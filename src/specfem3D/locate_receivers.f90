@@ -45,7 +45,6 @@
 
   use specfem_par, only: &
     myrank,DT,NSTEP, &
-    xigll,yigll,zigll, &
     STATIONS_FILE,nrec,islice_selected_rec,ispec_selected_rec, &
     xi_receiver,eta_receiver,gamma_receiver,station_name,network_name, &
     stlat,stlon,stele,stbur,nu, &
@@ -55,16 +54,6 @@
   use specfem_par, only: &
     nspec => NSPEC_CRUST_MANTLE
 
-  use specfem_par_crustmantle, only: &
-    ibool => ibool_crust_mantle, &
-    xstore => xstore_crust_mantle,ystore => ystore_crust_mantle,zstore => zstore_crust_mantle
-
-  ! for point search
-  use specfem_par,only: &
-    typical_size_squared, &
-    anchor_iax,anchor_iay,anchor_iaz, &
-    lat_min,lat_max,lon_min,lon_max,xyz_midpoints
-
   implicit none
 
   integer,intent(in) :: yr,jda,ho,mi
@@ -73,29 +62,37 @@
 
   ! local parameters
   integer :: iprocloop
-  integer :: irec
-  integer :: i,j,k,ispec,iglob
+  integer :: irec,i
   integer :: ier
 
-! coordinates of the control points of the surface element
-  double precision :: xelm(NGNOD),yelm(NGNOD),zelm(NGNOD)
-
+  integer, dimension(nrec) :: islice_selected_found,ispec_selected_found
+  double precision, dimension(nrec) :: xi_receiver_found,eta_receiver_found,gamma_receiver_found
+  double precision, dimension(3,3,nrec) :: nu_found
   integer :: nrec_found
-  integer, allocatable, dimension(:) :: ix_initial_guess,iy_initial_guess,iz_initial_guess
 
   ! point locations
   double precision, allocatable, dimension(:,:) :: xyz_target
-  double precision, allocatable, dimension(:) :: x_found,y_found,z_found
-  double precision, allocatable, dimension(:,:) :: x_found_all,y_found_all,z_found_all
+  double precision, allocatable, dimension(:,:) :: xyz_found
+
+  double precision, allocatable, dimension(:,:) :: xyz_found_subset
+  double precision, allocatable, dimension(:,:,:) :: xyz_found_all
+
+  double precision, dimension(nrec) :: stlat_found,stlon_found,stele_found,stbur_found,epidist_found
 
   double precision, allocatable, dimension(:) :: epidist
 
-  integer :: iter_loop,ispec_iterate
-  integer :: ia
-  double precision :: x,y,z
-  double precision :: xix,xiy,xiz
-  double precision :: etax,etay,etaz
-  double precision :: gammax,gammay,gammaz
+  integer :: nrec_SUBSET_current_size
+  integer :: irec_in_this_subset,irec_already_done
+
+  integer, allocatable, dimension(:) :: ispec_selected_subset
+  integer, allocatable, dimension(:,:) :: ispec_selected_all
+
+  double precision, dimension(:), allocatable :: final_distance
+  double precision, allocatable, dimension(:) :: final_distance_subset
+  double precision, dimension(:,:), allocatable :: final_distance_all
+
+  double precision, allocatable, dimension(:) :: xi_subset,eta_subset,gamma_subset
+  double precision, allocatable, dimension(:,:) :: xi_all,eta_all,gamma_all
 
   double precision :: lat,lon,radius,depth,r_target
 
@@ -105,47 +102,28 @@
   double precision :: ell
   double precision :: elevation
   double precision :: r0,p20
-  double precision :: dist_squared
-  double precision :: xi,eta,gamma,dx,dy,dz,dxi,deta,dgamma
+
+  double precision :: distmin_not_squared,final_distance_max
+  double precision :: x_target,y_target,z_target
+  double precision :: x,y,z
+  double precision :: xi,eta,gamma
+
+  integer :: ispec_selected
 
   integer :: iorientation
   double precision :: stazi,stdip
   double precision :: n(3),thetan,phin
-
-  ! use dynamic allocation
-  double precision, dimension(:), allocatable :: final_distance
-  double precision, dimension(:,:), allocatable :: final_distance_all
-
-  double precision :: distmin_squared,distmin_not_squared,final_distance_max
 
 ! receiver information
 ! timing information for the stations
 ! station information for writing the seismograms
   integer :: nsamp
 
-  integer, dimension(nrec) :: islice_selected_rec_found,ispec_selected_rec_found
-  double precision, dimension(nrec) :: xi_receiver_found,eta_receiver_found,gamma_receiver_found
-  double precision, dimension(3,3,nrec) :: nu_found
-
   character(len=MAX_LENGTH_STATION_NAME), dimension(nrec) :: station_name_found
   character(len=MAX_LENGTH_NETWORK_NAME), dimension(nrec) :: network_name_found
 
-  double precision, dimension(nrec) :: stlat_found,stlon_found,stele_found,stbur_found,epidist_found
-
-  integer, allocatable, dimension(:,:) :: ispec_selected_rec_all
-  double precision, allocatable, dimension(:,:) :: xi_receiver_all,eta_receiver_all,gamma_receiver_all
-  double precision, allocatable, dimension(:) :: xi_receiver_subset,eta_receiver_subset,gamma_receiver_subset
-
-  double precision :: x_target,y_target,z_target
-
   character(len=2) :: bic
   character(len=256) :: string
-
-  integer :: nrec_SUBSET_current_size
-  integer :: irec_in_this_subset,irec_already_done
-  integer, allocatable, dimension(:) :: ispec_selected_rec_subset
-  double precision, allocatable, dimension(:) :: x_found_subset,y_found_subset,z_found_subset
-  double precision, allocatable, dimension(:) :: final_distance_subset
 
   integer, allocatable, dimension(:) :: station_duplet
 
@@ -169,18 +147,10 @@
   ! get MPI starting time
   time_start = wtime()
 
-  ! make sure we clean the array before the gather
-  ispec_selected_rec(:) = 0
-
   ! allocate memory for arrays using number of stations
   allocate(epidist(nrec), &
-           ix_initial_guess(nrec), &
-           iy_initial_guess(nrec), &
-           iz_initial_guess(nrec), &
            xyz_target(NDIM,nrec), &
-           x_found(nrec), &
-           y_found(nrec), &
-           z_found(nrec), &
+           xyz_found(NDIM,nrec), &
            final_distance(nrec),stat=ier)
   if (ier /= 0) call exit_MPI(myrank,'Error allocating temporary receiver arrays')
 
@@ -189,9 +159,6 @@
 
   ! loop on all the stations to locate them in the mesh
   do irec = 1,nrec
-
-    ! set distance to huge initial value
-    distmin_squared = HUGEVAL
 
     ! station lat/lon in degrees
     lat = stlat(irec)
@@ -364,113 +331,15 @@
 500 format(a8,1x,a3,6x,f9.4,1x,f9.4,1x,f6.1,1x,f6.1,1x,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4.4,1x,i3.3,1x,i2.2,1x,i2.2,1x,f6.3)
 600 format(a8,1x,a3,6x,f9.4,1x,f9.4,1x,i6,1x,f6.1,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4.4,1x,i3.3,1x,i2.2,1x,i2.2,1x,f6.3)
 
-
-  ! find point locations
-  do irec = 1,nrec
-
-    ! set distance to huge initial value
-    distmin_squared = HUGEVAL
-
-    ! would write out desired target locations of receivers
-    !if (myrank == 0) write(IOUT_VTK,*) sngl(x_target(irec)), sngl(y_target(irec)), sngl(z_target(irec))
-
-    ! initializes located target
-    ! if we have not located a target element, the receiver is not in this slice
-    ! therefore use first element only for fictitious iterative search
-    ispec_selected_rec(irec) = 1
-    ix_initial_guess(irec) = MIDX
-    iy_initial_guess(irec) = MIDY
-    iz_initial_guess(irec) = MIDZ
-
-    ! gets target position
-    x_target = xyz_target(1,irec)
-    y_target = xyz_target(2,irec)
-    z_target = xyz_target(3,irec)
-
-    ! searches closest GLL point
-    if (USE_DISTANCE_CRITERION) then
-      ! checks if receiver in this slice
-      if (lat >= lat_min .and. lat <= lat_max .and. &
-          lon >= lon_min .and. lon <= lon_max) then
-        ! loops over all elements
-        do ispec = 1,nspec
-          ! exclude elements that are too far from target
-          dist_squared = (x_target - xyz_midpoints(1,ispec))*(x_target - xyz_midpoints(1,ispec)) &
-                       + (y_target - xyz_midpoints(2,ispec))*(y_target - xyz_midpoints(2,ispec)) &
-                       + (z_target - xyz_midpoints(3,ispec))*(z_target - xyz_midpoints(3,ispec))
-          !  we compare squared distances instead of distances themselves to significantly speed up calculations
-          if (dist_squared > typical_size_squared) cycle
-
-          ! loop only on points inside the element
-          ! exclude edges to ensure this point is not shared with other elements
-          do k=2,NGLLZ-1
-            do j=2,NGLLY-1
-              do i=2,NGLLX-1
-                iglob = ibool(i,j,k,ispec)
-                dist_squared = (x_target - dble(xstore(iglob)))*(x_target - dble(xstore(iglob))) &
-                             + (y_target - dble(ystore(iglob)))*(y_target - dble(ystore(iglob))) &
-                             + (z_target - dble(zstore(iglob)))*(z_target - dble(zstore(iglob)))
-
-                !  keep this point if it is closer to the receiver
-                !  we compare squared distances instead of distances themselves to significantly speed up calculations
-                if (dist_squared < distmin_squared) then
-                  distmin_squared = dist_squared
-                  ispec_selected_rec(irec) = ispec
-                  ix_initial_guess(irec) = i
-                  iy_initial_guess(irec) = j
-                  iz_initial_guess(irec) = k
-                endif
-
-              enddo
-            enddo
-          enddo
-
-        ! end of loop on all the spectral elements in current slice
-        enddo
-
-      endif
-    else
-      ! searches through all elements
-      do ispec = 1,nspec
-        ! loop only on points inside the element
-        ! exclude edges to ensure this point is not shared with other elements
-        do k=2,NGLLZ-1
-          do j=2,NGLLY-1
-            do i=2,NGLLX-1
-              iglob = ibool(i,j,k,ispec)
-              dist_squared = (x_target - dble(xstore(iglob)))*(x_target - dble(xstore(iglob))) &
-                           + (y_target - dble(ystore(iglob)))*(y_target - dble(ystore(iglob))) &
-                           + (z_target - dble(zstore(iglob)))*(z_target - dble(zstore(iglob)))
-
-              !  keep this point if it is closer to the receiver
-              !  we compare squared distances instead of distances themselves to significantly speed up calculations
-              if (dist_squared < distmin_squared) then
-                distmin_squared = dist_squared
-                ispec_selected_rec(irec) = ispec
-                ix_initial_guess(irec) = i
-                iy_initial_guess(irec) = j
-                iz_initial_guess(irec) = k
-              endif
-            enddo
-          enddo
-        enddo
-      ! end of loop on all the spectral elements in current slice
-      enddo
-    endif ! USE_DISTANCE_CRITERION
-
-  ! end of loop on all the stations
-  enddo
-
-! ****************************************
-! find the best (xi,eta) for each receiver
-! ****************************************
+  ! make sure we clean the array before the gather
+  ispec_selected_rec(:) = 0
+  islice_selected_rec(:) = -1
 
   ! initializes search distances
   final_distance(:) = HUGEVAL
 
   ! loop on all the receivers
-  ! gather source information in subsets to reduce memory requirements
-  islice_selected_rec(:) = -1
+  ! gather receiver information in subsets to reduce memory requirements
 
   ! loop over subsets of receivers
   do irec_already_done = 0, nrec, nrec_SUBSET_MAX
@@ -480,178 +349,111 @@
     nrec_SUBSET_current_size = min(nrec_SUBSET_MAX, nrec - irec_already_done)
 
     ! allocate arrays specific to each subset
-    allocate(ispec_selected_rec_subset(nrec_SUBSET_current_size), &
-             xi_receiver_subset(nrec_SUBSET_current_size), &
-             eta_receiver_subset(nrec_SUBSET_current_size), &
-             gamma_receiver_subset(nrec_SUBSET_current_size), &
-             x_found_subset(nrec_SUBSET_current_size), &
-             y_found_subset(nrec_SUBSET_current_size), &
-             z_found_subset(nrec_SUBSET_current_size), &
+    allocate(ispec_selected_subset(nrec_SUBSET_current_size), &
+             xi_subset(nrec_SUBSET_current_size), &
+             eta_subset(nrec_SUBSET_current_size), &
+             gamma_subset(nrec_SUBSET_current_size), &
+             xyz_found_subset(NDIM,nrec_SUBSET_current_size), &
              final_distance_subset(nrec_SUBSET_current_size),stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary receiver arrays')
 
     ! gather arrays
     if (myrank == 0) then
       ! only master process needs full arrays allocated
-      allocate(ispec_selected_rec_all(nrec_SUBSET_current_size,0:NPROCTOT_VAL-1), &
-               xi_receiver_all(nrec_SUBSET_current_size,0:NPROCTOT_VAL-1), &
-               eta_receiver_all(nrec_SUBSET_current_size,0:NPROCTOT_VAL-1), &
-               gamma_receiver_all(nrec_SUBSET_current_size,0:NPROCTOT_VAL-1), &
-               x_found_all(nrec_SUBSET_current_size,0:NPROCTOT_VAL-1), &
-               y_found_all(nrec_SUBSET_current_size,0:NPROCTOT_VAL-1), &
-               z_found_all(nrec_SUBSET_current_size,0:NPROCTOT_VAL-1), &
+      allocate(ispec_selected_all(nrec_SUBSET_current_size,0:NPROCTOT_VAL-1), &
+               xi_all(nrec_SUBSET_current_size,0:NPROCTOT_VAL-1), &
+               eta_all(nrec_SUBSET_current_size,0:NPROCTOT_VAL-1), &
+               gamma_all(nrec_SUBSET_current_size,0:NPROCTOT_VAL-1), &
+               xyz_found_all(NDIM,nrec_SUBSET_current_size,0:NPROCTOT_VAL-1), &
                final_distance_all(nrec_SUBSET_current_size,0:NPROCTOT_VAL-1),stat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary gather receiver arrays')
     else
       ! dummy arrays
-      allocate(ispec_selected_rec_all(1,1), &
-               xi_receiver_all(1,1), &
-               eta_receiver_all(1,1), &
-               gamma_receiver_all(1,1), &
-               x_found_all(1,1), &
-               y_found_all(1,1), &
-               z_found_all(1,1), &
+      allocate(ispec_selected_all(1,1), &
+               xi_all(1,1), &
+               eta_all(1,1), &
+               gamma_all(1,1), &
+               xyz_found_all(1,1,1), &
                final_distance_all(1,1),stat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary dummy receiver arrays')
     endif
 
     ! initializes search results
-    final_distance_all(:,:) = HUGEVAL
+    ispec_selected_subset(:) = 0
     final_distance_subset(:) = HUGEVAL
+    final_distance_all(:,:) = HUGEVAL
 
+    ! find point locations
     ! loop over the stations within this subset
     do irec_in_this_subset = 1,nrec_SUBSET_current_size
 
       ! mapping from station number in current subset to real station number in all the subsets
       irec = irec_in_this_subset + irec_already_done
 
-      ispec_iterate = ispec_selected_rec(irec)
-      ispec_selected_rec_subset(irec_in_this_subset) = ispec_iterate
-
-      ! define coordinates of the control points of the element
-      do ia = 1,NGNOD
-        iglob = ibool(anchor_iax(ia),anchor_iay(ia),anchor_iaz(ia),ispec_iterate)
-        xelm(ia) = dble(xstore(iglob))
-        yelm(ia) = dble(ystore(iglob))
-        zelm(ia) = dble(zstore(iglob))
-      enddo
-
-      ! use initial guess in xi and eta
-      xi = xigll(ix_initial_guess(irec))
-      eta = yigll(iy_initial_guess(irec))
-      gamma = zigll(iz_initial_guess(irec))
-
-      ! impose receiver exactly at the surface
-      if (.not. RECEIVERS_CAN_BE_BURIED) gamma = 1.d0
+      ! station lat/lon in degrees
+      lat = stlat(irec)
+      lon = stlon(irec)
 
       ! gets target position
       x_target = xyz_target(1,irec)
       y_target = xyz_target(2,irec)
       z_target = xyz_target(3,irec)
 
-      ! iterate to solve the non linear system
-      do iter_loop = 1,NUM_ITER
-
-        ! recompute Jacobian for the new point
-        call recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z, &
-                                xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
-
-        ! compute distance to target location
-        dx = - (x - x_target)
-        dy = - (y - y_target)
-        dz = - (z - z_target)
-
-        ! compute increments
-        ! gamma does not change since we know the receiver is exactly on the surface
-        dxi  = xix*dx + xiy*dy + xiz*dz
-        deta = etax*dx + etay*dy + etaz*dz
-
-        ! update values
-        xi = xi + dxi
-        eta = eta + deta
-
-        ! buried receivers vary in z depth
-        if (RECEIVERS_CAN_BE_BURIED) then
-          dgamma = gammax*dx + gammay*dy + gammaz*dz
-          gamma = gamma + dgamma
-        endif
-
-        ! impose that we stay in that element
-        ! (useful if user gives a receiver outside the mesh for instance)
-        ! we can go slightly outside the [1,1] segment since with finite elements
-        ! the polynomial solution is defined everywhere
-        ! can be useful for convergence of iterative scheme with distorted elements
-        if (xi > 1.10d0) xi = 1.10d0
-        if (xi < -1.10d0) xi = -1.10d0
-        if (eta > 1.10d0) eta = 1.10d0
-        if (eta < -1.10d0) eta = -1.10d0
-        if (gamma > 1.10d0) gamma = 1.10d0
-        if (gamma < -1.10d0) gamma = -1.10d0
-
-      ! end of non linear iterations
-      enddo
-
-      ! impose receiver exactly at the surface after final iteration
-      if (.not. RECEIVERS_CAN_BE_BURIED) gamma = 1.d0
-
-      ! compute final coordinates of point found
-      call recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z, &
-                              xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
+      ! locates best element and xi/eta/gamma interpolation values
+      call locate_point(x_target,y_target,z_target,lat,lon,ispec_selected,xi,eta,gamma, &
+                        x,y,z,distmin_not_squared,RECEIVERS_CAN_BE_BURIED)
 
       ! store xi,eta and x,y,z of point found
-      xi_receiver_subset(irec_in_this_subset) = xi
-      eta_receiver_subset(irec_in_this_subset) = eta
-      gamma_receiver_subset(irec_in_this_subset) = gamma
+      xi_subset(irec_in_this_subset) = xi
+      eta_subset(irec_in_this_subset) = eta
+      gamma_subset(irec_in_this_subset) = gamma
 
-      x_found(irec) = x
-      y_found(irec) = y
-      z_found(irec) = z
+      xyz_found(1,irec) = x
+      xyz_found(2,irec) = y
+      xyz_found(3,irec) = z
 
-      x_found_subset(irec_in_this_subset) = x
-      y_found_subset(irec_in_this_subset) = y
-      z_found_subset(irec_in_this_subset) = z
-
-      ! compute final distance between asked and found (converted to km)
-      distmin_not_squared = dsqrt((x_target-x)**2 + &
-                                  (y_target-y)**2 + &
-                                  (z_target-z)**2)*R_EARTH_KM
+      xyz_found_subset(1,irec_in_this_subset) = x
+      xyz_found_subset(2,irec_in_this_subset) = y
+      xyz_found_subset(3,irec_in_this_subset) = z
 
       final_distance(irec) = distmin_not_squared
+
       final_distance_subset(irec_in_this_subset) = distmin_not_squared
+      ispec_selected_subset(irec_in_this_subset) = ispec_selected
 
     enddo ! end of loop on all stations within current subset
 
     ! for MPI version, gather information from all the nodes
-    ispec_selected_rec_all(:,:) = -1
+    ispec_selected_all(:,:) = -1
 
-    call gather_all_i(ispec_selected_rec_subset,nrec_SUBSET_current_size, &
-                      ispec_selected_rec_all,nrec_SUBSET_current_size,NPROCTOT_VAL)
+    call gather_all_i(ispec_selected_subset,nrec_SUBSET_current_size, &
+                      ispec_selected_all,nrec_SUBSET_current_size,NPROCTOT_VAL)
 
     ! this is executed by main process only
     if (myrank == 0) then
       ! check that the gather operation went well
-      if (any(ispec_selected_rec_all(:,:) == -1)) &
+      if (any(ispec_selected_all(:,:) == -1)) then
+        print *,'Error ispec all: procs = ',NPROCTOT_VAL,'receivers subset size = ',nrec_SUBSET_current_size
+        print *,ispec_selected_all(:,:)
         call exit_MPI(myrank,'gather operation failed for receivers')
+      endif
     endif
 
-    call gather_all_dp(xi_receiver_subset,nrec_SUBSET_current_size, &
-                       xi_receiver_all,nrec_SUBSET_current_size,NPROCTOT_VAL)
-    call gather_all_dp(eta_receiver_subset,nrec_SUBSET_current_size, &
-                       eta_receiver_all,nrec_SUBSET_current_size,NPROCTOT_VAL)
-    call gather_all_dp(gamma_receiver_subset,nrec_SUBSET_current_size, &
-                       gamma_receiver_all,nrec_SUBSET_current_size,NPROCTOT_VAL)
+    call gather_all_dp(xi_subset,nrec_SUBSET_current_size, &
+                       xi_all,nrec_SUBSET_current_size,NPROCTOT_VAL)
+    call gather_all_dp(eta_subset,nrec_SUBSET_current_size, &
+                       eta_all,nrec_SUBSET_current_size,NPROCTOT_VAL)
+    call gather_all_dp(gamma_subset,nrec_SUBSET_current_size, &
+                       gamma_all,nrec_SUBSET_current_size,NPROCTOT_VAL)
     call gather_all_dp(final_distance_subset,nrec_SUBSET_current_size, &
                        final_distance_all,nrec_SUBSET_current_size,NPROCTOT_VAL)
-    call gather_all_dp(x_found_subset,nrec_SUBSET_current_size, &
-                       x_found_all,nrec_SUBSET_current_size,NPROCTOT_VAL)
-    call gather_all_dp(y_found_subset,nrec_SUBSET_current_size, &
-                       y_found_all,nrec_SUBSET_current_size,NPROCTOT_VAL)
-    call gather_all_dp(z_found_subset,nrec_SUBSET_current_size, &
-                       z_found_all,nrec_SUBSET_current_size,NPROCTOT_VAL)
+    call gather_all_dp(xyz_found_subset,NDIM*nrec_SUBSET_current_size, &
+                       xyz_found_all,NDIM*nrec_SUBSET_current_size,NPROCTOT_VAL)
 
     ! this is executed by main process only
     if (myrank == 0) then
 
+      ! selects best location in all slices
       ! MPI loop on all the results to determine the best slice
       do irec_in_this_subset = 1,nrec_SUBSET_current_size
 
@@ -665,39 +467,34 @@
             ! stores this slice's info
             distmin_not_squared = final_distance_all(irec_in_this_subset,iprocloop)
             islice_selected_rec(irec) = iprocloop
-            ispec_selected_rec(irec) = ispec_selected_rec_all(irec_in_this_subset,iprocloop)
+            ispec_selected_rec(irec) = ispec_selected_all(irec_in_this_subset,iprocloop)
 
-            xi_receiver(irec) = xi_receiver_all(irec_in_this_subset,iprocloop)
-            eta_receiver(irec) = eta_receiver_all(irec_in_this_subset,iprocloop)
-            gamma_receiver(irec) = gamma_receiver_all(irec_in_this_subset,iprocloop)
+            xi_receiver(irec) = xi_all(irec_in_this_subset,iprocloop)
+            eta_receiver(irec) = eta_all(irec_in_this_subset,iprocloop)
+            gamma_receiver(irec) = gamma_all(irec_in_this_subset,iprocloop)
 
-            x_found(irec) = x_found_all(irec_in_this_subset,iprocloop)
-            y_found(irec) = y_found_all(irec_in_this_subset,iprocloop)
-            z_found(irec) = z_found_all(irec_in_this_subset,iprocloop)
+            xyz_found(:,irec) = xyz_found_all(:,irec_in_this_subset,iprocloop)
           endif
         enddo
         final_distance(irec) = distmin_not_squared
+        if (final_distance(irec) == HUGEVAL) call exit_MPI(myrank,'Error locating receiver')
+
       enddo
     endif ! end of section executed by main process only
 
-    deallocate(ispec_selected_rec_subset)
-    deallocate(ispec_selected_rec_all)
-    deallocate(xi_receiver_subset)
-    deallocate(eta_receiver_subset)
-    deallocate(gamma_receiver_subset)
-    deallocate(xi_receiver_all)
-    deallocate(eta_receiver_all)
-    deallocate(gamma_receiver_all)
-    deallocate(x_found_subset)
-    deallocate(y_found_subset)
-    deallocate(z_found_subset)
-    deallocate(x_found_all)
-    deallocate(y_found_all)
-    deallocate(z_found_all)
-    deallocate(final_distance_subset)
+    deallocate(ispec_selected_subset)
+    deallocate(ispec_selected_all)
+    deallocate(xi_subset,eta_subset,gamma_subset)
+    deallocate(xi_all,eta_all,gamma_all)
     deallocate(final_distance_all)
+    deallocate(final_distance_subset)
+    deallocate(xyz_found_subset)
+    deallocate(xyz_found_all)
 
   enddo ! end of loop over all station subsets
+
+  ! deallocate arrays
+  deallocate(xyz_target)
 
   ! this is executed by the main process only
   if (myrank == 0) then
@@ -707,11 +504,11 @@
     if (ier /= 0 ) call exit_MPI(myrank,'Error opening and appending receivers to file sr_tmp.vtk')
 
     ! chooses best receivers locations
-    islice_selected_rec_found(:) = -1
+    ! if receiver location is too far off, we will exclude the receiver
+    islice_selected_found(:) = -1
     nrec_found = 0
-    do irec = 1,nrec
 
-      if (final_distance(irec) == HUGEVAL) call exit_MPI(myrank,'Error locating receiver')
+    do irec = 1,nrec
 
       if (DISPLAY_DETAILS_STATIONS .or. final_distance(irec) > 0.01d0) then
         write(IMAIN,*)
@@ -722,8 +519,10 @@
         write(IMAIN,*) '  closest estimate found: ',sngl(final_distance(irec)),' km away'
         write(IMAIN,*) '   in slice ',islice_selected_rec(irec),' in element ',ispec_selected_rec(irec)
         write(IMAIN,*) '   at xi,eta,gamma coordinates = ',xi_receiver(irec),eta_receiver(irec),gamma_receiver(irec)
+
         ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
-        call xyz_2_rlatlon_dble(x_found(irec),y_found(irec),z_found(irec),radius,lat,lon)
+        call xyz_2_rlatlon_dble(xyz_found(1,irec),xyz_found(2,irec),xyz_found(3,irec),radius,lat,lon)
+
         write(IMAIN,*) '   at lat/lon = ',sngl(lat),sngl(lon)
       endif
 
@@ -741,8 +540,8 @@
       else
         nrec_found = nrec_found + 1
 
-        islice_selected_rec_found(nrec_found) = islice_selected_rec(irec)
-        ispec_selected_rec_found(nrec_found) = ispec_selected_rec(irec)
+        islice_selected_found(nrec_found) = islice_selected_rec(irec)
+        ispec_selected_found(nrec_found) = ispec_selected_rec(irec)
 
         xi_receiver_found(nrec_found) = xi_receiver(irec)
         eta_receiver_found(nrec_found) = eta_receiver(irec)
@@ -760,7 +559,7 @@
         epidist_found(nrec_found) = epidist(irec)
 
         ! writes out actual receiver location to VTK file
-        write(IOUT_VTK,'(3e18.6)') sngl(x_found(irec)), sngl(y_found(irec)), sngl(z_found(irec))
+        write(IOUT_VTK,'(3e18.6)') sngl(xyz_found(1,irec)), sngl(xyz_found(2,irec)), sngl(xyz_found(3,irec))
       endif
     enddo
 
@@ -787,10 +586,12 @@
     endif
     call flush_IMAIN()
 
+    ! replaces list of all receivers with list of only those which were found 
+    ! (in particular: for a 1-chunk simulation, only stations in this chunk)
     nrec = nrec_found
 
-    islice_selected_rec(1:nrec) = islice_selected_rec_found(1:nrec)
-    ispec_selected_rec(1:nrec) = ispec_selected_rec_found(1:nrec)
+    islice_selected_rec(1:nrec) = islice_selected_found(1:nrec)
+    ispec_selected_rec(1:nrec) = ispec_selected_found(1:nrec)
 
     xi_receiver(1:nrec) = xi_receiver_found(1:nrec)
     eta_receiver(1:nrec) = eta_receiver_found(1:nrec)
@@ -812,7 +613,7 @@
           status='unknown',iostat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error opening file output_list_stations.txt')
     write(IOUT,*)
-    write(IOUT,*) 'total number of stations: ',nrec
+    write(IOUT,*) 'total number of stations (found): ',nrec
     write(IOUT,*)
     do irec = 1,nrec
       write(IOUT,*) &
@@ -837,15 +638,6 @@
 
   endif    ! end of section executed by main process only
 
-  call synchronize_all()
-
-  ! deallocate arrays
-  deallocate(epidist)
-  deallocate(ix_initial_guess,iy_initial_guess,iz_initial_guess)
-  deallocate(xyz_target)
-  deallocate(x_found,y_found,z_found)
-  deallocate(final_distance)
-
   ! main process broadcasts the results to all the slices
   call bcast_all_singlei(nrec)
 
@@ -865,6 +657,14 @@
   call bcast_all_dp(stbur,nrec)
   call bcast_all_dp(nu,nrec*3*3)
 
+  ! deallocate arrays
+  deallocate(epidist)
+  deallocate(xyz_found)
+  deallocate(final_distance)
+
+  ! synchronizes to get right timing
+  call synchronize_all()
+
   ! elapsed time since beginning of mesh generation
   if (myrank == 0) then
     tCPU = wtime() - time_start
@@ -876,6 +676,7 @@
     call flush_IMAIN()
   endif
   call synchronize_all()
+
 
   contains
 

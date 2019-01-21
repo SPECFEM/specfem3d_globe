@@ -80,6 +80,7 @@ specfem3D_OBJECTS += \
 	$O/initialize_simulation.solverstatic.o \
 	$O/iterate_time.solverstatic.o \
 	$O/iterate_time_undoatt.solverstatic.o \
+	$O/locate_point.solverstatic.o \
 	$O/locate_receivers.solverstatic.o \
 	$O/locate_regular_points.solverstatic.o \
 	$O/locate_sources.solverstatic.o \
@@ -149,6 +150,7 @@ specfem3D_SHARED_OBJECTS = \
 	$O/get_model_parameters.shared.o \
 	$O/get_timestep_and_layers.shared.o \
 	$O/gll_library.shared.o \
+	$O/heap_sort.shared.o \
 	$O/hex_nodes.shared.o \
 	$O/init_openmp.shared.o \
 	$O/intgrl.shared.o \
@@ -164,6 +166,7 @@ specfem3D_SHARED_OBJECTS = \
 	$O/recompute_jacobian.shared.o \
 	$O/reduce.shared.o \
 	$O/rthetaphi_xyz.shared.o \
+	$O/search_kdtree.shared.o \
 	$O/spline_routines.shared.o \
 	$O/write_VTK_file.shared.o \
 	$(EMPTY_MACRO)
@@ -355,8 +358,13 @@ $O/read_adjoint_sources.solverstatic.o: $O/write_seismograms.solverstatic.o
 $O/specfem3D_par.solverstatic_module.o: $O/adios_manager.shared_adios_module.o
 $O/specfem3D_par.solverstatic_module.o: $O/adios2_manager.shared_adios2_module.o
 
+$O/setup_sources_receivers.solverstatic.o: $O/search_kdtree.shared.o
+$O/locate_point.solverstatic.o: $O/search_kdtree.shared.o
+
 # Version file
 $O/initialize_simulation.solverstatic.o: ${SETUP}/version.fh
+
+
 
 ###
 ### specfem3D - optimized flags and dependence on values from mesher here

@@ -80,6 +80,7 @@ module kdtree_search
 
   ! info output
   logical :: be_verbose = .false.
+  integer :: IOUT_TREE = 6          ! default set to standard output
 
   !---------------------------------------------------------------
   ! public routines
@@ -171,11 +172,11 @@ contains
   points_data => kdtree_nodes_location(:,:)
 
   if (be_verbose) then
-    print *,'kd-tree:'
-    print *,'  total data points: ',npoints
-    !print *,'  box boundaries   : x min/max = ',minval(points_data(1,:)),maxval(points_data(1,:))
-    !print *,'                     y min/max = ',minval(points_data(2,:)),maxval(points_data(2,:))
-    !print *,'                     z min/max = ',minval(points_data(3,:)),maxval(points_data(3,:))
+    write(IOUT_TREE,*) 'kd-tree:'
+    write(IOUT_TREE,*) '  total data points: ',npoints
+    !write(IOUT_TREE,*) '  box boundaries   : x min/max = ',minval(points_data(1,:)),maxval(points_data(1,:))
+    !write(IOUT_TREE,*) '                     y min/max = ',minval(points_data(2,:)),maxval(points_data(2,:))
+    !write(IOUT_TREE,*) '                     z min/max = ',minval(points_data(3,:)),maxval(points_data(3,:))
   endif
 
   ! theoretical number of node for totally balanced tree
@@ -188,8 +189,8 @@ contains
     if (numnodes > 2147483646 - i ) stop 'Error number of nodes might exceed integer limit'
   enddo
   if (be_verbose) then
-    print *,'  theoretical   number of nodes: ',numnodes
-    print *,'               tree memory size: ',( numnodes * 32 )/1024./1024.,'MB'
+    write(IOUT_TREE,*) '  theoretical   number of nodes: ',numnodes
+    write(IOUT_TREE,*) '               tree memory size: ',( numnodes * 32 )/1024./1024.,'MB'
   endif
 
   ! local ordering
@@ -214,15 +215,15 @@ contains
   if (.not. associated(kdtree) ) stop 'Error creation of kd-tree failed'
 
   if (be_verbose) then
-    print *,'  actual        number of nodes: ',numnodes
+    write(IOUT_TREE,*) '  actual        number of nodes: ',numnodes
     ! tree node size: 4 (idim) + 8 (cut_value) + 4 (ipoint) + 2*4 (ibound_**) + 2*4 (left,right) = 32 bytes
-    print *,'               tree memory size: ',( numnodes * 32 )/1024./1024.,'MB'
-    print *,'  maximum depth   : ',maxdepth
+    write(IOUT_TREE,*) '               tree memory size: ',( numnodes * 32 )/1024./1024.,'MB'
+    write(IOUT_TREE,*) '  maximum depth   : ',maxdepth
 
     ! timing
     call cpu_time(ct_end)
-    print *,'  creation timing : ',ct_end - ct_start, '(s)'
-    print *
+    write(IOUT_TREE,*) '  creation timing : ',ct_end - ct_start, '(s)'
+    write(IOUT_TREE,*)
   endif
 
 
@@ -308,8 +309,8 @@ contains
 
   ! debug
   !if (be_verbose) then
-  !  print *,'target  : ',xyz_target(:)
-  !  print *,'nearest : ',kdtree_nodes_location(:,ipoint_min),'distance:',dist_min*6371.,'(km)',ipoint_min,iglob_min
+  !  write(IOUT_TREE,*) 'target  : ',xyz_target(:)
+  !  write(IOUT_TREE,*) 'nearest : ',kdtree_nodes_location(:,ipoint_min),'distance:',dist_min*6371.,'(km)',ipoint_min,iglob_min
   !endif
 
   end subroutine kdtree_find_nearest_neighbor
@@ -464,7 +465,7 @@ contains
 
   ! checks if num_nodes_get limited by search array size
   if (kdtree_search_num_nodes < num_nodes_get) then
-    print *,'Warning: Requested number of n-nodes bigger than actual number of search result kdtree_search_num_nodes'
+    write(IOUT_TREE,*) 'Warning: Requested number of n-nodes bigger than actual number of search result kdtree_search_num_nodes'
   endif
 
   ! initializes search results
@@ -583,7 +584,7 @@ contains
 
   ! checks if num_nodes_get limited by search array size
   if (kdtree_search_num_nodes < num_nodes_get) then
-    print *,'Warning: Requested number of n-nodes bigger than actual number of search result kdtree_search_num_nodes'
+    write(IOUT_TREE,*) 'Warning: Requested number of n-nodes bigger than actual number of search result kdtree_search_num_nodes'
   endif
 
   ! initializes search results
@@ -808,8 +809,8 @@ contains
   ! statistics
   numnodes = numnodes + 1
   if (numnodes == 1) then
-    print *,'printing kd-tree: total number of points      = ',npoints
-    !print *,'         index array = ',points_index(:)
+    write(IOUT_TREE,*) 'printing kd-tree: total number of points      = ',npoints
+    !write(IOUT_TREE,*) '         index array = ',points_index(:)
   endif
 
   ! outputs infos for a final node
@@ -823,11 +824,11 @@ contains
 
     ! outputs infos
     if (numnodes < OUTPUT_LENGTH) &
-      print *,'node:',numnodes,'index:',node%ipoint,' x/y/z = ',points_data(:,node%ipoint)
+      write(IOUT_TREE,*) 'node:',numnodes,'index:',node%ipoint,' x/y/z = ',points_data(:,node%ipoint)
   else
     ! outputs infos
     if (numnodes < OUTPUT_LENGTH) &
-      print *,'node:',numnodes,'dim:',node%idim,'cut = ',node%cut_value
+      write(IOUT_TREE,*) 'node:',numnodes,'dim:',node%idim,'cut = ',node%cut_value
   endif
 
   ! checks child nodes
@@ -1266,9 +1267,15 @@ contains
 !
 
 
-  subroutine kdtree_set_verbose()
+  subroutine kdtree_set_verbose(iout)
 
   implicit none
+
+  integer,intent(in),optional :: iout
+
+  if (present(iout)) then
+    IOUT_TREE = iout
+  endif
 
   ! sets verbosity on
   be_verbose = .true.

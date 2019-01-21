@@ -31,6 +31,8 @@
     theta_source,phi_source,TOPOGRAPHY,ibathy_topo, &
     USE_DISTANCE_CRITERION,xyz_midpoints
 
+  use kdtree_search, only: kdtree_delete,kdtree_nodes_location,kdtree_nodes_index
+
   implicit none
 
   ! setup for point search
@@ -71,6 +73,13 @@
 
   if (USE_DISTANCE_CRITERION) deallocate(xyz_midpoints)
 
+  ! frees tree memory
+  ! deletes tree arrays
+  deallocate(kdtree_nodes_location)
+  deallocate(kdtree_nodes_index)
+  ! deletes search tree nodes
+  call kdtree_delete()
+
   end subroutine setup_sources_receivers
 
 !
@@ -80,7 +89,7 @@
   subroutine setup_point_search_arrays()
 
   use constants,only: &
-    NDIM,MIDX,MIDY,MIDZ,TWO_PI,R_UNIT_SPHERE,USE_DISTANCE_CRITERION
+    NDIM,NGLLX,NGLLY,NGLLZ,MIDX,MIDY,MIDZ,IMAIN,TWO_PI,R_UNIT_SPHERE,USE_DISTANCE_CRITERION
 
   use specfem_par, only: &
     NEX_XI_VAL,LAT_LON_MARGIN,myrank
@@ -98,10 +107,14 @@
     anchor_iax,anchor_iay,anchor_iaz, &
     lat_min,lat_max,lon_min,lon_max,xyz_midpoints
 
+  use kdtree_search, only: kdtree_setup,kdtree_set_verbose, &
+    kdtree_num_nodes,kdtree_nodes_location,kdtree_nodes_index
+
   implicit none
 
   ! local parameters
   integer :: ispec,iglob,ier
+  integer :: i,j,k,inodes
 
   ! compute typical size of elements at the surface
   typical_size_squared = TWO_PI * R_UNIT_SPHERE / (4.d0 * NEX_XI_VAL)
@@ -146,6 +159,53 @@
 
   ! define (i,j,k) indices of the control/anchor points
   call hex_nodes_anchor_ijk(anchor_iax,anchor_iay,anchor_iaz)
+
+  ! kd-tree setup
+  ! uses all internal GLL points for search tree
+  ! all internal GLL points ( 2 to NGLLX-1 )
+  kdtree_num_nodes = nspec * (NGLLX-2)*(NGLLY-2)*(NGLLZ-2)
+
+  ! allocates tree arrays
+  allocate(kdtree_nodes_location(NDIM,kdtree_num_nodes),stat=ier)
+  if (ier /= 0) stop 'Error allocating kdtree_nodes_location arrays'
+  allocate(kdtree_nodes_index(kdtree_num_nodes),stat=ier)
+  if (ier /= 0) stop 'Error allocating kdtree_nodes_index arrays'
+
+  ! tree verbosity
+  if (myrank == 0) call kdtree_set_verbose(IMAIN)
+
+  ! prepares search arrays, each element takes its internal GLL points for tree search
+  kdtree_nodes_index(:) = 0
+  kdtree_nodes_location(:,:) = 0.0
+  ! adds tree nodes
+  inodes = 0
+  do ispec = 1,nspec
+    ! sets up tree nodes
+    ! all internal GLL points
+    do k = 2,NGLLZ-1
+      do j = 2,NGLLY-1
+        do i = 2,NGLLX-1
+          iglob = ibool(i,j,k,ispec)
+
+          ! counts nodes
+          inodes = inodes + 1
+          if (inodes > kdtree_num_nodes ) stop 'Error index inodes bigger than kdtree_num_nodes'
+
+          ! adds node index (index points to same ispec for all internal GLL points)
+          kdtree_nodes_index(inodes) = ispec
+
+          ! adds node location
+          kdtree_nodes_location(1,inodes) = xstore(iglob)
+          kdtree_nodes_location(2,inodes) = ystore(iglob)
+          kdtree_nodes_location(3,inodes) = zstore(iglob)
+        enddo
+      enddo
+    enddo
+  enddo
+  if (inodes /= kdtree_num_nodes ) stop 'Error index inodes does not match nnodes_local'
+
+  ! creates kd-tree for searching
+  call kdtree_setup()
 
   end subroutine setup_point_search_arrays
 
