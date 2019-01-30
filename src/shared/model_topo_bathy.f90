@@ -37,7 +37,8 @@
 
 ! standard routine to setup model
 
-  use constants, only: myrank,NX_BATHY,NY_BATHY,MAX_STRING_LEN,IMAIN,GRAVITY_INTEGRALS
+  use constants, only: myrank,NX_BATHY,NY_BATHY,MAX_STRING_LEN,IMAIN,GRAVITY_INTEGRALS, &
+    PATHNAME_TOPO_FILE,RESOLUTION_TOPO_FILE,PLOT_PNM_IMAGE_TOPO_BATHY
 
   implicit none
 
@@ -46,20 +47,48 @@
 
   character(len=MAX_STRING_LEN) :: LOCAL_PATH
 
+  ! local parameters
+  character(len=4) :: ending
+
+  ! timer MPI
+  double precision :: time1,tCPU
+  double precision, external :: wtime
+
+  ending = ''
+  if (len_trim(PATHNAME_TOPO_FILE) > 4) ending = PATHNAME_TOPO_FILE(len_trim(PATHNAME_TOPO_FILE)-3:len_trim(PATHNAME_TOPO_FILE))
+
   if (myrank == 0) then
     ! user output
     write(IMAIN,*)
     write(IMAIN,*) 'incorporating topography'
+    write(IMAIN,*) '  topo file            : ',trim(PATHNAME_TOPO_FILE)
+    write(IMAIN,*) '  resolution in minutes: ',RESOLUTION_TOPO_FILE
+    write(IMAIN,*)
     call flush_IMAIN()
 
+    ! get MPI starting time
+    time1 = wtime()
+
     ! read/save topo file on master
-    call read_topo_bathy_file(ibathy_topo)
+    if (ending == '.dat') then
+      call read_topo_bathy_file_dat_text(ibathy_topo)
+    else
+      call read_topo_bathy_file(ibathy_topo)
+    endif
+
+    ! elapsed time
+    tCPU = wtime() - time1
 
     ! user output
-    write(IMAIN,*) "  topography/bathymetry: min/max = ",minval(ibathy_topo),maxval(ibathy_topo)
+    write(IMAIN,*) '  topography/bathymetry: min/max = ',minval(ibathy_topo),maxval(ibathy_topo)
+    write(IMAIN,*)
+    write(IMAIN,*) '  Elapsed time for reading in seconds = ',tCPU
     call flush_IMAIN()
 
     if (.not. GRAVITY_INTEGRALS) call save_topo_bathy_database(ibathy_topo,LOCAL_PATH)
+
+    ! plots image
+    if (PLOT_PNM_IMAGE_TOPO_BATHY) call plot_topo_bathy_pnm(ibathy_topo)
   endif
 
   ! broadcast the information read on the master to the nodes
@@ -72,9 +101,14 @@
 !
 
   subroutine read_topo_bathy_file(ibathy_topo)
+
+! reads topography and bathymetry file (given in binary format, name ending in *.bin)
 !
-!---- read topography and bathymetry file once and for all
-!
+! from Elliot, 2014:
+!    This expects a file containing signed 16-bit integers, as generated
+!    using the ascii2bin.py script in DATA/topo_bathy/. Byte swapping should
+!    be handled automatically if necessary.
+
   use constants
 
   implicit none
@@ -85,6 +119,7 @@
   ! local parameters
   integer(kind=8) :: filesize   ! 8-bytes / 64-bits
   integer(kind=2) :: ival       ! 2-bytes / 16-bits
+  integer(kind=2),dimension(NX_BATHY) :: ival_array
   integer :: indx,itopo_x,itopo_y,itmp
   logical :: byteswap
 
@@ -96,42 +131,138 @@
   call open_file_abs_r(10, trim(PATHNAME_TOPO_FILE), len_trim(PATHNAME_TOPO_FILE), filesize)
 
   ! checks byte ordering
+  !
+  ! first entry in file is a byte marker
+  ! (see file convert_etopo_files_from_specfem_ASCII_to_binary_.**.py in DATA/topo_bathy/ directory)
   indx = 1
   call read_abs(10, ival, 2, indx)
   byteswap = (ival == HEADER_IS_BYTE_SWAPPED)
 
-  ! reads in topography array
-  do itopo_y = 1,NY_BATHY
-    do itopo_x = 1,NX_BATHY
-      indx = indx + 1
-      call read_abs(10, ival, 2, indx)
+  !debug
+  !print*,'topo bathy: byteswap ',byteswap,ival
 
-      if (byteswap) then
+  ! reads in topography array
+  if (byteswap) then
+    ! swapping byte from little- to big-endian or vice verse
+    do itopo_y = 1,NY_BATHY
+      do itopo_x = 1,NX_BATHY
+        indx = indx + 1
+        call read_abs(10, ival, 2, indx)
+
         ! note: ibm's xlf compiler warns about ishftc() with integer(2) input. ival should have type integer.
         !       other compilers would use iishift for integer(2) types.
         !ival = ishftc(ival, 8, 16)
         ! work-around
         itmp = ival
         ival = ishftc(itmp, 8, 16)
+
+        ! stores in array
+        ibathy_topo(itopo_x,itopo_y) = ival
+
+        ! checks values
+        if (ival < TOPO_MINIMUM .or. ival > TOPO_MAXIMUM) then
+          print *,'Error read topo_bathy: ival = ',ival,'at ix/iy = ',itopo_x,itopo_y,'exceeds min/max topography bounds'
+          print *,'topo_bathy dimension: nx,ny = ',NX_BATHY,NY_BATHY
+          call exit_mpi(0,'Error reading topo_bathy file value exceeds min/max bounds')
+        endif
+      enddo
+    enddo
+  else
+    ! keeps same byte order
+    do itopo_y = 1,NY_BATHY
+      ! fast way: reads all values in one direction (shifted by 2 bytes due to first marker entry)
+      call read_abs_shifted(10,ival_array,2 * NX_BATHY,itopo_y,2)
+
+      ! stores one-by-one
+      do itopo_x = 1,NX_BATHY
+        ! slow way: reads 1 entry at a time
+        !indx = indx + 1
+        !call read_abs(10, ival, 2, indx)
+        !
+        ! fast way: gets topo value from array
+        ival = ival_array(itopo_x)
+
+        ! stores in array
+        ibathy_topo(itopo_x,itopo_y) = ival
+
+        ! checks values
+        if (ival < TOPO_MINIMUM .or. ival > TOPO_MAXIMUM) then
+          print *,'Error read topo_bathy: ival = ',ival,'at ix/iy = ',itopo_x,itopo_y,'exceeds min/max topography bounds'
+          print *,'topo_bathy dimension: nx,ny = ',NX_BATHY,NY_BATHY
+          call exit_mpi(0,'Error reading topo_bathy file value exceeds min/max bounds')
+        endif
+      enddo
+    enddo
+  endif ! byteswap
+
+  ! closes file
+  call close_file_abs(10)
+
+  ! debug
+  !print *,'ibathy_topo ',ibathy_topo(1:10,5)
+
+  end subroutine read_topo_bathy_file
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  subroutine read_topo_bathy_file_dat_text(ibathy_topo)
+
+! reads topography and bathymetry file (given in ASCII format, name ending in *.dat)
+! (older formats used for version 6.0)
+
+  use constants
+
+  implicit none
+
+  ! use integer array to store values
+  integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
+
+  ! local parameters
+  real :: val
+  integer :: ival
+  integer :: itopo_x,itopo_y,ier
+
+  ! reads in topography values from file
+  open(unit=IIN,file=trim(PATHNAME_TOPO_FILE),status='old',action='read',iostat=ier)
+  if( ier /= 0 ) then
+    print*,'Error opening:',trim(PATHNAME_TOPO_FILE)
+    call exit_mpi(0,'Error opening topography data file')
+  endif
+
+  ! reads in topography array
+  do itopo_y = 1,NY_BATHY
+    do itopo_x = 1,NX_BATHY
+      read(IIN,*,iostat=ier) val
+
+      ! checks
+      if( ier /= 0 ) then
+        print*,'error read topo_bathy: ix,iy = ',itopo_x,itopo_y,val
+        print*,'topo_bathy dimension: nx,ny = ',NX_BATHY,NY_BATHY
+        call exit_mpi(0,'error reading topo_bathy file')
       endif
 
+      ! converts to integer
+      ival = nint(val)
+
       ! checks values
-      if (ival < TOPO_MINIMUM .or. ival > TOPO_MAXIMUM) then
-        print *,'Error read topo_bathy: ival = ',ival,'at ix/iy = ',itopo_x,itopo_y,'exceeds min/max topography bounds'
-        print *,'topo_bathy dimension: nx,ny = ',NX_BATHY,NY_BATHY
-        call exit_mpi(0,'Error reading topo_bathy file value exceeds min/max bounds')
+      if( ival < TOPO_MINIMUM .or. ival > TOPO_MAXIMUM ) then
+        print*,'Error read topo_bathy: ival = ',ival,val,'ix,iy = ',itopo_x,itopo_y
+        print*,' topo_bathy dimension: nx,ny = ',NX_BATHY,NY_BATHY
+        call exit_mpi(0,'Error reading topo_bathy file')
       endif
 
       ! stores in array
       ibathy_topo(itopo_x,itopo_y) = ival
+
     enddo
   enddo
-  call close_file_abs(10)
+  close(IIN)
 
-  ! plots image
-  if (PLOT_PNM_IMAGE_TOPO_BATHY) call plot_topo_bathy_pnm(ibathy_topo)
+  end subroutine read_topo_bathy_file_dat_text
 
-  end subroutine read_topo_bathy_file
 
 !
 !-------------------------------------------------------------------------------------------------
