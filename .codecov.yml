@@ -1,0 +1,4 @@
+# custom codecov setting
+ignore:
+  - src/gpu/boast/.*
+
