@@ -47,7 +47,7 @@
     myrank,DT,NSTEP, &
     STATIONS_FILE,nrec,islice_selected_rec,ispec_selected_rec, &
     xi_receiver,eta_receiver,gamma_receiver,station_name,network_name, &
-    stlat,stlon,stele,stbur,nu, &
+    stlat,stlon,stele,stbur,nu,receiver_final_distance_max, &
     rspl,espl,espl2,nspl,ibathy_topo, &
     TOPOGRAPHY,RECEIVERS_CAN_BE_BURIED
 
@@ -103,7 +103,7 @@
   double precision :: elevation
   double precision :: r0,p20
 
-  double precision :: distmin_not_squared,final_distance_max
+  double precision :: distmin_not_squared
   double precision :: x_target,y_target,z_target
   double precision :: x,y,z
   double precision :: xi,eta,gamma
@@ -337,6 +337,7 @@
 
   ! initializes search distances
   final_distance(:) = HUGEVAL
+  receiver_final_distance_max = HUGEVAL
 
   ! loop on all the receivers
   ! gather receiver information in subsets to reduce memory requirements
@@ -569,15 +570,15 @@
     close(IOUT_VTK)
 
     ! compute maximal distance for all the receivers
-    final_distance_max = maxval(final_distance(:))
+    receiver_final_distance_max = maxval(final_distance(:))
 
     ! display maximum error for all the receivers
     write(IMAIN,*)
-    write(IMAIN,*) 'maximum error in location of all the receivers: ',sngl(final_distance_max),' km'
+    write(IMAIN,*) 'maximum error in location of all the receivers: ',sngl(receiver_final_distance_max),' km'
 
     ! add warning if estimate is poor
     ! (usually means receiver outside the mesh given by the user)
-    if (final_distance_max > THRESHOLD_EXCLUDE_STATION) then
+    if (receiver_final_distance_max > THRESHOLD_EXCLUDE_STATION) then
       write(IMAIN,*)
       write(IMAIN,*) '************************************************************'
       write(IMAIN,*) '************************************************************'

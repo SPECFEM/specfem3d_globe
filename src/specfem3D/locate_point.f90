@@ -70,7 +70,6 @@
   double precision :: distmin_squared,dist_squared
 
   logical :: target_located
-  logical :: use_adjacent_elements_search
 
   ! nodes search
   double precision,dimension(3) :: xyz_target
@@ -83,8 +82,11 @@
   integer :: i_n,ientry
 
   ! brute-force search for closest element
-  ! if set to .false., a kd-tree search for initial guess element is used
+  ! if set to .false. (default), a kd-tree search for initial guess element is used
   logical,parameter :: DO_BRUTE_FORCE_SEARCH = .false.
+
+  ! looks for closer estimates in neighbor elements if needed
+  logical,parameter :: DO_ADJACENT_SEARCH = .true.
 
 
   ! set distance to huge initial value
@@ -97,7 +99,6 @@
   ix_initial_guess = MIDX
   iy_initial_guess = MIDY
   iz_initial_guess = MIDZ
-  use_adjacent_elements_search = .false.
 
   ! limits latitude to [-90.0,90.0]
   lat = lat_target
@@ -190,7 +191,6 @@
         ! end of loop on all the spectral elements in current slice
         enddo
       endif ! USE_DISTANCE_CRITERION
-
 
       ! to get a good starting point for the iterative refinement,
       ! updates final guess for closest GLL point in the best selected element
@@ -290,18 +290,8 @@
       enddo
     endif ! DO_BRUTE_FORCE_SEARCH
 
-    ! checks if initial guess lies on an element boundary
-    if ((ix_initial_guess == 1 .or. ix_initial_guess == NGLLX) .or. &
-        (iy_initial_guess == 1 .or. iy_initial_guess == NGLLY) .or. &
-        (iz_initial_guess == 1 .or. iz_initial_guess == NGLLZ)) then
-      ! best guess close to a GLL point on an element boundary
-      use_adjacent_elements_search = .true.
-    else
-      use_adjacent_elements_search = .false.
-    endif
-
     !debug
-    !print *,'initial guess ',ix_initial_guess,iy_initial_guess,iz_initial_guess,ispec_selected,use_adjacent_elements_search
+    !print *,'initial guess ',ix_initial_guess,iy_initial_guess,iz_initial_guess,ispec_selected
 
   endif ! target_located
 
@@ -340,82 +330,85 @@
     call find_local_coordinates(x_target,y_target,z_target,xi,eta,gamma,x,y,z, &
                                 ispec_selected,ix_initial_guess,iy_initial_guess,iz_initial_guess, &
                                 CAN_BE_BURIED)
+
     ! best distance to target .. so far
     distmin_squared = (x_target - x)*(x_target - x) &
                     + (y_target - y)*(y_target - y) &
                     + (z_target - z)*(z_target - z)
 
-    ! checks if position lies on an element boundary
-    if (abs(xi) > 1.099d0 .or. abs(eta) > 1.099d0 .or. abs(gamma) > 1.099d0) then
-      ! best guess close to an element boundary
-      use_adjacent_elements_search = .true.
-    else
-      use_adjacent_elements_search = .false.
-    endif
-
     !debug
-    !print *,'best guess ',xi,eta,gamma,use_adjacent_elements_search,'distance',sqrt(distmin_squared)*R_EARTH_KM
+    !print *,'best guess ',ispec_selected,xi,eta,gamma,'distance',sqrt(distmin_squared)*R_EARTH_KM
 
     ! loops over neighbors and try to find better location
-    if (use_adjacent_elements_search) then
+    if (DO_ADJACENT_SEARCH) then
 
-      ! adjacency arrays
-      num_neighbors = xadj(ispec_selected+1)-xadj(ispec_selected)
+      ! checks if position lies on an element boundary
+      if (abs(xi) > 1.099d0 .or. abs(eta) > 1.099d0 .or. abs(gamma) > 1.099d0) then
+        ! best guess close to an element boundary
+        ! looks through neighbors and determines best locations
 
-      ! debug
-      !print *,'neighbors',num_neighbors,ispec_selected,xadj(ispec_selected+1),xadj(ispec_selected)
-
-      ! loops over neighbors
-      do i_n = 1,num_neighbors
-        ! get neighbor
-        ientry = xadj(ispec_selected) + i_n
-        ispec = adjncy(ientry)
+        ! adjacency arrays
+        num_neighbors = xadj(ispec_selected+1)-xadj(ispec_selected)
 
         ! debug
-        !print *,'neighbor ',ispec,i_n,ientry,ispec_selected
+        !print *,'neighbors',num_neighbors,ispec_selected,xadj(ispec_selected+1),xadj(ispec_selected)
 
-        ! checks
-        if (ispec < 1 .or. ispec > nspec) stop 'Invalid ispec index in locate point search'
+        ! loops over neighbors
+        do i_n = 1,num_neighbors
+          ! get neighbor
+          ientry = xadj(ispec_selected) + i_n
+          ispec = adjncy(ientry)
 
-        ! gets xi/eta/gamma and corresponding x/y/z coordinates
-        call find_local_coordinates(x_target,y_target,z_target,xi_n,eta_n,gamma_n,x_n,y_n,z_n, &
-                                    ispec,MIDX,MIDY,MIDZ,CAN_BE_BURIED)
+          ! checks
+          if (ispec < 1 .or. ispec > nspec) stop 'Invalid ispec index in locate point search'
 
-        ! distance to target
-        dist_squared = (x_target - x_n)*(x_target - x_n) &
-                     + (y_target - y_n)*(y_target - y_n) &
-                     + (z_target - z_n)*(z_target - z_n)
+          ! gets xi/eta/gamma and corresponding x/y/z coordinates
+          call find_local_coordinates(x_target,y_target,z_target,xi_n,eta_n,gamma_n,x_n,y_n,z_n, &
+                                      ispec,MIDX,MIDY,MIDZ,CAN_BE_BURIED)
 
-        ! take this point if it is closer to the receiver
-        !  we compare squared distances instead of distances themselves to significantly speed up calculations
-        if (dist_squared < distmin_squared) then
-          distmin_squared = dist_squared
-          ! uses this as new location
-          ispec_selected = ispec
-          xi = xi_n
-          eta = eta_n
-          gamma = gamma_n
-          x = x_n
-          y = y_n
-          z = z_n
-        endif
+          ! distance to target
+          dist_squared = (x_target - x_n)*(x_target - x_n) &
+                       + (y_target - y_n)*(y_target - y_n) &
+                       + (z_target - z_n)*(z_target - z_n)
 
-      enddo ! num_neighbors
+          ! debug
+          !print *,'  neighbor ',ispec,i_n,ientry,ispec_selected,sngl(xi_n),sngl(eta_n),sngl(gamma_n), &
+          !          'distance',sngl(sqrt(dist_squared)*R_EARTH_KM),sngl(sqrt(distmin_squared)*R_EARTH_KM)
 
-      !debug
-      !print *,'best neighbor ',xi,eta,gamma,ispec_selected,'distance',sqrt(distmin_squared)*R_EARTH_KM
+          ! take this point if it is closer to the receiver
+          !  we compare squared distances instead of distances themselves to significantly speed up calculations
+          if (dist_squared < distmin_squared) then
+            distmin_squared = dist_squared
+            ! uses this as new location
+            ispec_selected = ispec
+            xi = xi_n
+            eta = eta_n
+            gamma = gamma_n
+            x = x_n
+            y = y_n
+            z = z_n
+          endif
 
-    endif ! use_adjacent_element_search
+        enddo ! num_neighbors
+
+        !debug
+        !print *,'  final neighbor ',ispec_selected,xi,eta,gamma,'distance',sqrt(distmin_squared)*R_EARTH_KM
+      endif
+
+    endif ! DO_ADJACENT_SEARCH
 
   else
     ! point not found in this slice
+    !
+    ! returns initial guess point
+    xi = 0.d0
+    eta = 0.d0
+    gamma = 0.d0
+
     iglob = ibool(ix_initial_guess,iy_initial_guess,iz_initial_guess,ispec_selected)
     x = dble(xstore(iglob))
     y = dble(xstore(iglob))
     z = dble(xstore(iglob))
-    xi = 0.d0
-    eta = 0.d0
-    gamma = 0.d0
   endif
 
   ! compute final distance between asked and found (converted to km)
