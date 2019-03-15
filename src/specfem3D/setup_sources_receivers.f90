@@ -90,10 +90,12 @@
   subroutine setup_point_search_arrays()
 
   use constants, only: &
-    NDIM,NGLLX,NGLLY,NGLLZ,MIDX,MIDY,MIDZ,IMAIN,TWO_PI,R_UNIT_SPHERE,USE_DISTANCE_CRITERION
+    NDIM,NGLLX,NGLLY,NGLLZ,MIDX,MIDY,MIDZ,IMAIN,TWO_PI,R_UNIT_SPHERE,DEGREES_TO_RADIANS, &
+    USE_DISTANCE_CRITERION
 
   use specfem_par, only: &
-    NEX_XI_VAL,LAT_LON_MARGIN,myrank
+    NCHUNKS_VAL,NEX_XI_VAL,NEX_ETA_VAL,ANGULAR_WIDTH_XI_IN_DEGREES_VAL,ANGULAR_WIDTH_ETA_IN_DEGREES_VAL, &
+    LAT_LON_MARGIN,myrank
 
   use specfem_par, only: &
     nspec => NSPEC_CRUST_MANTLE,nglob => NGLOB_CRUST_MANTLE
@@ -104,7 +106,7 @@
 
   ! for point search
   use specfem_par, only: &
-    typical_size_squared, &
+    element_size,typical_size_squared, &
     anchor_iax,anchor_iay,anchor_iaz, &
     lat_min,lat_max,lon_min,lon_max,xyz_midpoints
 
@@ -116,12 +118,22 @@
   ! local parameters
   integer :: ispec,iglob,ier
   integer :: i,j,k,inodes
+  double precision ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
 
   ! compute typical size of elements at the surface
-  typical_size_squared = TWO_PI * R_UNIT_SPHERE / (4.d0 * NEX_XI_VAL)
+  ! (normalized)
+  if (NCHUNKS_VAL == 6) then
+    ! estimation for global meshes (assuming 90-degree chunks)
+    element_size = TWO_PI * R_UNIT_SPHERE / (4.d0 * NEX_XI_VAL)
+  else
+    ! estimation for 1-chunk meshes
+    ANGULAR_WIDTH_XI_RAD = ANGULAR_WIDTH_XI_IN_DEGREES_VAL * DEGREES_TO_RADIANS
+    ANGULAR_WIDTH_ETA_RAD = ANGULAR_WIDTH_ETA_IN_DEGREES_VAL * DEGREES_TO_RADIANS
+    element_size = max( ANGULAR_WIDTH_XI_RAD/NEX_XI_VAL,ANGULAR_WIDTH_ETA_RAD/NEX_ETA_VAL ) * R_UNIT_SPHERE
+  endif
 
   ! use 10 times the distance as a criterion for source detection
-  typical_size_squared = (10.d0 * typical_size_squared)**2
+  typical_size_squared = (10.d0 * element_size)**2
 
   ! limits receiver search
   if (USE_DISTANCE_CRITERION) then
@@ -222,9 +234,11 @@
   subroutine setup_adjacency_neighbors()
 
   use constants, only: &
-    NDIM,NGLLX,NGLLY,NGLLZ,MIDX,MIDY,MIDZ,IMAIN,R_EARTH_KM
+    NDIM,NGLLX,NGLLY,NGLLZ,MIDX,MIDY,MIDZ,IMAIN, &
+    TWO_PI,R_UNIT_SPHERE,R_EARTH_KM, &
+    USE_DISTANCE_CRITERION
 
-  use specfem_par, only: myrank
+  use specfem_par, only: myrank,NEX_XI_VAL
 
   use specfem_par, only: &
     nspec => NSPEC_CRUST_MANTLE,nglob => NGLOB_CRUST_MANTLE
@@ -234,7 +248,7 @@
     xstore => xstore_crust_mantle,ystore => ystore_crust_mantle,zstore => zstore_crust_mantle
 
   ! for point search
-  use specfem_par, only: typical_size_squared, &
+  use specfem_par, only: element_size,typical_size_squared,xyz_midpoints, &
     xadj,adjncy,num_neighbors_all
 
   use kdtree_search, only: kdtree_setup,kdtree_delete, &
@@ -258,10 +272,15 @@
   double precision, external :: wtime
 
   ! kd-tree search
+  integer :: ielem,inodes
   integer :: nsearch_points
-  integer :: ielem,num_elements,inodes
+  integer :: num_elements,num_elements_max
+  integer :: ielem_counter,num_elements_actual_max
   !integer, parameter :: max_search_points = 2000
-  double precision :: r_search,xyz_target(NDIM)
+
+  double precision :: r_search
+  double precision :: xyz_target(NDIM)
+  double precision :: dist_squared,dist_squared_max
 
   logical :: is_neighbor
   logical,parameter :: DO_BRUTE_FORCE_SEARCH = .false.
@@ -273,7 +292,7 @@
     call flush_IMAIN()
   endif
 
-  ! get MPI starting time for all sources
+  ! get MPI starting time
   time1 = wtime()
 
   ! adjacency arrays
@@ -297,13 +316,18 @@
     ! kd-tree search
 
     ! search radius around element midpoints
-    ! note: typical size is using 10 times the size of a surface element, we take here half of it
-    !       this will lead up to about 500 elements within the search radius
-    r_search = sqrt(typical_size_squared) * 0.5
+    !
+    ! note: typical search size is using 10 times the size of a surface element;
+    !       we take here 6 times the surface element size
+    !       - since at low resolutions NEX < 64 and large element sizes, this search radius needs to be large enough, and,
+    !       - due to doubling layers (elements at depth will become bigger, however radius shrinks)
+    !
+    !       the search radius r_search given as routine argument must be non-squared
+    r_search = 6.0 * element_size
 
     ! user output
     if (myrank == 0) then
-      write(IMAIN,*) '  using kd-tree search radius: ',r_search * R_EARTH_KM,'(km)'
+      write(IMAIN,*) '  using kd-tree search radius = ',r_search * R_EARTH_KM,'(km)'
       write(IMAIN,*)
       call flush_IMAIN()
     endif
@@ -354,6 +378,11 @@
   inum_neighbor = 0
   num_neighbors_max = 0
   num_neighbors_all = 0
+
+  num_elements_max = 0
+  num_elements_actual_max = 0
+  dist_squared_max = 0.d0
+
   do ispec_ref = 1,nspec
     ! the eight corners of the current element
     iglob_corner(1) = ibool(1,1,1,ispec_ref)
@@ -365,17 +394,17 @@
     iglob_corner(7) = ibool(NGLLX,NGLLY,NGLLZ,ispec_ref)
     iglob_corner(8) = ibool(1,NGLLY,NGLLZ,ispec_ref)
 
+    ! midpoint for search radius
+    iglob = ibool(MIDX,MIDY,MIDZ,ispec_ref)
+    xyz_target(1) = xstore(iglob)
+    xyz_target(2) = ystore(iglob)
+    xyz_target(3) = zstore(iglob)
+
     if (DO_BRUTE_FORCE_SEARCH) then
       ! loops over all other elements to find closest neighbors
       num_elements = nspec
     else
       ! looks only at elements in kd-tree search radius
-
-      ! midpoint for search radius
-      iglob = ibool(MIDX,MIDY,MIDZ,ispec_ref)
-      xyz_target(1) = xstore(iglob)
-      xyz_target(2) = ystore(iglob)
-      xyz_target(3) = zstore(iglob)
 
       ! gets number of tree points within search radius
       ! (within search sphere)
@@ -401,8 +430,13 @@
       num_elements = nsearch_points
     endif
 
+    ! statistics
+    if (num_elements > num_elements_max) num_elements_max = num_elements
+    ielem_counter = 0
+
     ! counts number of neighbors
     num_neighbors = 0
+
     do ielem = 1,num_elements
 
       ! gets element index
@@ -418,6 +452,19 @@
 
       ! skip reference element
       if (ispec == ispec_ref) cycle
+
+      ! distance to reference element
+      dist_squared = (xyz_target(1) - xyz_midpoints(1,ispec))*(xyz_target(1) - xyz_midpoints(1,ispec)) &
+                   + (xyz_target(2) - xyz_midpoints(2,ispec))*(xyz_target(2) - xyz_midpoints(2,ispec)) &
+                   + (xyz_target(3) - xyz_midpoints(3,ispec))*(xyz_target(3) - xyz_midpoints(3,ispec))
+
+      ! exclude elements that are too far from target
+      if (USE_DISTANCE_CRITERION) then
+        !  we compare squared distances instead of distances themselves to significantly speed up calculations
+        if (dist_squared > typical_size_squared) cycle
+      endif
+
+      ielem_counter = ielem_counter + 1
 
       ! checks if element has a corner iglob from reference element
       is_neighbor = .false.
@@ -453,17 +500,33 @@
         inum_neighbor = inum_neighbor + 1
         ! checks
         if (inum_neighbor > MAX_NEIGHBORS*nspec) stop 'Error maximum neighbors exceeded'
-
         ! adds element
         tmp_adjncy(inum_neighbor) = ispec
 
         ! for statistics
         num_neighbors = num_neighbors + 1
+
+        ! maximum distance to reference element
+        if (dist_squared > dist_squared_max) dist_squared_max = dist_squared
       endif
-    enddo ! ispec
+    enddo ! ielem
+
+    ! checks if neighbors were found
+    if (num_neighbors == 0) then
+      print *,'Error: rank ',myrank,' - element ',ispec_ref,'has no neighbors!'
+      print *,'  element midpoint location: ',xyz_target(:)*R_EARTH_KM
+      print *,'  typical element size     : ',element_size*R_EARTH_KM,'(km)'
+      print *,'  brute force search       : ',DO_BRUTE_FORCE_SEARCH
+      print *,'  distance criteria        : ',USE_DISTANCE_CRITERION
+      print *,'  typical search distance  : ',typical_size_squared*R_EARTH_KM,'(km)'
+      print *,'  kd-tree r_search         : ',r_search*R_EARTH_KM,'(km)'
+      print *,'  search elements          : ',num_elements
+      call exit_MPI(myrank,'Error adjacency invalid')
+    endif
 
     ! statistics
     if (num_neighbors > num_neighbors_max) num_neighbors_max = num_neighbors
+    if (ielem_counter > num_elements_actual_max) num_elements_actual_max = ielem_counter
 
     ! adjacency indexing
     xadj(ispec_ref + 1) = inum_neighbor
@@ -508,8 +571,21 @@
   if (myrank == 0) then
     ! elapsed time since beginning of neighbor detection
     tCPU = wtime() - time1
-    write(IMAIN,*) '  maximum neighbors = ',num_neighbors_max
-    write(IMAIN,*) '  total number of neighbors = ',num_neighbors_all
+    write(IMAIN,*) '  maximum search elements                                      = ',num_elements_max
+    write(IMAIN,*) '  maximum of actual search elements (after distance criterion) = ',num_elements_actual_max
+    write(IMAIN,*)
+    write(IMAIN,*) '  estimated typical element size at surface = ',element_size*R_EARTH_KM,'(km)'
+    write(IMAIN,*) '  maximum distance between neighbor centers = ',sqrt(dist_squared_max)*R_EARTH_KM,'(km)'
+    if (.not. DO_BRUTE_FORCE_SEARCH) then
+      if (sqrt(dist_squared_max) > r_search - 0.5*element_size) then
+          write(IMAIN,*) '***'
+          write(IMAIN,*) '*** Warning: consider increasing the kd-tree search radius to improve this neighbor setup ***'
+          write(IMAIN,*) '***'
+      endif
+    endif
+    write(IMAIN,*)
+    write(IMAIN,*) '  maximum neighbors found per element = ',num_neighbors_max,'(should be 37 for globe meshes)'
+    write(IMAIN,*) '  total number of neighbors           = ',num_neighbors_all
     write(IMAIN,*)
     write(IMAIN,*) '  Elapsed time for detection of neighbors in seconds = ',tCPU
     write(IMAIN,*)

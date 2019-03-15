@@ -281,9 +281,11 @@ module specfem_par
   double precision, dimension(:), allocatable :: xi_source,eta_source,gamma_source
   double precision, dimension(:), allocatable :: tshift_src,hdur,hdur_Gaussian
   double precision, dimension(:), allocatable :: theta_source,phi_source
+
   double precision :: Mrr,Mtt,Mpp,Mrt,Mrp,Mtp,Mw,M0
   double precision :: t0
   double precision :: min_tshift_src_original
+  double precision :: source_final_distance_max
 
   ! External source time function.
   double precision, dimension(:), allocatable :: stfArray_external
@@ -299,6 +301,8 @@ module specfem_par
   double precision, dimension(:), allocatable :: xi_receiver,eta_receiver,gamma_receiver
   double precision, dimension(:,:,:), allocatable :: nu
   double precision, allocatable, dimension(:) :: stlat,stlon,stele,stbur
+  double precision :: receiver_final_distance_max
+
   character(len=MAX_LENGTH_STATION_NAME), dimension(:), allocatable  :: station_name
   character(len=MAX_LENGTH_NETWORK_NAME), dimension(:), allocatable :: network_name
   character(len=MAX_STRING_LEN) :: STATIONS_FILE
@@ -493,7 +497,10 @@ module specfem_par
   ! search margin in degrees
   double precision,parameter :: LAT_LON_MARGIN = 2.d0
 
-  ! typical element size squared (at surface)
+  ! estimated typical element size (at surface)
+  double precision :: element_size
+
+  ! typical element search distance squared
   double precision :: typical_size_squared
 
   ! adjacency arrays
@@ -1017,10 +1024,8 @@ module specfem_par_movie
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: nu_3dmovie
 
   integer :: npoints_3dmovie,nspecel_3dmovie
-  integer, dimension(:), allocatable :: num_ibool_3dmovie
 
   logical, dimension(:,:,:,:), allocatable :: mask_3dmovie
-  logical, dimension(:), allocatable :: mask_ibool
 
   ! outer core
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
