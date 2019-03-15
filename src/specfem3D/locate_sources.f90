@@ -46,7 +46,7 @@
     hdur,Mxx,Myy,Mzz,Mxy,Mxz,Myz,Mw,M0, &
     xi_source,eta_source,gamma_source,nu_source, &
     islice_selected_source,ispec_selected_source, &
-    tshift_src,theta_source,phi_source
+    tshift_src,theta_source,phi_source,source_final_distance_max
 
   ! forces
   use specfem_par, only: &
@@ -111,10 +111,12 @@
   double precision :: stazi,stdip
   double precision :: n(3),thetan,phin
 
-  double precision :: f0,t0_ricker,scaleF
+  double precision :: f0,t0_ricker,scaleF,force_N
+  double precision :: total_M0,total_Mw,total_force_N
 
   double precision, external :: get_cmt_scalar_moment
   double precision, external :: get_cmt_moment_magnitude
+  double precision, external :: get_cmt_moment_magnitude_from_M0
 
   ! mask source region (mask values are between 0 and 1, with 0 around sources)
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: mask_source
@@ -145,6 +147,11 @@
   islice_selected_source(:) = -1
 
   final_distance(:) = HUGEVAL
+  source_final_distance_max = HUGEVAL
+
+  total_M0 = 0.d0
+  total_Mw = 0.d0
+  total_force_N = 0.d0
 
   ! read all the sources
   call read_source_locations()
@@ -556,11 +563,20 @@
           ! factor_force_source in FORCESOLUTION file is in Newton
           ! 1 Newton is 1 kg * 1 m / (1 second)^2
           scaleF = RHOAV * (R_EARTH**4) * PI*GRAV*RHOAV
-          write(IMAIN,*) '    force = ', sngl(factor_force_source(isource) * scaleF),'(Newton)' ! dimensionalized
+          ! force in Newton
+          force_N = factor_force_source(isource) * scaleF
+          ! adds to total force applied (sum over all force point sources)
+          total_force_N = total_force_N + force_N
+
+          write(IMAIN,*) '    force = ', sngl(force_N),'(Newton)' ! dimensionalized
         else
           ! moment-tensor
           M0 = get_cmt_scalar_moment(Mxx(isource),Myy(isource),Mzz(isource),Mxy(isource),Mxz(isource),Myz(isource))
           Mw =  get_cmt_moment_magnitude(Mxx(isource),Myy(isource),Mzz(isource),Mxy(isource),Mxz(isource),Myz(isource))
+          ! adds to total moment
+          total_M0 = total_M0 + M0
+          total_Mw = get_cmt_moment_magnitude_from_M0(total_M0)
+
           write(IMAIN,*) '       scalar moment M0 = ', M0,' dyne-cm'
           write(IMAIN,*) '    moment magnitude Mw = ', Mw
         endif
@@ -641,8 +657,31 @@
 
   ! display maximum error in location estimate
   if (myrank == 0) then
+    ! sets total magnitude (for finite sources)
+    M0 = total_M0
+    Mw = total_Mw
+    force_N = total_force_N
+
+    if (NSOURCES > 1) then
+      write(IMAIN,*)
+      write(IMAIN,*) '********************'
+      write(IMAIN,*) 'finite source combined over all ',NSOURCES,' sources applied:'
+      if (USE_FORCE_POINT_SOURCE) then
+        ! total force in Newton
+        write(IMAIN,*) '  total force = ', sngl(force_N),'(Newton)' ! dimensionalized
+      else
+        ! moment-tensor
+        write(IMAIN,*) '     total scalar moment M0 = ', M0,' dyne-cm'
+        write(IMAIN,*) '  total moment magnitude Mw = ', Mw
+      endif
+      write(IMAIN,*) '********************'
+    endif
+
+    ! compute maximal distance for all the sources
+    source_final_distance_max = maxval(final_distance(:))
+
     write(IMAIN,*)
-    write(IMAIN,*) 'maximum error in location of the sources: ',sngl(maxval(final_distance)),' km'
+    write(IMAIN,*) 'maximum error in location of the sources: ',sngl(source_final_distance_max),' km'
     write(IMAIN,*)
     call flush_IMAIN()
 
@@ -658,7 +697,7 @@
   call bcast_all_dp(eta_source,NSOURCES)
   call bcast_all_dp(gamma_source,NSOURCES)
 
-  ! Broadcast mantitude and scalar moment to all processers
+  ! Broadcast magnitude and scalar moment to all processers
   call bcast_all_singledp(M0)
   call bcast_all_singledp(Mw)
 
@@ -682,6 +721,7 @@
     call flush_IMAIN()
   endif
   call synchronize_all()
+
 
   contains
 

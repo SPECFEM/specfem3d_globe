@@ -405,6 +405,7 @@
   implicit none
 
   double precision, intent(in) :: Mxx,Myy,Mzz,Mxy,Mxz,Myz
+
   ! local parameters
   double precision :: scalar_moment,scaleM
 
@@ -455,12 +456,38 @@
   implicit none
 
   double precision, intent(in) :: Mxx,Myy,Mzz,Mxy,Mxz,Myz
+
   ! local parameters
   double precision :: M0,Mw
   double precision,external :: get_cmt_scalar_moment
+  double precision,external :: get_cmt_moment_magnitude_from_M0
 
   ! scalar moment
   M0 = get_cmt_scalar_moment(Mxx,Myy,Mzz,Mxy,Mxz,Myz)
+
+  ! moment magnitude
+  Mw = get_cmt_moment_magnitude_from_M0(M0)
+
+  ! return value
+  get_cmt_moment_magnitude = Mw
+
+  end function
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  double precision function get_cmt_moment_magnitude_from_M0(M0)
+
+  ! calculates moment magnitude (Mw) from seismic moment M0
+
+  implicit none
+
+  double precision, intent(in) :: M0
+
+  ! local parameters
+  double precision :: Mw
 
   ! moment magnitude by Hanks & Kanamori, 1979
   ! Mw = 2/3 log( M0 ) - 10.7       (dyne-cm)
@@ -479,12 +506,13 @@
   ! see: http://earthquake.usgs.gov/aboutus/docs/020204mag_policy.php
 
   if (M0 > 0.d0) then
-    Mw = 2.d0/3.d0 * log10( M0 ) - 10.7
+    Mw = 2.d0/3.d0 * log10( M0 ) - 10.7d0
   else
     Mw = 0.d0
   endif
 
   ! return value
-  get_cmt_moment_magnitude = Mw
+  get_cmt_moment_magnitude_from_M0 = Mw
 
   end function
+
