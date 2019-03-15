@@ -37,10 +37,10 @@
   integer, parameter :: nparam_i = 46
   integer, dimension(nparam_i) :: bcast_integer
 
-  integer, parameter :: nparam_l = 64
+  integer, parameter :: nparam_l = 65
   logical, dimension(nparam_l) :: bcast_logical
 
-  integer, parameter :: nparam_dp = 34
+  integer, parameter :: nparam_dp = 35
   double precision, dimension(nparam_dp) :: bcast_double_precision
 
   ! initializes containers
@@ -99,7 +99,7 @@
             ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER, &
             ADIOS_FOR_SOLVER_MESHFILES,ADIOS_FOR_AVS_DX, &
             ADIOS_FOR_KERNELS,ADIOS_FOR_MODELS,ADIOS_FOR_UNDO_ATTENUATION, &
-            CEM_REQUEST,CEM_ACCEPT,BROADCAST_SAME_MESH_AND_MODEL /)
+            CEM_REQUEST,CEM_ACCEPT,BROADCAST_SAME_MESH_AND_MODEL,MODEL_GLL /)
 
     bcast_double_precision = (/ &
             DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
@@ -108,8 +108,8 @@
             R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
             MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH, &
             RMOHO_FICTITIOUS_IN_MESHER,RATIO_BY_WHICH_TO_INCREASE_IT, &
-            MEMORY_INSTALLED_PER_CORE_IN_GB,PERCENT_OF_MEM_TO_USE_PER_CORE &
-            /)
+            MEMORY_INSTALLED_PER_CORE_IN_GB,PERCENT_OF_MEM_TO_USE_PER_CORE, &
+            RECORD_LENGTH_IN_MINUTES /)
   endif
 
   ! broadcasts the information read on the master to the nodes
@@ -233,7 +233,7 @@
     CUT_SUPERBRICK_ETA = bcast_logical(26)
     SAVE_ALL_SEISMOS_IN_ONE_FILE = bcast_logical(27)
     HONOR_1D_SPHERICAL_MOHO = bcast_logical(28)
-    MOVIE_COARSE= bcast_logical(29)
+    MOVIE_COARSE = bcast_logical(29)
     USE_FORCE_POINT_SOURCE= bcast_logical(30)
     SAVE_SEISMOGRAMS_STRAIN= bcast_logical(31)
     SAVE_SEISMOGRAMS_IN_ADJOINT_RUN= bcast_logical(32)
@@ -269,6 +269,7 @@
     CEM_REQUEST = bcast_logical(62)
     CEM_ACCEPT = bcast_logical(63)
     BROADCAST_SAME_MESH_AND_MODEL = bcast_logical(64)
+    MODEL_GLL = bcast_logical(65)
 
     ! double precisions
     DT = bcast_double_precision(1)
@@ -305,6 +306,8 @@
     RATIO_BY_WHICH_TO_INCREASE_IT = bcast_double_precision(32)
     MEMORY_INSTALLED_PER_CORE_IN_GB = bcast_double_precision(33)
     PERCENT_OF_MEM_TO_USE_PER_CORE = bcast_double_precision(34)
+    RECORD_LENGTH_IN_MINUTES = bcast_double_precision(35)
+
   endif
 
   end subroutine broadcast_computed_parameters
