@@ -218,13 +218,14 @@
   ! loop on all the elements in the 2 x 2 blocks
 
 ! openmp mesher
-!$OMP PARALLEL DEFAULT(SHARED) &
-!$OMP PRIVATE(ix_elem,iy_elem,ispec_superbrick,ignod, &
-!$OMP offset_x,offset_y,offset_z,xelm,yelm,zelm, &
-!$OMP case_xi,case_eta,subblock_num, &
-!$OMP r1,r2,r3,r4,r5,r6,r7,r8, &
-!$OMP is_superbrick,ispec_loc,ielem)
-!$OMP DO
+! todo: this is not working properly yet (subroutines not locally thread-safe) and will lead to meshing errors...
+!!$OMP PARALLEL DEFAULT(SHARED) &
+!!$OMP PRIVATE(ix_elem,iy_elem,ispec_superbrick,ignod, &
+!!$OMP offset_x,offset_y,offset_z,xelm,yelm,zelm, &
+!!$OMP case_xi,case_eta,subblock_num, &
+!!$OMP r1,r2,r3,r4,r5,r6,r7,r8, &
+!!$OMP is_superbrick,ispec_loc,ielem)
+!!$OMP DO
   do ix_elem = 1,NEX_PER_PROC_XI,step_mult*ratio_sampling_array(ilayer)
     do iy_elem = 1,NEX_PER_PROC_ETA,step_mult*ratio_sampling_array(ilayer)
 
@@ -398,8 +399,8 @@
       enddo
     enddo
   enddo
-!$OMP ENDDO
-!$OMP END PARALLEL
+!!$OMP ENDDO
+!!$OMP END PARALLEL
 
   ! end index
   ispec = ispec0 + nelements
