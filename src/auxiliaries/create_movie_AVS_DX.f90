@@ -51,12 +51,12 @@
 ! threshold in percent of the maximum below which we cut the amplitude
   real(kind=CUSTOM_REAL), parameter :: THRESHOLD = 1._CUSTOM_REAL / 100._CUSTOM_REAL
 
-! flag to apply non linear scaling to normalized norm of displacement
-  logical, parameter :: NONLINEAR_SCALING = .false.
-
 ! uses fixed max_value to normalize instead of max of current wavefield
   logical, parameter :: FIX_SCALING = .false.
   real,parameter:: MAX_VALUE = 1.0
+
+! flag to apply non linear scaling to normalized norm of displacement
+  logical, parameter :: NONLINEAR_SCALING = .false.
 
 ! coefficient of power law used for non linear scaling
   real(kind=CUSTOM_REAL), parameter :: POWER_SCALING = 0.30_CUSTOM_REAL
