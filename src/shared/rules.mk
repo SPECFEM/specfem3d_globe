@@ -42,6 +42,7 @@ shared_OBJECTS = \
 	$O/count_elements.shared.o \
 	$O/count_number_of_sources.shared.o \
 	$O/count_points.shared.o \
+	$O/create_addressing.shared.o \
 	$O/create_name_database.shared.o \
 	$O/create_serial_name_database.shared.o \
 	$O/define_all_layers.shared.o \

@@ -111,7 +111,15 @@
   call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
+  ! closes adios file
   call adios_read_close(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
-end subroutine read_gll_model_adios
+  call synchronize_all()
+  if (myrank == 0) then
+    write(IMAIN,*)'  reading done'
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  end subroutine read_gll_model_adios

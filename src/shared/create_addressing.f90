@@ -27,19 +27,20 @@
 
 
   subroutine create_addressing(NCHUNKS,NPROC,NPROC_ETA,NPROC_XI,NPROCTOT, &
-                        addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice, &
-                        OUTPUT_FILES)
+                               addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice, &
+                               OUTPUT_FILES)
 
-  use constants
+  use constants,only: myrank,MAX_STRING_LEN,IOUT,IMAIN, &
+    CHUNK_AB,CHUNK_AB_ANTIPODE,CHUNK_AC,CHUNK_AC_ANTIPODE,CHUNK_BC,CHUNK_BC_ANTIPODE
 
   implicit none
 
-  integer :: NCHUNKS,NPROC,NPROC_ETA,NPROC_XI,NPROCTOT
+  integer,intent(in) :: NCHUNKS,NPROC,NPROC_ETA,NPROC_XI,NPROCTOT
 
-  integer, dimension(NCHUNKS,0:NPROC_XI-1,0:NPROC_ETA-1) :: addressing
-  integer, dimension(0:NPROCTOT-1) :: ichunk_slice,iproc_xi_slice,iproc_eta_slice
+  integer, dimension(NCHUNKS,0:NPROC_XI-1,0:NPROC_ETA-1),intent(out) :: addressing
+  integer, dimension(0:NPROCTOT-1),intent(out) :: ichunk_slice,iproc_xi_slice,iproc_eta_slice
 
-  character(len=MAX_STRING_LEN) :: OUTPUT_FILES
+  character(len=MAX_STRING_LEN),intent(in) :: OUTPUT_FILES
 
   ! local parameters
   integer :: ichunk,iproc_eta,iproc_xi,iprocnum,ier
@@ -62,11 +63,16 @@
   do ichunk = 1,NCHUNKS
     do iproc_eta = 0,NPROC_ETA-1
       do iproc_xi = 0,NPROC_XI-1
+        ! overall process number, should go from 0 to NPROCTOT-1
         iprocnum = (ichunk-1)*NPROC + iproc_eta * NPROC_XI + iproc_xi
+
+        ! stores local chunk,iproc_xi and iproc_eta numbers for this process
         addressing(ichunk,iproc_xi,iproc_eta) = iprocnum
         ichunk_slice(iprocnum) = ichunk
         iproc_xi_slice(iprocnum) = iproc_xi
         iproc_eta_slice(iprocnum) = iproc_eta
+
+        ! file output
         if (myrank == 0) write(IOUT,*) iprocnum,ichunk,iproc_xi,iproc_eta
       enddo
     enddo

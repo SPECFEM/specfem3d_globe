@@ -30,21 +30,22 @@
 !----
 
   subroutine assemble_MPI_scalar_block(array_val,nglob, &
-            iproc_xi,iproc_eta,ichunk,addressing, &
-            iboolleft_xi,iboolright_xi,iboolleft_eta,iboolright_eta, &
-            npoin2D_faces,npoin2D_xi,npoin2D_eta, &
-            iboolfaces,iboolcorner, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
-            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
-            buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
-            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL, &
-            NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB2DMAX_XY,NCHUNKS)
+                                       iproc_xi,iproc_eta,ichunk,addressing, &
+                                       iboolleft_xi,iboolright_xi,iboolleft_eta,iboolright_eta, &
+                                       npoin2D_faces,npoin2D_xi,npoin2D_eta, &
+                                       iboolfaces,iboolcorner, &
+                                       iprocfrom_faces,iprocto_faces,imsg_type, &
+                                       iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+                                       buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
+                                       buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
+                                       NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
+                                       NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL, &
+                                       NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB2DMAX_XY,NCHUNKS)
 
 ! this version of the routine is based on blocking MPI calls
 
-  use constants
+  use constants,only: CUSTOM_REAL,NB_SQUARE_EDGES_ONEDIR,NUMFACES_SHARED,NUMCORNERS_SHARED, &
+    ACTUALLY_ASSEMBLE_MPI_SLICES,ACTUALLY_ASSEMBLE_MPI_CHUNKS,itag,itag2,myrank
 
   implicit none
 
@@ -426,13 +427,13 @@
 !
 
   subroutine assemble_MPI_scalar(NPROC,NGLOB_AB,array_val, &
-                        num_interfaces,max_nibool_interfaces, &
-                        nibool_interfaces,ibool_interfaces, &
-                        my_neighbors)
+                                 num_interfaces,max_nibool_interfaces, &
+                                 nibool_interfaces,ibool_interfaces, &
+                                 my_neighbors)
 
 ! blocking send/receive
 
-  use constants
+  use constants,only: CUSTOM_REAL,itag
 
   implicit none
 

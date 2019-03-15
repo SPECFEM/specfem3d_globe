@@ -31,14 +31,21 @@
 
   implicit none
 
+  ! local parameters
+  integer :: ier
+
   ! user output
   if (myrank == 0) call sm_output_info()
 
   ! dynamic allocation of mesh arrays
-  allocate(addressing(NCHUNKS,0:NPROC_XI-1,0:NPROC_ETA-1))
-  allocate(ichunk_slice(0:NPROCTOT-1))
-  allocate(iproc_xi_slice(0:NPROCTOT-1))
-  allocate(iproc_eta_slice(0:NPROCTOT-1))
+  allocate(addressing(NCHUNKS,0:NPROC_XI-1,0:NPROC_ETA-1),stat=ier)
+  if (ier /= 0) stop 'Error allocating array addressing'
+  addressing(:,:,:) = -1
+
+  allocate(ichunk_slice(0:NPROCTOT-1), &
+           iproc_xi_slice(0:NPROCTOT-1), &
+           iproc_eta_slice(0:NPROCTOT-1),stat=ier)
+  if (ier /= 0) stop 'Error allocating arrays ichunk_slice,...'
 
   ! creates global slice addressing for solver
   call create_addressing(NCHUNKS,NPROC,NPROC_ETA,NPROC_XI,NPROCTOT, &

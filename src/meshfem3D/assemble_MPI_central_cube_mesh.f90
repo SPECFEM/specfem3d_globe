@@ -26,18 +26,19 @@
 !=====================================================================
 
   subroutine assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_from_slices_to_cube, &
-                                          npoin2D_cube_from_slices, &
-                                          buffer_all_cube_from_slices, buffer_slices, buffer_slices2, &
-                                          ibool_central_cube, &
-                                          receiver_cube_from_slices, ibool_inner_core, &
-                                          idoubling_inner_core, NSPEC_INNER_CORE, &
-                                          ibelm_bottom_inner_core, NSPEC2D_BOTTOM_INNER_CORE,NGLOB_INNER_CORE, &
-                                          vector_assemble,ndim_assemble, &
-                                          iproc_eta,addressing,NCHUNKS,NPROC_XI,NPROC_ETA)
+                                             npoin2D_cube_from_slices, &
+                                             buffer_all_cube_from_slices, buffer_slices, buffer_slices2, &
+                                             ibool_central_cube, &
+                                             receiver_cube_from_slices, ibool_inner_core, &
+                                             idoubling_inner_core, NSPEC_INNER_CORE, &
+                                             ibelm_bottom_inner_core, NSPEC2D_BOTTOM_INNER_CORE,NGLOB_INNER_CORE, &
+                                             vector_assemble,ndim_assemble, &
+                                             iproc_eta,addressing,NCHUNKS,NPROC_XI,NPROC_ETA)
 
   ! this version of the routine is based on blocking MPI calls
 
-  use constants
+  use constants,only: CUSTOM_REAL,NDIM,NGLLX,NGLLY,NGLLZ,CHUNK_AB,CHUNK_AB_ANTIPODE, &
+    IFLAG_TOP_CENTRAL_CUBE,IFLAG_BOTTOM_CENTRAL_CUBE,itag
 
   implicit none
 

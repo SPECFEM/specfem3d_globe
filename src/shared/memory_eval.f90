@@ -448,7 +448,7 @@
     static_memory_size = static_memory_size + &
       dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
 
-    ! mask_ibool
+    ! mask_ibool_3dmovie
     static_memory_size = static_memory_size + &
       NGLOB(IREGION_CRUST_MANTLE)*dble(SIZE_LOGICAL)
 

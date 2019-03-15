@@ -32,8 +32,16 @@ meshfem3D_TARGETS = \
 	$(EMPTY_MACRO)
 
 meshfem3D_OBJECTS = \
-	$O/meshfem3D_par.check_module.o \
+	$(xmeshfem3D_OBJECTS) \
+	$(meshfem3D_MESHER_OBJECTS) \
+	$(EMPTY_MACRO)
+
+xmeshfem3D_OBJECTS = \
 	$O/meshfem3D.check.o \
+	$(EMPTY_MACRO)
+
+meshfem3D_MESHER_OBJECTS = \
+	$O/meshfem3D_par.check_module.o \
 	$O/meshfem3D_models.check.o \
 	$O/add_missing_nodes.check.o \
 	$O/add_topography.check.o \
@@ -48,7 +56,6 @@ meshfem3D_OBJECTS = \
 	$O/compute_coordinates_grid.check.o \
 	$O/compute_element_properties.check.o \
 	$O/compute_volumes_and_areas.check.o \
-	$O/create_addressing.check.o \
 	$O/create_central_cube.check.o \
 	$O/create_central_cube_buffers.check.o \
 	$O/create_chunk_buffers.check.o \
@@ -169,6 +176,7 @@ meshfem3D_SHARED_OBJECTS = \
 	$O/count_elements.shared.o \
 	$O/count_number_of_sources.shared.o \
 	$O/count_points.shared.o \
+	$O/create_addressing.shared.o \
 	$O/create_name_database.shared.o \
 	$O/define_all_layers.shared.o \
 	$O/euler_angles.shared.o \
@@ -250,8 +258,7 @@ endif
 ####
 
 ${E}/xmeshfem3D: $(meshfem3D_SHARED_OBJECTS) $(meshfem3D_OBJECTS)
-## use MPI here
-	${MPIFCCOMPILE_CHECK} -o $@ $+ $(LDFLAGS) $(MPILIBS) $(LIBS)
+	${FCLINK} -o $@ $+ $(LDFLAGS) $(MPILIBS) $(LIBS)
 
 #######################################
 

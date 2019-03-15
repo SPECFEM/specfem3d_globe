@@ -199,8 +199,8 @@
           ! converts position to geocentric coordinates
           call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r,theta,phi)
           print *,'Error Jacobian rank:',myrank
-          print *,'  location r/lat/lon: ',r*R_EARTH_KM, &
-            90.0-(theta*RADIANS_TO_DEGREES),phi*RADIANS_TO_DEGREES
+          print *,'  location r/lat/lon: ',sngl(r*R_EARTH_KM),'km', &
+                  sngl(90.0-(theta*RADIANS_TO_DEGREES)),sngl(phi*RADIANS_TO_DEGREES)
           print *,'  Jacobian: ',jacobian
           call exit_MPI(myrank,'3D Jacobian undefined in recalc_jacobian_gll3D.f90')
         endif

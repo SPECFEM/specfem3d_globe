@@ -59,7 +59,7 @@
 
   real(kind=CUSTOM_REAL),dimension(NGLOB),intent(in) :: xstore,ystore,zstore
 
-  integer :: NPROCTOT
+  integer,intent(in) :: NPROCTOT
 
   ! local parameters
   integer :: ispec,iglob,j,k
@@ -87,6 +87,9 @@
     ibool_neighbors(:,:) = 0
     work_ispec_is_outer(:) = .false.
   endif
+
+  ! debug
+  !print *,'MPI interface ',IREGION,add_central_cube
 
   ! makes working copy (converted to nearest integers)
   work_test_flag(:) = nint( test_flag(:) )
@@ -700,9 +703,10 @@
   if (work_test_flag(iglob) <= 0) then
     ! we might have missed an interface point on an edge, just re-set to missing value
     print *,'warning ',myrank,' flag: missed rank=',rank
-    print *,'  flag=',work_test_flag(iglob),'missed iglob=',iglob,'interface=',icurrent
+    print *,'  flag=',work_test_flag(iglob),'missed iglob=',iglob,'interface=',icurrent,'is_face_edge',is_face_edge
     print *
   endif
+
   ! we might have missed an interface point on an edge, just re-set to missing value
   if (is_face_edge) then
     if (work_test_flag(iglob) < (rank + 1)) then

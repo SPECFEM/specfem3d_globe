@@ -32,6 +32,15 @@ specfem3D_TARGETS = \
 	$(EMPTY_MACRO)
 
 specfem3D_OBJECTS = \
+	$(xspecfem3D_OBJECTS) \
+	$(specfem3D_SOLVER_OBJECTS) \
+	$(EMPTY_MACRO)
+
+xspecfem3D_OBJECTS = \
+	$O/specfem3D.solverstatic.o  \
+	$(EMPTY_MACRO)
+
+specfem3D_SOLVER_OBJECTS = \
 	$O/assemble_MPI_scalar.solver.o \
 	$O/assemble_MPI_vector.solver.o \
 	$O/comp_source_spectrum.solver.o \
@@ -50,7 +59,7 @@ specfem3D_OBJECTS = \
 
 # solver objects with statically allocated arrays; dependent upon
 # values_from_mesher.h
-specfem3D_OBJECTS += \
+specfem3D_SOLVER_OBJECTS += \
 	$O/asdf_data.solverstatic_module.o \
 	$O/comp_source_time_function.solverstatic.o \
 	$O/specfem3D_par.solverstatic_module.o \
@@ -109,7 +118,6 @@ specfem3D_OBJECTS += \
 	$O/save_regular_kernels.solverstatic.o \
 	$O/setup_GLL_points.solverstatic.o \
 	$O/setup_sources_receivers.solverstatic.o \
-	$O/specfem3D.solverstatic.o \
 	$O/update_displacement_LDDRK.solverstatic.o \
 	$O/update_displacement_Newmark.solverstatic.o \
 	$O/write_movie_output.solverstatic.o \
@@ -143,6 +151,7 @@ specfem3D_SHARED_OBJECTS = \
 	$O/count_elements.shared.o \
 	$O/count_number_of_sources.shared.o \
 	$O/count_points.shared.o \
+	$O/create_addressing.shared.o \
 	$O/create_name_database.shared.o \
 	$O/define_all_layers.shared.o \
 	$O/exit_mpi.shared.o \
@@ -180,9 +189,9 @@ gpu_specfem3D_STUBS = \
 	$(EMPTY_MACRO)
 
 ifdef NO_GPU
-specfem3D_OBJECTS += $(gpu_specfem3D_STUBS)
+specfem3D_SOLVER_OBJECTS += $(gpu_specfem3D_STUBS)
 else
-specfem3D_OBJECTS += $(gpu_specfem3D_OBJECTS)
+specfem3D_SOLVER_OBJECTS += $(gpu_specfem3D_OBJECTS)
 endif
 
 ###
@@ -210,7 +219,7 @@ adios_specfem3D_SHARED_STUBS = \
 
 # conditional adios linking
 ifeq ($(ADIOS),yes)
-specfem3D_OBJECTS += $(adios_specfem3D_OBJECTS)
+specfem3D_SOLVER_OBJECTS += $(adios_specfem3D_OBJECTS)
 specfem3D_SHARED_OBJECTS += $(adios_specfem3D_SHARED_OBJECTS)
 else
 specfem3D_SHARED_OBJECTS += $(adios_specfem3D_SHARED_STUBS)
@@ -266,17 +275,17 @@ asdf_specfem3D_SHARED_STUBS = \
 
 # conditional asdf linking
 ifeq ($(ASDF),yes)
-specfem3D_OBJECTS += $(asdf_specfem3D_OBJECTS)
+specfem3D_SOLVER_OBJECTS += $(asdf_specfem3D_OBJECTS)
 specfem3D_SHARED_OBJECTS += $(asdf_specfem3D_SHARED_OBJECTS)
 else
-specfem3D_OBJECTS += $(asdf_specfem3D_STUBS)
+specfem3D_SOLVER_OBJECTS += $(asdf_specfem3D_STUBS)
 specfem3D_SHARED_OBJECTS += ${asdf_specfem3D_SHARED_STUBS}
 endif
 
 #
 # conditional CEM model
 ifeq ($(CEM),yes)
-specfem3D_OBJECTS += $O/read_write_netcdf.checknetcdf.o
+specfem3D_SOLVER_OBJECTS += $O/read_write_netcdf.checknetcdf.o
 endif
 
 ###
@@ -293,9 +302,9 @@ vtk_specfem3D_STUBS = \
 
 # conditional vtk linking
 ifeq ($(VTK),yes)
-specfem3D_OBJECTS += $(vtk_specfem3D_OBJECTS)
+specfem3D_SOLVER_OBJECTS += $(vtk_specfem3D_OBJECTS)
 else
-specfem3D_OBJECTS += $(vtk_specfem3D_STUBS)
+specfem3D_SOLVER_OBJECTS += $(vtk_specfem3D_STUBS)
 endif
 
 ###
@@ -312,12 +321,11 @@ endif
 #### rules for executables
 ####
 
-specfem3D_ALL_OBJECTS = $(specfem3D_OBJECTS) $(specfem3D_SHARED_OBJECTS)
-
-ifeq ($(CUDA),yes)
-SPECFEM_LINK_FLAGS = $(LDFLAGS) $(MPILIBS) $(CUDA_LINK) $(LIBS)
-else
 SPECFEM_LINK_FLAGS = $(LDFLAGS) $(MPILIBS) $(LIBS)
+
+# cuda
+ifeq ($(CUDA),yes)
+SPECFEM_LINK_FLAGS += $(CUDA_LINK)
 endif
 
 # non-gpu or opencl
@@ -326,16 +334,16 @@ SPECFEM_LINK_FLAGS += $(ASDF_LIBS) -lhdf5hl_fortran -lhdf5_hl -lhdf5 -lstdc++
 endif
 
 
-${E}/xspecfem3D: $(specfem3D_ALL_OBJECTS)
+${E}/xspecfem3D: $(specfem3D_OBJECTS) $(specfem3D_SHARED_OBJECTS)
 	@echo ""
 	@echo "building xspecfem3D $(BUILD_VERSION_TXT)"
 	@echo ""
 
-
 ## use MPI here
 ## DK DK add OpenMP compiler flag here if needed
-#	${MPIFCCOMPILE_CHECK} -qsmp=omp -o ${E}/xspecfem3D $(specfem3D_ALL_OBJECTS) $(LDFLAGS) $(MPILIBS) $(LIBS)
-	${FCLINK} -o ${E}/xspecfem3D $(specfem3D_ALL_OBJECTS) $(SPECFEM_LINK_FLAGS)
+#	${MPIFCCOMPILE_CHECK} -qsmp=omp -o ${E}/xspecfem3D $(specfem3D_OBJECTS) $(specfem3D_SHARED_OBJECTS) $(LDFLAGS) $(MPILIBS) $(LIBS)
+
+	${FCLINK} -o $@ $+ $(SPECFEM_LINK_FLAGS)
 	@echo ""
 
 #######################################

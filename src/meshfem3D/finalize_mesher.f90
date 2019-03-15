@@ -158,7 +158,7 @@
     call flush_IMAIN()
 
     ! close main output file
-    close(IMAIN)
+    if (IMAIN /= ISTANDARD_OUTPUT) close(IMAIN)
   endif
 
   ! synchronize all the processes to make sure everybody has finished

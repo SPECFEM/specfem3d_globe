@@ -26,23 +26,29 @@
 !=====================================================================
 
 ! Dimitri Komatitsch, July 2014, CNRS Marseille, France:
+!
 ! added the ability to run several calculations (several earthquakes)
 ! in an embarrassingly-parallel fashion from within the same run;
+!
 ! this can be useful when using a very large supercomputer to compute
 ! many earthquakes in a catalog, in which case it can be better from
 ! a batch job submission point of view to start fewer and much larger jobs,
 ! each of them computing several earthquakes in parallel.
+!
 ! To turn that option on, set parameter NUMBER_OF_SIMULTANEOUS_RUNS to a value greater than 1 in the Par_file.
+!
 ! To implement that, we create NUMBER_OF_SIMULTANEOUS_RUNS MPI sub-communicators,
 ! each of them being labeled "my_local_mpi_comm_world", and we use them
 ! in all the routines in "src/shared/parallel.f90", except in MPI_ABORT() because in that case
 ! we need to kill the entire run.
+!
 ! When that option is on, of course the number of processor cores used to start
 ! the code in the batch system must be a multiple of NUMBER_OF_SIMULTANEOUS_RUNS,
 ! all the individual runs must use the same number of processor cores,
 ! which as usual is NPROC in the input file DATA/Par_file,
 ! and thus the total number of processor cores to request from the batch system
 ! should be NUMBER_OF_SIMULTANEOUS_RUNS * NPROC.
+!
 ! All the runs to perform must be placed in directories called run0001, run0002, run0003 and so on
 ! (with exactly four digits).
 
@@ -1831,26 +1837,32 @@ end module my_mpi
 
   implicit none
 
+  ! local parameters
   integer :: sizeval,myrank,ier,key,my_group_for_bcast,my_local_rank_for_bcast,NPROC
-
   character(len=MAX_STRING_LEN) :: path_to_add
 
+  ! checks
   if (NUMBER_OF_SIMULTANEOUS_RUNS <= 0) stop 'NUMBER_OF_SIMULTANEOUS_RUNS <= 0 makes no sense'
 
+  ! world size and rank
   call MPI_COMM_SIZE(MPI_COMM_WORLD,sizeval,ier)
   call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
 
+  ! checks if multiple
   if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mod(sizeval,NUMBER_OF_SIMULTANEOUS_RUNS) /= 0) then
     if (myrank == 0) print *,'Error: the number of MPI processes ',sizeval, &
                             ' is not a multiple of NUMBER_OF_SIMULTANEOUS_RUNS = ',NUMBER_OF_SIMULTANEOUS_RUNS
     stop 'the number of MPI processes is not a multiple of NUMBER_OF_SIMULTANEOUS_RUNS'
   endif
 
+  ! checks output mode
   if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. IMAIN == ISTANDARD_OUTPUT) &
     stop 'must not have IMAIN == ISTANDARD_OUTPUT when NUMBER_OF_SIMULTANEOUS_RUNS > 1 otherwise output to screen is mingled'
 
+  ! sets output directory
   OUTPUT_FILES = OUTPUT_FILES_BASE(1:len_trim(OUTPUT_FILES_BASE))
 
+  ! splits MPI world
   if (NUMBER_OF_SIMULTANEOUS_RUNS == 1) then
 
     my_local_mpi_comm_world = MPI_COMM_WORLD

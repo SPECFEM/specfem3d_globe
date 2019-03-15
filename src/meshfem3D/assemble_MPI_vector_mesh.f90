@@ -27,11 +27,11 @@
 
 
   subroutine assemble_MPI_vector(NPROC,NGLOB_AB,array_val, &
-                        num_interfaces,max_nibool_interfaces, &
-                        nibool_interfaces,ibool_interfaces, &
-                        my_neighbors)
+                                 num_interfaces,max_nibool_interfaces, &
+                                 nibool_interfaces,ibool_interfaces, &
+                                 my_neighbors)
 
-  use constants
+  use constants,only: CUSTOM_REAL,NDIM,itag
 
   implicit none
 

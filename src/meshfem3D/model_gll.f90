@@ -86,6 +86,8 @@
     allocate( MGLL_V%vp_new(NGLLX,NGLLY,NGLLZ,MGLL_V%nspec), &
               MGLL_V%vs_new(NGLLX,NGLLY,NGLLZ,MGLL_V%nspec), stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating vp_new,.. arrays')
+    MGLL_V%vp_new(:,:,:,:) = 0.0_CUSTOM_REAL
+    MGLL_V%vs_new(:,:,:,:) = 0.0_CUSTOM_REAL
   else
     ! transverse isotropic model
     allocate( MGLL_V%vpv_new(NGLLX,NGLLY,NGLLZ,MGLL_V%nspec), &
@@ -94,10 +96,15 @@
               MGLL_V%vsh_new(NGLLX,NGLLY,NGLLZ,MGLL_V%nspec), &
               MGLL_V%eta_new(NGLLX,NGLLY,NGLLZ,MGLL_V%nspec), stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating vpv_new,.. arrays')
-
+    MGLL_V%vpv_new(:,:,:,:) = 0.0_CUSTOM_REAL
+    MGLL_V%vph_new(:,:,:,:) = 0.0_CUSTOM_REAL
+    MGLL_V%vsv_new(:,:,:,:) = 0.0_CUSTOM_REAL
+    MGLL_V%vsh_new(:,:,:,:) = 0.0_CUSTOM_REAL
+    MGLL_V%eta_new(:,:,:,:) = 0.0_CUSTOM_REAL
   endif
   allocate( MGLL_V%rho_new(NGLLX,NGLLY,NGLLZ,MGLL_V%nspec), stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating rho_new,.. arrays')
+  MGLL_V%rho_new(:,:,:,:) = 0.0_CUSTOM_REAL
 
   ! reads in model files for each process
   if (ADIOS_FOR_MODELS) then
@@ -122,6 +129,7 @@
     call min_all_cr(minvalue, min_all)
     if (myrank == 0) then
       write(IMAIN,*) '  vs new min/max: ',min_all,max_all
+      call flush_IMAIN()
     endif
     ! Vp
     maxvalue = maxval( MGLL_V%vp_new )
@@ -130,6 +138,7 @@
     call min_all_cr(minvalue, min_all)
     if (myrank == 0) then
       write(IMAIN,*) '  vp new min/max: ',min_all,max_all
+      call flush_IMAIN()
     endif
     ! density
     maxvalue = maxval( MGLL_V%rho_new )
@@ -147,6 +156,7 @@
     ! transverse isotropic model
     if (myrank == 0) then
       write(IMAIN,*)'model GLL: transverse isotropic'
+      call flush_IMAIN()
     endif
 
     ! Vsv
@@ -156,6 +166,7 @@
     call min_all_cr(minvalue, min_all)
     if (myrank == 0) then
       write(IMAIN,*) '  vsv new min/max: ',min_all,max_all
+      call flush_IMAIN()
     endif
     ! Vsh
     maxvalue = maxval( MGLL_V%vsh_new )
@@ -164,6 +175,7 @@
     call min_all_cr(minvalue, min_all)
     if (myrank == 0) then
       write(IMAIN,*) '  vsh new min/max: ',min_all,max_all
+      call flush_IMAIN()
     endif
     ! Vpv
     maxvalue = maxval( MGLL_V%vpv_new )
@@ -172,6 +184,7 @@
     call min_all_cr(minvalue, min_all)
     if (myrank == 0) then
       write(IMAIN,*) '  vpv new min/max: ',min_all,max_all
+      call flush_IMAIN()
     endif
     ! Vph
     maxvalue = maxval( MGLL_V%vph_new )
@@ -180,6 +193,7 @@
     call min_all_cr(minvalue, min_all)
     if (myrank == 0) then
       write(IMAIN,*) '  vph new min/max: ',min_all,max_all
+      call flush_IMAIN()
     endif
     ! density
     maxvalue = maxval( MGLL_V%rho_new )
@@ -188,6 +202,7 @@
     call min_all_cr(minvalue, min_all)
     if (myrank == 0) then
       write(IMAIN,*) '  rho new min/max: ',min_all,max_all
+      call flush_IMAIN()
     endif
     ! eta
     maxvalue = maxval( MGLL_V%eta_new )
@@ -211,21 +226,22 @@
   MGLL_V%scale_density =  1000.0d0/RHOAV
 
   if (.not. TRANSVERSE_ISOTROPY) then
-      ! non-dimensionalize isotropic values
-      MGLL_V%vp_new = MGLL_V%vp_new * MGLL_V%scale_velocity
-      MGLL_V%vs_new = MGLL_V%vs_new * MGLL_V%scale_velocity
-      MGLL_V%rho_new = MGLL_V%rho_new * MGLL_V%scale_density
+    ! non-dimensionalize isotropic values
+    MGLL_V%vp_new = MGLL_V%vp_new * MGLL_V%scale_velocity
+    MGLL_V%vs_new = MGLL_V%vs_new * MGLL_V%scale_velocity
+    MGLL_V%rho_new = MGLL_V%rho_new * MGLL_V%scale_density
   else
-      ! non-dimensionalize
-      ! transverse isotropic model
-      MGLL_V%vpv_new = MGLL_V%vpv_new * MGLL_V%scale_velocity
-      MGLL_V%vph_new = MGLL_V%vph_new * MGLL_V%scale_velocity
-      MGLL_V%vsv_new = MGLL_V%vsv_new * MGLL_V%scale_velocity
-      MGLL_V%vsh_new = MGLL_V%vsh_new * MGLL_V%scale_velocity
-      MGLL_V%rho_new = MGLL_V%rho_new * MGLL_V%scale_density
-      ! eta is already non-dimensional
+    ! non-dimensionalize
+    ! transverse isotropic model
+    MGLL_V%vpv_new = MGLL_V%vpv_new * MGLL_V%scale_velocity
+    MGLL_V%vph_new = MGLL_V%vph_new * MGLL_V%scale_velocity
+    MGLL_V%vsv_new = MGLL_V%vsv_new * MGLL_V%scale_velocity
+    MGLL_V%vsh_new = MGLL_V%vsh_new * MGLL_V%scale_velocity
+    MGLL_V%rho_new = MGLL_V%rho_new * MGLL_V%scale_density
+    ! eta is already non-dimensional
   endif
-
+  call synchronize_all()
+  
   end subroutine model_gll_broadcast
 
 !
@@ -257,6 +273,11 @@
 
   ! reads in model for each partition
   if (.not. TRANSVERSE_ISOTROPY) then
+    if (myrank == 0) then
+      write(IMAIN,*)'  reads isotropic model values: vp,vs,rho'
+      call flush_IMAIN()
+    endif
+
     ! isotropic model
     ! vp mesh
     open(unit=IIN,file=prname(1:len_trim(prname))//'vp.bin', &
@@ -279,6 +300,10 @@
     close(IIN)
 
   else
+    if (myrank == 0) then
+      write(IMAIN,*)'  reads transversely isotropic model values: vpv,vph,vsv,vsh,eta,rho'
+      call flush_IMAIN()
+    endif
 
     ! transverse isotropic model
     ! vp mesh
@@ -340,6 +365,13 @@
   endif
   read(IIN) MGLL_V%rho_new(:,:,:,1:MGLL_V%nspec)
   close(IIN)
+
+  call synchronize_all()
+  if (myrank == 0) then
+    write(IMAIN,*)'  reading done'
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
 
   end subroutine read_gll_model
 

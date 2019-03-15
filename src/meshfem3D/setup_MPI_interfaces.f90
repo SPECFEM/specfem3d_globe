@@ -161,7 +161,10 @@
 
   ! sets up MPI interfaces
   ! crust mantle region
-  if (myrank == 0 ) write(IMAIN,*) 'crust mantle MPI:'
+  if (myrank == 0 ) then
+    write(IMAIN,*) 'crust mantle MPI:'
+    call flush_IMAIN()
+  endif
 
   if (NPROCTOT > 1) then
     allocate(test_flag(NGLOB_CRUST_MANTLE), &
@@ -300,7 +303,10 @@
 
   ! sets up MPI interfaces
   ! outer core region
-  if (myrank == 0 ) write(IMAIN,*) 'outer core MPI:'
+  if (myrank == 0 ) then
+    write(IMAIN,*) 'outer core MPI:'
+    call flush_IMAIN()
+  endif
 
   if (NPROCTOT > 1) then
     allocate(test_flag(NGLOB_OUTER_CORE), &
@@ -440,7 +446,10 @@
 
   ! sets up MPI interfaces
   ! inner core
-  if (myrank == 0 ) write(IMAIN,*) 'inner core MPI:'
+  if (myrank == 0 ) then
+    write(IMAIN,*) 'inner core MPI:'
+    call flush_IMAIN()
+  endif
 
   if (NPROCTOT > 1) then
     allocate(test_flag(NGLOB_INNER_CORE), &
@@ -490,7 +499,10 @@
     ! including central cube
     if (INCLUDE_CENTRAL_CUBE) then
       ! user output
-      if (myrank == 0 ) write(IMAIN,*) 'inner core with central cube MPI:'
+      if (myrank == 0 ) then
+        write(IMAIN,*) 'inner core with central cube MPI:'
+        call flush_IMAIN()
+      endif
 
       ! test_flag is a scalar, not a vector
       ndim_assemble = 1

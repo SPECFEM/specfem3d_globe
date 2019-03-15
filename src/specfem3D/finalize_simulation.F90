@@ -314,6 +314,7 @@
   endif
   if (MOVIE_VOLUME) then
     deallocate(nu_3dmovie)
+    deallocate(mask_3dmovie,muvstore_crust_mantle_3dmovie)
   endif
 
   ! noise simulations

@@ -299,10 +299,10 @@
 
   ! adds contributions from different partitions to flag arrays
   call assemble_MPI_vector(NPROCTOT,NGLOB_CRUST_MANTLE, &
-                      test_flag_vector, &
-                      num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
-                      nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle, &
-                      my_neighbors_crust_mantle)
+                           test_flag_vector, &
+                           num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
+                           nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle, &
+                           my_neighbors_crust_mantle)
 
   ! removes initial flag
   test_flag_vector(:,:) = test_flag_vector(:,:) - 1.0_CUSTOM_REAL

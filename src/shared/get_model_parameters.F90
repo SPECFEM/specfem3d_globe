@@ -256,6 +256,13 @@
     ONE_CRUST = .true.
     TRANSVERSE_ISOTROPY = .true.
 
+  case ('transversely_isotropic_prem_plus_3d_crust_1.0')
+    CASE_3D = .true.
+    CRUSTAL = .true.
+    ONE_CRUST = .true.
+    TRANSVERSE_ISOTROPY = .true.
+    impose_crust = ICRUST_CRUST1
+
   case ('transversely_isotropic_prem_plus_3d')
     CASE_3D = .true.
     CRUSTAL = .true.

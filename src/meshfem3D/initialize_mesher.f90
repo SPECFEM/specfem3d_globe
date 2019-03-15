@@ -87,6 +87,24 @@
   ! synchronizes processes
   call synchronize_all()
 
+  ! additional initialization on this system (ADIOS,OpenMP,..)
+  call im_initialize_system()
+
+  end subroutine initialize_mesher
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine im_initialize_system()
+
+  use meshfem3D_par
+  use meshfem3D_models_par
+
+  use manager_adios
+
+  implicit none
+
   ! compute rotation matrix from Euler angles
   ANGULAR_WIDTH_XI_RAD = ANGULAR_WIDTH_XI_IN_DEGREES * DEGREES_TO_RADIANS
   ANGULAR_WIDTH_ETA_RAD = ANGULAR_WIDTH_ETA_IN_DEGREES * DEGREES_TO_RADIANS
@@ -106,4 +124,10 @@
   ! OpenMP
   call init_openmp()
 
-  end subroutine initialize_mesher
+  ! synchronizes processes
+  call synchronize_all()
+
+  end subroutine im_initialize_system
+
+
+
