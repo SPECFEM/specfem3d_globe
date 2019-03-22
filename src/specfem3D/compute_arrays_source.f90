@@ -194,6 +194,12 @@
   comp(2) = bic(1:2)//'E'
   comp(3) = bic(1:2)//'Z'
 
+  ! safety check
+  if (NSTEP_BLOCK > NTSTEP_BETWEEN_READ_ADJSRC) then
+    print *,'Error invalid NSTEP_BLOCK ',NSTEP_BLOCK,' compared to NTSTEP_BETWEEN_READ_ADJSRC ',NTSTEP_BETWEEN_READ_ADJSRC
+    call exit_MPI(myrank,'Error invalid NSTEP_BLOCK size in compute_array_source_adjoint')
+  endif
+
   ! (sub)trace start and end
   ! reading starts in chunks of NSTEP_BLOCK from the end of the trace,
   ! i.e. as an example: total length NSTEP = 3000, chunk length NSTEP_BLOCK= 1000
@@ -311,7 +317,7 @@
   enddo
 
   do icomp = 1, NDIM
-    source_adjoint(icomp,:) = adj_src_u(icomp,:)
+    source_adjoint(icomp,1:NSTEP_BLOCK) = adj_src_u(icomp,1:NSTEP_BLOCK)
   enddo
 
   contains
