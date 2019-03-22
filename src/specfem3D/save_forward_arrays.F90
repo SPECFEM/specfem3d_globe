@@ -52,6 +52,17 @@
 
   ! save files to local disk or tape system if restart file
   if (NUMBER_OF_RUNS > 1 .and. NUMBER_OF_THIS_RUN < NUMBER_OF_RUNS) then
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) '  saving restart/checkpoint file for run ',NUMBER_OF_THIS_RUN
+      call flush_IMAIN()
+    endif
+
+    ! note: we do not need to store the seismograms(:,:,:) array.
+    !       the seismograms will be outputted at the end of each run. consecutive runs will append to previous seismograms.
+    !       thus, it is similar to having NTSTEP_BETWEEN_OUTPUT_SEISMOS set to the number of timesteps of each run.
+    !
+    ! saves checkpoint
     if (ADIOS_FOR_FORWARD_ARRAYS) then
 #ifdef HAVE_ADIOS2
       call save_intermediate_forward_arrays_adios2()
@@ -64,6 +75,7 @@
           status='unknown',form='unformatted',action='write',iostat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'Error opening file dump_all_arrays*** for writing')
 
+      ! wavefield
       write(IOUT) displ_crust_mantle
       write(IOUT) veloc_crust_mantle
       write(IOUT) accel_crust_mantle
@@ -76,6 +88,7 @@
       write(IOUT) veloc_outer_core
       write(IOUT) accel_outer_core
 
+      ! strain
       write(IOUT) epsilondev_xx_crust_mantle
       write(IOUT) epsilondev_yy_crust_mantle
       write(IOUT) epsilondev_xy_crust_mantle
@@ -88,9 +101,11 @@
       write(IOUT) epsilondev_xz_inner_core
       write(IOUT) epsilondev_yz_inner_core
 
+      ! rotation
       write(IOUT) A_array_rotation
       write(IOUT) B_array_rotation
 
+      ! attenuation memory variables
       write(IOUT) R_xx_crust_mantle
       write(IOUT) R_yy_crust_mantle
       write(IOUT) R_xy_crust_mantle
@@ -109,6 +124,12 @@
 
   ! save last frame of the forward simulation
   if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) '  saving forward arrays'
+      call flush_IMAIN()
+    endif
+
     if (ADIOS_FOR_FORWARD_ARRAYS) then
 #ifdef HAVE_ADIOS2
       call save_forward_arrays_adios2()

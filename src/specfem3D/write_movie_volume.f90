@@ -155,6 +155,9 @@
   real(kind=CUSTOM_REAL), dimension(npoints_3dmovie) :: store_val3D_mu
   character(len=MAX_STRING_LEN) :: prname_movie
 
+  ! outputs values into ascii file for each process/slice
+  logical,parameter :: DEBUG_OUTPUT_ASCII = .false.
+
   ! safety check
   if (NDIM /= 3) stop 'movie volume output requires NDIM = 3'
 
@@ -223,6 +226,7 @@
 
   write(prname_movie,'(a,i6.6,a)') trim(LOCAL_TMP_PATH)//'/'//'proc',myrank,'_'
 
+  ! stores point locations
   open(unit=IOUT,file=trim(prname_movie)//'movie3D_x.bin',status='unknown',form='unformatted',iostat=ier)
   if (ier /= 0 ) call exit_mpi(myrank,'Error opening file movie3D_x.bin')
   if (npoints_3dmovie > 0) then
@@ -244,15 +248,18 @@
   endif
   close(IOUT)
 
-  open(unit=IOUT,file=trim(prname_movie)//'ascii_output.txt',status='unknown',iostat=ier)
-  if (ier /= 0 ) call exit_mpi(myrank,'Error opening file ascii_output.txt')
-  if (npoints_3dmovie > 0) then
-    do i = 1,npoints_3dmovie
-      write(IOUT,*) store_val3D_x(i),store_val3D_y(i),store_val3D_z(i),store_val3D_mu(i)
-    enddo
+  if (DEBUG_OUTPUT_ASCII) then
+    open(unit=IOUT,file=trim(prname_movie)//'ascii_output.txt',status='unknown',iostat=ier)
+    if (ier /= 0 ) call exit_mpi(myrank,'Error opening file ascii_output.txt')
+    if (npoints_3dmovie > 0) then
+      do i = 1,npoints_3dmovie
+        write(IOUT,*) store_val3D_x(i),store_val3D_y(i),store_val3D_z(i),store_val3D_mu(i)
+      enddo
+    endif
+    close(IOUT)
   endif
-  close(IOUT)
 
+  ! store element infos
   open(unit=IOUT,file=trim(prname_movie)//'movie3D_elements.bin',status='unknown',form='unformatted',iostat=ier)
   if (ier /= 0 ) call exit_mpi(myrank,'Error opening file movie3D_elements.bin')
  !  open(unit=57,file=trim(prname_movie)//'movie3D_elements.txt',status='unknown')

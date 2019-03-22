@@ -115,6 +115,9 @@
     NPROC_ETA = NPROC_XI
   endif
 
+  ! make sure single run simulation setting valid
+  if (NUMBER_OF_RUNS == 1) NUMBER_OF_THIS_RUN = 1
+
   ! turns on/off corresponding 1-D/3-D model flags
   ! and sets radius for each discontinuity and ocean density values
   call get_model_parameters()
@@ -315,6 +318,15 @@
   ! this can be any value in the case of two chunks
   if (NCHUNKS > 2 .and. abs(ANGULAR_WIDTH_ETA_IN_DEGREES - 90.d0) > 0.00000001d0) &
     stop 'ANGULAR_WIDTH_ETA_IN_DEGREES must be 90 for more than two chunks'
+
+  if (NUMBER_OF_RUNS < 1) &
+    stop 'NUMBER_OF_RUNS must be at least 1'
+
+  if (NUMBER_OF_THIS_RUN > NUMBER_OF_RUNS) &
+    stop 'NUMBER_OF_THIS_RUN cannot be larger than NUMBER_OF_RUNS'
+
+  if (SIMULATION_TYPE /= 1 .and. NUMBER_OF_RUNS /= 1) &
+    stop 'Only 1 run for SIMULATION_TYPE = 2/3'
 
   if (ABSORBING_CONDITIONS .and. NCHUNKS == 6) &
     stop 'cannot have absorbing conditions in the full Earth'

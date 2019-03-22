@@ -126,8 +126,8 @@
   enddo ! NSOURCES
 
   ! source spectra
-  write(IMAIN,*)
   write(IMAIN,*) 'printing the source spectrum'
+  write(IMAIN,*)
   call flush_IMAIN()
 
   do isource = 1,NSOURCES

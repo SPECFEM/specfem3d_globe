@@ -40,24 +40,6 @@
   integer :: ier
   character(len=MAX_STRING_LEN) outputname
 
-  ! checks run/checkpoint number
-  if (NUMBER_OF_RUNS < 1 .or. NUMBER_OF_RUNS > NSTEP) &
-    stop 'number of restart runs can not be less than 1 or greater than NSTEP'
-  if (NUMBER_OF_THIS_RUN < 1 .or. NUMBER_OF_THIS_RUN > NUMBER_OF_RUNS) &
-    stop 'incorrect run number'
-  if (SIMULATION_TYPE /= 1 .and. NUMBER_OF_RUNS /= 1) &
-    stop 'Only 1 run for SIMULATION_TYPE = 2/3'
-
-  ! define correct time steps if restart files
-  ! set start/end steps for time iteration loop
-  it_begin = (NUMBER_OF_THIS_RUN - 1) * (NSTEP / NUMBER_OF_RUNS) + 1
-  if (NUMBER_OF_THIS_RUN < NUMBER_OF_RUNS) then
-    it_end = NUMBER_OF_THIS_RUN * (NSTEP / NUMBER_OF_RUNS)
-  else
-    ! Last run may be a bit larger
-    it_end = NSTEP
-  endif
-
   ! checks if anything to do
   ! undoing attenuation doesn't support the following checkpointing
   if (UNDO_ATTENUATION ) return
@@ -66,7 +48,7 @@
   if (NUMBER_OF_THIS_RUN > 1) then
     ! user output
     if (myrank == 0) then
-      write(IMAIN,*) 'reading startup file for run = ',NUMBER_OF_THIS_RUN
+      write(IMAIN,*) '  reading startup file for run ',NUMBER_OF_THIS_RUN
       call flush_IMAIN()
     endif
 
@@ -83,6 +65,7 @@
       open(unit=IIN,file=trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'Error opening file dump_all_arrays*** for reading')
 
+      ! wavefield
       read(IIN) displ_crust_mantle
       read(IIN) veloc_crust_mantle
       read(IIN) accel_crust_mantle
@@ -95,6 +78,7 @@
       read(IIN) veloc_outer_core
       read(IIN) accel_outer_core
 
+      ! strain
       read(IIN) epsilondev_xx_crust_mantle
       read(IIN) epsilondev_yy_crust_mantle
       read(IIN) epsilondev_xy_crust_mantle
@@ -107,9 +91,11 @@
       read(IIN) epsilondev_xz_inner_core
       read(IIN) epsilondev_yz_inner_core
 
+      ! rotation
       read(IIN) A_array_rotation
       read(IIN) B_array_rotation
 
+      ! attenuation memory variables
       read(IIN) R_xx_crust_mantle
       read(IIN) R_yy_crust_mantle
       read(IIN) R_xy_crust_mantle

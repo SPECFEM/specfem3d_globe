@@ -83,6 +83,7 @@
     write(IMAIN,*) '  topography/bathymetry: min/max = ',minval(ibathy_topo),maxval(ibathy_topo)
     write(IMAIN,*)
     write(IMAIN,*) '  Elapsed time for reading in seconds = ',tCPU
+    write(IMAIN,*)
     call flush_IMAIN()
 
     if (.not. GRAVITY_INTEGRALS) call save_topo_bathy_database(ibathy_topo,LOCAL_PATH)

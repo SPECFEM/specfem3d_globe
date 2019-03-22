@@ -171,6 +171,10 @@
   use specfem_par_movie
   implicit none
 
+  ! from here on, no gpu data is needed anymore
+  ! frees allocated memory on GPU
+  if (GPU_MODE) call prepare_cleanup_device(Mesh_pointer,NCHUNKS_VAL)
+
   ! mass matrices
   ! crust/mantle
   if ((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. &

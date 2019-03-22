@@ -88,6 +88,7 @@
   call write_epsilon_forward_arrays_adios(file_handle_adios,sizeprocs_adios)
   call write_rotation_forward_arrays_adios(file_handle_adios,sizeprocs_adios)
   call write_attenuation_forward_arrays_adios(file_handle_adios,sizeprocs_adios)
+
   ! Reset the path to its original value to avoid bugs.
   call adios_set_path (file_handle_adios, '', adios_err)
 
@@ -448,6 +449,7 @@
   call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '', STRINGIFY_VAR(R_yz_inner_core))
 
   end subroutine define_attenuation_forward_arrays_adios
+
 
 !-------------------------------------------------------------------------------
 !>  Schedule writes of ADIOS forward arrays that are always dumped.

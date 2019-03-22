@@ -393,9 +393,9 @@ void FC_FUNC_(transfer_seismo_from_device_async,
 
     for (i = 0; i < NGLL3; i++) {
       iglob = ibool[i+NGLL3*ispec] - 1;
-      h_field[0+3*iglob] = mp->h_station_seismo_field[0+3*i+irec_local*NGLL3*3];
-      h_field[1+3*iglob] = mp->h_station_seismo_field[1+3*i+irec_local*NGLL3*3];
-      h_field[2+3*iglob] = mp->h_station_seismo_field[2+3*i+irec_local*NGLL3*3];
+      h_field[0+3*iglob] = mp->h_station_seismo_field[0+3*(i+irec_local*NGLL3)];
+      h_field[1+3*iglob] = mp->h_station_seismo_field[1+3*(i+irec_local*NGLL3)];
+      h_field[2+3*iglob] = mp->h_station_seismo_field[2+3*(i+irec_local*NGLL3)];
     }
   }
 

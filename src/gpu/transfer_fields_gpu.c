@@ -776,15 +776,17 @@ void FC_FUNC_(transfer_strain_cm_from_device,
 
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
-  int size = NGLL3*mp->NSPEC_CRUST_MANTLE;
-
   // copies array to CPU
-  gpuCopy_from_device_realw (&mp->d_eps_trace_over_3_crust_mantle, eps_trace_over_3, size);
+  int size = NGLL3 * mp->NSPEC_CRUST_MANTLE;
   gpuCopy_from_device_realw (&mp->d_epsilondev_xx_crust_mantle, epsilondev_xx, size);
   gpuCopy_from_device_realw (&mp->d_epsilondev_yy_crust_mantle, epsilondev_yy, size);
   gpuCopy_from_device_realw (&mp->d_epsilondev_xy_crust_mantle, epsilondev_xy, size);
   gpuCopy_from_device_realw (&mp->d_epsilondev_xz_crust_mantle, epsilondev_xz, size);
   gpuCopy_from_device_realw (&mp->d_epsilondev_yz_crust_mantle, epsilondev_yz, size);
+
+  // strain
+  int size_strain_only = NGLL3 * mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY;
+  gpuCopy_from_device_realw (&mp->d_eps_trace_over_3_crust_mantle, eps_trace_over_3, size_strain_only);
 
   GPU_ERROR_CHECKING ("after transfer_strain_cm_from_device");
 }
@@ -840,15 +842,17 @@ void FC_FUNC_(transfer_strain_ic_from_device,
 
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
-  int size = NGLL3 * mp->NSPEC_INNER_CORE;
-
   // copies array to CPU
-  gpuCopy_from_device_realw (&mp->d_eps_trace_over_3_inner_core, eps_trace_over_3, size);
+  int size = NGLL3 * mp->NSPEC_INNER_CORE;
   gpuCopy_from_device_realw (&mp->d_epsilondev_xx_inner_core, epsilondev_xx, size);
   gpuCopy_from_device_realw (&mp->d_epsilondev_yy_inner_core, epsilondev_yy, size);
   gpuCopy_from_device_realw (&mp->d_epsilondev_xy_inner_core, epsilondev_xy, size);
   gpuCopy_from_device_realw (&mp->d_epsilondev_xz_inner_core, epsilondev_xz, size);
   gpuCopy_from_device_realw (&mp->d_epsilondev_yz_inner_core, epsilondev_yz, size);
+
+  // strain
+  int size_strain_only = NGLL3 * mp->NSPEC_INNER_CORE_STRAIN_ONLY;
+  gpuCopy_from_device_realw (&mp->d_eps_trace_over_3_inner_core, eps_trace_over_3, size_strain_only);
 
   GPU_ERROR_CHECKING ("after transfer_strain_ic_from_device");
 }
@@ -967,7 +971,7 @@ void FC_FUNC_(transfer_rmemory_ic_from_device,
   //get mesh pointer out of Fortran integer container
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
-  int size = N_SLS*NGLL3*mp->NSPEC_INNER_CORE;
+  int size = N_SLS * NGLL3 * mp->NSPEC_INNER_CORE;
 
   // copies array to CPU
   gpuCopy_from_device_realw (&mp->d_R_xx_inner_core, R_xx, size);

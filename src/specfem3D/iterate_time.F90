@@ -106,7 +106,6 @@
   ! time loop
   do it = it_begin,it_end
 
-
     ! simulation status output and stability check
     if (mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == it_begin + 4 .or. it == it_end) then
       call check_stability()
@@ -299,29 +298,36 @@
   implicit none
 
   ! to store forward wave fields
-  if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
+  if (SIMULATION_TYPE == 1) then
+    if (SAVE_FORWARD .or. (NUMBER_OF_RUNS > 1 .and. NUMBER_OF_THIS_RUN < NUMBER_OF_RUNS)) then
+      ! wavefield
+      call transfer_fields_cm_from_device(NDIM*NGLOB_CRUST_MANTLE, &
+                                          displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle,Mesh_pointer)
+      call transfer_fields_ic_from_device(NDIM*NGLOB_INNER_CORE, &
+                                          displ_inner_core,veloc_inner_core,accel_inner_core,Mesh_pointer)
+      call transfer_fields_oc_from_device(NGLOB_OUTER_CORE, &
+                                          displ_outer_core,veloc_outer_core,accel_outer_core,Mesh_pointer)
+      ! strain
+      call transfer_strain_cm_from_device(Mesh_pointer,eps_trace_over_3_crust_mantle, &
+                                      epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle, &
+                                      epsilondev_xy_crust_mantle,epsilondev_xz_crust_mantle, &
+                                      epsilondev_yz_crust_mantle)
+      call transfer_strain_ic_from_device(Mesh_pointer,eps_trace_over_3_inner_core, &
+                                      epsilondev_xx_inner_core,epsilondev_yy_inner_core, &
+                                      epsilondev_xy_inner_core,epsilondev_xz_inner_core, &
+                                      epsilondev_yz_inner_core)
+      ! rotation
+      if (ROTATION_VAL) then
+        call transfer_rotation_from_device(Mesh_pointer,A_array_rotation,B_array_rotation)
+      endif
 
-    call transfer_fields_cm_from_device(NDIM*NGLOB_CRUST_MANTLE, &
-                                    displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
-                                    Mesh_pointer)
-    call transfer_fields_ic_from_device(NDIM*NGLOB_INNER_CORE, &
-                                    displ_inner_core,veloc_inner_core,accel_inner_core, &
-                                    Mesh_pointer)
-    call transfer_fields_oc_from_device(NGLOB_OUTER_CORE, &
-                                    displ_outer_core,veloc_outer_core,accel_outer_core, &
-                                    Mesh_pointer)
-
-    call transfer_strain_cm_from_device(Mesh_pointer,eps_trace_over_3_crust_mantle, &
-                                    epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle, &
-                                    epsilondev_xy_crust_mantle,epsilondev_xz_crust_mantle, &
-                                    epsilondev_yz_crust_mantle)
-    call transfer_strain_ic_from_device(Mesh_pointer,eps_trace_over_3_inner_core, &
-                                    epsilondev_xx_inner_core,epsilondev_yy_inner_core, &
-                                    epsilondev_xy_inner_core,epsilondev_xz_inner_core, &
-                                    epsilondev_yz_inner_core)
-
-    if (ROTATION_VAL) then
-      call transfer_rotation_from_device(Mesh_pointer,A_array_rotation,B_array_rotation)
+      ! attenuation memory variables
+      if (ATTENUATION_VAL) then
+        call transfer_rmemory_cm_from_device(Mesh_pointer,R_xx_crust_mantle,R_yy_crust_mantle,R_xy_crust_mantle, &
+                                             R_xz_crust_mantle,R_yz_crust_mantle)
+        call transfer_rmemory_ic_from_device(Mesh_pointer,R_xx_inner_core,R_yy_inner_core,R_xy_inner_core, &
+                                             R_xz_inner_core,R_yz_inner_core)
+      endif
     endif
 
   else if (SIMULATION_TYPE == 3) then
@@ -365,10 +371,6 @@
     endif
 
   endif
-
-  ! from here on, no gpu data is needed anymore
-  ! frees allocated memory on GPU
-  call prepare_cleanup_device(Mesh_pointer,NCHUNKS_VAL)
 
   end subroutine it_transfer_from_GPU
 
