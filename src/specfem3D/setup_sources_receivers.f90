@@ -248,6 +248,9 @@
       case (2)
         ! Heaviside
         t0 = min(t0,1.5d0 * (tshift_src(isource) - hdur(isource)))
+      case (3)
+        ! Monochromatic
+        t0 = 0.d0
       case default
         stop 'unsupported force_stf value!'
       end select

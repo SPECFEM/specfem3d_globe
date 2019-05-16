@@ -167,6 +167,13 @@
       ! null half-duration indicates a Heaviside
       ! replace with very short error function
       if (hdur(isource) < 5. * DT ) hdur(isource) = 5. * DT
+    case (3)
+      ! Monochromatic source time function
+      ! half-duration is the period
+      ! (see constants.h: TINYVAL = 1.d-9 )
+      if (hdur(isource) < TINYVAL ) then
+        stop 'Error set force period, make sure all forces have a non-zero period'
+      endif
     case default
       stop 'unsupported force_stf value!'
     end select

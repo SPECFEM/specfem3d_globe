@@ -754,6 +754,15 @@
               ! Heaviside
               write(IMAIN,*) '    using (quasi) Heaviside source time function'
               write(IMAIN,*) '             half duration: ',hdur(isource),' seconds'
+            case (3)
+              ! Monochromatic
+              write(IMAIN,*) '    using monochromatic source time function'
+              ! prints frequency content for point forces
+              f0 = hdur(isource)
+              write(IMAIN,*)
+              write(IMAIN,*) '    using a source of period ',f0
+              write(IMAIN,*)
+              write(IMAIN,*) '    half duration in period: ',hdur(isource),' seconds'
             case default
               stop 'unsupported force_stf value!'
             end select

@@ -481,6 +481,7 @@
   double precision, external :: comp_source_time_function
   double precision, external :: comp_source_time_function_rickr
   double precision, external :: comp_source_time_function_gauss
+  double precision, external :: comp_source_time_function_mono
 
   ! note: calling comp_source_time_function() includes the handling for external source time functions
 
@@ -499,6 +500,10 @@
     case (2)
       ! Heaviside (step) source time function
       stf = comp_source_time_function(time_source_dble,hdur_Gaussian(isource))
+    case (3)
+      ! Monochromatic source time function
+      f0 = 1.d0 / hdur(isource) ! using hdur as a PERIOD just to avoid changing FORCESOLUTION file format
+      stf = comp_source_time_function_mono(time_source_dble,f0)
     case default
       stop 'unsupported force_stf value!'
     end select
