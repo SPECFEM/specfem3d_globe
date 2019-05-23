@@ -344,16 +344,13 @@ module specfem_par
   ! for SAC headers for seismograms
   integer :: yr_SAC,jda_SAC,mo_SAC,da_SAC,ho_SAC,mi_SAC
   double precision :: sec_SAC
+
   real :: mb_SAC ! body-wave magnitude
   real :: ms_SAC ! surface-wave magnitude (for ASDF QuakeML file)
   double precision :: t_cmt_SAC,t_shift_SAC
   double precision :: elat_SAC,elon_SAC,depth_SAC, &
     cmt_lat_SAC,cmt_lon_SAC,cmt_depth_SAC,cmt_hdur_SAC
   character(len=20) :: event_name_SAC
-
-  ! for ASDF start time
-  integer :: yr, jda, mo, da, ho, mi
-  double precision :: sec
 
   ! strain flag
   logical :: COMPUTE_AND_STORE_STRAIN

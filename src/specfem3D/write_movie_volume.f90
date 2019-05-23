@@ -30,13 +30,13 @@
 
   subroutine movie_volume_count_points(num_ibool_3dmovie,mask_ibool_3dmovie)
 
-  use specfem_par,only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLY,NGLLZ,IOUT,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE_3DMOVIE, &
+  use specfem_par, only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLY,NGLLZ,IOUT,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE_3DMOVIE, &
     LOCAL_TMP_PATH,MOVIE_COARSE,MOVIE_TOP,MOVIE_BOTTOM,MOVIE_EAST,MOVIE_WEST,MOVIE_NORTH,MOVIE_SOUTH, &
     myrank
 
-  use specfem_par_crustmantle,only: ibool_crust_mantle,rstore_crust_mantle
+  use specfem_par_crustmantle, only: ibool_crust_mantle,rstore_crust_mantle
 
-  use specfem_par_movie,only: mask_3dmovie,nspecel_3dmovie,npoints_3dmovie
+  use specfem_par_movie, only: mask_3dmovie,nspecel_3dmovie,npoints_3dmovie
 
   implicit none
 
@@ -132,7 +132,7 @@
 ! the rotation matrix nu_3dmovie required to transfer to a geographic coordinate system
 
   use specfem_par
-  use specfem_par_crustmantle,only: ibool_crust_mantle,rstore_crust_mantle
+  use specfem_par_crustmantle, only: ibool_crust_mantle,rstore_crust_mantle
 
   implicit none
 

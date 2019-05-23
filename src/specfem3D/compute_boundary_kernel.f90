@@ -47,6 +47,9 @@
   logical,dimension(:),allocatable :: mask_ibool
   integer :: ier
 
+  ! checks if anything to do
+  if (.not. SAVE_BOUNDARY_MESH) return
+
   ! transfers wavefields onto CPU
   if (GPU_MODE) then
 

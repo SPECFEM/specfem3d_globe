@@ -63,6 +63,13 @@
   hdur(:) = 0.d0
   moment_tensor(:,:) = 0.d0
 
+  ! origin time
+  yr = 0
+  da = 0
+  ho = -1
+  mi = -1
+  sec = -1.d0
+
 !
 !---- read hypocenter info
 !
@@ -78,13 +85,6 @@
 
 ! read source number isource
   do isource = 1,NSOURCES
-
-    ! initializes
-    yr = 0
-    da = 0
-    ho = -1
-    mi = -1
-    sec = -1.d0
 
     ! gets header line
     read(IIN,"(a256)",iostat=ier) string
@@ -154,26 +154,29 @@
       !print *,itype,'line ----',string(istart:iend),'----'
 
       ! reads in event time information
-      select case (itype)
-      case (1)
-        ! year (as integer value)
-        read(string(istart:iend),*) yr
-      case (2)
-        ! month (as integer value)
-        read(string(istart:iend),*) mo
-      case (3)
-        ! day (as integer value)
-        read(string(istart:iend),*) da
-      case (4)
-        ! hour (as integer value)
-        read(string(istart:iend),*) ho
-      case (5)
-        ! minutes (as integer value)
-        read(string(istart:iend),*) mi
-      case (6)
-        ! seconds (as float value)
-        read(string(istart:iend),*) sec
-      end select
+      ! in case of multiple sources, time refers to the first entry only
+      if (isource == 1) then
+        select case (itype)
+        case (1)
+          ! year (as integer value)
+          read(string(istart:iend),*) yr
+        case (2)
+          ! month (as integer value)
+          read(string(istart:iend),*) mo
+        case (3)
+          ! day (as integer value)
+          read(string(istart:iend),*) da
+        case (4)
+          ! hour (as integer value)
+          read(string(istart:iend),*) ho
+        case (5)
+          ! minutes (as integer value)
+          read(string(istart:iend),*) mi
+        case (6)
+          ! seconds (as float value)
+          read(string(istart:iend),*) sec
+        end select
+      endif
 
       ! advances string
       istart = iend + 1

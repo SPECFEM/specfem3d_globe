@@ -675,7 +675,7 @@
 
   else
     ! updates kernel contribution on GPU
-    if (deviatoric_outercore ) call exit_mpi(myrank,'deviatoric kernel on GPU not supported yet')
+    if (deviatoric_outercore) call exit_mpi(myrank,'deviatoric kernel on GPU not supported yet')
 
     ! computes contribution to density and bulk modulus kernel
     call compute_kernels_oc_gpu(Mesh_pointer,deltat)
