@@ -2,7 +2,7 @@
 testdir=`pwd`
 
 # executable
-var=test_models
+var=test_save
 
 # title
 echo >> $testdir/results.log
@@ -14,6 +14,12 @@ echo "directory: `pwd`" >> $testdir/results.log
 # clean
 mkdir -p bin
 rm -f ./bin/$var
+
+mkdir -p OUTPUT_FILES
+rm -f OUTPUT_FILES/*
+
+mkdir -p DATABASES_MPI
+rm -f DATABASES_MPI/*
 
 # single compilation
 echo "compilation: $var" >> $testdir/results.log
@@ -30,7 +36,7 @@ fi
 
 # runs test
 echo "run: `date`" >> $testdir/results.log
-mpirun -np 4 ./bin/$var >> $testdir/results.log 2>$testdir/error.log
+OMP_NUM_THREADS=2 mpirun -np 4 ./bin/$var >> $testdir/results.log 2>$testdir/error.log
 
 # checks exit code
 if [[ $? -ne 0 ]]; then

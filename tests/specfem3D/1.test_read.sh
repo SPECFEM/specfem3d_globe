@@ -2,7 +2,7 @@
 testdir=`pwd`
 
 # executable
-var=test_models
+var=test_read
 
 # title
 echo >> $testdir/results.log
@@ -27,6 +27,16 @@ if [ ! -e ./bin/$var ]; then
   echo "compilation of $var failed, please check..." >> $testdir/results.log
   exit 1
 fi
+
+# checks if DATABASES_MPI files were generated from meshfem3D tests
+if [ ! -e ../meshfem3D/DATABASES_MPI/proc000000_reg3_solver_data.bin ]; then
+  echo "files in ../meshfem3D/DATABASES_MPI/ folder were not generated yet, please check with previous test meshfem3D/test_save ..." >> $testdir/results.log
+  exit 1
+fi
+
+# setup DATABASES_MPI/ from meshfem3D tests
+rm -rf DATABASES_MPI
+ln -s ../meshfem3D/DATABASES_MPI/
 
 # runs test
 echo "run: `date`" >> $testdir/results.log

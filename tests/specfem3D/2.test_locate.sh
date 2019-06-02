@@ -2,7 +2,7 @@
 testdir=`pwd`
 
 # executable
-var=test_models
+var=test_locate
 
 # title
 echo >> $testdir/results.log
@@ -28,9 +28,19 @@ if [ ! -e ./bin/$var ]; then
   exit 1
 fi
 
+# checks if DATABASES_MPI files were generated from meshfem3D tests
+if [ ! -e ../meshfem3D/DATABASES_MPI/proc000000_reg1_solver_data.bin ]; then
+  echo "files in ../meshfem3D/DATABASES_MPI/ folder were not generated yet, please check with previous test meshfem3D/test_save ..." >> $testdir/results.log
+  exit 1
+fi
+
+# setup DATABASES_MPI/ from meshfem3D tests
+rm -rf DATABASES_MPI
+ln -s ../meshfem3D/DATABASES_MPI/
+
 # runs test
 echo "run: `date`" >> $testdir/results.log
-mpirun -np 4 ./bin/$var >> $testdir/results.log 2>$testdir/error.log
+OMP_NUM_THREADS=2 mpirun -np 4 ./bin/$var >> $testdir/results.log 2>$testdir/error.log
 
 # checks exit code
 if [[ $? -ne 0 ]]; then
