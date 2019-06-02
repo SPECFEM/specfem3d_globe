@@ -79,7 +79,7 @@
 
   ! neighbors
   integer :: num_neighbors
-  integer :: i_n,ientry
+  integer :: i_n,ientry,ispec_ref
 
   ! brute-force search for closest element
   ! if set to .false. (default), a kd-tree search for initial guess element is used
@@ -87,7 +87,6 @@
 
   ! looks for closer estimates in neighbor elements if needed
   logical,parameter :: DO_ADJACENT_SEARCH = .true.
-
 
   ! set distance to huge initial value
   distmin_squared = HUGEVAL
@@ -347,16 +346,19 @@
         ! best guess close to an element boundary
         ! looks through neighbors and determines best locations
 
+        ! reference element
+        ispec_ref = ispec_selected
+
         ! adjacency arrays
-        num_neighbors = xadj(ispec_selected+1)-xadj(ispec_selected)
+        num_neighbors = xadj(ispec_ref+1)-xadj(ispec_ref)
 
         ! debug
-        !print *,'neighbors',num_neighbors,ispec_selected,xadj(ispec_selected+1),xadj(ispec_selected)
+        !print *,'neighbors',num_neighbors,'for element',ispec_ref,' xadj:',xadj(ispec_ref+1),xadj(ispec_ref)
 
         ! loops over neighbors
         do i_n = 1,num_neighbors
           ! get neighbor
-          ientry = xadj(ispec_selected) + i_n
+          ientry = xadj(ispec_ref) + i_n
           ispec = adjncy(ientry)
 
           ! checks
@@ -372,7 +374,7 @@
                        + (z_target - z_n)*(z_target - z_n)
 
           ! debug
-          !print *,'  neighbor ',ispec,i_n,ientry,ispec_selected,sngl(xi_n),sngl(eta_n),sngl(gamma_n), &
+          !print *,'  neighbor ',ispec,i_n,ientry,'ispec = ',ispec_selected,sngl(xi_n),sngl(eta_n),sngl(gamma_n), &
           !          'distance',sngl(sqrt(dist_squared)*R_EARTH_KM),sngl(sqrt(distmin_squared)*R_EARTH_KM)
 
           ! take this point if it is closer to the receiver
