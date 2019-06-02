@@ -446,5 +446,9 @@
   if (GRAVITY_INTEGRALS .and. CUSTOM_REAL /= SIZE_DOUBLE) &
     stop 'for GRAVITY_INTEGRALS use double precision i.e. configure the code with --enable-double-precision'
 
+  ! adjoint simulations: seismogram output only works if each process writes out its local seismos
+  if (WRITE_SEISMOGRAMS_BY_MASTER .and. SIMULATION_TYPE == 2) &
+    stop 'For SIMULATION_TYPE == 2, please set WRITE_SEISMOGRAMS_BY_MASTER to .false.'
+
   end subroutine rcp_check_parameters
 

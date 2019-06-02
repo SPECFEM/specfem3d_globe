@@ -70,7 +70,8 @@
              ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER, &
              SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,READ_ADJSRC_ASDF
 
-  logical :: SAVE_SEISMOGRAMS_STRAIN,SAVE_SEISMOGRAMS_IN_ADJOINT_RUN
+  logical :: SAVE_SEISMOGRAMS_STRAIN ! option under development (see Hom Nath commit 2deb0fa89), no functionality implemented yet
+  logical :: SAVE_SEISMOGRAMS_IN_ADJOINT_RUN
 
   ! sources
   logical :: USE_FORCE_POINT_SOURCE

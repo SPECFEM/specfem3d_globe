@@ -30,7 +30,7 @@
                                addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice, &
                                OUTPUT_FILES)
 
-  use constants,only: myrank,MAX_STRING_LEN,IOUT,IMAIN, &
+  use constants, only: myrank,MAX_STRING_LEN,IOUT,IMAIN, &
     CHUNK_AB,CHUNK_AB_ANTIPODE,CHUNK_AC,CHUNK_AC_ANTIPODE,CHUNK_BC,CHUNK_BC_ANTIPODE
 
   implicit none

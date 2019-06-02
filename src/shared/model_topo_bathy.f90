@@ -140,7 +140,7 @@
   byteswap = (ival == HEADER_IS_BYTE_SWAPPED)
 
   !debug
-  !print*,'topo bathy: byteswap ',byteswap,ival
+  !print *,'topo bathy: byteswap ',byteswap,ival
 
   ! reads in topography array
   if (byteswap) then
@@ -228,8 +228,8 @@
 
   ! reads in topography values from file
   open(unit=IIN,file=trim(PATHNAME_TOPO_FILE),status='old',action='read',iostat=ier)
-  if( ier /= 0 ) then
-    print*,'Error opening:',trim(PATHNAME_TOPO_FILE)
+  if ( ier /= 0 ) then
+    print *,'Error opening:',trim(PATHNAME_TOPO_FILE)
     call exit_mpi(0,'Error opening topography data file')
   endif
 
@@ -239,9 +239,9 @@
       read(IIN,*,iostat=ier) val
 
       ! checks
-      if( ier /= 0 ) then
-        print*,'error read topo_bathy: ix,iy = ',itopo_x,itopo_y,val
-        print*,'topo_bathy dimension: nx,ny = ',NX_BATHY,NY_BATHY
+      if ( ier /= 0 ) then
+        print *,'error read topo_bathy: ix,iy = ',itopo_x,itopo_y,val
+        print *,'topo_bathy dimension: nx,ny = ',NX_BATHY,NY_BATHY
         call exit_mpi(0,'error reading topo_bathy file')
       endif
 
@@ -249,9 +249,9 @@
       ival = nint(val)
 
       ! checks values
-      if( ival < TOPO_MINIMUM .or. ival > TOPO_MAXIMUM ) then
-        print*,'Error read topo_bathy: ival = ',ival,val,'ix,iy = ',itopo_x,itopo_y
-        print*,' topo_bathy dimension: nx,ny = ',NX_BATHY,NY_BATHY
+      if ( ival < TOPO_MINIMUM .or. ival > TOPO_MAXIMUM ) then
+        print *,'Error read topo_bathy: ival = ',ival,val,'ix,iy = ',itopo_x,itopo_y
+        print *,' topo_bathy dimension: nx,ny = ',NX_BATHY,NY_BATHY
         call exit_mpi(0,'Error reading topo_bathy file')
       endif
 
