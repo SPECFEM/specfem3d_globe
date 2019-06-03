@@ -122,16 +122,22 @@
 
   subroutine compute_add_sources_adjoint()
 
-  use specfem_par
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM
+
+  use specfem_par, only: myrank,it,it_begin,it_end,NTSTEP_BETWEEN_READ_ADJSRC, &
+    nadj_rec_local,hxir_adjstore,hetar_adjstore,hgammar_adjstore,number_adjsources_global,source_adjoint, &
+    islice_selected_rec,ispec_selected_rec,nrec,iadj_vec, &
+    GPU_MODE,GPU_ASYNC_COPY,Mesh_pointer
+
   use specfem_par_crustmantle, only: accel_crust_mantle,ibool_crust_mantle
 
   implicit none
 
   ! local parameters
   real(kind=CUSTOM_REAL),dimension(NDIM) :: stf_array
-  integer :: irec,irec_local,num_loc,i,j,k,iglob,ispec
+  real(kind=CUSTOM_REAL) :: hlagrange
+  integer :: irec,irec_local,i,j,k,iglob,ispec
   integer :: ivec_index
-  integer,dimension(nadj_rec_local) :: rec_local
   logical :: ibool_read_adj_arrays
 
   ! note: we check if nadj_rec_local > 0 before calling this routine, but better be safe...
@@ -184,40 +190,26 @@
 !       cray version 8.6.x needs -O0 when debugging flags are used. as a work around, the following
 !       debugging flags work for crayftn: -g -G0 -O0 -Rb -eF -rm -eC -eD -ec -en -eI -ea
 
-    ! fill local receivers first
-    irec_local = 0
-    rec_local(:) = 0
-    do irec = 1,nrec
-      ! adds source (only if this proc carries the source)
-      if (myrank == islice_selected_rec(irec)) then
-        irec_local = irec_local + 1
-        rec_local(irec_local) = irec
-      endif
-    enddo
-    num_loc = irec_local
+    ! adjoint source array index
+    ivec_index = iadj_vec(it)
 
-    ! checks
-    if (irec_local /= nadj_rec_local) then
-      print *,'Invalid number of local adjoint receivers in compute_add_sources_adjoint() routine:',irec_local,nadj_rec_local
-    endif
-
-    do irec_local = 1,num_loc
-
-      ! adds source (only if this proc carries the source)
-      irec = rec_local(irec_local)
-
-      ispec = ispec_selected_rec(irec)
-
-      ! adjoint source array index
-      ivec_index = iadj_vec(it)
-
+    ! receivers act as sources
+    do irec_local = 1, nadj_rec_local
+      ! adjoint source time function (trace)
       stf_array(:) = source_adjoint(:,irec_local,ivec_index)
+
+      ! receiver location
+      irec = number_adjsources_global(irec_local)
+      ! element index
+      ispec = ispec_selected_rec(irec)
 
       ! adds source contributions
       do k = 1,NGLLZ
         do j = 1,NGLLY
           do i = 1,NGLLX
             iglob = ibool_crust_mantle(i,j,k,ispec)
+
+            hlagrange = hxir_adjstore(i,irec_local) * hetar_adjstore(j,irec_local) * hgammar_adjstore(k,irec_local)
 
             ! adds adjoint source acting at this time step (it):
             !
@@ -276,8 +268,8 @@
             !           wavefield at the end of the first time loop, such that b_displ(it=1) corresponds to -t0 + (NSTEP-1)*DT.
             !           assuming that until that end the backward/reconstructed wavefield and adjoint fields
             !           have a zero contribution to adjoint kernels.
-            accel_crust_mantle(:,iglob) = accel_crust_mantle(:,iglob) &
-                          + stf_array(:) * (hxir_store(irec_local,i) * hetar_store(irec_local,j) * hgammar_store(irec_local,k))
+            accel_crust_mantle(:,iglob) = accel_crust_mantle(:,iglob) + stf_array(:) * hlagrange
+
           enddo ! NGLLX
         enddo ! NGLLY
       enddo ! NGLLZ

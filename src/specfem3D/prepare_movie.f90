@@ -150,9 +150,9 @@
   ! the following has to be true for the the array dimensions of eps to match with those of rstore etc..
   ! note that epsilondev and eps_trace_over_3 don't have the same dimensions.. could cause trouble
   if (NSPEC_CRUST_MANTLE_STR_OR_ATT /= NSPEC_CRUST_MANTLE) &
-    stop 'NSPEC_CRUST_MANTLE_STRAINS_ATT /= NSPEC_CRUST_MANTLE'
+    stop 'NSPEC_CRUST_MANTLE_STRAINS_ATT /= NSPEC_CRUST_MANTLE, please recompile'
   if (NSPEC_CRUST_MANTLE_STRAIN_ONLY /= NSPEC_CRUST_MANTLE) &
-    stop 'NSPEC_CRUST_MANTLE_STRAIN_ONLY /= NSPEC_CRUST_MANTLE'
+    stop 'NSPEC_CRUST_MANTLE_STRAIN_ONLY /= NSPEC_CRUST_MANTLE, please recompile'
   ! checks movie type
   if (MOVIE_VOLUME_TYPE < 1 .or. MOVIE_VOLUME_TYPE > 9) &
     stop 'MOVIE_VOLUME_TYPE has to be in range from 1 to 9'

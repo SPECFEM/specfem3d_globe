@@ -25,9 +25,6 @@
 !
 !=====================================================================
 
-! we switch between vectorized and non-vectorized version by using pre-processor flag FORCE_VECTORIZATION
-! and macros INDEX_IJK, DO_LOOP_IJK, ENDDO_LOOP_IJK defined in config.fh
-#include "config.fh"
 
   subroutine compute_seismograms(nglob,displ,seismo_current,seismograms)
 
@@ -36,7 +33,7 @@
   use specfem_par, only: &
     NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
     nrec_local,nu,ispec_selected_rec,number_receiver_global, &
-    scale_displ,hlagrange_store
+    scale_displ,hxir_store,hetar_store,hgammar_store
 
   use specfem_par_crustmantle, only: ibool_crust_mantle
 
@@ -53,11 +50,7 @@
   ! local parameters
   double precision :: uxd,uyd,uzd,hlagrange
   integer :: ispec,iglob,irec_local,irec
-#ifdef FORCE_VECTORIZATION
-  integer :: ijk
-#else
   integer :: i,j,k
-#endif
 
   do irec_local = 1,nrec_local
 
@@ -71,17 +64,20 @@
     uyd = ZERO
     uzd = ZERO
 
-    DO_LOOP_IJK
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+          iglob = ibool_crust_mantle(i,j,k,ispec)
 
-      iglob = ibool_crust_mantle(INDEX_IJK,ispec)
+          hlagrange = hxir_store(i,irec_local) * hetar_store(j,irec_local) * hgammar_store(k,irec_local)
 
-      hlagrange = hlagrange_store(INDEX_IJK,irec_local)
+          uxd = uxd + dble(displ(1,iglob))*hlagrange
+          uyd = uyd + dble(displ(2,iglob))*hlagrange
+          uzd = uzd + dble(displ(3,iglob))*hlagrange
 
-      uxd = uxd + dble(displ(1,iglob))*hlagrange
-      uyd = uyd + dble(displ(2,iglob))*hlagrange
-      uzd = uzd + dble(displ(3,iglob))*hlagrange
-
-    ENDDO_LOOP_IJK
+        enddo
+      enddo
+    enddo
 
     ! store North, East and Vertical components
     ! distinguish between single and double precision for reals
@@ -115,7 +111,6 @@
     NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS,UNDO_ATTENUATION, &
     nrec_local, &
     nu_source,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
-    hlagrange_store, &
     hxir_store,hpxir_store,hetar_store,hpetar_store,hgammar_store,hpgammar_store, &
     tshift_src,hdur_Gaussian, &
     DT,t0,deltat,it, &
@@ -167,11 +162,7 @@
 
   double precision :: hxir(NGLLX), hetar(NGLLY), hgammar(NGLLZ), &
                       hpxir(NGLLX),hpetar(NGLLY),hpgammar(NGLLZ)
-#ifdef FORCE_VECTORIZATION
-  integer :: ijk
-#else
   integer :: i,j,k
-#endif
 
   do irec_local = 1,nrec_local
 
@@ -213,27 +204,30 @@
     endif
 
     ! perform the general interpolation using Lagrange polynomials
-    DO_LOOP_IJK
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
 
-      iglob = ibool_crust_mantle(INDEX_IJK,ispec)
+          iglob = ibool_crust_mantle(i,j,k,ispec)
 
-      hlagrange = hlagrange_store(INDEX_IJK,irec_local)
+          hlagrange = hxir_store(i,irec_local) * hetar_store(j,irec_local) * hgammar_store(k,irec_local)
 
-      uxd = uxd + dble(displ_crust_mantle(1,iglob))*hlagrange
-      uyd = uyd + dble(displ_crust_mantle(2,iglob))*hlagrange
-      uzd = uzd + dble(displ_crust_mantle(3,iglob))*hlagrange
+          uxd = uxd + dble(displ_crust_mantle(1,iglob))*hlagrange
+          uyd = uyd + dble(displ_crust_mantle(2,iglob))*hlagrange
+          uzd = uzd + dble(displ_crust_mantle(3,iglob))*hlagrange
 
-      eps_trace = eps_trace + dble(eps_trace_over_3_loc(INDEX_IJK))*hlagrange
+          eps_trace = eps_trace + dble(eps_trace_over_3_loc(i,j,k))*hlagrange
 
-      dxx = dxx + dble(epsilondev_loc_matrix(1,INDEX_IJK))*hlagrange
-      dyy = dyy + dble(epsilondev_loc_matrix(2,INDEX_IJK))*hlagrange
-      dxy = dxy + dble(epsilondev_loc_matrix(3,INDEX_IJK))*hlagrange
-      dxz = dxz + dble(epsilondev_loc_matrix(4,INDEX_IJK))*hlagrange
-      dyz = dyz + dble(epsilondev_loc_matrix(5,INDEX_IJK))*hlagrange
+          dxx = dxx + dble(epsilondev_loc_matrix(1,i,j,k))*hlagrange
+          dyy = dyy + dble(epsilondev_loc_matrix(2,i,j,k))*hlagrange
+          dxy = dxy + dble(epsilondev_loc_matrix(3,i,j,k))*hlagrange
+          dxz = dxz + dble(epsilondev_loc_matrix(4,i,j,k))*hlagrange
+          dyz = dyz + dble(epsilondev_loc_matrix(5,i,j,k))*hlagrange
 
-      displ_s(:,INDEX_IJK) = displ_crust_mantle(:,iglob)
-
-    ENDDO_LOOP_IJK
+          displ_s(:,i,j,k) = displ_crust_mantle(:,iglob)
+        enddo
+      enddo
+    enddo
 
     eps_loc(1,1) = eps_trace + dxx
     eps_loc(2,2) = eps_trace + dyy
@@ -264,12 +258,12 @@
     ! interpolators
     ! note: we explicitly copy the store arrays to local temporary arrays here
     !       the array indexing (irec_local,:) is non-contiguous and compilers would have to do this anyway
-    hxir(:) = hxir_store(irec_local,:)
-    hetar(:) = hetar_store(irec_local,:)
-    hgammar(:) = hgammar_store(irec_local,:)
-    hpxir(:) = hpxir_store(irec_local,:)
-    hpetar(:) = hpetar_store(irec_local,:)
-    hpgammar(:) = hpgammar_store(irec_local,:)
+    hxir(:) = hxir_store(:,irec_local)
+    hetar(:) = hetar_store(:,irec_local)
+    hgammar(:) = hgammar_store(:,irec_local)
+    hpxir(:) = hpxir_store(:,irec_local)
+    hpetar(:) = hpetar_store(:,irec_local)
+    hpgammar(:) = hpgammar_store(:,irec_local)
 
     ! Frechet derivatives of the source
     call compute_adj_source_frechet(displ_s,Mxx(irec),Myy(irec),Mzz(irec), &

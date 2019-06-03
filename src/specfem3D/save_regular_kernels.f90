@@ -137,7 +137,7 @@
       do j = 1, NGLLY
         do i = 1, NGLLX
 
-          hlagrange = hxir_reg(i,ipoint)*hetar_reg(j,ipoint)*hgammar_reg(k,ipoint)
+          hlagrange = hxir_reg(i,ipoint) * hetar_reg(j,ipoint) * hgammar_reg(k,ipoint)
 
           if (ANISOTROPIC_KL) then
 

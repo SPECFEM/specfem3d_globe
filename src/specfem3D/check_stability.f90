@@ -558,6 +558,8 @@
   ! write time stamp file to give information about progression of simulation
   if (SIMULATION_TYPE == 1) then
     write(outputname,"('/timestamp_forward',i6.6)") it
+  else if (SIMULATION_TYPE == 2) then
+    write(outputname,"('/timestamp_adjoint',i6.6)") it
   else
     write(outputname,"('/timestamp_backward_and_adjoint',i6.6)") it
   endif

@@ -156,7 +156,7 @@
        ! note: this must remain here even when SIMULATION_TYPE == 3 because it applies to array
        !       accel_crust_mantle rather than b_accel_crust_mantle
        if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
-          if (nadj_rec_local > 0 ) call compute_add_sources_adjoint()
+          if (nadj_rec_local > 0) call compute_add_sources_adjoint()
        endif
 
        ! add the sources

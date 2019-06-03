@@ -357,9 +357,10 @@
     call lagrange_any2(xi, NGLLX, xigll, hxir)
     call lagrange_any2(eta, NGLLY, yigll, hetar)
     call lagrange_any2(gamma, NGLLZ, zigll, hgammar)
-    hxir_reg(:,ipoint) = hxir
-    hetar_reg(:,ipoint) = hetar
-    hgammar_reg(:,ipoint) = hgammar
+
+    hxir_reg(:,ipoint) = hxir(:)
+    hetar_reg(:,ipoint) = hetar(:)
+    hgammar_reg(:,ipoint) = hgammar(:)
 
   enddo ! ipoint
 

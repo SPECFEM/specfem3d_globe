@@ -150,7 +150,7 @@
 
   use specfem_par, only: scale_displ_inv, NUMBER_OF_SIMULTANEOUS_RUNS, READ_ADJSRC_ASDF, mygroup
 
-  use iso_c_binding, only: C_NULL_CHAR
+!  use iso_c_binding, only: C_NULL_CHAR
 
   implicit none
 
@@ -226,7 +226,7 @@
   adj_src(:,:) = 0._CUSTOM_REAL
 
   if (READ_ADJSRC_ASDF) then
-
+    ! ASDF format
     do icomp = 1, NDIM ! 3 components
 
       ! print *, "READING ADJOINT SOURCES USING ASDF"
@@ -246,7 +246,7 @@
     enddo
 
   else
-
+    ! ASCII format
     do icomp = 1, NDIM
 
       ! opens adjoint component file

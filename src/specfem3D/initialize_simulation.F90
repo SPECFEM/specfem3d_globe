@@ -458,6 +458,14 @@
       call exit_MPI(myrank, 'improper dimensions of adjoint arrays, please recompile solver 18')
   endif
 
+  ! adjoint simulations
+  if (SIMULATION_TYPE == 2) then
+    if (NSPEC_CRUST_MANTLE_STR_OR_ATT /= NSPEC_CRUST_MANTLE) &
+      call exit_MPI(myrank,'Error NSPEC_CRUST_MANTLE_STRAINS_ATT /= NSPEC_CRUST_MANTLE, please recompile solver')
+    if (NSPEC_CRUST_MANTLE_STRAIN_ONLY /= NSPEC_CRUST_MANTLE) &
+      call exit_MPI(myrank, 'Error NSPEC_CRUST_MANTLE_STRAIN_ONLY /= NSPEC_CRUST_MANTLE, please recompile solver')
+  endif
+
   ! checks attenuation
   if (ATTENUATION_VAL) then
     if (NSPEC_CRUST_MANTLE_ATTENUATION /= NSPEC_CRUST_MANTLE) &

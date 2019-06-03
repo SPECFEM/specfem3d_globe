@@ -297,7 +297,8 @@ module specfem_par
   ! receiver information
   integer :: nrec,nrec_local
   integer, dimension(:), allocatable :: islice_selected_rec,ispec_selected_rec
-  integer, dimension(:), allocatable :: number_receiver_global
+  integer, dimension(:), allocatable :: islice_num_rec_local
+
   double precision, dimension(:), allocatable :: xi_receiver,eta_receiver,gamma_receiver
   double precision, dimension(:,:,:), allocatable :: nu
   double precision, allocatable, dimension(:) :: stlat,stlon,stele,stbur
@@ -308,16 +309,17 @@ module specfem_par
   character(len=MAX_STRING_LEN) :: STATIONS_FILE
 
   ! Lagrange interpolators at receivers
-  double precision, dimension(:,:), allocatable :: hxir_store,hetar_store,hgammar_store
-  double precision, dimension(:,:,:,:), allocatable :: hlagrange_store
+  integer, dimension(:), allocatable, target :: number_receiver_global
+  double precision, dimension(:,:), allocatable, target :: hxir_store,hetar_store,hgammar_store
 
-  ! ADJOINT sources
+  ! adjoint sources
+  integer :: nadj_rec_local
+  integer, dimension(:), pointer :: number_adjsources_global
+  double precision, dimension(:,:), pointer :: hxir_adjstore,hetar_adjstore,hgammar_adjstore
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: source_adjoint
   ! asynchronous read buffer when IO_ASYNC_COPY is set
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: buffer_source_adjoint
 
-
-  integer :: nadj_rec_local
   integer :: NSTEP_SUB_ADJ  ! to read input in chunks
 
   integer, dimension(:,:), allocatable :: iadjsrc ! to read input in chunks
