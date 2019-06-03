@@ -49,7 +49,7 @@
 ! The code should write profiles by default every 2x2 degrees for the entire globe.
 !
 !July 15th, 2008, updated Oct 27th, 2010
-!Vala Hjorleifsdottir, vala@geofisica.unam.mx
+!originally by: Vala Hjorleifsdottir
 !
 ! usage:
 ! - default for 2x2 degree profiles around the globe
@@ -145,7 +145,7 @@
   call world_rank(myrank)
 
   ! checks number of processes
-  ! note: must run as a single process with: mpirun -np 1 ..
+  ! note: must run as a single process, if necessary with: mpirun -np 1 ./bin/xwrite_profile
   if (sizeprocs /= 1) then
     ! usage info
     if (myrank == 0) then
@@ -180,7 +180,7 @@
   delta_lon = INCR_lon
 
   ! start position
-  initial_colat =  COLAT_0! 90.d0 - start_lon
+  initial_colat =  COLAT_0! 90.d0 - start_lat
   initial_lon = LON_0
 
   ! loop range
@@ -191,50 +191,49 @@
 
   ! checks program arguments
   count = command_argument_count()
-  if (count > 0) then
-    if (count /= 2 .and. count /= 4) call usage()
-    ! gets increments
-    do i = 1,count
-      call get_command_argument(i,arg)
-      ! usage info
-      if (len_trim(arg) == 0) then
-        call usage()
-      else
-        select case(i)
-        case (1)
-          read(arg,*) delta_lat
-          ! new loop range
-          if (delta_lat == 0.d0) then
-            icolat_end = 0
-          else
-            icolat_end = int((180.0 - initial_colat)/delta_lat)
-          endif
-        case (2)
-          read(arg,*) delta_lon
-          ! new loop range
-          if (delta_lon == 0.d0) then
-            ilon_end = 0
-          else
-            ilon_end = int((360.0 - initial_lon)/delta_lon)
-          endif
-        case (3)
-          read(arg,*) lat
-          ! initial colatitude
-          initial_colat = 90.d0 - lat
-          ! single profile only
-          icolat_start = 0
+  if (count == 0 .or. (count /= 2 .and. count /= 4)) call usage()
+
+  ! gets increments
+  do i = 1,count
+    call get_command_argument(i,arg)
+    ! usage info
+    if (len_trim(arg) == 0) then
+      call usage()
+    else
+      select case(i)
+      case (1)
+        read(arg,*) delta_lat
+        ! new loop range
+        if (delta_lat == 0.d0) then
           icolat_end = 0
-        case (4)
-          read(arg,*) lon
-          ! initial longitude
-          initial_lon = lon
-          ! single profile only
-          ilon_start = 0
+        else
+          icolat_end = int((180.0 - initial_colat)/delta_lat)
+        endif
+      case (2)
+        read(arg,*) delta_lon
+        ! new loop range
+        if (delta_lon == 0.d0) then
           ilon_end = 0
-        end select
-      endif
-    enddo
-  endif
+        else
+          ilon_end = int((360.0 - initial_lon)/delta_lon)
+        endif
+      case (3)
+        read(arg,*) lat
+        ! initial colatitude
+        initial_colat = 90.d0 - lat
+        ! single profile only
+        icolat_start = 0
+        icolat_end = 0
+      case (4)
+        read(arg,*) lon
+        ! initial longitude
+        initial_lon = lon
+        ! single profile only
+        ilon_start = 0
+        ilon_end = 0
+      end select
+    endif
+  enddo
   call synchronize_all()
 
   ! user output
@@ -275,6 +274,9 @@
       if (phi_degrees < 0.0) phi_degrees = phi_degrees + 360.d0
       if (phi_degrees > 360.0) phi_degrees = phi_degrees - 360.d0
 
+      ! loads corresponding GLL mesh
+      if (MODEL_GLL) call load_GLL_mesh(theta_degrees,phi_degrees)
+
       ! file name
       write(outfile,'(a,i04.4,a,i04.4)') trim(OUTPUT_FILES)//'/CARDS_th',int(theta_degrees),'_ph',int(phi_degrees)
       if (myrank == 0) print *, 'file: ',trim(outfile)
@@ -296,7 +298,11 @@
       if (ier /= 0) stop 'Error opening file'
 
       ! header info
-      write(57,'(a)') '# model         : '//trim(MODEL)
+      if (MODEL_GLL) then
+        write(57,'(a)') '# model         : '//trim(MODEL)//' ! instead plotting values of GLL_REFERENCE_MODEL (see constants.h)'
+      else
+        write(57,'(a)') '# model         : '//trim(MODEL)
+      endif
       write(57,'(a,F10.4)') '# point location: colatitude [degree] = ',sngl(theta_degrees)
       write(57,'(a,F10.4)') '# point location: longitude  [degree] = ',sngl(phi_degrees)
       if (CRUSTAL) then
@@ -497,12 +503,16 @@
   ! closes main output file
   if (myrank == 0) then
     write(IMAIN,*)
-    write(IMAIN,*) 'see profiles written in directory: ',trim(OUTPUT_FILES)
+    write(IMAIN,*) 'see profiles CARDS_** written in directory: ',trim(OUTPUT_FILES)
     write(IMAIN,*)
     write(IMAIN,*) 'End of xwrite_profile'
     write(IMAIN,*)
     call flush_IMAIN()
     close(IMAIN)
+
+    print *
+    if (IMAIN /= ISTANDARD_OUTPUT) &
+      print *,'output written to: ',trim(OUTPUT_FILES)//'/output_write_profile.txt'
   endif
 
   call finalize_mpi()
@@ -644,9 +654,23 @@
     else
       write(IMAIN,*) '  no general mantle anisotropy'
     endif
-    write(IMAIN,*)
-    write(IMAIN,*)
+
+    ! model
+    if (MODEL == 'gll') then
+      write(IMAIN,*)
+      write(IMAIN,*) 'mesh setup: '
+      write(IMAIN,*) '  NCHUNKS            : ',NCHUNKS
+      write(IMAIN,*) '  NSPEC crust/mantle : ',NSPEC_REGIONS(IREGION_CRUST_MANTLE)
+      write(IMAIN,*) '  NSPEC outer core   : ',NSPEC_REGIONS(IREGION_OUTER_CORE)
+      write(IMAIN,*) '  NSPEC inner core   : ',NSPEC_REGIONS(IREGION_INNER_CORE)
+      write(IMAIN,*) '  NGLLX/NGLLY/NGLLZ  : ',NGLLX,NGLLY,NGLLZ
+      write(IMAIN,*)
+      write(IMAIN,*)
+    endif
+
+    call flush_IMAIN()
   endif
+
 
   if (myrank == 0) print *,'reading model...'
 
@@ -868,6 +892,15 @@
   !!! VH  commented out following two lines from get_model
   !! overwrites with tomographic model values (from iteration step) here, given at all GLL points
   !call meshfem3D_models_impose_val(vpv,vph,vsv,vsh,rho,dvp,eta_aniso,iregion_code,ispec,i,j,k)
+  !
+  ! note: for GLL models, we would need to have the GLL point index (ispec,i,j,k) instead of location (r_prem,xmesh,ymesh,zmesh).
+  !       the mesh indexing however is only available after running the full mesher.
+  !
+  !       todo: a workaround would be to run first mesher, then read in the database files and search for the closest GLL
+  !             point to a given location (x,y,z).
+  !
+  !       for now, we will output the values from the initial reference model used by the GLL model,
+  !       for example s362ani instead of GLL as choosen by GLL_REFERENCE_MODEL in constants.h
 
   ! checks vpv: if close to zero then there is probably an error
   if (vpv < TINYVAL) then
@@ -1048,3 +1081,358 @@
 !> end adding ocean
 
   end subroutine write_profile_ocean
+
+!
+!-------------------------------------------------------------------------------------
+!
+
+
+  subroutine load_GLL_mesh(theta_degrees,phi_degrees)
+
+! loads the GLL mesh slice which contains the colat/lon position
+
+  use constants, only: CUSTOM_REAL,myrank
+
+  use shared_parameters, only: NCHUNKS,NPROC_XI,NPROCTOT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES, &
+    ADIOS_FOR_MODELS,TRANSVERSE_ISOTROPY
+
+  use model_gll_par
+
+  implicit none
+
+  double precision,intent(in) :: theta_degrees,phi_degrees
+
+  ! local parameters
+  real(kind=CUSTOM_REAL) :: lat,lon,xi,eta,xi_width,eta_width
+  integer :: chunk
+  integer :: slice_proc
+  integer,save :: slice_proc_old = 0
+
+  ! converts to lat/lon
+  lat = 90.0 - theta_degrees
+  lon = phi_degrees
+  ! limits value range
+  if (lat < -90.0) lat = -90.0
+  if (lat > 90.0) lat = 90.0
+  if (lon < -180.0) lon = lon + 360.0
+  if (lon > 180.0) lon = lon - 360.0
+
+  call get_latlon_chunk_location(lat,lon,NCHUNKS,chunk,xi,eta)
+
+  ! chunk width
+  if (NCHUNKS == 6) then
+    xi_width = 90.0
+    eta_width = 90.0
+  else
+    xi_width = ANGULAR_WIDTH_XI_IN_DEGREES
+    eta_width = ANGULAR_WIDTH_ETA_IN_DEGREES
+  endif
+
+  ! converts chunk width to radians
+  call get_process_slice_number(chunk,xi,eta,NPROC_XI,xi_width,eta_width,slice_proc)
+
+  ! checks
+  if (slice_proc < 0 .or. slice_proc > NPROCTOT) then
+    print *,"Error invalid slice number found ",slice_proc," with total number of slices ",NPROCTOT
+    stop 'Error invalid slice_proc'
+  endif
+
+  ! user output
+  if (myrank == 0) then
+    print *
+    print *,'GLL model: location lat/lon = ',lat,'/',lon,' has mesh slice number = ',slice_proc
+  endif
+
+  ! reads in new model files in case
+  if (slice_proc /= slice_proc_old) then
+    ! user output
+    if (myrank == 0) then
+      print *,'GLL model: reloading mesh slice ',slice_proc
+    endif
+    ! loads GLL model
+    if (ADIOS_FOR_MODELS) then
+      call read_gll_model_adios(slice_proc)
+    else
+      call read_gll_model(slice_proc)
+    endif
+    ! saves slice number
+    slice_proc_old = slice_proc
+  endif
+
+  ! min/max values output
+  if (myrank == 0) then
+    if (.not. TRANSVERSE_ISOTROPY) then
+      ! isotropic model
+      print *,'  vs new min/max: ',minval(MGLL_V%vs_new),maxval(MGLL_V%vs_new)
+      print *,'  vp new min/max: ',minval(MGLL_V%vp_new),maxval(MGLL_V%vp_new)
+    else
+      ! transverse isotropic model
+      print *,'  vsv new min/max: ',minval(MGLL_V%vsv_new),maxval(MGLL_V%vsv_new)
+      print *,'  vsh new min/max: ',minval(MGLL_V%vsh_new),maxval(MGLL_V%vsh_new)
+      print *,'  vpv new min/max: ',minval(MGLL_V%vpv_new),maxval(MGLL_V%vpv_new)
+      print *,'  vph new min/max: ',minval(MGLL_V%vph_new),maxval(MGLL_V%vph_new)
+      print *,'  eta new min/max: ',minval(MGLL_V%eta_new),maxval(MGLL_V%eta_new)
+    endif
+    print *
+  endif
+
+  end subroutine load_GLL_mesh
+
+
+!
+!-------------------------------------------------------------------------------------
+!
+
+  subroutine get_latlon_chunk_location(lat,lon,nchunks,chunk,xi,eta)
+
+! returns the chunk number and process number xi/eta for a given location lat/lon (degrees)
+
+  use constants, only: PI,CUSTOM_REAL
+  use shared_parameters, only: CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH
+
+  implicit none
+
+  real(kind=CUSTOM_REAL),intent(in) :: lat,lon
+  integer,intent(in) :: nchunks
+  integer,intent(out) :: chunk
+  real(kind=CUSTOM_REAL),intent(out) :: xi,eta
+
+  ! local parameters
+  real(kind=CUSTOM_REAL) :: theta,phi,x,y,z,xik,etak
+  real(kind=CUSTOM_REAL) :: clat,clon,grot
+  real(kind=CUSTOM_REAL) :: rotation_matrix(3,3)
+  real(kind=CUSTOM_REAL) :: xn,yn,zn
+  integer :: k
+
+  ! converts lat/lon from degrees to radians (colatitute/longitude)
+  theta = (90.0 - lat)/180.0 * PI
+  phi = lon/180.0 * PI
+
+  ! converts (theta,phi) to (x,y,z) on unit sphere
+  call tp2xyz(theta,phi,x,y,z)
+
+  if (nchunks /= 6) then
+    clon = CENTER_LONGITUDE_IN_DEGREES
+    clat = CENTER_LATITUDE_IN_DEGREES
+    grot = GAMMA_ROTATION_AZIMUTH
+
+    ! converts to radians
+    clon = clon/180.0 * PI
+    clat = clat/180.0 * PI
+    grot = grot/180.0 * PI
+
+    call rotmat(clon,clat,grot,rotation_matrix)
+
+    xn = x * rotation_matrix(1,1) + y * rotation_matrix(2,1) + z * rotation_matrix(3,1)
+    yn = x * rotation_matrix(1,2) + y * rotation_matrix(2,2) + z * rotation_matrix(3,2)
+    zn = x * rotation_matrix(1,3) + y * rotation_matrix(2,3) + z * rotation_matrix(3,3)
+
+    x = xn; y = yn; z = zn
+  endif
+
+  ! loops over chunks
+  chunk = 0
+  xi = 10.d0
+  eta = 10.d0
+
+  do k = 1,nchunks
+    call chunk_map(k,x,y,z,xik,etak)
+
+    ! checks location
+    if (abs(xik) <= PI/4.0 .and. abs(etak) <= PI/4.0) then
+      chunk = k
+      xi = xik
+      eta = etak
+      !print *,"chunk ",k," contains slice with point"
+      !print *,"   xi = ",xi," eta = ",eta
+    endif
+
+    ! mininum
+    if (abs(xik) < xi .and. abs(etak) < eta) then
+      chunk = k
+      xi = xik
+      eta = etak
+    endif
+  enddo
+
+  if (nchunks /= 6 .and. (chunk > nchunks .or. abs(xi) > PI/2.0 .or. abs(eta) > PI/2.0)) then
+    print *,'Check if point lat/lon = ', lat, '/', lon,' is within the region or not'
+    stop 'Error invalid location for 1-chunk mesh'
+  endif
+
+  ! checks if we found a chunk
+  if (chunk == 0) then
+    print *,"no chunk found for location ",lat,"/",lon," , please check input..."
+    stop 'Error chunk not found, invalid lat/lon'
+  endif
+
+  end subroutine get_latlon_chunk_location
+
+!
+!-------------------------------------------------------------------------------------
+!
+
+  subroutine tp2xyz(th,ph,x,y,z)
+
+  use constants, only: CUSTOM_REAL
+
+  implicit none
+
+  real(CUSTOM_REAL),intent(in) :: th,ph
+  real(CUSTOM_REAL),intent(out) :: x,y,z
+
+  ! convert (th,ph) to (x,y,z) on unit sphere
+  x = sin(th) * cos(ph)
+  y = sin(th) * sin(ph)
+  z = cos(th)
+
+  end subroutine tp2xyz
+
+!
+!-------------------------------------------------------------------------------------
+!
+
+  subroutine rotmat(clon,clat,grot,rotation_matrix)
+
+  ! this function calculate the 3x3 rotation matrix from the AB chunk
+  ! frame to the actual frame defined by (clon,clat,grot)
+
+  use constants, only: CUSTOM_REAL,PI
+
+  implicit none
+
+  real(kind=CUSTOM_REAL),intent(in) :: clon,clat,grot
+  real(kind=CUSTOM_REAL),intent(out) :: rotation_matrix(3,3)
+
+  ! local parameters
+  real(kind=CUSTOM_REAL) :: alpha, beta, gamma, sina, cosa, sinb, cosb, sing, cosg
+
+  ! compute colatitude and longitude
+  alpha = clon
+  beta = PI/2.0 - clat
+  gamma = grot
+
+  sina = sin(alpha)
+  cosa = cos(alpha)
+  sinb = sin(beta)
+  cosb = cos(beta)
+  sing = sin(gamma)
+  cosg = cos(gamma)
+
+  ! define rotation matrix
+  rotation_matrix(1,1) = cosg*cosb*cosa-sing*sina
+  rotation_matrix(1,2) = -sing*cosb*cosa-cosg*sina
+  rotation_matrix(1,3) = sinb*cosa
+  rotation_matrix(2,1) = cosg*cosb*sina+sing*cosa
+  rotation_matrix(2,2) = -sing*cosb*sina+cosg*cosa
+  rotation_matrix(2,3) = sinb*sina
+  rotation_matrix(3,1) = -cosg*sinb
+  rotation_matrix(3,2) = sing*sinb
+  rotation_matrix(3,3) = cosb
+
+  end subroutine rotmat
+
+!
+!-------------------------------------------------------------------------------------
+!
+
+  subroutine chunk_map(k,xx,yy,zz,xi,eta)
+
+  ! this routine gets the xi,eta for (xx,yy,zz)
+  ! point under the k'th chunk coordinate
+  ! transformation
+
+  use constants, only: CUSTOM_REAL
+
+  implicit none
+
+  integer,intent(in) :: k
+  real(kind=CUSTOM_REAL),intent(in) :: xx, yy, zz
+  real(kind=CUSTOM_REAL),intent(out) :: xi, eta
+
+  ! local parameters
+  real(kind=CUSTOM_REAL) :: x, y, z
+  real(kind=CUSTOM_REAL), parameter :: EPS = 1e-6
+
+  x = xx; y = yy; z = zz
+
+  if (x < EPS .and. x >= 0) x = EPS
+  if (x > -EPS .and. x < 0) x = -EPS
+  if (y < EPS .and. y >= 0) y = EPS
+  if (y > -EPS .and. y < 0) y = -EPS
+  if (z < EPS .and. z >= 0) z = EPS
+  if (z > -EPS .and. z < 0) z = -EPS
+
+  if (k == 1) then
+    ! CHUNK_AB
+    xi = atan(y/z); eta = atan(-x/z)
+    if (z < 0)  xi = 10.0
+  else if (k == 2) then
+    ! CHUNK_AC
+    xi = atan(-z/y); eta = atan(x/y)
+    if (y > 0) xi = 10.0
+  else if (k == 3) then
+    ! CHUNK_BC
+    xi = atan(-z/x); eta = atan(-y/x)
+    if (x > 0) xi = 10.0
+  else if (k == 4) then
+    ! CHUNK_AC'
+    xi = atan(-z/y); eta = atan(-x/y)
+    if (y < 0) xi = 10.0
+  else if (k == 5) then
+    ! CHUNK_BC'
+    xi = atan(z/x); eta = atan(-y/x)
+    if (x < 0) xi = 10.0
+  else if (k == 6) then
+    ! CHUNK_AB'
+    xi = atan(y/z); eta = atan(x/z)
+    if (z > 0)  xi = 10.0
+  else
+    stop 'chunk number k < 6'
+  endif
+
+  end subroutine chunk_map
+
+!
+!-------------------------------------------------------------------------------------
+!
+
+  subroutine get_process_slice_number(chunk,xi,eta,nproc_xi,xi_width,eta_width,slice_proc)
+
+! returns slice number given chunk and chunk-location xi/eta,
+! using a chunk width xi_width/eta_width and a number of nprocesses per chunk nproc_xi
+
+  use constants, only: PI,CUSTOM_REAL
+
+  implicit none
+
+  integer,intent(in) :: chunk,nproc_xi
+  real(kind=CUSTOM_REAL),intent(in) :: xi,eta
+  real(kind=CUSTOM_REAL),intent(in) :: xi_width,eta_width
+
+  integer,intent(out) :: slice_proc
+
+  ! local parameters
+  real(kind=CUSTOM_REAL) :: xi1,eta1,xi_width_rad,eta_width_rad
+  integer :: proc_xi,proc_eta
+
+  ! converts chunk width to radians
+  xi_width_rad = xi_width/180.0 * PI
+  eta_width_rad = eta_width/180.0 * PI
+
+  ! gets process/slice number
+  xi1 = xi / xi_width_rad * 2.0
+  eta1 = eta / eta_width_rad * 2.0
+
+  proc_xi = floor((xi1 + 1.0)/2.0 * nproc_xi)
+  proc_eta = floor((eta1 + 1.0)/2.0 * nproc_xi)
+
+  slice_proc = nproc_xi * nproc_xi * (chunk - 1) + nproc_xi * proc_eta + proc_xi
+
+  !print *,"xi1  = ",xi1," xi_width = ",xi_width
+  !print *,"eta1 = ",eta1," eta_width = ",eta_width
+  !print *,"proc_xi = ",proc_xi
+  !print *,"proc_eta = ",proc_eta
+
+  end subroutine get_process_slice_number
+
