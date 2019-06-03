@@ -101,6 +101,12 @@
 
   implicit none
 
+  ! user info
+  if (myrank == 0) then
+    write(IMAIN,*) 'broadcast model: PPM'
+    call flush_IMAIN()
+  endif
+
   ! upper mantle structure
   if (myrank == 0) call read_model_ppm()
 

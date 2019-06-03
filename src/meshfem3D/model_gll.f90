@@ -65,7 +65,7 @@
 
   use constants
 
-  use shared_parameters, only: TRANSVERSE_ISOTROPY,NSPEC_REGIONS,ADIOS_FOR_MODELS
+  use shared_parameters, only: TRANSVERSE_ISOTROPY,NSPEC_REGIONS,ADIOS_FOR_MODELS,NPROCTOT,NCHUNKS
 
   use model_gll_par
 
@@ -78,6 +78,17 @@
 
   ! sets number of elements (crust/mantle region)
   MGLL_V%nspec = NSPEC_REGIONS(IREGION_CRUST_MANTLE)
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) 'broadcast model: GLL'
+    write(IMAIN,*) 'setup:'
+    write(IMAIN,*) '  NCHUNKS           : ',NCHUNKS
+    write(IMAIN,*) '  NPROC total       : ',NPROCTOT
+    write(IMAIN,*) '  NSPEC             : ',MGLL_V%nspec
+    write(IMAIN,*) '  NGLLX/NGLLY/NGLLZ : ',NGLLX,NGLLY,NGLLZ
+    call flush_IMAIN()
+  endif
 
   ! allocates arrays
   ! differs for isotropic model or transverse isotropic models
@@ -108,9 +119,9 @@
 
   ! reads in model files for each process
   if (ADIOS_FOR_MODELS) then
-    call read_gll_model_adios()
+    call read_gll_model_adios(myrank)
   else
-    call read_gll_model()
+    call read_gll_model(myrank)
   endif
 
   ! checks velocity range
@@ -241,7 +252,7 @@
     ! eta is already non-dimensional
   endif
   call synchronize_all()
-  
+
   end subroutine model_gll_broadcast
 
 !
@@ -249,31 +260,122 @@
 !
 
 
-  subroutine read_gll_model()
+  subroutine read_gll_model(rank)
 
   use constants
+  use shared_parameters, only: NCHUNKS,NPROCTOT,NPROC_XI,NPROC_ETA,NEX_XI,NEX_ETA
+
+  use model_gll_par
+
+  implicit none
+
+  integer,intent(in) :: rank
+
+  ! local parameters
+  integer :: num_ranks,nproc_eta_gll,nproc_xi_gll,nspec_gll,nex_xi_gll,nex_eta_gll
+  integer(kind=8) :: filesize
+  logical :: exists
+  character(len=MAX_STRING_LEN) :: filename
+
+  if (myrank == 0) then
+    write(IMAIN,*) 'reading in model from: ',trim(PATHNAME_GLL_modeldir)
+    if (rank /= myrank) write(IMAIN,*) '  mesh slice for rank: ',rank
+    call flush_IMAIN()
+  endif
+
+  ! gets number of processes from the mesh used for this GLL model (1 file per process)
+  if (myrank == 0) then
+    ! counts number of files and estimates setup
+    num_ranks = 0
+    filesize = 0
+    exists = .true.
+    do while (exists)
+      ! checks with density rho filenames
+      write(filename,'(a,i6.6,a)') PATHNAME_GLL_modeldir(1:len_trim(PATHNAME_GLL_modeldir))//'proc',num_ranks,'_reg1_rho.bin'
+      inquire(file=trim(filename),exist=exists)
+      if (exists) then
+        ! gets file size in bytes
+        if (num_ranks == 0) then
+          inquire(file=trim(filename),size=filesize)
+        endif
+        num_ranks = num_ranks + 1
+      endif
+    enddo
+    ! checks
+    if (num_ranks == 0) then
+      print *,'Error invalid number of rho mesh-files found for GLL model'
+      stop 'Error invalid number of rho mesh-files found for GLL model'
+    endif
+    ! assumes same number of chunks and nproc_eta = nproc_xi
+    nproc_eta_gll = int (sqrt ( dble(num_ranks) / NCHUNKS ))
+    nproc_xi_gll = int (sqrt ( dble(num_ranks) / NCHUNKS ))
+
+    ! estimates nspec (filesize might have 2byte overhead)
+    nspec_gll = int (filesize / dble(NGLLX*NGLLY*NGLLZ) / dble(CUSTOM_REAL) )
+    nex_xi_gll = int (sqrt(dble(nspec_gll) / dble(MGLL_V%nspec)) * NEX_XI )
+    nex_eta_gll = int (sqrt(dble(nspec_gll) / dble(MGLL_V%nspec)) * NEX_ETA )
+
+    ! user info
+    write(IMAIN,*) '  file setting found:'
+    write(IMAIN,*) '                    filesize : ',filesize
+    write(IMAIN,*) '    total number of processes: ',num_ranks
+    write(IMAIN,*) '                     NPROC_XI: ',nproc_xi_gll
+    write(IMAIN,*) '                    NPROC_ETA: ',nproc_eta_gll
+    write(IMAIN,*) '              estimated nspec: ',nspec_gll
+    write(IMAIN,*) '     estimated nex_xi/nex_eta: ',nex_xi_gll,nex_eta_gll
+    write(IMAIN,*)
+    write(IMAIN,*) '  current setting:'
+    write(IMAIN,*) '    total number of processes: ',NPROCTOT
+    write(IMAIN,*) '                     NPROC_XI: ',NPROC_XI
+    write(IMAIN,*) '                    NPROC_ETA: ',NPROC_ETA
+    write(IMAIN,*) '                        nspec: ',MGLL_V%nspec
+    write(IMAIN,*) '               nex_xi/nex_eta: ',NEX_XI,NEX_ETA
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+  call synchronize_all()
+
+  ! only crust and mantle has GLL model files for now
+  call read_gll_modelfiles(rank)
+
+  call synchronize_all()
+  if (myrank == 0) then
+    write(IMAIN,*)'  reading done'
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  end subroutine read_gll_model
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  subroutine read_gll_modelfiles(rank)
+
+  use constants, only: MAX_STRING_LEN,IMAIN,IIN,PATHNAME_GLL_modeldir
   use shared_parameters, only: TRANSVERSE_ISOTROPY
 
   use model_gll_par
 
   implicit none
 
+  integer,intent(in) :: rank
+
   ! local parameters
   integer :: ier
   character(len=MAX_STRING_LEN) :: prname
 
-  if (myrank == 0) then
-    write(IMAIN,*)
-    write(IMAIN,*)'reading in model from ',trim(PATHNAME_GLL_modeldir)
-    call flush_IMAIN()
-  endif
-
-  ! only crust and mantle
-  write(prname,'(a,i6.6,a)') PATHNAME_GLL_modeldir(1:len_trim(PATHNAME_GLL_modeldir))//'proc',myrank,'_reg1_'
+  ! for example: DATA/GLL/proc000000_reg1_rho.bin
+  !
+  ! root name
+  write(prname,'(a,i6.6,a)') PATHNAME_GLL_modeldir(1:len_trim(PATHNAME_GLL_modeldir))//'proc',rank,'_reg1_'
 
   ! reads in model for each partition
   if (.not. TRANSVERSE_ISOTROPY) then
-    if (myrank == 0) then
+    if (rank == 0) then
       write(IMAIN,*)'  reads isotropic model values: vp,vs,rho'
       call flush_IMAIN()
     endif
@@ -284,7 +386,7 @@
           status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
       write(IMAIN,*) 'Error opening: ',prname(1:len_trim(prname))//'vp.bin'
-      call exit_MPI(myrank,'Error model GLL')
+      call exit_MPI(rank,'Error model GLL')
     endif
     read(IIN) MGLL_V%vp_new(:,:,:,1:MGLL_V%nspec)
     close(IIN)
@@ -294,13 +396,13 @@
          status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
       print *,'Error opening: ',prname(1:len_trim(prname))//'vs.bin'
-      call exit_MPI(myrank,'Error model GLL')
+      call exit_MPI(rank,'Error model GLL')
     endif
     read(IIN) MGLL_V%vs_new(:,:,:,1:MGLL_V%nspec)
     close(IIN)
 
   else
-    if (myrank == 0) then
+    if (rank == 0) then
       write(IMAIN,*)'  reads transversely isotropic model values: vpv,vph,vsv,vsh,eta,rho'
       call flush_IMAIN()
     endif
@@ -311,7 +413,7 @@
           status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
       write(IMAIN,*) 'Error opening: ',prname(1:len_trim(prname))//'vpv.bin'
-      call exit_MPI(myrank,'Error model GLL')
+      call exit_MPI(rank,'Error model GLL')
     endif
     read(IIN) MGLL_V%vpv_new(:,:,:,1:MGLL_V%nspec)
     close(IIN)
@@ -320,7 +422,7 @@
           status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
       write(IMAIN,*) 'Error opening: ',prname(1:len_trim(prname))//'vph.bin'
-      call exit_MPI(myrank,'Error model GLL')
+      call exit_MPI(rank,'Error model GLL')
     endif
     read(IIN) MGLL_V%vph_new(:,:,:,1:MGLL_V%nspec)
     close(IIN)
@@ -330,7 +432,7 @@
          status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
       print *,'Error opening: ',prname(1:len_trim(prname))//'vsv.bin'
-      call exit_MPI(myrank,'Error model GLL')
+      call exit_MPI(rank,'Error model GLL')
     endif
     read(IIN) MGLL_V%vsv_new(:,:,:,1:MGLL_V%nspec)
     close(IIN)
@@ -339,7 +441,7 @@
          status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
       print *,'Error opening: ',prname(1:len_trim(prname))//'vsh.bin'
-      call exit_MPI(myrank,'Error model GLL')
+      call exit_MPI(rank,'Error model GLL')
     endif
     read(IIN) MGLL_V%vsh_new(:,:,:,1:MGLL_V%nspec)
     close(IIN)
@@ -349,7 +451,7 @@
          status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
       print *,'Error opening: ',prname(1:len_trim(prname))//'eta.bin'
-      call exit_MPI(myrank,'Error model GLL')
+      call exit_MPI(rank,'Error model GLL')
     endif
     read(IIN) MGLL_V%eta_new(:,:,:,1:MGLL_V%nspec)
     close(IIN)
@@ -361,19 +463,12 @@
        status='old',action='read',form='unformatted',iostat=ier)
   if (ier /= 0) then
     print *,'Error opening: ',prname(1:len_trim(prname))//'rho.bin'
-    call exit_MPI(myrank,'Error model GLL')
+    call exit_MPI(rank,'Error model GLL')
   endif
   read(IIN) MGLL_V%rho_new(:,:,:,1:MGLL_V%nspec)
   close(IIN)
 
-  call synchronize_all()
-  if (myrank == 0) then
-    write(IMAIN,*)'  reading done'
-    write(IMAIN,*)
-    call flush_IMAIN()
-  endif
-
-  end subroutine read_gll_model
+  end subroutine read_gll_modelfiles
 
 !
 !-------------------------------------------------------------------------------------------------

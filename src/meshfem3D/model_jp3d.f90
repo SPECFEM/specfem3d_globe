@@ -132,6 +132,12 @@
 
   integer :: ier
 
+  ! user info
+  if (myrank == 0) then
+    write(IMAIN,*) 'broadcast model: JP3D'
+    call flush_IMAIN()
+  endif
+
   ! allocates arrays
 ! model_jp3d_variables
   allocate(JP3DM_PNA(MPA),JP3DM_RNA(MRA),JP3DM_HNA(MHA), &

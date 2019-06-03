@@ -337,7 +337,9 @@
                   Qkappa,Qmu,idoubling,CRUSTAL,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
                   R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
 
+        !daniel todo:
         ! specific 3D models with PREM references which would become too fast at shorter periods ( < 40s Love waves)
+        !
         !select case (THREE_D_MODEL)
         !
         ! eventually sgloberani, check...
@@ -357,6 +359,7 @@
         !case default
         !  continue
         !end select
+
       else
         ! isotropic PREM model
         call model_prem_iso(r_prem,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &

@@ -37,7 +37,7 @@
 
   ! this version of the routine is based on blocking MPI calls
 
-  use constants,only: CUSTOM_REAL,NDIM,NGLLX,NGLLY,NGLLZ,CHUNK_AB,CHUNK_AB_ANTIPODE, &
+  use constants, only: CUSTOM_REAL,NDIM,NGLLX,NGLLY,NGLLZ,CHUNK_AB,CHUNK_AB_ANTIPODE, &
     IFLAG_TOP_CENTRAL_CUBE,IFLAG_BOTTOM_CENTRAL_CUBE,itag
 
   implicit none

@@ -69,6 +69,12 @@
   ! local parameters
   integer :: ier
 
+  ! user info
+  if (myrank == 0) then
+    write(IMAIN,*) 'broadcast model: S20RTS'
+    call flush_IMAIN()
+  endif
+
   ! allocates memory
   allocate(S20RTS_V_dvs_a(0:NK_20,0:NS_20,0:NS_20), &
            S20RTS_V_dvs_b(0:NK_20,0:NS_20,0:NS_20), &

@@ -398,6 +398,12 @@
 
   integer :: ier
 
+  ! user info
+  if (myrank == 0) then
+    write(IMAIN,*) 'broadcast model: full_sh'
+    call flush_IMAIN()
+  endif
+
   ! model_mantle_sh_variables
   allocate(MANTLE_SH_V_dvsh(0:NK_20,1:NSH_20), &   ! Full TI
            MANTLE_SH_V_dvsv(0:NK_20,1:NSH_20), &

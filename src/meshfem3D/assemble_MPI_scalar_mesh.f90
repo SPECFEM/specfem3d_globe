@@ -44,7 +44,7 @@
 
 ! this version of the routine is based on blocking MPI calls
 
-  use constants,only: CUSTOM_REAL,NB_SQUARE_EDGES_ONEDIR,NUMFACES_SHARED,NUMCORNERS_SHARED, &
+  use constants, only: CUSTOM_REAL,NB_SQUARE_EDGES_ONEDIR,NUMFACES_SHARED,NUMCORNERS_SHARED, &
     ACTUALLY_ASSEMBLE_MPI_SLICES,ACTUALLY_ASSEMBLE_MPI_CHUNKS,itag,itag2,myrank
 
   implicit none
@@ -433,7 +433,7 @@
 
 ! blocking send/receive
 
-  use constants,only: CUSTOM_REAL,itag
+  use constants, only: CUSTOM_REAL,itag
 
   implicit none
 

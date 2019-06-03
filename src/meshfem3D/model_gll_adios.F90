@@ -33,7 +33,7 @@
 ! used for iterative inversion procedures
 !--------------------------------------------------------------------------------------------------
 
-  subroutine read_gll_model_adios()
+  subroutine read_gll_model_adios(rank)
 
   use constants
 
@@ -47,14 +47,15 @@
 
   implicit none
 
+  integer,intent(in) :: rank
+
   ! local parameters
   integer :: local_dim
   character(len=MAX_STRING_LEN) :: file_name
 
   ! ADIOS variables
-  integer                 :: adios_err
+  integer :: adios_err
   integer(kind=8), dimension(1) :: start, count
-
   integer(kind=8) :: sel
 
   ! only crust and mantle
@@ -62,9 +63,9 @@
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*)
     write(IMAIN,*)'reading in model from ',trim(PATHNAME_GLL_modeldir)
-    write(IMAIN,*)'ADIOS file: ',trim(file_name)
+    write(IMAIN,*)'  ADIOS file: ',trim(file_name)
+    if (rank /= myrank) write(IMAIN,*) '  mesh slice for rank: ',rank
     call flush_IMAIN()
   endif
 
@@ -72,7 +73,7 @@
   call open_file_adios_read(file_name)
 
   local_dim = NGLLX * NGLLY * NGLLZ * MGLL_V%nspec
-  start(1) = local_dim*myrank
+  start(1) = local_dim * rank
   count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
 
@@ -116,6 +117,7 @@
   call check_adios_err(myrank,adios_err)
 
   call synchronize_all()
+
   if (myrank == 0) then
     write(IMAIN,*)'  reading done'
     write(IMAIN,*)

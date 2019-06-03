@@ -83,7 +83,7 @@
 
 ! standard routine to setup model
 
-  use constants, only: myrank
+  use constants, only: myrank,IMAIN
   use model_s362ani_par
 
   implicit none
@@ -92,6 +92,12 @@
 
   ! local parameters
   integer :: ier
+
+  ! user info
+  if (myrank == 0) then
+    write(IMAIN,*) 'broadcast model: S362ANI models'
+    call flush_IMAIN()
+  endif
 
   ! allocates model arrays
   allocate(xlaspl(maxcoe,maxhpa), &

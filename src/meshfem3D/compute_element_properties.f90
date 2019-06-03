@@ -146,6 +146,7 @@
 
   ! sets element tiso flag
   call compute_element_tiso_flag(elem_is_tiso,elem_in_mantle,iregion_code,ispec,nspec,idoubling)
+
   ! stores as element flags
   ispec_is_tiso(ispec) = elem_is_tiso
 

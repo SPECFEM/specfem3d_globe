@@ -57,6 +57,12 @@
   ! local parameters
   integer :: ier
 
+  ! user info
+  if (myrank == 0) then
+    write(IMAIN,*) 'broadcast model: heterogen mantle'
+    call flush_IMAIN()
+  endif
+
   ! allocates model array
   allocate(HMM_rho_in(N_R*N_THETA*N_PHI), &
           stat=ier)

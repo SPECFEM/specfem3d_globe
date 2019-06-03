@@ -95,6 +95,12 @@
   ! local parameters
   integer :: ier
 
+  ! user info
+  if (myrank == 0) then
+    write(IMAIN,*) 'broadcast model: SGLOBE'
+    call flush_IMAIN()
+  endif
+
  ! allocates memory
   allocate(SGLOBE_V_dvsv_a(0:NK_20,0:NS_35,0:NS_35), &
            SGLOBE_V_dvsv_b(0:NK_20,0:NS_35,0:NS_35), &

@@ -31,7 +31,7 @@
                                  nibool_interfaces,ibool_interfaces, &
                                  my_neighbors)
 
-  use constants,only: CUSTOM_REAL,NDIM,itag
+  use constants, only: CUSTOM_REAL,NDIM,itag
 
   implicit none
 

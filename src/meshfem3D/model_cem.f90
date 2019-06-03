@@ -71,6 +71,12 @@ end module cem_par
 
   integer              :: wSize
 
+  ! user info
+  if (myrank == 0) then
+    write(IMAIN,*) 'broadcast model: CEM'
+    call flush_IMAIN()
+  endif
+
   ! initializes
   rank = myrank
   call world_size (wSize)

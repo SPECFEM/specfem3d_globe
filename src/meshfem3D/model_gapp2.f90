@@ -59,6 +59,12 @@
 
   integer :: ier
 
+  ! user info
+  if (myrank == 0) then
+    write(IMAIN,*) 'broadcast model: GAPP2'
+    call flush_IMAIN()
+  endif
+
   ! allocates arrays only when called and needed
   allocate(dep(0:mr),dep1(0:mr1),vp1(0:mr1),vp3(ma,mo,mr), &
           stat=ier)

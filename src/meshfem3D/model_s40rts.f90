@@ -75,6 +75,12 @@
   ! local parameters
   integer :: ier
 
+  ! user info
+  if (myrank == 0) then
+    write(IMAIN,*) 'broadcast model: S40RTS'
+    call flush_IMAIN()
+  endif
+
   allocate(S40RTS_V_dvs_a(0:NK_20,0:NS_40,0:NS_40), &
            S40RTS_V_dvs_b(0:NK_20,0:NS_40,0:NS_40), &
            S40RTS_V_dvp_a(0:NK_20,0:NS_40,0:NS_40), &

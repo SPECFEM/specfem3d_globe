@@ -70,6 +70,12 @@
 
   integer :: ier
 
+  ! user info
+  if (myrank == 0) then
+    write(IMAIN,*) 'broadcast model: SEA99'
+    call flush_IMAIN()
+  endif
+
   ! allocates model arrays
   allocate(sea99_vs(100,100,100), &
            sea99_depth(100), &
