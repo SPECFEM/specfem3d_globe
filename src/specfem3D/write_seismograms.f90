@@ -165,9 +165,10 @@
   use specfem_par, only: &
           NPROCTOT_VAL,myrank,nrec,nrec_local, &
           number_receiver_global,seismograms, &
-          islice_selected_rec, &
+          islice_num_rec_local, &
           seismo_offset,seismo_current, &
           OUTPUT_SEISMOS_ASCII_TEXT, &
+          OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
           OUTPUT_SEISMOS_ASDF, &
           NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
           SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE, &
@@ -182,71 +183,21 @@
   integer :: iproc,sender,irec_local,irec,ier,receiver
   integer :: nrec_local_received
   integer :: total_seismos
-  integer,dimension(:),allocatable:: islice_num_rec_local
   character(len=MAX_STRING_LEN) :: sisname
 
   ! allocates single station seismogram
   allocate(one_seismogram(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
   if (ier /= 0) call exit_mpi(myrank,'Error while allocating one temporary seismogram')
 
-  ! write out seismograms: all processes write their local seismograms themselves
-  if (.not. WRITE_SEISMOGRAMS_BY_MASTER) then
-
-    ! all the processes write their local seismograms themselves
-    if (OUTPUT_SEISMOS_ASCII_TEXT .and. SAVE_ALL_SEISMOS_IN_ONE_FILE) then
-      write(sisname,'(A,I5.5)') '/all_seismograms_node_',myrank
-
-      if (USE_BINARY_FOR_LARGE_FILE) then
-        if (seismo_offset == 0) then
-          open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='unknown',form='unformatted',action='write')
-        else
-          open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='old', &
-               form='unformatted',position='append',action='write')
-        endif
-      else
-        if (seismo_offset == 0) then
-          open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii',status='unknown',form='formatted',action='write')
-        else
-          open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii',status='old', &
-               form='formatted',position='append',action='write')
-        endif
-      endif
-    endif
-
-    ! initializes the ASDF data structure by allocating arrays
-    if (OUTPUT_SEISMOS_ASDF) call init_asdf_data(nrec_local)
-
-    ! loop on all the local receivers
-    do irec_local = 1,nrec_local
-
-      ! get global number of that receiver
-      irec = number_receiver_global(irec_local)
-
-      one_seismogram(:,:) = seismograms(:,irec_local,:)
-
-      ! write this seismogram
-      ! note: ASDF data structure is given in module
-      !       stores all traces into ASDF container in case
-      call write_one_seismogram(one_seismogram,irec,irec_local)
-    enddo
-
-    ! writes out ASDF container to the file
-    if (OUTPUT_SEISMOS_ASDF) then
-      call write_asdf()
-      ! deallocate the container
-      call close_asdf_data()
-    endif
-
-    ! create one large file instead of one small file per station to avoid file system overload
-    if (OUTPUT_SEISMOS_ASCII_TEXT .and. SAVE_ALL_SEISMOS_IN_ONE_FILE) close(IOUT)
-
-  else if (WRITE_SEISMOGRAMS_BY_MASTER .and. OUTPUT_SEISMOS_ASDF) then
-    ! BS BS
+  ! ASDF format
+  if (OUTPUT_SEISMOS_ASDF) then
     ! The writing of seismograms by the master proc is handled within
     ! write_asdf()
+
     ! initializes the ASDF data structure by allocating arrays
     call init_asdf_data(nrec_local)
     call synchronize_all()
+
     do irec_local = 1,nrec_local
 
       ! get global number of that receiver
@@ -261,123 +212,162 @@
     enddo
     call write_asdf()
     call synchronize_all()
+
     ! deallocate the container
     call close_asdf_data()
+  endif
 
-  else
-    ! WRITE_SEISMOGRAMS_BY_MASTER .and. .not. OUTPUT_SEISMOS_ASDF
+  ! ASCII / SAC format
+  if (OUTPUT_SEISMOS_ASCII_TEXT .or. OUTPUT_SEISMOS_SAC_ALPHANUM .or. OUTPUT_SEISMOS_SAC_BINARY) then
 
-    ! only the master process does the writing of seismograms and
-    ! collects the data from all other processes
-    if (myrank == 0) then
-      ! on the master, gather all the seismograms
+    ! write out seismograms: all processes write their local seismograms themselves
+    if (.not. WRITE_SEISMOGRAMS_BY_MASTER) then
 
-      ! create one large file instead of one small file per station to avoid file system overload
-      if (OUTPUT_SEISMOS_ASCII_TEXT .and. SAVE_ALL_SEISMOS_IN_ONE_FILE) then
-         write(sisname,'(A)') '/all_seismograms'
+      ! all the processes write their local seismograms themselves
+      if (SAVE_ALL_SEISMOS_IN_ONE_FILE .and. OUTPUT_SEISMOS_ASCII_TEXT) then
+        write(sisname,'(A,I5.5)') '/all_seismograms_node_',myrank
 
-       if (USE_BINARY_FOR_LARGE_FILE) then
-         if (seismo_offset == 0) then
-           open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='unknown',form='unformatted',action='write')
-         else
-           open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='old', &
-                form='unformatted',position='append',action='write')
-         endif
-       else
-         if (seismo_offset == 0) then
-           open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii',status='unknown',form='formatted',action='write')
-         else
-           open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii',status='old', &
-                form='formatted',position='append',action='write')
-         endif
-       endif
-
+        if (USE_BINARY_FOR_LARGE_FILE) then
+          if (seismo_offset == 0) then
+            open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='unknown',form='unformatted',action='write')
+          else
+            open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='old', &
+                 form='unformatted',position='append',action='write')
+          endif
+        else
+          if (seismo_offset == 0) then
+            open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii',status='unknown',form='formatted',action='write')
+          else
+            open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii',status='old', &
+                 form='formatted',position='append',action='write')
+          endif
+        endif
       endif
 
-      ! counts number of local receivers for each slice
-      allocate(islice_num_rec_local(0:NPROCTOT_VAL-1),stat=ier)
-      if (ier /= 0 ) call exit_mpi(myrank,'Error allocating islice_num_rec_local')
+      ! loop on all the local receivers
+      do irec_local = 1,nrec_local
 
-      islice_num_rec_local(:) = 0
-      do irec = 1,nrec
-        iproc = islice_selected_rec(irec)
-        ! checks iproc value
-        if (iproc < 0 .or. iproc >= NPROCTOT_VAL) then
-          print *,'Error :',myrank,'iproc = ',iproc,'NPROCTOT = ',NPROCTOT_VAL
-          call exit_mpi(myrank,'Error iproc in islice_selected_rec')
-        endif
-        ! sums number of receivers for each slice
-        islice_num_rec_local(iproc) = islice_num_rec_local(iproc) + 1
+        ! get global number of that receiver
+        irec = number_receiver_global(irec_local)
+
+        one_seismogram(:,:) = seismograms(:,irec_local,:)
+
+        ! write this seismogram
+        ! note: ASDF data structure is given in module
+        !       stores all traces into ASDF container in case
+        call write_one_seismogram(one_seismogram,irec,irec_local)
       enddo
-
-      total_seismos = 0
-
-      ! loop on all the slices
-      do iproc = 0,NPROCTOT_VAL-1
-
-       ! communicates only with processes that contain local receivers (to minimize MPI chatter)
-       if (islice_num_rec_local(iproc) == 0 ) cycle
-
-       ! receive except from proc 0, which is me and therefore I already have this value
-       sender = iproc
-       if (iproc == 0) then
-         ! master is current slice
-         nrec_local_received = nrec_local
-       else
-         ! receives info from slave processes
-         call recv_singlei(nrec_local_received,sender,itag)
-         if (nrec_local_received <= 0) call exit_MPI(myrank,'Error while receiving local number of receivers')
-       endif
-       if (nrec_local_received > 0) then
-         do irec_local = 1,nrec_local_received
-           ! receive except from proc 0, which is myself and therefore I already have these values
-           if (iproc == 0) then
-             ! get global number of that receiver
-             irec = number_receiver_global(irec_local)
-             one_seismogram(:,:) = seismograms(:,irec_local,:)
-           else
-             ! receives info from slave processes
-             call recv_singlei(irec,sender,itag)
-             if (irec < 1 .or. irec > nrec) call exit_MPI(myrank,'Error while receiving global receiver number')
-             call recv_cr(one_seismogram,NDIM*seismo_current,sender,itag)
-           endif
-
-           total_seismos = total_seismos + 1
-           ! write this seismogram
-           call write_one_seismogram(one_seismogram,irec,irec_local)
-
-         enddo
-       endif
-      enddo
-      deallocate(islice_num_rec_local)
-
-      write(IMAIN,*)
-      write(IMAIN,*) 'Total number of receivers saved is ',total_seismos,' out of ',nrec
-      write(IMAIN,*)
-
-      if (total_seismos /= nrec) call exit_MPI(myrank,'incorrect total number of receivers saved')
 
       ! create one large file instead of one small file per station to avoid file system overload
-      if (SAVE_ALL_SEISMOS_IN_ONE_FILE) close(IOUT)
+      if (SAVE_ALL_SEISMOS_IN_ONE_FILE .and. OUTPUT_SEISMOS_ASCII_TEXT) close(IOUT)
 
     else
-      ! on the nodes, send the seismograms to the master
-      receiver = 0
-      ! only sends if this slice contains receiver stations
-      if (nrec_local > 0) then
-        call send_singlei(nrec_local,receiver,itag)
-        do irec_local = 1,nrec_local
-          ! get global number of that receiver
-          irec = number_receiver_global(irec_local)
-          call send_singlei(irec,receiver,itag)
+      ! WRITE_SEISMOGRAMS_BY_MASTER
+      ! only the master process does the writing of seismograms
 
-          one_seismogram(:,:) = seismograms(:,irec_local,:)
-          call send_cr(one_seismogram,NDIM*seismo_current,receiver,itag)
-        enddo
+      ! opens file for single file output
+      if (SAVE_ALL_SEISMOS_IN_ONE_FILE .and. OUTPUT_SEISMOS_ASCII_TEXT) then
+        if (myrank == 0) then
+          ! create one large file instead of one small file per station to avoid file system overload
+          write(sisname,'(A)') '/all_seismograms'
+
+          if (USE_BINARY_FOR_LARGE_FILE) then
+            if (seismo_offset == 0) then
+              open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='unknown', &
+                   form='unformatted',action='write')
+            else
+              open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='old', &
+                   form='unformatted',position='append',action='write')
+            endif
+          else
+            if (seismo_offset == 0) then
+              open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii',status='unknown', &
+                   form='formatted',action='write')
+            else
+              open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii',status='old', &
+                   form='formatted',position='append',action='write')
+            endif
+          endif
+        endif ! myrank
       endif
-    endif
 
-  endif ! WRITE_SEISMOGRAMS_BY_MASTER
+      ! collects the data from all other processes
+      if (myrank == 0) then
+        ! on the master, gather all the seismograms
+        total_seismos = 0
+
+        ! loop on all the slices
+        do iproc = 0,NPROCTOT_VAL-1
+
+         ! communicates only with processes that contain local receivers (to minimize MPI chatter)
+         if (islice_num_rec_local(iproc) == 0 ) cycle
+
+         ! receive except from proc 0, which is me and therefore I already have this value
+         sender = iproc
+         if (iproc == 0) then
+           ! master is current slice
+           nrec_local_received = nrec_local
+         else
+           ! receives info from slave processes
+           call recv_singlei(nrec_local_received,sender,itag)
+           if (nrec_local_received <= 0) call exit_MPI(myrank,'Error while receiving local number of receivers')
+         endif
+         if (nrec_local_received > 0) then
+           do irec_local = 1,nrec_local_received
+             ! receive except from proc 0, which is myself and therefore I already have these values
+             if (iproc == 0) then
+               ! get global number of that receiver
+               irec = number_receiver_global(irec_local)
+               one_seismogram(:,:) = seismograms(:,irec_local,:)
+             else
+               ! receives info from slave processes
+               call recv_singlei(irec,sender,itag)
+               if (irec < 1 .or. irec > nrec) call exit_MPI(myrank,'Error while receiving global receiver number')
+               call recv_cr(one_seismogram,NDIM*seismo_current,sender,itag)
+             endif
+
+             ! write this seismogram
+             call write_one_seismogram(one_seismogram,irec,irec_local)
+
+             ! counts seismos written
+             total_seismos = total_seismos + 1
+           enddo
+         endif
+        enddo
+
+      else
+        ! on the nodes, send the seismograms to the master
+        receiver = 0
+        ! only sends if this slice contains receiver stations
+        if (nrec_local > 0) then
+          call send_singlei(nrec_local,receiver,itag)
+          do irec_local = 1,nrec_local
+            ! get global number of that receiver
+            irec = number_receiver_global(irec_local)
+            call send_singlei(irec,receiver,itag)
+
+            one_seismogram(:,:) = seismograms(:,irec_local,:)
+            call send_cr(one_seismogram,NDIM*seismo_current,receiver,itag)
+          enddo
+        endif
+      endif
+
+      ! only master process
+      if (myrank == 0) then
+        ! output info
+        write(IMAIN,*)
+        write(IMAIN,*) 'Total number of receivers saved is ',total_seismos,' out of ',nrec
+        write(IMAIN,*)
+
+        if (total_seismos /= nrec) call exit_MPI(myrank,'incorrect total number of receivers saved')
+
+        ! create one large file instead of one small file per station to avoid file system overload
+        if (SAVE_ALL_SEISMOS_IN_ONE_FILE) close(IOUT)
+      endif
+
+    endif ! WRITE_SEISMOGRAMS_BY_MASTER
+
+  endif ! ASCII / SAC format
 
   deallocate(one_seismogram)
 
@@ -482,8 +472,8 @@
          phi = 0.d0
       endif
 
-      cphi=cos(phi*DEGREES_TO_RADIANS)
-      sphi=sin(phi*DEGREES_TO_RADIANS)
+      cphi = cos(phi*DEGREES_TO_RADIANS)
+      sphi = sin(phi*DEGREES_TO_RADIANS)
 
       ! BS BS do the rotation of the components and put result in
       ! new variable seismogram_tmp
@@ -557,25 +547,32 @@
   use constants, only: MAX_STRING_LEN,CUSTOM_REAL,IOUT
 
   use specfem_par, only: NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-    DT,t0,LOCAL_TMP_PATH, &
+    DT,t0,OUTPUT_FILES, &
     seismograms,number_receiver_global,nrec_local, &
-    it
+    it,myrank,WRITE_SEISMOGRAMS_BY_MASTER
 
   implicit none
 
   integer,intent(in) :: it_adj_written
 
   ! local parameters
-  integer :: irec,irec_local
+  integer :: irec,irec_local,ier
   integer :: iorientation,isample
 
   character(len=4) :: chn
   character(len=MAX_STRING_LEN) :: sisname
   character(len=2) :: bic
 
+  ! for adjoint simulations, source locations become the "receivers" for storing seismograms
+
+  ! safety check
+  if (WRITE_SEISMOGRAMS_BY_MASTER) &
+    call exit_MPI(myrank,'Error write_adj_seismograms() needs WRITE_SEISMOGRAMS_BY_MASTER turned off')
+
   ! checks if anything to do
   if (nrec_local <= 0 ) return
 
+  ! get band code
   call band_instrument_code(DT,bic)
 
   do irec_local = 1,nrec_local
@@ -605,10 +602,10 @@
        chn = bic(1:2)//'Z'
       endif
 
-
       ! create the name of the seismogram file for each slice
       ! file name includes the name of the station, the network and the component
-      write(sisname,"(a3,'.',a1,i6.6,'.',a3,'.sem')") '/NT','S',irec,chn
+      ! for example: NT.S000001.MXN.sem.ascii
+      write(sisname,"(a3,'.',a1,i6.6,'.',a3,'.sem.ascii')") '/NT','S',irec,chn
 
       ! save seismograms in text format with no subsampling.
       ! Because we do not subsample the output, this can result in large files
@@ -617,13 +614,16 @@
       ! the results with the source time function
       if (it <= NTSTEP_BETWEEN_OUTPUT_SEISMOS) then
         !open new file
-        open(unit=IOUT,file=LOCAL_TMP_PATH(1:len_trim(LOCAL_TMP_PATH))//sisname(1:len_trim(sisname)), &
-              status='unknown',action='write')
-      else if (it > NTSTEP_BETWEEN_OUTPUT_SEISMOS) then
+        open(unit=IOUT,file=trim(OUTPUT_FILES)//sisname(1:len_trim(sisname)), &
+              status='unknown',action='write',iostat=ier)
+      else
+        ! for it > NTSTEP_BETWEEN_OUTPUT_SEISMOS
         !append to existing file
-        open(unit=IOUT,file=LOCAL_TMP_PATH(1:len_trim(LOCAL_TMP_PATH))//sisname(1:len_trim(sisname)), &
-              status='old',position='append',action='write')
+        open(unit=IOUT,file=trim(OUTPUT_FILES)//sisname(1:len_trim(sisname)), &
+              status='old',position='append',action='write',iostat=ier)
       endif
+      if (ier /= 0) call exit_mpi(myrank,'Error opening file: '//trim(OUTPUT_FILES)//trim(sisname))
+
       ! make sure we never write more than the maximum number of time steps
       ! subtract half duration of the source to make sure travel time is correct
       do isample = it_adj_written+1,min(it,NSTEP)
