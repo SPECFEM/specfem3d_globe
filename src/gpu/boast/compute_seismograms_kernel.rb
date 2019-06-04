@@ -6,15 +6,15 @@ module BOAST
     function_name = "compute_seismograms_kernel"
     v.push nrec_local             = Int("nrec_local",             :dir => :in)
     v.push displ                  = Real("displ",                 :dir => :in,   :dim => [ Dim() ])
-    v.push d_ibool                = Int( "d_ibool",               :dir => :in,   :dim => [ Dim() ])
-    v.push xir                    = Real("xir",                   :dir => :in,   :dim => [ Dim() ])
-    v.push etar                   = Real("etar",                  :dir => :in,   :dim => [ Dim() ])
-    v.push gammar                 = Real("gammar",                :dir => :in,   :dim => [ Dim() ])
+    v.push d_ibool                = Int("d_ibool",                :dir => :in,   :dim => [ Dim() ])
+    v.push hxir                   = Real("hxir",                  :dir => :in,   :dim => [ Dim() ])
+    v.push hetar                  = Real("hetar",                 :dir => :in,   :dim => [ Dim() ])
+    v.push hgammar                = Real("hgammar",               :dir => :in,   :dim => [ Dim() ])
     v.push seismograms            = Real("seismograms",           :dir => :inout,:dim => [ Dim() ])
     v.push nu                     = Real("nu",                    :dir => :in,   :dim => [ Dim() ])
     v.push ispec_selected_rec     = Int("ispec_selected_rec",     :dir => :in,   :dim => [ Dim() ])
     v.push number_receiver_global = Int("number_receiver_global", :dir => :in,   :dim => [ Dim() ])
-    v.push scale_displ            = Real("scale_displ",            :dir => :in)
+    v.push scale_displ            = Real("scale_displ",           :dir => :in)
 
     ngllx        = Int("NGLLX",        :const => n_gllx)
     ngll2        = Int("NGLL2",        :const => n_gll2)
@@ -68,15 +68,15 @@ module BOAST
         print sh_dzd[tx] === 0
 
         print If (tx < ngll3) {
-          print lagrange === xir[irec_local + nrec_local*i]*etar[irec_local + nrec_local*j]*gammar[irec_local + nrec_local*k]
+          print lagrange === hxir[irec_local*ngllx + i] * hetar[irec_local*ngllx + j] * hgammar[irec_local*ngllx + k]
           print iglob ===    d_ibool[INDEX4(ngllx,ngllx,ngllx,i,j,k,ispec)]-1
 
           print sh_dxd[tx] === lagrange * displ[iglob*3 + 0]
           print sh_dyd[tx] === lagrange * displ[iglob*3 + 1]
           print sh_dzd[tx] === lagrange * displ[iglob*3 + 2]
-
         }
         print barrier(:local)
+
         print l === 1
         (1..7).each { |indx1|
           print s === l*2
@@ -89,17 +89,22 @@ module BOAST
           print l ===  l*2
         }
 
-    print If (tx == 0) {
-       print seismograms[irec_local*3 + 0] === scale_displ * ( nu[(irec_local*3)*3 + 0]*sh_dxd[0] + nu[(irec_local*3 + 1)*3 + 0]*sh_dyd[0] + nu[(irec_local*3 + 2)*3 + 0]*sh_dzd[0])
+        print If (tx == 0) {
+          print seismograms[irec_local*3 + 0] === scale_displ * (
+            nu[(irec_local*3)*3 + 0]*sh_dxd[0] + nu[(irec_local*3 + 1)*3 + 0]*sh_dyd[0] + nu[(irec_local*3 + 2)*3 + 0]*sh_dzd[0]
+            )
        }
-    print If (tx == 1) {
-       print seismograms[irec_local*3 + 1] === scale_displ * ( nu[(irec_local*3)*3 + 1]*sh_dxd[0] + nu[(irec_local*3 + 1)*3 + 1]*sh_dyd[0] + nu[(irec_local*3 + 2)*3 + 1]*sh_dzd[0])
+        print If (tx == 1) {
+          print seismograms[irec_local*3 + 1] === scale_displ * (
+            nu[(irec_local*3)*3 + 1]*sh_dxd[0] + nu[(irec_local*3 + 1)*3 + 1]*sh_dyd[0] + nu[(irec_local*3 + 2)*3 + 1]*sh_dzd[0]
+            )
        }
-    print If (tx == 2) {
-       print seismograms[irec_local*3 + 2] === scale_displ * ( nu[(irec_local*3)*3 + 2]*sh_dxd[0] + nu[(irec_local*3 + 1)*3 + 2]*sh_dyd[0] + nu[(irec_local*3 + 2)*3 + 2]*sh_dzd[0])
+        print If (tx == 2) {
+          print seismograms[irec_local*3 + 2] === scale_displ * (
+            nu[(irec_local*3)*3 + 2]*sh_dxd[0] + nu[(irec_local*3 + 1)*3 + 2]*sh_dyd[0] + nu[(irec_local*3 + 2)*3 + 2]*sh_dzd[0]
+            )
        }
-    }
-
+      }
       close p
     else
       raise "Unsupported language!"

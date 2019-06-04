@@ -85,10 +85,10 @@
 #endif
 
 __global__ void write_seismograms_transfer_from_device_kernel(const int * number_receiver_global, const int * ispec_selected_rec, const int * ibool, float * station_seismo_field, const float * d_field, const int nrec_local){
+  int iglob;
   int tx;
   int irec;
   int ispec;
-  int iglob;
   int blockID;
   blockID = blockIdx.x + (blockIdx.y) * (gridDim.x);
   tx = threadIdx.x;

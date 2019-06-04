@@ -165,7 +165,8 @@ kerns.each { |kern|
       f.puts k_s
       if $options[:check] then
         puts "  building kernel"
-        k.build( :LDFLAGS => " -L/usr/local/cuda-5.5.22/lib64", :NVCCFLAGS => "-arch sm_20 -O2 --compiler-options -Wall", :verbose => $options[:verbose] )
+        puts "  !! for checking with `make test_boast_kernels`, it might need BOAST version 2.0.2 !!"
+        k.build(:LDFLAGS => " -L/usr/local/cuda-5.5.22/lib64", :NVCCFLAGS => "-arch sm_20 -O2 --compiler-options -Wall", :verbose => $options[:verbose] )
       end
     elsif lang == :CL then
       s = k.to_s

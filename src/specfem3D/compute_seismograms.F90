@@ -166,17 +166,6 @@
 
   do irec_local = 1,nrec_local
 
-    ! initializes
-    uxd = ZERO
-    uyd = ZERO
-    uzd = ZERO
-    eps_trace = ZERO
-    dxx = ZERO
-    dyy = ZERO
-    dxy = ZERO
-    dxz = ZERO
-    dyz = ZERO
-
     ! gets global number of that receiver
     irec = number_receiver_global(irec_local)
 
@@ -202,6 +191,17 @@
       epsilondev_loc_matrix(4,:,:,:) = epsilondev_xz_crust_mantle(:,:,:,ispec)
       epsilondev_loc_matrix(5,:,:,:) = epsilondev_yz_crust_mantle(:,:,:,ispec)
     endif
+
+    ! initializes
+    uxd = ZERO
+    uyd = ZERO
+    uzd = ZERO
+    eps_trace = ZERO
+    dxx = ZERO
+    dyy = ZERO
+    dxy = ZERO
+    dxz = ZERO
+    dyz = ZERO
 
     ! perform the general interpolation using Lagrange polynomials
     do k = 1,NGLLZ
@@ -239,8 +239,10 @@
     eps_loc(3,1) = dxz
     eps_loc(3,2) = dyz
 
-    eps_loc_new(:,:) = eps_loc(:,:)
-    ! rotate to the local Cartesian coordinates (n-e-z):  eps_new=P*eps*P'
+    ! un-rotated
+    !eps_loc_new(:,:) = eps_loc(:,:)
+    !
+    ! rotate to the local Cartesian coordinates (n-e-z):  eps_new = P*eps*P'
     eps_loc_new(:,:) = matmul(matmul(nu_source(:,:,irec),eps_loc(:,:)), transpose(nu_source(:,:,irec)))
 
     ! distinguish between single and double precision for reals
@@ -250,6 +252,7 @@
     seismograms(4,irec_local,it-it_adj_written) = real(eps_loc_new(1,2), kind=CUSTOM_REAL)
     seismograms(5,irec_local,it-it_adj_written) = real(eps_loc_new(1,3), kind=CUSTOM_REAL)
     seismograms(6,irec_local,it-it_adj_written) = real(eps_loc_new(2,3), kind=CUSTOM_REAL)
+
     seismograms(7:9,irec_local,it-it_adj_written) = real(scale_displ*(nu_source(:,1,irec)*uxd + &
                                                                       nu_source(:,2,irec)*uyd + &
                                                                       nu_source(:,3,irec)*uzd), &
@@ -267,7 +270,8 @@
 
     ! Frechet derivatives of the source
     call compute_adj_source_frechet(displ_s,Mxx(irec),Myy(irec),Mzz(irec), &
-                Mxy(irec),Mxz(irec),Myz(irec),eps_s,eps_m_s,eps_m_l_s, &
+                Mxy(irec),Mxz(irec),Myz(irec), &
+                eps_s,eps_m_s,eps_m_l_s, &
                 hxir,hetar,hgammar, &
                 hpxir,hpetar,hpgammar, &
                 hprime_xx,hprime_yy,hprime_zz, &

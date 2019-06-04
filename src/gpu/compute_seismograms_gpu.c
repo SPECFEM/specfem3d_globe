@@ -71,9 +71,9 @@ void FC_FUNC_ (compute_seismograms_gpu,
     clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (int),    (void *) &mp->nrec_local));
     clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_displ_crust_mantle.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ibool_crust_mantle.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_xir.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_etar.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_gammar.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_hxir.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_hetar.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_hgammar.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_seismograms.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_nu.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ispec_selected_rec.ocl));
@@ -117,7 +117,7 @@ void FC_FUNC_ (compute_seismograms_gpu,
     compute_seismograms_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->nrec_local,
                                                                       mp->d_displ_crust_mantle.cuda,
                                                                       mp->d_ibool_crust_mantle.cuda,
-                                                                      mp->d_xir.cuda,mp->d_etar.cuda,mp->d_gammar.cuda,
+                                                                      mp->d_hxir.cuda,mp->d_hetar.cuda,mp->d_hgammar.cuda,
                                                                       mp->d_seismograms.cuda,
                                                                       mp->d_nu.cuda,
                                                                       mp->d_ispec_selected_rec.cuda,

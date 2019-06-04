@@ -124,8 +124,7 @@ void FC_FUNC_ (compute_add_sources_backward_gpu,
                                                   double *h_stf_pre_compute) {}
 
 void FC_FUNC_ (compute_add_sources_adjoint_gpu,
-               COMPUTE_ADD_SOURCES_ADJOINT_GPU) (long *Mesh_pointer_f,
-                                                 int *h_nrec) {}
+               COMPUTE_ADD_SOURCES_ADJOINT_GPU) (long *Mesh_pointer_f) {}
 
 void FC_FUNC_(transfer_adj_to_device,
               TRANSFER_ADJ_TO_DEVICE)(long* Mesh_pointer_f,
@@ -340,7 +339,7 @@ void FC_FUNC_ (prepare_constants_device,
                                           int *NSOURCES, int *nsources_local,
                                           realw *h_sourcearrays,
                                           int *h_islice_selected_source, int *h_ispec_selected_source,
-                                          int *nrec, int *nrec_local, int *nadj_rec_local,
+                                          int *nrec, int *nrec_local,
                                           int *h_number_receiver_global,
                                           int *h_islice_selected_rec, int *h_ispec_selected_rec,
                                           int *NSPEC_CRUST_MANTLE, int *NGLOB_CRUST_MANTLE,
@@ -360,9 +359,17 @@ void FC_FUNC_ (prepare_constants_device,
                                           int *SAVE_BOUNDARY_MESH_f,
                                           int *USE_MESH_COLORING_GPU_f,
                                           int *ANISOTROPIC_KL_f, int *APPROXIMATE_HESS_KL_f,
-                                          realw *deltat_f, realw *b_deltat_f,
+                                          realw *deltat_f,
                                           int *GPU_ASYNC_COPY_f,
-                                          double * h_xir,double * h_etar,double * h_gammar,double * h_nu ) {}
+                                          double * h_hxir_store,double * h_hetar_store,double * h_hgammar_store,double * h_nu ) {}
+
+void FC_FUNC_ (prepare_constants_adjoint_device,
+               PREPARE_CONSTANTS_ADJOINT_DEVICE) (long *Mesh_pointer_f,
+                                                  realw *b_deltat_f,
+                                                  int *nadj_rec_local, int *h_number_adjsources_global,
+                                                  double * h_hxir_adjstore,
+                                                  double * h_hetar_adjstore,
+                                                  double * h_hgammar_adjstore) {}
 
 void FC_FUNC_ (prepare_fields_rotation_device,
                PREPARE_FIELDS_ROTATION_DEVICE) (long *Mesh_pointer_f,

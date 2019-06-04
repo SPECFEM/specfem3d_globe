@@ -84,7 +84,7 @@
 #define BLOCKSIZE_TRANSFER 256
 #endif
 
-__global__ void compute_seismograms_kernel(const int nrec_local, const float * displ, const int * d_ibool, const float * xir, const float * etar, const float * gammar, float * seismograms, const float * nu, const int * ispec_selected_rec, const int * number_receiver_global, const float scale_displ){
+__global__ void compute_seismograms_kernel(const int nrec_local, const float * displ, const int * d_ibool, const float * hxir, const float * hetar, const float * hgammar, float * seismograms, const float * nu, const int * ispec_selected_rec, const int * number_receiver_global, const float scale_displ){
   int ispec;
   int iglob;
   int irec_local;
@@ -111,7 +111,7 @@ __global__ void compute_seismograms_kernel(const int nrec_local, const float * d
     sh_dyd[tx] = 0;
     sh_dzd[tx] = 0;
     if (tx < NGLL3) {
-      lagrange = ((xir[irec_local + (nrec_local) * (i)]) * (etar[irec_local + (nrec_local) * (j)])) * (gammar[irec_local + (nrec_local) * (k)]);
+      lagrange = ((hxir[(irec_local) * (NGLLX) + i]) * (hetar[(irec_local) * (NGLLX) + j])) * (hgammar[(irec_local) * (NGLLX) + k]);
       iglob = d_ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)] - (1);
       sh_dxd[tx] = (lagrange) * (displ[(iglob) * (3) + 0]);
       sh_dyd[tx] = (lagrange) * (displ[(iglob) * (3) + 1]);

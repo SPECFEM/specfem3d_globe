@@ -95,7 +95,7 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #define BLOCKSIZE_TRANSFER 256\n\
 #endif\n\
 \n\
-__kernel void compute_seismograms_kernel(const int nrec_local, const __global float * displ, const __global int * d_ibool, const __global float * xir, const __global float * etar, const __global float * gammar, __global float * seismograms, const __global float * nu, const __global int * ispec_selected_rec, const __global int * number_receiver_global, const float scale_displ){\n\
+__kernel void compute_seismograms_kernel(const int nrec_local, const __global float * displ, const __global int * d_ibool, const __global float * hxir, const __global float * hetar, const __global float * hgammar, __global float * seismograms, const __global float * nu, const __global int * ispec_selected_rec, const __global int * number_receiver_global, const float scale_displ){\n\
   int ispec;\n\
   int iglob;\n\
   int irec_local;\n\
@@ -122,7 +122,7 @@ __kernel void compute_seismograms_kernel(const int nrec_local, const __global fl
     sh_dyd[tx] = 0;\n\
     sh_dzd[tx] = 0;\n\
     if (tx < NGLL3) {\n\
-      lagrange = ((xir[irec_local + (nrec_local) * (i)]) * (etar[irec_local + (nrec_local) * (j)])) * (gammar[irec_local + (nrec_local) * (k)]);\n\
+      lagrange = ((hxir[(irec_local) * (NGLLX) + i]) * (hetar[(irec_local) * (NGLLX) + j])) * (hgammar[(irec_local) * (NGLLX) + k]);\n\
       iglob = d_ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)] - (1);\n\
       sh_dxd[tx] = (lagrange) * (displ[(iglob) * (3) + 0]);\n\
       sh_dyd[tx] = (lagrange) * (displ[(iglob) * (3) + 1]);\n\

@@ -58,6 +58,7 @@ void write_seismograms_transfer_from_device (Mesh *mp,
     size_t global_work_size[2];
     size_t local_work_size[2];
     cl_uint idx = 0;
+
     cl_event *copy_evt = NULL;
     cl_uint num_evt = 0;
 
@@ -152,9 +153,9 @@ void write_seismograms_transfer_from_device (Mesh *mp,
 
       for (i = 0; i < NGLL3; i++) {
         iglob = ibool[i+NGLL3*ispec] - 1;
-        h_field[0+3*iglob] = mp->h_station_seismo_field[0+3*i+irec_local*NGLL3*3];
-        h_field[1+3*iglob] = mp->h_station_seismo_field[1+3*i+irec_local*NGLL3*3];
-        h_field[2+3*iglob] = mp->h_station_seismo_field[2+3*i+irec_local*NGLL3*3];
+        h_field[0+3*iglob] = mp->h_station_seismo_field[0+3*(i+irec_local*NGLL3)];
+        h_field[1+3*iglob] = mp->h_station_seismo_field[1+3*(i+irec_local*NGLL3)];
+        h_field[2+3*iglob] = mp->h_station_seismo_field[2+3*(i+irec_local*NGLL3)];
       }
     }
   }
@@ -175,7 +176,7 @@ void write_seismograms_transfer_strain_from_device (Mesh *mp,
   TRACE ("write_seismograms_transfer_strain_from_device");
 
   int irec_local, irec;
-  int ispec, iglob, i;
+  int ispec, i;
 
   //checks if anything to do
   if (mp->nrec_local == 0) return;
@@ -210,6 +211,11 @@ void write_seismograms_transfer_strain_from_device (Mesh *mp,
 #endif
 #ifdef USE_CUDA
   if (run_cuda) {
+    // waits for previous copy call to be finished
+    if (GPU_ASYNC_COPY) {
+      cudaStreamSynchronize(mp->copy_stream);
+    }
+
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize,1,1);
 
@@ -230,9 +236,13 @@ void write_seismograms_transfer_strain_from_device (Mesh *mp,
   for (irec_local = 0; irec_local < mp->nrec_local; irec_local++) {
     irec = number_receiver_global[irec_local] - 1;
     ispec = h_ispec_selected[irec] - 1;
+
+    //debug
+    //printf("write_seismograms_transfer_strain_from_device: %d %d %d \n",irec_local,irec+1,ispec+1);
+
     for (i = 0; i < NGLL3; i++) {
-      iglob = ibool[i+NGLL3*ispec] - 1;
-      h_field[iglob] = mp->h_station_strain_field[i+irec_local*NGLL3];
+      // h_field has array size (NGLLX,NGLLY,NGLLZ,NSPEC), strain field (NGLLX,NGLLY,NGLLZ,nrec_local)
+      h_field[i+ispec*NGLL3] = mp->h_station_strain_field[i+irec_local*NGLL3];
     }
   }
 

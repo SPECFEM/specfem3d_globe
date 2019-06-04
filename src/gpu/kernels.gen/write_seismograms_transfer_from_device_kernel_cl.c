@@ -96,10 +96,10 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #endif\n\
 \n\
 __kernel void write_seismograms_transfer_from_device_kernel(const __global int * number_receiver_global, const __global int * ispec_selected_rec, const __global int * ibool, __global float * station_seismo_field, const __global float * d_field, const int nrec_local){\n\
+  int iglob;\n\
   int tx;\n\
   int irec;\n\
   int ispec;\n\
-  int iglob;\n\
   int blockID;\n\
   blockID = get_group_id(0) + (get_group_id(1)) * (get_num_groups(0));\n\
   tx = get_local_id(0);\n\

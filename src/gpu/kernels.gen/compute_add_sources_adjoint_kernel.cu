@@ -84,7 +84,7 @@
 #define BLOCKSIZE_TRANSFER 256
 #endif
 
-__global__ void compute_add_sources_adjoint_kernel(float * accel, const int nrec, const float * source_adjoint, const float * xir, const float * etar, const float * gammar, const int * ibool, const int * ispec_selected_rec, const int * pre_computed_irec, const int nadj_rec_local){
+__global__ void compute_add_sources_adjoint_kernel(float * accel, const float * source_adjoint, const float * xir, const float * etar, const float * gammar, const int * ibool, const int * ispec_selected_rec, const int * number_adjsources_global, const int nadj_rec_local){
   int ispec;
   int iglob;
   int irec_local;
@@ -94,14 +94,14 @@ __global__ void compute_add_sources_adjoint_kernel(float * accel, const int nrec
   int k;
   irec_local = blockIdx.x + (gridDim.x) * (blockIdx.y);
   if (irec_local < nadj_rec_local) {
-    irec = pre_computed_irec[irec_local];
+    irec = number_adjsources_global[irec_local] - (1);
     ispec = ispec_selected_rec[irec] - (1);
     i = threadIdx.x;
     j = threadIdx.y;
     k = threadIdx.z;
     iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)] - (1);
-    atomicAdd(accel + (iglob) * (3) + 0, (((source_adjoint[INDEX2(NDIM, 0, irec_local)]) * (xir[INDEX2(nadj_rec_local, irec_local, i)])) * (etar[INDEX2(nadj_rec_local, irec_local, j)])) * (gammar[INDEX2(nadj_rec_local, irec_local, k)]));
-    atomicAdd(accel + (iglob) * (3) + 1, (((source_adjoint[INDEX2(NDIM, 1, irec_local)]) * (xir[INDEX2(nadj_rec_local, irec_local, i)])) * (etar[INDEX2(nadj_rec_local, irec_local, j)])) * (gammar[INDEX2(nadj_rec_local, irec_local, k)]));
-    atomicAdd(accel + (iglob) * (3) + 2, (((source_adjoint[INDEX2(NDIM, 2, irec_local)]) * (xir[INDEX2(nadj_rec_local, irec_local, i)])) * (etar[INDEX2(nadj_rec_local, irec_local, j)])) * (gammar[INDEX2(nadj_rec_local, irec_local, k)]));
+    atomicAdd(accel + (iglob) * (3) + 0, (((source_adjoint[INDEX2(NDIM, 0, irec_local)]) * (xir[INDEX2(NGLLX, i, irec_local)])) * (etar[INDEX2(NGLLX, j, irec_local)])) * (gammar[INDEX2(NGLLX, k, irec_local)]));
+    atomicAdd(accel + (iglob) * (3) + 1, (((source_adjoint[INDEX2(NDIM, 1, irec_local)]) * (xir[INDEX2(NGLLX, i, irec_local)])) * (etar[INDEX2(NGLLX, j, irec_local)])) * (gammar[INDEX2(NGLLX, k, irec_local)]));
+    atomicAdd(accel + (iglob) * (3) + 2, (((source_adjoint[INDEX2(NDIM, 2, irec_local)]) * (xir[INDEX2(NGLLX, i, irec_local)])) * (etar[INDEX2(NGLLX, j, irec_local)])) * (gammar[INDEX2(NGLLX, k, irec_local)]));
   }
 }

@@ -77,7 +77,6 @@ module BOAST
           print veloc[id] === veloc[id] + deltatover2*accel[id]
         end
       }
-
       close p
     end
     pop_env( :array_start )

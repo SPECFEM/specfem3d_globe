@@ -1317,6 +1317,9 @@
 
     ! stores source arrays
     call setup_sources_receivers_srcarr()
+  else
+    ! dummy array
+    allocate(sourcearrays(1,1,1,1,1))
   endif
 
   ! adjoint source arrays
@@ -1338,7 +1341,7 @@
       if (ier /= 0 ) then
         print *,'Error rank ',myrank,': allocating source_adjoint failed! Please check your memory usage...'
         print *,'  failed number of local adjoint sources = ',nadj_rec_local,' steps = ',NTSTEP_BETWEEN_READ_ADJSRC
-        call exit_MPI(myrank,'Error allocating adjoint sourcearrays')
+        call exit_MPI(myrank,'Error allocating adjoint source_adjoint')
       endif
 
       ! additional buffer for asynchronous file i/o
@@ -1775,6 +1778,12 @@
         hetar_adjstore => hetar_store
         hgammar_adjstore => hgammar_store
       endif
+    else
+      ! dummy arrays
+      number_adjsources_global => number_receiver_global
+      hxir_adjstore => hxir_store
+      hetar_adjstore => hetar_store
+      hgammar_adjstore => hgammar_store
     endif ! nadj_rec_local
   endif
 

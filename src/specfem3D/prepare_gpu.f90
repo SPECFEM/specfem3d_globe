@@ -73,11 +73,9 @@
   call prepare_constants_device(Mesh_pointer,myrank,NGLLX, &
                                 hprime_xx,hprimewgll_xx, &
                                 wgllwgll_xy,wgllwgll_xz,wgllwgll_yz, &
-                                NSOURCES, nsources_local, &
-                                sourcearrays, &
+                                NSOURCES, nsources_local, sourcearrays, &
                                 islice_selected_source,ispec_selected_source, &
-                                nrec, nrec_local, nadj_rec_local, &
-                                number_receiver_global, &
+                                nrec, nrec_local, number_receiver_global, &
                                 islice_selected_rec,ispec_selected_rec, &
                                 NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
                                 NSPEC_CRUST_MANTLE_STRAIN_ONLY, &
@@ -96,10 +94,18 @@
                                 SAVE_BOUNDARY_MESH, &
                                 USE_MESH_COLORING_GPU, &
                                 ANISOTROPIC_KL,APPROXIMATE_HESS_KL, &
-                                deltat,b_deltat, &
+                                deltat, &
                                 GPU_ASYNC_COPY, &
                                 hxir_store,hetar_store,hgammar_store,nu)
+
+  if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
+    ! adjoint/kernel fields
+    call prepare_constants_adjoint_device(Mesh_pointer,b_deltat, &
+                                          nadj_rec_local,number_adjsources_global, &
+                                          hxir_adjstore,hetar_adjstore,hgammar_adjstore)
+  endif
   call synchronize_all()
+
 
   ! prepares rotation arrays
   if (ROTATION_VAL) then

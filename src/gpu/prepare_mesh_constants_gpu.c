@@ -79,7 +79,7 @@ void FC_FUNC_ (prepare_constants_device,
                                           int *NSOURCES, int *nsources_local,
                                           realw *h_sourcearrays,
                                           int *h_islice_selected_source, int *h_ispec_selected_source,
-                                          int *nrec, int *nrec_local, int *nadj_rec_local,
+                                          int *nrec, int *nrec_local,
                                           int *h_number_receiver_global,
                                           int *h_islice_selected_rec, int *h_ispec_selected_rec,
                                           int *NSPEC_CRUST_MANTLE, int *NGLOB_CRUST_MANTLE,
@@ -99,9 +99,9 @@ void FC_FUNC_ (prepare_constants_device,
                                           int *SAVE_BOUNDARY_MESH_f,
                                           int *USE_MESH_COLORING_GPU_f,
                                           int *ANISOTROPIC_KL_f, int *APPROXIMATE_HESS_KL_f,
-                                          realw *deltat_f, realw *b_deltat_f,
+                                          realw *deltat_f,
                                           int *GPU_ASYNC_COPY_f,
-                                          double * h_xir,double * h_etar,double * h_gammar,double * h_nu ) {
+                                          double * h_hxir_store,double * h_hetar_store,double * h_hgammar_store,double * h_nu ) {
 
   TRACE ("prepare_constants_device");
 
@@ -297,41 +297,39 @@ void FC_FUNC_ (prepare_constants_device,
 
   // receiver stations
   // note that:   size (number_receiver_global) = nrec_local
-  //                   size (ispec_selected_rec) = nrec
+  //              size (ispec_selected_rec) = nrec
   // number of receiver located in this partition
-
   mp->nrec_local = *nrec_local;
   if (mp->nrec_local > 0) {
     gpuCreateCopy_todevice_int (&mp->d_number_receiver_global, h_number_receiver_global, mp->nrec_local);
     // for seismograms
     if (mp->simulation_type == 1 || mp->simulation_type == 3 ) {
-
+      // forward/kernel simulations
       realw * xir    = (realw *)malloc(NGLLX * mp->nrec_local*sizeof(realw));
       realw * etar   = (realw *)malloc(NGLLX * mp->nrec_local*sizeof(realw));
       realw * gammar = (realw *)malloc(NGLLX * mp->nrec_local*sizeof(realw));
-      int i;
-      for (i=0;i<NGLLX * mp->nrec_local;i++){
-        xir[i]    = (realw)h_xir[i];
-        etar[i]   = (realw)h_etar[i];
-        gammar[i] = (realw)h_gammar[i];
+      // converts to double to realw arrays, assumes NGLLX == NGLLY == NGLLZ
+      for (int i=0;i<NGLLX * mp->nrec_local;i++){
+        xir[i]    = (realw)h_hxir_store[i];
+        etar[i]   = (realw)h_hetar_store[i];
+        gammar[i] = (realw)h_hgammar_store[i];
       }
-      gpuCreateCopy_todevice_realw (&mp->d_xir   , xir     , NGLLX * mp->nrec_local);
-      gpuCreateCopy_todevice_realw (&mp->d_etar  , etar    , NGLLX * mp->nrec_local);
-      gpuCreateCopy_todevice_realw (&mp->d_gammar, gammar  , NGLLX * mp->nrec_local);
+      gpuCreateCopy_todevice_realw (&mp->d_hxir   , xir     , NGLLX * mp->nrec_local);
+      gpuCreateCopy_todevice_realw (&mp->d_hetar  , etar    , NGLLX * mp->nrec_local);
+      gpuCreateCopy_todevice_realw (&mp->d_hgammar, gammar  , NGLLX * mp->nrec_local);
       free(xir);
       free(etar);
       free(gammar);
 
+      // local seismograms
       gpuMalloc_realw (&mp->d_seismograms, NDIM * mp->nrec_local);
 
+      // orientation
       float* nu;
-      nu=(float*)malloc(9 * sizeof(float) * mp->nrec_local);
-      int irec_loc=0;
-
-      for (i=0;i < (*nrec);i++)
-      {
-        if ( mp->myrank == h_islice_selected_rec[i])
-        {
+      nu = (float*) malloc(9 * sizeof(float) * mp->nrec_local);
+      int irec_loc = 0;
+      for (int i=0;i < (*nrec);i++) {
+        if ( mp->myrank == h_islice_selected_rec[i]) {
          int j;
          for (j=0;j < 9;j++) nu[j + 9*irec_loc] = (float)h_nu[j + 9*i];
          irec_loc = irec_loc + 1;
@@ -341,7 +339,8 @@ void FC_FUNC_ (prepare_constants_device,
       free(nu);
 
     } else if (mp->simulation_type == 2) {
-
+      // adjoint simulations
+      // seismograms will still be computed on CPU, no need for interpolators hxi,heta,hgamma
       // for transferring values from GPU to CPU
       if (GPU_ASYNC_COPY) {
 #ifdef USE_OPENCL
@@ -367,70 +366,12 @@ void FC_FUNC_ (prepare_constants_device,
       if (mp->h_station_strain_field == NULL) { exit_on_error("h_station_strain_field not allocated \n"); }
     }
   }
-
   gpuCreateCopy_todevice_int (&mp->d_ispec_selected_rec, h_ispec_selected_rec, *nrec);
-
-  // receiver adjoint source arrays only used for noise and adjoint simulations
-  // adjoint source arrays
-
-  mp->nadj_rec_local = *nadj_rec_local;
-  if (mp->nadj_rec_local > 0) {
-    // adjoint simulations
-    // checks simulation flag
-    if (mp->simulation_type != 2 && mp->simulation_type != 3 )
-      exit_on_error ("prepare_constants_device: nadj_rec_local invalid with simulation type\n");
-
-    // prepares local irec array:
-    gpuMalloc_int (&mp->d_pre_computed_irec, mp->nadj_rec_local);
-
-    // the irec_local variable needs to be precomputed (as
-    // h_pre_comp..), because normally it is in the loop updating accel,
-    // and due to how it's incremented, it cannot be parallelized
-    int *h_pre_computed_irec = (int *) malloc (mp->nadj_rec_local * sizeof (int));
-    if (h_pre_computed_irec == NULL) exit_on_error ("h_pre_computed_irec not allocated\n");
-
-    // sets up local irec array
-    int irec_local = 0;
-    int irec;
-    for (irec = 0; irec < *nrec; irec++) {
-      if (mp->myrank == h_islice_selected_rec[irec]) {
-        irec_local++;
-        h_pre_computed_irec[irec_local-1] = irec;
-      }
-    }
-    if (irec_local != mp->nadj_rec_local) exit_on_error ("prepare_constants_device: irec_local not equal to nadj_rec_local\n");
-
-    // copies values onto GPU
-    gpuCopy_todevice_int (&mp->d_pre_computed_irec, h_pre_computed_irec, mp->nadj_rec_local);
-
-    free (h_pre_computed_irec);
-
-    // temporary array to prepare extracted source array values
-    if (GPU_ASYNC_COPY) {
-#ifdef USE_OPENCL
-      if (run_opencl) {
-        ALLOC_PINNED_BUFFER_OCL(source_adjoint, mp->nadj_rec_local * NDIM * sizeof(realw));
-      }
-#endif
-#ifdef USE_CUDA
-      if (run_cuda) {
-        // note: Allocate pinned buffers otherwise cudaMemcpyAsync() will behave like cudaMemcpy(), i.e. synchronously.
-        print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_source_adjoint),
-                                               (mp->nadj_rec_local)*NDIM*sizeof(realw)),6011);
-      }
-#endif
-    } else {
-      mp->h_source_adjoint = (realw *) malloc (mp->nadj_rec_local * NDIM * sizeof (realw));
-      if (mp->h_source_adjoint == NULL) exit_on_error ("h_source_adjoint_slice not allocated\n");
-    }
-    gpuMalloc_realw (&mp->d_source_adjoint, mp->nadj_rec_local * NDIM );
-  }
+  mp->nadj_rec_local = 0;
 
   // for rotation and new attenuation
   mp->deltat = *deltat_f;
-  if (mp->simulation_type == 3) {
-    mp->b_deltat = *b_deltat_f;
-  }
+  mp->b_deltat = 0.f;
 
   // initializes for rotational effects
   mp->two_omega_earth = 0.f;
@@ -466,6 +407,95 @@ void FC_FUNC_ (prepare_constants_device,
   GPU_ERROR_CHECKING ("prepare_constants_device");
 }
 
+
+/*----------------------------------------------------------------------------------------------- */
+
+
+extern EXTERN_LANG
+void FC_FUNC_ (prepare_constants_adjoint_device,
+               PREPARE_CONSTANTS_ADJOINT_DEVICE) (long *Mesh_pointer_f,
+                                                  realw *b_deltat_f,
+                                                  int *nadj_rec_local, int *h_number_adjsources_global,
+                                                  double * h_hxir_adjstore,
+                                                  double * h_hetar_adjstore,
+                                                  double * h_hgammar_adjstore) {
+
+  TRACE ("prepare_constants_adjoint_device");
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
+
+  // safety checks
+  if (mp->simulation_type != 2 && mp->simulation_type != 3)
+    exit_on_error ("prepare_constants_adjoint_device: invalid simulation type\n");
+
+  // backward run
+  if (mp->simulation_type == 3) {
+    mp->b_deltat = *b_deltat_f;
+  }
+
+  // receiver adjoint source arrays only (used for noise and adjoint simulations)
+  // adjoint source arrays
+  mp->nadj_rec_local = *nadj_rec_local;
+  if (mp->nadj_rec_local > 0) {
+    // adjoint simulations
+    if (mp->simulation_type == 2){
+      gpuCreateCopy_todevice_int (&mp->d_number_adjsources_global, h_number_adjsources_global, mp->nadj_rec_local);
+    }else{
+      mp->d_number_adjsources_global = gpuTakeRef(mp->d_number_receiver_global);
+    }
+
+    if (mp->simulation_type == 2){
+      // adjoint simulations
+      // hxir for receivers and hxir_adj for adjoint source might be different
+      realw * xir_adj    = (realw *)malloc(NGLLX * mp->nadj_rec_local*sizeof(realw));
+      realw * etar_adj   = (realw *)malloc(NGLLX * mp->nadj_rec_local*sizeof(realw));
+      realw * gammar_adj = (realw *)malloc(NGLLX * mp->nadj_rec_local*sizeof(realw));
+      // converts to double to realw arrays, assumes NGLLX == NGLLY == NGLLZ
+      for (int i=0;i<NGLLX * mp->nadj_rec_local;i++){
+        xir_adj[i]    = (realw)h_hxir_adjstore[i];
+        etar_adj[i]   = (realw)h_hetar_adjstore[i];
+        gammar_adj[i] = (realw)h_hgammar_adjstore[i];
+      }
+      gpuCreateCopy_todevice_realw (&mp->d_hxir_adj   , xir_adj     , NGLLX * mp->nadj_rec_local);
+      gpuCreateCopy_todevice_realw (&mp->d_hetar_adj  , etar_adj    , NGLLX * mp->nadj_rec_local);
+      gpuCreateCopy_todevice_realw (&mp->d_hgammar_adj, gammar_adj  , NGLLX * mp->nadj_rec_local);
+      free(xir_adj);
+      free(etar_adj);
+      free(gammar_adj);
+    }else{
+      // kernel simulation
+      // adjoint source arrays and receiver arrays are the same, no need to allocate new arrays, just point to the existing ones
+      mp->d_hxir_adj = gpuTakeRef(mp->d_hxir);
+      mp->d_hetar_adj = gpuTakeRef(mp->d_hetar);
+      mp->d_hgammar_adj = gpuTakeRef(mp->d_hgammar);
+    }
+
+    // temporary array to prepare extracted source array values
+    if (GPU_ASYNC_COPY) {
+#ifdef USE_OPENCL
+      if (run_opencl) {
+        ALLOC_PINNED_BUFFER_OCL(source_adjoint, mp->nadj_rec_local * NDIM * sizeof(realw));
+      }
+#endif
+#ifdef USE_CUDA
+      if (run_cuda) {
+        // note: Allocate pinned buffers otherwise cudaMemcpyAsync() will behave like cudaMemcpy(), i.e. synchronously.
+        print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_source_adjoint),
+                                               (mp->nadj_rec_local)*NDIM*sizeof(realw)),6011);
+      }
+#endif
+    } else {
+      mp->h_source_adjoint = (realw *) malloc (mp->nadj_rec_local * NDIM * sizeof (realw));
+      if (mp->h_source_adjoint == NULL) exit_on_error ("h_source_adjoint_slice not allocated\n");
+    }
+    gpuMalloc_realw (&mp->d_source_adjoint, mp->nadj_rec_local * NDIM );
+  }
+
+  // synchronizes gpu calls
+  gpuSynchronize();
+
+  GPU_ERROR_CHECKING ("prepare_constants_adjoint_device");
+}
+
 /*----------------------------------------------------------------------------------------------- */
 // ROTATION simulations
 /*----------------------------------------------------------------------------------------------- */
@@ -486,7 +516,6 @@ void FC_FUNC_ (prepare_fields_rotation_device,
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // arrays only needed when rotation is required
-
   if (! mp->rotation) {exit_on_error("prepare_fields_rotation_device: rotation flag not properly initialized");}
 
   // checks array size
@@ -2683,9 +2712,9 @@ void FC_FUNC_ (prepare_cleanup_device,
   if (mp->nrec_local > 0) {
     gpuFree (&mp->d_number_receiver_global);
     if (mp->simulation_type == 1 || mp->simulation_type == 3 ) {
-      gpuFree (&mp->d_xir);
-      gpuFree (&mp->d_etar);
-      gpuFree (&mp->d_gammar);
+      gpuFree (&mp->d_hxir);
+      gpuFree (&mp->d_hetar);
+      gpuFree (&mp->d_hgammar);
       gpuFree (&mp->d_nu);
       gpuFree (&mp->d_seismograms);
     }else {
@@ -2696,7 +2725,12 @@ void FC_FUNC_ (prepare_cleanup_device,
   gpuFree (&mp->d_ispec_selected_rec);
   if (mp->nadj_rec_local > 0) {
     gpuFree (&mp->d_source_adjoint);
-    gpuFree (&mp->d_pre_computed_irec);
+    if (mp->simulation_type == 2){
+      gpuFree (&mp->d_number_adjsources_global);
+      gpuFree (&mp->d_hxir_adj);
+      gpuFree (&mp->d_hetar_adj);
+      gpuFree (&mp->d_hgammar_adj);
+    }
   }
 
   gpuFree (&mp->d_norm_max);

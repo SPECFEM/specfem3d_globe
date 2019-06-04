@@ -177,8 +177,7 @@ void FC_FUNC_ (compute_add_sources_backward_gpu,
 
 extern EXTERN_LANG
 void FC_FUNC_ (compute_add_sources_adjoint_gpu,
-               COMPUTE_ADD_SOURCES_ADJOINT_GPU) (long *Mesh_pointer_f,
-                                                 int *h_nrec) {
+               COMPUTE_ADD_SOURCES_ADJOINT_GPU) (long *Mesh_pointer_f) {
 
   // adds adjoint sources
   // note: call this routine after transfer_adj_to_device**() to have correct adjoint sourcearrays in array d_source_adjoint
@@ -190,9 +189,6 @@ void FC_FUNC_ (compute_add_sources_adjoint_gpu,
 
   // check if anything to do
   if (mp->nadj_rec_local == 0 ) return;
-
-  // total number of receivers/adjoint sources
-  int nrec = *h_nrec;
 
   int num_blocks_x, num_blocks_y;
   get_blocks_xy (mp->nadj_rec_local, &num_blocks_x, &num_blocks_y);
@@ -218,14 +214,13 @@ void FC_FUNC_ (compute_add_sources_adjoint_gpu,
     }
 
     clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_adjoint_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_accel_crust_mantle.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_adjoint_kernel, idx++, sizeof (int), (void *) &nrec));
     clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_adjoint_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_source_adjoint.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_adjoint_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_xir.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_adjoint_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_etar.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_adjoint_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_gammar.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_adjoint_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_hxir_adj.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_adjoint_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_hetar_adj.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_adjoint_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_hgammar_adj.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_adjoint_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ibool_crust_mantle.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_adjoint_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ispec_selected_rec.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_adjoint_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_pre_computed_irec.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_adjoint_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_number_adjsources_global.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_adjoint_kernel, idx++, sizeof (int), (void *) &mp->nadj_rec_local));
 
     local_work_size[0] = NGLLX;
@@ -259,14 +254,13 @@ void FC_FUNC_ (compute_add_sources_adjoint_gpu,
     dim3 threads(NGLLX,NGLLX,NGLLX);
 
     compute_add_sources_adjoint_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_accel_crust_mantle.cuda,
-                                                                              nrec,
                                                                               mp->d_source_adjoint.cuda,
-                                                                              mp->d_xir.cuda,
-                                                                              mp->d_etar.cuda,
-                                                                              mp->d_gammar.cuda,
+                                                                              mp->d_hxir_adj.cuda,
+                                                                              mp->d_hetar_adj.cuda,
+                                                                              mp->d_hgammar_adj.cuda,
                                                                               mp->d_ibool_crust_mantle.cuda,
                                                                               mp->d_ispec_selected_rec.cuda,
-                                                                              mp->d_pre_computed_irec.cuda,
+                                                                              mp->d_number_adjsources_global.cuda,
                                                                               mp->nadj_rec_local);
   }
 #endif

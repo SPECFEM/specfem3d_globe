@@ -300,7 +300,7 @@
     endif
 
     ! adds adjoint source contributions
-    call compute_add_sources_adjoint_gpu(Mesh_pointer,nrec)
+    call compute_add_sources_adjoint_gpu(Mesh_pointer)
 
     if (GPU_ASYNC_COPY) then
       ! starts asynchronously transfer of next adjoint arrays to GPU device memory
@@ -420,8 +420,7 @@
             do i = 1,NGLLX
               iglob = ibool_crust_mantle(i,j,k,ispec)
 
-              b_accel_crust_mantle(:,iglob) = b_accel_crust_mantle(:,iglob) &
-                + sourcearrays(:,i,j,k,isource) * stf_used
+              b_accel_crust_mantle(:,iglob) = b_accel_crust_mantle(:,iglob) + sourcearrays(:,i,j,k,isource) * stf_used
 
             enddo
           enddo
