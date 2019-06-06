@@ -512,11 +512,11 @@
 
 
   ! for future usage:
-  ! cut at a significant number of digits (2 digits)
+  ! cut at a significant number of digits (e.g., 2 digits)
   ! in steps of 1/2 digits
   ! example: 0.0734815 -> 0.0730
   !          0.07371   -> 0.0735
-  !call get_timestep_limit_significant_digit(DT)
+  call get_timestep_limit_significant_digit(DT)
 
   end subroutine get_timestep_and_layers
 
@@ -527,9 +527,12 @@
 
   subroutine get_timestep_limit_significant_digit(time_step)
 
-  ! cut at a significant number of digits (2 digits) using 1/2 rounding
+  ! cut at a significant number of digits (e.g., 2 digits) using 1/2 rounding
   ! example: 0.0734815 -> 0.0730
   !      and 0.0737777 -> 0.0735
+  !
+  ! also works with different magnitudes of time step sizes (0.118, 0.00523, ..). always cut of after 2 significant digits:
+  ! example: 0.118749999 -> 0.115
 
   implicit none
 
