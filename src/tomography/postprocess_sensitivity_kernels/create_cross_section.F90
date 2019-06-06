@@ -116,6 +116,7 @@
 
   integer :: i,j,k,iglob,ispec,ier,iflag
   integer :: nspec, nglob
+  integer(kind=8) :: arraysize
 
   ! model
   character(len=16) :: fname
@@ -338,10 +339,17 @@
     print *,'output directory: ',trim(output_dir)
     print *
     print *,'array size:'
-    print *,'  ibool   = ',NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE*NPROC_ETA_VAL*NPROC_XI_VAL*dble(SIZE_INTEGER)/1024./1024.,'MB'
-    print *,'  x,y,z   = ',NGLOB_CRUST_MANTLE*NPROC_ETA_VAL*NPROC_XI_VAL*dble(CUSTOM_REAL)/1024./1024.,'MB'
+    ! array size in bytes (note: the multiplication is split into two line to avoid integer arithmetic overflow)
+    arraysize = NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE
+    arraysize = arraysize * NPROC_ETA_VAL * NPROC_XI_VAL * SIZE_INTEGER
+    print *,'  ibool   = ',dble(arraysize)/1024./1024.,'MB'
+    arraysize = NGLOB_CRUST_MANTLE
+    arraysize = arraysize * NPROC_ETA_VAL * NPROC_XI_VAL * CUSTOM_REAL
+    print *,'  x,y,z   = ',dble(arraysize)/1024./1024.,'MB'
     print *
-    print *,'  model   = ',NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE*NPROC_ETA_VAL*NPROC_XI_VAL*dble(CUSTOM_REAL)/1024./1024.,'MB'
+    arraysize = NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE
+    arraysize = arraysize * NPROC_ETA_VAL * NPROC_XI_VAL * CUSTOM_REAL
+    print *,'  model   = ',dble(arraysize)/1024./1024.,'MB'
     print *
     print *,'total MPI processes: ',sizeprocs
     print *
