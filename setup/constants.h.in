@@ -367,8 +367,24 @@
 
   integer, parameter :: ADIOS_BUFFER_SIZE_IN_MB = 200
   character(len=*), parameter :: ADIOS_TRANSPORT_METHOD = "MPI"
-  character(len=*), parameter :: ADIOS_TRANSPORT_METHOD_UNDO_ATT = "MPI"   ! or check with: "POSIX"
+
+! ADIOS transport methods for undo save_frame** data files (see ADIOS manual for details)
+!! MPI (default)
+  character(len=*), parameter :: ADIOS_TRANSPORT_METHOD_UNDO_ATT = "MPI"   ! or check with: "POSIX", "MPI_AGGREGATE",..
   character(len=*), parameter :: ADIOS_METHOD_PARAMS_UNDO_ATT =  ''
+! or
+!! POSIX
+!  character(len=*), parameter :: ADIOS_TRANSPORT_METHOD_UNDO_ATT = "POSIX"
+!  character(len=*), parameter :: ADIOS_METHOD_PARAMS_UNDO_ATT =  ''
+! or
+!! MPI_AGGREGATE
+!  character(len=*), parameter :: ADIOS_TRANSPORT_METHOD_UNDO_ATT = "MPI_AGGREGATE"
+!  character(len=*), parameter :: ADIOS_METHOD_PARAMS_UNDO_ATT =  "num_aggregators=64,num_ost=672"
+! or
+!! MPI_LUSTRE
+!  character(len=*), parameter :: ADIOS_TRANSPORT_METHOD_UNDO_ATT = "MPI_LUSTRE"
+!  character(len=*), parameter :: ADIOS_METHOD_PARAMS_UNDO_ATT =  "stripe_count=16,stripe_size=4194304,block_size=4194304"
+
 
 !!-----------------------------------------------------------
 !!
