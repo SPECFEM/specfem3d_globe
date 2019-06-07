@@ -30,6 +30,7 @@
   use specfem_par
   use specfem_par_movie
   use manager_adios
+  use manager_adios2
 
   implicit none
 
@@ -261,6 +262,9 @@
   endif
 
   if (ADIOS_ENABLED) then
+#ifdef HAVE_ADIOS2
+    call initialize_adios2()
+#endif
     call initialize_adios()
   endif
   !if (ADIOS_ENABLED) then

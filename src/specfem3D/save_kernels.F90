@@ -49,8 +49,14 @@
 
   ! Open an handler to the ADIOS file in which kernel variables are written.
   if (ADIOS_FOR_KERNELS) then
-    if ((SIMULATION_TYPE == 3) .or. (SIMULATION_TYPE == 2 .and. nrec_local > 0)) &
+    if ((SIMULATION_TYPE == 3) .or. (SIMULATION_TYPE == 2 .and. nrec_local > 0)) then
+#ifdef HAVE_ADIOS2
+      call open_kernel_file_adios2()
+      call define_kernel_adios2_variables()
+#else
       call define_kernel_adios_variables()
+#endif
+    endif
   endif
 
   ! dump kernel arrays
@@ -92,8 +98,13 @@
 
   ! Write ADIOS defined variables to disk.
   if (ADIOS_FOR_KERNELS) then
-    if ((SIMULATION_TYPE == 3) .or. (SIMULATION_TYPE == 2 .and. nrec_local > 0)) &
+    if ((SIMULATION_TYPE == 3) .or. (SIMULATION_TYPE == 2 .and. nrec_local > 0)) then
+#ifdef HAVE_ADIOS2
+      call close_kernel_file_adios2()
+#else
       call close_file_adios()
+#endif
+    endif
   endif
 
   end subroutine save_kernels
@@ -537,11 +548,19 @@
 
   ! writes out kernels to files
   if (ADIOS_FOR_KERNELS) then
+#ifdef HAVE_ADIOS2
+    call write_kernels_cm_ani_adios2(alphav_kl_crust_mantle,alphah_kl_crust_mantle, &
+                                    betav_kl_crust_mantle,betah_kl_crust_mantle, &
+                                    eta_kl_crust_mantle, &
+                                    bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle, &
+                                    bulk_betav_kl_crust_mantle,bulk_betah_kl_crust_mantle)
+#else
     call write_kernels_cm_ani_adios(alphav_kl_crust_mantle,alphah_kl_crust_mantle, &
                                     betav_kl_crust_mantle,betah_kl_crust_mantle, &
                                     eta_kl_crust_mantle, &
                                     bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle, &
                                     bulk_betav_kl_crust_mantle,bulk_betah_kl_crust_mantle)
+#endif
   else
 
     call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_TMP_PATH)
@@ -749,8 +768,13 @@
 
   ! writes out kernels to files
   if (ADIOS_FOR_KERNELS) then
+#ifdef HAVE_ADIOS2
+    call write_kernels_cm_iso_adios2(mu_kl_crust_mantle, kappa_kl_crust_mantle, rhonotprime_kl_crust_mantle, &
+                                    bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle)
+#else
     call write_kernels_cm_iso_adios(mu_kl_crust_mantle, kappa_kl_crust_mantle, rhonotprime_kl_crust_mantle, &
                                     bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle)
+#endif
   else
 
     call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_TMP_PATH)
@@ -840,7 +864,11 @@
 
   ! writes out kernels to file
   if (ADIOS_FOR_KERNELS) then
+#ifdef HAVE_ADIOS2
+    call write_kernels_oc_adios2()
+#else
     call write_kernels_oc_adios()
+#endif
   else
     call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_TMP_PATH)
 
@@ -908,7 +936,11 @@
 
   ! writes out kernels to file
   if (ADIOS_FOR_KERNELS) then
+#ifdef HAVE_ADIOS2
+    call write_kernels_ic_adios2()
+#else
     call write_kernels_ic_adios()
+#endif
   else
     call create_name_database(prname,myrank,IREGION_INNER_CORE,LOCAL_TMP_PATH)
 
@@ -953,7 +985,11 @@
 
   ! writes out kernels to file
   if (ADIOS_FOR_KERNELS) then
+#ifdef HAVE_ADIOS2
+    call write_kernels_boundary_kl_adios2()
+#else
     call write_kernels_boundary_kl_adios()
+#endif
   else
     call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_TMP_PATH)
 
@@ -1034,7 +1070,11 @@
 
   ! writes out kernels to file
   if (ADIOS_FOR_KERNELS) then
+#ifdef HAVE_ADIOS2
+    call write_kernels_source_derivatives_adios2()
+#else
     call write_kernels_source_derivatives_adios()
+#endif
   else
     ! kernel file output
     do irec_local = 1, nrec_local
@@ -1091,7 +1131,11 @@
 
   ! writes out kernels to file
   if (ADIOS_FOR_KERNELS) then
+#ifdef HAVE_ADIOS2
+    call write_kernels_Hessian_adios2()
+#else
     call write_kernels_Hessian_adios()
+#endif
   else
     ! stores into file
     call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_TMP_PATH)

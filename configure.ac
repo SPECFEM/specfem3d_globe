@@ -159,6 +159,17 @@ AC_ARG_WITH([adios],
 AM_CONDITIONAL([COND_ADIOS], [test x"$want_adios" != xno])
 
 ###
+### ADIOS2
+###
+
+AC_ARG_WITH([adios2],
+    [AC_HELP_STRING([--with-adios2],
+        [build ADIOS enabled version @<:@default=no@:>@])],
+    [want_adios2="$withval"],
+    [want_adios2=no])
+AM_CONDITIONAL([COND_ADIOS2], [test x"$want_adios2" != xno])
+
+###
 ### ASDF
 ###
 
@@ -279,6 +290,15 @@ AC_LANG_POP(C)
 AS_IF([test x"$want_adios" != xno], [
     AS_BOX([ADIOS])
     CIT_ADIOS_CONFIG
+])
+
+###
+### ADIOS2
+###
+
+AS_IF([test x"$want_adios2" != xno], [
+    AS_BOX([ADIOS2])
+    CIT_ADIOS2_CONFIG
 ])
 
 ###

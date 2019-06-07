@@ -34,6 +34,7 @@ shared_TARGETS = \
 shared_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/adios_manager.shared_adios_module.o \
+	$O/adios2_manager.shared_adios2_module.o \
 	$O/auto_ner.shared.o \
 	$O/binary_c_io.cc.o \
 	$O/broadcast_computed_parameters.shared.o \
@@ -82,7 +83,7 @@ shared_OBJECTS = \
 shared_MODULES = \
 	$(FC_MODDIR)/constants.$(FC_MODEXT) \
 	$(FC_MODDIR)/manager_adios.$(FC_MODEXT) \
-	$(FC_MODDIR)/manager_adios_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/manager_adios2.$(FC_MODEXT) \
 	$(FC_MODDIR)/my_mpi.$(FC_MODEXT) \
 	$(FC_MODDIR)/shared_input_parameters.$(FC_MODEXT) \
 	$(FC_MODDIR)/shared_compute_parameters.$(FC_MODEXT) \
@@ -106,6 +107,14 @@ adios_shared_STUBS = \
 	$O/adios_method_stubs.cc.o \
 	$(EMPTY_MACRO)
 
+adios2_shared_OBJECTS = \
+	$O/adios2_helpers_read.shared_adios2_module.o \
+	$(EMPTY_MACRO)
+
+adios2_shared_MODULES = \
+	$(FC_MODDIR)/adios2_helpers_read_mod.$(FC_MODEXT) \
+	$(EMPTY_MACRO)
+
 asdf_shared_OBJECTS = \
 	$O/asdf_manager.shared_adios.o \
 	$(EMPTY_MACRO)
@@ -119,6 +128,11 @@ shared_OBJECTS += $(adios_shared_OBJECTS)
 shared_MODULES += $(adios_shared_MODULES)
 else
 shared_OBJECTS += $(adios_shared_STUBS)
+endif
+
+ifeq ($(ADIOS2),yes)
+shared_OBJECTS += $(adios2_shared_OBJECTS)
+shared_MODULES += $(adios2_shared_MODULES)
 endif
 
 ifeq ($(ASDF),yes)
@@ -143,9 +157,17 @@ ifeq ($(ADIOS),yes)
 $O/adios_manager.shared_adios_module.o: $O/adios_helpers_writers.shared_adios_module.o
 endif
 
+## additional dependencies
+ifeq ($(ADIOS2),yes)
+$O/adios2_manager.shared_adios2_module.o: $O/adios2_helpers_read.shared_adios2_module.o
+endif
+
 ##
 ## shared
 ##
+
+$O/read_parameter_file.shared.o: $S/read_parameter_file.F90 $O/shared_par.shared_module.o
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(ADIOS_DEF) $(ADIOS2_DEF)
 
 $O/%.shared_module.o: $S/%.f90 ${SETUP}/constants.h
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
@@ -170,8 +192,35 @@ $O/%.shared_adios_module.o: $S/%.F90 $O/shared_par.shared_module.o
 $O/%.shared_adios.o: $S/%.f90 $O/adios_manager.shared_adios_module.o $O/adios_helpers_writers.shared_adios_module.o $O/adios_helpers_definitions.shared_adios_module.o $O/shared_par.shared_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(ADIOS_DEF)
 
-$O/%.shared_adios.o: $S/%.F90 $O/adios_manager.shared_adios_module.o $O/adios_helpers_writers.shared_adios_module.o $O/adios_helpers_definitions.shared_adios_module.o $O/shared_par.shared_module.o
-	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(ADIOS_DEF)
+
+## ADIOS2
+# special two step build process for adios2_helpers_read
+# 1. preprocess and then replace all _NL_ string with new lines (-> $O/adios2_helpers_read.f90)
+# 2. compile generated f90 
+$S/adios2_helpers_read_generated.f90: $S/adios2_helpers_read_template.F90
+	@echo " == Rule Read-generate triggered for $< "
+	@echo " If this auto-generation does not work, you can do it manually using gfortran (version 5 or higher)"
+	@echo "     $$ gfortran -cpp -E -o $S/adios2_helpers_read_generated.f90 $S/adios2_helpers_read_template.F90"
+	@echo "     $$ sed -i " '"s\/ *_NL_\/\\n\/g"'  " adios2_helpers_read_generated.f90"
+	gfortran -cpp -E -o $S/adios2_helpers_read_generated.f90 $S/adios2_helpers_read_template.F90
+	sed -i -e "s/ *_NL_/\n/g" -e "s/##//g" $S/adios2_helpers_read_generated.f90
+
+
+$O/adios2_helpers_read.shared_adios2_module.o: $S/adios2_helpers_read_generated.f90 $O/shared_par.shared_module.o
+	@echo " == Rule Read-compile triggered for $< "
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $S/adios2_helpers_read_generated.f90 $(ADIOS2_DEF)
+
+$O/%.shared_adios2_module.o: $S/%.f90 $O/shared_par.shared_module.o
+	@echo " == Rule 1 triggered for $< "
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(ADIOS2_DEF)
+
+$O/%.shared_adios2_module.o: $S/%.F90 $O/shared_par.shared_module.o
+	@echo " == Rule 2 triggered for $< "
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(ADIOS2_DEF)
+
+$O/%.shared_adios2.o: $S/%.F90 $O/adios2_manager.shared_adios2_module.o  $O/adios2_helpers_read.shared_adios_module.o  $O/shared_par.shared_module.o
+	@echo " == Rule 3 triggered for $< "
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(ADIOS2_DEF)
 
 ## asdf
 

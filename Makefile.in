@@ -262,6 +262,22 @@ MPILIBS += @ADIOS_LIBS@
 
 #######################################
 ####
+#### ADIOS2
+#### with configure: ./configure --with-adios2 ADIOS2_CONFIG=..
+####
+#######################################
+
+@COND_ADIOS2_TRUE@ADIOS2 = yes
+@COND_ADIOS2_FALSE@ADIOS2 = no
+
+@COND_ADIOS2_TRUE@ADIOS2_DEF = $(FC_DEFINE)HAVE_ADIOS2
+@COND_ADIOS2_FALSE@ADIOS2_DEF =
+
+@COND_ADIOS2_TRUE@FCFLAGS += @ADIOS2_FCFLAGS@ $(FC_DEFINE)HAVE_ADIOS2
+@COND_ADIOS2_TRUE@MPILIBS += @ADIOS2_LIBS@
+
+#######################################
+####
 #### ASDF
 #### with configure: ./configure --with-asdf ASDF_LIBS=..
 ####
@@ -362,6 +378,13 @@ DEFAULT += 	\
 	$(EMPTY_MACRO)
 endif
 
+#ifeq ($(ADIOS2), yes)
+#DEFAULT += 	\
+#	xcombine_vol_data_adios2 \
+#	xcombine_vol_data_vtk_adios2 \
+#	$(EMPTY_MACRO)
+#endif
+
 all: default aux movies postprocess tomography
 
 default: $(DEFAULT)
@@ -427,6 +450,10 @@ ifeq ($(ADIOS), yes)
 	@echo "    xcombine_vol_data_adios"
 	@echo "    xcombine_vol_data_vtk_adios"
 endif
+ifeq ($(ADIOS2), yes)
+	@echo "    xcombine_vol_data_adios2"
+	@echo "    xcombine_vol_data_vtk_adios2"
+endif
 	@echo "    xcombine_surf_data"
 	@echo "    xcombine_AVS_DX"
 	@echo "    xconvolve_source_timefunction"
@@ -447,6 +474,9 @@ endif
 	@echo "    xsmooth_sem"
 ifeq ($(ADIOS), yes)
 	@echo "    xconvert_model_file_adios"
+endif
+ifeq ($(ADIOS2), yes)
+	@echo "    xconvert_model_file_adios2"
 endif
 	@echo ""
 	@echo "- tomography tools: [make tomography]"
