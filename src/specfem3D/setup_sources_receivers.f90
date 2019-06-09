@@ -119,6 +119,8 @@
   integer :: ispec,iglob,ier
   integer :: i,j,k,inodes
   double precision ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
+  ! determines tree points
+  logical :: use_midpoints_only
 
   ! compute typical size of elements at the surface
   ! (normalized)
@@ -178,9 +180,26 @@
 
   ! kd-tree setup for point localization
   !
-  ! uses all internal GLL points for search tree
-  ! all internal GLL points ( 2 to NGLLX-1 )
-  kdtree_num_nodes = nspec * (NGLLX-2)*(NGLLY-2)*(NGLLZ-2)
+  ! determines tree size
+  if (NEX_ETA_VAL > 100 .and. NEX_XI_VAL > 100) then
+    ! high-resolution mesh
+    ! only midpoints for search, should be sufficient to get accurate location
+    use_midpoints_only = .true.
+  else
+    ! low-resolution mesh
+    ! uses element's inner points
+    use_midpoints_only = .false.
+  endif
+
+  ! sets total number of tree points
+  if (use_midpoints_only) then
+    ! small tree size
+    kdtree_num_nodes = nspec
+  else
+    ! uses all internal GLL points for search tree
+    ! internal GLL points ( 2 to NGLLX-1 )
+    kdtree_num_nodes = nspec * (NGLLX-2)*(NGLLY-2)*(NGLLZ-2)
+  endif
 
   ! allocates tree arrays
   allocate(kdtree_nodes_location(NDIM,kdtree_num_nodes),stat=ier)
@@ -193,30 +212,48 @@
   kdtree_nodes_location(:,:) = 0.0
   ! adds tree nodes
   inodes = 0
-  do ispec = 1,nspec
+  if (use_midpoints_only) then
     ! sets up tree nodes
+    do ispec = 1,nspec
+      iglob = ibool(MIDX,MIDY,MIDZ,ispec)
+
+      ! counts nodes
+      inodes = inodes + 1
+      if (inodes > kdtree_num_nodes ) stop 'Error index inodes bigger than kdtree_num_nodes'
+
+      ! adds node index (index points to same ispec for all internal GLL points)
+      kdtree_nodes_index(inodes) = ispec
+
+      ! adds node location
+      kdtree_nodes_location(1,inodes) = xstore(iglob)
+      kdtree_nodes_location(2,inodes) = ystore(iglob)
+      kdtree_nodes_location(3,inodes) = zstore(iglob)
+    enddo
+  else
     ! all internal GLL points
-    do k = 2,NGLLZ-1
-      do j = 2,NGLLY-1
-        do i = 2,NGLLX-1
-          iglob = ibool(i,j,k,ispec)
+    do ispec = 1,nspec
+      do k = 2,NGLLZ-1
+        do j = 2,NGLLY-1
+          do i = 2,NGLLX-1
+            iglob = ibool(i,j,k,ispec)
 
-          ! counts nodes
-          inodes = inodes + 1
-          if (inodes > kdtree_num_nodes ) stop 'Error index inodes bigger than kdtree_num_nodes'
+            ! counts nodes
+            inodes = inodes + 1
+            if (inodes > kdtree_num_nodes ) stop 'Error index inodes bigger than kdtree_num_nodes'
 
-          ! adds node index (index points to same ispec for all internal GLL points)
-          kdtree_nodes_index(inodes) = ispec
+            ! adds node index (index points to same ispec for all internal GLL points)
+            kdtree_nodes_index(inodes) = ispec
 
-          ! adds node location
-          kdtree_nodes_location(1,inodes) = xstore(iglob)
-          kdtree_nodes_location(2,inodes) = ystore(iglob)
-          kdtree_nodes_location(3,inodes) = zstore(iglob)
+            ! adds node location
+            kdtree_nodes_location(1,inodes) = xstore(iglob)
+            kdtree_nodes_location(2,inodes) = ystore(iglob)
+            kdtree_nodes_location(3,inodes) = zstore(iglob)
+          enddo
         enddo
       enddo
     enddo
-  enddo
-  if (inodes /= kdtree_num_nodes ) stop 'Error index inodes does not match nnodes_local'
+  endif
+  if (inodes /= kdtree_num_nodes ) stop 'Error index inodes does not match kdtree_num_nodes'
 
   ! tree verbosity
   if (myrank == 0) call kdtree_set_verbose(IMAIN)

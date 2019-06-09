@@ -45,10 +45,12 @@
   ! for point search
   use specfem_par, only: &
     typical_size_squared, &
-    lat_min,lat_max,lon_min,lon_max,xyz_midpoints, &
-    xadj,adjncy
+    lat_min,lat_max,lon_min,lon_max,xyz_midpoints
 
   use kdtree_search, only: kdtree_find_nearest_neighbor
+
+!debug: sync
+!  use specfem_par, only: NPROCTOT_VAL,myrank
 
   implicit none
 
@@ -75,11 +77,6 @@
   double precision,dimension(3) :: xyz_target
   double precision :: dist_min
   integer :: inode_min
-  double precision :: xi_n,eta_n,gamma_n,x_n,y_n,z_n ! neighbor position result
-
-  ! neighbors
-  integer :: num_neighbors
-  integer :: i_n,ientry,ispec_ref
 
   ! brute-force search for closest element
   ! if set to .false. (default), a kd-tree search for initial guess element is used
@@ -87,6 +84,14 @@
 
   ! looks for closer estimates in neighbor elements if needed
   logical,parameter :: DO_ADJACENT_SEARCH = .true.
+
+!debug: sync
+!  integer :: iproc
+
+!debug: sync
+!  do iproc = 0,NPROCTOT_VAL-1
+!    if (iproc == myrank) then
+!    print *,'iproc ',iproc; flush(6)
 
   ! set distance to huge initial value
   distmin_squared = HUGEVAL
@@ -269,9 +274,9 @@
       ispec_selected = inode_min
 
       ! loops over GLL points in this element to get (i,j,k) for initial guess
-      do k = 1,NGLLZ
-        do j = 1,NGLLY
-          do i = 1,NGLLX
+      do k = 2,NGLLZ-1
+        do j = 2,NGLLY-1
+          do i = 2,NGLLX-1
             iglob = ibool(i,j,k,ispec_selected)
             dist_squared = (x_target - dble(xstore(iglob)))*(x_target - dble(xstore(iglob))) &
                          + (y_target - dble(ystore(iglob)))*(y_target - dble(ystore(iglob))) &
@@ -300,6 +305,8 @@
   ! ****************************************
   if (target_located) then
 
+!deprecated, but might be useful if one wishes to get an exact GLL point location:
+!
 !      ! for point sources, the location will be exactly at a GLL point
 !      ! otherwise this tries to find best location
 !
@@ -322,81 +329,20 @@
 !          dsqrt((x_target-xyz_found_subset(1,isource_in_this_subset))**2 + &
 !                (y_target-xyz_found_subset(2,isource_in_this_subset))**2 + &
 !                (z_target-xyz_found_subset(3,isource_in_this_subset))**2)*R_EARTH/1000.d0
-!
-!      else
+!      endif
 
     ! gets xi/eta/gamma and corresponding x/y/z coordinates
     call find_local_coordinates(x_target,y_target,z_target,xi,eta,gamma,x,y,z, &
                                 ispec_selected,ix_initial_guess,iy_initial_guess,iz_initial_guess, &
                                 CAN_BE_BURIED)
 
-    ! best distance to target .. so far
-    distmin_squared = (x_target - x)*(x_target - x) &
-                    + (y_target - y)*(y_target - y) &
-                    + (z_target - z)*(z_target - z)
-
-    !debug
-    !print *,'best guess ',ispec_selected,xi,eta,gamma,'distance',sqrt(distmin_squared)*R_EARTH_KM
-
     ! loops over neighbors and try to find better location
     if (DO_ADJACENT_SEARCH) then
-
       ! checks if position lies on an element boundary
       if (abs(xi) > 1.099d0 .or. abs(eta) > 1.099d0 .or. abs(gamma) > 1.099d0) then
-        ! best guess close to an element boundary
-        ! looks through neighbors and determines best locations
-
-        ! reference element
-        ispec_ref = ispec_selected
-
-        ! adjacency arrays
-        num_neighbors = xadj(ispec_ref+1)-xadj(ispec_ref)
-
-        ! debug
-        !print *,'neighbors',num_neighbors,'for element',ispec_ref,' xadj:',xadj(ispec_ref+1),xadj(ispec_ref)
-
-        ! loops over neighbors
-        do i_n = 1,num_neighbors
-          ! get neighbor
-          ientry = xadj(ispec_ref) + i_n
-          ispec = adjncy(ientry)
-
-          ! checks
-          if (ispec < 1 .or. ispec > nspec) stop 'Invalid ispec index in locate point search'
-
-          ! gets xi/eta/gamma and corresponding x/y/z coordinates
-          call find_local_coordinates(x_target,y_target,z_target,xi_n,eta_n,gamma_n,x_n,y_n,z_n, &
-                                      ispec,MIDX,MIDY,MIDZ,CAN_BE_BURIED)
-
-          ! distance to target
-          dist_squared = (x_target - x_n)*(x_target - x_n) &
-                       + (y_target - y_n)*(y_target - y_n) &
-                       + (z_target - z_n)*(z_target - z_n)
-
-          ! debug
-          !print *,'  neighbor ',ispec,i_n,ientry,'ispec = ',ispec_selected,sngl(xi_n),sngl(eta_n),sngl(gamma_n), &
-          !          'distance',sngl(sqrt(dist_squared)*R_EARTH_KM),sngl(sqrt(distmin_squared)*R_EARTH_KM)
-
-          ! take this point if it is closer to the receiver
-          !  we compare squared distances instead of distances themselves to significantly speed up calculations
-          if (dist_squared < distmin_squared) then
-            distmin_squared = dist_squared
-            ! uses this as new location
-            ispec_selected = ispec
-            xi = xi_n
-            eta = eta_n
-            gamma = gamma_n
-            x = x_n
-            y = y_n
-            z = z_n
-          endif
-
-        enddo ! num_neighbors
-
-        !debug
-        !print *,'  final neighbor ',ispec_selected,xi,eta,gamma,'distance',sqrt(distmin_squared)*R_EARTH_KM
+        ! searches for better position in neighboring elements
+        call find_best_neighbor(x_target,y_target,z_target,xi,eta,gamma,x,y,z,ispec_selected,distmin_squared,CAN_BE_BURIED)
       endif
-
     endif ! DO_ADJACENT_SEARCH
 
   else
@@ -414,9 +360,14 @@
   endif
 
   ! compute final distance between asked and found (converted to km)
-  distmin_not_squared = dsqrt((x_target-x)**2 + &
-                              (y_target-y)**2 + &
-                              (z_target-z)**2)*R_EARTH_KM
+  distmin_not_squared = dsqrt((x_target-x)*(x_target-x) + &
+                              (y_target-y)*(y_target-y) + &
+                              (z_target-z)*(z_target-z))*R_EARTH_KM
+
+!debug: sync
+!  endif ! iproc
+!  call synchronize_all()
+!  enddo
 
   end subroutine locate_point
 
@@ -425,8 +376,8 @@
 !
 
   subroutine find_local_coordinates(x_target,y_target,z_target,xi,eta,gamma,x,y,z, &
-                                   ispec_selected,ix_initial_guess,iy_initial_guess,iz_initial_guess, &
-                                   CAN_BE_BURIED)
+                                    ispec_selected,ix_initial_guess,iy_initial_guess,iz_initial_guess, &
+                                    CAN_BE_BURIED)
 
   use constants_solver, only: &
     NGNOD,HUGEVAL,NUM_ITER
@@ -558,3 +509,196 @@
                           xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
 
   end subroutine find_local_coordinates
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine find_best_neighbor(x_target,y_target,z_target,xi,eta,gamma,x,y,z,ispec_selected,distmin_squared,CAN_BE_BURIED)
+
+  use constants_solver, only: &
+    NGLLX,NGLLY,NGLLZ,MIDX,MIDY,MIDZ,NGNOD,R_EARTH_KM,HUGEVAL
+
+  use specfem_par, only: &
+    nspec => NSPEC_CRUST_MANTLE
+
+  use specfem_par_crustmantle, only: &
+    ibool => ibool_crust_mantle, &
+    xstore => xstore_crust_mantle,ystore => ystore_crust_mantle,zstore => zstore_crust_mantle
+
+  ! for point search
+  use specfem_par, only: &
+    xadj,adjncy
+
+  use kdtree_search, only: kdtree_find_nearest_neighbor
+
+  implicit none
+
+  double precision,intent(in) :: x_target,y_target,z_target
+  double precision,intent(inout) :: xi,eta,gamma
+  double precision,intent(inout) :: x,y,z
+
+  integer,intent(inout) :: ispec_selected
+  double precision,intent(inout) :: distmin_squared
+  logical,intent(in) :: CAN_BE_BURIED
+
+  ! local parameters
+  integer :: ix_initial_guess,iy_initial_guess,iz_initial_guess
+  integer :: ispec,i,j,k,iglob
+
+  double precision :: dist_squared
+  double precision :: distmin_squared_guess
+
+  ! nodes search
+  double precision :: xi_n,eta_n,gamma_n,x_n,y_n,z_n ! neighbor position result
+
+  ! neighbor elements
+  integer,parameter :: MAX_NEIGHBORS = 50   ! maximum number of neighbors (around 37 should be sufficient for crust/mantle)
+  integer :: index_neighbors(MAX_NEIGHBORS*MAX_NEIGHBORS) ! including neighbors of neighbors
+  integer :: num_neighbors
+
+  integer :: ii,jj,i_n,ientry,ispec_ref
+  logical :: do_neighbor
+
+  ! verbose output
+  logical,parameter :: DEBUG = .false.
+
+  ! best distance to target .. so far
+  distmin_squared = (x_target - x)*(x_target - x) &
+                  + (y_target - y)*(y_target - y) &
+                  + (z_target - z)*(z_target - z)
+
+  !debug
+  if (DEBUG) print *,'neighbors: best guess ',ispec_selected,xi,eta,gamma,'distance',sngl(sqrt(distmin_squared)*R_EARTH_KM)
+
+  ! fill neighbors arrays
+  !
+  ! note: we add direct neighbors plus neighbors of neighbors.
+  !       for very coarse meshes, the initial location guesses especially around doubling layers can be poor such that we need
+  !       to enlarge the search of neighboring elements.
+  index_neighbors(:) = 0
+  num_neighbors = 0
+  do ii = 1,xadj(ispec_selected+1)-xadj(ispec_selected)
+    ! get neighbor
+    ientry = xadj(ispec_selected) + ii
+    ispec_ref = adjncy(ientry)
+
+    ! checks
+    if (ispec_ref < 1 .or. ispec_ref > nspec) stop 'Invalid ispec index in locate point search'
+
+    ! checks if exists already in list
+    do_neighbor = .true.
+    do i_n = 1,num_neighbors
+      if (index_neighbors(i_n) == ispec_ref) then
+        do_neighbor = .false.
+        exit
+      endif
+    enddo
+
+    ! adds to search elements
+    if (do_neighbor) then
+      num_neighbors = num_neighbors + 1
+      index_neighbors(num_neighbors) = ispec_ref
+    endif
+
+    ! adds neighbors of neighbor
+    do jj = 1,xadj(ispec_ref+1)-xadj(ispec_ref)
+      ! get neighbor
+      ientry = xadj(ispec_ref) + jj
+      ispec = adjncy(ientry)
+
+      ! checks
+      if (ispec < 1 .or. ispec > nspec) stop 'Invalid ispec index in locate point search'
+
+      ! checks if exists already in list
+      do_neighbor = .true.
+      do i_n = 1,num_neighbors
+        if (index_neighbors(i_n) == ispec) then
+          do_neighbor = .false.
+          exit
+        endif
+      enddo
+
+      ! adds to search elements
+      if (do_neighbor) then
+        num_neighbors = num_neighbors + 1
+        index_neighbors(num_neighbors) = ispec
+      endif
+    enddo
+  enddo
+
+  ! loops over neighboring elements
+  do i_n = 1,num_neighbors
+    ispec = index_neighbors(i_n)
+
+    ! note: the final position location can be still off if we start too far away.
+    !       here we guess the best "inner" GLL point inside this search neighbor element
+    !       to be the starting initial guess for finding the local coordinates.
+
+    ! gets first guess as starting point
+    ix_initial_guess = MIDX
+    iy_initial_guess = MIDY
+    iz_initial_guess = MIDZ
+    iglob = ibool(MIDX,MIDY,MIDZ,ispec)
+
+    distmin_squared_guess = (x_target - dble(xstore(iglob)))*(x_target - dble(xstore(iglob))) &
+                          + (y_target - dble(ystore(iglob)))*(y_target - dble(ystore(iglob))) &
+                          + (z_target - dble(zstore(iglob)))*(z_target - dble(zstore(iglob)))
+
+    ! loop only on points inside the element
+    ! exclude edges to ensure this point is not shared with other elements
+    do k = 2,NGLLZ-1
+      do j = 2,NGLLY-1
+        do i = 2,NGLLX-1
+          iglob = ibool(i,j,k,ispec)
+          dist_squared = (x_target - dble(xstore(iglob)))*(x_target - dble(xstore(iglob))) &
+                       + (y_target - dble(ystore(iglob)))*(y_target - dble(ystore(iglob))) &
+                       + (z_target - dble(zstore(iglob)))*(z_target - dble(zstore(iglob)))
+          !  keep this point if it is closer to the receiver
+          !  we compare squared distances instead of distances themselves to significantly speed up calculations
+          if (dist_squared < distmin_squared_guess) then
+            distmin_squared_guess = dist_squared
+            ix_initial_guess = i
+            iy_initial_guess = j
+            iz_initial_guess = k
+          endif
+        enddo
+      enddo
+    enddo
+
+    ! gets xi/eta/gamma and corresponding x/y/z coordinates
+    call find_local_coordinates(x_target,y_target,z_target,xi_n,eta_n,gamma_n,x_n,y_n,z_n, &
+                                ispec,ix_initial_guess,iy_initial_guess,iz_initial_guess,CAN_BE_BURIED)
+
+    ! final distance to target
+    dist_squared = (x_target - x_n)*(x_target - x_n) &
+                 + (y_target - y_n)*(y_target - y_n) &
+                 + (z_target - z_n)*(z_target - z_n)
+
+    ! debug
+    if (DEBUG) print *,'  neighbor ',ispec,i_n,ientry,'ispec = ',ispec_selected,sngl(xi_n),sngl(eta_n),sngl(gamma_n), &
+                       'distance',sngl(sqrt(dist_squared)*R_EARTH_KM),sngl(sqrt(distmin_squared)*R_EARTH_KM)
+
+    ! takes this point if it is closer to the receiver
+    ! (we compare squared distances instead of distances themselves to significantly speed up calculations)
+    if (dist_squared < distmin_squared) then
+      distmin_squared = dist_squared
+      ! uses this as new location
+      ispec_selected = ispec
+      xi = xi_n
+      eta = eta_n
+      gamma = gamma_n
+      x = x_n
+      y = y_n
+      z = z_n
+    endif
+
+    ! checks if position lies inside element (which usually means that located position is accurate)
+    if (abs(xi) < 1.099d0 .and. abs(eta) < 1.099d0 .and. abs(gamma) < 1.099d0) exit
+
+  enddo ! num_neighbors
+
+  !debug
+  if (DEBUG) print *,'neighbors: final ',ispec_selected,xi,eta,gamma,'distance',sqrt(distmin_squared)*R_EARTH_KM
+
+  end subroutine find_best_neighbor

@@ -163,7 +163,7 @@
     mask_source(:,:,:,:) = 1.0_CUSTOM_REAL
   endif
 
-  ! appends receiver locations to sr.vtk file
+  ! appends locations to sr.vtk file
   if (myrank == 0) then
     open(IOUT_VTK,file=trim(OUTPUT_FILES)//'/sr_tmp.vtk', &
           position='append',status='old',iostat=ier)
