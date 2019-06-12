@@ -522,10 +522,10 @@
 
   ! adds contributions from different partitions to flag arrays
   call assemble_MPI_vector(NPROCTOT,NGLOB_INNER_CORE, &
-                      test_flag_vector, &
-                      num_interfaces_inner_core,max_nibool_interfaces_ic, &
-                      nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
-                      my_neighbors_inner_core)
+                           test_flag_vector, &
+                           num_interfaces_inner_core,max_nibool_interfaces_ic, &
+                           nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
+                           my_neighbors_inner_core)
 
   ! removes initial flag
   test_flag_vector(:,:) = test_flag_vector(:,:) - 1.0_CUSTOM_REAL
@@ -538,8 +538,8 @@
 
     ! checks valence
     if (valence(iglob) /= nint(test_flag_vector(1,iglob)) .or. &
-       valence(iglob) /= nint(test_flag_vector(2,iglob)) .or. &
-       valence(iglob) /= nint(test_flag_vector(3,iglob))) then
+        valence(iglob) /= nint(test_flag_vector(2,iglob)) .or. &
+        valence(iglob) /= nint(test_flag_vector(3,iglob))) then
       print *,'Error test MPI: rank',myrank,'valence:',valence(iglob),'flag:',test_flag_vector(:,:)
       call exit_mpi(myrank,'Error test MPI inner core valence')
     endif
