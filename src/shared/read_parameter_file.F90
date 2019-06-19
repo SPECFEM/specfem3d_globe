@@ -273,6 +273,7 @@
   call read_value_logical(ADIOS_FOR_UNDO_ATTENUATION, 'ADIOS_FOR_UNDO_ATTENUATION', ier)
   if (ier /= 0) stop 'an error occurred while reading the parameter file: ADIOS_FOR_UNDO_ATTENUATION'
 
+  if (ADIOS_ENABLED) then
 #if !defined(HAVE_ADIOS2) && !defined(ADIOS_INPUT)
     print *
     print *,'**************'
@@ -284,6 +285,7 @@
     print *
     stop 'an error occurred while reading the parameter file: ADIOS is enabled but code not built with ADIOS'
 #endif
+  endif
 
   ! ADIOS is very useful for very large simulations (say using 2000 MPI tasks or more)
   ! but slows down the code if used for simulations that are small or medium size, because of the overhead any library has.
