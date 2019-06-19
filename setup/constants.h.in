@@ -351,6 +351,16 @@
 
 !!-----------------------------------------------------------
 !!
+!! ADIOS2 Related values
+!!
+!!-----------------------------------------------------------
+
+  character(len=*), parameter :: ADIOS2_ENGINE_DEFAULT = "BP4"
+  character(len=*), parameter :: ADIOS2_ENGINE_PARAMS_DEFAULT = "SubStreams=64"
+  character(len=*), parameter :: ADIOS2_ENGINE_UNDO_ATT = "BP4"
+  character(len=*), parameter :: ADIOS2_ENGINE_PARAMS_UNDO_ATT = "SubStreams=64"
+!!-----------------------------------------------------------
+!!
 !! ASDF parameters
 !!
 !!-----------------------------------------------------------

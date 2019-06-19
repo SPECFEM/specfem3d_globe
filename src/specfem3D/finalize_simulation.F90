@@ -34,6 +34,7 @@
   use specfem_par_movie
 
   use manager_adios
+  use manager_adios2
 
 #ifdef XSMM
   use my_libxsmm
@@ -122,6 +123,9 @@
 
   ! adios finalizes
   if (ADIOS_ENABLED) then
+#ifdef HAVE_ADIOS2
+    call finalize_adios2()
+#endif
     call finalize_adios()
   endif
 

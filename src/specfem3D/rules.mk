@@ -134,6 +134,7 @@ specfem3D_MODULES = \
 specfem3D_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/adios_manager.shared_adios_module.o \
+	$O/adios2_manager.shared_adios2_module.o \
 	$O/auto_ner.shared.o \
 	$O/binary_c_io.cc.o \
 	$O/broadcast_computed_parameters.shared.o \
@@ -213,6 +214,34 @@ specfem3D_SHARED_OBJECTS += $(adios_specfem3D_SHARED_STUBS)
 endif
 
 ###
+### ADIOS2
+###
+
+adios2_specfem3D_OBJECTS = \
+	$O/read_forward_arrays_adios2.solverstatic_adios2.o \
+	$O/save_forward_arrays_adios2.solverstatic_adios2.o \
+	$O/save_kernels_adios2.solverstatic_adios2.o \
+	$(EMPTY_MACRO)
+#	$O/read_arrays_solver_adios2.solverstatic_adios2.o \
+#	$O/read_attenuation_adios2.solverstatic_adios2.o \
+#	$O/read_mesh_databases_adios2.solverstatic_adios2.o \
+
+adios2_specfem3D_SHARED_OBJECTS = \
+	$O/adios2_helpers_read.shared_adios2_module.o \
+	$(EMPTY_MACRO)
+
+adios2_specfem3D_SHARED_STUBS = \
+	$(EMPTY_MACRO)
+
+# conditional adios2 linking
+ifeq ($(ADIOS2),yes)
+specfem3D_OBJECTS += $(adios2_specfem3D_OBJECTS)
+specfem3D_SHARED_OBJECTS += $(adios2_specfem3D_SHARED_OBJECTS)
+else
+specfem3D_SHARED_OBJECTS += $(adios2_specfem3D_SHARED_STUBS)
+endif
+
+###
 ### ASDF
 ###
 
@@ -259,7 +288,7 @@ vtk_specfem3D_STUBS = \
 	$O/visual_vtk_stubs.visualc.o \
 	$(EMPTY_MACRO)
 
-# conditional adios linking
+# conditional vtk linking
 ifeq ($(VTK),yes)
 specfem3D_OBJECTS += $(vtk_specfem3D_OBJECTS)
 else
@@ -324,6 +353,7 @@ $O/locate_receivers.solverstatic.o: $O/write_seismograms.solverstatic.o
 $O/read_adjoint_sources.solverstatic.o: $O/write_seismograms.solverstatic.o
 
 $O/specfem3D_par.solverstatic_module.o: $O/adios_manager.shared_adios_module.o
+$O/specfem3D_par.solverstatic_module.o: $O/adios2_manager.shared_adios2_module.o
 
 # Version file
 $O/initialize_simulation.solverstatic.o: ${SETUP}/version.fh
@@ -354,6 +384,10 @@ $O/%.solverstatic_adios.o: $S/%.f90 ${OUTPUT}/values_from_mesher.h $O/shared_par
 $O/%.solverstatic_adios.o: $S/%.F90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o $O/adios_helpers.shared_adios.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
+$O/%.solverstatic_adios2.o: $S/%.F90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o 
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+
+###
 ###
 ### no dependence on values from mesher here
 ###
