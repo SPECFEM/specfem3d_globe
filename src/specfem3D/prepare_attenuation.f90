@@ -45,7 +45,13 @@
   real(kind=CUSTOM_REAL) :: mul
   integer :: ispec,i,j,k,ier
 
-  ! checks if attenuation is on and anything to do
+  ! needs these allocated for subroutine calls
+  allocate(factor_common_crust_mantle(ATT1_VAL,ATT2_VAL,ATT3_VAL,N_SLS,ATT4_VAL),stat=ier)
+  if (ier /= 0) stop 'Error allocating arrays factor_common_crust_mantle'
+  allocate(factor_common_inner_core(ATT1_VAL,ATT2_VAL,ATT3_VAL,N_SLS,ATT5_VAL),stat=ier)
+  if (ier /= 0) stop 'Error allocating arrays factor_common_inner_core'
+
+  ! checks if attenuation is on and anything to do further
   if (.not. ATTENUATION_VAL ) return
 
   ! get and store PREM attenuation model
@@ -56,13 +62,11 @@
 
   ! allocates arrays
   allocate(one_minus_sum_beta_crust_mantle(ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT4_VAL), &
-           factor_scale_crust_mantle(ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT4_VAL), &
-           factor_common_crust_mantle(ATT1_VAL,ATT2_VAL,ATT3_VAL,N_SLS,ATT4_VAL),stat=ier)
+           factor_scale_crust_mantle(ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT4_VAL),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays one_minus_sum_beta_crust_mantle,..'
 
   allocate(one_minus_sum_beta_inner_core(ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT5_VAL), &
-           factor_scale_inner_core(ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT5_VAL), &
-           factor_common_inner_core(ATT1_VAL,ATT2_VAL,ATT3_VAL,N_SLS,ATT5_VAL),stat=ier)
+           factor_scale_inner_core(ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT5_VAL),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays one_minus_sum_beta_inner_core,..'
 
   ! reads in attenuation values

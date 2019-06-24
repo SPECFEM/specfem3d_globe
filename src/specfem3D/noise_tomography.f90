@@ -193,6 +193,14 @@
   real(kind=CUSTOM_REAL) :: r,theta,phi
   character(len=MAX_STRING_LEN) :: filename
 
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) "  reading noise parameter files from: ", trim(OUTPUT_FILES) // '/..//NOISE_TOMOGRAPHY/'
+    call flush_IMAIN()
+  endif
+  call synchronize_all()
+
   ! read master receiver ID -- the ID in DATA/STATIONS
   filename = trim(OUTPUT_FILES)//'/..//NOISE_TOMOGRAPHY/irec_master_noise'
   open(unit=IIN_NOISE,file=trim(filename),status='old',action='read',iostat=ier)
@@ -208,7 +216,7 @@
 
   ! user output
   if (myrank == 0) then
-    filename = trim(OUTPUT_FILES)//'/irec_master_noise'
+    filename = trim(OUTPUT_FILES)//'/irec_master_noise.txt'
     open(unit=IOUT_NOISE,file=trim(filename),status='unknown',action='write',iostat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error opening output file irec_master_noise')
     write(IOUT_NOISE,*) 'The master receiver is: (RECEIVER ID)', irec_master_noise
@@ -285,6 +293,12 @@
   filesize = reclen_noise
   filesize = filesize * NSTEP
 
+  if (myrank == 0) then
+    write(IMAIN,*) "  noise surface wavefield files in directory: ", trim(LOCAL_TMP_PATH) // "/"
+    call flush_IMAIN()
+  endif
+  call synchronize_all()
+
   ! noise surface array stored by each process
   write(filename,"('/proc',i6.6,'_noise_surface_movie.bin')") myrank
 
@@ -314,10 +328,52 @@
   ! local parameters
   integer :: ipoin, ispec2D, ispec, i, j, k, iglob, ier
   character(len=MAX_STRING_LEN) :: filename
-  real(kind=CUSTOM_REAL), dimension(num_noise_surface_points) :: &
+
+  ! gathering points
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
       val_x,val_y,val_z,val_ux,val_uy,val_uz
-  real(kind=CUSTOM_REAL), dimension(num_noise_surface_points,0:NPROCTOT_VAL-1) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
       val_x_all,val_y_all,val_z_all,val_ux_all,val_uy_all,val_uz_all
+
+  ! a file called "mask_noise.bin" is saved in "./OUTPUT_FILES/"
+  filename = trim(OUTPUT_FILES)//'/mask_noise.bin'
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) "  saving noise mask to: ", trim(filename)
+    call flush_IMAIN()
+  endif
+  call synchronize_all()
+
+  ! temporary arrays
+  allocate(val_x(num_noise_surface_points), &
+           val_y(num_noise_surface_points), &
+           val_z(num_noise_surface_points), &
+           val_ux(num_noise_surface_points), &
+           val_uy(num_noise_surface_points), &
+           val_uz(num_noise_surface_points), stat=ier)
+  if (ier /= 0) stop 'Error allocating temporary arrays'
+
+  ! gather arrays
+  if (myrank == 0) then
+    ! only master gathers all data
+    allocate(val_x_all(num_noise_surface_points,0:NPROCTOT_VAL-1), &
+             val_y_all(num_noise_surface_points,0:NPROCTOT_VAL-1), &
+             val_z_all(num_noise_surface_points,0:NPROCTOT_VAL-1), &
+             val_ux_all(num_noise_surface_points,0:NPROCTOT_VAL-1), &
+             val_uy_all(num_noise_surface_points,0:NPROCTOT_VAL-1), &
+             val_uz_all(num_noise_surface_points,0:NPROCTOT_VAL-1), stat=ier)
+    if (ier /= 0) stop 'Error allocating temporary gather arrays'
+  else
+    ! dummy
+    allocate(val_x_all(1,1), &
+             val_y_all(1,1), &
+             val_z_all(1,1), &
+             val_ux_all(1,1), &
+             val_uy_all(1,1), &
+             val_uz_all(1,1), stat=ier)
+    if (ier /= 0) stop 'Error allocating temporary gather arrays'
+  endif
 
   ! sets up temporary arrays for this slice
   ipoin = 0
@@ -358,9 +414,6 @@
   ! create_movie_AVS_DX.f90 needs to be modified in order to do that,
   ! i.e., instead of showing the normal component, change it to either x, y or z component, or the norm.
   if (myrank == 0) then
-    ! a file called "mask_noise.bin" is saved in "./OUTPUT_FILES/"
-    filename = trim(OUTPUT_FILES)//'/mask_noise.bin'
-
     open(unit=IOUT_NOISE,file=trim(filename),status='unknown',form='unformatted',action='write',iostat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error opening output file mask_noise')
 
@@ -373,6 +426,10 @@
 
     close(IOUT_NOISE)
   endif
+
+  ! frees memory
+  deallocate(val_x,val_y,val_z,val_ux,val_uy,val_uz)
+  deallocate(val_x_all,val_y_all,val_z_all,val_ux_all,val_uy_all,val_uz_all)
 
   end subroutine save_mask_noise
 
@@ -446,8 +503,9 @@
   enddo
   close(IIN_NOISE)
 
+  ! file output
   if (myrank == 0) then
-     open(unit=IOUT_NOISE,file=trim(OUTPUT_FILES)//'/nu_master',status='unknown',action='write')
+     open(unit=IOUT_NOISE,file=trim(OUTPUT_FILES)//'/nu_master.txt',status='unknown',action='write')
      write(IOUT_NOISE,*) 'The direction (NEZ) of selected component of master receiver is', nu_master
      close(IOUT_NOISE)
   endif
