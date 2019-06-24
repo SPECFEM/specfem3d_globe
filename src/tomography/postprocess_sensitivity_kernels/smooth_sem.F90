@@ -94,19 +94,19 @@ program smooth_sem_globe
 
   integer :: islice(NSLICES2), islice0(NSLICES2)
 
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_AB) :: ibool
-  integer, dimension(NSPEC_AB) :: idoubling
-  logical, dimension(NSPEC_AB) :: ispec_is_tiso
+  integer, dimension(:,:,:,:), allocatable :: ibool
+  integer, dimension(:), allocatable :: idoubling
+  logical, dimension(:), allocatable :: ispec_is_tiso
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_AB) :: kernel, kernel_smooth
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_AB) :: tk, bk, jacobian
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_AB) :: xx0, yy0, zz0, xx, yy, zz
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_AB) :: &
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: xstore, ystore, zstore
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
     xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
 
-  real(kind=CUSTOM_REAL), dimension(NGLOB_AB) :: xstore, ystore, zstore
-  real(kind=CUSTOM_REAL), dimension(NSPEC_AB) :: cx0, cy0, cz0, cx, cy, cz
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: kernel, kernel_smooth
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: tk, bk, jacobian
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: xx0, yy0, zz0, xx, yy, zz
+
+  real(kind=CUSTOM_REAL), dimension(:),allocatable :: cx0, cy0, cz0, cx, cy, cz
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: exp_val
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: factor
@@ -373,6 +373,42 @@ program smooth_sem_globe
     print *,'  ',islice(1:nums)
     print *
   endif
+
+  allocate(ibool(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
+           idoubling(NSPEC_AB), &
+           ispec_is_tiso(NSPEC_AB), &
+           xstore(NGLOB_AB), &
+           ystore(NGLOB_AB), &
+           zstore(NGLOB_AB), &
+           xix(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
+           xiy(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
+           xiz(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
+           etax(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
+           etay(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
+           etaz(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
+           gammax(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
+           gammay(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
+           gammaz(NGLLX,NGLLY,NGLLZ,NSPEC_AB), stat=ier)
+  if (ier /= 0) stop 'Error allocating mesh arrays'
+
+  allocate(kernel(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
+           kernel_smooth(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
+           tk(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
+           bk(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
+           jacobian(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
+           xx0(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
+           yy0(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
+           zz0(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
+           xx(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
+           yy(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
+           zz(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
+           cx0(NSPEC_AB), &
+           cy0(NSPEC_AB), &
+           cz0(NSPEC_AB), &
+           cx(NSPEC_AB), &
+           cy(NSPEC_AB), &
+           cz(NSPEC_AB), stat=ier)
+  if (ier /= 0) stop 'Error allocating kernel arrays'
 
   ! read in the topology files of the current and neighboring slices
   ! point locations

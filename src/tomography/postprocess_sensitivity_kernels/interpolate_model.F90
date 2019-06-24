@@ -145,11 +145,11 @@
 
   ! new mesh
   ! single slice, target mesh
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: x2, y2, z2
+  real(kind=CUSTOM_REAL), dimension(:),allocatable :: x2, y2, z2
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:),allocatable :: model2
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool2
-  integer, dimension(NSPEC_CRUST_MANTLE) :: idoubling2
-  integer, dimension(NCHUNKS_VAL,0:NPROC_XI_VAL-1,0:NPROC_ETA_VAL-1) :: addressing2
+  integer, dimension(:,:,:,:),allocatable :: ibool2
+  integer, dimension(:),allocatable :: idoubling2
+  integer, dimension(:,:,:),allocatable :: addressing2
 
   ! input arguments
   character(len=MAX_STRING_LEN) :: arg
@@ -501,6 +501,8 @@
   if (ier /= 0) stop 'Error allocating addressing1'
 
   ! model files
+  allocate(addressing2(NCHUNKS_VAL,0:NPROC_XI_VAL-1,0:NPROC_ETA_VAL-1), stat=ier)
+  if (ier /= 0) stop 'Error allocating addressing2'
   allocate( model1(NGLLX,NGLLY,NGLLZ,nspec_max_old,nparams,0:nproc_chunk1-1),stat=ier )
   if (ier /= 0) stop 'Error allocating initial model1'
   allocate( model2(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE,nparams),stat=ier )
@@ -734,6 +736,13 @@ print *,myrank,'adios file rank',rank
     print *
   endif
   call synchronize_all()
+
+  allocate(x2(NGLOB_CRUST_MANTLE), &
+           y2(NGLOB_CRUST_MANTLE), &
+           z2(NGLOB_CRUST_MANTLE), &
+           ibool2(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE), &
+           idoubling2(NSPEC_CRUST_MANTLE), stat=ier)
+  if (ier /= 0) stop 'Error allocating mesh arrays'
 
   ! reads in the topology files of the target slices
   ! gets slice number
