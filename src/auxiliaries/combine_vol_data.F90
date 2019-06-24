@@ -42,24 +42,17 @@ program combine_vol_data
 
   include "OUTPUT_FILES/values_from_mesher.h"
 
-  integer,parameter :: MAX_NUM_NODES = 2000
-  integer, dimension(MAX_NUM_NODES) :: node_list, nspec_list, nglob_list
-  integer, dimension(MAX_NUM_NODES) :: npoint, nelement
+  integer :: num_node
+  integer, dimension(:), allocatable :: node_list,nspec_list,nglob_list
+  integer, dimension(:), allocatable :: npoint, nelement
 
-  ! dp: or use NPROCTOT_VAL to avoid setting max_num_nodes?
-  !integer, dimension(NPROCTOT_VAL) :: node_list, nspec_list, nglob_list
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: data
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: xstore, ystore, zstore
+  integer, dimension(:,:,:,:), allocatable :: ibool
 
-  integer :: ir, irs, ire, ires
-  integer :: iproc, num_node, i,j,k,ispec, it, di, dj, dk
-  integer :: np, ne
-  integer :: ier
+  integer, dimension(:), allocatable :: num_ibool
+  logical, dimension(:), allocatable :: mask_ibool
 
-  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: data
-  real(kind=CUSTOM_REAL),dimension(NGLOB_CRUST_MANTLE) :: xstore, ystore, zstore
-  integer,dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool
-
-  integer :: num_ibool(NGLOB_CRUST_MANTLE)
-  logical :: mask_ibool(NGLOB_CRUST_MANTLE)
   logical :: HIGH_RESOLUTION_MESH
 
   real(kind=CUSTOM_REAL) :: x, y, z
@@ -71,8 +64,8 @@ program combine_vol_data
   ! if there are more than one GLL points for a global point (points on element corners, edges, faces)
   logical,parameter:: AVERAGE_GLOBALPOINTS = .false.
 
-  integer,dimension(:),allocatable :: ibool_count
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: data_avg
+  integer, dimension(:), allocatable :: ibool_count
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: data_avg
 
   ! note:
   !  if one wants to remove the topography and ellipticity distortion, you would run the mesher again
@@ -89,7 +82,7 @@ program combine_vol_data
   double precision :: rspl(NR),espl(NR),espl2(NR)
   logical,parameter :: ONE_CRUST = .false. ! if you want to correct a model with one layer only in PREM crust
 
-  integer, dimension(NSPEC_INNER_CORE) :: idoubling_inner_core ! to get rid of fictitious elements in central cube
+  integer, dimension(:), allocatable :: idoubling_inner_core ! to get rid of fictitious elements in central cube
 
   character(len=MAX_STRING_LEN) :: arg(7)
   character(len=MAX_STRING_LEN) :: filename, outdir
@@ -119,6 +112,11 @@ program combine_vol_data
   character(len=MAX_STRING_LEN) :: in_file_dir, in_topo_dir
   character(len=MAX_STRING_LEN) :: sline,slice_list_name
 #endif
+
+  integer :: ir, irs, ire, ires
+  integer :: iproc, i,j,k,ispec, it, di, dj, dk
+  integer :: np, ne
+  integer :: ier
 
   ! starts here---------------------------------------------------------------
   ier = 0 ! avoids compiler warning in case of ADIOS and VTK output
@@ -196,10 +194,14 @@ program combine_vol_data
   slice_list_name = trim(arg(1))
   if (trim(slice_list_name) == 'all') then
     ! uses all slices to combine
-    do i = 0,NPROCTOT_VAL-1
-      num_node = num_node + 1
-      if (num_node > MAX_NUM_NODES ) stop 'Error number of slices exceeds MAX_NUM_NODES...'
-      node_list(num_node) = i
+    num_node = NPROCTOT_VAL
+    allocate(node_list(num_node),nspec_list(num_node),nglob_list(num_node), stat=ier)
+    if (ier /= 0) stop 'Error allocating list arrays'
+    node_list(:) = 0
+    nspec_list(:) = 0
+    nglob_list(:) = 0
+    do i = 1,num_node
+      node_list(i) = i-1  ! procs start at 0
     enddo
   else
     ! reads in slice file with specified slices
@@ -215,13 +217,32 @@ program combine_vol_data
     !  11
     !  14
     ! end of file to combine 3 slices (from process numbers 0, 11 and 14)
+
+    ! gets number of lines
+    num_node = 0
     do while (1 == 1)
       read(IIN,'(a)',iostat=ier) sline
       if (ier /= 0) exit
       read(sline,*,iostat=ier) njunk
       if (ier /= 0) exit
       num_node = num_node + 1
-      if (num_node > MAX_NUM_NODES ) stop 'Error number of slices exceeds MAX_NUM_NODES...'
+    enddo
+
+    allocate(node_list(num_node),nspec_list(num_node),nglob_list(num_node), stat=ier)
+    if (ier /= 0) stop 'Error allocating list arrays'
+    node_list(:) = 0
+    nspec_list(:) = 0
+    nglob_list(:) = 0
+
+    ! reads in list
+    rewind(IIN)
+    num_node = 0
+    do while (1 == 1)
+      read(IIN,'(a)',iostat=ier) sline
+      if (ier /= 0) exit
+      read(sline,*,iostat=ier) njunk
+      if (ier /= 0) exit
+      num_node = num_node + 1
       node_list(num_node) = njunk
     enddo
     close(IIN)
@@ -247,7 +268,7 @@ program combine_vol_data
   do i = 1, 7
     call get_command_argument(i,arg(i))
   enddo
-  call read_args_adios(arg, MAX_NUM_NODES, node_list, num_node, &
+  call read_args_adios(arg, num_node, node_list, num_node, &
                        var_name, value_file_name, mesh_file_name, &
                        outdir, ires, irs, ire, NPROCTOT_VAL)
 #endif
@@ -281,6 +302,22 @@ program combine_vol_data
   else
     stop 'resolution setting must be 0, 1, or 2'
   endif
+
+  ! allocates arrays
+  allocate(ibool(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE), &
+           idoubling_inner_core(NSPEC_INNER_CORE), &
+           xstore(NGLOB_CRUST_MANTLE), &
+           ystore(NGLOB_CRUST_MANTLE), &
+           zstore(NGLOB_CRUST_MANTLE), &
+           num_ibool(NGLOB_CRUST_MANTLE), &
+           mask_ibool(NGLOB_CRUST_MANTLE), stat=ier)
+  if (ier /= 0) stop 'Error allocating mesh arrays'
+
+  allocate(data(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),stat=ier)
+  if (ier /= 0) stop 'Error allocating data array'
+
+  allocate(npoint(num_node),nelement(num_node),stat=ier)
+  if (ier /= 0) stop 'Error allocating npoint,nelement arrays'
 
   ! sets up ellipticity splines in order to remove ellipticity from point coordinates
   if (CORRECT_ELLIPTICITY) call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
@@ -700,5 +737,10 @@ program combine_vol_data
 
   print *, 'Done writing mesh files'
   print *, ' '
+
+  ! free arrays
+  deallocate(node_list,nspec_list,nglob_list)
+  deallocate(ibool,idoubling_inner_core,xstore,ystore,zstore,num_ibool,mask_ibool)
+  deallocate(npoint,nelement)
 
 end program combine_vol_data

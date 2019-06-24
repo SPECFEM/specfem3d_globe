@@ -38,19 +38,14 @@ program combine_paraview_movie_data
 
   include "OUTPUT_FILES/values_from_mesher.h"
 
-  integer :: fid,i,ipoint,ier,it,itstart,itstop,dit_movie
-  integer :: iproc,num_node,npoint_all,nelement_all,nelement_total
-  integer :: np, ne
-  integer :: n1, n2, n3, n4, n5, n6, n7, n8
-
-  integer,parameter :: MAX_NUM_NODES = 2000
-  integer,dimension(MAX_NUM_NODES) :: npoint, nelement
+  integer :: num_node
+  integer, dimension(:),allocatable :: npoint, nelement
 
   ! data arrays
   integer :: numpoin,nelement_local
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: xstore, ystore, zstore
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: datastore
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: SEEstore,SNNstore,SZZstore,SNEstore,SNZstore,SEZstore
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: xstore, ystore, zstore
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: datastore
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: SEEstore,SNNstore,SZZstore,SNEstore,SNZstore,SEZstore
   real(kind=CUSTOM_REAL) :: x, y, z, dat
 
   character(len=MAX_STRING_LEN) :: prname, dimension_file
@@ -59,6 +54,11 @@ program combine_paraview_movie_data
   character(len=3) :: comp
 
   logical :: MOVIE_COARSE
+
+  integer :: fid,i,ipoint,ier,it,itstart,itstop,dit_movie
+  integer :: iproc,npoint_all,nelement_all,nelement_total
+  integer :: np, ne
+  integer :: n1, n2, n3, n4, n5, n6, n7, n8
 
   ! VTK
   logical :: USE_VTK
@@ -106,8 +106,6 @@ program combine_paraview_movie_data
   ! variable name
   var_name = comp
 
-  if (num_node > MAX_NUM_NODES) stop 'change array sizes for num_node > 1000 and recompile xcombine_paraview_movie_data'
-
   ! user output
   print *, 'Number of nodes: ',num_node
   print *, ' '
@@ -121,6 +119,9 @@ program combine_paraview_movie_data
     print *, 'Output file format : .mesh'
   endif
   print *, ' '
+
+  allocate(npoint(num_node),nelement(num_node),stat=ier)
+  if (ier /= 0) stop 'Error allocating npoint,nelement arrays'
 
   ! figure out total number of points
   print *, 'Counting points'
@@ -152,6 +153,18 @@ program combine_paraview_movie_data
   else
     nelement_total = nelement_all * 64
   endif
+
+  allocate(xstore(NGLOB_CRUST_MANTLE), &
+           ystore(NGLOB_CRUST_MANTLE), &
+           zstore(NGLOB_CRUST_MANTLE), &
+           datastore(NGLOB_CRUST_MANTLE), &
+           SEEstore(NGLOB_CRUST_MANTLE), &
+           SNNstore(NGLOB_CRUST_MANTLE), &
+           SZZstore(NGLOB_CRUST_MANTLE), &
+           SNEstore(NGLOB_CRUST_MANTLE), &
+           SNZstore(NGLOB_CRUST_MANTLE), &
+           SEZstore(NGLOB_CRUST_MANTLE), stat=ier)
+  if (ier /= 0) stop 'Error allocating mesh arrays'
 
   ! VTK
   if (USE_VTK) then
@@ -551,6 +564,11 @@ program combine_paraview_movie_data
   enddo ! timesteps
 
   print *, ' '
+
+  ! frees arrays
+  deallocate(npoint,nelement)
+  deallocate(xstore,ystore,zstore,datastore)
+  deallocate(SEEstore,SNNstore,SZZstore,SNEstore,SNZstore,SEZstore)
 
 end program combine_paraview_movie_data
 
