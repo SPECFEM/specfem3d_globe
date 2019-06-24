@@ -448,6 +448,11 @@ void FC_FUNC_ (compute_coupling_ocean_gpu,
 #endif
 #ifdef USE_CUDA
   if (run_cuda) {
+    // graph
+#ifdef USE_CUDA_GRAPHS
+    if (! mp->use_graph_call_elastic){
+#endif
+
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize,1,1);
 
@@ -460,6 +465,11 @@ void FC_FUNC_ (compute_coupling_ocean_gpu,
                                                                          mp->npoin_oceans,
                                                                          mp->d_ibool_ocean_load.cuda,
                                                                          mp->d_normal_ocean_load.cuda);
+
+#ifdef USE_CUDA_GRAPHS
+    } // graph
+#endif
+
   }
 #endif
 

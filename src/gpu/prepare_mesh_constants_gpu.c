@@ -132,6 +132,18 @@ void FC_FUNC_ (prepare_constants_device,
   // MPI process rank
   mp->myrank = *myrank_f;
 
+  // simulation type
+  mp->simulation_type = *SIMULATION_TYPE;
+  mp->noise_tomography = *NOISE_TOMOGRAPHY;
+
+  if (mp->simulation_type != 1 && mp->simulation_type != 2 && mp->simulation_type != 3 ) {
+    exit_on_error ("SIMULATION_TYPE must be set to 1,2 or 3 for GPU devices; please re-compile");
+  }
+  if (mp->noise_tomography != 0 && mp->noise_tomography != 1 && mp->noise_tomography != 2 && mp->noise_tomography != 3 ) {
+    exit_on_error ("NOISE_TOMOGRAPHY must be set to 0,1,2 or 3 for GPU devices; please re-compile");
+  }
+
+
 #ifdef USE_CUDA
   if (run_cuda) {
     // setup two streams, one for compute and one for host<->device memory copies
@@ -148,6 +160,50 @@ void FC_FUNC_ (prepare_constants_device,
     print_CUDA_error_if_any( cudaStreamCreate(&mp->compute_stream), 101);
     // copy stream (needed to transfer MPI buffers)
     if (GPU_ASYNC_COPY) print_CUDA_error_if_any( cudaStreamCreate(&mp->copy_stream), 102);
+
+    // graphs
+#ifdef USE_CUDA_GRAPHS
+    // CUDA graphs (version >= 10)
+    //
+    // we will create graphs for updating velocity/accelerations after the main iphase-loop of the stiffness calculations.
+    // those kernels are very small (multiply accel, ocean coupling, velocity update),
+    // thus launching each one separately creates an overhead.
+    // we will capture 2 graphs for elastic and acoustic updates and call the graphs instead.
+    //
+    // experimental feature
+    //
+    // initializes
+    mp->init_graph_elastic = 0;
+    mp->use_graph_call_elastic = 0;
+    mp->init_graph_acoustic = 0;
+    mp->use_graph_call_acoustic = 0;
+    mp->init_graph_norm = 0;
+    mp->use_graph_call_norm = 0;
+    mp->init_graph_norm_strain = 0;
+    mp->use_graph_call_norm_strain = 0;
+    // turns graphs on for only for forward runs for now...
+    //
+    // first, we set init_graph_** to capture cuda kernel calls. after capturing the first time we met these calls,
+    // we will set use_graph_call_** to true to then use the graph launch instead of explicit kernel calls.
+    if (mp->simulation_type == 1){
+      // initializes graph setup
+      mp->init_graph_elastic = 1;       // elastic veloc update graph
+      mp->use_graph_call_elastic = 0;
+      mp->init_graph_acoustic = 1;      // acoustic veloc update graph
+      mp->use_graph_call_acoustic = 0;
+      // debug
+      //if (mp->myrank == 0) printf("Graph: using CUDA graph\n");
+      if (GPU_ASYNC_COPY){
+        // check norm and norm strain graphs require async copies between host-device
+        mp->init_graph_norm = 1;              // check norm graph
+        mp->use_graph_call_norm = 0;
+        mp->init_graph_norm_strain = 1;       // check strain norm graph
+        mp->use_graph_call_norm_strain = 0;
+        //debug
+        //if (mp->myrank == 0) printf("Graph: using CUDA graph for stability check of norms of wavefield and strain\n");
+      }
+    }
+#endif
   }
 #endif
 
@@ -234,10 +290,6 @@ void FC_FUNC_ (prepare_constants_device,
   mp->NSPEC_INNER_CORE = *NSPEC_INNER_CORE;
   mp->NGLOB_INNER_CORE = *NGLOB_INNER_CORE;
   mp->NSPEC_INNER_CORE_STRAIN_ONLY = *NSPEC_INNER_CORE_STRAIN_ONLY;
-
-  // simulation type
-  mp->simulation_type = *SIMULATION_TYPE;
-  mp->noise_tomography = *NOISE_TOMOGRAPHY;
 
   // simulation flags initialization
   mp->save_forward = *SAVE_FORWARD_f;
@@ -390,16 +442,58 @@ void FC_FUNC_ (prepare_constants_device,
   int num_blocks_x,num_blocks_y;
 
   // buffer for crust_mantle arrays has maximum size
-  if (mp->compute_and_store_strain){
-    size = MAX(mp->NGLOB_CRUST_MANTLE, NGLL3 * (mp->NSPEC_CRUST_MANTLE));
-  } else{
-    size = mp->NGLOB_CRUST_MANTLE;
-  }
+  int size_block_norm,size_block_norm_strain;
+
+  // norm arrays
+  size = mp->NGLOB_CRUST_MANTLE;
+
   size_padded = ((int) ceil (((double) size) / ((double) blocksize))) * blocksize;
   get_blocks_xy (size_padded / blocksize, &num_blocks_x, &num_blocks_y);
 
+  size_block_norm = num_blocks_x * num_blocks_y;
+
+  // norm strain arrays
+  if (mp->compute_and_store_strain){
+    size = MAX(mp->NGLOB_CRUST_MANTLE, NGLL3 * (mp->NSPEC_CRUST_MANTLE));
+
+    size_padded = ((int) ceil (((double) size) / ((double) blocksize))) * blocksize;
+    get_blocks_xy (size_padded / blocksize, &num_blocks_x, &num_blocks_y);
+
+    size_block_norm_strain = num_blocks_x * num_blocks_y;
+  } else{
+    // dummy
+    size_block_norm_strain = 1;
+  }
+
   // creates buffer on GPU for maximum array values
-  gpuMalloc_realw (&mp->d_norm_max, num_blocks_x * num_blocks_y);
+  gpuMalloc_realw (&mp->d_norm_max, 3 * size_block_norm);        // factor 3 for fluid/cm/ic
+  gpuMalloc_realw (&mp->d_norm_strain_max, 6 * size_block_norm_strain); // factor 6 for strain trace,xx,yy,..
+  // initializes values to zero
+  gpuMemset_realw (&mp->d_norm_max, 3 * size_block_norm, 0);
+  gpuMemset_realw (&mp->d_norm_strain_max, 6 * size_block_norm_strain, 0);
+
+  // creates pinned host buffer
+  if (GPU_ASYNC_COPY) {
+#ifdef USE_OPENCL
+    if (run_opencl) {
+        ALLOC_PINNED_BUFFER_OCL(norm_max, 3 * size_block_norm * sizeof(realw));
+        ALLOC_PINNED_BUFFER_OCL(norm_strain_max, 6 * size_block_norm_strain * sizeof(realw));
+      }
+#endif
+#ifdef USE_CUDA
+    if (run_cuda) {
+      // note: Allocate pinned buffers otherwise cudaMemcpyAsync() will behave like cudaMemcpy(), i.e. synchronously.
+      print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_norm_max), 3 * size_block_norm * sizeof(realw)),8001);
+      print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_norm_strain_max), 6 * size_block_norm_strain * sizeof(realw)),8002);
+      print_CUDA_error_if_any(cudaEventCreate(&mp->kernel_event),8003);
+    }
+#endif
+  } else {
+    mp->h_norm_max = (realw *) malloc (3 * size_block_norm * sizeof (realw));
+    if (mp->h_norm_max == NULL) exit_on_error ("h_norm_max not allocated\n");
+    mp->h_norm_strain_max = (realw *) malloc (6 * size_block_norm_strain * sizeof (realw));
+    if (mp->h_norm_strain_max == NULL) exit_on_error ("h_norm_strain_max not allocated\n");
+  }
 
   // synchronizes gpu calls
   gpuSynchronize();
@@ -2733,7 +2827,23 @@ void FC_FUNC_ (prepare_cleanup_device,
     }
   }
 
+  if (GPU_ASYNC_COPY){
+#ifdef USE_OPENCL
+    if (run_opencl){
+      RELEASE_PINNED_BUFFER_OCL (norm_max);
+      RELEASE_PINNED_BUFFER_OCL (norm_strain_max);
+    }
+#endif
+#ifdef USE_CUDA
+    if (run_cuda){
+      cudaFreeHost(mp->h_norm_max);
+      cudaFreeHost(mp->h_norm_strain_max);
+      cudaEventDestroy(mp->kernel_event);
+    }
+#endif
+  }
   gpuFree (&mp->d_norm_max);
+  gpuFree (&mp->d_norm_strain_max);
 
   //------------------------------------------
   // rotation arrays
@@ -3209,6 +3319,25 @@ void FC_FUNC_ (prepare_cleanup_device,
   if (run_cuda) {
     cudaStreamDestroy(mp->compute_stream);
     if (GPU_ASYNC_COPY) cudaStreamDestroy(mp->copy_stream);
+    // graphs
+#ifdef USE_CUDA_GRAPHS
+    if (mp->use_graph_call_elastic) {
+      cudaGraphExecDestroy(mp->graphExec_elastic);
+      cudaGraphDestroy(mp->graph_elastic);
+    }
+    if (mp->use_graph_call_acoustic) {
+      cudaGraphExecDestroy(mp->graphExec_acoustic);
+      cudaGraphDestroy(mp->graph_acoustic);
+    }
+    if (mp->use_graph_call_norm) {
+      cudaGraphExecDestroy(mp->graphExec_norm);
+      cudaGraphDestroy(mp->graph_norm);
+    }
+    if (mp->use_graph_call_norm_strain) {
+      cudaGraphExecDestroy(mp->graphExec_norm_strain);
+      cudaGraphDestroy(mp->graph_norm_strain);
+    }
+#endif
   }
 #endif
 

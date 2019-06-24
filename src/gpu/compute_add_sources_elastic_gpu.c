@@ -343,7 +343,7 @@ void FC_FUNC_(transfer_adj_to_device_async,
   if (mp->nadj_rec_local == 0) return;
 
   // checks async-memcpy
-  if (! GPU_ASYNC_COPY ) {
+  if (! GPU_ASYNC_COPY) {
     exit_on_error("transfer_adj_to_device_async must be called with GPU_ASYNC_COPY == 1, \
 please check mesh_constants_cuda.h");
   }

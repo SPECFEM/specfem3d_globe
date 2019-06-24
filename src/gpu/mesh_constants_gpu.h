@@ -215,7 +215,7 @@ typedef float realw;
 
 #ifdef USE_CUDA
   // CUDA version >= 4.0 needed for cudaTextureType1D and cudaDeviceSynchronize()
-  #if CUDA_VERSION < 4000
+  #if CUDA_VERSION < 4000 || (defined (__CUDACC_VER_MAJOR__) && (__CUDACC_VER_MAJOR__ < 4))
     #undef USE_TEXTURES_FIELDS
     #undef USE_TEXTURES_CONSTANTS
     #pragma message ("\nCompiling for CUDA version < 4.0\n")
@@ -276,6 +276,12 @@ typedef float realw;
 //             For Volta, the spilling slows down the kernels by ~5%
 #undef USE_LAUNCH_BOUNDS
 //#define LAUNCH_MIN_BLOCKS 6  // with 6 blocks, kernel uses 80 registers and would lead to ~1% speed up
+#if defined (__CUDACC_VER_MAJOR__) && (__CUDACC_VER_MAJOR__ >= 10)
+// CUDA graphs: (experimental feature) requires compilation with CUDA toolkit versions >= 10.0
+//              uses graphs instead of separate kernel launches (for accel/veloc updates)
+//              to minimize launch time overheads for very small kernels
+//#define USE_CUDA_GRAPHS
+#endif
 #endif
 
 
@@ -283,9 +289,9 @@ typedef float realw;
 
 // kernel block size for updating displacements/potential (Newmark time scheme)
 // current hardware: 128 is slightly faster than 256 (~ 4%)
-#define BLOCKSIZE_KERNEL1 128
-#define BLOCKSIZE_KERNEL3 128
-#define BLOCKSIZE_TRANSFER 256
+#define BLOCKSIZE_KERNEL1 128     // update displ kernels
+#define BLOCKSIZE_KERNEL3 128     // update veloc / multiply accel kernels
+#define BLOCKSIZE_TRANSFER 256    // transfer host-device kernels, get maximum kernels
 
 // maximum grid dimension in one direction of GPU
 #define MAXIMUM_GRID_DIM 65535
@@ -844,6 +850,10 @@ typedef struct mesh_ {
 
   // norm checking
   gpu_realw_mem d_norm_max;
+  gpu_realw_mem d_norm_strain_max;
+
+  realw *h_norm_max;
+  realw *h_norm_strain_max;
 
   // ------------------------------------------------------------------   //
   // assembly
@@ -1008,6 +1018,9 @@ typedef struct mesh_ {
   cl_mem h_pinned_recv_accel_buffer_oc;
   cl_mem h_pinned_b_send_accel_buffer_oc;
   cl_mem h_pinned_b_recv_accel_buffer_oc;
+
+  cl_mem h_pinned_norm_max;
+  cl_mem h_pinned_norm_strain_max;
 #endif
 
   // streams
@@ -1015,6 +1028,31 @@ typedef struct mesh_ {
   // overlapped memcpy streams
   cudaStream_t compute_stream;
   cudaStream_t copy_stream;
+
+  // event
+  cudaEvent_t kernel_event;
+
+  // graphs
+#ifdef USE_CUDA_GRAPHS
+  int use_graph_call_elastic;
+  int use_graph_call_acoustic;
+  int use_graph_call_norm;
+  int use_graph_call_norm_strain;
+  int init_graph_elastic;
+  int init_graph_acoustic;
+  int init_graph_norm;
+  int init_graph_norm_strain;
+  // CUDA graphs (version >= 10)
+  cudaGraph_t graph_elastic;
+  cudaGraph_t graph_acoustic;
+  cudaGraph_t graph_norm;
+  cudaGraph_t graph_norm_strain;
+  cudaGraphExec_t graphExec_elastic;
+  cudaGraphExec_t graphExec_acoustic;
+  cudaGraphExec_t graphExec_norm;
+  cudaGraphExec_t graphExec_norm_strain;
+#endif
+
 #endif
 
 #ifdef USE_OPENCL
@@ -1076,6 +1114,10 @@ void gpuCopy_todevice_double (gpu_double_mem *d_array_addr_ptr, double *h_array,
 void gpuCopy_todevice_int (gpu_int_mem *d_array_addr_ptr, int *h_array, size_t size);
 
 void gpuCopy_from_device_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array, size_t size);
+
+void gpuCopy_from_device_realw_asyncEvent (Mesh *mp, gpu_realw_mem *d_array_addr_ptr, realw *h_array, size_t size);
+void gpuRecordEvent(Mesh *mp);
+void gpuWaitEvent (Mesh *mp);
 
 void gpuCopy_todevice_realw_offset (gpu_realw_mem *d_array_addr_ptr, realw *h_array, size_t size, size_t offset);
 void gpuCopy_from_device_realw_offset (gpu_realw_mem *d_array_addr_ptr, realw *h_array, size_t size, size_t offset);

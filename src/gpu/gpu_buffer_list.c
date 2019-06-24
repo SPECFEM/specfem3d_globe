@@ -343,6 +343,7 @@ GPU_REALW_BUFFER (d_hetar_adj);
 GPU_REALW_BUFFER (d_hgammar_adj);
 
 GPU_REALW_BUFFER (d_norm_max);
+GPU_REALW_BUFFER (d_norm_strain_max);
 
 // ------------------------------------------------------------------   //
 // assembly
