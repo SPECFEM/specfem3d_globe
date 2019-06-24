@@ -29,7 +29,7 @@
 ! and macros INDEX_IJK, DO_LOOP_IJK, ENDDO_LOOP_IJK defined in config.fh
 #include "config.fh"
 
-  subroutine compute_forces_inner_core_Dev( NSPEC,NGLOB,NSPEC_ATT, &
+  subroutine compute_forces_inner_core_Dev( NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT, &
                                             deltat, &
                                             displ_inner_core, &
                                             accel_inner_core, &
@@ -44,7 +44,13 @@
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
-  use constants_solver
+  use constants_solver, only: &
+    CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGLLCUBE,NDIM,IFLAG_IN_FICTITIOUS_CUBE, &
+    N_SLS,NSPEC_INNER_CORE_STRAIN_ONLY,NSPeC_INNER_CORE, &
+    ATT1_VAL,ATT2_VAL,ATT3_VAL, &
+    ANISOTROPIC_INNER_CORE_VAL,ATTENUATION_VAL,PARTIAL_PHYS_DISPERSION_ONLY_VAL,GRAVITY_VAL, &
+    m1,m2
+
 
   use specfem_par, only: &
     hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
@@ -76,7 +82,7 @@
 
   implicit none
 
-  integer :: NSPEC,NGLOB,NSPEC_ATT
+  integer :: NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT
 
   ! time step
   real(kind=CUSTOM_REAL) deltat
@@ -98,13 +104,13 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATT) :: &
     R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STR_OR_ATT) :: &
     epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STRAIN_ONLY) :: epsilon_trace_over_3
 
   ! work array with contributions
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ,NSPEC),intent(out) :: sum_terms
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ,NSPeC_INNER_CORE),intent(out) :: sum_terms
 
   ! inner/outer element run flag
   integer,intent(in) :: iphase

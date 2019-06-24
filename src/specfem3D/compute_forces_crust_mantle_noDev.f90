@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine compute_forces_crust_mantle_noDev(NSPEC,NGLOB,NSPEC_ATT, &
+  subroutine compute_forces_crust_mantle_noDev(NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT, &
                                                deltat, &
                                                displ_crust_mantle, &
                                                accel_crust_mantle, &
@@ -67,7 +67,7 @@
 
   implicit none
 
-  integer,intent(in) :: NSPEC,NGLOB,NSPEC_ATT
+  integer,intent(in) :: NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT
 
   ! time step
   real(kind=CUSTOM_REAL),intent(in) :: deltat
@@ -86,7 +86,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATT),intent(inout) :: &
     R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(inout) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STR_OR_ATT),intent(inout) :: &
     epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY),intent(inout) :: epsilon_trace_over_3

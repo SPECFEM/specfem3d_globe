@@ -93,15 +93,10 @@ void FC_FUNC_ (output_free_device_memory,
 void FC_FUNC_ (get_free_device_memory,
                get_FREE_DEVICE_MEMORY) (realw *free, realw *used, realw *total) {}
 
-void FC_FUNC_ (check_norm_acoustic_from_device,
-               CHECK_NORM_ACOUSTIC_FROM_DEVICE) (realw *norm,
-                                                 long *Mesh_pointer_f,
-                                                 int *FORWARD_OR_ADJOINT) {}
-
-void FC_FUNC_ (check_norm_elastic_from_device,
-               CHECK_NORM_ELASTIC_FROM_DEVICE) (realw *norm,
-                                                long *Mesh_pointer_f,
-                                                int *FORWARD_OR_ADJOINT) {}
+void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
+               CHECK_NORM_ELASTIC_ACOUSTIC_FROM_DEVICE) (realw *solidnorm,realw *fluidnorm,
+                                                         long *Mesh_pointer_f,
+                                                         int *FORWARD_OR_ADJOINT) {}
 
 void FC_FUNC_ (check_norm_strain_from_device,
                CHECK_NORM_STRAIN_FROM_DEVICE) (realw *strain_norm,

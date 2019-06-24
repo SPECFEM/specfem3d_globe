@@ -29,7 +29,7 @@
 ! and macros INDEX_IJK, DO_LOOP_IJK, ENDDO_LOOP_IJK defined in config.fh
 #include "config.fh"
 
-  subroutine compute_forces_crust_mantle_Dev( NSPEC,NGLOB,NSPEC_ATT, &
+  subroutine compute_forces_crust_mantle_Dev( NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT, &
                                               deltat, &
                                               displ_crust_mantle, &
                                               accel_crust_mantle, &
@@ -44,7 +44,12 @@
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
-  use constants_solver
+  use constants_solver, only: &
+    CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGLLCUBE,NDIM, &
+    N_SLS,NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_CRUST_MANTLE, &
+    ATT1_VAL,ATT2_VAL,ATT3_VAL, &
+    ANISOTROPIC_3D_MANTLE_VAL,ATTENUATION_VAL,PARTIAL_PHYS_DISPERSION_ONLY_VAL,GRAVITY_VAL, &
+    m1,m2
 
   use specfem_par, only: &
     hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
@@ -85,7 +90,7 @@
 
   implicit none
 
-  integer,intent(in) :: NSPEC,NGLOB,NSPEC_ATT
+  integer,intent(in) :: NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT
 
   ! time step
   real(kind=CUSTOM_REAL),intent(in) :: deltat
@@ -104,7 +109,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATT),intent(inout) :: &
     R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(inout) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STR_OR_ATT),intent(inout) :: &
     epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY),intent(inout) :: epsilon_trace_over_3
@@ -114,7 +119,7 @@
   real(kind=CUSTOM_REAL), dimension(N_SLS),intent(in) :: alphaval,betaval,gammaval
 
   ! work array with contributions
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ,NSPEC),intent(out) :: sum_terms
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),intent(out) :: sum_terms
 
   ! inner/outer element run flag
   integer,intent(in) :: iphase

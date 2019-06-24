@@ -88,14 +88,19 @@
   integer :: i,j,k
 #endif
 
-  ! checks if anything to do
-  ! GPU kernels still use original arrays
-  if (GPU_MODE) return
-
   ! user output
   if (myrank == 0) then
     write(IMAIN,*) "preparing elastic element arrays"
     call flush_IMAIN()
+  endif
+
+  ! checks if anything to do
+  ! GPU kernels still use original arrays
+  if (GPU_MODE) then
+    write(IMAIN,*) "  GPU mode uses with original arrays"
+    call flush_IMAIN()
+    ! done
+    return
   endif
 
   ! crust/mantle
@@ -678,6 +683,12 @@
     enddo
 !$OMP ENDDO
 !$OMP END PARALLEL
+  endif
+
+  ! safety check
+  if (GPU_MODE) then
+    print *,'!!! Please make sure to have GPU routines adapted to new elastic tensor arrays !!!'
+    stop 'Safety stop for GPU mode with modified elastic elements'
   endif
 
   ! synchronizes processes

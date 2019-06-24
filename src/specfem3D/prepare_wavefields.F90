@@ -164,11 +164,10 @@
            R_yz_inner_core(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_ATTENUATION),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays R_xx_inner_core,..'
 
-  if (ROTATION_VAL) then
-    allocate(A_array_rotation(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION), &
-             B_array_rotation(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION),stat=ier)
-    if (ier /= 0) stop 'Error allocating arrays A_array_rotation,..'
-  endif
+  ! needed for subroutine calls
+  allocate(A_array_rotation(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION), &
+           B_array_rotation(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION),stat=ier)
+  if (ier /= 0) stop 'Error allocating arrays A_array_rotation,..'
 
   ! allocates backward/reconstructed arrays (dummy in case of forward simulation)
   allocate(b_displ_crust_mantle(NDIM,NGLOB_CRUST_MANTLE_ADJOINT), &
@@ -202,12 +201,10 @@
 
   ! initializes backward/reconstructed arrays
   if (SIMULATION_TYPE == 3) then
-    if (ROTATION_VAL) then
-      allocate(b_A_array_rotation(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROT_ADJOINT), &
-               b_B_array_rotation(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROT_ADJOINT),stat=ier)
-      if (ier /= 0) stop 'Error allocating arrays b_A_array_rotation,..'
-    endif
-
+    ! needed for subroutine calls
+    allocate(b_A_array_rotation(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROT_ADJOINT), &
+             b_B_array_rotation(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROT_ADJOINT),stat=ier)
+    if (ier /= 0) stop 'Error allocating arrays b_A_array_rotation,..'
   endif
 
   ! Runge-Kutta time scheme

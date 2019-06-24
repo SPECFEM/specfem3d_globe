@@ -32,7 +32,7 @@
 
 
   subroutine compute_forces_outer_core_Dev(timeval,deltat,two_omega_earth, &
-                                           NSPEC,NGLOB, &
+                                           NSPEC_ROT,NGLOB, &
                                            A_array_rotation,B_array_rotation, &
                                            A_array_rotation_lddrk,B_array_rotation_lddrk, &
                                            displfluid,accelfluid, &
@@ -40,7 +40,12 @@
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
-  use constants_solver
+  use constants_solver, only: &
+    CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGLLCUBE,NDIM, &
+    NSPEC_OUTER_CORE_3DMOVIE,NSPEC_OUTER_CORE, &
+    ROTATION_VAL,GRAVITY_VAL, &
+    NSTAGE,ALPHA_LDDRK,BETA_LDDRK, &
+    m1,m2
 
   use specfem_par, only: &
     hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT,wgll_cube, &
@@ -67,14 +72,14 @@
 
   implicit none
 
-  integer,intent(in) :: NSPEC,NGLOB
+  integer,intent(in) :: NSPEC_ROT,NGLOB
 
   ! for the Euler scheme for rotation
   real(kind=CUSTOM_REAL),intent(in) :: timeval,deltat,two_omega_earth
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(inout) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_ROT),intent(inout) :: &
     A_array_rotation,B_array_rotation
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(inout) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_ROT),intent(inout) :: &
     A_array_rotation_lddrk,B_array_rotation_lddrk
 
   ! displacement and acceleration
@@ -84,7 +89,7 @@
   ! divergence of displacement
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_3DMOVIE),intent(out) :: div_displfluid
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(out) :: sum_terms
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE),intent(out) :: sum_terms
 
   ! inner/outer element run flag
   integer,intent(in) :: iphase

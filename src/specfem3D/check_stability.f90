@@ -111,8 +111,7 @@
   else
     ! on GPU
     ! way 2: just get maximum of fields from GPU
-    call check_norm_elastic_from_device(Usolidnorm,Mesh_pointer,1)
-    call check_norm_acoustic_from_device(Ufluidnorm,Mesh_pointer,1)
+    call check_norm_elastic_acoustic_from_device(Usolidnorm,Ufluidnorm,Mesh_pointer,1)
   endif
 
   ! check stability of the code, exit if unstable
@@ -141,8 +140,7 @@
       b_Ufluidnorm = maxval(abs(b_displ_outer_core))
     else
       ! on GPU
-      call check_norm_elastic_from_device(b_Usolidnorm,Mesh_pointer,3)
-      call check_norm_acoustic_from_device(b_Ufluidnorm,Mesh_pointer,3)
+      call check_norm_elastic_acoustic_from_device(b_Usolidnorm,b_Ufluidnorm,Mesh_pointer,3)
     endif
 
 ! this trick checks for NaN (Not a Number), which is not even equal to itself
@@ -427,8 +425,7 @@
     b_Ufluidnorm = maxval(abs(b_displ_outer_core))
   else
     ! on GPU
-    call check_norm_elastic_from_device(b_Usolidnorm,Mesh_pointer,3)
-    call check_norm_acoustic_from_device(b_Ufluidnorm,Mesh_pointer,3)
+    call check_norm_elastic_acoustic_from_device(b_Usolidnorm,b_Ufluidnorm,Mesh_pointer,3)
   endif
 
 ! this trick checks for NaN (Not a Number), which is not even equal to itself

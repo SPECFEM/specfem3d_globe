@@ -154,7 +154,7 @@
   total_force_N = 0.d0
 
   ! read all the sources
-  call read_source_locations()
+  call read_source_locations(srclat,srclon,srcdepth,moment_tensor)
 
   ! initializes source mask
   if (SAVE_SOURCE_MASK .and. SIMULATION_TYPE == 3) then
@@ -725,12 +725,27 @@
 
   contains
 
-    subroutine read_source_locations()
+    subroutine read_source_locations(srclat,srclon,srcdepth,moment_tensor)
 
     use specfem_par, only: min_tshift_src_original
 
     implicit none
 
+    ! (uses these as explicit routine arguments to avoid compiler warnings)
+    double precision, dimension(NSOURCES),intent(out) :: srclat,srclon,srcdepth
+    double precision, dimension(6,NSOURCES),intent(out) :: moment_tensor
+
+    ! initializes
+    srclat(:) = 0.d0
+    srclon(:) = 0.d0
+    srcdepth(:) = 0.d0
+    moment_tensor(:,:) = 0.d0
+
+    tshift_src(:) = 0.d0
+    hdur(:) = 0.d0
+    min_tshift_src_original = 0.d0
+
+    ! reads in source descriptions
     if (USE_FORCE_POINT_SOURCE) then
       ! point forces
       if (myrank == 0) then

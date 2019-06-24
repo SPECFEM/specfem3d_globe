@@ -81,8 +81,7 @@
                                        epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
                                        epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
                                        eps_trace_over_3_crust_mantle, &
-                                       alphaval,betaval,gammaval, &
-                                       factor_common_crust_mantle,ATT4_VAL)
+                                       alphaval,betaval,gammaval)
 
       ! inner core region
       call compute_forces_inner_core(NSPEC_INNER_CORE_STR_OR_ATT,NGLOB_INNER_CORE, &
@@ -98,8 +97,7 @@
                                      epsilondev_xx_inner_core,epsilondev_yy_inner_core,epsilondev_xy_inner_core, &
                                      epsilondev_xz_inner_core,epsilondev_yz_inner_core, &
                                      eps_trace_over_3_inner_core, &
-                                     alphaval,betaval,gammaval, &
-                                     factor_common_inner_core,ATT5_VAL)
+                                     alphaval,betaval,gammaval)
     else
       ! on GPU
       ! contains forward FORWARD_OR_ADJOINT == 1
@@ -445,8 +443,7 @@
                                        b_epsilondev_xy_crust_mantle, &
                                        b_epsilondev_xz_crust_mantle,b_epsilondev_yz_crust_mantle, &
                                        b_eps_trace_over_3_crust_mantle, &
-                                       b_alphaval,b_betaval,b_gammaval, &
-                                       factor_common_crust_mantle,ATT4_VAL)
+                                       b_alphaval,b_betaval,b_gammaval)
       ! inner core region
       call compute_forces_inner_core(NSPEC_INNER_CORE_ADJOINT,NGLOB_INNER_CORE_ADJOINT, &
                                      NSPEC_INNER_CORE_STR_AND_ATT, &
@@ -461,8 +458,7 @@
                                      b_epsilondev_xx_inner_core,b_epsilondev_yy_inner_core,b_epsilondev_xy_inner_core, &
                                      b_epsilondev_xz_inner_core,b_epsilondev_yz_inner_core, &
                                      b_eps_trace_over_3_inner_core, &
-                                     b_alphaval,b_betaval,b_gammaval, &
-                                     factor_common_inner_core,ATT5_VAL)
+                                     b_alphaval,b_betaval,b_gammaval)
     else
       ! on GPU
       ! contains forward FORWARD_OR_ADJOINT == 3
@@ -720,7 +716,7 @@
 !
 
 
-  subroutine compute_forces_crust_mantle( NSPEC,NGLOB,NSPEC_ATT, &
+  subroutine compute_forces_crust_mantle( NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT, &
                                           deltat, &
                                           displ_crust_mantle, &
                                           accel_crust_mantle, &
@@ -730,22 +726,21 @@
                                           epsilondev_xx,epsilondev_yy,epsilondev_xy, &
                                           epsilondev_xz,epsilondev_yz, &
                                           epsilon_trace_over_3, &
-                                          alphaval,betaval,gammaval, &
-                                          factor_common,vnspec )
+                                          alphaval,betaval,gammaval)
 
 ! wrapper function, decides about Deville optimization
 !
 ! (left in this file to let compiler decide about inlining)
 
   use constants_solver, only: CUSTOM_REAL,NDIM,NGLLX,NGLLY,NGLLZ,USE_DEVILLE_PRODUCTS_VAL, &
-    ATT1_VAL,ATT2_VAL,ATT3_VAL,N_SLS,NSPEC_CRUST_MANTLE_STRAIN_ONLY
+    ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT4_VAL,N_SLS,NSPEC_CRUST_MANTLE_STRAIN_ONLY
 
   ! note: passes sum_terms array as subroutine argument which will help for performance (better than use-statement)
-  use specfem_par_crustmantle, only: sum_terms_crust_mantle
+  use specfem_par_crustmantle, only: sum_terms_crust_mantle,factor_common_crust_mantle
 
   implicit none
 
-  integer,intent(in) :: NSPEC,NGLOB,NSPEC_ATT
+  integer,intent(in) :: NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT
 
   ! time step
   real(kind=CUSTOM_REAL),intent(in) :: deltat
@@ -754,9 +749,6 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB),intent(in) :: displ_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB),intent(inout) :: accel_crust_mantle
 
-  ! variable sized array variables
-  integer,intent(in) :: vnspec
-
   ! memory variables for attenuation
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
@@ -764,13 +756,12 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATT),intent(inout) :: &
     R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(inout) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STR_OR_ATT),intent(inout) :: &
     epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY),intent(inout) :: epsilon_trace_over_3
 
   ! [alpha,beta,gamma]val reduced to N_SLS and factor_common to N_SLS*NUM_NODES
-  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,N_SLS,vnspec),intent(in) :: factor_common
   real(kind=CUSTOM_REAL), dimension(N_SLS),intent(in) :: alphaval,betaval,gammaval
 
   ! inner/outer element run flag
@@ -778,7 +769,7 @@
 
   if (USE_DEVILLE_PRODUCTS_VAL) then
     ! uses Deville (2002) optimizations
-    call compute_forces_crust_mantle_Dev(NSPEC,NGLOB,NSPEC_ATT, &
+    call compute_forces_crust_mantle_Dev(NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT, &
                                          deltat, &
                                          displ_crust_mantle, &
                                          accel_crust_mantle, &
@@ -788,10 +779,10 @@
                                          epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
                                          epsilon_trace_over_3, &
                                          alphaval,betaval,gammaval, &
-                                         factor_common,vnspec,sum_terms_crust_mantle)
+                                         factor_common_crust_mantle,ATT4_VAL,sum_terms_crust_mantle)
   else
     ! no Deville optimization
-    call compute_forces_crust_mantle_noDev(NSPEC,NGLOB,NSPEC_ATT, &
+    call compute_forces_crust_mantle_noDev(NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT, &
                                            deltat, &
                                            displ_crust_mantle, &
                                            accel_crust_mantle, &
@@ -801,7 +792,7 @@
                                            epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
                                            epsilon_trace_over_3, &
                                            alphaval,betaval,gammaval, &
-                                           factor_common,vnspec)
+                                           factor_common_crust_mantle,ATT4_VAL)
   endif
 
   end subroutine compute_forces_crust_mantle
@@ -811,7 +802,7 @@
 !
 
 
-  subroutine compute_forces_inner_core( NSPEC,NGLOB,NSPEC_ATT, &
+  subroutine compute_forces_inner_core( NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT, &
                                         deltat, &
                                         displ_inner_core, &
                                         accel_inner_core, &
@@ -821,22 +812,21 @@
                                         epsilondev_xx,epsilondev_yy,epsilondev_xy, &
                                         epsilondev_xz,epsilondev_yz, &
                                         epsilon_trace_over_3, &
-                                        alphaval,betaval,gammaval, &
-                                        factor_common,vnspec)
+                                        alphaval,betaval,gammaval)
 
 ! wrapper function, decides about Deville optimization
 !
 ! (left in this file to let compiler decide about inlining)
 
   use constants_solver, only: CUSTOM_REAL,NDIM,NGLLX,NGLLY,NGLLZ,USE_DEVILLE_PRODUCTS_VAL, &
-    ATT1_VAL,ATT2_VAL,ATT3_VAL,N_SLS,NSPEC_INNER_CORE_STRAIN_ONLY
+    ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT5_VAL,N_SLS,NSPEC_INNER_CORE_STRAIN_ONLY
 
   ! note: passes sum_terms array as subroutine argument which will help for performance (better than use-statement)
-  use specfem_par_innercore, only: sum_terms_inner_core
+  use specfem_par_innercore, only: sum_terms_inner_core,factor_common_inner_core
 
   implicit none
 
-  integer,intent(in) :: NSPEC,NGLOB,NSPEC_ATT
+  integer,intent(in) :: NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT
 
   ! time step
   real(kind=CUSTOM_REAL),intent(in) :: deltat
@@ -849,8 +839,6 @@
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
   ! variable lengths for factor_common and one_minus_sum_beta
-  integer,intent(in) :: vnspec
-  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,N_SLS,vnspec),intent(in) :: factor_common
   real(kind=CUSTOM_REAL), dimension(N_SLS),intent(in) :: alphaval,betaval,gammaval
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATT),intent(inout) :: R_xx,R_yy,R_xy,R_xz,R_yz
@@ -858,7 +846,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATT),intent(inout) :: &
     R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(inout) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STR_OR_ATT),intent(inout) :: &
     epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STRAIN_ONLY),intent(inout) :: epsilon_trace_over_3
@@ -868,7 +856,7 @@
 
   if (USE_DEVILLE_PRODUCTS_VAL) then
     ! uses Deville (2002) optimizations
-    call compute_forces_inner_core_Dev(NSPEC,NGLOB,NSPEC_ATT, &
+    call compute_forces_inner_core_Dev(NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT, &
                                        deltat, &
                                        displ_inner_core, &
                                        accel_inner_core, &
@@ -878,10 +866,10 @@
                                        epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
                                        epsilon_trace_over_3, &
                                        alphaval,betaval,gammaval, &
-                                       factor_common,vnspec,sum_terms_inner_core)
+                                       factor_common_inner_core,ATT5_VAL,sum_terms_inner_core)
   else
     ! no Deville optimization
-    call compute_forces_inner_core_noDev(NSPEC,NGLOB,NSPEC_ATT, &
+    call compute_forces_inner_core_noDev(NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT, &
                                          deltat, &
                                          displ_inner_core, &
                                          accel_inner_core, &
@@ -891,7 +879,7 @@
                                          epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
                                          epsilon_trace_over_3, &
                                          alphaval,betaval,gammaval, &
-                                         factor_common,vnspec)
+                                         factor_common_inner_core,ATT5_VAL)
   endif
 
   end subroutine compute_forces_inner_core
