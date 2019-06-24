@@ -927,6 +927,9 @@
 
   use regions_mesh_par2
 
+!debug
+!  use shared_parameters, only: NPROCTOT
+
   implicit none
 
   ! number of total points
@@ -998,9 +1001,31 @@
   if (minval(ibool) /= 1 .or. maxval(ibool) /= nglob) &
     call exit_MPI(myrank,'incorrect global numbering')
 
+  ! debug
+  !do i = 0,NPROCTOT-1
+  !  if (myrank == i) then
+  !    print *,'ibool orig: ',myrank
+  !    print *,ibool(:,:,:,1)
+  !    print *,ibool(:,:,:,2)
+  !    print *,ibool(:,:,:,3)
+  !  endif
+  !  call synchronize_all()
+  !enddo
+
   ! creates a new indirect addressing to reduce cache misses in memory access in the solver
   ! this is *critical* to improve performance in the solver
   call get_global_indirect_addressing(nspec,nglob,ibool)
+
+  ! debug
+  !do i = 0,NPROCTOT-1
+  !  if (myrank == i) then
+  !    print *,'ibool new: ',myrank
+  !    print *,ibool(:,:,:,1)
+  !    print *,ibool(:,:,:,2)
+  !    print *,ibool(:,:,:,3)
+  !  endif
+  !  call synchronize_all()
+  !enddo
 
   ! checks again
   if (minval(ibool) /= 1 .or. maxval(ibool) /= nglob) &
@@ -1040,8 +1065,7 @@
 
   ! arrays mask_ibool(npointot) used to save memory
   ! allocate memory for arrays
-  allocate(mask_ibool(npointot), &
-          stat=ier)
+  allocate(mask_ibool(npointot),stat=ier)
   if (ier /= 0) stop 'Error in allocate 20b'
 
   ! initializes
@@ -1143,9 +1167,9 @@
   if (nspec < 1) stop 'Invalid number of elements'
 
   ! allocates temporary global mesh
-  allocate(xstore_glob(nglob),ystore_glob(nglob),zstore_glob(nglob), &
-           stat=ier)
+  allocate(xstore_glob(nglob),ystore_glob(nglob),zstore_glob(nglob),stat=ier)
   if (ier /= 0) call exit_mpi(myrank,'Error allocating temporary global mesh arrays')
+
   xstore_glob(:) = 0._CUSTOM_REAL
   ystore_glob(:) = 0._CUSTOM_REAL
   zstore_glob(:) = 0._CUSTOM_REAL
@@ -1156,10 +1180,12 @@
       do j = 1,NGLLY
         do i = 1,NGLLX
           iglob = ibool(i,j,k,ispec)
+
           if (iglob < 1 .or. iglob > nglob) then
-            print *,'Error invalid iglob',iglob,'at element',ispec,'ijk',i,j,k,'ibool',ibool(:,:,:,ispec)
+            print *,'rank ',myrank,': Error invalid iglob',iglob,'at element',ispec,'ijk',i,j,k,'ibool',ibool(:,:,:,ispec)
             stop 'Error fill global meshes has invalid iglob index'
           endif
+
           ! distinguish between single and double precision for reals
           xstore_glob(iglob) = real(xstore(i,j,k,ispec), kind=CUSTOM_REAL)
           ystore_glob(iglob) = real(ystore(i,j,k,ispec), kind=CUSTOM_REAL)

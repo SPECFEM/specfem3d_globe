@@ -909,6 +909,200 @@
 
   end subroutine write_VTK_data_elem_cr
 
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine write_VTU_data_elem_cr_binary(nspec,nglob, &
+                                           xstore_dummy,ystore_dummy,zstore_dummy,ibool, &
+                                           elem_data,prname_file)
+
+! saves vtu files in binary format, for CUSTOM_REAL values on all spectral elements
+
+  use constants, only: CUSTOM_REAL,SIZE_REAL,SIZE_INTEGER,MAX_STRING_LEN,NGLLX,NGLLY,NGLLZ,IOUT_VTK
+
+  implicit none
+
+  integer,intent(in) :: nspec,nglob
+
+  ! global coordinates
+  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
+  real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: xstore_dummy,ystore_dummy,zstore_dummy
+
+  ! element data values array
+  real(kind=CUSTOM_REAL), dimension(nspec),intent(in) :: elem_data
+
+  ! file name
+  character(len=MAX_STRING_LEN),intent(in) :: prname_file
+
+  ! local parameters
+  integer :: ispec,i,it,ier
+
+  ! local parameters
+  integer :: len_bytes,offset
+  character(len=MAX_STRING_LEN) :: var_name
+  character(len=16) :: str1,str_endian
+  character(len=12) :: str2,str3
+  character(len=1),parameter :: LF = achar(10) ! line feed character
+
+  ! endianness - determine endianness at run time:
+  ! https://www.ibm.com/developerworks/aix/library/au-endianc/index.html
+  !
+  ! for the Fortran version:
+  ! given the integer value of 1, big endian uses 00 00 00 01 and little endian uses 01 00 00 00 as bit representation.
+  ! using transfer(1,'a') takes the bit-representation of integer value 1 (multi-byte, usually 32-bit)
+  ! and interprets it as a character type (of 1-byte length).
+  ! thus, looking at the first byte, it is either 0 or 1, respectively.
+  ! finally, ichar(c) takes a character and returns its position number.
+  logical, parameter :: is_big_endian = (ichar(transfer(1,'a')) == 0)
+
+  ! note: VTK by default assumes binary data is big endian for "legacy" VTK format,
+  !       we use here the new .vtu file with XML format. in this case, we can specify the endianness by byte_order=".."
+
+  if (is_big_endian) then
+    str_endian = 'BigEndian'
+  else
+    str_endian = 'LittleEndian'
+  endif
+
+  ! variable name
+  var_name = 'elem_val'
+
+  ! numbers as strings
+  write(str1,'(i16)') nglob
+  write(str2,'(i12)') nspec
+
+  ! data offset for appended datasets
+  offset = 0
+  write(str3,'(i12)') offset
+
+  ! opens unstructured grid file as binary file
+  ! convert='BIG_ENDIAN' not needed, will be specified in XML format
+  open(IOUT_VTK,file=trim(prname_file)//'.vtu',access='stream',form='unformatted', &
+         status='unknown',action='write',iostat=ier)
+  if (ier /= 0 ) then
+    print *, 'Error opening VTU output file: ',trim(prname_file)//'.vtu'
+    stop 'Error opening VTU output file'
+  endif
+
+  ! XML file header
+  ! see: https://www.vtk.org/Wiki/VTK_XML_Formats
+  write(IOUT_VTK) '<?xml version="1.0"?>' // LF
+  write(IOUT_VTK) '<VTKFile type="UnstructuredGrid" version="0.1" byte_order="'// trim(str_endian) // '">' // LF
+  write(IOUT_VTK) '<UnstructuredGrid>' // LF
+  write(IOUT_VTK) '<Piece NumberOfPoints="'// str1 // '" NumberOfCells="' // str2 // '">' // LF
+
+  ! points
+  write(IOUT_VTK) '<Points>' // LF
+  ! binary format: not working properly yet - using appended instead
+  !write(IOUT_VTK) '<DataArray type="Float32" Name="Points" NumberOfComponents="3" format="binary" encoding="raw">' // LF
+  !! number of bytes to follow
+  !! see format description: https://www.vtk.org/Wiki/VTK_XML_Formats#Uncompressed_Data
+  !len_bytes = 3 * nglob * SIZE_REAL
+  !write(IOUT_VTK) len_bytes
+  !do i = 1,nglob
+  !  write(IOUT_VTK) real(total_dat_xyz(1,i),kind=4),real(total_dat_xyz(2,i),kind=4),real(total_dat_xyz(3,i),kind=4)
+  !enddo
+  !write(IOUT_VTK) '</DataArray>' // LF
+  !
+  ! appended format:
+  write(IOUT_VTK) '<DataArray type="Float32" Name="Points" NumberOfComponents="3" format="appended" offset="' &
+                   // str3 // '"/>' // LF
+  ! updates offset
+  ! array length in bytes
+  len_bytes = 3 * nglob * SIZE_REAL
+  ! new offset: data array size (len_bytes) + 4 bytes for length specifier at the beginning
+  offset = offset + len_bytes + 4
+  write(str3,'(i12)') offset
+  write(IOUT_VTK) '</Points>'//LF
+
+  ! cells
+  write(IOUT_VTK) '<Cells>' // LF
+  ! connectivity
+  write(IOUT_VTK) '<DataArray type="Int32" Name="connectivity" format="appended" offset="' // str3 // '"/>' // LF
+  ! updates offset
+  len_bytes = 8 * nspec * SIZE_INTEGER
+  offset = offset + len_bytes + 4
+  write(str3,'(i12)') offset
+
+  ! offsets
+  write(IOUT_VTK) '<DataArray type="Int32" Name="offsets" format="appended" offset="' // str3 // '"/>' // LF
+  ! updates offset
+  len_bytes = nspec * SIZE_INTEGER
+  offset = offset + len_bytes + 4
+  write(str3,'(i12)') offset
+
+  ! type: hexahedrons
+  write(IOUT_VTK) '<DataArray type="Int32" Name="types" format="appended" offset="' // str3 // '"/>' // LF
+  ! updates offset
+  len_bytes = nspec * SIZE_INTEGER
+  offset = offset + len_bytes + 4
+  write(str3,'(i12)') offset
+  write(IOUT_VTK) '</Cells>' // LF
+
+  ! cell data
+  write(IOUT_VTK) '<CellData Scalars="Scalars_">' // LF
+  write(IOUT_VTK) '<DataArray type="Float32" Name="' // trim(var_name) // '" format="appended" offset="' &
+                  // str3 // '"/>' // LF
+  write(IOUT_VTK) '</CellData>' // LF
+
+  ! empty point data values
+  write(IOUT_VTK) '<PointData>' // '</PointData>' // LF
+
+  ! finishes XML file
+  write(IOUT_VTK) '</Piece>' // LF
+  write(IOUT_VTK) '</UnstructuredGrid>' // LF
+
+  ! in case of appended data format, with offsets:
+  !write(IOUT_VTK) '<AppendedData encoding="base64">' // LF
+  write(IOUT_VTK) '<AppendedData encoding="raw">' // LF
+  write(IOUT_VTK) '_'
+  ! points
+  len_bytes = 3 * nglob * SIZE_REAL
+  write(IOUT_VTK) len_bytes
+  do i = 1,nglob
+    write(IOUT_VTK) real(xstore_dummy(i),kind=4),real(ystore_dummy(i),kind=4),real(zstore_dummy(i),kind=4)
+  enddo
+  ! cells
+  ! connectivity
+  ! number of bytes to follow
+  len_bytes = 8 * nspec * SIZE_INTEGER
+  write(IOUT_VTK) len_bytes
+  ! note: indices for VTK start at 0
+  do ispec = 1,nspec
+    write(IOUT_VTK) ibool(1,1,1,ispec)-1,ibool(NGLLX,1,1,ispec)-1,ibool(NGLLX,NGLLY,1,ispec)-1,ibool(1,NGLLY,1,ispec)-1, &
+      ibool(1,1,NGLLZ,ispec)-1,ibool(NGLLX,1,NGLLZ,ispec)-1,ibool(NGLLX,NGLLY,NGLLZ,ispec)-1,ibool(1,NGLLY,NGLLZ,ispec)-1
+  enddo
+  ! offsets
+  ! number of bytes to follow
+  len_bytes = nspec * SIZE_INTEGER
+  write(IOUT_VTK) len_bytes
+  ! offsets (8 points each)
+  write(IOUT_VTK) ((it*8),it = 1,nspec)
+  ! types
+  ! number of bytes to follow
+  len_bytes = nspec * SIZE_INTEGER
+  write(IOUT_VTK) len_bytes
+  ! type for hex elements is 12
+  write(IOUT_VTK) (12,it = 1,nspec)
+
+  ! cell data values
+  ! number of bytes to follow
+  len_bytes = nspec * SIZE_REAL
+  write(IOUT_VTK) len_bytes
+  ! data values
+  do ispec = 1,nspec
+    write(IOUT_VTK) real(elem_data(ispec),kind=4)
+  enddo
+
+  write(IOUT_VTK) '</AppendedData>' // LF
+  write(IOUT_VTK) '</VTKFile>' // LF
+  close(IOUT_VTK)
+
+  end subroutine write_VTU_data_elem_cr_binary
+
+
 !
 !-------------------------------------------------------------------------------------------------
 !

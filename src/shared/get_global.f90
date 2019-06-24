@@ -32,8 +32,6 @@
 
 ! non-structured global numbering software provided by Paul F. Fischer
 
-  use constants
-
   implicit none
 
   ! input parameters
@@ -75,7 +73,7 @@
 !- we can create a new indirect addressing to reduce cache misses
 ! (put into this subroutine but compiler keeps on complaining that it can't vectorize loops...)
 
-  use constants
+  use constants, only: NGLLX,NGLLY,NGLLZ
 
   implicit none
 
@@ -87,7 +85,7 @@
   integer, dimension(:), allocatable :: mask_ibool
   integer, dimension(:,:,:,:), allocatable :: copy_ibool_ori
   integer :: inumber
-  integer:: i,j,k,ispec,ier
+  integer:: i,j,k,ispec,ier,iglob
 
   ! copies original array
   allocate(copy_ibool_ori(NGLLX,NGLLY,NGLLZ,nspec), &
@@ -105,14 +103,15 @@
     do k = 1,NGLLZ
       do j = 1,NGLLY
         do i = 1,NGLLX
-          if (mask_ibool(copy_ibool_ori(i,j,k,ispec)) == -1) then
+          iglob = copy_ibool_ori(i,j,k,ispec)
+          if (mask_ibool(iglob) == -1) then
             ! creates a new point
             inumber = inumber + 1
             ibool(i,j,k,ispec) = inumber
-            mask_ibool(copy_ibool_ori(i,j,k,ispec)) = inumber
+            mask_ibool(iglob) = inumber
           else
             ! uses an existing point created previously
-            ibool(i,j,k,ispec) = mask_ibool(copy_ibool_ori(i,j,k,ispec))
+            ibool(i,j,k,ispec) = mask_ibool(iglob)
           endif
         enddo
       enddo
@@ -123,5 +122,97 @@
   deallocate(copy_ibool_ori)
   deallocate(mask_ibool)
 
+
   end subroutine get_global_indirect_addressing
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine get_global_indirect_addressing_phases(nspec,nglob,ibool, &
+                                                   phase_ispec_inner,num_phase_ispec,nspec_inner,nspec_outer)
+
+!
+! creates indirect addressing to reduce cache misses following inner/outer elements
+!
+
+  use constants, only: NGLLX,NGLLY,NGLLZ
+
+  implicit none
+
+  integer,intent(in) :: nspec,nglob
+  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(inout) :: ibool
+
+  integer,intent(in) :: num_phase_ispec
+  integer, dimension(num_phase_ispec,2),intent(in) :: phase_ispec_inner
+  integer,intent(in) :: nspec_inner,nspec_outer
+
+  ! local parameters
+  ! mask to sort ibool
+  integer, dimension(:), allocatable :: mask_ibool
+  integer, dimension(:,:,:,:), allocatable :: copy_ibool_ori
+  integer :: inumber
+  integer :: i,j,k,ispec,ier,iglob
+  integer :: ispec_p,iphase,counter_nspec,num_elements
+
+  ! copies original array
+  allocate(copy_ibool_ori(NGLLX,NGLLY,NGLLZ,nspec), &
+           mask_ibool(nglob), &
+           stat=ier)
+  if (ier /= 0) stop 'Error allocating local arrays in get_global_indirect_addressing'
+
+  ! initializes arrays
+  mask_ibool(:) = -1
+  copy_ibool_ori(:,:,:,:) = ibool(:,:,:,:)
+
+  ! reduces misses
+  counter_nspec = 0
+  inumber = 0
+  do iphase = 1,2
+
+    if (iphase == 1) then
+      ! outer elements (halo region)
+      num_elements = nspec_outer
+    else
+      ! inner elements
+      num_elements = nspec_inner
+    endif
+
+    do ispec_p = 1,num_elements
+      ! counter
+      counter_nspec = counter_nspec + 1
+
+      ! only compute elements which belong to current phase (inner or outer elements)
+      ispec = phase_ispec_inner(ispec_p,iphase)
+
+      ! checks
+      if (ispec < 1 .or. ispec > nspec ) stop 'Error ispec bounds in get_global_indirect_addressing_phases()'
+
+      do k = 1,NGLLZ
+        do j = 1,NGLLY
+          do i = 1,NGLLX
+            iglob = copy_ibool_ori(i,j,k,ispec)
+            if (mask_ibool(iglob) == -1) then
+              ! creates a new point
+              inumber = inumber + 1
+              ibool(i,j,k,ispec) = inumber
+              mask_ibool(iglob) = inumber
+            else
+              ! uses an existing point created previously
+              ibool(i,j,k,ispec) = mask_ibool(iglob)
+            endif
+          enddo
+        enddo
+      enddo
+
+    enddo ! ispec_p
+
+  enddo ! iphase
+
+  ! checks
+  if (counter_nspec /= nspec) stop 'Error invalid nspec counted in get_global_indirect_addressing_phases()'
+
+  end subroutine get_global_indirect_addressing_phases
+
 

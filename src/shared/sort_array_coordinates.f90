@@ -35,7 +35,7 @@
 !
 ! returns: sorted indexing array (ibool),  reordering array (iglob) & number of global points (nglob)
 
-  use constants
+  use constants, only: NDIM,SMALLVALTOL
 
   implicit none
 
@@ -112,6 +112,7 @@
 
   ! assign global node numbers (now sorted lexicographically)
   ig = 0
+  iglob(:) = 0
   do i = 1,npointot
     ! eliminate the multiples by using a single (new) point number for all the points that have the same X Y Z after sorting
     if (ifseg(i)) ig = ig + 1
@@ -139,6 +140,7 @@
   subroutine heap_sort_multi(N, dx, dy, dz, ia, ib)
 
   implicit none
+
   integer, intent(in) :: N
   double precision, dimension(N), intent(inout) :: dx
   double precision, dimension(N), intent(inout) :: dy
@@ -146,6 +148,7 @@
   integer, dimension(N), intent(inout) :: ia
   integer, dimension(N), intent(inout) :: ib
 
+  ! local parameters
   integer :: i
 
   ! checks if anything to do
@@ -174,10 +177,13 @@
 !$DIR NOOPTIMIZE
     subroutine dswap(A, i, j)
 
+    implicit none
+
     double precision, dimension(:), intent(inout) :: A
     integer, intent(in) :: i
     integer, intent(in) :: j
 
+    ! local parameters
     double precision :: tmp
 
     tmp = A(i)
@@ -188,10 +194,13 @@
 
     subroutine iswap(A, i, j)
 
+    implicit none
+
     integer, dimension(:), intent(inout) :: A
     integer, intent(in) :: i
     integer, intent(in) :: j
 
+    ! local parameters
     integer :: tmp
 
     tmp = A(i)
@@ -205,9 +214,12 @@
 !$DIR NOOPTIMIZE
     subroutine heap_sort_siftdown(start, bottom)
 
+    implicit none
+
     integer, intent(in) :: start
     integer, intent(in) :: bottom
 
+    ! local parameters
     integer :: i, j
     double precision :: xtmp, ytmp, ztmp
     integer :: atmp, btmp

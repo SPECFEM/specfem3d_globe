@@ -72,10 +72,13 @@
   real(kind=CUSTOM_REAL) :: eig_ratio_min_reg,eig_ratio_max_reg
 
   ! for file output
+  logical, parameter :: USE_VTU_FORMAT = .true.
+
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: val_ispec_pmax,val_ispec_dt
   character(len=MAX_STRING_LEN) :: filename
 
   character(len=32),parameter :: region(4) = (/character(len=32) :: 'crust/mantle', 'outer core', 'inner core', 'central cube'/)
+
 
   ! note: the mesh and time step check is only approximative
 
@@ -290,15 +293,31 @@
 
     ! minimum period
     filename = prname(1:len_trim(prname))//'res_minimum_period'
-    call write_VTK_data_elem_cr(nspec,nglob, &
-                                xstore_glob,ystore_glob,zstore_glob, &
-                                ibool,val_ispec_pmax,filename)
+    if (USE_VTU_FORMAT) then
+      ! binary vtu-format
+      call write_VTU_data_elem_cr_binary(nspec,nglob, &
+                                         xstore_glob,ystore_glob,zstore_glob, &
+                                         ibool,val_ispec_pmax,filename)
+    else
+      ! vtk-format
+      call write_VTK_data_elem_cr(nspec,nglob, &
+                                  xstore_glob,ystore_glob,zstore_glob, &
+                                  ibool,val_ispec_pmax,filename)
+    endif
 
     ! dt_max
     filename = prname(1:len_trim(prname))//'res_maximum_dt'
-    call write_VTK_data_elem_cr(nspec,nglob, &
-                                xstore_glob,ystore_glob,zstore_glob, &
-                                ibool,val_ispec_dt,filename)
+    if (USE_VTU_FORMAT) then
+      ! binary vtu-format
+      call write_VTU_data_elem_cr_binary(nspec,nglob, &
+                                         xstore_glob,ystore_glob,zstore_glob, &
+                                         ibool,val_ispec_dt,filename)
+    else
+      ! vtk-format
+      call write_VTK_data_elem_cr(nspec,nglob, &
+                                  xstore_glob,ystore_glob,zstore_glob, &
+                                  ibool,val_ispec_dt,filename)
+    endif
   endif
 
   ! free memory

@@ -358,11 +358,11 @@
   NER(6) = NER_670_600
   NER(7) = NER_771_670
   ! distributes NER_TOPDDOUBLEPRIME_771 onto two element layer regions depending on vertical sizes of layers
-  NER(8) = NER_TOPDDOUBLEPRIME_771 * (radius(8) - radius(9)) / (radius(8) - radius(10))
+  NER(8) = NER_TOPDDOUBLEPRIME_771 * int((radius(8) - radius(9)) / (radius(8) - radius(10)))
   NER(9) = NER_TOPDDOUBLEPRIME_771 - NER(8)
   NER(10) = NER_CMB_TOPDDOUBLEPRIME
   ! distributes NER_OUTER_CORE onto two element layer regions depending on vertical sizes of layers
-  NER(11) = NER_OUTER_CORE * (radius(11) - radius(12)) / (radius(11) - radius(13))
+  NER(11) = NER_OUTER_CORE * int((radius(11) - radius(12)) / (radius(11) - radius(13)))
   NER(12) = NER_OUTER_CORE - NER(11)
   NER(13) = NER_TOP_CENTRAL_CUBE_ICB
 
