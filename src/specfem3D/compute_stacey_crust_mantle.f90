@@ -364,7 +364,7 @@
   !           simple approach is still fastest. (assuming that files are accessed on a local scratch disk)
 
   ! checks
-  if (SIMULATION_TYPE /= 3 ) return
+  if (SIMULATION_TYPE /= 3) return
 
   ! crust & mantle
 
@@ -383,17 +383,24 @@
       ! on CPU
       do ispec2D = 1,nspec2D_xmin_crust_mantle
 
-        ispec = ibelm_xmin_crust_mantle(ispec2D)
-
         ! exclude elements that are not on absorbing edges
         if (nkmin_xi_crust_mantle(1,ispec2D) == 0 .or. njmin_crust_mantle(1,ispec2D) == 0) cycle
 
         i = 1
+        ispec = ibelm_xmin_crust_mantle(ispec2D)
+
         do k = nkmin_xi_crust_mantle(1,ispec2D),NGLLZ
           do j = njmin_crust_mantle(1,ispec2D),njmax_crust_mantle(1,ispec2D)
             iglob = ibool_crust_mantle(i,j,k,ispec)
 
-            b_accel_crust_mantle(:,iglob) = b_accel_crust_mantle(:,iglob) - absorb_xmin_crust_mantle(:,j,k,ispec2D)
+            ! note:
+            ! this leads to an internal cray compiler error (Cray Fortran Version 8.6.5):
+            !b_accel_crust_mantle(:,iglob) = b_accel_crust_mantle(:,iglob) - absorb_xmin_crust_mantle(:,j,k,ispec2D)
+            ! it helps to be more explicit:
+            b_accel_crust_mantle(1,iglob) = b_accel_crust_mantle(1,iglob) - absorb_xmin_crust_mantle(1,j,k,ispec2D)
+            b_accel_crust_mantle(2,iglob) = b_accel_crust_mantle(2,iglob) - absorb_xmin_crust_mantle(2,j,k,ispec2D)
+            b_accel_crust_mantle(3,iglob) = b_accel_crust_mantle(3,iglob) - absorb_xmin_crust_mantle(3,j,k,ispec2D)
+
           enddo
         enddo
       enddo
@@ -420,17 +427,19 @@
       ! on CPU
       do ispec2D = 1,nspec2D_xmax_crust_mantle
 
-        ispec = ibelm_xmax_crust_mantle(ispec2D)
-
         ! exclude elements that are not on absorbing edges
         if (nkmin_xi_crust_mantle(2,ispec2D) == 0 .or. njmin_crust_mantle(2,ispec2D) == 0) cycle
 
         i = NGLLX
+        ispec = ibelm_xmax_crust_mantle(ispec2D)
+
         do k = nkmin_xi_crust_mantle(2,ispec2D),NGLLZ
           do j = njmin_crust_mantle(2,ispec2D),njmax_crust_mantle(2,ispec2D)
             iglob = ibool_crust_mantle(i,j,k,ispec)
 
-            b_accel_crust_mantle(:,iglob) = b_accel_crust_mantle(:,iglob) - absorb_xmax_crust_mantle(:,j,k,ispec2D)
+            b_accel_crust_mantle(1,iglob) = b_accel_crust_mantle(1,iglob) - absorb_xmax_crust_mantle(1,j,k,ispec2D)
+            b_accel_crust_mantle(2,iglob) = b_accel_crust_mantle(2,iglob) - absorb_xmax_crust_mantle(2,j,k,ispec2D)
+            b_accel_crust_mantle(3,iglob) = b_accel_crust_mantle(3,iglob) - absorb_xmax_crust_mantle(3,j,k,ispec2D)
           enddo
         enddo
       enddo
@@ -455,17 +464,19 @@
     ! on CPU
     do ispec2D = 1,nspec2D_ymin_crust_mantle
 
-      ispec = ibelm_ymin_crust_mantle(ispec2D)
-
       ! exclude elements that are not on absorbing edges
       if (nkmin_eta_crust_mantle(1,ispec2D) == 0 .or. nimin_crust_mantle(1,ispec2D) == 0) cycle
 
       j = 1
+      ispec = ibelm_ymin_crust_mantle(ispec2D)
+
       do k = nkmin_eta_crust_mantle(1,ispec2D),NGLLZ
         do i = nimin_crust_mantle(1,ispec2D),nimax_crust_mantle(1,ispec2D)
           iglob = ibool_crust_mantle(i,j,k,ispec)
 
-          b_accel_crust_mantle(:,iglob)=b_accel_crust_mantle(:,iglob) - absorb_ymin_crust_mantle(:,i,k,ispec2D)
+          b_accel_crust_mantle(1,iglob)=b_accel_crust_mantle(1,iglob) - absorb_ymin_crust_mantle(1,i,k,ispec2D)
+          b_accel_crust_mantle(2,iglob)=b_accel_crust_mantle(2,iglob) - absorb_ymin_crust_mantle(2,i,k,ispec2D)
+          b_accel_crust_mantle(3,iglob)=b_accel_crust_mantle(3,iglob) - absorb_ymin_crust_mantle(3,i,k,ispec2D)
         enddo
       enddo
     enddo
@@ -488,17 +499,19 @@
     ! on CPU
     do ispec2D = 1,nspec2D_ymax_crust_mantle
 
-      ispec = ibelm_ymax_crust_mantle(ispec2D)
-
       ! exclude elements that are not on absorbing edges
       if (nkmin_eta_crust_mantle(2,ispec2D) == 0 .or. nimin_crust_mantle(2,ispec2D) == 0) cycle
 
       j = NGLLY
+      ispec = ibelm_ymax_crust_mantle(ispec2D)
+
       do k = nkmin_eta_crust_mantle(2,ispec2D),NGLLZ
         do i = nimin_crust_mantle(2,ispec2D),nimax_crust_mantle(2,ispec2D)
           iglob = ibool_crust_mantle(i,j,k,ispec)
 
-          b_accel_crust_mantle(:,iglob) = b_accel_crust_mantle(:,iglob) - absorb_ymax_crust_mantle(:,i,k,ispec2D)
+          b_accel_crust_mantle(1,iglob) = b_accel_crust_mantle(1,iglob) - absorb_ymax_crust_mantle(1,i,k,ispec2D)
+          b_accel_crust_mantle(2,iglob) = b_accel_crust_mantle(2,iglob) - absorb_ymax_crust_mantle(2,i,k,ispec2D)
+          b_accel_crust_mantle(3,iglob) = b_accel_crust_mantle(3,iglob) - absorb_ymax_crust_mantle(3,i,k,ispec2D)
         enddo
       enddo
     enddo
