@@ -63,6 +63,20 @@ env:
     # regular kernel example
     - TESTID=12 TESTDIR=4 TESTCOV=0 TESTFLAGS="--enable-vectorization" CUDA=false
 
+    # global_sglobe
+    #- TESTID=13 TESTDIR=5 TESTCOV=0 TESTFLAGS="--enable-vectorization" CUDA=false
+
+    # global_full_sphericalharmonic_model
+    #- TESTID=14 TESTDIR=6 TESTCOV=0 TESTFLAGS="--enable-vectorization" CUDA=false
+
+    # regional s40rts compilation w/ CUDA
+    #- TESTID=15 TESTDIR=7 TESTCOV=0 TESTFLAGS="--with-cuda=cuda5" CUDA=true CUDA_VERSION=6.5-14
+
+    # regional s40rts compilation w/ OpenCL (provided from CUDA library)
+    #- TESTID=16 TESTDIR=7 TESTCOV=0 TESTFLAGS="--with-opencl" CUDA=true CUDA_VERSION=6.5-14 OPENCL=true
+
+    # regional_small_adjoint - pure adjoint example
+    #- TESTID=17 TESTDIR=8 TESTCOV=0 TESTFLAGS="" CUDA=false
 
 before_install:
   # informations on git

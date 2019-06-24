@@ -14,6 +14,10 @@ case "$TESTDIR" in
   2) dir=EXAMPLES/global_small/ ;;
   3) dir=EXAMPLES/point_force/ ;;
   4) dir=EXAMPLES/regular_kernel/ ;;
+  5) dir=EXAMPLES/global_sglobe/ ;;
+  6) dir=EXAMPLES/global_full_sphericalharmonic_model/ ;;
+  7) dir=EXAMPLES/regional_s40rts/ ;;
+  8) dir=EXAMPLES/regional_small_adjoint/ ;;
   *) dir=EXAMPLES/regional_Greece_small/ ;;
 esac
 
@@ -63,8 +67,13 @@ if [ "$TESTCOV" == "1" ]; then
   ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TESTFLAGS} FLAGS_CHECK="-fprofile-arcs -ftest-coverage -O0" CFLAGS="-coverage -O0"
 else
   if [ "$CUDA" == "true" ]; then
-    echo "configuration: for cuda"
-    ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TESTFLAGS} CUDA_LIB="${CUDA_HOME}/lib64" CUDA_INC="${CUDA_HOME}/include" CUDA_FLAGS="-Xcompiler -Wall,-Wno-unused-function,-Wno-unused-const-variable,-Wfatal-errors -g -G"
+    if [ "$OPENCL" == "true" ]; then
+      echo "configuration: for opencl" # uses libOpenCL provided from CUDA package
+      ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TESTFLAGS} OCL_CPU_FLAGS="-g -Wall -std=c99 -DWITH_MPI" OCL_GPU_FLAGS="-Werror" OCL_INC="${CUDA_HOME}/include" OCL_LIB="${CUDA_HOME}/lib64" OCL_LIBS="-lOpenCL"
+    else
+      echo "configuration: for cuda"
+      ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TESTFLAGS} CUDA_LIB="${CUDA_HOME}/lib64" CUDA_INC="${CUDA_HOME}/include" CUDA_FLAGS="-Xcompiler -Wall,-Wno-unused-function,-Wno-unused-const-variable,-Wfatal-errors -g -G"
+    fi
   else
     echo "configuration: default"
     ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TESTFLAGS}
