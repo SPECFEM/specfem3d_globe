@@ -345,7 +345,7 @@
   NER(:)    = 1
   NER(3:5)  = 2
   if (CASE_3D) then
-     NER(1) = 2
+    NER(1) = 2
   endif
 
   ! starts from input arguments of a 90-degree chunk
@@ -358,11 +358,11 @@
   NER(6) = NER_670_600
   NER(7) = NER_771_670
   ! distributes NER_TOPDDOUBLEPRIME_771 onto two element layer regions depending on vertical sizes of layers
-  NER(8) = NER_TOPDDOUBLEPRIME_771 * int((radius(8) - radius(9)) / (radius(8) - radius(10)))
+  NER(8) = max(int( NER_TOPDDOUBLEPRIME_771 * (radius(8) - radius(9)) / (radius(8) - radius(10)) ), 1)
   NER(9) = NER_TOPDDOUBLEPRIME_771 - NER(8)
   NER(10) = NER_CMB_TOPDDOUBLEPRIME
   ! distributes NER_OUTER_CORE onto two element layer regions depending on vertical sizes of layers
-  NER(11) = NER_OUTER_CORE * int((radius(11) - radius(12)) / (radius(11) - radius(13)))
+  NER(11) = max(int( NER_OUTER_CORE * (radius(11) - radius(12)) / (radius(11) - radius(13)) ), 1)
   NER(12) = NER_OUTER_CORE - NER(11)
   NER(13) = NER_TOP_CENTRAL_CUBE_ICB
 
@@ -420,31 +420,38 @@
 
   ! Find optimal elements per region
   do i = 1,NUM_REGIONS-1
-     dr = r(i) - r(i+1)              ! Radial Length of Region
-     wt = width * DEGREES_TO_RADIANS * r(i)   / (NEX*1.0d0 / scaling(i)*1.0d0) ! Element Width Top
-     wb = width * DEGREES_TO_RADIANS * r(i+1) / (NEX*1.0d0 / scaling(i)*1.0d0) ! Element Width Bottom
-     w  = (wt + wb) * 0.5d0          ! Average Width of Region
-     ner_test = NER(i)               ! Initial solution
-     ratio = (dr / ner_test) / w     ! Aspect Ratio of Element
-     xi = dabs(ratio - 1.0d0)        ! Aspect Ratio should be near 1.0
-     ximin = 1.e7                    ! Initial Minimum
+    dr = r(i) - r(i+1)              ! Radial Length of Region
+    wt = width * DEGREES_TO_RADIANS * r(i)   / (NEX*1.0d0 / scaling(i)*1.0d0) ! Element Width Top
+    wb = width * DEGREES_TO_RADIANS * r(i+1) / (NEX*1.0d0 / scaling(i)*1.0d0) ! Element Width Bottom
+    w  = (wt + wb) * 0.5d0          ! Average Width of Region
+    ner_test = NER(i)               ! Initial solution
 
-     !debug
-     !print *,'region ',i,'element ratio: ',ratio,'xi = ',xi,'width = ',w
+    ! checks
+    if (ner_test == 0) then
+      print *,'Error auto_ner: region',i,'ner_test/w/dr = ',ner_test,w,dr
+      stop 'Error invalid ner value in auto_ner'
+    endif
 
-     ! increases NER to reach vertical/horizontal element ratio of about 1
-     do while(xi <= ximin)
-        NER(i) = ner_test            ! Found a better solution
-        ximin = xi                   !
-        ner_test = ner_test + 1      ! Increment ner_test and
-        ratio = (dr / ner_test) / w  ! look for a better
-        xi = dabs(ratio - 1.0d0)     ! solution
-     enddo
-     rt(i) = dr / NER(i) / wt        ! Find the Ratio of Top
-     rb(i) = dr / NER(i) / wb        ! and Bottom for completeness
+    ratio = (dr / ner_test) / w     ! Aspect Ratio of Element
+    xi = dabs(ratio - 1.0d0)        ! Aspect Ratio should be near 1.0
+    ximin = 1.e7                    ! Initial Minimum
 
-     !debug
-     !print *,'region ',i,'element ratio: top = ',rt(i),'bottom = ',rb(i)
+    !debug
+    !print *,'region ',i,'element ratio: ',ratio,'xi = ',xi,'width = ',w
+
+    ! increases NER to reach vertical/horizontal element ratio of about 1
+    do while(xi <= ximin)
+      NER(i) = ner_test            ! Found a better solution
+      ximin = xi                   !
+      ner_test = ner_test + 1      ! Increment ner_test and
+      ratio = (dr / ner_test) / w  ! look for a better
+      xi = dabs(ratio - 1.0d0)     ! solution
+    enddo
+    rt(i) = dr / NER(i) / wt        ! Find the Ratio of Top
+    rb(i) = dr / NER(i) / wb        ! and Bottom for completeness
+
+    !debug
+    !print *,'region ',i,'element ratio: top = ',rt(i),'bottom = ',rb(i)
   enddo
 
   end subroutine auto_optimal_ner
