@@ -163,7 +163,7 @@ FC_FUNC_(write_character_fd,WRITE_CHARACTER_FD)(int *pfd, char *z, int *lchar) {
 
  --------------------------------------- */
 
-//#define __USE_GNU  // has issues with gcc 5.5.x version? ".. error: unknown type name ‘__locale_t’ .."
+//#define __USE_GNU  // has issues with gcc 5.5.x version? ".. error: unknown type name '__locale_t' .."
 #include <string.h>
 
 #define MIN(x,y) ((x) < (y) ? (x) : (y))

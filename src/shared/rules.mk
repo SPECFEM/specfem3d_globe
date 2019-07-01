@@ -196,7 +196,7 @@ $O/%.shared_adios.o: $S/%.f90 $O/adios_manager.shared_adios_module.o $O/adios_he
 ## ADIOS2
 # special two step build process for adios2_helpers_read
 # 1. preprocess and then replace all _NL_ string with new lines (-> $O/adios2_helpers_read.f90)
-# 2. compile generated f90 
+# 2. compile generated f90
 $S/adios2_helpers_read_generated.f90: $S/adios2_helpers_read_template.F90
 	@echo " == Rule Read-generate triggered for $< "
 	@echo " If this auto-generation does not work, you can do it manually using gfortran (version 5 or higher)"
