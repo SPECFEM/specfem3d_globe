@@ -45,7 +45,7 @@
 
   use specfem_par, only: &
     myrank,DT,NSTEP, &
-    STATIONS_FILE,nrec,islice_selected_rec,ispec_selected_rec, &
+    nrec,islice_selected_rec,ispec_selected_rec, &
     xi_receiver,eta_receiver,gamma_receiver,station_name,network_name, &
     stlat,stlon,stele,stbur,nu,receiver_final_distance_max, &
     rspl,espl,espl2,nspl,ibathy_topo, &
@@ -123,9 +123,6 @@
   character(len=MAX_LENGTH_NETWORK_NAME), dimension(nrec) :: network_name_found
 
   character(len=2) :: bic
-  character(len=256) :: string
-
-  integer, allocatable, dimension(:) :: station_duplet
 
   ! sorting order
   integer, allocatable, dimension(:) :: irec_dist_ordered
@@ -679,110 +676,124 @@
   endif
   call synchronize_all()
 
+  end subroutine locate_receivers
 
-  contains
+!
+!-------------------------------------------------------------------------------------------------
+!
 
-    subroutine read_receiver_locations()
+  subroutine read_receiver_locations()
 
-    implicit none
+  use constants_solver, only: &
+    MAX_LENGTH_STATION_NAME,MAX_LENGTH_NETWORK_NAME,IMAIN,IIN,IOUT
 
-    if (myrank == 0) then
-      ! user output
-      write(IMAIN,*) 'reading receiver information...'
-      write(IMAIN,*)
-      call flush_IMAIN()
+  use specfem_par, only: &
+    myrank,nrec,STATIONS_FILE,RECEIVERS_CAN_BE_BURIED, &
+    station_name,network_name,stlat,stlon,stele,stbur
 
-      ! opens station file STATIONS or STATIONS_ADJOINT
-      open(unit=IIN,file=trim(STATIONS_FILE),status='old',action='read',iostat=ier)
-      if (ier /= 0 ) call exit_MPI(myrank,'Error opening STATIONS file')
+  implicit none
 
-      ! loop on all the stations to read station information
-      do irec = 1,nrec
+  ! local parameters
+  integer :: ier,irec,i
+  integer, allocatable, dimension(:) :: station_duplet
+  character(len=256) :: string
 
-        ! old line:
-        !read(IIN,*,iostat=ier) station_name(irec),network_name(irec),stlat(irec),stlon(irec),stele(irec),stbur(irec)
+  ! reads stations files
+  if (myrank == 0) then
+    ! user output
+    write(IMAIN,*) 'reading receiver information...'
+    write(IMAIN,*)
+    call flush_IMAIN()
 
-        ! reads in line as string
+    ! opens station file STATIONS or STATIONS_ADJOINT
+    open(unit=IIN,file=trim(STATIONS_FILE),status='old',action='read',iostat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error opening STATIONS file')
+
+    ! loop on all the stations to read station information
+    do irec = 1,nrec
+
+      ! old line:
+      !read(IIN,*,iostat=ier) station_name(irec),network_name(irec),stlat(irec),stlon(irec),stele(irec),stbur(irec)
+
+      ! reads in line as string
+      read(IIN,"(a256)",iostat=ier) string
+      if (ier /= 0) then
+        write(IMAIN,*) 'Error reading in station ',irec
+        call exit_MPI(myrank,'Error reading in station in STATIONS file')
+      endif
+
+      ! skips empty lines
+      do while( len_trim(string) == 0 )
         read(IIN,"(a256)",iostat=ier) string
         if (ier /= 0) then
           write(IMAIN,*) 'Error reading in station ',irec
           call exit_MPI(myrank,'Error reading in station in STATIONS file')
         endif
-
-        ! skips empty lines
-        do while( len_trim(string) == 0 )
-          read(IIN,"(a256)",iostat=ier) string
-          if (ier /= 0) then
-            write(IMAIN,*) 'Error reading in station ',irec
-            call exit_MPI(myrank,'Error reading in station in STATIONS file')
-          endif
-        enddo
-
-        ! reads in station information
-        read(string(1:len_trim(string)),*,iostat=ier) station_name(irec),network_name(irec), &
-                                                      stlat(irec),stlon(irec),stele(irec),stbur(irec)
-        if (ier /= 0) then
-          write(IMAIN,*) 'Error reading in station ',irec
-          call exit_MPI(myrank,'Error reading in station in STATIONS file')
-        endif
-
-        ! checks latitude
-        if (stlat(irec) < -90.d0 .or. stlat(irec) > 90.d0) then
-          write(IMAIN,*) 'Error station ',trim(station_name(irec)),': latitude ',stlat(irec), &
-                         ' is invalid, please check STATIONS record'
-          call exit_MPI(myrank,'Error station latitude invalid')
-        endif
-
       enddo
-      ! close receiver file
-      close(IIN)
 
-  ! BS BS begin
-  ! In case that the same station and network name appear twice (or more times) in the STATIONS
-  ! file, problems occur, as two (or more) seismograms are written (with mode
-  ! "append") to a file with same name. The philosophy here is to accept multiple
-  ! appearances and to just add a count to the station name in this case.
-      allocate(station_duplet(nrec),stat=ier)
-      if (ier /= 0 ) call exit_MPI(myrank,'Error allocating station_duplet array')
+      ! reads in station information
+      read(string(1:len_trim(string)),*,iostat=ier) station_name(irec),network_name(irec), &
+                                                    stlat(irec),stlon(irec),stele(irec),stbur(irec)
+      if (ier /= 0) then
+        write(IMAIN,*) 'Error reading in station ',irec
+        call exit_MPI(myrank,'Error reading in station in STATIONS file')
+      endif
 
-      station_duplet(:) = 0
-      do irec = 1,nrec
-        do i = 1,irec-1
-          if ((station_name(irec) == station_name(i)) .and. &
-              (network_name(irec) == network_name(i))) then
+      ! checks latitude
+      if (stlat(irec) < -90.d0 .or. stlat(irec) > 90.d0) then
+        write(IMAIN,*) 'Error station ',trim(station_name(irec)),': latitude ',stlat(irec), &
+                       ' is invalid, please check STATIONS record'
+        call exit_MPI(myrank,'Error station latitude invalid')
+      endif
 
-              station_duplet(i)=station_duplet(i)+1
-              if (len_trim(station_name(irec)) <= MAX_LENGTH_STATION_NAME-3) then
-                write(station_name(irec),"(a,'_',i2.2)") trim(station_name(irec)),station_duplet(i)+1
-              else
-                call exit_MPI(myrank,'Please increase MAX_LENGTH_STATION_NAME by at least 3 to name station duplets')
-              endif
+    enddo
+    ! close receiver file
+    close(IIN)
 
-          endif
-        enddo
+! BS BS begin
+! In case that the same station and network name appear twice (or more times) in the STATIONS
+! file, problems occur, as two (or more) seismograms are written (with mode
+! "append") to a file with same name. The philosophy here is to accept multiple
+! appearances and to just add a count to the station name in this case.
+    allocate(station_duplet(nrec),stat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating station_duplet array')
+
+    station_duplet(:) = 0
+    do irec = 1,nrec
+      do i = 1,irec-1
+        if ((station_name(irec) == station_name(i)) .and. &
+            (network_name(irec) == network_name(i))) then
+
+            station_duplet(i)=station_duplet(i)+1
+            if (len_trim(station_name(irec)) <= MAX_LENGTH_STATION_NAME-3) then
+              write(station_name(irec),"(a,'_',i2.2)") trim(station_name(irec)),station_duplet(i)+1
+            else
+              call exit_MPI(myrank,'Please increase MAX_LENGTH_STATION_NAME by at least 3 to name station duplets')
+            endif
+
+        endif
       enddo
-      deallocate(station_duplet)
-  ! BS BS end
+    enddo
+    deallocate(station_duplet)
+! BS BS end
 
-      ! if receivers can not be buried, sets depth to zero
-      if (.not. RECEIVERS_CAN_BE_BURIED ) stbur(:) = 0.d0
+    ! if receivers can not be buried, sets depth to zero
+    if (.not. RECEIVERS_CAN_BE_BURIED ) stbur(:) = 0.d0
 
-    endif
+  endif
 
-    ! broadcast the information read on the master to the nodes
-    call bcast_all_ch_array(station_name,nrec,MAX_LENGTH_STATION_NAME)
-    call bcast_all_ch_array(network_name,nrec,MAX_LENGTH_NETWORK_NAME)
-    call bcast_all_dp(stlat,nrec)
-    call bcast_all_dp(stlon,nrec)
-    call bcast_all_dp(stele,nrec)
-    call bcast_all_dp(stbur,nrec)
+  ! broadcast the information read on the master to the nodes
+  call bcast_all_ch_array(station_name,nrec,MAX_LENGTH_STATION_NAME)
+  call bcast_all_ch_array(network_name,nrec,MAX_LENGTH_NETWORK_NAME)
+  call bcast_all_dp(stlat,nrec)
+  call bcast_all_dp(stlon,nrec)
+  call bcast_all_dp(stele,nrec)
+  call bcast_all_dp(stbur,nrec)
 
-    end subroutine read_receiver_locations
-
-  end subroutine locate_receivers
+  end subroutine read_receiver_locations
 
 !
-!--------------------
+!-------------------------------------------------------------------------------------------------
 !
 
 ! sorting routine left here for inlining

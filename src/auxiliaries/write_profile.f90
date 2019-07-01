@@ -65,7 +65,18 @@
 
   program xwrite_profile
 
-  use meshfem3D_models_par
+  use constants, only: &
+    GRAV,RHOAV,PI,R_EARTH,R_EARTH_KM,IMAIN,ISTANDARD_OUTPUT, &
+    NGLLX,NGLLY,NGLLZ,N_SLS, &
+    IREGION_INNER_CORE,IREGION_OUTER_CORE,IREGION_CRUST_MANTLE, &
+    IFLAG_IN_FICTITIOUS_CUBE,IFLAG_INNER_CORE_NORMAL,IFLAG_MIDDLE_CENTRAL_CUBE,IFLAG_TOP_CENTRAL_CUBE,IFLAG_BOTTOM_CENTRAL_CUBE, &
+    IFLAG_OUTER_CORE_NORMAL, &
+    IFLAG_MANTLE_NORMAL,IFLAG_670_220,IFLAG_220_80,IFLAG_80_MOHO,IFLAG_CRUST, &
+    myrank
+
+  use meshfem3D_models_par, only: &
+    CRUSTAL,ONE_CRUST
+
   use shared_parameters
 
   implicit none
@@ -525,7 +536,7 @@
 
   subroutine usage()
 
-  use meshfem3D_models_par, only: myrank
+  use constants, only: myrank
 
   implicit none
 
@@ -546,6 +557,7 @@
 
   subroutine write_profile_setup()
 
+  use constants, only: IMAIN,myrank,N_SLS,NGLLX,NGLLY,NGLLZ,REGIONAL_MOHO_MESH,SUPPRESS_MOHO_STRETCHING
   use meshfem3D_models_par
   use shared_parameters
 
@@ -691,6 +703,7 @@
 
   subroutine write_profile_moho_depth(theta,phi,moho)
 
+  use constants, only: myrank
   use meshfem3D_models_par
   use shared_parameters
 
@@ -737,6 +750,7 @@
 
   subroutine write_profile_elevation(theta,phi,elevation)
 
+  use constants, only: THICKNESS_OCEANS_PREM,myrank
   use meshfem3D_models_par
   use shared_parameters
 
@@ -789,6 +803,7 @@
   subroutine write_profile_model_values(r,r_prem,theta,phi,iregion_code,idoubling,rmin,rmax, &
                                         rho,vpv,vph,vsv,vsh,eta_aniso,Qmu,Qkappa)
 
+  use constants, only: myrank,N_SLS,TINYVAL
   use meshfem3D_models_par
   use shared_parameters
 
@@ -931,6 +946,8 @@
 
   subroutine write_profile_add_topography(r_prem,idoubling,elevation)
 
+  use constants, only: IFLAG_CRUST,IFLAG_80_MOHO,IFLAG_220_80, &
+    R_EARTH,R_EARTH_KM,R_UNIT_SPHERE
   use meshfem3D_models_par
   use shared_parameters
 
@@ -971,6 +988,7 @@
 
   subroutine write_profile_ocean(r_prem,elevation,iline,iline_ocean)
 
+  use constants, only: MINIMUM_THICKNESS_3D_OCEANS
   use meshfem3D_models_par
   use shared_parameters
 

@@ -510,8 +510,6 @@
 ! multiply that time step by this ratio when LDDRK is on and when flag INCREASE_CFL_FOR_LDDRK is true.
   if (USE_LDDRK .and. INCREASE_CFL_FOR_LDDRK) DT = DT * RATIO_BY_WHICH_TO_INCREASE_IT
 
-
-  ! for future usage:
   ! cut at a significant number of digits (e.g., 2 digits)
   ! in steps of 1/2 digits
   ! example: 0.0734815 -> 0.0730

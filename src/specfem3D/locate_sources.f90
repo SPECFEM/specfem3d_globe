@@ -121,10 +121,6 @@
   ! mask source region (mask values are between 0 and 1, with 0 around sources)
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: mask_source
 
-  ! event time
-  integer :: yr,jda,mo,da,ho,mi
-  double precision :: sec
-
   ! timer MPI
   double precision :: time_start,tCPU
   double precision, external :: wtime
@@ -722,66 +718,82 @@
   endif
   call synchronize_all()
 
-
-  contains
-
-    subroutine read_source_locations(srclat,srclon,srcdepth,moment_tensor)
-
-    use specfem_par, only: min_tshift_src_original
-
-    implicit none
-
-    ! (uses these as explicit routine arguments to avoid compiler warnings)
-    double precision, dimension(NSOURCES),intent(out) :: srclat,srclon,srcdepth
-    double precision, dimension(6,NSOURCES),intent(out) :: moment_tensor
-
-    ! initializes
-    srclat(:) = 0.d0
-    srclon(:) = 0.d0
-    srcdepth(:) = 0.d0
-    moment_tensor(:,:) = 0.d0
-
-    tshift_src(:) = 0.d0
-    hdur(:) = 0.d0
-    min_tshift_src_original = 0.d0
-
-    ! reads in source descriptions
-    if (USE_FORCE_POINT_SOURCE) then
-      ! point forces
-      if (myrank == 0) then
-        ! only master process reads in FORCESOLUTION file
-        call get_force(tshift_src,hdur,srclat,srclon,srcdepth,DT,NSOURCES, &
-                       min_tshift_src_original,force_stf,factor_force_source, &
-                       comp_dir_vect_source_E,comp_dir_vect_source_N,comp_dir_vect_source_Z_UP)
-      endif
-      ! broadcasts specific point force infos
-      call bcast_all_i(force_stf,NSOURCES)
-      call bcast_all_dp(factor_force_source,NSOURCES)
-      call bcast_all_dp(comp_dir_vect_source_E,NSOURCES)
-      call bcast_all_dp(comp_dir_vect_source_N,NSOURCES)
-      call bcast_all_dp(comp_dir_vect_source_Z_UP,NSOURCES)
-    else
-      ! CMT moment tensors
-      if (myrank == 0) then
-        ! only master process reads in CMTSOLUTION file
-        call get_cmt(yr,jda,mo,da,ho,mi,sec,tshift_src,hdur,srclat,srclon,srcdepth,moment_tensor, &
-                     DT,NSOURCES,min_tshift_src_original)
-      endif
-      ! broadcast ispecific moment tensor infos
-      call bcast_all_dp(moment_tensor,6*NSOURCES)
-    endif
-
-    ! broadcast the information read on the master to the nodes
-    call bcast_all_dp(tshift_src,NSOURCES)
-    call bcast_all_dp(hdur,NSOURCES)
-    call bcast_all_dp(srclat,NSOURCES)
-    call bcast_all_dp(srclon,NSOURCES)
-    call bcast_all_dp(srcdepth,NSOURCES)
-    call bcast_all_singledp(min_tshift_src_original)
-
-    end subroutine read_source_locations
-
   end subroutine locate_sources
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine read_source_locations(srclat,srclon,srcdepth,moment_tensor)
+
+  use constants, only: &
+    myrank
+
+  use specfem_par, only: &
+    DT,NSOURCES,tshift_src,hdur,min_tshift_src_original
+
+  ! forces
+  use specfem_par, only: &
+    USE_FORCE_POINT_SOURCE,force_stf,factor_force_source, &
+    comp_dir_vect_source_E,comp_dir_vect_source_N,comp_dir_vect_source_Z_UP
+
+  implicit none
+
+  ! (uses these as explicit routine arguments to avoid compiler warnings)
+  double precision, dimension(NSOURCES),intent(out) :: srclat,srclon,srcdepth
+  double precision, dimension(6,NSOURCES),intent(out) :: moment_tensor
+
+  ! local parameters
+  ! event time
+  integer :: yr,jda,mo,da,ho,mi
+  double precision :: sec
+
+  ! initializes
+  srclat(:) = 0.d0
+  srclon(:) = 0.d0
+  srcdepth(:) = 0.d0
+  moment_tensor(:,:) = 0.d0
+
+  tshift_src(:) = 0.d0
+  hdur(:) = 0.d0
+  min_tshift_src_original = 0.d0
+
+  ! reads in source descriptions
+  if (USE_FORCE_POINT_SOURCE) then
+    ! point forces
+    if (myrank == 0) then
+      ! only master process reads in FORCESOLUTION file
+      call get_force(tshift_src,hdur,srclat,srclon,srcdepth,DT,NSOURCES, &
+                     min_tshift_src_original,force_stf,factor_force_source, &
+                     comp_dir_vect_source_E,comp_dir_vect_source_N,comp_dir_vect_source_Z_UP)
+    endif
+    ! broadcasts specific point force infos
+    call bcast_all_i(force_stf,NSOURCES)
+    call bcast_all_dp(factor_force_source,NSOURCES)
+    call bcast_all_dp(comp_dir_vect_source_E,NSOURCES)
+    call bcast_all_dp(comp_dir_vect_source_N,NSOURCES)
+    call bcast_all_dp(comp_dir_vect_source_Z_UP,NSOURCES)
+  else
+    ! CMT moment tensors
+    if (myrank == 0) then
+      ! only master process reads in CMTSOLUTION file
+      call get_cmt(yr,jda,mo,da,ho,mi,sec,tshift_src,hdur,srclat,srclon,srcdepth,moment_tensor, &
+                   DT,NSOURCES,min_tshift_src_original)
+    endif
+    ! broadcast ispecific moment tensor infos
+    call bcast_all_dp(moment_tensor,6*NSOURCES)
+  endif
+
+  ! broadcast the information read on the master to the nodes
+  call bcast_all_dp(tshift_src,NSOURCES)
+  call bcast_all_dp(hdur,NSOURCES)
+  call bcast_all_dp(srclat,NSOURCES)
+  call bcast_all_dp(srclon,NSOURCES)
+  call bcast_all_dp(srcdepth,NSOURCES)
+  call bcast_all_singledp(min_tshift_src_original)
+
+  end subroutine read_source_locations
 
 !
 !-------------------------------------------------------------------------------------------------

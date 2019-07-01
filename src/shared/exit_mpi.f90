@@ -42,8 +42,10 @@
   ! identifier for error message file
   integer, parameter :: IERROR = 30
 
-  integer :: myrank
-  character(len=*) :: error_msg
+  integer,intent(in) :: myrank
+  character(len=*),intent(in) :: error_msg
+
+  ! local parameters
   character(len=80) :: outputname
 
   ! write error message to screen
@@ -52,7 +54,7 @@
 
   ! write error message to file
   write(outputname,"('/error_message',i6.6,'.txt')") myrank
-  open(unit=IERROR,file=trim(OUTPUT_FILES)//'/'//outputname,status='unknown')
+  open(unit=IERROR,file=trim(OUTPUT_FILES)//'/'//trim(outputname),status='unknown')
   write(IERROR,*) error_msg(1:len(error_msg))
   write(IERROR,*) 'Error detected, aborting MPI... proc ',myrank
   close(IERROR)

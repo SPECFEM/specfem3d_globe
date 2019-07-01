@@ -162,7 +162,7 @@
   reclen_noise = CUSTOM_REAL * NDIM * NGLLX * NGLLY * NSPEC_TOP
 
   ! check integer size limit: size of reclen_noise must fit onto an 4-byte integer
-  if (NSPEC_TOP > 2147483646 / (CUSTOM_REAL * NGLLX * NGLLY * NDIM)) then
+  if (NSPEC_TOP > int(2147483646.d0 / (CUSTOM_REAL * NGLLX * NGLLY * NDIM))) then
     print *,'size of noise surface movie array needed exceeds integer 4-byte limit: ', &
       dble(CUSTOM_REAL * NGLLX * NGLLY * NDIM) * dble(NSPEC_TOP),reclen_noise
     print *,'  ',CUSTOM_REAL, NDIM, NGLLX * NGLLY, NSPEC_TOP

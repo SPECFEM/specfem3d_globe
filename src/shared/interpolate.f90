@@ -26,9 +26,9 @@
 !=====================================================================
 
 
-  subroutine interpolate(xi,eta,gamma,ielem, &
-                         nspec,model, &
-                         val,xigll,yigll,zigll)
+  subroutine interpolate_element_value(xi,eta,gamma,ielem, &
+                                       nspec,model_elem, &
+                                       val,xigll,yigll,zigll)
 
 ! interpolates model value for given location xi/eta/gamma within element ielem using GLL basis functions
 
@@ -40,7 +40,7 @@
   integer,intent(in):: ielem
 
   integer,intent(in):: nspec
-  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: model
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: model_elem
 
   real(kind=CUSTOM_REAL),intent(out) :: val
 
@@ -54,6 +54,9 @@
                       hgammar(NGLLZ), hpgammar(NGLLZ)
   integer:: i,j,k
 
+  ! checks
+  if (ielem < 1 .or. ielem > nspec) stop 'Error invalid ielem index in interpolate_element_value()'
+
   ! interpolation weights
   call lagrange_any(xi,NGLLX,xigll,hxir,hpxir)
   call lagrange_any(eta,NGLLY,yigll,hetar,hpetar)
@@ -64,19 +67,19 @@
   do k = 1, NGLLZ
     do j = 1, NGLLY
       do i = 1, NGLLX
-          val = val +  hxir(i) * hetar(j) * hgammar(k) * model(i,j,k,ielem)
+          val = val +  hxir(i) * hetar(j) * hgammar(k) * model_elem(i,j,k)
       enddo
     enddo
   enddo
 
-  end subroutine interpolate
+  end subroutine interpolate_element_value
 
 !
 !------------------------------------------------------------------------------
 !
 
   subroutine interpolate_limited(xi,eta,gamma,ielem, &
-                                 nspec,model, &
+                                 nspec,model_elem, &
                                  val,xigll,yigll,zigll, &
                                  i_selected,j_selected,k_selected)
 
@@ -91,7 +94,7 @@
   integer,intent(in):: ielem
 
   integer,intent(in):: nspec
-  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: model
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: model_elem
 
   real(kind=CUSTOM_REAL),intent(out) :: val
 
@@ -115,6 +118,9 @@
 
   !--------------------------------------------------------------------
 
+  ! checks
+  if (ielem < 1 .or. ielem > nspec) stop 'Error invalid ielem index in interpolate_limited()'
+
   ! interpolation weights
   call lagrange_any(xi,NGLLX,xigll,hxir,hpxir)
   call lagrange_any(eta,NGLLY,yigll,hetar,hpetar)
@@ -125,7 +131,7 @@
   do k = 1, NGLLZ
     do j = 1, NGLLY
       do i = 1, NGLLX
-        val = val + hxir(i) * hetar(j) * hgammar(k) * model(i,j,k,ielem)
+        val = val + hxir(i) * hetar(j) * hgammar(k) * model_elem(i,j,k)
       enddo
     enddo
   enddo
@@ -136,10 +142,10 @@
   ! uses average/closest point value if too far off
 
   ! closest point value
-  val_initial = model(i_selected,j_selected,k_selected,ielem)
+  val_initial = model_elem(i_selected,j_selected,k_selected)
 
   ! average value
-  val_avg = sum(model(:,:,:,ielem)) / NGLLX / NGLLY / NGLLZ
+  val_avg = sum(model_elem(:,:,:)) / NGLLX / NGLLY / NGLLZ
 
   ! initial difference
   pert = abs(val_initial - val_avg)

@@ -1215,9 +1215,9 @@ print *,myrank,'adios file rank',rank
 
         ! interpolate model values
         do iker = 1,nparams
-          call interpolate(xi,eta,gamma,ispec_selected, &
-                           nspec_max_old,model1(:,:,:,:,iker,rank_selected), &
-                           val,xigll,yigll,zigll)
+          call interpolate_element_value(xi,eta,gamma,ispec_selected, &
+                                         nspec_max_old,model1(:,:,:,ispec_selected,iker,rank_selected), &
+                                         val,xigll,yigll,zigll)
 
           ! sets new model value
           model2(i,j,k,ispec,iker) = val
@@ -1548,13 +1548,13 @@ print *,myrank,'adios file rank',rank
         do iker = 1,nparams
           if (USE_FALLBACK) then
             call interpolate_limited(xi,eta,gamma,ispec_selected, &
-                                     nspec_max_old,model1(:,:,:,:,iker,rank_selected), &
+                                     nspec_max_old,model1(:,:,:,ispec_selected,iker,rank_selected), &
                                      val,xigll,yigll,zigll, &
                                      i_selected,j_selected,k_selected)
           else
-            call interpolate(xi,eta,gamma,ispec_selected, &
-                             nspec_max_old,model1(:,:,:,:,iker,rank_selected), &
-                             val,xigll,yigll,zigll)
+            call interpolate_element_value(xi,eta,gamma,ispec_selected, &
+                                           nspec_max_old,model1(:,:,:,ispec_selected,iker,rank_selected), &
+                                           val,xigll,yigll,zigll)
           endif
 
           ! sets new model value

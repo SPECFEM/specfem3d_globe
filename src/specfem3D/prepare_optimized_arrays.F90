@@ -78,6 +78,7 @@
   ! local parameters
   integer :: iphase,ier
   integer :: num_elements
+  integer,dimension(1) :: idummy
 
   ! inverse arrays use 1D indexing for better compiler vectorization
   ! only used for Deville routines and FORCE_VECTORIZATION)
@@ -129,35 +130,32 @@
   ! inverse table
   ! this helps to speedup the assembly, especially with OpenMP (or on MIC) threading
   if (use_inversed_arrays) then
-    ! allocating arrays
-    allocate(ibool_inv_tbl_crust_mantle(NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE,2), &
-             ibool_inv_tbl_inner_core(NGLLX*NGLLY*NGLLZ*NSPEC_INNER_CORE,2), &
-             ibool_inv_tbl_outer_core(NGLLX*NGLLY*NGLLZ*NSPEC_OUTER_CORE,2),stat=ier)
-    if (ier /= 0) stop 'Error allocating ibool_inv_tbl arrays'
-
-    allocate(ibool_inv_st_crust_mantle(NGLOB_CRUST_MANTLE+1,2), &
-             ibool_inv_st_inner_core(NGLOB_INNER_CORE+1,2), &
-             ibool_inv_st_outer_core(NGLOB_OUTER_CORE+1,2),stat=ier)
-    if (ier /= 0) stop 'Error allocating ibool_inv_st arrays'
-
-    allocate(phase_iglob_crust_mantle(NGLOB_CRUST_MANTLE,2), &
-             phase_iglob_inner_core(NGLOB_INNER_CORE,2), &
-             phase_iglob_outer_core(NGLOB_OUTER_CORE,2),stat=ier)
-    if (ier /= 0) stop 'Error allocating phase_iglob arrays'
-
     ! initializing
     num_globs_crust_mantle(:) = 0
     num_globs_inner_core(:) = 0
     num_globs_outer_core(:) = 0
 
+    ! allocating arrays
+    allocate(ibool_inv_tbl_crust_mantle(NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE,2), &
+             ibool_inv_tbl_inner_core(NGLLX*NGLLY*NGLLZ*NSPEC_INNER_CORE,2), &
+             ibool_inv_tbl_outer_core(NGLLX*NGLLY*NGLLZ*NSPEC_OUTER_CORE,2),stat=ier)
+    if (ier /= 0) stop 'Error allocating ibool_inv_tbl arrays'
     ibool_inv_tbl_crust_mantle(:,:) = 0
     ibool_inv_tbl_inner_core(:,:) = 0
     ibool_inv_tbl_outer_core(:,:) = 0
 
+    allocate(ibool_inv_st_crust_mantle(NGLOB_CRUST_MANTLE+1,2), &
+             ibool_inv_st_inner_core(NGLOB_INNER_CORE+1,2), &
+             ibool_inv_st_outer_core(NGLOB_OUTER_CORE+1,2),stat=ier)
+    if (ier /= 0) stop 'Error allocating ibool_inv_st arrays'
     ibool_inv_st_crust_mantle(:,:) = 0
     ibool_inv_st_inner_core(:,:) = 0
     ibool_inv_st_outer_core(:,:) = 0
 
+    allocate(phase_iglob_crust_mantle(NGLOB_CRUST_MANTLE,2), &
+             phase_iglob_inner_core(NGLOB_INNER_CORE,2), &
+             phase_iglob_outer_core(NGLOB_OUTER_CORE,2),stat=ier)
+    if (ier /= 0) stop 'Error allocating phase_iglob arrays'
     phase_iglob_crust_mantle(:,:) = 0
     phase_iglob_inner_core(:,:) = 0
     phase_iglob_outer_core(:,:) = 0
@@ -174,11 +172,11 @@
         ! inner elements (iphase=2)
         num_elements = nspec_inner_crust_mantle
       endif
-      call make_inv_table(iphase,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE, &
-                          num_elements,phase_ispec_inner_crust_mantle, &
+      call prepare_make_inv_table(iphase,IREGION_CRUST_MANTLE,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE, &
+                          num_elements,phase_ispec_inner_crust_mantle,num_phase_ispec_crust_mantle, &
                           ibool_crust_mantle,phase_iglob_crust_mantle, &
                           ibool_inv_tbl_crust_mantle, ibool_inv_st_crust_mantle, &
-                          num_globs_crust_mantle)
+                          num_globs_crust_mantle,idummy)
 
       ! inner core
       if (iphase == 1) then
@@ -188,8 +186,8 @@
         ! inner elements (iphase=2)
         num_elements = nspec_inner_inner_core
       endif
-      call make_inv_table(iphase,NGLOB_INNER_CORE,NSPEC_INNER_CORE, &
-                          num_elements,phase_ispec_inner_inner_core, &
+      call prepare_make_inv_table(iphase,IREGION_INNER_CORE,NGLOB_INNER_CORE,NSPEC_INNER_CORE, &
+                          num_elements,phase_ispec_inner_inner_core,num_phase_ispec_inner_core, &
                           ibool_inner_core,phase_iglob_inner_core, &
                           ibool_inv_tbl_inner_core, ibool_inv_st_inner_core, &
                           num_globs_inner_core,idoubling_inner_core)
@@ -202,11 +200,11 @@
         ! inner elements (iphase=2)
         num_elements = nspec_inner_outer_core
       endif
-      call make_inv_table(iphase,NGLOB_OUTER_CORE,NSPEC_OUTER_CORE, &
-                          num_elements,phase_ispec_inner_outer_core, &
+      call prepare_make_inv_table(iphase,iREGION_OUTER_CORE,NGLOB_OUTER_CORE,NSPEC_OUTER_CORE, &
+                          num_elements,phase_ispec_inner_outer_core,num_phase_ispec_outer_core, &
                           ibool_outer_core,phase_iglob_outer_core, &
                           ibool_inv_tbl_outer_core, ibool_inv_st_outer_core, &
-                          num_globs_outer_core)
+                          num_globs_outer_core,idummy)
     enddo
 
     ! user output
@@ -219,28 +217,34 @@
   ! synchronizes processes
   call synchronize_all()
 
-  contains
+  end subroutine prepare_timerun_ibool_inv_tbl
 
-    subroutine make_inv_table(iphase,nglob,nspec, &
-                              phase_nspec,phase_ispec,ibool,phase_iglob, &
-                              ibool_inv_tbl,ibool_inv_st,num_globs,idoubling)
+!
+!-------------------------------------------------------------------------------------------------
+!
 
+  subroutine prepare_make_inv_table(iphase,iregion_code,nglob,nspec, &
+                                    phase_nspec,phase_ispec,num_phase_ispec, &
+                                    ibool,phase_iglob, &
+                                    ibool_inv_tbl,ibool_inv_st,num_globs,idoubling)
+
+    use constants, only: myrank,IFLAG_IN_FICTITIOUS_CUBE,IREGION_INNER_CORE,NGLLX,NGLLY,NGLLZ
     implicit none
 
     ! arguments
-    integer,intent(in) :: iphase
+    integer,intent(in) :: iphase,iregion_code
     integer,intent(in) :: nglob
     integer,intent(in) :: nspec
-    integer,intent(in) :: phase_nspec
-    integer, dimension(:,:),intent(in) :: phase_ispec
-    integer, dimension(:,:,:,:),intent(in) :: ibool
+    integer,intent(in) :: phase_nspec,num_phase_ispec
+    integer, dimension(num_phase_ispec,2),intent(in) :: phase_ispec
+    integer, dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
 
-    integer, dimension(:,:),intent(inout) :: phase_iglob
-    integer, dimension(:,:),intent(inout) :: ibool_inv_tbl
-    integer, dimension(:,:),intent(inout) :: ibool_inv_st
-    integer, dimension(:),intent(inout) :: num_globs
+    integer, dimension(nglob,2),intent(inout) :: phase_iglob
+    integer, dimension(NGLLX*NGLLY*NGLLZ*nspec,2),intent(inout) :: ibool_inv_tbl
+    integer, dimension(nglob+1,2),intent(inout) :: ibool_inv_st
+    integer, dimension(2),intent(inout) :: num_globs
 
-    integer,dimension(:),optional :: idoubling
+    integer,dimension(nspec) :: idoubling
 
     ! local parameters
     integer, dimension(:),   allocatable :: ibool_inv_num
@@ -263,7 +267,7 @@
     if (phase_nspec == 0) return
 
     ! checks if inner core region
-    if (present(idoubling)) then
+    if (iregion_code == IREGION_INNER_CORE) then
       is_inner_core = .true.
     else
       is_inner_core = .false.
@@ -404,9 +408,9 @@
     deallocate(ibool_inv_num)
     deallocate(ibool_inv_tbl_tmp)
 
-    end subroutine make_inv_table
+    end subroutine prepare_make_inv_table
 
-  end subroutine prepare_timerun_ibool_inv_tbl
+
 
 !
 !-------------------------------------------------------------------------------------------------

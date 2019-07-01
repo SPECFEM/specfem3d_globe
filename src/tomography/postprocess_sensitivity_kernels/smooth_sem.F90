@@ -688,7 +688,7 @@ program smooth_sem_globe
       ! user info about progress
       if (myrank == 0) then
         tCPU = wtime() - time_start
-        if (mod(ispec-1,NSPEC_AB/NSTEP_PERCENT_INFO) == 0 .and. ispec < (NSPEC_AB - 0.5*NSPEC_AB/NSTEP_PERCENT_INFO)) then
+        if (mod(ispec-1,int(NSPEC_AB/NSTEP_PERCENT_INFO)) == 0 .and. ispec < (NSPEC_AB - 0.5*NSPEC_AB/NSTEP_PERCENT_INFO)) then
           print *,'    ',int((ispec-1) / (NSPEC_AB/NSTEP_PERCENT_INFO)) * (100.0 / NSTEP_PERCENT_INFO), &
                  ' % elements done - Elapsed time in seconds = ',tCPU
         endif

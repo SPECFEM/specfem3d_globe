@@ -1330,7 +1330,6 @@
 
   ! locations
   real(kind=CUSTOM_REAL) :: x_found,y_found,z_found
-  real(kind=CUSTOM_REAL) :: val,val_initial
   real(kind=CUSTOM_REAL) :: xmin,xmax,ymin,ymax,zmin,zmax
 
   integer :: ipoin,nslice_points
@@ -1458,7 +1457,10 @@
     ! checks if point is inside element
     if (is_inside_element .and. dist_min < SMALLVAL) then
       ! sets new interpolated model value
-      call set_interpolated_value()
+      call set_interpolated_value(dist_min,nglob_target,model2,model_distance2, &
+                                  xi,eta,gamma,ispec_selected,i_selected,j_selected,k_selected,iglob, &
+                                  nspec,model,xigll,yigll,zigll, &
+                                  model_maxdiff,DO_WARNING,xyz_target,x_found,y_found,z_found,myrank)
 
       ! debug
       !if (myrank == 0) print *,'search first guess = ',dist_min*R_EARTH_KM,'point',ipoin
@@ -1541,7 +1543,10 @@
         !if (myrank == 0) print *,'search element: ',ispec_selected,'dist:',dist_min*R_EARTH_KM,'inside:',is_inside_element
 
         ! sets new interpolated model value
-        call set_interpolated_value()
+        call set_interpolated_value(dist_min,nglob_target,model2,model_distance2, &
+                                    xi,eta,gamma,ispec_selected,i_selected,j_selected,k_selected,iglob, &
+                                    nspec,model,xigll,yigll,zigll, &
+                                    model_maxdiff,DO_WARNING,xyz_target,x_found,y_found,z_found,myrank)
 
         ! counter adds element to new search list
         nsearch_points = nsearch_points + 1
@@ -1640,58 +1645,96 @@
 
     end subroutine check_location
 
-    !-------------------------------------------
+  end subroutine get_model_values_cross_section
 
-    subroutine set_interpolated_value()
 
-    implicit none
+!
+!------------------------------------------------------------------------------
+!
 
-    ! checks if new point distance is better than stored one
-    if (dist_min < model_distance2(iglob)) then
+  subroutine set_interpolated_value(dist_min,nglob_target,model2,model_distance2, &
+                                    xi,eta,gamma,ispec_selected,i_selected,j_selected,k_selected,iglob, &
+                                    nspec,model,xigll,yigll,zigll, &
+                                    model_maxdiff,DO_WARNING,xyz_target,x_found,y_found,z_found,myrank)
 
-      ! sets new minimum distance
-      model_distance2(iglob) = dist_min
+  use constants, only: NGLLX,NGLLY,NGLLZ,CUSTOM_REAL,R_EARTH_KM
+  implicit none
 
-      ! interpolate model values
-      call interpolate(xi,eta,gamma,ispec_selected, &
-                       nspec,model(:,:,:,:), &
-                       val,xigll,yigll,zigll)
+  double precision,intent(in) :: dist_min
+  ! new mesh
+  integer,intent(in) :: nglob_target
+  real(kind=CUSTOM_REAL),dimension(nglob_target),intent(inout) :: model2
+  real(kind=CUSTOM_REAL),dimension(nglob_target),intent(inout) :: model_distance2
 
-      ! sets new model value
-      model2(iglob) = val
+  ! point location
+  double precision,intent(in) :: xi,eta,gamma
+  integer,intent(in) :: ispec_selected
+  integer,intent(in) :: i_selected,j_selected,k_selected
+  integer,intent(in) :: iglob
 
-      ! checks difference of interpolated value with model value of closest GLL point
-      val_initial = model(i_selected,j_selected,k_selected,ispec_selected)
-      if (abs(val - val_initial ) > abs(model_maxdiff)) model_maxdiff = val - val_initial
+  ! for old, first mesh we interpolate on
+  integer,intent(in) :: nspec
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: model
 
-      ! checks model difference
-      if (DO_WARNING) then
-        ! note: warns for top elements, probably due to crustal structure
-        if (abs(val - val_initial ) > abs( 0.2 * val_initial )) then
-          print *,'Warning: model ',' value:',val,'is very different from initial value ',val_initial
-          print *,'  rank ',myrank,' - dist_min: ',dist_min * R_EARTH_KM,'(km)'
-          print *,'  selected ispec:',ispec_selected,'iglob_min:',iglob_min
-          print *,'  typical element size:',typical_size * 0.5 * R_EARTH_KM
-          print *,'  interpolation i,j,k :',i_selected,j_selected,k_selected
-          print *,'  interpolation       :',xi,eta,gamma
-          print *,'  target location:',xyz_target(:)
-          print *,'  target radius  :',sqrt(xyz_target(1)**2 + xyz_target(2)**2 + xyz_target(3)**2) * R_EARTH_KM,'(km)'
-          print *,'  GLL location   :',x_found,y_found,z_found
-          print *,'  GLL radius     :',sqrt(x_found**2 + y_found**2 + z_found**2) * R_EARTH_KM,'(km)'
-          print *,'  distance gll:',dist_min * R_EARTH_KM,'(km)'
-          !stop 'Error model value invalid'
-        endif
+  ! Gauss-Lobatto-Legendre points of integration and weights
+  double precision, dimension(NGLLX),intent(in) :: xigll
+  double precision, dimension(NGLLY),intent(in) :: yigll
+  double precision, dimension(NGLLZ),intent(in) :: zigll
+
+  real(kind=CUSTOM_REAL),intent(inout) :: model_maxdiff
+  logical, intent(in) :: DO_WARNING
+
+  ! nodes search
+  double precision,dimension(3),intent(in) :: xyz_target
+  real(kind=CUSTOM_REAL),intent(in) :: x_found,y_found,z_found
+  integer, intent(in) :: myrank
+
+  ! local parameters
+  real(kind=CUSTOM_REAL) :: val,val_initial
+
+  ! checks if new point distance is better than stored one
+  if (dist_min < model_distance2(iglob)) then
+
+    ! sets new minimum distance
+    model_distance2(iglob) = dist_min
+
+    ! interpolate model values
+    call interpolate_element_value(xi,eta,gamma,ispec_selected, &
+                                   nspec,model(:,:,:,ispec_selected), &
+                                   val,xigll,yigll,zigll)
+
+    ! sets new model value
+    model2(iglob) = val
+
+    ! checks difference of interpolated value with model value of closest GLL point
+    val_initial = model(i_selected,j_selected,k_selected,ispec_selected)
+    if (abs(val - val_initial ) > abs(model_maxdiff)) model_maxdiff = val - val_initial
+
+    ! checks model difference
+    if (DO_WARNING) then
+      ! note: warns for top elements, probably due to crustal structure
+      if (abs(val - val_initial ) > abs( 0.2 * val_initial )) then
+        print *,'Warning: model ',' value:',val,'is very different from initial value ',val_initial
+        print *,'  rank ',myrank,' - dist_min: ',dist_min * R_EARTH_KM,'(km)'
+        print *,'  selected ispec:',ispec_selected
+        print *,'  interpolation i,j,k :',i_selected,j_selected,k_selected
+        print *,'  interpolation       :',xi,eta,gamma
+        print *,'  target location:',xyz_target(:)
+        print *,'  target radius  :',sqrt(xyz_target(1)**2 + xyz_target(2)**2 + xyz_target(3)**2) * R_EARTH_KM,'(km)'
+        print *,'  GLL location   :',x_found,y_found,z_found
+        print *,'  GLL radius     :',sqrt(x_found**2 + y_found**2 + z_found**2) * R_EARTH_KM,'(km)'
+        print *,'  distance gll:',dist_min * R_EARTH_KM,'(km)'
+        !stop 'Error model value invalid'
       endif
-
-      ! debug
-      !if (myrank == 0 .and. iglob < 100) &
-      !  print *,'new model ',': value ',val,'initial ',val_initial,'diff ',(val - val_initial)/val_initial*100.0,'(%)'
-
     endif
 
-    end subroutine set_interpolated_value
+    ! debug
+    !if (myrank == 0 .and. iglob < 100) &
+    !  print *,'new model ',': value ',val,'initial ',val_initial,'diff ',(val - val_initial)/val_initial*100.0,'(%)'
 
-  end subroutine get_model_values_cross_section
+  endif
+
+  end subroutine set_interpolated_value
 
 !
 !------------------------------------------------------------------------------

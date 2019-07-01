@@ -310,7 +310,7 @@
   if (ier /= 0 ) stop 'Error allocating transverse kernels rhonotprime_kl_crust_mantle'
 
   ! crust_mantle
-  do ispec = 1, NSPEC_CRUST_MANTLE
+  do ispec = 1, NSPEC_CRUST_MANTLE_ADJOINT
     do k = 1, NGLLZ
       do j = 1, NGLLY
         do i = 1, NGLLX
@@ -728,7 +728,7 @@
   if (ier /= 0 ) stop 'Error allocating transverse kernels bulk_c_kl_crust_mantle,...'
 
   ! crust_mantle
-  do ispec = 1, NSPEC_CRUST_MANTLE
+  do ispec = 1, NSPEC_CRUST_MANTLE_ADJOINT
     do k = 1, NGLLZ
       do j = 1, NGLLY
         do i = 1, NGLLX
@@ -846,12 +846,13 @@
   scale_kl = scale_t * scale_displ_inv * 1.d9
 
   ! outer_core
-  do ispec = 1, NSPEC_OUTER_CORE
+  do ispec = 1, NSPEC_OUTER_CORE_ADJOINT
     do k = 1, NGLLZ
       do j = 1, NGLLY
         do i = 1, NGLLX
           rhol = rhostore_outer_core(i,j,k,ispec)
           kappal = kappavstore_outer_core(i,j,k,ispec)
+
           rho_kl = - rhol * rho_kl_outer_core(i,j,k,ispec)
           alpha_kl = - kappal * alpha_kl_outer_core(i,j,k,ispec)
 
@@ -914,7 +915,7 @@
   scale_kl = scale_t * scale_displ_inv * 1.d9
 
   ! inner_core
-  do ispec = 1, NSPEC_INNER_CORE
+  do ispec = 1, NSPEC_INNER_CORE_ADJOINT
     do k = 1, NGLLZ
       do j = 1, NGLLY
         do i = 1, NGLLX
