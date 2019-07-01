@@ -36,12 +36,24 @@
                       rmin,rmax, &
                       elem_in_crust,elem_in_mantle)
 
+  use constants, only: &
+    NGLLX,NGLLY,NGLLZ,MIDX,MIDY,MIDZ,N_SLS,CUSTOM_REAL, &
+    TINYVAL,R_EARTH_KM, &
+    IREGION_CRUST_MANTLE,IREGION_INNER_CORE,IREGION_OUTER_CORE, &
+    IFLAG_IN_FICTITIOUS_CUBE,IFLAG_INNER_CORE_NORMAL,IFLAG_MIDDLE_CENTRAL_CUBE,IFLAG_TOP_CENTRAL_CUBE,IFLAG_BOTTOM_CENTRAL_CUBE, &
+    IFLAG_OUTER_CORE_NORMAL, &
+    IFLAG_MANTLE_NORMAL,IFLAG_670_220,IFLAG_220_80,IFLAG_80_MOHO,IFLAG_CRUST, &
+    myrank
+
   use meshfem3D_par, only: &
     RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220, &
     R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
     ABSORBING_CONDITIONS
 
-  use meshfem3D_models_par
+  use meshfem3D_models_par, only: &
+    ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
+    ATTENUATION,ATTENUATION_3D,ATTENUATION_1D_WITH_3D_STORAGE, &
+    CEM_ACCEPT,CRUSTAL,HETEROGEN_3D_MANTLE
 
   use regions_mesh_par2, only: &
     Qmu_store,tau_e_store,tau_s,T_c_source
@@ -251,9 +263,9 @@
           c66store(i,j,k,ispec) = real(c66, kind=CUSTOM_REAL)
         endif
 
+        ! stores attenuation arrays
         if (ATTENUATION) then
           if (ATTENUATION_3D .or. ATTENUATION_1D_WITH_3D_STORAGE) then
-
             ! distinguish between single and double precision for reals
             do i_sls = 1,N_SLS
               tau_e_store(i,j,k,i_sls,ispec) = real(tau_e(i_sls), kind=CUSTOM_REAL)
@@ -261,10 +273,10 @@
             Qmu_store(i,j,k,ispec) = real(Qmu, kind=CUSTOM_REAL)
 
           else
-
+            ! single node per element
             ! distinguish between single and double precision for reals
             ! store values from mid-point for whole element
-            if (i == NGLLX/2 .and. j == NGLLY/2 .and. k == NGLLZ/2) then
+            if (i == MIDX .and. j == MIDY .and. k == MIDZ) then
               do i_sls = 1,N_SLS
                 tau_e_store(1,1,1,i_sls,ispec) = real(tau_e(i_sls), kind=CUSTOM_REAL)
               enddo
@@ -290,7 +302,12 @@
                             RICB,RCMB,RTOPDDOUBLEPRIME, &
                             R220,R670)
 
-  use meshfem3D_models_par
+  use constants, only: &
+    TINYVAL,DEGREES_TO_RADIANS,R_EARTH, &
+    IFLAG_IN_FICTITIOUS_CUBE,IFLAG_INNER_CORE_NORMAL,IFLAG_MIDDLE_CENTRAL_CUBE,IFLAG_TOP_CENTRAL_CUBE,IFLAG_BOTTOM_CENTRAL_CUBE, &
+    IFLAG_OUTER_CORE_NORMAL, &
+    IFLAG_MANTLE_NORMAL,IFLAG_670_220,IFLAG_220_80,IFLAG_80_MOHO,IFLAG_CRUST, &
+    myrank
 
   implicit none
 

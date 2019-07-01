@@ -44,7 +44,6 @@
 ! creates the inner core cube of the mesh
 
   use constants
-  use meshfem3D_models_par, only: myrank
 
   implicit none
 

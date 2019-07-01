@@ -47,7 +47,8 @@
   use constants, only: &
     IMAIN,IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
     MAX_NUMBER_OF_MESH_LAYERS,MAX_NUM_REGIONS,NB_SQUARE_CORNERS, &
-    IFLAG_IN_FICTITIOUS_CUBE
+    IFLAG_IN_FICTITIOUS_CUBE, &
+    SAVE_BOUNDARY_MESH,SUPPRESS_CRUSTAL_MESH,REGIONAL_MOHO_MESH
 
   use shared_parameters, only: &
     R_CENTRAL_CUBE,RICB,RCMB
@@ -66,7 +67,6 @@
     volume_total,Earth_mass_total,Earth_center_of_mass_x_total,Earth_center_of_mass_y_total,Earth_center_of_mass_z_total
 
   use meshfem3D_models_par, only: &
-    SAVE_BOUNDARY_MESH,SUPPRESS_CRUSTAL_MESH,REGIONAL_MOHO_MESH, &
     OCEANS
 
 #ifdef USE_CEM
@@ -537,8 +537,7 @@
     ATT1,ATT2,ATT3
 
   use meshfem3D_models_par, only: &
-    ATTENUATION,ANISOTROPIC_INNER_CORE,ANISOTROPIC_3D_MANTLE, &
-    SAVE_BOUNDARY_MESH,AM_V
+    ATTENUATION,ANISOTROPIC_INNER_CORE,ANISOTROPIC_3D_MANTLE,AM_V
 
   use regions_mesh_par2
 
@@ -824,6 +823,8 @@
 
   subroutine crm_setup_layers(ipass,NEX_PER_PROC_ETA)
 
+  use constants, only: SUPPRESS_CRUSTAL_MESH,REGIONAL_MOHO_MESH
+
   use meshfem3D_par, only: &
     nspec,iregion_code, &
     ibool,idoubling,is_on_a_slice_edge, &
@@ -831,13 +832,13 @@
     NGLLX,NGLLY,NGLLZ, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
     R670,RMOHO,R400,RMIDDLE_CRUST,MAX_NUMBER_OF_MESH_LAYERS, &
-    ner,r_top,r_bottom
+    ner,r_top,r_bottom, &
+    CASE_3D
 
   use meshfem3D_models_par, only: &
-    CASE_3D,SUPPRESS_CRUSTAL_MESH,ONE_CRUST,REGIONAL_MOHO_MESH
+    ONE_CRUST
 
   use regions_mesh_par
-
   use regions_mesh_par2
 
   implicit none

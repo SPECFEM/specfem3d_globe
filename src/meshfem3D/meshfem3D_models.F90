@@ -135,6 +135,8 @@
 
 ! preparing model parameter coefficients on all processes for mantle models
 
+  use constants, only: myrank
+
   use meshfem3D_models_par
 
   implicit none
@@ -470,7 +472,7 @@
   real(kind=4) :: xcolat,xlon,xrad
   real(kind=4) :: xdvpv,xdvph,xdvsv,xdvsh
 
-  logical :: found_crust,suppress_mantle_extension
+  logical :: found_crust,suppress_mantle_extension,is_inside_region
 
   ! initializes perturbation values
   dvs = ZERO
@@ -569,16 +571,12 @@
         vsv = vsv*(1.0d0+dvs)
         vsh = vsh*(1.0d0+dvs)
         ! use Lebedev model sea99 as background and add vp & vs perturbation from Zhao 1994 model jp3d
-        if (theta >= (PI/2.d0 - JP3D_LAT_MAX*DEGREES_TO_RADIANS) .and. theta <= (PI/2.d0 - JP3D_LAT_MIN*DEGREES_TO_RADIANS) &
-          .and. phi >= JP3D_LON_MIN*DEGREES_TO_RADIANS .and. phi <= JP3D_LON_MAX*DEGREES_TO_RADIANS) then
-        ! makes sure radius is fine
-        if (r_used > (R_EARTH - JP3D_DEP_MAX*1000.d0)/R_EARTH) then
-            call model_jp3d_iso_zhao(r_used,theta,phi,vp,vs,dvp,dvs,rho,found_crust)
-            vpv = vpv*(1.0d0+dvp)
-            vph = vph*(1.0d0+dvp)
-            vsv = vsv*(1.0d0+dvs)
-            vsh = vsh*(1.0d0+dvs)
-          endif
+        call model_jp3d_iso_zhao(r_used,theta,phi,vp,vs,dvp,dvs,rho,found_crust,is_inside_region)
+        if (is_inside_region) then
+          vpv = vpv*(1.0d0+dvp)
+          vph = vph*(1.0d0+dvp)
+          vsv = vsv*(1.0d0+dvs)
+          vsh = vsh*(1.0d0+dvs)
         endif
 
       case (THREE_D_MODEL_SEA99)
@@ -589,15 +587,12 @@
 
       case (THREE_D_MODEL_JP3D)
         ! jp3d1994
-        if (theta >= (PI/2.d0 - JP3D_LAT_MAX*DEGREES_TO_RADIANS) .and. theta <= (PI/2.d0 - JP3D_LAT_MIN*DEGREES_TO_RADIANS) &
-            .and. phi >= JP3D_LON_MIN*DEGREES_TO_RADIANS .and. phi <= JP3D_LON_MAX*DEGREES_TO_RADIANS) then
-          if (r_used > (R_EARTH - JP3D_DEP_MAX*1000.d0)/R_EARTH) then
-            call model_jp3d_iso_zhao(r_used,theta,phi,vp,vs,dvp,dvs,rho,found_crust)
-            vpv = vpv*(1.0d0+dvp)
-            vph = vph*(1.0d0+dvp)
-            vsv = vsv*(1.0d0+dvs)
-            vsh = vsh*(1.0d0+dvs)
-          endif
+        call model_jp3d_iso_zhao(r_used,theta,phi,vp,vs,dvp,dvs,rho,found_crust,is_inside_region)
+        if (is_inside_region) then
+          vpv = vpv*(1.0d0+dvp)
+          vph = vph*(1.0d0+dvp)
+          vsv = vsv*(1.0d0+dvs)
+          vsh = vsh*(1.0d0+dvs)
         endif
 
       case (THREE_D_MODEL_S362ANI,THREE_D_MODEL_S362WMANI, &
@@ -822,7 +817,7 @@
   double precision :: vpc,vsc,rhoc !vpc_eu
 
   double precision :: dvs
-  logical :: found_crust !,found_eucrust
+  logical :: found_crust,is_inside_region
 
   ! checks if anything to do, that is, there is nothing to do
   ! for point radius smaller than deepest possible crust radius (~80 km depth)
@@ -849,14 +844,9 @@
 
     case (THREE_D_MODEL_SEA99_JP3D,THREE_D_MODEL_JP3D)
       ! tries to use Zhao's model of the crust
-      if (theta >= (PI/2.d0 - JP3D_LAT_MAX*DEGREES_TO_RADIANS) .and. theta <= (PI/2.d0 - JP3D_LAT_MIN*DEGREES_TO_RADIANS) &
-        .and. phi >= JP3D_LON_MIN*DEGREES_TO_RADIANS .and. phi <= JP3D_LON_MAX*DEGREES_TO_RADIANS) then
-        ! makes sure radius is fine
-        if (r > (R_EARTH - JP3D_DEP_MAX*1000.d0)/R_EARTH) then
-                  call model_jp3d_iso_zhao(r,theta,phi,vpc,vsc,dvp,dvs,rhoc,found_crust)
-        endif
-      else
-        ! default crust
+      call model_jp3d_iso_zhao(r,theta,phi,vpc,vsc,dvp,dvs,rhoc,found_crust,is_inside_region)
+      if (.not. is_inside_region) then
+        ! uses default crust outside of model region
         call meshfem3D_model_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,found_crust,elem_in_crust)
       endif
 
@@ -1042,6 +1032,8 @@
 ! sets attenuation values tau_e and Qmu for a given point
 !
 ! note:  only Qmu attenuation considered, Qkappa attenuation not used so far in solver...
+
+  use constants, only: N_SLS
 
   use meshfem3D_models_par
 

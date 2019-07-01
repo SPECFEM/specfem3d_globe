@@ -56,7 +56,7 @@
 ! adds a regular spectral element to the different regions of the mesh
 
   use constants
-  use meshfem3D_models_par, only: myrank,HONOR_1D_SPHERICAL_MOHO,CASE_3D
+  use meshfem3D_models_par, only: HONOR_1D_SPHERICAL_MOHO,CASE_3D
 
   implicit none
 

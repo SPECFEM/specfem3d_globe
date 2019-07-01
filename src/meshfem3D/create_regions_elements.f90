@@ -31,7 +31,8 @@
 
 ! creates all elements belonging to different regions of the mesh
 
-  use constants, only: CUSTOM_REAL,MAX_STRING_LEN
+  use constants, only: CUSTOM_REAL,MAX_STRING_LEN, &
+    SAVE_BOUNDARY_MESH,SUPPRESS_CRUSTAL_MESH,REGIONAL_MOHO_MESH
 
   use meshfem3D_par, only: &
     nspec,iregion_code, &
@@ -49,7 +50,6 @@
     ner,r_top,r_bottom
 
   use meshfem3D_models_par, only: &
-    SAVE_BOUNDARY_MESH,SUPPRESS_CRUSTAL_MESH,REGIONAL_MOHO_MESH, &
     TRANSVERSE_ISOTROPY
 
   use regions_mesh_par, only: &

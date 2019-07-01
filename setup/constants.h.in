@@ -521,8 +521,8 @@
   integer, parameter :: NY_OBSERVATION = NX_OBSERVATION
 
 ! the code will display sample output values at this particular point as a check
-  integer, parameter :: ixr = max(NX_OBSERVATION / 3, 1)
-  integer, parameter :: iyr = max(NY_OBSERVATION / 4, 1)
+  integer, parameter :: ixr = max(int(NX_OBSERVATION / 3), 1)
+  integer, parameter :: iyr = max(int(NY_OBSERVATION / 4), 1)
   integer, parameter :: ichunkr = 3
 
 ! how often (every how many spectral elements computed) we print a timestamp to monitor the behavior of the code
@@ -830,22 +830,6 @@
 ! for lookup table for gravity every 100 m in radial direction of Earth model
   integer, parameter :: NRAD_GRAVITY = 70000
 
-!!-----------------------------------------------------------
-!!
-!! model constants
-!!
-!!-----------------------------------------------------------
-
-! The meaningful range of Zhao et al. (1994) model is as follows:
-!        latitude : 32 - 45 N
-!        longitude: 130-145 E
-!        depth    : 0  - 500 km
-! The deepest Moho beneath Japan is 40 km
-  double precision,parameter :: JP3D_LAT_MAX = 45.d0
-  double precision,parameter :: JP3D_LAT_MIN = 32.d0
-  double precision,parameter :: JP3D_LON_MAX = 145.d0
-  double precision,parameter :: JP3D_LON_MIN = 130.d0
-  double precision,parameter :: JP3D_DEP_MAX = 500.d0
 
 !!-----------------------------------------------------------
 !!

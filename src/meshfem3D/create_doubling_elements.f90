@@ -55,7 +55,7 @@
 ! adds doubling elements to the different regions of the mesh
 
   use constants
-  use meshfem3D_models_par, only: myrank,HONOR_1D_SPHERICAL_MOHO
+  use meshfem3D_models_par, only: HONOR_1D_SPHERICAL_MOHO
 
   implicit none
 

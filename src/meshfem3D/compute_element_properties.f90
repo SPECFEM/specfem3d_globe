@@ -40,9 +40,16 @@
                                         nspec_ani,nspec_stacey, &
                                         rho_vp,rho_vs, &
                                         xigll,yigll,zigll,ispec_is_tiso)
-  use constants
-  use meshfem3D_models_par, only: myrank, &
-    TOPOGRAPHY,ELLIPTICITY,CRUSTAL,CASE_3D,THREE_D_MODEL, &
+
+  use constants, only: myrank,NGLLX,NGLLY,NGLLZ,NGNOD,CUSTOM_REAL, &
+    IFLAG_220_80,IFLAG_670_220,IFLAG_80_MOHO,IFLAG_MANTLE_NORMAL,IFLAG_CRUST, &
+    IFLAG_OUTER_CORE_NORMAL, &
+    IREGION_CRUST_MANTLE,REGIONAL_MOHO_MESH,SUPPRESS_INTERNAL_TOPOGRAPHY,USE_GLL
+
+  use meshfem3D_models_par, only: &
+    TOPOGRAPHY,ELLIPTICITY,CRUSTAL,CASE_3D, &
+    THREE_D_MODEL,THREE_D_MODEL_MANTLE_SH,THREE_D_MODEL_S29EA, &
+    THREE_D_MODEL_S362ANI,THREE_D_MODEL_S362WMANI,THREE_D_MODEL_S362ANI_PREM, &
     ibathy_topo,nspl,rspl,espl,espl2
 
   implicit none

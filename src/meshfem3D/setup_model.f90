@@ -27,6 +27,8 @@
 
   subroutine setup_model()
 
+  use constants, only: IMAIN
+
   use meshfem3D_par
 
   implicit none
@@ -124,7 +126,10 @@
 
   subroutine sm_output_info()
 
+  use constants, only: IMAIN,NGLLX,NGLLY,NGLLZ,NGNOD,NGNOD2D,N_SLS
+
   use meshfem3D_models_par
+
   use meshfem3D_par, only: &
     MODEL,NEX_XI,NEX_ETA, &
     NPROC_XI,NPROC_ETA,NPROC,NCHUNKS,NPROCTOT, &
