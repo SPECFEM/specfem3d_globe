@@ -229,6 +229,10 @@
                                     ibool_inv_tbl,ibool_inv_st,num_globs,idoubling)
 
     use constants, only: myrank,IFLAG_IN_FICTITIOUS_CUBE,IREGION_INNER_CORE,NGLLX,NGLLY,NGLLZ
+#ifdef FORCE_VECTORIZATION
+    use constants, only: NGLLCUBE
+#endif
+
     implicit none
 
     ! arguments
@@ -409,7 +413,6 @@
     deallocate(ibool_inv_tbl_tmp)
 
     end subroutine prepare_make_inv_table
-
 
 
 !
