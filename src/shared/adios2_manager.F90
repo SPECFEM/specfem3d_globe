@@ -50,7 +50,7 @@ module manager_adios2
   logical :: is_adios2_initialized
 
   ! ADIOS Real type based on CUSTOM_REAL
-  integer, public :: adios2_custom_real
+  integer, public :: adios2_CUSTOM_REAL
 
 #ifdef HAVE_ADIOS2
   ! adios2 handlers
@@ -109,7 +109,7 @@ contains
   call world_get_comm(comm_adios2)
   call world_rank(myrank_adios2)
   call world_size(sizeprocs_adios2)
-  adios2_custom_real = 0;
+  adios2_CUSTOM_REAL = 0;
 
 
 #ifdef HAVE_ADIOS2
@@ -122,9 +122,9 @@ contains
   is_adios2_initialized = .true.
 
   if (CUSTOM_REAL == SIZE_REAL) then
-    adios2_custom_real = adios2_type_real4
+    adios2_CUSTOM_REAL = adios2_type_real4
   else
-    adios2_custom_real = adios2_type_real8
+    adios2_CUSTOM_REAL = adios2_type_real8
   endif
 
 #else
@@ -203,7 +203,7 @@ subroutine read_var_adios2(file, io, varname, ndims, start, count, data, src, fu
 !! \param count Local sizes for reading
 !! \param data Pre-allocated array to receive the data from file
 !! \param src Sourcefile string (for error print)
-!! \param func Calling Function string (for error print)
+!! \param func Calling function string (for error print)
 
 
   use adios2
@@ -227,9 +227,6 @@ subroutine read_var_adios2(file, io, varname, ndims, start, count, data, src, fu
 
 end subroutine read_var_adios2
 
-
-
 #endif /* HAVE_ADIOS2 */
+
 end module manager_adios2
-
-

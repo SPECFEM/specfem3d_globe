@@ -313,7 +313,7 @@ end module forward_adios2_read
   file_name = trim(LOCAL_TMP_PATH) // "/save_forward_arrays.bp"
   io_name = "SPECFEM3D_GLOBE_FORWARD_ARRAYS_UNDOATT"
 
-  if (.not.io_fwdatt%valid) then
+  if (.not. io_fwdatt%valid) then
     ! Create the ADIOS IO group which will contain all variables and attributes
     call adios2_declare_io(io_fwdatt, adios2obj, io_name, ier)
     call check_adios2_err(myrank,ier,src,func, "Declare IO group")
@@ -322,7 +322,7 @@ end module forward_adios2_read
     call adios2_set_engine(io_fwdatt, ADIOS2_ENGINE_DEFAULT, ier)
   endif
 
-  if (.not.adios2_file_fwdatt%valid) then
+  if (.not. adios2_file_fwdatt%valid) then
     ! Open the handle to file containing all the ADIOS variables
     call adios2_open(adios2_file_fwdatt, io_fwdatt, file_name, adios2_mode_read, ier)
     call check_adios2_err(myrank,ier,src,func, "Open file "//file_name)

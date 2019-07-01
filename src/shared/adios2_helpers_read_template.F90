@@ -58,7 +58,7 @@ module adios2_helpers_read_mod
   !! \param count Local sizes for reading
   !! \param data Pre-allocated array to receive the data from file
   !! \param src Sourcefile string (for error print)
-  !! \param func Calling Function string (for error print)
+  !! \param func Calling function string (for error print)
   !! \param step (optional) step to read from a multi-step file
 
 
@@ -134,7 +134,7 @@ end subroutine check_adios2_err
       call check_adios2_err(rank, ier, src, func, "Set step variable("//trim(varname)//")")    _NL_\
   endif                                                                                        _NL_\
   call adios2_get(file, var, data, adios2_mode_sync, ier)                                      _NL_\
-  call check_adios2_err(rank, ier, src, func, "Read variable("//trim(varname)//")")        
+  call check_adios2_err(rank, ier, src, func, "Read variable("//trim(varname)//")")
 
 
 !# SUB(TYPENAME,TYPEDEF,NDIMS,DIMDEF) \
@@ -144,12 +144,12 @@ end subroutine check_adios2_err
 !##CODE _BODY                                                                                     _NL_\
 !end subroutine read_adios2_##TYPENAME##_##NDIMS##d
 
-! #  !define SUBROUTINETYPE(TYPENAME,TYPEDEF) _NL_\
+! #  !define subroutineTYPE(TYPENAME,TYPEDEF) _NL_\
 ! # #SUB(TYPENAME,TYPEDEF,1,:)              _NL_\
 ! # #(TYPENAME,TYPEDEF,2,@@:,:@@)          _NL_\
 
 
-!! SUBROUTINETYPE(integer,integer(kind=4))
+!! subroutineTYPE(integer,integer(kind=4))
 
 !===============================================================================
 !> Read (a selection of) variable data from a file
@@ -163,7 +163,7 @@ end subroutine check_adios2_err
 !! \param count Local sizes for reading
 !! \param data Pre-allocated array to receive the data from file
 !! \param src Sourcefile string (for error print)
-!! \param func Calling Function string (for error print)
+!! \param func Calling function string (for error print)
 subroutine read_adios2_real_1d(file, io, varname, ndims, start, count, data, rank, src,func,step)
 CODE_ARGS
   real(kind=4), dimension(:), intent(out) :: data
@@ -321,7 +321,6 @@ CODE_ARGS
   integer(kind=8), dimension(:,:,:,:,:), intent(out) :: data
 CODE_BODY
 end subroutine read_adios2_long_5d
-
 
 
 end module adios2_helpers_read_mod

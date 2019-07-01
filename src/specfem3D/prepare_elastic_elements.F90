@@ -97,7 +97,7 @@
   ! checks if anything to do
   ! GPU kernels still use original arrays
   if (GPU_MODE) then
-    write(IMAIN,*) "  GPU mode uses with original arrays"
+    write(IMAIN,*) "  GPU mode with original arrays"
     call flush_IMAIN()
     ! done
     return

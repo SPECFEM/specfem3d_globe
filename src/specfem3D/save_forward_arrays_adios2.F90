@@ -69,7 +69,7 @@ end module forward_adios2_write
   ! Create the ADIOS IO group which will contain all variables and attributes
   call adios2_declare_io(io_fwdim, adios2obj, ioname, ier)
   if (ier /= 0) then
-    print *,&
+    print *, &
     'Error declaring an ADIOS2 IO group for itermediate forward arrays output in save_intermediate_forward_arrays_adios2()'
     stop 'Error declaring an ADIOS2 IO group: calling save_intermediate_forward_arrays_adios2() routine failed'
   endif
@@ -112,7 +112,7 @@ end module forward_adios2_write
   subroutine save_forward_arrays_adios2()
 
   use constants, only: MAX_STRING_LEN, ADIOS2_ENGINE_DEFAULT
-  use constants_solver, only:  ATTENUATION_VAL, ROTATION_VAL
+  use constants_solver, only: ATTENUATION_VAL, ROTATION_VAL
   use shared_parameters, only: LOCAL_TMP_PATH
 
   use adios2
@@ -184,7 +184,7 @@ end module forward_adios2_write
   subroutine save_forward_arrays_undoatt_adios2()
 
   use constants, only: MAX_STRING_LEN, ADIOS2_ENGINE_UNDO_ATT, ADIOS2_ENGINE_PARAMS_UNDO_ATT
-  use constants_solver, only:  ATTENUATION_VAL, ROTATION_VAL
+  use constants_solver, only: ATTENUATION_VAL, ROTATION_VAL
   use shared_parameters, only: LOCAL_PATH
   use specfem_par, only: iteration_on_subset
 
@@ -204,7 +204,7 @@ end module forward_adios2_write
   outputname = trim(LOCAL_PATH) // "/save_forward_arrays.bp"
   ioname = "SPECFEM3D_GLOBE_FORWARD_ARRAYS_UNDOATT"
 
-  if (.not.io_fwdatt%valid) then
+  if (.not. io_fwdatt%valid) then
      ! Create the ADIOS IO group which will contain all variables and attributes
      call adios2_declare_io(io_fwdatt, adios2obj, ioname, ier)
      if (ier /= 0) then
@@ -228,7 +228,7 @@ end module forward_adios2_write
      endif
   endif
 
-  if (.not.adios2_file_fwdatt%valid) then
+  if (.not. adios2_file_fwdatt%valid) then
      ! Open the handle to file containing all the ADIOS variables
      call adios2_open(adios2_file_fwdatt, io_fwdatt, outputname, adios2_mode_write, ier)
      if (ier /= 0) then
@@ -288,25 +288,25 @@ end module forward_adios2_write
   ldim(1) = NDIM * NGLOB_CRUST_MANTLE
   gdim = sizeprocs_adios2 * ldim;
   offs = myrank_adios2 * ldim;
-  call adios2_define_variable(v, io, "displ_crust_mantle", adios2_custom_real, 1, gdim, offs, ldim, .true., ier)
-  call adios2_define_variable(v, io, "veloc_crust_mantle", adios2_custom_real, 1, gdim, offs, ldim, .true., ier)
-  call adios2_define_variable(v, io, "accel_crust_mantle", adios2_custom_real, 1, gdim, offs, ldim, .true., ier)
+  call adios2_define_variable(v, io, "displ_crust_mantle", adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+  call adios2_define_variable(v, io, "veloc_crust_mantle", adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+  call adios2_define_variable(v, io, "accel_crust_mantle", adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
 
   ! inner core
   ldim(1) = NDIM * NGLOB_INNER_CORE
   gdim = sizeprocs_adios2 * ldim;
   offs = myrank_adios2 * ldim;
-  call adios2_define_variable(v, io, "displ_inner_core", adios2_custom_real, 1, gdim, offs, ldim, .true., ier)
-  call adios2_define_variable(v, io, "veloc_inner_core", adios2_custom_real, 1, gdim, offs, ldim, .true., ier)
-  call adios2_define_variable(v, io, "accel_inner_core", adios2_custom_real, 1, gdim, offs, ldim, .true., ier)
+  call adios2_define_variable(v, io, "displ_inner_core", adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+  call adios2_define_variable(v, io, "veloc_inner_core", adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+  call adios2_define_variable(v, io, "accel_inner_core", adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
 
   ! outer core
   ldim(1) = NGLOB_OUTER_CORE
   gdim = sizeprocs_adios2 * ldim;
   offs = myrank_adios2 * ldim;
-  call adios2_define_variable(v, io, "displ_outer_core", adios2_custom_real, 1, gdim, offs, ldim, .true., ier)
-  call adios2_define_variable(v, io, "veloc_outer_core", adios2_custom_real, 1, gdim, offs, ldim, .true., ier)
-  call adios2_define_variable(v, io, "accel_outer_core", adios2_custom_real, 1, gdim, offs, ldim, .true., ier)
+  call adios2_define_variable(v, io, "displ_outer_core", adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+  call adios2_define_variable(v, io, "veloc_outer_core", adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+  call adios2_define_variable(v, io, "accel_outer_core", adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
 
   end subroutine define_common_forward_arrays_adios2
 
@@ -343,20 +343,20 @@ end module forward_adios2_write
   ldim(1) = NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE_STR_OR_ATT
   gdim = sizeprocs_adios2 * ldim;
   offs = myrank_adios2 * ldim;
-  call adios2_define_variable(v, io, "epsilondev_xx_crust_mantle", adios2_custom_real, 1, gdim, offs, ldim, .true., ier)
-  call adios2_define_variable(v, io, "epsilondev_yy_crust_mantle", adios2_custom_real, 1, gdim, offs, ldim, .true., ier)
-  call adios2_define_variable(v, io, "epsilondev_xy_crust_mantle", adios2_custom_real, 1, gdim, offs, ldim, .true., ier)
-  call adios2_define_variable(v, io, "epsilondev_xz_crust_mantle", adios2_custom_real, 1, gdim, offs, ldim, .true., ier)
-  call adios2_define_variable(v, io, "epsilondev_yz_crust_mantle", adios2_custom_real, 1, gdim, offs, ldim, .true., ier)
+  call adios2_define_variable(v, io, "epsilondev_xx_crust_mantle", adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+  call adios2_define_variable(v, io, "epsilondev_yy_crust_mantle", adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+  call adios2_define_variable(v, io, "epsilondev_xy_crust_mantle", adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+  call adios2_define_variable(v, io, "epsilondev_xz_crust_mantle", adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+  call adios2_define_variable(v, io, "epsilondev_yz_crust_mantle", adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
 
   ldim(1) = NGLLX * NGLLY * NGLLZ * NSPEC_INNER_CORE_STR_OR_ATT
   gdim = sizeprocs_adios2 * ldim;
   offs = myrank_adios2 * ldim;
-  call adios2_define_variable(v, io, "epsilondev_xx_inner_core", adios2_custom_real, 1, gdim, offs, ldim, .true., ier)
-  call adios2_define_variable(v, io, "epsilondev_yy_inner_core", adios2_custom_real, 1, gdim, offs, ldim, .true., ier)
-  call adios2_define_variable(v, io, "epsilondev_xy_inner_core", adios2_custom_real, 1, gdim, offs, ldim, .true., ier)
-  call adios2_define_variable(v, io, "epsilondev_xz_inner_core", adios2_custom_real, 1, gdim, offs, ldim, .true., ier)
-  call adios2_define_variable(v, io, "epsilondev_yz_inner_core", adios2_custom_real, 1, gdim, offs, ldim, .true., ier)
+  call adios2_define_variable(v, io, "epsilondev_xx_inner_core", adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+  call adios2_define_variable(v, io, "epsilondev_yy_inner_core", adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+  call adios2_define_variable(v, io, "epsilondev_xy_inner_core", adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+  call adios2_define_variable(v, io, "epsilondev_xz_inner_core", adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+  call adios2_define_variable(v, io, "epsilondev_yz_inner_core", adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
 
   end subroutine define_epsilon_forward_arrays_adios2
 
@@ -391,8 +391,8 @@ end module forward_adios2_write
   ldim(1) = NGLLX * NGLLY * NGLLZ * NSPEC_OUTER_CORE_ROTATION
   gdim = sizeprocs_adios2 * ldim;
   offs = myrank_adios2 * ldim;
-  call adios2_define_variable(v, io, "A_array_rotation", adios2_custom_real, 1, gdim, offs, ldim, .true., ier)
-  call adios2_define_variable(v, io, "B_array_rotation", adios2_custom_real, 1, gdim, offs, ldim, .true., ier)
+  call adios2_define_variable(v, io, "A_array_rotation", adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+  call adios2_define_variable(v, io, "B_array_rotation", adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
 
   end subroutine define_rotation_forward_arrays_adios2
 
@@ -429,21 +429,21 @@ end module forward_adios2_write
   gdim = sizeprocs_adios2 * ldim;
   offs = myrank_adios2 * ldim;
 
-  call adios2_define_variable(v, io, "R_xx_crust_mantle", adios2_custom_real, 1, gdim, offs, ldim, .true., ier)
-  call adios2_define_variable(v, io, "R_yy_crust_mantle", adios2_custom_real, 1, gdim, offs, ldim, .true., ier)
-  call adios2_define_variable(v, io, "R_xy_crust_mantle", adios2_custom_real, 1, gdim, offs, ldim, .true., ier)
-  call adios2_define_variable(v, io, "R_xz_crust_mantle", adios2_custom_real, 1, gdim, offs, ldim, .true., ier)
-  call adios2_define_variable(v, io, "R_yz_crust_mantle", adios2_custom_real, 1, gdim, offs, ldim, .true., ier)
+  call adios2_define_variable(v, io, "R_xx_crust_mantle", adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+  call adios2_define_variable(v, io, "R_yy_crust_mantle", adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+  call adios2_define_variable(v, io, "R_xy_crust_mantle", adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+  call adios2_define_variable(v, io, "R_xz_crust_mantle", adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+  call adios2_define_variable(v, io, "R_yz_crust_mantle", adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
 
   ! inner core
   ldim(1) = N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_INNER_CORE_ATTENUATION
   gdim = sizeprocs_adios2 * ldim;
   offs = myrank_adios2 * ldim;
-  call adios2_define_variable(v, io, "R_xx_inner_core", adios2_custom_real, 1, gdim, offs, ldim, .true., ier)
-  call adios2_define_variable(v, io, "R_yy_inner_core", adios2_custom_real, 1, gdim, offs, ldim, .true., ier)
-  call adios2_define_variable(v, io, "R_xy_inner_core", adios2_custom_real, 1, gdim, offs, ldim, .true., ier)
-  call adios2_define_variable(v, io, "R_xz_inner_core", adios2_custom_real, 1, gdim, offs, ldim, .true., ier)
-  call adios2_define_variable(v, io, "R_yz_inner_core", adios2_custom_real, 1, gdim, offs, ldim, .true., ier)
+  call adios2_define_variable(v, io, "R_xx_inner_core", adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+  call adios2_define_variable(v, io, "R_yy_inner_core", adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+  call adios2_define_variable(v, io, "R_xy_inner_core", adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+  call adios2_define_variable(v, io, "R_xz_inner_core", adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+  call adios2_define_variable(v, io, "R_yz_inner_core", adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
 
   end subroutine define_attenuation_forward_arrays_adios2
 

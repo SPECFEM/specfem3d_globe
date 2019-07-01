@@ -120,7 +120,7 @@
   goto 3
 
   11 a0 = 0.0d0
-  
+
     if (j1 == 1) then
       b0 = 0.0d0
     else

@@ -1,6 +1,6 @@
 # 1 "../source/src/shared/adios2_helpers_read_template.F90"
-# 1 "<built-in>"
-# 1 "<command-line>"
+# 1 " < built-in > "
+# 1 " < command-line > "
 # 1 "../source/src/shared/adios2_helpers_read_template.F90"
 !=====================================================================
 !
@@ -62,7 +62,7 @@ module adios2_helpers_read_mod
   !! \param count Local sizes for reading
   !! \param data Pre-allocated array to receive the data from file
   !! \param src Sourcefile string (for error print)
-  !! \param func Calling Function string (for error print)
+  !! \param func Calling function string (for error print)
   !! \param step (optional) step to read from a multi-step file
 
 
@@ -127,19 +127,12 @@ end subroutine check_adios2_err
 !end subroutine read_adios2_TYPENAME_NDIMSd
 
 
-
-
-
-
-! #  !define SUBROUTINETYPE(TYPENAME,TYPEDEF)
+! #  !define subroutineTYPE(TYPENAME,TYPEDEF)
 ! # #SUB(TYPENAME,TYPEDEF,1,:)
 ! # #(TYPENAME,TYPEDEF,2,@@:,:@@)
 
 
-
-
-
-!! SUBROUTINETYPE(integer,integer(kind=4))
+!! subroutineTYPE(integer,integer(kind=4))
 
 !===============================================================================
 !> Read (a selection of) variable data from a file
@@ -153,7 +146,7 @@ end subroutine check_adios2_err
 !! \param count Local sizes for reading
 !! \param data Pre-allocated array to receive the data from file
 !! \param src Sourcefile string (for error print)
-!! \param func Calling Function string (for error print)
+!! \param func Calling function string (for error print)
 subroutine read_adios2_real_1d(file, io, varname, ndims, start, count, data, rank, src,func,step)
 use adios2
   implicit none
@@ -691,7 +684,6 @@ integer                 :: ier
   call adios2_get(file, var, data, adios2_mode_sync, ier)
   call check_adios2_err(rank, ier, src, func, "Read variable("//trim(varname)//")")
 end subroutine read_adios2_long_5d
-
 
 
 end module adios2_helpers_read_mod
