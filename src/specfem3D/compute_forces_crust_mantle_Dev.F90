@@ -151,8 +151,8 @@
   integer :: i,j,k
 #endif
 
-  integer,parameter :: NGLL2 = NGLLY * NGLLZ
-  integer,parameter :: NGLL3 = NGLLX * NGLLY * NGLLZ
+  !integer,parameter :: NGLL2 = NGLLY * NGLLZ
+  !integer,parameter :: NGLL3 = NGLLX * NGLLY * NGLLZ
 
 ! ****************************************************
 !   big loop over all spectral elements in the solid

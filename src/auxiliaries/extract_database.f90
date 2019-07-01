@@ -35,10 +35,16 @@
 !
 !  Qinya Liu, Caltech, May 2007
 
+  use constants, only: &
+    CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
+
+  use constants_solver, only: &
+    NGLOB_CRUST_MANTLE,NGLOB_INNER_CORE,NGLOB_OUTER_CORE,NSPEC_CRUST_MANTLE,NSPEC_INNER_CORE,NSPEC_OUTER_CORE
+
   implicit none
 
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
+  !include "constants.h"
+  !include "OUTPUT_FILES/values_from_mesher.h"
 
   character(len=150) :: infile, s_num, outfile, s_ireg
   integer :: num, i, nspec, nglob, ireg

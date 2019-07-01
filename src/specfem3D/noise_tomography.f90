@@ -544,7 +544,7 @@
 ! lists distances to master stations
 
   use specfem_par, only: nrec,stlat,stlon,station_name,network_name, &
-    HUGEVAL,DEGREES_TO_RADIANS,RADIANS_TO_DEGREES,myrank,IMAIN,NOISE_TOMOGRAPHY
+    DEGREES_TO_RADIANS,RADIANS_TO_DEGREES,myrank,IMAIN,NOISE_TOMOGRAPHY
   use specfem_par_noise
 
   implicit none

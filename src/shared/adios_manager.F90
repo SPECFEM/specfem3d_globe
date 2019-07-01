@@ -102,9 +102,8 @@ contains
 
 !> Initialize ADIOS and setup the xml output file
 
-  use constants, only: ADIOS_BUFFER_SIZE_IN_MB
-
 #ifdef USE_ADIOS
+  use constants, only: ADIOS_BUFFER_SIZE_IN_MB
   use adios_write_mod, only: adios_init_noxml
 #ifdef ADIOS_VERSION_OLD
   ! ADIOS versions <= 1.9

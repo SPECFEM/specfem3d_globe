@@ -46,7 +46,7 @@
                                    etaxstore,etaystore,etazstore, &
                                    gammaxstore,gammaystore,gammazstore)
 
-  use constants, only: myrank,NGLLX,NGLLY,NGLLZ,CUSTOM_REAL,SIZE_REAL, &
+  use constants, only: myrank,NGLLX,NGLLY,NGLLZ,CUSTOM_REAL, &
     ZERO,ONE,TINYVAL,VERYSMALLVAL,R_EARTH_KM,RADIANS_TO_DEGREES
 
   implicit none

@@ -29,7 +29,11 @@ program combine_vol_data
 
   ! outputs VTK files (ASCII format)
 
-  use constants
+  use constants, only: &
+    CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLY,NGLLZ,NR,IFLAG_IN_FICTITIOUS_CUBE,IIN
+
+  use constants_solver, only: &
+    NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE,NSPEC_OUTER_CORE,NSPEC_INNER_CORE,NPROCTOT_VAL
 
   ! combines the database files on several slices.
   ! the local database file needs to have been collected onto the frontend (copy_local_database.pl)
@@ -40,7 +44,7 @@ program combine_vol_data
 
   implicit none
 
-  include "OUTPUT_FILES/values_from_mesher.h"
+  !include "OUTPUT_FILES/values_from_mesher.h"
 
   integer :: num_node
   integer, dimension(:), allocatable :: node_list,nspec_list,nglob_list

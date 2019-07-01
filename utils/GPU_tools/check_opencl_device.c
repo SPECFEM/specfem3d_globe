@@ -12,7 +12,7 @@ for compilation, see the command-line examples given here:
 
 example on OsX:
 
-clang -framework OpenCL -o check_opencl_device check_opencl_device.c
+clang -framework OpenCL -o check_opencl_device check_opencl_device.c -DCL_SILENCE_DEPRECATION
 
 or on linux:
 

@@ -31,18 +31,14 @@
 
 ! creates all elements belonging to different regions of the mesh
 
-  use constants, only: CUSTOM_REAL,MAX_STRING_LEN, &
-    SAVE_BOUNDARY_MESH,SUPPRESS_CRUSTAL_MESH,REGIONAL_MOHO_MESH
-
   use meshfem3D_par, only: &
     nspec,iregion_code, &
     idoubling,is_on_a_slice_edge, &
     xstore,ystore,zstore, &
     IMAIN,myrank, &
-    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE,IFLAG_IN_FICTITIOUS_CUBE, &
+    IREGION_CRUST_MANTLE,IREGION_INNER_CORE,IFLAG_IN_FICTITIOUS_CUBE, &
     NPROC_XI,NPROC_ETA,NCHUNKS, &
     INCLUDE_CENTRAL_CUBE,R_CENTRAL_CUBE, &
-    MAX_NUMBER_OF_MESH_LAYERS,MAX_NUM_REGIONS,NB_SQUARE_CORNERS, &
     rmins,rmaxs,iproc_xi,iproc_eta,ichunk,NEX_XI, &
     rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
     ratio_sampling_array,doubling_index,this_region_has_a_doubling, &

@@ -102,7 +102,7 @@
 
   implicit none
 
-  integer i,ir,ia,io,ier
+  integer :: i,ir,ia,io,ier
   character(len=MAX_STRING_LEN), parameter :: GAPP2 = 'DATA/3dvpGAP_P2'
 
 !...........................................input data
@@ -184,8 +184,8 @@
 
   implicit none
 
-  integer id,ia,io,icon
-  real d,dtheta,dphi
+  integer :: id,ia,io,icon
+  real :: d,dtheta,dphi
 
   double precision radius,theta,phi,dvs,dvp,drho
 
@@ -211,7 +211,7 @@
 
   call d2id(d,nnr,dep,id,icon)
   if (icon /= 0) then
-     write(*,*)icon
+     write(*,*) icon
      write(*,*) radius,theta,phi,dvp,dvs,drho
   endif
 
@@ -223,7 +223,7 @@
   endif
   ! longitude
   if (phi < 0.0d0) phi = phi + 2.*PI
-  io=int(phi / dphi) + 1
+  io = int(phi / dphi) + 1
   if (io > no) io=io-no
 
   ! velocity and density perturbations
@@ -249,22 +249,29 @@
 !   icon  o   condition code
 !              0:normal, -99:above the surface, 99:below the cmb
 !.................................................................
-    integer i, mr, id, icon
-    real d,dmax,dmin
-    real di(0:mr)
+    integer, intent(in) :: mr
+    integer, intent(out) :: id, icon
+    real,intent(in) :: d
+    real,intent(in) :: di(0:mr)
+
+    integer :: i
+    real :: dmax,dmin
+
+    id = 0
     icon = 0
-    dmax=di(mr)
-    dmin=di(0)
+    dmax = di(mr)
+    dmin = di(0)
+
     if (d > dmax) then
-       icon=99
+       icon = 99
     else if (d < dmin) then
-       icon=-99
+       icon = -99
     else if (d == dmax) then
-       id=mr+1
+       id = mr+1
     else
        do i = 0, mr
           if (d < di(i)) then
-             id=i
+             id = i
              goto 900
           endif
        enddo

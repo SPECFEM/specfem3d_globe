@@ -33,7 +33,7 @@
 ! here would result in a loss of accuracy when one later convolves
 ! the results with the source time function
 
-  use constants, only: CUSTOM_REAL,SIZE_REAL,IOUT,MAX_STRING_LEN
+  use constants, only: CUSTOM_REAL,IOUT,MAX_STRING_LEN
 
   use specfem_par, only: &
     DT,t0,NSTEP, &

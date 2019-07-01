@@ -67,7 +67,6 @@
 
   use constants, only: &
     GRAV,RHOAV,PI,R_EARTH,R_EARTH_KM,IMAIN,ISTANDARD_OUTPUT, &
-    NGLLX,NGLLY,NGLLZ,N_SLS, &
     IREGION_INNER_CORE,IREGION_OUTER_CORE,IREGION_CRUST_MANTLE, &
     IFLAG_IN_FICTITIOUS_CUBE,IFLAG_INNER_CORE_NORMAL,IFLAG_MIDDLE_CENTRAL_CUBE,IFLAG_TOP_CENTRAL_CUBE,IFLAG_BOTTOM_CENTRAL_CUBE, &
     IFLAG_OUTER_CORE_NORMAL, &
@@ -947,7 +946,8 @@
   subroutine write_profile_add_topography(r_prem,idoubling,elevation)
 
   use constants, only: IFLAG_CRUST,IFLAG_80_MOHO,IFLAG_220_80, &
-    R_EARTH,R_EARTH_KM,R_UNIT_SPHERE
+    R_EARTH,R_UNIT_SPHERE
+
   use meshfem3D_models_par
   use shared_parameters
 

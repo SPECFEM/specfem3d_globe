@@ -735,7 +735,7 @@
   double precision xbar(n), xr(n), fxr, xe(n), fxe, xc(n), fxc, fxcc, xcc(n)
   integer place(n+1)
 
-  double precision max_size_simplex, max_value
+  double precision,external :: max_size_simplex, max_value
 
   rho   = 1.0d0
   chi   = 2.0d0
@@ -807,9 +807,8 @@
 
   do while (func_evals < maxfun .and. itercount < maxiter)
 
-     if (max_size_simplex(v,n) <= tolx .and. &
-          max_value(fv,n+1) <= tolf) then
-        goto 666
+     if (max_size_simplex(v,n) <= tolx .and. max_value(fv,n+1) <= tolf) then
+       goto 666
      endif
      how = none
 
@@ -942,11 +941,11 @@
 !
   double precision function max_value(fv,n)
   implicit none
-  integer n
-  double precision fv(n)
+  integer,intent(in) :: n
+  double precision, intent(in) :: fv(n)
 
-  integer i
-  double precision m, z
+  integer :: i
+  double precision :: m, z
 
   m = 0.0d0
   do i = 2,n
@@ -976,11 +975,11 @@
 !
   double precision function max_size_simplex(v,n)
   implicit none
-  integer n
-  double precision v(n,n+1)
+  integer, intent(in) :: n
+  double precision, intent(in) :: v(n,n+1)
 
-  integer i,j
-  double precision m, z
+  integer :: i,j
+  double precision :: m, z
 
   m = 0.0d0
   do i = 1,n

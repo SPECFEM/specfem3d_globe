@@ -29,11 +29,15 @@ program combine_surf_data
 
   ! combines the database files on several slices.
 
-  use constants
+  use constants, only: &
+    CUSTOM_REAL,MAX_STRING_LEN,IIN,NGLLX,NGLLY,NGLLZ
+
+  use constants_solver, only: &
+    NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE,NSPEC_OUTER_CORE,NSPEC_INNER_CORE
 
   implicit none
 
-  include "OUTPUT_FILES/values_from_mesher.h"
+  !include "OUTPUT_FILES/values_from_mesher.h"
 
   character(len=MAX_STRING_LEN) :: arg(20)
   character(len=MAX_STRING_LEN) :: sline,filename,surfname,reg_name,belm_name, indir, outdir

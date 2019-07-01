@@ -29,7 +29,7 @@
 
 ! convert x y z to r theta phi, single precision call
 
-  use constants, only: CUSTOM_REAL,SIZE_REAL,SMALL_VAL_ANGLE,ZERO
+  use constants, only: CUSTOM_REAL,SMALL_VAL_ANGLE,ZERO
 
   implicit none
 
@@ -369,7 +369,7 @@
 
 ! converts geocentric colatitude (theta) to geographic colatitude (theta_prime) (in radians)
 
-  use constants, only: PI_OVER_TWO,TINYVAL,CUSTOM_REAL,SIZE_REAL,ASSUME_PERFECT_SPHERE
+  use constants, only: CUSTOM_REAL
 
   implicit none
 

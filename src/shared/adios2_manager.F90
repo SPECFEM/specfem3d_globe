@@ -94,8 +94,8 @@ contains
 
 #ifdef HAVE_ADIOS2
   use adios2, only: adios2_init, adios2_debug_mode_on, adios2_type_real4, adios2_type_real8
+  use constants, only: CUSTOM_REAL, SIZE_REAL
 #endif
-  use constants, only: CUSTOM_REAL, SIZE_REAL, SIZE_DOUBLE
 
   implicit none
 

@@ -31,7 +31,7 @@
 ! in all the slices using an MPI reduction
 ! and output timestamp file to check that simulation is running fine
 
-  use constants, only: CUSTOM_REAL,IMAIN,R_EARTH, &
+  use constants, only: CUSTOM_REAL,IMAIN, &
     ADD_TIME_ESTIMATE_ELSEWHERE,HOURS_TIME_DIFFERENCE,MINUTES_TIME_DIFFERENCE, &
     STABILITY_THRESHOLD,mygroup
 
@@ -380,8 +380,7 @@
 
 ! only for backward/reconstructed wavefield
 
-  use constants, only: CUSTOM_REAL,IMAIN,R_EARTH, &
-    ADD_TIME_ESTIMATE_ELSEWHERE,HOURS_TIME_DIFFERENCE,MINUTES_TIME_DIFFERENCE,STABILITY_THRESHOLD
+  use constants, only: CUSTOM_REAL,IMAIN,STABILITY_THRESHOLD
 
   use specfem_par, only: &
     GPU_MODE,Mesh_pointer, &

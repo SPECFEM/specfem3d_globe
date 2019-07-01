@@ -33,13 +33,12 @@
                               theta_source,phi_source)
 
   use constants_solver, only: &
-    ELLIPTICITY_VAL,NCHUNKS_VAL,NEX_XI_VAL,NPROCTOT_VAL, &
-    CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,NDIM, &
+    ELLIPTICITY_VAL,NCHUNKS_VAL,NPROCTOT_VAL,NDIM, &
     MAX_LENGTH_STATION_NAME,MAX_LENGTH_NETWORK_NAME, &
-    USE_DISTANCE_CRITERION,DISPLAY_DETAILS_STATIONS,nrec_SUBSET_MAX, &
-    THRESHOLD_EXCLUDE_STATION,NUM_ITER, &
-    HUGEVAL,IMAIN,IIN,IOUT,IOUT_VTK,MIDX,MIDY,MIDZ, &
-    DEGREES_TO_RADIANS,RADIANS_TO_DEGREES,TWO_PI,R_UNIT_SPHERE,R_EARTH,R_EARTH_KM
+    DISPLAY_DETAILS_STATIONS,nrec_SUBSET_MAX, &
+    THRESHOLD_EXCLUDE_STATION, &
+    HUGEVAL,IMAIN,IOUT,IOUT_VTK, &
+    DEGREES_TO_RADIANS,RADIANS_TO_DEGREES,R_UNIT_SPHERE,R_EARTH
 
   use shared_input_parameters, only: OUTPUT_FILES
 
@@ -50,9 +49,6 @@
     stlat,stlon,stele,stbur,nu,receiver_final_distance_max, &
     rspl,espl,espl2,nspl,ibathy_topo, &
     TOPOGRAPHY,RECEIVERS_CAN_BE_BURIED
-
-  use specfem_par, only: &
-    nspec => NSPEC_CRUST_MANTLE
 
   implicit none
 
@@ -685,7 +681,7 @@
   subroutine read_receiver_locations()
 
   use constants_solver, only: &
-    MAX_LENGTH_STATION_NAME,MAX_LENGTH_NETWORK_NAME,IMAIN,IIN,IOUT
+    MAX_LENGTH_STATION_NAME,MAX_LENGTH_NETWORK_NAME,IMAIN,IIN
 
   use specfem_par, only: &
     myrank,nrec,STATIONS_FILE,RECEIVERS_CAN_BE_BURIED, &

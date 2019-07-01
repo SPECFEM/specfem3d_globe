@@ -590,7 +590,7 @@
   subroutine sort_MPI_interface(myrank,npoin,ibool_n, &
                                     NGLOB,xstore,ystore,zstore)
 
-  use constants, only: CUSTOM_REAL,SIZE_REAL
+  use constants, only: CUSTOM_REAL
 
   implicit none
 

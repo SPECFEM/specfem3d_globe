@@ -1321,7 +1321,7 @@
 
   subroutine model_s362ani_subtopo(xcolat,xlon,topo410,topo650)
 
-  use model_s362ani_par, only: numhpa,itypehpa,lmxhpa,maxcoe,numcoe,coe, &
+  use model_s362ani_par, only: numhpa,itypehpa,lmxhpa,numcoe,coe, &
     xlaspl,xlospl,radspl, &
     numker,ihpakern,ivarkern,varstr, &
     maxl,maxhpa,maxver,maxhpa

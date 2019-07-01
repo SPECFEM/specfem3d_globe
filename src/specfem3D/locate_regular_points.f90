@@ -119,7 +119,7 @@
   subroutine find_regular_grid_slice_number(slice_number, GRID)
 
   use constants, only: CUSTOM_REAL,PI,DEGREES_TO_RADIANS, &
-    NM_KL_REG_LAYER,KL_REG_MIN_LAT,KL_REG_MIN_LON
+    KL_REG_MIN_LAT,KL_REG_MIN_LON
 
   use specfem_par, only: myrank, addressing, &
     NCHUNKS_VAL, NPROC_XI_VAL, NPROC_ETA_VAL
@@ -184,7 +184,7 @@
 
   use constants_solver, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,NUM_ITER, &
     DEGREES_TO_RADIANS,HUGEVAL,TWO_PI,R_UNIT_SPHERE,R_EARTH, &
-    NM_KL_REG_PTS,NM_KL_REG_LAYER,KL_REG_MIN_LAT,KL_REG_MIN_LON
+    NM_KL_REG_PTS,KL_REG_MIN_LAT,KL_REG_MIN_LON
 
   use specfem_par, only: myrank, NEX_XI
 

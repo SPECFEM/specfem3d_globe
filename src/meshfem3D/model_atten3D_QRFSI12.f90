@@ -204,7 +204,7 @@
   real(kind=4) :: xlmvec(NSQ**2)
 
   double precision, parameter :: rmoho_prem = R_EARTH_KM - 24.4d0
-  double precision, parameter :: rcmb = 3480.0d0
+  !double precision, parameter :: rcmb = 3480.0d0
 
   ! in Colleen's original code theta refers to the latitude.  Here we have redefined theta to be colatitude
   ! to agree with the rest of specfem

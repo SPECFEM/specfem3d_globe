@@ -31,7 +31,6 @@
   use meshfem3d_par, only: &
     nspec,ibool,idoubling, &
     xstore,ystore,zstore, &
-    NGLLX,NGLLY,NGLLZ, &
     RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
     RMIDDLE_CRUST,ROCEAN, &
     ADIOS_FOR_AVS_DX

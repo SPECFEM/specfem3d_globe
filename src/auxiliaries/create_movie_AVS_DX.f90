@@ -32,7 +32,9 @@
 
   program xcreate_movie_AVS_DX
 
-  use constants
+  use constants, only: &
+    CUSTOM_REAL,MAX_STRING_LEN,IOUT,NGLLX,NGLLY,NGNOD2D_AVS_DX,PI_OVER_TWO,RADIANS_TO_DEGREES
+
   use shared_parameters, only: &
     NEX_XI,NEX_ETA,NSTEP,NTSTEP_BETWEEN_FRAMES, &
     NCHUNKS,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
@@ -579,9 +581,9 @@
       if (NONLINEAR_SCALING) then
         print *,'nonlinear scaling... '
         where(field_display(:) >= 0.)
-          field_display = field_display ** POWER_SCALING
+          field_display(:) = field_display(:) ** POWER_SCALING
         elsewhere
-          field_display = - abs(field_display) ** POWER_SCALING
+          field_display(:) = - abs(field_display(:)) ** POWER_SCALING
         endwhere
       endif
 
@@ -874,7 +876,7 @@
 
   implicit none
 
-  include "OUTPUT_FILES/values_from_mesher.h"
+  !include "OUTPUT_FILES/values_from_mesher.h"
 
   print *
   print *,'reading parameter file'

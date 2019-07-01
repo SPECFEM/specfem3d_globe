@@ -60,8 +60,7 @@
     NGNOD,CUSTOM_REAL,NGLLX,NGLLY,NGLLZ, &
     GAUSSALPHA,GAUSSBETA, &
     IIN,IOUT,MAX_STRING_LEN, &
-    NX_BATHY,NY_BATHY,NR,DEGREES_TO_RADIANS,RADIANS_TO_DEGREES,R_EARTH,R_EARTH_KM, &
-    HUGEVAL,TINYVAL,SMALLVAL,PI,PI_OVER_TWO
+    RADIANS_TO_DEGREES,R_EARTH_KM,SMALLVAL
 
   use postprocess_par, only: MAX_KERNEL_NAMES, &
     NCHUNKS_VAL,NPROC_XI_VAL,NPROC_ETA_VAL,NPROCTOT_VAL,NEX_XI_VAL, &
@@ -768,10 +767,8 @@
 
 ! creates point locations of horizontal cross-section points
 
-  use constants, only: R_UNIT_SPHERE,R_EARTH_KM,CUSTOM_REAL, &
-    NX_BATHY,NY_BATHY,NR, &
-    DEGREES_TO_RADIANS,RADIANS_TO_DEGREES,R_EARTH, &
-    PI_OVER_TWO
+  use constants, only: CUSTOM_REAL, &
+    NX_BATHY,NY_BATHY,NR,R_EARTH,R_UNIT_SPHERE
 
   use shared_parameters, only: ONE_CRUST
 
@@ -953,7 +950,7 @@
 
 ! creates point locations of horizontal cross-section points
 
-  use constants, only: R_UNIT_SPHERE,R_EARTH_KM,CUSTOM_REAL, &
+  use constants, only: R_UNIT_SPHERE,CUSTOM_REAL, &
     NX_BATHY,NY_BATHY,NR, &
     DEGREES_TO_RADIANS,RADIANS_TO_DEGREES,R_EARTH, &
     PI_OVER_TWO,TWO_PI,SMALLVAL
@@ -1271,7 +1268,7 @@
                                             typical_size,myrank,model_maxdiff)
 
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,MIDX,MIDY,MIDZ,R_EARTH_KM,R_EARTH,HUGEVAL,SMALLVAL
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,R_EARTH_KM,HUGEVAL,SMALLVAL
 
   use kdtree_search, only: kdtree_find_nearest_neighbor,kdtree_nodes_location, &
     kdtree_count_nearest_n_neighbors,kdtree_get_nearest_n_neighbors, &
@@ -1337,9 +1334,6 @@
 
   ! debug warning about large model value differences
   logical,parameter :: DO_WARNING = .false.
-
-  ! searches elements within a given radius
-  logical,parameter :: USE_SEARCH_RADIUS = .true.
 
   ! user output
   if (myrank == 0) print *,'looping over target points ...'
@@ -2154,9 +2148,6 @@
 
   double precision, parameter :: FACTOR_TAN = 1.d0 / ONE_MINUS_F_SQUARED
 
-  ! flag to chose to plot either all targets points (even if location is outside of mesh), or only close ones
-  logical, parameter :: PLOT_ALL_POINTS = .false.
-
   ! note: only master rank is computing this on collected array values
   !
   ! user output
@@ -2322,7 +2313,7 @@
 !
 ! grid will have a single point at north/south pole
 
-  use constants, only: PI, DEGREES_TO_RADIANS
+  use constants, only: DEGREES_TO_RADIANS
 
   implicit none
 
@@ -2486,7 +2477,7 @@
 
 ! returns latitude/longitude in radians for geocentric location
 
-  use constants, only: DEGREES_TO_RADIANS,PI,TWO_PI,PI_OVER_TWO,ONE_MINUS_F_SQUARED
+  use constants, only: DEGREES_TO_RADIANS,PI_OVER_TWO,ONE_MINUS_F_SQUARED
 
   implicit none
 
@@ -2518,7 +2509,7 @@
 ! determines area around lat/lon location for a regular, vertical latitude-longitude grid
 ! with dincr/ddepth increments
 
-  use constants, only: R_EARTH_KM,R_UNIT_SPHERE,PI,DEGREES_TO_RADIANS,SMALLVAL
+  use constants, only: R_EARTH_KM,R_UNIT_SPHERE,DEGREES_TO_RADIANS
 
   implicit none
 

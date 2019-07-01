@@ -46,9 +46,7 @@
 
   use constants, only: &
     IMAIN,IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
-    MAX_NUMBER_OF_MESH_LAYERS,MAX_NUM_REGIONS,NB_SQUARE_CORNERS, &
-    IFLAG_IN_FICTITIOUS_CUBE, &
-    SAVE_BOUNDARY_MESH,SUPPRESS_CRUSTAL_MESH,REGIONAL_MOHO_MESH
+    SAVE_BOUNDARY_MESH
 
   use shared_parameters, only: &
     R_CENTRAL_CUBE,RICB,RCMB
@@ -829,9 +827,8 @@
     nspec,iregion_code, &
     ibool,idoubling,is_on_a_slice_edge, &
     xstore,ystore,zstore, &
-    NGLLX,NGLLY,NGLLZ, &
-    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
-    R670,RMOHO,R400,RMIDDLE_CRUST,MAX_NUMBER_OF_MESH_LAYERS, &
+    IREGION_CRUST_MANTLE, &
+    R670,RMOHO,R400,RMIDDLE_CRUST, &
     ner,r_top,r_bottom, &
     CASE_3D
 
@@ -1046,7 +1043,6 @@
     nspec,iregion_code, &
     ibool,idoubling, &
     xstore,ystore,zstore, &
-    NGLLX,NGLLY,NGLLZ, &
     NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER, &
     NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE, &
     NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX

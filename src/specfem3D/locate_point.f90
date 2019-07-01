@@ -32,8 +32,8 @@
 ! locates target point inside best mesh element
 
   use constants_solver, only: &
-    NGLLX,NGLLY,NGLLZ,MIDX,MIDY,MIDZ,NGNOD,R_EARTH_KM,HUGEVAL, &
-    NUM_ITER,USE_DISTANCE_CRITERION
+    NGLLX,NGLLY,NGLLZ,MIDX,MIDY,MIDZ,R_EARTH_KM,HUGEVAL, &
+    USE_DISTANCE_CRITERION
 
   use specfem_par, only: &
     nspec => NSPEC_CRUST_MANTLE
@@ -517,7 +517,7 @@
   subroutine find_best_neighbor(x_target,y_target,z_target,xi,eta,gamma,x,y,z,ispec_selected,distmin_squared,CAN_BE_BURIED)
 
   use constants_solver, only: &
-    NGLLX,NGLLY,NGLLZ,MIDX,MIDY,MIDZ,NGNOD,R_EARTH_KM,HUGEVAL
+    NGLLX,NGLLY,NGLLZ,MIDX,MIDY,MIDZ,R_EARTH_KM
 
   use specfem_par, only: &
     nspec => NSPEC_CRUST_MANTLE

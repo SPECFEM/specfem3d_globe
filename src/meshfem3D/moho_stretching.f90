@@ -246,8 +246,8 @@
 ! Dec, 30, 2009
 
   use constants, only: &
-    NGNOD,R_EARTH_KM,R_EARTH,R_UNIT_SPHERE, &
-    PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,SMALLVAL,ONE,HONOR_DEEP_MOHO,USE_OLD_VERSION_5_1_5_FORMAT, &
+    NGNOD,R_EARTH, &
+    PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,ONE,HONOR_DEEP_MOHO,USE_OLD_VERSION_5_1_5_FORMAT, &
     SUPPRESS_MOHO_STRETCHING
 
   use meshfem3D_par, only: &
@@ -384,12 +384,12 @@
   ! radii for stretching criteria
   double precision,parameter ::  R15=6356000.d0/R_EARTH
   double precision,parameter ::  R25=6346000.d0/R_EARTH
-  double precision,parameter ::  R30=6341000.d0/R_EARTH
+  !double precision,parameter ::  R30=6341000.d0/R_EARTH
   double precision,parameter ::  R35=6336000.d0/R_EARTH
-  double precision,parameter ::  R40=6331000.d0/R_EARTH
+  !double precision,parameter ::  R40=6331000.d0/R_EARTH
   double precision,parameter ::  R45=6326000.d0/R_EARTH
-  double precision,parameter ::  R50=6321000.d0/R_EARTH
-  double precision,parameter ::  R55=6316000.d0/R_EARTH
+  !double precision,parameter ::  R50=6321000.d0/R_EARTH
+  !double precision,parameter ::  R55=6316000.d0/R_EARTH
   double precision,parameter ::  R60=6311000.d0/R_EARTH
 
   ! checks moho position: supposed to be at 60 km
@@ -533,13 +533,13 @@
   ! radii for stretching criteria
   double precision,parameter ::  R15=6356000.d0/R_EARTH
   double precision,parameter ::  R25=6346000.d0/R_EARTH
-  double precision,parameter ::  R30=6341000.d0/R_EARTH
+  !double precision,parameter ::  R30=6341000.d0/R_EARTH
   double precision,parameter ::  R35=6336000.d0/R_EARTH
-  double precision,parameter ::  R40=6331000.d0/R_EARTH
+  !double precision,parameter ::  R40=6331000.d0/R_EARTH
   double precision,parameter ::  R45=6326000.d0/R_EARTH
-  double precision,parameter ::  R50=6321000.d0/R_EARTH
+  !double precision,parameter ::  R50=6321000.d0/R_EARTH
   double precision,parameter ::  R55=6316000.d0/R_EARTH
-  double precision,parameter ::  R60=6311000.d0/R_EARTH
+  !double precision,parameter ::  R60=6311000.d0/R_EARTH
 
   ! checks moho position: supposed to be at 55 km
   if (RMOHO_STRETCH_ADJUSTMENT /= -15000.d0 ) &

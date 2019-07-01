@@ -272,13 +272,11 @@
 
   use constants, only: &
     NDIM,NGLLX,NGLLY,NGLLZ,MIDX,MIDY,MIDZ,IMAIN, &
-    TWO_PI,R_UNIT_SPHERE,R_EARTH_KM, &
-    USE_DISTANCE_CRITERION
-
-  use specfem_par, only: myrank,NEX_XI_VAL
+    R_EARTH_KM,USE_DISTANCE_CRITERION
 
   use specfem_par, only: &
-    nspec => NSPEC_CRUST_MANTLE,nglob => NGLOB_CRUST_MANTLE
+    myrank, &
+    nspec => NSPEC_CRUST_MANTLE
 
   use specfem_par_crustmantle, only: &
     ibool => ibool_crust_mantle, &

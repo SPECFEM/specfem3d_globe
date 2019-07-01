@@ -648,7 +648,7 @@
 
 ! saves arrays for boundaries such as MOHO, 400 and 670 discontinuities
 
-  use constants, only: myrank,IOUT,SAVE_BOUNDARY_MESH,SUPPRESS_CRUSTAL_MESH
+  use constants, only: myrank,IOUT,SUPPRESS_CRUSTAL_MESH
 
   use meshfem3D_models_par, only: &
     HONOR_1D_SPHERICAL_MOHO

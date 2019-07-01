@@ -488,7 +488,7 @@
 
   double precision:: x,sigma,weight
 
-  double precision,parameter:: one_over2pisqrt = 0.3989422804014327
+  !double precision,parameter:: one_over2pisqrt = 0.3989422804014327
 
   ! normalized version
   !weight = one_over2pisqrt*exp(-0.5*x*x/(sigma*sigma))/sigma

@@ -65,7 +65,7 @@
 program smooth_sem_globe
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,IIN,IOUT, &
-    GAUSSALPHA,GAUSSBETA,PI,TWO_PI,R_EARTH_KM,MAX_STRING_LEN,DEGREES_TO_RADIANS,SIZE_INTEGER,NGLLCUBE
+    GAUSSALPHA,GAUSSBETA,PI,TWO_PI,R_EARTH_KM,MAX_STRING_LEN,DEGREES_TO_RADIANS,NGLLCUBE
 
   use postprocess_par, only: &
     NCHUNKS_VAL,NPROC_XI_VAL,NPROC_ETA_VAL,NPROCTOT_VAL,NEX_XI_VAL,NEX_ETA_VAL, &
@@ -688,8 +688,9 @@ program smooth_sem_globe
       ! user info about progress
       if (myrank == 0) then
         tCPU = wtime() - time_start
-        if (mod(ispec-1,int(NSPEC_AB/NSTEP_PERCENT_INFO)) == 0 .and. ispec < (NSPEC_AB - 0.5*NSPEC_AB/NSTEP_PERCENT_INFO)) then
-          print *,'    ',int((ispec-1) / (NSPEC_AB/NSTEP_PERCENT_INFO)) * (100.0 / NSTEP_PERCENT_INFO), &
+        if (mod(ispec-1,max(int(1.0*NSPEC_AB/NSTEP_PERCENT_INFO),1)) == 0 &
+            .and. ispec < (NSPEC_AB - 0.5*NSPEC_AB/NSTEP_PERCENT_INFO)) then
+          print *,'    ',int((ispec-1) / max(int(1.0*NSPEC_AB/NSTEP_PERCENT_INFO),1)) * (100.0 / NSTEP_PERCENT_INFO), &
                  ' % elements done - Elapsed time in seconds = ',tCPU
         endif
         if (ispec == NSPEC_AB) then

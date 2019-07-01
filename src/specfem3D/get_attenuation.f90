@@ -161,7 +161,7 @@
 
   subroutine get_attenuation_scale_factor(T_c_source, tau_mu, tau_sigma, Q_mu, scale_factor)
 
-  use constants, only: ZERO,ONE,TWO,PI,GRAV,RHOAV,TWO_PI,N_SLS,myrank
+  use constants, only: ZERO,ONE,TWO,PI,TWO_PI,N_SLS,myrank
   use specfem_par, only: scale_t
 
   implicit none

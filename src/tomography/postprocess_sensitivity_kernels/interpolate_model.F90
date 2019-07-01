@@ -59,7 +59,7 @@
 
   use constants, only: SIZE_INTEGER, &
     TWO_PI,R_UNIT_SPHERE, &
-    NGNOD,MIDX,MIDY,MIDZ,R_EARTH_KM, &
+    NGNOD,MIDX,MIDY,MIDZ, &
     IFLAG_CRUST,IFLAG_80_MOHO,IFLAG_220_80,IFLAG_670_220,IFLAG_MANTLE_NORMAL
 
   use postprocess_par, only: &
@@ -1661,7 +1661,7 @@ print *,myrank,'adios file rank',rank
                     i_selected,j_selected,k_selected)
 
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,MIDX,MIDY,MIDZ,HUGEVAL,NUM_ITER,R_EARTH
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,MIDX,MIDY,MIDZ,HUGEVAL
 
   implicit none
 

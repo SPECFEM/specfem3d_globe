@@ -733,7 +733,7 @@
 ! (left in this file to let compiler decide about inlining)
 
   use constants_solver, only: CUSTOM_REAL,NDIM,NGLLX,NGLLY,NGLLZ,USE_DEVILLE_PRODUCTS_VAL, &
-    ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT4_VAL,N_SLS,NSPEC_CRUST_MANTLE_STRAIN_ONLY
+    ATT4_VAL,N_SLS,NSPEC_CRUST_MANTLE_STRAIN_ONLY
 
   ! note: passes sum_terms array as subroutine argument which will help for performance (better than use-statement)
   use specfem_par_crustmantle, only: sum_terms_crust_mantle,factor_common_crust_mantle
@@ -819,7 +819,7 @@
 ! (left in this file to let compiler decide about inlining)
 
   use constants_solver, only: CUSTOM_REAL,NDIM,NGLLX,NGLLY,NGLLZ,USE_DEVILLE_PRODUCTS_VAL, &
-    ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT5_VAL,N_SLS,NSPEC_INNER_CORE_STRAIN_ONLY
+    ATT5_VAL,N_SLS,NSPEC_INNER_CORE_STRAIN_ONLY
 
   ! note: passes sum_terms array as subroutine argument which will help for performance (better than use-statement)
   use specfem_par_innercore, only: sum_terms_inner_core,factor_common_inner_core

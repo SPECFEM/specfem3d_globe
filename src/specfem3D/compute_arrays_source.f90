@@ -146,7 +146,7 @@
                                            NSTEP_BLOCK,iadjsrc,it_sub_adj,NSTEP_SUB_ADJ, &
                                            NTSTEP_BETWEEN_READ_ADJSRC,DT)
 
-  use constants, only: CUSTOM_REAL,SIZE_REAL,NDIM,NGLLX,NGLLY,NGLLZ,IIN_ADJ,R_EARTH,MAX_STRING_LEN
+  use constants, only: CUSTOM_REAL,NDIM,IIN_ADJ,MAX_STRING_LEN
 
   use specfem_par, only: scale_displ_inv, NUMBER_OF_SIMULTANEOUS_RUNS, READ_ADJSRC_ASDF, mygroup
 

@@ -32,11 +32,15 @@ program combine_paraview_movie_data
 !
 ! used to visualize movie files created by MOVIE_VOLUME option in the Par_file
 
-  use constants
+  use constants, only: &
+    CUSTOM_REAL,MAX_STRING_LEN,IIN,OUTPUT_FILES_BASE
+
+  use constants_solver, only: &
+    NGLOB_CRUST_MANTLE
 
   implicit none
 
-  include "OUTPUT_FILES/values_from_mesher.h"
+  !include "OUTPUT_FILES/values_from_mesher.h"
 
   integer :: num_node
   integer, dimension(:),allocatable :: npoint, nelement

@@ -29,7 +29,7 @@
                      DT,NSOURCES,min_tshift_src_original)
 
   use constants, only: IIN,IMAIN,EXTERNAL_SOURCE_TIME_FUNCTION, &
-    RHOAV,R_EARTH,PI,GRAV,TINYVAL,MAX_STRING_LEN,mygroup
+    RHOAV,R_EARTH,PI,GRAV,MAX_STRING_LEN,mygroup
 
   use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS,NOISE_TOMOGRAPHY
 
@@ -322,7 +322,7 @@
     !-------------POINT FORCE-----------------------------------------------
       ! null half-duration indicates a Heaviside
       ! replace with very short error function
-      if (hdur(isource) < 5. * DT ) hdur(isource) = 5. * DT
+      if (hdur(isource) < 5.d0 * DT ) hdur(isource) = 5.d0 * DT
     !endif
 
   enddo
