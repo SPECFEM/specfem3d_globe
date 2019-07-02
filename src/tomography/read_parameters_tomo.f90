@@ -36,9 +36,10 @@
   integer :: ier
   character(len=MAX_STRING_LEN) :: s_step_fac,arg
 
+  ! Usage: add_model step_factor [INPUT-KERNELS-DIR/] [OUTPUT-MODEL-DIR/]
+
   ! subjective step length to multiply to the gradient
   ! e.g. step_fac = 0.03
-
   call get_command_argument(1,s_step_fac)
 
   if (trim(s_step_fac) == '') then
@@ -84,16 +85,18 @@
   endif
 
   ! statistics
-  if (PRINT_STATISTICS_FILES .and. myrank == 0) then
-    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_step_fac',status='unknown',action='write',iostat=ier)
-    if (ier /= 0) then
-      print *,'Error opening file: ',trim(OUTPUT_STATISTICS_DIR)//'statistics_step_fac'
-      print *,'Please make sure that directory '//trim(OUTPUT_STATISTICS_DIR)//' exists...'
-      print *
-      stop 'Error opening statistics file'
+  if (PRINT_STATISTICS_FILES) then
+    if (myrank == 0) then
+      open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_step_fac',status='unknown',action='write',iostat=ier)
+      if (ier /= 0) then
+        print *,'Error opening file: ',trim(OUTPUT_STATISTICS_DIR)//'statistics_step_fac'
+        print *,'Please make sure that directory '//trim(OUTPUT_STATISTICS_DIR)//' exists...'
+        print *
+        stop 'Error opening statistics file'
+      endif
+      write(IOUT,'(1e24.12)') step_fac
+      close(IOUT)
     endif
-    write(IOUT,'(1e24.12)') step_fac
-    close(IOUT)
   endif
 
   end subroutine read_parameters_tomo

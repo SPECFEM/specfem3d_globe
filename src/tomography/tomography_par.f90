@@ -28,14 +28,17 @@
 
 module tomography_par
 
-  use constants, only: CUSTOM_REAL,MAX_STRING_LEN, &
+  use constants, only: &
+    CUSTOM_REAL,MAX_STRING_LEN, &
     NGLLX,NGLLY,NGLLZ,IIN,IOUT, &
     FOUR_THIRDS,R_EARTH_KM,GAUSSALPHA,GAUSSBETA
 
-  implicit none
-
   ! array dimensions for static compilation
-  include "OUTPUT_FILES/values_from_mesher.h"
+  use constants_solver, only: &
+    NCHUNKS_VAL,NPROCTOT_VAL,NPROC_XI_VAL,NPROC_ETA_VAL, &
+    NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE
+
+  implicit none
 
   ! tomography parameter settings
   include "constants_tomography.h"

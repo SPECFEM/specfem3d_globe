@@ -40,8 +40,6 @@ program combine_paraview_movie_data
 
   implicit none
 
-  !include "OUTPUT_FILES/values_from_mesher.h"
-
   integer :: num_node
   integer, dimension(:),allocatable :: npoint, nelement
 

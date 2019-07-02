@@ -37,8 +37,6 @@ program combine_surf_data
 
   implicit none
 
-  !include "OUTPUT_FILES/values_from_mesher.h"
-
   character(len=MAX_STRING_LEN) :: arg(20)
   character(len=MAX_STRING_LEN) :: sline,filename,surfname,reg_name,belm_name, indir, outdir
   character(len=MAX_STRING_LEN) :: mesh_file, pt_mesh_file, em_mesh_file, command_name
