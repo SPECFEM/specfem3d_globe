@@ -118,6 +118,7 @@ xadd_model_OBJECTS = \
 
 xadd_model_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
+	$O/specfem3D_par.solverstatic_module.o \
 	$O/parallel.sharedmpi.o \
 	$O/exit_mpi.shared.o \
 	$O/gll_library.shared.o \
@@ -243,7 +244,7 @@ $(tomography_OBJECTS): S := ${S_TOP}/src/tomography
 ###
 ### Model dependencies
 ###
-$O/tomography_par.tomo_module.o: $O/shared_par.shared_module.o
+$O/tomography_par.tomo_module.o: $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o
 
 
 ####

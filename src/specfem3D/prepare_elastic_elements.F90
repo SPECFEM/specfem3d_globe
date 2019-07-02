@@ -97,10 +97,21 @@
   ! checks if anything to do
   ! GPU kernels still use original arrays
   if (GPU_MODE) then
-    write(IMAIN,*) "  GPU mode with original arrays"
-    call flush_IMAIN()
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) "  GPU mode with original arrays"
+      call flush_IMAIN()
+    endif
     ! done
     return
+  endif
+
+  ! user output
+  if (ATTENUATION_VAL) then
+    if (myrank == 0) then
+      write(IMAIN,*) "  using attenuation: shifting to unrelaxed moduli"
+      call flush_IMAIN()
+    endif
   endif
 
   ! crust/mantle

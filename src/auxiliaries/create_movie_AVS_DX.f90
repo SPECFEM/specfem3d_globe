@@ -876,8 +876,6 @@
 
   implicit none
 
-  !include "OUTPUT_FILES/values_from_mesher.h"
-
   print *
   print *,'reading parameter file'
   print *

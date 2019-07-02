@@ -44,8 +44,6 @@ program combine_vol_data
 
   implicit none
 
-  !include "OUTPUT_FILES/values_from_mesher.h"
-
   integer :: num_node
   integer, dimension(:), allocatable :: node_list,nspec_list,nglob_list
   integer, dimension(:), allocatable :: npoint, nelement
