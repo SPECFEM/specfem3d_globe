@@ -1838,10 +1838,10 @@
               hgamma = hgammar_adjstore(k,irec_local)
               ! checks if array values valid
               ! Lagrange interpolators shoud be about in a range ~ [-0.2,1.2]
-              if (abs(hxi) > 1.5 .or. abs(heta) > 1.5 .or. abs(hgamma) > 1.5) then
+              if (abs(hxi) > 2.0 .or. abs(heta) > 2.0 .or. abs(hgamma) > 2.0) then
                 print *,'hxi/heta/hgamma = ',hxi,heta,hgamma,irec_local,i,j,k
                 print *,'ERROR: trying to use arrays hxir_adjstore/hetar_adjstore/hgammar_adjstore with irec_local = ', &
-                        irec_local,' but these arrays are invalid!'
+                        irec_local,' but these array values are invalid!'
                 call exit_MPI_without_rank('ERROR: trying to use arrays hxir_adjstore/hetar_adjstore/hgammar_adjstore &
                                            &but these arrays are invalid!')
               endif
