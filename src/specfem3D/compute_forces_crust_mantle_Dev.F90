@@ -144,11 +144,9 @@
 
   integer :: ispec,iglob
   integer :: num_elements,ispec_p
-
+  integer :: i,j,k
 #ifdef FORCE_VECTORIZATION
   integer :: ijk_spec,ip,iglob_p,ijk
-#else
-  integer :: i,j,k
 #endif
 
   !integer,parameter :: NGLL2 = NGLLY * NGLLZ
@@ -192,12 +190,10 @@
 !$OMP ibool_inv_tbl, ibool_inv_st, num_globs, phase_iglob, &
 #endif
 !$OMP deltat,COMPUTE_AND_STORE_STRAIN ) &
-!$OMP PRIVATE( ispec,ispec_p,iglob, &
+!$OMP PRIVATE( ispec,ispec_p,i,j,k,iglob, &
 #ifdef FORCE_VECTORIZATION
 !$OMP ijk_spec,ip,iglob_p, &
 !$OMP ijk, &
-#else
-!$OMP i,j,k, &
 #endif
 !$OMP fac1,fac2,fac3, &
 !$OMP tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
@@ -211,15 +207,19 @@
     ! only compute elements which belong to current phase (inner or outer elements)
     ispec = phase_ispec_inner(ispec_p,iphase)
 
-    DO_LOOP_IJK
+    ! note: this loop will not fully vectorize because it contains a dependency (through indirect addressing with array ibool())
+    !       thus, instead of DO_LOOP_IJK we use do k=..;do j=..;do i=.., which helps the compiler to unroll the innermost loop
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+          iglob = ibool(i,j,k,ispec)
 
-      iglob = ibool(INDEX_IJK,ispec)
-
-      dummyx_loc(INDEX_IJK) = displ_crust_mantle(1,iglob)
-      dummyy_loc(INDEX_IJK) = displ_crust_mantle(2,iglob)
-      dummyz_loc(INDEX_IJK) = displ_crust_mantle(3,iglob)
-
-    ENDDO_LOOP_IJK
+          dummyx_loc(i,j,k) = displ_crust_mantle(1,iglob)
+          dummyy_loc(i,j,k) = displ_crust_mantle(2,iglob)
+          dummyz_loc(i,j,k) = displ_crust_mantle(3,iglob)
+        enddo
+      enddo
+    enddo
 
     ! subroutines adapted from Deville, Fischer and Mund, High-order methods
     ! for incompressible fluid flow, Cambridge University Press (2002),

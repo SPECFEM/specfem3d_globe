@@ -111,17 +111,15 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: jacobianl
 
   ! Deville
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: dummyx_loc
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: tempx1,tempx2,tempx3
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: newtempx1,newtempx2,newtempx3
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: chi_elem
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: temp1,temp2,temp3
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: newtemp1,newtemp2,newtemp3
 
   integer :: num_elements,ispec_p
-
+  integer :: i,j,k
 #ifdef FORCE_VECTORIZATION
   integer :: ijk
   integer :: ijk_spec, ip, iglob_p
-#else
-  integer :: i,j,k
 #endif
   real(kind=CUSTOM_REAL), dimension(NSTAGE) :: MYALPHA_LDDRK,MYBETA_LDDRK
 
@@ -168,9 +166,9 @@
 #endif
 !$OMP istage, B_array_rotation_lddrk, div_displfluid ) &
 !$OMP PRIVATE( &
-!$OMP ispec_p, ispec, iglob, dummyx_loc, &
+!$OMP ispec_p, ispec, i, j, k, iglob, chi_elem, &
 !$OMP xixl, xiyl, xizl, etaxl, etayl, etazl, gammaxl, gammayl, gammazl, jacobianl, &
-!$OMP dpotentialdxl, dpotentialdyl, dpotentialdzl, tempx1, tempx2, tempx3, &
+!$OMP dpotentialdxl, dpotentialdyl, dpotentialdzl, temp1, temp2, temp3, &
 !$OMP two_omega_deltat, cos_two_omega_t, sin_two_omega_t, &
 !$OMP source_euler_A, source_euler_B, A_rotation, B_rotation, ux_rotation, uy_rotation, &
 !$OMP gravity_term,vec_x,vec_y,vec_z, &
@@ -178,7 +176,7 @@
 !$OMP ijk, &
 !$OMP ijk_spec, ip, iglob_p, &
 #endif
-!$OMP newtempx1, newtempx3, newtempx2 ) &
+!$OMP newtemp1, newtemp2, newtemp3 ) &
 !$OMP FIRSTPRIVATE( hprime_xx, hprime_xxT, hprimewgll_xxT, hprimewgll_xx, &
 !$OMP wgllwgll_yz_3D, wgllwgll_xz_3D, wgllwgll_xy_3D, wgll_cube, &
 !$OMP MYALPHA_LDDRK,MYBETA_LDDRK )
@@ -190,22 +188,45 @@
 
     ! only compute element which belong to current phase (inner or outer elements)
 
-    DO_LOOP_IJK
-      iglob = ibool(INDEX_IJK,ispec)
-      ! gets "displacement"
-      dummyx_loc(INDEX_IJK) = displfluid(iglob)
-    ENDDO_LOOP_IJK
+    ! note: this loop will not fully vectorize because it contains a dependency (through indirect addressing with array ibool())
+    !       thus, instead of DO_LOOP_IJK we use do k=..;do j=..;do i=.., which helps the compiler to unroll the innermost loop
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+          iglob = ibool(i,j,k,ispec)
+          ! gets "displacement"
+          chi_elem(i,j,k) = displfluid(iglob)
+        enddo
+      enddo
+    enddo
 
     ! subroutines adapted from Deville, Fischer and Mund, High-order methods
     ! for incompressible fluid flow, Cambridge University Press (2002),
     ! pages 386 and 389 and Figure 8.3.1
 
-    ! computes 1. matrix multiplication for tempx1,..
-    call mxm5_single(hprime_xx,m1,dummyx_loc,tempx1,m2)
-    ! computes 2. matrix multiplication for tempx2,..
-    call mxm5_3dmat_single(dummyx_loc,m1,hprime_xxT,m1,tempx2,NGLLX)
-    ! computes 3. matrix multiplication for tempx1,..
-    call mxm5_single(dummyx_loc,m2,hprime_xxT,tempx3,m1)
+    ! computes 1. matrix multiplication for temp1
+    ! computes 2. matrix multiplication for temp2
+    ! computes 3. matrix multiplication for temp3
+    select case (NGLLX)
+    case (5)
+      call mxm5_single(hprime_xx,m1,chi_elem,temp1,m2)
+      call mxm5_3dmat_single(chi_elem,m1,hprime_xxT,m1,temp2,NGLLX)
+      call mxm5_single(chi_elem,m2,hprime_xxT,temp3,m1)
+    case (6)
+      call mxm6_single(hprime_xx,m1,chi_elem,temp1,m2)
+      call mxm6_3dmat_single(chi_elem,m1,hprime_xxT,m1,temp2,NGLLX)
+      call mxm6_single(chi_elem,m2,hprime_xxT,temp3,m1)
+    case (7)
+      call mxm7_single(hprime_xx,m1,chi_elem,temp1,m2)
+      call mxm7_3dmat_single(chi_elem,m1,hprime_xxT,m1,temp2,NGLLX)
+      call mxm7_single(chi_elem,m2,hprime_xxT,temp3,m1)
+    case (8)
+      call mxm8_single(hprime_xx,m1,chi_elem,temp1,m2)
+      call mxm8_3dmat_single(chi_elem,m1,hprime_xxT,m1,temp2,NGLLX)
+      call mxm8_single(chi_elem,m2,hprime_xxT,temp3,m1)
+    end select
+
+
 
     DO_LOOP_IJK
       ! get derivatives of velocity potential with respect to x, y and z
@@ -224,9 +245,9 @@
                                              - xiyl*(etaxl*gammazl-etazl*gammaxl) &
                                              + xizl*(etaxl*gammayl-etayl*gammaxl))
 
-      dpotentialdxl(INDEX_IJK) = xixl*tempx1(INDEX_IJK) + etaxl*tempx2(INDEX_IJK) + gammaxl*tempx3(INDEX_IJK)
-      dpotentialdyl(INDEX_IJK) = xiyl*tempx1(INDEX_IJK) + etayl*tempx2(INDEX_IJK) + gammayl*tempx3(INDEX_IJK)
-      dpotentialdzl(INDEX_IJK) = xizl*tempx1(INDEX_IJK) + etazl*tempx2(INDEX_IJK) + gammazl*tempx3(INDEX_IJK)
+      dpotentialdxl(INDEX_IJK) = xixl*temp1(INDEX_IJK) + etaxl*temp2(INDEX_IJK) + gammaxl*temp3(INDEX_IJK)
+      dpotentialdyl(INDEX_IJK) = xiyl*temp1(INDEX_IJK) + etayl*temp2(INDEX_IJK) + gammayl*temp3(INDEX_IJK)
+      dpotentialdzl(INDEX_IJK) = xizl*temp1(INDEX_IJK) + etazl*temp2(INDEX_IJK) + gammazl*temp3(INDEX_IJK)
     ENDDO_LOOP_IJK
 
     ! compute contribution of rotation and add to gradient of potential
@@ -331,9 +352,9 @@
         vec_z = gravity_pre_store(3,iglob)
 
         ! grad(rho)/rho in Cartesian components
-        dpotentialdxl(INDEX_IJK) = dpotentialdxl(INDEX_IJK) + dummyx_loc(INDEX_IJK) * vec_x
-        dpotentialdyl(INDEX_IJK) = dpotentialdyl(INDEX_IJK) + dummyx_loc(INDEX_IJK) * vec_y
-        dpotentialdzl(INDEX_IJK) = dpotentialdzl(INDEX_IJK) + dummyx_loc(INDEX_IJK) * vec_z
+        dpotentialdxl(INDEX_IJK) = dpotentialdxl(INDEX_IJK) + chi_elem(INDEX_IJK) * vec_x
+        dpotentialdyl(INDEX_IJK) = dpotentialdyl(INDEX_IJK) + chi_elem(INDEX_IJK) * vec_y
+        dpotentialdzl(INDEX_IJK) = dpotentialdzl(INDEX_IJK) + chi_elem(INDEX_IJK) * vec_z
       ENDDO_LOOP_IJK
     endif
 
@@ -349,31 +370,47 @@
       gammayl = deriv(8,INDEX_IJK,ispec)
       gammazl = deriv(9,INDEX_IJK,ispec)
 
-      tempx1(INDEX_IJK) = jacobianl(INDEX_IJK)*(xixl*dpotentialdxl(INDEX_IJK) &
-                               + xiyl*dpotentialdyl(INDEX_IJK) + xizl*dpotentialdzl(INDEX_IJK))
-      tempx2(INDEX_IJK) = jacobianl(INDEX_IJK)*(etaxl*dpotentialdxl(INDEX_IJK) &
-                               + etayl*dpotentialdyl(INDEX_IJK) + etazl*dpotentialdzl(INDEX_IJK))
-      tempx3(INDEX_IJK) = jacobianl(INDEX_IJK)*(gammaxl*dpotentialdxl(INDEX_IJK) &
-                               + gammayl*dpotentialdyl(INDEX_IJK) + gammazl*dpotentialdzl(INDEX_IJK))
-
+      temp1(INDEX_IJK) = jacobianl(INDEX_IJK) * &
+                         (xixl*dpotentialdxl(INDEX_IJK) + xiyl*dpotentialdyl(INDEX_IJK) + xizl*dpotentialdzl(INDEX_IJK))
+      temp2(INDEX_IJK) = jacobianl(INDEX_IJK) * &
+                         (etaxl*dpotentialdxl(INDEX_IJK) + etayl*dpotentialdyl(INDEX_IJK) + etazl*dpotentialdzl(INDEX_IJK))
+      temp3(INDEX_IJK) = jacobianl(INDEX_IJK) * &
+                         (gammaxl*dpotentialdxl(INDEX_IJK) + gammayl*dpotentialdyl(INDEX_IJK) + gammazl*dpotentialdzl(INDEX_IJK))
     ENDDO_LOOP_IJK
+
+    ! second double-loop over GLL to compute all the terms along the x,y,z directions and assemble the contributions
 
     ! subroutines adapted from Deville, Fischer and Mund, High-order methods
     ! for incompressible fluid flow, Cambridge University Press (2002),
     ! pages 386 and 389 and Figure 8.3.1
 
-    ! computes 1. matrix multiplication for newtempx1,..
-    call mxm5_single(hprimewgll_xxT,m1,tempx1,newtempx1,m2)
-    ! computes 2. matrix multiplication for tempx2,..
-    call mxm5_3dmat_single(tempx2,m1,hprimewgll_xx,m1,newtempx2,NGLLX)
-    ! computes 3. matrix multiplication for newtempx3,..
-    call mxm5_single(tempx3,m2,hprimewgll_xx,newtempx3,m1)
+    ! computes 1. matrix multiplication for newtemp1
+    ! computes 2. matrix multiplication for newtemp2
+    ! computes 3. matrix multiplication for newtemp3
+    select case (NGLLX)
+    case (5)
+      call mxm5_single(hprimewgll_xxT,m1,temp1,newtemp1,m2)
+      call mxm5_3dmat_single(temp2,m1,hprimewgll_xx,m1,newtemp2,NGLLX)
+      call mxm5_single(temp3,m2,hprimewgll_xx,newtemp3,m1)
+    case (6)
+      call mxm6_single(hprimewgll_xxT,m1,temp1,newtemp1,m2)
+      call mxm6_3dmat_single(temp2,m1,hprimewgll_xx,m1,newtemp2,NGLLX)
+      call mxm6_single(temp3,m2,hprimewgll_xx,newtemp3,m1)
+    case (7)
+      call mxm7_single(hprimewgll_xxT,m1,temp1,newtemp1,m2)
+      call mxm7_3dmat_single(temp2,m1,hprimewgll_xx,m1,newtemp2,NGLLX)
+      call mxm7_single(temp3,m2,hprimewgll_xx,newtemp3,m1)
+    case (8)
+      call mxm8_single(hprimewgll_xxT,m1,temp1,newtemp1,m2)
+      call mxm8_3dmat_single(temp2,m1,hprimewgll_xx,m1,newtemp2,NGLLX)
+      call mxm8_single(temp3,m2,hprimewgll_xx,newtemp3,m1)
+    end select
 
     ! sum contributions from each element to the global mesh and add gravity term
     DO_LOOP_IJK
-      sum_terms(INDEX_IJK,ispec) = - ( wgllwgll_yz_3D(INDEX_IJK)*newtempx1(INDEX_IJK) &
-                                     + wgllwgll_xz_3D(INDEX_IJK)*newtempx2(INDEX_IJK) &
-                                     + wgllwgll_xy_3D(INDEX_IJK)*newtempx3(INDEX_IJK))
+      sum_terms(INDEX_IJK,ispec) = - ( wgllwgll_yz_3D(INDEX_IJK)*newtemp1(INDEX_IJK) &
+                                     + wgllwgll_xz_3D(INDEX_IJK)*newtemp2(INDEX_IJK) &
+                                     + wgllwgll_xy_3D(INDEX_IJK)*newtemp3(INDEX_IJK))
     ENDDO_LOOP_IJK
 
     ! adds gravity term
@@ -413,7 +450,7 @@
   enddo   ! spectral element loop
 !$OMP ENDDO
 
-    ! updates acceleration
+  ! updates acceleration
 #ifdef FORCE_VECTORIZATION
   ! updates acceleration
 !$OMP DO
@@ -506,6 +543,104 @@
 
   end subroutine mxm5_single
 
+  !-------------
+
+  subroutine mxm6_single(A,n1,B,C,n3)
+
+! two-dimensional arrays (36,6)/(6,36)
+
+  use constants, only: CUSTOM_REAL
+
+  implicit none
+
+  integer,intent(in) :: n1,n3
+  real(kind=CUSTOM_REAL),dimension(n1,6),intent(in) :: A
+  real(kind=CUSTOM_REAL),dimension(6,n3),intent(in) :: B
+  real(kind=CUSTOM_REAL),dimension(n1,n3),intent(out) :: C
+
+  ! local parameters
+  integer :: i,j
+
+  ! matrix-matrix multiplication
+  do j = 1,n3
+    do i = 1,n1
+      C(i,j) =  A(i,1) * B(1,j) &
+              + A(i,2) * B(2,j) &
+              + A(i,3) * B(3,j) &
+              + A(i,4) * B(4,j) &
+              + A(i,5) * B(5,j) &
+              + A(i,6) * B(6,j)
+    enddo
+  enddo
+
+  end subroutine mxm6_single
+
+  !-------------
+
+  subroutine mxm7_single(A,n1,B,C,n3)
+
+! two-dimensional arrays (49,7)/(7,49)
+
+  use constants, only: CUSTOM_REAL
+
+  implicit none
+
+  integer,intent(in) :: n1,n3
+  real(kind=CUSTOM_REAL),dimension(n1,7),intent(in) :: A
+  real(kind=CUSTOM_REAL),dimension(7,n3),intent(in) :: B
+  real(kind=CUSTOM_REAL),dimension(n1,n3),intent(out) :: C
+
+  ! local parameters
+  integer :: i,j
+
+  ! matrix-matrix multiplication
+  do j = 1,n3
+    do i = 1,n1
+      C(i,j) =  A(i,1) * B(1,j) &
+              + A(i,2) * B(2,j) &
+              + A(i,3) * B(3,j) &
+              + A(i,4) * B(4,j) &
+              + A(i,5) * B(5,j) &
+              + A(i,6) * B(6,j) &
+              + A(i,7) * B(7,j)
+    enddo
+  enddo
+
+  end subroutine mxm7_single
+
+  !-------------
+
+  subroutine mxm8_single(A,n1,B,C,n3)
+
+! two-dimensional arrays (64,8)/(8,64)
+
+  use constants, only: CUSTOM_REAL
+
+  implicit none
+
+  integer,intent(in) :: n1,n3
+  real(kind=CUSTOM_REAL),dimension(n1,8),intent(in) :: A
+  real(kind=CUSTOM_REAL),dimension(8,n3),intent(in) :: B
+  real(kind=CUSTOM_REAL),dimension(n1,n3),intent(out) :: C
+
+  ! local parameters
+  integer :: i,j
+
+  ! matrix-matrix multiplication
+  do j = 1,n3
+    do i = 1,n1
+      C(i,j) =  A(i,1) * B(1,j) &
+              + A(i,2) * B(2,j) &
+              + A(i,3) * B(3,j) &
+              + A(i,4) * B(4,j) &
+              + A(i,5) * B(5,j) &
+              + A(i,6) * B(6,j) &
+              + A(i,7) * B(7,j) &
+              + A(i,8) * B(8,j)
+    enddo
+  enddo
+
+  end subroutine mxm8_single
 
 !--------------------------------------------------------------------------------------------
 
@@ -563,6 +698,111 @@
   enddo
 
   end subroutine mxm5_3dmat_single
+
+  !-------------
+
+  subroutine mxm6_3dmat_single(A,n1,B,n2,C,n3)
+
+! three-dimensional arrays (6,6,6) for A and C
+
+  use constants, only: CUSTOM_REAL
+
+  implicit none
+
+  integer,intent(in) :: n1,n2,n3
+  real(kind=CUSTOM_REAL),dimension(n1,6,n3),intent(in) :: A
+  real(kind=CUSTOM_REAL),dimension(6,n2),intent(in) :: B
+  real(kind=CUSTOM_REAL),dimension(n1,n2,n3),intent(out) :: C
+
+  ! local parameters
+  integer :: i,j,k
+
+  ! matrix-matrix multiplication
+  do k = 1,n3
+    do j = 1,n2
+      do i = 1,n1
+        C(i,j,k) =  A(i,1,k) * B(1,j) &
+                  + A(i,2,k) * B(2,j) &
+                  + A(i,3,k) * B(3,j) &
+                  + A(i,4,k) * B(4,j) &
+                  + A(i,5,k) * B(5,j) &
+                  + A(i,6,k) * B(6,j)
+      enddo
+    enddo
+  enddo
+
+  end subroutine mxm6_3dmat_single
+
+  !-------------
+
+  subroutine mxm7_3dmat_single(A,n1,B,n2,C,n3)
+
+! three-dimensional arrays (7,7,7) for A and C
+
+  use constants, only: CUSTOM_REAL
+
+  implicit none
+
+  integer,intent(in) :: n1,n2,n3
+  real(kind=CUSTOM_REAL),dimension(n1,7,n3),intent(in) :: A
+  real(kind=CUSTOM_REAL),dimension(7,n2),intent(in) :: B
+  real(kind=CUSTOM_REAL),dimension(n1,n2,n3),intent(out) :: C
+
+  ! local parameters
+  integer :: i,j,k
+
+  ! matrix-matrix multiplication
+  do k = 1,n3
+    do j = 1,n2
+      do i = 1,n1
+        C(i,j,k) =  A(i,1,k) * B(1,j) &
+                  + A(i,2,k) * B(2,j) &
+                  + A(i,3,k) * B(3,j) &
+                  + A(i,4,k) * B(4,j) &
+                  + A(i,5,k) * B(5,j) &
+                  + A(i,6,k) * B(6,j) &
+                  + A(i,7,k) * B(7,j)
+      enddo
+    enddo
+  enddo
+
+  end subroutine mxm7_3dmat_single
+
+  !-------------
+
+  subroutine mxm8_3dmat_single(A,n1,B,n2,C,n3)
+
+! three-dimensional arrays (8,8,8) for A and C
+
+  use constants, only: CUSTOM_REAL
+
+  implicit none
+
+  integer,intent(in) :: n1,n2,n3
+  real(kind=CUSTOM_REAL),dimension(n1,8,n3),intent(in) :: A
+  real(kind=CUSTOM_REAL),dimension(8,n2),intent(in) :: B
+  real(kind=CUSTOM_REAL),dimension(n1,n2,n3),intent(out) :: C
+
+  ! local parameters
+  integer :: i,j,k
+
+  ! matrix-matrix multiplication
+  do k = 1,n3
+    do j = 1,n2
+      do i = 1,n1
+        C(i,j,k) =  A(i,1,k) * B(1,j) &
+                  + A(i,2,k) * B(2,j) &
+                  + A(i,3,k) * B(3,j) &
+                  + A(i,4,k) * B(4,j) &
+                  + A(i,5,k) * B(5,j) &
+                  + A(i,6,k) * B(6,j) &
+                  + A(i,7,k) * B(7,j) &
+                  + A(i,8,k) * B(8,j)
+      enddo
+    enddo
+  enddo
+
+  end subroutine mxm8_3dmat_single
 
   end subroutine compute_forces_outer_core_Dev
 
