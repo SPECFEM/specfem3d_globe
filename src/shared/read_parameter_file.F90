@@ -273,7 +273,7 @@
   call read_value_logical(ADIOS_FOR_UNDO_ATTENUATION, 'ADIOS_FOR_UNDO_ATTENUATION', ier)
   if (ier /= 0) stop 'an error occurred while reading the parameter file: ADIOS_FOR_UNDO_ATTENUATION'
 
-#if !defined(HAVE_ADIOS2) && !defined(ADIOS_INPUT)
+#if !defined(HAVE_ADIOS) && !defined(HAVE_ADIOS2) && !defined(ADIOS_INPUT)
   if (ADIOS_ENABLED) then
     print *
     print *,'**************'
