@@ -260,7 +260,7 @@
                    !        the routine is called from write_seismograms()
 
   ! Calculate start_time
-  call get_time(startTime, start_time_string, pde_start_time_string, cmt_start_time_string, end_time_string)
+  call get_time_cmt(startTime, start_time_string, pde_start_time_string, cmt_start_time_string, end_time_string)
   start_time = startTime*(int(1000000000,kind=8)) ! convert to nanoseconds
 
   !--------------------------------------------------------
@@ -863,7 +863,7 @@
 !! \param pde_start_time_string A string for defining the waveform name start time using PDE
 !! \param cmt_start_time_string A string for defining the waveform name start time using CMT
 !! \param end_time_string A string for defining the waveform name end time
-  subroutine get_time(starttime, start_time_string, pde_start_time_string, cmt_start_time_string, end_time_string)
+  subroutine get_time_cmt(starttime, start_time_string, pde_start_time_string, cmt_start_time_string, end_time_string)
 
   use specfem_par, only: &
     NSTEP,DT,t_shift_SAC,hdur, &
@@ -908,7 +908,7 @@
 
   !write(*,*) fmtdate(values,'The CPU time used by this program is now %c seconds')
 
-  end subroutine get_time
+  end subroutine get_time_cmt
 
 !
 !-------------------------------------------------------------------------------------------------
