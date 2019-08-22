@@ -107,7 +107,7 @@ program combine_vol_data
 #endif
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
-  integer :: sizeprocs
+  integer :: sizeprocs, myrank
   character(len=MAX_STRING_LEN) :: value_file_name, mesh_file_name
   integer(kind=8) :: value_handle, mesh_handle
 #else
