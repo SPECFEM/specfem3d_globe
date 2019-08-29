@@ -72,10 +72,12 @@
 !       cray Fortran e.g. reserves 0,5,6 (standard error,input,output units) and 100-102
   integer, parameter :: ISTANDARD_OUTPUT = 6
   integer, parameter :: IIN = 40,IOUT = 41
+
 ! uncomment this to write messages to a text file
   integer, parameter :: IMAIN = 42
 ! uncomment this to write messages to the screen (slows down the code)
 ! integer, parameter :: IMAIN = ISTANDARD_OUTPUT
+
 ! I/O unit for noise data files
   integer, parameter :: IIN_NOISE = 43,IOUT_NOISE = 44
 ! I/O unit for adjoint source files
