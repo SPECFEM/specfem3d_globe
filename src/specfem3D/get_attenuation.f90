@@ -238,14 +238,22 @@
   ! local parameters
   double precision, dimension(N_SLS) :: tauinv
 
+  ! inverse of tau_s
   tauinv(:) = - 1.d0 / tau_s(:)
 
-  alphaval(:) = 1.d0 + deltat*tauinv(:) + deltat**2*tauinv(:)**2 / 2.d0 &
-                  + deltat**3*tauinv(:)**3 / 6.d0 + deltat**4*tauinv(:)**4 / 24.d0
-  betaval(:)  = deltat / 2.d0 + deltat**2*tauinv(:) / 3.d0 &
-                  + deltat**3*tauinv(:)**2 / 8.d0 + deltat**4*tauinv(:)**3 / 24.d0
-  gammaval(:) = deltat / 2.d0 + deltat**2*tauinv(:) / 6.d0 &
-                  + deltat**3*tauinv(:)**2 / 24.d0
+  ! runge-kutta coefficients
+  ! see e.g.: Savage et al. (BSSA, 2010): eq. (11)
+  alphaval(:) = 1.d0 + deltat * tauinv(:) &
+                  + deltat**2 * tauinv(:)**2 / 2.d0 &
+                  + deltat**3 * tauinv(:)**3 / 6.d0 &
+                  + deltat**4 * tauinv(:)**4 / 24.d0
+  betaval(:)  = deltat / 2.d0 &
+                  + deltat**2 * tauinv(:) / 3.d0 &
+                  + deltat**3 * tauinv(:)**2 / 8.d0 &
+                  + deltat**4 * tauinv(:)**3 / 24.d0
+  gammaval(:) = deltat / 2.d0 &
+                  + deltat**2 * tauinv(:) / 6.d0 &
+                  + deltat**3 * tauinv(:)**2 / 24.d0
 
   end subroutine get_attenuation_memory_values
 
