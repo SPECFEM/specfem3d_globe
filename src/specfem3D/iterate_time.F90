@@ -322,7 +322,7 @@
       endif
 
       ! attenuation memory variables
-      if (ATTENUATION_VAL) then
+      if (ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
         call transfer_rmemory_cm_from_device(Mesh_pointer,R_xx_crust_mantle,R_yy_crust_mantle,R_xy_crust_mantle, &
                                              R_xz_crust_mantle,R_yz_crust_mantle)
         call transfer_rmemory_ic_from_device(Mesh_pointer,R_xx_inner_core,R_yy_inner_core,R_xy_inner_core, &
