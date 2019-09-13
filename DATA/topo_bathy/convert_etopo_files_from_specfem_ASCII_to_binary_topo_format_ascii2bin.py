@@ -6,6 +6,7 @@
 
 from __future__ import print_function
 import sys
+import os
 from io import BytesIO
 
 try:
@@ -20,10 +21,14 @@ def convert_etopo_ascii2bin(filename_in,filename_out):
     print('Reading input file %s ...' % (filename_in,))
     print('Writing output to file %s ...' % (filename_out,))
 
-    # Input file
+    # Input file - ascii format
     inf = open(filename_in, 'rb')
 
-    # Output file
+    size_b = os.path.getsize(filename_in)
+    size_mb = size_b / 1024.0 / 1024.0
+    print('input file size: %6.1f MB' % (size_mb))
+
+    # Output file - binary format
     outf = open(filename_out, 'wb')
 
     # Add a byte-order mark
@@ -51,7 +56,7 @@ def convert_etopo_ascii2bin(filename_in,filename_out):
 
         i = i + 1
         if i % 10 == 0:
-            print('%d MB ...' % (i,))
+            print('%6d MB ...' % (i))
 
     inf.close()
     outf.close()
