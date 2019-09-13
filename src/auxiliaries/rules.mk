@@ -390,7 +390,11 @@ xextract_database_OBJECTS = \
 	$O/specfem3D_par.solverstatic_module.o \
 	$(EMPTY_MACRO)
 
-${E}/xextract_database: $(xextract_database_OBJECTS)
+xextract_database_SHARED_OBJECTS = \
+	$O/shared_par.shared_module.o \
+	$(EMPTY_MACRO)
+
+${E}/xextract_database: $(xextract_database_OBJECTS) $(xextract_database_SHARED_OBJECTS)
 	${FCCOMPILE_CHECK} -o $@ $+
 
 ### additional dependencies

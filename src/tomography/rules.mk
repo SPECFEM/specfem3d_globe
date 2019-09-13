@@ -184,6 +184,7 @@ xsum_kernels_OBJECTS = \
 
 xsum_kernels_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
+	$O/specfem3D_par.solverstatic_module.o \
 	$O/parallel.sharedmpi.o \
 	$O/param_reader.cc.o \
 	$O/read_parameter_file.shared.o \
@@ -226,6 +227,7 @@ xsum_preconditioned_kernels_OBJECTS = \
 
 xsum_preconditioned_kernels_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
+	$O/specfem3D_par.solverstatic_module.o \
 	$O/parallel.sharedmpi.o \
 	$O/param_reader.cc.o \
 	$O/read_parameter_file.shared.o \
