@@ -42,6 +42,9 @@ sed -i "s:SAVE_FORWARD.*:SAVE_FORWARD                    = .true.:g"  DATA/Par_f
 make clean
 make -j4 all
 
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
+
 # backup of constants setup
 cp setup/* $currentdir/OUTPUT_FILES/
 cp OUTPUT_FILES/values_from_mesher.h $currentdir/OUTPUT_FILES/values_from_mesher.h.compilation
@@ -54,8 +57,10 @@ mkdir -p bin
 rm -rf bin/*
 cp ../../bin/xmeshfem3D ./bin/
 cp ../../bin/xspecfem3D ./bin/xspecfem3D.kernel
-cp ../../bin/xcombine_vol_data ./bin/
-cp ../../bin/xcombine_vol_data_vtk ./bin/
+cp ../../bin/xcombine_vol_data* ./bin/
+
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
 # links data directories needed to run example in this current directory with s362ani
 cd DATA/
@@ -68,6 +73,9 @@ cd ../
 # copy useful script
 cp ../../utils/change_simulation_type.pl ./
 cp DATA/Par_file DATA/Par_file.org
+
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
 echo `date`
 

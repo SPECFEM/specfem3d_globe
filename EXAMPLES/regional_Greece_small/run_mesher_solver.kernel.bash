@@ -45,6 +45,8 @@ echo "starting MPI mesher on $numnodes processors"
 echo
 
 mpirun -np $numnodes $PWD/bin/xmeshfem3D
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
 echo "  mesher done: `date`"
 echo
@@ -69,6 +71,8 @@ echo "starting forward run in current directory $PWD"
 echo
 
 mpirun -np $numnodes $PWD/bin/xspecfem3D.kernel
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
 echo "  forward run done: `date`"
 echo
@@ -76,7 +80,10 @@ echo
 # renames output files of forward run
 cd OUTPUT_FILES/
 mv output_solver.txt output_solver.for.txt
-rename .sem. .sem.for. *.sem.*
+
+#rename .sem. .sem.for. *.sem.*
+rename 's/.sem./.sem.for./' *.sem.*
+
 cd ../
 
 
@@ -94,6 +101,8 @@ echo "starting adjoint run in current directory $PWD"
 echo
 
 mpirun -np $numnodes $PWD/bin/xspecfem3D.kernel
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
 echo "  adjoint run done: `date`"
 echo
