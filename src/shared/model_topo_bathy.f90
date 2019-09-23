@@ -200,6 +200,7 @@
   call close_file_abs(10)
 
   ! debug
+  !print *,'ibathy_topo min/max = ',minval(ibathy_topo),maxval(ibathy_topo)
   !print *,'ibathy_topo ',ibathy_topo(1:10,5)
 
   end subroutine read_topo_bathy_file
@@ -495,13 +496,11 @@
         ival = 255 * (ibathy_topo(ix,iy) - minvalue) / (maxvalue - minvalue)
       endif
 
-      if (ival < 1) ival = 1
+      if (ival < 0) ival = 0
       if (ival > 255) ival = 255
 
       ! write data value (red = green = blue to produce grey levels)
-      write(IOUT,'(i3)') ival
-      write(IOUT,'(i3)') ival
-      write(IOUT,'(i3)') ival
+      write(IOUT,'(i3,1x,i3,1x,i3)') ival,ival,ival
     enddo
   enddo
 

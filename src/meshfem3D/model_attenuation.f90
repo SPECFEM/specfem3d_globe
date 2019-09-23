@@ -366,9 +366,11 @@
   ! local parameters
   double precision :: f1, f2
 
+  ! min and max frequencies of the simulation
   f1 = 1.0d0 / max_period
   f2 = 1.0d0 / min_period
 
+  ! takes the frequency at the logarithmic mean between min and max
   omega_not =  1.0e+03 * 10.0d0**(0.5 * (log10(f1) + log10(f2)))
 
   end subroutine attenuation_source_frequency
@@ -395,13 +397,18 @@
   double precision :: dexpval
   integer :: i
 
+  ! min and max frequencies
   f1 = 1.0d0 / max_period
   f2 = 1.0d0 / min_period
 
+  ! log(f)
   exp1 = log10(f1)
   exp2 = log10(f2)
 
+  ! increment in log-space
   dexpval = (exp2-exp1) / ((n*1.0d0) - 1)
+
+  ! equally distributed in log-space
   do i = 1,n
     tau_s(i) = 1.0 / (PI * 2.0d0 * 10**(exp1 + (i - 1)* 1.0d0 *dexpval))
   enddo
@@ -454,11 +461,11 @@
     call exit_MPI(myrank, 'frequencies flipped or Q less than zero or N_SLS < 0')
   endif
 
-  ! Determine the Source frequency
+  ! Determine the Source frequency (i.e. the logarithmic mean of the min/max values)
   omega_not =  1.0e+03 * 10.0d0**(0.5 * (log10(f1) + log10(f2)))
 
   ! Determine the Frequencies at which to compare solutions
-  !   The frequencies should be equally spaced in log10 frequency
+  ! The frequencies should be equally spaced in log10 frequency
   do i = 1,nf
      f(i) = exp1 + ((i-1)*1.0d0 * (exp2-exp1) / ((nf-1)*1.0d0))
   enddo
@@ -600,12 +607,15 @@
   A(:) = 1.0d0 -  nsls*1.0d0
   B(:) = 0.0d0
   do i = 1,nf
-     w = 2.0d0 * PI * 10**f(i)
-     do j = 1,nsls
-        demon = 1.0d0 + w**2 * tau_s(j)**2
-        A(i) = A(i) + ((1.0d0 + (w**2 * tau_e(j) * tau_s(j)))/ demon)
-        B(i) = B(i) + ((w * (tau_e(j) - tau_s(j))) / demon)
-     enddo
+    ! angular frequency omega
+    w = 2.0d0 * PI * 10**f(i)
+    do j = 1,nsls
+      ! denominator
+      demon = 1.0d0 + w**2 * tau_s(j)**2
+      ! moduli
+      A(i) = A(i) + ((1.0d0 + (w**2 * tau_e(j) * tau_s(j)))/ demon)
+      B(i) = B(i) + ((w * (tau_e(j) - tau_s(j))) / demon)
+    enddo
   enddo
 
   end subroutine attenuation_maxwell
