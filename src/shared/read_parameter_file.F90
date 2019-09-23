@@ -273,32 +273,6 @@
   call read_value_logical(ADIOS_FOR_UNDO_ATTENUATION, 'ADIOS_FOR_UNDO_ATTENUATION', ier)
   if (ier /= 0) stop 'an error occurred while reading the parameter file: ADIOS_FOR_UNDO_ATTENUATION'
 
-#if !defined(HAVE_ADIOS) && !defined(HAVE_ADIOS2) && !defined(ADIOS_INPUT)
-  if (ADIOS_ENABLED) then
-    print *
-    print *,'**************'
-    print *,'**************'
-    print *,'ADIOS is enabled in parameter file but the code was not compiled with ADIOS'
-    print *,'See --with-adios2 and --with-adios configure options.'
-    print *,'**************'
-    print *,'**************'
-    print *
-    stop 'an error occurred while reading the parameter file: ADIOS is enabled but code not built with ADIOS'
-  endif
-#endif
-
-  ! ADIOS is very useful for very large simulations (say using 2000 MPI tasks or more)
-  ! but slows down the code if used for simulations that are small or medium size, because of the overhead any library has.
-  if (ADIOS_ENABLED .and. NCHUNKS * NPROC_XI_read * NPROC_ETA_read < 2000) then
-    print *
-    print *,'**************'
-    print *,'**************'
-    print *,'ADIOS significantly slows down small or medium-size runs, which is the case here, please consider turning it off'
-    print *,'**************'
-    print *,'**************'
-    print *
-  endif
-
   ! closes parameter file
   call close_parameter_file()
 
@@ -323,6 +297,20 @@
     ADIOS_FOR_MODELS = .false.
     ADIOS_FOR_UNDO_ATTENUATION = .false.
   endif
+
+#if !defined(HAVE_ADIOS) && !defined(HAVE_ADIOS2)
+  if (ADIOS_ENABLED) then
+    print *
+    print *,'**************'
+    print *,'**************'
+    print *,'ADIOS is enabled in parameter file but the code was not compiled with ADIOS'
+    print *,'See --with-adios2 and --with-adios configure options.'
+    print *,'**************'
+    print *,'**************'
+    print *
+    stop 'an error occurred while reading the parameter file: ADIOS is enabled but code not built with ADIOS'
+  endif
+#endif
 
   ! ADIOS is very useful for very large simulations (say using 2000 MPI tasks or more)
   ! but slows down the code if used for simulations that are small or medium size, because of the overhead any library has.

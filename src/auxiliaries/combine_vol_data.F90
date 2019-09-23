@@ -27,7 +27,23 @@
 
 program combine_vol_data
 
-  ! outputs VTK files (ASCII format)
+! combines mesh array data (NGLLX,NGLLY,NGLLZ,NSPEC) from different processes/ranks into a single file
+!
+! outputs VTK files (ASCII format)
+!
+! usage examples:
+!
+! VTK combines proc***_vs.bin files with high-resolution output to *.vtk file in OUTPUT_FILES/ directory:
+! > ./bin/xcombine_vol_data_vtk slices_all.txt vs DATABASES_MPI/ DATABASES_MPI/ OUTPUT_FILES/ 1
+!
+! VTK ADIOS combines vsv arrays from ADIOS solver_meshfiles.bp in low-resolution and region 1 only:
+! > mpirun -np 1 ./bin/xcombine_vol_data_vtk_adios slices_all.txt vsv \
+!      DATABASES_MPI/solver_meshfiles.bp DATABASES_MPI/solver_data.bp OUTPUT_FILES/ 0 1
+!
+! VTK ADIOS kernels:
+! > mpirun -np 1 ./bin/xcombine_vol_data_vtk_adios slices_all.txt alpha_kl \
+!      OUTPUT_FILES/kernels.bp DATABASES_MPI/solver_data.bp OUTPUT_FILES/ 0 1
+!
 
   use constants, only: &
     CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLY,NGLLZ,NR,IFLAG_IN_FICTITIOUS_CUBE,IIN
@@ -61,6 +77,7 @@ program combine_vol_data
   real :: dat
   integer :: numpoin, iglob, n1, n2, n3, n4, n5, n6, n7, n8
   integer :: iglob1, iglob2, iglob3, iglob4, iglob5, iglob6, iglob7, iglob8
+  integer :: nglob,nspec
 
   ! instead of taking the first value which appears for a global point, average the values
   ! if there are more than one GLL points for a global point (points on element corners, edges, faces)
@@ -108,6 +125,7 @@ program combine_vol_data
   integer :: sizeprocs, myrank
   character(len=MAX_STRING_LEN) :: value_file_name, mesh_file_name
   integer(kind=8) :: value_handle, mesh_handle
+  integer,parameter :: MAX_NUM_NODES = 2000
 #else
   integer :: iregion,njunk
   character(len=MAX_STRING_LEN) :: prname_topo, prname_file, dimension_file
@@ -250,11 +268,6 @@ program combine_vol_data
     close(IIN)
   endif
 
-  ! output info
-  print *, 'slice list: '
-  print *, node_list(1:num_node)
-  print *, ' '
-
   ! file to collect
   var_name = arg(2)
 
@@ -265,18 +278,41 @@ program combine_vol_data
 
   ! resolution
   read(arg(6),*) ires
+
 #else
   ! ADIOS input arguments
   do i = 1, 7
     call get_command_argument(i,arg(i))
   enddo
-  call read_args_adios(arg, num_node, node_list, num_node, &
+
+  ! temporary
+  allocate(node_list(MAX_NUM_NODES),stat=ier)
+  if (ier /= 0) stop 'Error allocating list arrays'
+
+  call read_args_adios(arg, MAX_NUM_NODES, node_list, num_node, &
                        var_name, value_file_name, mesh_file_name, &
                        outdir, ires, irs, ire, NPROCTOT_VAL)
+
+  allocate(nspec_list(num_node),nglob_list(num_node), stat=ier)
+  if (ier /= 0) stop 'Error allocating list arrays'
+  ! temporary copy
+  nspec_list(1:num_node) = node_list(1:num_node)
+  ! re-allocate with only required size
+  deallocate(node_list)
+  allocate(node_list(num_node),stat=ier)
+  if (ier /= 0) stop 'Error allocating array node_list'
+  node_list(:) = nspec_list(:)
+  nspec_list(:) = 0
+  nglob_list(:) = 0
+
 #endif
+
   filename = var_name
 
   ! output info
+  print *, 'slice list: '
+  print *, node_list(1:num_node)
+  print *, ' '
   print *, 'regions: start =', irs, ' to end =', ire
 
   ! sets up loop increments
@@ -354,6 +390,7 @@ program combine_vol_data
       iproc = node_list(it)
 
       print *, 'Reading slice ', iproc
+
 #ifndef USE_ADIOS_INSTEAD_OF_MESH
       write(prname_topo,'(a,i6.6,a,i1,a)') trim(in_topo_dir)//'/proc',iproc,'_reg',ir,'_'
       write(prname_file,'(a,i6.6,a,i1,a)') trim(in_file_dir)//'/proc',iproc,'_reg',ir,'_'
@@ -361,17 +398,21 @@ program combine_vol_data
       dimension_file = trim(prname_topo) //'solver_data.bin'
       open(unit = IIN,file = trim(dimension_file),status='old',action='read', iostat = ier, form='unformatted')
       if (ier /= 0) then
-       print *,'Error ',ier
-       print *,'file:',trim(dimension_file)
-       stop 'Error opening file'
+        print *,'Error ',ier
+        print *,'file:',trim(dimension_file)
+        stop 'Error opening file'
       endif
-      read(IIN) nspec_list(it)
-      read(IIN) nglob_list(it)
+      read(IIN) nspec
+      read(IIN) nglob
       close(IIN)
 #else
       ! adios reading
-      call read_scalars_adios_mesh(mesh_handle, iproc, ir, nglob_list(it), nspec_list(it))
+      call read_scalars_adios_mesh(mesh_handle, iproc, ir, nglob, nspec)
 #endif
+      nspec_list(it) = nspec
+      nglob_list(it) = nglob
+
+      print *,'nglob / nspec = ',nglob_list(it),' / ',nspec_list(it)
 
       ! check
       if (nspec_list(it) > NSPEC_CRUST_MANTLE ) stop 'Error file nspec too big, please check compilation'

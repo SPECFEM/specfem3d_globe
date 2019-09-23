@@ -109,8 +109,7 @@ contains
   call world_get_comm(comm_adios2)
   call world_rank(myrank_adios2)
   call world_size(sizeprocs_adios2)
-  adios2_CUSTOM_REAL = 0;
-
+  adios2_CUSTOM_REAL = 0
 
 #ifdef HAVE_ADIOS2
 
@@ -189,8 +188,7 @@ contains
 #ifdef HAVE_ADIOS2xxx
 
 
-
-subroutine read_var_adios2(file, io, varname, ndims, start, count, data, src, func )
+  subroutine read_var_adios2(file, io, varname, ndims, start, count, data, src, func )
 
 !> Read (a selection of) variable data from a file
 !! (set up a selection and schedule for reading in data)
@@ -225,7 +223,7 @@ subroutine read_var_adios2(file, io, varname, ndims, start, count, data, src, fu
   call adios2_get(file, var, data, adios2_mode_sync, ier)
   call check_adios2_err(myrank_adios2, ier, src, unc, "adios2_get("//trim(varname)//")")
 
-end subroutine read_var_adios2
+  end subroutine read_var_adios2
 
 #endif /* HAVE_ADIOS2 */
 
