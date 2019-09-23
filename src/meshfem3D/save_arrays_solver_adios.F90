@@ -849,7 +849,7 @@
   use constants
 
   use meshfem3D_par, only: &
-    LOCAL_PATH,nspec,iregion_code
+    LOCAL_PATH,nspec,nglob,iregion_code
 
   use meshfem3D_models_par, only: &
     TRANSVERSE_ISOTROPY,ATTENUATION, &
@@ -860,7 +860,8 @@
     Qmu_store
 
   use adios_write_mod, only: adios_declare_group,adios_select_method
-  use adios_helpers_mod, only: define_adios_global_array1D,write_adios_global_1d_array,check_adios_err
+  use adios_helpers_mod, only: define_adios_global_array1D,define_adios_scalar, &
+    write_adios_global_1d_array,check_adios_err
   use manager_adios
 
   implicit none
@@ -901,6 +902,12 @@
   call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, '', '', adios_err)
   ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
   !call check_adios_err(myrank,adios_err)
+
+  ! save nspec and nglob, to be used in combine_paraview_data
+  call define_adios_scalar (adios_group, group_size_inc, &
+                            region_name_scalar, STRINGIFY_VAR(nspec))
+  call define_adios_scalar (adios_group, group_size_inc, &
+                            region_name_scalar, STRINGIFY_VAR(nglob))
 
   !--- Define ADIOS variables -----------------------------
   !--- vp arrays -------------------------------------------
@@ -951,6 +958,11 @@
   endif
   call set_adios_group_size(group_size_inc)
 
+  ! save nspec and nglob, to be used in combine_paraview_data
+  call adios_write(file_handle_adios, trim(region_name) // "nspec", nspec, adios_err)
+  call check_adios_err(myrank,adios_err)
+  call adios_write(file_handle_adios, trim(region_name) // "nglob", nglob, adios_err)
+  call check_adios_err(myrank,adios_err)
 
   !--- Schedule writes for the previously defined ADIOS variables
   ! TODO Try the new write helpers routines

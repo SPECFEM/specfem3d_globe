@@ -147,6 +147,13 @@ subroutine init_adios(value_file_name, mesh_file_name, value_handle, mesh_handle
   integer :: ier
   integer :: comm
 
+  ! debug
+  logical, parameter :: DEBUG = .false.
+  integer :: vcnt,acnt,tfirst,tlast,i
+  character (len=128), dimension(:), allocatable :: vnamelist
+  character (len=128), dimension(:), allocatable :: anamelist
+  integer :: nglob,nspec
+
   call world_duplicate(comm)
 
   call adios_read_init_method(ADIOS_READ_METHOD_BP, comm, "verbose=1", ier)
@@ -157,6 +164,32 @@ subroutine init_adios(value_file_name, mesh_file_name, value_handle, mesh_handle
 
   call adios_read_open_file(value_handle, trim(value_file_name), 0, comm, ier)
   if (ier /= 0 ) stop 'Error opening value file with adios_read_open_file()'
+
+  ! debug output list variables and attributs in mesh file
+  if (DEBUG) then
+    print *,'mesh file: ',trim(mesh_file_name)
+    call adios_inq_file (mesh_handle,vcnt,acnt,tfirst,tlast,ier)
+    allocate (vnamelist(vcnt))
+    allocate (anamelist(acnt))
+    call adios_inq_varnames  (mesh_handle, vnamelist, ier)
+    call adios_inq_attrnames (mesh_handle, anamelist, ier)
+    print *,'Number of variables  : ',vcnt
+    do i=1,vcnt
+      print *,'  ',trim(vnamelist(i))
+    enddo
+    print *,'Number of attributes : ',acnt
+    do i=1,acnt
+      print *,'  ',trim(anamelist(i))
+    enddo
+    print *,''
+    deallocate(vnamelist,anamelist)
+    ! checks reading nglob/nspec values
+    print *,'mesh file: ',trim(mesh_file_name)
+    print *,'read A',mesh_handle
+    call adios_get_scalar(mesh_handle, "reg1/nglob", nglob, ier)
+    call adios_get_scalar(mesh_handle, "reg1/nspec", nspec, ier)
+    print *,'read AA',nglob,nspec,mesh_handle
+  endif
 
 end subroutine init_adios
 
@@ -175,6 +208,7 @@ subroutine clean_adios(value_handle, mesh_handle)
   call adios_read_close(mesh_handle,ier)
   call adios_read_close(value_handle,ier)
   call adios_read_finalize_method(ADIOS_READ_METHOD_BP, ier)
+
 end subroutine clean_adios
 
 
@@ -191,24 +225,50 @@ subroutine read_scalars_adios_mesh(mesh_handle, iproc, ir, nglob, nspec)
   integer(kind=8) :: sel
   character(len=80) :: reg_name
   integer :: ier
+  ! debug
+  logical, parameter :: DEBUG = .false.
+  character(len=1024) :: err_message
 
-  write(reg_name, '(a,i1)') trim("reg"), ir
+  ! region name
+  write(reg_name,"('reg',i1,'/')") ir
 
+  ! debug output
+  if (DEBUG) then
+    ! note: adios_get_scalar here retrieves the same nglob for everyone (from writer rank 0)
+    call adios_get_scalar(mesh_handle, trim(reg_name)//"nglob", nglob, ier)
+    if (ier /= 0) then
+      call adios_errmsg(err_message)
+      print *,'Error adios: could not read parameter: ',trim(reg_name)//"nglob"
+      print *,trim(err_message)
+      stop 'Error adios helper read scalar'
+    endif
+    call adios_get_scalar(mesh_handle, trim(reg_name)//"nspec", nspec, ier)
+    if (ier /= 0) then
+      call adios_errmsg(err_message)
+      print *,'Error adios: could not read parameter: ',trim(reg_name)//"nspec"
+      print *,trim(err_message)
+      stop 'Error adios helper read scalar'
+    endif
+    print *,'read nglob/nspec: ',iproc,ir,nglob,nspec
+  endif
+
+  ! reads nglob & nspec
+  ! the following adios calls allow to have different nglob/nspec values for different processes (iproc)
   call adios_selection_writeblock(sel, iproc)
-  call adios_schedule_read(mesh_handle, sel, trim(reg_name) // "/nglob", 0, 1, nglob, ier)
+  call adios_schedule_read(mesh_handle, sel, trim(reg_name) // "nglob", 0, 1, nglob, ier)
   if (ier /= 0) then
     print *
-    print * ,'Error adios: could not read parameter: ',trim(reg_name) // "/nglob"
-    print * ,'             please check if your input mesh file is correct...'
+    print *,'Error adios: could not read parameter: ',trim(reg_name) // "nglob"
+    print *,'             please check if your input mesh file is correct...'
     print *
     stop 'Error adios adios_schedule_read() for nglob'
   endif
 
-  call adios_schedule_read(mesh_handle, sel, trim(reg_name) // "/nspec", 0, 1, nspec, ier)
-  if (ier /= 0 ) stop 'Error adios adios_schedule_read() for nspec'
+  call adios_schedule_read(mesh_handle, sel, trim(reg_name) // "nspec", 0, 1, nspec, ier)
+  if (ier /= 0) stop 'Error adios adios_schedule_read() for nspec'
 
   call adios_perform_reads(mesh_handle, ier)
-  if (ier /= 0 ) stop 'Error adios: perform reading nglob and nspec failed'
+  if (ier /= 0) stop 'Error adios: perform reading nglob and nspec failed'
 
 end subroutine read_scalars_adios_mesh
 
@@ -232,7 +292,7 @@ subroutine read_coordinates_adios_mesh(mesh_handle, iproc, ir, nglob, nspec, &
   integer(kind=8) :: sel_coord, sel_ibool, sel_scalar
   integer :: offset_coord, offset_ibool, ier
 
-  write(reg_name, '(a,i1, a)') trim("reg"), ir, "/"
+  write(reg_name,"('reg',i1,'/')") ir
 
   call adios_selection_writeblock(sel_scalar, iproc)
   call adios_schedule_read(mesh_handle, sel_scalar, trim(reg_name) // "ibool/offset", &
@@ -308,8 +368,15 @@ subroutine read_values_adios(value_handle, var_name, iproc, ir, nspec, data)
   ! i.e. if the ending is "_kl" we assume it is a kernel name
   !
   is_kernel = .false.
+  ! example: alpha_kl checks ending '_kl'
   if (len_trim(var_name) > 3) then
     if (var_name(len_trim(var_name)-2:len_trim(var_name)) == '_kl') then
+      is_kernel = .true.
+    endif
+  endif
+  ! example: alpha_kl_crust_mantle checks ending '_kl_crust_mantle'
+  if (len_trim(var_name) > 16) then
+    if (var_name(len_trim(var_name)-15:len_trim(var_name)) == '_kl_crust_mantle') then
       is_kernel = .true.
     endif
   endif
@@ -322,20 +389,25 @@ subroutine read_values_adios(value_handle, var_name, iproc, ir, nspec, data)
     !
     ! note: this must match the naming convention used
     !       in file save_kernels_adios.F90
-    select case (ir)
-    case (IREGION_CRUST_MANTLE)
-      data_name = trim(var_name) // "_crust_mantle"
-    case (IREGION_OUTER_CORE)
-      data_name = trim(var_name) // "_outer_core"
-    case (IREGION_INNER_CORE)
-      data_name = trim(var_name) // "_inner_core"
-    case default
-      stop 'Error wrong region code in read_values_adios() routine'
-    end select
+    if (var_name(len_trim(var_name)-2:len_trim(var_name)) == '_kl') then
+      select case (ir)
+      case (IREGION_CRUST_MANTLE)
+        data_name = trim(var_name) // "_crust_mantle"
+      case (IREGION_OUTER_CORE)
+        data_name = trim(var_name) // "_outer_core"
+      case (IREGION_INNER_CORE)
+        data_name = trim(var_name) // "_inner_core"
+      case default
+        stop 'Error wrong region code in read_values_adios() routine'
+      end select
+    else
+      ! example: alpha_kl_crust_mantle
+      data_name = trim(var_name)
+    endif
   else
     ! for wavespeed name: rho,vp,..
     ! adds region name: var_name = "rho" -> reg1/rho
-    write(reg_name, '(a,i1, a)') trim("reg"), ir, "/"
+    write(reg_name,"('reg',i1,'/')") ir
     data_name = trim(reg_name) // trim(var_name)
   endif
 
