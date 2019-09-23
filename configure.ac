@@ -307,9 +307,7 @@ AS_IF([test x"$want_adios2" != xno], [
 
 AS_IF([test x"$want_asdf" != xno], [
     AS_BOX([ASDF])
-
     AC_ARG_VAR(ASDF_LIBS, [ASDF libraries for linking programs])
-
 ])
 
 #mpbl: adding flags to config.h.in through autoheader in order to save them into the adios file.
