@@ -911,6 +911,9 @@ void FC_FUNC_(transfer_rmemory_cm_from_device,
 
   int size = N_SLS * NGLL3 * mp->NSPEC_CRUST_MANTLE;
 
+  // checks if anything to do
+  if (mp->partial_phys_dispersion_only) return;
+
   // copies array to CPU
   gpuCopy_from_device_realw (&mp->d_R_xx_crust_mantle, R_xx, size);
   gpuCopy_from_device_realw (&mp->d_R_yy_crust_mantle, R_yy, size);
@@ -933,7 +936,7 @@ void FC_FUNC_(transfer_b_rmemory_cm_to_device,
                                                realw *b_R_xy,
                                                realw *b_R_xz,
                                                realw *b_R_yz) {
-  TRACE("transfer_b_Rmemory_cm_to_device");
+  TRACE("transfer_b_rmemory_cm_to_device");
 
   // debug
   DEBUG_BACKWARD_TRANSFER();
@@ -946,6 +949,7 @@ void FC_FUNC_(transfer_b_rmemory_cm_to_device,
   // checks if anything to do
   if (mp->partial_phys_dispersion_only) return;
 
+  // copies array to GPU
   gpuCopy_todevice_realw (&mp->d_b_R_xx_crust_mantle, b_R_xx, size);
   gpuCopy_todevice_realw (&mp->d_b_R_yy_crust_mantle, b_R_yy, size);
   gpuCopy_todevice_realw (&mp->d_b_R_xy_crust_mantle, b_R_xy, size);
@@ -966,12 +970,15 @@ void FC_FUNC_(transfer_rmemory_ic_from_device,
                                                realw* R_xy,
                                                realw* R_xz,
                                                realw* R_yz) {
-  TRACE("transfer_rmemory_cm_from_device");
+  TRACE("transfer_rmemory_ic_from_device");
 
   //get mesh pointer out of Fortran integer container
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   int size = N_SLS * NGLL3 * mp->NSPEC_INNER_CORE;
+
+  // checks if anything to do
+  if (mp->partial_phys_dispersion_only) return;
 
   // copies array to CPU
   gpuCopy_from_device_realw (&mp->d_R_xx_inner_core, R_xx, size);

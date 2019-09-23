@@ -409,13 +409,13 @@ void gpuCopy_from_device_realw_asyncEvent (Mesh *mp, gpu_realw_mem *d_array_addr
       print_CUDA_error_if_any(cudaMemcpyAsync(h_array,d_array_addr_ptr->cuda, sizeof(realw)*size, cudaMemcpyDeviceToHost,mp->copy_stream),33000);
 
       // creates event record
-      print_CUDA_error_if_any(cudaEventRecord(mp->kernel_event, mp->copy_stream),33001);
+      print_CUDA_error_if_any(cudaEventRecord(mp->kernel_event, mp->copy_stream),32001);
     }else{
       // blocking
       // note: cudaMemcpy implicitly synchronizes all other cuda operations
       //       however, stream capturing for graphs don't like this.
       //       it prefers explicit kernel dependencies, thus we use event synchronization above.
-      print_CUDA_error_if_any(cudaMemcpy(h_array,d_array_addr_ptr->cuda, sizeof(realw)*size, cudaMemcpyDeviceToHost),33001);
+      print_CUDA_error_if_any(cudaMemcpy(h_array,d_array_addr_ptr->cuda, sizeof(realw)*size, cudaMemcpyDeviceToHost),34001);
     }
   }
 #endif
