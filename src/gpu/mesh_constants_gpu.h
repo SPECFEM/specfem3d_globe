@@ -237,6 +237,9 @@ typedef float realw;
 // CUDA compiler specifications
 // (optional) use launch_bounds specification to increase compiler optimization
 #ifdef GPU_DEVICE_K20
+// specifics see: https://docs.nvidia.com/cuda/kepler-tuning-guide/index.html
+// maximum shared memory per thread block 48KB
+//
 // note: main kernel is Kernel_2_crust_mantle_impl() which is limited by register usage to only 5 active blocks
 //       while shared memory usage would allow up to 7 blocks (see profiling with nvcc...)
 //       here we specifiy to launch 7 blocks to increase occupancy and let the compiler reduce registers
@@ -256,10 +259,17 @@ typedef float realw;
 #endif
 
 #ifdef GPU_DEVICE_Maxwell
+// specifics see: https://docs.nvidia.com/cuda/maxwell-tuning-guide/index.html
+// register file size 64k 32-bit registers per SM
+// shared memory 64KB for GM107 and 96KB for GM204
 #undef USE_LAUNCH_BOUNDS
 #endif
 
 #ifdef GPU_DEVICE_Pascal
+// specifics see: https://docs.nvidia.com/cuda/pascal-tuning-guide/index.html
+// register file size 64k 32-bit registers per SM
+// shared memory 64KB for GP100 and 96KB for GP104
+//
 // Pascal P100: by default, the crust_mantle_impl_kernel_forward kernel uses 80 registers.
 //              80 * 128 threads -> 10240 registers    for Pascal: total of 65536 -> limits active blocks to 6
 //              using launch bounds to increase the number of blocks will lead to register spilling.
@@ -269,6 +279,11 @@ typedef float realw;
 #endif
 
 #ifdef GPU_DEVICE_Volta
+// specifics see: https://docs.nvidia.com/cuda/volta-tuning-guide/index.html
+// register file size 64k 32-bit registers per SM
+// shared memory size 96KB per SM (maximum shared memory per thread block)
+// maximum registers 255 per thread
+//
 // Volta V100: Using --ptxas-options -v flags, by default
 //             crust_mantle_impl_kernel_forward kernel Used 81 registers, 6200 bytes smem, 948 bytes cmem[0]
 //             81 * 128 threads -> 10368 registers     for Volta: total of 65536 -> limits active blocks to 6
