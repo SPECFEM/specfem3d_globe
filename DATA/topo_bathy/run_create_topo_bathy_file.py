@@ -650,10 +650,10 @@ def convert_data_to_specfem_format(ibathy_topo,filename_out):
         print("")
 
     # in case for transfering to other systems, one could further compress/decompress the binary file:
-    # > bzip2 <topo-file>.bin 
+    # > bzip2 <topo-file>.bin
     # will create a file like <topo-file.bin.bz2 which can be decompressed with
     # > bunzip2 <topo-file.bin.bz2
-    
+
 
 def create_topo_bathy(topo):
     """

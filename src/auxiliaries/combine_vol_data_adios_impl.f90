@@ -181,7 +181,7 @@ subroutine init_adios(value_file_name, mesh_file_name, value_handle, mesh_handle
     do i=1,acnt
       print *,'  ',trim(anamelist(i))
     enddo
-    print *,''
+    print *
     deallocate(vnamelist,anamelist)
     ! checks reading nglob/nspec values
     print *,'mesh file: ',trim(mesh_file_name)
