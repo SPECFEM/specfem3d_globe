@@ -55,7 +55,7 @@
     USE_ONE_LAYER_SB,ispec_is_tiso,ifirst_region,ilast_region,perm_layer,NUMBER_OF_MESH_LAYERS, &
     nspec_ani,nspec_actually,nspec_stacey,iMPIcut_xi,iMPIcut_eta, &
     stretch_tab, &
-    rhostore,dvpstore,rho_vp,rho_vs, &
+    rhostore,rho_vp,rho_vs, &
     kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
     c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
@@ -137,7 +137,7 @@
                     shape3D,dershape2D_bottom, &
                     INCLUDE_CENTRAL_CUBE, &
                     rmin,rmax,r_moho,r_400,r_670, &
-                    rhostore,dvpstore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
+                    rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                     nspec_ani,c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
@@ -166,7 +166,7 @@
                     shape3D,dershape2D_bottom, &
                     INCLUDE_CENTRAL_CUBE, &
                     rmin,rmax,r_moho,r_400,r_670, &
-                    rhostore,dvpstore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
+                    rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                     nspec_ani,c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
@@ -222,7 +222,7 @@
                         iproc_xi,iproc_eta,NPROC_XI,NPROC_ETA,ratio_divide_central_cube, &
                         iMPIcut_xi,iMPIcut_eta,iboun, &
                         idoubling,iregion_code,xstore,ystore,zstore, &
-                        shape3D,rmin,rmax,rhostore,dvpstore, &
+                        shape3D,rmin,rmax,rhostore, &
                         kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                         xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
                         gammaxstore,gammaystore,gammazstore,nspec_actually, &

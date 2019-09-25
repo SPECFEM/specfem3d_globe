@@ -33,11 +33,16 @@
 
   module model_heterogen_mantle_par
 
+  use constants, only: CUSTOM_REAL
+  implicit none
+
   ! heterogen_mantle_model_constants
   integer, parameter :: N_R = 256,N_THETA = 256,N_PHI = 256
 
   ! model array
   double precision,dimension(:),allocatable :: HMM_rho_in
+
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: dvpstore
 
   end module model_heterogen_mantle_par
 
@@ -49,13 +54,16 @@
 
 ! standard routine to setup model
 
-  use constants
+  use constants, only: myrank,IMAIN,CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,IREGION_CRUST_MANTLE
+  use shared_parameters, only: NSPEC_REGIONS
+
   use model_heterogen_mantle_par
 
   implicit none
 
   ! local parameters
   integer :: ier
+  integer :: nspec
 
   ! user info
   if (myrank == 0) then
@@ -64,9 +72,14 @@
   endif
 
   ! allocates model array
-  allocate(HMM_rho_in(N_R*N_THETA*N_PHI), &
-          stat=ier)
+  allocate(HMM_rho_in(N_R*N_THETA*N_PHI),stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating HMM array')
+  HMM_rho_in(:) = 0._CUSTOM_REAL
+
+  nspec = NSPEC_REGIONS(IREGION_CRUST_MANTLE)
+  allocate(dvpstore(NGLLX,NGLLY,NGLLZ,nspec),stat=ier)
+  if (ier /= 0) call exit_MPI(myrank,'Error allocating dvpstore array')
+  dvpstore(:,:,:,:) = 0._CUSTOM_REAL
 
   ! master process reads in model
   if (myrank == 0) then
@@ -83,9 +96,9 @@
   call bcast_all_dp(HMM_rho_in,N_R*N_THETA*N_PHI)
 
   if (myrank == 0) then
-    write(IMAIN,*) 'model_heterogen_mantle is broadcast.'
-    write(IMAIN,*) 'First value in HMM:',HMM_rho_in(1)
-    write(IMAIN,*) 'Last value in HMM:',HMM_rho_in(N_R*N_THETA*N_PHI)
+    write(IMAIN,*) 'model_heterogen_mantle is broadcast:'
+    write(IMAIN,*) '  First value in HMM:',HMM_rho_in(1)
+    write(IMAIN,*) '  Last value in HMM :',HMM_rho_in(N_R*N_THETA*N_PHI)
     call flush_IMAIN()
   endif
 
@@ -97,7 +110,7 @@
 
 
 !
-! NOTE: CURRENTLY THIS ROUTINE ONLY WORKS FOR N_R=N_THETA=N_PHI !!!!!
+! NOTE: CURRENTLY THIS ROUTINE ONLY WORKS FOR N_R = N_THETA = N_PHI !!!!!
 !
 
   subroutine read_heterogen_mantle_model()
@@ -115,7 +128,7 @@
        form='formatted',recl=20,status='old',action='read',iostat=ier)
   if (ier /= 0 ) call exit_MPI(0,'Error opening model file heterogen.dat')
 
-  j = N_R*N_THETA*N_PHI
+  j = N_R * N_THETA * N_PHI
 
   do i = 1,j
     read(IIN,rec=i,fmt='(F20.15)') HMM_rho_in(i)
@@ -129,7 +142,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_heterogen_mantle(radius,theta,phi,dvs,dvp,drho)
+  subroutine model_heterogen_mantle(ispec,i,j,k,radius,theta,phi,dvs,dvp,drho)
 
   use constants
   use model_heterogen_mantle_par
@@ -137,8 +150,9 @@
   implicit none
 
   ! variable declaration
-  double precision :: radius,theta,phi            ! input coordinates
-  double precision :: drho,dvp,dvs                ! output anomaly values
+  integer,intent(in) :: ispec,i,j,k
+  double precision,intent(in) :: radius,theta,phi            ! input coordinates
+  double precision,intent(out) :: drho,dvp,dvs                ! output anomaly values
 
   ! local parameters
   double precision :: x,y,z                       ! input converted to Cartesian
@@ -150,21 +164,25 @@
   double precision :: r_inner,r_outer             ! lower and upper domain bounds for r
   integer :: rec_read                             ! nr of record to be read from heterogen.dat (direct access file)
   double precision :: a,b,c                       ! substitutions in interpolation algorithm (weights)
+  double precision :: r_target
 
-  radius = radius*R_EARTH
+  ! dimensions in m
+  r_target = radius*R_EARTH
+
+  ! bounds
   r_inner = 3.500d6  !lower bound for heterogeneity zone
-! NOTE: r_outer NEEDS TO BE (just) SMALLER THAN R_EARTH!!!!!!!!
+  ! NOTE: r_outer NEEDS TO BE (just) SMALLER THAN R_EARTH!!!!!!!!
   r_outer = R_EARTH-1.0d1  !6.300d6  !upper bound for heterogeneity zone (lower mantle: e.g. 4.500d6)
 
-  delta = 2.*R_EARTH/(real(N_R-1))
-  delta2 = 2.*R_EARTH/(real(N_R-2))
-  !delta2 = 2.*R_EARTH/(real(N_R))
+  delta = 2.0 * R_EARTH/(real(N_R-1))
+  delta2 = 2.0 * R_EARTH/(real(N_R-2))
+  !delta2 = 2.0 * R_EARTH/(real(N_R))
 
-  if ((radius >= r_inner) .and. (radius <= r_outer)) then
+  if ((r_target >= r_inner) .and. (r_target <= r_outer)) then
     ! convert spherical point to Cartesian point, move origin to corner
-    x = R_EARTH + radius*sin(theta)*cos(phi)
-    y = R_EARTH + radius*sin(theta)*sin(phi)
-    z = R_EARTH + radius*cos(theta)
+    x = R_EARTH + r_target*sin(theta)*cos(phi)
+    y = R_EARTH + r_target*sin(theta)*sin(phi)
+    z = R_EARTH + r_target*cos(theta)
 
     ! determine which points to search for in heterogen.dat
     ! find x_low,y_low,z_low etc.
@@ -220,10 +238,124 @@
     dvp = (0.55/0.30)*drho
     dvs = (1.00/0.30)*drho
 
-  else !outside of heterogeneity domain
-    drho = 0.
-    dvp = 0.
-    dvs = 0.
+  else
+    !outside of heterogeneity domain
+    drho = 0.d0
+    dvp = 0.d0
+    dvs = 0.d0
   endif
 
+  ! stores dvp values for visualizing
+  dvpstore(i,j,k,ispec) = real(dvp, kind=CUSTOM_REAL)
+
   end subroutine model_heterogen_mantle
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+
+  subroutine model_heterogen_mantle_output_dvp(prname)
+
+  use constants, only: IOUT,MAX_STRING_LEN,myrank
+  use model_heterogen_mantle_par
+
+  implicit none
+
+  character(len=MAX_STRING_LEN),intent(in) :: prname
+
+  ! local parameters
+  integer :: ier
+
+  ! outputs dvp perturbations
+  ! to be visualized with ./xcombine_vol_data util
+  open(unit=IOUT,file=prname(1:len_trim(prname))//'dvp.bin', &
+        status='unknown',form='unformatted',action='write',iostat=ier)
+  if (ier /= 0 ) call exit_mpi(myrank,'Error opening dvp.bin file')
+  write(IOUT) dvpstore
+  close(IOUT)
+
+  end subroutine model_heterogen_mantle_output_dvp
+
+! obsolete... only for visualizing needs, which can be done with binary output from above
+!
+!  ! adios version
+!  subroutine model_heterogen_mantle_output_dvp_adios(prname)
+!
+!  use constants, only: IOUT,MAX_STRING_LEN,myrank
+!  use model_heterogen_mantle_par
+!
+!  implicit none
+!
+!  character(len=MAX_STRING_LEN),intent(in) :: prname
+!
+!  ! local parameters
+!  integer :: ier
+!
+!  write(group_name,"('SPECFEM3D_GLOBE_DVP_reg',i1)") iregion_code
+!
+!  ! set the adios group size to 0 before incremented by calls to helpers functions.
+!  group_size_inc = 0
+!  call init_adios_group(adios_group,group_name)
+!
+!  !--- Define ADIOS variables -----------------------------
+!  local_dim = size (dvpstore)
+!  call define_adios_global_array1D(adios_group, group_size_inc, &
+!                                   local_dim, region_name, &
+!                                   "dvp", dvpstore)
+!  !--- Open an ADIOS handler to the restart file. ---------
+!  outputname = trim(LOCAL_PATH) // "/dvp.bp"
+!  ! user output
+!  if (myrank == 0) write(IMAIN,*) '    saving arrays in ADIOS file: ',trim(outputname)
+!
+!  if (num_regions_written == 0) then
+!    ! opens file for writing
+!    call open_file_adios_write(outputname,group_name)
+!  else
+!    ! opens file for writing in append mode
+!    call open_file_adios_write_append(outputname,group_name)
+!  endif
+!  call set_adios_group_size(group_size_inc)
+!
+!  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, trim(region_name) // "dvp", dvpstore)
+!
+!  !--- Reset the path to zero and perform the actual write to disk
+!  ! closes file
+!  call close_file_adios()
+!
+!  end subroutine model_heterogen_mantle_output_dvp_adios
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine model_heterogen_mantle_permute_dvp(temp_array_real,perm,nspec)
+
+! permutes dvp array when mesh coloring is desired
+
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
+  use model_heterogen_mantle_par
+
+  implicit none
+
+  integer,intent(in) :: nspec
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(inout) :: temp_array_real
+  integer, dimension(nspec),intent(in) :: perm
+
+  ! local parameters
+  integer :: old_ispec,new_ispec
+
+  ! original taken from routine permute_elements_real() in get_perm_color.f90
+  ! this copy avoids linking the file for xwrite_profile tool.
+
+  ! copy the original array
+  temp_array_real(:,:,:,:) = dvpstore(:,:,:,:)
+
+  do old_ispec = 1,nspec
+    new_ispec = perm(old_ispec)
+    dvpstore(:,:,:,new_ispec) = temp_array_real(:,:,:,old_ispec)
+  enddo
+
+  end subroutine model_heterogen_mantle_permute_dvp

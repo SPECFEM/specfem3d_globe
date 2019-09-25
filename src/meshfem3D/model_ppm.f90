@@ -507,9 +507,9 @@
                           iregion_code,xixstore,xiystore,xizstore, &
                           etaxstore,etaystore,etazstore, &
                           gammaxstore,gammaystore,gammazstore, &
-                          xstore,ystore,zstore,rhostore,dvpstore, &
+                          xstore,ystore,zstore,rhostore, &
                           kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-                          nspec,HETEROGEN_3D_MANTLE, &
+                          nspec, &
                           NEX_XI,NCHUNKS,ABSORBING_CONDITIONS)
 
 ! smooth model parameters
@@ -527,7 +527,6 @@
   integer nspec,nspec_stacey,NCHUNKS
 
   logical ABSORBING_CONDITIONS
-  logical HETEROGEN_3D_MANTLE
 
 ! arrays with Jacobian matrix
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
@@ -539,7 +538,7 @@
   double precision zstore(NGLLX,NGLLY,NGLLZ,nspec)
 
 ! for anisotropy
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: rhostore,dvpstore,kappavstore,kappahstore, &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: rhostore,kappavstore,kappahstore, &
         muvstore,muhstore,eta_anisostore
 
 ! Stacey
@@ -799,9 +798,6 @@
       ks_muv(:,:,:,:) = muvstore(:,:,:,:)
       ks_muh(:,:,:,:) = muhstore(:,:,:,:)
       ks_eta(:,:,:,:) = eta_anisostore(:,:,:,:)
-      if (HETEROGEN_3D_MANTLE) then
-        ks_dvp(:,:,:,:) = dvpstore(:,:,:,:)
-      endif
       if (ABSORBING_CONDITIONS) then
         if (iregion_code == IREGION_CRUST_MANTLE) then
           ks_rhovp(:,:,:,1:nspec_stacey) = rho_vp(:,:,:,1:nspec_stacey)
@@ -1002,9 +998,6 @@
             muvstore(i,j,k,ispec) = tk_muv(i,j,k,ispec) / bk(i,j,k,ispec)
             muhstore(i,j,k,ispec) = tk_muh(i,j,k,ispec) / bk(i,j,k,ispec)
             eta_anisostore(i,j,k,ispec) = tk_eta(i,j,k,ispec) / bk(i,j,k,ispec)
-            if (HETEROGEN_3D_MANTLE) then
-              dvpstore(i,j,k,ispec) = tk_dvp(i,j,k,ispec) / bk(i,j,k,ispec)
-            endif
           endif
 
         enddo

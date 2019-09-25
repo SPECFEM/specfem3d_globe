@@ -34,7 +34,7 @@
                     shape3D,dershape2D_bottom, &
                     INCLUDE_CENTRAL_CUBE, &
                     rmin,rmax,r_moho,r_400,r_670, &
-                    rhostore,dvpstore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
+                    rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                     nspec_ani,c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
@@ -92,7 +92,7 @@
 
 ! for model density and anisotropy
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(inout) :: &
-    rhostore,dvpstore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore
+    rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore
 
 ! the 21 coefficients for an anisotropic medium in reduced notation
   integer,intent(in) :: nspec_ani
@@ -370,7 +370,7 @@
         ! compute several rheological and geometrical properties for this spectral element
         call compute_element_properties(ispec_loc,iregion_code,idoubling,ipass, &
                          xstore,ystore,zstore,nspec, &
-                         xelm,yelm,zelm,shape3D,rmin,rmax,rhostore,dvpstore, &
+                         xelm,yelm,zelm,shape3D,rmin,rmax,rhostore, &
                          kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                          xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
                          gammaxstore,gammaystore,gammazstore,nspec_actually, &

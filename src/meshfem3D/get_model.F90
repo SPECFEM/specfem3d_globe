@@ -27,7 +27,7 @@
 
   subroutine get_model(iregion_code,ispec,nspec,idoubling, &
                       kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-                      rhostore,dvpstore,nspec_ani, &
+                      rhostore,nspec_ani, &
                       c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                       c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                       c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
@@ -50,7 +50,7 @@
   use meshfem3D_models_par, only: &
     ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
     ATTENUATION,ATTENUATION_3D,ATTENUATION_1D_WITH_3D_STORAGE, &
-    CEM_ACCEPT,CRUSTAL,HETEROGEN_3D_MANTLE
+    CEM_ACCEPT,CRUSTAL
 
   use regions_mesh_par2, only: &
     Qmu_store,tau_e_store,tau_s,T_c_source
@@ -60,7 +60,7 @@
   integer :: iregion_code,ispec,nspec,idoubling
 
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec) :: kappavstore,kappahstore, &
-    muvstore,muhstore,eta_anisostore,rhostore,dvpstore
+    muvstore,muhstore,eta_anisostore,rhostore
 
   integer :: nspec_ani
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_ani) :: &
@@ -86,7 +86,7 @@
   double precision :: Qkappa,Qmu
   double precision, dimension(N_SLS) :: tau_e
 
-  double precision :: rho,dvp
+  double precision :: rho
   double precision :: vpv,vph,vsv,vsh,eta_aniso
   double precision :: r,r_prem,moho
   integer :: i,j,k,i_sls
@@ -134,7 +134,6 @@
         Qmu = 0.d0
         Qkappa = 0.d0 ! not used, not stored so far...
         tau_e(:) = 0.d0
-        dvp = 0.d0
 
         ! sets xyz coordinates of GLL point
         xmesh = xstore(i,j,k,ispec)
@@ -162,30 +161,30 @@
                               RMOHO,RMIDDLE_CRUST,ROCEAN)
 
         ! gets the 3-D model parameters for the mantle
-        call meshfem3D_models_get3Dmntl_val(iregion_code,r_prem,rho,dvp, &
+        call meshfem3D_models_get3Dmntl_val(iregion_code,r_prem,rho, &
                               vpv,vph,vsv,vsh,eta_aniso, &
                               RCMB,R670,RMOHO, &
                               xmesh,ymesh,zmesh,r, &
                               c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
-                              c33,c34,c35,c36,c44,c45,c46,c55,c56,c66 &
-#ifdef USE_CEM
-                              ,ispec,i,j,k &
-#endif
-                              )
+                              c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
+                              ispec,i,j,k)
 
         ! gets the 3-D crustal model
         ! M.A. don't overwrite crust if using CEM.
         if (CRUSTAL .and. .not. CEM_ACCEPT) then
           if (.not. elem_in_mantle) &
             call meshfem3D_models_get3Dcrust_val(iregion_code,xmesh,ymesh,zmesh,r, &
-                              vpv,vph,vsv,vsh,rho,eta_aniso,dvp, &
-                              c11,c12,c13,c14,c15,c16,c22,c23,c24,c25, &
-                              c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
-                              elem_in_crust,moho)
+                                                 vpv,vph,vsv,vsh,rho,eta_aniso, &
+                                                 c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+                                                 c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
+                                                 elem_in_crust,moho)
         endif
 
         ! overwrites with tomographic model values (from iteration step) here, given at all GLL points
-        call meshfem3D_models_impose_val(vpv,vph,vsv,vsh,rho,dvp,eta_aniso,iregion_code,ispec,i,j,k)
+        call meshfem3D_models_impose_val(iregion_code,xmesh,ymesh,zmesh,ispec,i,j,k, &
+                                         vpv,vph,vsv,vsh,rho,eta_aniso, &
+                                         c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+                                         c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
 
         ! checks vpv: if close to zero then there is probably an error
         if (vpv < TINYVAL) then
@@ -212,10 +211,6 @@
         muvstore(i,j,k,ispec) = real(rho*vsv*vsv, kind=CUSTOM_REAL)
         muhstore(i,j,k,ispec) = real(rho*vsh*vsh, kind=CUSTOM_REAL)
         eta_anisostore(i,j,k,ispec) = real(eta_aniso, kind=CUSTOM_REAL)
-
-        if (HETEROGEN_3D_MANTLE) then
-          dvpstore(i,j,k,ispec) = real(dvp, kind=CUSTOM_REAL)
-        endif
 
         if (ABSORBING_CONDITIONS) then
           if (iregion_code == IREGION_OUTER_CORE) then

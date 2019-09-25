@@ -43,7 +43,7 @@
   use regions_mesh_par2, only: &
     xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
     gammaxstore,gammaystore,gammazstore, &
-    rhostore,dvpstore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
+    rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
     c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
@@ -169,7 +169,7 @@
       write(IOUT) muvstore
     endif
 
-    !   save anisotropy in the mantle only
+    ! save anisotropy in the mantle only
     if (TRANSVERSE_ISOTROPY) then
       if (iregion_code == IREGION_CRUST_MANTLE .and. .not. ANISOTROPIC_3D_MANTLE) then
         write(IOUT) kappahstore
@@ -178,7 +178,7 @@
       endif
     endif
 
-    !   save anisotropy in the inner core only
+    ! save anisotropy in the inner core only
     if (ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) then
       write(IOUT) c11store
       write(IOUT) c33store
@@ -299,19 +299,16 @@
     close(IOUT)
   endif
 
-  if (HETEROGEN_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
-    open(unit=IOUT,file=prname(1:len_trim(prname))//'dvp.bin', &
-          status='unknown',form='unformatted',action='write',iostat=ier)
-    if (ier /= 0 ) call exit_mpi(myrank,'Error opening dvp.bin file')
-
-    write(IOUT) dvpstore
-    close(IOUT)
-  endif
 
   ! uncomment for vp & vs model storage
   if (SAVE_MESH_FILES) then
     ! outputs model files in binary format
     call save_arrays_solver_meshfiles()
+
+    ! dvpstore file output
+    if (HETEROGEN_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
+      call model_heterogen_mantle_output_dvp(prname)
+    endif
   endif
 
   ! debug outputs flags as vtk file

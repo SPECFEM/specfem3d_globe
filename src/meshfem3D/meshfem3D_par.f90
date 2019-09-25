@@ -60,7 +60,7 @@
   use shared_compute_parameters, only: &
     REFERENCE_1D_MODEL,REFERENCE_CRUSTAL_MODEL,THREE_D_MODEL,MODEL_GLL, &
     HONOR_1D_SPHERICAL_MOHO,CRUSTAL,ONE_CRUST,CASE_3D,TRANSVERSE_ISOTROPY, &
-    ISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
+    MODEL_3D_MANTLE_PERTUBATIONS,HETEROGEN_3D_MANTLE,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
     ATTENUATION_3D, &
     CEM_REQUEST, CEM_ACCEPT
 
@@ -291,7 +291,7 @@
 
   ! for model density and anisotropy
   integer :: nspec_ani
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rhostore,dvpstore, &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rhostore, &
     kappavstore,kappahstore,muvstore,muhstore,eta_anisostore
 
   ! the 21 coefficients for an anisotropic medium in reduced notation

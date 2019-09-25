@@ -610,7 +610,7 @@
   use regions_mesh_par2, only: &
     xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
     gammaxstore,gammaystore,gammazstore, &
-    rhostore,dvpstore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
+    rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
     c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
@@ -908,8 +908,9 @@
       endif
     endif
 
+    ! just to be nice and align dvpstore to the permuted mesh
     if (HETEROGEN_3D_MANTLE) then
-      call permute_elements_real(dvpstore,temp_array_real,perm,nspec)
+      call model_heterogen_mantle_permute_dvp(temp_array_real,perm,nspec)
     endif
 
     if (ABSORBING_CONDITIONS .and. NCHUNKS /= 6) then

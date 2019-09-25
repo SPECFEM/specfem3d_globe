@@ -311,9 +311,9 @@
     !        iregion_code,xixstore,xiystore,xizstore, &
     !        etaxstore,etaystore,etazstore, &
     !        gammaxstore,gammaystore,gammazstore, &
-    !        xstore,ystore,zstore,rhostore,dvpstore, &
+    !        xstore,ystore,zstore,rhostore, &
     !        kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-    !        nspec,HETEROGEN_3D_MANTLE, &
+    !        nspec, &
     !        NEX_XI,NCHUNKS,ABSORBING_CONDITIONS )
 
     ! creates mass matrix
@@ -490,7 +490,7 @@
   deallocate(gammaxstore,gammaystore,gammazstore)
 
   ! deallocate arrays
-  deallocate(rhostore,dvpstore,kappavstore,kappahstore)
+  deallocate(rhostore,kappavstore,kappahstore)
   deallocate(muvstore,muhstore)
   deallocate(eta_anisostore)
   deallocate(ispec_is_tiso)
@@ -570,11 +570,9 @@
   Qmu_store(:,:,:,:) = 0.0; tau_e_store(:,:,:,:,:) = 0.0
 
   ! array with model density
-  allocate(rhostore(NGLLX,NGLLY,NGLLZ,nspec), &
-           dvpstore(NGLLX,NGLLY,NGLLZ,nspec),stat=ier)
+  allocate(rhostore(NGLLX,NGLLY,NGLLZ,nspec),stat=ier)
   if (ier /= 0) stop 'Error in allocate 6'
-
-  rhostore(:,:,:,:) = 0.0; dvpstore(:,:,:,:) = 0.0
+  rhostore(:,:,:,:) = 0.0
 
   ! for anisotropy
   allocate(kappavstore(NGLLX,NGLLY,NGLLZ,nspec), &
