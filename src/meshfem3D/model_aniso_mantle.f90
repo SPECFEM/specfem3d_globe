@@ -515,7 +515,7 @@
 
 ! A
         AMM_V_beta(2,idep,ilat,ilon) = bet2(2,idep,ilat,ilon)
-        A=bet2(2,idep,ilat,ilon)
+        A = bet2(2,idep,ilat,ilon)
 
 !  C
         AMM_V_beta(3,idep,ilat,ilon) = bet2(5,idep,ilat,ilon)*A
@@ -558,62 +558,62 @@
 ! array par(i,nlayer)
 ! output: array pari(ipar, nlayer): rho, A, L, xi-1, phi-1, eta-1
 
-  integer i,j,k,ip,idum1,idum2,idum3,nlayer,nout,neff, &
+  integer :: i,j,k,ip,idum1,idum2,idum3,nlayer,nout,neff, &
           nband,nri,minlay,moho,kiti
-  double precision pari(14,47),qkappa(47),qshear(47),par(6,47)
-  double precision epa(14,47),ra(47),dcori(47),ri(47)
-  double precision corpar(21,47)
-  double precision aa,an,al,af,ac,vpv,vph,vsv,vsh,rho,red,a2l
-  character(len=80) nullval
+  double precision :: pari(14,47),qkappa(47),qshear(47),par(6,47)
+  double precision :: epa(14,47),ra(47),dcori(47),ri(47)
+  double precision :: corpar(21,47)
+  double precision :: aa,an,al,af,ac,vpv,vph,vsv,vsh,rho,red,a2l
+  character(len=80) :: nullval
   character(len=256), parameter :: Adrem119 = 'DATA/Montagner_model/Adrem119'
 
-     nri = 47
+  nri = 47
 
-     open(unit=IIN,file=Adrem119,status='old',action='read')
-     read(IIN,*,end = 77) nlayer,minlay,moho,nout,neff,nband,kiti,nullval
+  open(unit=IIN,file=Adrem119,status='old',action='read')
+  read(IIN,*,end = 77) nlayer,minlay,moho,nout,neff,nband,kiti,nullval
 
-     if (kiti == 0) read(IIN,"(20a4)",end = 77) idum1
-     read(IIN,"(20a4)",end = 77) idum2
-     read(IIN,"(20a4)",end = 77) idum3
+  if (kiti == 0) read(IIN,"(20a4)",end = 77) idum1
+  read(IIN,"(20a4)",end = 77) idum2
+  read(IIN,"(20a4)",end = 77) idum3
 
-     do i = 1,nlayer
-       read(IIN,"(4x,f11.1,8d12.5)",end = 77) ra(i),(par(k,i),k = 1,6),qshear(i),qkappa(i)
-     enddo
+  do i = 1,nlayer
+    read(IIN,"(4x,f11.1,8d12.5)",end = 77) ra(i),(par(k,i),k = 1,6),qshear(i),qkappa(i)
+  enddo
 
-     do i = 1,nlayer
-       ri(i) = 0.001*ra(i)
-     enddo
+  do i = 1,nlayer
+    ri(i) = 0.001*ra(i)
+  enddo
 
-     do i = 1,nlayer
-       rho = par(1,i)
-       pari(1,i) = rho
-!    A : pari(2,i)
-       pari(2,i) = rho*(par(2,i)**2)
-       aa = pari(2,i)
-!    L : pari(3,i)
-       pari(3,i) = rho*(par(3,i)**2)
-       al = pari(3,i)
-!    Xi : pari(4,i)= (N-L)/L
-       an = al*par(4,i)
-       pari(4,i) = 0.
-       pari(4,i) = par(4,i) - 1.
-!    Phi : pari(5,i)=(a-c)/a
-       pari(5,i) = - par(5,i) + 1.
-       ac = par(5,i)*aa
-!    f : pari(4,i)
-       af = par(6,i)*(aa - 2.*al)
-       pari(6,i) = par(6,i)
-       do ip = 7,14
-         pari(ip,i) = 0.
-       enddo
-       vsv = 0.
-       vsh = 0.
-       if (al < 0.0001 .or. an < 0.0001) goto 12
-       vsv = dsqrt(al/rho)
-       vsh = dsqrt(an/rho)
- 12    vpv = dsqrt(ac/rho)
-       vph = dsqrt(aa/rho)
-     enddo
+  do i = 1,nlayer
+    rho = par(1,i)
+    pari(1,i) = rho
+!   A : pari(2,i)
+    pari(2,i) = rho*(par(2,i)**2)
+    aa = pari(2,i)
+!   L : pari(3,i)
+    pari(3,i) = rho*(par(3,i)**2)
+    al = pari(3,i)
+!   Xi : pari(4,i)= (N-L)/L
+    an = al*par(4,i)
+    pari(4,i) = 0.
+    pari(4,i) = par(4,i) - 1.
+!   Phi : pari(5,i)=(a-c)/a
+    pari(5,i) = - par(5,i) + 1.
+    ac = par(5,i)*aa
+!   f : pari(4,i)
+    af = par(6,i)*(aa - 2.*al)
+    pari(6,i) = par(6,i)
+    do ip = 7,14
+      pari(ip,i) = 0.
+    enddo
+    vsv = 0.
+    vsh = 0.
+    if (al < 0.0001 .or. an < 0.0001) goto 12
+    vsv = dsqrt(al/rho)
+    vsh = dsqrt(an/rho)
+12    vpv = dsqrt(ac/rho)
+    vph = dsqrt(aa/rho)
+  enddo
 
   red = 1.
   do i = 1,nlayer
@@ -918,5 +918,5 @@
         (cosphifour + sinphifour)*(d66*costhetasq + &
         d44*sinthetasq + d46*sintwotheta)
 
-end subroutine rotate_aniso_tensor
+  end subroutine rotate_aniso_tensor
 

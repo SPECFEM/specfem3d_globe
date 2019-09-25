@@ -191,6 +191,7 @@
   ! allocates dummy array
   allocate(dummy_idoubling(NSPEC_CRUST_MANTLE),stat=ier)
   if (ier /= 0 ) call exit_mpi(myrank,'Error allocating dummy idoubling in crust_mantle')
+  dummy_idoubling(:) = 0
 
   ! allocates mass matrices in this slice (will be fully assembled in the solver)
   !
@@ -203,26 +204,35 @@
 
   allocate(rmassz_crust_mantle(NGLOB_CRUST_MANTLE),stat=ier)
   if (ier /= 0) stop 'Error allocating rmassz in crust_mantle'
+  rmassz_crust_mantle(:) = 0.0_CUSTOM_REAL
 
   ! allocates mass matrices
   allocate(rmassx_crust_mantle(NGLOB_XY_CM), &
            rmassy_crust_mantle(NGLOB_XY_CM),stat=ier)
   if (ier /= 0) stop 'Error allocating rmassx, rmassy in crust_mantle'
+  rmassx_crust_mantle(:) = 0.0_CUSTOM_REAL
+  rmassy_crust_mantle(:) = 0.0_CUSTOM_REAL
 
   ! b_rmassx and b_rmassy will be different to rmassx and rmassy
   ! needs new arrays
   allocate(b_rmassx_crust_mantle(NGLOB_XY_CM), &
            b_rmassy_crust_mantle(NGLOB_XY_CM),stat=ier)
   if (ier /= 0) stop 'Error allocating b_rmassx, b_rmassy in crust_mantle'
+  b_rmassx_crust_mantle(:) = 0.0_CUSTOM_REAL
+  b_rmassy_crust_mantle(:) = 0.0_CUSTOM_REAL
 
   ! x/y/z locations
   allocate(xstore_crust_mantle(NGLOB_CRUST_MANTLE), &
            ystore_crust_mantle(NGLOB_CRUST_MANTLE), &
            zstore_crust_mantle(NGLOB_CRUST_MANTLE),stat=ier)
   if (ier /= 0) stop 'Error allocating x/y/zstore in crust_mantle'
+  xstore_crust_mantle(:) = 0.0_CUSTOM_REAL
+  ystore_crust_mantle(:) = 0.0_CUSTOM_REAL
+  zstore_crust_mantle(:) = 0.0_CUSTOM_REAL
 
   allocate(rmass_ocean_load(NGLOB_CRUST_MANTLE_OCEANS),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays rmass_ocean_load,..'
+  rmass_ocean_load(:) = 0.0_CUSTOM_REAL
 
   allocate(ibool_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE), &
            xix_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE), &
@@ -235,16 +245,32 @@
            gammay_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE), &
            gammaz_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays ibool_crust_mantle,..'
+  ibool_crust_mantle(:,:,:,:) = 0
+  xix_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  xiy_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  xiz_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  etax_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  etay_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  etaz_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  gammax_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  gammay_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  gammaz_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
 
   allocate(rhostore_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE), &
            kappavstore_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE), &
            muvstore_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays rhostore_crust_mantle,..'
+  rhostore_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  kappavstore_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  muvstore_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
 
   allocate(kappahstore_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE), &
            muhstore_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE), &
            eta_anisostore_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays kappahstore_crust_mantle,..'
+  kappahstore_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  muhstore_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  eta_anisostore_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
 
   if (.not. ANISOTROPIC_3D_MANTLE_VAL) then
     ! allocates c11stores,.. for tiso elements
@@ -295,13 +321,37 @@
              c66store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE),stat=ier)
     if (ier /= 0) stop 'Error allocating arrays c11store_crust_mantle,..'
   endif
+  c11store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c12store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c13store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c14store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c15store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c16store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c22store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c23store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c24store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c25store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c26store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c33store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c34store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c35store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c36store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c44store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c45store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c46store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c55store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c56store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c66store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
 
   allocate(ispec_is_tiso_crust_mantle(NSPEC_CRUST_MANTLE),stat=ier)
   if (ier /= 0) stop 'Error allocating array ispec_is_tiso_crust_mantle'
+  ispec_is_tiso_crust_mantle(:) = .false.
 
   allocate(rho_vp_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STACEY), &
            rho_vs_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STACEY),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays rho_vp_crust_mantle,..'
+  rho_vp_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  rho_vs_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
 
   ! reads databases file
   if (I_should_read_the_database) then

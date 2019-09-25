@@ -62,6 +62,9 @@
   write(IMAIN,*) 'printing the source-time function'
   call flush_IMAIN()
 
+  ! initializes
+  strength = 0.d0
+
   ! source time function
   do isource = 1,NSOURCES
 

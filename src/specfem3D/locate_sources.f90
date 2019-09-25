@@ -149,6 +149,9 @@
   total_Mw = 0.d0
   total_force_N = 0.d0
 
+  ! normalized source radius
+  r0 = R_UNIT_SPHERE
+
   ! read all the sources
   call read_source_locations(srclat,srclon,srcdepth,moment_tensor)
 
@@ -296,9 +299,6 @@
 
       ! point depth (in m)
       depth = srcdepth(isource)*1000.0d0
-
-      ! normalized source radius
-      r0 = R_UNIT_SPHERE
 
       ! finds elevation of position
       if (TOPOGRAPHY) then

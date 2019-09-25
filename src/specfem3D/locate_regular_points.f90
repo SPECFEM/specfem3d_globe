@@ -266,6 +266,10 @@
     ! first exclude elements too far away
     locate_target = .false.
     distmin_squared = HUGEVAL
+    ix_in = 1
+    iy_in = 1
+    iz_in = 1
+    ispec_in = 1
 
     do ispec = 1,nspec
       iglob = ibool(1,1,1,ispec)

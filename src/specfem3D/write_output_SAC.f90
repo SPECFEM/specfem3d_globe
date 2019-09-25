@@ -218,6 +218,10 @@
   value1 = elon
   value1 = depth
 
+  value2 = 0.d0
+  value3 = 0.d0
+  value4 = 0.d0
+  value5 = 0.d0
 
   ! it is not clear, which magnitude to write out:
   ! should it be

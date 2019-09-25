@@ -900,6 +900,7 @@
   endif
 
   ! index for buffer reading
+  it_buffer = 0
   if (NOISE_TOMOGRAPHY == 2 .or. UNDO_ATTENUATION) then
     ! negative direction (counting back)
     it_buffer = nstep_subset_noise_buffer - icounter_noise_buffer
