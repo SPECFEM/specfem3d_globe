@@ -1072,7 +1072,6 @@ contains
   character(len=*),intent(in) :: array_name
 
   ! local parameters
-  integer :: ier = 0     ! SB SB : Initialize ier to 0
   integer :: local_dim
 
   ! checks if file handle valid
@@ -1083,16 +1082,6 @@ contains
 
   ! writes array
   call write_adios_global_1d_array(file_handle_adios,rank,sizeprocs_adios,local_dim,trim(array_name),array_gll)
-
-  ! SB SB : This check crashes on some compilers as ier is possibly not defined.
-  !         ier should be initialized to 0 or the following check should be removed
-  !         actually, ier is declared uninitialized and never assigned or modified by write_adios_global_1d_array
-  if (ier /= 0) then
-    call adios_errmsg(err_message)
-    print *,'Error adios: could not write array parameter: ',trim(array_name)
-    print *,trim(err_message)
-    stop 'Error adios helper write array'
-  endif
 
   end subroutine write_adios_array_gll
 
