@@ -1086,7 +1086,7 @@ contains
 
   ! SB SB : This check crashes on some compilers as ier is possibly not defined.
   !         ier should be initialized to 0 or the following check should be removed
-  !         actually, ier is declared uninitialized and never assigned or modified by write_adios_global_1d_array   
+  !         actually, ier is declared uninitialized and never assigned or modified by write_adios_global_1d_array
   if (ier /= 0) then
     call adios_errmsg(err_message)
     print *,'Error adios: could not write array parameter: ',trim(array_name)
