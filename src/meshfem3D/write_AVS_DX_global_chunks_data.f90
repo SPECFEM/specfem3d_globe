@@ -30,7 +30,7 @@
   subroutine write_AVS_DX_global_chunks_data(prname,nspec,iboun,ibool, &
                 idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
                 npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
-                ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
+                ELLIPTICITY,MODEL_3D_MANTLE_PERTUBATIONS, &
                 RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
                 RMIDDLE_CRUST,ROCEAN,iregion_code)
 
@@ -64,7 +64,7 @@
   integer nspl
   double precision rspl(NR),espl(NR),espl2(NR)
 
-  logical ELLIPTICITY,ISOTROPIC_3D_MANTLE
+  logical ELLIPTICITY,MODEL_3D_MANTLE_PERTUBATIONS
 
   double precision RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771, &
     R400,R120,R80,RMOHO,RMIDDLE_CRUST,ROCEAN
@@ -508,7 +508,7 @@
 
 ! writing elements
   open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementschunks.txt',status='unknown')
-  if (ISOTROPIC_3D_MANTLE) &
+  if (MODEL_3D_MANTLE_PERTUBATIONS) &
     open(unit=11,file=prname(1:len_trim(prname))//'AVS_DXelementschunks_dvp_dvs.txt',status='unknown')
 
 ! number of elements in AVS or DX file
@@ -530,7 +530,7 @@
 
 ! include lateral variations if needed
 
-  if (ISOTROPIC_3D_MANTLE) then
+  if (MODEL_3D_MANTLE_PERTUBATIONS) then
 !   pick a point within the element and get its radius
     r=dsqrt(xstore(2,2,2,ispec)**2+ystore(2,2,2,ispec)**2+zstore(2,2,2,ispec)**2)
 
@@ -606,7 +606,7 @@
     write(10,*) ispecface,idoubling(ispec),num_ibool_AVS_DX(iglobval(1)), &
                   num_ibool_AVS_DX(iglobval(4)),num_ibool_AVS_DX(iglobval(8)), &
                   num_ibool_AVS_DX(iglobval(5))
-    if (ISOTROPIC_3D_MANTLE) write(11,*) ispecface,dvp,dvs
+    if (MODEL_3D_MANTLE_PERTUBATIONS) write(11,*) ispecface,dvp,dvs
   endif
 
 ! face xi = xi_max
@@ -615,7 +615,7 @@
     write(10,*) ispecface,idoubling(ispec),num_ibool_AVS_DX(iglobval(2)), &
                   num_ibool_AVS_DX(iglobval(3)),num_ibool_AVS_DX(iglobval(7)), &
                   num_ibool_AVS_DX(iglobval(6))
-    if (ISOTROPIC_3D_MANTLE) write(11,*) ispecface,dvp,dvs
+    if (MODEL_3D_MANTLE_PERTUBATIONS) write(11,*) ispecface,dvp,dvs
   endif
 
 ! face eta = eta_min
@@ -624,7 +624,7 @@
     write(10,*) ispecface,idoubling(ispec),num_ibool_AVS_DX(iglobval(1)), &
                   num_ibool_AVS_DX(iglobval(2)),num_ibool_AVS_DX(iglobval(6)), &
                   num_ibool_AVS_DX(iglobval(5))
-    if (ISOTROPIC_3D_MANTLE) write(11,*) ispecface,dvp,dvs
+    if (MODEL_3D_MANTLE_PERTUBATIONS) write(11,*) ispecface,dvp,dvs
   endif
 
 ! face eta = eta_max
@@ -633,7 +633,7 @@
     write(10,*) ispecface,idoubling(ispec),num_ibool_AVS_DX(iglobval(4)), &
                   num_ibool_AVS_DX(iglobval(3)),num_ibool_AVS_DX(iglobval(7)), &
                   num_ibool_AVS_DX(iglobval(8))
-    if (ISOTROPIC_3D_MANTLE) write(11,*) ispecface,dvp,dvs
+    if (MODEL_3D_MANTLE_PERTUBATIONS) write(11,*) ispecface,dvp,dvs
   endif
 
   endif
@@ -644,7 +644,7 @@
     call exit_MPI(myrank,'incorrect number of surface elements in AVS or DX file creation')
 
   close(10)
-  if (ISOTROPIC_3D_MANTLE) close(11)
+  if (MODEL_3D_MANTLE_PERTUBATIONS) close(11)
 
   end subroutine write_AVS_DX_global_chunks_data
 

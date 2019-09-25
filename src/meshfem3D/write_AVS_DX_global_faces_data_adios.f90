@@ -52,7 +52,7 @@ subroutine define_AVS_DX_global_faces_data_adios (adios_group, &
                                                   nspec, iMPIcut_xi,iMPIcut_eta, &
                                                   ibool,mask_ibool, &
                                                   npointot, &
-                                                  ISOTROPIC_3D_MANTLE, &
+                                                  MODEL_3D_MANTLE_PERTUBATIONS, &
                                                   group_size_inc, avs_dx_adios)
 
   use constants
@@ -66,7 +66,7 @@ subroutine define_AVS_DX_global_faces_data_adios (adios_group, &
   integer :: nspec
   integer :: ibool(NGLLX,NGLLY,NGLLZ,nspec)
 
-  logical :: ISOTROPIC_3D_MANTLE
+  logical :: MODEL_3D_MANTLE_PERTUBATIONS
 
   logical :: iMPIcut_xi(2,nspec)
   logical :: iMPIcut_eta(2,nspec)
@@ -189,7 +189,7 @@ subroutine define_AVS_DX_global_faces_data_adios (adios_group, &
   call define_adios_global_array1D(adios_group, group_size_inc, nspecface, &
                                  '', "elements_faces/num_ibool_AVS_DX_iglob4", dummy_int1d)
 
-  if (ISOTROPIC_3D_MANTLE) then
+  if (MODEL_3D_MANTLE_PERTUBATIONS) then
     allocate(avs_dx_adios%dvp(nspecface), stat=ierr)
     if (ierr /= 0) call exit_MPI(myrank, "Error allocating dvp.")
     allocate(avs_dx_adios%dvs(nspecface), stat=ierr)
@@ -208,7 +208,7 @@ subroutine prepare_AVS_DX_global_faces_data_adios(nspec, &
                                                   iMPIcut_xi,iMPIcut_eta, &
                                                   ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
                                                   npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
-                                                  ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
+                                                  ELLIPTICITY,MODEL_3D_MANTLE_PERTUBATIONS, &
                                                   RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
                                                   RMIDDLE_CRUST,ROCEAN,iregion_code, &
                                                   avs_dx_adios)
@@ -222,7 +222,7 @@ subroutine prepare_AVS_DX_global_faces_data_adios(nspec, &
 
   integer idoubling(nspec)
 
-  logical ELLIPTICITY,ISOTROPIC_3D_MANTLE
+  logical ELLIPTICITY,MODEL_3D_MANTLE_PERTUBATIONS
 
   logical iMPIcut_xi(2,nspec)
   logical iMPIcut_eta(2,nspec)
@@ -267,6 +267,8 @@ subroutine prepare_AVS_DX_global_faces_data_adios(nspec, &
   mask_ibool(:) = .false.
 
   nspecface = 0
+  dvp = 0.0
+  dvs = 0.0
 
 ! mark global AVS or DX points
   do ispec = 1,nspec
@@ -512,7 +514,7 @@ subroutine prepare_AVS_DX_global_faces_data_adios(nspec, &
       iglob8=ibool(1,NGLLY,NGLLZ,ispec)
 
       ! include lateral variations if needed
-      if (ISOTROPIC_3D_MANTLE) then
+      if (MODEL_3D_MANTLE_PERTUBATIONS) then
         ! pick a point within the element and get its radius
         r = dsqrt(xstore(2,2,2,ispec)**2 &
             + ystore(2,2,2,ispec)**2 &
@@ -595,7 +597,7 @@ subroutine prepare_AVS_DX_global_faces_data_adios(nspec, &
         avs_dx_adios%iglob2(ispecface) = num_ibool_AVS_DX(iglob4)
         avs_dx_adios%iglob3(ispecface) = num_ibool_AVS_DX(iglob8)
         avs_dx_adios%iglob4(ispecface) = num_ibool_AVS_DX(iglob5)
-        if (ISOTROPIC_3D_MANTLE) then
+        if (MODEL_3D_MANTLE_PERTUBATIONS) then
           avs_dx_adios%dvp(ispecface) = dvp
           avs_dx_adios%dvs(ispecface) = dvs
         endif
@@ -609,7 +611,7 @@ subroutine prepare_AVS_DX_global_faces_data_adios(nspec, &
         avs_dx_adios%iglob2(ispecface) = num_ibool_AVS_DX(iglob3)
         avs_dx_adios%iglob3(ispecface) = num_ibool_AVS_DX(iglob7)
         avs_dx_adios%iglob4(ispecface) = num_ibool_AVS_DX(iglob6)
-        if (ISOTROPIC_3D_MANTLE) then
+        if (MODEL_3D_MANTLE_PERTUBATIONS) then
           avs_dx_adios%dvp(ispecface) = dvp
           avs_dx_adios%dvs(ispecface) = dvs
         endif
@@ -623,7 +625,7 @@ subroutine prepare_AVS_DX_global_faces_data_adios(nspec, &
         avs_dx_adios%iglob2(ispecface) = num_ibool_AVS_DX(iglob2)
         avs_dx_adios%iglob3(ispecface) = num_ibool_AVS_DX(iglob6)
         avs_dx_adios%iglob4(ispecface) = num_ibool_AVS_DX(iglob5)
-        if (ISOTROPIC_3D_MANTLE) then
+        if (MODEL_3D_MANTLE_PERTUBATIONS) then
           avs_dx_adios%dvp(ispecface) = dvp
           avs_dx_adios%dvs(ispecface) = dvs
         endif
@@ -637,7 +639,7 @@ subroutine prepare_AVS_DX_global_faces_data_adios(nspec, &
         avs_dx_adios%iglob2(ispecface) = num_ibool_AVS_DX(iglob3)
         avs_dx_adios%iglob3(ispecface) = num_ibool_AVS_DX(iglob7)
         avs_dx_adios%iglob4(ispecface) = num_ibool_AVS_DX(iglob8)
-        if (ISOTROPIC_3D_MANTLE) then
+        if (MODEL_3D_MANTLE_PERTUBATIONS) then
           avs_dx_adios%dvp(ispecface) = dvp
           avs_dx_adios%dvs(ispecface) = dvs
         endif
@@ -656,7 +658,7 @@ end subroutine prepare_AVS_DX_global_faces_data_adios
 !===============================================================================
 
 subroutine write_AVS_DX_global_faces_data_adios(adios_handle, myrank, &
-                                                sizeprocs, avs_dx_adios, ISOTROPIC_3D_MANTLE)
+                                                sizeprocs, avs_dx_adios, MODEL_3D_MANTLE_PERTUBATIONS)
 
   use adios_write_mod
   use adios_helpers_mod
@@ -666,7 +668,7 @@ subroutine write_AVS_DX_global_faces_data_adios(adios_handle, myrank, &
   integer(kind=8), intent(in) :: adios_handle
   integer, intent(in) :: myrank, sizeprocs
   type(avs_dx_global_faces_t), intent(inout) :: avs_dx_adios ! out for adios_write
-  logical ISOTROPIC_3D_MANTLE
+  logical MODEL_3D_MANTLE_PERTUBATIONS
   !--- Variables
   integer :: npoin, nspec
 
@@ -693,7 +695,7 @@ subroutine write_AVS_DX_global_faces_data_adios(adios_handle, myrank, &
                                    "elements_faces/num_ibool_AVS_DX_iglob4", avs_dx_adios%iglob4)
 
 
-  if (ISOTROPIC_3D_MANTLE) then
+  if (MODEL_3D_MANTLE_PERTUBATIONS) then
     call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, nspec, &
                                      "elements_faces/dvp", avs_dx_adios%dvp)
     call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, nspec, &
@@ -704,12 +706,12 @@ end subroutine write_AVS_DX_global_faces_data_adios
 
 !===============================================================================
 
-subroutine free_AVS_DX_global_faces_data_adios(avs_dx_adios, ISOTROPIC_3D_MANTLE)
+subroutine free_AVS_DX_global_faces_data_adios(avs_dx_adios, MODEL_3D_MANTLE_PERTUBATIONS)
 
   implicit none
   !--- Arguments
   type(avs_dx_global_faces_t), intent(inout) :: avs_dx_adios
-  logical ISOTROPIC_3D_MANTLE
+  logical MODEL_3D_MANTLE_PERTUBATIONS
 
   deallocate(avs_dx_adios%x_adios)
   deallocate(avs_dx_adios%y_adios)
@@ -721,7 +723,7 @@ subroutine free_AVS_DX_global_faces_data_adios(avs_dx_adios, ISOTROPIC_3D_MANTLE
   deallocate(avs_dx_adios%iglob3)
   deallocate(avs_dx_adios%iglob4)
 
-  if (ISOTROPIC_3D_MANTLE) then
+  if (MODEL_3D_MANTLE_PERTUBATIONS) then
     deallocate(avs_dx_adios%dvp)
     deallocate(avs_dx_adios%dvs)
   endif

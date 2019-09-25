@@ -630,10 +630,10 @@
     endif
     write(IMAIN,*)
     ! model mesh parameters
-    if (ISOTROPIC_3D_MANTLE) then
-      write(IMAIN,*) '  incorporating 3-D lateral variations'
+    if (MODEL_3D_MANTLE_PERTUBATIONS) then
+      write(IMAIN,*) '  incorporating 3-D lateral variations in the mantle'
     else
-      write(IMAIN,*) '  no 3-D lateral variations'
+      write(IMAIN,*) '  no 3-D lateral variations in the mantle'
     endif
     if (HETEROGEN_3D_MANTLE) then
       write(IMAIN,*) '  incorporating heterogeneities in the mantle'
@@ -713,7 +713,7 @@
 
   ! local parameters
   double precision :: r,xmesh,ymesh,zmesh
-  double precision :: dvp,rho,vpv,vph,vsv,vsh,eta_aniso
+  double precision :: rho,vpv,vph,vsv,vsh,eta_aniso
   double precision :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66
 
   ! moho depth
@@ -727,12 +727,12 @@
 
     ! gets moho depth from crustal model
     call meshfem3D_models_get3Dcrust_val(IREGION_CRUST_MANTLE,xmesh,ymesh,zmesh,r, &
-                                         vpv,vph,vsv,vsh,rho,eta_aniso,dvp, &
-                                         c11,c12,c13,c14,c15,c16,c22,c23,c24,c25, &
-                                         c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
+                                         vpv,vph,vsv,vsh,rho,eta_aniso, &
+                                         c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+                                         c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
                                          .true.,moho)
 
-    !if (myrank == 0) print *, '  crustal values:',vpv,vph,vsv,vsh,rho,eta_aniso,dvp
+    !if (myrank == 0) print *, '  crustal values:',vpv,vph,vsv,vsh,rho,eta_aniso
     if (myrank == 0) print *, '  moho depth [km]:',sngl(moho*R_EARTH_KM) !, &
                               !'moho radius (in km):',sngl((1.0d0-moho)*R_EARTH_KM)
   else
@@ -815,13 +815,14 @@
 
   ! local parameters
   double precision :: xmesh,ymesh,zmesh
-  double precision :: dvp,moho
+  double precision :: moho
   double precision :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66
   ! Attenuation values
   double precision, dimension(N_SLS) :: tau_s, tau_e
   double precision :: T_c_source
   ! Parameter used to decide whether this element is in the crust or not
-  logical:: elem_in_crust,elem_in_mantle
+  logical :: elem_in_crust,elem_in_mantle
+  integer :: i,j,k,ispec
 
   ! initializes values
   rho = 0.d0
@@ -854,7 +855,7 @@
   Qmu = 0.d0
   Qkappa = 0.d0 ! not used, not stored so far...
   tau_e(:) = 0.d0
-  dvp = 0.d0
+  i = 1; j = 1; k = 1; ispec = 1 ! dummy GLL point
 
   ! do not force the element/point to be in the crust
   elem_in_crust = .false.
@@ -876,12 +877,13 @@
                         RMOHO,RMIDDLE_CRUST,ROCEAN)
 
   ! gets the 3-D model parameters for the mantle
-  call meshfem3D_models_get3Dmntl_val(iregion_code,r_prem,rho,dvp, &
+  call meshfem3D_models_get3Dmntl_val(iregion_code,r_prem,rho, &
                         vpv,vph,vsv,vsh,eta_aniso, &
                         RCMB,R670,RMOHO, &
                         xmesh,ymesh,zmesh,r, &
                         c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
-                        c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
+                        c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
+                        ispec,i,j,k)
 
   ! gets the 3-D crustal model
   if (CRUSTAL) then
@@ -894,10 +896,10 @@
     endif
     if (.not. elem_in_mantle) then
       call meshfem3D_models_get3Dcrust_val(iregion_code,xmesh,ymesh,zmesh,r_prem, &
-                        vpv,vph,vsv,vsh,rho,eta_aniso,dvp, &
-                        c11,c12,c13,c14,c15,c16,c22,c23,c24,c25, &
-                        c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
-                        elem_in_crust,moho)
+                                           vpv,vph,vsv,vsh,rho,eta_aniso, &
+                                           c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+                                           c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
+                                           elem_in_crust,moho)
 
       !print *,'crustal: ',r_prem,R_DEEPEST_CRUST,elem_in_crust,vpv,vph,vsv,vsh,eta_aniso
     endif
@@ -905,7 +907,10 @@
 
   !!! VH  commented out following two lines from get_model
   !! overwrites with tomographic model values (from iteration step) here, given at all GLL points
-  !call meshfem3D_models_impose_val(vpv,vph,vsv,vsh,rho,dvp,eta_aniso,iregion_code,ispec,i,j,k)
+  !call meshfem3D_models_impose_val(iregion_code,xmesh,ymesh,zmesh,ispec,i,j,k, &
+  !                                 vpv,vph,vsv,vsh,rho,eta_aniso, &
+  !                                 c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+  !                                 c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
   !
   ! note: for GLL models, we would need to have the GLL point index (ispec,i,j,k) instead of location (r_prem,xmesh,ymesh,zmesh).
   !       the mesh indexing however is only available after running the full mesher.

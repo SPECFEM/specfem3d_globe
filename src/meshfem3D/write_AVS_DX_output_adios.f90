@@ -38,7 +38,7 @@
     LOCAL_PATH,IMAIN,ADIOS_TRANSPORT_METHOD
 
   use meshfem3D_models_par, only: &
-    ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
+    ELLIPTICITY,MODEL_3D_MANTLE_PERTUBATIONS, &
     nspl,rspl,espl,espl2
 
   use regions_mesh_par2
@@ -93,19 +93,19 @@
   call define_AVS_DX_global_faces_data_adios(adios_group, &
                                              nspec, iMPIcut_xi,iMPIcut_eta, &
                                              ibool,mask_ibool,npointot, &
-                                             ISOTROPIC_3D_MANTLE, &
+                                             MODEL_3D_MANTLE_PERTUBATIONS, &
                                              group_size_inc, avs_dx_global_faces_vars)
 
   call define_AVS_DX_global_chunks_data(adios_group, &
                                         nspec,iboun,ibool, &
                                         mask_ibool,npointot, &
-                                        ISOTROPIC_3D_MANTLE, &
+                                        MODEL_3D_MANTLE_PERTUBATIONS, &
                                         group_size_inc, avs_dx_global_chunks_vars)
 
   call define_AVS_DX_surfaces_data_adios(adios_group, &
                                          nspec,iboun,ibool, &
                                          mask_ibool,npointot, &
-                                         ISOTROPIC_3D_MANTLE, &
+                                         MODEL_3D_MANTLE_PERTUBATIONS, &
                                          group_size_inc, avs_dx_surface_vars)
 
 
@@ -128,35 +128,35 @@
                                               iMPIcut_xi,iMPIcut_eta, &
                                               ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
                                               npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
-                                              ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
+                                              ELLIPTICITY,MODEL_3D_MANTLE_PERTUBATIONS, &
                                               RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
                                               RMIDDLE_CRUST,ROCEAN,iregion_code, &
                                               avs_dx_global_faces_vars)
 
   call write_AVS_DX_global_faces_data_adios(file_handle_adios, myrank, &
-                                            sizeprocs, avs_dx_global_faces_vars, ISOTROPIC_3D_MANTLE)
+                                            sizeprocs, avs_dx_global_faces_vars, MODEL_3D_MANTLE_PERTUBATIONS)
 
   call prepare_AVS_DX_global_chunks_data_adios(prname,nspec, &
                                                iboun,ibool, idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
                                                npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
-                                               ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
+                                               ELLIPTICITY,MODEL_3D_MANTLE_PERTUBATIONS, &
                                                RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
                                                RMIDDLE_CRUST,ROCEAN,iregion_code, &
                                                avs_dx_global_chunks_vars)
 
   call write_AVS_DX_global_chunks_data_adios(file_handle_adios, myrank, &
-                                             sizeprocs, avs_dx_global_chunks_vars, ISOTROPIC_3D_MANTLE)
+                                             sizeprocs, avs_dx_global_chunks_vars, MODEL_3D_MANTLE_PERTUBATIONS)
 
   call prepare_AVS_DX_surfaces_data_adios(nspec,iboun, &
                                           ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool,npointot, &
                                           rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
-                                          ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
+                                          ELLIPTICITY,MODEL_3D_MANTLE_PERTUBATIONS, &
                                           RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
                                           RMIDDLE_CRUST,ROCEAN,iregion_code, &
                                           avs_dx_surface_vars)
 
   call write_AVS_DX_surfaces_data_adios(file_handle_adios, myrank, &
-                                        sizeprocs, avs_dx_surface_vars, ISOTROPIC_3D_MANTLE)
+                                        sizeprocs, avs_dx_surface_vars, MODEL_3D_MANTLE_PERTUBATIONS)
 
 
 
@@ -168,8 +168,8 @@
 
   !--- Clean up temporary arrays -------------------------
   call free_AVS_DX_global_data_adios(avs_dx_global_vars)
-  call free_AVS_DX_global_faces_data_adios(avs_dx_global_faces_vars, ISOTROPIC_3D_MANTLE)
-  call free_AVS_DX_global_chunks_data_adios(avs_dx_global_chunks_vars, ISOTROPIC_3D_MANTLE)
-  call free_AVS_DX_surfaces_data_adios(avs_dx_surface_vars, ISOTROPIC_3D_MANTLE)
+  call free_AVS_DX_global_faces_data_adios(avs_dx_global_faces_vars, MODEL_3D_MANTLE_PERTUBATIONS)
+  call free_AVS_DX_global_chunks_data_adios(avs_dx_global_chunks_vars, MODEL_3D_MANTLE_PERTUBATIONS)
+  call free_AVS_DX_surfaces_data_adios(avs_dx_surface_vars, MODEL_3D_MANTLE_PERTUBATIONS)
 
   end subroutine write_AVS_DX_output_adios

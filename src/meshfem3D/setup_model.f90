@@ -195,10 +195,10 @@
   write(IMAIN,*)
 
   ! model mesh parameters
-  if (ISOTROPIC_3D_MANTLE) then
-    write(IMAIN,*) '  incorporating 3-D lateral variations'
+  if (MODEL_3D_MANTLE_PERTUBATIONS) then
+    write(IMAIN,*) '  incorporating 3-D lateral variations in the mantle'
   else
-    write(IMAIN,*) '  no 3-D lateral variations'
+    write(IMAIN,*) '  no 3-D lateral variations in the mantle'
   endif
   if (HETEROGEN_3D_MANTLE) then
     write(IMAIN,*) '  incorporating heterogeneities in the mantle'
@@ -216,9 +216,9 @@
     write(IMAIN,*) '  using unmodified 1D crustal model with two layers'
   endif
   if (TRANSVERSE_ISOTROPY) then
-    write(IMAIN,*) '  incorporating anisotropy'
+    write(IMAIN,*) '  incorporating transverse isotropy'
   else
-    write(IMAIN,*) '  no anisotropy'
+    write(IMAIN,*) '  no transverse isotropy'
   endif
   if (ANISOTROPIC_INNER_CORE) then
     write(IMAIN,*) '  incorporating anisotropic inner core'

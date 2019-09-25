@@ -31,7 +31,7 @@
   subroutine write_AVS_DX_global_faces_data(prname,nspec,iMPIcut_xi,iMPIcut_eta, &
         ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
         npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
-        ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
+        ELLIPTICITY,MODEL_3D_MANTLE_PERTUBATIONS, &
         RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
         RMIDDLE_CRUST,ROCEAN,iregion_code)
 
@@ -44,7 +44,7 @@
 
   integer idoubling(nspec)
 
-  logical ELLIPTICITY,ISOTROPIC_3D_MANTLE
+  logical ELLIPTICITY,MODEL_3D_MANTLE_PERTUBATIONS
 
   logical iMPIcut_xi(2,nspec)
   logical iMPIcut_eta(2,nspec)
@@ -312,7 +312,7 @@
 
 ! writing elements
   open(unit=IOUT,file=prname(1:len_trim(prname))//'AVS_DXelementsfaces.txt',status='unknown')
- if (ISOTROPIC_3D_MANTLE) &
+ if (MODEL_3D_MANTLE_PERTUBATIONS) &
     open(unit=11,file=prname(1:len_trim(prname))//'AVS_DXelementsfaces_dvp_dvs.txt',status='unknown')
 
 ! number of elements in AVS or DX file
@@ -334,7 +334,7 @@
 
 ! include lateral variations if needed
 
-   if (ISOTROPIC_3D_MANTLE) then
+   if (MODEL_3D_MANTLE_PERTUBATIONS) then
  !   pick a point within the element and get its radius
      r=dsqrt(xstore(2,2,2,ispec)**2+ystore(2,2,2,ispec)**2+zstore(2,2,2,ispec)**2)
 
@@ -367,10 +367,10 @@
 
              ! gets reference model values: rho,vpv,vph,vsv,vsh and eta_aniso
              call meshfem3D_models_get1D_val(iregion_code,idoubling(ispec), &
-                               r,rho,vpv,vph,vsv,vsh,eta_aniso, &
-                               Qkappa,Qmu,RICB,RCMB, &
-                               RTOPDDOUBLEPRIME,R80,R120,R220,R400,R600,R670,R771, &
-                               RMOHO,RMIDDLE_CRUST,ROCEAN)
+                                             r,rho,vpv,vph,vsv,vsh,eta_aniso, &
+                                             Qkappa,Qmu,RICB,RCMB, &
+                                             RTOPDDOUBLEPRIME,R80,R120,R220,R400,R600,R670,R771, &
+                                             RMOHO,RMIDDLE_CRUST,ROCEAN)
 
              ! calculates isotropic values
              vp = sqrt(((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
@@ -410,7 +410,7 @@
     write(IOUT,*) ispecface,idoubling(ispec),num_ibool_AVS_DX(iglob1), &
                   num_ibool_AVS_DX(iglob4),num_ibool_AVS_DX(iglob8), &
                   num_ibool_AVS_DX(iglob5)
-    if (ISOTROPIC_3D_MANTLE) write(11,*) ispecface,dvp,dvs
+    if (MODEL_3D_MANTLE_PERTUBATIONS) write(11,*) ispecface,dvp,dvs
   endif
 
 ! face xi = xi_max
@@ -419,7 +419,7 @@
     write(IOUT,*) ispecface,idoubling(ispec),num_ibool_AVS_DX(iglob2), &
                   num_ibool_AVS_DX(iglob3),num_ibool_AVS_DX(iglob7), &
                   num_ibool_AVS_DX(iglob6)
-    if (ISOTROPIC_3D_MANTLE) write(11,*) ispecface,dvp,dvs
+    if (MODEL_3D_MANTLE_PERTUBATIONS) write(11,*) ispecface,dvp,dvs
   endif
 
 ! face eta = eta_min
@@ -428,7 +428,7 @@
     write(IOUT,*) ispecface,idoubling(ispec),num_ibool_AVS_DX(iglob1), &
                   num_ibool_AVS_DX(iglob2),num_ibool_AVS_DX(iglob6), &
                   num_ibool_AVS_DX(iglob5)
-    if (ISOTROPIC_3D_MANTLE) write(11,*) ispecface,dvp,dvs
+    if (MODEL_3D_MANTLE_PERTUBATIONS) write(11,*) ispecface,dvp,dvs
   endif
 
 ! face eta = eta_max
@@ -437,7 +437,7 @@
     write(IOUT,*) ispecface,idoubling(ispec),num_ibool_AVS_DX(iglob4), &
                   num_ibool_AVS_DX(iglob3),num_ibool_AVS_DX(iglob7), &
                   num_ibool_AVS_DX(iglob8)
-    if (ISOTROPIC_3D_MANTLE) write(11,*) ispecface,dvp,dvs
+    if (MODEL_3D_MANTLE_PERTUBATIONS) write(11,*) ispecface,dvp,dvs
   endif
 
   endif
@@ -448,7 +448,7 @@
     call exit_MPI(myrank,'incorrect number of surface elements in AVS or DX file creation')
 
   close(IOUT)
-  if (ISOTROPIC_3D_MANTLE) close(11)
+  if (MODEL_3D_MANTLE_PERTUBATIONS) close(11)
 
   end subroutine write_AVS_DX_global_faces_data
 

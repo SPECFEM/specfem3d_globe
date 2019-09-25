@@ -30,7 +30,7 @@
                                         xstore,ystore,zstore,nspec, &
                                         xelm,yelm,zelm,shape3D, &
                                         rmin,rmax, &
-                                        rhostore,dvpstore, &
+                                        rhostore, &
                                         kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                                         xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
                                         gammaxstore,gammaystore,gammazstore,nspec_actually, &
@@ -77,7 +77,7 @@
   double precision,intent(in) :: rmin,rmax
 
 ! for model density and anisotropy
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(out) :: rhostore,dvpstore,kappavstore, &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(out) :: rhostore,kappavstore, &
     kappahstore,muvstore,muhstore,eta_anisostore
 
 ! the 21 coefficients for an anisotropic medium in reduced notation
@@ -166,7 +166,7 @@
   if (ipass == 2) then
     call get_model(iregion_code,ispec,nspec,idoubling(ispec), &
                    kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-                   rhostore,dvpstore,nspec_ani, &
+                   rhostore,nspec_ani, &
                    c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                    c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                    c36store,c44store,c45store,c46store,c55store,c56store,c66store, &

@@ -160,10 +160,10 @@
     write(IMAIN,*)
 
     ! model mesh parameters
-    if (ISOTROPIC_3D_MANTLE) then
-      write(IMAIN,*) '  incorporating 3-D lateral variations'
+    if (MODEL_3D_MANTLE_PERTUBATIONS) then
+      write(IMAIN,*) '  incorporating 3-D lateral variations in the mantle'
     else
-      write(IMAIN,*) '  no 3-D lateral variations'
+      write(IMAIN,*) '  no 3-D lateral variations in the mantle'
     endif
     if (HETEROGEN_3D_MANTLE) then
       write(IMAIN,*) '  incorporating heterogeneities in the mantle'
@@ -491,8 +491,9 @@
        & because N_SLS is assumed to be equal to 3 when vectorizing compute_element_iso,tiso,aniso')
   endif
 
-  if (SIMULATION_TYPE == 3 .and. (ANISOTROPIC_3D_MANTLE_VAL .or. ANISOTROPIC_INNER_CORE_VAL)) &
-     call exit_MPI(myrank, 'anisotropic model is not implemented for kernel simulations yet')
+  ! allow for testing...
+  !if (SIMULATION_TYPE == 3 .and. (ANISOTROPIC_3D_MANTLE_VAL .or. ANISOTROPIC_INNER_CORE_VAL)) &
+  !   call exit_MPI(myrank, 'anisotropic model is not implemented for kernel simulations yet')
 
   ! checks model for transverse isotropic kernel computation
   if (SAVE_TRANSVERSE_KL_ONLY) then
