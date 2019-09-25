@@ -104,9 +104,9 @@ program test_save
 
     ! volume
     ! without topo/ellip: 0.69581709728628893d0
-    ! with    topo/ellip: 0.69301991059962509
+    ! with    topo/ellip: 0.69301991059962509 , gcc version 5.4: 0.69301991059962254
     print *,'volume_total = ',volume_total
-    if (abs(volume_total - 0.69301991059962509d0) > 1.d-15) then
+    if (abs(volume_total - 0.69301991059962d0) > 1.d-14) then
       print *,'ERROR: volume_total value invalid'
       stop 1
     else
