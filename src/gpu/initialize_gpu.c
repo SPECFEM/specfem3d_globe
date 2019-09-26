@@ -29,9 +29,60 @@
 
 #include "mesh_constants_gpu.h"
 
+/* ----------------------------------------------------------------------------------------------- */
+// compilation info
+/* ----------------------------------------------------------------------------------------------- */
+// putting these pragma messages into this source file to avoid having the "warning" appear
+// during compilation of each gpu/ source file
+
+// CUDA version output
+#ifdef USE_CUDA
+
+// macros for version output
+#define VALUE_TO_STRING(x) #x
+#define VALUE(x) VALUE_TO_STRING(x)
+#define VAR_NAME_VALUE(var) #var " = "  VALUE(var)
+
+#pragma message ("\n\nCompiling with: " VAR_NAME_VALUE(CUDA_VERSION) "\n")
+#if defined(__CUDA_ARCH__)
+#pragma message ("\n\nCompiling with: " VAR_NAME_VALUE(__CUDA_ARCH__) "\n")
+#endif
+// CUDA version >= 4.0 needed for cudaTextureType1D and cudaDeviceSynchronize()
+#if CUDA_VERSION < 4000 || (defined (__CUDACC_VER_MAJOR__) && (__CUDACC_VER_MAJOR__ < 4))
+#pragma message ("\n\nCompiling for CUDA version < 4.0\n")
+#endif
+
+#endif
+
+#ifdef USE_TEXTURES_FIELDS
+#pragma message ("\n\nCompiling with: USE_TEXTURES_FIELDS enabled\n")
+#endif
+#ifdef USE_TEXTURES_CONSTANTS
+#pragma message ("\n\nCompiling with: USE_TEXTURES_CONSTANTS enabled\n")
+#endif
+#ifdef USE_LAUNCH_BOUNDS
+#pragma message ("\n\nCompiling with: USE_LAUNCH_BOUNDS enabled\n")
+#endif
+#ifdef USE_MESH_COLORING_GPU
+#pragma message ("\n\nCompiling with: USE_MESH_COLORING_GPU enabled\n")
+#endif
+#if ENABLE_VERY_SLOW_ERROR_CHECKING == 1
+#pragma message ("\n\nCompiling with: ENABLE_VERY_SLOW_ERROR_CHECKING enabled\n")
+#endif
+#if DEBUG == 1
+#pragma message ("\n\nCompiling with: DEBUG enabled\n")
+#endif
+#if MAXDEBUG == 1
+#pragma message ("\n\nCompiling with: MAXDEBUG enabled\n")
+#endif
+#if DEBUG_BACKWARD_SIMULATIONS == 1
+#pragma message ("\n\nCompiling with: DEBUG_BACKWARD_SIMULATIONS enabled\n")
+#endif
+
 // debugging
 const int DEBUG_VERBOSE_OUTPUT = 0;
 
+/* ----------------------------------------------------------------------------------------------- */
 
 // GPU initialization
 

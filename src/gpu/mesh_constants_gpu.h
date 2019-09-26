@@ -70,7 +70,6 @@ typedef float realw;
 // debug: outputs traces
 #define DEBUG 0
 #if DEBUG == 1
-#pragma message ("\nCompiling with: DEBUG enabled\n")
 #define TRACE(x) printf ("%s\n", x); fflush(stdout);
 #define TRACE_EXTENDED(x) printf ("%s --- function %s file %s line %d \n",x,__func__,__FILE__,__LINE__); fflush(stdout);
 #else
@@ -79,7 +78,6 @@ typedef float realw;
 // more outputs
 #define MAXDEBUG 0
 #if MAXDEBUG == 1
-#pragma message ("\nCompiling with: MAXDEBUG enabled\n")
 #define LOG(x) printf ("%s\n", x)
 #define PRINT5(var, offset) for (;print_count<5;print_count++) printf ("var (%d)=%2.20f\n", print_count, var[offset+print_count]);
 #define PRINT10(var) if (print_count<10) { printf ("var=%1.20e\n", var); print_count++; }
@@ -92,7 +90,6 @@ typedef float realw;
 // debug: run backward simulations with/without GPU routines and empty arrays for debugging
 #define DEBUG_BACKWARD_SIMULATIONS 0
 #if DEBUG_BACKWARD_SIMULATIONS == 1
-#pragma message ("\nCompiling with: DEBUG_BACKWARD_SIMULATIONS enabled\n")
 #define DEBUG_BACKWARD_ASSEMBLY_OC()  return;
 #define DEBUG_BACKWARD_ASSEMBLY_IC()  return;
 #define DEBUG_BACKWARD_ASSEMBLY_CM()  return;
@@ -124,7 +121,6 @@ typedef float realw;
 // (note: this synchronizes many calls, thus e.g. no asynchronous memcpy possible)
 #define ENABLE_VERY_SLOW_ERROR_CHECKING 0
 #if ENABLE_VERY_SLOW_ERROR_CHECKING == 1
-#pragma message ("\nCompiling with: ENABLE_VERY_SLOW_ERROR_CHECKING enabled\n")
 #define GPU_ERROR_CHECKING(x) exit_on_gpu_error(x);
 #else
 #define GPU_ERROR_CHECKING(x)
@@ -184,9 +180,6 @@ typedef float realw;
 // (optional) pre-processing directive used in kernels: if defined check that it is also set in src/shared/constants.h:
 // leads up to ~ 5% performance increase
 //#define USE_MESH_COLORING_GPU
-#ifdef USE_MESH_COLORING_GPU
-#pragma message ("\nCompiling with: USE_MESH_COLORING_GPU enabled\n")
-#endif
 
 // note: mesh coloring has a tradeoff between extra costs for looping over colors
 //          and slowliness of atomic updates;
@@ -218,17 +211,9 @@ typedef float realw;
   #if CUDA_VERSION < 4000 || (defined (__CUDACC_VER_MAJOR__) && (__CUDACC_VER_MAJOR__ < 4))
     #undef USE_TEXTURES_FIELDS
     #undef USE_TEXTURES_CONSTANTS
-    #pragma message ("\nCompiling for CUDA version < 4.0\n")
   #endif
 #endif
 
-// compiling info
-#ifdef USE_TEXTURES_FIELDS
-#pragma message ("\nCompiling with: USE_TEXTURES_FIELDS enabled\n")
-#endif
-#ifdef USE_TEXTURES_CONSTANTS
-#pragma message ("\nCompiling with: USE_TEXTURES_CONSTANTS enabled\n")
-#endif
 
 // (optional) unrolling loops
 // leads up to ~10% performance increase in OpenCL and ~1% in Cuda
@@ -253,7 +238,6 @@ typedef float realw;
 //
 // using launch_bounds leads to ~ 20% performance increase on Kepler GPUs
 // (uncomment if not desired)
-#pragma message ("\nCompiling with: USE_LAUNCH_BOUNDS enabled for K20\n")
 #define USE_LAUNCH_BOUNDS
 #define LAUNCH_MIN_BLOCKS 7
 #endif

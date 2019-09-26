@@ -64,22 +64,6 @@ void release_kernels (void) {
 
 #endif // USE_OPENCL
 
-/* ----------------------------------------------------------------------------------------------- */
-// CUDA version output
-/* ----------------------------------------------------------------------------------------------- */
-#ifdef USE_CUDA
-
-// macros for version output
-#define VALUE_TO_STRING(x) #x
-#define VALUE(x) VALUE_TO_STRING(x)
-#define VAR_NAME_VALUE(var) #var " = "  VALUE(var)
-
-#pragma message ("Compiling with: " VAR_NAME_VALUE(CUDA_VERSION) "\n")
-#if defined(__CUDA_ARCH__)
-#pragma message ("Compiling with: " VAR_NAME_VALUE(__CUDA_ARCH__) "\n")
-#endif
-
-#endif
 
 /*----------------------------------------------------------------------------------------------- */
 // GPU preparation routines
