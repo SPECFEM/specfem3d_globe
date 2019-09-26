@@ -174,6 +174,7 @@ specfem3D_SHARED_OBJECTS = \
 	$O/read_value_parameters.shared.o \
 	$O/recompute_jacobian.shared.o \
 	$O/reduce.shared.o \
+	$O/rotate_tensor.shared.o \
 	$O/rthetaphi_xyz.shared.o \
 	$O/search_kdtree.shared.o \
 	$O/spline_routines.shared.o \

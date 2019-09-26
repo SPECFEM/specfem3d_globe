@@ -469,6 +469,7 @@ xwrite_profile_SHARED_OBJECTS = \
 	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
 	$O/reduce.shared.o \
+	$O/rotate_tensor.shared.o \
 	$O/rthetaphi_xyz.shared.o \
 	$O/smooth_weights_vec.shared.o \
 	$O/sort_array_coordinates.shared.o \

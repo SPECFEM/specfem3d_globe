@@ -144,11 +144,12 @@
             ! For anisotropic kernels
             iglob = ibool_crust_mantle(i,j,k,ispec)
 
-            ! The Cartesian global cijkl_kl are rotated into the spherical local cijkl_kl
+            ! The Cartesian global cijkl_kl are rotated into the local (radial) cijkl_kl
             ! ystore and zstore are thetaval and phival (line 2252) -- dangerous
             theta = rstore_crust_mantle(2,iglob)
             phi = rstore_crust_mantle(3,iglob)
-            call rotate_kernels_dble(cijkl_kl_crust_mantle(:,i,j,k,ispec),cijkl_kl_local(:),theta,phi)
+
+            call rotate_tensor_global_to_radial_vector(cijkl_kl_crust_mantle(:,i,j,k,ispec),cijkl_kl_local(:),theta,phi)
 
             cijkl_kl_crust_mantle_reg(:,ipoint) = cijkl_kl_crust_mantle_reg(:,ipoint) &
                                                 + cijkl_kl_local * scale_kl_ani * hlagrange
