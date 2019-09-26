@@ -154,7 +154,7 @@
   endif
 
   ! 3D mantle models
-  if (ISOTROPIC_3D_MANTLE) then
+  if (MODEL_3D_MANTLE_PERTUBATIONS) then
 
     select case (THREE_D_MODEL)
 
@@ -206,6 +206,7 @@
   endif
 
   ! arbitrary mantle models
+  ! adds additional perturbations on top of a reference 3D model
   if (HETEROGEN_3D_MANTLE) &
     call model_heterogen_mntl_broadcast()
 
@@ -373,7 +374,7 @@
       ! 1D-REF also known as STW105 (by Kustowski et al.) - used also as background for 3D models
       call model_1dref(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu,iregion_code,CRUSTAL)
       if (.not. TRANSVERSE_ISOTROPY) then
-        if (.not. ISOTROPIC_3D_MANTLE) then
+        if (.not. MODEL_3D_MANTLE_PERTUBATIONS) then
           ! this case here is only executed for 1D_ref_iso
           ! calculates isotropic values
           vp = sqrt(((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
@@ -415,7 +416,7 @@
   ! needs to set vpv,vph,vsv,vsh and eta_aniso for isotropic models
   if (.not. TRANSVERSE_ISOTROPY) then
      ! in the case of s362iso we want to save the anisotropic constants for the Voigt average
-     if (.not. (REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF .and. ISOTROPIC_3D_MANTLE)) then
+     if (.not. (REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF .and. MODEL_3D_MANTLE_PERTUBATIONS)) then
       vpv = vp
       vph = vp
       vsv = vs
@@ -431,25 +432,22 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine meshfem3D_models_get3Dmntl_val(iregion_code,r_prem,rho,dvp, &
+  subroutine meshfem3D_models_get3Dmntl_val(iregion_code,r_prem,rho, &
                               vpv,vph,vsv,vsh,eta_aniso, &
                               RCMB,R670,RMOHO, &
                               xmesh,ymesh,zmesh,r, &
                               c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
-                              c33,c34,c35,c36,c44,c45,c46,c55,c56,c66 &
-#ifdef USE_CEM
-                              ,ispec,i,j,k &
-#endif
-                              )
+                              c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
+                              ispec,i,j,k)
 
   use meshfem3D_models_par
 
   implicit none
 
   integer, intent (in) :: iregion_code
-  double precision :: r_prem
-  double precision :: rho,dvp
-  double precision :: vpv,vph,vsv,vsh,eta_aniso
+  double precision, intent(in) :: r_prem
+  double precision, intent(out) :: rho
+  double precision, intent(out) :: vpv,vph,vsv,vsh,eta_aniso
 
   double precision :: RCMB,R670,RMOHO
   double precision :: xmesh,ymesh,zmesh,r
@@ -458,14 +456,12 @@
   double precision :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33, &
                    c34,c35,c36,c44,c45,c46,c55,c56,c66
 
-#ifdef USE_CEM
-  ! CEM needs these to determine iglob
+  ! heterogen model and CEM needs these (CEM to determine iglob)
   integer, intent (in) :: ispec, i, j, k
-#endif
 
   ! local parameters
   double precision :: r_used,r_dummy,theta,phi
-  double precision :: dvs,drho,vp,vs
+  double precision :: dvp,dvs,drho,vp,vs
   double precision :: dvpv,dvph,dvsv,dvsh,deta
   double precision :: lat,lon
 
@@ -515,7 +511,7 @@
   !
   ! note: in general, models here make use of perturbation values with respect to their
   !          corresponding 1-D reference models
-  if (ISOTROPIC_3D_MANTLE .and. r_prem > RCMB/R_EARTH .and. .not. suppress_mantle_extension) then
+  if (MODEL_3D_MANTLE_PERTUBATIONS .and. r_prem > RCMB/R_EARTH .and. .not. suppress_mantle_extension) then
 
     ! extend 3-D mantle model above the Moho to the surface before adding the crust
     if (r_prem > RCMB/R_EARTH .and. r_prem < RMOHO/R_EARTH) then
@@ -696,13 +692,13 @@
 
     end select ! THREE_D_MODEL
 
-  endif ! ISOTROPIC_3D_MANTLE
+  endif ! MODEL_3D_MANTLE_PERTUBATIONS
 
   ! heterogen model
   if (HETEROGEN_3D_MANTLE .and. .not. suppress_mantle_extension) then
     call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_used,theta,phi)
     call reduce(theta,phi)
-    call model_heterogen_mantle(r_used,theta,phi,dvs,dvp,drho)
+    call model_heterogen_mantle(ispec,i,j,k,r_used,theta,phi,dvs,dvp,drho)
     vpv = vpv*(1.0d0+dvp)
     vph = vpv*(1.0d0+dvp)
     vsv = vsv*(1.0d0+dvs)
@@ -728,6 +724,7 @@
           r_used = RMOHO/R_EARTH
         endif
       endif
+
       call model_aniso_mantle(r_used,theta,phi,rho,c11,c12,c13,c14,c15,c16, &
                               c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
 
@@ -787,10 +784,10 @@
 !
 
   subroutine meshfem3D_models_get3Dcrust_val(iregion_code,xmesh,ymesh,zmesh,r, &
-                              vpv,vph,vsv,vsh,rho,eta_aniso,dvp, &
-                              c11,c12,c13,c14,c15,c16,c22,c23,c24,c25, &
-                              c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
-                              elem_in_crust,moho)
+                                             vpv,vph,vsv,vsh,rho,eta_aniso, &
+                                             c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+                                             c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
+                                             elem_in_crust,moho)
 
 ! returns velocities and density for points in 3D crustal region
 
@@ -801,11 +798,11 @@
   integer,intent(in) :: iregion_code
   ! note: r is the exact radius (and not r_prem with tolerance)
   double precision,intent(in) :: xmesh,ymesh,zmesh,r
-  double precision,intent(inout) :: vpv,vph,vsv,vsh,rho,eta_aniso,dvp
+  double precision,intent(inout) :: vpv,vph,vsv,vsh,rho,eta_aniso
 
   ! the 21 coefficients for an anisotropic medium in reduced notation
-  double precision,intent(inout) :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33, &
-                                    c34,c35,c36,c44,c45,c46,c55,c56,c66
+  double precision,intent(inout) :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+                                    c33,c34,c35,c36,c44,c45,c46,c55,c56,c66
 
   logical,intent(in) :: elem_in_crust
   double precision,intent(out) :: moho
@@ -816,7 +813,7 @@
   double precision :: vpvc,vphc,vsvc,vshc,etac
   double precision :: vpc,vsc,rhoc !vpc_eu
 
-  double precision :: dvs
+  double precision :: dvs,dvp
   logical :: found_crust,is_inside_region
 
   ! checks if anything to do, that is, there is nothing to do
@@ -1144,7 +1141,10 @@
 !
 
 
-  subroutine meshfem3D_models_impose_val(vpv,vph,vsv,vsh,rho,dvp,eta_aniso,iregion_code,ispec,i,j,k)
+  subroutine meshfem3D_models_impose_val(iregion_code,xmesh,ymesh,zmesh,ispec,i,j,k, &
+                                         vpv,vph,vsv,vsh,rho,eta_aniso, &
+                                         c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+                                         c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
 
 ! overwrites values with updated model values (from iteration step) here, given at all GLL points
 
@@ -1152,16 +1152,25 @@
 
   implicit none
 
-  double precision,intent(inout) :: vpv,vph,vsv,vsh,rho,dvp,eta_aniso
   integer,intent(in) :: iregion_code,ispec,i,j,k
+  double precision,intent(in) :: xmesh,ymesh,zmesh
+
+  double precision,intent(inout) :: vpv,vph,vsv,vsh,rho,eta_aniso
+  double precision,intent(inout) :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+                                    c33,c34,c35,c36,c44,c45,c46,c55,c56,c66
+
 
   ! checks if anything to do
   if (.not. MODEL_GLL) return
+
   ! only valid for crust/mantle region at the moment...
   if (iregion_code /= IREGION_CRUST_MANTLE) return
 
   ! over-impose values from model GLL values
-  call model_gll_impose_val(vpv,vph,vsv,vsh,rho,dvp,eta_aniso,ispec,i,j,k)
+  call model_gll_impose_val(xmesh,ymesh,zmesh,ispec,i,j,k, &
+                            vpv,vph,vsv,vsh,rho,eta_aniso, &
+                            c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+                            c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
 
   end subroutine meshfem3D_models_impose_val
 

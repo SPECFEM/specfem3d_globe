@@ -47,10 +47,10 @@
   use constants
 
   use shared_parameters, only: MODEL, &
-    REFERENCE_1D_MODEL,REFERENCE_CRUSTAL_MODEL,THREE_D_MODEL,MODEL_GLL, &
+    REFERENCE_1D_MODEL,REFERENCE_CRUSTAL_MODEL,THREE_D_MODEL,MODEL_GLL,MODEL_GLL_TYPE, &
     ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ATTENUATION_3D, &
     CASE_3D,CRUSTAL,HETEROGEN_3D_MANTLE,HONOR_1D_SPHERICAL_MOHO, &
-    ISOTROPIC_3D_MANTLE,ONE_CRUST,TRANSVERSE_ISOTROPY, &
+    MODEL_3D_MANTLE_PERTUBATIONS,ONE_CRUST,TRANSVERSE_ISOTROPY, &
     OCEANS,TOPOGRAPHY, &
     CEM_REQUEST,CEM_ACCEPT
 
@@ -201,9 +201,10 @@
 
   ! uses no 3D heterogeneity mantle by default
   HETEROGEN_3D_MANTLE = .false.
-  ISOTROPIC_3D_MANTLE = .false.
+  MODEL_3D_MANTLE_PERTUBATIONS = .false.
   HONOR_1D_SPHERICAL_MOHO = .false.
   MODEL_GLL = .false.
+  MODEL_GLL_TYPE = 0
 
   ! no CEM by default
   CEM_REQUEST = .false.
@@ -272,7 +273,7 @@
   case ('s20rts')
     CASE_3D = .true.
     CRUSTAL = .true.
-    ISOTROPIC_3D_MANTLE = .true.
+    MODEL_3D_MANTLE_PERTUBATIONS = .true.
     ONE_CRUST = .true.
     THREE_D_MODEL = THREE_D_MODEL_S20RTS
     TRANSVERSE_ISOTROPY = .true.
@@ -280,7 +281,7 @@
   case ('s40rts')
     CASE_3D = .true.
     CRUSTAL = .true.
-    ISOTROPIC_3D_MANTLE = .true.
+    MODEL_3D_MANTLE_PERTUBATIONS = .true.
     ONE_CRUST = .true.
     THREE_D_MODEL = THREE_D_MODEL_S40RTS
     TRANSVERSE_ISOTROPY = .true.
@@ -293,7 +294,7 @@
     !ATTENUATION_3D = .true.
     CASE_3D = .true.
     CRUSTAL = .true.
-    ISOTROPIC_3D_MANTLE = .true.
+    MODEL_3D_MANTLE_PERTUBATIONS = .true.
     ONE_CRUST = .true.
     THREE_D_MODEL = THREE_D_MODEL_MANTLE_SH
     TRANSVERSE_ISOTROPY = .true.
@@ -301,7 +302,7 @@
   case ('sea99_jp3d1994')
     CASE_3D = .true.
     CRUSTAL = .true.
-    ISOTROPIC_3D_MANTLE = .true.
+    MODEL_3D_MANTLE_PERTUBATIONS = .true.
     ONE_CRUST = .true.
     REFERENCE_1D_MODEL = REFERENCE_MODEL_SEA1D
     THREE_D_MODEL = THREE_D_MODEL_SEA99_JP3D
@@ -309,7 +310,7 @@
   case ('sea99')
     CASE_3D = .true.
     CRUSTAL = .true.
-    ISOTROPIC_3D_MANTLE = .true.
+    MODEL_3D_MANTLE_PERTUBATIONS = .true.
     ONE_CRUST = .true.
     REFERENCE_1D_MODEL = REFERENCE_MODEL_SEA1D
     THREE_D_MODEL = THREE_D_MODEL_SEA99
@@ -317,7 +318,7 @@
   case ('jp3d1994')
     CASE_3D = .true.
     CRUSTAL = .true.
-    ISOTROPIC_3D_MANTLE = .true.
+    MODEL_3D_MANTLE_PERTUBATIONS = .true.
     ONE_CRUST = .true.
     REFERENCE_1D_MODEL = REFERENCE_MODEL_JP1D
     THREE_D_MODEL = THREE_D_MODEL_JP3D
@@ -325,7 +326,7 @@
   case ('s362ani')
     CASE_3D = .true.
     CRUSTAL = .true.
-    ISOTROPIC_3D_MANTLE = .true.
+    MODEL_3D_MANTLE_PERTUBATIONS = .true.
     ONE_CRUST = .true.
     REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
     THREE_D_MODEL = THREE_D_MODEL_S362ANI
@@ -334,7 +335,7 @@
   case ('s362iso')
     CASE_3D = .true.
     CRUSTAL = .true.
-    ISOTROPIC_3D_MANTLE = .true.
+    MODEL_3D_MANTLE_PERTUBATIONS = .true.
     ONE_CRUST = .true.
     REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
     THREE_D_MODEL = THREE_D_MODEL_S362ANI
@@ -342,7 +343,7 @@
   case ('s362wmani')
     CASE_3D = .true.
     CRUSTAL = .true.
-    ISOTROPIC_3D_MANTLE = .true.
+    MODEL_3D_MANTLE_PERTUBATIONS = .true.
     ONE_CRUST = .true.
     REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
     THREE_D_MODEL = THREE_D_MODEL_S362WMANI
@@ -352,7 +353,7 @@
     CASE_3D = .true.
     CRUSTAL = .true.
     TRANSVERSE_ISOTROPY = .true.
-    ISOTROPIC_3D_MANTLE = .true.
+    MODEL_3D_MANTLE_PERTUBATIONS = .true.
     ONE_CRUST = .true.
     THREE_D_MODEL = THREE_D_MODEL_S362ANI_PREM
 
@@ -360,7 +361,7 @@
     ATTENUATION_3D = .true.
     CASE_3D = .true.
     CRUSTAL = .true.
-    ISOTROPIC_3D_MANTLE = .true.
+    MODEL_3D_MANTLE_PERTUBATIONS = .true.
     ONE_CRUST = .true.
     REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
     THREE_D_MODEL = THREE_D_MODEL_S362ANI
@@ -370,7 +371,7 @@
     ATTENUATION_3D = .true.
     CASE_3D = .true.
     CRUSTAL = .true.
-    ISOTROPIC_3D_MANTLE = .true.
+    MODEL_3D_MANTLE_PERTUBATIONS = .true.
     ONE_CRUST = .true.
     REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
     THREE_D_MODEL = THREE_D_MODEL_S362ANI
@@ -378,7 +379,7 @@
   case ('s29ea')
     CASE_3D = .true.
     CRUSTAL = .true.
-    ISOTROPIC_3D_MANTLE = .true.
+    MODEL_3D_MANTLE_PERTUBATIONS = .true.
     ONE_CRUST = .true.
     REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
     THREE_D_MODEL = THREE_D_MODEL_S29EA
@@ -388,7 +389,7 @@
     ! anisotropic perturbations to PREM
     CASE_3D = .true.
     CRUSTAL = .true.
-    ISOTROPIC_3D_MANTLE = .true.
+    MODEL_3D_MANTLE_PERTUBATIONS = .true.
     ONE_CRUST = .true.
     THREE_D_MODEL = THREE_D_MODEL_SGLOBE
     TRANSVERSE_ISOTROPY = .true.
@@ -397,7 +398,7 @@
     ! isotropic perturbations to PREM
     CASE_3D = .true.
     CRUSTAL = .true.
-    ISOTROPIC_3D_MANTLE = .true.
+    MODEL_3D_MANTLE_PERTUBATIONS = .true.
     ONE_CRUST = .true.
     THREE_D_MODEL = THREE_D_MODEL_SGLOBE_ISO
     TRANSVERSE_ISOTROPY = .true. ! still based on transversely isotropic PREM
@@ -420,8 +421,8 @@
   case ('heterogen')
     CASE_3D = .true.
     CRUSTAL = .true.
-    HETEROGEN_3D_MANTLE = .true.
-    ISOTROPIC_3D_MANTLE = .true.
+    HETEROGEN_3D_MANTLE = .true.  ! adds additional (dvp,dvs,drho) perturbations on top of reference 3D model
+    MODEL_3D_MANTLE_PERTUBATIONS = .true.
     ONE_CRUST = .true.
     REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
     THREE_D_MODEL = THREE_D_MODEL_S362ANI
@@ -450,31 +451,61 @@
     ! superimposed based on isotropic-prem
     CASE_3D = .true.
     CRUSTAL = .true.
-    ISOTROPIC_3D_MANTLE = .true.
+    MODEL_3D_MANTLE_PERTUBATIONS = .true.
     ONE_CRUST = .true.
     THREE_D_MODEL = THREE_D_MODEL_PPM
     TRANSVERSE_ISOTROPY = .true. ! to use transverse-isotropic prem
 
-  case ('gll')
-    ! model will be given on local basis, at all GLL points,
+  case ('gll','gll_tiso')
+    ! default GLL model:
+    ! will be given on local basis, at all GLL points,
     ! as from meshfem3d output from routine save_arrays_solver()
     !
+    ! transverse_isotropic should match the one from the reference model;
     ! reference model set in constants.h: GLL_REFERENCE_MODEL and GLL_REFERENCE_1D_MODEL
     CASE_3D = .true.
     CRUSTAL = .true.
-    ISOTROPIC_3D_MANTLE = .true.
+    MODEL_3D_MANTLE_PERTUBATIONS = .true.
     ONE_CRUST = .true.
     MODEL_GLL = .true.
+    MODEL_GLL_TYPE = 2 ! input model files are tiso
     REFERENCE_1D_MODEL = GLL_REFERENCE_1D_MODEL
     THREE_D_MODEL = THREE_D_MODEL_GLL
-    TRANSVERSE_ISOTROPY = .true.
+    TRANSVERSE_ISOTROPY = .true.  ! same as reference model
     ! note: after call to this routine we will reset
     !       THREE_D_MODEL = THREE_D_MODEL_S29EA
     !       to initialize 3D mesh structure based on the initial 3D model (like 420/660 topography,..)
+
+  case ('gll_iso')
+    ! isotropic GLL model
+    CASE_3D = .true.
+    CRUSTAL = .true.
+    MODEL_3D_MANTLE_PERTUBATIONS = .true.
+    ONE_CRUST = .true.
+    MODEL_GLL = .true.
+    MODEL_GLL_TYPE = 1 ! input model files are iso
+    REFERENCE_1D_MODEL = GLL_REFERENCE_1D_MODEL
+    THREE_D_MODEL = THREE_D_MODEL_GLL
+    TRANSVERSE_ISOTROPY = .true.  ! same as reference model
+    !TRANSVERSE_ISOTROPY = .false.  ! forces earth model to be considered isotropic, not tiso
+
+  case ('gll_azi')
+    ! azimuthal anisotropy GLL model
+    CASE_3D = .true.
+    CRUSTAL = .true.
+    MODEL_3D_MANTLE_PERTUBATIONS = .true.    ! to read in 3D reference model setup (like s362ani)
+    ANISOTROPIC_3D_MANTLE = .true.  ! to treat mantle elements as fully anisotropic in solver
+    ONE_CRUST = .true.
+    MODEL_GLL = .true.
+    MODEL_GLL_TYPE = 3 ! azimuthal type
+    REFERENCE_1D_MODEL = GLL_REFERENCE_1D_MODEL
+    THREE_D_MODEL = THREE_D_MODEL_GLL
+    TRANSVERSE_ISOTROPY = .true.    ! to include original tiso perturbations from reference model
+
   case ('gapp2')
     CASE_3D = .true.
     CRUSTAL = .true.
-    ISOTROPIC_3D_MANTLE = .true.
+    MODEL_3D_MANTLE_PERTUBATIONS = .true.
     ONE_CRUST = .true.
     REFERENCE_1D_MODEL = REFERENCE_MODEL_PREM
     THREE_D_MODEL = THREE_D_MODEL_GAPP2

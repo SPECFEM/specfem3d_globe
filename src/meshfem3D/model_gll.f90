@@ -41,17 +41,25 @@
   type model_gll_variables
     sequence
     ! tomographic iteration model on GLL points
-    double precision :: scale_velocity,scale_density
+    double precision :: scale_velocity,scale_density,scale_GPa
+
     ! isotropic model
     real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: vs_new,vp_new,rho_new
+
     ! transverse isotropic model
     real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: vsv_new,vpv_new, &
-      vsh_new,vph_new,eta_new
+                                                             vsh_new,vph_new,eta_new
+    ! azimuthal anisotropy
+    real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: Gc_prime_new,Gs_prime_new
+
     ! number of elements (crust/mantle elements)
     integer :: nspec
     integer :: dummy_pad ! padding 4 bytes to align the structure
   end type model_gll_variables
   type (model_gll_variables) :: MGLL_V
+
+  ! model GLL type: 1 == iso, 2 == tiso, 3 == azi
+  integer :: MGLL_TYPE
 
   end module model_gll_par
 
@@ -65,7 +73,8 @@
 
   use constants
 
-  use shared_parameters, only: TRANSVERSE_ISOTROPY,NSPEC_REGIONS,ADIOS_FOR_MODELS,NPROCTOT,NCHUNKS
+  use shared_parameters, only: NSPEC_REGIONS,ADIOS_FOR_MODELS,NPROCTOT,NCHUNKS, &
+                               MODEL,MODEL_GLL_TYPE
 
   use model_gll_par
 
@@ -76,12 +85,15 @@
   real(kind=CUSTOM_REAL) :: minvalue,maxvalue,min_all,max_all
   integer :: ier
 
+  ! sets type (iso,tiso,azi)
+  MGLL_TYPE = MODEL_GLL_TYPE
+
   ! sets number of elements (crust/mantle region)
   MGLL_V%nspec = NSPEC_REGIONS(IREGION_CRUST_MANTLE)
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*) 'broadcast model: GLL'
+    write(IMAIN,*) 'broadcast model: ',trim(MODEL)
     write(IMAIN,*) 'setup:'
     write(IMAIN,*) '  NCHUNKS           : ',NCHUNKS
     write(IMAIN,*) '  NPROC total       : ',NPROCTOT
@@ -90,16 +102,21 @@
     call flush_IMAIN()
   endif
 
+  ! saftey check
+  if (MGLL_TYPE < 1 .or. MGLL_TYPE > 3) &
+    stop 'Invalid MODEL_GLL_TYPE, please use 1(iso), 2(tiso) or 3(azi) in get_model_parameters.F90 setup'
+
   ! allocates arrays
   ! differs for isotropic model or transverse isotropic models
-  if (.not. TRANSVERSE_ISOTROPY) then
+  select case(MGLL_TYPE)
+  case (1)
     ! isotropic model
     allocate( MGLL_V%vp_new(NGLLX,NGLLY,NGLLZ,MGLL_V%nspec), &
               MGLL_V%vs_new(NGLLX,NGLLY,NGLLZ,MGLL_V%nspec), stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating vp_new,.. arrays')
     MGLL_V%vp_new(:,:,:,:) = 0.0_CUSTOM_REAL
     MGLL_V%vs_new(:,:,:,:) = 0.0_CUSTOM_REAL
-  else
+  case (2)
     ! transverse isotropic model
     allocate( MGLL_V%vpv_new(NGLLX,NGLLY,NGLLZ,MGLL_V%nspec), &
               MGLL_V%vph_new(NGLLX,NGLLY,NGLLZ,MGLL_V%nspec), &
@@ -112,7 +129,28 @@
     MGLL_V%vsv_new(:,:,:,:) = 0.0_CUSTOM_REAL
     MGLL_V%vsh_new(:,:,:,:) = 0.0_CUSTOM_REAL
     MGLL_V%eta_new(:,:,:,:) = 0.0_CUSTOM_REAL
-  endif
+  case (3)
+    ! azimuthally anisotropic model
+    allocate( MGLL_V%vpv_new(NGLLX,NGLLY,NGLLZ,MGLL_V%nspec), &
+              MGLL_V%vph_new(NGLLX,NGLLY,NGLLZ,MGLL_V%nspec), &
+              MGLL_V%vsv_new(NGLLX,NGLLY,NGLLZ,MGLL_V%nspec), &
+              MGLL_V%vsh_new(NGLLX,NGLLY,NGLLZ,MGLL_V%nspec), &
+              MGLL_V%eta_new(NGLLX,NGLLY,NGLLZ,MGLL_V%nspec), stat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating vpv_new,.. arrays')
+    MGLL_V%vpv_new(:,:,:,:) = 0.0_CUSTOM_REAL
+    MGLL_V%vph_new(:,:,:,:) = 0.0_CUSTOM_REAL
+    MGLL_V%vsv_new(:,:,:,:) = 0.0_CUSTOM_REAL
+    MGLL_V%vsh_new(:,:,:,:) = 0.0_CUSTOM_REAL
+    MGLL_V%eta_new(:,:,:,:) = 0.0_CUSTOM_REAL
+    allocate( MGLL_V%Gc_prime_new(NGLLX,NGLLY,NGLLZ,MGLL_V%nspec), &
+              MGLL_V%Gs_prime_new(NGLLX,NGLLY,NGLLZ,MGLL_V%nspec), stat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating vpv_new,.. arrays')
+    MGLL_V%Gc_prime_new(:,:,:,:) = 0.0_CUSTOM_REAL
+    MGLL_V%Gs_prime_new(:,:,:,:) = 0.0_CUSTOM_REAL
+  case default
+    stop 'Invalid MGLL_TYPE, type not implemented yet'
+  end select
+
   allocate( MGLL_V%rho_new(NGLLX,NGLLY,NGLLZ,MGLL_V%nspec), stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating rho_new,.. arrays')
   MGLL_V%rho_new(:,:,:,:) = 0.0_CUSTOM_REAL
@@ -124,108 +162,72 @@
     call read_gll_model(myrank)
   endif
 
-  ! checks velocity range
-  if (.not. TRANSVERSE_ISOTROPY) then
-
+  ! outputs velocity range
+  select case(MGLL_TYPE)
+  case (1)
     ! isotropic model
     if (myrank == 0) then
       write(IMAIN,*)'model GLL: isotropic'
       call flush_IMAIN()
     endif
-
     ! Vs
-    maxvalue = maxval( MGLL_V%vs_new )
-    minvalue = minval( MGLL_V%vs_new )
-    call max_all_cr(maxvalue, max_all)
-    call min_all_cr(minvalue, min_all)
-    if (myrank == 0) then
-      write(IMAIN,*) '  vs new min/max: ',min_all,max_all
-      call flush_IMAIN()
-    endif
+    call print_min_max_all(MGLL_V%vs_new,"vs new")
     ! Vp
-    maxvalue = maxval( MGLL_V%vp_new )
-    minvalue = minval( MGLL_V%vp_new )
-    call max_all_cr(maxvalue, max_all)
-    call min_all_cr(minvalue, min_all)
-    if (myrank == 0) then
-      write(IMAIN,*) '  vp new min/max: ',min_all,max_all
-      call flush_IMAIN()
-    endif
-    ! density
-    maxvalue = maxval( MGLL_V%rho_new )
-    minvalue = minval( MGLL_V%rho_new )
-    call max_all_cr(maxvalue, max_all)
-    call min_all_cr(minvalue, min_all)
-    if (myrank == 0) then
-      write(IMAIN,*) '  rho new min/max: ',min_all,max_all
-      write(IMAIN,*)
-      call flush_IMAIN()
-    endif
+    call print_min_max_all(MGLL_V%vp_new,"vp new")
 
-  else
-
-    ! transverse isotropic model
+  case (2)
+    ! transverse
     if (myrank == 0) then
+      ! transverse isotropic model
       write(IMAIN,*)'model GLL: transverse isotropic'
       call flush_IMAIN()
     endif
-
     ! Vsv
-    maxvalue = maxval( MGLL_V%vsv_new )
-    minvalue = minval( MGLL_V%vsv_new )
-    call max_all_cr(maxvalue, max_all)
-    call min_all_cr(minvalue, min_all)
-    if (myrank == 0) then
-      write(IMAIN,*) '  vsv new min/max: ',min_all,max_all
-      call flush_IMAIN()
-    endif
+    call print_min_max_all(MGLL_V%vsv_new,"vsv new")
     ! Vsh
-    maxvalue = maxval( MGLL_V%vsh_new )
-    minvalue = minval( MGLL_V%vsh_new )
-    call max_all_cr(maxvalue, max_all)
-    call min_all_cr(minvalue, min_all)
-    if (myrank == 0) then
-      write(IMAIN,*) '  vsh new min/max: ',min_all,max_all
-      call flush_IMAIN()
-    endif
+    call print_min_max_all(MGLL_V%vsh_new,"vsh new")
     ! Vpv
-    maxvalue = maxval( MGLL_V%vpv_new )
-    minvalue = minval( MGLL_V%vpv_new )
-    call max_all_cr(maxvalue, max_all)
-    call min_all_cr(minvalue, min_all)
-    if (myrank == 0) then
-      write(IMAIN,*) '  vpv new min/max: ',min_all,max_all
-      call flush_IMAIN()
-    endif
+    call print_min_max_all(MGLL_V%vpv_new,"vpv new")
     ! Vph
-    maxvalue = maxval( MGLL_V%vph_new )
-    minvalue = minval( MGLL_V%vph_new )
-    call max_all_cr(maxvalue, max_all)
-    call min_all_cr(minvalue, min_all)
-    if (myrank == 0) then
-      write(IMAIN,*) '  vph new min/max: ',min_all,max_all
-      call flush_IMAIN()
-    endif
-    ! density
-    maxvalue = maxval( MGLL_V%rho_new )
-    minvalue = minval( MGLL_V%rho_new )
-    call max_all_cr(maxvalue, max_all)
-    call min_all_cr(minvalue, min_all)
-    if (myrank == 0) then
-      write(IMAIN,*) '  rho new min/max: ',min_all,max_all
-      call flush_IMAIN()
-    endif
+    call print_min_max_all(MGLL_V%vph_new,"vph new")
     ! eta
-    maxvalue = maxval( MGLL_V%eta_new )
-    minvalue = minval( MGLL_V%eta_new )
-    call max_all_cr(maxvalue, max_all)
-    call min_all_cr(minvalue, min_all)
+    call print_min_max_all(MGLL_V%eta_new,"eta new")
+
+  case (3)
+    ! azimuthal model
     if (myrank == 0) then
-      write(IMAIN,*) '  eta new min/max: ',min_all,max_all
-      write(IMAIN,*)
+      ! azimuthal anisotropic model
+      write(IMAIN,*)'model GLL: azimuthal anisotropic'
       call flush_IMAIN()
     endif
+    ! Vsv
+    call print_min_max_all(MGLL_V%vsv_new,"vsv new")
+    ! Vsh
+    call print_min_max_all(MGLL_V%vsh_new,"vsh new")
+    ! Vpv
+    call print_min_max_all(MGLL_V%vpv_new,"vpv new")
+    ! Vph
+    call print_min_max_all(MGLL_V%vph_new,"vph new")
+    ! eta
+    call print_min_max_all(MGLL_V%eta_new,"eta new")
+    ! Gc_prime
+    call print_min_max_all(MGLL_V%Gc_prime_new,"Gc_prime new")
+    ! Gs_prime
+    call print_min_max_all(MGLL_V%Gs_prime_new,"Gs_prime new")
 
+  case default
+    stop 'New MGLL_TYPE, velocity range check not implemented yet'
+  end select
+
+  ! density
+  maxvalue = maxval( MGLL_V%rho_new )
+  minvalue = minval( MGLL_V%rho_new )
+  call max_all_cr(maxvalue, max_all)
+  call min_all_cr(minvalue, min_all)
+  if (myrank == 0) then
+    write(IMAIN,*) '  rho new min/max: ',min_all,max_all
+    write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   ! non-dimensionalizes model values
@@ -234,14 +236,17 @@
   ! (model velocities must be given as km/s)
   scaleval = dsqrt(PI*GRAV*RHOAV)
   MGLL_V%scale_velocity = 1000.0d0/(R_EARTH*scaleval)
-  MGLL_V%scale_density =  1000.0d0/RHOAV
+  MGLL_V%scale_density  =  1000.0d0/RHOAV
+  ! non-dimensionalize the elastic coefficients using the scale of GPa--[g/cm^3][(km/s)^2]
+  MGLL_V%scale_GPa      = 1.d0/( (RHOAV/1000.d0)*((R_EARTH*scaleval/1000.d0)**2) )  ! equal to scale_density * scale_velocity**2
 
-  if (.not. TRANSVERSE_ISOTROPY) then
+  select case(MGLL_TYPE)
+  case (1)
     ! non-dimensionalize isotropic values
     MGLL_V%vp_new = MGLL_V%vp_new * MGLL_V%scale_velocity
     MGLL_V%vs_new = MGLL_V%vs_new * MGLL_V%scale_velocity
     MGLL_V%rho_new = MGLL_V%rho_new * MGLL_V%scale_density
-  else
+  case (2)
     ! non-dimensionalize
     ! transverse isotropic model
     MGLL_V%vpv_new = MGLL_V%vpv_new * MGLL_V%scale_velocity
@@ -250,8 +255,42 @@
     MGLL_V%vsh_new = MGLL_V%vsh_new * MGLL_V%scale_velocity
     MGLL_V%rho_new = MGLL_V%rho_new * MGLL_V%scale_density
     ! eta is already non-dimensional
-  endif
+  case (3)
+    ! azimuthal model
+    MGLL_V%vpv_new = MGLL_V%vpv_new * MGLL_V%scale_velocity
+    MGLL_V%vph_new = MGLL_V%vph_new * MGLL_V%scale_velocity
+    MGLL_V%vsv_new = MGLL_V%vsv_new * MGLL_V%scale_velocity
+    MGLL_V%vsh_new = MGLL_V%vsh_new * MGLL_V%scale_velocity
+    MGLL_V%rho_new = MGLL_V%rho_new * MGLL_V%scale_density
+    MGLL_V%Gc_prime_new = MGLL_V%Gc_prime_new * MGLL_V%scale_GPa  ! moduli in GPa
+    MGLL_V%Gs_prime_new = MGLL_V%Gs_prime_new * MGLL_V%scale_GPa
+    ! eta is already non-dimensional
+  end select
   call synchronize_all()
+
+  contains
+
+    subroutine print_min_max_all(array,name)
+
+    implicit none
+
+    real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,MGLL_V%nspec),intent(in) :: array
+    character(len=*),intent(in) :: name
+    ! local parameters
+    real(kind=CUSTOM_REAL) :: minvalue,maxvalue,min_all,max_all
+
+    maxvalue = maxval( array )
+    minvalue = minval( array )
+    call max_all_cr(maxvalue, max_all)
+    call min_all_cr(minvalue, min_all)
+
+    if (myrank == 0) then
+      write(IMAIN,*) '  '//trim(name)//' min/max: ',min_all,max_all
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
+
+    end subroutine
 
   end subroutine model_gll_broadcast
 
@@ -356,7 +395,6 @@
   subroutine read_gll_modelfiles(rank)
 
   use constants, only: MAX_STRING_LEN,IMAIN,IIN,PATHNAME_GLL_modeldir
-  use shared_parameters, only: TRANSVERSE_ISOTROPY
 
   use model_gll_par
 
@@ -374,13 +412,14 @@
   write(prname,'(a,i6.6,a)') PATHNAME_GLL_modeldir(1:len_trim(PATHNAME_GLL_modeldir))//'proc',rank,'_reg1_'
 
   ! reads in model for each partition
-  if (.not. TRANSVERSE_ISOTROPY) then
+  select case (MGLL_TYPE)
+  case (1)
+    ! isotropic model
     if (rank == 0) then
       write(IMAIN,*)'  reads isotropic model values: vp,vs,rho'
       call flush_IMAIN()
     endif
 
-    ! isotropic model
     ! vp mesh
     open(unit=IIN,file=prname(1:len_trim(prname))//'vp.bin', &
           status='old',action='read',form='unformatted',iostat=ier)
@@ -401,14 +440,14 @@
     read(IIN) MGLL_V%vs_new(:,:,:,1:MGLL_V%nspec)
     close(IIN)
 
-  else
+  case (2)
+    ! transverse isotropic model
     if (rank == 0) then
       write(IMAIN,*)'  reads transversely isotropic model values: vpv,vph,vsv,vsh,eta,rho'
       call flush_IMAIN()
     endif
 
-    ! transverse isotropic model
-    ! vp mesh
+    ! vpv/vph mesh
     open(unit=IIN,file=prname(1:len_trim(prname))//'vpv.bin', &
           status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
@@ -427,7 +466,7 @@
     read(IIN) MGLL_V%vph_new(:,:,:,1:MGLL_V%nspec)
     close(IIN)
 
-    ! vs mesh
+    ! vsv/vsh mesh
     open(unit=IIN,file=prname(1:len_trim(prname))//'vsv.bin', &
          status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
@@ -456,7 +495,83 @@
     read(IIN) MGLL_V%eta_new(:,:,:,1:MGLL_V%nspec)
     close(IIN)
 
-  endif
+  case (3)
+    ! azimuthal model
+    if (rank == 0) then
+      write(IMAIN,*)'  reads azimuthal anisotropic model values: vpv,vph,vsv,vsh,eta,Gc_prime,Gs_prime,rho'
+      call flush_IMAIN()
+    endif
+
+    ! vpv/vph mesh
+    open(unit=IIN,file=prname(1:len_trim(prname))//'vpv.bin', &
+          status='old',action='read',form='unformatted',iostat=ier)
+    if (ier /= 0) then
+      write(IMAIN,*) 'Error opening: ',prname(1:len_trim(prname))//'vpv.bin'
+      call exit_MPI(rank,'Error model GLL')
+    endif
+    read(IIN) MGLL_V%vpv_new(:,:,:,1:MGLL_V%nspec)
+    close(IIN)
+
+    open(unit=IIN,file=prname(1:len_trim(prname))//'vph.bin', &
+          status='old',action='read',form='unformatted',iostat=ier)
+    if (ier /= 0) then
+      write(IMAIN,*) 'Error opening: ',prname(1:len_trim(prname))//'vph.bin'
+      call exit_MPI(rank,'Error model GLL')
+    endif
+    read(IIN) MGLL_V%vph_new(:,:,:,1:MGLL_V%nspec)
+    close(IIN)
+
+    ! vsv/vsh mesh
+    open(unit=IIN,file=prname(1:len_trim(prname))//'vsv.bin', &
+         status='old',action='read',form='unformatted',iostat=ier)
+    if (ier /= 0) then
+      print *,'Error opening: ',prname(1:len_trim(prname))//'vsv.bin'
+      call exit_MPI(rank,'Error model GLL')
+    endif
+    read(IIN) MGLL_V%vsv_new(:,:,:,1:MGLL_V%nspec)
+    close(IIN)
+
+    open(unit=IIN,file=prname(1:len_trim(prname))//'vsh.bin', &
+         status='old',action='read',form='unformatted',iostat=ier)
+    if (ier /= 0) then
+      print *,'Error opening: ',prname(1:len_trim(prname))//'vsh.bin'
+      call exit_MPI(rank,'Error model GLL')
+    endif
+    read(IIN) MGLL_V%vsh_new(:,:,:,1:MGLL_V%nspec)
+    close(IIN)
+
+    ! eta mesh
+    open(unit=IIN,file=prname(1:len_trim(prname))//'eta.bin', &
+         status='old',action='read',form='unformatted',iostat=ier)
+    if (ier /= 0) then
+      print *,'Error opening: ',prname(1:len_trim(prname))//'eta.bin'
+      call exit_MPI(rank,'Error model GLL')
+    endif
+    read(IIN) MGLL_V%eta_new(:,:,:,1:MGLL_V%nspec)
+    close(IIN)
+
+    ! Gc_prime
+    open(unit=IIN,file=prname(1:len_trim(prname))//'Gc_prime.bin', &
+         status='old',action='read',form='unformatted',iostat=ier)
+    if (ier /= 0) then
+      print *,'Error opening: ',prname(1:len_trim(prname))//'Gc_prime.bin'
+      call exit_MPI(rank,'Error model GLL')
+    endif
+    read(IIN) MGLL_V%Gc_prime_new(:,:,:,1:MGLL_V%nspec)
+    close(IIN)
+    ! Gs_prime
+    open(unit=IIN,file=prname(1:len_trim(prname))//'Gs_prime.bin', &
+         status='old',action='read',form='unformatted',iostat=ier)
+    if (ier /= 0) then
+      print *,'Error opening: ',prname(1:len_trim(prname))//'Gs_prime.bin'
+      call exit_MPI(rank,'Error model GLL')
+    endif
+    read(IIN) MGLL_V%Gs_prime_new(:,:,:,1:MGLL_V%nspec)
+    close(IIN)
+
+  case default
+    stop 'Invalid MGLL_TYPE, mesh file reading not implemented yet'
+  end select
 
   ! rho mesh
   open(unit=IIN,file=prname(1:len_trim(prname))//'rho.bin', &
@@ -474,32 +589,45 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_gll_impose_val(vpv,vph,vsv,vsh,rho,dvp,eta_aniso,ispec,i,j,k)
+  subroutine model_gll_impose_val(xmesh,ymesh,zmesh,ispec,i,j,k, &
+                                  vpv,vph,vsv,vsh,rho,eta_aniso, &
+                                  c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+                                  c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
 
 ! sets model parameters for specified GLL point (i,j,k,ispec)
 
   use constants, only: myrank
 
-  use shared_parameters, only: TRANSVERSE_ISOTROPY
+  use shared_parameters, only: ANISOTROPIC_3D_MANTLE
 
   use model_gll_par
 
   implicit none
 
-  double precision,intent(inout) :: vpv,vph,vsv,vsh,rho,dvp,eta_aniso
+  double precision,intent(in) :: xmesh,ymesh,zmesh
   integer,intent(in) :: ispec,i,j,k
+
+  double precision,intent(inout) :: vpv,vph,vsv,vsh,rho,eta_aniso
+  double precision,intent(inout) :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+                                    c33,c34,c35,c36,c44,c45,c46,c55,c56,c66
 
   ! local parameters
   double precision :: vp,vs
+  double precision :: Gc_prime,Gs_prime
 
-  ! isotropic model
-  if (.not. TRANSVERSE_ISOTROPY) then
+  ! safety check
+  if (ispec > MGLL_V%nspec) then
+    call exit_MPI(myrank,'model GLL: ispec too big')
+  endif
 
-    !check
-    if (ispec > MGLL_V%nspec) then
-      call exit_MPI(myrank,'model GLL: ispec too big')
-    endif
+  ! initializes
+  Gc_prime = 0.d0
+  Gs_prime = 0.d0
 
+  ! gets model values
+  select case(MGLL_TYPE)
+  case (1)
+    ! isotropic model
     ! takes stored GLL values from file
     ! ( note that these values are non-dimensionalized)
     vp = dble( MGLL_V%vp_new(i,j,k,ispec) )
@@ -514,14 +642,8 @@
     rho = rho
     eta_aniso = 1.0d0
 
-  ! transverse isotropic model
-  else
-
-    !check
-    if (ispec > MGLL_V%nspec) then
-      call exit_MPI(myrank,'model GLL: ispec too big')
-    endif
-
+  case (2)
+    ! transverse model parameters
     ! takes stored GLL values from file
     vph = dble( MGLL_V%vph_new(i,j,k,ispec) )
     vpv = dble( MGLL_V%vpv_new(i,j,k,ispec) )
@@ -530,10 +652,359 @@
     rho = dble( MGLL_V%rho_new(i,j,k,ispec) )
     eta_aniso = dble( MGLL_V%eta_new(i,j,k,ispec) )
 
-  endif
+  case (3)
+    ! azimuthal model
+    vph = dble( MGLL_V%vph_new(i,j,k,ispec) )
+    vpv = dble( MGLL_V%vpv_new(i,j,k,ispec) )
+    vsh = dble( MGLL_V%vsh_new(i,j,k,ispec) )
+    vsv = dble( MGLL_V%vsv_new(i,j,k,ispec) )
+    rho = dble( MGLL_V%rho_new(i,j,k,ispec) )
+    eta_aniso = dble( MGLL_V%eta_new(i,j,k,ispec) )
+    Gc_prime = dble( MGLL_V%Gc_prime_new(i,j,k,ispec) )
+    Gs_prime = dble( MGLL_V%Gs_prime_new(i,j,k,ispec) )
 
-  ! no mantle vp perturbation
-  dvp = 0.0d0
+  case default
+    stop 'Invalid MGLL_TYPE, imposing val not implemented yet'
+  end select
+
+  ! converts to cij parameters
+  if (ANISOTROPIC_3D_MANTLE) then
+      ! parameters need to be converted to cijkl
+      call model_gll_build_cij(xmesh,ymesh,zmesh, &
+                               vph,vpv,vsh,vsv,rho,eta_aniso,Gc_prime,Gs_prime, &
+                               c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+                               c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
+  endif ! ANISOTROPIC_3D_MANTLE
 
   end subroutine model_gll_impose_val
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine model_gll_build_cij(xmesh,ymesh,zmesh, &
+                                 vph,vpv,vsh,vsv,rho,eta_aniso,Gc_prime,Gs_prime, &
+                                 c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+                                 c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
+
+  use constants, only: ZERO
+  use model_gll_par
+
+  implicit none
+  double precision,intent(in) :: xmesh,ymesh,zmesh
+  double precision,intent(in) :: vpv,vph,vsv,vsh,rho,eta_aniso,Gc_prime,Gs_prime
+
+  double precision,intent(inout) :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+                                    c33,c34,c35,c36,c44,c45,c46,c55,c56,c66
+
+  ! local parameters
+  double precision:: d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26, &
+                     d33,d34,d35,d36,d44,d45,d46,d55,d56,d66
+  double precision:: A,C,L,N,F,Gc,Gs,Jc,Js,Kc,Ks,Mc,Ms,Bc,Bs,Hc,Hs,Dc,Ds,Ec,Es
+  double precision :: r,theta,phi
+
+  ! initializes
+  d11 = ZERO
+  d12 = ZERO
+  d13 = ZERO
+  d14 = ZERO
+  d15 = ZERO
+  d16 = ZERO
+  d22 = ZERO
+  d23 = ZERO
+  d24 = ZERO
+  d25 = ZERO
+  d26 = ZERO
+  d33 = ZERO
+  d34 = ZERO
+  d35 = ZERO
+  d36 = ZERO
+  d44 = ZERO
+  d45 = ZERO
+  d46 = ZERO
+  d55 = ZERO
+  d56 = ZERO
+  d66 = ZERO
+
+  A = ZERO
+  C = ZERO
+  L = ZERO
+  N = ZERO
+  F = ZERO
+
+  Gc = ZERO
+  Gs = ZERO
+  Jc = ZERO
+  Js = ZERO
+  Kc = ZERO
+  Ks = ZERO
+  Mc = ZERO
+  Ms = ZERO
+  Bc = ZERO
+  Bs = ZERO
+  Hc = ZERO
+  Hs = ZERO
+  Dc = ZERO
+  Ds = ZERO
+  Ec = ZERO
+  Es = ZERO
+
+  ! Love parameterization
+  A = rho * vph**2
+  C = rho * vpv**2
+  L = rho * vsv**2
+  N = rho * vsh**2
+  F = eta_aniso * (A - 2.d0 * L)
+
+  select case (MGLL_TYPE)
+  case (1,2)
+    ! anisotropy based on tiso parameters
+    !
+    !! if equivalent with an isotropic tensor
+    ! Lame parameters: mu = rho * vp**2
+    !                  lambda = rho * (vp**2 - vs**2)
+    !            then: C11 = C22 = C33 = lambda + 2mu
+    !                  C12 = C13 = C23 = lambda
+    !                  C44 = C55 = C66 = mu
+    !
+    !c11 = rho * vpv*vpv                  ! lambda + 2 mu
+    !c12 = rho * (vpv*vpv - 2.d0*vsv*vsv) ! lambda
+    !c13 = c12                            ! lambda
+    !c14 = 0.d0
+    !c15 = 0.d0
+    !c16 = 0.d0
+    !c22 = c11                            ! lambda + 2 mu
+    !c23 = c12                            ! lambda
+    !c24 = 0.d0
+    !c25 = 0.d0
+    !c26 = 0.d0
+    !c33 = c11                            ! lambda + 2 mu
+    !c34 = 0.d0
+    !c35 = 0.d0
+    !c36 = 0.d0
+    !c44 = rho * vsv*vsv                  ! mu
+    !c45 = 0.d0
+    !c46 = 0.d0
+    !c55 = c44                            ! mu
+    !c56 = 0.d0
+    !c66 = c44                            ! mu
+    !
+    !! or equivalent with an transversely isotropic elastic tensor
+    !
+    ! Anderson & Dziewonski, 1982: "Upper mantle anisotropy: evidence from free oscillations", GJR
+    ! A = rho * vph**2
+    ! C = rho * vpv**2
+    ! N = rho * vsh**2
+    ! L = rho * vsv**2
+    ! F = eta * (A - 2*L)
+    !
+    ! and therefore (assuming radial axis symmetry)
+    ! C11 = A = rho * vph**2
+    ! C33 = C = rho * vpv**2
+    ! C44 = L = rho * vsv**2
+    ! C13 = F = eta * (A - 2*L)
+    ! C12 = C11 - 2 C66 = A - 2*N = rho * (vph**2 - 2 * vsh**2)
+    ! C22 = C11
+    ! C23 = C13
+    ! C55 = C44
+    ! C66 = N = rho * vsh**2 = (C11-C12)/2
+    !
+    ! local coordinate system
+    d11 = A
+    d12 = A - 2.0*N
+    d13 = F
+    d14 = 0.d0
+    d15 = 0.d0
+    d16 = 0.d0
+    d22 = A
+    d23 = F
+    d24 = 0.d0
+    d25 = 0.d0
+    d26 = 0.d0
+    d33 = C
+    d34 = 0.d0
+    d35 = 0.d0
+    d36 = 0.d0
+    d44 = L
+    d45 = 0.d0
+    d46 = 0.d0
+    d55 = L
+    d56 = 0.d0
+    d66 = N
+
+  case (3)
+    ! azimuthal anisotropy
+
+    !for normalization of Gc & Gs similar to the kernels:
+    !
+    !rho_p = ZERO
+    !vpv_p = ZERO
+    !vph_p = ZERO
+    !vsv_p = ZERO
+    !vsh_p = ZERO
+    !eta_aniso_p = ZERO
+    !vp_p = ZERO
+    !vs_p = ZERO
+    !
+    !call model_prem_iso(myrank,r_prem,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &
+    !                    ONE_CRUST,.false.,RICB,RCMB,RTOPDDOUBLEPRIME, &
+    !                    R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+    !
+    !if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF) then
+    !   call model_1dref_broadcast(CRUSTAL)
+    !   call model_1dref(r_prem,rho_p,vpv_p,vph_p,vsv_p,vsh_p,eta_aniso_p,Qkappa_p,Qmu_p,iregion_code,CRUSTAL)
+    !   ! this case here is only executed for 1D_ref_iso
+    !   ! calculates isotropic values
+    !   vp_p = sqrt(((8.d0+4.d0*eta_aniso_p)*vph_p*vph_p + 3.d0*vpv_p*vpv_p &
+    !                + (8.d0 - 8.d0*eta_aniso_p)*vsv_p*vsv_p)/15.d0)
+    !   vs_p = sqrt(((1.d0-2.d0*eta_aniso_p)*vph_p*vph_p + vpv_p*vpv_p &
+    !                + 5.d0*vsh_p*vsh_p + (6.d0+4.d0*eta_aniso_p)*vsv_p*vsv_p)/15.d0)
+    !endif
+    !
+    !Gc = Gc_prime * (rho_p*vs_p**2)
+    !Gs = Gs_prime * (rho_p*vs_p**2)
+
+    ! daniel todo: add actual values
+    ! note: for Gc_prime and Gs_prime, the scaling rho * vs0**2 is equal to the isotropic shear moduli mu0 = rho * vs0**2
+    !       The mu0 value could in principle be choosen arbitrarily, as long as it is coherent with the scaling
+    !       for the kernel values. Its purpose is to non-dimensionalize Gc and scale the kernel contributions
+    !       with respect to the other ones and balance the contributions.
+    !
+    ! test: choosing PREM crustal values: rho=2.6 g/cm3, vp=5.8 km/s, vs=3.2 km/s -> mu0 = 26.624 GPa
+    !Gc = Gc_prime * 26.6/scale_GPa
+    !Gs = Gs_prime * 26.6/scale_GPa
+
+    Gc = Gc_prime ! to avoid compiler warning
+    Gs = Gs_prime ! to avoid compiler warning
+
+    ! test: ignore Gc,Gs contributions
+    Gc = 0.d0
+    Gs = 0.d0
+
+    !rhovpvsq = C  !!! that is C
+    !rhovphsq = A  !!! that is A
+
+    !rhovsvsq = L  !!! that is L
+    !rhovshsq = N  !!! that is N
+
+    !debug
+    !if (myrank==0) print *,"Gc,Gs",Gc,Gs
+
+    ! only A,C,L,N,F and Gc,Gs are non-zero
+    d11 = A
+    d12 = A - 2.d0*N
+    d13 = F
+    d14 = 0.d0
+    d15 = 0.d0
+    d16 = 0.d0
+    d22 = A
+    d23 = F
+    d24 = 0.d0
+    d25 = 0.d0
+    d26 = 0.d0
+    d33 = C
+    d34 = 0.d0
+    d35 = 0.d0
+    d36 = 0.d0
+    d44 = L - Gc
+    d45 = -Gs
+    d46 = 0.d0
+    d55 = L + Gc
+    d56 = 0.d0
+    d66 = N
+
+  case default
+    ! general case (see also model_aniso_mantle.f90)
+    d11 = A + Ec + Bc
+    d12 = A - 2.0*N - Ec
+    d13 = F + Hc
+    d14 = Ds + 2.0*Js + 2.0*Ms
+    d15 = 2.0*Jc + Dc
+    d16 = -0.5*Bs - Es
+    d22 = A + Ec - Bc
+    d23 = F - Hc
+    d24 = 2.0*Js - Ds
+    d25 = 2.0*Jc - 2.0*Mc - Dc
+    d26 = -Bs/2 + Es
+
+    d33 = C
+    d34 = 2.0 * (Js - Ks)
+    d35 = 2.0 * (Jc - Kc)
+    d36 = -Hs
+
+    d44 = L - Gc
+    d45 = -Gs
+    d46 = Mc - Dc
+
+    d55 = L + Gc
+    d56 = Ds - Ms
+
+    d66 = N - Ec
+
+    ! saftey stop
+    stop 'Invalid MGLL_TYPE, conversion to elastic tensor not implemented yet'
+  end select
+
+! Ebru: No need to scale elastic tensor as wavespeeds are already scaled before
+!       the construction of the tensor.
+  d11 = d11!/scale_GPa
+  d12 = d12!/scale_GPa
+  d13 = d13!/scale_GPa
+  d14 = d14!/scale_GPa
+  d15 = d15!/scale_GPa
+  d16 = d16!/scale_GPa
+  d22 = d22!/scale_GPa
+  d23 = d23!/scale_GPa
+  d24 = d24!/scale_GPa
+  d25 = d25!/scale_GPa
+  d26 = d26!/scale_GPa
+  d33 = d33!/scale_GPa
+  d34 = d34!/scale_GPa
+  d35 = d35!/scale_GPa
+  d36 = d36!/scale_GPa
+  d44 = d44!/scale_GPa
+  d45 = d45!/scale_GPa
+  d46 = d46!/scale_GPa
+  d55 = d55!/scale_GPa
+  d56 = d56!/scale_GPa
+  d66 = d66!/scale_GPa
+
+  c11 = ZERO
+  c12 = ZERO
+  c13 = ZERO
+  c14 = ZERO
+  c15 = ZERO
+  c16 = ZERO
+  c22 = ZERO
+  c23 = ZERO
+  c24 = ZERO
+  c25 = ZERO
+  c26 = ZERO
+  c33 = ZERO
+  c34 = ZERO
+  c35 = ZERO
+  c36 = ZERO
+  c44 = ZERO
+  c45 = ZERO
+  c46 = ZERO
+  c55 = ZERO
+  c56 = ZERO
+  c66 = ZERO
+
+  ! local position (d_ij given in radial direction)
+  call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r,theta,phi)
+  call reduce(theta,phi)
+
+  ! rotates from local (d_ij) to global (c_ij) anisotropic parameters.
+  ! The c_ij are the coefficients in the global reference frame used in SPECFEM3D
+  !
+  ! (see routine in model_aniso_mantle.f90)
+  call rotate_aniso_tensor(theta,phi, &
+                           d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26, &
+                           d33,d34,d35,d36,d44,d45,d46,d55,d56,d66, &
+                           c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+                           c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
+  ! debug
+  !if (myrank==0) print *,"c11",c11
+
+  end subroutine model_gll_build_cij

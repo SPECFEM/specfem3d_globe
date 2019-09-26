@@ -34,10 +34,10 @@
 
   ! local parameters
   ! broadcast parameter arrays
-  integer, parameter :: nparam_i = 46
+  integer, parameter :: nparam_i = 47
   integer, dimension(nparam_i) :: bcast_integer
 
-  integer, parameter :: nparam_l = 65
+  integer, parameter :: nparam_l = 66
   logical, dimension(nparam_l) :: bcast_logical
 
   integer, parameter :: nparam_dp = 35
@@ -73,11 +73,12 @@
             MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP, &
             NOISE_TOMOGRAPHY, &
             ATT1,ATT2,ATT3,ATT4,ATT5, &
-            GPU_RUNTIME,NUMBER_OF_SIMULTANEOUS_RUNS /)
+            GPU_RUNTIME,NUMBER_OF_SIMULTANEOUS_RUNS, &
+            MODEL_GLL_TYPE /)
 
     bcast_logical = (/ &
             TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-            CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE, &
+            CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,MODEL_3D_MANTLE_PERTUBATIONS,HETEROGEN_3D_MANTLE, &
             TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,ATTENUATION_3D, &
             RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
             SAVE_MESH_FILES,ATTENUATION, &
@@ -91,7 +92,10 @@
             READ_ADJSRC_ASDF,SAVE_REGULAR_KL, &
             PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION, &
             USE_LDDRK,INCREASE_CFL_FOR_LDDRK, &
-            ANISOTROPIC_KL,SAVE_TRANSVERSE_KL_ONLY,APPROXIMATE_HESS_KL, &
+            ANISOTROPIC_KL, &
+            SAVE_TRANSVERSE_KL_ONLY, &
+            SAVE_AZIMUTHAL_ANISO_KL_ONLY, &
+            APPROXIMATE_HESS_KL, &
             USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK, &
             EXACT_MASS_MATRIX_FOR_ROTATION, &
             GPU_MODE, &
@@ -203,6 +207,7 @@
     ATT5 = bcast_integer(44)
     GPU_RUNTIME = bcast_integer(45)
     NUMBER_OF_SIMULTANEOUS_RUNS = bcast_integer(46)
+    MODEL_GLL_TYPE  = bcast_integer(47)
 
     ! logicals
     TRANSVERSE_ISOTROPY = bcast_logical(1)
@@ -213,7 +218,7 @@
     GRAVITY = bcast_logical(6)
     ONE_CRUST = bcast_logical(7)
     ROTATION = bcast_logical(8)
-    ISOTROPIC_3D_MANTLE = bcast_logical(9)
+    MODEL_3D_MANTLE_PERTUBATIONS = bcast_logical(9)
     HETEROGEN_3D_MANTLE = bcast_logical(10)
     TOPOGRAPHY = bcast_logical(11)
     OCEANS = bcast_logical(12)
@@ -252,24 +257,25 @@
     INCREASE_CFL_FOR_LDDRK = bcast_logical(45)
     ANISOTROPIC_KL = bcast_logical(46)
     SAVE_TRANSVERSE_KL_ONLY = bcast_logical(47)
-    APPROXIMATE_HESS_KL = bcast_logical(48)
-    USE_FULL_TISO_MANTLE = bcast_logical(49)
-    SAVE_SOURCE_MASK = bcast_logical(50)
-    EXACT_MASS_MATRIX_FOR_ROTATION = bcast_logical(51)
-    GPU_MODE = bcast_logical(52)
-    ADIOS_ENABLED = bcast_logical(53)
-    ADIOS_FOR_FORWARD_ARRAYS = bcast_logical(54)
-    ADIOS_FOR_MPI_ARRAYS = bcast_logical(55)
-    ADIOS_FOR_ARRAYS_SOLVER = bcast_logical(56)
-    ADIOS_FOR_SOLVER_MESHFILES = bcast_logical(57)
-    ADIOS_FOR_AVS_DX = bcast_logical(58)
-    ADIOS_FOR_KERNELS = bcast_logical(59)
-    ADIOS_FOR_MODELS = bcast_logical(60)
-    ADIOS_FOR_UNDO_ATTENUATION = bcast_logical(61)
-    CEM_REQUEST = bcast_logical(62)
-    CEM_ACCEPT = bcast_logical(63)
-    BROADCAST_SAME_MESH_AND_MODEL = bcast_logical(64)
-    MODEL_GLL = bcast_logical(65)
+    SAVE_AZIMUTHAL_ANISO_KL_ONLY = bcast_logical(48)
+    APPROXIMATE_HESS_KL = bcast_logical(49)
+    USE_FULL_TISO_MANTLE = bcast_logical(50)
+    SAVE_SOURCE_MASK = bcast_logical(51)
+    EXACT_MASS_MATRIX_FOR_ROTATION = bcast_logical(52)
+    GPU_MODE = bcast_logical(53)
+    ADIOS_ENABLED = bcast_logical(54)
+    ADIOS_FOR_FORWARD_ARRAYS = bcast_logical(55)
+    ADIOS_FOR_MPI_ARRAYS = bcast_logical(56)
+    ADIOS_FOR_ARRAYS_SOLVER = bcast_logical(57)
+    ADIOS_FOR_SOLVER_MESHFILES = bcast_logical(58)
+    ADIOS_FOR_AVS_DX = bcast_logical(59)
+    ADIOS_FOR_KERNELS = bcast_logical(60)
+    ADIOS_FOR_MODELS = bcast_logical(61)
+    ADIOS_FOR_UNDO_ATTENUATION = bcast_logical(62)
+    CEM_REQUEST = bcast_logical(63)
+    CEM_ACCEPT = bcast_logical(64)
+    BROADCAST_SAME_MESH_AND_MODEL = bcast_logical(65)
+    MODEL_GLL = bcast_logical(66)
 
     ! double precisions
     DT = bcast_double_precision(1)

@@ -226,6 +226,8 @@
   if (ier /= 0) stop 'an error occurred while reading the parameter file: ANISOTROPIC_KL'
   call read_value_logical(SAVE_TRANSVERSE_KL_ONLY, 'SAVE_TRANSVERSE_KL_ONLY', ier)
   if (ier /= 0) stop 'an error occurred while reading the parameter file: SAVE_TRANSVERSE_KL_ONLY'
+  call read_value_logical(SAVE_AZIMUTHAL_ANISO_KL_ONLY,'SAVE_AZIMUTHAL_ANISO_KL_ONLY', ier)
+  if (ier /= 0) stop 'an error occurred while reading the parameter file: SAVE_AZIMUTHAL_ANISO_KL_ONLY'
   call read_value_logical(APPROXIMATE_HESS_KL, 'APPROXIMATE_HESS_KL', ier)
   if (ier /= 0) stop 'an error occurred while reading the parameter file: APPROXIMATE_HESS_KL'
   call read_value_logical(USE_FULL_TISO_MANTLE, 'USE_FULL_TISO_MANTLE', ier)

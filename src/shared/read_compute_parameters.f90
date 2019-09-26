@@ -340,6 +340,12 @@
   if (SAVE_TRANSVERSE_KL_ONLY .and. .not. ANISOTROPIC_KL) &
     stop 'Please set ANISOTROPIC_KL to .true. in Par_file to use SAVE_TRANSVERSE_KL_ONLY'
 
+  if (SAVE_AZIMUTHAL_ANISO_KL_ONLY .and. .not. ANISOTROPIC_KL) &
+    stop 'Please set ANISOTROPIC_KL to .true. in Par_file to use SAVE_AZIMUTHAL_ANISO_KL_ONLY'
+
+  if (SAVE_TRANSVERSE_KL_ONLY .and. SAVE_AZIMUTHAL_ANISO_KL_ONLY) &
+    stop 'Please set either SAVE_TRANSVERSE_KL_ONLY or SAVE_AZIMUTHAL_ANISO_KL_ONLY to .true., keep the other one .false.'
+
   if (PARTIAL_PHYS_DISPERSION_ONLY .and. UNDO_ATTENUATION) &
     stop 'cannot have both PARTIAL_PHYS_DISPERSION_ONLY and UNDO_ATTENUATION, they are mutually exclusive'
 
