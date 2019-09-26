@@ -453,8 +453,8 @@
   double precision :: xmesh,ymesh,zmesh,r
 
   ! the 21 coefficients for an anisotropic medium in reduced notation
-  double precision :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33, &
-                   c34,c35,c36,c44,c45,c46,c55,c56,c66
+  double precision :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+                      c33,c34,c35,c36,c44,c45,c46,c55,c56,c66
 
   ! heterogen model and CEM needs these (CEM to determine iglob)
   integer, intent (in) :: ispec, i, j, k
@@ -464,6 +464,7 @@
   double precision :: dvp,dvs,drho,vp,vs
   double precision :: dvpv,dvph,dvsv,dvsh,deta
   double precision :: lat,lon
+  double precision :: A,C,L,N,F
 
   real(kind=4) :: xcolat,xlon,xrad
   real(kind=4) :: xdvpv,xdvph,xdvsv,xdvsh
@@ -499,283 +500,386 @@
 !
 !---
 
-  ! sets flag when mantle should not be extended to surface
-  if (r_prem >= RMOHO/R_EARTH .and. .not. CRUSTAL) then
-    suppress_mantle_extension = .true.
-  endif
-
-  ! gets parameters for isotropic 3D mantle model
-  !
-  ! note: there can be transverse isotropy in the mantle, but only Lame parameters
-  !           like kappav,kappah,muv,muh and eta_aniso are used for these simulations
-  !
-  ! note: in general, models here make use of perturbation values with respect to their
-  !          corresponding 1-D reference models
-  if (MODEL_3D_MANTLE_PERTUBATIONS .and. r_prem > RCMB/R_EARTH .and. .not. suppress_mantle_extension) then
-
-    ! extend 3-D mantle model above the Moho to the surface before adding the crust
-    if (r_prem > RCMB/R_EARTH .and. r_prem < RMOHO/R_EARTH) then
-      ! GLL point is in mantle region, takes exact location
-      r_used = r
-    else ! else if (r_prem >= RMOHO/R_EARTH) then
-      if (CRUSTAL) then
-        ! GLL point is above moho
-        ! takes radius slightly below moho radius, this will then "extend the mantle up to the surface";
-        ! crustal values will be superimposed later on
-        r_used = 0.999999d0*RMOHO/R_EARTH
-      endif
+  if (iregion_code == IREGION_CRUST_MANTLE) then
+    ! crust/mantle
+    ! sets flag when mantle should not be extended to surface
+    if (r_prem >= RMOHO/R_EARTH .and. .not. CRUSTAL) then
+      suppress_mantle_extension = .true.
     endif
 
-    ! gets model parameters
-    select case (THREE_D_MODEL)
-
-      case (THREE_D_MODEL_S20RTS)
-        ! s20rts
-        call mantle_s20rts(r_used,theta,phi,dvs,dvp,drho)
-        vpv = vpv*(1.0d0+dvp)
-        vph = vph*(1.0d0+dvp)
-        vsv = vsv*(1.0d0+dvs)
-        vsh = vsh*(1.0d0+dvs)
-        rho = rho*(1.0d0+drho)
-
-      case (THREE_D_MODEL_S40RTS)
-        ! s40rts
-        call mantle_s40rts(r_used,theta,phi,dvs,dvp,drho)
-        vpv = vpv*(1.0d0+dvp)
-        vph = vph*(1.0d0+dvp)
-        vsv = vsv*(1.0d0+dvs)
-        vsh = vsh*(1.0d0+dvs)
-        rho = rho*(1.0d0+drho)
-
-      case(THREE_D_MODEL_MANTLE_SH)
-        ! full_sh model
-        lat = (PI/2.0d0-theta)*180.0d0/PI
-        lon = phi*180.0d0/PI
-        if (lon > 180.0d0) lon = lon - 360.0d0
-
-        call mantle_sh(lat,lon,r_used,dvpv,dvph,dvsv,dvsh,deta,drho)
-        vpv = vpv*(1.0d0+dvpv)
-        vph = vph*(1.0d0+dvph)
-        vsv = vsv*(1.0d0+dvsv)
-        vsh = vsh*(1.0d0+dvsh)
-        eta_aniso = eta_aniso*(1.0d0+deta)
-        rho = rho*(1.0d0+drho)
-
-      case (THREE_D_MODEL_SEA99_JP3D)
-        ! sea99 + jp3d1994
-        call model_sea99_s(r_used,theta,phi,dvs)
-        vsv = vsv*(1.0d0+dvs)
-        vsh = vsh*(1.0d0+dvs)
-        ! use Lebedev model sea99 as background and add vp & vs perturbation from Zhao 1994 model jp3d
-        call model_jp3d_iso_zhao(r_used,theta,phi,vp,vs,dvp,dvs,rho,found_crust,is_inside_region)
-        if (is_inside_region) then
-          vpv = vpv*(1.0d0+dvp)
-          vph = vph*(1.0d0+dvp)
-          vsv = vsv*(1.0d0+dvs)
-          vsh = vsh*(1.0d0+dvs)
-        endif
-
-      case (THREE_D_MODEL_SEA99)
-        ! sea99 Vs-only
-        call model_sea99_s(r_used,theta,phi,dvs)
-        vsv = vsv*(1.0d0+dvs)
-        vsh = vsh*(1.0d0+dvs)
-
-      case (THREE_D_MODEL_JP3D)
-        ! jp3d1994
-        call model_jp3d_iso_zhao(r_used,theta,phi,vp,vs,dvp,dvs,rho,found_crust,is_inside_region)
-        if (is_inside_region) then
-          vpv = vpv*(1.0d0+dvp)
-          vph = vph*(1.0d0+dvp)
-          vsv = vsv*(1.0d0+dvs)
-          vsh = vsh*(1.0d0+dvs)
-        endif
-
-      case (THREE_D_MODEL_S362ANI,THREE_D_MODEL_S362WMANI, &
-            THREE_D_MODEL_S362ANI_PREM,THREE_D_MODEL_S29EA)
-        ! 3D Harvard models s362ani, s362wmani, s362ani_prem and s2.9ea
-        xcolat = sngl(theta*180.0d0/PI)
-        xlon = sngl(phi*180.0d0/PI)
-        xrad = sngl(r_used*R_EARTH_KM)
-        call model_s362ani_subshsv(xcolat,xlon,xrad,xdvsh,xdvsv,xdvph,xdvpv)
-
-        ! to use speed values from the 1D reference model but with 3D mesh variations
-        if (USE_1D_REFERENCE) then
-          ! sets all 3D variations in the mantle to zero
-          xdvpv = 0.d0
-          xdvph = 0.d0
-          xdvsv = 0.d0
-          xdvsh = 0.d0
-        endif
-
-        if (TRANSVERSE_ISOTROPY) then
-          ! tiso perturbation
-          vpv = vpv*(1.0d0+dble(xdvpv))
-          vph = vph*(1.0d0+dble(xdvph))
-          vsv = vsv*(1.0d0+dble(xdvsv))
-          vsh = vsh*(1.0d0+dble(xdvsh))
-        else
-          ! isotropic model
-          vpv = vpv+xdvpv
-          vph = vph+xdvph
-          vsv = vsv+xdvsv
-          vsh = vsh+xdvsh
-          ! isotropic average (considers anisotropic parameterization eta,vsv,vsh,vpv,vph)
-          vp = sqrt(((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
-                    + (8.d0 - 8.d0*eta_aniso)*vsv*vsv)/15.d0)
-          vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
-                    + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0)
-          vpv = vp
-          vph = vp
-          vsv = vs
-          vsh = vs
-          eta_aniso = 1.0d0
-        endif
-
-      case (THREE_D_MODEL_PPM)
-        ! point profile model
-        call model_PPM(r_used,theta,phi,dvs,dvp,drho)
-        vpv = vpv*(1.0d0+dvp)
-        vph = vph*(1.0d0+dvp)
-        vsv = vsv*(1.0d0+dvs)
-        vsh = vsh*(1.0d0+dvs)
-        rho = rho*(1.0d0+drho)
-
-      case (THREE_D_MODEL_GAPP2)
-        ! 3D GAP model (Obayashi)
-        call mantle_gapmodel(r_used,theta,phi,dvs,dvp,drho)
-        vpv = vpv*(1.0d0+dvp)
-        vph = vph*(1.0d0+dvp)
-        vsv = vsv*(1.0d0+dvs)
-        vsh = vsh*(1.0d0+dvs)
-        rho = rho*(1.0d0+drho)
-
-      case (THREE_D_MODEL_SGLOBE,THREE_D_MODEL_SGLOBE_ISO)
-        ! 3D SGLOBE-rani model (Chang)
-
-        ! normally mantle perturbations are taken from 24.4km (R_MOHO) up.
-        ! we need to add the if statement for sgloberani_iso or sgloberani_aniso to take from 50km up:
-        if (r_prem > RCMB/R_EARTH .and. r_prem < 6321000.d0/R_EARTH) then
-          r_used = r
-        else   ! if (r_prem >= 6321000.d0/R_EARTH) then
-          ! this will then "extend the mantle up to the surface" from 50km depth
-          r_used = 6321000.d0/R_EARTH
-        endif
-
-        call mantle_sglobe(r_used,theta,phi,dvsv,dvsh,dvp,drho)
-
-        if (TRANSVERSE_ISOTROPY) then
-          ! tiso perturbation
-          vpv = vpv*(1.0d0+dvp)
-          vph = vph*(1.0d0+dvp)
-          vsv = vsv*(1.0d0+dvsv)
-          vsh = vsh*(1.0d0+dvsh)
-        else
-          ! isotropic model
-          vpv = vpv*(1.0d0+dvp)
-          vph = vph*(1.0d0+dvp)
-          vsv = vsv*(1.0d0+dvsv)
-          vsh = vsh*(1.0d0+dvsh)
-          ! Voigt average
-          vp = sqrt( (2.d0*vpv**2 + vph**2)/3.d0 )
-          vs = sqrt( (2.d0*vsv**2 + vsh**2)/3.d0 )
-          vph = vp
-          vpv = vp
-          vsh = vs
-          vsv = vs
-          eta_aniso = 1.d0
-        endif
-        rho = rho*(1.0d0+drho)
-
-      case default
-        stop 'unknown 3D Earth model in meshfem3D_models_get3Dmntl_val() '
-
-    end select ! THREE_D_MODEL
-
-  endif ! MODEL_3D_MANTLE_PERTUBATIONS
-
-  ! heterogen model
-  if (HETEROGEN_3D_MANTLE .and. .not. suppress_mantle_extension) then
-    call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_used,theta,phi)
-    call reduce(theta,phi)
-    call model_heterogen_mantle(ispec,i,j,k,r_used,theta,phi,dvs,dvp,drho)
-    vpv = vpv*(1.0d0+dvp)
-    vph = vpv*(1.0d0+dvp)
-    vsv = vsv*(1.0d0+dvs)
-    vsh = vsh*(1.0d0+dvs)
-    rho = rho*(1.0d0+drho)
-  endif ! HETEROGEN_3D_MANTLE
-
-  if (ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) &
-    call model_aniso_inner_core(r_prem,c11,c33,c12,c13,c44,REFERENCE_1D_MODEL, &
-                                vpv,vph,vsv,vsh,rho,eta_aniso)
-
-  if (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
-
-    ! anisotropic model between the Moho and 670 km (change to CMB if desired)
-    if (r_prem > R670/R_EARTH .and. .not. suppress_mantle_extension) then
+    ! gets parameters for isotropic 3D mantle model
+    !
+    ! note: there can be transverse isotropy in the mantle, but only Lame parameters
+    !           like kappav,kappah,muv,muh and eta_aniso are used for these simulations
+    !
+    ! note: in general, models here make use of perturbation values with respect to their
+    !          corresponding 1-D reference models
+    if (MODEL_3D_MANTLE_PERTUBATIONS .and. r_prem > RCMB/R_EARTH .and. .not. suppress_mantle_extension) then
 
       ! extend 3-D mantle model above the Moho to the surface before adding the crust
-      if (r_prem < RMOHO/R_EARTH) then
-        r_used = r_prem
-      else
+      if (r_prem > RCMB/R_EARTH .and. r_prem < RMOHO/R_EARTH) then
+        ! GLL point is in mantle region, takes exact location
+        r_used = r
+      else ! else if (r_prem >= RMOHO/R_EARTH) then
         if (CRUSTAL) then
-          ! fills 3-D mantle model above the Moho with the values at moho depth
-          r_used = RMOHO/R_EARTH
+          ! GLL point is above moho
+          ! takes radius slightly below moho radius, this will then "extend the mantle up to the surface";
+          ! crustal values will be superimposed later on
+          !
+          ! note: this assumes that all the following mantle models are defined below RMOHO.
+          !       this is in general true, almost all mantle models fix the moho depth at 24.4 km (set as RMOHO reference)
+          !       and invert their velocity models for structures below.
+          !
+          !       however, in case a mantle models extends to shallower depths, those velocity regions will be ignored.
+          !
+          ! to do in future: we might want to let the mantle routines decide where to this upper cut-off radius value
+          r_used = 0.999999d0*RMOHO/R_EARTH
         endif
       endif
 
-      call model_aniso_mantle(r_used,theta,phi,rho,c11,c12,c13,c14,c15,c16, &
-                              c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
+      ! gets model parameters
+      select case (THREE_D_MODEL)
 
-    else
-      ! fills the rest of the mantle with the isotropic model
-      c11 = rho*vpv*vpv
-      c12 = rho*(vpv*vpv-2.*vsv*vsv)
-      c13 = c12
-      c14 = 0.d0
-      c15 = 0.d0
-      c16 = 0.d0
-      c22 = c11
-      c23 = c12
-      c24 = 0.d0
-      c25 = 0.d0
-      c26 = 0.d0
-      c33 = c11
-      c34 = 0.d0
-      c35 = 0.d0
-      c36 = 0.d0
-      c44 = rho*vsv*vsv
-      c45 = 0.d0
-      c46 = 0.d0
-      c55 = c44
-      c56 = 0.d0
-      c66 = c44
-    endif
-  endif ! ANISOTROPIC_3D_MANTLE
+        case (THREE_D_MODEL_S20RTS)
+          ! s20rts
+          call mantle_s20rts(r_used,theta,phi,dvs,dvp,drho)
+          vpv = vpv*(1.0d0+dvp)
+          vph = vph*(1.0d0+dvp)
+          vsv = vsv*(1.0d0+dvs)
+          vsh = vsh*(1.0d0+dvs)
+          rho = rho*(1.0d0+drho)
 
+        case (THREE_D_MODEL_S40RTS)
+          ! s40rts
+          call mantle_s40rts(r_used,theta,phi,dvs,dvp,drho)
+          vpv = vpv*(1.0d0+dvp)
+          vph = vph*(1.0d0+dvp)
+          vsv = vsv*(1.0d0+dvs)
+          vsh = vsh*(1.0d0+dvs)
+          rho = rho*(1.0d0+drho)
+
+        case(THREE_D_MODEL_MANTLE_SH)
+          ! full_sh model
+          lat = (PI/2.0d0-theta)*180.0d0/PI
+          lon = phi*180.0d0/PI
+          if (lon > 180.0d0) lon = lon - 360.0d0
+
+          call mantle_sh(lat,lon,r_used,dvpv,dvph,dvsv,dvsh,deta,drho)
+          vpv = vpv*(1.0d0+dvpv)
+          vph = vph*(1.0d0+dvph)
+          vsv = vsv*(1.0d0+dvsv)
+          vsh = vsh*(1.0d0+dvsh)
+          eta_aniso = eta_aniso*(1.0d0+deta)
+          rho = rho*(1.0d0+drho)
+
+        case (THREE_D_MODEL_SEA99_JP3D)
+          ! sea99 + jp3d1994
+          call model_sea99_s(r_used,theta,phi,dvs)
+          vsv = vsv*(1.0d0+dvs)
+          vsh = vsh*(1.0d0+dvs)
+          ! use Lebedev model sea99 as background and add vp & vs perturbation from Zhao 1994 model jp3d
+          call model_jp3d_iso_zhao(r_used,theta,phi,vp,vs,dvp,dvs,rho,found_crust,is_inside_region)
+          if (is_inside_region) then
+            vpv = vpv*(1.0d0+dvp)
+            vph = vph*(1.0d0+dvp)
+            vsv = vsv*(1.0d0+dvs)
+            vsh = vsh*(1.0d0+dvs)
+          endif
+
+        case (THREE_D_MODEL_SEA99)
+          ! sea99 Vs-only
+          call model_sea99_s(r_used,theta,phi,dvs)
+          vsv = vsv*(1.0d0+dvs)
+          vsh = vsh*(1.0d0+dvs)
+
+        case (THREE_D_MODEL_JP3D)
+          ! jp3d1994
+          call model_jp3d_iso_zhao(r_used,theta,phi,vp,vs,dvp,dvs,rho,found_crust,is_inside_region)
+          if (is_inside_region) then
+            vpv = vpv*(1.0d0+dvp)
+            vph = vph*(1.0d0+dvp)
+            vsv = vsv*(1.0d0+dvs)
+            vsh = vsh*(1.0d0+dvs)
+          endif
+
+        case (THREE_D_MODEL_S362ANI,THREE_D_MODEL_S362WMANI, &
+              THREE_D_MODEL_S362ANI_PREM,THREE_D_MODEL_S29EA)
+          ! 3D Harvard models s362ani, s362wmani, s362ani_prem and s2.9ea
+          xcolat = sngl(theta*180.0d0/PI)
+          xlon = sngl(phi*180.0d0/PI)
+          xrad = sngl(r_used*R_EARTH_KM)
+          call model_s362ani_subshsv(xcolat,xlon,xrad,xdvsh,xdvsv,xdvph,xdvpv)
+
+          ! to use speed values from the 1D reference model but with 3D mesh variations
+          if (USE_1D_REFERENCE) then
+            ! sets all 3D variations in the mantle to zero
+            xdvpv = 0.d0
+            xdvph = 0.d0
+            xdvsv = 0.d0
+            xdvsh = 0.d0
+          endif
+
+          if (TRANSVERSE_ISOTROPY) then
+            ! tiso perturbation
+            vpv = vpv*(1.0d0+dble(xdvpv))
+            vph = vph*(1.0d0+dble(xdvph))
+            vsv = vsv*(1.0d0+dble(xdvsv))
+            vsh = vsh*(1.0d0+dble(xdvsh))
+          else
+            ! isotropic model
+            vpv = vpv+xdvpv
+            vph = vph+xdvph
+            vsv = vsv+xdvsv
+            vsh = vsh+xdvsh
+            ! isotropic average (considers anisotropic parameterization eta,vsv,vsh,vpv,vph)
+            vp = sqrt(((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
+                      + (8.d0 - 8.d0*eta_aniso)*vsv*vsv)/15.d0)
+            vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
+                      + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0)
+            vpv = vp
+            vph = vp
+            vsv = vs
+            vsh = vs
+            eta_aniso = 1.0d0
+          endif
+
+        case (THREE_D_MODEL_PPM)
+          ! point profile model
+          call model_PPM(r_used,theta,phi,dvs,dvp,drho)
+          vpv = vpv*(1.0d0+dvp)
+          vph = vph*(1.0d0+dvp)
+          vsv = vsv*(1.0d0+dvs)
+          vsh = vsh*(1.0d0+dvs)
+          rho = rho*(1.0d0+drho)
+
+        case (THREE_D_MODEL_GAPP2)
+          ! 3D GAP model (Obayashi)
+          call mantle_gapmodel(r_used,theta,phi,dvs,dvp,drho)
+          vpv = vpv*(1.0d0+dvp)
+          vph = vph*(1.0d0+dvp)
+          vsv = vsv*(1.0d0+dvs)
+          vsh = vsh*(1.0d0+dvs)
+          rho = rho*(1.0d0+drho)
+
+        case (THREE_D_MODEL_SGLOBE,THREE_D_MODEL_SGLOBE_ISO)
+          ! 3D SGLOBE-rani model (Chang)
+
+          ! normally mantle perturbations are taken from 24.4km (R_MOHO) up.
+          ! we need to add the if statement for sgloberani_iso or sgloberani_aniso to take from 50km up:
+          if (r_prem > RCMB/R_EARTH .and. r_prem < 6321000.d0/R_EARTH) then
+            r_used = r
+          else   ! if (r_prem >= 6321000.d0/R_EARTH) then
+            ! this will then "extend the mantle up to the surface" from 50km depth
+            r_used = 6321000.d0/R_EARTH
+          endif
+
+          call mantle_sglobe(r_used,theta,phi,dvsv,dvsh,dvp,drho)
+
+          if (TRANSVERSE_ISOTROPY) then
+            ! tiso perturbation
+            vpv = vpv*(1.0d0+dvp)
+            vph = vph*(1.0d0+dvp)
+            vsv = vsv*(1.0d0+dvsv)
+            vsh = vsh*(1.0d0+dvsh)
+          else
+            ! isotropic model
+            vpv = vpv*(1.0d0+dvp)
+            vph = vph*(1.0d0+dvp)
+            vsv = vsv*(1.0d0+dvsv)
+            vsh = vsh*(1.0d0+dvsh)
+            ! Voigt average
+            vp = sqrt( (2.d0*vpv**2 + vph**2)/3.d0 )
+            vs = sqrt( (2.d0*vsv**2 + vsh**2)/3.d0 )
+            vph = vp
+            vpv = vp
+            vsh = vs
+            vsv = vs
+            eta_aniso = 1.d0
+          endif
+          rho = rho*(1.0d0+drho)
+
+        case (THREE_D_MODEL_ANISO_MANTLE)
+          ! Montagner anisotropic model
+          call model_aniso_mantle(r_used,theta,phi,vpv,vph,vsv,vsh,eta_aniso,rho, &
+                                  c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+                                  c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
+
+        case default
+          print *,'Error: do not recognize value for THREE_D_MODEL ',THREE_D_MODEL
+          stop 'unknown 3D Earth model in meshfem3D_models_get3Dmntl_val(), please check... '
+
+      end select ! THREE_D_MODEL
+
+    endif ! MODEL_3D_MANTLE_PERTUBATIONS
+
+    ! heterogen model
+    ! adds additional mantle perturbations
+    ! (based on density variations) on top of reference 3D model
+    if (HETEROGEN_3D_MANTLE .and. .not. suppress_mantle_extension) then
+      ! gets spherical coordinates of actual point location
+      call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_used,theta,phi)
+      call reduce(theta,phi)
+      ! adds hetergeneous perturbations (isotropic)
+      call model_heterogen_mantle(ispec,i,j,k,r_used,theta,phi,dvs,dvp,drho)
+      vpv = vpv*(1.0d0+dvp)
+      vph = vpv*(1.0d0+dvp)
+      vsv = vsv*(1.0d0+dvs)
+      vsh = vsh*(1.0d0+dvs)
+      rho = rho*(1.0d0+drho)
+    endif ! HETEROGEN_3D_MANTLE
+
+  else if (iregion_code == IREGION_INNER_CORE) then
+    ! inner core 3D models
+    select case (THREE_D_MODEL_IC)
+    case (THREE_D_MODEL_INNER_CORE_ISHII)
+      ! Ishii et al. (2002) model
+      call model_aniso_inner_core(r_prem,c11,c33,c12,c13,c44,REFERENCE_1D_MODEL, &
+                                  vpv,vph,vsv,vsh,rho,eta_aniso)
+    case default
+      ! nothing to do yet, takes inner core velocities from 1D reference model...
+      continue
+
+    end select
+
+  else if (iregion_code == IREGION_OUTER_CORE) then
+    ! no 3D outer core models implemented yet... nothing to do
+    continue
+
+  else
+    ! case should not occur
+    print *,'Error invalid iregion_code',iregion_code
+    stop 'Invalid iregion_code case in meshfem3D_models_get3Dmntl_val() routine'
+  endif
+
+  ! collaborative earth model for whole globe
 #ifdef USE_CEM
   if (CEM_ACCEPT) then
+    ! over-imposes velocity values for all regions (crust/mantle,outer core,inner core)
     call request_cem (vsh, vsv, vph, vpv, rho, iregion_code, ispec, i, j, k)
   endif
 #endif
 
-!> Hejun
-! Assign Attenuation after get 3-D crustal model
-! This is here to identify how and where to include 3D attenuation
-!       if (ATTENUATION .and. ATTENUATION_3D) then
-!         call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_dummy,theta,phi)
-!         call reduce(theta,phi)
-!         theta_degrees = theta / DEGREES_TO_RADIANS
-!         phi_degrees = phi / DEGREES_TO_RADIANS
-!         tau_e(:)   = 0.0d0
-!         ! Get the value of Qmu (Attenuation) dependent on
-!         ! the radius (r_prem) and idoubling flag
-!         !call model_attenuation_1D_PREM(r_prem, Qmu, idoubling)
-!          call model_atten3D_QRFSI12(r_prem*R_EARTH_KM,theta_degrees,phi_degrees,Qmu,idoubling)
-!          ! Get tau_e from tau_s and Qmu
-!         call model_attenuation_getstored_tau(Qmu, T_c_source, tau_s, tau_e)
-!       endif
+  ! parameterization
+  !
+  ! converts isotropic/tiso parameters to fully anisotropic parameters
+  if (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
+
+    ! anisotropic model between the Moho and 670 km (change to CMB if desired)
+    if (THREE_D_MODEL == THREE_D_MODEL_ANISO_MANTLE) then
+      ! special case for model_aniso_mantle()
+      ! c11,.. already set in model_aniso_mantle() routine
+      ! nothing to do left
+      continue
+    else
+      ! convert isotropic/tiso parameters to full cij
+      if (TRANSVERSE_ISOTROPY) then
+        ! assume that transverse isotropy is given for a radial symmetry axis
+        ! we will need to rotate from this local (radial) axis to the SPECFEM global reference
+        !
+        ! Love parameterization
+        A = rho * vph**2
+        C = rho * vpv**2
+        L = rho * vsv**2
+        N = rho * vsh**2
+        F = eta_aniso * (A - 2.d0 * L)
+
+        ! local (radial) coordinate system to global SPECFEM reference
+        call rotate_tensor_Love_to_global(theta,phi, &
+                                          A,C,N,L,F, &
+                                          c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+                                          c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
+
+      else
+        ! calculates isotropic values from given (transversely isotropic) reference values
+        ! (are non-dimensionalized)
+        !
+        ! note: in case vpv == vph and vsv == vsh and eta == 1,
+        !       this reduces to vp == vpv and vs == vsv
+        vp = sqrt( ((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
+                  + (8.d0 - 8.d0*eta_aniso)*vsv*vsv)/15.d0 )
+        vs = sqrt( ((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
+                          + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0 )
+
+        ! fills the rest of the mantle with the isotropic model
+        !
+        ! note: no rotation needed as for isotropic case, there is no pre-defined symmetry axis
+        ! (cij becomes rotation invariant)
+        c11 = rho*vp*vp
+        c12 = rho*(vp*vp - 2.d0*vs*vs)
+        c13 = c12
+        c14 = 0.d0
+        c15 = 0.d0
+        c16 = 0.d0
+        c22 = c11
+        c23 = c12
+        c24 = 0.d0
+        c25 = 0.d0
+        c26 = 0.d0
+        c33 = c11
+        c34 = 0.d0
+        c35 = 0.d0
+        c36 = 0.d0
+        c44 = rho*vs*vs
+        c45 = 0.d0
+        c46 = 0.d0
+        c55 = c44
+        c56 = 0.d0
+        c66 = c44
+      endif
+    endif
+  endif ! ANISOTROPIC_3D_MANTLE
+
+  if (ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) then
+    ! calculates isotropic values from given (transversely isotropic) reference values
+    ! (are non-dimensionalized)
+    !
+    ! note: in case vpv == vph and vsv == vsh and eta == 1,
+    !       this reduces to vp == vpv and vs == vsv
+    vp = sqrt( ((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
+              + (8.d0 - 8.d0*eta_aniso)*vsv*vsv)/15.d0 )
+    vs = sqrt( ((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
+                      + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0 )
+
+    ! elastic tensor for hexagonal symmetry in reduced notation:
+    !
+    !      c11 c12 c13  0   0        0
+    !      c12 c11 c13  0   0        0
+    !      c13 c13 c33  0   0        0
+    !       0   0   0  c44  0        0
+    !       0   0   0   0  c44       0
+    !       0   0   0   0   0  c66=(c11-c12)/2
+    !
+    !       in terms of the A, C, L, N and F of Love (1927):
+    !
+    !       c11 = A
+    !       c33 = C
+    !       c12 = A-2N
+    !       c13 = F
+    !       c44 = L
+    !       c66 = N
+    !
+    !       isotropic equivalent:
+    !
+    !       c11 = lambda+2mu
+    !       c33 = lambda+2mu
+    !       c12 = lambda
+    !       c13 = lambda
+    !       c44 = mu
+    !       c66 = mu
+
+    ! fills the rest of the mantle with the isotropic model
+    !
+    ! note: no rotation needed as for isotropic case, there is no pre-defined symmetry axis
+    c11 = rho*vp*vp
+    c12 = rho*(vp*vp - 2.d0*vs*vs)
+    c13 = c12
+    c22 = c11
+    c23 = c12
+    c33 = c11
+    c44 = rho*vs*vs
+    c55 = c44
+    c66 = c44
+  endif
 
   end subroutine meshfem3D_models_get3Dmntl_val
 

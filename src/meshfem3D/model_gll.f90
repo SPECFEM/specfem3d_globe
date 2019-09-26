@@ -569,6 +569,10 @@
     read(IIN) MGLL_V%Gs_prime_new(:,:,:,1:MGLL_V%nspec)
     close(IIN)
 
+!daniel debug: setting Gc,Gs to zero to ignore for testing
+    MGLL_V%Gc_prime_new = 0.0_CUSTOM_REAL
+    MGLL_V%Gs_prime_new = 0.0_CUSTOM_REAL
+
   case default
     stop 'Invalid MGLL_TYPE, mesh file reading not implemented yet'
   end select
@@ -698,34 +702,11 @@
                                     c33,c34,c35,c36,c44,c45,c46,c55,c56,c66
 
   ! local parameters
-  double precision:: d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26, &
-                     d33,d34,d35,d36,d44,d45,d46,d55,d56,d66
-  double precision:: A,C,L,N,F,Gc,Gs,Jc,Js,Kc,Ks,Mc,Ms,Bc,Bs,Hc,Hs,Dc,Ds,Ec,Es
+  double precision :: A,C,L,N,F,Gc,Gs
+  double precision :: Jc,Js,Kc,Ks,Mc,Ms,Bc,Bs,Hc,Hs,Dc,Ds,Ec,Es
   double precision :: r,theta,phi
 
   ! initializes
-  d11 = ZERO
-  d12 = ZERO
-  d13 = ZERO
-  d14 = ZERO
-  d15 = ZERO
-  d16 = ZERO
-  d22 = ZERO
-  d23 = ZERO
-  d24 = ZERO
-  d25 = ZERO
-  d26 = ZERO
-  d33 = ZERO
-  d34 = ZERO
-  d35 = ZERO
-  d36 = ZERO
-  d44 = ZERO
-  d45 = ZERO
-  d46 = ZERO
-  d55 = ZERO
-  d56 = ZERO
-  d66 = ZERO
-
   A = ZERO
   C = ZERO
   L = ZERO
@@ -749,47 +730,55 @@
   Ec = ZERO
   Es = ZERO
 
-  ! Love parameterization
-  A = rho * vph**2
-  C = rho * vpv**2
-  L = rho * vsv**2
-  N = rho * vsh**2
-  F = eta_aniso * (A - 2.d0 * L)
+  ! local position (d_ij given in radial direction)
+  ! only in case needed for rotation
+  call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r,theta,phi)
+  call reduce(theta,phi)
+
+! Ebru: No need to scale elastic tensor as wavespeeds are already scaled before
+!       the construction of the tensor.
+!  d11 = d11!/scale_GPa
+! ..
 
   select case (MGLL_TYPE)
-  case (1,2)
-    ! anisotropy based on tiso parameters
+  case (1)
+    ! isotropic model
     !
-    !! if equivalent with an isotropic tensor
+    ! vpv == vp and vsv == vs and eta == 1
+    ! no symmetry axis, no need for rotation (following cij should be rotation invariant)
+    !
+    ! if equivalent with an isotropic tensor, cij can be set with
     ! Lame parameters: mu = rho * vp**2
     !                  lambda = rho * (vp**2 - vs**2)
     !            then: C11 = C22 = C33 = lambda + 2mu
     !                  C12 = C13 = C23 = lambda
     !                  C44 = C55 = C66 = mu
+    c11 = rho * vpv*vpv                  ! lambda + 2 mu
+    c12 = rho * (vpv*vpv - 2.d0*vsv*vsv) ! lambda
+    c13 = c12                            ! lambda
+    c14 = 0.d0
+    c15 = 0.d0
+    c16 = 0.d0
+    c22 = c11                            ! lambda + 2 mu
+    c23 = c12                            ! lambda
+    c24 = 0.d0
+    c25 = 0.d0
+    c26 = 0.d0
+    c33 = c11                            ! lambda + 2 mu
+    c34 = 0.d0
+    c35 = 0.d0
+    c36 = 0.d0
+    c44 = rho * vsv*vsv                  ! mu
+    c45 = 0.d0
+    c46 = 0.d0
+    c55 = c44                            ! mu
+    c56 = 0.d0
+    c66 = c44                            ! mu
+
+  case (2)
+    ! anisotropy based on tiso parameters
     !
-    !c11 = rho * vpv*vpv                  ! lambda + 2 mu
-    !c12 = rho * (vpv*vpv - 2.d0*vsv*vsv) ! lambda
-    !c13 = c12                            ! lambda
-    !c14 = 0.d0
-    !c15 = 0.d0
-    !c16 = 0.d0
-    !c22 = c11                            ! lambda + 2 mu
-    !c23 = c12                            ! lambda
-    !c24 = 0.d0
-    !c25 = 0.d0
-    !c26 = 0.d0
-    !c33 = c11                            ! lambda + 2 mu
-    !c34 = 0.d0
-    !c35 = 0.d0
-    !c36 = 0.d0
-    !c44 = rho * vsv*vsv                  ! mu
-    !c45 = 0.d0
-    !c46 = 0.d0
-    !c55 = c44                            ! mu
-    !c56 = 0.d0
-    !c66 = c44                            ! mu
-    !
-    !! or equivalent with an transversely isotropic elastic tensor
+    !! cij equivalent with an transversely isotropic elastic tensor
     !
     ! Anderson & Dziewonski, 1982: "Upper mantle anisotropy: evidence from free oscillations", GJR
     ! A = rho * vph**2
@@ -809,28 +798,18 @@
     ! C55 = C44
     ! C66 = N = rho * vsh**2 = (C11-C12)/2
     !
-    ! local coordinate system
-    d11 = A
-    d12 = A - 2.0*N
-    d13 = F
-    d14 = 0.d0
-    d15 = 0.d0
-    d16 = 0.d0
-    d22 = A
-    d23 = F
-    d24 = 0.d0
-    d25 = 0.d0
-    d26 = 0.d0
-    d33 = C
-    d34 = 0.d0
-    d35 = 0.d0
-    d36 = 0.d0
-    d44 = L
-    d45 = 0.d0
-    d46 = 0.d0
-    d55 = L
-    d56 = 0.d0
-    d66 = N
+    ! Love parameterization
+    A = rho * vph**2
+    C = rho * vpv**2
+    L = rho * vsv**2
+    N = rho * vsh**2
+    F = eta_aniso * (A - 2.d0 * L)
+
+    ! local (radial) coordinate system to global SPECFEM reference
+    call rotate_tensor_Love_to_global(theta,phi, &
+                                      A,C,N,L,F, &
+                                      c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+                                      c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
 
   case (3)
     ! azimuthal anisotropy
@@ -881,6 +860,13 @@
     Gc = 0.d0
     Gs = 0.d0
 
+    ! Love parameterization
+    A = rho * vph**2
+    C = rho * vpv**2
+    L = rho * vsv**2
+    N = rho * vsh**2
+    F = eta_aniso * (A - 2.d0 * L)
+
     !rhovpvsq = C  !!! that is C
     !rhovphsq = A  !!! that is A
 
@@ -890,120 +876,27 @@
     !debug
     !if (myrank==0) print *,"Gc,Gs",Gc,Gs
 
-    ! only A,C,L,N,F and Gc,Gs are non-zero
-    d11 = A
-    d12 = A - 2.d0*N
-    d13 = F
-    d14 = 0.d0
-    d15 = 0.d0
-    d16 = 0.d0
-    d22 = A
-    d23 = F
-    d24 = 0.d0
-    d25 = 0.d0
-    d26 = 0.d0
-    d33 = C
-    d34 = 0.d0
-    d35 = 0.d0
-    d36 = 0.d0
-    d44 = L - Gc
-    d45 = -Gs
-    d46 = 0.d0
-    d55 = L + Gc
-    d56 = 0.d0
-    d66 = N
+    ! local (azimuthal) coordinate system to global SPECFEM reference
+    call rotate_tensor_azimuthal_to_global(theta,phi, &
+                                           A,C,N,L,F, &
+                                           Gc,Gs, &
+                                           c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+                                           c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
+
 
   case default
-    ! general case (see also model_aniso_mantle.f90)
-    d11 = A + Ec + Bc
-    d12 = A - 2.0*N - Ec
-    d13 = F + Hc
-    d14 = Ds + 2.0*Js + 2.0*Ms
-    d15 = 2.0*Jc + Dc
-    d16 = -0.5*Bs - Es
-    d22 = A + Ec - Bc
-    d23 = F - Hc
-    d24 = 2.0*Js - Ds
-    d25 = 2.0*Jc - 2.0*Mc - Dc
-    d26 = -Bs/2 + Es
-
-    d33 = C
-    d34 = 2.0 * (Js - Ks)
-    d35 = 2.0 * (Jc - Kc)
-    d36 = -Hs
-
-    d44 = L - Gc
-    d45 = -Gs
-    d46 = Mc - Dc
-
-    d55 = L + Gc
-    d56 = Ds - Ms
-
-    d66 = N - Ec
-
     ! saftey stop
     stop 'Invalid MGLL_TYPE, conversion to elastic tensor not implemented yet'
+
+    !! for full parameterization, could call something like:
+    !call rotate_tensor_aniso_to_global(theta,phi &
+    !                                   A,C,N,L,F, &
+    !                                   Gc,Gs, &
+    !                                   Jc,Js,Kc,Ks,Mc,Ms,Bc,Bs,Hc,Hs,Dc,Ds,Ec,Es, &
+    !                                   c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+    !                                   c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
   end select
 
-! Ebru: No need to scale elastic tensor as wavespeeds are already scaled before
-!       the construction of the tensor.
-  d11 = d11!/scale_GPa
-  d12 = d12!/scale_GPa
-  d13 = d13!/scale_GPa
-  d14 = d14!/scale_GPa
-  d15 = d15!/scale_GPa
-  d16 = d16!/scale_GPa
-  d22 = d22!/scale_GPa
-  d23 = d23!/scale_GPa
-  d24 = d24!/scale_GPa
-  d25 = d25!/scale_GPa
-  d26 = d26!/scale_GPa
-  d33 = d33!/scale_GPa
-  d34 = d34!/scale_GPa
-  d35 = d35!/scale_GPa
-  d36 = d36!/scale_GPa
-  d44 = d44!/scale_GPa
-  d45 = d45!/scale_GPa
-  d46 = d46!/scale_GPa
-  d55 = d55!/scale_GPa
-  d56 = d56!/scale_GPa
-  d66 = d66!/scale_GPa
-
-  c11 = ZERO
-  c12 = ZERO
-  c13 = ZERO
-  c14 = ZERO
-  c15 = ZERO
-  c16 = ZERO
-  c22 = ZERO
-  c23 = ZERO
-  c24 = ZERO
-  c25 = ZERO
-  c26 = ZERO
-  c33 = ZERO
-  c34 = ZERO
-  c35 = ZERO
-  c36 = ZERO
-  c44 = ZERO
-  c45 = ZERO
-  c46 = ZERO
-  c55 = ZERO
-  c56 = ZERO
-  c66 = ZERO
-
-  ! local position (d_ij given in radial direction)
-  call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r,theta,phi)
-  call reduce(theta,phi)
-
-  ! rotates from local (d_ij) to global (c_ij) anisotropic parameters.
-  ! The c_ij are the coefficients in the global reference frame used in SPECFEM3D
-  !
-  ! (see routine in model_aniso_mantle.f90)
-  call rotate_aniso_tensor(theta,phi, &
-                           d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26, &
-                           d33,d34,d35,d36,d44,d45,d46,d55,d56,d66, &
-                           c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
-                           c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
   ! debug
   !if (myrank==0) print *,"c11",c11
 
