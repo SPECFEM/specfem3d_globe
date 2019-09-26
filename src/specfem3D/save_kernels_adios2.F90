@@ -33,6 +33,7 @@ module kernel_adios2
   type(adios2_variable), public :: v_alphav_kl_crust_mantle, v_alphah_kl_crust_mantle, v_betav_kl_crust_mantle, &
                                    v_betah_kl_crust_mantle, v_eta_kl_crust_mantle, v_rho_kl_crust_mantle, &
                                    v_bulk_c_kl_crust_mantle, v_bulk_betav_kl_crust_mantle, v_bulk_betah_kl_crust_mantle, &
+                                   v_Gc_prime_kl_crust_mantle, v_Gs_prime_kl_crust_mantle, &
                                    v_alpha_kl_crust_mantle, v_cijkl_kl_crust_mantle, v_rhonotprime_kl_crust_mantle, &
                                    v_kappa_kl_crust_mantle,  v_mu_kl_crust_mantle, &
                                    v_beta_kl_crust_mantle,  v_sigma_kl_crust_mantle, v_bulk_beta_kl_crust_mantle, &
@@ -174,6 +175,32 @@ end module kernel_adios2
         call adios2_define_variable(v_beta_kl_crust_mantle, adios2_io_kernel, "beta_kl_crust_mantle", &
                                     adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
         call adios2_define_variable(v_bulk_beta_kl_crust_mantle, adios2_io_kernel, "bulk_beta_kl_crust_mantle", &
+                                    adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+
+      else if (SAVE_AZIMUTHAL_ANISO_KL_ONLY) then
+        call adios2_define_variable(v_betav_kl_crust_mantle, adios2_io_kernel, "betav_kl_crust_mantle", &
+                                    adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+        call adios2_define_variable(v_betah_kl_crust_mantle, adios2_io_kernel, "betah_kl_crust_mantle", &
+                                    adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+        call adios2_define_variable(v_eta_kl_crust_mantle, adios2_io_kernel, "eta_kl_crust_mantle", &
+                                    adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+        call adios2_define_variable(v_rho_kl_crust_mantle, adios2_io_kernel, "rho_kl_crust_mantle", &
+                                    adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+        call adios2_define_variable(v_bulk_c_kl_crust_mantle, adios2_io_kernel, "bulk_c_kl_crust_mantle", &
+                                    adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+        call adios2_define_variable(v_bulk_betav_kl_crust_mantle, adios2_io_kernel, "bulk_betav_kl_crust_mantle", &
+                                    adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+        call adios2_define_variable(v_bulk_betah_kl_crust_mantle, adios2_io_kernel, "bulk_betah_kl_crust_mantle", &
+                                    adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+        call adios2_define_variable(v_alpha_kl_crust_mantle, adios2_io_kernel, "alpha_kl_crust_mantle", &
+                                    adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+        call adios2_define_variable(v_beta_kl_crust_mantle, adios2_io_kernel, "beta_kl_crust_mantle", &
+                                    adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+        call adios2_define_variable(v_bulk_beta_kl_crust_mantle, adios2_io_kernel, "bulk_beta_kl_crust_mantle", &
+                                    adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+        call adios2_define_variable(v_Gc_prime_crust_mantle, adios2_io_kernel, "Gc_prime_kl_crust_mantle", &
+                                    adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+        call adios2_define_variable(v_Gs_prime_crust_mantle, adios2_io_kernel, "Gs_prime_kl_crust_mantle", &
                                     adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
 
       else
@@ -336,7 +363,8 @@ end module kernel_adios2
                                         betav_kl_crust_mantle,betah_kl_crust_mantle, &
                                         eta_kl_crust_mantle, &
                                         bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle, &
-                                        bulk_betav_kl_crust_mantle,bulk_betah_kl_crust_mantle)
+                                        bulk_betav_kl_crust_mantle,bulk_betah_kl_crust_mantle, &
+                                        Gc_prime_kl_crust_mantle, Gs_prime_kl_crust_mantle)
 
   use specfem_par
   use specfem_par_crustmantle
@@ -352,7 +380,8 @@ end module kernel_adios2
       betav_kl_crust_mantle,betah_kl_crust_mantle, &
       eta_kl_crust_mantle, &
       bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle, &
-      bulk_betav_kl_crust_mantle,bulk_betah_kl_crust_mantle
+      bulk_betav_kl_crust_mantle,bulk_betah_kl_crust_mantle, &
+      Gc_prime_kl_crust_mantle, Gs_prime_kl_crust_mantle
 
   ! Variables
   integer :: ier
@@ -377,6 +406,24 @@ end module kernel_adios2
     call adios2_put(adios2_file_kernel, v_alpha_kl_crust_mantle, alpha_kl_crust_mantle, adios2_mode_sync, ier)
     call adios2_put(adios2_file_kernel, v_beta_kl_crust_mantle, beta_kl_crust_mantle, adios2_mode_sync, ier)
     call adios2_put(adios2_file_kernel, v_bulk_beta_kl_crust_mantle, bulk_beta_kl_crust_mantle, adios2_mode_sync, ier)
+
+  else if (SAVE_AZIMUTHAL_ANISO_KL_ONLY) then
+    ! kernels for inversions involving azimuthal anisotropy
+    ! (bulk_c, beta_v, beta_h, eta, Gc', Gs', rho ) parameterization
+    ! note: Gc' & Gs' are the normalized Gc & Gs kernels
+    call adios2_put(adios2_file_kernel, v_betav_kl_crust_mantle, betav_kl_crust_mantle, adios2_mode_sync, ier)
+    call adios2_put(adios2_file_kernel, v_betah_kl_crust_mantle, betah_kl_crust_mantle, adios2_mode_sync, ier)
+    call adios2_put(adios2_file_kernel, v_eta_kl_crust_mantle, eta_kl_crust_mantle, adios2_mode_sync, ier)
+    call adios2_put(adios2_file_kernel, v_rho_kl_crust_mantle, rho_kl_crust_mantle, adios2_mode_sync, ier)
+    call adios2_put(adios2_file_kernel, v_bulk_c_kl_crust_mantle, bulk_c_kl_crust_mantle, adios2_mode_sync, ier)
+    call adios2_put(adios2_file_kernel, v_bulk_betav_kl_crust_mantle, bulk_betav_kl_crust_mantle, adios2_mode_sync, ier)
+    call adios2_put(adios2_file_kernel, v_bulk_betah_kl_crust_mantle, bulk_betah_kl_crust_mantle, adios2_mode_sync, ier)
+    call adios2_put(adios2_file_kernel, v_alpha_kl_crust_mantle, alpha_kl_crust_mantle, adios2_mode_sync, ier)
+    call adios2_put(adios2_file_kernel, v_beta_kl_crust_mantle, beta_kl_crust_mantle, adios2_mode_sync, ier)
+    call adios2_put(adios2_file_kernel, v_bulk_beta_kl_crust_mantle, bulk_beta_kl_crust_mantle, adios2_mode_sync, ier)
+    call adios2_put(adios2_file_kernel, v_Gc_prime_kl_crust_mantle, Gc_prime_kl_crust_mantle, adios2_mode_sync, ier)
+    call adios2_put(adios2_file_kernel, v_Gs_prime_kl_crust_mantle, Gs_prime_kl_crust_mantle, adios2_mode_sync, ier)
+
   else
     ! note: the C_ij and density kernels are not for relative perturbations
     !       (delta ln( m_i) = delta m_i / m_i),

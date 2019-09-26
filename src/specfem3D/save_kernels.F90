@@ -254,6 +254,17 @@
   real(kind=CUSTOM_REAL) :: muvl,kappavl,muhl,kappahl
   real(kind=CUSTOM_REAL) :: alphav_sq,alphah_sq,betav_sq,betah_sq,bulk_sq
 
+  ! azimuthal
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: &
+    Gc_kl_crust_mantle, Gs_kl_crust_mantle, &
+    Gc_prime_kl_crust_mantle, Gs_prime_kl_crust_mantle, &
+    A_kl_crust_mantle, C_kl_crust_mantle, F_kl_crust_mantle, &
+    N_kl_crust_mantle, L_kl_crust_mantle, &
+    Jc_kl_crust_mantle, Kc_kl_crust_mantle, Mc_kl_crust_mantle, &
+    Bc_kl_crust_mantle, Hc_kl_crust_mantle, Ec_kl_crust_mantle, &
+    Dc_kl_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(21) :: cij,cij_radial
+
 #ifdef USE_CEM
   character(len=MAX_STRING_LEN) :: filename
 #endif
@@ -272,6 +283,9 @@
   ! final unit : [s km^(-3) (kg/m^3)^(-1)]
   scale_kl_rho = scale_t * scale_displ_inv / RHOAV * 1.d9
 
+  ! debug
+  if (myrank == 0) print *,'save kernels: scaling factors',scale_kl,scale_kl_ani,scale_kl_rho
+
   ! allocates temporary arrays
   if (SAVE_TRANSVERSE_KL_ONLY) then
     ! transverse isotropic kernel arrays for file output
@@ -280,9 +294,46 @@
              betav_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
              betah_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
              eta_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
-    if (ier /= 0 ) stop 'Error allocating transverse kernels alphav_kl_crust_mantle,...'
+    if (ier /= 0) stop 'Error allocating transverse kernels alphav_kl_crust_mantle,...'
 
     ! isotropic kernel arrays for file output
+    allocate(bulk_betav_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             bulk_betah_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
+    if (ier /= 0) stop 'Error allocating transverse kernels bulk_betav_kl_crust_mantle,...'
+
+    ! bulk velocity kernels
+    allocate(bulk_c_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             bulk_beta_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
+    if (ier /= 0) stop 'Error allocating transverse kernels bulk_c_kl_crust_mantle,...'
+
+  else if (SAVE_AZIMUTHAL_ANISO_KL_ONLY) then
+    ! azimuthal anisotropic kernels
+    allocate(Gc_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             Gs_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             A_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             C_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             F_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             L_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             N_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             Jc_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             Kc_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             Mc_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             Bc_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             Hc_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             Ec_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             Dc_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
+    if (ier /= 0) stop 'Error allocating azimuthal kernels alphav_kl_crust_mantle,...'
+
+    ! azimuthally anisotropic kernel arrays for file output
+    allocate(alphav_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             alphah_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             betav_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             betah_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             eta_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             Gc_prime_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             Gs_prime_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
+    if (ier /= 0) stop 'Error allocating azimuthal kernels alphav_kl_crust_mantle,...'
+
     allocate(bulk_betav_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
              bulk_betah_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
     if (ier /= 0 ) stop 'Error allocating transverse kernels bulk_betav_kl_crust_mantle,...'
@@ -291,6 +342,7 @@
     allocate(bulk_c_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
              bulk_beta_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
     if (ier /= 0 ) stop 'Error allocating transverse kernels bulk_c_kl_crust_mantle,...'
+
   else
     ! dummy allocation
     allocate(alphav_kl_crust_mantle(1,1,1,1), &
@@ -328,8 +380,26 @@
           cijkl_kl_crust_mantle(:,i,j,k,ispec) = cijkl_kl_local(:) * scale_kl_ani
           rho_kl_crust_mantle(i,j,k,ispec) = rho_kl_crust_mantle(i,j,k,ispec) * scale_kl_rho
 
+          ! debug: todo testing...
+          ! to get relative kernels Gc_prime,Gs_prime, needs background velocities
+          !
+          !call model_prem_iso(myrank,r_prem,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &
+          !                    ONE_CRUST,.false.,RICB,RCMB,RTOPDDOUBLEPRIME, &
+          !                    R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+          !
+          !if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF) then
+          !  call model_1dref_broadcast(CRUSTAL)
+          !  call model_1dref(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu,iregion_code,CRUSTAL)
+          !  ! this case here is only executed for 1D_ref_iso
+          !  ! calculates isotropic values
+          !  vp = sqrt(((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
+          !         + (8.d0 - 8.d0*eta_aniso)*vsv*vsv)/15.d0)
+          !  vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
+          !        + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0)
+          !endif
+
           ! transverse isotropic kernel calculations
-          if (SAVE_TRANSVERSE_KL_ONLY) then
+          if (SAVE_TRANSVERSE_KL_ONLY .or. SAVE_AZIMUTHAL_ANISO_KL_ONLY) then
             ! note: transverse isotropic kernels are calculated for all elements
             !
             !          however, the factors A,C,L,N,F are based only on transverse elements
@@ -340,43 +410,91 @@
             ! transverse isotropic parameters from compute_force_crust_mantle.f90
             ! C=rhovpvsq A=rhovphsq L=rhovsvsq N=rhovshsq eta=F/(A - 2 L)
 
-            ! Get A,C,F,L,N,eta from kappa,mu
-            ! element can have transverse isotropy if between d220 and Moho
-            if (.not. ispec_is_tiso_crust_mantle(ispec)) then
+            if (.not. ANISOTROPIC_3D_MANTLE) then
+              ! Get A,C,F,L,N,eta from kappa,mu
+              ! element can have transverse isotropy if between d220 and Moho
+              if (.not. ispec_is_tiso_crust_mantle(ispec)) then
+                ! layer with no transverse isotropy
+                ! A,C,L,N,F from isotropic model
+                mul = muvstore_crust_mantle(i,j,k,ispec)
+                kappal = kappavstore_crust_mantle(i,j,k,ispec)
+                muvl = mul
+                muhl = mul
 
-              ! layer with no transverse isotropy
-              ! A,C,L,N,F from isotropic model
+                A = kappal + FOUR_THIRDS * mul
+                C = A
+                L = mul
+                N = mul
+                F = kappal - 2._CUSTOM_REAL/3._CUSTOM_REAL * mul
+                eta = 1._CUSTOM_REAL
+              else
+                ! A,C,L,N,F from transverse isotropic model
+                kappavl = kappavstore_crust_mantle(i,j,k,ispec)
+                kappahl = kappahstore_crust_mantle(i,j,k,ispec)
+                muvl = muvstore_crust_mantle(i,j,k,ispec)
+                muhl = muhstore_crust_mantle(i,j,k,ispec)
+                kappal = kappavl
 
-              mul = muvstore_crust_mantle(i,j,k,ispec)
-              kappal = kappavstore_crust_mantle(i,j,k,ispec)
-              muvl = mul
-              muhl = mul
-
-              A = kappal + FOUR_THIRDS * mul
-              C = A
-              L = mul
-              N = mul
-              F = kappal - 2._CUSTOM_REAL/3._CUSTOM_REAL * mul
-              eta = 1._CUSTOM_REAL
-
+                A = kappahl + FOUR_THIRDS * muhl
+                C = kappavl + FOUR_THIRDS * muvl
+                L = muvl
+                N = muhl
+                eta = eta_anisostore_crust_mantle(i,j,k,ispec)  ! that is  F / (A - 2 L)
+                F = eta * ( A - 2._CUSTOM_REAL * L )
+              endif
             else
+              ! anisotropic mantle
+              !
+              ! Sieminski, 2007: assuming vertical(radial) symmetry axis
+              ! A = 1/8 (3 C11 + 3 C22 + 2 C12 + 4 C66)       -> kernel K_A = K_C11 + K_C12 + K_C22
+              ! C = C33                                       -> kernel K_C = K_C33
+              ! N = 1/8 (C11 + C22 - 2 C12 + 4 C66)           -> kernel K_N = K_C66 - 2 K_C12
+              ! L = 1/2 (C44 + C55)                           -> kernel K_L = K_C44 + K_C55
+              ! F = 1/2 (C13 + C23)                           -> kernel K_F = K_C13 + K_C23
+              ! eta = F / (A - 2 L)
+              !
+              ! and (also, Anderson & Dziewonski):
+              ! A = rho * vph**2
+              ! C = rho * vpv**2
+              ! N = rho * vsh**2 = muh
+              ! L = rho * vsv**2 = muv
+              ! F = eta * (A - 2*L)
 
-              ! A,C,L,N,F from transverse isotropic model
-              kappavl = kappavstore_crust_mantle(i,j,k,ispec)
-              kappahl = kappahstore_crust_mantle(i,j,k,ispec)
-              muvl = muvstore_crust_mantle(i,j,k,ispec)
-              muhl = muhstore_crust_mantle(i,j,k,ispec)
+              ! daniel todo:
+              ! please check, this assumes a radial symmetry axis, thus we should again first rotate back
+              ! the c11store,.. coefficients from the SPECFEM reference coordinate system
+              cij(1) = c11store_crust_mantle(i,j,k,ispec); cij(2) = c12store_crust_mantle(i,j,k,ispec)
+              cij(3) = c13store_crust_mantle(i,j,k,ispec); cij(4) = c14store_crust_mantle(i,j,k,ispec)
+              cij(5) = c15store_crust_mantle(i,j,k,ispec); cij(6) = c16store_crust_mantle(i,j,k,ispec)
+              cij(7) = c22store_crust_mantle(i,j,k,ispec); cij(8) = c23store_crust_mantle(i,j,k,ispec)
+              cij(9) = c24store_crust_mantle(i,j,k,ispec); cij(10) = c25store_crust_mantle(i,j,k,ispec)
+              cij(11) = c26store_crust_mantle(i,j,k,ispec); cij(12) = c33store_crust_mantle(i,j,k,ispec)
+              cij(13) = c34store_crust_mantle(i,j,k,ispec); cij(14) = c35store_crust_mantle(i,j,k,ispec)
+              cij(15) = c36store_crust_mantle(i,j,k,ispec); cij(16) = c44store_crust_mantle(i,j,k,ispec)
+              cij(17) = c45store_crust_mantle(i,j,k,ispec); cij(18) = c46store_crust_mantle(i,j,k,ispec)
+              cij(19) = c55store_crust_mantle(i,j,k,ispec); cij(20) = c56store_crust_mantle(i,j,k,ispec)
+              cij(21) = c66store_crust_mantle(i,j,k,ispec)
+
+              call rotate_kernels_dble(cij(:),cij_radial(:),theta,phi)
+
+              A = 0.125_CUSTOM_REAL * ( 3.0 * cij_radial(1) + 3.0 * cij_radial(7) &
+                                       + 2.0 * cij_radial(2) + 4.0 * cij_radial(21) )
+              C = cij_radial(12)
+              N = 0.125_CUSTOM_REAL * ( cij_radial(1) + cij_radial(7) &
+                                       - 2.0 * cij_radial(2) + 4.0 * cij_radial(21))
+              L = 0.5_CUSTOM_REAL * ( cij_radial(16) + cij_radial(19) )
+              F = 0.5_CUSTOM_REAL * ( cij_radial(3) + cij_radial(8) )
+              eta = F / (A - 2.0_CUSTOM_REAL * L)
+
+              ! mu & kappa for bulk kernels
+              ! derived from: kappav = rho*(vpv*vpv - 4.d0/3.0*vsv*vsv) and muv = rho * vsv**2
+              !               kappah = rho*(vph*vph - 4.d0/3.0*vsh*vsh) and muh = rho * vsh**2
+              muvl = L
+              muhl = N
+              kappavl = C - 4.0/3.0 * L
+              kappahl = A - 4.0/3.0 * N
               kappal = kappavl
-
-              A = kappahl + FOUR_THIRDS * muhl
-              C = kappavl + FOUR_THIRDS * muvl
-              L = muvl
-              N = muhl
-              eta = eta_anisostore_crust_mantle(i,j,k,ispec)  ! that is  F / (A - 2 L)
-              F = eta * ( A - 2._CUSTOM_REAL * L )
-
             endif
-
             ! note: cijkl_kl_local() is fully anisotropic C_ij kernel components (non-dimensionalized)
             !          for GLL point at (i,j,k,ispec)
 
@@ -422,22 +540,24 @@
             !
             ! additional primitive kernels for "asymptotic parameters" (Chen & Tromp 2007):
             !
-            !an_kl(6)  = 2*cijkl_kl_local(5)+2*cijkl_kl_local(10)+2*cijkl_kl_local(14)          !Jc
-            !an_kl(7)  = 2*cijkl_kl_local(4)+2*cijkl_kl_local(9)+2*cijkl_kl_local(13)           !Js
-            !an_kl(8)  = -2*cijkl_kl_local(14)                                                  !Kc
-            !an_kl(9)  = -2*cijkl_kl_local(13)                                                  !Ks
-            !an_kl(10) = -2*cijkl_kl_local(10)+cijkl_kl_local(18)                               !Mc
-            !an_kl(11) = 2*cijkl_kl_local(4)-cijkl_kl_local(20)                                 !Ms
-            !an_kl(12) = cijkl_kl_local(1)-cijkl_kl_local(7)                                    !Bc
-            !an_kl(13) = -1./2.*(cijkl_kl_local(6)+cijkl_kl_local(11))                          !Bs
-            !an_kl(14) = cijkl_kl_local(3)-cijkl_kl_local(8)                                    !Hc
-            !an_kl(15) = -cijkl_kl_local(15)                                                    !Hs
-            !an_kl(16) = -cijkl_kl_local(16)+cijkl_kl_local(19)                                 !Gc
-            !an_kl(17) = -cijkl_kl_local(17)                                                    !Gs
-            !an_kl(18) = cijkl_kl_local(5)-cijkl_kl_local(10)-cijkl_kl_local(18)                !Dc
-            !an_kl(19) = cijkl_kl_local(4)-cijkl_kl_local(9)+cijkl_kl_local(20)                 !Ds
-            !an_kl(20) = cijkl_kl_local(1)-cijkl_kl_local(2)+cijkl_kl_local(7)-cijkl_kl_local(21)      !Ec
-            !an_kl(21) = -cijkl_kl_local(6)+cijkl_kl_local(11)                                  !Es
+            if (SAVE_AZIMUTHAL_ANISO_KL_ONLY) then
+              an_kl(6)  = 2*cijkl_kl_local(5)+2*cijkl_kl_local(10)+2*cijkl_kl_local(14)          !Jc
+              an_kl(7)  = 2*cijkl_kl_local(4)+2*cijkl_kl_local(9)+2*cijkl_kl_local(13)           !Js
+              an_kl(8)  = -2*cijkl_kl_local(14)                                                  !Kc
+              an_kl(9)  = -2*cijkl_kl_local(13)                                                  !Ks
+              an_kl(10) = -2*cijkl_kl_local(10)+cijkl_kl_local(18)                               !Mc
+              an_kl(11) = 2*cijkl_kl_local(4)-cijkl_kl_local(20)                                 !Ms
+              an_kl(12) = cijkl_kl_local(1)-cijkl_kl_local(7)                                    !Bc
+              an_kl(13) = -1./2.*(cijkl_kl_local(6)+cijkl_kl_local(11))                          !Bs
+              an_kl(14) = cijkl_kl_local(3)-cijkl_kl_local(8)                                    !Hc
+              an_kl(15) = -cijkl_kl_local(15)                                                    !Hs
+              an_kl(16) = -cijkl_kl_local(16) + cijkl_kl_local(19)                               !Gc
+              an_kl(17) = -cijkl_kl_local(17)                                                    !Gs
+              an_kl(18) = cijkl_kl_local(5)-cijkl_kl_local(10)-cijkl_kl_local(18)                !Dc
+              an_kl(19) = cijkl_kl_local(4)-cijkl_kl_local(9)+cijkl_kl_local(20)                 !Ds
+              an_kl(20) = cijkl_kl_local(1)-cijkl_kl_local(2)+cijkl_kl_local(7)-cijkl_kl_local(21)   !Ec
+              an_kl(21) = -cijkl_kl_local(6)+cijkl_kl_local(11)                                  !Es
+            endif
 
             ! more parameterizations:
             !
@@ -466,8 +586,42 @@
             !       and
             !         angle \zeta is measured counter-clockwise from South
             !
+            if (SAVE_AZIMUTHAL_ANISO_KL_ONLY) then
+              ! daniel todo:
+              !
+              ! scaling with actual values?
+              !beta_v = sqrt(L/rhol)
+              !beta_h = sqrt(N/rhol)
+              ! isotropic: Voigt' average vs = sqrt( (2.d0*vsv**2 + vsh**2)/3.d0 )
+              !beta_0 = sqrt( (2.0 * beta_v**2 + beta_h**2)/3.0 )
 
+              !see model_gll.f90:
+              ! test scaling with arbitrary shear moduli
+              ! test: choosing PREM crustal values: rho=2.6 g/cm3, vp=5.8 km/s, vs=3.2 km/s -> mu0 = 26.624 GPa
+              !Gc = Gc_prime * 26.6/scale_GPa
+              !Gs = Gs_prime * 26.6/scale_GPa
 
+              ! scaling with shear moduli from 1D background reference
+              !Gc_prime = Gc / (rho beta_0**2)
+              !Gs_prime = Gs / (rho beta_0**2)
+
+              Gc_kl_crust_mantle(i,j,k,ispec) = -an_kl(16)*scale_kl_ani
+              Gs_kl_crust_mantle(i,j,k,ispec) = -an_kl(17)*scale_kl_ani
+              Gc_prime_kl_crust_mantle(i,j,k,ispec) = Gc_kl_crust_mantle(i,j,k,ispec)!/(rho*vs)
+              Gs_prime_kl_crust_mantle(i,j,k,ispec) = Gs_kl_crust_mantle(i,j,k,ispec)!/(rho*vs)
+              A_kl_crust_mantle(i,j,k,ispec) = -an_kl(1)*scale_kl_ani
+              C_kl_crust_mantle(i,j,k,ispec) = -an_kl(2)*scale_kl_ani
+              N_kl_crust_mantle(i,j,k,ispec) = -an_kl(3)*scale_kl_ani
+              L_kl_crust_mantle(i,j,k,ispec) = -an_kl(4)*scale_kl_ani
+              F_kl_crust_mantle(i,j,k,ispec) = -an_kl(5)*scale_kl_ani
+              Jc_kl_crust_mantle(i,j,k,ispec) = -an_kl(6)*scale_kl_ani
+              Kc_kl_crust_mantle(i,j,k,ispec) = -an_kl(8)*scale_kl_ani
+              Mc_kl_crust_mantle(i,j,k,ispec) = -an_kl(10)*scale_kl_ani
+              Bc_kl_crust_mantle(i,j,k,ispec) = -an_kl(12)*scale_kl_ani
+              Hc_kl_crust_mantle(i,j,k,ispec) = -an_kl(14)*scale_kl_ani
+              Ec_kl_crust_mantle(i,j,k,ispec) = -an_kl(20)*scale_kl_ani
+              Dc_kl_crust_mantle(i,j,k,ispec) = -an_kl(18)*scale_kl_ani
+            endif
 
             ! K_rho (primary kernel, for a parameterization (A,C,L,N,F,rho) )
             rhonotprime_kl_crust_mantle(i,j,k,ispec) = rhol * rho_kl_crust_mantle(i,j,k,ispec) / scale_kl_rho
@@ -539,7 +693,13 @@
             bulk_beta_kl_crust_mantle(i,j,k,ispec) = bulk_betah_kl_crust_mantle(i,j,k,ispec) &
                                                   + bulk_betav_kl_crust_mantle(i,j,k,ispec)
 
-          endif ! SAVE_TRANSVERSE_KL_ONLY
+            ! to check: Sieminski, 2007
+            !
+            ! isotropic kernels
+            ! K_alpha = 2 rho alpha**2 ( K_A + K_C + K_F)
+            ! K_beta = 2 rho beta**2 ( K_L + K_N - 2 K_F)
+
+          endif ! SAVE_TRANSVERSE_KL_ONLY .or. SAVE_AZIMUTHAL_ANISO_KL_ONLY
 
         enddo
       enddo
@@ -553,16 +713,18 @@
                                     betav_kl_crust_mantle,betah_kl_crust_mantle, &
                                     eta_kl_crust_mantle, &
                                     bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle, &
-                                    bulk_betav_kl_crust_mantle,bulk_betah_kl_crust_mantle)
+                                    bulk_betav_kl_crust_mantle,bulk_betah_kl_crust_mantle, &
+                                    Gc_prime_kl_crust_mantle, Gs_prime_kl_crust_mantle)
 #else
     call write_kernels_cm_ani_adios(alphav_kl_crust_mantle,alphah_kl_crust_mantle, &
                                     betav_kl_crust_mantle,betah_kl_crust_mantle, &
                                     eta_kl_crust_mantle, &
                                     bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle, &
-                                    bulk_betav_kl_crust_mantle,bulk_betah_kl_crust_mantle)
+                                    bulk_betav_kl_crust_mantle,bulk_betah_kl_crust_mantle, &
+                                    Gc_prime_kl_crust_mantle, Gs_prime_kl_crust_mantle)
 #endif
   else
-
+    ! binary file output
     call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_TMP_PATH)
 
     ! For anisotropic kernels
@@ -617,6 +779,89 @@
       write(IOUT) bulk_beta_kl_crust_mantle
       close(IOUT)
 
+    else if (SAVE_AZIMUTHAL_ANISO_KL_ONLY) then
+      ! kernels for inversions involving azimuthal anisotropy
+      ! (bulk_c, beta_v, beta_h, eta, Gc', Gs', rho ) parameterization
+      ! note: Gc' & Gs' are the normalized Gc & Gs kernels
+      open(unit=IOUT,file=trim(prname)//'eta_kernel.bin',status='unknown',form='unformatted',action='write')
+      write(IOUT) eta_kl_crust_mantle
+      close(IOUT)
+      open(unit=IOUT,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted',action='write')
+      write(IOUT) rho_kl_crust_mantle
+      close(IOUT)
+      open(unit=IOUT,file=trim(prname)//'bulk_c_kernel.bin',status='unknown',form='unformatted',action='write')
+      write(IOUT) bulk_c_kl_crust_mantle
+      close(IOUT)
+      open(unit=IOUT,file=trim(prname)//'bulk_betav_kernel.bin',status='unknown',form='unformatted',action='write')
+      write(IOUT) bulk_betav_kl_crust_mantle
+      close(IOUT)
+      open(unit=IOUT,file=trim(prname)//'bulk_betah_kernel.bin',status='unknown',form='unformatted',action='write')
+      write(IOUT) bulk_betah_kl_crust_mantle
+      close(IOUT)
+      open(unit=IOUT,file=trim(prname)//'Gc_prime_kernel.bin',status='unknown',form='unformatted',action='write')
+      write(IOUT) Gc_prime_kl_crust_mantle
+      close(IOUT)
+      open(unit=IOUT,file=trim(prname)//'Gs_prime_kernel.bin',status='unknown',form='unformatted',action='write')
+      write(IOUT) Gs_prime_kl_crust_mantle
+      close(IOUT)
+
+      ! to check: isotropic kernels
+      !open(unit=IOUT,file=trim(prname)//'alpha_kernel.bin',status='unknown',form='unformatted',action='write')
+      !write(IOUT) alpha_kl_crust_mantle
+      !close(IOUT)
+      !open(unit=IOUT,file=trim(prname)//'beta_kernel.bin',status='unknown',form='unformatted',action='write')
+      !write(IOUT) beta_kl_crust_mantle
+      !close(IOUT)
+      !open(unit=IOUT,file=trim(prname)//'bulk_beta_kernel.bin',status='unknown',form='unformatted',action='write')
+      !write(IOUT) bulk_beta_kl_crust_mantle
+      !close(IOUT)
+
+      ! to check: all anisotropic kernels
+      if (.false.) then
+        open(unit=IOUT,file=trim(prname)//'A_kernel.bin',status='unknown',form='unformatted',action='write')
+        write(IOUT) A_kl_crust_mantle
+        close(IOUT)
+        open(unit=IOUT,file=trim(prname)//'C_kernel.bin',status='unknown',form='unformatted',action='write')
+        write(IOUT) C_kl_crust_mantle
+        close(IOUT)
+        open(unit=IOUT,file=trim(prname)//'L_kernel.bin',status='unknown',form='unformatted',action='write')
+        write(IOUT) L_kl_crust_mantle
+        close(IOUT)
+        open(unit=IOUT,file=trim(prname)//'N_kernel.bin',status='unknown',form='unformatted',action='write')
+        write(IOUT) N_kl_crust_mantle
+        close(IOUT)
+        open(unit=IOUT,file=trim(prname)//'F_kernel.bin',status='unknown',form='unformatted',action='write')
+        write(IOUT) F_kl_crust_mantle
+        close(IOUT)
+        open(unit=IOUT,file=trim(prname)//'Gc_kernel.bin',status='unknown',form='unformatted',action='write')
+        write(IOUT) Gc_kl_crust_mantle
+        close(IOUT)
+        open(unit=IOUT,file=trim(prname)//'Gs_kernel.bin',status='unknown',form='unformatted',action='write')
+        write(IOUT) Gs_kl_crust_mantle
+        close(IOUT)
+        open(unit=IOUT,file=trim(prname)//'Jc_kernel.bin',status='unknown',form='unformatted',action='write')
+        write(IOUT) Jc_kl_crust_mantle
+        close(IOUT)
+        open(unit=IOUT,file=trim(prname)//'Kc_kernel.bin',status='unknown',form='unformatted',action='write')
+        write(IOUT) Kc_kl_crust_mantle
+        close(IOUT)
+        open(unit=IOUT,file=trim(prname)//'Mc_kernel.bin',status='unknown',form='unformatted',action='write')
+        write(IOUT) Mc_kl_crust_mantle
+        close(IOUT)
+        open(unit=IOUT,file=trim(prname)//'Bc_kernel.bin',status='unknown',form='unformatted',action='write')
+        write(IOUT) Bc_kl_crust_mantle
+        close(IOUT)
+        open(unit=IOUT,file=trim(prname)//'Hc_kernel.bin',status='unknown',form='unformatted',action='write')
+        write(IOUT) Hc_kl_crust_mantle
+        close(IOUT)
+        open(unit=IOUT,file=trim(prname)//'Ec_kernel.bin',status='unknown',form='unformatted',action='write')
+        write(IOUT) Ec_kl_crust_mantle
+        close(IOUT)
+        open(unit=IOUT,file=trim(prname)//'Dc_kernel.bin',status='unknown',form='unformatted',action='write')
+        write(IOUT) Dc_kl_crust_mantle
+        close(IOUT)
+      endif
+
     else
 
       ! fully anisotropic kernels
@@ -656,6 +901,34 @@
 
     filename = trim(OUTPUT_FILES)//'/xyzCrustMantle.nc'
     call write_coordinates_netcdf(filename)
+
+  else if (SAVE_AZIMUTHAL_ANISO_KL_ONLY) then
+    filename = trim(OUTPUT_FILES)//'/alphavKernelCrustMantle.nc'
+    call write_kernel_netcdf(filename, alphav_kl_crust_mantle)
+
+    filename = trim(OUTPUT_FILES)//'/alphahKernelCrustMantle.nc'
+    call write_kernel_netcdf(filename, alphah_kl_crust_mantle)
+
+    filename = trim(OUTPUT_FILES)//'/betavKernelCrustMantle.nc'
+    call write_kernel_netcdf(filename,betav_kl_crust_mantle)
+
+    filename = trim(OUTPUT_FILES)//'/betahKernelCrustMantle.nc'
+    call write_kernel_netcdf(filename,betah_kl_crust_mantle)
+
+    filename = trim(OUTPUT_FILES)//'/etaKernelCrustMantle.nc'
+    call write_kernel_netcdf(filename,eta_kl_crust_mantle)
+
+    filename = trim(OUTPUT_FILES)//'/rhoKernelCrustMantle.nc'
+    call write_kernel_netcdf(filename,rho_kl_crust_mantle)
+
+    filename = trim(OUTPUT_FILES)//'/GcprimeKernelCrustMantle.nc'
+    call write_kernel_netcdf(filename,Gc_prime_kl_crust_mantle)
+
+    filename = trim(OUTPUT_FILES)//'/GsprimeKernelCrustMantle.nc'
+    call write_kernel_netcdf(filename,Gs_prime_kl_crust_mantle)
+
+    filename = trim(OUTPUT_FILES)//'/xyzCrustMantle.nc'
+    call write_coordinates_netcdf(filename)
   endif
 #endif
 
@@ -667,6 +940,15 @@
              bulk_betav_kl_crust_mantle)
   deallocate(bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle)
   deallocate(rhonotprime_kl_crust_mantle)
+
+  if (SAVE_AZIMUTHAL_ANISO_KL_ONLY) then
+    deallocate(Gc_kl_crust_mantle,Gs_kl_crust_mantle)
+    deallocate(A_kl_crust_mantle,C_kl_crust_mantle,F_kl_crust_mantle, &
+               L_kl_crust_mantle,N_kl_crust_mantle,Jc_kl_crust_mantle, &
+               Kc_kl_crust_mantle,Mc_kl_crust_mantle,Bc_kl_crust_mantle, &
+               Hc_kl_crust_mantle,Ec_kl_crust_mantle,Dc_kl_crust_mantle)
+    deallocate(Gc_prime_kl_crust_mantle,Gs_prime_kl_crust_mantle)
+  endif
 
   end subroutine save_kernels_crust_mantle_ani
 
@@ -711,7 +993,6 @@
   scale_kl_ani = scale_t**3 / (RHOAV*R_EARTH**3) * 1.d18
   ! final unit : [s km^(-3) (kg/m^3)^(-1)]
   scale_kl_rho = scale_t * scale_displ_inv / RHOAV * 1.d9
-
 
   ! isotropic kernels
   !

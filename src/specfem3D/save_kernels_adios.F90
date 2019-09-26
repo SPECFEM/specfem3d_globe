@@ -92,6 +92,20 @@
         call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '', STRINGIFY_VAR(beta_kl_crust_mantle))
         call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '', "bulk_beta_kl_crust_mantle", dummy_real4d)
 
+      else if (SAVE_AZIMUTHAL_ANISO_KL_ONLY) then
+        call define_adios_global_array1D(adios_group, group_size_inc, local_dim,'', "betav_kl_crust_mantle", dummy_real4d)
+        call define_adios_global_array1D(adios_group, group_size_inc, local_dim,'', "betah_kl_crust_mantle", dummy_real4d)
+        call define_adios_global_array1D(adios_group, group_size_inc, local_dim,'', "eta_kl_crust_mantle", dummy_real4d)
+        call define_adios_global_array1D(adios_group, group_size_inc, local_dim,'', "rho_kl_crust_mantle", dummy_real4d)
+        call define_adios_global_array1D(adios_group, group_size_inc, local_dim,'', "bulk_c_kl_crust_mantle", dummy_real4d)
+        call define_adios_global_array1D(adios_group, group_size_inc, local_dim,'', "bulk_betav_kl_crust_mantle", dummy_real4d)
+        call define_adios_global_array1D(adios_group, group_size_inc, local_dim,'', "bulk_betah_kl_crust_mantle", dummy_real4d)
+        call define_adios_global_array1D(adios_group, group_size_inc, local_dim,'', "alpha_kl_crust_mantle", dummy_real4d)
+        call define_adios_global_array1D(adios_group, group_size_inc, local_dim,'', STRINGIFY_VAR(beta_kl_crust_mantle))
+        call define_adios_global_array1D(adios_group, group_size_inc, local_dim,'', "bulk_beta_kl_crust_mantle", dummy_real4d)
+        call define_adios_global_array1D(adios_group, group_size_inc, local_dim,'', "Gc_prime_kl_crust_mantle", dummy_real4d)
+        call define_adios_global_array1D(adios_group, group_size_inc, local_dim,'', "Gs_prime_kl_crust_mantle", dummy_real4d)
+
       else
         call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '', STRINGIFY_VAR(rho_kl_crust_mantle))
         local_dim = 21 * NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE_ADJOINT
@@ -190,7 +204,8 @@
                                         betav_kl_crust_mantle,betah_kl_crust_mantle, &
                                         eta_kl_crust_mantle, &
                                         bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle, &
-                                        bulk_betav_kl_crust_mantle,bulk_betah_kl_crust_mantle)
+                                        bulk_betav_kl_crust_mantle,bulk_betah_kl_crust_mantle, &
+                                        Gc_prime_kl_crust_mantle,Gs_prime_kl_crust_mantle)
 
   use specfem_par
   use specfem_par_crustmantle
@@ -207,7 +222,8 @@
       betav_kl_crust_mantle,betah_kl_crust_mantle, &
       eta_kl_crust_mantle, &
       bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle, &
-      bulk_betav_kl_crust_mantle,bulk_betah_kl_crust_mantle
+      bulk_betav_kl_crust_mantle,bulk_betah_kl_crust_mantle, &
+      Gc_prime_kl_crust_mantle, Gs_prime_kl_crust_mantle
 
   ! Variables
   integer :: local_dim
@@ -246,6 +262,35 @@
                                      STRINGIFY_VAR(beta_kl_crust_mantle))
     call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
                                      STRINGIFY_VAR(bulk_beta_kl_crust_mantle))
+
+  else if (SAVE_AZIMUTHAL_ANISO_KL_ONLY) then
+    ! kernels for inversions involving azimuthal anisotropy
+    ! (bulk_c, beta_v, beta_h, eta, Gc', Gs', rho ) parameterization
+    ! note: Gc' & Gs' are the normalized Gc & Gs kernels
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios,local_dim, &
+                                     STRINGIFY_VAR(betav_kl_crust_mantle))
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios,local_dim, &
+                                     STRINGIFY_VAR(betah_kl_crust_mantle))
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios,local_dim, &
+                                     STRINGIFY_VAR(eta_kl_crust_mantle))
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios,local_dim, &
+                                     STRINGIFY_VAR(rho_kl_crust_mantle))
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios,local_dim, &
+                                     STRINGIFY_VAR(bulk_c_kl_crust_mantle))
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios,local_dim, &
+                                     STRINGIFY_VAR(bulk_betav_kl_crust_mantle))
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios,local_dim, &
+                                     STRINGIFY_VAR(bulk_betah_kl_crust_mantle))
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios,local_dim, &
+                                     STRINGIFY_VAR(alpha_kl_crust_mantle))
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios,local_dim, &
+                                     STRINGIFY_VAR(beta_kl_crust_mantle))
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios,local_dim, &
+                                     STRINGIFY_VAR(bulk_beta_kl_crust_mantle))
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios,local_dim, &
+                                     STRINGIFY_VAR(Gc_prime_kl_crust_mantle))
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios,local_dim, &
+                                     STRINGIFY_VAR(Gs_prime_kl_crust_mantle))
   else
     ! note: the C_ij and density kernels are not for relative perturbations
     !       (delta ln( m_i) = delta m_i / m_i),
