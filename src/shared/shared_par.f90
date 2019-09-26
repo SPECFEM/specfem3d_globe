@@ -184,7 +184,6 @@
              NER_TOP_CENTRAL_CUBE_ICB, &
              NEX_XI,NEX_ETA
 
-
   ! attenuation
   integer :: MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD
   integer :: ATT1,ATT2,ATT3,ATT4,ATT5
@@ -202,7 +201,8 @@
   double precision :: MOVIE_TOP,MOVIE_BOTTOM,MOVIE_EAST,MOVIE_WEST, &
                       MOVIE_NORTH,MOVIE_SOUTH
   ! model flags
-  integer :: REFERENCE_1D_MODEL,REFERENCE_CRUSTAL_MODEL,THREE_D_MODEL
+  integer :: REFERENCE_1D_MODEL,REFERENCE_CRUSTAL_MODEL
+  integer :: THREE_D_MODEL,THREE_D_MODEL_IC
 
   logical :: TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
              CRUSTAL,ONE_CRUST
@@ -232,7 +232,8 @@
   integer, dimension(MAX_NUM_REGIONS) :: NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
   integer, dimension(MAX_NUM_REGIONS) :: NGLOB1D_RADIAL
 
-  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
+  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner_mesh_layers
+  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ratio_sampling_array
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
 
   double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top

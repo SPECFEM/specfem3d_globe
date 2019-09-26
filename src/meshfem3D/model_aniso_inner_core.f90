@@ -42,17 +42,18 @@
 
 ! given a normalized radius x, gives non-dimensionalized c11,c33,c12,c13,c44
 
-  integer REFERENCE_1D_MODEL
+  integer, intent(in) :: REFERENCE_1D_MODEL
 
-  double precision x,c11,c33,c12,c13,c44
-  double precision rho,vpv,vph,vsv,vsh,eta_aniso
+  double precision, intent(in) :: x
+  double precision, intent(out) :: c11,c33,c12,c13,c44
+  double precision, intent(out) :: rho,vpv,vph,vsv,vsh,eta_aniso
 
   ! local parameters
-  double precision vp,vs
-  double precision vpc,vsc,rhoc
-  double precision vp0,vs0,rho0,A0
-  double precision c66
-  double precision scale_fac
+  double precision :: vp,vs
+  double precision :: vpc,vsc,rhoc
+  double precision :: vp0,vs0,rho0,A0
+  double precision :: c66
+  double precision :: scale_fac
 
   ! calculates isotropic values from given (transversely isotropic) reference values
   ! (are non-dimensionalized)
@@ -63,6 +64,7 @@
 
   ! scale to dimensions (e.g. used in prem model)
   scale_fac = R_EARTH*dsqrt(PI*GRAV*RHOAV)/1000.d0
+
   vp = vp * scale_fac
   vs = vs * scale_fac
   rho = rho * RHOAV/1000.d0
@@ -70,32 +72,32 @@
   select case (REFERENCE_1D_MODEL)
 
     case (REFERENCE_MODEL_IASP91)
-      vpc=11.24094d0-4.09689d0*x*x
-      vsc=3.56454d0-3.45241d0*x*x
-      rhoc=13.0885d0-8.8381d0*x*x
+      vpc = 11.24094d0-4.09689d0*x*x
+      vsc = 3.56454d0-3.45241d0*x*x
+      rhoc = 13.0885d0-8.8381d0*x*x
       ! checks with given values
       if (abs(vpc-vp) > TINYVAL .or. abs(vsc-vs) > TINYVAL .or. abs(rhoc-rho) > TINYVAL) then
         stop 'Error isotropic IASP91 values in model_aniso_inner_core() '
       endif
 
       ! values at center
-      vp0=11.24094d0
-      vs0=3.56454d0
-      rho0=13.0885d0
+      vp0 = 11.24094d0
+      vs0 = 3.56454d0
+      rho0 = 13.0885d0
 
     case (REFERENCE_MODEL_PREM)
-      vpc=11.2622d0-6.3640d0*x*x
-      vsc=3.6678d0-4.4475d0*x*x
-      rhoc=13.0885d0-8.8381d0*x*x
+      vpc = 11.2622d0-6.3640d0*x*x
+      vsc = 3.6678d0-4.4475d0*x*x
+      rhoc = 13.0885d0-8.8381d0*x*x
       ! checks
       if (abs(vpc-vp) > TINYVAL .or. abs(vsc-vs) > TINYVAL .or. abs(rhoc-rho) > TINYVAL) then
         stop 'Error isotropic PREM values in model_aniso_inner_core() '
       endif
 
       ! values at center
-      vp0=11.2622d0
-      vs0=3.6678d0
-      rho0=13.0885d0
+      vp0 = 11.2622d0
+      vs0 = 3.6678d0
+      rho0 = 13.0885d0
 
     case (REFERENCE_MODEL_1DREF)
       ! values at center
@@ -133,7 +135,7 @@
   end select
 
 ! non-dimensionalization of elastic parameters (GPa--[g/cm^3][(km/s)^2])
-  scale_fac = RHOAV*R_EARTH*R_EARTH*PI*GRAV*RHOAV
+  scale_fac = RHOAV * R_EARTH*R_EARTH * PI*GRAV*RHOAV
   scale_fac = 1.d9 / scale_fac
 
 ! elastic tensor for hexagonal symmetry in reduced notation:
@@ -193,15 +195,20 @@
 ! 1000 5590 12.87   1606 1190 1295 1720 146 1383 175
 ! 1200 5527 12.77   1559 1155 1257 1670 141 1343 169
 !
-  c11 = rho*vp*vp*scale_fac
-  c66 = rho*vs*vs*scale_fac
-  c12 = c11 - 2.0d0*c66
 
-  A0 = rho0*vp0*vp0*scale_fac
+! note: the symmetry here is likely assuming that the radial direction aligns with vertical z-direction
+!       thus, the reference system assumed here is the same as the SPECFEM reference,
+!       and there is no need for rotating from a local (radial) to a global (SPECFEM) reference.
 
-  c33 = c11 + 0.0349d0*A0
-  c44 = c66 + 0.00988d0*A0
-  c13 = c12 - 0.00881d0*A0
+  c11 = rho * vp*vp * scale_fac
+  c66 = rho * vs*vs * scale_fac
+  c12 = c11 - 2.0d0 * c66
+
+  A0 = rho0 * vp0*vp0 * scale_fac
+
+  c33 = c11 + 0.0349d0 * A0
+  c44 = c66 + 0.00988d0 * A0
+  c13 = c12 - 0.00881d0 * A0
 
   end subroutine model_aniso_inner_core
 

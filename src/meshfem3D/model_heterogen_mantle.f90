@@ -36,6 +36,10 @@
   use constants, only: CUSTOM_REAL
   implicit none
 
+!
+! NOTE: CURRENTLY THIS ROUTINE ONLY WORKS FOR N_R = N_THETA = N_PHI !!!!!
+!
+
   ! heterogen_mantle_model_constants
   integer, parameter :: N_R = 256,N_THETA = 256,N_PHI = 256
 
@@ -109,10 +113,6 @@
 !
 
 
-!
-! NOTE: CURRENTLY THIS ROUTINE ONLY WORKS FOR N_R = N_THETA = N_PHI !!!!!
-!
-
   subroutine read_heterogen_mantle_model()
 
   use constants
@@ -121,16 +121,21 @@
   implicit none
 
   ! local parameters
-  integer :: i,j,ier
+  integer :: i,num_points,ier
 
   ! open heterogen.dat
   open(unit=IIN,file='./DATA/heterogen/heterogen.dat',access='direct', &
        form='formatted',recl=20,status='old',action='read',iostat=ier)
   if (ier /= 0 ) call exit_MPI(0,'Error opening model file heterogen.dat')
 
-  j = N_R * N_THETA * N_PHI
+  ! note: grid is a cubic box around the earth, stretching from [-R_EARTH,+R_EARTH] dimensions
+  !
+  ! N_R: number of layers in z-direction
+  ! N_THETA/N_PHI: horizontal x/y-direction gridding
+  num_points = N_R * N_THETA * N_PHI
 
-  do i = 1,j
+  do i = 1,num_points
+    ! note: single reclength must be 20
     read(IIN,rec=i,fmt='(F20.15)') HMM_rho_in(i)
   enddo
 
@@ -170,10 +175,12 @@
   r_target = radius*R_EARTH
 
   ! bounds
-  r_inner = 3.500d6  !lower bound for heterogeneity zone
   ! NOTE: r_outer NEEDS TO BE (just) SMALLER THAN R_EARTH!!!!!!!!
-  r_outer = R_EARTH-1.0d1  !6.300d6  !upper bound for heterogeneity zone (lower mantle: e.g. 4.500d6)
+  ! upper/lower radius (in m)
+  r_inner = 3.500d6          ! lower bound for heterogeneity zone
+  r_outer = R_EARTH - 1.0d1  ! or 6.300d6  !upper bound for heterogeneity zone (lower mantle: e.g. 4.500d6)
 
+  ! increments
   delta = 2.0 * R_EARTH/(real(N_R-1))
   delta2 = 2.0 * R_EARTH/(real(N_R-2))
   !delta2 = 2.0 * R_EARTH/(real(N_R))

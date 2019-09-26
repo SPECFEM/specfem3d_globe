@@ -34,7 +34,7 @@
 
   ! local parameters
   ! broadcast parameter arrays
-  integer, parameter :: nparam_i = 47
+  integer, parameter :: nparam_i = 48
   integer, dimension(nparam_i) :: bcast_integer
 
   integer, parameter :: nparam_l = 66
@@ -67,7 +67,8 @@
             NTSTEP_BETWEEN_OUTPUT_INFO, &
             NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS, &
             SIMULATION_TYPE, &
-            REFERENCE_1D_MODEL,REFERENCE_CRUSTAL_MODEL,THREE_D_MODEL, &
+            REFERENCE_1D_MODEL,REFERENCE_CRUSTAL_MODEL, &
+            THREE_D_MODEL,THREE_D_MODEL_IC, &
             NPROC,NPROCTOT, &
             NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube, &
             MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP, &
@@ -129,7 +130,7 @@
   call bcast_all_ch(GPU_PLATFORM,128)
   call bcast_all_ch(GPU_DEVICE,128)
 
-  call bcast_all_i(ner,MAX_NUMBER_OF_MESH_LAYERS)
+  call bcast_all_i(ner_mesh_layers,MAX_NUMBER_OF_MESH_LAYERS)
   call bcast_all_i(ratio_sampling_array,MAX_NUMBER_OF_MESH_LAYERS)
   call bcast_all_i(doubling_index,MAX_NUMBER_OF_MESH_LAYERS)
 
@@ -191,23 +192,24 @@
     REFERENCE_1D_MODEL = bcast_integer(28)
     REFERENCE_CRUSTAL_MODEL = bcast_integer(29)
     THREE_D_MODEL = bcast_integer(30)
-    NPROC = bcast_integer(31)
-    NPROCTOT = bcast_integer(32)
-    NEX_PER_PROC_XI = bcast_integer(33)
-    NEX_PER_PROC_ETA = bcast_integer(34)
-    ratio_divide_central_cube = bcast_integer(35)
-    MOVIE_VOLUME_TYPE = bcast_integer(36)
-    MOVIE_START = bcast_integer(37)
-    MOVIE_STOP = bcast_integer(38)
-    NOISE_TOMOGRAPHY = bcast_integer(39)
-    ATT1 = bcast_integer(40)
-    ATT2 = bcast_integer(41)
-    ATT3 = bcast_integer(42)
-    ATT4 = bcast_integer(43)
-    ATT5 = bcast_integer(44)
-    GPU_RUNTIME = bcast_integer(45)
-    NUMBER_OF_SIMULTANEOUS_RUNS = bcast_integer(46)
-    MODEL_GLL_TYPE  = bcast_integer(47)
+    THREE_D_MODEL_IC = bcast_integer(31)
+    NPROC = bcast_integer(32)
+    NPROCTOT = bcast_integer(33)
+    NEX_PER_PROC_XI = bcast_integer(34)
+    NEX_PER_PROC_ETA = bcast_integer(35)
+    ratio_divide_central_cube = bcast_integer(36)
+    MOVIE_VOLUME_TYPE = bcast_integer(37)
+    MOVIE_START = bcast_integer(38)
+    MOVIE_STOP = bcast_integer(39)
+    NOISE_TOMOGRAPHY = bcast_integer(40)
+    ATT1 = bcast_integer(41)
+    ATT2 = bcast_integer(42)
+    ATT3 = bcast_integer(43)
+    ATT4 = bcast_integer(44)
+    ATT5 = bcast_integer(45)
+    GPU_RUNTIME = bcast_integer(46)
+    NUMBER_OF_SIMULTANEOUS_RUNS = bcast_integer(47)
+    MODEL_GLL_TYPE  = bcast_integer(48)
 
     ! logicals
     TRANSVERSE_ISOTROPY = bcast_logical(1)

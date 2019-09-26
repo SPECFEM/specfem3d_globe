@@ -47,7 +47,9 @@
   use constants
 
   use shared_parameters, only: MODEL, &
-    REFERENCE_1D_MODEL,REFERENCE_CRUSTAL_MODEL,THREE_D_MODEL,MODEL_GLL,MODEL_GLL_TYPE, &
+    REFERENCE_1D_MODEL,REFERENCE_CRUSTAL_MODEL, &
+    THREE_D_MODEL,THREE_D_MODEL_IC, &
+    MODEL_GLL,MODEL_GLL_TYPE, &
     ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ATTENUATION_3D, &
     CASE_3D,CRUSTAL,HETEROGEN_3D_MANTLE,HONOR_1D_SPHERICAL_MOHO, &
     MODEL_3D_MANTLE_PERTUBATIONS,ONE_CRUST,TRANSVERSE_ISOTROPY, &
@@ -94,8 +96,10 @@
   if (len_trim(MODEL_L) > 4 ) ending = MODEL_L(len_trim(MODEL_L)-3:len_trim(MODEL_L))
 
   ! determines if the anisotropic inner core option should be turned on
+  THREE_D_MODEL_IC = 0
   if (trim(ending) == '_AIC') then
     ANISOTROPIC_INNER_CORE = .true.
+    THREE_D_MODEL_IC = THREE_D_MODEL_INNER_CORE_ISHII ! since we only have a single inner core aniso model, assumes we take it
     ! in case it has an ending for the inner core, remove it from the name
     MODEL_ROOT = MODEL_L(1:len_trim(MODEL_L)-4)
   else
@@ -178,7 +182,7 @@
 
   ! default values
 
-  ! uses PREM as the 1D reference model by default
+  ! uses PREM (isotropic) as the 1D reference model by default
   REFERENCE_1D_MODEL = REFERENCE_MODEL_PREM
 
   ! default crustal model
@@ -287,8 +291,8 @@
     TRANSVERSE_ISOTROPY = .true.
 
   case ('full_sh')
-    ! uses PREM by default
-    !REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
+    ! uses PREM by default, uncomment if necessary
+    !!REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
     ! uses SH crustal model by default
     REFERENCE_CRUSTAL_MODEL = ICRUST_CRUST_SH
     !ATTENUATION_3D = .true.
@@ -404,26 +408,30 @@
     TRANSVERSE_ISOTROPY = .true. ! still based on transversely isotropic PREM
 
   case ('3d_attenuation')
+    ! uses default model (PREM isotropic) as reference velocity model
+    ! adds Daltons' 3D attenuation model
     ATTENUATION_3D = .true.
     CASE_3D = .true.
     ONE_CRUST = .true.
 
   case ('3d_anisotropic')
-    ANISOTROPIC_3D_MANTLE = .true.
+    ! CRUSTAL = .true. ! with 3D crust: depends on 3D mantle reference model
     CASE_3D = .true. ! crustal moho stretching
     ONE_CRUST = .true. ! 1 element layer in top crust region
+    REFERENCE_1D_MODEL = REFERENCE_MODEL_PREM
     TRANSVERSE_ISOTROPY = .true. ! to use transverse isotropic PREM 1D ref model
-    ! CRUSTAL = .true. ! with 3D crust: depends on 3D mantle reference model
-    ! THREE_D_MODEL = 0 ! for default crustal model
     ! REFERENCE_1D_MODEL = REFERENCE_MODEL_AK135F_NO_MUD
     ! TRANSVERSE_ISOTROPY = .false. ! for AK135 ref model
+    MODEL_3D_MANTLE_PERTUBATIONS = .true.
+    THREE_D_MODEL = THREE_D_MODEL_ANISO_MANTLE
+    ANISOTROPIC_3D_MANTLE = .true. ! treats mantle elements as fully anisotropic
 
   case ('heterogen')
+    ONE_CRUST = .true.
     CASE_3D = .true.
     CRUSTAL = .true.
     HETEROGEN_3D_MANTLE = .true.  ! adds additional (dvp,dvs,drho) perturbations on top of reference 3D model
     MODEL_3D_MANTLE_PERTUBATIONS = .true.
-    ONE_CRUST = .true.
     REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
     THREE_D_MODEL = THREE_D_MODEL_S362ANI
     TRANSVERSE_ISOTROPY = .true.
@@ -463,44 +471,44 @@
     !
     ! transverse_isotropic should match the one from the reference model;
     ! reference model set in constants.h: GLL_REFERENCE_MODEL and GLL_REFERENCE_1D_MODEL
+    ONE_CRUST = .true.
     CASE_3D = .true.
     CRUSTAL = .true.
     MODEL_3D_MANTLE_PERTUBATIONS = .true.
-    ONE_CRUST = .true.
+    TRANSVERSE_ISOTROPY = .true.  ! same as reference model
     MODEL_GLL = .true.
-    MODEL_GLL_TYPE = 2 ! input model files are tiso
+    MODEL_GLL_TYPE = 2 ! (2 == tiso) input model files are tiso
     REFERENCE_1D_MODEL = GLL_REFERENCE_1D_MODEL
     THREE_D_MODEL = THREE_D_MODEL_GLL
-    TRANSVERSE_ISOTROPY = .true.  ! same as reference model
     ! note: after call to this routine we will reset
     !       THREE_D_MODEL = THREE_D_MODEL_S29EA
     !       to initialize 3D mesh structure based on the initial 3D model (like 420/660 topography,..)
 
   case ('gll_iso')
     ! isotropic GLL model
+    ONE_CRUST = .true.
     CASE_3D = .true.
     CRUSTAL = .true.
     MODEL_3D_MANTLE_PERTUBATIONS = .true.
-    ONE_CRUST = .true.
-    MODEL_GLL = .true.
-    MODEL_GLL_TYPE = 1 ! input model files are iso
-    REFERENCE_1D_MODEL = GLL_REFERENCE_1D_MODEL
-    THREE_D_MODEL = THREE_D_MODEL_GLL
     TRANSVERSE_ISOTROPY = .true.  ! same as reference model
     !TRANSVERSE_ISOTROPY = .false.  ! forces earth model to be considered isotropic, not tiso
+    MODEL_GLL = .true.
+    MODEL_GLL_TYPE = 1 ! (1 == iso) input model files are iso
+    REFERENCE_1D_MODEL = GLL_REFERENCE_1D_MODEL
+    THREE_D_MODEL = THREE_D_MODEL_GLL
 
   case ('gll_azi')
     ! azimuthal anisotropy GLL model
+    ONE_CRUST = .true.
     CASE_3D = .true.
     CRUSTAL = .true.
     MODEL_3D_MANTLE_PERTUBATIONS = .true.    ! to read in 3D reference model setup (like s362ani)
     ANISOTROPIC_3D_MANTLE = .true.  ! to treat mantle elements as fully anisotropic in solver
-    ONE_CRUST = .true.
+    TRANSVERSE_ISOTROPY = .false.    ! to include original tiso perturbations from reference model
     MODEL_GLL = .true.
     MODEL_GLL_TYPE = 3 ! azimuthal type
     REFERENCE_1D_MODEL = GLL_REFERENCE_1D_MODEL
     THREE_D_MODEL = THREE_D_MODEL_GLL
-    TRANSVERSE_ISOTROPY = .true.    ! to include original tiso perturbations from reference model
 
   case ('gapp2')
     CASE_3D = .true.
@@ -509,6 +517,12 @@
     ONE_CRUST = .true.
     REFERENCE_1D_MODEL = REFERENCE_MODEL_PREM
     THREE_D_MODEL = THREE_D_MODEL_GAPP2
+    TRANSVERSE_ISOTROPY = .true.
+
+  case ('ishii')
+    ! Ishii et al. (2002) inner core model
+    THREE_D_MODEL_IC = THREE_D_MODEL_INNER_CORE_ISHII
+    ! takes tiso PREM mantle model as reference
     TRANSVERSE_ISOTROPY = .true.
 
   case default

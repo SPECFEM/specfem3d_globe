@@ -358,12 +358,31 @@
   integer,intent(in) :: nspec
   integer,dimension(nspec),intent(in) :: idoubling
 
+  ! local parameters
+  logical, save :: is_first_call = .true.
+
   ! initializes
   elem_is_tiso = .false.
 
   ! checks if anything to do
   if (.not. TRANSVERSE_ISOTROPY) return
   if (iregion_code /= IREGION_CRUST_MANTLE) return
+
+  ! user output
+  if (myrank == 0) then
+    if (is_first_call) then
+      ! only output once
+      is_first_call = .false.
+      write(IMAIN,*) '  setting tiso flags in mantle model'
+      if (USE_FULL_TISO_MANTLE) &
+        write(IMAIN,*) '    using fully transverse isotopic mantle'
+      if (USE_OLD_VERSION_7_0_0_FORMAT) &
+        write(IMAIN,*) '    using formatting from version 7.0.0'
+      if (USE_OLD_VERSION_5_1_5_FORMAT) &
+        write(IMAIN,*) '    using formatting from version 5.1.5'
+      call flush_IMAIN()
+    endif
+  endif
 
   ! transverse isotropic models
   ! modifies tiso to have it for all mantle elements
