@@ -208,7 +208,8 @@
     ispec = phase_ispec_inner(ispec_p,iphase)
 
     ! note: this loop will not fully vectorize because it contains a dependency (through indirect addressing with array ibool())
-    !       thus, instead of DO_LOOP_IJK we use do k=..;do j=..;do i=.., which helps the compiler to unroll the innermost loop
+    !       thus, instead of DO_LOOP_IJK we use do k=..;do j=..;do i=..,
+    !       which helps the compiler to unroll the innermost loop
     do k = 1,NGLLZ
       do j = 1,NGLLY
         do i = 1,NGLLX
@@ -558,9 +559,12 @@
   subroutine mxm5_3comp_singleA(A,n1,B1,B2,B3,C1,C2,C3,n3)
 
 ! we can force inlining (Intel compiler)
+#if defined __INTEL_COMPILER
 !DIR$ ATTRIBUTES FORCEINLINE :: mxm5_3comp_singleA
+#else
 ! cray
 !DIR$ INLINEALWAYS mxm5_3comp_singleA
+#endif
 
 ! 3 different arrays for x/y/z-components, 2-dimensional arrays (25,5)/(5,25), same B matrix for all 3 component arrays
 
@@ -623,9 +627,12 @@
   subroutine mxm5_3comp_singleB(A1,A2,A3,n1,B,C1,C2,C3,n3)
 
 ! we can force inlining (Intel compiler)
+#if defined __INTEL_COMPILER
 !DIR$ ATTRIBUTES FORCEINLINE :: mxm5_3comp_singleB
+#else
 ! cray
 !DIR$ INLINEALWAYS mxm5_3comp_singleB
+#endif
 
 ! 3 different arrays for x/y/z-components, 2-dimensional arrays (25,5)/(5,25), same B matrix for all 3 component arrays
 
@@ -688,9 +695,12 @@
   subroutine mxm5_3comp_3dmat_singleB(A1,A2,A3,n1,B,n2,C1,C2,C3,n3)
 
 ! we can force inlining (Intel compiler)
+#if defined __INTEL_COMPILER
 !DIR$ ATTRIBUTES FORCEINLINE :: mxm5_3comp_3dmat_singleB
+#else
 ! cray
 !DIR$ INLINEALWAYS mxm5_3comp_3dmat_singleB
+#endif
 
 ! 3 different arrays for x/y/z-components, 3-dimensional arrays (5,5,5), same B matrix for all 3 component arrays
 

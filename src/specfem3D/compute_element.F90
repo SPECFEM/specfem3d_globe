@@ -1371,9 +1371,12 @@
                                                         sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
 
 ! we can force inlining (Intel compiler)
+#if defined __INTEL_COMPILER
 !DIR$ ATTRIBUTES INLINE :: compute_element_stress_attenuation_contrib
+#else
 ! cray
 !DIR$ INLINEALWAYS compute_element_stress_attenuation_contrib
+#endif
 
 ! updates stress with attenuation coontribution
 
@@ -1474,9 +1477,12 @@
                                                 duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl)
 
 ! we can force inlining (Intel compiler)
+#if defined __INTEL_COMPILER
 !DIR$ ATTRIBUTES INLINE :: compute_element_precompute_factors
+#else
 ! cray
 !DIR$ INLINEALWAYS compute_element_precompute_factors
+#endif
 
 ! precomputes factors
 
@@ -1575,9 +1581,12 @@
                                                epsilon_trace_over_3,epsilondev_loc)
 
 ! we can force inlining (Intel compiler)
+#if defined __INTEL_COMPILER
 !DIR$ ATTRIBUTES INLINE :: compute_element_deviatoric_strain
+#else
 ! cray
 !DIR$ INLINEALWAYS compute_element_deviatoric_strain
+#endif
 
 ! computes deviatoric strain
 
@@ -1665,9 +1674,12 @@
                                                 tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3)
 
 ! we can force inlining (Intel compiler)
+#if defined __INTEL_COMPILER
 !DIR$ATTRIBUTES INLINE :: compute_element_dot_product_stress
+#else
 ! cray
 !DIR$ INLINEALWAYS compute_element_dot_product_stress
+#endif
 
 ! computes dot product of stress tensor with test vector, non-symmetric form
 
@@ -1767,9 +1779,12 @@
                                      rho_s_H)
 
 ! we can force inlining (Intel compiler)
+#if defined __INTEL_COMPILER
 !DIR$ ATTRIBUTES INLINE :: compute_element_gravity
+#else
 ! cray
 !DIR$ INLINEALWAYS compute_element_gravity
+#endif
 
 ! computes non-symmetric stress terms for gravity
 

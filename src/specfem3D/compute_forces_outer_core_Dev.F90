@@ -189,7 +189,8 @@
     ! only compute element which belong to current phase (inner or outer elements)
 
     ! note: this loop will not fully vectorize because it contains a dependency (through indirect addressing with array ibool())
-    !       thus, instead of DO_LOOP_IJK we use do k=..;do j=..;do i=.., which helps the compiler to unroll the innermost loop
+    !       thus, instead of DO_LOOP_IJK we use do k=..;do j=..;do i=..,
+    !       which helps the compiler to unroll the innermost loop
     do k = 1,NGLLZ
       do j = 1,NGLLY
         do i = 1,NGLLX
