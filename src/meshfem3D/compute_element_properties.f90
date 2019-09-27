@@ -290,7 +290,7 @@
   subroutine compute_element_GLL_locations(xelm,yelm,zelm,ispec,nspec, &
                                            xstore,ystore,zstore,shape3D)
 
-  use constants,only: NGLLX,NGLLY,NGLLZ,NGNOD,ZERO
+  use constants, only: NGLLX,NGLLY,NGLLZ,NGNOD,ZERO
 
   implicit none
 
@@ -342,7 +342,7 @@
 
 ! sets transverse isotropic flag for elements in crust/mantle
 
-  use constants,only: IMAIN,myrank,USE_OLD_VERSION_7_0_0_FORMAT,USE_OLD_VERSION_5_1_5_FORMAT, &
+  use constants, only: IMAIN,myrank,USE_OLD_VERSION_7_0_0_FORMAT,USE_OLD_VERSION_5_1_5_FORMAT, &
     IFLAG_CRUST,IFLAG_220_80,IFLAG_80_MOHO,IFLAG_670_220,IFLAG_MANTLE_NORMAL,IREGION_CRUST_MANTLE, &
     REFERENCE_MODEL_1DREF,REFERENCE_MODEL_1DREF, &
     THREE_D_MODEL_S362WMANI,THREE_D_MODEL_SGLOBE

@@ -385,7 +385,7 @@
 
   ! check
   if (minval(NSPEC_REGIONS(:)) <= 0) then
-    print*,'Invalid NSPEC_REGIONS: ',NSPEC_REGIONS(:)
+    print *,'Invalid NSPEC_REGIONS: ',NSPEC_REGIONS(:)
     stop 'negative NSPEC_REGIONS, there is a problem somewhere, try to recompile :) '
   endif
 

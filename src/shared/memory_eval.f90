@@ -56,7 +56,7 @@
     SIMULATION_TYPE,SAVE_FORWARD, &
     MOVIE_VOLUME,MOVIE_VOLUME_TYPE
 
-  use shared_parameters,only: ner_mesh_layers,ratio_sampling_array,doubling_index,this_region_has_a_doubling
+  use shared_parameters, only: ner_mesh_layers,ratio_sampling_array,doubling_index,this_region_has_a_doubling
 
   implicit none
 

@@ -32,7 +32,7 @@
                                      ner,ilayer,ichunk,rotation_matrix,NCHUNKS, &
                                      INCLUDE_CENTRAL_CUBE,NUMBER_OF_MESH_LAYERS)
 
-  use constants,only: NGNOD,NDIM,ZERO,ONE,PI,PI_OVER_TWO,R_EARTH, &
+  use constants, only: NGNOD,NDIM,ZERO,ONE,PI,PI_OVER_TWO,R_EARTH, &
     CHUNK_AB,CHUNK_AC,CHUNK_BC,CHUNK_AB_ANTIPODE,CHUNK_AC_ANTIPODE,CHUNK_BC_ANTIPODE, &
     CENTRAL_CUBE_INFLATE_FACTOR
 
@@ -288,7 +288,7 @@
                                         iproc_xi,iproc_eta,NPROC_XI,NPROC_ETA, &
                                         nx_central_cube,ny_central_cube,nz_central_cube,radius_cube)
 
-  use constants,only: PI,PI_OVER_TWO,CENTRAL_CUBE_INFLATE_FACTOR
+  use constants, only: PI,PI_OVER_TWO,CENTRAL_CUBE_INFLATE_FACTOR
 
   implicit none
 
