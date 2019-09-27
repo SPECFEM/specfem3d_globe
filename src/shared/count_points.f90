@@ -29,9 +29,7 @@
   subroutine count_points(NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube, &
                         NSPEC1D_RADIAL,NGLOB1D_RADIAL, &
                         NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB, &
-                        nblocks_xi,nblocks_eta,ner,ratio_sampling_array, &
-                        this_region_has_a_doubling, &
-                        ifirst_region, ilast_region, iter_region, iter_layer, &
+                        nblocks_xi,nblocks_eta, &
                         doubling, padding, tmp_sum, &
                         INCLUDE_CENTRAL_CUBE,NER_TOP_CENTRAL_CUBE_ICB,NEX_XI, &
                         NUMBER_OF_MESH_LAYERS,layer_offset, &
@@ -47,6 +45,7 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   use constants
+  use shared_parameters, only: ner_mesh_layers,ratio_sampling_array,this_region_has_a_doubling
 
   implicit none
 
@@ -60,22 +59,21 @@
       NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
       NGLOB
 
-  integer NER_TOP_CENTRAL_CUBE_ICB,NEX_XI
-  integer nblocks_xi,nblocks_eta
+  integer :: NER_TOP_CENTRAL_CUBE_ICB,NEX_XI
+  integer :: nblocks_xi,nblocks_eta
 
-  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
-  logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_region_has_a_doubling
 
-  integer :: ifirst_region, ilast_region, iter_region, iter_layer, doubling, padding, tmp_sum
-  integer ::  NUMBER_OF_MESH_LAYERS,layer_offset, &
-              nb_lay_sb, nglob_vol, nglob_surf, nglob_edge
+  integer :: doubling, padding, tmp_sum
+  integer :: NUMBER_OF_MESH_LAYERS,layer_offset, &
+            nb_lay_sb, nglob_vol, nglob_surf, nglob_edge
 
 ! for the cut doublingbrick improvement
   logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,INCLUDE_CENTRAL_CUBE
   integer :: last_doubling_layer, cut_doubling, nglob_int_surf_xi, nglob_int_surf_eta,nglob_ext_surf, &
-              normal_doubling, nglob_center_edge, nglob_corner_edge, nglob_border_edge
+            normal_doubling, nglob_center_edge, nglob_corner_edge, nglob_border_edge
 
-
+  ! local parameters
+  integer :: ifirst_region, ilast_region, iter_region, iter_layer
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!
@@ -121,15 +119,17 @@
 
 ! in the crust-mantle and outercore
   do iter_region = IREGION_CRUST_MANTLE,IREGION_OUTER_CORE
+      ! layer first/last
       if (iter_region == IREGION_CRUST_MANTLE) then
-            ifirst_region = 1
-            ilast_region = 10 + layer_offset
+        ifirst_region = 1
+        ilast_region = 10 + layer_offset
       else if (iter_region == IREGION_OUTER_CORE) then
-            ifirst_region = 11 + layer_offset
-            ilast_region = NUMBER_OF_MESH_LAYERS - 1
+        ifirst_region = 11 + layer_offset
+        ilast_region = NUMBER_OF_MESH_LAYERS - 1
       else
-            stop 'incorrect region code detected'
+        stop 'incorrect region code detected'
       endif
+
       tmp_sum = 0;
       do iter_layer = ifirst_region, ilast_region
         nglob_int_surf_eta = 0
@@ -155,7 +155,7 @@
               nglob_corner_edge = 2*(NGLLX-1)+1
               nglob_border_edge = 3*(NGLLX-1)+1
             else
-              if (ner(iter_layer) == 1) then
+              if (ner_mesh_layers(iter_layer) == 1) then
                 nb_lay_sb = 1
                 nglob_vol = 28*NGLLX**3 - 62*NGLLX**2 + 47*NGLLX - 12
                 nglob_surf = 6*NGLLX**2-8*NGLLX+3
@@ -186,17 +186,18 @@
         nblocks_eta = NEX_PER_PROC_ETA / ratio_sampling_array(iter_layer)
 
         tmp_sum = tmp_sum + &
-        ((nblocks_xi)*(NGLLX-1)+1) * ((nblocks_eta)*(NGLLX-1)+1) * ((ner(iter_layer) - doubling*nb_lay_sb)*(NGLLX-1)+padding)+&
+        ((nblocks_xi)*(NGLLX-1)+1) * ((nblocks_eta)*(NGLLX-1)+1) * &
+        ((ner_mesh_layers(iter_layer) - doubling*nb_lay_sb)*(NGLLX-1)+padding) + &
         normal_doubling * ((((nblocks_xi*nblocks_eta)/4)*nglob_vol) - &
         (((nblocks_eta/2-1)*nblocks_xi/2+(nblocks_xi/2-1)*nblocks_eta/2)*nglob_surf) + &
         ((nblocks_eta/2-1)*(nblocks_xi/2-1)*nglob_edge)) + &
         cut_doubling*(nglob_vol*(nblocks_xi*nblocks_eta) - &
             ( nblocks_eta*(int(nblocks_xi/2)*nglob_int_surf_xi + int((nblocks_xi-1)/2)*nglob_ext_surf) + &
-              nblocks_xi*(int(nblocks_eta/2)*nglob_int_surf_eta + int((nblocks_eta-1)/2)*nglob_ext_surf)&
+              nblocks_xi*(int(nblocks_eta/2)*nglob_int_surf_eta + int((nblocks_eta-1)/2)*nglob_ext_surf) &
             ) + &
             ( int(nblocks_xi/2)*int(nblocks_eta/2)*nglob_center_edge + &
               int((nblocks_xi-1)/2)*int((nblocks_eta-1)/2)*nglob_corner_edge + &
-              ((int(nblocks_eta/2)*int((nblocks_xi-1)/2))+(int((nblocks_eta-1)/2)*int(nblocks_xi/2)))*nglob_border_edge&
+              ((int(nblocks_eta/2)*int((nblocks_xi-1)/2))+(int((nblocks_eta-1)/2)*int(nblocks_xi/2)))*nglob_border_edge &
             ))
       enddo
       NGLOB(iter_region) = tmp_sum

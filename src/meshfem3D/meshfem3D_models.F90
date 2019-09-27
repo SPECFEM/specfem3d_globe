@@ -434,7 +434,7 @@
 
   subroutine meshfem3D_models_get3Dmntl_val(iregion_code,r_prem,rho, &
                               vpv,vph,vsv,vsh,eta_aniso, &
-                              RCMB,R670,RMOHO, &
+                              RCMB,RMOHO, &
                               xmesh,ymesh,zmesh,r, &
                               c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
                               c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
@@ -449,7 +449,7 @@
   double precision, intent(out) :: rho
   double precision, intent(out) :: vpv,vph,vsv,vsh,eta_aniso
 
-  double precision :: RCMB,R670,RMOHO
+  double precision :: RCMB,RMOHO
   double precision :: xmesh,ymesh,zmesh,r
 
   ! the 21 coefficients for an anisotropic medium in reduced notation

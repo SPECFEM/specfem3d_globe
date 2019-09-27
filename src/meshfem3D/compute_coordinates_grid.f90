@@ -28,10 +28,13 @@
   subroutine compute_coord_main_mesh(offset_x,offset_y,offset_z,xelm,yelm,zelm, &
                                      ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
                                      NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-                                     r_top,r_bottom,ner,ilayer,ichunk,rotation_matrix,NCHUNKS, &
+                                     r_top,r_bottom, &
+                                     ner,ilayer,ichunk,rotation_matrix,NCHUNKS, &
                                      INCLUDE_CENTRAL_CUBE,NUMBER_OF_MESH_LAYERS)
 
-  use constants
+  use constants,only: NGNOD,NDIM,ZERO,ONE,PI,PI_OVER_TWO,R_EARTH, &
+    CHUNK_AB,CHUNK_AC,CHUNK_BC,CHUNK_AB_ANTIPODE,CHUNK_AC_ANTIPODE,CHUNK_BC_ANTIPODE, &
+    CENTRAL_CUBE_INFLATE_FACTOR
 
   implicit none
 
@@ -281,10 +284,11 @@
 ! create value of arrays xgrid ygrid and zgrid in the central cube without storing them
 
   subroutine compute_coord_central_cube(ix,iy,iz, &
-                  xgrid_central_cube,ygrid_central_cube,zgrid_central_cube, &
-                  iproc_xi,iproc_eta,NPROC_XI,NPROC_ETA,nx_central_cube,ny_central_cube,nz_central_cube,radius_cube)
+                                        xgrid_central_cube,ygrid_central_cube,zgrid_central_cube, &
+                                        iproc_xi,iproc_eta,NPROC_XI,NPROC_ETA, &
+                                        nx_central_cube,ny_central_cube,nz_central_cube,radius_cube)
 
-  use constants
+  use constants,only: PI,PI_OVER_TWO,CENTRAL_CUBE_INFLATE_FACTOR
 
   implicit none
 

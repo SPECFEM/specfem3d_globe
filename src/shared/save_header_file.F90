@@ -78,7 +78,6 @@
     ATT1,ATT2,ATT3,ATT4,ATT5, &
     MOVIE_VOLUME,MOVIE_VOLUME_TYPE,NTSTEP_BETWEEN_FRAMES,SIMULATION_TYPE,MOVIE_SURFACE, &
     UNDO_ATTENUATION,MEMORY_INSTALLED_PER_CORE_IN_GB,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-    this_region_has_a_doubling,doubling_index,ner,ratio_sampling_array, &
     RECORD_LENGTH_IN_MINUTES,NSTEP
 
   implicit none
@@ -145,9 +144,8 @@
   ! evaluate the amount of static memory needed by the solver, but imposing that SIMULATION_TYPE = 3
   ! because that is by far the most expensive setup for runs in terms of memory usage, thus that is
   ! the type of run for which we need to make sure that everything fits in memory
-  call memory_eval(doubling_index,this_region_has_a_doubling, &
-                   ner,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-                   ratio_sampling_array,NPROCTOT,NSPEC_REGIONS,NGLOB_REGIONS, &
+  call memory_eval(NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+                   NPROCTOT,NSPEC_REGIONS,NGLOB_REGIONS, &
                    NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
                    NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
                    NSPEC_INNER_CORE_ATTENUATION, &
@@ -172,9 +170,8 @@
   ! based on the original simulation type chosen in Par_file
   !
   ! evaluate the amount of static memory needed by the solver
-  call memory_eval(doubling_index,this_region_has_a_doubling, &
-                   ner,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-                   ratio_sampling_array,NPROCTOT,NSPEC_REGIONS,NGLOB_REGIONS, &
+  call memory_eval(NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+                   NPROCTOT,NSPEC_REGIONS,NGLOB_REGIONS, &
                    NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
                    NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
                    NSPEC_INNER_CORE_ATTENUATION, &

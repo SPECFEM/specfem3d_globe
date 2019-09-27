@@ -41,15 +41,15 @@
     INCLUDE_CENTRAL_CUBE,R_CENTRAL_CUBE, &
     rmins,rmaxs,iproc_xi,iproc_eta,ichunk,NEX_XI, &
     rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
-    ratio_sampling_array,doubling_index,this_region_has_a_doubling, &
+    this_region_has_a_doubling, &
     ratio_divide_central_cube,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, &
-    ner,r_top,r_bottom
+    ner_mesh_layers
 
   use meshfem3D_models_par, only: &
     TRANSVERSE_ISOTROPY
 
   use regions_mesh_par, only: &
-    xigll,yigll,zigll,iaddx,iaddy,iaddz,shape3D,dershape2D_bottom
+    xigll,yigll,zigll,iaddx,iaddy,iaddz,shape3D
 
   use regions_mesh_par2, only: &
     USE_ONE_LAYER_SB,ispec_is_tiso,ifirst_region,ilast_region,perm_layer,NUMBER_OF_MESH_LAYERS, &
@@ -111,13 +111,13 @@
     rmin = rmins(ilayer)
     rmax = rmaxs(ilayer)
 
-    ner_without_doubling = ner(ilayer)
+    ner_without_doubling = ner_mesh_layers(ilayer)
 
     ! if there is a doubling at the top of this region, we implement it in the last two layers of elements
     ! and therefore we suppress two layers of regular elements here
     USE_ONE_LAYER_SB = .false.
     if (this_region_has_a_doubling(ilayer)) then
-      if (ner(ilayer) == 1) then
+      if (ner_mesh_layers(ilayer) == 1) then
         ner_without_doubling = ner_without_doubling - 1
         USE_ONE_LAYER_SB = .true.
       else
@@ -128,60 +128,43 @@
 
     ! regular mesh elements
     call create_regular_elements(ilayer,ichunk,ispec,ipass, &
-                    ifirst_region,ilast_region,iregion_code, &
-                    nspec,NCHUNKS,NUMBER_OF_MESH_LAYERS, &
-                    NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-                    ner_without_doubling,ner,ratio_sampling_array,r_top,r_bottom, &
-                    xstore,ystore,zstore, &
-                    iaddx,iaddy,iaddz,xigll,yigll,zigll, &
-                    shape3D,dershape2D_bottom, &
-                    INCLUDE_CENTRAL_CUBE, &
-                    rmin,rmax,r_moho,r_400,r_670, &
-                    rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-                    nspec_ani,c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-                    c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-                    c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                    nspec_actually,xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
-                    gammaxstore,gammaystore,gammazstore, &
-                    nspec_stacey,rho_vp,rho_vs,iboun,iMPIcut_xi,iMPIcut_eta, &
-                    ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
-                    rotation_matrix,idoubling,doubling_index,USE_ONE_LAYER_SB, &
-                    stretch_tab, &
-                    NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho, &
-                    ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot,ibelm_670_top,ibelm_670_bot, &
-                    normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
-                    ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top, &
-                    ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot, &
-                    ispec_is_tiso)
+                                 ifirst_region,ilast_region,iregion_code, &
+                                 nspec,NCHUNKS,NUMBER_OF_MESH_LAYERS, &
+                                 NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+                                 ner_without_doubling, &
+                                 INCLUDE_CENTRAL_CUBE, &
+                                 rmin,rmax,r_moho,r_400,r_670, &
+                                 iMPIcut_xi,iMPIcut_eta, &
+                                 ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
+                                 rotation_matrix,idoubling,USE_ONE_LAYER_SB, &
+                                 stretch_tab, &
+                                 NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho, &
+                                 ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot,ibelm_670_top,ibelm_670_bot, &
+                                 normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
+                                 ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top, &
+                                 ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot, &
+                                 ispec_is_tiso)
 
 
     ! mesh doubling elements
-    if (this_region_has_a_doubling(ilayer) ) &
+    if (this_region_has_a_doubling(ilayer) ) then
       call create_doubling_elements(ilayer,ichunk,ispec,ipass, &
-                    ifirst_region,ilast_region,iregion_code, &
-                    nspec,NCHUNKS,NUMBER_OF_MESH_LAYERS, &
-                    NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-                    ner,ratio_sampling_array,r_top,r_bottom, &
-                    xstore,ystore,zstore,xigll,yigll,zigll, &
-                    shape3D,dershape2D_bottom, &
-                    INCLUDE_CENTRAL_CUBE, &
-                    rmin,rmax,r_moho,r_400,r_670, &
-                    rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-                    nspec_ani,c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-                    c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-                    c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                    nspec_actually,xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
-                    gammaxstore,gammaystore,gammazstore, &
-                    nspec_stacey,rho_vp,rho_vs,iboun,iMPIcut_xi,iMPIcut_eta, &
-                    ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
-                    rotation_matrix,idoubling,doubling_index,USE_ONE_LAYER_SB, &
-                    NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho, &
-                    ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot,ibelm_670_top,ibelm_670_bot, &
-                    normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
-                    ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top, &
-                    ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot, &
-                    CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,offset_proc_xi,offset_proc_eta, &
-                    ispec_is_tiso)
+                                    ifirst_region,ilast_region,iregion_code, &
+                                    nspec,NCHUNKS,NUMBER_OF_MESH_LAYERS, &
+                                    NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+                                    INCLUDE_CENTRAL_CUBE, &
+                                    rmin,rmax,r_moho,r_400,r_670, &
+                                    iMPIcut_xi,iMPIcut_eta, &
+                                    ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
+                                    rotation_matrix,idoubling,USE_ONE_LAYER_SB, &
+                                    NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho, &
+                                    ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot,ibelm_670_top,ibelm_670_bot, &
+                                    normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
+                                    ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top, &
+                                    ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot, &
+                                    CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,offset_proc_xi,offset_proc_eta, &
+                                    ispec_is_tiso)
+    endif
 
     ! user output
     if (myrank == 0) then

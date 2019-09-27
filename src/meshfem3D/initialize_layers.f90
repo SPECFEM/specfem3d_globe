@@ -26,20 +26,21 @@
 !=====================================================================
 
   subroutine initialize_layers(ipass,xigll,yigll,zigll,wxgll,wygll,wzgll, &
-                        shape3D,dershape3D,shape2D_x,shape2D_y,shape2D_bottom,shape2D_top, &
-                        dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top, &
-                        iaddx,iaddy,iaddz, &
-                        nspec,xstore,ystore,zstore,ibool,idoubling, &
-                        iboun,iMPIcut_xi,iMPIcut_eta,ispec2D_moho_top,ispec2D_moho_bot, &
-                        ispec2D_400_top,ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot, &
-                        NEX_PER_PROC_ETA,nex_eta_moho,RMOHO,R400,R670,r_moho,r_400,r_670, &
-                        ONE_CRUST,NUMBER_OF_MESH_LAYERS,layer_shift, &
-                        iregion_code,ifirst_region,ilast_region, &
-                        first_layer_aniso,last_layer_aniso,is_on_a_slice_edge)
+                               shape3D,dershape3D,shape2D_x,shape2D_y,shape2D_bottom,shape2D_top, &
+                               dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top, &
+                               iaddx,iaddy,iaddz, &
+                               nspec,xstore,ystore,zstore,ibool,idoubling, &
+                               iboun,iMPIcut_xi,iMPIcut_eta,ispec2D_moho_top,ispec2D_moho_bot, &
+                               ispec2D_400_top,ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot, &
+                               NEX_PER_PROC_ETA,nex_eta_moho,RMOHO,R400,R670,r_moho,r_400,r_670, &
+                               ONE_CRUST,NUMBER_OF_MESH_LAYERS,layer_shift, &
+                               iregion_code,ifirst_region,ilast_region, &
+                               first_layer_aniso,last_layer_aniso,is_on_a_slice_edge)
 
 ! create the different regions of the mesh
 
-  use constants
+  use constants,only: myrank,R_EARTH,NGLLX,NGLLY,NGLLZ,NGNOD,NGNOD2D,NDIM,NDIM2D,ADD_4TH_DOUBLING, &
+    GAUSSALPHA,GAUSSBETA,IREGION_CRUST_MANTLE,IREGION_INNER_CORE,IREGION_OUTER_CORE,MAX_NUMBER_OF_MESH_LAYERS
 
   implicit none
 

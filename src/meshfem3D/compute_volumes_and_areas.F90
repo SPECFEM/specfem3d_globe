@@ -36,22 +36,22 @@
 
   implicit none
 
-  integer :: nspec
-  double precision :: wxgll(NGLLX),wygll(NGLLY),wzgll(NGLLZ)
+  integer,intent(in) :: nspec
+  double precision,intent(in) :: wxgll(NGLLX),wygll(NGLLY),wzgll(NGLLZ)
 
-  integer :: NCHUNKS,iregion_code
+  integer,intent(in) :: NCHUNKS,iregion_code
 
-  double precision :: volume_total
-  double precision :: RCMB,RICB,R_CENTRAL_CUBE
+  double precision,intent(out) :: volume_total
+  double precision,intent(in) :: RCMB,RICB,R_CENTRAL_CUBE
 
-  integer,dimension(nspec) :: idoubling
+  integer,dimension(nspec),intent(in) :: idoubling
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: &
     xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore
 
-  integer :: NSPEC2D_BOTTOM,NSPEC2D_TOP
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_BOTTOM) :: jacobian2D_bottom
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_TOP) :: jacobian2D_top
+  integer,intent(in) :: NSPEC2D_BOTTOM,NSPEC2D_TOP
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_BOTTOM),intent(in) :: jacobian2D_bottom
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_TOP),intent(in) :: jacobian2D_top
 
   ! local parameters
   double precision :: volume_local,area_local_bottom,area_local_top

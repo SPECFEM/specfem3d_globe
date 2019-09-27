@@ -46,10 +46,10 @@
 
   double precision, intent(in) :: x
   double precision, intent(out) :: c11,c33,c12,c13,c44
-  double precision, intent(out) :: rho,vpv,vph,vsv,vsh,eta_aniso
+  double precision, intent(in) :: rho,vpv,vph,vsv,vsh,eta_aniso
 
   ! local parameters
-  double precision :: vp,vs
+  double precision :: vp,vs,rho_dim
   double precision :: vpc,vsc,rhoc
   double precision :: vp0,vs0,rho0,A0
   double precision :: c66
@@ -67,7 +67,7 @@
 
   vp = vp * scale_fac
   vs = vs * scale_fac
-  rho = rho * RHOAV/1000.d0
+  rho_dim = rho * RHOAV/1000.d0
 
   select case (REFERENCE_1D_MODEL)
 
@@ -76,7 +76,7 @@
       vsc = 3.56454d0-3.45241d0*x*x
       rhoc = 13.0885d0-8.8381d0*x*x
       ! checks with given values
-      if (abs(vpc-vp) > TINYVAL .or. abs(vsc-vs) > TINYVAL .or. abs(rhoc-rho) > TINYVAL) then
+      if (abs(vpc-vp) > TINYVAL .or. abs(vsc-vs) > TINYVAL .or. abs(rhoc-rho_dim) > TINYVAL) then
         stop 'Error isotropic IASP91 values in model_aniso_inner_core() '
       endif
 
@@ -90,7 +90,7 @@
       vsc = 3.6678d0-4.4475d0*x*x
       rhoc = 13.0885d0-8.8381d0*x*x
       ! checks
-      if (abs(vpc-vp) > TINYVAL .or. abs(vsc-vs) > TINYVAL .or. abs(rhoc-rho) > TINYVAL) then
+      if (abs(vpc-vp) > TINYVAL .or. abs(vsc-vs) > TINYVAL .or. abs(rhoc-rho_dim) > TINYVAL) then
         stop 'Error isotropic PREM values in model_aniso_inner_core() '
       endif
 
@@ -200,8 +200,8 @@
 !       thus, the reference system assumed here is the same as the SPECFEM reference,
 !       and there is no need for rotating from a local (radial) to a global (SPECFEM) reference.
 
-  c11 = rho * vp*vp * scale_fac
-  c66 = rho * vs*vs * scale_fac
+  c11 = rho_dim * vp*vp * scale_fac
+  c66 = rho_dim * vs*vs * scale_fac
   c12 = c11 - 2.0d0 * c66
 
   A0 = rho0 * vp0*vp0 * scale_fac

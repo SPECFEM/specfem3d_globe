@@ -27,9 +27,8 @@
 
 ! compute the approximate amount of static memory needed to run the solver
 
-  subroutine memory_eval(doubling_index,this_region_has_a_doubling, &
-                         ner,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-                         ratio_sampling_array,NPROCTOT, &
+  subroutine memory_eval(NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+                         NPROCTOT, &
                          NSPEC,NGLOB, &
                          NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
                          NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
@@ -57,6 +56,8 @@
     SIMULATION_TYPE,SAVE_FORWARD, &
     MOVIE_VOLUME,MOVIE_VOLUME_TYPE
 
+  use shared_parameters,only: ner_mesh_layers,ratio_sampling_array,doubling_index,this_region_has_a_doubling
+
   implicit none
 
   ! input
@@ -64,10 +65,6 @@
             NSPEC2D_BOTTOM,NSPEC2D_TOP
 
   integer, intent(in) :: NEX_PER_PROC_XI,NEX_PER_PROC_ETA
-
-  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS), intent(in) :: doubling_index
-  logical, dimension(MAX_NUMBER_OF_MESH_LAYERS), intent(in) :: this_region_has_a_doubling
-  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS), intent(in) :: ner,ratio_sampling_array
   integer, intent(in) :: NPROCTOT
 
   ! output
@@ -105,7 +102,7 @@
   ! count anisotropic elements
   do ilayer = 1, NUMBER_OF_MESH_LAYERS
     if (doubling_index(ilayer) == IFLAG_220_80 .or. doubling_index(ilayer) == IFLAG_80_MOHO) then
-      ner_without_doubling = ner(ilayer)
+      ner_without_doubling = ner_mesh_layers(ilayer)
       if (this_region_has_a_doubling(ilayer)) then
         ner_without_doubling = ner_without_doubling - 2
         ispec_aniso = ispec_aniso + &

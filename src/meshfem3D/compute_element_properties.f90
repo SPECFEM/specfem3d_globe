@@ -41,7 +41,7 @@
                                         rho_vp,rho_vs, &
                                         xigll,yigll,zigll,ispec_is_tiso)
 
-  use constants, only: myrank,NGLLX,NGLLY,NGLLZ,NGNOD,CUSTOM_REAL, &
+  use constants, only: NGLLX,NGLLY,NGLLZ,NGNOD,CUSTOM_REAL, &
     IFLAG_220_80,IFLAG_670_220,IFLAG_80_MOHO,IFLAG_MANTLE_NORMAL,IFLAG_CRUST, &
     IFLAG_OUTER_CORE_NORMAL, &
     IREGION_CRUST_MANTLE,REGIONAL_MOHO_MESH,SUPPRESS_INTERNAL_TOPOGRAPHY,USE_GLL
@@ -128,10 +128,10 @@
         !
         ! differentiate between regional and global meshing
         if (REGIONAL_MOHO_MESH) then
-          call moho_stretching_honor_crust_reg(myrank,xelm,yelm,zelm, &
+          call moho_stretching_honor_crust_reg(xelm,yelm,zelm, &
                                                elem_in_crust,elem_in_mantle)
         else
-          call moho_stretching_honor_crust(myrank,xelm,yelm,zelm, &
+          call moho_stretching_honor_crust(xelm,yelm,zelm, &
                                            elem_in_crust,elem_in_mantle)
         endif
       else
@@ -249,7 +249,6 @@
     !           call add_topography_icb(xelm,yelm,zelm)
   endif
 
-
   ! make the Earth elliptical
   if (ELLIPTICITY) then
     ! note: after adding ellipticity, the mesh becomes elliptical and geocentric and geodetic/geographic colatitudes differ.
@@ -261,7 +260,6 @@
       call get_ellipticity(xelm,yelm,zelm,nspl,rspl,espl,espl2)
     endif
   endif
-
 
   ! re-interpolates and creates the GLL point locations since the anchor points might have moved
   !
@@ -283,7 +281,6 @@
                                gammaxstore,gammaystore,gammazstore)
   endif
 
-
   end subroutine compute_element_properties
 
 !
@@ -293,17 +290,17 @@
   subroutine compute_element_GLL_locations(xelm,yelm,zelm,ispec,nspec, &
                                            xstore,ystore,zstore,shape3D)
 
-  use constants
+  use constants,only: NGLLX,NGLLY,NGLLZ,NGNOD,ZERO
 
   implicit none
 
-  integer :: ispec,nspec
+  integer,intent(in) :: ispec,nspec
 
-  double precision,dimension(NGNOD) :: xelm,yelm,zelm
+  double precision,dimension(NGNOD),intent(in) :: xelm,yelm,zelm
 
-  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
+  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(inout) :: xstore,ystore,zstore
 
-  double precision,dimension(NGNOD,NGLLX,NGLLY,NGLLZ) :: shape3D
+  double precision,dimension(NGNOD,NGLLX,NGLLY,NGLLZ),intent(in) :: shape3D
 
   ! local parameters
   double precision :: xmesh,ymesh,zmesh
@@ -345,7 +342,10 @@
 
 ! sets transverse isotropic flag for elements in crust/mantle
 
-  use constants
+  use constants,only: IMAIN,myrank,USE_OLD_VERSION_7_0_0_FORMAT,USE_OLD_VERSION_5_1_5_FORMAT, &
+    IFLAG_CRUST,IFLAG_220_80,IFLAG_80_MOHO,IFLAG_670_220,IFLAG_MANTLE_NORMAL,IREGION_CRUST_MANTLE, &
+    REFERENCE_MODEL_1DREF,REFERENCE_MODEL_1DREF, &
+    THREE_D_MODEL_S362WMANI,THREE_D_MODEL_SGLOBE
 
   use meshfem3D_models_par, only: &
     TRANSVERSE_ISOTROPY,USE_FULL_TISO_MANTLE,REFERENCE_1D_MODEL,THREE_D_MODEL
@@ -369,10 +369,10 @@
   if (iregion_code /= IREGION_CRUST_MANTLE) return
 
   ! user output
-  if (myrank == 0) then
-    if (is_first_call) then
+  if (is_first_call) then
+    is_first_call = .false.
+    if (myrank == 0) then
       ! only output once
-      is_first_call = .false.
       write(IMAIN,*) '  setting tiso flags in mantle model'
       if (USE_FULL_TISO_MANTLE) &
         write(IMAIN,*) '    using fully transverse isotopic mantle'

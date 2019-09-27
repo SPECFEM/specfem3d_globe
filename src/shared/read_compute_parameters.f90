@@ -73,7 +73,7 @@
   integer :: ielem,elem_doubling_mantle,elem_doubling_middle_outer_core,elem_doubling_bottom_outer_core
   double precision :: DEPTH_SECOND_DOUBLING_REAL,DEPTH_THIRD_DOUBLING_REAL, &
                           DEPTH_FOURTH_DOUBLING_REAL,distance,distance_min,zval
-  integer :: ifirst_region, ilast_region, iter_region, iter_layer, doubling, padding, tmp_sum, tmp_sum_xi, tmp_sum_eta
+  integer :: doubling, padding, tmp_sum, tmp_sum_xi, tmp_sum_eta
   ! layers
   integer ::  NUMBER_OF_MESH_LAYERS,layer_offset,nspec2D_xi_sb,nspec2D_eta_sb, &
               nb_lay_sb, nspec_sb, nglob_vol, nglob_surf, nglob_edge
@@ -210,20 +210,12 @@
   NPROCTOT = NCHUNKS * NPROC
 
   !  definition of general mesh parameters
-  call define_all_layers(NER_CRUST,NER_80_MOHO,NER_220_80, &
-                        NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
-                        NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
-                        NER_TOP_CENTRAL_CUBE_ICB, &
-                        RMIDDLE_CRUST,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-                        R_CENTRAL_CUBE,RMOHO_FICTITIOUS_IN_MESHER,R80_FICTITIOUS_IN_MESHER, &
-                        ONE_CRUST,ner,ratio_sampling_array, &
-                        NUMBER_OF_MESH_LAYERS,layer_offset,last_doubling_layer, &
-                        r_bottom,r_top,this_region_has_a_doubling, &
-                        ielem,elem_doubling_mantle,elem_doubling_middle_outer_core, &
-                        elem_doubling_bottom_outer_core, &
-                        DEPTH_SECOND_DOUBLING_REAL,DEPTH_THIRD_DOUBLING_REAL, &
-                        DEPTH_FOURTH_DOUBLING_REAL,distance,distance_min,zval, &
-                        doubling_index,rmins,rmaxs)
+  call define_all_layers(NUMBER_OF_MESH_LAYERS,layer_offset,last_doubling_layer, &
+                         ielem,elem_doubling_mantle,elem_doubling_middle_outer_core, &
+                         elem_doubling_bottom_outer_core, &
+                         DEPTH_SECOND_DOUBLING_REAL,DEPTH_THIRD_DOUBLING_REAL, &
+                         DEPTH_FOURTH_DOUBLING_REAL,distance,distance_min,zval, &
+                         rmins,rmaxs)
 
   ! calculates number of elements (NSPEC_REGIONS)
   call count_elements(NEX_XI,NEX_ETA,NEX_PER_PROC_XI,NPROC, &
@@ -233,8 +225,6 @@
                         NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
                         NSPEC1D_RADIAL, &
                         NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
-                        ner,ratio_sampling_array,this_region_has_a_doubling, &
-                        ifirst_region,ilast_region,iter_region,iter_layer, &
                         doubling,tmp_sum,tmp_sum_xi,tmp_sum_eta, &
                         NUMBER_OF_MESH_LAYERS,layer_offset,nspec2D_xi_sb,nspec2D_eta_sb, &
                         nb_lay_sb, nspec_sb, nglob_surf, &
@@ -249,9 +239,7 @@
                         NSPEC1D_RADIAL,NGLOB1D_RADIAL, &
                         NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
                         NGLOB_REGIONS, &
-                        nblocks_xi,nblocks_eta,ner,ratio_sampling_array, &
-                        this_region_has_a_doubling, &
-                        ifirst_region, ilast_region, iter_region, iter_layer, &
+                        nblocks_xi,nblocks_eta, &
                         doubling, padding, tmp_sum, &
                         INCLUDE_CENTRAL_CUBE,NER_TOP_CENTRAL_CUBE_ICB,NEX_XI, &
                         NUMBER_OF_MESH_LAYERS,layer_offset, &

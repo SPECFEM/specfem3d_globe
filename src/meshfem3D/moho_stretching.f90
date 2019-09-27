@@ -25,14 +25,14 @@
 !
 !=====================================================================
 
-  subroutine moho_stretching_honor_crust(myrank,xelm,yelm,zelm, &
+  subroutine moho_stretching_honor_crust(xelm,yelm,zelm, &
                                          elem_in_crust,elem_in_mantle)
 
 ! stretching the moho according to the crust 2.0
 ! input:  myrank, xelm, yelm, zelm
 ! Dec, 30, 2009
 
-  use constants, only: &
+  use constants, only: myrank, &
     NGNOD,R_EARTH_KM,R_EARTH,R_UNIT_SPHERE, &
     PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,SMALLVAL,ONE,USE_OLD_VERSION_5_1_5_FORMAT, &
     SUPPRESS_MOHO_STRETCHING,ICRUST_CRUST_SH
@@ -45,8 +45,7 @@
 
   implicit none
 
-  integer :: myrank
-  double precision,dimension(NGNOD) :: xelm,yelm,zelm
+  double precision,dimension(NGNOD),intent(inout) :: xelm,yelm,zelm
   logical,intent(inout) :: elem_in_crust,elem_in_mantle
 
   ! local parameters
@@ -234,7 +233,7 @@
 !------------------------------------------------------------------------------------------------
 !
 
-  subroutine moho_stretching_honor_crust_reg(myrank,xelm,yelm,zelm, &
+  subroutine moho_stretching_honor_crust_reg(xelm,yelm,zelm, &
                                              elem_in_crust,elem_in_mantle)
 
 ! regional routine: for REGIONAL_MOHO_MESH adaptations
@@ -245,7 +244,7 @@
 ! input:  myrank, xelm, yelm, zelm
 ! Dec, 30, 2009
 
-  use constants, only: &
+  use constants, only: myrank, &
     NGNOD,R_EARTH, &
     PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,ONE,HONOR_DEEP_MOHO,USE_OLD_VERSION_5_1_5_FORMAT, &
     SUPPRESS_MOHO_STRETCHING
@@ -255,11 +254,9 @@
 
   implicit none
 
-  integer :: myrank
+  double precision,dimension(NGNOD),intent(inout) :: xelm,yelm,zelm
 
-  double precision,dimension(NGNOD) :: xelm,yelm,zelm
-
-  logical :: elem_in_crust,elem_in_mantle
+  logical,intent(inout) :: elem_in_crust,elem_in_mantle
 
   ! local parameters
   integer :: ia,count_crust,count_mantle
@@ -641,15 +638,16 @@
 
   implicit none
 
-  integer :: ia
+  integer,intent(in) :: ia
 
-  double precision :: xelm(NGNOD)
-  double precision :: yelm(NGNOD)
-  double precision :: zelm(NGNOD)
+  double precision,intent(out) :: xelm(NGNOD)
+  double precision,intent(out) :: yelm(NGNOD)
+  double precision,intent(out) :: zelm(NGNOD)
 
-  double precision :: x,y,z
+  double precision,intent(inout) :: x,y,z
 
-  double precision :: r,elevation,gamma
+  double precision,intent(in) :: elevation,gamma
+  double precision,intent(inout) :: r
 
   ! local parameters
   double precision :: stretch_factor

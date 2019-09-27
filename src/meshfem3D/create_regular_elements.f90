@@ -26,37 +26,50 @@
 !=====================================================================
 
   subroutine create_regular_elements(ilayer,ichunk,ispec,ipass, &
-                    ifirst_region,ilast_region,iregion_code, &
-                    nspec,NCHUNKS,NUMBER_OF_MESH_LAYERS, &
-                    NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-                    ner_without_doubling,ner,ratio_sampling_array,r_top,r_bottom, &
-                    xstore,ystore,zstore, &
-                    iaddx,iaddy,iaddz,xigll,yigll,zigll, &
-                    shape3D,dershape2D_bottom, &
-                    INCLUDE_CENTRAL_CUBE, &
-                    rmin,rmax,r_moho,r_400,r_670, &
-                    rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-                    nspec_ani,c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-                    c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-                    c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                    nspec_actually,xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
-                    gammaxstore,gammaystore,gammazstore, &
-                    nspec_stacey,rho_vp,rho_vs,iboun,iMPIcut_xi,iMPIcut_eta, &
-                    ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
-                    rotation_matrix,idoubling,doubling_index,USE_ONE_LAYER_SB, &
-                    stretch_tab, &
-                    NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho, &
-                    ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot,ibelm_670_top,ibelm_670_bot, &
-                    normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
-                    ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top, &
-                    ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot, &
-                    ispec_is_tiso)
+                                     ifirst_region,ilast_region,iregion_code, &
+                                     nspec,NCHUNKS,NUMBER_OF_MESH_LAYERS, &
+                                     NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+                                     ner_without_doubling, &
+                                     INCLUDE_CENTRAL_CUBE, &
+                                     rmin,rmax,r_moho,r_400,r_670, &
+                                     iMPIcut_xi,iMPIcut_eta, &
+                                     ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
+                                     rotation_matrix,idoubling,USE_ONE_LAYER_SB, &
+                                     stretch_tab, &
+                                     NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho, &
+                                     ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot,ibelm_670_top,ibelm_670_bot, &
+                                     normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
+                                     ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top, &
+                                     ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot, &
+                                     ispec_is_tiso)
 
 
 ! adds a regular spectral element to the different regions of the mesh
 
-  use constants
+  use constants, only: myrank,NDIM,CUSTOM_REAL,NGLLX,NGLLY,NGNOD,NGNOD_EIGHT_CORNERS,SUPPRESS_CRUSTAL_MESH, &
+    SAVE_BOUNDARY_MESH,IREGION_CRUST_MANTLE
+
+  use shared_parameters, only: ner_mesh_layers,ratio_sampling_array,doubling_index,r_bottom,r_top
+
   use meshfem3D_models_par, only: HONOR_1D_SPHERICAL_MOHO,CASE_3D
+
+  use meshfem3D_par, only: &
+    xstore,ystore,zstore
+
+  use regions_mesh_par, only: &
+    xigll,yigll,zigll,iaddx,iaddy,iaddz,shape3D,dershape2D_bottom
+
+  use regions_mesh_par2, only: &
+    nspec_ani,nspec_actually,nspec_stacey, &
+    rhostore,rho_vp,rho_vs, &
+    kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
+    c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
+    c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+    c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
+    xixstore,xiystore,xizstore, &
+    etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
+    iboun
+
 
   implicit none
 
@@ -70,54 +83,12 @@
   integer,intent(in) :: NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
 
   integer,intent(in) :: ner_without_doubling
-  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS),intent(in) :: ner,ratio_sampling_array
-  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS),intent(in) :: r_bottom,r_top
-
-! arrays with the mesh in double precision
-  double precision,intent(inout) :: xstore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision,intent(inout) :: ystore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision,intent(inout) :: zstore(NGLLX,NGLLY,NGLLZ,nspec)
-
-! topology of the elements
-  integer, dimension(NGNOD),intent(in) :: iaddx,iaddy,iaddz
-
-! Gauss-Lobatto-Legendre points and weights of integration
-  double precision,intent(in) :: xigll(NGLLX),yigll(NGLLY),zigll(NGLLZ)
-
-! 3D shape functions and their derivatives
-  double precision,intent(in) :: shape3D(NGNOD,NGLLX,NGLLY,NGLLZ)
-
-! 2D shape functions and their derivatives
-  double precision,intent(in) :: dershape2D_bottom(NDIM2D,NGNOD2D,NGLLX,NGLLY)
 
   logical,intent(in) :: INCLUDE_CENTRAL_CUBE
 
 ! parameters needed to store the radii of the grid points in the spherically symmetric Earth
   double precision,intent(in) :: rmin,rmax
   double precision,intent(in) :: r_moho,r_400,r_670
-
-! for model density and anisotropy
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(inout) :: &
-    rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore
-
-! the 21 coefficients for an anisotropic medium in reduced notation
-  integer,intent(in) :: nspec_ani
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_ani),intent(inout) :: &
-    c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-    c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-    c36store,c44store,c45store,c46store,c55store,c56store,c66store
-
-! arrays with mesh parameters
-  integer,intent(in) :: nspec_actually
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_actually),intent(inout) :: &
-    xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore
-
-! Stacey, indices for Clayton-Engquist absorbing conditions
-  integer,intent(in) :: nspec_stacey
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_stacey),intent(inout) :: rho_vp,rho_vs
-
-! boundary locator
-  logical,intent(inout) :: iboun(6,nspec)
 
 ! MPI cut-planes parameters along xi and along eta
   logical, dimension(2,nspec),intent(inout) :: iMPIcut_xi,iMPIcut_eta
@@ -129,10 +100,9 @@
   double precision, dimension(NDIM,NDIM),intent(in) :: rotation_matrix
 
   integer,intent(inout) :: idoubling(nspec)
-  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS),intent(in) :: doubling_index
   logical,intent(in) :: USE_ONE_LAYER_SB
 
-  double precision, dimension(2,ner(1)),intent(in) :: stretch_tab
+  double precision, dimension(2,ner_mesh_layers(1)),intent(in) :: stretch_tab
 
 ! Boundary Mesh
   integer :: NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho
@@ -246,22 +216,27 @@
           ! lower crust elements is given by the param MAX_RATIO_STRETCHING
           ! to avoid stretching, set MAX_RATIO_STRETCHING = 1.0d  in constants.h
           call compute_coord_main_mesh(offset_x,offset_y,offset_z,xelm,yelm,zelm, &
-             ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
-             NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-             stretch_tab(1,ner_without_doubling-iz_elem+1), &
-             stretch_tab(2,ner_without_doubling-iz_elem+1),1,ilayer,ichunk,rotation_matrix, &
-             NCHUNKS,INCLUDE_CENTRAL_CUBE,NUMBER_OF_MESH_LAYERS)
+                                       ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
+                                       NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+                                       stretch_tab(1,ner_without_doubling-iz_elem+1), &
+                                       stretch_tab(2,ner_without_doubling-iz_elem+1), &
+                                       1,ilayer,ichunk,rotation_matrix, &
+                                       NCHUNKS,INCLUDE_CENTRAL_CUBE,NUMBER_OF_MESH_LAYERS)
         else
           call compute_coord_main_mesh(offset_x,offset_y,offset_z,xelm,yelm,zelm, &
-             ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
-             NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-             r_top(ilayer),r_bottom(ilayer),ner(ilayer),ilayer,ichunk,rotation_matrix, &
-             NCHUNKS,INCLUDE_CENTRAL_CUBE,NUMBER_OF_MESH_LAYERS)
+                                       ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
+                                       NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+                                       r_top(ilayer),r_bottom(ilayer), &
+                                       ner_mesh_layers(ilayer),ilayer,ichunk,rotation_matrix, &
+                                       NCHUNKS,INCLUDE_CENTRAL_CUBE,NUMBER_OF_MESH_LAYERS)
         endif
 
         ! add one spectral element to the list
         ispec_loc = map_ispec(ielem)
-        if (ispec_loc > nspec .or. ispec_loc < 1) call exit_MPI(myrank,'invalid ispec_loc in mesh creation')
+        if (ispec_loc > nspec .or. ispec_loc < 1) then
+          print *,'Error: invalid local ispec',ispec_loc,'nspec',nspec,'region',iregion_code,'layer',ilayer
+          call exit_MPI(myrank,'invalid ispec_loc in mesh creation')
+        endif
 
         ! new get_flag_boundaries
         ! xmin & xmax
@@ -283,7 +258,7 @@
           if (iproc_eta == NPROC_ETA-1) iboun(4,ispec_loc)= .true.
         endif
         ! zmin & zmax
-        if (iz_elem == ner(ilayer) .and. ilayer == ifirst_region) then
+        if (iz_elem == ner_mesh_layers(ilayer) .and. ilayer == ifirst_region) then
           iboun(6,ispec_loc)= .true.
         endif
         if (iz_elem == 1 .and. ilayer == ilast_region) then    ! defined if no doubling in this layer
@@ -307,31 +282,37 @@
 
         ! compute several rheological and geometrical properties for this spectral element
         call compute_element_properties(ispec_loc,iregion_code,idoubling,ipass, &
-                         xstore,ystore,zstore,nspec, &
-                         xelm,yelm,zelm,shape3D,rmin,rmax,rhostore, &
-                         kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-                         xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
-                         gammaxstore,gammaystore,gammazstore,nspec_actually, &
-                         c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-                         c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-                         c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                         nspec_ani,nspec_stacey, &
-                         rho_vp,rho_vs, &
-                         xigll,yigll,zigll,ispec_is_tiso)
+                                        xstore,ystore,zstore,nspec, &
+                                        xelm,yelm,zelm,shape3D,rmin,rmax,rhostore, &
+                                        kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
+                                        xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
+                                        gammaxstore,gammaystore,gammazstore,nspec_actually, &
+                                        c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
+                                        c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+                                        c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
+                                        nspec_ani,nspec_stacey, &
+                                        rho_vp,rho_vs, &
+                                        xigll,yigll,zigll,ispec_is_tiso)
 
         ! boundary mesh
         if (ipass == 2 .and. SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
           is_superbrick = .false.
           ispec_superbrick = 0 ! dummy value, will not be used
           call get_jacobian_discontinuities(ispec_loc,ix_elem,iy_elem,rmin,rmax, &
-                   r1,r2,r3,r4,r5,r6,r7,r8, &
-                   xstore(:,:,:,ispec_loc),ystore(:,:,:,ispec_loc),zstore(:,:,:,ispec_loc),dershape2D_bottom, &
-                   ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot,ibelm_670_top,ibelm_670_bot, &
-                   normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
-                   ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top, &
-                   ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot, &
-                   NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,r_moho,r_400,r_670, &
-                   is_superbrick,USE_ONE_LAYER_SB,ispec_superbrick,nex_eta_moho,HONOR_1D_SPHERICAL_MOHO)
+                                            r1,r2,r3,r4,r5,r6,r7,r8, &
+                                            xstore(:,:,:,ispec_loc),ystore(:,:,:,ispec_loc),zstore(:,:,:,ispec_loc), &
+                                            dershape2D_bottom, &
+                                            ibelm_moho_top,ibelm_moho_bot, &
+                                            ibelm_400_top,ibelm_400_bot, &
+                                            ibelm_670_top,ibelm_670_bot, &
+                                            normal_moho,normal_400,normal_670, &
+                                            jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
+                                            ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top, &
+                                            ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot, &
+                                            NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670, &
+                                            r_moho,r_400,r_670, &
+                                            is_superbrick,USE_ONE_LAYER_SB,ispec_superbrick, &
+                                            nex_eta_moho,HONOR_1D_SPHERICAL_MOHO)
         endif
 
   enddo ! i_elem

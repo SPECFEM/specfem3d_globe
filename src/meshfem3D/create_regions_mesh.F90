@@ -827,7 +827,7 @@
     xstore,ystore,zstore, &
     IREGION_CRUST_MANTLE, &
     R670,RMOHO,R400,RMIDDLE_CRUST, &
-    ner,r_top,r_bottom, &
+    ner_mesh_layers,r_top,r_bottom, &
     CASE_3D
 
   use meshfem3D_models_par, only: &
@@ -877,18 +877,18 @@
 
   ! crustal layer stretching: element layer's top and bottom radii will get stretched when in crust
   ! (number of element layers in crust can vary for different resolutions and 1chunk simulations)
-  allocate(stretch_tab(2,ner(1)),stat=ier)
+  allocate(stretch_tab(2,ner_mesh_layers(1)),stat=ier)
   if (ier /= 0) stop 'Error in allocate 19'
   if (CASE_3D .and. iregion_code == IREGION_CRUST_MANTLE .and. .not. SUPPRESS_CRUSTAL_MESH) then
     ! stretching function determines top and bottom of each element layer in the
-    ! crust region (between r_top(1) and r_bottom(1)), where ner(1) is the
+    ! crust region (between r_top(1) and r_bottom(1)), where ner_mesh_layers(1) is the
     ! number of element layers in this crust region
 
     ! differentiate between regional meshes or global meshes
     if (REGIONAL_MOHO_MESH) then
-      call stretching_function_regional(r_top(1),r_bottom(1),ner(1),stretch_tab)
+      call stretching_function_regional(r_top(1),r_bottom(1),ner_mesh_layers(1),stretch_tab)
     else
-      call stretching_function(r_top(1),r_bottom(1),ner(1),stretch_tab)
+      call stretching_function(r_top(1),r_bottom(1),ner_mesh_layers(1),stretch_tab)
     endif
 
     ! RMIDDLE_CRUST so far is only used for 1D - models with two layers in the crust

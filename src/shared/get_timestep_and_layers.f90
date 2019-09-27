@@ -516,6 +516,16 @@
   !          0.07371   -> 0.0735
   !call get_timestep_limit_significant_digit(DT)
 
+
+  !daniel todo: cut-off mantle?
+  !NER_600_400 = 0
+  !NER_670_600 = 0
+  !NER_771_670 = 0
+  !NER_TOPDDOUBLEPRIME_771 = 0
+  !NER_CMB_TOPDDOUBLEPRIME = 0
+  !NER_OUTER_CORE = 0
+  !NER_TOP_CENTRAL_CUBE_ICB = 0
+
   end subroutine get_timestep_and_layers
 
 !

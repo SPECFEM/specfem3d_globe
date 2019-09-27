@@ -25,97 +25,100 @@
 !
 !=====================================================================
 
-  subroutine define_all_layers(NER_CRUST,NER_80_MOHO,NER_220_80, &
-                        NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
-                        NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
-                        NER_TOP_CENTRAL_CUBE_ICB, &
-                        RMIDDLE_CRUST,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-                        R_CENTRAL_CUBE,RMOHO_FICTITIOUS_IN_MESHER,R80_FICTITIOUS_IN_MESHER, &
-                        ONE_CRUST, &
-                        ner,ratio_sampling_array, &
-                        NUMBER_OF_MESH_LAYERS,layer_offset,last_doubling_layer, &
-                        r_bottom,r_top,this_region_has_a_doubling, &
-                        ielem,elem_doubling_mantle,elem_doubling_middle_outer_core, &
-                        elem_doubling_bottom_outer_core, &
-                        DEPTH_SECOND_DOUBLING_REAL,DEPTH_THIRD_DOUBLING_REAL, &
-                        DEPTH_FOURTH_DOUBLING_REAL,distance,distance_min,zval, &
-                        doubling_index,rmins,rmaxs)
+  subroutine define_all_layers(NUMBER_OF_MESH_LAYERS,layer_offset,last_doubling_layer, &
+                               ielem,elem_doubling_mantle,elem_doubling_middle_outer_core, &
+                               elem_doubling_bottom_outer_core, &
+                               DEPTH_SECOND_DOUBLING_REAL,DEPTH_THIRD_DOUBLING_REAL, &
+                               DEPTH_FOURTH_DOUBLING_REAL,distance,distance_min,zval, &
+                               rmins,rmaxs)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!
 !!!!!!  definition of general mesh parameters below
 !!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  use constants
+
+  use constants, only: ADD_4TH_DOUBLING,MAX_NUMBER_OF_MESH_LAYERS,SUPPRESS_CRUSTAL_MESH, &
+    DEPTH_FOURTH_DOUBLING_OPTIMAL,DEPTH_SECOND_DOUBLING_OPTIMAL,DEPTH_THIRD_DOUBLING_OPTIMAL, &
+    HUGEVAL,ONE,R_EARTH, &
+    IFLAG_CRUST,IFLAG_80_MOHO,IFLAG_220_80,IFLAG_670_220,IFLAG_MANTLE_NORMAL, &
+    IFLAG_OUTER_CORE_NORMAL,IFLAG_INNER_CORE_NORMAL
+
+  use shared_parameters, only: ner_mesh_layers, &
+    ratio_sampling_array,this_region_has_a_doubling,doubling_index,r_bottom,r_top
+
+  use shared_parameters, only: &
+    NER_CRUST,NER_80_MOHO,NER_220_80, &
+    NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
+    NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
+    NER_TOP_CENTRAL_CUBE_ICB, &
+    RMIDDLE_CRUST,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
+    R_CENTRAL_CUBE,RMOHO_FICTITIOUS_IN_MESHER,R80_FICTITIOUS_IN_MESHER, &
+    ONE_CRUST
+
 
   implicit none
 
-  ! parameters read from parameter file
-  integer NER_CRUST,NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
-          NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
-          NER_TOP_CENTRAL_CUBE_ICB
-
-  ! radii
-  double precision RMIDDLE_CRUST,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-          R_CENTRAL_CUBE,RMOHO_FICTITIOUS_IN_MESHER,R80_FICTITIOUS_IN_MESHER
-
-  logical ONE_CRUST
-
   ! layers
   integer :: NUMBER_OF_MESH_LAYERS,layer_offset,last_doubling_layer
-  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
-
-  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
-  logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_region_has_a_doubling
 
   ! doubling elements
   integer :: ielem,elem_doubling_mantle,elem_doubling_middle_outer_core,elem_doubling_bottom_outer_core
   double precision :: DEPTH_SECOND_DOUBLING_REAL,DEPTH_THIRD_DOUBLING_REAL, &
-                          DEPTH_FOURTH_DOUBLING_REAL,distance,distance_min,zval
+                      DEPTH_FOURTH_DOUBLING_REAL
+  double precision :: distance,distance_min,zval
 
-  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
   double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs
 
+  ! note: all these parameters must be set to .true. for now,
+  !       otherwise mesher will fail since it assumes to have at least 3 doubling layers
+  logical, parameter :: ADD_1ST_DOUBLING = .true.
+  logical, parameter :: ADD_2ND_DOUBLING = .true.
+  logical, parameter :: ADD_3RD_DOUBLING = .true.
 
 ! find element below top of which we should implement the second doubling in the mantle
-! locate element closest to optimal value
-  elem_doubling_mantle = -1
-  DEPTH_SECOND_DOUBLING_REAL = 0
-  distance_min = HUGEVAL
-  do ielem = 2,NER_TOPDDOUBLEPRIME_771
-    zval = RTOPDDOUBLEPRIME + ielem * (R771 - RTOPDDOUBLEPRIME) / dble(NER_TOPDDOUBLEPRIME_771)
-    distance = abs(zval - (R_EARTH - DEPTH_SECOND_DOUBLING_OPTIMAL))
-    if (distance < distance_min) then
-      elem_doubling_mantle = ielem
-      distance_min = distance
-      DEPTH_SECOND_DOUBLING_REAL = R_EARTH - zval
-    endif
-  enddo
-  if (elem_doubling_mantle == -1) stop 'Unable to determine second doubling element'
+  DEPTH_SECOND_DOUBLING_REAL = 0.d0
+  if (ADD_2ND_DOUBLING) then
+    ! locate element closest to optimal value
+    elem_doubling_mantle = -1
+    distance_min = HUGEVAL
+    do ielem = 2,NER_TOPDDOUBLEPRIME_771
+      zval = RTOPDDOUBLEPRIME + ielem * (R771 - RTOPDDOUBLEPRIME) / dble(NER_TOPDDOUBLEPRIME_771)
+      distance = abs(zval - (R_EARTH - DEPTH_SECOND_DOUBLING_OPTIMAL))
+      if (distance < distance_min) then
+        elem_doubling_mantle = ielem
+        distance_min = distance
+        DEPTH_SECOND_DOUBLING_REAL = R_EARTH - zval
+      endif
+    enddo
+    if (elem_doubling_mantle == -1) stop 'Unable to determine second doubling element'
+  endif
 
 ! find element below top of which we should implement the third doubling in the middle of the outer core
-! locate element closest to optimal value
-  elem_doubling_middle_outer_core = -1
-  DEPTH_THIRD_DOUBLING_REAL = 0
-  distance_min = HUGEVAL
-! start at element number 4 because we need at least two elements below for the fourth doubling
-! implemented at the bottom of the outer core
-  do ielem = 4,NER_OUTER_CORE
-    zval = RICB + ielem * (RCMB - RICB) / dble(NER_OUTER_CORE)
-    distance = abs(zval - (R_EARTH - DEPTH_THIRD_DOUBLING_OPTIMAL))
-    if (distance < distance_min) then
-      elem_doubling_middle_outer_core = ielem
-      distance_min = distance
-      DEPTH_THIRD_DOUBLING_REAL = R_EARTH - zval
-    endif
-  enddo
-  if (elem_doubling_middle_outer_core == -1) stop 'Unable to determine third doubling element'
+  DEPTH_THIRD_DOUBLING_REAL = 0.d0
+  if (ADD_3RD_DOUBLING) then
+    ! locate element closest to optimal value
+    elem_doubling_middle_outer_core = -1
+    distance_min = HUGEVAL
+    ! start at element number 4 because we need at least two elements below for the fourth doubling
+    ! implemented at the bottom of the outer core
+    do ielem = 4,NER_OUTER_CORE
+      zval = RICB + ielem * (RCMB - RICB) / dble(NER_OUTER_CORE)
+      distance = abs(zval - (R_EARTH - DEPTH_THIRD_DOUBLING_OPTIMAL))
+      if (distance < distance_min) then
+        elem_doubling_middle_outer_core = ielem
+        distance_min = distance
+        DEPTH_THIRD_DOUBLING_REAL = R_EARTH - zval
+      endif
+    enddo
+    if (elem_doubling_middle_outer_core == -1) stop 'Unable to determine third doubling element'
+  endif
 
   if (ADD_4TH_DOUBLING) then
 ! find element below top of which we should implement the fourth doubling in the middle of the outer core
 ! locate element closest to optimal value
     elem_doubling_bottom_outer_core = -1
-    DEPTH_FOURTH_DOUBLING_REAL = 0
+    DEPTH_FOURTH_DOUBLING_REAL = 0.d0
     distance_min = HUGEVAL
 ! end two elements before the top because we need at least two elements above for the third doubling
 ! implemented in the middle of the outer core
@@ -135,6 +138,7 @@
   endif
 
   ratio_sampling_array(15) = 0
+  last_doubling_layer = 0
 
 ! define all the layers of the mesh
   if (.not. ADD_4TH_DOUBLING) then
@@ -152,26 +156,34 @@
       layer_offset = 1
 
       ! now only one region
-      ner( 1) = NER_CRUST + NER_80_MOHO
-      ner( 2) = 0
-      ner( 3) = 0
+      ner_mesh_layers( 1) = NER_CRUST + NER_80_MOHO
+      ner_mesh_layers( 2) = 0
+      ner_mesh_layers( 3) = 0
 
-      ner( 4) = NER_220_80
-      ner( 5) = NER_400_220
-      ner( 6) = NER_600_400
-      ner( 7) = NER_670_600
-      ner( 8) = NER_771_670
-      ner( 9) = NER_TOPDDOUBLEPRIME_771 - elem_doubling_mantle
-      ner(10) = elem_doubling_mantle
-      ner(11) = NER_CMB_TOPDDOUBLEPRIME
-      ner(12) = NER_OUTER_CORE - elem_doubling_middle_outer_core
-      ner(13) = elem_doubling_middle_outer_core
-      ner(14) = NER_TOP_CENTRAL_CUBE_ICB
+      ner_mesh_layers( 4) = NER_220_80
+      ner_mesh_layers( 5) = NER_400_220
+      ner_mesh_layers( 6) = NER_600_400
+      ner_mesh_layers( 7) = NER_670_600
+      ner_mesh_layers( 8) = NER_771_670
+      ner_mesh_layers( 9) = NER_TOPDDOUBLEPRIME_771 - elem_doubling_mantle
+      ner_mesh_layers(10) = elem_doubling_mantle
+      ner_mesh_layers(11) = NER_CMB_TOPDDOUBLEPRIME
+      ner_mesh_layers(12) = NER_OUTER_CORE - elem_doubling_middle_outer_core
+      ner_mesh_layers(13) = elem_doubling_middle_outer_core
+      ner_mesh_layers(14) = NER_TOP_CENTRAL_CUBE_ICB
 
       ! value of the doubling ratio in each radial region of the mesh
       ratio_sampling_array(1:9) = 1
-      ratio_sampling_array(10:12) = 2
-      ratio_sampling_array(13:14) = 4
+      if (ADD_1ST_DOUBLING) then
+        ratio_sampling_array(10:12) = 2
+      else
+        ratio_sampling_array(10:12) = ratio_sampling_array(9)
+      endif
+      if (ADD_2ND_DOUBLING) then
+        ratio_sampling_array(13:14) = 4 ! 2 * ratio_sampling_array(12)
+      else
+        ratio_sampling_array(13:14) = ratio_sampling_array(12)
+      endif
 
       ! value of the doubling index flag in each radial region of the mesh
       doubling_index(1:3) = IFLAG_CRUST !!!!! IFLAG_80_MOHO
@@ -183,9 +195,14 @@
 
       ! define the three regions in which we implement a mesh doubling at the top of that region
       this_region_has_a_doubling(:)  = .false.
-      this_region_has_a_doubling(10) = .true.
-      this_region_has_a_doubling(13) = .true.
-      last_doubling_layer = 13
+      if (ADD_1ST_DOUBLING) then
+        this_region_has_a_doubling(10) = .true.
+        last_doubling_layer = 10
+      endif
+      if (ADD_2ND_DOUBLING) then
+        this_region_has_a_doubling(13) = .true.
+        last_doubling_layer = 13
+      endif
 
       ! define the top and bottom radii of all the regions of the mesh in the radial direction
       ! the first region is the crust at the surface of the Earth
@@ -282,25 +299,37 @@
       NUMBER_OF_MESH_LAYERS = 13
       layer_offset = 0
 
-      ner( 1) = NER_CRUST
-      ner( 2) = NER_80_MOHO
-      ner( 3) = NER_220_80
-      ner( 4) = NER_400_220
-      ner( 5) = NER_600_400
-      ner( 6) = NER_670_600
-      ner( 7) = NER_771_670
-      ner( 8) = NER_TOPDDOUBLEPRIME_771 - elem_doubling_mantle
-      ner( 9) = elem_doubling_mantle
-      ner(10) = NER_CMB_TOPDDOUBLEPRIME
-      ner(11) = NER_OUTER_CORE - elem_doubling_middle_outer_core
-      ner(12) = elem_doubling_middle_outer_core
-      ner(13) = NER_TOP_CENTRAL_CUBE_ICB
+      ner_mesh_layers( 1) = NER_CRUST
+      ner_mesh_layers( 2) = NER_80_MOHO
+      ner_mesh_layers( 3) = NER_220_80
+      ner_mesh_layers( 4) = NER_400_220
+      ner_mesh_layers( 5) = NER_600_400
+      ner_mesh_layers( 6) = NER_670_600
+      ner_mesh_layers( 7) = NER_771_670
+      ner_mesh_layers( 8) = NER_TOPDDOUBLEPRIME_771 - elem_doubling_mantle
+      ner_mesh_layers( 9) = elem_doubling_mantle
+      ner_mesh_layers(10) = NER_CMB_TOPDDOUBLEPRIME
+      ner_mesh_layers(11) = NER_OUTER_CORE - elem_doubling_middle_outer_core
+      ner_mesh_layers(12) = elem_doubling_middle_outer_core
+      ner_mesh_layers(13) = NER_TOP_CENTRAL_CUBE_ICB
 
       ! value of the doubling ratio in each radial region of the mesh
       ratio_sampling_array(1) = 1
-      ratio_sampling_array(2:8) = 2
-      ratio_sampling_array(9:11) = 4
-      ratio_sampling_array(12:13) = 8
+      if (ADD_1ST_DOUBLING) then
+        ratio_sampling_array(2:8) = 2
+      else
+        ratio_sampling_array(2:8) = ratio_sampling_array(1)
+      endif
+      if (ADD_2ND_DOUBLING) then
+        ratio_sampling_array(9:11) = 4 ! 2 * ratio_sampling_array(8)
+      else
+        ratio_sampling_array(9:11) = ratio_sampling_array(8)
+      endif
+      if (ADD_3RD_DOUBLING) then
+        ratio_sampling_array(12:13) = 8 ! 2 * ratio_sampling_array(11)
+      else
+        ratio_sampling_array(12:13) = ratio_sampling_array(11)
+      endif
 
       ! value of the doubling index flag in each radial region of the mesh
       doubling_index(1) = IFLAG_CRUST
@@ -313,10 +342,18 @@
 
       ! define the three regions in which we implement a mesh doubling at the top of that region
       this_region_has_a_doubling(:)  = .false.
-      this_region_has_a_doubling(2)  = .true.
-      this_region_has_a_doubling(9)  = .true.
-      this_region_has_a_doubling(12) = .true.
-      last_doubling_layer = 12
+      if (ADD_1ST_DOUBLING) then
+        this_region_has_a_doubling(2)  = .true.
+        last_doubling_layer = 2
+      endif
+      if (ADD_2ND_DOUBLING) then
+        this_region_has_a_doubling(9)  = .true.
+        last_doubling_layer = 9
+      endif
+      if (ADD_3RD_DOUBLING) then
+        this_region_has_a_doubling(12) = .true.
+        last_doubling_layer = 12
+      endif
 
       ! define the top and bottom radii of all the regions of the mesh in the radial direction
       ! the first region is the crust at the surface of the Earth
@@ -414,30 +451,42 @@
       NUMBER_OF_MESH_LAYERS = 14
       layer_offset = 1
       if ((RMIDDLE_CRUST-RMOHO_FICTITIOUS_IN_MESHER) < (R_EARTH-RMIDDLE_CRUST)) then
-        ner( 1) = ceiling (NER_CRUST / 2.d0)
-        ner( 2) = floor (NER_CRUST / 2.d0)
+        ner_mesh_layers( 1) = ceiling (NER_CRUST / 2.d0)
+        ner_mesh_layers( 2) = floor (NER_CRUST / 2.d0)
       else
-        ner( 1) = floor (NER_CRUST / 2.d0)      ! regional mesh: ner(1) = 1 since NER_CRUST=3
-        ner( 2) = ceiling (NER_CRUST / 2.d0)    !                ner(2) = 2
+        ner_mesh_layers( 1) = floor (NER_CRUST / 2.d0)      ! regional mesh: ner_mesh_layers(1) = 1 since NER_CRUST=3
+        ner_mesh_layers( 2) = ceiling (NER_CRUST / 2.d0)    !                ner_mesh_layers(2) = 2
       endif
-      ner( 3) = NER_80_MOHO
-      ner( 4) = NER_220_80
-      ner( 5) = NER_400_220
-      ner( 6) = NER_600_400
-      ner( 7) = NER_670_600
-      ner( 8) = NER_771_670
-      ner( 9) = NER_TOPDDOUBLEPRIME_771 - elem_doubling_mantle
-      ner(10) = elem_doubling_mantle
-      ner(11) = NER_CMB_TOPDDOUBLEPRIME
-      ner(12) = NER_OUTER_CORE - elem_doubling_middle_outer_core
-      ner(13) = elem_doubling_middle_outer_core
-      ner(14) = NER_TOP_CENTRAL_CUBE_ICB
+      ner_mesh_layers( 3) = NER_80_MOHO
+      ner_mesh_layers( 4) = NER_220_80
+      ner_mesh_layers( 5) = NER_400_220
+      ner_mesh_layers( 6) = NER_600_400
+      ner_mesh_layers( 7) = NER_670_600
+      ner_mesh_layers( 8) = NER_771_670
+      ner_mesh_layers( 9) = NER_TOPDDOUBLEPRIME_771 - elem_doubling_mantle
+      ner_mesh_layers(10) = elem_doubling_mantle
+      ner_mesh_layers(11) = NER_CMB_TOPDDOUBLEPRIME
+      ner_mesh_layers(12) = NER_OUTER_CORE - elem_doubling_middle_outer_core
+      ner_mesh_layers(13) = elem_doubling_middle_outer_core
+      ner_mesh_layers(14) = NER_TOP_CENTRAL_CUBE_ICB
 
       ! value of the doubling ratio in each radial region of the mesh
       ratio_sampling_array(1:2) = 1
-      ratio_sampling_array(3:9) = 2
-      ratio_sampling_array(10:12) = 4
-      ratio_sampling_array(13:14) = 8
+      if (ADD_1ST_DOUBLING) then
+        ratio_sampling_array(3:9) = 2
+      else
+        ratio_sampling_array(3:9) = ratio_sampling_array(2)
+      endif
+      if (ADD_2ND_DOUBLING) then
+        ratio_sampling_array(10:12) = 4 ! 2 * ratio_sampling_array(9)
+      else
+        ratio_sampling_array(10:12) = ratio_sampling_array(9)
+      endif
+      if (ADD_3RD_DOUBLING) then
+        ratio_sampling_array(13:14) = 8 ! 2 * ratio_sampling_array(12)
+      else
+        ratio_sampling_array(13:14) = ratio_sampling_array(12)
+      endif
 
       ! value of the doubling index flag in each radial region of the mesh
       doubling_index(1:2) = IFLAG_CRUST
@@ -450,11 +499,19 @@
 
       ! define the three regions in which we implement a mesh doubling at the top of that region
       this_region_has_a_doubling(:)  = .false.
-      this_region_has_a_doubling(3)  = .true.
-      this_region_has_a_doubling(10) = .true.
-      this_region_has_a_doubling(13) = .true.
+      if (ADD_1ST_DOUBLING) then
+        this_region_has_a_doubling(3)  = .true.
+        last_doubling_layer = 3
+      endif
+      if (ADD_2ND_DOUBLING) then
+        this_region_has_a_doubling(10) = .true.
+        last_doubling_layer = 10
+      endif
+      if (ADD_3RD_DOUBLING) then
+        this_region_has_a_doubling(13) = .true.
+        last_doubling_layer = 13
+      endif
       this_region_has_a_doubling(14) = .false.
-      last_doubling_layer = 13
 
       ! define the top and bottom radii of all the regions of the mesh in the radial direction
       ! the first region is the crust at the surface of the Earth
@@ -555,28 +612,40 @@
       layer_offset = 1
 
       ! now only one region
-      ner( 1) = NER_CRUST + NER_80_MOHO
-      ner( 2) = 0
-      ner( 3) = 0
+      ner_mesh_layers( 1) = NER_CRUST + NER_80_MOHO
+      ner_mesh_layers( 2) = 0
+      ner_mesh_layers( 3) = 0
 
-      ner( 4) = NER_220_80
-      ner( 5) = NER_400_220
-      ner( 6) = NER_600_400
-      ner( 7) = NER_670_600
-      ner( 8) = NER_771_670
-      ner( 9) = NER_TOPDDOUBLEPRIME_771 - elem_doubling_mantle
-      ner(10) = elem_doubling_mantle
-      ner(11) = NER_CMB_TOPDDOUBLEPRIME
-      ner(12) = NER_OUTER_CORE - elem_doubling_middle_outer_core
-      ner(13) = elem_doubling_middle_outer_core - elem_doubling_bottom_outer_core
-      ner(14) = elem_doubling_bottom_outer_core
-      ner(15) = NER_TOP_CENTRAL_CUBE_ICB
+      ner_mesh_layers( 4) = NER_220_80
+      ner_mesh_layers( 5) = NER_400_220
+      ner_mesh_layers( 6) = NER_600_400
+      ner_mesh_layers( 7) = NER_670_600
+      ner_mesh_layers( 8) = NER_771_670
+      ner_mesh_layers( 9) = NER_TOPDDOUBLEPRIME_771 - elem_doubling_mantle
+      ner_mesh_layers(10) = elem_doubling_mantle
+      ner_mesh_layers(11) = NER_CMB_TOPDDOUBLEPRIME
+      ner_mesh_layers(12) = NER_OUTER_CORE - elem_doubling_middle_outer_core
+      ner_mesh_layers(13) = elem_doubling_middle_outer_core - elem_doubling_bottom_outer_core
+      ner_mesh_layers(14) = elem_doubling_bottom_outer_core
+      ner_mesh_layers(15) = NER_TOP_CENTRAL_CUBE_ICB
 
       ! value of the doubling ratio in each radial region of the mesh
       ratio_sampling_array(1:9) = 1
-      ratio_sampling_array(10:12) = 2
-      ratio_sampling_array(13) = 4
-      ratio_sampling_array(14:15) = 8
+      if (ADD_1ST_DOUBLING) then
+        ratio_sampling_array(10:12) = 2
+      else
+        ratio_sampling_array(10:12) = ratio_sampling_array(9)
+      endif
+      if (ADD_2ND_DOUBLING) then
+        ratio_sampling_array(13) = 4 ! 2 * ratio_sampling_array(12)
+      else
+        ratio_sampling_array(13) = ratio_sampling_array(12)
+      endif
+      if (ADD_3RD_DOUBLING) then
+        ratio_sampling_array(14:15) = 8 ! 2 * ratio_sampling_array(13)
+      else
+        ratio_sampling_array(14:15) = ratio_sampling_array(13)
+      endif
 
       ! value of the doubling index flag in each radial region of the mesh
       doubling_index(1:3) = IFLAG_CRUST !!!!! IFLAG_80_MOHO
@@ -588,10 +657,18 @@
 
       ! define the three regions in which we implement a mesh doubling at the top of that region
       this_region_has_a_doubling(:)  = .false.
-      this_region_has_a_doubling(10) = .true.
-      this_region_has_a_doubling(13) = .true.
-      this_region_has_a_doubling(14) = .true.
-      last_doubling_layer = 14
+      if (ADD_1ST_DOUBLING) then
+        this_region_has_a_doubling(10) = .true.
+        last_doubling_layer = 10
+      endif
+      if (ADD_2ND_DOUBLING) then
+        this_region_has_a_doubling(13) = .true.
+        last_doubling_layer = 13
+      endif
+      if (ADD_3RD_DOUBLING) then
+        this_region_has_a_doubling(14) = .true.
+        last_doubling_layer = 14
+      endif
 
       ! define the top and bottom radii of all the regions of the mesh in the radial direction
       ! the first region is the crust at the surface of the Earth
@@ -689,27 +766,43 @@
       NUMBER_OF_MESH_LAYERS = 14
       layer_offset = 0
 
-      ner( 1) = NER_CRUST
-      ner( 2) = NER_80_MOHO
-      ner( 3) = NER_220_80
-      ner( 4) = NER_400_220
-      ner( 5) = NER_600_400
-      ner( 6) = NER_670_600
-      ner( 7) = NER_771_670
-      ner( 8) = NER_TOPDDOUBLEPRIME_771 - elem_doubling_mantle
-      ner( 9) = elem_doubling_mantle
-      ner(10) = NER_CMB_TOPDDOUBLEPRIME
-      ner(11) = NER_OUTER_CORE - elem_doubling_middle_outer_core
-      ner(12) = elem_doubling_middle_outer_core - elem_doubling_bottom_outer_core
-      ner(13) = elem_doubling_bottom_outer_core
-      ner(14) = NER_TOP_CENTRAL_CUBE_ICB
+      ner_mesh_layers( 1) = NER_CRUST
+      ner_mesh_layers( 2) = NER_80_MOHO
+      ner_mesh_layers( 3) = NER_220_80
+      ner_mesh_layers( 4) = NER_400_220
+      ner_mesh_layers( 5) = NER_600_400
+      ner_mesh_layers( 6) = NER_670_600
+      ner_mesh_layers( 7) = NER_771_670
+      ner_mesh_layers( 8) = NER_TOPDDOUBLEPRIME_771 - elem_doubling_mantle
+      ner_mesh_layers( 9) = elem_doubling_mantle
+      ner_mesh_layers(10) = NER_CMB_TOPDDOUBLEPRIME
+      ner_mesh_layers(11) = NER_OUTER_CORE - elem_doubling_middle_outer_core
+      ner_mesh_layers(12) = elem_doubling_middle_outer_core - elem_doubling_bottom_outer_core
+      ner_mesh_layers(13) = elem_doubling_bottom_outer_core
+      ner_mesh_layers(14) = NER_TOP_CENTRAL_CUBE_ICB
 
       ! value of the doubling ratio in each radial region of the mesh
       ratio_sampling_array(1) = 1
-      ratio_sampling_array(2:8) = 2
-      ratio_sampling_array(9:11) = 4
-      ratio_sampling_array(12) = 8
-      ratio_sampling_array(13:14) = 16
+      if (ADD_1ST_DOUBLING) then
+        ratio_sampling_array(2:8) = 2
+      else
+        ratio_sampling_array(2:8) = ratio_sampling_array(1)
+      endif
+      if (ADD_2ND_DOUBLING) then
+        ratio_sampling_array(9:11) = 4 ! 2 * ratio_sampling_array(8)
+      else
+        ratio_sampling_array(9:11) = ratio_sampling_array(8)
+      endif
+      if (ADD_3RD_DOUBLING) then
+        ratio_sampling_array(12) = 8 ! 2 * ratio_sampling_array(11)
+      else
+        ratio_sampling_array(12) = ratio_sampling_array(11)
+      endif
+      if (ADD_4TH_DOUBLING) then
+        ratio_sampling_array(13:14) = 16 ! 2 * ratio_sampling_array(12)
+      else
+        ratio_sampling_array(13:14) = ratio_sampling_array(12)
+      endif
 
       ! value of the doubling index flag in each radial region of the mesh
       doubling_index(1) = IFLAG_CRUST
@@ -722,11 +815,22 @@
 
       ! define the three regions in which we implement a mesh doubling at the top of that region
       this_region_has_a_doubling(:)  = .false.
-      this_region_has_a_doubling(2)  = .true.
-      this_region_has_a_doubling(9)  = .true.
-      this_region_has_a_doubling(12) = .true.
-      this_region_has_a_doubling(13) = .true.
-      last_doubling_layer = 13
+      if (ADD_1ST_DOUBLING) then
+        this_region_has_a_doubling(2)  = .true.
+        last_doubling_layer = 2
+      endif
+      if (ADD_2ND_DOUBLING) then
+        this_region_has_a_doubling(9)  = .true.
+        last_doubling_layer = 9
+      endif
+      if (ADD_3RD_DOUBLING) then
+        this_region_has_a_doubling(12) = .true.
+        last_doubling_layer = 12
+      endif
+      if (ADD_4TH_DOUBLING) then
+        this_region_has_a_doubling(13) = .true.
+        last_doubling_layer = 13
+      endif
 
       ! define the top and bottom radii of all the regions of the mesh in the radial direction
       ! the first region is the crust at the surface of the Earth
@@ -824,32 +928,48 @@
       NUMBER_OF_MESH_LAYERS = 15
       layer_offset = 1
       if ((RMIDDLE_CRUST-RMOHO_FICTITIOUS_IN_MESHER) < (R_EARTH-RMIDDLE_CRUST)) then
-        ner( 1) = ceiling (NER_CRUST / 2.d0)
-        ner( 2) = floor (NER_CRUST / 2.d0)
+        ner_mesh_layers( 1) = ceiling (NER_CRUST / 2.d0)
+        ner_mesh_layers( 2) = floor (NER_CRUST / 2.d0)
       else
-        ner( 1) = floor (NER_CRUST / 2.d0)
-        ner( 2) = ceiling (NER_CRUST / 2.d0)
+        ner_mesh_layers( 1) = floor (NER_CRUST / 2.d0)
+        ner_mesh_layers( 2) = ceiling (NER_CRUST / 2.d0)
       endif
-      ner( 3) = NER_80_MOHO
-      ner( 4) = NER_220_80
-      ner( 5) = NER_400_220
-      ner( 6) = NER_600_400
-      ner( 7) = NER_670_600
-      ner( 8) = NER_771_670
-      ner( 9) = NER_TOPDDOUBLEPRIME_771 - elem_doubling_mantle
-      ner(10) = elem_doubling_mantle
-      ner(11) = NER_CMB_TOPDDOUBLEPRIME
-      ner(12) = NER_OUTER_CORE - elem_doubling_middle_outer_core
-      ner(13) = elem_doubling_middle_outer_core - elem_doubling_bottom_outer_core
-      ner(14) = elem_doubling_bottom_outer_core
-      ner(15) = NER_TOP_CENTRAL_CUBE_ICB
+      ner_mesh_layers( 3) = NER_80_MOHO
+      ner_mesh_layers( 4) = NER_220_80
+      ner_mesh_layers( 5) = NER_400_220
+      ner_mesh_layers( 6) = NER_600_400
+      ner_mesh_layers( 7) = NER_670_600
+      ner_mesh_layers( 8) = NER_771_670
+      ner_mesh_layers( 9) = NER_TOPDDOUBLEPRIME_771 - elem_doubling_mantle
+      ner_mesh_layers(10) = elem_doubling_mantle
+      ner_mesh_layers(11) = NER_CMB_TOPDDOUBLEPRIME
+      ner_mesh_layers(12) = NER_OUTER_CORE - elem_doubling_middle_outer_core
+      ner_mesh_layers(13) = elem_doubling_middle_outer_core - elem_doubling_bottom_outer_core
+      ner_mesh_layers(14) = elem_doubling_bottom_outer_core
+      ner_mesh_layers(15) = NER_TOP_CENTRAL_CUBE_ICB
 
       ! value of the doubling ratio in each radial region of the mesh
       ratio_sampling_array(1:2) = 1
-      ratio_sampling_array(3:9) = 2
-      ratio_sampling_array(10:12) = 4
-      ratio_sampling_array(13) = 8
-      ratio_sampling_array(14:15) = 16
+      if (ADD_1ST_DOUBLING) then
+        ratio_sampling_array(3:9) = 2
+      else
+        ratio_sampling_array(3:9) = ratio_sampling_array(2)
+      endif
+      if (ADD_2ND_DOUBLING) then
+        ratio_sampling_array(10:12) = 4 ! 2 * ratio_sampling_array(9)
+      else
+        ratio_sampling_array(10:12) = ratio_sampling_array(9)
+      endif
+      if (ADD_3RD_DOUBLING) then
+        ratio_sampling_array(13) = 8 ! 2 * ratio_sampling_array(12)
+      else
+        ratio_sampling_array(13) = ratio_sampling_array(12)
+      endif
+      if (ADD_4TH_DOUBLING) then
+        ratio_sampling_array(14:15) = 16 ! 2 * ratio_sampling_array(13)
+      else
+        ratio_sampling_array(14:15) = ratio_sampling_array(13)
+      endif
 
       ! value of the doubling index flag in each radial region of the mesh
       doubling_index(1:2) = IFLAG_CRUST
@@ -862,11 +982,22 @@
 
       ! define the three regions in which we implement a mesh doubling at the top of that region
       this_region_has_a_doubling(:)  = .false.
-      this_region_has_a_doubling(3)  = .true.
-      this_region_has_a_doubling(10) = .true.
-      this_region_has_a_doubling(13) = .true.
-      this_region_has_a_doubling(14) = .true.
-      last_doubling_layer = 14
+      if (ADD_1ST_DOUBLING) then
+        this_region_has_a_doubling(3)  = .true.
+        last_doubling_layer = 3
+      endif
+      if (ADD_2ND_DOUBLING) then
+        this_region_has_a_doubling(10) = .true.
+        last_doubling_layer = 10
+      endif
+      if (ADD_3RD_DOUBLING) then
+        this_region_has_a_doubling(13) = .true.
+        last_doubling_layer = 13
+      endif
+      if (ADD_4TH_DOUBLING) then
+        this_region_has_a_doubling(14) = .true.
+        last_doubling_layer = 14
+      endif
 
       ! define the top and bottom radii of all the regions of the mesh in the radial direction
       ! the first region is the crust at the surface of the Earth
@@ -955,7 +1086,6 @@
       rmins(15) = R_CENTRAL_CUBE / R_EARTH
     endif
   endif
-
 
   end subroutine define_all_layers
 
