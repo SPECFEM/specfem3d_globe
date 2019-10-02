@@ -461,6 +461,8 @@
               ! F = eta * (A - 2*L)
 
               ! daniel todo:
+              ! Love parameters derived from elastic tensor cij
+              !
               ! please check, this assumes a radial symmetry axis, thus we should again first rotate back
               ! the c11store,.. coefficients from the SPECFEM reference coordinate system
               cij(1) = c11store_crust_mantle(i,j,k,ispec); cij(2) = c12store_crust_mantle(i,j,k,ispec)

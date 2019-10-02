@@ -111,6 +111,8 @@
   ! while we need an equation for "mu" and thus we have an additional factor of 2
   ! in the scaling factor below and in equation (49) of Komatitsch and Tromp, Geophys. J. Int. (2002) 149, 390-412,
   ! because "mu" is related to the square of velocity.
+  !
+  ! mu(omega_c) = mu(omega_0)[ 1 + 2/(pi Q_mu) ln(omega_c / omega_0) ]
 
   ! rescale in crust and mantle
   do ispec = 1,NSPEC_CRUST_MANTLE
@@ -125,6 +127,7 @@
           endif
 
           if (ANISOTROPIC_3D_MANTLE_VAL) then
+            ! anisotropic element
             scale_factor_minus_one = scale_factor - 1.d0
 
             mul = c44store_crust_mantle(i,j,k,ispec)
@@ -148,6 +151,7 @@
             c66store_crust_mantle(i,j,k,ispec) = c66store_crust_mantle(i,j,k,ispec) &
                     + scale_factor_minus_one * mul
           else
+            ! isotropic or transverse isotropic element
             if (MOVIE_VOLUME .and. SIMULATION_TYPE == 3) then
               ! store the original value of \mu to compute \mu*\eps
               muvstore_crust_mantle_3dmovie(i,j,k,ispec) = muvstore_crust_mantle(i,j,k,ispec)

@@ -367,7 +367,7 @@
   d13 = F + HC
   d14 = S3 + 2.d0*S1sh + 2.d0*S1p
   d15 = 2.d0*C1p + C3
-  d16 = -BS/2. - ES
+  d16 = -BS/2.d0 - ES
   d22 = A + EC - BC
   d23 = F - HC
   d24 = 2.d0*S1p - S3

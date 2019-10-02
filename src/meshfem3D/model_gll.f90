@@ -748,8 +748,9 @@
     ! no symmetry axis, no need for rotation (following cij should be rotation invariant)
     !
     ! if equivalent with an isotropic tensor, cij can be set with
-    ! Lame parameters: mu = rho * vp**2
-    !                  lambda = rho * (vp**2 - vs**2)
+    ! Lame parameters: mu = rho * vs**2
+    !                  lambda = rho * (vp**2 - 2 vs**2) = rho * vp**2 - 2 mu
+    !
     !            then: C11 = C22 = C33 = lambda + 2mu
     !                  C12 = C13 = C23 = lambda
     !                  C44 = C55 = C66 = mu
@@ -787,15 +788,15 @@
     ! L = rho * vsv**2
     ! F = eta * (A - 2*L)
     !
-    ! and therefore (assuming radial axis symmetry)
+    ! and therefore (assuming radial axis symmetry, see e.g. Stein & Wysession, chapter 3.6.2)
     ! C11 = A = rho * vph**2
     ! C33 = C = rho * vpv**2
     ! C44 = L = rho * vsv**2
     ! C13 = F = eta * (A - 2*L)
     ! C12 = C11 - 2 C66 = A - 2*N = rho * (vph**2 - 2 * vsh**2)
-    ! C22 = C11
-    ! C23 = C13
-    ! C55 = C44
+    ! C22 = C11 = A
+    ! C23 = C13 = F
+    ! C55 = C44 = L
     ! C66 = N = rho * vsh**2 = (C11-C12)/2
     !
     ! Love parameterization
@@ -889,12 +890,12 @@
     stop 'Invalid MGLL_TYPE, conversion to elastic tensor not implemented yet'
 
     !! for full parameterization, could call something like:
-    !call rotate_tensor_aniso_to_global(theta,phi &
-    !                                   A,C,N,L,F, &
-    !                                   Gc,Gs, &
-    !                                   Jc,Js,Kc,Ks,Mc,Ms,Bc,Bs,Hc,Hs,Dc,Ds,Ec,Es, &
-    !                                   c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
-    !                                   c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
+    !   call rotate_tensor_aniso_to_global(theta,phi &
+    !                                      A,C,N,L,F, &
+    !                                      Gc,Gs, &
+    !                                      Jc,Js,Kc,Ks,Mc,Ms,Bc,Bs,Hc,Hs,Dc,Ds,Ec,Es, &
+    !                                      c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+    !                                      c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
   end select
 
   ! debug
