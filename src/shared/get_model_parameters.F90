@@ -95,17 +95,17 @@
   ending = ''
   if (len_trim(MODEL_L) > 4 ) ending = MODEL_L(len_trim(MODEL_L)-3:len_trim(MODEL_L))
 
-  ! determines if the anisotropic inner core option should be turned on
+  ! initializes inner core parameters
+  ANISOTROPIC_INNER_CORE = .false.
   THREE_D_MODEL_IC = 0
-  if (trim(ending) == '_AIC') then
+  MODEL_ROOT = MODEL_L ! sets root name of model to original one
+
+  ! determines if the anisotropic inner core option should be turned on
+  if (trim(ending) == '_aic') then
     ANISOTROPIC_INNER_CORE = .true.
     THREE_D_MODEL_IC = THREE_D_MODEL_INNER_CORE_ISHII ! since we only have a single inner core aniso model, assumes we take it
     ! in case it has an ending for the inner core, remove it from the name
     MODEL_ROOT = MODEL_L(1:len_trim(MODEL_L)-4)
-  else
-    ANISOTROPIC_INNER_CORE = .false.
-    ! sets root name of model to original one
-    MODEL_ROOT = MODEL_L
   endif
 
   ! crustal option by name ending

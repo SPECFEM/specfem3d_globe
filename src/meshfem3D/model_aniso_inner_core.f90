@@ -33,7 +33,7 @@
 ! adds a 3D model or a read_aniso_inner_core_model subroutine
 !--------------------------------------------------------------------------------------------------
 
-  subroutine model_aniso_inner_core(x,c11,c33,c12,c13,c44,REFERENCE_1D_MODEL, &
+  subroutine model_aniso_inner_core(r,c11,c12,c13,c33,c44,REFERENCE_1D_MODEL, &
                                     vpv,vph,vsv,vsh,rho,eta_aniso)
 
   use constants
@@ -44,60 +44,78 @@
 
   integer, intent(in) :: REFERENCE_1D_MODEL
 
-  double precision, intent(in) :: x
-  double precision, intent(out) :: c11,c33,c12,c13,c44
-  double precision, intent(in) :: rho,vpv,vph,vsv,vsh,eta_aniso
+  double precision, intent(in) :: r
+  double precision, intent(inout) :: c11,c12,c13,c33,c44
+  double precision, intent(inout) :: rho,vpv,vph,vsv,vsh,eta_aniso
 
   ! local parameters
   double precision :: vp,vs,rho_dim
   double precision :: vpc,vsc,rhoc
   double precision :: vp0,vs0,rho0,A0
   double precision :: c66
-  double precision :: scale_fac
+  double precision :: scaleval,scale_GPa
+  double precision :: x
+
+  logical, save :: is_first_call = .true.
+
+  ! user output
+  if (is_first_call) then
+    is_first_call = .false.
+    if (myrank == 0) then
+      write(IMAIN,*)
+      write(IMAIN,*) 'incorporating anisotropic inner core model: Ishii'
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
+  endif
+
+  ! non-dimensional radius (in m)
+  x = r
 
   ! calculates isotropic values from given (transversely isotropic) reference values
   ! (are non-dimensionalized)
   vp = sqrt(((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
             + (8.d0 - 8.d0*eta_aniso)*vsv*vsv)/15.d0)
   vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
-                    + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0)
+            + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0)
 
   ! scale to dimensions (e.g. used in prem model)
-  scale_fac = R_EARTH*dsqrt(PI*GRAV*RHOAV)/1000.d0
-
-  vp = vp * scale_fac
-  vs = vs * scale_fac
+  scaleval = R_EARTH/1000.d0 * dsqrt(PI*GRAV*RHOAV)
+  vp = vp * scaleval    ! km/s
+  vs = vs * scaleval
   rho_dim = rho * RHOAV/1000.d0
 
   select case (REFERENCE_1D_MODEL)
 
     case (REFERENCE_MODEL_IASP91)
-      vpc = 11.24094d0-4.09689d0*x*x
-      vsc = 3.56454d0-3.45241d0*x*x
-      rhoc = 13.0885d0-8.8381d0*x*x
-      ! checks with given values
-      if (abs(vpc-vp) > TINYVAL .or. abs(vsc-vs) > TINYVAL .or. abs(rhoc-rho_dim) > TINYVAL) then
-        stop 'Error isotropic IASP91 values in model_aniso_inner_core() '
-      endif
-
       ! values at center
       vp0 = 11.24094d0
       vs0 = 3.56454d0
       rho0 = 13.0885d0
 
-    case (REFERENCE_MODEL_PREM)
-      vpc = 11.2622d0-6.3640d0*x*x
-      vsc = 3.6678d0-4.4475d0*x*x
-      rhoc = 13.0885d0-8.8381d0*x*x
-      ! checks
+      ! checks with input isotropic values
+      vpc = vp0 - 4.09689d0*x*x
+      vsc = vs0 - 3.45241d0*x*x
+      rhoc = rho0 - 8.8381d0*x*x
+      ! checks with given values
       if (abs(vpc-vp) > TINYVAL .or. abs(vsc-vs) > TINYVAL .or. abs(rhoc-rho_dim) > TINYVAL) then
-        stop 'Error isotropic PREM values in model_aniso_inner_core() '
+        stop 'Error isotropic IASP91 values in model_aniso_inner_core() '
       endif
 
+    case (REFERENCE_MODEL_PREM)
       ! values at center
       vp0 = 11.2622d0
       vs0 = 3.6678d0
       rho0 = 13.0885d0
+
+      ! checks with input isotropic values
+      vpc = vp0 - 6.3640d0*x*x
+      vsc = vs0 - 4.4475d0*x*x
+      rhoc = rho0 - 8.8381d0*x*x
+      ! checks
+      if (abs(vpc-vp) > TINYVAL .or. abs(vsc-vs) > TINYVAL .or. abs(rhoc-rho_dim) > TINYVAL) then
+        stop 'Error isotropic PREM values in model_aniso_inner_core() '
+      endif
 
     case (REFERENCE_MODEL_1DREF)
       ! values at center
@@ -133,10 +151,6 @@
       stop 'unknown 1D reference Earth model in anisotropic inner core'
 
   end select
-
-! non-dimensionalization of elastic parameters (GPa--[g/cm^3][(km/s)^2])
-  scale_fac = RHOAV * R_EARTH*R_EARTH * PI*GRAV*RHOAV
-  scale_fac = 1.d9 / scale_fac
 
 ! elastic tensor for hexagonal symmetry in reduced notation:
 !
@@ -196,19 +210,47 @@
 ! 1200 5527 12.77   1559 1155 1257 1670 141 1343 169
 !
 
-! note: the symmetry here is likely assuming that the radial direction aligns with vertical z-direction
+! note: the symmetry axis aligns with the rotation axis of the Earth, which is assumed to be the vertical z-direction here.
 !       thus, the reference system assumed here is the same as the SPECFEM reference,
 !       and there is no need for rotating from a local (radial) to a global (SPECFEM) reference.
 
-  c11 = rho_dim * vp*vp * scale_fac
-  c66 = rho_dim * vs*vs * scale_fac
+  c11 = (rho_dim * vp*vp)    ! in GPa
+  c66 = (rho_dim * vs*vs)
   c12 = c11 - 2.0d0 * c66
 
-  A0 = rho0 * vp0*vp0 * scale_fac
+  A0 = (rho0 * vp0*vp0)
 
   c33 = c11 + 0.0349d0 * A0
   c44 = c66 + 0.00988d0 * A0
   c13 = c12 - 0.00881d0 * A0
+
+  ! non-dimensionalize the elastic coefficients using
+  ! the scale of GPa--[g/cm^3][(km/s)^2]
+  scaleval = dsqrt(PI*GRAV*RHOAV)
+  scale_GPa = (RHOAV/1000.d0)*((R_EARTH*scaleval/1000.d0)**2)
+
+  ! scales only values to return
+  c11 = c11/scale_GPa
+  c12 = c12/scale_GPa
+  c13 = c13/scale_GPa
+  c33 = c33/scale_GPa
+  c44 = c44/scale_GPa
+
+  ! re-converts cij to tiso (to store e.g. muvstore values)
+  ! C11 = A = rho * vph**2
+  ! C33 = C = rho * vpv**2
+  ! C44 = L = rho * vsv**2
+  ! C13 = F = eta * (A - 2*L)
+  ! C12 = C11 - 2 C66 = A - 2*N = rho * (vph**2 - 2 * vsh**2)
+  ! C22 = C11 = A
+  ! C23 = C13 = F
+  ! C55 = C44 = L
+  ! C66 = N = rho * vsh**2 = (C11-C12)/2
+  vpv = sqrt(c33/rho)
+  vph = sqrt(c11/rho)
+  vsv = sqrt(c44/rho)
+  vsh = sqrt((c11-c12)/rho)
+  eta_aniso = c13/(c11 - 2.d0*c44)
 
   end subroutine model_aniso_inner_core
 

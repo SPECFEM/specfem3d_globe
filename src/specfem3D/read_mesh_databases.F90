@@ -160,29 +160,22 @@
 
   ! local parameters
   integer :: nspec_iso,nspec_tiso,nspec_ani
-  logical :: READ_KAPPA_MU,READ_TISO
   ! dummy array that does not need to be actually read
   integer, dimension(:),allocatable :: dummy_idoubling
   integer :: ier
 
   ! crust and mantle
-
+  nspec_iso = NSPEC_CRUST_MANTLE
   if (ANISOTROPIC_3D_MANTLE_VAL) then
-    READ_KAPPA_MU = .false.
-    READ_TISO = .false.
-    nspec_iso = NSPECMAX_ISO_MANTLE ! 1
     nspec_tiso = NSPECMAX_TISO_MANTLE ! 1
     nspec_ani = NSPEC_CRUST_MANTLE
   else
-    READ_KAPPA_MU = .true.
-    nspec_iso = NSPEC_CRUST_MANTLE
     if (TRANSVERSE_ISOTROPY_VAL) then
       nspec_tiso = NSPECMAX_TISO_MANTLE
     else
       nspec_tiso = 1
     endif
     nspec_ani = NSPECMAX_ANISO_MANTLE ! 1
-    READ_TISO = .true.
   endif
 
   ! sets number of top elements for surface movies & noise tomography
@@ -256,9 +249,9 @@
   gammay_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
   gammaz_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
 
-  allocate(rhostore_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE), &
-           kappavstore_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE), &
-           muvstore_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE),stat=ier)
+  allocate(rhostore_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE), &
+           kappavstore_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE), &
+           muvstore_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays rhostore_crust_mantle,..'
   rhostore_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
   kappavstore_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
@@ -376,7 +369,6 @@
                                     ibool_crust_mantle,dummy_idoubling,ispec_is_tiso_crust_mantle, &
                                     rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
                                     NGLOB_CRUST_MANTLE_OCEANS,rmass_ocean_load, &
-                                    READ_KAPPA_MU,READ_TISO, &
                                     b_rmassx_crust_mantle,b_rmassy_crust_mantle)
     else
       call read_arrays_solver(IREGION_CRUST_MANTLE, &
@@ -399,7 +391,6 @@
                               ibool_crust_mantle,dummy_idoubling,ispec_is_tiso_crust_mantle, &
                               rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
                               NGLOB_CRUST_MANTLE_OCEANS,rmass_ocean_load, &
-                              READ_KAPPA_MU,READ_TISO, &
                               b_rmassx_crust_mantle,b_rmassy_crust_mantle)
     endif
   endif
@@ -480,7 +471,6 @@
 
   ! local parameters
   integer :: nspec_iso,nspec_tiso,nspec_ani,NGLOB_XY_dummy
-  logical :: READ_KAPPA_MU,READ_TISO
   integer :: ier
 
   ! dummy array that does not need to be actually read
@@ -492,8 +482,6 @@
 
   ! outer core (no anisotropy nor S velocity)
   ! rmass_ocean_load is not used in this routine because it is meaningless in the outer core
-  READ_KAPPA_MU = .false.
-  READ_TISO = .false.
   nspec_iso = NSPEC_OUTER_CORE
   nspec_tiso = 1
   nspec_ani = 1
@@ -558,7 +546,6 @@
                                     ibool_outer_core,dummy_idoubling_outer_core,dummy_ispec_is_tiso, &
                                     dummy_rmass,dummy_rmass,rmass_outer_core, &
                                     1,dummy_array, &
-                                    READ_KAPPA_MU,READ_TISO, &
                                     dummy_rmass,dummy_rmass)
     else
       call read_arrays_solver(IREGION_OUTER_CORE, &
@@ -581,7 +568,6 @@
                               ibool_outer_core,dummy_idoubling_outer_core,dummy_ispec_is_tiso, &
                               dummy_rmass,dummy_rmass,rmass_outer_core, &
                               1, dummy_array, &
-                              READ_KAPPA_MU,READ_TISO, &
                               dummy_rmass,dummy_rmass)
     endif
   endif
@@ -621,7 +607,6 @@
 
   ! local parameters
   integer :: nspec_iso,nspec_tiso,nspec_ani
-  logical :: READ_KAPPA_MU,READ_TISO
   integer :: ier
 
   ! dummy array that does not need to be actually read
@@ -630,8 +615,6 @@
 
   ! inner core (no anisotropy)
   ! rmass_ocean_load is not used in this routine because it is meaningless in the inner core
-  READ_KAPPA_MU = .true. ! (muvstore needed for attenuation)
-  READ_TISO = .false.
   nspec_iso = NSPEC_INNER_CORE
   nspec_tiso = 1
   if (ANISOTROPIC_INNER_CORE_VAL) then
@@ -720,7 +703,6 @@
                                     ibool_inner_core,idoubling_inner_core,dummy_ispec_is_tiso, &
                                     rmassx_inner_core,rmassy_inner_core,rmassz_inner_core, &
                                     1,dummy_array, &
-                                    READ_KAPPA_MU,READ_TISO, &
                                     b_rmassx_inner_core,b_rmassy_inner_core)
     else
       call read_arrays_solver(IREGION_INNER_CORE, &
@@ -743,7 +725,6 @@
                               ibool_inner_core,idoubling_inner_core,dummy_ispec_is_tiso, &
                               rmassx_inner_core,rmassy_inner_core,rmassz_inner_core, &
                               1,dummy_array, &
-                              READ_KAPPA_MU,READ_TISO, &
                               b_rmassx_inner_core,b_rmassy_inner_core)
     endif
   endif

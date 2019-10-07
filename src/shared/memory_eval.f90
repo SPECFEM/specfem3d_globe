@@ -121,12 +121,11 @@
     NSPECMAX_ANISO_IC = 1
   endif
 
+  NSPECMAX_ISO_MANTLE = NSPEC(IREGION_CRUST_MANTLE)
   if (ANISOTROPIC_3D_MANTLE) then
-    NSPECMAX_ISO_MANTLE = 1
     NSPECMAX_TISO_MANTLE = 1
     NSPECMAX_ANISO_MANTLE = NSPEC(IREGION_CRUST_MANTLE)
   else
-    NSPECMAX_ISO_MANTLE = NSPEC(IREGION_CRUST_MANTLE)
     if (TRANSVERSE_ISOTROPY) then
       ! note: the number of transverse isotropic elements is ispec_aniso
       !          however for transverse isotropic kernels, the arrays muhstore,kappahstore,eta_anisostore,
@@ -136,7 +135,6 @@
     else
       NSPECMAX_TISO_MANTLE = 1
     endif
-
     NSPECMAX_ANISO_MANTLE = 1
   endif
 

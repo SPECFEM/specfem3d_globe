@@ -68,9 +68,10 @@
 
   ! local parameters
   ! maximum of the norm of the displacement and of the potential in the fluid
-  real(kind=CUSTOM_REAL) Usolidnorm,Usolidnorm_all,Ufluidnorm,Ufluidnorm_all
-  real(kind=CUSTOM_REAL) Strain_norm,Strain_norm_all,Strain2_norm,Strain2_norm_all
-  real(kind=CUSTOM_REAL) b_Usolidnorm,b_Usolidnorm_all,b_Ufluidnorm,b_Ufluidnorm_all
+  real(kind=CUSTOM_REAL) :: Usolidnorm,Usolidnorm_all,Ufluidnorm,Ufluidnorm_all
+  real(kind=CUSTOM_REAL) :: Strain_norm,Strain_norm_all,Strain2_norm,Strain2_norm_all
+  real(kind=CUSTOM_REAL) :: b_Usolidnorm,b_Usolidnorm_all,b_Ufluidnorm,b_Ufluidnorm_all
+  real(kind=CUSTOM_REAL) :: norm_cm,norm_ic
   ! timer MPI
   double precision :: tCPU
   double precision, external :: wtime
@@ -100,13 +101,9 @@
   ! compute maximum of norm of displacement in each slice
   if (.not. GPU_MODE) then
     ! on CPU
-    Usolidnorm = max( maxval(sqrt(displ_crust_mantle(1,:)**2 + &
-                                  displ_crust_mantle(2,:)**2 + &
-                                  displ_crust_mantle(3,:)**2)), &
-                      maxval(sqrt(displ_inner_core(1,:)**2 + &
-                                  displ_inner_core(2,:)**2 + &
-                                  displ_inner_core(3,:)**2)))
-
+    norm_cm = maxval(sqrt(displ_crust_mantle(1,:)**2 + displ_crust_mantle(2,:)**2 + displ_crust_mantle(3,:)**2))
+    norm_ic = maxval(sqrt(displ_inner_core(1,:)**2 + displ_inner_core(2,:)**2 + displ_inner_core(3,:)**2))
+    Usolidnorm = max(norm_cm,norm_ic)
     Ufluidnorm = maxval(abs(displ_outer_core))
   else
     ! on GPU
@@ -117,11 +114,23 @@
   ! check stability of the code, exit if unstable
   ! negative values can occur with some compilers when the unstable value is greater
   ! than the greatest possible floating-point number of the machine
-! this trick checks for NaN (Not a Number), which is not even equal to itself
-  if (Usolidnorm > STABILITY_THRESHOLD .or. Usolidnorm < 0 .or. Usolidnorm /= Usolidnorm) &
+  ! this trick checks for NaN (Not a Number), which is not even equal to itself
+  if (Usolidnorm > STABILITY_THRESHOLD .or. Usolidnorm < 0 .or. Usolidnorm /= Usolidnorm) then
+    print *,'Error: simulation became unstable in solid, process',myrank
+    if (GPU_MODE) then
+      print*,'     norm solid = ',Usolidnorm
+    else
+      print*,'     norm crust/mantle = ',norm_cm,' inner core = ',norm_ic
+    endif
+    print *,'Please check time step setting in get_timestep_and_layers.f90, exiting...'
     call exit_MPI(myrank,'forward simulation became unstable in solid and blew up')
-  if (Ufluidnorm > STABILITY_THRESHOLD .or. Ufluidnorm < 0 .or. Ufluidnorm /= Ufluidnorm) &
+  endif
+  if (Ufluidnorm > STABILITY_THRESHOLD .or. Ufluidnorm < 0 .or. Ufluidnorm /= Ufluidnorm) then
+    print *,'Error: simulation became unstable in fluid, process',myrank
+    print*,'        norm fluid = ',Ufluidnorm
+    print *,'Please check time step setting in get_timestep_and_layers.f90, exiting...'
     call exit_MPI(myrank,'forward simulation became unstable in fluid and blew up')
+  endif
 
   ! compute the maximum of the maxima for all the slices using an MPI reduction
   call max_all_cr(Usolidnorm,Usolidnorm_all)
@@ -354,14 +363,27 @@
     ! check stability of the code, exit if unstable
     ! negative values can occur with some compilers when the unstable value is greater
     ! than the greatest possible floating-point number of the machine
-! this trick checks for NaN (Not a Number), which is not even equal to itself
-    if (Usolidnorm_all > STABILITY_THRESHOLD .or. Usolidnorm_all < 0 .or. Usolidnorm_all /= Usolidnorm_all) &
+    ! this trick checks for NaN (Not a Number), which is not even equal to itself
+    if (Usolidnorm_all > STABILITY_THRESHOLD .or. Usolidnorm_all < 0 .or. Usolidnorm_all /= Usolidnorm_all) then
+      print *,'Error: simulation became unstable'
+      if (GPU_MODE) then
+        print *,'       all processes total norm solid = ',Usolidnorm_all
+      else
+        print *,'       rank 0: norm crust/mantle = ',norm_cm,' inner core = ',norm_ic
+        print *,'       all processes total norm solid = ',Usolidnorm_all
+      endif
+      print *,'Please check time step setting in get_timestep_and_layers.f90, exiting...'
       call exit_MPI(myrank,'forward simulation became unstable and blew up in the solid')
-    if (Ufluidnorm_all > STABILITY_THRESHOLD .or. Ufluidnorm_all < 0 .or. Ufluidnorm_all /= Ufluidnorm_all) &
+    endif
+    if (Ufluidnorm_all > STABILITY_THRESHOLD .or. Ufluidnorm_all < 0 .or. Ufluidnorm_all /= Ufluidnorm_all) then
+      print *,'Error: simulation became unstable'
+      print *,'       all processes total norm fluid = ',Ufluidnorm_all
+      print *,'Please check time step setting in get_timestep_and_layers.f90, exiting...'
       call exit_MPI(myrank,'forward simulation became unstable and blew up in the fluid')
+    endif
 
     if (SIMULATION_TYPE == 3 .and. .not. UNDO_ATTENUATION) then
-! this trick checks for NaN (Not a Number), which is not even equal to itself
+      ! this trick checks for NaN (Not a Number), which is not even equal to itself
       if (b_Usolidnorm_all > STABILITY_THRESHOLD .or. b_Usolidnorm_all < 0 .or. b_Usolidnorm_all /= b_Usolidnorm_all) &
         call exit_MPI(myrank,'backward simulation became unstable and blew up in the solid')
       if (b_Ufluidnorm_all > STABILITY_THRESHOLD .or. b_Ufluidnorm_all < 0 .or. b_Ufluidnorm_all /= b_Ufluidnorm_all) &

@@ -160,58 +160,55 @@
 
   write(IOUT) rhostore
   write(IOUT) kappavstore
+  if (iregion_code /= IREGION_OUTER_CORE) then
+    write(IOUT) muvstore ! note: muvstore needed for kernel/movies/etc.
+  endif
 
   ! other terms needed in the solid regions only
-  if (iregion_code /= IREGION_OUTER_CORE) then
-
-    ! note: muvstore needed for Q_mu shear attenuation in inner core
-    if (.not. (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE)) then
-      write(IOUT) muvstore
-    endif
-
+  select case(iregion_code)
+  case (IREGION_CRUST_MANTLE)
+    ! crust/mantle region mesh
     ! save anisotropy in the mantle only
-    if (TRANSVERSE_ISOTROPY) then
-      if (iregion_code == IREGION_CRUST_MANTLE .and. .not. ANISOTROPIC_3D_MANTLE) then
+    if (ANISOTROPIC_3D_MANTLE) then
+      write(IOUT) c11store
+      write(IOUT) c12store
+      write(IOUT) c13store
+      write(IOUT) c14store
+      write(IOUT) c15store
+      write(IOUT) c16store
+      write(IOUT) c22store
+      write(IOUT) c23store
+      write(IOUT) c24store
+      write(IOUT) c25store
+      write(IOUT) c26store
+      write(IOUT) c33store
+      write(IOUT) c34store
+      write(IOUT) c35store
+      write(IOUT) c36store
+      write(IOUT) c44store
+      write(IOUT) c45store
+      write(IOUT) c46store
+      write(IOUT) c55store
+      write(IOUT) c56store
+      write(IOUT) c66store
+    else
+      if (TRANSVERSE_ISOTROPY) then
         write(IOUT) kappahstore
         write(IOUT) muhstore
         write(IOUT) eta_anisostore
       endif
     endif
-
+  case (IREGION_INNER_CORE)
+    ! inner core mesh
     ! save anisotropy in the inner core only
-    if (ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) then
+    if (ANISOTROPIC_INNER_CORE) then
       write(IOUT) c11store
-      write(IOUT) c33store
       write(IOUT) c12store
       write(IOUT) c13store
+      write(IOUT) c33store
       write(IOUT) c44store
     endif
-
-    if (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
-        write(IOUT) c11store
-        write(IOUT) c12store
-        write(IOUT) c13store
-        write(IOUT) c14store
-        write(IOUT) c15store
-        write(IOUT) c16store
-        write(IOUT) c22store
-        write(IOUT) c23store
-        write(IOUT) c24store
-        write(IOUT) c25store
-        write(IOUT) c26store
-        write(IOUT) c33store
-        write(IOUT) c34store
-        write(IOUT) c35store
-        write(IOUT) c36store
-        write(IOUT) c44store
-        write(IOUT) c45store
-        write(IOUT) c46store
-        write(IOUT) c55store
-        write(IOUT) c56store
-        write(IOUT) c66store
-    endif
-
-  endif
+  end select
 
   ! Stacey
   if (ABSORBING_CONDITIONS) then

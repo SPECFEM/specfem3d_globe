@@ -60,22 +60,25 @@
   real(kind=CUSTOM_REAL) :: one_minus_sum_beta_use,minus_sum_beta
 
   ! tiso elements
-  real(kind=CUSTOM_REAL) :: rhovphsq,sinphifour,cosphisq,sinphisq,costhetasq,rhovsvsq,sinthetasq, &
-        cosphifour,costhetafour,rhovpvsq,sinthetafour,rhovshsq,cosfourphi, &
-        costwotheta,cosfourtheta,sintwophisq,costheta,sinphi,sintheta,cosphi, &
-        sintwotheta,costwophi,sintwophi,costwothetasq,costwophisq,phi,theta
+  real(kind=CUSTOM_REAL) :: rhovphsq,rhovpvsq,rhovshsq,rhovsvsq,eta_aniso,phi,theta
+
+  !real(kind=CUSTOM_REAL) :: rhovphsq,sinphifour,cosphisq,sinphisq,costhetasq,rhovsvsq,sinthetasq, &
+  !      cosphifour,costhetafour,rhovpvsq,sinthetafour,rhovshsq,cosfourphi, &
+  !      costwotheta,cosfourtheta,sintwophisq,costheta,sinphi,sintheta,cosphi, &
+  !      sintwotheta,costwophi,sintwophi,costwothetasq,costwophisq,phi,theta
 
   ! aniso element
-  real(kind=CUSTOM_REAL) :: c11,c12,c13,c22,c23,c33,c44,c55,c66
+  real(kind=CUSTOM_REAL) :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+                            c33,c34,c35,c36,c44,c45,c46,c55,c56,c66
 
-  real(kind=CUSTOM_REAL) :: two_rhovsvsq,two_rhovshsq ! two_rhovpvsq,two_rhovphsq
-  real(kind=CUSTOM_REAL) :: four_rhovsvsq,four_rhovshsq ! four_rhovpvsq,four_rhovphsq
+!  real(kind=CUSTOM_REAL) :: two_rhovsvsq,two_rhovshsq ! two_rhovpvsq,two_rhovphsq
+!  real(kind=CUSTOM_REAL) :: four_rhovsvsq,four_rhovshsq ! four_rhovpvsq,four_rhovphsq
 
-  real(kind=CUSTOM_REAL) :: twoetaminone,etaminone,eta_aniso
-  real(kind=CUSTOM_REAL) :: two_eta_aniso,four_eta_aniso,six_eta_aniso
+!  real(kind=CUSTOM_REAL) :: twoetaminone,etaminone,eta_aniso
+!  real(kind=CUSTOM_REAL) :: two_eta_aniso,four_eta_aniso,six_eta_aniso
 
-  real(kind=CUSTOM_REAL) :: templ1,templ1_cos,templ2,templ2_cos,templ3,templ3_two,templ3_cos
-  real(kind=CUSTOM_REAL) :: kappavl,kappahl,muvl,muhl,mul
+!  real(kind=CUSTOM_REAL) :: templ1,templ1_cos,templ2,templ2_cos,templ3,templ3_two,templ3_cos
+  real(kind=CUSTOM_REAL) :: kappavl,kappahl,muvl,muhl,mul,A,F,L,N
 
   integer :: ispec,iglob,i_SLS,icount,icount_iso
 
@@ -135,11 +138,59 @@
 #else
 !$OMP i,j,k, &
 #endif
-!$OMP minus_sum_beta,mul,c11,c12,c13,c22,c23,c33,c44,c55,c66)
+!$OMP minus_sum_beta,mul,muvl,muhl,A,L,F,eta_aniso,c11,c12,c13,c22,c23,c33,c44,c55,c66)
 !$OMP DO
       do ispec = 1,NSPEC_CRUST_MANTLE
         ! all elements are fully anisotropic
         DO_LOOP_IJK
+          ! Sieminski, 2007:
+          ! A = 1/8 (3 C11 + 3 C22 + 2 C12 + 4 C66)
+          ! C = C33
+          ! N = 1/8 (C11 + C22 - 2 C12 + 4 C66)
+          ! L = 1/2 (C44 + C55)
+          ! F = 1/2 (C13 + C23)
+          !
+          ! Anderson & Dziewonski, 1982: "Upper mantle anisotropy: evidence from free oscillations", GJR
+          ! A = rho * vph**2
+          ! C = rho * vpv**2
+          ! N = rho * vsh**2
+          ! L = rho * vsv**2
+          ! F = eta * (A - 2*L)
+          !
+          ! and therefore (assuming radial axis symmetry)
+          ! C11 = A = rho * vph**2
+          ! C33 = C = rho * vpv**2
+          ! C44 = L = rho * vsv**2
+          ! C13 = F = eta * (A - 2*L)
+          ! C12 = C11 - 2 C66 = A - 2*N = rho * (vph**2 - 2 * vsh**2)
+          ! C22 = C11
+          ! C23 = C13
+          ! C55 = C44
+          ! C66 = N = rho * vsh**2 = (C11-C12)/2
+          !
+          ! scaling:
+          ! muvl = muvl * one_minus_sum_beta_use = muvl*( 1 - sum_beta) = muvl - muvl*sum_beta = muvl + muvl*minus_sum_beta
+          ! muhl = muhl * one_minus_sum_beta_use
+          !
+          ! rho vsv**2 = muv -> L = L * (1 - sum_beta) = L - L * sum_beta = L + muv * minus_sum_beta
+          ! rho vsh**2 = muh -> N = N + muh * minus_sum_beta
+          !
+          ! rho vph**2 = A = kappah + 4/3 muh -> kappah + 4/3 muh * (1 - sum_beta) = kappah + 4/3 muh - 4/3 muh*sum_beta
+          ! rho vpv**2 = C = kappav + 4/3 muv -> kappav + 4/3 muv - 4/3 muv*sum_beta
+          !
+          ! c11' = A' = c11 - 4/3 muh*sum_beta
+          ! c33' = C' = c33 - 4/3 muv*sum_beta
+          ! c66' = N' = c66 - muh*sum_beta
+          ! c44' = L' = c44 - muv*sum_beta
+          ! c55' = c55 - muv*sum_beta     ! to be consistent with tiso case c55 == c44
+          ! c22' = c22 - 4/3 muh*sum_beta ! to be consistent with tiso case c22 == c11
+          !
+          ! c13' = F' = eta*(A' - 2*L') = eta*(A - 4/3 muh*sum_beta - 2*(L - muv*sum_beta))
+          !                             = c13 + eta*( 2*muv*sum_beta - 4/3 muh*sum_beta)
+          ! c23' = c23 + eta*( 2*muv*sum_beta - 4/3 muh*sum_beta) ! be consistent with tiso case c23 == c13
+          ! c12' = A' - 2*N' = A - 4/3 muh*sum_beta - 2*(N - muh*sum_beta) = A - 2*N - 4/3 muh*sum_beta + 2 muh*sum_beta
+          !                                                                = c12 + 2/3 muh*sum_beta
+
           c11 = c11store_crust_mantle(INDEX_IJK,ispec)
           c12 = c12store_crust_mantle(INDEX_IJK,ispec)
           c13 = c13store_crust_mantle(INDEX_IJK,ispec)
@@ -156,16 +207,43 @@
           else
             minus_sum_beta =  one_minus_sum_beta_crust_mantle(1,1,1,ispec) - 1.0_CUSTOM_REAL
           endif
-          mul = c44 * minus_sum_beta
-          c11 = c11 + FOUR_THIRDS * mul ! * minus_sum_beta * mul
-          c12 = c12 - TWO_THIRDS * mul
-          c13 = c13 - TWO_THIRDS * mul
-          c22 = c22 + FOUR_THIRDS * mul
-          c23 = c23 - TWO_THIRDS * mul
-          c33 = c33 + FOUR_THIRDS * mul
-          c44 = c44 + mul
-          c55 = c55 + mul
-          c66 = c66 + mul
+
+!daniel todo
+          if (.true.) then
+            ! this is the original routine to shift moduli, using only muv (from c44) to scale
+            mul = c44 * minus_sum_beta
+            c11 = c11 + FOUR_THIRDS * mul ! * minus_sum_beta * mul
+            c12 = c12 - TWO_THIRDS * mul
+            c13 = c13 - TWO_THIRDS * mul
+            c22 = c22 + FOUR_THIRDS * mul
+            c23 = c23 - TWO_THIRDS * mul
+            c33 = c33 + FOUR_THIRDS * mul
+            c44 = c44 + mul
+            c55 = c55 + mul
+            c66 = c66 + mul
+          else
+            ! new: tries to shift moduli by separating muv and muh factors.
+            !      still needs rotations to rotate back and forth from SPECFEM global axis to a radial symmetry axis
+            !      since this shift assumes a radial symmetry
+            A = 0.125d0 * (3.d0 * c11 + 3.d0 * c22 + 2.d0 * c12 + 4.d0 * c66)
+            N = 0.125d0 * (c11 + c22 - 2.d0 * c12 + 4.d0 * c66)
+            L = 0.5d0 * (c44 + c55)
+            F = 0.5d0 * (c13 + c23)
+            eta_aniso = F / (A - 2.d0*L)   ! eta = F / (A-2L)
+
+            muvl = L * minus_sum_beta     ! c44 -> L -> muv
+            muhl = N * minus_sum_beta     ! c66 -> N -> muh
+
+            c11 = c11 + FOUR_THIRDS * muhl ! * minus_sum_beta * mul
+            c12 = c12 - TWO_THIRDS * muhl
+            c13 = c13 + eta_aniso * (FOUR_THIRDS * muhl - 2.d0*muvl)
+            c22 = c22 + FOUR_THIRDS * muhl
+            c23 = c23 + eta_aniso * (FOUR_THIRDS * muhl - 2.d0*muvl)
+            c33 = c33 + FOUR_THIRDS * muvl
+            c44 = c44 + muvl
+            c55 = c55 + muvl
+            c66 = c66 + muhl
+          endif
 
           ! stores unrelaxed factors
           c11store_crust_mantle(INDEX_IJK,ispec) = c11
@@ -267,162 +345,33 @@
           theta = rstore_crust_mantle(2,iglob)
           phi = rstore_crust_mantle(3,iglob)
 
-          ! precompute some products to reduce the CPU time
+          ! rotates radial to global reference
+          call rotate_tensor_tiso_to_cij(theta,phi, &
+                                         rhovphsq,rhovpvsq,rhovsvsq,rhovshsq,eta_aniso, &
+                                         c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+                                         c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
 
-          costheta = cos(theta)
-          sintheta = sin(theta)
-          cosphi = cos(phi)
-          sinphi = sin(phi)
-
-          costhetasq = costheta * costheta
-          sinthetasq = sintheta * sintheta
-          cosphisq = cosphi * cosphi
-          sinphisq = sinphi * sinphi
-
-          costhetafour = costhetasq * costhetasq
-          sinthetafour = sinthetasq * sinthetasq
-          cosphifour = cosphisq * cosphisq
-          sinphifour = sinphisq * sinphisq
-
-          costwotheta = cos(2.0_CUSTOM_REAL*theta)
-          sintwotheta = sin(2.0_CUSTOM_REAL*theta)
-          costwophi = cos(2.0_CUSTOM_REAL*phi)
-          sintwophi = sin(2.0_CUSTOM_REAL*phi)
-
-          cosfourtheta = cos(4.0_CUSTOM_REAL*theta)
-          cosfourphi = cos(4.0_CUSTOM_REAL*phi)
-
-          costwothetasq = costwotheta * costwotheta
-
-          costwophisq = costwophi * costwophi
-          sintwophisq = sintwophi * sintwophi
-
-          etaminone = eta_aniso - 1.0_CUSTOM_REAL
-          twoetaminone = 2.0_CUSTOM_REAL * eta_aniso - 1.0_CUSTOM_REAL
-
-          ! precompute some products to reduce the CPU time
-          two_eta_aniso = 2.0_CUSTOM_REAL*eta_aniso
-          four_eta_aniso = 4.0_CUSTOM_REAL*eta_aniso
-          six_eta_aniso = 6.0_CUSTOM_REAL*eta_aniso
-
-          two_rhovsvsq = 2.0_CUSTOM_REAL*rhovsvsq
-          two_rhovshsq = 2.0_CUSTOM_REAL*rhovshsq
-          four_rhovsvsq = 4.0_CUSTOM_REAL*rhovsvsq
-          four_rhovshsq = 4.0_CUSTOM_REAL*rhovshsq
-
-          ! pre-compute temporary values
-          templ1 = four_rhovsvsq - rhovpvsq + twoetaminone*rhovphsq - four_eta_aniso*rhovsvsq
-          templ1_cos = rhovphsq - rhovpvsq + costwotheta*templ1
-          templ2 = four_rhovsvsq - rhovpvsq - rhovphsq + two_eta_aniso*rhovphsq - four_eta_aniso*rhovsvsq
-          templ2_cos = rhovpvsq - rhovphsq + costwotheta*templ2
-          templ3 = rhovphsq + rhovpvsq - two_eta_aniso*rhovphsq + four_eta_aniso*rhovsvsq
-          templ3_two = templ3 - two_rhovshsq - two_rhovsvsq
-          templ3_cos = templ3_two + costwotheta*templ2
-
-          ! reordering operations to facilitate compilation, avoiding divisions, using locality for temporary values
-          c11store_crust_mantle(INDEX_IJK,ispec) = rhovphsq*sinphifour &
-                + 2.0_CUSTOM_REAL*cosphisq*sinphisq* &
-                ( rhovphsq*costhetasq + sinthetasq*(eta_aniso*rhovphsq + two_rhovsvsq - two_eta_aniso*rhovsvsq) ) &
-                + cosphifour*(rhovphsq*costhetafour &
-                  + 2.0_CUSTOM_REAL*costhetasq*sinthetasq*(eta_aniso*rhovphsq + two_rhovsvsq - two_eta_aniso*rhovsvsq) &
-                  + rhovpvsq*sinthetafour)
-
-          c12store_crust_mantle(INDEX_IJK,ispec) = 0.25_CUSTOM_REAL*costhetasq &
-                *(rhovphsq - two_rhovshsq)*(3.0_CUSTOM_REAL + cosfourphi) &
-                - four_rhovshsq*cosphisq*costhetasq*sinphisq &
-                + 0.03125_CUSTOM_REAL*rhovphsq*sintwophisq*(11.0_CUSTOM_REAL + cosfourtheta + 4.0*costwotheta) &
-                + eta_aniso*sinthetasq*(rhovphsq - two_rhovsvsq) &
-                           *(cosphifour + sinphifour + 2.0_CUSTOM_REAL*cosphisq*costhetasq*sinphisq) &
-                + rhovpvsq*cosphisq*sinphisq*sinthetafour &
-                - rhovsvsq*sintwophisq*sinthetafour
-
-          c13store_crust_mantle(INDEX_IJK,ispec) = 0.125_CUSTOM_REAL*cosphisq &
-                *(rhovphsq + six_eta_aniso*rhovphsq + rhovpvsq - four_rhovsvsq &
-                      - 12.0_CUSTOM_REAL*eta_aniso*rhovsvsq + cosfourtheta*templ1) &
-                + sinphisq*(eta_aniso*costhetasq*(rhovphsq - two_rhovsvsq) + sinthetasq*(rhovphsq - two_rhovshsq))
-
-          ! uses temporary templ1 from c13
-          c15store_crust_mantle(INDEX_IJK,ispec) = cosphi*costheta*sintheta* &
-                ( 0.5_CUSTOM_REAL*cosphisq* (rhovpvsq - rhovphsq + costwotheta*templ1) &
-                  + etaminone*sinphisq*(rhovphsq - two_rhovsvsq))
-
-          c14store_crust_mantle(INDEX_IJK,ispec) = costheta*sinphi*sintheta* &
-                ( 0.5_CUSTOM_REAL*cosphisq*(templ2_cos + four_rhovshsq - four_rhovsvsq) &
-                  + sinphisq*(etaminone*rhovphsq + 2.0_CUSTOM_REAL*(rhovshsq - eta_aniso*rhovsvsq)) )
-
-          ! uses temporary templ2_cos from c14
-          c16store_crust_mantle(INDEX_IJK,ispec) = 0.5_CUSTOM_REAL*cosphi*sinphi*sinthetasq* &
-                ( cosphisq*templ2_cos &
-                  + 2.0_CUSTOM_REAL*etaminone*sinphisq*(rhovphsq - two_rhovsvsq) )
-
-          c22store_crust_mantle(INDEX_IJK,ispec) = rhovphsq*cosphifour + 2.0_CUSTOM_REAL*cosphisq*sinphisq* &
-                (rhovphsq*costhetasq + sinthetasq*(eta_aniso*rhovphsq + two_rhovsvsq - two_eta_aniso*rhovsvsq)) &
-                + sinphifour* &
-                (rhovphsq*costhetafour + 2.0_CUSTOM_REAL*costhetasq*sinthetasq*(eta_aniso*rhovphsq &
-                      + two_rhovsvsq - two_eta_aniso*rhovsvsq) + rhovpvsq*sinthetafour)
-
-          ! uses temporary templ1 from c13
-          c23store_crust_mantle(INDEX_IJK,ispec) = 0.125_CUSTOM_REAL*sinphisq*(rhovphsq + six_eta_aniso*rhovphsq &
-                  + rhovpvsq - four_rhovsvsq - 12.0_CUSTOM_REAL*eta_aniso*rhovsvsq + cosfourtheta*templ1) &
-                + cosphisq*(eta_aniso*costhetasq*(rhovphsq - two_rhovsvsq) + sinthetasq*(rhovphsq - two_rhovshsq))
-
-          ! uses temporary templ1 from c13
-          c24store_crust_mantle(INDEX_IJK,ispec) = costheta*sinphi*sintheta* &
-                ( etaminone*cosphisq*(rhovphsq - two_rhovsvsq) &
-                  + 0.5_CUSTOM_REAL*sinphisq*(rhovpvsq - rhovphsq + costwotheta*templ1) )
-
-          ! uses temporary templ2_cos from c14
-          c25store_crust_mantle(INDEX_IJK,ispec) = cosphi*costheta*sintheta* &
-                ( cosphisq*(etaminone*rhovphsq + 2.0_CUSTOM_REAL*(rhovshsq - eta_aniso*rhovsvsq)) &
-                  + 0.5_CUSTOM_REAL*sinphisq*(templ2_cos + four_rhovshsq - four_rhovsvsq) )
-
-          ! uses temporary templ2_cos from c14
-          c26store_crust_mantle(INDEX_IJK,ispec) = 0.5_CUSTOM_REAL*cosphi*sinphi*sinthetasq* &
-                ( 2.0_CUSTOM_REAL*etaminone*cosphisq*(rhovphsq - two_rhovsvsq) &
-                  + sinphisq*templ2_cos )
-
-          c33store_crust_mantle(INDEX_IJK,ispec) = rhovpvsq*costhetafour &
-                + 2.0_CUSTOM_REAL*costhetasq*sinthetasq*(two_rhovsvsq + eta_aniso*(rhovphsq - two_rhovsvsq)) &
-                + rhovphsq*sinthetafour
-
-          ! uses temporary templ1_cos from c13
-          c34store_crust_mantle(INDEX_IJK,ispec) = - 0.25_CUSTOM_REAL*sinphi*sintwotheta*templ1_cos
-
-          ! uses temporary templ1_cos from c34
-          c35store_crust_mantle(INDEX_IJK,ispec) = - 0.25_CUSTOM_REAL*cosphi*sintwotheta*templ1_cos
-
-          ! uses temporary templ1_cos from c34
-          c36store_crust_mantle(INDEX_IJK,ispec) = - 0.25_CUSTOM_REAL*sintwophi*sinthetasq &
-                *(templ1_cos - four_rhovshsq + four_rhovsvsq)
-
-          c44store_crust_mantle(INDEX_IJK,ispec) = cosphisq*(rhovsvsq*costhetasq + rhovshsq*sinthetasq) &
-                + sinphisq*(rhovsvsq*costwothetasq + costhetasq*sinthetasq*templ3)
-
-          ! uses temporary templ3 from c44
-          c46store_crust_mantle(INDEX_IJK,ispec) = - cosphi*costheta*sintheta* &
-                  ( cosphisq*(rhovshsq - rhovsvsq) - 0.5_CUSTOM_REAL*sinphisq*templ3_cos  )
-
-          ! uses templ3 from c46
-          c45store_crust_mantle(INDEX_IJK,ispec) = 0.25_CUSTOM_REAL*sintwophi*sinthetasq* &
-                (templ3_two + costwotheta*(rhovphsq + rhovpvsq - two_eta_aniso*rhovphsq + 4.0_CUSTOM_REAL*etaminone*rhovsvsq))
-
-          c55store_crust_mantle(INDEX_IJK,ispec) = sinphisq*(rhovsvsq*costhetasq + rhovshsq*sinthetasq) &
-                + cosphisq*(rhovsvsq*costwothetasq &
-                    + costhetasq*sinthetasq*(rhovphsq - two_eta_aniso*rhovphsq + rhovpvsq + four_eta_aniso*rhovsvsq) )
-
-          ! uses temporary templ3_cos from c46
-          c56store_crust_mantle(INDEX_IJK,ispec) = costheta*sinphi*sintheta* &
-                ( 0.5_CUSTOM_REAL*cosphisq*templ3_cos + sinphisq*(rhovsvsq - rhovshsq) )
-
-          c66store_crust_mantle(INDEX_IJK,ispec) = rhovshsq*costwophisq*costhetasq &
-                - 2.0_CUSTOM_REAL*cosphisq*costhetasq*sinphisq*(rhovphsq - two_rhovshsq) &
-                + 0.03125_CUSTOM_REAL*rhovphsq*sintwophisq*(11.0_CUSTOM_REAL + 4.0_CUSTOM_REAL*costwotheta + cosfourtheta) &
-                - 0.125_CUSTOM_REAL*rhovsvsq*sinthetasq* &
-                ( -6.0_CUSTOM_REAL - 2.0_CUSTOM_REAL*costwotheta - 2.0_CUSTOM_REAL*cosfourphi &
-                          + cos(4.0_CUSTOM_REAL*phi - 2.0_CUSTOM_REAL*theta) &
-                          + cos(2.0_CUSTOM_REAL*(2.0_CUSTOM_REAL*phi + theta)) ) &
-                + rhovpvsq*cosphisq*sinphisq*sinthetafour &
-                - 0.5_CUSTOM_REAL*eta_aniso*sintwophisq*sinthetafour*(rhovphsq - two_rhovsvsq)
+          c11store_crust_mantle(INDEX_IJK,ispec) = c11
+          c12store_crust_mantle(INDEX_IJK,ispec) = c12
+          c13store_crust_mantle(INDEX_IJK,ispec) = c13
+          c14store_crust_mantle(INDEX_IJK,ispec) = c14
+          c15store_crust_mantle(INDEX_IJK,ispec) = c15
+          c16store_crust_mantle(INDEX_IJK,ispec) = c16
+          c22store_crust_mantle(INDEX_IJK,ispec) = c22
+          c23store_crust_mantle(INDEX_IJK,ispec) = c23
+          c24store_crust_mantle(INDEX_IJK,ispec) = c24
+          c25store_crust_mantle(INDEX_IJK,ispec) = c25
+          c26store_crust_mantle(INDEX_IJK,ispec) = c26
+          c33store_crust_mantle(INDEX_IJK,ispec) = c33
+          c34store_crust_mantle(INDEX_IJK,ispec) = c34
+          c35store_crust_mantle(INDEX_IJK,ispec) = c35
+          c36store_crust_mantle(INDEX_IJK,ispec) = c36
+          c44store_crust_mantle(INDEX_IJK,ispec) = c44
+          c45store_crust_mantle(INDEX_IJK,ispec) = c45
+          c46store_crust_mantle(INDEX_IJK,ispec) = c46
+          c55store_crust_mantle(INDEX_IJK,ispec) = c55
+          c56store_crust_mantle(INDEX_IJK,ispec) = c56
+          c66store_crust_mantle(INDEX_IJK,ispec) = c66
         ENDDO_LOOP_IJK
 
         ! counter
@@ -507,14 +456,15 @@
   endif
 
   ! inner core
-  if (ATTENUATION_VAL) then
-    ! only scales for attenuation
-    if (ANISOTROPIC_INNER_CORE_VAL) then
-      ! user output
-      if (myrank == 0) then
-        write(IMAIN,*) "  inner core anisotropic elements"
-        call flush_IMAIN()
-      endif
+  if (ANISOTROPIC_INNER_CORE_VAL) then
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) "  inner core anisotropic elements"
+      call flush_IMAIN()
+    endif
+
+    if (ATTENUATION_VAL) then
+      ! only scales for attenuation
 
       ! anisotropic inner core elements
       icount = 0
@@ -598,14 +548,17 @@
         write(IMAIN,*) "  aniso elements = ",icount
         call flush_IMAIN()
       endif
+    endif ! ATTENUATION
+  else
+    ! isotropic inner core elements
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) "  inner core isotropic elements"
+      call flush_IMAIN()
+    endif
 
-    else
-      ! isotropic inner core elements
-      ! user output
-      if (myrank == 0) then
-        write(IMAIN,*) "  inner core isotropic elements"
-        call flush_IMAIN()
-      endif
+    if (ATTENUATION_VAL) then
+      ! only scales for attenuation
 
       icount_iso = 0
 
@@ -653,7 +606,11 @@
         write(IMAIN,*) "  iso elements  = ",icount_iso
         call flush_IMAIN()
       endif
-    endif
+    endif ! ATTENUATION
+  endif ! anisotropic/isotropic inner core
+
+  if (ATTENUATION_VAL) then
+    ! only scales for attenuation
 
     ! since we scale muv and c11,.. stores we must divide with this factor to use the relaxed moduli for the modulus defect
     ! calculation in updating the memory variables
@@ -694,7 +651,7 @@
     enddo
 !$OMP ENDDO
 !$OMP END PARALLEL
-  endif
+  endif ! ATTENUATION
 
   ! safety check
   if (GPU_MODE) then

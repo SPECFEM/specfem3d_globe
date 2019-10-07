@@ -312,11 +312,11 @@
 
   implicit none
 
-  integer :: iregion_code,idoubling
-  double precision :: r_prem,rho
-  double precision :: vpv,vph,vsv,vsh,eta_aniso
-  double precision :: Qkappa,Qmu
-  double precision :: RICB,RCMB,RTOPDDOUBLEPRIME,R80,R120,R220,R400, &
+  integer,intent(in) :: iregion_code,idoubling
+  double precision,intent(in) :: r_prem,rho
+  double precision,intent(inout) :: vpv,vph,vsv,vsh,eta_aniso
+  double precision,intent(inout) :: Qkappa,Qmu
+  double precision,intent(in) :: RICB,RCMB,RTOPDDOUBLEPRIME,R80,R120,R220,R400, &
     R600,R670,R771,RMOHO,RMIDDLE_CRUST,ROCEAN
 
   ! local parameters
@@ -337,8 +337,8 @@
         ! default PREM:
         !   gets anisotropic PREM parameters, with radial anisotropic extension (from moho to surface for crustal model)
         call model_prem_aniso(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso, &
-                  Qkappa,Qmu,idoubling,CRUSTAL,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
-                  R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+                              Qkappa,Qmu,idoubling,CRUSTAL,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
+                              R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
 
         !daniel todo:
         ! specific 3D models with PREM references which would become too fast at shorter periods ( < 40s Love waves)
@@ -368,45 +368,81 @@
         call model_prem_iso(r_prem,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &
                   ONE_CRUST,.true.,RICB,RCMB,RTOPDDOUBLEPRIME, &
                   R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+        vpv = vp
+        vph = vp
+        vsv = vs
+        vsh = vs
+        eta_aniso = 1.d0
       endif
 
     case (REFERENCE_MODEL_1DREF)
       ! 1D-REF also known as STW105 (by Kustowski et al.) - used also as background for 3D models
       call model_1dref(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu,iregion_code,CRUSTAL)
+
       if (.not. TRANSVERSE_ISOTROPY) then
-        if (.not. MODEL_3D_MANTLE_PERTUBATIONS) then
+        if (.not. (MODEL_3D_MANTLE_PERTUBATIONS .and. iregion_code == IREGION_CRUST_MANTLE)) then
           ! this case here is only executed for 1D_ref_iso
           ! calculates isotropic values
           vp = sqrt(((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
                     + (8.d0 - 8.d0*eta_aniso)*vsv*vsv)/15.d0)
           vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
                     + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0)
+          vpv = vp
+          vph = vp
+          vsv = vs
+          vsh = vs
+          eta_aniso = 1.d0
         endif
       endif
 
     case (REFERENCE_MODEL_1066A)
       ! 1066A (by Gilbert & Dziewonski) - pure isotropic model, used in 1D model mode only
       call model_1066a(r_prem,rho,vp,vs,Qkappa,Qmu,iregion_code)
+      vpv = vp
+      vph = vp
+      vsv = vs
+      vsh = vs
+      eta_aniso = 1.d0
 
     case (REFERENCE_MODEL_AK135F_NO_MUD)
       ! AK135 (by Kennett et al. ) - pure isotropic model, used in 1D model mode only
       call model_ak135(r_prem,rho,vp,vs,Qkappa,Qmu,iregion_code)
+      vpv = vp
+      vph = vp
+      vsv = vs
+      vsh = vs
+      eta_aniso = 1.d0
 
     case (REFERENCE_MODEL_IASP91)
       ! IASP91 (by Kennett & Engdahl) - pure isotropic model, used in 1D model mode only
       call model_iasp91(r_prem,rho,vp,vs,Qkappa,Qmu,idoubling, &
-                    ONE_CRUST,.true.,RICB,RCMB,RTOPDDOUBLEPRIME, &
-                    R771,R670,R400,R220,R120,RMOHO,RMIDDLE_CRUST)
+                        ONE_CRUST,.true.,RICB,RCMB,RTOPDDOUBLEPRIME, &
+                        R771,R670,R400,R220,R120,RMOHO,RMIDDLE_CRUST)
+      vpv = vp
+      vph = vp
+      vsv = vs
+      vsh = vs
+      eta_aniso = 1.d0
 
     case (REFERENCE_MODEL_JP1D)
       !JP1D (by Zhao et al.) - pure isotropic model, used also as background for 3D models
       call model_jp1d(r_prem,rho,vp,vs,Qkappa,Qmu,idoubling, &
                       .true.,RICB,RCMB,RTOPDDOUBLEPRIME, &
                       R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST)
+      vpv = vp
+      vph = vp
+      vsv = vs
+      vsh = vs
+      eta_aniso = 1.d0
 
     case (REFERENCE_MODEL_SEA1D)
       ! SEA1D (by Lebedev & Nolet) - pure isotropic model, used also as background for 3D models
       call model_sea1d(r_prem,rho,vp,vs,Qkappa,Qmu,iregion_code)
+      vpv = vp
+      vph = vp
+      vsv = vs
+      vsh = vs
+      eta_aniso = 1.d0
 
     case default
       stop 'unknown 1D reference Earth model in meshfem3D_models_get1D_val()'
@@ -416,7 +452,9 @@
   ! needs to set vpv,vph,vsv,vsh and eta_aniso for isotropic models
   if (.not. TRANSVERSE_ISOTROPY) then
      ! in the case of s362iso we want to save the anisotropic constants for the Voigt average
-     if (.not. (REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF .and. MODEL_3D_MANTLE_PERTUBATIONS)) then
+     if (.not. (REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF &
+                .and. MODEL_3D_MANTLE_PERTUBATIONS &
+                .and. iregion_code == IREGION_CRUST_MANTLE)) then
       vpv = vp
       vph = vp
       vsv = vs
@@ -444,20 +482,20 @@
 
   implicit none
 
-  integer, intent (in) :: iregion_code
+  integer, intent(in) :: iregion_code
   double precision, intent(in) :: r_prem
-  double precision, intent(out) :: rho
-  double precision, intent(out) :: vpv,vph,vsv,vsh,eta_aniso
+  double precision, intent(inout) :: rho
+  double precision, intent(inout) :: vpv,vph,vsv,vsh,eta_aniso
 
-  double precision :: RCMB,RMOHO
-  double precision :: xmesh,ymesh,zmesh,r
+  double precision,intent(in) :: RCMB,RMOHO
+  double precision,intent(in) :: xmesh,ymesh,zmesh,r
 
   ! the 21 coefficients for an anisotropic medium in reduced notation
-  double precision :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
-                      c33,c34,c35,c36,c44,c45,c46,c55,c56,c66
+  double precision,intent(inout) :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+                                  c33,c34,c35,c36,c44,c45,c46,c55,c56,c66
 
   ! heterogen model and CEM needs these (CEM to determine iglob)
-  integer, intent (in) :: ispec, i, j, k
+  integer, intent(in) :: ispec, i, j, k
 
   ! local parameters
   double precision :: r_used,r_dummy,theta,phi
@@ -733,12 +771,24 @@
     select case (THREE_D_MODEL_IC)
     case (THREE_D_MODEL_INNER_CORE_ISHII)
       ! Ishii et al. (2002) model
-      call model_aniso_inner_core(r_prem,c11,c33,c12,c13,c44,REFERENCE_1D_MODEL, &
+      call model_aniso_inner_core(r_prem,c11,c12,c13,c33,c44,REFERENCE_1D_MODEL, &
                                   vpv,vph,vsv,vsh,rho,eta_aniso)
+      ! converts to isotropic values
+      if (.not. TRANSVERSE_ISOTROPY) then
+        ! converts further to iso
+        vp = sqrt( ((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
+                  + (8.d0 - 8.d0*eta_aniso)*vsv*vsv)/15.d0 )
+        vs = sqrt( ((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
+                          + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0 )
+        vpv = vp
+        vph = vp
+        vsv = vs
+        vsh = vs
+        eta_aniso = 1.d0
+      endif
     case default
       ! nothing to do yet, takes inner core velocities from 1D reference model...
       continue
-
     end select
 
   else if (iregion_code == IREGION_OUTER_CORE) then
@@ -830,16 +880,6 @@
   endif ! ANISOTROPIC_3D_MANTLE
 
   if (ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) then
-    ! calculates isotropic values from given (transversely isotropic) reference values
-    ! (are non-dimensionalized)
-    !
-    ! note: in case vpv == vph and vsv == vsh and eta == 1,
-    !       this reduces to vp == vpv and vs == vsv
-    vp = sqrt( ((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
-              + (8.d0 - 8.d0*eta_aniso)*vsv*vsv)/15.d0 )
-    vs = sqrt( ((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
-                      + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0 )
-
     ! elastic tensor for hexagonal symmetry in reduced notation:
     !
     !      c11 c12 c13  0   0        0
@@ -870,16 +910,62 @@
     ! fills the rest of the mantle with the isotropic model
     !
     ! note: no rotation needed as for isotropic case, there is no pre-defined symmetry axis
-    c11 = rho*vp*vp
-    c12 = rho*(vp*vp - 2.d0*vs*vs)
-    c13 = c12
-    c22 = c11
-    c23 = c12
-    c33 = c11
-    c44 = rho*vs*vs
-    c55 = c44
-    c66 = c44
-  endif
+    if (THREE_D_MODEL_IC == THREE_D_MODEL_INNER_CORE_ISHII) then
+      ! c11,c33,c12,c13,c44 provided by Ishii model
+      c11 = c11
+      c12 = c12
+      c13 = c13
+      c33 = c33
+      c44 = c44
+      ! setting additional ones
+      c23 = c13
+      c55 = c44
+      c66 = 0.5d0 * (c11 - c12)
+    else
+      if (TRANSVERSE_ISOTROPY) then
+        ! transversly isotropic
+        ! C11 = A = rho * vph**2
+        ! C33 = C = rho * vpv**2
+        ! C44 = L = rho * vsv**2
+        ! C13 = F = eta * (A - 2*L)
+        ! C12 = C11 - 2 C66 = A - 2*N = rho * (vph**2 - 2 * vsh**2)
+        ! C22 = C11 = A
+        ! C23 = C13 = F
+        ! C55 = C44 = L
+        ! C66 = N = rho * vsh**2 = (C11-C12)/2
+        c11 = rho*vph*vph
+        c12 = rho*(vph*vph - 2.d0*vsh*vsh)
+        c33 = rho*vpv*vpv
+        c44 = rho*vsv*vsv
+        c13 = eta_aniso * (c11 - 2.d0 * c44)
+        c22 = c11
+        c23 = c13
+        c55 = c44
+        c66 = rho*vsh*vsh
+      else
+        ! isotropic
+        ! calculates isotropic values from given (transversely isotropic) reference values
+        ! (are non-dimensionalized)
+        !
+        ! note: in case vpv == vph and vsv == vsh and eta == 1,
+        !       this reduces to vp == vpv and vs == vsv
+        vp = sqrt( ((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
+                  + (8.d0 - 8.d0*eta_aniso)*vsv*vsv)/15.d0 )
+        vs = sqrt( ((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
+                          + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0 )
+
+        c11 = rho*vp*vp
+        c12 = rho*(vp*vp - 2.d0*vs*vs)
+        c13 = c12
+        c22 = c11
+        c23 = c13
+        c33 = c11
+        c44 = rho*vs*vs
+        c55 = c44
+        c66 = c44
+      endif
+    endif
+  endif ! ANISOTROPIC_INNER_CORE
 
   end subroutine meshfem3D_models_get3Dmntl_val
 
@@ -909,7 +995,7 @@
                                     c33,c34,c35,c36,c44,c45,c46,c55,c56,c66
 
   logical,intent(in) :: elem_in_crust
-  double precision,intent(out) :: moho
+  double precision,intent(inout) :: moho
 
   ! local parameters
   double precision :: r_dummy,theta,phi
@@ -1140,17 +1226,17 @@
 
   implicit none
 
-  integer :: idoubling
+  integer,intent(in) :: idoubling
 
-  double precision :: xmesh,ymesh,zmesh
+  double precision,intent(in) :: xmesh,ymesh,zmesh
 
-  double precision :: r_prem
-  double precision :: moho
+  double precision,intent(in) :: r_prem
+  double precision,intent(in) :: moho
 
   ! attenuation values
-  double precision :: Qkappa,Qmu
-  double precision, dimension(N_SLS) :: tau_s, tau_e
-  double precision  :: T_c_source
+  double precision,intent(inout) :: Qkappa,Qmu
+  double precision, dimension(N_SLS),intent(inout) :: tau_s, tau_e
+  double precision,intent(inout)  :: T_c_source
 
   logical,intent(in) :: elem_in_crust
 

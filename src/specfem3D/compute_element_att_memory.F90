@@ -81,7 +81,7 @@
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE) :: c44store
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE) :: muvstore
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: muvstore
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: &
     epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz
@@ -109,35 +109,24 @@
 
     ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
     if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
-
       if (ANISOTROPIC_3D_MANTLE_VAL) then
-
         DO_LOOP_IJK
           factor_common_c44_muv(INDEX_IJK) = factor_common(INDEX_IJK,i_SLS,ispec) * c44store(INDEX_IJK,ispec)
         ENDDO_LOOP_IJK
-
       else
-
         DO_LOOP_IJK
           factor_common_c44_muv(INDEX_IJK) = factor_common(INDEX_IJK,i_SLS,ispec) * muvstore(INDEX_IJK,ispec)
         ENDDO_LOOP_IJK
-
       endif
-
     else
-
       if (ANISOTROPIC_3D_MANTLE_VAL) then
-
         DO_LOOP_IJK
           factor_common_c44_muv(INDEX_IJK) = factor_common(1,1,1,i_SLS,ispec) * c44store(INDEX_IJK,ispec)
         ENDDO_LOOP_IJK
-
       else
-
         DO_LOOP_IJK
           factor_common_c44_muv(INDEX_IJK) = factor_common(1,1,1,i_SLS,ispec) * muvstore(INDEX_IJK,ispec)
         ENDDO_LOOP_IJK
-
       endif
     endif
 
@@ -216,7 +205,7 @@
   real(kind=CUSTOM_REAL), dimension(vx,vy,vz,N_SLS,vnspec) :: factor_common
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE) :: c44store
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE) :: muvstore
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: muvstore
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5) :: epsilondev_loc
 
@@ -243,7 +232,6 @@
     ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
     if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
       if (ANISOTROPIC_3D_MANTLE_VAL) then
-
         DO_LOOP_IJK
           factor_common_c44_muv(INDEX_IJK) = factor_common(INDEX_IJK,i_SLS,ispec) * c44store(INDEX_IJK,ispec)
         ENDDO_LOOP_IJK
@@ -252,9 +240,7 @@
           factor_common_c44_muv(INDEX_IJK) = factor_common(INDEX_IJK,i_SLS,ispec) * muvstore(INDEX_IJK,ispec)
         ENDDO_LOOP_IJK
       endif
-
     else
-
       if (ANISOTROPIC_3D_MANTLE_VAL) then
         DO_LOOP_IJK
           factor_common_c44_muv(INDEX_IJK) = factor_common(1,1,1,i_SLS,ispec) * c44store(INDEX_IJK,ispec)
@@ -264,7 +250,6 @@
           factor_common_c44_muv(INDEX_IJK) = factor_common(1,1,1,i_SLS,ispec) * muvstore(INDEX_IJK,ispec)
         ENDDO_LOOP_IJK
       endif
-
     endif
 
     ! updates memory variables
@@ -382,7 +367,6 @@
 
     ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
     if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
-
       if (ANISOTROPIC_INNER_CORE_VAL) then
         DO_LOOP_IJK
           factor_common_use(INDEX_IJK) = factor_common(INDEX_IJK,i_SLS,ispec) * c44store(INDEX_IJK,ispec)
@@ -393,7 +377,6 @@
         ENDDO_LOOP_IJK
       endif
     else
-
       if (ANISOTROPIC_INNER_CORE_VAL) then
         DO_LOOP_IJK
           factor_common_use(INDEX_IJK) = factor_common(1,1,1,i_SLS,ispec) * c44store(INDEX_IJK,ispec)
@@ -507,7 +490,6 @@
 
     ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
     if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
-
       if (ANISOTROPIC_INNER_CORE_VAL) then
         DO_LOOP_IJK
           factor_common_use(INDEX_IJK) = factor_common(INDEX_IJK,i_SLS,ispec) * c44store(INDEX_IJK,ispec)
@@ -518,7 +500,6 @@
         ENDDO_LOOP_IJK
       endif
     else
-
       if (ANISOTROPIC_INNER_CORE_VAL) then
         DO_LOOP_IJK
           factor_common_use(INDEX_IJK) = factor_common(1,1,1,i_SLS,ispec) * c44store(INDEX_IJK,ispec)
@@ -529,8 +510,6 @@
         ENDDO_LOOP_IJK
       endif
     endif
-
-
 
     ! updates memory variables
     DO_LOOP_IJK

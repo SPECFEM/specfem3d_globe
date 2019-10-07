@@ -435,10 +435,11 @@
     if (REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) &
       DT = DT*(1.d0 - 0.3d0)
 
-    ! using inner core anisotropy, simulations might become unstable in solid
+    ! using inner core anisotropy
     if (ANISOTROPIC_INNER_CORE) then
-      ! DT = DT*(1.d0 - 0.1d0) not working yet...
-      stop 'anisotropic inner core - unstable feature, uncomment this line in get_timestep_and_layers.f90'
+      ! note: main limiting time step constraint is usually in the crust/mantle elements for 3D models
+      !       for details, you can check in the output_mesher.txt
+      continue
     endif
 
     ! makes time step smaller for certain crustal models, otherwise becomes unstable in solid
@@ -515,16 +516,6 @@
   ! example: 0.0734815 -> 0.0730
   !          0.07371   -> 0.0735
   !call get_timestep_limit_significant_digit(DT)
-
-
-  !daniel todo: cut-off mantle?
-  !NER_600_400 = 0
-  !NER_670_600 = 0
-  !NER_771_670 = 0
-  !NER_TOPDDOUBLEPRIME_771 = 0
-  !NER_CMB_TOPDDOUBLEPRIME = 0
-  !NER_OUTER_CORE = 0
-  !NER_TOP_CENTRAL_CUBE_ICB = 0
 
   end subroutine get_timestep_and_layers
 

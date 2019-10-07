@@ -56,7 +56,6 @@
   use constants_solver, only: &
     NSPEC => NSPEC_CRUST_MANTLE, &
     NGLOB => NGLOB_CRUST_MANTLE, &
-    NSPECMAX_ISO => NSPECMAX_ISO_MANTLE, &
     NSPEC_ATTENUATION => NSPEC_CRUST_MANTLE_ATTENUATION, &
     NSPEC_STRAIN_ONLY => NSPEC_CRUST_MANTLE_STRAIN_ONLY, &
     ATTENUATION_VAL, &
@@ -82,7 +81,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: wgll_cube
 
   ! store anisotropic properties only where needed to save memory
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO),intent(in) :: kappavstore,muvstore
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: kappavstore,muvstore
 
   ! attenuation
   ! memory variables for attenuation
@@ -595,7 +594,6 @@
 !  use constants_solver, only: &
 !    NSPEC => NSPEC_CRUST_MANTLE, &
 !    NGLOB => NGLOB_CRUST_MANTLE, &
-!    NSPECMAX_ISO => NSPECMAX_ISO_MANTLE, &
 !    NSPECMAX_TISO => NSPECMAX_TISO_MANTLE, &
 !    NSPEC_ATTENUATION => NSPEC_CRUST_MANTLE_ATTENUATION, &
 !    NSPEC_STRAIN_ONLY => NSPEC_CRUST_MANTLE_STRAIN_ONLY, &
@@ -629,7 +627,7 @@
 !  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO),intent(in) :: &
 !        kappahstore,muhstore,eta_anisostore
 !
-!  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO),intent(in) :: kappavstore,muvstore
+!  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: kappavstore,muvstore
 !
 !  ! attenuation
 !  ! memory variables for attenuation
@@ -1249,7 +1247,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(out) :: epsilondev_loc
 
   ! local parameters
-  real(kind=CUSTOM_REAL) :: c11,c33,c44,c12,c13
+  real(kind=CUSTOM_REAL) :: c11,c12,c13,c22,c23,c33,c44,c55,c66
 
   ! local element arrays
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: jacobianl
@@ -1307,18 +1305,42 @@
     !       c13 = F
     !       c33 = C
     !       c44 = L
+    !
+    ! transversely isotropic
+    !       C11 = A = rho * vph**2
+    !       C33 = C = rho * vpv**2
+    !       C44 = L = rho * vsv**2
+    !       C13 = F = eta * (A - 2*L)
+    !       C12 = C11 - 2 C66 = A - 2*N = rho * (vph**2 - 2 * vsh**2)
+    !       C22 = C11 = A
+    !       C23 = C13 = F
+    !       C55 = C44 = L
+    !       C66 = N = rho * vsh**2 = (C11-C12)/2
+    !
+    ! isotropic
+    ! Lame parameters: mu = rho * vs**2
+    !                  lambda = rho * (vp**2 - 2 vs**2) = rho * vp**2 - 2 mu
+    !
+    !            then: C11 = C22 = C33 = lambda + 2mu
+    !                  C12 = C13 = C23 = lambda
+    !                  C44 = C55 = C66 = mu
     c11 = c11store(INDEX_IJK,ispec)
     c12 = c12store(INDEX_IJK,ispec)
     c13 = c13store(INDEX_IJK,ispec)
     c33 = c33store(INDEX_IJK,ispec)
     c44 = c44store(INDEX_IJK,ispec)
+    ! tiso symmetry
+    c22 = c11
+    c23 = c13
+    c55 = c44
+    c66 = 0.5_CUSTOM_REAL*(c11-c12)
 
     sigma_xx(INDEX_IJK) = c11*duxdxl(INDEX_IJK) + c12*duydyl(INDEX_IJK) + c13*duzdzl(INDEX_IJK)
-    sigma_yy(INDEX_IJK) = c12*duxdxl(INDEX_IJK) + c11*duydyl(INDEX_IJK) + c13*duzdzl(INDEX_IJK)
-    sigma_zz(INDEX_IJK) = c13*duxdxl(INDEX_IJK) + c13*duydyl(INDEX_IJK) + c33*duzdzl(INDEX_IJK)
+    sigma_yy(INDEX_IJK) = c12*duxdxl(INDEX_IJK) + c22*duydyl(INDEX_IJK) + c23*duzdzl(INDEX_IJK)
+    sigma_zz(INDEX_IJK) = c13*duxdxl(INDEX_IJK) + c23*duydyl(INDEX_IJK) + c33*duzdzl(INDEX_IJK)
 
-    sigma_xy(INDEX_IJK) = 0.5_CUSTOM_REAL*(c11-c12)*duxdyl_plus_duydxl(INDEX_IJK)
-    sigma_xz(INDEX_IJK) = c44*duzdxl_plus_duxdzl(INDEX_IJK)
+    sigma_xy(INDEX_IJK) = c66*duxdyl_plus_duydxl(INDEX_IJK)
+    sigma_xz(INDEX_IJK) = c55*duzdxl_plus_duxdzl(INDEX_IJK)
     sigma_yz(INDEX_IJK) = c44*duzdyl_plus_duydzl(INDEX_IJK)
   ENDDO_LOOP_IJK
 

@@ -186,35 +186,15 @@
   local_dim = NGLLX * NGLLY * NGLLZ * nspec
   call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(rhostore))
   call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(kappavstore))
-
   if (iregion_code /= IREGION_OUTER_CORE) then
-    ! note: muvstore needed for Q_mu shear attenuation in inner core
-    if (.not. (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE)) then
-      local_dim = NGLLX * NGLLY * NGLLZ * nspec
-      call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(muvstore))
-    endif
+    call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(muvstore))
+  endif
 
+  ! solid regions
+  select case(iregion_code)
+  case (IREGION_CRUST_MANTLE)
     ! save anisotropy in the mantle only
-    if (TRANSVERSE_ISOTROPY) then
-      if (iregion_code == IREGION_CRUST_MANTLE .and. .not. ANISOTROPIC_3D_MANTLE) then
-        local_dim = NGLLX * NGLLY * NGLLZ * nspec
-        call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(kappahstore))
-        call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(muhstore))
-        call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(eta_anisostore))
-      endif
-    endif
-
-    !   save anisotropy in the inner core only
-    if (ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) then
-      local_dim = NGLLX * NGLLY * NGLLZ * nspec_ani
-      call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(c11store))
-      call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(c33store))
-      call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(c12store))
-      call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(c13store))
-      call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(c44store))
-    endif
-
-    if (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
+    if (ANISOTROPIC_3D_MANTLE) then
       local_dim = NGLLX * NGLLY * NGLLZ * nspec_ani
       call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(c11store))
       call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(c12store))
@@ -237,8 +217,25 @@
       call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(c55store))
       call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(c56store))
       call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(c66store))
+    else
+      if (TRANSVERSE_ISOTROPY) then
+        local_dim = NGLLX * NGLLY * NGLLZ * nspec
+        call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(kappahstore))
+        call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(muhstore))
+        call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(eta_anisostore))
+      endif
     endif
-  endif
+  case (IREGION_INNER_CORE)
+    !   save anisotropy in the inner core only
+    if (ANISOTROPIC_INNER_CORE) then
+      local_dim = NGLLX * NGLLY * NGLLZ * nspec_ani
+      call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(c11store))
+      call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(c12store))
+      call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(c13store))
+      call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(c33store))
+      call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(c44store))
+    endif
+  end select
 
   ! Stacey
   if (ABSORBING_CONDITIONS) then
@@ -403,42 +400,17 @@
   call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(rhostore))
   call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
-                                trim(region_name) // STRINGIFY_VAR(kappavstore))
-
+                                   trim(region_name) // STRINGIFY_VAR(kappavstore))
   if (iregion_code /= IREGION_OUTER_CORE) then
-    if (.not. (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE)) then
-      local_dim = NGLLX * NGLLY * NGLLZ * nspec
-      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
-                                   trim(region_name) // STRINGIFY_VAR(muvstore))
-    endif
-    if (TRANSVERSE_ISOTROPY) then
-      if (iregion_code == IREGION_CRUST_MANTLE .and. .not. ANISOTROPIC_3D_MANTLE) then
-        local_dim = NGLLX * NGLLY * NGLLZ * nspec
-        call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
-                                trim(region_name) // STRINGIFY_VAR(kappahstore))
-        call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
-                                   trim(region_name) // STRINGIFY_VAR(muhstore))
-        call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
-                             trim(region_name) // STRINGIFY_VAR(eta_anisostore))
-      endif
-    endif
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                                     trim(region_name) // STRINGIFY_VAR(muvstore))
+  endif
 
-    !   save anisotropy in the inner core only
-    if (ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) then
-      local_dim = NGLLX * NGLLY * NGLLZ * nspec_ani
-      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
-                                   trim(region_name) // STRINGIFY_VAR(c11store))
-      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
-                                   trim(region_name) // STRINGIFY_VAR(c33store))
-      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
-                                   trim(region_name) // STRINGIFY_VAR(c12store))
-      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
-                                   trim(region_name) // STRINGIFY_VAR(c13store))
-      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
-                                   trim(region_name) // STRINGIFY_VAR(c44store))
-    endif
-
-    if (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
+  ! solid regions
+  select case(iregion_code)
+  case (IREGION_CRUST_MANTLE)
+    ! save anisotropy in the mantle only
+    if (ANISOTROPIC_3D_MANTLE) then
       local_dim = NGLLX * NGLLY * NGLLZ * nspec_ani
       call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(c11store))
@@ -482,8 +454,33 @@
                                    trim(region_name) // STRINGIFY_VAR(c56store))
       call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(c66store))
+    else
+      if (TRANSVERSE_ISOTROPY) then
+        local_dim = NGLLX * NGLLY * NGLLZ * nspec
+        call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                                trim(region_name) // STRINGIFY_VAR(kappahstore))
+        call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                                   trim(region_name) // STRINGIFY_VAR(muhstore))
+        call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                             trim(region_name) // STRINGIFY_VAR(eta_anisostore))
+      endif
     endif
-  endif
+  case (IREGION_INNER_CORE)
+    ! save anisotropy in the inner core only
+    if (ANISOTROPIC_INNER_CORE) then
+      local_dim = NGLLX * NGLLY * NGLLZ * nspec_ani
+      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                                   trim(region_name) // STRINGIFY_VAR(c11store))
+      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                                   trim(region_name) // STRINGIFY_VAR(c12store))
+      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                                   trim(region_name) // STRINGIFY_VAR(c13store))
+      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                                   trim(region_name) // STRINGIFY_VAR(c33store))
+      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                                   trim(region_name) // STRINGIFY_VAR(c44store))
+    endif
+  end select
 
   if (ABSORBING_CONDITIONS) then
     local_dim = NGLLX * NGLLY * NGLLZ * nspec_stacey

@@ -749,7 +749,6 @@ module specfem_par_innercore
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: sum_terms_inner_core
 
   ! material parameters
-  ! (note: muvstore also needed for attenuation in case of anisotropic inner core)
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
     rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core
 

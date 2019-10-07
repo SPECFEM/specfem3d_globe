@@ -148,6 +148,7 @@
         r_prem = r
         if (r <= rmin*1.000001d0) r_prem = rmin*1.000001d0
         if (r >= rmax*0.999999d0) r_prem = rmax*0.999999d0
+
         ! checks r_prem,rmin/rmax and assigned idoubling
         call get_model_check_idoubling(r_prem,xmesh,ymesh,zmesh,rmin,rmax,idoubling, &
                             RICB,RCMB,RTOPDDOUBLEPRIME, &
@@ -225,9 +226,9 @@
 
         if (ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) then
           c11store(i,j,k,ispec) = real(c11, kind=CUSTOM_REAL)
-          c33store(i,j,k,ispec) = real(c33, kind=CUSTOM_REAL)
           c12store(i,j,k,ispec) = real(c12, kind=CUSTOM_REAL)
           c13store(i,j,k,ispec) = real(c13, kind=CUSTOM_REAL)
+          c33store(i,j,k,ispec) = real(c33, kind=CUSTOM_REAL)
           c44store(i,j,k,ispec) = real(c44, kind=CUSTOM_REAL)
         endif
 

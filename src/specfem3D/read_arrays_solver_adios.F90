@@ -39,7 +39,6 @@ subroutine read_arrays_solver_adios(iregion_code, &
                                     ibool,idoubling,ispec_is_tiso, &
                                     rmassx,rmassy,rmassz, &
                                     nglob_oceans,rmass_ocean_load, &
-                                    READ_KAPPA_MU,READ_TISO, &
                                     b_rmassx,b_rmassy)
 
 
@@ -92,9 +91,6 @@ subroutine read_arrays_solver_adios(iregion_code, &
   integer :: nglob_oceans
   real(kind=CUSTOM_REAL), dimension(nglob_oceans) :: rmass_ocean_load
 
-  ! flags to know if we should read Vs and anisotropy arrays
-  logical :: READ_KAPPA_MU,READ_TISO
-
   character(len=MAX_STRING_LEN) :: file_name
 
   ! local parameters
@@ -144,40 +140,6 @@ subroutine read_arrays_solver_adios(iregion_code, &
       zstore, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  local_dim = NGLLX * NGLLY * NGLLZ * nspec_iso
-  start(1) = local_dim*myrank; count(1) = local_dim
-  sel_num = sel_num+1
-  sel => selections(sel_num)
-  call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "rhostore/array", 0, 1, &
-      rhostore, adios_err)
-  call check_adios_err(myrank,adios_err)
-  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "kappavstore/array", 0, 1, &
-      kappavstore, adios_err)
-  call check_adios_err(myrank,adios_err)
-  if (READ_KAPPA_MU) then
-    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "muvstore/array", 0, 1, &
-        muvstore, adios_err)
-    call check_adios_err(myrank,adios_err)
-  endif
-
-  if (TRANSVERSE_ISOTROPY_VAL .and. READ_TISO) then
-    local_dim = NGLLX * NGLLY * NGLLZ * nspec_tiso
-    start(1) = local_dim*myrank; count(1) = local_dim
-    sel_num = sel_num+1
-    sel => selections(sel_num)
-    call adios_selection_boundingbox (sel , 1, start, count)
-    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "kappahstore/array", 0, 1, &
-        kappahstore, adios_err)
-    call check_adios_err(myrank,adios_err)
-    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "muhstore/array", 0, 1, &
-        muhstore, adios_err)
-    call check_adios_err(myrank,adios_err)
-    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "eta_anisostore/array", 0, 1, &
-        eta_anisostore, adios_err)
-    call check_adios_err(myrank,adios_err)
-  endif
-
   local_dim = nspec
   start(1) = local_dim*myrank; count(1) = local_dim
   sel_num = sel_num+1
@@ -195,7 +157,6 @@ subroutine read_arrays_solver_adios(iregion_code, &
   sel_num = sel_num+1
   sel => selections(sel_num)
   call adios_selection_boundingbox (sel , 1, start, count)
-
   call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "ibool/array", 0, 1, &
       ibool, adios_err)
   call check_adios_err(myrank,adios_err)
@@ -228,80 +189,120 @@ subroutine read_arrays_solver_adios(iregion_code, &
       gammaz, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  if (ANISOTROPIC_INNER_CORE_VAL .and. iregion_code == IREGION_INNER_CORE) then
-    local_dim = NGLLX * NGLLY * NGLLZ * nspec_ani
-    start(1) = local_dim*myrank; count(1) = local_dim
-    sel_num = sel_num+1
-    sel => selections(sel_num)
-    call adios_selection_boundingbox (sel , 1, start, count)
-
-    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c11store/array", 0, 1, &
-        c11store, adios_err)
-    call check_adios_err(myrank,adios_err)
-    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c12store/array", 0, 1, &
-        c12store, adios_err)
-    call check_adios_err(myrank,adios_err)
-    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c13store/array", 0, 1, &
-        c13store, adios_err)
-    call check_adios_err(myrank,adios_err)
-    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c33store/array", 0, 1, &
-        c33store, adios_err)
-    call check_adios_err(myrank,adios_err)
-    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c44store/array", 0, 1, &
-        c44store, adios_err)
+  local_dim = NGLLX * NGLLY * NGLLZ * nspec_iso
+  start(1) = local_dim*myrank; count(1) = local_dim
+  sel_num = sel_num+1
+  sel => selections(sel_num)
+  call adios_selection_boundingbox (sel , 1, start, count)
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "rhostore/array", 0, 1, &
+                           rhostore, adios_err)
+  call check_adios_err(myrank,adios_err)
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "kappavstore/array", 0, 1, &
+                           kappavstore, adios_err)
+  call check_adios_err(myrank,adios_err)
+  if (iregion_code /= IREGION_OUTER_CORE) then
+    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "muvstore/array", 0, 1, &
+                             muvstore, adios_err)
     call check_adios_err(myrank,adios_err)
   endif
 
-  if (ANISOTROPIC_3D_MANTLE_VAL .and. iregion_code == IREGION_CRUST_MANTLE) then
-    local_dim = NGLLX * NGLLY * NGLLZ * nspec_ani
-    start(1) = local_dim*myrank; count(1) = local_dim
-    sel_num = sel_num+1
-    sel => selections(sel_num)
-    call adios_selection_boundingbox (sel , 1, start, count)
+  ! solid regions
+  select case(iregion_code)
+  case (IREGION_CRUST_MANTLE)
+    ! crust/mantle
+    if (ANISOTROPIC_3D_MANTLE_VAL) then
+      local_dim = NGLLX * NGLLY * NGLLZ * nspec_ani
+      start(1) = local_dim*myrank; count(1) = local_dim
+      sel_num = sel_num+1
+      sel => selections(sel_num)
+      call adios_selection_boundingbox (sel , 1, start, count)
 
-    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c11store/array", 0, 1, c11store, adios_err)
-    call check_adios_err(myrank,adios_err)
-    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c12store/array", 0, 1, c12store, adios_err)
-    call check_adios_err(myrank,adios_err)
-    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c13store/array", 0, 1, c13store, adios_err)
-    call check_adios_err(myrank,adios_err)
-    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c14store/array", 0, 1, c14store, adios_err)
-    call check_adios_err(myrank,adios_err)
-    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c15store/array", 0, 1, c15store, adios_err)
-    call check_adios_err(myrank,adios_err)
-    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c16store/array", 0, 1, c16store, adios_err)
-    call check_adios_err(myrank,adios_err)
-    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c22store/array", 0, 1, c22store, adios_err)
-    call check_adios_err(myrank,adios_err)
-    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c23store/array", 0, 1, c23store, adios_err)
-    call check_adios_err(myrank,adios_err)
-    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c24store/array", 0, 1, c24store, adios_err)
-    call check_adios_err(myrank,adios_err)
-    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c25store/array", 0, 1, c25store, adios_err)
-    call check_adios_err(myrank,adios_err)
-    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c26store/array", 0, 1, c26store, adios_err)
-    call check_adios_err(myrank,adios_err)
-    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c33store/array", 0, 1, c33store, adios_err)
-    call check_adios_err(myrank,adios_err)
-    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c34store/array", 0, 1, c34store, adios_err)
-    call check_adios_err(myrank,adios_err)
-    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c35store/array", 0, 1, c35store, adios_err)
-    call check_adios_err(myrank,adios_err)
-    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c36store/array", 0, 1, c36store, adios_err)
-    call check_adios_err(myrank,adios_err)
-    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c44store/array", 0, 1, c44store, adios_err)
-    call check_adios_err(myrank,adios_err)
-    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c45store/array", 0, 1, c45store, adios_err)
-    call check_adios_err(myrank,adios_err)
-    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c46store/array", 0, 1, c46store, adios_err)
-    call check_adios_err(myrank,adios_err)
-    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c55store/array", 0, 1, c55store, adios_err)
-    call check_adios_err(myrank,adios_err)
-    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c56store/array", 0, 1, c56store, adios_err)
-    call check_adios_err(myrank,adios_err)
-    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c66store/array", 0, 1, c66store, adios_err)
-    call check_adios_err(myrank,adios_err)
-  endif
+      call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c11store/array", 0, 1, c11store, adios_err)
+      call check_adios_err(myrank,adios_err)
+      call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c12store/array", 0, 1, c12store, adios_err)
+      call check_adios_err(myrank,adios_err)
+      call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c13store/array", 0, 1, c13store, adios_err)
+      call check_adios_err(myrank,adios_err)
+      call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c14store/array", 0, 1, c14store, adios_err)
+      call check_adios_err(myrank,adios_err)
+      call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c15store/array", 0, 1, c15store, adios_err)
+      call check_adios_err(myrank,adios_err)
+      call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c16store/array", 0, 1, c16store, adios_err)
+      call check_adios_err(myrank,adios_err)
+      call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c22store/array", 0, 1, c22store, adios_err)
+      call check_adios_err(myrank,adios_err)
+      call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c23store/array", 0, 1, c23store, adios_err)
+      call check_adios_err(myrank,adios_err)
+      call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c24store/array", 0, 1, c24store, adios_err)
+      call check_adios_err(myrank,adios_err)
+      call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c25store/array", 0, 1, c25store, adios_err)
+      call check_adios_err(myrank,adios_err)
+      call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c26store/array", 0, 1, c26store, adios_err)
+      call check_adios_err(myrank,adios_err)
+      call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c33store/array", 0, 1, c33store, adios_err)
+      call check_adios_err(myrank,adios_err)
+      call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c34store/array", 0, 1, c34store, adios_err)
+      call check_adios_err(myrank,adios_err)
+      call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c35store/array", 0, 1, c35store, adios_err)
+      call check_adios_err(myrank,adios_err)
+      call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c36store/array", 0, 1, c36store, adios_err)
+      call check_adios_err(myrank,adios_err)
+      call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c44store/array", 0, 1, c44store, adios_err)
+      call check_adios_err(myrank,adios_err)
+      call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c45store/array", 0, 1, c45store, adios_err)
+      call check_adios_err(myrank,adios_err)
+      call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c46store/array", 0, 1, c46store, adios_err)
+      call check_adios_err(myrank,adios_err)
+      call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c55store/array", 0, 1, c55store, adios_err)
+      call check_adios_err(myrank,adios_err)
+      call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c56store/array", 0, 1, c56store, adios_err)
+      call check_adios_err(myrank,adios_err)
+      call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c66store/array", 0, 1, c66store, adios_err)
+      call check_adios_err(myrank,adios_err)
+    else
+      if (TRANSVERSE_ISOTROPY_VAL) then
+        local_dim = NGLLX * NGLLY * NGLLZ * nspec_tiso
+        start(1) = local_dim*myrank; count(1) = local_dim
+        sel_num = sel_num+1
+        sel => selections(sel_num)
+        call adios_selection_boundingbox (sel , 1, start, count)
+        call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "kappahstore/array", 0, 1, &
+            kappahstore, adios_err)
+        call check_adios_err(myrank,adios_err)
+        call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "muhstore/array", 0, 1, &
+            muhstore, adios_err)
+        call check_adios_err(myrank,adios_err)
+        call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "eta_anisostore/array", 0, 1, &
+            eta_anisostore, adios_err)
+        call check_adios_err(myrank,adios_err)
+      endif
+    endif
+  case (IREGION_INNER_CORE)
+    ! inner core
+    if (ANISOTROPIC_INNER_CORE_VAL) then
+      local_dim = NGLLX * NGLLY * NGLLZ * nspec_ani
+      start(1) = local_dim*myrank; count(1) = local_dim
+      sel_num = sel_num+1
+      sel => selections(sel_num)
+      call adios_selection_boundingbox (sel , 1, start, count)
+
+      call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c11store/array", 0, 1, &
+          c11store, adios_err)
+      call check_adios_err(myrank,adios_err)
+      call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c12store/array", 0, 1, &
+          c12store, adios_err)
+      call check_adios_err(myrank,adios_err)
+      call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c13store/array", 0, 1, &
+          c13store, adios_err)
+      call check_adios_err(myrank,adios_err)
+      call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c33store/array", 0, 1, &
+          c33store, adios_err)
+      call check_adios_err(myrank,adios_err)
+      call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c44store/array", 0, 1, &
+          c44store, adios_err)
+      call check_adios_err(myrank,adios_err)
+    endif
+  end select
 
   ! Stacey
   if (ABSORBING_CONDITIONS) then

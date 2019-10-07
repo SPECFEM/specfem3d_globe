@@ -53,10 +53,10 @@
   real(kind=CUSTOM_REAL) :: dt_max,dt_max_reg
   real(kind=CUSTOM_REAL) :: pmax,pmax_reg
   real(kind=CUSTOM_REAL) :: pmax_empirical
-  real(kind=CUSTOM_REAL) :: elemsize_min,elemsize_max,elemsize_min_reg,elemsize_max_reg
+  real(kind=CUSTOM_REAL) :: elemsize_min,elemsize_max,elemsize_min_reg,elemsize_max_reg,dx
   real(kind=CUSTOM_REAL) :: cmax,cmax_reg
 
-  real(kind=CUSTOM_REAL) :: vpmax,vsmin
+  real(kind=CUSTOM_REAL) :: vpmax,vsmin,vpmax_reg,vsmin_reg
   real(kind=CUSTOM_REAL) :: avg_distance,distance_min
   double precision :: deltat
   integer :: ispec
@@ -107,6 +107,9 @@
   dt_max_reg = HUGEVAL
   cmax_reg = - HUGEVAL
 
+  vsmin_reg = HUGEVAL
+  vpmax_reg = - HUGEVAL
+
 ! openmp mesher
 !$OMP PARALLEL DEFAULT(PRIVATE) &
 !$OMP SHARED(nspec,nglob,iregion_code, &
@@ -119,6 +122,10 @@
 
     ! determines maximum velocities at corners of this element
     call get_vpvs_minmax(vpmax,vsmin,ispec,nspec,iregion_code,kappavstore,kappahstore,muvstore,muhstore,rhostore)
+
+    ! sets region min/max
+    vsmin_reg = min(vsmin,vsmin_reg)
+    vpmax_reg = max(vpmax,vpmax_reg)
 
     ! computes minimum size of this grid cell
     call get_elem_minmaxsize(elemsize_min,elemsize_max,ispec,nspec,xstore,ystore,zstore)
@@ -179,8 +186,8 @@
     !             B  o=====o C
     !
     ! note: this condition is usually not met for the case of our global meshes
-    ! call get_min_distance_from_second_GLL_points(dx,ispec,nspec,xstore,ystore,zstore)
-    !if (distance_min > dx) distance_min = dx
+    call get_min_distance_from_second_GLL_points(dx,ispec,nspec,xstore,ystore,zstore)
+    if (distance_min > dx) distance_min = dx
 
     ! suggested timestep
     deltat = COURANT_SUGGESTED * distance_min / vpmax
@@ -220,6 +227,11 @@
 !$OMP END PARALLEL
 
   ! collects for all slices
+  vsmin = vsmin_reg
+  call min_all_all_cr(vsmin,vsmin_reg)
+  vpmax = vpmax_reg
+  call max_all_all_cr(vpmax,vpmax_reg)
+
   dt_max = dt_max_reg
   call min_all_all_cr(dt_max,dt_max_reg)
 
@@ -258,6 +270,13 @@
     write(IMAIN,*) '  Verification of mesh parameters:'
     write(IMAIN,*) '----------------------------------'
     write(IMAIN,*) '  Region is ',trim(region(iregion_code))
+    write(IMAIN,*)
+    if (iregion_code == IREGION_OUTER_CORE) then
+      write(IMAIN,*) '  Min Vp = ',vsmin_reg,' (km/s)'
+    else
+      write(IMAIN,*) '  Min Vs = ',vsmin_reg,' (km/s)'
+    endif
+    write(IMAIN,*) '  Max Vp = ',vpmax_reg,' (km/s)'
     write(IMAIN,*)
     write(IMAIN,*) '  Max element edge size = ',elemsize_max_reg,' (km)'
     write(IMAIN,*) '  Min element edge size = ',elemsize_min_reg,' (km)'
@@ -360,6 +379,7 @@
 
   vpmax = - HUGEVAL
   vsmin = HUGEVAL
+
   do k = 1, NGLLZ, NGLLZ-1
     do j = 1, NGLLY, NGLLY-1
       do i = 1, NGLLX, NGLLX-1
@@ -375,9 +395,21 @@
           vph = vpv
         else if (ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) then
           ! this likely needs to be improved, for now, it just takes the maximum entry of Cij (for given symmetry)
-          vpv = max(c11store(i,j,k,ispec),c33store(i,j,k,ispec),c12store(i,j,k,ispec),c13store(i,j,k,ispec), &
-                    c44store(i,j,k,ispec)) / rhostore(i,j,k,ispec)
-          vph = vpv
+          !vpv = max(c11store(i,j,k,ispec),c33store(i,j,k,ispec),c12store(i,j,k,ispec),c13store(i,j,k,ispec), &
+          !          c44store(i,j,k,ispec)) / rhostore(i,j,k,ispec)
+          !
+          ! transversly isotropic
+          ! C11 = A = rho * vph**2
+          ! C33 = C = rho * vpv**2
+          ! C44 = L = rho * vsv**2
+          ! C13 = F = eta * (A - 2*L)
+          ! C12 = C11 - 2 C66 = A - 2*N = rho * (vph**2 - 2 * vsh**2)
+          ! C22 = C11 = A
+          ! C23 = C13 = F
+          ! C55 = C44 = L
+          ! C66 = N = rho * vsh**2 = (C11-C12)/2
+          vpv = c33store(i,j,k,ispec)/rhostore(i,j,k,ispec)  ! vpv squared
+          vph = c11store(i,j,k,ispec)/rhostore(i,j,k,ispec)
         else
           vpv = (kappavstore(i,j,k,ispec) + FOUR_THIRDS*muvstore(i,j,k,ispec)) / rhostore(i,j,k,ispec)
           vph = (kappahstore(i,j,k,ispec) + FOUR_THIRDS*muhstore(i,j,k,ispec)) / rhostore(i,j,k,ispec)
@@ -395,8 +427,19 @@
           vsh = vsv
         else if (ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) then
           ! this likely needs to be improved: assumes that vs velocities are specified by c44 and c66
-          vsv = min(c44store(i,j,k,ispec),c66store(i,j,k,ispec)) / rhostore(i,j,k,ispec)
-          vsh = vsv
+          !vsv = min(c44store(i,j,k,ispec),c66store(i,j,k,ispec)) / rhostore(i,j,k,ispec)
+          ! transversly isotropic
+          ! C11 = A = rho * vph**2
+          ! C33 = C = rho * vpv**2
+          ! C44 = L = rho * vsv**2
+          ! C13 = F = eta * (A - 2*L)
+          ! C12 = C11 - 2 C66 = A - 2*N = rho * (vph**2 - 2 * vsh**2)
+          ! C22 = C11 = A
+          ! C23 = C13 = F
+          ! C55 = C44 = L
+          ! C66 = N = rho * vsh**2 = (C11-C12)/2
+          vsv = c44store(i,j,k,ispec)/rhostore(i,j,k,ispec)  ! vsv squared
+          vsh = 0.5d0*(c11store(i,j,k,ispec)-c12store(i,j,k,ispec))/rhostore(i,j,k,ispec)
         else
           vsv = muvstore(i,j,k,ispec) / rhostore(i,j,k,ispec)
           vsh = muhstore(i,j,k,ispec) / rhostore(i,j,k,ispec)
