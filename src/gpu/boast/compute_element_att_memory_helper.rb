@@ -31,10 +31,8 @@ module BOAST
     v.push epsilondev_xy_loc = Real("epsilondev_xy_loc", :dir => :in)
     v.push epsilondev_xz_loc = Real("epsilondev_xz_loc", :dir => :in)
     v.push epsilondev_yz_loc = Real("epsilondev_yz_loc", :dir => :in)
-    if type == :crust_mantle then
-      v.push d_c44store      = Real("d_c44store",        :dir => :in, :dim => [Dim()])
-      v.push anisotropy      = Int( "ANISOTROPY",        :dir => :in)
-    end
+    v.push d_c44store        = Real("d_c44store",        :dir => :in, :dim => [Dim()])
+    v.push anisotropy        = Int( "ANISOTROPY",        :dir => :in)
     v.push use_3d_attenuation_arrays = Int( "USE_3D_ATTENUATION_ARRAYS",    :dir => :in)
 
     ngll3 = Int("NGLL3", :const => n_gll3)
@@ -51,15 +49,11 @@ module BOAST
       decl factor_loc = Real("factor_loc")
       decl sn = Real("sn")
       decl snp1 = Real("snp1")
-      if type == :crust_mantle then
-        print If(anisotropy => lambda {
-          print mul === d_c44store[tx + ngll3_padded*working_element]
-        }, :else => lambda {
-          print mul === d_muv[tx + ngll3_padded*working_element]
-        })
-      else
+      print If(anisotropy => lambda {
+        print mul === d_c44store[tx + ngll3_padded*working_element]
+      }, :else => lambda {
         print mul === d_muv[tx + ngll3_padded*working_element]
-      end
+      })
       print For( i_sls, 0, nsls - 1 ) {
         # indices
         # note: index for R_xx,... here is (i,j,k,i_sls,ispec) and not (i,j,k,ispec,i_sls) as in local version

@@ -97,18 +97,6 @@
     call flush_IMAIN()
   endif
 
-  ! checks if anything to do
-  ! GPU kernels still use original arrays
-  if (GPU_MODE) then
-    ! user output
-    if (myrank == 0) then
-      write(IMAIN,*) "  GPU mode with original arrays"
-      call flush_IMAIN()
-    endif
-    ! done
-    return
-  endif
-
   ! user output
   if (ATTENUATION_VAL) then
     if (myrank == 0) then
@@ -231,8 +219,8 @@
             F = 0.5d0 * (c13 + c23)
             eta_aniso = F / (A - 2.d0*L)   ! eta = F / (A-2L)
 
-            muvl = L * minus_sum_beta     ! c44 -> L -> muv
-            muhl = N * minus_sum_beta     ! c66 -> N -> muh
+            muvl = L * minus_sum_beta     ! c44 - > L - > muv
+            muhl = N * minus_sum_beta     ! c66 - > N - > muh
 
             c11 = c11 + FOUR_THIRDS * muhl ! * minus_sum_beta * mul
             c12 = c12 - TWO_THIRDS * muhl
@@ -329,6 +317,7 @@
 
           ! stores unrelaxed shear moduli
           muvstore_crust_mantle(INDEX_IJK,ispec) = muvl
+          muhstore_crust_mantle(INDEX_IJK,ispec) = muhl
 
           rhovpvsq = kappavl + FOUR_THIRDS * muvl  !!! that is C
           rhovphsq = kappahl + FOUR_THIRDS * muhl  !!! that is A
@@ -652,12 +641,6 @@
 !$OMP ENDDO
 !$OMP END PARALLEL
   endif ! ATTENUATION
-
-  ! safety check
-  if (GPU_MODE) then
-    print *,'!!! Please make sure to have GPU routines adapted to new elastic tensor arrays !!!'
-    stop 'Safety stop for GPU mode with modified elastic elements'
-  endif
 
   ! synchronizes processes
   call synchronize_all()

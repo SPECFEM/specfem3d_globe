@@ -118,16 +118,16 @@
   if (Usolidnorm > STABILITY_THRESHOLD .or. Usolidnorm < 0 .or. Usolidnorm /= Usolidnorm) then
     print *,'Error: simulation became unstable in solid, process',myrank
     if (GPU_MODE) then
-      print*,'     norm solid = ',Usolidnorm
+      print *,'     norm solid = ',Usolidnorm
     else
-      print*,'     norm crust/mantle = ',norm_cm,' inner core = ',norm_ic
+      print *,'     norm crust/mantle = ',norm_cm,' inner core = ',norm_ic
     endif
     print *,'Please check time step setting in get_timestep_and_layers.f90, exiting...'
     call exit_MPI(myrank,'forward simulation became unstable in solid and blew up')
   endif
   if (Ufluidnorm > STABILITY_THRESHOLD .or. Ufluidnorm < 0 .or. Ufluidnorm /= Ufluidnorm) then
     print *,'Error: simulation became unstable in fluid, process',myrank
-    print*,'        norm fluid = ',Ufluidnorm
+    print *,'        norm fluid = ',Ufluidnorm
     print *,'Please check time step setting in get_timestep_and_layers.f90, exiting...'
     call exit_MPI(myrank,'forward simulation became unstable in fluid and blew up')
   endif

@@ -122,7 +122,7 @@
   implicit none
 
   ! local parameters
-  real(kind=CUSTOM_REAL) :: one_minus_sum_beta_use,mul
+  real(kind=CUSTOM_REAL) :: one_minus_sum_beta_use,muvl,muhl
   integer :: ispec
 #ifdef FORCE_VECTORIZATION
 ! in this vectorized version we have to assume that N_SLS == 3 in order to be able to unroll and thus suppress
@@ -143,10 +143,6 @@
   do ispec = 1,NSPEC_CRUST_MANTLE
     ! isotropic and tiso elements
     DO_LOOP_IJK
-
-      ! layer with no transverse isotropy, use kappav and muv
-      mul = muvstore_crust_mantle(INDEX_IJK,ispec)
-
       ! precompute terms for attenuation if needed
       if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
         one_minus_sum_beta_use = one_minus_sum_beta_crust_mantle(INDEX_IJK,ispec)
@@ -154,11 +150,19 @@
         one_minus_sum_beta_use = one_minus_sum_beta_crust_mantle(1,1,1,ispec)
       endif
 
+      ! layer with both iso and transverse isotropy elements, use kappav and muv
+      muvl = muvstore_crust_mantle(INDEX_IJK,ispec)
       ! returns to the relaxed moduli Mu_r = Mu_u / [1 - sum(1 - tau_strain/tau_stress) ]
-      mul = mul / one_minus_sum_beta_use
-
+      muvl = muvl / one_minus_sum_beta_use
       ! stores relaxed shear moduli for kernel computations
-      muvstore_crust_mantle(INDEX_IJK,ispec) = mul
+      muvstore_crust_mantle(INDEX_IJK,ispec) = muvl
+
+      ! tiso elements also use muh
+      if (ispec_is_tiso_crust_mantle(ispec)) then
+        muhl = muhstore_crust_mantle(INDEX_IJK,ispec)
+        muhl = muhl / one_minus_sum_beta_use
+        muhstore_crust_mantle(INDEX_IJK,ispec) = muhl
+      endif
     ENDDO_LOOP_IJK
   enddo
 
@@ -168,10 +172,6 @@
     if (idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
     ! isotropic element
     DO_LOOP_IJK
-
-      ! layer with no transverse isotropy, use kappav and muv
-      mul = muvstore_inner_core(INDEX_IJK,ispec)
-
       ! precompute terms for attenuation if needed
       if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
         one_minus_sum_beta_use = one_minus_sum_beta_inner_core(INDEX_IJK,ispec)
@@ -179,11 +179,12 @@
         one_minus_sum_beta_use = one_minus_sum_beta_inner_core(1,1,1,ispec)
       endif
 
+      ! layer with no transverse isotropy, use kappav and muv
+      muvl = muvstore_inner_core(INDEX_IJK,ispec)
       ! returns to the relaxed moduli Mu_r = Mu_u / [1 - sum(1 - tau_strain/tau_stress) ]
-      mul = mul / one_minus_sum_beta_use
-
+      muvl = muvl / one_minus_sum_beta_use
       ! stores relaxed shear moduli for kernel computations
-      muvstore_inner_core(INDEX_IJK,ispec) = mul
+      muvstore_inner_core(INDEX_IJK,ispec) = muvl
     ENDDO_LOOP_IJK
   enddo
 

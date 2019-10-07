@@ -106,7 +106,7 @@ static __device__ void compute_element_ic_att_stress(const int tx, const int wor
   }
 }
 
-static __device__ void compute_element_ic_att_memory(const int tx, const int working_element, const float * d_muv, const float * factor_common, const float * alphaval, const float * betaval, const float * gammaval, float * R_xx, float * R_yy, float * R_xy, float * R_xz, float * R_yz, const float * epsilondev_xx, const float * epsilondev_yy, const float * epsilondev_xy, const float * epsilondev_xz, const float * epsilondev_yz, const float epsilondev_xx_loc, const float epsilondev_yy_loc, const float epsilondev_xy_loc, const float epsilondev_xz_loc, const float epsilondev_yz_loc, const int USE_3D_ATTENUATION_ARRAYS){
+static __device__ void compute_element_ic_att_memory(const int tx, const int working_element, const float * d_muv, const float * factor_common, const float * alphaval, const float * betaval, const float * gammaval, float * R_xx, float * R_yy, float * R_xy, float * R_xz, float * R_yz, const float * epsilondev_xx, const float * epsilondev_yy, const float * epsilondev_xy, const float * epsilondev_xz, const float * epsilondev_yz, const float epsilondev_xx_loc, const float epsilondev_yy_loc, const float epsilondev_xy_loc, const float epsilondev_xz_loc, const float epsilondev_yz_loc, const float * d_c44store, const int ANISOTROPY, const int USE_3D_ATTENUATION_ARRAYS){
   int offset;
   int i_sls;
   float mul;
@@ -116,7 +116,11 @@ static __device__ void compute_element_ic_att_memory(const int tx, const int wor
   float factor_loc;
   float sn;
   float snp1;
-  mul = d_muv[tx + (NGLL3_PADDED) * (working_element)];
+  if (ANISOTROPY) {
+    mul = d_c44store[tx + (NGLL3_PADDED) * (working_element)];
+  } else {
+    mul = d_muv[tx + (NGLL3_PADDED) * (working_element)];
+  }
   for (i_sls = 0; i_sls <= N_SLS - (1); i_sls += 1) {
     offset = tx + (NGLL3) * (i_sls + (N_SLS) * (working_element));
     if (USE_3D_ATTENUATION_ARRAYS) {
@@ -224,6 +228,44 @@ static __device__ void compute_element_ic_gravity(const int tx, const int iglob,
   rho_s_H3[0] = (factor) * ((sx_l) * (Hxzl) + (sy_l) * (Hyzl) + (sz_l) * (Hzzl));
 }
 
+static __device__ void compute_element_ic_aniso(const int offset, const float * __restrict__ d_c11store, const float * __restrict__ d_c12store, const float * __restrict__ d_c13store, const float * __restrict__ d_c33store, const float * __restrict__ d_c44store, const float duxdxl, const float duydyl, const float duzdzl, const float duxdyl_plus_duydxl, const float duzdxl_plus_duxdzl, const float duzdyl_plus_duydzl, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){
+  float c11;
+  float c12;
+  float c13;
+  float c33;
+  float c44;
+  float c66;
+  c11 = d_c11store[offset];
+  c12 = d_c12store[offset];
+  c13 = d_c13store[offset];
+  c33 = d_c33store[offset];
+  c44 = d_c44store[offset];
+  c66 = (0.5f) * (c11 - (c12));
+  *(sigma_xx) = (c11) * (duxdxl) + (c12) * (duydyl) + (c13) * (duzdzl);
+  *(sigma_yy) = (c12) * (duxdxl) + (c11) * (duydyl) + (c13) * (duzdzl);
+  *(sigma_zz) = (c13) * (duxdxl) + (c13) * (duydyl) + (c33) * (duzdzl);
+  *(sigma_xy) = (c66) * (duxdyl_plus_duydxl);
+  *(sigma_xz) = (c44) * (duzdxl_plus_duxdzl);
+  *(sigma_yz) = (c44) * (duzdyl_plus_duydzl);
+}
+
+static __device__ void compute_element_ic_iso(const int offset, const float * d_kappavstore, const float * d_muvstore, const float duxdxl, const float duydyl, const float duzdzl, const float duxdxl_plus_duydyl, const float duxdxl_plus_duzdzl, const float duydyl_plus_duzdzl, const float duxdyl_plus_duydxl, const float duzdxl_plus_duxdzl, const float duzdyl_plus_duydzl, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){
+  float lambdal;
+  float mul;
+  float lambdalplus2mul;
+  float kappal;
+  kappal = d_kappavstore[offset];
+  mul = d_muvstore[offset];
+  lambdalplus2mul = kappal + (mul) * (1.3333333333333333f);
+  lambdal = lambdalplus2mul - ((mul) * (2.0f));
+  *(sigma_xx) = (lambdalplus2mul) * (duxdxl) + (lambdal) * (duydyl_plus_duzdzl);
+  *(sigma_yy) = (lambdalplus2mul) * (duydyl) + (lambdal) * (duxdxl_plus_duzdzl);
+  *(sigma_zz) = (lambdalplus2mul) * (duzdzl) + (lambdal) * (duxdxl_plus_duydyl);
+  *(sigma_xy) = (mul) * (duxdyl_plus_duydxl);
+  *(sigma_xz) = (mul) * (duzdxl_plus_duxdzl);
+  *(sigma_yz) = (mul) * (duzdyl_plus_duydzl);
+}
+
 
 /*----------------------------------------------*/
 // main function
@@ -284,12 +326,6 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
   float fac1;
   float fac2;
   float fac3;
-  float lambdal;
-  float mul;
-  float lambdalplus2mul;
-  float kappal;
-  float mul_iso;
-  float mul_aniso;
   float sigma_xx;
   float sigma_xy;
   float sigma_xz;
@@ -304,11 +340,6 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
   float epsilondev_xy_loc_1;
   float epsilondev_xz_loc_1;
   float epsilondev_yz_loc_1;
-  float c11;
-  float c12;
-  float c13;
-  float c33;
-  float c44;
   float sum_terms1;
   float sum_terms2;
   float sum_terms3;
@@ -506,49 +537,10 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
       }
     }
 
-    kappal = d_kappavstore[offset];
-    mul = d_muvstore[offset];
-
-    if (ATTENUATION) {
-      if (USE_3D_ATTENUATION_ARRAYS) {
-        mul_iso = (mul) * (one_minus_sum_beta[tx + (working_element) * (NGLL3)]);
-        mul_aniso = (mul) * (one_minus_sum_beta[tx + (working_element) * (NGLL3)] - (1.0f));
-      } else {
-        mul_iso = (mul) * (one_minus_sum_beta[working_element]);
-        mul_aniso = (mul) * (one_minus_sum_beta[working_element] - (1.0f));
-      }
-    } else {
-      mul_iso = mul;
-    }
-
     if (ANISOTROPY) {
-      c11 = d_c11store[offset];
-      c12 = d_c12store[offset];
-      c13 = d_c13store[offset];
-      c33 = d_c33store[offset];
-      c44 = d_c44store[offset];
-      if (ATTENUATION) {
-        c11 = c11 + (mul_aniso) * (1.3333333333333333f);
-        c12 = c12 - ((mul_aniso) * (0.6666666666666666f));
-        c13 = c13 - ((mul_aniso) * (0.6666666666666666f));
-        c33 = c33 + (mul_aniso) * (1.3333333333333333f);
-        c44 = c44 + mul_aniso;
-      }
-      sigma_xx = (c11) * (duxdxl) + (c12) * (duydyl) + (c13) * (duzdzl);
-      sigma_yy = (c12) * (duxdxl) + (c11) * (duydyl) + (c13) * (duzdzl);
-      sigma_zz = (c13) * (duxdxl) + (c13) * (duydyl) + (c33) * (duzdzl);
-      sigma_xy = ((c11 - (c12)) * (duxdyl_plus_duydxl)) * (0.5f);
-      sigma_xz = (c44) * (duzdxl_plus_duxdzl);
-      sigma_yz = (c44) * (duzdyl_plus_duydzl);
+      compute_element_ic_aniso(offset, d_c11store, d_c12store, d_c13store, d_c33store, d_c44store, duxdxl, duydyl, duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);
     } else {
-      lambdalplus2mul = kappal + (mul_iso) * (1.3333333333333333f);
-      lambdal = lambdalplus2mul - ((mul_iso) * (2.0f));
-      sigma_xx = (lambdalplus2mul) * (duxdxl) + (lambdal) * (duydyl_plus_duzdzl);
-      sigma_yy = (lambdalplus2mul) * (duydyl) + (lambdal) * (duxdxl_plus_duzdzl);
-      sigma_zz = (lambdalplus2mul) * (duzdzl) + (lambdal) * (duxdxl_plus_duydyl);
-      sigma_xy = (mul) * (duxdyl_plus_duydxl);
-      sigma_xz = (mul) * (duzdxl_plus_duxdzl);
-      sigma_yz = (mul) * (duzdyl_plus_duydzl);
+      compute_element_ic_iso(offset, d_kappavstore, d_muvstore, duxdxl, duydyl, duzdzl, duxdxl_plus_duydyl, duxdxl_plus_duzdzl, duydyl_plus_duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);
     }
 
     if (ATTENUATION &&  !(PARTIAL_PHYS_DISPERSION_ONLY)) {
@@ -729,7 +721,7 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
 #endif
 
     if (ATTENUATION &&  !(PARTIAL_PHYS_DISPERSION_ONLY)) {
-      compute_element_ic_att_memory(tx, working_element, d_muvstore, factor_common, alphaval, betaval, gammaval, R_xx, R_yy, R_xy, R_xz, R_yz, epsilondev_xx, epsilondev_yy, epsilondev_xy, epsilondev_xz, epsilondev_yz, epsilondev_xx_loc_1, epsilondev_yy_loc_1, epsilondev_xy_loc_1, epsilondev_xz_loc_1, epsilondev_yz_loc_1, USE_3D_ATTENUATION_ARRAYS);
+      compute_element_ic_att_memory(tx, working_element, d_muvstore, factor_common, alphaval, betaval, gammaval, R_xx, R_yy, R_xy, R_xz, R_yz, epsilondev_xx, epsilondev_yy, epsilondev_xy, epsilondev_xz, epsilondev_yz, epsilondev_xx_loc_1, epsilondev_yy_loc_1, epsilondev_xy_loc_1, epsilondev_xz_loc_1, epsilondev_yz_loc_1, d_c44store, ANISOTROPY, USE_3D_ATTENUATION_ARRAYS);
     }
 
     if (COMPUTE_AND_STORE_STRAIN) {

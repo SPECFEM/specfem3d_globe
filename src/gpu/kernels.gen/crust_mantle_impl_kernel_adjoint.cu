@@ -225,7 +225,7 @@ static __device__ void compute_element_cm_gravity(const int tx, const int iglob,
   rho_s_H3[0] = (factor) * ((sx_l) * (Hxzl) + (sy_l) * (Hyzl) + (sz_l) * (Hzzl));
 }
 
-static __device__ void compute_element_cm_aniso(const int offset, const float * d_c11store, const float * d_c12store, const float * d_c13store, const float * d_c14store, const float * d_c15store, const float * d_c16store, const float * d_c22store, const float * d_c23store, const float * d_c24store, const float * d_c25store, const float * d_c26store, const float * d_c33store, const float * d_c34store, const float * d_c35store, const float * d_c36store, const float * d_c44store, const float * d_c45store, const float * d_c46store, const float * d_c55store, const float * d_c56store, const float * d_c66store, const int ATTENUATION, const float one_minus_sum_beta_use, const float duxdxl, const float duxdyl, const float duxdzl, const float duydxl, const float duydyl, const float duydzl, const float duzdxl, const float duzdyl, const float duzdzl, const float duxdyl_plus_duydxl, const float duzdxl_plus_duxdzl, const float duzdyl_plus_duydzl, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){
+static __device__ void compute_element_cm_aniso(const int offset, const float * d_c11store, const float * d_c12store, const float * d_c13store, const float * d_c14store, const float * d_c15store, const float * d_c16store, const float * d_c22store, const float * d_c23store, const float * d_c24store, const float * d_c25store, const float * d_c26store, const float * d_c33store, const float * d_c34store, const float * d_c35store, const float * d_c36store, const float * d_c44store, const float * d_c45store, const float * d_c46store, const float * d_c55store, const float * d_c56store, const float * d_c66store, const float duxdxl, const float duxdyl, const float duxdzl, const float duydxl, const float duydyl, const float duydzl, const float duzdxl, const float duzdyl, const float duzdzl, const float duxdyl_plus_duydxl, const float duzdxl_plus_duxdzl, const float duzdyl_plus_duydzl, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){
   float c11;
   float c12;
   float c13;
@@ -247,8 +247,6 @@ static __device__ void compute_element_cm_aniso(const int offset, const float * 
   float c55;
   float c56;
   float c66;
-  float mul;
-  float minus_sum_beta;
   c11 = d_c11store[offset];
   c12 = d_c12store[offset];
   c13 = d_c13store[offset];
@@ -270,19 +268,6 @@ static __device__ void compute_element_cm_aniso(const int offset, const float * 
   c55 = d_c55store[offset];
   c56 = d_c56store[offset];
   c66 = d_c66store[offset];
-  if (ATTENUATION) {
-    minus_sum_beta = one_minus_sum_beta_use - (1.0f);
-    mul = (c44) * (minus_sum_beta);
-    c11 = c11 + (mul) * (1.3333333333333333f);
-    c12 = c12 - ((mul) * (0.6666666666666666f));
-    c13 = c13 - ((mul) * (0.6666666666666666f));
-    c22 = c22 + (mul) * (1.3333333333333333f);
-    c23 = c23 - ((mul) * (0.6666666666666666f));
-    c33 = c33 + (mul) * (1.3333333333333333f);
-    c44 = c44 + mul;
-    c55 = c55 + mul;
-    c66 = c66 + mul;
-  }
   *(sigma_xx) = (c11) * (duxdxl) + (c16) * (duxdyl_plus_duydxl) + (c12) * (duydyl) + (c15) * (duzdxl_plus_duxdzl) + (c14) * (duzdyl_plus_duydzl) + (c13) * (duzdzl);
   *(sigma_yy) = (c12) * (duxdxl) + (c26) * (duxdyl_plus_duydxl) + (c22) * (duydyl) + (c25) * (duzdxl_plus_duxdzl) + (c24) * (duzdyl_plus_duydzl) + (c23) * (duzdzl);
   *(sigma_zz) = (c13) * (duxdxl) + (c36) * (duxdyl_plus_duydxl) + (c23) * (duydyl) + (c35) * (duzdxl_plus_duxdzl) + (c34) * (duzdyl_plus_duydzl) + (c33) * (duzdzl);
@@ -291,16 +276,13 @@ static __device__ void compute_element_cm_aniso(const int offset, const float * 
   *(sigma_yz) = (c14) * (duxdxl) + (c46) * (duxdyl_plus_duydxl) + (c24) * (duydyl) + (c45) * (duzdxl_plus_duxdzl) + (c44) * (duzdyl_plus_duydzl) + (c34) * (duzdzl);
 }
 
-static __device__ void compute_element_cm_iso(const int offset, const float * d_kappavstore, const float * d_muvstore, const int ATTENUATION, const float one_minus_sum_beta_use, const float duxdxl, const float duydyl, const float duzdzl, const float duxdxl_plus_duydyl, const float duxdxl_plus_duzdzl, const float duydyl_plus_duzdzl, const float duxdyl_plus_duydxl, const float duzdxl_plus_duxdzl, const float duzdyl_plus_duydzl, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){
+static __device__ void compute_element_cm_iso(const int offset, const float * d_kappavstore, const float * d_muvstore, const float duxdxl, const float duydyl, const float duzdzl, const float duxdxl_plus_duydyl, const float duxdxl_plus_duzdzl, const float duydyl_plus_duzdzl, const float duxdyl_plus_duydxl, const float duzdxl_plus_duxdzl, const float duzdyl_plus_duydzl, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){
   float lambdal;
   float mul;
   float lambdalplus2mul;
   float kappal;
   kappal = d_kappavstore[offset];
   mul = d_muvstore[offset];
-  if (ATTENUATION) {
-    mul = (mul) * (one_minus_sum_beta_use);
-  }
   lambdalplus2mul = kappal + (mul) * (1.3333333333333333f);
   lambdal = lambdalplus2mul - ((mul) * (2.0f));
   *(sigma_xx) = (lambdalplus2mul) * (duxdxl) + (lambdal) * (duydyl_plus_duzdzl);
@@ -311,7 +293,7 @@ static __device__ void compute_element_cm_iso(const int offset, const float * d_
   *(sigma_yz) = (mul) * (duzdyl_plus_duydzl);
 }
 
-static __device__ void compute_element_cm_tiso(const int offset, const float * d_kappavstore, const float * d_muvstore, const float * d_kappahstore, const float * d_muhstore, const float * d_eta_anisostore, const int ATTENUATION, const float one_minus_sum_beta_use, const float duxdxl, const float duxdyl, const float duxdzl, const float duydxl, const float duydyl, const float duydzl, const float duzdxl, const float duzdyl, const float duzdzl, const float duxdyl_plus_duydxl, const float duzdxl_plus_duxdzl, const float duzdyl_plus_duydzl, const int iglob, const float * d_rstore, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){
+static __device__ void compute_element_cm_tiso(const int offset, const float * d_kappavstore, const float * d_muvstore, const float * d_kappahstore, const float * d_muhstore, const float * d_eta_anisostore, const float duxdxl, const float duxdyl, const float duxdzl, const float duydxl, const float duydyl, const float duydzl, const float duzdxl, const float duzdyl, const float duzdzl, const float duxdyl_plus_duydxl, const float duzdxl_plus_duxdzl, const float duzdyl_plus_duydzl, const int iglob, const float * d_rstore, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){
   float kappavl;
   float muvl;
   float kappahl;
@@ -378,10 +360,6 @@ static __device__ void compute_element_cm_tiso(const int offset, const float * d
   muvl = d_muvstore[offset];
   kappahl = d_kappahstore[offset];
   muhl = d_muhstore[offset];
-  if (ATTENUATION) {
-    muvl = (muvl) * (one_minus_sum_beta_use);
-    muhl = (muhl) * (one_minus_sum_beta_use);
-  }
   rhovpvsq = kappavl + (muvl) * (1.3333333333333333f);
   rhovphsq = kappahl + (muhl) * (1.3333333333333333f);
   rhovsvsq = muvl;
@@ -503,7 +481,6 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
   float fac1;
   float fac2;
   float fac3;
-  float one_minus_sum_beta_use;
   float sigma_xx;
   float sigma_xy;
   float sigma_xz;
@@ -711,21 +688,13 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
       }
     }
 
-    if (ATTENUATION) {
-      if (USE_3D_ATTENUATION_ARRAYS) {
-        one_minus_sum_beta_use = one_minus_sum_beta[tx + (working_element) * (NGLL3)];
-      } else {
-        one_minus_sum_beta_use = one_minus_sum_beta[working_element];
-      }
-    }
-
     if (ANISOTROPY) {
-      compute_element_cm_aniso(offset, d_c11store, d_c12store, d_c13store, d_c14store, d_c15store, d_c16store, d_c22store, d_c23store, d_c24store, d_c25store, d_c26store, d_c33store, d_c34store, d_c35store, d_c36store, d_c44store, d_c45store, d_c46store, d_c55store, d_c56store, d_c66store, ATTENUATION, one_minus_sum_beta_use, duxdxl, duxdyl, duxdzl, duydxl, duydyl, duydzl, duzdxl, duzdyl, duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);
+      compute_element_cm_aniso(offset, d_c11store, d_c12store, d_c13store, d_c14store, d_c15store, d_c16store, d_c22store, d_c23store, d_c24store, d_c25store, d_c26store, d_c33store, d_c34store, d_c35store, d_c36store, d_c44store, d_c45store, d_c46store, d_c55store, d_c56store, d_c66store, duxdxl, duxdyl, duxdzl, duydxl, duydyl, duydzl, duzdxl, duzdyl, duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);
     } else {
       if ( !(d_ispec_is_tiso[working_element])) {
-        compute_element_cm_iso(offset, d_kappavstore, d_muvstore, ATTENUATION, one_minus_sum_beta_use, duxdxl, duydyl, duzdzl, duxdxl_plus_duydyl, duxdxl_plus_duzdzl, duydyl_plus_duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);
+        compute_element_cm_iso(offset, d_kappavstore, d_muvstore, duxdxl, duydyl, duzdzl, duxdxl_plus_duydyl, duxdxl_plus_duzdzl, duydyl_plus_duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);
       } else {
-        compute_element_cm_tiso(offset, d_kappavstore, d_muvstore, d_kappahstore, d_muhstore, d_eta_anisostore, ATTENUATION, one_minus_sum_beta_use, duxdxl, duxdyl, duxdzl, duydxl, duydyl, duydzl, duzdxl, duzdyl, duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl, iglob_1, d_rstore,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);
+        compute_element_cm_tiso(offset, d_kappavstore, d_muvstore, d_kappahstore, d_muhstore, d_eta_anisostore, duxdxl, duxdyl, duxdzl, duydxl, duydyl, duydzl, duzdxl, duzdyl, duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl, iglob_1, d_rstore,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);
       }
     }
 

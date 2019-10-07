@@ -315,8 +315,8 @@ __device__ void compute_element_cm_aniso(int offset,
                                          realw_const_p d_c34store,realw_const_p d_c35store,realw_const_p d_c36store,
                                          realw_const_p d_c44store,realw_const_p d_c45store,realw_const_p d_c46store,
                                          realw_const_p d_c55store,realw_const_p d_c56store,realw_const_p d_c66store,
-                                         const int ATTENUATION,
-                                         realw one_minus_sum_beta_use,
+                                         //const int ATTENUATION, // not needed
+                                         //realw one_minus_sum_beta_use,
                                          realw duxdxl,realw duxdyl,realw duxdzl,
                                          realw duydxl,realw duydyl,realw duydzl,
                                          realw duzdxl,realw duzdyl,realw duzdzl,
@@ -351,6 +351,7 @@ __device__ void compute_element_cm_aniso(int offset,
   c66 = d_c66store[offset];
 
   // use unrelaxed parameters if attenuation
+  /*   not needed
   if (ATTENUATION){
     minus_sum_beta = one_minus_sum_beta_use - 1.0f;
     mul = c44;
@@ -365,6 +366,7 @@ __device__ void compute_element_cm_aniso(int offset,
     c55 = c55 + minus_sum_beta * mul;
     c66 = c66 + minus_sum_beta * mul;
   }
+  */
 
   *sigma_xx = c11*duxdxl + c16*duxdyl_plus_duydxl + c12*duydyl +
              c15*duzdxl_plus_duxdzl + c14*duzdyl_plus_duydzl + c13*duzdzl;
@@ -386,8 +388,8 @@ __device__ void compute_element_cm_aniso(int offset,
 
 __device__ void compute_element_cm_iso(int offset,
                                        realw_const_p d_kappavstore,realw_const_p d_muvstore,
-                                       const int ATTENUATION,
-                                       realw one_minus_sum_beta_use,
+                                       //const int ATTENUATION,  // not needed anymore
+                                       //realw one_minus_sum_beta_use,
                                        realw duxdxl,realw duydyl,realw duzdzl,
                                        realw duxdxl_plus_duydyl,realw duxdxl_plus_duzdzl,realw duydyl_plus_duzdzl,
                                        realw duxdyl_plus_duydxl,realw duzdxl_plus_duxdzl,realw duzdyl_plus_duydzl,
@@ -401,9 +403,9 @@ __device__ void compute_element_cm_iso(int offset,
   mul = d_muvstore[offset];
 
   // use unrelaxed parameters if attenuation
-  if (ATTENUATION ){
-    mul = mul * one_minus_sum_beta_use;
-  }
+  //if (ATTENUATION ){   // not needed
+  //  mul = mul * one_minus_sum_beta_use;
+  //}
 
   lambdalplus2mul = kappal + 1.33333333333333333333f * mul;  // 4./3. = 1.3333333
   lambdal = lambdalplus2mul - 2.0f * mul;
@@ -1077,8 +1079,8 @@ crust_mantle_impl_kernel( int nb_blocks_to_compute,
                             d_c11store,d_c12store,d_c13store,d_c14store,d_c15store,d_c16store,d_c22store,
                             d_c23store,d_c24store,d_c25store,d_c26store,d_c33store,d_c34store,d_c35store,
                             d_c36store,d_c44store,d_c45store,d_c46store,d_c55store,d_c56store,d_c66store,
-                            ATTENUATION,
-                            one_minus_sum_beta_use,
+                            // ATTENUATION,  // not needed
+                            // one_minus_sum_beta_use,
                             duxdxl,duxdyl,duxdzl,duydxl,duydyl,duydzl,duzdxl,duzdyl,duzdzl,
                             duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl,
                             &sigma_xx,&sigma_yy,&sigma_zz,
@@ -1089,8 +1091,8 @@ crust_mantle_impl_kernel( int nb_blocks_to_compute,
         // isotropic case
         compute_element_cm_iso(offset,
                             d_kappavstore,d_muvstore,
-                            ATTENUATION,
-                            one_minus_sum_beta_use,
+                            //ATTENUATION, // not needed
+                            //one_minus_sum_beta_use,
                             duxdxl,duydyl,duzdzl,
                             duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl,
                             duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl,
@@ -1098,6 +1100,7 @@ crust_mantle_impl_kernel( int nb_blocks_to_compute,
                             &sigma_xy,&sigma_xz,&sigma_yz);
       }else{
         // transverse isotropy
+        /* not needed, will be treated as fully anisotropic element
         compute_element_cm_tiso(offset,
                               d_kappavstore,d_muvstore,
                               d_kappahstore,d_muhstore,d_eta_anisostore,
@@ -1109,6 +1112,17 @@ crust_mantle_impl_kernel( int nb_blocks_to_compute,
                               duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl,
                               iglob,
                               d_ystore,d_zstore,
+                              &sigma_xx,&sigma_yy,&sigma_zz,
+                              &sigma_xy,&sigma_xz,&sigma_yz);
+        */
+        compute_element_cm_aniso(offset,
+                              d_c11store,d_c12store,d_c13store,d_c14store,d_c15store,d_c16store,d_c22store,
+                              d_c23store,d_c24store,d_c25store,d_c26store,d_c33store,d_c34store,d_c35store,
+                              d_c36store,d_c44store,d_c45store,d_c46store,d_c55store,d_c56store,d_c66store,
+                              // ATTENUATION,  // not needed
+                              // one_minus_sum_beta_use,
+                              duxdxl,duxdyl,duxdzl,duydxl,duydyl,duydzl,duzdxl,duzdyl,duzdzl,
+                              duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl,
                               &sigma_xx,&sigma_yy,&sigma_zz,
                               &sigma_xy,&sigma_xz,&sigma_yz);
       }

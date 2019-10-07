@@ -1557,19 +1557,19 @@ void FC_FUNC_ (prepare_crust_mantle_device,
     // no anisotropy
     // only needed if not anisotropic 3D mantle
 
-    // transverse isotropic elements
-
     // transverse isotropy flag
     gpuCreateCopy_todevice_int (&mp->d_ispec_is_tiso_crust_mantle, h_ispec_is_tiso, mp->NSPEC_CRUST_MANTLE);
 
-    // kappavstore, kappahstore
+    // isotropic elements
+    // kappavstore
     gpuMalloc_realw (&mp->d_kappavstore_crust_mantle, size_padded_iso);
-    gpuMalloc_realw (&mp->d_kappahstore_crust_mantle, size_padded_tiso);
-
-    // muvstore, muhstore
+    // muvstore
     gpuMalloc_realw (&mp->d_muvstore_crust_mantle, size_padded_iso);
-    gpuMalloc_realw (&mp->d_muhstore_crust_mantle, size_padded_tiso);
 
+    // transverse isotropic elements
+    // need additional kappah,muh and eta
+    gpuMalloc_realw (&mp->d_kappahstore_crust_mantle, size_padded_tiso);
+    gpuMalloc_realw (&mp->d_muhstore_crust_mantle, size_padded_tiso);
     // eta_anisostore
     gpuMalloc_realw (&mp->d_eta_anisostore_crust_mantle, size_padded_tiso);
 
@@ -2588,7 +2588,6 @@ void FC_FUNC_ (prepare_inner_core_device,
       mp->d_b_rmassx_inner_core = gpuTakeRef(mp->d_rmassx_inner_core);
       mp->d_b_rmassy_inner_core = gpuTakeRef(mp->d_rmassy_inner_core);
     }
-
 
     // kernels
     size = NGLL3 * (mp->NSPEC_INNER_CORE);

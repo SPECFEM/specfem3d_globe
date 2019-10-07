@@ -123,7 +123,7 @@ void compute_element_ic_att_stress(const int tx, const int working_element, cons
 #if __OPENCL_C_VERSION__ && __OPENCL_C_VERSION__ >= 120\n\
 static\n\
 #endif\n\
-void compute_element_ic_att_memory(const int tx, const int working_element, const __global float * d_muv, const __global float * factor_common, const __global float * alphaval, const __global float * betaval, const __global float * gammaval, __global float * R_xx, __global float * R_yy, __global float * R_xy, __global float * R_xz, __global float * R_yz, const __global float * epsilondev_xx, const __global float * epsilondev_yy, const __global float * epsilondev_xy, const __global float * epsilondev_xz, const __global float * epsilondev_yz, const float epsilondev_xx_loc, const float epsilondev_yy_loc, const float epsilondev_xy_loc, const float epsilondev_xz_loc, const float epsilondev_yz_loc, const int USE_3D_ATTENUATION_ARRAYS){\n\
+void compute_element_ic_att_memory(const int tx, const int working_element, const __global float * d_muv, const __global float * factor_common, const __global float * alphaval, const __global float * betaval, const __global float * gammaval, __global float * R_xx, __global float * R_yy, __global float * R_xy, __global float * R_xz, __global float * R_yz, const __global float * epsilondev_xx, const __global float * epsilondev_yy, const __global float * epsilondev_xy, const __global float * epsilondev_xz, const __global float * epsilondev_yz, const float epsilondev_xx_loc, const float epsilondev_yy_loc, const float epsilondev_xy_loc, const float epsilondev_xz_loc, const float epsilondev_yz_loc, const __global float * d_c44store, const int ANISOTROPY, const int USE_3D_ATTENUATION_ARRAYS){\n\
   int offset;\n\
   int i_sls;\n\
   float mul;\n\
@@ -133,7 +133,11 @@ void compute_element_ic_att_memory(const int tx, const int working_element, cons
   float factor_loc;\n\
   float sn;\n\
   float snp1;\n\
-  mul = d_muv[tx + (NGLL3_PADDED) * (working_element)];\n\
+  if (ANISOTROPY) {\n\
+    mul = d_c44store[tx + (NGLL3_PADDED) * (working_element)];\n\
+  } else {\n\
+    mul = d_muv[tx + (NGLL3_PADDED) * (working_element)];\n\
+  }\n\
   for (i_sls = 0; i_sls <= N_SLS - (1); i_sls += 1) {\n\
     offset = tx + (NGLL3) * (i_sls + (N_SLS) * (working_element));\n\
     if (USE_3D_ATTENUATION_ARRAYS) {\n\
@@ -244,6 +248,50 @@ void compute_element_ic_gravity(const int tx, const int iglob, const __global fl
   rho_s_H3[0] = (factor) * ((sx_l) * (Hxzl) + (sy_l) * (Hyzl) + (sz_l) * (Hzzl));\n\
 }\n\
 \n\
+#if __OPENCL_C_VERSION__ && __OPENCL_C_VERSION__ >= 120\n\
+static\n\
+#endif\n\
+void compute_element_ic_aniso(const int offset, const __global float * restrict d_c11store, const __global float * restrict d_c12store, const __global float * restrict d_c13store, const __global float * restrict d_c33store, const __global float * restrict d_c44store, const float duxdxl, const float duydyl, const float duzdzl, const float duxdyl_plus_duydxl, const float duzdxl_plus_duxdzl, const float duzdyl_plus_duydzl, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){\n\
+  float c11;\n\
+  float c12;\n\
+  float c13;\n\
+  float c33;\n\
+  float c44;\n\
+  float c66;\n\
+  c11 = d_c11store[offset];\n\
+  c12 = d_c12store[offset];\n\
+  c13 = d_c13store[offset];\n\
+  c33 = d_c33store[offset];\n\
+  c44 = d_c44store[offset];\n\
+  c66 = (0.5f) * (c11 - (c12));\n\
+  *(sigma_xx) = (c11) * (duxdxl) + (c12) * (duydyl) + (c13) * (duzdzl);\n\
+  *(sigma_yy) = (c12) * (duxdxl) + (c11) * (duydyl) + (c13) * (duzdzl);\n\
+  *(sigma_zz) = (c13) * (duxdxl) + (c13) * (duydyl) + (c33) * (duzdzl);\n\
+  *(sigma_xy) = (c66) * (duxdyl_plus_duydxl);\n\
+  *(sigma_xz) = (c44) * (duzdxl_plus_duxdzl);\n\
+  *(sigma_yz) = (c44) * (duzdyl_plus_duydzl);\n\
+}\n\
+\n\
+#if __OPENCL_C_VERSION__ && __OPENCL_C_VERSION__ >= 120\n\
+static\n\
+#endif\n\
+void compute_element_ic_iso(const int offset, const __global float * d_kappavstore, const __global float * d_muvstore, const float duxdxl, const float duydyl, const float duzdzl, const float duxdxl_plus_duydyl, const float duxdxl_plus_duzdzl, const float duydyl_plus_duzdzl, const float duxdyl_plus_duydxl, const float duzdxl_plus_duxdzl, const float duzdyl_plus_duydzl, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){\n\
+  float lambdal;\n\
+  float mul;\n\
+  float lambdalplus2mul;\n\
+  float kappal;\n\
+  kappal = d_kappavstore[offset];\n\
+  mul = d_muvstore[offset];\n\
+  lambdalplus2mul = kappal + (mul) * (1.3333333333333333f);\n\
+  lambdal = lambdalplus2mul - ((mul) * (2.0f));\n\
+  *(sigma_xx) = (lambdalplus2mul) * (duxdxl) + (lambdal) * (duydyl_plus_duzdzl);\n\
+  *(sigma_yy) = (lambdalplus2mul) * (duydyl) + (lambdal) * (duxdxl_plus_duzdzl);\n\
+  *(sigma_zz) = (lambdalplus2mul) * (duzdzl) + (lambdal) * (duxdxl_plus_duydyl);\n\
+  *(sigma_xy) = (mul) * (duxdyl_plus_duydxl);\n\
+  *(sigma_xz) = (mul) * (duzdxl_plus_duxdzl);\n\
+  *(sigma_yz) = (mul) * (duzdyl_plus_duydzl);\n\
+}\n\
+\n\
 \n\
 /*----------------------------------------------*/\n\
 // main function\n\
@@ -320,12 +368,6 @@ __kernel  void inner_core_impl_kernel_adjoint(const int nb_blocks_to_compute, co
   float fac1;\n\
   float fac2;\n\
   float fac3;\n\
-  float lambdal;\n\
-  float mul;\n\
-  float lambdalplus2mul;\n\
-  float kappal;\n\
-  float mul_iso;\n\
-  float mul_aniso;\n\
   float sigma_xx;\n\
   float sigma_xy;\n\
   float sigma_xz;\n\
@@ -340,11 +382,6 @@ __kernel  void inner_core_impl_kernel_adjoint(const int nb_blocks_to_compute, co
   float epsilondev_xy_loc_1;\n\
   float epsilondev_xz_loc_1;\n\
   float epsilondev_yz_loc_1;\n\
-  float c11;\n\
-  float c12;\n\
-  float c13;\n\
-  float c33;\n\
-  float c44;\n\
   float sum_terms1;\n\
   float sum_terms2;\n\
   float sum_terms3;\n\
@@ -542,49 +579,10 @@ __kernel  void inner_core_impl_kernel_adjoint(const int nb_blocks_to_compute, co
       }\n\
     }\n\
 \n\
-    kappal = d_kappavstore[offset];\n\
-    mul = d_muvstore[offset];\n\
-\n\
-    if (ATTENUATION) {\n\
-      if (USE_3D_ATTENUATION_ARRAYS) {\n\
-        mul_iso = (mul) * (one_minus_sum_beta[tx + (working_element) * (NGLL3)]);\n\
-        mul_aniso = (mul) * (one_minus_sum_beta[tx + (working_element) * (NGLL3)] - (1.0f));\n\
-      } else {\n\
-        mul_iso = (mul) * (one_minus_sum_beta[working_element]);\n\
-        mul_aniso = (mul) * (one_minus_sum_beta[working_element] - (1.0f));\n\
-      }\n\
-    } else {\n\
-      mul_iso = mul;\n\
-    }\n\
-\n\
     if (ANISOTROPY) {\n\
-      c11 = d_c11store[offset];\n\
-      c12 = d_c12store[offset];\n\
-      c13 = d_c13store[offset];\n\
-      c33 = d_c33store[offset];\n\
-      c44 = d_c44store[offset];\n\
-      if (ATTENUATION) {\n\
-        c11 = c11 + (mul_aniso) * (1.3333333333333333f);\n\
-        c12 = c12 - ((mul_aniso) * (0.6666666666666666f));\n\
-        c13 = c13 - ((mul_aniso) * (0.6666666666666666f));\n\
-        c33 = c33 + (mul_aniso) * (1.3333333333333333f);\n\
-        c44 = c44 + mul_aniso;\n\
-      }\n\
-      sigma_xx = (c11) * (duxdxl) + (c12) * (duydyl) + (c13) * (duzdzl);\n\
-      sigma_yy = (c12) * (duxdxl) + (c11) * (duydyl) + (c13) * (duzdzl);\n\
-      sigma_zz = (c13) * (duxdxl) + (c13) * (duydyl) + (c33) * (duzdzl);\n\
-      sigma_xy = ((c11 - (c12)) * (duxdyl_plus_duydxl)) * (0.5f);\n\
-      sigma_xz = (c44) * (duzdxl_plus_duxdzl);\n\
-      sigma_yz = (c44) * (duzdyl_plus_duydzl);\n\
+      compute_element_ic_aniso(offset, d_c11store, d_c12store, d_c13store, d_c33store, d_c44store, duxdxl, duydyl, duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);\n\
     } else {\n\
-      lambdalplus2mul = kappal + (mul_iso) * (1.3333333333333333f);\n\
-      lambdal = lambdalplus2mul - ((mul_iso) * (2.0f));\n\
-      sigma_xx = (lambdalplus2mul) * (duxdxl) + (lambdal) * (duydyl_plus_duzdzl);\n\
-      sigma_yy = (lambdalplus2mul) * (duydyl) + (lambdal) * (duxdxl_plus_duzdzl);\n\
-      sigma_zz = (lambdalplus2mul) * (duzdzl) + (lambdal) * (duxdxl_plus_duydyl);\n\
-      sigma_xy = (mul) * (duxdyl_plus_duydxl);\n\
-      sigma_xz = (mul) * (duzdxl_plus_duxdzl);\n\
-      sigma_yz = (mul) * (duzdyl_plus_duydzl);\n\
+      compute_element_ic_iso(offset, d_kappavstore, d_muvstore, duxdxl, duydyl, duzdzl, duxdxl_plus_duydyl, duxdxl_plus_duzdzl, duydyl_plus_duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);\n\
     }\n\
 \n\
     if (ATTENUATION &&  !(PARTIAL_PHYS_DISPERSION_ONLY)) {\n\
@@ -765,7 +763,7 @@ __kernel  void inner_core_impl_kernel_adjoint(const int nb_blocks_to_compute, co
 #endif\n\
 \n\
     if (ATTENUATION &&  !(PARTIAL_PHYS_DISPERSION_ONLY)) {\n\
-      compute_element_ic_att_memory(tx, working_element, d_muvstore, factor_common, alphaval, betaval, gammaval, R_xx, R_yy, R_xy, R_xz, R_yz, epsilondev_xx, epsilondev_yy, epsilondev_xy, epsilondev_xz, epsilondev_yz, epsilondev_xx_loc_1, epsilondev_yy_loc_1, epsilondev_xy_loc_1, epsilondev_xz_loc_1, epsilondev_yz_loc_1, USE_3D_ATTENUATION_ARRAYS);\n\
+      compute_element_ic_att_memory(tx, working_element, d_muvstore, factor_common, alphaval, betaval, gammaval, R_xx, R_yy, R_xy, R_xz, R_yz, epsilondev_xx, epsilondev_yy, epsilondev_xy, epsilondev_xz, epsilondev_yz, epsilondev_xx_loc_1, epsilondev_yy_loc_1, epsilondev_xy_loc_1, epsilondev_xz_loc_1, epsilondev_yz_loc_1, d_c44store, ANISOTROPY, USE_3D_ATTENUATION_ARRAYS);\n\
     }\n\
 \n\
     if (COMPUTE_AND_STORE_STRAIN) {\n\
