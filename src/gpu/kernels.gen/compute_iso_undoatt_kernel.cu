@@ -122,10 +122,12 @@ static __device__ void compute_element_strain_undoatt(const int ispec, const int
   float fac1;
   float fac2;
   float fac3;
+
   tx = threadIdx.x;
   K = (tx) / (NGLL2);
   J = (tx - ((K) * (NGLL2))) / (NGLLX);
   I = tx - ((K) * (NGLL2)) - ((J) * (NGLLX));
+
   tempx1l = 0.0f;
   tempx2l = 0.0f;
   tempx3l = 0.0f;
@@ -135,6 +137,7 @@ static __device__ void compute_element_strain_undoatt(const int ispec, const int
   tempz1l = 0.0f;
   tempz2l = 0.0f;
   tempz3l = 0.0f;
+
   for (l = 0; l <= NGLLX - (1); l += 1) {
     fac1 = sh_hprime_xx[(l) * (NGLLX) + I];
     tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + l]) * (fac1);
@@ -149,6 +152,7 @@ static __device__ void compute_element_strain_undoatt(const int ispec, const int
     tempy3l = tempy3l + (s_dummyy_loc[(l) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
     tempz3l = tempz3l + (s_dummyz_loc[(l) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
   }
+
   offset = (ispec) * (NGLL3_PADDED) + tx;
   xixl = d_xix[offset];
   etaxl = d_etax[offset];
@@ -168,6 +172,7 @@ static __device__ void compute_element_strain_undoatt(const int ispec, const int
   duzdxl = (xixl) * (tempz1l) + (etaxl) * (tempz2l) + (gammaxl) * (tempz3l);
   duzdyl = (xiyl) * (tempz1l) + (etayl) * (tempz2l) + (gammayl) * (tempz3l);
   duzdzl = (xizl) * (tempz1l) + (etazl) * (tempz2l) + (gammazl) * (tempz3l);
+
   templ = (duxdxl + duydyl + duzdzl) * (0.3333333333333333f);
   epsilondev_loc[0] = duxdxl - (templ);
   epsilondev_loc[1] = duydyl - (templ);
@@ -176,6 +181,7 @@ static __device__ void compute_element_strain_undoatt(const int ispec, const int
   epsilondev_loc[4] = (duzdyl + duydzl) * (0.5f);
   *(epsilon_trace_over_3) = templ;
 }
+
 __global__ void compute_iso_undoatt_kernel(const float * epsilondev_xx, const float * epsilondev_yy, const float * epsilondev_xy, const float * epsilondev_xz, const float * epsilondev_yz, const float * epsilon_trace_over_3, float * mu_kl, float * kappa_kl, const int NSPEC, const float deltat, const int * d_ibool, const float * d_b_displ, const float * d_xix, const float * d_xiy, const float * d_xiz, const float * d_etax, const float * d_etay, const float * d_etaz, const float * d_gammax, const float * d_gammay, const float * d_gammaz, const float * d_hprime_xx){
   int ispec;
   int ijk_ispec;
@@ -189,12 +195,14 @@ __global__ void compute_iso_undoatt_kernel(const float * epsilondev_xx, const fl
   __shared__ float s_dummyy_loc[(NGLL3)];
   __shared__ float s_dummyz_loc[(NGLL3)];
   __shared__ float sh_hprime_xx[(NGLL2)];
+
   ispec = blockIdx.x + (blockIdx.y) * (gridDim.x);
   ijk_ispec = threadIdx.x + (NGLL3) * (ispec);
   tx = threadIdx.x;
   if (tx < NGLL2) {
     sh_hprime_xx[tx] = d_hprime_xx[tx];
   }
+
   if (ispec < NSPEC) {
     iglob = d_ibool[ijk_ispec] - (1);
     s_dummyx_loc[tx] = d_b_displ[0 + (3) * (iglob)];
@@ -202,6 +210,7 @@ __global__ void compute_iso_undoatt_kernel(const float * epsilondev_xx, const fl
     s_dummyz_loc[tx] = d_b_displ[2 + (3) * (iglob)];
   }
   __syncthreads();
+
   if (ispec < NSPEC) {
     epsdev[0] = epsilondev_xx[ijk_ispec];
     epsdev[1] = epsilondev_yy[ijk_ispec];
@@ -209,7 +218,9 @@ __global__ void compute_iso_undoatt_kernel(const float * epsilondev_xx, const fl
     epsdev[3] = epsilondev_xz[ijk_ispec];
     epsdev[4] = epsilondev_yz[ijk_ispec];
     eps_trace_over_3 = epsilon_trace_over_3[ijk_ispec];
+
     compute_element_strain_undoatt(ispec, ijk_ispec, d_ibool, s_dummyx_loc, s_dummyy_loc, s_dummyz_loc, d_xix, d_xiy, d_xiz, d_etax, d_etay, d_etaz, d_gammax, d_gammay, d_gammaz, sh_hprime_xx, b_epsdev,  &b_eps_trace_over_3);
+
     mu_kl[ijk_ispec] = mu_kl[ijk_ispec] + (deltat) * ((epsdev[0]) * (b_epsdev[0]) + (epsdev[1]) * (b_epsdev[1]) + (epsdev[0] + epsdev[1]) * (b_epsdev[0] + b_epsdev[1]) + ((epsdev[2]) * (b_epsdev[2]) + (epsdev[3]) * (b_epsdev[3]) + (epsdev[4]) * (b_epsdev[4])) * (2.0f));
     kappa_kl[ijk_ispec] = kappa_kl[ijk_ispec] + (deltat) * (((eps_trace_over_3) * (b_eps_trace_over_3)) * (9.0f));
   }

@@ -92,10 +92,13 @@ __global__ void compute_stacey_acoustic_backward_kernel(float * b_potential_dot_
   int k;
   int iglob;
   int ispec;
+
   igll = threadIdx.x;
   iface = blockIdx.x + (blockIdx.y) * (gridDim.x);
+
   if (iface < num_abs_boundary_faces) {
     ispec = abs_boundary_ispec[iface] - (1);
+
     switch (interface_type) {
       case 4 :
         if (nkmin_xi[INDEX2(2, 0, iface)] == 0 || njmin[INDEX2(2, 0, iface)] == 0) {
@@ -165,6 +168,7 @@ __global__ void compute_stacey_acoustic_backward_kernel(float * b_potential_dot_
         }
         break;
     }
+
     iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)] - (1);
     atomicAdd(b_potential_dot_dot_acoustic + iglob,  -(b_absorb_potential[INDEX2(NGLL2, igll, iface)]));
   }

@@ -90,11 +90,14 @@ __global__ void get_maximum_vector_kernel(const float * array, const int size, f
   int bx;
   int i;
   int s;
+
   tid = threadIdx.x;
   bx = (blockIdx.y) * (gridDim.x) + blockIdx.x;
   i = tid + (bx) * (blockDim.x);
+
   sdata[tid] = (i < size ? sqrt((array[(i) * (3) + 0]) * (array[(i) * (3) + 0]) + (array[(i) * (3) + 1]) * (array[(i) * (3) + 1]) + (array[(i) * (3) + 2]) * (array[(i) * (3) + 2])) : 0.0f);
   __syncthreads();
+
   s = (blockDim.x) / (2);
   while (s > 0) {
     if (tid < s) {
@@ -105,6 +108,7 @@ __global__ void get_maximum_vector_kernel(const float * array, const int size, f
     s = s >> 1;
     __syncthreads();
   }
+
   if (tid == 0) {
     d_max[bx] = sdata[0];
   }

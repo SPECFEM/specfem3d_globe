@@ -97,7 +97,9 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 \n\
 __kernel void update_accel_acoustic_kernel(__global float * accel, const int size, const __global float * rmass){\n\
   int id;\n\
+\n\
   id = get_global_id(0) + (get_group_id(1)) * (get_global_size(0));\n\
+\n\
   if (id < size) {\n\
     accel[id] = (accel[id]) * (rmass[id]);\n\
   }\n\

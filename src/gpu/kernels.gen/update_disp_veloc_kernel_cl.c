@@ -97,7 +97,9 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 \n\
 __kernel void update_disp_veloc_kernel(__global float * displ, __global float * veloc, __global float * accel, const int size, const float deltat, const float deltatsqover2, const float deltatover2){\n\
   int id;\n\
+\n\
   id = get_global_id(0) + (get_group_id(1)) * (get_global_size(0));\n\
+\n\
   if (id < size) {\n\
     displ[id] = displ[id] + (deltat) * (veloc[id]) + (deltatsqover2) * (accel[id]);\n\
     veloc[id] = veloc[id] + (deltatover2) * (accel[id]);\n\

@@ -90,10 +90,12 @@ static __device__ void compute_element_cm_att_stress(const int tx, const int wor
   int i_sls;
   float R_xx_val;
   float R_yy_val;
+
   for (i_sls = 0; i_sls <= N_SLS - (1); i_sls += 1) {
     offset = tx + (NGLL3) * (i_sls + (N_SLS) * (working_element));
     R_xx_val = R_xx[offset];
     R_yy_val = R_yy[offset];
+
     sigma_xx[0] = sigma_xx[0] - (R_xx_val);
     sigma_yy[0] = sigma_yy[0] - (R_yy_val);
     sigma_zz[0] = sigma_zz[0] + R_xx_val + R_yy_val;
@@ -113,11 +115,13 @@ static __device__ void compute_element_cm_att_memory(const int tx, const int wor
   float factor_loc;
   float sn;
   float snp1;
+
   if (ANISOTROPY) {
     mul = d_c44store[tx + (NGLL3_PADDED) * (working_element)];
   } else {
     mul = d_muv[tx + (NGLL3_PADDED) * (working_element)];
   }
+
   for (i_sls = 0; i_sls <= N_SLS - (1); i_sls += 1) {
     offset = tx + (NGLL3) * (i_sls + (N_SLS) * (working_element));
     if (USE_3D_ATTENUATION_ARRAYS) {
@@ -128,6 +132,7 @@ static __device__ void compute_element_cm_att_memory(const int tx, const int wor
     alphaval_loc = alphaval[i_sls];
     betaval_loc = betaval[i_sls];
     gammaval_loc = gammaval[i_sls];
+
     sn = (factor_loc) * (epsilondev_xx[tx + (NGLL3) * (working_element)]);
     snp1 = (factor_loc) * (epsilondev_xx_loc);
     R_xx[offset] = (alphaval_loc) * (R_xx[offset]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);
@@ -177,14 +182,18 @@ static __device__ void compute_element_cm_gravity(const int tx, const int iglob,
   float sz_l;
   float factor;
   int int_radius;
+
   radius = d_rstore[0 + (3) * (iglob)];
   theta = d_rstore[1 + (3) * (iglob)];
   phi = d_rstore[2 + (3) * (iglob)];
+
   if (radius < 1.5696123057604773e-05f) {
     radius = 1.5696123057604773e-05f;
   }
+
   sincosf(theta,  &sin_theta,  &cos_theta);
   sincosf(phi,  &sin_phi,  &cos_phi);
+
   int_radius = rint(((radius) * (6371.0f)) * (10.0f)) - (1);
   if (int_radius < 0) {
     int_radius = 0;
@@ -192,6 +201,7 @@ static __device__ void compute_element_cm_gravity(const int tx, const int iglob,
   minus_g = d_minus_gravity_table[int_radius];
   minus_dg = d_minus_deriv_gravity_table[int_radius];
   rho = d_density_table[int_radius];
+
   gxl = ((minus_g) * (sin_theta)) * (cos_phi);
   gyl = ((minus_g) * (sin_theta)) * (sin_phi);
   gzl = (minus_g) * (cos_theta);
@@ -201,15 +211,18 @@ static __device__ void compute_element_cm_gravity(const int tx, const int iglob,
   sin_theta_sq = (sin_theta) * (sin_theta);
   cos_phi_sq = (cos_phi) * (cos_phi);
   sin_phi_sq = (sin_phi) * (sin_phi);
+
   Hxxl = (minus_g_over_radius) * ((cos_phi_sq) * (cos_theta_sq) + sin_phi_sq) + ((cos_phi_sq) * (minus_dg)) * (sin_theta_sq);
   Hyyl = (minus_g_over_radius) * (cos_phi_sq + (cos_theta_sq) * (sin_phi_sq)) + ((minus_dg) * (sin_phi_sq)) * (sin_theta_sq);
   Hzzl = (cos_theta_sq) * (minus_dg) + (minus_g_over_radius) * (sin_theta_sq);
   Hxyl = (((cos_phi) * (minus_dg_plus_g_over_radius)) * (sin_phi)) * (sin_theta_sq);
   Hxzl = (((cos_phi) * (cos_theta)) * (minus_dg_plus_g_over_radius)) * (sin_theta);
   Hyzl = (((cos_theta) * (minus_dg_plus_g_over_radius)) * (sin_phi)) * (sin_theta);
+
   sx_l = (rho) * (s_dummyx_loc[tx]);
   sy_l = (rho) * (s_dummyy_loc[tx]);
   sz_l = (rho) * (s_dummyz_loc[tx]);
+
   *(sigma_xx) = *(sigma_xx) + (sy_l) * (gyl) + (sz_l) * (gzl);
   *(sigma_yy) = *(sigma_yy) + (sx_l) * (gxl) + (sz_l) * (gzl);
   *(sigma_zz) = *(sigma_zz) + (sx_l) * (gxl) + (sy_l) * (gyl);
@@ -219,6 +232,7 @@ static __device__ void compute_element_cm_gravity(const int tx, const int iglob,
   *(sigma_zx) = *(sigma_zx) - ((sz_l) * (gxl));
   *(sigma_yz) = *(sigma_yz) - ((sy_l) * (gzl));
   *(sigma_zy) = *(sigma_zy) - ((sz_l) * (gyl));
+
   factor = (jacobianl) * (wgll_cube[tx]);
   rho_s_H1[0] = (factor) * ((sx_l) * (Hxxl) + (sy_l) * (Hxyl) + (sz_l) * (Hxzl));
   rho_s_H2[0] = (factor) * ((sx_l) * (Hxyl) + (sy_l) * (Hyyl) + (sz_l) * (Hyzl));

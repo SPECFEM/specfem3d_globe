@@ -89,11 +89,14 @@ __global__ void write_seismograms_transfer_strain_from_device_kernel(const int *
   int irec;
   int ispec;
   int blockID;
+
   blockID = blockIdx.x + (blockIdx.y) * (gridDim.x);
   tx = threadIdx.x;
+
   if (blockID < nrec_local) {
     irec = number_receiver_global[blockID] - (1);
     ispec = ispec_selected_rec[irec] - (1);
+
     station_strain_field[(NGLL3) * (blockID) + tx] = d_field[(NGLL3) * (ispec) + tx];
   }
 }

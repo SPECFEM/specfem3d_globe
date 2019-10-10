@@ -88,10 +88,13 @@ __global__ void compute_hess_kernel(const int * ibool, const float * accel, cons
   int ispec;
   int ijk_ispec;
   int iglob;
+
   ispec = blockIdx.x + (blockIdx.y) * (gridDim.x);
+
   if (ispec < NSPEC_AB) {
     ijk_ispec = threadIdx.x + (NGLL3) * (ispec);
     iglob = ibool[ijk_ispec] - (1);
+
     hess_kl[ijk_ispec] = hess_kl[ijk_ispec] + (deltat) * ((accel[0 + (3) * (iglob)]) * (b_accel[0 + (3) * (iglob)]) + (accel[1 + (3) * (iglob)]) * (b_accel[1 + (3) * (iglob)]) + (accel[2 + (3) * (iglob)]) * (b_accel[2 + (3) * (iglob)]));
   }
 }

@@ -30,6 +30,8 @@ module BOAST
       decl i_sls  = Int("i_sls")
       decl r_xx_val = Real("R_xx_val")
       decl r_yy_val = Real("R_yy_val")
+      comment()
+
       print For( i_sls, 0, nsls - 1) {
         # index
         # note: index for R_xx,.. here is (i,j,k,i_sls,ispec) and not (i,j,k,ispec,i_sls) as in local version
@@ -42,6 +44,8 @@ module BOAST
 
         print r_xx_val === r_xx[offset]
         print r_yy_val === r_yy[offset]
+        comment()
+
         print sigma_xx[0] === sigma_xx[0] - r_xx_val
         print sigma_yy[0] === sigma_yy[0] - r_yy_val
         print sigma_zz[0] === sigma_zz[0] + r_xx_val + r_yy_val

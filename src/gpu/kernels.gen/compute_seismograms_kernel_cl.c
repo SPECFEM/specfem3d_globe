@@ -110,14 +110,18 @@ __kernel void compute_seismograms_kernel(const int nrec_local, const __global fl
   __local float sh_dxd[(NGLL3_PADDED)];\n\
   __local float sh_dyd[(NGLL3_PADDED)];\n\
   __local float sh_dzd[(NGLL3_PADDED)];\n\
+\n\
   tx = get_local_id(0);\n\
   irec_local = get_group_id(0) + (get_num_groups(0)) * (get_group_id(1));\n\
+\n\
   k = (tx) / (NGLL2);\n\
   j = (tx - ((k) * (NGLL2))) / (NGLLX);\n\
   i = tx - ((k) * (NGLL2)) - ((j) * (NGLLX));\n\
+\n\
   if (irec_local < nrec_local) {\n\
     irec = number_receiver_global[irec_local] - (1);\n\
     ispec = ispec_selected_rec[irec] - (1);\n\
+\n\
     sh_dxd[tx] = 0;\n\
     sh_dyd[tx] = 0;\n\
     sh_dzd[tx] = 0;\n\
@@ -129,6 +133,7 @@ __kernel void compute_seismograms_kernel(const int nrec_local, const __global fl
       sh_dzd[tx] = (lagrange) * (displ[(iglob) * (3) + 2]);\n\
     }\n\
     barrier(CLK_LOCAL_MEM_FENCE);\n\
+\n\
     l = 1;\n\
     s = (l) * (2);\n\
     if (((tx < 0) ^ (s < 0) ? (tx % s) + s : tx % s) == 0) {\n\
@@ -186,6 +191,7 @@ __kernel void compute_seismograms_kernel(const int nrec_local, const __global fl
     }\n\
     barrier(CLK_LOCAL_MEM_FENCE);\n\
     l = (l) * (2);\n\
+\n\
     if (tx == 0) {\n\
       seismograms[(irec_local) * (3) + 0] = (scale_displ) * ((nu[((irec_local) * (3)) * (3) + 0]) * (sh_dxd[0]) + (nu[((irec_local) * (3) + 1) * (3) + 0]) * (sh_dyd[0]) + (nu[((irec_local) * (3) + 2) * (3) + 0]) * (sh_dzd[0]));\n\
     }\n\

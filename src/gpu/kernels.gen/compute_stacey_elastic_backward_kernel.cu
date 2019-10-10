@@ -92,10 +92,13 @@ __global__ void compute_stacey_elastic_backward_kernel(float * b_accel, const fl
   int k;
   int iglob;
   int ispec;
+
   igll = threadIdx.x;
   iface = blockIdx.x + (blockIdx.y) * (gridDim.x);
+
   if (iface < num_abs_boundary_faces) {
     ispec = abs_boundary_ispec[iface] - (1);
+
     switch (interface_type) {
       case 0 :
         if (nkmin_xi[INDEX2(2, 0, iface)] == 0 || njmin[INDEX2(2, 0, iface)] == 0) {
@@ -154,6 +157,7 @@ __global__ void compute_stacey_elastic_backward_kernel(float * b_accel, const fl
         }
         break;
     }
+
     iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)] - (1);
     atomicAdd(b_accel + (iglob) * (3) + 0,  -(b_absorb_field[INDEX3(NDIM, NGLL2, 0, igll, iface)]));
     atomicAdd(b_accel + (iglob) * (3) + 1,  -(b_absorb_field[INDEX3(NDIM, NGLL2, 1, igll, iface)]));

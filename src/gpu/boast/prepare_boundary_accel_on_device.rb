@@ -39,7 +39,11 @@ module BOAST
       decl iglob
       decl iloc
       decl iinterface
+      comment()
+
       print id === get_global_id(0)+get_global_size(0)*get_global_id(1)
+      comment()
+
       print For(iinterface, 0, num_interfaces-1) {
         print If(id<d_nibool_interfaces[iinterface]) {
           print iloc === id + max_nibool_interfaces*iinterface

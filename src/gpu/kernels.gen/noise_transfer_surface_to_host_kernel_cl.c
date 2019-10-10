@@ -98,19 +98,23 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 __kernel void noise_transfer_surface_to_host_kernel(const __global int * ibelm_top, const int nspec_top, const __global int * ibool, const __global float * displ, __global float * noise_surface_movie){\n\
   int igll;\n\
   int iface;\n\
+\n\
   igll = get_local_id(0);\n\
   iface = get_group_id(0) + (get_group_id(1)) * (get_num_groups(0));\n\
+\n\
   if (iface < nspec_top) {\n\
     int i;\n\
     int j;\n\
     int k;\n\
     int ispec;\n\
     int iglob;\n\
+\n\
     ispec = ibelm_top[iface] - (1);\n\
     k = NGLLX - (1);\n\
     j = (igll) / (NGLLX);\n\
     i = igll - ((j) * (NGLLX));\n\
     iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)] - (1);\n\
+\n\
     noise_surface_movie[INDEX3(NDIM, NGLL2, 0, igll, iface)] = displ[(iglob) * (3) + 0];\n\
     noise_surface_movie[INDEX3(NDIM, NGLL2, 1, igll, iface)] = displ[(iglob) * (3) + 1];\n\
     noise_surface_movie[INDEX3(NDIM, NGLL2, 2, igll, iface)] = displ[(iglob) * (3) + 2];\n\

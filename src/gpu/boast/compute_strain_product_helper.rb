@@ -12,6 +12,7 @@ module BOAST
     sub = Procedure(function_name, [prod, eps_trace_over_3, epsdev, b_eps_trace_over_3, b_epsdev], :local => true) {
       decl eps   = Real("eps", :dim => [Dim(6)], :allocate => true )
       decl b_eps = Real("b_eps", :dim => [Dim(6)], :allocate => true )
+      comment()
 
       print eps[0] === epsdev[0] + eps_trace_over_3
       print eps[1] === epsdev[1] + eps_trace_over_3
@@ -19,6 +20,7 @@ module BOAST
       print eps[3] === epsdev[4]
       print eps[4] === epsdev[3]
       print eps[5] === epsdev[2]
+      comment()
 
       print b_eps[0] === b_epsdev[0] + b_eps_trace_over_3
       print b_eps[1] === b_epsdev[1] + b_eps_trace_over_3
@@ -26,6 +28,7 @@ module BOAST
       print b_eps[3] === b_epsdev[4]
       print b_eps[4] === b_epsdev[3]
       print b_eps[5] === b_epsdev[2]
+      comment()
 
       # Computing the 21 strain products without assuming eps(i)*b_eps(j) = eps(j)*b_eps(i)
       print prod[0] === (eps[0]) * (b_eps[0]);

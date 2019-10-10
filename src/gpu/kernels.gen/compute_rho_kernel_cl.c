@@ -99,10 +99,13 @@ __kernel void compute_rho_kernel(const __global int * ibool, const __global floa
   int ispec;\n\
   int ijk_ispec;\n\
   int iglob;\n\
+\n\
   ispec = get_group_id(0) + (get_group_id(1)) * (get_num_groups(0));\n\
+\n\
   if (ispec < NSPEC) {\n\
     ijk_ispec = get_local_id(0) + (NGLL3) * (ispec);\n\
     iglob = ibool[ijk_ispec] - (1);\n\
+\n\
     rho_kl[ijk_ispec] = rho_kl[ijk_ispec] + (deltat) * ((accel[0 + (3) * (iglob)]) * (b_displ[0 + (3) * (iglob)]) + (accel[1 + (3) * (iglob)]) * (b_displ[1 + (3) * (iglob)]) + (accel[2 + (3) * (iglob)]) * (b_displ[2 + (3) * (iglob)]));\n\
   }\n\
 }\n\

@@ -54,14 +54,17 @@ module BOAST
         Real("s_dummy#{a}_loc", :local => true, :dim => [Dim(ngll3)] )
       }
       decl sh_hprime_xx = Real("sh_hprime_xx",     :local => true, :dim => [Dim(ngll2)] )
+      comment()
 
       print ispec === get_group_id(0) + get_group_id(1)*get_num_groups(0)
       print ijk_ispec === get_local_id(0) + ngll3*ispec
       print tx === get_local_id(0)
+      comment()
 
       print If(tx < ngll2) {
         print sh_hprime_xx[tx] === d_hprime_xx[tx]
       }
+      comment()
 
       print If(ispec < nspec) {
         print iglob === d_ibool[ijk_ispec] - 1
@@ -70,6 +73,7 @@ module BOAST
         }
       }
       print barrier(:local)
+      comment()
 
       print If(ispec < nspec) {
 
@@ -79,6 +83,7 @@ module BOAST
                                                       *d_xi, *d_eta, *d_gamma,
                                                       sh_hprime_xx,
                                                       epsdev,eps_trace_over_3.address)
+        comment()
 
         print If(nspec_strain_only == 1 => lambda {
           print epsilon_trace_over_3[tx] === eps_trace_over_3
@@ -89,7 +94,6 @@ module BOAST
         (0..4).each { |indx|
           print epsilondev[indx][ijk_ispec] === epsdev[indx]
         }
-
       }
 
       close p

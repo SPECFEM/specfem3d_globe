@@ -42,11 +42,17 @@ module BOAST
       end
       decl tx, irec, ispec
       decl blockID
+      comment()
+
       print blockID === get_group_id(0)+get_group_id(1)*get_num_groups(0)
       print tx      === get_local_id(0)
+      comment()
+
       print If(blockID<nrec_local) {
         print irec === number_receiver_global[blockID] - 1
         print ispec === ispec_selected_rec[irec] - 1
+        comment()
+
         # copy element values to output array
         if type == :transfer then
           # from displ array (NDIM,NGLOB)

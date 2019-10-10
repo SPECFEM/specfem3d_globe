@@ -98,10 +98,14 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 __kernel void compute_iso_kernel(const __global float * epsilondev_xx, const __global float * epsilondev_yy, const __global float * epsilondev_xy, const __global float * epsilondev_xz, const __global float * epsilondev_yz, const __global float * epsilon_trace_over_3, const __global float * b_epsilondev_xx, const __global float * b_epsilondev_yy, const __global float * b_epsilondev_xy, const __global float * b_epsilondev_xz, const __global float * b_epsilondev_yz, const __global float * b_epsilon_trace_over_3, __global float * mu_kl, __global float * kappa_kl, const int NSPEC, const float deltat){\n\
   int ispec;\n\
   int ijk_ispec;\n\
+\n\
   ispec = get_group_id(0) + (get_group_id(1)) * (get_num_groups(0));\n\
+\n\
   if (ispec < NSPEC) {\n\
     ijk_ispec = get_local_id(0) + (NGLL3) * (ispec);\n\
+\n\
     mu_kl[ijk_ispec] = mu_kl[ijk_ispec] + (deltat) * ((epsilondev_xx[ijk_ispec]) * (b_epsilondev_xx[ijk_ispec]) + (epsilondev_yy[ijk_ispec]) * (b_epsilondev_yy[ijk_ispec]) + (epsilondev_xx[ijk_ispec] + epsilondev_yy[ijk_ispec]) * (b_epsilondev_xx[ijk_ispec] + b_epsilondev_yy[ijk_ispec]) + ((epsilondev_xy[ijk_ispec]) * (b_epsilondev_xy[ijk_ispec]) + (epsilondev_xz[ijk_ispec]) * (b_epsilondev_xz[ijk_ispec]) + (epsilondev_yz[ijk_ispec]) * (b_epsilondev_yz[ijk_ispec])) * (2));\n\
+\n\
     kappa_kl[ijk_ispec] = kappa_kl[ijk_ispec] + (deltat) * (((epsilon_trace_over_3[ijk_ispec]) * (b_epsilon_trace_over_3[ijk_ispec])) * (9));\n\
   }\n\
 }\n\

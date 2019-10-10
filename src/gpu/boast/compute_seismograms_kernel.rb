@@ -51,18 +51,23 @@ module BOAST
       decl sh_dxd = Real("sh_dxd",     :local => true, :dim => [Dim(ngll3_padded)] )
       decl sh_dyd = Real("sh_dyd",     :local => true, :dim => [Dim(ngll3_padded)] )
       decl sh_dzd = Real("sh_dzd",     :local => true, :dim => [Dim(ngll3_padded)] )
+      comment()
 
       print tx === get_local_id(0)
       print irec_local === get_group_id(0) + get_num_groups(0)*get_group_id(1)
+      comment()
 
       print k === tx/ngll2
       print j === (tx - k*ngll2)/ngllx
       print i ===  tx - k*ngll2 - j*ngllx
+      comment()
 
       print If (irec_local < nrec_local) {
 
         print irec  === number_receiver_global[irec_local] - 1
         print ispec === ispec_selected_rec[irec] - 1
+        comment()
+
         print sh_dxd[tx] === 0
         print sh_dyd[tx] === 0
         print sh_dzd[tx] === 0
@@ -76,6 +81,7 @@ module BOAST
           print sh_dzd[tx] === lagrange * displ[iglob*3 + 2]
         }
         print barrier(:local)
+        comment()
 
         print l === 1
         (1..7).each { |indx1|
@@ -88,6 +94,7 @@ module BOAST
           print barrier(:local)
           print l ===  l*2
         }
+        comment()
 
         print If (tx == 0) {
           print seismograms[irec_local*3 + 0] === scale_displ * (

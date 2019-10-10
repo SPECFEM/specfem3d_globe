@@ -23,10 +23,16 @@ module BOAST
         decl ispec = Int("ispec")
         decl ijk_ispec = Int("ijk_ispec")
         decl iglob = Int("iglob")
+        comment()
+
         print ispec === get_group_id(0) + get_group_id(1)*get_num_groups(0)
+        comment()
+
         print If(ispec < nspec ) {
           print ijk_ispec === get_local_id(0) + ngll3*ispec
           print iglob === ibool[ijk_ispec] - 1
+          comment()
+
           print rho_kl[ijk_ispec] === rho_kl[ijk_ispec] + deltat * ( accel[0, iglob] * b_displ[0, iglob]\
                                                                    + accel[1, iglob] * b_displ[1, iglob]\
                                                                    + accel[2, iglob] * b_displ[2, iglob])

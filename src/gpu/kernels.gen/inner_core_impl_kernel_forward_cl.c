@@ -107,10 +107,12 @@ void compute_element_ic_att_stress(const int tx, const int working_element, cons
   int i_sls;\n\
   float R_xx_val;\n\
   float R_yy_val;\n\
+\n\
   for (i_sls = 0; i_sls <= N_SLS - (1); i_sls += 1) {\n\
     offset = tx + (NGLL3) * (i_sls + (N_SLS) * (working_element));\n\
     R_xx_val = R_xx[offset];\n\
     R_yy_val = R_yy[offset];\n\
+\n\
     sigma_xx[0] = sigma_xx[0] - (R_xx_val);\n\
     sigma_yy[0] = sigma_yy[0] - (R_yy_val);\n\
     sigma_zz[0] = sigma_zz[0] + R_xx_val + R_yy_val;\n\
@@ -133,11 +135,13 @@ void compute_element_ic_att_memory(const int tx, const int working_element, cons
   float factor_loc;\n\
   float sn;\n\
   float snp1;\n\
+\n\
   if (ANISOTROPY) {\n\
     mul = d_c44store[tx + (NGLL3_PADDED) * (working_element)];\n\
   } else {\n\
     mul = d_muv[tx + (NGLL3_PADDED) * (working_element)];\n\
   }\n\
+\n\
   for (i_sls = 0; i_sls <= N_SLS - (1); i_sls += 1) {\n\
     offset = tx + (NGLL3) * (i_sls + (N_SLS) * (working_element));\n\
     if (USE_3D_ATTENUATION_ARRAYS) {\n\
@@ -148,6 +152,7 @@ void compute_element_ic_att_memory(const int tx, const int working_element, cons
     alphaval_loc = alphaval[i_sls];\n\
     betaval_loc = betaval[i_sls];\n\
     gammaval_loc = gammaval[i_sls];\n\
+\n\
     sn = (factor_loc) * (epsilondev_xx[tx + (NGLL3) * (working_element)]);\n\
     snp1 = (factor_loc) * (epsilondev_xx_loc);\n\
     R_xx[offset] = (alphaval_loc) * (R_xx[offset]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);\n\
@@ -200,14 +205,18 @@ void compute_element_ic_gravity(const int tx, const int iglob, const __global fl
   float sz_l;\n\
   float factor;\n\
   int int_radius;\n\
+\n\
   radius = d_rstore[0 + (3) * (iglob)];\n\
   theta = d_rstore[1 + (3) * (iglob)];\n\
   phi = d_rstore[2 + (3) * (iglob)];\n\
+\n\
   if (radius < 1.5696123057604773e-05f) {\n\
     radius = 1.5696123057604773e-05f;\n\
   }\n\
+\n\
   sin_theta = sincos(theta,  &cos_theta);\n\
   sin_phi = sincos(phi,  &cos_phi);\n\
+\n\
   int_radius = rint(((radius) * (6371.0f)) * (10.0f)) - (1);\n\
   if (int_radius < 0) {\n\
     int_radius = 0;\n\
@@ -215,6 +224,7 @@ void compute_element_ic_gravity(const int tx, const int iglob, const __global fl
   minus_g = d_minus_gravity_table[int_radius];\n\
   minus_dg = d_minus_deriv_gravity_table[int_radius];\n\
   rho = d_density_table[int_radius];\n\
+\n\
   gxl = ((minus_g) * (sin_theta)) * (cos_phi);\n\
   gyl = ((minus_g) * (sin_theta)) * (sin_phi);\n\
   gzl = (minus_g) * (cos_theta);\n\
@@ -224,15 +234,18 @@ void compute_element_ic_gravity(const int tx, const int iglob, const __global fl
   sin_theta_sq = (sin_theta) * (sin_theta);\n\
   cos_phi_sq = (cos_phi) * (cos_phi);\n\
   sin_phi_sq = (sin_phi) * (sin_phi);\n\
+\n\
   Hxxl = (minus_g_over_radius) * ((cos_phi_sq) * (cos_theta_sq) + sin_phi_sq) + ((cos_phi_sq) * (minus_dg)) * (sin_theta_sq);\n\
   Hyyl = (minus_g_over_radius) * (cos_phi_sq + (cos_theta_sq) * (sin_phi_sq)) + ((minus_dg) * (sin_phi_sq)) * (sin_theta_sq);\n\
   Hzzl = (cos_theta_sq) * (minus_dg) + (minus_g_over_radius) * (sin_theta_sq);\n\
   Hxyl = (((cos_phi) * (minus_dg_plus_g_over_radius)) * (sin_phi)) * (sin_theta_sq);\n\
   Hxzl = (((cos_phi) * (cos_theta)) * (minus_dg_plus_g_over_radius)) * (sin_theta);\n\
   Hyzl = (((cos_theta) * (minus_dg_plus_g_over_radius)) * (sin_phi)) * (sin_theta);\n\
+\n\
   sx_l = (rho) * (s_dummyx_loc[tx]);\n\
   sy_l = (rho) * (s_dummyy_loc[tx]);\n\
   sz_l = (rho) * (s_dummyz_loc[tx]);\n\
+\n\
   *(sigma_xx) = *(sigma_xx) + (sy_l) * (gyl) + (sz_l) * (gzl);\n\
   *(sigma_yy) = *(sigma_yy) + (sx_l) * (gxl) + (sz_l) * (gzl);\n\
   *(sigma_zz) = *(sigma_zz) + (sx_l) * (gxl) + (sy_l) * (gyl);\n\
@@ -242,6 +255,7 @@ void compute_element_ic_gravity(const int tx, const int iglob, const __global fl
   *(sigma_zx) = *(sigma_zx) - ((sz_l) * (gxl));\n\
   *(sigma_yz) = *(sigma_yz) - ((sy_l) * (gzl));\n\
   *(sigma_zy) = *(sigma_zy) - ((sz_l) * (gyl));\n\
+\n\
   factor = (jacobianl) * (wgll_cube[tx]);\n\
   rho_s_H1[0] = (factor) * ((sx_l) * (Hxxl) + (sy_l) * (Hxyl) + (sz_l) * (Hxzl));\n\
   rho_s_H2[0] = (factor) * ((sx_l) * (Hxyl) + (sy_l) * (Hyyl) + (sz_l) * (Hyzl));\n\

@@ -88,10 +88,13 @@ __global__ void compute_rho_kernel(const int * ibool, const float * accel, const
   int ispec;
   int ijk_ispec;
   int iglob;
+
   ispec = blockIdx.x + (blockIdx.y) * (gridDim.x);
+
   if (ispec < NSPEC) {
     ijk_ispec = threadIdx.x + (NGLL3) * (ispec);
     iglob = ibool[ijk_ispec] - (1);
+
     rho_kl[ijk_ispec] = rho_kl[ijk_ispec] + (deltat) * ((accel[0 + (3) * (iglob)]) * (b_displ[0 + (3) * (iglob)]) + (accel[1 + (3) * (iglob)]) * (b_displ[1 + (3) * (iglob)]) + (accel[2 + (3) * (iglob)]) * (b_displ[2 + (3) * (iglob)]));
   }
 }

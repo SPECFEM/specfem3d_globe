@@ -97,7 +97,9 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 \n\
 __kernel void update_potential_kernel(__global float * potential_acoustic, __global float * potential_dot_acoustic, __global float * potential_dot_dot_acoustic, const int size, const float deltat, const float deltatsqover2, const float deltatover2){\n\
   int id;\n\
+\n\
   id = get_global_id(0) + (get_group_id(1)) * (get_global_size(0));\n\
+\n\
   if (id < size) {\n\
     potential_acoustic[id] = potential_acoustic[id] + (deltat) * (potential_dot_acoustic[id]) + (deltatsqover2) * (potential_dot_dot_acoustic[id]);\n\
     potential_dot_acoustic[id] = potential_dot_acoustic[id] + (deltatover2) * (potential_dot_dot_acoustic[id]);\n\

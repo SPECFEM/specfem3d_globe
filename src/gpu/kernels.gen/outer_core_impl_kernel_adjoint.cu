@@ -173,6 +173,7 @@ __global__ void outer_core_impl_kernel_adjoint(const int nb_blocks_to_compute, c
   __shared__ float s_temp3[(NGLL3)];
   __shared__ float sh_hprime_xx[(NGLL2)];
   __shared__ float sh_hprimewgll_xx[(NGLL2)];
+
   bx = (blockIdx.y) * (gridDim.x) + blockIdx.x;
   tx = threadIdx.x + ((NGLL3_PADDED) * (0)) / (1);
 
@@ -209,9 +210,11 @@ __global__ void outer_core_impl_kernel_adjoint(const int nb_blocks_to_compute, c
 #endif
   }
   __syncthreads();
+
   K = (tx) / (NGLL2);
   J = (tx - ((K) * (NGLL2))) / (NGLLX);
   I = tx - ((K) * (NGLL2)) - ((J) * (NGLLX));
+
   if (active_1) {
     temp1l = 0.0f;
     temp2l = 0.0f;
@@ -239,6 +242,7 @@ __global__ void outer_core_impl_kernel_adjoint(const int nb_blocks_to_compute, c
       temp3l = temp3l + (s_dummy_loc[(l) * (NGLL2) + (J) * (NGLLX) + I]) * (sh_hprime_xx[(l) * (NGLLX) + K]);
     }
 #endif
+
     offset = (working_element) * (NGLL3_PADDED) + tx;
     xixl = d_xix[offset];
     etaxl = d_etax[offset];
@@ -249,22 +253,26 @@ __global__ void outer_core_impl_kernel_adjoint(const int nb_blocks_to_compute, c
     xizl = d_xiz[offset];
     etazl = d_etaz[offset];
     gammazl = d_gammaz[offset];
+
     jacobianl = (1.0f) / ((xixl) * ((etayl) * (gammazl) - ((etazl) * (gammayl))) - ((xiyl) * ((etaxl) * (gammazl) - ((etazl) * (gammaxl)))) + (xizl) * ((etaxl) * (gammayl) - ((etayl) * (gammaxl))));
     dpotentialdxl = (xixl) * (temp1l) + (etaxl) * (temp2l) + (gammaxl) * (temp3l);
     dpotentialdyl = (xiyl) * (temp1l) + (etayl) * (temp2l) + (gammayl) * (temp3l);
     dpotentialdzl = (xizl) * (temp1l) + (etazl) * (temp2l) + (gammazl) * (temp3l);
+
     if (ROTATION) {
       compute_element_oc_rotation(tx, working_element, time, two_omega_earth, deltat, d_A_array_rotation, d_B_array_rotation, dpotentialdxl, dpotentialdyl,  &dpotentialdx_with_rot,  &dpotentialdy_with_rot);
     } else {
       dpotentialdx_with_rot = dpotentialdxl;
       dpotentialdy_with_rot = dpotentialdyl;
     }
+
     radius = d_rstore[0 + (3) * (iglob_1)];
     theta = d_rstore[1 + (3) * (iglob_1)];
     phi = d_rstore[2 + (3) * (iglob_1)];
     sincosf(theta,  &sin_theta,  &cos_theta);
     sincosf(phi,  &sin_phi,  &cos_phi);
     int_radius = rint(((radius) * (R_EARTH_KM)) * (10.0f)) - (1);
+
     if ( !(GRAVITY)) {
       grad_x_ln_rho = ((sin_theta) * (cos_phi)) * (d_d_ln_density_dr_table[int_radius]);
       grad_y_ln_rho = ((sin_theta) * (sin_phi)) * (d_d_ln_density_dr_table[int_radius]);
@@ -278,11 +286,14 @@ __global__ void outer_core_impl_kernel_adjoint(const int nb_blocks_to_compute, c
       gzl = cos_theta;
       gravity_term_1 = (((d_minus_rho_g_over_kappa_fluid[int_radius]) * (jacobianl)) * (wgll_cube[tx])) * ((dpotentialdx_with_rot) * (gxl) + (dpotentialdy_with_rot) * (gyl) + (dpotentialdzl) * (gzl));
     }
+
     s_temp1[tx] = (jacobianl) * ((xixl) * (dpotentialdx_with_rot) + (xiyl) * (dpotentialdy_with_rot) + (xizl) * (dpotentialdzl));
     s_temp2[tx] = (jacobianl) * ((etaxl) * (dpotentialdx_with_rot) + (etayl) * (dpotentialdy_with_rot) + (etazl) * (dpotentialdzl));
     s_temp3[tx] = (jacobianl) * ((gammaxl) * (dpotentialdx_with_rot) + (gammayl) * (dpotentialdy_with_rot) + (gammazl) * (dpotentialdzl));
   }
   __syncthreads();
+
+
   if (active_1) {
     temp1l = 0.0f;
     temp2l = 0.0f;
@@ -310,6 +321,7 @@ __global__ void outer_core_impl_kernel_adjoint(const int nb_blocks_to_compute, c
       temp3l = temp3l + (s_temp3[(l) * (NGLL2) + (J) * (NGLLX) + I]) * (sh_hprimewgll_xx[(K) * (NGLLX) + l]);
     }
 #endif
+
     sum_terms =  -((wgllwgll_yz[(K) * (NGLLX) + J]) * (temp1l) + (wgllwgll_xz[(K) * (NGLLX) + I]) * (temp2l) + (wgllwgll_xy[(J) * (NGLLX) + I]) * (temp3l));
     if (GRAVITY) {
       sum_terms = sum_terms + gravity_term_1;

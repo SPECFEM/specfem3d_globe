@@ -87,8 +87,10 @@
 __global__ void noise_add_surface_movie_kernel(float * accel, const int * ibool, const int * ibelm_top, const int nspec_top, const float * noise_surface_movie, const float * normal_x_noise, const float * normal_y_noise, const float * normal_z_noise, const float * mask_noise, const float * jacobian2D, const float * wgllwgll){
   int igll;
   int iface;
+
   igll = threadIdx.x;
   iface = blockIdx.x + (blockIdx.y) * (gridDim.x);
+
   if (iface < nspec_top) {
     int i;
     int j;
@@ -101,12 +103,14 @@ __global__ void noise_add_surface_movie_kernel(float * accel, const int * ibool,
     float normal_x;
     float normal_y;
     float normal_z;
+
     ispec = ibelm_top[iface] - (1);
     k = NGLLX - (1);
     j = (igll) / (NGLLX);
     i = igll - ((j) * (NGLLX));
     iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)] - (1);
     ipoin = (NGLL2) * (iface) + igll;
+
     normal_x = normal_x_noise[ipoin];
     normal_y = normal_y_noise[ipoin];
     normal_z = normal_z_noise[ipoin];
@@ -115,6 +119,7 @@ __global__ void noise_add_surface_movie_kernel(float * accel, const int * ibool,
     eta = eta + (noise_surface_movie[INDEX3(NDIM, NGLL2, 1, igll, iface)]) * (normal_y);
     eta = eta + (noise_surface_movie[INDEX3(NDIM, NGLL2, 2, igll, iface)]) * (normal_z);
     jacobianw = (wgllwgll[(j) * (NGLLX) + i]) * (jacobian2D[igll + (NGLL2) * (iface)]);
+
     atomicAdd(accel + (iglob) * (3) + 0, (((eta) * (mask_noise[ipoin])) * (normal_x)) * (jacobianw));
     atomicAdd(accel + (iglob) * (3) + 1, (((eta) * (mask_noise[ipoin])) * (normal_y)) * (jacobianw));
     atomicAdd(accel + (iglob) * (3) + 2, (((eta) * (mask_noise[ipoin])) * (normal_z)) * (jacobianw));

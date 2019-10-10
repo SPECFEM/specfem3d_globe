@@ -27,8 +27,11 @@ module BOAST
       decl tx =     Int("tx",       :signed => false)
       decl offset = Int("offset",   :signed => false)
       decl sh_tmp = Real("sh_tmp",  :local => true, :dim => [Dim(21*n_gll3)] )
+      comment()
 
       print ispec === get_group_id(0) + get_group_id(1)*get_num_groups(0)
+      comment()
+
       print If(ispec < nspec) {
         print tx === get_local_id(0)
         print offset === ispec*ngll3*21+tx
@@ -38,6 +41,8 @@ module BOAST
       }
       # synchronizes threads
       print barrier(:local)
+      comment()
+
       print If(ispec < nspec) {
         print For(i, 0, 21-1) {
           print id === (i*ngll3+tx)

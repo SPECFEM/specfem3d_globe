@@ -95,10 +95,13 @@ __global__ void compute_stacey_acoustic_kernel(const float * potential_dot_acous
   float sn;
   float jacobianw;
   float fac1;
+
   igll = threadIdx.x;
   iface = blockIdx.x + (blockIdx.y) * (gridDim.x);
+
   if (iface < num_abs_boundary_faces) {
     ispec = abs_boundary_ispec[iface] - (1);
+
     switch (interface_type) {
       case 4 :
         if (nkmin_xi[INDEX2(2, 0, iface)] == 0 || njmin[INDEX2(2, 0, iface)] == 0) {
@@ -173,6 +176,7 @@ __global__ void compute_stacey_acoustic_kernel(const float * potential_dot_acous
         fac1 = wgllwgll[(j) * (NGLLX) + i];
         break;
     }
+
     iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)] - (1);
     sn = (potential_dot_acoustic[iglob]) / (vpstore[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)]);
     jacobianw = (abs_boundary_jacobian2D[INDEX2(NGLL2, igll, iface)]) * (fac1);

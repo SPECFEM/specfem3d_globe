@@ -117,10 +117,13 @@ __kernel void compute_stacey_elastic_kernel(const __global float * veloc, __glob
   float tz;\n\
   float jacobianw;\n\
   float fac1;\n\
+\n\
   igll = get_local_id(0);\n\
   iface = get_group_id(0) + (get_group_id(1)) * (get_num_groups(0));\n\
+\n\
   if (iface < num_abs_boundary_faces) {\n\
     ispec = abs_boundary_ispec[iface] - (1);\n\
+\n\
     switch (interface_type) {\n\
       case 0 :\n\
         if (nkmin_xi[INDEX2(2, 0, iface)] == 0 || njmin[INDEX2(2, 0, iface)] == 0) {\n\
@@ -183,6 +186,7 @@ __kernel void compute_stacey_elastic_kernel(const __global float * veloc, __glob
         fac1 = wgllwgll[(k) * (NGLLX) + i];\n\
         break;\n\
     }\n\
+\n\
     iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)] - (1);\n\
     vx = veloc[(iglob) * (3) + 0];\n\
     vy = veloc[(iglob) * (3) + 1];\n\

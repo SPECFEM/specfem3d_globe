@@ -49,11 +49,15 @@ module BOAST
       decl factor_loc = Real("factor_loc")
       decl sn = Real("sn")
       decl snp1 = Real("snp1")
+      comment()
+
       print If(anisotropy => lambda {
         print mul === d_c44store[tx + ngll3_padded*working_element]
       }, :else => lambda {
         print mul === d_muv[tx + ngll3_padded*working_element]
       })
+      comment()
+
       print For( i_sls, 0, nsls - 1 ) {
         # indices
         # note: index for R_xx,... here is (i,j,k,i_sls,ispec) and not (i,j,k,ispec,i_sls) as in local version
@@ -69,6 +73,7 @@ module BOAST
         print alphaval_loc === alphaval[i_sls]
         print  betaval_loc ===  betaval[i_sls]
         print gammaval_loc === gammaval[i_sls]
+        comment()
 
         [[r_xx, epsilondev_xx, epsilondev_xx_loc],
          [r_yy, epsilondev_yy, epsilondev_yy_loc],

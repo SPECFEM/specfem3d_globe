@@ -100,11 +100,14 @@ __kernel void write_seismograms_transfer_strain_from_device_kernel(const __globa
   int irec;\n\
   int ispec;\n\
   int blockID;\n\
+\n\
   blockID = get_group_id(0) + (get_group_id(1)) * (get_num_groups(0));\n\
   tx = get_local_id(0);\n\
+\n\
   if (blockID < nrec_local) {\n\
     irec = number_receiver_global[blockID] - (1);\n\
     ispec = ispec_selected_rec[irec] - (1);\n\
+\n\
     station_strain_field[(NGLL3) * (blockID) + tx] = d_field[(NGLL3) * (ispec) + tx];\n\
   }\n\
 }\n\
