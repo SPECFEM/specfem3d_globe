@@ -53,15 +53,9 @@
 
   use regions_mesh_par2, only: &
     USE_ONE_LAYER_SB,ispec_is_tiso,ifirst_region,ilast_region,perm_layer,NUMBER_OF_MESH_LAYERS, &
-    nspec_ani,nspec_actually,nspec_stacey,iMPIcut_xi,iMPIcut_eta, &
+    iMPIcut_xi,iMPIcut_eta, &
     stretch_tab, &
-    rhostore,rho_vp,rho_vs, &
-    kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-    c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-    c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-    c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-    xixstore,xiystore,xizstore, &
-    etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,iboun
+    iboun
 
 ! boundary mesh
   use regions_mesh_par2, only: &
@@ -205,15 +199,8 @@
                         iproc_xi,iproc_eta,NPROC_XI,NPROC_ETA,ratio_divide_central_cube, &
                         iMPIcut_xi,iMPIcut_eta,iboun, &
                         idoubling,iregion_code,xstore,ystore,zstore, &
-                        shape3D,rmin,rmax,rhostore, &
-                        kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-                        xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
-                        gammaxstore,gammaystore,gammazstore,nspec_actually, &
-                        c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-                        c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-                        c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                        nspec_ani,nspec_stacey, &
-                        rho_vp,rho_vs,xigll,yigll,zigll, &
+                        shape3D,rmin,rmax, &
+                        xigll,yigll,zigll, &
                         ispec_is_tiso)
   endif
 

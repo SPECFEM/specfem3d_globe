@@ -562,6 +562,8 @@ module specfem_par_crustmantle
     c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
     c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle
 
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: mu0store_crust_mantle
+
   ! flag for transversely isotropic elements
   logical, dimension(:),allocatable :: ispec_is_tiso_crust_mantle
 

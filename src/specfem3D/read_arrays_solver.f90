@@ -36,6 +36,7 @@
                                 c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                                 c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                                 c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
+                                mu0store, &
                                 ibool,idoubling,ispec_is_tiso, &
                                 rmassx,rmassy,rmassz, &
                                 nglob_oceans,rmass_ocean_load, &
@@ -73,6 +74,8 @@
     c11store,c12store,c13store,c14store,c15store,c16store, &
     c22store,c23store,c24store,c25store,c26store,c33store,c34store, &
     c35store,c36store,c44store,c45store,c46store,c55store,c56store,c66store
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_ani) :: mu0store
 
   ! global addressing
   integer,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
@@ -172,6 +175,8 @@
       read(IIN) c55store
       read(IIN) c56store
       read(IIN) c66store
+      ! for azi kernels
+      read(IIN) mu0store
     else
       ! for anisotropy, gravity and rotation
       if (TRANSVERSE_ISOTROPY_VAL) then

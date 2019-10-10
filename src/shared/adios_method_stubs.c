@@ -48,7 +48,7 @@ void FC_FUNC_(save_arrays_solver_adios,SAVE_ARRAYS_SOLVER_ADIOS)(int* idoubling,
                                                                  int* NSPEC2DMAX_XMIN_XMAX, int* NSPEC2DMAX_YMIN_YMAX,
                                                                  int* NSPEC2D_TOP, int* NSPEC2D_BOTTOM) {}
 
-void FC_FUNC_(save_arrays_solver_meshfiles_adios,SAVE_ARRAYS_SOLVER_MESHFILES_ADIOS)(void) {}
+void FC_FUNC_(save_model_meshfiles_adios,SAVE_MODEL_MESHFILES_ADIOS)(void) {}
 
 void FC_FUNC_(save_arrays_boundary_adios,SAVE_ARRAYS_BOUNDARY_ADIOS)(void) {}
 

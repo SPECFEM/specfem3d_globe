@@ -87,6 +87,9 @@ module manager_adios
   public :: open_file_adios_read_only_rank
   public :: open_file_adios_write
   public :: open_file_adios_write_append
+  ! check
+  public :: read_adios_array_gll_check
+  public :: show_adios_file_variables
 #endif
 
 contains
@@ -423,8 +426,7 @@ contains
 
 ! only single process is reading, useful for file inquiry
 
-  use adios_read_mod, only: adios_read_open_file,adios_read_init_method,ADIOS_READ_METHOD_BP, &
-    adios_inq_file,adios_inq_varnames,adios_inq_attrnames
+  use adios_read_mod, only: adios_read_open_file,adios_read_init_method,ADIOS_READ_METHOD_BP
 
   implicit none
 
@@ -823,6 +825,119 @@ contains
 
   end subroutine read_adios_array_gll
 
+
+!
+!---------------------------------------------------------------------------------
+!
+
+! only available with ADIOS compilation support
+! to clearly separate adios version and non-adios version of same tools
+
+  subroutine read_adios_array_gll_check(rank,nspec,array_name,array_gll,ier)
+
+  use adios_read_mod, only: adios_get_scalar,adios_selection_boundingbox,adios_schedule_read,adios_perform_reads
+
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
+
+  implicit none
+
+  integer,intent(in) :: rank
+  integer,intent(in) :: nspec
+
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(out) :: array_gll
+  character(len=*),intent(in) :: array_name
+
+  integer,intent(out) :: ier
+
+  ! local parameters
+  integer :: local_dim
+  integer(kind=8) :: sel
+  integer(kind=8) :: sel_start(1),count_ad(1)
+  ! inquiry
+  integer :: i,variable_count, attribute_count
+  integer :: timestep_first, timestep_last
+  character (len=128), dimension(:), allocatable :: fnamelist
+  logical :: found_par
+
+  ! initializes
+  array_gll(:,:,:,:) = 0.0_CUSTOM_REAL
+
+  ! checks if array_name can actually be found in adios file
+  ! file inquiry
+  call adios_inq_file(file_handle_adios,variable_count,attribute_count,timestep_first,timestep_last,ier)
+  if (ier /= 0) then
+    ! show error message
+    call adios_errmsg(err_message)
+    print *,'Error inquiring adios file for reading:'
+    print *,trim(err_message)
+    stop 'Error inquiring adios file'
+  endif
+  ! variable names
+  found_par = .false.
+  if (variable_count > 0) then
+    allocate (fnamelist(variable_count),stat=ier)
+    if (ier /= 0) stop 'Error allocating namelist array'
+
+    ! gets variable names
+    call adios_inq_varnames(file_handle_adios, fnamelist, ier)
+
+    ! user output
+    !print *,'variables: ',variable_count
+
+    ! checks if a variable name matches the array_name
+    do i = 1,variable_count
+      !debug
+      !print *,'  ',trim(fnamelist(i)),' compare to ',trim(array_name)//"/local_dim"
+
+      ! compares with input name
+      ! (adds /local_dims to name to have full name comparison, e.g., reg1/rho/local_dim)
+      if (trim(fnamelist(i)) == trim(array_name)//"/local_dim") then
+        ! debug
+        !if (rank == 0) print *,'  found ',trim(array_name)
+
+        found_par = .true.
+        ! exit do-loop
+        exit
+      endif
+    enddo
+    deallocate(fnamelist)
+  else
+    print *,'ADIOS file contains no variables'
+    return
+  endif
+  ! check if parameter found
+  if (.not. found_par) then
+    ier = 1 ! returns an error if not found
+    return
+  endif
+
+  ! gets dimension
+  call adios_get_scalar(file_handle_adios, trim(array_name)//"/local_dim",local_dim, ier)
+  if (ier == 0 ) then
+    ! allow any rank to read from another rank-segment
+    !! checks rank
+    !!if (myrank_adios /= rank) &
+    !!  stop 'Error invalid rank for reading adios GLL array'
+
+    sel_start(1) = local_dim * rank
+    count_ad(1) = NGLLX * NGLLY * NGLLZ * nspec
+    call adios_selection_boundingbox(sel, 1, sel_start, count_ad)
+
+    ! reads selected array
+    call adios_schedule_read(file_handle_adios, sel,trim(array_name)//"/array",0, 1, array_gll, ier)
+    if (ier /= 0 ) then
+      print *,'Error adios: scheduling read of array ',trim(array_name),' failed'
+      stop 'Error adios helper schedule read array'
+    endif
+
+    call adios_perform_reads(file_handle_adios, ier)
+    if (ier /= 0 ) then
+      print *,'Error adios: performing read of array ',trim(array_name),' failed'
+      stop 'Error adios helper perform read array'
+    endif
+  endif
+
+  end subroutine read_adios_array_gll_check
 
 !
 !---------------------------------------------------------------------------------

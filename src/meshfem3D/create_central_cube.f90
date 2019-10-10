@@ -30,15 +30,8 @@
                         iproc_xi,iproc_eta,NPROC_XI,NPROC_ETA,ratio_divide_central_cube, &
                         iMPIcut_xi,iMPIcut_eta,iboun, &
                         idoubling,iregion_code,xstore,ystore,zstore, &
-                        shape3D,rmin,rmax,rhostore, &
-                        kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-                        xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
-                        gammaxstore,gammaystore,gammazstore,nspec_actually, &
-                        c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-                        c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-                        c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                        nspec_ani,nspec_stacey, &
-                        rho_vp,rho_vs,xigll,yigll,zigll, &
+                        shape3D,rmin,rmax, &
+                        xigll,yigll,zigll, &
                         ispec_is_tiso)
 
 ! creates the inner core cube of the mesh
@@ -50,7 +43,7 @@
   integer :: ratio_divide_central_cube
 
 ! correct number of spectral elements in each block depending on chunk type
-  integer nspec,nspec_stacey
+  integer nspec
 
   integer NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
 
@@ -77,30 +70,11 @@
 
   integer idoubling(nspec)
 
-! for model density and anisotropy
-  integer nspec_ani
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
-    rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore
-
-! the 21 coefficients for an anisotropic medium in reduced notation
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_ani) :: &
-    c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-    c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-    c36store,c44store,c45store,c46store,c55store,c56store,c66store
-
 ! boundary locator
   logical iboun(6,nspec)
 
-! arrays with mesh parameters
-  integer nspec_actually
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_actually) :: &
-    xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore
-
 ! MPI cut-planes parameters along xi and along eta
   logical, dimension(2,nspec) :: iMPIcut_xi,iMPIcut_eta
-
-! Stacey, indices for Clayton-Engquist absorbing conditions
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_stacey) :: rho_vp,rho_vs
 
   integer ispec
   integer iproc_xi,iproc_eta,ichunk,ipass
@@ -240,15 +214,7 @@
         ! compute several rheological and geometrical properties for this spectral element
         call compute_element_properties(ispec,iregion_code,idoubling,ipass, &
                          xstore,ystore,zstore,nspec, &
-                         xelm,yelm,zelm,shape3D,rmin,rmax,rhostore, &
-                         kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-                         xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
-                         gammaxstore,gammaystore,gammazstore,nspec_actually, &
-                         c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-                         c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-                         c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                         nspec_ani,nspec_stacey, &
-                         rho_vp,rho_vs, &
+                         xelm,yelm,zelm,shape3D,rmin,rmax, &
                          xigll,yigll,zigll,ispec_is_tiso)
       enddo
     enddo

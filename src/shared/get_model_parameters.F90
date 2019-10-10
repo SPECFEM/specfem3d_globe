@@ -503,8 +503,8 @@
     CASE_3D = .true.
     CRUSTAL = .true.
     MODEL_3D_MANTLE_PERTUBATIONS = .true.    ! to read in 3D reference model setup (like s362ani)
-    ANISOTROPIC_3D_MANTLE = .true.  ! to treat mantle elements as fully anisotropic in solver
-    TRANSVERSE_ISOTROPY = .false.    ! to include original tiso perturbations from reference model
+    TRANSVERSE_ISOTROPY = .true.    ! to include original tiso perturbations from reference model
+    ANISOTROPIC_3D_MANTLE = .true.  ! to impose mantle elements as fully anisotropic in solver
     MODEL_GLL = .true.
     MODEL_GLL_TYPE = 3 ! azimuthal type
     REFERENCE_1D_MODEL = GLL_REFERENCE_1D_MODEL

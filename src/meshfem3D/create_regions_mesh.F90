@@ -57,8 +57,8 @@
     xstore_glob,ystore_glob,zstore_glob
 
   use meshfem3D_par, only: &
-    NCHUNKS,SAVE_MESH_FILES,ABSORBING_CONDITIONS,LOCAL_PATH, &
-    ADIOS_FOR_ARRAYS_SOLVER, &
+    NCHUNKS,SAVE_MESH_FILES,ABSORBING_CONDITIONS,LOCAL_PATH,ANISOTROPIC_3D_MANTLE, &
+    ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_SOLVER_MESHFILES, &
     ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION,GRAVITY_INTEGRALS, &
     NGLOB1D_RADIAL_CORNER, &
     NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
@@ -394,7 +394,7 @@
         write(IMAIN,*) '  ...saving binary files'
         call flush_IMAIN()
       endif
-      ! saves mesh and model parameters
+      ! saves mesh and model parameters for solver
       if (ADIOS_FOR_ARRAYS_SOLVER) then
         if (myrank == 0) write(IMAIN,*) '    in ADIOS file format'
         call save_arrays_solver_adios(idoubling,ibool,xstore,ystore,zstore, &
@@ -426,15 +426,27 @@
         endif
       endif
 
+      ! saves mesh files for visualization, GLL model updates, etc.
       ! create AVS or DX mesh data for the slices
       if (SAVE_MESH_FILES) then
         ! user output
         call synchronize_all()
         if (myrank == 0) then
           write(IMAIN,*)
-          write(IMAIN,*) '  ...saving AVS or DX mesh files'
+          write(IMAIN,*) '  ...saving (AVS or DX) mesh files'
           call flush_IMAIN()
         endif
+
+        ! outputs model files
+        if (ADIOS_FOR_SOLVER_MESHFILES) then
+          ! adios file output
+          call save_model_meshfiles_adios()
+        else
+          ! outputs model files in binary format
+          call save_model_meshfiles()
+        endif
+
+        ! AVS/DX output
         call write_AVS_DX_output(npointot,iregion_code)
       endif
 
@@ -494,12 +506,18 @@
   deallocate(muvstore,muhstore)
   deallocate(eta_anisostore)
   deallocate(ispec_is_tiso)
+
   deallocate(c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
              c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
              c36store,c44store,c45store,c46store,c55store,c56store,c66store)
+
+  if (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) &
+    deallocate(mu0_store,Gc_prime_store,Gs_prime_store)
+
   deallocate(iboun)
   deallocate(ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax)
   deallocate(ibelm_bottom,ibelm_top)
+
   deallocate(jacobian2D_xmin,jacobian2D_xmax,jacobian2D_ymin,jacobian2D_ymax)
   deallocate(jacobian2D_bottom,jacobian2D_top)
   deallocate(normal_xmin,normal_xmax,normal_ymin,normal_ymax)
@@ -583,9 +601,12 @@
            ispec_is_tiso(nspec),stat=ier)
   if (ier /= 0) stop 'Error in allocate 7'
 
-  kappavstore(:,:,:,:) = 0.0; kappahstore(:,:,:,:) = 0.0
-  muvstore(:,:,:,:) = 0.0; muhstore(:,:,:,:) = 0.0
+  kappavstore(:,:,:,:) = 0.0
+  kappahstore(:,:,:,:) = 0.0
+  muvstore(:,:,:,:) = 0.0
+  muhstore(:,:,:,:) = 0.0
   eta_anisostore(:,:,:,:) = 0.0
+
   ispec_is_tiso(:) = .false.
 
   ! Stacey absorbing boundaries
@@ -637,6 +658,17 @@
   c34store(:,:,:,:) = 0.0; c35store(:,:,:,:) = 0.0; c36store(:,:,:,:) = 0.0
   c44store(:,:,:,:) = 0.0; c45store(:,:,:,:) = 0.0; c46store(:,:,:,:) = 0.0
   c55store(:,:,:,:) = 0.0; c56store(:,:,:,:) = 0.0; c66store(:,:,:,:) = 0.0
+
+  ! additional array stores for azimuthal
+  if (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
+    allocate(mu0_store(NGLLX,NGLLY,NGLLZ,nspec), &
+             Gc_prime_store(NGLLX,NGLLY,NGLLZ,nspec), &
+             Gs_prime_store(NGLLX,NGLLY,NGLLZ,nspec),stat=ier)
+    if (ier /= 0) stop 'Error allocating mu0,Gc,Gs array'
+    mu0_store(:,:,:,:) = 0.0
+    Gc_prime_store(:,:,:,:) = 0.0
+    Gs_prime_store(:,:,:,:) = 0.0
+  endif
 
   ! boundary locator
   allocate(iboun(6,nspec),stat=ier)

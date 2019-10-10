@@ -251,7 +251,7 @@
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: &
     bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle, &
     bulk_betav_kl_crust_mantle,bulk_betah_kl_crust_mantle
-  real(kind=CUSTOM_REAL) :: A,C,F,L,N,eta
+  real(kind=CUSTOM_REAL) :: A,C,F,L,N,eta,mu0
   real(kind=CUSTOM_REAL) :: muvl,kappavl,muhl,kappahl
   real(kind=CUSTOM_REAL) :: alphav_sq,alphah_sq,betav_sq,betah_sq,bulk_sq
 
@@ -560,38 +560,36 @@
               an_kl(19) = cijkl_kl_local(4)-cijkl_kl_local(9)+cijkl_kl_local(20)                 !Ds
               an_kl(20) = cijkl_kl_local(1)-cijkl_kl_local(2)+cijkl_kl_local(7)-cijkl_kl_local(21)   !Ec
               an_kl(21) = -cijkl_kl_local(6)+cijkl_kl_local(11)                                  !Es
-            endif
 
-            ! more parameterizations:
-            !
-            ! see Zhu (2015, GJI, appendix A2):
-            ! - kernels for model parameterization (L, N, Gc, Gs):
-            !
-            ! L  = 1/2 (C44 + C55)                          -> kernel K_L  = K_C44 + K_C55
-            ! N  = 1/8 (C11 + C22 - 2 C12 + 4 C66)          -> kernel K_N  = K_C66 - 2 K_C12
-            ! Gc = 1/2 (C55 - C44)                          -> kernel K_Gc = K_C55 - K_C44
-            ! Gs = - C45                                    -> kernel K_Gs = - K_C45
-            !
-            ! - kernels for model parameterization (dln(beta_v), dln(beta_h), Gc_prime, Gs_prime) (dimension-less):
-            !
-            ! beta_v = sqrt(L/rho)                          -> kernel K_beta_v = 2 L K_L - 4 L eta K_F
-            ! beta_h = sqrt(N/rho)                          -> kernel K_beta_h = 2 N K_N
-            ! Gc_prime = Gc / (rho beta_0**2)               -> kernel K_Gc_prime = rho beta_0**2 K_Gc
-            ! Gs_prime = Gs / (rho beta_0**2)               -> kernel K_Gs_prime = rho beta_0**2 K_Gs
-            !
-            ! with beta_0 being the isotropic shear wave speed in the 1-D reference model
-            !
-            ! note: for azimuthal anisotropy, Gs and Gc will provide the fast axis angle \zeta = 1/2 arctan( Gs / Gc )
-            !
-            !       Convention here is a Cartesian reference frame (x,y,z) where x points East, y points North and z points up.
-            !       And
-            !         Gs = - C54    (as compared to Gs = C54 used e.g. by Montagner, 2002, Seismic Anisotropy Tomography)
-            !       and
-            !         angle \zeta is measured counter-clockwise from South
-            !
-            if (SAVE_AZIMUTHAL_ANISO_KL_ONLY) then
-              ! daniel todo:
+              ! more parameterizations:
               !
+              ! see Zhu (2015, GJI, appendix A2):
+              ! - kernels for model parameterization (L, N, Gc, Gs):
+              !
+              ! L  = 1/2 (C44 + C55)                          -> kernel K_L  = K_C44 + K_C55
+              ! N  = 1/8 (C11 + C22 - 2 C12 + 4 C66)          -> kernel K_N  = K_C66 - 2 K_C12
+              ! Gc = 1/2 (C55 - C44)                          -> kernel K_Gc = K_C55 - K_C44
+              ! Gs = - C45                                    -> kernel K_Gs = - K_C45
+              !
+              ! - kernels for model parameterization (dln(beta_v), dln(beta_h), Gc_prime, Gs_prime) (dimension-less):
+              !
+              ! beta_v = sqrt(L/rho)                          -> kernel K_beta_v = 2 L K_L - 4 L eta K_F
+              ! beta_h = sqrt(N/rho)                          -> kernel K_beta_h = 2 N K_N
+              ! Gc_prime = Gc / (rho beta_0**2)               -> kernel K_Gc_prime = rho beta_0**2 K_Gc
+              ! Gs_prime = Gs / (rho beta_0**2)               -> kernel K_Gs_prime = rho beta_0**2 K_Gs
+              !
+              ! with beta_0 being the isotropic shear wave speed in the 1-D reference model
+              !
+              ! note: for azimuthal anisotropy, Gs and Gc will provide the fast axis angle \zeta = 1/2 arctan( Gs / Gc )
+              !
+              !       Convention here is a Cartesian reference frame (x,y,z) where x points East, y points North and z points up.
+              !       And
+              !         Gs = - C54    (as compared to Gs = C54 used e.g. by Montagner, 2002, Seismic Anisotropy Tomography)
+              !       and
+              !         angle \zeta is measured counter-clockwise from South
+              !
+
+              ! daniel todo:
               ! scaling with actual values?
               !beta_v = sqrt(L/rhol)
               !beta_h = sqrt(N/rhol)
@@ -605,13 +603,20 @@
               !Gs = Gs_prime * 26.6/scale_GPa
 
               ! scaling with shear moduli from 1D background reference
-              !Gc_prime = Gc / (rho beta_0**2)
-              !Gs_prime = Gs / (rho beta_0**2)
+              !Gc_prime = Gc / (rho beta_0**2) = Gc / mu0
+              !Gs_prime = Gs / (rho beta_0**2) = Gs / mu0
 
               Gc_kl_crust_mantle(i,j,k,ispec) = -an_kl(16)*scale_kl_ani
               Gs_kl_crust_mantle(i,j,k,ispec) = -an_kl(17)*scale_kl_ani
-              Gc_prime_kl_crust_mantle(i,j,k,ispec) = Gc_kl_crust_mantle(i,j,k,ispec)!/(rho*vs)
-              Gs_prime_kl_crust_mantle(i,j,k,ispec) = Gs_kl_crust_mantle(i,j,k,ispec)!/(rho*vs)
+
+              mu0 = mu0store_crust_mantle(i,j,k,ispec)
+              if (abs(mu0) < TINYVAL) then
+                Gc_prime_kl_crust_mantle(i,j,k,ispec) = Gc_kl_crust_mantle(i,j,k,ispec) / mu0
+                Gs_prime_kl_crust_mantle(i,j,k,ispec) = Gs_kl_crust_mantle(i,j,k,ispec) / mu0
+              else
+                Gc_prime_kl_crust_mantle(i,j,k,ispec) = 0.0_CUSTOM_REAL
+                Gs_prime_kl_crust_mantle(i,j,k,ispec) = 0.0_CUSTOM_REAL
+              endif
               A_kl_crust_mantle(i,j,k,ispec) = -an_kl(1)*scale_kl_ani
               C_kl_crust_mantle(i,j,k,ispec) = -an_kl(2)*scale_kl_ani
               N_kl_crust_mantle(i,j,k,ispec) = -an_kl(3)*scale_kl_ani

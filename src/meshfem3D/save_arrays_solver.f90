@@ -31,12 +31,12 @@
   use constants
 
   use meshfem3D_models_par, only: &
-    OCEANS,TRANSVERSE_ISOTROPY,HETEROGEN_3D_MANTLE,ANISOTROPIC_3D_MANTLE, &
+    OCEANS,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
     ANISOTROPIC_INNER_CORE,ATTENUATION
 
   use meshfem3D_par, only: &
     nspec,nglob,iregion_code, &
-    NCHUNKS,ABSORBING_CONDITIONS,SAVE_MESH_FILES, &
+    NCHUNKS,ABSORBING_CONDITIONS, &
     ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION, &
     OUTPUT_FILES,xstore_glob,ystore_glob,zstore_glob
 
@@ -47,6 +47,7 @@
     c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
+    mu0_store, &
     rmassx,rmassy,rmassz,rmass_ocean_load, &
     b_rmassx,b_rmassy, &
     ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
@@ -191,6 +192,8 @@
       write(IOUT) c55store
       write(IOUT) c56store
       write(IOUT) c66store
+      ! for azimuthal aniso kernels
+      write(IOUT) mu0_store
     else
       if (TRANSVERSE_ISOTROPY) then
         write(IOUT) kappahstore
@@ -296,18 +299,6 @@
     close(IOUT)
   endif
 
-
-  ! uncomment for vp & vs model storage
-  if (SAVE_MESH_FILES) then
-    ! outputs model files in binary format
-    call save_arrays_solver_meshfiles()
-
-    ! dvpstore file output
-    if (HETEROGEN_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
-      call model_heterogen_mantle_output_dvp(prname)
-    endif
-  endif
-
   ! debug outputs flags as vtk file
   if (DEBUG) then
     if (iregion_code == IREGION_CRUST_MANTLE) then
@@ -319,157 +310,7 @@
 
   end subroutine save_arrays_solver
 
-!
-!-------------------------------------------------------------------------------------------------
-!
 
-  subroutine save_arrays_solver_meshfiles()
-
-! outputs model files in binary format
-
-  use constants
-
-  use meshfem3D_par, only: nspec
-
-  use meshfem3D_models_par, only: &
-    TRANSVERSE_ISOTROPY,ATTENUATION,ATTENUATION_3D,ATTENUATION_1D_WITH_3D_STORAGE
-
-  use regions_mesh_par2, only: &
-    rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-    Qmu_store, &
-    prname
-
-  implicit none
-
-  ! local parameters
-  integer :: i,j,k,ispec,ier
-  real(kind=CUSTOM_REAL) :: scaleval1,scaleval2
-  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: temp_store
-
-  ! scaling factors to re-dimensionalize units
-  scaleval1 = sngl( sqrt(PI*GRAV*RHOAV)*(R_EARTH/1000.0d0) )
-  scaleval2 = sngl( RHOAV/1000.0d0 )
-
-  ! uses temporary array
-  allocate(temp_store(NGLLX,NGLLY,NGLLZ,nspec),stat=ier)
-  if (ier /= 0) stop 'Error allocating temp_store array'
-  temp_store(:,:,:,:) = 0._CUSTOM_REAL
-
-  ! isotropic model
-  ! vp
-  open(unit=IOUT,file=prname(1:len_trim(prname))//'vp.bin', &
-       status='unknown',form='unformatted',action='write',iostat=ier)
-  if (ier /= 0 ) call exit_mpi(myrank,'Error opening vp.bin file')
-
-  temp_store(:,:,:,:) = sqrt((kappavstore(:,:,:,:) + 4.0_CUSTOM_REAL * muvstore(:,:,:,:)/3.0_CUSTOM_REAL)/rhostore(:,:,:,:)) &
-                        * scaleval1
-  write(IOUT) temp_store
-  close(IOUT)
-  ! vs
-  open(unit=IOUT,file=prname(1:len_trim(prname))//'vs.bin', &
-        status='unknown',form='unformatted',action='write',iostat=ier)
-  if (ier /= 0 ) call exit_mpi(myrank,'Error opening vs.bin file')
-
-  temp_store(:,:,:,:) = sqrt( muvstore(:,:,:,:)/rhostore(:,:,:,:) )*scaleval1
-  write(IOUT) temp_store
-  close(IOUT)
-  ! rho
-  open(unit=IOUT,file=prname(1:len_trim(prname))//'rho.bin', &
-        status='unknown',form='unformatted',action='write',iostat=ier)
-  if (ier /= 0 ) call exit_mpi(myrank,'Error opening rho.bin file')
-
-  temp_store(:,:,:,:) = rhostore(:,:,:,:) * scaleval2
-  write(IOUT) temp_store
-  close(IOUT)
-
-  ! transverse isotropic model
-  if (TRANSVERSE_ISOTROPY) then
-    ! vpv
-    open(unit=IOUT,file=prname(1:len_trim(prname))//'vpv.bin', &
-          status='unknown',form='unformatted',action='write',iostat=ier)
-    if (ier /= 0 ) call exit_mpi(myrank,'Error opening vpv.bin file')
-
-    temp_store(:,:,:,:) = sqrt((kappavstore(:,:,:,:) + 4.0_CUSTOM_REAL * muvstore(:,:,:,:)/3.0_CUSTOM_REAL)/rhostore(:,:,:,:)) &
-                          * scaleval1
-    write(IOUT) temp_store
-    close(IOUT)
-
-    ! vph
-    open(unit=IOUT,file=prname(1:len_trim(prname))//'vph.bin', &
-          status='unknown',form='unformatted',action='write',iostat=ier)
-    if (ier /= 0 ) call exit_mpi(myrank,'Error opening vph.bin file')
-
-    temp_store(:,:,:,:) = sqrt((kappahstore(:,:,:,:) + 4.0_CUSTOM_REAL * muhstore(:,:,:,:)/3.0_CUSTOM_REAL)/rhostore(:,:,:,:)) &
-                          * scaleval1
-    write(IOUT) temp_store
-    close(IOUT)
-
-    ! vsv
-    open(unit=IOUT,file=prname(1:len_trim(prname))//'vsv.bin', &
-          status='unknown',form='unformatted',action='write',iostat=ier)
-    if (ier /= 0 ) call exit_mpi(myrank,'Error opening vsv.bin file')
-
-    temp_store(:,:,:,:) = sqrt( muvstore(:,:,:,:)/rhostore(:,:,:,:) )*scaleval1
-    write(IOUT) temp_store
-    close(IOUT)
-
-    ! vsh
-    open(unit=IOUT,file=prname(1:len_trim(prname))//'vsh.bin', &
-          status='unknown',form='unformatted',action='write',iostat=ier)
-    if (ier /= 0 ) call exit_mpi(myrank,'Error opening vsh.bin file')
-
-    temp_store(:,:,:,:) = sqrt( muhstore(:,:,:,:)/rhostore(:,:,:,:) )*scaleval1
-    write(IOUT) temp_store
-    close(IOUT)
-
-    ! rho
-    open(unit=IOUT,file=prname(1:len_trim(prname))//'rho.bin', &
-          status='unknown',form='unformatted',action='write',iostat=ier)
-    if (ier /= 0 ) call exit_mpi(myrank,'Error opening rho.bin file')
-
-    temp_store(:,:,:,:) = rhostore(:,:,:,:) * scaleval2
-    write(IOUT) temp_store
-    close(IOUT)
-
-    ! eta
-    open(unit=IOUT,file=prname(1:len_trim(prname))//'eta.bin', &
-          status='unknown',form='unformatted',action='write',iostat=ier)
-    if (ier /= 0 ) call exit_mpi(myrank,'Error opening eta.bin file')
-    write(IOUT) eta_anisostore
-    close(IOUT)
-  endif ! TRANSVERSE_ISOTROPY
-
-  ! shear attenuation
-  if (ATTENUATION) then
-    ! saves Qmu_store to full CUSTOM_REAL array
-    if (ATTENUATION_3D .or. ATTENUATION_1D_WITH_3D_STORAGE) then
-      ! attenuation arrays are fully 3D
-      temp_store(:,:,:,:) = Qmu_store(:,:,:,:)
-    else
-      ! attenuation array dimensions: Q_mustore(1,1,1,nspec)
-      do ispec = 1,nspec
-        do k = 1,NGLLZ
-          do j = 1,NGLLY
-            do i = 1,NGLLX
-              temp_store(i,j,k,ispec) = Qmu_store(1,1,1,ispec)
-            enddo
-          enddo
-        enddo
-      enddo
-    endif
-
-    ! Qmu
-    open(unit=IOUT,file=prname(1:len_trim(prname))//'qmu.bin', &
-          status='unknown',form='unformatted',action='write',iostat=ier)
-    if (ier /= 0 ) call exit_mpi(myrank,'Error opening qmu.bin file')
-    write(IOUT) temp_store
-    close(IOUT)
-  endif ! ATTENUATION
-
-  ! frees temporary memory
-  deallocate(temp_store)
-
-  end subroutine save_arrays_solver_meshfiles
 !
 !-------------------------------------------------------------------------------------------------
 !

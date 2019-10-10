@@ -26,15 +26,9 @@
 !=====================================================================
 
   subroutine get_model(iregion_code,ispec,nspec,idoubling, &
-                      kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-                      rhostore,nspec_ani, &
-                      c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-                      c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-                      c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                      nspec_stacey,rho_vp,rho_vs, &
-                      xstore,ystore,zstore, &
-                      rmin,rmax, &
-                      elem_in_crust,elem_in_mantle)
+                       xstore,ystore,zstore, &
+                       rmin,rmax, &
+                       elem_in_crust,elem_in_mantle)
 
   use constants, only: &
     NGLLX,NGLLY,NGLLZ,MIDX,MIDY,MIDZ,N_SLS,CUSTOM_REAL, &
@@ -55,22 +49,17 @@
   use regions_mesh_par2, only: &
     Qmu_store,tau_e_store,tau_s,T_c_source
 
+  use regions_mesh_par2, only: rhostore, &
+    kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
+    c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
+    c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+    c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
+    mu0_store,Gc_prime_store,Gs_prime_store, &
+    rho_vp,rho_vs
+
   implicit none
 
   integer :: iregion_code,ispec,nspec,idoubling
-
-  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec) :: kappavstore,kappahstore, &
-    muvstore,muhstore,eta_anisostore,rhostore
-
-  integer :: nspec_ani
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_ani) :: &
-    c11store,c12store,c13store,c14store,c15store,c16store, &
-    c22store,c23store,c24store,c25store,c26store, &
-    c33store,c34store,c35store,c36store, &
-    c44store,c45store,c46store,c55store,c56store,c66store
-
-  integer :: nspec_stacey
-  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec_stacey):: rho_vp,rho_vs
 
   double precision, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
 
@@ -81,14 +70,20 @@
   double precision :: xmesh,ymesh,zmesh
   ! the 21 coefficients for an anisotropic medium in reduced notation
   double precision :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33, &
-                   c34,c35,c36,c44,c45,c46,c55,c56,c66
+                      c34,c35,c36,c44,c45,c46,c55,c56,c66
+  ! azimuthal
+  double precision :: A,C,L,N,F,Gc,Gs,Gc_prime,Gs_prime,mu0
 
   double precision :: Qkappa,Qmu
   double precision, dimension(N_SLS) :: tau_e
 
-  double precision :: rho
+  double precision :: rho,vs
+  ! tiso
   double precision :: vpv,vph,vsv,vsh,eta_aniso
+
   double precision :: r,r_prem,moho
+  double precision :: theta,phi
+
   integer :: i,j,k,i_sls
 
   ! it is *CRUCIAL* to leave this initialization here, this was the cause of the "s362ani + attenuation" bug in 2013 and 2014
@@ -131,6 +126,10 @@
         c56 = 0.d0
         c66 = 0.d0
 
+        mu0 = 0.d0
+        Gc = 0.d0
+        Gs = 0.d0
+
         Qmu = 0.d0
         Qkappa = 0.d0 ! not used, not stored so far...
         tau_e(:) = 0.d0
@@ -160,6 +159,18 @@
                               Qkappa,Qmu,RICB,RCMB, &
                               RTOPDDOUBLEPRIME,R80,R120,R220,R400,R600,R670,R771, &
                               RMOHO,RMIDDLE_CRUST,ROCEAN)
+
+        ! stores vs from reference 1D model
+        if (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
+          ! calculates isotropic values
+          !vp = sqrt(((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
+          !          + (8.d0 - 8.d0*eta_aniso)*vsv*vsv)/15.d0)
+          vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
+                    + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0)
+          ! stores 1D isotropic mu0 = (rho * Vs*Vs) values
+          mu0 = rho * vs*vs
+          mu0_store(i,j,k,ispec) = real( mu0, kind=CUSTOM_REAL)
+        endif
 
         ! gets the 3-D model parameters for the mantle
         call meshfem3D_models_get3Dmntl_val(iregion_code,r_prem,rho, &
@@ -204,8 +215,7 @@
                                              tau_e,tau_s,T_c_source, &
                                              moho,Qmu,Qkappa,elem_in_crust)
 
-! define elastic parameters in the model
-
+        ! define elastic parameters in the model
         rhostore(i,j,k,ispec) = real(rho, kind=CUSTOM_REAL)
         kappavstore(i,j,k,ispec) = real(rho*(vpv*vpv - 4.d0*vsv*vsv/3.d0), kind=CUSTOM_REAL)
         kappahstore(i,j,k,ispec) = real(rho*(vph*vph - 4.d0*vsh*vsh/3.d0), kind=CUSTOM_REAL)
@@ -254,6 +264,27 @@
           c55store(i,j,k,ispec) = real(c55, kind=CUSTOM_REAL)
           c56store(i,j,k,ispec) = real(c56, kind=CUSTOM_REAL)
           c66store(i,j,k,ispec) = real(c66, kind=CUSTOM_REAL)
+
+          ! stores Gc_prime and Gs_prime
+          ! gets point's position theta/phi, lat/lon
+          call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r,theta,phi)
+          call reduce(theta,phi)
+          ! rotates from global to local (radial) reference
+          call rotate_tensor_global_to_azi(theta,phi, &
+                                           A,C,N,L,F, &
+                                           Gc,Gs, &
+                                           c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+                                           c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
+          ! Gc_prime relative to isotropic shear moduli:
+          ! Gc_prime = Gc / (rho beta_0**2) = Gc / mu0
+          ! Gs_prime = Gs / (rho beta_0**2) = Gs / mu0
+          mu0 = mu0_store(i,j,k,ispec)
+          if (abs(mu0) > TINYVAL) then
+            Gc_prime = Gc / mu0
+            Gs_prime = Gs / mu0
+          endif
+          Gc_prime_store(i,j,k,ispec) = real(Gc_prime, kind=CUSTOM_REAL)
+          Gs_prime_store(i,j,k,ispec) = real(Gs_prime, kind=CUSTOM_REAL)
         endif
 
         ! stores attenuation arrays

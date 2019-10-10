@@ -36,6 +36,7 @@ subroutine read_arrays_solver_adios(iregion_code, &
                                     c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                                     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                                     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
+                                    mu0store, &
                                     ibool,idoubling,ispec_is_tiso, &
                                     rmassx,rmassy,rmassz, &
                                     nglob_oceans,rmass_ocean_load, &
@@ -76,6 +77,8 @@ subroutine read_arrays_solver_adios(iregion_code, &
     c11store,c12store,c13store,c14store,c15store,c16store, &
     c22store,c23store,c24store,c25store,c26store,c33store,c34store, &
     c35store,c36store,c44store,c45store,c46store,c55store,c56store,c66store
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_ani) :: mu0store
 
   ! global addressing
   integer,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
@@ -258,6 +261,9 @@ subroutine read_arrays_solver_adios(iregion_code, &
       call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c56store/array", 0, 1, c56store, adios_err)
       call check_adios_err(myrank,adios_err)
       call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "c66store/array", 0, 1, c66store, adios_err)
+      call check_adios_err(myrank,adios_err)
+      ! for azimuthal
+      call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "mu0store/array", 0, 1, mu0store, adios_err)
       call check_adios_err(myrank,adios_err)
     else
       if (TRANSVERSE_ISOTROPY_VAL) then

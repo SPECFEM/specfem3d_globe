@@ -287,7 +287,8 @@
              c46store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE), &
              c55store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE), &
              c56store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE), &
-             c66store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE),stat=ier)
+             c66store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE), &
+             mu0store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE),stat=ier)
     if (ier /= 0) stop 'Error allocating arrays c11store_crust_mantle,..'
   else
     ! allocates c11stores,.. for aniso elements
@@ -311,7 +312,8 @@
              c46store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
              c55store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
              c56store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
-             c66store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE),stat=ier)
+             c66store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
+             mu0store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE),stat=ier)
     if (ier /= 0) stop 'Error allocating arrays c11store_crust_mantle,..'
   endif
   c11store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
@@ -335,6 +337,8 @@
   c55store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
   c56store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
   c66store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  ! for azimuthal
+  mu0store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
 
   allocate(ispec_is_tiso_crust_mantle(NSPEC_CRUST_MANTLE),stat=ier)
   if (ier /= 0) stop 'Error allocating array ispec_is_tiso_crust_mantle'
@@ -366,6 +370,7 @@
                                     c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
                                     c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
                                     c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
+                                    mu0store_crust_mantle, &
                                     ibool_crust_mantle,dummy_idoubling,ispec_is_tiso_crust_mantle, &
                                     rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
                                     NGLOB_CRUST_MANTLE_OCEANS,rmass_ocean_load, &
@@ -388,6 +393,7 @@
                               c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
                               c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
                               c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
+                              mu0store_crust_mantle, &
                               ibool_crust_mantle,dummy_idoubling,ispec_is_tiso_crust_mantle, &
                               rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
                               NGLOB_CRUST_MANTLE_OCEANS,rmass_ocean_load, &
@@ -543,6 +549,7 @@
                                     dummy_array,dummy_array,dummy_array, &
                                     dummy_array,dummy_array,dummy_array, &
                                     dummy_array,dummy_array,dummy_array, &
+                                    dummy_array, &
                                     ibool_outer_core,dummy_idoubling_outer_core,dummy_ispec_is_tiso, &
                                     dummy_rmass,dummy_rmass,rmass_outer_core, &
                                     1,dummy_array, &
@@ -565,6 +572,7 @@
                               dummy_array,dummy_array,dummy_array, &
                               dummy_array,dummy_array,dummy_array, &
                               dummy_array,dummy_array,dummy_array, &
+                              dummy_array, &
                               ibool_outer_core,dummy_idoubling_outer_core,dummy_ispec_is_tiso, &
                               dummy_rmass,dummy_rmass,rmass_outer_core, &
                               1, dummy_array, &
@@ -700,6 +708,7 @@
                                     dummy_array,dummy_array,dummy_array, &
                                     c44store_inner_core,dummy_array,dummy_array, &
                                     dummy_array,dummy_array,dummy_array, &
+                                    dummy_array, &
                                     ibool_inner_core,idoubling_inner_core,dummy_ispec_is_tiso, &
                                     rmassx_inner_core,rmassy_inner_core,rmassz_inner_core, &
                                     1,dummy_array, &
@@ -722,6 +731,7 @@
                               dummy_array,dummy_array,dummy_array, &
                               c44store_inner_core,dummy_array,dummy_array, &
                               dummy_array,dummy_array,dummy_array, &
+                              dummy_array, &
                               ibool_inner_core,idoubling_inner_core,dummy_ispec_is_tiso, &
                               rmassx_inner_core,rmassy_inner_core,rmassz_inner_core, &
                               1,dummy_array, &
@@ -1765,6 +1775,7 @@
   call bcast_all_cr_for_database(kappahstore_crust_mantle(1,1,1,1), size(kappahstore_crust_mantle))
   call bcast_all_cr_for_database(muhstore_crust_mantle(1,1,1,1), size(muhstore_crust_mantle))
   call bcast_all_cr_for_database(eta_anisostore_crust_mantle(1,1,1,1), size(eta_anisostore_crust_mantle))
+
   call bcast_all_cr_for_database(c11store_crust_mantle(1,1,1,1), size(c11store_crust_mantle))
   call bcast_all_cr_for_database(c12store_crust_mantle(1,1,1,1), size(c12store_crust_mantle))
   call bcast_all_cr_for_database(c13store_crust_mantle(1,1,1,1), size(c13store_crust_mantle))
@@ -1786,6 +1797,8 @@
   call bcast_all_cr_for_database(c55store_crust_mantle(1,1,1,1), size(c55store_crust_mantle))
   call bcast_all_cr_for_database(c56store_crust_mantle(1,1,1,1), size(c56store_crust_mantle))
   call bcast_all_cr_for_database(c66store_crust_mantle(1,1,1,1), size(c66store_crust_mantle))
+  call bcast_all_cr_for_database(mu0store_crust_mantle(1,1,1,1), size(mu0store_crust_mantle))
+
   call bcast_all_i_for_database(ibool_crust_mantle(1,1,1,1), size(ibool_crust_mantle))
   call bcast_all_l_for_database(ispec_is_tiso_crust_mantle(1), size(ispec_is_tiso_crust_mantle))
   call bcast_all_cr_for_database(rmassx_crust_mantle(1), size(rmassx_crust_mantle))

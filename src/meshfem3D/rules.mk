@@ -113,6 +113,7 @@ meshfem3D_MESHER_OBJECTS = \
 	$O/model_sglobe.check.o \
 	$O/moho_stretching.check.o \
 	$O/save_arrays_solver.check.o \
+	$O/save_model_meshfiles.check.o \
 	$O/setup_color_perm.check.o \
 	$O/setup_counters.check.o \
 	$O/setup_inner_outer.check.o \
@@ -225,6 +226,7 @@ adios_meshfem3D_OBJECTS = \
 	$O/get_absorb_adios.check_adios.o \
 	$O/model_gll_adios.check_adios.o \
 	$O/save_arrays_solver_adios.check_adios.o \
+	$O/save_model_meshfiles_adios.check_adios.o \
 	$(EMPTY_MACRO)
 
 adios_meshfem3D_SHARED_OBJECTS = \

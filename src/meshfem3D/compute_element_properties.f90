@@ -30,15 +30,6 @@
                                         xstore,ystore,zstore,nspec, &
                                         xelm,yelm,zelm,shape3D, &
                                         rmin,rmax, &
-                                        rhostore, &
-                                        kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-                                        xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
-                                        gammaxstore,gammaystore,gammazstore,nspec_actually, &
-                                        c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-                                        c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-                                        c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                                        nspec_ani,nspec_stacey, &
-                                        rho_vp,rho_vs, &
                                         xigll,yigll,zigll,ispec_is_tiso)
 
   use constants, only: NGLLX,NGLLY,NGLLZ,NGNOD,CUSTOM_REAL, &
@@ -52,10 +43,15 @@
     THREE_D_MODEL_S362ANI,THREE_D_MODEL_S362WMANI,THREE_D_MODEL_S362ANI_PREM, &
     ibathy_topo,nspl,rspl,espl,espl2
 
+  use regions_mesh_par2, only: &
+    xixstore,xiystore,xizstore, &
+    etaxstore,etaystore,etazstore, &
+    gammaxstore,gammaystore,gammazstore
+
   implicit none
 
   ! correct number of spectral elements in each block depending on chunk type
-  integer,intent(in) :: ispec,nspec,nspec_stacey
+  integer,intent(in) :: ispec,nspec
 
 ! arrays with the mesh in double precision
   double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(inout) :: xstore,ystore,zstore
@@ -75,25 +71,6 @@
 ! in the spherically symmetric Earth
   integer,dimension(nspec),intent(in) :: idoubling
   double precision,intent(in) :: rmin,rmax
-
-! for model density and anisotropy
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(out) :: rhostore,kappavstore, &
-    kappahstore,muvstore,muhstore,eta_anisostore
-
-! the 21 coefficients for an anisotropic medium in reduced notation
-  integer,intent(in) :: nspec_ani
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_ani),intent(out) :: &
-    c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-    c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-    c36store,c44store,c45store,c46store,c55store,c56store,c66store
-
-! arrays with mesh parameters
-  integer,intent(in) :: nspec_actually
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_actually),intent(out) :: &
-    xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore
-
-! Stacey, indices for Clayton-Engquist absorbing conditions
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_stacey),intent(out) :: rho_vp,rho_vs
 
   ! Parameters used to calculate Jacobian based upon 125 GLL points
   double precision,intent(in) :: xigll(NGLLX)
@@ -165,12 +142,6 @@
   ! (only needed for second meshing phase)
   if (ipass == 2) then
     call get_model(iregion_code,ispec,nspec,idoubling(ispec), &
-                   kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-                   rhostore,nspec_ani, &
-                   c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-                   c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-                   c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                   nspec_stacey,rho_vp,rho_vs, &
                    xstore,ystore,zstore, &
                    rmin,rmax, &
                    elem_in_crust,elem_in_mantle)

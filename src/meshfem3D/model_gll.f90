@@ -569,10 +569,6 @@
     read(IIN) MGLL_V%Gs_prime_new(:,:,:,1:MGLL_V%nspec)
     close(IIN)
 
-!daniel debug: setting Gc,Gs to zero to ignore for testing
-    MGLL_V%Gc_prime_new = 0.0_CUSTOM_REAL
-    MGLL_V%Gs_prime_new = 0.0_CUSTOM_REAL
-
   case default
     stop 'Invalid MGLL_TYPE, mesh file reading not implemented yet'
   end select
@@ -857,25 +853,19 @@
     Gc = Gc_prime ! to avoid compiler warning
     Gs = Gs_prime ! to avoid compiler warning
 
-    ! test: ignore Gc,Gs contributions
-    Gc = 0.d0
-    Gs = 0.d0
+!daniel debug:
+! test: ignore Gc,Gs contributions
+Gc = 0.d0
+Gs = 0.d0
+!daniel debug
+!print *,"debug: model_gll_build_cij Gc,Gs",Gc,Gs
 
     ! Love parameterization
-    A = rho * vph**2
-    C = rho * vpv**2
-    L = rho * vsv**2
-    N = rho * vsh**2
+    A = rho * vph**2    !rhovphsq = A  !!! that is A
+    C = rho * vpv**2    !rhovpvsq = C  !!! that is C
+    L = rho * vsv**2    !rhovsvsq = L  !!! that is L
+    N = rho * vsh**2    !rhovshsq = N  !!! that is N
     F = eta_aniso * (A - 2.d0 * L)
-
-    !rhovpvsq = C  !!! that is C
-    !rhovphsq = A  !!! that is A
-
-    !rhovsvsq = L  !!! that is L
-    !rhovshsq = N  !!! that is N
-
-    !debug
-    !if (myrank==0) print *,"Gc,Gs",Gc,Gs
 
     ! local (azimuthal) coordinate system to global SPECFEM reference
     call rotate_tensor_azimuthal_to_global(theta,phi, &

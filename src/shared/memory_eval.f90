@@ -270,6 +270,10 @@
   static_memory_size = static_memory_size + &
     21.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPECMAX_ANISO_MANTLE*dble(CUSTOM_REAL)
 
+  ! mu0
+  static_memory_size = static_memory_size + &
+    1.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPECMAX_ANISO_MANTLE*dble(CUSTOM_REAL)
+
   ! ispec_is_tiso_crust_mantle
   static_memory_size = static_memory_size + NSPEC(IREGION_CRUST_MANTLE)*dble(SIZE_LOGICAL)
 

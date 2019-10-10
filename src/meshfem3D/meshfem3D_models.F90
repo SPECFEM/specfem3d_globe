@@ -198,6 +198,10 @@
         ! SGLOBE-rani model
         call model_sglobe_broadcast()
 
+      case (THREE_D_MODEL_ANISO_MANTLE)
+        ! Montagner anisotropic model
+        call model_aniso_mantle_broadcast()
+
       case default
         call exit_MPI(myrank,'3D model not defined')
 
@@ -205,14 +209,10 @@
 
   endif
 
-  ! arbitrary mantle models
   ! adds additional perturbations on top of a reference 3D model
+  ! using "arbitrary" mantle models (for example density models derived from geodynamics modeling)
   if (HETEROGEN_3D_MANTLE) &
     call model_heterogen_mntl_broadcast()
-
-  ! anisotropic mantle
-  if (ANISOTROPIC_3D_MANTLE) &
-    call model_aniso_mantle_broadcast()
 
   ! Enclose this in an ifdef so we don't link to netcdf
   ! if we don't need it.
@@ -340,6 +340,12 @@
                               Qkappa,Qmu,idoubling,CRUSTAL,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
                               R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
 
+        ! calculates isotropic values
+        vp = sqrt(((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
+                  + (8.d0 - 8.d0*eta_aniso)*vsv*vsv)/15.d0)
+        vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
+                  + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0)
+
         !daniel todo:
         ! specific 3D models with PREM references which would become too fast at shorter periods ( < 40s Love waves)
         !
@@ -379,14 +385,15 @@
       ! 1D-REF also known as STW105 (by Kustowski et al.) - used also as background for 3D models
       call model_1dref(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu,iregion_code,CRUSTAL)
 
+      ! calculates isotropic values
+      vp = sqrt(((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
+                + (8.d0 - 8.d0*eta_aniso)*vsv*vsv)/15.d0)
+      vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
+                + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0)
+
       if (.not. TRANSVERSE_ISOTROPY) then
         if (.not. (MODEL_3D_MANTLE_PERTUBATIONS .and. iregion_code == IREGION_CRUST_MANTLE)) then
           ! this case here is only executed for 1D_ref_iso
-          ! calculates isotropic values
-          vp = sqrt(((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
-                    + (8.d0 - 8.d0*eta_aniso)*vsv*vsv)/15.d0)
-          vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
-                    + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0)
           vpv = vp
           vph = vp
           vsv = vs
