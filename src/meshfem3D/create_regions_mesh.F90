@@ -57,7 +57,7 @@
     xstore_glob,ystore_glob,zstore_glob
 
   use meshfem3D_par, only: &
-    NCHUNKS,SAVE_MESH_FILES,ABSORBING_CONDITIONS,LOCAL_PATH,ANISOTROPIC_3D_MANTLE, &
+    NCHUNKS,SAVE_MESH_FILES,ABSORBING_CONDITIONS,LOCAL_PATH, &
     ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_SOLVER_MESHFILES, &
     ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION,GRAVITY_INTEGRALS, &
     NGLOB1D_RADIAL_CORNER, &
@@ -511,8 +511,7 @@
              c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
              c36store,c44store,c45store,c46store,c55store,c56store,c66store)
 
-  if (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) &
-    deallocate(mu0_store,Gc_prime_store,Gs_prime_store)
+  deallocate(mu0store,Gc_prime_store,Gs_prime_store)
 
   deallocate(iboun)
   deallocate(ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax)
@@ -660,15 +659,21 @@
   c55store(:,:,:,:) = 0.0; c56store(:,:,:,:) = 0.0; c66store(:,:,:,:) = 0.0
 
   ! additional array stores for azimuthal
+  allocate(mu0store(NGLLX,NGLLY,NGLLZ,nspec),stat=ier)
+  if (ier /= 0) stop 'Error allocating mu0,Gc,Gs array'
+  mu0store(:,:,:,:) = 0.0
+
   if (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
-    allocate(mu0_store(NGLLX,NGLLY,NGLLZ,nspec), &
-             Gc_prime_store(NGLLX,NGLLY,NGLLZ,nspec), &
+    allocate(Gc_prime_store(NGLLX,NGLLY,NGLLZ,nspec), &
              Gs_prime_store(NGLLX,NGLLY,NGLLZ,nspec),stat=ier)
-    if (ier /= 0) stop 'Error allocating mu0,Gc,Gs array'
-    mu0_store(:,:,:,:) = 0.0
-    Gc_prime_store(:,:,:,:) = 0.0
-    Gs_prime_store(:,:,:,:) = 0.0
+  else
+    ! dummy
+    allocate(Gc_prime_store(1,1,1,1), &
+             Gs_prime_store(1,1,1,1),stat=ier)
   endif
+  if (ier /= 0) stop 'Error allocating Gc_prime,Gs_prime array'
+  Gc_prime_store(:,:,:,:) = 0.0
+  Gs_prime_store(:,:,:,:) = 0.0
 
   ! boundary locator
   allocate(iboun(6,nspec),stat=ier)

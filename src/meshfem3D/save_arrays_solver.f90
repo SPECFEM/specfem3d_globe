@@ -47,7 +47,7 @@
     c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-    mu0_store, &
+    mu0store, &
     rmassx,rmassy,rmassz,rmass_ocean_load, &
     b_rmassx,b_rmassy, &
     ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
@@ -193,7 +193,7 @@
       write(IOUT) c56store
       write(IOUT) c66store
       ! for azimuthal aniso kernels
-      write(IOUT) mu0_store
+      write(IOUT) mu0store
     else
       if (TRANSVERSE_ISOTROPY) then
         write(IOUT) kappahstore

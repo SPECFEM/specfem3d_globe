@@ -48,7 +48,7 @@
 
   use regions_mesh_par2, only: &
     rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-    Qmu_store,Gc_prime_store,Gs_prime_store,mu0_store
+    Qmu_store,Gc_prime_store,Gs_prime_store,mu0store
 
   use adios_write_mod, only: adios_declare_group,adios_select_method
   use adios_helpers_mod, only: define_adios_global_array1D,define_adios_scalar, &
@@ -145,8 +145,8 @@
     local_dim = size (Gs_prime_store)
     call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, "Gs_prime", Gs_prime_store)
     ! mu0
-    local_dim = size (mu0_store)
-    call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, "mu0", mu0_store)
+    local_dim = size (mu0store)
+    call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, "mu0", mu0store)
   endif
 
   if (ATTENUATION) then
@@ -236,9 +236,9 @@
     call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, trim(region_name) // "Gs_prime", &
                                      Gs_prime_store)
     ! mu0
-    local_dim = size (mu0_store)
+    local_dim = size (mu0store)
     call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, trim(region_name) // "mu0", &
-                                     mu0_store * scale_GPa)
+                                     mu0store * scale_GPa)
   endif
 
   ! shear attenuation

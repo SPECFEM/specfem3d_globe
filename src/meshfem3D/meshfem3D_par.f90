@@ -305,7 +305,8 @@
     c36store,c44store,c45store,c46store,c55store,c56store,c66store
 
   ! azimuthal arrays
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: mu0_store,Gc_prime_store,Gs_prime_store
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: mu0store
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: Gc_prime_store,Gs_prime_store
 
   ! boundary locator
   logical, dimension(:,:), allocatable :: iboun

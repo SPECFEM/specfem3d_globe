@@ -68,7 +68,7 @@
     c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-    mu0_store, &
+    mu0store, &
     rmassx,rmassy,rmassz,rmass_ocean_load, &
     b_rmassx,b_rmassy, &
     ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
@@ -218,7 +218,7 @@
       call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(c56store))
       call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(c66store))
       ! for azimuthal aniso kernels
-      call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(mu0_store))
+      call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(mu0store))
     else
       if (TRANSVERSE_ISOTROPY) then
         local_dim = NGLLX * NGLLY * NGLLZ * nspec
@@ -457,7 +457,7 @@
       call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(c66store))
       call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
-                                   trim(region_name) // STRINGIFY_VAR(mu0_store))
+                                   trim(region_name) // STRINGIFY_VAR(mu0store))
     else
       if (TRANSVERSE_ISOTROPY) then
         local_dim = NGLLX * NGLLY * NGLLZ * nspec

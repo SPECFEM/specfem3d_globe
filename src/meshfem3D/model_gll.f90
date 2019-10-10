@@ -50,7 +50,7 @@
     real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: vsv_new,vpv_new, &
                                                              vsh_new,vph_new,eta_new
     ! azimuthal anisotropy
-    real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: Gc_prime_new,Gs_prime_new
+    real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: Gc_prime_new,Gs_prime_new,mu0_new
 
     ! number of elements (crust/mantle elements)
     integer :: nspec
@@ -143,10 +143,12 @@
     MGLL_V%vsh_new(:,:,:,:) = 0.0_CUSTOM_REAL
     MGLL_V%eta_new(:,:,:,:) = 0.0_CUSTOM_REAL
     allocate( MGLL_V%Gc_prime_new(NGLLX,NGLLY,NGLLZ,MGLL_V%nspec), &
-              MGLL_V%Gs_prime_new(NGLLX,NGLLY,NGLLZ,MGLL_V%nspec), stat=ier)
+              MGLL_V%Gs_prime_new(NGLLX,NGLLY,NGLLZ,MGLL_V%nspec), &
+              MGLL_V%mu0_new(NGLLX,NGLLY,NGLLZ,MGLL_V%nspec),stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating vpv_new,.. arrays')
     MGLL_V%Gc_prime_new(:,:,:,:) = 0.0_CUSTOM_REAL
     MGLL_V%Gs_prime_new(:,:,:,:) = 0.0_CUSTOM_REAL
+    MGLL_V%mu0_new(:,:,:,:) = 0.0_CUSTOM_REAL
   case default
     stop 'Invalid MGLL_TYPE, type not implemented yet'
   end select
@@ -214,6 +216,8 @@
     call print_min_max_all(MGLL_V%Gc_prime_new,"Gc_prime new")
     ! Gs_prime
     call print_min_max_all(MGLL_V%Gs_prime_new,"Gs_prime new")
+    ! mu0
+    call print_min_max_all(MGLL_V%mu0_new,"mu0 new")
 
   case default
     stop 'New MGLL_TYPE, velocity range check not implemented yet'
@@ -262,8 +266,9 @@
     MGLL_V%vsv_new = MGLL_V%vsv_new * MGLL_V%scale_velocity
     MGLL_V%vsh_new = MGLL_V%vsh_new * MGLL_V%scale_velocity
     MGLL_V%rho_new = MGLL_V%rho_new * MGLL_V%scale_density
-    MGLL_V%Gc_prime_new = MGLL_V%Gc_prime_new * MGLL_V%scale_GPa  ! moduli in GPa
-    MGLL_V%Gs_prime_new = MGLL_V%Gs_prime_new * MGLL_V%scale_GPa
+    ! Gc_prime,Gs_prime are already non-dimensional
+    MGLL_V%mu0_new = MGLL_V%mu0_new * MGLL_V%scale_GPa ! moduli in GPa
+
     ! eta is already non-dimensional
   end select
   call synchronize_all()
@@ -416,7 +421,7 @@
   case (1)
     ! isotropic model
     if (rank == 0) then
-      write(IMAIN,*)'  reads isotropic model values: vp,vs,rho'
+      write(IMAIN,*)'  reads isotropic model values: rho,vp,vs'
       call flush_IMAIN()
     endif
 
@@ -443,7 +448,7 @@
   case (2)
     ! transverse isotropic model
     if (rank == 0) then
-      write(IMAIN,*)'  reads transversely isotropic model values: vpv,vph,vsv,vsh,eta,rho'
+      write(IMAIN,*)'  reads transversely isotropic model values: rho,vpv,vph,vsv,vsh,eta'
       call flush_IMAIN()
     endif
 
@@ -498,7 +503,7 @@
   case (3)
     ! azimuthal model
     if (rank == 0) then
-      write(IMAIN,*)'  reads azimuthal anisotropic model values: vpv,vph,vsv,vsh,eta,Gc_prime,Gs_prime,rho'
+      write(IMAIN,*)'  reads azimuthal anisotropic model values: rho,vpv,vph,vsv,vsh,eta,Gc_prime,Gs_prime,mu0'
       call flush_IMAIN()
     endif
 
@@ -569,6 +574,20 @@
     read(IIN) MGLL_V%Gs_prime_new(:,:,:,1:MGLL_V%nspec)
     close(IIN)
 
+    ! mu0
+    if (.true.) then  ! by default try to read in mu0
+      open(unit=IIN,file=prname(1:len_trim(prname))//'mu0.bin', &
+           status='old',action='read',form='unformatted',iostat=ier)
+      if (ier /= 0) then
+        print *,'Error opening: ',prname(1:len_trim(prname))//'mu0.bin'
+        call exit_MPI(rank,'Error model GLL')
+      endif
+      read(IIN) MGLL_V%mu0_new(:,:,:,1:MGLL_V%nspec)
+      close(IIN)
+    else
+      MGLL_V%mu0_new(:,:,:,1:MGLL_V%nspec) = 1.0
+    endif
+
   case default
     stop 'Invalid MGLL_TYPE, mesh file reading not implemented yet'
   end select
@@ -613,7 +632,7 @@
 
   ! local parameters
   double precision :: vp,vs
-  double precision :: Gc_prime,Gs_prime
+  double precision :: Gc_prime,Gs_prime,mu0
 
   ! safety check
   if (ispec > MGLL_V%nspec) then
@@ -662,7 +681,7 @@
     eta_aniso = dble( MGLL_V%eta_new(i,j,k,ispec) )
     Gc_prime = dble( MGLL_V%Gc_prime_new(i,j,k,ispec) )
     Gs_prime = dble( MGLL_V%Gs_prime_new(i,j,k,ispec) )
-
+    mu0 = dble( MGLL_V%mu0_new(i,j,k,ispec) )
   case default
     stop 'Invalid MGLL_TYPE, imposing val not implemented yet'
   end select
@@ -671,7 +690,7 @@
   if (ANISOTROPIC_3D_MANTLE) then
       ! parameters need to be converted to cijkl
       call model_gll_build_cij(xmesh,ymesh,zmesh, &
-                               vph,vpv,vsh,vsv,rho,eta_aniso,Gc_prime,Gs_prime, &
+                               vph,vpv,vsh,vsv,rho,eta_aniso,Gc_prime,Gs_prime,mu0, &
                                c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
                                c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
   endif ! ANISOTROPIC_3D_MANTLE
@@ -683,7 +702,7 @@
 !
 
   subroutine model_gll_build_cij(xmesh,ymesh,zmesh, &
-                                 vph,vpv,vsh,vsv,rho,eta_aniso,Gc_prime,Gs_prime, &
+                                 vph,vpv,vsh,vsv,rho,eta_aniso,Gc_prime,Gs_prime,mu0, &
                                  c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
                                  c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
 
@@ -692,7 +711,7 @@
 
   implicit none
   double precision,intent(in) :: xmesh,ymesh,zmesh
-  double precision,intent(in) :: vpv,vph,vsv,vsh,rho,eta_aniso,Gc_prime,Gs_prime
+  double precision,intent(in) :: vpv,vph,vsv,vsh,rho,eta_aniso,Gc_prime,Gs_prime,mu0
 
   double precision,intent(inout) :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
                                     c33,c34,c35,c36,c44,c45,c46,c55,c56,c66
@@ -840,7 +859,6 @@
     !Gc = Gc_prime * (rho_p*vs_p**2)
     !Gs = Gs_prime * (rho_p*vs_p**2)
 
-    ! daniel todo: add actual values
     ! note: for Gc_prime and Gs_prime, the scaling rho * vs0**2 is equal to the isotropic shear moduli mu0 = rho * vs0**2
     !       The mu0 value could in principle be choosen arbitrarily, as long as it is coherent with the scaling
     !       for the kernel values. Its purpose is to non-dimensionalize Gc and scale the kernel contributions
@@ -850,8 +868,8 @@
     !Gc = Gc_prime * 26.6/scale_GPa
     !Gs = Gs_prime * 26.6/scale_GPa
 
-    Gc = Gc_prime ! to avoid compiler warning
-    Gs = Gs_prime ! to avoid compiler warning
+    Gc = Gc_prime * mu0
+    Gs = Gs_prime * mu0
 
 !daniel debug:
 ! test: ignore Gc,Gs contributions

@@ -81,7 +81,7 @@
   case (1)
     ! isotropic model
     if (rank == 0) then
-      write(IMAIN,*)'  ADIOS reads isotropic model values: vp,vs,rho'
+      write(IMAIN,*)'  ADIOS reads isotropic model values: rho,vp,vs'
       call flush_IMAIN()
     endif
     ! vp mesh
@@ -92,7 +92,7 @@
   case (2)
     ! transverse isotropic model
     if (rank == 0) then
-      write(IMAIN,*)'  ADIOS reads transversely isotropic model values: vpv,vph,vsv,vsh,eta,rho'
+      write(IMAIN,*)'  ADIOS reads transversely isotropic model values: rho,vpv,vph,vsv,vsh,eta'
       call flush_IMAIN()
     endif
 
@@ -116,7 +116,7 @@
   case (3)
     ! azimuthal model
     if (rank == 0) then
-      write(IMAIN,*)'  reads azimuthal anisotropic model values: vpv,vph,vsv,vsh,eta,Gc_prime,Gs_prime,rho'
+      write(IMAIN,*)'  reads azimuthal anisotropic model values: rho,vpv,vph,vsv,vsh,eta,Gc_prime,Gs_prime,mu0'
       call flush_IMAIN()
     endif
 
@@ -136,11 +136,13 @@
     call adios_schedule_read(file_handle_adios, sel, "reg1/eta/array", 0, 1, &
         MGLL_V%eta_new(:,:,:,1:MGLL_V%nspec), adios_err)
 
-    ! Gc/Gs mesh
+    ! Gc_prime/Gs_prime/mu0 mesh
     call adios_schedule_read(file_handle_adios, sel, "reg1/Gc_prime/array", 0, 1, &
         MGLL_V%Gc_prime_new(:,:,:,1:MGLL_V%nspec), adios_err)
     call adios_schedule_read(file_handle_adios, sel, "reg1/Gs_prime/array", 0, 1, &
         MGLL_V%Gs_prime_new(:,:,:,1:MGLL_V%nspec), adios_err)
+    call adios_schedule_read(file_handle_adios, sel, "reg1/mu0/array", 0, 1, &
+        MGLL_V%mu0_new(:,:,:,1:MGLL_V%nspec), adios_err)
 
   case default
     stop 'Invalid MGLL_TYPE for reading ADIOS GLL model, type not implemented yet'

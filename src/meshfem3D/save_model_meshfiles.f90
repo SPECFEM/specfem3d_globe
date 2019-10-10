@@ -14,7 +14,7 @@
 
   use regions_mesh_par2, only: &
     rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-    Qmu_store,Gc_prime_store,Gs_prime_store,mu0_store, &
+    Qmu_store,Gc_prime_store,Gs_prime_store,mu0store, &
     prname
 
   implicit none
@@ -141,7 +141,7 @@
     open(unit=IOUT,file=prname(1:len_trim(prname))//'mu0.bin', &
           status='unknown',form='unformatted',action='write',iostat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error opening mu0.bin file')
-    temp_store(:,:,:,:) = mu0_store(:,:,:,:) * scale_GPa
+    temp_store(:,:,:,:) = mu0store(:,:,:,:) * scale_GPa
     write(IOUT) temp_store
     close(IOUT)
   endif
