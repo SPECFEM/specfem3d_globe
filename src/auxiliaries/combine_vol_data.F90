@@ -412,7 +412,8 @@ program combine_vol_data
       nspec_list(it) = nspec
       nglob_list(it) = nglob
 
-      print *,'nglob / nspec = ',nglob_list(it),' / ',nspec_list(it)
+      !debug
+      !print *,'nglob / nspec = ',nglob_list(it),' / ',nspec_list(it)
 
       ! check
       if (nspec_list(it) > NSPEC_CRUST_MANTLE ) stop 'Error file nspec too big, please check compilation'
@@ -433,9 +434,10 @@ program combine_vol_data
 
     enddo
 
-    print *, 'nspec_list(it) = ', nspec_list(1:num_node)
-    print *, 'nglob_list(it) = ', nglob_list(1:num_node)
-    print *, 'nelement(it)   = ', nelement(1:num_node)
+    !debug
+    !print *, 'nspec_list(it) = ', nspec_list(1:num_node)
+    !print *, 'nglob_list(it) = ', nglob_list(1:num_node)
+    !print *, 'nelement(it)   = ', nelement(1:num_node)
 
 #ifdef USE_VTK_INSTEAD_OF_MESH
     ! VTK
