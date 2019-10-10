@@ -924,6 +924,95 @@
 !-------------------------------------------------------------------------------------------------
 !
 
+  subroutine rotate_tensor_global_to_azi(theta,phi, &
+                                          A,C,N,L,F, &
+                                          Gc,Gs, &
+                                          c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+                                          c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
+
+! rotates from local radial symmetry given by Love parameterization
+! to global global reference frame used in SPECFEM3D
+
+  implicit none
+
+  double precision,intent(in) :: theta,phi
+  double precision,intent(out) :: A,C,N,L,F,Gc,Gs
+
+  double precision,intent(in) :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+                                  c33,c34,c35,c36,c44,c45,c46,c55,c56,c66
+
+  ! local parameters
+  double precision :: d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26, &
+                      d33,d34,d35,d36,d44,d45,d46,d55,d56,d66
+
+  ! Anderson & Dziewonski, 1982: "Upper mantle anisotropy: evidence from free oscillations", GJR
+  ! A = rho * vph**2
+  ! C = rho * vpv**2
+  ! N = rho * vsh**2
+  ! L = rho * vsv**2
+  ! F = eta * (A - 2*L)
+  !
+  ! and therefore (assuming radial axis symmetry)
+  ! C11 = A = rho * vph**2
+  ! C33 = C = rho * vpv**2
+  ! C44 = L = rho * vsv**2
+  ! C13 = F = eta * (A - 2*L)
+  ! C12 = C11 - 2 C66 = A - 2*N = rho * (vph**2 - 2 * vsh**2)
+  ! C22 = C11
+  ! C23 = C13
+  ! C55 = C44
+  ! C66 = N = rho * vsh**2 = (C11-C12)/2
+
+  ! rotates from global to local (radial) reference system
+  call rotate_tensor_global_to_radial(theta,phi, &
+                                      d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26, &
+                                      d33,d34,d35,d36,d44,d45,d46,d55,d56,d66, &
+                                      c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+                                      c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
+
+  ! sets up Love parameters from local (radial) system
+  ! for pure tiso tensors:
+  ! A = d22
+  ! F = d23
+  ! C = d33
+  ! L = d44
+  ! N = d66
+  !
+  ! for more general tensors:
+  !
+  ! Sieminski, 2007:
+  ! A = 1/8 (3 C11 + 3 C22 + 2 C12 + 4 C66)
+  ! C = C33
+  ! N = 1/8 (C11 + C22 - 2 C12 + 4 C66)
+  ! L = 1/2 (C44 + C55)
+  ! F = 1/2 (C13 + C23)
+  ! and derived eta = F / (A - 2 L)
+  !
+  A = 0.125d0 * (3.d0 * d11 + 3.d0 * d22 + 2.d0 * d12 + 4.d0 * d66)
+  C = d33
+  N = 0.125d0 * (d11 + d22 - 2.d0 * d12 + 4.d0 * d66)
+  L = 0.5d0 * (d44 + d55)
+  F = 0.5d0 * (d13 + d23)
+
+  ! see rotate for aniso rotations:
+  ! in local (radial) symmetry
+  !   d44 = L - Gc
+  !   d45 = -Gs
+  !   d55 = L + Gc
+  !
+  ! therefor: Gs = - d45
+  !           Gc = 1/2 ( d55 - d44 )
+  Gs = - d45
+  Gc = 0.5d0 * (d55 - d44)
+
+  end subroutine rotate_tensor_global_to_azi
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
   subroutine rotate_tensor_global_to_radial_vector(cij_kl,cij_kl_spherical,theta_in,phi_in)
 
 ! Purpose : compute the kernels in r,theta,phi (cij_kl_spherical)
