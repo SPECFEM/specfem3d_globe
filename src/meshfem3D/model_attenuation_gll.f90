@@ -73,8 +73,6 @@
   implicit none
 
   ! local parameters
-  double precision :: scaleval
-  real(kind=CUSTOM_REAL) :: minvalue,maxvalue,min_all,max_all
   integer :: ier
 
   ! sets type (iso,tiso,azi)
