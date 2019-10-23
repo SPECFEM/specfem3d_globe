@@ -198,9 +198,9 @@ end module kernel_adios2
                                     adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
         call adios2_define_variable(v_bulk_beta_kl_crust_mantle, adios2_io_kernel, "bulk_beta_kl_crust_mantle", &
                                     adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
-        call adios2_define_variable(v_Gc_prime_crust_mantle, adios2_io_kernel, "Gc_prime_kl_crust_mantle", &
+        call adios2_define_variable(v_Gc_prime_kl_crust_mantle, adios2_io_kernel, "Gc_prime_kl_crust_mantle", &
                                     adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
-        call adios2_define_variable(v_Gs_prime_crust_mantle, adios2_io_kernel, "Gs_prime_kl_crust_mantle", &
+        call adios2_define_variable(v_Gs_prime_kl_crust_mantle, adios2_io_kernel, "Gs_prime_kl_crust_mantle", &
                                     adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
 
       else
