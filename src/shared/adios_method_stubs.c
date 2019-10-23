@@ -57,6 +57,8 @@ void FC_FUNC_(save_mpi_arrays_adios,SAVE_MPI_ARRAYS_ADIOS)(void) {}
 void FC_FUNC_(write_avs_dx_output_adios,WRITE_AVS_DX_OUTPUT_ADIOS)(int* npointot, int* iregion_code,
                                                                    int* num_ibool_AVS_DX, int* mask_ibool) {}
 
+void FC_FUNC_(read_gll_qmu_model_adios,READ_GLL_QMU_MODEL_ADIOS)(void) {}
+
 // for xspecfem3D compilation
 
 void FC_FUNC_(read_arrays_solver_adios,READ_ARRAYS_SOLVER_ADIOS)(void) {}
