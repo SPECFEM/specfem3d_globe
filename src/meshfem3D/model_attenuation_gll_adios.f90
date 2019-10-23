@@ -67,7 +67,7 @@
     if (rank /= myrank) write(IMAIN,*) '  mesh slice for rank: ',rank
     call flush_IMAIN()
   endif
- 
+
   ! Setup the ADIOS library to read the file
   call open_file_adios_read(file_name)
 
@@ -84,7 +84,7 @@
   call adios_perform_reads(file_handle_adios, adios_err)
 
   call check_adios_err(myrank,adios_err)
-  
+
   ! closes adios file
   call adios_read_close(file_handle_adios, adios_err)
 

@@ -141,7 +141,7 @@
   end subroutine model_attenuation_gll_broadcast
 
 
-  
+
   subroutine model_attenuation_gll(ispec, i, j, k, Qmu)
 
   use model_gll_qmu_par
