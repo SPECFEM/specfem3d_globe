@@ -1,7 +1,7 @@
-# 1 "../source/src/shared/adios2_helpers_read_template.F90"
-# 1 " < built-in > "
-# 1 " < command-line > "
-# 1 "../source/src/shared/adios2_helpers_read_template.F90"
+! 1 "../source/src/shared/adios2_helpers_read_template.F90"
+! 1 " < built-in > "
+! 1 " < command-line > "
+! 1 "../source/src/shared/adios2_helpers_read_template.F90"
 !=====================================================================
 !
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
@@ -114,10 +114,10 @@ end subroutine check_adios2_err
 
 !===============================================================================
 
-# 124 "../source/src/shared/adios2_helpers_read_template.F90"
+! 124 "../source/src/shared/adios2_helpers_read_template.F90"
 
 
-# 138 "../source/src/shared/adios2_helpers_read_template.F90"
+! 138 "../source/src/shared/adios2_helpers_read_template.F90"
 
 
 !# SUB(TYPENAME,TYPEDEF,NDIMS,DIMDEF) !subroutine read_adios2_TYPENAME_NDIMSd(file, io, varname, ndims, start, count, data, myrank, src, func, step)
