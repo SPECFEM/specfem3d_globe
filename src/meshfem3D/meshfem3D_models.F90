@@ -74,7 +74,9 @@
     call model_attenuation_broadcast(MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD)
 
     ! 3D attenuation
-    if (ATTENUATION_3D) then
+    if (ATTENUATION_GLL) then
+      call model_attenuation_gll_broadcast()
+    else if (ATTENUATION_3D) then
       ! Colleen's model defined originally between 24.4km and 650km
       call model_atten3D_QRFSI12_broadcast()
     else
@@ -1220,6 +1222,7 @@
 !
 
   subroutine meshfem3D_models_getatten_val(idoubling,xmesh,ymesh,zmesh,r_prem, &
+                                           ispec, i, j, k, &
                                            tau_e,tau_s,T_c_source, &
                                            moho,Qmu,Qkappa,elem_in_crust)
 
@@ -1236,6 +1239,7 @@
   integer,intent(in) :: idoubling
 
   double precision,intent(in) :: xmesh,ymesh,zmesh
+  integer,intent(in) :: ispec,i,j,k
 
   double precision,intent(in) :: r_prem
   double precision,intent(in) :: moho
@@ -1263,7 +1267,9 @@
 
   ! Get the value of Qmu (Attenuation) dependent on
   ! the radius (r_prem) and idoubling flag
-  if (ATTENUATION_3D) then
+  if (ATTENUATION_GLL) then
+     call model_attenuation_gll(ispec, i, j, k, Qmu)
+  else if (ATTENUATION_3D) then
     ! used for models: s362ani_3DQ, s362iso_3DQ, 3D_attenuation
 
     ! gets spherical coordinates

@@ -92,6 +92,7 @@ meshfem3D_MESHER_OBJECTS = \
 	$O/model_aniso_inner_core.check.o \
 	$O/model_aniso_mantle.check.o \
 	$O/model_atten3D_QRFSI12.check.o \
+	$O/model_attenuation_gll.check.o \
 	$O/model_attenuation.check.o \
 	$O/model_crust_1_0.check.o \
 	$O/model_crust_2_0.check.o \
@@ -152,6 +153,7 @@ meshfem3D_MODULES = \
 	$(FC_MODDIR)/model_full_sh_crust_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_full_sh_mantle_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_gll_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_gll_qmu_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_heterogen_mantle_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_jp3d_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_ppm_par.$(FC_MODEXT) \
@@ -225,6 +227,7 @@ adios_meshfem3D_OBJECTS = \
 	$O/write_AVS_DX_surface_data_adios.check_adios_module.o \
 	$O/get_absorb_adios.check_adios.o \
 	$O/model_gll_adios.check_adios.o \
+	$O/model_attenuation_gll_adios.check_adios.o \
 	$O/save_arrays_solver_adios.check_adios.o \
 	$O/save_model_meshfiles_adios.check_adios.o \
 	$(EMPTY_MACRO)
@@ -284,6 +287,8 @@ $O/write_AVS_DX_output_adios.check_adios.o: \
 $O/get_absorb_adios.check_adios.o: $O/adios_manager.shared_adios_module.o
 
 $O/model_gll_adios.check_adios.o: $O/model_gll.check.o
+
+$O/model_attenuation_gll_adios.check_adios.o: $O/model_attenuation_gll_adios.check.o
 
 $O/model_attenuation.check.o: \
 	$O/model_1dref.check.o \

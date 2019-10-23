@@ -419,6 +419,7 @@ xwrite_profile_OBJECTS += \
 	$O/model_aniso_inner_core.check.o \
 	$O/model_aniso_mantle.check.o \
 	$O/model_atten3D_QRFSI12.check.o \
+	$O/model_attenuation_gll.check.o \
 	$O/model_attenuation.check.o \
 	$O/model_crust_1_0.check.o \
 	$O/model_crust_2_0.check.o \
@@ -480,6 +481,7 @@ xwrite_profile_SHARED_OBJECTS = \
 # adios
 xwrite_profile_adios_OBJECTS = \
 	$O/model_gll_adios.check_adios.o \
+	$O/model_attenuation_gll_adios.check_adios.o \
 	$(EMPTY_MACRO)
 
 xwrite_profile_adios_SHARED_OBJECTS = \

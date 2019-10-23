@@ -208,6 +208,7 @@
         !note:  only Qmu attenuation considered, Qkappa attenuation not used so far...
         if (ATTENUATION) &
           call meshfem3D_models_getatten_val(idoubling,xmesh,ymesh,zmesh,r_prem, &
+                                             ispec, i, j, k, &
                                              tau_e,tau_s,T_c_source, &
                                              moho,Qmu,Qkappa,elem_in_crust)
 

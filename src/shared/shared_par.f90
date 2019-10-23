@@ -213,6 +213,7 @@
   integer :: MODEL_GLL_TYPE
 
   logical :: ATTENUATION_3D
+  logical :: ATTENUATION_GLL
   logical :: INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE
 
   logical :: EMULATE_ONLY = .false.
