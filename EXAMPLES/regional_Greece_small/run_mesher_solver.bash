@@ -1,13 +1,6 @@
 #!/bin/bash
 
-###########################################################
-# USER PARAMETERS
-
-## 4 CPUs
-CPUs=4
-
-###########################################################
-
+# gets settings from Par_file
 
 BASEMPIDIR=`grep ^LOCAL_PATH DATA/Par_file | cut -d = -f 2 `
 
@@ -20,11 +13,6 @@ NCHUNKS=`grep ^NCHUNKS DATA/Par_file | cut -d = -f 2 `
 
 # total number of nodes is the product of the values read
 numnodes=$(( $NCHUNKS * $NPROC_XI * $NPROC_ETA ))
-
-if [ ! "$numnodes" == "$CPUs" ]; then
-  echo "error: Par_file for $numnodes CPUs"
-  exit 1
-fi
 
 mkdir -p OUTPUT_FILES
 

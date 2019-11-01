@@ -1,12 +1,6 @@
 #!/bin/bash
-###########################################################
-# USER PARAMETERS
 
-## 4 CPUs
-CPUs=4
-
-###########################################################
-
+# gets settings from Par_file
 
 BASEMPIDIR=`grep ^LOCAL_PATH DATA/Par_file | cut -d = -f 2 `
 
@@ -20,12 +14,6 @@ NCHUNKS=`grep ^NCHUNKS DATA/Par_file | cut -d = -f 2 `
 # total number of nodes is the product of the values read
 numnodes=$(( $NCHUNKS * $NPROC_XI * $NPROC_ETA ))
 
-if [ ! "$numnodes" == "$CPUs" ]; then
-  echo "error: Par_file for $numnodes CPUs"
-  exit 1
-fi
-
-
 mkdir -p OUTPUT_FILES
 
 # backup files used for this simulation
@@ -33,7 +21,9 @@ cp DATA/Par_file OUTPUT_FILES/
 cp DATA/STATIONS OUTPUT_FILES/
 cp DATA/CMTSOLUTION OUTPUT_FILES/
 
-
+if [ ! -f ./change_simulation_type.pl ]; then
+ln -s ../../utils/change_simulation_type.pl
+fi
 
 ##
 ## mesh generation
@@ -60,6 +50,9 @@ cp OUTPUT_FILES/*.txt $BASEMPIDIR/
 ##
 cp DATA/Par_file DATA/Par_file.org
 ./change_simulation_type.pl -F
+
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 sleep 2
 # set up addressing
 #cp $BASEMPIDIR/addr*.txt OUTPUT_FILES/
@@ -91,7 +84,13 @@ cd ../
 ## adjoint simulation
 ##
 ./change_simulation_type.pl -b
-cp SEM/STATIONS_ADJOINT DATA/
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
+
+cp -v SEM/STATIONS_ADJOINT DATA/
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
+
 cp DATA/STATIONS_ADJOINT OUTPUT_FILES/
 sleep 2
 
