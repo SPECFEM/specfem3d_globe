@@ -133,21 +133,25 @@
     endif
 
     ! outer core
-    local_dim = NSPEC_OUTER_CORE * NGLLX * NGLLY * NGLLZ
-    call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '', STRINGIFY_VAR(rho_kl_outer_core))
-      call define_adios_global_array1D(adios_group, group_size_inc,local_dim, '', STRINGIFY_VAR(alpha_kl_outer_core))
-    if (deviatoric_outercore) then
-      call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '', STRINGIFY_VAR(beta_kl_outer_core))
+    if (SAVE_KERNELS_OC) then
+      local_dim = NSPEC_OUTER_CORE * NGLLX * NGLLY * NGLLZ
+      call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '', STRINGIFY_VAR(rho_kl_outer_core))
+        call define_adios_global_array1D(adios_group, group_size_inc,local_dim, '', STRINGIFY_VAR(alpha_kl_outer_core))
+      if (deviatoric_outercore) then
+        call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '', STRINGIFY_VAR(beta_kl_outer_core))
+      endif
     endif
 
     ! inner core
-    local_dim = NSPEC_INNER_CORE * NGLLX * NGLLY * NGLLZ
-    call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '', STRINGIFY_VAR(rho_kl_inner_core))
-    call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '', STRINGIFY_VAR(alpha_kl_inner_core))
-    call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '', STRINGIFY_VAR(beta_kl_inner_core))
+    if (SAVE_KERNELS_IC) then
+      local_dim = NSPEC_INNER_CORE * NGLLX * NGLLY * NGLLZ
+      call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '', STRINGIFY_VAR(rho_kl_inner_core))
+      call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '', STRINGIFY_VAR(alpha_kl_inner_core))
+      call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '', STRINGIFY_VAR(beta_kl_inner_core))
+    endif
 
     ! boundary kernel
-    if (SAVE_BOUNDARY_MESH) then
+    if (SAVE_KERNELS_BOUNDARY) then
       !call save_kernels_boundary_kl()
       if (.not. SUPPRESS_CRUSTAL_MESH .and. HONOR_1D_SPHERICAL_MOHO) then
         local_dim = NSPEC2D_MOHO * NGLLX * NGLLY * NDIM
@@ -374,6 +378,9 @@
   ! Variables
   integer :: local_dim
 
+  ! checks if anything to do
+  if (.not. SAVE_KERNELS_OC) return
+
   local_dim = NSPEC_OUTER_CORE * NGLLX* NGLLY * NGLLZ
 
   call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
@@ -406,6 +413,9 @@
   ! Variables
   integer :: local_dim
 
+  ! checks if anything to do
+  if (.not. SAVE_KERNELS_IC) return
+
   local_dim = NSPEC_INNER_CORE * NGLLX * NGLLY * NGLLZ
 
   call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
@@ -434,6 +444,9 @@
 
   ! Variables
   integer :: local_dim
+
+  ! checks if anything to do
+  if (.not. SAVE_KERNELS_BOUNDARY) return
 
   if (.not. SUPPRESS_CRUSTAL_MESH .and. HONOR_1D_SPHERICAL_MOHO) then
     local_dim = NSPEC2D_MOHO * NGLLX * NGLLY * NDIM

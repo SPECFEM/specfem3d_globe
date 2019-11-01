@@ -37,10 +37,11 @@ module kernel_adios2
                                    v_alpha_kl_crust_mantle, v_cijkl_kl_crust_mantle, v_rhonotprime_kl_crust_mantle, &
                                    v_kappa_kl_crust_mantle,  v_mu_kl_crust_mantle, &
                                    v_beta_kl_crust_mantle,  v_sigma_kl_crust_mantle, v_bulk_beta_kl_crust_mantle, &
-                                   v_rho_kl_outer_core, v_alpha_kl_outer_core, v_beta_kl_outer_core, v_rho_kl_inner_core, &
-                                   v_alpha_kl_inner_core, v_beta_kl_inner_core, v_moho_kl, v_d400_kl, v_d670_kl, v_cmb_kl, &
-                                   v_icb_kl, v_hess_kl_crust_mantle, v_moment_der, v_sloc_der, v_stshift_der, v_shdur_der
+                                   v_hess_kl_crust_mantle, v_moment_der, v_sloc_der, v_stshift_der, v_shdur_der
 
+  type(adios2_variable), public :: v_rho_kl_outer_core, v_alpha_kl_outer_core, v_beta_kl_outer_core
+  type(adios2_variable), public :: v_rho_kl_inner_core, v_alpha_kl_inner_core, v_beta_kl_inner_core
+  type(adios2_variable), public :: v_moho_kl, v_d400_kl, v_d670_kl, v_cmb_kl, v_icb_kl,
 
 end module kernel_adios2
 
@@ -256,32 +257,36 @@ end module kernel_adios2
     endif
 
     ! outer core
-    ldim(1) = NSPEC_OUTER_CORE * NGLLX * NGLLY * NGLLZ
-    gdim = sizeprocs_adios2 * ldim;
-    offs = myrank_adios2 * ldim;
+    if (SAVE_KERNELS_OC) then
+      ldim(1) = NSPEC_OUTER_CORE * NGLLX * NGLLY * NGLLZ
+      gdim = sizeprocs_adios2 * ldim;
+      offs = myrank_adios2 * ldim;
 
-    call adios2_define_variable(v_rho_kl_outer_core, adios2_io_kernel, "rho_kl_outer_core", &
-                                adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
-    call adios2_define_variable(v_alpha_kl_outer_core, adios2_io_kernel, "alpha_kl_outer_core", &
-                                adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
-    if (deviatoric_outercore) then
-      call adios2_define_variable(v_beta_kl_outer_core, adios2_io_kernel, "beta_kl_outer_core", &
+      call adios2_define_variable(v_rho_kl_outer_core, adios2_io_kernel, "rho_kl_outer_core", &
                                   adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+      call adios2_define_variable(v_alpha_kl_outer_core, adios2_io_kernel, "alpha_kl_outer_core", &
+                                  adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+      if (deviatoric_outercore) then
+        call adios2_define_variable(v_beta_kl_outer_core, adios2_io_kernel, "beta_kl_outer_core", &
+                                    adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+      endif
     endif
 
     ! inner core
-    ldim(1) = NSPEC_INNER_CORE * NGLLX * NGLLY * NGLLZ
-    gdim = sizeprocs_adios2 * ldim;
-    offs = myrank_adios2 * ldim;
-    call adios2_define_variable(v_rho_kl_inner_core, adios2_io_kernel, "rho_kl_inner_core", &
-                                adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
-    call adios2_define_variable(v_alpha_kl_inner_core, adios2_io_kernel, "alpha_kl_inner_core", &
-                                adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
-    call adios2_define_variable(v_beta_kl_inner_core, adios2_io_kernel, "beta_kl_inner_core", &
-                                adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+    if (SAVE_KERNELS_IC) then
+      ldim(1) = NSPEC_INNER_CORE * NGLLX * NGLLY * NGLLZ
+      gdim = sizeprocs_adios2 * ldim;
+      offs = myrank_adios2 * ldim;
+      call adios2_define_variable(v_rho_kl_inner_core, adios2_io_kernel, "rho_kl_inner_core", &
+                                  adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+      call adios2_define_variable(v_alpha_kl_inner_core, adios2_io_kernel, "alpha_kl_inner_core", &
+                                  adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+      call adios2_define_variable(v_beta_kl_inner_core, adios2_io_kernel, "beta_kl_inner_core", &
+                                  adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
+    endif
 
     ! boundary kernel
-    if (SAVE_BOUNDARY_MESH) then
+    if (SAVE_KERNELS_BOUNDARY) then
       !call save_kernels_boundary_kl()
       if (.not. SUPPRESS_CRUSTAL_MESH .and. HONOR_1D_SPHERICAL_MOHO) then
         ldim(1) = NSPEC2D_MOHO * NGLLX * NGLLY * NDIM
@@ -313,7 +318,6 @@ end module kernel_adios2
       offs = myrank_adios2 * ldim;
       call adios2_define_variable(v_icb_kl, adios2_io_kernel, "icb_kl", &
                                   adios2_CUSTOM_REAL, 1, gdim, offs, ldim, .true., ier)
-
     endif
 
     ! approximate Hessian
@@ -494,6 +498,9 @@ end module kernel_adios2
   ! Variables
   integer :: ier
 
+  ! checks if anything to do
+  if (.not. SAVE_KERNELS_OC) return
+
   call adios2_put(adios2_file_kernel, v_rho_kl_outer_core, rho_kl_outer_core, adios2_mode_sync, ier)
   call adios2_put(adios2_file_kernel, v_alpha_kl_outer_core, alpha_kl_outer_core, adios2_mode_sync, ier)
 
@@ -520,6 +527,9 @@ end module kernel_adios2
   ! Variables
   integer :: ier
 
+  ! checks if anything to do
+  if (.not. SAVE_KERNELS_IC) return
+
   call adios2_put(adios2_file_kernel, v_rho_kl_inner_core, rho_kl_inner_core, adios2_mode_sync, ier)
   call adios2_put(adios2_file_kernel, v_alpha_kl_inner_core, alpha_kl_inner_core, adios2_mode_sync, ier)
   call adios2_put(adios2_file_kernel, v_beta_kl_inner_core, beta_kl_inner_core, adios2_mode_sync, ier)
@@ -542,6 +552,9 @@ end module kernel_adios2
 
   ! Variables
   integer :: ier
+
+  ! checks if anything to do
+  if (.not. SAVE_KERNELS_BOUNDARY) return
 
   if (.not. SUPPRESS_CRUSTAL_MESH .and. HONOR_1D_SPHERICAL_MOHO) then
     call adios2_put(adios2_file_kernel, v_moho_kl, moho_kl, adios2_mode_sync, ier)

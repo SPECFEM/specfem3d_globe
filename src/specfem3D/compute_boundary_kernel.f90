@@ -48,7 +48,7 @@
   integer :: ier
 
   ! checks if anything to do
-  if (.not. SAVE_BOUNDARY_MESH) return
+  if (.not. SAVE_KERNELS_BOUNDARY) return
 
   ! transfers wavefields onto CPU
   if (GPU_MODE) then

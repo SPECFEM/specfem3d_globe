@@ -48,16 +48,16 @@
   if (EXACT_UNDOING_TO_DISK) return
 
   ! outer core
-  call compute_kernels_outer_core()
+  if (SAVE_KERNELS_OC) call compute_kernels_outer_core()
 
   ! inner core
-  call compute_kernels_inner_core()
+  if (SAVE_KERNELS_IC) call compute_kernels_inner_core()
 
   ! NOISE TOMOGRAPHY --- source strength kernel
   if (NOISE_TOMOGRAPHY == 3) call compute_kernels_strength_noise()
 
   ! boundary kernels
-  if (SAVE_BOUNDARY_MESH) call compute_boundary_kernels()
+  if (SAVE_KERNELS_BOUNDARY) call compute_boundary_kernels()
 
   ! approximate Hessian
   if (APPROXIMATE_HESS_KL) call compute_kernels_Hessian()
@@ -337,6 +337,9 @@
 
   ! outer_core -- compute the actual displacement and acceleration (NDIM,NGLOBMAX_OUTER_CORE)
 
+  ! safety check
+  if (.not. SAVE_KERNELS_OC) return
+
   if (.not. GPU_MODE) then
     ! on CPU
 
@@ -421,7 +424,7 @@
     enddo
 
     ! calculates gradient grad(displ) (also needed for boundary kernels)
-    if (SAVE_BOUNDARY_MESH .or. deviatoric_outercore) then
+    if (SAVE_KERNELS_BOUNDARY .or. deviatoric_outercore) then
       mask_ibool(:) = .false.
       do ispec = 1, NSPEC_OUTER_CORE
 
@@ -688,6 +691,9 @@
 #else
   integer :: i,j,k
 #endif
+
+  ! safety check
+  if (.not. SAVE_KERNELS_IC) return
 
   if (.not. GPU_MODE) then
     ! on CPU

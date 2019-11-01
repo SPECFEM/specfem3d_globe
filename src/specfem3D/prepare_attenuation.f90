@@ -94,6 +94,11 @@
                                   tau_sigma_dble, &
                                   NSPEC_INNER_CORE)
 
+  ! debug
+  !if (myrank == 0) print *,'debug: original moduli muv',muvstore_crust_mantle(1,1,1,1000),muvstore_crust_mantle(3,3,3,3000)
+  !if (myrank == 0) print *,'debug: original moduli c11',c11store_crust_mantle(1,1,1,1000),c11store_crust_mantle(3,3,3,3000)
+  !if (myrank == 0) print *,'debug: original moduli c44',c44store_crust_mantle(1,1,1,1000),c44store_crust_mantle(3,3,3,3000)
+
   ! physical dispersion: scales moduli from reference frequency to simulation (source) center frequency
   !
   ! if attenuation is on, shift PREM to right frequency

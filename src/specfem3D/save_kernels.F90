@@ -33,7 +33,7 @@
 
   subroutine save_kernels()
 
-  use constants_solver, only: SAVE_BOUNDARY_MESH
+  use constants_solver, only: SAVE_KERNELS_BOUNDARY,SAVE_KERNELS_OC,SAVE_KERNELS_IC
 
   use specfem_par, only: NOISE_TOMOGRAPHY,SIMULATION_TYPE,nrec_local, &
     APPROXIMATE_HESS_KL,ADIOS_FOR_KERNELS
@@ -62,8 +62,8 @@
   ! dump kernel arrays
   if (SIMULATION_TYPE == 3) then
 
-    ! restores relaxed elastic moduli after being shifted to unrelaxed values before time loop
-    call restore_relaxed_moduli()
+    ! restores original reference moduli (before shifting and unrelaxing)
+    call restore_original_moduli()
 
     ! crust mantle
     call save_kernels_crust_mantle()
@@ -74,14 +74,18 @@
     endif
 
     ! outer core
-    call save_kernels_outer_core(rhostore_outer_core,kappavstore_outer_core,rho_kl_outer_core,alpha_kl_outer_core)
+    if (SAVE_KERNELS_OC) then
+      call save_kernels_outer_core(rhostore_outer_core,kappavstore_outer_core,rho_kl_outer_core,alpha_kl_outer_core)
+    endif
 
     ! inner core
-    call save_kernels_inner_core(rhostore_inner_core,muvstore_inner_core,kappavstore_inner_core, &
-                                     rho_kl_inner_core,alpha_kl_inner_core,beta_kl_inner_core)
+    if (SAVE_KERNELS_IC) then
+      call save_kernels_inner_core(rhostore_inner_core,muvstore_inner_core,kappavstore_inner_core, &
+                                   rho_kl_inner_core,alpha_kl_inner_core,beta_kl_inner_core)
+    endif
 
     ! boundary kernel
-    if (SAVE_BOUNDARY_MESH) then
+    if (SAVE_KERNELS_BOUNDARY) then
       call save_kernels_boundary_kl()
     endif
 
@@ -113,6 +117,48 @@
 !-------------------------------------------------------------------------------------------------
 !
 
+  subroutine restore_original_moduli()
+
+  use specfem_par
+  use specfem_par_crustmantle
+
+  implicit none
+
+  ! checks if anything to do
+  ! only needs to restore original moduli when attenuation was used in prepare_attenuation.f90 to change moduli
+  if (.not. ATTENUATION_VAL) return
+
+  ! debug
+  !if (myrank == 0) print *,'debug: unrestored moduli muv',muvstore_crust_mantle(1,1,1,1000),muvstore_crust_mantle(3,3,3,3000)
+  !if (myrank == 0) print *,'debug: unrestored moduli c11',c11store_crust_mantle(1,1,1,1000),c11store_crust_mantle(3,3,3,3000)
+  !if (myrank == 0) print *,'debug: unrestored moduli c44',c44store_crust_mantle(1,1,1,1000),c44store_crust_mantle(3,3,3,3000)
+
+
+  ! note: we could save the original moduli in additional **store arrays.
+  !       however, this will almost double the memory requirements for the kernel simulations.
+  !       we thus tend to revert back the changes done to the elastic moduli,
+  !       reusing the same arrays.
+
+  ! beware the order here: in the preparation of the time loop, we first shift moduli, then unrelax them.
+  !                        let's do now the opposite...
+
+  ! restores relaxed elastic moduli after setting unrelaxed values before time loop
+  call restore_relaxed_moduli()
+
+  ! restore un-shifted elastic moduli (which correspond to the original moduli read in from mesher)
+  call restore_unshifted_reference_moduli()
+
+  ! debug
+  !if (myrank == 0) print *,'debug: restored moduli muv',muvstore_crust_mantle(1,1,1,1000),muvstore_crust_mantle(3,3,3,3000)
+  !if (myrank == 0) print *,'debug: restored moduli c11',c11store_crust_mantle(1,1,1,1000),c11store_crust_mantle(3,3,3,3000)
+  !if (myrank == 0) print *,'debug: restored moduli c44',c44store_crust_mantle(1,1,1,1000),c44store_crust_mantle(3,3,3,3000)
+
+  end subroutine restore_original_moduli
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
   subroutine restore_relaxed_moduli()
 
   use specfem_par
@@ -122,7 +168,7 @@
   implicit none
 
   ! local parameters
-  real(kind=CUSTOM_REAL) :: one_minus_sum_beta_use,muvl,muhl
+  real(kind=CUSTOM_REAL) :: one_minus_sum_beta_use,minus_sum_beta,mul,muvl,muhl
   integer :: ispec
 #ifdef FORCE_VECTORIZATION
 ! in this vectorized version we have to assume that N_SLS == 3 in order to be able to unroll and thus suppress
@@ -135,7 +181,6 @@
 
   ! check if anything to do
   if (.not. ATTENUATION_VAL) return
-  if (GPU_MODE) return
 
   ! only muvstore is used further and needs to be restored
 
@@ -150,45 +195,232 @@
         one_minus_sum_beta_use = one_minus_sum_beta_crust_mantle(1,1,1,ispec)
       endif
 
-      ! layer with both iso and transverse isotropy elements, use kappav and muv
-      muvl = muvstore_crust_mantle(INDEX_IJK,ispec)
-      ! returns to the relaxed moduli Mu_r = Mu_u / [1 - sum(1 - tau_strain/tau_stress) ]
-      muvl = muvl / one_minus_sum_beta_use
-      ! stores relaxed shear moduli for kernel computations
-      muvstore_crust_mantle(INDEX_IJK,ispec) = muvl
+      ! zero-shift case
+      if (abs(one_minus_sum_beta_use) < TINYVAL) cycle
 
-      ! tiso elements also use muh
-      if (ispec_is_tiso_crust_mantle(ispec)) then
-        muhl = muhstore_crust_mantle(INDEX_IJK,ispec)
-        muhl = muhl / one_minus_sum_beta_use
-        muhstore_crust_mantle(INDEX_IJK,ispec) = muhl
+      if (ANISOTROPIC_3D_MANTLE_VAL) then
+        ! aniso
+        minus_sum_beta =  one_minus_sum_beta_use - 1.0_CUSTOM_REAL
+
+        ! zero-shift
+        if (abs(one_minus_sum_beta_use) < TINYVAL) cycle
+
+        ! shifting in prepare_elastic_elements:
+        ! c44 = c44store_crust_mantle(INDEX_IJK,ispec)
+        ! mul = c44 * minus_sum_beta
+        ! c44 = c44 + mul
+        ! restores
+        mul = c44store_crust_mantle(INDEX_IJK,ispec) / one_minus_sum_beta_use
+        c44store_crust_mantle(INDEX_IJK,ispec) = mul
+
+! daniel todo: unrelaxed moduli shift: see prepare_elastic_elements to shift back accordingly.
+!              a new shift version could tries to shift moduli by separating muv and muh factors.
+!              this would require changes here.
+
+        ! shifting in prepare_elastic_elements:
+        ! mul = mul * minus_sum_beta
+        ! c11 = c11 + FOUR_THIRDS * mul ! * minus_sum_beta * mul
+        ! c12 = c12 - TWO_THIRDS * mul
+        ! c13 = c13 - TWO_THIRDS * mul
+        ! c22 = c22 + FOUR_THIRDS * mul
+        ! c23 = c23 - TWO_THIRDS * mul
+        ! c33 = c33 + FOUR_THIRDS * mul
+        ! c55 = c55 + mul
+        ! c66 = c66 + mul
+        !
+        ! restores
+        mul = mul * minus_sum_beta
+        c11store_crust_mantle(INDEX_IJK,ispec) = c11store_crust_mantle(INDEX_IJK,ispec) - FOUR_THIRDS * mul
+        c12store_crust_mantle(INDEX_IJK,ispec) = c12store_crust_mantle(INDEX_IJK,ispec) + TWO_THIRDS * mul
+        c13store_crust_mantle(INDEX_IJK,ispec) = c13store_crust_mantle(INDEX_IJK,ispec) + TWO_THIRDS * mul
+        c22store_crust_mantle(INDEX_IJK,ispec) = c22store_crust_mantle(INDEX_IJK,ispec) - FOUR_THIRDS * mul
+        c23store_crust_mantle(INDEX_IJK,ispec) = c23store_crust_mantle(INDEX_IJK,ispec) + TWO_THIRDS * mul
+        c33store_crust_mantle(INDEX_IJK,ispec) = c33store_crust_mantle(INDEX_IJK,ispec) - FOUR_THIRDS * mul
+        c55store_crust_mantle(INDEX_IJK,ispec) = c55store_crust_mantle(INDEX_IJK,ispec) - mul
+        c66store_crust_mantle(INDEX_IJK,ispec) = c66store_crust_mantle(INDEX_IJK,ispec) - mul
+
+      else
+        ! layer with both iso and transverse isotropy elements, use kappav and muv
+        muvl = muvstore_crust_mantle(INDEX_IJK,ispec)
+        ! returns to the relaxed moduli Mu_r = Mu_u / [1 - sum(1 - tau_strain/tau_stress) ]
+        muvl = muvl / one_minus_sum_beta_use
+        ! stores relaxed shear moduli for kernel computations
+        muvstore_crust_mantle(INDEX_IJK,ispec) = muvl
+
+        ! tiso elements also use muh
+        if (ispec_is_tiso_crust_mantle(ispec)) then
+          muhl = muhstore_crust_mantle(INDEX_IJK,ispec)
+          muhl = muhl / one_minus_sum_beta_use
+          muhstore_crust_mantle(INDEX_IJK,ispec) = muhl
+        endif
+      endif
+    ENDDO_LOOP_IJK
+  enddo
+  ! see prepare_elastic_elements:
+  ! since we scale muv and c11,.. stores we must divide with this factor to use the relaxed moduli for the modulus defect
+  ! calculation in updating the memory variables
+  !
+  ! note: we won't need to restores factor_common here.
+  !       it is only needed for time-stepping of the attenuation memory variables.
+
+  ! inner core
+  if (SAVE_KERNELS_IC) then
+    do ispec = 1,NSPEC_INNER_CORE
+      ! exclude fictitious elements in central cube
+      if (idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+      ! isotropic element
+      DO_LOOP_IJK
+        ! precompute terms for attenuation if needed
+        if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
+          one_minus_sum_beta_use = one_minus_sum_beta_inner_core(INDEX_IJK,ispec)
+        else
+          one_minus_sum_beta_use = one_minus_sum_beta_inner_core(1,1,1,ispec)
+        endif
+
+        ! layer with no transverse isotropy, use kappav and muv
+        muvl = muvstore_inner_core(INDEX_IJK,ispec)
+        ! returns to the relaxed moduli Mu_r = Mu_u / [1 - sum(1 - tau_strain/tau_stress) ]
+        muvl = muvl / one_minus_sum_beta_use
+        ! stores relaxed shear moduli for kernel computations
+        muvstore_inner_core(INDEX_IJK,ispec) = muvl
+      ENDDO_LOOP_IJK
+    enddo
+    ! note: we won't need to restores factor_common here.
+    !       it is only needed for time-stepping of the attenuation memory variables.
+  endif ! SAVE_KERNELS_IC
+
+  end subroutine restore_relaxed_moduli
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine restore_unshifted_reference_moduli()
+
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_innercore
+
+  implicit none
+
+  ! local parameters
+  real(kind=CUSTOM_REAL) :: scale_factor,scale_factor_minus_one,mul
+  integer :: ispec
+#ifdef FORCE_VECTORIZATION
+! in this vectorized version we have to assume that N_SLS == 3 in order to be able to unroll and thus suppress
+! an inner loop that would otherwise prevent vectorization; this is safe in practice in all cases because N_SLS == 3
+! in all known applications, and in the main program we check that N_SLS == 3 if FORCE_VECTORIZATION is used and we stop
+  integer :: ijk
+#else
+  integer :: i,j,k
+#endif
+
+  ! check if anything to do
+  if (.not. ATTENUATION_VAL) return
+
+  ! crust/mantle
+  do ispec = 1,NSPEC_CRUST_MANTLE
+    ! isotropic and tiso elements
+    DO_LOOP_IJK
+      if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
+        scale_factor = factor_scale_crust_mantle(INDEX_IJK,ispec)
+      else
+        scale_factor = factor_scale_crust_mantle(1,1,1,ispec)
+      endif
+
+      ! zero-scale factor
+      if (abs(scale_factor) < TINYVAL) cycle
+
+      if (ANISOTROPIC_3D_MANTLE_VAL) then
+        ! anisotropic element
+        scale_factor_minus_one = scale_factor - 1.d0
+
+        ! shifting: (in prepare_attenuation.f90)
+        ! mul = c44store_crust_mantle(i,j,k,ispec)
+        ! c44store_crust_mantle(i,j,k,ispec) = c44store_crust_mantle(i,j,k,ispec) + scale_factor_minus_one * mul
+        ! restores like:
+        mul = c44store_crust_mantle(INDEX_IJK,ispec)/scale_factor ! equals mu = c44store_crust_mantle/(1+scale_factor_minus_one)
+        c44store_crust_mantle(INDEX_IJK,ispec) = mul
+
+        ! see shifting in prepare_attenuation.f90:
+        ! c11store_crust_mantle(i,j,k,ispec) = c11store_crust_mantle(i,j,k,ispec) + FOUR_THIRDS * scale_factor_minus_one * mul
+        ! c12store_crust_mantle(i,j,k,ispec) = c12store_crust_mantle(i,j,k,ispec) - TWO_THIRDS * scale_factor_minus_one * mul
+        ! c13store_crust_mantle(i,j,k,ispec) = c13store_crust_mantle(i,j,k,ispec) - TWO_THIRDS * scale_factor_minus_one * mul
+        ! c22store_crust_mantle(i,j,k,ispec) = c22store_crust_mantle(i,j,k,ispec) + FOUR_THIRDS * scale_factor_minus_one * mul
+        ! c23store_crust_mantle(i,j,k,ispec) = c23store_crust_mantle(i,j,k,ispec) - TWO_THIRDS * scale_factor_minus_one * mul
+        ! c33store_crust_mantle(i,j,k,ispec) = c33store_crust_mantle(i,j,k,ispec) + FOUR_THIRDS * scale_factor_minus_one * mul
+        ! c44store_crust_mantle(i,j,k,ispec) = c44store_crust_mantle(i,j,k,ispec) + scale_factor_minus_one * mul
+        ! c55store_crust_mantle(i,j,k,ispec) = c55store_crust_mantle(i,j,k,ispec) + scale_factor_minus_one * mul
+        ! c66store_crust_mantle(i,j,k,ispec) = c66store_crust_mantle(i,j,k,ispec) + scale_factor_minus_one * mul
+        !
+        ! becomes (sign change of last term)
+        c11store_crust_mantle(INDEX_IJK,ispec) = c11store_crust_mantle(INDEX_IJK,ispec) &
+                                                 - FOUR_THIRDS * scale_factor_minus_one * mul
+        c12store_crust_mantle(INDEX_IJK,ispec) = c12store_crust_mantle(INDEX_IJK,ispec) &
+                                                 + TWO_THIRDS * scale_factor_minus_one * mul
+        c13store_crust_mantle(INDEX_IJK,ispec) = c13store_crust_mantle(INDEX_IJK,ispec) &
+                                                 + TWO_THIRDS * scale_factor_minus_one * mul
+        c22store_crust_mantle(INDEX_IJK,ispec) = c22store_crust_mantle(INDEX_IJK,ispec) &
+                                                 - FOUR_THIRDS * scale_factor_minus_one * mul
+        c23store_crust_mantle(INDEX_IJK,ispec) = c23store_crust_mantle(INDEX_IJK,ispec) &
+                                                 + TWO_THIRDS * scale_factor_minus_one * mul
+        c33store_crust_mantle(INDEX_IJK,ispec) = c33store_crust_mantle(INDEX_IJK,ispec) &
+                                                 - FOUR_THIRDS * scale_factor_minus_one * mul
+        c55store_crust_mantle(INDEX_IJK,ispec) = c55store_crust_mantle(INDEX_IJK,ispec) &
+                                                 - scale_factor_minus_one * mul
+        c66store_crust_mantle(INDEX_IJK,ispec) = c66store_crust_mantle(INDEX_IJK,ispec) &
+                                                 - scale_factor_minus_one * mul
+      else
+        ! isotropic or transverse isotropic element
+        muvstore_crust_mantle(INDEX_IJK,ispec) = muvstore_crust_mantle(INDEX_IJK,ispec) / scale_factor
+        ! scales transverse isotropic values for mu_h
+        if (ispec_is_tiso_crust_mantle(ispec)) then
+          muhstore_crust_mantle(INDEX_IJK,ispec) = muhstore_crust_mantle(INDEX_IJK,ispec) / scale_factor
+        endif
       endif
     ENDDO_LOOP_IJK
   enddo
 
   ! inner core
-  do ispec = 1,NSPEC_INNER_CORE
-    ! exclude fictitious elements in central cube
-    if (idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
-    ! isotropic element
-    DO_LOOP_IJK
-      ! precompute terms for attenuation if needed
-      if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
-        one_minus_sum_beta_use = one_minus_sum_beta_inner_core(INDEX_IJK,ispec)
-      else
-        one_minus_sum_beta_use = one_minus_sum_beta_inner_core(1,1,1,ispec)
-      endif
+  if (SAVE_KERNELS_IC) then
+    do ispec = 1,NSPEC_INNER_CORE
+      ! exclude fictitious elements in central cube
+      if (idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
 
-      ! layer with no transverse isotropy, use kappav and muv
-      muvl = muvstore_inner_core(INDEX_IJK,ispec)
-      ! returns to the relaxed moduli Mu_r = Mu_u / [1 - sum(1 - tau_strain/tau_stress) ]
-      muvl = muvl / one_minus_sum_beta_use
-      ! stores relaxed shear moduli for kernel computations
-      muvstore_inner_core(INDEX_IJK,ispec) = muvl
-    ENDDO_LOOP_IJK
-  enddo
+      DO_LOOP_IJK
+        if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
+          scale_factor = factor_scale_inner_core(INDEX_IJK,ispec)
+        else
+          scale_factor = factor_scale_inner_core(1,1,1,ispec)
+        endif
 
-  end subroutine restore_relaxed_moduli
+        ! zero-scale factor
+        if (abs(scale_factor) < TINYVAL) cycle
+
+        if (ANISOTROPIC_INNER_CORE_VAL) then
+          scale_factor_minus_one = scale_factor - 1.d0
+
+          mul = c44store_inner_core(INDEX_IJK,ispec) / scale_factor
+          c44store_inner_core(INDEX_IJK,ispec) = mul
+
+          c11store_inner_core(INDEX_IJK,ispec) = c11store_inner_core(INDEX_IJK,ispec) &
+                                                 - FOUR_THIRDS * scale_factor_minus_one * mul
+          c12store_inner_core(INDEX_IJK,ispec) = c12store_inner_core(INDEX_IJK,ispec) &
+                                                 + TWO_THIRDS * scale_factor_minus_one * mul
+          c13store_inner_core(INDEX_IJK,ispec) = c13store_inner_core(INDEX_IJK,ispec) &
+                                                 + TWO_THIRDS * scale_factor_minus_one * mul
+          c33store_inner_core(INDEX_IJK,ispec) = c33store_inner_core(INDEX_IJK,ispec) &
+                                                 - FOUR_THIRDS * scale_factor_minus_one * mul
+        endif
+
+        muvstore_inner_core(INDEX_IJK,ispec) = muvstore_inner_core(INDEX_IJK,ispec) / scale_factor
+
+      ENDDO_LOOP_IJK
+    enddo
+  endif
+
+  end subroutine restore_unshifted_reference_moduli
+
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -229,7 +461,7 @@
 
   ! local parameters
   real(kind=CUSTOM_REAL),dimension(21) ::  cijkl_kl_local
-  real(kind=CUSTOM_REAL) :: scale_kl,scale_kl_ani,scale_kl_rho
+  real(kind=CUSTOM_REAL) :: scale_kl,scale_kl_ani,scale_kl_rho,scaleval,scale_GPa
   real(kind=CUSTOM_REAL) :: rhol,mul,kappal
   real(kind=CUSTOM_REAL) :: theta,phi
 
@@ -283,9 +515,12 @@
   scale_kl_ani = scale_t**3 / (RHOAV*R_EARTH**3) * 1.d18
   ! final unit : [s km^(-3) (kg/m^3)^(-1)]
   scale_kl_rho = scale_t * scale_displ_inv / RHOAV * 1.d9
+  ! the scale of GPa--[g/cm^3][(km/s)^2]
+  scaleval = dsqrt(PI*GRAV*RHOAV)
+  scale_GPa = (RHOAV/1000.d0)*((R_EARTH*scaleval/1000.d0)**2)
 
   ! debug
-  if (myrank == 0) print *,'save kernels: scaling factors',scale_kl,scale_kl_ani,scale_kl_rho
+  !if (myrank == 0) print *,'debug: save kernels: scaling factors',scale_kl,scale_kl_ani,scale_kl_rho
 
   ! allocates temporary arrays
   if (SAVE_TRANSVERSE_KL_ONLY) then
@@ -380,24 +615,6 @@
 
           cijkl_kl_crust_mantle(:,i,j,k,ispec) = cijkl_kl_local(:) * scale_kl_ani
           rho_kl_crust_mantle(i,j,k,ispec) = rho_kl_crust_mantle(i,j,k,ispec) * scale_kl_rho
-
-          ! debug: todo testing...
-          ! to get relative kernels Gc_prime,Gs_prime, needs background velocities
-          !
-          !call model_prem_iso(myrank,r_prem,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &
-          !                    ONE_CRUST,.false.,RICB,RCMB,RTOPDDOUBLEPRIME, &
-          !                    R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
-          !
-          !if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF) then
-          !  call model_1dref_broadcast(CRUSTAL)
-          !  call model_1dref(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu,iregion_code,CRUSTAL)
-          !  ! this case here is only executed for 1D_ref_iso
-          !  ! calculates isotropic values
-          !  vp = sqrt(((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
-          !         + (8.d0 - 8.d0*eta_aniso)*vsv*vsv)/15.d0)
-          !  vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
-          !        + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0)
-          !endif
 
           ! transverse isotropic kernel calculations
           if (SAVE_TRANSVERSE_KL_ONLY .or. SAVE_AZIMUTHAL_ANISO_KL_ONLY) then
@@ -609,8 +826,8 @@
               Gc_kl_crust_mantle(i,j,k,ispec) = -an_kl(16)*scale_kl_ani
               Gs_kl_crust_mantle(i,j,k,ispec) = -an_kl(17)*scale_kl_ani
 
-              mu0 = mu0store_crust_mantle(i,j,k,ispec)
-              if (abs(mu0) < TINYVAL) then
+              mu0 = mu0store_crust_mantle(i,j,k,ispec) * scale_GPa  ! original values from 1D background reference model
+              if (abs(mu0) > TINYVAL) then
                 Gc_prime_kl_crust_mantle(i,j,k,ispec) = Gc_kl_crust_mantle(i,j,k,ispec) / mu0
                 Gs_prime_kl_crust_mantle(i,j,k,ispec) = Gs_kl_crust_mantle(i,j,k,ispec) / mu0
               else
@@ -789,14 +1006,21 @@
 
     else if (SAVE_AZIMUTHAL_ANISO_KL_ONLY) then
       ! kernels for inversions involving azimuthal anisotropy
+      ! (alpha_v, alpha_h, beta_v, beta_h, eta, rho ) parameterization
+      open(unit=IOUT,file=trim(prname)//'alphav_kernel.bin',status='unknown',form='unformatted',action='write')
+      write(IOUT) alphav_kl_crust_mantle
+      close(IOUT)
+      open(unit=IOUT,file=trim(prname)//'alphah_kernel.bin',status='unknown',form='unformatted',action='write')
+      write(IOUT) alphah_kl_crust_mantle
+      close(IOUT)
+      open(unit=IOUT,file=trim(prname)//'betav_kernel.bin',status='unknown',form='unformatted',action='write')
+      write(IOUT) betav_kl_crust_mantle
+      close(IOUT)
+      open(unit=IOUT,file=trim(prname)//'betah_kernel.bin',status='unknown',form='unformatted',action='write')
+      write(IOUT) betah_kl_crust_mantle
+      close(IOUT)
+
       ! (bulk_c, beta_v, beta_h, eta, Gc', Gs', rho ) parameterization
-      ! note: Gc' & Gs' are the normalized Gc & Gs kernels
-      open(unit=IOUT,file=trim(prname)//'eta_kernel.bin',status='unknown',form='unformatted',action='write')
-      write(IOUT) eta_kl_crust_mantle
-      close(IOUT)
-      open(unit=IOUT,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted',action='write')
-      write(IOUT) rho_kl_crust_mantle
-      close(IOUT)
       open(unit=IOUT,file=trim(prname)//'bulk_c_kernel.bin',status='unknown',form='unformatted',action='write')
       write(IOUT) bulk_c_kl_crust_mantle
       close(IOUT)
@@ -806,6 +1030,15 @@
       open(unit=IOUT,file=trim(prname)//'bulk_betah_kernel.bin',status='unknown',form='unformatted',action='write')
       write(IOUT) bulk_betah_kl_crust_mantle
       close(IOUT)
+
+      open(unit=IOUT,file=trim(prname)//'eta_kernel.bin',status='unknown',form='unformatted',action='write')
+      write(IOUT) eta_kl_crust_mantle
+      close(IOUT)
+      open(unit=IOUT,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted',action='write')
+      write(IOUT) rho_kl_crust_mantle
+      close(IOUT)
+
+      ! note: Gc' & Gs' are the normalized Gc & Gs kernels
       open(unit=IOUT,file=trim(prname)//'Gc_prime_kernel.bin',status='unknown',form='unformatted',action='write')
       write(IOUT) Gc_prime_kl_crust_mantle
       close(IOUT)
@@ -814,15 +1047,17 @@
       close(IOUT)
 
       ! to check: isotropic kernels
-      !open(unit=IOUT,file=trim(prname)//'alpha_kernel.bin',status='unknown',form='unformatted',action='write')
-      !write(IOUT) alpha_kl_crust_mantle
-      !close(IOUT)
-      !open(unit=IOUT,file=trim(prname)//'beta_kernel.bin',status='unknown',form='unformatted',action='write')
-      !write(IOUT) beta_kl_crust_mantle
-      !close(IOUT)
-      !open(unit=IOUT,file=trim(prname)//'bulk_beta_kernel.bin',status='unknown',form='unformatted',action='write')
-      !write(IOUT) bulk_beta_kl_crust_mantle
-      !close(IOUT)
+      if (.false.) then
+        open(unit=IOUT,file=trim(prname)//'alpha_kernel.bin',status='unknown',form='unformatted',action='write')
+        write(IOUT) alpha_kl_crust_mantle
+        close(IOUT)
+        open(unit=IOUT,file=trim(prname)//'beta_kernel.bin',status='unknown',form='unformatted',action='write')
+        write(IOUT) beta_kl_crust_mantle
+        close(IOUT)
+        open(unit=IOUT,file=trim(prname)//'bulk_beta_kernel.bin',status='unknown',form='unformatted',action='write')
+        write(IOUT) bulk_beta_kl_crust_mantle
+        close(IOUT)
+      endif
 
       ! to check: all anisotropic kernels
       if (.false.) then
@@ -909,7 +1144,7 @@
 
     filename = trim(OUTPUT_FILES)//'/xyzCrustMantle.nc'
     call write_coordinates_netcdf(filename)
-
+  
   else if (SAVE_AZIMUTHAL_ANISO_KL_ONLY) then
     filename = trim(OUTPUT_FILES)//'/alphavKernelCrustMantle.nc'
     call write_kernel_netcdf(filename, alphav_kl_crust_mantle)
@@ -1132,6 +1367,9 @@
   real(kind=CUSTOM_REAL) :: rhol,kappal,rho_kl,alpha_kl
   integer :: ispec,i,j,k
 
+  ! saftey check
+  if (.not. SAVE_KERNELS_OC) return
+
   scale_kl = scale_t * scale_displ_inv * 1.d9
 
   ! outer_core
@@ -1200,6 +1438,9 @@
   real(kind=CUSTOM_REAL) :: rhol,mul,kappal,rho_kl,alpha_kl,beta_kl
   integer :: ispec,i,j,k
 
+  ! safety check
+  if (.not. SAVE_KERNELS_IC) return
+
   ! scaling to units
   scale_kl = scale_t * scale_displ_inv * 1.d9
 
@@ -1261,6 +1502,9 @@
 
   ! local parameters
   real(kind=CUSTOM_REAL):: scale_kl
+
+  ! saftey check
+  if (.not. SAVE_KERNELS_BOUNDARY) return
 
   ! kernel unit [ s / km^3 ]
   scale_kl = scale_t * scale_displ_inv * 1.d9

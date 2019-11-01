@@ -196,7 +196,7 @@
             minus_sum_beta =  one_minus_sum_beta_crust_mantle(1,1,1,ispec) - 1.0_CUSTOM_REAL
           endif
 
-!daniel todo
+          ! shifts moduli to unrelaxed ones
           if (.true.) then
             ! this is the original routine to shift moduli, using only muv (from c44) to scale
             mul = c44 * minus_sum_beta
@@ -209,7 +209,12 @@
             c44 = c44 + mul
             c55 = c55 + mul
             c66 = c66 + mul
+
           else
+
+!daniel todo: unrelaxed moduli shift: not used yet, please verify...
+!             also, if changed, needs adaptation in save_kernels.f90 to shift back accordingly
+
             ! new: tries to shift moduli by separating muv and muh factors.
             !      still needs rotations to rotate back and forth from SPECFEM global axis to a radial symmetry axis
             !      since this shift assumes a radial symmetry
@@ -400,14 +405,13 @@
       write(IMAIN,*) "  iso elements  = ",icount_iso
       call flush_IMAIN()
     endif
-
     if (icount > NSPECMAX_TISO_MANTLE) stop 'Error invalid number of tiso elements in prepare_timerun_aniso'
     if (icount_iso > NSPECMAX_ISO_MANTLE) stop 'Error invalid number of iso elements in prepare_timerun_aniso'
+  endif ! ANISOTROPIC_3D_MANTLE_VAL
 
-    ! since we scale muv and c11,.. stores we must divide with this factor to use the relaxed moduli for the modulus defect
-    ! calculation in updating the memory variables
-    if (ATTENUATION_VAL) then
-
+  ! since we scale muv and c11,.. stores we must divide with this factor to use the relaxed moduli for the modulus defect
+  ! calculation in updating the memory variables
+  if (ATTENUATION_VAL) then
 ! openmp solver
 !$OMP PARALLEL DEFAULT(SHARED) &
 !$OMP PRIVATE(ispec,i_SLS, &
@@ -418,31 +422,30 @@
 #endif
 !$OMP one_minus_sum_beta_use)
 !$OMP DO
-      do ispec = 1,NSPEC_CRUST_MANTLE
-        DO_LOOP_IJK
-          ! gets factor
-          if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
-            one_minus_sum_beta_use = one_minus_sum_beta_crust_mantle(INDEX_IJK,ispec)
-          else
-            one_minus_sum_beta_use = one_minus_sum_beta_crust_mantle(1,1,1,ispec)
-          endif
+    do ispec = 1,NSPEC_CRUST_MANTLE
+      DO_LOOP_IJK
+        ! gets factor
+        if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
+          one_minus_sum_beta_use = one_minus_sum_beta_crust_mantle(INDEX_IJK,ispec)
+        else
+          one_minus_sum_beta_use = one_minus_sum_beta_crust_mantle(1,1,1,ispec)
+        endif
 
-          ! corrects factor_common to obtain relaxed moduli in moduli defect
-          do i_SLS = 1,N_SLS
-            if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
-              factor_common_crust_mantle(INDEX_IJK,i_SLS,ispec) = &
-                  factor_common_crust_mantle(INDEX_IJK,i_SLS,ispec) / one_minus_sum_beta_use
-            else
-              factor_common_crust_mantle(1,1,1,i_SLS,ispec) = &
-                  factor_common_crust_mantle(1,1,1,i_SLS,ispec) / one_minus_sum_beta_use
-            endif
-          enddo
-        ENDDO_LOOP_IJK
-      enddo
+        ! corrects factor_common to obtain relaxed moduli in moduli defect
+        do i_SLS = 1,N_SLS
+          if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
+            factor_common_crust_mantle(INDEX_IJK,i_SLS,ispec) = &
+                factor_common_crust_mantle(INDEX_IJK,i_SLS,ispec) / one_minus_sum_beta_use
+          else
+            factor_common_crust_mantle(1,1,1,i_SLS,ispec) = &
+                factor_common_crust_mantle(1,1,1,i_SLS,ispec) / one_minus_sum_beta_use
+          endif
+        enddo
+      ENDDO_LOOP_IJK
+    enddo
 !$OMP ENDDO
 !$OMP END PARALLEL
-    endif ! ATTENUATION_VAL
-  endif
+  endif ! ATTENUATION_VAL
 
   ! inner core
   if (ANISOTROPIC_INNER_CORE_VAL) then

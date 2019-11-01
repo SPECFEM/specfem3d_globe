@@ -96,7 +96,9 @@ void FC_FUNC_ (prepare_constants_device,
                                           int *PARTIAL_PHYS_DISPERSION_ONLY_f, int *USE_3D_ATTENUATION_ARRAYS_f,
                                           int *COMPUTE_AND_STORE_STRAIN_f,
                                           int *ANISOTROPIC_3D_MANTLE_f, int *ANISOTROPIC_INNER_CORE_f,
-                                          int *SAVE_BOUNDARY_MESH_f,
+                                          int *SAVE_KERNELS_OC_f,
+                                          int *SAVE_KERNELS_IC_f,
+                                          int *SAVE_KERNELS_BOUNDARY_f,
                                           int *USE_MESH_COLORING_GPU_f,
                                           int *ANISOTROPIC_KL_f, int *APPROXIMATE_HESS_KL_f,
                                           realw *deltat_f,
@@ -307,7 +309,10 @@ void FC_FUNC_ (prepare_constants_device,
   mp->compute_and_store_strain = *COMPUTE_AND_STORE_STRAIN_f;
   mp->anisotropic_3D_mantle = *ANISOTROPIC_3D_MANTLE_f;
   mp->anisotropic_inner_core = *ANISOTROPIC_INNER_CORE_f;
-  mp->save_boundary_mesh = *SAVE_BOUNDARY_MESH_f;
+
+  mp->save_kernels_oc = *SAVE_KERNELS_OC_f;
+  mp->save_kernels_ic = *SAVE_KERNELS_IC_f;
+  mp->save_kernels_boundary = *SAVE_KERNELS_BOUNDARY_f;
 
   mp->anisotropic_kl = *ANISOTROPIC_KL_f;
   mp->approximate_hess_kl = *APPROXIMATE_HESS_KL_f;
@@ -1762,7 +1767,7 @@ void FC_FUNC_ (prepare_crust_mantle_device,
   }
 
   // needed for boundary kernel calculations
-  if (mp->simulation_type == 3 && mp->save_boundary_mesh) {
+  if (mp->simulation_type == 3 && mp->save_kernels_boundary) {
     gpuMalloc_realw (&mp->d_rhostore_crust_mantle, size_padded);
 
     int i;
@@ -2220,15 +2225,17 @@ void FC_FUNC_ (prepare_outer_core_device,
     mp->d_b_rmass_outer_core = gpuTakeRef(mp->d_rmass_outer_core);
 
     //kernels
-    size_t size = NGLL3 * (mp->NSPEC_OUTER_CORE);
+    if (mp->save_kernels_oc){
+      size_t size = NGLL3 * (mp->NSPEC_OUTER_CORE);
 
-    // density kernel
-    gpuMalloc_realw (&mp->d_rho_kl_outer_core, size);
-    gpuMemset_realw (&mp->d_rho_kl_outer_core, size, 0);
+      // density kernel
+      gpuMalloc_realw (&mp->d_rho_kl_outer_core, size);
+      gpuMemset_realw (&mp->d_rho_kl_outer_core, size, 0);
 
-    // isotropic kernel
-    gpuMalloc_realw (&mp->d_alpha_kl_outer_core, size);
-    gpuMemset_realw (&mp->d_alpha_kl_outer_core, size, 0);
+      // isotropic kernel
+      gpuMalloc_realw (&mp->d_alpha_kl_outer_core, size);
+      gpuMemset_realw (&mp->d_alpha_kl_outer_core, size, 0);
+    }
   }
 
   // mesh coloring
@@ -2434,7 +2441,7 @@ void FC_FUNC_ (prepare_inner_core_device,
   }
 
   // needed for boundary kernel calculations
-  if (mp->simulation_type == 3 && mp->save_boundary_mesh) {
+  if (mp->simulation_type == 3 && mp->save_kernels_boundary) {
     gpuMalloc_realw (&mp->d_rhostore_inner_core, size_padded);
 
 #ifdef USE_OPENCL
@@ -2590,18 +2597,20 @@ void FC_FUNC_ (prepare_inner_core_device,
     }
 
     // kernels
-    size = NGLL3 * (mp->NSPEC_INNER_CORE);
+    if (mp->save_kernels_ic) {
+      size = NGLL3 * (mp->NSPEC_INNER_CORE);
 
-    // density kernel
-    gpuMalloc_realw (&mp->d_rho_kl_inner_core, size);
-    gpuMemset_realw (&mp->d_rho_kl_inner_core, size, 0);
+      // density kernel
+      gpuMalloc_realw (&mp->d_rho_kl_inner_core, size);
+      gpuMemset_realw (&mp->d_rho_kl_inner_core, size, 0);
 
-    // isotropic kernel
-    gpuMalloc_realw (&mp->d_alpha_kl_inner_core, size);
-    gpuMemset_realw (&mp->d_alpha_kl_inner_core, size, 0);
+      // isotropic kernel
+      gpuMalloc_realw (&mp->d_alpha_kl_inner_core, size);
+      gpuMemset_realw (&mp->d_alpha_kl_inner_core, size, 0);
 
-    gpuMalloc_realw (&mp->d_beta_kl_inner_core, size);
-    gpuMemset_realw (&mp->d_beta_kl_inner_core, size, 0);
+      gpuMalloc_realw (&mp->d_beta_kl_inner_core, size);
+      gpuMemset_realw (&mp->d_beta_kl_inner_core, size, 0);
+    }
   }
 
   // mesh coloring
@@ -3106,7 +3115,7 @@ void FC_FUNC_ (prepare_cleanup_device,
     gpuFree (&mp->d_c66store_crust_mantle);
   }
 
-  if (mp->simulation_type == 3 && mp->save_boundary_mesh) {
+  if (mp->simulation_type == 3 && mp->save_kernels_boundary) {
     gpuFree (&mp->d_rhostore_crust_mantle);
   }
 
@@ -3196,7 +3205,7 @@ void FC_FUNC_ (prepare_cleanup_device,
   // mass matrix
   gpuFree (&mp->d_rmass_outer_core);
 
-  if (mp->simulation_type == 3) {
+  if (mp->simulation_type == 3 && mp->save_kernels_oc) {
     gpuFree (&mp->d_rho_kl_outer_core);
     gpuFree (&mp->d_alpha_kl_outer_core);
   }
@@ -3225,7 +3234,7 @@ void FC_FUNC_ (prepare_cleanup_device,
     gpuFree (&mp->d_c44store_inner_core);
   }
 
-  if (mp->simulation_type == 3 && mp->save_boundary_mesh) {
+  if (mp->simulation_type == 3 && mp->save_kernels_boundary) {
     gpuFree (&mp->d_rhostore_inner_core);
   }
 
@@ -3264,9 +3273,11 @@ void FC_FUNC_ (prepare_cleanup_device,
       gpuFree (&mp->d_b_rmassy_inner_core);
     }
     // kernels
-    gpuFree (&mp->d_rho_kl_inner_core);
-    gpuFree (&mp->d_alpha_kl_inner_core);
-    gpuFree (&mp->d_beta_kl_inner_core);
+    if (mp->save_kernels_ic){
+      gpuFree (&mp->d_rho_kl_inner_core);
+      gpuFree (&mp->d_alpha_kl_inner_core);
+      gpuFree (&mp->d_beta_kl_inner_core);
+    }
   }
 
   //------------------------------------------

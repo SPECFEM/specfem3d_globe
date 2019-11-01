@@ -91,7 +91,9 @@
                                 PARTIAL_PHYS_DISPERSION_ONLY,USE_3D_ATTENUATION_ARRAYS, &
                                 COMPUTE_AND_STORE_STRAIN, &
                                 ANISOTROPIC_3D_MANTLE_VAL,ANISOTROPIC_INNER_CORE_VAL, &
-                                SAVE_BOUNDARY_MESH, &
+                                SAVE_KERNELS_OC, &
+                                SAVE_KERNELS_IC, &
+                                SAVE_KERNELS_BOUNDARY, &
                                 USE_MESH_COLORING_GPU, &
                                 ANISOTROPIC_KL,APPROXIMATE_HESS_KL, &
                                 deltat, &

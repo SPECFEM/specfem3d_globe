@@ -67,6 +67,7 @@
   call prepare_attenuation()
 
   ! precomputes iso/tiso/aniso elastic element factors
+  ! (careful with the order, prepare_attenuation() should be called before this one)
   call prepare_elastic_elements()
 
   ! allocates & initializes arrays

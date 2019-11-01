@@ -767,7 +767,9 @@ typedef struct mesh_ {
   int exact_mass_matrix_for_rotation;
   int oceans;
   int anisotropic_inner_core;
-  int save_boundary_mesh;
+  int save_kernels_boundary;
+  int save_kernels_oc;
+  int save_kernels_ic;
 
   int anisotropic_kl;
   int approximate_hess_kl;

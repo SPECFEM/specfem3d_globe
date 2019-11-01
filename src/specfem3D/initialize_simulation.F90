@@ -496,13 +496,10 @@
   !   call exit_MPI(myrank, 'anisotropic model is not implemented for kernel simulations yet')
 
   ! checks model for transverse isotropic kernel computation
-  if (SAVE_TRANSVERSE_KL_ONLY) then
-    if (ANISOTROPIC_3D_MANTLE_VAL) then
-        call exit_mpi(myrank,'Error SAVE_TRANSVERSE_KL_ONLY: Earth model not supported yet')
-    endif
-    if (SIMULATION_TYPE == 3) then
+  if (SIMULATION_TYPE == 3) then
+    if (SAVE_TRANSVERSE_KL_ONLY) then
       if (.not. ANISOTROPIC_KL) then
-        call exit_mpi(myrank,'Error SAVE_TRANSVERSE_KL_ONLY: needs anisotropic kernel calculations')
+        call exit_mpi(myrank,'Error SAVE_TRANSVERSE_KL_ONLY: needs anisotropic kernel flag ANISOTROPIC_KL set to .true.')
       endif
     endif
   endif

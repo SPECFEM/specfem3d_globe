@@ -371,6 +371,16 @@
     THREE_D_MODEL = THREE_D_MODEL_S362ANI
     TRANSVERSE_ISOTROPY = .true.
 
+  case ('s362ani_azi')
+    CASE_3D = .true.
+    CRUSTAL = .true.
+    MODEL_3D_MANTLE_PERTUBATIONS = .true.
+    ONE_CRUST = .true.
+    REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
+    THREE_D_MODEL = THREE_D_MODEL_S362ANI
+    TRANSVERSE_ISOTROPY = .true.    ! to include original tiso perturbations from reference model
+    ANISOTROPIC_3D_MANTLE = .true.  ! to impose mantle elements as fully anisotropic in solver
+
   case ('s362iso_3dq')
     ATTENUATION_3D = .true.
     CASE_3D = .true.
