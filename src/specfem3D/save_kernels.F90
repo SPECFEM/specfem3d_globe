@@ -1144,7 +1144,7 @@
 
     filename = trim(OUTPUT_FILES)//'/xyzCrustMantle.nc'
     call write_coordinates_netcdf(filename)
-  
+
   else if (SAVE_AZIMUTHAL_ANISO_KL_ONLY) then
     filename = trim(OUTPUT_FILES)//'/alphavKernelCrustMantle.nc'
     call write_kernel_netcdf(filename, alphav_kl_crust_mantle)
