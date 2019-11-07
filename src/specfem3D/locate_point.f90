@@ -27,7 +27,7 @@
 
 
   subroutine locate_point(x_target,y_target,z_target,lat_target,lon_target,ispec_selected,xi,eta,gamma, &
-                          x,y,z,distmin_not_squared,CAN_BE_BURIED)
+                          x,y,z,distmin_not_squared,POINT_CAN_BE_BURIED)
 
 ! locates target point inside best mesh element
 
@@ -62,7 +62,7 @@
   double precision,intent(out) :: x,y,z
   double precision,intent(out) :: distmin_not_squared
 
-  logical,intent(in) :: CAN_BE_BURIED
+  logical,intent(in) :: POINT_CAN_BE_BURIED
 
   ! local parameters
   integer :: ix_initial_guess,iy_initial_guess,iz_initial_guess
@@ -334,14 +334,14 @@
     ! gets xi/eta/gamma and corresponding x/y/z coordinates
     call find_local_coordinates(x_target,y_target,z_target,xi,eta,gamma,x,y,z, &
                                 ispec_selected,ix_initial_guess,iy_initial_guess,iz_initial_guess, &
-                                CAN_BE_BURIED)
+                                POINT_CAN_BE_BURIED)
 
     ! loops over neighbors and try to find better location
     if (DO_ADJACENT_SEARCH) then
       ! checks if position lies on an element boundary
       if (abs(xi) > 1.099d0 .or. abs(eta) > 1.099d0 .or. abs(gamma) > 1.099d0) then
         ! searches for better position in neighboring elements
-        call find_best_neighbor(x_target,y_target,z_target,xi,eta,gamma,x,y,z,ispec_selected,distmin_squared,CAN_BE_BURIED)
+        call find_best_neighbor(x_target,y_target,z_target,xi,eta,gamma,x,y,z,ispec_selected,distmin_squared,POINT_CAN_BE_BURIED)
       endif
     endif ! DO_ADJACENT_SEARCH
 
@@ -377,7 +377,7 @@
 
   subroutine find_local_coordinates(x_target,y_target,z_target,xi,eta,gamma,x,y,z, &
                                     ispec_selected,ix_initial_guess,iy_initial_guess,iz_initial_guess, &
-                                    CAN_BE_BURIED)
+                                    POINT_CAN_BE_BURIED)
 
   use constants_solver, only: &
     NGNOD,HUGEVAL,NUM_ITER
@@ -399,7 +399,7 @@
 
   integer,intent(in) :: ispec_selected,ix_initial_guess,iy_initial_guess,iz_initial_guess
 
-  logical,intent(in) :: CAN_BE_BURIED
+  logical,intent(in) :: POINT_CAN_BE_BURIED
 
   ! local parameters
   integer :: ia,iter_loop
@@ -428,7 +428,7 @@
   gamma = zigll(iz_initial_guess)
 
   ! impose receiver exactly at the surface
-  if (.not. CAN_BE_BURIED) gamma = 1.d0
+  if (.not. POINT_CAN_BE_BURIED) gamma = 1.d0
 
   d_min_sq = HUGEVAL
   dx_min = HUGEVAL
@@ -502,7 +502,7 @@
   enddo
 
   ! impose receiver exactly at the surface
-  if (.not. CAN_BE_BURIED) gamma = 1.d0
+  if (.not. POINT_CAN_BE_BURIED) gamma = 1.d0
 
   ! compute final coordinates of point found
   call recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z, &
@@ -514,7 +514,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine find_best_neighbor(x_target,y_target,z_target,xi,eta,gamma,x,y,z,ispec_selected,distmin_squared,CAN_BE_BURIED)
+  subroutine find_best_neighbor(x_target,y_target,z_target,xi,eta,gamma,x,y,z,ispec_selected,distmin_squared,POINT_CAN_BE_BURIED)
 
   use constants_solver, only: &
     NGLLX,NGLLY,NGLLZ,MIDX,MIDY,MIDZ,R_EARTH_KM
@@ -540,7 +540,7 @@
 
   integer,intent(inout) :: ispec_selected
   double precision,intent(inout) :: distmin_squared
-  logical,intent(in) :: CAN_BE_BURIED
+  logical,intent(in) :: POINT_CAN_BE_BURIED
 
   ! local parameters
   integer :: ix_initial_guess,iy_initial_guess,iz_initial_guess
@@ -668,7 +668,7 @@
 
     ! gets xi/eta/gamma and corresponding x/y/z coordinates
     call find_local_coordinates(x_target,y_target,z_target,xi_n,eta_n,gamma_n,x_n,y_n,z_n, &
-                                ispec,ix_initial_guess,iy_initial_guess,iz_initial_guess,CAN_BE_BURIED)
+                                ispec,ix_initial_guess,iy_initial_guess,iz_initial_guess,POINT_CAN_BE_BURIED)
 
     ! final distance to target
     dist_squared = (x_target - x_n)*(x_target - x_n) &

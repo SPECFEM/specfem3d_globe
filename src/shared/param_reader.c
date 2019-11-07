@@ -189,6 +189,7 @@ FC_FUNC_(param_read,PARAM_READ)(char * string_read, int * string_read_len, char 
     //    printf("Line read = %s\n", line);
     // If we have a match, extract the keyword from the line.
     keyword = strndup(line+parameter[1].rm_so, parameter[1].rm_eo-parameter[1].rm_so);
+
     // If the keyword is not the one we're looking for, check the next line.
     if (strcmp(keyword, namecopy) != 0) {
       free(keyword);
@@ -198,12 +199,16 @@ FC_FUNC_(param_read,PARAM_READ)(char * string_read, int * string_read_len, char 
     regfree(&compiled_pattern);
     // If it matches, extract the value from the line.
     value = strndup(line+parameter[2].rm_so, parameter[2].rm_eo-parameter[2].rm_so);
+
     // Clear out the return string with blanks, copy the value into it, and return.
     memset(string_read, ' ', *string_read_len);
+
     value_len = strlen(value);
-    if (value_len > (size_t)*string_read_len)
-      value_len = *string_read_len;
+    // makes sure there is a character left for NUL termination
+    if (value_len > (size_t)*string_read_len - 1) value_len = *string_read_len - 1;
+
     strncpy(string_read, value, value_len);
+
     free(value);
     free(namecopy);
     *ierr = 0;

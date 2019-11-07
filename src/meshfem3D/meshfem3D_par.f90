@@ -549,8 +549,10 @@
   ! for matching with central cube in inner core
   integer, dimension(:), allocatable :: sender_from_slices_to_cube
   integer, dimension(:,:), allocatable :: ibool_central_cube
+
   double precision, dimension(:,:), allocatable :: buffer_slices,buffer_slices2
   double precision, dimension(:,:,:), allocatable :: buffer_all_cube_from_slices
+
   integer :: nb_msgs_theor_in_cube,non_zero_nb_msgs_theor_in_cube, &
     npoin2D_cube_from_slices,receiver_cube_from_slices
 

@@ -995,10 +995,17 @@
 
   do while (ios == 0)
   read(IIN,"(a)",iostat=ios) string
+
   lstr = len_trim(string)
+  if (lstr < 4) then
+    print *,'Error model s362ani: invalid string read: ',trim(string)
+    stop 'Error reading model file for s362ani'
+  endif
+
   if (ios == 0) then
     if (string(1:16) == 'REFERENCE MODEL:') then
-      substr = trim(string(17:len_trim(string)))
+      lstr = len_trim(string) - 17 + 1
+      substr(1:lstr) = trim(string(17:len_trim(string)))
       ifst = 1
       ilst = len_trim(substr)
       do while (substr(ifst:ifst) == ' ' .and. ifst < ilst)
@@ -1010,7 +1017,8 @@
         refmodel = substr(ifst:ilst)
       endif
     else if (string(1:11) == 'KERNEL SET:') then
-      substr = trim(string(12:len_trim(string)))
+      lstr = len_trim(string) - 12 + 1
+      substr(1:lstr) = trim(string(12:len_trim(string)))
       ifst = 1
       ilst = len_trim(substr)
       do while (substr(ifst:ifst) == ' ' .and. ifst < ilst)
@@ -1022,14 +1030,16 @@
         kernstri = substr(ifst:ilst)
       endif
     else if (string(1:25) == 'RADIAL STRUCTURE KERNELS:') then
-      substr = trim(string(26:len_trim(string)))
-      read(substr,*,iostat=ierror) nmodkern
+      lstr = len_trim(string) - 26 + 1
+      substr(1:lstr) = trim(string(26:len_trim(string)))
+      read(substr(1:lstr),*,iostat=ierror) nmodkern
       if (ierror /= 0) then
         stop 'Error reading model 3'
       endif
     else if (string(1:4) == 'DESC' .and. string(9:9) == ':') then
       read(string(5:8),"(i4)") idummy
-      substr = trim(string(10:len_trim(string)))
+      lstr = len_trim(string) - 10 + 1
+      substr(1:lstr) = trim(string(10:len_trim(string)))
       ifst = 1
       ilst = len_trim(substr)
       do while (substr(ifst:ifst) == ' ' .and. ifst < ilst)
@@ -1041,8 +1051,9 @@
         desckern(idummy) = substr(ifst:ilst)
       endif
     else if (string(1:29) == 'HORIZONTAL PARAMETERIZATIONS:') then
-      substr = trim(string(30:len_trim(string)))
-      read(substr,*,iostat=ierror) nhorpar
+      lstr = len_trim(string) - 30 + 1
+      substr(1:lstr) = trim(string(30:len_trim(string)))
+      read(substr(1:lstr),*,iostat=ierror) nhorpar
       if (ierror /= 0) then
         stop 'Error reading model 5'
       endif
@@ -1056,8 +1067,9 @@
       if (ilst-ifst <= 0) then
         stop 'Error reading model 6'
       else if (string(ifst:ifst+19) == 'SPHERICAL HARMONICS,') then
-        substr = trim(string(20+ifst:len_trim(string)))
-        read(substr,*) lmax
+        lstr = len_trim(string) - (20+ifst) + 1
+        substr(1:lstr) = trim(string(20+ifst:len_trim(string)))
+        read(substr(1:lstr),*) lmax
         ityphpar(idummy) = 1
         lmaxhor(idummy) = lmax
         ncoefhor(idummy) = (lmax+1)**2
@@ -1069,7 +1081,8 @@
           ifst = ifst-1
         enddo
         read(string(ifst+1:ilst),*) ncoef
-        substr = trim(string(ifst1:ifst-1))
+        lstr = (ifst-1) - ifst1 + 1
+        substr(1:lstr) = trim(string(ifst1:ifst-1))
         do while (string(ifst1:ifst1) == ' ' .and. ifst1 < ifst)
           ifst1 = ifst1+1
         enddo
@@ -1083,8 +1096,9 @@
       endif
     else if (string(1:4) == 'STRU' .and. string(9:9) == ':') then
       read(string(5:8),"(i4)") idummy
-      substr = trim(string(10:len_trim(string)))
-      read(substr,*) ihor
+      lstr = len_trim(string) - 10 + 1
+      substr(1:lstr) = trim(string(10:len_trim(string)))
+      read(substr(1:lstr),*) ihor
       ihorpar(idummy) = ihor
       ncoef = ncoefhor(ihor)
       read(IIN,"(6e12.4)") (coef(i,idummy),i = 1,ncoef)

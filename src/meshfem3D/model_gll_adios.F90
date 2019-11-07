@@ -86,9 +86,9 @@
     endif
     ! vp mesh
     call adios_schedule_read(file_handle_adios, sel, "reg1/vp/array", 0, 1, &
-        MGLL_V%vp_new(:,:,:,1:MGLL_V%nspec), adios_err)
+                             MGLL_V%vp_new(:,:,:,1:MGLL_V%nspec), adios_err)
     call adios_schedule_read(file_handle_adios, sel, "reg1/vs/array", 0, 1, &
-        MGLL_V%vs_new(:,:,:,1:MGLL_V%nspec), adios_err)
+                             MGLL_V%vs_new(:,:,:,1:MGLL_V%nspec), adios_err)
   case (2)
     ! transverse isotropic model
     if (rank == 0) then
@@ -99,19 +99,19 @@
     ! WARNING previously wronly name 'vps' in the adios files
     ! vpv/vph mesh
     call adios_schedule_read(file_handle_adios, sel, "reg1/vpv/array", 0, 1, &
-        MGLL_V%vpv_new(:,:,:,1:MGLL_V%nspec), adios_err)
+                             MGLL_V%vpv_new(:,:,:,1:MGLL_V%nspec), adios_err)
     call adios_schedule_read(file_handle_adios, sel, "reg1/vph/array", 0, 1, &
-        MGLL_V%vph_new(:,:,:,1:MGLL_V%nspec), adios_err)
+                             MGLL_V%vph_new(:,:,:,1:MGLL_V%nspec), adios_err)
 
     ! vsv/vsh mesh
     call adios_schedule_read(file_handle_adios, sel, "reg1/vsv/array", 0, 1, &
-        MGLL_V%vsv_new(:,:,:,1:MGLL_V%nspec), adios_err)
+                             MGLL_V%vsv_new(:,:,:,1:MGLL_V%nspec), adios_err)
     call adios_schedule_read(file_handle_adios, sel, "reg1/vsh/array", 0, 1, &
-        MGLL_V%vsh_new(:,:,:,1:MGLL_V%nspec), adios_err)
+                             MGLL_V%vsh_new(:,:,:,1:MGLL_V%nspec), adios_err)
 
     ! eta mesh
     call adios_schedule_read(file_handle_adios, sel, "reg1/eta/array", 0, 1, &
-        MGLL_V%eta_new(:,:,:,1:MGLL_V%nspec), adios_err)
+                             MGLL_V%eta_new(:,:,:,1:MGLL_V%nspec), adios_err)
 
   case (3)
     ! azimuthal model
@@ -122,27 +122,27 @@
 
     ! vpv/vph mesh
     call adios_schedule_read(file_handle_adios, sel, "reg1/vpv/array", 0, 1, &
-        MGLL_V%vpv_new(:,:,:,1:MGLL_V%nspec), adios_err)
+                             MGLL_V%vpv_new(:,:,:,1:MGLL_V%nspec), adios_err)
     call adios_schedule_read(file_handle_adios, sel, "reg1/vph/array", 0, 1, &
-        MGLL_V%vph_new(:,:,:,1:MGLL_V%nspec), adios_err)
+                             MGLL_V%vph_new(:,:,:,1:MGLL_V%nspec), adios_err)
 
     ! vsv/vsh mesh
     call adios_schedule_read(file_handle_adios, sel, "reg1/vsv/array", 0, 1, &
-        MGLL_V%vsv_new(:,:,:,1:MGLL_V%nspec), adios_err)
+                             MGLL_V%vsv_new(:,:,:,1:MGLL_V%nspec), adios_err)
     call adios_schedule_read(file_handle_adios, sel, "reg1/vsh/array", 0, 1, &
-        MGLL_V%vsh_new(:,:,:,1:MGLL_V%nspec), adios_err)
+                             MGLL_V%vsh_new(:,:,:,1:MGLL_V%nspec), adios_err)
 
     ! eta mesh
     call adios_schedule_read(file_handle_adios, sel, "reg1/eta/array", 0, 1, &
-        MGLL_V%eta_new(:,:,:,1:MGLL_V%nspec), adios_err)
+                             MGLL_V%eta_new(:,:,:,1:MGLL_V%nspec), adios_err)
 
     ! Gc_prime/Gs_prime/mu0 mesh
     call adios_schedule_read(file_handle_adios, sel, "reg1/Gc_prime/array", 0, 1, &
-        MGLL_V%Gc_prime_new(:,:,:,1:MGLL_V%nspec), adios_err)
+                             MGLL_V%Gc_prime_new(:,:,:,1:MGLL_V%nspec), adios_err)
     call adios_schedule_read(file_handle_adios, sel, "reg1/Gs_prime/array", 0, 1, &
-        MGLL_V%Gs_prime_new(:,:,:,1:MGLL_V%nspec), adios_err)
+                             MGLL_V%Gs_prime_new(:,:,:,1:MGLL_V%nspec), adios_err)
     call adios_schedule_read(file_handle_adios, sel, "reg1/mu0/array", 0, 1, &
-        MGLL_V%mu0_new(:,:,:,1:MGLL_V%nspec), adios_err)
+                             MGLL_V%mu0_new(:,:,:,1:MGLL_V%nspec), adios_err)
 
   case default
     stop 'Invalid MGLL_TYPE for reading ADIOS GLL model, type not implemented yet'
@@ -150,7 +150,7 @@
 
   ! rho mesh
   call adios_schedule_read(file_handle_adios, sel, "reg1/rho/array", 0, 1, &
-      MGLL_V%rho_new(:,:,:,1:MGLL_V%nspec), adios_err)
+                           MGLL_V%rho_new(:,:,:,1:MGLL_V%nspec), adios_err)
 
   call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)

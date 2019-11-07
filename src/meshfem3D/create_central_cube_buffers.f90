@@ -30,19 +30,19 @@
 !
 
   subroutine create_central_cube_buffers(iproc_xi,iproc_eta,ichunk, &
-                   NPROC_XI,NPROC_ETA,NCHUNKS, &
-                   NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
-                   NSPEC2DMAX_XMIN_XMAX_INNER_CORE,NSPEC2DMAX_YMIN_YMAX_INNER_CORE, &
-                   NSPEC2D_BOTTOM_INNER_CORE, &
-                   addressing,ibool_inner_core,idoubling_inner_core, &
-                   xstore_inner_core,ystore_inner_core,zstore_inner_core, &
-                   nspec2D_xmin_inner_core,nspec2D_xmax_inner_core, &
-                   nspec2D_ymin_inner_core,nspec2D_ymax_inner_core, &
-                   ibelm_xmin_inner_core,ibelm_xmax_inner_core, &
-                   ibelm_ymin_inner_core,ibelm_ymax_inner_core,ibelm_bottom_inner_core, &
-                   nb_msgs_theor_in_cube,non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices, &
-                   receiver_cube_from_slices,sender_from_slices_to_cube,ibool_central_cube, &
-                   buffer_slices,buffer_slices2,buffer_all_cube_from_slices)
+                                         NPROC_XI,NPROC_ETA,NCHUNKS, &
+                                         NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
+                                         NSPEC2DMAX_XMIN_XMAX_INNER_CORE,NSPEC2DMAX_YMIN_YMAX_INNER_CORE, &
+                                         NSPEC2D_BOTTOM_INNER_CORE, &
+                                         addressing,ibool_inner_core,idoubling_inner_core, &
+                                         xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+                                         nspec2D_xmin_inner_core,nspec2D_xmax_inner_core, &
+                                         nspec2D_ymin_inner_core,nspec2D_ymax_inner_core, &
+                                         ibelm_xmin_inner_core,ibelm_xmax_inner_core, &
+                                         ibelm_ymin_inner_core,ibelm_ymax_inner_core,ibelm_bottom_inner_core, &
+                                         nb_msgs_theor_in_cube,non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices, &
+                                         receiver_cube_from_slices,sender_from_slices_to_cube,ibool_central_cube, &
+                                         buffer_slices,buffer_slices2,buffer_all_cube_from_slices)
 
   use constants
 
@@ -76,18 +76,27 @@
 
   integer, dimension(non_zero_nb_msgs_theor_in_cube), intent(out) :: sender_from_slices_to_cube
   integer, dimension(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices), intent(out) :: ibool_central_cube
+
   double precision, dimension(npoin2D_cube_from_slices,NDIM), intent(out) :: buffer_slices,buffer_slices2
   double precision, dimension(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices,NDIM), intent(out) :: &
         buffer_all_cube_from_slices
 
   ! local variables below
-  integer i,j,k,ispec,ispec2D,iglob
-  integer sender,receiver,imsg,ipoin,iproc_xi_loop
+  integer :: i,j,k,ispec,ispec2D,iglob
+  integer :: sender,receiver,imsg,ipoin,iproc_xi_loop
 
-  double precision x_target,y_target,z_target
-  double precision x_current,y_current,z_current
+  double precision :: x_target,y_target,z_target
+  double precision :: x_current,y_current,z_current
 
   integer :: nproc_xi_half_floor,nproc_xi_half_ceil
+
+  ! initializes
+  sender_from_slices_to_cube(:) = -1
+  ibool_central_cube(:,:) = -1
+
+  buffer_slices(:,:) = 0.d0
+  buffer_slices2(:,:) = 0.d0
+  buffer_all_cube_from_slices(:,:,:) = 0.d0
 
   if (mod(NPROC_XI,2) /= 0) then
     nproc_xi_half_floor = floor(NPROC_XI/2.d0)
