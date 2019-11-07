@@ -288,7 +288,8 @@ $O/get_absorb_adios.check_adios.o: $O/adios_manager.shared_adios_module.o
 
 $O/model_gll_adios.check_adios.o: $O/model_gll.check.o
 
-$O/model_attenuation_gll_adios.check_adios.o: $O/model_attenuation_gll_adios.check.o
+$O/model_attenuation_gll.check.o: $O/model_gll.check.o
+$O/model_attenuation_gll_adios.check_adios.o: $O/model_attenuation_gll.check.o
 
 $O/model_attenuation.check.o: \
 	$O/model_1dref.check.o \

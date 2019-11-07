@@ -41,14 +41,12 @@
   type model_gll_qmu_variables
     sequence
     ! tomographic iteration model on GLL points
-
     real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: qmu_new
 
     ! number of elements (crust/mantle elements)
     integer :: nspec
-    integer :: dummy_pad ! padding 4 bytes to align the structure
   end type model_gll_qmu_variables
-  type (model_gll_qmu_variables) :: MGLL_V
+  type (model_gll_qmu_variables) :: MGLL_QMU_V
 
   ! model GLL type: 1 == iso, 2 == tiso, 3 == azi
   integer :: MGLL_TYPE
@@ -68,6 +66,7 @@
   use shared_parameters, only: NSPEC_REGIONS,ADIOS_FOR_MODELS,NPROCTOT,NCHUNKS, &
                                MODEL,MODEL_GLL_TYPE
 
+  use model_gll_par,only: MGLL_V
   use model_gll_qmu_par
 
   implicit none
@@ -79,7 +78,7 @@
   MGLL_TYPE = MODEL_GLL_TYPE
 
   ! sets number of elements (crust/mantle region)
-  MGLL_V%nspec = NSPEC_REGIONS(IREGION_CRUST_MANTLE)
+  MGLL_QMU_V%nspec = NSPEC_REGIONS(IREGION_CRUST_MANTLE)
 
   ! user output
   if (myrank == 0) then
@@ -87,7 +86,7 @@
     write(IMAIN,*) 'setup:'
     write(IMAIN,*) '  NCHUNKS           : ',NCHUNKS
     write(IMAIN,*) '  NPROC total       : ',NPROCTOT
-    write(IMAIN,*) '  NSPEC             : ',MGLL_V%nspec
+    write(IMAIN,*) '  NSPEC             : ',MGLL_QMU_V%nspec
     write(IMAIN,*) '  NGLLX/NGLLY/NGLLZ : ',NGLLX,NGLLY,NGLLZ
     call flush_IMAIN()
   endif
@@ -96,50 +95,86 @@
   if (MGLL_TYPE < 1 .or. MGLL_TYPE > 3) &
     stop 'Invalid MODEL_GLL_TYPE, please use 1(iso), 2(tiso) or 3(azi) in get_model_parameters.F90 setup'
 
+  if (MGLL_QMU_V%nspec /= MGLL_V%nspec) &
+    stop 'Invalid nspec for QMu GLL model, size must be same to model GLL'
+
   ! allocates arrays
   ! differs for isotropic model or transverse isotropic models
-  allocate( MGLL_V%qmu_new(NGLLX,NGLLY,NGLLZ,MGLL_V%nspec), &
-       stat=ier)
-  MGLL_V%qmu_new(:,:,:,:) = 0.0_CUSTOM_REAL
-  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating qmu_new,.. arrays')
+  allocate( MGLL_QMU_V%qmu_new(NGLLX,NGLLY,NGLLZ,MGLL_QMU_V%nspec),stat=ier)
+  if (ier /= 0) call exit_MPI(myrank,'Error allocating qmu_new array')
+  MGLL_QMU_V%qmu_new(:,:,:,:) = 0.0_CUSTOM_REAL
 
   ! reads in model files for each process
   if (ADIOS_FOR_MODELS) then
      call read_gll_qmu_model_adios(myrank)
   else
-     call exit_MPI(myrank,'GLL Qmu models are not implemented for binary files.')
+     call read_gll_qmu_model(myrank)
   endif
 
-  call print_min_max_all(MGLL_V%qmu_new,"qmu new")
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) 'model Qmu GLL:'
+    call flush_IMAIN()
+  endif
+  call print_min_max_all(MGLL_QMU_V%qmu_new,"qmu new")
 
   call synchronize_all()
 
-  contains
-
-    subroutine print_min_max_all(array,name)
-
-    implicit none
-
-    real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,MGLL_V%nspec),intent(in) :: array
-    character(len=*),intent(in) :: name
-    ! local parameters
-    real(kind=CUSTOM_REAL) :: minvalue,maxvalue,min_all,max_all
-
-    maxvalue = maxval( array )
-    minvalue = minval( array )
-    call max_all_cr(maxvalue, max_all)
-    call min_all_cr(minvalue, min_all)
-
-    if (myrank == 0) then
-      write(IMAIN,*) '  '//trim(name)//' min/max: ',min_all,max_all
-      write(IMAIN,*)
-      call flush_IMAIN()
-    endif
-
-    end subroutine
-
   end subroutine model_attenuation_gll_broadcast
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  subroutine read_gll_qmu_model(rank)
+
+  use constants
+  use model_gll_qmu_par
+
+  implicit none
+
+  integer,intent(in) :: rank
+
+  ! local parameters
+  integer :: ier
+  character(len=MAX_STRING_LEN) :: filename
+  character(len=MAX_STRING_LEN) :: prname
+
+  if (myrank == 0) then
+    write(IMAIN,*) 'reading in model from: ',trim(PATHNAME_GLL_modeldir)
+    if (rank /= myrank) write(IMAIN,*) '  mesh slice for rank: ',rank
+    call flush_IMAIN()
+  endif
+
+  ! for example: DATA/GLL/proc000000_reg1_qmu.bin
+  !
+  ! root name
+  write(prname,'(a,i6.6,a)') PATHNAME_GLL_modeldir(1:len_trim(PATHNAME_GLL_modeldir))//'proc',rank,'_reg1_'
+
+  ! qmu mesh
+  filename = prname(1:len_trim(prname))//'qmu.bin'
+  open(unit=IIN,file=trim(filename),status='old',action='read',form='unformatted',iostat=ier)
+  if (ier /= 0) then
+    print *,'Error opening: ',trim(filename)
+    call exit_MPI(rank,'Error model Qmu GLL')
+  endif
+  read(IIN) MGLL_QMU_V%qmu_new(:,:,:,1:MGLL_QMU_V%nspec)
+  close(IIN)
+
+  call synchronize_all()
+  if (myrank == 0) then
+    write(IMAIN,*)'  reading done'
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  end subroutine read_gll_qmu_model
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
 
 
   subroutine model_attenuation_gll(ispec, i, j, k, Qmu)
@@ -151,6 +186,6 @@
   integer,intent(in) :: ispec,i,j,k
   double precision,intent(inout) :: Qmu
 
-  Qmu = dble( MGLL_V%qmu_new(i,j,k,ispec) )
+  Qmu = dble( MGLL_QMU_V%qmu_new(i,j,k,ispec) )
 
   end subroutine model_attenuation_gll

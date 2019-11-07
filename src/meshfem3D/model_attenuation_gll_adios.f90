@@ -71,23 +71,20 @@
   ! Setup the ADIOS library to read the file
   call open_file_adios_read(file_name)
 
-  local_dim = NGLLX * NGLLY * NGLLZ * MGLL_V%nspec
+  local_dim = NGLLX * NGLLY * NGLLZ * MGLL_QMU_V%nspec
   start(1) = local_dim * rank
   count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
 
   ! reads in model for each partition
   call adios_schedule_read(file_handle_adios, sel, "reg1/Qmu/array", 0, 1, &
-       MGLL_V%qmu_new(:,:,:,1:MGLL_V%nspec), adios_err)
-
+                           MGLL_QMU_V%qmu_new(:,:,:,1:MGLL_QMU_V%nspec), adios_err)
 
   call adios_perform_reads(file_handle_adios, adios_err)
-
   call check_adios_err(myrank,adios_err)
 
   ! closes adios file
   call adios_read_close(file_handle_adios, adios_err)
-
   call check_adios_err(myrank,adios_err)
 
   call synchronize_all()

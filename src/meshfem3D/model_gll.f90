@@ -273,31 +273,37 @@
   end select
   call synchronize_all()
 
-  contains
-
-    subroutine print_min_max_all(array,name)
-
-    implicit none
-
-    real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,MGLL_V%nspec),intent(in) :: array
-    character(len=*),intent(in) :: name
-    ! local parameters
-    real(kind=CUSTOM_REAL) :: minvalue,maxvalue,min_all,max_all
-
-    maxvalue = maxval( array )
-    minvalue = minval( array )
-    call max_all_cr(maxvalue, max_all)
-    call min_all_cr(minvalue, min_all)
-
-    if (myrank == 0) then
-      write(IMAIN,*) '  '//trim(name)//' min/max: ',min_all,max_all
-      write(IMAIN,*)
-      call flush_IMAIN()
-    endif
-
-    end subroutine
-
   end subroutine model_gll_broadcast
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  subroutine print_min_max_all(array,name)
+
+  use constants, only: CUSTOM_REAL,IMAIN,NGLLX,NGLLY,NGLLZ,myrank
+  use model_gll_par, only: MGLL_V
+
+  implicit none
+
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,MGLL_V%nspec),intent(in) :: array
+  character(len=*),intent(in) :: name
+  ! local parameters
+  real(kind=CUSTOM_REAL) :: minvalue,maxvalue,min_all,max_all
+
+  maxvalue = maxval( array )
+  minvalue = minval( array )
+  call max_all_cr(maxvalue, max_all)
+  call min_all_cr(minvalue, min_all)
+
+  if (myrank == 0) then
+    write(IMAIN,*) '  '//trim(name)//' min/max: ',min_all,max_all
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  end subroutine
 
 !
 !-------------------------------------------------------------------------------------------------
