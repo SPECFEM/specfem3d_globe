@@ -205,13 +205,7 @@
 
   ! ASDF format
   if (OUTPUT_SEISMOS_ASDF) then
-    ! The writing of seismograms by the master proc is handled within
-    ! write_asdf()
-
-    ! initializes the ASDF data structure by allocating arrays
-    call init_asdf_data(nrec_local)
-    call synchronize_all()
-
+    ! The writing of seismograms by the master proc is handled within write_asdf()
     do irec_local = 1,nrec_local
 
       ! get global number of that receiver

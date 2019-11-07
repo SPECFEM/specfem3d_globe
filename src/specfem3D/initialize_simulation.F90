@@ -275,8 +275,7 @@
     !call write_specfem_header_adios()
   !endif
 
-  if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3 &
-       .and. READ_ADJSRC_ASDF) then
+  if ((SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) .and. READ_ADJSRC_ASDF) then
     call asdf_setup(current_asdf_handle, path_to_add, simul_run_flag)
   endif
 

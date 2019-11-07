@@ -605,7 +605,12 @@ contains
   endif
 
   call adios_perform_reads(file_handle_adios, ier)
-  if (ier /= 0 ) stop 'Error helper adios read scalar failed'
+  if (ier /= 0) then
+    call adios_errmsg(err_message)
+    print *,'Error adios: could not read parameter: ',trim(scalar_name)
+    print *,trim(err_message)
+    stop 'Error helper adios read scalar failed'
+  endif
 
   end subroutine read_adios_scalar_int
 

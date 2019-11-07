@@ -1704,14 +1704,14 @@
 
     ! stores interpolators for receiver positions
     call setup_sources_receivers_intp(NSOURCES, &
-                      islice_selected_source, &
-                      xi_source,eta_source,gamma_source, &
-                      xigll,yigll,zigll, &
-                      SIMULATION_TYPE,nrec,nrec_local, &
-                      islice_selected_rec,number_receiver_global, &
-                      xi_receiver,eta_receiver,gamma_receiver, &
-                      hxir_store,hetar_store,hgammar_store, &
-                      nadj_hprec_local,hpxir_store,hpetar_store,hpgammar_store)
+                                      islice_selected_source, &
+                                      xi_source,eta_source,gamma_source, &
+                                      xigll,yigll,zigll, &
+                                      SIMULATION_TYPE,nrec,nrec_local, &
+                                      islice_selected_rec,number_receiver_global, &
+                                      xi_receiver,eta_receiver,gamma_receiver, &
+                                      hxir_store,hetar_store,hgammar_store, &
+                                      nadj_hprec_local,hpxir_store,hpetar_store,hpgammar_store)
 
     ! allocates seismogram array
     if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
@@ -1849,6 +1849,15 @@
           enddo
         enddo
       enddo
+    endif
+  endif
+
+  ! ASDF seismograms
+  if (OUTPUT_SEISMOS_ASDF) then
+    if (.not. (SIMULATION_TYPE == 3 .and. (.not. SAVE_SEISMOGRAMS_IN_ADJOINT_RUN)) ) then
+      ! initializes the ASDF data structure by allocating arrays
+      call init_asdf_data(nrec_local)
+      call synchronize_all()
     endif
   endif
 

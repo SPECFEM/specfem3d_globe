@@ -40,7 +40,7 @@
   ! Variables
   integer :: total_seismos_local, ier
 
-  total_seismos_local = nrec_local*3 ! 3 components
+  total_seismos_local = nrec_local * 3 ! 3 components
 
   asdf_container%nrec_local = nrec_local
 
@@ -686,113 +686,138 @@
   write(Mrp_str, "(g12.5)") Mrp*1e-7
   write(Mtp_str, "(g12.5)") Mtp*1e-7
 
-  quakemlstring = '<q:quakeml xmlns="http://quakeml.org/xmlns/bed/1.2"'//&
-                  ' xmlns:q="http://quakeml.org/xmlns/quakeml/1.2">'//&
-                  '<eventParameters publicID="smi:local/'//trim(event_name_SAC)//'#eventPrm">'//&
-                  '<event publicID="smi:local/'//trim(event_name_SAC)//'#eventID">'//&
-                  '<preferredOriginID>smi:local/'//trim(event_name_SAC)//'/origin#cmtorigin</preferredOriginID>'//&
-                  '<preferredMagnitudeID>smi:local/'//trim(event_name_SAC)//'/magnitude#moment_mag</preferredMagnitudeID>'//&
-                  '<preferredFocalMechanismID>smi:local/'//trim(event_name_SAC)//'/focal_mechanism</preferredFocalMechanismID>'//&
-                  '<type>earthquake</type>'//&
-                  '<typeCertainty>known</typeCertainty>'//&
-                  '<description>'//&
-                  '<text>'//trim(event_name_SAC)//'</text>'//&
-                  '<type>earthquake name</type>'//&
-                  '</description>'//&
-                  '<origin publicID="smi:local/'//trim(event_name_SAC)//'/origin#reforigin">'//&
-                  '<time>'//&
-                  '<value>'//trim(pde_start_time_string)//'</value>'//&
-                  '</time>'//&
-                  '<latitude>'//&
-                  '<value>'//trim(pde_lat_str)//'</value>'//&
-                  '</latitude>'//&
-                  '<longitude>'//&
-                  '<value>'//trim(pde_lon_str)//'</value>'//&
-                  '</longitude>'//&
-                  '<depth>'//&
-                  '<value>'//trim(pde_depth_str)//'</value>'//&
-                  '</depth>'//&
-                  '<type>hypocenter</type>'//&
-                  '<comment id="smi:local/'//trim(event_name_SAC)//'/comment#ref_origin">'//&
-                  '<text>Hypocenter catalog: PDE</text>'//&
-                  '</comment>'//&
-                  '</origin>'//&
-                  '<origin publicID="smi:local/'//trim(event_name_SAC)//'/origin#cmtorigin">'//&
-                  '<time>'//&
-                  '<value>'//trim(cmt_start_time_string)//'</value>'//&
-                  '</time>'//&
-                  '<latitude>'//&
-                  '<value>'//trim(cmt_lat_str)//'</value>'//&
-                  '</latitude>'//&
-                  '<longitude>'//&
-                  '<value>'//trim(cmt_lon_str)//'</value>'//&
-                  '</longitude>'//&
-                  '<depth>'//&
-                  '<value>'//trim(cmt_depth_str)//'</value>'//&
-                  '</depth>'//&
-                  '</origin>'//&
-                  '<focalMechanism publicID="smi:local/'//trim(event_name_SAC)//'/focal_mechanism">'//&
-                  '<momentTensor publicID="smi:local/'//trim(event_name_SAC)//'/momenttensor">'//&
-                  '<derivedOriginID>smi:local/'//trim(event_name_SAC)//'/origin#cmtorigin'//&
-                  '</derivedOriginID>'//&
-                  '<momentMagnitudeID>smi:local/'//trim(event_name_SAC)//'/magnitude#moment_mag'//&
-                  '</momentMagnitudeID>'//&
-                  '<scalarMoment>'//&
-                  '<value>'//trim(M0_str)//'</value>'//&
-                  '</scalarMoment>'//&
-                  '<tensor>'//&
-                  '<Mrr>'//&
-                  '<value>'//trim(Mrr_str)//'</value>'//&
-                  '<uncertainty>0</uncertainty>'//&
-                  '</Mrr>'//&
-                  '<Mtt>'//&
-                  '<value>'//trim(Mtt_str)//'</value>'//&
-                  '<uncertainty>0</uncertainty>'//&
-                  '</Mtt>'//&
-                  '<Mpp>'//&
-                  '<value>'//trim(Mpp_str)//'</value>'//&
-                  '<uncertainty>0</uncertainty>'//&
-                  '</Mpp>'//&
-                  '<Mrt>'//&
-                  '<value>'//trim(Mrt_str)//'</value>'//&
-                  '<uncertainty>0</uncertainty>'//&
-                  '</Mrt>'//&
-                  '<Mrp>'//&
-                  '<value>'//trim(Mrp_str)//'</value>'//&
-                  '<uncertainty>0</uncertainty>'//&
-                  '</Mrp>'//&
-                  '<Mtp>'//&
-                  '<value>'//trim(Mtp_str)//'</value>'//&
-                  '<uncertainty>0</uncertainty>'//&
-                  '</Mtp>'//&
-                  '</tensor>'//&
-                  '<sourceTimeFunction>'//&
-                  '<type>triangle</type>'//&
-                  '<duration>'//trim(hdur_str)//'</duration>'//&
-                  '</sourceTimeFunction>'//&
-                  '</momentTensor>'//&
-                  '</focalMechanism>'//&
-                  '<magnitude publicID="smi:local/'//trim(event_name_SAC)//'/magnitude#moment_mag">'//&
-                  '<mag>'//&
-                  '<value>'//trim(Mw_str)//'</value>'//&
-                  '</mag>'//&
-                  '<type>Mwc</type>'//&
-                  '</magnitude>'//&
-                  '<magnitude publicID="smi:local/'//trim(event_name_SAC)//'/magnitude#mb">'//&
-                  '<mag>'//&
-                  '<value>'//trim(mb_str)//'</value>'//&
-                  '</mag>'//&
-                  '<type>mb</type>'//&
-                  '</magnitude>'//&
-                  '<magnitude publicID="smi:local/'//trim(event_name_SAC)//'/magnitude#MS">'//&
-                  '<mag>'//&
-                  '<value>'//trim(ms_str)//'</value>'//&
-                  '</mag>'//&
-                  '<type>MS</type>'//&
-                  '</magnitude>'//&
-                  '</event>'//&
-                  '</eventParameters>'//&
-                  '</q:quakeml>'
+  ! header version
+  quakemlstring = &
+    '<q:quakeml xmlns="http://quakeml.org/xmlns/bed/1.2" xmlns:q="http://quakeml.org/xmlns/quakeml/1.2">'
+
+  ! event
+  quakemlstring = quakemlstring // &
+    '<eventParameters publicID="smi:local/'//trim(event_name_SAC)//'#eventPrm">'// &
+    '<event publicID="smi:local/'//trim(event_name_SAC)//'#eventID">'
+
+  ! info preferences
+  quakemlstring = quakemlstring // &
+    '<preferredOriginID>smi:local/'//trim(event_name_SAC)//'/origin#cmtorigin</preferredOriginID>'// &
+    '<preferredMagnitudeID>smi:local/'//trim(event_name_SAC)//'/magnitude#moment_mag</preferredMagnitudeID>'// &
+    '<preferredFocalMechanismID>smi:local/'//trim(event_name_SAC)//'/focal_mechanism</preferredFocalMechanismID>'
+
+  ! event name
+  quakemlstring = quakemlstring // &
+    '<type>earthquake</type>'// &
+    '<typeCertainty>known</typeCertainty>'// &
+    '<description>'// &
+    '  <text>'//trim(event_name_SAC)//'</text>'// &
+    '  <type>earthquake name</type>'// &
+    '</description>'
+
+  ! event origin
+  quakemlstring = quakemlstring // &
+    '<origin publicID="smi:local/'//trim(event_name_SAC)//'/origin#reforigin">'//&
+    '  <time>'//&
+    '    <value>'//trim(pde_start_time_string)//'</value>'//&
+    '  </time>'//&
+    '  <latitude>'//&
+    '    <value>'//trim(pde_lat_str)//'</value>'//&
+    '  </latitude>'//&
+    '  <longitude>'//&
+    '    <value>'//trim(pde_lon_str)//'</value>'//&
+    '  </longitude>'//&
+    '  <depth>'//&
+    '    <value>'//trim(pde_depth_str)//'</value>'//&
+    '  </depth>'//&
+    '  <type>hypocenter</type>'//&
+    '  <comment id="smi:local/'//trim(event_name_SAC)//'/comment#ref_origin">'//&
+    '    <text>Hypocenter catalog: PDE</text>'//&
+    '  </comment>'//&
+    '</origin>'
+
+  ! event cmtorigin
+  quakemlstring = quakemlstring // &
+    '<origin publicID="smi:local/'//trim(event_name_SAC)//'/origin#cmtorigin">'//&
+    '  <time>'//&
+    '    <value>'//trim(cmt_start_time_string)//'</value>'//&
+    '  </time>'//&
+    '  <latitude>'//&
+    '    <value>'//trim(cmt_lat_str)//'</value>'//&
+    '  </latitude>'//&
+    '  <longitude>'//&
+    '    <value>'//trim(cmt_lon_str)//'</value>'//&
+    '  </longitude>'//&
+    '  <depth>'//&
+    '    <value>'//trim(cmt_depth_str)//'</value>'//&
+    '  </depth>'//&
+    '</origin>'
+
+  ! event focal mechanism (empty for now...)
+  quakemlstring = quakemlstring // &
+    '<focalMechanism publicID="smi:local/'//trim(event_name_SAC)//'/focal_mechanism">'//&
+    '<momentTensor publicID="smi:local/'//trim(event_name_SAC)//'/momenttensor">'//&
+    '  <derivedOriginID>smi:local/'//trim(event_name_SAC)//'/origin#cmtorigin'//&
+    '  </derivedOriginID>'//&
+    '  <momentMagnitudeID>smi:local/'//trim(event_name_SAC)//'/magnitude#moment_mag'//&
+    '  </momentMagnitudeID>'//&
+    '  <scalarMoment>'//&
+    '    <value>'//trim(M0_str)//'</value>'//&
+    '  </scalarMoment>'//&
+    '  <tensor>'//&
+    '  <Mrr>'//&
+    '    <value>'//trim(Mrr_str)//'</value>'//&
+    '    <uncertainty>0</uncertainty>'//&
+    '  </Mrr>'//&
+    '  <Mtt>'//&
+    '    <value>'//trim(Mtt_str)//'</value>'//&
+    '    <uncertainty>0</uncertainty>'//&
+    '  </Mtt>'//&
+    '  <Mpp>'//&
+    '    <value>'//trim(Mpp_str)//'</value>'//&
+    '    <uncertainty>0</uncertainty>'//&
+    '  </Mpp>'//&
+    '  <Mrt>'//&
+    '    <value>'//trim(Mrt_str)//'</value>'//&
+    '    <uncertainty>0</uncertainty>'//&
+    '  </Mrt>'//&
+    '  <Mrp>'//&
+    '    <value>'//trim(Mrp_str)//'</value>'//&
+    '    <uncertainty>0</uncertainty>'//&
+    '  </Mrp>'//&
+    '  <Mtp>'//&
+    '    <value>'//trim(Mtp_str)//'</value>'//&
+    '    <uncertainty>0</uncertainty>'//&
+    '  </Mtp>'//&
+    '  </tensor>'//&
+    '  <sourceTimeFunction>'//&
+    '    <type>triangle</type>'//&
+    '    <duration>'//trim(hdur_str)//'</duration>'//&
+    '  </sourceTimeFunction>'//&
+    '</momentTensor>'//&
+    '</focalMechanism>'
+
+  ! event magnitudes
+  quakemlstring = quakemlstring // &
+    '<magnitude publicID="smi:local/'//trim(event_name_SAC)//'/magnitude#moment_mag">'//&
+    '  <mag>'//&
+    '    <value>'//trim(Mw_str)//'</value>'//&
+    '  </mag>'//&
+    '  <type>Mwc</type>'//&
+    '</magnitude>'//&
+    '<magnitude publicID="smi:local/'//trim(event_name_SAC)//'/magnitude#mb">'//&
+    '  <mag>'//&
+    '    <value>'//trim(mb_str)//'</value>'//&
+    '  </mag>'//&
+    '  <type>mb</type>'//&
+    '</magnitude>'//&
+    '  <magnitude publicID="smi:local/'//trim(event_name_SAC)//'/magnitude#MS">'//&
+    '  <mag>'//&
+    '    <value>'//trim(ms_str)//'</value>'//&
+    '  </mag>'//&
+    '  <type>MS</type>'//&
+    '</magnitude>'
+
+  ! event finish
+  quakemlstring = quakemlstring // &
+    '</event>'//&
+    '</eventParameters>'//&
+    '</q:quakeml>'
 
   end subroutine cmt_to_quakeml
 
@@ -947,52 +972,63 @@
   len_station_depth = len(trim(station_depth))
   len_station_ele = len(trim(station_ele))
 
-  stationxmlstring = '<FDSNStationXML schemaVersion="1.0" xmlns="http://www.fdsn.org/xml/station/1">'//&
-                     '<Source>SPECFEM3D_GLOBE</Source>'//&
-                     '<Module>SPECFEM3D_GLOBE/asdf-library</Module>'//&
-                     '<ModuleURI>http://seismic-data.org</ModuleURI>'//&
-                     '<Created>'//trim(start_time_string)//'</Created>'//&
-                     '<Network code="'//trim(network_name(1:len(network_name)))//'"'//&
-                     '><Station code="'//trim(station_name(1:len(station_name)))//'">'//&
-                     '<Latitude unit="DEGREES">'//trim(station_lat(1:len_station_lat))//'</Latitude>'//&
-                     '<Longitude unit="DEGREES">'//trim(station_lon(1:len_station_lon))//'</Longitude>'//&
-                     '<Elevation>'//trim(station_ele(1:len_station_ele))//'</Elevation>'//&
-                     '<Site>'//&
-                     '<Name>N/A</Name>'//&
-                     '</Site>'//&
-                     '<CreationDate>'//trim(start_time_string)//'</CreationDate>'//&
-                     '<TotalNumberChannels>3</TotalNumberChannels>'//&
-                     '<SelectedNumberChannels>3</SelectedNumberChannels>'//&
-                     '<Channel locationCode="S3" code="MXN"'//&
-                     ' startDate="'//trim(start_time_string)//'">'//&
-                     '<Latitude unit="DEGREES">'//trim(station_lat(1:len_station_lat))//'</Latitude>'//&
-                     '<Longitude unit="DEGREES">'//trim(station_lon(1:len_station_lon))//'</Longitude>'//&
-                     '<Elevation>'//trim(station_ele(1:len_station_ele))//'</Elevation>'//&
-                     '<Depth>'//trim(station_depth(1:len_station_depth))//'</Depth>'//&
-                     '<Azimuth>0.0</Azimuth>'//&
-                     '<Dip>0.0</Dip>'//&
-                     '</Channel>'//&
-                     '<Channel locationCode="S3" code="MXE"'//&
-                     ' startDate="'//trim(start_time_string)//'">'//&
-                     '<Latitude unit="DEGREES">'//trim(station_lat(1:len_station_lat))//'</Latitude>'//&
-                     '<Longitude unit="DEGREES">'//trim(station_lon(1:len_station_lon))//'</Longitude>'//&
-                     '<Elevation>'//trim(station_ele(1:len_station_ele))//'</Elevation>'//&
-                     '<Depth>'//trim(station_depth(1:len_station_depth))//'</Depth>'//&
-                     '<Azimuth>90.0</Azimuth>'//&
-                     '<Dip>0.0</Dip>'//&
-                     '</Channel>'//&
-                     '<Channel locationCode="S3" code="MXZ"'//&
-                     ' startDate="'//trim(start_time_string)//'">'//&
-                     '<Latitude unit="DEGREES">'//trim(station_lat(1:len_station_lat))//'</Latitude>'//&
-                     '<Longitude unit="DEGREES">'//trim(station_lon(1:len_station_lon))//'</Longitude>'//&
-                     '<Elevation>'//trim(station_ele(1:len_station_ele))//'</Elevation>'//&
-                     '<Depth>'//trim(station_depth(1:len_station_depth))//'</Depth>'//&
-                     '<Azimuth>0.0</Azimuth>'//&
-                     '<Dip>90.0</Dip>'//&
-                     '</Channel>'//&
-                     '</Station>'//&
-                     '</Network>'//&
-                     '</FDSNStationXML>'
+  ! header
+  stationxmlstring = &
+    '<FDSNStationXML schemaVersion="1.0" xmlns="http://www.fdsn.org/xml/station/1">'
+
+  ! info
+  stationxmlstring = stationxmlstring // &
+    '<Source>SPECFEM3D_GLOBE</Source>'//&
+    '<Module>SPECFEM3D_GLOBE/asdf-library</Module>'//&
+    '<ModuleURI>http://seismic-data.org</ModuleURI>'//&
+    '<Created>'//trim(start_time_string)//'</Created>'
+
+  ! station
+  stationxmlstring = stationxmlstring // &
+    '<Network code="'//trim(network_name(1:len(network_name)))//'">'//&
+    '<Station code="'//trim(station_name(1:len(station_name)))//'">'//&
+    '  <Latitude unit="DEGREES">'//trim(station_lat(1:len_station_lat))//'</Latitude>'//&
+    '  <Longitude unit="DEGREES">'//trim(station_lon(1:len_station_lon))//'</Longitude>'//&
+    '  <Elevation>'//trim(station_ele(1:len_station_ele))//'</Elevation>'//&
+    '  <Site>'//&
+    '    <Name>N/A</Name>'//&
+    '  </Site>'//&
+    '  <CreationDate>'//trim(start_time_string)//'</CreationDate>'
+
+  ! channels
+  stationxmlstring = stationxmlstring // &
+    '  <TotalNumberChannels>3</TotalNumberChannels>'//&
+    '  <SelectedNumberChannels>3</SelectedNumberChannels>'//&
+    '  <Channel locationCode="S3" code="MXN" startDate="'//trim(start_time_string)//'">'//&
+    '    <Latitude unit="DEGREES">'//trim(station_lat(1:len_station_lat))//'</Latitude>'//&
+    '    <Longitude unit="DEGREES">'//trim(station_lon(1:len_station_lon))//'</Longitude>'//&
+    '    <Elevation>'//trim(station_ele(1:len_station_ele))//'</Elevation>'//&
+    '    <Depth>'//trim(station_depth(1:len_station_depth))//'</Depth>'//&
+    '    <Azimuth>0.0</Azimuth>'//&
+    '    <Dip>0.0</Dip>'//&
+    '  </Channel>'//&
+    '  <Channel locationCode="S3" code="MXE" startDate="'//trim(start_time_string)//'">'//&
+    '    <Latitude unit="DEGREES">'//trim(station_lat(1:len_station_lat))//'</Latitude>'//&
+    '    <Longitude unit="DEGREES">'//trim(station_lon(1:len_station_lon))//'</Longitude>'//&
+    '    <Elevation>'//trim(station_ele(1:len_station_ele))//'</Elevation>'//&
+    '    <Depth>'//trim(station_depth(1:len_station_depth))//'</Depth>'//&
+    '    <Azimuth>90.0</Azimuth>'//&
+    '    <Dip>0.0</Dip>'//&
+    '  </Channel>'//&
+    '  <Channel locationCode="S3" code="MXZ" startDate="'//trim(start_time_string)//'">'//&
+    '    <Latitude unit="DEGREES">'//trim(station_lat(1:len_station_lat))//'</Latitude>'//&
+    '    <Longitude unit="DEGREES">'//trim(station_lon(1:len_station_lon))//'</Longitude>'//&
+    '    <Elevation>'//trim(station_ele(1:len_station_ele))//'</Elevation>'//&
+    '    <Depth>'//trim(station_depth(1:len_station_depth))//'</Depth>'//&
+    '    <Azimuth>0.0</Azimuth>'//&
+    '    <Dip>90.0</Dip>'//&
+    '  </Channel>'
+
+  ! finish
+  stationxmlstring = stationxmlstring // &
+    '</Station>'//&
+    '</Network>'//&
+    '</FDSNStationXML>'
 
   end subroutine station_to_stationxml
 
