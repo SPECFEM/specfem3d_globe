@@ -228,7 +228,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine evradker(depth,string,nker,vercof,dvercof,ierror)
+  subroutine evradker(depth,kerstr,nker,vercof,dvercof,ierror)
 
   use constants, only: R_EARTH_KM
 
@@ -242,7 +242,7 @@
   real(kind=4) :: dvercof(nker)
   real(kind=4) :: splpts(100)
 
-  character(len=80) string
+  character(len=80) :: kerstr
 
   logical :: upper,upper_650
   logical :: lower,lower_650
@@ -256,9 +256,6 @@
   integer :: i,nspl,nskip,nlower,nupper,iker,lstr
 
   real(kind=4) :: u,u2,ddep,radius2,radius,depth
-
-  ierror = 0
-  lstr = len_trim(string)
 
   radius = r0 - depth
   ddep = 0.1
@@ -282,7 +279,11 @@
     dvercof(iker) = 0.0
   enddo
 
-  if (string(1:16) == 'WDC+SPC_U4L8CHEB') then
+  ierror = 0
+  lstr = len_trim(kerstr)
+  if (lstr < 1) stop 'Error invalid string in evradker() for model s362ani'
+
+  if (kerstr(1:16) == 'WDC+SPC_U4L8CHEB') then
     nupper = 5
     nlower = 9
     nskip = 2
@@ -311,7 +312,7 @@
         dvercof(i) = (chebyshev2(i-nskip-nupper) - chebyshev(i-nskip-nupper))/ddep
       enddo
     endif
-  else if (string(1:13) == 'WDC+SHSVWM20A') then
+  else if (kerstr(1:13) == 'WDC+SHSVWM20A') then
     nspl=20
     splpts(1)=0.0
     splpts(2)=50.0
@@ -339,7 +340,7 @@
       dvercof(i)=dvercof(i-20)
     enddo
     vercof(1)=1.0
-  else if (string(1:16) == 'WDC+XBS_362_U6L8') then
+  else if (kerstr(1:16) == 'WDC+XBS_362_U6L8') then
     if (upper) then
       nspl=6
       splpts(1)=24.4
@@ -364,7 +365,7 @@
     vercof(1)=1.0
 !        vercof(16)=1.
 !        vercof(17)=1.
-!      else if (string(1:21) == 'WDC+ANI_362_U6L8_TOPO') then
+!      else if (kerstr(1:21) == 'WDC+ANI_362_U6L8_TOPO') then
 !        if (upper) then
 !         nspl=6
 !         splpts(1)=24.4
@@ -395,8 +396,8 @@
 !        vercof(23)=1.
 !        vercof(24)=1.
 !        vercof(25)=1.
-  else if ((string(1:lstr) == 'WDC+ANI_362_U6L8' .and. lstr == 16) &
-      .or. (string(1:lstr) == 'WDC+ANI_362_U6L8_TOPO'.and.lstr == 21)) then
+  else if ((kerstr(1:lstr) == 'WDC+ANI_362_U6L8' .and. lstr == 16) &
+      .or. (kerstr(1:lstr) == 'WDC+ANI_362_U6L8_TOPO'.and.lstr == 21)) then
     if (upper) then
       nspl=6
       splpts(1)=24.4
@@ -425,7 +426,7 @@
     vercof(1)=1.0
     vercof(22)=1.0
     vercof(23)=1.0
-  else if (string(1:lstr) == 'WDC+WM_362_U6L8' .and. lstr == 15) then
+  else if (kerstr(1:lstr) == 'WDC+WM_362_U6L8' .and. lstr == 15) then
     if (upper) then
       nspl=6
       splpts(1)=24.4
@@ -459,8 +460,8 @@
     vercof(30)=1.0
     vercof(31)=1.0
     vercof(32)=1.0
-  else if ((string(1:lstr) == 'WDC+ANI_362_U6L8_650' .and. lstr == 20) &
-      .or. (string(1:lstr) == 'WDC+ANI_362_U6L8_TOPO_650'.and.lstr == 25)) then
+  else if ((kerstr(1:lstr) == 'WDC+ANI_362_U6L8_650' .and. lstr == 20) &
+      .or. (kerstr(1:lstr) == 'WDC+ANI_362_U6L8_TOPO_650'.and.lstr == 25)) then
     if (upper_650) then
       nspl=6
       splpts(1)=24.4
@@ -489,7 +490,7 @@
     vercof(1)=1.0
     vercof(22)=1.0
     vercof(23)=1.0
-  else if (string(1:lstr) == 'WDC+WM_362_U6L8_650' .and. lstr == 19) then
+  else if (kerstr(1:lstr) == 'WDC+WM_362_U6L8_650' .and. lstr == 19) then
     if (upper_650) then
       nspl=6
       splpts(1)=24.4
@@ -523,7 +524,7 @@
     vercof(30)=1.0
     vercof(31)=1.0
     vercof(32)=1.0
-  else if (string(1:lstr) == 'WDC+U8L8_650' .and. lstr == 12) then
+  else if (kerstr(1:lstr) == 'WDC+U8L8_650' .and. lstr == 12) then
     if (upper_650) then
       nspl=8
       splpts(1)=24.4
@@ -559,7 +560,7 @@
     vercof(34)=1.0
     vercof(35)=1.0
     vercof(36)=1.0
-  else if (string(1:lstr) == 'WDC+U8L8_670' .and. lstr == 12) then
+  else if (kerstr(1:lstr) == 'WDC+U8L8_670' .and. lstr == 12) then
     if (upper) then
       nspl=8
       splpts(1)=24.4
@@ -595,8 +596,8 @@
     vercof(34)=1.0
     vercof(35)=1.0
     vercof(36)=1.0
-  else if ((string(1:lstr) == 'WDC+U8L8_I1D_650' .and. lstr == 16) &
-      .or. (string(1:lstr) == 'WDC+U8L8_I3D_650'.and.lstr == 16)) then
+  else if ((kerstr(1:lstr) == 'WDC+U8L8_I1D_650' .and. lstr == 16) &
+      .or. (kerstr(1:lstr) == 'WDC+U8L8_I3D_650'.and.lstr == 16)) then
     if (upper_650) then
       nspl=8
       splpts(1)=24.4
@@ -648,8 +649,8 @@
     vercof(34)=1.0
     vercof(35)=1.0
     vercof(36)=1.0
-  else if ((string(1:lstr) == 'WDC+I1D_650' .and. lstr == 11) .or. &
-          (string(1:lstr) == 'WDC+I3D_650' .and. lstr == 11)) then
+  else if ((kerstr(1:lstr) == 'WDC+I1D_650' .and. lstr == 11) .or. &
+          (kerstr(1:lstr) == 'WDC+I3D_650' .and. lstr == 11)) then
     if (upper_650) then
       nspl=8
       splpts(1)=24.4
@@ -717,7 +718,7 @@
     vercof(34)=1.0
     vercof(35)=1.0
     vercof(36)=1.0
-  else if (string(1:lstr) == 'V16A4_V7A4' .and. lstr == 10) then
+  else if (kerstr(1:lstr) == 'V16A4_V7A4' .and. lstr == 10) then
     if (upper_650) then
       nspl=8
       splpts(1)=24.4
@@ -756,9 +757,9 @@
     vercof(21)=1.0
     vercof(22)=1.0
   else
-    write(*,"('problem 4')")
-    write(*,"(a)")string(1:len_trim(string))
-    stop
+    write(*,*) 'Error model s362ani: problem 4: lstr = ',lstr,'kerstr: ',kerstr(1:lstr)
+    write(*,"(a)") kerstr(1:len_trim(kerstr))
+    stop 'Error model s362ani'
   endif
 
   end subroutine evradker
@@ -994,117 +995,123 @@
   endif
 
   do while (ios == 0)
-  read(IIN,"(a)",iostat=ios) string
+    ! reads file line
+    read(IIN,"(a)",iostat=ios) string
 
-  lstr = len_trim(string)
-  if (lstr < 4) then
-    print *,'Error model s362ani: invalid string read: ',trim(string)
-    stop 'Error reading model file for s362ani'
-  endif
+    if (ios == 0) then
+      ! checks length
+      lstr = len_trim(string)
+      if (lstr < 4) then
+        print *,'Error model s362ani: invalid string read: ',trim(string)
+        stop 'Error reading model file for s362ani'
+      endif
 
-  if (ios == 0) then
-    if (string(1:16) == 'REFERENCE MODEL:') then
-      lstr = len_trim(string) - 17 + 1
-      substr(1:lstr) = trim(string(17:len_trim(string)))
-      ifst = 1
-      ilst = len_trim(substr)
-      do while (substr(ifst:ifst) == ' ' .and. ifst < ilst)
-        ifst = ifst+1
-      enddo
-      if (ilst-ifst <= 0) then
-        stop 'Error reading model 1'
-      else
-        refmodel = substr(ifst:ilst)
-      endif
-    else if (string(1:11) == 'KERNEL SET:') then
-      lstr = len_trim(string) - 12 + 1
-      substr(1:lstr) = trim(string(12:len_trim(string)))
-      ifst = 1
-      ilst = len_trim(substr)
-      do while (substr(ifst:ifst) == ' ' .and. ifst < ilst)
-        ifst = ifst+1
-      enddo
-      if (ilst-ifst <= 0) then
-        stop 'Error reading model 2'
-      else
-        kernstri = substr(ifst:ilst)
-      endif
-    else if (string(1:25) == 'RADIAL STRUCTURE KERNELS:') then
-      lstr = len_trim(string) - 26 + 1
-      substr(1:lstr) = trim(string(26:len_trim(string)))
-      read(substr(1:lstr),*,iostat=ierror) nmodkern
-      if (ierror /= 0) then
-        stop 'Error reading model 3'
-      endif
-    else if (string(1:4) == 'DESC' .and. string(9:9) == ':') then
-      read(string(5:8),"(i4)") idummy
-      lstr = len_trim(string) - 10 + 1
-      substr(1:lstr) = trim(string(10:len_trim(string)))
-      ifst = 1
-      ilst = len_trim(substr)
-      do while (substr(ifst:ifst) == ' ' .and. ifst < ilst)
-        ifst = ifst+1
-      enddo
-      if (ilst-ifst <= 0) then
-        stop 'Error reading model 4'
-      else
-        desckern(idummy) = substr(ifst:ilst)
-      endif
-    else if (string(1:29) == 'HORIZONTAL PARAMETERIZATIONS:') then
-      lstr = len_trim(string) - 30 + 1
-      substr(1:lstr) = trim(string(30:len_trim(string)))
-      read(substr(1:lstr),*,iostat=ierror) nhorpar
-      if (ierror /= 0) then
-        stop 'Error reading model 5'
-      endif
-    else if (string(1:4) == 'HPAR' .and. string(9:9) == ':') then
-      read(string(5:8),"(i4)") idummy
-      ifst = 10
-      ilst = len_trim(string)
-      do while (string(ifst:ifst) == ' ' .and. ifst < ilst)
-        ifst = ifst+1
-      enddo
-      if (ilst-ifst <= 0) then
-        stop 'Error reading model 6'
-      else if (string(ifst:ifst+19) == 'SPHERICAL HARMONICS,') then
-        lstr = len_trim(string) - (20+ifst) + 1
-        substr(1:lstr) = trim(string(20+ifst:len_trim(string)))
-        read(substr(1:lstr),*) lmax
-        ityphpar(idummy) = 1
-        lmaxhor(idummy) = lmax
-        ncoefhor(idummy) = (lmax+1)**2
-      else if (string(ifst:ifst+17) == 'SPHERICAL SPLINES,') then
-        ifst1 = ifst+18
-        ifst = len_trim(string)
+      ! initializes substring
+      substr = ''
+
+      if (string(1:16) == 'REFERENCE MODEL:') then
+        lstr = len_trim(string) - 17 + 1
+        substr(1:lstr) = trim(string(17:len_trim(string)))
+        ifst = 1
+        ilst = len_trim(substr)
+        do while (substr(ifst:ifst) == ' ' .and. ifst < ilst)
+          ifst = ifst+1
+        enddo
+        if (ilst-ifst <= 0) then
+          stop 'Error reading model 1'
+        else
+          refmodel = substr(ifst:ilst)
+        endif
+      else if (string(1:11) == 'KERNEL SET:') then
+        lstr = len_trim(string) - 12 + 1
+        substr(1:lstr) = trim(string(12:len_trim(string)))
+        ifst = 1
+        ilst = len_trim(substr)
+        do while (substr(ifst:ifst) == ' ' .and. ifst < ilst)
+          ifst = ifst+1
+        enddo
+        if (ilst-ifst <= 0) then
+          stop 'Error reading model 2'
+        else
+          kernstri = substr(ifst:ilst)
+        endif
+      else if (string(1:25) == 'RADIAL STRUCTURE KERNELS:') then
+        lstr = len_trim(string) - 26 + 1
+        substr(1:lstr) = trim(string(26:len_trim(string)))
+        read(substr(1:lstr),*,iostat=ierror) nmodkern
+        if (ierror /= 0) then
+          stop 'Error reading model 3'
+        endif
+      else if (string(1:4) == 'DESC' .and. string(9:9) == ':') then
+        read(string(5:8),"(i4)") idummy
+        lstr = len_trim(string) - 10 + 1
+        substr(1:lstr) = trim(string(10:len_trim(string)))
+        ifst = 1
+        ilst = len_trim(substr)
+        do while (substr(ifst:ifst) == ' ' .and. ifst < ilst)
+          ifst = ifst+1
+        enddo
+        if (ilst-ifst <= 0) then
+          stop 'Error reading model 4'
+        else
+          desckern(idummy) = substr(ifst:ilst)
+        endif
+      else if (string(1:29) == 'HORIZONTAL PARAMETERIZATIONS:') then
+        lstr = len_trim(string) - 30 + 1
+        substr(1:lstr) = trim(string(30:len_trim(string)))
+        read(substr(1:lstr),*,iostat=ierror) nhorpar
+        if (ierror /= 0) then
+          stop 'Error reading model 5'
+        endif
+      else if (string(1:4) == 'HPAR' .and. string(9:9) == ':') then
+        read(string(5:8),"(i4)") idummy
+        ifst = 10
         ilst = len_trim(string)
-        do while(string(ifst:ifst) /= ',')
-          ifst = ifst-1
+        do while (string(ifst:ifst) == ' ' .and. ifst < ilst)
+          ifst = ifst+1
         enddo
-        read(string(ifst+1:ilst),*) ncoef
-        lstr = (ifst-1) - ifst1 + 1
-        substr(1:lstr) = trim(string(ifst1:ifst-1))
-        do while (string(ifst1:ifst1) == ' ' .and. ifst1 < ifst)
-          ifst1 = ifst1+1
-        enddo
-        hsplfile(idummy) = string(ifst1:ifst-1)
-        ityphpar(idummy) = 2
-        lmaxhor(idummy) = 0
-        ncoefhor(idummy) = ncoef
-        do i = 1,ncoef
-          read(IIN,*) ixlspl(i,idummy),xlaspl(i,idummy),xlospl(i,idummy),xraspl(i,idummy)
-        enddo
+        if (ilst-ifst <= 0) then
+          stop 'Error reading model 6'
+        else if (string(ifst:ifst+19) == 'SPHERICAL HARMONICS,') then
+          lstr = len_trim(string) - (20+ifst) + 1
+          substr(1:lstr) = trim(string(20+ifst:len_trim(string)))
+          read(substr(1:lstr),*) lmax
+          ityphpar(idummy) = 1
+          lmaxhor(idummy) = lmax
+          ncoefhor(idummy) = (lmax+1)**2
+        else if (string(ifst:ifst+17) == 'SPHERICAL SPLINES,') then
+          ifst1 = ifst+18
+          ifst = len_trim(string)
+          ilst = len_trim(string)
+          do while(string(ifst:ifst) /= ',')
+            ifst = ifst-1
+          enddo
+          read(string(ifst+1:ilst),*) ncoef
+          lstr = (ifst-1) - ifst1 + 1
+          substr(1:lstr) = trim(string(ifst1:ifst-1))
+          do while (string(ifst1:ifst1) == ' ' .and. ifst1 < ifst)
+            ifst1 = ifst1+1
+          enddo
+          hsplfile(idummy) = string(ifst1:ifst-1)
+          ityphpar(idummy) = 2
+          lmaxhor(idummy) = 0
+          ncoefhor(idummy) = ncoef
+          do i = 1,ncoef
+            read(IIN,*) ixlspl(i,idummy),xlaspl(i,idummy),xlospl(i,idummy),xraspl(i,idummy)
+          enddo
+        endif
+      else if (string(1:4) == 'STRU' .and. string(9:9) == ':') then
+        read(string(5:8),"(i4)") idummy
+        lstr = len_trim(string) - 10 + 1
+        substr(1:lstr) = trim(string(10:len_trim(string)))
+        read(substr(1:lstr),*) ihor
+        ihorpar(idummy) = ihor
+        ncoef = ncoefhor(ihor)
+        read(IIN,"(6e12.4)") (coef(i,idummy),i = 1,ncoef)
       endif
-    else if (string(1:4) == 'STRU' .and. string(9:9) == ':') then
-      read(string(5:8),"(i4)") idummy
-      lstr = len_trim(string) - 10 + 1
-      substr(1:lstr) = trim(string(10:len_trim(string)))
-      read(substr(1:lstr),*) ihor
-      ihorpar(idummy) = ihor
-      ncoef = ncoefhor(ihor)
-      read(IIN,"(6e12.4)") (coef(i,idummy),i = 1,ncoef)
     endif
-  endif
   enddo
+
   close(IIN)
 
   end subroutine rd3dmodl
