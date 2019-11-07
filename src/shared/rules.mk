@@ -118,7 +118,7 @@ adios2_shared_MODULES = \
 	$(EMPTY_MACRO)
 
 asdf_shared_OBJECTS = \
-	$O/asdf_manager.shared_adios.o \
+	$O/asdf_manager.shared_asdf.o \
 	$(EMPTY_MACRO)
 
 asdf_shared_STUBS = \
