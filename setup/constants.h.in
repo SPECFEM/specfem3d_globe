@@ -363,7 +363,7 @@
 !!
 !!-----------------------------------------------------------
 
-  integer, parameter :: ADIOS_BUFFER_SIZE_IN_MB = 200
+  integer, parameter :: ADIOS_BUFFER_SIZE_IN_MB = 400
   character(len=*), parameter :: ADIOS_TRANSPORT_METHOD = "MPI"
 
 ! ADIOS transport methods for undo save_frame** data files (see ADIOS manual for details)
