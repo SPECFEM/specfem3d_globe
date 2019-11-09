@@ -122,7 +122,7 @@ void compute_element_cm_att_stress(const int tx, const int working_element, cons
 #if __OPENCL_C_VERSION__ && __OPENCL_C_VERSION__ >= 120\n\
 static\n\
 #endif\n\
-void compute_element_cm_att_memory(const int tx, const int working_element, const __global float * d_muv, const __global float * factor_common, const __global float * alphaval, const __global float * betaval, const __global float * gammaval, __global float * R_xx, __global float * R_yy, __global float * R_xy, __global float * R_xz, __global float * R_yz, const __global float * epsilondev_xx, const __global float * epsilondev_yy, const __global float * epsilondev_xy, const __global float * epsilondev_xz, const __global float * epsilondev_yz, const float epsilondev_xx_loc, const float epsilondev_yy_loc, const float epsilondev_xy_loc, const float epsilondev_xz_loc, const float epsilondev_yz_loc, const __global float * d_c44store, const int ANISOTROPY, const int USE_3D_ATTENUATION_ARRAYS){\n\
+void compute_element_cm_att_memory(const int tx, const int working_element, const __global float * d_muvstore, const __global float * factor_common, const __global float * alphaval, const __global float * betaval, const __global float * gammaval, __global float * R_xx, __global float * R_yy, __global float * R_xy, __global float * R_xz, __global float * R_yz, const __global float * epsilondev_xx, const __global float * epsilondev_yy, const __global float * epsilondev_xy, const __global float * epsilondev_xz, const __global float * epsilondev_yz, const float epsilondev_xx_loc, const float epsilondev_yy_loc, const float epsilondev_xy_loc, const float epsilondev_xz_loc, const float epsilondev_yz_loc, const int USE_3D_ATTENUATION_ARRAYS){\n\
   int offset;\n\
   int i_sls;\n\
   float mul;\n\
@@ -133,11 +133,7 @@ void compute_element_cm_att_memory(const int tx, const int working_element, cons
   float sn;\n\
   float snp1;\n\
 \n\
-  if (ANISOTROPY) {\n\
-    mul = d_c44store[tx + (NGLL3_PADDED) * (working_element)];\n\
-  } else {\n\
-    mul = d_muv[tx + (NGLL3_PADDED) * (working_element)];\n\
-  }\n\
+  mul = d_muvstore[tx + (NGLL3_PADDED) * (working_element)];\n\
 \n\
   for (i_sls = 0; i_sls <= N_SLS - (1); i_sls += 1) {\n\
     offset = tx + (NGLL3) * (i_sls + (N_SLS) * (working_element));\n\
@@ -929,7 +925,7 @@ __kernel  void crust_mantle_impl_kernel_adjoint(const int nb_blocks_to_compute, 
 #endif\n\
 \n\
     if (ATTENUATION &&  !(PARTIAL_PHYS_DISPERSION_ONLY)) {\n\
-      compute_element_cm_att_memory(tx, working_element, d_muvstore, factor_common, alphaval, betaval, gammaval, R_xx, R_yy, R_xy, R_xz, R_yz, epsilondev_xx, epsilondev_yy, epsilondev_xy, epsilondev_xz, epsilondev_yz, epsilondev_xx_loc_1, epsilondev_yy_loc_1, epsilondev_xy_loc_1, epsilondev_xz_loc_1, epsilondev_yz_loc_1, d_c44store, ANISOTROPY, USE_3D_ATTENUATION_ARRAYS);\n\
+      compute_element_cm_att_memory(tx, working_element, d_muvstore, factor_common, alphaval, betaval, gammaval, R_xx, R_yy, R_xy, R_xz, R_yz, epsilondev_xx, epsilondev_yy, epsilondev_xy, epsilondev_xz, epsilondev_yz, epsilondev_xx_loc_1, epsilondev_yy_loc_1, epsilondev_xy_loc_1, epsilondev_xz_loc_1, epsilondev_yz_loc_1, USE_3D_ATTENUATION_ARRAYS);\n\
     }\n\
 \n\
     if (COMPUTE_AND_STORE_STRAIN) {\n\

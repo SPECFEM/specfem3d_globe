@@ -168,8 +168,17 @@
   implicit none
 
   ! local parameters
-  real(kind=CUSTOM_REAL) :: one_minus_sum_beta_use,minus_sum_beta,mul,muvl,muhl
-  integer :: ispec
+  real(kind=CUSTOM_REAL) :: one_minus_sum_beta_use,minus_sum_beta,muvl,muhl
+
+  ! for rotations
+  double precision :: g11,g12,g13,g14,g15,g16,g22,g23,g24,g25,g26, &
+                      g33,g34,g35,g36,g44,g45,g46,g55,g56,g66
+  double precision :: d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26, &
+                      d33,d34,d35,d36,d44,d45,d46,d55,d56,d66
+  double precision :: phi_dble,theta_dble
+  double precision :: A_dble,F_dble,L_dble,N_dble,eta_aniso !,C_dble
+
+  integer :: ispec,iglob
 #ifdef FORCE_VECTORIZATION
 ! in this vectorized version we have to assume that N_SLS == 3 in order to be able to unroll and thus suppress
 ! an inner loop that would otherwise prevent vectorization; this is safe in practice in all cases because N_SLS == 3
@@ -205,17 +214,16 @@
         ! zero-shift
         if (abs(one_minus_sum_beta_use) < TINYVAL) cycle
 
+        ! original routine
+        !
         ! shifting in prepare_elastic_elements:
         ! c44 = c44store_crust_mantle(INDEX_IJK,ispec)
         ! mul = c44 * minus_sum_beta
         ! c44 = c44 + mul
-        ! restores
-        mul = c44store_crust_mantle(INDEX_IJK,ispec) / one_minus_sum_beta_use
-        c44store_crust_mantle(INDEX_IJK,ispec) = mul
-
-! daniel todo: unrelaxed moduli shift: see prepare_elastic_elements to shift back accordingly.
-!              a new shift version could tries to shift moduli by separating muv and muh factors.
-!              this would require changes here.
+        ! restores:
+        !
+        ! mul = c44store_crust_mantle(INDEX_IJK,ispec) / one_minus_sum_beta_use
+        ! c44store_crust_mantle(INDEX_IJK,ispec) = mul
 
         ! shifting in prepare_elastic_elements:
         ! mul = mul * minus_sum_beta
@@ -228,16 +236,166 @@
         ! c55 = c55 + mul
         ! c66 = c66 + mul
         !
-        ! restores
-        mul = mul * minus_sum_beta
-        c11store_crust_mantle(INDEX_IJK,ispec) = c11store_crust_mantle(INDEX_IJK,ispec) - FOUR_THIRDS * mul
-        c12store_crust_mantle(INDEX_IJK,ispec) = c12store_crust_mantle(INDEX_IJK,ispec) + TWO_THIRDS * mul
-        c13store_crust_mantle(INDEX_IJK,ispec) = c13store_crust_mantle(INDEX_IJK,ispec) + TWO_THIRDS * mul
-        c22store_crust_mantle(INDEX_IJK,ispec) = c22store_crust_mantle(INDEX_IJK,ispec) - FOUR_THIRDS * mul
-        c23store_crust_mantle(INDEX_IJK,ispec) = c23store_crust_mantle(INDEX_IJK,ispec) + TWO_THIRDS * mul
-        c33store_crust_mantle(INDEX_IJK,ispec) = c33store_crust_mantle(INDEX_IJK,ispec) - FOUR_THIRDS * mul
-        c55store_crust_mantle(INDEX_IJK,ispec) = c55store_crust_mantle(INDEX_IJK,ispec) - mul
-        c66store_crust_mantle(INDEX_IJK,ispec) = c66store_crust_mantle(INDEX_IJK,ispec) - mul
+        ! restores:
+        ! mul = mul * minus_sum_beta
+        ! c11store_crust_mantle(INDEX_IJK,ispec) = c11store_crust_mantle(INDEX_IJK,ispec) - FOUR_THIRDS * mul
+        ! c12store_crust_mantle(INDEX_IJK,ispec) = c12store_crust_mantle(INDEX_IJK,ispec) + TWO_THIRDS * mul
+        ! c13store_crust_mantle(INDEX_IJK,ispec) = c13store_crust_mantle(INDEX_IJK,ispec) + TWO_THIRDS * mul
+        ! c22store_crust_mantle(INDEX_IJK,ispec) = c22store_crust_mantle(INDEX_IJK,ispec) - FOUR_THIRDS * mul
+        ! c23store_crust_mantle(INDEX_IJK,ispec) = c23store_crust_mantle(INDEX_IJK,ispec) + TWO_THIRDS * mul
+        ! c33store_crust_mantle(INDEX_IJK,ispec) = c33store_crust_mantle(INDEX_IJK,ispec) - FOUR_THIRDS * mul
+        ! c55store_crust_mantle(INDEX_IJK,ispec) = c55store_crust_mantle(INDEX_IJK,ispec) - mul
+        ! c66store_crust_mantle(INDEX_IJK,ispec) = c66store_crust_mantle(INDEX_IJK,ispec) - mul
+
+        ! new shift version shifts moduli by separating muv and muh factors.
+        ! unrelaxed moduli shift: see prepare_elastic_elements to shift back accordingly.
+
+        ! local position (d_ij given in radial direction)
+        ! only in case needed for rotation
+        iglob = ibool_crust_mantle(INDEX_IJK,ispec)
+        theta_dble = rstore_crust_mantle(2,iglob)
+        phi_dble = rstore_crust_mantle(3,iglob)
+        call reduce(theta_dble,phi_dble)
+
+        g11 = c11store_crust_mantle(INDEX_IJK,ispec)
+        g12 = c12store_crust_mantle(INDEX_IJK,ispec)
+        g13 = c13store_crust_mantle(INDEX_IJK,ispec)
+        g14 = c14store_crust_mantle(INDEX_IJK,ispec)
+        g15 = c15store_crust_mantle(INDEX_IJK,ispec)
+        g16 = c16store_crust_mantle(INDEX_IJK,ispec)
+        g22 = c22store_crust_mantle(INDEX_IJK,ispec)
+        g23 = c23store_crust_mantle(INDEX_IJK,ispec)
+        g24 = c24store_crust_mantle(INDEX_IJK,ispec)
+        g25 = c25store_crust_mantle(INDEX_IJK,ispec)
+        g26 = c26store_crust_mantle(INDEX_IJK,ispec)
+        g33 = c33store_crust_mantle(INDEX_IJK,ispec)
+        g34 = c34store_crust_mantle(INDEX_IJK,ispec)
+        g35 = c35store_crust_mantle(INDEX_IJK,ispec)
+        g36 = c36store_crust_mantle(INDEX_IJK,ispec)
+        g44 = c44store_crust_mantle(INDEX_IJK,ispec)
+        g45 = c45store_crust_mantle(INDEX_IJK,ispec)
+        g46 = c46store_crust_mantle(INDEX_IJK,ispec)
+        g55 = c55store_crust_mantle(INDEX_IJK,ispec)
+        g56 = c56store_crust_mantle(INDEX_IJK,ispec)
+        g66 = c66store_crust_mantle(INDEX_IJK,ispec)
+
+        call rotate_tensor_global_to_radial(theta_dble,phi_dble, &
+                                            d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26, &
+                                            d33,d34,d35,d36,d44,d45,d46,d55,d56,d66, &
+                                            g11,g12,g13,g14,g15,g16,g22,g23,g24,g25,g26, &
+                                            g33,g34,g35,g36,g44,g45,g46,g55,g56,g66)
+
+        ! new: tries to shift moduli by separating muv and muh factors.
+        !      still needs rotations to rotate back and forth from SPECFEM global axis to a radial symmetry axis
+        !      since this shift assumes a radial symmetry
+
+        ! orig:
+        !         L = 1/2 (d44 + d55)
+        !         muvl' = L * minus_sum_beta
+        !
+        !         d44' = d44 + 1/2 (d44+d55)*minus_sum_beta = d44 + muvl'
+        !         d55' = d55 + 1/2 (d44+d55)*minus_sum_beta
+        !
+        !         1/2 (d44' + d55') = 1/2 (d44+d55 + (d44+d55)*minus_sum_beta )
+        !                           = 1/2 (d44+d55) * (1 + minus_sum_beta)
+        !         -> L = 1/2 (d44+d55) = 1/2 (d44'+d55')/(1 + minus_sum_beta)
+        !              = muv
+        L_dble = 0.5d0 * (d44 + d55) / one_minus_sum_beta_use
+
+        ! orig:
+        !        N = 0.125d0 * (d11 + d22 - 2.d0 * d12 + 4.d0 * d66)
+        !        muhl' = N * minus_sum_beta
+        !
+        !        d11' = d11 + 4/3 muhl'
+        !        d12' = d12 - 2/3 muhl'
+        !        d22' = d22 + 4/3 muhl'
+        !        d66' = d66 + muhl'
+        !
+        !        N' = muh' = N * (1 + minus_sum_beta)
+        !        -> N = N'/(1 + minus_sum_beta)
+        !             = muh
+        N_dble = 0.125d0 * (d11 + d22 - 2.d0 * d12 + 4.d0 * d66) / one_minus_sum_beta_use
+
+        ! shifting back
+        muvl = L_dble * minus_sum_beta
+        muhl = N_dble * minus_sum_beta
+
+        d11 = d11 - FOUR_THIRDS * muhl ! * minus_sum_beta * mul
+        d12 = d12 + TWO_THIRDS * muhl
+        d22 = d22 - FOUR_THIRDS * muhl
+        d33 = d33 - FOUR_THIRDS * muvl
+        d44 = d44 - muvl
+        d55 = d55 - muvl
+        d66 = d66 - muhl
+
+        ! orig:
+        !       A = 1/8 (3 d11 + 3 d22 + 2 d12 + 4 d66)
+        !
+        !       d11' = d11 - 4/3 muhl
+        !       d22' = d22 - 4/3 muhl
+        !       d12' = d12 + 2/3 muhl
+        !       d66' = d66 - muhl
+        !
+        A_dble = 0.125d0 * (3.d0 * d11 + 3.d0 * d22 + 2.d0 * d12 + 4.d0 * d66)
+
+        !unused: C_dble = d33
+
+        ! orig:
+        !       F = 1/2 (d13 + d23)
+        !       eta_aniso = F / (A - 2 L)
+        !
+        !       d13' = d13 + eta_aniso * (4/3 muhl' - 2 muvl')
+        !            = d13 + eta_aniso * (4/3 muhl*minus_sum_beta - 2 muvl *minus_sum_beta)
+        !
+        !       d23' = d23 + eta_aniso * (4/3 muhl' - 2 muvl')
+        !
+        !       F' = 1/2 (d13' + d23')
+        !          = 1/2 (d13 + eta_aniso * (4/3 muhl' - 2 muvl') + d23 + eta_aniso * (4/3 muhl' - 2 muvl')
+        !          = 1/2 (d13 + d23) + eta_aniso (4/3 muhl' - 2muvl')
+        !          = F + F/(A-2L) * (4/3muhl' - 2muvl')
+        !          = F (1 +(4/3muhl' - 2muvl')/(A-2L))
+        !       -> F = F' / (1 + (4/3muhl' - 2muvl') / (A-2L))
+        F_dble = 0.5d0 * (d13 + d23) / (1.d0 + (FOUR_THIRDS * muhl - 2.d0 * muvl) / (A_dble - 2.d0 * L_dble))
+        eta_aniso = F_dble / (A_dble - 2.d0*L_dble)   ! eta = F / (A-2L)
+
+        d13 = d13 - eta_aniso * (FOUR_THIRDS * muhl - 2.d0*muvl)
+        d23 = d23 - eta_aniso * (FOUR_THIRDS * muhl - 2.d0*muvl)
+
+        ! debug
+        !if (myrank == 0 .and. ispec == 1000 .and. ijk == 1) &
+        !  print *,'debug: original moduli unrelaxing A,N,L,F,eta',A_dble,N_dble,L_dble,F_dble,eta_aniso,'mu',muvl,muhl
+
+        ! rotates to global reference system
+        call rotate_tensor_radial_to_global(theta_dble,phi_dble, &
+                                            d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26, &
+                                            d33,d34,d35,d36,d44,d45,d46,d55,d56,d66, &
+                                            g11,g12,g13,g14,g15,g16,g22,g23,g24,g25,g26, &
+                                            g33,g34,g35,g36,g44,g45,g46,g55,g56,g66)
+
+        ! stores unrelaxed factors
+        c11store_crust_mantle(INDEX_IJK,ispec) = g11
+        c12store_crust_mantle(INDEX_IJK,ispec) = g12
+        c13store_crust_mantle(INDEX_IJK,ispec) = g13
+        c14store_crust_mantle(INDEX_IJK,ispec) = g14
+        c15store_crust_mantle(INDEX_IJK,ispec) = g15
+        c16store_crust_mantle(INDEX_IJK,ispec) = g16
+        c22store_crust_mantle(INDEX_IJK,ispec) = g22
+        c23store_crust_mantle(INDEX_IJK,ispec) = g23
+        c24store_crust_mantle(INDEX_IJK,ispec) = g24
+        c25store_crust_mantle(INDEX_IJK,ispec) = g25
+        c26store_crust_mantle(INDEX_IJK,ispec) = g26
+        c33store_crust_mantle(INDEX_IJK,ispec) = g33
+        c34store_crust_mantle(INDEX_IJK,ispec) = g34
+        c35store_crust_mantle(INDEX_IJK,ispec) = g35
+        c36store_crust_mantle(INDEX_IJK,ispec) = g36
+        c44store_crust_mantle(INDEX_IJK,ispec) = g44
+        c45store_crust_mantle(INDEX_IJK,ispec) = g45
+        c46store_crust_mantle(INDEX_IJK,ispec) = g46
+        c55store_crust_mantle(INDEX_IJK,ispec) = g55
+        c56store_crust_mantle(INDEX_IJK,ispec) = g56
+        c66store_crust_mantle(INDEX_IJK,ispec) = g66
+
+        muvstore_crust_mantle(INDEX_IJK,ispec) = L_dble
 
       else
         ! layer with both iso and transverse isotropy elements, use kappav and muv
@@ -304,8 +462,17 @@
   implicit none
 
   ! local parameters
-  real(kind=CUSTOM_REAL) :: scale_factor,scale_factor_minus_one,mul
-  integer :: ispec
+  real(kind=CUSTOM_REAL) :: scale_factor,scale_factor_minus_one,mul,muvl,muhl
+
+  ! for rotations
+  double precision :: g11,g12,g13,g14,g15,g16,g22,g23,g24,g25,g26, &
+                      g33,g34,g35,g36,g44,g45,g46,g55,g56,g66
+  double precision :: d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26, &
+                      d33,d34,d35,d36,d44,d45,d46,d55,d56,d66
+  double precision :: phi_dble,theta_dble
+  double precision :: A_dble,F_dble,L_dble,N_dble,eta_aniso !,C_dble
+
+  integer :: ispec,iglob
 #ifdef FORCE_VECTORIZATION
 ! in this vectorized version we have to assume that N_SLS == 3 in order to be able to unroll and thus suppress
 ! an inner loop that would otherwise prevent vectorization; this is safe in practice in all cases because N_SLS == 3
@@ -336,12 +503,14 @@
         scale_factor_minus_one = scale_factor - 1.d0
 
         ! shifting: (in prepare_attenuation.f90)
+
+        ! old routine:
         ! mul = c44store_crust_mantle(i,j,k,ispec)
         ! c44store_crust_mantle(i,j,k,ispec) = c44store_crust_mantle(i,j,k,ispec) + scale_factor_minus_one * mul
         ! restores like:
-        mul = c44store_crust_mantle(INDEX_IJK,ispec)/scale_factor ! equals mu = c44store_crust_mantle/(1+scale_factor_minus_one)
-        c44store_crust_mantle(INDEX_IJK,ispec) = mul
-
+        ! mul = c44store_crust_mantle(INDEX_IJK,ispec)/scale_factor ! equals mu = c44store_crust_mantle/(1+scale_factor_minus_one)
+        ! c44store_crust_mantle(INDEX_IJK,ispec) = mul
+        !
         ! see shifting in prepare_attenuation.f90:
         ! c11store_crust_mantle(i,j,k,ispec) = c11store_crust_mantle(i,j,k,ispec) + FOUR_THIRDS * scale_factor_minus_one * mul
         ! c12store_crust_mantle(i,j,k,ispec) = c12store_crust_mantle(i,j,k,ispec) - TWO_THIRDS * scale_factor_minus_one * mul
@@ -354,22 +523,194 @@
         ! c66store_crust_mantle(i,j,k,ispec) = c66store_crust_mantle(i,j,k,ispec) + scale_factor_minus_one * mul
         !
         ! becomes (sign change of last term)
-        c11store_crust_mantle(INDEX_IJK,ispec) = c11store_crust_mantle(INDEX_IJK,ispec) &
-                                                 - FOUR_THIRDS * scale_factor_minus_one * mul
-        c12store_crust_mantle(INDEX_IJK,ispec) = c12store_crust_mantle(INDEX_IJK,ispec) &
-                                                 + TWO_THIRDS * scale_factor_minus_one * mul
-        c13store_crust_mantle(INDEX_IJK,ispec) = c13store_crust_mantle(INDEX_IJK,ispec) &
-                                                 + TWO_THIRDS * scale_factor_minus_one * mul
-        c22store_crust_mantle(INDEX_IJK,ispec) = c22store_crust_mantle(INDEX_IJK,ispec) &
-                                                 - FOUR_THIRDS * scale_factor_minus_one * mul
-        c23store_crust_mantle(INDEX_IJK,ispec) = c23store_crust_mantle(INDEX_IJK,ispec) &
-                                                 + TWO_THIRDS * scale_factor_minus_one * mul
-        c33store_crust_mantle(INDEX_IJK,ispec) = c33store_crust_mantle(INDEX_IJK,ispec) &
-                                                 - FOUR_THIRDS * scale_factor_minus_one * mul
-        c55store_crust_mantle(INDEX_IJK,ispec) = c55store_crust_mantle(INDEX_IJK,ispec) &
-                                                 - scale_factor_minus_one * mul
-        c66store_crust_mantle(INDEX_IJK,ispec) = c66store_crust_mantle(INDEX_IJK,ispec) &
-                                                 - scale_factor_minus_one * mul
+        !c11store_crust_mantle(INDEX_IJK,ispec) = c11store_crust_mantle(INDEX_IJK,ispec) &
+        !                                         - FOUR_THIRDS * scale_factor_minus_one * mul
+        !c12store_crust_mantle(INDEX_IJK,ispec) = c12store_crust_mantle(INDEX_IJK,ispec) &
+        !                                         + TWO_THIRDS * scale_factor_minus_one * mul
+        !c13store_crust_mantle(INDEX_IJK,ispec) = c13store_crust_mantle(INDEX_IJK,ispec) &
+        !                                         + TWO_THIRDS * scale_factor_minus_one * mul
+        !c22store_crust_mantle(INDEX_IJK,ispec) = c22store_crust_mantle(INDEX_IJK,ispec) &
+        !                                         - FOUR_THIRDS * scale_factor_minus_one * mul
+        !c23store_crust_mantle(INDEX_IJK,ispec) = c23store_crust_mantle(INDEX_IJK,ispec) &
+        !                                         + TWO_THIRDS * scale_factor_minus_one * mul
+        !c33store_crust_mantle(INDEX_IJK,ispec) = c33store_crust_mantle(INDEX_IJK,ispec) &
+        !                                         - FOUR_THIRDS * scale_factor_minus_one * mul
+        !c55store_crust_mantle(INDEX_IJK,ispec) = c55store_crust_mantle(INDEX_IJK,ispec) &
+        !                                         - scale_factor_minus_one * mul
+        !c66store_crust_mantle(INDEX_IJK,ispec) = c66store_crust_mantle(INDEX_IJK,ispec) &
+        !                                         - scale_factor_minus_one * mul
+
+
+        ! new shift version shifts moduli by separating muv and muh factors.
+        ! local position (d_ij given in radial direction)
+        ! only in case needed for rotation
+        iglob = ibool_crust_mantle(INDEX_IJK,ispec)
+        theta_dble = rstore_crust_mantle(2,iglob)
+        phi_dble = rstore_crust_mantle(3,iglob)
+        call reduce(theta_dble,phi_dble)
+
+        g11 = c11store_crust_mantle(INDEX_IJK,ispec)
+        g12 = c12store_crust_mantle(INDEX_IJK,ispec)
+        g13 = c13store_crust_mantle(INDEX_IJK,ispec)
+        g14 = c14store_crust_mantle(INDEX_IJK,ispec)
+        g15 = c15store_crust_mantle(INDEX_IJK,ispec)
+        g16 = c16store_crust_mantle(INDEX_IJK,ispec)
+        g22 = c22store_crust_mantle(INDEX_IJK,ispec)
+        g23 = c23store_crust_mantle(INDEX_IJK,ispec)
+        g24 = c24store_crust_mantle(INDEX_IJK,ispec)
+        g25 = c25store_crust_mantle(INDEX_IJK,ispec)
+        g26 = c26store_crust_mantle(INDEX_IJK,ispec)
+        g33 = c33store_crust_mantle(INDEX_IJK,ispec)
+        g34 = c34store_crust_mantle(INDEX_IJK,ispec)
+        g35 = c35store_crust_mantle(INDEX_IJK,ispec)
+        g36 = c36store_crust_mantle(INDEX_IJK,ispec)
+        g44 = c44store_crust_mantle(INDEX_IJK,ispec)
+        g45 = c45store_crust_mantle(INDEX_IJK,ispec)
+        g46 = c46store_crust_mantle(INDEX_IJK,ispec)
+        g55 = c55store_crust_mantle(INDEX_IJK,ispec)
+        g56 = c56store_crust_mantle(INDEX_IJK,ispec)
+        g66 = c66store_crust_mantle(INDEX_IJK,ispec)
+
+        call rotate_tensor_global_to_radial(theta_dble,phi_dble, &
+                                            d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26, &
+                                            d33,d34,d35,d36,d44,d45,d46,d55,d56,d66, &
+                                            g11,g12,g13,g14,g15,g16,g22,g23,g24,g25,g26, &
+                                            g33,g34,g35,g36,g44,g45,g46,g55,g56,g66)
+
+        ! forward shifts like: (see prepate_attenuation)
+        !  A_dble = 0.125d0 * (3.d0 * d11 + 3.d0 * d22 + 2.d0 * d12 + 4.d0 * d66)
+        !  N_dble = 0.125d0 * (d11 + d22 - 2.d0 * d12 + 4.d0 * d66)
+        !  L_dble = 0.5d0 * (d44 + d55)
+        !  F_dble = 0.5d0 * (d13 + d23)
+        !  eta_aniso = F_dble / (A_dble - 2.d0*L_dble)   ! eta = F / (A-2L)
+        !  muvl = L_dble * scale_factor_minus_one     ! c44 -> L -> muv
+        !  muhl = N_dble * scale_factor_minus_one     ! c66 -> N -> muh
+        !  d11 = d11 + FOUR_THIRDS * muhl ! * minus_sum_beta * mul
+        !  d12 = d12 - TWO_THIRDS * muhl
+        !  d13 = d13 + eta_aniso * (FOUR_THIRDS * muhl - 2.d0*muvl)
+        !  d22 = d22 + FOUR_THIRDS * muhl
+        !  d23 = d23 + eta_aniso * (FOUR_THIRDS * muhl - 2.d0*muvl)
+        !  d33 = d33 + FOUR_THIRDS * muvl
+        !  d44 = d44 + muvl
+        !  d55 = d55 + muvl
+        !  d66 = d66 + muhl
+        !
+        ! scaling similar to unrelaxed one, but with different scaling factor
+        !
+        ! orig:
+        !         L = 1/2 (d44 + d55)
+        !         muvl' = L * scale_factor_minus_one
+        !
+        !         d44' = d44 + 1/2 (d44+d55)*scale_factor_minus_one = d44 + muvl'
+        !         d55' = d55 + 1/2 (d44+d55)*scale_factor_minus_one
+        !
+        !         1/2 (d44' + d55') = 1/2 (d44+d55 + (d44+d55)*scale_factor_minus_one )
+        !                           = 1/2 (d44+d55) * (1 + scale_factor_minus_one)
+        !         -> L = 1/2 (d44+d55) = 1/2 (d44'+d55')/(1 + scale_factor_minus_one)
+        !              = muv
+        L_dble = 0.5d0 * (d44 + d55) / scale_factor
+
+        ! orig:
+        !        N = 0.125d0 * (d11 + d22 - 2.d0 * d12 + 4.d0 * d66)
+        !        muhl' = N * scale_factor_minus_one
+        !
+        !        d11' = d11 + 4/3 muhl'
+        !        d12' = d12 - 2/3 muhl'
+        !        d22' = d22 + 4/3 muhl'
+        !        d66' = d66 + muhl'
+        !
+        !        N' = muh' = N * (1 + minus_sum_beta)
+        !        -> N = N'/(1 + minus_sum_beta)
+        !             = muh
+        N_dble = 0.125d0 * (d11 + d22 - 2.d0 * d12 + 4.d0 * d66) / scale_factor
+
+        ! shifting back
+        muvl = L_dble * scale_factor_minus_one
+        muhl = N_dble * scale_factor_minus_one
+
+        d11 = d11 - FOUR_THIRDS * muhl ! * minus_sum_beta * mul
+        d12 = d12 + TWO_THIRDS * muhl
+        d22 = d22 - FOUR_THIRDS * muhl
+        d33 = d33 - FOUR_THIRDS * muvl
+        d44 = d44 - muvl
+        d55 = d55 - muvl
+        d66 = d66 - muhl
+
+        ! orig:
+        !       A = 1/8 (3 d11 + 3 d22 + 2 d12 + 4 d66)
+        !
+        !       d11' = d11 - 4/3 muhl
+        !       d22' = d22 - 4/3 muhl
+        !       d12' = d12 + 2/3 muhl
+        !       d66' = d66 - muhl
+        !
+        A_dble = 0.125d0 * (3.d0 * d11 + 3.d0 * d22 + 2.d0 * d12 + 4.d0 * d66)
+
+        !unused: C_dble = d33
+
+        ! orig:
+        !       F = 1/2 (d13 + d23)
+        !       eta_aniso = F / (A - 2 L)
+        !
+        !       d13' = d13 + eta_aniso * (4/3 muhl' - 2 muvl')
+        !            = d13 + eta_aniso * (4/3 muhl*scale_factor_minus_one) - 2 muvl *scale_factor_minus_one)
+        !
+        !       d23' = d23 + eta_aniso * (4/3 muhl' - 2 muvl')
+        !
+        !       F' = 1/2 (d13' + d23')
+        !          = 1/2 (d13 + eta_aniso * (4/3 muhl' - 2 muvl') + d23 + eta_aniso * (4/3 muhl' - 2 muvl')
+        !          = 1/2 (d13 + d23) + eta_aniso (4/3 muhl' - 2muvl')
+        !          = F + F/(A-2L) (4/3muhl' - 2muvl')
+        !          = F (1 +(4/3muhl' - 2muvl')/(A-2L))
+        !       -> F = F' / (1 + (4/3muhl' - 2muvl') / (A-2L))
+        F_dble = 0.5d0 * (d13 + d23) / (1.d0 + (FOUR_THIRDS * muhl - 2.d0 * muvl) / (A_dble - 2.d0 * L_dble))
+        eta_aniso = F_dble / (A_dble - 2.d0*L_dble)   ! eta = F / (A-2L)
+
+        d13 = d13 - eta_aniso * (FOUR_THIRDS * muhl - 2.d0*muvl)
+        d23 = d23 - eta_aniso * (FOUR_THIRDS * muhl - 2.d0*muvl)
+
+        ! debug
+        !if (myrank == 0 .and. ispec == 1000 .and. ijk == 1) &
+        !  print *,'debug: original moduli unscaling A,N,L,F,eta',A_dble,N_dble,L_dble,F_dble,eta_aniso,'mu',muvl,muhl
+
+        ! rotates to global reference system
+        call rotate_tensor_radial_to_global(theta_dble,phi_dble, &
+                                            d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26, &
+                                            d33,d34,d35,d36,d44,d45,d46,d55,d56,d66, &
+                                            g11,g12,g13,g14,g15,g16,g22,g23,g24,g25,g26, &
+                                            g33,g34,g35,g36,g44,g45,g46,g55,g56,g66)
+
+        ! stores unrelaxed factors
+        c11store_crust_mantle(INDEX_IJK,ispec) = g11
+        c12store_crust_mantle(INDEX_IJK,ispec) = g12
+        c13store_crust_mantle(INDEX_IJK,ispec) = g13
+        c14store_crust_mantle(INDEX_IJK,ispec) = g14
+        c15store_crust_mantle(INDEX_IJK,ispec) = g15
+        c16store_crust_mantle(INDEX_IJK,ispec) = g16
+        c22store_crust_mantle(INDEX_IJK,ispec) = g22
+        c23store_crust_mantle(INDEX_IJK,ispec) = g23
+        c24store_crust_mantle(INDEX_IJK,ispec) = g24
+        c25store_crust_mantle(INDEX_IJK,ispec) = g25
+        c26store_crust_mantle(INDEX_IJK,ispec) = g26
+        c33store_crust_mantle(INDEX_IJK,ispec) = g33
+        c34store_crust_mantle(INDEX_IJK,ispec) = g34
+        c35store_crust_mantle(INDEX_IJK,ispec) = g35
+        c36store_crust_mantle(INDEX_IJK,ispec) = g36
+        c44store_crust_mantle(INDEX_IJK,ispec) = g44
+        c45store_crust_mantle(INDEX_IJK,ispec) = g45
+        c46store_crust_mantle(INDEX_IJK,ispec) = g46
+        c55store_crust_mantle(INDEX_IJK,ispec) = g55
+        c56store_crust_mantle(INDEX_IJK,ispec) = g56
+        c66store_crust_mantle(INDEX_IJK,ispec) = g66
+
+        ! for solving memory-variables, modulus defect \delta \mu_l (Komatitsch, 2002, eq. (11) & (13))
+        ! note: for solving the memory variables, we will only use the modulus defect
+        !       associated with muv. this is consistent with the implementation for tiso below.
+        !
+        !       however, to properly account for shear attenuation, one might have to add also
+        !       memory-variables for a modulus defect associated with muh.
+        muvstore_crust_mantle(INDEX_IJK,ispec) = L_dble
+
       else
         ! isotropic or transverse isotropic element
         muvstore_crust_mantle(INDEX_IJK,ispec) = muvstore_crust_mantle(INDEX_IJK,ispec) / scale_factor
@@ -805,6 +1146,8 @@
               !       and
               !         angle \zeta is measured counter-clockwise from South
               !
+              Gc_kl_crust_mantle(i,j,k,ispec) = -an_kl(16)*scale_kl_ani
+              Gs_kl_crust_mantle(i,j,k,ispec) = -an_kl(17)*scale_kl_ani
 
               ! daniel todo:
               ! scaling with actual values?
@@ -823,11 +1166,9 @@
               !Gc_prime = Gc / (rho beta_0**2) = Gc / mu0
               !Gs_prime = Gs / (rho beta_0**2) = Gs / mu0
 
-              Gc_kl_crust_mantle(i,j,k,ispec) = -an_kl(16)*scale_kl_ani
-              Gs_kl_crust_mantle(i,j,k,ispec) = -an_kl(17)*scale_kl_ani
-
-              mu0 = mu0store_crust_mantle(i,j,k,ispec) * scale_GPa  ! original values from 1D background reference model
+              mu0 = mu0store_crust_mantle(i,j,k,ispec) ! original values from 1D background reference model
               if (abs(mu0) > TINYVAL) then
+                mu0 = mu0 * scale_GPa  ! scales to GPa
                 Gc_prime_kl_crust_mantle(i,j,k,ispec) = Gc_kl_crust_mantle(i,j,k,ispec) / mu0
                 Gs_prime_kl_crust_mantle(i,j,k,ispec) = Gs_kl_crust_mantle(i,j,k,ispec) / mu0
               else

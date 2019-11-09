@@ -75,7 +75,7 @@
     c22store,c23store,c24store,c25store,c26store,c33store,c34store, &
     c35store,c36store,c44store,c45store,c46store,c55store,c56store,c66store
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_ani) :: mu0store
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: mu0store
 
   ! global addressing
   integer,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
@@ -175,8 +175,6 @@
       read(IIN) c55store
       read(IIN) c56store
       read(IIN) c66store
-      ! for azi kernels
-      read(IIN) mu0store
     else
       ! for anisotropy, gravity and rotation
       if (TRANSVERSE_ISOTROPY_VAL) then
@@ -185,6 +183,9 @@
         read(IIN) eta_anisostore
       endif
     endif
+    ! for azi kernels
+    read(IIN) mu0store
+
   case (IREGION_INNER_CORE)
     ! inner core
     if (ANISOTROPIC_INNER_CORE_VAL) then

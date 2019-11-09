@@ -108,7 +108,7 @@ static __device__ void compute_element_ic_att_stress(const int tx, const int wor
   }
 }
 
-static __device__ void compute_element_ic_att_memory(const int tx, const int working_element, const float * d_muv, const float * factor_common, const float * alphaval, const float * betaval, const float * gammaval, float * R_xx, float * R_yy, float * R_xy, float * R_xz, float * R_yz, const float * epsilondev_xx, const float * epsilondev_yy, const float * epsilondev_xy, const float * epsilondev_xz, const float * epsilondev_yz, const float epsilondev_xx_loc, const float epsilondev_yy_loc, const float epsilondev_xy_loc, const float epsilondev_xz_loc, const float epsilondev_yz_loc, const float * d_c44store, const int ANISOTROPY, const int USE_3D_ATTENUATION_ARRAYS){
+static __device__ void compute_element_ic_att_memory(const int tx, const int working_element, const float * d_muvstore, const float * factor_common, const float * alphaval, const float * betaval, const float * gammaval, float * R_xx, float * R_yy, float * R_xy, float * R_xz, float * R_yz, const float * epsilondev_xx, const float * epsilondev_yy, const float * epsilondev_xy, const float * epsilondev_xz, const float * epsilondev_yz, const float epsilondev_xx_loc, const float epsilondev_yy_loc, const float epsilondev_xy_loc, const float epsilondev_xz_loc, const float epsilondev_yz_loc, const int USE_3D_ATTENUATION_ARRAYS){
   int offset;
   int i_sls;
   float mul;
@@ -119,11 +119,7 @@ static __device__ void compute_element_ic_att_memory(const int tx, const int wor
   float sn;
   float snp1;
 
-  if (ANISOTROPY) {
-    mul = d_c44store[tx + (NGLL3_PADDED) * (working_element)];
-  } else {
-    mul = d_muv[tx + (NGLL3_PADDED) * (working_element)];
-  }
+  mul = d_muvstore[tx + (NGLL3_PADDED) * (working_element)];
 
   for (i_sls = 0; i_sls <= N_SLS - (1); i_sls += 1) {
     offset = tx + (NGLL3) * (i_sls + (N_SLS) * (working_element));
@@ -735,7 +731,7 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
 #endif
 
     if (ATTENUATION &&  !(PARTIAL_PHYS_DISPERSION_ONLY)) {
-      compute_element_ic_att_memory(tx, working_element, d_muvstore, factor_common, alphaval, betaval, gammaval, R_xx, R_yy, R_xy, R_xz, R_yz, epsilondev_xx, epsilondev_yy, epsilondev_xy, epsilondev_xz, epsilondev_yz, epsilondev_xx_loc_1, epsilondev_yy_loc_1, epsilondev_xy_loc_1, epsilondev_xz_loc_1, epsilondev_yz_loc_1, d_c44store, ANISOTROPY, USE_3D_ATTENUATION_ARRAYS);
+      compute_element_ic_att_memory(tx, working_element, d_muvstore, factor_common, alphaval, betaval, gammaval, R_xx, R_yy, R_xy, R_xz, R_yz, epsilondev_xx, epsilondev_yy, epsilondev_xy, epsilondev_xz, epsilondev_yz, epsilondev_xx_loc_1, epsilondev_yy_loc_1, epsilondev_xy_loc_1, epsilondev_xz_loc_1, epsilondev_yz_loc_1, USE_3D_ATTENUATION_ARRAYS);
     }
 
     if (COMPUTE_AND_STORE_STRAIN) {

@@ -875,6 +875,8 @@
 
     allocate(temp_array_real(NGLLX,NGLLY,NGLLZ,nspec))
 
+    ! note: muvstore needed for attenuation also for anisotropic 3d mantle
+    call permute_elements_real(muvstore,temp_array_real,perm,nspec)
     if (ANISOTROPIC_3D_MANTLE) then
       call permute_elements_real(c11store,temp_array_real,perm,nspec)
       call permute_elements_real(c11store,temp_array_real,perm,nspec)
@@ -899,8 +901,6 @@
       call permute_elements_real(c56store,temp_array_real,perm,nspec)
       call permute_elements_real(c66store,temp_array_real,perm,nspec)
     else
-      call permute_elements_real(muvstore,temp_array_real,perm,nspec)
-
       if (TRANSVERSE_ISOTROPY) then
         call permute_elements_real(kappahstore,temp_array_real,perm,nspec)
         call permute_elements_real(muhstore,temp_array_real,perm,nspec)
@@ -979,7 +979,6 @@
 
     ! note: muvstore needed for attenuation also for anisotropic inner core
     call permute_elements_real(muvstore,temp_array_real,perm,nspec)
-
     !  anisotropy in the inner core only
     if (ANISOTROPIC_INNER_CORE) then
       call permute_elements_real(c11store,temp_array_real,perm,nspec)

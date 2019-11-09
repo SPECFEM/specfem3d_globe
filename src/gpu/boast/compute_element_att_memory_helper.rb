@@ -11,7 +11,7 @@ module BOAST
     v = []
     v.push tx                = Int( "tx",                :dir => :in)
     v.push working_element   = Int( "working_element",   :dir => :in)
-    v.push d_muv             = Real("d_muv",             :dir => :in, :dim => [Dim()] )
+    v.push d_muvstore        = Real("d_muvstore",        :dir => :in, :dim => [Dim()] )
     v.push factor_common     = Real("factor_common",     :dir => :in, :dim => [Dim()] )
     v.push alphaval          = Real("alphaval",          :dir => :in, :dim => [Dim()] )
     v.push betaval           = Real("betaval",           :dir => :in, :dim => [Dim()] )
@@ -31,8 +31,6 @@ module BOAST
     v.push epsilondev_xy_loc = Real("epsilondev_xy_loc", :dir => :in)
     v.push epsilondev_xz_loc = Real("epsilondev_xz_loc", :dir => :in)
     v.push epsilondev_yz_loc = Real("epsilondev_yz_loc", :dir => :in)
-    v.push d_c44store        = Real("d_c44store",        :dir => :in, :dim => [Dim()])
-    v.push anisotropy        = Int( "ANISOTROPY",        :dir => :in)
     v.push use_3d_attenuation_arrays = Int( "USE_3D_ATTENUATION_ARRAYS",    :dir => :in)
 
     ngll3 = Int("NGLL3", :const => n_gll3)
@@ -51,11 +49,7 @@ module BOAST
       decl snp1 = Real("snp1")
       comment()
 
-      print If(anisotropy => lambda {
-        print mul === d_c44store[tx + ngll3_padded*working_element]
-      }, :else => lambda {
-        print mul === d_muv[tx + ngll3_padded*working_element]
-      })
+      print mul === d_muvstore[tx + ngll3_padded*working_element]
       comment()
 
       print For( i_sls, 0, nsls - 1 ) {

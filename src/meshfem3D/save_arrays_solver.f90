@@ -192,8 +192,6 @@
       write(IOUT) c55store
       write(IOUT) c56store
       write(IOUT) c66store
-      ! for azimuthal aniso kernels
-      write(IOUT) mu0store
     else
       if (TRANSVERSE_ISOTROPY) then
         write(IOUT) kappahstore
@@ -201,6 +199,9 @@
         write(IOUT) eta_anisostore
       endif
     endif
+    ! for azimuthal aniso kernels
+    write(IOUT) mu0store
+
   case (IREGION_INNER_CORE)
     ! inner core mesh
     ! save anisotropy in the inner core only

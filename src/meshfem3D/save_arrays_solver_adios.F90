@@ -217,8 +217,6 @@
       call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(c55store))
       call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(c56store))
       call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(c66store))
-      ! for azimuthal aniso kernels
-      call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(mu0store))
     else
       if (TRANSVERSE_ISOTROPY) then
         local_dim = NGLLX * NGLLY * NGLLZ * nspec
@@ -227,6 +225,10 @@
         call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(eta_anisostore))
       endif
     endif
+    ! for azimuthal aniso kernels
+    local_dim = NGLLX * NGLLY * NGLLZ * nspec
+    call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(mu0store))
+
   case (IREGION_INNER_CORE)
     !   save anisotropy in the inner core only
     if (ANISOTROPIC_INNER_CORE) then
@@ -456,19 +458,21 @@
                                    trim(region_name) // STRINGIFY_VAR(c56store))
       call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(c66store))
-      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
-                                   trim(region_name) // STRINGIFY_VAR(mu0store))
     else
       if (TRANSVERSE_ISOTROPY) then
         local_dim = NGLLX * NGLLY * NGLLZ * nspec
         call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
-                                trim(region_name) // STRINGIFY_VAR(kappahstore))
+                                    trim(region_name) // STRINGIFY_VAR(kappahstore))
         call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
-                                   trim(region_name) // STRINGIFY_VAR(muhstore))
+                                    trim(region_name) // STRINGIFY_VAR(muhstore))
         call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
-                             trim(region_name) // STRINGIFY_VAR(eta_anisostore))
+                                    trim(region_name) // STRINGIFY_VAR(eta_anisostore))
       endif
     endif
+    local_dim = NGLLX * NGLLY * NGLLZ * nspec
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                                 trim(region_name) // STRINGIFY_VAR(mu0store))
+
   case (IREGION_INNER_CORE)
     ! save anisotropy in the inner core only
     if (ANISOTROPIC_INNER_CORE) then

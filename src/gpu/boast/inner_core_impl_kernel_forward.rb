@@ -1186,13 +1186,8 @@ module BOAST
                         epsilondev_yy_loc[elem_index],\
                         epsilondev_xy_loc[elem_index],\
                         epsilondev_xz_loc[elem_index],\
-                        epsilondev_yz_loc[elem_index]]
-            if type == :inner_core then
-              __params += [d_c44store, anisotropy]
-            elsif type == :crust_mantle then
-              __params += [d_cstore[3][3], anisotropy]
-            end
-            __params.push use_3d_attenuation_arrays
+                        epsilondev_yz_loc[elem_index],\
+                        use_3d_attenuation_arrays]
             print sub_compute_element_att_memory.call( *__params )
           }
           comment()

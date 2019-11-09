@@ -496,11 +496,12 @@
 
   ! checks model for transverse isotropic kernel computation
   if (SIMULATION_TYPE == 3) then
-    if (SAVE_TRANSVERSE_KL_ONLY) then
-      if (.not. ANISOTROPIC_KL) then
-        call exit_mpi(myrank,'Error SAVE_TRANSVERSE_KL_ONLY: needs anisotropic kernel flag ANISOTROPIC_KL set to .true.')
-      endif
-    endif
+    if (SAVE_TRANSVERSE_KL_ONLY .and. (.not. ANISOTROPIC_KL)) &
+      call exit_mpi(myrank,'SAVE_TRANSVERSE_KL_ONLY needs anisotropic kernel flag ANISOTROPIC_KL set to .true.')
+    if (SAVE_AZIMUTHAL_ANISO_KL_ONLY .and. (.not. ANISOTROPIC_KL)) &
+      call exit_mpi(myrank,'SAVE_AZIMUTHAL_ANISO_KL_ONLY needs anisotropic kernel flag ANISOTROPIC_KL set to .true.')
+    if (SAVE_REGULAR_KL .and. SAVE_AZIMUTHAL_ANISO_KL_ONLY) &
+      call exit_mpi(myrank,'SAVE_AZIMUTHAL_ANISO_KL_ONLY not implemented yet for SAVE_REGULAR_KL kernels')
   endif
 
   ! check for GPU runs

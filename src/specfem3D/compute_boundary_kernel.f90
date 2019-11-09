@@ -482,11 +482,11 @@
 
           ! ------ adjoint stress -------
           call compute_stress_from_strain(dsdx(:,:,i,j,k),sigma(:,:,i,j,k),i,j,k,ispec,iregion_code, &
-                     kappavstore,muvstore, &
-                     c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-                     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-                     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                     ispec_is_tiso)
+                                          kappavstore,muvstore, &
+                                          c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
+                                          c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+                                          c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
+                                          ispec_is_tiso)
 
           ! ----- forward strain -------
           temp1(:) = matmul(b_displl(:,:,j,k), hprime_xx(i,:))
@@ -507,11 +507,11 @@
 
           ! ----- forward stress ---------
           call compute_stress_from_strain(b_dsdx(:,:,i,j,k),b_sigma(:,:,i,j,k),i,j,k,ispec,iregion_code, &
-                     kappavstore,muvstore, &
-                     c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-                     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-                     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                     ispec_is_tiso)
+                                          kappavstore,muvstore, &
+                                          c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
+                                          c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+                                          c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
+                                          ispec_is_tiso)
 
           ! ---- precompute K_d for F-S boundaries ----
           if (fluid_solid_boundary) then
@@ -589,11 +589,11 @@
 ! ==========================================================================================
 
   subroutine compute_stress_from_strain(dsdx,sigma,i,j,k,ispec,iregion_code, &
-           kappavstore,muvstore, &
-           c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-           c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-           ispec_is_tiso)
+                                        kappavstore,muvstore, &
+                                        c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
+                                        c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+                                        c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
+                                        ispec_is_tiso)
 
   use constants_solver
 

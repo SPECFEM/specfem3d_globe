@@ -287,8 +287,7 @@
              c46store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE), &
              c55store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE), &
              c56store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE), &
-             c66store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE), &
-             mu0store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE),stat=ier)
+             c66store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE),stat=ier)
     if (ier /= 0) stop 'Error allocating arrays c11store_crust_mantle,..'
   else
     ! allocates c11stores,.. for aniso elements
@@ -312,8 +311,7 @@
              c46store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
              c55store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
              c56store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
-             c66store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
-             mu0store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE),stat=ier)
+             c66store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE),stat=ier)
     if (ier /= 0) stop 'Error allocating arrays c11store_crust_mantle,..'
   endif
   c11store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
@@ -337,7 +335,10 @@
   c55store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
   c56store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
   c66store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+
   ! for azimuthal
+  allocate(mu0store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),stat=ier)
+  if (ier /= 0) stop 'Error allocating mu0 array'
   mu0store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
 
   allocate(ispec_is_tiso_crust_mantle(NSPEC_CRUST_MANTLE),stat=ier)
@@ -458,6 +459,11 @@
     deallocate(b_rmassx_crust_mantle,b_rmassy_crust_mantle)
     nullify(b_rmassx_crust_mantle,b_rmassy_crust_mantle)
     nullify(b_rmassz_crust_mantle)
+  endif
+
+  ! only needed for azimuthal kernels
+  if (.not. (SIMULATION_TYPE == 3 .and. (ANISOTROPIC_KL .and. SAVE_AZIMUTHAL_ANISO_KL_ONLY))) then
+    deallocate(mu0store_crust_mantle)
   endif
 
   end subroutine read_mesh_databases_CM

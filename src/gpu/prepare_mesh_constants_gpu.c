@@ -1764,6 +1764,26 @@ void FC_FUNC_ (prepare_crust_mantle_device,
                                            NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
     }
 #endif
+
+    // muvstore (needed for attenuation)
+    gpuMalloc_realw (&mp->d_muvstore_crust_mantle, size_padded);
+    // transfer with padding
+#ifdef USE_OPENCL
+    if (run_opencl) {
+      for (int i = 0; i < mp->NSPEC_CRUST_MANTLE; i++) {
+        int offset = i * NGLL3_PADDED * sizeof (realw);
+        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_muvstore_crust_mantle.ocl, CL_FALSE, offset,
+                                       NGLL3*sizeof (realw), &h_muv[i*NGLL3], 0, NULL, NULL));
+      }
+    }
+#endif
+#ifdef USE_CUDA
+    if (run_cuda) {
+      // faster (small memcpy above have low bandwidth...)
+      print_CUDA_error_if_any(cudaMemcpy2D(mp->d_muvstore_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), h_muv,
+                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),48100);
+    }
+#endif
   }
 
   // needed for boundary kernel calculations

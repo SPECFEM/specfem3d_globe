@@ -41,7 +41,7 @@
   subroutine compute_element_att_memory_cm(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
                                            vx,vy,vz,vnspec,factor_common, &
                                            alphaval,betaval,gammaval, &
-                                           c44store,muvstore, &
+                                           muvstore, &
                                            epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
                                            epsilondev_loc)
 ! crust mantle
@@ -80,7 +80,6 @@
   real(kind=CUSTOM_REAL), dimension(vx,vy,vz,N_SLS,vnspec) :: factor_common
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE) :: c44store
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: muvstore
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: &
@@ -104,30 +103,17 @@
   ! IMPROVE we use mu_v here even if there is some anisotropy
   ! IMPROVE we should probably use an average value instead
 
-
   do i_SLS = 1,N_SLS
 
     ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
     if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
-      if (ANISOTROPIC_3D_MANTLE_VAL) then
-        DO_LOOP_IJK
-          factor_common_c44_muv(INDEX_IJK) = factor_common(INDEX_IJK,i_SLS,ispec) * c44store(INDEX_IJK,ispec)
-        ENDDO_LOOP_IJK
-      else
-        DO_LOOP_IJK
-          factor_common_c44_muv(INDEX_IJK) = factor_common(INDEX_IJK,i_SLS,ispec) * muvstore(INDEX_IJK,ispec)
-        ENDDO_LOOP_IJK
-      endif
+      DO_LOOP_IJK
+        factor_common_c44_muv(INDEX_IJK) = factor_common(INDEX_IJK,i_SLS,ispec) * muvstore(INDEX_IJK,ispec)
+      ENDDO_LOOP_IJK
     else
-      if (ANISOTROPIC_3D_MANTLE_VAL) then
-        DO_LOOP_IJK
-          factor_common_c44_muv(INDEX_IJK) = factor_common(1,1,1,i_SLS,ispec) * c44store(INDEX_IJK,ispec)
-        ENDDO_LOOP_IJK
-      else
-        DO_LOOP_IJK
-          factor_common_c44_muv(INDEX_IJK) = factor_common(1,1,1,i_SLS,ispec) * muvstore(INDEX_IJK,ispec)
-        ENDDO_LOOP_IJK
-      endif
+      DO_LOOP_IJK
+        factor_common_c44_muv(INDEX_IJK) = factor_common(1,1,1,i_SLS,ispec) * muvstore(INDEX_IJK,ispec)
+      ENDDO_LOOP_IJK
     endif
 
     ! updates memory variables
@@ -162,7 +148,7 @@
   subroutine compute_element_att_memory_cm_lddrk(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
                                                  R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
                                                  vx,vy,vz,vnspec,factor_common, &
-                                                 c44store,muvstore, &
+                                                 muvstore, &
                                                  epsilondev_loc, &
                                                  deltat)
 ! crust mantle
@@ -204,7 +190,6 @@
 
   real(kind=CUSTOM_REAL), dimension(vx,vy,vz,N_SLS,vnspec) :: factor_common
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE) :: c44store
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: muvstore
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5) :: epsilondev_loc
@@ -231,25 +216,13 @@
 
     ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
     if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
-      if (ANISOTROPIC_3D_MANTLE_VAL) then
-        DO_LOOP_IJK
-          factor_common_c44_muv(INDEX_IJK) = factor_common(INDEX_IJK,i_SLS,ispec) * c44store(INDEX_IJK,ispec)
-        ENDDO_LOOP_IJK
-      else
-        DO_LOOP_IJK
-          factor_common_c44_muv(INDEX_IJK) = factor_common(INDEX_IJK,i_SLS,ispec) * muvstore(INDEX_IJK,ispec)
-        ENDDO_LOOP_IJK
-      endif
+      DO_LOOP_IJK
+        factor_common_c44_muv(INDEX_IJK) = factor_common(INDEX_IJK,i_SLS,ispec) * muvstore(INDEX_IJK,ispec)
+      ENDDO_LOOP_IJK
     else
-      if (ANISOTROPIC_3D_MANTLE_VAL) then
-        DO_LOOP_IJK
-          factor_common_c44_muv(INDEX_IJK) = factor_common(1,1,1,i_SLS,ispec) * c44store(INDEX_IJK,ispec)
-        ENDDO_LOOP_IJK
-      else
-        DO_LOOP_IJK
-          factor_common_c44_muv(INDEX_IJK) = factor_common(1,1,1,i_SLS,ispec) * muvstore(INDEX_IJK,ispec)
-        ENDDO_LOOP_IJK
-      endif
+      DO_LOOP_IJK
+        factor_common_c44_muv(INDEX_IJK) = factor_common(1,1,1,i_SLS,ispec) * muvstore(INDEX_IJK,ispec)
+      ENDDO_LOOP_IJK
     endif
 
     ! updates memory variables
@@ -299,7 +272,7 @@
   subroutine compute_element_att_memory_ic(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
                                            vx,vy,vz,vnspec,factor_common, &
                                            alphaval,betaval,gammaval, &
-                                           c44store,muvstore, &
+                                           muvstore, &
                                            epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
                                            epsilondev_loc)
 ! inner core
@@ -334,7 +307,6 @@
   real(kind=CUSTOM_REAL), dimension(vx,vy,vz,N_SLS,vnspec) :: factor_common
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_IC) :: c44store
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: muvstore
 
 !  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: epsilondev
@@ -367,25 +339,13 @@
 
     ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
     if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
-      if (ANISOTROPIC_INNER_CORE_VAL) then
-        DO_LOOP_IJK
-          factor_common_use(INDEX_IJK) = factor_common(INDEX_IJK,i_SLS,ispec) * c44store(INDEX_IJK,ispec)
-        ENDDO_LOOP_IJK
-      else
-        DO_LOOP_IJK
-          factor_common_use(INDEX_IJK) = factor_common(INDEX_IJK,i_SLS,ispec) * muvstore(INDEX_IJK,ispec)
-        ENDDO_LOOP_IJK
-      endif
+      DO_LOOP_IJK
+        factor_common_use(INDEX_IJK) = factor_common(INDEX_IJK,i_SLS,ispec) * muvstore(INDEX_IJK,ispec)
+      ENDDO_LOOP_IJK
     else
-      if (ANISOTROPIC_INNER_CORE_VAL) then
-        DO_LOOP_IJK
-          factor_common_use(INDEX_IJK) = factor_common(1,1,1,i_SLS,ispec) * c44store(INDEX_IJK,ispec)
-        ENDDO_LOOP_IJK
-      else
-        DO_LOOP_IJK
-          factor_common_use(INDEX_IJK) = factor_common(1,1,1,i_SLS,ispec) * muvstore(INDEX_IJK,ispec)
-        ENDDO_LOOP_IJK
-      endif
+      DO_LOOP_IJK
+        factor_common_use(INDEX_IJK) = factor_common(1,1,1,i_SLS,ispec) * muvstore(INDEX_IJK,ispec)
+      ENDDO_LOOP_IJK
     endif
 
     ! updates memory variables
@@ -420,7 +380,7 @@
   subroutine compute_element_att_memory_ic_lddrk(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
                                                  R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
                                                  vx,vy,vz,vnspec,factor_common, &
-                                                 c44store,muvstore, &
+                                                 muvstore, &
                                                  epsilondev_loc, &
                                                  deltat)
 ! inner core
@@ -459,7 +419,6 @@
 
   real(kind=CUSTOM_REAL), dimension(vx,vy,vz,N_SLS,vnspec) :: factor_common
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_IC) :: c44store
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: muvstore
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5) :: epsilondev_loc
@@ -490,25 +449,13 @@
 
     ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
     if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
-      if (ANISOTROPIC_INNER_CORE_VAL) then
-        DO_LOOP_IJK
-          factor_common_use(INDEX_IJK) = factor_common(INDEX_IJK,i_SLS,ispec) * c44store(INDEX_IJK,ispec)
-        ENDDO_LOOP_IJK
-      else
-        DO_LOOP_IJK
-          factor_common_use(INDEX_IJK) = factor_common(INDEX_IJK,i_SLS,ispec) * muvstore(INDEX_IJK,ispec)
-        ENDDO_LOOP_IJK
-      endif
+      DO_LOOP_IJK
+        factor_common_use(INDEX_IJK) = factor_common(INDEX_IJK,i_SLS,ispec) * muvstore(INDEX_IJK,ispec)
+      ENDDO_LOOP_IJK
     else
-      if (ANISOTROPIC_INNER_CORE_VAL) then
-        DO_LOOP_IJK
-          factor_common_use(INDEX_IJK) = factor_common(1,1,1,i_SLS,ispec) * c44store(INDEX_IJK,ispec)
-        ENDDO_LOOP_IJK
-      else
-        DO_LOOP_IJK
-          factor_common_use(INDEX_IJK) = factor_common(1,1,1,i_SLS,ispec) * muvstore(INDEX_IJK,ispec)
-        ENDDO_LOOP_IJK
-      endif
+      DO_LOOP_IJK
+        factor_common_use(INDEX_IJK) = factor_common(1,1,1,i_SLS,ispec) * muvstore(INDEX_IJK,ispec)
+      ENDDO_LOOP_IJK
     endif
 
     ! updates memory variables

@@ -66,7 +66,7 @@
   use shared_parameters, only: NSPEC_REGIONS,ADIOS_FOR_MODELS,NPROCTOT,NCHUNKS, &
                                MODEL,MODEL_GLL_TYPE
 
-  use model_gll_par,only: MGLL_V
+  use model_gll_par, only: MGLL_V
   use model_gll_qmu_par
 
   implicit none

@@ -61,24 +61,19 @@
 
   ! tiso elements
   real(kind=CUSTOM_REAL) :: rhovphsq,rhovpvsq,rhovshsq,rhovsvsq,eta_aniso,phi,theta
-
-  !real(kind=CUSTOM_REAL) :: rhovphsq,sinphifour,cosphisq,sinphisq,costhetasq,rhovsvsq,sinthetasq, &
-  !      cosphifour,costhetafour,rhovpvsq,sinthetafour,rhovshsq,cosfourphi, &
-  !      costwotheta,cosfourtheta,sintwophisq,costheta,sinphi,sintheta,cosphi, &
-  !      sintwotheta,costwophi,sintwophi,costwothetasq,costwophisq,phi,theta
+  real(kind=CUSTOM_REAL) :: kappavl,kappahl,muvl,muhl,mul
 
   ! aniso element
   real(kind=CUSTOM_REAL) :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
                             c33,c34,c35,c36,c44,c45,c46,c55,c56,c66
 
-!  real(kind=CUSTOM_REAL) :: two_rhovsvsq,two_rhovshsq ! two_rhovpvsq,two_rhovphsq
-!  real(kind=CUSTOM_REAL) :: four_rhovsvsq,four_rhovshsq ! four_rhovpvsq,four_rhovphsq
-
-!  real(kind=CUSTOM_REAL) :: twoetaminone,etaminone,eta_aniso
-!  real(kind=CUSTOM_REAL) :: two_eta_aniso,four_eta_aniso,six_eta_aniso
-
-!  real(kind=CUSTOM_REAL) :: templ1,templ1_cos,templ2,templ2_cos,templ3,templ3_two,templ3_cos
-  real(kind=CUSTOM_REAL) :: kappavl,kappahl,muvl,muhl,mul,A,F,L,N
+  ! for rotations
+  double precision :: g11,g12,g13,g14,g15,g16,g22,g23,g24,g25,g26, &
+                      g33,g34,g35,g36,g44,g45,g46,g55,g56,g66
+  double precision :: d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26, &
+                      d33,d34,d35,d36,d44,d45,d46,d55,d56,d66
+  double precision :: phi_dble,theta_dble
+  double precision :: A_dble,F_dble,L_dble,N_dble !,C_dble
 
   integer :: ispec,iglob,i_SLS,icount,icount_iso
 
@@ -120,13 +115,17 @@
 
 ! openmp solver
 !$OMP PARALLEL DEFAULT(SHARED) &
-!$OMP PRIVATE(ispec, &
+!$OMP PRIVATE(ispec,iglob, &
 #ifdef FORCE_VECTORIZATION
 !$OMP ijk, &
 #else
 !$OMP i,j,k, &
 #endif
-!$OMP minus_sum_beta,mul,muvl,muhl,A,L,F,eta_aniso,c11,c12,c13,c22,c23,c33,c44,c55,c66)
+!$OMP minus_sum_beta,mul,muvl,muhl,eta_aniso, &
+!$OMP theta_dble,phi_dble, &
+!$OMP d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26,d33,d34,d35,d36,d44,d45,d46,d55,d56,d66, &
+!$OMP g11,g12,g13,g14,g15,g16,g22,g23,g24,g25,g26,g33,g34,g35,g36,g44,g45,g46,g55,g56,g66, &
+!$OMP A_dble,F_dble,L_dble,N_dble)
 !$OMP DO
       do ispec = 1,NSPEC_CRUST_MANTLE
         ! all elements are fully anisotropic
@@ -175,19 +174,11 @@
           !
           ! c13' = F' = eta*(A' - 2*L') = eta*(A - 4/3 muh*sum_beta - 2*(L - muv*sum_beta))
           !                             = c13 + eta*( 2*muv*sum_beta - 4/3 muh*sum_beta)
+          !                             = c13 + eta*( 4/3 muh * minus_sum_beta - 2 muv * minus_sum_beta)
           ! c23' = c23 + eta*( 2*muv*sum_beta - 4/3 muh*sum_beta) ! be consistent with tiso case c23 == c13
           ! c12' = A' - 2*N' = A - 4/3 muh*sum_beta - 2*(N - muh*sum_beta) = A - 2*N - 4/3 muh*sum_beta + 2 muh*sum_beta
           !                                                                = c12 + 2/3 muh*sum_beta
 
-          c11 = c11store_crust_mantle(INDEX_IJK,ispec)
-          c12 = c12store_crust_mantle(INDEX_IJK,ispec)
-          c13 = c13store_crust_mantle(INDEX_IJK,ispec)
-          c22 = c22store_crust_mantle(INDEX_IJK,ispec)
-          c23 = c23store_crust_mantle(INDEX_IJK,ispec)
-          c33 = c33store_crust_mantle(INDEX_IJK,ispec)
-          c44 = c44store_crust_mantle(INDEX_IJK,ispec)
-          c55 = c55store_crust_mantle(INDEX_IJK,ispec)
-          c66 = c66store_crust_mantle(INDEX_IJK,ispec)
 
           ! precompute terms for attenuation if needed
           if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
@@ -196,58 +187,148 @@
             minus_sum_beta =  one_minus_sum_beta_crust_mantle(1,1,1,ispec) - 1.0_CUSTOM_REAL
           endif
 
+          ! original routine...
+          !
           ! shifts moduli to unrelaxed ones
-          if (.true.) then
-            ! this is the original routine to shift moduli, using only muv (from c44) to scale
-            mul = c44 * minus_sum_beta
-            c11 = c11 + FOUR_THIRDS * mul ! * minus_sum_beta * mul
-            c12 = c12 - TWO_THIRDS * mul
-            c13 = c13 - TWO_THIRDS * mul
-            c22 = c22 + FOUR_THIRDS * mul
-            c23 = c23 - TWO_THIRDS * mul
-            c33 = c33 + FOUR_THIRDS * mul
-            c44 = c44 + mul
-            c55 = c55 + mul
-            c66 = c66 + mul
+          ! this is the original routine to shift moduli, using only muv (from c44) to scale
+          !  c11 = c11store_crust_mantle(INDEX_IJK,ispec)
+          !  c12 = c12store_crust_mantle(INDEX_IJK,ispec)
+          !  c13 = c13store_crust_mantle(INDEX_IJK,ispec)
+          !  c22 = c22store_crust_mantle(INDEX_IJK,ispec)
+          !  c23 = c23store_crust_mantle(INDEX_IJK,ispec)
+          !  c33 = c33store_crust_mantle(INDEX_IJK,ispec)
+          !  c44 = c44store_crust_mantle(INDEX_IJK,ispec)
+          !  c55 = c55store_crust_mantle(INDEX_IJK,ispec)
+          !  c66 = c66store_crust_mantle(INDEX_IJK,ispec)
+          !
+          !  mul = c44 * minus_sum_beta
+          !
+          !  c11 = c11 + FOUR_THIRDS * mul ! * minus_sum_beta * mul
+          !  c12 = c12 - TWO_THIRDS * mul
+          !  c13 = c13 - TWO_THIRDS * mul
+          !  c22 = c22 + FOUR_THIRDS * mul
+          !  c23 = c23 - TWO_THIRDS * mul
+          !  c33 = c33 + FOUR_THIRDS * mul
+          !  c44 = c44 + mul
+          !  c55 = c55 + mul
+          !  c66 = c66 + mul
+          !
+          !  ! stores unrelaxed factors
+          !  c11store_crust_mantle(INDEX_IJK,ispec) = c11
+          !  c12store_crust_mantle(INDEX_IJK,ispec) = c12
+          !  c13store_crust_mantle(INDEX_IJK,ispec) = c13
+          !  c22store_crust_mantle(INDEX_IJK,ispec) = c22
+          !  c23store_crust_mantle(INDEX_IJK,ispec) = c23
+          !  c33store_crust_mantle(INDEX_IJK,ispec) = c33
+          !  c44store_crust_mantle(INDEX_IJK,ispec) = c44
+          !  c55store_crust_mantle(INDEX_IJK,ispec) = c55
+          !  c66store_crust_mantle(INDEX_IJK,ispec) = c66
 
-          else
+          ! new routine
+          ! unrelaxed moduli shift using muv and muh scaling
+          ! also, needs adaptation in save_kernels.f90 to shift back accordingly
 
-!daniel todo: unrelaxed moduli shift: not used yet, please verify...
-!             also, if changed, needs adaptation in save_kernels.f90 to shift back accordingly
+          ! local position (d_ij given in radial direction)
+          ! only in case needed for rotation
+          iglob = ibool_crust_mantle(INDEX_IJK,ispec)
+          theta_dble = rstore_crust_mantle(2,iglob)
+          phi_dble = rstore_crust_mantle(3,iglob)
+          call reduce(theta_dble,phi_dble)
 
-            ! new: tries to shift moduli by separating muv and muh factors.
-            !      still needs rotations to rotate back and forth from SPECFEM global axis to a radial symmetry axis
-            !      since this shift assumes a radial symmetry
-            A = 0.125d0 * (3.d0 * c11 + 3.d0 * c22 + 2.d0 * c12 + 4.d0 * c66)
-            N = 0.125d0 * (c11 + c22 - 2.d0 * c12 + 4.d0 * c66)
-            L = 0.5d0 * (c44 + c55)
-            F = 0.5d0 * (c13 + c23)
-            eta_aniso = F / (A - 2.d0*L)   ! eta = F / (A-2L)
+          g11 = c11store_crust_mantle(INDEX_IJK,ispec)
+          g12 = c12store_crust_mantle(INDEX_IJK,ispec)
+          g13 = c13store_crust_mantle(INDEX_IJK,ispec)
+          g14 = c14store_crust_mantle(INDEX_IJK,ispec)
+          g15 = c15store_crust_mantle(INDEX_IJK,ispec)
+          g16 = c16store_crust_mantle(INDEX_IJK,ispec)
+          g22 = c22store_crust_mantle(INDEX_IJK,ispec)
+          g23 = c23store_crust_mantle(INDEX_IJK,ispec)
+          g24 = c24store_crust_mantle(INDEX_IJK,ispec)
+          g25 = c25store_crust_mantle(INDEX_IJK,ispec)
+          g26 = c26store_crust_mantle(INDEX_IJK,ispec)
+          g33 = c33store_crust_mantle(INDEX_IJK,ispec)
+          g34 = c34store_crust_mantle(INDEX_IJK,ispec)
+          g35 = c35store_crust_mantle(INDEX_IJK,ispec)
+          g36 = c36store_crust_mantle(INDEX_IJK,ispec)
+          g44 = c44store_crust_mantle(INDEX_IJK,ispec)
+          g45 = c45store_crust_mantle(INDEX_IJK,ispec)
+          g46 = c46store_crust_mantle(INDEX_IJK,ispec)
+          g55 = c55store_crust_mantle(INDEX_IJK,ispec)
+          g56 = c56store_crust_mantle(INDEX_IJK,ispec)
+          g66 = c66store_crust_mantle(INDEX_IJK,ispec)
 
-            muvl = L * minus_sum_beta     ! c44 - > L - > muv
-            muhl = N * minus_sum_beta     ! c66 - > N - > muh
+          call rotate_tensor_global_to_radial(theta_dble,phi_dble, &
+                                  d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26, &
+                                  d33,d34,d35,d36,d44,d45,d46,d55,d56,d66, &
+                                  g11,g12,g13,g14,g15,g16,g22,g23,g24,g25,g26, &
+                                  g33,g34,g35,g36,g44,g45,g46,g55,g56,g66)
 
-            c11 = c11 + FOUR_THIRDS * muhl ! * minus_sum_beta * mul
-            c12 = c12 - TWO_THIRDS * muhl
-            c13 = c13 + eta_aniso * (FOUR_THIRDS * muhl - 2.d0*muvl)
-            c22 = c22 + FOUR_THIRDS * muhl
-            c23 = c23 + eta_aniso * (FOUR_THIRDS * muhl - 2.d0*muvl)
-            c33 = c33 + FOUR_THIRDS * muvl
-            c44 = c44 + muvl
-            c55 = c55 + muvl
-            c66 = c66 + muhl
-          endif
+          ! new: shifts shear moduli by separating muv and muh factors.
+          !      still needs rotations to rotate back and forth from SPECFEM global axis to a radial symmetry axis
+          !      since this shift assumes a radial symmetry
+          A_dble = 0.125d0 * (3.d0 * d11 + 3.d0 * d22 + 2.d0 * d12 + 4.d0 * d66)
+          !C_dble = d33
+          N_dble = 0.125d0 * (d11 + d22 - 2.d0 * d12 + 4.d0 * d66)
+          L_dble = 0.5d0 * (d44 + d55)
+          F_dble = 0.5d0 * (d13 + d23)
+
+          eta_aniso = F_dble / (A_dble - 2.d0*L_dble)   ! eta = F / (A-2L)
+
+          muvl = L_dble * minus_sum_beta     ! c44 - > L - > muv
+          muhl = N_dble * minus_sum_beta     ! c66 - > N - > muh
+
+          d11 = d11 + FOUR_THIRDS * muhl ! * minus_sum_beta * mul
+          d12 = d12 - TWO_THIRDS * muhl
+          d13 = d13 + eta_aniso * (FOUR_THIRDS * muhl - 2.d0*muvl)
+          d22 = d22 + FOUR_THIRDS * muhl
+          d23 = d23 + eta_aniso * (FOUR_THIRDS * muhl - 2.d0*muvl)
+          d33 = d33 + FOUR_THIRDS * muvl
+          d44 = d44 + muvl
+          d55 = d55 + muvl
+          d66 = d66 + muhl
+
+          ! debug
+          !if (myrank == 0 .and. ispec == 1000 .and. ijk == 1) &
+          !  print *,'debug: original moduli unrelaxing A,N,L,F,eta',A_dble,N_dble,L_dble,F_dble,eta_aniso,'mu',muvl,muhl
+
+          ! rotates to global reference system
+          call rotate_tensor_radial_to_global(theta_dble,phi_dble, &
+                                              d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26, &
+                                              d33,d34,d35,d36,d44,d45,d46,d55,d56,d66, &
+                                              g11,g12,g13,g14,g15,g16,g22,g23,g24,g25,g26, &
+                                              g33,g34,g35,g36,g44,g45,g46,g55,g56,g66)
 
           ! stores unrelaxed factors
-          c11store_crust_mantle(INDEX_IJK,ispec) = c11
-          c12store_crust_mantle(INDEX_IJK,ispec) = c12
-          c13store_crust_mantle(INDEX_IJK,ispec) = c13
-          c22store_crust_mantle(INDEX_IJK,ispec) = c22
-          c23store_crust_mantle(INDEX_IJK,ispec) = c23
-          c33store_crust_mantle(INDEX_IJK,ispec) = c33
-          c44store_crust_mantle(INDEX_IJK,ispec) = c44
-          c55store_crust_mantle(INDEX_IJK,ispec) = c55
-          c66store_crust_mantle(INDEX_IJK,ispec) = c66
+          c11store_crust_mantle(INDEX_IJK,ispec) = g11
+          c12store_crust_mantle(INDEX_IJK,ispec) = g12
+          c13store_crust_mantle(INDEX_IJK,ispec) = g13
+          c14store_crust_mantle(INDEX_IJK,ispec) = g14
+          c15store_crust_mantle(INDEX_IJK,ispec) = g15
+          c16store_crust_mantle(INDEX_IJK,ispec) = g16
+          c22store_crust_mantle(INDEX_IJK,ispec) = g22
+          c23store_crust_mantle(INDEX_IJK,ispec) = g23
+          c24store_crust_mantle(INDEX_IJK,ispec) = g24
+          c25store_crust_mantle(INDEX_IJK,ispec) = g25
+          c26store_crust_mantle(INDEX_IJK,ispec) = g26
+          c33store_crust_mantle(INDEX_IJK,ispec) = g33
+          c34store_crust_mantle(INDEX_IJK,ispec) = g34
+          c35store_crust_mantle(INDEX_IJK,ispec) = g35
+          c36store_crust_mantle(INDEX_IJK,ispec) = g36
+          c44store_crust_mantle(INDEX_IJK,ispec) = g44
+          c45store_crust_mantle(INDEX_IJK,ispec) = g45
+          c46store_crust_mantle(INDEX_IJK,ispec) = g46
+          c55store_crust_mantle(INDEX_IJK,ispec) = g55
+          c56store_crust_mantle(INDEX_IJK,ispec) = g56
+          c66store_crust_mantle(INDEX_IJK,ispec) = g66
+
+          ! for solving memory-variables, modulus defect \delta \mu_l (Komatitsch, 2002, eq. (11) & (13))
+          ! note: for solving the memory variables, we will only use the modulus defect
+          !       associated with muv. this is consistent with the implementation for tiso below.
+          !
+          !       however, to properly account for shear attenuation, one might have to add also
+          !       memory-variables for a modulus defect associated with muh.
+          muvstore_crust_mantle(INDEX_IJK,ispec) = d44
+
         ENDDO_LOOP_IJK
 
         ! counter
@@ -511,8 +592,9 @@
           ! please check:
           ! shear along [100] direction: mul = c44
           ! instead of
-          !mul = muvstore(INDEX_IJK,ispec) * minus_sum_beta
+          !   > mul = muvstore(INDEX_IJK,ispec) * minus_sum_beta
           ! this would be following the implementation from above for fully anisotropic elements...
+          !
           mul = c44 * minus_sum_beta
 
           c11 = c11 + FOUR_THIRDS * mul ! * minus_sum_beta * mul
@@ -527,6 +609,9 @@
           c13store_inner_core(INDEX_IJK,ispec) = c13
           c33store_inner_core(INDEX_IJK,ispec) = c33
           c44store_inner_core(INDEX_IJK,ispec) = c44
+
+          ! for solving memory-variables, modulus defect \delta \mu_l (Komatitsch, 2002, eq. (11) & (13))
+          muvstore_inner_core(INDEX_IJK,ispec) = c44
         ENDDO_LOOP_IJK
         ! counter
 !$OMP ATOMIC
