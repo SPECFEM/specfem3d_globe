@@ -877,12 +877,10 @@
     Gc = Gc_prime * mu0
     Gs = Gs_prime * mu0
 
-!daniel debug:
-! test: ignore Gc,Gs contributions
-Gc = 0.d0
-Gs = 0.d0
-!daniel debug
-!print *,"debug: model_gll_build_cij Gc,Gs",Gc,Gs
+    !daniel debug:
+    ! test: ignore Gc,Gs contributions
+    !Gc = 0.d0
+    !Gs = 0.d0
 
     ! Love parameterization
     A = rho * vph**2    !rhovphsq = A  !!! that is A

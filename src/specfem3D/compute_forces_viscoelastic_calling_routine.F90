@@ -694,7 +694,6 @@
     call update_veloc_elastic_newmark_backward()
   endif
 
-
 !daniel debug: att - debug
 !  if (DEBUG) then
 !    if (SIMULATION_TYPE == 1) then
