@@ -90,42 +90,53 @@
       MODEL_L(i:i) = achar(iachar(MODEL_L(i:i)) + irange)
     endif
   enddo
+  MODEL_ROOT = MODEL_L ! sets root name of model to original one
 
-  ! extract ending of model name
-  ending = ''
-  if (len_trim(MODEL_L) > 4 ) ending = MODEL_L(len_trim(MODEL_L)-3:len_trim(MODEL_L))
-
+  ! inner core anisotropy
   ! initializes inner core parameters
   ANISOTROPIC_INNER_CORE = .false.
   THREE_D_MODEL_IC = 0
-  MODEL_ROOT = MODEL_L ! sets root name of model to original one
-
+  ! extract ending of model name
+  ending = ''
+  if (len_trim(MODEL_ROOT) > 4 ) ending = MODEL_ROOT(len_trim(MODEL_ROOT)-3:len_trim(MODEL_ROOT))
   ! determines if the anisotropic inner core option should be turned on
   if (trim(ending) == '_aic') then
     ANISOTROPIC_INNER_CORE = .true.
     THREE_D_MODEL_IC = THREE_D_MODEL_INNER_CORE_ISHII ! since we only have a single inner core aniso model, assumes we take it
     ! in case it has an ending for the inner core, remove it from the name
-    MODEL_ROOT = MODEL_L(1:len_trim(MODEL_L)-4)
+    MODEL_ROOT = MODEL_ROOT(1:len_trim(MODEL_ROOT)-4)
+  endif
+
+  ! crust/mantle anisotropy
+  ! uses no full anisotropy calculations by default
+  ANISOTROPIC_3D_MANTLE = .false.
+  ! determines if the anisotropic mantle option should be turned on
+  ending = ''
+  if (len_trim(MODEL_ROOT) > 4 ) ending = MODEL_ROOT(len_trim(MODEL_ROOT)-3:len_trim(MODEL_ROOT))
+  if (trim(ending) == '_acm') then
+    ! turn handling on of crust/mantle elements for fully anisotropic calculations
+    ANISOTROPIC_3D_MANTLE = .true.
+    ! in case it has an ending "_aniso", remove it from the name
+    MODEL_ROOT = MODEL_ROOT(1:len_trim(MODEL_ROOT)-4)
   endif
 
   ! crustal option by name ending
   impose_crust = 0
   ending = ''
-
   ! 1D crust options
   ! checks with '_onecrust' option
   if (len_trim(MODEL_ROOT) > 9 ) ending = MODEL_ROOT(len_trim(MODEL_ROOT)-8:len_trim(MODEL_ROOT))
   if (trim(ending) == '_onecrust') then
     impose_crust = -1 ! negative flag for 1Dcrust option with 1-layer
     ! in case it has an ending for the 1D crust, remove it from the name
-    MODEL_ROOT = MODEL_ROOT(1: len_trim(MODEL_L)-9)
+    MODEL_ROOT = MODEL_ROOT(1: len_trim(MODEL_ROOT)-9)
   endif
   ! checks with '_1Dcrust' option
   if (len_trim(MODEL_ROOT) > 8 ) ending = MODEL_ROOT(len_trim(MODEL_ROOT)-7:len_trim(MODEL_ROOT))
   if (trim(ending) == '_1dcrust') then
     impose_crust = -2 ! negative flag for 1Dcrust option with 2-layers
     ! in case it has an ending for the 1D crust, remove it from the name
-    MODEL_ROOT = MODEL_ROOT(1: len_trim(MODEL_L)-8)
+    MODEL_ROOT = MODEL_ROOT(1: len_trim(MODEL_ROOT)-8)
   endif
 
   ! 3D crust options
@@ -135,42 +146,42 @@
   if (trim(ending) == '_crustmaps') then
     impose_crust = ICRUST_CRUSTMAPS
     ! in case it has an ending for the crust, remove it from the name
-    MODEL_ROOT = MODEL_ROOT(1: len_trim(MODEL_L)-10)
+    MODEL_ROOT = MODEL_ROOT(1: len_trim(MODEL_ROOT)-10)
   endif
   ! checks with '_crust1.0' option
   if (len_trim(MODEL_ROOT) > 9 ) ending = MODEL_ROOT(len_trim(MODEL_ROOT)-8:len_trim(MODEL_ROOT))
   if (trim(ending) == '_crust1.0') then
     impose_crust = ICRUST_CRUST1
     ! in case it has an ending for the crust, remove it from the name
-    MODEL_ROOT = MODEL_ROOT(1: len_trim(MODEL_L)-9)
+    MODEL_ROOT = MODEL_ROOT(1: len_trim(MODEL_ROOT)-9)
   endif
   ! checks with '_crust2.0' option
   if (len_trim(MODEL_ROOT) > 9 ) ending = MODEL_ROOT(len_trim(MODEL_ROOT)-8:len_trim(MODEL_ROOT))
   if (trim(ending) == '_crust2.0') then
     impose_crust = ICRUST_CRUST2
     ! in case it has an ending for the crust, remove it from the name
-    MODEL_ROOT = MODEL_ROOT(1: len_trim(MODEL_L)-9)
+    MODEL_ROOT = MODEL_ROOT(1: len_trim(MODEL_ROOT)-9)
   endif
   ! checks with '_epcrust' option
   if (len_trim(MODEL_ROOT) > 8 ) ending = MODEL_ROOT(len_trim(MODEL_ROOT)-7:len_trim(MODEL_ROOT))
   if (trim(ending) == '_epcrust') then
     impose_crust = ICRUST_EPCRUST
     ! in case it has an ending for the crust, remove it from the name
-    MODEL_ROOT = MODEL_ROOT(1: len_trim(MODEL_L)-8)
+    MODEL_ROOT = MODEL_ROOT(1: len_trim(MODEL_ROOT)-8)
   endif
   ! checks with '_eucrust' option
   if (len_trim(MODEL_ROOT) > 8 ) ending = MODEL_ROOT(len_trim(MODEL_ROOT)-7:len_trim(MODEL_ROOT))
   if (trim(ending) == '_eucrust') then
     impose_crust = ICRUST_EUCRUST
     ! in case it has an ending for the crust, remove it from the name
-    MODEL_ROOT = MODEL_ROOT(1: len_trim(MODEL_L)-8)
+    MODEL_ROOT = MODEL_ROOT(1: len_trim(MODEL_ROOT)-8)
   endif
   ! checks with '_crustSH' option
   if (len_trim(MODEL_ROOT) > 8 ) ending = MODEL_ROOT(len_trim(MODEL_ROOT)-7:len_trim(MODEL_ROOT))
   if (trim(ending) == '_crustsh') then
     impose_crust = ICRUST_CRUST_SH
     ! in case it has an ending for the crust, remove it from the name
-    MODEL_ROOT = MODEL_ROOT(1: len_trim(MODEL_L)-8)
+    MODEL_ROOT = MODEL_ROOT(1: len_trim(MODEL_ROOT)-8)
   endif
 
 
@@ -188,9 +199,6 @@
   ! default crustal model
   ! (used Crust2.0 as default when CRUSTAL flag is set for simulation)
   REFERENCE_CRUSTAL_MODEL = ICRUST_CRUST2
-
-  ! uses no anisotropic 3D model by default
-  ANISOTROPIC_3D_MANTLE = .false.
 
   ! uses 1D attenuation model by default
   ATTENUATION_3D = .false.
