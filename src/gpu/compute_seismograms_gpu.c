@@ -60,6 +60,16 @@ void FC_FUNC_ (compute_seismograms_gpu,
 
   int size_buffer = 3 * mp->nrec_local * sizeof(realw);
 
+  // determines wavefield depending on simulation type
+  gpu_realw_mem displ;
+  if (mp->simulation_type == 3) {
+    // backward/reconstructed wavefield
+    displ = mp->d_b_displ_crust_mantle;
+  }else{
+    // forward/adjoint wavefield
+    displ = mp->d_displ_crust_mantle;
+  }
+
 #ifdef USE_OPENCL
   if (run_opencl) {
     size_t global_work_size[2];
@@ -69,7 +79,7 @@ void FC_FUNC_ (compute_seismograms_gpu,
 
     //prepare field transfer array on device
     clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (int),    (void *) &mp->nrec_local));
-    clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_displ_crust_mantle.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (cl_mem), (void *) &displ.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ibool_crust_mantle.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_hxir.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_hetar.ocl));
@@ -115,7 +125,7 @@ void FC_FUNC_ (compute_seismograms_gpu,
 
     // prepare field transfer array on device
     compute_seismograms_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->nrec_local,
-                                                                      mp->d_displ_crust_mantle.cuda,
+                                                                      displ.cuda,
                                                                       mp->d_ibool_crust_mantle.cuda,
                                                                       mp->d_hxir.cuda,mp->d_hetar.cuda,mp->d_hgammar.cuda,
                                                                       mp->d_seismograms.cuda,
