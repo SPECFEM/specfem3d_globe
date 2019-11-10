@@ -973,6 +973,7 @@
               ! Get A,C,F,L,N,eta from kappa,mu
               ! element can have transverse isotropy if between d220 and Moho
               if (.not. ispec_is_tiso_crust_mantle(ispec)) then
+                ! isotropic element
                 ! layer with no transverse isotropy
                 ! A,C,L,N,F from isotropic model
                 mul = muvstore_crust_mantle(i,j,k,ispec)
@@ -987,6 +988,7 @@
                 F = kappal - 2._CUSTOM_REAL/3._CUSTOM_REAL * mul
                 eta = 1._CUSTOM_REAL
               else
+                ! tiso element
                 ! A,C,L,N,F from transverse isotropic model
                 kappavl = kappavstore_crust_mantle(i,j,k,ispec)
                 kappahl = kappahstore_crust_mantle(i,j,k,ispec)
@@ -1038,13 +1040,19 @@
 
               call rotate_tensor_global_to_radial_vector(cij(:),cij_radial(:),theta,phi)
 
+              ! A = 1/8 ( 3 c11 + 3 c22 + 2 c12 + 4 c66)
               A = 0.125_CUSTOM_REAL * ( 3.0 * cij_radial(1) + 3.0 * cij_radial(7) &
                                        + 2.0 * cij_radial(2) + 4.0 * cij_radial(21) )
+              ! C = c33
               C = cij_radial(12)
+              ! N = 1/8 ( c11 + c22 - 2 c12 + 4 c66)
               N = 0.125_CUSTOM_REAL * ( cij_radial(1) + cij_radial(7) &
                                        - 2.0 * cij_radial(2) + 4.0 * cij_radial(21))
+              ! L = 1/2 (c44 + c55)
               L = 0.5_CUSTOM_REAL * ( cij_radial(16) + cij_radial(19) )
+              ! F = 1/2 (c13 + c23)
               F = 0.5_CUSTOM_REAL * ( cij_radial(3) + cij_radial(8) )
+              ! eta = F / (A - 2 L)
               eta = F / (A - 2.0_CUSTOM_REAL * L)
 
               ! mu & kappa for bulk kernels
@@ -1102,22 +1110,22 @@
             ! additional primitive kernels for "asymptotic parameters" (Chen & Tromp 2007):
             !
             if (SAVE_AZIMUTHAL_ANISO_KL_ONLY) then
-              an_kl(6)  = 2*cijkl_kl_local(5)+2*cijkl_kl_local(10)+2*cijkl_kl_local(14)          !Jc
-              an_kl(7)  = 2*cijkl_kl_local(4)+2*cijkl_kl_local(9)+2*cijkl_kl_local(13)           !Js
+              an_kl(6)  = 2*cijkl_kl_local(5) + 2*cijkl_kl_local(10)+ 2*cijkl_kl_local(14)       !Jc
+              an_kl(7)  = 2*cijkl_kl_local(4) + 2*cijkl_kl_local(9) + 2*cijkl_kl_local(13)       !Js
               an_kl(8)  = -2*cijkl_kl_local(14)                                                  !Kc
               an_kl(9)  = -2*cijkl_kl_local(13)                                                  !Ks
-              an_kl(10) = -2*cijkl_kl_local(10)+cijkl_kl_local(18)                               !Mc
-              an_kl(11) = 2*cijkl_kl_local(4)-cijkl_kl_local(20)                                 !Ms
-              an_kl(12) = cijkl_kl_local(1)-cijkl_kl_local(7)                                    !Bc
-              an_kl(13) = -1./2.*(cijkl_kl_local(6)+cijkl_kl_local(11))                          !Bs
-              an_kl(14) = cijkl_kl_local(3)-cijkl_kl_local(8)                                    !Hc
+              an_kl(10) = -2*cijkl_kl_local(10) + cijkl_kl_local(18)                             !Mc
+              an_kl(11) = 2*cijkl_kl_local(4) - cijkl_kl_local(20)                               !Ms
+              an_kl(12) = cijkl_kl_local(1) - cijkl_kl_local(7)                                  !Bc
+              an_kl(13) = -1./2.*(cijkl_kl_local(6) + cijkl_kl_local(11))                        !Bs
+              an_kl(14) = cijkl_kl_local(3) - cijkl_kl_local(8)                                  !Hc
               an_kl(15) = -cijkl_kl_local(15)                                                    !Hs
               an_kl(16) = -cijkl_kl_local(16) + cijkl_kl_local(19)                               !Gc
               an_kl(17) = -cijkl_kl_local(17)                                                    !Gs
-              an_kl(18) = cijkl_kl_local(5)-cijkl_kl_local(10)-cijkl_kl_local(18)                !Dc
-              an_kl(19) = cijkl_kl_local(4)-cijkl_kl_local(9)+cijkl_kl_local(20)                 !Ds
-              an_kl(20) = cijkl_kl_local(1)-cijkl_kl_local(2)+cijkl_kl_local(7)-cijkl_kl_local(21)   !Ec
-              an_kl(21) = -cijkl_kl_local(6)+cijkl_kl_local(11)                                  !Es
+              an_kl(18) = cijkl_kl_local(5) - cijkl_kl_local(10) - cijkl_kl_local(18)            !Dc
+              an_kl(19) = cijkl_kl_local(4) - cijkl_kl_local(9) + cijkl_kl_local(20)             !Ds
+              an_kl(20) = cijkl_kl_local(1) - cijkl_kl_local(2) + cijkl_kl_local(7) - cijkl_kl_local(21)   !Ec
+              an_kl(21) = -cijkl_kl_local(6) + cijkl_kl_local(11)                                !Es
 
               ! more parameterizations:
               !
@@ -1146,8 +1154,8 @@
               !       and
               !         angle \zeta is measured counter-clockwise from South
               !
-              Gc_kl_crust_mantle(i,j,k,ispec) = -an_kl(16)*scale_kl_ani
-              Gs_kl_crust_mantle(i,j,k,ispec) = -an_kl(17)*scale_kl_ani
+              Gc_kl_crust_mantle(i,j,k,ispec) = -an_kl(16) * scale_kl_ani
+              Gs_kl_crust_mantle(i,j,k,ispec) = -an_kl(17) * scale_kl_ani
 
               ! daniel todo:
               ! scaling with actual values?

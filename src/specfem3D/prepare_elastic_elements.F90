@@ -144,18 +144,20 @@
           ! L = rho * vsv**2
           ! F = eta * (A - 2*L)
           !
-          ! and therefore (assuming radial axis symmetry)
-          ! C11 = A = rho * vph**2
-          ! C33 = C = rho * vpv**2
-          ! C44 = L = rho * vsv**2
-          ! C13 = F = eta * (A - 2*L)
-          ! C12 = C11 - 2 C66 = A - 2*N = rho * (vph**2 - 2 * vsh**2)
+          ! for radial axis symmetry and transversely isotropic media this simplifies to:
+          ! A = C11 = rho * vph**2 = kappah + 4/3 muh
+          ! C = C33 = rho * vpv**2 = kappav + 4/3 muv
+          ! N = C66 = rho * vsh**2 = muh
+          ! L = C44 = rho * vsv**2 = muv
+          ! F = C13 = eta * (A - 2*L)
+          ! and
+          ! C12 = C11 - 2 C66 = A - 2*N = rho * vph**2 - 2 * rho * vsh**2 = kappah + 4/3 muh - 2 muh = kappah - 2/3 muh
           ! C22 = C11
           ! C23 = C13
           ! C55 = C44
-          ! C66 = N = rho * vsh**2 = (C11-C12)/2
+          ! C66 = N = rho * vsh**2 = muh = (C11-C12)/2
           !
-          ! scaling:
+          ! shear moduli scaling:
           ! muvl = muvl * one_minus_sum_beta_use = muvl*( 1 - sum_beta) = muvl - muvl*sum_beta = muvl + muvl*minus_sum_beta
           ! muhl = muhl * one_minus_sum_beta_use
           !
@@ -165,17 +167,26 @@
           ! rho vph**2 = A = kappah + 4/3 muh -> kappah + 4/3 muh * (1 - sum_beta) = kappah + 4/3 muh - 4/3 muh*sum_beta
           ! rho vpv**2 = C = kappav + 4/3 muv -> kappav + 4/3 muv - 4/3 muv*sum_beta
           !
-          ! c11' = A' = c11 - 4/3 muh*sum_beta
-          ! c33' = C' = c33 - 4/3 muv*sum_beta
-          ! c66' = N' = c66 - muh*sum_beta
-          ! c44' = L' = c44 - muv*sum_beta
-          ! c55' = c55 - muv*sum_beta     ! to be consistent with tiso case c55 == c44
-          ! c22' = c22 - 4/3 muh*sum_beta ! to be consistent with tiso case c22 == c11
+          ! -> scaling for Love parameters:
+          ! A' = A - 4/3 muh*sum_beta
+          ! C' = C - 4/3 muv*sum_beta
+          ! N' = N * (1 - sum_beta) = N - muh*sum_beta
+          ! L' = L * (1 - sum_beta) = L - muv*sum_beta
+          !
+          ! -> scaling for tensor elements:
+          ! c11' = c11 - 4/3 muh*sum_beta  ! A
+          ! c33' = c33 - 4/3 muv*sum_beta  ! C
+          ! c66' = c66 - muh*sum_beta      ! N
+          ! c44' = c44 - muv*sum_beta      ! L
+          !
+          ! c55' = c55 - muv*sum_beta      ! to be consistent with tiso case c55 == c44
+          ! c22' = c22 - 4/3 muh*sum_beta  ! to be consistent with tiso case c22 == c11
           !
           ! c13' = F' = eta*(A' - 2*L') = eta*(A - 4/3 muh*sum_beta - 2*(L - muv*sum_beta))
           !                             = c13 + eta*( 2*muv*sum_beta - 4/3 muh*sum_beta)
           !                             = c13 + eta*( 4/3 muh * minus_sum_beta - 2 muv * minus_sum_beta)
           ! c23' = c23 + eta*( 2*muv*sum_beta - 4/3 muh*sum_beta) ! be consistent with tiso case c23 == c13
+          !
           ! c12' = A' - 2*N' = A - 4/3 muh*sum_beta - 2*(N - muh*sum_beta) = A - 2*N - 4/3 muh*sum_beta + 2 muh*sum_beta
           !                                                                = c12 + 2/3 muh*sum_beta
 
