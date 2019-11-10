@@ -46,7 +46,7 @@
 
   use constants, only: &
     IMAIN,IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
-    SAVE_BOUNDARY_MESH
+    SAVE_BOUNDARY_MESH,SAVE_MESHFILES_AVS_DX_FORMAT
 
   use shared_parameters, only: &
     R_CENTRAL_CUBE,RICB,RCMB
@@ -433,7 +433,7 @@
         call synchronize_all()
         if (myrank == 0) then
           write(IMAIN,*)
-          write(IMAIN,*) '  ...saving (AVS or DX) mesh files'
+          write(IMAIN,*) '  ...saving mesh files'
           call flush_IMAIN()
         endif
 
@@ -447,7 +447,9 @@
         endif
 
         ! AVS/DX output
-        call write_AVS_DX_output(npointot,iregion_code)
+        if (SAVE_MESHFILES_AVS_DX_FORMAT) then
+          call write_AVS_DX_output(npointot,iregion_code)
+        endif
       endif
 
     endif ! .not. GRAVITY_INTEGRALS

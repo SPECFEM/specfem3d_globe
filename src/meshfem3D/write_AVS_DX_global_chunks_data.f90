@@ -28,11 +28,11 @@
 ! create AVS or DX 2D data for the faces of the global chunks,
 ! to be recombined in postprocessing
   subroutine write_AVS_DX_global_chunks_data(prname,nspec,iboun,ibool, &
-                idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
-                npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
-                ELLIPTICITY,MODEL_3D_MANTLE_PERTUBATIONS, &
-                RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
-                RMIDDLE_CRUST,ROCEAN,iregion_code)
+                                             idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
+                                             npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
+                                             ELLIPTICITY,MODEL_3D_MANTLE_PERTUBATIONS, &
+                                             RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
+                                             RMIDDLE_CRUST,ROCEAN,iregion_code)
 
   use constants
 

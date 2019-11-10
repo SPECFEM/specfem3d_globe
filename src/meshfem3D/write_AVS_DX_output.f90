@@ -28,13 +28,14 @@
 
   subroutine write_AVS_DX_output(npointot,iregion_code)
 
+  use constants, only: SAVE_MESHFILES_AVS_DX_FORMAT
+
   use meshfem3d_par, only: &
     nspec,ibool,idoubling, &
     xstore,ystore,zstore, &
     RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
     RMIDDLE_CRUST,ROCEAN, &
     ADIOS_FOR_AVS_DX
-
 
   use meshfem3D_models_par, only: &
     ELLIPTICITY,MODEL_3D_MANTLE_PERTUBATIONS, &
@@ -55,6 +56,9 @@
   integer, dimension(:), allocatable :: num_ibool_AVS_DX
   logical, dimension(:), allocatable :: mask_ibool
   integer :: ier
+
+  ! checks if anything to do
+  if (.not. SAVE_MESHFILES_AVS_DX_FORMAT) return
 
   ! arrays num_ibool_AVS_DX and mask_ibool used to save memory
   ! allocate memory for arrays
