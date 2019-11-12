@@ -170,7 +170,7 @@
   use iso_c_binding, only: C_NULL_CHAR,c_ptr
 !  use iso_Fortran_env
 
-  use specfem_par,only: seismo_current,seismo_offset,DT,NSTEP,nrec_local, &
+  use specfem_par, only: seismo_current,seismo_offset,DT,NSTEP,nrec_local, &
     event_name_SAC,OUTPUT_FILES,WRITE_SEISMOGRAMS_BY_MASTER
 
   implicit none
@@ -196,7 +196,7 @@
 
   !-- ASDF variables
   ! daniel: note that these are file pointers to hid_t which (at least in newer HDF5 versions) become int64
-  !         the corresponding fortran integer would be integer(kind=8).
+  !         the corresponding Fortran integer would be integer(kind=8).
   !         one might have to check if the compiler uses 64-bit or 32-bit pointers.
   integer(kind=8) :: file_id
   integer(kind=8), dimension(3) ::  data_ids
@@ -911,8 +911,8 @@
     '</q:quakeml>'
 
   !debug
-  !print*,'debug: quakeML:'
-  !print*,'*****'//trim(quakemlstring)//'*****'
+  !print *,'debug: quakeML:'
+  !print *,'*****'//trim(quakemlstring)//'*****'
 
   end subroutine cmt_to_quakeml
 
@@ -1136,8 +1136,8 @@
     '</FDSNStationXML>'
 
   !debug
-  !print*,'debug: station XML:'
-  !print*,'*****'//trim(stationxmlstring)//'*****'
+  !print *,'debug: station XML:'
+  !print *,'*****'//trim(stationxmlstring)//'*****'
 
   end subroutine station_to_stationxml
 
