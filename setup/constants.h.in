@@ -405,7 +405,16 @@
 !!
 !!-----------------------------------------------------------
 
- logical, parameter :: OUTPUT_PROVENANCE = .false.
+! keeps track of everything
+  logical, parameter :: ASDF_OUTPUT_PROVENANCE = .false.
+
+! ASDF string lengths
+  integer, parameter :: ASDF_MAX_STRING_LENGTH = 1024
+  integer, parameter :: ASDF_MAX_QUAKEML_LENGTH = 8096
+  integer, parameter :: ASDF_MAX_STATIONXML_LENGTH = 16182
+  integer, parameter :: ASDF_MAX_PARFILE_LENGTH = 20000
+  integer, parameter :: ASDF_MAX_CONSTANTS_LENGTH = 45000
+  integer, parameter :: ASDF_MAX_TIME_STRING_LENGTH = 22
 
 
 !!-----------------------------------------------------------

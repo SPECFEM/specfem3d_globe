@@ -216,9 +216,12 @@
       ! write this seismogram
       ! note: ASDF data structure is given in module
       !       stores all traces into ASDF container in case
-      call write_one_seismogram(one_seismogram,irec,irec_local)
+      call write_one_seismogram(one_seismogram,irec,irec_local,.true.)
     enddo
+
+    ! writes ASDF file output
     call write_asdf()
+
     call synchronize_all()
 
     ! deallocate the container
@@ -263,7 +266,7 @@
         ! write this seismogram
         ! note: ASDF data structure is given in module
         !       stores all traces into ASDF container in case
-        call write_one_seismogram(one_seismogram,irec,irec_local)
+        call write_one_seismogram(one_seismogram,irec,irec_local,.false.)
       enddo
 
       ! create one large file instead of one small file per station to avoid file system overload
@@ -335,7 +338,7 @@
              endif
 
              ! write this seismogram
-             call write_one_seismogram(one_seismogram,irec,irec_local)
+             call write_one_seismogram(one_seismogram,irec,irec_local,.false.)
 
              ! counts seismos written
              total_seismos = total_seismos + 1
@@ -385,7 +388,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine write_one_seismogram(one_seismogram,irec,irec_local)
+  subroutine write_one_seismogram(one_seismogram,irec,irec_local,is_for_asdf)
 
   use constants_solver, only: MAX_STRING_LEN,CUSTOM_REAL,NDIM,DEGREES_TO_RADIANS, &
     MAX_LENGTH_STATION_NAME,MAX_LENGTH_NETWORK_NAME
@@ -403,8 +406,9 @@
 
   implicit none
 
-  integer :: irec,irec_local
-  real(kind=CUSTOM_REAL), dimension(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: one_seismogram
+  integer,intent(in) :: irec,irec_local
+  logical,intent(in) :: is_for_asdf
+  real(kind=CUSTOM_REAL), dimension(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS),intent(in) :: one_seismogram
 
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(5,NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: seismogram_tmp
@@ -525,19 +529,21 @@
     write(sisname_big_file,"(a,'.',a,'.',a3,'.sem')") network_name(irec)(1:length_network_name), &
                    station_name(irec)(1:length_station_name),chn
 
-    ! SAC output format
-    if (OUTPUT_SEISMOS_SAC_ALPHANUM .or. OUTPUT_SEISMOS_SAC_BINARY ) then
-      call write_output_SAC(seismogram_tmp,irec,iorientation,sisname,chn,phi)
-    endif
+    if (is_for_asdf) then
+      ! ASDF output format
+      if (OUTPUT_SEISMOS_ASDF) then
+        call store_asdf_data(seismogram_tmp,irec_local,irec,chn,iorientation)
+      endif
+    else
+      ! SAC output format
+      if (OUTPUT_SEISMOS_SAC_ALPHANUM .or. OUTPUT_SEISMOS_SAC_BINARY ) then
+        call write_output_SAC(seismogram_tmp,irec,iorientation,sisname,chn,phi)
+      endif
 
-    ! ASCII output format
-    if (OUTPUT_SEISMOS_ASCII_TEXT) then
-      call write_output_ASCII(seismogram_tmp,iorientation,sisname,sisname_big_file)
-    endif
-
-    ! ASDF output format
-    if (OUTPUT_SEISMOS_ASDF) then
-      call store_asdf_data(seismogram_tmp,irec_local,irec,chn,iorientation)
+      ! ASCII output format
+      if (OUTPUT_SEISMOS_ASCII_TEXT) then
+        call write_output_ASCII(seismogram_tmp,iorientation,sisname,sisname_big_file)
+      endif
     endif
 
   enddo ! do iorientation

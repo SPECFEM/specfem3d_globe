@@ -50,8 +50,8 @@ subroutine read_adjoint_sources_ASDF(adj_source_name, adj_source, index_start, i
   ! print *, " nsamples ", nsamples
   ! print *, adj_source_name, " reading"
 
-  call ASDF_read_partial_waveform_f(current_asdf_handle, "AuxiliaryData/AdjointSources/"//&
-      trim(adj_source_name) // C_NULL_CHAR, offset, nsamples, adj_source, ier)
+  call ASDF_read_partial_waveform_f(current_asdf_handle, "AuxiliaryData/AdjointSources/" // &
+                                    trim(adj_source_name) // C_NULL_CHAR, offset, nsamples, adj_source, ier)
 
   if (ier /= 0) then
     print *,'Error reading adjoint source: ',trim(adj_source_name)

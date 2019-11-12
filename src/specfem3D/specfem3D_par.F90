@@ -435,7 +435,7 @@ module specfem_par
   ! ASDF
   !-----------------------------------------------------------------
   ! asdf file handle
-  integer :: current_asdf_handle
+  integer(kind=8) :: current_asdf_handle
 
   !-----------------------------------------------------------------
   ! time scheme
