@@ -26,9 +26,11 @@
 !=====================================================================
 
   subroutine compute_volumes_and_areas(NCHUNKS,iregion_code,nspec,wxgll,wygll,wzgll, &
-                                  xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
-                                  NSPEC2D_BOTTOM,jacobian2D_bottom,NSPEC2D_TOP,jacobian2D_top,idoubling, &
-                                  volume_total,RCMB,RICB,R_CENTRAL_CUBE)
+                                       xixstore,xiystore,xizstore, &
+                                       etaxstore,etaystore,etazstore, &
+                                       gammaxstore,gammaystore,gammazstore, &
+                                       NSPEC2D_BOTTOM,jacobian2D_bottom,NSPEC2D_TOP,jacobian2D_top,idoubling, &
+                                       volume_total,RCMB,RICB,R_CENTRAL_CUBE)
 
   use constants
 
@@ -41,7 +43,7 @@
 
   integer,intent(in) :: NCHUNKS,iregion_code
 
-  double precision,intent(out) :: volume_total
+  double precision,intent(inout) :: volume_total
   double precision,intent(in) :: RCMB,RICB,R_CENTRAL_CUBE
 
   integer,dimension(nspec),intent(in) :: idoubling

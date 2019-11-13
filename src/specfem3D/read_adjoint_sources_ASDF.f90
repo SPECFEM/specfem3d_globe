@@ -33,7 +33,7 @@ subroutine read_adjoint_sources_ASDF(adj_source_name, adj_source, index_start, i
 
   implicit none
 
-  integer :: itime, offset, nsamples
+  integer :: offset, nsamples
   integer :: index_start, index_end
   real(kind=CUSTOM_REAL), dimension(*),intent(out) :: adj_source ! NSTEP block size
   character(len=*) :: adj_source_name
@@ -55,9 +55,10 @@ subroutine read_adjoint_sources_ASDF(adj_source_name, adj_source, index_start, i
 
   if (ier /= 0) then
     print *,'Error reading adjoint source: ',trim(adj_source_name)
-    print *,'rank ',myrank,' - time step: ',itime,' index_start:',index_start,' index_end: ',index_end
+    print *,'rank ',myrank,' - index_start:',index_start,' index_end: ',index_end
     print *,'  ',trim(adj_source_name)//'has wrong length, please check with your simulation duration'
-    call exit_MPI(myrank,'Adjoint source '//trim(adj_source_name)//' has wrong length, please check with your simulation duration')
+    call exit_MPI(myrank,'Adjoint source '//trim(adj_source_name)// &
+                  ' has wrong length, please check with your simulation duration')
   endif
 
 end subroutine read_adjoint_sources_ASDF

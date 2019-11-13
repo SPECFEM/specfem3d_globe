@@ -284,7 +284,7 @@
   allocate(networks_names(num_stations), &
            stations_names(num_stations), &
            component_names(num_stations*3), stat=ier)
-  if (ier /= 0) call exit_MPI('Error allocating names')
+  if (ier /= 0) call exit_MPI(myrank,'Error allocating names')
 
   !--------------------------------------------------------
   ! ASDF variables
@@ -464,22 +464,27 @@
       do k = 1, mysize ! Need to set up metadata for all processes
 
         do j = 1, num_stations_gather(k) ! loop over number of stations on that process
+          ! group for station
           call ASDF_create_stations_group_f(waveforms_grp, &
                                             trim(network_names_gather(j, k)) // "." //      &
                                             trim(station_names_gather(j, k)) // C_NULL_CHAR, &
                                             station_grp)
-          stationxml_length = 1423 + len(trim(station_names_gather(j,k))) + len(trim(network_names_gather(j,k)))
 
-          call ASDF_define_station_xml_f(station_grp, stationxml_length, stationxml_grp)
-
+          ! gathers station info
           call station_to_stationxml(station_names_gather(j,k), network_names_gather(j,k), &
                                      station_lats_gather(j,k), station_longs_gather(j,k), &
                                      station_elevs_gather(j,k), station_depths_gather(j,k), &
                                      start_time_string, stationxml)
 
+          ! allocates memory block for stationXML info
+          stationxml_length = len_trim(stationxml) + 1  ! plus one for the additional null character
+          call ASDF_define_station_xml_f(station_grp, stationxml_length, stationxml_grp)
+
+          ! writes stationXML
           call ASDF_write_station_xml_f(stationxml_grp, trim(stationxml)//C_NULL_CHAR, ier)
           if (ier /= 0) call exit_MPI(myrank,'Error ASDF write station XML failed')
 
+          ! waveforms
           do  i = 1, 3 ! loop over each component
             ! Generate unique waveform name
             ! example: HT.LIT.S3.MXN__2008-01-06T05:14:19__2008-01-06T05:14:53
@@ -843,10 +848,8 @@
   quakemlstring = trim(quakemlstring) // &
     '<focalMechanism publicID="smi:local/'//trim(event_name_SAC)//'/focal_mechanism">'//&
     '<momentTensor publicID="smi:local/'//trim(event_name_SAC)//'/momenttensor">'//&
-    '  <derivedOriginID>smi:local/'//trim(event_name_SAC)//'/origin#cmtorigin'//&
-    '  </derivedOriginID>'//&
-    '  <momentMagnitudeID>smi:local/'//trim(event_name_SAC)//'/magnitude#moment_mag'//&
-    '  </momentMagnitudeID>'//&
+    '  <derivedOriginID>smi:local/'//trim(event_name_SAC)//'/origin#cmtorigin'//'</derivedOriginID>'//&
+    '  <momentMagnitudeID>smi:local/'//trim(event_name_SAC)//'/magnitude#moment_mag'//'</momentMagnitudeID>'//&
     '  <scalarMoment>'//&
     '    <value>'//trim(M0_str)//'</value>'//&
     '  </scalarMoment>'//&
@@ -937,7 +940,7 @@
   integer :: iatime(9)
   character(len=4) :: yr
   character(len=2) :: mo, da, hr, minute
-  character(len=15) :: second
+  character(len=15) :: str_second
   real :: real_sec
   integer :: stime,iyr,imo,ida,ihr,imin,isec
 
@@ -970,11 +973,11 @@
   write(minute, "(I2.2)") iatime(2)
 
   real_sec = iatime(1) + fraction_sec
-  write(second, "(I2.2, F0.4)") int(real_sec), real_sec-int(real_sec)
+  write(str_second, "(I2.2, F0.4)") int(real_sec), real_sec-int(real_sec)
 
   ! format example: 2018-01-31T16:40:02.8900
   time_string = trim(yr)//"-"//trim(mo)//"-"//trim(da)//"T"//&
-                  trim(hr)//':'//trim(minute)//':'//trim(second)
+                  trim(hr)//':'//trim(minute)//':'//trim(str_second)
 
   end subroutine convert_systime_to_string
 
