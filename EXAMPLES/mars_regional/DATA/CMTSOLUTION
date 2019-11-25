@@ -1,0 +1,13 @@
+PDE 2019 11 22 19 30  0.0  4.5  136.0   6.0 5.9 5.8 Lander
+event name:     lander1
+time shift:       0.0
+half duration:    2.000
+latitude:        6.00000
+longitude:     133.00000
+depth:          12.0000
+Mrr:       4.710000e+24
+Mtt:       3.810000e+22
+Mpp:      -4.740000e+24
+Mrt:       3.990000e+23
+Mrp:      -8.050000e+23
+Mtp:      -1.230000e+24
