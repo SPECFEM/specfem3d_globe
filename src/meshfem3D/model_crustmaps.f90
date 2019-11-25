@@ -67,7 +67,7 @@
 
 ! standard routine to setup model
 
-  use constants,only: myrank
+  use constants, only: myrank
   use shared_parameters, only: PLANET_TYPE,IPLANET_MARS
 
   use model_crustmaps_par
@@ -138,7 +138,7 @@
 
   subroutine read_general_crustmap()
 
-  use constants,only: IMAIN,ZERO,HUGEVAL
+  use constants, only: IMAIN,ZERO,HUGEVAL
   use shared_parameters, only: PLANET_TYPE,IPLANET_MARS
 
   use model_crustmaps_par
@@ -234,7 +234,7 @@
 
   subroutine read_general_crustmap_layer(var,var_letter,ind)
 
-  use constants,only: IMAIN,IIN,MAX_STRING_LEN
+  use constants, only: IMAIN,IIN,MAX_STRING_LEN
   use shared_parameters, only: PLANET_TYPE,IPLANET_MARS
 
   use model_crustmaps_par, only: CRUSTMAP_RESOLUTION
@@ -288,7 +288,7 @@
 ! read smooth crust2.0 model (0.25 degree resolution) with eucrust
 ! based on software routines provided with the crust2.0 model by Bassin et al.
 
-  use constants,only: PI,GRAV,R_EARTH,RHOAV,INCLUDE_SEDIMENTS_IN_CRUST
+  use constants, only: PI,GRAV,R_EARTH,RHOAV,INCLUDE_SEDIMENTS_IN_CRUST
 
   use model_crustmaps_par
 
@@ -386,7 +386,7 @@
 
 ! crustal vp and vs in km/s, layer thickness in km
 
-  use constants,only: MINIMUM_SEDIMENT_THICKNESS,SMOOTH_CRUST_EVEN_MORE
+  use constants, only: MINIMUM_SEDIMENT_THICKNESS,SMOOTH_CRUST_EVEN_MORE
   use shared_parameters, only: PLANET_TYPE,IPLANET_MARS
 
   use model_crustmaps_par
@@ -456,7 +456,7 @@
     ! for global scale
     cap_degree = 2.d0
     !cap_degree = 1.d0 / CRUSTMAP_RESOLUTION
-    !print*,"HELLO"
+    !print *,"HELLO"
     call smooth_weights_CAP_vardegree(lon,lat,xlon,xlat,weight,cap_degree,NTHETA,NPHI)
     num_points = NTHETA*NPHI
   else

@@ -131,7 +131,7 @@
     call meshfem3D_model_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,found_crust,elem_in_crust)
 
     !debug
-    !if (lon > 140.0 .and. lon < 143. .and. lat < -42. .and. lat > -45. .and. ia == 27) then
+    !if (lon > 140.0 .and. lon < 143. .and. lat <-42. .and. lat > -45. .and. ia == 27) then
     !  print '(a, I4, 4F12.4)', 'crust map:', ia, lat, lon, (ONE-r)*R_EARTH_KM,moho*R_EARTH_KM
     !endif
     !if (r > 1.02d0) then
@@ -392,7 +392,7 @@
 
 ! honors deep moho (below 60 km), otherwise keeps the mesh boundary at r60 fixed
 
-  use constants,only: NGNOD,EARTH_R,R_UNIT_SPHERE,SMALLVAL
+  use constants, only: NGNOD,EARTH_R,R_UNIT_SPHERE,SMALLVAL
   use shared_parameters, only: PLANET_TYPE,IPLANET_MARS,R_EARTH,R_MARS,RMOHO_STRETCH_ADJUSTMENT
 
   use meshfem3D_par, only: RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST
@@ -576,7 +576,7 @@
 ! mesh will get stretched down to r220
 
   use constants, only: NGNOD,EARTH_R,R_UNIT_SPHERE,SMALLVAL
-  use shared_parameters,only: PLANET_TYPE,IPLANET_MARS,R_EARTH,R_MARS,RMOHO_STRETCH_ADJUSTMENT
+  use shared_parameters, only: PLANET_TYPE,IPLANET_MARS,R_EARTH,R_MARS,RMOHO_STRETCH_ADJUSTMENT
 
   use meshfem3D_par, only: RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST
 

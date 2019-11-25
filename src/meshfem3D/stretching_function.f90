@@ -90,7 +90,7 @@
 ! stretch_tab array uses indices index_radius & index_layer :
 !   stretch_tab( index_radius (1=top,2=bottom) , index_layer (1=first layer, 2=second layer,..) )
 
-  use shared_parameters,only: PLANET_TYPE,IPLANET_MARS
+  use shared_parameters, only: PLANET_TYPE,IPLANET_MARS
 
   implicit none
 

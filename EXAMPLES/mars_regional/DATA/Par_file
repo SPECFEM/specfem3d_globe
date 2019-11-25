@@ -21,7 +21,7 @@ GAMMA_ROTATION_AZIMUTH          = 0.d0
 
 # number of elements at the surface along the two sides of the first chunk
 # (must be multiple of 16 and 8 * multiple of NPROC below)
-NEX_XI                          = 32 
+NEX_XI                          = 32
 NEX_ETA                         = 32
 
 # number of MPI processors along the two sides of the first chunk
@@ -58,7 +58,7 @@ NPROC_ETA                       = 2
 #                          e.g. s20rts_1Dcrust, s362ani_1Dcrust, etc.
 #
 # 1D MARS models: 1D_Sohl
-# 3D MARS models: 1D_Sohl_3D_crust, thermal_SH?? (to be added..)                         
+# 3D MARS models: 1D_Sohl_3D_crust, thermal_SH?? (to be added..)
 #
 MODEL                           = 1D_Sohl_3D_crust
 

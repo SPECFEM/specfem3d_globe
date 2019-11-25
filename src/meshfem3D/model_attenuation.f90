@@ -208,7 +208,7 @@
   else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) then
     AM_V%Qr(:)     = SEA1DM_V_radius_sea1d(:)
     AM_V%Qmu(:)    = SEA1DM_V_Qmu_sea1d(:)
-  elseif (REFERENCE_1D_MODEL == REFERENCE_MODEL_SOHL) then
+  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_SOHL) then
     ! Mars: attenuation model by Nimmo & Faul, 2013?
     !       at the moment, this is taken from PREM
     AM_V%Qr(:)     = (/   0.0d0,    RICB,  RICB,  RCMB,    RCMB,    R670, R670,   R220,    R220,    R80,     R80, R_EARTH /)

@@ -30,8 +30,8 @@
 ! creates a spline for the gravity profile in PREM
 ! radius and density are non-dimensional
 
-  use constants,only: NR
-  use shared_parameters,only: PLANET_TYPE,IPLANET_MARS
+  use constants, only: NR
+  use shared_parameters, only: PLANET_TYPE,IPLANET_MARS
 
   implicit none
 

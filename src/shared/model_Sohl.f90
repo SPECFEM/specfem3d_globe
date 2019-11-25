@@ -11,7 +11,7 @@
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
-! the Free Software Foundation; either version 2 of the License, or
+! the Free Software Foundation; either version 3 of the License, or
 ! (at your option) any later version.
 !
 ! This program is distributed in the hope that it will be useful,
@@ -29,9 +29,9 @@
 !
 ! Isotropic version of the spherically symmetric Reference Mars Model
 ! model A in the reference
-!  
+!
 ! Sohl, F., and T. Spohn (1997), The interior structure of Mars: Implications
-! from SNC meteorites, J. Geophys. Res., 102(E1), 1613–1635,
+! from SNC meteorites, J. Geophys. Res., 102(E1), 1613-1635,
 ! doi:10.1029/96JE03419.
 !
 !
@@ -79,7 +79,7 @@
     !
     if (r >= 0.d0 .and. r < RICB) then
       ! debug
-      !if (myrank == 0) print*,'debug: model Sohl:',idoubling,IFLAG_INNER_CORE_NORMAL,IFLAG_MIDDLE_CENTRAL_CUBE, &
+      !if (myrank == 0) print *,'debug: model Sohl:',idoubling,IFLAG_INNER_CORE_NORMAL,IFLAG_MIDDLE_CENTRAL_CUBE, &
       !                            IFLAG_BOTTOM_CENTRAL_CUBE,IFLAG_TOP_CENTRAL_CUBE,IFLAG_IN_FICTITIOUS_CUBE
 
       ! checks with inner core flags
@@ -106,19 +106,19 @@
     !
     else if (r > RTOPDDOUBLEPRIME .and. r < R670) then
       if (idoubling /= IFLAG_MANTLE_NORMAL) &
-        call exit_MPI(myrank,'wrong doubling flag for top D" -> d670 point in model_Sohl()')
+        call exit_MPI(myrank,'wrong doubling flag for top D" - > d670 point in model_Sohl()')
     !
     !--- mantle: from d670 to d220
     !
     else if (r > R670 .and. r < R220) then
       if (idoubling /= IFLAG_670_220) &
-        call exit_MPI(myrank,'wrong doubling flag for d670 -> d220 point in model_Sohl()')
+        call exit_MPI(myrank,'wrong doubling flag for d670 - > d220 point in model_Sohl()')
     !
     !--- mantle and crust: from d220 to MOHO and then to surface
     !
     else if (r > R220) then
       if (idoubling /= IFLAG_220_80 .and. idoubling /= IFLAG_80_MOHO .and. idoubling /= IFLAG_CRUST) &
-        call exit_MPI(myrank,'wrong doubling flag for d220 -> Moho -> surface point in model_Sohl()')
+        call exit_MPI(myrank,'wrong doubling flag for d220 - > Moho - > surface point in model_Sohl()')
     endif
 
   endif
@@ -249,7 +249,7 @@
         Qkappa=57827.0d0
 
         ! same properties everywhere in Mars crust if we decide to
-        ! define only one layer in the crust. Use the value at 
+        ! define only one layer in the crust. Use the value at
         ! 60 km depth (r = 3330 km) in modSOHL from IPGP
         if (ONE_CRUST) then
           drhodr=0.0d0

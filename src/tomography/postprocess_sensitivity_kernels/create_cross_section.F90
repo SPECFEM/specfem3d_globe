@@ -2478,7 +2478,7 @@
 ! returns latitude/longitude in radians for geocentric location
 
   use constants, only: DEGREES_TO_RADIANS,PI_OVER_TWO
-  use shared_parameters,only: ONE_MINUS_F_SQUARED
+  use shared_parameters, only: ONE_MINUS_F_SQUARED
 
   implicit none
 

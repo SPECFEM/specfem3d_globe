@@ -81,10 +81,10 @@
  Radial Meshing parameters:
    NCHUNKS                =            1
 
-   CENTER LAT/LON:             4.50000000     /   136.000000    
-   GAMMA_ROTATION_AZIMUTH:     0.00000000    
+   CENTER LAT/LON:             4.50000000     /   136.000000
+   GAMMA_ROTATION_AZIMUTH:     0.00000000
 
-   CHUNK WIDTH XI/ETA:         15.0000000     /   15.0000000    
+   CHUNK WIDTH XI/ETA:         15.0000000     /   15.0000000
    NEX XI/ETA:                        32 /          32
 
    NER_CRUST:                          5
@@ -103,7 +103,7 @@
    R_CENTRAL_CUBE =    395.000000      km
 
  Mesh resolution:
-   DT =   0.11874999999999999     
+   DT =   0.11874999999999999
    Minimum period =    22.666666666666664       (s)
 
    MIN_ATTENUATION_PERIOD =           23
@@ -118,11 +118,11 @@
 
  first pass
 
-   ...allocating arrays 
+   ...allocating arrays
 
-   ...setting up layers 
+   ...setting up layers
 
-   ...creating mesh elements 
+   ...creating mesh elements
    creating layer            1 out of           10
      10.0%    current clock (NOT elapsed) time is: 23h 42min 09sec
    creating layer            2 out of           10
@@ -151,11 +151,11 @@
 
  second pass
 
-   ...allocating arrays 
+   ...allocating arrays
 
-   ...setting up layers 
+   ...setting up layers
 
-   ...creating mesh elements 
+   ...creating mesh elements
    creating layer            1 out of           10
      10.0%    current clock (NOT elapsed) time is: 23h 42min 10sec
    creating layer            2 out of           10
@@ -178,7 +178,7 @@
     100.0%    current clock (NOT elapsed) time is: 23h 42min 13sec
 
 
-   ...fills global mesh points 
+   ...fills global mesh points
 
    ...checking mesh resolution and time step
 
@@ -192,17 +192,17 @@
 
    Max element edge size =    84.6614075      (km)
    Min element edge size =    17.9431019      (km)
-   Max/min ratio =    4.71832609    
+   Max/min ratio =    4.71832609
 
-   Max Jacobian eigenvalue ratio =   0.999410808    
-   Min Jacobian eigenvalue ratio =   0.219796881    
+   Max Jacobian eigenvalue ratio =   0.999410808
+   Min Jacobian eigenvalue ratio =   0.219796881
 
    Minimum period resolved =    13.8247976      (s)
    Minimum period resolved (empirical) =    22.6666660      (s)
    Maximum suggested time step =   0.219999999      (s)
 
    for DT :   0.118749999      (s)
-   Max stability for wave velocities =   0.296273053    
+   Max stability for wave velocities =   0.296273053
  ----------------------------------
 
    saving vtk mesh files for resolution res_minimum_period...
@@ -245,7 +245,7 @@
    total unique MPI interface points:       51252
 
 
-   ...element inner/outer separation 
+   ...element inner/outer separation
 
  for overlapping of communications with calculations:
 
@@ -253,7 +253,7 @@
  percentage of volume elements in crust/mantle    80.1394653     %
 
 
-   ...element mesh coloring 
+   ...element mesh coloring
    mesh coloring:  F
 
    ...creating mass matrix
@@ -274,11 +274,11 @@
 
  first pass
 
-   ...allocating arrays 
+   ...allocating arrays
 
-   ...setting up layers 
+   ...setting up layers
 
-   ...creating mesh elements 
+   ...creating mesh elements
    creating layer            1 out of            2
      50.0%    current clock (NOT elapsed) time is: 23h 42min 14sec
    creating layer            2 out of            2
@@ -291,18 +291,18 @@
 
  second pass
 
-   ...allocating arrays 
+   ...allocating arrays
 
-   ...setting up layers 
+   ...setting up layers
 
-   ...creating mesh elements 
+   ...creating mesh elements
    creating layer            1 out of            2
      50.0%    current clock (NOT elapsed) time is: 23h 42min 14sec
    creating layer            2 out of            2
     100.0%    current clock (NOT elapsed) time is: 23h 42min 14sec
 
 
-   ...fills global mesh points 
+   ...fills global mesh points
 
    ...checking mesh resolution and time step
 
@@ -316,17 +316,17 @@
 
    Max element edge size =    110.107559      (km)
    Min element edge size =    33.4513626      (km)
-   Max/min ratio =    3.29157162    
+   Max/min ratio =    3.29157162
 
-   Max Jacobian eigenvalue ratio =   0.995009065    
-   Min Jacobian eigenvalue ratio =   0.236497343    
+   Max Jacobian eigenvalue ratio =   0.995009065
+   Min Jacobian eigenvalue ratio =   0.236497343
 
    Minimum period resolved =    14.4822693      (s)
    Minimum period resolved (empirical) =    22.6666660      (s)
    Maximum suggested time step =   0.490000010      (s)
 
    for DT :   0.118749999      (s)
-   Max stability for wave velocities =   0.133192942    
+   Max stability for wave velocities =   0.133192942
  ----------------------------------
 
    saving vtk mesh files for resolution res_minimum_period...
@@ -369,12 +369,12 @@
    total assembled MPI interface points:        4660
 
 
-   ...element inner/outer separation 
+   ...element inner/outer separation
  percentage of edge elements in outer core    59.0000000     %
  percentage of volume elements in outer core    41.0000000     %
 
 
-   ...element mesh coloring 
+   ...element mesh coloring
    mesh coloring:  F
 
    ...creating mass matrix
@@ -395,11 +395,11 @@
 
  first pass
 
-   ...allocating arrays 
+   ...allocating arrays
 
-   ...setting up layers 
+   ...setting up layers
 
-   ...creating mesh elements 
+   ...creating mesh elements
    creating layer            1 out of            1
     100.0%    current clock (NOT elapsed) time is: 23h 42min 14sec
 
@@ -410,16 +410,16 @@
 
  second pass
 
-   ...allocating arrays 
+   ...allocating arrays
 
-   ...setting up layers 
+   ...setting up layers
 
-   ...creating mesh elements 
+   ...creating mesh elements
    creating layer            1 out of            1
     100.0%    current clock (NOT elapsed) time is: 23h 42min 14sec
 
 
-   ...fills global mesh points 
+   ...fills global mesh points
 
    ...checking mesh resolution and time step
 
@@ -433,17 +433,17 @@
 
    Max element edge size =    33.7446175      (km)
    Min element edge size =    25.6568470      (km)
-   Max/min ratio =    1.31522858    
+   Max/min ratio =    1.31522858
 
-   Max Jacobian eigenvalue ratio =   0.996225119    
-   Min Jacobian eigenvalue ratio =   0.847605467    
+   Max Jacobian eigenvalue ratio =   0.996225119
+   Min Jacobian eigenvalue ratio =   0.847605467
 
    Minimum period resolved =    12.5162678      (s)
    Minimum period resolved (empirical) =    22.6666660      (s)
    Maximum suggested time step =   0.330000013      (s)
 
    for DT :   0.118749999      (s)
-   Max stability for wave velocities =   0.195671856    
+   Max stability for wave velocities =   0.195671856
  ----------------------------------
 
    saving vtk mesh files for resolution res_minimum_period...
@@ -486,12 +486,12 @@
    total assembled MPI interface points:        1156
 
 
-   ...element inner/outer separation 
+   ...element inner/outer separation
  percentage of edge elements in inner core    75.0000000     %
  percentage of volume elements in inner core    25.0000000     %
 
 
-   ...element mesh coloring 
+   ...element mesh coloring
    mesh coloring:  F
 
    ...creating mass matrix
@@ -520,14 +520,14 @@
  Load balancing = 100 % by definition
 
 
- the time step of the solver will be DT =   0.118749999    
+ the time step of the solver will be DT =   0.118749999
 
  using single precision for the calculations
 
  smallest and largest possible floating-point numbers are:    1.17549435E-38   3.40282347E+38
 
 
- Elapsed time for mesh generation and buffer creation in seconds =    20.015900999999999     
+ Elapsed time for mesh generation and buffer creation in seconds =    20.015900999999999
  Elapsed time for mesh generation and buffer creation in hh:mm:ss =    0 h 00 m 20 s
 
  End of mesh generation

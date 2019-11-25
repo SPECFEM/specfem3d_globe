@@ -19,7 +19,7 @@ Mars Orbital Laser Altimeter (MOLA) data:
   - megt90n000fb.img      - data
     https://pds-geosciences.wustl.edu/mgs/mgs-m-mola-5-megdr-l3-v1/mgsl_300x/meg032/megt90n000fb.img
 
-  - megt90n000fb.lbl.txt  - detailed table info 
+  - megt90n000fb.lbl.txt  - detailed table info
     https://pds-geosciences.wustl.edu/mgs/mgs-m-mola-5-megdr-l3-v1/mgsl_300x/meg032/megt90n000fb.lbl
 
 
