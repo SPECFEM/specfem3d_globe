@@ -63,6 +63,7 @@ shared_OBJECTS = \
 	$O/make_ellipticity.shared.o \
 	$O/memory_eval.shared.o \
 	$O/model_prem.shared.o \
+	$O/model_Sohl.shared.o \
 	$O/model_topo_bathy.shared.o \
 	$O/parallel.sharedmpi.o \
 	$O/param_reader.cc.o \

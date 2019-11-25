@@ -29,8 +29,12 @@
 
 ! creates a spline for the ellipticity profile in PREM
 ! radius and density are non-dimensional
+! or
+! for mars, creates a spline for the ellipticity profile in Mars (Sohl $ Spohn)
 
-  use constants, only: NR,TWO_PI,PI,GRAV,RHOAV,HOURS_PER_DAY,SECONDS_PER_HOUR,R_UNIT_SPHERE
+
+  use constants, only: NR,TWO_PI,PI,GRAV,R_UNIT_SPHERE
+  use shared_parameters, only: RHOAV,PLANET_TYPE,IPLANET_MARS,HOURS_PER_DAY,SECONDS_PER_HOUR
 
   implicit none
 
@@ -44,7 +48,7 @@
   integer :: i
   ! radii
   double precision :: ROCEAN,RMIDDLE_CRUST,RMOHO,R80,R220,R400,R600,R670, &
-                   R771,RTOPDDOUBLEPRIME,RCMB,RICB
+                      R771,RTOPDDOUBLEPRIME,RCMB,RICB,RSURFACE
   double precision :: r_icb,r_cmb,r_topddoubleprime,r_771,r_670,r_600
   double precision :: r_400,r_220,r_80,r_moho,r_middle_crust,r_ocean,r_0
 
@@ -55,38 +59,67 @@
   double precision :: z,g_a,bom,exponentval,i_rho,i_radau
   double precision :: yp1,ypn
 
+  ! Earth
   ! radius of the Earth for gravity calculation
   double precision, parameter :: R_EARTH_ELLIPTICITY = 6371000.d0
   ! radius of the ocean floor for gravity calculation
   double precision, parameter :: ROCEAN_ELLIPTICITY = 6368000.d0
+  ! Mars
+  ! radius of Mars for gravity calculation
+  double precision, parameter :: R_MARS_ELLIPTICITY = 3390000.d0
+  ! radius of the ocean floor for gravity calculation
+  double precision, parameter :: ROCEAN_MARS_ELLIPTICITY = 3390000.d0
 
-  ! PREM
-  ROCEAN = 6368000.d0
-  RMIDDLE_CRUST = 6356000.d0
-  RMOHO = 6346600.d0
-  R80  = 6291000.d0
-  R220 = 6151000.d0
-  R400 = 5971000.d0
-  R600 = 5771000.d0
-  R670 = 5701000.d0
-  R771 = 5600000.d0
-  RTOPDDOUBLEPRIME = 3630000.d0
-  RCMB = 3480000.d0
-  RICB = 1221000.d0
+  ! selects radii
+  select case (PLANET_TYPE)
+  case (IPLANET_MARS)
+    ! Mars
+    ! Sohn & Spohn Model A
+    RSURFACE = R_MARS_ELLIPTICITY
+    ROCEAN = ROCEAN_MARS_ELLIPTICITY
+    RMIDDLE_CRUST = 3340000.d0
+    RMOHO = 3280000.d0
+    R80  = 3055000.d0
+    R220 = 2908000.d0
+    R400 = 2655000.d0
+    R600 = 2455000.d0
+    R670 = 2360000.d0
+    R771 = 2033000.d0
+    RTOPDDOUBLEPRIME = 1503000.d0
+    RCMB = 1468000.d0
+    RICB = 515000.d0
+
+  case default
+    ! Earth default
+    ! PREM
+    RSURFACE = R_EARTH_ELLIPTICITY
+    ROCEAN = ROCEAN_ELLIPTICITY
+    RMIDDLE_CRUST = 6356000.d0
+    RMOHO = 6346600.d0
+    R80  = 6291000.d0
+    R220 = 6151000.d0
+    R400 = 5971000.d0
+    R600 = 5771000.d0
+    R670 = 5701000.d0
+    R771 = 5600000.d0
+    RTOPDDOUBLEPRIME = 3630000.d0
+    RCMB = 3480000.d0
+    RICB = 1221000.d0
+  end select
 
   ! non-dimensionalize
-  r_icb = RICB/R_EARTH_ELLIPTICITY
-  r_cmb = RCMB/R_EARTH_ELLIPTICITY
-  r_topddoubleprime = RTOPDDOUBLEPRIME/R_EARTH_ELLIPTICITY
-  r_771 = R771/R_EARTH_ELLIPTICITY
-  r_670 = R670/R_EARTH_ELLIPTICITY
-  r_600 = R600/R_EARTH_ELLIPTICITY
-  r_400 = R400/R_EARTH_ELLIPTICITY
-  r_220 = R220/R_EARTH_ELLIPTICITY
-  r_80 = R80/R_EARTH_ELLIPTICITY
-  r_moho = RMOHO/R_EARTH_ELLIPTICITY
-  r_middle_crust = RMIDDLE_CRUST/R_EARTH_ELLIPTICITY
-  r_ocean = ROCEAN_ELLIPTICITY/R_EARTH_ELLIPTICITY
+  r_icb = RICB/RSURFACE
+  r_cmb = RCMB/RSURFACE
+  r_topddoubleprime = RTOPDDOUBLEPRIME/RSURFACE
+  r_771 = R771/RSURFACE
+  r_670 = R670/RSURFACE
+  r_600 = R600/RSURFACE
+  r_400 = R400/RSURFACE
+  r_220 = R220/RSURFACE
+  r_80 = R80/RSURFACE
+  r_moho = RMOHO/RSURFACE
+  r_middle_crust = RMIDDLE_CRUST/RSURFACE
+  r_ocean = ROCEAN/RSURFACE
   r_0 = 1.d0
 
   do i=1,163
@@ -129,31 +162,52 @@
     r(i) = r_ocean+(r_0-r_ocean)*dble(i-634)/dble(6)
   enddo
 
-  ! use PREM to get the density profile for ellipticity (fine for other 1D reference models)
-  do i = 1,NR
-    call prem_density(r(i),rho(i),ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
-                      R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
-    radau(i) = rho(i)*r(i)*r(i)
-  enddo
+  ! density profile
+  if (PLANET_TYPE == IPLANET_MARS) then
+    ! Mars
+    ! Sohn & Spohn Model A
+    ! No Ocean
+    do i=627,NR
+      r(i) = r_middle_crust+(r_0-r_middle_crust)*dble(i-627)/dble(12)
+    enddo
+    ! use Sohl & Spohn model A (1997) to get the density profile for ellipticity.
+    do i = 1,NR
+      call Sohl_density(r(i),rho(i),ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
+                        R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+      radau(i) = rho(i)*r(i)*r(i)
+    enddo
+
+  else
+    ! Earth
+    ! use PREM to get the density profile for ellipticity (fine for other 1D reference models)
+    do i = 1,NR
+      call prem_density(r(i),rho(i),ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
+                        R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+      radau(i) = rho(i)*r(i)*r(i)
+    enddo
+  endif
 
   eta(1) = 0.0d0
-
   k(1) = 0.0d0
 
   do i=2,NR
     call intgrl(i_rho,r,1,i,rho,s1,s2,s3)
+
 ! Radau approximation of Clairaut's equation for first-order terms of ellipticity, see e.g. Jeffreys H.,
 ! The figures of rotating planets, Mon. Not. R. astr. Soc., vol. 113, p. 97-105 (1953).
 ! The Radau approximation is mentioned on page 97.
 ! For more details see Section 14.1.2 in Dahlen and Tromp (1998)
 ! (see also in file ellipticity_equations_from_Dahlen_Tromp_1998.pdf in the "doc" directory of the code).
     call intgrl(i_radau,r,1,i,radau,s1,s2,s3)
+
     z=(2.0d0/3.0d0)*i_radau/(i_rho*r(i)*r(i))
+
     ! this comes from equation (14.19) in Dahlen and Tromp (1998)
     eta(i)=(25.0d0/4.0d0)*((1.0d0-(3.0d0/2.0d0)*z)**2.0d0)-1.0d0
     k(i)=eta(i)/(r(i)**3.0d0)
   enddo
 
+  ! day rotation
   bom = TWO_PI/(HOURS_PER_DAY*SECONDS_PER_HOUR)
 
   ! non-dimensionalized value

@@ -53,7 +53,7 @@
   integer :: int_radius,idoubling,nspl_gravity,iglob,ier
 
   ! minimum radius in inner core (to avoid zero radius)
-  double precision, parameter :: MINIMUM_RADIUS_INNER_CORE = 100.d0 / R_EARTH
+  double precision, parameter :: MINIMUM_RADIUS_INNER_CORE = 100.d0 ! in m
 
   if (myrank == 0) then
     write(IMAIN,*) "preparing gravity arrays"
@@ -81,9 +81,19 @@
 
       ! use PREM density profile to calculate gravity (fine for other 1D models)
       idoubling = 0
-      call model_prem_iso(radius,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,.false., &
-                          ONE_CRUST,.false.,RICB,RCMB,RTOPDDOUBLEPRIME, &
-                          R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+      ! density profile
+      if (PLANET_TYPE == IPLANET_MARS) then
+        ! Mars
+        ! Sohn & Spohn Model A
+        call model_Sohl(radius,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,.false., &
+                        ONE_CRUST,.false.,RICB,RCMB,RTOPDDOUBLEPRIME, &
+                        R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+      else
+        ! Earth
+        call model_prem_iso(radius,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,.false., &
+                            ONE_CRUST,.false.,RICB,RCMB,RTOPDDOUBLEPRIME, &
+                            R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+      endif
 
       dg = 4.0d0 * rho - 2.0d0 * g / radius
 
@@ -140,13 +150,21 @@
     ! no gravity
     ! tabulate d ln(rho)/dr needed for the no gravity fluid potential
     do int_radius = 1,NRAD_GRAVITY
-       radius = dble(int_radius) / (R_EARTH_KM * 10.d0)
-       idoubling = 0
-       call model_prem_iso(radius,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,.false., &
-                           ONE_CRUST,.false.,RICB,RCMB,RTOPDDOUBLEPRIME, &
-                           R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
-
-       d_ln_density_dr_table(int_radius) = drhodr/rho
+      radius = dble(int_radius) / (R_EARTH_KM * 10.d0)
+      idoubling = 0
+      ! density profile
+      if (PLANET_TYPE == IPLANET_MARS) then
+        ! Mars
+        call model_Sohl(radius,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,.false., &
+                        ONE_CRUST,.false.,RICB,RCMB,RTOPDDOUBLEPRIME, &
+                        R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+      else
+        ! Earth
+        call model_prem_iso(radius,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,.false., &
+                            ONE_CRUST,.false.,RICB,RCMB,RTOPDDOUBLEPRIME, &
+                            R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+      endif
+      d_ln_density_dr_table(int_radius) = drhodr/rho
     enddo
 
     ! pre-computes gradient
@@ -264,7 +282,7 @@
 
       ! make sure radius is never zero even for points at center of cube
       ! because we later divide by radius
-      if (radius < MINIMUM_RADIUS_INNER_CORE) radius = MINIMUM_RADIUS_INNER_CORE
+      if (radius < MINIMUM_RADIUS_INNER_CORE / R_EARTH) radius = MINIMUM_RADIUS_INNER_CORE / R_EARTH
 
       cos_theta = dcos(theta)
       sin_theta = dsin(theta)

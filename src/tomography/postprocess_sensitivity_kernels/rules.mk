@@ -318,6 +318,7 @@ xcreate_cross_section_SHARED_OBJECTS = \
 	$O/lagrange_poly.shared.o \
 	$O/make_ellipticity.shared.o \
 	$O/model_prem.shared.o \
+	$O/model_Sohl.shared.o \
 	$O/model_topo_bathy.shared.o \
 	$O/recompute_jacobian.shared.o \
 	$O/reduce.shared.o \

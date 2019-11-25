@@ -66,16 +66,29 @@
     ! check total Earth mass
     if (NCHUNKS == 6) then
       write(IMAIN,*)
-      write(IMAIN,*) 'computed total Earth mass for this density model and mesh: '
-      write(IMAIN,*) '   ',sngl(Earth_mass_total),' kg'
-      write(IMAIN,*) '   (should be not too far from 5.974E+24 kg)'
+      if (PLANET_TYPE == IPLANET_MARS) then
+        ! Mars
+        write(IMAIN,*) 'computed total Mars mass for this density model and mesh: '
+        write(IMAIN,*) '   ',sngl(Earth_mass_total),' kg'
+        write(IMAIN,*) '   (should be not too far from 6.417E+23 kg)'
+        write(IMAIN,*)
+        ! take into account the fact that dimensions have been non-dimensionalized by dividing them by R_EARTH
+        write(IMAIN,*) 'average density for this density model and mesh: '
+        write(IMAIN,*) '   ',sngl(Earth_mass_total / (volume_total * R_EARTH**3)),' kg/m3'
+        write(IMAIN,*) '   (should be not too far from 3933 kg/m3)'
+      else
+        ! Earth
+        write(IMAIN,*) 'computed total Earth mass for this density model and mesh: '
+        write(IMAIN,*) '   ',sngl(Earth_mass_total),' kg'
+        write(IMAIN,*) '   (should be not too far from 5.974E+24 kg)'
+        write(IMAIN,*)
+        ! take into account the fact that dimensions have been non-dimensionalized by dividing them by R_EARTH
+        write(IMAIN,*) 'average density for this density model and mesh: '
+        write(IMAIN,*) '   ',sngl(Earth_mass_total / (volume_total * R_EARTH**3)),' kg/m3'
+        write(IMAIN,*) '   (should be not too far from 5514 kg/m3)'
+      endif
       write(IMAIN,*)
-      ! take into account the fact that dimensions have been non-dimensionalized by dividing them by R_EARTH
-      write(IMAIN,*) 'average density for this density model and mesh: '
-      write(IMAIN,*) '   ',sngl(Earth_mass_total / (volume_total * R_EARTH**3)),' kg/m3'
-      write(IMAIN,*) '   (should be not too far from 5514 kg/m3)'
-      write(IMAIN,*)
-      write(IMAIN,*) 'position of the center of mass of the Earth for this density model and mesh: '
+      write(IMAIN,*) 'position of the center of mass of the globe for this density model and mesh: '
       write(IMAIN,*) '   x = ',sngl((Earth_center_of_mass_x_total / Earth_mass_total) / 1000.d0),' km'
       write(IMAIN,*) '   y = ',sngl((Earth_center_of_mass_y_total / Earth_mass_total) / 1000.d0),' km'
       write(IMAIN,*) '   z = ',sngl((Earth_center_of_mass_z_total / Earth_mass_total) / 1000.d0),' km'

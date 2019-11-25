@@ -57,7 +57,7 @@
 ! sets parameters for computation based on Par_file settings
 
   use constants, only: &
-    TINYVAL,R_EARTH_KM,DEGREES_TO_RADIANS, &
+    TINYVAL,DEGREES_TO_RADIANS, &
     SUPPRESS_CRUSTAL_MESH,ADD_4TH_DOUBLING, &
     DO_BENCHMARK_RUN_ONLY,NSTEP_FOR_BENCHMARK, &
     IREGION_CRUST_MANTLE,IREGION_INNER_CORE, &
@@ -84,15 +84,6 @@
 
   ! count the total number of sources in the CMTSOLUTION file
   call count_number_of_sources(NSOURCES)
-
-  ! converts values to radians
-  MOVIE_EAST = MOVIE_EAST_DEG * DEGREES_TO_RADIANS
-  MOVIE_WEST = MOVIE_WEST_DEG * DEGREES_TO_RADIANS
-  MOVIE_NORTH = (90.0d0 - MOVIE_NORTH_DEG) * DEGREES_TO_RADIANS ! converting from latitude to colatitude
-  MOVIE_SOUTH = (90.0d0 - MOVIE_SOUTH_DEG) * DEGREES_TO_RADIANS
-  ! converts movie top/bottom depths to radii
-  MOVIE_TOP = (R_EARTH_KM-MOVIE_TOP_KM)/R_EARTH_KM
-  MOVIE_BOTTOM = (R_EARTH_KM-MOVIE_BOTTOM_KM)/R_EARTH_KM
 
   ! include central cube or not
   ! use regular cubed sphere instead of cube for large distances
@@ -153,6 +144,15 @@
 
   ! debug
   !print *,'initial time steps = ',NSTEP,' record length = ',RECORD_LENGTH_IN_MINUTES,' DT = ',DT
+
+  ! movies: converts values to radians
+  MOVIE_EAST = MOVIE_EAST_DEG * DEGREES_TO_RADIANS
+  MOVIE_WEST = MOVIE_WEST_DEG * DEGREES_TO_RADIANS
+  MOVIE_NORTH = (90.0d0 - MOVIE_NORTH_DEG) * DEGREES_TO_RADIANS ! converting from latitude to colatitude
+  MOVIE_SOUTH = (90.0d0 - MOVIE_SOUTH_DEG) * DEGREES_TO_RADIANS
+  ! converts movie top/bottom depths to radii
+  MOVIE_TOP = (R_EARTH_KM-MOVIE_TOP_KM)/R_EARTH_KM
+  MOVIE_BOTTOM = (R_EARTH_KM-MOVIE_BOTTOM_KM)/R_EARTH_KM
 
   ! half-time duration
   !

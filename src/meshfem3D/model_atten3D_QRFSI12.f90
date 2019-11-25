@@ -203,8 +203,6 @@
   real(kind=4) :: shdep(NSQ)
   real(kind=4) :: xlmvec(NSQ**2)
 
-  double precision, parameter :: rmoho_prem = R_EARTH_KM - 24.4d0
-  !double precision, parameter :: rcmb = 3480.0d0
 
   ! in Colleen's original code theta refers to the latitude.  Here we have redefined theta to be colatitude
   ! to agree with the rest of specfem
@@ -219,7 +217,7 @@
   ! when we want to expand mantle up to surface...
 
 !  !if (idoubling == IFLAG_CRUST .or. radius >= rmoho) then
-  if (radius >= rmoho_prem) then
+  if (radius >= RMOHO_PREM) then
   !   print *,'QRFSI12: we are in the crust'
      Qmu = 600.0d0
   else if (idoubling == IFLAG_INNER_CORE_NORMAL .or. idoubling == IFLAG_MIDDLE_CENTRAL_CUBE .or. &

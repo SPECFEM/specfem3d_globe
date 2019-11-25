@@ -336,7 +336,7 @@
   double precision:: g_dvs,g_depth,g_lat,g_lon,x,g_weight,weight_sum,weight_prod
 
   double precision,parameter:: const_a = sigma_v/3.0
-  double precision,parameter:: const_b = sigma_h/3.0/(R_EARTH_KM*DEGREES_TO_RADIANS)
+  double precision,parameter:: const_b = sigma_h/3.0
 
   ! initialize
   dvs = 0.0d0
@@ -363,12 +363,13 @@
   ! loop over neighboring points
   dvs = 0.0
   weight_sum = 0.0
+
   do i=-NUM_GAUSSPOINTS,NUM_GAUSSPOINTS
     g_depth = r_depth + i*const_a
     do j=-NUM_GAUSSPOINTS,NUM_GAUSSPOINTS
-      g_lon = lon + j*const_b
+      g_lon = lon + j*const_b/(R_EARTH_KM*DEGREES_TO_RADIANS)
       do k=-NUM_GAUSSPOINTS,NUM_GAUSSPOINTS
-        g_lat = lat + k*const_b
+        g_lat = lat + k*const_b/(R_EARTH_KM*DEGREES_TO_RADIANS)
 
         call get_PPMmodel_value(g_lat,g_lon,g_depth,g_dvs)
 

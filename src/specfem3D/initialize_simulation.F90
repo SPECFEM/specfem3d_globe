@@ -89,6 +89,15 @@
 
   if (myrank == 0) then
 
+    write(IMAIN,*)
+    select case(PLANET_TYPE)
+    case (IPLANET_MARS)
+      write(IMAIN,*) 'Planet: Mars'
+    case default
+      write(IMAIN,*) 'Planet: Earth'
+    end select
+    write(IMAIN,*)
+
     if (FIX_UNDERFLOW_PROBLEM) write(IMAIN,*) 'Fixing slow underflow trapping problem using small initial field'
 
     write(IMAIN,*)

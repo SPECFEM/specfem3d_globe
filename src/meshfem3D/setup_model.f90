@@ -115,6 +115,7 @@
   if (myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*)
+    call flush_IMAIN()
   endif
   call synchronize_all()
 
@@ -236,7 +237,7 @@
   endif
   write(IMAIN,*)
 
-  write(IMAIN,*) 'Reference radius of the Earth used is ',R_EARTH_KM,' km'
+  write(IMAIN,*) 'Reference radius of the globe used is ',R_EARTH_KM,' km'
   write(IMAIN,*)
   write(IMAIN,*) 'Central cube is at a radius of ',R_CENTRAL_CUBE/1000.d0,' km'
 

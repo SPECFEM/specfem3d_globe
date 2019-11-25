@@ -453,6 +453,17 @@
       vsh = vs
       eta_aniso = 1.d0
 
+    case (REFERENCE_MODEL_SOHL)
+      ! Mars
+      call model_Sohl(r_prem,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &
+                      ONE_CRUST,.true.,RICB,RCMB,RTOPDDOUBLEPRIME, &
+                      R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+      vpv = vp
+      vph = vp
+      vsv = vs
+      vsh = vs
+      eta_aniso = 1.d0
+
     case default
       stop 'unknown 1D reference Earth model in meshfem3D_models_get1D_val()'
 
@@ -1230,7 +1241,7 @@
 !
 ! note:  only Qmu attenuation considered, Qkappa attenuation not used so far in solver...
 
-  use constants, only: N_SLS
+  use constants, only: N_SLS,RMOHO_PREM
 
   use meshfem3D_models_par
 
@@ -1254,7 +1265,6 @@
   ! local parameters
   double precision :: r_dummy,theta,phi,theta_degrees,phi_degrees
   double precision :: r_used
-  double precision, parameter :: rmoho_prem = R_EARTH_KM - 24.4d0
 
   ! initializes
   tau_e(:)   = 0.0d0
@@ -1284,11 +1294,11 @@
     if (CRUSTAL) then
       if (r_prem > (ONE-moho) .or. elem_in_crust) then
         ! points in actual crust: puts point radius into prem crust
-        r_used = rmoho_prem*1.0001
-      else if (r_prem*R_EARTH_KM >= rmoho_prem) then
+        r_used = RMOHO_PREM*1.0001
+      else if (r_prem*R_EARTH_KM >= RMOHO_PREM) then
         ! points below actual crust (e.g. oceanic crust case), but above prem moho:
         ! puts point slightly below prem moho to expand mantle values at that depth
-        r_used = rmoho_prem*0.99999
+        r_used = RMOHO_PREM*0.99999
       endif
     endif ! CRUSTAL
 

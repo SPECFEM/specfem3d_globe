@@ -64,7 +64,7 @@
 
   use postprocess_par, only: &
     CUSTOM_REAL,NGLLX,NGLLY,NGLLZ, &
-    GAUSSALPHA,GAUSSBETA,R_EARTH_KM, &
+    GAUSSALPHA,GAUSSBETA, &
     IIN,IOUT,MAX_STRING_LEN, &
     NCHUNKS_VAL,NPROC_XI_VAL,NPROC_ETA_VAL,NPROCTOT_VAL,NEX_XI_VAL, &
     NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE
@@ -1249,7 +1249,7 @@ print *,myrank,'adios file rank',rank
                                      USE_MIDPOINT_SEARCH,DO_SEPARATION_410_650,DO_SEPARATION_TOPO,USE_FALLBACK)
 
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,MIDX,MIDY,MIDZ,R_EARTH_KM,R_EARTH
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,MIDX,MIDY,MIDZ,R_EARTH_KM,R_EARTH,EARTH_R
 
   use kdtree_search, only: kdtree_find_nearest_neighbor,kdtree_nodes_location
 
@@ -1306,7 +1306,7 @@ print *,myrank,'adios file rank',rank
   logical :: is_critical,search_internal
   integer :: ii,jj,kk
   ! Earth radius
-  double precision,parameter :: RTOP = R_EARTH      ! 6371000.d0
+  double precision,parameter :: RTOP = EARTH_R      ! 6371000.d0
   double precision,parameter :: R220 = 6151000.d0
   double precision,parameter :: R410 = 5961000.d0
   double precision,parameter :: R600 = 5771000.d0

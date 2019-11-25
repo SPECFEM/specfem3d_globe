@@ -107,6 +107,18 @@ url_etopo2 = 'https://www.ngdc.noaa.gov/mgg/global/relief/ETOPO2/ETOPO2v2-2006/E
 #filename_web5 = 'ETOPO5.DAT'
 #url_etopo5 = 'https://www.ngdc.noaa.gov/mgg/global/relief/ETOPO5/TOPO/ETOPO5/ETOPO5.DAT'
 
+## MARS
+# see: https://pds-geosciences.wustl.edu/missions/mgs/megdr.html
+#
+# MOLA topography data set
+# 32-pixel per degree = 0.03125 degree resolution ~ 1.875 arc-minute
+filename_webMOLA2lbl = 'megt90n000fb.lbl'
+filename_webMOLA2 = 'megt90n000fb.img'
+url_MOLA2 = 'https://pds-geosciences.wustl.edu/mgs/mgs-m-mola-5-megdr-l3-v1/mgsl_300x/meg032/megt90n000fb.img'
+
+
+# plots PNM image
+plot_image = True
 
 ####################################################################
 
@@ -135,8 +147,14 @@ def get_url(topo):
         url = url_etopo2 # will get re-sampled
     elif topo == 'etopo15':
         url = url_etopo2 # will get re-sampled
+    elif topo == 'mars1.875':
+        url = url_MOLA2
+    elif topo == 'mars2':
+        url = url_MOLA2  # will get re-sampled
+    elif topo == 'mars4':
+        url = url_MOLA2  # will get re-sampled
     else:
-        print("Invalid topo argument %s, only recognizes etopo1,etopo2,etopo4,etopo5,etopo15" % topo)
+        print("Invalid topo argument %s, only recognizes etopo1,etopo2,etopo4,etopo5,etopo15,mars2,mars4" % topo)
         sys.exit(1)
     return url
 
@@ -145,69 +163,87 @@ def download_data_file(topo,filename):
     """
     downloads topo/bathy file from web
     """
+    global filename_webMOLA2,filename_webMOLA2lbl
+
     print("download:")
 
     # checks if file already downloaded
     if os.path.isfile(filename):
         print("  file %s exists already, skipping download" % filename)
+        return
+
+    # download from web
+    url = get_url(topo)
+    print("url: %s" % url)
+
+    # downloads large files as stream
+    r = requests.get(url,stream=True)
+
+    # file status
+    if r.status_code == 200:
+        status = 'success'
+    elif r.status_code == 404:
+        status = 'file not found'
     else:
-        # download from web
-        url = get_url(topo)
-        print("url: %s" % url)
+        status = str(r.status_code)
 
-        # downloads large files as stream
-        r = requests.get(url,stream=True)
+    # file length
+    length = r.headers.get('content-length')
+    if length is None: length = 0
 
-        # file status
-        if r.status_code == 200:
-            status = 'success'
-        elif r.status_code == 404:
-            status = 'file not found'
+    # info
+    print("url file info:")
+    print("  status  : ",status)
+    print("  header  : ",r.headers['content-type'])
+    print("  encoding: ",r.encoding)
+    print("  length  : {} {}".format(int(length) / 1024.0 / 1024.0,"(MB)"))
+
+    # check
+    if r.status_code == 404:
+        print("Error: file not found",r.status_code)
+        sys.exit(1)
+
+    # downloads data file
+    if 'mars' in topo:
+        # data file in .img format
+        filename = filename_webMOLA2
+    else:
+        # data file downloaded as .zip file
+        filename = 'topo.zip'
+
+    # saves data file as topo.zip
+    with open(filename, 'wb') as f:
+        if length == 0:
+            # no content length header
+            f.write(r.content)
         else:
-            status = str(r.status_code)
-
-        # file length
-        length = r.headers.get('content-length')
-        if length is None: length = 0
-
-        # info
-        print("url file info:")
-        print("  status  : ",status)
-        print("  header  : ",r.headers['content-type'])
-        print("  encoding: ",r.encoding)
-        print("  length  : {} {}".format(int(length) / 1024.0 / 1024.0,"(MB)"))
-
-        # check
-        if r.status_code == 404:
-            print("Error: file not found",r.status_code)
-            sys.exit(1)
-
-        # saves data file as topo.zip
-        with open('topo.zip', 'wb') as f:
-            if length == 0:
-                # no content length header
-                f.write(r.content)
-            else:
+            # status bar
+            print("start downloading...")
+            incr = 0
+            t_start = timeit.default_timer()
+            for data in r.iter_content(chunk_size=4096):
+                incr += len(data)
+                f.write(data)
+                done = int(100.0 * incr / int(length))
+                # download speed MB/s
+                t_elapsed = timeit.default_timer() - t_start
+                total_data = incr / 1024. / 1024.
+                bandwidth = total_data / t_elapsed
                 # status bar
-                print("start downloading...")
-                incr = 0
-                t_start = timeit.default_timer()
-                for data in r.iter_content(chunk_size=4096):
-                    incr += len(data)
-                    f.write(data)
-                    done = int(100.0 * incr / int(length))
-                    # download speed MB/s
-                    t_elapsed = timeit.default_timer() - t_start
-                    total_data = incr / 1024. / 1024.
-                    bandwidth = total_data / t_elapsed
-                    # status bar
-                    sys.stdout.write("\r[%s%s] %6.1f MB  %4.2f MB/s" % ('=' * done, ' ' * (100-done), total_data, bandwidth ) )
-                    sys.stdout.flush()
-            print("")
-            print("written: ",f.name)
+                sys.stdout.write("\r[%s%s] %6.1f MB  %4.2f MB/s" % ('=' * done, ' ' * (100-done), total_data, bandwidth ) )
+                sys.stdout.flush()
+        print("")
+        print("written: ",f.name)
 
+    # extract data file
+    if 'mars' in topo:
+        # already data format
+        # downloads also table info file (descriptor to actual data file, needed for later file conversions with GDAL/GMT)
+        lbl_file = requests.get(filename_webMOLA2lbl)
+        open(filename_webMOLA2,'w').write(lbl_file.content)
+    else:
         # unzip
-        with zipfile.ZipFile('topo.zip', 'r') as zipObj:
+        with zipfile.ZipFile(filename, 'r') as zipObj:
             # list
             print("zip files: ",zipObj.namelist())
             # Extract all the contents of zip file in current directory
@@ -233,12 +269,22 @@ def resample_topo_file(topo,filename_web,filename):
         Ival = 5   # to 5 minute downsampling
     elif topo == 'etopo15':
         Ival = 15  # to 15 minute downsampling
+    elif topo == 'mars1.875':
+        Ival = 1.875
+    elif topo == 'mars2':
+        Ival = 2  # to 2 minute resampling
+    elif topo == 'mars4':
+        Ival = 4  # to 2 minute resampling
     else:
         print("invalid topo parameters for resampling, exiting...")
         sys.exit(1)
 
     print("  resampling to {}m".format(Ival))
-    gridfile = "ETOPO{}.grd".format(Ival)
+    if 'mars' in topo:
+        gridfile = "MARSTOPO{}.grd".format(Ival)
+    else:
+        gridfile = "ETOPO{}.grd".format(Ival)
+
     if gridfile != filename:
         print("inconsistent filenames: gridfile {} and filename {}".format(gridfile,filename))
         print("please check script, exiting...")
@@ -270,6 +316,24 @@ def resample_topo_file(topo,filename_web,filename):
                 # direct resample
                 cmd = 'grdsample ' + filename_web + ' -V -Rd ' + grid + ' ' + interval
 
+        elif 'mars' in topo:
+            # converting to raw binary grid file
+            # converts to GeoTiff
+            # > gdal_translate -of GTiff megt90n000fb.lbl topo.tif
+            # converts to GeoTiff, method 3
+            # see: https://pds-geosciences.wustl.edu/mgs/mgs-m-mola-5-megdr-l3-v1/mgsl_300x/extras/mola_envi.pdf
+            # > gdal_translate -a_ullr upperLeftX UpperLeftY LowerRightX LowerLeftY megt90n000fb.lbl topo.tif
+            # converts to ETOPO file
+            # > xyz2grd megt90n000fb.img -Gtopo.grd=ns -R0/360/-90/90 -I1.875m -ZTLhw -fg -r -Vl
+            # plot image
+            # > grdimage topo.grd -JX6i+ -I+d -P -Vl > topo.ps
+            print("  converting binary file to grid file: "+filename_web)
+            cmd = 'xyz2grd '   + filename_web + ' -Gmarstopo1.875.grd -R0/360/-90/90 -I1.875m -r -ZTLhw -fic -fog -V'
+            print("> ",cmd)
+            status = subprocess.call(cmd, shell=True)
+            check_status(status)
+            # resample
+            cmd = 'grdsample marstopo1.875.grd -V -Rd ' + grid + ' ' + interval
         else:
             print("invalid topo %s for resampling" % topo)
             sys.exit(1)
@@ -367,7 +431,7 @@ def smooth_topo_bathy_fortran_tool(topo,filename_in,filename_out,SIZE_FILTER_ONE
         check_status(status)
         print("")
 
-def smooth_topo_bathy(topo,filename_in,filename_out,SIZE_FILTER_ONE_SIDE=1,NX_BATHY=0,NY_BATHY=0,plot_image=False):
+def smooth_topo_bathy(topo,filename_in,filename_out,SIZE_FILTER_ONE_SIDE=1,NX_BATHY=0,NY_BATHY=0):
     """
     smooths elevation by taking average value within neighboring data points
     """
@@ -378,62 +442,76 @@ def smooth_topo_bathy(topo,filename_in,filename_out,SIZE_FILTER_ONE_SIDE=1,NX_BA
     print("  NY_BATHY = ",NY_BATHY)
     print("")
 
-    # see also: DATA/topo_bathy/smooth_topo_bathy_PPM_image.f90
-    print("  using SIZE_FILTER_ONE_SIDE: {}".format(SIZE_FILTER_ONE_SIDE))
-    # checks filter size
-    if SIZE_FILTER_ONE_SIDE < 1:
-        print("SIZE_FILTER_ONE_SIDE must be greater than 1 for filter")
-        sys.exit(1)
-    print("  size of window filter is (%d x %d)" %(2*SIZE_FILTER_ONE_SIDE+1,2*SIZE_FILTER_ONE_SIDE+1))
-    print("")
-    area_window = np.float((2*SIZE_FILTER_ONE_SIDE+1)**2)
-
     # checks if file already downloaded
     if os.path.isfile(filename_out):
         print("  file %s exists already, reading in..." % filename_out)
         print("  (this might take a while)...")
         ibathy_topo = np.loadtxt(filename_out,dtype='int')
         ibathy_topo = np.reshape(ibathy_topo, (NX_BATHY,NY_BATHY), order='F')
+        return ibathy_topo
+
+    # reads in data from ascii file
+    print("  loading data from file: %s" % filename_in)
+    print("  (this might take a while)...")
+    data = np.loadtxt(filename_in)
+    print("")
+
+    # checks number of entries
+    total_size = data.size
+    print("  number of total data points = ",total_size)
+    if total_size != NX_BATHY * NY_BATHY:
+        print("Error dimension: size for %s should be %d" % (topo,NX_BATHY*NY_BATHY))
+        sys.exit(1)
+
+    # fortran shaped array as output format from gmt command grd2xyz
+    topo_bathy = np.reshape(data, (NX_BATHY,NY_BATHY), order='F')
+    # or explicit reading
+    #topo_bathy = np.zeros((NX_BATHY,NY_BATHY))
+    # fortran (column-major) order
+    #for iy in np.arange(NY_BATHY):
+    #    for ix in np.arange(NX_BATHY):
+    #        # E/W-direction corresponds to x
+    #        # N/S-direction             to y
+    #        topo_bathy[ix,iy] = data[ix+iy*NX_BATHY]
+
+    #debug
+    #NX_BATHY = 4
+    #NY_BATHY = 2
+    #topo_bathy = np.arange(4 * 2).reshape((4, 2))
+    #print(topo_bathy)
+
+    print("")
+    print("min and max of topography before smoothing = %f / %f" %(topo_bathy.min(),topo_bathy.max()))
+    print("")
+
+    # smoothed array
+    ibathy_topo = np.zeros((NX_BATHY,NY_BATHY),dtype='int')
+
+    # creates ibathy_topo array
+    if SIZE_FILTER_ONE_SIDE == 0:
+        print("  no smoothing...")
+        # explicit looping
+        for ix_current in np.arange(NX_BATHY):
+            for iy_current in np.arange(NY_BATHY):
+                ibathy_topo[ix_current,iy_current] = int(topo_bathy[ix_current,iy_current])
+
+
     else:
-        # reads in data from ascii file
-        print("  loading data from file: %s" % filename_in)
-        print("  (this might take a while)...")
-        data = np.loadtxt(filename_in)
-        print("")
-
-        # checks number of entries
-        total_size = data.size
-        print("  number of total data points = ",total_size)
-        if total_size != NX_BATHY * NY_BATHY:
-            print("Error dimension: size for %s should be %d" % (topo,NX_BATHY*NY_BATHY))
-            sys.exit(1)
-
-        # fortran shaped array as output format from gmt command grd2xyz
-        topo_bathy = np.reshape(data, (NX_BATHY,NY_BATHY), order='F')
-        # or explicit reading
-        #topo_bathy = np.zeros((NX_BATHY,NY_BATHY))
-        # fortran (column-major) order
-        #for iy in np.arange(NY_BATHY):
-        #    for ix in np.arange(NX_BATHY):
-        #        # E/W-direction corresponds to x
-        #        # N/S-direction             to y
-        #        topo_bathy[ix,iy] = data[ix+iy*NX_BATHY]
-
-        #debug
-        #NX_BATHY = 4
-        #NY_BATHY = 2
-        #topo_bathy = np.arange(4 * 2).reshape((4, 2))
-        #print(topo_bathy)
-
-        print("")
-        print("min and max of topography before smoothing = %f / %f" %(topo_bathy.min(),topo_bathy.max()))
-        print("")
-
         # smoothing: average value in x/y neighborhood
+
+        # see also: DATA/topo_bathy/smooth_topo_bathy_PPM_image.f90
+        print("  using SIZE_FILTER_ONE_SIDE: {}".format(SIZE_FILTER_ONE_SIDE))
+        # checks filter size
+        #if SIZE_FILTER_ONE_SIDE < 1:
+        #    print("SIZE_FILTER_ONE_SIDE must be greater than 1 for filter")
+        #    sys.exit(1)
+        print("  size of window filter is (%d x %d)" %(2*SIZE_FILTER_ONE_SIDE+1,2*SIZE_FILTER_ONE_SIDE+1))
+        print("")
+        area_window = np.float((2*SIZE_FILTER_ONE_SIDE+1)**2)
+
+
         count = 0
         incr = int(total_size / 100.0)
-        # smoothed array
-        ibathy_topo = np.zeros((NX_BATHY,NY_BATHY),dtype='int')
 
         print("  computing smoothed values...")
         t_start = timeit.default_timer()
@@ -525,25 +603,20 @@ def smooth_topo_bathy(topo,filename_in,filename_out,SIZE_FILTER_ONE_SIDE=1,NX_BA
                         sys.stdout.write("\r{:3d} % done / elapsed time {:8.1f} s / estimated total time {:8.1f} s".format(done,t_elapsed,t_elapsed/done*100.0))
                         sys.stdout.flush()
 
-        print("")
-
-        min_val = ibathy_topo.min()
-        max_val = ibathy_topo.max()
-        print("")
-        print("min and max of topography after smoothing = %f / %f" %(min_val,max_val))
-        print("")
-
-        print("  saving the smoothed model: %s" % filename_out)
-        with open(filename_out,'w') as f:
-            # saves in fortran (column-major) order
-            for iy in np.arange(NY_BATHY):
-                for ix in np.arange(NX_BATHY):
-                    f.write("{}\n".format(ibathy_topo[ix,iy]))
-
     print("")
 
-    # PPM image
-    if plot_image: plot_PPM_image(ibathy_topo)
+    min_val = ibathy_topo.min()
+    max_val = ibathy_topo.max()
+    print("")
+    print("min and max of topography after smoothing = %f / %f" %(min_val,max_val))
+    print("")
+
+    print("  saving the smoothed model: %s" % filename_out)
+    with open(filename_out,'w') as f:
+        # saves in fortran (column-major) order
+        for iy in np.arange(NY_BATHY):
+            for ix in np.arange(NX_BATHY):
+                f.write("{}\n".format(ibathy_topo[ix,iy]))
 
     return ibathy_topo
 
@@ -659,7 +732,7 @@ def create_topo_bathy(topo):
     """
     downloads and creates SPECFEM3D_GLOBE readable topo file
     """
-    global filename_web1,filename_web2
+    global filename_web1,filename_web2,filename_webMOLA2,plot_image
 
     print("topo/bathy:")
     print("  etopo: %s" % topo)
@@ -700,15 +773,40 @@ def create_topo_bathy(topo):
         NY_BATHY = 720
         filename_web = filename_web2
 
+    elif topo == 'mars1.875':
+        INTERVAL = 1.875          # original 32-pixel per degree = 0.03125 degree -> 1.875 arc-minutes
+        SIZE_FILTER_ONE_SIDE = 0  # no filtering
+        NX_BATHY = 11520
+        NY_BATHY = 5760
+        filename_web = filename_webMOLA2
+
+    elif topo == 'mars2':
+        INTERVAL = 2              # original 32-pixel per degree = 0.03125 degree -> 1.875 arc-minutes, resample to 2m
+        SIZE_FILTER_ONE_SIDE = 0  # no filtering
+        NX_BATHY = 10800
+        NY_BATHY = 5400
+        filename_web = filename_webMOLA2
+
+    elif topo == 'mars4':
+        INTERVAL = 4              # resample to 2m
+        SIZE_FILTER_ONE_SIDE = 3
+        NX_BATHY = 5400
+        NY_BATHY = 2700
+        filename_web = filename_webMOLA2
+
     else:
         print("Unrecognized option %s" % topo)
         sys.exit(1)
 
-    print("  interval: {} minutes".format(INTERVAL))
     # 1-degree in km
-    degree_distance = 2.0 * 6371.0 * 3.1415926 / 360.0
+    if 'mars' in topo:
+        degree_distance = 2.0 * 3390.0 * 3.1415926 / 360.0
+    else:
+        degree_distance = 2.0 * 6371.0 * 3.1415926 / 360.0
     # distance for minutes interval
     grid_resolution_minutes = INTERVAL * degree_distance / 60.0
+
+    print("  interval: {} minutes".format(INTERVAL))
     print("  interval grid point spacing: {:6.2f} km".format(grid_resolution_minutes))
     print("  filter size one side: {}".format(SIZE_FILTER_ONE_SIDE))
     print("  filter size one side distance: {:6.2f} km".format(SIZE_FILTER_ONE_SIDE*grid_resolution_minutes))
@@ -716,13 +814,18 @@ def create_topo_bathy(topo):
     print("")
 
     # GMT grid filename
-    filename_grid = "ETOPO{}.grd".format(INTERVAL)
-    # ASCII filenames
-    filename_out = "topo_bathy_etopo{}_unmodified_unsmoothed.dat".format(INTERVAL)
-    filename_out_smoothed = "topo_bathy_etopo{}_smoothed_window_{}.dat".format(INTERVAL,SIZE_FILTER_ONE_SIDE)
-
-    #filename_grid = 'etopo1_ice_c_resampled_at_2minutes.grd'
-    #filename_out = 'topo_bathy_etopo1_ice_c_resampled_at_2minutes_original_unmodified_unsmoothed.dat'
+    if 'mars' in topo:
+        filename_grid = "MARSTOPO{}.grd".format(INTERVAL)
+        # ASCII filenames
+        filename_out = "topo_bathy_marstopo{}_unmodified_unsmoothed.dat".format(INTERVAL)
+        filename_out_smoothed = "topo_bathy_marstopo{}_smoothed_window_{}.dat".format(INTERVAL,SIZE_FILTER_ONE_SIDE)
+    else:
+        filename_grid = "ETOPO{}.grd".format(INTERVAL)
+        # ASCII filenames
+        filename_out = "topo_bathy_etopo{}_unmodified_unsmoothed.dat".format(INTERVAL)
+        filename_out_smoothed = "topo_bathy_etopo{}_smoothed_window_{}.dat".format(INTERVAL,SIZE_FILTER_ONE_SIDE)
+        #filename_grid = 'etopo1_ice_c_resampled_at_2minutes.grd'
+        #filename_out = 'topo_bathy_etopo1_ice_c_resampled_at_2minutes_original_unmodified_unsmoothed.dat'
 
     # data file download
     download_data_file(topo,filename_web)
@@ -747,7 +850,10 @@ def create_topo_bathy(topo):
 
     else:
         # uses python routine for smoothing
-        ibathy_topo = smooth_topo_bathy(topo,filename_out,filename_out_smoothed,SIZE_FILTER_ONE_SIDE,NX_BATHY,NY_BATHY,plot_image=False)
+        ibathy_topo = smooth_topo_bathy(topo,filename_out,filename_out_smoothed,SIZE_FILTER_ONE_SIDE,NX_BATHY,NY_BATHY)
+
+        # PPM image
+        if plot_image: plot_PPM_image(ibathy_topo)
 
         # conversion to SPECFEM binary
         convert_data_to_specfem_format(ibathy_topo,filename_out_smoothed + '.bin')
@@ -758,7 +864,7 @@ def create_topo_bathy(topo):
 if __name__ == '__main__':
     # gets arguments
     if '--help' in sys.argv or '-h' in sys.argv or len(sys.argv) != 2:
-        print("usage: ./create_topo_bathy_file.py topo [== etopo1,etopo2,etopo4,etopo5 or etopo15]")
+        print("usage: ./create_topo_bathy_file.py topo [== etopo1,etopo2,etopo4,etopo5,etopo15,mars2,mars4]")
         sys.exit(1)
     else:
         topo = sys.argv[1]

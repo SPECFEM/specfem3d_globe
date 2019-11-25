@@ -72,6 +72,7 @@
     write(IMAIN,*)
     call flush_IMAIN()
   endif
+  call synchronize_all()
 
   ! get addressing for this process
   ichunk = ichunk_slice(myrank)

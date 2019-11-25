@@ -41,6 +41,13 @@
   character(len=MAX_STRING_LEN) :: tmp
   character,parameter :: delimiter = ','
 
+  ! safety check
+  if (len_trim(kernel_names(1)) == 0) then
+    print *,'Error: empty kernel name as first entry ',kernel_names(1)
+    print *,'Please provide a kernel name'
+    stop 'Error empty kernel name string'
+  endif
+
   ! gets first name/token
   iker = 1
   call strtok(kernel_names_comma_delimited, delimiter, kernel_names(iker))

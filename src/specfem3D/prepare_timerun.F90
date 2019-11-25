@@ -155,7 +155,7 @@
   if (myrank == 0) then
 
     write(IMAIN,*)
-    write(IMAIN,*) 'Reference radius of the Earth used is ',R_EARTH_KM,' km'
+    write(IMAIN,*) 'Reference radius of the globe used is ',R_EARTH_KM,' km'
     write(IMAIN,*)
 
     write(IMAIN,*)

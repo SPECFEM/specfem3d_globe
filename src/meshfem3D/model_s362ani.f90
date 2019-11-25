@@ -230,7 +230,7 @@
 
   subroutine evradker(depth,kerstr,nker,vercof,dvercof,ierror)
 
-  use constants, only: R_EARTH_KM
+  use constants, only: EARTH_R_KM
 
   implicit none
 
@@ -247,7 +247,7 @@
   logical :: upper,upper_650
   logical :: lower,lower_650
 
-  real(kind=4), parameter :: r0 = R_EARTH_KM ! 6371.0
+  real(kind=4), parameter :: r0 = EARTH_R_KM ! 6371.0
   real(kind=4), parameter :: rmoho = r0 - 24.4  ! subtracting the thickness here
   real(kind=4), parameter :: r670 = r0 - 670.0    ! subtracting the thickness here
   real(kind=4), parameter :: r650 = r0 - 650.0    ! subtracting the thickness here
@@ -1196,7 +1196,7 @@
   subroutine model_s362ani_subshsv(xcolat,xlon,xrad,dvsh,dvsv,dvph,dvpv)
 
   use model_s362ani_par
-  use constants, only: R_EARTH_KM
+  use constants, only: EARTH_R_KM
 
   implicit none
 
@@ -1227,7 +1227,7 @@
   integer,dimension(maxhpa) :: nconpt
   integer,dimension(maxver,maxhpa) :: iconpt
 
-  real(kind=4), parameter :: r0 = R_EARTH_KM ! 6371.0
+  real(kind=4), parameter :: r0 = EARTH_R_KM ! 6371.0
 
   ! initializes
   vsv3drel = 0.0

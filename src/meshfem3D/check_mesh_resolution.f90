@@ -375,7 +375,7 @@
   real(kind=CUSTOM_REAL) :: vpv,vph,vsv,vsh
   integer :: i,j,k
   ! scaling factors to re-dimensionalize units
-  real(kind=CUSTOM_REAL),parameter :: scaleval = real(sqrt(PI*GRAV*RHOAV)*(R_EARTH/1000.0d0),kind=CUSTOM_REAL)
+  real(kind=CUSTOM_REAL) :: scaleval
 
   vpmax = - HUGEVAL
   vsmin = HUGEVAL
@@ -457,6 +457,7 @@
     enddo
   enddo
   ! maximum Vp (in km/s)
+  scaleval = real(sqrt(PI*GRAV*RHOAV)*(R_EARTH/1000.0d0),kind=CUSTOM_REAL)
   vpmax = sqrt(vpmax) * scaleval
   vsmin = sqrt(vsmin) * scaleval
 

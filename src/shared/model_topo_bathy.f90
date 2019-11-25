@@ -37,14 +37,15 @@
 
 ! standard routine to setup model
 
-  use constants, only: myrank,NX_BATHY,NY_BATHY,MAX_STRING_LEN,IMAIN,GRAVITY_INTEGRALS, &
-    PATHNAME_TOPO_FILE,RESOLUTION_TOPO_FILE,PLOT_PNM_IMAGE_TOPO_BATHY
+  use constants, only: myrank,MAX_STRING_LEN,IMAIN,GRAVITY_INTEGRALS, &
+                       PLOT_PNM_IMAGE_TOPO_BATHY
+
+  use shared_parameters, only: NX_BATHY,NY_BATHY,PATHNAME_TOPO_FILE,RESOLUTION_TOPO_FILE
 
   implicit none
 
   ! bathymetry and topography: use integer array to store values
   integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
-
   character(len=MAX_STRING_LEN) :: LOCAL_PATH
 
   ! local parameters
@@ -111,6 +112,7 @@
 !    be handled automatically if necessary.
 
   use constants
+  use shared_parameters, only: NX_BATHY,NY_BATHY,TOPO_MINIMUM,TOPO_MAXIMUM,PATHNAME_TOPO_FILE
 
   implicit none
 
@@ -216,6 +218,7 @@
 ! (older formats used for version 6.0)
 
   use constants
+  use shared_parameters, only: NX_BATHY,NY_BATHY,TOPO_MINIMUM,TOPO_MAXIMUM,PATHNAME_TOPO_FILE
 
   implicit none
 
@@ -273,6 +276,7 @@
   subroutine save_topo_bathy_database(ibathy_topo,LOCAL_PATH)
 
   use constants
+  use shared_parameters, only: NX_BATHY,NY_BATHY
 
   implicit none
 
@@ -312,6 +316,7 @@
   subroutine read_topo_bathy_database(ibathy_topo,LOCAL_PATH)
 
   use constants
+  use shared_parameters, only: NX_BATHY,NY_BATHY
 
   implicit none
 
@@ -372,6 +377,7 @@
 !
 
   use constants
+  use shared_parameters, only: NX_BATHY,NY_BATHY,RESOLUTION_TOPO_FILE
 
   implicit none
 
@@ -386,6 +392,7 @@
 
   ! local parameters
   integer :: iadd1,iel1
+
   double precision :: samples_per_degree_topo
   double precision :: xlo
   double precision :: lon_corner,lat_corner,ratio_lon,ratio_lat
@@ -455,8 +462,8 @@
 
 ! stores topo_bathy image in PNM format with grey levels
 
-  use constants, only: NX_BATHY,NY_BATHY,IOUT,IMAIN,PLOT_PNM_IMAGE_TOPO_BATHY
-  use shared_input_parameters, only: OUTPUT_FILES
+  use constants, only: IOUT,IMAIN,PLOT_PNM_IMAGE_TOPO_BATHY
+  use shared_parameters, only: OUTPUT_FILES,NX_BATHY,NY_BATHY
 
   implicit none
 

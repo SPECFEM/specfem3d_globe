@@ -193,7 +193,7 @@
   double precision, parameter :: SCALE_VS =  1.40d0
   double precision, parameter :: SCALE_RHO = 0.0d0
 
-  double precision, parameter :: R_EARTH_ = R_EARTH_KM
+  double precision, parameter :: R_EARTH_ = EARTH_R_KM
   double precision, parameter :: ZERO_ = 0.d0
 
 !.....................................

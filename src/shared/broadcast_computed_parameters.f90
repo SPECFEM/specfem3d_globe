@@ -157,6 +157,28 @@
   call bcast_all_i(DIFF_NSPEC2D_ETA,NB_SQUARE_EDGES_ONEDIR*NB_CUT_CASE)
   call bcast_all_i(DIFF_NSPEC2D_XI,NB_SQUARE_EDGES_ONEDIR*NB_CUT_CASE)
 
+  ! broadcasts shared parameters for planet setup
+  call bcast_all_singlei(PLANET_TYPE)
+  call bcast_all_singledp(R_EARTH)
+  call bcast_all_singledp(R_EARTH_KM)
+  call bcast_all_singledp(RHOAV)
+  call bcast_all_singledp(STANDARD_GRAVITY)
+  call bcast_all_singledp(ONE_MINUS_F_SQUARED)
+  call bcast_all_ch(PATHNAME_TOPO_FILE,MAX_STRING_LEN)
+  call bcast_all_singlei(RESOLUTION_TOPO_FILE)
+  call bcast_all_singlei(NX_BATHY)
+  call bcast_all_singlei(NY_BATHY)
+  call bcast_all_singlei(TOPO_MINIMUM)
+  call bcast_all_singlei(TOPO_MAXIMUM)
+  call bcast_all_singledp(R_DEEPEST_CRUST)
+  call bcast_all_singledp(HOURS_PER_DAY)
+  call bcast_all_singledp(SECONDS_PER_HOUR)
+  call bcast_all_singledp(MAX_RATIO_CRUST_STRETCHING)
+  call bcast_all_singledp(RMOHO_STRETCH_ADJUSTMENT)
+  call bcast_all_singledp(R80_STRETCH_ADJUSTMENT)
+  call bcast_all_singlel(REGIONAL_MOHO_MESH)
+  call bcast_all_singlel(HONOR_DEEP_MOHO)
+
   ! non-master processes set their parameters
   if (myrank /= 0) then
 

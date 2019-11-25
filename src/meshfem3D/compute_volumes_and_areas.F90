@@ -215,8 +215,8 @@
   double precision :: Earth_center_of_mass_x_tot_reg,Earth_center_of_mass_y_tot_reg,Earth_center_of_mass_z_tot_reg
 
   ! take into account the fact that the density and the radius of the Earth have previously been non-dimensionalized
-  double precision, parameter :: non_dimensionalizing_factor1 = RHOAV*R_EARTH**3
-  double precision, parameter :: non_dimensionalizing_factor2 = non_dimensionalizing_factor1 * R_EARTH
+  double precision :: non_dimensionalizing_factor1
+  double precision :: non_dimensionalizing_factor2
 
   ! initializes
   Earth_mass_local = ZERO
@@ -276,6 +276,9 @@
   enddo
 
   ! take into account the fact that the density and the radius of the Earth have previously been non-dimensionalized
+  non_dimensionalizing_factor1 = RHOAV*R_EARTH**3
+  non_dimensionalizing_factor2 = non_dimensionalizing_factor1 * R_EARTH
+
   Earth_mass_local = Earth_mass_local * non_dimensionalizing_factor1
 
   Earth_center_of_mass_x_local = Earth_center_of_mass_x_local * non_dimensionalizing_factor2

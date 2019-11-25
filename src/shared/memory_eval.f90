@@ -54,7 +54,8 @@
     TRANSVERSE_ISOTROPY,ANISOTROPIC_INNER_CORE,ROTATION,TOPOGRAPHY,GRAVITY, &
     ONE_CRUST,NCHUNKS, &
     SIMULATION_TYPE,SAVE_FORWARD, &
-    MOVIE_VOLUME,MOVIE_VOLUME_TYPE
+    MOVIE_VOLUME,MOVIE_VOLUME_TYPE, &
+    NX_BATHY,NY_BATHY
 
   use shared_parameters, only: ner_mesh_layers,ratio_sampling_array,doubling_index,this_region_has_a_doubling
 

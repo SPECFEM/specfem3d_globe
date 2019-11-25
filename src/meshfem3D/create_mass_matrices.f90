@@ -238,7 +238,7 @@
     gammaxstore,gammaystore,gammazstore, &
     rmassx,rmassy,b_rmassx,b_rmassy
 
-  use shared_parameters, only: UNDO_ATTENUATION
+  use shared_parameters, only: UNDO_ATTENUATION,HOURS_PER_DAY,SECONDS_PER_HOUR
 
   implicit none
 

@@ -27,10 +27,8 @@
 
   subroutine add_topography(xelm,yelm,zelm,ibathy_topo)
 
-  use constants, only: myrank, &
-    NGNOD,NX_BATHY,NY_BATHY,R_EARTH,R_UNIT_SPHERE,ONE
-
-  use meshfem3D_par, only: R220
+  use constants, only: myrank,NGNOD,R_UNIT_SPHERE,ONE
+  use meshfem3D_par, only: R220,NX_BATHY,NY_BATHY,R_EARTH
 
   implicit none
 
@@ -67,7 +65,10 @@
 
     ! add elevation to all the points of that element
     ! also make sure gamma makes sense
-    if (gamma < -0.02 .or. gamma > 1.02) call exit_MPI(myrank,'incorrect value of gamma for topography')
+    if (gamma < -0.02 .or. gamma > 1.02) then
+      print '(a, 2F9.2,2F9.4)','DEBUG lat/lon/r/gamma:',lat,lon,r,gamma
+      call exit_MPI(myrank,'incorrect value of gamma for topography')
+    endif
 
     xelm(ia) = x*(ONE + gamma * elevation / r)
     yelm(ia) = y*(ONE + gamma * elevation / r)
@@ -90,7 +91,7 @@
                                 ibathy_topo)
 
   use constants
-  use meshfem3D_par, only: R220
+  use meshfem3D_par, only: R220,NX_BATHY,NY_BATHY
 
   implicit none
 

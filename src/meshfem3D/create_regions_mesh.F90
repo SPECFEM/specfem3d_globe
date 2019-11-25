@@ -858,7 +858,7 @@
 
   subroutine crm_setup_layers(ipass,NEX_PER_PROC_ETA)
 
-  use constants, only: SUPPRESS_CRUSTAL_MESH,REGIONAL_MOHO_MESH
+  use constants, only: SUPPRESS_CRUSTAL_MESH
 
   use meshfem3D_par, only: &
     nspec,iregion_code, &
@@ -870,7 +870,7 @@
     CASE_3D
 
   use meshfem3D_models_par, only: &
-    ONE_CRUST
+    ONE_CRUST,REGIONAL_MOHO_MESH
 
   use regions_mesh_par
   use regions_mesh_par2

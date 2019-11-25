@@ -172,8 +172,11 @@
     ! redefines "pure" 1D model without crustal modification
     call define_model_sea1d(.false.)
     AM_V%Qn = NR_SEA1D
+  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_SOHL) then
+    ! Mars
+    AM_V%Qn = 12
   else
-    call exit_MPI(myrank, 'Reference 1D Model Not recognized')
+    call exit_MPI(myrank, 'Error attenuation setup: Reference 1D Model Not recognized')
   endif
 
   ! sets up attenuation storage (for all possible Qmu values defined in the 1D models)
@@ -185,11 +188,11 @@
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating AM_V arrays')
 
   if (REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM) then
-    AM_V%Qr(:)     = (/    0.0d0,     RICB,  RICB,  RCMB,    RCMB,    R670,    R670,   R220,    R220,    R80,     R80, R_EARTH /)
-    AM_V%Qmu(:)    = (/   84.6d0,   84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
+    AM_V%Qr(:)     = (/   0.0d0,    RICB,  RICB,  RCMB,    RCMB,    R670,    R670,   R220,    R220,    R80,     R80, R_EARTH /)
+    AM_V%Qmu(:)    = (/  84.6d0,  84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
   else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) then
-    AM_V%Qr(:)     = (/    0.0d0,     RICB,  RICB,  RCMB,    RCMB,    R670,    R670,    R220,   R220,   R120,    R120, R_EARTH /)
-    AM_V%Qmu(:)    = (/   84.6d0,   84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
+    AM_V%Qr(:)     = (/   0.0d0,    RICB,  RICB,  RCMB,    RCMB,    R670,    R670,    R220,   R220,   R120,    R120, R_EARTH /)
+    AM_V%Qmu(:)    = (/  84.6d0,  84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
   else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135F_NO_MUD) then
     AM_V%Qr(:)     = Mak135_V_radius_ak135(:)
     AM_V%Qmu(:)    = Mak135_V_Qmu_ak135(:)
@@ -200,11 +203,16 @@
     AM_V%Qr(:)     = Mref_V_radius_ref(:)
     AM_V%Qmu(:)    = Mref_V_Qmu_ref(:)
   else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_JP1D) then
-    AM_V%Qr(:)     = (/    0.0d0,     RICB,  RICB,  RCMB,    RCMB,    R670,    R670,    R220,   R220,   R120,    R120, R_EARTH /)
-    AM_V%Qmu(:)    = (/   84.6d0,   84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
+    AM_V%Qr(:)     = (/   0.0d0,    RICB,  RICB,  RCMB,    RCMB,    R670,    R670,    R220,   R220,   R120,    R120, R_EARTH /)
+    AM_V%Qmu(:)    = (/  84.6d0,  84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
   else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) then
     AM_V%Qr(:)     = SEA1DM_V_radius_sea1d(:)
     AM_V%Qmu(:)    = SEA1DM_V_Qmu_sea1d(:)
+  elseif (REFERENCE_1D_MODEL == REFERENCE_MODEL_SOHL) then
+    ! Mars: attenuation model by Nimmo & Faul, 2013?
+    !       at the moment, this is taken from PREM
+    AM_V%Qr(:)     = (/   0.0d0,    RICB,  RICB,  RCMB,    RCMB,    R670, R670,   R220,    R220,    R80,     R80, R_EARTH /)
+    AM_V%Qmu(:)    = (/  84.6d0,  84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
   endif
 
   do i = 1, AM_V%Qn

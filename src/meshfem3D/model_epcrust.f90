@@ -180,7 +180,7 @@
   double precision:: weightl
   !double precision:: min_sed
   ! moho threshold
-  double precision:: minimum_moho_depth = 7.d0 / R_EARTH_KM
+  double precision,parameter:: minimum_moho_depth = 7.d0 / EARTH_R_KM
 
   ! initializes
   found_crust = .false.

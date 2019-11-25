@@ -50,7 +50,8 @@
 
   use constants, only: DEGREES_TO_RADIANS, NGLLX, &
     REFERENCE_MODEL_PREM,REFERENCE_MODEL_IASP91,REFERENCE_MODEL_AK135F_NO_MUD, &
-    REFERENCE_MODEL_1066A,REFERENCE_MODEL_1DREF,REFERENCE_MODEL_JP1D,REFERENCE_MODEL_SEA1D
+    REFERENCE_MODEL_1066A,REFERENCE_MODEL_1DREF,REFERENCE_MODEL_JP1D,REFERENCE_MODEL_SEA1D, &
+    REFERENCE_MODEL_SOHL
 
   use shared_parameters, only: REFERENCE_1D_MODEL
 
@@ -114,6 +115,11 @@
     RADIUS_INNER_CORE = 1217.1d0
     P_VELOCITY_MAX = 11.09142d0 ! vp
 
+  case (REFERENCE_MODEL_SOHL)
+    ! Mars
+    RADIUS_INNER_CORE = 515.0d0
+    P_VELOCITY_MAX = 7.3d0                ! vp: 11.26220 - 6.36400 * (1221.49/6371.)**2
+    RADIAL_LEN_RATIO_CENTRAL_CUBE = 0.76  ! for an aspect ratio around 1.3
   end select
 
   ! relative minimum distance between two GLL points
@@ -171,6 +177,9 @@
 
   ! estimated time step
   DT = MAXIMUM_STABILITY_CONDITION * min_grid_dx / P_VELOCITY_MAX
+
+  !debug
+  !print *,'debug: auto_time_stepping: inner core elem size',elem_size,'width/nex',WIDTH,NEX_MAX,'DT',DT
 
   end subroutine auto_time_stepping
 
@@ -258,16 +267,14 @@
 
   subroutine auto_ner(WIDTH, NEX_MAX)
 
-  use constants, only: R_EARTH
-
-  use shared_parameters, only: &
-    CASE_3D !, CRUSTAL, HONOR_1D_SPHERICAL_MOHO, REFERENCE_1D_MODEL
+  ! Mars
+  use shared_parameters, only: PLANET_TYPE,IPLANET_MARS,R_EARTH,R_MARS
 
   use shared_parameters, only: &
     NER_CRUST, NER_80_MOHO, NER_220_80, NER_400_220, NER_600_400, &
     NER_670_600, NER_771_670, NER_TOPDDOUBLEPRIME_771, &
     NER_CMB_TOPDDOUBLEPRIME, NER_OUTER_CORE, NER_TOP_CENTRAL_CUBE_ICB, &
-    R_CENTRAL_CUBE
+    R_CENTRAL_CUBE,CASE_3D
 
   use shared_parameters, only: &
     R80,R220,R400,R600,R670,R771, &
@@ -292,42 +299,62 @@
 !          RMOHO_FICTITIOUS_IN_MESHER,R80_FICTITIOUS_IN_MESHER
 !  double precision :: RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS
 
-  ! This is PREM in Kilometers, well ... kinda, not really ....
-  !radius(1)  = 6371.00d0 ! Surface
-  !radius(2)  = 6346.60d0 !    Moho - 1st Mesh Doubling Interface
-  !radius(3)  = 6291.60d0 !      80
-  !radius(4)  = 6151.00d0 !     220
-  !radius(5)  = 5971.00d0 !     400
-  !radius(6)  = 5771.00d0 !     600
-  !radius(7)  = 5701.00d0 !     670
-  !radius(8)  = 5600.00d0 !     771
-  !radius(9)  = 4712.00d0 !    1650 - 2nd Mesh Doubling: Geochemical Layering; Kellogg et al. 1999, Science
-  !radius(10) = 3630.00d0 !     D_double_prime
-  !radius(11) = 3480.00d0 !     CMB
-  !radius(12) = 2511.00d0 !    3860 - 3rd Mesh Doubling Interface
-  !radius(13) = 1371.00d0 !    5000 - 4th Mesh Doubling Interface
-  !radius(14) =  982.00d0 ! Top Central Cube
+  ! radii
+  if (PLANET_TYPE == IPLANET_MARS) then
+    ! Mars
+    radius(1)  = R_MARS               ! Surface radius 3390.0 km
+    radius(2)  = RMOHO_FICTITIOUS_IN_MESHER !    Moho - 1st Mesh Doubling Interface
+    radius(3)  = R80                  ! d = 334.5 km
+    radius(4)  = R220                 ! d = 482 km
+    radius(5)  = R400                 ! d = 735 km
+    radius(6)  = R600                 ! d = 935 km
+    radius(7)  = R670                 ! d = 1030 km
+    radius(8)  = R771                 ! d = 1357 km, radius 2033000.0 m
+    radius(9)  = 1900000.0d0          ! in between
+    radius(10) = RTOPDDOUBLEPRIME     ! d = 1887 km, radius 1503000.0 m
+    radius(11) = RCMB                 ! d = 1922 km
+    radius(12) = 1300000.0d0          ! d = 2090 km - 3rd Mesh Doubling Interface
+    radius(13) = 700000.0d0           ! d = 2690 km - 4th Mesh Doubling Interface
+    radius(14) = 395000.d0            ! RICB = 515000.0, Top Central Cube
+  else
+    ! Earth
+    ! This is PREM in Kilometers, well ... kinda, not really ....
+    !radius(1)  = 6371.00d0 ! Surface
+    !radius(2)  = 6346.60d0 !    Moho - 1st Mesh Doubling Interface
+    !radius(3)  = 6291.60d0 !      80
+    !radius(4)  = 6151.00d0 !     220
+    !radius(5)  = 5971.00d0 !     400
+    !radius(6)  = 5771.00d0 !     600
+    !radius(7)  = 5701.00d0 !     670
+    !radius(8)  = 5600.00d0 !     771
+    !radius(9)  = 4712.00d0 !    1650 - 2nd Mesh Doubling: Geochemical Layering; Kellogg et al. 1999, Science
+    !radius(10) = 3630.00d0 !     D_double_prime
+    !radius(11) = 3480.00d0 !     CMB
+    !radius(12) = 2511.00d0 !    3860 - 3rd Mesh Doubling Interface
+    !radius(13) = 1371.00d0 !    5000 - 4th Mesh Doubling Interface
+    !radius(14) =  982.00d0 ! Top Central Cube
 
-  ! uses model specific radii to determine number of elements in radial direction
-  ! (set by earlier call to routine get_model_parameters_radii())
+    ! uses model specific radii to determine number of elements in radial direction
+    ! (set by earlier call to routine get_model_parameters_radii())
 
-  radius(1)  = R_EARTH ! Surface
-  radius(2)  = RMOHO_FICTITIOUS_IN_MESHER !    Moho - 1st Mesh Doubling Interface
-  radius(3)  = R80    !      80
-  radius(4)  = R220   !     220
-  radius(5)  = R400   !     400
-  radius(6)  = R600   !     600
-  radius(7)  = R670   !     670
-  radius(8)  = R771   !     771
+    radius(1)  = R_EARTH ! Surface
+    radius(2)  = RMOHO_FICTITIOUS_IN_MESHER !    Moho - 1st Mesh Doubling Interface
+    radius(3)  = R80    !      80
+    radius(4)  = R220   !     220
+    radius(5)  = R400   !     400
+    radius(6)  = R600   !     600
+    radius(7)  = R670   !     670
+    radius(8)  = R771   !     771
 
-  radius(9)  = 4712000.0d0 !    1650 - 2nd Mesh Doubling: Geochemical Layering; Kellogg et al. 1999, Science
+    radius(9)  = 4712000.0d0 !    1650 - 2nd Mesh Doubling: Geochemical Layering; Kellogg et al. 1999, Science
 
-  radius(10) = RTOPDDOUBLEPRIME   !     D_double_prime ~ 3630
-  radius(11) = RCMB   !     CMB ~ 3480
+    radius(10) = RTOPDDOUBLEPRIME   !     D_double_prime ~ 3630
+    radius(11) = RCMB   !     CMB ~ 3480
 
-  radius(12) = 2511000.0d0 !    3860 - 3rd Mesh Doubling Interface
-  radius(13) = 1371000.0d0 !    5000 - 4th Mesh Doubling Interface
-  radius(14) =  982000.0d0 ! Top Central Cube
+    radius(12) = 2511000.0d0 !    3860 - 3rd Mesh Doubling Interface
+    radius(13) = 1371000.0d0 !    5000 - 4th Mesh Doubling Interface
+    radius(14) =  982000.0d0 ! Top Central Cube
+  endif
 
   ! radii in km
   radius(:) = radius(:) / 1000.0d0
@@ -346,6 +373,10 @@
   NER(3:5)  = 2
   if (CASE_3D) then
     NER(1) = 2
+  endif
+  if (PLANET_TYPE == IPLANET_MARS) then
+    ! Mars
+    NER(1) = 5
   endif
 
   ! starts from input arguments of a 90-degree chunk
@@ -367,14 +398,14 @@
   NER(13) = NER_TOP_CENTRAL_CUBE_ICB
 
   ! debug
-  !print *,'input NER:',NER(:)
+  !print *,'debug: input NER:',NER(:)
 
   ! Find the Number of Radial Elements in a region based upon
   ! the aspect ratio of the elements
   call auto_optimal_ner(NUM_REGIONS, WIDTH, NEX_MAX, radius, scaling, NER, ratio_top, ratio_bottom)
 
   ! debug
-  !print *,'output NER:',NER(:)
+  !print *,'debug: output NER:',NER(:)
 
   ! Set Output arguments
   NER_CRUST                = NER(1)
@@ -439,6 +470,12 @@
     !debug
     !print *,'region ',i,'element ratio: ',ratio,'xi = ',xi,'width = ',w
 
+    ! check
+    if (ratio < 0.d0) then
+      print *,'Error: auto optimal ner has negative aspect ratio of element:',ratio,'region',i,'r',r(i),r(i+1),dr,'width',w
+      stop 'Error auto_optimal_ner() with negative aspect ratio of element'
+    endif
+
     ! increases NER to reach vertical/horizontal element ratio of about 1
     do while(xi <= ximin)
       NER(i) = ner_test            ! Found a better solution
@@ -462,13 +499,15 @@
 
   subroutine find_r_central_cube(nex_xi_in, rcube)
 
+  use shared_parameters, only: PLANET_TYPE,IPLANET_MARS
+
   implicit none
 
   integer, parameter :: NBNODE = 8
   double precision, parameter :: alpha = 0.41d0
 
   integer,intent(in) :: nex_xi_in
-  double precision,intent(out) :: rcube
+  double precision,intent(inout) :: rcube
 
   ! local parameters
   integer :: npts
@@ -483,46 +522,63 @@
   double precision :: max_edgemax, min_edgemin
   double precision :: aspect_ratio, max_aspect_ratio
 
-  nex_xi = nex_xi_in / 16
+  ! inner core radius (in km)
+  if (PLANET_TYPE == IPLANET_MARS) then
+    ! Mars
+    rcube_test   =  100.0d0  ! start
+    rcubemax     =  MAX(300.0d0,rcube)  ! maximum size
+  else
+    ! Earth
+    rcube_test   =  930.0d0  ! start
+    rcubemax     = MAX(1100.0d0,rcube)  ! maximum size
+  endif
 
-  rcubestep    = 1.0d0
-  rcube_test   =  930.0d0
-  rcubemax     = 1100.0d0
+  nex_xi = nex_xi_in / 16
   ximin        = 1e7
+
   rcube        = rcube_test
+  rcubestep    = 1.0d0
 
   do while(rcube_test <= rcubemax)
-     max_edgemax = -1e7
-     min_edgemin = 1e7
-     max_aspect_ratio = 0.0d0
+    max_edgemax = -1e7
+    min_edgemin = 1e7
+    max_aspect_ratio = 0.0d0
 
-     call compute_nex(nex_xi, rcube_test, alpha, nex_eta)
+    call compute_nex(nex_xi, rcube_test, alpha, nex_eta)
 
-     npts = (4 * nex_xi * nex_eta * NBNODE) + (nex_xi * nex_xi * NBNODE)
+    npts = (4 * nex_xi * nex_eta * NBNODE) + (nex_xi * nex_xi * NBNODE)
 
-     allocate(points(npts, 2))
+    allocate(points(npts, 2))
 
-     call compute_IC_mesh(rcube_test, points, npts, nspec_cube, nspec_chunks, nex_xi, nex_eta)
+    call compute_IC_mesh(rcube_test, points, npts, nspec_cube, nspec_chunks, nex_xi, nex_eta)
 
-     nspec = nspec_cube + nspec_chunks
-     do ispec = 1,nspec
-        call get_element(points, ispec, npts, elem)
-        call get_size_min_max(elem, edgemax, edgemin)
-        aspect_ratio = edgemax / edgemin
-        max_edgemax = MAX(max_edgemax, edgemax)
-        min_edgemin = MIN(min_edgemin, edgemin)
-        max_aspect_ratio = MAX(max_aspect_ratio, aspect_ratio)
-     enddo
-     xi = (max_edgemax / min_edgemin)
-!       xi = abs(rcube_test - 981.0d0) / 45.0d0
-!       write(*,'(a,5(f14.4,2x))')'rcube, xi, ximin:-',rcube_test, xi, min_edgemin,max_edgemax,max_aspect_ratio
-     deallocate(points)
+    nspec = nspec_cube + nspec_chunks
+    do ispec = 1,nspec
+      call get_element(points, ispec, npts, elem)
+      call get_size_min_max(elem, edgemax, edgemin)
 
-     if (xi < ximin) then
-        ximin      = xi
-        rcube      = rcube_test
-     endif
-     rcube_test = rcube_test + rcubestep
+      aspect_ratio = edgemax / edgemin
+      max_edgemax = MAX(max_edgemax, edgemax)
+      min_edgemin = MIN(min_edgemin, edgemin)
+      max_aspect_ratio = MAX(max_aspect_ratio, aspect_ratio)
+    enddo
+    ! maximum aspect ratio
+    xi = (max_edgemax / min_edgemin)
+
+    !xi = abs(rcube_test - 981.0d0) / 45.0d0
+
+    ! debug
+    !print '(a,6(f14.4,2x))','debug: rcube, xi, ximin, min/max/ratio', &
+    !                        rcube_test, xi, ximin, min_edgemin,max_edgemax,max_aspect_ratio
+
+    ! stores better aspect ratio
+    if (xi < ximin) then
+      ximin      = xi
+      rcube      = rcube_test
+    endif
+    rcube_test = rcube_test + rcubestep
+
+    deallocate(points)
   enddo
 
   end subroutine find_r_central_cube
@@ -620,13 +676,13 @@
   edgemax = -1e7
   edgemin = -edgemax
   do ie = 1,NBNODE/2,1
-      ix1 = (ie * 2) - 1
-      ix2 = ix1 + 1
-      ix3 = ix1 + 2
-      edge = sqrt( (pts(ix1,1) - pts(ix2,1))**2 + (pts(ix1,2) - pts(ix2,2))**2 ) + &
-             sqrt( (pts(ix2,1) - pts(ix3,1))**2 + (pts(ix2,2) - pts(ix3,2))**2 )
-      edgemax = MAX(edgemax, edge)
-      edgemin = MIN(edgemin, edge)
+    ix1 = (ie * 2) - 1
+    ix2 = ix1 + 1
+    ix3 = ix1 + 2
+    edge = sqrt( (pts(ix1,1) - pts(ix2,1))**2 + (pts(ix1,2) - pts(ix2,2))**2 ) + &
+           sqrt( (pts(ix2,1) - pts(ix3,1))**2 + (pts(ix2,2) - pts(ix3,2))**2 )
+    edgemax = MAX(edgemax, edge)
+    edgemin = MIN(edgemin, edge)
   enddo
 
   end subroutine get_size_min_max

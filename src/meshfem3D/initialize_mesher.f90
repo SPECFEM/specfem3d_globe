@@ -87,6 +87,19 @@
   ! synchronizes processes
   call synchronize_all()
 
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*)
+    select case(PLANET_TYPE)
+    case (IPLANET_MARS)
+      write(IMAIN,*) 'Planet: Mars'
+    case default
+      write(IMAIN,*) 'Planet: Earth'
+    end select
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
   ! additional initialization on this system (ADIOS,OpenMP,..)
   call im_initialize_system()
 

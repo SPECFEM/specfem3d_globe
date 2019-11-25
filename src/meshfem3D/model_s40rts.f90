@@ -176,8 +176,8 @@
   ! factor to convert perturbations in shear speed to perturbations in density
   double precision, parameter :: SCALE_RHO = 0.40d0
 
-  double precision, parameter :: R_EARTH_ = R_EARTH ! 6371000.d0
-  double precision, parameter :: RMOHO_ = R_EARTH - 24400.0 ! 6346600.d0
+  double precision, parameter :: R_EARTH_ = EARTH_R ! 6371000.d0
+  double precision, parameter :: RMOHO_ = EARTH_R - 24400.0 ! 6346600.d0
   double precision, parameter :: RCMB_ = 3480000.d0
   double precision, parameter :: ZERO_ = 0.d0
 

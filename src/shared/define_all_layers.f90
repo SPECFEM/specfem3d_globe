@@ -38,11 +38,17 @@
 !!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-  use constants, only: ADD_4TH_DOUBLING,MAX_NUMBER_OF_MESH_LAYERS,SUPPRESS_CRUSTAL_MESH, &
-    DEPTH_FOURTH_DOUBLING_OPTIMAL,DEPTH_SECOND_DOUBLING_OPTIMAL,DEPTH_THIRD_DOUBLING_OPTIMAL, &
-    HUGEVAL,ONE,R_EARTH, &
+  use constants, only: myrank,ADD_4TH_DOUBLING,MAX_NUMBER_OF_MESH_LAYERS,SUPPRESS_CRUSTAL_MESH,HUGEVAL,ONE, &
     IFLAG_CRUST,IFLAG_80_MOHO,IFLAG_220_80,IFLAG_670_220,IFLAG_MANTLE_NORMAL, &
     IFLAG_OUTER_CORE_NORMAL,IFLAG_INNER_CORE_NORMAL
+
+  ! Earth
+  use constants, only: &
+    EARTH_DEPTH_SECOND_DOUBLING_OPTIMAL,EARTH_DEPTH_THIRD_DOUBLING_OPTIMAL,EARTH_DEPTH_FOURTH_DOUBLING_OPTIMAL
+  ! Mars
+  use constants, only: &
+    MARS_DEPTH_SECOND_DOUBLING_OPTIMAL,MARS_DEPTH_THIRD_DOUBLING_OPTIMAL,MARS_DEPTH_FOURTH_DOUBLING_OPTIMAL
+  use shared_parameters, only: PLANET_TYPE,IPLANET_MARS,R_EARTH,R_MARS
 
   use shared_parameters, only: ner_mesh_layers, &
     ratio_sampling_array,this_region_has_a_doubling,doubling_index,r_bottom,r_top
@@ -55,7 +61,6 @@
     RMIDDLE_CRUST,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
     R_CENTRAL_CUBE,RMOHO_FICTITIOUS_IN_MESHER,R80_FICTITIOUS_IN_MESHER, &
     ONE_CRUST
-
 
   implicit none
 
@@ -70,11 +75,29 @@
 
   double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs
 
+  double precision :: R_PLANET
+  double precision :: DEPTH_SECOND_DOUBLING_OPTIMAL,DEPTH_THIRD_DOUBLING_OPTIMAL,DEPTH_FOURTH_DOUBLING_OPTIMAL
+
   ! note: all these parameters must be set to .true. for now,
   !       otherwise mesher will fail since it assumes to have at least 3 doubling layers
   logical, parameter :: ADD_1ST_DOUBLING = .true.
   logical, parameter :: ADD_2ND_DOUBLING = .true.
   logical, parameter :: ADD_3RD_DOUBLING = .true.
+
+  ! doubling depths
+  if (PLANET_TYPE == IPLANET_MARS) then
+    ! Mars
+    R_PLANET = R_MARS
+    DEPTH_SECOND_DOUBLING_OPTIMAL = MARS_DEPTH_SECOND_DOUBLING_OPTIMAL
+    DEPTH_THIRD_DOUBLING_OPTIMAL = MARS_DEPTH_THIRD_DOUBLING_OPTIMAL
+    DEPTH_FOURTH_DOUBLING_OPTIMAL = MARS_DEPTH_FOURTH_DOUBLING_OPTIMAL
+  else
+    ! Earth
+    R_PLANET = R_EARTH
+    DEPTH_SECOND_DOUBLING_OPTIMAL = EARTH_DEPTH_SECOND_DOUBLING_OPTIMAL
+    DEPTH_THIRD_DOUBLING_OPTIMAL = EARTH_DEPTH_THIRD_DOUBLING_OPTIMAL
+    DEPTH_FOURTH_DOUBLING_OPTIMAL = EARTH_DEPTH_FOURTH_DOUBLING_OPTIMAL
+  endif
 
 ! find element below top of which we should implement the second doubling in the mantle
   DEPTH_SECOND_DOUBLING_REAL = 0.d0
@@ -84,11 +107,11 @@
     distance_min = HUGEVAL
     do ielem = 2,NER_TOPDDOUBLEPRIME_771
       zval = RTOPDDOUBLEPRIME + ielem * (R771 - RTOPDDOUBLEPRIME) / dble(NER_TOPDDOUBLEPRIME_771)
-      distance = abs(zval - (R_EARTH - DEPTH_SECOND_DOUBLING_OPTIMAL))
+      distance = abs(zval - (R_PLANET - DEPTH_SECOND_DOUBLING_OPTIMAL))
       if (distance < distance_min) then
         elem_doubling_mantle = ielem
         distance_min = distance
-        DEPTH_SECOND_DOUBLING_REAL = R_EARTH - zval
+        DEPTH_SECOND_DOUBLING_REAL = R_PLANET - zval
       endif
     enddo
     if (elem_doubling_mantle == -1) stop 'Unable to determine second doubling element'
@@ -104,11 +127,11 @@
     ! implemented at the bottom of the outer core
     do ielem = 4,NER_OUTER_CORE
       zval = RICB + ielem * (RCMB - RICB) / dble(NER_OUTER_CORE)
-      distance = abs(zval - (R_EARTH - DEPTH_THIRD_DOUBLING_OPTIMAL))
+      distance = abs(zval - (R_PLANET - DEPTH_THIRD_DOUBLING_OPTIMAL))
       if (distance < distance_min) then
         elem_doubling_middle_outer_core = ielem
         distance_min = distance
-        DEPTH_THIRD_DOUBLING_REAL = R_EARTH - zval
+        DEPTH_THIRD_DOUBLING_REAL = R_PLANET - zval
       endif
     enddo
     if (elem_doubling_middle_outer_core == -1) stop 'Unable to determine third doubling element'
@@ -124,11 +147,11 @@
 ! implemented in the middle of the outer core
     do ielem = 2,NER_OUTER_CORE-2
       zval = RICB + ielem * (RCMB - RICB) / dble(NER_OUTER_CORE)
-      distance = abs(zval - (R_EARTH - DEPTH_FOURTH_DOUBLING_OPTIMAL))
+      distance = abs(zval - (R_PLANET - DEPTH_FOURTH_DOUBLING_OPTIMAL))
       if (distance < distance_min) then
         elem_doubling_bottom_outer_core = ielem
         distance_min = distance
-        DEPTH_FOURTH_DOUBLING_REAL = R_EARTH - zval
+        DEPTH_FOURTH_DOUBLING_REAL = R_PLANET - zval
       endif
     enddo
     if (elem_doubling_bottom_outer_core == -1) stop 'Unable to determine fourth doubling element'
@@ -149,7 +172,7 @@
     if (SUPPRESS_CRUSTAL_MESH) then
 
       ! suppress the crustal layers
-      ! will be replaced by an extension of the mantle: R_EARTH is not modified,
+      ! will be replaced by an extension of the mantle: R_PLANET is not modified,
       ! but no more crustal doubling
 
       NUMBER_OF_MESH_LAYERS = 14
@@ -207,7 +230,7 @@
       ! define the top and bottom radii of all the regions of the mesh in the radial direction
       ! the first region is the crust at the surface of the Earth
       ! the last region is in the inner core near the center of the Earth
-      r_top(1) = R_EARTH
+      r_top(1) = R_PLANET
       r_bottom(1) = R80_FICTITIOUS_IN_MESHER
 
       r_top(2) = RMIDDLE_CRUST    !!!! now fictitious
@@ -232,18 +255,18 @@
       r_bottom(8) = R771
 
       r_top(9) = R771
-      r_bottom(9) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
+      r_bottom(9) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
 
-      r_top(10) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
+      r_top(10) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
       r_bottom(10) = RTOPDDOUBLEPRIME
 
       r_top(11) = RTOPDDOUBLEPRIME
       r_bottom(11) = RCMB
 
       r_top(12) = RCMB
-      r_bottom(12) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
+      r_bottom(12) = R_PLANET - DEPTH_THIRD_DOUBLING_REAL
 
-      r_top(13) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
+      r_top(13) = R_PLANET - DEPTH_THIRD_DOUBLING_REAL
       r_bottom(13) = RICB
 
       r_top(14) = RICB
@@ -251,40 +274,40 @@
 
       ! new definition of rmins & rmaxs
       rmaxs(1) = ONE
-      rmins(1) = R80_FICTITIOUS_IN_MESHER / R_EARTH
+      rmins(1) = R80_FICTITIOUS_IN_MESHER / R_PLANET
 
-      rmaxs(2) = RMIDDLE_CRUST / R_EARTH    !!!! now fictitious
-      rmins(2) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH    !!!! now fictitious
+      rmaxs(2) = RMIDDLE_CRUST / R_PLANET    !!!! now fictitious
+      rmins(2) = RMOHO_FICTITIOUS_IN_MESHER / R_PLANET    !!!! now fictitious
 
-      rmaxs(3) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH    !!!! now fictitious
-      rmins(3) = R80_FICTITIOUS_IN_MESHER / R_EARTH    !!!! now fictitious
+      rmaxs(3) = RMOHO_FICTITIOUS_IN_MESHER / R_PLANET    !!!! now fictitious
+      rmins(3) = R80_FICTITIOUS_IN_MESHER / R_PLANET    !!!! now fictitious
 
-      rmaxs(4) = R80_FICTITIOUS_IN_MESHER / R_EARTH
-      rmins(4) = R220 / R_EARTH
+      rmaxs(4) = R80_FICTITIOUS_IN_MESHER / R_PLANET
+      rmins(4) = R220 / R_PLANET
 
-      rmaxs(5) = R220 / R_EARTH
-      rmins(5) = R400 / R_EARTH
+      rmaxs(5) = R220 / R_PLANET
+      rmins(5) = R400 / R_PLANET
 
-      rmaxs(6) = R400 / R_EARTH
-      rmins(6) = R600 / R_EARTH
+      rmaxs(6) = R400 / R_PLANET
+      rmins(6) = R600 / R_PLANET
 
-      rmaxs(7) = R600 / R_EARTH
-      rmins(7) = R670 / R_EARTH
+      rmaxs(7) = R600 / R_PLANET
+      rmins(7) = R670 / R_PLANET
 
-      rmaxs(8) = R670 / R_EARTH
-      rmins(8) = R771 / R_EARTH
+      rmaxs(8) = R670 / R_PLANET
+      rmins(8) = R771 / R_PLANET
 
-      rmaxs(9:10) = R771 / R_EARTH
-      rmins(9:10) = RTOPDDOUBLEPRIME / R_EARTH
+      rmaxs(9:10) = R771 / R_PLANET
+      rmins(9:10) = RTOPDDOUBLEPRIME / R_PLANET
 
-      rmaxs(11) = RTOPDDOUBLEPRIME / R_EARTH
-      rmins(11) = RCMB / R_EARTH
+      rmaxs(11) = RTOPDDOUBLEPRIME / R_PLANET
+      rmins(11) = RCMB / R_PLANET
 
-      rmaxs(12:13) = RCMB / R_EARTH
-      rmins(12:13) = RICB / R_EARTH
+      rmaxs(12:13) = RCMB / R_PLANET
+      rmins(12:13) = RICB / R_PLANET
 
-      rmaxs(14) = RICB / R_EARTH
-      rmins(14) = R_CENTRAL_CUBE / R_EARTH
+      rmaxs(14) = RICB / R_PLANET
+      rmins(14) = R_CENTRAL_CUBE / R_PLANET
 
     else if (ONE_CRUST) then
 
@@ -366,7 +389,7 @@
       !!!!!!!!!!! DK DK: The Moho stretching and squishing that Jeroen added to V4.0
       !!!!!!!!!!! DK DK: should partly deal with this problem.
 
-      r_top(1) = R_EARTH
+      r_top(1) = R_PLANET
       r_bottom(1) = RMOHO_FICTITIOUS_IN_MESHER
 
       r_top(2) = RMOHO_FICTITIOUS_IN_MESHER
@@ -388,18 +411,18 @@
       r_bottom(7) = R771
 
       r_top(8) = R771
-      r_bottom(8) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
+      r_bottom(8) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
 
-      r_top(9) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
+      r_top(9) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
       r_bottom(9) = RTOPDDOUBLEPRIME
 
       r_top(10) = RTOPDDOUBLEPRIME
       r_bottom(10) = RCMB
 
       r_top(11) = RCMB
-      r_bottom(11) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
+      r_bottom(11) = R_PLANET - DEPTH_THIRD_DOUBLING_REAL
 
-      r_top(12) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
+      r_top(12) = R_PLANET - DEPTH_THIRD_DOUBLING_REAL
       r_bottom(12) = RICB
 
       r_top(13) = RICB
@@ -407,37 +430,37 @@
 
       ! new definition of rmins & rmaxs
       rmaxs(1) = ONE
-      rmins(1) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
+      rmins(1) = RMOHO_FICTITIOUS_IN_MESHER / R_PLANET
 
-      rmaxs(2) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
-      rmins(2) = R80_FICTITIOUS_IN_MESHER / R_EARTH
+      rmaxs(2) = RMOHO_FICTITIOUS_IN_MESHER / R_PLANET
+      rmins(2) = R80_FICTITIOUS_IN_MESHER / R_PLANET
 
-      rmaxs(3) = R80_FICTITIOUS_IN_MESHER / R_EARTH
-      rmins(3) = R220 / R_EARTH
+      rmaxs(3) = R80_FICTITIOUS_IN_MESHER / R_PLANET
+      rmins(3) = R220 / R_PLANET
 
-      rmaxs(4) = R220 / R_EARTH
-      rmins(4) = R400 / R_EARTH
+      rmaxs(4) = R220 / R_PLANET
+      rmins(4) = R400 / R_PLANET
 
-      rmaxs(5) = R400 / R_EARTH
-      rmins(5) = R600 / R_EARTH
+      rmaxs(5) = R400 / R_PLANET
+      rmins(5) = R600 / R_PLANET
 
-      rmaxs(6) = R600 / R_EARTH
-      rmins(6) = R670 / R_EARTH
+      rmaxs(6) = R600 / R_PLANET
+      rmins(6) = R670 / R_PLANET
 
-      rmaxs(7) = R670 / R_EARTH
-      rmins(7) = R771 / R_EARTH
+      rmaxs(7) = R670 / R_PLANET
+      rmins(7) = R771 / R_PLANET
 
-      rmaxs(8:9) = R771 / R_EARTH
-      rmins(8:9) = RTOPDDOUBLEPRIME / R_EARTH
+      rmaxs(8:9) = R771 / R_PLANET
+      rmins(8:9) = RTOPDDOUBLEPRIME / R_PLANET
 
-      rmaxs(10) = RTOPDDOUBLEPRIME / R_EARTH
-      rmins(10) = RCMB / R_EARTH
+      rmaxs(10) = RTOPDDOUBLEPRIME / R_PLANET
+      rmins(10) = RCMB / R_PLANET
 
-      rmaxs(11:12) = RCMB / R_EARTH
-      rmins(11:12) = RICB / R_EARTH
+      rmaxs(11:12) = RCMB / R_PLANET
+      rmins(11:12) = RICB / R_PLANET
 
-      rmaxs(13) = RICB / R_EARTH
-      rmins(13) = R_CENTRAL_CUBE / R_EARTH
+      rmaxs(13) = RICB / R_PLANET
+      rmins(13) = R_CENTRAL_CUBE / R_PLANET
 
     else
 
@@ -450,7 +473,7 @@
 
       NUMBER_OF_MESH_LAYERS = 14
       layer_offset = 1
-      if ((RMIDDLE_CRUST-RMOHO_FICTITIOUS_IN_MESHER) < (R_EARTH-RMIDDLE_CRUST)) then
+      if ((RMIDDLE_CRUST-RMOHO_FICTITIOUS_IN_MESHER) < (R_PLANET-RMIDDLE_CRUST)) then
         ner_mesh_layers( 1) = ceiling (NER_CRUST / 2.d0)
         ner_mesh_layers( 2) = floor (NER_CRUST / 2.d0)
       else
@@ -517,7 +540,7 @@
       ! the first region is the crust at the surface of the Earth
       ! the last region is in the inner core near the center of the Earth
 
-      r_top(1) = R_EARTH
+      r_top(1) = R_PLANET
       r_bottom(1) = RMIDDLE_CRUST
 
       r_top(2) = RMIDDLE_CRUST
@@ -542,18 +565,18 @@
       r_bottom(8) = R771
 
       r_top(9) = R771
-      r_bottom(9) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
+      r_bottom(9) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
 
-      r_top(10) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
+      r_top(10) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
       r_bottom(10) = RTOPDDOUBLEPRIME
 
       r_top(11) = RTOPDDOUBLEPRIME
       r_bottom(11) = RCMB
 
       r_top(12) = RCMB
-      r_bottom(12) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
+      r_bottom(12) = R_PLANET - DEPTH_THIRD_DOUBLING_REAL
 
-      r_top(13) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
+      r_top(13) = R_PLANET - DEPTH_THIRD_DOUBLING_REAL
       r_bottom(13) = RICB
 
       r_top(14) = RICB
@@ -561,40 +584,40 @@
 
       ! new definition of rmins & rmaxs
       rmaxs(1) = ONE
-      rmins(1) = RMIDDLE_CRUST / R_EARTH
+      rmins(1) = RMIDDLE_CRUST / R_PLANET
 
-      rmaxs(2) = RMIDDLE_CRUST / R_EARTH
-      rmins(2) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
+      rmaxs(2) = RMIDDLE_CRUST / R_PLANET
+      rmins(2) = RMOHO_FICTITIOUS_IN_MESHER / R_PLANET
 
-      rmaxs(3) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
-      rmins(3) = R80_FICTITIOUS_IN_MESHER / R_EARTH
+      rmaxs(3) = RMOHO_FICTITIOUS_IN_MESHER / R_PLANET
+      rmins(3) = R80_FICTITIOUS_IN_MESHER / R_PLANET
 
-      rmaxs(4) = R80_FICTITIOUS_IN_MESHER / R_EARTH
-      rmins(4) = R220 / R_EARTH
+      rmaxs(4) = R80_FICTITIOUS_IN_MESHER / R_PLANET
+      rmins(4) = R220 / R_PLANET
 
-      rmaxs(5) = R220 / R_EARTH
-      rmins(5) = R400 / R_EARTH
+      rmaxs(5) = R220 / R_PLANET
+      rmins(5) = R400 / R_PLANET
 
-      rmaxs(6) = R400 / R_EARTH
-      rmins(6) = R600 / R_EARTH
+      rmaxs(6) = R400 / R_PLANET
+      rmins(6) = R600 / R_PLANET
 
-      rmaxs(7) = R600 / R_EARTH
-      rmins(7) = R670 / R_EARTH
+      rmaxs(7) = R600 / R_PLANET
+      rmins(7) = R670 / R_PLANET
 
-      rmaxs(8) = R670 / R_EARTH
-      rmins(8) = R771 / R_EARTH
+      rmaxs(8) = R670 / R_PLANET
+      rmins(8) = R771 / R_PLANET
 
-      rmaxs(9:10) = R771 / R_EARTH
-      rmins(9:10) = RTOPDDOUBLEPRIME / R_EARTH
+      rmaxs(9:10) = R771 / R_PLANET
+      rmins(9:10) = RTOPDDOUBLEPRIME / R_PLANET
 
-      rmaxs(11) = RTOPDDOUBLEPRIME / R_EARTH
-      rmins(11) = RCMB / R_EARTH
+      rmaxs(11) = RTOPDDOUBLEPRIME / R_PLANET
+      rmins(11) = RCMB / R_PLANET
 
-      rmaxs(12:13) = RCMB / R_EARTH
-      rmins(12:13) = RICB / R_EARTH
+      rmaxs(12:13) = RCMB / R_PLANET
+      rmins(12:13) = RICB / R_PLANET
 
-      rmaxs(14) = RICB / R_EARTH
-      rmins(14) = R_CENTRAL_CUBE / R_EARTH
+      rmaxs(14) = RICB / R_PLANET
+      rmins(14) = R_CENTRAL_CUBE / R_PLANET
 
     endif
   else
@@ -605,7 +628,7 @@
     if (SUPPRESS_CRUSTAL_MESH) then
 
       ! suppress the crustal layers
-      ! will be replaced by an extension of the mantle: R_EARTH is not modified,
+      ! will be replaced by an extension of the mantle: R_PLANET is not modified,
       ! but no more crustal doubling
 
       NUMBER_OF_MESH_LAYERS = 15
@@ -674,7 +697,7 @@
       ! the first region is the crust at the surface of the Earth
       ! the last region is in the inner core near the center of the Earth
 
-      r_top(1) = R_EARTH
+      r_top(1) = R_PLANET
       r_bottom(1) = R80_FICTITIOUS_IN_MESHER
 
       r_top(2) = RMIDDLE_CRUST    !!!! now fictitious
@@ -699,21 +722,21 @@
       r_bottom(8) = R771
 
       r_top(9) = R771
-      r_bottom(9) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
+      r_bottom(9) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
 
-      r_top(10) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
+      r_top(10) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
       r_bottom(10) = RTOPDDOUBLEPRIME
 
       r_top(11) = RTOPDDOUBLEPRIME
       r_bottom(11) = RCMB
 
       r_top(12) = RCMB
-      r_bottom(12) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
+      r_bottom(12) = R_PLANET - DEPTH_THIRD_DOUBLING_REAL
 
-      r_top(13) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
-      r_bottom(13) = R_EARTH - DEPTH_FOURTH_DOUBLING_REAL
+      r_top(13) = R_PLANET - DEPTH_THIRD_DOUBLING_REAL
+      r_bottom(13) = R_PLANET - DEPTH_FOURTH_DOUBLING_REAL
 
-      r_top(14) = R_EARTH - DEPTH_FOURTH_DOUBLING_REAL
+      r_top(14) = R_PLANET - DEPTH_FOURTH_DOUBLING_REAL
       r_bottom(14) = RICB
 
       r_top(15) = RICB
@@ -721,40 +744,40 @@
 
       ! new definition of rmins & rmaxs
       rmaxs(1) = ONE
-      rmins(1) = R80_FICTITIOUS_IN_MESHER / R_EARTH
+      rmins(1) = R80_FICTITIOUS_IN_MESHER / R_PLANET
 
-      rmaxs(2) = RMIDDLE_CRUST / R_EARTH    !!!! now fictitious
-      rmins(2) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH    !!!! now fictitious
+      rmaxs(2) = RMIDDLE_CRUST / R_PLANET    !!!! now fictitious
+      rmins(2) = RMOHO_FICTITIOUS_IN_MESHER / R_PLANET    !!!! now fictitious
 
-      rmaxs(3) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH    !!!! now fictitious
-      rmins(3) = R80_FICTITIOUS_IN_MESHER / R_EARTH    !!!! now fictitious
+      rmaxs(3) = RMOHO_FICTITIOUS_IN_MESHER / R_PLANET    !!!! now fictitious
+      rmins(3) = R80_FICTITIOUS_IN_MESHER / R_PLANET    !!!! now fictitious
 
-      rmaxs(4) = R80_FICTITIOUS_IN_MESHER / R_EARTH
-      rmins(4) = R220 / R_EARTH
+      rmaxs(4) = R80_FICTITIOUS_IN_MESHER / R_PLANET
+      rmins(4) = R220 / R_PLANET
 
-      rmaxs(5) = R220 / R_EARTH
-      rmins(5) = R400 / R_EARTH
+      rmaxs(5) = R220 / R_PLANET
+      rmins(5) = R400 / R_PLANET
 
-      rmaxs(6) = R400 / R_EARTH
-      rmins(6) = R600 / R_EARTH
+      rmaxs(6) = R400 / R_PLANET
+      rmins(6) = R600 / R_PLANET
 
-      rmaxs(7) = R600 / R_EARTH
-      rmins(7) = R670 / R_EARTH
+      rmaxs(7) = R600 / R_PLANET
+      rmins(7) = R670 / R_PLANET
 
-      rmaxs(8) = R670 / R_EARTH
-      rmins(8) = R771 / R_EARTH
+      rmaxs(8) = R670 / R_PLANET
+      rmins(8) = R771 / R_PLANET
 
-      rmaxs(9:10) = R771 / R_EARTH
-      rmins(9:10) = RTOPDDOUBLEPRIME / R_EARTH
+      rmaxs(9:10) = R771 / R_PLANET
+      rmins(9:10) = RTOPDDOUBLEPRIME / R_PLANET
 
-      rmaxs(11) = RTOPDDOUBLEPRIME / R_EARTH
-      rmins(11) = RCMB / R_EARTH
+      rmaxs(11) = RTOPDDOUBLEPRIME / R_PLANET
+      rmins(11) = RCMB / R_PLANET
 
-      rmaxs(12:14) = RCMB / R_EARTH
-      rmins(12:14) = RICB / R_EARTH
+      rmaxs(12:14) = RCMB / R_PLANET
+      rmins(12:14) = RICB / R_PLANET
 
-      rmaxs(15) = RICB / R_EARTH
-      rmins(15) = R_CENTRAL_CUBE / R_EARTH
+      rmaxs(15) = RICB / R_PLANET
+      rmins(15) = R_CENTRAL_CUBE / R_PLANET
 
     else if (ONE_CRUST) then
 
@@ -843,7 +866,7 @@
       !!!!!!!!!!! DK DK: The Moho stretching and squishing that Jeroen added to V4.0
       !!!!!!!!!!! DK DK: should partly deal with this problem.
 
-      r_top(1) = R_EARTH
+      r_top(1) = R_PLANET
       r_bottom(1) = RMOHO_FICTITIOUS_IN_MESHER
 
       r_top(2) = RMOHO_FICTITIOUS_IN_MESHER
@@ -865,21 +888,21 @@
       r_bottom(7) = R771
 
       r_top(8) = R771
-      r_bottom(8) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
+      r_bottom(8) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
 
-      r_top(9) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
+      r_top(9) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
       r_bottom(9) = RTOPDDOUBLEPRIME
 
       r_top(10) = RTOPDDOUBLEPRIME
       r_bottom(10) = RCMB
 
       r_top(11) = RCMB
-      r_bottom(11) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
+      r_bottom(11) = R_PLANET - DEPTH_THIRD_DOUBLING_REAL
 
-      r_top(12) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
-      r_bottom(12) = R_EARTH - DEPTH_FOURTH_DOUBLING_REAL
+      r_top(12) = R_PLANET - DEPTH_THIRD_DOUBLING_REAL
+      r_bottom(12) = R_PLANET - DEPTH_FOURTH_DOUBLING_REAL
 
-      r_top(13) = R_EARTH - DEPTH_FOURTH_DOUBLING_REAL
+      r_top(13) = R_PLANET - DEPTH_FOURTH_DOUBLING_REAL
       r_bottom(13) = RICB
 
       r_top(14) = RICB
@@ -887,37 +910,37 @@
 
       ! new definition of rmins & rmaxs
       rmaxs(1) = ONE
-      rmins(1) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
+      rmins(1) = RMOHO_FICTITIOUS_IN_MESHER / R_PLANET
 
-      rmaxs(2) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
-      rmins(2) = R80_FICTITIOUS_IN_MESHER / R_EARTH
+      rmaxs(2) = RMOHO_FICTITIOUS_IN_MESHER / R_PLANET
+      rmins(2) = R80_FICTITIOUS_IN_MESHER / R_PLANET
 
-      rmaxs(3) = R80_FICTITIOUS_IN_MESHER / R_EARTH
-      rmins(3) = R220 / R_EARTH
+      rmaxs(3) = R80_FICTITIOUS_IN_MESHER / R_PLANET
+      rmins(3) = R220 / R_PLANET
 
-      rmaxs(4) = R220 / R_EARTH
-      rmins(4) = R400 / R_EARTH
+      rmaxs(4) = R220 / R_PLANET
+      rmins(4) = R400 / R_PLANET
 
-      rmaxs(5) = R400 / R_EARTH
-      rmins(5) = R600 / R_EARTH
+      rmaxs(5) = R400 / R_PLANET
+      rmins(5) = R600 / R_PLANET
 
-      rmaxs(6) = R600 / R_EARTH
-      rmins(6) = R670 / R_EARTH
+      rmaxs(6) = R600 / R_PLANET
+      rmins(6) = R670 / R_PLANET
 
-      rmaxs(7) = R670 / R_EARTH
-      rmins(7) = R771 / R_EARTH
+      rmaxs(7) = R670 / R_PLANET
+      rmins(7) = R771 / R_PLANET
 
-      rmaxs(8:9) = R771 / R_EARTH
-      rmins(8:9) = RTOPDDOUBLEPRIME / R_EARTH
+      rmaxs(8:9) = R771 / R_PLANET
+      rmins(8:9) = RTOPDDOUBLEPRIME / R_PLANET
 
-      rmaxs(10) = RTOPDDOUBLEPRIME / R_EARTH
-      rmins(10) = RCMB / R_EARTH
+      rmaxs(10) = RTOPDDOUBLEPRIME / R_PLANET
+      rmins(10) = RCMB / R_PLANET
 
-      rmaxs(11:13) = RCMB / R_EARTH
-      rmins(11:13) = RICB / R_EARTH
+      rmaxs(11:13) = RCMB / R_PLANET
+      rmins(11:13) = RICB / R_PLANET
 
-      rmaxs(14) = RICB / R_EARTH
-      rmins(14) = R_CENTRAL_CUBE / R_EARTH
+      rmaxs(14) = RICB / R_PLANET
+      rmins(14) = R_CENTRAL_CUBE / R_PLANET
 
     else
 
@@ -927,7 +950,7 @@
 
       NUMBER_OF_MESH_LAYERS = 15
       layer_offset = 1
-      if ((RMIDDLE_CRUST-RMOHO_FICTITIOUS_IN_MESHER) < (R_EARTH-RMIDDLE_CRUST)) then
+      if ((RMIDDLE_CRUST-RMOHO_FICTITIOUS_IN_MESHER) < (R_PLANET-RMIDDLE_CRUST)) then
         ner_mesh_layers( 1) = ceiling (NER_CRUST / 2.d0)
         ner_mesh_layers( 2) = floor (NER_CRUST / 2.d0)
       else
@@ -1003,7 +1026,7 @@
       ! the first region is the crust at the surface of the Earth
       ! the last region is in the inner core near the center of the Earth
 
-      r_top(1) = R_EARTH
+      r_top(1) = R_PLANET
       r_bottom(1) = RMIDDLE_CRUST
 
       r_top(2) = RMIDDLE_CRUST
@@ -1028,21 +1051,21 @@
       r_bottom(8) = R771
 
       r_top(9) = R771
-      r_bottom(9) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
+      r_bottom(9) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
 
-      r_top(10) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
+      r_top(10) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
       r_bottom(10) = RTOPDDOUBLEPRIME
 
       r_top(11) = RTOPDDOUBLEPRIME
       r_bottom(11) = RCMB
 
       r_top(12) = RCMB
-      r_bottom(12) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
+      r_bottom(12) = R_PLANET - DEPTH_THIRD_DOUBLING_REAL
 
-      r_top(13) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
-      r_bottom(13) = R_EARTH - DEPTH_FOURTH_DOUBLING_REAL
+      r_top(13) = R_PLANET - DEPTH_THIRD_DOUBLING_REAL
+      r_bottom(13) = R_PLANET - DEPTH_FOURTH_DOUBLING_REAL
 
-      r_top(14) = R_EARTH - DEPTH_FOURTH_DOUBLING_REAL
+      r_top(14) = R_PLANET - DEPTH_FOURTH_DOUBLING_REAL
       r_bottom(14) = RICB
 
       r_top(15) = RICB
@@ -1050,42 +1073,65 @@
 
       ! new definition of rmins & rmaxs
       rmaxs(1) = ONE
-      rmins(1) = RMIDDLE_CRUST / R_EARTH
+      rmins(1) = RMIDDLE_CRUST / R_PLANET
 
-      rmaxs(2) = RMIDDLE_CRUST / R_EARTH
-      rmins(2) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
+      rmaxs(2) = RMIDDLE_CRUST / R_PLANET
+      rmins(2) = RMOHO_FICTITIOUS_IN_MESHER / R_PLANET
 
-      rmaxs(3) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
-      rmins(3) = R80_FICTITIOUS_IN_MESHER / R_EARTH
+      rmaxs(3) = RMOHO_FICTITIOUS_IN_MESHER / R_PLANET
+      rmins(3) = R80_FICTITIOUS_IN_MESHER / R_PLANET
 
-      rmaxs(4) = R80_FICTITIOUS_IN_MESHER / R_EARTH
-      rmins(4) = R220 / R_EARTH
+      rmaxs(4) = R80_FICTITIOUS_IN_MESHER / R_PLANET
+      rmins(4) = R220 / R_PLANET
 
-      rmaxs(5) = R220 / R_EARTH
-      rmins(5) = R400 / R_EARTH
+      rmaxs(5) = R220 / R_PLANET
+      rmins(5) = R400 / R_PLANET
 
-      rmaxs(6) = R400 / R_EARTH
-      rmins(6) = R600 / R_EARTH
+      rmaxs(6) = R400 / R_PLANET
+      rmins(6) = R600 / R_PLANET
 
-      rmaxs(7) = R600 / R_EARTH
-      rmins(7) = R670 / R_EARTH
+      rmaxs(7) = R600 / R_PLANET
+      rmins(7) = R670 / R_PLANET
 
-      rmaxs(8) = R670 / R_EARTH
-      rmins(8) = R771 / R_EARTH
+      rmaxs(8) = R670 / R_PLANET
+      rmins(8) = R771 / R_PLANET
 
-      rmaxs(9:10) = R771 / R_EARTH
-      rmins(9:10) = RTOPDDOUBLEPRIME / R_EARTH
+      rmaxs(9:10) = R771 / R_PLANET
+      rmins(9:10) = RTOPDDOUBLEPRIME / R_PLANET
 
-      rmaxs(11) = RTOPDDOUBLEPRIME / R_EARTH
-      rmins(11) = RCMB / R_EARTH
+      rmaxs(11) = RTOPDDOUBLEPRIME / R_PLANET
+      rmins(11) = RCMB / R_PLANET
 
-      rmaxs(12:14) = RCMB / R_EARTH
-      rmins(12:14) = RICB / R_EARTH
+      rmaxs(12:14) = RCMB / R_PLANET
+      rmins(12:14) = RICB / R_PLANET
 
-      rmaxs(15) = RICB / R_EARTH
-      rmins(15) = R_CENTRAL_CUBE / R_EARTH
+      rmaxs(15) = RICB / R_PLANET
+      rmins(15) = R_CENTRAL_CUBE / R_PLANET
     endif
   endif
+
+  ! checks
+  do ielem = 1,NUMBER_OF_MESH_LAYERS-1
+    if (r_top(ielem) - r_top(ielem+1) < 0.d0) then
+      print *,'Error: define_all_layers rank ',myrank,'found invalid layer ',ielem, &
+              ' with negative radius separation: r_top ',r_top(ielem),r_top(ielem+1)
+      stop 'Error invalid layering in define all layers'
+    endif
+    if (r_bottom(ielem) - r_bottom(ielem+1) < 0.d0) then
+      print *,'Error: define_all_layers rank ',myrank,'found invalid layer ',ielem, &
+              ' with negative radius separation: r_bottom ',r_top(ielem),r_top(ielem+1)
+      stop 'Error invalid layering in define all layers'
+    endif
+  enddo
+
+  ! debug
+  !if (myrank == 0) then
+  !  print *,'debug: define_all_layers:',NUMBER_OF_MESH_LAYERS
+  !  do ielem = 1,NUMBER_OF_MESH_LAYERS
+  !    print *,'debug:  layer ',ielem,': top/bottom ',r_top(ielem),r_bottom(ielem), &
+  !            'rmin/rmax/ner = ',rmins(ielem),rmaxs(ielem),ner_mesh_layers(ielem)
+  !  enddo
+  !endif
 
   end subroutine define_all_layers
 

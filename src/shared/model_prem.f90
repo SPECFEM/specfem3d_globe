@@ -44,6 +44,7 @@
                             R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
 
   use constants
+  use shared_parameters, only: R_EARTH,RHOAV
 
   implicit none
 
@@ -277,6 +278,7 @@
                               R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
 
   use constants
+  use shared_parameters, only: R_EARTH,RHOAV
 
   implicit none
 
@@ -540,6 +542,7 @@
 !       here, we will extend the mantle with isotropic values (averaged), and no radial anisotropy above moho depths.
 
   use constants
+  use shared_parameters, only: R_EARTH,RHOAV
 
   implicit none
 
@@ -643,6 +646,7 @@
 ! and number of points per wavelength only in the fluid outer core
 
   use constants
+  use shared_parameters, only: R_EARTH,RHOAV
 
   implicit none
 
@@ -683,6 +687,7 @@
                           R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
 
   use constants
+  use shared_parameters, only: R_EARTH,RHOAV
 
   implicit none
 

@@ -27,10 +27,16 @@
 
   subroutine get_model_parameters()
 
+  use constants
+  use shared_parameters
+
   implicit none
 
   ! turns on/off corresponding 1-D/3-D model flags
   call get_model_parameters_flags()
+
+  ! sets constants for planet
+  call get_model_planet_constants()
 
   ! sets radius for each discontinuity and ocean density values
   call get_model_parameters_radii()
@@ -54,7 +60,7 @@
     ATTENUATION_GLL, CASE_3D,CRUSTAL,HETEROGEN_3D_MANTLE, &
     HONOR_1D_SPHERICAL_MOHO, MODEL_3D_MANTLE_PERTUBATIONS, &
     ONE_CRUST, TRANSVERSE_ISOTROPY, OCEANS,TOPOGRAPHY, &
-    CEM_REQUEST,CEM_ACCEPT
+    CEM_REQUEST,CEM_ACCEPT,GPU_MODE
 
   implicit none
 
@@ -261,6 +267,19 @@
   case ('1d_ref_iso')
     HONOR_1D_SPHERICAL_MOHO = .true.
     REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
+
+  case ('1d_sohl')
+    ! Mars
+    HONOR_1D_SPHERICAL_MOHO = .true.
+    REFERENCE_1D_MODEL = REFERENCE_MODEL_SOHL
+
+  case('1d_sohl_3d_crust')
+    ! Mars
+    CASE_3D = .true.
+    CRUSTAL = .true.
+    ONE_CRUST = .true.
+    REFERENCE_1D_MODEL = REFERENCE_MODEL_SOHL
+    REFERENCE_CRUSTAL_MODEL = ICRUST_CRUSTMAPS
 
   ! 3-D models
   case ('transversely_isotropic_prem_plus_3d_crust_2.0')
@@ -618,7 +637,105 @@
        REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) .and. TRANSVERSE_ISOTROPY) &
         stop 'models IASP91, AK135, 1066A, JP1D and SEA1D are currently isotropic'
 
+  ! Mars
+  ! Mars 1D_Sohl is isotropic
+  if (REFERENCE_1D_MODEL == REFERENCE_MODEL_SOHL .and. TRANSVERSE_ISOTROPY) &
+      stop 'model 1D_Sohl is currently isotropic'
+  ! Mars has no ocean
+  if (REFERENCE_1D_MODEL == REFERENCE_MODEL_SOHL .and. OCEANS) &
+    stop 'model 1D_Sohl cannot use an ocean approximation'
+  ! Mars not implemented yet on GPU (missing correct gravity)
+  if (REFERENCE_1D_MODEL == REFERENCE_MODEL_SOHL .and. GPU_MODE) &
+    stop 'model 1D_Sohl cannot use GPU_MODE'
+
   end subroutine get_model_parameters_flags
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  subroutine get_model_planet_constants()
+
+  use constants
+  use shared_parameters
+
+  implicit none
+
+! note: Please make sure to broadcast the values below in broadcast_computed_parameters.f90
+!
+!       here, only the master process is setting the new defaults.
+!       thus, they need to be broadcast to all other processes.
+!       this will be done in routine broadcast_computed_parameters().
+
+  ! sets Planet constants
+  select case(REFERENCE_1D_MODEL)
+  case (REFERENCE_MODEL_SOHL)
+    ! Mars
+    ! sets planet
+    PLANET_TYPE = IPLANET_MARS
+    ! radius
+    R_EARTH = MARS_R
+    R_EARTH_KM = MARS_R_KM
+    ! average density
+    RHOAV = MARS_RHOAV
+    ! gravity
+    STANDARD_GRAVITY = MARS_STANDARD_GRAVITY
+    ! flattening/eccentricity
+    ONE_MINUS_F_SQUARED = MARS_ONE_MINUS_F_SQUARED
+    ! topo
+    PATHNAME_TOPO_FILE = MARS_PATHNAME_TOPO_FILE
+    RESOLUTION_TOPO_FILE = MARS_RESOLUTION_TOPO_FILE
+    NX_BATHY = MARS_NX_BATHY
+    NY_BATHY = MARS_NY_BATHY
+    TOPO_MINIMUM = MARS_TOPO_MINIMUM
+    TOPO_MAXIMUM = MARS_TOPO_MAXIMUM
+    ! crust
+    R_DEEPEST_CRUST = MARS_R_DEEPEST_CRUST
+    ! rotation
+    HOURS_PER_DAY = MARS_HOURS_PER_DAY
+    SECONDS_PER_HOUR = MARS_SECONDS_PER_HOUR
+    ! mesh
+    MAX_RATIO_CRUST_STRETCHING = MARS_MAX_RATIO_CRUST_STRETCHING
+    RMOHO_STRETCH_ADJUSTMENT = MARS_RMOHO_STRETCH_ADJUSTMENT
+    R80_STRETCH_ADJUSTMENT = MARS_R80_STRETCH_ADJUSTMENT
+    REGIONAL_MOHO_MESH = MARS_REGIONAL_MOHO_MESH
+    HONOR_DEEP_MOHO = MARS_HONOR_DEEP_MOHO
+
+  case default
+    ! Earth
+    ! default: sets Earth as default for R_EARTH, RHOAV, ..
+    PLANET_TYPE = IPLANET_EARTH
+    ! radius
+    R_EARTH = EARTH_R
+    R_EARTH_KM = EARTH_R_KM
+    ! average density
+    RHOAV = EARTH_RHOAV
+    ! gravity
+    STANDARD_GRAVITY = EARTH_STANDARD_GRAVITY
+    ! flattening/eccentricity
+    ONE_MINUS_F_SQUARED = EARTH_ONE_MINUS_F_SQUARED
+    ! topo
+    PATHNAME_TOPO_FILE = EARTH_PATHNAME_TOPO_FILE
+    RESOLUTION_TOPO_FILE = EARTH_RESOLUTION_TOPO_FILE
+    NX_BATHY = EARTH_NX_BATHY
+    NY_BATHY = EARTH_NY_BATHY
+    TOPO_MINIMUM = EARTH_TOPO_MINIMUM
+    TOPO_MAXIMUM = EARTH_TOPO_MAXIMUM
+    ! crust
+    R_DEEPEST_CRUST = EARTH_R_DEEPEST_CRUST
+    ! rotation
+    HOURS_PER_DAY = EARTH_HOURS_PER_DAY
+    SECONDS_PER_HOUR = EARTH_SECONDS_PER_HOUR
+    ! mesh
+    MAX_RATIO_CRUST_STRETCHING = EARTH_MAX_RATIO_CRUST_STRETCHING
+    RMOHO_STRETCH_ADJUSTMENT = EARTH_RMOHO_STRETCH_ADJUSTMENT
+    R80_STRETCH_ADJUSTMENT = EARTH_R80_STRETCH_ADJUSTMENT
+    REGIONAL_MOHO_MESH = EARTH_REGIONAL_MOHO_MESH
+    HONOR_DEEP_MOHO = EARTH_HONOR_DEEP_MOHO
+  end select
+
+  end subroutine get_model_planet_constants
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -634,7 +751,9 @@
     RMOHO,R80,R120,R220,R400,R600,R670,R771, &
     RTOPDDOUBLEPRIME,RCMB,RICB, &
     RMOHO_FICTITIOUS_IN_MESHER,R80_FICTITIOUS_IN_MESHER, &
-    RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS
+    R80_STRETCH_ADJUSTMENT,RMOHO_STRETCH_ADJUSTMENT, &
+    RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS, &
+    R_EARTH
 
   use shared_parameters, only: &
     HONOR_1D_SPHERICAL_MOHO,CASE_3D,CRUSTAL,REFERENCE_1D_MODEL
@@ -809,6 +928,32 @@
     ! values for SEA1D that are not discontinuities
     R600 = 5771000.d0
     R771 = 5611000.d0
+
+  else if ( REFERENCE_1D_MODEL == REFERENCE_MODEL_SOHL) then
+    ! Mars
+    ! Sohl & Spohn, 1997: Model A, Table 5, pg. 1623
+    ROCEAN = 3390000.d0         ! (Physical surface)
+    RMIDDLE_CRUST = 3340000.d0  ! 50 km
+    RMOHO = 3280000.d0          ! (Crust-mantle boundary)  110 km average crustal thickness
+    R80  = 3055500.d0           ! (Rheological lithosphere) 334.5 km deep, too small will cause negative Jacobian err
+    R120 = -1.d0                ! by default there is no d120 discontinuity, except in IASP91, therefore set to fictitious value
+    R220 = 2908000.d0           ! (Thermal lithosphere) d = 482 km
+    R400 = 2655000.d0           ! d = 735 km
+    R600 = 2455000.d0           ! d = 935 km
+    R670 = 2360000.d0           ! (alpha-olivine-beta-spinel transition) d = 1030 km
+    R771 = 2033000.d0           ! (beta-spinel-gamma-spinel transition) d = 1357 km, below which the second doubling implemented
+    RTOPDDOUBLEPRIME = 1503000.d0  ! (lower thermal boundary layer) d = 1887 km, too thin for mesh ?
+    RCMB = 1468000.d0           ! (Core-mantle boundary) d = 1922 km
+    ! note: Sohl & Spohn assume an entirely molten iron alloy core.
+    !       since SPECFEM assumes a structure of solid crust/mantle - fluid outer core - solid inner core,
+    !       we set a very small inner core radius here.
+    RICB = 515000.d0            ! d = 2875 km good for both stability and efficiency
+
+    ! densities
+    RHO_OCEANS = 1020.0 / MARS_RHOAV   ! will not be used
+    ! densities fluid outer core (from modSOHL)
+    RHO_TOP_OC = 6936.40 / MARS_RHOAV
+    RHO_BOTTOM_OC = 7268.20 / MARS_RHOAV
   endif
 
   ! honor the PREM Moho or define a fictitious Moho in order to have even radial sampling
@@ -830,6 +975,13 @@
       RMOHO_FICTITIOUS_IN_MESHER = RMOHO_FICTITIOUS_IN_MESHER + RMOHO_STRETCH_ADJUSTMENT
       R80_FICTITIOUS_IN_MESHER = R80_FICTITIOUS_IN_MESHER + R80_STRETCH_ADJUSTMENT
     endif
+  endif
+
+  ! Mars
+  ! Ebru - a quick fix for MARS but should be done and checked again during 3D implementation
+  if (REFERENCE_1D_MODEL == REFERENCE_MODEL_SOHL) then
+    RMOHO_FICTITIOUS_IN_MESHER = RMOHO
+    R80_FICTITIOUS_IN_MESHER = R80
   endif
 
   end subroutine get_model_parameters_radii

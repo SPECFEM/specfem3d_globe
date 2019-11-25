@@ -321,6 +321,131 @@
     NER_771_670 = NER_771_670 + 1
   endif
 
+  ! Mars
+  if (PLANET_TYPE == IPLANET_MARS) then
+    ! radius of central cube
+    R_CENTRAL_CUBE = 395000.d0
+
+    ! time step / number of element layers
+    if (NEX_MAX*multiplication_factor <= 80) then
+      DT                       = 0.3d0
+      ! attenuation period range
+      MIN_ATTENUATION_PERIOD   = 30
+      MAX_ATTENUATION_PERIOD   = 1500
+      ! number of element layers in each mesh region
+      NER_CRUST                = 1
+      NER_80_MOHO              = 2
+      NER_220_80               = 1
+      NER_400_220              = 2
+      NER_600_400              = 2
+      NER_670_600              = 1
+      NER_771_670              = 3
+      NER_TOPDDOUBLEPRIME_771  = 3
+      NER_CMB_TOPDDOUBLEPRIME  = 1
+      NER_OUTER_CORE           = 5
+      NER_TOP_CENTRAL_CUBE_ICB = 1
+    else if (NEX_MAX*multiplication_factor <= 96) then
+      DT                       = 0.252d0 * 0.90d0
+      ! attenuation period range
+      MIN_ATTENUATION_PERIOD   = 30
+      MAX_ATTENUATION_PERIOD   = 1500
+      ! number of element layers in each mesh region
+      NER_CRUST                = 5  ! 110 km
+      NER_80_MOHO              = 2  ! 225 km
+      NER_220_80               = 1  ! 147 km
+      NER_400_220              = 2  ! 253 km
+      NER_600_400              = 2  ! 200 km
+      NER_670_600              = 1  !  95 km
+      NER_771_670              = 3  ! 313 km
+      NER_TOPDDOUBLEPRIME_771  = 4  ! 530 km
+      NER_CMB_TOPDDOUBLEPRIME  = 1  !  35 km
+      NER_OUTER_CORE           = 10 !1068 km
+      NER_TOP_CENTRAL_CUBE_ICB = 2  ! 300 km
+    else if (NEX_MAX*multiplication_factor <= 160) then
+      DT                       = 0.2d0
+      ! attenuation period range
+      ! The shortest period at this resoution is about 20 s compare with
+      ! NEX=256, so change the attenuation period accordingly.
+      ! attenuation period range
+      MIN_ATTENUATION_PERIOD   = 20       ! 30
+      MAX_ATTENUATION_PERIOD   = 1000     ! 1500
+      ! number of element layers in each mesh region
+      NER_CRUST                = 5 !3   change to 5 for moho stretching
+      NER_80_MOHO              = 5
+      NER_220_80               = 3
+      NER_400_220              = 4
+      NER_600_400              = 3
+      NER_670_600              = 2
+      NER_771_670              = 6
+      NER_TOPDDOUBLEPRIME_771  = 8
+      NER_CMB_TOPDDOUBLEPRIME  = 1
+      NER_OUTER_CORE           = 16
+      NER_TOP_CENTRAL_CUBE_ICB = 4
+    else if (NEX_MAX*multiplication_factor <= 256) then
+      DT                       = 0.15d0
+      ! attenuation period range
+      MIN_ATTENUATION_PERIOD   = 10  ! 20
+      MAX_ATTENUATION_PERIOD   = 500 ! 1000
+      ! number of element layers in each mesh region
+      NER_CRUST                = 5 !4
+      NER_80_MOHO              = 6 !6
+      NER_220_80               = 4 !3
+      NER_400_220              = 5 !5
+      NER_600_400              = 4
+      NER_670_600              = 2
+      NER_771_670              = 8 !6
+      NER_TOPDDOUBLEPRIME_771  = 10
+      NER_CMB_TOPDDOUBLEPRIME  = 1
+      NER_OUTER_CORE           = 18 !22
+      NER_TOP_CENTRAL_CUBE_ICB = 5
+    else if (NEX_MAX*multiplication_factor <= 320) then
+      DT                       = 0.07d0
+      ! attenuation period range
+      MIN_ATTENUATION_PERIOD   = 15
+      MAX_ATTENUATION_PERIOD   = 750
+      ! number of element layers in each mesh region
+      NER_CRUST                = 5
+      NER_80_MOHO              = 8
+      NER_220_80               = 5
+      NER_400_220              = 6
+      NER_600_400              = 5
+      NER_670_600              = 3
+      NER_771_670              = 10
+      NER_TOPDDOUBLEPRIME_771  = 13
+      NER_CMB_TOPDDOUBLEPRIME  = 1
+      NER_OUTER_CORE           = 20 !30
+      NER_TOP_CENTRAL_CUBE_ICB = 5 !9
+    else
+      stop 'NEX not implemented for Mars yet'
+    endif
+
+    if (HONOR_1D_SPHERICAL_MOHO) then
+      ! 1D models honor 1D spherical moho
+      if (.not. ONE_CRUST) then
+        ! case 1D + two+ crustal layers
+        if (NEX_MAX*multiplication_factor <= 160) then
+          DT = 0.16d0
+        else if (NEX_MAX*multiplication_factor <= 256) then
+          DT = 0.09d0
+        else if (NEX_MAX*multiplication_factor <= 320) then
+          DT = 0.07d0
+        endif
+      else
+        ! makes time set to maximum value without blow up simulation with 3D crust
+        if (NEX_MAX*multiplication_factor <= 80) then
+          DT = 0.15d0
+        else if (NEX_MAX*multiplication_factor <= 160) then
+          ! make it smaller to avoid stability issue
+          DT = 0.16d0
+        else if (NEX_MAX*multiplication_factor <= 256) then
+          DT = 0.1d0 !0.12
+        else if (NEX_MAX*multiplication_factor <= 320) then
+          DT = 0.08d0
+        endif
+      endif
+    endif
+  endif ! Mars
+
   !----
   !----  change some values in the case of regular PREM with two crustal layers or of 3D models
   !----
@@ -401,6 +526,9 @@
     ! gets time step size
     call auto_time_stepping(min_chunk_width_in_degrees, NEX_MAX, dt_auto)
 
+    !debug
+    !print *,'debug: get_timestep: min width',min_chunk_width_in_degrees,NEX_MAX,'dt_auto',dt_auto,'DT',DT
+
     ! note: automatic time step might overestimate the time step size for chunk sizes larger ~ 40 degrees
     !       thus we only replace the empirical time step size if the estimate gets smaller
 
@@ -418,6 +546,19 @@
       if (NER_CRUST < 2 ) NER_CRUST = 2
     endif
 
+    ! Mars
+    if (PLANET_TYPE == IPLANET_MARS) then
+      if (HONOR_1D_SPHERICAL_MOHO) then
+        if (.not. ONE_CRUST) then
+          ! case 1D + two+ crustal layers
+          if (NER_CRUST < 3 ) NER_CRUST = 3
+        endif
+      else
+        ! case 3D
+        if (NER_CRUST < 5 ) NER_CRUST = 5
+      endif
+    endif
+
   endif
 
 !---
@@ -428,79 +569,104 @@
 
 
   ! time step reductions are based on empirical values (..somehow)
-
-  ! following models need special attention, at least for global simulations:
-  if (NCHUNKS == 6) then
-    ! makes time step smaller for this ref model, otherwise becomes unstable in fluid
-    if (REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) &
-      DT = DT*(1.d0 - 0.3d0)
-
-    ! using inner core anisotropy
-    if (ANISOTROPIC_INNER_CORE) then
-      ! note: main limiting time step constraint is usually in the crust/mantle elements for 3D models
-      !       for details, you can check in the output_mesher.txt
-      continue
+  if (PLANET_TYPE == IPLANET_MARS) then
+    ! Mars
+    if (NCHUNKS == 6) then
+      if (CRUSTAL .and. CASE_3D) then
+        if (REFERENCE_CRUSTAL_MODEL == ICRUST_CRUSTMAPS) &
+          DT = DT*(1.d0 - 0.1d0)
+      endif
     endif
+    if (MARS_HONOR_DEEP_MOHO) then
+      if (HONOR_1D_SPHERICAL_MOHO) then
+        ! spherical moho depth, and nothing to deform, default layering will be sufficient
+        continue
+      else
+        ! enforces 5 element layers for regional simulation
+        NER_CRUST = 5
+      endif
+    endif
+    ! takes a 5% safety margin on the maximum stable time step
+    ! which was obtained by trial and error
+    DT = DT * (1.d0 - 0.05d0)
 
-    ! makes time step smaller for certain crustal models, otherwise becomes unstable in solid
-    ! CRUSTAL: indicates a 3D crustal model, like CRUST2.0 will be used
-    ! CASE_3D: indicates element stretching to honor e.g. moho depths and/or upper/lower crusts
-    if (CRUSTAL .and. CASE_3D) then
-      ! reduces time step size for CRUST1.0 crustal model
-      if (REFERENCE_CRUSTAL_MODEL == ICRUST_CRUST1) &
-        DT = DT*(1.d0 - 0.1d0)
-      ! reduces time step size for crustmaps crustal model
-      if (REFERENCE_CRUSTAL_MODEL == ICRUST_CRUSTMAPS) &
+  else
+    ! Earth
+    ! following models need special attention, at least for global simulations:
+    if (NCHUNKS == 6) then
+      ! makes time step smaller for this ref model, otherwise becomes unstable in fluid
+      if (REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) &
         DT = DT*(1.d0 - 0.3d0)
+
+      ! using inner core anisotropy
+      if (ANISOTROPIC_INNER_CORE) then
+        ! note: main limiting time step constraint is usually in the crust/mantle elements for 3D models
+        !       for details, you can check in the output_mesher.txt
+        continue
+      endif
+
+      ! makes time step smaller for certain crustal models, otherwise becomes unstable in solid
+      ! CRUSTAL: indicates a 3D crustal model, like CRUST2.0 will be used
+      ! CASE_3D: indicates element stretching to honor e.g. moho depths and/or upper/lower crusts
+      if (CRUSTAL .and. CASE_3D) then
+        ! reduces time step size for CRUST1.0 crustal model
+        if (REFERENCE_CRUSTAL_MODEL == ICRUST_CRUST1) &
+          DT = DT*(1.d0 - 0.1d0)
+        ! reduces time step size for crustmaps crustal model
+        if (REFERENCE_CRUSTAL_MODEL == ICRUST_CRUSTMAPS) &
+          DT = DT*(1.d0 - 0.3d0)
+      endif
     endif
-  endif
 
-  ! following models need special attention, regardless of number of chunks:
-  ! it makes the time step smaller for this ref model, otherwise becomes unstable in fluid
-  if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) &
-    DT = DT*(1.d0 - 0.8d0)  ! *0.20d0
+    ! following models need special attention, regardless of number of chunks:
+    ! it makes the time step smaller for this ref model, otherwise becomes unstable in fluid
+    if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) &
+      DT = DT*(1.d0 - 0.8d0)  ! *0.20d0
 
-  ! reduces time step size for "no mud" version of AK135F model
-  if (REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135F_NO_MUD) &
-    DT = DT*(1.d0 - 0.05d0)
+    ! reduces time step size for "no mud" version of AK135F model
+    if (REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135F_NO_MUD) &
+      DT = DT*(1.d0 - 0.05d0)
 
-  !  decreases time step as otherwise the solution might become unstable for rougher/unsmoothed models
-  if (.false.) then
-    if (THREE_D_MODEL == THREE_D_MODEL_PPM ) DT = DT * (1.d0 - 0.2d0)
-  endif
-
-  ! takes a 5% safety margin on the maximum stable time step
-  ! which was obtained by trial and error
-  DT = DT * (1.d0 - 0.05d0)
-
-  ! adapts number of element layers in crust and time step for regional simulations
-  if (REGIONAL_MOHO_MESH) then
-    ! hard coded number of crustal element layers and time step
-
-    ! checks
-    if (NCHUNKS > 1 ) stop 'regional moho mesh: NCHUNKS error in rcp_set_timestep_and_layers'
-
-    ! increases number of layers due to element deformations when honoring large moho depth variations (7km - 70km).
-    ! this should lead to a better mesh quality.
-    if (HONOR_1D_SPHERICAL_MOHO) then
-      ! spherical moho depth, and nothing to deform, default layering will be sufficient
-      continue
-    else
-      ! original values
-      !print *,'NER:',NER_CRUST
-      !print *,'DT:',DT
-
-      ! enforce 3 element layers
-      NER_CRUST = 3
-
-      ! increased stability, empirical
-      DT = DT*(1.d0 + 0.5d0)
-
-      ! empirical values for different regions
-      if (REGIONAL_MOHO_MESH_EUROPE ) DT = 0.17 ! Europe
-      if (REGIONAL_MOHO_MESH_ASIA ) DT = 0.15 ! Asia & Middle East
+    !  decreases time step as otherwise the solution might become unstable for rougher/unsmoothed models
+    if (.false.) then
+      if (THREE_D_MODEL == THREE_D_MODEL_PPM ) DT = DT * (1.d0 - 0.2d0)
     endif
-  endif
+
+    ! takes a 5% safety margin on the maximum stable time step
+    ! which was obtained by trial and error
+    DT = DT * (1.d0 - 0.05d0)
+
+    ! adapts number of element layers in crust and time step for regional simulations
+    if (REGIONAL_MOHO_MESH) then
+      ! hard coded number of crustal element layers and time step
+
+      ! checks
+      if (NCHUNKS > 1 ) stop 'regional moho mesh: NCHUNKS error in rcp_set_timestep_and_layers'
+
+      ! increases number of layers due to element deformations when honoring large moho depth variations (7km - 70km).
+      ! this should lead to a better mesh quality.
+      if (HONOR_1D_SPHERICAL_MOHO) then
+        ! spherical moho depth, and nothing to deform, default layering will be sufficient
+        continue
+      else
+        ! original values
+        !print *,'NER:',NER_CRUST
+        !print *,'DT:',DT
+
+        ! enforce 3 element layers
+        NER_CRUST = 3
+
+        ! increased stability, empirical
+        DT = DT*(1.d0 + 0.5d0)
+
+        ! empirical values for different regions
+        if (EARTH_REGIONAL_MOHO_MESH_EUROPE ) DT = 0.17 ! Europe
+        if (EARTH_REGIONAL_MOHO_MESH_ASIA ) DT = 0.15 ! Asia & Middle East
+      endif
+    endif
+
+  endif ! planet_type
+
 
   ! the maximum CFL of LDDRK is significantly higher than that of the Newmark scheme,
   ! in a ratio that is theoretically 1.327 / 0.697 = 1.15 / 0.604 = 1.903 for a solid with Poisson's ratio = 0.25

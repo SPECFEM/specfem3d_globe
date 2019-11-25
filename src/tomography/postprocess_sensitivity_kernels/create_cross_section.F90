@@ -767,10 +767,8 @@
 
 ! creates point locations of horizontal cross-section points
 
-  use constants, only: CUSTOM_REAL, &
-    NX_BATHY,NY_BATHY,NR,R_EARTH,R_UNIT_SPHERE
-
-  use shared_parameters, only: ONE_CRUST
+  use constants, only: CUSTOM_REAL,NR,R_UNIT_SPHERE
+  use shared_parameters, only: ONE_CRUST,R_EARTH,NX_BATHY,NY_BATHY
 
   implicit none
 
@@ -950,12 +948,11 @@
 
 ! creates point locations of horizontal cross-section points
 
-  use constants, only: R_UNIT_SPHERE,CUSTOM_REAL, &
-    NX_BATHY,NY_BATHY,NR, &
-    DEGREES_TO_RADIANS,RADIANS_TO_DEGREES,R_EARTH, &
+  use constants, only: R_UNIT_SPHERE,CUSTOM_REAL,NR, &
+    DEGREES_TO_RADIANS,RADIANS_TO_DEGREES, &
     PI_OVER_TWO,TWO_PI,SMALLVAL
 
-  use shared_parameters, only: ONE_CRUST
+  use shared_parameters, only: ONE_CRUST,R_EARTH,NX_BATHY,NY_BATHY
 
   implicit none
 
@@ -2113,8 +2110,9 @@
                                    typical_size,dlat,dlon,nlat,lat0,dincr,ddepth,section_type,ELLIPTICITY, &
                                    model_diff,model_pert,m_avg_total,point_avg_total)
 
-  use constants, only: CUSTOM_REAL,RADIANS_TO_DEGREES,R_EARTH_KM, &
-    TINYVAL,HUGEVAL,PI,PI_OVER_TWO,ONE_MINUS_F_SQUARED
+  use constants, only: CUSTOM_REAL,RADIANS_TO_DEGREES, &
+    TINYVAL,HUGEVAL,PI,PI_OVER_TWO
+  use shared_parameters, only: ONE_MINUS_F_SQUARED,R_EARTH_KM
 
   implicit none
 
@@ -2145,8 +2143,10 @@
   double precision :: val,pert,diff
   double precision :: pert_min,pert_max
   integer :: ipoints_integral
+  double precision :: FACTOR_TAN
 
-  double precision, parameter :: FACTOR_TAN = 1.d0 / ONE_MINUS_F_SQUARED
+  ! factor
+  FACTOR_TAN = 1.d0 / ONE_MINUS_F_SQUARED
 
   ! note: only master rank is computing this on collected array values
   !
@@ -2477,7 +2477,8 @@
 
 ! returns latitude/longitude in radians for geocentric location
 
-  use constants, only: DEGREES_TO_RADIANS,PI_OVER_TWO,ONE_MINUS_F_SQUARED
+  use constants, only: DEGREES_TO_RADIANS,PI_OVER_TWO
+  use shared_parameters,only: ONE_MINUS_F_SQUARED
 
   implicit none
 

@@ -33,9 +33,14 @@
 ! Dec, 30, 2009
 
   use constants, only: myrank, &
-    NGNOD,R_EARTH_KM,R_EARTH,R_UNIT_SPHERE, &
+    NGNOD,R_UNIT_SPHERE,R_EARTH,R_EARTH_KM, &
     PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,SMALLVAL,ONE,USE_OLD_VERSION_5_1_5_FORMAT, &
-    SUPPRESS_MOHO_STRETCHING,ICRUST_CRUST_SH
+    SUPPRESS_MOHO_STRETCHING,ICRUST_CRUST_SH, &
+    EARTH_R_KM,EARTH_R
+
+  ! Mars
+  use constants, only: MARS_R,MARS_R_KM
+  use shared_parameters, only: PLANET_TYPE,IPLANET_MARS
 
   use meshfem3D_par, only: &
     RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST,REFERENCE_CRUSTAL_MODEL
@@ -57,11 +62,26 @@
   integer :: ia,count_crust,count_mantle
   logical :: found_crust
 
-  ! minimum/maximum allowed moho depths (5km/90km non-dimensionalized)
-  double precision,parameter :: MOHO_MINIMUM_DEFAULT = 5.0 / R_EARTH_KM
-  double precision,parameter :: MOHO_MAXIMUM_DEFAULT = 90.0 / R_EARTH_KM
+  double precision :: MOHO_MAXIMUM_DEFAULT,MOHO_MINIMUM_DEFAULT
+  double precision :: MOHO_MAXIMUM,MOHO_MINIMUM
 
-  double precision :: MOHO_MINIMUM,MOHO_MAXIMUM
+  ! minimum/maximum allowed moho depths (5km/90km non-dimensionalized)
+  double precision,parameter :: MOHO_MINIMUM_DEFAULT_EARTH = 5.0 / EARTH_R_KM
+  double precision,parameter :: MOHO_MAXIMUM_DEFAULT_EARTH = 90.0 / EARTH_R_KM
+  ! Mars
+  double precision,parameter :: MOHO_MINIMUM_DEFAULT_MARS = 5.0 / MARS_R_KM
+  double precision,parameter :: MOHO_MAXIMUM_DEFAULT_MARS = 150.0 / MARS_R_KM
+
+  ! min/max defaults
+  if (PLANET_TYPE == IPLANET_MARS) then
+    ! Mars
+    MOHO_MINIMUM_DEFAULT = MOHO_MINIMUM_DEFAULT_MARS
+    MOHO_MAXIMUM_DEFAULT = MOHO_MAXIMUM_DEFAULT_MARS
+  else
+    ! Earth
+    MOHO_MINIMUM_DEFAULT = MOHO_MINIMUM_DEFAULT_EARTH
+    MOHO_MAXIMUM_DEFAULT = MOHO_MAXIMUM_DEFAULT_EARTH
+  endif
 
   ! sets min/max allowed moho depth
   MOHO_MINIMUM = MOHO_MINIMUM_DEFAULT
@@ -109,6 +129,15 @@
 
     ! gets smoothed moho depth
     call meshfem3D_model_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,found_crust,elem_in_crust)
+
+    !debug
+    !if (lon > 140.0 .and. lon < 143. .and. lat < -42. .and. lat > -45. .and. ia == 27) then
+    !  print '(a, I4, 4F12.4)', 'crust map:', ia, lat, lon, (ONE-r)*R_EARTH_KM,moho*R_EARTH_KM
+    !endif
+    !if (r > 1.02d0) then
+    !  print '(a,4F12.4)', 'DEBUG moho_stretching_honor_crust_reg(): lat, lon, r, moho =', lat, lon, r, moho
+    !  stop 'stop for detecting large r in moho_stretching'
+    !endif
 
     ! checks non-dimensionalized moho depth
     !
@@ -246,8 +275,10 @@
 
   use constants, only: myrank, &
     NGNOD,R_EARTH, &
-    PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,ONE,HONOR_DEEP_MOHO,USE_OLD_VERSION_5_1_5_FORMAT, &
+    PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,ONE,USE_OLD_VERSION_5_1_5_FORMAT, &
     SUPPRESS_MOHO_STRETCHING
+
+  use shared_parameters, only: HONOR_DEEP_MOHO
 
   use meshfem3D_par, only: &
     R220
@@ -361,7 +392,9 @@
 
 ! honors deep moho (below 60 km), otherwise keeps the mesh boundary at r60 fixed
 
-  use constants
+  use constants,only: NGNOD,EARTH_R,R_UNIT_SPHERE,SMALLVAL
+  use shared_parameters, only: PLANET_TYPE,IPLANET_MARS,R_EARTH,R_MARS,RMOHO_STRETCH_ADJUSTMENT
+
   use meshfem3D_par, only: RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST
 
   implicit none
@@ -378,25 +411,56 @@
 
   ! local parameters
   double precision :: elevation,gamma
-  ! radii for stretching criteria
-  double precision,parameter ::  R15=6356000.d0/R_EARTH
-  double precision,parameter ::  R25=6346000.d0/R_EARTH
-  !double precision,parameter ::  R30=6341000.d0/R_EARTH
-  double precision,parameter ::  R35=6336000.d0/R_EARTH
-  !double precision,parameter ::  R40=6331000.d0/R_EARTH
-  double precision,parameter ::  R45=6326000.d0/R_EARTH
-  !double precision,parameter ::  R50=6321000.d0/R_EARTH
-  !double precision,parameter ::  R55=6316000.d0/R_EARTH
-  double precision,parameter ::  R60=6311000.d0/R_EARTH
+  double precision :: R15,R25,R35,R45,R60,RSURFACE
 
-  ! checks moho position: supposed to be at 60 km
-  if (RMOHO_STRETCH_ADJUSTMENT /= -20000.d0 ) &
-    stop 'wrong moho stretch adjustment for stretch_deep_moho'
-  if (RMOHO_FICTITIOUS_IN_MESHER/R_EARTH /= R60 ) &
-    stop 'wrong moho depth '
-  ! checks middle crust position: supposed to be bottom of first layer at 15 km
-  if (RMIDDLE_CRUST/R_EARTH /= R15 ) &
-    stop 'wrong middle crust depth'
+  ! radii for stretching criteria
+  double precision,parameter ::  EARTH_R15 = 6356000.d0/EARTH_R
+  double precision,parameter ::  EARTH_R25 = 6346000.d0/EARTH_R
+  !double precision,parameter ::  EARTH_R30 = 6341000.d0/EARTH_R
+  double precision,parameter ::  EARTH_R35 = 6336000.d0/EARTH_R
+  !double precision,parameter ::  EARTH_R40 = 6331000.d0/EARTH_R
+  double precision,parameter ::  EARTH_R45 = 6326000.d0/EARTH_R
+  !double precision,parameter ::  EARTH_R50 = 6321000.d0/EARTH_R
+  !double precision,parameter ::  EARTH_R55 = 6316000.d0/EARTH_R
+  double precision,parameter ::  EARTH_R60 = 6311000.d0/EARTH_R
+  ! Mars
+  double precision,parameter ::  MARS_R15 = 3375000.d0/R_MARS ! 15 km  bot of 1st lyr
+  double precision,parameter ::  MARS_R25 = 3365000.d0/R_MARS ! 25 km
+  !double precision,parameter ::  MARS_R30 = 3355000.d0/R_MARS ! 35 km  bot of 2nd lyr
+  double precision,parameter ::  MARS_R35 = 3345000.d0/R_MARS ! 45 km
+  !double precision,parameter ::  MARS_R40 = 3335000.d0/R_MARS ! 55 km  bot of 3rd lyr
+  double precision,parameter ::  MARS_R45 = 3325000.d0/R_MARS ! 65 km
+  !double precision,parameter ::  MARS_R50 = 3310000.d0/R_MARS ! 80 km  bot of 4th lyr
+  !double precision,parameter ::  MARS_R55 = 3295000.d0/R_MARS ! 95 km
+  double precision,parameter ::  MARS_R60 = 3270000.d0/R_MARS ! 110 km moho + 10 km adjustment
+
+  ! radii
+  if (PLANET_TYPE == IPLANET_MARS) then
+    ! Mars
+    RSURFACE = R_MARS
+    R15 = MARS_R15
+    R25 = MARS_R25
+    R35 = MARS_R35
+    R45 = MARS_R45
+    R60 = MARS_R60
+  else
+    ! Earth
+    RSURFACE = R_EARTH
+    R15 = EARTH_R15
+    R25 = EARTH_R25
+    R35 = EARTH_R35
+    R45 = EARTH_R45
+    R60 = EARTH_R60
+
+    ! checks moho position: supposed to be at 60 km
+    if (RMOHO_STRETCH_ADJUSTMENT /= -20000.d0 ) &
+      stop 'wrong moho stretch adjustment for stretch_deep_moho'
+    if (RMOHO_FICTITIOUS_IN_MESHER/R_EARTH /= R60 ) &
+      stop 'wrong moho depth '
+    ! checks middle crust position: supposed to be bottom of first layer at 15 km
+    if (RMIDDLE_CRUST/R_EARTH /= R15 ) &
+      stop 'wrong middle crust depth'
+  endif
 
   ! stretches mesh by moving point coordinates
   if (moho < R25 .and. moho > R45) then
@@ -448,7 +512,7 @@
       if (r < R45 .and. r >= R60) then
         gamma=(R45-r)/(R45-R60)
       else if (r < R60) then
-        gamma=(r-R220/R_EARTH)/(R60-R220/R_EARTH)
+        gamma=(r-R220/RSURFACE)/(R60-R220/RSURFACE)
         if (abs(gamma) < SMALLVAL) then
           gamma=0.0d0
         endif
@@ -511,7 +575,9 @@
 ! honors shallow and middle depth moho, deep moho will be interpolated within elements
 ! mesh will get stretched down to r220
 
-  use constants
+  use constants, only: NGNOD,EARTH_R,R_UNIT_SPHERE,SMALLVAL
+  use shared_parameters,only: PLANET_TYPE,IPLANET_MARS,R_EARTH,R_MARS,RMOHO_STRETCH_ADJUSTMENT
+
   use meshfem3D_par, only: RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST
 
   implicit none
@@ -527,25 +593,56 @@
 
   ! local parameters
   double precision :: elevation,gamma
-  ! radii for stretching criteria
-  double precision,parameter ::  R15=6356000.d0/R_EARTH
-  double precision,parameter ::  R25=6346000.d0/R_EARTH
-  !double precision,parameter ::  R30=6341000.d0/R_EARTH
-  double precision,parameter ::  R35=6336000.d0/R_EARTH
-  !double precision,parameter ::  R40=6331000.d0/R_EARTH
-  double precision,parameter ::  R45=6326000.d0/R_EARTH
-  !double precision,parameter ::  R50=6321000.d0/R_EARTH
-  double precision,parameter ::  R55=6316000.d0/R_EARTH
-  !double precision,parameter ::  R60=6311000.d0/R_EARTH
+  double precision :: R15,R25,R35,R45,R55,RSURFACE
 
-  ! checks moho position: supposed to be at 55 km
-  if (RMOHO_STRETCH_ADJUSTMENT /= -15000.d0 ) &
-    stop 'wrong moho stretch adjustment for stretch_moho'
-  if (RMOHO_FICTITIOUS_IN_MESHER/R_EARTH /= R55 ) &
-    stop 'wrong moho depth '
-  ! checks middle crust position: supposed to be bottom of first layer at 15 km
-  if (RMIDDLE_CRUST/R_EARTH /= R15 ) &
-    stop 'wrong middle crust depth'
+  ! radii for stretching criteria
+  double precision,parameter ::  EARTH_R15 = 6356000.d0/EARTH_R
+  double precision,parameter ::  EARTH_R25 = 6346000.d0/EARTH_R
+  !double precision,parameter ::  EARTH_R30 = 6341000.d0/EARTH_R
+  double precision,parameter ::  EARTH_R35 = 6336000.d0/EARTH_R
+  !double precision,parameter ::  EARTH_R40 = 6331000.d0/EARTH_R
+  double precision,parameter ::  EARTH_R45 = 6326000.d0/EARTH_R
+  !double precision,parameter ::  EARTH_R50 = 6321000.d0/EARTH_R
+  double precision,parameter ::  EARTH_R55 = 6316000.d0/EARTH_R
+  !double precision,parameter ::  EARTH_R60 = 6311000.d0/EARTH_R
+  ! Mars
+  double precision,parameter ::  MARS_R15 = 3375000.d0/R_MARS ! 15 km  bot of 1st lyr
+  double precision,parameter ::  MARS_R25 = 3365000.d0/R_MARS ! 25 km
+  !double precision,parameter ::  MARS_R30 = 3355000.d0/R_MARS ! 35 km  bot of 2nd lyr
+  double precision,parameter ::  MARS_R35 = 3345000.d0/R_MARS ! 45 km
+  !double precision,parameter ::  MARS_R40 = 3335000.d0/R_MARS ! 55 km  bot of 3rd lyr
+  double precision,parameter ::  MARS_R45 = 3325000.d0/R_MARS ! 65 km
+  !double precision,parameter ::  MARS_R50 = 3310000.d0/R_MARS ! 80 km  bot of 4th lyr
+  double precision,parameter ::  MARS_R55 = 3295000.d0/R_MARS ! 95 km
+  !double precision,parameter ::  MARS_R60 = 3270000.d0/R_MARS ! 110 km moho + 10 km adjustment
+
+  ! radii
+  if (PLANET_TYPE == IPLANET_MARS) then
+    ! Mars
+    RSURFACE = R_MARS
+    R15 = MARS_R15
+    R25 = MARS_R25
+    R35 = MARS_R35
+    R45 = MARS_R45
+    R55 = MARS_R55
+  else
+    ! Earth
+    RSURFACE = R_EARTH
+    R15 = EARTH_R15
+    R25 = EARTH_R25
+    R35 = EARTH_R35
+    R45 = EARTH_R45
+    R55 = EARTH_R55
+
+    ! checks moho position: supposed to be at 55 km
+    if (RMOHO_STRETCH_ADJUSTMENT /= -15000.d0 ) &
+      stop 'wrong moho stretch adjustment for stretch_moho'
+    if (RMOHO_FICTITIOUS_IN_MESHER/R_EARTH /= R55 ) &
+      stop 'wrong moho depth '
+    ! checks middle crust position: supposed to be bottom of first layer at 15 km
+    if (RMIDDLE_CRUST/R_EARTH /= R15 ) &
+      stop 'wrong middle crust depth'
+  endif
 
   ! moho between 25km and 45 km
   if (moho < R25 .and. moho > R45) then
@@ -553,8 +650,8 @@
     elevation = moho - R35
     if (r >= R35 .and. r < R15) then
       gamma=((R15-r)/(R15-R35))
-    else if (r < R35 .and. r > R220/R_EARTH) then
-      gamma = ((r-R220/R_EARTH)/(R35-R220/R_EARTH))
+    else if (r < R35 .and. r > R220/RSURFACE) then
+      gamma = ((r-R220/RSURFACE)/(R35-R220/RSURFACE))
       if (abs(gamma) < SMALLVAL) then
         gamma=0.0d0
       endif
@@ -573,8 +670,8 @@
     elevation = R45 - R35
     if (r >= R35 .and. r < R15) then
       gamma=((R15-r)/(R15-R35))
-    else if (r < R35 .and. r > R220/R_EARTH) then
-      gamma=((r-R220/R_EARTH)/(R35-R220/R_EARTH))
+    else if (r < R35 .and. r > R220/RSURFACE) then
+      gamma=((r-R220/RSURFACE)/(R35-R220/RSURFACE))
       if (abs(gamma) < SMALLVAL) then
         gamma=0.0d0
       endif
@@ -593,8 +690,8 @@
     elevation = R25-R35
     if (r >= R35 .and. r < R15) then
       gamma=((R15-r)/(R15-R35))
-    else if (r < R35 .and. r > R220/R_EARTH) then
-      gamma=(r-R220/R_EARTH)/(R35-R220/R_EARTH)
+    else if (r < R35 .and. r > R220/RSURFACE) then
+      gamma=(r-R220/RSURFACE)/(R35-R220/RSURFACE)
       if (abs(gamma) < SMALLVAL) then
         gamma=0.0d0
       endif

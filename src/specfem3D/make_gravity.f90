@@ -30,58 +30,94 @@
 ! creates a spline for the gravity profile in PREM
 ! radius and density are non-dimensional
 
-  use constants
+  use constants,only: NR
+  use shared_parameters,only: PLANET_TYPE,IPLANET_MARS
 
   implicit none
 
-  integer nspl
+  integer,intent(out) :: nspl
 
-  logical ONE_CRUST
+  double precision,intent(inout) :: rspl(NR),gspl(NR),gspl2(NR)
 
-! radius of the Earth for gravity calculation
+  logical,intent(in) :: ONE_CRUST
+
+  ! local parameters
+  integer :: i
+  double precision :: ROCEAN,RMIDDLE_CRUST,RMOHO,R80,R220,R400,R600,R670, &
+                      R771,RTOPDDOUBLEPRIME,RCMB,RICB,RSURFACE
+  double precision :: r_icb,r_cmb,r_topddoubleprime,r_771,r_670,r_600
+  double precision :: r_400,r_220,r_80,r_moho,r_middle_crust,r_ocean,r_0
+  double precision :: r(NR),rho(NR),g(NR),i_rho
+  double precision :: s1(NR),s2(NR),s3(NR)
+  double precision :: yp1,ypn
+
+  ! Earth
+  ! radius of the Earth for gravity calculation
   double precision, parameter :: R_EARTH_GRAVITY = 6371000.d0
-! radius of the ocean floor for gravity calculation
+  ! radius of the ocean floor for gravity calculation
   double precision, parameter :: ROCEAN_GRAVITY = 6368000.d0
+  ! Mars
+  ! radius of Mars for gravity calculation
+  double precision, parameter :: R_MARS_GRAVITY = 3390000.d0
+  ! radius of the ocean floor for gravity calculation
+  double precision, parameter :: ROCEAN_MARS_GRAVITY = 3390000.d0
 
-  double precision rspl(NR),gspl(NR),gspl2(NR)
+  ! sets radii
+  select case (PLANET_TYPE)
+  case (IPLANET_MARS)
+    ! Mars
+    ! Sohl & Spohn (Mars Model A)
+    RSURFACE = R_MARS_GRAVITY
+    ROCEAN = ROCEAN_MARS_GRAVITY
+    RMIDDLE_CRUST = 3340000.d0
+    RMOHO = 3280000.d0 ! moho depth at 110 km
+    R80  = 3055000.d0
+    R220 = 2908000.d0
+    R400 = 2655000.d0
+    R600 = 2455000.d0
+    R670 = 2360000.d0
+    R771 = 2033000.d0
+    RTOPDDOUBLEPRIME = 1503000.d0
+    RCMB = 1468000.d0
+    RICB = 515000.d0
 
-  integer i
-  double precision ROCEAN,RMIDDLE_CRUST,RMOHO,R80,R220,R400,R600,R670, &
-                   R771,RTOPDDOUBLEPRIME,RCMB,RICB
-  double precision r_icb,r_cmb,r_topddoubleprime,r_771,r_670,r_600
-  double precision r_400,r_220,r_80,r_moho,r_middle_crust,r_ocean,r_0
-  double precision r(NR),rho(NR),g(NR),i_rho
-  double precision s1(NR),s2(NR),s3(NR)
-  double precision yp1,ypn
+  case default
+    ! Earth default
+    ! PREM
+    RSURFACE = R_EARTH_GRAVITY
+    ROCEAN = ROCEAN_GRAVITY ! PREM defines this as 6368000.d0
+    RMIDDLE_CRUST = 6356000.d0
+    RMOHO = 6346600.d0 ! PREM moho depth at 24.4 km
+    R80  = 6291000.d0
+    R220 = 6151000.d0
+    R400 = 5971000.d0
+    R600 = 5771000.d0
+    R670 = 5701000.d0
+    R771 = 5600000.d0
+    RTOPDDOUBLEPRIME = 3630000.d0
+    RCMB = 3480000.d0
+    RICB = 1221000.d0
+  end select
 
-! PREM
-  ROCEAN = ROCEAN_GRAVITY ! PREM defines this as 6368000.d0
-  RMIDDLE_CRUST = 6356000.d0
-  RMOHO = 6346600.d0 ! PREM moho depth at 24.4 km
-  R80  = 6291000.d0
-  R220 = 6151000.d0
-  R400 = 5971000.d0
-  R600 = 5771000.d0
-  R670 = 5701000.d0
-  R771 = 5600000.d0
-  RTOPDDOUBLEPRIME = 3630000.d0
-  RCMB = 3480000.d0
-  RICB = 1221000.d0
-
-! non-dimensionalize
-  r_icb = RICB/R_EARTH_GRAVITY
-  r_cmb = RCMB/R_EARTH_GRAVITY
-  r_topddoubleprime = RTOPDDOUBLEPRIME/R_EARTH_GRAVITY
-  r_771 = R771/R_EARTH_GRAVITY
-  r_670 = R670/R_EARTH_GRAVITY
-  r_600 = R600/R_EARTH_GRAVITY
-  r_400 = R400/R_EARTH_GRAVITY
-  r_220 = R220/R_EARTH_GRAVITY
-  r_80 = R80/R_EARTH_GRAVITY
-  r_moho = RMOHO/R_EARTH_GRAVITY
-  r_middle_crust = RMIDDLE_CRUST/R_EARTH_GRAVITY
-  r_ocean = ROCEAN/R_EARTH_GRAVITY
+  ! non-dimensionalize
+  r_icb = RICB/RSURFACE
+  r_cmb = RCMB/RSURFACE
+  r_topddoubleprime = RTOPDDOUBLEPRIME/RSURFACE
+  r_771 = R771/RSURFACE
+  r_670 = R670/RSURFACE
+  r_600 = R600/RSURFACE
+  r_400 = R400/RSURFACE
+  r_220 = R220/RSURFACE
+  r_80 = R80/RSURFACE
+  r_moho = RMOHO/RSURFACE
+  r_middle_crust = RMIDDLE_CRUST/RSURFACE
+  r_ocean = ROCEAN/RSURFACE
   r_0 = 1.d0
+
+! note: for Mars
+!       discretize the radius point to fit the spline, inherited from PREM
+! To do: (may not be necessary)
+!        Find number of points at each layer to have better integrations
 
   do i=1,163
     r(i) = r_icb*dble(i-1)/dble(162)
@@ -123,11 +159,28 @@
     r(i) = r_ocean+(r_0-r_ocean)*dble(i-634)/dble(6)
   enddo
 
-! use PREM to get the density profile for ellipticity (fine for other 1D reference models)
-  do i = 1,NR
-    call prem_density(r(i),rho(i),ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
-      R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
-  enddo
+  ! density profile
+  if (PLANET_TYPE == IPLANET_MARS) then
+    ! Mars
+    ! Sohn & Spohn Model A
+    ! No Ocean
+    do i=627,NR
+      r(i) = r_middle_crust+(r_0-r_middle_crust)*dble(i-627)/dble(12)
+    enddo
+    ! use Sohl & Spohn model A to get the density profile for gravity
+    do i = 1,NR
+      call sohl_density(r(i),rho(i),ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
+                        R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+    enddo
+
+  else
+    ! Earth
+    ! use PREM to get the density profile for ellipticity (fine for other 1D reference models)
+    do i = 1,NR
+      call prem_density(r(i),rho(i),ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
+                        R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+    enddo
+  endif
 
   g(1)=0.0d0
   do i=2,NR
@@ -139,17 +192,18 @@
 ! get ready to spline g
 !
   nspl = 1
-  rspl(1)=r(1)
-  gspl(1)=g(1)
+  rspl(1) = r(1)
+  gspl(1) = g(1)
   do i=2,NR
     if (r(i) /= r(i-1)) then
-      nspl=nspl+1
-      rspl(nspl)=r(i)
-      gspl(nspl)=g(i)
+      nspl = nspl+1
+      rspl(nspl) = r(i)
+      gspl(nspl) = g(i)
     endif
   enddo
-  yp1=(4.0d0/3.0d0)*rho(1)
-  ypn=4.0d0*rho(NR)-2.0d0*g(NR)/r(NR)
+  yp1 = (4.0d0/3.0d0)*rho(1)
+  ypn = 4.0d0*rho(NR)-2.0d0*g(NR)/r(NR)
+
   call spline_construction(rspl,gspl,nspl,yp1,ypn,gspl2)
 
   end subroutine make_gravity

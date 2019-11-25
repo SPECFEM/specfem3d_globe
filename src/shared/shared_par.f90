@@ -41,6 +41,14 @@
   ! we put a default value here
   logical :: I_should_read_the_database = .true.
 
+  ! planet constants
+  ! (put some constants here rather than in shared_parameters to avoid changing too many file)
+  ! radius of globe
+  double precision :: R_EARTH = EARTH_R    ! default: earth
+  double precision :: R_EARTH_KM = EARTH_R_KM
+
+  ! average density
+  double precision :: RHOAV = EARTH_RHOAV  ! default: earth density
 
   end module constants
 
@@ -161,7 +169,15 @@
   ! parameters to be computed based upon parameters above read from file
 
   use constants, only: MAX_NUM_REGIONS,MAX_NUMBER_OF_MESH_LAYERS, &
-    NB_SQUARE_CORNERS,NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE
+    NB_SQUARE_CORNERS,NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE,MAX_STRING_LEN
+
+  use constants, only: IPLANET_EARTH,IPLANET_MARS,R_MARS,R_EARTH,R_EARTH_KM,RHOAV, &
+    EARTH_STANDARD_GRAVITY, &
+    EARTH_NX_BATHY,EARTH_NY_BATHY,EARTH_TOPO_MAXIMUM,EARTH_TOPO_MINIMUM, &
+    EARTH_PATHNAME_TOPO_FILE,EARTH_RESOLUTION_TOPO_FILE, &
+    EARTH_HOURS_PER_DAY,EARTH_SECONDS_PER_HOUR,EARTH_ONE_MINUS_F_SQUARED, &
+    EARTH_HONOR_DEEP_MOHO,EARTH_R_DEEPEST_CRUST,EARTH_REGIONAL_MOHO_MESH, &
+    EARTH_MAX_RATIO_CRUST_STRETCHING,EARTH_RMOHO_STRETCH_ADJUSTMENT,EARTH_R80_STRETCH_ADJUSTMENT
 
   implicit none
 
@@ -248,6 +264,40 @@
   logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
   integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
   integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
+
+! note: for different planets, we will re-set R_EARTH, RHOAV, .. in reading the Par_file
+!       to avoid problems when they are used to non-dimensionalize all parameters.
+
+  ! planet
+  integer :: PLANET_TYPE = IPLANET_EARTH   ! default: earth
+
+  ! gravity
+  double precision :: STANDARD_GRAVITY = EARTH_STANDARD_GRAVITY
+
+  ! flattening / eccentricity
+  double precision :: ONE_MINUS_F_SQUARED = EARTH_ONE_MINUS_F_SQUARED
+
+  ! topo
+  character (len=MAX_STRING_LEN) :: PATHNAME_TOPO_FILE = EARTH_PATHNAME_TOPO_FILE
+  integer :: NX_BATHY = EARTH_NX_BATHY
+  integer :: NY_BATHY = EARTH_NY_BATHY
+  integer :: RESOLUTION_TOPO_FILE = EARTH_RESOLUTION_TOPO_FILE
+  integer :: TOPO_MINIMUM = EARTH_TOPO_MINIMUM
+  integer :: TOPO_MAXIMUM = EARTH_TOPO_MAXIMUM
+
+  ! crust
+  double precision :: R_DEEPEST_CRUST = EARTH_R_DEEPEST_CRUST
+
+  ! rotation
+  double precision :: HOURS_PER_DAY = EARTH_HOURS_PER_DAY
+  double precision :: SECONDS_PER_HOUR = EARTH_SECONDS_PER_HOUR
+
+  ! mesh
+  double precision :: MAX_RATIO_CRUST_STRETCHING = EARTH_MAX_RATIO_CRUST_STRETCHING
+  double precision :: RMOHO_STRETCH_ADJUSTMENT = EARTH_RMOHO_STRETCH_ADJUSTMENT
+  double precision :: R80_STRETCH_ADJUSTMENT = EARTH_R80_STRETCH_ADJUSTMENT
+  logical :: REGIONAL_MOHO_MESH = EARTH_REGIONAL_MOHO_MESH
+  logical :: HONOR_DEEP_MOHO = EARTH_HONOR_DEEP_MOHO
 
   end module shared_compute_parameters
 

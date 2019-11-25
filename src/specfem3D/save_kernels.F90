@@ -1914,11 +1914,12 @@
   implicit none
 
   ! local parameters
-  real(kind=CUSTOM_REAL),parameter :: scale_mass = RHOAV * (R_EARTH**3)
+  real(kind=CUSTOM_REAL) :: scale_mass
   integer :: irec_local
   character(len=MAX_STRING_LEN) :: outputname
 
-  !scale_mass = RHOAV * (R_EARTH**3)
+  ! scaling factor
+  scale_mass = RHOAV * (R_EARTH**3)
 
   ! computes derivatives
   do irec_local = 1, nrec_local
