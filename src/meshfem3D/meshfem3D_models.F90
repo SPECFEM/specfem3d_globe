@@ -29,7 +29,9 @@
 
 ! preparing model parameter coefficients on all processes
 
-  use shared_parameters, only: MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,LOCAL_PATH,R80,R220,R670,RCMB,RICB
+  use shared_parameters, only: MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,LOCAL_PATH, &
+    R80,R220,R670,RCMB,RICB, &
+    SAVE_MESH_FILES
 
   use meshfem3D_models_par
 
@@ -52,6 +54,9 @@
 
     ! sets up topo/bathy
     call model_topo_bathy_broadcast(ibathy_topo,LOCAL_PATH)
+
+    ! saves VTK output
+    if (SAVE_MESH_FILES) call meshfem3D_plot_VTK_topo_bathy()
   endif
 
 !---
@@ -240,6 +245,7 @@
 ! preparing model parameter coefficients on all processes for crustal models
 
   use meshfem3D_models_par
+  use shared_parameters, only: SAVE_MESH_FILES
 
   implicit none
 
@@ -287,6 +293,10 @@
       stop 'crustal model type not defined'
 
   end select
+
+  ! plot moho as VTK file output
+  if (SAVE_MESH_FILES) call meshfem3D_plot_VTK_crust_moho()
+
 
   end subroutine meshfem3D_crust_broadcast
 
@@ -1386,5 +1396,254 @@
                             c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
 
   end subroutine meshfem3D_models_impose_val
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine meshfem3D_plot_VTK_crust_moho()
+
+! creates VTK output file for moho depths spanning full globe
+
+  use constants, only: PI,IREGION_CRUST_MANTLE,MAX_STRING_LEN,IMAIN,myrank
+  use shared_parameters, only: LOCAL_PATH,R_EARTH_KM
+
+  implicit none
+
+  double precision :: lat,lon,r,phi,theta
+  double precision :: xmesh,ymesh,zmesh
+
+  double precision :: vpv,vph,vsv,vsh,rho,eta_aniso
+  double precision :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+                      c33,c34,c35,c36,c44,c45,c46,c55,c56,c66
+  double precision :: moho
+  integer :: iregion_code
+  logical :: elem_in_crust
+
+  ! 2D grid
+  integer, parameter :: NLAT = 180,NLON = 360
+  double precision :: dlat,dlon
+
+  integer :: i,j,ier,iglob,ispec
+  integer :: icorner1,icorner2,icorner3,icorner4
+  integer :: nspec,nglob
+  double precision, dimension(:), allocatable :: moho_depth,tmp_x,tmp_y,tmp_z
+  integer, dimension(:,:), allocatable :: ibool2D
+
+  character(len=MAX_STRING_LEN) :: filename
+
+  ! only master process writes file
+  if (myrank /= 0) return
+
+  elem_in_crust = .true.
+  iregion_code = IREGION_CRUST_MANTLE
+
+  dlat = 180.d0/NLAT
+  dlon = 360.d0/NLON
+
+  nglob = NLON * NLAT
+  allocate(moho_depth(nglob), &
+           tmp_x(nglob),tmp_y(nglob),tmp_z(nglob),stat=ier)
+  if (ier /= 0) stop 'Error allocating moho_depth arrays'
+  moho_depth(:) = 0.d0
+  tmp_x(:) = 0.d0
+  tmp_y(:) = 0.d0
+  tmp_z(:) = 0.d0
+
+  ! loop in 1-degree steps over the globe
+  do j = 1,NLAT
+    do i = 1,NLON
+      ! lat/lon in degrees (range lat/lon = [-90,90] / [-180,180]
+      lat = 90.d0 - j*dlat + 0.5d0
+      lon = -180.d0 + i*dlon - 0.5d0
+
+      ! converts to colatitude theta/phi in radians
+      theta = (90.d0 - lat) * PI/180.d0   ! colatitude between [0,pi]
+      phi = lon * PI/180.d0               ! longitude between [-pi,pi]
+      r = 1.0d0                           ! radius at surface (normalized)
+
+      ! gets point's position
+      call rthetaphi_2_xyz_dble(xmesh,ymesh,zmesh,r,theta,phi)
+
+      ! debug
+      !print *,'debug: lat/lon',lat,lon,theta,phi,'xyz',xmesh,ymesh,zmesh
+
+      ! gets moho
+      call meshfem3D_models_get3Dcrust_val(iregion_code,xmesh,ymesh,zmesh,r, &
+                                           vpv,vph,vsv,vsh,rho,eta_aniso, &
+                                           c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+                                           c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
+                                           elem_in_crust,moho)
+      ! stores
+      iglob = i + (j-1) * NLON
+      moho_depth(iglob) = moho * R_EARTH_KM  ! dimensionalize moho depth to km
+      tmp_x(iglob) = xmesh
+      tmp_y(iglob) = ymesh
+      tmp_z(iglob) = zmesh
+    enddo
+  enddo
+
+  ! creates an ibool2D array for 2D quad mesh
+  nspec = (NLAT-1) * (NLON-1)
+  allocate(ibool2D(4,nspec),stat=ier)
+  if (ier /= 0) stop 'Error allocating moho_depth ibool2D array'
+  ibool2D(:,:) = 0
+
+  ispec = 0
+  do j = 1,NLAT-1
+    do i = 1,NLON-1
+      !     1       2        NLON
+      !     * ----  * -//-- *
+      !     | ispec |       |
+      !     * ----  * -//-- *
+      !     3       4
+
+      ispec = ispec + 1
+      icorner1 = i   + (j  -1) * NLON
+      icorner2 = i+1 + (j  -1) * NLON
+      icorner3 = i   + (j+1-1) * NLON
+      icorner4 = i+1 + (j+1-1) * NLON
+
+      ibool2D(1,ispec) = icorner1
+      ibool2D(2,ispec) = icorner2
+      ibool2D(3,ispec) = icorner3
+      ibool2D(4,ispec) = icorner4
+    enddo
+  enddo
+  if (ispec /= nspec) stop 'Error invalid ispec value in plot_crustal_model_moho()'
+
+  filename = trim(LOCAL_PATH)//'/mesh_moho_depth'
+
+  call write_VTK_2Ddata_dp(nspec,nglob,tmp_x,tmp_y,tmp_z,ibool2D,moho_depth,filename)
+
+  write(IMAIN,*)
+  write(IMAIN,*) '  moho depths written to file: ',trim(filename)//'.vtk'
+  write(IMAIN,*) '  min/max = ',sngl(minval(moho_depth(:))),'/',sngl(maxval(moho_depth(:))),'(km)'
+  write(IMAIN,*)
+
+
+  ! frees memory
+  deallocate(moho_depth,tmp_x,tmp_y,tmp_z,ibool2D)
+
+  end subroutine meshfem3D_plot_VTK_crust_moho
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine meshfem3D_plot_VTK_topo_bathy()
+
+! creates VTK output file for moho depths spanning full globe
+
+  use constants, only: PI,MAX_STRING_LEN,IMAIN,myrank
+  use shared_parameters, only: LOCAL_PATH
+  use meshfem3D_models_par, only: ibathy_topo
+
+  implicit none
+
+  double precision :: lat,lon,r,phi,theta,elevation
+  double precision :: xmesh,ymesh,zmesh
+
+  ! 2D grid
+  integer, parameter :: NLAT = 180,NLON = 360
+  double precision :: dlat,dlon
+
+  integer :: i,j,ier,iglob,ispec
+  integer :: icorner1,icorner2,icorner3,icorner4
+  integer :: nspec,nglob
+  double precision, dimension(:), allocatable :: topo,tmp_x,tmp_y,tmp_z
+  integer, dimension(:,:), allocatable :: ibool2D
+
+  character(len=MAX_STRING_LEN) :: filename
+
+  ! only master process writes file
+  if (myrank /= 0) return
+
+  dlat = 180.d0/NLAT
+  dlon = 360.d0/NLON
+
+  nglob = NLON * NLAT
+  allocate(topo(nglob), &
+           tmp_x(nglob),tmp_y(nglob),tmp_z(nglob),stat=ier)
+  if (ier /= 0) stop 'Error allocating topo_bathy arrays'
+  topo(:) = 0.d0
+  tmp_x(:) = 0.d0
+  tmp_y(:) = 0.d0
+  tmp_z(:) = 0.d0
+
+  ! loop in 1-degree steps over the globe
+  do j = 1,NLAT
+    do i = 1,NLON
+      ! lat/lon in degrees (range lat/lon = [-90,90] / [-180,180]
+      lat = 90.d0 - j*dlat + 0.5d0
+      lon = -180.d0 + i*dlon - 0.5d0
+
+      ! converts to colatitude theta/phi in radians
+      theta = (90.d0 - lat) * PI/180.d0   ! colatitude between [0,pi]
+      phi = lon * PI/180.d0               ! longitude between [-pi,pi]
+      r = 1.0d0                           ! radius at surface (normalized)
+
+      ! gets point's position
+      call rthetaphi_2_xyz_dble(xmesh,ymesh,zmesh,r,theta,phi)
+
+      ! debug
+      !print *,'debug: lat/lon',lat,lon,theta,phi,'xyz',xmesh,ymesh,zmesh
+
+      ! compute elevation at current point
+      call get_topo_bathy(lat,lon,elevation,ibathy_topo)
+
+      ! stores
+      iglob = i + (j-1) * NLON
+      topo(iglob) = elevation / 1000.d0  ! convert to km, original elevation given in m
+      tmp_x(iglob) = xmesh
+      tmp_y(iglob) = ymesh
+      tmp_z(iglob) = zmesh
+    enddo
+  enddo
+
+  ! creates an ibool2D array for 2D quad mesh
+  nspec = (NLAT-1) * (NLON-1)
+  allocate(ibool2D(4,nspec),stat=ier)
+  if (ier /= 0) stop 'Error allocating topo_bathy ibool2D array'
+  ibool2D(:,:) = 0
+
+  ispec = 0
+  do j = 1,NLAT-1
+    do i = 1,NLON-1
+      !     1       2        NLON
+      !     * ----  * -//-- *
+      !     | ispec |       |
+      !     * ----  * -//-- *
+      !     3       4
+
+      ispec = ispec + 1
+      icorner1 = i   + (j  -1) * NLON
+      icorner2 = i+1 + (j  -1) * NLON
+      icorner3 = i   + (j+1-1) * NLON
+      icorner4 = i+1 + (j+1-1) * NLON
+
+      ibool2D(1,ispec) = icorner1
+      ibool2D(2,ispec) = icorner2
+      ibool2D(3,ispec) = icorner3
+      ibool2D(4,ispec) = icorner4
+    enddo
+  enddo
+  if (ispec /= nspec) stop 'Error invalid ispec value in plot_VTK_topo_bathy()'
+
+  filename = trim(LOCAL_PATH)//'/mesh_topo_bathy'
+
+  call write_VTK_2Ddata_dp(nspec,nglob,tmp_x,tmp_y,tmp_z,ibool2D,topo,filename)
+
+  write(IMAIN,*)
+  write(IMAIN,*) '  elevations written to file: ',trim(filename)//'.vtk'
+  write(IMAIN,*) '  min/max = ',sngl(minval(topo(:))),'/',sngl(maxval(topo(:))),'(km)'
+  write(IMAIN,*)
+
+
+  ! frees memory
+  deallocate(topo,tmp_x,tmp_y,tmp_z,ibool2D)
+
+  end subroutine meshfem3D_plot_VTK_topo_bathy
 
 

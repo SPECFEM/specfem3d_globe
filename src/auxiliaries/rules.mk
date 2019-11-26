@@ -480,6 +480,7 @@ xwrite_profile_SHARED_OBJECTS = \
 	$O/smooth_weights_vec.shared.o \
 	$O/sort_array_coordinates.shared.o \
 	$O/spline_routines.shared.o \
+	$O/write_VTK_file.shared.o \
 	$O/ylm.shared.o \
 	$(EMPTY_MACRO)
 

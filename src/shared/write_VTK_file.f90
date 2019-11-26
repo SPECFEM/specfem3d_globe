@@ -1576,3 +1576,82 @@
 
   end subroutine write_VTU_movie_data_binary
 
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine write_VTK_2Ddata_dp(nspec,nglob,xstore_dummy,ystore_dummy,zstore_dummy, &
+                                 ibool2D,dat_value,filename)
+
+! stores values on a spherical 2D quad mesh
+!
+! for details:
+!
+! VTK type definition numbers:
+!   https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html
+! ordering images see e.g.:
+!   https://lorensen.github.io/VTKExamples/site/VTKBook/05Chapter5/
+
+  use constants, only: IOUT_VTK,MAX_STRING_LEN
+
+  implicit none
+
+  integer :: nspec,nglob
+
+  ! global coordinates
+  double precision, dimension(nglob) :: xstore_dummy,ystore_dummy,zstore_dummy
+  integer, dimension(4,nspec) :: ibool2D
+
+  ! element flag array
+  double precision, dimension(nglob) :: dat_value
+
+  ! file name
+  character(len=MAX_STRING_LEN) :: filename
+
+  ! local parameters
+  integer :: ispec,i,itype
+
+  ! VTK_QUAD == 8 type, NGNOD2D == 4 corners only
+  itype = 8
+
+  ! debug
+  !print*,'debug:',itype,nglob,nspec,xstore_dummy(1),ystore_dummy(1),zstore_dummy(1)
+  !print*,'debug:',ibool2D(:,1)
+
+  ! write source and receiver VTK files for Paraview
+  open(IOUT_VTK,file=trim(filename)//'.vtk',status='unknown')
+  write(IOUT_VTK,'(a)') '# vtk DataFile Version 3.1'
+  write(IOUT_VTK,'(a)') 'material model VTK file'
+  write(IOUT_VTK,'(a)') 'ASCII'
+  write(IOUT_VTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
+  write(IOUT_VTK, '(a,i12,a)') 'POINTS ', nglob, ' float'
+  do i = 1,nglob
+    write(IOUT_VTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
+  enddo
+  write(IOUT_VTK,*) ""
+
+  ! note: indices for vtk start at 0
+  write(IOUT_VTK,'(a,i12,i12)') "CELLS ",nspec,nspec*(4+1)
+  do ispec = 1,nspec
+    ! quad4 element using an indexing (left,bottom),(right,bottom),(right,top),(left,top)
+    write(IOUT_VTK,'(5i12)') 4,ibool2D(1,ispec)-1,ibool2D(2,ispec)-1,ibool2D(3,ispec)-1,ibool2D(4,ispec)-1
+  enddo
+  write(IOUT_VTK,*) ""
+
+  ! type: hexahedrons
+  write(IOUT_VTK,'(a,i12)') "CELL_TYPES ",nspec
+  write(IOUT_VTK,'(6i12)') (itype,ispec=1,nspec)
+  write(IOUT_VTK,*) ""
+
+  write(IOUT_VTK,'(a,i12)') "POINT_DATA ",nglob
+  write(IOUT_VTK,'(a)') "SCALARS dat float"
+  write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
+  do i = 1,nglob
+    write(IOUT_VTK,*) dat_value(i)
+  enddo
+  write(IOUT_VTK,*) ""
+  close(IOUT_VTK)
+
+  end subroutine write_VTK_2Ddata_dp
+
