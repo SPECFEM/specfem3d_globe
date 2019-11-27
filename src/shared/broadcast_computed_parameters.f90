@@ -179,6 +179,9 @@
   call bcast_all_singlel(REGIONAL_MOHO_MESH)
   call bcast_all_singlel(HONOR_DEEP_MOHO)
 
+  ! empirical minimum period resolved estimation
+  call bcast_all_singledp(T_min)
+
   ! non-master processes set their parameters
   if (myrank /= 0) then
 

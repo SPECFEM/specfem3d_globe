@@ -189,6 +189,9 @@
   integer :: NSTEP
   double precision :: DT
 
+  ! shortest minimum period resolved by mesh (empirical formula)
+  double precision :: T_min
+
   ! number of sources given in CMTSOLUTION file
   integer :: NSOURCES
 

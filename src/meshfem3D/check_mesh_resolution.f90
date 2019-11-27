@@ -30,12 +30,11 @@
                                    kappavstore,kappahstore,muvstore,muhstore,rhostore)
 
   use constants
-
+  use shared_parameters, only: T_min
   use meshfem3D_par, only: &
     nspec,nglob, &
     DT,myrank,ibool, &
     xstore_glob,ystore_glob,zstore_glob,SAVE_MESH_FILES, &
-    ANGULAR_WIDTH_ETA_IN_DEGREES,ANGULAR_WIDTH_XI_IN_DEGREES,NEX_XI,NEX_ETA, &
     dt_max_glob,pmax_glob
 
   use regions_mesh_par2, only: prname
@@ -260,8 +259,7 @@
   call max_all_cr(eig_ratio_max,eig_ratio_max_reg)
 
   ! empirical minimum period resolved by mesh
-  ! uses formula: width/90. * 256/NEX * 17s
-  pmax_empirical = max(ANGULAR_WIDTH_ETA_IN_DEGREES,ANGULAR_WIDTH_XI_IN_DEGREES)/90.0 * 256.0/min(NEX_ETA,NEX_XI) * 17.0
+  pmax_empirical = T_min
 
   ! user output
   if (myrank == 0) then

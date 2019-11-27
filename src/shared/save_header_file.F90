@@ -79,7 +79,7 @@
     MOVIE_VOLUME,MOVIE_VOLUME_TYPE,NTSTEP_BETWEEN_FRAMES,SIMULATION_TYPE,MOVIE_SURFACE, &
     UNDO_ATTENUATION,MEMORY_INSTALLED_PER_CORE_IN_GB,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
     RECORD_LENGTH_IN_MINUTES,NSTEP, &
-    NX_BATHY,NY_BATHY,R_EARTH_KM
+    NX_BATHY,NY_BATHY,R_EARTH_KM,T_min
 
   implicit none
 
@@ -112,14 +112,14 @@
   ! local parameters
   double precision :: subtract_central_cube_elems,subtract_central_cube_points
   ! for regional code
-  double precision x,y,gamma,rgt,xi,eta
-  double precision x_top,y_top,z_top
-  double precision ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
+  double precision :: x,y,gamma,rgt,xi,eta
+  double precision :: x_top,y_top,z_top
+  double precision :: ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
   ! rotation matrix from Euler angles
-  integer i,j,ix,iy,icorner
-  double precision rotation_matrix(3,3)
-  double precision vector_ori(3),vector_rotated(3)
-  double precision r_corner,theta_corner,phi_corner,lat,long,colat_corner
+  integer :: i,j,ix,iy,icorner
+  double precision :: rotation_matrix(3,3)
+  double precision :: vector_ori(3),vector_rotated(3)
+  double precision :: r_corner,theta_corner,phi_corner,lat,long,colat_corner
   integer :: ier
 
   integer :: num_elem_gc,num_gll_gc
@@ -202,8 +202,7 @@
     print *,'total points per slice = ',sum(NGLOB_REGIONS)
     print *
     print *,'the time step of the solver will be DT = ',sngl(DT),' (s)'
-    print *,'the (approximate) minimum period resolved will be = ', &
-            sngl(max(ANGULAR_WIDTH_ETA_IN_DEGREES,ANGULAR_WIDTH_XI_IN_DEGREES)/90.0 * 256.0/min(NEX_ETA,NEX_XI) * 17.0),' (s)'
+    print *,'the (approximate) minimum period resolved will be = ',sngl(T_min),' (s)'
     print *
     print *,'current record length is = ',sngl(RECORD_LENGTH_IN_MINUTES),'min'
     print *,'current minimum number of time steps will be = ',NSTEP
@@ -341,8 +340,7 @@
   write(IOUT,*) '! total points per slice = ',sum(NGLOB_REGIONS)
   write(IOUT,*) '!'
   write(IOUT,*) '! the time step of the solver will be DT = ',sngl(DT),' (s)'
-  write(IOUT,*) '! the (approximate) minimum period resolved will be = ', &
-            sngl(max(ANGULAR_WIDTH_ETA_IN_DEGREES,ANGULAR_WIDTH_XI_IN_DEGREES)/90.0 * 256.0/min(NEX_ETA,NEX_XI) * 17.0),' (s)'
+  write(IOUT,*) '! the (approximate) minimum period resolved will be = ',sngl(T_min),' (s)'
   write(IOUT,*) '!'
 
   write(IOUT,'(1x,a,i1,a)') '! total for full ',NCHUNKS,'-chunk mesh:'

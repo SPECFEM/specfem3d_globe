@@ -27,6 +27,7 @@
 
   subroutine create_meshes()
 
+  use shared_parameters, only: T_min
   use meshfem3D_par
 
   implicit none
@@ -64,8 +65,8 @@
     write(IMAIN,*)
     write(IMAIN,*) 'Mesh resolution:'
     write(IMAIN,*) '  DT = ',DT
-    write(IMAIN,*) '  Minimum period = ', &
-                   max(ANGULAR_WIDTH_ETA_IN_DEGREES,ANGULAR_WIDTH_XI_IN_DEGREES)/90.0 * 256.0/min(NEX_ETA,NEX_XI) * 17.0,' (s)'
+    write(IMAIN,*) '  Minimum period = ',T_min,' (s)'
+    ! attenuation range
     write(IMAIN,*)
     write(IMAIN,*) '  MIN_ATTENUATION_PERIOD = ',MIN_ATTENUATION_PERIOD
     write(IMAIN,*) '  MAX_ATTENUATION_PERIOD = ',MAX_ATTENUATION_PERIOD

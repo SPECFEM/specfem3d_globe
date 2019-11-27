@@ -76,6 +76,12 @@
   ! conservative stability limit
   MAXIMUM_STABILITY_CONDITION     =     0.40d0
 
+  ! note: the following assumes that the time step is mostly limited by the inner core,
+  !       where the highest P-velocities appear.
+  !       this might however not always be the case, e.g., when there is strong crustal variations
+  !       and element sizes vary due to moho stretching.
+  !       maybe this could be improved in future...
+
   DOUBLING_INNER_CORE             =      8.0d0
 
   ! default for PREM (near inner core boundary)
@@ -118,7 +124,7 @@
   case (REFERENCE_MODEL_SOHL)
     ! Mars
     RADIUS_INNER_CORE = 515.0d0
-    P_VELOCITY_MAX = 7.3d0                ! vp: 11.26220 - 6.36400 * (1221.49/6371.)**2
+    P_VELOCITY_MAX = 7.3d0 * 1.1d0        ! vp: 11.26220 - 6.36400 * (1221.49/6371.)**2; daniel: increase by a factor 1.1x
     RADIAL_LEN_RATIO_CENTRAL_CUBE = 0.76  ! for an aspect ratio around 1.3
   end select
 
@@ -190,7 +196,7 @@
 
   use constants, only: N_SLS,NGLLX
 
-  use shared_parameters, only: MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD
+  use shared_parameters, only: MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD, PLANET_TYPE, IPLANET_MARS
 
   implicit none
 
@@ -204,7 +210,7 @@
   double precision :: THETA(5)
 
   ! factor degree to km
-  double precision,parameter :: DEG2KM = 111.d0
+  double precision :: DEG2KM
 
   ! required points per wavelength
   double precision,parameter :: PTS_PER_WAVELENGTH = 4.d0
@@ -214,11 +220,26 @@
      stop 'N_SLS must be greater than 1 or less than 6'
   endif
 
+  ! minimum period estimation
+  select case (PLANET_TYPE)
+  case (IPLANET_MARS)
+    ! minimum velocity (Vs) (based on Sohl & Spohn, minimum Vs is ~ 4 km/s)
+    S_VELOCITY_MIN = 4.d0
+
+    ! converts degree to km
+    ! Mars: radius 3390 km -> 2 * PI * R / 360 ~ 59.16 km
+    DEG2KM = 59.d0
+  case default
+    ! minimum velocity (Vs)
+    S_VELOCITY_MIN = 2.25d0
+
+    ! converts degree to km
+    ! Earth: radius 6371 km -> 2 * PI * R / 360 ~ 111.19 km
+    DEG2KM = 111.d0
+  end select
+
   ! average spacing between GLL points
   GLL_SPACING = dble(NGLLX - 1)
-
-  ! minimum velocity (Vs)
-  S_VELOCITY_MIN = 2.25d0
 
   ! Compute Min Attenuation Period
   !

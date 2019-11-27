@@ -36,12 +36,19 @@
 
   implicit none
 
-  double precision :: r_top, r_bottom,value
-  integer :: ner,i
-  double precision, dimension (2,ner) :: stretch_tab
+  double precision,intent(in) :: r_top, r_bottom
+  integer,intent(in) :: ner
+  double precision, dimension (2,ner),intent(inout) :: stretch_tab
+
+  ! local parameters
+  double precision :: value
   ! for increasing execution speed but have less precision in stretching, increase step
   ! not very effective algorithm, but sufficient : used once per proc for meshing.
   double precision, parameter :: step = 0.001
+  integer :: i
+
+  ! safety check
+  if (ner <= 1) stop 'Invalid ner value for stretching_function() routine'
 
   ! initializes array
   ! for example: 2 element layers (ner=2)  for most probable resolutions (NEX < 1000) in the crust
@@ -63,7 +70,7 @@
     enddo
   enddo
 
-! deduce r_top and r_bottom
+  ! deduce r_top and r_bottom
   ! r_top
   stretch_tab(1,1) = r_top
   do i=2,ner
