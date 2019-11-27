@@ -70,13 +70,17 @@ env:
     #- TESTID=14 TESTDIR=6 TESTCOV=0 TESTFLAGS="--enable-vectorization" CUDA=false
 
     # regional s40rts compilation w/ CUDA
-    #- TESTID=15 TESTDIR=7 TESTCOV=0 TESTFLAGS="--with-cuda=cuda5" CUDA=true CUDA_VERSION=6.5-14
+    - TESTID=15 TESTDIR=7 TESTCOV=0 TESTFLAGS="--with-cuda=cuda5" CUDA=true CUDA_VERSION=6.5-14
 
     # regional s40rts compilation w/ OpenCL (provided from CUDA library)
-    #- TESTID=16 TESTDIR=7 TESTCOV=0 TESTFLAGS="--with-opencl" CUDA=true CUDA_VERSION=6.5-14 OPENCL=true
+    - TESTID=16 TESTDIR=7 TESTCOV=0 TESTFLAGS="--with-opencl" CUDA=true CUDA_VERSION=6.5-14 OPENCL=true
 
     # regional_small_adjoint - pure adjoint example
     #- TESTID=17 TESTDIR=8 TESTCOV=0 TESTFLAGS="" CUDA=false
+
+    # regional mars
+    - TESTID=18 TESTDIR=9 TESTCOV=0 TESTFLAGS="" CUDA=false
+
 
 before_install:
   # informations on git

@@ -18,6 +18,7 @@ case "$TESTDIR" in
   6) dir=EXAMPLES/global_full_sphericalharmonic_model/ ;;
   7) dir=EXAMPLES/regional_s40rts/ ;;
   8) dir=EXAMPLES/regional_small_adjoint/ ;;
+  9) dir=EXAMPLES/mars_regional/ ;;
   *) dir=EXAMPLES/regional_Greece_small/ ;;
 esac
 
@@ -185,6 +186,30 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "2" ]; then
   cd $WORKDIR
 fi
 echo -en 'travis_fold:end:coverage.global-small\\r'
+
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.regional-s40rts\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "2" ]; then
+  ##
+  ## testing regional s40rts
+  ##
+  cd EXAMPLES/regional_s40rts/
+  sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
+  ./run_this_example.sh
+  cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.regional-s40rts\\r'
+
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.mars-regional\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
+  ##
+  ## testing mars regional
+  ##
+  cd EXAMPLES/mars_regional/
+  sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
+  ./run_this_example.sh
+  cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.mars-regional\\r'
 
 
 # done

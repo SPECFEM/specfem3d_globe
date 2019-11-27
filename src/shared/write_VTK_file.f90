@@ -1616,8 +1616,8 @@
   itype = 8
 
   ! debug
-  !print*,'debug:',itype,nglob,nspec,xstore_dummy(1),ystore_dummy(1),zstore_dummy(1)
-  !print*,'debug:',ibool2D(:,1)
+  !print *,'debug:',itype,nglob,nspec,xstore_dummy(1),ystore_dummy(1),zstore_dummy(1)
+  !print *,'debug:',ibool2D(:,1)
 
   ! write source and receiver VTK files for Paraview
   open(IOUT_VTK,file=trim(filename)//'.vtk',status='unknown')
