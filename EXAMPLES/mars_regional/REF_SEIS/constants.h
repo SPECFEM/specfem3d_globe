@@ -1035,7 +1035,7 @@
 
 ! For the reference ellipsoid to convert geographic latitudes to geocentric:
 ! Mars flattening (https://en.wikipedia.org/wiki/Mars): 0.00589 +/- 0.00015 -> 1/f with f ~ 169.77
-! Smith et al. 1999, The global topography of Mars and implications for surface evolution. Science 284(5419), 1495-1503
+! Smith et al. 1999, The global topography of Mars and implications for surface evolution. Science 284(5419), 1495–1503
 ! uses f = 169.8
   double precision, parameter :: MARS_FLATTENING_F = 1.d0 / 169.8d0
   double precision, parameter :: MARS_ONE_MINUS_F_SQUARED = (1.d0 - MARS_FLATTENING_F)**2

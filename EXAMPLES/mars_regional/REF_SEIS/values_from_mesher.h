@@ -20,8 +20,8 @@
  ! total elements per slice =         3988
  ! total points per slice =       271899
  !
- ! the time step of the solver will be DT =   0.118749999      (s)
- ! the (approximate) minimum period resolved will be =    22.6666660      (s)
+ ! the time step of the solver will be DT =   0.189999998      (s)
+ ! the (approximate) minimum period resolved will be =    6.66666651      (s)
  !
  ! total for full 1-chunk mesh:
  ! ---------------------------
