@@ -259,7 +259,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_jp3d_iso_zhao(radius,theta,phi,vp,vs,dvp,dvs,rho,found_crust,is_inside_region)
+  subroutine model_jp3d_iso_zhao(radius,theta,phi,vp,vs,dvp,dvs,rho,moho,sediment,found_crust,is_inside_region)
 
   use constants, only: ONE,R_EARTH,R_EARTH_KM,PI,GRAV,RHOAV,DEGREES_TO_RADIANS
 
@@ -268,7 +268,7 @@
   implicit none
 
   double precision,intent(in) :: radius,theta,phi
-  double precision,intent(inout) :: vp,vs,dvs,dvp,rho
+  double precision,intent(inout) :: vp,vs,dvs,dvp,rho,moho,sediment
   logical,intent(inout) ::  found_crust
   logical,intent(out) ::  is_inside_region
 
@@ -324,6 +324,11 @@
       dvs = 1.5d0*dvp
       vp = vp*(1.0d0+dvp)
       vs = vs*(1.0d0+dvs)
+
+      ! moho
+      moho = H2 * 1000.d0 / R_EARTH  ! non-dimensionalizes
+      ! no information about sediment layers
+      sediment = 0.d0
 
       ! determine rho
       if (LAY == 1) then

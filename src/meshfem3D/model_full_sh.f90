@@ -262,7 +262,7 @@
 !-----------------------------------------------------------------------------------------
 !
 
-  subroutine crust_sh(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,found_crust,elem_in_crust)
+  subroutine crust_sh(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,sediment,found_crust,elem_in_crust)
 
 ! gets crustal value for location lat/lon/r
 
@@ -273,7 +273,7 @@
   implicit none
 
   double precision,intent(in) :: lat,lon,r
-  double precision,intent(out) :: vpvc,vphc,vsvc,vshc,etac,rhoc,moho
+  double precision,intent(out) :: vpvc,vphc,vsvc,vshc,etac,rhoc,moho,sediment
   logical,intent(out) :: found_crust
   logical,intent(in) :: elem_in_crust
 
@@ -295,6 +295,7 @@
   vphc = ZERO !km/s
   rhoc = ZERO !g/cm^3
   moho = ZERO !km
+  sediment = ZERO
   etac = ZERO
   do l = 1,NSH_40
     vsvc = vsvc + CRUST_SH_V_vsv(l)*dble(shcof(l))
@@ -340,6 +341,10 @@
 
   ! scales (non-dimensionalizes) values
   moho = moho * 1000.d0/R_EARTH
+
+  ! no sediment thickness information
+  sediment = 0.d0
+
   if (found_crust) then
     scaleval = dsqrt(PI*GRAV*RHOAV)
     vsvc = vsvc * 1000.d0/(R_EARTH*scaleval)

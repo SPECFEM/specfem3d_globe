@@ -114,7 +114,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_crust_1_0(lat,lon,x,vp,vs,rho,moho,found_crust,elem_in_crust)
+  subroutine model_crust_1_0(lat,lon,x,vp,vs,rho,moho,sediment,found_crust,elem_in_crust)
 
   use constants
   use model_crust_1_0_par
@@ -122,7 +122,7 @@
   implicit none
 
   double precision,intent(in) :: lat,lon,x
-  double precision,intent(out) :: vp,vs,rho,moho
+  double precision,intent(out) :: vp,vs,rho,moho,sediment
   logical,intent(out) :: found_crust
   logical,intent(in) :: elem_in_crust
 
@@ -138,6 +138,7 @@
   vs = ZERO
   rho = ZERO
   moho = ZERO
+  sediment = ZERO
 
   ! gets smoothed structure
   call crust_1_0_CAPsmoothed(lat,lon,vps,vss,rhos,thicks)
@@ -178,6 +179,11 @@
 
   ! no matter if found_crust is true or false, compute moho thickness
   moho = (h_uc + thicks(7) + thicks(8)) * scaleval
+
+  ! sediment thickness
+  if (INCLUDE_SEDIMENTS_IN_CRUST) then
+    sediment = h_sed * scaleval
+  endif
 
   ! gets corresponding crustal velocities and density
   found_crust = .true.
@@ -251,7 +257,7 @@
   ! crustal / sediment thickness
   double precision, dimension(:,:),allocatable :: thc,ths
   double precision :: lat,lon,x
-  double precision :: vp,vs,rho,moho
+  double precision :: vp,vs,rho,moho,sediment
   double precision :: h_moho_min,h_moho_max
   logical :: found_crust
 
@@ -411,7 +417,7 @@
       do i = 1,CRUST_NLO
         lon = -180.d0 + i - 0.5d0
         x = 1.0d0
-        call model_crust_1_0(lat,lon,x,vp,vs,rho,moho,found_crust,.false.)
+        call model_crust_1_0(lat,lon,x,vp,vs,rho,moho,sediment,found_crust,.false.)
 
         ! limit moho thickness
         if (moho > h_moho_max) h_moho_max = moho

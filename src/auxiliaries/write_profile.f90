@@ -709,10 +709,10 @@
   implicit none
 
   double precision,intent(in) :: theta,phi
-  double precision,intent(out) :: moho
+  double precision,intent(inout) :: moho
 
   ! local parameters
-  double precision :: r,xmesh,ymesh,zmesh
+  double precision :: r,xmesh,ymesh,zmesh,sediment
   double precision :: rho,vpv,vph,vsv,vsh,eta_aniso
   double precision :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66
 
@@ -730,11 +730,11 @@
                                          vpv,vph,vsv,vsh,rho,eta_aniso, &
                                          c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
                                          c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
-                                         .true.,moho)
+                                         .true.,moho,sediment)
 
     !if (myrank == 0) print *, '  crustal values:',vpv,vph,vsv,vsh,rho,eta_aniso
-    if (myrank == 0) print *, '  moho depth [km]:',sngl(moho*R_EARTH_KM) !, &
-                              !'moho radius (in km):',sngl((1.0d0-moho)*R_EARTH_KM)
+    if (myrank == 0) print *, '  moho depth [km]    :',sngl(moho*R_EARTH_KM) !,'radius (in km):',sngl((1.0d0-moho)*R_EARTH_KM)
+    if (myrank == 0) print *, '  sediment depth [km]:',sngl(sediment*R_EARTH_KM)
   else
     moho = 0.d0
     ! 1D crust from reference model
@@ -815,7 +815,7 @@
 
   ! local parameters
   double precision :: xmesh,ymesh,zmesh
-  double precision :: moho
+  double precision :: moho,sediment
   double precision :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66
   ! Attenuation values
   double precision, dimension(N_SLS) :: tau_s, tau_e
@@ -899,7 +899,7 @@
                                            vpv,vph,vsv,vsh,rho,eta_aniso, &
                                            c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
                                            c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
-                                           elem_in_crust,moho)
+                                           elem_in_crust,moho,sediment)
 
       !print *,'crustal: ',r_prem,R_DEEPEST_CRUST,elem_in_crust,vpv,vph,vsv,vsh,eta_aniso
     endif

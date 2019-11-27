@@ -165,21 +165,22 @@
 !--------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_eucrust(lat,lon,x,vpc,mohoc,found_crust,point_in_area)
+  subroutine model_eucrust(lat,lon,x,vpc,mohoc,sedimentc,found_crust,point_in_area)
 
   use model_eucrust_par
 
   implicit none
 
   double precision,intent(in) :: lat,lon,x
-  double precision,intent(inout) :: vpc,mohoc
+  double precision,intent(inout) :: vpc,mohoc,sedimentc
   logical,intent(out) :: found_crust,point_in_area
   ! local parameters
-  double precision :: vp,moho
+  double precision :: vp,moho,sediment
 
   ! initializes
   vp = 0.d0
   moho = 0.d0
+  sediment = 0.d0
   found_crust = .false.
   point_in_area = .false.
 
@@ -198,17 +199,19 @@
   point_in_area = .true.
 
   ! smoothing over 1.0 degrees
-  call eu_cap_smoothing(lat,lon,x,vp,moho,found_crust)
+  call eu_cap_smoothing(lat,lon,x,vp,moho,sediment,found_crust)
 
   ! without smoothing
-  !call crust_eu(lat,lon,x,vp,moho,found_crust)
+  !call crust_eu(lat,lon,x,vp,moho,sediment,found_crust)
 
   mohoc = moho
   if (found_crust) then
     vpc = vp
+    sedimentc = sediment
     !debug
     !print *,'EUcrust: ',lat,lon,x,vpc,mohoc
   endif
+  sedimentc = sediment
 
   end subroutine model_eucrust
 
@@ -216,7 +219,7 @@
 !--------------------------------------------------------------------------------------------------
 !
 
-  subroutine crust_eu(lat,lon,x,vp,moho,found_crust)
+  subroutine crust_eu(lat,lon,x,vp,moho,sediment,found_crust)
 
 ! returns Vp at the specific location lat/lon
 
@@ -226,7 +229,7 @@
   implicit none
 
   double precision,intent(in) :: lat,lon,x
-  double precision,intent(out) :: vp,moho !,vs,rho
+  double precision,intent(out) :: vp,moho,sediment !,vs,rho
   logical,intent(out) :: found_crust
 
   double precision :: h_basement,h_uc,h_moho,x3,x4,x5
@@ -240,6 +243,7 @@
   found_crust = .false.
   vp = 0.d0
   moho = 0.d0
+  sediment = 0.d0
 
   ! checks region range
   if (lon < longitude_min .or. lon > longitude_max ) return
@@ -274,7 +278,12 @@
             found_crust = .true.
             vp = eucrust_vp_lowercrust(i+j*ilons) *1000.0d0/(R_EARTH*scaleval)
           endif
-          moho = h_moho*1000.0d0/R_EARTH
+          moho = h_moho * 1000.0d0/R_EARTH
+          ! sediment thickness
+          if (INCLUDE_SEDIMENTS_IN_CRUST .and. h_basement > MINIMUM_SEDIMENT_THICKNESS) then
+            sediment = h_basement * 1000.d0/R_EARTH
+          endif
+
           ! in case location below moho, no vp value will be found
           return
         endif
@@ -287,7 +296,7 @@
 !
 !--------------------------------------------------------------------------------------------------
 !
-  subroutine eu_cap_smoothing(lat_in,lon_in,radius,vp,moho,found)
+  subroutine eu_cap_smoothing(lat_in,lon_in,radius,vp,moho,sediment,found)
 
 ! smooths with a cap of size CAP (in degrees)
 ! using NTHETA points in the theta direction (latitudinal)
@@ -301,7 +310,7 @@
 
   ! argument variables
   double precision,intent(in) :: lat_in,lon_in,radius
-  double precision,intent(out) :: vp,moho
+  double precision,intent(out) :: vp,moho,sediment
   logical,intent(out) :: found
 
   integer, parameter :: NTHETA = 4
@@ -313,7 +322,7 @@
   integer :: itheta,iphi,npoints
   double precision :: lat,lon,theta,phi
   double precision :: sint,cost,sinp,cosp,dtheta,dphi,cap_area,wght,total
-  double precision :: val,valmoho
+  double precision :: val,valmoho,valsediment
   double precision :: r_rot,theta_rot,phi_rot
   double precision :: rotation_matrix(3,3),x(3),xc(3)
   double precision :: xlon(NTHETA*NPHI),xlat(NTHETA*NPHI),weight(NTHETA*NPHI)
@@ -413,12 +422,14 @@
   ! integrates value
   vp = 0.0d0
   moho = 0.d0
+  sediment = 0.d0
   do i = 1,npoints
     ! get crust values
-    call crust_eu(xlat(i),xlon(i),radius,val,valmoho,found)
+    call crust_eu(xlat(i),xlon(i),radius,val,valmoho,valsediment,found)
     ! adds weighted contribution
     vp = vp + weight(i)*val
     moho = moho + weight(i)*valmoho
+    sediment = sediment + weight(i)*valsediment
   enddo
 
   if (abs(vp) < TINYVAL) found = .false.

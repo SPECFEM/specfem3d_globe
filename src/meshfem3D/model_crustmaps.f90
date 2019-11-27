@@ -282,7 +282,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_crustmaps(lat,lon,x,vp,vs,rho,moho,found_crust,elem_in_crust)
+  subroutine model_crustmaps(lat,lon,x,vp,vs,rho,moho,sediment,found_crust,elem_in_crust)
 
 ! Matthias Meschede
 ! read smooth crust2.0 model (0.25 degree resolution) with eucrust
@@ -296,7 +296,7 @@
 
   double precision,intent(in) :: lat,lon,x
   double precision,intent(inout) :: vp,vs,rho
-  double precision,intent(out) :: moho
+  double precision,intent(inout) :: moho,sediment
   logical,intent(out) :: found_crust
   logical,intent(in) :: elem_in_crust
 
@@ -308,13 +308,13 @@
   call read_crustmaps(lat,lon,vps,vss,rhos,thicks)
 
   ! format:
-  ! thicks(1) - upper sediment layer thickness
-  ! thicks(2) - lower sediment layer
+  ! thicks(1) - soft sediment layer thickness
+  ! thicks(2) - hard sediment layer
   ! thicks(3) - upper crust layer
   ! thicks(4) - middle crust layer
   ! thicks(5) - lower crust layer
 
-  ! upper sediments
+  ! soft sediments
   x3 = (R_EARTH-thicks(1)*1000.0d0)/R_EARTH
 
   ! all sediments
@@ -374,7 +374,13 @@
     continue
   endif
 
-  moho = (h_uc+thicks(4)+thicks(5))*1000.0d0/R_EARTH
+  ! moho
+  moho = (h_uc+thicks(4)+thicks(5))*1000.0d0/R_EARTH ! non-dimensionalizes
+
+  ! sediment thickness
+  if (INCLUDE_SEDIMENTS_IN_CRUST) then
+    sediment = h_sed * 1000.d0/R_EARTH ! non-dimensionalizes
+  endif
 
   end subroutine model_crustmaps
 

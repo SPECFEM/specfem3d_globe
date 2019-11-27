@@ -81,7 +81,7 @@
   ! tiso
   double precision :: vpv,vph,vsv,vsh,eta_aniso
 
-  double precision :: r,r_prem,moho
+  double precision :: r,r_prem,moho,sediment
   double precision :: theta,phi
 
   integer :: i,j,k,i_sls
@@ -185,7 +185,7 @@
                                                  vpv,vph,vsv,vsh,rho,eta_aniso, &
                                                  c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
                                                  c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
-                                                 elem_in_crust,moho)
+                                                 elem_in_crust,moho,sediment)
         endif
 
         ! overwrites with tomographic model values (from iteration step) here, given at all GLL points

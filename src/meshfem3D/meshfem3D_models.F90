@@ -529,7 +529,7 @@
 
   ! local parameters
   double precision :: r_used,r_dummy,theta,phi
-  double precision :: dvp,dvs,drho,vp,vs
+  double precision :: dvp,dvs,drho,vp,vs,moho,sediment
   double precision :: dvpv,dvph,dvsv,dvsh,deta
   double precision :: lat,lon
   double precision :: A,C,L,N,F
@@ -646,7 +646,7 @@
           vsv = vsv*(1.0d0+dvs)
           vsh = vsh*(1.0d0+dvs)
           ! use Lebedev model sea99 as background and add vp & vs perturbation from Zhao 1994 model jp3d
-          call model_jp3d_iso_zhao(r_used,theta,phi,vp,vs,dvp,dvs,rho,found_crust,is_inside_region)
+          call model_jp3d_iso_zhao(r_used,theta,phi,vp,vs,dvp,dvs,rho,moho,sediment,found_crust,is_inside_region)
           if (is_inside_region) then
             vpv = vpv*(1.0d0+dvp)
             vph = vph*(1.0d0+dvp)
@@ -662,7 +662,7 @@
 
         case (THREE_D_MODEL_JP3D)
           ! jp3d1994
-          call model_jp3d_iso_zhao(r_used,theta,phi,vp,vs,dvp,dvs,rho,found_crust,is_inside_region)
+          call model_jp3d_iso_zhao(r_used,theta,phi,vp,vs,dvp,dvs,rho,moho,sediment,found_crust,is_inside_region)
           if (is_inside_region) then
             vpv = vpv*(1.0d0+dvp)
             vph = vph*(1.0d0+dvp)
@@ -1007,7 +1007,7 @@
                                              vpv,vph,vsv,vsh,rho,eta_aniso, &
                                              c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
                                              c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
-                                             elem_in_crust,moho)
+                                             elem_in_crust,moho,sediment)
 
 ! returns velocities and density for points in 3D crustal region
 
@@ -1025,7 +1025,7 @@
                                     c33,c34,c35,c36,c44,c45,c46,c55,c56,c66
 
   logical,intent(in) :: elem_in_crust
-  double precision,intent(inout) :: moho
+  double precision,intent(inout) :: moho,sediment
 
   ! local parameters
   double precision :: r_dummy,theta,phi
@@ -1061,15 +1061,15 @@
 
     case (THREE_D_MODEL_SEA99_JP3D,THREE_D_MODEL_JP3D)
       ! tries to use Zhao's model of the crust
-      call model_jp3d_iso_zhao(r,theta,phi,vpc,vsc,dvp,dvs,rhoc,found_crust,is_inside_region)
+      call model_jp3d_iso_zhao(r,theta,phi,vpc,vsc,dvp,dvs,rhoc,moho,sediment,found_crust,is_inside_region)
       if (.not. is_inside_region) then
         ! uses default crust outside of model region
-        call meshfem3D_model_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,found_crust,elem_in_crust)
+        call meshfem3D_model_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,sediment,found_crust,elem_in_crust)
       endif
 
     case default
       ! default crust
-      call meshfem3D_model_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,found_crust,elem_in_crust)
+      call meshfem3D_model_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,sediment,found_crust,elem_in_crust)
 
   end select
 
@@ -1117,7 +1117,7 @@
 !
 
 
-  subroutine meshfem3D_model_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,found_crust,elem_in_crust)
+  subroutine meshfem3D_model_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,sediment,found_crust,elem_in_crust)
 
 ! returns velocity/density for default crust
 
@@ -1127,14 +1127,14 @@
 
   double precision,intent(in) :: lat,lon,r
   double precision,intent(out) :: vpvc,vphc,vsvc,vshc,etac,rhoc
-  double precision,intent(out) :: moho
+  double precision,intent(out) :: moho,sediment
   logical,intent(out) :: found_crust
   logical,intent(in) :: elem_in_crust
 
   ! local parameters
   ! for isotropic crust
   double precision :: vpc,vsc
-  double precision :: vpc_area,vsc_area,rhoc_area,moho_area
+  double precision :: vpc_area,vsc_area,rhoc_area,moho_area,sediment_area
   logical :: found_crust_area,point_in_area
 
   ! initializes
@@ -1153,6 +1153,9 @@
   ! moho depth
   moho = 0.d0
 
+  ! sediment depth
+  sediment = 0.d0
+
   ! flag to indicate if position inside crust
   found_crust = .false.
 
@@ -1167,7 +1170,7 @@
 
     case (ICRUST_CRUST1)
       ! crust 1.0
-      call model_crust_1_0(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
+      call model_crust_1_0(lat,lon,r,vpc,vsc,rhoc,moho,sediment,found_crust,elem_in_crust)
       vpvc = vpc
       vphc = vpc
       vsvc = vsc
@@ -1176,7 +1179,7 @@
     case (ICRUST_CRUST2)
       ! default
       ! crust 2.0
-      call model_crust_2_0(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
+      call model_crust_2_0(lat,lon,r,vpc,vsc,rhoc,moho,sediment,found_crust,elem_in_crust)
       vpvc = vpc
       vphc = vpc
       vsvc = vsc
@@ -1184,7 +1187,7 @@
 
     case (ICRUST_CRUSTMAPS)
       ! general crustmaps
-      call model_crustmaps(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
+      call model_crustmaps(lat,lon,r,vpc,vsc,rhoc,moho,sediment,found_crust,elem_in_crust)
       vpvc = vpc
       vphc = vpc
       vsvc = vsc
@@ -1192,7 +1195,8 @@
 
     case (ICRUST_EPCRUST)
       ! if defined within lat/lon-range, takes vp/vs/rho/moho from eucrust07
-      call model_epcrust(lat,lon,r,vpc_area,vsc_area,rhoc_area,moho_area,found_crust_area,elem_in_crust,point_in_area)
+      call model_epcrust(lat,lon,r,vpc_area,vsc_area,rhoc_area,moho_area,sediment_area, &
+                         found_crust_area,elem_in_crust,point_in_area)
       if (point_in_area) then
         vpvc = vpc_area
         vphc = vpc_area
@@ -1200,10 +1204,11 @@
         vshc = vsc_area
         rhoc = rhoc_area
         moho = moho_area
+        sediment = sediment_area
         found_crust = found_crust_area
       else
         ! by default takes Crust1.0 values
-        call model_crust_1_0(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
+        call model_crust_1_0(lat,lon,r,vpc,vsc,rhoc,moho,sediment,found_crust,elem_in_crust)
         vpvc = vpc
         vphc = vpc
         vsvc = vsc
@@ -1212,21 +1217,22 @@
 
     case (ICRUST_CRUST_SH)
       ! SH crust: provides TI crust
-      call crust_sh(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,found_crust,elem_in_crust)
+      call crust_sh(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,sediment,found_crust,elem_in_crust)
 
     case (ICRUST_EUCRUST)
       ! by default takes Crust1.0 values for vs/vp/rho/moho
-      call model_crust_1_0(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
+      call model_crust_1_0(lat,lon,r,vpc,vsc,rhoc,moho,sediment,found_crust,elem_in_crust)
       vpvc = vpc
       vphc = vpc
       vsvc = vsc
       vshc = vsc
       ! if defined within lat/lon-range, takes vp/moho from eucrust07
-      call model_eucrust(lat,lon,r,vpc_area,moho_area,found_crust_area,point_in_area)
+      call model_eucrust(lat,lon,r,vpc_area,moho_area,sediment_area,found_crust_area,point_in_area)
       if (point_in_area) then
         vpvc = vpc_area
         vphc = vpc_area
         moho = moho_area
+        sediment = sediment_area
         found_crust = found_crust_area
       endif
 
@@ -1416,7 +1422,7 @@
   double precision :: vpv,vph,vsv,vsh,rho,eta_aniso
   double precision :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
                       c33,c34,c35,c36,c44,c45,c46,c55,c56,c66
-  double precision :: moho
+  double precision :: moho,sediment
   integer :: iregion_code
   logical :: elem_in_crust
 
@@ -1427,7 +1433,8 @@
   integer :: i,j,ier,iglob,ispec
   integer :: icorner1,icorner2,icorner3,icorner4
   integer :: nspec,nglob
-  double precision, dimension(:), allocatable :: moho_depth,tmp_x,tmp_y,tmp_z
+  double precision, dimension(:), allocatable :: moho_depth,sediment_depth
+  double precision, dimension(:), allocatable :: tmp_x,tmp_y,tmp_z
   integer, dimension(:,:), allocatable :: ibool2D
 
   character(len=MAX_STRING_LEN) :: filename
@@ -1443,9 +1450,11 @@
 
   nglob = NLON * NLAT
   allocate(moho_depth(nglob), &
+           sediment_depth(nglob), &
            tmp_x(nglob),tmp_y(nglob),tmp_z(nglob),stat=ier)
   if (ier /= 0) stop 'Error allocating moho_depth arrays'
   moho_depth(:) = 0.d0
+  sediment_depth(:) = 0.d0
   tmp_x(:) = 0.d0
   tmp_y(:) = 0.d0
   tmp_z(:) = 0.d0
@@ -1473,10 +1482,11 @@
                                            vpv,vph,vsv,vsh,rho,eta_aniso, &
                                            c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
                                            c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
-                                           elem_in_crust,moho)
+                                           elem_in_crust,moho,sediment)
       ! stores
       iglob = i + (j-1) * NLON
       moho_depth(iglob) = moho * R_EARTH_KM  ! dimensionalize moho depth to km
+      sediment_depth(iglob) = sediment * R_EARTH_KM
       tmp_x(iglob) = xmesh
       tmp_y(iglob) = ymesh
       tmp_z(iglob) = zmesh
@@ -1521,9 +1531,16 @@
   write(IMAIN,*) '  min/max = ',sngl(minval(moho_depth(:))),'/',sngl(maxval(moho_depth(:))),'(km)'
   write(IMAIN,*)
 
+  filename = trim(LOCAL_PATH)//'/mesh_sediment_depth'
+
+  call write_VTK_2Ddata_dp(nspec,nglob,tmp_x,tmp_y,tmp_z,ibool2D,sediment_depth,filename)
+
+  write(IMAIN,*) '  sediment depths written to file: ',trim(filename)//'.vtk'
+  write(IMAIN,*) '  min/max = ',sngl(minval(sediment_depth(:))),'/',sngl(maxval(sediment_depth(:))),'(km)'
+  write(IMAIN,*)
 
   ! frees memory
-  deallocate(moho_depth,tmp_x,tmp_y,tmp_z,ibool2D)
+  deallocate(moho_depth,sediment_depth,tmp_x,tmp_y,tmp_z,ibool2D)
 
   end subroutine meshfem3D_plot_VTK_crust_moho
 

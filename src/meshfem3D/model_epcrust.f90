@@ -158,7 +158,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_epcrust(lat,lon,dep,vpc,vsc,rhoc,mohoc,found_crust,elem_in_crust,point_in_area)
+  subroutine model_epcrust(lat,lon,dep,vpc,vsc,rhoc,mohoc,sedimentc,found_crust,elem_in_crust,point_in_area)
 
   use constants
   use model_epcrust_par
@@ -167,7 +167,7 @@
 
   ! INPUT & OUTPUT
   double precision,intent(in) :: lat, lon, dep
-  double precision,intent(inout) :: vpc, vsc, rhoc, mohoc
+  double precision,intent(inout) :: vpc, vsc, rhoc, mohoc, sedimentc
   logical,intent(out) :: found_crust,point_in_area
   logical,intent(in) :: elem_in_crust
 
@@ -247,6 +247,12 @@
     moho = minimum_moho_depth
   endif
   mohoc = moho
+
+  ! sediment thickness
+  if (INCLUDE_SEDIMENTS_IN_CRUST .and. zsmooth(1) >= MINIMUM_SEDIMENT_THICKNESS) then
+    sedimentc = zsmooth(1) / R_EARTH_KM
+  endif
+
 
   ! initializes
   vp = ZERO

@@ -56,7 +56,8 @@
   ! local parameters
   double precision :: r,theta,phi,lat,lon
   double precision :: vpvc,vphc,vsvc,vshc,etac,rhoc
-  double precision :: moho,elevation,gamma
+  double precision :: moho,sediment
+  double precision :: elevation,gamma
   double precision :: x,y,z
   double precision :: R_moho,R_middlecrust
   integer :: ia,count_crust,count_mantle
@@ -126,9 +127,10 @@
 
     ! initializes
     moho = 0.d0
+    sediment = 0.d0
 
     ! gets smoothed moho depth
-    call meshfem3D_model_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,found_crust,elem_in_crust)
+    call meshfem3D_model_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,sediment,found_crust,elem_in_crust)
 
     !debug
     !if (lon > 140.0 .and. lon < 143. .and. lat <-42. .and. lat > -45. .and. ia == 27) then
@@ -293,7 +295,7 @@
   integer :: ia,count_crust,count_mantle
   double precision :: r,theta,phi,lat,lon
   double precision :: vpvc,vphc,vsvc,vshc,etac,rhoc
-  double precision :: moho
+  double precision :: moho,sediment
   logical :: found_crust
   double precision :: x,y,z
 
@@ -329,9 +331,10 @@
 
     ! initializes
     moho = 0.d0
+    sediment = 0.d0
 
     ! gets smoothed moho depth
-    call meshfem3D_model_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,found_crust,elem_in_crust)
+    call meshfem3D_model_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,sediment,found_crust,elem_in_crust)
 
     ! checks moho depth
     if (abs(moho) < TINYVAL ) call exit_mpi(myrank,'Error moho depth in crust_reg to honor')
