@@ -79,10 +79,10 @@
  !  by typing "size -d bin/xspecfem3D"
  !  after compiling the code with the DATA/Par_file you plan to use)
  !
- ! size of static arrays per slice =    84.136032000000000       MB
- !                                 =    80.238372802734375       MiB
- !                                 =    8.4136031999999999E-002  GB
- !                                 =    7.8357785940170288E-002  GiB
+ ! size of static arrays per slice =    84.136532000000003       MB
+ !                                 =    80.238849639892578       MiB
+ !                                 =    8.4136532000000000E-002  GB
+ !                                 =    7.8358251601457596E-002  GiB
  !
  ! (should be below to 80% or 90% of the memory installed per core)
  ! (if significantly more, the job will not run by lack of memory )
@@ -91,12 +91,12 @@
  ! (but that can be perfectly acceptable if you can afford it and
  !  want faster results by using more cores)
  !
- ! size of static arrays for all slices =    336.54412800000000       MB
- !                                      =    320.95349121093750       MiB
- !                                      =   0.33654412800000000       GB
- !                                      =   0.31343114376068115       GiB
- !                                      =    3.3654412800000001E-004  TB
- !                                      =    3.0608510132879019E-004  TiB
+ ! size of static arrays for all slices =    336.54612800000001       MB
+ !                                      =    320.95539855957031       MiB
+ !                                      =   0.33654612800000000       GB
+ !                                      =   0.31343300640583038       GiB
+ !                                      =    3.3654612799999999E-004  TB
+ !                                      =    3.0608692031819373E-004  TiB
  !
 
  integer, parameter :: NEX_XI_VAL =           16

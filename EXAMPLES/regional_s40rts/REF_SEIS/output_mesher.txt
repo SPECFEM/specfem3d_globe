@@ -6,6 +6,9 @@
  Version: 7.0.3
 
 
+ Planet: Earth
+
+
  There are            4  MPI processes
  Processes are numbered from 0 to            3
 
@@ -33,26 +36,44 @@
    incorporating rotation
    incorporating attenuation using            3  standard linear solids
 
-   incorporating 3-D lateral variations
+   incorporating 3-D lateral variations in the mantle
    no heterogeneities in the mantle
    incorporating crustal variations
    using one layer only in crust
-   incorporating anisotropy
+   incorporating transverse isotropy
    no inner-core anisotropy
    no general mantle anisotropy
 
- Reference radius of the Earth used is    6371.0000000000000       km
+ Reference radius of the globe used is    6371.0000000000000       km
 
  Central cube is at a radius of    930.00000000000000       km
  creating global slice addressing
 
 
  incorporating topography
+   topo file            : DATA/topo_bathy/topo_bathy_etopo4_smoothed_window_7.bin
+   resolution in minutes:            4
+
    topography/bathymetry: min/max =        -7747        5507
+
+   Elapsed time for reading in seconds =    3.1691999999999998E-002
+
+
+   elevations written to file: ./DATABASES_MPI/mesh_topo_bathy.vtk
+   min/max =   -7.53175020     /   5.42700005     (km)
+
+ broadcast model: S40RTS
 
  incorporating crustal model: CRUST1.0
 
    Moho crustal thickness (without ice) min/max =    4.13000011       80.0000000      km
+
+
+   moho depths written to file: ./DATABASES_MPI/mesh_moho_depth.vtk
+   min/max =    5.59049988     /   74.4168549     (km)
+
+   sediment depths written to file: ./DATABASES_MPI/mesh_sediment_depth.vtk
+   min/max =    0.00000000     /   18.7808456     (km)
 
 
  additional mesh optimizations
@@ -66,8 +87,13 @@
 
 
  Radial Meshing parameters:
-   CHUNK WIDTH XI/ETA =   30.000000000000000      /   30.000000000000000
-   NEX XI/ETA =          16 /          16
+   NCHUNKS                =            1
+
+   CENTER LAT/LON:             65.0000000     /  -20.0000000
+   GAMMA_ROTATION_AZIMUTH:     60.0000000
+
+   CHUNK WIDTH XI/ETA:         30.0000000     /   30.0000000
+   NEX XI/ETA:                        16 /          16
 
    NER_CRUST:                          2
    NER_80_MOHO:                        1
@@ -106,25 +132,26 @@
 
    ...creating mesh elements
    creating layer            1 out of           10
-     10.0%    current clock (NOT elapsed) time is: 23h 15min 32sec
+   setting tiso flags in mantle model
+     10.0%    current clock (NOT elapsed) time is: 23h 30min 46sec
    creating layer            2 out of           10
-     20.0%    current clock (NOT elapsed) time is: 23h 15min 32sec
+     20.0%    current clock (NOT elapsed) time is: 23h 30min 46sec
    creating layer            3 out of           10
-     30.0%    current clock (NOT elapsed) time is: 23h 15min 32sec
+     30.0%    current clock (NOT elapsed) time is: 23h 30min 46sec
    creating layer            4 out of           10
-     40.0%    current clock (NOT elapsed) time is: 23h 15min 32sec
+     40.0%    current clock (NOT elapsed) time is: 23h 30min 46sec
    creating layer            5 out of           10
-     50.0%    current clock (NOT elapsed) time is: 23h 15min 32sec
+     50.0%    current clock (NOT elapsed) time is: 23h 30min 46sec
    creating layer            6 out of           10
-     60.0%    current clock (NOT elapsed) time is: 23h 15min 32sec
+     60.0%    current clock (NOT elapsed) time is: 23h 30min 46sec
    creating layer            7 out of           10
-     70.0%    current clock (NOT elapsed) time is: 23h 15min 32sec
+     70.0%    current clock (NOT elapsed) time is: 23h 30min 46sec
    creating layer            8 out of           10
-     80.0%    current clock (NOT elapsed) time is: 23h 15min 32sec
+     80.0%    current clock (NOT elapsed) time is: 23h 30min 46sec
    creating layer            9 out of           10
-     90.0%    current clock (NOT elapsed) time is: 23h 15min 32sec
+     90.0%    current clock (NOT elapsed) time is: 23h 30min 46sec
    creating layer           10 out of           10
-    100.0%    current clock (NOT elapsed) time is: 23h 15min 32sec
+    100.0%    current clock (NOT elapsed) time is: 23h 30min 46sec
 
 
    ...creating global addressing
@@ -139,25 +166,25 @@
 
    ...creating mesh elements
    creating layer            1 out of           10
-     10.0%    current clock (NOT elapsed) time is: 23h 15min 33sec
+     10.0%    current clock (NOT elapsed) time is: 23h 30min 48sec
    creating layer            2 out of           10
-     20.0%    current clock (NOT elapsed) time is: 23h 15min 33sec
+     20.0%    current clock (NOT elapsed) time is: 23h 30min 48sec
    creating layer            3 out of           10
-     30.0%    current clock (NOT elapsed) time is: 23h 15min 33sec
+     30.0%    current clock (NOT elapsed) time is: 23h 30min 48sec
    creating layer            4 out of           10
-     40.0%    current clock (NOT elapsed) time is: 23h 15min 34sec
+     40.0%    current clock (NOT elapsed) time is: 23h 30min 49sec
    creating layer            5 out of           10
-     50.0%    current clock (NOT elapsed) time is: 23h 15min 35sec
+     50.0%    current clock (NOT elapsed) time is: 23h 30min 50sec
    creating layer            6 out of           10
-     60.0%    current clock (NOT elapsed) time is: 23h 15min 35sec
+     60.0%    current clock (NOT elapsed) time is: 23h 30min 50sec
    creating layer            7 out of           10
-     70.0%    current clock (NOT elapsed) time is: 23h 15min 35sec
+     70.0%    current clock (NOT elapsed) time is: 23h 30min 50sec
    creating layer            8 out of           10
-     80.0%    current clock (NOT elapsed) time is: 23h 15min 36sec
+     80.0%    current clock (NOT elapsed) time is: 23h 30min 50sec
    creating layer            9 out of           10
-     90.0%    current clock (NOT elapsed) time is: 23h 15min 36sec
+     90.0%    current clock (NOT elapsed) time is: 23h 30min 51sec
    creating layer           10 out of           10
-    100.0%    current clock (NOT elapsed) time is: 23h 15min 37sec
+    100.0%    current clock (NOT elapsed) time is: 23h 30min 52sec
 
 
    ...fills global mesh points
@@ -168,6 +195,9 @@
    Verification of mesh parameters:
  ----------------------------------
    Region is crust/mantle
+
+   Min Vs =   0.550000429      (km/s)
+   Max Vp =    13.7778416      (km/s)
 
    Max element edge size =    593.347900      (km)
    Min element edge size =    5.32537460      (km)
@@ -241,7 +271,7 @@
 
    ...saving binary files
 
-   ...saving AVS or DX mesh files
+   ...saving mesh files
 
     calculated top area:   0.26727005739359655
  calculated bottom area:    7.9821086326286317E-002
@@ -260,9 +290,9 @@
 
    ...creating mesh elements
    creating layer            1 out of            2
-     50.0%    current clock (NOT elapsed) time is: 23h 15min 38sec
+     50.0%    current clock (NOT elapsed) time is: 23h 30min 52sec
    creating layer            2 out of            2
-    100.0%    current clock (NOT elapsed) time is: 23h 15min 38sec
+    100.0%    current clock (NOT elapsed) time is: 23h 30min 52sec
 
 
    ...creating global addressing
@@ -277,9 +307,9 @@
 
    ...creating mesh elements
    creating layer            1 out of            2
-     50.0%    current clock (NOT elapsed) time is: 23h 15min 38sec
+     50.0%    current clock (NOT elapsed) time is: 23h 30min 52sec
    creating layer            2 out of            2
-    100.0%    current clock (NOT elapsed) time is: 23h 15min 38sec
+    100.0%    current clock (NOT elapsed) time is: 23h 30min 52sec
 
 
    ...fills global mesh points
@@ -290,6 +320,9 @@
    Verification of mesh parameters:
  ----------------------------------
    Region is outer core
+
+   Min Vp =    8.06479359      (km/s)
+   Max Vp =    10.3560038      (km/s)
 
    Max element edge size =    612.976562      (km)
    Min element edge size =    70.4752121      (km)
@@ -359,7 +392,7 @@
 
    ...saving binary files
 
-   ...saving AVS or DX mesh files
+   ...saving mesh files
 
     calculated top area:    7.9821086326286317E-002
  calculated bottom area:    9.8272623923351329E-003
@@ -378,7 +411,7 @@
 
    ...creating mesh elements
    creating layer            1 out of            1
-    100.0%    current clock (NOT elapsed) time is: 23h 15min 38sec
+    100.0%    current clock (NOT elapsed) time is: 23h 30min 52sec
 
 
    ...creating global addressing
@@ -393,7 +426,7 @@
 
    ...creating mesh elements
    creating layer            1 out of            1
-    100.0%    current clock (NOT elapsed) time is: 23h 15min 38sec
+    100.0%    current clock (NOT elapsed) time is: 23h 30min 52sec
 
 
    ...fills global mesh points
@@ -404,6 +437,9 @@
    Verification of mesh parameters:
  ----------------------------------
    Region is inner core
+
+   Min Vs =    3.50444508      (km/s)
+   Max Vp =    11.1265926      (km/s)
 
    Max element edge size =    318.452393      (km)
    Min element edge size =    145.270370      (km)
@@ -473,7 +509,7 @@
 
    ...saving binary files
 
-   ...saving AVS or DX mesh files
+   ...saving mesh files
 
     calculated top area:    9.8272623923351329E-003
  calculated bottom area:    5.7012336507380676E-003
@@ -501,8 +537,8 @@
  smallest and largest possible floating-point numbers are:    1.17549435E-38   3.40282347E+38
 
 
- Elapsed time for mesh generation and buffer creation in seconds =    38.521116018295288
- Elapsed time for mesh generation and buffer creation in hh:mm:ss =    0 h 00 m 38 s
+ Elapsed time for mesh generation and buffer creation in seconds =    8.7501910000000009
+ Elapsed time for mesh generation and buffer creation in hh:mm:ss =    0 h 00 m 08 s
 
  End of mesh generation
 

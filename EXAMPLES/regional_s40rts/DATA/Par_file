@@ -214,7 +214,7 @@ SAVE_SEISMOGRAMS_IN_ADJOINT_RUN = .false.
 OUTPUT_SEISMOS_ASCII_TEXT       = .true.
 OUTPUT_SEISMOS_SAC_ALPHANUM     = .false.
 OUTPUT_SEISMOS_SAC_BINARY       = .false.
-OUTPUT_SEISMOS_ASDF             = .true.
+OUTPUT_SEISMOS_ASDF             = .false.
 
 # rotate seismograms to Radial-Transverse-Z or use default North-East-Z reference frame
 ROTATE_SEISMOGRAMS_RT           = .false.
@@ -231,7 +231,7 @@ USE_BINARY_FOR_LARGE_FILE       = .false.
 RECEIVERS_CAN_BE_BURIED         = .true.
 
 # print source time function
-PRINT_SOURCE_TIME_FUNCTION      = .true.
+PRINT_SOURCE_TIME_FUNCTION      = .false.
 
 #-----------------------------------------------------------
 #
