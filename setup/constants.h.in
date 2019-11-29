@@ -291,6 +291,10 @@
 ! (always safe to leave that to true; in the case of 1D attenuation models, setting it to false can save some memory storage)
   logical, parameter :: ATTENUATION_1D_WITH_3D_STORAGE  = .true.
 
+! reference frequency of anelastic model
+! by default, we use PREM values at 1 Hz
+  double precision, parameter :: ATTENUATION_f0_REFERENCE = 1.d0   ! in Hz
+
 
 !!-----------------------------------------------------------
 !!

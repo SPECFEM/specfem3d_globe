@@ -161,7 +161,7 @@
 
   subroutine get_attenuation_scale_factor(T_c_source, tau_mu, tau_sigma, Q_mu, scale_factor)
 
-  use constants, only: ZERO,ONE,TWO,PI,TWO_PI,N_SLS,myrank
+  use constants, only: ZERO,ONE,TWO,PI,TWO_PI,N_SLS,ATTENUATION_f0_REFERENCE,myrank
   use specfem_par, only: scale_t
 
   implicit none
@@ -172,7 +172,7 @@
   double precision,intent(out) :: scale_factor
 
   ! local parameters
-  double precision :: f_c_source, w_c_source, f_0_prem
+  double precision :: f_c_source, w_c_source,f_0_model
   double precision :: factor_scale_mu0, factor_scale_mu
   double precision :: a_val, b_val
   double precision :: big_omega
@@ -182,8 +182,8 @@
   f_c_source = ONE / T_c_source
   w_c_source = TWO_PI * f_c_source
 
-  !--- non dimensionalize PREM reference of 1 second
-  f_0_prem = ONE / ( ONE / scale_t)
+  !--- non dimensionalize (e.g., PREM reference of 1 second)
+  f_0_model = ATTENUATION_f0_REFERENCE * scale_t  ! original f_0_prem = ONE / ( ONE / scale_t)
 
 !--- quantity by which to scale mu_0 to get mu
 ! this formula can be found for instance in
@@ -192,7 +192,7 @@
 ! Geophys. J. R. Astron. Soc., vol. 47, pp. 41-58 (1976)
 ! and in Aki, K. and Richards, P. G., Quantitative seismology, theory and methods,
 ! W. H. Freeman, (1980), second edition, sections 5.5 and 5.5.2, eq. (5.81) p. 170
-  factor_scale_mu0 = ONE + TWO * log(f_c_source / f_0_prem) / (PI * Q_mu)
+  factor_scale_mu0 = ONE + TWO * log(f_c_source / f_0_model) / (PI * Q_mu)
 
   !--- compute a, b and Omega parameters, also compute one minus sum of betas
   a_val = ONE

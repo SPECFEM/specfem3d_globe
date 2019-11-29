@@ -497,6 +497,7 @@
 
   ! Run a simplex search to determine the optimum values of tau_e
   call fminsearch(attenuation_eval, tau_e, n, iterations, min_value, prnt, err,AS_V)
+
   if (err > 0) then
      write(*,*)'Search did not converge for an attenuation of ', Q_real
      write(*,*)'    Iterations: ', iterations
@@ -759,7 +760,6 @@
   chi   = 2.0d0
   psi   = 0.5d0
   sigma = 0.5d0
-
 
   if (itercount > 0) then
      maxiter = itercount
