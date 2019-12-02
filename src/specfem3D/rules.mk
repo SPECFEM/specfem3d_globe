@@ -84,6 +84,7 @@ specfem3D_SOLVER_OBJECTS += \
 	$O/compute_seismograms.solverstatic.o \
 	$O/compute_stacey_crust_mantle.solverstatic.o \
 	$O/compute_stacey_outer_core.solverstatic.o \
+	$O/compute_strain_att.solverstatic.o \
 	$O/finalize_simulation.solverstatic.o \
 	$O/get_attenuation.solverstatic.o \
 	$O/initialize_simulation.solverstatic.o \
