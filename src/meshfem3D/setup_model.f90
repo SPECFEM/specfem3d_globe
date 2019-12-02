@@ -86,7 +86,7 @@
           endif
         endif
       else
-        write(IMAIN,'(a,i1,a)') '   default ',NER_CRUST,'-layer crust'
+        write(IMAIN,'(a,i2,a)') '   default ',NER_CRUST,'-layer crust'
         if (SUPPRESS_MOHO_STRETCHING .or. (.not. TOPOGRAPHY)) then
           write(IMAIN,*) '  no element stretching for 3-D moho surface'
         else

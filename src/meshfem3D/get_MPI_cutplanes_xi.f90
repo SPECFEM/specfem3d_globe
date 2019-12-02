@@ -40,13 +40,13 @@
 
   implicit none
 
-  integer :: nspec
+  integer,intent(in) :: nspec
 
   logical,dimension(2,nspec) :: iMPIcut_xi
 
-  integer,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
+  integer,dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
 
-  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
+  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: xstore,ystore,zstore
 
   ! logical mask used to create arrays iboolleft_xi and iboolright_xi
   integer :: npointot
@@ -58,7 +58,7 @@
   integer :: npoin2D_xi
 
   integer :: NGLOB2DMAX_XMIN_XMAX
-  integer, dimension(NGLOB2DMAX_XMIN_XMAX) :: iboolleft_xi,iboolright_xi
+  integer, dimension(NGLOB2DMAX_XMIN_XMAX),intent(inout) :: iboolleft_xi,iboolright_xi
 
   integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_all
 

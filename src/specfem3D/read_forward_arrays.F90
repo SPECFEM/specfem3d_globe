@@ -280,8 +280,7 @@
     !if (myrank == 0 ) print *,'reading in: ',trim(LOCAL_PATH)//'/'//trim(outputname),iteration_on_subset_tmp,iteration_on_subset,it
 
     ! opens corresponding snapshot file for reading
-    open(unit=IIN,file=trim(outputname), &
-         status='old',action='read',form='unformatted',iostat=ier)
+    open(unit=IIN,file=trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error opening file proc***_save_frame_at** for reading')
 
     read(IIN) b_displ_crust_mantle

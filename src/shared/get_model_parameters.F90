@@ -270,11 +270,13 @@
 
   case ('1d_sohl')
     ! Mars
+    TRANSVERSE_ISOTROPY = .false. ! enforces isotropic model
     HONOR_1D_SPHERICAL_MOHO = .true.
     REFERENCE_1D_MODEL = REFERENCE_MODEL_SOHL
 
   case('1d_sohl_3d_crust')
     ! Mars
+    TRANSVERSE_ISOTROPY = .false. ! enforces isotropic model
     CASE_3D = .true.
     CRUSTAL = .true.
     ONE_CRUST = .true.
@@ -559,6 +561,20 @@
     REFERENCE_1D_MODEL = GLL_REFERENCE_1D_MODEL
     THREE_D_MODEL = THREE_D_MODEL_GLL
     ATTENUATION_GLL = .true.
+
+  case ('gll_mars')
+    ! Mars
+    ! default GLL model for mars
+    CASE_3D = .true.
+    CRUSTAL = .true.
+    ONE_CRUST = .true.
+    REFERENCE_1D_MODEL = REFERENCE_MODEL_SOHL
+    REFERENCE_CRUSTAL_MODEL = ICRUST_CRUSTMAPS
+    TRANSVERSE_ISOTROPY = .false. ! enforces isotropic model
+    MODEL_3D_MANTLE_PERTUBATIONS = .false. ! not based on a 3D mantle model, but 1D model Sohl
+    THREE_D_MODEL = 0
+    MODEL_GLL = .true.
+    MODEL_GLL_TYPE = 1 ! (1 == iso) input model files are iso (vp,vs,rho)
 
   case ('gapp2')
     CASE_3D = .true.

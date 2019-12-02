@@ -265,8 +265,6 @@ module specfem_par
     gravity_pre_store_inner_core
   real(kind=CUSTOM_REAL), dimension(:,:),allocatable :: gravity_H_crust_mantle,gravity_H_inner_core
 
-
-
   !-----------------------------------------------------------------
   ! sources
   !-----------------------------------------------------------------

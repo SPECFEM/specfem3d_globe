@@ -321,8 +321,10 @@
 !  double precision :: RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS
 
   ! radii
-  if (PLANET_TYPE == IPLANET_MARS) then
+  select case (PLANET_TYPE)
+  case (IPLANET_MARS)
     ! Mars
+    ! note: radii R_.. are set according to Mars model geometry
     radius(1)  = R_MARS               ! Surface radius 3390.0 km
     radius(2)  = RMOHO_FICTITIOUS_IN_MESHER !    Moho - 1st Mesh Doubling Interface
     radius(3)  = R80                  ! d = 334.5 km
@@ -337,7 +339,8 @@
     radius(12) = 1300000.0d0          ! d = 2090 km - 3rd Mesh Doubling Interface
     radius(13) = 700000.0d0           ! d = 2690 km - 4th Mesh Doubling Interface
     radius(14) = 395000.d0            ! RICB = 515000.0, Top Central Cube
-  else
+
+  case default
     ! Earth
     ! This is PREM in Kilometers, well ... kinda, not really ....
     !radius(1)  = 6371.00d0 ! Surface
@@ -375,7 +378,7 @@
     radius(12) = 2511000.0d0 !    3860 - 3rd Mesh Doubling Interface
     radius(13) = 1371000.0d0 !    5000 - 4th Mesh Doubling Interface
     radius(14) =  982000.0d0 ! Top Central Cube
-  endif
+  end select
 
   ! radii in km
   radius(:) = radius(:) / 1000.0d0
@@ -397,7 +400,7 @@
   endif
   if (PLANET_TYPE == IPLANET_MARS) then
     ! Mars
-    NER(1) = 5
+    NER(1) = 2
   endif
 
   ! starts from input arguments of a 90-degree chunk
@@ -452,6 +455,8 @@
   subroutine auto_optimal_ner(NUM_REGIONS, width, NEX, r, scaling, NER, rt, rb)
 
   use constants, only: DEGREES_TO_RADIANS
+  ! Mars
+  use shared_parameters, only: PLANET_TYPE,IPLANET_MARS
 
   implicit none
 
@@ -470,6 +475,32 @@
   integer :: ner_test
   integer :: i
 
+  ! target ratio
+  double precision :: aspect_ratio
+
+  ! Earth: optimal ratio around 1 (almost cubic shapes)
+  double precision,parameter :: ASPECT_RATIO_EARTH = 1.d0
+  ! Mars: due to a smaller radius, the optimal ratio around 1 is too optimistic and
+  !       tends to drastically increase the number of element layers;
+  !       we thus allow for more elongated elements with an empirical ratio ~ 1.5
+  double precision,parameter :: ASPECT_RATIO_MARS = 1.5d0
+
+  !debug
+  logical, parameter :: DEBUG = .false.
+
+  ! sets target aspect ratio
+  select case(PLANET_TYPE)
+  case (IPLANET_MARS)
+    ! Mars
+    aspect_ratio = ASPECT_RATIO_MARS
+  case default
+    ! Earth
+    aspect_ratio = ASPECT_RATIO_EARTH
+  end select
+
+  ! debug
+  if (DEBUG) print *,'planet: ',PLANET_TYPE,'(1 == earth,2 == mars) - target ratio ',aspect_ratio
+
   ! Find optimal elements per region
   do i = 1,NUM_REGIONS-1
     dr = r(i) - r(i+1)              ! Radial Length of Region
@@ -485,11 +516,12 @@
     endif
 
     ratio = (dr / ner_test) / w     ! Aspect Ratio of Element
-    xi = dabs(ratio - 1.0d0)        ! Aspect Ratio should be near 1.0
+    xi = dabs(ratio - aspect_ratio) ! Aspect Ratio should be near 1.0
     ximin = 1.e7                    ! Initial Minimum
 
     !debug
-    !print *,'region ',i,'element ratio: ',ratio,'xi = ',xi,'width = ',w
+    if (DEBUG) print *,'debug auto_optimal_ner: region ',i, &
+                       'element initial ratio: ',sngl(ratio),'xi = ',sngl(xi),'width = ',sngl(w),'ner',ner_test
 
     ! check
     if (ratio < 0.d0) then
@@ -499,17 +531,21 @@
 
     ! increases NER to reach vertical/horizontal element ratio of about 1
     do while(xi <= ximin)
-      NER(i) = ner_test            ! Found a better solution
-      ximin = xi                   !
-      ner_test = ner_test + 1      ! Increment ner_test and
-      ratio = (dr / ner_test) / w  ! look for a better
-      xi = dabs(ratio - 1.0d0)     ! solution
+      NER(i) = ner_test                 ! Found a better solution
+      ximin = xi
+      ner_test = ner_test + 1           ! Increment ner_test
+      ratio = (dr / ner_test) / w
+      xi = dabs(ratio - aspect_ratio)   ! look for a better solution
     enddo
     rt(i) = dr / NER(i) / wt        ! Find the Ratio of Top
     rb(i) = dr / NER(i) / wb        ! and Bottom for completeness
 
     !debug
-    !print *,'region ',i,'element ratio: top = ',rt(i),'bottom = ',rb(i)
+    if (DEBUG) then
+      print *,'debug auto_optimal_ner: region ',i, &
+              'element final ratio: top = ',sngl(rt(i)),'bottom = ',sngl(rb(i)),'ner',NER(i)
+      print *
+    endif
   enddo
 
   end subroutine auto_optimal_ner
@@ -543,10 +579,13 @@
   double precision :: max_edgemax, min_edgemin
   double precision :: aspect_ratio, max_aspect_ratio
 
+  ! debug
+  !print *,'debug: inner core radius initial = ',sngl(rcube)
+
   ! inner core radius (in km)
   if (PLANET_TYPE == IPLANET_MARS) then
     ! Mars
-    rcube_test   =  100.0d0  ! start
+    rcube_test   =  200.0d0  ! start
     rcubemax     =  MAX(300.0d0,rcube)  ! maximum size
   else
     ! Earth
@@ -602,6 +641,9 @@
     deallocate(points)
   enddo
 
+  ! debug
+  !print *,'debug: inner core radius adjusted to = ',sngl(rcube)
+
   end subroutine find_r_central_cube
 
 !
@@ -611,10 +653,9 @@
   subroutine compute_nex(nex_xi, rcube, alpha, ner)
 
   use constants, only: PI,PI_OVER_TWO,PI_OVER_FOUR
+  use shared_parameters, only: RICB
 
   implicit none
-
-  double precision, parameter :: RICB_KM = 1221.0d0
 
   integer,intent(in) :: nex_xi
   double precision,intent(in) :: rcube, alpha
@@ -626,6 +667,13 @@
   double precision :: x, y
   double precision :: surfx, surfy
   double precision :: dist_cc_icb, somme, dist_moy
+
+  double precision :: RICB_KM
+  ! Earth
+  !double precision, parameter :: RICB_KM = 1221.0d0
+  ! Mars
+  !double precision, parameter :: RICB_KM = 515.d0
+  RICB_KM = RICB / 1000.d0
 
   somme = 0.0d0
 
@@ -806,10 +854,9 @@
   subroutine compute_coordinate(ix,iy,nbx, nby, rcube, ic, alpha, x, y)
 
   use constants, only: PI_OVER_TWO,PI_OVER_FOUR
+  use shared_parameters, only: RICB
 
   implicit none
-
-  double precision, parameter :: RICB_KM = 1221.0d0
 
   integer,intent(in) :: ix, iy, nbx, nby, ic
   double precision,intent(in) :: rcube, alpha
@@ -822,6 +869,13 @@
   double precision :: xsurf, ysurf
   double precision :: deltax, deltay
   double precision :: temp
+
+  double precision :: RICB_KM
+  ! Earth
+  !double precision, parameter :: RICB_KM = 1221.0d0
+  ! Mars
+  !double precision, parameter :: RICB_KM = 515.d0
+  RICB_KM = RICB / 1000.d0
 
   ratio_x = (ix * 1.0d0) / (nbx * 1.0d0)
   ratio_y = (iy * 1.0d0) / (nby * 1.0d0)

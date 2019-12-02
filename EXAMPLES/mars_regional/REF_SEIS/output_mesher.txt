@@ -46,7 +46,7 @@
 
  Reference radius of the globe used is    3390.0000000000000       km
 
- Central cube is at a radius of    395.00000000000000       km
+ Central cube is at a radius of    355.00000000000000       km
  creating global slice addressing
 
 
@@ -56,7 +56,7 @@
 
    topography/bathymetry: min/max =        -7830       21092
 
-   Elapsed time for reading in seconds =    3.1486000000000000E-002
+   Elapsed time for reading in seconds =   0.15303400000000000
 
 
    elevations written to file: ./DATABASES_MPI/mesh_topo_bathy.vtk
@@ -82,7 +82,7 @@
  additional mesh optimizations
 
  moho:
-   default 5-layer crust
+   default  5-layer crust
    incorporating element stretching for 3-D moho surface
 
  internal topography 410/660:
@@ -99,19 +99,19 @@
    NEX XI/ETA:                        32 /          32
 
    NER_CRUST:                          5
-   NER_80_MOHO:                        4
-   NER_220_80:                         3
-   NER_400_220:                        6
-   NER_600_400:                        5
-   NER_670_600:                        3
-   NER_771_670:                        9
-   NER_TOPDDOUBLEPRIME_771:           11
+   NER_80_MOHO:                        3
+   NER_220_80:                         2
+   NER_400_220:                        4
+   NER_600_400:                        3
+   NER_670_600:                        2
+   NER_771_670:                        6
+   NER_TOPDDOUBLEPRIME_771:            8
    NER_CMB_TOPDDOUBLEPRIME:            1
-   NER_OUTER_CORE:                    13
-   NER_TOP_CENTRAL_CUBE_ICB:           4
+   NER_OUTER_CORE:                     9
+   NER_TOP_CENTRAL_CUBE_ICB:           3
    SUPPRESS_CRUSTAL_MESH:    F
 
-   R_CENTRAL_CUBE =    395.000000      km
+   R_CENTRAL_CUBE =    355.000000      km
 
  Mesh resolution:
    DT =   0.19000000000000000
@@ -135,25 +135,25 @@
 
    ...creating mesh elements
    creating layer            1 out of           10
-     10.0%    current clock (NOT elapsed) time is: 18h 55min 56sec
+     10.0%    current clock (NOT elapsed) time is: 01h 45min 58sec
    creating layer            2 out of           10
-     20.0%    current clock (NOT elapsed) time is: 18h 55min 57sec
+     20.0%    current clock (NOT elapsed) time is: 01h 45min 58sec
    creating layer            3 out of           10
-     30.0%    current clock (NOT elapsed) time is: 18h 55min 57sec
+     30.0%    current clock (NOT elapsed) time is: 01h 45min 58sec
    creating layer            4 out of           10
-     40.0%    current clock (NOT elapsed) time is: 18h 55min 57sec
+     40.0%    current clock (NOT elapsed) time is: 01h 45min 58sec
    creating layer            5 out of           10
-     50.0%    current clock (NOT elapsed) time is: 18h 55min 57sec
+     50.0%    current clock (NOT elapsed) time is: 01h 45min 58sec
    creating layer            6 out of           10
-     60.0%    current clock (NOT elapsed) time is: 18h 55min 57sec
+     60.0%    current clock (NOT elapsed) time is: 01h 45min 58sec
    creating layer            7 out of           10
-     70.0%    current clock (NOT elapsed) time is: 18h 55min 57sec
+     70.0%    current clock (NOT elapsed) time is: 01h 45min 58sec
    creating layer            8 out of           10
-     80.0%    current clock (NOT elapsed) time is: 18h 55min 57sec
+     80.0%    current clock (NOT elapsed) time is: 01h 45min 58sec
    creating layer            9 out of           10
-     90.0%    current clock (NOT elapsed) time is: 18h 55min 57sec
+     90.0%    current clock (NOT elapsed) time is: 01h 45min 58sec
    creating layer           10 out of           10
-    100.0%    current clock (NOT elapsed) time is: 18h 55min 57sec
+    100.0%    current clock (NOT elapsed) time is: 01h 45min 58sec
 
 
    ...creating global addressing
@@ -168,25 +168,25 @@
 
    ...creating mesh elements
    creating layer            1 out of           10
-     10.0%    current clock (NOT elapsed) time is: 18h 55min 58sec
+     10.0%    current clock (NOT elapsed) time is: 01h 45min 59sec
    creating layer            2 out of           10
-     20.0%    current clock (NOT elapsed) time is: 18h 55min 58sec
+     20.0%    current clock (NOT elapsed) time is: 01h 45min 59sec
    creating layer            3 out of           10
-     30.0%    current clock (NOT elapsed) time is: 18h 55min 58sec
+     30.0%    current clock (NOT elapsed) time is: 01h 45min 59sec
    creating layer            4 out of           10
-     40.0%    current clock (NOT elapsed) time is: 18h 55min 58sec
+     40.0%    current clock (NOT elapsed) time is: 01h 45min 59sec
    creating layer            5 out of           10
-     50.0%    current clock (NOT elapsed) time is: 18h 55min 58sec
+     50.0%    current clock (NOT elapsed) time is: 01h 45min 59sec
    creating layer            6 out of           10
-     60.0%    current clock (NOT elapsed) time is: 18h 55min 58sec
+     60.0%    current clock (NOT elapsed) time is: 01h 45min 59sec
    creating layer            7 out of           10
-     70.0%    current clock (NOT elapsed) time is: 18h 55min 58sec
+     70.0%    current clock (NOT elapsed) time is: 01h 45min 59sec
    creating layer            8 out of           10
-     80.0%    current clock (NOT elapsed) time is: 18h 55min 58sec
+     80.0%    current clock (NOT elapsed) time is: 01h 45min 59sec
    creating layer            9 out of           10
-     90.0%    current clock (NOT elapsed) time is: 18h 55min 58sec
+     90.0%    current clock (NOT elapsed) time is: 01h 45min 59sec
    creating layer           10 out of           10
-    100.0%    current clock (NOT elapsed) time is: 18h 56min 01sec
+    100.0%    current clock (NOT elapsed) time is: 01h 46min 01sec
 
 
    ...fills global mesh points
@@ -201,14 +201,14 @@
    Min Vs =    4.06001282      (km/s)
    Max Vp =    10.6069231      (km/s)
 
-   Max element edge size =    84.6614075      (km)
+   Max element edge size =    112.881851      (km)
    Min element edge size =    17.9431019      (km)
-   Max/min ratio =    4.71832609
+   Max/min ratio =    6.29110003
 
-   Max Jacobian eigenvalue ratio =   0.999410808
-   Min Jacobian eigenvalue ratio =   0.219796881
+   Max Jacobian eigenvalue ratio =   0.998958230
+   Min Jacobian eigenvalue ratio =   0.183511242
 
-   Minimum period resolved =    13.8247976      (s)
+   Minimum period resolved =    13.5016880      (s)
    Minimum period resolved (empirical) =    6.66666651      (s)
    Maximum suggested time step =   0.219999999      (s)
 
@@ -239,29 +239,29 @@
    ...preparing MPI interfaces
 
  crust/mantle region:
-   #max of points in MPI buffers along xi npoin2D_xi =         6501
-   #max of array elements transferred npoin2D_xi*NDIM =        19503
+   #max of points in MPI buffers along xi npoin2D_xi =         4977
+   #max of array elements transferred npoin2D_xi*NDIM =        14931
 
-   #max of points in MPI buffers along eta npoin2D_eta =         6501
-   #max of array elements transferred npoin2D_eta*NDIM =        19503
+   #max of points in MPI buffers along eta npoin2D_eta =         4977
+   #max of array elements transferred npoin2D_eta*NDIM =        14931
 
  crust mantle MPI:
    maximum interfaces:           3
    MPI addressing maximum interfaces:           3
    MPI addressing : all interfaces okay
 
-   total MPI interface points :        52764
-   unique MPI interface points:        51252
+   total MPI interface points :        40364
+   unique MPI interface points:        39268
    maximum valence            :            3
-   total unique MPI interface points:       51252
+   total unique MPI interface points:       39268
 
 
    ...element inner/outer separation
 
  for overlapping of communications with calculations:
 
- percentage of edge elements in crust/mantle    19.8605366     %
- percentage of volume elements in crust/mantle    80.1394653     %
+ percentage of edge elements in crust/mantle    18.7814064     %
+ percentage of volume elements in crust/mantle    81.2185974     %
 
 
    ...element mesh coloring
@@ -291,9 +291,9 @@
 
    ...creating mesh elements
    creating layer            1 out of            2
-     50.0%    current clock (NOT elapsed) time is: 18h 56min 01sec
+     50.0%    current clock (NOT elapsed) time is: 01h 46min 02sec
    creating layer            2 out of            2
-    100.0%    current clock (NOT elapsed) time is: 18h 56min 01sec
+    100.0%    current clock (NOT elapsed) time is: 01h 46min 02sec
 
 
    ...creating global addressing
@@ -308,9 +308,9 @@
 
    ...creating mesh elements
    creating layer            1 out of            2
-     50.0%    current clock (NOT elapsed) time is: 18h 56min 01sec
+     50.0%    current clock (NOT elapsed) time is: 01h 46min 02sec
    creating layer            2 out of            2
-    100.0%    current clock (NOT elapsed) time is: 18h 56min 01sec
+    100.0%    current clock (NOT elapsed) time is: 01h 46min 02sec
 
 
    ...fills global mesh points
@@ -325,14 +325,14 @@
    Min Vp =    6.02501249      (km/s)
    Max Vp =    6.47867584      (km/s)
 
-   Max element edge size =    110.107559      (km)
+   Max element edge size =    159.043594      (km)
    Min element edge size =    33.4513626      (km)
-   Max/min ratio =    3.29157162
+   Max/min ratio =    4.75447273
 
-   Max Jacobian eigenvalue ratio =   0.995009065
-   Min Jacobian eigenvalue ratio =   0.236497343
+   Max Jacobian eigenvalue ratio =   0.775694788
+   Min Jacobian eigenvalue ratio =   0.180479959
 
-   Minimum period resolved =    14.4822693      (s)
+   Minimum period resolved =    12.2035303      (s)
    Minimum period resolved (empirical) =    6.66666651      (s)
    Maximum suggested time step =   0.490000010      (s)
 
@@ -363,26 +363,26 @@
    ...preparing MPI interfaces
 
  outer core region:
-   #max of points in MPI buffers along xi npoin2D_xi =          609
-   #max of array elements transferred npoin2D_xi*NDIM =         1827
+   #max of points in MPI buffers along xi npoin2D_xi =          465
+   #max of array elements transferred npoin2D_xi*NDIM =         1395
 
-   #max of points in MPI buffers along eta npoin2D_eta =          609
-   #max of array elements transferred npoin2D_eta*NDIM =         1827
+   #max of points in MPI buffers along eta npoin2D_eta =          465
+   #max of array elements transferred npoin2D_eta*NDIM =         1395
 
  outer core MPI:
    maximum interfaces:           3
    MPI addressing maximum interfaces:           3
    MPI addressing : all interfaces okay
 
-   total MPI interface points :         5084
-   unique MPI interface points:         4660
+   total MPI interface points :         3868
+   unique MPI interface points:         3572
    maximum valence            :            3
-   total assembled MPI interface points:        4660
+   total assembled MPI interface points:        3572
 
 
    ...element inner/outer separation
- percentage of edge elements in outer core    59.0000000     %
- percentage of volume elements in outer core    41.0000000     %
+ percentage of edge elements in outer core    55.9523811     %
+ percentage of volume elements in outer core    44.0476189     %
 
 
    ...element mesh coloring
@@ -412,7 +412,7 @@
 
    ...creating mesh elements
    creating layer            1 out of            1
-    100.0%    current clock (NOT elapsed) time is: 18h 56min 01sec
+    100.0%    current clock (NOT elapsed) time is: 01h 46min 02sec
 
 
    ...creating global addressing
@@ -427,7 +427,7 @@
 
    ...creating mesh elements
    creating layer            1 out of            1
-    100.0%    current clock (NOT elapsed) time is: 18h 56min 01sec
+    100.0%    current clock (NOT elapsed) time is: 01h 46min 02sec
 
 
    ...fills global mesh points
@@ -442,19 +442,19 @@
    Min Vs =    3.00000000      (km/s)
    Max Vp =    7.30000019      (km/s)
 
-   Max element edge size =    33.7446175      (km)
-   Min element edge size =    25.6568470      (km)
-   Max/min ratio =    1.31522858
+   Max element edge size =    53.4033127      (km)
+   Min element edge size =    23.0586834      (km)
+   Max/min ratio =    2.31597400
 
-   Max Jacobian eigenvalue ratio =   0.996225119
-   Min Jacobian eigenvalue ratio =   0.847605467
+   Max Jacobian eigenvalue ratio =   0.632223904
+   Min Jacobian eigenvalue ratio =   0.428498775
 
-   Minimum period resolved =    12.5162678      (s)
+   Minimum period resolved =    12.5771914      (s)
    Minimum period resolved (empirical) =    6.66666651      (s)
-   Maximum suggested time step =   0.330000013      (s)
+   Maximum suggested time step =   0.294999987      (s)
 
    for DT :   0.189999998      (s)
-   Max stability for wave velocities =   0.313074976
+   Max stability for wave velocities =   0.348351061
  ----------------------------------
 
    saving vtk mesh files for resolution res_minimum_period...
@@ -480,21 +480,21 @@
    ...preparing MPI interfaces
 
  inner core region:
-   #max of points in MPI buffers along xi npoin2D_xi =          153
-   #max of array elements transferred npoin2D_xi*NDIM =          459
+   #max of points in MPI buffers along xi npoin2D_xi =          117
+   #max of array elements transferred npoin2D_xi*NDIM =          351
 
-   #max of points in MPI buffers along eta npoin2D_eta =          153
-   #max of array elements transferred npoin2D_eta*NDIM =          459
+   #max of points in MPI buffers along eta npoin2D_eta =          117
+   #max of array elements transferred npoin2D_eta*NDIM =          351
 
  inner core MPI:
    maximum interfaces:           3
    MPI addressing maximum interfaces:           3
    MPI addressing : all interfaces okay
 
-   total MPI interface points :         1292
-   unique MPI interface points:         1156
+   total MPI interface points :          988
+   unique MPI interface points:          884
    maximum valence            :            3
-   total assembled MPI interface points:        1156
+   total assembled MPI interface points:         884
 
 
    ...element inner/outer separation
@@ -513,18 +513,18 @@
    ...saving mesh files
 
     calculated top area:    1.5768445997781343E-003
- calculated bottom area:    9.2761589214228183E-004
+ calculated bottom area:    7.4925658914915720E-004
 
- calculated volume:    2.2741887316173947E-002
+ calculated volume:    2.2751774167423980E-002
 
  Repartition of elements in regions:
  ----------------------------------
 
- total number of elements in each slice:         3988
+ total number of elements in each slice:         3280
 
-  - crust and mantle:    97.0912704      %
-  - outer core:    2.50752258      %
-  - inner core:   0.401203603      %
+  - crust and mantle:    97.0731735      %
+  - outer core:    2.56097555      %
+  - inner core:   0.365853667      %
 
  for some mesh statistics, see comments in file OUTPUT_FILES/values_from_mesher.h
 
@@ -538,8 +538,8 @@
  smallest and largest possible floating-point numbers are:    1.17549435E-38   3.40282347E+38
 
 
- Elapsed time for mesh generation and buffer creation in seconds =    25.328569999999999
- Elapsed time for mesh generation and buffer creation in hh:mm:ss =    0 h 00 m 25 s
+ Elapsed time for mesh generation and buffer creation in seconds =    27.242925000000000
+ Elapsed time for mesh generation and buffer creation in hh:mm:ss =    0 h 00 m 27 s
 
  End of mesh generation
 

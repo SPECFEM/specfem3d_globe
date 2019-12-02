@@ -45,11 +45,10 @@
 
     ! number of elements (crust/mantle elements)
     integer :: nspec
+
+    integer :: dummy_pad ! padding 4 bytes to align the structure
   end type model_gll_qmu_variables
   type (model_gll_qmu_variables) :: MGLL_QMU_V
-
-  ! model GLL type: 1 == iso, 2 == tiso, 3 == azi
-  integer :: MGLL_TYPE
 
   end module model_gll_qmu_par
 
@@ -64,7 +63,7 @@
   use constants
 
   use shared_parameters, only: NSPEC_REGIONS,ADIOS_FOR_MODELS,NPROCTOT,NCHUNKS, &
-                               MODEL,MODEL_GLL_TYPE
+                               MODEL
 
   use model_gll_par, only: MGLL_V
   use model_gll_qmu_par
@@ -73,9 +72,6 @@
 
   ! local parameters
   integer :: ier
-
-  ! sets type (iso,tiso,azi)
-  MGLL_TYPE = MODEL_GLL_TYPE
 
   ! sets number of elements (crust/mantle region)
   MGLL_QMU_V%nspec = NSPEC_REGIONS(IREGION_CRUST_MANTLE)
@@ -92,9 +88,6 @@
   endif
 
   ! safety check
-  if (MGLL_TYPE < 1 .or. MGLL_TYPE > 3) &
-    stop 'Invalid MODEL_GLL_TYPE, please use 1(iso), 2(tiso) or 3(azi) in get_model_parameters.F90 setup'
-
   if (MGLL_QMU_V%nspec /= MGLL_V%nspec) &
     stop 'Invalid nspec for QMu GLL model, size must be same to model GLL'
 

@@ -38,6 +38,7 @@
   integer :: multiplication_factor
   double precision :: min_chunk_width_in_degrees
   double precision :: dt_auto,T_min_res
+  integer :: nex_max_auto_ner_estimate
 
   !----
   !----  case prem_onecrust by default
@@ -178,8 +179,26 @@
       NER_OUTER_CORE           = 20 !30
       NER_TOP_CENTRAL_CUBE_ICB = 5 !9
     else
-      stop 'NEX not implemented for Mars yet'
+      ! for bigger NEX, uses 320 setting and then automatically adjusts in auto_ner()..
+      DT                       = 0.07d0
+      ! attenuation period range
+      MIN_ATTENUATION_PERIOD   = 10
+      MAX_ATTENUATION_PERIOD   = 500
+      ! number of element layers in each mesh region
+      NER_CRUST                = 5
+      NER_80_MOHO              = 8
+      NER_220_80               = 5
+      NER_400_220              = 6
+      NER_600_400              = 5
+      NER_670_600              = 3
+      NER_771_670              = 10
+      NER_TOPDDOUBLEPRIME_771  = 13
+      NER_CMB_TOPDDOUBLEPRIME  = 1
+      NER_OUTER_CORE           = 20 !30
+      NER_TOP_CENTRAL_CUBE_ICB = 5 !9
     endif
+    ! uses automatic estimates for NEX > 320
+    nex_max_auto_ner_estimate = 320
 
     if (HONOR_1D_SPHERICAL_MOHO) then
       ! 1D models honor 1D spherical moho
@@ -472,6 +491,8 @@
     !! removed this limit           else
     !! removed this limit             stop 'problem with this value of NEX_MAX'
     endif
+    ! uses automatic estimates for NEX > 1248
+    nex_max_auto_ner_estimate = 1248
 
     !> Hejun
     ! avoids elongated elements below the 670-discontinuity,
@@ -548,7 +569,7 @@
   ! adapts number of layer elements and time step size
   ! (for regional simulations with chunk sizes < 90 degrees)
   ! (or very, very large meshes)
-  if (min_chunk_width_in_degrees < 90.0d0 .or. NEX_MAX > 1248) then
+  if (min_chunk_width_in_degrees < 90.0d0 .or. NEX_MAX > nex_max_auto_ner_estimate) then
     ! adapts number of layer elements and time step size
 
     ! note: for global simulations, we set

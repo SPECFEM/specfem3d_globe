@@ -956,7 +956,7 @@
   use constants, only: NGLLX,NGLLY,NGLLZ,ZERO
 
   use meshfem3d_par, only: &
-    nspec,nglob, &
+    nspec,nglob,iregion_code, &
     ibool,xstore,ystore,zstore, &
     myrank
 
@@ -999,9 +999,9 @@
   ! these arrays and therefore destroy them
 
 ! openmp mesher
-!$OMP PARALLEL DEFAULT(SHARED) &
-!$OMP PRIVATE(ispec,ieoff,ilocnum,i,j,k)
-!$OMP DO
+!!$OMP PARALLEL DEFAULT(SHARED) &
+!!$OMP PRIVATE(ispec,ieoff,ilocnum,i,j,k)
+!!$OMP DO
   do ispec = 1,nspec
     ieoff = NGLLX * NGLLY * NGLLZ * (ispec-1)
     ilocnum = 0
@@ -1020,8 +1020,8 @@
       enddo
     enddo
   enddo
-!$OMP ENDDO
-!$OMP END PARALLEL
+!!$OMP ENDDO
+!!$OMP END PARALLEL
 
   call get_global(npointot,xp,yp,zp,ibool,locval,ifseg,nglob_new)
 
@@ -1030,7 +1030,8 @@
 
   ! check that number of points found equals theoretical value
   if (nglob_new /= nglob) then
-    write(errmsg,*) 'incorrect total number of points found: myrank,nglob_new,nglob = ',myrank,nglob_new,nglob
+    write(errmsg,*) 'incorrect total number of points found: myrank,nglob_new,nglob = ',myrank,nglob_new,nglob, &
+                    'region',iregion_code
     call exit_MPI(myrank,errmsg)
   endif
   if (minval(ibool) /= 1 .or. maxval(ibool) /= nglob) &
@@ -1112,26 +1113,26 @@
 
   ! gets MPI buffer indices
   call get_MPI_cutplanes_xi(prname,nspec,iMPIcut_xi,ibool, &
-                  xstore,ystore,zstore,mask_ibool,npointot, &
-                  NSPEC2D_ETA_FACE,iregion_code,npoin2D_xi, &
-                  iboolleft_xi,iboolright_xi, &
-                  npoin2D_xi_all,NGLOB2DMAX_XMIN_XMAX(iregion_code))
+                            xstore,ystore,zstore,mask_ibool,npointot, &
+                            NSPEC2D_ETA_FACE,iregion_code,npoin2D_xi, &
+                            iboolleft_xi,iboolright_xi, &
+                            npoin2D_xi_all,NGLOB2DMAX_XMIN_XMAX(iregion_code))
 
   call get_MPI_cutplanes_eta(prname,nspec,iMPIcut_eta,ibool, &
-                  xstore,ystore,zstore,mask_ibool,npointot, &
-                  NSPEC2D_XI_FACE,iregion_code,npoin2D_eta, &
-                  iboolleft_eta,iboolright_eta, &
-                  npoin2D_eta_all,NGLOB2DMAX_YMIN_YMAX(iregion_code))
+                             xstore,ystore,zstore,mask_ibool,npointot, &
+                             NSPEC2D_XI_FACE,iregion_code,npoin2D_eta, &
+                             iboolleft_eta,iboolright_eta, &
+                             npoin2D_eta_all,NGLOB2DMAX_YMIN_YMAX(iregion_code))
 
   call get_MPI_1D_buffers(prname,nspec,iMPIcut_xi,iMPIcut_eta, &
-                  ibool,idoubling, &
-                  xstore,ystore,zstore,mask_ibool,npointot, &
-                  NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER,iregion_code, &
-                  ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
-                  ibool1D_leftxi_righteta,ibool1D_rightxi_righteta, &
-                  xyz1D_leftxi_lefteta,xyz1D_rightxi_lefteta, &
-                  xyz1D_leftxi_righteta,xyz1D_rightxi_righteta, &
-                  NGLOB1D_RADIAL_MAX)
+                          ibool,idoubling, &
+                          xstore,ystore,zstore,mask_ibool,npointot, &
+                          NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER,iregion_code, &
+                          ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
+                          ibool1D_leftxi_righteta,ibool1D_rightxi_righteta, &
+                          xyz1D_leftxi_lefteta,xyz1D_rightxi_lefteta, &
+                          xyz1D_leftxi_righteta,xyz1D_rightxi_righteta, &
+                          NGLOB1D_RADIAL_MAX)
 
   deallocate(mask_ibool)
 

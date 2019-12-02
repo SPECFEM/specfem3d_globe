@@ -58,48 +58,48 @@
    reading in MPI databases...
    for overlapping of communications with calculations:
 
-   percentage of edge elements in crust/mantle    19.8605366     %
-   percentage of volume elements in crust/mantle    80.1394653     %
+   percentage of edge elements in crust/mantle    18.7814064     %
+   percentage of volume elements in crust/mantle    81.2185974     %
 
-   percentage of edge elements in outer core    59.0000000     %
-   percentage of volume elements in outer core    41.0000000     %
+   percentage of edge elements in outer core    55.9523811     %
+   percentage of volume elements in outer core    44.0476189     %
 
    percentage of edge elements in inner core    75.0000000     %
    percentage of volume elements in inner core    25.0000000     %
 
    reading in Stacey databases...
 
- Elapsed time for reading mesh in seconds =    7.75820017E-02
+ Elapsed time for reading mesh in seconds =    6.56400025E-02
 
  topography:
    topography/bathymetry: min/max =        -7830       21092
 
- Elapsed time for reading topo/bathy in seconds =   0.111941002
+ Elapsed time for reading topo/bathy in seconds =   0.127651006
 
  adjacency:
-   total number of elements in this slice =         3872
+   total number of elements in this slice =         3184
 
    using kd-tree search radius =    166.40623586983435      (km)
 
-   maximum search elements                                      =          753
-   maximum of actual search elements (after distance criterion) =          752
+   maximum search elements                                      =          728
+   maximum of actual search elements (after distance criterion) =          727
 
    estimated typical element size at surface =    27.734372644972389      (km)
-   maximum distance between neighbor centers =    103.46241446876425      (km)
+   maximum distance between neighbor centers =    109.11130884280979      (km)
 
    maximum neighbors found per element =           37 (should be 37 for globe meshes)
-   total number of neighbors           =        85844
+   total number of neighbors           =        71112
 
-   Elapsed time for detection of neighbors in seconds =   0.19024600000000000
+   Elapsed time for detection of neighbors in seconds =   0.15029799999999996
 
  kd-tree:
-   total data points:       104544
-   theoretical   number of nodes:       209082
-                tree memory size:    6.38067627     MB
-   actual        number of nodes:       209087
-                tree memory size:    6.38082886     MB
+   total data points:        85968
+   theoretical   number of nodes:       171927
+                tree memory size:    5.24679565     MB
+   actual        number of nodes:       171935
+                tree memory size:    5.24703979     MB
    maximum depth   :           21
-   creation timing :    4.59310114E-02 (s)
+   creation timing :    3.71629894E-02 (s)
 
 
  sources:           1
@@ -112,7 +112,7 @@
  source #            1
 
    source located in slice            2
-                  in element         3332
+                  in element         2644
 
    using moment tensor source:
      xi coordinate of source in that element:   0.26455169111572147
@@ -147,7 +147,7 @@
  maximum error in location of the sources:    7.54199979E-13  km
 
 
- Elapsed time for detection of sources in seconds =    1.1380000000000001E-002
+ Elapsed time for detection of sources in seconds =    4.2419999999999680E-003
 
  End of source detection - done
 
@@ -171,13 +171,13 @@
        original longitude:    135.623444
       epicentral distance:    3.00284719
    closest estimate found:    8.42893030E-13  km away
-    in slice            0  in element         3872
+    in slice            0  in element         3184
     at xi,eta,gamma coordinates =  -0.60179879744949183       0.78589132127318573        1.0002502586262438
     at lat/lon =    4.50238419       135.623444
 
  maximum error in location of all the receivers:    8.42893030E-13  km
 
- Elapsed time for receiver detection in seconds =    6.0799999999999743E-004
+ Elapsed time for receiver detection in seconds =    1.0109999999999841E-003
 
  End of receiver detection - done
 
@@ -229,9 +229,9 @@
    using attenuation: shifting to unrelaxed moduli
    crust/mantle transverse isotropic and isotropic elements
    tiso elements =            0
-   iso elements  =         3872
+   iso elements  =         3184
    inner core isotropic elements
-   iso elements  =           16
+   iso elements  =           12
  preparing wavefields
    allocating wavefields
    initializing wavefields
@@ -246,13 +246,13 @@
    inverse table of ibool done
    fused array done
    bandwidth test (STREAM TRIAD):
-      memory accesses =    9.02241898     MB
-      timing  min/max =    8.29000026E-04 s /    1.89299998E-03 s
-      timing      avg =    9.84900049E-04 s
-      bandwidth       =    8.94604111     GB/s
+      memory accesses =    7.40784073     MB
+      timing  min/max =    6.92999980E-04 s /    7.35000009E-04 s
+      timing      avg =    7.17799994E-04 s
+      bandwidth       =    10.0783215     GB/s
 
 
- Elapsed time for preparing timerun in seconds =   0.219835997
+ Elapsed time for preparing timerun in seconds =   0.190947995
 
 
  time loop:
@@ -274,17 +274,17 @@
  Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    0.00000000
  Max of strain, eps_trace_over_3_crust_mantle =   0.00000000
  Max of strain, epsilondev_crust_mantle  =   3.63220876E-09
- Elapsed time in seconds =   0.18620899999999996
+ Elapsed time in seconds =   0.16330099999999992
  Elapsed time in hh:mm:ss =      0 h 00 m 00 s
- Mean elapsed time per time step in seconds =    3.7241799999999992E-002
+ Mean elapsed time per time step in seconds =    3.2660199999999986E-002
  Time steps done =            5  out of          900
  Time steps remaining =          895
- Estimated remaining time in seconds =    33.331410999999996
- Estimated remaining time in hh:mm:ss =      0 h 00 m 33 s
- Estimated total run time in seconds =    33.517619999999994
- Estimated total run time in hh:mm:ss =      0 h 00 m 33 s
+ Estimated remaining time in seconds =    29.230878999999987
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 29 s
+ Estimated total run time in seconds =    29.394179999999988
+ Estimated total run time in hh:mm:ss =      0 h 00 m 29 s
  We have done   0.555555582     % of that
- The run will finish approximately on (in local time): Wed Nov 27, 2019 18:57
+ The run will finish approximately on (in local time): Tue Dec 03, 2019 01:46
  ************************************************************
  **** BEWARE: the above time estimates are not very reliable
  **** because fewer than 100 iterations have been performed
@@ -292,47 +292,47 @@
 
  Time step #          500
  Time:    1.53016663      minutes
- Max norm displacement vector U in solid in all slices for forward prop. (m) =    2.31489744E-02
- Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    0.00000000
- Max of strain, eps_trace_over_3_crust_mantle =   1.25815836E-09
- Max of strain, epsilondev_crust_mantle  =   3.61898606E-06
- Elapsed time in seconds =    31.533958999999996
- Elapsed time in hh:mm:ss =      0 h 00 m 31 s
- Mean elapsed time per time step in seconds =    6.3067917999999987E-002
+ Max norm displacement vector U in solid in all slices for forward prop. (m) =    2.31407154E-02
+ Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    6.29214384E-31
+ Max of strain, eps_trace_over_3_crust_mantle =   1.25685551E-09
+ Max of strain, epsilondev_crust_mantle  =   3.61711227E-06
+ Elapsed time in seconds =    20.923922000000001
+ Elapsed time in hh:mm:ss =      0 h 00 m 20 s
+ Mean elapsed time per time step in seconds =    4.1847844000000002E-002
  Time steps done =          500  out of          900
  Time steps remaining =          400
- Estimated remaining time in seconds =    25.227167199999993
- Estimated remaining time in hh:mm:ss =      0 h 00 m 25 s
- Estimated total run time in seconds =    56.761126199999993
- Estimated total run time in hh:mm:ss =      0 h 00 m 56 s
+ Estimated remaining time in seconds =    16.739137599999999
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 16 s
+ Estimated total run time in seconds =    37.663059599999997
+ Estimated total run time in hh:mm:ss =      0 h 00 m 37 s
  We have done    55.5555573     % of that
- The run will finish approximately on (in local time): Wed Nov 27, 2019 18:56
+ The run will finish approximately on (in local time): Tue Dec 03, 2019 01:46
 
  Time step #          900
  Time:    2.79683328      minutes
- Max norm displacement vector U in solid in all slices for forward prop. (m) =    2.31367890E-02
- Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    6.93593674E-25
- Max of strain, eps_trace_over_3_crust_mantle =   5.56422908E-10
- Max of strain, epsilondev_crust_mantle  =   3.62708647E-06
- Elapsed time in seconds =    56.676412999999997
- Elapsed time in hh:mm:ss =      0 h 00 m 56 s
- Mean elapsed time per time step in seconds =    6.2973792222222214E-002
+ Max norm displacement vector U in solid in all slices for forward prop. (m) =    2.31413096E-02
+ Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    4.65904684E-22
+ Max of strain, eps_trace_over_3_crust_mantle =   8.83151940E-10
+ Max of strain, epsilondev_crust_mantle  =   3.62535843E-06
+ Elapsed time in seconds =    37.764641000000005
+ Elapsed time in hh:mm:ss =      0 h 00 m 37 s
+ Mean elapsed time per time step in seconds =    4.1960712222222224E-002
  Time steps done =          900  out of          900
  Time steps remaining =            0
  Estimated remaining time in seconds =    0.0000000000000000
  Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
- Estimated total run time in seconds =    56.676412999999997
- Estimated total run time in hh:mm:ss =      0 h 00 m 56 s
+ Estimated total run time in seconds =    37.764641000000005
+ Estimated total run time in hh:mm:ss =      0 h 00 m 37 s
  We have done    100.000000     % of that
 
 
  Total number of time steps written:          900
 
- Writing the seismograms in parallel took    5.7320000000018467E-003  seconds
+ Writing the seismograms in parallel took    5.3600000000031400E-003  seconds
 
  Time-Loop Complete. Timing info:
- Total elapsed time in seconds =    56.740791999999999
- Total elapsed time in hh:mm:ss =      0 h 00 m 56 s
+ Total elapsed time in seconds =    37.808851000000004
+ Total elapsed time in hh:mm:ss =      0 h 00 m 37 s
 
  finalizing simulation
 

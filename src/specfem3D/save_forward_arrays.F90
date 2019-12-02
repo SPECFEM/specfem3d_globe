@@ -72,7 +72,7 @@
     else
       write(outputname,"('dump_all_arrays',i6.6)") myrank
       open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname), &
-          status='unknown',form='unformatted',action='write',iostat=ier)
+           status='unknown',form='unformatted',action='write',iostat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'Error opening file dump_all_arrays*** for writing')
 
       ! wavefield
@@ -140,8 +140,7 @@
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_save_forward_arrays.bin'
       outputname = trim(LOCAL_TMP_PATH)//'/'//trim(outputname)
 
-      open(unit=IOUT,file=trim(outputname),status='unknown', &
-          form='unformatted',action='write',iostat=ier)
+      open(unit=IOUT,file=trim(outputname),status='unknown',form='unformatted',action='write',iostat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'Error opening file proc***_save_forward_arrays** for writing')
 
       write(IOUT) displ_crust_mantle
@@ -249,8 +248,7 @@
     ! debug
     !if (myrank == 0 ) print *,'saving in: ',trim(LOCAL_PATH)//'/'//trim(outputname), iteration_on_subset_tmp,it
 
-    open(unit=IOUT,file=trim(outputname), &
-         status='unknown',form='unformatted',action='write',iostat=ier)
+    open(unit=IOUT,file=trim(outputname),status='unknown',form='unformatted',action='write',iostat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error opening file proc***_save_frame_at** for writing')
 
     write(IOUT) displ_crust_mantle

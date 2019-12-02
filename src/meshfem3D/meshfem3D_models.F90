@@ -325,8 +325,8 @@
   implicit none
 
   integer,intent(in) :: iregion_code,idoubling
-  double precision,intent(in) :: r_prem,rho
-  double precision,intent(inout) :: vpv,vph,vsv,vsh,eta_aniso
+  double precision,intent(in) :: r_prem
+  double precision,intent(inout) :: vpv,vph,vsv,vsh,eta_aniso,rho
   double precision,intent(inout) :: Qkappa,Qmu
   double precision,intent(in) :: RICB,RCMB,RTOPDDOUBLEPRIME,R80,R120,R220,R400, &
     R600,R670,R771,RMOHO,RMIDDLE_CRUST,ROCEAN

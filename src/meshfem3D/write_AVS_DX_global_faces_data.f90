@@ -29,62 +29,64 @@
 ! to be recombined in postprocessing
 
   subroutine write_AVS_DX_global_faces_data(prname,nspec,iMPIcut_xi,iMPIcut_eta, &
-        ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
-        npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
-        ELLIPTICITY,MODEL_3D_MANTLE_PERTUBATIONS, &
-        RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
-        RMIDDLE_CRUST,ROCEAN,iregion_code)
+                                            ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
+                                            npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
+                                            ELLIPTICITY,MODEL_3D_MANTLE_PERTUBATIONS, &
+                                            RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
+                                            RMIDDLE_CRUST,ROCEAN,iregion_code)
 
-  use constants
+  use constants, only: NGLLX,NGLLY,NGLLZ,NR,CUSTOM_REAL,IOUT,MAX_STRING_LEN,myrank, &
+    ONE,TWO,R_EARTH,R_UNIT_SPHERE
 
   implicit none
 
-  integer nspec
-  integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
+  integer,intent(in) :: nspec
+  integer,intent(in) :: ibool(NGLLX,NGLLY,NGLLZ,nspec)
 
-  integer idoubling(nspec)
+  integer,intent(in) :: idoubling(nspec)
 
-  logical ELLIPTICITY,MODEL_3D_MANTLE_PERTUBATIONS
+  logical,intent(in) :: ELLIPTICITY,MODEL_3D_MANTLE_PERTUBATIONS
 
-  logical iMPIcut_xi(2,nspec)
-  logical iMPIcut_eta(2,nspec)
+  logical,intent(in) :: iMPIcut_xi(2,nspec)
+  logical,intent(in) :: iMPIcut_eta(2,nspec)
 
-  double precision RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771, &
+  double precision,intent(in) :: RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771, &
     R400,R120,R80,RMOHO,RMIDDLE_CRUST,ROCEAN
 
-  double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision ystore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision zstore(NGLLX,NGLLY,NGLLZ,nspec)
+  double precision,intent(in) :: xstore(NGLLX,NGLLY,NGLLZ,nspec)
+  double precision,intent(in) :: ystore(NGLLX,NGLLY,NGLLZ,nspec)
+  double precision,intent(in) :: zstore(NGLLX,NGLLY,NGLLZ,nspec)
 
-  real(kind=CUSTOM_REAL) kappavstore(NGLLX,NGLLY,NGLLZ,nspec)
-  real(kind=CUSTOM_REAL) muvstore(NGLLX,NGLLY,NGLLZ,nspec)
-  real(kind=CUSTOM_REAL) rhostore(NGLLX,NGLLY,NGLLZ,nspec)
+  real(kind=CUSTOM_REAL),intent(in) :: kappavstore(NGLLX,NGLLY,NGLLZ,nspec)
+  real(kind=CUSTOM_REAL),intent(in) :: muvstore(NGLLX,NGLLY,NGLLZ,nspec)
+  real(kind=CUSTOM_REAL),intent(in) :: rhostore(NGLLX,NGLLY,NGLLZ,nspec)
 
-! logical mask used to output global points only once
-  integer npointot
-  logical mask_ibool(npointot)
+  ! logical mask used to output global points only once
+  integer,intent(in) :: npointot
+  logical,intent(inout) :: mask_ibool(npointot)
 
-! numbering of global AVS or DX points
-  integer num_ibool_AVS_DX(npointot)
+  ! numbering of global AVS or DX points
+  integer,intent(inout) :: num_ibool_AVS_DX(npointot)
 
-  integer ispec
-  integer i,j,k,np
-  integer iglob1,iglob2,iglob3,iglob4,iglob5,iglob6,iglob7,iglob8
-  integer npoin,numpoin,nspecface,ispecface
+  ! for ellipticity
+  integer,intent(in) :: nspl
+  double precision,intent(in) :: rspl(NR),espl(NR),espl2(NR)
 
-  double precision r,rho,vp,vs,Qkappa,Qmu
-  double precision vpv,vph,vsv,vsh,eta_aniso
-  double precision x,y,z,theta,phi_dummy,cost,p20,ell,factor
-  real(kind=CUSTOM_REAL) dvp,dvs
+  integer,intent(in) :: iregion_code
 
-! for ellipticity
-  integer nspl
-  double precision rspl(NR),espl(NR),espl2(NR)
+  ! local parameters
+  integer :: ispec
+  integer :: i,j,k,np
+  integer :: iglob1,iglob2,iglob3,iglob4,iglob5,iglob6,iglob7,iglob8
+  integer :: npoin,numpoin,nspecface,ispecface
 
-! processor identification
-  character(len=MAX_STRING_LEN) prname
+  double precision :: r,rho,vp,vs,Qkappa,Qmu
+  double precision :: vpv,vph,vsv,vsh,eta_aniso
+  double precision :: x,y,z,theta,phi_dummy,cost,p20,ell,factor
+  real(kind=CUSTOM_REAL) :: dvp,dvs
 
-  integer iregion_code
+  ! processor identification
+  character(len=MAX_STRING_LEN) :: prname
 
 ! writing points
   open(unit=IOUT,file=prname(1:len_trim(prname))//'AVS_DXpointsfaces.txt',status='unknown')
