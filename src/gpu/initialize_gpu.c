@@ -103,7 +103,6 @@ static struct {
   PASS(IREGION_INNER_CORE),
   PASS(IFLAG_IN_FICTITIOUS_CUBE),
   PASS(COLORING_MIN_NSPEC_OUTER_CORE), PASS(COLORING_MIN_NSPEC_INNER_CORE),
-  PASS(R_EARTH_KM),
 
   // macro functions: not working yet, spaces not allowed in OCL compiler
 

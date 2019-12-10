@@ -1,5 +1,5 @@
 module BOAST
-  def BOAST::compute_element_gravity( type, n_gll3 = 125, r_earth_km = 6371.0 )
+  def BOAST::compute_element_gravity( type, n_gll3 = 125)
     if type == :inner_core then
       function_name = "compute_element_ic_gravity"
     elsif type == :crust_mantle then
@@ -33,6 +33,7 @@ module BOAST
     v.push *rho_s_H = [1,2,3].collect {|n|
                                      Real("rho_s_H#{n}", :dir => :inout, :dim => [Dim()], :private => true )
     }
+    v.push r_earth_km               = Real("R_EARTH_KM", :dir => :in)
 
     p = Procedure(function_name, v, :local => true) {
       decl radius = Real("radius"), theta = Real("theta"), phi = Real("phi")

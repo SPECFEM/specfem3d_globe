@@ -158,12 +158,6 @@ typedef float realw;
 // inner core : fictitious elements id (from constants.h)
 #define IFLAG_IN_FICTITIOUS_CUBE  11
 
-// R_EARTH_KM is the radius of the bottom of the oceans (radius of Earth in km)
-#define R_EARTH_KM 6371.0f
-
-// uncomment line below for PREM with oceans
-//#define R_EARTH_KM 6368.0f
-
 // Asynchronous memory copies between GPU and CPU
 // (set to 0 for synchronuous/blocking copies, set to 1 for asynchronuous copies)
 #define GPU_ASYNC_COPY 1
@@ -791,6 +785,7 @@ typedef struct mesh_ {
 
   realw RHO_BOTTOM_OC;
   realw RHO_TOP_OC;
+  realw R_EARTH_KM;
 
   // ------------------------------------------------------------------   //
   // rotation

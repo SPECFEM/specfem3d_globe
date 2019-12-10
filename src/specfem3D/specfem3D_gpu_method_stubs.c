@@ -390,7 +390,8 @@ void FC_FUNC_ (prepare_fields_gravity_device,
                                                realw *minus_g_icb,
                                                realw *minus_g_cmb,
                                                double *RHO_BOTTOM_OC,
-                                               double *RHO_TOP_OC) {}
+                                               double *RHO_TOP_OC,
+                                               double *R_EARTH_KM) {}
 
 void FC_FUNC_ (prepare_fields_attenuat_device,
                PREPARE_FIELDS_ATTENUAT_DEVICE) (long *Mesh_pointer_f,

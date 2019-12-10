@@ -170,7 +170,7 @@
                                      wgll_cube, &
                                      NRAD_GRAVITY, &
                                      minus_g_icb,minus_g_cmb, &
-                                     RHO_BOTTOM_OC,RHO_TOP_OC)
+                                     RHO_BOTTOM_OC,RHO_TOP_OC,R_EARTH_KM)
 
   deallocate(cr_d_ln_density_dr_table,cr_minus_rho_g_over_kappa_fluid, &
              cr_minus_gravity_table,cr_minus_deriv_gravity_table, &
@@ -345,9 +345,9 @@
     call synchronize_all()
 
     call prepare_oceans_device(Mesh_pointer,npoin_oceans, &
-                              ibool_ocean_load, &
-                              rmass_ocean_load_selected, &
-                              normal_ocean_load)
+                               ibool_ocean_load, &
+                               rmass_ocean_load_selected, &
+                               normal_ocean_load)
   endif
   call synchronize_all()
 

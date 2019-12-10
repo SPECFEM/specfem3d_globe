@@ -18,12 +18,12 @@ module BOAST
   end
 
   require "./compute_element_gravity_helper.rb"
-  def BOAST::compute_element_ic_gravity( n_gll3 = 125, r_earth_km = 6371.0 )
-    return BOAST::compute_element_gravity( :inner_core, n_gll3, r_earth_km )
+  def BOAST::compute_element_ic_gravity( n_gll3 = 125 )
+    return BOAST::compute_element_gravity( :inner_core, n_gll3 )
   end
 
-  def BOAST::compute_element_cm_gravity( n_gll3 = 125, r_earth_km = 6371.0 )
-    return compute_element_gravity( :crust_mantle, n_gll3, r_earth_km )
+  def BOAST::compute_element_cm_gravity( n_gll3 = 125 )
+    return compute_element_gravity( :crust_mantle, n_gll3 )
   end
 
 #----------------------------------------------------------------------
@@ -513,11 +513,11 @@ module BOAST
 #
 #----------------------------------------------------------------------
 
-  def BOAST::inner_core_impl_kernel_forward(ref = true, elem_per_thread = 1, mesh_coloring = false, textures_fields = false, textures_constants = false, unroll_loops = true, n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128, n_sls = 3, r_earth_km = 6371.0, coloring_min_nspec_inner_core = 1000, i_flag_in_fictitious_cube = 11)
-    return BOAST::impl_kernel(:inner_core, true, ref, elem_per_thread, mesh_coloring, textures_fields, textures_constants, unroll_loops, n_gllx, n_gll2, n_gll3, n_gll3_padded, n_sls, r_earth_km, coloring_min_nspec_inner_core, i_flag_in_fictitious_cube)
+  def BOAST::inner_core_impl_kernel_forward(ref = true, elem_per_thread = 1, mesh_coloring = false, textures_fields = false, textures_constants = false, unroll_loops = true, n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128, n_sls = 3, coloring_min_nspec_inner_core = 1000, i_flag_in_fictitious_cube = 11)
+    return BOAST::impl_kernel(:inner_core, true, ref, elem_per_thread, mesh_coloring, textures_fields, textures_constants, unroll_loops, n_gllx, n_gll2, n_gll3, n_gll3_padded, n_sls, coloring_min_nspec_inner_core, i_flag_in_fictitious_cube)
   end
 
-  def BOAST::impl_kernel(type, forward, ref = true, elem_per_thread = 1, mesh_coloring = false, textures_fields = false, textures_constants = false, unroll_loops = false, n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128, n_sls = 3, r_earth_km = 6371.0, coloring_min_nspec_inner_core = 1000, i_flag_in_fictitious_cube = 11, launch_bounds = false, min_blocks = 7)
+  def BOAST::impl_kernel(type, forward, ref = true, elem_per_thread = 1, mesh_coloring = false, textures_fields = false, textures_constants = false, unroll_loops = false, n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128, n_sls = 3, coloring_min_nspec_inner_core = 1000, i_flag_in_fictitious_cube = 11, launch_bounds = false, min_blocks = 7)
     push_env( :array_start => 0 )
     kernel = CKernel::new
     v = []
@@ -606,6 +606,7 @@ module BOAST
     v.push d_minus_gravity_table   = Real("d_minus_gravity_table",   :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push d_minus_deriv_gravity_table = Real("d_minus_deriv_gravity_table", :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push d_density_table         = Real("d_density_table",         :dir => :in, :restrict => true, :dim => [Dim()] )
+    v.push r_earth_km              = Real( "R_EARTH_KM",             :dir => :in)
     v.push wgll_cube               = Real("wgll_cube",               :dir => :in, :restrict => true, :dim => [Dim()] )
     if type == :inner_core then
       v.push nspec_strain_only = Int( "NSPEC_INNER_CORE_STRAIN_ONLY", :dir => :in)
@@ -664,7 +665,7 @@ module BOAST
     if (get_lang == CUDA and ref) then
       get_output.print File::read("references/#{function_name}.cu".gsub("_forward","").gsub("_adjoint",""))
     elsif(get_lang == CL or get_lang == CUDA) then
-      make_specfem3d_header(:ngllx => n_gllx, :ngll2 => n_gll2, :ngll3 => n_gll3, :ngll3_padded => n_gll3_padded, :n_sls => n_sls, :r_earth_km => r_earth_km, :coloring_min_nspec_inner_core => coloring_min_nspec_inner_core, :iflag_in_fictitious_cube => i_flag_in_fictitious_cube)
+      make_specfem3d_header(:ngllx => n_gllx, :ngll2 => n_gll2, :ngll3 => n_gll3, :ngll3_padded => n_gll3_padded, :n_sls => n_sls, :coloring_min_nspec_inner_core => coloring_min_nspec_inner_core, :iflag_in_fictitious_cube => i_flag_in_fictitious_cube)
       if type == :inner_core then
         #DEACTIVATE USE TEXTURES CONSTANTS
         get_output.puts "#ifdef #{use_textures_constants}"
@@ -684,11 +685,11 @@ module BOAST
       if type == :inner_core then
         sub_compute_element_att_stress =  compute_element_ic_att_stress(n_gll3, n_sls)
         sub_compute_element_att_memory =  compute_element_ic_att_memory(n_gll3, n_gll3_padded, n_sls)
-        sub_compute_element_gravity =  compute_element_ic_gravity(n_gll3, r_earth_km)
+        sub_compute_element_gravity =  compute_element_ic_gravity(n_gll3)
       elsif type == :crust_mantle then
         sub_compute_element_att_stress =  compute_element_cm_att_stress(n_gll3, n_sls)
         sub_compute_element_att_memory =  compute_element_cm_att_memory(n_gll3, n_gll3_padded, n_sls)
-        sub_compute_element_gravity =  compute_element_cm_gravity(n_gll3, r_earth_km)
+        sub_compute_element_gravity =  compute_element_cm_gravity(n_gll3)
       end
       # function definitions
       comment()
@@ -1056,7 +1057,8 @@ module BOAST
                                    sigma[0][0].address, sigma[1][1].address, sigma[2][2].address,\
                                    sigma[0][1].address, sigma[1][0].address, sigma[0][2].address,\
                                    sigma[2][0].address, sigma[1][2].address, sigma[2][1].address,\
-                                   rho_s_H[elem_index][0].address, rho_s_H[elem_index][1].address, rho_s_H[elem_index][2].address)
+                                   rho_s_H[elem_index][0].address, rho_s_H[elem_index][1].address, rho_s_H[elem_index][2].address,\
+                                   r_earth_km)
           }
           comment()
 

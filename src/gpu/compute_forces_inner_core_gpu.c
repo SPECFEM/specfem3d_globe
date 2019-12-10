@@ -223,6 +223,7 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_minus_gravity_table.ocl));
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_minus_deriv_gravity_table.ocl));
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_density_table.ocl));
+    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (realw), (void *) &mp->R_EARTH_KM));
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_wgll_cube.ocl));
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->NSPEC_INNER_CORE_STRAIN_ONLY));
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->NSPEC_INNER_CORE));
@@ -302,6 +303,7 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
                                                                mp->d_minus_gravity_table.cuda,
                                                                mp->d_minus_deriv_gravity_table.cuda,
                                                                mp->d_density_table.cuda,
+                                                               mp->R_EARTH_KM,
                                                                mp->d_wgll_cube.cuda,
                                                                mp->NSPEC_INNER_CORE_STRAIN_ONLY,
                                                                mp->NSPEC_INNER_CORE);

@@ -656,7 +656,8 @@ void FC_FUNC_ (prepare_fields_gravity_device,
                                                realw *minus_g_icb,
                                                realw *minus_g_cmb,
                                                double *RHO_BOTTOM_OC,
-                                               double *RHO_TOP_OC) {
+                                               double *RHO_TOP_OC,
+                                               double *R_EARTH_KM) {
 
   TRACE ("prepare_fields_gravity_device");
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
@@ -684,6 +685,7 @@ void FC_FUNC_ (prepare_fields_gravity_device,
   // constants
   mp->RHO_BOTTOM_OC = (realw) *RHO_BOTTOM_OC;
   mp->RHO_TOP_OC = (realw) *RHO_TOP_OC;
+  mp->R_EARTH_KM = (realw) *R_EARTH_KM;  // needed for both, gravity (crust/mantle,inner core) and non-gravity cases (outer core)
 
   GPU_ERROR_CHECKING ("prepare_fields_gravity_device");
 }

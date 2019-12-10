@@ -60,7 +60,7 @@
     ATTENUATION_GLL, CASE_3D,CRUSTAL,HETEROGEN_3D_MANTLE, &
     HONOR_1D_SPHERICAL_MOHO, MODEL_3D_MANTLE_PERTUBATIONS, &
     ONE_CRUST, TRANSVERSE_ISOTROPY, OCEANS,TOPOGRAPHY, &
-    CEM_REQUEST,CEM_ACCEPT,GPU_MODE
+    CEM_REQUEST,CEM_ACCEPT
 
   implicit none
 
@@ -660,9 +660,6 @@
   ! Mars has no ocean
   if (REFERENCE_1D_MODEL == REFERENCE_MODEL_SOHL .and. OCEANS) &
     stop 'model 1D_Sohl cannot use an ocean approximation'
-  ! Mars not implemented yet on GPU (missing correct gravity)
-  if (REFERENCE_1D_MODEL == REFERENCE_MODEL_SOHL .and. GPU_MODE) &
-    stop 'model 1D_Sohl cannot use GPU_MODE'
 
   end subroutine get_model_parameters_flags
 
