@@ -496,7 +496,7 @@
   enddo
 
   ! Run a simplex search to determine the optimum values of tau_e
-  call fminsearch(attenuation_eval, tau_e, n, iterations, min_value, prnt, err,AS_V)
+  call fminsearch(attenuation_eval, tau_e, n, iterations, min_value, prnt, err, AS_V)
 
   if (err > 0) then
      write(*,*)'Search did not converge for an attenuation of ', Q_real
@@ -610,8 +610,8 @@
   ! Output
   double precision, dimension(nf),intent(out)   :: A,B
 
-  integer i,j
-  double precision w, demon
+  integer :: i,j
+  double precision :: w, demon
 
   A(:) = 1.0d0 -  nsls*1.0d0
   B(:) = 0.0d0
@@ -655,6 +655,7 @@
 !
   double precision function attenuation_eval(Xin,AS_V)
 
+  use constants, only: HUGEVAL
   use meshfem3D_models_par, only: attenuation_simplex_variables
 
   implicit none
@@ -673,7 +674,13 @@
 
   call attenuation_maxwell(AS_V%nf,AS_V%nsls,AS_V%f,AS_V%tau_s,tau_e,B,A)
 
-  tan_delta(:) = B(:) / A(:)
+  do i = 1,AS_V%nf
+    if (abs(A(i)) > 0.0d0) then
+      tan_delta(i) = B(i) / A(i)
+    else
+      tan_delta(i) = HUGEVAL
+    endif
+  enddo
 
   attenuation_eval = 0.0d0
   iQ2 = AS_V%iQ**2
@@ -728,13 +735,14 @@
   ! Input
   double precision, external :: funk
 
-  integer n
-  double precision x(n) ! Also Output
-  integer itercount, prnt, err
-  double precision tolf
+  integer,intent(in) :: n
+  double precision,intent(inout) :: x(n) ! Also Output
+  integer,intent(inout) :: itercount, err
+  integer,intent(in) :: prnt
+  double precision,intent(inout) :: tolf
 
   !Internal
-  integer i,j, how
+  integer :: i,j, how
   integer, parameter :: none             = 0
   integer, parameter :: initial          = 1
   integer, parameter :: expand           = 2
@@ -743,16 +751,16 @@
   integer, parameter :: contract_inside  = 5
   integer, parameter :: shrink           = 6
 
-  integer maxiter, maxfun
-  integer func_evals
-  double precision tolx
+  integer :: maxiter, maxfun
+  integer :: func_evals
+  double precision :: tolx
 
-  double precision rho, chi, psi, sigma
-  double precision xin(n), y(n), v(n,n+1), fv(n+1)
-  double precision vtmp(n,n+1)
-  double precision usual_delta, zero_term_delta
-  double precision xbar(n), xr(n), fxr, xe(n), fxe, xc(n), fxc, fxcc, xcc(n)
-  integer place(n+1)
+  double precision :: rho, chi, psi, sigma
+  double precision :: xin(n), y(n), v(n,n+1), fv(n+1)
+  double precision :: vtmp(n,n+1)
+  double precision :: usual_delta, zero_term_delta
+  double precision :: xbar(n), xr(n), fxr, xe(n), fxe, xc(n), fxc, fxcc, xcc(n)
+  integer :: place(n+1)
 
   double precision,external :: max_size_simplex, max_value
 
