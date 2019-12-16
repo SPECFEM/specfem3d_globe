@@ -190,6 +190,9 @@
   integer :: inodes
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: model_maxdiff
   real(kind=CUSTOM_REAL) :: val
+  double precision :: sizeval
+  logical :: use_single_process_per_chunk
+  integer :: istart_xi,iend_xi,istart_eta,iend_eta
 
   ! starts mpi
   call init_mpi()
@@ -371,8 +374,35 @@
   call bcast_all_singlei(nproc_eta_old)
   call bcast_all_singlei(nproc_xi_old)
 
+  ! warning
+  if (nproc_xi_old /= nproc_eta_old) then
+    if (myrank == 0) then
+      print *,''
+      print *,'Warning: nproc_eta = ',nproc_eta_old,' not equal to nproc_xi = ',nproc_xi_old
+      print *,'         routine works only by assuming nproc_xi == nproc_eta...'
+      print *,'Please consider changing your old mesh setup!'
+      print *,''
+    endif
+  endif
+
   ! sets old nproc_xi (assumes equal nproc_xi/nproc_eta)
   nproc_xi_old = nproc_eta_old
+
+  ! total number of processes per chunk (source mesh)
+  nproc_chunk1 = nproc_eta_old * nproc_xi_old
+
+  ! note: in case nproc_xi and nproc_eta are the same for old and new mesh, then the slice will have the same mehs geometry.
+  !       thus, we can only read in a single process mesh. otherwise, we will read in a full chunk and then search for
+  !       the closest mesh point in the whole chunk mesh. however, this will require much more memory to store the whole chunk.
+  if (nproc_xi_old == NPROC_XI_VAL .and. nproc_eta_old == NPROC_ETA_VAL) then
+    use_single_process_per_chunk = .true.
+    nproc_chunk1 = 1
+  else
+    use_single_process_per_chunk = .false.
+  endif
+  ! out-comment to enforce full chunk search
+  !use_single_process_per_chunk = .false.
+  !nproc_chunk1 = nproc_eta_old * nproc_xi_old
 
   ! defines model parameters
   ! note: the fname setup is done here now to avoid corruption by the above adios routines. the adios calls above
@@ -409,7 +439,7 @@
   ! console output
   if (myrank == 0) then
     print *,'source mesh:  '
-    print *,'  processors = ',nproc_eta_old * nproc_xi_old * NCHUNKS_VAL
+    print *,'  total number of processors = ',nproc_eta_old * nproc_xi_old * NCHUNKS_VAL
     print *,'  nproc_eta / nproc_xi = ',nproc_eta_old,nproc_xi_old
     print *,'  nspec      = ',nspec_max_old
     print *,'  nglob      = ',nglob_max_old
@@ -435,11 +465,13 @@
     print *,'output model directory: ',trim(output_model_dir)
     print *
     print *,'array size:'
-    print *,'  ibool1   = ',NGLLX*NGLLY*NGLLZ*nspec_max_old*nproc_eta_old*nproc_xi_old*dble(SIZE_INTEGER)/1024./1024.,'MB'
-    print *,'  x1,y1,z1 = ',nglob_max_old*nproc_eta_old*nproc_xi_old*dble(CUSTOM_REAL)/1024./1024.,'MB'
+    print *,'  ibool1   = ',NGLLX*NGLLY*NGLLZ*nspec_max_old*nproc_chunk1*dble(SIZE_INTEGER)/1024./1024.,'MB'
+    print *,'  x1,y1,z1 = ',nglob_max_old*nproc_chunk1*dble(CUSTOM_REAL)/1024./1024.,'MB'
+    sizeval = NGLLX*NGLLY*NGLLZ*nspec_max_old*nproc_chunk1*nparams*dble(CUSTOM_REAL)
+    print *,'  model1   = ',sngl(sizeval/1024./1024.),'MB'
     print *
-    print *,'  model1   = ',NGLLX*NGLLY*NGLLZ*nspec_max_old*nparams*nproc_eta_old*nproc_xi_old*dble(CUSTOM_REAL)/1024./1024.,'MB'
-    print *,'  model2   = ',NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE*nparams*dble(CUSTOM_REAL)/1024./1024.,'MB'
+    sizeval = NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE*nparams*dble(CUSTOM_REAL)
+    print *,'  model2   = ',sngl(sizeval/1024./1024.),'MB'
     print *
     print *,'total MPI processes: ',sizeprocs
     print *
@@ -485,8 +517,13 @@
   endif
   call synchronize_all()
 
-  ! total number of processes per chunk (source mesh)
-  nproc_chunk1 = nproc_eta_old * nproc_xi_old
+  ! user output
+  if (myrank == 0) then
+    print *,'allocating search arrays:'
+    print *,'  collecting number of processes per chunk = ',nproc_chunk1
+    print *,'  use search by single process per chunk   = ',use_single_process_per_chunk
+    print *,''
+  endif
 
   ! collected mesh arrays for a single chunk
   allocate( x1(nglob_max_old,0:nproc_chunk1-1), &
@@ -593,9 +630,24 @@
   call open_file_adios_read(solver_file)
 #endif
 
+  ! sets loop bounds
+  if (use_single_process_per_chunk) then
+    istart_eta = iproc_eta_selected
+    iend_eta = iproc_eta_selected
+
+    istart_xi = iproc_xi_selected
+    iend_xi = iproc_xi_selected
+  else
+    istart_eta = 0
+    iend_eta = nproc_eta_old - 1
+
+    istart_xi = 0
+    iend_xi = nproc_xi_old - 1
+  endif
+
   iprocnum = 0
-  do iproc_eta = 0, nproc_eta_old - 1
-    do iproc_xi = 0, nproc_xi_old - 1
+  do iproc_eta = istart_eta, iend_eta
+    do iproc_xi = istart_xi, iend_xi
       ! gets slice number
       rank = addressing1(ichunk_selected,iproc_xi,iproc_eta)
 
@@ -605,6 +657,12 @@
       ! user output
       if (myrank == 0) then
         print *,'  slice number: ',iprocnum,' out of ',nproc_chunk1
+      endif
+      ! warning
+      if (use_single_process_per_chunk) then
+        if (rank /= myrank) then
+          print *,'Warning: old mesh rank ',rank,' not identical to target rank ',myrank
+        endif
       endif
 
       ! reads in old arrays
@@ -688,8 +746,8 @@ print *,myrank,'adios file rank',rank
 #endif
 
   iprocnum = 0
-  do iproc_eta = 0, nproc_eta_old - 1
-    do iproc_xi = 0, nproc_xi_old - 1
+  do iproc_eta = istart_eta, iend_eta
+    do iproc_xi = istart_xi, iend_xi
       ! gets slice number
       rank = addressing1(ichunk_selected,iproc_xi,iproc_eta)
 
@@ -699,6 +757,12 @@ print *,myrank,'adios file rank',rank
       ! user output
       if (myrank == 0) then
         print *,'  slice number: ',iprocnum,' out of ',nproc_chunk1
+      endif
+      ! warning
+      if (use_single_process_per_chunk) then
+        if (rank /= myrank) then
+          print *,'Warning: old mesh rank ',rank,' not identical to target rank ',myrank
+        endif
       endif
 
       ! reads in model slices
@@ -711,7 +775,7 @@ print *,myrank,'adios file rank',rank
         call read_adios_array_gll(rank,nspec,fname(iker),model1(:,:,:,:,iker,iprocnum-1))
 #else
         ! opens model file
-        write(m_file,'(a,i6.6,a)') trim(input_model_dir)//'proc',rank,'_reg1_'//trim(fname(iker))//'.bin'
+        write(m_file,'(a,i6.6,a)') trim(input_model_dir)//'/proc',rank,'_reg1_'//trim(fname(iker))//'.bin'
         open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
         if (ier /= 0) then
           print *,'Error opening file: ',trim(m_file)
@@ -787,7 +851,7 @@ print *,myrank,'adios file rank',rank
 
 #else
   ! opens binary file
-  write(solver_file,'(a,i6.6,a)') trim(dir_topo2)//'proc',rank,'_reg1_'//'solver_data.bin'
+  write(solver_file,'(a,i6.6,a)') trim(dir_topo2)//'/proc',rank,'_reg1_'//'solver_data.bin'
   open(IIN,file=solver_file,status='old',form='unformatted',action='read',iostat=ier)
   if (ier /= 0) then
     print *,'Error opening file: ',trim(solver_file)
@@ -858,8 +922,8 @@ print *,myrank,'adios file rank',rank
       ! counts total number of points in this layer in source mesh
       iprocnum = 0
       inodes = 0
-      do iproc_eta = 0, nproc_eta_old - 1
-        do iproc_xi = 0, nproc_xi_old - 1
+      do iproc_eta = istart_eta, iend_eta
+        do iproc_xi = istart_xi, iend_xi
           ! counter
           iprocnum = iprocnum + 1
           ! all elements
@@ -907,8 +971,8 @@ print *,myrank,'adios file rank',rank
       ! fills all local nodes into tree array
       iprocnum = 0
       inodes = 0
-      do iproc_eta = 0, nproc_eta_old - 1
-        do iproc_xi = 0, nproc_xi_old - 1
+      do iproc_eta = istart_eta, iend_eta
+        do iproc_xi = istart_xi, iend_xi
 
           ! counter
           iprocnum = iprocnum + 1
@@ -1081,6 +1145,7 @@ print *,myrank,'adios file rank',rank
     ! user output
     if (myrank == 0) then
       print *, '  for parameter: ',trim(fname(iker))
+      print *, '    slice rank 0 has min/max = ',minval(model2(:,:,:,:,iker)),'/',maxval(model2(:,:,:,:,iker))
     endif
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
@@ -1705,8 +1770,8 @@ print *,myrank,'adios file rank',rank
   rank_selected = -1
 
   ! finds closest point
-  do rank=0,nproc-1
-    do ispec=1,nspec
+  do rank = 0,nproc-1
+    do ispec = 1,nspec
       ! distance to cell center
       ! midpoint
       iglob = ibool(MIDX,MIDY,MIDZ,ispec,rank)
@@ -1719,9 +1784,9 @@ print *,myrank,'adios file rank',rank
 
       ! loop only on points inside the element
       ! exclude edges to ensure this point is not shared with other elements
-      do k=2,NGLLZ-1
-        do j=2,NGLLY-1
-          do i=2,NGLLX-1
+      do k = 2,NGLLZ-1
+        do j = 2,NGLLY-1
+          do i = 2,NGLLX-1
             iglob = ibool(i,j,k,ispec,rank)
             dist = (x_target - dble(xstore(iglob,rank)))**2 &
                   +(y_target - dble(ystore(iglob,rank)))**2 &
@@ -1841,9 +1906,9 @@ print *,myrank,'adios file rank',rank
   iz_initial_guess = 0
 
   ! finds closest interior GLL point
-  do k=1,NGLLZ
-    do j=1,NGLLY
-      do i=1,NGLLX
+  do k = 1,NGLLZ
+    do j = 1,NGLLY
+      do i = 1,NGLLX
         iglob = ibool(i,j,k,ispec_selected,rank_selected)
 
         dist = (x_target - xstore(iglob,rank_selected))**2 &
