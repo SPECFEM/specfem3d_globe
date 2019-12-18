@@ -195,13 +195,13 @@
     if (myrank == 0 ) write(IMAIN,*) '  creating central cube'
 
     call create_central_cube(ichunk,ispec,iaddx,iaddy,iaddz,ipass, &
-                        nspec,NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,R_CENTRAL_CUBE, &
-                        iproc_xi,iproc_eta,NPROC_XI,NPROC_ETA,ratio_divide_central_cube, &
-                        iMPIcut_xi,iMPIcut_eta,iboun, &
-                        idoubling,iregion_code,xstore,ystore,zstore, &
-                        shape3D,rmin,rmax, &
-                        xigll,yigll,zigll, &
-                        ispec_is_tiso)
+                             nspec,NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,R_CENTRAL_CUBE, &
+                             iproc_xi,iproc_eta,NPROC_XI,NPROC_ETA,ratio_divide_central_cube, &
+                             iMPIcut_xi,iMPIcut_eta,iboun, &
+                             idoubling,iregion_code,xstore,ystore,zstore, &
+                             shape3D,rmin,rmax, &
+                             xigll,yigll,zigll, &
+                             ispec_is_tiso)
   endif
 
   ! check total number of spectral elements created

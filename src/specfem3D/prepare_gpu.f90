@@ -98,7 +98,8 @@
                                 ANISOTROPIC_KL,APPROXIMATE_HESS_KL, &
                                 deltat, &
                                 GPU_ASYNC_COPY, &
-                                hxir_store,hetar_store,hgammar_store,nu)
+                                hxir_store,hetar_store,hgammar_store,nu_rec, &
+                                SAVE_SEISMOGRAMS_STRAIN)
 
   if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
     ! adjoint/kernel fields

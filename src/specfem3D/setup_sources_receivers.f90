@@ -1008,7 +1008,7 @@
            stbur(nrec),stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating receiver arrays')
 
-  allocate(nu(NDIM,NDIM,nrec),stat=ier)
+  allocate(nu_rec(NDIM,NDIM,nrec),stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating receiver arrays')
 
   !  receivers
@@ -1749,6 +1749,18 @@
              hetar_store(1,1), &
              hgammar_store(1,1),stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating dummy receiver interpolators')
+  endif
+
+  ! strain seismograms
+  if (SAVE_SEISMOGRAMS_STRAIN) then
+    if (nrec_local > 0) then
+      allocate(seismograms_eps(6,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
+      if (ier /= 0) stop 'Error while allocating strain seismograms'
+      seismograms_eps(:,:,:) = 0._CUSTOM_REAL
+    else
+      ! dummy
+      allocate(seismograms_eps(1,1,1))
+    endif
   endif
 
   ! adjoint sources

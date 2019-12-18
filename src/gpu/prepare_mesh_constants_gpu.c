@@ -103,7 +103,8 @@ void FC_FUNC_ (prepare_constants_device,
                                           int *ANISOTROPIC_KL_f, int *APPROXIMATE_HESS_KL_f,
                                           realw *deltat_f,
                                           int *GPU_ASYNC_COPY_f,
-                                          double * h_hxir_store,double * h_hetar_store,double * h_hgammar_store,double * h_nu ) {
+                                          double * h_hxir_store,double * h_hetar_store,double * h_hgammar_store,double * h_nu,
+                                          int *SAVE_SEISMOGRAMS_STRAIN_f) {
 
   TRACE ("prepare_constants_device");
 
@@ -394,9 +395,10 @@ void FC_FUNC_ (prepare_constants_device,
       }
       gpuCreateCopy_todevice_realw (&mp->d_nu, nu, 3*3* mp->nrec_local);
       free(nu);
+    }
 
-    } else if (mp->simulation_type == 2) {
-      // adjoint simulations
+    if (mp->simulation_type == 2 || *SAVE_SEISMOGRAMS_STRAIN_f) {
+      // adjoint simulations or strain seismograms
       // seismograms will still be computed on CPU, no need for interpolators hxi,heta,hgamma
       // for transferring values from GPU to CPU
       if (GPU_ASYNC_COPY) {

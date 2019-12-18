@@ -34,7 +34,8 @@
   use specfem_par, only: myrank,Mesh_pointer,GPU_MODE,GPU_ASYNC_COPY,SIMULATION_TYPE, &
     nrec_local,number_receiver_global,ispec_selected_rec,ispec_selected_source, &
     it,it_begin,it_end,seismo_current,seismo_offset, seismograms,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-    WRITE_SEISMOGRAMS_BY_MASTER,OUTPUT_SEISMOS_ASDF, SAVE_SEISMOGRAMS_IN_ADJOINT_RUN, &
+    WRITE_SEISMOGRAMS_BY_MASTER,OUTPUT_SEISMOS_ASDF, &
+    SAVE_SEISMOGRAMS_IN_ADJOINT_RUN,SAVE_SEISMOGRAMS_STRAIN, &
     it_adj_written,moment_der,sloc_der,shdur_der,stshift_der,scale_displ,NSTEP
 
   use specfem_par_crustmantle, only: displ_crust_mantle,b_displ_crust_mantle, &
@@ -59,7 +60,7 @@
     if (GPU_MODE) then
       ! for forward and kernel simulations, seismograms are computed by the GPU, thus no need to transfer the wavefield
       ! gets field values from GPU
-      if (SIMULATION_TYPE == 2) then
+      if (SIMULATION_TYPE == 2 .or. SAVE_SEISMOGRAMS_STRAIN) then
         ! this transfers fields only in elements with stations for efficiency
         call write_seismograms_transfer_gpu(Mesh_pointer, &
                                             displ_crust_mantle,b_displ_crust_mantle, &
@@ -116,6 +117,19 @@
         endif
       endif
     end select
+
+    ! strain seismograms
+    if (SAVE_SEISMOGRAMS_STRAIN) then
+      select case (SIMULATION_TYPE)
+      case (1)
+        ! forward run
+        call compute_seismograms_strain(NGLOB_CRUST_MANTLE,displ_crust_mantle)
+      case (3)
+        ! kernel run
+        call compute_seismograms_strain(NGLOB_CRUST_MANTLE,b_displ_crust_mantle)
+      end select
+    endif
+
   endif ! nrec_local
 
   ! write the current or final seismograms
@@ -133,6 +147,8 @@
         ! forward/reconstructed wavefields
         if (.not. ( SIMULATION_TYPE == 3 .and. (.not. SAVE_SEISMOGRAMS_IN_ADJOINT_RUN) ) ) &
           call write_seismograms_to_file()
+        if (SAVE_SEISMOGRAMS_STRAIN) &
+          call write_seismograms_strain()
       case (2)
         ! adjoint wavefield
         call write_adj_seismograms(it_adj_written)
@@ -433,11 +449,11 @@
   call band_instrument_code(DT,bic)
 
   if (ROTATE_SEISMOGRAMS_RT) then ! iorientation 1=N,2=E,3=Z,4=R,5=T
-    ior_start=3    ! starting from Z
-    ior_end  =5    ! ending with T => ZRT
+    ior_start = 3    ! starting from Z
+    ior_end   = 5    ! ending with T => ZRT
   else
-    ior_start=1    ! starting from N
-    ior_end  =3    ! ending with Z => NEZ
+    ior_start = 1    ! starting from N
+    ior_end   = 3    ! ending with Z => NEZ
   endif
 
   do iorientation = ior_start,ior_end      ! BS BS changed according to ROTATE_SEISMOGRAMS_RT
@@ -651,6 +667,108 @@
   enddo
 
   end subroutine write_adj_seismograms
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+! write strain seismograms to text files
+
+  subroutine write_seismograms_strain()
+
+  use constants, only: MAX_STRING_LEN,CUSTOM_REAL,IOUT,myrank
+
+  use specfem_par, only: NSTEP,DT,t0,seismo_current,seismo_offset, &
+    OUTPUT_FILES,WRITE_SEISMOGRAMS_BY_MASTER,SIMULATION_TYPE, &
+    number_receiver_global,nrec_local,network_name,station_name, &
+    seismograms_eps
+
+  implicit none
+
+  ! local parameters
+  integer :: irec,irec_local,ier,it_tmp
+  integer :: iorientation,isample
+  double precision :: value
+  double precision :: timeval
+
+  character(len=3) :: chn
+  character(len=MAX_STRING_LEN) :: sisname
+
+  ! safety check
+  if (WRITE_SEISMOGRAMS_BY_MASTER) &
+    call exit_MPI(myrank,'Error write_seismograms_strain() needs WRITE_SEISMOGRAMS_BY_MASTER turned off')
+
+  ! checks if anything to do
+  if (nrec_local <= 0 ) return
+
+  do irec_local = 1,nrec_local
+
+    ! get global number of that receiver
+    irec = number_receiver_global(irec_local)
+
+    ! strain orientation in local, radial direction (N-E-UP)
+    do iorientation = 1,6
+
+      select case (iorientation)
+      case (1)
+       chn = 'SNN'
+      case (2)
+       chn = 'SEE'
+      case (3)
+       chn = 'SZZ'
+      case (4)
+       chn = 'SNE'
+      case (5)
+       chn = 'SNZ'
+      case (6)
+       chn = 'SEZ'
+      case default
+        call exit_MPI(myrank,'incorrect channel value in write_seismograms_strain()')
+      end select
+
+      ! strain seismograms start will have channel-code S**
+      !
+      ! create the name of the strain seismogram file using the station name and network name
+      ! using format: **net**.**sta**.channel
+      ! for example: IU.KONO.SNN.sem.ascii
+      write(sisname,"('/',a,'.',a,'.',a3,'.sem.ascii')") trim(network_name(irec)),trim(station_name(irec)),chn
+
+      ! save seismograms in text format
+      if (seismo_offset == 0) then
+        !open new file
+        open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname),status='unknown',action='write',iostat=ier)
+      else
+        ! for it > NTSTEP_BETWEEN_OUTPUT_SEISMOS
+        !append to existing file
+        open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname),status='old',position='append',action='write',iostat=ier)
+      endif
+      if (ier /= 0) call exit_mpi(myrank,'Error opening file: '//trim(OUTPUT_FILES)//trim(sisname))
+
+      ! subtract half duration of the source to make sure travel time is correct
+      do isample = 1,seismo_current
+        ! seismogram value
+        value = dble(seismograms_eps(iorientation,irec_local,isample))
+
+        ! current time increment
+        it_tmp = seismo_offset + isample
+
+        ! current time
+        if (SIMULATION_TYPE == 3) then
+          timeval = dble(NSTEP-it_tmp)*DT - t0
+        else
+          timeval = dble(it_tmp-1)*DT - t0
+        endif
+
+        ! writes out to file
+        ! distinguish between single and double precision for reals
+        write(IOUT,*) real(timeval, kind=CUSTOM_REAL), ' ', real(value, kind=CUSTOM_REAL)
+      enddo
+      close(IOUT)
+
+    enddo
+  enddo
+
+  end subroutine write_seismograms_strain
 
 !
 !-------------------------------------------------------------------------------------------------

@@ -291,7 +291,7 @@
   if (myrank == 0 .and. WRITE_SEISMOGRAMS_BY_MASTER) deallocate(islice_num_rec_local)
   deallocate(station_name,network_name, &
              stlat,stlon,stele,stbur)
-  deallocate(nu,number_receiver_global)
+  deallocate(nu_rec,number_receiver_global)
   if (nrec_local > 0) then
     deallocate(hxir_store, &
                hetar_store, &
@@ -301,6 +301,7 @@
     endif
   endif
   deallocate(seismograms)
+  if (SAVE_SEISMOGRAMS_STRAIN) deallocate(seismograms_eps)
 
   ! kernels
   if (SIMULATION_TYPE == 3) then

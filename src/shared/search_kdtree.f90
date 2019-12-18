@@ -637,7 +637,7 @@ contains
   double precision, dimension(3,npoints), intent(in) :: points_data
   integer,dimension(npoints), intent(inout) :: points_index
 
-  type (kdtree_node), pointer :: node ! pointers in standard fortran90 cannot have intent(..) attribute
+  type (kdtree_node), pointer :: node ! pointers in standard Fortran90 cannot have intent(..) attribute
 
   integer,intent(in) :: depth
   integer,intent(in) :: ibound_lower,ibound_upper
@@ -833,7 +833,7 @@ contains
   double precision, dimension(3,npoints),intent(in) :: points_data
   integer,dimension(npoints), intent(in) :: points_index
 
-  type (kdtree_node), pointer :: node  ! pointers in standard fortran90 cannot have intent(..) attribute
+  type (kdtree_node), pointer :: node  ! pointers in standard Fortran90 cannot have intent(..) attribute
 
   integer, intent(inout) :: numnodes
 
@@ -1049,7 +1049,7 @@ contains
   integer, intent(in) :: npoints
   double precision, dimension(3,npoints), intent(in) :: points_data
 
-  type (kdtree_node), pointer :: node ! pointers in standard fortran90 cannot have intent(..) attribute
+  type (kdtree_node), pointer :: node ! pointers in standard Fortran90 cannot have intent(..) attribute
 
   double precision,dimension(3), intent(in) :: xyz_target
 
@@ -1179,7 +1179,7 @@ contains
   integer, intent(in) :: npoints
   double precision, dimension(3,npoints), intent(in) :: points_data
 
-  type (kdtree_node), pointer :: node     ! pointers in standard fortran90 cannot have intent(..) attribute
+  type (kdtree_node), pointer :: node     ! pointers in standard Fortran90 cannot have intent(..) attribute
 
   double precision, dimension(3), intent(in) :: xyz_target
 

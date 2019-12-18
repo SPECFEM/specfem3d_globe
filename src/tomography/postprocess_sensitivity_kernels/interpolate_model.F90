@@ -377,11 +377,11 @@
   ! warning
   if (nproc_xi_old /= nproc_eta_old) then
     if (myrank == 0) then
-      print *,''
+      print *
       print *,'Warning: nproc_eta = ',nproc_eta_old,' not equal to nproc_xi = ',nproc_xi_old
       print *,'         routine works only by assuming nproc_xi == nproc_eta...'
       print *,'Please consider changing your old mesh setup!'
-      print *,''
+      print *
     endif
   endif
 
@@ -522,7 +522,7 @@
     print *,'allocating search arrays:'
     print *,'  collecting number of processes per chunk = ',nproc_chunk1
     print *,'  use search by single process per chunk   = ',use_single_process_per_chunk
-    print *,''
+    print *
   endif
 
   ! collected mesh arrays for a single chunk

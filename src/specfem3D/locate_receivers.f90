@@ -46,7 +46,7 @@
     myrank,DT,NSTEP, &
     nrec,islice_selected_rec,ispec_selected_rec, &
     xi_receiver,eta_receiver,gamma_receiver,station_name,network_name, &
-    stlat,stlon,stele,stbur,nu,receiver_final_distance_max, &
+    stlat,stlon,stele,stbur,nu_rec,receiver_final_distance_max, &
     rspl,espl,espl2,nspl,ibathy_topo, &
     TOPOGRAPHY,RECEIVERS_CAN_BE_BURIED
 
@@ -208,9 +208,9 @@
       n(3) = sin(thetan)*sin(phin)
 
       !     get the Cartesian components of n in the model: nu
-      nu(iorientation,1,irec) = n(1)*sint*cosp + n(2)*cost*cosp - n(3)*sinp
-      nu(iorientation,2,irec) = n(1)*sint*sinp + n(2)*cost*sinp + n(3)*cosp
-      nu(iorientation,3,irec) = n(1)*cost - n(2)*sint
+      nu_rec(iorientation,1,irec) = n(1)*sint*cosp + n(2)*cost*cosp - n(3)*sinp
+      nu_rec(iorientation,2,irec) = n(1)*sint*sinp + n(2)*cost*sinp + n(3)*cosp
+      nu_rec(iorientation,3,irec) = n(1)*cost - n(2)*sint
     enddo
 
     ! point depth (in m)
@@ -550,7 +550,7 @@
         stele_found(nrec_found) = stele(irec)
         stbur_found(nrec_found) = stbur(irec)
 
-        nu_found(:,:,nrec_found) = nu(:,:,irec)
+        nu_found(:,:,nrec_found) = nu_rec(:,:,irec)
         epidist_found(nrec_found) = epidist(irec)
 
         ! writes out actual receiver location to VTK file
@@ -600,7 +600,7 @@
     stele(1:nrec) = stele_found(1:nrec)
     stbur(1:nrec) = stbur_found(1:nrec)
 
-    nu(:,:,1:nrec) = nu_found(:,:,1:nrec)
+    nu_rec(:,:,1:nrec) = nu_found(:,:,1:nrec)
     epidist(1:nrec) = epidist_found(1:nrec)
 
     ! write the list of stations and associated epicentral distance
@@ -650,7 +650,7 @@
   call bcast_all_dp(stlon,nrec)
   call bcast_all_dp(stele,nrec)
   call bcast_all_dp(stbur,nrec)
-  call bcast_all_dp(nu,nrec*3*3)
+  call bcast_all_dp(nu_rec,nrec*3*3)
 
   ! deallocate arrays
   deallocate(epidist)

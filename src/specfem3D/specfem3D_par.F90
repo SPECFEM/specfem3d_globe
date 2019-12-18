@@ -298,7 +298,7 @@ module specfem_par
   integer, dimension(:), allocatable :: islice_num_rec_local
 
   double precision, dimension(:), allocatable :: xi_receiver,eta_receiver,gamma_receiver
-  double precision, dimension(:,:,:), allocatable :: nu
+  double precision, dimension(:,:,:), allocatable :: nu_rec
   double precision, allocatable, dimension(:) :: stlat,stlon,stele,stbur
   double precision :: receiver_final_distance_max
 
@@ -338,6 +338,10 @@ module specfem_par
   integer :: it_begin,it_end
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: seismograms
   integer :: seismo_offset, seismo_current
+
+  ! strain seismograms
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: seismograms_eps
+
   ! adjoint seismograms
   integer :: it_adj_written
 

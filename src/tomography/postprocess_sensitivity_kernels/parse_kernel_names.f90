@@ -90,7 +90,7 @@
 !
 
 ! note: IBM's xlf compiler seems to have an issue with a subroutine name "strtok".
-!    we're using a more fortran-like name.
+!    we're using a more Fortran-like name.
   subroutine tokenize_string (source_string, delimiter, token)
 
 !     @(#) Tokenize a string in a similar manner to C routine strtok(3c).
@@ -136,8 +136,8 @@
     isource_len = len_trim(saved_string)  ! length of input string from first call
   endif
 
-  ! token = '' is not allowed by IBM's xlf compiler. assigning empty strings is non-standard fortran.
-  ! as a work-around, we set a null character '\0' here to initialize the string
+  ! token = '' is not allowed by IBM's xlf compiler. assigning empty strings is non-standard Fortran.
+  ! as a work-around, we set a null character '' here to initialize the string
   token = char(0)
   ibegin = isaved_start
 

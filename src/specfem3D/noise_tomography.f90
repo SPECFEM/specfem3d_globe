@@ -240,7 +240,7 @@
       call compute_arrays_source_noise(xi_receiver(irec_master_noise), &
                                        eta_receiver(irec_master_noise), &
                                        gamma_receiver(irec_master_noise), &
-                                       nu(:,:,irec_master_noise),noise_sourcearray, xigll,yigll,zigll,NSTEP)
+                                       nu_rec(:,:,irec_master_noise),noise_sourcearray, xigll,yigll,zigll,NSTEP)
     endif
   endif
 

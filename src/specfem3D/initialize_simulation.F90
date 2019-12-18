@@ -534,6 +534,9 @@
     endif
   endif
 
+  if (SAVE_SEISMOGRAMS_STRAIN .and. WRITE_SEISMOGRAMS_BY_MASTER) &
+    call exit_MPI(myrank,'For SAVE_SEISMOGRAMS_STRAIN, please set WRITE_SEISMOGRAMS_BY_MASTER to .false.')
+
   end subroutine initialize_simulation_check
 
 !
