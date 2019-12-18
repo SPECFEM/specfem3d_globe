@@ -151,7 +151,7 @@
   ! cross-section infos
   integer :: section_type
   integer :: nsection_params
-  character(len=MAX_STRING_LEN) :: param_args(MAX_KERNEL_NAMES)
+  character(len=MAX_STRING_LEN),dimension(MAX_KERNEL_NAMES) :: param_args
 
   ! depth with respect to with topography
   logical :: TOPOGRAPHY

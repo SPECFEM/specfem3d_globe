@@ -65,7 +65,7 @@
 program smooth_sem_globe
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,IIN,IOUT, &
-    GAUSSALPHA,GAUSSBETA,PI,TWO_PI,R_EARTH_KM,MAX_STRING_LEN,DEGREES_TO_RADIANS,NGLLCUBE
+    GAUSSALPHA,GAUSSBETA,PI,TWO_PI,R_EARTH_KM,MAX_STRING_LEN,DEGREES_TO_RADIANS,NGLLCUBE,myrank
 
   use postprocess_par, only: &
     NCHUNKS_VAL,NPROC_XI_VAL,NPROC_ETA_VAL,NPROCTOT_VAL,NEX_XI_VAL,NEX_ETA_VAL, &
@@ -75,6 +75,9 @@ program smooth_sem_globe
   use kdtree_search
 
   implicit none
+
+  !-------------------------------------------------------------
+  ! Parameters
 
   ! copy from static compilation (depends on Par_file values)
   integer, parameter :: NPROC_XI  = NPROC_XI_VAL
@@ -92,6 +95,8 @@ program smooth_sem_globe
   integer, parameter :: NARGS = 5
   character(len=*), parameter :: reg_name = '_reg1_'
 
+  !-------------------------------------------------------------
+
   integer :: islice(NSLICES2), islice0(NSLICES2)
 
   integer, dimension(:,:,:,:), allocatable :: ibool
@@ -102,8 +107,8 @@ program smooth_sem_globe
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
     xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: kernel, kernel_smooth
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: tk, bk, jacobian
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: kernel, kernel_smooth,tk
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: bk, jacobian
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: xx0, yy0, zz0, xx, yy, zz
 
   real(kind=CUSTOM_REAL), dimension(:),allocatable :: cx0, cy0, cz0, cx, cy, cz
@@ -118,22 +123,25 @@ program smooth_sem_globe
   real(kind=CUSTOM_REAL) :: center_x0, center_y0, center_z0
   real(kind=CUSTOM_REAL) :: center_x, center_y, center_z
 
-  real(kind=CUSTOM_REAL) :: max_old, max_new, min_old, min_new
+  real(kind=CUSTOM_REAL),dimension(MAX_KERNEL_NAMES) :: min_old,max_old
+  real(kind=CUSTOM_REAL) :: max_new, min_new
   real(kind=CUSTOM_REAL) :: max_old_all, max_new_all, min_old_all, min_new_all
 
-  integer :: sizeprocs,ier,myrank,ichunk, ixi, ieta, iglob,nums,ival
+  integer :: ier,ichunk, ixi, ieta, iglob,nums,ival
   integer :: ispec,iproc,ispec2,inum
   integer :: i,j,k
+  integer :: sizeprocs
 
-  character(len=MAX_STRING_LEN) :: arg(5)
-  character(len=MAX_STRING_LEN) :: kernel_names_comma_delimited, kernel_names(MAX_KERNEL_NAMES)
+  character(len=MAX_STRING_LEN),dimension(NARGS) :: arg
+  character(len=MAX_STRING_LEN),dimension(MAX_KERNEL_NAMES) :: kernel_names
+  character(len=MAX_STRING_LEN) :: kernel_names_comma_delimited
   character(len=MAX_STRING_LEN) :: kernel_name, topo_dir, input_dir, output_dir
   character(len=MAX_STRING_LEN) :: prname_lp
   character(len=MAX_STRING_LEN) :: local_data_file
 
   character(len=MAX_STRING_LEN) ::  ks_file
 
-  integer :: nker
+  integer :: nker,iker
 
   ! Gauss-Lobatto-Legendre points of integration and weights
   double precision, dimension(NGLLX) :: xigll, wxgll
@@ -200,7 +208,7 @@ program smooth_sem_globe
   ! check command line arguments
   if (command_argument_count() /= NARGS) then
     if (myrank == 0) then
-        print *, 'Usage: mpirun -np NPROC bin/xsmooth_sem SIGMA_H SIGMA_V KERNEL_NAME INPUT_DIR OUPUT_DIR'
+      print *, 'Usage: mpirun -np NPROC bin/xsmooth_sem SIGMA_H SIGMA_V KERNEL_NAME INPUT_DIR OUPUT_DIR'
       stop ' Please check command line arguments'
     endif
   endif
@@ -237,18 +245,18 @@ program smooth_sem_globe
   kernel_names_comma_delimited = arg(3)
   input_dir = arg(4)
   output_dir = arg(5)
+  call synchronize_all()
 
   call parse_kernel_names(kernel_names_comma_delimited,kernel_names,nker)
-  kernel_name = trim(kernel_names(1))
-  if (nker > 1) then
-    if (myrank == 0) then
-      ! The machinery for reading multiple names from the command line is in
-      ! place,
-      ! but the smoothing routines themselves have not yet been modified to work
-      !  on multiple arrays.
-      if (myrank == 0) print *, 'Smoothing only first name in list: ', trim(kernel_name)
-      if (myrank == 0) print *
-    endif
+  if (nker > MAX_KERNEL_NAMES) stop 'number of kernel_names exceeds MAX_KERNEL_NAMES'
+
+  if (myrank == 0) then
+    ! The machinery for reading multiple names from the command line is in
+    ! place,
+    ! but the smoothing routines themselves have not yet been modified to work
+    !  on multiple arrays.
+    if (myrank == 0) print *, 'Smoothing list: ', trim(kernel_names_comma_delimited),' - total: ',nker
+    if (myrank == 0) print *
   endif
   call synchronize_all()
 
@@ -283,7 +291,7 @@ program smooth_sem_globe
     ! scalelength: approximately S ~ sigma * sqrt(8.0) for a Gaussian smoothing
     print *,"  smoothing scalelengths horizontal, vertical (km): ",sigma_h*sqrt(8.0),sigma_v*sqrt(8.0)
     print *
-    print *,"  data name      : ",trim(kernel_name)
+    print *,"  data name      : ",trim(kernel_names_comma_delimited)
     print *,"  input dir      : ",trim(input_dir)
     print *,"  output dir     : ",trim(output_dir)
     print *
@@ -391,9 +399,9 @@ program smooth_sem_globe
            gammaz(NGLLX,NGLLY,NGLLZ,NSPEC_AB), stat=ier)
   if (ier /= 0) stop 'Error allocating mesh arrays'
 
-  allocate(kernel(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
-           kernel_smooth(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
-           tk(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
+  allocate(kernel(NGLLX,NGLLY,NGLLZ,NSPEC_AB,nker), &
+           kernel_smooth(NGLLX,NGLLY,NGLLZ,NSPEC_AB,nker), &
+           tk(NGLLX,NGLLY,NGLLZ,NSPEC_AB,nker), &
            bk(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
            jacobian(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
            xx0(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
@@ -409,6 +417,12 @@ program smooth_sem_globe
            cy(NSPEC_AB), &
            cz(NSPEC_AB), stat=ier)
   if (ier /= 0) stop 'Error allocating kernel arrays'
+
+  ! initializes
+  kernel(:,:,:,:,:) = 0.0_CUSTOM_REAL
+  kernel_smooth(:,:,:,:,:) = 0.0_CUSTOM_REAL
+  tk(:,:,:,:,:) = 0.0_CUSTOM_REAL
+  bk(:,:,:,:) = 0.0_CUSTOM_REAL
 
   ! read in the topology files of the current and neighboring slices
   ! point locations
@@ -534,10 +548,6 @@ program smooth_sem_globe
   ! synchronizes
   call synchronize_all()
 
-  ! initializes
-  tk(:,:,:,:) = 0.0_CUSTOM_REAL
-  bk(:,:,:,:) = 0.0_CUSTOM_REAL
-
   ! loop over all slices
   do inum = 1, nums
 
@@ -635,28 +645,32 @@ program smooth_sem_globe
       enddo
     endif
 
-    ! user output
-    if (myrank == 0) print *,'  reading data file:',iproc,trim(kernel_name)
+    ! loops over input kernels
+    do iker = 1,nker
+      kernel_name = kernel_names(iker)
+      ! user output
+      if (myrank == 0) print *,'  reading data file:',iproc,trim(kernel_name)
 
-    ! data file
-    write(local_data_file,'(a,i6.6,a)') &
-      trim(input_dir)//'/proc',iproc,trim(reg_name)//trim(kernel_name)//'.bin'
+      ! data file
+      write(local_data_file,'(a,i6.6,a)') &
+        trim(input_dir)//'/proc',iproc,trim(reg_name)//trim(kernel_name)//'.bin'
 
-    open(IIN,file=trim(local_data_file),status='old',action='read',form='unformatted',iostat=ier)
-    if (ier /= 0) then
-      print *,'Error opening data file: ',trim(local_data_file)
-      call exit_mpi(myrank,'Error opening data file')
-    endif
+      open(IIN,file=trim(local_data_file),status='old',action='read',form='unformatted',iostat=ier)
+      if (ier /= 0) then
+        print *,'Error opening data file: ',trim(local_data_file)
+        call exit_mpi(myrank,'Error opening data file')
+      endif
 
-    read(IIN) kernel
-    close(IIN)
+      read(IIN) kernel(:,:,:,:,iker)
+      close(IIN)
 
-    ! statistics
-    ! get the global maximum value of the original kernel file
-    if (iproc == myrank) then
-      min_old = minval(kernel)
-      max_old = maxval(kernel)
-    endif
+      ! statistics
+      ! get the global maximum value of the original kernel file
+      if (iproc == myrank) then
+        min_old(iker) = minval(kernel(:,:,:,:,iker))
+        max_old(iker) = maxval(kernel(:,:,:,:,iker))
+      endif
+    enddo
     if (myrank == 0) print *
 
     ! search setup
@@ -826,7 +840,7 @@ program smooth_sem_globe
                 tmp_bk(:,:,:,ispec2) = exp_val(:,:,:)
                 print *,'debug',myrank,'ispec',ispec,'ispec2',ispec2,'dist:',dist_h,dist_v
                 print *,'debug exp',minval(exp_val),maxval(exp_val)
-                print *,'debug kernel',minval(kernel(:,:,:,ispec2)),maxval(kernel(:,:,:,ispec2))
+                print *,'debug kernel',minval(kernel(:,:,:,ispec2,1)),maxval(kernel(:,:,:,ispec2,1))
               endif
             endif
           endif
@@ -834,18 +848,20 @@ program smooth_sem_globe
           ! adds GLL integration weights
           exp_val(:,:,:) = exp_val(:,:,:) * factor(:,:,:)
 
-          ! adds contribution of element ispec2 to smoothed kernel values
-          tk(INDEX_IJK,ispec) = tk(INDEX_IJK,ispec) + sum(exp_val(:,:,:) * kernel(:,:,:,ispec2))
-
           ! normalization, integrated values of Gaussian smoothing function
           bk(INDEX_IJK,ispec) = bk(INDEX_IJK,ispec) + sum(exp_val(:,:,:))
 
+          ! adds contribution of element ispec2 to smoothed kernel values
+          do iker = 1,nker
+            tk(INDEX_IJK,ispec,iker) = tk(INDEX_IJK,ispec,iker) + sum(exp_val(:,:,:) * kernel(:,:,:,ispec2,iker))
+          enddo
+
           ! checks number
-          !if (isNaN(tk(INDEX_IJK,ispec))) then
-          !  print *,'Error tk NaN: ',tk(INDEX_IJK,ispec)
+          !if (isNaN(tk(INDEX_IJK,ispec,1))) then
+          !  print *,'Error tk NaN: ',tk(INDEX_IJK,ispec,1)
           !  print *,'rank:',myrank
           !  print *,'INDEX_IJK,ispec:',INDEX_IJK,ispec
-          !  print *,'tk: ',tk(INDEX_IJK,ispec),'bk:',bk(INDEX_IJK,ispec)
+          !  print *,'tk: ',tk(INDEX_IJK,ispec,1),'bk:',bk(INDEX_IJK,ispec)
           !  print *,'sum exp_val: ',sum(exp_val(:,:,:)),'sum factor:',sum(factor(:,:,:))
           !  print *,'sum kernel:',sum(kernel(:,:,:,ispec2))
           !  call exit_mpi(myrank, 'Error NaN')
@@ -903,87 +919,101 @@ program smooth_sem_globe
   ! normalizes/scaling factor
   if (myrank == 0) then
     print *, 'Scaling values:'
-    print *, '  tk min/max = ',minval(tk),maxval(tk)
     print *, '  bk min/max = ',minval(bk),maxval(bk)
     print *, '  theoretical norm = ',norm
+    do iker = 1,nker
+      print *, '  ',trim(kernel_names(iker)),' tk min/max = ',minval(tk(:,:,:,:,iker)),maxval(tk(:,:,:,:,iker))
+    enddo
     print *
   endif
 
   ! compute the smoothed kernel values
-  kernel_smooth(:,:,:,:) = 0.0_CUSTOM_REAL
   do ispec = 1, NSPEC_AB
 
+    ! avoids division by zero
     DO_LOOP_IJK
-
-      ! checks the normalization criterion
-      ! e.g. sigma_h 160km, sigma_v 40km:
-      !     norm (not squared sigma_h ) ~ 0.001
-      !     norm ( squared sigma_h) ~ 6.23 * e-5
-      !if (abs(bk(INDEX_IJK,ispec) - norm) > 1.e-4) then
-      !  print *, 'Problem norm here --- ', myrank, ispec, i, j, k, bk(INDEX_IJK,ispec), norm
-      !  !call exit_mpi(myrank, 'Error computing Gaussian function on the grid')
-      !endif
-
-      !debug
-      !if (tk(INDEX_IJK,ispec) == 0.0_CUSTOM_REAL .and. myrank == 0) then
-      !  print *,myrank,'zero tk: ',INDEX_IJK,ispec,'tk:',tk(INDEX_IJK,ispec),'bk:',bk(INDEX_IJK,ispec)
-      !endif
-
-
-      ! avoids division by zero
       if (bk(INDEX_IJK,ispec) == 0.0_CUSTOM_REAL) bk(INDEX_IJK,ispec) = 1.0_CUSTOM_REAL
-
-      ! normalizes smoothed kernel values by integral value of Gaussian weighting
-      kernel_smooth(INDEX_IJK,ispec) = tk(INDEX_IJK,ispec) / bk(INDEX_IJK,ispec)
-
-      ! checks number (isNaN check)
-      if (kernel_smooth(INDEX_IJK,ispec) /= kernel_smooth(INDEX_IJK,ispec)) then
-        print *,'Error kernel_smooth value not a number: ',kernel_smooth(INDEX_IJK,ispec)
-        print *,'rank:',myrank
-        print *,'INDEX_IJK,ispec:',INDEX_IJK,ispec
-        print *,'tk: ',tk(INDEX_IJK,ispec),'bk:',bk(INDEX_IJK,ispec),'norm:',norm
-        call exit_mpi(myrank, 'Error kernel value is NaN')
-      endif
-
     ENDDO_LOOP_IJK
 
+    ! loops over kernels
+    do iker = 1,nker
+
+      DO_LOOP_IJK
+        ! checks the normalization criterion
+        ! e.g. sigma_h 160km, sigma_v 40km:
+        !     norm (not squared sigma_h ) ~ 0.001
+        !     norm ( squared sigma_h) ~ 6.23 * e-5
+        !if (abs(bk(INDEX_IJK,ispec) - norm) > 1.e-4) then
+        !  print *, 'Problem norm here --- ', myrank, ispec, i, j, k, bk(INDEX_IJK,ispec), norm
+        !  !call exit_mpi(myrank, 'Error computing Gaussian function on the grid')
+        !endif
+
+        !debug
+        !if (tk(INDEX_IJK,ispec) == 0.0_CUSTOM_REAL .and. myrank == 0) then
+        !  print *,myrank,'zero tk: ',INDEX_IJK,ispec,'tk:',tk(INDEX_IJK,ispec),'bk:',bk(INDEX_IJK,ispec)
+        !endif
+
+        ! normalizes smoothed kernel values by integral value of Gaussian weighting
+        kernel_smooth(INDEX_IJK,ispec,iker) = tk(INDEX_IJK,ispec,iker) / bk(INDEX_IJK,ispec)
+
+        ! checks number (isNaN check)
+        if (kernel_smooth(INDEX_IJK,ispec,iker) /= kernel_smooth(INDEX_IJK,ispec,iker)) then
+          print *,'Error kernel_smooth value not a number: ',kernel_smooth(INDEX_IJK,ispec,iker),trim(kernel_names(iker))
+          print *,'rank:',myrank
+          print *,'INDEX_IJK,ispec,iker:',INDEX_IJK,ispec,iker
+          print *,'tk: ',tk(INDEX_IJK,ispec,iker),'bk:',bk(INDEX_IJK,ispec),'norm:',norm
+          call exit_mpi(myrank, 'Error kernel value is NaN')
+        endif
+      ENDDO_LOOP_IJK
+
+    enddo
   enddo
 
-  ! statistics
-  min_new = minval(kernel_smooth)
-  max_new = maxval(kernel_smooth)
+  ! output
+  do iker = 1,nker
 
-  ! file output
-  ! smoothed kernel file name
-  write(ks_file,'(a,i6.6,a)') trim(output_dir)//'/proc',myrank, &
-                              trim(reg_name)//trim(kernel_name)//'_smooth.bin'
+    ! name
+    kernel_name = kernel_names(iker)
+    if (myrank == 0) then
+      print *,'smoothed: ',trim(kernel_name)
+    endif
 
-  open(IOUT,file=trim(ks_file),status='unknown',form='unformatted',action='write',iostat=ier)
-  if (ier /= 0) call exit_mpi(myrank,'Error opening smoothed kernel file')
+    ! file output
+    ! smoothed kernel file name
+    write(ks_file,'(a,i6.6,a)') trim(output_dir)//'/proc',myrank, &
+                                trim(reg_name)//trim(kernel_name)//'_smooth.bin'
 
-  ! Note: output the following instead of kernel_smooth(:,:,:,1:NSPEC_AB) to create files of the same sizes
-  write(IOUT) kernel_smooth(:,:,:,:)
-  close(IOUT)
-  if (myrank == 0) print *,'written: ',trim(ks_file)
+    open(IOUT,file=trim(ks_file),status='unknown',form='unformatted',action='write',iostat=ier)
+    if (ier /= 0) call exit_mpi(myrank,'Error opening smoothed kernel file')
 
-  ! synchronizes
-  call synchronize_all()
+    ! Note: output the following instead of kernel_smooth(:,:,:,1:NSPEC_AB) to create files of the same sizes
+    write(IOUT) kernel_smooth(:,:,:,:,iker)
+    close(IOUT)
+    if (myrank == 0) print *,'  written: ',trim(ks_file)
 
-  ! the minimum/maximum value for the smoothed kernel
-  call min_all_cr(min_old, min_old_all)
-  call min_all_cr(min_new, min_new_all)
-  call max_all_cr(max_old, max_old_all)
-  call max_all_cr(max_new, max_new_all)
+    ! statistics
+    min_new = minval(kernel_smooth(:,:,:,:,iker))
+    max_new = maxval(kernel_smooth(:,:,:,:,iker))
 
-  if (myrank == 0) then
-    print *
-    print *, 'Minimum data value before smoothing = ', min_old_all
-    print *, 'Minimum data value after smoothing  = ', min_new_all
-    print *
-    print *, 'Maximum data value before smoothing = ', max_old_all
-    print *, 'Maximum data value after smoothing  = ', max_new_all
-    print *
-  endif
+    ! the minimum/maximum value for the smoothed kernel
+    call min_all_cr(min_old(iker), min_old_all)
+    call min_all_cr(min_new, min_new_all)
+    call max_all_cr(max_old(iker), max_old_all)
+    call max_all_cr(max_new, max_new_all)
+
+    if (myrank == 0) then
+      print *
+      print *, '  Minimum data value before smoothing = ', min_old_all
+      print *, '  Minimum data value after smoothing  = ', min_new_all
+      print *
+      print *, '  Maximum data value before smoothing = ', max_old_all
+      print *, '  Maximum data value after smoothing  = ', max_new_all
+      print *
+    endif
+    ! synchronizes
+    call synchronize_all()
+
+  enddo
 
   ! stop all the processes, and exit
   call finalize_mpi()
