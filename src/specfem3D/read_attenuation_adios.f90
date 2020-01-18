@@ -35,8 +35,7 @@ subroutine read_attenuation_adios(iregion_code, &
   use constants_solver
   use specfem_par, only: ATTENUATION_VAL,LOCAL_PATH
 
-  use adios_read_mod
-  use adios_helpers_mod, only: check_adios_err
+  use adios_helpers_mod
   use manager_adios
 
   implicit none
@@ -53,7 +52,6 @@ subroutine read_attenuation_adios(iregion_code, &
   character(len=MAX_STRING_LEN) :: file_name
   integer :: local_dim
   ! ADIOS variables
-  integer                 :: adios_err
   integer(kind=8)         :: sel
   integer(kind=8), dimension(1) :: start, count
 
@@ -70,49 +68,41 @@ subroutine read_attenuation_adios(iregion_code, &
   file_name= trim(LOCAL_PATH) // "/attenuation.bp"
 
   ! opens adios file
-  call open_file_adios_read(file_name)
+  call open_file_adios_read_and_init_method(myadios_file,myadios_group,file_name)
 
-  call adios_selection_writeblock(sel, myrank)
-  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "t_c_source", 0, 1, &
-     T_c_source, adios_err)
-
-  call adios_perform_reads(file_handle_adios, adios_err)
-  call check_adios_err(myrank,adios_err)
+  call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "t_c_source",T_c_source)
 
   local_dim = size (tau_s)
   start(1) = local_dim*myrank; count(1) = local_dim
-  call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "tau_s/array", 0, 1, &
-    tau_s, adios_err)
-  call check_adios_err(myrank,adios_err)
+  call set_selection_boundingbox(sel, start, count)
 
-  call adios_perform_reads(file_handle_adios, adios_err)
-  call check_adios_err(myrank,adios_err)
+  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                 trim(region_name) // "tau_s/array", tau_s)
+
+  call read_adios_perform(myadios_file)
+  call delete_adios_selection(sel)
 
   local_dim = size (factor_common)
   start(1) = local_dim*myrank; count(1) = local_dim
-  call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "tau_e_store/array", 0, 1, &
-    factor_common, adios_err)
-  call check_adios_err(myrank,adios_err)
+  call set_selection_boundingbox(sel, start, count)
 
-  call adios_perform_reads(file_handle_adios, adios_err)
-  call check_adios_err(myrank,adios_err)
+  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                 trim(region_name) // "tau_e_store/array", factor_common)
+
+  call read_adios_perform(myadios_file)
+  call delete_adios_selection(sel)
 
   local_dim = size (scale_factor)
   start(1) = local_dim*myrank; count(1) = local_dim
-  call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "Qmu_store/array", 0, 1, &
-    scale_factor, adios_err)
-  call check_adios_err(myrank,adios_err)
+  call set_selection_boundingbox(sel, start, count)
 
-  call adios_perform_reads(file_handle_adios, adios_err)
-  call check_adios_err(myrank,adios_err)
+  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                 trim(region_name) // "Qmu_store/array", scale_factor)
 
-  ! Close ADIOS handler to the restart file.
-  call adios_selection_delete(sel)
+  call read_adios_perform(myadios_file)
+  call delete_adios_selection(sel)
 
-  ! closes adios file
-  call close_file_adios_read()
+  ! closes ADIOS handler to the restart file.
+  call close_file_adios_read_and_finalize_method(myadios_file)
 
 end subroutine read_attenuation_adios

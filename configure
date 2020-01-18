@@ -657,6 +657,9 @@ CUDA_FLAGS
 NVCC
 CONFIGURE_FLAGS
 ASDF_LIBS
+MPICC
+ADIOS2_CLIBS
+ADIOS2_CFLAGS
 ADIOS2_LIBS
 ADIOS2_FCFLAGS
 ADIOS2_CONFIG
@@ -813,6 +816,7 @@ LOCAL_PATH_IS_ALSO_GLOBAL
 CPP
 ADIOS_CONFIG
 ADIOS2_CONFIG
+MPICC
 ASDF_LIBS
 NVCC
 CUDA_FLAGS
@@ -1494,6 +1498,7 @@ Some influential environment variables:
   ADIOS2_CONFIG
               Path to adios_config program that indicates how to compile with
               it.
+  MPICC       MPI C compiler command
   ASDF_LIBS   ASDF libraries for linking programs
   NVCC        NVIDIA CUDA compiler command
   CUDA_FLAGS  CUDA compiler flags
@@ -6499,6 +6504,8 @@ if test x"$want_adios2" != xno; then :
 ## ADIOS2 ##
 ## ------ ##"
 
+    # for fortran compilation
+
 
   # Extract the first word of "adios2-config", so it can be a program name with args.
 set dummy adios2-config; ac_word=$2
@@ -6626,6 +6633,32 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
 
 
+
+
+    # for C file compilation
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ADIOS2 C flags and libs" >&5
+$as_echo_n "checking for ADIOS2 C flags and libs... " >&6; }
+    if test x"$ADIOS2_CONFIG" != x; then :
+
+      ADIOS2_CFLAGS=`$ADIOS2_CONFIG --c-flags`
+      ADIOS2_CLIBS=`$ADIOS2_CONFIG --c-libs`
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: done" >&5
+$as_echo "done" >&6; }
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no adios2_config" >&5
+$as_echo "no adios2_config" >&6; }
+fi
+
+
+
+    # in case adios2 c file compilation needs mpi
+
+    if test x"$MPICC" = x; then :
+
+        MPICC=mpicc
+
+fi
 
 
 fi

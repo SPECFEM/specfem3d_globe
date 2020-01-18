@@ -245,7 +245,6 @@
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
 
-
   ! mass matrices need to be assembled with MPI here once and for all
   call prepare_timerun_rmass_assembly()
 
@@ -355,10 +354,10 @@
   ! ocean load
   if (OCEANS_VAL) then
     call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
-                        rmass_ocean_load, &
-                        num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
-                        nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle, &
-                        my_neighbors_crust_mantle)
+                             rmass_ocean_load, &
+                             num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
+                             nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle, &
+                             my_neighbors_crust_mantle)
   endif
 
   ! crust and mantle
@@ -398,8 +397,6 @@
                                my_neighbors_crust_mantle)
     endif
   endif
-
-
 
   ! outer core
   call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_OUTER_CORE, &

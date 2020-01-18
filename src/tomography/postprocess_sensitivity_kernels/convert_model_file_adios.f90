@@ -32,13 +32,9 @@
 
 program convert_model_file_adios
 
-  use constants, only: ADIOS_TRANSPORT_METHOD
-
   use postprocess_par, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,IIN,IOUT, &
     MAX_STRING_LEN,NPROCTOT_VAL,NSPEC_CRUST_MANTLE
 
-  use adios_read_mod
-  use adios_write_mod
   use adios_helpers_mod
   use manager_adios
 
@@ -73,8 +69,8 @@ program convert_model_file_adios
   integer :: myrank, sizeprocs
 
   ! model parameters
-  character(len=MAX_STRING_LEN) :: m_file
-  character(len=MAX_STRING_LEN) :: m_adios_file
+  character(len=MAX_STRING_LEN) :: model_filename
+  character(len=MAX_STRING_LEN) :: model_filename_adios
 
   integer, parameter :: nparams = 12
   character(len=16) :: model_name(nparams),fname(nparams),found_fname(nparams),found_model_name(nparams)
@@ -89,12 +85,10 @@ program convert_model_file_adios
 
   ! adios
   character(len=MAX_STRING_LEN) :: group_name
-  integer(kind=8) :: group, model_handle
-  integer(kind=8) :: totalsize
   integer(kind=8) :: group_size_inc
   integer :: local_dim
   integer :: comm
-  integer :: ier
+  integer :: iexist,ier
 
   ! starts mpi
   call init_mpi()
@@ -155,10 +149,10 @@ program convert_model_file_adios
   ! sets adios model file name
   if ( convert_format == 1) then
     ! from adios to old binaries
-    m_adios_file = trim(input_model_dir) // '/' // trim(model_adios_file)
+    model_filename_adios = trim(input_model_dir) // '/' // trim(model_adios_file)
   else
     ! from old binaries to adios
-    m_adios_file = trim(output_model_dir) // '/' // trim(model_adios_file)
+    model_filename_adios = trim(output_model_dir) // '/' // trim(model_adios_file)
   endif
 
   ! defines model parameters
@@ -223,23 +217,23 @@ program convert_model_file_adios
 
     ! user output
     if (myrank == 0) then
-      print *, 'reading in ADIOS model file: ',trim(m_adios_file)
+      print *, 'reading in ADIOS model file: ',trim(model_filename_adios)
     endif
 
     ! opens adios file
-    call open_file_adios_read(m_adios_file)
+    call open_file_adios_read_and_init_method(myadios_file,myadios_group,model_filename_adios)
 
     ! debug
-    !if (myrank == 0) call show_adios_file_variables(m_adios_file)
+    !if (myrank == 0) call show_adios_file_variables(myadios_file,myadios_group,model_filename_adios)
 
     icount = 0
     do iker = 1,nparams
       model(:,:,:,:) = 0.0_CUSTOM_REAL
 
       ! reads in associated model array
-      call read_adios_array_gll_check(myrank,NSPEC,model_name(iker),model,ier)
+      call read_adios_array_gll_check(myadios_file,myadios_group,myrank,NSPEC,model_name(iker),model,iexist)
       ! checks if read was successful
-      if (ier /= 0) then
+      if (iexist == 0) then
         exist = .false.
       else
         exist = .true.
@@ -263,21 +257,30 @@ program convert_model_file_adios
         if (iker == nparams) HAS_ATTENUATION_Q = .true.
 
         ! writes out binary file
-        write(m_file,'(a,i6.6,a)') trim(output_model_dir)//'/proc',myrank,'_reg1_'//trim(fname(iker))//'.bin'
-        open(IOUT,file=trim(m_file),form='unformatted',action='write',iostat=ier)
+        write(model_filename,'(a,i6.6,a)') trim(output_model_dir)//'/proc',myrank,'_reg1_'//trim(fname(iker))//'.bin'
+        open(IOUT,file=trim(model_filename),form='unformatted',action='write',iostat=ier)
         if (ier /= 0) then
-          print *, 'Error opening binary parameter file: ',trim(m_file)
+          print *, 'Error opening binary parameter file: ',trim(model_filename)
           stop 'Error opening binary parameter file'
         endif
         ! model values
         write(IOUT) model
         close(IOUT)
+
+        ! user output
+        if (myrank == 0) then
+          write(*,*) '  written output for parameter: ',trim(found_fname(icount))
+          ! min/max
+          write(*,*) '  slice rank 0 has min/max value = ',minval(model(:,:,:,:)),"/",maxval(model(:,:,:,:))
+          write(*,*) ''
+        endif
+
       endif
 
     enddo
 
     ! closes adios file
-    call close_file_adios_read()
+    call close_file_adios_read_and_finalize_method(myadios_file)
 
     ! check if file written
     if (icount == 0) then
@@ -307,6 +310,7 @@ program convert_model_file_adios
         print *, '  found parameter: ',trim(found_fname(iker))
       enddo
       print *, ' '
+      print *, 'output files: ',trim(output_model_dir)//'/proc***'
       print *, 'done writing the model in binary format'
     endif
 
@@ -324,9 +328,9 @@ program convert_model_file_adios
     icount = 0
     do iker = 1,nparams
       ! file name
-      write(m_file,'(a,i6.6,a)') trim(input_model_dir)//'/proc',myrank,'_reg1_'//trim(fname(iker))//'.bin'
+      write(model_filename,'(a,i6.6,a)') trim(input_model_dir)//'/proc',myrank,'_reg1_'//trim(fname(iker))//'.bin'
 
-      inquire(file=trim(m_file),EXIST=exist)
+      inquire(file=trim(model_filename),EXIST=exist)
       ! makes sure all processes have same flag
       call any_all_l(exist,exist_all)
 
@@ -364,10 +368,10 @@ program convert_model_file_adios
     ! reads in parameter values
     do iker = 1,icount
       ! file name
-      write(m_file,'(a,i6.6,a)') trim(input_model_dir)//'/proc',myrank,'_reg1_'//trim(found_fname(iker))//'.bin'
-      open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
+      write(model_filename,'(a,i6.6,a)') trim(input_model_dir)//'/proc',myrank,'_reg1_'//trim(found_fname(iker))//'.bin'
+      open(IIN,file=trim(model_filename),status='old',form='unformatted',action='read',iostat=ier)
       if (ier /= 0) then
-        print *, 'Error: rank ',myrank,' could not open binary parameter file: ',trim(m_file)
+        print *, 'Error: rank ',myrank,' could not open binary parameter file: ',trim(model_filename)
         stop 'Error opening parameter file'
       endif
       read(IIN) model
@@ -382,7 +386,7 @@ program convert_model_file_adios
     ! user output
     if (myrank == 0) then
       print *, ' '
-      print *, 'writing out ADIOS model file: ',trim(m_adios_file)
+      print *, 'writing out ADIOS model file: ',trim(model_filename_adios)
       print *, ' '
       if (HAS_TRANSVERSE_ISOTROPY) &
         print *, '  transversely isotropic model parameters (vpv,vph,vsv,vsh,eta,rho)'
@@ -395,48 +399,57 @@ program convert_model_file_adios
       print *, ' '
     endif
 
-    group_size_inc = 0
     group_name = "MODELS_GROUP"
+    call init_adios_group(myadios_group,group_name)
 
-    call adios_declare_group(group, group_name, '', 1, ier)
-    call adios_select_method(group, ADIOS_TRANSPORT_METHOD, '', '', ier)
-    call define_adios_scalar(group, group_size_inc, '', "NSPEC", nspec)
+    group_size_inc = 0
+
+    ! for backward compatibility
+    call define_adios_scalar(myadios_group, group_size_inc, '', "NSPEC", nspec)
+    call define_adios_scalar(myadios_group, group_size_inc, '', "reg1/nspec", nspec)
 
     ! Setup ADIOS for the current group
     local_dim = NGLLX * NGLLY * NGLLZ * NSPEC
 
     ! Define ADIOS Variables
-    do iker=1,icount
-      call define_adios_global_array1D(group, group_size_inc,local_dim,'',trim(found_model_name(iker)),model)
+    do iker = 1,icount
+      call define_adios_global_array1D(myadios_group, group_size_inc,local_dim,'',trim(found_model_name(iker)),model)
     enddo
 
     ! Open an handler to the ADIOS file and setup the group size
-    call adios_open(model_handle, group_name, trim(m_adios_file), "w", comm, ier);
-    if (ier /= 0) then
-      print *, 'Error opening adios model file: ',trim(m_adios_file)
-      stop 'Error opening adios model file'
-    endif
+    call open_file_adios_write(myadios_file,myadios_group,model_filename_adios,group_name)
+    call set_adios_group_size(myadios_file,group_size_inc)
 
-    call adios_group_size (model_handle, group_size_inc, totalsize, ier)
-    if (ier /= 0 ) stop 'Error calling adios_group_size() routine failed'
-
-    call adios_write(model_handle, "NSPEC", nspec, ier)
+    ! writes nspec (for checking and backward compatibility)
+    call write_adios_scalar(myadios_file,myadios_group,"NSPEC",nspec)
+    call write_adios_scalar(myadios_file,myadios_group,"reg1/nspec",nspec)
 
     local_dim = NGLLX * NGLLY * NGLLZ * NSPEC
-    do iker=1,icount
-      model(:,:,:,:) = model_par(:,:,:,:,iker)
+    do iker = 1,icount
+      ! note: the write_adios_** call might be in deferred mode. thus, the memory pointer should not change
+      !       until a perform/close/end_step call is done.
+      !
+      ! instead of a temporary copy
+      ! > model(:,:,:,:) = model_par(:,:,:,:,iker)
+      ! we will pass the array pointer to model_par(:,:,:,:,ier) directly
+      !
       ! Write previously defined ADIOS variables
-      call write_adios_global_1d_array(model_handle, myrank, sizeprocs, local_dim, &
-                                       trim(found_model_name(iker)),model(:,:,:,:))
+      call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs, local_dim, &
+                                       trim(found_model_name(iker)),model_par(:,:,:,:,iker))
     enddo
     ! Perform the actual write to disk
-    call adios_set_path(model_handle, '', ier)
-    call adios_close(model_handle, ier)
+    call write_adios_perform(myadios_file)
+
+    ! closes ADIOS handler
+    call close_file_adios(myadios_file)
 
     ! free memory
     deallocate(model_par)
 
-    if (myrank == 0) print *, 'done writing the model in adios format'
+    if (myrank == 0) then
+      print *, 'output file: ',trim(model_filename_adios)
+      print *, 'done writing the model in adios format'
+    endif
   endif
 
   ! free memory
@@ -449,7 +462,7 @@ program convert_model_file_adios
     print *, ' '
   endif
 
-  call adios_finalize (myrank, ier)
+  call finalize_adios()
   call finalize_mpi()
 
 end program convert_model_file_adios

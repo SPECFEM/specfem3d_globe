@@ -74,7 +74,7 @@
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
   use manager_adios
-  use adios_helpers_mod, only: define_adios_scalar,define_adios_global_array1D
+  use adios_helpers_mod
 #endif
 
   implicit none
@@ -178,9 +178,10 @@
 
   ! ADIOS
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
-  integer :: local_dim,global_dim
+  integer :: local_dim
+  integer(kind=8) :: global_dim
   character(len=MAX_STRING_LEN) :: group_name
-  integer(kind=8) :: group,group_size_inc
+  integer(kind=8) :: group_size_inc
 #endif
 
   ! MPI parameters
@@ -211,7 +212,6 @@
     endif
     call abort_mpi()
   endif
-
 
   ! checks program arguments
   if (myrank == 0) then
@@ -288,6 +288,7 @@
   endif
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
+  ! ADIOS
   call synchronize_all()
   ! initializes ADIOS
   if (myrank == 0) then
@@ -295,28 +296,35 @@
     print *, ' '
   endif
   call initialize_adios()
+
+  ! initializes i/o group
+  call init_adios_group(myadios_group,"Interpolator")
 #endif
 
   !  master process gets old, source mesh dimension
   if (myrank == 0) then
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
+    ! ADIOS
     ! user output
     print *, 'reading in ADIOS solver file: ',trim(dir_topo1)//'/solver_data.bp'
 
     ! opens adios file
     write(solver_file,'(a,a)') trim(dir_topo1)//'/solver_data.bp'
-    call open_file_adios_read_only_rank(myrank,solver_file)
+    call open_file_adios_read_only_rank(myadios_file,myadios_group,myrank,solver_file)
 
     ! reads in scalars
-    print *,'rank ',myrank,'reading scalar'
-    call read_adios_scalar_int_only_rank(myrank,"reg1/nspec",nspec_max_old)
-    call read_adios_scalar_int_only_rank(myrank,"reg1/nglob",nglob_max_old)
+    print *,'ADIOS file only rank ',myrank,'reading scalars'
+    call read_adios_scalar(myadios_file,myadios_group,myrank,"reg1/nspec",nspec_max_old)
+    call read_adios_scalar(myadios_file,myadios_group,myrank,"reg1/nglob",nglob_max_old)
+    print *,'  nspec/nglob = ',nspec_max_old,'/',nglob_max_old
 
     ! determines total number of processes
+    call read_adios_scalar(myadios_file,myadios_group,myrank,"reg1/ibool/local_dim",local_dim)
+    call read_adios_scalar(myadios_file,myadios_group,myrank,"reg1/ibool/global_dim",global_dim)
+    print *,'  local_dim/global_dim = ',local_dim,'/',global_dim
+
     rank = 0
-    call read_adios_scalar_int_only_rank(myrank,"reg1/ibool/local_dim",local_dim)
-    call read_adios_scalar_int_only_rank(myrank,"reg1/ibool/global_dim",global_dim)
     if (mod(global_dim,local_dim) == 0) then
       ! sizeprocs
       rank = global_dim/local_dim
@@ -324,11 +332,13 @@
       print *,'Error invalid local_dim/global_dim ratio in file: ',trim(solver_file)
       stop 'Error adios array has invalid local_dim/global_dim ratio'
     endif
-
+    print *,'  estimated number of total processes = ',rank
+    print *,''
     ! closes file
-    call close_file_adios_read()
+    call close_file_adios_read_and_finalize_method(myadios_file)
 
 #else
+    ! default binary
     ! user output
     print *, 'reading in binary solver files: ',trim(dir_topo1)//'/proc***_reg1_solver_data.bin'
 
@@ -627,7 +637,7 @@
   ! single adios file for all old process slices
   ! opens adios file
   write(solver_file,'(a,a)') trim(dir_topo1)//'/solver_data.bp'
-  call open_file_adios_read(solver_file)
+  call open_file_adios_read_and_init_method(myadios_file,myadios_group,solver_file)
 #endif
 
   ! sets loop bounds
@@ -667,10 +677,10 @@
 
       ! reads in old arrays
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
-print *,myrank,'adios file rank',rank
+      ! ADIOS
       ! reads in scalars for rank
-      call read_adios_scalar_int(rank,"reg1/nspec",nspec)
-      call read_adios_scalar_int(rank,"reg1/nglob",nglob)
+      call read_adios_scalar(myadios_file,myadios_group,rank,"reg1/nspec",nspec)
+      call read_adios_scalar(myadios_file,myadios_group,rank,"reg1/nglob",nglob)
 
       ! checks dimensions
       if (nspec /= nspec_max_old .or. nglob /= nglob_max_old) then
@@ -679,12 +689,12 @@ print *,myrank,'adios file rank',rank
       endif
 
       ! reads in arrays
-      call read_adios_array_1d(rank,nglob,"reg1/x_global",x1(:,iprocnum-1))
-      call read_adios_array_1d(rank,nglob,"reg1/y_global",y1(:,iprocnum-1))
-      call read_adios_array_1d(rank,nglob,"reg1/z_global",z1(:,iprocnum-1))
+      call read_adios_array(myadios_file,myadios_group,rank,nglob,"reg1/x_global",x1(:,iprocnum-1))
+      call read_adios_array(myadios_file,myadios_group,rank,nglob,"reg1/y_global",y1(:,iprocnum-1))
+      call read_adios_array(myadios_file,myadios_group,rank,nglob,"reg1/z_global",z1(:,iprocnum-1))
 
-      call read_adios_array_gll_int(rank,nspec,"reg1/ibool",ibool1(:,:,:,:,iprocnum-1))
-      call read_adios_array_1d_int(rank,nspec,"reg1/idoubling",idoubling1(:,iprocnum-1))
+      call read_adios_array(myadios_file,myadios_group,rank,nspec,"reg1/ibool",ibool1(:,:,:,:,iprocnum-1))
+      call read_adios_array(myadios_file,myadios_group,rank,nspec,"reg1/idoubling",idoubling1(:,iprocnum-1))
 
 #else
       ! old, source mesh locations
@@ -715,7 +725,7 @@ print *,myrank,'adios file rank',rank
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
   ! closes file
-  call close_file_adios_read()
+  call close_file_adios_read_and_finalize_method(myadios_file)
 #endif
 
   ! user output
@@ -742,7 +752,7 @@ print *,myrank,'adios file rank',rank
   ! single adios file for all old model arrays
   ! opens adios file
   write(solver_file,'(a,a)') trim(dir_topo1)//'/model_gll.bp'
-  call open_file_adios_read(solver_file)
+  call open_file_adios_read_and_init_method(myadios_file,myadios_group,solver_file)
 #endif
 
   iprocnum = 0
@@ -772,7 +782,7 @@ print *,myrank,'adios file rank',rank
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
         ! reads in array
-        call read_adios_array_gll(rank,nspec,fname(iker),model1(:,:,:,:,iker,iprocnum-1))
+        call read_adios_array(myadios_file,myadios_group,rank,nspec,fname(iker),model1(:,:,:,:,iker,iprocnum-1))
 #else
         ! opens model file
         write(m_file,'(a,i6.6,a)') trim(input_model_dir)//'/proc',rank,'_reg1_'//trim(fname(iker))//'.bin'
@@ -790,7 +800,7 @@ print *,myrank,'adios file rank',rank
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
   ! closes file
-  call close_file_adios_read()
+  call close_file_adios_read_and_finalize_method(myadios_file)
 #endif
 
   ! user output
@@ -825,12 +835,16 @@ print *,myrank,'adios file rank',rank
   ! checks new mesh locations
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
   ! single adios file for all process slices
+  ! re-initiate new group
+  call init_adios_group(myadios_group,"InterpolatorNew")
+
   ! opens adios file
   write(solver_file,'(a,a)') trim(dir_topo2)//'/solver_data.bp'
-  call open_file_adios_read(solver_file)
+  call open_file_adios_read_and_init_method(myadios_file,myadios_group,solver_file)
+
   ! reads in scalars for rank
-  call read_adios_scalar_int(rank,"reg1/nspec",nspec)
-  call read_adios_scalar_int(rank,"reg1/nglob",nglob)
+  call read_adios_scalar(myadios_file,myadios_group,rank,"reg1/nspec",nspec)
+  call read_adios_scalar(myadios_file,myadios_group,rank,"reg1/nglob",nglob)
 
   ! checks dimensions
   if (nspec /= NSPEC_CRUST_MANTLE .or. nglob /= NGLOB_CRUST_MANTLE) then
@@ -840,14 +854,14 @@ print *,myrank,'adios file rank',rank
   call synchronize_all()
 
   ! reads in arrays
-  call read_adios_array_1d(rank,nglob,"reg1/x_global",x2(:))
-  call read_adios_array_1d(rank,nglob,"reg1/y_global",y2(:))
-  call read_adios_array_1d(rank,nglob,"reg1/z_global",z2(:))
-  call read_adios_array_gll_int(rank,nspec,"reg1/ibool",ibool2(:,:,:,:))
-  call read_adios_array_1d_int(rank,nspec,"reg1/idoubling",idoubling2(:))
+  call read_adios_array(myadios_file,myadios_group,rank,nglob,"reg1/x_global",x2(:))
+  call read_adios_array(myadios_file,myadios_group,rank,nglob,"reg1/y_global",y2(:))
+  call read_adios_array(myadios_file,myadios_group,rank,nglob,"reg1/z_global",z2(:))
+  call read_adios_array(myadios_file,myadios_group,rank,nspec,"reg1/ibool",ibool2(:,:,:,:))
+  call read_adios_array(myadios_file,myadios_group,rank,nspec,"reg1/idoubling",idoubling2(:))
 
   ! closes file
-  call close_file_adios_read()
+  call close_file_adios_read_and_finalize_method(myadios_file)
 
 #else
   ! opens binary file
@@ -1121,23 +1135,27 @@ print *,myrank,'adios file rank',rank
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
   ! sets up adios group
   group_name = "MODELS_GROUP"
-  group_size_inc = 0
-  call init_adios_group(group,group_name)
+  call init_adios_group(myadios_val_group,group_name)
 
   ! defines group size
-  call define_adios_scalar(group, group_size_inc, '', "NSPEC", nspec)
+  group_size_inc = 0
+  call define_adios_scalar(myadios_val_group, group_size_inc, '', "NSPEC", nspec)
+  call define_adios_scalar(myadios_val_group, group_size_inc, '', "reg1/nspec", nspec)
+
   local_dim = size(model2(:,:,:,:,iker))
   do iker = 1,nparams
-    call define_adios_global_array1D(group, group_size_inc,local_dim,'',trim(fname(iker)),model2(:,:,:,:,iker))
+    call define_adios_global_array1D(myadios_val_group, group_size_inc,local_dim,'',trim(fname(iker)),model2(:,:,:,:,iker))
   enddo
 
   ! opens new adios model file
   write(solver_file,'(a,a)') trim(output_model_dir) //'/model_gll_interpolated.bp'
-  call open_file_adios_write(solver_file,group_name)
-  call set_adios_group_size(group_size_inc)
+  call open_file_adios_write(myadios_val_file,myadios_val_group,solver_file,group_name)
 
-  ! writes nspec
-  call write_adios_scalar_int("NSPEC",nspec)
+  call set_adios_group_size(myadios_val_file,group_size_inc)
+
+  ! writes nspec (for checking and backward compatibility)
+  call write_adios_scalar(myadios_val_file,myadios_val_group,"NSPEC",nspec)
+  call write_adios_scalar(myadios_val_file,myadios_val_group,"reg1/nspec",nspec)
 #endif
 
   ! writes out new model
@@ -1149,11 +1167,12 @@ print *,myrank,'adios file rank',rank
     endif
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
-!  call finalize_adios()
-!  stop 'safety stop: ADIOS support not fully implemented yet...'
+    ! ADIOS
     ! writes previously defined ADIOS variables
-    call write_adios_array_gll(myrank,nspec,trim(fname(iker)),model2(:,:,:,:,iker))
+    call write_adios_array_gll(myadios_val_file,myadios_val_group,myrank,sizeprocs_adios,nspec,trim(fname(iker)), &
+                               model2(:,:,:,:,iker))
 #else
+    ! default binary
     write(m_file,'(a,i6.6,a)') trim(output_model_dir) // '/proc',rank,'_reg1_'//trim(fname(iker))//'.bin'
     open(IOUT,file=trim(m_file),status='unknown',form='unformatted',action='write',iostat=ier)
     if (ier /= 0) then
@@ -1167,8 +1186,11 @@ print *,myrank,'adios file rank',rank
   enddo
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
+  ! ADIOS
+  ! Reset the path to its original value to avoid bugs.
+  call write_adios_perform(myadios_val_file)
   ! closing performs actual write
-  call close_file_adios()
+  call close_file_adios(myadios_val_file)
 #endif
 
   ! frees memory

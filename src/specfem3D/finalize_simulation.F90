@@ -34,7 +34,6 @@
   use specfem_par_movie
 
   use manager_adios
-  use manager_adios2
 
 #ifdef USE_XSMM
   use my_libxsmm
@@ -123,15 +122,11 @@
 
   ! adios finalizes
   if (ADIOS_ENABLED) then
-#ifdef HAVE_ADIOS2
-    call finalize_adios2()
-#endif
     call finalize_adios()
   endif
 
   ! asdf finalizes
-  if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3 &
-       .and. READ_ADJSRC_ASDF) then
+  if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3 .and. READ_ADJSRC_ASDF) then
     call asdf_cleanup()
   endif
 
@@ -139,6 +134,9 @@
   ! finalizes LIBXSMM
   call libxsmm_finalize()
 #endif
+
+  ! synchronize all
+  call synchronize_all()
 
   ! frees dynamically allocated memory
   call finalize_simulation_cleanup()

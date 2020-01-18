@@ -50,14 +50,60 @@ program sum_kernels_globe
   use tomography_par
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
+  use adios_helpers_mod
   use manager_adios
 #endif
 
   implicit none
 
-  character(len=MAX_STRING_LEN) :: kernel_list(MAX_KERNEL_PATHS), sline, kernel_name
-  integer :: nker
-  integer :: ier
+  character(len=MAX_STRING_LEN) :: kernel_list(MAX_KERNEL_PATHS), sline
+  character(len=MAX_STRING_LEN) :: kernel_name
+  integer :: nker,iker
+  integer :: ier,i
+
+  ! kernel names
+  ! consider adding more when implemented...
+  !
+  ! iso (bulk c, bulk beta, rho)
+  character(len=MAX_STRING_LEN),dimension(3),parameter :: kernel_names_iso = &
+      (/character(len=MAX_STRING_LEN) :: &
+       "bulk_c_kernel", &
+       "bulk_beta_kernel", &
+       "rho_kernel" &
+       /)
+  ! iso (alpha,beta,rho)
+  character(len=MAX_STRING_LEN),dimension(3),parameter :: kernel_names_alpha_beta_rho = &
+      (/character(len=MAX_STRING_LEN) :: &
+       "alpha_kernel", &
+       "beta_kernel", &
+       "rho_kernel" &
+       /)
+  ! tiso
+  character(len=MAX_STRING_LEN),dimension(4),parameter :: kernel_names_tiso = &
+      (/character(len=MAX_STRING_LEN) :: &
+       "bulk_c_kernel", &
+       "bulk_betav_kernel", &
+       "bulk_betah_kernel", &
+       "eta_kernel" &
+       /)
+
+  ! ADIOS
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
+  ! corresponding kernel names of adios variables
+  character(len=MAX_STRING_LEN),dimension(10),parameter :: adios_kl_names = &
+      (/character(len=MAX_STRING_LEN) :: &
+       "bulk_c_kl_crust_mantle", &
+       "bulk_beta_kl_crust_mantle", &
+       "rho_kl_crust_mantle", &
+       "alpha_kl_crust_mantle", &
+       "beta_kl_crust_mantle", &
+       "rho_kl_crust_mantle", &
+       "bulk_c_kl_crust_mantle", &
+       "bulk_betav_kl_crust_mantle", &
+       "bulk_betah_kl_crust_mantle", &
+       "eta_kl_crust_mantle" &
+       /) ! "rho_kl_crust_mantle","hess_kl_crust_mantle"
+#endif
 
   ! ============ program starts here =====================
   ! initialize the MPI communicator and start the NPROCTOT MPI processes
@@ -72,7 +118,7 @@ program sum_kernels_globe
     write(*,*) 'sum_kernels_globe:'
 #endif
     write(*,*)
-    write(*,*) 'reading kernel list: '
+    write(*,*) 'reading kernel list: ',trim(kernel_file_list)
   endif
 
   ! reads in event list
@@ -91,9 +137,11 @@ program sum_kernels_globe
   enddo
   close(IIN)
   if (myrank == 0) then
-    write(*,*) '  ',nker,' events'
+    write(*,*) '  found ',nker,' events'
     write(*,*)
   endif
+  ! check
+  if (nker == 0) stop 'No event kernel directories found, please check...'
 
   ! checks if number of MPI process as specified
   if (sizeprocs /= NPROCTOT_VAL) then
@@ -106,26 +154,32 @@ program sum_kernels_globe
       print *
     endif
     call synchronize_all()
-    stop 'Error total number of slices'
+    stop 'Error MPI processes not equal to total number of slices'
   endif
   call synchronize_all()
 
+  ! user output
+  if (myrank == 0) then
+    print *,'kernel directories: ',nker
+    print *,'summing kernels in following INPUT_KERNELS/ sub-directories:'
+    do iker = 1,nker
+      print *,'  ',trim(kernel_list(iker))
+    enddo
+    print *
+  endif
+
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
-  call synchronize_all()
-  ! initializes ADIOS
+  ! ADIOS
+  ! initializes
   if (myrank == 0) then
     print *, 'initializing ADIOS...'
     print *, ' '
   endif
   call initialize_adios()
-#endif
 
-  ! user output
-  if (myrank == 0) then
-    print *,'summing kernels in INPUT_KERNELS/ directories:'
-    print *,kernel_list(1:nker)
-    print *
-  endif
+  ! opens file for summed kernel result
+  call open_sum_file(adios_kl_names)
+#endif
 
   ! synchronizes
   call synchronize_all()
@@ -134,53 +188,68 @@ program sum_kernels_globe
   if (USE_ISO_KERNELS) then
 
     !  isotropic kernels
-    if (myrank == 0) write(*,*) 'isotropic kernels: bulk_c, bulk_beta, rho'
+    if (myrank == 0) then
+      write(*,*) 'isotropic kernels: bulk_c, bulk_beta, rho'
+      write(*,*) ''
+    endif
+    do i = 1,3
+      ! kernel name
+      kernel_name = kernel_names_iso(i)
 
-    kernel_name = 'bulk_c_kernel'
-    call sum_kernel(kernel_name,kernel_list,nker)
-
-    kernel_name = 'bulk_beta_kernel'
-    call sum_kernel(kernel_name,kernel_list,nker)
-
-    kernel_name = 'rho_kernel'
-    call sum_kernel(kernel_name,kernel_list,nker)
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
+      call get_adios_kernel_name(kernel_name,adios_kl_names)
+#endif
+      ! stores sum over all event kernels
+      call sum_kernel(kernel_name,kernel_list,nker)
+    enddo
 
   else if (USE_ALPHA_BETA_RHO) then
 
     ! isotropic kernels
-    if (myrank == 0) write(*,*) 'isotropic kernels: alpha, beta, rho'
+    if (myrank == 0) then
+      write(*,*) 'isotropic kernels: alpha, beta, rho'
+      write(*,*) ''
+    endif
+    do i = 1,3
+      ! kernel name
+      kernel_name = kernel_names_alpha_beta_rho(i)
 
-    kernel_name = 'alpha_kernel'
-    call sum_kernel(kernel_name,kernel_list,nker)
-
-    kernel_name = 'beta_kernel'
-    call sum_kernel(kernel_name,kernel_list,nker)
-
-    kernel_name = 'rho_kernel'
-    call sum_kernel(kernel_name,kernel_list,nker)
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
+      call get_adios_kernel_name(kernel_name,adios_kl_names)
+#endif
+      ! stores sum over all event kernels
+      call sum_kernel(kernel_name,kernel_list,nker)
+    enddo
 
   else
 
     ! transverse isotropic kernels
-    if (myrank == 0) write(*,*) 'transverse isotropic kernels: bulk_c, bulk_betav, bulk_betah, eta'
+    if (myrank == 0) then
+      write(*,*) 'transverse isotropic kernels: bulk_c, bulk_betav, bulk_betah, eta'
+      write(*,*) ''
+    endif
+    do i = 1,4
+      ! kernel name
+      kernel_name = kernel_names_tiso(i)
 
-    kernel_name = 'bulk_c_kernel'
-    call sum_kernel(kernel_name,kernel_list,nker)
-
-    kernel_name = 'bulk_betav_kernel'
-    call sum_kernel(kernel_name,kernel_list,nker)
-
-    kernel_name = 'bulk_betah_kernel'
-    call sum_kernel(kernel_name,kernel_list,nker)
-
-    kernel_name = 'eta_kernel'
-    call sum_kernel(kernel_name,kernel_list,nker)
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
+      call get_adios_kernel_name(kernel_name,adios_kl_names)
+#endif
+      ! stores sum over all event kernels
+      call sum_kernel(kernel_name,kernel_list,nker)
+    enddo
 
   endif
+
+  ! synchronizes
+  call synchronize_all()
 
   if (myrank == 0) write(*,*) 'done writing all kernels, see directory OUTPUT_SUM/'
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
+  ! ADIOS
+  ! closes summed kernel file
+  call close_sum_file()
   ! finalizes adios
   call finalize_adios()
 #endif
@@ -199,46 +268,21 @@ end program sum_kernels_globe
   use tomography_par
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
+  use adios_helpers_mod
   use manager_adios
-  use adios_helpers_mod, only: define_adios_scalar,define_adios_global_array1D
 #endif
 
   implicit none
 
-  character(len=MAX_STRING_LEN) :: kernel_name,kernel_list(MAX_KERNEL_PATHS)
-  integer :: nker
+  character(len=MAX_STRING_LEN), intent(in) :: kernel_name,kernel_list(MAX_KERNEL_PATHS)
+  integer, intent(in) :: nker
 
   ! local parameters
-  character(len=MAX_STRING_LEN) :: k_file
+  character(len=MAX_STRING_LEN) :: file_name
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: kernel,total_kernel
   double precision :: norm,norm_sum
   integer :: iker,ier
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: mask_source
-
-  ! ADIOS
-#ifdef USE_ADIOS_INSTEAD_OF_MESH
-  integer :: is,ie
-  integer :: local_dim
-  integer(kind=8) :: group
-  integer(kind=8),save :: group_size_inc
-  character(len=MAX_STRING_LEN) :: kernel_name_adios
-  logical,save :: is_first_call = .true.
-
-  character(len=MAX_STRING_LEN),parameter :: group_name = "KERNELS_GROUP"
-  character(len=MAX_STRING_LEN),dimension(10),parameter :: kl_name = &
-      (/character(len=MAX_STRING_LEN) :: &
-       "bulk_c_kl_crust_mantle", &
-       "bulk_beta_kl_crust_mantle", &
-       "rho_kl_crust_mantle", &
-       "alpha_kl_crust_mantle", &
-       "beta_kl_crust_mantle", &
-       "rho_kl_crust_mantle", &
-       "bulk_c_kl_crust_mantle", &
-       "bulk_betav_kl_crust_mantle", &
-       "bulk_betah_kl_crust_mantle", &
-       "eta_kl_crust_mantle" &
-       /) ! "rho_kl_crust_mantle","hess_kl_crust_mantle"
-#endif
 
   ! initializes arrays
   allocate(kernel(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE), &
@@ -251,103 +295,37 @@ end program sum_kernels_globe
     mask_source(:,:,:,:) = 1.0_CUSTOM_REAL
   endif
 
-  ! ADIOS setup group size
-#ifdef USE_ADIOS_INSTEAD_OF_MESH
-  ! start setting up full file group size when first kernel is called
-  if (is_first_call) then
-    ! reset flag
-    is_first_call = .false.
-
-    ! sets up adios group
-    group_size_inc = 0
-    call init_adios_group(group,group_name)
-
-    ! defines group size
-    call define_adios_scalar(group, group_size_inc, '', "NSPEC", NSPEC_CRUST_MANTLE)
-
-    ! defines all arrays
-    if (USE_ISO_KERNELS) then
-      ! for 3 parameters: (bulk_c, bulk_beta, rho)
-      is = 1; ie = 3
-    else if (USE_ALPHA_BETA_RHO) then
-      ! for 3 parameters: (alpha, beta, rho)
-      is = 4; ie = 6
-    else
-      ! for 4 parameters: (bulk_c, bulk_betav, bulk_betah, eta)
-      is = 7; ie = 10
-    endif
-    do iker = is,ie
-      local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE
-      call define_adios_global_array1D(group, group_size_inc, local_dim, '', trim(kl_name(iker)), total_kernel(:,:,:,:))
-    enddo
-
-    ! opens new adios model file
-    write(k_file,'(a)') 'OUTPUT_SUM/' // 'kernels_sum.bp'
-    call open_file_adios_write(k_file,group_name)
-    call set_adios_group_size(group_size_inc)
-
-    ! writes nspec
-    call write_adios_scalar_int("NSPEC",NSPEC_CRUST_MANTLE)
-
-    ! closes file
-    call close_file_adios()
-  endif
-
-  ! choose corresponding ADIOS kernel name
-  select case (trim(kernel_name))
-  case ('bulk_c_kernel')
-    kernel_name_adios = kl_name(1)
-  case ('bulk_beta_kernel')
-    kernel_name_adios = kl_name(2)
-  case ('rho_kernel')
-    kernel_name_adios = kl_name(3)
-  case ('alpha_kernel')
-    kernel_name_adios = kl_name(4)
-  case ('beta_kernel')
-    kernel_name_adios = kl_name(5)
-  !case ('rho_kernel')
-  !  kernel_name_adios = kl_name(6)
-  !case ('bulk_c_kernel')
-  !  kernel_name_adios = kl_name(7)
-  case ('bulk_betav_kernel')
-    kernel_name_adios = kl_name(8)
-  case ('bulk_betah_kernel')
-    kernel_name_adios = kl_name(9)
-  case ('eta_kernel')
-    kernel_name_adios = kl_name(10)
-  case default
-    print *,'Error kernel name not recognized for ADIOS: ',trim(kernel_name)
-    stop 'Kernel name not recognized for ADIOS'
-  end select
-#endif
-
   ! loops over all event kernels
   do iker = 1, nker
     ! user output
     if (myrank == 0) then
-#ifdef USE_ADIOS_INSTEAD_OF_MESH
-    write(*,*) 'reading in event kernel for: ',trim(kernel_name_adios)
-#else
     write(*,*) 'reading in event kernel for: ',trim(kernel_name)
-#endif
     write(*,*) '    ',iker, ' out of ', nker
     endif
 
     ! sensitivity kernel / frechet derivative
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
-    write(k_file,'(a,a)') 'INPUT_KERNELS/'//trim(kernel_list(iker)),'/kernels.bp'
+    ! ADIOS
+    ! reads existing event kernel file
+    write(file_name,'(a,a)') 'INPUT_KERNELS/'//trim(kernel_list(iker)),'/kernels.bp'
     ! debug
-    !write(*,*) 'adios kernel name: ',trim(kernel_name_adios)
-    !write(*,*) 'adios file: ',trim(k_file)
+    !print *,'adios file: ',trim(file_name)
+    !print *,'adios kernel: ',kernel_name
+
     ! reads adios file
-    call open_file_adios_read(k_file)
-    call read_adios_array_gll(myrank,NSPEC_CRUST_MANTLE,trim(kernel_name_adios),kernel(:,:,:,:))
-    call close_file_adios_read()
+    call open_file_adios_read_and_init_method(myadios_file,myadios_group,file_name)
+
+    ! gets kernel value
+    call read_adios_array(myadios_file,myadios_group,myrank,NSPEC_CRUST_MANTLE,trim(kernel_name),kernel(:,:,:,:))
+
+    ! closes read file
+    call close_file_adios_read_and_finalize_method(myadios_file)
 #else
-    write(k_file,'(a,i6.6,a)') 'INPUT_KERNELS/'//trim(kernel_list(iker)) &
-                               //'/proc',myrank,trim(REG)//trim(kernel_name)//'.bin'
+    ! default binary
+    write(file_name,'(a,i6.6,a)') 'INPUT_KERNELS/'//trim(kernel_list(iker)) &
+                                  //'/proc',myrank,trim(REG)//trim(kernel_name)//'.bin'
     ! reads binary file
-    call read_kernel_binary(k_file,NSPEC_CRUST_MANTLE,kernel)
+    call read_kernel_binary(file_name,NSPEC_CRUST_MANTLE,kernel)
 #endif
 
     ! outputs norm of kernel
@@ -361,9 +339,9 @@ end program sum_kernels_globe
     ! source mask
     if (USE_SOURCE_MASK) then
       ! reads in mask
-      write(k_file,'(a,i6.6,a)') 'INPUT_KERNELS/'//trim(kernel_list(iker)) &
-                                 //'/proc',myrank,trim(REG)//'mask_source.bin'
-      call read_kernel_binary(k_file,NSPEC_CRUST_MANTLE,mask_source)
+      write(file_name,'(a,i6.6,a)') 'INPUT_KERNELS/'//trim(kernel_list(iker)) &
+                                    //'/proc',myrank,trim(REG)//'mask_source.bin'
+      call read_kernel_binary(file_name,NSPEC_CRUST_MANTLE,mask_source)
 
       ! masks source elements
       kernel = kernel * mask_source
@@ -375,27 +353,30 @@ end program sum_kernels_globe
 
   ! user output
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
-  if (myrank == 0) write(*,*) 'writing out summed kernel for: ',trim(kernel_name_adios),' into file kernels_sum.bp'
+  if (myrank == 0) write(*,*) 'writing out summed kernel for: ',trim(kernel_name),' into file kernels_sum.bp'
 #else
   if (myrank == 0) write(*,*) 'writing out summed kernel for: ',trim(kernel_name)
 #endif
 
   ! stores summed kernels
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
-  ! appends to adios file
-  write(k_file,'(a)') 'OUTPUT_SUM/' // 'kernels_sum.bp'
-  call open_file_adios_write_append(k_file,group_name)
-  call set_adios_group_size(group_size_inc)
-  ! writes previously defined ADIOS variables
-  call write_adios_array_gll(myrank,NSPEC_CRUST_MANTLE,trim(kernel_name_adios),total_kernel(:,:,:,:))
-  ! closing performs actual write
-  call close_file_adios()
+  ! ADIOS
+  ! writes summed kernel result
+  call write_adios_array_gll(myadios_val_file,myadios_val_group,myrank,sizeprocs_adios,NSPEC_CRUST_MANTLE, &
+                             trim(kernel_name),total_kernel(:,:,:,:))
+  ! sync adios2 writes before loosing the temporary scope of the arrays
+  if (is_adios_version2) call write_adios_perform(myadios_val_file)
 #else
-  write(k_file,'(a,i6.6,a)') 'OUTPUT_SUM/proc',myrank,trim(REG)//trim(kernel_name)//'.bin'
-  call write_kernel_binary(k_file,NSPEC_CRUST_MANTLE,total_kernel)
+  ! default binary
+  write(file_name,'(a,i6.6,a)') 'OUTPUT_SUM/proc',myrank,trim(REG)//trim(kernel_name)//'.bin'
+  call write_kernel_binary(file_name,NSPEC_CRUST_MANTLE,total_kernel)
 #endif
 
-  if (myrank == 0) write(*,*)
+  if (myrank == 0) then
+    ! min/max
+    write(*,*) '  slice rank 0 has min/max value = ',minval(total_kernel(:,:,:,:)),"/",maxval(total_kernel(:,:,:,:))
+    write(*,*)
+  endif
 
   ! frees memory
   deallocate(kernel,total_kernel)
@@ -468,3 +449,124 @@ end program sum_kernels_globe
   close(IOUT)
 
   end subroutine write_kernel_binary
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
+! ADIOS only
+
+  subroutine open_sum_file(adios_kl_names)
+
+  use tomography_par
+
+  use adios_helpers_mod
+  use manager_adios
+
+  implicit none
+
+  character(len=MAX_STRING_LEN),dimension(10), intent(in) :: adios_kl_names
+
+  ! local parameters
+  integer :: is,ie,iker
+  integer :: local_dim
+  integer(kind=8) :: group_size_inc
+  character(len=MAX_STRING_LEN) :: file_name
+  real(kind=CUSTOM_REAL), dimension(1,1,1,1) :: val_dummy
+
+  ! ADIOS
+  ! start setting up full file group size
+  ! i/o group for reading in event kernels
+  call init_adios_group(myadios_group,"KernelReader")
+
+  ! i/o group to write out summed kernel values
+  call init_adios_group(myadios_val_group,"KERNELS_GROUP")
+
+  ! defines variables and group size
+  group_size_inc = 0
+  call define_adios_scalar(myadios_val_group, group_size_inc, '', "NSPEC", NSPEC_CRUST_MANTLE)
+  call define_adios_scalar(myadios_val_group, group_size_inc, '', "reg1/nspec", NSPEC_CRUST_MANTLE)
+
+  ! defines all arrays
+  if (USE_ISO_KERNELS) then
+    ! for 3 parameters: (bulk_c, bulk_beta, rho)
+    is = 1; ie = 3
+  else if (USE_ALPHA_BETA_RHO) then
+    ! for 3 parameters: (alpha, beta, rho)
+    is = 4; ie = 6
+  else
+    ! for 4 parameters: (bulk_c, bulk_betav, bulk_betah, eta)
+    is = 7; ie = 10
+  endif
+  do iker = is,ie
+    local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, '', trim(adios_kl_names(iker)), val_dummy)
+  enddo
+
+  ! opens new adios model file
+  write(file_name,'(a)') 'OUTPUT_SUM/' // 'kernels_sum.bp'
+  call open_file_adios_write(myadios_val_file,myadios_val_group,file_name,"KERNELS_GROUP")
+
+  call set_adios_group_size(myadios_val_file,group_size_inc)
+
+  ! initially writes nspec (for checking and backward compatibility)
+  call write_adios_scalar(myadios_val_file,myadios_val_group,"NSPEC",NSPEC_CRUST_MANTLE)
+  call write_adios_scalar(myadios_val_file,myadios_val_group,"reg1/nspec",NSPEC_CRUST_MANTLE)
+
+  end subroutine open_sum_file
+
+!-------------------------------------------------------------------------------------------------
+
+  subroutine close_sum_file()
+
+  use manager_adios
+
+  implicit none
+
+  ! closes summed kernel file
+  call close_file_adios(myadios_val_file)
+
+  end subroutine close_sum_file
+
+!-------------------------------------------------------------------------------------------------
+
+  subroutine get_adios_kernel_name(kernel_name,adios_kl_names)
+
+  use constants, only: MAX_STRING_LEN
+
+  implicit none
+
+  character(len=MAX_STRING_LEN), intent(inout) :: kernel_name
+  character(len=MAX_STRING_LEN),dimension(10), intent(in) :: adios_kl_names
+
+  ! choose corresponding ADIOS kernel name
+  select case (trim(kernel_name))
+  case ('bulk_c_kernel')
+    kernel_name = trim(adios_kl_names(1))
+  case ('bulk_beta_kernel')
+    kernel_name = trim(adios_kl_names(2))
+  case ('rho_kernel')
+    kernel_name = trim(adios_kl_names(3))
+  case ('alpha_kernel')
+    kernel_name = trim(adios_kl_names(4))
+  case ('beta_kernel')
+    kernel_name = trim(adios_kl_names(5))
+  !case ('rho_kernel')
+  !  kernel_name = trim(adios_kl_names(6))
+  !case ('bulk_c_kernel')
+  !  kernel_name = trim(adios_kl_names(7))
+  case ('bulk_betav_kernel')
+    kernel_name = trim(adios_kl_names(8))
+  case ('bulk_betah_kernel')
+    kernel_name = trim(adios_kl_names(9))
+  case ('eta_kernel')
+    kernel_name = trim(adios_kl_names(10))
+  case default
+    print *,'Error kernel name not recognized for ADIOS: ',trim(kernel_name)
+    stop 'Kernel name not recognized for ADIOS'
+  end select
+
+  end subroutine get_adios_kernel_name
+
+#endif  /* USE_ADIOS_INSTEAD_OF_MESH */

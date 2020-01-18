@@ -54,10 +54,9 @@ cd $currentdir
 
 # copy executables
 mkdir -p bin
-rm -rf bin/*
-cp ../../bin/xmeshfem3D ./bin/
-cp ../../bin/xspecfem3D ./bin/xspecfem3D.kernel
-cp ../../bin/xcombine_vol_data* ./bin/
+rm -rf bin/x*
+cp -v ../../bin/x* ./bin/
+cp -v ../../bin/xspecfem3D ./bin/xspecfem3D.kernel
 
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi

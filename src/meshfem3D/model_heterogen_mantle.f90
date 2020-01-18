@@ -293,7 +293,7 @@
 !
 !  use constants, only: IOUT,MAX_STRING_LEN,myrank
 !  use model_heterogen_mantle_par
-!
+!  use manager_adios
 !  implicit none
 !
 !  character(len=MAX_STRING_LEN),intent(in) :: prname
@@ -305,11 +305,11 @@
 !
 !  ! set the adios group size to 0 before incremented by calls to helpers functions.
 !  group_size_inc = 0
-!  call init_adios_group(adios_group,group_name)
+!  call init_adios_group(myadios_group,group_name)
 !
 !  !--- Define ADIOS variables -----------------------------
 !  local_dim = size (dvpstore)
-!  call define_adios_global_array1D(adios_group, group_size_inc, &
+!  call define_adios_global_array1D(myadios_group, group_size_inc, &
 !                                   local_dim, region_name, &
 !                                   "dvp", dvpstore)
 !  !--- Open an ADIOS handler to the restart file. ---------
@@ -319,18 +319,20 @@
 !
 !  if (num_regions_written == 0) then
 !    ! opens file for writing
-!    call open_file_adios_write(outputname,group_name)
+!    call open_file_adios_write(myadios_file,myadios_group,outputname,group_name)
 !  else
 !    ! opens file for writing in append mode
-!    call open_file_adios_write_append(outputname,group_name)
+!    call open_file_adios_write_append(myadios_file,myadios_group,outputname,group_name)
 !  endif
-!  call set_adios_group_size(group_size_inc)
+!  call set_adios_group_size(myadios_file,group_size_inc)
 !
-!  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, trim(region_name) // "dvp", dvpstore)
+!  call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs_adios, &
+!                                   local_dim, trim(region_name) // "dvp", dvpstore)
 !
 !  !--- Reset the path to zero and perform the actual write to disk
+!  call write_adios_perform(myadios_file)
 !  ! closes file
-!  call close_file_adios()
+!  call close_file_adios(myadios_file)
 !
 !  end subroutine model_heterogen_mantle_output_dvp_adios
 

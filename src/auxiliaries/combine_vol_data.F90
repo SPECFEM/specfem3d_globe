@@ -36,9 +36,9 @@ program combine_vol_data
 ! VTK combines proc***_vs.bin files with high-resolution output to *.vtk file in OUTPUT_FILES/ directory:
 ! > ./bin/xcombine_vol_data_vtk slices_all.txt vs DATABASES_MPI/ DATABASES_MPI/ OUTPUT_FILES/ 1
 !
-! VTK ADIOS combines vsv arrays from ADIOS solver_meshfiles.bp in low-resolution and region 1 only:
+! VTK ADIOS combines vsv arrays from ADIOS model_gll.bp in low-resolution and region 1 only:
 ! > mpirun -np 1 ./bin/xcombine_vol_data_vtk_adios slices_all.txt vsv \
-!      DATABASES_MPI/solver_meshfiles.bp DATABASES_MPI/solver_data.bp OUTPUT_FILES/ 0 1
+!      DATABASES_MPI/model_gll.bp DATABASES_MPI/solver_data.bp OUTPUT_FILES/ 0 1
 !
 ! VTK ADIOS kernels:
 ! > mpirun -np 1 ./bin/xcombine_vol_data_vtk_adios slices_all.txt alpha_kl \
@@ -54,7 +54,6 @@ program combine_vol_data
   ! combines the database files on several slices.
   ! the local database file needs to have been collected onto the frontend (copy_local_database.pl)
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
-  use adios_read_mod
   use combine_vol_data_adios_mod
 #endif
 
@@ -122,9 +121,9 @@ program combine_vol_data
 #endif
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
+  ! ADIOS
   integer :: sizeprocs, myrank
   character(len=MAX_STRING_LEN) :: value_file_name, mesh_file_name
-  integer(kind=8) :: value_handle, mesh_handle
   integer,parameter :: MAX_NUM_NODES = 2000
 #else
   integer :: iregion,njunk
@@ -141,8 +140,8 @@ program combine_vol_data
   ! starts here---------------------------------------------------------------
   ier = 0 ! avoids compiler warning in case of ADIOS and VTK output
 
-  ! ADIOS MPI initialization
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
+  ! ADIOS MPI initialization
   ! starts mpi
   call init_mpi()
   call world_size(sizeprocs)
@@ -166,7 +165,34 @@ program combine_vol_data
              stop 'This program needs that NSPEC_CRUST_MANTLE > NSPEC_OUTER_CORE and NSPEC_INNER_CORE'
 
   ! reads input arguments
-#ifndef USE_ADIOS_INSTEAD_OF_MESH
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
+  ! ADIOS
+  ! input arguments
+  do i = 1, 7
+    call get_command_argument(i,arg(i))
+  enddo
+
+  ! temporary
+  allocate(node_list(MAX_NUM_NODES),stat=ier)
+  if (ier /= 0) stop 'Error allocating list arrays'
+
+  call read_args_adios(arg, MAX_NUM_NODES, node_list, num_node, &
+                       var_name, value_file_name, mesh_file_name, &
+                       outdir, ires, irs, ire, NPROCTOT_VAL)
+
+  allocate(nspec_list(num_node),nglob_list(num_node), stat=ier)
+  if (ier /= 0) stop 'Error allocating list arrays'
+  ! temporary copy
+  nspec_list(1:num_node) = node_list(1:num_node)
+  ! re-allocate with only required size
+  deallocate(node_list)
+  allocate(node_list(num_node),stat=ier)
+  if (ier /= 0) stop 'Error allocating array node_list'
+  node_list(:) = nspec_list(:)
+  nspec_list(:) = 0
+  nglob_list(:) = 0
+#else
+  ! default
   do i = 1, 7
     call get_command_argument(i,arg(i))
 
@@ -278,33 +304,6 @@ program combine_vol_data
 
   ! resolution
   read(arg(6),*) ires
-
-#else
-  ! ADIOS input arguments
-  do i = 1, 7
-    call get_command_argument(i,arg(i))
-  enddo
-
-  ! temporary
-  allocate(node_list(MAX_NUM_NODES),stat=ier)
-  if (ier /= 0) stop 'Error allocating list arrays'
-
-  call read_args_adios(arg, MAX_NUM_NODES, node_list, num_node, &
-                       var_name, value_file_name, mesh_file_name, &
-                       outdir, ires, irs, ire, NPROCTOT_VAL)
-
-  allocate(nspec_list(num_node),nglob_list(num_node), stat=ier)
-  if (ier /= 0) stop 'Error allocating list arrays'
-  ! temporary copy
-  nspec_list(1:num_node) = node_list(1:num_node)
-  ! re-allocate with only required size
-  deallocate(node_list)
-  allocate(node_list(num_node),stat=ier)
-  if (ier /= 0) stop 'Error allocating array node_list'
-  node_list(:) = nspec_list(:)
-  nspec_list(:) = 0
-  nglob_list(:) = 0
-
 #endif
 
   filename = var_name
@@ -314,6 +313,9 @@ program combine_vol_data
   print *, node_list(1:num_node)
   print *, ' '
   print *, 'regions: start =', irs, ' to end =', ire
+
+  ! checks
+  if (num_node < 1) stop 'Error need at least one slice for combining data arrays, please check your input arguments...'
 
   ! sets up loop increments
   di = 0
@@ -361,7 +363,9 @@ program combine_vol_data
   if (CORRECT_ELLIPTICITY) call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
-  call init_adios(value_file_name, mesh_file_name, value_handle, mesh_handle)
+  ! ADIOS
+  ! opens single mesh file
+  call init_adios(value_file_name, mesh_file_name)
 #endif
 
   do ir = irs, ire
@@ -391,11 +395,15 @@ program combine_vol_data
 
       print *, 'Reading slice ', iproc
 
-#ifndef USE_ADIOS_INSTEAD_OF_MESH
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
+      ! ADIOS
+      ! reads mesh nglob & nspec
+      call read_scalars_adios_mesh(iproc, ir, nglob, nspec)
+#else
+      ! default binary
       write(prname_topo,'(a,i6.6,a,i1,a)') trim(in_topo_dir)//'/proc',iproc,'_reg',ir,'_'
-      write(prname_file,'(a,i6.6,a,i1,a)') trim(in_file_dir)//'/proc',iproc,'_reg',ir,'_'
-
       dimension_file = trim(prname_topo) //'solver_data.bin'
+
       open(unit = IIN,file = trim(dimension_file),status='old',action='read', iostat = ier, form='unformatted')
       if (ier /= 0) then
         print *,'Error ',ier
@@ -405,19 +413,24 @@ program combine_vol_data
       read(IIN) nspec
       read(IIN) nglob
       close(IIN)
-#else
-      ! adios reading
-      call read_scalars_adios_mesh(mesh_handle, iproc, ir, nglob, nspec)
 #endif
       nspec_list(it) = nspec
       nglob_list(it) = nglob
 
       !debug
-      !print *,'nglob / nspec = ',nglob_list(it),' / ',nspec_list(it)
+      print *,'nglob / nspec = ',nglob_list(it),' / ',nspec_list(it)
 
       ! check
-      if (nspec_list(it) > NSPEC_CRUST_MANTLE ) stop 'Error file nspec too big, please check compilation'
-      if (nglob_list(it) > NGLOB_CRUST_MANTLE ) stop 'Error file nglob too big, please check compilation'
+      if (nspec_list(it) > NSPEC_CRUST_MANTLE ) then
+        print *,'Error: found nspec ',nspec_list(it),' should be ',NSPEC_CRUST_MANTLE
+        print *,'Please consider re-compiling tool for corresponding file setup...'
+        stop 'Error file nspec too big, please check compilation'
+      endif
+      if (nglob_list(it) > NGLOB_CRUST_MANTLE ) then
+        print *,'Error: found nglob ',nglob_list(it),' should be ',NGLOB_CRUST_MANTLE
+        print *,'Please consider re-compiling tool for corresponding file setup...'
+        stop 'Error file nglob too big, please check compilation'
+      endif
 
       ! theoretical number of points and elements
       npoint(it) = nglob_list(it)
@@ -468,51 +481,25 @@ program combine_vol_data
       ! gets slice id (process id)
       iproc = node_list(it)
 
-      ! initializes data values
-      data(:,:,:,:) = -1.e10
-
       ! output info
       print *, ' '
-      print *, 'Reading slice ', iproc
-
-      ! reads in kernel/data values
-#ifndef USE_ADIOS_INSTEAD_OF_MESH
-      write(prname_topo,'(a,i6.6,a,i1,a)') trim(in_topo_dir)//'/proc',iproc,'_reg',ir,'_'
-      write(prname_file,'(a,i6.6,a,i1,a)') trim(in_file_dir)//'/proc',iproc,'_reg',ir,'_'
-
-      ! filename.bin
-      data_file = trim(prname_file) // trim(filename) // '.bin'
-
-      open(unit = IIN,file = trim(data_file),status='old',action='read', iostat = ier,form ='unformatted')
-      if (ier /= 0) then
-        print *,'Error opening file: ',trim(data_file)
-        stop 'Error opening file'
-      endif
-      read(IIN,iostat=ier) data(:,:,:,1:nspec_list(it))
-      if (ier /= 0) then
-        print *,'Error reading file: ',trim(data_file)
-        stop 'Error reading data'
-      endif
-      close(IIN)
-#else
-      ! adios reading
-      call read_values_adios(value_handle, var_name, iproc, ir, nspec_list(it), data)
-      data_file = trim(var_name)
-#endif
-      ! output info
-      print *,trim(data_file)
-      print *,'  min/max value: ',minval(data(:,:,:,1:nspec_list(it))),maxval(data(:,:,:,1:nspec_list(it)))
-      print *
+      print *, 'Reading mesh slice ', iproc
 
       ! topology file
       ! reads in mesh coordinates and local-to-global mapping (ibool)
-#ifndef USE_ADIOS_INSTEAD_OF_MESH
-      data_file = trim(prname_topo) // 'solver_data.bin'
-      !print *, trim(data_file)
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
+      ! ADIOS
+      ! reads mesh
+      call read_coordinates_adios_mesh(iproc, ir, nglob_list(it), nspec_list(it), xstore, ystore, zstore, ibool)
+#else
+      ! default binary
+      write(prname_topo,'(a,i6.6,a,i1,a)') trim(in_topo_dir)//'/proc',iproc,'_reg',ir,'_'
+      dimension_file = trim(prname_topo) // 'solver_data.bin'
+      !print *, trim(dimension_file)
 
-      open(unit = IIN,file = trim(data_file),status='old',action='read', iostat = ier, form='unformatted')
+      open(unit = IIN,file = trim(dimension_file),status='old',action='read', iostat = ier, form='unformatted')
       if (ier /= 0) then
-        print *,'Error opening file: ',trim(data_file)
+        print *,'Error opening file: ',trim(dimension_file)
         stop 'Error opening topo file'
       endif
       xstore(:) = 0.0
@@ -527,10 +514,44 @@ program combine_vol_data
       read(IIN) ibool(:,:,:,1:nspec_list(it))
       if (ir == 3) read(IIN) idoubling_inner_core(1:nspec_list(it)) ! flag that can indicate fictitious elements
       close(IIN)
-#else
-      ! adios reading
-      call read_coordinates_adios_mesh(mesh_handle, iproc, ir, nglob_list(it), nspec_list(it), xstore, ystore, zstore, ibool)
 #endif
+
+      ! reads data
+      ! initializes data values
+      data(:,:,:,:) = -1.e10
+
+      ! output info
+      print *, ' '
+      print *, 'Reading data values for slice ', iproc
+
+      ! reads in kernel/data values
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
+      ! ADIOS
+      ! reads values
+      call read_values_adios(var_name, iproc, ir, nspec_list(it), data)
+      data_file = trim(var_name)
+#else
+      ! default binary
+      write(prname_file,'(a,i6.6,a,i1,a)') trim(in_file_dir)//'/proc',iproc,'_reg',ir,'_'
+      ! filename.bin
+      data_file = trim(prname_file) // trim(filename) // '.bin'
+
+      open(unit = IIN,file = trim(data_file),status='old',action='read', iostat = ier,form ='unformatted')
+      if (ier /= 0) then
+        print *,'Error opening file: ',trim(data_file)
+        stop 'Error opening file'
+      endif
+      read(IIN,iostat=ier) data(:,:,:,1:nspec_list(it))
+      if (ier /= 0) then
+        print *,'Error reading file: ',trim(data_file)
+        stop 'Error reading data'
+      endif
+      close(IIN)
+#endif
+      ! output info
+      print *,trim(data_file)
+      print *,'  min/max value: ',minval(data(:,:,:,1:nspec_list(it))),maxval(data(:,:,:,1:nspec_list(it)))
+      print *
 
       !average data on global points
       if (AVERAGE_GLOBALPOINTS) then
@@ -758,6 +779,7 @@ program combine_vol_data
     print *,'written: ',trim(mesh_file)
     print *
 #else
+    ! .mesh
     call close_file_fd(pfd)
     call close_file_fd(efd)
 
@@ -775,7 +797,8 @@ program combine_vol_data
   enddo
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
-  call clean_adios(value_handle, mesh_handle)
+  ! ADIOS
+  call clean_adios()
   ! shuts down mpi
   call finalize_mpi()
 #endif

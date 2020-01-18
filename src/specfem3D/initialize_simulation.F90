@@ -30,7 +30,6 @@
   use specfem_par
   use specfem_par_movie
   use manager_adios
-  use manager_adios2
 
   implicit none
 
@@ -270,20 +269,12 @@
     if (myrank == 0 ) call initialize_vtkwindow(GPU_MODE)
   endif
 
+  ! ADIOS
   if (ADIOS_ENABLED) then
-#ifdef HAVE_ADIOS2
-    call initialize_adios2()
-#endif
     call initialize_adios()
   endif
-  !if (ADIOS_ENABLED) then
-    ! TODO use only one ADIOS group to write simulation parameters
-    !      i.e. merge write_solver... write_par_... into
-    !      write_specfem3D_globe_adios_header()
-    !call write_solver_info_header_ADIOS()
-    !call write_specfem_header_adios()
-  !endif
 
+  ! ASDF
   if ((SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) .and. READ_ADJSRC_ASDF) then
     call asdf_setup(current_asdf_handle, path_to_add, simul_run_flag)
   endif

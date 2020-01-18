@@ -61,7 +61,6 @@ module adios2_helpers_read_mod
   !! \param func Calling function string (for error print)
   !! \param step (optional) step to read from a multi-step file
 
-
   interface read_adios2
     module procedure read_adios2_integer_1d
     module procedure read_adios2_integer_2d
@@ -95,7 +94,8 @@ contains
 
 !> Check ADIOS return code, print a message and abort on error
 !! \param adios2_err The error code considered.
-subroutine check_adios2_err(myrank, adios2_err, sourcefile, func, msg)
+  subroutine check_adios2_err(myrank, adios2_err, sourcefile, func, msg)
+
   implicit none
   integer, intent(in) :: myrank, adios2_err
   character(len=*), intent(in) :: sourcefile, func, msg
@@ -103,9 +103,10 @@ subroutine check_adios2_err(myrank, adios2_err, sourcefile, func, msg)
   if (adios2_err /= adios2_error_none) then
     print *, "process ", myrank, "has ADIOS2 error ",adios2_err,' in ', &
     trim(sourcefile), ':', trim(func), ": ", trim(msg)
-    stop 'adios error'
+    stop 'ADIOS2 error'
   endif
-end subroutine check_adios2_err
+
+  end subroutine check_adios2_err
 
 
 !===============================================================================
@@ -130,8 +131,8 @@ end subroutine check_adios2_err
   call check_adios2_err(rank, ier, src, func, "Inquire variable "//trim(varname))              _NL_\
   call adios2_set_selection(var, ndims, start, count, ier)                                     _NL_\
   if (present(step)) then                                                                      _NL_\
-      call adios2_set_step_selection(var, step, 1_8, ier)                                      _NL_\
-      call check_adios2_err(rank, ier, src, func, "Set step variable("//trim(varname)//")")    _NL_\
+    call adios2_set_step_selection(var, step, 1_8, ier)                                        _NL_\
+    call check_adios2_err(rank, ier, src, func, "Set step variable("//trim(varname)//")")      _NL_\
   endif                                                                                        _NL_\
   call adios2_get(file, var, data, adios2_mode_sync, ier)                                      _NL_\
   call check_adios2_err(rank, ier, src, func, "Read variable("//trim(varname)//")")
@@ -164,163 +165,163 @@ end subroutine check_adios2_err
 !! \param data Pre-allocated array to receive the data from file
 !! \param src Sourcefile string (for error print)
 !! \param func Calling function string (for error print)
-subroutine read_adios2_real_1d(file, io, varname, ndims, start, count, data, rank, src,func,step)
-CODE_ARGS
+  subroutine read_adios2_real_1d(file, io, varname, ndims, start, count, data, rank, src,func,step)
+  CODE_ARGS
   real(kind=4), dimension(:), intent(out) :: data
-CODE_BODY
-end subroutine read_adios2_real_1d
+  CODE_BODY
+  end subroutine read_adios2_real_1d
 
 
 !===============================================================================
-subroutine read_adios2_real_2d(file, io, varname, ndims, start, count, data, rank, src,func,step)
-CODE_ARGS
+  subroutine read_adios2_real_2d(file, io, varname, ndims, start, count, data, rank, src,func,step)
+  CODE_ARGS
   real(kind=4), dimension(:,:), intent(out) :: data
-CODE_BODY
-end subroutine read_adios2_real_2d
+  CODE_BODY
+  end subroutine read_adios2_real_2d
 
 
 !===============================================================================
-subroutine read_adios2_real_3d(file, io, varname, ndims, start, count, data, rank, src,func,step)
-CODE_ARGS
+  subroutine read_adios2_real_3d(file, io, varname, ndims, start, count, data, rank, src,func,step)
+  CODE_ARGS
   real(kind=4), dimension(:,:,:), intent(out) :: data
-CODE_BODY
-end subroutine read_adios2_real_3d
+  CODE_BODY
+  end subroutine read_adios2_real_3d
 
 
 !===============================================================================
-subroutine read_adios2_real_4d(file, io, varname, ndims, start, count, data, rank, src,func,step)
-CODE_ARGS
+  subroutine read_adios2_real_4d(file, io, varname, ndims, start, count, data, rank, src,func,step)
+  CODE_ARGS
   real(kind=4), dimension(:,:,:,:), intent(out) :: data
-CODE_BODY
-end subroutine read_adios2_real_4d
+  CODE_BODY
+  end subroutine read_adios2_real_4d
 
 
 !===============================================================================
-subroutine read_adios2_real_5d(file, io, varname, ndims, start, count, data, rank, src,func,step)
-CODE_ARGS
+  subroutine read_adios2_real_5d(file, io, varname, ndims, start, count, data, rank, src,func,step)
+  CODE_ARGS
   real(kind=4), dimension(:,:,:,:,:), intent(out) :: data
-CODE_BODY
-end subroutine read_adios2_real_5d
+  CODE_BODY
+  end subroutine read_adios2_real_5d
 
 
 !===============================================================================
-subroutine read_adios2_double_1d(file, io, varname, ndims, start, count, data, rank, src,func,step)
-CODE_ARGS
+  subroutine read_adios2_double_1d(file, io, varname, ndims, start, count, data, rank, src,func,step)
+  CODE_ARGS
   real(kind=8), dimension(:), intent(out) :: data
-CODE_BODY
-end subroutine read_adios2_double_1d
+  CODE_BODY
+  end subroutine read_adios2_double_1d
 
 
 !===============================================================================
-subroutine read_adios2_double_2d(file, io, varname, ndims, start, count, data, rank, src,func,step)
-CODE_ARGS
+  subroutine read_adios2_double_2d(file, io, varname, ndims, start, count, data, rank, src,func,step)
+  CODE_ARGS
   real(kind=8), dimension(:,:), intent(out) :: data
-CODE_BODY
-end subroutine read_adios2_double_2d
+  CODE_BODY
+  end subroutine read_adios2_double_2d
 
 
 !===============================================================================
-subroutine read_adios2_double_3d(file, io, varname, ndims, start, count, data, rank, src,func,step)
-CODE_ARGS
+  subroutine read_adios2_double_3d(file, io, varname, ndims, start, count, data, rank, src,func,step)
+  CODE_ARGS
   real(kind=8), dimension(:,:,:), intent(out) :: data
-CODE_BODY
-end subroutine read_adios2_double_3d
+  CODE_BODY
+  end subroutine read_adios2_double_3d
 
 
 !===============================================================================
-subroutine read_adios2_double_4d(file, io, varname, ndims, start, count, data, rank, src,func,step)
-CODE_ARGS
+  subroutine read_adios2_double_4d(file, io, varname, ndims, start, count, data, rank, src,func,step)
+  CODE_ARGS
   real(kind=8), dimension(:,:,:,:), intent(out) :: data
-CODE_BODY
-end subroutine read_adios2_double_4d
+  CODE_BODY
+  end subroutine read_adios2_double_4d
 
 
 !===============================================================================
-subroutine read_adios2_double_5d(file, io, varname, ndims, start, count, data, rank, src,func,step)
-CODE_ARGS
+  subroutine read_adios2_double_5d(file, io, varname, ndims, start, count, data, rank, src,func,step)
+  CODE_ARGS
   real(kind=8), dimension(:,:,:,:,:), intent(out) :: data
-CODE_BODY
-end subroutine read_adios2_double_5d
+  CODE_BODY
+  end subroutine read_adios2_double_5d
 
 
 !===============================================================================
-subroutine read_adios2_integer_1d(file, io, varname, ndims, start, count, data, rank, src,func,step)
-CODE_ARGS
+  subroutine read_adios2_integer_1d(file, io, varname, ndims, start, count, data, rank, src,func,step)
+  CODE_ARGS
   integer, dimension(:), intent(out) :: data
-CODE_BODY
-end subroutine read_adios2_integer_1d
+  CODE_BODY
+  end subroutine read_adios2_integer_1d
 
 
 !===============================================================================
-subroutine read_adios2_integer_2d(file, io, varname, ndims, start, count, data, rank, src,func,step)
-CODE_ARGS
+  subroutine read_adios2_integer_2d(file, io, varname, ndims, start, count, data, rank, src,func,step)
+  CODE_ARGS
   integer, dimension(:,:), intent(out) :: data
-CODE_BODY
-end subroutine read_adios2_integer_2d
+  CODE_BODY
+  end subroutine read_adios2_integer_2d
 
 
 !===============================================================================
-subroutine read_adios2_integer_3d(file, io, varname, ndims, start, count, data, rank, src,func,step)
-CODE_ARGS
+  subroutine read_adios2_integer_3d(file, io, varname, ndims, start, count, data, rank, src,func,step)
+  CODE_ARGS
   integer, dimension(:,:,:), intent(out) :: data
-CODE_BODY
-end subroutine read_adios2_integer_3d
+  CODE_BODY
+  end subroutine read_adios2_integer_3d
 
 
 !===============================================================================
-subroutine read_adios2_integer_4d(file, io, varname, ndims, start, count, data, rank, src,func,step)
-CODE_ARGS
+  subroutine read_adios2_integer_4d(file, io, varname, ndims, start, count, data, rank, src,func,step)
+  CODE_ARGS
   integer, dimension(:,:,:,:), intent(out) :: data
-CODE_BODY
-end subroutine read_adios2_integer_4d
+  CODE_BODY
+  end subroutine read_adios2_integer_4d
 
 
 !===============================================================================
-subroutine read_adios2_integer_5d(file, io, varname, ndims, start, count, data, rank, src,func,step)
-CODE_ARGS
+  subroutine read_adios2_integer_5d(file, io, varname, ndims, start, count, data, rank, src,func,step)
+  CODE_ARGS
   integer, dimension(:,:,:,:,:), intent(out) :: data
-CODE_BODY
-end subroutine read_adios2_integer_5d
+  CODE_BODY
+  end subroutine read_adios2_integer_5d
 
 
 !===============================================================================
-subroutine read_adios2_long_1d(file, io, varname, ndims, start, count, data, rank, src,func,step)
-CODE_ARGS
+  subroutine read_adios2_long_1d(file, io, varname, ndims, start, count, data, rank, src,func,step)
+  CODE_ARGS
   integer(kind=8), dimension(:), intent(out) :: data
-CODE_BODY
-end subroutine read_adios2_long_1d
+  CODE_BODY
+  end subroutine read_adios2_long_1d
 
 
 !===============================================================================
-subroutine read_adios2_long_2d(file, io, varname, ndims, start, count, data, rank, src,func,step)
-CODE_ARGS
+  subroutine read_adios2_long_2d(file, io, varname, ndims, start, count, data, rank, src,func,step)
+  CODE_ARGS
   integer(kind=8), dimension(:,:), intent(out) :: data
-CODE_BODY
-end subroutine read_adios2_long_2d
+  CODE_BODY
+  end subroutine read_adios2_long_2d
 
 
 !===============================================================================
-subroutine read_adios2_long_3d(file, io, varname, ndims, start, count, data, rank, src,func,step)
-CODE_ARGS
+  subroutine read_adios2_long_3d(file, io, varname, ndims, start, count, data, rank, src,func,step)
+  CODE_ARGS
   integer(kind=8), dimension(:,:,:), intent(out) :: data
-CODE_BODY
-end subroutine read_adios2_long_3d
+  CODE_BODY
+  end subroutine read_adios2_long_3d
 
 
 !===============================================================================
-subroutine read_adios2_long_4d(file, io, varname, ndims, start, count, data, rank, src,func,step)
-CODE_ARGS
+  subroutine read_adios2_long_4d(file, io, varname, ndims, start, count, data, rank, src,func,step)
+  CODE_ARGS
   integer(kind=8), dimension(:,:,:,:), intent(out) :: data
-CODE_BODY
-end subroutine read_adios2_long_4d
+  CODE_BODY
+  end subroutine read_adios2_long_4d
 
 
 !===============================================================================
-subroutine read_adios2_long_5d(file, io, varname, ndims, start, count, data, rank, src,func,step)
-CODE_ARGS
+  subroutine read_adios2_long_5d(file, io, varname, ndims, start, count, data, rank, src,func,step)
+  CODE_ARGS
   integer(kind=8), dimension(:,:,:,:,:), intent(out) :: data
-CODE_BODY
-end subroutine read_adios2_long_5d
+  CODE_BODY
+  end subroutine read_adios2_long_5d
 
 
 end module adios2_helpers_read_mod

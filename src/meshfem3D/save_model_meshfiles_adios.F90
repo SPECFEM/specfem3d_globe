@@ -50,30 +50,39 @@
     rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
     Qmu_store,Gc_prime_store,Gs_prime_store,mu0store
 
-  use adios_write_mod, only: adios_declare_group,adios_select_method
-  use adios_helpers_mod, only: define_adios_global_array1D,define_adios_scalar, &
-    write_adios_global_1d_array,check_adios_err
+  use adios_helpers_mod
   use manager_adios
 
   implicit none
 
   ! local parameters
-  integer :: i,j,k,ispec
+  integer :: i,j,k,ispec,ier
   real(kind=CUSTOM_REAL) :: scaleval1,scaleval2,scaleval,scale_GPa
-  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: temp_store
-  real(kind=CUSTOM_REAL), dimension(1,1,1,1) :: dummy_ijke
+  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: temp_store_vp,temp_store_vs,temp_store_rho,temp_store_rho_inv
+  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: temp_store_vpv,temp_store_vph,temp_store_vsv,temp_store_vsh
+  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: temp_store_mu0
+  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: temp_store_Qmu
+  real(kind=CUSTOM_REAL),dimension(1,1,1,1) :: dummy_ijke
 
   ! local parameters
   character(len=MAX_STRING_LEN) :: outputname, group_name
   integer :: local_dim
   integer(kind=8) :: group_size_inc
   ! ADIOS variables
-  integer                 :: adios_err
-  integer(kind=8)         :: adios_group
-  character(len=128)      :: region_name, region_name_scalar
+  character(len=128) :: region_name, region_name_scalar
   !--- Save the number of region written. Open the file in "w" mode if 0, else
   !    in "a"  mode
   integer, save :: num_regions_written = 0
+
+  ! user output
+  if (myrank == 0) then
+#if defined(USE_ADIOS)
+    write(IMAIN,*) '    model    in ADIOS 1 file format'
+#elif defined(USE_ADIOS2)
+    write(IMAIN,*) '    model    in ADIOS 2 file format'
+#endif
+    call flush_IMAIN()
+  endif
 
   ! scaling factors to re-dimensionalize units
   scaleval1 = sngl( sqrt(PI*GRAV*RHOAV)*(R_EARTH/1000.0d0) )
@@ -82,144 +91,172 @@
   ! isotropic model
   write(region_name,"('reg',i1, '/')") iregion_code
   write(region_name_scalar,"('reg',i1)") iregion_code
-  write(group_name,"('SPECFEM3D_GLOBE_solver_meshfiles_reg',i1)") iregion_code
+  write(group_name,"('SPECFEM3D_GLOBE_MODEL_reg',i1)") iregion_code
 
-  group_size_inc = 0
-
-  call adios_declare_group(adios_group, group_name, '', 1, adios_err)
-  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
-  !call check_adios_err(myrank,adios_err)
-
-  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, '', '', adios_err)
-  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
-  !call check_adios_err(myrank,adios_err)
+  call init_adios_group(myadios_val_group,group_name)
 
   ! save nspec and nglob, to be used in combine_paraview_data
-  call define_adios_scalar (adios_group, group_size_inc, &
+  group_size_inc = 0
+  call define_adios_scalar (myadios_val_group, group_size_inc, &
                             region_name_scalar, STRINGIFY_VAR(nspec))
-  call define_adios_scalar (adios_group, group_size_inc, &
+  call define_adios_scalar (myadios_val_group, group_size_inc, &
                             region_name_scalar, STRINGIFY_VAR(nglob))
 
+  ! array sizes
+  local_dim = NGLLX * NGLLY * NGLLZ * nspec
+
+  ! checks size
+  if (size(kappavstore) /= local_dim) then
+    print *,'Error: size kappavstore ',size(kappavstore), ' should be ',local_dim
+    call exit_mpi(myrank,'Error size kappavstore for storing meshfiles')
+  endif
+
   !--- Define ADIOS variables -----------------------------
-  !--- vp arrays -------------------------------------------
-  local_dim = size (kappavstore)
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, "vp", dummy_ijke)
-
-  !--- vs arrays -------------------------------------------
-  local_dim = size (rhostore)
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, "vs", dummy_ijke)
-
-  !--- rho arrays ------------------------------------------
-  local_dim = size (rhostore)
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, "rho", dummy_ijke)
+  ! rho
+  call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "rho", dummy_ijke)
+  ! vp
+  call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vp", dummy_ijke)
+  ! vs (will store it even for the outer core, although it should just be zero there)
+  call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vs", dummy_ijke)
 
   ! transverse isotropic model
   if (TRANSVERSE_ISOTROPY) then
-    !--- vpv arrays ----------------------------------------
-    local_dim = size (kappavstore)
-    call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, "vpv", dummy_ijke)
-
-    !--- vph arrays ----------------------------------------
-    local_dim = size (kappavstore)
-    call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, "vph", dummy_ijke)
-
-    !--- vsv arrays ----------------------------------------
-    local_dim = size (rhostore)
-    call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, "vsv", dummy_ijke)
-
-    !--- vsh arrays ----------------------------------------
-    local_dim = size (rhostore)
-    call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, "vsh", dummy_ijke)
-
-    !--- eta arrays ----------------------------------------
-    local_dim = size (eta_anisostore)
-    call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, "eta", eta_anisostore)
+    ! vpv
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vpv", dummy_ijke)
+    ! vph
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vph", dummy_ijke)
+    ! vsv
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vsv", dummy_ijke)
+    ! vsh
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vsh", dummy_ijke)
+    ! eta
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "eta", eta_anisostore)
   endif
 
   ! anisotropic values
   if (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
     ! Gc_prime
-    local_dim = size (Gc_prime_store)
-    call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, "Gc_prime", Gc_prime_store)
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "Gc_prime", Gc_prime_store)
     ! Gs_prime
-    local_dim = size (Gs_prime_store)
-    call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, "Gs_prime", Gs_prime_store)
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "Gs_prime", Gs_prime_store)
     ! mu0
-    local_dim = size (mu0store)
-    call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, "mu0", mu0store)
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "mu0", mu0store)
   endif
 
   if (ATTENUATION) then
-    !--- Qmu arrays ----------------------------------------
-    local_dim = NGLLX * NGLLY * NGLLZ * nspec
-    call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, "qmu", dummy_ijke)
+    ! Qmu
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "qmu", dummy_ijke)
   endif
 
   !--- Open an ADIOS handler to the restart file. ---------
-  outputname = trim(LOCAL_PATH) // "/solver_meshfiles.bp"
+  outputname = trim(LOCAL_PATH) // "/model_gll.bp"
 
   ! user output
-  if (myrank == 0) write(IMAIN,*) '    saving arrays in ADIOS file: ',trim(outputname)
+  if (myrank == 0) write(IMAIN,*) '    saving model meshfile arrays in ADIOS file: ',trim(outputname)
 
   if (num_regions_written == 0) then
     ! opens file for writing
-    call open_file_adios_write(outputname,group_name)
+    call open_file_adios_write(myadios_val_file,myadios_val_group,outputname,group_name)
   else
     ! opens file for writing in append mode
-    call open_file_adios_write_append(outputname,group_name)
+    call open_file_adios_write_append(myadios_val_file,myadios_val_group,outputname,group_name)
   endif
-  call set_adios_group_size(group_size_inc)
+
+  call set_adios_group_size(myadios_val_file,group_size_inc)
 
   ! save nspec and nglob, to be used in combine_paraview_data
-  call adios_write(file_handle_adios, trim(region_name) // "nspec", nspec, adios_err)
-  call check_adios_err(myrank,adios_err)
-  call adios_write(file_handle_adios, trim(region_name) // "nglob", nglob, adios_err)
-  call check_adios_err(myrank,adios_err)
+  call write_adios_scalar(myadios_val_file,myadios_val_group,trim(region_name) // "nspec",nspec)
+  call write_adios_scalar(myadios_val_file,myadios_val_group,trim(region_name) // "nglob",nglob)
+
+! note: the following uses temporary arrays for array expressions like sqrt( (kappavstore+..)).
+!       since the write_adios_** calls might be in deferred mode, these temporary arrays should be valid
+!       until a perform/close/end_step call is done.
+!
+!       as a work-around, we will explicitly allocate temporary arrays and deallocate them after the file close.
+
+  allocate(temp_store_vp(NGLLX,NGLLY,NGLLZ,nspec), &
+           temp_store_vs(NGLLX,NGLLY,NGLLZ,nspec), &
+           temp_store_rho(NGLLX,NGLLY,NGLLZ,nspec),stat=ier)
+  if (ier /= 0) stop 'Error allocating temp vp,.. arrays'
+  temp_store_vp(:,:,:,:) = 0.0_CUSTOM_REAL
+  temp_store_vs(:,:,:,:) = 0.0_CUSTOM_REAL
+  temp_store_rho(:,:,:,:) = 0.0_CUSTOM_REAL
+
+  allocate(temp_store_rho_inv(NGLLX,NGLLY,NGLLZ,nspec),stat=ier)
+  if (ier /= 0) stop 'Error allocating temp rho_inv array'
+
+  ! this might have issues when rho is zero in ficticious inner core elements:
+  !temp_store_rho(:,:,:,:) = rhostore(:,:,:,:) * scaleval2
+  !temp_store_vp(:,:,:,:) = sqrt( (kappavstore + 4.0_CUSTOM_REAL * muvstore/3.00_CUSTOM_REAL)/rhostore ) * scaleval1
+  !temp_store_vs(:,:,:,:) = sqrt( muvstore/rhostore ) * scaleval1
+  !
+  ! takes inverse of rho, avoiding zero values in ficticious elements:
+  temp_store_rho_inv(:,:,:,:) = rhostore(:,:,:,:)
+  where(temp_store_rho_inv(:,:,:,:) <= 0.0_CUSTOM_REAL) temp_store_rho_inv = 1.0_CUSTOM_REAL
+  temp_store_rho_inv = 1.0_CUSTOM_REAL / temp_store_rho_inv
+
+  ! rho: for storing, we take the original rho and dimensionalize it
+  temp_store_rho(:,:,:,:) = rhostore(:,:,:,:) * scaleval2
+  ! vp
+  temp_store_vp(:,:,:,:) = sqrt( (kappavstore + 4.0_CUSTOM_REAL * muvstore/3.0_CUSTOM_REAL) * temp_store_rho_inv ) * scaleval1
+  ! vs
+  temp_store_vs(:,:,:,:) = sqrt( muvstore * temp_store_rho_inv ) * scaleval1
 
   !--- Schedule writes for the previously defined ADIOS variables
-  ! TODO Try the new write helpers routines
-  !--- vp arrays -------------------------------------------
-  local_dim = size (kappavstore)
-  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, trim(region_name) // "vp", &
-                                   sqrt( (kappavstore+4.*muvstore/3.)/rhostore )*scaleval1)
-
-  !--- vs arrays -------------------------------------------
-  local_dim = size (rhostore)
-  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, trim(region_name) // "vs", &
-                                   sqrt( muvstore/rhostore )*scaleval1 )
-
-  !--- rho arrays ------------------------------------------
-  local_dim = size (rhostore)
-  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, trim(region_name) // "rho", &
-                                   rhostore *scaleval2)
+  ! rho
+  call write_adios_global_1d_array(myadios_val_file, myadios_val_group, myrank, sizeprocs_adios, local_dim, &
+                                   trim(region_name) // "rho", temp_store_rho)
+  ! vp
+  call write_adios_global_1d_array(myadios_val_file, myadios_val_group, myrank, sizeprocs_adios, local_dim, &
+                                   trim(region_name) // "vp", temp_store_vp)
+  ! vs
+  call write_adios_global_1d_array(myadios_val_file, myadios_val_group, myrank, sizeprocs_adios, local_dim, &
+                                   trim(region_name) // "vs", temp_store_vs)
 
   ! transverse isotropic model
   if (TRANSVERSE_ISOTROPY) then
-    !--- vps arrays ----------------------------------------
-    local_dim = size (kappavstore)
-    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, trim(region_name) // "vpv", &
-                                     sqrt( (kappavstore+4.*muvstore/3.)/rhostore )*scaleval1)
+    allocate(temp_store_vpv(NGLLX,NGLLY,NGLLZ,nspec), &
+             temp_store_vph(NGLLX,NGLLY,NGLLZ,nspec), &
+             temp_store_vsv(NGLLX,NGLLY,NGLLZ,nspec), &
+             temp_store_vsh(NGLLX,NGLLY,NGLLZ,nspec),stat=ier)
+    if (ier /= 0) stop 'Error allocating temp vpv,.. arrays'
 
-    !--- vph arrays ----------------------------------------
-    local_dim = size (kappavstore)
-    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, trim(region_name) // "vph", &
-                                     sqrt( (kappahstore+4.*muhstore/3.)/rhostore )*scaleval1)
+    ! original:
+    !temp_store_vpv(:,:,:,:) = sqrt( (kappavstore+4.0_CUSTOM_REAL*muvstore/3.0_CUSTOM_REAL)/rhostore ) * scaleval1
+    !temp_store_vph(:,:,:,:) = sqrt( (kappahstore+4.0_CUSTOM_REAL*muhstore/3.0_CUSTOM_REAL)/rhostore ) * scaleval1
+    !temp_store_vsv(:,:,:,:) = sqrt( muvstore/rhostore ) * scaleval1
+    !temp_store_vsh(:,:,:,:) = sqrt( muhstore/rhostore ) * scaleval1
+    ! using safer inverse rho array:
+    temp_store_vpv(:,:,:,:) = sqrt( (kappavstore + 4.0_CUSTOM_REAL*muvstore/3.0_CUSTOM_REAL) * temp_store_rho_inv ) * scaleval1
+    temp_store_vph(:,:,:,:) = sqrt( (kappahstore + 4.0_CUSTOM_REAL*muhstore/3.0_CUSTOM_REAL) * temp_store_rho_inv ) * scaleval1
+    temp_store_vsv(:,:,:,:) = sqrt( muvstore * temp_store_rho_inv ) * scaleval1
+    temp_store_vsh(:,:,:,:) = sqrt( muhstore * temp_store_rho_inv ) * scaleval1
 
-    !--- vsv arrays ----------------------------------------
-    local_dim = size (rhostore)
-    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, trim(region_name) // "vsv", &
-                                     sqrt( muvstore/rhostore )*scaleval1)
-
-    !--- vsh arrays ----------------------------------------
-    local_dim = size (rhostore)
-    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, trim(region_name) // "vsh", &
-                                     sqrt( muhstore/rhostore )*scaleval1)
-
-    !--- eta arrays ----------------------------------------
-    local_dim = size (eta_anisostore)
-    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, trim(region_name) // "eta", &
-                                     eta_anisostore)
+    ! vpv
+    call write_adios_global_1d_array(myadios_val_file, myadios_val_group, myrank, sizeprocs_adios, local_dim, &
+                                     trim(region_name) // "vpv", temp_store_vpv)
+    ! vph
+    call write_adios_global_1d_array(myadios_val_file, myadios_val_group, myrank, sizeprocs_adios, local_dim, &
+                                     trim(region_name) // "vph", temp_store_vph)
+    ! vsv
+    call write_adios_global_1d_array(myadios_val_file, myadios_val_group, myrank, sizeprocs_adios, local_dim, &
+                                     trim(region_name) // "vsv", temp_store_vsv)
+    ! vsh
+    call write_adios_global_1d_array(myadios_val_file, myadios_val_group, myrank, sizeprocs_adios, local_dim, &
+                                     trim(region_name) // "vsh", temp_store_vsh)
+    ! eta
+    call write_adios_global_1d_array(myadios_val_file, myadios_val_group, myrank, sizeprocs_adios, local_dim, &
+                                     trim(region_name) // "eta", eta_anisostore)
+  else
+    ! dummy
+    allocate(temp_store_vpv(1,1,1,1), &
+             temp_store_vph(1,1,1,1), &
+             temp_store_vsv(1,1,1,1), &
+             temp_store_vsh(1,1,1,1))
   endif ! TRANSVERSE_ISOTROPY
+
+  ! free memory
+  deallocate(temp_store_rho_inv)
 
   ! anisotropic values
   if (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
@@ -227,54 +264,65 @@
     scaleval = dsqrt(PI*GRAV*RHOAV)
     scale_GPa = (RHOAV/1000.d0)*((R_EARTH*scaleval/1000.d0)**2)
 
+    allocate(temp_store_mu0(NGLLX,NGLLY,NGLLZ,nspec),stat=ier)
+    if (ier /= 0) stop 'Error allocating temp mu0 array'
+
+    temp_store_mu0(:,:,:,:) = mu0store(:,:,:,:) * scale_GPa
+
     ! Gc_prime
-    local_dim = size (Gc_prime_store)
-    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, trim(region_name) // "Gc_prime", &
-                                     Gc_prime_store)
+    call write_adios_global_1d_array(myadios_val_file, myadios_val_group, myrank, sizeprocs_adios, local_dim, &
+                                     trim(region_name) // "Gc_prime", Gc_prime_store)
     ! Gs_prime
-    local_dim = size (Gs_prime_store)
-    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, trim(region_name) // "Gs_prime", &
-                                     Gs_prime_store)
+    call write_adios_global_1d_array(myadios_val_file, myadios_val_group, myrank, sizeprocs_adios, local_dim, &
+                                     trim(region_name) // "Gs_prime", Gs_prime_store)
     ! mu0
-    local_dim = size (mu0store)
-    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, trim(region_name) // "mu0", &
-                                     mu0store * scale_GPa)
+    call write_adios_global_1d_array(myadios_val_file, myadios_val_group, myrank, sizeprocs_adios, local_dim, &
+                                     trim(region_name) // "mu0", temp_store_mu0)
+  else
+    ! dummy
+    allocate(temp_store_mu0(1,1,1,1))
   endif
 
   ! shear attenuation
   if (ATTENUATION) then
-    !-------------------------------------------------------
-    !--- Qmu arrays ----------------------------------------
-    !-------------------------------------------------------
+    ! Qmu arrays
     ! saves Qmu_store to full CUSTOM_REAL array
     ! uses temporary array
-    allocate(temp_store(NGLLX,NGLLY,NGLLZ,nspec))
+
+    ! note: write_adios_* calls could be in deferred mode and not synchronized.
+    !       thus, temporary arrays should be valid and unmodified until a perform/close/end_step call is done.
+    !
+    !       we will thus keep the allocated array until after the file close.
+    allocate(temp_store_Qmu(NGLLX,NGLLY,NGLLZ,nspec),stat=ier)
+    if (ier /= 0) stop 'Error allocating temp qmu array'
+
     if (ATTENUATION_3D .or. ATTENUATION_1D_WITH_3D_STORAGE) then
       ! attenuation arrays are fully 3D
-      temp_store(:,:,:,:) = Qmu_store(:,:,:,:)
+      temp_store_Qmu(:,:,:,:) = Qmu_store(:,:,:,:)
     else
-      ! attenuation array dimensions: Q_mustore(1,1,1,nspec)
+      ! fills full attenuation array dimensions: Q_mustore(1,1,1,nspec)
       do ispec = 1,nspec
         do k = 1,NGLLZ
           do j = 1,NGLLY
             do i = 1,NGLLX
-              temp_store(i,j,k,ispec) = Qmu_store(1,1,1,ispec)
+              temp_store_Qmu(i,j,k,ispec) = Qmu_store(1,1,1,ispec)
             enddo
           enddo
         enddo
       enddo
     endif
-
-    local_dim = NGLLX * NGLLY * NGLLZ * nspec
-    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, trim(region_name) // "qmu", &
-                                     temp_store)
-
-    ! frees temporary memory
-    deallocate(temp_store)
+    ! Qmu
+    call write_adios_global_1d_array(myadios_val_file, myadios_val_group, myrank, sizeprocs_adios, local_dim, &
+                                     trim(region_name) // "qmu", temp_store_Qmu)
+  else
+    ! dummy
+    allocate(temp_store_Qmu(1,1,1,1))
   endif ! ATTENUATION
 
+  !--- Reset the path to zero and perform the actual write to disk
+  call write_adios_perform(myadios_val_file)
   ! closes file
-  call close_file_adios()
+  call close_file_adios(myadios_val_file)
 
   !---------------------------------------------------------
   !--- dvpstore arrays ------------------------------------------
@@ -285,5 +333,14 @@
   !endif
 
   num_regions_written = num_regions_written + 1
+
+  ! adios should be done with writing memory out.
+  call synchronize_all()
+
+  ! frees temporary memory
+  deallocate(temp_store_vp,temp_store_vs,temp_store_rho)
+  deallocate(temp_store_vpv,temp_store_vph,temp_store_vsv,temp_store_vsh)
+  deallocate(temp_store_mu0)
+  deallocate(temp_store_Qmu)
 
   end subroutine save_model_meshfiles_adios

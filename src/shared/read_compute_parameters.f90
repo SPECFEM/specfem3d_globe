@@ -260,8 +260,8 @@
       ATT2 = 1
       ATT3 = 1
     endif
-    ATT4 = NSPEC_REGIONS(IREGION_CRUST_MANTLE)
-    ATT5 = NSPEC_REGIONS(IREGION_INNER_CORE)
+    ATT4 = NSPEC_REGIONS(IREGION_CRUST_MANTLE)  ! only used for header file in save_header_file.F90
+    ATT5 = NSPEC_REGIONS(IREGION_INNER_CORE)    ! only used for header file
   else
      ATT1 = 1
      ATT2 = 1

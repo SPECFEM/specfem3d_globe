@@ -174,12 +174,13 @@
     if (IMAIN /= ISTANDARD_OUTPUT) close(IMAIN)
   endif
 
-  ! synchronize all the processes to make sure everybody has finished
-  call synchronize_all()
-
+  ! ADIOS
   if (ADIOS_ENABLED) then
     call finalize_adios()
   endif
+
+  ! synchronize all the processes to make sure everybody has finished doing stuff
+  call synchronize_all()
 
   end subroutine finalize_mesher
 

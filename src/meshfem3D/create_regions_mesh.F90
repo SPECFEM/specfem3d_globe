@@ -396,7 +396,6 @@
       endif
       ! saves mesh and model parameters for solver
       if (ADIOS_FOR_ARRAYS_SOLVER) then
-        if (myrank == 0) write(IMAIN,*) '    in ADIOS file format'
         call save_arrays_solver_adios(idoubling,ibool,xstore,ystore,zstore, &
                                       NSPEC2DMAX_XMIN_XMAX, NSPEC2DMAX_YMIN_YMAX, &
                                       NSPEC2D_TOP,NSPEC2D_BOTTOM)
@@ -419,7 +418,6 @@
         endif
         ! saves boundary file
         if (ADIOS_FOR_ARRAYS_SOLVER) then
-          if (myrank == 0) write(IMAIN,*) '    in ADIOS file format'
           call save_arrays_boundary_adios()
         else
           call save_arrays_boundary()
@@ -453,6 +451,9 @@
       endif
 
     endif ! .not. GRAVITY_INTEGRALS
+
+    ! synchronizes processes before clean up memory
+    call synchronize_all()
 
     ! frees memory
     deallocate(rmassx,rmassy,rmassz)

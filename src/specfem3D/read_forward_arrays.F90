@@ -53,11 +53,7 @@
     endif
 
     if (ADIOS_FOR_FORWARD_ARRAYS) then
-#ifdef HAVE_ADIOS2
-      call read_intermediate_forward_arrays_adios2()
-#else
       call read_intermediate_forward_arrays_adios()
-#endif
     else
       write(outputname,"('dump_all_arrays',i6.6)") myrank
       outputname = trim(LOCAL_TMP_PATH) // '/' // outputname(1:len_trim(outputname))
@@ -138,11 +134,7 @@
 
   ! reads in file data
   if (ADIOS_FOR_FORWARD_ARRAYS) then
-#ifdef HAVE_ADIOS2
-    call read_forward_arrays_adios2()
-#else
     call read_forward_arrays_adios()
-#endif
   else
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_save_forward_arrays.bin'
     outputname = trim(LOCAL_TMP_PATH) // '/' // outputname(1:len_trim(outputname))
@@ -266,11 +258,7 @@
   iteration_on_subset_tmp = NSUBSET_ITERATIONS - iteration_on_subset + 1
 
   if (ADIOS_FOR_UNDO_ATTENUATION) then
-#ifdef HAVE_ADIOS2
-    call read_forward_arrays_undoatt_adios2(iteration_on_subset_tmp)
-#else
     call read_forward_arrays_undoatt_adios(iteration_on_subset_tmp)
-#endif
   else
     ! reads in saved wavefield
     write(outputname,'(a,i6.6,a,i6.6,a)') 'proc',myrank,'_save_frame_at',iteration_on_subset_tmp,'.bin'

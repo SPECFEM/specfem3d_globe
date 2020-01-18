@@ -41,15 +41,22 @@ auxiliaries_TARGETS = \
 	$E/xwrite_profile \
 	$(EMPTY_MACRO)
 
-ifeq ($(ADIOS),yes)
-auxiliaries_TARGETS += \
+## ADIOS
+adios_auxiliaries_TARGETS += \
 	$E/xcombine_vol_data_adios \
 	$E/xcombine_vol_data_vtk_adios \
 	$(EMPTY_MACRO)
 
-auxiliaries_MODULES = \
+adios_auxiliaries_MODULES = \
 	$(FC_MODDIR)/combine_vol_data_adios_mod.$(FC_MODEXT) \
 	$(EMPTY_MACRO)
+
+ifeq ($(ADIOS),yes)
+auxiliaries_TARGETS += $(adios_auxiliaries_TARGETS)
+auxiliaries_MODULES += $(adios_auxiliaries_MODULES)
+else ifeq ($(ADIOS2),yes)
+auxiliaries_TARGETS += $(adios_auxiliaries_TARGETS)
+auxiliaries_MODULES += $(adios_auxiliaries_MODULES)
 endif
 
 auxiliaries_OBJECTS = \
@@ -236,10 +243,16 @@ $O/combine_vol_data.auxsolver.o: $O/specfem3D_par.solverstatic_module.o
 
 xcombine_vol_data_adios_OBJECTS = \
 	$O/combine_vol_data.auxadios.o \
-	$O/combine_vol_data_adios_impl.auxmpi.o \
+	$O/combine_vol_data_adios_impl.auxadios.o \
 	$(EMPTY_MACRO)
 
 xcombine_vol_data_adios_SHARED_OBJECTS = \
+	$O/adios_helpers_addons.shared_adios_cc.o \
+	$O/adios_helpers_definitions.shared_adios.o \
+	$O/adios_helpers_readers.shared_adios.o \
+	$O/adios_helpers_writers.shared_adios.o \
+	$O/adios_helpers.shared_adios.o \
+	$O/adios_manager.shared_adios_module.o \
 	$O/shared_par.shared_module.o \
 	$O/specfem3D_par.solverstatic_module.o \
 	$O/binary_c_io.cc.o \
@@ -258,13 +271,14 @@ xcombine_vol_data_adios_SHARED_OBJECTS = \
 	$O/spline_routines.shared.o \
 	$(EMPTY_MACRO)
 
-$O/combine_vol_data.auxadios.o: $O/combine_vol_data_adios_impl.auxmpi.o
+$O/combine_vol_data.auxadios.o: $O/combine_vol_data_adios_impl.auxadios.o
 
 ${E}/xcombine_vol_data_adios: $(xcombine_vol_data_adios_OBJECTS) $(xcombine_vol_data_adios_SHARED_OBJECTS)
 	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 ### additional dependencies
 $O/combine_vol_data.auxadios.o: $O/specfem3D_par.solverstatic_module.o
+$O/combine_vol_data_adios_impl.auxadios.o: $O/adios_manager.shared_adios_module.o $O/adios_helpers.shared_adios.o
 
 #######################################
 
@@ -302,10 +316,16 @@ $O/combine_vol_data.auxsolver_vtk.o: $O/specfem3D_par.solverstatic_module.o
 
 xcombine_vol_data_vtk_adios_OBJECTS = \
 	$O/combine_vol_data.auxadios_vtk.o \
-	$O/combine_vol_data_adios_impl.auxmpi.o \
+	$O/combine_vol_data_adios_impl.auxadios.o \
 	$(EMPTY_MACRO)
 
 xcombine_vol_data_vtk_adios_SHARED_OBJECTS = \
+	$O/adios_helpers_addons.shared_adios_cc.o \
+	$O/adios_helpers_definitions.shared_adios.o \
+	$O/adios_helpers_readers.shared_adios.o \
+	$O/adios_helpers_writers.shared_adios.o \
+	$O/adios_helpers.shared_adios.o \
+	$O/adios_manager.shared_adios_module.o \
 	$O/shared_par.shared_module.o \
 	$O/specfem3D_par.solverstatic_module.o \
 	$O/binary_c_io.cc.o \
@@ -325,7 +345,7 @@ xcombine_vol_data_vtk_adios_SHARED_OBJECTS = \
 	$O/write_VTK_file.shared.o \
 	$(EMPTY_MACRO)
 
-$O/combine_vol_data.auxadios_vtk.o: $O/combine_vol_data_adios_impl.auxmpi.o
+$O/combine_vol_data.auxadios_vtk.o: $O/combine_vol_data_adios_impl.auxadios.o
 
 ${E}/xcombine_vol_data_vtk_adios: $(xcombine_vol_data_vtk_adios_OBJECTS) $(xcombine_vol_data_vtk_adios_SHARED_OBJECTS)
 	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
@@ -491,8 +511,10 @@ xwrite_profile_adios_OBJECTS = \
 	$(EMPTY_MACRO)
 
 xwrite_profile_adios_SHARED_OBJECTS = \
-	$O/adios_helpers_definitions.shared_adios_module.o \
-	$O/adios_helpers_writers.shared_adios_module.o \
+	$O/adios_helpers_addons.shared_adios_cc.o \
+	$O/adios_helpers_definitions.shared_adios.o \
+	$O/adios_helpers_readers.shared_adios.o \
+	$O/adios_helpers_writers.shared_adios.o \
 	$O/adios_helpers.shared_adios.o \
 	$(EMPTY_MACRO)
 
@@ -502,6 +524,9 @@ xwrite_profile_adios_SHARED_STUBS = \
 
 # conditional adios linking
 ifeq ($(ADIOS),yes)
+xwrite_profile_OBJECTS += $(xwrite_profile_adios_OBJECTS)
+xwrite_profile_SHARED_OBJECTS += $(xwrite_profile_adios_SHARED_OBJECTS)
+else ifeq ($(ADIOS2),yes)
 xwrite_profile_OBJECTS += $(xwrite_profile_adios_OBJECTS)
 xwrite_profile_SHARED_OBJECTS += $(xwrite_profile_adios_SHARED_OBJECTS)
 else
@@ -540,14 +565,14 @@ $O/%.aux.o: $S/%.f90 $O/shared_par.shared_module.o ${OUTPUT}/values_from_mesher.
 $O/%.auxsolver.o: $S/%.f90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/%.auxmpi.o: $S/%.f90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o $O/parallel.sharedmpi.o
-	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
-
 $O/%.auxsolver.o: $S/%.F90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.auxsolver_vtk.o: $S/%.F90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(FC_DEFINE)USE_VTK_INSTEAD_OF_MESH
+
+$O/%.auxadios.o: $S/%.f90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o $O/parallel.sharedmpi.o
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(FC_DEFINE)USE_ADIOS_INSTEAD_OF_MESH
 
 $O/%.auxadios.o: $S/%.F90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o $O/parallel.sharedmpi.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(FC_DEFINE)USE_ADIOS_INSTEAD_OF_MESH

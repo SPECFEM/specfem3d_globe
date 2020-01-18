@@ -69,8 +69,7 @@
   type(avs_dx_surface_t) :: avs_dx_surface_vars
 
   character(len=MAX_STRING_LEN) :: reg_name, outputname, group_name
-  integer :: ier
-  integer(kind=8) :: adios_group, group_size_inc
+  integer(kind=8) :: group_size_inc
 
   integer :: sizeprocs
 
@@ -84,26 +83,23 @@
 
   ! set the adios group size to 0 before incremented by calls to helpers functions.
   group_size_inc = 0
-  call init_adios_group(adios_group,group_name)
+  call init_adios_group(myadios_group,group_name)
 
   !--- Define ADIOS variables -----------------------------
-  call define_AVS_DX_global_data_adios(adios_group, nspec, ibool, &
+  call define_AVS_DX_global_data_adios(nspec, ibool, &
                                        npointot, mask_ibool, group_size_inc, avs_dx_global_vars)
 
-  call define_AVS_DX_global_faces_data_adios(adios_group, &
-                                             nspec, iMPIcut_xi,iMPIcut_eta, &
+  call define_AVS_DX_global_faces_data_adios(nspec, iMPIcut_xi,iMPIcut_eta, &
                                              ibool,mask_ibool,npointot, &
                                              MODEL_3D_MANTLE_PERTUBATIONS, &
                                              group_size_inc, avs_dx_global_faces_vars)
 
-  call define_AVS_DX_global_chunks_data(adios_group, &
-                                        nspec,iboun,ibool, &
+  call define_AVS_DX_global_chunks_data(nspec,iboun,ibool, &
                                         mask_ibool,npointot, &
                                         MODEL_3D_MANTLE_PERTUBATIONS, &
                                         group_size_inc, avs_dx_global_chunks_vars)
 
-  call define_AVS_DX_surfaces_data_adios(adios_group, &
-                                         nspec,iboun,ibool, &
+  call define_AVS_DX_surfaces_data_adios(nspec,iboun,ibool, &
                                          mask_ibool,npointot, &
                                          MODEL_3D_MANTLE_PERTUBATIONS, &
                                          group_size_inc, avs_dx_surface_vars)
@@ -115,14 +111,14 @@
   if (myrank == 0) write(IMAIN,*) '    saving arrays in ADIOS file: ',trim(outputname)
 
   ! opens file for writing
-  call open_file_adios_write(outputname,group_name)
-  call set_adios_group_size(group_size_inc)
+  call open_file_adios_write(myadios_file,myadios_group,outputname,group_name)
+  call set_adios_group_size(myadios_file,group_size_inc)
 
   !--- Schedule writes for the previously defined ADIOS variables
   call prepare_AVS_DX_global_data_adios(nspec, ibool, idoubling, xstore, ystore, zstore, num_ibool_AVS_DX, &
                                         mask_ibool, npointot, avs_dx_global_vars)
 
-  call write_AVS_DX_global_data_adios(file_handle_adios, myrank,sizeprocs, avs_dx_global_vars)
+  call write_AVS_DX_global_data_adios(myrank,sizeprocs, avs_dx_global_vars)
 
   call prepare_AVS_DX_global_faces_data_adios(nspec, &
                                               iMPIcut_xi,iMPIcut_eta, &
@@ -133,8 +129,7 @@
                                               RMIDDLE_CRUST,ROCEAN,iregion_code, &
                                               avs_dx_global_faces_vars)
 
-  call write_AVS_DX_global_faces_data_adios(file_handle_adios, myrank, &
-                                            sizeprocs, avs_dx_global_faces_vars, MODEL_3D_MANTLE_PERTUBATIONS)
+  call write_AVS_DX_global_faces_data_adios(myrank, sizeprocs, avs_dx_global_faces_vars, MODEL_3D_MANTLE_PERTUBATIONS)
 
   call prepare_AVS_DX_global_chunks_data_adios(prname,nspec, &
                                                iboun,ibool, idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
@@ -144,8 +139,7 @@
                                                RMIDDLE_CRUST,ROCEAN,iregion_code, &
                                                avs_dx_global_chunks_vars)
 
-  call write_AVS_DX_global_chunks_data_adios(file_handle_adios, myrank, &
-                                             sizeprocs, avs_dx_global_chunks_vars, MODEL_3D_MANTLE_PERTUBATIONS)
+  call write_AVS_DX_global_chunks_data_adios(myrank, sizeprocs, avs_dx_global_chunks_vars, MODEL_3D_MANTLE_PERTUBATIONS)
 
   call prepare_AVS_DX_surfaces_data_adios(nspec,iboun, &
                                           ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool,npointot, &
@@ -155,16 +149,15 @@
                                           RMIDDLE_CRUST,ROCEAN,iregion_code, &
                                           avs_dx_surface_vars)
 
-  call write_AVS_DX_surfaces_data_adios(file_handle_adios, myrank, &
-                                        sizeprocs, avs_dx_surface_vars, MODEL_3D_MANTLE_PERTUBATIONS)
+  call write_AVS_DX_surfaces_data_adios(myrank, sizeprocs, avs_dx_surface_vars, MODEL_3D_MANTLE_PERTUBATIONS)
 
 
 
   !--- Reset the path to zero and perform the actual write to disk
-  call adios_set_path (file_handle_adios, '', ier)
+  call write_adios_perform(myadios_file)
 
   ! closes file
-  call close_file_adios()
+  call close_file_adios(myadios_file)
 
   !--- Clean up temporary arrays -------------------------
   call free_AVS_DX_global_data_adios(avs_dx_global_vars)

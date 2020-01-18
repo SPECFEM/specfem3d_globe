@@ -50,12 +50,7 @@
   ! Open an handler to the ADIOS file in which kernel variables are written.
   if (ADIOS_FOR_KERNELS) then
     if ((SIMULATION_TYPE == 3) .or. (SIMULATION_TYPE == 2 .and. nrec_local > 0)) then
-#ifdef HAVE_ADIOS2
-      call open_kernel_file_adios2()
-      call define_kernel_adios2_variables()
-#else
       call define_kernel_adios_variables()
-#endif
     endif
   endif
 
@@ -103,11 +98,7 @@
   ! Write ADIOS defined variables to disk.
   if (ADIOS_FOR_KERNELS) then
     if ((SIMULATION_TYPE == 3) .or. (SIMULATION_TYPE == 2 .and. nrec_local > 0)) then
-#ifdef HAVE_ADIOS2
-      call close_kernel_file_adios2()
-#else
-      call close_file_adios()
-#endif
+      call close_kernel_adios_file()
     endif
   endif
 
@@ -883,6 +874,10 @@
              bulk_beta_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
     if (ier /= 0) stop 'Error allocating transverse kernels bulk_c_kl_crust_mantle,...'
 
+    ! only dummy
+    allocate(Gc_prime_kl_crust_mantle(1,1,1,1), &
+             Gs_prime_kl_crust_mantle(1,1,1,1))
+
   else if (SAVE_AZIMUTHAL_ANISO_KL_ONLY) then
     ! azimuthal anisotropic kernels
     allocate(Gc_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
@@ -933,6 +928,9 @@
     ! only dummy
     allocate(bulk_c_kl_crust_mantle(1,1,1,1), &
              bulk_beta_kl_crust_mantle(1,1,1,1))
+    ! only dummy
+    allocate(Gc_prime_kl_crust_mantle(1,1,1,1), &
+             Gs_prime_kl_crust_mantle(1,1,1,1))
   endif
 
   allocate(rhonotprime_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
@@ -1273,6 +1271,15 @@
             ! K_alpha = 2 rho alpha**2 ( K_A + K_C + K_F)
             ! K_beta = 2 rho beta**2 ( K_L + K_N - 2 K_F)
 
+          else
+
+            ! fully anisotropic kernels
+
+            ! note: the C_ij and density kernels are not for relative perturbations (delta ln( m_i) = delta m_i / m_i),
+            !          but absolute perturbations (delta m_i = m_i - m_0)
+            rho_kl_crust_mantle = - rho_kl_crust_mantle
+            cijkl_kl_crust_mantle = - cijkl_kl_crust_mantle
+
           endif ! SAVE_TRANSVERSE_KL_ONLY .or. SAVE_AZIMUTHAL_ANISO_KL_ONLY
 
         enddo
@@ -1282,21 +1289,12 @@
 
   ! writes out kernels to files
   if (ADIOS_FOR_KERNELS) then
-#ifdef HAVE_ADIOS2
-    call write_kernels_cm_ani_adios2(alphav_kl_crust_mantle,alphah_kl_crust_mantle, &
-                                    betav_kl_crust_mantle,betah_kl_crust_mantle, &
-                                    eta_kl_crust_mantle, &
-                                    bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle, &
-                                    bulk_betav_kl_crust_mantle,bulk_betah_kl_crust_mantle, &
-                                    Gc_prime_kl_crust_mantle, Gs_prime_kl_crust_mantle)
-#else
     call write_kernels_cm_ani_adios(alphav_kl_crust_mantle,alphah_kl_crust_mantle, &
                                     betav_kl_crust_mantle,betah_kl_crust_mantle, &
                                     eta_kl_crust_mantle, &
                                     bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle, &
                                     bulk_betav_kl_crust_mantle,bulk_betah_kl_crust_mantle, &
                                     Gc_prime_kl_crust_mantle, Gs_prime_kl_crust_mantle)
-#endif
   else
     ! binary file output
     call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_TMP_PATH)
@@ -1457,13 +1455,11 @@
     else
 
       ! fully anisotropic kernels
-      ! note: the C_ij and density kernels are not for relative perturbations (delta ln( m_i) = delta m_i / m_i),
-      !          but absolute perturbations (delta m_i = m_i - m_0)
       open(unit=IOUT,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted',action='write')
-      write(IOUT) - rho_kl_crust_mantle
+      write(IOUT) rho_kl_crust_mantle
       close(IOUT)
       open(unit=IOUT,file=trim(prname)//'cijkl_kernel.bin',status='unknown',form='unformatted',action='write')
-      write(IOUT) - cijkl_kl_crust_mantle
+      write(IOUT) cijkl_kl_crust_mantle
       close(IOUT)
 
     endif
@@ -1532,6 +1528,7 @@
              bulk_betav_kl_crust_mantle)
   deallocate(bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle)
   deallocate(rhonotprime_kl_crust_mantle)
+  deallocate(Gc_prime_kl_crust_mantle,Gs_prime_kl_crust_mantle)
 
   if (SAVE_AZIMUTHAL_ANISO_KL_ONLY) then
     deallocate(Gc_kl_crust_mantle,Gs_kl_crust_mantle)
@@ -1539,7 +1536,6 @@
                L_kl_crust_mantle,N_kl_crust_mantle,Jc_kl_crust_mantle, &
                Kc_kl_crust_mantle,Mc_kl_crust_mantle,Bc_kl_crust_mantle, &
                Hc_kl_crust_mantle,Ec_kl_crust_mantle,Dc_kl_crust_mantle)
-    deallocate(Gc_prime_kl_crust_mantle,Gs_prime_kl_crust_mantle)
   endif
 
   end subroutine save_kernels_crust_mantle_ani
@@ -1641,13 +1637,8 @@
 
   ! writes out kernels to files
   if (ADIOS_FOR_KERNELS) then
-#ifdef HAVE_ADIOS2
-    call write_kernels_cm_iso_adios2(mu_kl_crust_mantle, kappa_kl_crust_mantle, rhonotprime_kl_crust_mantle, &
-                                    bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle)
-#else
     call write_kernels_cm_iso_adios(mu_kl_crust_mantle, kappa_kl_crust_mantle, rhonotprime_kl_crust_mantle, &
                                     bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle)
-#endif
   else
 
     call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_TMP_PATH)
@@ -1741,11 +1732,7 @@
 
   ! writes out kernels to file
   if (ADIOS_FOR_KERNELS) then
-#ifdef HAVE_ADIOS2
-    call write_kernels_oc_adios2()
-#else
     call write_kernels_oc_adios()
-#endif
   else
     call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_TMP_PATH)
 
@@ -1816,11 +1803,7 @@
 
   ! writes out kernels to file
   if (ADIOS_FOR_KERNELS) then
-#ifdef HAVE_ADIOS2
-    call write_kernels_ic_adios2()
-#else
     call write_kernels_ic_adios()
-#endif
   else
     call create_name_database(prname,myrank,IREGION_INNER_CORE,LOCAL_TMP_PATH)
 
@@ -1868,11 +1851,7 @@
 
   ! writes out kernels to file
   if (ADIOS_FOR_KERNELS) then
-#ifdef HAVE_ADIOS2
-    call write_kernels_boundary_kl_adios2()
-#else
     call write_kernels_boundary_kl_adios()
-#endif
   else
     call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_TMP_PATH)
 
@@ -1954,11 +1933,7 @@
 
   ! writes out kernels to file
   if (ADIOS_FOR_KERNELS) then
-#ifdef HAVE_ADIOS2
-    call write_kernels_source_derivatives_adios2()
-#else
     call write_kernels_source_derivatives_adios()
-#endif
   else
     ! kernel file output
     do irec_local = 1, nrec_local
@@ -2015,11 +1990,7 @@
 
   ! writes out kernels to file
   if (ADIOS_FOR_KERNELS) then
-#ifdef HAVE_ADIOS2
-    call write_kernels_Hessian_adios2()
-#else
     call write_kernels_Hessian_adios()
-#endif
   else
     ! stores into file
     call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_TMP_PATH)

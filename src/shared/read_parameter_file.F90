@@ -300,7 +300,7 @@
     ADIOS_FOR_UNDO_ATTENUATION = .false.
   endif
 
-#if !defined(HAVE_ADIOS) && !defined(HAVE_ADIOS2)
+#if !defined(USE_ADIOS) && !defined(USE_ADIOS2)
   if (ADIOS_ENABLED) then
     print *
     print *,'**************'

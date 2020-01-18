@@ -89,6 +89,8 @@ void FC_FUNC_(save_intermediate_forward_arrays_adios,SAVE_INTERMEDIATE_FORWARD_A
 
 void FC_FUNC_(define_kernel_adios_variables,DEFINE_KERNEL_ADIOS_VARIABLES)(void) {}
 
+void FC_FUNC_(close_kernel_adios_file,CLOSE_KERNEL_ADIOS_FILE)(void) {}
+
 void FC_FUNC_(write_kernels_cm_ani_adios,WRITE_KERNELS_CM_ADIOS)(void) {}
 
 void FC_FUNC_(write_kernels_cm_iso_adios,WRITE_KERNELS_CM_ADIOS)(void) {}

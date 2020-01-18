@@ -363,31 +363,31 @@ end module forward_adios2_read
 
   ! rotation
   if (ROTATION_VAL) then
-     local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_OUTER_CORE_ROTATION
-     start(1) = local_dim*myrank; count(1) = local_dim
-     call read_adios2(file, io_fwdatt, "A_array_rotation", 1, start, count, A_array_rotation, myrank, src,func, t)
-     call read_adios2(file, io_fwdatt, "B_array_rotation", 1, start, count, B_array_rotation, myrank, src,func, t)
+    local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_OUTER_CORE_ROTATION
+    start(1) = local_dim*myrank; count(1) = local_dim
+    call read_adios2(file, io_fwdatt, "A_array_rotation", 1, start, count, A_array_rotation, myrank, src,func, t)
+    call read_adios2(file, io_fwdatt, "B_array_rotation", 1, start, count, B_array_rotation, myrank, src,func, t)
   endif
 
 
   if (ATTENUATION_VAL) then
-     ! attenuation memory variables crust/mantle
-     local_dim = N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE_ATTENUATION
-     start(1) = local_dim*myrank; count(1) = local_dim
-     call read_adios2(file, io_fwdatt, "R_xx_crust_mantle", 1, start, count, R_xx_crust_mantle, myrank, src,func, t)
-     call read_adios2(file, io_fwdatt, "R_yy_crust_mantle", 1, start, count, R_yy_crust_mantle, myrank, src,func, t)
-     call read_adios2(file, io_fwdatt, "R_xy_crust_mantle", 1, start, count, R_xy_crust_mantle, myrank, src,func, t)
-     call read_adios2(file, io_fwdatt, "R_xz_crust_mantle", 1, start, count, R_xz_crust_mantle, myrank, src,func, t)
-     call read_adios2(file, io_fwdatt, "R_yz_crust_mantle", 1, start, count, R_yz_crust_mantle, myrank, src,func, t)
+    ! attenuation memory variables crust/mantle
+    local_dim = N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE_ATTENUATION
+    start(1) = local_dim*myrank; count(1) = local_dim
+    call read_adios2(file, io_fwdatt, "R_xx_crust_mantle", 1, start, count, R_xx_crust_mantle, myrank, src,func, t)
+    call read_adios2(file, io_fwdatt, "R_yy_crust_mantle", 1, start, count, R_yy_crust_mantle, myrank, src,func, t)
+    call read_adios2(file, io_fwdatt, "R_xy_crust_mantle", 1, start, count, R_xy_crust_mantle, myrank, src,func, t)
+    call read_adios2(file, io_fwdatt, "R_xz_crust_mantle", 1, start, count, R_xz_crust_mantle, myrank, src,func, t)
+    call read_adios2(file, io_fwdatt, "R_yz_crust_mantle", 1, start, count, R_yz_crust_mantle, myrank, src,func, t)
 
-     ! attenuation memory variables inner core
-     local_dim = N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_INNER_CORE_ATTENUATION
-     start(1) = local_dim*myrank; count(1) = local_dim
-     call read_adios2(file, io_fwdatt, "R_xx_inner_core", 1, start, count, R_xx_inner_core, myrank, src,func, t)
-     call read_adios2(file, io_fwdatt, "R_yy_inner_core", 1, start, count, R_yy_inner_core, myrank, src,func, t)
-     call read_adios2(file, io_fwdatt, "R_xy_inner_core", 1, start, count, R_xy_inner_core, myrank, src,func, t)
-     call read_adios2(file, io_fwdatt, "R_xz_inner_core", 1, start, count, R_xz_inner_core, myrank, src,func, t)
-     call read_adios2(file, io_fwdatt, "R_yz_inner_core", 1, start, count, R_yz_inner_core, myrank, src,func, t)
+    ! attenuation memory variables inner core
+    local_dim = N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_INNER_CORE_ATTENUATION
+    start(1) = local_dim*myrank; count(1) = local_dim
+    call read_adios2(file, io_fwdatt, "R_xx_inner_core", 1, start, count, R_xx_inner_core, myrank, src,func, t)
+    call read_adios2(file, io_fwdatt, "R_yy_inner_core", 1, start, count, R_yy_inner_core, myrank, src,func, t)
+    call read_adios2(file, io_fwdatt, "R_xy_inner_core", 1, start, count, R_xy_inner_core, myrank, src,func, t)
+    call read_adios2(file, io_fwdatt, "R_xz_inner_core", 1, start, count, R_xz_inner_core, myrank, src,func, t)
+    call read_adios2(file, io_fwdatt, "R_yz_inner_core", 1, start, count, R_yz_inner_core, myrank, src,func, t)
   endif
 
   ! Never close the file here. It will be closed in adios2_manager::finalize_adios2()

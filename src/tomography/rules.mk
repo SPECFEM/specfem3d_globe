@@ -68,18 +68,22 @@ tomography_MODULES = \
 ####
 #### ADIOS versions
 ####
-ifeq ($(ADIOS),yes)
 
-tomography_TARGETS += \
+adios_tomography_TARGETS += \
 	$E/xsum_kernels_adios \
 	$(EMPTY_MACRO)
 
-tomography_OBJECTS += \
+adios_tomography_OBJECTS += \
 	$(xsum_kernels_adios_OBJECTS) \
 	$(EMPTY_MACRO)
 
+ifeq ($(ADIOS),yes)
+tomography_TARGETS += $(adios_tomography_TARGETS)
+tomography_OBJECTS += $(adios_tomography_OBJECTS)
+else ifeq ($(ADIOS2),yes)
+tomography_TARGETS += $(adios_tomography_TARGETS)
+tomography_OBJECTS += $(adios_tomography_OBJECTS)
 endif
-
 
 
 ####
@@ -204,8 +208,10 @@ xsum_kernels_adios_OBJECTS = \
 
 xsum_kernels_adios_SHARED_OBJECTS = \
 	$(xsum_kernels_SHARED_OBJECTS) \
-	$O/adios_helpers_definitions.shared_adios_module.o \
-	$O/adios_helpers_writers.shared_adios_module.o \
+	$O/adios_helpers_addons.shared_adios_cc.o \
+	$O/adios_helpers_definitions.shared_adios.o \
+	$O/adios_helpers_readers.shared_adios.o \
+	$O/adios_helpers_writers.shared_adios.o \
 	$O/adios_helpers.shared_adios.o \
 	$O/adios_manager.shared_adios_module.o \
 	$(EMPTY_MACRO)

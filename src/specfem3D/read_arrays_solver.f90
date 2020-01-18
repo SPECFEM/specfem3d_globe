@@ -235,6 +235,5 @@
 
   close(IIN) ! solver_data.bin
 
-
   end subroutine read_arrays_solver
 

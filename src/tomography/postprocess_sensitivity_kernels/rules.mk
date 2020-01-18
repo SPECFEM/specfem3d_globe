@@ -41,13 +41,6 @@ tomography/postprocess_sensitivity_kernels_TARGETS = \
 	$E/xsmooth_sem \
 	$(EMPTY_MACRO)
 
-ifeq ($(ADIOS),yes)
-tomography/postprocess_sensitivity_kernels_TARGETS += \
-	$E/xconvert_model_file_adios \
-	$E/xinterpolate_model_adios \
-	$(EMPTY_MACRO)
-endif
-
 tomography/postprocess_sensitivity_kernels_OBJECTS = \
 	$(xaddition_sem_OBJECTS) \
 	$(xclip_sem_OBJECTS) \
@@ -59,10 +52,23 @@ tomography/postprocess_sensitivity_kernels_OBJECTS = \
 	$(xconvert_model_file_adios_OBJECTS) \
 	$(EMPTY_MACRO)
 
-ifeq ($(ADIOS),yes)
-tomography/postprocess_sensitivity_kernels_OBJECTS += \
+
+## ADIOS
+tomography/adios_postprocess_sensitivity_kernels_TARGETS += \
+	$E/xconvert_model_file_adios \
+	$E/xinterpolate_model_adios \
+	$(EMPTY_MACRO)
+
+tomography/adios_postprocess_sensitivity_kernels_OBJECTS += \
 	$(xinterpolate_model_adios_OBJECTS) \
 	$(EMPTY_MACRO)
+
+ifeq ($(ADIOS),yes)
+tomography/postprocess_sensitivity_kernels_TARGETS += $(tomography/adios_postprocess_sensitivity_kernels_TARGETS)
+tomography/postprocess_sensitivity_kernels_OBJECTS += $(tomography/adios_postprocess_sensitivity_kernels_OBJECTS)
+else ifeq ($(ADIOS2),yes)
+tomography/postprocess_sensitivity_kernels_TARGETS += $(tomography/adios_postprocess_sensitivity_kernels_TARGETS)
+tomography/postprocess_sensitivity_kernels_OBJECTS += $(tomography/adios_postprocess_sensitivity_kernels_OBJECTS)
 endif
 
 # These files come from the shared directory
@@ -115,8 +121,10 @@ xconvert_model_file_adios_SHARED_OBJECTS = \
 	$O/param_reader.cc.o \
 	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
-	$O/adios_helpers_definitions.shared_adios_module.o \
-	$O/adios_helpers_writers.shared_adios_module.o \
+	$O/adios_helpers_addons.shared_adios_cc.o \
+	$O/adios_helpers_definitions.shared_adios.o \
+	$O/adios_helpers_readers.shared_adios.o \
+	$O/adios_helpers_writers.shared_adios.o \
 	$O/adios_helpers.shared_adios.o \
 	$O/adios_manager.shared_adios_module.o \
 	$(EMPTY_MACRO)
@@ -248,8 +256,10 @@ xinterpolate_model_adios_SHARED_OBJECTS = \
 	$(xinterpolate_model_SHARED_OBJECTS)
 
 xinterpolate_model_adios_SHARED_OBJECTS += \
-	$O/adios_helpers_definitions.shared_adios_module.o \
-	$O/adios_helpers_writers.shared_adios_module.o \
+	$O/adios_helpers_addons.shared_adios_cc.o \
+	$O/adios_helpers_definitions.shared_adios.o \
+	$O/adios_helpers_readers.shared_adios.o \
+	$O/adios_helpers_writers.shared_adios.o \
 	$O/adios_helpers.shared_adios.o \
 	$O/adios_manager.shared_adios_module.o \
 	$(EMPTY_MACRO)

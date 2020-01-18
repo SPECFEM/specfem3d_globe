@@ -234,8 +234,10 @@ adios_meshfem3D_OBJECTS = \
 	$(EMPTY_MACRO)
 
 adios_meshfem3D_SHARED_OBJECTS = \
-	$O/adios_helpers_definitions.shared_adios_module.o \
-	$O/adios_helpers_writers.shared_adios_module.o \
+	$O/adios_helpers_addons.shared_adios_cc.o \
+	$O/adios_helpers_definitions.shared_adios.o \
+	$O/adios_helpers_readers.shared_adios.o \
+	$O/adios_helpers_writers.shared_adios.o \
 	$O/adios_helpers.shared_adios.o \
 	$(EMPTY_MACRO)
 
@@ -243,13 +245,28 @@ adios_meshfem3D_SHARED_STUBS = \
 	$O/adios_method_stubs.cc.o \
 	$(EMPTY_MACRO)
 
+#adios2_meshfem3D_OBJECTS = \
+#	$(EMPTY_MACRO)
+
+#adios2_meshfem3D_SHARED_OBJECTS = \
+#	$O/adios2_helpers_read.shared_adios2_module.o \
+#	$(EMPTY_MACRO)
+
 # conditional adios linking
 ifeq ($(ADIOS),yes)
+meshfem3D_OBJECTS += $(adios_meshfem3D_OBJECTS)
+meshfem3D_SHARED_OBJECTS += $(adios_meshfem3D_SHARED_OBJECTS)
+else ifeq ($(ADIOS2),yes)
 meshfem3D_OBJECTS += $(adios_meshfem3D_OBJECTS)
 meshfem3D_SHARED_OBJECTS += $(adios_meshfem3D_SHARED_OBJECTS)
 else
 meshfem3D_SHARED_OBJECTS += $(adios_meshfem3D_SHARED_STUBS)
 endif
+
+
+###
+### Collaborative Earth Model (CEM)
+###
 
 # conditional CEM model
 ifeq ($(CEM),yes)

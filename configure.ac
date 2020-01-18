@@ -298,7 +298,26 @@ AS_IF([test x"$want_adios" != xno], [
 
 AS_IF([test x"$want_adios2" != xno], [
     AS_BOX([ADIOS2])
+
+    # for fortran compilation
     CIT_ADIOS2_CONFIG
+
+    # for C file compilation
+    AC_MSG_CHECKING([for ADIOS2 C flags and libs])
+    AS_IF([test x"$ADIOS2_CONFIG" != x], [
+      ADIOS2_CFLAGS=`$ADIOS2_CONFIG --c-flags`
+      ADIOS2_CLIBS=`$ADIOS2_CONFIG --c-libs`
+      AC_MSG_RESULT(done)
+    ],[AC_MSG_RESULT(no adios2_config)])
+    AC_SUBST([ADIOS2_CFLAGS])
+    AC_SUBST([ADIOS2_CLIBS])
+
+    # in case adios2 c file compilation needs mpi
+    AC_ARG_VAR(MPICC, [MPI C compiler command])
+    AS_IF([test x"$MPICC" = x],[
+        MPICC=mpicc
+    ])
+    AC_SUBST([MPICC])
 ])
 
 ###

@@ -403,10 +403,21 @@
 !!
 !!-----------------------------------------------------------
 
+! ADIOS2 engines
+!! note on native engine types:
+!!  - "MPI" is not supported yet by adios2 version (current 2.4.0), check out in future.
+!!  - "BPfile" doesn't support file appending yet, which is needed at the moment.
+!!  - "BP3" would allow for backward compatibility to ADIOS 1.x, but doesn't support file appending yet.
+!!  - "BP4" is the new adios2 format with enhanced capabilities.
+!! we will use "BP4" by default.
+!!
+!! BP4
+!! format details: https://adios2.readthedocs.io/en/latest/engines/engines.html#bp4
   character(len=*), parameter :: ADIOS2_ENGINE_DEFAULT = "BP4"
-  character(len=*), parameter :: ADIOS2_ENGINE_PARAMS_DEFAULT = "SubStreams=64"
+  character(len=*), parameter :: ADIOS2_ENGINE_PARAMS_DEFAULT = "" ! add "SubStreams=64" for larger runs
+
   character(len=*), parameter :: ADIOS2_ENGINE_UNDO_ATT = "BP4"
-  character(len=*), parameter :: ADIOS2_ENGINE_PARAMS_UNDO_ATT = "SubStreams=64"
+  character(len=*), parameter :: ADIOS2_ENGINE_PARAMS_UNDO_ATT = "" ! add "SubStreams=64" for larger runs
 
 
 !!-----------------------------------------------------------

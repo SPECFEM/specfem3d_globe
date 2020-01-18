@@ -261,5 +261,3 @@ FC_FUNC_(get_utctime_params,GET_UTCTIME_PARAMS)(int* stime_in,
 
   return;
 }
-
-

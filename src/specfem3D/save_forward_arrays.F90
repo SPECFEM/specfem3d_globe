@@ -64,11 +64,7 @@
     !
     ! saves checkpoint
     if (ADIOS_FOR_FORWARD_ARRAYS) then
-#ifdef HAVE_ADIOS2
-      call save_intermediate_forward_arrays_adios2()
-#else
       call save_intermediate_forward_arrays_adios()
-#endif
     else
       write(outputname,"('dump_all_arrays',i6.6)") myrank
       open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname), &
@@ -131,11 +127,7 @@
     endif
 
     if (ADIOS_FOR_FORWARD_ARRAYS) then
-#ifdef HAVE_ADIOS2
-      call save_forward_arrays_adios2()
-#else
       call save_forward_arrays_adios()
-#endif
     else
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_save_forward_arrays.bin'
       outputname = trim(LOCAL_TMP_PATH)//'/'//trim(outputname)
@@ -231,11 +223,7 @@
   endif
 
   if (ADIOS_FOR_UNDO_ATTENUATION) then
-#ifdef HAVE_ADIOS2
-    call save_forward_arrays_undoatt_adios2()
-#else
     call save_forward_arrays_undoatt_adios()
-#endif
   else
     ! current subset iteration
     iteration_on_subset_tmp = iteration_on_subset

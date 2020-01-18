@@ -1684,6 +1684,27 @@ end module my_mpi
 !-------------------------------------------------------------------------------------------------
 !
 
+  subroutine world_size_comm(sizeval,comm)
+
+  use my_mpi
+
+  implicit none
+
+  integer,intent(out) :: sizeval
+  integer,intent(in) :: comm
+
+  ! local parameters
+  integer :: ier
+
+  call MPI_COMM_SIZE(comm,sizeval,ier)
+  if (ier /= 0 ) stop 'Error getting MPI world size'
+
+  end subroutine world_size_comm
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
   subroutine world_rank(rank)
 
   use my_mpi
