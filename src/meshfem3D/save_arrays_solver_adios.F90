@@ -541,6 +541,9 @@
   ! closes file
   call close_file_adios(myadios_file)
 
+  ! makes sure all done
+  call synchronize_all()
+
   ! Clean the temporary arrays containing the node information
   deallocate(tmp_array_x)
   deallocate(tmp_array_y)

@@ -650,7 +650,7 @@ subroutine define_adios_global_dims_1d(adios_group, group_size_inc, array_name, 
 
   ! uses local_dim as dummy variable
   call define_adios_scalar(adios_group, group_size_inc, trim(array_name), "local_dim", local_dim)
-  call define_adios_scalar(adios_group, group_size_inc, trim(array_name), "global_dim", int(local_dim, 8)) ! long integer type
+  call define_adios_scalar(adios_group, group_size_inc, trim(array_name), "global_dim", int(local_dim,kind=8)) ! long type
   call define_adios_scalar(adios_group, group_size_inc, trim(array_name), "offset", local_dim)
 
 end subroutine define_adios_global_dims_1d
@@ -719,7 +719,7 @@ end subroutine define_adios_global_dims_1d
 
 #endif
 
-  group_size_inc = group_size_inc + local_dim*4
+  group_size_inc = group_size_inc + local_dim * 4
 
   end subroutine define_adios_global_1d_generic_real
 
@@ -916,7 +916,7 @@ end subroutine define_adios_global_dims_1d
 
 #endif
 
-  group_size_inc = group_size_inc + local_dim*8
+  group_size_inc = group_size_inc + local_dim * 8
 
   end subroutine define_adios_global_1d_generic_double
 
@@ -1113,7 +1113,7 @@ end subroutine define_adios_global_1d_double_4d
 
 #endif
 
-  group_size_inc = group_size_inc + local_dim*4
+  group_size_inc = group_size_inc + local_dim * 4
 
   end subroutine define_adios_global_1d_generic_int
 
@@ -1310,7 +1310,7 @@ end subroutine define_adios_global_1d_double_4d
 
 #endif
 
-  group_size_inc = group_size_inc + local_dim*8
+  group_size_inc = group_size_inc + local_dim * 8
 
   end subroutine define_adios_global_1d_generic_long
 
@@ -1513,7 +1513,7 @@ subroutine define_adios_global_1d_generic_logical(adios_group, group_size_inc, a
 
 #endif
 
-  group_size_inc = group_size_inc + local_dim*4
+  group_size_inc = group_size_inc + local_dim * 4
 
 end subroutine define_adios_global_1d_generic_logical
 
@@ -1709,7 +1709,7 @@ subroutine define_adios_global_1d_string_generic(adios_group, group_size_inc, ar
 
 #endif
 
-  group_size_inc = group_size_inc + local_dim*1
+  group_size_inc = group_size_inc + local_dim * 1
 
 end subroutine define_adios_global_1d_string_generic
 
@@ -1810,7 +1810,7 @@ subroutine  define_adios_local_1d_string_1d(adios_group, group_size_inc, local_d
 
 #endif
 
-  group_size_inc = group_size_inc + 1*local_dim
+  group_size_inc = group_size_inc + local_dim * 1
 
   ! to avoid compiler warnings
   idummy = len(var)

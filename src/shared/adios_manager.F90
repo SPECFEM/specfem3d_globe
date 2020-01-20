@@ -120,6 +120,7 @@ module manager_adios
   ! file closing
   public :: close_file_adios
   public :: close_file_adios_read_and_finalize_method
+  public :: close_file_adios_read_and_finalize_method_only_rank
   public :: close_file_adios_read
 
   ! groups
@@ -129,6 +130,7 @@ module manager_adios
   public :: set_selection_boundingbox
   public :: delete_adios_selection
   public :: get_adios_group
+  public :: flush_adios_group_all
 
   ! check
   public :: check_adios_err
@@ -277,6 +279,7 @@ contains
   ! local parameters
 #if defined(USE_ADIOS) || defined(USE_ADIOS2)
   integer :: ier
+  logical, external :: is_valid_comm
 #endif
 
   TRACE_ADIOS('finalize_adios')
@@ -300,15 +303,15 @@ contains
   if (myadios_val_file /= 0) stop 'Error adios file myadios_val_file still open, please check.'
   if (myadios_fwd_file /= 0) stop 'Error adios file myadios_fwd_file still open, please check.'
 
+  ! wait until finalized, synchronizes all using adios communicator
+  call synchronize_all_comm(comm_adios)
+
   ! finalize
   call adios_finalize(myrank_adios, ier)
   if (ier /= 0 ) stop 'Error cleaning up ADIOS: calling adios_finalize() routine failed'
 
-  ! wait until finalized, synchronizes all using adios communicator
-  call synchronize_all_comm(comm_adios)
-
   ! frees (duplicate) MPI communicator
-  call world_comm_free(comm_adios)
+  if (is_valid_comm(comm_adios)) call world_comm_free(comm_adios)
 
 #elif defined(USE_ADIOS2)
   ! checks to close file at the end of run
@@ -322,15 +325,16 @@ contains
   if (myadios_val_file%valid) stop 'Error adios2 file myadios_val_file still open, please check.'
   if (myadios_fwd_file%valid) stop 'Error adios2 file myadios_fwd_file still open, please check.'
 
+  ! wait until finalized, synchronizes all using adios communicator
+  call synchronize_all_comm(comm_adios)
+
   ! finalize
   call adios2_finalize(myadios2_obj, ier)
   if (ier /= 0 ) stop 'Error cleaning up ADIOS2: calling adios2_finalize() routine failed'
 
-  ! wait until finalized, synchronizes all using adios communicator
-  call synchronize_all_comm(comm_adios)
-
-  ! frees (duplicate) MPI communicator
-  call world_comm_free(comm_adios)
+  ! adios2 internally calls MPI_Comm_dup and frees (duplicate) MPI communicator when finalizing.
+  ! since we called an explicit duplicator, we also free it.
+  if (is_valid_comm(comm_adios)) call world_comm_free(comm_adios)
 
 #else
   ! safety stop
@@ -505,6 +509,9 @@ contains
   if (DEBUG) then
     call show_adios_file_variables(adios_handle,adios_group,name)
   endif
+
+  ! do not synchronize across adios processes
+  ! this is only called by a single process (using MPI_COMM_SELF for adios i/o).
 
   end subroutine open_file_adios_read_only_rank
 
@@ -750,6 +757,9 @@ contains
 
 #endif
 
+  ! synchronizes all processes
+  call synchronize_all_comm(comm_adios)
+
   end subroutine close_file_adios
 
 #endif
@@ -797,15 +807,71 @@ contains
 
 #endif
 
+  ! synchronizes all processes
+  call synchronize_all_comm(comm_adios)
+
+  end subroutine close_file_adios_read_and_finalize_method
+
+#endif
+!
+!---------------------------------------------------------------------------------
+!
+#if defined(USE_ADIOS) || defined(USE_ADIOS2)
+! only available with ADIOS compilation support
+! to clearly separate adios version and non-adios version of same tools
+
+  subroutine close_file_adios_read_and_finalize_method_only_rank(adios_handle,rank)
+
+! only single process closes
+
+  implicit none
+
+#if defined(USE_ADIOS)
+  ! adios
+  integer(kind=8), intent(inout) :: adios_handle
+#elif defined(USE_ADIOS2)
+  ! adios2
+  type(adios2_engine), intent(inout) :: adios_handle
+#endif
+  integer, intent(in) :: rank
+  ! local parameters
+  integer :: ier
+
+  TRACE_ADIOS('close_file_adios_read_and_finalize')
+
+  ! only specified rank proceeds
+  if (myrank_adios /= rank) return
+
+#if defined(USE_ADIOS)
+  ! ADIOS 1
+  call adios_read_close(adios_handle,ier)
+  if (ier /= 0 ) stop 'Error helper adios read close in close_file_adios_read_and_finalize() routine'
+
+  ! sets explicitly to zero
+  adios_handle = 0
+
+  ! finalizes file opened with adios_read_init_method()
+  call adios_read_finalize_method(ADIOS_READ_METHOD_BP, ier)
+  if (ier /= 0 ) stop 'Error helper adios read finalize'
+
+#elif defined(USE_ADIOS2)
+  ! ADIOS 2
+  ! no special case, file just has been opened with adios2_mode_read flag
+  call adios2_close(adios_handle, ier)
+  call check_adios_err(ier,"Error closing adios file close_file_adios_read_and_finalize() routine")
+
+#endif
+
   ! do not synchronize after closing, as it will be called also by a single process in interpolate_model.F90
   ! and thus would stall the program execution.
   !
   ! do not: synchronizes all processes
   ! >call synchronize_all_comm(comm_adios)
 
-  end subroutine close_file_adios_read_and_finalize_method
+  end subroutine close_file_adios_read_and_finalize_method_only_rank
 
 #endif
+
 !
 !---------------------------------------------------------------------------------
 !
@@ -851,6 +917,9 @@ contains
   call check_adios_err(ier,"Error closing adios2 file with handle")
 
 #endif
+
+  ! synchronizes all processes
+  call synchronize_all_comm(comm_adios)
 
   end subroutine close_file_adios_read
 
@@ -1130,7 +1199,48 @@ contains
   end subroutine get_adios_group
 
 #endif
+!
+!---------------------------------------------------------------------------------
+!
+#if defined(USE_ADIOS) || defined(USE_ADIOS2)
+! only available with ADIOS compilation support
+! to clearly separate adios version and non-adios version of same tools
 
+  subroutine flush_adios_group_all(adios_group)
+
+  implicit none
+
+#if defined(USE_ADIOS)
+  integer(kind=8), intent(inout) :: adios_group
+#elif defined(USE_ADIOS2)
+  type(adios2_io), intent(inout) :: adios_group
+#endif
+
+  ! local parameters
+  integer :: ier
+
+  TRACE_ADIOS('flush_adios_group_all')
+
+  ! initializes adios group
+#if defined(USE_ADIOS)
+  ! ADIOS 1
+  ! no flush all
+  ! to avoid compiler warning
+  ier = adios_group
+
+#elif defined(USE_ADIOS2)
+  ! ADIOS 2
+  ! flush all engines
+  if (adios_group%valid) then
+    call adios2_flush_all_engines(adios_group,ier)
+    if (ier /= 0 ) stop 'Error cleaning up ADIOS2: calling adios2_flush_all_engines() failed'
+  endif
+
+#endif
+
+  end subroutine flush_adios_group_all
+
+#endif
 
 !-------------------------------------------------------------------------------
 !

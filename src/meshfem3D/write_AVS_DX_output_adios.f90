@@ -155,7 +155,6 @@
 
   !--- Reset the path to zero and perform the actual write to disk
   call write_adios_perform(myadios_file)
-
   ! closes file
   call close_file_adios(myadios_file)
 

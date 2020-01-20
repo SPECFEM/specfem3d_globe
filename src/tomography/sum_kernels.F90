@@ -244,15 +244,18 @@ program sum_kernels_globe
   ! synchronizes
   call synchronize_all()
 
-  if (myrank == 0) write(*,*) 'done writing all kernels, see directory OUTPUT_SUM/'
-
-#ifdef USE_ADIOS_INSTEAD_OF_MESH
   ! ADIOS
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
   ! closes summed kernel file
   call close_sum_file()
   ! finalizes adios
   call finalize_adios()
 #endif
+
+  ! synchronizes
+  call synchronize_all()
+
+  if (myrank == 0) write(*,*) 'done writing all kernels, see directory OUTPUT_SUM/'
 
   ! stop all the processes, and exit
   call finalize_mpi()

@@ -158,6 +158,11 @@
   deallocate(iproc_xi_slice)
   deallocate(iproc_eta_slice)
 
+  ! ADIOS
+  if (ADIOS_ENABLED) then
+    call finalize_adios()
+  endif
+
   ! elapsed time since beginning of mesh generation
   if (myrank == 0) then
     tCPU = wtime() - time_start
@@ -174,12 +179,7 @@
     if (IMAIN /= ISTANDARD_OUTPUT) close(IMAIN)
   endif
 
-  ! ADIOS
-  if (ADIOS_ENABLED) then
-    call finalize_adios()
-  endif
-
-  ! synchronize all the processes to make sure everybody has finished doing stuff
+  ! synchronize all the processes to make sure everybody has finished
   call synchronize_all()
 
   end subroutine finalize_mesher

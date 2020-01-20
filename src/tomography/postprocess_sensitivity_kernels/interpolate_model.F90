@@ -335,7 +335,7 @@
     print *,'  estimated number of total processes = ',rank
     print *,''
     ! closes file
-    call close_file_adios_read_and_finalize_method(myadios_file)
+    call close_file_adios_read_and_finalize_method_only_rank(myadios_file,myrank)
 
 #else
     ! default binary

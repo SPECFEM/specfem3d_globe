@@ -497,6 +497,8 @@
 
   end select  ! end of test if first or second pass
 
+  ! synchronizes processes
+  call synchronize_all()
 
   ! deallocate these arrays after each pass
   ! because they have a different size in each pass to save memory
@@ -587,12 +589,12 @@
            tau_e_store(ATT1,ATT2,ATT3,N_SLS,nspec_att),stat=ier)
   if (ier /= 0) stop 'Error in allocate 1'
 
-  Qmu_store(:,:,:,:) = 0.0; tau_e_store(:,:,:,:,:) = 0.0
+  Qmu_store(:,:,:,:) = 0.0_CUSTOM_REAL; tau_e_store(:,:,:,:,:) = 0.0_CUSTOM_REAL
 
   ! array with model density
   allocate(rhostore(NGLLX,NGLLY,NGLLZ,nspec),stat=ier)
   if (ier /= 0) stop 'Error in allocate 6'
-  rhostore(:,:,:,:) = 0.0
+  rhostore(:,:,:,:) = 0.0_CUSTOM_REAL
 
   ! for anisotropy
   allocate(kappavstore(NGLLX,NGLLY,NGLLZ,nspec), &
@@ -603,11 +605,11 @@
            ispec_is_tiso(nspec),stat=ier)
   if (ier /= 0) stop 'Error in allocate 7'
 
-  kappavstore(:,:,:,:) = 0.0
-  kappahstore(:,:,:,:) = 0.0
-  muvstore(:,:,:,:) = 0.0
-  muhstore(:,:,:,:) = 0.0
-  eta_anisostore(:,:,:,:) = 0.0
+  kappavstore(:,:,:,:) = 0.0_CUSTOM_REAL
+  kappahstore(:,:,:,:) = 0.0_CUSTOM_REAL
+  muvstore(:,:,:,:) = 0.0_CUSTOM_REAL
+  muhstore(:,:,:,:) = 0.0_CUSTOM_REAL
+  eta_anisostore(:,:,:,:) = 0.0_CUSTOM_REAL
 
   ispec_is_tiso(:) = .false.
 
@@ -621,7 +623,7 @@
            rho_vs(NGLLX,NGLLY,NGLLZ,nspec_stacey),stat=ier)
   if (ier /= 0) stop 'Error in allocate 8'
 
-  rho_vp(:,:,:,:) = 0.0; rho_vs(:,:,:,:) = 0.0
+  rho_vp(:,:,:,:) = 0.0_CUSTOM_REAL; rho_vs(:,:,:,:) = 0.0_CUSTOM_REAL
 
   ! anisotropy
   if ((ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) .or. &
@@ -664,7 +666,7 @@
   ! additional array stores for azimuthal
   allocate(mu0store(NGLLX,NGLLY,NGLLZ,nspec),stat=ier)
   if (ier /= 0) stop 'Error allocating mu0,Gc,Gs array'
-  mu0store(:,:,:,:) = 0.0
+  mu0store(:,:,:,:) = 0.0_CUSTOM_REAL
 
   if (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
     allocate(Gc_prime_store(NGLLX,NGLLY,NGLLZ,nspec), &
@@ -675,8 +677,8 @@
              Gs_prime_store(1,1,1,1),stat=ier)
   endif
   if (ier /= 0) stop 'Error allocating Gc_prime,Gs_prime array'
-  Gc_prime_store(:,:,:,:) = 0.0
-  Gs_prime_store(:,:,:,:) = 0.0
+  Gc_prime_store(:,:,:,:) = 0.0_CUSTOM_REAL
+  Gs_prime_store(:,:,:,:) = 0.0_CUSTOM_REAL
 
   ! boundary locator
   allocate(iboun(6,nspec),stat=ier)

@@ -298,6 +298,28 @@ end module my_mpi
   end subroutine wait_req
 
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  logical function is_valid_comm(comm)
+
+  use my_mpi
+
+  implicit none
+
+  integer, intent(in) :: comm
+
+  ! tests if communicator is valid
+  if (comm == MPI_COMM_NULL) then
+    is_valid_comm = .false.
+  else
+    is_valid_comm = .true.
+  endif
+
+  end function is_valid_comm
+
+
 !-------------------------------------------------------------------------------------------------
 !
 ! MPI broadcasting helper

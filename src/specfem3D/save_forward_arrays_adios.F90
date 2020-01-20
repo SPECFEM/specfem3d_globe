@@ -80,7 +80,6 @@
 
   ! Reset the path to its original value to avoid bugs.
   call write_adios_perform(myadios_fwd_file)
-
   ! Close ADIOS handler to the restart file.
   call close_file_adios(myadios_fwd_file)
 
@@ -147,7 +146,6 @@
 
   ! Reset the path to its original value to avoid bugs.
   call write_adios_perform(myadios_fwd_file)
-
   ! Close ADIOS handler to the restart file.
   call close_file_adios(myadios_fwd_file)
 
@@ -310,7 +308,11 @@
 
   ! Close ADIOS handler to the restart file.
   if (do_close_file) then
+    ! flushes all engines (makes sure i/o is all written out)
+    ! > call flush_adios_group_all(myadios_fwd_group)
+    ! closes file
     call close_file_adios(myadios_fwd_file)
+    ! re-sets flag
     is_initialized_fwd_group = .false.
 
     ! debug

@@ -93,6 +93,47 @@
   write(region_name_scalar,"('reg',i1)") iregion_code
   write(group_name,"('SPECFEM3D_GLOBE_MODEL_reg',i1)") iregion_code
 
+!daniel
+! note: on Mac OsX with OpenMPI 3.1, an error can occur at the end when finalizing MPI:
+!
+!--------------------------------------------------------------------------
+!A system call failed during shared memory initialization that should
+!not have.  It is likely that your MPI job will now either abort or
+!experience performance degradation.
+!
+!  Local host:  **mymac**.home
+!  System call: unlink(2) /var/folders/0b/8r9lhyv48v58lf006s7hkfmr0000gn/T//ompi.**mymac**.501/pid.39081/1/vader_segment.**mymac**.e8f40001.0
+!  Error:       No such file or directory (errno 2)
+!--------------------------------------------------------------------------
+!
+! this seems to be related to this routine somehow and the crust/mantle region.
+!
+! a work-around could be to call mpirun with:
+! > mpirun --mca btl_vader_backing_directory /tmp -np 4 ./bin/xmeshfem3D
+!
+! or either in your shell, use:
+! > export OMPI_MCA_btl=self,tcp
+! or when calling mpirun:
+! > OMPI_MCA_btl=self,tcp mpirun -np 4 ./bin/xmeshfem3D
+!
+!
+! as software work-around, we re-initialize adios.
+!
+! todo: this will need to be re-evaluated in future as it might be fixed in future versions.
+  if (is_adios_version2) then
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) '    re-initializes adios2 for meshfile model output'
+      call flush_IMAIN()
+    endif
+    call synchronize_all()
+    ! frees adios main object
+    call finalize_adios()
+    ! re-initializes
+    call initialize_adios()
+  endif
+
+  ! initializes i/o group
   call init_adios_group(myadios_val_group,group_name)
 
   ! save nspec and nglob, to be used in combine_paraview_data
@@ -130,17 +171,17 @@
     ! vsh
     call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vsh", dummy_ijke)
     ! eta
-    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "eta", eta_anisostore)
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "eta", dummy_ijke)
   endif
 
   ! anisotropic values
   if (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
     ! Gc_prime
-    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "Gc_prime", Gc_prime_store)
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "Gc_prime", dummy_ijke)
     ! Gs_prime
-    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "Gs_prime", Gs_prime_store)
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "Gs_prime", dummy_ijke)
     ! mu0
-    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "mu0", mu0store)
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "mu0", dummy_ijke)
   endif
 
   if (ATTENUATION) then
@@ -173,7 +214,6 @@
 !       until a perform/close/end_step call is done.
 !
 !       as a work-around, we will explicitly allocate temporary arrays and deallocate them after the file close.
-
   allocate(temp_store_vp(NGLLX,NGLLY,NGLLZ,nspec), &
            temp_store_vs(NGLLX,NGLLY,NGLLZ,nspec), &
            temp_store_rho(NGLLX,NGLLY,NGLLZ,nspec),stat=ier)
@@ -255,9 +295,6 @@
              temp_store_vsh(1,1,1,1))
   endif ! TRANSVERSE_ISOTROPY
 
-  ! free memory
-  deallocate(temp_store_rho_inv)
-
   ! anisotropic values
   if (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
     ! the scale of GPa--[g/cm^3][(km/s)^2]
@@ -321,6 +358,8 @@
 
   !--- Reset the path to zero and perform the actual write to disk
   call write_adios_perform(myadios_val_file)
+  ! flushes all engines related to this io group (not really required, but used to make sure i/o has all written out)
+  call flush_adios_group_all(myadios_val_group)
   ! closes file
   call close_file_adios(myadios_val_file)
 
@@ -339,6 +378,7 @@
 
   ! frees temporary memory
   deallocate(temp_store_vp,temp_store_vs,temp_store_rho)
+  deallocate(temp_store_rho_inv)
   deallocate(temp_store_vpv,temp_store_vph,temp_store_vsv,temp_store_vsh)
   deallocate(temp_store_mu0)
   deallocate(temp_store_Qmu)
