@@ -39,7 +39,7 @@ module adios_helpers_readers_mod
   use adios2
 #endif
 
-  use manager_adios,only: check_adios_err !,myrank_adios
+  use manager_adios, only: check_adios_err !,myrank_adios
 
   implicit none
 

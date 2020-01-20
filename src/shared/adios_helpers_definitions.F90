@@ -46,7 +46,7 @@ module adios_helpers_definitions_mod
   use adios2
 #endif
 
-  use manager_adios,only: check_adios_err
+  use manager_adios, only: check_adios_err
 #if defined(USE_ADIOS2)
   use manager_adios, only: sizeprocs_adios,myrank_adios
 #endif
@@ -397,7 +397,7 @@ subroutine define_adios_scalar_integer(adios_group, group_size_inc, path, name, 
   endif
 
   !debug
-  !print*,'debug adios: ',myrank_adios,' define integer scalar: ',trim(full_name),' path: ',trim(path),' name: ',trim(name)
+  !print *,'debug adios: ',myrank_adios,' define integer scalar: ',trim(full_name),' path: ',trim(path),' name: ',trim(name)
 
 #if defined(USE_ADIOS)
   ! ADIOS 1
@@ -412,7 +412,7 @@ subroutine define_adios_scalar_integer(adios_group, group_size_inc, path, name, 
   !         this is due to appending to a file will increase the step count for variables.
   !         retrieving local scalar variables would use adios2_set_block_selection() which then fails in such cases with an error:
   !          " ERROR: invalid blockID 0 from steps start 0 in variable reg2/nspec,
-  !                   check argument to Variable<T>::SetBlockID, in call to Get "
+  !                   check argument to Variable < T>::SetBlockID, in call to Get "
   !
   !         however, using 1-D arrays will use adios2_set_selection() which succeeds also for appended variables.
   !         until adios2 fixes this, we will use the 1-D work-around.

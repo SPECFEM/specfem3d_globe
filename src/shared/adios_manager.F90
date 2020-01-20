@@ -501,7 +501,7 @@ contains
 #elif defined(USE_ADIOS2)
   ! MPI version only to pass a communicator other than the one from adios_init
   call adios2_open(adios_handle, adios_group, trim(name), adios2_mode_read, comm_dummy, ier)
-  call check_adios_err(ier,"Error opening adios2 file with mpi comm for reading: "//trim(name))
+  call check_adios_err(ier,"Error opening adios2 file with MPI comm for reading: "//trim(name))
 
 #endif
 
@@ -1459,8 +1459,8 @@ contains
 #elif defined(USE_ADIOS2)
   ! ADIOS 2
   ! note: inquiry functionality in adios 2 quite different to version 1
-  !       for fortran bindings, unfortunately there is no adios2_inquire_all_*** functionality
-  !       thus, we have no way to inquire and list all variables in a file using fortran commands.
+  !       for Fortran bindings, unfortunately there is no adios2_inquire_all_*** functionality
+  !       thus, we have no way to inquire and list all variables in a file using Fortran commands.
   !
   ! only checks
   if (.not. myadios2_obj%valid) then
@@ -1481,7 +1481,7 @@ contains
     print *,'file name: ',trim(filename)
 
     ! inquire all variables
-    ! fortran binding not supported yet by adios2
+    ! Fortran binding not supported yet by adios2
     !call adios2_inquire_all_variables(vars,variable_count,adios_group)
     ! C-wrapper
     call get_adios2_all_variables_count(variable_count,adios_group)
@@ -1495,7 +1495,7 @@ contains
     print *
 
     ! inquire all attributes
-    ! fortran binding not supported yet by adios2
+    ! Fortran binding not supported yet by adios2
     !call adios2_inquire_all_attributes(atts,attribute_count,adios_group)
     ! C-wrapper
     call get_adios2_all_variables_count(attribute_count,adios_group)

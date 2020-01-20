@@ -190,7 +190,7 @@ program sum_kernels_globe
     !  isotropic kernels
     if (myrank == 0) then
       write(*,*) 'isotropic kernels: bulk_c, bulk_beta, rho'
-      write(*,*) ''
+      print *
     endif
     do i = 1,3
       ! kernel name
@@ -208,7 +208,7 @@ program sum_kernels_globe
     ! isotropic kernels
     if (myrank == 0) then
       write(*,*) 'isotropic kernels: alpha, beta, rho'
-      write(*,*) ''
+      print *
     endif
     do i = 1,3
       ! kernel name
@@ -226,7 +226,7 @@ program sum_kernels_globe
     ! transverse isotropic kernels
     if (myrank == 0) then
       write(*,*) 'transverse isotropic kernels: bulk_c, bulk_betav, bulk_betah, eta'
-      write(*,*) ''
+      print *
     endif
     do i = 1,4
       ! kernel name

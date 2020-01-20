@@ -272,7 +272,7 @@ program convert_model_file_adios
           write(*,*) '  written output for parameter: ',trim(found_fname(icount))
           ! min/max
           write(*,*) '  slice rank 0 has min/max value = ',minval(model(:,:,:,:)),"/",maxval(model(:,:,:,:))
-          write(*,*) ''
+          print *
         endif
 
       endif

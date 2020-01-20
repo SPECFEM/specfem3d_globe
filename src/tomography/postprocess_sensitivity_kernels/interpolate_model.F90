@@ -333,7 +333,7 @@
       stop 'Error adios array has invalid local_dim/global_dim ratio'
     endif
     print *,'  estimated number of total processes = ',rank
-    print *,''
+    print *
     ! closes file
     call close_file_adios_read_and_finalize_method_only_rank(myadios_file,myrank)
 

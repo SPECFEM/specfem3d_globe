@@ -889,8 +889,8 @@
       num_phase_ispec /= num_phase_ispec_wmax .or. &
       num_colors_inner /= num_colors_inner_wmax .or. &
       num_colors_outer /= num_colors_outer_wmax) then
-    print *,myrank,'Error num_interfaces for mpi arrays'
-    call exit_mpi(myrank,'Error num_interfaces for mpi arrays in adios saved file')
+    print *,myrank,'Error num_interfaces for MPI arrays'
+    call exit_mpi(myrank,'Error num_interfaces for MPI arrays in adios saved file')
   endif
 
   ! create the name for the database of the current slide and region
