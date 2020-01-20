@@ -325,7 +325,7 @@
     print *,'  local_dim/global_dim = ',local_dim,'/',global_dim
 
     rank = 0
-    if (mod(global_dim,local_dim) == 0) then
+    if (mod(global_dim,int(local_dim,kind=8)) == 0) then
       ! sizeprocs
       rank = global_dim/local_dim
     else

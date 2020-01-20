@@ -101,8 +101,8 @@
 !not have.  It is likely that your MPI job will now either abort or
 !experience performance degradation.
 !
-!  Local host:  **mymac**.home
-!  System call: unlink(2) /var/folders/0b/8r9lhyv48v58lf006s7hkfmr0000gn/T//ompi.**mymac**.501/pid.39081/1/vader_segment.**mymac**.e8f40001.0
+!  Local host:  mac.home
+!  System call: unlink(2) /var/folders/0b/8r9lhyv48v58lf006s7hkfmr0000gn/T//ompi.mac.501/pid.39081/1/vader_segment.mac.e8f40001.0
 !  Error:       No such file or directory (errno 2)
 !--------------------------------------------------------------------------
 !
