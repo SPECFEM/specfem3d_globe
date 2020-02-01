@@ -46,7 +46,7 @@
 !  and the core determination was developed.
 !
 
-  subroutine auto_time_stepping(WIDTH,  NEX_MAX, DT)
+  subroutine auto_time_stepping(WIDTH, NEX_MAX, DT)
 
   use constants, only: DEGREES_TO_RADIANS, NGLLX, &
     REFERENCE_MODEL_PREM,REFERENCE_MODEL_IASP91,REFERENCE_MODEL_AK135F_NO_MUD, &
@@ -65,10 +65,12 @@
   double precision :: RADIAL_LEN_RATIO_CENTRAL_CUBE
   double precision :: RADIUS_INNER_CORE
   double precision :: DOUBLING_INNER_CORE
-  double precision :: P_VELOCITY_MAX     ! Located Near the inner Core Boundary
+  double precision :: P_VELOCITY_MAX ! Located Near the inner Core Boundary
   double precision :: MAXIMUM_STABILITY_CONDITION
   double precision :: MIN_GLL_POINT_SPACING
   double precision :: elem_size,min_grid_dx
+  double precision :: dt_suggested
+  double precision :: RADIAL_LEN_RATIO_CRUST,RADIUS_SURFACE,P_VELOCITY_MAX_CRUST,dt_suggested_crust
 
   ! initializes defaults
   RADIAL_LEN_RATIO_CENTRAL_CUBE   =     0.40d0
@@ -123,9 +125,16 @@
 
   case (REFERENCE_MODEL_SOHL)
     ! Mars
+    ! note: for mars, the time stepping is mostly affected by crustal elements.
+    !       we will use two estimates, one for inner core and another for the crust to determine a minimum time step.
+    ! inner core
     RADIUS_INNER_CORE = 515.0d0
     P_VELOCITY_MAX = 7.3d0 * 1.1d0        ! vp: 11.26220 - 6.36400 * (1221.49/6371.)**2; daniel: increase by a factor 1.1x
-    RADIAL_LEN_RATIO_CENTRAL_CUBE = 0.76  ! for an aspect ratio around 1.3
+    RADIAL_LEN_RATIO_CENTRAL_CUBE = 0.7   ! for an aspect ratio around 1.3
+    ! surface/crust
+    RADIUS_SURFACE = 3390.0d0       ! in km
+    P_VELOCITY_MAX_CRUST = 7.73d0   ! according to crustmap marscrustp7.cmap (lower crust layer) files
+    RADIAL_LEN_RATIO_CRUST = 0.46   ! empirical factor to account for aspect ratio in crust
   end select
 
   ! relative minimum distance between two GLL points
@@ -182,7 +191,22 @@
   min_grid_dx = elem_size * MIN_GLL_POINT_SPACING
 
   ! estimated time step
-  DT = MAXIMUM_STABILITY_CONDITION * min_grid_dx / P_VELOCITY_MAX
+  dt_suggested = MAXIMUM_STABILITY_CONDITION * min_grid_dx / P_VELOCITY_MAX
+
+  ! return as DT
+  DT = dt_suggested
+
+  ! Mars
+  if (REFERENCE_1D_MODEL == REFERENCE_MODEL_SOHL) then
+    ! crustal elements
+    elem_size = RADIAL_LEN_RATIO_CRUST * ((WIDTH * DEGREES_TO_RADIANS) * RADIUS_SURFACE) / dble(NEX_MAX)
+    ! estimated time step
+    dt_suggested_crust = MAXIMUM_STABILITY_CONDITION * MIN_GLL_POINT_SPACING * elem_size / P_VELOCITY_MAX_CRUST
+    ! minimum suggested time step
+    DT = min(dt_suggested,dt_suggested_crust)
+    !debug
+    !print *,'debug: auto_time_stepping: mars dt_suggested/dt_suggested_crust',dt_suggested,dt_suggested_crust
+  endif
 
   !debug
   !print *,'debug: auto_time_stepping: inner core elem size',elem_size,'width/nex',WIDTH,NEX_MAX,'DT',DT
