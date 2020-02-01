@@ -187,7 +187,7 @@
   integer :: id,ia,io,icon
   real :: d,dtheta,dphi
 
-  double precision radius,theta,phi,dvs,dvp,drho
+  double precision :: radius,theta,phi,dvs,dvp,drho
 
 ! factor to convert perturbations in shear speed to perturbations in density
   double precision, parameter :: SCALE_VS =  1.40d0
@@ -203,11 +203,11 @@
   drho = ZERO_
 
   ! increments in latitude/longitude (in rad)
-  dtheta = dela * DEGREES_TO_RADIANS
-  dphi = delo * DEGREES_TO_RADIANS
+  dtheta = real(dela * DEGREES_TO_RADIANS)
+  dphi = real(delo * DEGREES_TO_RADIANS)
 
   ! depth given in km
-  d=R_EARTH_-radius*R_EARTH_
+  d = real(R_EARTH_ - radius*R_EARTH_)
 
   call d2id(d,nnr,dep,id,icon)
   if (icon /= 0) then

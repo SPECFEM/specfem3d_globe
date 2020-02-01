@@ -310,27 +310,27 @@
                                               g33,g34,g35,g36,g44,g45,g46,g55,g56,g66)
 
           ! stores unrelaxed factors
-          c11store_crust_mantle(INDEX_IJK,ispec) = g11
-          c12store_crust_mantle(INDEX_IJK,ispec) = g12
-          c13store_crust_mantle(INDEX_IJK,ispec) = g13
-          c14store_crust_mantle(INDEX_IJK,ispec) = g14
-          c15store_crust_mantle(INDEX_IJK,ispec) = g15
-          c16store_crust_mantle(INDEX_IJK,ispec) = g16
-          c22store_crust_mantle(INDEX_IJK,ispec) = g22
-          c23store_crust_mantle(INDEX_IJK,ispec) = g23
-          c24store_crust_mantle(INDEX_IJK,ispec) = g24
-          c25store_crust_mantle(INDEX_IJK,ispec) = g25
-          c26store_crust_mantle(INDEX_IJK,ispec) = g26
-          c33store_crust_mantle(INDEX_IJK,ispec) = g33
-          c34store_crust_mantle(INDEX_IJK,ispec) = g34
-          c35store_crust_mantle(INDEX_IJK,ispec) = g35
-          c36store_crust_mantle(INDEX_IJK,ispec) = g36
-          c44store_crust_mantle(INDEX_IJK,ispec) = g44
-          c45store_crust_mantle(INDEX_IJK,ispec) = g45
-          c46store_crust_mantle(INDEX_IJK,ispec) = g46
-          c55store_crust_mantle(INDEX_IJK,ispec) = g55
-          c56store_crust_mantle(INDEX_IJK,ispec) = g56
-          c66store_crust_mantle(INDEX_IJK,ispec) = g66
+          c11store_crust_mantle(INDEX_IJK,ispec) = real(g11,kind=CUSTOM_REAL)
+          c12store_crust_mantle(INDEX_IJK,ispec) = real(g12,kind=CUSTOM_REAL)
+          c13store_crust_mantle(INDEX_IJK,ispec) = real(g13,kind=CUSTOM_REAL)
+          c14store_crust_mantle(INDEX_IJK,ispec) = real(g14,kind=CUSTOM_REAL)
+          c15store_crust_mantle(INDEX_IJK,ispec) = real(g15,kind=CUSTOM_REAL)
+          c16store_crust_mantle(INDEX_IJK,ispec) = real(g16,kind=CUSTOM_REAL)
+          c22store_crust_mantle(INDEX_IJK,ispec) = real(g22,kind=CUSTOM_REAL)
+          c23store_crust_mantle(INDEX_IJK,ispec) = real(g23,kind=CUSTOM_REAL)
+          c24store_crust_mantle(INDEX_IJK,ispec) = real(g24,kind=CUSTOM_REAL)
+          c25store_crust_mantle(INDEX_IJK,ispec) = real(g25,kind=CUSTOM_REAL)
+          c26store_crust_mantle(INDEX_IJK,ispec) = real(g26,kind=CUSTOM_REAL)
+          c33store_crust_mantle(INDEX_IJK,ispec) = real(g33,kind=CUSTOM_REAL)
+          c34store_crust_mantle(INDEX_IJK,ispec) = real(g34,kind=CUSTOM_REAL)
+          c35store_crust_mantle(INDEX_IJK,ispec) = real(g35,kind=CUSTOM_REAL)
+          c36store_crust_mantle(INDEX_IJK,ispec) = real(g36,kind=CUSTOM_REAL)
+          c44store_crust_mantle(INDEX_IJK,ispec) = real(g44,kind=CUSTOM_REAL)
+          c45store_crust_mantle(INDEX_IJK,ispec) = real(g45,kind=CUSTOM_REAL)
+          c46store_crust_mantle(INDEX_IJK,ispec) = real(g46,kind=CUSTOM_REAL)
+          c55store_crust_mantle(INDEX_IJK,ispec) = real(g55,kind=CUSTOM_REAL)
+          c56store_crust_mantle(INDEX_IJK,ispec) = real(g56,kind=CUSTOM_REAL)
+          c66store_crust_mantle(INDEX_IJK,ispec) = real(g66,kind=CUSTOM_REAL)
 
           ! for solving memory-variables, modulus defect \delta \mu_l (Komatitsch, 2002, eq. (11) & (13))
           ! note: for solving the memory variables, we will only use the modulus defect
@@ -338,7 +338,7 @@
           !
           !       however, to properly account for shear attenuation, one might have to add also
           !       memory-variables for a modulus defect associated with muh.
-          muvstore_crust_mantle(INDEX_IJK,ispec) = d44
+          muvstore_crust_mantle(INDEX_IJK,ispec) = real(d44,kind=CUSTOM_REAL)
 
         ENDDO_LOOP_IJK
 

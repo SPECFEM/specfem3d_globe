@@ -1176,9 +1176,9 @@
       rn = dd(iver)/verrad(iver)
       dr = rn - 1.d0
       if (rn <= 1.d0) then
-        con(ncon) = (0.75d0*rn-1.5d0)*(rn**2)+1.d0
+        con(ncon) = real( (0.75d0*rn-1.5d0)*(rn**2)+1.d0 ,kind=4)
       else if (rn > 1.d0) then
-        con(ncon) = ((-0.25d0*dr+0.75d0)*dr-0.75d0)*dr+0.25d0
+        con(ncon) = real( ((-0.25d0*dr+0.75d0)*dr-0.75d0)*dr+0.25d0 ,kind=4)
       else
         con(ncon) = 0.0
       endif

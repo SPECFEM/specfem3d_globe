@@ -59,8 +59,11 @@
   ! needs these allocated for subroutine calls
   allocate(factor_common_crust_mantle(ATT1_VAL,ATT2_VAL,ATT3_VAL,N_SLS,ATT4_VAL),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays factor_common_crust_mantle'
+  factor_common_crust_mantle(:,:,:,:,:) = 0.0_CUSTOM_REAL
+
   allocate(factor_common_inner_core(ATT1_VAL,ATT2_VAL,ATT3_VAL,N_SLS,ATT5_VAL),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays factor_common_inner_core'
+  factor_common_inner_core(:,:,:,:,:) = 0.0_CUSTOM_REAL
 
   ! checks if attenuation is on and anything to do further
   if (.not. ATTENUATION_VAL ) return
@@ -75,10 +78,14 @@
   allocate(one_minus_sum_beta_crust_mantle(ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT4_VAL), &
            factor_scale_crust_mantle(ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT4_VAL),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays one_minus_sum_beta_crust_mantle,..'
+  one_minus_sum_beta_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  factor_scale_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
 
   allocate(one_minus_sum_beta_inner_core(ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT5_VAL), &
            factor_scale_inner_core(ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT5_VAL),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays one_minus_sum_beta_inner_core,..'
+  one_minus_sum_beta_inner_core(:,:,:,:) = 0.0_CUSTOM_REAL
+  factor_scale_inner_core(:,:,:,:) = 0.0_CUSTOM_REAL
 
   ! reads in attenuation values
   ! CRUST_MANTLE ATTENUATION
@@ -87,6 +94,7 @@
                                 factor_common_crust_mantle, &
                                 factor_scale_crust_mantle,tau_sigma_dble, &
                                 NSPEC_CRUST_MANTLE)
+
   call bcast_attenuation_model_3D(one_minus_sum_beta_crust_mantle, &
                                   factor_common_crust_mantle, &
                                   factor_scale_crust_mantle, &
@@ -99,6 +107,7 @@
                                 factor_common_inner_core, &
                                 factor_scale_inner_core,tau_sigma_dble, &
                                 NSPEC_INNER_CORE)
+
   call bcast_attenuation_model_3D(one_minus_sum_beta_inner_core, &
                                   factor_common_inner_core, &
                                   factor_scale_inner_core, &
@@ -249,27 +258,27 @@
                                                 g33,g34,g35,g36,g44,g45,g46,g55,g56,g66)
 
             ! stores unrelaxed factors
-            c11store_crust_mantle(i,j,k,ispec) = g11
-            c12store_crust_mantle(i,j,k,ispec) = g12
-            c13store_crust_mantle(i,j,k,ispec) = g13
-            c14store_crust_mantle(i,j,k,ispec) = g14
-            c15store_crust_mantle(i,j,k,ispec) = g15
-            c16store_crust_mantle(i,j,k,ispec) = g16
-            c22store_crust_mantle(i,j,k,ispec) = g22
-            c23store_crust_mantle(i,j,k,ispec) = g23
-            c24store_crust_mantle(i,j,k,ispec) = g24
-            c25store_crust_mantle(i,j,k,ispec) = g25
-            c26store_crust_mantle(i,j,k,ispec) = g26
-            c33store_crust_mantle(i,j,k,ispec) = g33
-            c34store_crust_mantle(i,j,k,ispec) = g34
-            c35store_crust_mantle(i,j,k,ispec) = g35
-            c36store_crust_mantle(i,j,k,ispec) = g36
-            c44store_crust_mantle(i,j,k,ispec) = g44
-            c45store_crust_mantle(i,j,k,ispec) = g45
-            c46store_crust_mantle(i,j,k,ispec) = g46
-            c55store_crust_mantle(i,j,k,ispec) = g55
-            c56store_crust_mantle(i,j,k,ispec) = g56
-            c66store_crust_mantle(i,j,k,ispec) = g66
+            c11store_crust_mantle(i,j,k,ispec) = real(g11,kind=CUSTOM_REAL)
+            c12store_crust_mantle(i,j,k,ispec) = real(g12,kind=CUSTOM_REAL)
+            c13store_crust_mantle(i,j,k,ispec) = real(g13,kind=CUSTOM_REAL)
+            c14store_crust_mantle(i,j,k,ispec) = real(g14,kind=CUSTOM_REAL)
+            c15store_crust_mantle(i,j,k,ispec) = real(g15,kind=CUSTOM_REAL)
+            c16store_crust_mantle(i,j,k,ispec) = real(g16,kind=CUSTOM_REAL)
+            c22store_crust_mantle(i,j,k,ispec) = real(g22,kind=CUSTOM_REAL)
+            c23store_crust_mantle(i,j,k,ispec) = real(g23,kind=CUSTOM_REAL)
+            c24store_crust_mantle(i,j,k,ispec) = real(g24,kind=CUSTOM_REAL)
+            c25store_crust_mantle(i,j,k,ispec) = real(g25,kind=CUSTOM_REAL)
+            c26store_crust_mantle(i,j,k,ispec) = real(g26,kind=CUSTOM_REAL)
+            c33store_crust_mantle(i,j,k,ispec) = real(g33,kind=CUSTOM_REAL)
+            c34store_crust_mantle(i,j,k,ispec) = real(g34,kind=CUSTOM_REAL)
+            c35store_crust_mantle(i,j,k,ispec) = real(g35,kind=CUSTOM_REAL)
+            c36store_crust_mantle(i,j,k,ispec) = real(g36,kind=CUSTOM_REAL)
+            c44store_crust_mantle(i,j,k,ispec) = real(g44,kind=CUSTOM_REAL)
+            c45store_crust_mantle(i,j,k,ispec) = real(g45,kind=CUSTOM_REAL)
+            c46store_crust_mantle(i,j,k,ispec) = real(g46,kind=CUSTOM_REAL)
+            c55store_crust_mantle(i,j,k,ispec) = real(g55,kind=CUSTOM_REAL)
+            c56store_crust_mantle(i,j,k,ispec) = real(g56,kind=CUSTOM_REAL)
+            c66store_crust_mantle(i,j,k,ispec) = real(g66,kind=CUSTOM_REAL)
 
             ! for attenuation
             muvstore_crust_mantle(i,j,k,ispec) = L_dble * scale_factor

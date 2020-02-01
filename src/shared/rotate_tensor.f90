@@ -636,27 +636,27 @@
                                     t33,t34,t35,t36,t44,t45,t46,t55,t56,t66)
 
   ! converts and returns back in custom real
-  c11 = t11
-  c12 = t12
-  c13 = t13
-  c14 = t14
-  c15 = t15
-  c16 = t16
-  c22 = t22
-  c23 = t23
-  c24 = t24
-  c25 = t25
-  c26 = t26
-  c33 = t33
-  c34 = t34
-  c35 = t35
-  c36 = t36
-  c44 = t44
-  c45 = t45
-  c46 = t46
-  c55 = t55
-  c56 = t56
-  c66 = t66
+  c11 = real(t11,kind=CUSTOM_REAL)
+  c12 = real(t12,kind=CUSTOM_REAL)
+  c13 = real(t13,kind=CUSTOM_REAL)
+  c14 = real(t14,kind=CUSTOM_REAL)
+  c15 = real(t15,kind=CUSTOM_REAL)
+  c16 = real(t16,kind=CUSTOM_REAL)
+  c22 = real(t22,kind=CUSTOM_REAL)
+  c23 = real(t23,kind=CUSTOM_REAL)
+  c24 = real(t24,kind=CUSTOM_REAL)
+  c25 = real(t25,kind=CUSTOM_REAL)
+  c26 = real(t26,kind=CUSTOM_REAL)
+  c33 = real(t33,kind=CUSTOM_REAL)
+  c34 = real(t34,kind=CUSTOM_REAL)
+  c35 = real(t35,kind=CUSTOM_REAL)
+  c36 = real(t36,kind=CUSTOM_REAL)
+  c44 = real(t44,kind=CUSTOM_REAL)
+  c45 = real(t45,kind=CUSTOM_REAL)
+  c46 = real(t46,kind=CUSTOM_REAL)
+  c55 = real(t55,kind=CUSTOM_REAL)
+  c56 = real(t56,kind=CUSTOM_REAL)
+  c66 = real(t66,kind=CUSTOM_REAL)
 
 
 ! original routine... kept for reference
@@ -1087,27 +1087,27 @@
                                       c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
 
   ! return radial reference
-  cij_kl_spherical(1) = d11
-  cij_kl_spherical(2) = d12
-  cij_kl_spherical(3) = d13
-  cij_kl_spherical(4) = d14
-  cij_kl_spherical(5) = d15
-  cij_kl_spherical(6) = d16
-  cij_kl_spherical(7) = d22
-  cij_kl_spherical(8) = d23
-  cij_kl_spherical(9) = d24
-  cij_kl_spherical(10) = d25
-  cij_kl_spherical(11) = d26
-  cij_kl_spherical(12) = d33
-  cij_kl_spherical(13) = d34
-  cij_kl_spherical(14) = d35
-  cij_kl_spherical(15) = d36
-  cij_kl_spherical(16) = d44
-  cij_kl_spherical(17) = d45
-  cij_kl_spherical(18) = d46
-  cij_kl_spherical(19) = d55
-  cij_kl_spherical(20) = d56
-  cij_kl_spherical(21) = d66
+  cij_kl_spherical(1) = real(d11,kind=CUSTOM_REAL)
+  cij_kl_spherical(2) = real(d12,kind=CUSTOM_REAL)
+  cij_kl_spherical(3) = real(d13,kind=CUSTOM_REAL)
+  cij_kl_spherical(4) = real(d14,kind=CUSTOM_REAL)
+  cij_kl_spherical(5) = real(d15,kind=CUSTOM_REAL)
+  cij_kl_spherical(6) = real(d16,kind=CUSTOM_REAL)
+  cij_kl_spherical(7) = real(d22,kind=CUSTOM_REAL)
+  cij_kl_spherical(8) = real(d23,kind=CUSTOM_REAL)
+  cij_kl_spherical(9) = real(d24,kind=CUSTOM_REAL)
+  cij_kl_spherical(10) = real(d25,kind=CUSTOM_REAL)
+  cij_kl_spherical(11) = real(d26,kind=CUSTOM_REAL)
+  cij_kl_spherical(12) = real(d33,kind=CUSTOM_REAL)
+  cij_kl_spherical(13) = real(d34,kind=CUSTOM_REAL)
+  cij_kl_spherical(14) = real(d35,kind=CUSTOM_REAL)
+  cij_kl_spherical(15) = real(d36,kind=CUSTOM_REAL)
+  cij_kl_spherical(16) = real(d44,kind=CUSTOM_REAL)
+  cij_kl_spherical(17) = real(d45,kind=CUSTOM_REAL)
+  cij_kl_spherical(18) = real(d46,kind=CUSTOM_REAL)
+  cij_kl_spherical(19) = real(d55,kind=CUSTOM_REAL)
+  cij_kl_spherical(20) = real(d56,kind=CUSTOM_REAL)
+  cij_kl_spherical(21) = real(d66,kind=CUSTOM_REAL)
 
 
 ! for reference, original routine...

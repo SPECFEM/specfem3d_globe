@@ -287,9 +287,9 @@
   factor = ONE-(TWO/3.0d0)*ell*p20
 
   ! removes ellipticity factor
-  x = x / factor
-  y = y / factor
-  z = z / factor
+  x = real( dble(x) / factor,kind=CUSTOM_REAL)
+  y = real( dble(y) / factor,kind=CUSTOM_REAL)
+  z = real( dble(z) / factor,kind=CUSTOM_REAL)
 
   end subroutine revert_ellipticity
 
