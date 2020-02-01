@@ -69,10 +69,10 @@
 
 ! input, output and main MPI I/O files
 ! note: careful with these unit numbers, we mostly use units in the 40-50 range.
-!       cray Fortran e.g. reserves 0,5,6 (standard error,input,output units) and 100-102
-  integer, parameter :: ISTANDARD_OUTPUT = 6
+!       cray Fortran e.g. reserves 0,5,6 (standard error,input,output units) and 100,101,102 (input,output,error unit)
+  integer, parameter :: ISTANDARD_OUTPUT = 6     ! or for cray: 101
+! I/O unit for file input,output
   integer, parameter :: IIN = 40,IOUT = 41
-
 ! uncomment this to write messages to a text file
   integer, parameter :: IMAIN = 42
 ! uncomment this to write messages to the screen (slows down the code)
@@ -414,10 +414,10 @@
 !! BP4
 !! format details: https://adios2.readthedocs.io/en/latest/engines/engines.html#bp4
   character(len=*), parameter :: ADIOS2_ENGINE_DEFAULT = "BP4"
-  character(len=*), parameter :: ADIOS2_ENGINE_PARAMS_DEFAULT = "" ! add "SubStreams=64" for larger runs
+  character(len=*), parameter :: ADIOS2_ENGINE_PARAMS_DEFAULT = "" ! add "SubStreams=64,MaxBufferSize=800Mb" for larger runs
 
   character(len=*), parameter :: ADIOS2_ENGINE_UNDO_ATT = "BP4"
-  character(len=*), parameter :: ADIOS2_ENGINE_PARAMS_UNDO_ATT = "" ! add "SubStreams=64" for larger runs
+  character(len=*), parameter :: ADIOS2_ENGINE_PARAMS_UNDO_ATT = "" ! add "SubStreams=64,MaxBufferSize=800Mb" for larger runs
 
 
 !!-----------------------------------------------------------
