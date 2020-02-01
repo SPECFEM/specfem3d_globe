@@ -34,13 +34,13 @@
 
   ! local parameters
   ! broadcast parameter arrays
-  integer, parameter :: nparam_i = 48
+  integer, parameter :: nparam_i = 49
   integer, dimension(nparam_i) :: bcast_integer
 
   integer, parameter :: nparam_l = 67
   logical, dimension(nparam_l) :: bcast_logical
 
-  integer, parameter :: nparam_dp = 35
+  integer, parameter :: nparam_dp = 36
   double precision, dimension(nparam_dp) :: bcast_double_precision
 
   ! initializes containers
@@ -75,7 +75,7 @@
             NOISE_TOMOGRAPHY, &
             ATT1,ATT2,ATT3,ATT4,ATT5, &
             GPU_RUNTIME,NUMBER_OF_SIMULTANEOUS_RUNS, &
-            MODEL_GLL_TYPE /)
+            MODEL_GLL_TYPE,USER_NSTEP /)
 
     bcast_logical = (/ &
             TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
@@ -114,7 +114,7 @@
             MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH, &
             RMOHO_FICTITIOUS_IN_MESHER,RATIO_BY_WHICH_TO_INCREASE_IT, &
             MEMORY_INSTALLED_PER_CORE_IN_GB,PERCENT_OF_MEM_TO_USE_PER_CORE, &
-            RECORD_LENGTH_IN_MINUTES /)
+            RECORD_LENGTH_IN_MINUTES, USER_DT /)
   endif
 
   ! broadcasts the information read on the master to the nodes
@@ -235,6 +235,7 @@
     GPU_RUNTIME = bcast_integer(46)
     NUMBER_OF_SIMULTANEOUS_RUNS = bcast_integer(47)
     MODEL_GLL_TYPE  = bcast_integer(48)
+    USER_NSTEP = bcast_integer(49)
 
     ! logicals
     TRANSVERSE_ISOTROPY = bcast_logical(1)
@@ -341,6 +342,7 @@
     MEMORY_INSTALLED_PER_CORE_IN_GB = bcast_double_precision(33)
     PERCENT_OF_MEM_TO_USE_PER_CORE = bcast_double_precision(34)
     RECORD_LENGTH_IN_MINUTES = bcast_double_precision(35)
+    USER_DT = bcast_double_precision(36)
 
   endif
 

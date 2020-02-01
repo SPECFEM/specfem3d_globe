@@ -61,7 +61,7 @@
     SUPPRESS_CRUSTAL_MESH,ADD_4TH_DOUBLING, &
     DO_BENCHMARK_RUN_ONLY,NSTEP_FOR_BENCHMARK, &
     IREGION_CRUST_MANTLE,IREGION_INNER_CORE, &
-    NGLLX,NGLLY,NGLLZ,ATTENUATION_1D_WITH_3D_STORAGE
+    NGLLX,NGLLY,NGLLZ,ATTENUATION_1D_WITH_3D_STORAGE,myrank
 
   use shared_parameters
 
@@ -141,6 +141,18 @@
 
   ! if doing benchmark runs to measure scaling of the code for a limited number of time steps only
   if (DO_BENCHMARK_RUN_ONLY) NSTEP = NSTEP_FOR_BENCHMARK
+
+  ! overrides NSTEP in case specified in Par_file
+  if (USER_NSTEP > 0) then
+    ! overrides NSTEP
+    if (myrank == 0) then
+      print *,'simulation number of time steps:'
+      print *,'  NSTEP determined = ',NSTEP
+      print *,'  Par_file: user overrides with specified NSTEP = ',USER_NSTEP
+      print *,''
+    endif
+    NSTEP = USER_NSTEP
+  endif
 
   ! debug
   !print *,'initial time steps = ',NSTEP,' record length = ',RECORD_LENGTH_IN_MINUTES,' DT = ',DT

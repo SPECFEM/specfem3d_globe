@@ -275,6 +275,18 @@
   call read_value_logical(ADIOS_FOR_UNDO_ATTENUATION, 'ADIOS_FOR_UNDO_ATTENUATION', ier)
   if (ier /= 0) stop 'an error occurred while reading the parameter file: ADIOS_FOR_UNDO_ATTENUATION'
 
+  ! optional (sort of an eastern egg type feature) parameters
+  !
+  ! these parameters may or may not be present in the Par_file.
+  ! in case they are in the Par_file, use a negative value to indicate that they can be ignored
+  ! and the code should use the automatically determined value as by default
+  !
+  ! DT specified to override automatic DT
+  call read_value_double_precision(USER_DT, 'DT', ier)
+  ! NSTEP specified to override automatic NSTEP
+  call read_value_integer(USER_NSTEP, 'NSTEP', ier)
+  ! no error checking, continue if not available
+
   ! closes parameter file
   call close_parameter_file()
 

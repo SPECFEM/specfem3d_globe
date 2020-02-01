@@ -158,6 +158,10 @@
              ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_SOLVER_MESHFILES, &
              ADIOS_FOR_AVS_DX,ADIOS_FOR_KERNELS,ADIOS_FOR_MODELS,ADIOS_FOR_UNDO_ATTENUATION
 
+  ! (optional) parameters
+  double precision :: USER_DT = -1.0  ! negative values will be ignored by default
+  integer :: USER_NSTEP = -1          ! negative to ignore by default
+
   end module shared_input_parameters
 
 !

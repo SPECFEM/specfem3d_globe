@@ -122,7 +122,6 @@
   deallocate(copy_ibool_ori)
   deallocate(mask_ibool)
 
-
   end subroutine get_global_indirect_addressing
 
 

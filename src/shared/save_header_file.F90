@@ -846,7 +846,7 @@
 
   what_we_can_use_in_GB = MEMORY_INSTALLED_PER_CORE_IN_GB * PERCENT_OF_MEM_TO_USE_PER_CORE / 100.d0
 
-! convert static memory size to GB
+  ! convert static memory size to GB
   static_memory_size_GB = static_memory_size / 1.d9
 
 !! DK DK June 2014: TODO  this comment is true but the statement is commented out for now
@@ -882,59 +882,61 @@
     endif
   endif
 
-! compute the size to store in memory at each time step
+  ! compute the size to store in memory at each time step
   size_to_store_at_each_time_step = 0
 
-! displ_crust_mantle
+  ! displ_crust_mantle
   size_to_store_at_each_time_step = size_to_store_at_each_time_step &
     + dble(NDIM)*NGLOB_REGIONS(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
 
-! displ_inner_core
+  ! displ_inner_core
   size_to_store_at_each_time_step = size_to_store_at_each_time_step &
     + dble(NDIM)*NGLOB_REGIONS(IREGION_INNER_CORE)*dble(CUSTOM_REAL)
 
-! displ_outer_core and accel_outer_core (both being scalar arrays)
+  ! displ_outer_core and accel_outer_core (both being scalar arrays)
   size_to_store_at_each_time_step = size_to_store_at_each_time_step &
     + 2.d0*NGLOB_REGIONS(IREGION_OUTER_CORE)*dble(CUSTOM_REAL)
 
-! noise_surface_movie
+  ! noise_surface_movie
   if (NOISE_TOMOGRAPHY == 3) then
     size_to_store_at_each_time_step = size_to_store_at_each_time_step &
       + dble(NDIM)*dble(NGLLX*NGLLY)*dble(NSPEC2D_TOP(IREGION_CRUST_MANTLE))*dble(CUSTOM_REAL)
   endif
 
-! convert to GB
+  ! convert to GB
   size_to_store_at_each_time_step = size_to_store_at_each_time_step / 1.d9
 
   NT_DUMP_ATTENUATION_optimal = int((what_we_can_use_in_GB - static_memory_size_GB) / size_to_store_at_each_time_step)
+  ! check
+  if (NT_DUMP_ATTENUATION_optimal <= 0) NT_DUMP_ATTENUATION_optimal = 1
 
-! compute the size of files to dump to disk
+  ! compute the size of files to dump to disk
   disk_size_of_each_dumping = 0
 
-! displ_crust_mantle, veloc_crust_mantle, accel_crust_mantle
+  ! displ_crust_mantle, veloc_crust_mantle, accel_crust_mantle
   disk_size_of_each_dumping = disk_size_of_each_dumping + 3.d0*dble(NDIM)*NGLOB_REGIONS(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
 
-! displ_inner_core, veloc_inner_core, accel_inner_core
+  ! displ_inner_core, veloc_inner_core, accel_inner_core
   disk_size_of_each_dumping = disk_size_of_each_dumping + 3.d0*dble(NDIM)*NGLOB_REGIONS(IREGION_INNER_CORE)*dble(CUSTOM_REAL)
 
-! displ_outer_core, veloc_outer_core, accel_outer_core (all scalar arrays)
+  ! displ_outer_core, veloc_outer_core, accel_outer_core (all scalar arrays)
   disk_size_of_each_dumping = disk_size_of_each_dumping + 3.d0*NGLOB_REGIONS(IREGION_OUTER_CORE)*dble(CUSTOM_REAL)
 
-! A_array_rotation,B_array_rotation
+  ! A_array_rotation,B_array_rotation
   if (ROTATION) disk_size_of_each_dumping = disk_size_of_each_dumping + &
       dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_REGIONS(IREGION_OUTER_CORE)*2.d0*dble(CUSTOM_REAL)
 
   if (ATTENUATION) then
-! R_memory_crust_mantle
+    ! R_memory_crust_mantle
     disk_size_of_each_dumping = disk_size_of_each_dumping + 5.d0*dble(N_SLS)*dble(NGLLX)* &
       dble(NGLLY)*dble(NGLLZ)*NSPEC_REGIONS(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
 
-! R_memory_inner_core
+    ! R_memory_inner_core
     disk_size_of_each_dumping = disk_size_of_each_dumping + 5.d0*dble(N_SLS)*dble(NGLLX)* &
       dble(NGLLY)*dble(NGLLZ)*NSPEC_REGIONS(IREGION_INNER_CORE)*dble(CUSTOM_REAL)
   endif
 
-! convert to GB
+  ! convert to GB
   disk_size_of_each_dumping = disk_size_of_each_dumping / 1.d9
 
 !! DK DK this formula could be made more precise; currently in some cases it can probably be off by +1 or -1; does not matter much

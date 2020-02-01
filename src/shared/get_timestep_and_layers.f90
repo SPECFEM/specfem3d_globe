@@ -176,26 +176,43 @@
       NER_771_670              = 10
       NER_TOPDDOUBLEPRIME_771  = 13
       NER_CMB_TOPDDOUBLEPRIME  = 1
-      NER_OUTER_CORE           = 20 !30
-      NER_TOP_CENTRAL_CUBE_ICB = 5 !9
-    else
-      ! for bigger NEX, uses 320 setting and then automatically adjusts in auto_ner()..
-      DT                       = 0.07d0
+      NER_OUTER_CORE           = 20
+      NER_TOP_CENTRAL_CUBE_ICB = 5
+    else if (NEX_MAX*multiplication_factor <= 480) then
+      DT                       = 0.008d0
       ! attenuation period range
       MIN_ATTENUATION_PERIOD   = 10
       MAX_ATTENUATION_PERIOD   = 500
       ! number of element layers in each mesh region
-      NER_CRUST                = 5
-      NER_80_MOHO              = 8
-      NER_220_80               = 5
-      NER_400_220              = 6
-      NER_600_400              = 5
-      NER_670_600              = 3
-      NER_771_670              = 10
-      NER_TOPDDOUBLEPRIME_771  = 13
+      NER_CRUST                = 7
+      NER_80_MOHO              = 14
+      NER_220_80               = 11
+      NER_400_220              = 12
+      NER_600_400              = 11
+      NER_670_600              = 9
+      NER_771_670              = 16
+      NER_TOPDDOUBLEPRIME_771  = 19
       NER_CMB_TOPDDOUBLEPRIME  = 1
-      NER_OUTER_CORE           = 20 !30
-      NER_TOP_CENTRAL_CUBE_ICB = 5 !9
+      NER_OUTER_CORE           = 30
+      NER_TOP_CENTRAL_CUBE_ICB = 9
+    else
+      ! for bigger NEX, uses 480 setting and then automatically adjusts in auto_ner()..
+      DT                       = 0.008d0
+      ! attenuation period range
+      MIN_ATTENUATION_PERIOD   = 10
+      MAX_ATTENUATION_PERIOD   = 500
+      ! number of element layers in each mesh region
+      NER_CRUST                = 7
+      NER_80_MOHO              = 14
+      NER_220_80               = 11
+      NER_400_220              = 12
+      NER_600_400              = 11
+      NER_670_600              = 9
+      NER_771_670              = 16
+      NER_TOPDDOUBLEPRIME_771  = 19
+      NER_CMB_TOPDDOUBLEPRIME  = 1
+      NER_OUTER_CORE           = 30
+      NER_TOP_CENTRAL_CUBE_ICB = 9
     endif
     ! uses automatic estimates for NEX > 320
     nex_max_auto_ner_estimate = 320
@@ -586,7 +603,7 @@
     call auto_time_stepping(min_chunk_width_in_degrees, NEX_MAX, dt_auto)
 
     !debug
-    !print *,'debug: get_timestep: min width',min_chunk_width_in_degrees,NEX_MAX,'dt_auto',dt_auto,'DT',DT
+    !if (myrank == 0) print *,'debug: get_timestep: min width',min_chunk_width_in_degrees,NEX_MAX,'dt_auto',dt_auto,'DT',DT
 
     ! note: automatic time step might overestimate the time step size for chunk sizes larger ~ 40 degrees
     !       thus we only replace the empirical time step size if the estimate gets smaller
@@ -727,7 +744,6 @@
 
   end select ! planet_type
 
-
   ! the maximum CFL of LDDRK is significantly higher than that of the Newmark scheme,
   ! in a ratio that is theoretically 1.327 / 0.697 = 1.15 / 0.604 = 1.903 for a solid with Poisson's ratio = 0.25
   ! and for a fluid (see the manual of the 2D code, SPECFEM2D, Tables 4.1 and 4.2, and that ratio does not
@@ -742,6 +758,18 @@
   ! example: 0.0734815 -> 0.0730
   !          0.07371   -> 0.0735
   !call get_timestep_limit_significant_digit(DT)
+
+  ! overrides DT in case specified in Par_file
+  if (USER_DT > 0.d0) then
+    ! overrides DT
+    if (myrank == 0) then
+      print *,'simulation time step size:'
+      print *,'  DT determined = ',DT
+      print *,'  Par_file: user overrides with specified DT = ',USER_DT
+      print *,''
+    endif
+    DT = USER_DT
+  endif
 
   end subroutine get_timestep_and_layers
 
