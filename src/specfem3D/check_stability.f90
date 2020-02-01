@@ -31,25 +31,11 @@
 ! in all the slices using an MPI reduction
 ! and output timestamp file to check that simulation is running fine
 
-  use constants, only: CUSTOM_REAL,IMAIN, &
-    ADD_TIME_ESTIMATE_ELSEWHERE,HOURS_TIME_DIFFERENCE,MINUTES_TIME_DIFFERENCE, &
-    STABILITY_THRESHOLD,mygroup
-
-  use specfem_par, only: &
-    GPU_MODE,Mesh_pointer, &
-    COMPUTE_AND_STORE_STRAIN, &
-    SIMULATION_TYPE,scale_displ,time_start,DT,t0, &
-    NSTEP,it,it_begin,it_end,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN, &
-    myrank,UNDO_ATTENUATION,NUMBER_OF_SIMULTANEOUS_RUNS,I_am_running_on_a_slow_node
-
-  use specfem_par_crustmantle, only: displ_crust_mantle,b_displ_crust_mantle, &
-    eps_trace_over_3_crust_mantle, &
-    epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
-    epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle
-
-  use specfem_par_innercore, only: displ_inner_core,b_displ_inner_core
-
-  use specfem_par_outercore, only: displ_outer_core,b_displ_outer_core
+  !use constants
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_innercore
+  use specfem_par_outercore
 
   implicit none
 
@@ -57,11 +43,14 @@
 ! and exclude them from the runs in order not to slow down all the others when NUMBER_OF_SIMULTANEOUS_RUNS > 1.
 ! That option purposely does nothing when NUMBER_OF_SIMULTANEOUS_RUNS == 1.
   logical, parameter :: CHECK_FOR_SLOW_NODES = .false.  ! option off by default
+
 ! we accept nodes that are up to that factor slower than a normal (expected) run time, but not more than that
   double precision, parameter :: TOLERANCE_FACTOR_FOR_SLOW_NODES = 2.d0
+
 ! this is the reference time per time step expected for a normal run for the same mesh and same problem on the same machine,
 ! please adjust it carefully for your own problem (cut and paste it from the output of a run that went well for the same problem)
   double precision, parameter :: REFERENCE_TIME_PER_TIME_STEP_ON_NORMAL_NODES = 2.67d-3
+
 ! do not check before MIN_TIME_STEPS_FOR_SLOW_NODES time steps
 ! because the time step estimate (which is an average) may then be unreliable
   integer, parameter :: MIN_TIME_STEPS_FOR_SLOW_NODES = 200
@@ -96,6 +85,7 @@
              timestamp_remote,year_remote,mon_remote,day_remote,hr_remote,minutes_remote,day_of_week_remote
   integer, external :: idaywk
 
+  ! slow node detection
   I_am_running_on_a_slow_node = .false.
 
   ! compute maximum of norm of displacement in each slice
@@ -110,6 +100,27 @@
     ! way 2: just get maximum of fields from GPU
     call check_norm_elastic_acoustic_from_device(Usolidnorm,Ufluidnorm,Mesh_pointer,1)
   endif
+
+  !debug
+  !print *,'debug: stability rank ',myrank,' it ',it,' norm ',Usolidnorm,Ufluidnorm,' displ CM/OC/IC ', &
+  !        maxval(abs(displ_crust_mantle)),maxval(abs(displ_outer_core)),maxval(abs(displ_inner_core))
+  !print *,'debug: stability rank ',myrank,' it ',it,' displ CM x/y/z ', &
+  !        maxval(abs(displ_crust_mantle(1,:))),maxval(abs(displ_crust_mantle(2,:))),maxval(abs(displ_crust_mantle(3,:)))
+  !print *,'debug: stability rank ',myrank,' it ',it,' displ IC x/y/z ', &
+  !        maxval(abs(displ_inner_core(1,:))),maxval(abs(displ_inner_core(2,:))),maxval(abs(displ_inner_core(3,:)))
+  !print *,'debug: stability rank ',myrank,' it ',it,' accel CM/OC,IC', &
+  !maxval(abs(accel_crust_mantle)),maxval(abs(accel_outer_core)),maxval(abs(accel_inner_core))
+  ! maximum on vertical
+  !pos = maxloc(abs(displ_crust_mantle(3,:)))
+  !iglob = pos(1)
+  !r = dble(rstore_crust_mantle(1,iglob))
+  !theta = dble(rstore_crust_mantle(2,iglob))
+  !phi = dble(rstore_crust_mantle(3,iglob))
+  !print *,'debug: rank ',myrank,' it ',it,' stability iglob ',iglob,' position r/lat/lon ', &
+  !        r*R_EARTH_KM,(PI/2.0-theta)*180.0/PI,phi*180.0/PI
+  !flush(101)
+  !call synchronize_all()
+
 
   ! check stability of the code, exit if unstable
   ! negative values can occur with some compilers when the unstable value is greater
@@ -543,8 +554,8 @@
   implicit none
 
   ! maximum of the norm of the displacement and of the potential in the fluid
-  real(kind=CUSTOM_REAL) Usolidnorm_all,Ufluidnorm_all
-  real(kind=CUSTOM_REAL) b_Usolidnorm_all,b_Ufluidnorm_all
+  real(kind=CUSTOM_REAL) :: Usolidnorm_all,Ufluidnorm_all
+  real(kind=CUSTOM_REAL) :: b_Usolidnorm_all,b_Ufluidnorm_all
 
   ! timer MPI
   double precision :: tCPU,t_remain,t_total

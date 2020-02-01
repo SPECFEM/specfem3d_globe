@@ -137,7 +137,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: dummyx_loc,dummyy_loc,dummyz_loc
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5) :: epsilondev_loc
-  real(kind=CUSTOM_REAL) fac1,fac2,fac3
+  real(kind=CUSTOM_REAL) :: fac1,fac2,fac3
 
   ! for gravity
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: rho_s_H
@@ -258,7 +258,6 @@
     call mxm5_3comp_singleB(dummyx_loc,dummyy_loc,dummyz_loc,m2,hprime_xxT,tempx3,tempy3,tempz3,m1)
 #endif
 
-
     !
     ! compute either isotropic, transverse isotropic or anisotropic elements
     !
@@ -297,18 +296,18 @@
        else
           ! transverse isotropic element
           call compute_element_tiso(ispec, &
-                                     gravity_pre_store,gravity_H, &
-                                     deriv, &
-                                     wgll_cube, &
-                                     c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-                                     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-                                     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                                     ibool, &
-                                     R_xx,R_yy,R_xy,R_xz,R_yz, &
-                                     epsilon_trace_over_3, &
-                                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-                                     dummyx_loc,dummyy_loc,dummyz_loc, &
-                                     epsilondev_loc,rho_s_H)
+                                    gravity_pre_store,gravity_H, &
+                                    deriv, &
+                                    wgll_cube, &
+                                    c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
+                                    c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+                                    c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
+                                    ibool, &
+                                    R_xx,R_yy,R_xy,R_xz,R_yz, &
+                                    epsilon_trace_over_3, &
+                                    tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
+                                    dummyx_loc,dummyy_loc,dummyz_loc, &
+                                    epsilondev_loc,rho_s_H)
        endif ! .not. ispec_is_tiso
     endif
 

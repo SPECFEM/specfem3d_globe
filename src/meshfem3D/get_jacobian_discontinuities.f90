@@ -45,30 +45,29 @@
   implicit none
 
   ! input
-  integer :: ispec, ix_elem, iy_elem
-  double precision :: rmin,rmax
-  double precision :: r1, r2, r3, r4, r5, r6, r7, r8
+  integer,intent(in) :: ispec, ix_elem, iy_elem
+  double precision,intent(in) :: rmin,rmax
+  double precision,intent(in) :: r1, r2, r3, r4, r5, r6, r7, r8
 
-  double precision :: xstore(NGLLX,NGLLY,NGLLZ)
-  double precision :: ystore(NGLLX,NGLLY,NGLLZ)
-  double precision :: zstore(NGLLX,NGLLY,NGLLZ)
+  double precision,intent(in) :: xstore(NGLLX,NGLLY,NGLLZ)
+  double precision,intent(in) :: ystore(NGLLX,NGLLY,NGLLZ)
+  double precision,intent(in) :: zstore(NGLLX,NGLLY,NGLLZ)
 
-  double precision :: dershape2D_bottom(NDIM2D,NGNOD2D,NGLLX,NGLLY)
+  double precision,intent(in) :: dershape2D_bottom(NDIM2D,NGNOD2D,NGLLX,NGLLY)
 
-  integer :: NSPEC2D_MOHO, NSPEC2D_400, NSPEC2D_670, nex_eta_moho, ispec_superbrick
-  double precision :: r_moho, r_400, r_670
+  integer,intent(in) :: NSPEC2D_MOHO, NSPEC2D_400, NSPEC2D_670, nex_eta_moho, ispec_superbrick
+  double precision,intent(in) :: r_moho, r_400, r_670
 
-  logical :: is_superbrick, USE_ONE_LAYER_SB,HONOR_1D_SPHERICAL_MOHO
+  logical,intent(in) :: is_superbrick, USE_ONE_LAYER_SB,HONOR_1D_SPHERICAL_MOHO
 
   ! output
-  integer ispec2D_moho_top, ispec2D_moho_bot, ispec2D_400_top, ispec2D_400_bot, ispec2D_670_top, ispec2D_670_bot
-  integer,dimension(NSPEC2D_MOHO) :: ibelm_moho_top, ibelm_moho_bot
-  integer,dimension(NSPEC2D_400) :: ibelm_400_top, ibelm_400_bot
-  integer,dimension(NSPEC2D_670) :: ibelm_670_top, ibelm_670_bot
-  real(kind=CUSTOM_REAL) :: normal_moho(NDIM,NGLLX,NGLLY,NSPEC2D_MOHO), jacobian2D_moho(NGLLX,NGLLY,NSPEC2D_MOHO)
-  real(kind=CUSTOM_REAL) :: normal_400(NDIM,NGLLX,NGLLY,NSPEC2D_400), jacobian2D_400(NGLLX,NGLLY,NSPEC2D_400)
-  real(kind=CUSTOM_REAL) :: normal_670(NDIM,NGLLX,NGLLY,NSPEC2D_670), jacobian2D_670(NGLLX,NGLLY,NSPEC2D_670)
-
+  integer,intent(inout) :: ispec2D_moho_top, ispec2D_moho_bot, ispec2D_400_top, ispec2D_400_bot, ispec2D_670_top, ispec2D_670_bot
+  integer,dimension(NSPEC2D_MOHO),intent(inout) :: ibelm_moho_top, ibelm_moho_bot
+  integer,dimension(NSPEC2D_400),intent(inout) :: ibelm_400_top, ibelm_400_bot
+  integer,dimension(NSPEC2D_670),intent(inout) :: ibelm_670_top, ibelm_670_bot
+  real(kind=CUSTOM_REAL),intent(inout) :: normal_moho(NDIM,NGLLX,NGLLY,NSPEC2D_MOHO), jacobian2D_moho(NGLLX,NGLLY,NSPEC2D_MOHO)
+  real(kind=CUSTOM_REAL),intent(inout) :: normal_400(NDIM,NGLLX,NGLLY,NSPEC2D_400), jacobian2D_400(NGLLX,NGLLY,NSPEC2D_400)
+  real(kind=CUSTOM_REAL),intent(inout) :: normal_670(NDIM,NGLLX,NGLLY,NSPEC2D_670), jacobian2D_670(NGLLX,NGLLY,NSPEC2D_670)
 
   ! local variables
   double precision, dimension(NGNOD2D) :: xelm2, yelm2, zelm2

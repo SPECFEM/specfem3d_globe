@@ -63,7 +63,7 @@
 
   double precision, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
 
-  double precision :: rmin,rmax
+  double precision,intent(in) :: rmin,rmax
   logical,intent(in) :: elem_in_crust,elem_in_mantle
 
   ! local parameters
@@ -129,6 +129,8 @@
         mu0 = 0.d0
         Gc = 0.d0
         Gs = 0.d0
+        Gc_prime = 0.d0
+        Gs_prime = 0.d0
 
         Qmu = 0.d0
         Qkappa = 0.d0 ! not used, not stored so far...
@@ -279,6 +281,8 @@
           if (abs(mu0) > TINYVAL) then
             Gc_prime = Gc / mu0
             Gs_prime = Gs / mu0
+          else
+            stop 'Error reference mu0 not set for Gs/Gc prime'
           endif
           Gc_prime_store(i,j,k,ispec) = real(Gc_prime, kind=CUSTOM_REAL)
           Gs_prime_store(i,j,k,ispec) = real(Gs_prime, kind=CUSTOM_REAL)

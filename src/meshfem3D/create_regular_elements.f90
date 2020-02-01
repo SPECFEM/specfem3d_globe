@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine create_regular_elements(ilayer,ichunk,ispec,ipass, &
+  subroutine create_regular_elements(ilayer,ichunk,ispec_count,ipass, &
                                      ifirst_region,ilast_region,iregion_code, &
                                      nspec,NCHUNKS,NUMBER_OF_MESH_LAYERS, &
                                      NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
@@ -65,16 +65,15 @@
   implicit none
 
   integer,intent(in) :: ilayer,ichunk,ipass,ifirst_region,ilast_region
-  integer,intent(inout) :: ispec
+
+  integer,intent(inout) :: ispec_count
 
   ! code for the four regions of the mesh
   integer,intent(in) :: iregion_code
   ! correct number of spectral elements in each block depending on chunk type
   integer,intent(in) :: nspec,NCHUNKS,NUMBER_OF_MESH_LAYERS
   integer,intent(in) :: NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
-
   integer,intent(in) :: ner_without_doubling
-
   logical,intent(in) :: INCLUDE_CENTRAL_CUBE
 
 ! parameters needed to store the radii of the grid points in the spherically symmetric Earth
@@ -96,18 +95,18 @@
   double precision, dimension(2,ner_mesh_layers(1)),intent(in) :: stretch_tab
 
 ! Boundary Mesh
-  integer :: NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho
-  integer :: ibelm_moho_top(NSPEC2D_MOHO),ibelm_moho_bot(NSPEC2D_MOHO)
-  integer :: ibelm_400_top(NSPEC2D_400),ibelm_400_bot(NSPEC2D_400)
-  integer :: ibelm_670_top(NSPEC2D_670),ibelm_670_bot(NSPEC2D_670)
-  real(kind=CUSTOM_REAL) :: normal_moho(NDIM,NGLLX,NGLLY,NSPEC2D_MOHO)
-  real(kind=CUSTOM_REAL) :: normal_400(NDIM,NGLLX,NGLLY,NSPEC2D_400)
-  real(kind=CUSTOM_REAL) :: normal_670(NDIM,NGLLX,NGLLY,NSPEC2D_670)
-  real(kind=CUSTOM_REAL) :: jacobian2D_moho(NGLLX,NGLLY,NSPEC2D_MOHO)
-  real(kind=CUSTOM_REAL) :: jacobian2D_400(NGLLX,NGLLY,NSPEC2D_400)
-  real(kind=CUSTOM_REAL) :: jacobian2D_670(NGLLX,NGLLY,NSPEC2D_670)
+  integer,intent(in) :: NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho
+  integer,intent(inout) :: ibelm_moho_top(NSPEC2D_MOHO),ibelm_moho_bot(NSPEC2D_MOHO)
+  integer,intent(inout) :: ibelm_400_top(NSPEC2D_400),ibelm_400_bot(NSPEC2D_400)
+  integer,intent(inout) :: ibelm_670_top(NSPEC2D_670),ibelm_670_bot(NSPEC2D_670)
+  real(kind=CUSTOM_REAL),intent(inout) :: normal_moho(NDIM,NGLLX,NGLLY,NSPEC2D_MOHO)
+  real(kind=CUSTOM_REAL),intent(inout) :: normal_400(NDIM,NGLLX,NGLLY,NSPEC2D_400)
+  real(kind=CUSTOM_REAL),intent(inout) :: normal_670(NDIM,NGLLX,NGLLY,NSPEC2D_670)
+  real(kind=CUSTOM_REAL),intent(inout) :: jacobian2D_moho(NGLLX,NGLLY,NSPEC2D_MOHO)
+  real(kind=CUSTOM_REAL),intent(inout) :: jacobian2D_400(NGLLX,NGLLY,NSPEC2D_400)
+  real(kind=CUSTOM_REAL),intent(inout) :: jacobian2D_670(NGLLX,NGLLY,NSPEC2D_670)
 
-  integer :: ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top, &
+  integer,intent(inout) :: ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top, &
     ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot
 
   logical, dimension(nspec),intent(inout) :: ispec_is_tiso
@@ -123,7 +122,7 @@
   integer :: ix,iy,iz
 
   ! stores original value
-  ispec0 = ispec
+  ispec0 = ispec_count
 
   ! counts number of elements for this layer
   nelements = NEX_PER_PROC_XI/ratio_sampling_array(ilayer) &
@@ -303,7 +302,7 @@
 !!$OMP END PARALLEL
 
   ! end index
-  ispec = ispec0 + nelements
+  ispec_count = ispec0 + nelements
 
   ! free array
   deallocate(map_ispec)

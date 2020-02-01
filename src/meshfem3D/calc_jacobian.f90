@@ -61,31 +61,31 @@
   double precision, dimension(NGLLZ),intent(in) :: zigll
 
   ! output results
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(out) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(inout) :: &
     xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
     gammaxstore,gammaystore,gammazstore
 
   ! local parameters for this subroutine
-  double precision,dimension(NGLLX):: hxir,hpxir
-  double precision,dimension(NGLLY):: hetar,hpetar
-  double precision,dimension(NGLLZ):: hgammar,hpgammar
+  double precision,dimension(NGLLX) :: hxir,hpxir
+  double precision,dimension(NGLLY) :: hetar,hpetar
+  double precision,dimension(NGLLZ) :: hgammar,hpgammar
 
-  double precision:: xxi,xeta,xgamma,yxi,yeta,ygamma,zxi,zeta,zgamma
-  double precision:: xi,eta,gamma
+  double precision :: xxi,xeta,xgamma,yxi,yeta,ygamma,zxi,zeta,zgamma
+  double precision :: xi,eta,gamma
 
-  double precision:: hlagrange,hlagrange_xi,hlagrange_eta,hlagrange_gamma
-  double precision:: jacobian,jacobian_inv
-  double precision:: xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
-  double precision:: r,theta,phi
-  double precision:: x,y,z
+  double precision :: hlagrange,hlagrange_xi,hlagrange_eta,hlagrange_gamma
+  double precision :: jacobian,jacobian_inv
+  double precision :: xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
+  double precision :: r,theta,phi
+  double precision :: x,y,z
 
-  integer:: i,j,k,i1,j1,k1
+  integer :: i,j,k,i1,j1,k1
 
   ! test parameters which can be deleted
   logical, parameter :: DEBUG = .false.
 
-  double precision:: xmesh,ymesh,zmesh
-  double precision:: sumshape,sumdershapexi,sumdershapeeta,sumdershapegamma
+  double precision :: xmesh,ymesh,zmesh
+  double precision :: sumshape,sumdershapexi,sumdershapeeta,sumdershapegamma
 
   ! first go over all 125 GLL points
   do k = 1,NGLLZ
@@ -267,8 +267,8 @@
   double precision,dimension(NGLLB),intent(in) :: yigll
 
   ! output results
-  real(kind=CUSTOM_REAL),dimension(NGLLA,NGLLB,NSPEC2DMAX_AB),intent(out) :: jacobian2D
-  real(kind=CUSTOM_REAL),dimension(3,NGLLA,NGLLB,NSPEC2DMAX_AB),intent(out) :: normal
+  real(kind=CUSTOM_REAL),dimension(NGLLA,NGLLB,NSPEC2DMAX_AB),intent(inout) :: jacobian2D
+  real(kind=CUSTOM_REAL),dimension(3,NGLLA,NGLLB,NSPEC2DMAX_AB),intent(inout) :: normal
 
   ! local parameters in this subroutine
   integer :: i,j,i1,j1

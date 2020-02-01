@@ -74,6 +74,7 @@
 
   allocate(AM_V%Qtau_s(N_SLS),stat=ier)
   if (ier /= 0 ) call exit_mpi(myrank,'Error allocating Qtau_s array')
+  AM_V%Qtau_s(:) = 0.d0
 
   ! master process determines period ranges
   if (myrank == 0) call read_attenuation_model(MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
@@ -253,7 +254,7 @@
   implicit none
 
   double precision,intent(inout) :: Qmu_in
-  double precision,intent(out) :: T_c_source
+  double precision,intent(inout) :: T_c_source
   double precision, dimension(N_SLS),intent(inout) :: tau_s, tau_e
 
   ! local parameters
@@ -289,7 +290,7 @@
 
   double precision,intent(inout) :: Qmu
   double precision, dimension(N_SLS),intent(inout) :: tau_e
-  integer :: rw
+  integer,intent(inout) :: rw
 
   ! local parameters
   double precision :: Qmu_new
@@ -306,6 +307,7 @@
     allocate(AM_S%tau_e_storage(N_SLS, Qtmp), &
              AM_S%Qmu_storage(Qtmp),stat=ier)
     if (ier /= 0) stop 'Error allocating AM_S arrays'
+    AM_S%tau_e_storage(:,:) = 0.d0
     AM_S%Qmu_storage(:) = -1
   endif
 

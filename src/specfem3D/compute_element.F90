@@ -90,11 +90,11 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATTENUATION),intent(in) :: &
     R_xx,R_yy,R_xy,R_xz,R_yz
 
-  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STRAIN_ONLY),intent(out) :: epsilon_trace_over_3
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STRAIN_ONLY),intent(inout) :: epsilon_trace_over_3
 
   ! gravity
-  real(kind=CUSTOM_REAL),dimension(NDIM,NGLOB) :: gravity_pre_store
-  real(kind=CUSTOM_REAL),dimension(6,NGLOB) :: gravity_H
+  real(kind=CUSTOM_REAL),dimension(NDIM,NGLOB),intent(in) :: gravity_pre_store
+  real(kind=CUSTOM_REAL),dimension(6,NGLOB),intent(in) :: gravity_H
 
   ! element info
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(inout) :: &
@@ -102,8 +102,8 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: dummyx_loc,dummyy_loc,dummyz_loc
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ),intent(out) :: rho_s_H
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(out) :: epsilondev_loc
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ),intent(inout) :: rho_s_H
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(inout) :: epsilondev_loc
 
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: jacobianl
@@ -256,11 +256,11 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATTENUATION),intent(in) :: &
     R_xx,R_yy,R_xy,R_xz,R_yz
 
-  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STRAIN_ONLY),intent(out) :: epsilon_trace_over_3
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STRAIN_ONLY),intent(inout) :: epsilon_trace_over_3
 
   ! gravity
-  real(kind=CUSTOM_REAL),dimension(NDIM,NGLOB) :: gravity_pre_store
-  real(kind=CUSTOM_REAL),dimension(6,NGLOB) :: gravity_H
+  real(kind=CUSTOM_REAL),dimension(NDIM,NGLOB),intent(in) :: gravity_pre_store
+  real(kind=CUSTOM_REAL),dimension(6,NGLOB),intent(in) :: gravity_H
 
   ! element info
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(inout) :: &
@@ -268,8 +268,8 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: dummyx_loc,dummyy_loc,dummyz_loc
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ),intent(out) :: rho_s_H
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(out) :: epsilondev_loc
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ),intent(inout) :: rho_s_H
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(inout) :: epsilondev_loc
 
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: jacobianl
@@ -433,11 +433,11 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATTENUATION),intent(in) :: &
     R_xx,R_yy,R_xy,R_xz,R_yz
 
-  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STRAIN_ONLY),intent(out) :: epsilon_trace_over_3
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STRAIN_ONLY),intent(inout) :: epsilon_trace_over_3
 
   ! gravity
-  real(kind=CUSTOM_REAL),dimension(NDIM,NGLOB) :: gravity_pre_store
-  real(kind=CUSTOM_REAL),dimension(6,NGLOB) :: gravity_H
+  real(kind=CUSTOM_REAL),dimension(NDIM,NGLOB),intent(in) :: gravity_pre_store
+  real(kind=CUSTOM_REAL),dimension(6,NGLOB),intent(in) :: gravity_H
 
   ! element info
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(inout) :: &
@@ -445,8 +445,8 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: dummyx_loc,dummyy_loc,dummyz_loc
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ),intent(out) :: rho_s_H
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(out) :: epsilondev_loc
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ),intent(inout) :: rho_s_H
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(inout) :: epsilondev_loc
 
   ! local parameters
   ! the 21 coefficients for an anisotropic medium in reduced notation
@@ -1036,11 +1036,11 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATTENUATION),intent(in) :: &
     R_xx,R_yy,R_xy,R_xz,R_yz
 
-  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STRAIN_ONLY),intent(out) :: epsilon_trace_over_3
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STRAIN_ONLY),intent(inout) :: epsilon_trace_over_3
 
   ! gravity
-  real(kind=CUSTOM_REAL),dimension(NDIM,NGLOB) :: gravity_pre_store
-  real(kind=CUSTOM_REAL),dimension(6,NGLOB) :: gravity_H
+  real(kind=CUSTOM_REAL),dimension(NDIM,NGLOB),intent(in) :: gravity_pre_store
+  real(kind=CUSTOM_REAL),dimension(6,NGLOB),intent(in) :: gravity_H
 
   ! element info
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(inout) :: &
@@ -1048,8 +1048,8 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: dummyx_loc,dummyy_loc,dummyz_loc
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ),intent(out) :: rho_s_H
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(out) :: epsilondev_loc
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ),intent(inout) :: rho_s_H
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(inout) :: epsilondev_loc
 
   ! local parameters
   ! the 21 coefficients for an anisotropic medium in reduced notation
@@ -1231,11 +1231,11 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATTENUATION),intent(in) :: &
     R_xx,R_yy,R_xy,R_xz,R_yz
 
-  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STRAIN_ONLY),intent(out) :: epsilon_trace_over_3
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STRAIN_ONLY),intent(inout) :: epsilon_trace_over_3
 
   ! gravity
-  real(kind=CUSTOM_REAL),dimension(NDIM,NGLOB) :: gravity_pre_store
-  real(kind=CUSTOM_REAL),dimension(6,NGLOB) :: gravity_H
+  real(kind=CUSTOM_REAL),dimension(NDIM,NGLOB),intent(in) :: gravity_pre_store
+  real(kind=CUSTOM_REAL),dimension(6,NGLOB),intent(in) :: gravity_H
 
   ! element info
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(inout) :: &
@@ -1243,8 +1243,8 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: dummyx_loc,dummyy_loc,dummyz_loc
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ),intent(out) :: rho_s_H
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(out) :: epsilondev_loc
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ),intent(inout) :: rho_s_H
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(inout) :: epsilondev_loc
 
   ! local parameters
   real(kind=CUSTOM_REAL) :: c11,c12,c13,c22,c23,c33,c44,c55,c66
@@ -1528,7 +1528,7 @@
     duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
 
   ! local parameters
-  real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl
+  real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobian
   real(kind=CUSTOM_REAL) :: duxdyl,duxdzl,duydxl,duydzl,duzdxl,duzdyl
   real(kind=CUSTOM_REAL) :: x1,x2,x3,y1,y2,y3,z1,z2,z3
 
@@ -1552,9 +1552,12 @@
     gammazl = deriv_loc(9,INDEX_IJK)
 
     ! compute the Jacobian
-    jacobianl(INDEX_IJK) = 1.0_CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
-                                 - xiyl*(etaxl*gammazl-etazl*gammaxl) &
-                                 + xizl*(etaxl*gammayl-etayl*gammaxl))
+    jacobian = (xixl*(etayl*gammazl-etazl*gammayl) &
+              - xiyl*(etaxl*gammazl-etazl*gammaxl) &
+              + xizl*(etaxl*gammayl-etayl*gammaxl))
+    if (jacobian <= 0.0_CUSTOM_REAL) stop 'Error invalid jacobian in compute_element_precompute_factors()'
+
+    jacobianl(INDEX_IJK) = 1.0_CUSTOM_REAL / jacobian
 
     x1 = tempx1(INDEX_IJK)
     x2 = tempx2(INDEX_IJK)
@@ -1624,8 +1627,8 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
 
   integer, intent(in) :: ispec,NSPEC_STRAIN_ONLY
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STRAIN_ONLY),intent(out) :: epsilon_trace_over_3
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(out) :: epsilondev_loc
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STRAIN_ONLY),intent(inout) :: epsilon_trace_over_3
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(inout) :: epsilondev_loc
 
   ! local parameters
   real(kind=CUSTOM_REAL) :: templ
@@ -1644,41 +1647,34 @@
 
   ! compute deviatoric strain
   if (NSPEC_STRAIN_ONLY == 1) then
-    if (ispec == 1) then
 
+    DO_LOOP_IJK
+      templ = ONE_THIRD * (duxdxl(INDEX_IJK) + duydyl(INDEX_IJK) + duzdzl(INDEX_IJK))
+      epsilondev_loc(INDEX_IJK,1) = duxdxl(INDEX_IJK) - templ
+      epsilondev_loc(INDEX_IJK,2) = duydyl(INDEX_IJK) - templ
+      epsilondev_loc(INDEX_IJK,3) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl(INDEX_IJK)
+      epsilondev_loc(INDEX_IJK,4) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl(INDEX_IJK)
+      epsilondev_loc(INDEX_IJK,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl(INDEX_IJK)
+    ENDDO_LOOP_IJK
+
+    if (ispec == 1) then
       DO_LOOP_IJK
         templ = ONE_THIRD * (duxdxl(INDEX_IJK) + duydyl(INDEX_IJK) + duzdzl(INDEX_IJK))
         epsilon_trace_over_3(INDEX_IJK,1) = templ
-        epsilondev_loc(INDEX_IJK,1) = duxdxl(INDEX_IJK) - templ
-        epsilondev_loc(INDEX_IJK,2) = duydyl(INDEX_IJK) - templ
-        epsilondev_loc(INDEX_IJK,3) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl(INDEX_IJK)
-        epsilondev_loc(INDEX_IJK,4) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl(INDEX_IJK)
-        epsilondev_loc(INDEX_IJK,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl(INDEX_IJK)
       ENDDO_LOOP_IJK
-
-    else
-
-      DO_LOOP_IJK
-        templ = ONE_THIRD * (duxdxl(INDEX_IJK) + duydyl(INDEX_IJK) + duzdzl(INDEX_IJK))
-        epsilondev_loc(INDEX_IJK,1) = duxdxl(INDEX_IJK) - templ
-        epsilondev_loc(INDEX_IJK,2) = duydyl(INDEX_IJK) - templ
-        epsilondev_loc(INDEX_IJK,3) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl(INDEX_IJK)
-        epsilondev_loc(INDEX_IJK,4) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl(INDEX_IJK)
-        epsilondev_loc(INDEX_IJK,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl(INDEX_IJK)
-      ENDDO_LOOP_IJK
-
     endif
+
   else
 
-      DO_LOOP_IJK
-        templ = ONE_THIRD * (duxdxl(INDEX_IJK) + duydyl(INDEX_IJK) + duzdzl(INDEX_IJK))
-        epsilon_trace_over_3(INDEX_IJK,ispec) = templ
-        epsilondev_loc(INDEX_IJK,1) = duxdxl(INDEX_IJK) - templ
-        epsilondev_loc(INDEX_IJK,2) = duydyl(INDEX_IJK) - templ
-        epsilondev_loc(INDEX_IJK,3) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl(INDEX_IJK)
-        epsilondev_loc(INDEX_IJK,4) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl(INDEX_IJK)
-        epsilondev_loc(INDEX_IJK,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl(INDEX_IJK)
-      ENDDO_LOOP_IJK
+    DO_LOOP_IJK
+      templ = ONE_THIRD * (duxdxl(INDEX_IJK) + duydyl(INDEX_IJK) + duzdzl(INDEX_IJK))
+      epsilon_trace_over_3(INDEX_IJK,ispec) = templ
+      epsilondev_loc(INDEX_IJK,1) = duxdxl(INDEX_IJK) - templ
+      epsilondev_loc(INDEX_IJK,2) = duydyl(INDEX_IJK) - templ
+      epsilondev_loc(INDEX_IJK,3) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl(INDEX_IJK)
+      epsilondev_loc(INDEX_IJK,4) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl(INDEX_IJK)
+      epsilondev_loc(INDEX_IJK,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl(INDEX_IJK)
+    ENDDO_LOOP_IJK
 
   endif
 
@@ -1828,8 +1824,8 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: wgll_cube
 
   ! gravity
-  real(kind=CUSTOM_REAL),dimension(NDIM,NGLOB) :: gravity_pre_store
-  real(kind=CUSTOM_REAL),dimension(6,NGLOB) :: gravity_H
+  real(kind=CUSTOM_REAL),dimension(NDIM,NGLOB),intent(in) :: gravity_pre_store
+  real(kind=CUSTOM_REAL),dimension(6,NGLOB),intent(in) :: gravity_H
 
 !  double precision, dimension(NRAD_GRAVITY),intent(in) :: minus_gravity_table,density_table,minus_deriv_gravity_table
 
@@ -1838,7 +1834,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(inout) :: sigma_xx,sigma_yy,sigma_zz
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(inout) :: sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ),intent(out) :: rho_s_H
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ),intent(inout) :: rho_s_H
 
   ! local parameters
   ! for gravity
