@@ -79,9 +79,35 @@
     xyz1D_leftxi_lefteta,xyz1D_rightxi_lefteta, &
     xyz1D_leftxi_righteta,xyz1D_rightxi_righteta
 
-  use regions_mesh_par
+  use regions_mesh_par, only: &
+    dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top, &
+    xigll,yigll,zigll,wxgll,wygll,wzgll
 
-  use regions_mesh_par2
+  use regions_mesh_par2, only: prname, &
+    xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
+    kappavstore,kappahstore,muvstore,muhstore,rhostore,eta_anisostore, &
+    c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
+    c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+    c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
+    mu0store,Gc_prime_store,Gs_prime_store, &
+    rho_vp,rho_vs, &
+    Qmu_store,tau_e_store, &
+    nglob_xy,rmassx,rmassy,rmassz,b_rmassx,b_rmassy, &
+    nglob_oceans,rmass_ocean_load, &
+    iMPIcut_xi,iMPIcut_eta, &
+    ispec_is_tiso
+
+  ! absorb
+  use regions_mesh_par2, only: iboun, nimin, nimax, njmin, njmax, nkmin_xi,nkmin_eta
+
+  ! boundary mesh
+  use regions_mesh_par2, only: &
+    ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
+    nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
+    jacobian2D_xmin,jacobian2D_xmax,jacobian2D_ymin,jacobian2D_ymax,jacobian2D_bottom,jacobian2D_top, &
+    normal_xmin,normal_xmax,normal_ymin,normal_ymax,normal_bottom,normal_top, &
+    ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot,ibelm_670_top,ibelm_670_bot, &
+    normal_moho,normal_400,normal_670
 
   implicit none
 
@@ -683,6 +709,7 @@
   ! boundary locator
   allocate(iboun(6,nspec),stat=ier)
   if (ier /= 0) stop 'Error in allocate 10'
+  iboun(:,:) = .false.
 
   ! boundary parameters locator
   allocate(ibelm_xmin(NSPEC2DMAX_XMIN_XMAX), &
@@ -853,6 +880,10 @@
   normal_moho(:,:,:,:) = 0.0; normal_400(:,:,:,:) = 0.0; normal_670(:,:,:,:) = 0.0
   jacobian2D_moho(:,:,:) = 0.0; jacobian2D_400(:,:,:) = 0.0; jacobian2D_670(:,:,:) = 0.0
 
+  ispec2D_moho_top = 0; ispec2D_moho_bot = 0
+  ispec2D_400_top = 0; ispec2D_400_bot = 0
+  ispec2D_670_top = 0; ispec2D_670_bot = 0
+
   end subroutine crm_allocate_arrays
 
 !
@@ -861,13 +892,11 @@
 
   subroutine crm_setup_layers(ipass,NEX_PER_PROC_ETA)
 
-  use constants, only: SUPPRESS_CRUSTAL_MESH
+  use constants, only: SUPPRESS_CRUSTAL_MESH, &
+    GAUSSALPHA,GAUSSBETA,NGLLX,NGLLY,NGLLZ
 
   use meshfem3D_par, only: &
-    nspec,iregion_code, &
-    ibool,idoubling,is_on_a_slice_edge, &
-    xstore,ystore,zstore, &
-    IREGION_CRUST_MANTLE, &
+    iregion_code,IREGION_CRUST_MANTLE, &
     R670,RMOHO,R400,RMIDDLE_CRUST, &
     ner_mesh_layers,r_top,r_bottom, &
     CASE_3D
@@ -887,18 +916,36 @@
   integer :: cpt
   integer :: i,ier
 
+  ! do only once
+  if (ipass == 1) then
+    ! set up coordinates of the Gauss-Lobatto-Legendre points
+    call zwgljd(xigll,wxgll,NGLLX,GAUSSALPHA,GAUSSBETA)
+    call zwgljd(yigll,wygll,NGLLY,GAUSSALPHA,GAUSSBETA)
+    call zwgljd(zigll,wzgll,NGLLZ,GAUSSALPHA,GAUSSBETA)
+
+    ! get the 3-D shape functions
+    call get_shape3D(shape3D,dershape3D,xigll,yigll,zigll)
+
+    ! get the 2-D shape functions
+    call get_shape2D(shape2D_x,dershape2D_x,yigll,zigll,NGLLY,NGLLZ)
+    call get_shape2D(shape2D_y,dershape2D_y,xigll,zigll,NGLLX,NGLLZ)
+    call get_shape2D(shape2D_bottom,dershape2D_bottom,xigll,yigll,NGLLX,NGLLY)
+    call get_shape2D(shape2D_top,dershape2D_top,xigll,yigll,NGLLX,NGLLY)
+
+    ! create the shape of the corner nodes of a regular mesh element
+    call hex_nodes(iaddx,iaddy,iaddz)
+
+    ! reference element has size one here, not two
+    iaddx(:) = iaddx(:) / 2
+    iaddy(:) = iaddy(:) / 2
+    iaddz(:) = iaddz(:) / 2
+  endif
+
   ! initializes element layers
-  call initialize_layers(ipass,xigll,yigll,zigll,wxgll,wygll,wzgll, &
-                         shape3D,dershape3D,shape2D_x,shape2D_y,shape2D_bottom,shape2D_top, &
-                         dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top, &
-                         iaddx,iaddy,iaddz, &
-                         nspec,xstore,ystore,zstore,ibool,idoubling, &
-                         iboun,iMPIcut_xi,iMPIcut_eta,ispec2D_moho_top,ispec2D_moho_bot, &
-                         ispec2D_400_top,ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot, &
-                         NEX_PER_PROC_ETA,nex_eta_moho,RMOHO,R400,R670,r_moho,r_400,r_670, &
+  call initialize_layers(NEX_PER_PROC_ETA,nex_eta_moho,RMOHO,R400,R670,r_moho,r_400,r_670, &
                          ONE_CRUST,NUMBER_OF_MESH_LAYERS,layer_shift, &
                          iregion_code,ifirst_region,ilast_region, &
-                         first_layer_aniso,last_layer_aniso,is_on_a_slice_edge)
+                         first_layer_aniso,last_layer_aniso)
 
   ! to consider anisotropic elements first and to build the mesh from the bottom to the top of the region
   allocate (perm_layer(ifirst_region:ilast_region),stat=ier)
@@ -956,14 +1003,12 @@
 
 ! creates global indexing array ibool
 
-  use constants, only: NGLLX,NGLLY,NGLLZ,ZERO
+  use constants, only: NGLLX,NGLLY,NGLLZ,ZERO,MAX_STRING_LEN
 
   use meshfem3d_par, only: &
     nspec,nglob,iregion_code, &
     ibool,xstore,ystore,zstore, &
     myrank
-
-  use regions_mesh_par2
 
 !debug
 !  use shared_parameters, only: NPROCTOT
@@ -981,7 +1026,7 @@
 
   integer :: nglob_new
   integer :: ieoff,ilocnum,ier
-  integer :: i,j,k,ispec
+  integer :: i,j,k,ispec,iglob
   character(len=MAX_STRING_LEN) :: errmsg
 
   ! allocate memory for arrays
@@ -1070,6 +1115,22 @@
   if (minval(ibool) /= 1 .or. maxval(ibool) /= nglob) &
     call exit_MPI(myrank,'incorrect global numbering after sorting')
 
+  ! checks ibool element by element
+  do ispec = 1,nspec
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+          ! increases point counter
+          iglob = ibool(i,j,k,ispec)
+          if (iglob < 1 .or. iglob > nglob) then
+            print *,'Error: rank ',myrank,'has invalid iglob ',iglob,' element ',ispec,'ijk',i,j,k,'val',ibool(:,:,:,ispec)
+            call exit_MPI(myrank,'Error invalid ibool array adressing')
+          endif
+        enddo
+      enddo
+    enddo
+  enddo
+
   end subroutine crm_setup_indexing
 
 !
@@ -1088,7 +1149,7 @@
     NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE, &
     NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
 
-  use regions_mesh_par2
+  use regions_mesh_par2, only: prname,iMPIcut_xi,iMPIcut_eta
 
   use MPI_interfaces_par
 
@@ -1220,7 +1281,7 @@
           iglob = ibool(i,j,k,ispec)
 
           if (iglob < 1 .or. iglob > nglob) then
-            print *,'rank ',myrank,': Error invalid iglob',iglob,'at element',ispec,'ijk',i,j,k,'ibool',ibool(:,:,:,ispec)
+            print *,'Error rank ',myrank,': invalid iglob',iglob,'at element',ispec,'ijk',i,j,k,'ibool',ibool(:,:,:,ispec)
             stop 'Error fill global meshes has invalid iglob index'
           endif
 

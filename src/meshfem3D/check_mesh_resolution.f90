@@ -30,10 +30,12 @@
                                    kappavstore,kappahstore,muvstore,muhstore,rhostore)
 
   use constants
+
   use shared_parameters, only: T_min
+
   use meshfem3D_par, only: &
     nspec,nglob, &
-    DT,myrank,ibool, &
+    DT,myrank,ibool,idoubling, &
     xstore_glob,ystore_glob,zstore_glob,SAVE_MESH_FILES, &
     dt_max_glob,pmax_glob
 
@@ -58,7 +60,7 @@
   real(kind=CUSTOM_REAL) :: vpmax,vsmin,vpmax_reg,vsmin_reg
   real(kind=CUSTOM_REAL) :: avg_distance,distance_min
   double precision :: deltat
-  integer :: ispec
+  integer :: ispec,ier
 
   ! minimum distance between adjacent GLL points
   double precision, dimension(15), parameter :: percent_GLL = &
@@ -75,9 +77,7 @@
 
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: val_ispec_pmax,val_ispec_dt
   character(len=MAX_STRING_LEN) :: filename
-
   character(len=32),parameter :: region(4) = (/character(len=32) :: 'crust/mantle', 'outer core', 'inner core', 'central cube'/)
-
 
   ! note: the mesh and time step check is only approximative
 
@@ -85,7 +85,8 @@
   if (NGLLX < 1 .or. NGLLX > 15) stop 'Invalid NGLLX value in routine check_mesh_resolution'
 
   ! temporary arrays for file output
-  allocate(val_ispec_pmax(nspec),val_ispec_dt(nspec))
+  allocate(val_ispec_pmax(nspec),val_ispec_dt(nspec),stat=ier)
+  if (ier /= 0) stop 'Error allocating val_ispec_pmax arrays'
   val_ispec_pmax(:) = 0._CUSTOM_REAL
   val_ispec_dt(:) = 0._CUSTOM_REAL
 
@@ -118,6 +119,9 @@
 !$OMP pmax_reg,dt_max_reg,cmax_reg,val_ispec_pmax,val_ispec_dt,DT)
 !$OMP DO
   do ispec = 1,nspec
+
+    ! suppress fictitious elements in central cube
+    if (idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
 
     ! determines maximum velocities at corners of this element
     call get_vpvs_minmax(vpmax,vsmin,ispec,nspec,iregion_code,kappavstore,kappahstore,muvstore,muhstore,rhostore)
@@ -744,7 +748,7 @@
   integer :: i,j,k
   double precision,dimension(3,3) :: jacobian,A
   double precision :: e1,e2,e3
-  double precision :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl !,jacobianl
+  double precision :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
 
   eig_ratio_min = HUGEVAL
   eig_ratio_max = - HUGEVAL
@@ -762,10 +766,15 @@
         gammayl = gammaystore(i,j,k,ispec)
         gammazl = gammazstore(i,j,k,ispec)
 
-        ! computes the Jacobian (determinant)
-        !jacobianl = 1.d0 / (xixl*(etayl*gammazl-etazl*gammayl) &
-        !              - xiyl*(etaxl*gammazl-etazl*gammaxl) &
-        !              + xizl*(etaxl*gammayl-etayl*gammaxl))
+        ! computes the Jacobian (determinant) (not inversed yet)
+        jacobianl = (xixl*(etayl*gammazl-etazl*gammayl) &
+                   - xiyl*(etaxl*gammazl-etazl*gammaxl) &
+                   + xizl*(etaxl*gammayl-etayl*gammaxl))
+        ! checks
+        if (jacobianl <= 0.d0 .or. jacobianl /= jacobianl) then
+          print *,"Error negative or invalid jacobian in element",ispec,'jacobianl',jacobianl
+          stop "Error invalid jacobian in get_eigenvalues_min_ratio()"
+        endif
 
         ! loads the jacobian matrix
         jacobian(1,1) = xixl
@@ -849,9 +858,10 @@
   double precision,dimension(3,3), parameter :: Id = reshape((/1,0,0, 0,1,0, 0,0,1/),(/3,3/))
   double precision,parameter :: ONE_THIRD = 1.d0 / 3.d0
   double precision,parameter :: PI = 3.141592653589793d0
+  double precision,parameter :: TOL_ZERO = 1.d-30, TOL_EIG = 1.d-5
 
   ! check symmetry
-  if (A(1,2) /= A(2,1) .or. A(1,3) /= A(3,1) .or. A(2,3) /= A(3,2)) then
+  if (abs(A(1,2) - A(2,1)) > TOL_ZERO .or. abs(A(1,3) - A(3,1)) > TOL_ZERO .or. abs(A(2,3) - A(3,2)) > TOL_ZERO) then
     print *,"Error non-symmetric input matrix A: ",A(:,:)
     stop 'invalid non-symmetric matrix A'
   endif
@@ -860,7 +870,12 @@
   detA = A(1,1)*(A(2,2)*A(3,3) - A(3,2)*A(2,3)) &
        + A(1,2)*(A(3,1)*A(2,3) - A(2,1)*A(3,3)) &
        + A(1,3)*(A(2,1)*A(3,2) - A(3,1)*A(2,2))
-  if (detA <= 0.d0) stop "invalid input matrix A has negative determinant"
+
+  ! checks
+  if (detA <= 0.d0) then
+    print *,"Error negative determinant matrix A: ",detA,'matrix',A(:,:)
+    stop "invalid input matrix A has negative determinant"
+  endif
 
   ! power in off-diagonal entries
   p1 = A(1,2)*A(1,2) + A(1,3)*A(1,3) + A(2,3)*A(2,3)
@@ -922,7 +937,7 @@
 
   ! checks
   if (eig3 == 0.d0) stop 'Invalid zero eigenvalue'
-  if (abs(detA - eig1 * eig2 * eig3)/detA > 1.e-5) then
+  if (abs(detA - eig1 * eig2 * eig3)/detA > TOL_EIG) then
     print *,'invalid inaccurate eigenvalues:',eig1*eig2*eig3,'instead of ',detA
     stop 'Invalid inaccurate eigenvalues'
   endif

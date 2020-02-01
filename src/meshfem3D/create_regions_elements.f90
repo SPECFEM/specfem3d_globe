@@ -34,7 +34,6 @@
   use meshfem3D_par, only: &
     nspec,iregion_code, &
     idoubling,is_on_a_slice_edge, &
-    xstore,ystore,zstore, &
     IMAIN,myrank, &
     IREGION_CRUST_MANTLE,IREGION_INNER_CORE,IFLAG_IN_FICTITIOUS_CUBE, &
     NPROC_XI,NPROC_ETA,NCHUNKS, &
@@ -42,14 +41,11 @@
     rmins,rmaxs,iproc_xi,iproc_eta,ichunk,NEX_XI, &
     rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
     this_region_has_a_doubling, &
-    ratio_divide_central_cube,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, &
+    CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, &
     ner_mesh_layers
 
   use meshfem3D_models_par, only: &
     TRANSVERSE_ISOTROPY
-
-  use regions_mesh_par, only: &
-    xigll,yigll,zigll,iaddx,iaddy,iaddz,shape3D
 
   use regions_mesh_par2, only: &
     USE_ONE_LAYER_SB,ispec_is_tiso,ifirst_region,ilast_region,perm_layer,NUMBER_OF_MESH_LAYERS, &
@@ -73,10 +69,12 @@
   integer,intent(in) :: offset_proc_xi,offset_proc_eta
 
   ! local parameters
-  integer :: ispec,nspec_tiso
+  integer :: ispec_count,nspec_tiso
+
   ! parameters needed to store the radii of the grid points in the spherically symmetric Earth
   double precision :: rmin,rmax
   integer :: ner_without_doubling,ilayer,ilayer_loop
+
   ! timing
   double precision, external :: wtime
   !double precision :: time_start,tCPU
@@ -84,12 +82,15 @@
 
   ! initializes flags for transverse isotropic elements
   ispec_is_tiso(:) = .false.
+  nspec_tiso = 0
 
   ! get MPI starting time
   !time_start = wtime()
 
+  ! counts all the elements in this region of the mesh
+  ispec_count = 0
+
   ! loop on all the layers in this region of the mesh
-  ispec = 0 ! counts all the elements in this region of the mesh
   do ilayer_loop = ifirst_region,ilast_region
 
     ilayer = perm_layer(ilayer_loop)
@@ -121,7 +122,7 @@
     endif
 
     ! regular mesh elements
-    call create_regular_elements(ilayer,ichunk,ispec,ipass, &
+    call create_regular_elements(ilayer,ichunk,ispec_count,ipass, &
                                  ifirst_region,ilast_region,iregion_code, &
                                  nspec,NCHUNKS,NUMBER_OF_MESH_LAYERS, &
                                  NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
@@ -142,7 +143,7 @@
 
     ! mesh doubling elements
     if (this_region_has_a_doubling(ilayer) ) then
-      call create_doubling_elements(ilayer,ichunk,ispec,ipass, &
+      call create_doubling_elements(ilayer,ichunk,ispec_count,ipass, &
                                     ifirst_region,ilast_region,iregion_code, &
                                     nspec,NCHUNKS,NUMBER_OF_MESH_LAYERS, &
                                     NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
@@ -194,18 +195,17 @@
     ! user output
     if (myrank == 0 ) write(IMAIN,*) '  creating central cube'
 
-    call create_central_cube(ichunk,ispec,iaddx,iaddy,iaddz,ipass, &
-                             nspec,NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,R_CENTRAL_CUBE, &
-                             iproc_xi,iproc_eta,NPROC_XI,NPROC_ETA,ratio_divide_central_cube, &
-                             iMPIcut_xi,iMPIcut_eta,iboun, &
-                             idoubling,iregion_code,xstore,ystore,zstore, &
-                             shape3D,rmin,rmax, &
-                             xigll,yigll,zigll, &
+    call create_central_cube(ichunk,ispec_count,ipass, &
+                             nspec,NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+                             iproc_xi,iproc_eta,NPROC_XI,NPROC_ETA, &
+                             iMPIcut_xi,iMPIcut_eta, &
+                             idoubling,iregion_code, &
+                             rmin,rmax,R_CENTRAL_CUBE, &
                              ispec_is_tiso)
   endif
 
   ! check total number of spectral elements created
-  if (ispec /= nspec) call exit_MPI(myrank,'ispec should equal nspec')
+  if (ispec_count /= nspec) call exit_MPI(myrank,'ispec_count should equal nspec')
 
   ! if any of these flags is true, the element is on a communication edge
   ! this is not enough because it can also be in contact by an edge or a corner but not a full face

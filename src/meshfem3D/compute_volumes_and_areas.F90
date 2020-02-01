@@ -32,9 +32,11 @@
                                        NSPEC2D_BOTTOM,jacobian2D_bottom,NSPEC2D_TOP,jacobian2D_top,idoubling, &
                                        volume_total,RCMB,RICB,R_CENTRAL_CUBE)
 
-  use constants
+  use constants,only: NGLLX,NGLLY,NGLLZ,myrank, &
+    ZERO,CUSTOM_REAL,PI,R_UNIT_SPHERE,IFLAG_IN_FICTITIOUS_CUBE,IMAIN, &
+    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE
 
-  use meshfem3D_models_par
+  use meshfem3D_models_par,only: TOPOGRAPHY,R_EARTH
 
   implicit none
 
@@ -90,10 +92,20 @@
           gammayl = gammaystore(i,j,k,ispec)
           gammazl = gammazstore(i,j,k,ispec)
 
-          jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
-                        - xiyl*(etaxl*gammazl-etazl*gammaxl) &
-                        + xizl*(etaxl*gammayl-etayl*gammaxl))
+          jacobianl = (xixl*(etayl*gammazl-etazl*gammayl) &
+                     - xiyl*(etaxl*gammazl-etazl*gammaxl) &
+                     + xizl*(etaxl*gammayl-etayl*gammaxl))
 
+          if (jacobianl <= 0.0_CUSTOM_REAL) then
+            print *,'Error: rank ',myrank,' found negative Jacobian ',jacobianl,'element',ispec,'ijk',i,j,k,'id',idoubling(ispec)
+            print *,'Please check if mesh is okay, exiting...'
+            call exit_MPI(myrank,'Error: negative Jacobian found in compute_volumes_and_areas() routine')
+          endif
+
+          ! inverts jacobian mapping
+          jacobianl = 1._CUSTOM_REAL / jacobianl
+
+          ! sums
           volume_local = volume_local + dble(jacobianl)*weight
 
         enddo
@@ -105,7 +117,7 @@
   do ispec = 1,NSPEC2D_BOTTOM
     do i = 1,NGLLX
       do j = 1,NGLLY
-        weight=wxgll(i)*wygll(j)
+        weight = wxgll(i)*wygll(j)
         area_local_bottom = area_local_bottom + dble(jacobian2D_bottom(i,j,ispec))*weight
       enddo
     enddo
@@ -115,7 +127,7 @@
   do ispec = 1,NSPEC2D_TOP
     do i = 1,NGLLX
       do j = 1,NGLLY
-        weight=wxgll(i)*wygll(j)
+        weight = wxgll(i)*wygll(j)
         area_local_top = area_local_top + dble(jacobian2D_top(i,j,ispec))*weight
       enddo
     enddo
@@ -124,7 +136,7 @@
   ! use an MPI reduction to compute the total area and volume
   volume_total_region = ZERO
   area_total_bottom   = ZERO
-  area_total_top   = ZERO
+  area_total_top      = ZERO
 
   call sum_all_dp(area_local_bottom,area_total_bottom)
   call sum_all_dp(area_local_top,area_total_top)
@@ -136,7 +148,8 @@
 
     !   check volume of chunk, and bottom and top area
     write(IMAIN,*)
-    write(IMAIN,*) '   calculated top area: ',area_total_top
+    write(IMAIN,*) 'calculated region volume: ',sngl(volume_total_region)
+    write(IMAIN,*) '                top area: ',sngl(area_total_top)
 
     ! compare to exact theoretical value
     if (NCHUNKS == 6 .and. .not. TOPOGRAPHY) then
@@ -152,7 +165,7 @@
       end select
     endif
 
-    write(IMAIN,*) 'calculated bottom area: ',area_total_bottom
+    write(IMAIN,*) '             bottom area: ',sngl(area_total_bottom)
 
     ! compare to exact theoretical value
     if (NCHUNKS == 6 .and. .not. TOPOGRAPHY) then

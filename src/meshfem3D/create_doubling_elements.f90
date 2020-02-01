@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine create_doubling_elements(ilayer,ichunk,ispec,ipass, &
+  subroutine create_doubling_elements(ilayer,ichunk,ispec_count,ipass, &
                                       ifirst_region,ilast_region,iregion_code, &
                                       nspec,NCHUNKS,NUMBER_OF_MESH_LAYERS, &
                                       NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
@@ -68,13 +68,14 @@
   implicit none
 
   integer,intent(in) :: ilayer,ichunk,ipass,ifirst_region,ilast_region
-  integer,intent(inout) :: ispec
+
+  integer,intent(inout) :: ispec_count
+
   ! code for the four regions of the mesh
   integer,intent(in) :: iregion_code
   ! correct number of spectral elements in each block depending on chunk type
   integer,intent(in) :: nspec,NCHUNKS,NUMBER_OF_MESH_LAYERS
   integer,intent(in) :: NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
-
   logical,intent(in) :: INCLUDE_CENTRAL_CUBE
 
 ! parameters needed to store the radii of the grid points in the spherically symmetric Earth
@@ -156,7 +157,7 @@
   endif
 
   ! stores original value
-  ispec0 = ispec
+  ispec0 = ispec_count
 
   ! counts number of elements for this layer
   nelements = NEX_PER_PROC_XI/(step_mult*ratio_sampling_array(ilayer)) &
@@ -284,7 +285,7 @@
                                      NCHUNKS,INCLUDE_CENTRAL_CUBE,NUMBER_OF_MESH_LAYERS)
 
         ! add one spectral element to the list
-        !ispec = ispec + 1
+        !ispec_count = ispec_count + 1
 
         ! counts in increasing order 1,2,3,..
         ielem = ispec_superbrick + nspec_sb * ( (iy_elem-1)/(step_mult*ratio_sampling_array(ilayer)) &
@@ -367,7 +368,7 @@
 !!$OMP END PARALLEL
 
   ! end index
-  ispec = ispec0 + nelements
+  ispec_count = ispec0 + nelements
 
   ! free array
   deallocate(map_ispec)

@@ -168,7 +168,6 @@
   do l = 1,NLAYERS_CRUSTMAP
     ! file index: from 3 to 7
     i = l + 2
-
     call read_general_crustmap_layer(thickness(:,:,l), 't', i)
     call read_general_crustmap_layer(density(:,:,l),   'r', i)
     call read_general_crustmap_layer(velocp(:,:,l),    'p', i)
