@@ -51,9 +51,9 @@ subroutine read_arrays_solver_adios(iregion_code, &
 
   implicit none
 
-  integer :: iregion_code
-  integer :: nspec,nglob,nglob_xy
-  integer :: nspec_iso,nspec_tiso,nspec_ani
+  integer,intent(in) :: iregion_code
+  integer,intent(in) :: nspec,nglob,nglob_xy
+  integer,intent(in) :: nspec_iso,nspec_tiso,nspec_ani
 
   ! Stacey
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec):: rho_vp,rho_vs
@@ -96,15 +96,16 @@ subroutine read_arrays_solver_adios(iregion_code, &
   character(len=MAX_STRING_LEN) :: file_name
 
   ! local parameters
-  integer :: lnspec, lnglob, local_dim
+  integer :: lnspec, lnglob
   ! ADIOS variables
+  integer(kind=8) :: local_dim
   integer(kind=8), dimension(1) :: start, count
 
   integer(kind=8), dimension(256),target :: selections
   integer :: sel_num, i
   integer(kind=8), pointer :: sel => null()
 
-  character(len=128)      :: region_name, region_name_scalar
+  character(len=128) :: region_name, region_name_scalar
 
   ! user output
   if (myrank == 0) then
@@ -130,12 +131,31 @@ subroutine read_arrays_solver_adios(iregion_code, &
   !call show_adios_file_variables(myadios_file,myadios_group,file_name)
 
   ! read coordinates of the mesh
-  call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "nspec",lnspec)
-  call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "nglob",lnglob)
+  call read_adios_scalar(myadios_file, myadios_group, myrank, trim(region_name) // "nspec",lnspec)
+  call read_adios_scalar(myadios_file, myadios_group, myrank, trim(region_name) // "nglob",lnglob)
+
+  !debug
+  !print *,'debug: rank ',myrank,' parameter: ',trim(region_name)//"nspec",' lnspec/lnglob = ',lnspec,lnglob
+  !call synchronize_all()
+
+  ! checks dimensions
+  if (lnspec /= nspec) then
+    print *,'Error: rank ',myrank,' region ',iregion_code,' invalid file dimension: nspec in file = ',lnspec, &
+            ' but nspec desired:',nspec
+    print *,'please check file ',trim(file_name)
+    call exit_mpi(myrank,'Error dimensions in solver_data.bp')
+  endif
+  if (lnglob /= nglob) then
+    print *,'Error: rank ',myrank,' region ',iregion_code,' invalid file dimension: nglob in file = ',lnglob, &
+            ' but nglob desired:',nglob
+    print *,'please check file ',trim(file_name)
+    call exit_mpi(myrank,'Error dimensions in solver_data.bp')
+  endif
+  call synchronize_all()
 
   ! mesh coordinates
   local_dim = nglob
-  start(1) = local_dim*myrank; count(1) = local_dim
+  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
   sel_num = sel_num+1
   sel => selections(sel_num)
   call set_selection_boundingbox(sel, start, count)
@@ -143,9 +163,11 @@ subroutine read_arrays_solver_adios(iregion_code, &
   call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, trim(region_name) // "x_global/array", xstore)
   call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, trim(region_name) // "y_global/array", ystore)
   call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, trim(region_name) // "z_global/array", zstore)
+  ! perform actual reading
+  call read_adios_perform(myadios_file)
 
   local_dim = nspec
-  start(1) = local_dim*myrank; count(1) = local_dim
+  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
   sel_num = sel_num+1
   sel => selections(sel_num)
   call set_selection_boundingbox(sel, start, count)
@@ -156,12 +178,10 @@ subroutine read_arrays_solver_adios(iregion_code, &
                                  trim(region_name) // "ispec_is_tiso/array", ispec_is_tiso)
 
   local_dim = NGLLX * NGLLY * NGLLZ * nspec
-  start(1) = local_dim*myrank; count(1) = local_dim
+  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
   sel_num = sel_num+1
   sel => selections(sel_num)
   call set_selection_boundingbox(sel, start, count)
-
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, trim(region_name) // "ibool/array", ibool)
 
   call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, trim(region_name) // "ibool/array", ibool)
 
@@ -174,9 +194,11 @@ subroutine read_arrays_solver_adios(iregion_code, &
   call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, trim(region_name) // "gammaxstore/array", gammax)
   call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, trim(region_name) // "gammaystore/array", gammay)
   call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, trim(region_name) // "gammazstore/array", gammaz)
+  ! perform actual reading
+  call read_adios_perform(myadios_file)
 
-  local_dim = NGLLX * NGLLY * NGLLZ * nspec_iso
-  start(1) = local_dim*myrank; count(1) = local_dim
+  local_dim = NGLLX * NGLLY * NGLLZ * nspec_iso  ! see read_mesh_databases for settings of nspec_iso
+  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
   sel_num = sel_num+1
   sel => selections(sel_num)
   call set_selection_boundingbox(sel, start, count)
@@ -189,6 +211,8 @@ subroutine read_arrays_solver_adios(iregion_code, &
     call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
                                    trim(region_name) // "muvstore/array", muvstore)
   endif
+  ! perform actual reading
+  call read_adios_perform(myadios_file)
 
   ! solid regions
   select case(iregion_code)
@@ -196,7 +220,7 @@ subroutine read_arrays_solver_adios(iregion_code, &
     ! crust/mantle
     if (ANISOTROPIC_3D_MANTLE_VAL) then
       local_dim = NGLLX * NGLLY * NGLLZ * nspec_ani
-      start(1) = local_dim*myrank; count(1) = local_dim
+      start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
       sel_num = sel_num+1
       sel => selections(sel_num)
       call set_selection_boundingbox(sel, start, count)
@@ -246,7 +270,7 @@ subroutine read_arrays_solver_adios(iregion_code, &
     else
       if (TRANSVERSE_ISOTROPY_VAL) then
         local_dim = NGLLX * NGLLY * NGLLZ * nspec_tiso
-        start(1) = local_dim*myrank; count(1) = local_dim
+        start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
         sel_num = sel_num+1
         sel => selections(sel_num)
         call set_selection_boundingbox(sel, start, count)
@@ -262,7 +286,7 @@ subroutine read_arrays_solver_adios(iregion_code, &
 
     ! for azimuthal
     local_dim = NGLLX * NGLLY * NGLLZ * nspec
-    start(1) = local_dim*myrank; count(1) = local_dim
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
     sel_num = sel_num+1
     sel => selections(sel_num)
     call set_selection_boundingbox(sel, start, count)
@@ -274,7 +298,7 @@ subroutine read_arrays_solver_adios(iregion_code, &
     ! inner core
     if (ANISOTROPIC_INNER_CORE_VAL) then
       local_dim = NGLLX * NGLLY * NGLLZ * nspec_ani
-      start(1) = local_dim*myrank; count(1) = local_dim
+      start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
       sel_num = sel_num+1
       sel => selections(sel_num)
       call set_selection_boundingbox(sel, start, count)
@@ -291,11 +315,13 @@ subroutine read_arrays_solver_adios(iregion_code, &
                                      trim(region_name) // "c44store/array", c44store)
     endif
   end select
+  ! perform actual reading
+  call read_adios_perform(myadios_file)
 
   ! Stacey
   if (ABSORBING_CONDITIONS) then
     local_dim = NGLLX * NGLLY * NGLLZ * nspec ! nspec_stacey in meshfem3D
-    start(1) = local_dim*myrank; count(1) = local_dim
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
     sel_num = sel_num+1
     sel => selections(sel_num)
     call set_selection_boundingbox(sel, start, count)
@@ -309,7 +335,8 @@ subroutine read_arrays_solver_adios(iregion_code, &
       call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
                                      trim(region_name) // "rho_vp/array", rho_vp)
     endif
-
+    ! perform actual reading
+    call read_adios_perform(myadios_file)
   endif
 
   ! mass matrices
@@ -327,7 +354,7 @@ subroutine read_arrays_solver_adios(iregion_code, &
       (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL .and. iregion_code == IREGION_INNER_CORE)) then
 
     local_dim = nglob_xy
-    start(1) = local_dim*myrank; count(1) = local_dim
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
     sel_num = sel_num+1
     sel => selections(sel_num)
     call set_selection_boundingbox(sel, start, count)
@@ -337,18 +364,20 @@ subroutine read_arrays_solver_adios(iregion_code, &
   endif
 
   local_dim = nglob
-  start(1) = local_dim*myrank; count(1) = local_dim
+  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
   sel_num = sel_num+1
   sel => selections(sel_num)
   call set_selection_boundingbox(sel, start, count)
 
   call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, trim(region_name) // "rmassz/array", rmassz)
+  ! perform actual reading
+  call read_adios_perform(myadios_file)
 
 
   if ((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
       (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL .and. iregion_code == IREGION_INNER_CORE)) then
     local_dim = nglob_xy
-    start(1) = local_dim*myrank; count(1) = local_dim
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
     sel_num = sel_num+1
     sel => selections(sel_num)
     call set_selection_boundingbox(sel, start, count)
@@ -357,12 +386,14 @@ subroutine read_arrays_solver_adios(iregion_code, &
                                    trim(region_name) // "b_rmassx/array", b_rmassx)
     call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
                                    trim(region_name) // "b_rmassy/array", b_rmassy)
+    ! perform actual reading
+    call read_adios_perform(myadios_file)
   endif
 
   ! read additional ocean load mass matrix
   if (OCEANS_VAL .and. iregion_code == IREGION_CRUST_MANTLE) then
     local_dim = NGLOB_CRUST_MANTLE_OCEANS ! nglob_oceans
-    start(1) = local_dim*myrank; count(1) = local_dim
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
     sel_num = sel_num+1
     sel => selections(sel_num)
     call set_selection_boundingbox(sel, start, count)
@@ -383,18 +414,7 @@ subroutine read_arrays_solver_adios(iregion_code, &
   ! closes adios file
   call close_file_adios_read_and_finalize_method(myadios_file)
 
-  ! checks dimensions
-  if (lnspec /= nspec) then
-    print *,'Error file dimension: nspec in file = ',lnspec, &
-        ' but nspec desired:',nspec
-    print *,'please check file ', file_name
-    call exit_mpi(myrank,'Error dimensions in solver_data.bp')
-  endif
-  if (lnglob /= nglob) then
-    print *,'Error file dimension: nglob in file = ',lnglob, &
-        ' but nglob desired:',nglob
-    print *,'please check file ', file_name
-    call exit_mpi(myrank,'Error dimensions in solver_data.bp')
-  endif
+  ! synchronizes processes
+  call synchronize_all()
 
 end subroutine read_arrays_solver_adios

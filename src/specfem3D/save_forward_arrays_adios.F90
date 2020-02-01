@@ -341,8 +341,8 @@
   implicit none
 
   integer(kind=8), intent(inout) :: group_size_inc
-
-  integer :: local_dim
+  ! local parameters
+  integer(kind=8) :: local_dim
 
   ! crust/mantle
   local_dim = NDIM * NGLOB_CRUST_MANTLE
@@ -410,8 +410,8 @@
   implicit none
 
   integer(kind=8), intent(inout) :: group_size_inc
-
-  integer :: local_dim
+  ! local parameters
+  integer(kind=8) :: local_dim
 
   ! strains
   local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE_STR_OR_ATT
@@ -460,8 +460,8 @@
   implicit none
 
   integer(kind=8), intent(inout) :: group_size_inc
-
-  integer :: local_dim
+  ! local parameters
+  integer(kind=8) :: local_dim
 
   local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_OUTER_CORE_ROTATION
   call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(A_array_rotation))
@@ -487,8 +487,8 @@
   implicit none
 
   integer(kind=8), intent(inout) :: group_size_inc
-
-  integer :: local_dim
+  ! local parameters
+  integer(kind=8) :: local_dim
 
   ! attenuation memory variables
   ! crust/mantle
@@ -526,7 +526,7 @@
   implicit none
 
   ! local parameters
-  integer :: local_dim
+  integer(kind=8) :: local_dim
 
   ! crust/mantle
   local_dim = NDIM * NGLOB_CRUST_MANTLE
@@ -574,7 +574,7 @@
   implicit none
 
   ! local parameters
-  integer :: local_dim
+  integer(kind=8) :: local_dim
 
   ! strains
   ! crust/mantle
@@ -624,7 +624,7 @@
   implicit none
 
   ! local parameters
-  integer :: local_dim
+  integer(kind=8) :: local_dim
 
   local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_OUTER_CORE_ROTATION
   call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group, myrank, sizeprocs_adios, local_dim, &
@@ -651,7 +651,7 @@
   implicit none
 
   ! local parameters
-  integer :: local_dim
+  integer(kind=8) :: local_dim
 
   ! attenuation memory variables
   ! crust/mantle

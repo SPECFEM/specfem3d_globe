@@ -49,9 +49,9 @@
   implicit none
   ! Local parameters
   character(len=MAX_STRING_LEN) :: file_name,group_name
-  integer :: local_dim
+  integer(kind=8) :: local_dim
   ! ADIOS variables
-  integer(kind=8)         :: sel
+  integer(kind=8) :: sel
   integer(kind=8), dimension(1) :: start, count
 
   file_name = trim(LOCAL_TMP_PATH) // "/dump_all_arrays_adios.bp"
@@ -75,7 +75,7 @@
 
   ! crust/mantle
   local_dim = NDIM * NGLOB_CRUST_MANTLE
-  start(1) = local_dim*myrank; count(1) = local_dim
+  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
   call set_selection_boundingbox(sel, start, count)
 
   call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, "displ_crust_mantle/array", displ_crust_mantle)
@@ -88,7 +88,7 @@
 
   ! inner core
   local_dim = NDIM * NGLOB_INNER_CORE
-  start(1) = local_dim*myrank; count(1) = local_dim
+  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
   call set_selection_boundingbox(sel, start, count)
 
   call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, "displ_inner_core/array", displ_inner_core)
@@ -100,7 +100,7 @@
 
   ! outer core
   local_dim = NGLOB_OUTER_CORE
-  start(1) = local_dim*myrank; count(1) = local_dim
+  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
   call set_selection_boundingbox(sel, start, count)
 
   call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, "displ_outer_core/array", displ_outer_core)
@@ -112,7 +112,7 @@
 
   ! strains crust/mantle
   local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE_STR_OR_ATT
-  start(1) = local_dim*myrank; count(1) = local_dim
+  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
   call set_selection_boundingbox(sel, start, count)
 
   call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
@@ -131,7 +131,7 @@
 
   ! strains inner core
   local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_INNER_CORE_STR_OR_ATT
-  start(1) = local_dim*myrank; count(1) = local_dim
+  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
   call set_selection_boundingbox(sel, start, count)
 
   call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
@@ -150,7 +150,7 @@
 
   ! rotation
   local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_OUTER_CORE_ROTATION
-  start(1) = local_dim*myrank; count(1) = local_dim
+  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
   call set_selection_boundingbox(sel, start, count)
 
   call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, "A_array_rotation/array", A_array_rotation)
@@ -161,7 +161,7 @@
 
   ! attenuation memory variables crust/mantle
   local_dim = N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE_ATTENUATION
-  start(1) = local_dim*myrank; count(1) = local_dim
+  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
   call set_selection_boundingbox(sel, start, count)
 
   call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, "R_xx_crust_mantle/array", R_xx_crust_mantle)
@@ -175,7 +175,7 @@
 
   ! attenuation memory variables inner core
   local_dim = N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_INNER_CORE_ATTENUATION
-  start(1) = local_dim*myrank; count(1) = local_dim
+  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
   call set_selection_boundingbox(sel, start, count)
 
   call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, "R_xx_inner_core/array", R_xx_inner_core)
@@ -210,9 +210,9 @@
   implicit none
   ! Local parameters
   character(len=MAX_STRING_LEN) :: file_name,group_name
-  integer :: local_dim
   ! ADIOS variables
-  integer(kind=8)         :: sel
+  integer(kind=8) :: local_dim
+  integer(kind=8) :: sel
   integer(kind=8), dimension(1) :: start, count
 
   file_name = trim(LOCAL_TMP_PATH) // "/save_forward_arrays.bp"
@@ -226,7 +226,7 @@
   ! reads in arrays
   ! crust/mantle
   local_dim = NDIM * NGLOB_CRUST_MANTLE
-  start(1) = local_dim*myrank; count(1) = local_dim
+  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
   call set_selection_boundingbox(sel, start, count)
 
   call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, "displ_crust_mantle/array", b_displ_crust_mantle)
@@ -239,7 +239,7 @@
 
   ! inner core
   local_dim = NDIM * NGLOB_INNER_CORE
-  start(1) = local_dim*myrank; count(1) = local_dim
+  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
   call set_selection_boundingbox(sel, start, count)
 
   call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, "displ_inner_core/array", b_displ_inner_core)
@@ -251,7 +251,7 @@
 
   ! outer core
   local_dim = NGLOB_OUTER_CORE
-  start(1) = local_dim*myrank; count(1) = local_dim
+  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
   call set_selection_boundingbox(sel, start, count)
 
   call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, "displ_outer_core/array", b_displ_outer_core)
@@ -263,7 +263,7 @@
 
   ! strains crust/mantle
   local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE_STR_OR_ATT
-  start(1) = local_dim*myrank; count(1) = local_dim
+  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
   call set_selection_boundingbox(sel, start, count)
 
   call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
@@ -282,7 +282,7 @@
 
   ! strains inner core
   local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_INNER_CORE_STR_OR_ATT
-  start(1) = local_dim*myrank; count(1) = local_dim
+  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
   call set_selection_boundingbox(sel, start, count)
 
   call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
@@ -302,7 +302,7 @@
   ! rotation
   if (ROTATION_VAL) then
     local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_OUTER_CORE_ROTATION
-    start(1) = local_dim*myrank; count(1) = local_dim
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
     call set_selection_boundingbox(sel, start, count)
 
     call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, "A_array_rotation/array", b_A_array_rotation)
@@ -316,7 +316,7 @@
   if (ATTENUATION_VAL) then
     ! crust/mantle
     local_dim = N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE_ATTENUATION
-    start(1) = local_dim*myrank; count(1) = local_dim
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
     call set_selection_boundingbox(sel, start, count)
 
     call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, "R_xx_crust_mantle/array", b_R_xx_crust_mantle)
@@ -330,7 +330,7 @@
 
     ! inner core
     local_dim = N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_INNER_CORE_ATTENUATION
-    start(1) = local_dim*myrank; count(1) = local_dim
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
     call set_selection_boundingbox(sel, start, count)
 
     call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, "R_xx_inner_core/array", b_R_xx_inner_core)
@@ -367,8 +367,8 @@
   integer, intent(in) :: iteration_on_subset_tmp
   ! Local parameters
   character(len=MAX_STRING_LEN) :: file_name,group_name
-  integer :: local_dim
   ! ADIOS variables
+  integer(kind=8) :: local_dim
   integer(kind=8), dimension(1) :: start, count
   ! shorten the name of iteration variable and make it integer*8
   integer(kind=8) :: step
@@ -445,7 +445,7 @@
   ! reads in arrays
   ! crust/mantle
   local_dim = NDIM * NGLOB_CRUST_MANTLE
-  start(1) = local_dim*myrank; count(1) = local_dim
+  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
   sel_num = sel_num+1
   sel => selections(sel_num)
   call set_selection_boundingbox(sel,start,count)
@@ -461,7 +461,7 @@
 
   ! inner core
   local_dim = NDIM * NGLOB_INNER_CORE
-  start(1) = local_dim*myrank; count(1) = local_dim
+  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
   sel_num = sel_num+1
   sel => selections(sel_num)
   call set_selection_boundingbox(sel, start, count)
@@ -476,7 +476,7 @@
 
   ! outer core
   local_dim = NGLOB_OUTER_CORE
-  start(1) = local_dim*myrank; count(1) = local_dim
+  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
   sel_num = sel_num+1
   sel => selections(sel_num)
   call set_selection_boundingbox(sel, start, count)
@@ -492,7 +492,7 @@
   ! rotation
   if (ROTATION_VAL) then
     local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_OUTER_CORE_ROTATION
-    start(1) = local_dim*myrank; count(1) = local_dim
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
     sel_num = sel_num+1
     sel => selections(sel_num)
     call set_selection_boundingbox(sel, start, count)
@@ -508,7 +508,7 @@
   if (ATTENUATION_VAL) then
     ! crust/mantle
     local_dim = N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE_ATTENUATION
-    start(1) = local_dim*myrank; count(1) = local_dim
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
     sel_num = sel_num+1
     sel => selections(sel_num)
     call set_selection_boundingbox(sel, start, count)
@@ -527,7 +527,7 @@
 
     ! inner core
     local_dim = N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_INNER_CORE_ATTENUATION
-    start(1) = local_dim*myrank; count(1) = local_dim
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
     sel_num = sel_num+1
     sel => selections(sel_num)
     call set_selection_boundingbox(sel, start, count)

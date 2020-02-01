@@ -86,7 +86,7 @@ program convert_model_file_adios
   ! adios
   character(len=MAX_STRING_LEN) :: group_name
   integer(kind=8) :: group_size_inc
-  integer :: local_dim
+  integer(kind=8) :: local_dim
   integer :: comm
   integer :: iexist,ier
 

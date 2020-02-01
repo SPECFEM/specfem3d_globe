@@ -201,7 +201,13 @@ contains
   call adios2_inquire_variable(v, adios_group, trim(scalar_name), ier)
   call check_adios_err(ier,"Error adios2 read_adios_scalar_int(): inquire variable "//trim(scalar_name)//" failed")
 
+  ! checks
   if (.not. v%valid) stop 'Error adios2 variable invalid'
+
+  if (v%type /= adios2_type_integer4) then
+    print *,'Error: adios2 variable type mismatch: ',v%type,' instead of ',adios2_type_integer4
+    call check_adios_err(1,"Error adios2 variable type mismatch for "//trim(scalar_name))
+  endif
 
   !debug steps
   ! for engine
@@ -230,7 +236,7 @@ contains
   !call check_adios_err(ier, "Error adios2 set block selection for "//trim(scalar_name)//" failed")
   !
   ! selection for scalar as 1-D array single entry
-  start(1) = 1 * rank
+  start(1) = 1 * int(rank,kind=8)
   count(1) = 1
   call adios2_set_selection(v, 1, start, count, ier)
   call check_adios_err(ier,"Error adios2 set selection for "//trim(scalar_name)//" failed")
@@ -318,7 +324,13 @@ contains
   call adios2_inquire_variable(v, adios_group, trim(scalar_name), ier)
   call check_adios_err(ier,"Error adios2 read_adios_scalar_long(): inquire variable "//trim(scalar_name)//" failed")
 
+  ! checks
   if (.not. v%valid) stop 'Error adios2 variable invalid'
+
+  if (v%type /= adios2_type_integer8) then
+    print *,'Error: adios2 variable type mismatch: ',v%type,' instead of ',adios2_type_integer8
+    call check_adios_err(1,"Error adios2 variable type mismatch for "//trim(scalar_name))
+  endif
 
   ! selection for local scalar variables
   ! this will fail for variables appended to the file (e.g., reg2/nspec and reg3/nspec variables in solver_data.bp etc.)
@@ -328,7 +340,7 @@ contains
   !call check_adios_err(ier, "Error adios2 set block selection for "//trim(scalar_name)//" failed")
   !
   ! selection for scalar as 1-D array single entry
-  start(1) = 1 * rank
+  start(1) = 1 * int(rank,kind=8)
   count(1) = 1
   call adios2_set_selection(v, 1, start, count, ier)
   call check_adios_err(ier,"Error adios2 set selection for "//trim(scalar_name)//" failed")
@@ -417,6 +429,11 @@ contains
 
   if (.not. v%valid) stop 'Error adios2 variable invalid'
 
+  if (v%type /= adios2_type_real8) then
+    print *,'Error: adios2 variable type mismatch: ',v%type,' instead of ',adios2_type_real8
+    call check_adios_err(1,"Error adios2 variable type mismatch for "//trim(scalar_name))
+  endif
+
   ! selection for local scalar variables
   ! this will fail for variables appended to the file (e.g., reg2/nspec and reg3/nspec variables in solver_data.bp etc.)
   ! maybe in future, adios2 will work with this.
@@ -425,7 +442,7 @@ contains
   !call check_adios_err(ier, "Error adios2 set block selection for "//trim(scalar_name)//" failed")
   !
   ! selection for scalar as 1-D array single entry
-  start(1) = 1 * rank
+  start(1) = 1 * int(rank,kind=8)
   count(1) = 1
   call adios2_set_selection(v, 1, start, count, ier)
   call check_adios_err(ier,"Error adios2 set selection for "//trim(scalar_name)//" failed")
@@ -475,7 +492,7 @@ contains
 
   ! local parameters
   integer :: ier
-  integer :: local_dim
+  integer(kind=8) :: local_dim
   integer(kind=8) :: start(1),count(1)
 #if defined(USE_ADIOS)
   integer(kind=8) :: sel
@@ -506,7 +523,7 @@ contains
   !!if (myrank_adios /= rank) &
   !!  stop 'Error invalid rank for reading adios GLL array'
 
-  start(1) = local_dim * rank
+  start(1) = local_dim * int(rank,kind=8)
   count(1) = NGLLX * NGLLY * NGLLZ * nspec
   call adios_selection_boundingbox(sel, 1, start, count)
 
@@ -555,7 +572,7 @@ contains
   if (.not. v%valid) stop 'Error adios2 variable invalid'
 
   ! selection
-  start(1) = local_dim * rank
+  start(1) = local_dim * int(rank,kind=8)
   count(1) = NGLLX * NGLLY * NGLLZ * nspec
   call adios2_set_selection(v, 1, start, count, ier)
   call check_adios_err(ier,"Error adios2 set selection for "//trim(array_name) // "/array"//" failed")
@@ -599,7 +616,7 @@ contains
   integer, intent(out) :: iexist
 
   ! local parameters
-  integer :: local_dim
+  integer(kind=8) :: local_dim
   integer(kind=8) :: start(1),count(1)
   integer :: ier
 #if defined(USE_ADIOS)
@@ -679,7 +696,7 @@ contains
     !!if (myrank_adios /= rank) &
     !!  stop 'Error invalid rank for reading adios GLL array'
 
-    start(1) = local_dim * rank
+    start(1) = local_dim * int(rank,kind=8)
     count(1) = NGLLX * NGLLY * NGLLZ * nspec
     call adios_selection_boundingbox(sel, 1, start, count)
 
@@ -733,7 +750,7 @@ contains
     if (.not. v%valid) stop 'Error adios2 variable invalid'
 
     ! selection
-    start(1) = local_dim * rank
+    start(1) = local_dim * int(rank,kind=8)
     count(1) = NGLLX * NGLLY * NGLLZ * nspec
     call adios2_set_selection(v, 1, start, count, ier)
     call check_adios_err(ier,"Error adios2 set selection for "//trim(array_name) // "/array"//" failed")
@@ -778,7 +795,7 @@ contains
 
   ! local parameters
   integer :: ier
-  integer :: local_dim
+  integer(kind=8) :: local_dim
   integer(kind=8) :: start(1),count(1)
 #if defined(USE_ADIOS)
   integer(kind=8) :: sel
@@ -808,7 +825,7 @@ contains
   !!if (myrank_adios /= rank) &
   !!  stop 'Error invalid rank for reading adios GLL array'
 
-  start(1) = local_dim * rank
+  start(1) = local_dim * int(rank,kind=8)
   count(1) = NGLLX * NGLLY * NGLLZ * nspec
 
   call adios_selection_boundingbox(sel, 1, start, count)
@@ -858,7 +875,7 @@ contains
   if (.not. v%valid) stop 'Error adios2 variable invalid'
 
   ! selection
-  start(1) = local_dim * rank
+  start(1) = local_dim * int(rank,kind=8)
   count(1) = NGLLX * NGLLY * NGLLZ * nspec
   call adios2_set_selection(v, 1, start, count, ier)
   call check_adios_err(ier,"Error adios2 set selection for "//trim(array_name) // "/array"//" failed")
@@ -899,11 +916,11 @@ contains
 
   ! local parameters
   integer :: ier
-  integer :: local_dim
+  integer(kind=8) :: local_dim
   integer(kind=8) :: start(1),count(1)
 #if defined(USE_ADIOS)
   integer(kind=8) :: sel
-  !integer :: offset
+  !integer(kind=8) :: offset
 #elif defined(USE_ADIOS2)
   type(adios2_variable) :: v
 #endif
@@ -930,8 +947,8 @@ contains
     stop 'Error adios helper read array'
   endif
 
-  start(1) = local_dim * rank
-  count(1) = nsize
+  start(1) = local_dim * int(rank,kind=8)
+  count(1) = int(nsize,kind=8)
 
   ! gets offset (offset is the same as: local_dim * rank)
   !call adios_selection_writeblock(sel,rank)
@@ -989,8 +1006,8 @@ contains
   if (.not. v%valid) stop 'Error adios2 variable invalid'
 
   ! selection
-  start(1) = local_dim * rank
-  count(1) = nsize
+  start(1) = local_dim * int(rank,kind=8)
+  count(1) = int(nsize,kind=8)
   call adios2_set_selection(v, 1, start, count, ier)
   call check_adios_err(ier,"Error adios2 set selection for "//trim(array_name) // "/array"//" failed")
 
@@ -1030,11 +1047,11 @@ contains
 
   ! local parameters
   integer :: ier
-  integer :: local_dim
+  integer(kind=8) :: local_dim
   integer(kind=8) :: start(1),count(1)
 #if defined(USE_ADIOS)
   integer(kind=8) :: sel
-  !integer :: offset
+  !integer(kind=8) :: offset
 #elif defined(USE_ADIOS2)
   type(adios2_variable) :: v
 #endif
@@ -1055,8 +1072,8 @@ contains
     stop 'Error adios helper read array'
   endif
 
-  start(1) = local_dim * rank
-  count(1) = nsize
+  start(1) = local_dim * int(rank,kind=8)
+  count(1) = int(nsize,kind=8)
 
   call adios_selection_boundingbox(sel, 1, start, count)
 
@@ -1100,8 +1117,8 @@ contains
   if (.not. v%valid) stop 'Error adios2 variable invalid'
 
   ! selection
-  start(1) = local_dim * rank
-  count(1) = nsize
+  start(1) = local_dim * int(rank,kind=8)
+  count(1) = int(nsize,kind=8)
   call adios2_set_selection(v, 1, start, count, ier)
   call check_adios_err(ier,"Error adios2 set selection for "//trim(array_name) // "/array"//" failed")
 

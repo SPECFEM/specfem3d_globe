@@ -81,7 +81,7 @@
   ! local Variables
   character(len=MAX_STRING_LEN) :: outputname, group_name
   integer(kind=8) :: group_size_inc
-  integer :: local_dim
+  integer(kind=8) :: local_dim
 
   ! Type inference for define_adios_global_array1D. Avoid additional args.
   real(kind=CUSTOM_REAL), dimension(1,1,1,1) :: dummy_real4d
@@ -309,7 +309,7 @@
       Gc_prime_kl_crust_mantle, Gs_prime_kl_crust_mantle
 
   ! Variables
-  integer :: local_dim
+  integer(kind=8) :: local_dim
 
   ! checks if anything to do
   if (.not. ANISOTROPIC_KL) return
@@ -414,7 +414,7 @@
       bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle
 
   ! Variables
-  integer :: local_dim
+  integer(kind=8) :: local_dim
 
   ! checks if anything to do
   if (ANISOTROPIC_KL) return
@@ -463,7 +463,7 @@
   implicit none
 
   ! Variables
-  integer :: local_dim
+  integer(kind=8) :: local_dim
 
   ! checks if anything to do
   if (.not. SAVE_KERNELS_OC) return
@@ -500,7 +500,7 @@
   implicit none
 
   ! Variables
-  integer :: local_dim
+  integer(kind=8) :: local_dim
 
   ! checks if anything to do
   if (.not. SAVE_KERNELS_IC) return
@@ -534,7 +534,7 @@
   implicit none
 
   ! Variables
-  integer :: local_dim
+  integer(kind=8) :: local_dim
 
   ! checks if anything to do
   if (.not. SAVE_KERNELS_BOUNDARY) return
@@ -588,7 +588,7 @@
   ! to transform these arrays in the post processing phase.
   !real(kind=CUSTOM_REAL), dimension(3,3,nrec_local) :: moment_der_tmp
   !real(kind=CUSTOM_REAL), dimension(3,nrec_local) :: sloc_der_tmp
-  integer :: local_dim
+  integer(kind=8) :: local_dim
 
   !moment_der_tmp(:, :, :) = moment_der(:, :, :) * 1e-7
   !moment_der_tmp(1, 3, :) = -2 * moment_der(1, 3, :)
@@ -630,7 +630,7 @@
   implicit none
 
   ! Variables
-  integer :: local_dim
+  integer(kind=8) :: local_dim
 
   local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE_ADJOINT
 
@@ -657,7 +657,7 @@
   implicit none
 
   ! Variables
-  integer :: local_dim
+  integer(kind=8) :: local_dim
 
   local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE_ADJOINT
 

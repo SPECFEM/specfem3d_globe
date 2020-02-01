@@ -50,12 +50,12 @@ subroutine read_attenuation_adios(iregion_code, &
   ! local parameters
   double precision :: T_c_source
   character(len=MAX_STRING_LEN) :: file_name
-  integer :: local_dim
   ! ADIOS variables
-  integer(kind=8)         :: sel
+  integer(kind=8) :: local_dim
+  integer(kind=8) :: sel
   integer(kind=8), dimension(1) :: start, count
 
-  character(len=128)      :: region_name, region_name_scalar
+  character(len=128) :: region_name, region_name_scalar
 
   write(region_name,"('reg',i1, '/')") iregion_code
   write(region_name_scalar,"('reg',i1)") iregion_code
@@ -65,7 +65,7 @@ subroutine read_attenuation_adios(iregion_code, &
 
   ! All of the following reads use the output parameters as their temporary arrays
   ! use the filename to determine the actual contents of the read
-  file_name= trim(LOCAL_PATH) // "/attenuation.bp"
+  file_name = trim(LOCAL_PATH) // "/attenuation.bp"
 
   ! opens adios file
   call open_file_adios_read_and_init_method(myadios_file,myadios_group,file_name)
@@ -73,7 +73,7 @@ subroutine read_attenuation_adios(iregion_code, &
   call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "t_c_source",T_c_source)
 
   local_dim = size (tau_s)
-  start(1) = local_dim*myrank; count(1) = local_dim
+  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
   call set_selection_boundingbox(sel, start, count)
 
   call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
@@ -83,7 +83,7 @@ subroutine read_attenuation_adios(iregion_code, &
   call delete_adios_selection(sel)
 
   local_dim = size (factor_common)
-  start(1) = local_dim*myrank; count(1) = local_dim
+  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
   call set_selection_boundingbox(sel, start, count)
 
   call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
@@ -93,7 +93,7 @@ subroutine read_attenuation_adios(iregion_code, &
   call delete_adios_selection(sel)
 
   local_dim = size (scale_factor)
-  start(1) = local_dim*myrank; count(1) = local_dim
+  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
   call set_selection_boundingbox(sel, start, count)
 
   call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &

@@ -270,7 +270,7 @@ subroutine read_coordinates_adios_mesh(iproc, ir, nglob, nspec, &
   character(len=80) :: reg_name
   integer(kind=8), dimension(1) :: start, count
   integer(kind=8) :: sel_coord, sel_ibool
-  integer :: offset_coord, offset_ibool
+  integer(kind=8) :: offset_coord, offset_ibool
 
   write(reg_name,"('reg',i1,'/')") ir
 
@@ -314,7 +314,7 @@ subroutine read_values_adios(var_name, iproc, ir, nspec, data)
   ! Variables
   integer(kind=8), dimension(1) :: start, count
   integer(kind=8) :: sel
-  integer :: offset
+  integer(kind=8) :: offset
   character(len=128) :: data_name
   character(len=8) :: reg_name
   logical :: is_kernel

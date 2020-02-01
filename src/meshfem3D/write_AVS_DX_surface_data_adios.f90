@@ -73,6 +73,7 @@ subroutine define_AVS_DX_surfaces_data_adios(nspec,iboun, &
   integer, dimension(8) :: iglobval
   integer :: npoin,nspecface
   integer :: ierr
+  integer(kind=8) :: local_dim
 
   ! Dummy arrays for type inference inside adios helpers
   real(kind=4),    dimension(1) :: dummy_real1d
@@ -128,24 +129,26 @@ subroutine define_AVS_DX_surfaces_data_adios(nspec,iboun, &
   if (ierr /= 0) call exit_MPI(myrank, "Error allocating iglob4.")
 
   !--- Variables for '...AVS_DXpointschunk.txt'
-  call define_adios_global_array1D(myadios_group, group_size_inc, npoin, &
+  local_dim = npoin
+  call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, &
                                    '', "points_surfaces/x_value", dummy_real1d)
-  call define_adios_global_array1D(myadios_group, group_size_inc, npoin, &
+  call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, &
                                    '', "points_surfaces/y_value", dummy_real1d)
-  call define_adios_global_array1D(myadios_group, group_size_inc, npoin, &
+  call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, &
                                    '', "points_surfaces/z_value", dummy_real1d)
 
   !--- Variables for '...AVS_DXpointschunk.txt'
-  call define_adios_global_array1D(myadios_group, group_size_inc, nspecface, &
+  local_dim = nspecface
+  call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, &
                                    '', "elements_surfaces/idoubling", dummy_int1d)
 
-  call define_adios_global_array1D(myadios_group, group_size_inc, nspecface, &
+  call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, &
                                    '', "elements_surfaces/num_ibool_AVS_DX_iglob1", dummy_int1d)
-  call define_adios_global_array1D(myadios_group, group_size_inc, nspecface, &
+  call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, &
                                    '', "elements_surfaces/num_ibool_AVS_DX_iglob2", dummy_int1d)
-  call define_adios_global_array1D(myadios_group, group_size_inc, nspecface, &
+  call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, &
                                    '', "elements_surfaces/num_ibool_AVS_DX_iglob3", dummy_int1d)
-  call define_adios_global_array1D(myadios_group, group_size_inc, nspecface, &
+  call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, &
                                    '', "elements_surfaces/num_ibool_AVS_DX_iglob4", dummy_int1d)
 
   !--- Variables for AVS_DXelementschunks_dvp_dvs.txt
@@ -154,9 +157,9 @@ subroutine define_AVS_DX_surfaces_data_adios(nspec,iboun, &
     if (ierr /= 0) call exit_MPI(myrank, "Error allocating dvp.")
     allocate(avs_dx_adios%dvs(nspecface), stat=ierr)
     if (ierr /= 0) call exit_MPI(myrank, "Error allocating dvs.")
-    call define_adios_global_array1D(myadios_group, group_size_inc, nspecface, &
+    call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, &
                                      '', "elements_surfaces/dvp", dummy_real1d)
-    call define_adios_global_array1D(myadios_group, group_size_inc, nspecface, &
+    call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, &
                                      '', "elements_surfaces/dvs", dummy_real1d)
   endif
 
@@ -435,35 +438,37 @@ subroutine write_AVS_DX_surfaces_data_adios(myrank, sizeprocs, avs_dx_adios, MOD
   logical MODEL_3D_MANTLE_PERTUBATIONS
   !--- Variables
   integer :: npoin, nspec
+  integer(kind=8) :: local_dim
 
   npoin = avs_dx_adios%npoin
   nspec = avs_dx_adios%nspecface
 
-  call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs, npoin, &
+  local_dim = npoin
+  call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs, local_dim, &
                                    "points_surfaces/x_value", avs_dx_adios%x_adios)
-  call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs, npoin, &
+  call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs, local_dim, &
                                    "points_surfaces/y_value", avs_dx_adios%y_adios)
-  call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs, npoin, &
+  call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs, local_dim, &
                                    "points_surfaces/z_value", avs_dx_adios%z_adios)
 
-
-  call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs, nspec, &
+  local_dim = nspec
+  call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs, local_dim, &
                                    "elements_surfaces/idoubling", avs_dx_adios%idoubling)
 
-  call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs, nspec, &
+  call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs, local_dim, &
                                    "elements_surfaces/num_ibool_AVS_DX_iglob1", avs_dx_adios%iglob1)
-  call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs, nspec, &
+  call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs, local_dim, &
                                    "elements_surfaces/num_ibool_AVS_DX_iglob2", avs_dx_adios%iglob2)
-  call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs, nspec, &
+  call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs, local_dim, &
                                    "elements_surfaces/num_ibool_AVS_DX_iglob3", avs_dx_adios%iglob3)
-  call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs, nspec, &
+  call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs, local_dim, &
                                    "elements_surfaces/num_ibool_AVS_DX_iglob4", avs_dx_adios%iglob4)
 
 
   if (MODEL_3D_MANTLE_PERTUBATIONS) then
-    call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs, nspec, &
+    call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs, local_dim, &
                                      "elements_surfaces/dvp", avs_dx_adios%dvp)
-    call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs, nspec, &
+    call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs, local_dim, &
                                      "elements_surfaces/dvs", avs_dx_adios%dvs)
   endif
 

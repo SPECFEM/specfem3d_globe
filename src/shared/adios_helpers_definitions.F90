@@ -204,6 +204,7 @@ subroutine define_adios_scalar_double (adios_group, group_size_inc, path, name, 
   integer(kind=8),  intent(inout) :: group_size_inc
   character(len=*), intent(in)    :: name, path
   real(kind=8),     intent(in)    :: var
+
   ! Local Variables
 #if defined(USE_ADIOS)
   integer(kind=8) :: varid ! dummy variable, adios use var name
@@ -244,8 +245,8 @@ subroutine define_adios_scalar_double (adios_group, group_size_inc, path, name, 
   !
   ! defines scalar as 1-d array with single entry
   ldim(1) = 1
-  gdim(:) = sizeprocs_adios * ldim(:)
-  offs(:) = myrank_adios * ldim(:)
+  gdim(:) = int(sizeprocs_adios,kind=8) * ldim(:)
+  offs(:) = int(myrank_adios,kind=8) * ldim(:)
 
   call adios2_define_variable(v, adios_group, trim(full_name), adios2_type_real8, &
                               1, gdim, offs, ldim, adios2_constant_dims, ier)
@@ -288,6 +289,7 @@ subroutine define_adios_scalar_float(adios_group, group_size_inc, path, name, va
   integer(kind=8),  intent(inout) :: group_size_inc
   character(len=*), intent(in)    :: name, path
   real(kind=4),     intent(in)    :: var
+
   ! Local Variables
 #if defined(USE_ADIOS)
   integer(kind=8) :: varid ! dummy variable, adios use var name
@@ -328,8 +330,8 @@ subroutine define_adios_scalar_float(adios_group, group_size_inc, path, name, va
   !
   ! defines scalar as 1-d array with single entry
   ldim(1) = 1
-  gdim(:) = sizeprocs_adios * ldim(:)
-  offs(:) = myrank_adios * ldim(:)
+  gdim(:) = int(sizeprocs_adios,kind=8) * ldim(:)
+  offs(:) = int(myrank_adios,kind=8) * ldim(:)
 
   call adios2_define_variable(v, adios_group, trim(full_name), adios2_type_real4, &
                               1, gdim, offs, ldim, adios2_constant_dims, ier)
@@ -372,6 +374,7 @@ subroutine define_adios_scalar_integer(adios_group, group_size_inc, path, name, 
   character(len=*), intent(in)    :: name, path
   integer(kind=8),  intent(inout) :: group_size_inc
   integer(kind=4),  intent(in)    :: var
+
   ! Local Variables
 #if defined(USE_ADIOS)
   integer(kind=8) :: varid ! dummy variable, adios use var name
@@ -426,8 +429,8 @@ subroutine define_adios_scalar_integer(adios_group, group_size_inc, path, name, 
   !
   ! defines scalar as 1-d array with single entry
   ldim(1) = 1
-  gdim(:) = sizeprocs_adios * ldim(:)
-  offs(:) = myrank_adios * ldim(:)
+  gdim(:) = int(sizeprocs_adios,kind=8) * ldim(:)
+  offs(:) = int(myrank_adios,kind=8) * ldim(:)
 
   call adios2_define_variable(v, adios_group, trim(full_name), adios2_type_integer4, &
                               1, gdim, offs, ldim, adios2_constant_dims, ier)
@@ -470,6 +473,7 @@ subroutine define_adios_scalar_long(adios_group, group_size_inc, path, name, var
   character(len=*), intent(in)     :: name, path
   integer(kind=8),  intent(inout)  :: group_size_inc
   integer(kind=8),  intent(in)  :: var
+
   ! Local Variables
 #if defined(USE_ADIOS)
   integer(kind=8) :: varid ! dummy variable, adios use var name
@@ -496,7 +500,7 @@ subroutine define_adios_scalar_long(adios_group, group_size_inc, path, name, var
 
 #if defined(USE_ADIOS)
   ! ADIOS 1
-  ! adios: 2 ~ integer(kind=4)
+  ! adios: 2 ~ integer(kind=8)
   call adios_define_var (adios_group, trim(name), trim(path), adios_long, '', '', '', varid)
 
 #elif defined(USE_ADIOS2)
@@ -511,8 +515,8 @@ subroutine define_adios_scalar_long(adios_group, group_size_inc, path, name, var
   !
   ! defines scalar as 1-d array with single entry
   ldim(1) = 1
-  gdim(:) = sizeprocs_adios * ldim(:)
-  offs(:) = myrank_adios * ldim(:)
+  gdim(:) = int(sizeprocs_adios,kind=8) * ldim(:)
+  offs(:) = int(myrank_adios,kind=8) * ldim(:)
 
   call adios2_define_variable(v, adios_group, trim(full_name), adios2_type_integer8, &
                               1, gdim, offs, ldim, adios2_constant_dims, ier)
@@ -556,6 +560,7 @@ subroutine define_adios_scalar_byte (adios_group, group_size_inc, name, path, va
   ! note: byte is non-standard gnu Fortran
   !byte,     intent(in)             :: var
   integer(kind=1),  intent(in)     :: var
+
   ! Local Variables
 #if defined(USE_ADIOS)
   integer(kind=8) :: varid ! dummy variable, adios use var name
@@ -597,8 +602,8 @@ subroutine define_adios_scalar_byte (adios_group, group_size_inc, name, path, va
   !
   ! defines scalar as 1-d array with single entry
   ldim(1) = 1
-  gdim(:) = sizeprocs_adios * ldim(:)
-  offs(:) = myrank_adios * ldim(:)
+  gdim(:) = int(sizeprocs_adios,kind=8) * ldim(:)
+  offs(:) = int(myrank_adios,kind=8) * ldim(:)
 
   call adios2_define_variable(v, adios_group, trim(full_name), adios2_type_integer1, &
                               1, gdim, offs, ldim, adios2_constant_dims, ier)
@@ -640,7 +645,7 @@ subroutine define_adios_global_dims_1d(adios_group, group_size_inc, array_name, 
   type(adios2_io),  intent(in) :: adios_group
 #endif
   character(len=*), intent(in) :: array_name
-  integer,          intent(in) :: local_dim
+  integer(kind=8),  intent(in) :: local_dim
   integer(kind=8),  intent(inout) :: group_size_inc
 
   TRACE_ADIOS_L2_ARG('define_adios_global_dims_1d: ',trim(array_name))
@@ -649,8 +654,8 @@ subroutine define_adios_global_dims_1d(adios_group, group_size_inc, array_name, 
   if (len_trim(array_name) == 0) stop 'Error adios: invalid array_name in define_adios_global_dims_1d()'
 
   ! uses local_dim as dummy variable
-  call define_adios_scalar(adios_group, group_size_inc, trim(array_name), "local_dim", local_dim)
-  call define_adios_scalar(adios_group, group_size_inc, trim(array_name), "global_dim", int(local_dim,kind=8)) ! long type
+  call define_adios_scalar(adios_group, group_size_inc, trim(array_name), "local_dim", local_dim)  ! scalar long type
+  call define_adios_scalar(adios_group, group_size_inc, trim(array_name), "global_dim", local_dim)
   call define_adios_scalar(adios_group, group_size_inc, trim(array_name), "offset", local_dim)
 
 end subroutine define_adios_global_dims_1d
@@ -674,7 +679,7 @@ end subroutine define_adios_global_dims_1d
   type(adios2_io),  intent(in)     :: adios_group
 #endif
   character(len=*), intent(in) :: array_name
-  integer,          intent(in) :: local_dim
+  integer(kind=8),  intent(in) :: local_dim
   integer(kind=8),  intent(inout) :: group_size_inc
   ! Variables
 #if defined(USE_ADIOS)
@@ -705,8 +710,8 @@ end subroutine define_adios_global_dims_1d
   ! ADIOS 2
   ! note: variable parameter v will not be stored globally, instead will be retrieved by _inquire** function again
   ldim(1) = local_dim
-  gdim(:) = sizeprocs_adios * ldim(:)
-  offs(:) = myrank_adios * ldim(:)
+  gdim(:) = int(sizeprocs_adios,kind=8) * ldim(:)
+  offs(:) = int(myrank_adios,kind=8) * ldim(:)
 
   full_name = trim(array_name) // '/array'
 
@@ -871,7 +876,7 @@ end subroutine define_adios_global_dims_1d
   type(adios2_io),  intent(in)     :: adios_group
 #endif
   character(len=*), intent(in) :: array_name
-  integer,          intent(in) :: local_dim
+  integer(kind=8),  intent(in) :: local_dim
   integer(kind=8),  intent(inout) :: group_size_inc
   ! Variables
 #if defined(USE_ADIOS)
@@ -902,8 +907,8 @@ end subroutine define_adios_global_dims_1d
   ! ADIOS 2
   ! note: variable parameter v will not be stored globally, instead will be retrieved by _inquire** function again
   ldim(1) = local_dim
-  gdim(:) = sizeprocs_adios * ldim(:)
-  offs(:) = myrank_adios * ldim(:)
+  gdim(:) = int(sizeprocs_adios,kind=8) * ldim(:)
+  offs(:) = int(myrank_adios,kind=8) * ldim(:)
 
   full_name = trim(array_name) // '/array'
 
@@ -1068,7 +1073,7 @@ end subroutine define_adios_global_1d_double_4d
   type(adios2_io),  intent(in)     :: adios_group
 #endif
   character(len=*), intent(in) :: array_name
-  integer,          intent(in) :: local_dim
+  integer(kind=8),  intent(in) :: local_dim
   integer(kind=8),  intent(inout) :: group_size_inc
   ! Variables
 #if defined(USE_ADIOS)
@@ -1099,8 +1104,8 @@ end subroutine define_adios_global_1d_double_4d
   ! ADIOS 2
   ! note: variable will not be stored globally, instead will be retrieved by _inquire** function again
   ldim(1) = local_dim
-  gdim(:) = sizeprocs_adios * ldim(:)
-  offs(:) = myrank_adios * ldim(:)
+  gdim(:) = int(sizeprocs_adios,kind=8) * ldim(:)
+  offs(:) = int(myrank_adios,kind=8) * ldim(:)
 
   full_name = trim(array_name) // "/array"
 
@@ -1265,7 +1270,7 @@ end subroutine define_adios_global_1d_double_4d
   type(adios2_io),  intent(in)     :: adios_group
 #endif
   character(len=*), intent(in) :: array_name
-  integer,          intent(in) :: local_dim
+  integer(kind=8),  intent(in) :: local_dim
   integer(kind=8),  intent(inout) :: group_size_inc
   ! Variables
 #if defined(USE_ADIOS)
@@ -1296,8 +1301,8 @@ end subroutine define_adios_global_1d_double_4d
   ! ADIOS 2
   ! note: variable will not be stored globally, instead will be retrieved by _inquire** function again
   ldim(1) = local_dim
-  gdim(:) = sizeprocs_adios * ldim(:)
-  offs(:) = myrank_adios * ldim(:)
+  gdim(:) = int(sizeprocs_adios,kind=8) * ldim(:)
+  offs(:) = int(myrank_adios,kind=8) * ldim(:)
 
   full_name = trim(array_name) // '/array'
 
@@ -1461,7 +1466,7 @@ subroutine define_adios_global_1d_generic_logical(adios_group, group_size_inc, a
   type(adios2_io),  intent(in)     :: adios_group
 #endif
   character(len=*), intent(in) :: array_name
-  integer,          intent(in) :: local_dim
+  integer(kind=8),  intent(in) :: local_dim
   integer(kind=8),  intent(inout) :: group_size_inc
   ! Variables
 #if defined(USE_ADIOS)
@@ -1499,8 +1504,8 @@ subroutine define_adios_global_1d_generic_logical(adios_group, group_size_inc, a
   !       also, adios2 has no adios2_get()/adios2_put() routine for logicals.
   !       we need to use integer array instead for storing/reading.
   ldim(1) = local_dim
-  gdim(:) = sizeprocs_adios * ldim(:)
-  offs(:) = myrank_adios * ldim(:)
+  gdim(:) = int(sizeprocs_adios,kind=8) * ldim(:)
+  offs(:) = int(myrank_adios,kind=8) * ldim(:)
 
   full_name = trim(array_name) // '/array'
 
@@ -1659,7 +1664,7 @@ subroutine define_adios_global_1d_string_generic(adios_group, group_size_inc, ar
   type(adios2_io),  intent(in)     :: adios_group
 #endif
   character(len=*), intent(in) :: array_name
-  integer,          intent(in) :: local_dim
+  integer(kind=8),  intent(in) :: local_dim
   integer(kind=8),  intent(inout) :: group_size_inc
   ! Variables
 #if defined(USE_ADIOS)
@@ -1695,8 +1700,8 @@ subroutine define_adios_global_1d_string_generic(adios_group, group_size_inc, ar
 
   ! local array dimensions
   ldim(1) = local_dim
-  gdim(:) = sizeprocs_adios * ldim(:)
-  offs(:) = myrank_adios * ldim(:)
+  gdim(:) = int(sizeprocs_adios,kind=8) * ldim(:)
+  offs(:) = int(myrank_adios,kind=8) * ldim(:)
 
   full_name = trim(array_name) // '/array'
 
@@ -1725,7 +1730,7 @@ subroutine define_adios_global_1d_string_1d(adios_group, group_size_inc, local_d
   type(adios2_io),  intent(in)     :: adios_group
 #endif
   character(len=*), intent(in) :: path, array_name
-  integer,          intent(in) :: local_dim
+  integer(kind=8),  intent(in) :: local_dim
   integer(kind=8),  intent(inout) :: group_size_inc
   character(len=*), intent(in) :: var
   ! Local vars
@@ -1768,7 +1773,7 @@ subroutine  define_adios_local_1d_string_1d(adios_group, group_size_inc, local_d
   type(adios2_io),  intent(in)     :: adios_group
 #endif
   character(len=*), intent(in) :: path, array_name
-  integer,          intent(in) :: local_dim
+  integer(kind=8),  intent(in) :: local_dim
   integer(kind=8),  intent(inout) :: group_size_inc
   character(len=*), intent(in) :: var
   ! Local

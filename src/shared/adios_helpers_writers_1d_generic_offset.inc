@@ -13,8 +13,8 @@
   type(adios2_variable) :: v
 #endif
   integer, intent(in) :: myrank, sizeprocs
-  integer, intent(in) :: local_dim, offset
-  integer(kind=8), intent(in) :: global_dim
+  integer(kind=8), intent(in) :: local_dim
+  integer(kind=8), intent(in) :: global_dim, offset
   character(len=*) :: array_name
   ! Variables
   integer :: adios_err

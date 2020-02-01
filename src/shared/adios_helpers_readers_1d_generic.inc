@@ -62,6 +62,7 @@
   ! gets associated variable for array
   call adios2_inquire_variable(v, adios_group, trim(array_name), ier)
   call check_adios_err(ier,"Error adios2 readers_1d_generic: inquire variable "//trim(array_name)//" failed")
+
   if (.not. v%valid) stop 'Error adios2 variable invalid'
 
   call adios2_set_selection(v, 1, start, count, ier)

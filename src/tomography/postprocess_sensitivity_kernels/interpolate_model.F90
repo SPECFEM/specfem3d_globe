@@ -178,7 +178,7 @@
 
   ! ADIOS
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
-  integer :: local_dim
+  integer(kind=8) :: local_dim
   integer(kind=8) :: global_dim
   character(len=MAX_STRING_LEN) :: group_name
   integer(kind=8) :: group_size_inc
@@ -325,9 +325,9 @@
     print *,'  local_dim/global_dim = ',local_dim,'/',global_dim
 
     rank = 0
-    if (mod(global_dim,int(local_dim,kind=8)) == 0) then
+    if (mod(global_dim,local_dim) == 0) then
       ! sizeprocs
-      rank = global_dim/local_dim
+      rank = int(global_dim/local_dim)
     else
       print *,'Error invalid local_dim/global_dim ratio in file: ',trim(solver_file)
       stop 'Error adios array has invalid local_dim/global_dim ratio'

@@ -455,7 +455,7 @@ contains
   character(len=*), intent(in) :: array_name
 
   ! local parameters
-  integer :: local_dim
+  integer(kind=8) :: local_dim
 
   TRACE_ADIOS_L2_ARG('write_adios_array_gll: ',trim(array_name))
 
@@ -496,21 +496,22 @@ contains
   type(adios2_io), intent(in) :: adios_group
   type(adios2_variable) :: v
 #endif
-  integer, intent(in) :: sizeprocs, local_dim, myrank
+  integer, intent(in) :: sizeprocs, myrank
+  integer(kind=8), intent(in) :: local_dim
   character(len=*), intent(in) :: path
 
   integer :: adios_err
-  integer :: offset
+  integer(kind=8) :: offset
   integer(kind=8) :: global_dim ! should be long for large cases.
 
   TRACE_ADIOS_L2_ARG('write_1D_global_array_adios_dims: ',trim(path))
 
   ! global dimension
-  global_dim = int(local_dim, 8) * int(sizeprocs, 8)
+  global_dim = local_dim * int(sizeprocs,kind=8)
 
   ! process offset
   ! note: assumes that myrank starts is within [0,sizeprocs-1]
-  offset = local_dim * myrank
+  offset = local_dim * int(myrank,kind=8)
 
 #if defined(USE_ADIOS)
   ! ADIOS 1
@@ -1084,7 +1085,8 @@ contains
   type(adios2_io), intent(in) :: adios_group
   type(adios2_variable) :: v
 #endif
-  integer, intent(in) :: myrank, sizeprocs, local_dim
+  integer, intent(in) :: myrank, sizeprocs
+  integer(kind=8), intent(in) :: local_dim
   character(len=*) :: array_name
   ! Variables
   integer :: adios_err
@@ -1235,8 +1237,8 @@ contains
 #endif
 
   integer, intent(in) :: sizeprocs, myrank
-  integer, intent(in) :: local_dim, offset
-  integer(kind=8), intent(in) :: global_dim
+  integer(kind=8), intent(in) :: local_dim
+  integer(kind=8), intent(in) :: global_dim, offset
   character(len=*), intent(in) :: path
 
   integer :: adios_err
@@ -1318,8 +1320,8 @@ contains
 #endif
 
   integer, intent(in) :: myrank, sizeprocs
-  integer, intent(in) :: local_dim, offset
-  integer(kind=8), intent(in) :: global_dim
+  integer(kind=8), intent(in) :: local_dim
+  integer(kind=8), intent(in) :: global_dim, offset
   character(len=*) :: array_name
   character(len=*), intent(in) :: array
   ! Variables
@@ -1379,8 +1381,8 @@ contains
   type(adios2_variable) :: v
 #endif
   integer, intent(in) :: sizeprocs, myrank
-  integer, intent(in) :: local_dim, offset
-  integer(kind=8), intent(in) :: global_dim
+  integer(kind=8), intent(in) :: local_dim
+  integer(kind=8), intent(in) :: global_dim, offset
   character(len=*), intent(in) :: path
 
   ! local parameters

@@ -102,10 +102,11 @@
 
   integer :: i,j,k,ispec,iglob,ier
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: tmp_array_x, tmp_array_y, tmp_array_z
+  real(kind=CUSTOM_REAL),dimension(1) :: dummy_1d
 
   ! local parameters
   character(len=MAX_STRING_LEN) :: outputname, group_name ! reg_name
-  integer :: local_dim
+  integer(kind=8) :: local_dim
   integer(kind=8) :: group_size_inc
   ! ADIOS variables
   character(len=128)      :: region_name, region_name_scalar
@@ -148,9 +149,9 @@
   call define_adios_scalar(myadios_group, group_size_inc, region_name_scalar, STRINGIFY_VAR(nglob))
 
   local_dim = nglob
-  call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, region_name, "x_global", tmp_array_x)
-  call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, region_name, "y_global", tmp_array_y)
-  call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, region_name, "z_global", tmp_array_z)
+  call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, region_name, "x_global", dummy_1d)
+  call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, region_name, "y_global", dummy_1d)
+  call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, region_name, "z_global", dummy_1d)
 
   local_dim = NGLLX * NGLLY * NGLLZ * nspec
   call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(xstore))
@@ -827,27 +828,28 @@
 
   implicit none
 
-  integer :: iregion_code
-  character(len=MAX_STRING_LEN) :: LOCAL_PATH
+  integer, intent(in) :: iregion_code
+  character(len=MAX_STRING_LEN), intent(in) :: LOCAL_PATH
   ! MPI interfaces
-  integer :: num_interfaces,max_nibool_interfaces
-  integer, dimension(num_interfaces) :: my_neighbors
-  integer, dimension(num_interfaces) :: nibool_interfaces
-  integer, dimension(max_nibool_interfaces,num_interfaces) :: ibool_interfaces
+  integer, intent(in) :: num_interfaces,max_nibool_interfaces
+  integer, dimension(num_interfaces), intent(in) :: my_neighbors
+  integer, dimension(num_interfaces), intent(in) :: nibool_interfaces
+  integer, dimension(max_nibool_interfaces,num_interfaces), intent(in) :: ibool_interfaces
   ! inner/outer elements
-  integer :: nspec_inner,nspec_outer
-  integer :: num_phase_ispec
-  integer,dimension(num_phase_ispec,2) :: phase_ispec_inner
+  integer, intent(in) :: nspec_inner,nspec_outer
+  integer, intent(in) :: num_phase_ispec
+  integer,dimension(num_phase_ispec,2), intent(in) :: phase_ispec_inner
   ! mesh coloring
-  integer :: num_colors_outer,num_colors_inner
-  integer, dimension(num_colors_outer + num_colors_inner) :: num_elem_colors
+  integer, intent(in) :: num_colors_outer,num_colors_inner
+  integer, dimension(num_colors_outer + num_colors_inner), intent(in) :: num_elem_colors
 
   ! local parameters
   character(len=MAX_STRING_LEN) :: outputname, group_name ! prname,
-  integer :: local_dim
+  integer :: i,ier
+  integer(kind=8) :: local_dim
   integer(kind=8) :: group_size_inc
   ! ADIOS variables
-  character(len=128)      :: region_name, region_name_scalar
+  character(len=128) :: region_name, region_name_scalar
   !--- Save the number of region written. Open the file in "w" mode if 0, else
   !    in "a"  mode
   integer, save :: num_regions_written = 0
@@ -858,6 +860,9 @@
   ! wmax = world_max variables to have constant strides in adios file
   integer :: num_interfaces_wmax, max_nibool_interfaces_wmax, &
              num_phase_ispec_wmax, num_colors_outer_wmax, num_colors_inner_wmax
+  integer, dimension(:),allocatable :: nibool_interfaces_wmax,my_neighbors_wmax
+  integer, dimension(:,:),allocatable :: ibool_interfaces_wmax,phase_ispec_inner_wmax
+  integer, dimension(:),allocatable :: num_elem_colors_wmax
 
   ! user output
   if (myrank == 0) then
@@ -883,14 +888,21 @@
   num_colors_outer_wmax      = ints_to_reduce(4)
   num_colors_inner_wmax      = ints_to_reduce(5)
 
+  ! note: the number of interfaces could be different for different mpi processes
+  !       (e.g., depending if a slice is located at a chunk edge or inside)
+  !       determining the maximum values helps to assign a common rule for array offsets for all processes.
+  !
   ! checks
-  if (num_interfaces /= num_interfaces_wmax .or. &
-      max_nibool_interfaces /= max_nibool_interfaces_wmax .or. &
-      num_phase_ispec /= num_phase_ispec_wmax .or. &
-      num_colors_inner /= num_colors_inner_wmax .or. &
-      num_colors_outer /= num_colors_outer_wmax) then
-    print *,myrank,'Error num_interfaces for MPI arrays'
-    call exit_mpi(myrank,'Error num_interfaces for MPI arrays in adios saved file')
+  if (num_interfaces > num_interfaces_wmax .or. &
+      max_nibool_interfaces > max_nibool_interfaces_wmax .or. &
+      num_phase_ispec > num_phase_ispec_wmax .or. &
+      num_colors_inner > num_colors_inner_wmax .or. &
+      num_colors_outer > num_colors_outer_wmax) then
+    print *,'Error: rank ',myrank,' num_interfaces ', &
+            num_interfaces,max_nibool_interfaces,num_phase_ispec,num_colors_inner,num_colors_outer, &
+            ' for mpi arrays differ from max values: ', &
+            num_interfaces_wmax,max_nibool_interfaces_wmax,num_phase_ispec_wmax,num_colors_inner_wmax,num_colors_outer_wmax
+    call exit_mpi(myrank,'Error num_interfaces for mpi arrays in adios saved file')
   endif
 
   ! create the name for the database of the current slide and region
@@ -911,14 +923,14 @@
 
   ! interfaces
   call define_adios_scalar(myadios_group, group_size_inc, region_name_scalar, STRINGIFY_VAR(num_interfaces))
-  if (num_interfaces > 0) then
-    call define_adios_scalar(myadios_group, group_size_inc, region_name_scalar, STRINGIFY_VAR(max_nibool_interfaces))
+  call define_adios_scalar(myadios_group, group_size_inc, region_name_scalar, STRINGIFY_VAR(max_nibool_interfaces))
 
-    local_dim = num_interfaces
+  if (num_interfaces_wmax > 0) then
+    local_dim = num_interfaces_wmax
     call define_adios_global_array1D(myadios_group,group_size_inc,local_dim,region_name,STRINGIFY_VAR(my_neighbors))
     call define_adios_global_array1D(myadios_group,group_size_inc,local_dim,region_name,STRINGIFY_VAR(nibool_interfaces))
 
-    local_dim = max_nibool_interfaces * num_interfaces
+    local_dim = max_nibool_interfaces_wmax * num_interfaces_wmax
     call define_adios_global_array1D(myadios_group,group_size_inc,local_dim,region_name,STRINGIFY_VAR(ibool_interfaces))
   endif
 
@@ -926,17 +938,18 @@
   call define_adios_scalar(myadios_group, group_size_inc, region_name_scalar, STRINGIFY_VAR(nspec_inner))
   call define_adios_scalar(myadios_group, group_size_inc, region_name_scalar, STRINGIFY_VAR(nspec_outer))
   call define_adios_scalar(myadios_group, group_size_inc, region_name_scalar, STRINGIFY_VAR(num_phase_ispec))
-  if (num_phase_ispec > 0) then
-    local_dim = num_phase_ispec * 2
+
+  if (num_phase_ispec_wmax > 0) then
+    local_dim = num_phase_ispec_wmax * 2
     call define_adios_global_array1D(myadios_group,group_size_inc,local_dim,region_name,STRINGIFY_VAR(phase_ispec_inner))
   endif
 
   ! mesh coloring
-  if (USE_MESH_COLORING_GPU) then
-    call define_adios_scalar(myadios_group, group_size_inc, region_name_scalar, STRINGIFY_VAR(num_colors_outer))
-    call define_adios_scalar(myadios_group, group_size_inc, region_name_scalar, STRINGIFY_VAR(num_colors_inner))
+  call define_adios_scalar(myadios_group, group_size_inc, region_name_scalar, STRINGIFY_VAR(num_colors_outer))
+  call define_adios_scalar(myadios_group, group_size_inc, region_name_scalar, STRINGIFY_VAR(num_colors_inner))
 
-    local_dim = num_colors_outer + num_colors_inner
+  if (USE_MESH_COLORING_GPU) then
+    local_dim = num_colors_outer_wmax + num_colors_inner_wmax
     call define_adios_global_array1D(myadios_group,group_size_inc,local_dim,region_name,STRINGIFY_VAR(num_elem_colors))
   endif
 
@@ -962,39 +975,70 @@
 
   ! MPI interfaces
   call write_adios_scalar(myadios_file,myadios_group,trim(region_name) // "num_interfaces", num_interfaces)
+  call write_adios_scalar(myadios_file,myadios_group,trim(region_name) // "max_nibool_interfaces", max_nibool_interfaces)
 
-  if (num_interfaces > 0) then
-    call write_adios_scalar(myadios_file,myadios_group,trim(region_name) // "max_nibool_interfaces", max_nibool_interfaces)
+  ! allocates buffers with max sizes (same size for all processes for constant strides)
+  allocate(my_neighbors_wmax(num_interfaces_wmax), &
+           nibool_interfaces_wmax(num_interfaces_wmax), stat=ier)
+  if (ier /= 0) stop 'Error allocating wmax arrays'
+  ! initializes
+  my_neighbors_wmax(:) = -1
+  my_neighbors_wmax(1:num_interfaces) = my_neighbors(1:num_interfaces)  ! current process valid range
+  nibool_interfaces_wmax(:) = -1
+  nibool_interfaces_wmax(1:num_interfaces) = nibool_interfaces(1:num_interfaces)
 
-    local_dim = num_interfaces
-    call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs_adios, local_dim, &
-                                     trim(region_name) // STRINGIFY_VAR(my_neighbors))
-    call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs_adios, local_dim, &
-                                     trim(region_name) // STRINGIFY_VAR(nibool_interfaces))
+  allocate(ibool_interfaces_wmax(max_nibool_interfaces_wmax,num_interfaces_wmax),stat=ier)
+  if (ier /= 0) stop 'Error allocating ibool_interfaces_wmax array'
+  ibool_interfaces_wmax(:,:) = -1
+  do i = 1,num_interfaces
+    ibool_interfaces_wmax(1:max_nibool_interfaces,i) = ibool_interfaces(1:max_nibool_interfaces,i)
+  enddo
 
-    local_dim = max_nibool_interfaces * num_interfaces
+  if (num_interfaces_wmax > 0) then
+    local_dim = num_interfaces_wmax
     call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs_adios, local_dim, &
-                                     trim(region_name) // STRINGIFY_VAR(ibool_interfaces))
+                                     trim(region_name) // "my_neighbors", my_neighbors_wmax)
+    call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs_adios, local_dim, &
+                                     trim(region_name) // "nibool_interfaces", nibool_interfaces_wmax)
+
+    local_dim = max_nibool_interfaces_wmax * num_interfaces_wmax
+    call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs_adios, local_dim, &
+                                     trim(region_name) // "ibool_interfaces", ibool_interfaces_wmax)
   endif
 
   ! inner/outer elements
   call write_adios_scalar(myadios_file,myadios_group,trim(region_name) // "nspec_inner", nspec_inner)
   call write_adios_scalar(myadios_file,myadios_group,trim(region_name) // "nspec_outer", nspec_outer)
   call write_adios_scalar(myadios_file,myadios_group,trim(region_name) // "num_phase_ispec", num_phase_ispec)
-  if (num_phase_ispec > 0) then
-    local_dim = num_phase_ispec * 2
+
+  allocate(phase_ispec_inner_wmax(num_phase_ispec_wmax,2),stat=ier)
+  if (ier /= 0) stop 'Error allocating phase_ispec_inner_wmax array'
+  ! initializes
+  phase_ispec_inner_wmax(:,:) = -1
+  do i = 1,2
+    phase_ispec_inner_wmax(1:num_phase_ispec,i) = phase_ispec_inner(1:num_phase_ispec,i)
+  enddo
+
+  if (num_phase_ispec_wmax > 0) then
+    local_dim = num_phase_ispec_wmax * 2
     call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs_adios, local_dim, &
-                                     trim(region_name) // STRINGIFY_VAR(phase_ispec_inner))
+                                     trim(region_name) // "phase_ispec_inner", phase_ispec_inner_wmax)
   endif
 
   ! mesh coloring
-  if (USE_MESH_COLORING_GPU) then
-    call write_adios_scalar(myadios_file,myadios_group,trim(region_name) // "num_colors_outer", num_colors_outer)
-    call write_adios_scalar(myadios_file,myadios_group,trim(region_name) // "num_colors_inner", num_colors_inner)
+  call write_adios_scalar(myadios_file,myadios_group,trim(region_name) // "num_colors_outer", num_colors_outer)
+  call write_adios_scalar(myadios_file,myadios_group,trim(region_name) // "num_colors_inner", num_colors_inner)
 
-    local_dim = num_colors_outer + num_colors_inner
+  allocate(num_elem_colors_wmax(num_colors_outer_wmax + num_colors_inner_wmax),stat=ier)
+  if (ier /= 0) stop 'Error allocating num_elem_colors_wmax array'
+
+  if (USE_MESH_COLORING_GPU) then
+    num_elem_colors_wmax(:) = -1
+    num_elem_colors_wmax(1:(num_colors_outer+num_colors_inner)) = num_elem_colors(1:(num_colors_outer+num_colors_inner))
+
+    local_dim = num_colors_outer_wmax + num_colors_inner_wmax
     call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs_adios, local_dim, &
-                                     trim(region_name) // STRINGIFY_VAR(num_elem_colors))
+                                     trim(region_name) // "num_elem_colors", num_elem_colors_wmax)
   endif
 
   !--- Reset the path to zero and perform the actual write to disk
@@ -1003,6 +1047,11 @@
   call close_file_adios(myadios_file)
 
   num_regions_written = num_regions_written + 1
+
+  ! frees temporary arrays
+  deallocate(my_neighbors_wmax,nibool_interfaces_wmax)
+  deallocate(ibool_interfaces_wmax)
+  deallocate(num_elem_colors_wmax)
 
   end subroutine save_mpi_arrays_adios
 
@@ -1038,7 +1087,7 @@
   ! local parameters
   ! local parameters
   character(len=MAX_STRING_LEN) :: outputname, group_name
-  integer :: local_dim
+  integer(kind=8) :: local_dim
   integer(kind=8) :: group_size_inc
   ! ADIOS variables
   character(len=128) :: region_name, region_name_scalar

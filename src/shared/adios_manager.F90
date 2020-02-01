@@ -1544,18 +1544,18 @@ contains
 
   if (ier /= 0) then
     print *,'Error: process ',myrank_adios,' has ADIOS error ',ier
-    print *,trim(msg)
+    print *,'Error message: ',trim(msg)
     call adios_errmsg(err_message)
-    print *,'ADIOS error: ',trim(err_message)
-    stop 'ADIOS error'
+    print *,'Error message ADIOS: ',trim(err_message)
+    call exit_mpi(myrank_adios,'ADIOS error')
   endif
 
 #elif defined(USE_ADIOS2)
   ! ADIOS 2
   if (ier /= adios2_error_none) then
     print *,'Error: process ',myrank_adios,' has ADIOS2 error ',ier
-    print *,trim(msg)
-    stop 'ADIOS2 error'
+    print *,'Error message: ',trim(msg)
+    call exit_mpi(myrank_adios,'ADIOS2 error')
   endif
 #endif
 

@@ -12,7 +12,8 @@
   type(adios2_io), intent(in) :: adios_group
   type(adios2_variable) :: v
 #endif
-  integer, intent(in) :: myrank, sizeprocs, local_dim
+  integer, intent(in) :: myrank, sizeprocs
+  integer(kind=8), intent(in) :: local_dim
   character(len=*) :: array_name
   ! Variables
   integer :: adios_err

@@ -15,7 +15,7 @@
   type(adios2_io),  intent(in)     :: adios_group
 #endif
   character(len=*), intent(in) :: path, array_name
-  integer,          intent(in) :: local_dim
+  integer(kind=8),  intent(in) :: local_dim
   integer(kind=8),  intent(inout) :: group_size_inc
   ! Local vars
   integer :: idummy

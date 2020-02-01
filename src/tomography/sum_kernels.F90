@@ -473,7 +473,7 @@ end program sum_kernels_globe
 
   ! local parameters
   integer :: is,ie,iker
-  integer :: local_dim
+  integer(kind=8) :: local_dim
   integer(kind=8) :: group_size_inc
   character(len=MAX_STRING_LEN) :: file_name
   real(kind=CUSTOM_REAL), dimension(1,1,1,1) :: val_dummy

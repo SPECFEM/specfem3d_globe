@@ -66,7 +66,7 @@
 
   ! local parameters
   character(len=MAX_STRING_LEN) :: outputname, group_name
-  integer :: local_dim
+  integer(kind=8) :: local_dim
   integer(kind=8) :: group_size_inc
   ! ADIOS variables
   character(len=128) :: region_name, region_name_scalar

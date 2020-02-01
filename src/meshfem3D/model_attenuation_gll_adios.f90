@@ -47,7 +47,7 @@
   integer,intent(in) :: rank
 
   ! local parameters
-  integer :: local_dim
+  integer(kind=8) :: local_dim
   character(len=MAX_STRING_LEN) :: file_name
 
   ! ADIOS variables
@@ -69,7 +69,7 @@
   call open_file_adios_read_and_init_method(myadios_file,myadios_group,file_name)
 
   local_dim = NGLLX * NGLLY * NGLLZ * MGLL_QMU_V%nspec
-  start(1) = local_dim * rank
+  start(1) = local_dim * int(rank,kind=8)
   count(1) = local_dim
   call set_selection_boundingbox(sel, start, count)
 
