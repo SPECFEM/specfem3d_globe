@@ -157,19 +157,19 @@
 
   ! synchronize all processes to make sure everybody is ready to start time loop
   call synchronize_all()
-  if (myrank == 0) write(IMAIN,*) 'All processes are synchronized before time loop'
-
   if (myrank == 0) then
+    write(IMAIN,*) 'All processes are synchronized before time loop (undoatt)'
     write(IMAIN,*)
     write(IMAIN,*) 'Starting time iteration loop (undoatt)...'
     write(IMAIN,*)
     call flush_IMAIN()
   endif
+  call synchronize_all()
 
   ! create an empty file to monitor the start of the simulation
   if (myrank == 0) then
     open(unit=IOUT,file=trim(OUTPUT_FILES)//'/starttimeloop.txt',status='unknown',action='write')
-    write(IOUT,*) 'hello, starting time loop'
+    write(IOUT,*) 'hello, starting time loop in iterate_time_undoatt() routine'
     close(IOUT)
   endif
 

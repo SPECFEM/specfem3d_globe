@@ -404,11 +404,16 @@
   call bcast_mesh_databases_CM()
 
   ! check that the number of points in this slice is correct
-  if (minval(ibool_crust_mantle(:,:,:,:)) /= 1) &
-      call exit_MPI(myrank,'incorrect global numbering: iboolmin is not equal to 1 in crust and mantle')
-  if (maxval(ibool_crust_mantle(:,:,:,:)) /= NGLOB_CRUST_MANTLE) &
-      call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in crust and mantle')
-
+  if (minval(ibool_crust_mantle(:,:,:,:)) /= 1) then
+    print *,'Error: rank ',myrank,' has invalid crust_mantle ibool indexing min/max = ', &
+            minval(ibool_crust_mantle(:,:,:,:)),maxval(ibool_crust_mantle(:,:,:,:)),'max glob = ',NGLOB_CRUST_MANTLE
+    call exit_MPI(myrank,'incorrect global numbering: iboolmin is not equal to 1 in crust and mantle')
+  endif
+  if (maxval(ibool_crust_mantle(:,:,:,:)) /= NGLOB_CRUST_MANTLE) then
+    print *,'Error: rank ',myrank,' has invalid ibool indexing min/max = ', &
+            minval(ibool_crust_mantle(:,:,:,:)),maxval(ibool_crust_mantle(:,:,:,:)), 'max glob =',NGLOB_CRUST_MANTLE
+    call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in crust and mantle')
+  endif
   deallocate(dummy_idoubling)
 
   ! mass matrix corrections
@@ -590,10 +595,14 @@
   deallocate(dummy_idoubling_outer_core,dummy_ispec_is_tiso,dummy_rmass)
 
   ! check that the number of points in this slice is correct
-  ! check that the number of points in this slice is correct
-  if (minval(ibool_outer_core(:,:,:,:)) /= 1) &
-      call exit_MPI(myrank,'incorrect global numbering: iboolmin is not equal to 1 in outer core')
+  if (minval(ibool_outer_core(:,:,:,:)) /= 1) then
+    print *,'Error: rank ',myrank,' has invalid outer_core ibool indexing min/max = ', &
+            minval(ibool_outer_core(:,:,:,:)),maxval(ibool_outer_core(:,:,:,:)),'max glob = ',NGLOB_OUTER_CORE
+    call exit_MPI(myrank,'incorrect global numbering: iboolmin is not equal to 1 in outer core')
+  endif
   if (maxval(ibool_outer_core(:,:,:,:)) /= NGLOB_OUTER_CORE) then
+    print *,'Error: rank ',myrank,' has invalid ibool indexing min/max = ', &
+            minval(ibool_outer_core(:,:,:,:)),maxval(ibool_outer_core(:,:,:,:)),'max glob = ',NGLOB_OUTER_CORE
     call exit_MPI(myrank, 'incorrect global numbering: iboolmax does not equal nglob in outer core')
   endif
 
@@ -749,8 +758,11 @@
   deallocate(dummy_ispec_is_tiso)
 
   ! check that the number of points in this slice is correct
-  if (minval(ibool_inner_core(:,:,:,:)) /= 1 .or. maxval(ibool_inner_core(:,:,:,:)) /= NGLOB_INNER_CORE) &
-    call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in inner core')
+  if (minval(ibool_inner_core(:,:,:,:)) /= 1 .or. maxval(ibool_inner_core(:,:,:,:)) /= NGLOB_INNER_CORE) then
+    print *,'Error: rank ',myrank,' has invalid inner_core ibool indexing min/max = ', &
+            minval(ibool_inner_core(:,:,:,:)),maxval(ibool_inner_core(:,:,:,:)),'max glob = ',NGLOB_INNER_CORE
+    call exit_MPI(myrank,'incorrect global numbering: iboolmin/max does not equal 1/nglob in inner core')
+  endif
 
   ! mass matrix corrections
   if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) then
@@ -1061,9 +1073,6 @@
              icb_kl_bot(NGLLX,NGLLY,NSPEC2D_ICB),stat=ier)
     if (ier /= 0) stop 'Error allocating arrays moho_kl,.. '
 
-    k_top = 1
-    k_bot = NGLLZ
-
     ! initialization
     moho_kl(:,:,:) = 0._CUSTOM_REAL
     d400_kl(:,:,:) = 0._CUSTOM_REAL
@@ -1196,19 +1205,56 @@
 
   ! local parameters
   real :: percentage_edge
-  integer :: ier
+  integer :: ier,i,num_poin,num_elements
+  integer ::iglob_min,iglob_max
+  integer ::ispec_min,ispec_max
 
   ! read MPI interfaces from file
 
   ! crust mantle
   if (I_should_read_the_database) then
     if (ADIOS_FOR_MPI_ARRAYS) then
-      call read_mesh_databases_MPI_CM_adios()
+      call read_mesh_databases_MPI_adios(IREGION_CRUST_MANTLE)
     else
       call read_mesh_databases_MPI_CM()
     endif
   endif
   call bcast_mesh_databases_MPI_CM()
+
+  ! checks interface values read
+  if (minval(my_neighbors_crust_mantle) < 0 .or. maxval(my_neighbors_crust_mantle) >= NPROCTOT) then
+    print *,'Error: invalid mpi neighbors min/max',minval(my_neighbors_crust_mantle),maxval(my_neighbors_crust_mantle),NPROCTOT
+    call exit_mpi(myrank,'Error invalid mpi neighbors crust_mantle')
+  endif
+  do i = 1,num_interfaces_crust_mantle
+    ! number of points on interface
+    num_poin = nibool_interfaces_crust_mantle(i)
+    if (num_poin <= 0 .or. num_poin > NGLOB_CRUST_MANTLE) then
+      print *,'Error: invalid nibool_interfaces_crust_mantle ',num_poin,'interface',i,'nglob',NGLOB_CRUST_MANTLE
+      call exit_mpi(myrank,'Error invalid nibool_interfaces_crust_mantle')
+    endif
+    ! iglob min/max
+    iglob_min = minval(ibool_interfaces_crust_mantle(1:num_poin,i))
+    iglob_max = maxval(ibool_interfaces_crust_mantle(1:num_poin,i))
+    if (iglob_min <= 0 .or. iglob_max > NGLOB_CRUST_MANTLE) then
+      print *,'Error: invalid ibool_interfaces_crust_mantle min/max ',iglob_min,iglob_max,'interface',i,'nglob',NGLOB_CRUST_MANTLE
+      call exit_mpi(myrank,'Error invalid ibool_interfaces_crust_mantle')
+    endif
+  enddo
+  do i = 1,2
+    if (i == 1) then
+      num_elements = nspec_outer_crust_mantle
+    else
+      num_elements = nspec_inner_crust_mantle
+    endif
+    ispec_min = minval(phase_ispec_inner_crust_mantle(1:num_elements,i))
+    ispec_max = maxval(phase_ispec_inner_crust_mantle(1:num_elements,i))
+    if (ispec_min <= 0 .or. ispec_max > NSPEC_CRUST_MANTLE) then
+      print *,'Error: invalid phase_ispec_inner_crust_mantle min/max ',ispec_min,ispec_max,'phase',i, &
+              nspec_outer_crust_mantle,nspec_inner_crust_mantle,'nspec',NSPEC_CRUST_MANTLE
+      call exit_mpi(myrank,'Error invalid phase_ispec_inner_crust_mantle')
+    endif
+  enddo
 
   allocate(buffer_send_vector_crust_mantle(NDIM,max_nibool_interfaces_cm,num_interfaces_crust_mantle), &
            buffer_recv_vector_crust_mantle(NDIM,max_nibool_interfaces_cm,num_interfaces_crust_mantle), &
@@ -1229,12 +1275,47 @@
   ! outer core
   if (I_should_read_the_database) then
     if (ADIOS_FOR_MPI_ARRAYS) then
-      call read_mesh_databases_MPI_OC_adios()
+      call read_mesh_databases_MPI_adios(IREGION_OUTER_CORE)
     else
       call read_mesh_databases_MPI_OC()
     endif
   endif
   call bcast_mesh_databases_MPI_OC()
+
+  ! checks interface values read
+  if (minval(my_neighbors_outer_core) < 0 .or. maxval(my_neighbors_outer_core) >= NPROCTOT) then
+    print *,'Error: invalid mpi neighbors min/max',minval(my_neighbors_outer_core),maxval(my_neighbors_outer_core),NPROCTOT
+    call exit_mpi(myrank,'Error invalid mpi neighbors outer_core')
+  endif
+  do i = 1,num_interfaces_outer_core
+    ! number of points on interface
+    num_poin = nibool_interfaces_outer_core(i)
+    if (num_poin <= 0 .or. num_poin > NGLOB_outer_core) then
+      print *,'Error: invalid nibool_interfaces_outer_core ',num_poin,'interface',i,'nglob',NGLOB_outer_core
+      call exit_mpi(myrank,'Error invalid nibool_interfaces_outer_core')
+    endif
+    ! iglob min/max
+    iglob_min = minval(ibool_interfaces_outer_core(1:num_poin,i))
+    iglob_max = maxval(ibool_interfaces_outer_core(1:num_poin,i))
+    if (iglob_min <= 0 .or. iglob_max > NGLOB_outer_core) then
+      print *,'Error: invalid ibool_interfaces_outer_core min/max ',iglob_min,iglob_max,'interface',i,'nglob',NGLOB_outer_core
+      call exit_mpi(myrank,'Error invalid ibool_interfaces_outer_core')
+    endif
+  enddo
+  do i = 1,2
+    if (i == 1) then
+      num_elements = nspec_outer_outer_core
+    else
+      num_elements = nspec_inner_outer_core
+    endif
+    ispec_min = minval(phase_ispec_inner_outer_core(1:num_elements,i))
+    ispec_max = maxval(phase_ispec_inner_outer_core(1:num_elements,i))
+    if (ispec_min <= 0 .or. ispec_max > NSPEC_OUTER_CORE) then
+      print *,'Error: invalid phase_ispec_inner_outer_core min/max ',ispec_min,ispec_max,'phase',i, &
+              nspec_outer_outer_core,nspec_inner_outer_core,'nspec',NSPEC_OUTER_CORE
+      call exit_mpi(myrank,'Error invalid phase_ispec_inner_outer_core')
+    endif
+  enddo
 
   allocate(buffer_send_scalar_outer_core(max_nibool_interfaces_oc,num_interfaces_outer_core), &
            buffer_recv_scalar_outer_core(max_nibool_interfaces_oc,num_interfaces_outer_core), &
@@ -1255,12 +1336,47 @@
   ! inner core
   if (I_should_read_the_database) then
     if (ADIOS_FOR_MPI_ARRAYS) then
-      call read_mesh_databases_MPI_IC_adios()
+      call read_mesh_databases_MPI_adios(IREGION_INNER_CORE)
     else
       call read_mesh_databases_MPI_IC()
     endif
   endif
   call bcast_mesh_databases_MPI_IC()
+
+  ! checks interface values read
+  if (minval(my_neighbors_inner_core) < 0 .or. maxval(my_neighbors_inner_core) >= NPROCTOT) then
+    print *,'Error: invalid mpi neighbors min/max',minval(my_neighbors_inner_core),maxval(my_neighbors_inner_core),NPROCTOT
+    call exit_mpi(myrank,'Error invalid mpi neighbors inner_core')
+  endif
+  do i = 1,num_interfaces_inner_core
+    ! number of points on interface
+    num_poin = nibool_interfaces_inner_core(i)
+    if (num_poin <= 0 .or. num_poin > NGLOB_inner_core) then
+      print *,'Error: invalid nibool_interfaces_inner_core ',num_poin,'interface',i,'nglob',NGLOB_inner_core
+      call exit_mpi(myrank,'Error invalid nibool_interfaces_inner_core')
+    endif
+    ! iglob min/max
+    iglob_min = minval(ibool_interfaces_inner_core(1:num_poin,i))
+    iglob_max = maxval(ibool_interfaces_inner_core(1:num_poin,i))
+    if (iglob_min <= 0 .or. iglob_max > NGLOB_inner_core) then
+      print *,'Error: invalid ibool_interfaces_inner_core min/max ',iglob_min,iglob_max,'interface',i,'nglob',NGLOB_inner_core
+      call exit_mpi(myrank,'Error invalid ibool_interfaces_inner_core')
+    endif
+  enddo
+  do i = 1,2
+    if (i == 1) then
+      num_elements = nspec_outer_inner_core
+    else
+      num_elements = nspec_inner_inner_core
+    endif
+    ispec_min = minval(phase_ispec_inner_inner_core(1:num_elements,i))
+    ispec_max = maxval(phase_ispec_inner_inner_core(1:num_elements,i))
+    if (ispec_min <= 0 .or. ispec_max > NSPEC_INNER_CORE) then
+      print *,'Error: invalid phase_ispec_inner_inner_core min/max ',ispec_min,ispec_max,'phase',i, &
+              nspec_outer_inner_core,nspec_inner_inner_core,'nspec',NSPEC_INNER_CORE
+      call exit_mpi(myrank,'Error invalid phase_ispec_inner_inner_core')
+    endif
+  enddo
 
   allocate(buffer_send_vector_inner_core(NDIM,max_nibool_interfaces_ic,num_interfaces_inner_core), &
            buffer_recv_vector_inner_core(NDIM,max_nibool_interfaces_ic,num_interfaces_inner_core), &

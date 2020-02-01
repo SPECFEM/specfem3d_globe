@@ -927,6 +927,12 @@
   ! if doing benchmark runs to measure scaling of the code for a limited number of time steps only
   if (DO_BENCHMARK_RUN_ONLY) NSTEP = NSTEP_FOR_BENCHMARK
 
+  ! overrides NSTEP in case specified in Par_file
+  if (USER_NSTEP > 0) then
+    ! overrides NSTEP
+    NSTEP = USER_NSTEP
+  endif
+
   ! checks length for symmetry in case of noise simulations
   if (NOISE_TOMOGRAPHY /= 0) then
     if (mod(NSTEP+1,2) /= 0) then

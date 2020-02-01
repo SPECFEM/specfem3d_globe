@@ -664,7 +664,6 @@ module specfem_par_crustmantle
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: hess_kl_crust_mantle
 
   ! Boundary Mesh and Kernels
-  integer :: k_top,k_bot,iregion_code
   integer, dimension(:), allocatable :: ibelm_moho_top,ibelm_moho_bot
   integer, dimension(:), allocatable :: ibelm_400_top,ibelm_400_bot
   integer, dimension(:), allocatable :: ibelm_670_top,ibelm_670_bot

@@ -79,9 +79,14 @@
     close(IIN)
   endif
 
-  factor_common(:,:,:,:,:) = factor_common(:,:,:,:,:) * scale_t_inv ! This is really tau_e, not factor_common
+  ! This is really tau_e, not factor_common
+  factor_common(:,:,:,:,:) = real( factor_common(:,:,:,:,:) * scale_t_inv ,kind=CUSTOM_REAL)
   tau_s(:)                 = tau_s(:) * scale_t_inv
-  T_c_source               = 1000.0d0 / T_c_source
+  if (T_c_source > 0.d0) then
+    T_c_source = 1000.0d0 / T_c_source
+  else
+    T_c_source = 0.d0
+  endif
   T_c_source               = T_c_source * scale_t_inv
 
   ! loops over elements
@@ -94,7 +99,7 @@
           do i_sls = 1,N_SLS
             tau_e(i_sls) = factor_common(i,j,k,i_sls,ispec)
           enddo
-          Q_mu     = factor_scale(i,j,k,ispec)
+          Q_mu = factor_scale(i,j,k,ispec)
 
           ! Determine the factor_common and one_minus_sum_beta from tau_s and tau_e
           call get_attenuation_property_values(tau_s, tau_e, fc, omsb)
@@ -135,12 +140,13 @@
   double precision, dimension(N_SLS) :: tauinv,beta
   integer :: i
 
-  tauinv(:) = -1.0d0 / tau_s(:)
+  tauinv(:) = 0.d0
+  where(tau_s(:) > 0.d0) tauinv(:) = - 1.0d0 / tau_s(:)
 
-  beta(:) = 1.0d0 - tau_e(:) / tau_s(:)
-  one_minus_sum_beta = 1.0d0
+  beta(:) = 1.0d0 + tau_e(:) * tauinv(:)     ! 1 - tau_e / tau_s
 
   ! factor to scale from relaxed to unrelaxed moduli: see e.g. Komatitsch & Tromp 1999, eq. (7)
+  one_minus_sum_beta = 1.0d0
   do i = 1,N_SLS
      one_minus_sum_beta = one_minus_sum_beta - beta(i)
   enddo
@@ -174,12 +180,16 @@
   ! local parameters
   double precision :: f_c_source, w_c_source,f_0_model
   double precision :: factor_scale_mu0, factor_scale_mu
-  double precision :: a_val, b_val
+  double precision :: a_val, b_val, denom
   double precision :: big_omega
   integer :: i
 
   !--- compute central angular frequency of source (non dimensionalized)
-  f_c_source = ONE / T_c_source
+  if (T_c_source > 0.d0) then
+    f_c_source = ONE / T_c_source
+  else
+    f_c_source = 0.d0
+  endif
   w_c_source = TWO_PI * f_c_source
 
   !--- non dimensionalize (e.g., PREM reference of 1 second)
@@ -192,23 +202,36 @@
 ! Geophys. J. R. Astron. Soc., vol. 47, pp. 41-58 (1976)
 ! and in Aki, K. and Richards, P. G., Quantitative seismology, theory and methods,
 ! W. H. Freeman, (1980), second edition, sections 5.5 and 5.5.2, eq. (5.81) p. 170
-  factor_scale_mu0 = ONE + TWO * log(f_c_source / f_0_model) / (PI * Q_mu)
+  if (f_0_model > 0.d0) then
+    factor_scale_mu0 = ONE + TWO * log(f_c_source / f_0_model) / (PI * Q_mu)
+  else
+    factor_scale_mu0 = ONE
+  endif
 
   !--- compute a, b and Omega parameters, also compute one minus sum of betas
   a_val = ONE
   b_val = ZERO
 
   do i = 1,N_SLS
-    a_val = a_val - w_c_source * w_c_source * tau_mu(i) * &
-      (tau_mu(i) - tau_sigma(i)) / (1.d0 + w_c_source * w_c_source * tau_mu(i) * tau_mu(i))
-    b_val = b_val + w_c_source * (tau_mu(i) - tau_sigma(i)) / &
-      (1.d0 + w_c_source * w_c_source * tau_mu(i) * tau_mu(i))
+    denom = 1.d0 + w_c_source * w_c_source * tau_mu(i) * tau_mu(i)
+    if (denom /= 0.d0) then
+      a_val = a_val - w_c_source * w_c_source * tau_mu(i) * (tau_mu(i) - tau_sigma(i)) / denom
+      b_val = b_val + w_c_source * (tau_mu(i) - tau_sigma(i)) / denom
+    endif
   enddo
 
-  big_omega = a_val*(sqrt(1.d0 + b_val*b_val/(a_val*a_val))-1.d0)
+  if (a_val /= 0.d0) then
+    big_omega = a_val*(sqrt(1.d0 + b_val*b_val/(a_val*a_val))-1.d0)
+  else
+    big_omega = 0.d0
+  endif
 
   !--- quantity by which to scale mu to get mu_relaxed
-  factor_scale_mu = b_val * b_val / (TWO * big_omega)
+  if (big_omega /= 0.d0) then
+    factor_scale_mu = b_val * b_val / (TWO * big_omega)
+  else
+    factor_scale_mu = ONE
+  endif
 
   !--- total factor by which to scale mu0
   scale_factor = factor_scale_mu * factor_scale_mu0

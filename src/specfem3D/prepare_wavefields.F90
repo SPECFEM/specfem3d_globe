@@ -62,6 +62,11 @@
     call flush_IMAIN()
   endif
 
+  ! note: after allocation, arrays have not been mapped to memory yet. this will be done with the first initialization.
+  !       it is thus unlikely, that any of the allocate() routines here will fail.
+  !       todo: we could move these allocation statements closer to the initialization and allocate only after
+  !             the previous arrays have been initialized/mapped to memory.
+
   ! allocates arrays
   allocate(displ_crust_mantle(NDIM,NGLOB_CRUST_MANTLE), &
            veloc_crust_mantle(NDIM,NGLOB_CRUST_MANTLE), &
@@ -475,6 +480,8 @@
   integer :: i
 #endif
 
+! note: after allocation, arrays have not been mapped to memory yet. this will be done with the first initialization here.
+
   ! put negligible initial value to avoid very slow underflow trapping
   if (FIX_UNDERFLOW_PROBLEM) then
     init_value = VERYSMALLVAL
@@ -483,8 +490,7 @@
   endif
 
 #ifdef WAVEFIELD_INIT_WITH_OMP_PER_REGION
-! note: after allocation, arrays have not been mapped to memory yet. this will be done with the first initialization here.
-!       we initialize arrays the same way as we access them with OpenMP threads in compute_forces***() routines.
+! note: we initialize arrays the same way as we access them with OpenMP threads in compute_forces***() routines.
 !       this ensures that memory blocks close to the thread location (on the corresponding CPU-core) will be mapped,
 !       which should speedup (at least the OpenMP-) code.
 

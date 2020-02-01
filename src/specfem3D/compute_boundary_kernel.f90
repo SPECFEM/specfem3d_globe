@@ -46,6 +46,8 @@
 
   logical,dimension(:),allocatable :: mask_ibool
   integer :: ier
+  integer :: iregion_code
+  integer :: k_top,k_bot
 
   ! checks if anything to do
   if (.not. SAVE_KERNELS_BOUNDARY) return
@@ -172,6 +174,10 @@
     deallocate(mask_ibool)
 
   endif ! GPU_MODE
+
+  ! top/bottom index
+  k_top = 1
+  k_bot = NGLLZ
 
   ! updates kernels on CPU
   fluid_solid_boundary = .false.
@@ -399,25 +405,25 @@
 
   implicit none
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,*) :: displ,accel,b_displ
-  integer :: nspec, iregion_code
-  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
-  logical, dimension(*) :: ispec_is_tiso
+  real(kind=CUSTOM_REAL), dimension(NDIM,*),intent(in) :: displ,accel,b_displ
+  integer, intent(in) :: nspec, iregion_code
+  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
+  logical, dimension(*),intent(in) :: ispec_is_tiso
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
-  real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLY) :: hprime_yy
-  real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,*) :: xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,*) :: rhostore, kappavstore,muvstore
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,*) :: c11store,c12store,c13store,c14store,c15store,c16store, &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX),intent(in) :: hprime_xx
+  real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLY),intent(in) :: hprime_yy
+  real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ),intent(in) :: hprime_zz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,*),intent(in) :: xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,*),intent(in) :: rhostore, kappavstore,muvstore
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,*),intent(in) :: c11store,c12store,c13store,c14store,c15store,c16store, &
              c22store,c23store,c24store,c25store,c26store,c33store, c34store,c35store,c36store, &
              c44store,c45store,c46store,c55store,c56store,c66store
 
-  integer NSPEC2D_DISC, k_disc
-  integer :: ibelm_disc(NSPEC2D_DISC)
-  real(kind=CUSTOM_REAL) :: normal_disc(NDIM,NGLLX,NGLLY,NSPEC2D_DISC)
-  real(kind=CUSTOM_REAL) :: b_kl(NGLLX,NGLLY,NSPEC2D_DISC)
-  logical :: fluid_solid_boundary
+  integer,intent(in) :: NSPEC2D_DISC, k_disc
+  integer,intent(in) :: ibelm_disc(NSPEC2D_DISC)
+  real(kind=CUSTOM_REAL),intent(in) :: normal_disc(NDIM,NGLLX,NGLLY,NSPEC2D_DISC)
+  real(kind=CUSTOM_REAL),intent(out) :: b_kl(NGLLX,NGLLY,NSPEC2D_DISC)
+  logical,intent(in) :: fluid_solid_boundary
 
   ! --- local variables ---
   integer ispec2D,i,j,k,iglob,ispec
