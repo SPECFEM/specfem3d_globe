@@ -59,7 +59,7 @@
 
   integer,intent(in) :: NEX_MAX
   double precision, intent(in) :: WIDTH
-  double precision, intent(out) :: DT
+  double precision, intent(inout) :: DT
 
   ! local parameters
   double precision :: RADIAL_LEN_RATIO_CENTRAL_CUBE
@@ -216,16 +216,17 @@
 !
 !-------------------------------------------------------------------------------------------------
 !
-  subroutine auto_attenuation_periods(WIDTH, NEX_MAX)
+  subroutine auto_attenuation_periods(WIDTH, NEX_MAX, MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
 
   use constants, only: N_SLS,NGLLX
 
-  use shared_parameters, only: MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD, PLANET_TYPE, IPLANET_MARS
+  use shared_parameters, only: PLANET_TYPE, IPLANET_MARS
 
   implicit none
 
   double precision,intent(in) :: WIDTH
   integer, intent(in) :: NEX_MAX
+  double precision, intent(inout) :: MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD
 
   ! local parameters
   double precision :: TMP
@@ -238,11 +239,15 @@
 
   ! required points per wavelength
   double precision,parameter :: PTS_PER_WAVELENGTH = 4.d0
+  double precision,parameter :: TOL_ZERO = 1.d-30
 
   ! safety check
-  if (N_SLS < 2 .or. N_SLS > 5) then
-     stop 'N_SLS must be greater than 1 or less than 6'
-  endif
+  if (N_SLS < 2 .or. N_SLS > 5) &
+    stop 'N_SLS must be greater than 1 or less than 6'
+  if (NEX_MAX <= 0) &
+    stop 'Invalid NEX_MAX in auto_attenuation_periods()'
+  if (WIDTH <= 0.d0) &
+    stop 'Invalid WIDTH in auto_attenuation_periods()'
 
   ! minimum period estimation
   select case (PLANET_TYPE)
@@ -280,7 +285,7 @@
   TMP = TMP/S_VELOCITY_MIN
 
   ! The Minimum attenuation period (integer)
-  MIN_ATTENUATION_PERIOD = int(TMP)
+  MIN_ATTENUATION_PERIOD = TMP
 
   ! THETA defines the width of the Attenuation Range in Decades
   !   The number defined here were determined by minimizing
@@ -299,10 +304,22 @@
   !   1.75 decades from the min attenuation period, see THETA above
   TMP = TMP * 10.0d0**THETA(N_SLS)
 
-  MAX_ATTENUATION_PERIOD = int(TMP)
+  ! maximum period
+  MAX_ATTENUATION_PERIOD = TMP
 
-  ! debug
-  !print *,'attenuation range min/max: ',MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD
+  ! check
+  if (MIN_ATTENUATION_PERIOD <= 0.d0) then
+    print *,'Error: invalid attenuation minimum: ',MIN_ATTENUATION_PERIOD
+    stop 'Invalid attenuation minimum'
+  endif
+  if (MAX_ATTENUATION_PERIOD <= 0.d0) then
+    print *,'Error: invalid attenuation maximum: ',MAX_ATTENUATION_PERIOD
+    stop 'Invalid attenuation maximum'
+  endif
+  if (abs(MAX_ATTENUATION_PERIOD - MIN_ATTENUATION_PERIOD) < TOL_ZERO .or. MAX_ATTENUATION_PERIOD < MIN_ATTENUATION_PERIOD) then
+    print *,'Error: invalid attenuation range min/max: ',MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD
+    stop 'Invalid attenuation range min/max'
+  endif
 
   end subroutine auto_attenuation_periods
 

@@ -34,13 +34,13 @@
 
   ! local parameters
   ! broadcast parameter arrays
-  integer, parameter :: nparam_i = 49
+  integer, parameter :: nparam_i = 47
   integer, dimension(nparam_i) :: bcast_integer
 
   integer, parameter :: nparam_l = 67
   logical, dimension(nparam_l) :: bcast_logical
 
-  integer, parameter :: nparam_dp = 36
+  integer, parameter :: nparam_dp = 38
   double precision, dimension(nparam_dp) :: bcast_double_precision
 
   ! initializes containers
@@ -54,7 +54,7 @@
     ! rather than single values one by one to reduce MPI communication calls:
     ! sets up broadcasting array
     bcast_integer = (/ &
-            MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
+            NER_CRUST, &
             NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
             NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
             NER_TOP_CENTRAL_CUBE_ICB, &
@@ -107,7 +107,9 @@
             CEM_REQUEST,CEM_ACCEPT,BROADCAST_SAME_MESH_AND_MODEL,MODEL_GLL /)
 
     bcast_double_precision = (/ &
-            DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
+            DT, &
+            MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD, &
+            ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
             CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
             RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
             R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
@@ -187,55 +189,53 @@
 
     ! please, be careful with ordering and counting here
     ! integers
-    MIN_ATTENUATION_PERIOD = bcast_integer(1)
-    MAX_ATTENUATION_PERIOD = bcast_integer(2)
-    NER_CRUST = bcast_integer(3)
-    NER_80_MOHO = bcast_integer(4)
-    NER_220_80 = bcast_integer(5)
-    NER_400_220 = bcast_integer(6)
-    NER_600_400 = bcast_integer(7)
-    NER_670_600 = bcast_integer(8)
-    NER_771_670 = bcast_integer(9)
-    NER_TOPDDOUBLEPRIME_771 = bcast_integer(10)
-    NER_CMB_TOPDDOUBLEPRIME = bcast_integer(11)
-    NER_OUTER_CORE = bcast_integer(12)
-    NER_TOP_CENTRAL_CUBE_ICB = bcast_integer(13)
-    NEX_XI = bcast_integer(14)
-    NEX_ETA = bcast_integer(15)
-    NPROC_XI = bcast_integer(16)
-    NPROC_ETA = bcast_integer(17)
-    NTSTEP_BETWEEN_OUTPUT_SEISMOS = bcast_integer(18)
-    NTSTEP_BETWEEN_READ_ADJSRC = bcast_integer(19)
-    NSTEP = bcast_integer(20)
-    NSOURCES = bcast_integer(21)
-    NTSTEP_BETWEEN_FRAMES = bcast_integer(22)
-    NTSTEP_BETWEEN_OUTPUT_INFO = bcast_integer(23)
-    NUMBER_OF_RUNS = bcast_integer(24)
-    NUMBER_OF_THIS_RUN = bcast_integer(25)
-    NCHUNKS = bcast_integer(26)
-    SIMULATION_TYPE = bcast_integer(27)
-    REFERENCE_1D_MODEL = bcast_integer(28)
-    REFERENCE_CRUSTAL_MODEL = bcast_integer(29)
-    THREE_D_MODEL = bcast_integer(30)
-    THREE_D_MODEL_IC = bcast_integer(31)
-    NPROC = bcast_integer(32)
-    NPROCTOT = bcast_integer(33)
-    NEX_PER_PROC_XI = bcast_integer(34)
-    NEX_PER_PROC_ETA = bcast_integer(35)
-    ratio_divide_central_cube = bcast_integer(36)
-    MOVIE_VOLUME_TYPE = bcast_integer(37)
-    MOVIE_START = bcast_integer(38)
-    MOVIE_STOP = bcast_integer(39)
-    NOISE_TOMOGRAPHY = bcast_integer(40)
-    ATT1 = bcast_integer(41)
-    ATT2 = bcast_integer(42)
-    ATT3 = bcast_integer(43)
-    ATT4 = bcast_integer(44)
-    ATT5 = bcast_integer(45)
-    GPU_RUNTIME = bcast_integer(46)
-    NUMBER_OF_SIMULTANEOUS_RUNS = bcast_integer(47)
-    MODEL_GLL_TYPE  = bcast_integer(48)
-    USER_NSTEP = bcast_integer(49)
+    NER_CRUST = bcast_integer(1)
+    NER_80_MOHO = bcast_integer(2)
+    NER_220_80 = bcast_integer(3)
+    NER_400_220 = bcast_integer(4)
+    NER_600_400 = bcast_integer(5)
+    NER_670_600 = bcast_integer(6)
+    NER_771_670 = bcast_integer(7)
+    NER_TOPDDOUBLEPRIME_771 = bcast_integer(8)
+    NER_CMB_TOPDDOUBLEPRIME = bcast_integer(9)
+    NER_OUTER_CORE = bcast_integer(10)
+    NER_TOP_CENTRAL_CUBE_ICB = bcast_integer(11)
+    NEX_XI = bcast_integer(12)
+    NEX_ETA = bcast_integer(13)
+    NPROC_XI = bcast_integer(14)
+    NPROC_ETA = bcast_integer(15)
+    NTSTEP_BETWEEN_OUTPUT_SEISMOS = bcast_integer(16)
+    NTSTEP_BETWEEN_READ_ADJSRC = bcast_integer(17)
+    NSTEP = bcast_integer(18)
+    NSOURCES = bcast_integer(19)
+    NTSTEP_BETWEEN_FRAMES = bcast_integer(20)
+    NTSTEP_BETWEEN_OUTPUT_INFO = bcast_integer(21)
+    NUMBER_OF_RUNS = bcast_integer(22)
+    NUMBER_OF_THIS_RUN = bcast_integer(23)
+    NCHUNKS = bcast_integer(24)
+    SIMULATION_TYPE = bcast_integer(25)
+    REFERENCE_1D_MODEL = bcast_integer(26)
+    REFERENCE_CRUSTAL_MODEL = bcast_integer(27)
+    THREE_D_MODEL = bcast_integer(28)
+    THREE_D_MODEL_IC = bcast_integer(29)
+    NPROC = bcast_integer(30)
+    NPROCTOT = bcast_integer(31)
+    NEX_PER_PROC_XI = bcast_integer(32)
+    NEX_PER_PROC_ETA = bcast_integer(33)
+    ratio_divide_central_cube = bcast_integer(34)
+    MOVIE_VOLUME_TYPE = bcast_integer(35)
+    MOVIE_START = bcast_integer(36)
+    MOVIE_STOP = bcast_integer(37)
+    NOISE_TOMOGRAPHY = bcast_integer(38)
+    ATT1 = bcast_integer(39)
+    ATT2 = bcast_integer(40)
+    ATT3 = bcast_integer(41)
+    ATT4 = bcast_integer(42)
+    ATT5 = bcast_integer(43)
+    GPU_RUNTIME = bcast_integer(44)
+    NUMBER_OF_SIMULTANEOUS_RUNS = bcast_integer(45)
+    MODEL_GLL_TYPE  = bcast_integer(46)
+    USER_NSTEP = bcast_integer(47)
 
     ! logicals
     TRANSVERSE_ISOTROPY = bcast_logical(1)
@@ -308,41 +308,43 @@
 
     ! double precisions
     DT = bcast_double_precision(1)
-    ANGULAR_WIDTH_XI_IN_DEGREES = bcast_double_precision(2)
-    ANGULAR_WIDTH_ETA_IN_DEGREES = bcast_double_precision(3)
-    CENTER_LONGITUDE_IN_DEGREES = bcast_double_precision(4)
-    CENTER_LATITUDE_IN_DEGREES = bcast_double_precision(5)
-    GAMMA_ROTATION_AZIMUTH = bcast_double_precision(6)
-    ROCEAN = bcast_double_precision(7)
-    RMIDDLE_CRUST = bcast_double_precision(8)
-    RMOHO = bcast_double_precision(9)
-    R80 = bcast_double_precision(10)
-    R120 = bcast_double_precision(11)
-    R220 = bcast_double_precision(12)
-    R400 = bcast_double_precision(13)
-    R600 = bcast_double_precision(14)
-    R670 = bcast_double_precision(15)
-    R771 = bcast_double_precision(16)
-    RTOPDDOUBLEPRIME = bcast_double_precision(17)
-    RCMB = bcast_double_precision(18)
-    RICB = bcast_double_precision(19)
-    R_CENTRAL_CUBE = bcast_double_precision(20)
-    RHO_TOP_OC = bcast_double_precision(21)
-    RHO_BOTTOM_OC = bcast_double_precision(22)
-    RHO_OCEANS = bcast_double_precision(23)
-    HDUR_MOVIE = bcast_double_precision(24)
-    MOVIE_TOP = bcast_double_precision(25)
-    MOVIE_BOTTOM = bcast_double_precision(26)
-    MOVIE_WEST = bcast_double_precision(27)
-    MOVIE_EAST = bcast_double_precision(28)
-    MOVIE_NORTH = bcast_double_precision(29)
-    MOVIE_SOUTH = bcast_double_precision(30)
-    RMOHO_FICTITIOUS_IN_MESHER = bcast_double_precision(31)
-    RATIO_BY_WHICH_TO_INCREASE_IT = bcast_double_precision(32)
-    MEMORY_INSTALLED_PER_CORE_IN_GB = bcast_double_precision(33)
-    PERCENT_OF_MEM_TO_USE_PER_CORE = bcast_double_precision(34)
-    RECORD_LENGTH_IN_MINUTES = bcast_double_precision(35)
-    USER_DT = bcast_double_precision(36)
+    MIN_ATTENUATION_PERIOD = bcast_double_precision(2)
+    MAX_ATTENUATION_PERIOD = bcast_double_precision(3)
+    ANGULAR_WIDTH_XI_IN_DEGREES = bcast_double_precision(4)
+    ANGULAR_WIDTH_ETA_IN_DEGREES = bcast_double_precision(5)
+    CENTER_LONGITUDE_IN_DEGREES = bcast_double_precision(6)
+    CENTER_LATITUDE_IN_DEGREES = bcast_double_precision(7)
+    GAMMA_ROTATION_AZIMUTH = bcast_double_precision(8)
+    ROCEAN = bcast_double_precision(9)
+    RMIDDLE_CRUST = bcast_double_precision(10)
+    RMOHO = bcast_double_precision(11)
+    R80 = bcast_double_precision(12)
+    R120 = bcast_double_precision(13)
+    R220 = bcast_double_precision(14)
+    R400 = bcast_double_precision(15)
+    R600 = bcast_double_precision(16)
+    R670 = bcast_double_precision(17)
+    R771 = bcast_double_precision(18)
+    RTOPDDOUBLEPRIME = bcast_double_precision(19)
+    RCMB = bcast_double_precision(20)
+    RICB = bcast_double_precision(21)
+    R_CENTRAL_CUBE = bcast_double_precision(22)
+    RHO_TOP_OC = bcast_double_precision(23)
+    RHO_BOTTOM_OC = bcast_double_precision(24)
+    RHO_OCEANS = bcast_double_precision(25)
+    HDUR_MOVIE = bcast_double_precision(26)
+    MOVIE_TOP = bcast_double_precision(27)
+    MOVIE_BOTTOM = bcast_double_precision(28)
+    MOVIE_WEST = bcast_double_precision(29)
+    MOVIE_EAST = bcast_double_precision(30)
+    MOVIE_NORTH = bcast_double_precision(31)
+    MOVIE_SOUTH = bcast_double_precision(32)
+    RMOHO_FICTITIOUS_IN_MESHER = bcast_double_precision(33)
+    RATIO_BY_WHICH_TO_INCREASE_IT = bcast_double_precision(34)
+    MEMORY_INSTALLED_PER_CORE_IN_GB = bcast_double_precision(35)
+    PERCENT_OF_MEM_TO_USE_PER_CORE = bcast_double_precision(36)
+    RECORD_LENGTH_IN_MINUTES = bcast_double_precision(37)
+    USER_DT = bcast_double_precision(38)
 
   endif
 

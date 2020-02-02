@@ -62,19 +62,12 @@
 
 ! standard routine to setup model
 
-  use constants
+  use constants, only: N_SLS,myrank
   use meshfem3D_models_par, only: AM_V
 
   implicit none
 
-  integer,intent(in) :: MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD
-
-  ! local parameters
-  integer :: ier
-
-  allocate(AM_V%Qtau_s(N_SLS),stat=ier)
-  if (ier /= 0 ) call exit_mpi(myrank,'Error allocating Qtau_s array')
-  AM_V%Qtau_s(:) = 0.d0
+  double precision,intent(in) :: MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD
 
   ! master process determines period ranges
   if (myrank == 0) call read_attenuation_model(MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
@@ -83,7 +76,7 @@
   call bcast_all_singledp(AM_V%min_period)
   call bcast_all_singledp(AM_V%max_period)
   call bcast_all_singledp(AM_V%QT_c_source)
-  call bcast_all_dp(AM_V%Qtau_s,   N_SLS)
+  call bcast_all_dp(AM_V%Qtau_s,N_SLS)
 
   end subroutine model_attenuation_broadcast
 
@@ -93,17 +86,22 @@
 
   subroutine read_attenuation_model(min_att_period, max_att_period)
 
-  use constants
+  use constants, only: N_SLS
   use meshfem3D_models_par, only: AM_V
 
   implicit none
 
-  integer,intent(in) :: min_att_period, max_att_period
+  double precision,intent(in) :: min_att_period, max_att_period
 
-  AM_V%min_period = min_att_period * 1.0d0
-  AM_V%max_period = max_att_period * 1.0d0
+  ! initializes
+  AM_V%min_period = min_att_period     ! stores in AM_V object
+  AM_V%max_period = max_att_period
+  AM_V%Qtau_s(:) = 0.d0
 
+  ! gets stress relaxation times
   call attenuation_tau_sigma(AM_V%Qtau_s, N_SLS, AM_V%min_period, AM_V%max_period)
+
+  ! gets center frequency (T_c_source) of simulation period band
   call attenuation_source_frequency(AM_V%QT_c_source, AM_V%min_period, AM_V%max_period)
 
   end subroutine read_attenuation_model
@@ -119,27 +117,28 @@
 !
 ! All this subroutine does is define the Attenuation vs Radius and then Compute the Attenuation
 ! Variables (tau_sigma and tau_epsilon ( or tau_mu) )
-  subroutine model_attenuation_setup(REFERENCE_1D_MODEL,RICB,RCMB,R670,R220,R80,CRUSTAL)
+  subroutine model_attenuation_setup(REFERENCE_1D_MODEL,CRUSTAL)
 
   use constants
   use meshfem3D_models_par, only: AM_V
 
+  !use shared_parameters, only: RICB,RCMB,R670,R220,R80
+
   use model_1dref_par, only: &
-    NR_REF,Mref_V_radius_ref,Mref_V_Qmu_ref
+    NR_REF,Mref_V_Qmu_ref ! Mref_V_radius_ref
 
   use model_ak135_par, only: &
-    NR_AK135F_NO_MUD,Mak135_V_radius_ak135,Mak135_V_Qmu_ak135
+    NR_AK135F_NO_MUD,Mak135_V_Qmu_ak135 ! Mak135_V_radius_ak135
 
   use model_1066a_par, only: &
-    NR_1066A,M1066a_V_radius_1066a,M1066a_V_Qmu_1066a
+    NR_1066A,M1066a_V_Qmu_1066a ! M1066a_V_radius_1066a
 
   use model_sea1d_par, only: &
-    NR_SEA1D,SEA1DM_V_radius_sea1d,SEA1DM_V_Qmu_sea1d
+    NR_SEA1D,SEA1DM_V_Qmu_sea1d ! SEA1DM_V_radius_sea1d
 
   implicit none
 
   integer,intent(in) :: REFERENCE_1D_MODEL
-  double precision,intent(in) :: RICB, RCMB, R670, R220, R80
   logical,intent(in) :: CRUSTAL
 
   ! local parameters
@@ -147,7 +146,7 @@
   integer :: i,ier
 
   ! parameter definitions
-  double precision, parameter :: R120 = 6251.d3 ! as defined by IASP91
+  !double precision, parameter :: R120 = 6251.d3 ! as defined by IASP91
 
   ! uses "pure" 1D models including their 1D-crust profiles
   ! (uses USE_EXTERNAL_CRUSTAL_MODEL set to false)
@@ -181,44 +180,53 @@
   endif
 
   ! sets up attenuation storage (for all possible Qmu values defined in the 1D models)
-  allocate(AM_V%Qr(AM_V%Qn), &
-           AM_V%Qmu(AM_V%Qn), &
-           AM_V%interval_Q(AM_V%Qn), &
-           AM_V%Qtau_e(N_SLS,AM_V%Qn), &
+  allocate(AM_V%Qmu(AM_V%Qn), &
            stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating AM_V arrays')
+  AM_V%Qmu(:) = 0.d0
+
+  ! unused so far...
+  !allocate(AM_V%Qr(AM_V%Qn), &
+  !         AM_V%Qtau_e(N_SLS,AM_V%Qn), &
+  !         AM_V%interval_Q(AM_V%Qn), &
+  !         stat=ier)
+  !AM_V%Qr(:) = 0.d0
+  !AM_V%interval_Q(:) = 0 ! unused
+  !AM_V%Qtau_e(:,:) = 0.d0
 
   if (REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM) then
-    AM_V%Qr(:)     = (/   0.0d0,    RICB,  RICB,  RCMB,    RCMB,    R670,    R670,   R220,    R220,    R80,     R80, R_EARTH /)
+    !AM_V%Qr(:)     = (/   0.0d0,    RICB,  RICB,  RCMB,    RCMB,    R670,    R670,   R220,    R220,    R80,     R80, R_EARTH /)
     AM_V%Qmu(:)    = (/  84.6d0,  84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
   else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) then
-    AM_V%Qr(:)     = (/   0.0d0,    RICB,  RICB,  RCMB,    RCMB,    R670,    R670,    R220,   R220,   R120,    R120, R_EARTH /)
+    !AM_V%Qr(:)     = (/   0.0d0,    RICB,  RICB,  RCMB,    RCMB,    R670,    R670,    R220,   R220,   R120,    R120, R_EARTH /)
     AM_V%Qmu(:)    = (/  84.6d0,  84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
   else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135F_NO_MUD) then
-    AM_V%Qr(:)     = Mak135_V_radius_ak135(:)
+    !AM_V%Qr(:)     = Mak135_V_radius_ak135(:)
     AM_V%Qmu(:)    = Mak135_V_Qmu_ak135(:)
   else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
-    AM_V%Qr(:)     = M1066a_V_radius_1066a(:)
+    !AM_V%Qr(:)     = M1066a_V_radius_1066a(:)
     AM_V%Qmu(:)    = M1066a_V_Qmu_1066a(:)
   else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF) then
-    AM_V%Qr(:)     = Mref_V_radius_ref(:)
+    !AM_V%Qr(:)     = Mref_V_radius_ref(:)
     AM_V%Qmu(:)    = Mref_V_Qmu_ref(:)
   else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_JP1D) then
-    AM_V%Qr(:)     = (/   0.0d0,    RICB,  RICB,  RCMB,    RCMB,    R670,    R670,    R220,   R220,   R120,    R120, R_EARTH /)
+    !AM_V%Qr(:)     = (/   0.0d0,    RICB,  RICB,  RCMB,    RCMB,    R670,    R670,    R220,   R220,   R120,    R120, R_EARTH /)
     AM_V%Qmu(:)    = (/  84.6d0,  84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
   else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) then
-    AM_V%Qr(:)     = SEA1DM_V_radius_sea1d(:)
+    !AM_V%Qr(:)     = SEA1DM_V_radius_sea1d(:)
     AM_V%Qmu(:)    = SEA1DM_V_Qmu_sea1d(:)
   else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_SOHL) then
     ! Mars: attenuation model by Nimmo & Faul, 2013?
     !       at the moment, this is taken from PREM
-    AM_V%Qr(:)     = (/   0.0d0,    RICB,  RICB,  RCMB,    RCMB,    R670, R670,   R220,    R220,    R80,     R80, R_EARTH /)
+    !AM_V%Qr(:)     = (/   0.0d0,    RICB,  RICB,  RCMB,    RCMB,    R670, R670,   R220,    R220,    R80,     R80, R_EARTH /)
     AM_V%Qmu(:)    = (/  84.6d0,  84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
   endif
 
+  ! sets up storage of relaxation times
   do i = 1, AM_V%Qn
     call model_attenuation_getstored_tau(AM_V%Qmu(i), AM_V%QT_c_source, AM_V%Qtau_s, tau_e)
-    AM_V%Qtau_e(:,i) = tau_e(:)
+    ! unused, just in case also needed to stored in AM_V object (main storage is in AM_S object filled in routine above)
+    !AM_V%Qtau_e(:,i) = tau_e(:)
   enddo
 
   ! re-defines 1D models with crustal modification if necessary
@@ -368,6 +376,8 @@
 
 ! Determine the Source Frequency
 
+  use constants, only: myrank
+
   implicit none
 
   double precision,intent(out) :: omega_not
@@ -375,6 +385,7 @@
 
   ! local parameters
   double precision :: f1, f2
+  double precision, parameter :: TOL_ZERO = 1.d-30
 
   ! min and max frequencies of the simulation
   f1 = 1.0d0 / max_period
@@ -382,6 +393,12 @@
 
   ! takes the frequency at the logarithmic mean between min and max
   omega_not =  1.0e+03 * 10.0d0**(0.5 * (log10(f1) + log10(f2)))
+
+  ! checks
+  if (omega_not < TOL_ZERO .or. omega_not /= omega_not) then
+    print *,'Error: invalid center frequency ',omega_not,'in attenuation_source_frequency() routine'
+    call exit_MPI(myrank,'Error invalid center frequency')
+  endif
 
   end subroutine attenuation_source_frequency
 
@@ -393,19 +410,26 @@
 
 ! Set the Tau_sigma (tau_s) to be equally spaced in log10 frequency
 
-  use constants, only: PI
+  use constants, only: PI,myrank
 
   implicit none
 
   integer,intent(in) :: n
-  double precision,intent(out) :: tau_s(n)
+  double precision,intent(inout) :: tau_s(n)
   double precision,intent(in) :: min_period, max_period
 
   ! local parameters
   double precision :: f1, f2
   double precision :: exp1, exp2
-  double precision :: dexpval
+  double precision :: dexpval,fac
+  double precision, parameter :: TOL_ZERO = 1.d-30
   integer :: i
+
+  ! checks
+  if (max_period < TOL_ZERO) &
+    call exit_MPI(myrank,'Error invalid maximum period in attenuation_tau_sigma(), cannot be zero or negative.')
+  if (min_period < TOL_ZERO) &
+    call exit_MPI(myrank,'Error invalid maximum period in attenuation_tau_sigma(), cannot be zero or negative.')
 
   ! min and max frequencies
   f1 = 1.0d0 / max_period
@@ -418,9 +442,19 @@
   ! increment in log-space
   dexpval = (exp2-exp1) / ((n*1.0d0) - 1)
 
+! debug
+print*,'debug: att tau ',n,'f1/f2',f1,f2,'period ',min_period,max_period,'exp',exp1,exp2,dexpval; flush(101)
+
   ! equally distributed in log-space
   do i = 1,n
-    tau_s(i) = 1.0 / (PI * 2.0d0 * 10**(exp1 + (i - 1)* 1.0d0 *dexpval))
+    fac = PI * 2.0d0 * 10**(exp1 + (i - 1) * 1.0d0 * dexpval)
+    ! checks
+    if (abs(fac) <= TOL_ZERO) then
+      print *,'Error: invalid denominator ',fac,' for sls ',i,' in attenuation_tau_sigma() routine'
+      stop 'Error invalid denominator in attenuation_tau_sigma() routine'
+    endif
+    ! relaxation time
+    tau_s(i) = 1.d0 / fac
   enddo
 
   end subroutine attenuation_tau_sigma
@@ -439,9 +473,9 @@
   ! Input / Output
   double precision,intent(in) :: t1, t2
   double precision,intent(in) :: Q_real
-  double precision,intent(out) :: omega_not !   T_c_source
+  double precision,intent(inout) :: omega_not !   T_c_source
   integer,intent(in) :: n
-  double precision, dimension(n),intent(out) :: tau_s, tau_e
+  double precision, dimension(n),intent(inout) :: tau_s, tau_e
 
   ! local parameters
   type (attenuation_simplex_variables) :: AS_V

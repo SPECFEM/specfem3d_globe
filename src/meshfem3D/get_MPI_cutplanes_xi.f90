@@ -155,7 +155,7 @@
   ! compare number of surface elements detected to analytical value
   if (ispecc1 /= nspec2Dtheor) then
     write(errmsg,*) 'Error MPI cut-planes detection in xi=left T=',nspec2Dtheor,' C=',ispecc1
-    call exit_MPI(myrank,errmsg)
+    call exit_MPI(myrank,trim(errmsg))
   endif
 
   ! subtract the line that contains the flag after the last point
@@ -224,7 +224,7 @@
   ! compare number of surface elements detected to analytical value
   if (ispecc2 /= nspec2Dtheor) then
     write(errmsg,*) 'Error MPI cut-planes detection in xi=right T=',nspec2Dtheor,' C=',ispecc2
-    call exit_MPI(myrank,errmsg)
+    call exit_MPI(myrank,trim(errmsg))
   endif
 
   ! subtract the line that contains the flag after the last point

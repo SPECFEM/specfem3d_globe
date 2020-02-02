@@ -42,10 +42,11 @@
 
   use constants
   use shared_parameters, only: ner_mesh_layers,ratio_sampling_array,this_region_has_a_doubling
+
   implicit none
 
   ! parameters to be computed based upon parameters above read from file
-  integer NPROC,NEX_XI,NEX_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube
+  integer :: NPROC,NEX_XI,NEX_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube
 
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC_REGIONS,NSPEC2D_XI,NSPEC2D_ETA, &
       NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
@@ -54,7 +55,6 @@
   integer ::  doubling, tmp_sum, tmp_sum_xi, tmp_sum_eta
   integer ::  NUMBER_OF_MESH_LAYERS,layer_offset,nspec2D_xi_sb,nspec2D_eta_sb, &
               nb_lay_sb, nspec_sb, nglob_surf
-
 
   ! for the cut doublingbrick improvement
   logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
@@ -353,7 +353,7 @@
         stop 'incorrect region code detected'
     endif
 
-    tmp_sum = 0;
+    tmp_sum = 0
     do iter_layer = ifirst_region, ilast_region
       if (this_region_has_a_doubling(iter_layer)) then
         if (ner_mesh_layers(iter_layer) == 1) then
@@ -377,11 +377,12 @@
     NSPEC_REGIONS(iter_region) = tmp_sum
   enddo
 
-  if (INCLUDE_CENTRAL_CUBE) &
+  if (INCLUDE_CENTRAL_CUBE) then
     NSPEC_REGIONS(IREGION_INNER_CORE) = NSPEC_REGIONS(IREGION_INNER_CORE) + &
          (NEX_PER_PROC_XI / ratio_divide_central_cube) * &
          (NEX_PER_PROC_ETA / ratio_divide_central_cube) * &
          (NEX_XI / ratio_divide_central_cube)
+  endif
 
   ! check
   if (minval(NSPEC_REGIONS(:)) <= 0) then

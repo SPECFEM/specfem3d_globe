@@ -40,6 +40,11 @@
   double precision :: dt_auto,T_min_res
   integer :: nex_max_auto_ner_estimate
 
+  ! initializes
+  DT = 0.d0
+  MIN_ATTENUATION_PERIOD = 0.d0
+  MAX_ATTENUATION_PERIOD = 0.d0
+
   !----
   !----  case prem_onecrust by default
   !----
@@ -93,8 +98,8 @@
     if (NEX_MAX*multiplication_factor <= 80) then
       DT                       = 0.2d0
       ! attenuation period range
-      MIN_ATTENUATION_PERIOD   = 20
-      MAX_ATTENUATION_PERIOD   = 1000
+      MIN_ATTENUATION_PERIOD   = 20.d0
+      MAX_ATTENUATION_PERIOD   = 1000.d0
       ! number of element layers in each mesh region
       NER_CRUST                = 1
       NER_80_MOHO              = 2
@@ -110,8 +115,8 @@
     else if (NEX_MAX*multiplication_factor <= 96) then
       DT                       = 0.2d0
       ! attenuation period range
-      MIN_ATTENUATION_PERIOD   = 20
-      MAX_ATTENUATION_PERIOD   = 1000
+      MIN_ATTENUATION_PERIOD   = 20.d0
+      MAX_ATTENUATION_PERIOD   = 1000.d0
       ! number of element layers in each mesh region
       NER_CRUST                = 5  ! 110 km
       NER_80_MOHO              = 2  ! 225 km
@@ -130,8 +135,8 @@
       ! The shortest period at this resoution is about 20 s compare with
       ! NEX=256, so change the attenuation period accordingly.
       ! attenuation period range
-      MIN_ATTENUATION_PERIOD   = 20
-      MAX_ATTENUATION_PERIOD   = 1000
+      MIN_ATTENUATION_PERIOD   = 20.d0
+      MAX_ATTENUATION_PERIOD   = 1000.d0
       ! number of element layers in each mesh region
       NER_CRUST                = 5 !3   change to 5 for moho stretching
       NER_80_MOHO              = 5
@@ -147,8 +152,8 @@
     else if (NEX_MAX*multiplication_factor <= 256) then
       DT                       = 0.15d0
       ! attenuation period range
-      MIN_ATTENUATION_PERIOD   = 10
-      MAX_ATTENUATION_PERIOD   = 500
+      MIN_ATTENUATION_PERIOD   = 10.d0
+      MAX_ATTENUATION_PERIOD   = 500.d0
       ! number of element layers in each mesh region
       NER_CRUST                = 5
       NER_80_MOHO              = 6
@@ -164,8 +169,8 @@
     else if (NEX_MAX*multiplication_factor <= 320) then
       DT                       = 0.07d0
       ! attenuation period range
-      MIN_ATTENUATION_PERIOD   = 10
-      MAX_ATTENUATION_PERIOD   = 500
+      MIN_ATTENUATION_PERIOD   = 10.d0
+      MAX_ATTENUATION_PERIOD   = 500.d0
       ! number of element layers in each mesh region
       NER_CRUST                = 5
       NER_80_MOHO              = 8
@@ -181,8 +186,8 @@
     else if (NEX_MAX*multiplication_factor <= 480) then
       DT                       = 0.008d0
       ! attenuation period range
-      MIN_ATTENUATION_PERIOD   = 10
-      MAX_ATTENUATION_PERIOD   = 500
+      MIN_ATTENUATION_PERIOD   = 10.d0
+      MAX_ATTENUATION_PERIOD   = 500.d0
       ! number of element layers in each mesh region
       NER_CRUST                = 7
       NER_80_MOHO              = 14
@@ -199,8 +204,8 @@
       ! for bigger NEX, uses 480 setting and then automatically adjusts in auto_ner()..
       DT                       = 0.008d0
       ! attenuation period range
-      MIN_ATTENUATION_PERIOD   = 10
-      MAX_ATTENUATION_PERIOD   = 500
+      MIN_ATTENUATION_PERIOD   = 10.d0
+      MAX_ATTENUATION_PERIOD   = 500.d0
       ! number of element layers in each mesh region
       NER_CRUST                = 7
       NER_80_MOHO              = 14
@@ -256,8 +261,8 @@
       DT                       = 0.252d0
 
       ! attenuation period range
-      MIN_ATTENUATION_PERIOD   = 30
-      MAX_ATTENUATION_PERIOD   = 1500
+      MIN_ATTENUATION_PERIOD   = 30.d0
+      MAX_ATTENUATION_PERIOD   = 1500.d0
 
       ! number of element layers in each mesh region
       NER_CRUST                = 1
@@ -281,8 +286,8 @@
       DT                       = 0.252d0 * 0.90d0
 
       ! attenuation period range
-      MIN_ATTENUATION_PERIOD   = 30
-      MAX_ATTENUATION_PERIOD   = 1500
+      MIN_ATTENUATION_PERIOD   = 30.d0
+      MAX_ATTENUATION_PERIOD   = 1500.d0
 
       ! number of element layers in each mesh region
       NER_CRUST                = 1
@@ -306,8 +311,8 @@
       DT                       = 0.252d0
 
       ! attenuation period range
-      MIN_ATTENUATION_PERIOD   = 30
-      MAX_ATTENUATION_PERIOD   = 1500
+      MIN_ATTENUATION_PERIOD   = 30.d0
+      MAX_ATTENUATION_PERIOD   = 1500.d0
 
       ! number of element layers in each mesh region
       NER_CRUST                = 1
@@ -329,8 +334,8 @@
     else if (NEX_MAX*multiplication_factor <= 256) then
       DT                       = 0.225d0
 
-      MIN_ATTENUATION_PERIOD   = 20
-      MAX_ATTENUATION_PERIOD   = 1000
+      MIN_ATTENUATION_PERIOD   = 20.d0
+      MAX_ATTENUATION_PERIOD   = 1000.d0
 
       NER_CRUST                = 1
       NER_80_MOHO              = 1
@@ -349,8 +354,8 @@
     else if (NEX_MAX*multiplication_factor <= 320) then
       DT                       = 0.16d0
 
-      MIN_ATTENUATION_PERIOD   = 15
-      MAX_ATTENUATION_PERIOD   = 750
+      MIN_ATTENUATION_PERIOD   = 15.d0
+      MAX_ATTENUATION_PERIOD   = 750.d0
 
       NER_CRUST                = 1
       NER_80_MOHO              = 1
@@ -369,8 +374,8 @@
     else if (NEX_MAX*multiplication_factor <= 480) then
       DT                       = 0.11d0
 
-      MIN_ATTENUATION_PERIOD   = 10
-      MAX_ATTENUATION_PERIOD   = 500
+      MIN_ATTENUATION_PERIOD   = 10.d0
+      MAX_ATTENUATION_PERIOD   = 500.d0
 
       NER_CRUST                = 1
       NER_80_MOHO              = 2
@@ -389,8 +394,8 @@
     else if (NEX_MAX*multiplication_factor <= 512) then
       DT                       = 0.1125d0
 
-      MIN_ATTENUATION_PERIOD   = 9
-      MAX_ATTENUATION_PERIOD   = 500
+      MIN_ATTENUATION_PERIOD   = 9.d0
+      MAX_ATTENUATION_PERIOD   = 500.d0
 
       NER_CRUST                = 1
       NER_80_MOHO              = 2
@@ -409,8 +414,8 @@
     else if (NEX_MAX*multiplication_factor <= 640) then
       DT                       = 0.09d0
 
-      MIN_ATTENUATION_PERIOD   = 8
-      MAX_ATTENUATION_PERIOD   = 400
+      MIN_ATTENUATION_PERIOD   = 8.d0
+      MAX_ATTENUATION_PERIOD   = 400.d0
 
       NER_CRUST                = 2
       NER_80_MOHO              = 3
@@ -429,8 +434,8 @@
     else if (NEX_MAX*multiplication_factor <= 864) then
       DT                       = 0.0667d0
 
-      MIN_ATTENUATION_PERIOD   = 6
-      MAX_ATTENUATION_PERIOD   = 300
+      MIN_ATTENUATION_PERIOD   = 6.d0
+      MAX_ATTENUATION_PERIOD   = 300.d0
 
       NER_CRUST                = 2
       NER_80_MOHO              = 4
@@ -449,8 +454,8 @@
     else if (NEX_MAX*multiplication_factor <= 1152) then
       DT                       = 0.05d0
 
-      MIN_ATTENUATION_PERIOD   = 4
-      MAX_ATTENUATION_PERIOD   = 200
+      MIN_ATTENUATION_PERIOD   = 4.d0
+      MAX_ATTENUATION_PERIOD   = 200.d0
 
       NER_CRUST                = 3
       NER_80_MOHO              = 6
@@ -469,8 +474,8 @@
     else if (NEX_MAX*multiplication_factor <= 1248) then
       DT                       = 0.0462d0
 
-      MIN_ATTENUATION_PERIOD   = 4
-      MAX_ATTENUATION_PERIOD   = 200
+      MIN_ATTENUATION_PERIOD   = 4.d0
+      MAX_ATTENUATION_PERIOD   = 200.d0
 
       NER_CRUST                = 3
       NER_80_MOHO              = 6
@@ -489,8 +494,8 @@
       ! scale with respect to 1248 if above that limit
       DT                       = 0.0462d0 * 1248.d0 / (2.d0*NEX_MAX)
 
-      MIN_ATTENUATION_PERIOD   = 4
-      MAX_ATTENUATION_PERIOD   = 200
+      MIN_ATTENUATION_PERIOD   = 4.d0
+      MAX_ATTENUATION_PERIOD   = 200.d0
 
       NER_CRUST                = nint(3 * 2.d0*NEX_MAX / 1248.d0)
       NER_80_MOHO              = nint(6 * 2.d0*NEX_MAX / 1248.d0)
@@ -575,7 +580,7 @@
 
   ! gets attenuation min/max range
   if (.not. ATTENUATION_RANGE_PREDEFINED) then
-     call auto_attenuation_periods(min_chunk_width_in_degrees, NEX_MAX)
+     call auto_attenuation_periods(min_chunk_width_in_degrees, NEX_MAX, MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
   endif
 
   ! note: global estimate above for DT is empirical for chunk sizes of 90 degrees.
@@ -596,8 +601,8 @@
     ! gets number of element-layers
     call auto_ner(min_chunk_width_in_degrees, NEX_MAX)
 
-    ! gets attenuation min/max range
-    call auto_attenuation_periods(min_chunk_width_in_degrees, NEX_MAX)
+    ! re-sets attenuation min/max range
+    call auto_attenuation_periods(min_chunk_width_in_degrees, NEX_MAX, MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
 
     ! gets time step size
     call auto_time_stepping(min_chunk_width_in_degrees, NEX_MAX, dt_auto)

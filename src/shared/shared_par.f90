@@ -208,7 +208,7 @@
              NEX_XI,NEX_ETA
 
   ! attenuation
-  integer :: MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD
+  double precision :: MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD
   integer :: ATT1,ATT2,ATT3,ATT4,ATT5
 
   ! radii of layers

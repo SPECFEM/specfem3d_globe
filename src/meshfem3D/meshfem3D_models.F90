@@ -29,10 +29,7 @@
 
 ! preparing model parameter coefficients on all processes
 
-  use shared_parameters, only: MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,LOCAL_PATH, &
-    R80,R220,R670,RCMB,RICB, &
-    SAVE_MESH_FILES
-
+  use shared_parameters, only: MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,LOCAL_PATH,SAVE_MESH_FILES
   use meshfem3D_models_par
 
   implicit none
@@ -87,7 +84,7 @@
     else
       ! sets up attenuation coefficients according to the chosen, "pure" 1D model
       ! (including their 1D-crustal profiles)
-      call model_attenuation_setup(REFERENCE_1D_MODEL,RICB,RCMB,R670,R220,R80,CRUSTAL)
+      call model_attenuation_setup(REFERENCE_1D_MODEL,CRUSTAL)
     endif
 
   endif

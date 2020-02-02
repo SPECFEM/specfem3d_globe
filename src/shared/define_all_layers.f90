@@ -84,6 +84,22 @@
   logical, parameter :: ADD_2ND_DOUBLING = .true.
   logical, parameter :: ADD_3RD_DOUBLING = .true.
 
+  ! initializes
+  NUMBER_OF_MESH_LAYERS = 0
+  ner_mesh_layers(:) = 0
+
+  layer_offset = 0
+  last_doubling_layer = 0
+
+  ratio_sampling_array(:) = 0
+  doubling_index(:) = 0
+
+  r_top(:) = 0.d0
+  r_bottom(:) = 0.d0
+
+  rmins(:) = 0.d0
+  rmaxs(:) = 0.d0
+
   ! doubling depths
   if (PLANET_TYPE == IPLANET_MARS) then
     ! Mars
@@ -157,11 +173,8 @@
     if (elem_doubling_bottom_outer_core == -1) stop 'Unable to determine fourth doubling element'
 ! make sure that the two doublings in the outer core are found in the right order
     if (elem_doubling_bottom_outer_core >= elem_doubling_middle_outer_core) &
-                    stop 'Error in location of the two doublings in the outer core'
+      stop 'Error in location of the two doublings in the outer core'
   endif
-
-  ratio_sampling_array(15) = 0
-  last_doubling_layer = 0
 
 ! define all the layers of the mesh
   if (.not. ADD_4TH_DOUBLING) then
@@ -1110,7 +1123,23 @@
     endif
   endif
 
-  ! checks
+  ! checks arrays
+  if (NUMBER_OF_MESH_LAYERS <= 0) &
+    stop 'Error invalid number of mesh layers in define_all_layers()'
+  if (minval(ratio_sampling_array(1:NUMBER_OF_MESH_LAYERS)) <= 0) &
+    stop 'Error invalid ratio array in define_all_layers()'
+  if (minval(doubling_index(1:NUMBER_OF_MESH_LAYERS)) <= 0) &
+    stop 'Error invalid doubling array in define_all_layers()'
+  if (minval(r_top(1:NUMBER_OF_MESH_LAYERS)) <= 0.d0) &
+    stop 'Error invalid r_top array in define_all_layers()'
+  if (minval(r_bottom(1:NUMBER_OF_MESH_LAYERS)) <= 0.d0) &
+    stop 'Error invalid r_bottom array in define_all_layers()'
+  if (minval(rmins(1:NUMBER_OF_MESH_LAYERS)) <= 0.d0) &
+    stop 'Error invalid rmins array in define_all_layers()'
+  if (minval(rmaxs(1:NUMBER_OF_MESH_LAYERS)) <= 0.d0) &
+    stop 'Error invalid rmaxs array in define_all_layers()'
+
+  ! checks layering
   do ielem = 1,NUMBER_OF_MESH_LAYERS-1
     if (r_top(ielem) - r_top(ielem+1) < 0.d0) then
       print *,'Error: define_all_layers rank ',myrank,'found invalid layer ',ielem, &

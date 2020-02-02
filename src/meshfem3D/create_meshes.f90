@@ -68,8 +68,8 @@
     write(IMAIN,*) '  Minimum period = ',T_min,' (s)'
     ! attenuation range
     write(IMAIN,*)
-    write(IMAIN,*) '  MIN_ATTENUATION_PERIOD = ',MIN_ATTENUATION_PERIOD
-    write(IMAIN,*) '  MAX_ATTENUATION_PERIOD = ',MAX_ATTENUATION_PERIOD
+    write(IMAIN,*) '  MIN_ATTENUATION_PERIOD = ',sngl(MIN_ATTENUATION_PERIOD)
+    write(IMAIN,*) '  MAX_ATTENUATION_PERIOD = ',sngl(MAX_ATTENUATION_PERIOD)
     write(IMAIN,*)
     call flush_IMAIN()
   endif

@@ -834,7 +834,7 @@
 
   ! builds heap
   do i = N/2, 1, -1
-    call heap_sort_siftdown(i, N)
+    call my_heap_sort_siftdown(i, N)
   enddo
 
   ! sorts array
@@ -847,12 +847,12 @@
     Y(1) = Y(i)
     Y(i) = itmp
 
-    call heap_sort_siftdown(1, i - 1)
+    call my_heap_sort_siftdown(1, i - 1)
   enddo
 
   contains
 
-    subroutine heap_sort_siftdown(start, bottom)
+    subroutine my_heap_sort_siftdown(start, bottom)
 
     implicit none
 
@@ -886,7 +886,7 @@
     X(i) = xtmp
     Y(i) = ytmp
 
-    end subroutine heap_sort_siftdown
+    end subroutine my_heap_sort_siftdown
 
   end subroutine heap_sort_distances
 

@@ -39,7 +39,7 @@
 !
 !---
 
-  use constants, only: NR, &
+  use constants, only: NR,N_SLS, &
     PI,PI_OVER_TWO,ZERO,ONE,DEGREES_TO_RADIANS,RADIANS_TO_DEGREES, &
     IREGION_CRUST_MANTLE,IREGION_INNER_CORE,IREGION_OUTER_CORE, &
     ICRUST_CRUST1,ICRUST_CRUST2,ICRUST_CRUSTMAPS,ICRUST_EPCRUST,ICRUST_CRUST_SH,ICRUST_EUCRUST, &
@@ -81,21 +81,22 @@
   ! model_attenuation_variables
   type model_attenuation_variables
     sequence
-    double precision :: min_period, max_period
-    double precision :: QT_c_source        ! Source Frequency
-    double precision, dimension(:), allocatable   :: Qtau_s             ! tau_sigma
-    double precision, dimension(:), allocatable   :: QrDisc             ! Discontinuities Defined
-    double precision, dimension(:), allocatable   :: Qr                 ! Radius
+    double precision :: min_period, max_period                          ! Attenuation period band
+    double precision :: QT_c_source                                     ! Period band center Frequency
+    double precision, dimension(N_SLS)            :: Qtau_s             ! tau_sigma
     double precision, dimension(:), allocatable   :: Qmu                ! Shear Attenuation
-    double precision, dimension(:,:), allocatable :: Qtau_e             ! tau_epsilon
-    double precision, dimension(:), allocatable   :: Qomsb, Qomsb2      ! one_minus_sum_beta
-    double precision, dimension(:,:), allocatable :: Qfc, Qfc2          ! factor_common
-    double precision, dimension(:), allocatable   :: Qsf, Qsf2          ! scale_factor
-    integer, dimension(:), allocatable            :: Qrmin              ! Max and Mins of idoubling
-    integer, dimension(:), allocatable            :: Qrmax              ! Max and Mins of idoubling
-    integer, dimension(:), allocatable            :: interval_Q                 ! Steps
     integer :: Qn                 ! Number of points
     integer :: dummy_pad ! padding 4 bytes to align the structure
+    ! unused so far..
+    !double precision, dimension(:,:), allocatable :: Qtau_e             ! tau_epsilon
+    !double precision, dimension(:), allocatable   :: Qr                 ! Radius
+    !double precision, dimension(:), allocatable   :: QrDisc             ! Discontinuities Defined
+    !double precision, dimension(:), allocatable   :: Qomsb, Qomsb2      ! one_minus_sum_beta
+    !double precision, dimension(:,:), allocatable :: Qfc, Qfc2          ! factor_common
+    !double precision, dimension(:), allocatable   :: Qsf, Qsf2          ! scale_factor
+    !integer, dimension(:), allocatable            :: Qrmin              ! Max and Mins of idoubling
+    !integer, dimension(:), allocatable            :: Qrmax              ! Max and Mins of idoubling
+    !integer, dimension(:), allocatable            :: interval_Q         ! Steps
   end type model_attenuation_variables
   type (model_attenuation_variables) :: AM_V
   ! model_attenuation_variables

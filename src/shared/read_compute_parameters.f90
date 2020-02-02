@@ -254,7 +254,7 @@
                         nblocks_xi,nblocks_eta, &
                         doubling, padding, tmp_sum, &
                         INCLUDE_CENTRAL_CUBE,NER_TOP_CENTRAL_CUBE_ICB,NEX_XI, &
-                        NUMBER_OF_MESH_LAYERS,layer_offset, &
+                        NUMBER_OF_MESH_LAYERS, layer_offset, &
                         nb_lay_sb, nglob_vol, nglob_surf, nglob_edge, &
                         CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, &
                         last_doubling_layer, cut_doubling, nglob_int_surf_xi, nglob_int_surf_eta,nglob_ext_surf, &

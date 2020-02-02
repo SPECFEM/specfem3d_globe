@@ -968,6 +968,8 @@
   ! (number of element layers in crust can vary for different resolutions and 1chunk simulations)
   allocate(stretch_tab(2,ner_mesh_layers(1)),stat=ier)
   if (ier /= 0) stop 'Error in allocate 19'
+  stretch_tab(:,:) = 0.d0
+
   if (CASE_3D .and. iregion_code == IREGION_CRUST_MANTLE .and. .not. SUPPRESS_CRUSTAL_MESH) then
     ! stretching function determines top and bottom of each element layer in the
     ! crust region (between r_top(1) and r_bottom(1)), where ner_mesh_layers(1) is the
@@ -1080,7 +1082,7 @@
   if (nglob_new /= nglob) then
     write(errmsg,*) 'incorrect total number of points found: myrank,nglob_new,nglob = ',myrank,nglob_new,nglob, &
                     'region',iregion_code
-    call exit_MPI(myrank,errmsg)
+    call exit_MPI(myrank,trim(errmsg))
   endif
   if (minval(ibool) /= 1 .or. maxval(ibool) /= nglob) &
     call exit_MPI(myrank,'incorrect global numbering')
