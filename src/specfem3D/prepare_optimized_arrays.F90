@@ -300,8 +300,8 @@
     DO_LOOP_IJK
       iglob = ibool(INDEX_IJK,ispec)
       ! checks index
-      if (iglob <= 0 .or. iglob > nspec) then
-        print *,'Error: invalid iglob ',iglob,'in prepare_make_inv_table(): phase ',iphase,'region',iregion_code
+      if (iglob <= 0 .or. iglob > nglob) then
+        print *,'Error: invalid iglob ',iglob,'in prepare_make_inv_table(): phase ',iphase,'region',iregion_code,'nglob',nglob
         call exit_MPI(myrank,'Error invalid iglob index in prepare_make_inv_table()')
       endif
       ! increases valence counter

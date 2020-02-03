@@ -168,6 +168,9 @@ contains
   type(adios2_variable) :: v
   integer(kind=8) :: step_start !,nsteps
   integer(kind=8) :: start(1),count(1)
+  !debug
+  logical, parameter :: DEBUG = .false.
+  integer(kind=8) :: nsteps
 #endif
 
   TRACE_ADIOS_L2_ARG('read_adios_scalar_int: ',trim(scalar_name))
@@ -210,31 +213,41 @@ contains
   endif
 
   !debug steps
-  ! for engine
-  !call adios2_steps(nsteps,adios_handle,ier)
-  !call check_adios_err(ier, "Error adios2 get engine steps for "//trim(scalar_name)//" failed")
-  !call adios2_current_step(step_start,adios_handle,ier)
-  !call check_adios_err(ier, "Error adios2 get current engine steps for "//trim(scalar_name)//" failed")
-  !print *,'debug adios: ',trim(scalar_name),' engine nsteps = ',nsteps,' current = ',step_start
-  ! for variable
-  !call adios2_variable_steps(nsteps, v, ier)
-  !call check_adios_err(ier, "Error adios2 get steps for "//trim(scalar_name)//" failed")
-  !only available in C:
-  !> call adios2_variable_steps_start(step_start, v, ier)
-  !> call check_adios_err(ier, "Error adios2 get start step for "//trim(scalar_name)//" failed")
-  !print *,'debug adios: ',trim(scalar_name),' nsteps = ',nsteps,' ndims = ',v%ndims
-  !only available in C:
-  !> call adios2_selection_size(nsteps, v, ier)
-  !> call check_adios_err(ier, "Error adios2 get start step for "//trim(scalar_name)//" failed")
-  !print *,'debug adios: ',trim(scalar_name),' selection size = ',nsteps
+  if (DEBUG) then
+    ! for engine
+    call adios2_steps(nsteps,adios_handle,ier)
+    call check_adios_err(ier, "Error adios2 get engine steps for "//trim(scalar_name)//" failed")
 
-  ! selection for local scalar variables
-  ! this will fail for variables appended to the file (e.g., reg2/nspec and reg3/nspec variables in solver_data.bp etc.)
-  ! maybe in future, adios2 will work with this.
-  !
-  !call adios2_set_block_selection(v, int(rank,kind=8), ier)
-  !call check_adios_err(ier, "Error adios2 set block selection for "//trim(scalar_name)//" failed")
-  !
+    call adios2_current_step(step_start,adios_handle,ier)
+    call check_adios_err(ier, "Error adios2 get current engine steps for "//trim(scalar_name)//" failed")
+
+    print *,'debug adios: ',rank,trim(scalar_name),' engine nsteps = ',nsteps,' current = ',step_start; flush(6)
+
+    ! for variable
+    call adios2_variable_steps(nsteps, v, ier)
+    call check_adios_err(ier, "Error adios2 get steps for "//trim(scalar_name)//" failed")
+
+    print *,'debug adios: ',rank,trim(scalar_name),' variable nsteps = ',nsteps; flush(6)
+
+    !only available in C:
+    !> call adios2_variable_steps_start(step_start, v, ier)
+    !> call check_adios_err(ier, "Error adios2 get start step for "//trim(scalar_name)//" failed")
+    !print *,'debug adios: ',trim(scalar_name),' nsteps = ',nsteps,' ndims = ',v%ndims
+    !only available in C:
+    !> call adios2_selection_size(nsteps, v, ier)
+    !> call check_adios_err(ier, "Error adios2 get start step for "//trim(scalar_name)//" failed")
+    !print *,'debug adios: ',trim(scalar_name),' selection size = ',nsteps
+
+    ! selection for local scalar variables
+    ! this will fail for variables appended to the file (e.g., reg2/nspec and reg3/nspec variables in solver_data.bp etc.)
+    ! maybe in future, adios2 will work with this.
+    !
+    !call adios2_set_block_selection(v, int(rank,kind=8), ier)
+    !call check_adios_err(ier, "Error adios2 set block selection for "//trim(scalar_name)//" failed")
+
+    call synchronize_all()
+  endif
+
   ! selection for scalar as 1-D array single entry
   start(1) = 1 * int(rank,kind=8)
   count(1) = 1
@@ -254,6 +267,12 @@ contains
   ! reads array data
   call adios2_get(adios_handle, v, scalar, adios2_mode_sync, ier)
   call check_adios_err(ier,"Error adios2 get for array "//trim(scalar_name)//" failed")
+
+  ! debug
+  if (DEBUG) then
+    print *,'debug adios: ',rank,trim(scalar_name),' scalar value = ',scalar; flush(6)
+    call synchronize_all()
+  endif
 
 #endif
 

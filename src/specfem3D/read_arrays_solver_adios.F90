@@ -135,7 +135,7 @@ subroutine read_arrays_solver_adios(iregion_code, &
   call read_adios_scalar(myadios_file, myadios_group, myrank, trim(region_name) // "nglob",lnglob)
 
   !debug
-  !print *,'debug: rank ',myrank,' parameter: ',trim(region_name)//"nspec",' lnspec/lnglob = ',lnspec,lnglob
+  !print *,'debug: rank ',myrank,' parameter: ',trim(region_name)//"nspec",' lnspec/lnglob = ',lnspec,lnglob; flush(6)
   !call synchronize_all()
 
   ! checks dimensions

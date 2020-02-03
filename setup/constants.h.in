@@ -413,8 +413,14 @@
 !!
 !! BP4
 !! format details: https://adios2.readthedocs.io/en/latest/engines/engines.html#bp4
+!!
+!! note: parameter SubStreams=64 for larger runs with NPROCS > 64 creates problems when reading scalar values (in appended mode),
+!!       try to avoid it for now as default parameter.
+!!       for undo_att, it seems to work however and can be used in ADIOS2_ENGINE_PARAMS_UNDO_ATT setting.
+!!
+!!       in future adios2 versions, re-evalute if parameters could be "SubStreams=64,MaxBufferSize=800Mb" for larger runs
   character(len=*), parameter :: ADIOS2_ENGINE_DEFAULT = "BP4"
-  character(len=*), parameter :: ADIOS2_ENGINE_PARAMS_DEFAULT = "" ! add "SubStreams=64,MaxBufferSize=800Mb" for larger runs
+  character(len=*), parameter :: ADIOS2_ENGINE_PARAMS_DEFAULT = "" ! add "MaxBufferSize=800Mb" for larger runs
 
   character(len=*), parameter :: ADIOS2_ENGINE_UNDO_ATT = "BP4"
   character(len=*), parameter :: ADIOS2_ENGINE_PARAMS_UNDO_ATT = "" ! add "SubStreams=64,MaxBufferSize=800Mb" for larger runs

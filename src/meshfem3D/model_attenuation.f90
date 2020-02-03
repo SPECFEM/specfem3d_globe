@@ -442,9 +442,6 @@
   ! increment in log-space
   dexpval = (exp2-exp1) / ((n*1.0d0) - 1)
 
-! debug
-print*,'debug: att tau ',n,'f1/f2',f1,f2,'period ',min_period,max_period,'exp',exp1,exp2,dexpval; flush(101)
-
   ! equally distributed in log-space
   do i = 1,n
     fac = PI * 2.0d0 * 10**(exp1 + (i - 1) * 1.0d0 * dexpval)
