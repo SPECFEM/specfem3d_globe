@@ -32,11 +32,11 @@
                                        NSPEC2D_BOTTOM,jacobian2D_bottom,NSPEC2D_TOP,jacobian2D_top,idoubling, &
                                        volume_total,RCMB,RICB,R_CENTRAL_CUBE)
 
-  use constants,only: NGLLX,NGLLY,NGLLZ,myrank, &
+  use constants, only: NGLLX,NGLLY,NGLLZ,myrank, &
     ZERO,CUSTOM_REAL,PI,R_UNIT_SPHERE,IFLAG_IN_FICTITIOUS_CUBE,IMAIN, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE
 
-  use meshfem3D_models_par,only: TOPOGRAPHY,R_EARTH
+  use meshfem3D_models_par, only: TOPOGRAPHY,R_EARTH
 
   implicit none
 

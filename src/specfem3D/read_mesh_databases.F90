@@ -1223,8 +1223,8 @@
 
   ! checks interface values read
   if (minval(my_neighbors_crust_mantle) < 0 .or. maxval(my_neighbors_crust_mantle) >= NPROCTOT) then
-    print *,'Error: invalid mpi neighbors min/max',minval(my_neighbors_crust_mantle),maxval(my_neighbors_crust_mantle),NPROCTOT
-    call exit_mpi(myrank,'Error invalid mpi neighbors crust_mantle')
+    print *,'Error: invalid MPI neighbors min/max',minval(my_neighbors_crust_mantle),maxval(my_neighbors_crust_mantle),NPROCTOT
+    call exit_mpi(myrank,'Error invalid MPI neighbors crust_mantle')
   endif
   do i = 1,num_interfaces_crust_mantle
     ! number of points on interface
@@ -1284,8 +1284,8 @@
 
   ! checks interface values read
   if (minval(my_neighbors_outer_core) < 0 .or. maxval(my_neighbors_outer_core) >= NPROCTOT) then
-    print *,'Error: invalid mpi neighbors min/max',minval(my_neighbors_outer_core),maxval(my_neighbors_outer_core),NPROCTOT
-    call exit_mpi(myrank,'Error invalid mpi neighbors outer_core')
+    print *,'Error: invalid MPI neighbors min/max',minval(my_neighbors_outer_core),maxval(my_neighbors_outer_core),NPROCTOT
+    call exit_mpi(myrank,'Error invalid MPI neighbors outer_core')
   endif
   do i = 1,num_interfaces_outer_core
     ! number of points on interface
@@ -1345,8 +1345,8 @@
 
   ! checks interface values read
   if (minval(my_neighbors_inner_core) < 0 .or. maxval(my_neighbors_inner_core) >= NPROCTOT) then
-    print *,'Error: invalid mpi neighbors min/max',minval(my_neighbors_inner_core),maxval(my_neighbors_inner_core),NPROCTOT
-    call exit_mpi(myrank,'Error invalid mpi neighbors inner_core')
+    print *,'Error: invalid MPI neighbors min/max',minval(my_neighbors_inner_core),maxval(my_neighbors_inner_core),NPROCTOT
+    call exit_mpi(myrank,'Error invalid MPI neighbors inner_core')
   endif
   do i = 1,num_interfaces_inner_core
     ! number of points on interface

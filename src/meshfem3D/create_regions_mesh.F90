@@ -1126,7 +1126,7 @@
           iglob = ibool(i,j,k,ispec)
           if (iglob < 1 .or. iglob > nglob) then
             print *,'Error: rank ',myrank,'has invalid iglob ',iglob,' element ',ispec,'ijk',i,j,k,'val',ibool(:,:,:,ispec)
-            call exit_MPI(myrank,'Error invalid ibool array adressing')
+            call exit_MPI(myrank,'Error invalid ibool array addressing')
           endif
         enddo
       enddo

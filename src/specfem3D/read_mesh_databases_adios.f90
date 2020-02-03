@@ -819,7 +819,7 @@ subroutine read_mesh_databases_MPI_adios(iregion_code)
   ! closes adios file
   call close_file_adios_read_and_finalize_method(myadios_file)
 
-  ! sets region mpi parameters
+  ! sets region MPI parameters
   select case(iregion_code)
   case (IREGION_CRUST_MANTLE)
     ! crust/mantle
@@ -831,7 +831,7 @@ subroutine read_mesh_databases_MPI_adios(iregion_code)
     num_colors_outer_crust_mantle = num_colors_outer
     num_colors_inner_crust_mantle = num_colors_inner
 
-    ! mpi arrays
+    ! MPI arrays
     allocate(my_neighbors_crust_mantle(num_interfaces), &
              nibool_interfaces_crust_mantle(num_interfaces),stat=ierr)
     if (ierr /= 0 ) call exit_mpi(myrank,'Error allocating array my_neighbors_crust_mantle etc.')
@@ -878,7 +878,7 @@ subroutine read_mesh_databases_MPI_adios(iregion_code)
     num_colors_outer_outer_core = num_colors_outer
     num_colors_inner_outer_core = num_colors_inner
 
-    ! mpi arrays
+    ! MPI arrays
     allocate(my_neighbors_outer_core(num_interfaces), &
              nibool_interfaces_outer_core(num_interfaces),stat=ierr)
     if (ierr /= 0 ) call exit_mpi(myrank,'Error allocating array my_neighbors_outer_core etc.')
@@ -925,7 +925,7 @@ subroutine read_mesh_databases_MPI_adios(iregion_code)
     num_colors_outer_inner_core = num_colors_outer
     num_colors_inner_inner_core = num_colors_inner
 
-    ! mpi arrays
+    ! MPI arrays
     allocate(my_neighbors_inner_core(num_interfaces), &
              nibool_interfaces_inner_core(num_interfaces),stat=ierr)
     if (ierr /= 0 ) call exit_mpi(myrank,'Error allocating array my_neighbors_inner_core etc.')

@@ -771,7 +771,7 @@
       print *,'simulation time step size:'
       print *,'  DT determined = ',DT
       print *,'  Par_file: user overrides with specified DT = ',USER_DT
-      print *,''
+      print *
     endif
     DT = USER_DT
   endif

@@ -888,7 +888,7 @@
   num_colors_outer_wmax      = ints_to_reduce(4)
   num_colors_inner_wmax      = ints_to_reduce(5)
 
-  ! note: the number of interfaces could be different for different mpi processes
+  ! note: the number of interfaces could be different for different MPI processes
   !       (e.g., depending if a slice is located at a chunk edge or inside)
   !       determining the maximum values helps to assign a common rule for array offsets for all processes.
   !
@@ -900,9 +900,9 @@
       num_colors_outer > num_colors_outer_wmax) then
     print *,'Error: rank ',myrank,' num_interfaces ', &
             num_interfaces,max_nibool_interfaces,num_phase_ispec,num_colors_inner,num_colors_outer, &
-            ' for mpi arrays differ from max values: ', &
+            ' for MPI arrays differ from max values: ', &
             num_interfaces_wmax,max_nibool_interfaces_wmax,num_phase_ispec_wmax,num_colors_inner_wmax,num_colors_outer_wmax
-    call exit_mpi(myrank,'Error num_interfaces for mpi arrays in adios saved file')
+    call exit_mpi(myrank,'Error num_interfaces for MPI arrays in adios saved file')
   endif
 
   ! create the name for the database of the current slide and region

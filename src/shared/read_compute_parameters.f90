@@ -149,7 +149,7 @@
       print *,'simulation number of time steps:'
       print *,'  NSTEP determined = ',NSTEP
       print *,'  Par_file: user overrides with specified NSTEP = ',USER_NSTEP
-      print *,''
+      print *
     endif
     NSTEP = USER_NSTEP
   endif

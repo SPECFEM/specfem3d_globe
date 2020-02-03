@@ -35,7 +35,7 @@
 
 ! creates the inner core cube of the mesh
 
-  use constants,only: NGNOD,myrank,R_EARTH, &
+  use constants, only: NGNOD,myrank,R_EARTH, &
     IFLAG_BOTTOM_CENTRAL_CUBE,IFLAG_TOP_CENTRAL_CUBE,IFLAG_MIDDLE_CENTRAL_CUBE,IFLAG_IN_FICTITIOUS_CUBE, &
     CHUNK_AB,CHUNK_AB_ANTIPODE, &
     CHUNK_AC,CHUNK_AC_ANTIPODE, &
