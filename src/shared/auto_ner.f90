@@ -819,6 +819,7 @@
   double precision :: alpha
   double precision :: x, y
   integer :: ic, ix, iy, in
+  ! topology of the elements
   integer, parameter, dimension(NBNODE) :: iaddx(NBNODE) = (/0,1,2,2,2,1,0,0/)
   integer, parameter, dimension(NBNODE) :: iaddy(NBNODE) = (/0,0,0,1,2,2,2,1/)
   integer :: k

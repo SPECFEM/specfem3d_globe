@@ -620,6 +620,7 @@
   ! array with model density
   allocate(rhostore(NGLLX,NGLLY,NGLLZ,nspec),stat=ier)
   if (ier /= 0) stop 'Error in allocate 6'
+
   rhostore(:,:,:,:) = 0.0_CUSTOM_REAL
 
   ! for anisotropy
@@ -692,6 +693,7 @@
   ! additional array stores for azimuthal
   allocate(mu0store(NGLLX,NGLLY,NGLLZ,nspec),stat=ier)
   if (ier /= 0) stop 'Error allocating mu0,Gc,Gs array'
+
   mu0store(:,:,:,:) = 0.0_CUSTOM_REAL
 
   if (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
@@ -703,6 +705,7 @@
              Gs_prime_store(1,1,1,1),stat=ier)
   endif
   if (ier /= 0) stop 'Error allocating Gc_prime,Gs_prime array'
+
   Gc_prime_store(:,:,:,:) = 0.0_CUSTOM_REAL
   Gs_prime_store(:,:,:,:) = 0.0_CUSTOM_REAL
 
@@ -893,7 +896,7 @@
   subroutine crm_setup_layers(ipass,NEX_PER_PROC_ETA)
 
   use constants, only: SUPPRESS_CRUSTAL_MESH, &
-    GAUSSALPHA,GAUSSBETA,NGLLX,NGLLY,NGLLZ
+    GAUSSALPHA,GAUSSBETA,NGLLX,NGLLY,NGLLZ,NGNOD
 
   use meshfem3D_par, only: &
     iregion_code,IREGION_CRUST_MANTLE, &
@@ -915,6 +918,8 @@
   ! local parameters
   integer :: cpt
   integer :: i,ier
+  ! topology of the elements
+  integer, dimension(NGNOD) :: iaddx,iaddy,iaddz
 
   ! do only once
   if (ipass == 1) then
@@ -932,13 +937,11 @@
     call get_shape2D(shape2D_bottom,dershape2D_bottom,xigll,yigll,NGLLX,NGLLY)
     call get_shape2D(shape2D_top,dershape2D_top,xigll,yigll,NGLLX,NGLLY)
 
-    ! create the shape of the corner nodes of a regular mesh element
+    ! create the topology of the corner nodes of a regular mesh element
     call hex_nodes(iaddx,iaddy,iaddz)
-
-    ! reference element has size one here, not two
-    iaddx(:) = iaddx(:) / 2
-    iaddy(:) = iaddy(:) / 2
-    iaddz(:) = iaddz(:) / 2
+    iaddx_corner(:) = iaddx(:) / 2  ! reference element corner has size one here, not two
+    iaddy_corner(:) = iaddy(:) / 2
+    iaddz_corner(:) = iaddz(:) / 2
   endif
 
   ! initializes element layers

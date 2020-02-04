@@ -103,7 +103,7 @@
 
   double precision,intent(in) :: r_top, r_bottom !,value
   integer,intent(in) :: ner !,i
-  double precision, dimension (2,ner),intent(out) :: stretch_tab
+  double precision, dimension (2,ner),intent(inout) :: stretch_tab
 
   ! local parameters
   double precision :: R15,R35,R55,R80

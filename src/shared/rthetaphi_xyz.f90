@@ -69,7 +69,7 @@
   double precision, intent(in) :: x,y,z
   double precision, intent(out) :: r,theta,phi
 
-  double precision xmesh,ymesh,zmesh
+  double precision :: xmesh,ymesh,zmesh
 
   xmesh = x
   ymesh = y

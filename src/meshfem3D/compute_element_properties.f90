@@ -34,7 +34,7 @@
 
   use constants, only: NGLLX,NGLLY,NGLLZ,NGNOD,CUSTOM_REAL, &
     IFLAG_220_80,IFLAG_670_220,IFLAG_80_MOHO,IFLAG_MANTLE_NORMAL,IFLAG_CRUST, &
-    IFLAG_OUTER_CORE_NORMAL, &
+    IFLAG_OUTER_CORE_NORMAL,IFLAG_IN_FICTITIOUS_CUBE, &
     IREGION_CRUST_MANTLE,SUPPRESS_INTERNAL_TOPOGRAPHY,USE_GLL
 
   use meshfem3D_models_par, only: &
@@ -246,11 +246,13 @@
   ! updates Jacobian
   ! (only needed for second meshing phase)
   if (ipass == 2) then
-    call recalc_jacobian_gll3D(xstore,ystore,zstore,xigll,yigll,zigll, &
-                               ispec,nspec, &
-                               xixstore,xiystore,xizstore, &
-                               etaxstore,etaystore,etazstore, &
-                               gammaxstore,gammaystore,gammazstore)
+    if (idoubling(ispec) /= IFLAG_IN_FICTITIOUS_CUBE) then
+      call recalc_jacobian_gll3D(xstore,ystore,zstore,xigll,yigll,zigll, &
+                                 ispec,nspec, &
+                                 xixstore,xiystore,xizstore, &
+                                 etaxstore,etaystore,etazstore, &
+                                 gammaxstore,gammaystore,gammazstore)
+    endif
   endif
 
   end subroutine compute_element_properties

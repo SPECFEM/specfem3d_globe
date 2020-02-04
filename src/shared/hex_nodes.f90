@@ -27,12 +27,12 @@
 
   subroutine hex_nodes(iaddx,iaddy,iaddz)
 
-  use constants
+  use constants, only: NGNOD
 
   implicit none
 
 ! topology of the elements
-  integer, dimension(NGNOD) :: iaddx,iaddy,iaddz
+  integer, dimension(NGNOD), intent(out) :: iaddx,iaddy,iaddz
 
 ! define the topology of the hexahedral elements
 
@@ -175,7 +175,7 @@
 !  zelm(ia) = dble(zstore(iglob))
 !enddo
 
-  use constants
+  use constants, only: NGNOD,MIDX,MIDY,MIDZ,NGLLX,NGLLY,NGLLZ
 
   implicit none
 

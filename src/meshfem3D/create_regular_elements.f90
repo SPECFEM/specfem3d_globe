@@ -57,7 +57,7 @@
     xstore,ystore,zstore
 
   use regions_mesh_par, only: &
-    xigll,yigll,zigll,iaddx,iaddy,iaddz,shape3D,dershape2D_bottom
+    xigll,yigll,zigll,iaddx_corner,iaddy_corner,iaddz_corner,shape3D,dershape2D_bottom
 
   use regions_mesh_par2, only: &
     iboun
@@ -189,12 +189,12 @@
         ! loop on all the corner nodes of this element
         do ignod = 1,NGNOD_EIGHT_CORNERS
           ! define topological coordinates of this mesh point
-          offset_x(ignod) = (ix_elem - 1) + iaddx(ignod) * ratio_sampling_array(ilayer)
-          offset_y(ignod) = (iy_elem - 1) + iaddy(ignod) * ratio_sampling_array(ilayer)
+          offset_x(ignod) = (ix_elem - 1) + iaddx_corner(ignod) * ratio_sampling_array(ilayer)
+          offset_y(ignod) = (iy_elem - 1) + iaddy_corner(ignod) * ratio_sampling_array(ilayer)
           if (ilayer == 1 .and. CASE_3D) then
-            offset_z(ignod) = iaddz(ignod)
+            offset_z(ignod) = iaddz_corner(ignod)
           else
-            offset_z(ignod) = (iz_elem - 1) + iaddz(ignod)
+            offset_z(ignod) = (iz_elem - 1) + iaddz_corner(ignod)
           endif
         enddo
         call add_missing_nodes(offset_x,offset_y,offset_z)

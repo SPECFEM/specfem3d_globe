@@ -197,11 +197,14 @@
           ! note: the mesh can have ellipticity, thus the geocentric colatitude might differ from the geographic one
           !
           ! converts position to geocentric coordinates
-          call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r,theta,phi)
-          print *,'Error Jacobian rank:',myrank
-          print *,'  location r/lat/lon: ',sngl(r*R_EARTH_KM),'km', &
-                  sngl(90.0-(theta*RADIANS_TO_DEGREES)),sngl(phi*RADIANS_TO_DEGREES)
-          print *,'  Jacobian: ',jacobian
+          print *,'Error Jacobian rank:',myrank,'has invalid Jacobian ',jacobian
+          print *,'  Jacobian: ',jacobian,'xxi/eta/gamma',xxi,xeta,xgamma,'yxi/eta/gamma',yxi,yeta,ygamma,'zxi',zxi/zeta,zgamma
+          if (DEBUG) then
+            print *,'  location x/y/z    : ',xmesh,ymesh,zmesh
+            call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r,theta,phi)
+            print *,'  location r/lat/lon: ',sngl(r*R_EARTH_KM),'km', &
+                    sngl(90.0-(theta*RADIANS_TO_DEGREES)),sngl(phi*RADIANS_TO_DEGREES)
+          endif
           call exit_MPI(myrank,'3D Jacobian undefined in recalc_jacobian_gll3D.f90')
         endif
 

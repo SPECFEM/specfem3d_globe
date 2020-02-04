@@ -47,7 +47,7 @@
     xstore,ystore,zstore
 
   use regions_mesh_par, only: &
-    xigll,yigll,zigll,iaddx,iaddy,iaddz,shape3D
+    xigll,yigll,zigll,shape3D
 
   use regions_mesh_par2, only: &
     iboun
@@ -67,7 +67,7 @@
   double precision, intent(in) :: R_CENTRAL_CUBE
 
 ! MPI cut-planes parameters along xi and along eta
-logical, dimension(2,nspec), intent(inout) :: iMPIcut_xi,iMPIcut_eta
+  logical, dimension(2,nspec), intent(inout) :: iMPIcut_xi,iMPIcut_eta
 
 ! code for the four regions of the mesh
   integer, intent(in) :: iregion_code
@@ -79,7 +79,7 @@ logical, dimension(2,nspec), intent(inout) :: iMPIcut_xi,iMPIcut_eta
 
   logical, dimension(nspec), intent(inout) :: ispec_is_tiso
 
-  !local parameters
+  ! local parameters
   double precision, dimension(NGNOD) :: xelm,yelm,zelm
   ! to define the central cube in the inner core
   double precision :: radius_cube
@@ -88,6 +88,8 @@ logical, dimension(2,nspec), intent(inout) :: iMPIcut_xi,iMPIcut_eta
   integer :: nx_central_cube,ny_central_cube,nz_central_cube
   ! the height at which the central cube is cut
   integer :: nz_inf_limit
+  ! topology of the elements
+  integer, dimension(NGNOD) :: iaddx,iaddy,iaddz
 
   ! create the shape of a regular mesh element in the inner core
   call hex_nodes(iaddx,iaddy,iaddz)

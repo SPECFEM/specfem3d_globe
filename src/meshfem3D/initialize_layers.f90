@@ -90,8 +90,8 @@
 
   nex_eta_moho = NEX_PER_PROC_ETA
 
-  r_moho = RMOHO/R_EARTH
+  r_moho = RMOHO / R_EARTH
   r_400 = R400 / R_EARTH
-  r_670 = R670/R_EARTH
+  r_670 = R670 / R_EARTH
 
   end subroutine initialize_layers
