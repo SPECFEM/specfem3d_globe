@@ -52,7 +52,7 @@
 
   use constants
 
-  use shared_parameters, only: MODEL, &
+  use shared_parameters, only: MODEL,MODEL_NAME, &
     REFERENCE_1D_MODEL,REFERENCE_CRUSTAL_MODEL, &
     THREE_D_MODEL,THREE_D_MODEL_IC, &
     MODEL_GLL,MODEL_GLL_TYPE, &
@@ -98,7 +98,17 @@
   enddo
   MODEL_ROOT = MODEL_L ! sets root name of model to original one
 
+  ! note: in the following we check the model name and see if some specific ending has been appended
+  !       to override the default settings of the chosen model.
+  !
+  !       these appended endings could in principle be combined, however the order is sensitive.
+  !       as a working usage example:
+  !         "MODEL  = **model**_crust1.0_ACM_AIC"
+  !       would override the crustal model to be CRUST1.0, use a fully anisotropic crust/mantle (ACM) and inner core (AIC).
+
   ! inner core anisotropy
+  ! model name has "_AIC" appended: "MODEL  = **model**_AIC"   (AIC = Anisotropic Inner Core)
+  !
   ! initializes inner core parameters
   ANISOTROPIC_INNER_CORE = .false.
   THREE_D_MODEL_IC = 0
@@ -114,6 +124,8 @@
   endif
 
   ! crust/mantle anisotropy
+  ! model name has "_ACM" appended: "MODEL  = **model**_ACM"  (ACM = fully Anisotropic Crust/Mantle)
+  !
   ! uses no full anisotropy calculations by default
   ANISOTROPIC_3D_MANTLE = .false.
   ! determines if the anisotropic mantle option should be turned on
@@ -127,6 +139,17 @@
   endif
 
   ! crustal option by name ending
+  ! model name has "_onecrust" or "_1Dcrust" appended
+  !
+  ! idea suggested by Jeroen Ritsema:
+  ! "If I may suggest one modification to specfem-3D: allow for 3D mantle structure (i.e. s20rts) and a PREM crust.
+  !  This is helpful in isolating the mantle contribution to waveform anomalies.
+  !  Right now, crust2.0 structure is automatically included if the mantle model is turned on."
+  !
+  ! both settings will ignore the 3D crust and use the 1D crustal structure as defined by the 1D reference model:
+  ! _onecrust: uses a 1-element layer crust, instead of a 2-element layers in the crust
+  ! _1Dcrust : uses a 2-element layer crust (default layering, and ignores the 3D crustal setting)
+  !
   impose_crust = 0
   ending = ''
   ! 1D crust options
@@ -146,6 +169,11 @@
   endif
 
   ! 3D crust options
+  ! model name has "_crustmaps", "_crust1.0", "_crust2.0", "_epcrust", "_eucrust", "_crustSH" appended:
+  ! "MODEL   = **model**_crust1.0" ..
+  !
+  ! this will use the corresponding 3D crustal model instead of the default crust (usually CRUST2.0).
+  !
   ! checks with '_crustmaps' option
   if (len_trim(MODEL_ROOT) > 10 ) &
     ending = MODEL_ROOT(len_trim(MODEL_ROOT)-9:len_trim(MODEL_ROOT))
@@ -190,6 +218,8 @@
     MODEL_ROOT = MODEL_ROOT(1: len_trim(MODEL_ROOT)-8)
   endif
 
+  ! save main model name (without appended options)
+  MODEL_NAME = trim(MODEL_ROOT)
 
 !---
 !
@@ -233,7 +263,7 @@
   TRANSVERSE_ISOTROPY = .false.
 
   ! model specifics
-  select case (trim(MODEL_ROOT))
+  select case (trim(MODEL_NAME))
 
   ! 1-D models
   case ('1d_isotropic_prem')
@@ -245,15 +275,15 @@
 
   case ('1d_iasp91','1d_1066a','1d_ak135f_no_mud','1d_jp3d','1d_sea99')
     HONOR_1D_SPHERICAL_MOHO = .true.
-    if (MODEL_ROOT == '1d_iasp91') then
+    if (trim(MODEL_NAME) == '1d_iasp91') then
       REFERENCE_1D_MODEL = REFERENCE_MODEL_IASP91
-    else if (MODEL_ROOT == '1d_1066a') then
+    else if (trim(MODEL_NAME) == '1d_1066a') then
       REFERENCE_1D_MODEL = REFERENCE_MODEL_1066A
-    else if (MODEL_ROOT == '1d_ak135f_no_mud') then
+    else if (trim(MODEL_NAME) == '1d_ak135f_no_mud') then
       REFERENCE_1D_MODEL = REFERENCE_MODEL_AK135F_NO_MUD
-    else if (MODEL_ROOT == '1d_jp3d') then
+    else if (trim(MODEL_NAME) == '1d_jp3d') then
       REFERENCE_1D_MODEL = REFERENCE_MODEL_JP1D
-    else if (MODEL_ROOT == '1d_sea99') then
+    else if (trim(MODEL_NAME) == '1d_sea99') then
       REFERENCE_1D_MODEL = REFERENCE_MODEL_SEA1D
     else
       stop 'reference 1D Earth model unknown'
@@ -303,7 +333,7 @@
     ONE_CRUST = .true.
     TRANSVERSE_ISOTROPY = .true.
 
-  case ('s20rts')
+  case ('s20rts','s20rts_paper')
     CASE_3D = .true.
     CRUSTAL = .true.
     MODEL_3D_MANTLE_PERTUBATIONS = .true.
@@ -311,7 +341,7 @@
     THREE_D_MODEL = THREE_D_MODEL_S20RTS
     TRANSVERSE_ISOTROPY = .true.
 
-  case ('s40rts')
+  case ('s40rts','s40rts_paper')
     CASE_3D = .true.
     CRUSTAL = .true.
     MODEL_3D_MANTLE_PERTUBATIONS = .true.

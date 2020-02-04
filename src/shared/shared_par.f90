@@ -112,7 +112,7 @@
 
   ! file directories
   character(len=MAX_STRING_LEN) :: OUTPUT_FILES
-  character(len=MAX_STRING_LEN) :: MODEL
+  character(len=MAX_STRING_LEN) :: MODEL,MODEL_NAME
   character(len=MAX_STRING_LEN) :: LOCAL_PATH,LOCAL_TMP_PATH
 
   ! attenuation parameters

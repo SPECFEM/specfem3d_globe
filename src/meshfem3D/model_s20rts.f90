@@ -32,6 +32,15 @@
 !
 ! Note that S20RTS uses transversely isotropic PREM as a background
 ! model, and that we use the PREM radial attenuation model when ATTENUATION is incorporated.
+!
+! The spherical harmonic model provided in DATA/s20rts/S20RTS.sph
+! uses the updated S20RTS model from November, 2010.
+! Thus, it is likely the follow-up model S20RTSb mentioned in:
+!
+! Ritsema, J. and H.J. van Heijst, 2004.
+! Global transition zone tomography,
+! JGR, 109, B02302, doi:10.1029/2003JB002610
+!
 !--------------------------------------------------------------------------------------------------
 
   module model_s20rts_par
@@ -106,7 +115,8 @@
 
   subroutine read_model_s20rts()
 
-  use constants
+  use constants, only: IIN
+
   use model_s20rts_par
 
   implicit none
@@ -155,7 +165,10 @@
 
   subroutine mantle_s20rts(radius,theta,phi,dvs,dvp,drho)
 
-  use constants
+  use constants, only: EARTH_R
+
+  use shared_parameters, only: MODEL_NAME
+
   use model_s20rts_par
 
   implicit none
@@ -164,7 +177,50 @@
 
   ! local parameters
   ! factor to convert perturbations in shear speed to perturbations in density
+  !
+  ! note: the scaling to density is not mentioned in Ritsema's 1999 or 2004 paper.
+  !       thus, the scaling factor below is an ad hoc choice and somewhat vague estimation.
+  !       it refers mostly to:
+  !       * Karato, 1993
+  !         Effects of anelasticity on seismic tomography,
+  !         GRL, 20 (15), p. 1623-1626.
+  !         who shows in figure 2 scaling for drho/dvp and drho/dvs.
+  !         the factor 0.4 is a rough guess and average for both throughout the mantle.
+  !
+  !       still, density perturbation scaling is not constant throughout the mantle, more recent studies about it are:
+  !       * Romanowicz, 2001, Can we resolve 3D density heterogeneity in the lower mantle,
+  !         GRL, 28 (6), p. 1107-1110.
+  !         which shows a dln(rho)/dln(vs) ~ 0.4 only for upper mantle based on degree-2 structure comparison
+  !       * Karato & Karki, 2001, Origin of lateral variation of seismic wave velocities and density in the deep mantle,
+  !         JGR, 106 (B10), p. 21,771-21,783.
+  !         where figure "Plate" 2 shows roughly a ratio R rho/s ~ 0.4 for a thermal mantle
+  !         with a weaker attenuation/temperature (g=10) connection.
+  !
+  ! the scaling factor 0.4 has also been used in:
+  ! * Masters et al., 2000, The relative behavior of shear velocity, bulk sound speed, and compressional velocity in the mantle:
+  !   Implications for chemical and thermal structure,
+  !   Earth's Deep Interior: Mineral Physics and Tomography From the Atomic to the Global Scale. (2000), Geophys. Monogr. Ser.,
+  !   vol. 117, edited by S. Karato et al., pp. 63-87, AGU.
+  !   where a scaling dln(vs)/dln(rho) = 2.5 -> dln(rho) = 0.4 dln(vs) was used when inverting surface wave data.
+  !   however, it had no effect on Love waves and only minor effect on Rayleigh wave fits.
+  ! * Qin et al., 2009: Reliability of mantle tomography models assessed by spectral element simulation, GJI, 177, 125-144.
+  !
+  ! Other choices would be:
+  ! - factor 0.2 used in:
+  ! * Montagner & Anderson, 1989, Petrological constraints on seismic anisotropy,
+  !   PEPI, 54 (1-2),p. 82-105.
+  !   use scaling factor 0.2 to have drho/rho = 1/5 dL/L (vertically polarized shear velocity perturbations)
+  ! - factor 0.33 used in:
+  ! * Panning & Romanowicz, 2006, A three-dimensional radially anisotropic model of shear velocity in the whole mantle,
+  !   GJI, 167, p. 361-379. doi: 10.1111/j.1365-246X.2006.03100.x
+  !   use scaling factor 0.33 to have dln(rho) = 0.33 dln(Vs)
+  !
   double precision, parameter :: SCALE_RHO = 0.40d0
+
+  ! factor to convert shear vs to vp perturbations
+  ! (see Ritsema & van Heijst, 2004, section 3.3, page 5)
+  double precision, parameter :: SCALE_VP_PAPER = 0.50d0
+  double precision, parameter :: SCALE_RHO_PAPER = 0.50d0  ! assuming same scaling was used as in s40rts paper
 
   double precision, parameter :: R_EARTH_ = EARTH_R ! 6371000.d0
   double precision, parameter :: RMOHO_ = EARTH_R - 24400.0 ! 6346600.d0
@@ -182,15 +238,20 @@
   dvp = ZERO_
   drho = ZERO_
 
+  ! normalized radii
   r_moho = RMOHO_ / R_EARTH_
   r_cmb = RCMB_ / R_EARTH_
   if (radius >= r_moho .or. radius <= r_cmb) return
 
+  ! scaled radius between [-1,1]
   xr = -1.0d0+2.0d0*(radius-r_cmb)/(r_moho-r_cmb)
+
+  ! contributions from vertical splines
   do k = 0,NK_20
     radial_basis(k) = s20rts_rsple(1,NK_20+1,S20RTS_V_spknt(1),S20RTS_V_qq0(1,NK_20+1-k),S20RTS_V_qq(1,1,NK_20+1-k),xr)
   enddo
 
+  ! spherical harmonics
   do l = 0,NS_20
     sint = dsin(theta)
     cost = dcos(theta)
@@ -222,7 +283,25 @@
 
   enddo
 
-  drho = SCALE_RHO*dvs
+  ! we have "MODEL  = s20rts" as the version suggested by Jeroen Ritsema,
+  !     and "MODEL  = s20rts_paper" as the version with the same scaling factors as mentioned in the paper.
+  !
+  if (trim(MODEL_NAME) == 's20rts_paper') then
+    ! original paper version
+    ! density perturbations
+    drho = SCALE_RHO_PAPER * dvs
+
+    ! vp perturbations
+    ! (there is no need for the P12 model in this case, perturbations are scaled dvs values and added to PREM)
+    ! scales 2 dln(vp) = dln(vs), overrides the previous dvp value
+    dvp = SCALE_VP_PAPER * dvs
+
+  else
+    ! suggested model
+    ! dvp based on P12 model
+    ! density perturbations based on Karato/Masters/etc. (for a thermal, anelastic mantle)
+    drho = SCALE_RHO * dvs
+  endif
 
   end subroutine mantle_s20rts
 
@@ -232,7 +311,6 @@
 
   subroutine s20rts_splhsetup()
 
-  use constants
   use model_s20rts_par
 
   implicit none

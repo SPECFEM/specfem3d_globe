@@ -49,10 +49,10 @@
   call world_size(sizeprocs)
   call world_rank(myrank)
 
-! set the base pathname for output files
+  ! set the base pathname for output files
   OUTPUT_FILES = OUTPUT_FILES_BASE
 
-! open main output file, only written to by process 0
+  ! open main output file, only written to by process 0
   if (myrank == 0) then
     if (IMAIN /= ISTANDARD_OUTPUT) &
       open(unit=IMAIN,file=trim(OUTPUT_FILES)//'/output_mesher.txt',status='unknown')
@@ -67,7 +67,7 @@
     call flush_IMAIN()
   endif
 
-! get MPI starting time
+  ! get MPI starting time
   time_start = wtime()
 
   if (myrank == 0) then

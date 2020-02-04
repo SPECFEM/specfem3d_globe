@@ -479,8 +479,9 @@
   integer :: i, iterations, err,prnt
   double precision :: f1, f2, exp1,exp2,dexpval, min_value
 
+  ! frequencies (to compare calculated and target results)
   integer, parameter :: nf = 100
-  double precision,dimension(nf) :: f
+  double precision, dimension(nf) :: f
 
   double precision, external :: attenuation_eval
 
@@ -517,6 +518,14 @@
      tau_s(i) = 1.0 / (PI * 2.0d0 * 10**(exp1 + (i - 1)* 1.0d0 *dexpval))
   enddo
 
+  ! note: for frequency dependent Q models, one would need to define Q(f) at the frequencies f(i) defined above.
+  !       this would require to setup the arrays AS_V%Q and AS_V%iQ to have Q values for each frequency f_i.
+  !
+  !       here we assume a frequency-independent Q model, thus we only need to specify single values
+  !       in AS_V%Q and AS_V%iQ, respectively, based Q_real.
+  !
+  !       this will be done in the following routine call.
+  !
   ! Shove the parameters into the module
   call attenuation_simplex_setup(nf,n,f,Q_real,tau_s,AS_V)
 

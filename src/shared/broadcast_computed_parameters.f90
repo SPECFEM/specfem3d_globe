@@ -127,7 +127,9 @@
   ! broadcasts non-single value parameters
   call bcast_all_ch(LOCAL_PATH,MAX_STRING_LEN)
   call bcast_all_ch(LOCAL_TMP_PATH,MAX_STRING_LEN)
+
   call bcast_all_ch(MODEL,MAX_STRING_LEN)
+  call bcast_all_ch(MODEL_NAME,MAX_STRING_LEN)
 
   call bcast_all_ch(GPU_PLATFORM,128)
   call bcast_all_ch(GPU_DEVICE,128)
