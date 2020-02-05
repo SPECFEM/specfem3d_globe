@@ -79,7 +79,14 @@
   character(len=MAX_STRING_LEN) :: filename
   character(len=32),parameter :: region(4) = (/character(len=32) :: 'crust/mantle', 'outer core', 'inner core', 'central cube'/)
 
+  !debug timing
+  !double precision, external :: wtime
+  !double precision :: tstart,tCPU
+
   ! note: the mesh and time step check is only approximative
+
+  !debug timing
+  !tstart = wtime()
 
   ! safety check
   if (NGLLX < 1 .or. NGLLX > 15) stop 'Invalid NGLLX value in routine check_mesh_resolution'
@@ -111,12 +118,10 @@
   vpmax_reg = - HUGEVAL
 
 ! openmp mesher
-!$OMP PARALLEL DEFAULT(PRIVATE) &
-!$OMP SHARED(nspec,nglob,iregion_code, &
-!$OMP xstore,ystore,zstore, &
-!$OMP kappavstore,kappahstore,muvstore,muhstore,rhostore, &
-!$OMP elemsize_min_reg,elemsize_max_reg,eig_ratio_min_reg,eig_ratio_max_reg, &
-!$OMP pmax_reg,dt_max_reg,cmax_reg,val_ispec_pmax,val_ispec_dt,DT)
+!$OMP PARALLEL DEFAULT(SHARED) &
+!$OMP PRIVATE(ispec,vpmax,vsmin,elemsize_min,elemsize_max, &
+!$OMP eig_ratio_min,eig_ratio_max, &
+!$OMP avg_distance,pmax,distance_min,dx,deltat,dt_max,cmax)
 !$OMP DO
   do ispec = 1,nspec
 
@@ -264,6 +269,10 @@
 
   ! empirical minimum period resolved by mesh
   pmax_empirical = T_min
+
+  !debug timing
+  !tCPU = wtime() - tstart
+  !if (myrank == 0) print *,'debug: timing region ',iregion_code,' check mesh resolution = ',sngl(tCPU),'(s)'
 
   ! user output
   if (myrank == 0) then

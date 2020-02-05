@@ -325,7 +325,10 @@
     print *,'  local_dim/global_dim = ',local_dim,'/',global_dim
 
     rank = 0
-    if (mod(global_dim,local_dim) == 0) then
+    ! note: the mod-function is only standard for integer, but an extension for integer(8).
+    !       thus, instead of testing mod(global_dim,local_dim) == 0,
+    !       we will just do what mod() would do and compute mod(a,b) = a - int(a/b) * b explicitly
+    if ((global_dim - int(global_dim/local_dim) * local_dim) == 0) then
       ! sizeprocs
       rank = int(global_dim/local_dim)
     else
