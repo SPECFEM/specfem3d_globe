@@ -978,7 +978,7 @@
     ROCEAN = 3390000.d0         ! (Physical surface)
     RMIDDLE_CRUST = 3340000.d0  ! 50 km
     RMOHO = 3280000.d0          ! (Crust-mantle boundary)  110 km average crustal thickness
-    R80  = 3055500.d0           ! (Rheological lithosphere) 334.5 km deep, too small will cause negative Jacobian err
+    R80  = 3055500.d0           ! (Rheological lithosphere) 334.5 km deep, if smaller will cause negative Jacobian err
     R120 = -1.d0                ! by default there is no d120 discontinuity, except in IASP91, therefore set to fictitious value
     R220 = 2908000.d0           ! (Thermal lithosphere) d = 482 km
     R400 = 2655000.d0           ! d = 735 km
@@ -1023,8 +1023,15 @@
   ! Mars
   ! Ebru - a quick fix for MARS but should be done and checked again during 3D implementation
   if (REFERENCE_1D_MODEL == REFERENCE_MODEL_SOHL) then
-    RMOHO_FICTITIOUS_IN_MESHER = RMOHO
-    R80_FICTITIOUS_IN_MESHER = R80
+    ! initializes fictitious levels
+    RMOHO_FICTITIOUS_IN_MESHER = RMOHO      ! Mars: moho at 110km depth  (see above)
+    R80_FICTITIOUS_IN_MESHER = R80          !       r80  at 334.5 km depth
+    if (CRUSTAL .and. CASE_3D) then
+      ! mesh will honor 3D crustal moho topography
+      ! moho in current crustal maps varies between 14 - 106 km
+      RMOHO_FICTITIOUS_IN_MESHER = RMOHO_FICTITIOUS_IN_MESHER + RMOHO_STRETCH_ADJUSTMENT
+      R80_FICTITIOUS_IN_MESHER = R80_FICTITIOUS_IN_MESHER + R80_STRETCH_ADJUSTMENT
+    endif
   endif
 
   end subroutine get_model_parameters_radii

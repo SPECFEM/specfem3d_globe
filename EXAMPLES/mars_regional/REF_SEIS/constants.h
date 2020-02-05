@@ -69,10 +69,10 @@
 
 ! input, output and main MPI I/O files
 ! note: careful with these unit numbers, we mostly use units in the 40-50 range.
-!       cray Fortran e.g. reserves 0,5,6 (standard error,input,output units) and 100-102
-  integer, parameter :: ISTANDARD_OUTPUT = 6
+!       cray Fortran e.g. reserves 0,5,6 (standard error,input,output units) and 100,101,102 (input,output,error unit)
+  integer, parameter :: ISTANDARD_OUTPUT = 6     ! or for cray: 101
+! I/O unit for file input,output
   integer, parameter :: IIN = 40,IOUT = 41
-
 ! uncomment this to write messages to a text file
   integer, parameter :: IMAIN = 42
 ! uncomment this to write messages to the screen (slows down the code)
@@ -403,10 +403,27 @@
 !!
 !!-----------------------------------------------------------
 
+! ADIOS2 engines
+!! note on native engine types:
+!!  - "MPI" is not supported yet by adios2 version (current 2.4.0), check out in future.
+!!  - "BPfile" doesn't support file appending yet, which is needed at the moment.
+!!  - "BP3" would allow for backward compatibility to ADIOS 1.x, but doesn't support file appending yet.
+!!  - "BP4" is the new adios2 format with enhanced capabilities.
+!! we will use "BP4" by default.
+!!
+!! BP4
+!! format details: https://adios2.readthedocs.io/en/latest/engines/engines.html#bp4
+!!
+!! note: parameter SubStreams=64 for larger runs with NPROCS > 64 creates problems when reading scalar values (in appended mode),
+!!       try to avoid it for now as default parameter.
+!!       for undo_att, it seems to work however and can be used in ADIOS2_ENGINE_PARAMS_UNDO_ATT setting.
+!!
+!!       in future adios2 versions, re-evalute if parameters could be "SubStreams=64,MaxBufferSize=800Mb" for larger runs
   character(len=*), parameter :: ADIOS2_ENGINE_DEFAULT = "BP4"
-  character(len=*), parameter :: ADIOS2_ENGINE_PARAMS_DEFAULT = "SubStreams=64"
+  character(len=*), parameter :: ADIOS2_ENGINE_PARAMS_DEFAULT = "" ! add "MaxBufferSize=800Mb" for larger runs
+
   character(len=*), parameter :: ADIOS2_ENGINE_UNDO_ATT = "BP4"
-  character(len=*), parameter :: ADIOS2_ENGINE_PARAMS_UNDO_ATT = "SubStreams=64"
+  character(len=*), parameter :: ADIOS2_ENGINE_PARAMS_UNDO_ATT = "" ! add "SubStreams=64,MaxBufferSize=800Mb" for larger runs
 
 
 !!-----------------------------------------------------------
@@ -1065,11 +1082,11 @@
   double precision, parameter :: MARS_SECONDS_PER_HOUR = 3600.d0
 
 ! for the stretching of crustal elements in the case of 3D models
-  double precision, parameter :: MARS_MAX_RATIO_CRUST_STRETCHING = 0.7d0 ! 0.75
-  double precision, parameter :: MARS_RMOHO_STRETCH_ADJUSTMENT = -10000.d0 ! moho down to 120 km
-  double precision, parameter :: MARS_R80_STRETCH_ADJUSTMENT =   -20000.d0 ! r80 down to 120km
-! adapted regional moho stretching
+  double precision, parameter :: MARS_MAX_RATIO_CRUST_STRETCHING = 0.9d0 ! choose ratio < 1 for stretching effect
+  double precision, parameter :: MARS_RMOHO_STRETCH_ADJUSTMENT = 0.d0 ! moho at 110 km
+  double precision, parameter :: MARS_R80_STRETCH_ADJUSTMENT =   0.d0 ! r80  at 334.5 km
+! adapted regional moho stretching (use only for special areas to optimize a local mesh)
 ! 1~6 chunk simulation, 5-layer crust
   logical, parameter :: MARS_REGIONAL_MOHO_MESH = .false.
-  logical, parameter :: MARS_HONOR_DEEP_MOHO = .true.
+  logical, parameter :: MARS_HONOR_DEEP_MOHO = .false.
 

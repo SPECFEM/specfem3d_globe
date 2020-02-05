@@ -70,7 +70,7 @@ if [[ $? -ne 0 ]]; then exit 1; fi
 
 # plotting
 if [ "$vis" == "plot" ]; then
-  echo 
+  echo
   sed "s:alpha_kl:bulk_betav_kl:g" state_alpha_kl.pvsm > tmp.pvsm
   ./paraviewpython-example.py tmp.pvsm
   # checks exit code

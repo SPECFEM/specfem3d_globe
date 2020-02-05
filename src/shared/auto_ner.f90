@@ -130,11 +130,18 @@
     ! inner core
     RADIUS_INNER_CORE = 515.0d0
     P_VELOCITY_MAX = 7.3d0 * 1.1d0        ! vp: 11.26220 - 6.36400 * (1221.49/6371.)**2; daniel: increase by a factor 1.1x
-    RADIAL_LEN_RATIO_CENTRAL_CUBE = 0.7   ! for an aspect ratio around 1.3
+    RADIAL_LEN_RATIO_CENTRAL_CUBE = 0.76  ! for an aspect ratio around 1.3
     ! surface/crust
     RADIUS_SURFACE = 3390.0d0       ! in km
     P_VELOCITY_MAX_CRUST = 7.73d0   ! according to crustmap marscrustp7.cmap (lower crust layer) files
-    RADIAL_LEN_RATIO_CRUST = 0.46   ! empirical factor to account for aspect ratio in crust
+    ! empirical factor to account for aspect ratio in crust
+    if (NEX_MAX < 480) then
+      ! allows for larger time steps
+      RADIAL_LEN_RATIO_CRUST = 0.85
+    else
+      ! takes stretching effect into account which will lead to thinner elements closer to surface
+      RADIAL_LEN_RATIO_CRUST = 0.46
+    endif
   end select
 
   ! relative minimum distance between two GLL points
@@ -196,6 +203,9 @@
   ! return as DT
   DT = dt_suggested
 
+  !debug
+  !print *,'debug: auto_time_stepping: inner core elem size',elem_size,'width/nex',WIDTH,NEX_MAX,'DT',DT
+
   ! Mars
   if (REFERENCE_1D_MODEL == REFERENCE_MODEL_SOHL) then
     ! crustal elements
@@ -205,11 +215,9 @@
     ! minimum suggested time step
     DT = min(dt_suggested,dt_suggested_crust)
     !debug
-    !print *,'debug: auto_time_stepping: mars dt_suggested/dt_suggested_crust',dt_suggested,dt_suggested_crust
+    !print *,'debug: auto_time_stepping: mars crust elem size ',elem_size, &
+    !        'dt_suggested,dt_suggested_crust',dt_suggested,dt_suggested_crust
   endif
-
-  !debug
-  !print *,'debug: auto_time_stepping: inner core elem size',elem_size,'width/nex',WIDTH,NEX_MAX,'DT',DT
 
   end subroutine auto_time_stepping
 

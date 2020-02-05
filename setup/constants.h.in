@@ -1082,11 +1082,11 @@
   double precision, parameter :: MARS_SECONDS_PER_HOUR = 3600.d0
 
 ! for the stretching of crustal elements in the case of 3D models
-  double precision, parameter :: MARS_MAX_RATIO_CRUST_STRETCHING = 0.7d0 ! 0.75
-  double precision, parameter :: MARS_RMOHO_STRETCH_ADJUSTMENT = -10000.d0 ! moho down to 120 km
-  double precision, parameter :: MARS_R80_STRETCH_ADJUSTMENT =   -20000.d0 ! r80 down to 120km
-! adapted regional moho stretching
+  double precision, parameter :: MARS_MAX_RATIO_CRUST_STRETCHING = 0.9d0 ! choose ratio < 1 for stretching effect
+  double precision, parameter :: MARS_RMOHO_STRETCH_ADJUSTMENT = 0.d0 ! moho at 110 km
+  double precision, parameter :: MARS_R80_STRETCH_ADJUSTMENT =   0.d0 ! r80  at 334.5 km
+! adapted regional moho stretching (use only for special areas to optimize a local mesh)
 ! 1~6 chunk simulation, 5-layer crust
   logical, parameter :: MARS_REGIONAL_MOHO_MESH = .false.
-  logical, parameter :: MARS_HONOR_DEEP_MOHO = .true.
+  logical, parameter :: MARS_HONOR_DEEP_MOHO = .false.
 

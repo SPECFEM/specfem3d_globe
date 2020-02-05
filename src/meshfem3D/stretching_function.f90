@@ -32,6 +32,7 @@
 ! stretch_tab array uses indices index_radius & index_layer :
 !   stretch_tab( index_radius (1=top,2=bottom) , index_layer (1=first layer, 2=second layer,..) )
 
+  use constants, only: myrank
   use shared_parameters, only: MAX_RATIO_CRUST_STRETCHING
 
   implicit none
@@ -48,13 +49,13 @@
   integer :: i
 
   ! safety check
-  if (ner <= 1) stop 'Invalid ner value for stretching_function() routine'
+  if (ner <= 1) call exit_MPI(myrank,'Invalid ner value for stretching_function() routine')
 
   ! initializes array
   ! for example: 2 element layers (ner=2)  for most probable resolutions (NEX < 1000) in the crust
   !                      then stretch_tab(2,1) = 0.5 = stretch_tab(2,2)
   do i = 1,ner
-    stretch_tab(2,i)=(1.d0/ner)
+    stretch_tab(2,i) = (1.d0/ner)
   enddo
 
   ! fill with ratio of the layer one thickness for each element
@@ -73,7 +74,7 @@
   ! deduce r_top and r_bottom
   ! r_top
   stretch_tab(1,1) = r_top
-  do i=2,ner
+  do i = 2,ner
     stretch_tab(1,i) = sum(stretch_tab(2,i:ner))*(r_top-r_bottom) + r_bottom
   enddo
 
@@ -82,6 +83,14 @@
   do i = 1,ner-1
     stretch_tab(2,i) = stretch_tab(1,i+1)
   enddo
+
+  ! debug
+  !if (myrank == 0) then
+  !  print *,'debug: stretch tab top ',stretch_tab(1,:)
+  !  do i = 1,ner-1
+  !    print *,'debug: stretch layer ',i,'thickness',stretch_tab(1,i) - stretch_tab(2,i),'top/bottom',r_top,r_bottom
+  !  enddo
+  !endif
 
   end subroutine stretching_function
 
@@ -164,10 +173,10 @@
   else
     ! Earth
     ! surface radius 6371000.0
-    R15 = 6356000.d0
-    R35 = 6336000.d0
-    R55 = 6326000.d0
-    R80 = 6306000.d0
+    R15 = 6356000.d0    ! d = 15km depth
+    R35 = 6336000.d0    ! d = 35km
+    R55 = 6326000.d0    ! d = 45km
+    R80 = 6306000.d0    ! d = 65km
   endif
 
   if (ner == 3) then
