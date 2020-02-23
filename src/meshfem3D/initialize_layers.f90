@@ -62,7 +62,7 @@
 
   if (.not. ADD_4TH_DOUBLING) NUMBER_OF_MESH_LAYERS = NUMBER_OF_MESH_LAYERS - 1
 
-! define the first and last layers that define this region
+  ! define the first and last layers that define this region
   if (iregion_code == IREGION_CRUST_MANTLE) then
     ifirst_region = 1
     ilast_region = 10 + layer_shift
@@ -79,13 +79,18 @@
     call exit_MPI(myrank,'incorrect region code detected')
   endif
 
-! to consider anisotropic elements first and to build the mesh from the bottom to the top of the region
+  ! to consider anisotropic elements first and to build the mesh from the bottom to the top of the region
+  ! note: in older versions, we assumed to have anisotropic elements at the beginning of ibool(..),etc. arrays
+  !       to save memory and directly address only a portion of it for anisotropic stress computation.
+  !       in newer versions, this mesh addressing has become more general and doesn't rely anymore of having
+  !       anisotropic elements at the beginning of these arrays.
+  !       still, it doesn't hurt to keep this and have it in case for backward compatibility.
   if (ONE_CRUST) then
-    first_layer_aniso = 2
-    last_layer_aniso = 3
+    first_layer_aniso = 2         ! layer 80-MOHO   (see define_all_layers.f90)
+    last_layer_aniso = 3          ! layer 220-80
   else
-    first_layer_aniso = 3
-    last_layer_aniso = 4
+    first_layer_aniso = 3         ! layer 80-MOHO
+    last_layer_aniso = 4          ! layer 220-80
   endif
 
   nex_eta_moho = NEX_PER_PROC_ETA

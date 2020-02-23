@@ -74,6 +74,7 @@
 
   ! initializes defaults
   RADIAL_LEN_RATIO_CENTRAL_CUBE   =     0.40d0
+  RADIAL_LEN_RATIO_CRUST          =     0.40d0
 
   ! conservative stability limit
   MAXIMUM_STABILITY_CONDITION     =     0.40d0

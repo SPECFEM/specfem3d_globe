@@ -273,11 +273,11 @@ program smooth_sem_globe
   !   average size of a spectral element in km = ...
   !   e.g. nproc 12x12, nex 192: element_size = 52.122262
   if (NCHUNKS_VAL == 6) then
-    element_size = TWO_PI / dble(4) * R_EARTH_KM / dble(NEX_XI_VAL)
+    element_size = real(TWO_PI / dble(4) * R_EARTH_KM / dble(NEX_XI_VAL),kind=CUSTOM_REAL)
   else
     ANGULAR_WIDTH_XI_RAD = ANGULAR_WIDTH_XI_IN_DEGREES_VAL * DEGREES_TO_RADIANS
     ANGULAR_WIDTH_ETA_RAD = ANGULAR_WIDTH_ETA_IN_DEGREES_VAL * DEGREES_TO_RADIANS
-    element_size = max( ANGULAR_WIDTH_XI_RAD/NEX_XI_VAL,ANGULAR_WIDTH_ETA_RAD/NEX_ETA_VAL ) * R_EARTH_KM
+    element_size = max( ANGULAR_WIDTH_XI_RAD/NEX_XI_VAL,ANGULAR_WIDTH_ETA_RAD/NEX_ETA_VAL ) * real(R_EARTH_KM,kind=CUSTOM_REAL)
   endif
 
   ! user output
@@ -302,10 +302,10 @@ program smooth_sem_globe
   call synchronize_all()
 
   ! initializes lengths (non-dimensionalizes)
-  element_size_m = element_size / R_EARTH_KM ! e.g. 9 km on the surface, 36 km at CMB
+  element_size_m = element_size / real(R_EARTH_KM,kind=CUSTOM_REAL) ! e.g. 9 km on the surface, 36 km at CMB
 
-  sigma_h = sigma_h / R_EARTH_KM ! scale
-  sigma_v = sigma_v / R_EARTH_KM ! scale
+  sigma_h = sigma_h / real(R_EARTH_KM,kind=CUSTOM_REAL) ! scale
+  sigma_v = sigma_v / real(R_EARTH_KM,kind=CUSTOM_REAL) ! scale
 
   sigma_h2 = 2.0 * sigma_h ** 2  ! factor two for Gaussian distribution with standard variance sigma
   sigma_v2 = 2.0 * sigma_v ** 2
@@ -350,7 +350,7 @@ program smooth_sem_globe
   do k=1,NGLLZ
     do j=1,NGLLY
       do i=1,NGLLX
-        wgll_cube(i,j,k) = wxgll(i)*wygll(j)*wzgll(k)
+        wgll_cube(i,j,k) = real(wxgll(i)*wygll(j)*wzgll(k),kind=CUSTOM_REAL)
       enddo
     enddo
   enddo

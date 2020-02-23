@@ -416,11 +416,11 @@ contains
 
     ! Set engine and parameters
     call adios2_set_engine(adios_group, ADIOS2_ENGINE_DEFAULT, ier)
-    call check_adios_err(ier,"Error setting engine for ADIOS2 IO group in init_adios_group()")
+    call check_adios_err(ier,"Error setting engine for ADIOS2 IO group in open_file_adios_read_and_init_method()")
 
     ! Set default parameters
     call adios2_set_parameters(adios_group, ADIOS2_ENGINE_PARAMS_DEFAULT, ier)
-    call check_adios_err(ier,"Error setting parameters for ADIOS2 IO group in init_adios_group()")
+    call check_adios_err(ier,"Error setting parameters for ADIOS2 IO group in open_file_adios_read_and_init_method()")
   endif
 
   ! Open the handle to file containing all the ADIOS variables for the current io group

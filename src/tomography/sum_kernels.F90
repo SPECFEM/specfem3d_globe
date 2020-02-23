@@ -291,7 +291,8 @@ end program sum_kernels_globe
   allocate(kernel(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE), &
            total_kernel(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),stat=ier)
   if (ier /= 0) stop 'Error allocating kernel arrays'
-  total_kernel(:,:,:,:) = 0._CUSTOM_REAL
+  kernel(:,:,:,:) = 0.0_CUSTOM_REAL
+  total_kernel(:,:,:,:) = 0.0_CUSTOM_REAL
 
   if (USE_SOURCE_MASK) then
     allocate( mask_source(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) )
@@ -307,6 +308,9 @@ end program sum_kernels_globe
     endif
 
     ! sensitivity kernel / frechet derivative
+    kernel(:,:,:,:) = 0.0_CUSTOM_REAL
+
+    ! reads in kernel values
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
     ! ADIOS
     ! reads existing event kernel file

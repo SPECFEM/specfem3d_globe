@@ -191,8 +191,8 @@ program clip_sem_globe
             val = sem_array(i,j,k,ispec)
 
             ! clipping values
-            if (val < min_val) sem_array(i,j,k,ispec) = min_val
-            if (val > max_val) sem_array(i,j,k,ispec) = max_val
+            if (val < min_val) sem_array(i,j,k,ispec) = real(min_val,kind=CUSTOM_REAL)
+            if (val > max_val) sem_array(i,j,k,ispec) = real(max_val,kind=CUSTOM_REAL)
           enddo
         enddo
       enddo
