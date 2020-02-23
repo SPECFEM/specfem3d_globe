@@ -701,7 +701,7 @@
   subroutine get_model_planet_constants()
 
   use constants
-  use shared_parameters,only: &
+  use shared_parameters, only: &
     PLANET_TYPE, &
     HOURS_PER_DAY,SECONDS_PER_HOUR, &
     ONE_MINUS_F_SQUARED,STANDARD_GRAVITY, &
