@@ -58,10 +58,10 @@
 
   file_name = trim(LOCAL_TMP_PATH) // "/dump_all_arrays_adios.bp"
 
-  group_name = "SPECFEM3D_GLOBE_FORWARD_ARRAYS"
+  group_name = "SPECFEM3D_GLOBE_FORWARD_ARRAYS_RESTART"
   call init_adios_group(myadios_fwd_group,group_name)
 
-  ! Define ADIOS variables
+  ! defines ADIOS variables
   group_size_inc = 0
   call define_common_forward_arrays_adios(group_size_inc)
   call define_epsilon_forward_arrays_adios(group_size_inc)
@@ -80,6 +80,8 @@
 
   ! Reset the path to its original value to avoid bugs.
   call write_adios_perform(myadios_fwd_file)
+  ! flushes all engines (makes sure i/o is all written out)
+  call flush_adios_group_all(myadios_fwd_group)
   ! Close ADIOS handler to the restart file.
   call close_file_adios(myadios_fwd_file)
 
@@ -114,19 +116,12 @@
   group_name = "SPECFEM3D_GLOBE_FORWARD_ARRAYS"
   call init_adios_group(myadios_fwd_group,group_name)
 
-  ! Define ADIOS variables
+  ! defines ADIOS variables
   group_size_inc = 0
   call define_common_forward_arrays_adios(group_size_inc)
   call define_epsilon_forward_arrays_adios(group_size_inc)
-  ! TODO check following:
-  ! conditional definition of vars seem to mess with the group size,
-  ! even if the variables are conditionally written.
-  !  if (ROTATION_VAL) then
-    call define_rotation_forward_arrays_adios(group_size_inc)
-  !  endif
-  !  if (ATTENUATION_VAL) then
-    call define_attenuation_forward_arrays_adios(group_size_inc)
-  !  endif
+  if (ROTATION_VAL) call define_rotation_forward_arrays_adios(group_size_inc)
+  if (ATTENUATION_VAL) call define_attenuation_forward_arrays_adios(group_size_inc)
 
   ! Open an ADIOS handler to the restart file.
   call open_file_adios_write(myadios_fwd_file,myadios_fwd_group,file_name,group_name)
@@ -135,17 +130,13 @@
   ! Issue the order to write the previously defined variable to the ADIOS file
   call write_common_forward_arrays_adios()
   call write_epsilon_forward_arrays_adios()
-
-  if (ROTATION_VAL) then
-    call write_rotation_forward_arrays_adios()
-  endif
-
-  if (ATTENUATION_VAL) then
-    call write_attenuation_forward_arrays_adios()
-  endif
+  if (ROTATION_VAL) call write_rotation_forward_arrays_adios()
+  if (ATTENUATION_VAL) call write_attenuation_forward_arrays_adios()
 
   ! Reset the path to its original value to avoid bugs.
   call write_adios_perform(myadios_fwd_file)
+  ! flushes all engines (makes sure i/o is all written out)
+  call flush_adios_group_all(myadios_fwd_group)
   ! Close ADIOS handler to the restart file.
   call close_file_adios(myadios_fwd_file)
 
@@ -234,22 +225,13 @@
     if (do_init_group) then
       call init_adios_group_undo_att(myadios_fwd_group,group_name)
 
-      ! Define ADIOS variables
+      ! defines ADIOS variables
       group_size_inc = 0
-
       ! iteration number
       call define_adios_scalar(myadios_fwd_group, group_size_inc, '', "iteration", iteration_on_subset_tmp)
-
       call define_common_forward_arrays_adios(group_size_inc)
-      ! TODO check following:
-      ! conditional definition of vars seem to mess with the group size,
-      ! even if the variables are conditionally written.
-      if (ROTATION_VAL) then
-        call define_rotation_forward_arrays_adios(group_size_inc)
-      endif
-      if (ATTENUATION_VAL) then
-        call define_attenuation_forward_arrays_adios(group_size_inc)
-      endif
+      if (ROTATION_VAL) call define_rotation_forward_arrays_adios(group_size_inc)
+      if (ATTENUATION_VAL) call define_attenuation_forward_arrays_adios(group_size_inc)
     endif
 
     ! Open an ADIOS handler to the restart file.
@@ -285,17 +267,10 @@
 
   ! iteration number
   call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, "iteration", iteration_on_subset_tmp)
-
   ! Issue the order to write the previously defined variable to the ADIOS file
   call write_common_forward_arrays_adios()
-
-  if (ROTATION_VAL) then
-    call write_rotation_forward_arrays_adios()
-  endif
-
-  if (ATTENUATION_VAL) then
-    call write_attenuation_forward_arrays_adios()
-  endif
+  if (ROTATION_VAL) call write_rotation_forward_arrays_adios()
+  if (ATTENUATION_VAL) call write_attenuation_forward_arrays_adios()
 
   ! perform writing
   if (ADIOS_SAVE_ALL_SNAPSHOTS_IN_ONE_FILE) then
@@ -309,7 +284,7 @@
   ! Close ADIOS handler to the restart file.
   if (do_close_file) then
     ! flushes all engines (makes sure i/o is all written out)
-    ! > call flush_adios_group_all(myadios_fwd_group)
+    call flush_adios_group_all(myadios_fwd_group)
     ! closes file
     call close_file_adios(myadios_fwd_file)
     ! re-sets flag
@@ -361,32 +336,6 @@
   call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(displ_outer_core))
   call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(veloc_outer_core))
   call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(accel_outer_core))
-
-  ! strains
-  local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE_STR_OR_ATT
-  call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', &
-                                   STRINGIFY_VAR(epsilondev_xx_crust_mantle))
-  call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', &
-                                   STRINGIFY_VAR(epsilondev_yy_crust_mantle))
-  call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', &
-                                   STRINGIFY_VAR(epsilondev_xy_crust_mantle))
-  call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', &
-                                   STRINGIFY_VAR(epsilondev_xz_crust_mantle))
-  call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', &
-                                   STRINGIFY_VAR(epsilondev_yz_crust_mantle))
-
-
-  local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_INNER_CORE_STR_OR_ATT
-  call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', &
-                                   STRINGIFY_VAR(epsilondev_xx_inner_core))
-  call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', &
-                                   STRINGIFY_VAR(epsilondev_yy_inner_core))
-  call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', &
-                                   STRINGIFY_VAR(epsilondev_xy_inner_core))
-  call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', &
-                                   STRINGIFY_VAR(epsilondev_xz_inner_core))
-  call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', &
-                                   STRINGIFY_VAR(epsilondev_yz_inner_core))
 
   end subroutine define_common_forward_arrays_adios
 

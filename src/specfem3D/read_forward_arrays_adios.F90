@@ -56,7 +56,7 @@
 
   file_name = trim(LOCAL_TMP_PATH) // "/dump_all_arrays_adios.bp"
 
-  group_name = "SPECFEM3D_GLOBE_FORWARD_ARRAYS"
+  group_name = "SPECFEM3D_GLOBE_FORWARD_ARRAYS_RESTART"
   call init_adios_group(myadios_group,group_name)
 
   ! opens adios file
