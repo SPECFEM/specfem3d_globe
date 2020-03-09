@@ -57,6 +57,7 @@ tomography/postprocess_sensitivity_kernels_OBJECTS = \
 tomography/adios_postprocess_sensitivity_kernels_TARGETS += \
 	$E/xconvert_model_file_adios \
 	$E/xinterpolate_model_adios \
+	$E/xsmooth_sem_adios \
 	$(EMPTY_MACRO)
 
 tomography/adios_postprocess_sensitivity_kernels_OBJECTS += \
@@ -303,6 +304,34 @@ xsmooth_sem_SHARED_OBJECTS = \
 $O/smooth_sem.postprocess.o: $O/search_kdtree.shared.o
 
 ${E}/xsmooth_sem: $(xsmooth_sem_OBJECTS) $(xsmooth_sem_SHARED_OBJECTS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
+
+
+##
+## xsmooth_sem_adios
+##
+xsmooth_sem_adios_OBJECTS = \
+	$O/postprocess_par.postprocess_module.o \
+	$O/parse_kernel_names.postprocess.o \
+	$O/smooth_sem.postprocess_adios.o \
+	$(EMPTY_MACRO)
+
+xsmooth_sem_adios_SHARED_OBJECTS = \
+	$(xsmooth_sem_SHARED_OBJECTS)
+
+
+xsmooth_sem_adios_SHARED_OBJECTS += \
+	$O/adios_helpers_definitions.shared_adios_module.o \
+	$O/adios_helpers_readers.shared_adios.o \
+        $O/adios_helpers_writers.shared_adios_module.o \
+        $O/adios_helpers.shared_adios.o \
+        $O/adios_manager.shared_adios_module.o \
+	$(EMPTY_MACRO)
+
+# extra dependencies
+$O/smooth_sem.postprocess_adios.o: $O/search_kdtree.shared.o
+
+${E}/xsmooth_sem_adios: $(xsmooth_sem_adios_OBJECTS) $(xsmooth_sem_adios_SHARED_OBJECTS)
 	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 
