@@ -40,11 +40,13 @@
 
 
   subroutine model_prem_iso(x,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &
-                            ONE_CRUST,check_doubling_flag,RICB,RCMB,RTOPDDOUBLEPRIME, &
-                            R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+                            ONE_CRUST,check_doubling_flag)
 
   use constants
   use shared_parameters, only: R_EARTH,RHOAV
+
+  use shared_parameters, only: RICB,RCMB,RTOPDDOUBLEPRIME, &
+    R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN
 
   implicit none
 
@@ -55,8 +57,7 @@
 
   integer :: idoubling
 
-  double precision :: x,rho,drhodr,vp,vs,Qkappa,Qmu,RICB,RCMB,RTOPDDOUBLEPRIME, &
-      R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN
+  double precision :: x,rho,drhodr,vp,vs,Qkappa,Qmu
 
   double precision :: r,scaleval
 
@@ -274,11 +275,13 @@
 !
 
   subroutine model_prem_aniso(x,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu, &
-                              idoubling,CRUSTAL,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
-                              R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+                              idoubling,CRUSTAL,ONE_CRUST)
 
   use constants
   use shared_parameters, only: R_EARTH,RHOAV
+
+  use shared_parameters, only: RICB,RCMB,RTOPDDOUBLEPRIME, &
+    R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN
 
   implicit none
 
@@ -289,9 +292,9 @@
 
   integer :: idoubling
 
-  double precision :: x,rho,Qkappa,Qmu,vpv,vph,vsv,vsh,eta_aniso,RICB,RCMB, &
-      RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN
+  double precision :: x,rho,Qkappa,Qmu,vpv,vph,vsv,vsh,eta_aniso
 
+  ! local parameters
   double precision :: r
   double precision :: scaleval
 
@@ -530,8 +533,7 @@
 !
 
   subroutine model_prem_aniso_extended_isotropic(x,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu, &
-                                     idoubling,CRUSTAL,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
-                                     R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+                                                 idoubling,CRUSTAL,ONE_CRUST)
 
 ! note: for 3D crustal models, we extend the mantle reference up to the surface and then superimpose the crustal values later.
 !       however, PREM mantle is anisotropic (eta < 1 and vsh > vsv) and the extension continues with strong TISO, thus
@@ -544,6 +546,8 @@
   use constants
   use shared_parameters, only: R_EARTH,RHOAV
 
+  use shared_parameters, only: R80,RMOHO
+
   implicit none
 
 ! given a normalized radius x, gives the non-dimensionalized density rho,
@@ -554,7 +558,6 @@
 
   logical,intent(in) :: CRUSTAL,ONE_CRUST
   integer,intent(in) :: idoubling
-  double precision,intent(in) :: RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN
 
   ! local parameters
   double precision :: r,vp,vs
@@ -562,8 +565,7 @@
 
   ! gets default values
   call model_prem_aniso(x,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu, &
-                        idoubling,CRUSTAL,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
-                        R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+                        idoubling,CRUSTAL,ONE_CRUST)
 
   if (CRUSTAL) then
     ! adds crustal model like CRUST2.0 later on top
@@ -683,16 +685,17 @@
 !=====================================================================
 !
 
-  subroutine prem_density(x,rho,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
-                          R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+  subroutine prem_density(x,rho,ONE_CRUST)
 
   use constants
   use shared_parameters, only: R_EARTH,RHOAV
 
+  use shared_parameters, only: RICB,RCMB,RTOPDDOUBLEPRIME, &
+    R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN
+
   implicit none
 
-  double precision :: x,rho,RICB,RCMB,RTOPDDOUBLEPRIME, &
-      R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN
+  double precision :: x,rho
 
   logical :: ONE_CRUST
 
@@ -703,36 +706,36 @@
 
   ! calculates density according to radius
   if (r <= RICB) then
-    rho=13.0885d0-8.8381d0*x*x
+    rho = 13.0885d0-8.8381d0*x*x
   else if (r > RICB .and. r <= RCMB) then
-    rho=12.5815d0-1.2638d0*x-3.6426d0*x*x-5.5281d0*x*x*x
+    rho = 12.5815d0-1.2638d0*x-3.6426d0*x*x-5.5281d0*x*x*x
   else if (r > RCMB .and. r <= RTOPDDOUBLEPRIME) then
-    rho=7.9565d0-6.4761d0*x+5.5283d0*x*x-3.0807d0*x*x*x
+    rho = 7.9565d0-6.4761d0*x+5.5283d0*x*x-3.0807d0*x*x*x
   else if (r > RTOPDDOUBLEPRIME .and. r <= R771) then
-    rho=7.9565d0-6.4761d0*x+5.5283d0*x*x-3.0807d0*x*x*x
+    rho = 7.9565d0-6.4761d0*x+5.5283d0*x*x-3.0807d0*x*x*x
   else if (r > R771 .and. r <= R670) then
-    rho=7.9565d0-6.4761d0*x+5.5283d0*x*x-3.0807d0*x*x*x
+    rho = 7.9565d0-6.4761d0*x+5.5283d0*x*x-3.0807d0*x*x*x
   else if (r > R670 .and. r <= R600) then
-    rho=5.3197d0-1.4836d0*x
+    rho = 5.3197d0-1.4836d0*x
   else if (r > R600 .and. r <= R400) then
-    rho=11.2494d0-8.0298d0*x
+    rho = 11.2494d0-8.0298d0*x
   else if (r > R400 .and. r <= R220) then
-    rho=7.1089d0-3.8045d0*x
+    rho = 7.1089d0-3.8045d0*x
   else if (r > R220 .and. r <= R80) then
-    rho=2.6910d0+0.6924d0*x
+    rho = 2.6910d0+0.6924d0*x
   else
     if (r > R80 .and. r <= RMOHO) then
-      rho=2.6910d0+0.6924d0*x
+      rho = 2.6910d0+0.6924d0*x
     else if (r > RMOHO .and. r <= RMIDDLE_CRUST) then
       if (ONE_CRUST) then
-        rho=2.6d0
+        rho = 2.6d0
       else
-        rho=2.9d0
+        rho = 2.9d0
       endif
     else if (r > RMIDDLE_CRUST .and. r <= ROCEAN) then
-      rho=2.6d0
+      rho = 2.6d0
     else if (r > ROCEAN) then
-      rho=2.6d0
+      rho = 2.6d0
     endif
   endif
 

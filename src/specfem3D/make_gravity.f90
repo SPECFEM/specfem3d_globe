@@ -164,7 +164,7 @@
     ! Mars
     ! Sohn & Spohn Model A
     ! No Ocean
-    do i=627,NR
+    do i = 627,NR
       r(i) = r_middle_crust+(r_0-r_middle_crust)*dble(i-627)/dble(12)
     enddo
     ! use Sohl & Spohn model A to get the density profile for gravity
@@ -177,15 +177,14 @@
     ! Earth
     ! use PREM to get the density profile for ellipticity (fine for other 1D reference models)
     do i = 1,NR
-      call prem_density(r(i),rho(i),ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
-                        R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+      call prem_density(r(i),rho(i),ONE_CRUST)
     enddo
   endif
 
-  g(1)=0.0d0
-  do i=2,NR
+  g(1) = 0.0d0
+  do i = 2,NR
     call intgrl(i_rho,r,1,i,rho,s1,s2,s3)
-    g(i)=4.0d0*i_rho/(r(i)*r(i))
+    g(i) = 4.0d0*i_rho/(r(i)*r(i))
   enddo
 
 !

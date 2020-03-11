@@ -346,8 +346,7 @@
         ! default PREM:
         !   gets anisotropic PREM parameters, with radial anisotropic extension (from moho to surface for crustal model)
         call model_prem_aniso(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso, &
-                              Qkappa,Qmu,idoubling,CRUSTAL,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
-                              R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+                              Qkappa,Qmu,idoubling,CRUSTAL,ONE_CRUST)
 
         ! calculates isotropic values
         vp = sqrt(((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
@@ -364,15 +363,13 @@
         !case (THREE_D_MODEL_SGLOBE,THREE_D_MODEL_SGLOBE_ISO)
         !  ! gets anisotropic PREM parameters, with isotropic extension (from moho to surface for crustal model)
         !  call model_prem_aniso_extended_isotropic(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu, &
-        !            idoubling,CRUSTAL,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
-        !            R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+        !                                           idoubling,CRUSTAL,ONE_CRUST)
         !
         ! eventually also Ritsema models, check...
         !case (THREE_D_MODEL_S20RTS,THREE_D_MODEL_S40RTS)
         !  ! gets anisotropic PREM parameters, with isotropic extension (from moho to surface for crustal model)
         !  call model_prem_aniso_extended_isotropic(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu, &
-        !            idoubling,CRUSTAL,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
-        !            R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+        !                                           idoubling,CRUSTAL,ONE_CRUST)
         !
         !case default
         !  continue
@@ -381,8 +378,7 @@
       else
         ! isotropic PREM model
         call model_prem_iso(r_prem,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &
-                  ONE_CRUST,.true.,RICB,RCMB,RTOPDDOUBLEPRIME, &
-                  R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+                            ONE_CRUST,.true.)
         vpv = vp
         vph = vp
         vsv = vs

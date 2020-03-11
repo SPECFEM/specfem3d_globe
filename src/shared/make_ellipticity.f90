@@ -181,8 +181,7 @@
     ! Earth
     ! use PREM to get the density profile for ellipticity (fine for other 1D reference models)
     do i = 1,NR
-      call prem_density(r(i),rho(i),ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
-                        R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+      call prem_density(r(i),rho(i),ONE_CRUST)
       radau(i) = rho(i)*r(i)*r(i)
     enddo
   endif

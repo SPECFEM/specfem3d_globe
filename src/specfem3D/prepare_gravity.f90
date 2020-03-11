@@ -91,8 +91,7 @@
       else
         ! Earth
         call model_prem_iso(radius,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,.false., &
-                            ONE_CRUST,.false.,RICB,RCMB,RTOPDDOUBLEPRIME, &
-                            R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+                            ONE_CRUST,.false.)
       endif
 
       dg = 4.0d0 * rho - 2.0d0 * g / radius
@@ -161,8 +160,7 @@
       else
         ! Earth
         call model_prem_iso(radius,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,.false., &
-                            ONE_CRUST,.false.,RICB,RCMB,RTOPDDOUBLEPRIME, &
-                            R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+                            ONE_CRUST,.false.)
       endif
       d_ln_density_dr_table(int_radius) = drhodr/rho
     enddo
