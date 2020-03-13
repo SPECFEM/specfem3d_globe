@@ -137,7 +137,8 @@ program smooth_sem_globe
   real(kind=CUSTOM_REAL) :: max_new, min_new
   real(kind=CUSTOM_REAL) :: max_old_all, max_new_all, min_old_all, min_new_all
 
-  integer :: ier,ichunk, ixi, ieta, iglob,nums,ival
+  integer :: nspec, nglob
+  integer :: ier,ichunk, ixi, ieta, iglob,nums
   integer :: ispec,iproc,ispec2,inum
   integer :: i,j,k
   integer :: sizeprocs
@@ -147,14 +148,14 @@ program smooth_sem_globe
   character(len=MAX_STRING_LEN) :: kernel_names_comma_delimited
   character(len=MAX_STRING_LEN) :: kernel_name, topo_dir
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
-  character(len=MAX_STRING_LEN) :: input_file, solver_file, output_file
+  character(len=MAX_STRING_LEN) :: input_file, solver_file
+  character(len=MAX_STRING_LEN) :: varname
 #else
   character(len=MAX_STRING_LEN) :: input_dir, output_dir
-#endif
-  character(len=MAX_STRING_LEN) :: prname_lp
   character(len=MAX_STRING_LEN) :: local_data_file
-
-  character(len=MAX_STRING_LEN) ::  ks_file
+#endif
+  character(len=MAX_STRING_LEN) :: output_file
+  character(len=MAX_STRING_LEN) :: filename
 
   integer :: nker,iker
 
@@ -180,21 +181,16 @@ program smooth_sem_globe
   ! debugging
   integer, dimension(:),allocatable :: ispec_flag
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: tmp_bk
-  character(len=MAX_STRING_LEN) :: filename
 
   ! timing
   double precision :: time_start
   double precision :: tCPU
   double precision, external :: wtime
-#ifdef USE_ADIOS_INSTEAD_OF_MESH
-  integer :: global_dim, nspec, nglob
-  character(len=MAX_STRING_LEN) :: group_name
-  integer(kind=8) :: group,group_size_inc,local_dim
-  logical :: is_kernel
 
-  integer(kind=8), dimension(1) :: start, count
-  integer(kind=8) :: sel_coord, sel_ibool, sel_idoubling
-  integer(kind=8) :: offset_coord, offset_ibool, offset_idoubling
+  ! ADIOS
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
+  integer(kind=8) :: group_size_inc,local_dim
+  logical :: is_kernel
 #endif
 
 #ifdef FORCE_VECTORIZATION
@@ -234,9 +230,22 @@ program smooth_sem_globe
   if (command_argument_count() /= NARGS) then
     if (myrank == 0) then
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
-      print *, 'Usage: mpirun -np NPROC bin/xsmooth_sem SIGMA_H SIGMA_V KERNEL_NAME INPUT_FILE SOLVER_FILE OUTPUT_FILE'
+      print *,'Usage: mpirun -np NPROC bin/xsmooth_sem_adios SIGMA_H SIGMA_V KERNEL_NAME INPUT_FILE SOLVER_FILE OUTPUT_FILE'
+      print *,'   with'
+      print *,'     SIGMA_H, SIGMA_V - horizontal and vertical smoothing lenghts'
+      print *,'     KERNEL_NAME      - comma-separated kernel names (e.g., alpha_kernel,beta_kernel)'
+      print *,'     INPUT_FILE       - ADIOS file with kernel values (e.g., kernels.bp)'
+      print *,'     SOLVER_FILE      - ADIOS file with mesh arrays (e.g., DATABASES_MPI/solver_data.bp)'
+      print *,'     OUTPUT_FILE      - ADIOS file for smoothed output'
+      print *,''
 #else
       print *, 'Usage: mpirun -np NPROC bin/xsmooth_sem SIGMA_H SIGMA_V KERNEL_NAME INPUT_DIR OUPUT_DIR'
+      print *,'   with'
+      print *,'     SIGMA_H, SIGMA_V - horizontal and vertical smoothing lenghts'
+      print *,'     KERNEL_NAME      - comma-separated kernel names (e.g., alpha_kernel,beta_kernel)'
+      print *,'     INPUT_DIR        - directory with kernel files (e.g., proc***_alpha_kernel.bin)'
+      print *,'     OUTPUT_DIR       - directory for smoothed output files'
+      print *,''
 #endif
       stop ' Please check command line arguments'
     endif
@@ -272,7 +281,9 @@ program smooth_sem_globe
   read(arg(1),*) sigma_h
   read(arg(2),*) sigma_v
   kernel_names_comma_delimited = arg(3)
+
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
+  ! ADIOS arguments
   input_file = arg(4)
   solver_file = arg(5)
   output_file = arg(6)
@@ -328,9 +339,10 @@ program smooth_sem_globe
     print *
     print *,"  data name      : ",trim(kernel_names_comma_delimited)
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
-    print *,"  input file      : ",trim(input_file)
-    print *,"  solver file      : ",trim(solver_file)
-    print *,"  output file     : ",trim(output_file)
+    ! ADIOS arguments
+    print *,"  input file     : ",trim(input_file)
+    print *,"  solver file    : ",trim(solver_file)
+    print *,"  output file    : ",trim(output_file)
 #else
     print *,"  input dir      : ",trim(input_dir)
     print *,"  output dir     : ",trim(output_dir)
@@ -339,6 +351,18 @@ program smooth_sem_globe
     print *,"number of elements per slice: ",NSPEC_AB
     print *
   endif
+
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
+  ! ADIOS
+  call synchronize_all()
+  ! initializes ADIOS
+  if (myrank == 0) then
+    print *, 'initializing ADIOS...'
+    print *, ' '
+  endif
+  call initialize_adios()
+#endif
+
   ! synchronizes
   call synchronize_all()
 
@@ -466,15 +490,21 @@ program smooth_sem_globe
   bk(:,:,:,:) = 0.0_CUSTOM_REAL
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
-  call initialize_adios()
+  ! ADIOS
+  ! user output
+  if (myrank == 0) print *, 'reading in ADIOS solver file: ',trim(solver_file)
+
+  ! opens file for reading
   call init_adios_group(myadios_group, "MeshReader")
   call open_file_adios_read_and_init_method(myadios_file, myadios_group, trim(solver_file))
+
   call read_adios_scalar(myadios_file, myadios_group, myrank, trim(reg_name)//"nspec", nspec)
   call read_adios_scalar(myadios_file, myadios_group, myrank, trim(reg_name)//"nglob", nglob)
 
   if (nspec /= NSPEC_AB) call exit_mpi(myrank,'Error invalid nspec value in solver_data.bp')
   if (nglob /= NGLOB_AB) call exit_mpi(myrank,'Error invalid nglob value in solver_data.bp')
 
+  ! reads mesh arrays
   call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "ibool", ibool(:, :, :, :))
 
   call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "xixstore", xix(:, :, :, :))
@@ -497,20 +527,20 @@ program smooth_sem_globe
 #else
   ! read in the topology files of the current and neighboring slices
   ! point locations
-  write(prname_lp,'(a,i6.6,a)') trim(topo_dir)//'/proc',myrank,trim(reg_name)//'solver_data.bin'
-  open(IIN,file=trim(prname_lp),status='old',action='read',form='unformatted',iostat=ier)
+  write(filename,'(a,i6.6,a)') trim(topo_dir)//'/proc',myrank,trim(reg_name)//'solver_data.bin'
+  open(IIN,file=trim(filename),status='old',action='read',form='unformatted',iostat=ier)
   if (ier /= 0) then
-    print *,'Error opening file: ',trim(prname_lp)
+    print *,'Error opening file: ',trim(filename)
     call exit_mpi(myrank,'Error opening solver_data.bin file')
   endif
 
   ! checks nspec
-  read(IIN) ival
-  if (ival /= NSPEC_AB) call exit_mpi(myrank,'Error invalid nspec value in solver_data.bin')
+  read(IIN) nspec
+  if (nspec /= NSPEC_AB) call exit_mpi(myrank,'Error invalid nspec value in solver_data.bin')
 
   ! checks nglob
-  read(IIN) ival
-  if (ival /= NGLOB_AB) call exit_mpi(myrank,'Error invalid nglob value in solver_data.bin')
+  read(IIN) nglob
+  if (nglob /= NGLOB_AB) call exit_mpi(myrank,'Error invalid nglob value in solver_data.bin')
 
   ! node locations
   read(IIN) xstore
@@ -571,11 +601,24 @@ program smooth_sem_globe
     cz0(ispec) = (zz0(1,1,1,ispec) + zz0(NGLLX,NGLLY,NGLLZ,ispec)) * 0.5_CUSTOM_REAL
   enddo
 
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
+  ! ADIOS single file opening
+  ! user output
+  if (myrank == 0) print *, 'reading in ADIOS input file : ',trim(input_file)
+  ! open kernel file before looping over slices
+  ! note: the number of neighbor slices might be different for different procs,
+  !       thus no synchronization should occur within the loop over neighbor slices.
+  !       adios however requires that all processes are synchronized for opening/closing files, so we do it here.
+  call init_adios_group(myadios_val_group, "ValReader")
+  call open_file_adios_read(myadios_val_file, myadios_val_group, trim(input_file))
+#endif
+
   ! element search
   if (.not. DO_BRUTE_FORCE_SEARCH) then
     ! search by kd-tree
     ! user output
     if (myrank == 0) then
+      print *
       print *,'using kd-tree search:'
       if (DO_SEARCH_ELLIP) then
         print *,'  search radius horizontal: ',r_search_dist_h * R_EARTH_KM,'km'
@@ -605,6 +648,7 @@ program smooth_sem_globe
     ! brute-force search
     ! user output
     if (myrank == 0) then
+      print *
       print *,'using brute-force search:'
       print *,'  search radius horizontal: ',sigma_h3 * R_EARTH_KM,'km'
       print *,'  search radius vertical  : ',sigma_v3 * R_EARTH_KM,'km'
@@ -628,7 +672,13 @@ program smooth_sem_globe
 
     iproc = islice(inum)
 
-    if (myrank == 0) print *,'  reading slice:',iproc
+    ! user output
+    if (myrank == 0) then
+      print *,''
+      print *,'slice ',inum,'out of ',nums
+      print *,'  reading slice proc:',iproc
+      print *,''
+    endif
 
     ! debugging
     if (DEBUG .and. myrank == 0) then
@@ -648,7 +698,9 @@ program smooth_sem_globe
       yy(:,:,:,:) = yy0(:,:,:,:)
       zz(:,:,:,:) = zz0(:,:,:,:)
     else
+      ! read in neighbor slice
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
+      ! ADIOS
       call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "ibool", ibool(:, :, :, :))
 
       call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "xixstore", xix(:, :, :, :))
@@ -670,19 +722,19 @@ program smooth_sem_globe
       call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "idoubling", idoubling(:))
 #else
       ! neighbor database file
-      write(prname_lp,'(a,i6.6,a)') trim(topo_dir)//'/proc',iproc,trim(reg_name)//'solver_data.bin'
+      write(filename,'(a,i6.6,a)') trim(topo_dir)//'/proc',iproc,trim(reg_name)//'solver_data.bin'
 
       ! read in the topology, kernel files, calculate center of elements
       ! point locations
       ! given in Cartesian coordinates
-      open(IIN,file=trim(prname_lp),status='old',action='read',form='unformatted',iostat=ier)
+      open(IIN,file=trim(filename),status='old',action='read',form='unformatted',iostat=ier)
       if (ier /= 0) then
-        print *,'Error could not open database file: ',trim(prname_lp)
+        print *,'Error could not open database file: ',trim(filename)
         call exit_mpi(myrank,'Error opening slices in solver_data.bin file')
       endif
 
-      read(IIN) ival  ! nspec
-      read(IIN) ival  ! nglob
+      read(IIN) nspec
+      read(IIN) nglob
       read(IIN) xstore
       read(IIN) ystore
       read(IIN) zstore
@@ -739,31 +791,38 @@ program smooth_sem_globe
       enddo
     endif
 
-#ifdef USE_ADIOS_INSTEAD_OF_MESH
-    call init_adios_group(myadios_val_group, "ValReader")
-    call open_file_adios_read(myadios_val_file, myadios_val_group, trim(input_file))
-#endif
     ! loops over input kernels
     do iker = 1,nker
       kernel_name = kernel_names(iker)
       ! user output
-      if (myrank == 0) print *,'  reading data file:',iproc,trim(kernel_name)
+      if (myrank == 0) then
+        print *,'  kernel ',iker,'out of ',nker
+        print *,'  reading data file: proc = ',iproc,' name = ',trim(kernel_name)
+        print *,''
+      endif
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
+      ! ADIOS array name
+      ! determines if parameter name is for a kernel
       if (len_trim(kernel_name) > 3) then
         if (kernel_name(len_trim(kernel_name)-2:len_trim(kernel_name)) == '_kl') then
           is_kernel = .true.
         endif
       endif
-      if (myrank == 0) print *, trim(kernel_name), " is_kernel: ", is_kernel
       if (is_kernel) then
         ! NOTE: reg1 => crust_mantle, others are not implemented
-        call read_adios_array(myadios_val_file, myadios_val_group, iproc, nspec, &
-          trim(kernel_name) // "_crust_mantle", kernel(:, :, :, :, iker))
+        varname = trim(kernel_name) // "_crust_mantle"
       else
-        call read_adios_array(myadios_val_file, myadios_val_group, iproc, nspec, &
-          trim(reg_name) // trim(kernel_name), kernel(:, :, :, :, iker))
+        varname = trim(reg_name) // trim(kernel_name)
       endif
+      ! user output
+      if (myrank == 0) then
+        print *, '  data: ADIOS ',trim(kernel_name), " is_kernel = ", is_kernel
+        print *, '  data: ADIOS using array name = ',trim(varname)
+        print *
+      endif
+      ! reads kernel values
+      call read_adios_array(myadios_val_file, myadios_val_group, iproc, nspec, trim(varname), kernel(:, :, :, :, iker))
 #else
       ! data file
       write(local_data_file,'(a,i6.6,a)') &
@@ -889,12 +948,11 @@ program smooth_sem_globe
               i = kdtree_search_index(ielem)
               ispec_flag(i) = ielem
             enddo
-#ifndef USE_ADIOS_INSTEAD_OF_MESH
-            write(filename,'(a,i4.4,a,i6.6)') trim(output_dir)//'/search_elem',tmp_ispec_dbg,'_proc',iproc
+            ! writes out vtk file for debugging
+            write(filename,'(a,i4.4,a,i6.6)') trim(LOCAL_PATH)//'/search_elem',tmp_ispec_dbg,'_proc',iproc
             call write_VTK_data_elem_i(NSPEC_AB,NGLOB_AB,xstore,ystore,zstore, &
                                        ibool,ispec_flag,filename)
             print *,'file written: ',trim(filename)//'.vtk'
-#endif
             deallocate(ispec_flag)
           endif
         endif
@@ -947,20 +1005,20 @@ program smooth_sem_globe
                                      xx(:,:,:,ispec2),yy(:,:,:,ispec2),zz(:,:,:,ispec2))
 
           ! debug
-          if (DEBUG .and. myrank == 0) then
-            if (ispec == tmp_ispec_dbg) then
+          !if (DEBUG .and. myrank == 0) then
+          !  if (ispec == tmp_ispec_dbg) then
 #ifdef FORCE_VECTORIZATION
-              if (ijk == (2 + 3*NGLLX + 4*NGLLY*NGLLX)) then
+          !    if (ijk == (2 + 3*NGLLX + 4*NGLLY*NGLLX)) then
 #else
-              if (i == 2 .and. j == 3 .and. k == 4) then
+          !    if (i == 2 .and. j == 3 .and. k == 4) then
 #endif
-                tmp_bk(:,:,:,ispec2) = exp_val(:,:,:)
-                print *,'debug',myrank,'ispec',ispec,'ispec2',ispec2,'dist:',dist_h,dist_v
-                print *,'debug exp',minval(exp_val),maxval(exp_val)
-                print *,'debug kernel',minval(kernel(:,:,:,ispec2,1)),maxval(kernel(:,:,:,ispec2,1))
-              endif
-            endif
-          endif
+          !      tmp_bk(:,:,:,ispec2) = exp_val(:,:,:)
+          !      print *,'debug',myrank,'ispec',ispec,'ispec2',ispec2,'dist:',dist_h,dist_v
+          !      print *,'debug exp',minval(exp_val),maxval(exp_val)
+          !      print *,'debug kernel',minval(kernel(:,:,:,ispec2,1)),maxval(kernel(:,:,:,ispec2,1))
+          !    endif
+          !  endif
+          !endif
 
           ! adds GLL integration weights
           exp_val(:,:,:) = exp_val(:,:,:) * factor(:,:,:)
@@ -1001,11 +1059,10 @@ program smooth_sem_globe
         ! debug element (tmp_ispec_dbg)
         if (ispec == tmp_ispec_dbg) then
           ! outputs Gaussian weighting function
-#ifndef USE_ADIOS_INSTEAD_OF_MESH
-          write(filename,'(a,i4.4,a,i6.6)') trim(output_dir)//'/search_elem',tmp_ispec_dbg,'_Gaussian_proc',iproc
+          ! writes out vtk file for debugging
+          write(filename,'(a,i4.4,a,i6.6)') trim(LOCAL_PATH)//'/search_elem',tmp_ispec_dbg,'_Gaussian_proc',iproc
           call write_VTK_data_gll_cr(NSPEC_AB,NGLOB_AB,xstore,ystore,zstore,ibool,tmp_bk,filename)
           print *,'file written: ',trim(filename)//'.vtk'
-#endif
         endif
       endif
 
@@ -1031,6 +1088,12 @@ program smooth_sem_globe
     deallocate(kdtree_nodes_location)
     deallocate(kdtree_nodes_index)
   endif
+
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
+  ! ADIOS
+  ! closes kernel file
+  call close_file_adios_read(myadios_val_file)
+#endif
 
   ! synchronizes
   call synchronize_all()
@@ -1083,49 +1146,62 @@ program smooth_sem_globe
           print *,'tk: ',tk(INDEX_IJK,ispec,iker),'bk:',bk(INDEX_IJK,ispec),'norm:',norm
           call exit_mpi(myrank, 'Error kernel value is NaN')
         endif
+
       ENDDO_LOOP_IJK
 
     enddo
   enddo
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
-  call close_file_adios_read(myadios_val_file)
+  ! ADIOS
+  ! user output
+  if (myrank == 0) print *, 'writing to ADIOS output file: ',trim(output_file)
+  ! determines group size
   call init_adios_group(myadios_val_group, "ValWriter")
-  call open_file_adios_write(myadios_val_file, myadios_val_group, trim(output_file), "ValWriter")
   group_size_inc = 0
   call define_adios_scalar(myadios_val_group, group_size_inc, '', trim(reg_name)//"nspec", nspec)
-  call write_adios_scalar(myadios_val_file, myadios_val_group, trim(reg_name)//"nspec", nspec)
   call define_adios_scalar(myadios_val_group, group_size_inc, '', trim(reg_name)//"nglob", nglob)
+  do iker = 1,nker
+    ! name
+    kernel_name = kernel_names(iker)
+    local_dim = NGLLX * NGLLY * NGLLZ * nspec
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, trim(reg_name), &
+                                     trim(kernel_name), kernel_smooth(:, :, :, :, iker))
+  enddo
+  ! opens output files
+  call open_file_adios_write(myadios_val_file, myadios_val_group, trim(output_file), "ValWriter")
+  call set_adios_group_size(myadios_val_file,group_size_inc)
+  ! writes to file
+  call write_adios_scalar(myadios_val_file, myadios_val_group, trim(reg_name)//"nspec", nspec)
   call write_adios_scalar(myadios_val_file, myadios_val_group, trim(reg_name)//"nglob", nglob)
 #endif
+
   ! output
   do iker = 1,nker
-
     ! name
     kernel_name = kernel_names(iker)
     if (myrank == 0) then
       print *,'smoothed: ',trim(kernel_name)
     endif
 
-#ifdef USE_ADIOS_INSTEAD_OF_MESH
-    local_dim = NGLLX * NGLLY * NGLLZ * nspec
-    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, '', &
-      trim(reg_name) // trim(kernel_name), kernel_smooth(:, :, :, :, iker))
-    call write_adios_array_gll(myadios_val_file, myadios_val_group, myrank, &
-      sizeprocs_adios, nspec, trim(reg_name) // trim(kernel_name), kernel_smooth(:, :, :, :, iker))
-#else
     ! file output
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
+    ! ADIOS
+    ! smoothed kernel values
+    local_dim = NGLLX * NGLLY * NGLLZ * nspec
+    call write_adios_global_1d_array(myadios_val_file, myadios_val_group, myrank, sizeprocs_adios, local_dim, &
+                                     trim(reg_name) // trim(kernel_name), kernel_smooth(:, :, :, :, iker))
+#else
     ! smoothed kernel file name
-    write(ks_file,'(a,i6.6,a)') trim(output_dir)//'/proc',myrank, &
-                                trim(reg_name)//trim(kernel_name)//'_smooth.bin'
+    write(output_file,'(a,i6.6,a)') trim(output_dir)//'/proc', myrank, trim(reg_name)//trim(kernel_name)//'_smooth.bin'
 
-    open(IOUT,file=trim(ks_file),status='unknown',form='unformatted',action='write',iostat=ier)
+    open(IOUT,file=trim(output_file),status='unknown',form='unformatted',action='write',iostat=ier)
     if (ier /= 0) call exit_mpi(myrank,'Error opening smoothed kernel file')
 
     ! Note: output the following instead of kernel_smooth(:,:,:,1:NSPEC_AB) to create files of the same sizes
     write(IOUT) kernel_smooth(:,:,:,:,iker)
     close(IOUT)
-    if (myrank == 0) print *,'  written: ',trim(ks_file)
+    if (myrank == 0) print *,'  written: ',trim(output_file)
 #endif
 
     ! statistics
@@ -1149,17 +1225,22 @@ program smooth_sem_globe
     endif
     ! synchronizes
     call synchronize_all()
-
-#ifdef USE_ADIOS_INSTEAD_OF_MESH
-    call write_adios_perform(myadios_val_file)
-#endif
-
   enddo
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
+  ! ADIOS
+  ! actual writing
+  ! (note: done at the very end, otherwise it will reset path and we would need to re-initiate a group)
+  call write_adios_perform(myadios_val_file)
+  ! closes adios files
   call close_file_adios(myadios_val_file)
   call close_file_adios_read_and_finalize_method(myadios_file)
+  ! finalizes adios
+  call finalize_adios()
 #endif
+
+  ! user output
+  if (myrank == 0) print *, 'all done'
 
   ! stop all the processes, and exit
   call finalize_mpi()
