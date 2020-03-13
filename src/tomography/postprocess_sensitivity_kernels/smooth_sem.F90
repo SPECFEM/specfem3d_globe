@@ -237,7 +237,7 @@ program smooth_sem_globe
       print *,'     INPUT_FILE       - ADIOS file with kernel values (e.g., kernels.bp)'
       print *,'     SOLVER_FILE      - ADIOS file with mesh arrays (e.g., DATABASES_MPI/solver_data.bp)'
       print *,'     OUTPUT_FILE      - ADIOS file for smoothed output'
-      print *,''
+      print *
 #else
       print *, 'Usage: mpirun -np NPROC bin/xsmooth_sem SIGMA_H SIGMA_V KERNEL_NAME INPUT_DIR OUPUT_DIR'
       print *,'   with'
@@ -245,7 +245,7 @@ program smooth_sem_globe
       print *,'     KERNEL_NAME      - comma-separated kernel names (e.g., alpha_kernel,beta_kernel)'
       print *,'     INPUT_DIR        - directory with kernel files (e.g., proc***_alpha_kernel.bin)'
       print *,'     OUTPUT_DIR       - directory for smoothed output files'
-      print *,''
+      print *
 #endif
       stop ' Please check command line arguments'
     endif
@@ -674,10 +674,10 @@ program smooth_sem_globe
 
     ! user output
     if (myrank == 0) then
-      print *,''
+      print *
       print *,'slice ',inum,'out of ',nums
       print *,'  reading slice proc:',iproc
-      print *,''
+      print *
     endif
 
     ! debugging
@@ -798,7 +798,7 @@ program smooth_sem_globe
       if (myrank == 0) then
         print *,'  kernel ',iker,'out of ',nker
         print *,'  reading data file: proc = ',iproc,' name = ',trim(kernel_name)
-        print *,''
+        print *
       endif
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
