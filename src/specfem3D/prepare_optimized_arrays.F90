@@ -449,9 +449,24 @@
 #else
   integer :: i,j,k
 #endif
+  double precision :: sizeval
 
   ! fused array only needed for compute forces in crust/mantle (Deville routine)
   if (USE_DEVILLE_PRODUCTS_VAL) then
+    ! estimated memory size required in MB
+    sizeval = 9.d0 * dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*dble(NSPEC_CRUST_MANTLE)*dble(CUSTOM_REAL)
+    sizeval = sizeval + 9.d0 * dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*dble(NSPEC_INNER_CORE)*dble(CUSTOM_REAL)
+    sizeval = sizeval + 9.d0 * dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*dble(NSPEC_OUTER_CORE)*dble(CUSTOM_REAL)
+    ! in MB
+    sizeval = sizeval / 1024.d0 / 1024.d0
+
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*)"  fusing arrays: "
+      write(IMAIN,*) "    size of fused arrays = ",sngl(sizeval),"MB"
+      write(IMAIN,*) "                         = ",sngl(sizeval / 1024.d0),"GB"
+      call flush_IMAIN()
+    endif
 
     ! crust/mantle
     ! allocates fused array
@@ -530,7 +545,7 @@
 
     ! user output
     if (myrank == 0) then
-      write(IMAIN,*)"  fused array done"
+      write(IMAIN,*)"  fused arrays done"
       call flush_IMAIN()
     endif
 

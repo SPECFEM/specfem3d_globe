@@ -783,7 +783,7 @@
     ! user output
     if (myrank == 0) then
       write(IMAIN,*)
-      write(IMAIN,*) "  minimum memory requested     : ",memory_size / 1024. / 1024.,"MB per process"
+      write(IMAIN,*) "  minimum memory requested     : ",sngl(memory_size / 1024.d0 / 1024.d0),"MB per process"
       write(IMAIN,*)
       call flush_IMAIN()
     endif
