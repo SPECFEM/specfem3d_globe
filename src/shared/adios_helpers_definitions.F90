@@ -387,7 +387,7 @@ subroutine define_adios_scalar_integer(adios_group, group_size_inc, path, name, 
   integer(kind=4) :: idummy
   character(len=256) :: full_name
 
-  TRACE_ADIOS_L2_ARG('define_adios_scalar_integer',trim(name))
+  TRACE_ADIOS_L2_ARG('define_adios_scalar_integer: ',trim(name))
 
   ! check
   if (len_trim(name) == 0) stop 'Error adios: invalid name in define_adios_scalar_integer()'

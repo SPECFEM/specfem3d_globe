@@ -328,7 +328,7 @@
 
   ! ADIOS is very useful for very large simulations (say using 2000 MPI tasks or more)
   ! but slows down the code if used for simulations that are small or medium size, because of the overhead any library has.
-  if (ADIOS_ENABLED .and. NCHUNKS * NPROC_XI_read * NPROC_ETA_read < 2000) then
+  if (ADIOS_ENABLED .and. NCHUNKS * NPROC_XI_read * NPROC_ETA_read < 2000 .and. myrank == 0) then
     print *
     print *,'**************'
     print *,'**************'

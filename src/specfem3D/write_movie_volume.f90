@@ -370,38 +370,32 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine write_movie_volume_strains(npoints_3dmovie, &
-                                        LOCAL_TMP_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE, &
-                                        it,vnspec, &
+  subroutine write_movie_volume_strains(vnspec_eps_cm, &
                                         eps_trace_over_3_crust_mantle, &
+                                        vnspec_cm, &
                                         epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
-                                        epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
-                                        muvstore_crust_mantle_3dmovie, &
-                                        mask_3dmovie,nu_3dmovie)
+                                        epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle)
 
 ! outputs strains: MOVIE_VOLUME_TYPE == 1 / 2 / 3
 
   use constants_solver
 
+  use shared_parameters, only: LOCAL_TMP_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE
+
+  use specfem_par, only: it
+
+  use specfem_par_movie, only: npoints_3dmovie,muvstore_crust_mantle_3dmovie,mask_3dmovie,nu_3dmovie
+
   implicit none
 
   ! input
-  integer,intent(in) :: npoints_3dmovie,MOVIE_VOLUME_TYPE,it
+  integer,intent(in) :: vnspec_eps_cm
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,vnspec_eps_cm),intent(in) :: eps_trace_over_3_crust_mantle
 
-  integer,intent(in) :: vnspec
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,vnspec),intent(in) :: eps_trace_over_3_crust_mantle
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE),intent(in) :: &
+  integer,intent(in) :: vnspec_cm
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,vnspec_cm),intent(in) :: &
     epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
     epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE),intent(in) :: muvstore_crust_mantle_3dmovie
-
-  logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE),intent(in) :: mask_3dmovie
-
-  logical,intent(in) :: MOVIE_COARSE
-  real(kind=CUSTOM_REAL), dimension(3,3,npoints_3dmovie),intent(in) :: nu_3dmovie
-  character(len=MAX_STRING_LEN) LOCAL_TMP_PATH,outputname
 
   ! variables
   real(kind=CUSTOM_REAL) :: muv_3dmovie
@@ -409,11 +403,12 @@
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: store_val3d_NN,store_val3d_EE,store_val3d_ZZ, &
                                                      store_val3d_NE,store_val3d_NZ,store_val3d_EZ
   integer :: ipoints_3dmovie,i,j,k,ispec,iNIT,ier
-
-  character(len=1) movie_prefix
+  character(len=MAX_STRING_LEN) :: outputname
+  character(len=1) :: movie_prefix
 
   ! check
-  if (NDIM /= 3) call exit_MPI(myrank, 'write_movie_volume requires NDIM = 3')
+  if (NDIM /= 3) call exit_MPI(myrank, 'write_movie_volume_strains() requires NDIM = 3')
+  if (vnspec_cm /= NSPEC_CRUST_MANTLE) call exit_MPI(myrank,'Invalid vnspec_cm value for write_movie_volume_strains() routine')
 
   ! allocates arrays
   allocate(store_val3d_NN(npoints_3dmovie), &
@@ -442,44 +437,42 @@
 
   ipoints_3dmovie = 0
   do ispec = 1,NSPEC_CRUST_MANTLE
-   do k = 1,NGLLZ,iNIT
-    do j = 1,NGLLY,iNIT
-     do i = 1,NGLLX,iNIT
-      if (mask_3dmovie(i,j,k,ispec)) then
-       ipoints_3dmovie = ipoints_3dmovie + 1
-       muv_3dmovie = muvstore_crust_mantle_3dmovie(i,j,k,ispec)
+    do k = 1,NGLLZ,iNIT
+      do j = 1,NGLLY,iNIT
+        do i = 1,NGLLX,iNIT
+          if (mask_3dmovie(i,j,k,ispec)) then
+            ipoints_3dmovie = ipoints_3dmovie + 1
+            muv_3dmovie = muvstore_crust_mantle_3dmovie(i,j,k,ispec)
 
-       eps_loc(1,1) = eps_trace_over_3_crust_mantle(i,j,k,ispec) + &
-                      epsilondev_xx_crust_mantle(i,j,k,ispec)
-       eps_loc(2,2) = eps_trace_over_3_crust_mantle(i,j,k,ispec) + &
-                      epsilondev_yy_crust_mantle(i,j,k,ispec)
-       eps_loc(3,3) = eps_trace_over_3_crust_mantle(i,j,k,ispec) - &
-                      epsilondev_xx_crust_mantle(i,j,k,ispec) - &
-                      epsilondev_yy_crust_mantle(i,j,k,ispec)
+            eps_loc(1,1) = eps_trace_over_3_crust_mantle(i,j,k,ispec) + epsilondev_xx_crust_mantle(i,j,k,ispec)
+            eps_loc(2,2) = eps_trace_over_3_crust_mantle(i,j,k,ispec) + epsilondev_yy_crust_mantle(i,j,k,ispec)
+            eps_loc(3,3) = eps_trace_over_3_crust_mantle(i,j,k,ispec) &
+                           - epsilondev_xx_crust_mantle(i,j,k,ispec) &
+                           - epsilondev_yy_crust_mantle(i,j,k,ispec)
 
-       eps_loc(1,2) = epsilondev_xy_crust_mantle(i,j,k,ispec)
-       eps_loc(1,3) = epsilondev_xz_crust_mantle(i,j,k,ispec)
-       eps_loc(2,3) = epsilondev_yz_crust_mantle(i,j,k,ispec)
+            eps_loc(1,2) = epsilondev_xy_crust_mantle(i,j,k,ispec)
+            eps_loc(1,3) = epsilondev_xz_crust_mantle(i,j,k,ispec)
+            eps_loc(2,3) = epsilondev_yz_crust_mantle(i,j,k,ispec)
 
-       eps_loc(2,1) = eps_loc(1,2)
-       eps_loc(3,1) = eps_loc(1,3)
-       eps_loc(3,2) = eps_loc(2,3)
+            eps_loc(2,1) = eps_loc(1,2)
+            eps_loc(3,1) = eps_loc(1,3)
+            eps_loc(3,2) = eps_loc(2,3)
 
-       ! rotate eps_loc to spherical coordinates
-       eps_loc_new(:,:) = matmul(matmul(nu_3dmovie(:,:,ipoints_3dmovie),eps_loc(:,:)), &
-                                  transpose(nu_3dmovie(:,:,ipoints_3dmovie)))
-       if (MOVIE_VOLUME_TYPE == 3) eps_loc_new(:,:) = eps_loc(:,:)*muv_3dmovie
+            ! rotate eps_loc to spherical coordinates
+            eps_loc_new(:,:) = matmul(matmul(nu_3dmovie(:,:,ipoints_3dmovie),eps_loc(:,:)), &
+                                      transpose(nu_3dmovie(:,:,ipoints_3dmovie)))
+            if (MOVIE_VOLUME_TYPE == 3) eps_loc_new(:,:) = eps_loc(:,:)*muv_3dmovie
 
-       store_val3d_NN(ipoints_3dmovie) = eps_loc_new(1,1)
-       store_val3d_EE(ipoints_3dmovie) = eps_loc_new(2,2)
-       store_val3d_ZZ(ipoints_3dmovie) = eps_loc_new(3,3)
-       store_val3d_NE(ipoints_3dmovie) = eps_loc_new(1,2)
-       store_val3d_NZ(ipoints_3dmovie) = eps_loc_new(1,3)
-       store_val3d_EZ(ipoints_3dmovie) = eps_loc_new(2,3)
-      endif
-     enddo
+            store_val3d_NN(ipoints_3dmovie) = eps_loc_new(1,1)
+            store_val3d_EE(ipoints_3dmovie) = eps_loc_new(2,2)
+            store_val3d_ZZ(ipoints_3dmovie) = eps_loc_new(3,3)
+            store_val3d_NE(ipoints_3dmovie) = eps_loc_new(1,2)
+            store_val3d_NZ(ipoints_3dmovie) = eps_loc_new(1,3)
+            store_val3d_EZ(ipoints_3dmovie) = eps_loc_new(2,3)
+          endif
+        enddo
+      enddo
     enddo
-   enddo
   enddo
   if (ipoints_3dmovie /= npoints_3dmovie) stop 'did not find the right number of points for 3D movie'
 
@@ -528,21 +521,22 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine write_movie_volume_vector(it,npoints_3dmovie,LOCAL_TMP_PATH,MOVIE_VOLUME_TYPE, &
-                                      MOVIE_COARSE,ibool_crust_mantle,vector_crust_mantle, &
-                                      scalingval,mask_3dmovie,nu_3dmovie)
+  subroutine write_movie_volume_vector(npoints_3dmovie, &
+                                       ibool_crust_mantle,vector_crust_mantle, &
+                                       scalingval,mask_3dmovie,nu_3dmovie)
 
 ! outputs displacement/velocity: MOVIE_VOLUME_TYPE == 5 / 6
 
   use constants_solver
 
+  use shared_parameters, only: LOCAL_TMP_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE
+
+  use specfem_par, only: it
+
   implicit none
 
   ! input
-  integer :: it
   integer :: npoints_3dmovie
-  integer :: MOVIE_VOLUME_TYPE
-  logical :: MOVIE_COARSE
 
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
 
@@ -553,8 +547,6 @@
 
   double precision :: scalingval
   real(kind=CUSTOM_REAL), dimension(NDIM,NDIM,npoints_3dmovie) :: nu_3dmovie
-
-  character(len=MAX_STRING_LEN) :: LOCAL_TMP_PATH
 
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(NDIM) :: vector_local,vector_local_new
@@ -644,41 +636,45 @@
 !-------------------------------------------------------------------------------------------------
 !
 
- subroutine write_movie_volume_divcurl(it,eps_trace_over_3_crust_mantle, &
+ subroutine write_movie_volume_divcurl(vnspec_eps_cm,eps_trace_over_3_crust_mantle, &
                                        div_displ_outer_core, &
                                        accel_outer_core,kappavstore_outer_core,rhostore_outer_core,ibool_outer_core, &
-                                       eps_trace_over_3_inner_core, &
-                                       epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
+                                       vnspec_eps_ic,eps_trace_over_3_inner_core, &
+                                       vnspec_cm,epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
                                        epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
-                                       epsilondev_xx_inner_core,epsilondev_yy_inner_core,epsilondev_xy_inner_core, &
-                                       epsilondev_xz_inner_core,epsilondev_yz_inner_core, &
-                                       LOCAL_TMP_PATH)
+                                       vnspec_ic,epsilondev_xx_inner_core,epsilondev_yy_inner_core,epsilondev_xy_inner_core, &
+                                       epsilondev_xz_inner_core,epsilondev_yz_inner_core)
 
 ! outputs divergence and curl: MOVIE_VOLUME_TYPE == 4
 
   use constants_solver
 
+  use shared_parameters, only: LOCAL_TMP_PATH
+
+  use specfem_par, only: it
+
   implicit none
 
-  integer :: it
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: eps_trace_over_3_crust_mantle
+  integer,intent(in) :: vnspec_eps_cm
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,vnspec_eps_cm) :: eps_trace_over_3_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_3DMOVIE) :: div_displ_outer_core
 
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: accel_outer_core
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: &
-        rhostore_outer_core,kappavstore_outer_core
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: rhostore_outer_core,kappavstore_outer_core
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: ibool_outer_core
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STRAIN_ONLY) :: eps_trace_over_3_inner_core
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) :: &
+  integer,intent(in) :: vnspec_eps_ic
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,vnspec_eps_ic) :: eps_trace_over_3_inner_core
+
+  integer,intent(in) :: vnspec_cm
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,vnspec_cm) :: &
     epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
     epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_OR_ATT) :: &
+  integer,intent(in) :: vnspec_ic
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,vnspec_ic) :: &
     epsilondev_xx_inner_core,epsilondev_yy_inner_core,epsilondev_xy_inner_core, &
     epsilondev_xz_inner_core,epsilondev_yz_inner_core
-
-  character(len=MAX_STRING_LEN) LOCAL_TMP_PATH
 
   ! local parameters
   real(kind=CUSTOM_REAL) :: rhol,kappal
@@ -691,6 +687,9 @@
   logical,parameter :: MOVIE_OUTPUT_DIV = .true.          ! divergence
   logical,parameter :: MOVIE_OUTPUT_CURL = .true.         ! curl
   logical,parameter :: MOVIE_OUTPUT_CURLNORM = .true.     ! Frobenius norm of curl
+
+  ! checks
+  if (vnspec_cm /= NSPEC_CRUST_MANTLE) call exit_MPI(myrank,'Invalid vnspec_cm value for write_movie_volume_divcurl() routine')
 
   ! outputs divergence
   if (MOVIE_OUTPUT_DIV) then
@@ -834,18 +833,18 @@
 !-------------------------------------------------------------------------------------------------
 !
 
- subroutine write_movie_volume_displnorm(it,LOCAL_TMP_PATH, &
-                                      displ_crust_mantle,displ_inner_core,displ_outer_core, &
-                                      ibool_crust_mantle,ibool_inner_core,ibool_outer_core)
+ subroutine write_movie_volume_displnorm(displ_crust_mantle,displ_inner_core,displ_outer_core, &
+                                         ibool_crust_mantle,ibool_inner_core,ibool_outer_core)
 
 ! outputs norm of displacement: MOVIE_VOLUME_TYPE == 7
 
   use constants_solver
-  use specfem_par, only: scale_displ
+
+  use shared_parameters, only: LOCAL_TMP_PATH
+
+  use specfem_par, only: it, scale_displ
 
   implicit none
-
-  integer :: it
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: displ_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: displ_inner_core
@@ -854,8 +853,6 @@
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool_inner_core
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: ibool_outer_core
-
-  character(len=MAX_STRING_LEN) LOCAL_TMP_PATH
 
   ! local parameters
   integer :: ispec,iglob,i,j,k,ier
@@ -953,18 +950,18 @@
 !-------------------------------------------------------------------------------------------------
 !
 
- subroutine write_movie_volume_velnorm(it,LOCAL_TMP_PATH, &
-                                      veloc_crust_mantle,veloc_inner_core,veloc_outer_core, &
-                                      ibool_crust_mantle,ibool_inner_core,ibool_outer_core)
+ subroutine write_movie_volume_velnorm(veloc_crust_mantle,veloc_inner_core,veloc_outer_core, &
+                                       ibool_crust_mantle,ibool_inner_core,ibool_outer_core)
 
 ! outputs norm of velocity: MOVIE_VOLUME_TYPE == 8
 
   use constants_solver
-  use specfem_par, only: scale_veloc
+
+  use shared_parameters, only: LOCAL_TMP_PATH
+
+  use specfem_par, only: it, scale_veloc
 
   implicit none
-
-  integer :: it
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: veloc_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: veloc_outer_core
@@ -974,11 +971,9 @@
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool_inner_core
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: ibool_outer_core
 
-  character(len=MAX_STRING_LEN) LOCAL_TMP_PATH
-
   ! local parameters
   integer :: ispec,iglob,i,j,k,ier
-  character(len=MAX_STRING_LEN) outputname
+  character(len=MAX_STRING_LEN) :: outputname
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: tmp_data
 
   logical,parameter :: OUTPUT_CRUST_MANTLE = .true.
@@ -1071,18 +1066,18 @@
 !-------------------------------------------------------------------------------------------------
 !
 
- subroutine write_movie_volume_accelnorm(it,LOCAL_TMP_PATH, &
-                                      accel_crust_mantle,accel_inner_core,accel_outer_core, &
-                                      ibool_crust_mantle,ibool_inner_core,ibool_outer_core)
+ subroutine write_movie_volume_accelnorm(accel_crust_mantle,accel_inner_core,accel_outer_core, &
+                                         ibool_crust_mantle,ibool_inner_core,ibool_outer_core)
 
 ! outputs norm of acceleration: MOVIE_VOLUME_TYPE == 1
 
   use constants_solver
-  use specfem_par, only: scale_t_inv,scale_veloc
+
+  use shared_parameters, only: LOCAL_TMP_PATH
+
+  use specfem_par, only: it, scale_t_inv,scale_veloc
 
   implicit none
-
-  integer :: it
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: accel_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: accel_inner_core
@@ -1092,11 +1087,9 @@
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool_inner_core
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: ibool_outer_core
 
-  character(len=MAX_STRING_LEN) LOCAL_TMP_PATH
-
   ! local parameters
   integer :: ispec,iglob,i,j,k,ier
-  character(len=MAX_STRING_LEN) outputname
+  character(len=MAX_STRING_LEN) :: outputname
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: tmp_data
   real(kind=CUSTOM_REAL) :: scale_accel
 

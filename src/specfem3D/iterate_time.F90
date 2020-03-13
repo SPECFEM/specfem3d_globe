@@ -309,13 +309,13 @@
                                           displ_outer_core,veloc_outer_core,accel_outer_core,Mesh_pointer)
       ! strain
       call transfer_strain_cm_from_device(Mesh_pointer,eps_trace_over_3_crust_mantle, &
-                                      epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle, &
-                                      epsilondev_xy_crust_mantle,epsilondev_xz_crust_mantle, &
-                                      epsilondev_yz_crust_mantle)
+                                          epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle, &
+                                          epsilondev_xy_crust_mantle,epsilondev_xz_crust_mantle, &
+                                          epsilondev_yz_crust_mantle)
       call transfer_strain_ic_from_device(Mesh_pointer,eps_trace_over_3_inner_core, &
-                                      epsilondev_xx_inner_core,epsilondev_yy_inner_core, &
-                                      epsilondev_xy_inner_core,epsilondev_xz_inner_core, &
-                                      epsilondev_yz_inner_core)
+                                          epsilondev_xx_inner_core,epsilondev_yy_inner_core, &
+                                          epsilondev_xy_inner_core,epsilondev_xz_inner_core, &
+                                          epsilondev_yz_inner_core)
       ! rotation
       if (ROTATION_VAL) then
         call transfer_rotation_from_device(Mesh_pointer,A_array_rotation,B_array_rotation)

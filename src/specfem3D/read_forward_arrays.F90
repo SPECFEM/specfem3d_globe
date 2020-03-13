@@ -206,14 +206,14 @@
     ! strain
     if (.not. UNDO_ATTENUATION) then
       call transfer_b_strain_cm_to_device(Mesh_pointer, &
-                                    b_epsilondev_xx_crust_mantle,b_epsilondev_yy_crust_mantle, &
-                                    b_epsilondev_xy_crust_mantle,b_epsilondev_xz_crust_mantle, &
-                                    b_epsilondev_yz_crust_mantle)
+                                          b_epsilondev_xx_crust_mantle,b_epsilondev_yy_crust_mantle, &
+                                          b_epsilondev_xy_crust_mantle,b_epsilondev_xz_crust_mantle, &
+                                          b_epsilondev_yz_crust_mantle)
 
       call transfer_b_strain_ic_to_device(Mesh_pointer, &
-                                    b_epsilondev_xx_inner_core,b_epsilondev_yy_inner_core, &
-                                    b_epsilondev_xy_inner_core,b_epsilondev_xz_inner_core, &
-                                    b_epsilondev_yz_inner_core)
+                                          b_epsilondev_xx_inner_core,b_epsilondev_yy_inner_core, &
+                                          b_epsilondev_xy_inner_core,b_epsilondev_xz_inner_core, &
+                                          b_epsilondev_yz_inner_core)
     endif
     ! rotation
     if (ROTATION_VAL) then
