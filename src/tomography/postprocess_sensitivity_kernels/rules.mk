@@ -321,11 +321,11 @@ xsmooth_sem_adios_SHARED_OBJECTS = \
 
 
 xsmooth_sem_adios_SHARED_OBJECTS += \
-	$O/adios_helpers_definitions.shared_adios_module.o \
+	$O/adios_helpers_definitions.shared_adios.o \
 	$O/adios_helpers_readers.shared_adios.o \
-        $O/adios_helpers_writers.shared_adios_module.o \
-        $O/adios_helpers.shared_adios.o \
-        $O/adios_manager.shared_adios_module.o \
+	$O/adios_helpers_writers.shared_adios.o \
+	$O/adios_helpers.shared_adios.o \
+	$O/adios_manager.shared_adios_module.o \
 	$(EMPTY_MACRO)
 
 # extra dependencies
