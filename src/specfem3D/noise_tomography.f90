@@ -457,7 +457,7 @@
   ! output parameters
   real(kind=CUSTOM_REAL),dimension(NDIM,NGLLX,NGLLY,NGLLZ,NSTEP) :: noise_sourcearray
   ! local parameters
-  integer itime, i, j, k, ier
+  integer itime, i, j, k, ier, nlines
   real(kind=CUSTOM_REAL) :: junk
   real(kind=CUSTOM_REAL), dimension(NSTEP) :: noise_src
   real(kind=CUSTOM_REAL), dimension(NDIM,NSTEP) :: noise_src_u
@@ -468,6 +468,9 @@
   double precision, dimension(NGLLZ) :: hgammar, hpgammar
   character(len=MAX_STRING_LEN) :: filename
 
+  ! initializes
+  noise_src(:) = 0._CUSTOM_REAL
+
   ! noise file (source time function)
   filename = trim(OUTPUT_FILES)//'/..//NOISE_TOMOGRAPHY/S_squared'
   open(unit=IIN_NOISE,file=trim(filename),status='old',action='read',iostat=ier)
@@ -475,8 +478,22 @@
     call exit_MPI(myrank, 'file '//trim(filename)//' does NOT exist! This file should have been generated using Matlab scripts')
   endif
 
-  noise_src(:) = 0._CUSTOM_REAL
-  do itime  = 1,NSTEP
+  ! counts line reads noise source S(t)
+  nlines = 0
+  do while(ier == 0)
+    read(IIN_NOISE,*,iostat=ier) junk, junk
+    if (ier == 0)  nlines = nlines + 1
+  enddo
+  rewind(IIN_NOISE)
+
+  ! checks to be sure that file is matching simulation setup
+  if (nlines /= NSTEP) then
+    print *,'Error: invalid number of lines ',nlines,' in file NOISE_TOMOGRAPHY/S_squared'
+    print *,'Please check file...'
+    call exit_MPI(myrank,'Error invalid number of lines in file S_squared')
+  endif
+
+  do itime = 1,NSTEP
     read(IIN_NOISE,*,iostat=ier) junk, noise_src(itime)
     if (ier /= 0) then
       print *,'Error noise source S_squared file length: NSTEP length required is ',NSTEP,' with time step size ',DT
