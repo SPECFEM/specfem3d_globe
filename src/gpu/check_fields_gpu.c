@@ -106,9 +106,20 @@ void FC_FUNC_ (output_free_device_memory,
 
   TRACE ("output_free_device_memory");
 
-  char info[6];
-  sprintf (info, "f %d:", *myrank);
-  output_free_memory (*myrank, info);
+  char info_str[15]; // add extra character for null termination
+  int len;
+
+  // safety check to avoid string buffer overflow
+  if (*myrank > 99999999) { exit_on_error("Error: rank too large in output_free_device_memory() routine"); }
+
+  len = snprintf (info_str, 15, "rank %8d:", *myrank);
+  if (len >= 15){ printf("warning: string length truncated (from %d) in output_free_device_memory() routine\n", len); }
+
+  //debug
+  //printf("debug: info ***%s***\n",info_str);
+
+  // writes to output file
+  output_free_memory (*myrank, info_str);
 }
 
 /*----------------------------------------------------------------------------------------------- */
