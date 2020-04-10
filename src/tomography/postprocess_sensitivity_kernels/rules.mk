@@ -62,6 +62,7 @@ tomography/adios_postprocess_sensitivity_kernels_TARGETS += \
 
 tomography/adios_postprocess_sensitivity_kernels_OBJECTS += \
 	$(xinterpolate_model_adios_OBJECTS) \
+	$(xsmooth_sem_adios_OBJECTS) \
 	$(EMPTY_MACRO)
 
 ifeq ($(ADIOS),yes)
@@ -321,6 +322,7 @@ xsmooth_sem_adios_SHARED_OBJECTS = \
 
 
 xsmooth_sem_adios_SHARED_OBJECTS += \
+	$O/adios_helpers_addons.shared_adios_cc.o \
 	$O/adios_helpers_definitions.shared_adios.o \
 	$O/adios_helpers_readers.shared_adios.o \
 	$O/adios_helpers_writers.shared_adios.o \
