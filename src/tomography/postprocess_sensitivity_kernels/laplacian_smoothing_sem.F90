@@ -1,31 +1,31 @@
 #include "config.fh"
 
 program laplacian_smoothing_sem
-  
+
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,IIN,IOUT, &
        GAUSSALPHA,GAUSSBETA,MAX_STRING_LEN,R_EARTH_KM,myrank
-  
+
   use postprocess_par, only: &
        NCHUNKS_VAL,NPROC_XI_VAL,NPROC_ETA_VAL,NPROCTOT_VAL,NEX_XI_VAL,NEX_ETA_VAL, &
        ANGULAR_WIDTH_XI_IN_DEGREES_VAL,ANGULAR_WIDTH_ETA_IN_DEGREES_VAL, &
        NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,MAX_KERNEL_NAMES,LOCAL_PATH
-  
+
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
   use adios_helpers_mod
   use manager_adios
 #endif
-  
+
   implicit none
-  
+
   ! copy from static compilation (depends on Par_file values)
   integer, parameter :: NPROC_XI  = NPROC_XI_VAL
   integer, parameter :: NPROC_ETA = NPROC_ETA_VAL
   integer, parameter :: NCHUNKS   = NCHUNKS_VAL
-  
+
   !takes region 1 kernels
   integer, parameter :: NSPEC_AB = NSPEC_CRUST_MANTLE
   integer, parameter :: NGLOB_AB = NGLOB_CRUST_MANTLE
-  
+
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
   integer, parameter :: NARGS = 6
   character(len=*), parameter :: reg_name = 'reg1/'
@@ -33,22 +33,22 @@ program laplacian_smoothing_sem
   integer, parameter :: NARGS = 5
   character(len=*), parameter :: reg_name = '_reg1_'
 #endif
-  
+
   integer :: nspec, nglob, nker, niter_cg_max
   integer :: iker, i, j, k, iel, i1, i2, ier, sizeprocs
-  
+
   double precision    :: Lx, Ly, Lz, conv_crit
-  
-  
-  real(kind=CUSTOM_REAL), dimension(:),       allocatable :: m, s  
+
+
+  real(kind=CUSTOM_REAL), dimension(:),       allocatable :: m, s
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: mo, so
-  
+
   ! Mesh parameters
   real(kind=CUSTOM_REAL), dimension(:),       allocatable :: xglob, yglob, zglob, valglob
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: dxsi_dx, deta_dx, dgam_dx
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: dxsi_dy, deta_dy, dgam_dy
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: dxsi_dz, deta_dz, dgam_dz
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: jacobian  
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: jacobian
 
   integer, dimension(:,:,:,:), allocatable :: ibool
   integer, dimension(:),       allocatable :: idoubling, ispec_is_tiso, my_neighbors, &
@@ -56,7 +56,7 @@ program laplacian_smoothing_sem
   integer, dimension(:,:),     allocatable :: ibool_interfaces
 
   integer :: max_nibool_interfaces, num_interfaces
-  
+
   double precision, dimension(NGLLX)             :: wx, xgll
   double precision, dimension(NGLLY)             :: wy, ygll
   double precision, dimension(NGLLZ)             :: wz, zgll
@@ -64,14 +64,14 @@ program laplacian_smoothing_sem
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX)       :: dlagx,   dlagy,   dlagz
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX)       :: dlagxwx, dlagywy, dlagzwz
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX)       :: wxy,     wxz,     wyz
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX,NGLLX) :: wxyz  
-  
-    
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX,NGLLX) :: wxyz
+
+
   character(len=MAX_STRING_LEN),dimension(NARGS) :: arg
   character(len=MAX_STRING_LEN),dimension(MAX_KERNEL_NAMES) :: kernel_names
   character(len=MAX_STRING_LEN) :: kernel_names_comma_delimited
   character(len=MAX_STRING_LEN) :: kernel_name, topo_dir
-  
+
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
   character(len=MAX_STRING_LEN) :: input_file, solver_file, solver_file_mpi, tmp_dir
   character(len=MAX_STRING_LEN) :: varname, tmp_str
@@ -81,7 +81,7 @@ program laplacian_smoothing_sem
   character(len=MAX_STRING_LEN) :: local_data_file
   character(len=MAX_STRING_LEN) :: filename
 #endif
-  
+
   character(len=MAX_STRING_LEN) :: output_file
 
   real(kind=CUSTOM_REAL) :: dxsi_dxl, deta_dxl, dgam_dxl
@@ -89,7 +89,7 @@ program laplacian_smoothing_sem
   real(kind=CUSTOM_REAL) :: dxsi_dzl, deta_dzl, dgam_dzl, jacobianl
 
   real(kind=CUSTOM_REAL) :: norm_kerl, norm_ker
-  
+
   ! timing
   double precision, external :: wtime
 
@@ -98,7 +98,7 @@ program laplacian_smoothing_sem
   integer(kind=8) :: group_size_inc,local_dim
   logical :: is_kernel
 #endif
-  
+
   ! number of steps to reach 100 percent, i.e. 10 outputs info for every 10 percent
   integer,parameter :: NSTEP_PERCENT_INFO = 10
 
@@ -108,8 +108,8 @@ program laplacian_smoothing_sem
   call init_mpi()
   call world_size(sizeprocs)
   call world_rank(myrank)
-  
-  ! Parameters for convergence 
+
+  ! Parameters for convergence
   conv_crit    = 1e-5    ! convergence criterion
   niter_cg_max = 1000    ! max number of iteration
 
@@ -140,7 +140,7 @@ program laplacian_smoothing_sem
      endif
   endif
   call synchronize_all()
-  
+
   ! check number of MPI processes
   if (sizeprocs /= NPROCTOT_VAL) then
      if (myrank == 0) then
@@ -153,13 +153,13 @@ program laplacian_smoothing_sem
      stop 'Error wrong number of MPI processes'
   endif
   call synchronize_all()
-  
+
   if (myrank == 0) then
      print *, 'Running XLAPLACIAN_SMOOTHING_SEM'
      print *
   endif
   call synchronize_all()
-  
+
   ! parse command line arguments
   do i = 1, NARGS
      call get_command_argument(i,arg(i))
@@ -170,7 +170,7 @@ program laplacian_smoothing_sem
   read(arg(1),*) Lx
   read(arg(2),*) Lz
   kernel_names_comma_delimited = arg(3)
-  
+
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
   ! ADIOS arguments
   input_file = arg(4)
@@ -183,10 +183,10 @@ program laplacian_smoothing_sem
   output_dir = arg(5)
 #endif
   call synchronize_all()
-  
+
   call parse_kernel_names(kernel_names_comma_delimited,kernel_names,nker)
   if (nker > MAX_KERNEL_NAMES) stop 'number of kernel_names exceeds MAX_KERNEL_NAMES'
-  
+
   if (myrank == 0) then
      ! The machinery for reading multiple names from the command line is in
      ! place,
@@ -196,14 +196,14 @@ program laplacian_smoothing_sem
      if (myrank == 0) print *
   endif
   call synchronize_all()
-  
+
   call read_parameter_file()
   topo_dir = trim(LOCAL_PATH)//'/'
-  
+
   ! checks if basin code or global code: global code uses nchunks /= 0
   if (NCHUNKS == 0) stop 'Error nchunks'
   if (sizeprocs /= NPROCTOT_VAL) call exit_mpi(myrank,'Error total number of slices')
-  
+
   ! user output
   if (myrank == 0) then
      print *,"defaults:"
@@ -226,7 +226,7 @@ program laplacian_smoothing_sem
      print *,"number of elements per slice: ",NSPEC_AB
      print *
   endif
-  
+
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
   ! ADIOS
   call synchronize_all()
@@ -237,37 +237,37 @@ program laplacian_smoothing_sem
   endif
   call initialize_adios()
 #endif
-  
+
   ! synchronizes
   call synchronize_all()
   Lx = Lx / real(R_EARTH_KM,kind=CUSTOM_REAL) ! scale
   Lz = Lz / real(R_EARTH_KM,kind=CUSTOM_REAL) ! scale
   Ly = Lx
-  
-  
-  ! 1. Read inputs and prepare mpi / gpu
-  if (.not.allocated(ibool))         allocate(ibool(ngllx, nglly, ngllz, nspec_ab))
-  if (.not.allocated(valglob))       allocate(valglob(nglob_ab))
-  if (.not.allocated(dxsi_dx))       allocate(dxsi_dx(ngllx, nglly, ngllz, nspec_ab))
-  if (.not.allocated(dxsi_dy))       allocate(dxsi_dy(ngllx, nglly, ngllz, nspec_ab))
-  if (.not.allocated(dxsi_dz))       allocate(dxsi_dz(ngllx, nglly, ngllz, nspec_ab))
-  if (.not.allocated(deta_dx))       allocate(deta_dx(ngllx, nglly, ngllz, nspec_ab))
-  if (.not.allocated(deta_dy))       allocate(deta_dy(ngllx, nglly, ngllz, nspec_ab))
-  if (.not.allocated(deta_dz))       allocate(deta_dz(ngllx, nglly, ngllz, nspec_ab))
-  if (.not.allocated(dgam_dx))       allocate(dgam_dx(ngllx, nglly, ngllz, nspec_ab))
-  if (.not.allocated(dgam_dy))       allocate(dgam_dy(ngllx, nglly, ngllz, nspec_ab))
-  if (.not.allocated(dgam_dz))       allocate(dgam_dz(ngllx, nglly, ngllz, nspec_ab))
-  if (.not.allocated(jacobian))      allocate(jacobian(ngllx, nglly, ngllz, nspec_ab))
-  if (.not.allocated(xglob))         allocate(xglob(nglob_ab))
-  if (.not.allocated(yglob))         allocate(yglob(nglob_ab))
-  if (.not.allocated(zglob))         allocate(zglob(nglob_ab))
-  if (.not.allocated(idoubling))     allocate(idoubling(nspec_ab))
-  if (.not.allocated(ispec_is_tiso)) allocate(ispec_is_tiso(nspec_ab))
 
-  if (.not.allocated(m))  allocate(m(nglob_ab))
-  if (.not.allocated(s))  allocate(s(nglob_ab))
-  if (.not.allocated(mo)) allocate(mo(ngllx, nglly, ngllz, nspec_ab))
-  if (.not.allocated(so)) allocate(so(ngllx, nglly, ngllz, nspec_ab))
+
+  ! 1. Read inputs and prepare MPI / gpu
+  if (.not. allocated(ibool))         allocate(ibool(ngllx, nglly, ngllz, nspec_ab))
+  if (.not. allocated(valglob))       allocate(valglob(nglob_ab))
+  if (.not. allocated(dxsi_dx))       allocate(dxsi_dx(ngllx, nglly, ngllz, nspec_ab))
+  if (.not. allocated(dxsi_dy))       allocate(dxsi_dy(ngllx, nglly, ngllz, nspec_ab))
+  if (.not. allocated(dxsi_dz))       allocate(dxsi_dz(ngllx, nglly, ngllz, nspec_ab))
+  if (.not. allocated(deta_dx))       allocate(deta_dx(ngllx, nglly, ngllz, nspec_ab))
+  if (.not. allocated(deta_dy))       allocate(deta_dy(ngllx, nglly, ngllz, nspec_ab))
+  if (.not. allocated(deta_dz))       allocate(deta_dz(ngllx, nglly, ngllz, nspec_ab))
+  if (.not. allocated(dgam_dx))       allocate(dgam_dx(ngllx, nglly, ngllz, nspec_ab))
+  if (.not. allocated(dgam_dy))       allocate(dgam_dy(ngllx, nglly, ngllz, nspec_ab))
+  if (.not. allocated(dgam_dz))       allocate(dgam_dz(ngllx, nglly, ngllz, nspec_ab))
+  if (.not. allocated(jacobian))      allocate(jacobian(ngllx, nglly, ngllz, nspec_ab))
+  if (.not. allocated(xglob))         allocate(xglob(nglob_ab))
+  if (.not. allocated(yglob))         allocate(yglob(nglob_ab))
+  if (.not. allocated(zglob))         allocate(zglob(nglob_ab))
+  if (.not. allocated(idoubling))     allocate(idoubling(nspec_ab))
+  if (.not. allocated(ispec_is_tiso)) allocate(ispec_is_tiso(nspec_ab))
+
+  if (.not. allocated(m))  allocate(m(nglob_ab))
+  if (.not. allocated(s))  allocate(s(nglob_ab))
+  if (.not. allocated(mo)) allocate(mo(ngllx, nglly, ngllz, nspec_ab))
+  if (.not. allocated(so)) allocate(so(ngllx, nglly, ngllz, nspec_ab))
   m(:) = 0
   s(:) = 0
 
@@ -293,40 +293,40 @@ program laplacian_smoothing_sem
         dlagzwz(i2,i1) = real(lagrange_deriv_GLL(i1-1,i2-1,xgll,NGLLX)*wz(i2), kind=CUSTOM_REAL)
         wxy(i1, i2)    = real(wx(i1)*wy(i2), kind=CUSTOM_REAL)
         wyz(i1, i2)    = real(wy(i1)*wz(i2), kind=CUSTOM_REAL)
-        wxz(i1, i2)    = real(wx(i1)*wz(i2), kind=CUSTOM_REAL)       
+        wxz(i1, i2)    = real(wx(i1)*wz(i2), kind=CUSTOM_REAL)
      enddo
   enddo
-  
-  
+
+
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
  ! ADIOS
   ! user output
   if (myrank == 0) print *, 'reading in ADIOS solver file: ',trim(solver_file)
-  
+
   ! opens file for reading
   call init_adios_group(myadios_group, "MeshReader")
-  call open_file_adios_read_and_init_method(myadios_file, myadios_group, trim(solver_file))  
+  call open_file_adios_read_and_init_method(myadios_file, myadios_group, trim(solver_file))
   call read_adios_scalar(myadios_file, myadios_group, myrank, trim(reg_name)//"nspec", nspec)
-  call read_adios_scalar(myadios_file, myadios_group, myrank, trim(reg_name)//"nglob", nglob)  
+  call read_adios_scalar(myadios_file, myadios_group, myrank, trim(reg_name)//"nglob", nglob)
   if (nspec /= NSPEC_AB) call exit_mpi(myrank,'Error invalid nspec value in solver_data.bp')
   if (nglob /= NGLOB_AB) call exit_mpi(myrank,'Error invalid nglob value in solver_data.bp')
   ! reads mesh arrays
-  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "ibool", ibool(:, :, :, :))  
+  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "ibool", ibool(:, :, :, :))
   call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "xixstore", dxsi_dx(:, :, :, :))
   call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "xiystore", dxsi_dy(:, :, :, :))
   call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "xizstore", dxsi_dz(:, :, :, :))
   call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "gammaxstore", dgam_dx(:, :, :, :))
   call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "gammaystore", dgam_dy(:, :, :, :))
-  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "gammazstore", dgam_dz(:, :, :, :))  
+  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "gammazstore", dgam_dz(:, :, :, :))
   call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "etaxstore", deta_dx(:, :, :, :))
   call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "etaystore", deta_dy(:, :, :, :))
   call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "etazstore", deta_dz(:, :, :, :))
   call close_file_adios_read_and_finalize_method(myadios_file)
- 
+
   ! opens file for mesh
   if (myrank == 0) print *, 'reading in ADIOS solver file: ',trim(solver_file_mpi)
   call init_adios_group(myadios_group, "MeshMPIReader")
-  call open_file_adios_read_and_init_method(myadios_file,myadios_group,solver_file_mpi)  
+  call open_file_adios_read_and_init_method(myadios_file,myadios_group,solver_file_mpi)
   ! MPI interfaces
   call read_adios_scalar(myadios_file,myadios_group,myrank,trim(reg_name) // "num_interfaces",num_interfaces)
   call read_adios_scalar(myadios_file,myadios_group,myrank,trim(reg_name) // "max_nibool_interfaces",max_nibool_interfaces)
@@ -351,17 +351,17 @@ program laplacian_smoothing_sem
         do i = 1, max_nibool_interfaces
             k = k + 1
             ibool_interfaces(i, j) = ibool_interfaces_tmp(k)
-        enddo  
+        enddo
      enddo
      deallocate(ibool_interfaces_tmp)
-  else  
+  else
      max_nibool_interfaces = 0
      allocate(ibool_interfaces(0,0),stat=ier)
      if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array dummy ibool_interfaces_crust_mantle')
   endif
   call close_file_adios_read_and_finalize_method(myadios_file)
 
-#else  
+#else
   ! read in the topology files of the current and neighboring slices
   ! point locations
   write(filename,'(a,i6.6,a)') trim(topo_dir)//'/proc',myrank,trim(reg_name)//'solver_data.bin'
@@ -463,10 +463,10 @@ program laplacian_smoothing_sem
               deta_dz(i,j,k,iel)  = deta_dzl * Lz
               dgam_dz(i,j,k,iel)  = dgam_dzl * Lz
               jacobian(i,j,k,iel) = jacobianl / (Lx*Ly*Lz)
-           end do
-        end do
-     end do
-  end do
+           enddo
+        enddo
+     enddo
+  enddo
   call synchronize_all()
 
 
@@ -483,9 +483,9 @@ program laplacian_smoothing_sem
      do iker = 1, nker
         kernel_name = kernel_names(iker)
         local_dim = NGLLX * NGLLY * NGLLZ * nspec
-        !!! warning different conventions 
+        !!! warning different conventions
         write(tmp_str,'(a,a)')trim(kernel_name),'_crust_mantle'
-        !write(tmp_str,'(a,a)')trim(reg_name),trim(kernel_name)        
+        !write(tmp_str,'(a,a)')trim(reg_name),trim(kernel_name)
         call define_adios_global_array1D(myadios_group, group_size_inc,local_dim, '', &
                                      trim(tmp_str), so(:, :, :, :))
      enddo
@@ -545,7 +545,7 @@ program laplacian_smoothing_sem
      ! data file
      write(local_data_file,'(a,i6.6,a)') &
           trim(input_dir)//'/proc',myrank,trim(reg_name)//trim(kernel_name)//'.bin'
-     
+
      open(IIN,file=trim(local_data_file),status='old',action='read',form='unformatted',iostat=ier)
      if (ier /= 0) then
         print *,'Error opening data file: ',trim(local_data_file)
@@ -565,7 +565,7 @@ program laplacian_smoothing_sem
      !! First pass
      call apply_mass_matrix_gll(mo, m)
      call solve_laplace_linear_system_cg(m, s) ! Solve A y = m
-        
+
      !! Second pass
      call apply_mass_matrix_glob(s, m)
      call solve_laplace_linear_system_cg(m, s) ! Solve A s = y
@@ -573,19 +573,19 @@ program laplacian_smoothing_sem
      !! SAve kernels
      call model_glob_to_gll(s, so)
      so = so * norm_ker
-     
+
      ! smoothed kernel file name
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
      ! ADIOS
      write(tmp_str,'(a,a)')trim(kernel_name),'_crust_mantle'
-     !write(tmp_str,'(a,a)')trim(reg_name),trim(kernel_name)  
+     !write(tmp_str,'(a,a)')trim(reg_name),trim(kernel_name)
      local_dim = NGLLX * NGLLY * NGLLZ * nspec
      call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs_adios, local_dim, &
           trim(tmp_str), so(:, :, :, :))
 #else
-     write(output_file,'(a,i6.6,a)') trim(output_dir)//'/proc', myrank, trim(reg_name)//trim(kernel_name)//'_smooth.bin'     
+     write(output_file,'(a,i6.6,a)') trim(output_dir)//'/proc', myrank, trim(reg_name)//trim(kernel_name)//'_smooth.bin'
      open(IOUT,file=trim(output_file),status='unknown',form='unformatted',action='write',iostat=ier)
-     if (ier /= 0) call exit_mpi(myrank,'Error opening smoothed kernel file')     
+     if (ier /= 0) call exit_mpi(myrank,'Error opening smoothed kernel file')
      ! Note: output the following instead of kernel_smooth(:,:,:,1:NSPEC_AB) to create files of the same sizes
      write(IOUT) so(:,:,:,:)
      close(IOUT)
@@ -594,8 +594,8 @@ program laplacian_smoothing_sem
      ! synchronizes
      call synchronize_all()
 
-  end do
-  
+  enddo
+
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
   ! ADIOS
   ! actual writing
@@ -613,16 +613,16 @@ program laplacian_smoothing_sem
 
  ! stop all the processes, and exit
  call finalize_mpi()
- 
-  
+
+
 contains
 
 
   subroutine solve_laplace_linear_system_cg(m, s)
-    
+
     implicit none
 
-    integer :: iter_cg    
+    integer :: iter_cg
     real(kind=CUSTOM_REAL)    :: res_ini, res_norm, res_norm_new, res_norm_inf
     real(kind=CUSTOM_REAL)    :: pAp, alpha, beta
 
@@ -630,29 +630,29 @@ contains
     real(kind=CUSTOM_REAL), dimension(:), allocatable, intent(inout) :: s
     real(kind=CUSTOM_REAL), dimension(:), allocatable                :: r, p, Ap
 
-    
+
     ! Initializations and allocations
-    if (.not.allocated(r))  allocate(r(nglob))
-    if (.not.allocated(p))  allocate(p(nglob))
-    if (.not.allocated(Ap)) allocate(Ap(nglob))
+    if (.not. allocated(r))  allocate(r(nglob))
+    if (.not. allocated(p))  allocate(p(nglob))
+    if (.not. allocated(Ap)) allocate(Ap(nglob))
     r(:)  = 0.
     p(:)  = 0.
-    Ap(:) = 0.    
+    Ap(:) = 0.
     !! niter_cg_max = nglob !300 !nglob   ! could be changed, here it's the theoretical maximum value
                                        ! warning should be bcast from master...
 
     ! Compute As and form residuals, use them as fir direction
     ! As = 0 because we assume s=0
     s(:) = 0.
-    r(:) = m(:) 
+    r(:) = m(:)
     p(:) = r(:)
 
     ! Compute initial squared norm of residuals
-    call compute_scalar_product(r, r, res_norm)       
+    call compute_scalar_product(r, r, res_norm)
     res_ini = res_norm
     if (myrank == 0) then
-        write(6,*) 'Initial residual: ',res_ini
-    end if
+        write(*,*) 'Initial residual: ',res_ini
+    endif
     call synchronize_all()
 
     ! Conjugate gradient iterations
@@ -661,8 +661,8 @@ contains
        ! Compute Ap product and scalar product
        call compute_Ax_product(p, Ap)
        call compute_scalar_product(p, Ap, pAp)
-              
-       ! Compute alpha, then update smooth model and residual      
+
+       ! Compute alpha, then update smooth model and residual
        alpha = res_norm / pAp
        s     = s + real(alpha, kind=4) * p
        r     = r - real(alpha, kind=4) * Ap
@@ -673,35 +673,35 @@ contains
        !if ( res_norm_inf < conv_crit) then
        if ( res_norm_new < res_ini*conv_crit) then
           exit
-       end if
-       
+       endif
+
        ! Compute beta and update conjugate direction
        beta     = res_norm_new / res_norm
        res_norm = res_norm_new
-       p        = r + real(beta, kind=4) * p 
+       p        = r + real(beta, kind=4) * p
 
        ! Print infos
        if (myrank == 0) then
-           write(6,*)'Iterations ',iter_cg,', max residual ',res_norm_inf,' l2 norm ',res_norm_new
-       end if
+           write(*,*)'Iterations ',iter_cg,', max residual ',res_norm_inf,' l2 norm ',res_norm_new
+       endif
 
-    end do
+    enddo
 
-    if (myrank == 0) write(6,*)'Iterations ',iter_cg,', max residual ',res_norm_inf
+    if (myrank == 0) write(*,*)'Iterations ',iter_cg,', max residual ',res_norm_inf
 
-    
+
   end subroutine solve_laplace_linear_system_cg
 
-  
+
   subroutine compute_Ax_product(s, As)
 
     implicit none
 
     real(kind=CUSTOM_REAL), dimension(NGLLX, NGLLY, NGLLZ) :: sl, stif, mass
     real(kind=CUSTOM_REAL), dimension(NGLLX, NGLLY, NGLLZ) :: grad_xsil, grad_etal, grad_gaml
-    
+
     integer :: i, j, k, l, iel, idof
-    
+
     real(kind=CUSTOM_REAL)    :: lapla_x, lapla_y, lapla_z, jacobianl
     real(kind=CUSTOM_REAL)    :: dxsi_dxl, deta_dxl, dgam_dxl
     real(kind=CUSTOM_REAL)    :: dxsi_dyl, deta_dyl, dgam_dyl
@@ -723,15 +723,15 @@ contains
              do i = 1, ngllx
                 idof      = ibool(i, j, k, iel)
                 sl(i,j,k) = s(idof)
-             end do
-          end do
-       end do
+             enddo
+          enddo
+       enddo
 
        ! First loop
        do k = 1, ngllz
           do j = 1, nglly
              do i = 1, ngllx
-                
+
                 ! Compute derivatives at elemental level
                 dsl_dxsi = 0.
                 dsl_deta = 0.
@@ -740,19 +740,19 @@ contains
                    dsl_dxsi = dsl_dxsi + sl(l, j, k) * dlagx(i, l)
                    dsl_deta = dsl_deta + sl(i, l, k) * dlagy(j, l)
                    dsl_dgam = dsl_dgam + sl(i, j, l) * dlagz(k, l)
-                end do
+                enddo
 
                 ! Get derivatives informations
-                dxsi_dxl  = dxsi_dx(i, j, k, iel) 
+                dxsi_dxl  = dxsi_dx(i, j, k, iel)
                 dxsi_dyl  = dxsi_dy(i, j, k, iel)
                 dxsi_dzl  = dxsi_dz(i, j, k, iel)
-                deta_dxl  = deta_dx(i, j, k, iel) 
+                deta_dxl  = deta_dx(i, j, k, iel)
                 deta_dyl  = deta_dy(i, j, k, iel)
                 deta_dzl  = deta_dz(i, j, k, iel)
-                dgam_dxl  = dgam_dx(i, j, k, iel) 
+                dgam_dxl  = dgam_dx(i, j, k, iel)
                 dgam_dyl  = dgam_dy(i, j, k, iel)
                 dgam_dzl  = dgam_dz(i, j, k, iel)
-                jacobianl = jacobian(i, j, k, iel) 
+                jacobianl = jacobian(i, j, k, iel)
 
                 ! Get physical derivatives
                 dsl_dxl = dsl_dxsi * dxsi_dxl + dsl_deta * deta_dxl + dsl_dgam * dgam_dxl
@@ -766,11 +766,11 @@ contains
 
                 ! Compute mass term
                 mass(i, j, k) = wxyz(i, j, k) * jacobianl *  sl(i, j, k)
-                
-             end do
-          end do
-       end do       
-       
+
+             enddo
+          enddo
+       enddo
+
        ! Second loop
        do k = 1, ngllz
           do j = 1, nglly
@@ -784,41 +784,41 @@ contains
                    lapla_x = lapla_x + grad_xsil(l, j, k) * dlagxwx(l, i)
                    lapla_y = lapla_y + grad_etal(i, l, k) * dlagywy(l, j)
                    lapla_z = lapla_z + grad_gaml(i, j, l) * dlagzwz(l, k)
-                end do
+                enddo
 
                 ! Stiffness
-                stif(i,j,k) = wyz(j,k)*lapla_x + wxz(i,k)*lapla_y + wxy(i,j)*lapla_z                
-                
-             end do
-          end do
-       end do
-       
+                stif (i,j,k) = wyz(j,k)*lapla_x + wxz(i,k)*lapla_y + wxy(i,j)*lapla_z
+
+             enddo
+          enddo
+       enddo
+
       ! Go back to dof
        do k = 1, ngllz
           do j = 1, nglly
-             do i = 1, ngllx                
+             do i = 1, ngllx
                 idof     = ibool(i, j, k, iel)
-                As(idof) = As(idof) + stif(i, j, k) + mass(i, j, k)                
-             end do
-          end do
-       end do
-              
-    end do
+                As(idof) = As(idof) + stif (i, j, k) + mass(i, j, k)
+             enddo
+          enddo
+       enddo
 
-    
+    enddo
+
+
     call assemble_MPI_scalar(sizeprocs, nglob, As, &
                              num_interfaces, max_nibool_interfaces, &
                              nibool_interfaces, ibool_interfaces, my_neighbors)
 
-    
+
   end subroutine compute_Ax_product
 
   ! subroutine model_gll_to_glob(mgll, mglob)
 
   !   implicit none
-    
+
   !   integer :: i, j, k, iel, idof
-    
+
   !   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable, intent(in)    :: mgll
   !   real(kind=CUSTOM_REAL), dimension(:),       allocatable, intent(inout) :: mglob
 
@@ -829,48 +829,48 @@ contains
   !            do i = 1, ngllx
   !               idof        = ibool(i, j, k, iel)
   !               mglob(idof) = mglob(idof) + mgll(i, j, k, iel) / valglob(idof)
-  !            end do
-  !         end do
-  !      end do
-  !   end do
-    
+  !            enddo
+  !         enddo
+  !      enddo
+  !   enddo
+
   !   call assemble_MPI_scalar(sizeprocs, nglob_ab, mglob, &
   !                            num_interfaces, max_nibool_interfaces, &
   !                            nibool_interfaces, ibool_interfaces, my_neighbors)
-    
+
   ! end subroutine model_gll_to_glob
-  
+
   subroutine model_glob_to_gll(mglob, mgll)
-    
+
     implicit none
-    
+
     integer :: i, j, k, iel, idof
-    
+
     real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable, intent(inout) :: mgll
     real(kind=CUSTOM_REAL), dimension(:),       allocatable, intent(inout)    :: mglob
-    
+
     do iel = 1, nspec
        do k = 1, ngllz
           do j = 1, nglly
              do i = 1, ngllx
                 idof               = ibool(i, j, k, iel)
                 mgll(i, j, k, iel) =  mglob(idof)
-             end do
-          end do
-       end do
-    end do
-    
+             enddo
+          enddo
+       enddo
+    enddo
+
   end subroutine model_glob_to_gll
-  
+
   subroutine apply_mass_matrix_glob(m, s)
-    
+
     implicit none
-    
+
     integer :: i, j, k, iel, idof
-    
+
     real(kind=CUSTOM_REAL), dimension(:), allocatable, intent(in)    :: m
     real(kind=CUSTOM_REAL), dimension(:), allocatable, intent(inout) :: s
-    
+
     s(:) = 0.
     do iel = 1, nspec
        do k = 1, ngllz
@@ -878,26 +878,26 @@ contains
              do i = 1, ngllx
                 idof    = ibool(i, j, k, iel)
                 s(idof) = s(idof) + m(idof) * jacobian(i, j, k, iel) * wxyz(i,j,k)
-             end do
-          end do
-       end do
-    end do
+             enddo
+          enddo
+       enddo
+    enddo
 
     call assemble_MPI_scalar(sizeprocs, nglob, s, &
                              num_interfaces, max_nibool_interfaces, &
                              nibool_interfaces, ibool_interfaces, my_neighbors)
-    
+
   end subroutine apply_mass_matrix_glob
-  
+
   subroutine apply_mass_matrix_gll(m, s)
-    
+
     implicit none
-    
+
     integer :: i, j, k, iel, idof
-    
+
     real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable, intent(in)    :: m
     real(kind=CUSTOM_REAL), dimension(:),       allocatable, intent(inout) :: s
-    
+
     s(:) = 0.
     do iel = 1, nspec
        do k = 1, ngllz
@@ -906,21 +906,21 @@ contains
                 idof    = ibool(i, j, k, iel)
                 s(idof) = s(idof) + m(i, j, k, iel) * jacobian(i, j, k, iel) * wxyz(i,j,k)
                 !s(idof) = m(i, j, k, iel) * jacobian(i, j, k, iel) * wxyz(i,j,k)
-             end do
-          end do
-       end do
-    end do
-    
+             enddo
+          enddo
+       enddo
+    enddo
+
     call assemble_MPI_scalar(sizeprocs, nglob, s, &
                              num_interfaces, max_nibool_interfaces, &
                              nibool_interfaces, ibool_interfaces, my_neighbors)
-    
+
   end subroutine apply_mass_matrix_gll
 
   subroutine compute_scalar_product(a, b, val)
 
     implicit none
-    
+
     real(kind=CUSTOM_REAL), dimension(:), allocatable, intent(in) :: a, b
     real(kind=CUSTOM_REAL), intent(out) :: val
     real(kind=CUSTOM_REAL) :: valloc
@@ -928,21 +928,21 @@ contains
     valloc = 0
     val    = 0
     if (size(a) /= size(b)) then
-       stop 
-    end if
+       stop
+    endif
     do i=1,size(a)
        valloc = valloc + a(i) * b(i)
-    end do
+    enddo
     call sum_all_cr(valloc, val)
     call bcast_all_singlecr(val)
     !print *,'scal prod',myrank,valloc,val
-    
+
   end subroutine compute_scalar_product
 
   subroutine compute_infinite_norm(a, val)
 
     implicit none
-    
+
     real(kind=CUSTOM_REAL), dimension(:), allocatable, intent(in) :: a
     integer :: i
     real(kind=CUSTOM_REAL), intent(inout) :: val
@@ -952,7 +952,7 @@ contains
     val    = 0
     do i=1,size(a)
        valloc = max(valloc,abs(a(i)))
-    end do
+    enddo
     call max_all_cr(valloc, val)
     call bcast_all_singlecr(val)
     !print *,'inf norm ',myrank,valloc,val
@@ -1033,7 +1033,7 @@ contains
              array_val(ibool_interfaces(ipoin,iinterface)) + buffer_recv_scalar(ipoin,iinterface)
       enddo
    enddo
-   
+
     ! wait for communications completion (send)
     do iinterface = 1, num_interfaces
       call wait_req(request_send_scalar(iinterface))
@@ -1048,5 +1048,5 @@ contains
 
   end subroutine assemble_MPI_scalar
 
-  
+
 end program laplacian_smoothing_sem

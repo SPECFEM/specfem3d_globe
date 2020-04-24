@@ -70,7 +70,7 @@
                            num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
                            nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle, &
                            my_neighbors_crust_mantle)
-  
+
   ! For norms
   allocate(normx(NGLOB_CRUST_MANTLE_OCEANS),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays normx (ocean load)'
@@ -94,7 +94,7 @@
         ! updates once
         if (.not. updated_dof_ocean_load(iglob)) then
           ! Get normals
-          normx(iglob) = normal_top_crust_mantle(1,i,j,ispec2D) 
+          normx(iglob) = normal_top_crust_mantle(1,i,j,ispec2D)
           normy(iglob) = normal_top_crust_mantle(2,i,j,ispec2D)
           normz(iglob) = normal_top_crust_mantle(3,i,j,ispec2D)
           ipoin = ipoin + 1
@@ -164,7 +164,7 @@
              normal_ocean_load(3,ipoin) = normz(iglob) / norm
           else
              normal_ocean_load(:,ipoin) = normal_top_crust_mantle(:,i,j,ispec2D)
-          end if
+          endif
           ! masks this global point
           updated_dof_ocean_load(iglob) = .true.
         endif

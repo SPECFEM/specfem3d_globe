@@ -359,7 +359,7 @@ xlaplacian_smoothing_sem_SHARED_OBJECTS = \
         $O/read_value_parameters.shared.o \
         $(EMPTY_MACRO)
 
-${E}/xlaplacian_smoothing_sem: $(xlaplacian_smoothing_sem_OBJECTS) $(xlaplacian_smoothing_sem_SHARED_OBJECTS) 
+${E}/xlaplacian_smoothing_sem: $(xlaplacian_smoothing_sem_OBJECTS) $(xlaplacian_smoothing_sem_SHARED_OBJECTS)
 	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 
@@ -384,7 +384,7 @@ xlaplacian_smoothing_sem_adios_SHARED_OBJECTS += \
         $O/adios_manager.shared_adios_module.o \
         $(EMPTY_MACRO)
 
-${E}/xlaplacian_smoothing_sem_adios: $(xlaplacian_smoothing_sem_adios_OBJECTS) $(xlaplacian_smoothing_sem_adios_SHARED_OBJECTS) 
+${E}/xlaplacian_smoothing_sem_adios: $(xlaplacian_smoothing_sem_adios_OBJECTS) $(xlaplacian_smoothing_sem_adios_SHARED_OBJECTS)
 	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 
