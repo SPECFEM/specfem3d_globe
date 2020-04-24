@@ -34,7 +34,7 @@ program laplacian_smoothing_sem
   character(len=*), parameter :: reg_name = '_reg1_'
 #endif
   
-  integer :: nspec, nglob, nker
+  integer :: nspec, nglob, nker, niter_cg_max
   integer :: iker, i, j, k, iel, i1, i2, ier, sizeprocs
   
   double precision    :: Lx, Ly, Lz, conv_crit
@@ -52,7 +52,7 @@ program laplacian_smoothing_sem
 
   integer, dimension(:,:,:,:), allocatable :: ibool
   integer, dimension(:),       allocatable :: idoubling, ispec_is_tiso, my_neighbors, &
-                                              nibool_interfaces, ibool_interfaces_tmp
+                                              nibool_interfaces
   integer, dimension(:,:),     allocatable :: ibool_interfaces
 
   integer :: max_nibool_interfaces, num_interfaces
@@ -75,17 +75,14 @@ program laplacian_smoothing_sem
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
   character(len=MAX_STRING_LEN) :: input_file, solver_file, solver_file_mpi, tmp_dir
   character(len=MAX_STRING_LEN) :: varname, tmp_str
+  integer, dimension(:),       allocatable :: ibool_interfaces_tmp
 #else
   character(len=MAX_STRING_LEN) :: input_dir, output_dir
   character(len=MAX_STRING_LEN) :: local_data_file
+  character(len=MAX_STRING_LEN) :: filename
 #endif
   
   character(len=MAX_STRING_LEN) :: output_file
-  character(len=MAX_STRING_LEN) :: filename
-
-  ! tmp variable
-  character(len=MAX_STRING_LEN) :: region_name, file_name
-  integer :: iregion_code
 
   real(kind=CUSTOM_REAL) :: dxsi_dxl, deta_dxl, dgam_dxl
   real(kind=CUSTOM_REAL) :: dxsi_dyl, deta_dyl, dgam_dyl
@@ -120,16 +117,18 @@ program laplacian_smoothing_sem
   if (command_argument_count() /= NARGS) then
      if (myrank == 0) then
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
-        print *,'Usage: mpirun -np NPROC bin/xlaplacian_smoothing_sem_adios SIGMA_H SIGMA_V KERNEL_NAME INPUT_FILE SOLVER_FILE OUTPUT_FILE'
+        print *,'Usage: mpirun -np NPROC bin/xlaplacian_smoothing_sem_adios SIGMA_H SIGMA_V KERNEL_NAME', &
+               ' INPUT_FILE SOLVER_FILE OUTPUT_FILE'
         print *,'   with'
         print *,'     SIGMA_H, SIGMA_V - horizontal and vertical smoothing lenghts'
         print *,'     KERNEL_NAME      - comma-separated kernel names (e.g., alpha_kernel,beta_kernel)'
         print *,'     INPUT_FILE       - ADIOS file with kernel values (e.g., kernels.bp)'
-        print *,'     SOLVER_FILE      - ADIOS file with mesh arrays (e.g., DATABASES_MPI/) containing solver_data.bp solver_data_mpi.bp'
+        print *,'     SOLVER_FILE      - ADIOS file with mesh arrays (e.g., DATABASES_MPI/) containing', &
+               ' solver_data.bp solver_data_mpi.bp'
         print *,'     OUTPUT_FILE      - ADIOS file for smoothed output'
         print *
 #else
-        print *, 'Usage: mpirun -np NPROC bin/xlaplacian_smoothing_sem SIGMA_H SIGMA_V KERNEL_NAME INPUT_DIR OUPUT_DIR'
+        print *,'Usage: mpirun -np NPROC bin/xlaplacian_smoothing_sem SIGMA_H SIGMA_V KERNEL_NAME INPUT_DIR OUPUT_DIR'
         print *,'   with'
         print *,'     SIGMA_H, SIGMA_V - horizontal and vertical smoothing lenghts'
         print *,'     KERNEL_NAME      - comma-separated kernel names (e.g., alpha_kernel,beta_kernel)'
@@ -341,8 +340,10 @@ program laplacian_smoothing_sem
      if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array ibool_interfaces_crust_mantle')
      allocate(ibool_interfaces_tmp(max_nibool_interfaces * num_interfaces), stat=ier)
      if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array ibool_interfaces_crust_mantle_tmp')
-     call read_adios_array(myadios_file, myadios_group, myrank, num_interfaces, trim(reg_name) // "my_neighbors", my_neighbors(:))
-     call read_adios_array(myadios_file, myadios_group, myrank, num_interfaces, trim(reg_name) // "nibool_interfaces", nibool_interfaces(:))
+     call read_adios_array(myadios_file, myadios_group, myrank, num_interfaces, trim(reg_name) // "my_neighbors", &
+             my_neighbors(:))
+     call read_adios_array(myadios_file, myadios_group, myrank, num_interfaces, trim(reg_name) // "nibool_interfaces", &
+             nibool_interfaces(:))
      call read_adios_array(myadios_file, myadios_group, myrank, num_interfaces*max_nibool_interfaces, &
         trim(reg_name) // "ibool_interfaces", ibool_interfaces_tmp(:))
      k = 0
@@ -621,7 +622,7 @@ contains
     
     implicit none
 
-    integer :: iter_cg, niter_cg_max    
+    integer :: iter_cg    
     real(kind=CUSTOM_REAL)    :: res_ini, res_norm, res_norm_new, res_norm_inf
     real(kind=CUSTOM_REAL)    :: pAp, alpha, beta
 

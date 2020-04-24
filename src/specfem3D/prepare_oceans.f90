@@ -62,6 +62,7 @@
   updated_dof_ocean_load(:) = .false.
 
   ! Get valence of dof and assemble
+  allocate(valence(NGLOB_CRUST_MANTLE_OCEANS),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays valence (ocean load)'
   valence(:) = 1.
   call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
