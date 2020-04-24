@@ -1012,7 +1012,7 @@
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
     ! single adios file for all old model arrays
     ! opens adios file with old model values
-    write(solver_file,'(a,a)') trim(dir_topo1)//'/model_gll.bp'
+    write(solver_file,'(a,a)') trim(input_model_dir)//'/model_gll.bp'
     call open_file_adios_read_and_init_method(myadios_val_file,myadios_val_group,solver_file)
 #endif
 
