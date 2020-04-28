@@ -411,10 +411,10 @@
 
   ! adds contributions from different partitions to flag arrays
   call assemble_MPI_scalar(NPROCTOT,NGLOB_OUTER_CORE, &
-                                test_flag, &
-                                num_interfaces_outer_core,max_nibool_interfaces_oc, &
-                                nibool_interfaces_outer_core,ibool_interfaces_outer_core, &
-                                my_neighbors_outer_core)
+                           test_flag, &
+                           num_interfaces_outer_core,max_nibool_interfaces_oc, &
+                           nibool_interfaces_outer_core,ibool_interfaces_outer_core, &
+                           my_neighbors_outer_core)
 
 
   ! removes initial flag

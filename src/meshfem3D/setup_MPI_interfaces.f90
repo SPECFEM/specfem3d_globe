@@ -176,18 +176,19 @@
 
     ! assembles values
     call assemble_MPI_scalar_block(test_flag,NGLOB_CRUST_MANTLE, &
-              iproc_xi,iproc_eta,ichunk,addressing, &
-              iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
-              npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
-              iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
-              iprocfrom_faces,iprocto_faces,imsg_type, &
-              iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-              buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
-              buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
-              NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-              NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
-              NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE), &
-              NGLOB2DMAX_XY,NCHUNKS)
+                                   iproc_xi,iproc_eta,ichunk,addressing, &
+                                   iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle, &
+                                   iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
+                                   npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+                                   iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
+                                   iprocfrom_faces,iprocto_faces,imsg_type, &
+                                   iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+                                   buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
+                                   buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
+                                   NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
+                                   NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
+                                   NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE), &
+                                   NGLOB2DMAX_XY,NCHUNKS)
 
     ! removes own myrank id (+1)
     test_flag(:) = test_flag(:) - ( myrank + 1.0)
@@ -333,7 +334,6 @@
                                    NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE), &
                                    NGLOB2DMAX_XY,NCHUNKS)
 
-
     ! removes own myrank id (+1)
     test_flag(:) = test_flag(:) - ( myrank + 1.0)
 
@@ -476,18 +476,19 @@
 
     ! assembles values
     call assemble_MPI_scalar_block(test_flag,NGLOB_INNER_CORE, &
-              iproc_xi,iproc_eta,ichunk,addressing, &
-              iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
-              npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
-              iboolfaces_inner_core,iboolcorner_inner_core, &
-              iprocfrom_faces,iprocto_faces,imsg_type, &
-              iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-              buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
-              buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
-              NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-              NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_INNER_CORE), &
-              NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE), &
-              NGLOB2DMAX_XY,NCHUNKS)
+                                   iproc_xi,iproc_eta,ichunk,addressing, &
+                                   iboolleft_xi_inner_core,iboolright_xi_inner_core, &
+                                   iboolleft_eta_inner_core,iboolright_eta_inner_core, &
+                                   npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+                                   iboolfaces_inner_core,iboolcorner_inner_core, &
+                                   iprocfrom_faces,iprocto_faces,imsg_type, &
+                                   iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+                                   buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
+                                   buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
+                                   NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
+                                   NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_INNER_CORE), &
+                                   NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE), &
+                                   NGLOB2DMAX_XY,NCHUNKS)
 
     ! debug: idoubling inner core
     if (DEBUG) then

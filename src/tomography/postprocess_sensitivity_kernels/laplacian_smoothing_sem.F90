@@ -1,6 +1,34 @@
+!=====================================================================
+!
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          --------------------------------------------------
+!
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+!                        Princeton University, USA
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
+!
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 3 of the License, or
+! (at your option) any later version.
+!
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+! GNU General Public License for more details.
+!
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+!
+!=====================================================================
+
 #include "config.fh"
 
-program laplacian_smoothing_sem
+
+program smooth_laplacian_sem
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,IIN,IOUT, &
        GAUSSALPHA,GAUSSBETA,MAX_STRING_LEN,R_EARTH_KM,myrank
@@ -117,7 +145,7 @@ program laplacian_smoothing_sem
   if (command_argument_count() /= NARGS) then
      if (myrank == 0) then
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
-        print *,'Usage: mpirun -np NPROC bin/xlaplacian_smoothing_sem_adios SIGMA_H SIGMA_V KERNEL_NAME', &
+        print *,'Usage: mpirun -np NPROC bin/xsmooth_laplacian_sem_adios SIGMA_H SIGMA_V KERNEL_NAME', &
                ' INPUT_FILE SOLVER_FILE OUTPUT_FILE'
         print *,'   with'
         print *,'     SIGMA_H, SIGMA_V - horizontal and vertical smoothing lenghts'
@@ -128,7 +156,7 @@ program laplacian_smoothing_sem
         print *,'     OUTPUT_FILE      - ADIOS file for smoothed output'
         print *
 #else
-        print *,'Usage: mpirun -np NPROC bin/xlaplacian_smoothing_sem SIGMA_H SIGMA_V KERNEL_NAME INPUT_DIR OUPUT_DIR'
+        print *,'Usage: mpirun -np NPROC bin/xsmooth_laplacian_sem SIGMA_H SIGMA_V KERNEL_NAME INPUT_DIR OUPUT_DIR'
         print *,'   with'
         print *,'     SIGMA_H, SIGMA_V - horizontal and vertical smoothing lenghts'
         print *,'     KERNEL_NAME      - comma-separated kernel names (e.g., alpha_kernel,beta_kernel)'
@@ -155,7 +183,7 @@ program laplacian_smoothing_sem
   call synchronize_all()
 
   if (myrank == 0) then
-     print *, 'Running XLAPLACIAN_SMOOTHING_SEM'
+     print *, 'Running smooth_laplacian_SEM'
      print *
   endif
   call synchronize_all()
@@ -617,6 +645,7 @@ program laplacian_smoothing_sem
 
 contains
 
+!-------------------------------------------------------------------------------------------------
 
   subroutine solve_laplace_linear_system_cg(m, s)
 
@@ -692,6 +721,7 @@ contains
 
   end subroutine solve_laplace_linear_system_cg
 
+!-------------------------------------------------------------------------------------------------
 
   subroutine compute_Ax_product(s, As)
 
@@ -813,6 +843,8 @@ contains
 
   end subroutine compute_Ax_product
 
+!-------------------------------------------------------------------------------------------------
+
   ! subroutine model_gll_to_glob(mgll, mglob)
 
   !   implicit none
@@ -862,6 +894,8 @@ contains
 
   end subroutine model_glob_to_gll
 
+!-------------------------------------------------------------------------------------------------
+
   subroutine apply_mass_matrix_glob(m, s)
 
     implicit none
@@ -888,6 +922,8 @@ contains
                              nibool_interfaces, ibool_interfaces, my_neighbors)
 
   end subroutine apply_mass_matrix_glob
+
+!-------------------------------------------------------------------------------------------------
 
   subroutine apply_mass_matrix_gll(m, s)
 
@@ -917,6 +953,8 @@ contains
 
   end subroutine apply_mass_matrix_gll
 
+!-------------------------------------------------------------------------------------------------
+
   subroutine compute_scalar_product(a, b, val)
 
     implicit none
@@ -939,6 +977,8 @@ contains
 
   end subroutine compute_scalar_product
 
+!-------------------------------------------------------------------------------------------------
+
   subroutine compute_infinite_norm(a, val)
 
     implicit none
@@ -959,6 +999,7 @@ contains
 
   end subroutine compute_infinite_norm
 
+!-------------------------------------------------------------------------------------------------
 
  subroutine assemble_MPI_scalar(NPROC,nglob,array_val, &
                         num_interfaces,max_nibool_interfaces, &
@@ -1049,4 +1090,4 @@ contains
   end subroutine assemble_MPI_scalar
 
 
-end program laplacian_smoothing_sem
+end program smooth_laplacian_sem

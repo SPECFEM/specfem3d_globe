@@ -39,7 +39,7 @@ tomography/postprocess_sensitivity_kernels_TARGETS = \
 	$E/xinterpolate_model \
 	$E/xcreate_cross_section \
 	$E/xsmooth_sem \
-	$E/xlaplacian_smoothing_sem \
+	$E/xsmooth_laplacian_sem \
 	$(EMPTY_MACRO)
 
 tomography/postprocess_sensitivity_kernels_OBJECTS = \
@@ -50,7 +50,7 @@ tomography/postprocess_sensitivity_kernels_OBJECTS = \
 	$(xinterpolate_model_OBJECTS) \
 	$(xcreate_cross_section_OBJECTS) \
 	$(xsmooth_sem_OBJECTS) \
-	$(xlaplacian_smoothing_sem_OBJECTS) \
+	$(xsmooth_laplacian_sem_OBJECTS) \
 	$(xconvert_model_file_adios_OBJECTS) \
 	$(EMPTY_MACRO)
 
@@ -60,11 +60,13 @@ tomography/adios_postprocess_sensitivity_kernels_TARGETS += \
 	$E/xconvert_model_file_adios \
 	$E/xinterpolate_model_adios \
 	$E/xsmooth_sem_adios \
-	$E/xlaplacian_smoothing_sem_adios \
+	$E/xsmooth_laplacian_sem_adios \
 	$(EMPTY_MACRO)
 
 tomography/adios_postprocess_sensitivity_kernels_OBJECTS += \
 	$(xinterpolate_model_adios_OBJECTS) \
+	$(xsmooth_sem_adios_OBJECTS) \
+	$(xsmooth_laplacian_sem_adios_OBJECTS) \
 	$(EMPTY_MACRO)
 
 ifeq ($(ADIOS),yes)
@@ -323,13 +325,13 @@ xsmooth_sem_adios_OBJECTS = \
 xsmooth_sem_adios_SHARED_OBJECTS = \
 	$(xsmooth_sem_SHARED_OBJECTS)
 
-
 xsmooth_sem_adios_SHARED_OBJECTS += \
-	$O/adios_helpers_definitions.shared_adios_module.o \
+	$O/adios_helpers_addons.shared_adios_cc.o \
+	$O/adios_helpers_definitions.shared_adios.o \
 	$O/adios_helpers_readers.shared_adios.o \
-        $O/adios_helpers_writers.shared_adios_module.o \
-        $O/adios_helpers.shared_adios.o \
-        $O/adios_manager.shared_adios_module.o \
+	$O/adios_helpers_writers.shared_adios.o \
+	$O/adios_helpers.shared_adios.o \
+	$O/adios_manager.shared_adios_module.o \
 	$(EMPTY_MACRO)
 
 # extra dependencies
@@ -340,51 +342,51 @@ ${E}/xsmooth_sem_adios: $(xsmooth_sem_adios_OBJECTS) $(xsmooth_sem_adios_SHARED_
 
 
 ##
-## xlaplacian_smoothing_sem
+## xsmooth_laplacian_sem
 ##
-xlaplacian_smoothing_sem_OBJECTS = \
-        $O/postprocess_par.postprocess_module.o \
+xsmooth_laplacian_sem_OBJECTS = \
+	$O/postprocess_par.postprocess_module.o \
 	$O/parse_kernel_names.postprocess.o \
-        $O/laplacian_smoothing_sem.postprocess.o \
+	$O/laplacian_smoothing_sem.postprocess.o \
 	$(EMPTY_MACRO)
 
-xlaplacian_smoothing_sem_SHARED_OBJECTS = \
-        $O/shared_par.shared_module.o \
-        $O/parallel.sharedmpi.o \
-        $O/exit_mpi.shared.o \
-        $O/gll_library.shared.o \
-        $O/lagrange_poly.shared.o \
-        $O/param_reader.cc.o \
-        $O/read_parameter_file.shared.o \
-        $O/read_value_parameters.shared.o \
-        $(EMPTY_MACRO)
+xsmooth_laplacian_sem_SHARED_OBJECTS = \
+	$O/shared_par.shared_module.o \
+	$O/parallel.sharedmpi.o \
+	$O/exit_mpi.shared.o \
+	$O/gll_library.shared.o \
+	$O/lagrange_poly.shared.o \
+	$O/param_reader.cc.o \
+	$O/read_parameter_file.shared.o \
+	$O/read_value_parameters.shared.o \
+	$(EMPTY_MACRO)
 
-${E}/xlaplacian_smoothing_sem: $(xlaplacian_smoothing_sem_OBJECTS) $(xlaplacian_smoothing_sem_SHARED_OBJECTS)
+${E}/xsmooth_laplacian_sem: $(xsmooth_laplacian_sem_OBJECTS) $(xsmooth_laplacian_sem_SHARED_OBJECTS)
 	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 
 ##
-## xlaplacian_smoothing_sem_adios
+## xsmooth_laplacian_sem_adios
 ##
-xlaplacian_smoothing_sem_adios_OBJECTS = \
-        $O/postprocess_par.postprocess_module.o \
-        $O/parse_kernel_names.postprocess.o \
-        $O/laplacian_smoothing_sem.postprocess_adios.o \
-        $(EMPTY_MACRO)
+xsmooth_laplacian_sem_adios_OBJECTS = \
+	$O/postprocess_par.postprocess_module.o \
+	$O/parse_kernel_names.postprocess.o \
+	$O/laplacian_smoothing_sem.postprocess_adios.o \
+	$(EMPTY_MACRO)
 
-xlaplacian_smoothing_sem_adios_SHARED_OBJECTS = \
-        $(xlaplacian_smoothing_sem_SHARED_OBJECTS)
+xsmooth_laplacian_sem_adios_SHARED_OBJECTS = \
+	$(xsmooth_laplacian_sem_SHARED_OBJECTS)
 
+xsmooth_laplacian_sem_adios_SHARED_OBJECTS += \
+	$O/adios_helpers_addons.shared_adios_cc.o \
+	$O/adios_helpers_definitions.shared_adios.o \
+	$O/adios_helpers_readers.shared_adios.o \
+	$O/adios_helpers_writers.shared_adios.o \
+	$O/adios_helpers.shared_adios.o \
+	$O/adios_manager.shared_adios_module.o \
+	$(EMPTY_MACRO)
 
-xlaplacian_smoothing_sem_adios_SHARED_OBJECTS += \
-        $O/adios_helpers_definitions.shared_adios_module.o \
-        $O/adios_helpers_readers.shared_adios.o \
-        $O/adios_helpers_writers.shared_adios_module.o \
-        $O/adios_helpers.shared_adios.o \
-        $O/adios_manager.shared_adios_module.o \
-        $(EMPTY_MACRO)
-
-${E}/xlaplacian_smoothing_sem_adios: $(xlaplacian_smoothing_sem_adios_OBJECTS) $(xlaplacian_smoothing_sem_adios_SHARED_OBJECTS)
+${E}/xsmooth_laplacian_sem_adios: $(xsmooth_laplacian_sem_adios_OBJECTS) $(xsmooth_laplacian_sem_adios_SHARED_OBJECTS)
 	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 

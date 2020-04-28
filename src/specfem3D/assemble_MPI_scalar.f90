@@ -30,25 +30,25 @@
 !----
 
   subroutine assemble_MPI_scalar(NPROC,nglob,array_val, &
-                        num_interfaces,max_nibool_interfaces, &
-                        nibool_interfaces,ibool_interfaces, &
-                        my_neighbors)
+                                 num_interfaces,max_nibool_interfaces, &
+                                 nibool_interfaces,ibool_interfaces, &
+                                 my_neighbors)
 
 ! blocking send/receive
 
-  use constants
+  use constants, only: CUSTOM_REAL,itag
 
   implicit none
 
-  integer :: NPROC
-  integer :: nglob
+  integer, intent(in) :: NPROC
+  integer, intent(in) :: nglob
 
   ! array to assemble
   real(kind=CUSTOM_REAL), dimension(nglob), intent(inout) :: array_val
 
-  integer :: num_interfaces,max_nibool_interfaces
-  integer, dimension(num_interfaces) :: nibool_interfaces,my_neighbors
-  integer, dimension(max_nibool_interfaces,num_interfaces) :: ibool_interfaces
+  integer, intent(in) :: num_interfaces,max_nibool_interfaces
+  integer, dimension(num_interfaces), intent(in) :: nibool_interfaces,my_neighbors
+  integer, dimension(max_nibool_interfaces,num_interfaces), intent(in) :: ibool_interfaces
 
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: buffer_send_scalar
@@ -56,7 +56,7 @@
   integer, dimension(:), allocatable :: request_send_scalar
   integer, dimension(:), allocatable :: request_recv_scalar
 
-  integer ipoin,iinterface,ier
+  integer :: ipoin,iinterface,ier
 
 ! here we have to assemble all the contributions between partitions using MPI
 
@@ -83,12 +83,15 @@
     do iinterface = 1, num_interfaces
       ! non-blocking synchronous send request
       call isend_cr(buffer_send_scalar(1:nibool_interfaces(iinterface),iinterface), &
-                   nibool_interfaces(iinterface),my_neighbors(iinterface), &
-                   itag,request_send_scalar(iinterface) )
+                    nibool_interfaces(iinterface), &
+                    my_neighbors(iinterface), &
+                    itag,request_send_scalar(iinterface) )
+
       ! receive request
       call irecv_cr(buffer_recv_scalar(1:nibool_interfaces(iinterface),iinterface), &
-                   nibool_interfaces(iinterface),my_neighbors(iinterface), &
-                   itag,request_recv_scalar(iinterface) )
+                    nibool_interfaces(iinterface), &
+                    my_neighbors(iinterface), &
+                    itag,request_recv_scalar(iinterface) )
     enddo
 
     ! wait for communications completion (recv)
@@ -123,34 +126,33 @@
 !
 
   subroutine assemble_MPI_scalar_s(NPROC,nglob,array_val, &
-                        buffer_send_scalar,buffer_recv_scalar, &
-                        num_interfaces,max_nibool_interfaces, &
-                        nibool_interfaces,ibool_interfaces, &
-                        my_neighbors, &
-                        request_send_scalar,request_recv_scalar)
+                                   buffer_send_scalar,buffer_recv_scalar, &
+                                   num_interfaces,max_nibool_interfaces, &
+                                   nibool_interfaces,ibool_interfaces, &
+                                   my_neighbors, &
+                                   request_send_scalar,request_recv_scalar)
 
 ! non-blocking MPI send
 
-  use constants
+  use constants, only: CUSTOM_REAL,itag
 
   implicit none
 
-  integer :: NPROC
-  integer :: nglob
-  integer :: num_interfaces,max_nibool_interfaces
+  integer, intent(in) :: NPROC
+  integer, intent(in) :: nglob
+  integer, intent(in) :: num_interfaces,max_nibool_interfaces
 
-! array to send
+  ! array to send
   real(kind=CUSTOM_REAL), dimension(nglob) :: array_val
 
-
-  real(kind=CUSTOM_REAL), dimension(max_nibool_interfaces,num_interfaces) :: &
-       buffer_send_scalar,buffer_recv_scalar
+  real(kind=CUSTOM_REAL), dimension(max_nibool_interfaces,num_interfaces) :: buffer_send_scalar,buffer_recv_scalar
 
   integer, dimension(num_interfaces) :: nibool_interfaces,my_neighbors
   integer, dimension(max_nibool_interfaces,num_interfaces) :: ibool_interfaces
   integer, dimension(num_interfaces) :: request_send_scalar,request_recv_scalar
 
-  integer ipoin,iinterface
+  ! local parameters
+  integer :: ipoin,iinterface
 
 ! sends only if more than one partition
   if (NPROC > 1) then
@@ -158,8 +160,7 @@
     ! partition border copy into the buffer
     do iinterface = 1, num_interfaces
       do ipoin = 1, nibool_interfaces(iinterface)
-        buffer_send_scalar(ipoin,iinterface) = &
-          array_val(ibool_interfaces(ipoin,iinterface))
+        buffer_send_scalar(ipoin,iinterface) = array_val(ibool_interfaces(ipoin,iinterface))
       enddo
     enddo
 
@@ -167,13 +168,15 @@
     do iinterface = 1, num_interfaces
       ! non-blocking synchronous send request
       call isend_cr(buffer_send_scalar(1:nibool_interfaces(iinterface),iinterface), &
-                   nibool_interfaces(iinterface),my_neighbors(iinterface), &
-                   itag,request_send_scalar(iinterface))
+                    nibool_interfaces(iinterface), &
+                    my_neighbors(iinterface), &
+                    itag,request_send_scalar(iinterface))
+
       ! receive request
       call irecv_cr(buffer_recv_scalar(1:nibool_interfaces(iinterface),iinterface), &
-                   nibool_interfaces(iinterface),my_neighbors(iinterface), &
-                   itag,request_recv_scalar(iinterface))
-
+                    nibool_interfaces(iinterface), &
+                    my_neighbors(iinterface), &
+                    itag,request_recv_scalar(iinterface))
     enddo
 
   endif
@@ -185,31 +188,31 @@
 !
 
   subroutine assemble_MPI_scalar_w(NPROC,nglob,array_val, &
-                        buffer_recv_scalar,num_interfaces, &
-                        max_nibool_interfaces, &
-                        nibool_interfaces,ibool_interfaces, &
-                        request_send_scalar,request_recv_scalar)
+                                   buffer_recv_scalar,num_interfaces, &
+                                   max_nibool_interfaces, &
+                                   nibool_interfaces,ibool_interfaces, &
+                                   request_send_scalar,request_recv_scalar)
 
 ! waits for send/receiver to be completed and assembles contributions
 
-  use constants
+  use constants,only: CUSTOM_REAL,itag
 
   implicit none
 
-  integer :: NPROC
-  integer :: nglob
-  integer :: num_interfaces,max_nibool_interfaces
+  integer,intent(in) :: NPROC
+  integer,intent(in) :: nglob
+  integer,intent(in) :: num_interfaces,max_nibool_interfaces
 ! array to assemble
   real(kind=CUSTOM_REAL), dimension(nglob) :: array_val
 
-  real(kind=CUSTOM_REAL), dimension(max_nibool_interfaces,num_interfaces) :: &
-       buffer_recv_scalar
+  real(kind=CUSTOM_REAL), dimension(max_nibool_interfaces,num_interfaces) :: buffer_recv_scalar
 
-  integer, dimension(num_interfaces) :: nibool_interfaces
-  integer, dimension(max_nibool_interfaces,num_interfaces) :: ibool_interfaces
-  integer, dimension(num_interfaces) :: request_send_scalar,request_recv_scalar
+  integer, dimension(num_interfaces),intent(in) :: nibool_interfaces
+  integer, dimension(max_nibool_interfaces,num_interfaces),intent(in) :: ibool_interfaces
+  integer, dimension(num_interfaces),intent(in) :: request_send_scalar,request_recv_scalar
 
-  integer ipoin,iinterface
+  ! local parameters
+  integer :: ipoin,iinterface
 
 ! assemble only if more than one partition
   if (NPROC > 1) then
