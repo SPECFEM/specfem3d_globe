@@ -34,6 +34,8 @@ shared_TARGETS = \
 shared_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/adios_manager.shared_adios_module.o \
+	$O/assemble_MPI_scalar.shared.o \
+	$O/assemble_MPI_vector.shared.o \
 	$O/auto_ner.shared.o \
 	$O/binary_c_io.cc.o \
 	$O/broadcast_computed_parameters.shared.o \

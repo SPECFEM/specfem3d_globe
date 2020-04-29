@@ -41,16 +41,12 @@ xmeshfem3D_OBJECTS = \
 	$(EMPTY_MACRO)
 
 meshfem3D_MESHER_OBJECTS = \
-	$O/meshfem3D_par.check_module.o \
-	$O/meshfem3D_models.check.o \
 	$O/add_missing_nodes.check.o \
 	$O/add_topography.check.o \
 	$O/add_topography_410_650.check.o \
 	$O/add_topography_cmb.check.o \
 	$O/add_topography_icb.check.o \
 	$O/assemble_MPI_central_cube_mesh.check.o \
-	$O/assemble_MPI_scalar_mesh.check.o \
-	$O/assemble_MPI_vector_mesh.check.o \
 	$O/calc_jacobian.check.o \
 	$O/check_mesh_resolution.check.o \
 	$O/compute_coordinates_grid.check.o \
@@ -85,6 +81,8 @@ meshfem3D_MESHER_OBJECTS = \
 	$O/initialize_layers.check.o \
 	$O/initialize_mesher.check.o \
 	$O/lgndr.check.o \
+	$O/meshfem3D_par.check_module.o \
+	$O/meshfem3D_models.check.o \
 	$O/model_1dref.check.o \
 	$O/model_1066a.check.o \
 	$O/model_ak135.check.o \
@@ -171,8 +169,9 @@ meshfem3D_MODULES = \
 
 # These files come from the shared directory
 meshfem3D_SHARED_OBJECTS = \
-	$O/shared_par.shared_module.o \
 	$O/adios_manager.shared_adios_module.o \
+	$O/assemble_MPI_scalar.shared.o \
+	$O/assemble_MPI_vector.shared.o \
 	$O/auto_ner.shared.o \
 	$O/binary_c_io.cc.o \
 	$O/broadcast_computed_parameters.shared.o \
@@ -209,6 +208,7 @@ meshfem3D_SHARED_OBJECTS = \
 	$O/rotate_tensor.shared.o \
 	$O/rthetaphi_xyz.shared.o \
 	$O/save_header_file.shared.o \
+	$O/shared_par.shared_module.o \
 	$O/smooth_weights_vec.shared.o \
 	$O/sort_array_coordinates.shared.o \
 	$O/spline_routines.shared.o \

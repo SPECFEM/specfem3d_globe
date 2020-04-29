@@ -348,18 +348,19 @@ OUTPUT = $B/OUTPUT_FILES
 
 # code subdirectories
 SUBDIRS = \
-	shared \
-	create_header_file \
-	meshfem3D \
-	specfem3D \
 	auxiliaries \
-	tomography/postprocess_sensitivity_kernels \
+	create_header_file \
+	gpu \
+	meshfem3D \
+	shared \
+	specfem3D \
 	tomography \
+	tomography/postprocess_sensitivity_kernels \
 	$(EMPTY_MACRO)
 
-ifeq ($(HAS_GPU),yes)
-  SUBDIRS := gpu $(SUBDIRS)
-endif
+#ifeq ($(HAS_GPU),yes)
+#  SUBDIRS := gpu $(SUBDIRS)
+#endif
 
 # default targets
 DEFAULT = \
@@ -477,6 +478,7 @@ endif
 	@echo "    xdifference_sem"
 	@echo "    xinterpolate_model"
 	@echo "    xsmooth_sem"
+	@echo "    xsmooth_laplacian_sem"
 ifeq ($(ADIOS), yes)
 	@echo "    xconvert_model_file_adios"
 endif

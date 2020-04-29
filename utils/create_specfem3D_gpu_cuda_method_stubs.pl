@@ -8,7 +8,7 @@
 #             run in directory root SPECFEM3D/
 #
 
-$outfile = "src/specfem3D/specfem3D_gpu_method_stubs.c";
+$outfile = "src/gpu/specfem3D_gpu_method_stubs.c";
 
 
 open(IOUT,"> _____temp_tutu_____");
@@ -69,6 +69,10 @@ $success = 0;
 
 foreach $name (@objects) {
   chop $name;
+
+  # skip own output file
+  if($name =~ /specfem3D_gpu_method_stubs.c/){ next; }
+
   print "extracting word in file $name ...\n";
 
   print IOUT "\n//\n// $name\n//\n\n";

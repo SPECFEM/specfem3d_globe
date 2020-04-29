@@ -41,14 +41,13 @@ xspecfem3D_OBJECTS = \
 	$(EMPTY_MACRO)
 
 specfem3D_SOLVER_OBJECTS = \
-	$O/assemble_MPI_scalar.solver.o \
-	$O/assemble_MPI_vector.solver.o \
+	$O/assemble_MPI_gpu.solver.o \
 	$O/comp_source_spectrum.solver.o \
 	$O/compute_adj_source_frechet.solver.o \
 	$O/convert_time.solver.o \
 	$O/define_derivation_matrices.solver.o \
-	$O/file_io_threads.cc.o \
-	$O/force_ftz.cc.o \
+	$O/file_io_threads.solver_cc.o \
+	$O/force_ftz.solver_cc.o \
 	$O/get_backazimuth.solver.o \
 	$O/get_cmt.solver.o \
 	$O/get_force.solver.o \
@@ -61,10 +60,8 @@ specfem3D_SOLVER_OBJECTS = \
 # values_from_mesher.h
 specfem3D_SOLVER_OBJECTS += \
 	$O/asdf_data.solverstatic_module.o \
-	$O/comp_source_time_function.solverstatic.o \
-	$O/specfem3D_par.solverstatic_module.o \
-	$O/write_seismograms.solverstatic.o \
 	$O/check_stability.solverstatic.o \
+	$O/comp_source_time_function.solverstatic.o \
 	$O/compute_add_sources.solverstatic.o \
 	$O/compute_arrays_source.solverstatic.o \
 	$O/compute_boundary_kernel.solverstatic.o \
@@ -119,6 +116,7 @@ specfem3D_SOLVER_OBJECTS += \
 	$O/save_regular_kernels.solverstatic.o \
 	$O/setup_GLL_points.solverstatic.o \
 	$O/setup_sources_receivers.solverstatic.o \
+	$O/specfem3D_par.solverstatic_module.o \
 	$O/update_displacement_LDDRK.solverstatic.o \
 	$O/update_displacement_Newmark.solverstatic.o \
 	$O/write_movie_output.solverstatic.o \
@@ -126,6 +124,7 @@ specfem3D_SOLVER_OBJECTS += \
 	$O/write_movie_surface.solverstatic.o \
 	$O/write_output_ASCII.solverstatic.o \
 	$O/write_output_SAC.solverstatic.o \
+	$O/write_seismograms.solverstatic.o \
 	$(EMPTY_MACRO)
 
 specfem3D_MODULES = \
@@ -142,8 +141,9 @@ specfem3D_MODULES = \
 
 # These files come from the shared directory
 specfem3D_SHARED_OBJECTS = \
-	$O/shared_par.shared_module.o \
 	$O/adios_manager.shared_adios_module.o \
+	$O/assemble_MPI_scalar.shared.o \
+	$O/assemble_MPI_vector.shared.o \
 	$O/auto_ner.shared.o \
 	$O/binary_c_io.cc.o \
 	$O/broadcast_computed_parameters.shared.o \
@@ -178,6 +178,7 @@ specfem3D_SHARED_OBJECTS = \
 	$O/rotate_tensor.shared.o \
 	$O/rthetaphi_xyz.shared.o \
 	$O/search_kdtree.shared.o \
+	$O/shared_par.shared_module.o \
 	$O/spline_routines.shared.o \
 	$O/write_VTK_file.shared.o \
 	$(EMPTY_MACRO)
@@ -186,15 +187,7 @@ specfem3D_SHARED_OBJECTS = \
 ### GPU
 ###
 
-gpu_specfem3D_STUBS = \
-	$O/specfem3D_gpu_method_stubs.cc.o \
-	$(EMPTY_MACRO)
-
-ifdef NO_GPU
-specfem3D_SOLVER_OBJECTS += $(gpu_specfem3D_STUBS)
-else
-specfem3D_SOLVER_OBJECTS += $(gpu_specfem3D_OBJECTS)
-endif
+specfem3D_SHARED_OBJECTS += $(gpu_OBJECTS)
 
 ###
 ### ADIOS
@@ -273,9 +266,6 @@ asdf_specfem3D_SHARED_OBJECTS = \
 	$O/asdf_manager.shared_asdf.o \
 	$(EMPTY_MACRO)
 
-asdf_specfem3D_STUBS = \
-	$(EMPTY_MACRO)
-
 asdf_specfem3D_SHARED_STUBS = \
 	$O/asdf_method_stubs.cc.o \
 	$(EMPTY_MACRO)
@@ -285,7 +275,6 @@ ifeq ($(ASDF),yes)
 specfem3D_SOLVER_OBJECTS += $(asdf_specfem3D_OBJECTS)
 specfem3D_SHARED_OBJECTS += $(asdf_specfem3D_SHARED_OBJECTS)
 else
-specfem3D_SOLVER_OBJECTS += $(asdf_specfem3D_STUBS)
 specfem3D_SHARED_OBJECTS += ${asdf_specfem3D_SHARED_STUBS}
 endif
 
@@ -418,7 +407,7 @@ $O/%.solver.o: $S/%.f90 $O/shared_par.shared_module.o
 $O/%.solver.o: $S/%.F90 $O/shared_par.shared_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/%.cc.o: $S/%.c ${SETUP}/config.h
+$O/%.solver_cc.o: $S/%.c ${SETUP}/config.h
 	${CC} -c $(CPPFLAGS) $(CFLAGS) -o $@ $<
 
 ###

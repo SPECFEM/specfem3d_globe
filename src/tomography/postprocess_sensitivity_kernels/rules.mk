@@ -353,6 +353,7 @@ xsmooth_laplacian_sem_OBJECTS = \
 xsmooth_laplacian_sem_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/parallel.sharedmpi.o \
+	$O/assemble_MPI_scalar.shared.o \
 	$O/exit_mpi.shared.o \
 	$O/gll_library.shared.o \
 	$O/lagrange_poly.shared.o \

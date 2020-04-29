@@ -60,10 +60,21 @@ gpu_specfem3D_OBJECTS = \
 	$O/save_and_compare_cpu_vs_gpu.o \
 	$(EMPTY_MACRO)
 
+gpu_specfem3D_STUBS = \
+	$O/specfem3D_gpu_method_stubs.gpu_cc.o \
+	$(EMPTY_MACRO)
+
 ifeq ($(CUDA),yes)
   cuda_specfem3D_DEVICE_OBJ =  $O/cuda_device_obj.o
   include $(BOAST_DIR)/kernel_cuda.mk # defines $(cuda_kernels_OBJS)
 endif
+
+ifdef NO_GPU
+gpu_OBJECTS = $(gpu_specfem3D_STUBS)
+else
+gpu_OBJECTS = $(gpu_specfem3D_OBJECTS)
+endif
+
 
 #######################################
 
@@ -106,6 +117,9 @@ ifeq ($(CUDA),yes)
   endif
   ifeq ($(CUDA8),yes)
     BUILD_VERSION_TXT += (v8)
+  endif
+  ifeq ($(CUDA9),yes)
+	  BUILD_VERSION_TXT += (v9)
   endif
 
 endif
@@ -180,6 +194,9 @@ $O/%.ocl.o: $S/%.c ${SETUP}/config.h $S/mesh_constants_gpu.h $S/mesh_constants_o
 
 $O/%.cuda.o: $S/%.c ${SETUP}/config.h $S/mesh_constants_gpu.h
 	$(NVCC) -c $< -o $@ $(NVCC_CFLAGS) -I${SETUP} -I$(BOAST_DIR) $(SELECTOR_CFLAG)
+
+$O/%.gpu_cc.o: $S/%.c ${SETUP}/config.h
+	${CC} -c $(CPPFLAGS) $(CFLAGS) -o $@ $<
 
 print-%:
 	@echo '$*=$($*)'

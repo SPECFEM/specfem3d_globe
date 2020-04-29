@@ -45,8 +45,8 @@
   integer :: ipoin,ispec,ispec2D,i,j,k,iglob,ier
   ! flag to mask ocean-bottom degrees of freedom for ocean load
   logical, dimension(:), allocatable :: updated_dof_ocean_load
-  real, dimension(:), allocatable :: valence, normx, normy, normz
-  real :: norm=1.
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: valence, normx, normy, normz
+  real :: norm = 1.0
 
   ! checks if anything to do
   if (.not. OCEANS_VAL) return
@@ -64,7 +64,7 @@
   ! Get valence of dof and assemble
   allocate(valence(NGLOB_CRUST_MANTLE_OCEANS),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays valence (ocean load)'
-  valence(:) = 1.
+  valence(:) = 1.0_CUSTOM_REAL
   call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
                            valence, &
                            num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
@@ -74,13 +74,13 @@
   ! For norms
   allocate(normx(NGLOB_CRUST_MANTLE_OCEANS),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays normx (ocean load)'
-  normx(:) = 0.
+  normx(:) = 0.0_CUSTOM_REAL
   allocate(normy(NGLOB_CRUST_MANTLE_OCEANS),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays normy (ocean load)'
-  normy(:) = 0.
+  normy(:) = 0.0_CUSTOM_REAL
   allocate(normz(NGLOB_CRUST_MANTLE_OCEANS),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays normz (ocean load)'
-  normz(:) = 0.
+  normz(:) = 0.0_CUSTOM_REAL
 
   ! counts global points on surface to oceans
   ipoin = 0
