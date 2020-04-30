@@ -142,7 +142,7 @@
 
 ! sends data
 
-  use constants,only: CUSTOM_REAL,NDIM,itag
+  use constants, only: CUSTOM_REAL,NDIM,itag
 
   implicit none
 
@@ -207,7 +207,7 @@
 
 ! waits for data to receive and assembles
 
-  use constants,only: CUSTOM_REAL,NDIM,itag
+  use constants, only: CUSTOM_REAL,NDIM,itag
 
   implicit none
 

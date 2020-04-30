@@ -227,7 +227,7 @@
   ! sends data
   ! note: array to assemble already filled into buffer_send_vector array
 
-  use constants,only: CUSTOM_REAL,NDIM,itag
+  use constants, only: CUSTOM_REAL,NDIM,itag
 
   implicit none
 
@@ -280,7 +280,7 @@
 
 ! waits for data to receive and assembles
 
-  use constants,only: CUSTOM_REAL,NDIM
+  use constants, only: CUSTOM_REAL,NDIM
 
   implicit none
 
@@ -344,7 +344,7 @@
                                             request_recv_vector, &
                                             IREGION,FORWARD_OR_ADJOINT)
 
-  use constants,only: CUSTOM_REAL,NDIM
+  use constants, only: CUSTOM_REAL,NDIM
 
   implicit none
 

@@ -201,7 +201,7 @@
 
 ! waits for send/receiver to be completed and assembles contributions
 
-  use constants,only: CUSTOM_REAL,itag
+  use constants, only: CUSTOM_REAL,itag
 
   implicit none
 
