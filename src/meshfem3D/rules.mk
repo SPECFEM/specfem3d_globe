@@ -92,6 +92,7 @@ meshfem3D_MESHER_OBJECTS = \
 	$O/model_atten3D_QRFSI12.check.o \
 	$O/model_attenuation_gll.check.o \
 	$O/model_attenuation.check.o \
+	$O/model_case65TAY.check.o \
 	$O/model_crust_1_0.check.o \
 	$O/model_crust_2_0.check.o \
 	$O/model_crustmaps.check.o \
@@ -143,6 +144,7 @@ meshfem3D_MODULES = \
 	$(FC_MODDIR)/model_ak135_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_aniso_mantle_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_atten3d_qrfsi12_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_case65tay_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_crust_1_0_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_crust_2_0_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_crustmaps_par.$(FC_MODEXT) \
@@ -313,7 +315,9 @@ $O/model_attenuation.check.o: \
 	$O/model_1dref.check.o \
 	$O/model_ak135.check.o \
 	$O/model_1066a.check.o \
-	$O/model_sea1d.check.o
+	$O/model_sea1d.check.o \
+	$O/model_case65TAY.check.o \
+	$(EMPTY_MACRO)
 
 $O/meshfem3D_par.check_module.o: $O/adios_manager.shared_adios_module.o
 

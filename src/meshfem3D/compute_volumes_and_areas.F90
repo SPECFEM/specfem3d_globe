@@ -192,9 +192,9 @@
   ! compute Earth mass of that part of the slice and then total Earth mass
 
   subroutine compute_Earth_mass(Earth_mass_total, &
-                            Earth_center_of_mass_x_total,Earth_center_of_mass_y_total,Earth_center_of_mass_z_total, &
-                            nspec,wxgll,wygll,wzgll,xstore,ystore,zstore,xixstore,xiystore,xizstore, &
-                            etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,rhostore,idoubling)
+                                Earth_center_of_mass_x_total,Earth_center_of_mass_y_total,Earth_center_of_mass_z_total, &
+                                nspec,wxgll,wygll,wzgll,xstore,ystore,zstore,xixstore,xiystore,xizstore, &
+                                etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,rhostore,idoubling)
 
   use constants
 
@@ -266,7 +266,7 @@
 
           rhol = rhostore(i,j,k,ispec)
 
-          Earth_mass_local = Earth_mass_local + dble(jacobianl)*rhol*weight
+          Earth_mass_local = Earth_mass_local + dble(jacobianl) * rhol * weight
 
           x_meshpoint = xstore(i,j,k,ispec)
           y_meshpoint = ystore(i,j,k,ispec)

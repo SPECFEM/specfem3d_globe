@@ -126,6 +126,9 @@
 
     case (REFERENCE_MODEL_SEA1D)
       call model_sea1d_broadcast(CRUSTAL)
+
+    case (REFERENCE_MODEL_CASE65TAY)
+      call model_case65TAY_broadcast(CRUSTAL)
   end select
 
   end subroutine meshfem3D_reference_model_broadcast
@@ -302,10 +305,10 @@
 !
 
   subroutine meshfem3D_models_get1D_val(iregion_code,idoubling, &
-                              r_prem,rho,vpv,vph,vsv,vsh,eta_aniso, &
-                              Qkappa,Qmu,RICB,RCMB, &
-                              RTOPDDOUBLEPRIME,R80,R120,R220,R400,R600,R670,R771, &
-                              RMOHO,RMIDDLE_CRUST,ROCEAN)
+                                        r_prem,rho,vpv,vph,vsv,vsh,eta_aniso, &
+                                        Qkappa,Qmu,RICB,RCMB, &
+                                        RTOPDDOUBLEPRIME,R80,R120,R220,R400,R600,R670,R771, &
+                                        RMOHO,RMIDDLE_CRUST,ROCEAN)
 ! reference model values
 !
 ! for a given location radius (r_prem, which is the point's radius with tolerance factor),
@@ -461,6 +464,15 @@
       call model_Sohl(r_prem,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &
                       ONE_CRUST,.true.,RICB,RCMB,RTOPDDOUBLEPRIME, &
                       R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+      vpv = vp
+      vph = vp
+      vsv = vs
+      vsh = vs
+      eta_aniso = 1.d0
+
+    case (REFERENCE_MODEL_CASE65TAY)
+      ! Mars
+      call model_case65TAY(r_prem,rho,vp,vs,Qkappa,Qmu,iregion_code)
       vpv = vp
       vph = vp
       vsv = vs
