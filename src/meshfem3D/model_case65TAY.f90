@@ -177,7 +177,7 @@
 
   subroutine define_model_case65TAY(USE_EXTERNAL_CRUSTAL_MODEL)
 
-  use constants,only: myrank,SUPPRESS_CRUSTAL_MESH
+  use constants, only: myrank,SUPPRESS_CRUSTAL_MESH
   use shared_parameters, only: RICB,RCMB,ROCEAN
   use model_case65tay_par
 
