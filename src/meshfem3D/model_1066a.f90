@@ -171,7 +171,7 @@
 
   subroutine define_model_1066a(USE_EXTERNAL_CRUSTAL_MODEL)
 
-  use constants,only: myrank,SUPPRESS_CRUSTAL_MESH
+  use constants, only: myrank,SUPPRESS_CRUSTAL_MESH
   use shared_parameters, only: RICB,RCMB,ROCEAN
   use model_1066a_par
 
