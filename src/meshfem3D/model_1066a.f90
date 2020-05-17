@@ -117,12 +117,19 @@
 ! and a point below the ICB or the CMB and interpolate between them,
 ! which would lead to a wrong value (keeping in mind that we interpolate
 ! between points i-1 and i below)
+
+  ! inner core range [1:33]
   if (iregion_code == IREGION_INNER_CORE .and. i > 33) i = 33
 
-  if (iregion_code == IREGION_OUTER_CORE .and. i < 35) i = 35
+  ! outer core range [34:66]
+  ! due to the interpolation below, we add +1 to the bottom
+  if (iregion_code == IREGION_OUTER_CORE .and. i <= 34) i = 34 + 1
   if (iregion_code == IREGION_OUTER_CORE .and. i > 66) i = 66
 
-  if (iregion_code == IREGION_CRUST_MANTLE .and. i < 68) i = 68
+  ! crust/mantle range [67:160]
+  ! due to the interpolation below, we add +1 to the bottom
+  if (iregion_code == IREGION_CRUST_MANTLE .and. i <= 67) i = 67 + 1
+  if (iregion_code == IREGION_CRUST_MANTLE .and. i > NR_1066A) i = NR_1066A
 
   if (i == 1) then
     rho = M1066a_V_density_1066a(i)
@@ -164,7 +171,8 @@
 
   subroutine define_model_1066a(USE_EXTERNAL_CRUSTAL_MODEL)
 
-  use constants
+  use constants,only: myrank,SUPPRESS_CRUSTAL_MESH
+  use shared_parameters, only: RICB,RCMB,ROCEAN
   use model_1066a_par
 
   implicit none
@@ -173,6 +181,7 @@
 
   ! local parameters
   integer :: i
+  double precision, parameter :: TOL = 1.d-9
 
 ! define all the values in the model
 
@@ -208,8 +217,8 @@
   M1066a_V_radius_1066a( 30) =   1113690.d0
   M1066a_V_radius_1066a( 31) =   1152090.d0
   M1066a_V_radius_1066a( 32) =   1190500.d0
-  M1066a_V_radius_1066a( 33) =   1229480.d0
-  M1066a_V_radius_1066a( 34) =   1229480.d0
+  M1066a_V_radius_1066a( 33) =   1229480.d0  ! ICB inner core
+  M1066a_V_radius_1066a( 34) =   1229480.d0  ! ICB outer core
   M1066a_V_radius_1066a( 35) =   1299360.d0
   M1066a_V_radius_1066a( 36) =   1369820.d0
   M1066a_V_radius_1066a( 37) =   1440280.d0
@@ -241,8 +250,8 @@
   M1066a_V_radius_1066a( 63) =   3272210.d0
   M1066a_V_radius_1066a( 64) =   3342670.d0
   M1066a_V_radius_1066a( 65) =   3413130.d0
-  M1066a_V_radius_1066a( 66) =   3484300.d0
-  M1066a_V_radius_1066a( 67) =   3484300.d0
+  M1066a_V_radius_1066a( 66) =   3484300.d0 ! CMB outer core
+  M1066a_V_radius_1066a( 67) =   3484300.d0 ! CMB mantle
   M1066a_V_radius_1066a( 68) =   3518220.d0
   M1066a_V_radius_1066a( 69) =   3552850.d0
   M1066a_V_radius_1066a( 70) =   3587490.d0
@@ -332,8 +341,8 @@
   M1066a_V_radius_1066a(154) =   6283130.d0
   M1066a_V_radius_1066a(155) =   6308750.d0
   M1066a_V_radius_1066a(156) =   6334380.d0
-  M1066a_V_radius_1066a(157) =   6360000.d0
-  M1066a_V_radius_1066a(158) =   6360000.d0
+  M1066a_V_radius_1066a(157) =   6360000.d0  ! MOHO
+  M1066a_V_radius_1066a(158) =   6360000.d0  ! MOHO crust
   M1066a_V_radius_1066a(159) =   6365500.d0
   M1066a_V_radius_1066a(160) =   6371000.d0
 
@@ -369,8 +378,8 @@
   M1066a_V_density_1066a( 30) =   13.06704d0
   M1066a_V_density_1066a( 31) =   13.05251d0
   M1066a_V_density_1066a( 32) =   13.03858d0
-  M1066a_V_density_1066a( 33) =   13.02875d0
-  M1066a_V_density_1066a( 34) =   12.16065d0
+  M1066a_V_density_1066a( 33) =   13.02875d0 ! ICB inner core
+  M1066a_V_density_1066a( 34) =   12.16065d0 ! ICB outer core
   M1066a_V_density_1066a( 35) =   12.11699d0
   M1066a_V_density_1066a( 36) =   12.07483d0
   M1066a_V_density_1066a( 37) =   12.03307d0
@@ -402,8 +411,8 @@
   M1066a_V_density_1066a( 63) =   10.23961d0
   M1066a_V_density_1066a( 64) =   10.13786d0
   M1066a_V_density_1066a( 65) =   10.0323d0
-  M1066a_V_density_1066a( 66) =   9.91745d0
-  M1066a_V_density_1066a( 67) =   5.53205d0
+  M1066a_V_density_1066a( 66) =   9.91745d0  ! CMB outer core
+  M1066a_V_density_1066a( 67) =   5.53205d0  ! CMB mantle
   M1066a_V_density_1066a( 68) =   5.52147d0
   M1066a_V_density_1066a( 69) =   5.50959d0
   M1066a_V_density_1066a( 70) =   5.49821d0
@@ -493,8 +502,8 @@
   M1066a_V_density_1066a(154) =   3.3598d0
   M1066a_V_density_1066a(155) =   3.35259d0
   M1066a_V_density_1066a(156) =   3.34549d0
-  M1066a_V_density_1066a(157) =   3.33828d0
-  M1066a_V_density_1066a(158) =   2.17798d0
+  M1066a_V_density_1066a(157) =   3.33828d0 ! MOHO
+  M1066a_V_density_1066a(158) =   2.17798d0 ! MOHO crust
   M1066a_V_density_1066a(159) =   2.17766d0
   M1066a_V_density_1066a(160) =   2.17734d0
 
@@ -530,8 +539,8 @@
   M1066a_V_vp_1066a( 30) =   10.9953d0
   M1066a_V_vp_1066a( 31) =   10.9857d0
   M1066a_V_vp_1066a( 32) =   10.9756d0
-  M1066a_V_vp_1066a( 33) =   10.9687d0
-  M1066a_V_vp_1066a( 34) =   10.414d0
+  M1066a_V_vp_1066a( 33) =   10.9687d0 ! ICB inner core
+  M1066a_V_vp_1066a( 34) =   10.414d0  ! ICB outer core
   M1066a_V_vp_1066a( 35) =   10.3518d0
   M1066a_V_vp_1066a( 36) =   10.2922d0
   M1066a_V_vp_1066a( 37) =   10.2351d0
@@ -563,8 +572,8 @@
   M1066a_V_vp_1066a( 63) =   8.3807d0
   M1066a_V_vp_1066a( 64) =   8.2556d0
   M1066a_V_vp_1066a( 65) =   8.1318d0
-  M1066a_V_vp_1066a( 66) =   8.0112d0
-  M1066a_V_vp_1066a( 67) =   13.7172d0
+  M1066a_V_vp_1066a( 66) =   8.0112d0  ! CMB outer core
+  M1066a_V_vp_1066a( 67) =   13.7172d0 ! CMB mantle
   M1066a_V_vp_1066a( 68) =   13.7134d0
   M1066a_V_vp_1066a( 69) =   13.7089d0
   M1066a_V_vp_1066a( 70) =   13.6806d0
@@ -654,8 +663,8 @@
   M1066a_V_vp_1066a(154) =   7.7972d0
   M1066a_V_vp_1066a(155) =   7.7391d0
   M1066a_V_vp_1066a(156) =   7.7134d0
-  M1066a_V_vp_1066a(157) =   7.7046d0
-  M1066a_V_vp_1066a(158) =   4.7022d0
+  M1066a_V_vp_1066a(157) =   7.7046d0  ! MOHO
+  M1066a_V_vp_1066a(158) =   4.7022d0  ! MOHO crust
   M1066a_V_vp_1066a(159) =   4.7001d0
   M1066a_V_vp_1066a(160) =   4.6979d0
 
@@ -691,8 +700,8 @@
   M1066a_V_vs_1066a( 30) =   3.5301d0
   M1066a_V_vs_1066a( 31) =   3.5238d0
   M1066a_V_vs_1066a( 32) =   3.5172d0
-  M1066a_V_vs_1066a( 33) =   3.5118d0
-  M1066a_V_vs_1066a( 34) =  0.d0
+  M1066a_V_vs_1066a( 33) =   3.5118d0 ! ICB inner core
+  M1066a_V_vs_1066a( 34) =  0.d0      ! ICB outer core
   M1066a_V_vs_1066a( 35) =  0.d0
   M1066a_V_vs_1066a( 36) =  0.d0
   M1066a_V_vs_1066a( 37) =  0.d0
@@ -724,8 +733,8 @@
   M1066a_V_vs_1066a( 63) =  0.d0
   M1066a_V_vs_1066a( 64) =  0.d0
   M1066a_V_vs_1066a( 65) =  0.d0
-  M1066a_V_vs_1066a( 66) =  0.d0
-  M1066a_V_vs_1066a( 67) =   7.2498d0
+  M1066a_V_vs_1066a( 66) =  0.d0      ! CMB outer core
+  M1066a_V_vs_1066a( 67) =   7.2498d0 ! CMB mantle
   M1066a_V_vs_1066a( 68) =   7.2376d0
   M1066a_V_vs_1066a( 69) =   7.2239d0
   M1066a_V_vs_1066a( 70) =   7.21d0
@@ -815,8 +824,8 @@
   M1066a_V_vs_1066a(154) =   4.483d0
   M1066a_V_vs_1066a(155) =   4.5389d0
   M1066a_V_vs_1066a(156) =   4.604d0
-  M1066a_V_vs_1066a(157) =   4.6487d0
-  M1066a_V_vs_1066a(158) =   2.5806d0
+  M1066a_V_vs_1066a(157) =   4.6487d0  ! MOHO
+  M1066a_V_vs_1066a(158) =   2.5806d0  ! MOHO crust
   M1066a_V_vs_1066a(159) =   2.5814d0
   M1066a_V_vs_1066a(160) =   2.5822d0
 
@@ -858,8 +867,8 @@
   M1066a_V_Qkappa_1066a( 30) =   156900.d0
   M1066a_V_Qkappa_1066a( 31) =   156900.d0
   M1066a_V_Qkappa_1066a( 32) =   156900.d0
-  M1066a_V_Qkappa_1066a( 33) =   156900.d0
-  M1066a_V_Qkappa_1066a( 34) =  0.d0
+  M1066a_V_Qkappa_1066a( 33) =   156900.d0 ! ICB inner core
+  M1066a_V_Qkappa_1066a( 34) =  0.d0       ! ICB outer core
   M1066a_V_Qkappa_1066a( 35) =  0.d0
   M1066a_V_Qkappa_1066a( 36) =  0.d0
   M1066a_V_Qkappa_1066a( 37) =  0.d0
@@ -891,8 +900,8 @@
   M1066a_V_Qkappa_1066a( 63) =  0.d0
   M1066a_V_Qkappa_1066a( 64) =  0.d0
   M1066a_V_Qkappa_1066a( 65) =  0.d0
-  M1066a_V_Qkappa_1066a( 66) =  0.d0
-  M1066a_V_Qkappa_1066a( 67) =   16600.d0
+  M1066a_V_Qkappa_1066a( 66) =  0.d0      ! CMB outer core
+  M1066a_V_Qkappa_1066a( 67) =   16600.d0 ! CMB mantle
   M1066a_V_Qkappa_1066a( 68) =   16600.d0
   M1066a_V_Qkappa_1066a( 69) =   16600.d0
   M1066a_V_Qkappa_1066a( 70) =   16600.d0
@@ -982,8 +991,8 @@
   M1066a_V_Qkappa_1066a(154) =   5893.d0
   M1066a_V_Qkappa_1066a(155) =   5893.d0
   M1066a_V_Qkappa_1066a(156) =   5893.d0
-  M1066a_V_Qkappa_1066a(157) =   5893.d0
-  M1066a_V_Qkappa_1066a(158) =   5893.d0
+  M1066a_V_Qkappa_1066a(157) =   5893.d0 ! MOHO
+  M1066a_V_Qkappa_1066a(158) =   5893.d0 ! MOHO crust
   M1066a_V_Qkappa_1066a(159) =   5893.d0
   M1066a_V_Qkappa_1066a(160) =   5893.d0
 
@@ -1019,8 +1028,8 @@
   M1066a_V_Qmu_1066a( 30) =   3138.d0
   M1066a_V_Qmu_1066a( 31) =   3138.d0
   M1066a_V_Qmu_1066a( 32) =   3138.d0
-  M1066a_V_Qmu_1066a( 33) =   3138.d0
-  M1066a_V_Qmu_1066a( 34) =  0.d0
+  M1066a_V_Qmu_1066a( 33) =   3138.d0  ! ICB inner core
+  M1066a_V_Qmu_1066a( 34) =  0.d0      ! ICB outer core
   M1066a_V_Qmu_1066a( 35) =  0.d0
   M1066a_V_Qmu_1066a( 36) =  0.d0
   M1066a_V_Qmu_1066a( 37) =  0.d0
@@ -1052,8 +1061,8 @@
   M1066a_V_Qmu_1066a( 63) =  0.d0
   M1066a_V_Qmu_1066a( 64) =  0.d0
   M1066a_V_Qmu_1066a( 65) =  0.d0
-  M1066a_V_Qmu_1066a( 66) =  0.d0
-  M1066a_V_Qmu_1066a( 67) =   332.d0
+  M1066a_V_Qmu_1066a( 66) =  0.d0     ! CMB outer core
+  M1066a_V_Qmu_1066a( 67) =   332.d0  ! CMB mantle
   M1066a_V_Qmu_1066a( 68) =   332.d0
   M1066a_V_Qmu_1066a( 69) =   332.d0
   M1066a_V_Qmu_1066a( 70) =   332.d0
@@ -1143,12 +1152,12 @@
   M1066a_V_Qmu_1066a(154) =   117.9d0
   M1066a_V_Qmu_1066a(155) =   117.9d0
   M1066a_V_Qmu_1066a(156) =   117.9d0
-  M1066a_V_Qmu_1066a(157) =   117.9d0
-  M1066a_V_Qmu_1066a(158) =   117.9d0
+  M1066a_V_Qmu_1066a(157) =   117.9d0 ! MOHO
+  M1066a_V_Qmu_1066a(158) =   117.9d0 ! MOHO crust
   M1066a_V_Qmu_1066a(159) =   117.9d0
   M1066a_V_Qmu_1066a(160) =   117.9d0
 
-! strip the crust and replace it by mantle if we use an external crustal model
+  ! strip the crust and replace it by mantle if we use an external crustal model
   if (SUPPRESS_CRUSTAL_MESH .or. USE_EXTERNAL_CRUSTAL_MODEL) then
     do i = NR_1066A-3,NR_1066A
       M1066a_V_density_1066a(i) = M1066a_V_density_1066a(NR_1066A-4)
@@ -1158,6 +1167,15 @@
       M1066a_V_Qmu_1066a(i) = M1066a_V_Qmu_1066a(NR_1066A-4)
     enddo
   endif
+
+  ! checks
+  ! ICB at radius(33)
+  if (abs(RICB - M1066a_V_radius_1066a(33)) > TOL) &
+    call exit_MPI(myrank,'Error: radius RICB and model radius index not matching')
+  if (abs(RCMB - M1066a_V_radius_1066a(66)) > TOL) &
+    call exit_MPI(myrank,'Error: radius RCMB and model radius index not matching')
+  if (abs(ROCEAN - M1066a_V_radius_1066a(160)) > TOL) &
+    call exit_MPI(myrank,'Error: radius ROCEAN and model radius index not matching')
 
   end subroutine define_model_1066a
 

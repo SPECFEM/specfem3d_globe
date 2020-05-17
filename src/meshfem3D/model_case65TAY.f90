@@ -131,11 +131,13 @@
   if (iregion_code == IREGION_INNER_CORE .and. i > 104) i = 104
 
   ! outer core index range [105:370]
-  if (iregion_code == IREGION_OUTER_CORE .and. i < 105) i = 105
+  ! due to the interpolation below, we add +1 to the bottom
+  if (iregion_code == IREGION_OUTER_CORE .and. i <= 105) i = 105 + 1
   if (iregion_code == IREGION_OUTER_CORE .and. i > 370) i = 370
 
   ! crust/mantle index range [371:681]
-  if (iregion_code == IREGION_CRUST_MANTLE .and. i < 371) i = 371
+  ! due to the interpolation below, we add +1 to the bottom
+  if (iregion_code == IREGION_CRUST_MANTLE .and. i <= 371) i = 371 + 1
   if (iregion_code == IREGION_CRUST_MANTLE .and. i > NR_case65TAY) i = NR_case65TAY
 
   ! model value interpolation
