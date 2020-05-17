@@ -136,6 +136,9 @@
   use model_sea1d_par, only: &
     NR_SEA1D,SEA1DM_V_Qmu_sea1d ! SEA1DM_V_radius_sea1d
 
+  use model_case65tay_par, only: &
+    NR_case65TAY,Mcase65TAY_V_Qmu
+
   implicit none
 
   integer,intent(in) :: REFERENCE_1D_MODEL
@@ -150,34 +153,43 @@
 
   ! uses "pure" 1D models including their 1D-crust profiles
   ! (uses USE_EXTERNAL_CRUSTAL_MODEL set to false)
-  if (REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM) then
+  select case(REFERENCE_1D_MODEL)
+  case (REFERENCE_MODEL_PREM, REFERENCE_MODEL_IASP91, REFERENCE_MODEL_JP1D)
+    ! PREM Q layers
     AM_V%Qn = 12
-  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) then
-    AM_V%Qn = 12
-  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135F_NO_MUD) then
+
+  case (REFERENCE_MODEL_AK135F_NO_MUD)
     ! redefines "pure" 1D model without crustal modification
     call define_model_ak135(.false.)
     AM_V%Qn = NR_AK135F_NO_MUD
-  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
+
+  case (REFERENCE_MODEL_1066A)
     ! redefines "pure" 1D model without crustal modification
     call define_model_1066a(.false.)
     AM_V%Qn = NR_1066A
-  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF) then
+
+  case (REFERENCE_MODEL_1DREF)
     ! redefines "pure" 1D model without crustal modification
     call define_model_1dref(.false.)
     AM_V%Qn = NR_REF
-  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_JP1D) then
-    AM_V%Qn = 12
-  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) then
+
+  case (REFERENCE_MODEL_SEA1D)
     ! redefines "pure" 1D model without crustal modification
     call define_model_sea1d(.false.)
     AM_V%Qn = NR_SEA1D
-  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_SOHL) then
-    ! Mars
+
+  case (REFERENCE_MODEL_SOHL)
+    ! Mars, Q from PREM
     AM_V%Qn = 12
-  else
+
+  case (REFERENCE_MODEL_CASE65TAY)
+    ! redefines "pure" 1D model without crustal modification
+    call define_model_case65TAY(.false.)
+    AM_V%Qn = NR_case65TAY
+
+  case default
     call exit_MPI(myrank, 'Error attenuation setup: Reference 1D Model Not recognized')
-  endif
+  end select
 
   ! sets up attenuation storage (for all possible Qmu values defined in the 1D models)
   allocate(AM_V%Qmu(AM_V%Qn), &
@@ -194,33 +206,44 @@
   !AM_V%interval_Q(:) = 0 ! unused
   !AM_V%Qtau_e(:,:) = 0.d0
 
-  if (REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM) then
+  select case(REFERENCE_1D_MODEL)
+  case (REFERENCE_MODEL_PREM, REFERENCE_MODEL_IASP91, REFERENCE_MODEL_JP1D)
+    ! PREM Q values
     !AM_V%Qr(:)     = (/   0.0d0,    RICB,  RICB,  RCMB,    RCMB,    R670,    R670,   R220,    R220,    R80,     R80, R_EARTH /)
     AM_V%Qmu(:)    = (/  84.6d0,  84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
-  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) then
-    !AM_V%Qr(:)     = (/   0.0d0,    RICB,  RICB,  RCMB,    RCMB,    R670,    R670,    R220,   R220,   R120,    R120, R_EARTH /)
-    AM_V%Qmu(:)    = (/  84.6d0,  84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
-  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135F_NO_MUD) then
+
+  case (REFERENCE_MODEL_AK135F_NO_MUD)
     !AM_V%Qr(:)     = Mak135_V_radius_ak135(:)
     AM_V%Qmu(:)    = Mak135_V_Qmu_ak135(:)
-  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
+
+  case (REFERENCE_MODEL_1066A)
     !AM_V%Qr(:)     = M1066a_V_radius_1066a(:)
     AM_V%Qmu(:)    = M1066a_V_Qmu_1066a(:)
-  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF) then
+
+  case (REFERENCE_MODEL_1DREF)
     !AM_V%Qr(:)     = Mref_V_radius_ref(:)
     AM_V%Qmu(:)    = Mref_V_Qmu_ref(:)
-  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_JP1D) then
-    !AM_V%Qr(:)     = (/   0.0d0,    RICB,  RICB,  RCMB,    RCMB,    R670,    R670,    R220,   R220,   R120,    R120, R_EARTH /)
-    AM_V%Qmu(:)    = (/  84.6d0,  84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
-  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) then
+
+  case (REFERENCE_MODEL_SEA1D)
     !AM_V%Qr(:)     = SEA1DM_V_radius_sea1d(:)
     AM_V%Qmu(:)    = SEA1DM_V_Qmu_sea1d(:)
-  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_SOHL) then
-    ! Mars: attenuation model by Nimmo & Faul, 2013?
+
+  case (REFERENCE_MODEL_SOHL)
+    ! Mars: todo - future use attenuation model by Nimmo & Faul, 2013?
     !       at the moment, this is taken from PREM
     !AM_V%Qr(:)     = (/   0.0d0,    RICB,  RICB,  RCMB,    RCMB,    R670, R670,   R220,    R220,    R80,     R80, R_EARTH /)
     AM_V%Qmu(:)    = (/  84.6d0,  84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
-  endif
+
+  case (REFERENCE_MODEL_CASE65TAY)
+    ! taken from PREM
+    !AM_V%Qr(:)     = (/   0.0d0,    RICB,  RICB,  RCMB,    RCMB,    R670, R670, R220,    R220,    R80,     R80, R_EARTH /)
+    !AM_V%Qmu(:)    = (/  84.6d0,  84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
+    ! values as defined in model
+    AM_V%Qmu(:)    = Mcase65TAY_V_Qmu(:)
+
+  case default
+    call exit_MPI(myrank, 'Error attenuation setup: Reference 1D Model values missing')
+  end select
 
   ! sets up storage of relaxation times
   do i = 1, AM_V%Qn
@@ -231,19 +254,28 @@
 
   ! re-defines 1D models with crustal modification if necessary
   if (CRUSTAL) then
-    if (REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135F_NO_MUD) then
+    select case(REFERENCE_1D_MODEL)
+    case (REFERENCE_MODEL_AK135F_NO_MUD)
       ! redefines 1D model with crustal modification
       call define_model_ak135(CRUSTAL)
-    else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
+
+    case (REFERENCE_MODEL_1066A)
       ! redefines 1D model with crustal modification
       call define_model_1066a(CRUSTAL)
-    else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF) then
+
+    case (REFERENCE_MODEL_1DREF)
       ! redefines 1D model with crustal modification
       call define_model_1dref(CRUSTAL)
-    else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) then
+
+    case (REFERENCE_MODEL_SEA1D)
       ! redefines 1D model with crustal modification
       call define_model_sea1d(CRUSTAL)
-    endif
+
+    case (REFERENCE_MODEL_CASE65TAY)
+      ! redefines 1D model with crustal modification
+      call define_model_case65TAY(CRUSTAL)
+
+    end select
   endif
 
   end subroutine model_attenuation_setup

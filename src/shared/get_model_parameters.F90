@@ -313,6 +313,21 @@
     REFERENCE_1D_MODEL = REFERENCE_MODEL_SOHL
     REFERENCE_CRUSTAL_MODEL = ICRUST_CRUSTMAPS
 
+  case('1d_case65tay')
+    ! Mars
+    TRANSVERSE_ISOTROPY = .false. ! enforces isotropic model
+    HONOR_1D_SPHERICAL_MOHO = .true.
+    REFERENCE_1D_MODEL = REFERENCE_MODEL_CASE65TAY
+
+  case('1d_case65tay_3d_crust')
+    ! Mars
+    TRANSVERSE_ISOTROPY = .false. ! enforces isotropic model
+    CASE_3D = .true.
+    CRUSTAL = .true.
+    ONE_CRUST = .true.
+    REFERENCE_1D_MODEL = REFERENCE_MODEL_CASE65TAY
+    REFERENCE_CRUSTAL_MODEL = ICRUST_CRUSTMAPS
+
   ! 3-D models
   case ('transversely_isotropic_prem_plus_3d_crust_2.0')
     CASE_3D = .true.
@@ -606,6 +621,29 @@
     MODEL_GLL = .true.
     MODEL_GLL_TYPE = 1 ! (1 == iso) input model files are iso (vp,vs,rho)
 
+  case ('gll_mars_case65tay')
+    ! Mars
+    REFERENCE_1D_MODEL = REFERENCE_MODEL_CASE65TAY
+    REFERENCE_CRUSTAL_MODEL = ICRUST_CRUSTMAPS
+    TRANSVERSE_ISOTROPY = .false. ! enforces isotropic model
+    MODEL_3D_MANTLE_PERTUBATIONS = .false. ! not based on a 3D mantle model, but 1D model Sohl
+    THREE_D_MODEL = 0
+    MODEL_GLL = .true.
+    MODEL_GLL_TYPE = 1 ! (1 == iso) input model files are iso (vp,vs,rho)
+
+  case ('gll_mars_case65tay_3d_crust')
+    ! Mars w/ 3d crust
+    CASE_3D = .true.
+    CRUSTAL = .true.
+    ONE_CRUST = .true.
+    REFERENCE_1D_MODEL = REFERENCE_MODEL_CASE65TAY
+    REFERENCE_CRUSTAL_MODEL = ICRUST_CRUSTMAPS
+    TRANSVERSE_ISOTROPY = .false. ! enforces isotropic model
+    MODEL_3D_MANTLE_PERTUBATIONS = .false. ! not based on a 3D mantle model, but 1D model
+    THREE_D_MODEL = 0
+    MODEL_GLL = .true.
+    MODEL_GLL_TYPE = 1 ! (1 == iso) input model files are iso (vp,vs,rho)
+
   case ('gapp2')
     CASE_3D = .true.
     CRUSTAL = .true.
@@ -690,6 +728,12 @@
   ! Mars has no ocean
   if (REFERENCE_1D_MODEL == REFERENCE_MODEL_SOHL .and. OCEANS) &
     stop 'model 1D_Sohl cannot use an ocean approximation'
+  ! Mars model is isotropic
+  if (REFERENCE_1D_MODEL == REFERENCE_MODEL_CASE65TAY .and. TRANSVERSE_ISOTROPY) &
+      stop 'model 1D_case65tay is currently isotropic'
+  ! Mars has no ocean
+  if (REFERENCE_1D_MODEL == REFERENCE_MODEL_CASE65TAY .and. OCEANS) &
+    stop 'model 1D_case65tay cannot use an ocean approximation'
 
   end subroutine get_model_parameters_flags
 
@@ -721,7 +765,7 @@
 
   ! sets Planet constants
   select case(REFERENCE_1D_MODEL)
-  case (REFERENCE_MODEL_SOHL)
+  case (REFERENCE_MODEL_SOHL,REFERENCE_MODEL_CASE65TAY)
     ! Mars
     ! sets planet
     PLANET_TYPE = IPLANET_MARS
@@ -857,7 +901,8 @@
   RHO_BOTTOM_OC = 12166.5885 / RHOAV
 
   ! differing 1-D model radii
-  if (REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) then
+  select case(REFERENCE_1D_MODEL)
+  case (REFERENCE_MODEL_IASP91)
     ! IASP91
     ROCEAN = 6371000.d0
     RMIDDLE_CRUST = 6351000.d0
@@ -878,10 +923,8 @@
     RHO_TOP_OC = 9900.2379 / RHOAV
     RHO_BOTTOM_OC = 12168.6383 / RHOAV
 
-  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135F_NO_MUD) then
-
+  case (REFERENCE_MODEL_AK135F_NO_MUD)
 !! DK DK values below entirely checked and fixed by Dimitri Komatitsch in December 2012.
-
     ROCEAN = 6368000.d0
     RMIDDLE_CRUST = 6351000.d0
     RMOHO  = 6336000.d0         ! at 35km depth
@@ -900,7 +943,7 @@
     RHO_TOP_OC = 9914.5000 / RHOAV
     RHO_BOTTOM_OC = 12139.1000 / RHOAV
 
-  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
+  case (REFERENCE_MODEL_1066A)
     ! values below corrected by Ying Zhou
     ! 1066A
     RMOHO = 6360000.d0 ! at 11km depth
@@ -925,7 +968,7 @@
     RHO_TOP_OC = 9917.4500 / RHOAV
     RHO_BOTTOM_OC = 12160.6500 / RHOAV
 
-  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF) then
+  case (REFERENCE_MODEL_1DREF)
     ! REF
     ROCEAN = 6368000.d0         ! at 3km depth
     RMIDDLE_CRUST = 6356000.d0  ! at 15km
@@ -943,7 +986,7 @@
     RHO_TOP_OC = 9903.48 / RHOAV
     RHO_BOTTOM_OC = 12166.35 / RHOAV
 
-  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_JP1D) then
+  case (REFERENCE_MODEL_JP1D)
     ! values below corrected by Min Chen
     ! jp1d
     ROCEAN = 6371000.d0
@@ -962,7 +1005,7 @@
     RHO_TOP_OC = 9900.2379 / RHOAV
     RHO_BOTTOM_OC = 12168.6383 / RHOAV
 
-  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) then
+  case (REFERENCE_MODEL_SEA1D)
     ! SEA1D without the 2 km of mud layer or the 3km water layer
     ROCEAN = 6371000.d0
     RMIDDLE_CRUST = 6361000.d0
@@ -980,7 +1023,7 @@
     R600 = 5771000.d0
     R771 = 5611000.d0
 
-  else if ( REFERENCE_1D_MODEL == REFERENCE_MODEL_SOHL) then
+  case (REFERENCE_MODEL_SOHL)
     ! Mars
     ! Sohl & Spohn, 1997: Model A, Table 5, pg. 1623
     ROCEAN = 3390000.d0         ! (Physical surface)
@@ -1005,7 +1048,35 @@
     ! densities fluid outer core (from modSOHL)
     RHO_TOP_OC = 6936.40 / MARS_RHOAV
     RHO_BOTTOM_OC = 7268.20 / MARS_RHOAV
-  endif
+
+  case (REFERENCE_MODEL_CASE65TAY)
+    ! Mars
+    ! geothermal case 65, Taylor composition
+    ! (has different CMB radius)
+    ROCEAN = 3390000.d0         ! (Physical surface)
+    RMIDDLE_CRUST = 3340000.d0  ! 50 km
+    RMOHO = 3280000.d0          ! (Crust-mantle boundary)  110 km average crustal thickness
+    R80  = 3055500.d0           ! (Rheological lithosphere) 334.5 km deep, if smaller will cause negative Jacobian err
+    R120 = -1.d0                ! by default there is no d120 discontinuity, except in IASP91, therefore set to fictitious value
+    R220 = 2908000.d0           ! (Thermal lithosphere) d = 482 km
+    R400 = 2655000.d0           ! d = 735 km
+    R600 = 2455000.d0           ! d = 935 km
+    R670 = 2360000.d0           ! (alpha-olivine-beta-spinel transition) d = 1030 km
+    R771 = 2033000.d0           ! (beta-spinel-gamma-spinel transition) d = 1357 km, below which the second doubling implemented
+    RTOPDDOUBLEPRIME = 1875000.d0  ! (lower thermal boundary layer) 35km above CMB
+    RCMB = 1840000.d0              ! (Core-mantle boundary) d = 1550 km
+    RICB = 515000.d0            ! d = 2875 km, for mesh to have a solid inner core, radius good for both stability and efficiency
+
+    ! densities
+    RHO_OCEANS = 1020.0 / MARS_RHOAV   ! will not be used
+    ! densities fluid outer core (from modSOHL)
+    RHO_TOP_OC = 6936.40 / MARS_RHOAV
+    RHO_BOTTOM_OC = 7268.20 / MARS_RHOAV
+
+  case default
+    ! will use default values set on top
+    continue
+  end select
 
   ! honor the PREM Moho or define a fictitious Moho in order to have even radial sampling
   ! from the d220 to the Earth surface
@@ -1030,7 +1101,8 @@
 
   ! Mars
   ! Ebru - a quick fix for MARS but should be done and checked again during 3D implementation
-  if (REFERENCE_1D_MODEL == REFERENCE_MODEL_SOHL) then
+  if (REFERENCE_1D_MODEL == REFERENCE_MODEL_SOHL .or. &
+      REFERENCE_1D_MODEL == REFERENCE_MODEL_CASE65TAY) then
     ! initializes fictitious levels
     RMOHO_FICTITIOUS_IN_MESHER = RMOHO      ! Mars: moho at 110km depth  (see above)
     R80_FICTITIOUS_IN_MESHER = R80          !       r80  at 334.5 km depth

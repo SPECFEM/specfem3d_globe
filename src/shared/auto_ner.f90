@@ -51,7 +51,7 @@
   use constants, only: DEGREES_TO_RADIANS, NGLLX, &
     REFERENCE_MODEL_PREM,REFERENCE_MODEL_IASP91,REFERENCE_MODEL_AK135F_NO_MUD, &
     REFERENCE_MODEL_1066A,REFERENCE_MODEL_1DREF,REFERENCE_MODEL_JP1D,REFERENCE_MODEL_SEA1D, &
-    REFERENCE_MODEL_SOHL
+    REFERENCE_MODEL_SOHL,REFERENCE_MODEL_CASE65TAY
 
   use shared_parameters, only: REFERENCE_1D_MODEL
 
@@ -124,7 +124,7 @@
     RADIUS_INNER_CORE = 1217.1d0
     P_VELOCITY_MAX = 11.09142d0 ! vp
 
-  case (REFERENCE_MODEL_SOHL)
+  case (REFERENCE_MODEL_SOHL,REFERENCE_MODEL_CASE65TAY)
     ! Mars
     ! note: for mars, the time stepping is mostly affected by crustal elements.
     !       we will use two estimates, one for inner core and another for the crust to determine a minimum time step.
@@ -208,7 +208,8 @@
   !print *,'debug: auto_time_stepping: inner core elem size',elem_size,'width/nex',WIDTH,NEX_MAX,'DT',DT
 
   ! Mars
-  if (REFERENCE_1D_MODEL == REFERENCE_MODEL_SOHL) then
+  select case(REFERENCE_1D_MODEL)
+  case (REFERENCE_MODEL_SOHL,REFERENCE_MODEL_CASE65TAY)
     ! crustal elements
     elem_size = RADIAL_LEN_RATIO_CRUST * ((WIDTH * DEGREES_TO_RADIANS) * RADIUS_SURFACE) / dble(NEX_MAX)
     ! estimated time step
@@ -218,7 +219,7 @@
     !debug
     !print *,'debug: auto_time_stepping: mars crust elem size ',elem_size, &
     !        'dt_suggested,dt_suggested_crust',dt_suggested,dt_suggested_crust
-  endif
+  end select
 
   end subroutine auto_time_stepping
 
@@ -227,9 +228,9 @@
 !
   subroutine auto_attenuation_periods(WIDTH, NEX_MAX, MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
 
-  use constants, only: N_SLS,NGLLX
+  use constants, only: N_SLS,NGLLX,REFERENCE_MODEL_CASE65TAY
 
-  use shared_parameters, only: PLANET_TYPE, IPLANET_MARS
+  use shared_parameters, only: PLANET_TYPE, IPLANET_MARS,REFERENCE_1D_MODEL
 
   implicit none
 
@@ -261,9 +262,14 @@
   ! minimum period estimation
   select case (PLANET_TYPE)
   case (IPLANET_MARS)
-    ! minimum velocity (Vs) (based on Sohl & Spohn, minimum Vs is ~ 4 km/s)
-    S_VELOCITY_MIN = 4.d0
-
+    ! minimum velocity (Vs)
+    if (REFERENCE_1D_MODEL == REFERENCE_MODEL_CASE65TAY) then
+      ! based on case65tay, minimum ~ 2.48 km/s
+      S_VELOCITY_MIN = 2.48d0
+    else
+      ! based on Sohl & Spohn, minimum Vs is ~ 4 km/s
+      S_VELOCITY_MIN = 4.d0
+    endif
     ! converts degree to km
     ! Mars: radius 3390 km -> 2 * PI * R / 360 ~ 59.16 km
     DEG2KM = 59.d0

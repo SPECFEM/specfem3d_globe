@@ -445,6 +445,7 @@ xwrite_profile_OBJECTS += \
 	$O/model_atten3D_QRFSI12.check.o \
 	$O/model_attenuation_gll.check.o \
 	$O/model_attenuation.check.o \
+	$O/model_case65TAY.check.o \
 	$O/model_crust_1_0.check.o \
 	$O/model_crust_2_0.check.o \
 	$O/model_crustmaps.check.o \
