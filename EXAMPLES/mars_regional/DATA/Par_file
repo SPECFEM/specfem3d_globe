@@ -48,6 +48,9 @@ NPROC_ETA                       = 2
 # 3D crustal models:
 # crust1.0, crust2.0, EPcrust, EuCRUST, crustmaps, crustSH
 #
+# Mars models:
+# 1D_Sohl, 1D_Sohl_3D_crust, 1D_case65TAY, 1D_case65TAY_3D_crust
+#
 # 3D models with 3D crust: append "_**crustname**" to the mantle model name
 #                          to take a 3D crustal model (by default crust2.0 is taken for 3D mantle models)
 #                          e.g. s20rts_crust1.0, s362ani_crustmaps, full_sh_crustSH, sglobe_EPcrust, etc.
@@ -56,9 +59,6 @@ NPROC_ETA                       = 2
 #                          to take the 1D crustal model from the
 #                          associated reference model rather than the default 3D crustal model
 #                          e.g. s20rts_1Dcrust, s362ani_1Dcrust, etc.
-#
-# 1D MARS models: 1D_Sohl
-# 3D MARS models: 1D_Sohl_3D_crust, thermal_SH?? (to be added..)
 #
 MODEL                           = 1D_Sohl_3D_crust
 

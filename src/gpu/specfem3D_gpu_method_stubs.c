@@ -42,10 +42,10 @@ typedef float realw;
 // src/gpu/assemble_MPI_scalar_gpu.c
 //
 
-void FC_FUNC_ (transfer_boun_pot_from_device,
-               TRANSFER_BOUN_POT_FROM_DEVICE) (long *Mesh_pointer_f,
-                                               realw *send_buffer,
-                                               int *FORWARD_OR_ADJOINT) {}
+void FC_FUNC_(transfer_boun_pot_from_device,
+              TRANSFER_BOUN_POT_FROM_DEVICE) (long *Mesh_pointer_f,
+                                              realw *send_buffer,
+                                              int *FORWARD_OR_ADJOINT) {}
 
 void FC_FUNC_ (transfer_asmbl_pot_to_device,
                TRANSFER_ASMBL_POT_TO_DEVICE) (long *Mesh_pointer_f,
