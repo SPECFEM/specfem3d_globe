@@ -167,7 +167,7 @@
     ! Mars
     ! Sohn & Spohn Model A
     ! No Ocean
-    do i=627,NR
+    do i = 627,NR
       r(i) = r_middle_crust+(r_0-r_middle_crust)*dble(i-627)/dble(12)
     enddo
     ! use Sohl & Spohn model A (1997) to get the density profile for ellipticity.
@@ -189,7 +189,7 @@
   eta(1) = 0.0d0
   k(1) = 0.0d0
 
-  do i=2,NR
+  do i = 2,NR
     call intgrl(i_rho,r,1,i,rho,s1,s2,s3)
 
 ! Radau approximation of Clairaut's equation for first-order terms of ellipticity, see e.g. Jeffreys H.,
