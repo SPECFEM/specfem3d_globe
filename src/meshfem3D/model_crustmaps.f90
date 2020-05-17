@@ -303,6 +303,7 @@
   double precision :: h_sed,h_uc
   double precision :: x3,x4,x5,x6,x7,scaleval
   double precision,dimension(NLAYERS_CRUSTMAP) :: vps,vss,rhos,thicks
+  double precision,parameter :: THICKNESS_TOL = 1.d-9 ! to skip zero-thickness layers
 
   call read_crustmaps(lat,lon,vps,vss,rhos,thicks)
 
@@ -332,24 +333,24 @@
 
   found_crust = .true.
 ! if (x > x3 .and. INCLUDE_SEDIMENTS_IN_CRUST .and. h_sed > MINIMUM_SEDIMENT_THICKNESS) then
-  if (x > x3 .and. INCLUDE_SEDIMENTS_IN_CRUST) then
+  if (x > x3 .and. INCLUDE_SEDIMENTS_IN_CRUST .and. thicks(1) > THICKNESS_TOL) then
    vp = vps(1)
    vs = vss(1)
    rho = rhos(1)
 ! else if (x > x4 .and. INCLUDE_SEDIMENTS_IN_CRUST .and. h_sed > MINIMUM_SEDIMENT_THICKNESS) then
-  else if (x > x4 .and. INCLUDE_SEDIMENTS_IN_CRUST) then
+  else if (x > x4 .and. INCLUDE_SEDIMENTS_IN_CRUST .and. thicks(2) > THICKNESS_TOL) then
    vp = vps(2)
    vs = vss(2)
    rho = rhos(2)
-  else if (x > x5) then
+  else if (x > x5 .and. thicks(3) > THICKNESS_TOL) then
    vp = vps(3)
    vs = vss(3)
    rho = rhos(3)
-  else if (x > x6) then
+  else if (x > x6 .and. thicks(4) > THICKNESS_TOL) then
    vp = vps(4)
    vs = vss(4)
    rho = rhos(4)
-  else if (x > x7 .or. elem_in_crust) then
+  else if ((x > x7 .and. thicks(5) > THICKNESS_TOL) .or. elem_in_crust) then
    vp = vps(5)
    vs = vss(5)
    rho = rhos(5)
