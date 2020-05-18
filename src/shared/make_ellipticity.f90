@@ -199,11 +199,11 @@
 ! (see also in file ellipticity_equations_from_Dahlen_Tromp_1998.pdf in the "doc" directory of the code).
     call intgrl(i_radau,r,1,i,radau,s1,s2,s3)
 
-    z=(2.0d0/3.0d0)*i_radau/(i_rho*r(i)*r(i))
+    z = (2.0d0/3.0d0)*i_radau/(i_rho*r(i)*r(i))
 
     ! this comes from equation (14.19) in Dahlen and Tromp (1998)
-    eta(i)=(25.0d0/4.0d0)*((1.0d0-(3.0d0/2.0d0)*z)**2.0d0)-1.0d0
-    k(i)=eta(i)/(r(i)**3.0d0)
+    eta(i) = (25.0d0/4.0d0)*((1.0d0-(3.0d0/2.0d0)*z)**2.0d0)-1.0d0
+    k(i) = eta(i)/(r(i)**3.0d0)
   enddo
 
   ! day rotation
