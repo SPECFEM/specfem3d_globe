@@ -85,6 +85,11 @@
              timestamp_remote,year_remote,mon_remote,day_remote,hr_remote,minutes_remote,day_of_week_remote
   integer, external :: idaywk
 
+  ! debugging
+  integer :: iglob,pos(1)
+  double precision :: r,phi,theta
+  logical, parameter :: DEBUG = .false.
+
   ! slow node detection
   I_am_running_on_a_slow_node = .false.
 
@@ -102,25 +107,35 @@
   endif
 
   !debug
-  !print *,'debug: stability rank ',myrank,' it ',it,' norm ',Usolidnorm,Ufluidnorm,' displ CM/OC/IC ', &
-  !        maxval(abs(displ_crust_mantle)),maxval(abs(displ_outer_core)),maxval(abs(displ_inner_core))
-  !print *,'debug: stability rank ',myrank,' it ',it,' displ CM x/y/z ', &
-  !        maxval(abs(displ_crust_mantle(1,:))),maxval(abs(displ_crust_mantle(2,:))),maxval(abs(displ_crust_mantle(3,:)))
-  !print *,'debug: stability rank ',myrank,' it ',it,' displ IC x/y/z ', &
-  !        maxval(abs(displ_inner_core(1,:))),maxval(abs(displ_inner_core(2,:))),maxval(abs(displ_inner_core(3,:)))
-  !print *,'debug: stability rank ',myrank,' it ',it,' accel CM/OC,IC', &
-  !maxval(abs(accel_crust_mantle)),maxval(abs(accel_outer_core)),maxval(abs(accel_inner_core))
-  ! maximum on vertical
-  !pos = maxloc(abs(displ_crust_mantle(3,:)))
-  !iglob = pos(1)
-  !r = dble(rstore_crust_mantle(1,iglob))
-  !theta = dble(rstore_crust_mantle(2,iglob))
-  !phi = dble(rstore_crust_mantle(3,iglob))
-  !print *,'debug: rank ',myrank,' it ',it,' stability iglob ',iglob,' position r/lat/lon ', &
-  !        r*R_EARTH_KM,(PI/2.0-theta)*180.0/PI,phi*180.0/PI
-  !flush(101)
-  !call synchronize_all()
-
+  if (DEBUG) then
+    ! in case the simulations becomes unstable, this will provide some more infos to find out where.
+    ! also, in the Par_file one could set:
+    !    ..
+    !    NTSTEP_BETWEEN_OUTPUT_INFO      = 1
+    !    ..
+    ! to run this check after each wavefield increment
+    !
+    ! output norms and maximum values
+    print *,'debug: stability rank ',myrank,' it ',it,' norm ',Usolidnorm,Ufluidnorm,' displ CM/OC/IC ', &
+            maxval(abs(displ_crust_mantle)),maxval(abs(displ_outer_core)),maxval(abs(displ_inner_core))
+    print *,'debug: stability rank ',myrank,' it ',it,' displ CM x/y/z ', &
+            maxval(abs(displ_crust_mantle(1,:))),maxval(abs(displ_crust_mantle(2,:))),maxval(abs(displ_crust_mantle(3,:)))
+    print *,'debug: stability rank ',myrank,' it ',it,' displ IC x/y/z ', &
+            maxval(abs(displ_inner_core(1,:))),maxval(abs(displ_inner_core(2,:))),maxval(abs(displ_inner_core(3,:)))
+    print *,'debug: stability rank ',myrank,' it ',it,' accel CM/OC,IC', &
+            maxval(abs(accel_crust_mantle)),maxval(abs(accel_outer_core)),maxval(abs(accel_inner_core))
+    ! maximum on vertical
+    pos = maxloc(abs(displ_crust_mantle(3,:)))
+    ! position of maximum
+    iglob = pos(1)
+    r = dble(rstore_crust_mantle(1,iglob))
+    theta = dble(rstore_crust_mantle(2,iglob))
+    phi = dble(rstore_crust_mantle(3,iglob))
+    print *,'debug: rank ',myrank,' it ',it,' stability iglob ',iglob,' position r/lat/lon ', &
+            r*R_EARTH_KM,(PI/2.0-theta)*180.0/PI,phi*180.0/PI
+    !flush(101) ! stdout on cray
+    call synchronize_all()
+  endif
 
   ! check stability of the code, exit if unstable
   ! negative values can occur with some compilers when the unstable value is greater
