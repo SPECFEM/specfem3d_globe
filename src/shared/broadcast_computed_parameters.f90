@@ -169,7 +169,7 @@
   call bcast_all_singledp(STANDARD_GRAVITY)
   call bcast_all_singledp(ONE_MINUS_F_SQUARED)
   call bcast_all_ch(PATHNAME_TOPO_FILE,MAX_STRING_LEN)
-  call bcast_all_singlei(RESOLUTION_TOPO_FILE)
+  call bcast_all_singledp(RESOLUTION_TOPO_FILE)
   call bcast_all_singlei(NX_BATHY)
   call bcast_all_singlei(NY_BATHY)
   call bcast_all_singlei(TOPO_MINIMUM)

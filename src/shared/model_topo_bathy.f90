@@ -63,7 +63,7 @@
     write(IMAIN,*)
     write(IMAIN,*) 'incorporating topography'
     write(IMAIN,*) '  topo file            : ',trim(PATHNAME_TOPO_FILE)
-    write(IMAIN,*) '  resolution in minutes: ',RESOLUTION_TOPO_FILE
+    write(IMAIN,*) '  resolution in minutes: ',sngl(RESOLUTION_TOPO_FILE)
     write(IMAIN,*)
     call flush_IMAIN()
 

@@ -111,17 +111,53 @@ url_etopo2 = 'https://www.ngdc.noaa.gov/mgg/global/relief/ETOPO2/ETOPO2v2-2006/E
 # see: https://pds-geosciences.wustl.edu/missions/mgs/megdr.html
 #
 # MOLA topography data set
-# 32-pixel per degree = 0.03125 degree resolution ~ 1.875 arc-minute
+# 32-pixel per degree = 0.03125 degree resolution ~ 0.03125 / (1/60) = 1.875 arc-minute
 filename_webMOLA2lbl = 'megt90n000fb.lbl'
 filename_webMOLA2 = 'megt90n000fb.img'
 url_MOLA2 = 'https://pds-geosciences.wustl.edu/mgs/mgs-m-mola-5-megdr-l3-v1/mgsl_300x/meg032/megt90n000fb.img'
 
+## Moon
+# Digital elevation model (DEM) is based on data from the Lunar Orbiter Laser Altimeter (LOLA)
+# an instrument on the Lunar Reconnaissance Orbiter (LRO) spacecraft
+#
+# Smith, D. E., Zuber, M. T., Neumann, G. A., Mazarico, E., Head III, J., Torrence, M. H., & LOLA Science Team (2011).
+# Results from the Lunar Orbiter Laser Altimeter (LOLA): global, high-resolution topographic mapping of the Moon.
+# Paper presented at the 42nd Lunar and Planetary Science Conference, Lunar and Planetary Institute, Houston, TX.
+# https://www.lpi.usra.edu/meetings/lpsc2011/pdf/2350.pdf
+#
+# as default, we take LOLA topography gridded data (cylindrical) with int16 values in img-format:
+# https://pds-geosciences.wustl.edu/missions/lro/lola.htm
+#
+# product page: default 64-pixel per degree = 0.015625 degree resolution ~ 0.015625 / (1/60.) = 0.9375 arc-minute
+# https://ode.rsl.wustl.edu/moon/indexproductpage.aspx?product_idgeo=22930908
+#
+# more recent, higher-quality topo data would be available here:
+# high-resolution lunar topography (SLDEM2015): https://pgda.gsfc.nasa.gov/products/54
+#
+# int16 values, 16-pixel per degree = 0.0625 degree resolution ~ 3.75 arc-minute
+#filename_webLOLAlbl = 'ldem_16.lbl'
+#filename_webLOLA = 'ldem_16.img'
+#url_LOLA = 'https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_16.img'
+# float values, 16-pixel per degree = 0.015625 degree resolution
+#filename_webLOLAlbl = 'ldem_16_float.lbl'
+#filename_webLOLA = 'ldem_16_float.img'
+#url_LOLA = 'https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/float_img/ldem_16_float.img'
+# 64-pixel per degree = 0.015625 degree resolution
+filename_webLOLAlbl = 'ldem_64.lbl'
+filename_webLOLA = 'ldem_64.img'
+url_LOLA = 'https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_64.img'
 
+## plotting
 # plots PNM image
 plot_image = True
 
 ####################################################################
 
+# global parameters
+SIZE_FILTER_ONE_SIDE = 0   # filter size to average topo with neighbors
+NX_BATHY = 0               # array size x-direction
+NY_BATHY = 0               # array size y-direction
+INTERVAL = 0               # topo resolution
 
 def check_status(status):
     if status != 0:
@@ -151,10 +187,14 @@ def get_url(topo):
         url = url_MOLA2
     elif topo == 'mars2':
         url = url_MOLA2  # will get re-sampled
-    elif topo == 'mars4':
+    elif topo == 'mars':
         url = url_MOLA2  # will get re-sampled
+    elif topo == 'moon':
+        url = url_LOLA
+    elif topo == 'moon2':
+        url = url_LOLA
     else:
-        print("Invalid topo argument %s, only recognizes etopo1,etopo2,etopo4,etopo5,etopo15,mars2,mars4" % topo)
+        print("Invalid topo argument %s, only recognizes etopo1,etopo2,etopo4,etopo5,etopo15,mars,moon" % topo)
         sys.exit(1)
     return url
 
@@ -163,7 +203,8 @@ def download_data_file(topo,filename):
     """
     downloads topo/bathy file from web
     """
-    global filename_webMOLA2,filename_webMOLA2lbl
+    global filename_webMOLA2,filename_webMOLA2lbl,url_MOLA2
+    global filename_webLOLA,filename_webLOLAlbl,url_LOLA
 
     print("download:")
 
@@ -207,6 +248,9 @@ def download_data_file(topo,filename):
     if 'mars' in topo:
         # data file in .img format
         filename = filename_webMOLA2
+    elif 'moon' in topo:
+        # data file in .img format
+        filename = filename_webLOLA
     else:
         # data file downloaded as .zip file
         filename = 'topo.zip'
@@ -239,8 +283,24 @@ def download_data_file(topo,filename):
     if 'mars' in topo:
         # already data format
         # downloads also table info file (descriptor to actual data file, needed for later file conversions with GDAL/GMT)
-        lbl_file = requests.get(filename_webMOLA2lbl)
-        open(filename_webMOLA2,'w').write(lbl_file.content)
+        url = url_MOLA2
+        url = url[0:url_MOLA2.rfind('/')] + '/' + filename_webMOLA2lbl
+        lbl_file = requests.get(url)
+        text = lbl_file.content
+        # avoid bytes string issues with strings like b'Hello', converts to text string
+        if isinstance(text, (bytes, bytearray)): text = text.decode("utf-8")
+        open(filename_webMOLA2lbl,'w').write(text)
+    elif 'moon' in topo:
+        # table data
+        url = url_LOLA
+        url = url[0:url_LOLA.rfind('/')] + '/' + filename_webLOLAlbl
+        print("table: " + url)
+        lbl_file = requests.get(url)
+        text = lbl_file.content
+        # avoid bytes string issues with strings like b'Hello', converts to text string
+        if isinstance(text, (bytes, bytearray)): text = text.decode("utf-8")
+        print(text)
+        open(filename_webLOLAlbl,'w').write(text)
     else:
         # unzip
         with zipfile.ZipFile(filename, 'r') as zipObj:
@@ -251,56 +311,44 @@ def download_data_file(topo,filename):
             zipObj.extractall()
     print("")
 
-def resample_topo_file(topo,filename_web,filename):
+def resample_topo_file(topo,filename_web,filename_grid):
     """
     re-samples etopo2 to a coarser grid format
     """
+    global INTERVAL
+    global filename_webLOLAlbl
+
     # re-sampling
     print("resampling:")
 
-    # sampling interval
-    if topo == 'etopo1':
-        Ival = 1   # to 1 minute resampling (resampling as .tif can lead to problems)
-    elif topo == 'etopo2':
-        Ival = 2   # to 2 minute resampling
-    elif topo == 'etopo4':
-        Ival = 4   # to 4 minute downsampling
-    elif topo == 'etopo5':
-        Ival = 5   # to 5 minute downsampling
-    elif topo == 'etopo15':
-        Ival = 15  # to 15 minute downsampling
-    elif topo == 'mars1.875':
-        Ival = 1.875
-    elif topo == 'mars2':
-        Ival = 2  # to 2 minute resampling
-    elif topo == 'mars4':
-        Ival = 4  # to 2 minute resampling
-    else:
-        print("invalid topo parameters for resampling, exiting...")
-        sys.exit(1)
+    # target sampling interval
+    # example: INTERVAL = 1 -> 1 arc-minute = 1/60 degree resolution = 0.01666666666666 degree resolution
+    Ival = INTERVAL
 
     print("  resampling to {}m".format(Ival))
     if 'mars' in topo:
         gridfile = "MARSTOPO{}.grd".format(Ival)
+    elif 'moon' in topo:
+        gridfile = "MOONTOPO{}.grd".format(Ival)
     else:
         gridfile = "ETOPO{}.grd".format(Ival)
 
-    if gridfile != filename:
-        print("inconsistent filenames: gridfile {} and filename {}".format(gridfile,filename))
+    if gridfile != filename_grid:
+        print("inconsistent filenames: gridfile {} and filename {}".format(gridfile,filename_grid))
         print("please check script, exiting...")
         sys.exit(1)
 
     # checks if file already done
-    if os.path.isfile(filename):
-        print("  file %s exists already, skipping resample" % filename)
+    if os.path.isfile(filename_grid):
+        print("  file %s exists already, skipping resample" % filename_grid)
     else:
         # sampling interval
-        interval = "-I{}m".format(Ival)
-        grid = "-G{}=ns".format(filename)
+        interval_min = "-I{}m".format(Ival)
+        grid = "-G{}=ns".format(filename_grid)
 
         if topo == 'etopo1':
             # converting from raw binary to grid file
-            cmd = 'xyz2grd '   + filename_web + ' -V -Rd ' + grid + ' -r -ZTLh ' + interval
+            cmd = 'xyz2grd '   + filename_web + ' -V -Rd ' + grid + ' -r -ZTLh ' + interval_min
 
         elif topo == 'etopo2' or topo == 'etopo4' or topo == 'etopo5' or topo == 'etopo15':
             if filename_web == 'ETOPO2v2c_i2_LSB.bin':
@@ -311,10 +359,10 @@ def resample_topo_file(topo,filename_web,filename):
                 status = subprocess.call(cmd, shell=True)
                 check_status(status)
                 # resample
-                cmd = 'grdsample etopo2v2c.grd -V -Rd ' + grid + ' ' + interval
+                cmd = 'grdsample etopo2v2c.grd -V -Rd ' + grid + ' ' + interval_min
             else:
                 # direct resample
-                cmd = 'grdsample ' + filename_web + ' -V -Rd ' + grid + ' ' + interval
+                cmd = 'grdsample ' + filename_web + ' -V -Rd ' + grid + ' ' + interval_min
 
         elif 'mars' in topo:
             # converting to raw binary grid file
@@ -328,12 +376,73 @@ def resample_topo_file(topo,filename_web,filename):
             # plot image
             # > grdimage topo.grd -JX6i+ -I+d -P -Vl > topo.ps
             print("  converting binary file to grid file: "+filename_web)
+            # using int-16 values
             cmd = 'xyz2grd '   + filename_web + ' -Gmarstopo1.875.grd -R0/360/-90/90 -I1.875m -r -ZTLhw -fic -fog -V'
             print("> ",cmd)
             status = subprocess.call(cmd, shell=True)
             check_status(status)
             # resample
-            cmd = 'grdsample marstopo1.875.grd -V -Rd ' + grid + ' ' + interval
+            cmd = 'grdsample marstopo1.875.grd -V -Rd ' + grid + ' ' + interval_min
+        elif 'moon' in topo:
+            # converting to raw binary grid file
+            # 0.1 degree resolution = 0.1 / (1.60.) = 6 arc-minute
+            # 4-pixel per degree -> 0.25 degree resolution = 15 arc-minute
+            # 64-pixel per degree -> 0.015625 degree resolution = 0.9375 arc-minute
+            #
+            # converts to GeoTIFF format
+            #print("  converting binary file to grid file: "+filename_web)
+            #cmd = 'gdal_translate -of GTiff ' + filename_webLOLAlbl + ' topo.tif'
+            #print("> ",cmd)
+            #status = subprocess.call(cmd, shell=True)
+            #check_status(status)
+            #
+            # remove offset, we are interested in +/- elevations only:
+            # note: these LOLA topo datasets use a scale and offset, to output absolute elevation values.
+            #       this will interfere with the gmt resampling commands, thus we remove the offset of 1737400 m
+            #
+            #       the following is a workaround to end up with a GMT readable file using geographic coordinates and elevation.
+            #       it uses multiple steps of scaling to avoid issues with clipping the int16 value range.
+            #
+            # remove offset, still using 0.5 scale
+            cmd = 'gdal_translate -ot int16 -a_offset 0 -a_scale 0.5 ' + filename_webLOLAlbl + ' topo.lbl'
+            print("> ",cmd)
+            status = subprocess.call(cmd, shell=True)
+            check_status(status)
+            # or use grdmath to subtract offset and convert to a gmt int16 format (still having scale factor)
+            #cmd = 'grdmath ' + filename_webLOLAlbl + ' 1737400.0 SUB = topo.grd=ns -V'
+            # remove scale
+            cmd = 'gdal_translate -of GTiff -unscale topo.lbl topo.tif'
+            print("> ",cmd)
+            status = subprocess.call(cmd, shell=True)
+            check_status(status)
+            # convert to GMT int16 format
+            cmd = 'grdconvert topo.tif -Gtopo.grd=ns -V'
+            print("> ",cmd)
+            status = subprocess.call(cmd, shell=True)
+            check_status(status)
+            # workaround: directly using xyz2grd fails, complains about wrong array sizes, probably due to some header data.
+            #             thus, we output just the elevation data and re-read into grd-format
+            #  converts to binary float without x,y positions
+            cmd = 'grd2xyz topo.grd -ZTLf > topo.bin'
+            print("> ",cmd)
+            status = subprocess.call(cmd, shell=True)
+            check_status(status)
+            # using int-16 values from 16-pixel resolution = 0.0625 degree resolution
+            #cmd = 'xyz2grd topo.bin -Gtopo_moon.grd -R0/360/-90/90 -I0.0625 -r -ZTLf -fic -fog -Vl'
+            # using int-16 values from 64-pixel resolution = 0.9375m arc-minutes
+            cmd = 'xyz2grd topo.bin -Gtopo_moon.grd -R0/360/-90/90 -I0.9375m -r -ZTLf -fic -fog -Vl'
+            #cmd = 'xyz2grd '   + filename_web + ' -Gmoontopo.grd -R0/360/-90/90 -I0.9375m -r -ZTLhw -fic -fog -V'
+            print("> ",cmd)
+            status = subprocess.call(cmd, shell=True)
+            check_status(status)
+            print("")
+            cmd = 'grdinfo topo_moon.grd'
+            status = subprocess.call(cmd, shell=True)
+            check_status(status)
+            print("")
+            # resample
+            cmd = 'grdsample topo_moon.grd -V -Rd ' + grid + ' ' + interval_min
+
         else:
             print("invalid topo %s for resampling" % topo)
             sys.exit(1)
@@ -410,10 +519,12 @@ def sum_neighbors_with_padded_array(arr_padded,x,y,n=3):
     total_sum = arr_padded[ix-n:ix+n+1,iy-n:iy+n+1].sum()
     return total_sum
 
-def smooth_topo_bathy_fortran_tool(topo,filename_in,filename_out,SIZE_FILTER_ONE_SIDE):
+def smooth_topo_bathy_fortran_tool(topo,filename_in,filename_out):
     """
     smooths elevation by fortran tool
     """
+    global SIZE_FILTER_ONE_SIDE
+
     # checks if file already downloaded
     if os.path.isfile(filename_out):
         print("  file %s exists already " % filename_out)
@@ -431,10 +542,12 @@ def smooth_topo_bathy_fortran_tool(topo,filename_in,filename_out,SIZE_FILTER_ONE
         check_status(status)
         print("")
 
-def smooth_topo_bathy(topo,filename_in,filename_out,SIZE_FILTER_ONE_SIDE=1,NX_BATHY=0,NY_BATHY=0):
+def smooth_topo_bathy(topo,filename_in,filename_out):
     """
     smooths elevation by taking average value within neighboring data points
     """
+    global SIZE_FILTER_ONE_SIDE,NX_BATHY,NY_BATHY
+
     print("smoothing:")
     # pre-defined dimensions
     print("  topo/bathy dimensions:")
@@ -635,6 +748,9 @@ def plot_PPM_image(ibathy_topo,filename='image_topo_bathy.pnm'):
 
     print("  image dimensions: {} x {}".format(xdim,ydim))
     print("  topography min/max values = %f / %f" %(min_val,max_val))
+    # ascii rgb output -> about 12 byte per number to estimate file size
+    print("  estimated file size = ",xdim*ydim*12/1024.0/1024.0,"MB")
+    print("")
 
     # scales image values between [0,255]
     for ix in np.arange(xdim):
@@ -732,12 +848,20 @@ def create_topo_bathy(topo):
     """
     downloads and creates SPECFEM3D_GLOBE readable topo file
     """
-    global filename_web1,filename_web2,filename_webMOLA2,plot_image
+    global SIZE_FILTER_ONE_SIDE,NX_BATHY,NY_BATHY
+    global INTERVAL
+    global filename_web1,filename_web2,filename_webMOLA2,filename_webLOLA
+    global plot_image
 
     print("topo/bathy:")
     print("  etopo: %s" % topo)
 
-    # sets filenames
+    # sets filenames and file parameters:
+    #   INTERVAL               - target file resoltion in arc-minutes
+    #                            example: INTERVAL = 1 -> 1 arc-minute resolution = 1/60 degree resolution
+    #   SIZE_FILTER_ONE_SIDE   - filter size to average with neighboring values
+    #   NX_BATHY, NY_BATHY     - target array output size
+    #   filename_web           - file name for data file (downloaded from web)
     if topo == 'etopo1':
         INTERVAL = 1
         SIZE_FILTER_ONE_SIDE = 3
@@ -787,12 +911,26 @@ def create_topo_bathy(topo):
         NY_BATHY = 5400
         filename_web = filename_webMOLA2
 
-    elif topo == 'mars4':
-        INTERVAL = 4              # resample to 2m
+    elif topo == 'mars':
+        INTERVAL = 4              # resample to 4m
         SIZE_FILTER_ONE_SIDE = 3
         NX_BATHY = 5400
         NY_BATHY = 2700
         filename_web = filename_webMOLA2
+
+    elif topo == 'moon':
+        INTERVAL = 4              # resample to 4m
+        SIZE_FILTER_ONE_SIDE = 0  # no filtering
+        NX_BATHY = 5400
+        NY_BATHY = 2700
+        filename_web = filename_webLOLA
+
+    elif topo == 'moon2':
+        INTERVAL = 2              # resample to 2m
+        SIZE_FILTER_ONE_SIDE = 0  # no filtering
+        NX_BATHY = 10800
+        NY_BATHY = 5400
+        filename_web = filename_webLOLA
 
     else:
         print("Unrecognized option %s" % topo)
@@ -801,6 +939,8 @@ def create_topo_bathy(topo):
     # 1-degree in km
     if 'mars' in topo:
         degree_distance = 2.0 * 3390.0 * 3.1415926 / 360.0
+    elif 'moon' in topo:
+        degree_distance = 2.0 * 1737.1 * 3.1415926 / 360.0
     else:
         degree_distance = 2.0 * 6371.0 * 3.1415926 / 360.0
     # distance for minutes interval
@@ -819,6 +959,11 @@ def create_topo_bathy(topo):
         # ASCII filenames
         filename_out = "topo_bathy_marstopo{}_unmodified_unsmoothed.dat".format(INTERVAL)
         filename_out_smoothed = "topo_bathy_marstopo{}_smoothed_window_{}.dat".format(INTERVAL,SIZE_FILTER_ONE_SIDE)
+    elif 'moon' in topo:
+        filename_grid = "MOONTOPO{}.grd".format(INTERVAL)
+        # ASCII filenames
+        filename_out = "topo_bathy_moon{}_unmodified_unsmoothed.dat".format(INTERVAL)
+        filename_out_smoothed = "topo_bathy_moon{}_smoothed_window_{}.dat".format(INTERVAL,SIZE_FILTER_ONE_SIDE)
     else:
         filename_grid = "ETOPO{}.grd".format(INTERVAL)
         # ASCII filenames
@@ -840,7 +985,7 @@ def create_topo_bathy(topo):
     if topo == 'etopo1' or topo == 'etopo2':
         # etopo1/etopo2 smoothing
         # takes too long in python, using provided fortran tool
-        smooth_topo_bathy_fortran_tool(topo,filename_out,filename_out_smoothed,SIZE_FILTER_ONE_SIDE)
+        smooth_topo_bathy_fortran_tool(topo,filename_out,filename_out_smoothed)
 
         # conversion to SPECFEM binary
         # taken from file: convert_etopo_files_from_specfem_ASCII_to_binary_topo_format_ascii2bin.py
@@ -850,7 +995,7 @@ def create_topo_bathy(topo):
 
     else:
         # uses python routine for smoothing
-        ibathy_topo = smooth_topo_bathy(topo,filename_out,filename_out_smoothed,SIZE_FILTER_ONE_SIDE,NX_BATHY,NY_BATHY)
+        ibathy_topo = smooth_topo_bathy(topo,filename_out,filename_out_smoothed)
 
         # PPM image
         if plot_image: plot_PPM_image(ibathy_topo)
@@ -864,7 +1009,7 @@ def create_topo_bathy(topo):
 if __name__ == '__main__':
     # gets arguments
     if '--help' in sys.argv or '-h' in sys.argv or len(sys.argv) != 2:
-        print("usage: ./create_topo_bathy_file.py topo [== etopo1,etopo2,etopo4,etopo5,etopo15,mars2,mars4]")
+        print("usage: ./create_topo_bathy_file.py topo [== etopo1,etopo2,etopo4,etopo5,etopo15,mars,moon]")
         sys.exit(1)
     else:
         topo = sys.argv[1]
