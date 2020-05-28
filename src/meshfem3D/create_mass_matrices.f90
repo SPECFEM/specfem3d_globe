@@ -241,7 +241,7 @@
     gammaxstore,gammaystore,gammazstore, &
     rmassx,rmassy,b_rmassx,b_rmassy
 
-  use shared_parameters, only: UNDO_ATTENUATION,HOURS_PER_DAY,SECONDS_PER_HOUR
+  use shared_parameters, only: UNDO_ATTENUATION,HOURS_PER_DAY,SECONDS_PER_HOUR,RHOAV
 
   implicit none
 
@@ -373,6 +373,8 @@
     rho_vp,rho_vs, &
     nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
     nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta
+
+  use shared_parameters, only: RHOAV
 
   implicit none
 
@@ -756,6 +758,8 @@
     rmassz,rmass_ocean_load, &
     ibelm_top,jacobian2D_top
 
+  use shared_parameters, only: R_PLANET
+
   implicit none
 
   integer,dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
@@ -869,7 +873,7 @@
           if (elevation >= - MINIMUM_THICKNESS_3D_OCEANS) then
             height_oceans = 0.d0
           else
-            height_oceans = dabs(elevation) / R_EARTH
+            height_oceans = dabs(elevation) / R_PLANET
           endif
 
         else

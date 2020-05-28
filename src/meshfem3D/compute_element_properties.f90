@@ -41,7 +41,8 @@
     TOPOGRAPHY,ELLIPTICITY,CRUSTAL,CASE_3D, &
     THREE_D_MODEL,THREE_D_MODEL_MANTLE_SH,THREE_D_MODEL_S29EA, &
     THREE_D_MODEL_S362ANI,THREE_D_MODEL_S362WMANI,THREE_D_MODEL_S362ANI_PREM, &
-    ibathy_topo,nspl,rspl,espl,espl2,REGIONAL_MOHO_MESH
+    ibathy_topo,nspl,rspl,ellipicity_spline,ellipicity_spline2, &
+    REGIONAL_MOHO_MESH
 
 
   use regions_mesh_par2, only: &
@@ -226,10 +227,10 @@
     ! note: after adding ellipticity, the mesh becomes elliptical and geocentric and geodetic/geographic colatitudes differ.
     if (USE_GLL) then
       ! make the Earth's ellipticity, use GLL points
-      call get_ellipticity_gll(xstore,ystore,zstore,ispec,nspec,nspl,rspl,espl,espl2)
+      call get_ellipticity_gll(xstore,ystore,zstore,ispec,nspec,nspl,rspl,ellipicity_spline,ellipicity_spline2)
     else
       ! make the Earth's ellipticity, use element anchor points
-      call get_ellipticity(xelm,yelm,zelm,nspl,rspl,espl,espl2)
+      call get_ellipticity(xelm,yelm,zelm,nspl,rspl,ellipicity_spline,ellipicity_spline2)
     endif
   endif
 

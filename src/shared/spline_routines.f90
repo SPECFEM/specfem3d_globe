@@ -81,6 +81,8 @@
 
   subroutine spline_evaluation(xpoint,ypoint,spline_coefficients,npoint,x_evaluate_spline,y_spline_obtained)
 
+  use shared_parameters, only: R_PLANET_KM
+
   implicit none
 
 ! number of input points and coordinates of the input points
@@ -119,7 +121,11 @@
 
 ! test that the interval obtained does not have a size of zero
 ! (this could happen for instance in the case of duplicates in the input list of points)
-  if (xpoint(index_higher) == xpoint(index_lower)) stop 'incorrect interval found in spline evaluation'
+  if (xpoint(index_higher) == xpoint(index_lower)) then
+    print *,'Error: invalid spline evalution index_higher/index_lower = ',index_higher,index_lower,'range = ',1,npoint
+    print *,'       point x = ',x_evaluate_spline,' x radius = ',x_evaluate_spline * R_PLANET_KM,'(km)'
+    stop 'incorrect interval found in spline evaluation'
+  endif
 
   coef1 = (xpoint(index_higher) - x_evaluate_spline) / (xpoint(index_higher) - xpoint(index_lower))
   coef2 = (x_evaluate_spline - xpoint(index_lower)) / (xpoint(index_higher) - xpoint(index_lower))

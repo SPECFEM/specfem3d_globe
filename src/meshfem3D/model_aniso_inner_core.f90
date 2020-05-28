@@ -37,6 +37,7 @@
                                     vpv,vph,vsv,vsh,rho,eta_aniso)
 
   use constants
+  use shared_parameters, only: R_PLANET,RHOAV
 
   implicit none
 
@@ -80,7 +81,7 @@
             + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0)
 
   ! scale to dimensions (e.g. used in prem model)
-  scaleval = R_EARTH/1000.d0 * dsqrt(PI*GRAV*RHOAV)
+  scaleval = R_PLANET/1000.d0 * dsqrt(PI*GRAV*RHOAV)
   vp = vp * scaleval    ! km/s
   vs = vs * scaleval
   rho_dim = rho * RHOAV/1000.d0
@@ -227,7 +228,7 @@
   ! non-dimensionalize the elastic coefficients using
   ! the scale of GPa--[g/cm^3][(km/s)^2]
   scaleval = dsqrt(PI*GRAV*RHOAV)
-  scale_GPa = (RHOAV/1000.d0)*((R_EARTH*scaleval/1000.d0)**2)
+  scale_GPa = (RHOAV/1000.d0)*((R_PLANET*scaleval/1000.d0)**2)
 
   ! scales only values to return
   c11 = c11/scale_GPa

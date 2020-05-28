@@ -844,12 +844,12 @@
   scale_kl = scale_t * scale_displ_inv * 1.d9
   ! For anisotropic kernels
   ! final unit : [s km^(-3) GPa^(-1)]
-  scale_kl_ani = scale_t**3 / (RHOAV*R_EARTH**3) * 1.d18
+  scale_kl_ani = scale_t**3 / (RHOAV*R_PLANET**3) * 1.d18
   ! final unit : [s km^(-3) (kg/m^3)^(-1)]
   scale_kl_rho = scale_t * scale_displ_inv / RHOAV * 1.d9
   ! the scale of GPa--[g/cm^3][(km/s)^2]
   scaleval = dsqrt(PI*GRAV*RHOAV)
-  scale_GPa = (RHOAV/1000.d0)*((R_EARTH*scaleval/1000.d0)**2)
+  scale_GPa = (RHOAV/1000.d0)*((R_PLANET*scaleval/1000.d0)**2)
 
   ! debug
   !if (myrank == 0) print *,'debug: save kernels: scaling factors',scale_kl,scale_kl_ani,scale_kl_rho
@@ -1578,7 +1578,7 @@
   scale_kl = scale_t * scale_displ_inv * 1.d9
   ! For anisotropic kernels
   ! final unit : [s km^(-3) GPa^(-1)]
-  scale_kl_ani = scale_t**3 / (RHOAV*R_EARTH**3) * 1.d18
+  scale_kl_ani = scale_t**3 / (RHOAV*R_PLANET**3) * 1.d18
   ! final unit : [s km^(-3) (kg/m^3)^(-1)]
   scale_kl_rho = scale_t * scale_displ_inv / RHOAV * 1.d9
 

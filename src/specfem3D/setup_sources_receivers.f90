@@ -272,7 +272,9 @@
 
   use constants, only: &
     NDIM,NGLLX,NGLLY,NGLLZ,MIDX,MIDY,MIDZ,IMAIN, &
-    R_EARTH_KM,USE_DISTANCE_CRITERION
+    USE_DISTANCE_CRITERION
+
+  use shared_parameters, only: R_PLANET_KM
 
   use specfem_par, only: &
     myrank, &
@@ -362,7 +364,7 @@
 
     ! user output
     if (myrank == 0) then
-      write(IMAIN,*) '  using kd-tree search radius = ',r_search * R_EARTH_KM,'(km)'
+      write(IMAIN,*) '  using kd-tree search radius = ',r_search * R_PLANET_KM,'(km)'
       write(IMAIN,*)
       call flush_IMAIN()
     endif
@@ -549,12 +551,12 @@
     ! checks if neighbors were found
     if (num_neighbors == 0) then
       print *,'Error: rank ',myrank,' - element ',ispec_ref,'has no neighbors!'
-      print *,'  element midpoint location: ',xyz_target(:)*R_EARTH_KM
-      print *,'  typical element size     : ',element_size*R_EARTH_KM,'(km)'
+      print *,'  element midpoint location: ',xyz_target(:)*R_PLANET_KM
+      print *,'  typical element size     : ',element_size*R_PLANET_KM,'(km)'
       print *,'  brute force search       : ',DO_BRUTE_FORCE_SEARCH
       print *,'  distance criteria        : ',USE_DISTANCE_CRITERION
-      print *,'  typical search distance  : ',typical_size_squared*R_EARTH_KM,'(km)'
-      print *,'  kd-tree r_search         : ',r_search*R_EARTH_KM,'(km)'
+      print *,'  typical search distance  : ',typical_size_squared*R_PLANET_KM,'(km)'
+      print *,'  kd-tree r_search         : ',r_search*R_PLANET_KM,'(km)'
       print *,'  search elements          : ',num_elements
       call exit_MPI(myrank,'Error adjacency invalid')
     endif
@@ -609,8 +611,8 @@
     write(IMAIN,*) '  maximum search elements                                      = ',num_elements_max
     write(IMAIN,*) '  maximum of actual search elements (after distance criterion) = ',num_elements_actual_max
     write(IMAIN,*)
-    write(IMAIN,*) '  estimated typical element size at surface = ',element_size*R_EARTH_KM,'(km)'
-    write(IMAIN,*) '  maximum distance between neighbor centers = ',sqrt(dist_squared_max)*R_EARTH_KM,'(km)'
+    write(IMAIN,*) '  estimated typical element size at surface = ',element_size*R_PLANET_KM,'(km)'
+    write(IMAIN,*) '  maximum distance between neighbor centers = ',sqrt(dist_squared_max)*R_PLANET_KM,'(km)'
     if (.not. DO_BRUTE_FORCE_SEARCH) then
       if (sqrt(dist_squared_max) > r_search - 0.5*element_size) then
           write(IMAIN,*) '***'

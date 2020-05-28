@@ -100,10 +100,12 @@
 
   use constants
 
+  use shared_parameters, only: R_PLANET
+
   use meshfem3D_par, only: x_observation,y_observation,z_observation, &
                            lon_observation,lat_observation,ELLIPTICITY,TOPOGRAPHY,OUTPUT_FILES
 
-  use meshfem3D_models_par, only: nspl,rspl,espl,espl2,ibathy_topo
+  use meshfem3D_models_par, only: nspl,rspl,ellipicity_spline,ellipicity_spline2,ibathy_topo
 
   implicit none
 
@@ -242,7 +244,7 @@
       end select
 
       ! add ellipticity
-      if (ELLIPTICITY) call get_ellipticity_single_point(x_top,y_top,z_top,nspl,rspl,espl,espl2)
+      if (ELLIPTICITY) call get_ellipticity_single_point(x_top,y_top,z_top,nspl,rspl,ellipicity_spline,ellipicity_spline2)
 
       ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
       call xyz_2_rlatlon_dble(x_top,y_top,z_top,r,lat,lon)
@@ -265,7 +267,7 @@
       ! add topography
       if (TOPOGRAPHY) then
         ! non-dimensionalize the elevation, which is in meters
-        elevation = elevation / R_EARTH
+        elevation = elevation / R_PLANET
 
         x_top = x_top*(ONE + elevation)
         y_top = y_top*(ONE + elevation)
@@ -535,7 +537,7 @@
   integer :: ixval,iyval,ichunkval
 
   ! scaling factors
-  nondimensionalizing_factor_gi  = RHOAV * R_EARTH
+  nondimensionalizing_factor_gi  = RHOAV * R_PLANET
   nondimensionalizing_factor_Gij = RHOAV
   scaling_factor_gi = GRAV * nondimensionalizing_factor_gi
   scaling_factor_Gij_Eotvos = GRAV * nondimensionalizing_factor_Gij * SI_UNITS_TO_EOTVOS

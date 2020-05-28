@@ -38,16 +38,16 @@
     DISPLAY_DETAILS_STATIONS,nrec_SUBSET_MAX, &
     THRESHOLD_EXCLUDE_STATION, &
     HUGEVAL,IMAIN,IOUT,IOUT_VTK, &
-    DEGREES_TO_RADIANS,RADIANS_TO_DEGREES,R_UNIT_SPHERE,R_EARTH
+    DEGREES_TO_RADIANS,RADIANS_TO_DEGREES,R_UNIT_SPHERE
 
-  use shared_input_parameters, only: OUTPUT_FILES
+  use shared_parameters, only: OUTPUT_FILES,R_PLANET
 
   use specfem_par, only: &
     myrank,DT,NSTEP, &
     nrec,islice_selected_rec,ispec_selected_rec, &
     xi_receiver,eta_receiver,gamma_receiver,station_name,network_name, &
     stlat,stlon,stele,stbur,nu_rec,receiver_final_distance_max, &
-    rspl,espl,espl2,nspl,ibathy_topo, &
+    rspl,ellipicity_spline,ellipicity_spline2,nspl,ibathy_topo, &
     TOPOGRAPHY,RECEIVERS_CAN_BE_BURIED
 
   implicit none
@@ -222,7 +222,7 @@
     ! finds elevation of receiver
     if (TOPOGRAPHY) then
        call get_topo_bathy(lat,lon,elevation,ibathy_topo)
-       r0 = r0 + elevation/R_EARTH
+       r0 = r0 + elevation/R_PLANET
     endif
 
     ! ellipticity
@@ -232,14 +232,14 @@
       p20 = 0.5d0*(3.0d0*cost*cost-1.0d0)
 
       ! get ellipticity using spline evaluation
-      call spline_evaluation(rspl,espl,espl2,nspl,r0,ell)
+      call spline_evaluation(rspl,ellipicity_spline,ellipicity_spline2,nspl,r0,ell)
 
       ! this is eq (14.4) in Dahlen and Tromp (1998)
       r0 = r0*(1.0d0-(2.0d0/3.0d0)*ell*p20)
     endif
 
     ! subtract station burial depth (in meters)
-    r_target = r0 - depth/R_EARTH
+    r_target = r0 - depth/R_PLANET
 
     ! compute the Cartesian position of the receiver
     x_target = r_target*sint*cosp

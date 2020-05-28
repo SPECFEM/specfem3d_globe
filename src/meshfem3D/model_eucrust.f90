@@ -224,6 +224,8 @@
 ! returns Vp at the specific location lat/lon
 
   use constants
+  use shared_parameters, only: R_PLANET,RHOAV
+
   use model_eucrust_par
 
   implicit none
@@ -259,9 +261,9 @@
           h_uc = eucrust_ucdepth(i+j*ilons)
           h_moho = eucrust_mohodepth(i+j*ilons)
 
-          x3 = (R_EARTH - h_basement*1000.0d0)/R_EARTH
-          x4 = (R_EARTH - h_uc*1000.0d0)/R_EARTH
-          x5 = (R_EARTH - h_moho*1000.0d0)/R_EARTH
+          x3 = (R_PLANET - h_basement*1000.0d0)/R_PLANET
+          x4 = (R_PLANET - h_uc*1000.0d0)/R_PLANET
+          x5 = (R_PLANET - h_moho*1000.0d0)/R_PLANET
 
           scaleval = dsqrt(PI*GRAV*RHOAV)
 
@@ -270,18 +272,18 @@
             ! above sediment basement, returns average upper crust value
             ! since no special sediment values are given
             found_crust = .true.
-            vp = eucrust_vp_uppercrust(i+j*ilons) *1000.0d0/(R_EARTH*scaleval)
+            vp = eucrust_vp_uppercrust(i+j*ilons) *1000.0d0/(R_PLANET*scaleval)
           else if (x > x4) then
             found_crust = .true.
-            vp = eucrust_vp_uppercrust(i+j*ilons) *1000.0d0/(R_EARTH*scaleval)
+            vp = eucrust_vp_uppercrust(i+j*ilons) *1000.0d0/(R_PLANET*scaleval)
           else if (x > x5) then
             found_crust = .true.
-            vp = eucrust_vp_lowercrust(i+j*ilons) *1000.0d0/(R_EARTH*scaleval)
+            vp = eucrust_vp_lowercrust(i+j*ilons) *1000.0d0/(R_PLANET*scaleval)
           endif
-          moho = h_moho * 1000.0d0/R_EARTH
+          moho = h_moho * 1000.0d0/R_PLANET
           ! sediment thickness
           if (INCLUDE_SEDIMENTS_IN_CRUST .and. h_basement > MINIMUM_SEDIMENT_THICKNESS) then
-            sediment = h_basement * 1000.d0/R_EARTH
+            sediment = h_basement * 1000.d0/R_PLANET
           endif
 
           ! in case location below moho, no vp value will be found

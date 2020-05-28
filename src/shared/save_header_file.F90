@@ -79,7 +79,7 @@
     MOVIE_VOLUME,MOVIE_VOLUME_TYPE,NTSTEP_BETWEEN_FRAMES,SIMULATION_TYPE,MOVIE_SURFACE, &
     UNDO_ATTENUATION,MEMORY_INSTALLED_PER_CORE_IN_GB,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
     RECORD_LENGTH_IN_MINUTES,NSTEP, &
-    NX_BATHY,NY_BATHY,R_EARTH_KM,T_min
+    NX_BATHY,NY_BATHY,R_PLANET_KM,T_min_period
 
   implicit none
 
@@ -202,7 +202,7 @@
     print *,'total points per slice = ',sum(NGLOB_REGIONS)
     print *
     print *,'the time step of the solver will be DT = ',sngl(DT),' (s)'
-    print *,'the (approximate) minimum period resolved will be = ',sngl(T_min),' (s)'
+    print *,'the (approximate) minimum period resolved will be = ',sngl(T_min_period),' (s)'
     print *
     print *,'current record length is = ',sngl(RECORD_LENGTH_IN_MINUTES),'min'
     print *,'current minimum number of time steps will be = ',NSTEP
@@ -340,7 +340,7 @@
   write(IOUT,*) '! total points per slice = ',sum(NGLOB_REGIONS)
   write(IOUT,*) '!'
   write(IOUT,*) '! the time step of the solver will be DT = ',sngl(DT),' (s)'
-  write(IOUT,*) '! the (approximate) minimum period resolved will be = ',sngl(T_min),' (s)'
+  write(IOUT,*) '! the (approximate) minimum period resolved will be = ',sngl(T_min_period),' (s)'
   write(IOUT,*) '!'
 
   write(IOUT,'(1x,a,i1,a)') '! total for full ',NCHUNKS,'-chunk mesh:'
@@ -444,15 +444,15 @@
     num_elem_gc = int( 90.d0 / ANGULAR_WIDTH_XI_IN_DEGREES * 4 * NEX_XI )
     num_gll_gc = int( 90.d0 / ANGULAR_WIDTH_XI_IN_DEGREES * 4 * NEX_XI *(NGLLX-1) )
     avg_dist_deg = max( ANGULAR_WIDTH_XI_IN_DEGREES/NEX_XI,ANGULAR_WIDTH_ETA_IN_DEGREES/NEX_ETA ) / dble(NGLLX-1)
-    avg_dist_km = max( ANGULAR_WIDTH_XI_RAD/NEX_XI,ANGULAR_WIDTH_ETA_RAD/NEX_ETA ) * R_EARTH_KM / dble(NGLLX-1)
-    avg_element_size = max( ANGULAR_WIDTH_XI_RAD/NEX_XI,ANGULAR_WIDTH_ETA_RAD/NEX_ETA ) * R_EARTH_KM
+    avg_dist_km = max( ANGULAR_WIDTH_XI_RAD/NEX_XI,ANGULAR_WIDTH_ETA_RAD/NEX_ETA ) * R_PLANET_KM / dble(NGLLX-1)
+    avg_element_size = max( ANGULAR_WIDTH_XI_RAD/NEX_XI,ANGULAR_WIDTH_ETA_RAD/NEX_ETA ) * R_PLANET_KM
   else
     ! global mesh, chunks of 90 degrees
     num_elem_gc = 4 * NEX_XI
     num_gll_gc = 4 * NEX_XI*(NGLLX-1)
     avg_dist_deg = 360.d0 / dble(4) / dble(NEX_XI*(NGLLX-1))
-    avg_dist_km = TWO_PI / dble(4) * R_EARTH_KM / dble(NEX_XI*(NGLLX-1))
-    avg_element_size = TWO_PI / dble(4) * R_EARTH_KM / dble(NEX_XI)
+    avg_dist_km = TWO_PI / dble(4) * R_PLANET_KM / dble(NEX_XI*(NGLLX-1))
+    avg_element_size = TWO_PI / dble(4) * R_PLANET_KM / dble(NEX_XI)
   endif
 
   write(IOUT,*) '! resolution of the mesh at the surface:'

@@ -33,11 +33,11 @@
 
   use constants_solver
 
-  use shared_input_parameters, only: OUTPUT_FILES
+  use shared_parameters, only: OUTPUT_FILES,R_PLANET,RHOAV
 
   use specfem_par, only: &
     NSOURCES,DT, &
-    rspl,espl,espl2,nspl,ibathy_topo, &
+    rspl,ellipicity_spline,ellipicity_spline2,nspl,ibathy_topo, &
     LOCAL_TMP_PATH,SIMULATION_TYPE,TOPOGRAPHY, &
     SAVE_SOURCE_MASK
 
@@ -303,7 +303,7 @@
       ! finds elevation of position
       if (TOPOGRAPHY) then
         call get_topo_bathy(lat,lon,elevation,ibathy_topo)
-        r0 = r0 + elevation/R_EARTH
+        r0 = r0 + elevation/R_PLANET
       endif
 
       ! ellipticity
@@ -314,17 +314,17 @@
 
         ! todo: check if we need radius or r0 for evaluation below...
         !       (receiver location routine takes r0)
-        radius = r0 - depth/R_EARTH
+        radius = r0 - depth/R_PLANET
 
         ! get ellipticity using spline evaluation
-        call spline_evaluation(rspl,espl,espl2,nspl,radius,ell)
+        call spline_evaluation(rspl,ellipicity_spline,ellipicity_spline2,nspl,radius,ell)
 
         ! this is eq (14.4) in Dahlen and Tromp (1998)
         r0 = r0*(1.0d0-(2.0d0/3.0d0)*ell*p20)
       endif
 
       ! subtracts source depth (given in km)
-      r_target = r0 - depth/R_EARTH
+      r_target = r0 - depth/R_PLANET
 
       ! compute the Cartesian position of the source
       x_target = r_target*sint*cosp
@@ -558,7 +558,7 @@
           ! scale and non-dimensionalize the factor_force_source
           ! factor_force_source in FORCESOLUTION file is in Newton
           ! 1 Newton is 1 kg * 1 m / (1 second)^2
-          scaleF = RHOAV * (R_EARTH**4) * PI*GRAV*RHOAV
+          scaleF = RHOAV * (R_PLANET**4) * PI*GRAV*RHOAV
           ! force in Newton
           force_N = factor_force_source(isource) * scaleF
           ! adds to total force applied (sum over all force point sources)
@@ -609,7 +609,7 @@
         write(IMAIN,*)
         write(IMAIN,*) '        latitude: ',(PI_OVER_TWO-colat_source)*RADIANS_TO_DEGREES
         write(IMAIN,*) '       longitude: ',phi_source(isource)*RADIANS_TO_DEGREES
-        write(IMAIN,*) '           depth: ',(r0-r_found)*R_EARTH/1000.0d0,' km'
+        write(IMAIN,*) '           depth: ',(r0-r_found)*R_PLANET/1000.0d0,' km'
         write(IMAIN,*)
 
         ! display error in location estimate

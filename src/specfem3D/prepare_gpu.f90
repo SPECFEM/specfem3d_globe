@@ -171,7 +171,7 @@
                                      wgll_cube, &
                                      NRAD_GRAVITY, &
                                      minus_g_icb,minus_g_cmb, &
-                                     RHO_BOTTOM_OC,RHO_TOP_OC,R_EARTH_KM)
+                                     RHO_BOTTOM_OC,RHO_TOP_OC,R_PLANET_KM)
 
   deallocate(cr_d_ln_density_dr_table,cr_minus_rho_g_over_kappa_fluid, &
              cr_minus_gravity_table,cr_minus_deriv_gravity_table, &

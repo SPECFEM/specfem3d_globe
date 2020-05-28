@@ -72,9 +72,8 @@
 ! standard routine to setup model
 
   use constants
-
   use shared_parameters, only: NSPEC_REGIONS,ADIOS_FOR_MODELS,NPROCTOT,NCHUNKS, &
-                               MODEL,MODEL_GLL_TYPE
+    MODEL,MODEL_GLL_TYPE,R_PLANET,RHOAV
 
   use model_gll_par
 
@@ -239,10 +238,10 @@
   ! scaling values
   ! (model velocities must be given as km/s)
   scaleval = dsqrt(PI*GRAV*RHOAV)
-  MGLL_V%scale_velocity = 1000.0d0/(R_EARTH*scaleval)
+  MGLL_V%scale_velocity = 1000.0d0/(R_PLANET*scaleval)
   MGLL_V%scale_density  =  1000.0d0/RHOAV
   ! non-dimensionalize the elastic coefficients using the scale of GPa--[g/cm^3][(km/s)^2]
-  MGLL_V%scale_GPa      = 1.d0/( (RHOAV/1000.d0)*((R_EARTH*scaleval/1000.d0)**2) )  ! equal to scale_density * scale_velocity**2
+  MGLL_V%scale_GPa      = 1.d0/( (RHOAV/1000.d0)*((R_PLANET*scaleval/1000.d0)**2) )  ! equal to scale_density * scale_velocity**2
 
   select case(MGLL_TYPE)
   case (1)

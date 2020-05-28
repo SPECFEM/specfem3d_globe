@@ -65,7 +65,9 @@
 program smooth_sem_globe
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,IIN,IOUT, &
-    GAUSSALPHA,GAUSSBETA,PI,TWO_PI,R_EARTH_KM,MAX_STRING_LEN,DEGREES_TO_RADIANS,NGLLCUBE,myrank
+    GAUSSALPHA,GAUSSBETA,PI,TWO_PI,MAX_STRING_LEN,DEGREES_TO_RADIANS,NGLLCUBE,myrank
+
+  use shared_parameters, only: R_PLANET_KM
 
   use postprocess_par, only: &
     NCHUNKS_VAL,NPROC_XI_VAL,NPROC_ETA_VAL,NPROCTOT_VAL,NEX_XI_VAL,NEX_ETA_VAL, &
@@ -319,11 +321,11 @@ program smooth_sem_globe
   !   average size of a spectral element in km = ...
   !   e.g. nproc 12x12, nex 192: element_size = 52.122262
   if (NCHUNKS_VAL == 6) then
-    element_size = real(TWO_PI / dble(4) * R_EARTH_KM / dble(NEX_XI_VAL),kind=CUSTOM_REAL)
+    element_size = real(TWO_PI / dble(4) * R_PLANET_KM / dble(NEX_XI_VAL),kind=CUSTOM_REAL)
   else
     ANGULAR_WIDTH_XI_RAD = ANGULAR_WIDTH_XI_IN_DEGREES_VAL * DEGREES_TO_RADIANS
     ANGULAR_WIDTH_ETA_RAD = ANGULAR_WIDTH_ETA_IN_DEGREES_VAL * DEGREES_TO_RADIANS
-    element_size = max( ANGULAR_WIDTH_XI_RAD/NEX_XI_VAL,ANGULAR_WIDTH_ETA_RAD/NEX_ETA_VAL ) * real(R_EARTH_KM,kind=CUSTOM_REAL)
+    element_size = max( ANGULAR_WIDTH_XI_RAD/NEX_XI_VAL,ANGULAR_WIDTH_ETA_RAD/NEX_ETA_VAL ) * real(R_PLANET_KM,kind=CUSTOM_REAL)
   endif
 
   ! user output
@@ -367,10 +369,10 @@ program smooth_sem_globe
   call synchronize_all()
 
   ! initializes lengths (non-dimensionalizes)
-  element_size_m = element_size / real(R_EARTH_KM,kind=CUSTOM_REAL) ! e.g. 9 km on the surface, 36 km at CMB
+  element_size_m = element_size / real(R_PLANET_KM,kind=CUSTOM_REAL) ! e.g. 9 km on the surface, 36 km at CMB
 
-  sigma_h = sigma_h / real(R_EARTH_KM,kind=CUSTOM_REAL) ! scale
-  sigma_v = sigma_v / real(R_EARTH_KM,kind=CUSTOM_REAL) ! scale
+  sigma_h = sigma_h / real(R_PLANET_KM,kind=CUSTOM_REAL) ! scale
+  sigma_v = sigma_v / real(R_PLANET_KM,kind=CUSTOM_REAL) ! scale
 
   sigma_h2 = 2.0 * sigma_h ** 2  ! factor two for Gaussian distribution with standard variance sigma
   sigma_v2 = 2.0 * sigma_v ** 2
@@ -621,10 +623,10 @@ program smooth_sem_globe
       print *
       print *,'using kd-tree search:'
       if (DO_SEARCH_ELLIP) then
-        print *,'  search radius horizontal: ',r_search_dist_h * R_EARTH_KM,'km'
-        print *,'  search radius vertical  : ',r_search_dist_v * R_EARTH_KM,'km'
+        print *,'  search radius horizontal: ',r_search_dist_h * R_PLANET_KM,'km'
+        print *,'  search radius vertical  : ',r_search_dist_v * R_PLANET_KM,'km'
       else
-        print *,'  search sphere radius: ',r_search * R_EARTH_KM,'km'
+        print *,'  search sphere radius: ',r_search * R_PLANET_KM,'km'
       endif
       print *
     endif
@@ -650,8 +652,8 @@ program smooth_sem_globe
     if (myrank == 0) then
       print *
       print *,'using brute-force search:'
-      print *,'  search radius horizontal: ',sigma_h3 * R_EARTH_KM,'km'
-      print *,'  search radius vertical  : ',sigma_v3 * R_EARTH_KM,'km'
+      print *,'  search radius horizontal: ',sigma_h3 * R_PLANET_KM,'km'
+      print *,'  search radius vertical  : ',sigma_v3 * R_PLANET_KM,'km'
       print *
     endif
   endif
@@ -982,7 +984,7 @@ program smooth_sem_globe
         call get_distance_vec(dist_h,dist_v,center_x0,center_y0,center_z0,center_x,center_y,center_z)
 
         ! checks distance between centers of elements
-        ! note: distances and sigmah, sigmav are normalized by R_EARTH_KM
+        ! note: distances and sigmah, sigmav are normalized by R_PLANET_KM
         if ( dist_h > sigma_h3 .or. dist_v > sigma_v3 ) cycle
 
         ! integration factors:

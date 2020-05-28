@@ -115,6 +115,8 @@
   subroutine model_crust_2_0(lat,lon,x,vp,vs,rho,moho,sediment,found_crust,elem_in_crust)
 
   use constants
+  use shared_parameters, only: R_PLANET_KM,RHOAV
+
   use model_crust_2_0_par
 
   implicit none
@@ -157,7 +159,7 @@
   h_uc = h_sed + thicks(5)
 
   ! non-dimensionalization factor
-  scaleval = ONE / R_EARTH_KM
+  scaleval = ONE / R_PLANET_KM
 
   ! non-dimensionalize thicknesses (given in km)
 
@@ -223,7 +225,7 @@
 
   ! non-dimensionalize
   if (found_crust) then
-    scaleval = ONE / ( R_EARTH_KM * dsqrt(PI*GRAV*RHOAV) )
+    scaleval = ONE / ( R_PLANET_KM * dsqrt(PI*GRAV*RHOAV) )
     vp = vp * scaleval
     vs = vs * scaleval
     rho = rho * 1000.0d0 / RHOAV

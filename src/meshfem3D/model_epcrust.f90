@@ -161,6 +161,8 @@
   subroutine model_epcrust(lat,lon,dep,vpc,vsc,rhoc,mohoc,sedimentc,found_crust,elem_in_crust,point_in_area)
 
   use constants
+  use shared_parameters, only: R_PLANET,R_PLANET_KM,RHOAV
+
   use model_epcrust_par
 
   implicit none
@@ -228,20 +230,20 @@
     enddo
   endif
 
-  !topo=(R_EARTH_KM+z0)/R_EARTH_KM
-  !basement=(R_EARTH_KM+z0-zsmooth(1))/R_EARTH_KM
-  !conrad=(R_EARTH_KM+z0-zsmooth(1)-zsmooth(2))/R_EARTH_KM
-  !moho_top=(R_EARTH_KM+z0-zsmooth(1)-zsmooth(2)-zsmooth(3))/R_EARTH_KM
+  !topo=(R_PLANET_KM+z0)/R_PLANET_KM
+  !basement=(R_PLANET_KM+z0-zsmooth(1))/R_PLANET_KM
+  !conrad=(R_PLANET_KM+z0-zsmooth(1)-zsmooth(2))/R_PLANET_KM
+  !moho_top=(R_PLANET_KM+z0-zsmooth(1)-zsmooth(2)-zsmooth(3))/R_PLANET_KM
 
-  topo     = (R_EARTH_KM + z0)/R_EARTH_KM
-  basement = (R_EARTH_KM - zsmooth(1))/R_EARTH_KM
-  conrad   = (R_EARTH_KM - (zsmooth(1)+zsmooth(2)))/R_EARTH_KM
-  moho_top = (R_EARTH_KM - (zsmooth(1)+zsmooth(2)+zsmooth(3)))/R_EARTH_KM
+  topo     = (R_PLANET_KM + z0)/R_PLANET_KM
+  basement = (R_PLANET_KM - zsmooth(1))/R_PLANET_KM
+  conrad   = (R_PLANET_KM - (zsmooth(1)+zsmooth(2)))/R_PLANET_KM
+  moho_top = (R_PLANET_KM - (zsmooth(1)+zsmooth(2)+zsmooth(3)))/R_PLANET_KM
 
-  !min_sed  = 1.0 - MINIMUM_SEDIMENT_THICKNESS/R_EARTH_KM
+  !min_sed  = 1.0 - MINIMUM_SEDIMENT_THICKNESS/R_PLANET_KM
 
   ! moho depth
-  moho = (zsmooth(1)+zsmooth(2)+zsmooth(3))/R_EARTH_KM
+  moho = (zsmooth(1)+zsmooth(2)+zsmooth(3))/R_PLANET_KM
   ! Hejun Zhu, delete moho thickness less than 7 km
   if (moho < minimum_moho_depth) then
     moho = minimum_moho_depth
@@ -250,7 +252,7 @@
 
   ! sediment thickness
   if (INCLUDE_SEDIMENTS_IN_CRUST .and. zsmooth(1) >= MINIMUM_SEDIMENT_THICKNESS) then
-    sedimentc = zsmooth(1) / R_EARTH_KM
+    sedimentc = zsmooth(1) / R_PLANET_KM
   endif
 
 
@@ -279,8 +281,8 @@
 
   if (found_crust) then
     scaleval = dsqrt(PI*GRAV*RHOAV)
-    vpc = vp*1000.d0/(R_EARTH*scaleval)
-    vsc = vs*1000.d0/(R_EARTH*scaleval)
+    vpc = vp*1000.d0/(R_PLANET*scaleval)
+    vsc = vs*1000.d0/(R_PLANET*scaleval)
     rhoc = rho*1000.d0/RHOAV
     !debug
     !print *,'EPcrust: ',lat,lon,dep,vpc,vsc,rhoc,mohoc

@@ -5,6 +5,7 @@
 ! outputs model files in binary format
 
   use constants
+  use shared_parameters, only: R_PLANET,RHOAV
 
   use meshfem3D_par, only: nspec,iregion_code
 
@@ -25,7 +26,7 @@
   real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: temp_store
 
   ! scaling factors to re-dimensionalize units
-  scaleval1 = sngl( sqrt(PI*GRAV*RHOAV)*(R_EARTH/1000.0d0) )
+  scaleval1 = sngl( sqrt(PI*GRAV*RHOAV)*(R_PLANET/1000.0d0) )
   scaleval2 = sngl( RHOAV/1000.0d0 )
 
   ! uses temporary array
@@ -121,7 +122,7 @@
   if (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
     ! the scale of GPa--[g/cm^3][(km/s)^2]
     scaleval = dsqrt(PI*GRAV*RHOAV)
-    scale_GPa = (RHOAV/1000.d0)*((R_EARTH*scaleval/1000.d0)**2)
+    scale_GPa = (RHOAV/1000.d0)*((R_PLANET*scaleval/1000.d0)**2)
 
     ! Gc_prime
     open(unit=IOUT,file=prname(1:len_trim(prname))//'Gc_prime.bin', &

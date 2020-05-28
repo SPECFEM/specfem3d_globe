@@ -27,7 +27,7 @@
 
 module cem_par
 
-  use constants, only: PI, GRAV, RHOAV, R_EARTH, MAX_STRING_LEN
+  use constants, only: PI, GRAV, RHOAV, MAX_STRING_LEN
 
   implicit none
 
@@ -82,7 +82,7 @@ end module cem_par
   call world_size (wSize)
 
   scaleval = dsqrt(PI*GRAV*RHOAV)
-  scale_GPa = (RHOAV / 1000.d0) * ((R_EARTH * scaleval / 1000.d0) ** 2)
+  scale_GPa = (RHOAV / 1000.d0) * ((R_PLANET * scaleval / 1000.d0) ** 2)
 
   if (CEM_ACCEPT) then
 
@@ -135,30 +135,30 @@ end module cem_par
     iglob = ibool(i,j,k,ispec)
 
     rho = reg1Bc%rho(iglob) * 1000.0d0 / (RHOAV)
-    vpv = reg1Bc%vpv(iglob) * 1000.0d0 / (R_EARTH * scaleval)
-    vsv = reg1Bc%vsv(iglob) * 1000.0d0 / (R_EARTH * scaleval)
-    vsh = reg1Bc%vsh(iglob) * 1000.0d0 / (R_EARTH * scaleval)
-    vph = reg1Bc%vph(iglob) * 1000.0d0 / (R_EARTH * scaleval)
+    vpv = reg1Bc%vpv(iglob) * 1000.0d0 / (R_PLANET * scaleval)
+    vsv = reg1Bc%vsv(iglob) * 1000.0d0 / (R_PLANET * scaleval)
+    vsh = reg1Bc%vsh(iglob) * 1000.0d0 / (R_PLANET * scaleval)
+    vph = reg1Bc%vph(iglob) * 1000.0d0 / (R_PLANET * scaleval)
 
   else if (iregion_code == IREGION_OUTER_CORE) then
 
     iglob = ibool(i,j,k,ispec)
 
     rho = reg2Bc%rho(iglob) * 1000.0d0 / (RHOAV)
-    vpv = reg2Bc%vpv(iglob) * 1000.0d0 / (R_EARTH * scaleval)
-    vsv = reg2Bc%vsv(iglob) * 1000.0d0 / (R_EARTH * scaleval)
-    vsh = reg2Bc%vsh(iglob) * 1000.0d0 / (R_EARTH * scaleval)
-    vph = reg2Bc%vph(iglob) * 1000.0d0 / (R_EARTH * scaleval)
+    vpv = reg2Bc%vpv(iglob) * 1000.0d0 / (R_PLANET * scaleval)
+    vsv = reg2Bc%vsv(iglob) * 1000.0d0 / (R_PLANET * scaleval)
+    vsh = reg2Bc%vsh(iglob) * 1000.0d0 / (R_PLANET * scaleval)
+    vph = reg2Bc%vph(iglob) * 1000.0d0 / (R_PLANET * scaleval)
 
   else if (iregion_code == IREGION_INNER_CORE) then
 
     iglob = ibool(i,j,k,ispec)
 
     rho = reg3Bc%rho(iglob) * 1000.0d0 / (RHOAV)
-    vpv = reg3Bc%vpv(iglob) * 1000.0d0 / (R_EARTH * scaleval)
-    vsv = reg3Bc%vsv(iglob) * 1000.0d0 / (R_EARTH * scaleval)
-    vsh = reg3Bc%vsh(iglob) * 1000.0d0 / (R_EARTH * scaleval)
-    vph = reg3Bc%vph(iglob) * 1000.0d0 / (R_EARTH * scaleval)
+    vpv = reg3Bc%vpv(iglob) * 1000.0d0 / (R_PLANET * scaleval)
+    vsv = reg3Bc%vsv(iglob) * 1000.0d0 / (R_PLANET * scaleval)
+    vsh = reg3Bc%vsh(iglob) * 1000.0d0 / (R_PLANET * scaleval)
+    vph = reg3Bc%vph(iglob) * 1000.0d0 / (R_PLANET * scaleval)
 
   endif
 
@@ -309,7 +309,7 @@ end module cem_par
       do j = 1,NGLLY
         do i = 1,NGLLX
 
-          x               = sngl(xstore(i,j,k,ispec)) * R_EARTH_KM
+          x               = sngl(xstore(i,j,k,ispec)) * R_PLANET_KM
           iglob           = ibool(i,j,k,ispec)
           xyzOut(iglob,1) = sngl(x)
 
@@ -324,7 +324,7 @@ end module cem_par
       do j = 1,NGLLY
         do i = 1,NGLLX
 
-          y               = sngl(ystore(i,j,k,ispec)) * R_EARTH_KM
+          y               = sngl(ystore(i,j,k,ispec)) * R_PLANET_KM
           iglob           = ibool(i,j,k,ispec)
           xyzOut(iglob,2) = sngl(y)
 
@@ -339,7 +339,7 @@ end module cem_par
       do j = 1,NGLLY
         do i = 1,NGLLX
 
-          z               = sngl(zstore(i,j,k,ispec)) * R_EARTH_KM
+          z               = sngl(zstore(i,j,k,ispec)) * R_PLANET_KM
           iglob           = ibool(i,j,k,ispec)
           xyzOut(iglob,3) = sngl(z)
 
@@ -355,15 +355,15 @@ end module cem_par
         do j = 1,NGLLY
           do i = 1,NGLLX
 
-            x               = sngl(xstore(i,j,k,ispec)) * R_EARTH_KM
+            x               = sngl(xstore(i,j,k,ispec)) * R_PLANET_KM
             iglob           = ibool(i,j,k,ispec)
             xyzOut(iglob,1) = sngl(x)
 
-            y               = sngl(ystore(i,j,k,ispec)) * R_EARTH_KM
+            y               = sngl(ystore(i,j,k,ispec)) * R_PLANET_KM
             iglob           = ibool(i,j,k,ispec)
             xyzOut(iglob,2) = sngl(y)
 
-            z               = sngl(zstore(i,j,k,ispec)) * R_EARTH_KM
+            z               = sngl(zstore(i,j,k,ispec)) * R_PLANET_KM
             iglob           = ibool(i,j,k,ispec)
             xyzOut(iglob,3) = sngl(z)
 

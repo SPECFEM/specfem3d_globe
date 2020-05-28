@@ -128,6 +128,7 @@
   subroutine sm_output_info()
 
   use constants, only: IMAIN,NGLLX,NGLLY,NGLLZ,NGNOD,NGNOD2D,N_SLS
+  use shared_parameters, only: R_PLANET_KM
 
   use meshfem3D_models_par
 
@@ -237,7 +238,7 @@
   endif
   write(IMAIN,*)
 
-  write(IMAIN,*) 'Reference radius of the globe used is ',R_EARTH_KM,' km'
+  write(IMAIN,*) 'Reference radius of the globe used is ',R_PLANET_KM,' km'
   write(IMAIN,*)
   write(IMAIN,*) 'Central cube is at a radius of ',R_CENTRAL_CUBE/1000.d0,' km'
 

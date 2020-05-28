@@ -28,12 +28,12 @@
 
 module postprocess_par
 
-  use shared_input_parameters, only: LOCAL_PATH
-
   use constants, only: CUSTOM_REAL,MAX_STRING_LEN, &
     NGLLX,NGLLY,NGLLZ,IIN,IOUT, &
-    FOUR_THIRDS,R_EARTH_KM,GAUSSALPHA,GAUSSBETA, &
+    FOUR_THIRDS,GAUSSALPHA,GAUSSBETA, &
     myrank
+
+  use shared_parameters, only: LOCAL_PATH,R_PLANET_KM
 
   implicit none
 

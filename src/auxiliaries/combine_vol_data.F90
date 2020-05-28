@@ -46,7 +46,7 @@ program combine_vol_data
 !
 
   use constants, only: &
-    CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLY,NGLLZ,NR,IFLAG_IN_FICTITIOUS_CUBE,IIN
+    CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLY,NGLLZ,NR_DENSITY,IFLAG_IN_FICTITIOUS_CUBE,IIN
 
   use constants_solver, only: &
     NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE,NSPEC_OUTER_CORE,NSPEC_INNER_CORE,NPROCTOT_VAL
@@ -97,7 +97,7 @@ program combine_vol_data
   logical, parameter :: CORRECT_ELLIPTICITY = .false.
 
   integer :: nspl
-  double precision :: rspl(NR),espl(NR),espl2(NR)
+  double precision :: rspl(NR_DENSITY),espl(NR_DENSITY),espl2(NR_DENSITY)
   logical,parameter :: ONE_CRUST = .false. ! if you want to correct a model with one layer only in PREM crust
 
   integer, dimension(:), allocatable :: idoubling_inner_core ! to get rid of fictitious elements in central cube

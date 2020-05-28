@@ -58,9 +58,11 @@
   program interpolate_model
 
   use constants, only: SIZE_INTEGER, &
-    TWO_PI,R_UNIT_SPHERE,R_EARTH_KM,HUGEVAL_SNGL, &
+    TWO_PI,R_UNIT_SPHERE,HUGEVAL_SNGL, &
     NGNOD,MIDX,MIDY,MIDZ, &
     IFLAG_CRUST,IFLAG_80_MOHO,IFLAG_220_80,IFLAG_670_220,IFLAG_MANTLE_NORMAL
+
+  use shared_parameters, only: R_PLANET_KM
 
   use postprocess_par, only: &
     CUSTOM_REAL,NGLLX,NGLLY,NGLLZ, &
@@ -727,7 +729,7 @@
 
   ! user output
   if (myrank == 0) then
-    print *,'  typical element size (new mesh at surface) = ',sngl(typical_size * R_EARTH_KM),'(km)'
+    print *,'  typical element size (new mesh at surface) = ',sngl(typical_size * R_PLANET_KM),'(km)'
     print *
   endif
 
@@ -1323,7 +1325,7 @@
   val = maxval(point_distance(:,:,:,:))
   call max_all_all_cr(val,val_all)
   ! convert to km
-  val_all = sqrt(val_all) * real(R_EARTH_KM,kind=CUSTOM_REAL)
+  val_all = sqrt(val_all) * real(R_PLANET_KM,kind=CUSTOM_REAL)
   ! user output
   if (myrank == 0) then
     print *
@@ -1345,12 +1347,12 @@
     do i = 0,nproctot_new-1
       if (i == myrank) then
         loc_max = maxloc(point_distance(:,:,:,:))
-        print *,'poor location: rank ',myrank,'has maximum distance ',sqrt(val)*R_EARTH_KM,'(km)'
+        print *,'poor location: rank ',myrank,'has maximum distance ',sqrt(val)*R_PLANET_KM,'(km)'
         print *,'     location: at index ',loc_max
         print *,'     location: doubling layer ',idoubling2(loc_max(4)),'(1=crust,2=80-MOHO,3=220-80,4=670-220,5=mantle-normal)'
         iglob = ibool2(loc_max(1),loc_max(2),loc_max(3),loc_max(4))
-        val = sqrt(x2(iglob)*x2(iglob) + y2(iglob)*y2(iglob) + z2(iglob)*z2(iglob)) * real(R_EARTH_KM,kind=CUSTOM_REAL)
-        print *,'     location: ',x2(iglob),y2(iglob),z2(iglob),'at radius ',val,'(km) depth',sngl(R_EARTH_KM - val),'(km)'
+        val = sqrt(x2(iglob)*x2(iglob) + y2(iglob)*y2(iglob) + z2(iglob)*z2(iglob)) * real(R_PLANET_KM,kind=CUSTOM_REAL)
+        print *,'     location: ',x2(iglob),y2(iglob),z2(iglob),'at radius ',val,'(km) depth',sngl(R_PLANET_KM - val),'(km)'
         print *
       endif
       call synchronize_all()
@@ -1603,9 +1605,9 @@
                                      USE_MIDPOINT_SEARCH,DO_SEPARATION_410_650,DO_SEPARATION_TOPO,USE_FALLBACK)
 
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,MIDX,MIDY,MIDZ,R_EARTH_KM,R_EARTH
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,MIDX,MIDY,MIDZ
 
-  use shared_parameters, only: R220,R400,R600,R670
+  use shared_parameters, only: R220,R400,R600,R670,R_PLANET,R_PLANET_KM
 
   use kdtree_search, only: kdtree_find_nearest_neighbor,kdtree_nodes_location
 
@@ -1719,7 +1721,7 @@
 
     ! debug
     !if (myrank == 0 .and. iglob < 100) &
-    !  print *,'dist_min kdtree midpoint: ',dist_min * R_EARTH_KM,'(km)',typical_size * R_EARTH_KM
+    !  print *,'dist_min kdtree midpoint: ',dist_min * R_PLANET_KM,'(km)',typical_size * R_PLANET_KM
 
     ! special case for 410-km/650-km discontinuity
     if (DO_SEPARATION_410_650) then
@@ -1727,19 +1729,19 @@
       r = sqrt(xyz_target(1)*xyz_target(1) + xyz_target(2)*xyz_target(2) + xyz_target(3)*xyz_target(3))
 
       ! surface
-      if (r >= R220/R_EARTH) then
+      if (r >= R220/R_PLANET) then
         ! elements close to surface
         is_critical = .true.
       endif
 
       ! 410-km discontinuity
-      if (r >= R600/R_EARTH .and. r <= R220/R_EARTH) then
+      if (r >= R600/R_PLANET .and. r <= R220/R_PLANET) then
         ! elements within 220 - 600 km depth
         is_critical = .true.
       endif
 
       ! 650-km discontinuity
-      if (r >= (R670 - R670_MARGIN)/R_EARTH .and. r <= (R670 + R670_MARGIN)/R_EARTH) then
+      if (r >= (R670 - R670_MARGIN)/R_PLANET .and. r <= (R670 + R670_MARGIN)/R_PLANET) then
         ! elements within around 650 km depth
         is_critical = .true.
       endif
@@ -1751,7 +1753,7 @@
       r = sqrt(xyz_target(1)*xyz_target(1) + xyz_target(2)*xyz_target(2) + xyz_target(3)*xyz_target(3))
 
       ! surface
-      if (r >= R220/R_EARTH) then
+      if (r >= R220/R_PLANET) then
         ! elements close to surface
         is_critical = .true.
       endif
@@ -1769,7 +1771,7 @@
       iglob = ibool2(1,1,1,ispec)
       elem_height = r - sqrt(x2(iglob)*x2(iglob) + y2(iglob)*y2(iglob) + z2(iglob)*z2(iglob))
       ! debug
-      !if (myrank == 0) print *,'element height: ',elem_height * R_EARTH_KM,'(km)','radius: ',mid_radius*R_EARTH_KM
+      !if (myrank == 0) print *,'element height: ',elem_height * R_PLANET_KM,'(km)','radius: ',mid_radius*R_PLANET_KM
     endif
 
   endif
@@ -1798,21 +1800,21 @@
 
               ! takes corresponding internal GLL point for element search
               ! 410-km discontinuity
-              if (r >= (R400 - R400_MARGIN)/R_EARTH .and. r <= (R400 + R400_MARGIN)/R_EARTH) search_internal = .true.
+              if (r >= (R400 - R400_MARGIN)/R_PLANET .and. r <= (R400 + R400_MARGIN)/R_PLANET) search_internal = .true.
               ! 650-km discontinuity
-              if (r >= (R670 - R670_MARGIN)/R_EARTH .and. r <= (R670 + R670_MARGIN)/R_EARTH) search_internal = .true.
+              if (r >= (R670 - R670_MARGIN)/R_PLANET .and. r <= (R670 + R670_MARGIN)/R_PLANET) search_internal = .true.
             endif
           endif
 
           if (DO_SEPARATION_TOPO) then
-            RTOP = R_EARTH
+            RTOP = R_PLANET
             if (is_critical) then
               ! GLL point radius
               r = sqrt(x_target*x_target + y_target*y_target + z_target*z_target)
 
               ! takes corresponding internal GLL point for element search
               ! surface elements
-              if (r >= (RTOP - RTOP_MARGIN)/R_EARTH) search_internal = .true.
+              if (r >= (RTOP - RTOP_MARGIN)/R_PLANET) search_internal = .true.
             endif
           endif
 
@@ -1865,7 +1867,7 @@
 
           ! debug
           !if (myrank == 0 .and. iglob < 100) &
-          !  print *,'dist_min kdtree: ',dist_min * R_EARTH_KM,'(km)',typical_size * R_EARTH_KM
+          !  print *,'dist_min kdtree: ',dist_min * R_PLANET_KM,'(km)',typical_size * R_PLANET_KM
 
           ! restores original target point location for locating/interpolating
           iglob = ibool2(i,j,k,ispec)
@@ -1900,19 +1902,19 @@
           if (DO_WARNING) then
             dist_min = sqrt((x_found-x_target)**2 + (y_found-y_target)**2 + (z_found-z_target)**2)
             if (dist_min > 2.0 * typical_size) then
-              print *,'Warning: rank ',myrank,' - large dist_min: ',dist_min * R_EARTH_KM,'(km)', &
-                     'element size:',typical_size * R_EARTH_KM
+              print *,'Warning: rank ',myrank,' - large dist_min: ',dist_min * R_PLANET_KM,'(km)', &
+                     'element size:',typical_size * R_PLANET_KM
               print *,'target location:',xyz_target(:)
-              print *,'target radius  :',sqrt(xyz_target(1)**2 + xyz_target(2)**2 + xyz_target(3)**2) * R_EARTH_KM,'(km)'
+              print *,'target radius  :',sqrt(xyz_target(1)**2 + xyz_target(2)**2 + xyz_target(3)**2) * R_PLANET_KM,'(km)'
               print *,'gll location   :',x_found,y_found,z_found
-              print *,'gll radius     :',sqrt(x_found**2 + y_found**2 + z_found**2) * R_EARTH_KM,'(km)'
-              print *,'distance gll:',dist_min * R_EARTH_KM,'(km)'
+              print *,'gll radius     :',sqrt(x_found**2 + y_found**2 + z_found**2) * R_PLANET_KM,'(km)'
+              print *,'distance gll:',dist_min * R_PLANET_KM,'(km)'
               ! debug
               !stop 'Error GLL model value invalid'
             endif
             ! debug
             !if (myrank == 0 .and. iglob < 100) &
-            !  print *,'dist_min GLL point: ',dist_min * R_EARTH_KM,'(km)',typical_size * R_EARTH_KM
+            !  print *,'dist_min GLL point: ',dist_min * R_PLANET_KM,'(km)',typical_size * R_PLANET_KM
           endif
 
           ! new model values
@@ -1945,16 +1947,16 @@
               ! note: warns for top elements, probably due to crustal structure
               if (abs(val - val_initial ) > abs( 0.2 * val_initial )) then
                 print *,'Warning: model ',iker,' value:',val,'is very different from initial value ',val_initial
-                print *,'  rank ',myrank,' - dist_min: ',dist_min * R_EARTH_KM,'(km)'
+                print *,'  rank ',myrank,' - dist_min: ',dist_min * R_PLANET_KM,'(km)'
                 print *,'  element',ispec,'selected ispec:',ispec_selected,'in rank:',rank_selected,'iglob_min:',iglob_min
-                print *,'  typical element size:',typical_size * 0.5 * R_EARTH_KM
+                print *,'  typical element size:',typical_size * 0.5 * R_PLANET_KM
                 print *,'  interpolation i,j,k :',i_selected,j_selected,k_selected
                 print *,'  interpolation       :',xi,eta,gamma
                 print *,'  target location:',xyz_target(:)
-                print *,'  target radius  :',sqrt(xyz_target(1)**2 + xyz_target(2)**2 + xyz_target(3)**2) * R_EARTH_KM,'(km)'
+                print *,'  target radius  :',sqrt(xyz_target(1)**2 + xyz_target(2)**2 + xyz_target(3)**2) * R_PLANET_KM,'(km)'
                 print *,'  GLL location   :',x_found,y_found,z_found
-                print *,'  GLL radius     :',sqrt(x_found**2 + y_found**2 + z_found**2) * R_EARTH_KM,'(km)'
-                print *,'  distance gll:',dist_min * R_EARTH_KM,'(km)'
+                print *,'  GLL radius     :',sqrt(x_found**2 + y_found**2 + z_found**2) * R_PLANET_KM,'(km)'
+                print *,'  distance gll:',dist_min * R_PLANET_KM,'(km)'
                 !stop 'Error model value invalid'
               endif
             endif
@@ -1993,23 +1995,23 @@
       print *,'Error rank:',myrank,'invalid selected ispec ',ispec_selected,'for element',ispec
       print *,'rank_selected:',rank_selected,'iglob_min:',iglob_min,'nspec_old:',nspec_old
       print *,'target location:',xyz_target(:)
-      print *,'dist_min: ',dist_min * R_EARTH_KM,'(km)'
+      print *,'dist_min: ',dist_min * R_PLANET_KM,'(km)'
       stop 'Error specifying closest ispec element'
     endif
 
     ! checks minimum distance within a typical element size
     if (DO_WARNING) then
       if (dist_min > 2.0 * typical_size) then
-        print *,'Warning: rank ',myrank,' - large dist_min: ',dist_min * R_EARTH_KM,'(km)', &
-               'element size:',typical_size * R_EARTH_KM
+        print *,'Warning: rank ',myrank,' - large dist_min: ',dist_min * R_PLANET_KM,'(km)', &
+               'element size:',typical_size * R_PLANET_KM
         print *,'element',ispec,'selected ispec:',ispec_selected,'in rank:',rank_selected,'iglob_min:',iglob_min
-        print *,'typical element size:',typical_size * 0.5 * R_EARTH_KM
+        print *,'typical element size:',typical_size * 0.5 * R_PLANET_KM
         print *,'target location:',xyz_target(:)
-        print *,'target radius  :',sqrt(xyz_target(1)**2 + xyz_target(2)**2 + xyz_target(3)**2) * R_EARTH_KM,'(km)'
+        print *,'target radius  :',sqrt(xyz_target(1)**2 + xyz_target(2)**2 + xyz_target(3)**2) * R_PLANET_KM,'(km)'
         print *,'found location :',kdtree_nodes_location(:,iglob_min)
         print *,'found radius   :',sqrt(kdtree_nodes_location(1,iglob_min)**2 &
                                      + kdtree_nodes_location(2,iglob_min)**2 &
-                                     + kdtree_nodes_location(3,iglob_min)**2 ) * R_EARTH_KM,'(km)'
+                                     + kdtree_nodes_location(3,iglob_min)**2 ) * R_PLANET_KM,'(km)'
         !debug
         !stop 'Error dist_min too large in check_point_result() routine'
       endif
@@ -2144,8 +2146,9 @@
                            i_selected,j_selected,k_selected, &
                            dist_sq)
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,HUGEVAL,NUM_ITER,R_EARTH_KM, &
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,HUGEVAL,NUM_ITER, &
     MIDX,MIDY,MIDZ,myrank
+  use shared_parameters, only: R_PLANET_KM
 
   implicit none
 
@@ -2249,7 +2252,7 @@
     stop 'Error locate_single: no initial guess'
 
   ! debug
-  !print *,'distmin = ',sngl(sqrt(distmin) * R_EARTH_KM),'(km)'
+  !print *,'distmin = ',sngl(sqrt(distmin) * R_PLANET_KM),'(km)'
 
   ! find the best (xi,eta)
   ! use initial guess in xi, eta and gamma from closest point found
@@ -2432,11 +2435,11 @@
       print *, '*****************************************************************'
       print *, '***** WARNING: location estimate is poor                    *****'
       print *, '*****************************************************************'
-      print *, 'closest estimate found: ',sngl(sqrt(dist_sq)*R_EARTH_KM),'km away',' - not within:',typical_size * R_EARTH_KM
+      print *, 'closest estimate found: ',sngl(sqrt(dist_sq)*R_PLANET_KM),'km away',' - not within:',typical_size * R_PLANET_KM
       print *, ' myrank ',myrank,' in element ',ispec_selected,ix_initial_guess,iy_initial_guess,iz_initial_guess
       print *, ' at xi,eta,gamma coordinates = ',xi,eta,gamma
-      print *, ' at radius ',sqrt(x**2 + y**2 + z**2) * R_EARTH_KM,'(km)'
-      print *, ' initial distance :',sqrt(distmin)*R_EARTH_KM,'(km)'
+      print *, ' at radius ',sqrt(x**2 + y**2 + z**2) * R_PLANET_KM,'(km)'
+      print *, ' initial distance :',sqrt(distmin)*R_PLANET_KM,'(km)'
     endif
   endif
 
@@ -2452,7 +2455,8 @@
                                             nspec,nglob,ibool,xstore,ystore,zstore, &
                                             anchor_iax,anchor_iay,anchor_iaz)
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,HUGEVAL,NUM_ITER,R_EARTH_KM
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,HUGEVAL,NUM_ITER
+  use shared_parameters, only: R_PLANET_KM
 
   implicit none
 
@@ -2515,7 +2519,7 @@
       print *,'debug: jacobian error i,j,k,ispec :',ix_initial_guess,iy_initial_guess,iz_initial_guess,ispec_selected
       print *,'debug: jacobian error iter_loop   :',iter_loop
       dist = (x_target-x)**2 + (y_target-y)**2 + (z_target-z)**2
-      print *,'debug: jacobian error dist        :',dist,sqrt(dist)*R_EARTH_KM,'(km)'
+      print *,'debug: jacobian error dist        :',dist,sqrt(dist)*R_PLANET_KM,'(km)'
       ! uses initial guess again
       !xi = xigll(ix_initial_guess)
       !eta = yigll(iy_initial_guess)

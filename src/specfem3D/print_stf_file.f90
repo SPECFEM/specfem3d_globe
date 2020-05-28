@@ -31,7 +31,7 @@
 ! prints source time function and spectrum
 
   use constants
-  use shared_input_parameters
+  use shared_parameters
 
   use specfem_par, only: NSOURCES,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
     factor_force_source, &

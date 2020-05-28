@@ -30,8 +30,8 @@
                       comp_dir_vect_source_E,comp_dir_vect_source_N, &
                       comp_dir_vect_source_Z_UP)
 
-  use constants, only: IIN,MAX_STRING_LEN,TINYVAL,mygroup,RHOAV,R_EARTH,PI,GRAV
-  use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS
+  use constants, only: IIN,MAX_STRING_LEN,TINYVAL,mygroup,PI,GRAV
+  use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS,R_PLANET,RHOAV
 
   implicit none
 
@@ -48,14 +48,14 @@
   double precision, dimension(NSOURCES), intent(out) :: comp_dir_vect_source_Z_UP
 
   ! local variables below
-  integer :: isource,dummyval
+  integer :: isource,ier
   double precision :: scaleF
   double precision :: t_shift(NSOURCES)
   double precision :: length
-  character(len=7) :: dummy
   character(len=MAX_STRING_LEN) :: string
   character(len=MAX_STRING_LEN) :: FORCESOLUTION,path_to_add
-  integer :: ier
+  integer :: dummyval
+  character(len=7) :: dummy
 
   ! initializes
   lat(:) = 0.d0
@@ -94,6 +94,7 @@
 ! read source number isource
   do isource = 1,NSOURCES
 
+    ! header
     read(IIN,"(a)") string
     ! skips empty lines
     do while (len_trim(string) == 0)
@@ -101,7 +102,9 @@
     enddo
 
     ! read header with event information
-    read(string,"(a6,i4)") dummy,dummyval
+    ! format: FORCE  id
+    ! as example: FORCE 001
+    read(string,"(a6,i4)") dummy,dummyval  ! not used any further
 
     ! read time shift
     read(IIN,"(a)") string
@@ -213,7 +216,7 @@
   ! factor_force_source in FORCESOLUTION file is in Newton
   ! 1 Newton is 1 kg * 1 m / (1 second)^2
   !
-  scaleF = RHOAV * (R_EARTH**4) * PI*GRAV*RHOAV
+  scaleF = RHOAV * (R_PLANET**4) * PI*GRAV*RHOAV
   factor_force_source(:) = factor_force_source(:) / scaleF
 
   end subroutine get_force

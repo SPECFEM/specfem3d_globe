@@ -31,7 +31,7 @@
 
   use constants
 
-  use shared_parameters, only: T_min
+  use shared_parameters, only: T_min_period
 
   use meshfem3D_par, only: &
     nspec,nglob, &
@@ -152,7 +152,7 @@
     !if (eig_ratio_min_reg > eig_min_ratio) then
     !  eig_ratio_min_reg = eig_min_ratio
     !  print *,'eigen: ',eig_ratio_min_reg, &
-    !          'at radius ',sngl(sqrt(xstore(3,3,3,ispec)**2 + ystore(3,3,3,ispec)**2 + zstore(3,3,3,ispec)**2)*R_EARTH_KM)
+    !          'at radius ',sngl(sqrt(xstore(3,3,3,ispec)**2 + ystore(3,3,3,ispec)**2 + zstore(3,3,3,ispec)**2)*R_PLANET_KM)
     !endif
 
     ! largest possible minimum period such that number of points per minimum wavelength
@@ -175,7 +175,7 @@
     !  print *,'minimum period = ',sngl(pmax_reg), &
     !          sngl(256.0/max(NEX_ETA,NEX_XI) * max(ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES)/90.0 * 17.0), &
     !          'vpmax = ',vpmax,'vsmin = ',vsmin, &
-    !          'at radius ',sngl(sqrt(xstore(3,3,3,ispec)**2 + ystore(3,3,3,ispec)**2 + zstore(3,3,3,ispec)**2)*R_EARTH_KM)
+    !          'at radius ',sngl(sqrt(xstore(3,3,3,ispec)**2 + ystore(3,3,3,ispec)**2 + zstore(3,3,3,ispec)**2)*R_PLANET_KM)
     !endif
 
     ! sets region minimum period
@@ -212,7 +212,7 @@
     !  dt_max_reg = dt_max
     !  print *,'dt_max = ',dt_max_reg,sngl(DT),sngl(fac_pow),dt_cut, &
     !          'vp = ',vpmax,'distance_min = ',distance_min,eig_ratio_min, &
-    !          'at radius ',sngl(sqrt(xstore(3,3,3,ispec)**2 + ystore(3,3,3,ispec)**2 + zstore(3,3,3,ispec)**2)*R_EARTH_KM)
+    !          'at radius ',sngl(sqrt(xstore(3,3,3,ispec)**2 + ystore(3,3,3,ispec)**2 + zstore(3,3,3,ispec)**2)*R_PLANET_KM)
     !endif
 
     ! sets region time step in this slice
@@ -268,7 +268,7 @@
   call max_all_cr(eig_ratio_max,eig_ratio_max_reg)
 
   ! empirical minimum period resolved by mesh
-  pmax_empirical = T_min
+  pmax_empirical = T_min_period
 
   !debug timing
   !tCPU = wtime() - tstart
@@ -366,8 +366,8 @@
   subroutine get_vpvs_minmax(vpmax,vsmin,ispec,nspec,iregion_code,kappavstore,kappahstore,muvstore,muhstore,rhostore)
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,IREGION_CRUST_MANTLE,IREGION_INNER_CORE, &
-    PI,GRAV,RHOAV,R_EARTH,HUGEVAL,TINYVAL,FOUR_THIRDS
-
+    PI,GRAV,HUGEVAL,TINYVAL,FOUR_THIRDS
+  use shared_parameters, only: RHOAV,R_PLANET
   use meshfem3D_models_par, only: ANISOTROPIC_INNER_CORE,ANISOTROPIC_3D_MANTLE
 
   use regions_mesh_par2, only: &
@@ -468,7 +468,7 @@
     enddo
   enddo
   ! maximum Vp (in km/s)
-  scaleval = real(sqrt(PI*GRAV*RHOAV)*(R_EARTH/1000.0d0),kind=CUSTOM_REAL)
+  scaleval = real(sqrt(PI*GRAV*RHOAV)*(R_PLANET/1000.0d0),kind=CUSTOM_REAL)
   vpmax = sqrt(vpmax) * scaleval
   vsmin = sqrt(vsmin) * scaleval
 
@@ -480,7 +480,8 @@
 
   subroutine get_elem_minmaxsize(elemsize_min,elemsize_max,ispec,nspec,xstore,ystore,zstore)
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,R_EARTH_KM,HUGEVAL
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,HUGEVAL
+  use shared_parameters, only: R_PLANET_KM
 
   implicit none
 
@@ -552,8 +553,8 @@
     enddo
   enddo
   ! size (in km)
-  elemsize_min = sqrt(elemsize_min) * R_EARTH_KM
-  elemsize_max = sqrt(elemsize_max) * R_EARTH_KM
+  elemsize_min = sqrt(elemsize_min) * R_PLANET_KM
+  elemsize_max = sqrt(elemsize_max) * R_PLANET_KM
 
   end subroutine get_elem_minmaxsize
 
@@ -564,7 +565,8 @@
 
   subroutine get_min_distance_from_second_GLL_points(dx,ispec,nspec,xstore,ystore,zstore)
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,R_EARTH_KM,HUGEVAL
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,HUGEVAL
+  use shared_parameters, only: R_PLANET_KM
 
   implicit none
 
@@ -730,7 +732,7 @@
     if (dx > dist ) dx = dist
   enddo
   ! size (in km)
-  dx = sqrt(dx) * R_EARTH_KM
+  dx = sqrt(dx) * R_PLANET_KM
 
   end subroutine get_min_distance_from_second_GLL_points
 

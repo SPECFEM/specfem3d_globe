@@ -31,7 +31,9 @@ module tomography_par
   use constants, only: &
     CUSTOM_REAL,MAX_STRING_LEN, &
     NGLLX,NGLLY,NGLLZ,IIN,IOUT, &
-    FOUR_THIRDS,R_EARTH_KM,GAUSSALPHA,GAUSSBETA
+    FOUR_THIRDS,GAUSSALPHA,GAUSSBETA
+
+  use shared_parameters, only: R_PLANET_KM
 
   ! array dimensions for static compilation
   use constants_solver, only: &

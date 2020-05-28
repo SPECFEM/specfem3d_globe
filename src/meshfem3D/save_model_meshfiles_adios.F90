@@ -37,6 +37,7 @@
   subroutine save_model_meshfiles_adios()
 
   use constants
+  use shared_parameters, only: R_PLANET,RHOAV
 
   use meshfem3D_par, only: &
     LOCAL_PATH,nspec,nglob,iregion_code
@@ -85,7 +86,7 @@
   endif
 
   ! scaling factors to re-dimensionalize units
-  scaleval1 = sngl( sqrt(PI*GRAV*RHOAV)*(R_EARTH/1000.0d0) )
+  scaleval1 = sngl( sqrt(PI*GRAV*RHOAV)*(R_PLANET/1000.0d0) )
   scaleval2 = sngl( RHOAV/1000.0d0 )
 
   ! isotropic model
@@ -299,7 +300,7 @@
   if (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
     ! the scale of GPa--[g/cm^3][(km/s)^2]
     scaleval = dsqrt(PI*GRAV*RHOAV)
-    scale_GPa = (RHOAV/1000.d0)*((R_EARTH*scaleval/1000.d0)**2)
+    scale_GPa = (RHOAV/1000.d0)*((R_PLANET*scaleval/1000.d0)**2)
 
     allocate(temp_store_mu0(NGLLX,NGLLY,NGLLZ,nspec),stat=ier)
     if (ier /= 0) stop 'Error allocating temp mu0 array'

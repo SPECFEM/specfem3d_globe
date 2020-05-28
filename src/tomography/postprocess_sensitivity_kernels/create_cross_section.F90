@@ -60,7 +60,9 @@
     NGNOD,CUSTOM_REAL,NGLLX,NGLLY,NGLLZ, &
     GAUSSALPHA,GAUSSBETA, &
     IIN,IOUT,MAX_STRING_LEN, &
-    RADIANS_TO_DEGREES,R_EARTH_KM,SMALLVAL
+    RADIANS_TO_DEGREES,SMALLVAL
+
+  use shared_parameters, only: R_PLANET_KM
 
   use postprocess_par, only: MAX_KERNEL_NAMES, &
     NCHUNKS_VAL,NPROC_XI_VAL,NPROC_ETA_VAL,NPROCTOT_VAL,NEX_XI_VAL, &
@@ -215,7 +217,7 @@
           print *,'   output-dir/   - output directory with topology files (e.g. proc***_solver_data.bin)'
           print *
           print *,'   topoography-flag - depth will be taken with respect to surface topography (0 == off / 1 == on);'
-          print *,'                      if no topography is used, then depth is with respect to sea-level (at radius R_EARTH_KM)'
+          print *,'                      if no topography is used, then depth is with respect to sea-level'
           print *,'   ellipticity-flag - depth will consider Earth ellipticity (0 == off / 1 == on);'
           print *,'                      if no ellipticity is used, Earth shape is assumed to be perfectly spherical'
           print *
@@ -236,7 +238,7 @@
   v_lat2 = 0.d0
   v_lon2 = 0.d0
   depth_min = 0.d0
-  depth_max = R_EARTH_KM - RCMB_LIMIT_KM
+  depth_max = R_PLANET_KM - RCMB_LIMIT_KM
 
   ! reads input arguments
   do i = 1, 8
@@ -266,7 +268,7 @@
         read(param_args(1),*) depth0
         read(param_args(2),*) dincr
         ! check
-        if (depth0 > R_EARTH_KM) stop 'Error cross-section depth (given in km) must be smaller than Earth radius'
+        if (depth0 > R_PLANET_KM) stop 'Error cross-section depth (given in km) must be smaller than Earth radius'
         if (dincr > 360.0) stop 'Error lat/lon increment (given in degrees) must be smaller than 360'
       else
         ! vertical cross-section
@@ -455,8 +457,8 @@
     endif
 
     ! number of depths between min/max radius (by default, surface down to CMB)
-    r_top = R_EARTH_KM - depth_min
-    r_bottom = R_EARTH_KM - depth_max
+    r_top = R_PLANET_KM - depth_min
+    r_bottom = R_PLANET_KM - depth_max
     ndepth = int((r_top - r_bottom)/ddepth) + 1
 
     ! starting depth
@@ -700,7 +702,7 @@
     print *,'search statistics:','  parameter ',trim(fname)
     print *,'  min/max values = ',min_val,max_val
     print *
-    print *,'  maximum distance to target point = ',maxval(model_distance2(:)) * R_EARTH_KM,'(km)'
+    print *,'  maximum distance to target point = ',maxval(model_distance2(:)) * R_PLANET_KM,'(km)'
     print *,'  maximum model value difference between closest GLL point = ',val
     print *
   endif
@@ -767,8 +769,8 @@
 
 ! creates point locations of horizontal cross-section points
 
-  use constants, only: CUSTOM_REAL,NR,R_UNIT_SPHERE
-  use shared_parameters, only: ONE_CRUST,R_EARTH,NX_BATHY,NY_BATHY
+  use constants, only: CUSTOM_REAL,NR_DENSITY,R_UNIT_SPHERE
+  use shared_parameters, only: ONE_CRUST,R_PLANET,NX_BATHY,NY_BATHY
 
   implicit none
 
@@ -791,7 +793,7 @@
 
   ! for ellipticity
   integer :: nspl
-  double precision,dimension(NR) :: rspl,espl,espl2
+  double precision,dimension(NR_DENSITY) :: rspl,ellipicity_spline,ellipicity_spline2
 
   double precision :: r0,p20
   double precision :: cost
@@ -822,7 +824,7 @@
   ! make ellipticity
   if (ELLIPTICITY) then
     ! splines used for locating exact positions
-    call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
+    call make_ellipticity(nspl,rspl,ellipicity_spline,ellipicity_spline2,ONE_CRUST)
   endif
 
   ! read topography and bathymetry file
@@ -892,7 +894,7 @@
           ! gets elevation in meters
           call get_topo_bathy(lat,lon,elevation,ibathy_topo)
           ! adds to spherical radius
-          r0 = r0 + elevation/R_EARTH
+          r0 = r0 + elevation/R_PLANET
         endif
 
         ! ellipticity
@@ -902,15 +904,15 @@
           ! see the discussion above eq (14.4) in Dahlen and Tromp (1998)
           p20 = 0.5d0*(3.0d0*cost*cost-1.0d0)
           ! get ellipticity using spline evaluation
-          call spline_evaluation(rspl,espl,espl2,nspl,r0,ell)
+          call spline_evaluation(rspl,ellipicity_spline,ellipicity_spline2,nspl,r0,ell)
           ! this is eq (14.4) in Dahlen and Tromp (1998)
           r0 = r0*(1.0d0-(2.0d0/3.0d0)*ell*p20)
         endif
 
         ! subtracts desired depth (in meters)
-        r0 = r0 - depth/R_EARTH
+        r0 = r0 - depth/R_PLANET
 
-        !if (myrank == 0) print *,'  elevation = ',elevation,'ellip = ',ell,'radius = ',r0 * R_EARTH_KM
+        !if (myrank == 0) print *,'  elevation = ',elevation,'ellip = ',ell,'radius = ',r0 * R_PLANET_KM
 
         ! compute the Cartesian position of the receiver
         x_target = r0 * sin(theta) * cos(phi)
@@ -948,11 +950,11 @@
 
 ! creates point locations of horizontal cross-section points
 
-  use constants, only: R_UNIT_SPHERE,CUSTOM_REAL,NR, &
+  use constants, only: R_UNIT_SPHERE,CUSTOM_REAL,NR_DENSITY, &
     DEGREES_TO_RADIANS,RADIANS_TO_DEGREES, &
     PI_OVER_TWO,TWO_PI,SMALLVAL
 
-  use shared_parameters, only: ONE_CRUST,R_EARTH,NX_BATHY,NY_BATHY
+  use shared_parameters, only: ONE_CRUST,R_PLANET,NX_BATHY,NY_BATHY
 
   implicit none
 
@@ -977,7 +979,7 @@
 
   ! for ellipticity
   integer :: nspl
-  double precision,dimension(NR) :: rspl,espl,espl2
+  double precision,dimension(NR_DENSITY) :: rspl,ellipicity_spline,ellipicity_spline2
 
   double precision :: r0,p20
   double precision :: cost
@@ -1023,7 +1025,7 @@
   ! make ellipticity
   if (ELLIPTICITY) then
     ! splines used for locating exact positions
-    call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
+    call make_ellipticity(nspl,rspl,ellipicity_spline,ellipicity_spline2,ONE_CRUST)
   endif
 
   ! read topography and bathymetry file
@@ -1150,7 +1152,7 @@
         ! gets elevation in meters
         call get_topo_bathy(lat,lon,elevation,ibathy_topo)
         ! adds to spherical radius
-        r0 = r0 + elevation/R_EARTH
+        r0 = r0 + elevation/R_PLANET
       endif
 
       ! ellipticity
@@ -1160,15 +1162,15 @@
         ! see the discussion above eq (14.4) in Dahlen and Tromp (1998)
         p20 = 0.5d0*(3.0d0*cost*cost-1.0d0)
         ! get ellipticity using spline evaluation
-        call spline_evaluation(rspl,espl,espl2,nspl,r0,ell)
+        call spline_evaluation(rspl,ellipicity_spline,ellipicity_spline2,nspl,r0,ell)
         ! this is eq (14.4) in Dahlen and Tromp (1998)
         r0 = r0*(1.0d0-(2.0d0/3.0d0)*ell*p20)
       endif
 
       ! subtracts desired depth (in meters)
-      r0 = r0 - depth/R_EARTH
+      r0 = r0 - depth/R_PLANET
 
-      !if (myrank == 0) print *,'  elevation = ',elevation,'ellip = ',ell,'radius = ',r0 * R_EARTH_KM
+      !if (myrank == 0) print *,'  elevation = ',elevation,'ellip = ',ell,'radius = ',r0 * R_PLANET_KM
 
       ! compute the Cartesian position of the receiver
       x_target = r0 * sin(theta) * cos(phi)
@@ -1265,7 +1267,8 @@
                                             typical_size,myrank,model_maxdiff)
 
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,R_EARTH_KM,HUGEVAL,SMALLVAL
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,HUGEVAL,SMALLVAL
+  use shared_parameters, only: R_PLANET_KM
 
   use kdtree_search, only: kdtree_find_nearest_neighbor,kdtree_nodes_location, &
     kdtree_count_nearest_n_neighbors,kdtree_get_nearest_n_neighbors, &
@@ -1371,7 +1374,7 @@
 
   ! user output
   if (myrank == 0) then
-    print *,'  using search radius: ',sngl(r_search * R_EARTH_KM),'(km)'
+    print *,'  using search radius: ',sngl(r_search * R_PLANET_KM),'(km)'
     print *
     print *,'  points contained in master slice: ',nslice_points,' out of ',nglob_target
     print *
@@ -1404,7 +1407,7 @@
     call kdtree_count_nearest_n_neighbors(xyz_target,r_search,nsearch_points)
 
     ! debug
-    !if (myrank == 0) print *,'search radius: ',r_search*R_EARTH_KM,'has number of neighbors = ',nsearch_points
+    !if (myrank == 0) print *,'search radius: ',r_search*R_PLANET_KM,'has number of neighbors = ',nsearch_points
 
     ! checks if points near target locations have been found, if not then it is outside of mesh
     if (nsearch_points == 0) cycle
@@ -1422,7 +1425,7 @@
 
     ! debug
     !if (myrank == 0 .and. iglob < 100) &
-    !  print *,'dist_min kdtree: ',dist_min * R_EARTH_KM,'(km)',typical_size * R_EARTH_KM
+    !  print *,'dist_min kdtree: ',dist_min * R_PLANET_KM,'(km)',typical_size * R_PLANET_KM
 
     ! restores original target point location for locating/interpolating
     ! (re-assignment might help for compiler optimizations with better locality)
@@ -1454,7 +1457,7 @@
                                   model_maxdiff,DO_WARNING,xyz_target,x_found,y_found,z_found,myrank)
 
       ! debug
-      !if (myrank == 0) print *,'search first guess = ',dist_min*R_EARTH_KM,'point',ipoin
+      !if (myrank == 0) print *,'search first guess = ',dist_min*R_PLANET_KM,'point',ipoin
 
       ! no more searching needed, switch to next point
       cycle
@@ -1531,7 +1534,7 @@
         call check_location()
 
         ! debug
-        !if (myrank == 0) print *,'search element: ',ispec_selected,'dist:',dist_min*R_EARTH_KM,'inside:',is_inside_element
+        !if (myrank == 0) print *,'search element: ',ispec_selected,'dist:',dist_min*R_PLANET_KM,'inside:',is_inside_element
 
         ! sets new interpolated model value
         call set_interpolated_value(dist_min,nglob_target,model2,model_distance2, &
@@ -1546,7 +1549,7 @@
     enddo
 
     ! debug
-    !if (myrank == 0) print *,'search elements = ',num_search_elem,' contained = ',nsearch_points,'radius:',r_search*R_EARTH_KM
+    !if (myrank == 0) print *,'search elements = ',num_search_elem,' contained = ',nsearch_points,'radius:',r_search*R_PLANET_KM
 
     ! frees search arrays
     deallocate(kdtree_search_index)
@@ -1578,23 +1581,23 @@
       print *,'Error rank:',myrank,'invalid selected ispec ',ispec_selected
       print *,'iglob_min:',iglob_min,'nspec:',nspec
       print *,'target location:',xyz_target(:)
-      print *,'dist_min: ',dist_min * R_EARTH_KM,'(km)'
+      print *,'dist_min: ',dist_min * R_PLANET_KM,'(km)'
       stop 'Error specifying closest ispec element'
     endif
 
     ! checks minimum distance within a typical element size
     if (DO_WARNING) then
       if (dist_min > 2 * typical_size) then
-        print *,'Warning: rank ',myrank,' - large dist_min: ',dist_min * R_EARTH_KM,'(km)', &
-               'element size:',typical_size * R_EARTH_KM
+        print *,'Warning: rank ',myrank,' - large dist_min: ',dist_min * R_PLANET_KM,'(km)', &
+               'element size:',typical_size * R_PLANET_KM
         print *,'element selected ispec:',ispec_selected,'iglob_min:',iglob_min
-        print *,'typical element size:',typical_size * 0.5 * R_EARTH_KM
+        print *,'typical element size:',typical_size * 0.5 * R_PLANET_KM
         print *,'target location:',xyz_target(:)
-        print *,'target radius  :',sqrt(xyz_target(1)**2 + xyz_target(2)**2 + xyz_target(3)**2) * R_EARTH_KM,'(km)'
+        print *,'target radius  :',sqrt(xyz_target(1)**2 + xyz_target(2)**2 + xyz_target(3)**2) * R_PLANET_KM,'(km)'
         print *,'found location :',kdtree_nodes_location(:,iglob_min)
         print *,'found radius   :',sqrt(kdtree_nodes_location(1,iglob_min)**2 &
                                      + kdtree_nodes_location(2,iglob_min)**2 &
-                                     + kdtree_nodes_location(3,iglob_min)**2 ) * R_EARTH_KM,'(km)'
+                                     + kdtree_nodes_location(3,iglob_min)**2 ) * R_PLANET_KM,'(km)'
         !debug
         !stop 'Error dist_min too large in check_point_result() routine'
       endif
@@ -1619,19 +1622,19 @@
       ! distance to closest GLL (still normalized)
       dist = sqrt((x_found-x_target)**2 + (y_found-y_target)**2 + (z_found-z_target)**2)
       if (dist > 2 * typical_size) then
-        print *,'Warning: rank ',myrank,' - large GLL distance: ',dist * R_EARTH_KM,'(km)', &
-               'element size:',element_size*R_EARTH_KM,'typical size:',typical_size * R_EARTH_KM
+        print *,'Warning: rank ',myrank,' - large GLL distance: ',dist * R_PLANET_KM,'(km)', &
+               'element size:',element_size*R_PLANET_KM,'typical size:',typical_size * R_PLANET_KM
         print *,'target location:',xyz_target(:)
-        print *,'target radius  :',sqrt(xyz_target(1)**2 + xyz_target(2)**2 + xyz_target(3)**2) * R_EARTH_KM,'(km)'
+        print *,'target radius  :',sqrt(xyz_target(1)**2 + xyz_target(2)**2 + xyz_target(3)**2) * R_PLANET_KM,'(km)'
         print *,'gll location   :',x_found,y_found,z_found
-        print *,'gll radius     :',sqrt(x_found**2 + y_found**2 + z_found**2) * R_EARTH_KM,'(km)'
+        print *,'gll radius     :',sqrt(x_found**2 + y_found**2 + z_found**2) * R_PLANET_KM,'(km)'
         print *,'minimum distance gll:',dist_min,'(km)'
         ! debug
         !stop 'Error GLL model value invalid'
       endif
       ! debug
       !if (myrank == 0 .and. iglob_min < 100) &
-      !  print *,'dist_min GLL point: ',dist_min * R_EARTH_KM,'(km)',typical_size * R_EARTH_KM
+      !  print *,'dist_min GLL point: ',dist_min * R_PLANET_KM,'(km)',typical_size * R_PLANET_KM
     endif
 
     end subroutine check_location
@@ -1648,7 +1651,9 @@
                                     nspec,model,xigll,yigll,zigll, &
                                     model_maxdiff,DO_WARNING,xyz_target,x_found,y_found,z_found,myrank)
 
-  use constants, only: NGLLX,NGLLY,NGLLZ,CUSTOM_REAL,R_EARTH_KM
+  use constants, only: NGLLX,NGLLY,NGLLZ,CUSTOM_REAL
+  use shared_parameters, only: R_PLANET_KM
+
   implicit none
 
   double precision,intent(in) :: dist_min
@@ -1706,15 +1711,15 @@
       ! note: warns for top elements, probably due to crustal structure
       if (abs(val - val_initial ) > abs( 0.2 * val_initial )) then
         print *,'Warning: model ',' value:',val,'is very different from initial value ',val_initial
-        print *,'  rank ',myrank,' - dist_min: ',dist_min * R_EARTH_KM,'(km)'
+        print *,'  rank ',myrank,' - dist_min: ',dist_min * R_PLANET_KM,'(km)'
         print *,'  selected ispec:',ispec_selected
         print *,'  interpolation i,j,k :',i_selected,j_selected,k_selected
         print *,'  interpolation       :',xi,eta,gamma
         print *,'  target location:',xyz_target(:)
-        print *,'  target radius  :',sqrt(xyz_target(1)**2 + xyz_target(2)**2 + xyz_target(3)**2) * R_EARTH_KM,'(km)'
+        print *,'  target radius  :',sqrt(xyz_target(1)**2 + xyz_target(2)**2 + xyz_target(3)**2) * R_PLANET_KM,'(km)'
         print *,'  GLL location   :',x_found,y_found,z_found
-        print *,'  GLL radius     :',sqrt(x_found**2 + y_found**2 + z_found**2) * R_EARTH_KM,'(km)'
-        print *,'  distance gll:',dist_min * R_EARTH_KM,'(km)'
+        print *,'  GLL radius     :',sqrt(x_found**2 + y_found**2 + z_found**2) * R_PLANET_KM,'(km)'
+        print *,'  distance gll:',dist_min * R_PLANET_KM,'(km)'
         !stop 'Error model value invalid'
       endif
     endif
@@ -1741,7 +1746,8 @@
                                  i_selected,j_selected,k_selected,dist_min, &
                                  is_inside_element,element_size)
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,HUGEVAL,NUM_ITER,R_EARTH_KM
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,HUGEVAL,NUM_ITER
+  use shared_parameters, only: R_PLANET_KM
 
   implicit none
 
@@ -1844,7 +1850,7 @@
   dist_min = sqrt(dist_min)
 
   ! debug
-  !print *,'dist min = ',sngl(dist_min * R_EARTH_KM),'(km)'
+  !print *,'dist min = ',sngl(dist_min * R_PLANET_KM),'(km)'
 
   ! find the best (xi,eta)
   ! use initial guess in xi, eta and gamma from closest point found
@@ -1922,7 +1928,7 @@
 
   ! debug
   !if (final_distance > 5.0 ) &
-  !  print *,'final distance = ',sngl(final_distance * R_EARTH_KM),'(km)',dist_min * R_EARTH_KM,'xi/eta/gamma = ',xi,eta,gamma
+  !  print *,'final distance = ',sngl(final_distance * R_PLANET_KM),'(km)',dist_min * R_PLANET_KM,'xi/eta/gamma = ',xi,eta,gamma
 
   ! checks if location improved
   if (final_distance < dist_min ) then
@@ -1972,7 +1978,7 @@
     if (dist_min < 0.1 * element_size) then
       is_inside_element = .true.
       ! debug
-      !print *,'xi/eta/gamma:',xi_target,eta_target,gamma_target,'dist',dist_min * R_EARTH_KM,'elemsize',element_size*R_EARTH_KM
+      !print *,'xi/eta/gamma:',xi_target,eta_target,gamma_target,'dist',dist_min * R_PLANET_KM,'elemsize',element_size*R_PLANET_KM
     endif
   endif
 
@@ -1983,14 +1989,14 @@
       print *, '*****************************************************************'
       print *, '***** WARNING: location estimate is poor                    *****'
       print *, '*****************************************************************'
-      print *, 'closest estimate found: ',sngl(dist_min * R_EARTH_KM),'km away, not within:',typical_size * R_EARTH_KM
+      print *, 'closest estimate found: ',sngl(dist_min * R_PLANET_KM),'km away, not within:',typical_size * R_PLANET_KM
       print *, ' in element ',ispec_selected,ix_initial_guess,iy_initial_guess,iz_initial_guess
       print *, ' at xi,eta,gamma coordinates = ',xi,eta,gamma
-      print *, ' at radius ',sqrt(x**2 + y**2 + z**2) * R_EARTH_KM,'(km)'
-      print *, ' initial distance :',dist_min * R_EARTH_KM,'(km)'
+      print *, ' at radius ',sqrt(x**2 + y**2 + z**2) * R_PLANET_KM,'(km)'
+      print *, ' initial distance :',dist_min * R_PLANET_KM,'(km)'
     else
       print *,'point inside: ',is_inside_element, &
-              'distances = ',dist_min * R_EARTH_KM,element_size * R_EARTH_KM,typical_size*R_EARTH_KM
+              'distances = ',dist_min * R_PLANET_KM,element_size * R_PLANET_KM,typical_size*R_PLANET_KM
       print *, ' at xi,eta,gamma coordinates = ',xi,eta,gamma
     endif
 
@@ -2008,7 +2014,8 @@
                                  model_diff,model_pert,m_avg_total,point_avg_total, &
                                  typical_size,depth0,section_type,filename)
 
-  use constants, only: CUSTOM_REAL,IOUT,MAX_STRING_LEN,R_EARTH_KM
+  use constants, only: CUSTOM_REAL,IOUT,MAX_STRING_LEN
+  use shared_parameters, only: R_PLANET_KM
 
   implicit none
 
@@ -2084,11 +2091,11 @@
       diff = model_diff(iglob)
 
       ! outputs cross-section points to file
-      write(IOUT,*) sngl(lon),sngl(lat),sngl(r*R_EARTH_KM),sngl(val), &
-                    sngl(pert),sngl(diff),sngl(dist_min*R_EARTH_KM)
+      write(IOUT,*) sngl(lon),sngl(lat),sngl(r*R_PLANET_KM),sngl(val), &
+                    sngl(pert),sngl(diff),sngl(dist_min*R_PLANET_KM)
     endif
     !debug
-    !print *,'lat/lon/r/param = ',sngl(lat),sngl(lon),sngl(r*R_EARTH_KM),model2(iglob),model_distance2(iglob)*R_EARTH_KM
+    !print *,'lat/lon/r/param = ',sngl(lat),sngl(lon),sngl(r*R_PLANET_KM),model2(iglob),model_distance2(iglob)*R_PLANET_KM
   enddo
 
   ! closes file
@@ -2112,7 +2119,7 @@
 
   use constants, only: CUSTOM_REAL,RADIANS_TO_DEGREES, &
     TINYVAL,HUGEVAL,PI,PI_OVER_TWO
-  use shared_parameters, only: ONE_MINUS_F_SQUARED,R_EARTH_KM
+  use shared_parameters, only: ONE_MINUS_F_SQUARED,R_PLANET_KM
 
   implicit none
 
@@ -2287,11 +2294,11 @@
   enddo
 
   ! user output
-  print *,'  distance limit of close points       = ',sngl(distance_limit * R_EARTH_KM),'(km)'
+  print *,'  distance limit of close points       = ',sngl(distance_limit * R_PLANET_KM),'(km)'
   print *,'  number of close cross-section points = ',ipoints_integral
   print *
-  print *,'  full Earth surface area    = ',sngl(4.0 * PI * R_EARTH_KM**2),'(km^2)'
-  print *,'  cross-section surface area = ',sngl(total_spherical_area * R_EARTH_KM**2),'(km^2)'
+  print *,'  full Earth surface area    = ',sngl(4.0 * PI * R_PLANET_KM**2),'(km^2)'
+  print *,'  cross-section surface area = ',sngl(total_spherical_area * R_PLANET_KM**2),'(km^2)'
   print *,'                             = ',sngl(total_spherical_area / (4.0 * PI) * 100.d0) ,'%'
   print *
   print *,'  cross-section average value = ',sngl(m_avg_total)
@@ -2510,7 +2517,8 @@
 ! determines area around lat/lon location for a regular, vertical latitude-longitude grid
 ! with dincr/ddepth increments
 
-  use constants, only: R_EARTH_KM,R_UNIT_SPHERE,DEGREES_TO_RADIANS
+  use constants, only: R_UNIT_SPHERE,DEGREES_TO_RADIANS
+  use shared_parameters, only: R_PLANET_KM
 
   implicit none
 
@@ -2543,7 +2551,7 @@
   dincr_rad = dincr * DEGREES_TO_RADIANS
 
   ! normalized half vertical increment
-  ddepth_half = 0.5d0 * ddepth / R_EARTH_KM
+  ddepth_half = 0.5d0 * ddepth / R_PLANET_KM
 
   ! radius bottom/top
   if (r + ddepth_half >= R_UNIT_SPHERE) then
@@ -2564,7 +2572,7 @@
 
   !debug
   if (DEBUG) then
-    print *,'  r/theta/phi = ',r*R_EARTH_KM,theta/DEGREES_TO_RADIANS,phi/DEGREES_TO_RADIANS,'area = ',area * R_EARTH_KM**2
+    print *,'  r/theta/phi = ',r*R_PLANET_KM,theta/DEGREES_TO_RADIANS,phi/DEGREES_TO_RADIANS,'area = ',area * R_PLANET_KM**2
   endif
 
   end subroutine get_vertical_lat_lon_section_area

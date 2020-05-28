@@ -31,7 +31,9 @@
 program smooth_laplacian_sem
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,IIN,IOUT, &
-       GAUSSALPHA,GAUSSBETA,MAX_STRING_LEN,R_EARTH_KM,myrank
+       GAUSSALPHA,GAUSSBETA,MAX_STRING_LEN,myrank
+
+  use shared_parameters, only: R_PLANET_KM
 
   use postprocess_par, only: &
        NCHUNKS_VAL,NPROC_XI_VAL,NPROC_ETA_VAL,NPROCTOT_VAL,NEX_XI_VAL,NEX_ETA_VAL, &
@@ -268,8 +270,8 @@ program smooth_laplacian_sem
 
   ! synchronizes
   call synchronize_all()
-  Lx = Lx / real(R_EARTH_KM,kind=CUSTOM_REAL) ! scale
-  Lz = Lz / real(R_EARTH_KM,kind=CUSTOM_REAL) ! scale
+  Lx = Lx / real(R_PLANET_KM,kind=CUSTOM_REAL) ! scale
+  Lz = Lz / real(R_PLANET_KM,kind=CUSTOM_REAL) ! scale
   Ly = Lx
 
 

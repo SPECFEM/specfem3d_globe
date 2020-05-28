@@ -30,13 +30,15 @@
 
   subroutine write_AVS_DX_global_faces_data(prname,nspec,iMPIcut_xi,iMPIcut_eta, &
                                             ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
-                                            npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
-                                            ELLIPTICITY,MODEL_3D_MANTLE_PERTUBATIONS, &
-                                            RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
-                                            RMIDDLE_CRUST,ROCEAN,iregion_code)
+                                            npointot,rhostore,kappavstore,muvstore, &
+                                            nspl,rspl,ellipicity_spline,ellipicity_spline2,ELLIPTICITY, &
+                                            MODEL_3D_MANTLE_PERTUBATIONS, &
+                                            RICB,RCMB,RTOPDDOUBLEPRIME,R670,R220,R771,R400,R120,R80,RMOHO, &
+                                            RMIDDLE_CRUST,iregion_code)
 
-  use constants, only: NGLLX,NGLLY,NGLLZ,NR,CUSTOM_REAL,IOUT,MAX_STRING_LEN,myrank, &
-    ONE,TWO,R_EARTH,R_UNIT_SPHERE
+  use constants, only: NGLLX,NGLLY,NGLLZ,NR_DENSITY,CUSTOM_REAL,IOUT,MAX_STRING_LEN,myrank, &
+    ONE,TWO,R_UNIT_SPHERE
+  use shared_parameters, only: R_PLANET
 
   implicit none
 
@@ -50,8 +52,8 @@
   logical,intent(in) :: iMPIcut_xi(2,nspec)
   logical,intent(in) :: iMPIcut_eta(2,nspec)
 
-  double precision,intent(in) :: RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771, &
-    R400,R120,R80,RMOHO,RMIDDLE_CRUST,ROCEAN
+  double precision,intent(in) :: RICB,RCMB,RTOPDDOUBLEPRIME,R670,R220,R771, &
+    R400,R120,R80,RMOHO,RMIDDLE_CRUST
 
   double precision,intent(in) :: xstore(NGLLX,NGLLY,NGLLZ,nspec)
   double precision,intent(in) :: ystore(NGLLX,NGLLY,NGLLZ,nspec)
@@ -70,7 +72,7 @@
 
   ! for ellipticity
   integer,intent(in) :: nspl
-  double precision,intent(in) :: rspl(NR),espl(NR),espl2(NR)
+  double precision,intent(in) :: rspl(NR_DENSITY),ellipicity_spline(NR_DENSITY),ellipicity_spline2(NR_DENSITY)
 
   integer,intent(in) :: iregion_code
 
@@ -340,7 +342,7 @@
  !   pick a point within the element and get its radius
      r=dsqrt(xstore(2,2,2,ispec)**2+ystore(2,2,2,ispec)**2+zstore(2,2,2,ispec)**2)
 
-     if (r > RCMB/R_EARTH .and. r < R_UNIT_SPHERE) then
+     if (r > RCMB/R_PLANET .and. r < R_UNIT_SPHERE) then
  !     average over the element
        dvp = 0.0
        dvs = 0.0
@@ -360,7 +362,7 @@
 ! this is the Legendre polynomial of degree two, P2(cos(theta)), see the discussion above eq (14.4) in Dahlen and Tromp (1998)
                p20=0.5d0*(3.0d0*cost*cost-1.0d0)
 ! get ellipticity using spline evaluation
-               call spline_evaluation(rspl,espl,espl2,nspl,r,ell)
+               call spline_evaluation(rspl,ellipicity_spline,ellipicity_spline2,nspl,r,ell)
 ! this is eq (14.4) in Dahlen and Tromp (1998)
                factor=ONE-(TWO/3.0d0)*ell*p20
                r=r/factor
@@ -371,8 +373,8 @@
              call meshfem3D_models_get1D_val(iregion_code,idoubling(ispec), &
                                              r,rho,vpv,vph,vsv,vsh,eta_aniso, &
                                              Qkappa,Qmu,RICB,RCMB, &
-                                             RTOPDDOUBLEPRIME,R80,R120,R220,R400,R600,R670,R771, &
-                                             RMOHO,RMIDDLE_CRUST,ROCEAN)
+                                             RTOPDDOUBLEPRIME,R80,R120,R220,R400,R670,R771, &
+                                             RMOHO,RMIDDLE_CRUST)
 
              ! calculates isotropic values
              vp = sqrt(((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &

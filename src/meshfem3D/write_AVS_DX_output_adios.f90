@@ -33,13 +33,13 @@
     nspec,ibool,idoubling, &
     xstore,ystore,zstore, &
     myrank,NGLLX,NGLLY,NGLLZ, &
-    RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
-    RMIDDLE_CRUST,ROCEAN, &
+    RICB,RCMB,RTOPDDOUBLEPRIME,R670,R220,R771,R400,R120,R80,RMOHO, &
+    RMIDDLE_CRUST, &
     LOCAL_PATH,IMAIN,ADIOS_TRANSPORT_METHOD
 
   use meshfem3D_models_par, only: &
     ELLIPTICITY,MODEL_3D_MANTLE_PERTUBATIONS, &
-    nspl,rspl,espl,espl2
+    nspl,rspl,ellipicity_spline,ellipicity_spline2
 
   use regions_mesh_par2
 
@@ -123,30 +123,33 @@
   call prepare_AVS_DX_global_faces_data_adios(nspec, &
                                               iMPIcut_xi,iMPIcut_eta, &
                                               ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
-                                              npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
-                                              ELLIPTICITY,MODEL_3D_MANTLE_PERTUBATIONS, &
-                                              RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
-                                              RMIDDLE_CRUST,ROCEAN,iregion_code, &
+                                              npointot,rhostore,kappavstore,muvstore, &
+                                              nspl,rspl,ellipicity_spline,ellipicity_spline2,ELLIPTICITY, &
+                                              MODEL_3D_MANTLE_PERTUBATIONS, &
+                                              RICB,RCMB,RTOPDDOUBLEPRIME,R670,R220,R771,R400,R120,R80,RMOHO, &
+                                              RMIDDLE_CRUST,iregion_code, &
                                               avs_dx_global_faces_vars)
 
   call write_AVS_DX_global_faces_data_adios(myrank, sizeprocs, avs_dx_global_faces_vars, MODEL_3D_MANTLE_PERTUBATIONS)
 
   call prepare_AVS_DX_global_chunks_data_adios(prname,nspec, &
                                                iboun,ibool, idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
-                                               npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
-                                               ELLIPTICITY,MODEL_3D_MANTLE_PERTUBATIONS, &
-                                               RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
-                                               RMIDDLE_CRUST,ROCEAN,iregion_code, &
+                                               npointot,rhostore,kappavstore,muvstore, &
+                                               nspl,rspl,ellipicity_spline,ellipicity_spline2,ELLIPTICITY, &
+                                               MODEL_3D_MANTLE_PERTUBATIONS, &
+                                               RICB,RCMB,RTOPDDOUBLEPRIME,R670,R220,R771,R400,R120,R80,RMOHO, &
+                                               RMIDDLE_CRUST,iregion_code, &
                                                avs_dx_global_chunks_vars)
 
   call write_AVS_DX_global_chunks_data_adios(myrank, sizeprocs, avs_dx_global_chunks_vars, MODEL_3D_MANTLE_PERTUBATIONS)
 
   call prepare_AVS_DX_surfaces_data_adios(nspec,iboun, &
                                           ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool,npointot, &
-                                          rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
-                                          ELLIPTICITY,MODEL_3D_MANTLE_PERTUBATIONS, &
-                                          RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
-                                          RMIDDLE_CRUST,ROCEAN,iregion_code, &
+                                          rhostore,kappavstore,muvstore, &
+                                          nspl,rspl,ellipicity_spline,ellipicity_spline2,ELLIPTICITY, &
+                                          MODEL_3D_MANTLE_PERTUBATIONS, &
+                                          RICB,RCMB,RTOPDDOUBLEPRIME,R670,R220,R771,R400,R120,R80,RMOHO, &
+                                          RMIDDLE_CRUST,iregion_code, &
                                           avs_dx_surface_vars)
 
   call write_AVS_DX_surfaces_data_adios(myrank, sizeprocs, avs_dx_surface_vars, MODEL_3D_MANTLE_PERTUBATIONS)

@@ -94,8 +94,8 @@
                                 c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
                                 c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
 
-  use constants, only: DEGREES_TO_RADIANS,R_EARTH
-  use shared_parameters, only: R670
+  use constants, only: DEGREES_TO_RADIANS
+  use shared_parameters, only: R_PLANET,R670
 
   use model_aniso_mantle_par
 
@@ -121,7 +121,7 @@
   !
   ! anisotropic model defined between Moho and 670 km
   ! (change to CMB if desired)
-  if (r <= R670/R_EARTH) then
+  if (r <= R670/R_PLANET) then
     ! takes reference model (PREM) velocity values and converts to full cij
 
     ! calculates isotropic values from given (transversely isotropic) reference values
@@ -184,7 +184,8 @@
                        d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26,d33,d34,d35,d36, &
                        d44,d45,d46,d55,d56,d66)
 
-  use constants, only: R_EARTH,R_EARTH_KM,R_UNIT_SPHERE,DEGREES_TO_RADIANS,ZERO,PI,GRAV,RHOAV
+  use constants, only: R_UNIT_SPHERE,DEGREES_TO_RADIANS,ZERO,PI,GRAV
+  use shared_parameters, only: R_PLANET,RHOAV
 
   implicit none
 
@@ -226,7 +227,7 @@
   if (ph == 360.d0) ph = 0.999999d0*ph
 
 ! dimensionalize
-  depth = R_EARTH_KM*(R_UNIT_SPHERE - r)
+  depth = R_PLANET*(R_UNIT_SPHERE - r)/1000.d0
   if (depth <= pro(nz0) .or. depth >= pro(1)) call exit_MPI_without_rank('r out of range in build_cij')
 
   icolat = int(int(tet + pxy0)/pxy0)
@@ -388,7 +389,7 @@
 ! non-dimensionalize the elastic coefficients using
 ! the scale of GPa--[g/cm^3][(km/s)^2]
   scaleval = dsqrt(PI*GRAV*RHOAV)
-  scale_GPa =(RHOAV/1000.d0)*((R_EARTH*scaleval/1000.d0)**2)
+  scale_GPa =(RHOAV/1000.d0)*((R_PLANET*scaleval/1000.d0)**2)
 
   d11 = d11/scale_GPa
   d12 = d12/scale_GPa

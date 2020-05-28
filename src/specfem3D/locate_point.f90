@@ -32,8 +32,10 @@
 ! locates target point inside best mesh element
 
   use constants_solver, only: &
-    NGLLX,NGLLY,NGLLZ,MIDX,MIDY,MIDZ,R_EARTH_KM,HUGEVAL, &
+    NGLLX,NGLLY,NGLLZ,MIDX,MIDY,MIDZ,HUGEVAL, &
     USE_DISTANCE_CRITERION
+
+  use shared_parameters, only: R_PLANET_KM
 
   use specfem_par, only: &
     nspec => NSPEC_CRUST_MANTLE
@@ -328,7 +330,7 @@
 !        final_distance_subset(isource_in_this_subset) = &
 !          dsqrt((x_target-xyz_found_subset(1,isource_in_this_subset))**2 + &
 !                (y_target-xyz_found_subset(2,isource_in_this_subset))**2 + &
-!                (z_target-xyz_found_subset(3,isource_in_this_subset))**2)*R_EARTH/1000.d0
+!                (z_target-xyz_found_subset(3,isource_in_this_subset))**2)*R_PLANET/1000.d0
 !      endif
 
     ! gets xi/eta/gamma and corresponding x/y/z coordinates
@@ -362,7 +364,7 @@
   ! compute final distance between asked and found (converted to km)
   distmin_not_squared = dsqrt((x_target-x)*(x_target-x) + &
                               (y_target-y)*(y_target-y) + &
-                              (z_target-z)*(z_target-z))*R_EARTH_KM
+                              (z_target-z)*(z_target-z))*R_PLANET_KM
 
 !debug: sync
 !  endif ! iproc
@@ -517,7 +519,9 @@
   subroutine find_best_neighbor(x_target,y_target,z_target,xi,eta,gamma,x,y,z,ispec_selected,distmin_squared,POINT_CAN_BE_BURIED)
 
   use constants_solver, only: &
-    NGLLX,NGLLY,NGLLZ,MIDX,MIDY,MIDZ,R_EARTH_KM
+    NGLLX,NGLLY,NGLLZ,MIDX,MIDY,MIDZ
+
+  use shared_parameters, only: R_PLANET_KM
 
   use specfem_par, only: &
     nspec => NSPEC_CRUST_MANTLE
@@ -569,7 +573,7 @@
                   + (z_target - z)*(z_target - z)
 
   !debug
-  if (DEBUG) print *,'neighbors: best guess ',ispec_selected,xi,eta,gamma,'distance',sngl(sqrt(distmin_squared)*R_EARTH_KM)
+  if (DEBUG) print *,'neighbors: best guess ',ispec_selected,xi,eta,gamma,'distance',sngl(sqrt(distmin_squared)*R_PLANET_KM)
 
   ! fill neighbors arrays
   !
@@ -677,7 +681,7 @@
 
     ! debug
     if (DEBUG) print *,'  neighbor ',ispec,i_n,ientry,'ispec = ',ispec_selected,sngl(xi_n),sngl(eta_n),sngl(gamma_n), &
-                       'distance',sngl(sqrt(dist_squared)*R_EARTH_KM),sngl(sqrt(distmin_squared)*R_EARTH_KM)
+                       'distance',sngl(sqrt(dist_squared)*R_PLANET_KM),sngl(sqrt(distmin_squared)*R_PLANET_KM)
 
     ! takes this point if it is closer to the receiver
     ! (we compare squared distances instead of distances themselves to significantly speed up calculations)
@@ -699,6 +703,6 @@
   enddo ! num_neighbors
 
   !debug
-  if (DEBUG) print *,'neighbors: final ',ispec_selected,xi,eta,gamma,'distance',sqrt(distmin_squared)*R_EARTH_KM
+  if (DEBUG) print *,'neighbors: final ',ispec_selected,xi,eta,gamma,'distance',sqrt(distmin_squared)*R_PLANET_KM
 
   end subroutine find_best_neighbor

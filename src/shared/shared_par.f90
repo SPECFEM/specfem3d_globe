@@ -41,15 +41,6 @@
   ! we put a default value here
   logical :: I_should_read_the_database = .true.
 
-  ! planet constants
-  ! (put some constants here rather than in shared_parameters to avoid changing too many file)
-  ! radius of globe
-  double precision :: R_EARTH = EARTH_R    ! default: earth
-  double precision :: R_EARTH_KM = EARTH_R_KM
-
-  ! average density
-  double precision :: RHOAV = EARTH_RHOAV  ! default: earth density
-
   end module constants
 
 !
@@ -175,8 +166,11 @@
   use constants, only: MAX_NUM_REGIONS,MAX_NUMBER_OF_MESH_LAYERS, &
     NB_SQUARE_CORNERS,NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE,MAX_STRING_LEN
 
-  use constants, only: IPLANET_EARTH,IPLANET_MARS,R_MARS,R_EARTH,R_EARTH_KM,RHOAV, &
-    EARTH_STANDARD_GRAVITY, &
+  use constants, only: IPLANET_EARTH,IPLANET_MARS,IPLANET_MOON
+
+  use constants, only: &
+    EARTH_R,EARTH_R_KM, &
+    EARTH_STANDARD_GRAVITY,EARTH_RHOAV, &
     EARTH_NX_BATHY,EARTH_NY_BATHY,EARTH_TOPO_MAXIMUM,EARTH_TOPO_MINIMUM, &
     EARTH_PATHNAME_TOPO_FILE,EARTH_RESOLUTION_TOPO_FILE, &
     EARTH_HOURS_PER_DAY,EARTH_SECONDS_PER_HOUR,EARTH_ONE_MINUS_F_SQUARED, &
@@ -194,7 +188,7 @@
   double precision :: DT
 
   ! shortest minimum period resolved by mesh (empirical formula)
-  double precision :: T_min
+  double precision :: T_min_period
 
   ! number of sources given in CMTSOLUTION file
   integer :: NSOURCES
@@ -272,11 +266,15 @@
   integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
   integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
 
-! note: for different planets, we will re-set R_EARTH, RHOAV, .. in reading the Par_file
+! default planet
+!
+! note: for different planets, we will re-set R_EARTH, RHOAV, .. after reading the Par_file
 !       to avoid problems when they are used to non-dimensionalize all parameters.
-
-  ! planet
-  integer :: PLANET_TYPE = IPLANET_EARTH   ! default: earth
+!
+!       see routine get_model_planet_constants() in get_model_parameters.F90
+!
+  ! default planet Earth
+  integer :: PLANET_TYPE = IPLANET_EARTH
 
   ! gravity
   double precision :: STANDARD_GRAVITY = EARTH_STANDARD_GRAVITY
@@ -291,6 +289,19 @@
   double precision :: RESOLUTION_TOPO_FILE = EARTH_RESOLUTION_TOPO_FILE
   integer :: TOPO_MINIMUM = EARTH_TOPO_MINIMUM
   integer :: TOPO_MAXIMUM = EARTH_TOPO_MAXIMUM
+
+  ! planet constants
+  ! radius of globe
+  ! we still use R_EARTH, but will mostly shift to R_PLANET to allow for different planets
+  double precision :: R_EARTH = EARTH_R    ! default: earth
+  double precision :: R_EARTH_KM = EARTH_R_KM
+
+  ! physical surface radius
+  double precision :: R_PLANET = EARTH_R
+  double precision :: R_PLANET_KM = EARTH_R / 1000.d0
+
+  ! average density
+  double precision :: RHOAV = EARTH_RHOAV  ! default: earth density
 
   ! crust
   double precision :: R_DEEPEST_CRUST = EARTH_R_DEEPEST_CRUST

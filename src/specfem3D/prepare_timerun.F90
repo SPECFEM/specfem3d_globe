@@ -155,7 +155,7 @@
   if (myrank == 0) then
 
     write(IMAIN,*)
-    write(IMAIN,*) 'Reference radius of the globe used is ',R_EARTH_KM,' km'
+    write(IMAIN,*) 'Reference radius of the globe used is ',R_PLANET_KM,' km'
     write(IMAIN,*)
 
     write(IMAIN,*)
@@ -577,7 +577,7 @@
   scale_t = ONE/dsqrt(PI*GRAV*RHOAV)
   scale_t_inv = dsqrt(PI*GRAV*RHOAV)
 
-  scale_displ = R_EARTH
+  scale_displ = R_PLANET
   scale_displ_inv = ONE / scale_displ
 
   scale_veloc = scale_displ * scale_t_inv

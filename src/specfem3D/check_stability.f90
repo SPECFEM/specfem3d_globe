@@ -132,7 +132,7 @@
     theta = dble(rstore_crust_mantle(2,iglob))
     phi = dble(rstore_crust_mantle(3,iglob))
     print *,'debug: rank ',myrank,' it ',it,' stability iglob ',iglob,' position r/lat/lon ', &
-            r*R_EARTH_KM,(PI/2.0-theta)*180.0/PI,phi*180.0/PI
+            r*R_PLANET_KM,(PI/2.0-theta)*180.0/PI,phi*180.0/PI
     !flush(101) ! stdout on cray
     call synchronize_all()
   endif

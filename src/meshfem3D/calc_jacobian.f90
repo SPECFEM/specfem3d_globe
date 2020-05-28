@@ -47,7 +47,9 @@
                                    gammaxstore,gammaystore,gammazstore)
 
   use constants, only: myrank,NGLLX,NGLLY,NGLLZ,CUSTOM_REAL, &
-    ZERO,ONE,TINYVAL,VERYSMALLVAL,R_EARTH_KM,RADIANS_TO_DEGREES
+    ZERO,ONE,TINYVAL,VERYSMALLVAL,RADIANS_TO_DEGREES
+
+  use shared_parameters, only: R_PLANET_KM
 
   implicit none
 
@@ -199,12 +201,10 @@
           ! converts position to geocentric coordinates
           print *,'Error Jacobian rank:',myrank,'has invalid Jacobian ',jacobian
           print *,'  Jacobian: ',jacobian,'xxi/eta/gamma',xxi,xeta,xgamma,'yxi/eta/gamma',yxi,yeta,ygamma,'zxi',zxi/zeta,zgamma
-          if (DEBUG) then
-            print *,'  location x/y/z    : ',xmesh,ymesh,zmesh
-            call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r,theta,phi)
-            print *,'  location r/lat/lon: ',sngl(r*R_EARTH_KM),'km', &
-                    sngl(90.0-(theta*RADIANS_TO_DEGREES)),sngl(phi*RADIANS_TO_DEGREES)
-          endif
+          print *,'  location x/y/z: ',xstore(i,j,k,ispec),ystore(i,j,k,ispec),zstore(i,j,k,ispec)
+          call xyz_2_rthetaphi_dble(xstore(i,j,k,ispec),ystore(i,j,k,ispec),zstore(i,j,k,ispec),r,theta,phi)
+          print *,'  location r    : ',sngl(r*R_PLANET_KM),'km - lat/lon: ', &
+                  sngl(90.0-(theta*RADIANS_TO_DEGREES)),sngl(phi*RADIANS_TO_DEGREES)
           call exit_MPI(myrank,'3D Jacobian undefined in recalc_jacobian_gll3D.f90')
         endif
 

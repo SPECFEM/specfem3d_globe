@@ -66,12 +66,12 @@
 
   ! allocates model arrays
   allocate(M1066a_V_radius_1066a(NR_1066A), &
-          M1066a_V_density_1066a(NR_1066A), &
-          M1066a_V_vp_1066a(NR_1066A), &
-          M1066a_V_vs_1066a(NR_1066A), &
-          M1066a_V_Qkappa_1066a(NR_1066A), &
-          M1066a_V_Qmu_1066a(NR_1066A), &
-          stat=ier)
+           M1066a_V_density_1066a(NR_1066A), &
+           M1066a_V_vp_1066a(NR_1066A), &
+           M1066a_V_vs_1066a(NR_1066A), &
+           M1066a_V_Qkappa_1066a(NR_1066A), &
+           M1066a_V_Qmu_1066a(NR_1066A), &
+           stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating M1066a_V arrays')
 
   ! all processes will define same parameters
@@ -86,6 +86,8 @@
   subroutine model_1066a(x,rho,vp,vs,Qkappa,Qmu,iregion_code)
 
   use constants
+  use shared_parameters, only: R_PLANET,RHOAV
+
   use model_1066a_par
 
   implicit none
@@ -106,7 +108,7 @@
   integer :: i
 
   ! compute real physical radius in meters
-  r = x * R_EARTH
+  r = x * R_PLANET
 
   i = 1
   do while(r >= M1066a_V_radius_1066a(i) .and. i /= NR_1066A)
@@ -162,8 +164,8 @@
 ! time scaling (s^{-1}) is done with scaleval
   scaleval = dsqrt(PI*GRAV*RHOAV)
   rho = rho*1000.0d0/RHOAV
-  vp = vp*1000.0d0/(R_EARTH*scaleval)
-  vs = vs*1000.0d0/(R_EARTH*scaleval)
+  vp = vp*1000.0d0/(R_PLANET*scaleval)
+  vs = vs*1000.0d0/(R_PLANET*scaleval)
 
   end subroutine model_1066a
 

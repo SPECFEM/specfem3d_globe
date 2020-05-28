@@ -114,7 +114,7 @@
   integer :: iregion_code
   ! for ellipticity
   !integer :: nspl
-  !double precision :: rspl(NR),espl(NR),espl2(NR)
+  !double precision :: rspl(NR_DENSITY),ellipicity_spline(NR_DENSITY),ellipicity_spline2(NR_DENSITY)
   ! proc numbers for MPI
   integer :: sizeprocs
 
@@ -316,9 +316,9 @@
       write(57,'(a,F10.4)') '# point location: colatitude [degree] = ',sngl(theta_degrees)
       write(57,'(a,F10.4)') '# point location: longitude  [degree] = ',sngl(phi_degrees)
       if (CRUSTAL) then
-        write(57,'(a,F10.4)') '# moho depth    : moho [km] = ',sngl(moho*R_EARTH_KM)
+        write(57,'(a,F10.4)') '# moho depth    : moho [km] = ',sngl(moho*(R_PLANET/1000.d0))
       else
-        write(57,'(a,F10.4)') '# moho 1D depth : moho [km] =',sngl((1.d0-RMOHO/R_EARTH)*R_EARTH_KM)
+        write(57,'(a,F10.4)') '# moho 1D depth : moho [km] =',sngl((1.d0-RMOHO/R_PLANET)*(R_PLANET/1000.d0))
       endif
       !write(57,'(a)') '#'
       if (TRANSVERSE_ISOTROPY) then
@@ -331,7 +331,7 @@
       else
         write(57,'(a)') '# no surface topography'
       endif
-      if (OCEANS .or. ((.not. CRUSTAL) .and. (ROCEAN < R_EARTH))) then
+      if (OCEANS .or. ((.not. CRUSTAL) .and. (ROCEAN < R_PLANET))) then
         if (OCEANS) then
           write(57,'(a)') '# oceans'
         else
@@ -394,27 +394,27 @@
 
         !  make sure that the Moho discontinuity is at the real moho
         if (CRUSTAL) then
-          if (rmin == RMOHO_FICTITIOUS_IN_MESHER/R_EARTH) rmin = 1.0d0 - moho
-          if (rmax == RMOHO_FICTITIOUS_IN_MESHER/R_EARTH) rmax = 1.0d0 - moho
+          if (rmin == RMOHO_FICTITIOUS_IN_MESHER/R_PLANET) rmin = 1.0d0 - moho
+          if (rmax == RMOHO_FICTITIOUS_IN_MESHER/R_PLANET) rmax = 1.0d0 - moho
           !print *,'rmin == moho at line ',iline
         endif
 
         if (rmin == rmax_last) then  !!!! this means that we have just jumped between layers
           ! depth increment
           ! write values every 10 km in the deep earth and every 1 km in the shallow earth
-          if (rmin > (R_EARTH_KM-DELTA_HIRES_DEPTH)/R_EARTH_KM) then
+          if (rmin > ((R_PLANET/1000.d0)-DELTA_HIRES_DEPTH)/(R_PLANET/1000.d0)) then
             delta = 1.0d0   ! in km
           else
             delta = 10.0d0  ! in km
           endif
 
           ! normalization
-          delta = delta/R_EARTH_KM
+          delta = delta/(R_PLANET/1000.d0)
 
           ! sets maximum radius without ocean for 1D models
-          if (((.not. CRUSTAL) .and. (ROCEAN < R_EARTH)) .and. (.not. TOPOGRAPHY)) then
+          if (((.not. CRUSTAL) .and. (ROCEAN < R_PLANET)) .and. (.not. TOPOGRAPHY)) then
             ! stops at ocean depth and adds last ocean layers explicitly
-            if (rmax == 1.0d0) rmax = ROCEAN/R_EARTH
+            if (rmax == 1.0d0) rmax = ROCEAN/R_PLANET
           endif
 
           ! backup to detect jump between layers
@@ -426,9 +426,9 @@
           do idep = 1,nit+1
             ! line counters
             ! inner core boundary
-            if (rmin == RICB/R_EARTH .and. idep == 1) iline_icb = iline
+            if (rmin == RICB/R_PLANET .and. idep == 1) iline_icb = iline
             ! core mantle boundary
-            if (rmin == RCMB/R_EARTH .and. idep == 1) iline_cmb = iline
+            if (rmin == RCMB/R_PLANET .and. idep == 1) iline_cmb = iline
             ! moho
             if (CRUSTAL) then
               ! uses 3D crustal model (e.g. Crust2.0)
@@ -437,7 +437,7 @@
               endif
             else
               ! 1D crust from reference model
-              if (rmin == RMOHO/R_EARTH .and. idep == 1) iline_moho = iline
+              if (rmin == RMOHO/R_PLANET .and. idep == 1) iline_moho = iline
             endif
 
             ! radius
@@ -468,10 +468,10 @@
             ! scale values read from routines back to true values
             scaleval = dsqrt(PI*GRAV*RHOAV)
             rho = rho*RHOAV/1000.0d0              ! [kg/m3]
-            vpv  = vpv*R_EARTH*scaleval/1000.0d0  ! [m/s]
-            vph  = vph*R_EARTH*scaleval/1000.0d0  ! [m/s]
-            vsv  = vsv*R_EARTH*scaleval/1000.0d0  ! [m/s]
-            vsh  = vsh*R_EARTH*scaleval/1000.0d0  ! [m/s]
+            vpv  = vpv*R_PLANET*scaleval/1000.0d0  ! [m/s]
+            vph  = vph*R_PLANET*scaleval/1000.0d0  ! [m/s]
+            vsv  = vsv*R_PLANET*scaleval/1000.0d0  ! [m/s]
+            vsh  = vsh*R_PLANET*scaleval/1000.0d0  ! [m/s]
 
             ! finally write the values obtained at the given depth to file
             str_info = ''
@@ -480,7 +480,7 @@
             if (iline == iline_moho) str_info = ' # moho'
 
             write(57,'(F8.0,7F9.2,F9.5,a)') &
-              sngl(r_prem*R_EARTH),sngl(rho*1000.d0),sngl(vpv*1000.d0),sngl(vsv*1000.d0), &
+              sngl(r_prem*R_PLANET),sngl(rho*1000.d0),sngl(vpv*1000.d0),sngl(vsv*1000.d0), &
               sngl(Qkappa),sngl(Qmu),sngl(vph*1000.d0),sngl(vsh*1000.d0),sngl(eta_aniso),trim(str_info)
 
             ! line counter
@@ -488,7 +488,8 @@
 
             ! debug
             !write(*,'(i3,11F10.4)') &
-            ! iline,sngl(rmin*R_EARTH_KM),sngl(rmax*R_EARTH_KM),sngl(r_prem*R_EARTH_KM),sngl(r*R_EARTH_KM), &
+            ! iline,sngl(rmin*(R_PLANET/1000.d0)),sngl(rmax*(R_PLANET/1000.d0)), &
+            ! sngl(r_prem*(R_PLANET/1000.d0)),sngl(r*(R_PLANET/1000.d0)), &
             ! sngl(vpv),sngl(vph),sngl(vsv),sngl(vsh),sngl(rho),sngl(eta_aniso),sngl(Qmu)
 
           enddo !idep
@@ -720,7 +721,7 @@
   ! read crustal models and topo models as they are needed to modify the depths of the discontinuities
   if (CRUSTAL) then
     ! convert from rthetaphi to xyz, with r=-7km
-    r = 1.0d0 - 7.0d0/R_EARTH_KM
+    r = 1.0d0 - 7.0d0/(R_PLANET/1000.d0)
     call rthetaphi_2_xyz_dble(xmesh,ymesh,zmesh,r,theta,phi)
 
     !if (myrank == 0) print *, '  xmesh,ymesh,zmesh,r,theta,phi = ',xmesh,ymesh,zmesh,r,90.0-theta*180./PI,phi*180./PI
@@ -733,12 +734,13 @@
                                          .true.,moho,sediment)
 
     !if (myrank == 0) print *, '  crustal values:',vpv,vph,vsv,vsh,rho,eta_aniso
-    if (myrank == 0) print *, '  moho depth [km]    :',sngl(moho*R_EARTH_KM) !,'radius (in km):',sngl((1.0d0-moho)*R_EARTH_KM)
-    if (myrank == 0) print *, '  sediment depth [km]:',sngl(sediment*R_EARTH_KM)
+    if (myrank == 0) print *, '  moho depth [km]    :',sngl(moho*(R_PLANET/1000.d0))
+                              !,'radius (in km):',sngl((1.0d0-moho)*(R_PLANET/1000.d0))
+    if (myrank == 0) print *, '  sediment depth [km]:',sngl(sediment*(R_PLANET/1000.d0))
   else
     moho = 0.d0
     ! 1D crust from reference model
-    if (myrank == 0) print *, '  moho 1D depth [km]:',sngl((1.d0-RMOHO/R_EARTH)*R_EARTH_KM)
+    if (myrank == 0) print *, '  moho 1D depth [km]:',sngl((1.d0-RMOHO/R_PLANET)*(R_PLANET/1000.d0))
   endif
 
   end subroutine write_profile_moho_depth
@@ -774,13 +776,13 @@
 
       !if (myrank == 0) print *,'  get_topo_bathy(lat,lon,elevation,ibathy_topo',lat,lon,elevation
       if (myrank == 0) print *,'  elevation [m]:',sngl(elevation) !, &
-                               !'surface radius (in km):',sngl((1.0d0 + elevation/R_EARTH)*R_EARTH_KM)
+                               !'surface radius (in km):',sngl((1.0d0 + elevation/R_PLANET)*(R_PLANET/1000.d0))
 
     else
       ! oceans selected only, without topography
-      if ((.not. CRUSTAL) .and. (ROCEAN < R_EARTH)) then
+      if ((.not. CRUSTAL) .and. (ROCEAN < R_PLANET)) then
         ! if 1D Earth, use oceans of constant thickness everywhere (see create_mass_matrices_ocean_load())
-        elevation = - THICKNESS_OCEANS_PREM * R_EARTH ! in m
+        elevation = - THICKNESS_OCEANS_PREM * R_PLANET ! in m
         if (myrank == 0) print *,'  ocean PREM [m]:',sngl(elevation)
       else
         ! 3D crustal model without topography, not using an ocean
@@ -873,8 +875,8 @@
   call meshfem3D_models_get1D_val(iregion_code,idoubling, &
                         r_prem,rho,vpv,vph,vsv,vsh,eta_aniso, &
                         Qkappa,Qmu,RICB,RCMB, &
-                        RTOPDDOUBLEPRIME,R80,R120,R220,R400,R600,R670,R771, &
-                        RMOHO,RMIDDLE_CRUST,ROCEAN)
+                        RTOPDDOUBLEPRIME,R80,R120,R220,R400,R670,R771, &
+                        RMOHO,RMIDDLE_CRUST)
 
   ! gets the 3-D model parameters for the mantle
   call meshfem3D_models_get3Dmntl_val(iregion_code,r_prem,rho, &
@@ -924,7 +926,7 @@
   ! checks vpv: if close to zero then there is probably an error
   if (vpv < TINYVAL) then
     print *,'error vpv: ',vpv,vph,vsv,vsh,rho
-    print *,'radius:',r*R_EARTH_KM
+    print *,'radius:',r*(R_PLANET/1000.d0)
     call exit_mpi(myrank,'Error get model values in write_profile')
   endif
 
@@ -951,9 +953,8 @@
 
   subroutine write_profile_add_topography(r_prem,idoubling,elevation)
 
-  use constants, only: IFLAG_CRUST,IFLAG_80_MOHO,IFLAG_220_80, &
-    R_EARTH,R_UNIT_SPHERE
-
+  use constants, only: IFLAG_CRUST,IFLAG_80_MOHO,IFLAG_220_80,R_UNIT_SPHERE
+  use shared_parameters, only: R_PLANET
   use meshfem3D_models_par
   use shared_parameters
 
@@ -974,13 +975,13 @@
         idoubling == IFLAG_220_80) then
       ! adds mesh stretching
       !print *, 'adding topography.  elevation: ',elevation
-      gamma = (r_prem - R220/R_EARTH) / (R_UNIT_SPHERE - R220/R_EARTH)
+      gamma = (r_prem - R220/R_PLANET) / (R_UNIT_SPHERE - R220/R_PLANET)
       if (gamma < -0.02 .or. gamma > 1.02) print *, 'incorrect value of gamma for topograpy'
 
       ! stretching due to elevation
-      !print *,'rprem before: ',r_prem*R_EARTH
-      r_prem = r_prem*(ONE + gamma * (elevation/R_EARTH) /r_prem)
-      !print *,'r_prem after: ',r_prem*R_EARTH
+      !print *,'rprem before: ',r_prem*R_PLANET
+      r_prem = r_prem*(ONE + gamma * (elevation/R_PLANET) /r_prem)
+      !print *,'r_prem after: ',r_prem*R_PLANET
     endif
   endif
 !> end add_topography
@@ -1013,7 +1014,7 @@
 
 ! < ocean
   ! This part adds the ocean to profile where needed
-  if ( (TOPOGRAPHY .or. OCEANS) .or. ((.not. CRUSTAL) .and. (ROCEAN < R_EARTH)) ) then
+  if ( (TOPOGRAPHY .or. OCEANS) .or. ((.not. CRUSTAL) .and. (ROCEAN < R_PLANET)) ) then
 
     ! note: For 1D models (with 1D reference crust), CRUSTAL is set to .false.
     !
@@ -1043,9 +1044,9 @@
         nlayers_ocean = floor(-elevation/delta)
       else
         ! no topography on mesh
-        if ((.not. CRUSTAL) .and. (ROCEAN < R_EARTH)) then
-          ! 1D model without topography, uses default ocean layer (R_EARTH - ROCEAN)
-          nlayers_ocean = floor((R_EARTH - ROCEAN)/delta)
+        if ((.not. CRUSTAL) .and. (ROCEAN < R_PLANET)) then
+          ! 1D model without topography, uses default ocean layer (R_PLANET - ROCEAN)
+          nlayers_ocean = floor((R_PLANET - ROCEAN)/delta)
         else
           ! 3D crustal model, without topography
           ! no oceans
@@ -1053,7 +1054,7 @@
         endif
       endif
     else
-      ! case for 1D (reference crust) models which include an ocean: ((.not. CRUSTAL) .and. (ROCEAN < R_EARTH)) then
+      ! case for 1D (reference crust) models which include an ocean: ((.not. CRUSTAL) .and. (ROCEAN < R_PLANET)) then
       if (TOPOGRAPHY) then
         if (elevation < - MINIMUM_THICKNESS_3D_OCEANS) then
           ! uses actual bathymetry value and fills up ocean to surface
@@ -1063,9 +1064,9 @@
           nlayers_ocean = -1
         endif
       else
-        if ((.not. CRUSTAL) .and. (ROCEAN < R_EARTH)) then
+        if ((.not. CRUSTAL) .and. (ROCEAN < R_PLANET)) then
           ! 1D models without topography, takes reference ocean depth
-          nlayers_ocean = floor((R_EARTH - ROCEAN)/delta)
+          nlayers_ocean = floor((R_PLANET - ROCEAN)/delta)
         else
           ! 3D crustal models without topography will have no ocean
           nlayers_ocean = -1
@@ -1081,14 +1082,14 @@
       ! points within ocean
       do ilayers_ocean = 0,nlayers_ocean
         ! radius
-        r_ocean = r_prem + ilayers_ocean* delta/R_EARTH
+        r_ocean = r_prem + ilayers_ocean* delta/R_PLANET
 
         ! ocean properties (salt water parameters from PREM)
         if (ilayers_ocean == 0) then
           ! line with section info
-          write(57,'(F8.0,7F9.2,F9.5,a)') sngl(r_ocean*R_EARTH),1020.0,1450.,0.0,57822.5,0.0,1450.0,0.0,1.0,' # ocean'
+          write(57,'(F8.0,7F9.2,F9.5,a)') sngl(r_ocean*R_PLANET),1020.0,1450.,0.0,57822.5,0.0,1450.0,0.0,1.0,' # ocean'
         else
-          write(57,'(F8.0,7F9.2,F9.5)') sngl(r_ocean*R_EARTH),1020.0,1450.,0.0,57822.5,0.0,1450.0,0.0,1.0
+          write(57,'(F8.0,7F9.2,F9.5)') sngl(r_ocean*R_PLANET),1020.0,1450.,0.0,57822.5,0.0,1450.0,0.0,1.0
         endif
         ! line counter
         iline = iline + 1
@@ -1096,7 +1097,7 @@
       ! at surface
       if (r_ocean < 1.d0) then
         ! last line exactly at earth surface
-        write(57,'(F8.0,7F9.2,F9.5)') sngl(1.0d0*R_EARTH),1020.0,1450.,0.0,57822.5,0.0,1450.,0.0,1.0
+        write(57,'(F8.0,7F9.2,F9.5)') sngl(1.0d0*R_PLANET),1020.0,1450.,0.0,57822.5,0.0,1450.,0.0,1.0
         ! line counter
         iline = iline + 1
       endif

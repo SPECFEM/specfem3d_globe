@@ -36,7 +36,8 @@
     ZERO,CUSTOM_REAL,PI,R_UNIT_SPHERE,IFLAG_IN_FICTITIOUS_CUBE,IMAIN, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE
 
-  use meshfem3D_models_par, only: TOPOGRAPHY,R_EARTH
+  use shared_parameters, only: R_PLANET
+  use meshfem3D_models_par, only: TOPOGRAPHY
 
   implicit none
 
@@ -157,9 +158,9 @@
         case (IREGION_CRUST_MANTLE)
           write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*R_UNIT_SPHERE**2
         case (IREGION_OUTER_CORE)
-          write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RCMB/R_EARTH)**2
+          write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RCMB/R_PLANET)**2
         case (IREGION_INNER_CORE)
-          write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RICB/R_EARTH)**2
+          write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RICB/R_PLANET)**2
         case default
           call exit_MPI(myrank,'incorrect region code')
       end select
@@ -171,12 +172,12 @@
     if (NCHUNKS == 6 .and. .not. TOPOGRAPHY) then
       select case (iregion_code)
         case (IREGION_CRUST_MANTLE)
-          write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RCMB/R_EARTH)**2
+          write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RCMB/R_PLANET)**2
         case (IREGION_OUTER_CORE)
-          write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RICB/R_EARTH)**2
+          write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RICB/R_PLANET)**2
         case (IREGION_INNER_CORE)
           write(IMAIN,*) '            more or less similar area (central cube): ', &
-                                           dble(NCHUNKS)*(2.*(R_CENTRAL_CUBE / R_EARTH)/sqrt(3.))**2
+                                           dble(NCHUNKS)*(2.*(R_CENTRAL_CUBE / R_PLANET)/sqrt(3.))**2
         case default
           call exit_MPI(myrank,'incorrect region code')
       end select
@@ -196,7 +197,11 @@
                                 nspec,wxgll,wygll,wzgll,xstore,ystore,zstore,xixstore,xiystore,xizstore, &
                                 etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,rhostore,idoubling)
 
-  use constants
+  use constants, only: NGLLX,NGLLY,NGLLZ,ZERO,CUSTOM_REAL,IFLAG_IN_FICTITIOUS_CUBE, &
+    SHIFT_TO_THIS_CENTER_OF_MASS,x_shift,y_shift,z_shift, &
+    myrank
+
+  use shared_parameters, only: R_PLANET,RHOAV
 
   implicit none
 
@@ -289,8 +294,8 @@
   enddo
 
   ! take into account the fact that the density and the radius of the Earth have previously been non-dimensionalized
-  non_dimensionalizing_factor1 = RHOAV*R_EARTH**3
-  non_dimensionalizing_factor2 = non_dimensionalizing_factor1 * R_EARTH
+  non_dimensionalizing_factor1 = RHOAV*R_PLANET**3
+  non_dimensionalizing_factor2 = non_dimensionalizing_factor1 * R_PLANET
 
   Earth_mass_local = Earth_mass_local * non_dimensionalizing_factor1
 

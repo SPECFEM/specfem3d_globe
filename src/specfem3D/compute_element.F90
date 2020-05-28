@@ -1856,7 +1856,7 @@
 #endif
 
   ! minimum radius in inner core (to avoid zero radius)
-  !double precision, parameter :: MINIMUM_RADIUS_INNER_CORE = 100.d0 / R_EARTH
+  !double precision, parameter :: MINIMUM_RADIUS_INNER_CORE = 100.d0 / R_PLANET
 
   ! computes non-symmetric terms for gravity
   DO_LOOP_IJK
@@ -1917,7 +1917,7 @@
 !
 !! computes non-symmetric stress terms for gravity
 !
-!  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,NRAD_GRAVITY,R_EARTH,R_EARTH_KM
+!  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,NRAD_GRAVITY,R_PLANET,R_PLANET_KM
 !
 !#ifdef FORCE_VECTORIZATION
 !  use constants, only: NGLLCUBE
@@ -1965,7 +1965,7 @@
 !#endif
 !
 !  ! minimum radius in inner core (to avoid zero radius)
-!  double precision, parameter :: MINIMUM_RADIUS_INNER_CORE = 100.d0 / R_EARTH
+!  double precision, parameter :: MINIMUM_RADIUS_INNER_CORE = 100.d0 / R_PLANET
 !
 !  ! computes non-symmetric terms for gravity
 !  DO_LOOP_IJK
@@ -1996,10 +1996,10 @@
 !    ! spherical components of the gravitational acceleration
 !
 !    ! for efficiency replace with lookup table every 100 m in radial direction
-!    !int_radius = nint(10.d0 * radius * R_EARTH_KM )
+!    !int_radius = nint(10.d0 * radius * R_PLANET_KM )
 !
 !    ! make sure we never use zero for point exactly at the center of the Earth
-!    int_radius = max(1,nint(10.d0 * radius * R_EARTH_KM))
+!    int_radius = max(1,nint(10.d0 * radius * R_PLANET_KM))
 !
 !    minus_g = minus_gravity_table(int_radius)
 !    minus_dg = minus_deriv_gravity_table(int_radius)

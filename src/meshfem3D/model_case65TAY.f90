@@ -94,6 +94,8 @@
   subroutine model_case65TAY(x,rho,vp,vs,Qkappa,Qmu,iregion_code)
 
   use constants
+  use shared_parameters, only: R_PLANET,RHOAV
+
   use model_case65tay_par
 
   implicit none
@@ -114,7 +116,7 @@
   integer :: i
 
   ! compute real physical radius in meters
-  r = x * R_EARTH
+  r = x * R_PLANET
 
   i = 1
   do while(r >= Mcase65TAY_V_radius(i) .and. i /= NR_case65TAY)
@@ -170,8 +172,8 @@
   ! time scaling (s^{-1}) is done with scaleval
   scaleval = dsqrt(PI*GRAV*RHOAV)
   rho = rho*1000.0d0/RHOAV
-  vp = vp*1000.0d0/(R_EARTH*scaleval)
-  vs = vs*1000.0d0/(R_EARTH*scaleval)
+  vp = vp*1000.0d0/(R_PLANET*scaleval)
+  vs = vs*1000.0d0/(R_PLANET*scaleval)
 
   end subroutine model_case65TAY
 

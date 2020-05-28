@@ -28,7 +28,7 @@
   subroutine add_topography(xelm,yelm,zelm,ibathy_topo)
 
   use constants, only: myrank,NGNOD,R_UNIT_SPHERE,ONE
-  use meshfem3D_par, only: R220,NX_BATHY,NY_BATHY,R_EARTH
+  use meshfem3D_par, only: R220,NX_BATHY,NY_BATHY,R_PLANET
 
   implicit none
 
@@ -58,10 +58,10 @@
     call get_topo_bathy(lat,lon,elevation,ibathy_topo)
 
     ! non-dimensionalize the elevation, which is in meters
-    elevation = elevation / R_EARTH
+    elevation = elevation / R_PLANET
 
     ! stretching topography between d220 and the surface
-    gamma = (r - R220/R_EARTH) / (R_UNIT_SPHERE - R220/R_EARTH)
+    gamma = (r - R220/R_PLANET) / (R_UNIT_SPHERE - R220/R_PLANET)
 
     ! add elevation to all the points of that element
     ! also make sure gamma makes sense
@@ -91,6 +91,7 @@
                                 ibathy_topo)
 
   use constants
+  use shared_parameters, only: R_PLANET
   use meshfem3D_par, only: R220,NX_BATHY,NY_BATHY
 
   implicit none
@@ -122,10 +123,10 @@
         call get_topo_bathy(lat,lon,elevation,ibathy_topo)
 
         ! non-dimensionalize the elevation, which is in meters
-        elevation = elevation / R_EARTH
+        elevation = elevation / R_PLANET
 
         ! stretching topography between d220 and the surface
-        gamma = (r - R220/R_EARTH) / (R_UNIT_SPHERE - R220/R_EARTH)
+        gamma = (r - R220/R_PLANET) / (R_UNIT_SPHERE - R220/R_PLANET)
 
         ! add elevation to all the points of that element
         ! also make sure factor makes sense

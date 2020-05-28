@@ -183,8 +183,10 @@
                                    hxir_reg,hetar_reg,hgammar_reg)
 
   use constants_solver, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,NUM_ITER, &
-    DEGREES_TO_RADIANS,HUGEVAL,TWO_PI,R_UNIT_SPHERE,R_EARTH, &
+    DEGREES_TO_RADIANS,HUGEVAL,TWO_PI,R_UNIT_SPHERE, &
     NM_KL_REG_PTS,KL_REG_MIN_LAT,KL_REG_MIN_LON
+
+  use shared_parameters, only: R_PLANET
 
   use specfem_par, only: myrank, NEX_XI
 
@@ -256,7 +258,7 @@
     lat = KL_REG_MIN_LAT + ilat * GRID%dlat * GRID%ndoubling(ilayer)
     lon = KL_REG_MIN_LON + (ilon - 1) * GRID%dlon * GRID%ndoubling(ilayer)
     ! convert radius to meters and then scale
-    radius = GRID%rlayer(ilayer) * 1000.0 / R_EARTH
+    radius = GRID%rlayer(ilayer) * 1000.0 / R_PLANET
     ! (x,y,z) for isp point
     th = (90.0 - lat) * DEGREES_TO_RADIANS; ph = lon * DEGREES_TO_RADIANS
     x_target = radius * sin(th) * cos(ph)

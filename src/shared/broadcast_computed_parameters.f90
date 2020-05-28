@@ -165,6 +165,8 @@
   call bcast_all_singlei(PLANET_TYPE)
   call bcast_all_singledp(R_EARTH)
   call bcast_all_singledp(R_EARTH_KM)
+  call bcast_all_singledp(R_PLANET)
+  call bcast_all_singledp(R_PLANET_KM)
   call bcast_all_singledp(RHOAV)
   call bcast_all_singledp(STANDARD_GRAVITY)
   call bcast_all_singledp(ONE_MINUS_F_SQUARED)
@@ -184,7 +186,7 @@
   call bcast_all_singlel(HONOR_DEEP_MOHO)
 
   ! empirical minimum period resolved estimation
-  call bcast_all_singledp(T_min)
+  call bcast_all_singledp(T_min_period)
 
   ! non-master processes set their parameters
   if (myrank /= 0) then

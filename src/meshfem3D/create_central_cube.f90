@@ -35,13 +35,13 @@
 
 ! creates the inner core cube of the mesh
 
-  use constants, only: NGNOD,myrank,R_EARTH, &
+  use constants, only: NGNOD,myrank, &
     IFLAG_BOTTOM_CENTRAL_CUBE,IFLAG_TOP_CENTRAL_CUBE,IFLAG_MIDDLE_CENTRAL_CUBE,IFLAG_IN_FICTITIOUS_CUBE, &
     CHUNK_AB,CHUNK_AB_ANTIPODE, &
     CHUNK_AC,CHUNK_AC_ANTIPODE, &
     CHUNK_BC,CHUNK_BC_ANTIPODE
 
-  use shared_parameters, only: ratio_divide_central_cube
+  use shared_parameters, only: ratio_divide_central_cube,R_PLANET
 
   use meshfem3D_par, only: &
     xstore,ystore,zstore
@@ -101,7 +101,7 @@
   nz_central_cube = NEX_XI / ratio_divide_central_cube
 
   ! size of the cube along Cartesian axes before rotation
-  radius_cube = (R_CENTRAL_CUBE / R_EARTH) / sqrt(3.d0)
+  radius_cube = (R_CENTRAL_CUBE / R_PLANET) / sqrt(3.d0)
 
   ! define spectral elements in central cube
   do iz = 0,2*nz_central_cube-2,2
@@ -110,7 +110,7 @@
 
         ! radii that define the shell, we know that we are in the central cube
         rmin = 0.d0
-        rmax = R_CENTRAL_CUBE / R_EARTH
+        rmax = R_CENTRAL_CUBE / R_PLANET
 
         ! loop over the NGNOD nodes
         do ia = 1,NGNOD

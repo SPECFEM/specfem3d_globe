@@ -39,7 +39,7 @@
 !
 !---
 
-  use constants, only: NR,N_SLS, &
+  use constants, only: NR_DENSITY,N_SLS, &
     PI,PI_OVER_TWO,ZERO,ONE,DEGREES_TO_RADIANS,RADIANS_TO_DEGREES, &
     IREGION_CRUST_MANTLE,IREGION_INNER_CORE,IREGION_OUTER_CORE, &
     ICRUST_CRUST1,ICRUST_CRUST2,ICRUST_CRUSTMAPS,ICRUST_EPCRUST,ICRUST_CRUST_SH,ICRUST_EUCRUST, &
@@ -50,7 +50,8 @@
   use constants, only: &
     REFERENCE_MODEL_PREM,REFERENCE_MODEL_1066A,REFERENCE_MODEL_AK135F_NO_MUD, &
     REFERENCE_MODEL_1DREF,REFERENCE_MODEL_SEA1D,REFERENCE_MODEL_IASP91,REFERENCE_MODEL_JP1D, &
-    REFERENCE_MODEL_SOHL,REFERENCE_MODEL_CASE65TAY
+    REFERENCE_MODEL_SOHL,REFERENCE_MODEL_CASE65TAY, &
+    REFERENCE_MODEL_VPREMOON
 
   ! 3D models
   use constants, only: &
@@ -74,7 +75,7 @@
     ATTENUATION_3D, ATTENUATION_GLL, &
     CEM_REQUEST, CEM_ACCEPT, &
     NX_BATHY,NY_BATHY, &
-    R_EARTH,R_EARTH_KM,R_DEEPEST_CRUST,REGIONAL_MOHO_MESH
+    R_PLANET,R_PLANET_KM,R_DEEPEST_CRUST,REGIONAL_MOHO_MESH
 
   implicit none
 
@@ -107,7 +108,6 @@
     double precision, dimension(:,:), allocatable :: tau_e_storage
     double precision, dimension(:), allocatable   :: Qmu_storage
     integer :: Q_resolution
-    integer :: Q_max
   end type model_attenuation_storage_var
   type (model_attenuation_storage_var) :: AM_S
   ! model_attenuation_storage_var
@@ -131,7 +131,7 @@
   integer, dimension(:,:),allocatable :: ibathy_topo
 
   ! for ellipticity
-  double precision,dimension(NR) :: rspl,espl,espl2
+  double precision,dimension(NR_DENSITY) :: rspl,ellipicity_spline,ellipicity_spline2
   integer :: nspl
 
   end module meshfem3D_models_par

@@ -224,6 +224,7 @@ xcombine_vol_data_SHARED_OBJECTS = \
 	$O/make_ellipticity.shared.o \
 	$O/model_prem.shared.o \
 	$O/model_Sohl.shared.o \
+	$O/model_vpremoon.shared.o \
 	$O/parallel.sharedmpi.o \
 	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
@@ -262,6 +263,7 @@ xcombine_vol_data_adios_SHARED_OBJECTS = \
 	$O/make_ellipticity.shared.o \
 	$O/model_prem.shared.o \
 	$O/model_Sohl.shared.o \
+	$O/model_vpremoon.shared.o \
 	$O/parallel.sharedmpi.o \
 	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
@@ -296,6 +298,7 @@ xcombine_vol_data_vtk_SHARED_OBJECTS = \
 	$O/make_ellipticity.shared.o \
 	$O/model_prem.shared.o \
 	$O/model_Sohl.shared.o \
+	$O/model_vpremoon.shared.o \
 	$O/parallel.sharedmpi.o \
 	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
@@ -335,6 +338,7 @@ xcombine_vol_data_vtk_adios_SHARED_OBJECTS = \
 	$O/make_ellipticity.shared.o \
 	$O/model_prem.shared.o \
 	$O/model_Sohl.shared.o \
+	$O/model_vpremoon.shared.o \
 	$O/parallel.sharedmpi.o \
 	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
@@ -490,6 +494,7 @@ xwrite_profile_SHARED_OBJECTS = \
 	$O/model_prem.shared.o \
 	$O/model_Sohl.shared.o \
 	$O/model_topo_bathy.shared.o \
+	$O/model_vpremoon.shared.o \
 	$O/parallel.sharedmpi.o \
 	$O/param_reader.cc.o \
 	$O/read_compute_parameters.shared.o \

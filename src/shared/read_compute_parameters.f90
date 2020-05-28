@@ -163,8 +163,8 @@
   MOVIE_NORTH = (90.0d0 - MOVIE_NORTH_DEG) * DEGREES_TO_RADIANS ! converting from latitude to colatitude
   MOVIE_SOUTH = (90.0d0 - MOVIE_SOUTH_DEG) * DEGREES_TO_RADIANS
   ! converts movie top/bottom depths to radii
-  MOVIE_TOP = (R_EARTH_KM-MOVIE_TOP_KM)/R_EARTH_KM
-  MOVIE_BOTTOM = (R_EARTH_KM-MOVIE_BOTTOM_KM)/R_EARTH_KM
+  MOVIE_TOP = (R_PLANET_KM-MOVIE_TOP_KM)/R_PLANET_KM
+  MOVIE_BOTTOM = (R_PLANET_KM-MOVIE_BOTTOM_KM)/R_PLANET_KM
 
   ! half-time duration
   !

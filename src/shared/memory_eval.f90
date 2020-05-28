@@ -418,9 +418,9 @@
     3.d0*NGLOB(IREGION_OUTER_CORE)*dble(CUSTOM_REAL)
 
   ! ELLIPTICITY
-  ! rspl,espl,espl2
+  ! rspl,ellipicity_spline,ellipicity_spline2
   static_memory_size = static_memory_size + &
-    3.d0*NR*dble(SIZE_DOUBLE)
+    3.d0*NR_DENSITY*dble(SIZE_DOUBLE)
 
   ! OCEANS
   ! rmass_ocean_load

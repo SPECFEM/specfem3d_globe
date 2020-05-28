@@ -731,7 +731,7 @@
   else
 
 ! regular scaling to real distance if no topography
-    elevation_sphere(:) = R_EARTH * elevation_sphere(:)
+    elevation_sphere(:) = R_PLANET * elevation_sphere(:)
 
   endif
 

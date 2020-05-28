@@ -128,7 +128,7 @@
        form='formatted',recl=20,status='old',action='read',iostat=ier)
   if (ier /= 0 ) call exit_MPI(0,'Error opening model file heterogen.dat')
 
-  ! note: grid is a cubic box around the earth, stretching from [-R_EARTH,+R_EARTH] dimensions
+  ! note: grid is a cubic box around the earth, stretching from [-R_PLANET,+R_PLANET] dimensions
   !
   ! N_R: number of layers in z-direction
   ! N_THETA/N_PHI: horizontal x/y-direction gridding
@@ -150,6 +150,8 @@
   subroutine model_heterogen_mantle(ispec,i,j,k,radius,theta,phi,dvs,dvp,drho)
 
   use constants
+  use shared_parameters, only: R_PLANET
+
   use model_heterogen_mantle_par
 
   implicit none
@@ -172,24 +174,24 @@
   double precision :: r_target
 
   ! dimensions in m
-  r_target = radius*R_EARTH
+  r_target = radius*R_PLANET
 
   ! bounds
-  ! NOTE: r_outer NEEDS TO BE (just) SMALLER THAN R_EARTH!!!!!!!!
+  ! NOTE: r_outer NEEDS TO BE (just) SMALLER THAN R_PLANET!!!!!!!!
   ! upper/lower radius (in m)
   r_inner = 3.500d6          ! lower bound for heterogeneity zone
-  r_outer = R_EARTH - 1.0d1  ! or 6.300d6  !upper bound for heterogeneity zone (lower mantle: e.g. 4.500d6)
+  r_outer = R_PLANET - 1.0d1  ! or 6.300d6  !upper bound for heterogeneity zone (lower mantle: e.g. 4.500d6)
 
   ! increments
-  delta = 2.0 * R_EARTH/(real(N_R-1))
-  delta2 = 2.0 * R_EARTH/(real(N_R-2))
-  !delta2 = 2.0 * R_EARTH/(real(N_R))
+  delta = 2.0 * R_PLANET/(real(N_R-1))
+  delta2 = 2.0 * R_PLANET/(real(N_R-2))
+  !delta2 = 2.0 * R_PLANET/(real(N_R))
 
   if ((r_target >= r_inner) .and. (r_target <= r_outer)) then
     ! convert spherical point to Cartesian point, move origin to corner
-    x = R_EARTH + r_target*sin(theta)*cos(phi)
-    y = R_EARTH + r_target*sin(theta)*sin(phi)
-    z = R_EARTH + r_target*cos(theta)
+    x = R_PLANET + r_target*sin(theta)*cos(phi)
+    y = R_PLANET + r_target*sin(theta)*sin(phi)
+    z = R_PLANET + r_target*cos(theta)
 
     ! determine which points to search for in heterogen.dat
     ! find x_low,y_low,z_low etc.

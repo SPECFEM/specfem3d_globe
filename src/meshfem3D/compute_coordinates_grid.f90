@@ -32,9 +32,10 @@
                                      ner,ilayer,ichunk,rotation_matrix,NCHUNKS, &
                                      INCLUDE_CENTRAL_CUBE,NUMBER_OF_MESH_LAYERS)
 
-  use constants, only: NGNOD,NDIM,ZERO,ONE,PI,PI_OVER_TWO,R_EARTH, &
+  use constants, only: NGNOD,NDIM,ZERO,ONE,PI,PI_OVER_TWO, &
     CHUNK_AB,CHUNK_AC,CHUNK_BC,CHUNK_AB_ANTIPODE,CHUNK_AC_ANTIPODE,CHUNK_BC_ANTIPODE, &
     CENTRAL_CUBE_INFLATE_FACTOR
+  use shared_parameters, only: R_PLANET
 
   implicit none
 
@@ -93,12 +94,12 @@
       eta = PI_OVER_TWO*fact_eta
 
       gamma = ONE / sqrt(ONE + fact_xi_**2 + fact_eta_**2)
-      rgt = (r_top / R_EARTH)*gamma
+      rgt = (r_top / R_PLANET)*gamma
 
 ! coordinates of the edge extremity on the central cube surface
-      x_bot = ((r_bottom / R_EARTH) / sqrt(3.d0))* fact_xi * (1 + cos(eta)*CENTRAL_CUBE_INFLATE_FACTOR / PI)
-      y_bot = ((r_bottom / R_EARTH) / sqrt(3.d0)) * fact_eta * (1 + cos(xi)*CENTRAL_CUBE_INFLATE_FACTOR / PI)
-      z_bot = ((r_bottom / R_EARTH) / sqrt(3.d0)) * (1 + (cos(xi) + cos(eta))*CENTRAL_CUBE_INFLATE_FACTOR / PI)
+      x_bot = ((r_bottom / R_PLANET) / sqrt(3.d0))* fact_xi * (1 + cos(eta)*CENTRAL_CUBE_INFLATE_FACTOR / PI)
+      y_bot = ((r_bottom / R_PLANET) / sqrt(3.d0)) * fact_eta * (1 + cos(xi)*CENTRAL_CUBE_INFLATE_FACTOR / PI)
+      z_bot = ((r_bottom / R_PLANET) / sqrt(3.d0)) * (1 + (cos(xi) + cos(eta))*CENTRAL_CUBE_INFLATE_FACTOR / PI)
 
 ! coordinates of the edge extremity on the ICB
       x_top = fact_xi_*rgt
@@ -164,8 +165,8 @@
 
       gamma = ONE / sqrt(ONE + x*x + y*y)
 
-      rgt = (r_top / R_EARTH)*gamma
-      rgb = (r_bottom / R_EARTH)*gamma
+      rgt = (r_top / R_PLANET)*gamma
+      rgb = (r_bottom / R_PLANET)*gamma
 
       ! define the mesh points on the top and the bottom in the six regions of the cubed sphere
       select case (ichunk)

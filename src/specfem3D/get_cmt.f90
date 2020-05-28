@@ -29,9 +29,9 @@
                      DT,NSOURCES,min_tshift_src_original)
 
   use constants, only: IIN,IMAIN,EXTERNAL_SOURCE_TIME_FUNCTION, &
-    RHOAV,R_EARTH,PI,GRAV,MAX_STRING_LEN,mygroup
+    PI,GRAV,MAX_STRING_LEN,mygroup
 
-  use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS,NOISE_TOMOGRAPHY
+  use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS,NOISE_TOMOGRAPHY,R_PLANET,RHOAV
 
   implicit none
 
@@ -354,7 +354,7 @@
 ! thus 1 Newton = 100,000 dynes
 ! therefore 1 dyne.cm = 1e-7 Newton.m
 !
-  scaleM = 1.d7 * RHOAV * (R_EARTH**5) * PI*GRAV*RHOAV
+  scaleM = 1.d7 * RHOAV * (R_PLANET**5) * PI*GRAV*RHOAV
   moment_tensor(:,:) = moment_tensor(:,:) / scaleM
 
   contains
@@ -403,7 +403,8 @@
 
   ! calculates scalar moment (M0)
 
-  use constants, only: RHOAV,R_EARTH,PI,GRAV
+  use constants, only: PI,GRAV
+  use shared_parameters, only: R_PLANET,RHOAV
 
   implicit none
 
@@ -441,7 +442,7 @@
   ! 1 Newton is 1 kg * 1 m / (1 second)^2
   ! thus 1 Newton = 100,000 dynes
   ! therefore 1 dyne.cm = 1e-7 Newton.m
-  scaleM = 1.d7 * RHOAV * (R_EARTH**5) * PI * GRAV * RHOAV
+  scaleM = 1.d7 * RHOAV * (R_PLANET**5) * PI * GRAV * RHOAV
 
   ! return value (in dyne-cm)
   get_cmt_scalar_moment = scalar_moment * scaleM

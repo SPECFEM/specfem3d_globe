@@ -169,13 +169,15 @@ end subroutine define_AVS_DX_surfaces_data_adios
 
   subroutine prepare_AVS_DX_surfaces_data_adios(nspec,iboun, &
                                                 ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool,npointot, &
-                                                rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
-                                                ELLIPTICITY,MODEL_3D_MANTLE_PERTUBATIONS, &
-                                                RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
-                                                RMIDDLE_CRUST,ROCEAN,iregion_code, &
+                                                rhostore,kappavstore,muvstore, &
+                                                nspl,rspl,ellipicity_spline,ellipicity_spline2,ELLIPTICITY, &
+                                                MODEL_3D_MANTLE_PERTUBATIONS, &
+                                                RICB,RCMB,RTOPDDOUBLEPRIME,R670,R220,R771,R400,R120,R80,RMOHO, &
+                                                RMIDDLE_CRUST,iregion_code, &
                                                 avs_dx_adios)
 
   use constants
+  use shared_parameters, only: R_PLANET
 
   implicit none
 
@@ -187,8 +189,8 @@ end subroutine define_AVS_DX_surfaces_data_adios
   logical iboun(6,nspec)
   logical ELLIPTICITY,MODEL_3D_MANTLE_PERTUBATIONS
 
-  double precision RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771, &
-       R400,R120,R80,RMOHO,RMIDDLE_CRUST,ROCEAN
+  double precision RICB,RCMB,RTOPDDOUBLEPRIME,R670,R220,R771, &
+       R400,R120,R80,RMOHO,RMIDDLE_CRUST
 
   double precision r,rho,vp,vs,Qkappa,Qmu
   double precision vpv,vph,vsv,vsh,eta_aniso
@@ -217,7 +219,7 @@ end subroutine define_AVS_DX_surfaces_data_adios
 
 ! for ellipticity
   integer nspl
-  double precision rspl(NR),espl(NR),espl2(NR)
+  double precision rspl(NR_DENSITY),ellipicity_spline(NR_DENSITY),ellipicity_spline2(NR_DENSITY)
 
   integer iregion_code
 
@@ -332,7 +334,7 @@ end subroutine define_AVS_DX_surfaces_data_adios
         r=dsqrt(xstore(2,2,2,ispec)**2 &
             + ystore(2,2,2,ispec)**2+zstore(2,2,2,ispec)**2)
 
-        if (r > RCMB/R_EARTH .and. r < R_UNIT_SPHERE) then
+        if (r > RCMB/R_PLANET .and. r < R_UNIT_SPHERE) then
           !     average over the element
           dvp = 0.0
           dvs = 0.0
@@ -352,7 +354,7 @@ end subroutine define_AVS_DX_surfaces_data_adios
 ! this is the Legendre polynomial of degree two, P2(cos(theta)), see the discussion above eq (14.4) in Dahlen and Tromp (1998)
                   p20=0.5d0*(3.0d0*cost*cost-1.0d0)
 ! get ellipticity using spline evaluation
-                  call spline_evaluation(rspl,espl,espl2,nspl,r,ell)
+                  call spline_evaluation(rspl,ellipicity_spline,ellipicity_spline2,nspl,r,ell)
 ! this is eq (14.4) in Dahlen and Tromp (1998)
                   factor=ONE-(TWO/3.0d0)*ell*p20
                   r=r/factor
@@ -363,8 +365,8 @@ end subroutine define_AVS_DX_surfaces_data_adios
                                                 idoubling(ispec), &
                                                 r,rho,vpv,vph,vsv,vsh,eta_aniso, &
                                                 Qkappa,Qmu,RICB,RCMB, &
-                                                RTOPDDOUBLEPRIME,R80,R120,R220,R400,R600,R670,R771, &
-                                                RMOHO,RMIDDLE_CRUST,ROCEAN)
+                                                RTOPDDOUBLEPRIME,R80,R120,R220,R400,R670,R771, &
+                                                RMOHO,RMIDDLE_CRUST)
 
                 ! calculates isotropic values
                 vp = sqrt(((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &

@@ -240,7 +240,7 @@ module specfem_par
 
   ! for ellipticity
   integer :: nspl
-  double precision,dimension(NR) :: rspl,espl,espl2
+  double precision,dimension(NR_DENSITY) :: rspl,ellipicity_spline,ellipicity_spline2
 
   !-----------------------------------------------------------------
   ! rotation

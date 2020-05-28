@@ -32,8 +32,10 @@
 
 ! create the different regions of the mesh
 
-  use constants, only: myrank,R_EARTH,ADD_4TH_DOUBLING, &
+  use constants, only: myrank,ADD_4TH_DOUBLING, &
     IREGION_CRUST_MANTLE,IREGION_INNER_CORE,IREGION_OUTER_CORE,MAX_NUMBER_OF_MESH_LAYERS
+
+  use shared_parameters, only: R_PLANET
 
   implicit none
 
@@ -95,8 +97,8 @@
 
   nex_eta_moho = NEX_PER_PROC_ETA
 
-  r_moho = RMOHO / R_EARTH
-  r_400 = R400 / R_EARTH
-  r_670 = R670 / R_EARTH
+  r_moho = RMOHO / R_PLANET
+  r_400 = R400 / R_PLANET
+  r_670 = R670 / R_PLANET
 
   end subroutine initialize_layers

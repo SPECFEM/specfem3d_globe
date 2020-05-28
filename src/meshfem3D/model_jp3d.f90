@@ -261,7 +261,8 @@
 
   subroutine model_jp3d_iso_zhao(radius,theta,phi,vp,vs,dvp,dvs,rho,moho,sediment,found_crust,is_inside_region)
 
-  use constants, only: ONE,R_EARTH,R_EARTH_KM,PI,GRAV,RHOAV,DEGREES_TO_RADIANS
+  use constants, only: ONE,PI,GRAV,DEGREES_TO_RADIANS
+  use shared_parameters, only: R_PLANET,RHOAV
 
   use model_jp3d_par
 
@@ -286,14 +287,14 @@
       .and. phi >= JP3D_LON_MIN*DEGREES_TO_RADIANS .and. phi <= JP3D_LON_MAX*DEGREES_TO_RADIANS) then
 
     ! makes sure radius is fine
-    if (radius > (R_EARTH - JP3D_DEP_MAX*1000.d0)/R_EARTH) then
+    if (radius > (R_PLANET - JP3D_DEP_MAX*1000.d0)/R_PLANET) then
       is_inside_region = .true.
 
       found_crust = .false.
 
       PE = theta
       RE = phi
-      HE = (ONE - radius)*R_EARTH_KM
+      HE = (ONE - radius)*(R_PLANET/1000.d0)
 
       !  calculate depths of the Conrad, the Moho and
       !  the plate boundary beneath the location (PHI,RAM)
@@ -326,7 +327,7 @@
       vs = vs*(1.0d0+dvs)
 
       ! moho
-      moho = H2 * 1000.d0 / R_EARTH  ! non-dimensionalizes
+      moho = H2 * 1000.d0 / R_PLANET  ! non-dimensionalizes
       ! no information about sediment layers
       sediment = 0.d0
 
@@ -345,8 +346,8 @@
       ! time scaling (s^{-1}) is done with scaleval
       scaleval = dsqrt(PI*GRAV*RHOAV)
       rho = rho*1000.0d0/RHOAV
-      vp = vp*1000.0d0/(R_EARTH*scaleval)
-      vs = vs*1000.0d0/(R_EARTH*scaleval)
+      vp = vp*1000.0d0/(R_PLANET*scaleval)
+      vs = vs*1000.0d0/(R_PLANET*scaleval)
     endif
   endif
 

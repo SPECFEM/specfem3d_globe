@@ -32,13 +32,15 @@
 
   use constants, only: &
     NGLLX,NGLLY,NGLLZ,MIDX,MIDY,MIDZ,N_SLS,CUSTOM_REAL, &
-    TINYVAL,R_EARTH_KM, &
+    TINYVAL, &
     IREGION_CRUST_MANTLE,IREGION_INNER_CORE,IREGION_OUTER_CORE, &
     myrank
 
+  use shared_parameters, only: R_PLANET_KM
+
   use meshfem3D_par, only: &
-    RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220, &
-    R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
+    RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R220, &
+    R771,R400,R120,R80,RMIDDLE_CRUST, &
     ABSORBING_CONDITIONS
 
   use meshfem3D_models_par, only: &
@@ -152,15 +154,15 @@
 
         ! checks r_prem,rmin/rmax and assigned idoubling
         call get_model_check_idoubling(r_prem,xmesh,ymesh,zmesh,rmin,rmax,idoubling, &
-                            RICB,RCMB,RTOPDDOUBLEPRIME, &
-                            R220,R670)
+                                       RICB,RCMB,RTOPDDOUBLEPRIME, &
+                                       R220,R670)
 
         ! gets reference model values: rho,vpv,vph,vsv,vsh and eta_aniso
         call meshfem3D_models_get1D_val(iregion_code,idoubling, &
-                              r_prem,rho,vpv,vph,vsv,vsh,eta_aniso, &
-                              Qkappa,Qmu,RICB,RCMB, &
-                              RTOPDDOUBLEPRIME,R80,R120,R220,R400,R600,R670,R771, &
-                              RMOHO,RMIDDLE_CRUST,ROCEAN)
+                                        r_prem,rho,vpv,vph,vsv,vsh,eta_aniso, &
+                                        Qkappa,Qmu,RICB,RCMB, &
+                                        RTOPDDOUBLEPRIME,R80,R120,R220,R400,R670,R771, &
+                                        RMOHO,RMIDDLE_CRUST)
 
         ! stores isotropic shear modulus from reference 1D model
         ! calculates isotropic value
@@ -199,7 +201,7 @@
         ! checks vpv: if close to zero then there is probably an error
         if (vpv < TINYVAL) then
           print *,'Error vpv: ',vpv,' vph:',vph,' vsv: ',vsv,' vsh: ',vsh,' rho:',rho
-          print *,'radius:',r*R_EARTH_KM
+          print *,'radius:',r*R_PLANET_KM
           call exit_mpi(myrank,'Error get_model values')
         endif
 
@@ -328,11 +330,13 @@
                             R220,R670)
 
   use constants, only: &
-    TINYVAL,DEGREES_TO_RADIANS,R_EARTH, &
+    TINYVAL,DEGREES_TO_RADIANS, &
     IFLAG_IN_FICTITIOUS_CUBE,IFLAG_INNER_CORE_NORMAL,IFLAG_MIDDLE_CENTRAL_CUBE,IFLAG_TOP_CENTRAL_CUBE,IFLAG_BOTTOM_CENTRAL_CUBE, &
     IFLAG_OUTER_CORE_NORMAL, &
     IFLAG_MANTLE_NORMAL,IFLAG_670_220,IFLAG_220_80,IFLAG_80_MOHO,IFLAG_CRUST, &
     myrank
+
+  use shared_parameters, only: R_PLANET
 
   implicit none
 
@@ -344,7 +348,7 @@
   double precision :: r_m,r,theta,phi
 
   ! compute real physical radius in meters
-  r_m = r_prem * R_EARTH
+  r_m = r_prem * R_PLANET
 
   ! checks layers
   if (abs(rmax - rmin ) < TINYVAL) then

@@ -322,6 +322,8 @@
 ! returns dvs,dvp and drho for given radius,theta,phi location
 
   use constants
+  use shared_parameters, only: R_PLANET_KM
+
   use model_ppm_par
 
   implicit none
@@ -344,7 +346,7 @@
   drho = 0.0d0
 
   ! depth of given radius (in km)
-  r_depth = R_EARTH_KM*(1.0 - radius)  ! radius is normalized between [0,1]
+  r_depth = R_PLANET_KM*(1.0 - radius)  ! radius is normalized between [0,1]
   if (r_depth > PPM_maxdepth .or. r_depth < PPM_mindepth) return
 
   lat=(PI_OVER_TWO-theta)*RADIANS_TO_DEGREES
@@ -367,19 +369,19 @@
   do i=-NUM_GAUSSPOINTS,NUM_GAUSSPOINTS
     g_depth = r_depth + i*const_a
     do j=-NUM_GAUSSPOINTS,NUM_GAUSSPOINTS
-      g_lon = lon + j*const_b/(R_EARTH_KM*DEGREES_TO_RADIANS)
+      g_lon = lon + j*const_b/(R_PLANET_KM*DEGREES_TO_RADIANS)
       do k=-NUM_GAUSSPOINTS,NUM_GAUSSPOINTS
-        g_lat = lat + k*const_b/(R_EARTH_KM*DEGREES_TO_RADIANS)
+        g_lat = lat + k*const_b/(R_PLANET_KM*DEGREES_TO_RADIANS)
 
         call get_PPMmodel_value(g_lat,g_lon,g_depth,g_dvs)
 
         ! horizontal weighting
-        x = (g_lat-lat)*DEGREES_TO_RADIANS*R_EARTH_KM
+        x = (g_lat-lat)*DEGREES_TO_RADIANS*R_PLANET_KM
         call get_Gaussianweight(x,sigma_h,g_weight)
         g_dvs = g_dvs*g_weight
         weight_prod = g_weight
 
-        x = (g_lon-lon)*DEGREES_TO_RADIANS*R_EARTH_KM
+        x = (g_lon-lon)*DEGREES_TO_RADIANS*R_PLANET_KM
         call get_Gaussianweight(x,sigma_h,g_weight)
         g_dvs = g_dvs*g_weight
         weight_prod = weight_prod * g_weight
@@ -516,6 +518,8 @@
 ! smooth model parameters
 
   use constants
+  use shared_parameters, only: R_PLANET,R_PLANET_KM
+
   use model_ppm_par, only: &
     PPM_maxlat,PPM_maxlon,PPM_minlat,PPM_minlon,PPM_maxdepth,PPM_mindepth
 
@@ -616,7 +620,7 @@
 
 
   sizeprocs = NCHUNKS*NPROC_XI*NPROC_ETA
-  element_size = (TWO_PI*R_EARTH/1000.d0)/(4*NEX_XI)
+  element_size = (TWO_PI*R_PLANET/1000.d0)/(4*NEX_XI)
 
   if (myrank == 0) then
     write(IMAIN, *) "model smoothing defaults:"
@@ -630,12 +634,12 @@
   if (nchunks == 0) call exit_mpi(myrank,'no chunks')
 
   element_size = element_size * 1000  ! e.g. 9 km on the surface, 36 km at CMB
-  element_size = element_size / R_EARTH
+  element_size = element_size / R_PLANET
 
   sigma_h = sigma_h * 1000.0 ! m
-  sigma_h = sigma_h / R_EARTH ! scale
+  sigma_h = sigma_h / R_PLANET ! scale
   sigma_v = sigma_v * 1000.0 ! m
-  sigma_v = sigma_v / R_EARTH ! scale
+  sigma_v = sigma_v / R_PLANET ! scale
 
   sigma_h2 = sigma_h ** 2
   sigma_v2 = sigma_v ** 2
@@ -904,7 +908,7 @@
         call get_distance_vec(dist_h,dist_v,cx0(ispec),cy0(ispec),cz0(ispec), &
                               cx(ispec2),cy(ispec2),cz(ispec2))
 
-        ! note: distances and sigmah, sigmav are normalized by R_EARTH
+        ! note: distances and sigmah, sigmav are normalized by R_PLANET
 
         ! checks distance between centers of elements
         if (dist_h > sigma_h3 .or. dist_v > sigma_v3 ) cycle
@@ -962,15 +966,15 @@
   maxdepth = PPM_maxdepth
   mindepth = PPM_mindepth
 
-  margin_v = sigma_v*R_EARTH/1000.0 ! in km
-  margin_h = sigma_h*R_EARTH/1000.0 * 180.0/(R_EARTH_KM*PI) ! in degree
+  margin_v = sigma_v*R_PLANET/1000.0 ! in km
+  margin_h = sigma_h*R_PLANET/1000.0 * 180.0/(R_PLANET_KM*PI) ! in degree
 
   ! computes the smoothed values
   do ispec = 1, nspec
 
     ! depth of given radius (in km)
     call xyz_2_rthetaphi(cx0(ispec),cy0(ispec),cz0(ispec),radius,theta,phi)
-    r_depth = R_EARTH_KM - radius*R_EARTH_KM  ! radius is normalized between [0,1]
+    r_depth = R_PLANET_KM - radius*R_PLANET_KM  ! radius is normalized between [0,1]
     if (r_depth >= maxdepth+margin_v .or. r_depth+margin_v < mindepth) cycle
 
     lat=(PI/2.0d0-theta)*180.0d0/PI
@@ -1012,7 +1016,7 @@
 
         ! depth of given radius (in km)
         call xyz_2_rthetaphi(cx0(ispec),cy0(ispec),cz0(ispec),radius,theta,phi)
-        r_depth = R_EARTH_KM - radius*R_EARTH_KM  ! radius is normalized between [0,1]
+        r_depth = R_PLANET_KM - radius*R_PLANET_KM  ! radius is normalized between [0,1]
         if (r_depth >= maxdepth+margin_v .or. r_depth+margin_v < mindepth) cycle
 
         lat=(PI/2.0d0-theta)*180.0d0/PI
