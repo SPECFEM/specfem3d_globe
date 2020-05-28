@@ -38,16 +38,88 @@
 !--------------------------------------------------------------------------------------------------
 
 
+  module model_sohl_par
+
+  implicit none
+
+  ! radius at physical surface
+  double precision, parameter :: SOHL_RSURFACE = 3390000.d0
+  ! no ocean, same as surface radius (Physical surface)
+  double precision, parameter :: SOHL_ROCEAN = SOHL_RSURFACE
+  ! some mid-crust layer for meshing
+  double precision, parameter :: SOHL_RMIDDLE_CRUST = 3340000.d0  ! depth = 50 km
+
+  ! Sohl & Spohn, 1997, propose two models:
+  !   * model A: mostly constrained by geophysical moment of inertia
+  !   * model B: mostly constrained by global Fe/Si composition by geochemical requirement
+  ! we will use model A as default
+  !
+  ! Model A
+  ! Sohl & Spohn 1997, Table 5, pg. 1623
+  ! Crust-mantle boundary
+  double precision, parameter :: SOHL_RMOHO = 3280000.d0       ! depth = 110 km average crustal thickness
+  ! Rheological lithosphere
+  double precision, parameter :: SOHL_R80  = 3055500.d0        ! depth = 334.5 km, if smaller will cause negative Jacobian err
+  ! Thermal lithosphere
+  double precision, parameter :: SOHL_R220 = 2908000.d0        ! depth = 482 km
+  double precision, parameter :: SOHL_R400 = 2655000.d0        ! depth = 735 km (added for meshing)
+  double precision, parameter :: SOHL_R600 = 2455000.d0        ! depth = 935 km (added for meshing)
+  ! alpha-olivine-beta-spinel transition
+  double precision, parameter :: SOHL_R670 = 2360000.d0        ! depth = 1030 km
+  ! beta-spinel-gamma-spinel transition
+  double precision, parameter :: SOHL_R771 = 2033000.d0        ! depth = 1357 km, below which the second doubling implemented
+  ! lower thermal boundary layer
+  double precision, parameter :: SOHL_RTOPDDOUBLEPRIME = 1503000.d0 ! depth = 1887 km, too thin for mesh ?
+  ! Core-mantle boundary
+  double precision, parameter :: SOHL_RCMB = 1468000.d0        ! depth = 1922 km
+  ! note: Sohl & Spohn assume an entirely molten iron alloy core.
+  !       since SPECFEM assumes a structure of solid crust/mantle - fluid outer core - solid inner core,
+  !       we set a very small inner core radius here.
+  double precision, parameter :: SOHL_RICB = 515000.d0         ! depth = 2875 km good for both stability and efficiency
+
+  ! Model B
+  ! Sohl & Spohn 1997, Table 6, pg. 1623
+  ! Crust-mantle boundary
+  double precision, parameter :: SOHL_B_RMOHO = 3138000.d0      ! depth =  252 km
+  ! Rheological lithosphere
+  double precision, parameter :: SOHL_B_R80  = 3016000.d0       ! depth =  374 km
+  ! Thermal lithosphere
+  double precision, parameter :: SOHL_B_R220 = 2783000.d0       ! depth =  607 km
+  double precision, parameter :: SOHL_B_R400 = 2655000.d0       ! depth =  735 km (added for meshing)
+  double precision, parameter :: SOHL_B_R600 = 2455000.d0       ! depth =  935 km (added for meshing)
+  ! alpha-olivine-beta-spinel transition
+  double precision, parameter :: SOHL_B_R670 = 2332000.d0       ! depth = 1058 km
+  ! beta-spinel-gamma-spinel transition
+  double precision, parameter :: SOHL_B_R771 = 1974000.d0       ! depth = 1416 km
+  ! lower thermal boundary layer
+  double precision, parameter :: SOHL_B_RTOPDDOUBLEPRIME = 1700000.d0 ! depth = 1690 km
+  ! Core-mantle boundary
+  double precision, parameter :: SOHL_B_RCMB = 1667000.d0       ! depth = 1723 km
+
+  ! densities
+  double precision, parameter :: SOHL_RHO_OCEANS = 1020.0         ! will not be used
+  double precision, parameter :: SOHL_RHO_TOP_OC = 6936.40        ! densities fluid outer core (from modSOHL)
+  double precision, parameter :: SOHL_RHO_BOTTOM_OC = 7268.20
+
+  end module model_sohl_par
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
   subroutine model_Sohl(x,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &
-                        ONE_CRUST,check_doubling_flag,RICB,RCMB,RTOPDDOUBLEPRIME, &
-                        R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+                        ONE_CRUST,check_doubling_flag)
 
   use constants, only: myrank,PI,GRAV, &
     IFLAG_CRUST,IFLAG_220_80,IFLAG_670_220,IFLAG_80_MOHO,IFLAG_MANTLE_NORMAL, &
     IFLAG_TOP_CENTRAL_CUBE,IFLAG_INNER_CORE_NORMAL,IFLAG_OUTER_CORE_NORMAL, &
     IFLAG_BOTTOM_CENTRAL_CUBE,IFLAG_IN_FICTITIOUS_CUBE,IFLAG_MIDDLE_CENTRAL_CUBE, &
     SUPPRESS_CRUSTAL_MESH
-  use shared_parameters, only: R_EARTH,R_MARS,RHOAV
+
+  use shared_parameters, only: R_PLANET,RHOAV
+
+  use model_sohl_par
 
   implicit none
 
@@ -61,14 +133,11 @@
   double precision,intent(in) :: x
   double precision,intent(out) :: rho,drhodr,vp,vs,Qkappa,Qmu
 
-  double precision,intent(in) :: RICB,RCMB,RTOPDDOUBLEPRIME, &
-                                 R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN
-
   ! local parameters
   double precision :: r,scaleval, x_moho
 
 ! compute real physical radius in meters
-  r = x * R_MARS
+  r = x * R_PLANET
 
 ! check flags to make sure we correctly honor the discontinuities
 ! we use strict inequalities since r has been slightly changed in mesher
@@ -77,46 +146,46 @@
     !
     !--- inner core
     !
-    if (r >= 0.d0 .and. r < RICB) then
+    if (r >= 0.d0 .and. r < SOHL_RICB) then
       ! debug
       !if (myrank == 0) print *,'debug: model Sohl:',idoubling,IFLAG_INNER_CORE_NORMAL,IFLAG_MIDDLE_CENTRAL_CUBE, &
       !                            IFLAG_BOTTOM_CENTRAL_CUBE,IFLAG_TOP_CENTRAL_CUBE,IFLAG_IN_FICTITIOUS_CUBE
 
       ! checks with inner core flags
       if (idoubling /= IFLAG_INNER_CORE_NORMAL .and. &
-         idoubling /= IFLAG_MIDDLE_CENTRAL_CUBE .and. &
-         idoubling /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
-         idoubling /= IFLAG_TOP_CENTRAL_CUBE .and. &
-         idoubling /= IFLAG_IN_FICTITIOUS_CUBE) &
+          idoubling /= IFLAG_MIDDLE_CENTRAL_CUBE .and. &
+          idoubling /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
+          idoubling /= IFLAG_TOP_CENTRAL_CUBE .and. &
+          idoubling /= IFLAG_IN_FICTITIOUS_CUBE) &
            call exit_MPI(myrank,'wrong doubling flag for inner core point in model_Sohl()')
     !
     !--- outer core
     !
-    else if (r > RICB .and. r < RCMB) then
+    else if (r > SOHL_RICB .and. r < SOHL_RCMB) then
       if (idoubling /= IFLAG_OUTER_CORE_NORMAL) &
         call exit_MPI(myrank,'wrong doubling flag for outer core point in model_Sohl()')
     !
     !--- D" at the base of the mantle
     !
-    else if (r > RCMB .and. r < RTOPDDOUBLEPRIME) then
+    else if (r > SOHL_RCMB .and. r < SOHL_RTOPDDOUBLEPRIME) then
       if (idoubling /= IFLAG_MANTLE_NORMAL) &
         call exit_MPI(myrank,'wrong doubling flag for D" point in model_Sohl()')
     !
     !--- mantle: from top of D" to d670
     !
-    else if (r > RTOPDDOUBLEPRIME .and. r < R670) then
+    else if (r > SOHL_RTOPDDOUBLEPRIME .and. r < SOHL_R670) then
       if (idoubling /= IFLAG_MANTLE_NORMAL) &
         call exit_MPI(myrank,'wrong doubling flag for top D" - > d670 point in model_Sohl()')
     !
     !--- mantle: from d670 to d220
     !
-    else if (r > R670 .and. r < R220) then
+    else if (r > SOHL_R670 .and. r < SOHL_R220) then
       if (idoubling /= IFLAG_670_220) &
         call exit_MPI(myrank,'wrong doubling flag for d670 - > d220 point in model_Sohl()')
     !
     !--- mantle and crust: from d220 to MOHO and then to surface
     !
-    else if (r > R220) then
+    else if (r > SOHL_R220) then
       if (idoubling /= IFLAG_220_80 .and. idoubling /= IFLAG_80_MOHO .and. idoubling /= IFLAG_CRUST) &
         call exit_MPI(myrank,'wrong doubling flag for d220 - > Moho - > surface point in model_Sohl()')
     endif
@@ -126,11 +195,13 @@
 !
 !--- inner core
 !
-  if (r >= 0.d0 .and. r <= RICB) then
+  if (r >= 0.d0 .and. r <= SOHL_RICB) then
     drhodr=-13.4654d-3-2.0d0*1.6906d0*x-3.0d0*0.4225d0*x*x
     !rho=7.2942d0-13.4654d-3*x-1.6906d0*x*x-0.4225d0*x*x*x
     !vp=6.5395d0-22.5299d-3*x-2.3767d0*x*x-7.2716d-1*x*x*x
     !vs=2.4d0
+    ! constant values for inner core
+    ! todo: shouldn't we have therefore drhodr = 0 ? probably doesn't matter yet...
     rho=8.752d0
     vp=7.3d0
     vs=3d0
@@ -139,7 +210,7 @@
 !
 !--- outer core
 !
-  else if (r > RICB .and. r <= RCMB) then
+  else if (r > SOHL_RICB .and. r <= SOHL_RCMB) then
     drhodr=-13.4654d-3-2.0d0*1.6906d0*x-3.0d0*0.4225d0*x*x
     rho=7.2942d0-13.4654d-3*x-1.6906d0*x*x-0.4225d0*x*x*x
     vp=6.5395d0-22.5299d-3*x-2.3767d0*x*x-7.2716d-1*x*x*x
@@ -149,7 +220,7 @@
 !
 !--- D" at the base of the mantle
 !
-  else if (r > RCMB .and. r <= RTOPDDOUBLEPRIME) then
+  else if (r > SOHL_RCMB .and. r <= SOHL_RTOPDDOUBLEPRIME) then
     drhodr=-0.5184d0-2.0d0*3.2190d-2*x-3.0d0*1.3738d-1*x*x
     rho=4.5706d0-0.5184d0*x-3.2190d-2*x*x-1.3738d-1*x*x*x
     vp=11.4166d0-9.0421d-1*x-2.6380d0*x*x+9.4287d-1*x*x*x
@@ -159,7 +230,7 @@
 !
 !--- mantle: from top of D" to d670
 !
-  else if (r > RTOPDDOUBLEPRIME .and. r <= R771) then
+  else if (r > SOHL_RTOPDDOUBLEPRIME .and. r <= SOHL_R771) then
     drhodr=-0.5184d0-2.0d0*3.2190d-2*x-3.0d0*1.3738d-1*x*x
     rho=4.5706d0-0.5184d0*x-3.2190d-2*x*x-1.3738d-1*x*x*x
     vp=11.4166d0-9.0421d-1*x-2.6380d0*x*x+9.4287d-1*x*x*x
@@ -167,7 +238,7 @@
     Qmu=312.0d0
     Qkappa=57827.0d0
 
-  else if (r > R771 .and. r <= R670) then
+  else if (r > SOHL_R771 .and. r <= SOHL_R670) then
     drhodr=-5.8162d-1+2.0d0*1.7083d-1*x-3.0d0*3.0264d-1*x*x
     rho=4.4067d0-5.8162d-1*x+1.7083d-1*x*x-3.0264d-1*x*x*x
     vp=11.8365d0-4.1713d0*x+3.1366d0*x*x-2.5691d0*x*x*x
@@ -177,7 +248,7 @@
 !
 !--- mantle: above d670
 !
-  else if (r > R670 .and. r <= R600) then
+  else if (r > SOHL_R670 .and. r <= SOHL_R600) then
     drhodr=-0.8166d0+2.0d0*0.4844d0*x-3.0d0*0.4175d0*x*x
     rho=4.1601d0-0.8166d0*x+0.4844d0*x*x-0.4175d0*x*x*x
     vp=11.9300d0-4.8826d0*x+3.5016d0*x*x-2.5538d0*x*x*x
@@ -185,7 +256,7 @@
     Qmu=143.0d0
     Qkappa=57827.0d0
 
-  else if (r > R600 .and. r <= R400) then
+  else if (r > SOHL_R600 .and. r <= SOHL_R400) then
     drhodr=-0.8166d0+2.0d0*0.4844d0*x-3.0d0*0.4175d0*x*x
     rho=4.1601d0-0.8166d0*x+0.4844d0*x*x-0.4175d0*x*x*x
     vp=11.9300d0-4.8826d0*x+3.5016d0*x*x-2.5538d0*x*x*x
@@ -193,7 +264,7 @@
     Qmu=143.0d0
     Qkappa=57827.0d0
 
-  else if (r > R400 .and. r <= R220) then
+  else if (r > SOHL_R400 .and. r <= SOHL_R220) then
     drhodr=-0.8166d0+2.0d0*0.4844d0*x-3.0d0*0.4175d0*x*x
     rho=4.1601d0-0.8166d0*x+0.4844d0*x*x-0.4175d0*x*x*x
     vp=11.9300d0-4.8826d0*x+3.5016d0*x*x-2.5538d0*x*x*x
@@ -201,7 +272,7 @@
     Qmu=143.0d0
     Qkappa=57827.0d0
 
-  else if (r > R220 .and. r <= R80) then
+  else if (r > SOHL_R220 .and. r <= SOHL_R80) then
     drhodr=-3.4678d01+2.0d0*4.0167d01*x-3.0d0*1.5572d01*x*x
     rho=1.3572d01-3.4678d01*x+4.0167d01*x*x-1.5572d01*x*x*x
     vp=1.5559d01-1.7460d01*x+1.8004d01*x*x-8.1157d0*x*x*x
@@ -211,7 +282,7 @@
   else
     if (CRUSTAL .and. .not. SUPPRESS_CRUSTAL_MESH) then
       ! fill with mantle and later add CRUST2.0
-      if (r > R80) then
+      if (r > SOHL_R80) then
         ! density/velocity from mantle just below moho
         drhodr=-3.4678d01+2.0d0*4.0167d01*x-3.0d0*1.5572d01*x*x
         rho=1.3572d01-3.4678d01*x+4.0167d01*x*x-1.5572d01*x*x*x
@@ -222,7 +293,7 @@
         Qkappa=57827.0d0
       endif
     else
-      if (r > R80 .and. r <= RMOHO) then
+      if (r > SOHL_R80 .and. r <= SOHL_RMOHO) then
         drhodr=1.7831d0+2.0d0*1.2168d0*x-3.0d0*1.7209d0*x*x
         rho=2.2095d0+1.7831d0*x+1.2168d0*x*x-1.7209d0*x*x*x
         vp=1.4372d01-1.3395d01*x+1.3353d01*x*x-6.3398d0*x*x*x
@@ -232,7 +303,7 @@
 
       else if (SUPPRESS_CRUSTAL_MESH) then
         ! DK DK extend the Moho up to the surface instead of the crust
-        x_moho = RMOHO / R_EARTH
+        x_moho = SOHL_RMOHO / R_PLANET
         drhodr=1.7831d0+2.0d0*1.2168d0*x_moho-3.0d0*1.7209d0*x_moho*x_moho
         rho=2.2095d0+1.7831d0*x_moho+1.2168d0*x_moho*x_moho-1.7209d0*x_moho*x_moho*x_moho
         vp=1.4372d01-1.3395d01*x_moho+1.3353d01*x_moho*x_moho-6.3398d0*x_moho*x_moho*x_moho
@@ -240,7 +311,7 @@
         Qmu=600.0d0
         Qkappa=57827.0d0
 
-      else if (r > RMOHO .and. r <= RMIDDLE_CRUST) then
+      else if (r > SOHL_RMOHO .and. r <= SOHL_RMIDDLE_CRUST) then
         drhodr=1.2062d02-2.0d0*1.2140d02*x+3.0d0*4.0519d01*x*x
         rho=-3.6937d01+1.2062d02*x-1.2140d02*x*x+4.0519d01*x*x*x
         vp=5.0537d01-1.2368d02*x+1.2381d02*x*x-4.3012d01*x*x*x
@@ -260,7 +331,7 @@
           Qkappa=57827.0d0
         endif
 
-      else if (r > RMIDDLE_CRUST .and. r <= ROCEAN) then
+      else if (r > SOHL_RMIDDLE_CRUST .and. r <= SOHL_ROCEAN) then
         drhodr=1.2062d02-2.0d0*1.2140d02*x+3.0d0*4.0519d01*x*x
         rho=-3.6937d01+1.2062d02*x-1.2140d02*x*x+4.0519d01*x*x*x
         vp=5.0537d01-1.2368d02*x+1.2381d02*x*x-4.3012d01*x*x*x
@@ -270,7 +341,7 @@
 
       ! for density profile for gravity, we do not check that r <= R_MARS
       ! Obviously will not be used for Mars but could keep it for regolith
-      else if (r > ROCEAN) then
+      else if (r > SOHL_ROCEAN) then
         drhodr=1.2062d02-2.0d0*1.2140d02*x+3.0d0*4.0519d01*x*x
         rho=-3.6937d01+1.2062d02*x-1.2140d02*x*x+4.0519d01*x*x*x
         vp=5.0537d01-1.2368d02*x+1.2381d02*x*x-4.3012d01*x*x*x
@@ -286,7 +357,7 @@
 
 !daniel todo: check non-dimensionalize with R_MARS, MARS_RHOAV?
 !
-! note: we will set RHOAV and R_EARTH to MARS_RHOAV and mars radius in get_model_parameters
+! note: we will set RHOAV and R_PLANET to MARS_RHOAV and mars radius in get_model_parameters
 !       to have these non-dimensionalization factors account for a different planet. however, it might also work
 !       with earth factor as long as we are consistent in dimensionalize/non-dimensionalize
 
@@ -295,8 +366,8 @@
   scaleval = dsqrt(PI*GRAV*RHOAV)
   drhodr = drhodr*1000.0d0/RHOAV
   rho = rho*1000.0d0/RHOAV
-  vp = vp*1000.0d0/(R_EARTH*scaleval)
-  vs = vs*1000.0d0/(R_EARTH*scaleval)
+  vp = vp*1000.0d0/(R_PLANET*scaleval)
+  vs = vs*1000.0d0/(R_PLANET*scaleval)
 
   end subroutine model_Sohl
 
@@ -304,13 +375,15 @@
 !=====================================================================
 !
 
+! not used yet, mostly in case for AVS_DX mesh outputs
+
   subroutine Sohl_display_outer_core(x,rho,vp,vs,Qkappa,Qmu,idoubling)
 
 ! routine used for AVS or DX display of stability condition
 ! and number of points per wavelength only in the fluid outer core
 
   use constants, only: IFLAG_OUTER_CORE_NORMAL,myrank,PI,GRAV
-  use shared_parameters, only: R_EARTH,RHOAV
+  use shared_parameters, only: R_PLANET,RHOAV
 
   implicit none
 
@@ -340,8 +413,8 @@
 ! time scaling (s^{-1}) is done with scaleval
   scaleval = dsqrt(PI*GRAV*RHOAV)
   rho = rho*1000.0d0/RHOAV
-  vp = vp*1000.0d0/(R_EARTH*scaleval)
-  vs = vs*1000.0d0/(R_EARTH*scaleval)
+  vp = vp*1000.0d0/(R_PLANET*scaleval)
+  vs = vs*1000.0d0/(R_PLANET*scaleval)
 
   end subroutine Sohl_display_outer_core
 
@@ -349,18 +422,17 @@
 !=====================================================================
 !
 
-  subroutine Sohl_density(x,rho,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
-                          R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+  subroutine Sohl_density(x,rho,ONE_CRUST)
 
-  use shared_parameters, only: R_MARS,RHOAV
+  use constants, only: R_MARS
+  use shared_parameters, only: RHOAV
+
+  use model_sohl_par
 
   implicit none
 
   double precision, intent(in) :: x
   double precision, intent(out) :: rho
-  double precision, intent(in) :: RICB,RCMB,RTOPDDOUBLEPRIME, &
-                                  R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN
-
   logical, intent(in) :: ONE_CRUST
 
   ! local parameters
@@ -370,42 +442,42 @@
   r = x * R_MARS
 
   ! calculates density according to radius
-  if (r <= RICB) then
+  if (r <= SOHL_RICB) then
     rho = 7.2942d0-13.4654d-3*x-1.6906d0*x*x-0.4225d0*x*x*x
-  else if (r > RICB .and. r <= RCMB) then
+  else if (r > SOHL_RICB .and. r <= SOHL_RCMB) then
     rho = 7.2942d0-13.4654d-2*x-1.6906d0*x*x-0.4225d0*x*x*x
-  else if (r > RCMB .and. r <= RTOPDDOUBLEPRIME) then
+  else if (r > SOHL_RCMB .and. r <= SOHL_RTOPDDOUBLEPRIME) then
     rho = 4.5706d0-0.5184d0*x-3.2190d-2*x*x-1.3738d-1*x*x*x
-  else if (r > RTOPDDOUBLEPRIME .and. r <= R771) then
+  else if (r > SOHL_RTOPDDOUBLEPRIME .and. r <= SOHL_R771) then
     rho = 4.5706d0-0.5184d0*x-3.2190d-2*x*x-1.3738d-1*x*x*x
-  else if (r > R771 .and. r <= R670) then
+  else if (r > SOHL_R771 .and. r <= SOHL_R670) then
     rho = 4.4067d0-5.8162d-1*x+1.7083d-1*x*x-3.0264d-1*x*x*x
-  else if (r > R670 .and. r <= R600) then
+  else if (r > SOHL_R670 .and. r <= SOHL_R600) then
     rho = 4.1601d0-0.8166d0*x+0.4844d0*x*x-0.4175d0*x*x*x
-  else if (r > R600 .and. r <= R400) then
+  else if (r > SOHL_R600 .and. r <= SOHL_R400) then
     rho = 4.1601d0-0.8166d0*x+0.4844d0*x*x-0.4175d0*x*x*x
-  else if (r > R400 .and. r <= R220) then
+  else if (r > SOHL_R400 .and. r <= SOHL_R220) then
     rho = 4.1601d0-0.8166d0*x+0.4844d0*x*x-0.4175d0*x*x*x
-  else if (r > R220 .and. r <= R80) then
+  else if (r > SOHL_R220 .and. r <= SOHL_R80) then
     rho = 1.3572d01-3.4678d01*x+4.0167d01*x*x-1.5572d01*x*x*x
   else
-    if (r > R80 .and. r <= RMOHO) then
+    if (r > SOHL_R80 .and. r <= SOHL_RMOHO) then
       rho = 2.2095d0+1.7831d0*x+1.2168d0*x*x-1.7209d0*x*x*x
-    else if (r > RMOHO .and. r <= RMIDDLE_CRUST) then
+    else if (r > SOHL_RMOHO .and. r <= SOHL_RMIDDLE_CRUST) then
       if (ONE_CRUST) then
-        rho = 2.815d0
+        rho = 2.815d0  ! constant upper crust value
       else
         rho = -3.6937d01+1.2062d02*x-1.2140d02*x*x+4.0519d01*x*x*x
       endif
-    else if (r > RMIDDLE_CRUST .and. r <= ROCEAN) then
+    else if (r > SOHL_RMIDDLE_CRUST .and. r <= SOHL_ROCEAN) then
       rho = -3.6937d01+1.2062d02*x-1.2140d02*x*x+4.0519d01*x*x*x
-    else if (r > ROCEAN) then
-      rho = -3.6937d01+1.2062d02*x-1.2140d02*x*x+4.0519d01*x*x*x
+    else if (r > SOHL_ROCEAN) then
+      rho = -3.6937d01+1.2062d02*x-1.2140d02*x*x+4.0519d01*x*x*x ! no ocean, same as upper crust
     endif
   endif
 
   ! non-dimensionalize
-  rho = rho*1000.0d0/RHOAV
+  rho = rho * 1000.0d0 / RHOAV
 
   end subroutine Sohl_density
 
