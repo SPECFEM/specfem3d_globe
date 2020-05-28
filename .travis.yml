@@ -81,6 +81,8 @@ env:
     # regional mars
     - TESTID=18 TESTDIR=9 TESTCOV=0 TESTFLAGS="" CUDA=false
 
+    # regional moon
+    - TESTID=19 TESTDIR=10 TESTCOV=0 TESTFLAGS="" CUDA=false
 
 before_install:
   # informations on git

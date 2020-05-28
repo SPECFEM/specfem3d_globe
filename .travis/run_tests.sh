@@ -19,6 +19,7 @@ case "$TESTDIR" in
   7) dir=EXAMPLES/regional_s40rts/ ;;
   8) dir=EXAMPLES/regional_small_adjoint/ ;;
   9) dir=EXAMPLES/mars_regional/ ;;
+  10) dir=EXAMPLES/moon_global/ ;;
   *) dir=EXAMPLES/regional_Greece_small/ ;;
 esac
 
@@ -210,6 +211,18 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   cd $WORKDIR
 fi
 echo -en 'travis_fold:end:coverage.mars-regional\\r'
+
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.moon-global\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
+  ##
+  ## testing moon global
+  ##
+  cd EXAMPLES/moon_global/
+  sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
+  ./run_this_example.sh
+  cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.moon-global\\r'
 
 
 # done
