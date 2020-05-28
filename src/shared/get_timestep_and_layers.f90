@@ -875,7 +875,7 @@
   !
   !   Mars : 2 * PI * 3390km / 4 / 256 / 4.0 km/s ~ 5 s
   !
-  !   Moon : 2 * PI * 1737.1km / 4 /256 / 4.0 km/s ~ 2.6 s
+  !   Moon : 2 * PI * 1737.1km / 4 /256 / 1.8 km/s ~ 6 s
   !
   !   note: for mars, the current mesh leads to a higher resolution in the crust with the above expected estimation,
   !         but lower resolution in the upper mantle region (below the doubling layer) with about twice the estimation size.
@@ -896,7 +896,7 @@
   !  T_min_res = 5.d0
   !case (IPLANET_MOON)
   !  ! Moon
-  !  T_min_res = 2.6d0
+  !  T_min_res = 6.d0
   !case default
   !  ! avoiding exit_MPI(), since we also call this routine in create_header_file
   !  ! which can be compiled without MPI - using stop instead

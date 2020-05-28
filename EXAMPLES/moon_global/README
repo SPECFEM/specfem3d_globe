@@ -5,7 +5,7 @@ README
 Example of a global simulation for Moon
 
 Simulation uses a 1D Moon model (VPREMOON by Garcia et al., 2011) together with topography.
-The setup runs on 6 CPU cores (MPI processes), with a runtime of about 1 min.
+The setup runs on 6 CPU cores (MPI processes), with a runtime of about 5 min.
 
 The stations are the Apollo Passive Seismic Experiments (Apollo) seismometers.
 The event is the large meteoroid impact on May 13, 1972 (day 134, 1972), impact time 08:46:42.5 +/- 1s 
@@ -63,8 +63,8 @@ type:
 to setup this directory for the simulation and to run a corresponding
 script "run_mesher_solver.bash".
 
-The simulation is accurate down to a shortest period of ~ 6 s.
-(minimum period resolved ~ (256/NEX_XI) * (ANGULAR_WIDTH/90) * 5 = (256/48) * (90/90) * 2.6 ~ 14 s)
+The simulation is accurate down to a shortest period of ~ 32 s.
+(minimum period resolved ~ (256/NEX_XI) * (ANGULAR_WIDTH/90) * 6 = (256/48) * (90/90) * 6 ~ 32 s)
  
 Reference seismograms for comparisons are provided in the directory: REF_SEIS/
 Please modify the setup and scripts according to your specifics.

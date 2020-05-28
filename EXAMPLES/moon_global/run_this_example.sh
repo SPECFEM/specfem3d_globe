@@ -34,6 +34,8 @@ cd ../../
 
 # compiles for a forward simulation
 cp $currentdir/DATA/Par_file DATA/Par_file
+cp $currentdir/DATA/FORCESOLUTION DATA/FORCESOLUTION
+
 make clean
 make -j4 all
 
