@@ -526,6 +526,7 @@ contains
 
   ! initializes
   array_gll(:,:,:,:) = 0.0_CUSTOM_REAL
+  local_dim = 0
 
 #if defined(USE_ADIOS)
   ! ADIOS 1
@@ -656,7 +657,7 @@ contains
 
   ! initializes
   array_gll(:,:,:,:) = 0.0_CUSTOM_REAL
-
+  local_dim = 0
   iexist = 0  ! 0 == does not exist; 1 == success, exists in file
 
 #if defined(USE_ADIOS)
@@ -829,6 +830,7 @@ contains
 
   ! initializes
   array_gll(:,:,:,:) = 0
+  local_dim = 0
 
 #if defined(USE_ADIOS)
   ! ADIOS 1
@@ -956,6 +958,7 @@ contains
 
   ! initializes
   array_1d(:) = 0._CUSTOM_REAL
+  local_dim = 0
 
 #if defined(USE_ADIOS)
   ! ADIOS 1
@@ -1082,6 +1085,7 @@ contains
 
   ! initializes
   array_1d(:) = 0
+  local_dim = 0
 
 #if defined(USE_ADIOS)
   ! ADIOS 1
