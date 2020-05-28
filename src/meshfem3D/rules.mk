@@ -201,6 +201,7 @@ meshfem3D_SHARED_OBJECTS = \
 	$O/model_prem.shared.o \
 	$O/model_Sohl.shared.o \
 	$O/model_topo_bathy.shared.o \
+	$O/model_vpremoon.shared.o \
 	$O/parallel.sharedmpi.o \
 	$O/param_reader.cc.o \
 	$O/read_compute_parameters.shared.o \
@@ -320,7 +321,8 @@ $O/model_attenuation.check.o: \
 	$(EMPTY_MACRO)
 
 $O/meshfem3D_par.check_module.o: $O/adios_manager.shared_adios_module.o
-
+$O/meshfem3D_models.check.o: $O/model_prem.shared.o
+$O/model_atten3D_QRFSI12.check.o: $O/model_prem.shared.o
 
 # Version file
 $O/initialize_mesher.check.o: ${SETUP}/version.fh

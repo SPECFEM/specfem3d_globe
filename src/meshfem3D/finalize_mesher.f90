@@ -66,27 +66,38 @@
     ! check total Earth mass
     if (NCHUNKS == 6) then
       write(IMAIN,*)
-      if (PLANET_TYPE == IPLANET_MARS) then
-        ! Mars
-        write(IMAIN,*) 'computed total Mars mass for this density model and mesh: '
-        write(IMAIN,*) '   ',sngl(Earth_mass_total),' kg'
-        write(IMAIN,*) '   (should be not too far from 6.417E+23 kg)'
-        write(IMAIN,*)
-        ! take into account the fact that dimensions have been non-dimensionalized by dividing them by R_EARTH
-        write(IMAIN,*) 'average density for this density model and mesh: '
-        write(IMAIN,*) '   ',sngl(Earth_mass_total / (volume_total * R_EARTH**3)),' kg/m3'
-        write(IMAIN,*) '   (should be not too far from 3933 kg/m3)'
-      else
+      select case(PLANET_TYPE)
+      case (IPLANET_EARTH)
         ! Earth
         write(IMAIN,*) 'computed total Earth mass for this density model and mesh: '
         write(IMAIN,*) '   ',sngl(Earth_mass_total),' kg'
         write(IMAIN,*) '   (should be not too far from 5.974E+24 kg)'
         write(IMAIN,*)
-        ! take into account the fact that dimensions have been non-dimensionalized by dividing them by R_EARTH
+        ! take into account the fact that dimensions have been non-dimensionalized by dividing them by R_PLANET
         write(IMAIN,*) 'average density for this density model and mesh: '
-        write(IMAIN,*) '   ',sngl(Earth_mass_total / (volume_total * R_EARTH**3)),' kg/m3'
+        write(IMAIN,*) '   ',sngl(Earth_mass_total / (volume_total * R_PLANET**3)),' kg/m3'
         write(IMAIN,*) '   (should be not too far from 5514 kg/m3)'
-      endif
+      case (IPLANET_MARS)
+        ! Mars
+        write(IMAIN,*) 'computed total Mars mass for this density model and mesh: '
+        write(IMAIN,*) '   ',sngl(Earth_mass_total),' kg'
+        write(IMAIN,*) '   (should be not too far from 6.417E+23 kg)'
+        write(IMAIN,*)
+        ! take into account the fact that dimensions have been non-dimensionalized by dividing them by R_PLANET
+        write(IMAIN,*) 'average density for this density model and mesh: '
+        write(IMAIN,*) '   ',sngl(Earth_mass_total / (volume_total * R_PLANET**3)),' kg/m3'
+        write(IMAIN,*) '   (should be not too far from 3933 kg/m3)'
+      case (IPLANET_MOON)
+        ! Moon
+        write(IMAIN,*) 'computed total Moon mass for this density model and mesh: '
+        write(IMAIN,*) '   ',sngl(Earth_mass_total),' kg'
+        write(IMAIN,*) '   (should be not too far from 7.347E+22 kg)'
+        write(IMAIN,*)
+        ! take into account the fact that dimensions have been non-dimensionalized by dividing them by R_PLANET
+        write(IMAIN,*) 'average density for this density model and mesh: '
+        write(IMAIN,*) '   ',sngl(Earth_mass_total / (volume_total * R_PLANET**3)),' kg/m3'
+        write(IMAIN,*) '   (should be not too far from 3344 kg/m3)'
+      end select
       write(IMAIN,*)
       write(IMAIN,*) 'position of the center of mass of the globe for this density model and mesh: '
       write(IMAIN,*) '   x = ',sngl((Earth_center_of_mass_x_total / Earth_mass_total) / 1000.d0),' km'

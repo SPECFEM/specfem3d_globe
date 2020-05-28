@@ -135,9 +135,9 @@ url_MOLA2 = 'https://pds-geosciences.wustl.edu/mgs/mgs-m-mola-5-megdr-l3-v1/mgsl
 # high-resolution lunar topography (SLDEM2015): https://pgda.gsfc.nasa.gov/products/54
 #
 # int16 values, 16-pixel per degree = 0.0625 degree resolution ~ 3.75 arc-minute
-#filename_webLOLAlbl = 'ldem_16.lbl'
-#filename_webLOLA = 'ldem_16.img'
-#url_LOLA = 'https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_16.img'
+filename_webLOLAlbl_16px = 'ldem_16.lbl'
+filename_webLOLA_16px = 'ldem_16.img'
+url_LOLA_16px = 'https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_16.img'
 # float values, 16-pixel per degree = 0.015625 degree resolution
 #filename_webLOLAlbl = 'ldem_16_float.lbl'
 #filename_webLOLA = 'ldem_16_float.img'
@@ -171,6 +171,9 @@ def get_url(topo):
     returns url for data download
     """
     global url_etopo1,url_etopo2 #url_etopo5
+    global url_MOLA2
+    global url_LOLA,url_LOLA_16px
+
     # sets url
     url = ''
     if topo == 'etopo1':
@@ -185,14 +188,12 @@ def get_url(topo):
         url = url_etopo2 # will get re-sampled
     elif topo == 'mars1.875':
         url = url_MOLA2
-    elif topo == 'mars2':
+    elif topo == 'mars' or topo == 'mars2':
         url = url_MOLA2  # will get re-sampled
-    elif topo == 'mars':
-        url = url_MOLA2  # will get re-sampled
-    elif topo == 'moon':
+    elif topo == 'moon' or topo == 'moon1' or topo == 'moon2':
         url = url_LOLA
-    elif topo == 'moon2':
-        url = url_LOLA
+    elif topo == 'moon4':
+        url = url_LOLA_16px
     else:
         print("Invalid topo argument %s, only recognizes etopo1,etopo2,etopo4,etopo5,etopo15,mars,moon" % topo)
         sys.exit(1)
@@ -205,6 +206,7 @@ def download_data_file(topo,filename):
     """
     global filename_webMOLA2,filename_webMOLA2lbl,url_MOLA2
     global filename_webLOLA,filename_webLOLAlbl,url_LOLA
+    global filename_webLOLA_16px,filename_webLOLAlbl_16px,url_LOLA_16px
 
     print("download:")
 
@@ -250,7 +252,10 @@ def download_data_file(topo,filename):
         filename = filename_webMOLA2
     elif 'moon' in topo:
         # data file in .img format
-        filename = filename_webLOLA
+        if topo == 'moon4':
+            filename = filename_webLOLA_16px
+        else:
+            filename = filename_webLOLA
     else:
         # data file downloaded as .zip file
         filename = 'topo.zip'
@@ -292,15 +297,21 @@ def download_data_file(topo,filename):
         open(filename_webMOLA2lbl,'w').write(text)
     elif 'moon' in topo:
         # table data
-        url = url_LOLA
-        url = url[0:url_LOLA.rfind('/')] + '/' + filename_webLOLAlbl
+        if topo == 'moon4':
+            url = url_LOLA_16px
+            file = filename_webLOLAlbl_16px
+        else:
+            url = url_LOLA
+            file = filename_webLOLAlbl
+
+        url = url[0:url.rfind('/')] + '/' + file
         print("table: " + url)
         lbl_file = requests.get(url)
         text = lbl_file.content
         # avoid bytes string issues with strings like b'Hello', converts to text string
         if isinstance(text, (bytes, bytearray)): text = text.decode("utf-8")
         print(text)
-        open(filename_webLOLAlbl,'w').write(text)
+        open(file,'w').write(text)
     else:
         # unzip
         with zipfile.ZipFile(filename, 'r') as zipObj:
@@ -404,7 +415,11 @@ def resample_topo_file(topo,filename_web,filename_grid):
             #       it uses multiple steps of scaling to avoid issues with clipping the int16 value range.
             #
             # remove offset, still using 0.5 scale
-            cmd = 'gdal_translate -ot int16 -a_offset 0 -a_scale 0.5 ' + filename_webLOLAlbl + ' topo.lbl'
+            if topo == 'moon4':
+                file = filename_webLOLAlbl_16px
+            else:
+                file = filename_webLOLAlbl
+            cmd = 'gdal_translate -ot int16 -a_offset 0 -a_scale 0.5 ' + file + ' topo.lbl'
             print("> ",cmd)
             status = subprocess.call(cmd, shell=True)
             check_status(status)
@@ -428,20 +443,22 @@ def resample_topo_file(topo,filename_web,filename_grid):
             status = subprocess.call(cmd, shell=True)
             check_status(status)
             # using int-16 values from 16-pixel resolution = 0.0625 degree resolution
-            #cmd = 'xyz2grd topo.bin -Gtopo_moon.grd -R0/360/-90/90 -I0.0625 -r -ZTLf -fic -fog -Vl'
-            # using int-16 values from 64-pixel resolution = 0.9375m arc-minutes
-            cmd = 'xyz2grd topo.bin -Gtopo_moon.grd -R0/360/-90/90 -I0.9375m -r -ZTLf -fic -fog -Vl'
+            if topo == 'moon4':
+                cmd = 'xyz2grd topo.bin -Gtopo.moon.grd -R0/360/-90/90 -I0.0625 -r -ZTLf -fic -fog -Vl'
+            else:
+                # using int-16 values from 64-pixel resolution = 0.9375m arc-minutes
+                cmd = 'xyz2grd topo.bin -Gtopo.moon.grd -R0/360/-90/90 -I0.9375m -r -ZTLf -fic -fog -Vl'
             #cmd = 'xyz2grd '   + filename_web + ' -Gmoontopo.grd -R0/360/-90/90 -I0.9375m -r -ZTLhw -fic -fog -V'
             print("> ",cmd)
             status = subprocess.call(cmd, shell=True)
             check_status(status)
             print("")
-            cmd = 'grdinfo topo_moon.grd'
+            cmd = 'grdinfo topo.moon.grd'
             status = subprocess.call(cmd, shell=True)
             check_status(status)
             print("")
             # resample
-            cmd = 'grdsample topo_moon.grd -V -Rd ' + grid + ' ' + interval_min
+            cmd = 'grdsample topo.moon.grd -V -Rd ' + grid + ' ' + interval_min
 
         else:
             print("invalid topo %s for resampling" % topo)
@@ -925,12 +942,26 @@ def create_topo_bathy(topo):
         NY_BATHY = 2700
         filename_web = filename_webLOLA
 
+    elif topo == 'moon1':
+        INTERVAL = 1              # resample to 1m
+        SIZE_FILTER_ONE_SIDE = 0
+        NX_BATHY = 21600
+        NY_BATHY = 10800
+        filename_web = filename_webLOLA
+
     elif topo == 'moon2':
         INTERVAL = 2              # resample to 2m
-        SIZE_FILTER_ONE_SIDE = 0  # no filtering
+        SIZE_FILTER_ONE_SIDE = 0
         NX_BATHY = 10800
         NY_BATHY = 5400
         filename_web = filename_webLOLA
+
+    elif topo == 'moon4':         # low-res version
+        INTERVAL = 4              # resample to 4m
+        SIZE_FILTER_ONE_SIDE = 3  # filter
+        NX_BATHY = 5400
+        NY_BATHY = 2700
+        filename_web = filename_webLOLA_16px
 
     else:
         print("Unrecognized option %s" % topo)
@@ -938,12 +969,13 @@ def create_topo_bathy(topo):
 
     # 1-degree in km
     if 'mars' in topo:
-        degree_distance = 2.0 * 3390.0 * 3.1415926 / 360.0
+        radius = 3390.0
     elif 'moon' in topo:
-        degree_distance = 2.0 * 1737.1 * 3.1415926 / 360.0
+        radius = 1737.1
     else:
-        degree_distance = 2.0 * 6371.0 * 3.1415926 / 360.0
+        radius = 6371.0
     # distance for minutes interval
+    degree_distance = 2.0 * radius * 3.1415926 / 360.0
     grid_resolution_minutes = INTERVAL * degree_distance / 60.0
 
     print("  interval: {} minutes".format(INTERVAL))

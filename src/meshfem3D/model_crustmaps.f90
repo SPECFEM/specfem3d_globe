@@ -48,6 +48,8 @@
   integer, parameter :: EU_CRUSTMAP_RESOLUTION = 4 !means 1/4 degrees
   ! Mars
   integer, parameter :: MARS_CRUSTMAP_RESOLUTION = 6 !means 1/6 degrees
+  ! Moon
+  integer, parameter :: MOON_CRUSTMAP_RESOLUTION = 6 !means 1/6 degrees
 
   ! model_crustmaps_variables combined crustal maps
   integer :: CRUSTMAP_RESOLUTION
@@ -68,7 +70,7 @@
 ! standard routine to setup model
 
   use constants, only: myrank
-  use shared_parameters, only: PLANET_TYPE,IPLANET_MARS
+  use shared_parameters, only: PLANET_TYPE,IPLANET_EARTH,IPLANET_MARS,IPLANET_MOON
 
   use model_crustmaps_par
 
@@ -78,13 +80,19 @@
   integer :: ier
 
   ! resolution
-  if (PLANET_TYPE == IPLANET_MARS) then
-    ! Mars
-    CRUSTMAP_RESOLUTION = MARS_CRUSTMAP_RESOLUTION
-  else
+  select case(PLANET_TYPE)
+  case (IPLANET_EARTH)
     ! Earth
     CRUSTMAP_RESOLUTION = EU_CRUSTMAP_RESOLUTION
-  endif
+  case (IPLANET_MARS)
+    ! Mars
+    CRUSTMAP_RESOLUTION = MARS_CRUSTMAP_RESOLUTION
+  case (IPLANET_MOON)
+    ! Moon
+    CRUSTMAP_RESOLUTION = MOON_CRUSTMAP_RESOLUTION
+  case default
+    call exit_MPI(myrank,'Invalid planet, crustmaps not implemented yet')
+  end select
 
   ! allocates model arrays
   allocate(thickness(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP), &
@@ -138,8 +146,8 @@
 
   subroutine read_general_crustmap()
 
-  use constants, only: IMAIN,ZERO,HUGEVAL
-  use shared_parameters, only: PLANET_TYPE,IPLANET_MARS
+  use constants, only: IMAIN,ZERO,HUGEVAL,myrank
+  use shared_parameters, only: PLANET_TYPE,IPLANET_EARTH,IPLANET_MARS,IPLANET_MOON
 
   use model_crustmaps_par
 
@@ -152,13 +160,19 @@
   ! user output
   write(IMAIN,*)
   write(IMAIN,*) 'incorporating crustal model: crustMap'
-  if (PLANET_TYPE == IPLANET_MARS) then
-    ! Mars
-    write(IMAIN,*) '  using files              : DATA/crustmap/marscrust**.cmap'
-  else
+  select case(PLANET_TYPE)
+  case (IPLANET_EARTH)
     ! Earth
     write(IMAIN,*) '  using files              : DATA/crustmap/eucrust**.cmap'
-  endif
+  case (IPLANET_MARS)
+    ! Mars
+    write(IMAIN,*) '  using files              : DATA/crustmap/marscrust**.cmap'
+  case (IPLANET_MOON)
+    ! Moon
+    write(IMAIN,*) '  using files              : DATA/crustmap/mooncrust**.cmap'
+  case default
+    call exit_MPI(myrank,'Invalid planet, crustmaps not implemented yet')
+  end select
   write(IMAIN,*) '  crustmap resolution      : ',CRUSTMAP_RESOLUTION
   write(IMAIN,*) '  number of crustmap layers: ',NLAYERS_CRUSTMAP
   write(IMAIN,*) '  number of values per file: ',180*360*CRUSTMAP_RESOLUTION*CRUSTMAP_RESOLUTION
@@ -233,8 +247,8 @@
 
   subroutine read_general_crustmap_layer(var,var_letter,ind)
 
-  use constants, only: IMAIN,IIN,MAX_STRING_LEN
-  use shared_parameters, only: PLANET_TYPE,IPLANET_MARS
+  use constants, only: IMAIN,IIN,MAX_STRING_LEN,myrank
+  use shared_parameters, only: PLANET_TYPE,IPLANET_EARTH,IPLANET_MARS,IPLANET_MOON
 
   use model_crustmaps_par, only: CRUSTMAP_RESOLUTION
 
@@ -249,13 +263,19 @@
   integer :: ier, ila, iln
 
   ! file names
-  if (PLANET_TYPE == IPLANET_MARS) then
-    ! Mars
-    write(str_crust,'(a,a1,i1,a)') 'DATA/crustmap/marscrust', var_letter, ind,'.cmap'
-  else
+  select case(PLANET_TYPE)
+  case (IPLANET_EARTH)
     ! Earth
     write(str_crust,'(a,a1,i1,a5)') 'DATA/crustmap/eucrust', var_letter, ind,'.cmap'
-  endif
+  case (IPLANET_MARS)
+    ! Mars
+    write(str_crust,'(a,a1,i1,a)') 'DATA/crustmap/marscrust', var_letter, ind,'.cmap'
+  case (IPLANET_MOON)
+    ! Moon
+    write(str_crust,'(a,a1,i1,a)') 'DATA/crustmap/mooncrust', var_letter, ind,'.cmap'
+  case default
+    call exit_MPI(myrank,'Invalid planet, crustmaps layers not implemented yet')
+  end select
 
   open(unit = IIN,file=trim(str_crust),status='old',action='read',iostat=ier)
   if (ier /= 0) then
@@ -287,7 +307,8 @@
 ! read smooth crust2.0 model (0.25 degree resolution) with eucrust
 ! based on software routines provided with the crust2.0 model by Bassin et al.
 
-  use constants, only: PI,GRAV,R_EARTH,RHOAV,INCLUDE_SEDIMENTS_IN_CRUST
+  use constants, only: PI,GRAV,INCLUDE_SEDIMENTS_IN_CRUST
+  use shared_parameters, only: R_PLANET,RHOAV
 
   use model_crustmaps_par
 
@@ -315,21 +336,21 @@
   ! thicks(5) - lower crust layer
 
   ! soft sediments
-  x3 = (R_EARTH-thicks(1)*1000.0d0)/R_EARTH
+  x3 = (R_PLANET - thicks(1)*1000.0d0)/R_PLANET
 
   ! all sediments
   h_sed = thicks(1) + thicks(2)
-  x4 = (R_EARTH-h_sed*1000.0d0)/R_EARTH
+  x4 = (R_PLANET - h_sed*1000.0d0)/R_PLANET
 
   ! upper crust
   h_uc = h_sed + thicks(3)
-  x5 = (R_EARTH-h_uc*1000.0d0)/R_EARTH
+  x5 = (R_PLANET - h_uc*1000.0d0)/R_PLANET
 
   ! middle crust
-  x6 = (R_EARTH-(h_uc+thicks(4))*1000.0d0)/R_EARTH
+  x6 = (R_PLANET - (h_uc+thicks(4))*1000.0d0)/R_PLANET
 
   ! moho
-  x7 = (R_EARTH-(h_uc+thicks(4)+thicks(5))*1000.0d0)/R_EARTH
+  x7 = (R_PLANET - (h_uc+thicks(4)+thicks(5))*1000.0d0)/R_PLANET
 
   found_crust = .true.
 ! if (x > x3 .and. INCLUDE_SEDIMENTS_IN_CRUST .and. h_sed > MINIMUM_SEDIMENT_THICKNESS) then
@@ -362,24 +383,24 @@
   scaleval = dsqrt(PI*GRAV*RHOAV)
 
   if (found_crust) then
-    vp = vp*1000.0d0/(R_EARTH*scaleval)
-    vs = vs*1000.0d0/(R_EARTH*scaleval)
+    vp = vp*1000.0d0/(R_PLANET*scaleval)
+    vs = vs*1000.0d0/(R_PLANET*scaleval)
     rho = rho*1000.0d0/RHOAV
   else
     ! takes ficticious values
-    !vp = 20.0*1000.0d0/(R_EARTH*scaleval)
-    !vs = 20.0*1000.0d0/(R_EARTH*scaleval)
+    !vp = 20.0*1000.0d0/(R_PLANET*scaleval)
+    !vs = 20.0*1000.0d0/(R_PLANET*scaleval)
     !rho = 20.0*1000.0d0/RHOAV
     ! uses default input values
     continue
   endif
 
   ! moho
-  moho = (h_uc+thicks(4)+thicks(5))*1000.0d0/R_EARTH ! non-dimensionalizes
+  moho = (h_uc+thicks(4)+thicks(5))*1000.0d0/R_PLANET ! non-dimensionalizes
 
   ! sediment thickness
   if (INCLUDE_SEDIMENTS_IN_CRUST) then
-    sediment = h_sed * 1000.d0/R_EARTH ! non-dimensionalizes
+    sediment = h_sed * 1000.d0/R_PLANET ! non-dimensionalizes
   endif
 
   end subroutine model_crustmaps
@@ -392,8 +413,8 @@
 
 ! crustal vp and vs in km/s, layer thickness in km
 
-  use constants, only: MINIMUM_SEDIMENT_THICKNESS,SMOOTH_CRUST_EVEN_MORE
-  use shared_parameters, only: PLANET_TYPE,IPLANET_MARS
+  use constants, only: MINIMUM_SEDIMENT_THICKNESS,SMOOTH_CRUST_EVEN_MORE,myrank
+  use shared_parameters, only: PLANET_TYPE,IPLANET_EARTH,IPLANET_MARS,IPLANET_MOON
 
   use model_crustmaps_par
 
@@ -457,15 +478,17 @@
   weight(:) = 0.d0
 
   ! smoothing
-  if (PLANET_TYPE == IPLANET_MARS) then
-    ! Mars
+  select case(PLANET_TYPE)
+  case (IPLANET_MARS,IPLANET_MOON)
+    ! Mars, Moon
     ! for global scale
     cap_degree = 2.d0
     !cap_degree = 1.d0 / CRUSTMAP_RESOLUTION
     !print *,"HELLO"
     call smooth_weights_CAP_vardegree(lon,lat,xlon,xlat,weight,cap_degree,NTHETA,NPHI)
     num_points = NTHETA*NPHI
-  else
+
+  case (IPLANET_EARTH)
     ! Earth
 
     ! checks if inside/outside of critical region for mesh stretching
@@ -509,7 +532,10 @@
         num_points = NTHETA*NPHI
       endif
     endif
-  endif
+
+  case default
+    call exit_MPI(myrank,'Invalid planet, crustmaps smoothing not implemented yet')
+  end select
 
   ! initializes
   velp(:) = 0.0d0

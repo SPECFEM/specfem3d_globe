@@ -51,9 +51,10 @@
   use constants, only: DEGREES_TO_RADIANS, NGLLX, &
     REFERENCE_MODEL_PREM,REFERENCE_MODEL_IASP91,REFERENCE_MODEL_AK135F_NO_MUD, &
     REFERENCE_MODEL_1066A,REFERENCE_MODEL_1DREF,REFERENCE_MODEL_JP1D,REFERENCE_MODEL_SEA1D, &
-    REFERENCE_MODEL_SOHL,REFERENCE_MODEL_CASE65TAY
+    REFERENCE_MODEL_SOHL,REFERENCE_MODEL_SOHL_B,REFERENCE_MODEL_CASE65TAY, &
+    REFERENCE_MODEL_VPREMOON,REFERENCE_MODEL_MOON_MEENA
 
-  use shared_parameters, only: REFERENCE_1D_MODEL
+  use shared_parameters, only: REFERENCE_1D_MODEL,R_PLANET,RICB
 
   implicit none
 
@@ -71,6 +72,7 @@
   double precision :: elem_size,min_grid_dx
   double precision :: dt_suggested
   double precision :: RADIAL_LEN_RATIO_CRUST,RADIUS_SURFACE,P_VELOCITY_MAX_CRUST,dt_suggested_crust
+  logical :: check_crust_DT
 
   ! initializes defaults
   RADIAL_LEN_RATIO_CENTRAL_CUBE   =     0.40d0
@@ -88,52 +90,49 @@
   DOUBLING_INNER_CORE             =      8.0d0
 
   ! default for PREM (near inner core boundary)
-  RADIUS_INNER_CORE               =   1221.0d0 ! RICB in km
-  P_VELOCITY_MAX                  = 11.02827d0 ! in km/s
+  RADIUS_INNER_CORE               = RICB / 1000.d0 ! RICB in km
+  P_VELOCITY_MAX                  = 11.02827d0 ! km/s vp: 11.26220 - 6.36400 * (1221.49/6371.)**2
 
   ! default for NGLLX == 5
   MIN_GLL_POINT_SPACING         =   0.1730d0
 
+  ! radius surface/crust
+  RADIUS_SURFACE = R_PLANET / 1000.d0    ! in km
+
+  ! also check constraint on DT from crust
+  check_crust_DT = .false.
+
   ! modifies maximum velocity according to reference 1D model
   select case (REFERENCE_1D_MODEL)
-  case (REFERENCE_MODEL_PREM)
-    RADIUS_INNER_CORE = 1221.0d0
-    P_VELOCITY_MAX = 11.02827d0 ! vp: 11.26220 - 6.36400 * (1221.49/6371.)**2
-
   case (REFERENCE_MODEL_IASP91)
-    RADIUS_INNER_CORE = 1217.0d0
     P_VELOCITY_MAX = 11.09147d0 ! vp: 11.24094 - 4.09689 * (1216.9/6371.)**2
 
   case (REFERENCE_MODEL_AK135F_NO_MUD)
-    RADIUS_INNER_CORE = 1217.5d0
     P_VELOCITY_MAX = 11.0427d0 ! vp
 
   case (REFERENCE_MODEL_1066A)
-    RADIUS_INNER_CORE = 1229.48d0
     P_VELOCITY_MAX = 10.9687d0 ! vp
 
   case (REFERENCE_MODEL_1DREF)
-    RADIUS_INNER_CORE = 1221.491d0
     P_VELOCITY_MAX = 11.02827d0  ! vpv (PREM)
 
   case (REFERENCE_MODEL_JP1D)
-    RADIUS_INNER_CORE = 1217.0d0
     P_VELOCITY_MAX = 11.09147d0 ! vp: 11.24094 - 4.09689 * x**2 (IASP91)
 
   case (REFERENCE_MODEL_SEA1D)
-    RADIUS_INNER_CORE = 1217.1d0
     P_VELOCITY_MAX = 11.09142d0 ! vp
 
-  case (REFERENCE_MODEL_SOHL,REFERENCE_MODEL_CASE65TAY)
+  case (REFERENCE_MODEL_SOHL, &
+        REFERENCE_MODEL_SOHL_B, &
+        REFERENCE_MODEL_CASE65TAY)
     ! Mars
     ! note: for mars, the time stepping is mostly affected by crustal elements.
     !       we will use two estimates, one for inner core and another for the crust to determine a minimum time step.
     ! inner core
-    RADIUS_INNER_CORE = 515.0d0
     P_VELOCITY_MAX = 7.3d0 * 1.1d0        ! vp: 11.26220 - 6.36400 * (1221.49/6371.)**2; daniel: increase by a factor 1.1x
     RADIAL_LEN_RATIO_CENTRAL_CUBE = 0.76  ! for an aspect ratio around 1.3
     ! surface/crust
-    RADIUS_SURFACE = 3390.0d0       ! in km
+    check_crust_DT = .true.
     P_VELOCITY_MAX_CRUST = 7.73d0   ! according to crustmap marscrustp7.cmap (lower crust layer) files
     ! empirical factor to account for aspect ratio in crust
     if (NEX_MAX < 480) then
@@ -143,6 +142,26 @@
       ! takes stretching effect into account which will lead to thinner elements closer to surface
       RADIAL_LEN_RATIO_CRUST = 0.46
     endif
+
+  case (REFERENCE_MODEL_VPREMOON, &
+        REFERENCE_MODEL_MOON_MEENA)
+    ! Moon
+    ! uses two estimates, one for inner core and another for the crust to determine a minimum time step.
+    ! inner core
+    P_VELOCITY_MAX = 7.3d0 * 1.1d0
+    RADIAL_LEN_RATIO_CENTRAL_CUBE = 0.76
+    ! surface/crust
+    check_crust_DT = .true.
+    P_VELOCITY_MAX_CRUST = 5.5d0   ! according to VPREMOON (lower crust layer)
+    ! empirical factor to account for aspect ratio in crust
+    if (NEX_MAX < 480) then
+      ! allows for larger time steps
+      RADIAL_LEN_RATIO_CRUST = 0.85
+    else
+      ! takes stretching effect into account which will lead to thinner elements closer to surface
+      RADIAL_LEN_RATIO_CRUST = 0.46
+    endif
+
   end select
 
   ! relative minimum distance between two GLL points
@@ -207,9 +226,9 @@
   !debug
   !print *,'debug: auto_time_stepping: inner core elem size',elem_size,'width/nex',WIDTH,NEX_MAX,'DT',DT
 
-  ! Mars
-  select case(REFERENCE_1D_MODEL)
-  case (REFERENCE_MODEL_SOHL,REFERENCE_MODEL_CASE65TAY)
+  ! crust time step
+  if (check_crust_DT) then
+    ! Mars & Moon models
     ! crustal elements
     elem_size = RADIAL_LEN_RATIO_CRUST * ((WIDTH * DEGREES_TO_RADIANS) * RADIUS_SURFACE) / dble(NEX_MAX)
     ! estimated time step
@@ -219,7 +238,7 @@
     !debug
     !print *,'debug: auto_time_stepping: mars crust elem size ',elem_size, &
     !        'dt_suggested,dt_suggested_crust',dt_suggested,dt_suggested_crust
-  end select
+  endif
 
   end subroutine auto_time_stepping
 
@@ -228,9 +247,9 @@
 !
   subroutine auto_attenuation_periods(WIDTH, NEX_MAX, MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
 
-  use constants, only: N_SLS,NGLLX,REFERENCE_MODEL_CASE65TAY
+  use constants, only: N_SLS
 
-  use shared_parameters, only: PLANET_TYPE, IPLANET_MARS,REFERENCE_1D_MODEL
+  use shared_parameters, only: T_min_period
 
   implicit none
 
@@ -239,16 +258,8 @@
   double precision, intent(inout) :: MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD
 
   ! local parameters
-  double precision :: TMP
-  double precision :: GLL_SPACING
-  double precision :: S_VELOCITY_MIN
+  double precision :: tmp
   double precision :: THETA(5)
-
-  ! factor degree to km
-  double precision :: DEG2KM
-
-  ! required points per wavelength
-  double precision,parameter :: PTS_PER_WAVELENGTH = 4.d0
   double precision,parameter :: TOL_ZERO = 1.d-30
 
   ! safety check
@@ -259,48 +270,8 @@
   if (WIDTH <= 0.d0) &
     stop 'Invalid WIDTH in auto_attenuation_periods()'
 
-  ! minimum period estimation
-  select case (PLANET_TYPE)
-  case (IPLANET_MARS)
-    ! minimum velocity (Vs)
-    if (REFERENCE_1D_MODEL == REFERENCE_MODEL_CASE65TAY) then
-      ! based on case65tay, minimum ~ 2.48 km/s
-      S_VELOCITY_MIN = 2.48d0
-    else
-      ! based on Sohl & Spohn, minimum Vs is ~ 4 km/s
-      S_VELOCITY_MIN = 4.d0
-    endif
-    ! converts degree to km
-    ! Mars: radius 3390 km -> 2 * PI * R / 360 ~ 59.16 km
-    DEG2KM = 59.d0
-  case default
-    ! minimum velocity (Vs)
-    S_VELOCITY_MIN = 2.25d0
-
-    ! converts degree to km
-    ! Earth: radius 6371 km -> 2 * PI * R / 360 ~ 111.19 km
-    DEG2KM = 111.d0
-  end select
-
-  ! average spacing between GLL points
-  GLL_SPACING = dble(NGLLX - 1)
-
-  ! Compute Min Attenuation Period
-  !
-  ! width of element in km = (Angular width in degrees / NEX_MAX) * degrees to km
-  TMP = WIDTH / dble(NEX_MAX) * DEG2KM
-
-  ! average grid node spacing in km = Width of an element in km / spacing for GLL point
-  TMP = TMP / GLL_SPACING
-
-  ! minimum resolved wavelength (for fixed number of points per wavelength)
-  TMP = TMP * PTS_PER_WAVELENGTH
-
-  ! The Minimum attenuation period = (minimum wavelength) / V_min
-  TMP = TMP/S_VELOCITY_MIN
-
   ! The Minimum attenuation period (integer)
-  MIN_ATTENUATION_PERIOD = TMP
+  MIN_ATTENUATION_PERIOD = T_min_period
 
   ! THETA defines the width of the Attenuation Range in Decades
   !   The number defined here were determined by minimizing
@@ -317,10 +288,10 @@
   !
   ! The max attenuation period for 3 SLS is optimally
   !   1.75 decades from the min attenuation period, see THETA above
-  TMP = TMP * 10.0d0**THETA(N_SLS)
+  tmp = MIN_ATTENUATION_PERIOD * 10.0d0**THETA(N_SLS)
 
   ! maximum period
-  MAX_ATTENUATION_PERIOD = TMP
+  MAX_ATTENUATION_PERIOD = tmp
 
   ! check
   if (MIN_ATTENUATION_PERIOD <= 0.d0) then
@@ -331,7 +302,8 @@
     print *,'Error: invalid attenuation maximum: ',MAX_ATTENUATION_PERIOD
     stop 'Invalid attenuation maximum'
   endif
-  if (abs(MAX_ATTENUATION_PERIOD - MIN_ATTENUATION_PERIOD) < TOL_ZERO .or. MAX_ATTENUATION_PERIOD < MIN_ATTENUATION_PERIOD) then
+  if (abs(MAX_ATTENUATION_PERIOD - MIN_ATTENUATION_PERIOD) < TOL_ZERO .or. &
+      MAX_ATTENUATION_PERIOD < MIN_ATTENUATION_PERIOD) then
     print *,'Error: invalid attenuation range min/max: ',MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD
     stop 'Invalid attenuation range min/max'
   endif
@@ -344,8 +316,7 @@
 
   subroutine auto_ner(WIDTH, NEX_MAX)
 
-  ! Mars
-  use shared_parameters, only: PLANET_TYPE,IPLANET_MARS,R_EARTH,R_MARS
+  use shared_parameters, only: PLANET_TYPE,IPLANET_EARTH,IPLANET_MARS,IPLANET_MOON,R_PLANET
 
   use shared_parameters, only: &
     NER_CRUST, NER_80_MOHO, NER_220_80, NER_400_220, NER_600_400, &
@@ -371,32 +342,22 @@
   double precision, dimension(NUM_REGIONS-1) :: ratio_bottom
   integer,          dimension(NUM_REGIONS-1) :: NER
 
-!  double precision :: ROCEAN,RMIDDLE_CRUST, &
-!          RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-!          RMOHO_FICTITIOUS_IN_MESHER,R80_FICTITIOUS_IN_MESHER
-!  double precision :: RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS
+! uses model specific radii to determine number of elements in radial direction
+! (set by earlier call to routine get_model_parameters_radii())
 
   ! radii
-  select case (PLANET_TYPE)
-  case (IPLANET_MARS)
-    ! Mars
-    ! note: radii R_.. are set according to Mars model geometry
-    radius(1)  = R_MARS               ! Surface radius 3390.0 km
-    radius(2)  = RMOHO_FICTITIOUS_IN_MESHER !    Moho - 1st Mesh Doubling Interface
-    radius(3)  = R80                  ! d = 334.5 km
-    radius(4)  = R220                 ! d = 482 km
-    radius(5)  = R400                 ! d = 735 km
-    radius(6)  = R600                 ! d = 935 km
-    radius(7)  = R670                 ! d = 1030 km
-    radius(8)  = R771                 ! d = 1357 km, radius 2033000.0 m
-    radius(9)  = 1900000.0d0          ! in between
-    radius(10) = RTOPDDOUBLEPRIME     ! d = 1887 km, radius 1503000.0 m
-    radius(11) = RCMB                 ! d = 1922 km
-    radius(12) = 1300000.0d0          ! d = 2090 km - 3rd Mesh Doubling Interface
-    radius(13) = 700000.0d0           ! d = 2690 km - 4th Mesh Doubling Interface
-    radius(14) = 395000.d0            ! RICB = 515000.0, Top Central Cube
+  radius(1)  = R_PLANET ! Surface radius
+  radius(2)  = RMOHO_FICTITIOUS_IN_MESHER   ! Moho - 1st Mesh Doubling Interface
+  radius(3)  = R80
+  radius(4)  = R220
+  radius(5)  = R400
+  radius(6)  = R600
+  radius(7)  = R670
+  radius(8)  = R771
 
-  case default
+  ! specific radii for planets
+  select case (PLANET_TYPE)
+  case (IPLANET_EARTH)
     ! Earth
     ! This is PREM in Kilometers, well ... kinda, not really ....
     !radius(1)  = 6371.00d0 ! Surface
@@ -414,26 +375,42 @@
     !radius(13) = 1371.00d0 !    5000 - 4th Mesh Doubling Interface
     !radius(14) =  982.00d0 ! Top Central Cube
 
-    ! uses model specific radii to determine number of elements in radial direction
-    ! (set by earlier call to routine get_model_parameters_radii())
-
-    radius(1)  = R_EARTH ! Surface
-    radius(2)  = RMOHO_FICTITIOUS_IN_MESHER !    Moho - 1st Mesh Doubling Interface
-    radius(3)  = R80    !      80
-    radius(4)  = R220   !     220
-    radius(5)  = R400   !     400
-    radius(6)  = R600   !     600
-    radius(7)  = R670   !     670
-    radius(8)  = R771   !     771
-
     radius(9)  = 4712000.0d0 !    1650 - 2nd Mesh Doubling: Geochemical Layering; Kellogg et al. 1999, Science
-
     radius(10) = RTOPDDOUBLEPRIME   !     D_double_prime ~ 3630
     radius(11) = RCMB   !     CMB ~ 3480
 
     radius(12) = 2511000.0d0 !    3860 - 3rd Mesh Doubling Interface
     radius(13) = 1371000.0d0 !    5000 - 4th Mesh Doubling Interface
-    radius(14) =  982000.0d0 ! Top Central Cube
+    radius(14) = R_CENTRAL_CUBE ! Top Central Cube
+
+  case (IPLANET_MARS)
+    ! Mars
+    ! note: radii R_.. are set according to Mars model geometry
+    radius(9)  = 1900000.0d0          ! in between R771 (at 2033km) and RTOPDOUBLEPRIME (at 1503km)
+    radius(10) = RTOPDDOUBLEPRIME     ! depth = 1887 km, radius 1503000.0 m
+    radius(11) = RCMB                 ! depth = 1922 km
+
+    radius(12) = 1300000.0d0          ! depth = 2090 km - 3rd Mesh Doubling Interface
+    radius(13) = 700000.0d0           ! depth = 2690 km - 4th Mesh Doubling Interface
+    radius(14) = R_CENTRAL_CUBE       ! Top Central Cube (and ICB at RICB = 515000.0)
+
+  case (IPLANET_MOON)
+    ! Moon
+    ! note: radii R_.. are set according to Moon model geometry
+    radius(9)  = 800000.0d0           ! in between R771 (radius = 966.1 km) and RTOPDOUBLEPRIME
+    radius(10) = RTOPDDOUBLEPRIME     ! D" radius = 480 km
+    radius(11) = RCMB                 ! RCMB radius = 380 km
+
+    radius(12) = 335000.0d0           ! 3rd Mesh Doubling Interface
+    radius(13) = 285000.0d0           ! 4th Mesh Doubling Interface
+    radius(14) = R_CENTRAL_CUBE       ! Top Central Cube (and ICB at RICB radius = 240 km)
+
+  case default
+    ! avoiding exit_MPI(), since we also call this routine in create_header_file
+    ! which can be compiled without MPI - using stop instead
+    !call exit_MPI(myrank,'Invalid planet, auto_ner() not implemented yet')
+    print *,'Invalid planet, auto_ner() not implemented yet'
+    stop 'Invalid planet, auto_ner() not implemented yet'
   end select
 
   ! radii in km
@@ -454,8 +431,10 @@
   if (CASE_3D) then
     NER(1) = 2
   endif
-  if (PLANET_TYPE == IPLANET_MARS) then
-    ! Mars
+
+  ! specifies minimum element layers (in vertical direction) for top layer
+  if (PLANET_TYPE == IPLANET_MARS .or. PLANET_TYPE == IPLANET_MOON) then
+    ! Mars & Moon
     NER(1) = 2
   endif
 
@@ -500,7 +479,7 @@
   NER_OUTER_CORE           = NER(11) + NER(12)
   NER_TOP_CENTRAL_CUBE_ICB = NER(13)
 
-  R_CENTRAL_CUBE           = radius(14) * 1000.0d0
+  R_CENTRAL_CUBE           = radius(14) * 1000.0d0 ! converts to m
 
   end subroutine auto_ner
 
@@ -511,8 +490,7 @@
   subroutine auto_optimal_ner(NUM_REGIONS, width, NEX, r, scaling, NER, rt, rb)
 
   use constants, only: DEGREES_TO_RADIANS
-  ! Mars
-  use shared_parameters, only: PLANET_TYPE,IPLANET_MARS
+  use shared_parameters, only: PLANET_TYPE,IPLANET_EARTH,IPLANET_MARS,IPLANET_MOON
 
   implicit none
 
@@ -546,16 +524,19 @@
 
   ! sets target aspect ratio
   select case(PLANET_TYPE)
-  case (IPLANET_MARS)
+  case (IPLANET_MARS,IPLANET_MOON)
     ! Mars
     aspect_ratio = ASPECT_RATIO_MARS
-  case default
+  case (IPLANET_EARTH)
     ! Earth
     aspect_ratio = ASPECT_RATIO_EARTH
+  case default
+    print *,'Invalid planet, auto_optimal_ner not implemented yet'
+    stop 'Invalid planet, auto_optimal_ner not implemented yet'
   end select
 
   ! debug
-  if (DEBUG) print *,'planet: ',PLANET_TYPE,'(1 == earth,2 == mars) - target ratio ',aspect_ratio
+  if (DEBUG) print *,'planet: ',PLANET_TYPE,'(1 == earth,2 == mars, 3 == moon) - target ratio ',aspect_ratio
 
   ! Find optimal elements per region
   do i = 1,NUM_REGIONS-1
@@ -567,7 +548,7 @@
 
     ! checks
     if (ner_test == 0) then
-      print *,'Error auto_ner: region',i,'ner_test/w/dr = ',ner_test,w,dr
+      print *,'Error auto_ner: region',i,'ner_test = ',ner_test,'width w/wtop/wbottom =',w,wt,wb,'radial length dr = ',dr
       stop 'Error invalid ner value in auto_ner'
     endif
 
@@ -581,7 +562,8 @@
 
     ! check
     if (ratio < 0.d0) then
-      print *,'Error: auto optimal ner has negative aspect ratio of element:',ratio,'region',i,'r',r(i),r(i+1),dr,'width',w
+      print *,'Error: auto optimal ner has negative aspect ratio of element:',ratio
+      print *,'       region',i,'radius',r(i),r(i+1),dr,'width',w
       stop 'Error auto_optimal_ner() with negative aspect ratio of element'
     endif
 
@@ -612,7 +594,7 @@
 
   subroutine find_r_central_cube(nex_xi_in, rcube)
 
-  use shared_parameters, only: PLANET_TYPE,IPLANET_MARS
+  use shared_parameters, only: PLANET_TYPE,IPLANET_EARTH,IPLANET_MARS,IPLANET_MOON
 
   implicit none
 
@@ -639,15 +621,29 @@
   !print *,'debug: inner core radius initial = ',sngl(rcube)
 
   ! inner core radius (in km)
-  if (PLANET_TYPE == IPLANET_MARS) then
-    ! Mars
-    rcube_test   =  200.0d0  ! start
-    rcubemax     =  MAX(300.0d0,rcube)  ! maximum size
-  else
+  select case(PLANET_TYPE)
+  case (IPLANET_EARTH)
     ! Earth
     rcube_test   =  930.0d0  ! start
     rcubemax     = MAX(1100.0d0,rcube)  ! maximum size
-  endif
+
+  case (IPLANET_MARS)
+    ! Mars
+    rcube_test   =  200.0d0  ! start
+    rcubemax     =  MAX(300.0d0,rcube)  ! maximum size
+
+  case (IPLANET_MOON)
+    ! Moon
+    rcube_test   =  150.0d0  ! start
+    rcubemax     =  MAX(220.0d0,rcube)  ! maximum size, RICB at 240km
+
+  case default
+    ! avoiding exit_MPI(), since we also call this routine in create_header_file
+    ! which can be compiled without MPI - using stop instead
+    !call exit_MPI(myrank,'Invalid planet, find r central cube not implemented yet')
+    print *,'Invalid planet, find r central cube not implemented yet'
+    stop 'Invalid planet, find r central cube not implemented yet'
+  end select
 
   nex_xi = nex_xi_in / 16
   ximin        = 1e7
@@ -723,12 +719,9 @@
   double precision :: x, y
   double precision :: surfx, surfy
   double precision :: dist_cc_icb, somme, dist_moy
-
   double precision :: RICB_KM
-  ! Earth
-  !double precision, parameter :: RICB_KM = 1221.0d0
-  ! Mars
-  !double precision, parameter :: RICB_KM = 515.d0
+
+  ! inner-core boundary in km
   RICB_KM = RICB / 1000.d0
 
   somme = 0.0d0
@@ -928,10 +921,8 @@
   double precision :: temp
 
   double precision :: RICB_KM
-  ! Earth
-  !double precision, parameter :: RICB_KM = 1221.0d0
-  ! Mars
-  !double precision, parameter :: RICB_KM = 515.d0
+
+  ! inner-core boundary in km
   RICB_KM = RICB / 1000.d0
 
   ratio_x = (ix * 1.0d0) / (nbx * 1.0d0)

@@ -42,13 +42,18 @@
     IFLAG_CRUST,IFLAG_80_MOHO,IFLAG_220_80,IFLAG_670_220,IFLAG_MANTLE_NORMAL, &
     IFLAG_OUTER_CORE_NORMAL,IFLAG_INNER_CORE_NORMAL
 
+  use shared_parameters, only: PLANET_TYPE,IPLANET_MARS,IPLANET_EARTH,IPLANET_MOON, &
+    R_PLANET
+
   ! Earth
   use constants, only: &
     EARTH_DEPTH_SECOND_DOUBLING_OPTIMAL,EARTH_DEPTH_THIRD_DOUBLING_OPTIMAL,EARTH_DEPTH_FOURTH_DOUBLING_OPTIMAL
   ! Mars
   use constants, only: &
     MARS_DEPTH_SECOND_DOUBLING_OPTIMAL,MARS_DEPTH_THIRD_DOUBLING_OPTIMAL,MARS_DEPTH_FOURTH_DOUBLING_OPTIMAL
-  use shared_parameters, only: PLANET_TYPE,IPLANET_MARS,R_EARTH,R_MARS
+  ! Moon
+  use constants, only: &
+    MOON_DEPTH_SECOND_DOUBLING_OPTIMAL,MOON_DEPTH_THIRD_DOUBLING_OPTIMAL,MOON_DEPTH_FOURTH_DOUBLING_OPTIMAL
 
   use shared_parameters, only: ner_mesh_layers, &
     ratio_sampling_array,this_region_has_a_doubling,doubling_index,r_bottom,r_top
@@ -69,14 +74,17 @@
 
   ! doubling elements
   integer :: ielem,elem_doubling_mantle,elem_doubling_middle_outer_core,elem_doubling_bottom_outer_core
+  integer :: ner_start,ner_end
   double precision :: DEPTH_SECOND_DOUBLING_REAL,DEPTH_THIRD_DOUBLING_REAL, &
                       DEPTH_FOURTH_DOUBLING_REAL
   double precision :: distance,distance_min,zval
 
   double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs
 
-  double precision :: R_PLANET
   double precision :: DEPTH_SECOND_DOUBLING_OPTIMAL,DEPTH_THIRD_DOUBLING_OPTIMAL,DEPTH_FOURTH_DOUBLING_OPTIMAL
+
+  ! debugging
+  logical, parameter :: DEBUG = .false.
 
   ! note: all these parameters must be set to .true. for now,
   !       otherwise mesher will fail since it assumes to have at least 3 doubling layers
@@ -101,19 +109,32 @@
   rmaxs(:) = 0.d0
 
   ! doubling depths
-  if (PLANET_TYPE == IPLANET_MARS) then
-    ! Mars
-    R_PLANET = R_MARS
-    DEPTH_SECOND_DOUBLING_OPTIMAL = MARS_DEPTH_SECOND_DOUBLING_OPTIMAL
-    DEPTH_THIRD_DOUBLING_OPTIMAL = MARS_DEPTH_THIRD_DOUBLING_OPTIMAL
-    DEPTH_FOURTH_DOUBLING_OPTIMAL = MARS_DEPTH_FOURTH_DOUBLING_OPTIMAL
-  else
+  select case(PLANET_TYPE)
+  case (IPLANET_EARTH)
     ! Earth
-    R_PLANET = R_EARTH
     DEPTH_SECOND_DOUBLING_OPTIMAL = EARTH_DEPTH_SECOND_DOUBLING_OPTIMAL
     DEPTH_THIRD_DOUBLING_OPTIMAL = EARTH_DEPTH_THIRD_DOUBLING_OPTIMAL
     DEPTH_FOURTH_DOUBLING_OPTIMAL = EARTH_DEPTH_FOURTH_DOUBLING_OPTIMAL
-  endif
+
+  case (IPLANET_MARS)
+    ! Mars
+    DEPTH_SECOND_DOUBLING_OPTIMAL = MARS_DEPTH_SECOND_DOUBLING_OPTIMAL
+    DEPTH_THIRD_DOUBLING_OPTIMAL = MARS_DEPTH_THIRD_DOUBLING_OPTIMAL
+    DEPTH_FOURTH_DOUBLING_OPTIMAL = MARS_DEPTH_FOURTH_DOUBLING_OPTIMAL
+
+  case (IPLANET_MOON)
+    ! Moon
+    DEPTH_SECOND_DOUBLING_OPTIMAL = MOON_DEPTH_SECOND_DOUBLING_OPTIMAL
+    DEPTH_THIRD_DOUBLING_OPTIMAL = MOON_DEPTH_THIRD_DOUBLING_OPTIMAL
+    DEPTH_FOURTH_DOUBLING_OPTIMAL = MOON_DEPTH_FOURTH_DOUBLING_OPTIMAL
+
+  case default
+    ! avoiding exit_MPI(), since we also call this routine in create_header_file
+    ! which can be compiled without MPI - using stop instead
+    !call exit_MPI(myrank,'Invalid planet, defining all layers not implemented yet')
+    print *,'Invalid planet, defining all layers not implemented yet'
+    stop 'Invalid planet, defining all layers not implemented yet'
+  end select
 
 ! find element below top of which we should implement the second doubling in the mantle
   DEPTH_SECOND_DOUBLING_REAL = 0.d0
@@ -130,6 +151,9 @@
         DEPTH_SECOND_DOUBLING_REAL = R_PLANET - zval
       endif
     enddo
+    if (DEBUG .and. myrank == 0) &
+      print *,'debug: 2nd doubling index = ',elem_doubling_mantle,DEPTH_SECOND_DOUBLING_REAL,'(in mantle D" - 771)'
+    ! check
     if (elem_doubling_mantle == -1) stop 'Unable to determine second doubling element'
   endif
 
@@ -141,7 +165,14 @@
     distance_min = HUGEVAL
     ! start at element number 4 because we need at least two elements below for the fourth doubling
     ! implemented at the bottom of the outer core
-    do ielem = 4,NER_OUTER_CORE
+    ! also, end at least one element layer before the CMB, otherwise the MPI interface points might cause problems.
+    if (ADD_4TH_DOUBLING) then
+      ner_start = 4
+    else
+      ner_start = 2
+    endif
+    ner_end = NER_OUTER_CORE-1
+    do ielem = ner_start,ner_end
       zval = RICB + ielem * (RCMB - RICB) / dble(NER_OUTER_CORE)
       distance = abs(zval - (R_PLANET - DEPTH_THIRD_DOUBLING_OPTIMAL))
       if (distance < distance_min) then
@@ -150,6 +181,9 @@
         DEPTH_THIRD_DOUBLING_REAL = R_PLANET - zval
       endif
     enddo
+    if (DEBUG .and. myrank == 0) &
+      print *,'debug: 3rd doubling index = ',elem_doubling_middle_outer_core,DEPTH_THIRD_DOUBLING_REAL,'(in outer core)'
+    ! check
     if (elem_doubling_middle_outer_core == -1) stop 'Unable to determine third doubling element'
   endif
 
@@ -170,10 +204,16 @@
         DEPTH_FOURTH_DOUBLING_REAL = R_PLANET - zval
       endif
     enddo
+    if (DEBUG .and. myrank == 0) &
+      print *,'debug: 4th doubling index = ',elem_doubling_bottom_outer_core,DEPTH_FOURTH_DOUBLING_REAL,'(in outer core)'
+    ! check
     if (elem_doubling_bottom_outer_core == -1) stop 'Unable to determine fourth doubling element'
-! make sure that the two doublings in the outer core are found in the right order
-    if (elem_doubling_bottom_outer_core >= elem_doubling_middle_outer_core) &
-      stop 'Error in location of the two doublings in the outer core'
+    ! make sure that the two doublings in the outer core are found in the right order
+    if (elem_doubling_bottom_outer_core >= elem_doubling_middle_outer_core) then
+      print *,'Error: invalid 4th doubling layer with bottom doubling layer index = ',elem_doubling_bottom_outer_core
+      print *,'       should be below 3rd doubling layer at ',elem_doubling_middle_outer_core
+      stop 'Error in location of the two doublings in the outer core, 4th should be below 3rd doubling layer'
+    endif
   endif
 
 ! define all the layers of the mesh
@@ -1148,19 +1188,20 @@
     endif
     if (r_bottom(ielem) - r_bottom(ielem+1) < 0.d0) then
       print *,'Error: define_all_layers rank ',myrank,'found invalid layer ',ielem, &
-              ' with negative radius separation: r_bottom ',r_top(ielem),r_top(ielem+1)
+              ' with negative radius separation: r_bottom ',r_bottom(ielem),r_bottom(ielem+1)
       stop 'Error invalid layering in define all layers'
     endif
   enddo
 
   ! debug
-  !if (myrank == 0) then
-  !  print *,'debug: define_all_layers:',NUMBER_OF_MESH_LAYERS
-  !  do ielem = 1,NUMBER_OF_MESH_LAYERS
-  !    print *,'debug:  layer ',ielem,': top/bottom ',r_top(ielem),r_bottom(ielem), &
-  !            'rmin/rmax/ner = ',rmins(ielem),rmaxs(ielem),ner_mesh_layers(ielem)
-  !  enddo
-  !endif
+  if (DEBUG .and. myrank == 0) then
+    print *,'debug: define_all_layers:',NUMBER_OF_MESH_LAYERS
+    do ielem = 1,NUMBER_OF_MESH_LAYERS
+      print *,'debug:  layer ',ielem,': top/bottom ',sngl(r_top(ielem)),sngl(r_bottom(ielem)), &
+              'rmin/rmax/ner = ',sngl(rmins(ielem)),sngl(rmaxs(ielem)),ner_mesh_layers(ielem), &
+              'doubling',this_region_has_a_doubling(ielem),ratio_sampling_array(ielem)
+    enddo
+  endif
 
   end subroutine define_all_layers
 

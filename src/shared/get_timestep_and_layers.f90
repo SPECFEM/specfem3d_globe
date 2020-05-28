@@ -37,13 +37,16 @@
   integer :: NEX_MAX
   integer :: multiplication_factor
   double precision :: min_chunk_width_in_degrees
-  double precision :: dt_auto,T_min_res
+  double precision :: dt_auto
   integer :: nex_max_auto_ner_estimate
 
   ! initializes
   DT = 0.d0
   MIN_ATTENUATION_PERIOD = 0.d0
   MAX_ATTENUATION_PERIOD = 0.d0
+
+  ! minimum period estimation
+  call get_minimum_period_estimate()
 
   !----
   !----  case prem_onecrust by default
@@ -52,36 +55,12 @@
   NEX_MAX = max(NEX_XI,NEX_ETA)
 
   ! to suppress the crustal layers
-  ! (replaced by an extension of the mantle: R_EARTH is not modified, but no more crustal doubling)
+  ! (replaced by an extension of the mantle: R_PLANET is not modified, but no more crustal doubling)
   if (SUPPRESS_CRUSTAL_MESH) then
     multiplication_factor = 2
   else
     multiplication_factor = 1
   endif
-
-  ! minimum period estimation
-  !   Earth: 2 * PI * 6371km / 4 / 256 / 2.3 km/s ~ 17 s
-  !
-  !   Mars : 2 * PI * 3390km / 4 / 256 / 4.0 km/s ~ 5 s
-  !   note: for mars, the current mesh leads to a higher resolution in the crust with the above expected estimation,
-  !         but lower resolution in the upper mantle region (below the doubling layer) with about twice the estimation size.
-  !
-  !   daniel todo: we might want to re-evaluate these mesh and minimum period estimations...
-  !                the mesh resolution estimations mostly affects the simulation by
-  !                setting the attenuation min/max period band in auto_ner.f90
-  !
-  !                for now, these minimum period estimations are mostly meant to inform users at which periods
-  !                the seismograms should be filtered above.
-  !
-  select case (PLANET_TYPE)
-  case (IPLANET_MARS)
-    ! Mars
-    T_min_res = 5.d0
-  case default
-    ! Earth
-    T_min_res = 17.d0
-  end select
-  T_min = max(ANGULAR_WIDTH_ETA_IN_DEGREES,ANGULAR_WIDTH_XI_IN_DEGREES)/90.0 * 256.0/min(NEX_ETA,NEX_XI) * T_min_res
 
   ! sets time step size, attenuation band and layers
   select case (PLANET_TYPE)
@@ -201,7 +180,7 @@
       NER_OUTER_CORE           = 30
       NER_TOP_CENTRAL_CUBE_ICB = 9
     else
-      ! for bigger NEX, uses 480 setting and then automatically adjusts in auto_ner()..
+      ! for bigger NEX, uses 480 setting and then automatically adjusts in auto_ner()
       DT                       = 0.008d0
       ! attenuation period range
       MIN_ATTENUATION_PERIOD   = 10.d0
@@ -219,8 +198,8 @@
       NER_OUTER_CORE           = 30
       NER_TOP_CENTRAL_CUBE_ICB = 9
     endif
-    ! uses automatic estimates for NEX > 320
-    nex_max_auto_ner_estimate = 320
+    ! uses automatic estimates for NEX > 480
+    nex_max_auto_ner_estimate = 480
 
     if (HONOR_1D_SPHERICAL_MOHO) then
       ! 1D models honor 1D spherical moho
@@ -248,8 +227,73 @@
       endif
     endif
 
-  case default
+  case (IPLANET_MOON)
+    ! Moon
+    ! radius of central cube
+    R_CENTRAL_CUBE = 200000.d0   ! artificial ICB will be at 250 km
+
+    ! Moon minimum period:
+    !   Moon deg2km ~ 1737.1 * 2 * PI / 360 = 30.2km, vs_min ~ 4.0 km/s
+    !   90./NEX * 30.2 / (NGLL-1) * 4 / 4.0 -> NEX = 80, NGLL = 5: T_min ~ 8.5 s
+
+    ! time step / number of element layers
+    if (NEX_MAX*multiplication_factor <= 80) then
+      DT                       = 0.2d0
+      ! attenuation period range
+      MIN_ATTENUATION_PERIOD   = 15.d0
+      MAX_ATTENUATION_PERIOD   = 750d0
+      ! number of element layers in each mesh region
+      NER_CRUST                = 2   ! earth:  1
+      NER_80_MOHO              = 2   !         1
+      NER_220_80               = 3   !         2
+      NER_400_220              = 2   !         2
+      NER_600_400              = 2   !         2
+      NER_670_600              = 1   !         1
+      NER_771_670              = 1   !         1
+      NER_TOPDDOUBLEPRIME_771  = 4   !         15
+      NER_CMB_TOPDDOUBLEPRIME  = 2   !         1
+      NER_OUTER_CORE           = 4   !         16
+      NER_TOP_CENTRAL_CUBE_ICB = 2   !         2
+    else
+      ! for bigger NEX, automatically adjusts in auto_ner()..
+      DT                       = 0.1d0
+      ! attenuation period range
+      MIN_ATTENUATION_PERIOD   = 15.d0
+      MAX_ATTENUATION_PERIOD   = 750d0
+      ! number of element layers in each mesh region
+      NER_CRUST                = 3
+      NER_80_MOHO              = 2  ! 2 okay; setting w/ jacobian error: nex96, rmoho=28km, r80=130km, ner > 2
+      NER_220_80               = 3
+      NER_400_220              = 2
+      NER_600_400              = 2
+      NER_670_600              = 1
+      NER_771_670              = 1
+      NER_TOPDDOUBLEPRIME_771  = 5
+      NER_CMB_TOPDDOUBLEPRIME  = 2
+      NER_OUTER_CORE           = 4
+      NER_TOP_CENTRAL_CUBE_ICB = 2
+    endif
+    ! uses automatic estimates for NEX > 80
+    nex_max_auto_ner_estimate = 80
+
+  case (IPLANET_EARTH)
     ! Earth
+    ! default radius of central cube
+    R_CENTRAL_CUBE = 982000.0d0
+
+    ! default layering
+    ! number of element layers in each mesh region
+    NER_CRUST                = 1
+    NER_80_MOHO              = 1
+    NER_220_80               = 2
+    NER_400_220              = 2
+    NER_600_400              = 2
+    NER_670_600              = 1
+    NER_771_670              = 1
+    NER_TOPDDOUBLEPRIME_771  = 15
+    NER_CMB_TOPDDOUBLEPRIME  = 1
+    NER_OUTER_CORE           = 16
+    NER_TOP_CENTRAL_CUBE_ICB = 2
 
     ! Earth minimum period example:
     !   deg2km ~ 111km, vs_min ~ 2.25 km/s
@@ -259,24 +303,9 @@
     if (NEX_MAX*multiplication_factor <= 80) then
       ! time step
       DT                       = 0.252d0
-
       ! attenuation period range
       MIN_ATTENUATION_PERIOD   = 30.d0
       MAX_ATTENUATION_PERIOD   = 1500.d0
-
-      ! number of element layers in each mesh region
-      NER_CRUST                = 1
-      NER_80_MOHO              = 1
-      NER_220_80               = 2
-      NER_400_220              = 2
-      NER_600_400              = 2
-      NER_670_600              = 1
-      NER_771_670              = 1
-      NER_TOPDDOUBLEPRIME_771  = 15
-      NER_CMB_TOPDDOUBLEPRIME  = 1
-      NER_OUTER_CORE           = 16
-      NER_TOP_CENTRAL_CUBE_ICB = 2
-
       ! radius of central cube
       R_CENTRAL_CUBE = 950000.d0
 
@@ -284,24 +313,9 @@
       ! time step
       !! DK DK to handle a case that Zhinan Xie found to be unstable for NEX = 96 I reduce the time step to 90% of its value here
       DT                       = 0.252d0 * 0.90d0
-
       ! attenuation period range
       MIN_ATTENUATION_PERIOD   = 30.d0
       MAX_ATTENUATION_PERIOD   = 1500.d0
-
-      ! number of element layers in each mesh region
-      NER_CRUST                = 1
-      NER_80_MOHO              = 1
-      NER_220_80               = 2
-      NER_400_220              = 2
-      NER_600_400              = 2
-      NER_670_600              = 1
-      NER_771_670              = 1
-      NER_TOPDDOUBLEPRIME_771  = 15
-      NER_CMB_TOPDDOUBLEPRIME  = 1
-      NER_OUTER_CORE           = 16
-      NER_TOP_CENTRAL_CUBE_ICB = 2
-
       ! radius of central cube
       R_CENTRAL_CUBE = 950000.d0
 
@@ -309,24 +323,9 @@
     else if (NEX_MAX*multiplication_factor <= 160) then
       ! time step
       DT                       = 0.252d0
-
       ! attenuation period range
       MIN_ATTENUATION_PERIOD   = 30.d0
       MAX_ATTENUATION_PERIOD   = 1500.d0
-
-      ! number of element layers in each mesh region
-      NER_CRUST                = 1
-      NER_80_MOHO              = 1
-      NER_220_80               = 2
-      NER_400_220              = 2
-      NER_600_400              = 2
-      NER_670_600              = 1
-      NER_771_670              = 1
-      NER_TOPDDOUBLEPRIME_771  = 15
-      NER_CMB_TOPDDOUBLEPRIME  = 1
-      NER_OUTER_CORE           = 16
-      NER_TOP_CENTRAL_CUBE_ICB = 2
-
       ! radius of central cube
       R_CENTRAL_CUBE = 950000.d0
 
@@ -337,17 +336,14 @@
       MIN_ATTENUATION_PERIOD   = 20.d0
       MAX_ATTENUATION_PERIOD   = 1000.d0
 
-      NER_CRUST                = 1
-      NER_80_MOHO              = 1
-      NER_220_80               = 2
+      ! adding more layering
       NER_400_220              = 3
       NER_600_400              = 3
-      NER_670_600              = 1
-      NER_771_670              = 1
       NER_TOPDDOUBLEPRIME_771  = 22
       NER_CMB_TOPDDOUBLEPRIME  = 2
       NER_OUTER_CORE           = 24
       NER_TOP_CENTRAL_CUBE_ICB = 3
+
       R_CENTRAL_CUBE = 965000.d0
 
     ! element width =   0.2812500      degrees =    31.27357      km
@@ -357,17 +353,16 @@
       MIN_ATTENUATION_PERIOD   = 15.d0
       MAX_ATTENUATION_PERIOD   = 750.d0
 
-      NER_CRUST                = 1
-      NER_80_MOHO              = 1
+      ! adding more layering
       NER_220_80               = 3
       NER_400_220              = 4
       NER_600_400              = 4
-      NER_670_600              = 1
       NER_771_670              = 2
       NER_TOPDDOUBLEPRIME_771  = 29
       NER_CMB_TOPDDOUBLEPRIME  = 2
       NER_OUTER_CORE           = 32
       NER_TOP_CENTRAL_CUBE_ICB = 4
+
       R_CENTRAL_CUBE = 940000.d0
 
     ! element width =   0.1875000      degrees =    20.84905      km
@@ -377,7 +372,7 @@
       MIN_ATTENUATION_PERIOD   = 10.d0
       MAX_ATTENUATION_PERIOD   = 500.d0
 
-      NER_CRUST                = 1
+      ! adding more layering
       NER_80_MOHO              = 2
       NER_220_80               = 4
       NER_400_220              = 5
@@ -388,6 +383,7 @@
       NER_CMB_TOPDDOUBLEPRIME  = 3
       NER_OUTER_CORE           = 48
       NER_TOP_CENTRAL_CUBE_ICB = 5
+
       R_CENTRAL_CUBE = 988000.d0
 
     ! element width =   0.1757812      degrees =    19.54598      km
@@ -397,7 +393,7 @@
       MIN_ATTENUATION_PERIOD   = 9.d0
       MAX_ATTENUATION_PERIOD   = 500.d0
 
-      NER_CRUST                = 1
+      ! adding more layering
       NER_80_MOHO              = 2
       NER_220_80               = 4
       NER_400_220              = 6
@@ -408,6 +404,7 @@
       NER_CMB_TOPDDOUBLEPRIME  = 3
       NER_OUTER_CORE           = 51
       NER_TOP_CENTRAL_CUBE_ICB = 5
+
       R_CENTRAL_CUBE = 1010000.d0
 
     ! element width =   0.1406250      degrees =    15.63679      km
@@ -417,6 +414,7 @@
       MIN_ATTENUATION_PERIOD   = 8.d0
       MAX_ATTENUATION_PERIOD   = 400.d0
 
+      ! adding more layering
       NER_CRUST                = 2
       NER_80_MOHO              = 3
       NER_220_80               = 5
@@ -428,6 +426,7 @@
       NER_CMB_TOPDDOUBLEPRIME  = 4
       NER_OUTER_CORE           = 64
       NER_TOP_CENTRAL_CUBE_ICB = 6
+
       R_CENTRAL_CUBE = 1020000.d0
 
     ! element width =   0.1041667      degrees =    11.58280      km
@@ -437,6 +436,7 @@
       MIN_ATTENUATION_PERIOD   = 6.d0
       MAX_ATTENUATION_PERIOD   = 300.d0
 
+      ! adding more layering
       NER_CRUST                = 2
       NER_80_MOHO              = 4
       NER_220_80               = 6
@@ -448,6 +448,7 @@
       NER_CMB_TOPDDOUBLEPRIME  = 5
       NER_OUTER_CORE           = 86
       NER_TOP_CENTRAL_CUBE_ICB = 9
+
       R_CENTRAL_CUBE = 990000.d0
 
     ! element width =   7.8125000E-02  degrees =    8.687103      km
@@ -457,6 +458,7 @@
       MIN_ATTENUATION_PERIOD   = 4.d0
       MAX_ATTENUATION_PERIOD   = 200.d0
 
+      ! adding more layering
       NER_CRUST                = 3
       NER_80_MOHO              = 6
       NER_220_80               = 8
@@ -468,6 +470,7 @@
       NER_CMB_TOPDDOUBLEPRIME  = 7
       NER_OUTER_CORE           = 116
       NER_TOP_CENTRAL_CUBE_ICB = 12
+
       R_CENTRAL_CUBE = 985000.d0
 
     ! element width =   7.2115384E-02  degrees =    8.018865      km
@@ -477,6 +480,7 @@
       MIN_ATTENUATION_PERIOD   = 4.d0
       MAX_ATTENUATION_PERIOD   = 200.d0
 
+      ! adding more layering
       NER_CRUST                = 3
       NER_80_MOHO              = 6
       NER_220_80               = 9
@@ -488,6 +492,7 @@
       NER_CMB_TOPDDOUBLEPRIME  = 8
       NER_OUTER_CORE           = 124
       NER_TOP_CENTRAL_CUBE_ICB = 13
+
       R_CENTRAL_CUBE = 985000.d0
 
     else
@@ -497,6 +502,7 @@
       MIN_ATTENUATION_PERIOD   = 4.d0
       MAX_ATTENUATION_PERIOD   = 200.d0
 
+      ! adding more layering
       NER_CRUST                = nint(3 * 2.d0*NEX_MAX / 1248.d0)
       NER_80_MOHO              = nint(6 * 2.d0*NEX_MAX / 1248.d0)
       NER_220_80               = nint(9 * 2.d0*NEX_MAX / 1248.d0)
@@ -508,12 +514,10 @@
       NER_CMB_TOPDDOUBLEPRIME  = nint(8 * 2.d0*NEX_MAX / 1248.d0)
       NER_OUTER_CORE           = nint(124 * 2.d0*NEX_MAX / 1248.d0)
       NER_TOP_CENTRAL_CUBE_ICB = nint(13 * 2.d0*NEX_MAX / 1248.d0)
-      R_CENTRAL_CUBE = 985000.d0
 
-    !! removed this limit           else
-    !! removed this limit             stop 'problem with this value of NEX_MAX'
+      R_CENTRAL_CUBE = 985000.d0
     endif
-    ! uses automatic estimates for NEX > 1248
+    ! uses automatic estimates auto_ner() for NEX > 1248
     nex_max_auto_ner_estimate = 1248
 
     !> Hejun
@@ -550,6 +554,12 @@
       endif
     endif
 
+  case default
+    ! avoiding exit_MPI(), since we also call this routine in create_header_file
+    ! which can be compiled without MPI - using stop instead
+    !call exit_MPI(myrank,'Invalid planet, timestep and layers not implemented yet')
+    print *,'Invalid planet, timestep and layers not implemented yet'
+    stop 'Invalid planet, timestep and layers not implemented yet'
   end select
 
   ! in case we stretch the element layers to account for moho, we need at least 2 element layers in the crust
@@ -627,8 +637,9 @@
       if (NER_CRUST < 2 ) NER_CRUST = 2
     endif
 
-    ! Mars
-    if (PLANET_TYPE == IPLANET_MARS) then
+    ! Mars & Moon
+    ! sets minimum number of element layers in crust
+    if (PLANET_TYPE == IPLANET_MARS .or. PLANET_TYPE == IPLANET_MOON) then
       if (HONOR_1D_SPHERICAL_MOHO) then
         if (.not. ONE_CRUST) then
           ! case 1D + two+ crustal layers
@@ -672,7 +683,12 @@
     ! which was obtained by trial and error
     DT = DT * (1.d0 - 0.05d0)
 
-  case default
+  case (IPLANET_MOON)
+    ! takes a 5% safety margin on the maximum stable time step
+    ! which was obtained by trial and error
+    DT = DT * (1.d0 - 0.05d0)
+
+  case (IPLANET_EARTH)
     ! Earth
     ! following models need special attention, at least for global simulations:
     if (NCHUNKS == 6) then
@@ -747,6 +763,12 @@
       endif
     endif
 
+  case default
+    ! avoiding exit_MPI(), since we also call this routine in create_header_file
+    ! which can be compiled without MPI - using stop instead
+    !call exit_MPI(myrank,'Invalid planet, timestep and layers not implemented yet')
+    print *,'Invalid planet, timestep and layers not implemented yet'
+    stop 'Invalid planet, timestep and layers not implemented yet'
   end select ! planet_type
 
   ! the maximum CFL of LDDRK is significantly higher than that of the Newmark scheme,
@@ -823,3 +845,142 @@
   time_step = dt_cut
 
   end subroutine get_timestep_limit_significant_digit
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine get_minimum_period_estimate()
+
+  use constants, only: NGLLX,PI,NPTS_PER_WAVELENGTH,REFERENCE_MODEL_CASE65TAY
+
+  use shared_parameters, only: T_min_period, &
+    ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES, &
+    NEX_XI,NEX_ETA, &
+    PLANET_TYPE,IPLANET_EARTH,IPLANET_MARS,IPLANET_MOON,R_PLANET, &
+    REFERENCE_1D_MODEL
+
+  implicit none
+
+  ! local parameters
+  integer :: NEX_MAX
+  double precision :: tmp,deg2km
+  double precision :: width,gll_spacing
+  double precision :: S_VELOCITY_MIN
+
+  ! we often use an estimate based on NGLL == 5, assuming that the number of points per wavelength
+  ! coincides with the number of GLL points and thus the element size is the same length a the minimum wavelength:
+  !
+  !   Earth: 2 * PI * 6371km / 4 / 256 / 2.3 km/s ~ 17 s
+  !
+  !   Mars : 2 * PI * 3390km / 4 / 256 / 4.0 km/s ~ 5 s
+  !
+  !   Moon : 2 * PI * 1737.1km / 4 /256 / 4.0 km/s ~ 2.6 s
+  !
+  !   note: for mars, the current mesh leads to a higher resolution in the crust with the above expected estimation,
+  !         but lower resolution in the upper mantle region (below the doubling layer) with about twice the estimation size.
+  !
+  !   daniel todo: we might want to re-evaluate these mesh and minimum period estimations...
+  !                the mesh resolution estimations mostly affects the simulation by
+  !                setting the attenuation min/max period band in auto_ner.f90
+  !
+  !                for now, these minimum period estimations are mostly meant to inform users at which periods
+  !                the seismograms should be filtered above.
+  !
+  !select case (PLANET_TYPE)
+  !case (IPLANET_EARTH)
+  !  ! Earth
+  !  T_min_res = 17.d0
+  !case (IPLANET_MARS)
+  !  ! Mars
+  !  T_min_res = 5.d0
+  !case (IPLANET_MOON)
+  !  ! Moon
+  !  T_min_res = 2.6d0
+  !case default
+  !  ! avoiding exit_MPI(), since we also call this routine in create_header_file
+  !  ! which can be compiled without MPI - using stop instead
+  !  !call exit_MPI(myrank,'Invalid planet, timestep and layers not implemented yet')
+  !  print *,'Invalid planet, timestep and layers not implemented yet'
+  !  stop 'Invalid planet, timestep and layers not implemented yet'
+  !end select
+  !T_min = max(ANGULAR_WIDTH_ETA_IN_DEGREES,ANGULAR_WIDTH_XI_IN_DEGREES)/90.0 * 256.0/min(NEX_ETA,NEX_XI) * T_min_res
+  !
+  !
+  ! Here, we use a slighty more general estimation which allows for different NGLL settings.
+  ! Also, we estimate the lower bound of the minimum period resolved by the model mesh
+  ! and not the upper bound of the minimum period as in the above formula.
+  !
+  ! This lower bound on the minimum period (T_min_period) will also be used for the attenuation period range estimation.
+  !
+  ! minimum period estimation
+  select case (PLANET_TYPE)
+  case (IPLANET_EARTH)
+    ! Earth
+    ! minimum velocity (Vs)
+    S_VELOCITY_MIN = 2.25d0
+
+  case (IPLANET_MARS)
+    ! Mars
+    ! minimum velocity (Vs)
+    if (REFERENCE_1D_MODEL == REFERENCE_MODEL_CASE65TAY) then
+      ! based on case65tay, minimum ~ 2.48 km/s
+      S_VELOCITY_MIN = 2.48d0
+    else
+      ! based on Sohl & Spohn, minimum Vs is ~ 4 km/s
+      S_VELOCITY_MIN = 4.d0
+    endif
+
+  case (IPLANET_MOON)
+    ! Moon
+    ! VPREMOON has very slow Vs close to surface (0.5 km/s) (regolith layer)
+    ! for this estimate, we use a slightly larger value here (vs corresponds to 10km depth)
+    S_VELOCITY_MIN = 1.8d0
+
+  case default
+    ! avoiding exit_MPI(), since we also call this routine in create_header_file
+    ! which can be compiled without MPI - using stop instead
+    !call exit_MPI(myrank,'Invalid planet, auto_attenuation_periods() not implemented yet')
+    print *,'Invalid planet, auto_attenuation_periods() not implemented yet'
+    stop 'Invalid planet, auto_attenuation_periods() not implemented yet'
+  end select
+
+  ! number of elements along one side of a chunk
+  NEX_MAX = max(NEX_XI,NEX_ETA)
+
+  ! width of chunk
+  width = min(ANGULAR_WIDTH_ETA_IN_DEGREES,ANGULAR_WIDTH_XI_IN_DEGREES)
+
+  ! average spacing between GLL points
+  gll_spacing = dble(NGLLX - 1)
+
+  ! check
+  if (NEX_MAX <= 0) &
+    stop 'Invalid NEX_MAX in get_minimum_period_estimate()'
+  if (width <= 0.d0) &
+    stop 'Invalid WIDTH in get_minimum_period_estimate()'
+  if (gll_spacing <= 0.d0) &
+    stop 'Invalid gll_spacing in get_minimum_period_estimate()'
+
+  ! converts degree to km
+  ! example Earth: radius 6371 km -> 2 * PI * R / 360 ~ 111.19 km
+  deg2km = R_PLANET / 1000.d0 * 2.d0 * PI / 360.d0
+
+  ! computes Min Period
+  !
+  ! width of element in km = (Angular width in degrees / NEX_MAX) * degrees to km
+  tmp = width * deg2km / dble(NEX_MAX)
+
+  ! average grid node spacing in km = Width of an element in km / spacing for GLL point
+  tmp = tmp / gll_spacing
+
+  ! minimum resolved wavelength (for fixed number of points per wavelength)
+  tmp = tmp * dble(NPTS_PER_WAVELENGTH-1)
+
+  ! minimum period resolved = (minimum wavelength) / V_min
+  tmp = tmp/S_VELOCITY_MIN
+
+  ! estimated minimum period resolved
+  T_min_period = tmp
+
+  end subroutine get_minimum_period_estimate

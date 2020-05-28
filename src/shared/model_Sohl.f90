@@ -355,8 +355,6 @@
 
   endif
 
-!daniel todo: check non-dimensionalize with R_MARS, MARS_RHOAV?
-!
 ! note: we will set RHOAV and R_PLANET to MARS_RHOAV and mars radius in get_model_parameters
 !       to have these non-dimensionalization factors account for a different planet. however, it might also work
 !       with earth factor as long as we are consistent in dimensionalize/non-dimensionalize

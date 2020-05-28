@@ -168,6 +168,7 @@ specfem3D_SHARED_OBJECTS = \
 	$O/model_prem.shared.o \
 	$O/model_Sohl.shared.o \
 	$O/model_topo_bathy.shared.o \
+	$O/model_vpremoon.shared.o \
 	$O/parallel.sharedmpi.o \
 	$O/param_reader.cc.o \
 	$O/read_compute_parameters.shared.o \
@@ -363,6 +364,8 @@ $O/specfem3D_par.solverstatic_module.o: $O/adios_manager.shared_adios_module.o
 
 $O/setup_sources_receivers.solverstatic.o: $O/search_kdtree.shared.o
 $O/locate_point.solverstatic.o: $O/search_kdtree.shared.o
+
+$O/make_gravity.solver.o: $O/model_prem.shared.o $O/model_Sohl.shared.o $O/model_vpremoon.shared.o
 
 # Version file
 $O/initialize_simulation.solverstatic.o: ${SETUP}/version.fh

@@ -32,8 +32,9 @@
 
   use constants
 
+  use shared_parameters, only: T_min_period
+
   use specfem_par, only: &
-          ANGULAR_WIDTH_XI_IN_DEGREES,NEX_XI, &
           station_name,network_name,stlat,stlon,stele,stbur, &
           DT,t0, &
           seismo_offset,seismo_current,it_end, &
@@ -185,13 +186,15 @@
   EVEL   = undef  !not defined
   EVDP   = sngl(cmt_depth)
 
-
   ! SAC headers will have new format
   USER0  = sngl(cmt_hdur) !half duration from CMT file if not changed to t0 = 0.d0 (point source)
 
   ! USER1 and USER2 slots are used for the shortest and longest periods at which
   ! simulations are accurate, respectively.
-  shortest_period = (256/NEX_XI)*(ANGULAR_WIDTH_XI_IN_DEGREES/90)*17
+
+  ! minimum period estimation
+  shortest_period = T_min_period
+
   USER1  = sngl(shortest_period)
   USER2  = 500.0d0
   USER3  = undef

@@ -66,6 +66,7 @@ shared_OBJECTS = \
 	$O/model_prem.shared.o \
 	$O/model_Sohl.shared.o \
 	$O/model_topo_bathy.shared.o \
+	$O/model_vpremoon.shared.o \
 	$O/parallel.sharedmpi.o \
 	$O/param_reader.cc.o \
 	$O/read_compute_parameters.shared.o \
@@ -87,6 +88,9 @@ shared_OBJECTS = \
 shared_MODULES = \
 	$(FC_MODDIR)/constants.$(FC_MODEXT) \
 	$(FC_MODDIR)/manager_adios.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_prem_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_sohl_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_vpremoon_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/my_mpi.$(FC_MODEXT) \
 	$(FC_MODDIR)/shared_input_parameters.$(FC_MODEXT) \
 	$(FC_MODDIR)/shared_compute_parameters.$(FC_MODEXT) \
@@ -168,6 +172,9 @@ $O/adios_helpers.shared_adios.o: $O/adios_helpers_readers.shared_adios.o $O/adio
 else ifeq ($(ADIOS2),yes)
 $O/adios_helpers.shared_adios.o: $O/adios_helpers_readers.shared_adios.o $O/adios_helpers_writers.shared_adios.o $O/adios_helpers_definitions.shared_adios.o
 endif
+
+$O/get_model_parameters.shared.o: $O/model_prem.shared.o $O/model_Sohl.shared.o $O/model_vpremoon.shared.o
+$O/make_ellipticity.shared.o: $O/model_prem.shared.o $O/model_Sohl.shared.o $O/model_vpremoon.shared.o
 
 ##
 ## shared

@@ -38,7 +38,7 @@
   integer :: ier
 
   ! sets up spline coefficients for ellipticity
-  if (ELLIPTICITY) call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
+  if (ELLIPTICITY) call make_ellipticity(nspl,rspl,ellipicity_spline,ellipicity_spline2,ONE_CRUST)
 
   ! read topography and bathymetry file
   if (TOPOGRAPHY) then
@@ -307,8 +307,8 @@
   subroutine meshfem3D_models_get1D_val(iregion_code,idoubling, &
                                         r_prem,rho,vpv,vph,vsv,vsh,eta_aniso, &
                                         Qkappa,Qmu,RICB,RCMB, &
-                                        RTOPDDOUBLEPRIME,R80,R120,R220,R400,R600,R670,R771, &
-                                        RMOHO,RMIDDLE_CRUST,ROCEAN)
+                                        RTOPDDOUBLEPRIME,R80,R120,R220,R400,R670,R771, &
+                                        RMOHO,RMIDDLE_CRUST)
 ! reference model values
 !
 ! for a given location radius (r_prem, which is the point's radius with tolerance factor),
@@ -329,7 +329,7 @@
   double precision,intent(inout) :: vpv,vph,vsv,vsh,eta_aniso,rho
   double precision,intent(inout) :: Qkappa,Qmu
   double precision,intent(in) :: RICB,RCMB,RTOPDDOUBLEPRIME,R80,R120,R220,R400, &
-    R600,R670,R771,RMOHO,RMIDDLE_CRUST,ROCEAN
+    R670,R771,RMOHO,RMIDDLE_CRUST
 
   ! local parameters
   double precision :: drhodr,vp,vs
@@ -462,8 +462,7 @@
     case (REFERENCE_MODEL_SOHL)
       ! Mars
       call model_Sohl(r_prem,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &
-                      ONE_CRUST,.true.,RICB,RCMB,RTOPDDOUBLEPRIME, &
-                      R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+                      ONE_CRUST,.true.)
       vpv = vp
       vph = vp
       vsv = vs
@@ -473,6 +472,16 @@
     case (REFERENCE_MODEL_CASE65TAY)
       ! Mars
       call model_case65TAY(r_prem,rho,vp,vs,Qkappa,Qmu,iregion_code)
+      vpv = vp
+      vph = vp
+      vsv = vs
+      vsh = vs
+      eta_aniso = 1.d0
+
+    case (REFERENCE_MODEL_VPREMOON)
+      ! Moon
+      call model_vpremoon(r_prem,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &
+                          ONE_CRUST,.true.,iregion_code)
       vpv = vp
       vph = vp
       vsv = vs
@@ -576,7 +585,7 @@
   if (iregion_code == IREGION_CRUST_MANTLE) then
     ! crust/mantle
     ! sets flag when mantle should not be extended to surface
-    if (r_prem >= RMOHO/R_EARTH .and. .not. CRUSTAL) then
+    if (r_prem >= RMOHO/R_PLANET .and. .not. CRUSTAL) then
       suppress_mantle_extension = .true.
     endif
 
@@ -587,13 +596,13 @@
     !
     ! note: in general, models here make use of perturbation values with respect to their
     !          corresponding 1-D reference models
-    if (MODEL_3D_MANTLE_PERTUBATIONS .and. r_prem > RCMB/R_EARTH .and. .not. suppress_mantle_extension) then
+    if (MODEL_3D_MANTLE_PERTUBATIONS .and. r_prem > RCMB/R_PLANET .and. .not. suppress_mantle_extension) then
 
       ! extend 3-D mantle model above the Moho to the surface before adding the crust
-      if (r_prem > RCMB/R_EARTH .and. r_prem < RMOHO/R_EARTH) then
+      if (r_prem > RCMB/R_PLANET .and. r_prem < RMOHO/R_PLANET) then
         ! GLL point is in mantle region, takes exact location
         r_used = r
-      else ! else if (r_prem >= RMOHO/R_EARTH) then
+      else ! else if (r_prem >= RMOHO/R_PLANET) then
         if (CRUSTAL) then
           ! GLL point is above moho
           ! takes radius slightly below moho radius, this will then "extend the mantle up to the surface";
@@ -606,7 +615,7 @@
           !       however, in case a mantle models extends to shallower depths, those velocity regions will be ignored.
           !
           ! to do in future: we might want to let the mantle routines decide where to this upper cut-off radius value
-          r_used = 0.999999d0*RMOHO/R_EARTH
+          r_used = 0.999999d0*RMOHO/R_PLANET
         endif
       endif
 
@@ -680,7 +689,7 @@
           ! 3D Harvard models s362ani, s362wmani, s362ani_prem and s2.9ea
           xcolat = sngl(theta*180.0d0/PI)
           xlon = sngl(phi*180.0d0/PI)
-          xrad = sngl(r_used*R_EARTH_KM)
+          xrad = sngl(r_used*R_PLANET_KM)
           call model_s362ani_subshsv(xcolat,xlon,xrad,xdvsh,xdvsv,xdvph,xdvpv)
 
           ! to use speed values from the 1D reference model but with 3D mesh variations
@@ -739,11 +748,11 @@
 
           ! normally mantle perturbations are taken from 24.4km (R_MOHO) up.
           ! we need to add the if statement for sgloberani_iso or sgloberani_aniso to take from 50km up:
-          if (r_prem > RCMB/R_EARTH .and. r_prem < 6321000.d0/R_EARTH) then
+          if (r_prem > RCMB/R_PLANET .and. r_prem < 6321000.d0/R_PLANET) then
             r_used = r
-          else   ! if (r_prem >= 6321000.d0/R_EARTH) then
+          else   ! if (r_prem >= 6321000.d0/R_PLANET) then
             ! this will then "extend the mantle up to the surface" from 50km depth
-            r_used = 6321000.d0/R_EARTH
+            r_used = 6321000.d0/R_PLANET
           endif
 
           call mantle_sglobe(r_used,theta,phi,dvsv,dvsh,dvp,drho)
@@ -1262,9 +1271,11 @@
 !
 ! note:  only Qmu attenuation considered, Qkappa attenuation not used so far in solver...
 
-  use constants, only: N_SLS,RMOHO_PREM
+  use constants, only: N_SLS
 
   use meshfem3D_models_par
+
+  use model_prem_par, only: PREM_RMOHO
 
   implicit none
 
@@ -1311,15 +1322,15 @@
 
     ! in case models incorporate a 3D crust, attenuation values for mantle
     ! get expanded up to surface, and for the crustal points Qmu for PREM crust is imposed
-    r_used = r_prem*R_EARTH_KM
+    r_used = r_prem*R_PLANET_KM
     if (CRUSTAL) then
       if (r_prem > (ONE-moho) .or. elem_in_crust) then
         ! points in actual crust: puts point radius into prem crust
-        r_used = RMOHO_PREM*1.0001
-      else if (r_prem*R_EARTH_KM >= RMOHO_PREM) then
+        r_used = PREM_RMOHO/1000.d0 * 1.0001
+      else if (r_prem*R_PLANET_KM >= PREM_RMOHO/1000.d0) then
         ! points below actual crust (e.g. oceanic crust case), but above prem moho:
         ! puts point slightly below prem moho to expand mantle values at that depth
-        r_used = RMOHO_PREM*0.99999
+        r_used = PREM_RMOHO/1000.d0 * 0.99999
       endif
     endif ! CRUSTAL
 
@@ -1417,7 +1428,7 @@
 ! creates VTK output file for moho depths spanning full globe
 
   use constants, only: PI,IREGION_CRUST_MANTLE,MAX_STRING_LEN,IMAIN,myrank
-  use shared_parameters, only: LOCAL_PATH,R_EARTH_KM
+  use shared_parameters, only: LOCAL_PATH,R_PLANET_KM
 
   implicit none
 
@@ -1446,6 +1457,11 @@
 
   ! only master process writes file
   if (myrank /= 0) return
+
+  write(IMAIN,*)
+  write(IMAIN,*) '  VTK moho output: resolution = ',1,'deg'
+  write(IMAIN,*) '                   NLAT = ',NLAT
+  write(IMAIN,*) '                   NLON = ',NLON
 
   elem_in_crust = .true.
   iregion_code = IREGION_CRUST_MANTLE
@@ -1490,8 +1506,8 @@
                                            elem_in_crust,moho,sediment)
       ! stores
       iglob = i + (j-1) * NLON
-      moho_depth(iglob) = moho * R_EARTH_KM  ! dimensionalize moho depth to km
-      sediment_depth(iglob) = sediment * R_EARTH_KM
+      moho_depth(iglob) = moho * R_PLANET_KM  ! dimensionalize moho depth to km
+      sediment_depth(iglob) = sediment * R_PLANET_KM
       tmp_x(iglob) = xmesh
       tmp_y(iglob) = ymesh
       tmp_z(iglob) = zmesh
@@ -1559,7 +1575,7 @@
 ! creates VTK output file for moho depths spanning full globe
 
   use constants, only: PI,MAX_STRING_LEN,IMAIN,myrank
-  use shared_parameters, only: LOCAL_PATH
+  use shared_parameters, only: LOCAL_PATH,RESOLUTION_TOPO_FILE,R_PLANET_KM
   use meshfem3D_models_par, only: ibathy_topo
 
   implicit none
@@ -1568,8 +1584,9 @@
   double precision :: xmesh,ymesh,zmesh
 
   ! 2D grid
-  integer, parameter :: NLAT = 180,NLON = 360
-  double precision :: dlat,dlon
+  integer, parameter :: NLAT_g = 180,NLON_g = 360  ! full sphere
+  integer :: NLAT,NLON
+  double precision :: dlat,dlon,samples_per_degree,dist
 
   integer :: i,j,ier,iglob,ispec
   integer :: icorner1,icorner2,icorner3,icorner4
@@ -1582,8 +1599,40 @@
   ! only master process writes file
   if (myrank /= 0) return
 
-  dlat = 180.d0/NLAT
-  dlon = 360.d0/NLON
+  ! number of samples per degree
+  samples_per_degree =  60.d0 / RESOLUTION_TOPO_FILE
+  ! distance between sampling points
+  dist = 2.d0 * PI * R_PLANET_KM / 360.d0 / samples_per_degree
+
+  ! total nlat/nlon
+  NLAT = int(NLAT_g * samples_per_degree)
+  NLON = int(NLON_g * samples_per_degree)
+
+  ! user output
+  write(IMAIN,*)
+  write(IMAIN,*) '  VTK topo output: topo resolution in minutes = ',sngl(RESOLUTION_TOPO_FILE)
+  write(IMAIN,*) '                   samples per degree         = ',sngl(samples_per_degree)
+  write(IMAIN,*) '                   resolution distance        = ',sngl(dist),'(km)'
+  write(IMAIN,*) '                   full globe NLAT = ',NLAT
+  write(IMAIN,*) '                              NLON = ',NLON
+  write(IMAIN,*) '                              total number of points NLAT x NLON = ',NLAT*NLON
+  call flush_IMAIN()
+
+  ! limits size of output file
+  if (samples_per_degree > 2) then
+    samples_per_degree = 2.d0
+    NLAT = int(NLAT_g * samples_per_degree)
+    NLON = int(NLON_g * samples_per_degree)
+    ! info
+    write(IMAIN,*) '                   limiting output to samples per degree         = ',int(samples_per_degree)
+    call flush_IMAIN()
+  endif
+
+  ! integer 32-bit limitation (integer overflow)
+  if (NLAT > int(2147483646.d0 / dble(NLON))) then
+    print *,'Error: integer 32-bit overflow: nlat x nlon = ',NLAT,'x',NLON,' exceeds limit ',2147483646
+    stop 'Error vtu (nlat x nlon) might exceed integer limit'
+  endif
 
   nglob = NLON * NLAT
   allocate(topo(nglob), &
@@ -1594,12 +1643,15 @@
   tmp_y(:) = 0.d0
   tmp_z(:) = 0.d0
 
+  dlat = 180.d0/NLAT
+  dlon = 360.d0/NLON
+
   ! loop in 1-degree steps over the globe
   do j = 1,NLAT
     do i = 1,NLON
       ! lat/lon in degrees (range lat/lon = [-90,90] / [-180,180]
-      lat = 90.d0 - j*dlat + 0.5d0
-      lon = -180.d0 + i*dlon - 0.5d0
+      lat = 90.d0 - j*dlat + 0.5d0*dlat
+      lon = -180.d0 + i*dlon - 0.5d0*dlon
 
       ! converts to colatitude theta/phi in radians
       theta = (90.d0 - lat) * PI/180.d0   ! colatitude between [0,pi]
@@ -1655,7 +1707,7 @@
 
   filename = trim(LOCAL_PATH)//'/mesh_topo_bathy'
 
-  call write_VTK_2Ddata_dp(nspec,nglob,tmp_x,tmp_y,tmp_z,ibool2D,topo,filename)
+  call write_VTU_2Ddata_dp(nspec,nglob,tmp_x,tmp_y,tmp_z,ibool2D,topo,filename)
 
   write(IMAIN,*)
   write(IMAIN,*) '  elevations written to file: ',trim(filename)//'.vtk'

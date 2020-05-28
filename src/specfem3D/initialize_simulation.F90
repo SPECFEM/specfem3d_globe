@@ -90,10 +90,14 @@
 
     write(IMAIN,*)
     select case(PLANET_TYPE)
+    case (IPLANET_EARTH)
+      write(IMAIN,*) 'Planet: Earth'
     case (IPLANET_MARS)
       write(IMAIN,*) 'Planet: Mars'
+    case (IPLANET_MOON)
+      write(IMAIN,*) 'Natural satellite: Moon'
     case default
-      write(IMAIN,*) 'Planet: Earth'
+      call exit_MPI(myrank,'Invalid planet, type not recognized yet')
     end select
     write(IMAIN,*)
 

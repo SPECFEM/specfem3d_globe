@@ -139,6 +139,9 @@
   use model_case65tay_par, only: &
     NR_case65TAY,Mcase65TAY_V_Qmu
 
+  use model_vpremoon_par, only: &
+    NR_VPREMOON_layers,VPREMOON_Qmu_original
+
   implicit none
 
   integer,intent(in) :: REFERENCE_1D_MODEL
@@ -154,7 +157,9 @@
   ! uses "pure" 1D models including their 1D-crust profiles
   ! (uses USE_EXTERNAL_CRUSTAL_MODEL set to false)
   select case(REFERENCE_1D_MODEL)
-  case (REFERENCE_MODEL_PREM, REFERENCE_MODEL_IASP91, REFERENCE_MODEL_JP1D)
+  case (REFERENCE_MODEL_PREM, &
+        REFERENCE_MODEL_IASP91, &
+        REFERENCE_MODEL_JP1D)
     ! PREM Q layers
     AM_V%Qn = 12
 
@@ -178,7 +183,8 @@
     call define_model_sea1d(.false.)
     AM_V%Qn = NR_SEA1D
 
-  case (REFERENCE_MODEL_SOHL)
+  case (REFERENCE_MODEL_SOHL, &
+        REFERENCE_MODEL_SOHL_B)
     ! Mars, Q from PREM
     AM_V%Qn = 12
 
@@ -187,13 +193,17 @@
     call define_model_case65TAY(.false.)
     AM_V%Qn = NR_case65TAY
 
+  case (REFERENCE_MODEL_VPREMOON)
+    ! Moon
+    ! no need to redefine 1D model, Qmu_original array contains original values (without CRUSTAL modification)
+    AM_V%Qn = NR_VPREMOON_layers
+
   case default
     call exit_MPI(myrank, 'Error attenuation setup: Reference 1D Model Not recognized')
   end select
 
   ! sets up attenuation storage (for all possible Qmu values defined in the 1D models)
-  allocate(AM_V%Qmu(AM_V%Qn), &
-           stat=ier)
+  allocate(AM_V%Qmu(AM_V%Qn),stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating AM_V arrays')
   AM_V%Qmu(:) = 0.d0
 
@@ -207,9 +217,11 @@
   !AM_V%Qtau_e(:,:) = 0.d0
 
   select case(REFERENCE_1D_MODEL)
-  case (REFERENCE_MODEL_PREM, REFERENCE_MODEL_IASP91, REFERENCE_MODEL_JP1D)
+  case (REFERENCE_MODEL_PREM, &
+        REFERENCE_MODEL_IASP91, &
+        REFERENCE_MODEL_JP1D)
     ! PREM Q values
-    !AM_V%Qr(:)     = (/   0.0d0,    RICB,  RICB,  RCMB,    RCMB,    R670,    R670,   R220,    R220,    R80,     R80, R_EARTH /)
+    !AM_V%Qr(:)     = (/   0.0d0,    RICB,  RICB,  RCMB,    RCMB,    R670,    R670,   R220,    R220,    R80,     R80, R_PLANET /)
     AM_V%Qmu(:)    = (/  84.6d0,  84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
 
   case (REFERENCE_MODEL_AK135F_NO_MUD)
@@ -228,18 +240,20 @@
     !AM_V%Qr(:)     = SEA1DM_V_radius_sea1d(:)
     AM_V%Qmu(:)    = SEA1DM_V_Qmu_sea1d(:)
 
-  case (REFERENCE_MODEL_SOHL)
+  case (REFERENCE_MODEL_SOHL, &
+        REFERENCE_MODEL_SOHL_B)
     ! Mars: todo - future use attenuation model by Nimmo & Faul, 2013?
     !       at the moment, this is taken from PREM
-    !AM_V%Qr(:)     = (/   0.0d0,    RICB,  RICB,  RCMB,    RCMB,    R670, R670,   R220,    R220,    R80,     R80, R_EARTH /)
+    !AM_V%Qr(:)     = (/   0.0d0,    RICB,  RICB,  RCMB,    RCMB,    R670, R670,   R220,    R220,    R80,     R80, R_PLANET /)
     AM_V%Qmu(:)    = (/  84.6d0,  84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
 
   case (REFERENCE_MODEL_CASE65TAY)
-    ! taken from PREM
-    !AM_V%Qr(:)     = (/   0.0d0,    RICB,  RICB,  RCMB,    RCMB,    R670, R670, R220,    R220,    R80,     R80, R_EARTH /)
-    !AM_V%Qmu(:)    = (/  84.6d0,  84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
     ! values as defined in model
     AM_V%Qmu(:)    = Mcase65TAY_V_Qmu(:)
+
+  case (REFERENCE_MODEL_VPREMOON)
+    ! Moon
+    AM_V%Qmu(:)    = VPREMOON_Qmu_original(:)
 
   case default
     call exit_MPI(myrank, 'Error attenuation setup: Reference 1D Model values missing')
@@ -334,31 +348,31 @@
 
   ! local parameters
   double precision :: Qmu_new
-  integer :: Qtmp,ier
+  integer :: num_total_Q,Qtmp,ier
   integer, save :: first_time_called = 1
 
   if (first_time_called == 1) then
     first_time_called = 0
     AM_S%Q_resolution = 10**ATTENUATION_COMP_RESOLUTION
-    AM_S%Q_max        = ATTENUATION_COMP_MAXIMUM
 
-    Qtmp              = AM_S%Q_resolution * AM_S%Q_max
+    ! total number of Q values for storage table
+    num_total_Q = AM_S%Q_resolution * ATTENUATION_COMP_MAXIMUM
 
-    allocate(AM_S%tau_e_storage(N_SLS, Qtmp), &
-             AM_S%Qmu_storage(Qtmp),stat=ier)
+    ! allocates Q table for precomputing relaxation times
+    allocate(AM_S%tau_e_storage(N_SLS, num_total_Q), &
+             AM_S%Qmu_storage(num_total_Q),stat=ier)
     if (ier /= 0) stop 'Error allocating AM_S arrays'
     AM_S%tau_e_storage(:,:) = 0.d0
     AM_S%Qmu_storage(:) = -1
   endif
 
-  if (Qmu < 0.0d0 .or. Qmu > AM_S%Q_max) then
-    write(IMAIN,*) 'Error attenuation_storage()'
-    write(IMAIN,*) 'Attenuation Value out of Range: ', Qmu
-    write(IMAIN,*) 'Attenuation Value out of Range: Min, Max ', 0, AM_S%Q_max
-    call flush_IMAIN()
-    ! stop
-    call exit_MPI(myrank, 'Attenuation Value out of Range')
-  endif
+  ! limits shear attenuation value
+  ! by default, value set in constants.h for ATTENUATION_COMP_MAXIMUM = 5000
+  ! (higher Q -> attenuation becomes negligible)
+  !
+  ! zero/negative Q values or larger Q values will be limited to this maximum values
+  if (Qmu <= 0.0d0) Qmu = ATTENUATION_COMP_MAXIMUM
+  if (Qmu > ATTENUATION_COMP_MAXIMUM) Qmu = ATTENUATION_COMP_MAXIMUM
 
   if (rw > 0 .and. Qmu == 0.0d0) then
     ! read
@@ -373,6 +387,10 @@
   ! converts Qmu to an array integer index:
   ! e.g. Qmu = 150.31 -> Qtmp = 150.31 * 10 = int( 1503.10 ) = 1503
   Qtmp    = int(Qmu * dble(AM_S%Q_resolution))
+
+  ! limits
+  if (Qtmp < 1) Qtmp = 1
+  if (Qtmp > AM_S%Q_resolution * ATTENUATION_COMP_MAXIMUM) Qtmp = AM_S%Q_resolution * ATTENUATION_COMP_MAXIMUM
 
   ! rounds to corresponding double value:
   ! e.g. Qmu_new = dble( 1503 ) / dble(10) = 150.30
