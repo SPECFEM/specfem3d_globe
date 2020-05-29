@@ -821,7 +821,6 @@
   double precision :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66
   ! Attenuation values
   double precision, dimension(N_SLS) :: tau_s, tau_e
-  double precision :: T_c_source
   ! Parameter used to decide whether this element is in the crust or not
   logical :: elem_in_crust,elem_in_mantle
   integer :: i,j,k,ispec
@@ -939,7 +938,7 @@
   if (ATTENUATION) then
     call meshfem3D_models_getatten_val(idoubling,xmesh,ymesh,zmesh,r_prem, &
                                        ispec, i, j, k, &
-                                       tau_e,tau_s,T_c_source, &
+                                       tau_e,tau_s, &
                                        moho,Qmu,Qkappa,elem_in_crust)
   endif
 !> end GET_MODEL

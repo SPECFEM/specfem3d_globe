@@ -34,33 +34,6 @@
   if (ier /= 0) stop 'Error allocating temp_store array'
   temp_store(:,:,:,:) = 0._CUSTOM_REAL
 
-  ! isotropic model
-  ! vp
-  open(unit=IOUT,file=prname(1:len_trim(prname))//'vp.bin', &
-       status='unknown',form='unformatted',action='write',iostat=ier)
-  if (ier /= 0 ) call exit_mpi(myrank,'Error opening vp.bin file')
-
-  temp_store(:,:,:,:) = sqrt((kappavstore(:,:,:,:) + 4.0_CUSTOM_REAL * muvstore(:,:,:,:)/3.0_CUSTOM_REAL)/rhostore(:,:,:,:)) &
-                        * scaleval1
-  write(IOUT) temp_store
-  close(IOUT)
-  ! vs
-  open(unit=IOUT,file=prname(1:len_trim(prname))//'vs.bin', &
-        status='unknown',form='unformatted',action='write',iostat=ier)
-  if (ier /= 0 ) call exit_mpi(myrank,'Error opening vs.bin file')
-
-  temp_store(:,:,:,:) = sqrt( muvstore(:,:,:,:)/rhostore(:,:,:,:) )*scaleval1
-  write(IOUT) temp_store
-  close(IOUT)
-  ! rho
-  open(unit=IOUT,file=prname(1:len_trim(prname))//'rho.bin', &
-        status='unknown',form='unformatted',action='write',iostat=ier)
-  if (ier /= 0 ) call exit_mpi(myrank,'Error opening rho.bin file')
-
-  temp_store(:,:,:,:) = rhostore(:,:,:,:) * scaleval2
-  write(IOUT) temp_store
-  close(IOUT)
-
   ! transverse isotropic model
   if (TRANSVERSE_ISOTROPY) then
     ! vpv
@@ -116,6 +89,35 @@
     if (ier /= 0 ) call exit_mpi(myrank,'Error opening eta.bin file')
     write(IOUT) eta_anisostore
     close(IOUT)
+
+  else
+    ! isotropic model
+    ! vp
+    open(unit=IOUT,file=prname(1:len_trim(prname))//'vp.bin', &
+         status='unknown',form='unformatted',action='write',iostat=ier)
+    if (ier /= 0 ) call exit_mpi(myrank,'Error opening vp.bin file')
+
+    temp_store(:,:,:,:) = sqrt((kappavstore(:,:,:,:) + 4.0_CUSTOM_REAL * muvstore(:,:,:,:)/3.0_CUSTOM_REAL)/rhostore(:,:,:,:)) &
+                          * scaleval1
+    write(IOUT) temp_store
+    close(IOUT)
+    ! vs
+    open(unit=IOUT,file=prname(1:len_trim(prname))//'vs.bin', &
+          status='unknown',form='unformatted',action='write',iostat=ier)
+    if (ier /= 0 ) call exit_mpi(myrank,'Error opening vs.bin file')
+
+    temp_store(:,:,:,:) = sqrt( muvstore(:,:,:,:)/rhostore(:,:,:,:) )*scaleval1
+    write(IOUT) temp_store
+    close(IOUT)
+    ! rho
+    open(unit=IOUT,file=prname(1:len_trim(prname))//'rho.bin', &
+          status='unknown',form='unformatted',action='write',iostat=ier)
+    if (ier /= 0 ) call exit_mpi(myrank,'Error opening rho.bin file')
+
+    temp_store(:,:,:,:) = rhostore(:,:,:,:) * scaleval2
+    write(IOUT) temp_store
+    close(IOUT)
+
   endif ! TRANSVERSE_ISOTROPY
 
   ! anisotropic values

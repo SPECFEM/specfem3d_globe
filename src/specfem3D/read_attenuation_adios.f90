@@ -29,8 +29,7 @@
 !===============================================================================
 !> \brief Read adios attenuation arrays created by the mesher
 !         (regX_attenuation.bp)
-subroutine read_attenuation_adios(iregion_code, &
-                                  factor_common, scale_factor, tau_s, vnspec, T_c_source)
+  subroutine read_attenuation_adios(iregion_code, factor_common, scale_factor, tau_s, vnspec, f_c_source)
 
   use constants_solver
   use specfem_par, only: ATTENUATION_VAL,LOCAL_PATH
@@ -40,15 +39,15 @@ subroutine read_attenuation_adios(iregion_code, &
 
   implicit none
 
-  integer :: vnspec
-  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec) :: scale_factor
-  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,N_SLS,vnspec) :: factor_common
-  double precision, dimension(N_SLS)                 :: tau_s
+  integer,intent(in) :: iregion_code
 
-  integer :: iregion_code
+  integer,intent(in) :: vnspec
+  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec),intent(inout) :: scale_factor
+  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,N_SLS,vnspec),intent(inout) :: factor_common
+  double precision, dimension(N_SLS),intent(inout) :: tau_s
+  double precision,intent(inout) :: f_c_source
 
   ! local parameters
-  double precision :: T_c_source
   character(len=MAX_STRING_LEN) :: file_name
   ! ADIOS variables
   integer(kind=8) :: local_dim
@@ -70,7 +69,11 @@ subroutine read_attenuation_adios(iregion_code, &
   ! opens adios file
   call open_file_adios_read_and_init_method(myadios_file,myadios_group,file_name)
 
-  call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "t_c_source",T_c_source)
+  ! note: for backward-compatibility, the center frequency parameter in ADIOS was stored as t_c_source
+  !       thus, we read in the parameter as "t_c_source"
+  !
+  !       todo in future version, we might want to get rid of this naming ambiguity
+  call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "t_c_source",f_c_source)
 
   local_dim = size (tau_s)
   start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
@@ -105,4 +108,4 @@ subroutine read_attenuation_adios(iregion_code, &
   ! closes ADIOS handler to the restart file.
   call close_file_adios_read_and_finalize_method(myadios_file)
 
-end subroutine read_attenuation_adios
+  end subroutine read_attenuation_adios

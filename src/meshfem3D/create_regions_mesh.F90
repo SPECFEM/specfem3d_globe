@@ -583,7 +583,7 @@
     ATT1,ATT2,ATT3
 
   use meshfem3D_models_par, only: &
-    ATTENUATION,ANISOTROPIC_INNER_CORE,ANISOTROPIC_3D_MANTLE,AM_V
+    ATTENUATION,ANISOTROPIC_INNER_CORE,ANISOTROPIC_3D_MANTLE
 
   use regions_mesh_par2
 
@@ -604,8 +604,6 @@
   ! new attenuation definition on all GLL points
   ! attenuation
   if (ATTENUATION) then
-    T_c_source = AM_V%QT_c_source
-    tau_s(:)   = AM_V%Qtau_s(:)
     nspec_att = nspec
   else
     ! allocates dummy size arrays

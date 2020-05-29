@@ -633,3 +633,277 @@
 
   end subroutine write_attenuation_forward_arrays_adios
 
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  subroutine save_forward_model_at_shifted_frequency_adios()
+
+! outputs model files in binary format
+
+  use constants
+  use shared_parameters, only: R_PLANET,RHOAV,LOCAL_PATH,TRANSVERSE_ISOTROPY
+
+  use specfem_par_crustmantle
+  use specfem_par_innercore
+
+  use adios_helpers_mod
+  use manager_adios
+
+  implicit none
+
+  ! local parameters
+  integer :: ier
+  real(kind=CUSTOM_REAL) :: scaleval1,scaleval2 !,scaleval,scale_GPa
+  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: temp_store_vpv,temp_store_vph,temp_store_vsv,temp_store_vsh
+  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: temp_store_vp_ic,temp_store_vs_ic
+
+  ! local parameters
+  real(kind=CUSTOM_REAL),dimension(1,1,1,1) :: dummy_ijke
+  integer :: iregion_code,nspec,nglob
+  character(len=MAX_STRING_LEN) :: outputname, group_name
+  integer(kind=8) :: local_dim
+  integer(kind=8) :: group_size_inc
+  ! ADIOS variables
+  character(len=128) :: region_name, region_name_scalar
+
+  ! user output
+  if (myrank == 0) then
+#if defined(USE_ADIOS)
+    write(IMAIN,*) '    shifted model    in ADIOS 1 file format'
+#elif defined(USE_ADIOS2)
+    write(IMAIN,*) '    shifted model    in ADIOS 2 file format'
+#endif
+    call flush_IMAIN()
+  endif
+
+  ! scaling factors to re-dimensionalize units
+  scaleval1 = sngl( sqrt(PI*GRAV*RHOAV)*(R_PLANET/1000.0d0) )
+  scaleval2 = sngl( RHOAV/1000.0d0 )
+
+  ! note: since we only use shear attenuation, the shift occurs in muv values.
+  !       thus, we output here only vpv, vsv or vp,vs for crust/mantle and inner core regions
+  !       which are affected by the attenuation shift. all other model arrays stay the same.
+
+  ! initializes i/o group
+  group_size_inc = 0
+  group_name = 'SPECFEM3D_GLOBE_MODEL_SHIFTED'
+  call init_adios_group(myadios_val_group,group_name)
+
+  ! crust/mantle region
+  iregion_code = IREGION_CRUST_MANTLE
+  nspec = NSPEC_CRUST_MANTLE
+  nglob = NGLOB_CRUST_MANTLE
+  ! region name
+  write(region_name,"('reg',i1, '/')") iregion_code
+  write(region_name_scalar,"('reg',i1)") iregion_code
+
+  ! save nspec and nglob, to be used in combine_paraview_data
+  call define_adios_scalar (myadios_val_group, group_size_inc, &
+                            region_name_scalar, STRINGIFY_VAR(nspec))
+  call define_adios_scalar (myadios_val_group, group_size_inc, &
+                            region_name_scalar, STRINGIFY_VAR(nglob))
+
+  ! array sizes
+  local_dim = NGLLX * NGLLY * NGLLZ * nspec
+
+  ! checks size
+  if (size(kappavstore_crust_mantle) /= local_dim) then
+    print *,'Error: size kappavstore ',size(kappavstore_crust_mantle), ' should be ',local_dim
+    call exit_mpi(myrank,'Error size kappavstore_crust_mantle for storing meshfiles')
+  endif
+
+  ! safety check
+  if (ANISOTROPIC_3D_MANTLE_VAL) &
+    call exit_mpi(myrank,'ANISOTROPIC_3D_MANTLE not supported yet for shifted model file output')
+
+  !--- Define ADIOS variables -----------------------------
+  if (TRANSVERSE_ISOTROPY) then
+    ! transverse isotropic model
+    ! vpv
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vpv", dummy_ijke)
+    ! vph
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vph", dummy_ijke)
+    ! vsv
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vsv", dummy_ijke)
+    ! vsv
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vsh", dummy_ijke)
+  else
+    ! isotropic model
+    ! vp
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vp", dummy_ijke)
+    ! vs (will store it even for the outer core, although it should just be zero there)
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vs", dummy_ijke)
+  endif
+
+  ! inner core
+  iregion_code = IREGION_INNER_CORE
+  nspec = NSPEC_INNER_CORE
+  nglob = NGLOB_INNER_CORE
+  ! region name
+  write(region_name,"('reg',i1, '/')") iregion_code
+  write(region_name_scalar,"('reg',i1)") iregion_code
+
+  ! save nspec and nglob, to be used in combine_paraview_data
+  call define_adios_scalar (myadios_val_group, group_size_inc, &
+                            region_name_scalar, STRINGIFY_VAR(nspec))
+  call define_adios_scalar (myadios_val_group, group_size_inc, &
+                            region_name_scalar, STRINGIFY_VAR(nglob))
+
+  ! array sizes
+  local_dim = NGLLX * NGLLY * NGLLZ * nspec
+
+  ! checks size
+  if (size(kappavstore_inner_core) /= local_dim) then
+    print *,'Error: size kappavstore ',size(kappavstore_inner_core), ' should be ',local_dim
+    call exit_mpi(myrank,'Error size kappavstore_inner_core for storing meshfiles')
+  endif
+
+  !--- Define ADIOS variables -----------------------------
+  if (ANISOTROPIC_INNER_CORE_VAL) then
+    call exit_mpi(myrank,'ANISOTROPIC_INNER_CORE not supported yet for shifted model file output')
+  else
+    ! isotropic model
+    ! vp
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vp", dummy_ijke)
+    ! vs (will store it even for the outer core, although it should just be zero there)
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vs", dummy_ijke)
+  endif
+
+  !--- Open an ADIOS handler to the restart file. ---------
+  outputname = trim(LOCAL_PATH) // "/model_gll_shifted.bp"
+
+  ! user output
+  if (myrank == 0) write(IMAIN,*) '    saving shifted model arrays in ADIOS file: ',trim(outputname)
+
+  ! opens file for writing
+  call open_file_adios_write(myadios_val_file,myadios_val_group,outputname,group_name)
+
+  call set_adios_group_size(myadios_val_file,group_size_inc)
+
+  ! crust/mantle region
+  iregion_code = IREGION_CRUST_MANTLE
+  nspec = NSPEC_CRUST_MANTLE
+  nglob = NGLOB_CRUST_MANTLE
+  ! region name
+  write(region_name,"('reg',i1, '/')") iregion_code
+  write(region_name_scalar,"('reg',i1)") iregion_code
+
+  ! save nspec and nglob, to be used in combine_paraview_data
+  call write_adios_scalar(myadios_val_file,myadios_val_group,trim(region_name) // "nspec",nspec)
+  call write_adios_scalar(myadios_val_file,myadios_val_group,trim(region_name) // "nglob",nglob)
+
+! note: the following uses temporary arrays for array expressions like sqrt( (kappavstore+..)).
+!       since the write_adios_** calls might be in deferred mode, these temporary arrays should be valid
+!       until a perform/close/end_step call is done.
+!
+!       as a work-around, we will explicitly allocate temporary arrays and deallocate them after the file close.
+  allocate(temp_store_vpv(NGLLX,NGLLY,NGLLZ,nspec), &
+           temp_store_vph(NGLLX,NGLLY,NGLLZ,nspec), &
+           temp_store_vsv(NGLLX,NGLLY,NGLLZ,nspec), &
+           temp_store_vsh(NGLLX,NGLLY,NGLLZ,nspec),stat=ier)
+  if (ier /= 0) stop 'Error allocating temp vp,.. arrays'
+  temp_store_vpv(:,:,:,:) = 0.0_CUSTOM_REAL
+  temp_store_vph(:,:,:,:) = 0.0_CUSTOM_REAL
+  temp_store_vsv(:,:,:,:) = 0.0_CUSTOM_REAL
+  temp_store_vsh(:,:,:,:) = 0.0_CUSTOM_REAL
+
+  ! transverse isotropic model
+  if (TRANSVERSE_ISOTROPY) then
+    ! vpv
+    temp_store_vpv(:,:,:,:) = sqrt((kappavstore_crust_mantle(:,:,:,:) &
+                          + 4.0_CUSTOM_REAL * muvstore_crust_mantle(:,:,:,:)/3.0_CUSTOM_REAL)/rhostore_crust_mantle(:,:,:,:)) &
+                          * scaleval1
+    ! vph
+    temp_store_vph(:,:,:,:) = sqrt((kappahstore_crust_mantle(:,:,:,:) &
+                          + 4.0_CUSTOM_REAL * muhstore_crust_mantle(:,:,:,:)/3.0_CUSTOM_REAL)/rhostore_crust_mantle(:,:,:,:)) &
+                          * scaleval1
+    ! vsv
+    temp_store_vsv(:,:,:,:) = sqrt( muvstore_crust_mantle(:,:,:,:)/rhostore_crust_mantle(:,:,:,:) )*scaleval1
+    ! vsh
+    temp_store_vsh(:,:,:,:) = sqrt( muhstore_crust_mantle(:,:,:,:)/rhostore_crust_mantle(:,:,:,:) )*scaleval1
+
+    !--- Schedule writes for the previously defined ADIOS variables
+    ! vpv
+    call write_adios_global_1d_array(myadios_val_file, myadios_val_group, myrank, sizeprocs_adios, local_dim, &
+                                     trim(region_name) // "vpv", temp_store_vpv)
+    ! vph
+    call write_adios_global_1d_array(myadios_val_file, myadios_val_group, myrank, sizeprocs_adios, local_dim, &
+                                     trim(region_name) // "vph", temp_store_vph)
+    ! vsv
+    call write_adios_global_1d_array(myadios_val_file, myadios_val_group, myrank, sizeprocs_adios, local_dim, &
+                                     trim(region_name) // "vsv", temp_store_vsv)
+    ! vsh
+    call write_adios_global_1d_array(myadios_val_file, myadios_val_group, myrank, sizeprocs_adios, local_dim, &
+                                     trim(region_name) // "vsh", temp_store_vsh)
+  else
+    ! isotropic model
+    ! vp
+    temp_store_vpv(:,:,:,:) = sqrt((kappavstore_crust_mantle(:,:,:,:) &
+                          + 4.0_CUSTOM_REAL * muvstore_crust_mantle(:,:,:,:)/3.0_CUSTOM_REAL)/rhostore_crust_mantle(:,:,:,:)) &
+                          * scaleval1
+    ! vs
+    temp_store_vsv(:,:,:,:) = sqrt( muvstore_crust_mantle(:,:,:,:)/rhostore_crust_mantle(:,:,:,:) )*scaleval1
+
+    !--- Schedule writes for the previously defined ADIOS variables
+    ! vp
+    call write_adios_global_1d_array(myadios_val_file, myadios_val_group, myrank, sizeprocs_adios, local_dim, &
+                                     trim(region_name) // "vp", temp_store_vpv)
+    ! vs
+    call write_adios_global_1d_array(myadios_val_file, myadios_val_group, myrank, sizeprocs_adios, local_dim, &
+                                     trim(region_name) // "vs", temp_store_vsv)
+  endif ! TRANSVERSE_ISOTROPY
+
+  ! inner core
+  iregion_code = IREGION_INNER_CORE
+  nspec = NSPEC_INNER_CORE
+  nglob = NGLOB_INNER_CORE
+  ! region name
+  write(region_name,"('reg',i1, '/')") iregion_code
+  write(region_name_scalar,"('reg',i1)") iregion_code
+
+  ! uses temporary array
+  allocate(temp_store_vp_ic(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE), &
+           temp_store_vs_ic(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE),stat=ier)
+  if (ier /= 0) stop 'Error allocating temp_store array'
+  temp_store_vp_ic(:,:,:,:) = 0._CUSTOM_REAL
+  temp_store_vs_ic(:,:,:,:) = 0._CUSTOM_REAL
+
+  ! isotropic model
+  if (ANISOTROPIC_INNER_CORE_VAL) then
+    call exit_mpi(myrank,'ANISOTROPIC_INNER_CORE not supported yet for shifted model file output')
+  else
+    ! isotropic model
+    ! vp
+    temp_store_vp_ic(:,:,:,:) = sqrt((kappavstore_inner_core(:,:,:,:) &
+                          + 4.0_CUSTOM_REAL * muvstore_inner_core(:,:,:,:)/3.0_CUSTOM_REAL)/rhostore_inner_core(:,:,:,:)) &
+                          * scaleval1
+    ! vs
+    temp_store_vs_ic(:,:,:,:) = sqrt( muvstore_inner_core(:,:,:,:)/rhostore_inner_core(:,:,:,:) )*scaleval1
+
+    !--- Schedule writes for the previously defined ADIOS variables
+    ! vp
+    call write_adios_global_1d_array(myadios_val_file, myadios_val_group, myrank, sizeprocs_adios, local_dim, &
+                                     trim(region_name) // "vp", temp_store_vp_ic)
+    ! vs
+    call write_adios_global_1d_array(myadios_val_file, myadios_val_group, myrank, sizeprocs_adios, local_dim, &
+                                     trim(region_name) // "vs", temp_store_vs_ic)
+  endif ! TRANSVERSE_ISOTROPY
+
+  !--- Reset the path to zero and perform the actual write to disk
+  call write_adios_perform(myadios_val_file)
+  ! flushes all engines related to this io group (not really required, but used to make sure i/o has all written out)
+  call flush_adios_group_all(myadios_val_group)
+  ! closes file
+  call close_file_adios(myadios_val_file)
+
+  ! adios should be done with writing memory out.
+  call synchronize_all()
+
+  ! frees temporary array
+  deallocate(temp_store_vpv,temp_store_vph,temp_store_vsv,temp_store_vsh)
+  deallocate(temp_store_vp_ic,temp_store_vs_ic)
+
+  end subroutine save_forward_model_at_shifted_frequency_adios

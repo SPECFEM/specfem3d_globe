@@ -202,7 +202,11 @@
              NEX_XI,NEX_ETA
 
   ! attenuation
+  ! attenuation period band min/max
   double precision :: MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD
+  ! logarithmic center frequency (center of attenuation band)
+  double precision :: ATT_F_C_SOURCE
+  ! attenuation array sizes
   integer :: ATT1,ATT2,ATT3,ATT4,ATT5
 
   ! radii of layers

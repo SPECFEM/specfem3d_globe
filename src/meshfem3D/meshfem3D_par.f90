@@ -79,54 +79,6 @@
 
   implicit none
 
-  ! model_attenuation_variables
-  type model_attenuation_variables
-    sequence
-    double precision :: min_period, max_period                          ! Attenuation period band
-    double precision :: QT_c_source                                     ! Period band center Frequency
-    double precision, dimension(N_SLS)            :: Qtau_s             ! tau_sigma
-    double precision, dimension(:), allocatable   :: Qmu                ! Shear Attenuation
-    integer :: Qn                 ! Number of points
-    integer :: dummy_pad ! padding 4 bytes to align the structure
-    ! unused so far..
-    !double precision, dimension(:,:), allocatable :: Qtau_e             ! tau_epsilon
-    !double precision, dimension(:), allocatable   :: Qr                 ! Radius
-    !double precision, dimension(:), allocatable   :: QrDisc             ! Discontinuities Defined
-    !double precision, dimension(:), allocatable   :: Qomsb, Qomsb2      ! one_minus_sum_beta
-    !double precision, dimension(:,:), allocatable :: Qfc, Qfc2          ! factor_common
-    !double precision, dimension(:), allocatable   :: Qsf, Qsf2          ! scale_factor
-    !integer, dimension(:), allocatable            :: Qrmin              ! Max and Mins of idoubling
-    !integer, dimension(:), allocatable            :: Qrmax              ! Max and Mins of idoubling
-    !integer, dimension(:), allocatable            :: interval_Q         ! Steps
-  end type model_attenuation_variables
-  type (model_attenuation_variables) :: AM_V
-  ! model_attenuation_variables
-
-  ! model_attenuation_storage_var
-  type model_attenuation_storage_var
-    sequence
-    double precision, dimension(:,:), allocatable :: tau_e_storage
-    double precision, dimension(:), allocatable   :: Qmu_storage
-    integer :: Q_resolution
-  end type model_attenuation_storage_var
-  type (model_attenuation_storage_var) :: AM_S
-  ! model_attenuation_storage_var
-
-  ! attenuation_simplex_variables
-  type attenuation_simplex_variables
-    sequence
-    double precision :: Q  ! Q     = Desired Value of Attenuation or Q
-    double precision :: iQ ! iQ    = 1/Q
-    double precision, dimension(:), allocatable ::  f
-    ! f = Frequencies at which to evaluate the solution
-    double precision, dimension(:), allocatable :: tau_s
-    ! tau_s = Tau_sigma defined by the frequency range and
-    !             number of standard linear solids
-    integer :: nf          ! nf    = Number of Frequencies
-    integer :: nsls        ! nsls  = Number of Standard Linear Solids
-  end type attenuation_simplex_variables
-  ! attenuation_simplex_variables
-
   ! bathymetry and topography: use integer array to store values
   integer, dimension(:,:),allocatable :: ibathy_topo
 
@@ -361,8 +313,7 @@
   ! attenuation
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),   allocatable :: Qmu_store
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: tau_e_store
-  double precision, dimension(N_SLS) :: tau_s
-  double precision :: T_c_source
+  double precision, dimension(N_SLS) :: tau_s_store
 
   ! element layers
   integer :: NUMBER_OF_MESH_LAYERS,layer_shift, &

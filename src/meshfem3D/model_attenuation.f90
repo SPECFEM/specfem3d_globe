@@ -58,25 +58,79 @@
 !
 !--------------------------------------------------------------------------------------------------
 
-  subroutine model_attenuation_broadcast(MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD)
+  module model_attenuation_par
+
+  implicit none
+
+  ! model_attenuation_storage_var
+  type model_attenuation_storage_var
+    sequence
+    double precision, dimension(:,:), allocatable :: tau_e_storage
+    double precision, dimension(:), allocatable   :: Qmu_storage
+    integer :: Q_resolution
+  end type model_attenuation_storage_var
+  type (model_attenuation_storage_var) :: AM_S
+  ! model_attenuation_storage_var
+
+  ! attenuation_simplex_variables
+  type attenuation_simplex_variables
+    sequence
+    double precision :: Q  ! Q     = Desired Value of Attenuation or Q
+    double precision :: iQ ! iQ    = 1/Q
+    double precision, dimension(:), allocatable ::  f
+    ! f = Frequencies at which to evaluate the solution
+    double precision, dimension(:), allocatable :: tau_s
+    ! tau_s = Tau_sigma defined by the frequency range and
+    !             number of standard linear solids
+    integer :: nf          ! nf    = Number of Frequencies
+    integer :: nsls        ! nsls  = Number of Standard Linear Solids
+  end type attenuation_simplex_variables
+  type(attenuation_simplex_variables) :: AS_V
+
+  ! unused..
+  ! model_attenuation_variables
+  !type model_attenuation_variables
+  !  sequence
+  !  double precision, dimension(N_SLS)            :: Qtau_s             ! tau_sigma
+  !  integer :: dummy_pad ! padding 4 bytes to align the structure
+  !  double precision, dimension(:), allocatable   :: Qmu                ! Shear Attenuation
+  !  integer :: Qn                                                       ! Number of points
+  !  double precision, dimension(:,:), allocatable :: Qtau_e             ! tau_epsilon
+  !  double precision, dimension(:), allocatable   :: Qr                 ! Radius
+  !  double precision, dimension(:), allocatable   :: QrDisc             ! Discontinuities Defined
+  !  double precision, dimension(:), allocatable   :: Qomsb, Qomsb2      ! one_minus_sum_beta
+  !  double precision, dimension(:,:), allocatable :: Qfc, Qfc2          ! factor_common
+  !  double precision, dimension(:), allocatable   :: Qsf, Qsf2          ! scale_factor
+  !  integer, dimension(:), allocatable            :: Qrmin              ! Max and Mins of idoubling
+  !  integer, dimension(:), allocatable            :: Qrmax              ! Max and Mins of idoubling
+  !  integer, dimension(:), allocatable            :: interval_Q         ! Steps
+  !end type model_attenuation_variables
+  !type (model_attenuation_variables) :: AM_V
+  ! model_attenuation_variables
+
+  end module model_attenuation_par
+
+!
+!------------------------------------------------------------------------
+!
+
+  subroutine model_attenuation_broadcast()
 
 ! standard routine to setup model
 
   use constants, only: N_SLS,myrank
-  use meshfem3D_models_par, only: AM_V
+
+  use shared_parameters, only: ATT_F_C_SOURCE
+  use regions_mesh_par2, only: tau_s_store
 
   implicit none
 
-  double precision,intent(in) :: MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD
-
   ! master process determines period ranges
-  if (myrank == 0) call read_attenuation_model(MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
+  if (myrank == 0) call read_attenuation_model()
 
   ! broadcasts to all others
-  call bcast_all_singledp(AM_V%min_period)
-  call bcast_all_singledp(AM_V%max_period)
-  call bcast_all_singledp(AM_V%QT_c_source)
-  call bcast_all_dp(AM_V%Qtau_s,N_SLS)
+  call bcast_all_singledp(ATT_F_C_SOURCE)
+  call bcast_all_dp(tau_s_store,N_SLS)
 
   end subroutine model_attenuation_broadcast
 
@@ -84,25 +138,36 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_attenuation_model(min_att_period, max_att_period)
+  subroutine read_attenuation_model()
 
   use constants, only: N_SLS
-  use meshfem3D_models_par, only: AM_V
+
+  use shared_parameters, only: MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,ATT_F_C_SOURCE
+
+  use regions_mesh_par2, only: tau_s_store
 
   implicit none
 
-  double precision,intent(in) :: min_att_period, max_att_period
+  ! local parameters
+  double precision :: f_c_source,min_period,max_period
+  double precision,dimension(N_SLS) :: tau_s
 
   ! initializes
-  AM_V%min_period = min_att_period     ! stores in AM_V object
-  AM_V%max_period = max_att_period
-  AM_V%Qtau_s(:) = 0.d0
+  tau_s(:) = 0.d0
+
+  ! attenuation period range
+  min_period = MIN_ATTENUATION_PERIOD
+  max_period = MAX_ATTENUATION_PERIOD
 
   ! gets stress relaxation times
-  call attenuation_tau_sigma(AM_V%Qtau_s, N_SLS, AM_V%min_period, AM_V%max_period)
+  call attenuation_tau_sigma(tau_s, N_SLS, min_period, max_period)
 
-  ! gets center frequency (T_c_source) of simulation period band
-  call attenuation_source_frequency(AM_V%QT_c_source, AM_V%min_period, AM_V%max_period)
+  ! gets center frequency (f_c_source) of simulation period band
+  call attenuation_source_frequency(f_c_source, min_period, max_period)
+
+  ! stores values
+  tau_s_store(:) = tau_s(:)
+  ATT_F_C_SOURCE = f_c_source
 
   end subroutine read_attenuation_model
 
@@ -120,9 +185,8 @@
   subroutine model_attenuation_setup(REFERENCE_1D_MODEL,CRUSTAL)
 
   use constants
-  use meshfem3D_models_par, only: AM_V
 
-  !use shared_parameters, only: RICB,RCMB,R670,R220,R80
+  use regions_mesh_par2, only: tau_s_store
 
   use model_1dref_par, only: &
     NR_REF,Mref_V_Qmu_ref ! Mref_V_radius_ref
@@ -149,10 +213,17 @@
 
   ! local parameters
   double precision :: tau_e(N_SLS)
+  ! shear Attenuation
+  double precision, dimension(:), allocatable   :: Qmu
+  ! number of points
+  integer :: Qn
   integer :: i,ier
 
   ! parameter definitions
   !double precision, parameter :: R120 = 6251.d3 ! as defined by IASP91
+
+  ! initializes
+  Qn = 0
 
   ! uses "pure" 1D models including their 1D-crust profiles
   ! (uses USE_EXTERNAL_CRUSTAL_MODEL set to false)
@@ -161,109 +232,101 @@
         REFERENCE_MODEL_IASP91, &
         REFERENCE_MODEL_JP1D)
     ! PREM Q layers
-    AM_V%Qn = 12
+    Qn = 12
 
   case (REFERENCE_MODEL_AK135F_NO_MUD)
     ! redefines "pure" 1D model without crustal modification
     call define_model_ak135(.false.)
-    AM_V%Qn = NR_AK135F_NO_MUD
+    Qn = NR_AK135F_NO_MUD
 
   case (REFERENCE_MODEL_1066A)
     ! redefines "pure" 1D model without crustal modification
     call define_model_1066a(.false.)
-    AM_V%Qn = NR_1066A
+    Qn = NR_1066A
 
   case (REFERENCE_MODEL_1DREF)
     ! redefines "pure" 1D model without crustal modification
     call define_model_1dref(.false.)
-    AM_V%Qn = NR_REF
+    Qn = NR_REF
 
   case (REFERENCE_MODEL_SEA1D)
     ! redefines "pure" 1D model without crustal modification
     call define_model_sea1d(.false.)
-    AM_V%Qn = NR_SEA1D
+    Qn = NR_SEA1D
 
   case (REFERENCE_MODEL_SOHL, &
         REFERENCE_MODEL_SOHL_B)
     ! Mars, Q from PREM
-    AM_V%Qn = 12
+    Qn = 12
 
   case (REFERENCE_MODEL_CASE65TAY)
     ! redefines "pure" 1D model without crustal modification
     call define_model_case65TAY(.false.)
-    AM_V%Qn = NR_case65TAY
+    Qn = NR_case65TAY
 
   case (REFERENCE_MODEL_VPREMOON)
     ! Moon
     ! no need to redefine 1D model, Qmu_original array contains original values (without CRUSTAL modification)
-    AM_V%Qn = NR_VPREMOON_layers
+    Qn = NR_VPREMOON_layers
 
   case default
     call exit_MPI(myrank, 'Error attenuation setup: Reference 1D Model Not recognized')
   end select
 
-  ! sets up attenuation storage (for all possible Qmu values defined in the 1D models)
-  allocate(AM_V%Qmu(AM_V%Qn),stat=ier)
-  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating AM_V arrays')
-  AM_V%Qmu(:) = 0.d0
+  ! checks
+  if (Qn < 1) call exit_MPI(myrank,'Error Qmu array has size zero')
 
-  ! unused so far...
-  !allocate(AM_V%Qr(AM_V%Qn), &
-  !         AM_V%Qtau_e(N_SLS,AM_V%Qn), &
-  !         AM_V%interval_Q(AM_V%Qn), &
-  !         stat=ier)
-  !AM_V%Qr(:) = 0.d0
-  !AM_V%interval_Q(:) = 0 ! unused
-  !AM_V%Qtau_e(:,:) = 0.d0
+  ! sets up attenuation storage (for all possible Qmu values defined in the 1D models)
+  allocate(Qmu(Qn),stat=ier)
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary Qmu arrays')
+  Qmu(:) = 0.d0
 
   select case(REFERENCE_1D_MODEL)
   case (REFERENCE_MODEL_PREM, &
         REFERENCE_MODEL_IASP91, &
         REFERENCE_MODEL_JP1D)
     ! PREM Q values
-    !AM_V%Qr(:)     = (/   0.0d0,    RICB,  RICB,  RCMB,    RCMB,    R670,    R670,   R220,    R220,    R80,     R80, R_PLANET /)
-    AM_V%Qmu(:)    = (/  84.6d0,  84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
+    ! radius = (/   0.0d0,    RICB,  RICB,  RCMB,    RCMB,    R670,    R670,   R220,    R220,    R80,     R80, R_PLANET /)
+    Qmu(:) = (/  84.6d0,  84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
 
   case (REFERENCE_MODEL_AK135F_NO_MUD)
-    !AM_V%Qr(:)     = Mak135_V_radius_ak135(:)
-    AM_V%Qmu(:)    = Mak135_V_Qmu_ak135(:)
+    ! radius = Mak135_V_radius_ak135(:)
+    Qmu(:) = Mak135_V_Qmu_ak135(:)
 
   case (REFERENCE_MODEL_1066A)
-    !AM_V%Qr(:)     = M1066a_V_radius_1066a(:)
-    AM_V%Qmu(:)    = M1066a_V_Qmu_1066a(:)
+    ! radius = M1066a_V_radius_1066a(:)
+    Qmu(:) = M1066a_V_Qmu_1066a(:)
 
   case (REFERENCE_MODEL_1DREF)
-    !AM_V%Qr(:)     = Mref_V_radius_ref(:)
-    AM_V%Qmu(:)    = Mref_V_Qmu_ref(:)
+    ! radius = Mref_V_radius_ref(:)
+    Qmu(:) = Mref_V_Qmu_ref(:)
 
   case (REFERENCE_MODEL_SEA1D)
-    !AM_V%Qr(:)     = SEA1DM_V_radius_sea1d(:)
-    AM_V%Qmu(:)    = SEA1DM_V_Qmu_sea1d(:)
+    ! radius = SEA1DM_V_radius_sea1d(:)
+    Qmu(:) = SEA1DM_V_Qmu_sea1d(:)
 
   case (REFERENCE_MODEL_SOHL, &
         REFERENCE_MODEL_SOHL_B)
     ! Mars: todo - future use attenuation model by Nimmo & Faul, 2013?
     !       at the moment, this is taken from PREM
-    !AM_V%Qr(:)     = (/   0.0d0,    RICB,  RICB,  RCMB,    RCMB,    R670, R670,   R220,    R220,    R80,     R80, R_PLANET /)
-    AM_V%Qmu(:)    = (/  84.6d0,  84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
+    ! radius = (/   0.0d0,    RICB,  RICB,  RCMB,    RCMB,    R670, R670,   R220,    R220,    R80,     R80, R_PLANET /)
+    Qmu(:) = (/  84.6d0,  84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
 
   case (REFERENCE_MODEL_CASE65TAY)
     ! values as defined in model
-    AM_V%Qmu(:)    = Mcase65TAY_V_Qmu(:)
+    Qmu(:) = Mcase65TAY_V_Qmu(:)
 
   case (REFERENCE_MODEL_VPREMOON)
     ! Moon
-    AM_V%Qmu(:)    = VPREMOON_Qmu_original(:)
+    Qmu(:) = VPREMOON_Qmu_original(:)
 
   case default
     call exit_MPI(myrank, 'Error attenuation setup: Reference 1D Model values missing')
   end select
 
   ! sets up storage of relaxation times
-  do i = 1, AM_V%Qn
-    call model_attenuation_getstored_tau(AM_V%Qmu(i), AM_V%QT_c_source, AM_V%Qtau_s, tau_e)
-    ! unused, just in case also needed to stored in AM_V object (main storage is in AM_S object filled in routine above)
-    !AM_V%Qtau_e(:,i) = tau_e(:)
+  do i = 1,Qn
+    call model_attenuation_getstored_tau(Qmu(i), tau_s_store, tau_e)
   enddo
 
   ! re-defines 1D models with crustal modification if necessary
@@ -288,7 +351,6 @@
     case (REFERENCE_MODEL_CASE65TAY)
       ! redefines 1D model with crustal modification
       call define_model_case65TAY(CRUSTAL)
-
     end select
   endif
 
@@ -298,21 +360,25 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_attenuation_getstored_tau(Qmu_in, T_c_source, tau_s, tau_e)
+  subroutine model_attenuation_getstored_tau(Qmu_in, tau_s, tau_e)
 
 ! includes min_period, max_period, and N_SLS
 
   use constants
-  use meshfem3D_models_par, only: AM_V
+  use shared_parameters, only: MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD
 
   implicit none
 
   double precision,intent(inout) :: Qmu_in
-  double precision,intent(inout) :: T_c_source
   double precision, dimension(N_SLS),intent(inout) :: tau_s, tau_e
 
   ! local parameters
   integer :: rw
+  double precision :: min_period,max_period
+
+  ! attenuation period band
+  min_period = MIN_ATTENUATION_PERIOD
+  max_period = MAX_ATTENUATION_PERIOD
 
   ! tries to retrieve value from storage table
   ! READ
@@ -322,7 +388,7 @@
   if (rw > 0) return
 
   ! value not found in table, will need to create appropriate entries
-  call attenuation_invert_by_simplex(AM_V%min_period, AM_V%max_period, N_SLS, Qmu_in, T_c_source, tau_s, tau_e)
+  call attenuation_invert_by_simplex(min_period, max_period, N_SLS, Qmu_in, tau_s, tau_e)
 
   ! stores value in storage table
   ! WRITE
@@ -338,7 +404,8 @@
   subroutine model_attenuation_storage(Qmu, tau_e, rw)
 
   use constants
-  use meshfem3D_models_par, only: AM_S
+
+  use model_attenuation_par, only: AM_S
 
   implicit none
 
@@ -367,7 +434,7 @@
   endif
 
   ! limits shear attenuation value
-  ! by default, value set in constants.h for ATTENUATION_COMP_MAXIMUM = 5000
+  ! by default, value set in constants.h for ATTENUATION_COMP_MAXIMUM = 9000
   ! (higher Q -> attenuation becomes negligible)
   !
   ! zero/negative Q values or larger Q values will be limited to this maximum values
@@ -380,6 +447,7 @@
     tau_e(:) = 0.0d0
     return
   endif
+
   ! Generate index for Storage Array
   ! and Recast Qmu using this index
 
@@ -422,7 +490,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine attenuation_source_frequency(omega_not, min_period, max_period)
+  subroutine attenuation_source_frequency(f_c_source, min_period, max_period)
 
 ! Determine the Source Frequency
 
@@ -430,7 +498,7 @@
 
   implicit none
 
-  double precision,intent(out) :: omega_not
+  double precision,intent(out) :: f_c_source
   double precision,intent(in) :: min_period, max_period
 
   ! local parameters
@@ -442,11 +510,13 @@
   f2 = 1.0d0 / min_period
 
   ! takes the frequency at the logarithmic mean between min and max
-  omega_not =  1.0e+03 * 10.0d0**(0.5 * (log10(f1) + log10(f2)))
+  ! note: previous versions had a scaling factor 1000.d0 added and removed again when read in the solver.
+  !       for backward-compatibilty, we will add this factor when storing/reading the value.
+  f_c_source = 10.0d0**(0.5 * (log10(f1) + log10(f2)))
 
   ! checks
-  if (omega_not < TOL_ZERO .or. omega_not /= omega_not) then
-    print *,'Error: invalid center frequency ',omega_not,'in attenuation_source_frequency() routine'
+  if (f_c_source < TOL_ZERO .or. f_c_source /= f_c_source) then
+    print *,'Error: invalid center frequency ',f_c_source,'in attenuation_source_frequency() routine'
     call exit_MPI(myrank,'Error invalid center frequency')
   endif
 
@@ -510,22 +580,19 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine attenuation_invert_by_simplex(t2, t1, n, Q_real, omega_not, tau_s, tau_e)
+  subroutine attenuation_invert_by_simplex(t2, t1, n, Q_real, tau_s, tau_e)
 
   use constants, only: PI,myrank
-  use meshfem3D_models_par, only: attenuation_simplex_variables
 
   implicit none
 
   ! Input / Output
-  double precision,intent(in) :: t1, t2
+  double precision,intent(in) :: t1, t2  ! min/max of attenuation period band
   double precision,intent(in) :: Q_real
-  double precision,intent(inout) :: omega_not !   T_c_source
   integer,intent(in) :: n
   double precision, dimension(n),intent(inout) :: tau_s, tau_e
 
   ! local parameters
-  type (attenuation_simplex_variables) :: AS_V
   integer :: i, iterations, err,prnt
   double precision :: f1, f2, exp1,exp2,dexpval, min_value
 
@@ -553,9 +620,6 @@
     call exit_MPI(myrank, 'frequencies flipped or Q less than zero or N_SLS < 0')
   endif
 
-  ! Determine the Source frequency (i.e. the logarithmic mean of the min/max values)
-  omega_not =  1.0e+03 * 10.0d0**(0.5 * (log10(f1) + log10(f2)))
-
   ! Determine the Frequencies at which to compare solutions
   ! The frequencies should be equally spaced in log10 frequency
   do i = 1,nf
@@ -577,7 +641,7 @@
   !       this will be done in the following routine call.
   !
   ! Shove the parameters into the module
-  call attenuation_simplex_setup(nf,n,f,Q_real,tau_s,AS_V)
+  call attenuation_simplex_setup(nf,n,f,Q_real,tau_s)
 
   ! Set the Tau_epsilon (tau_e) to an initial value at omega*tau = 1
   ! tan_delta = 1/Q = (tau_e - tau_s)/(2 * sqrt(tau e*tau_s))
@@ -588,7 +652,7 @@
   enddo
 
   ! Run a simplex search to determine the optimum values of tau_e
-  call fminsearch(attenuation_eval, tau_e, n, iterations, min_value, prnt, err, AS_V)
+  call fminsearch(attenuation_eval, tau_e, n, iterations, min_value, prnt, err)
 
   if (err > 0) then
      write(*,*)'Search did not converge for an attenuation of ', Q_real
@@ -598,7 +662,7 @@
      call exit_MPI(myrank,'attenuation_simplex: Search for Strain relaxation times did not converge')
   endif
 
-  call attenuation_simplex_finish(AS_V)
+  call attenuation_simplex_finish()
 
   end subroutine attenuation_invert_by_simplex
 
@@ -606,13 +670,11 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine attenuation_simplex_finish(AS_V)
+  subroutine attenuation_simplex_finish()
 
-  use meshfem3D_models_par, only: attenuation_simplex_variables
+  use model_attenuation_par, only: AS_V
 
   implicit none
-
-  type (attenuation_simplex_variables) :: AS_V
 
   deallocate(AS_V%f)
   deallocate(AS_V%tau_s)
@@ -626,13 +688,11 @@
 
 !   - Inserts necessary parameters into the module attenuation_simplex_variables
 !   - See module for explanation
-  subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
+  subroutine attenuation_simplex_setup(nf_in, nsls_in, f_in, Q_in, tau_s_in)
 
-  use meshfem3D_models_par, only: attenuation_simplex_variables
+  use model_attenuation_par, only: AS_V
 
   implicit none
-
-  type (attenuation_simplex_variables),intent(inout) :: AS_V
 
   integer,intent(in) :: nf_in, nsls_in
   double precision,intent(in) :: Q_in
@@ -745,15 +805,15 @@
 !
 !    See attenuation_simplex_setup
 !
-  double precision function attenuation_eval(Xin,AS_V)
+  double precision function attenuation_eval(Xin)
 
   use constants, only: HUGEVAL
-  use meshfem3D_models_par, only: attenuation_simplex_variables
+
+  use model_attenuation_par, only: AS_V
 
   implicit none
 
   ! Input
-  type (attenuation_simplex_variables),intent(in) :: AS_V
   double precision, dimension(AS_V%nsls),intent(in) :: Xin
 
   ! local parameters
@@ -816,13 +876,9 @@
 !                 2 => Iterations exceeded limit
 !
 !     See Matlab fminsearch
-  subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err, AS_V)
-
-  use meshfem3D_models_par, only: attenuation_simplex_variables
+  subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err)
 
   implicit none
-
-  type (attenuation_simplex_variables) :: AS_V
 
   ! Input
   double precision, external :: funk
@@ -885,7 +941,7 @@
   v(:,1) = xin
   x      = xin
 
-  fv(1) = funk(xin,AS_V)
+  fv(1) = funk(xin)
 
   usual_delta = 0.05
   zero_term_delta = 0.00025
@@ -899,7 +955,7 @@
      endif
      v(:,j+1) = y
      x(:) = y
-     fv(j+1) = funk(x,AS_V)
+     fv(j+1) = funk(x)
   enddo
 
   call heap_sort_local(n+1, fv, place)
@@ -941,13 +997,13 @@
      enddo
      xr = (1 + rho)*xbar - rho*v(:,n+1)
      x(:) = xr
-     fxr = funk(x,AS_V)
+     fxr = funk(x)
      func_evals = func_evals + 1
      if (fxr < fv(1)) then
         ! Calculate the expansion point
         xe = (1 + rho*chi)*xbar - rho*chi*v(:,n+1)
         x = xe
-        fxe = funk(x,AS_V)
+        fxe = funk(x)
         func_evals = func_evals+1
         if (fxe < fxr) then
            v(:,n+1) = xe
@@ -969,7 +1025,7 @@
               ! Perform an outside contraction
               xc = (1 + psi*rho)*xbar - psi*rho*v(:,n+1)
               x(:) = xc
-              fxc = funk(x,AS_V)
+              fxc = funk(x)
               func_evals = func_evals+1
 
               if (fxc <= fxr) then
@@ -984,7 +1040,7 @@
               ! Perform an inside contraction
               xcc = (1-psi)*xbar + psi*v(:,n+1)
               x(:) = xcc
-              fxcc = funk(x,AS_V)
+              fxcc = funk(x)
               func_evals = func_evals+1
 
               if (fxcc < fv(n+1)) then
@@ -1000,7 +1056,7 @@
               do j=2,n+1
                  v(:,j)=v(:,1)+sigma*(v(:,j) - v(:,1))
                  x(:) = v(:,j)
-                 fv(j) = funk(x,AS_V)
+                 fv(j) = funk(x)
               enddo
               func_evals = func_evals + n
            endif

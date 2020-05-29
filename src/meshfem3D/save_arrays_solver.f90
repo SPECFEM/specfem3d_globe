@@ -30,6 +30,8 @@
 
   use constants
 
+  use shared_parameters, only: ATT_F_C_SOURCE
+
   use meshfem3D_models_par, only: &
     OCEANS,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
     ANISOTROPIC_INNER_CORE,ATTENUATION
@@ -56,7 +58,8 @@
     jacobian2D_bottom,jacobian2D_top, &
     rho_vp,rho_vs, &
     nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
-    ispec_is_tiso,tau_s,T_c_source,tau_e_store,Qmu_store, &
+    ispec_is_tiso, &
+    tau_s_store,tau_e_store,Qmu_store, &
     prname
 
   implicit none
@@ -74,6 +77,7 @@
   ! local parameters
   integer :: i,j,k,ispec,iglob,ier
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: tmp_array
+  double precision :: f_c_source
 
   ! debug file output
   character(len=MAX_STRING_LEN) :: filename
@@ -290,13 +294,20 @@
   close(IOUT)
 
   if (ATTENUATION) then
+    ! attenuation center frequency
+    f_c_source = ATT_F_C_SOURCE
+
+    ! note: previous versions had a scaling factor 1000.d0 added and removed again when read in the solver.
+    !       for backward-compatibilty, we will add this factor when storing/reading the value.
+    f_c_source = 1000.d0 * f_c_source
+
     open(unit=IOUT, file=prname(1:len_trim(prname))//'attenuation.bin', &
           status='unknown', form='unformatted',action='write',iostat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error opening attenuation.bin file')
-    write(IOUT) tau_s
+    write(IOUT) tau_s_store
     write(IOUT) tau_e_store
     write(IOUT) Qmu_store
-    write(IOUT) T_c_source
+    write(IOUT) f_c_source
     close(IOUT)
   endif
 

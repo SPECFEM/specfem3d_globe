@@ -49,7 +49,7 @@
     CEM_ACCEPT,CRUSTAL
 
   use regions_mesh_par2, only: &
-    Qmu_store,tau_e_store,tau_s,T_c_source
+    Qmu_store,tau_e_store,tau_s_store
 
   use regions_mesh_par2, only: rhostore, &
     kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
@@ -213,7 +213,7 @@
         if (ATTENUATION) &
           call meshfem3D_models_getatten_val(idoubling,xmesh,ymesh,zmesh,r_prem, &
                                              ispec, i, j, k, &
-                                             tau_e,tau_s,T_c_source, &
+                                             tau_e,tau_s_store, &
                                              moho,Qmu,Qkappa,elem_in_crust)
 
         ! define elastic parameters in the model

@@ -44,6 +44,7 @@
   DT = 0.d0
   MIN_ATTENUATION_PERIOD = 0.d0
   MAX_ATTENUATION_PERIOD = 0.d0
+  ATT_F_C_SOURCE         = 0.d0
 
   ! minimum period estimation
   call get_minimum_period_estimate()
@@ -238,7 +239,7 @@
 
     ! time step / number of element layers
     if (NEX_MAX*multiplication_factor <= 80) then
-      DT                       = 0.2d0
+      DT                       = 0.16d0
       ! attenuation period range
       MIN_ATTENUATION_PERIOD   = 15.d0
       MAX_ATTENUATION_PERIOD   = 750d0

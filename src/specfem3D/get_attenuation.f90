@@ -32,6 +32,9 @@
                                       factor_scale, tau_s, vnspec)
 
   use constants_solver
+
+  use shared_parameters, only: ATT_F_C_SOURCE
+
   use specfem_par, only: ATTENUATION_VAL,ADIOS_FOR_ARRAYS_SOLVER,LOCAL_PATH, &
     scale_t_inv
 
@@ -51,20 +54,30 @@
   ! local parameters
   integer :: i,j,k,ispec,ier,i_sls
   double precision, dimension(N_SLS) :: tau_e, fc
-  double precision :: omsb, Q_mu, sf, T_c_source
+  double precision :: omsb, Q_mu, sf
+  double precision :: f_c_source  ! frequency
+  double precision :: T_c_source  ! period
   character(len=MAX_STRING_LEN) :: prname
+
+  double precision, parameter :: TOL = 1.d-9
 
   ! checks if attenuation is on and anything to do
   if (.not. ATTENUATION_VAL) return
   if (.not. I_should_read_the_database) return
 
+  ! initializes
+  tau_s(:) = 0.d0
+  factor_common(:,:,:,:,:) = 0._CUSTOM_REAL
+  factor_scale(:,:,:,:) = 0._CUSTOM_REAL
+  f_c_source = 0.d0
+
   ! All of the following reads use the output parameters as their temporary arrays
   ! use the filename to determine the actual contents of the read
   if (ADIOS_FOR_ARRAYS_SOLVER) then
-    call read_attenuation_adios(iregion_code, &
-                                factor_common, factor_scale, tau_s, vnspec, T_c_source)
+    ! ADIOS format
+    call read_attenuation_adios(iregion_code,factor_common, factor_scale, tau_s, vnspec, f_c_source)
   else
-
+    ! binary format
     ! opens corresponding databases file
     call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
 
@@ -75,19 +88,48 @@
     read(IIN) tau_s
     read(IIN) factor_common ! tau_e_store
     read(IIN) factor_scale  ! Qmu_store
-    read(IIN) T_c_source
+    read(IIN) f_c_source    ! center frequency
     close(IIN)
   endif
+
+  ! checks
+  if (f_c_source <= 0.d0) call exit_MPI(myrank,'Error: invalid attenuation center frequency read in from mesh file')
+
+  ! note: previous versions had a scaling factor 1000.d0 added and removed again when read in the solver.
+  !       for backward-compatibilty, we will add this factor when storing/reading the value.
+  f_c_source = f_c_source / 1000.d0
+
+  ! since we read in crust/mantle region first, we check if the center frequency is the same for both regions
+  if (iregion_code == IREGION_INNER_CORE) then
+    if (abs(f_c_source - ATT_F_C_SOURCE) > TOL) then
+      print *,'Error: different center frequencies for crust/mantle and inner core regions:'
+      print *,'  crust/mantle center frequency: ',ATT_F_C_SOURCE
+      print *,'  inner core   center frequency: ',f_c_source
+      print *,'Please check if the mesh files are correct.'
+      call exit_MPI(myrank,'Error different center frequencies for crust/mantle and inner core regions')
+    endif
+  endif
+
+  ! stores center frequency as shared parameter
+  ATT_F_C_SOURCE = f_c_source
+
+  ! debug
+  !print*,'debug: rank ',myrank,' attenuation center frequency = ',ATT_F_C_SOURCE,'region',iregion_code
 
   ! This is really tau_e, not factor_common
   factor_common(:,:,:,:,:) = real( factor_common(:,:,:,:,:) * scale_t_inv ,kind=CUSTOM_REAL)
   tau_s(:)                 = tau_s(:) * scale_t_inv
-  if (T_c_source > 0.d0) then
-    T_c_source = 1000.0d0 / T_c_source
+
+  ! converts center frequency to center period
+  ! note: the mesher stores the center frequency f_c_source.
+  !       here we invert it to have the center period T_c_source
+  if (f_c_source > 0.d0) then
+    T_c_source = 1.0d0 / f_c_source
   else
     T_c_source = 0.d0
   endif
-  T_c_source               = T_c_source * scale_t_inv
+  ! non-dimensionalizes
+  T_c_source = T_c_source * scale_t_inv
 
   ! loops over elements
   do ispec = 1, vnspec
@@ -172,7 +214,8 @@
 
   implicit none
 
-  double precision,intent(in) :: T_c_source,Q_mu
+  double precision,intent(in) :: T_c_source  ! center period
+  double precision,intent(in) :: Q_mu
   double precision, dimension(N_SLS),intent(in) :: tau_mu, tau_sigma
 
   double precision,intent(out) :: scale_factor

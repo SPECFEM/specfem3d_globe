@@ -40,8 +40,8 @@
 
   ! local parameters
   double precision, dimension(N_SLS) :: alphaval_dble, betaval_dble, gammaval_dble
-
   double precision :: scale_factor,scale_factor_minus_one
+
   real(kind=CUSTOM_REAL) :: mul,muvl,muhl,eta_aniso
   ! aniso element
   !real(kind=CUSTOM_REAL) :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
@@ -71,6 +71,13 @@
   ! get and store PREM attenuation model
   if (myrank == 0) then
     write(IMAIN,*) "preparing attenuation"
+    write(IMAIN,*) "  The code uses a constant Q quality factor, but approximated"
+    write(IMAIN,*) "  based on a series of Zener standard linear solids (SLS)."
+    write(IMAIN,*) "  Approximation is performed in the following frequency band:"
+    write(IMAIN,*)
+    write(IMAIN,*) "  number of SLS bodies:",N_SLS
+    write(IMAIN,*) "  Reference frequency of anelastic model (Hz):",sngl(ATTENUATION_f0_REFERENCE)
+    write(IMAIN,*) "                                   period (s):",sngl(1.0/ATTENUATION_f0_REFERENCE)
     call flush_IMAIN()
   endif
 
@@ -303,6 +310,9 @@
     enddo
   enddo ! enddo CRUST MANTLE
 
+  ! note: no scaling for outer core arrays.
+  !       we only implement shear attenuation so far, can be neglected in the outer core where vs == 0.
+
   ! rescale in inner core
   do ispec = 1,NSPEC_INNER_CORE
     do k = 1,NGLLZ
@@ -346,10 +356,10 @@
   gammaval = real(gammaval_dble, kind=CUSTOM_REAL)
 
   if (SIMULATION_TYPE == 3) then
-   call get_attenuation_memory_values(tau_sigma_dble, b_deltat, alphaval_dble, betaval_dble, gammaval_dble)
-   b_alphaval = real(alphaval_dble, kind=CUSTOM_REAL)
-   b_betaval  = real(betaval_dble, kind=CUSTOM_REAL)
-   b_gammaval = real(gammaval_dble, kind=CUSTOM_REAL)
+    call get_attenuation_memory_values(tau_sigma_dble, b_deltat, alphaval_dble, betaval_dble, gammaval_dble)
+    b_alphaval = real(alphaval_dble, kind=CUSTOM_REAL)
+    b_betaval  = real(betaval_dble, kind=CUSTOM_REAL)
+    b_gammaval = real(gammaval_dble, kind=CUSTOM_REAL)
   endif
 
   if (USE_LDDRK) then
@@ -357,17 +367,47 @@
   endif
 
   if (UNDO_ATTENUATION) then
-   b_alphaval = alphaval
-   b_betaval = betaval
-   b_gammaval = gammaval
+    b_alphaval = alphaval
+    b_betaval = betaval
+    b_gammaval = gammaval
   endif
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*) "  attenuation period range min/max: ",sngl(MIN_ATTENUATION_PERIOD),'/',sngl(MAX_ATTENUATION_PERIOD),' (s)'
+    write(IMAIN,*) "  Attenuation frequency band min/max (Hz):",sngl(1.0/MAX_ATTENUATION_PERIOD), &
+                                                            '/',sngl(1.0/MIN_ATTENUATION_PERIOD)
+    write(IMAIN,*) "              period band    min/max (s) :",sngl(MIN_ATTENUATION_PERIOD), &
+                                                            '/',sngl(MAX_ATTENUATION_PERIOD)
+    write(IMAIN,*) "  Logarithmic center frequency (Hz):",sngl(ATT_F_C_SOURCE)
+    write(IMAIN,*) "                     period     (s):",sngl(1.0/ATT_F_C_SOURCE)
+    write(IMAIN,*)
+    write(IMAIN,*) "  using shear attenuation Q_mu"
+    write(IMAIN,*)
     write(IMAIN,*) "  ATTENUATION_1D_WITH_3D_STORAGE  : ",ATTENUATION_1D_WITH_3D_STORAGE_VAL
     write(IMAIN,*) "  ATTENUATION_3D                  : ",ATTENUATION_3D_VAL
     call flush_IMAIN()
+  endif
+
+  if (ATTENUATION_SAVE_MODEL_AT_SHIFTED_CENTER_FREQ) then
+    ! user output
+    call synchronize_all()
+    if (myrank == 0) then
+      write(IMAIN,*) '  saving velocity model at shifted center frequency...'
+      write(IMAIN,*) '    new reference frequency (ATTENUATION_f0_REFERENCE) for anelastic model: ',sngl(ATT_F_C_SOURCE),'(Hz)'
+      write(IMAIN,*)
+      write(IMAIN,*) '    shear attenuation affects: (vp,vs) or (vpv,vph,vsv,vsh)'
+      call flush_IMAIN()
+    endif
+
+    ! outputs model files
+    if (ADIOS_FOR_SOLVER_MESHFILES) then
+      ! adios file output
+      !call save_forward_model_at_shifted_frequency_adios()
+      stop 'save_forward_model_at_shifted_frequency_adios() not implemented yet'
+    else
+      ! outputs model files in binary format
+      call save_forward_model_at_shifted_frequency()
+    endif
   endif
 
   ! synchronizes processes

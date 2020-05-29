@@ -52,6 +52,8 @@
 
   use constants
 
+  use shared_parameters, only: ATT_F_C_SOURCE
+
   use meshfem3D_models_par, only: &
     OCEANS,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
     ANISOTROPIC_INNER_CORE,ATTENUATION
@@ -77,7 +79,8 @@
     jacobian2D_bottom,jacobian2D_top, &
     rho_vp,rho_vs, &
     nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
-    ispec_is_tiso,tau_s,T_c_source,tau_e_store,Qmu_store, &
+    ispec_is_tiso, &
+    tau_s_store,tau_e_store,Qmu_store, &
     nspec_actually, nspec_ani, nspec_stacey, nglob_xy, nglob_oceans ! prname,
 
   use adios_helpers_mod
@@ -103,6 +106,7 @@
   integer :: i,j,k,ispec,iglob,ier
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: tmp_array_x, tmp_array_y, tmp_array_z
   real(kind=CUSTOM_REAL),dimension(1) :: dummy_1d
+  double precision :: f_c_source,t_c_source
 
   ! local parameters
   character(len=MAX_STRING_LEN) :: outputname, group_name ! reg_name
@@ -740,6 +744,16 @@
   !--- Attenuation arrays ----------------------------------
   !---------------------------------------------------------
   if (ATTENUATION) then
+    ! attenuation center frequency
+    f_c_source = ATT_F_C_SOURCE
+
+    ! note: previous versions had a scaling factor 1000.d0 added and removed again when read in the solver.
+    !       for backward-compatibilty, we will add this factor when storing/reading the value.
+    f_c_source = 1000.d0 * f_c_source
+
+    ! furthermore for backward-compatibility, the center frequency parameter in ADIOS was stored as t_c_source
+    t_c_source = f_c_source
+
     write(group_name,"('SPECFEM3D_GLOBE_ATTENUATION_reg',i1)") iregion_code
 
     ! set the adios group size to 0 before incremented by calls to helpers functions.
@@ -749,8 +763,8 @@
     !--- Define ADIOS variables -----------------------------
     call define_adios_scalar(myadios_group, group_size_inc, region_name_scalar, STRINGIFY_VAR(t_c_source))
 
-    local_dim = size(tau_s)
-    call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(tau_s))
+    local_dim = size(tau_s_store)
+    call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(tau_s_store))
     local_dim = size(tau_e_store)
     call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(tau_e_store))
     local_dim = size(Qmu_store)
@@ -772,11 +786,11 @@
     call set_adios_group_size(myadios_file,group_size_inc)
 
     !--- Schedule writes for the previously defined ADIOS variables
-    call write_adios_scalar(myadios_file,myadios_group,trim(region_name) // "t_c_source", T_c_source)
+    call write_adios_scalar(myadios_file,myadios_group,trim(region_name) // "t_c_source", t_c_source)
 
-    local_dim = size (tau_s)
+    local_dim = size (tau_s_store)
     call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs_adios, local_dim, &
-                                     trim(region_name) // STRINGIFY_VAR(tau_s))
+                                     trim(region_name) // STRINGIFY_VAR(tau_s_store))
     local_dim = size (tau_e_store)
     call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs_adios, local_dim, &
                                 trim(region_name) // STRINGIFY_VAR(tau_e_store))

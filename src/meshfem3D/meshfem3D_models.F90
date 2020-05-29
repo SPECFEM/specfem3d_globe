@@ -29,7 +29,7 @@
 
 ! preparing model parameter coefficients on all processes
 
-  use shared_parameters, only: MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,LOCAL_PATH,SAVE_MESH_FILES
+  use shared_parameters, only: LOCAL_PATH,SAVE_MESH_FILES
   use meshfem3D_models_par
 
   implicit none
@@ -73,7 +73,7 @@
 
   ! attenuation
   if (ATTENUATION) then
-    call model_attenuation_broadcast(MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD)
+    call model_attenuation_broadcast()
 
     ! 3D attenuation
     if (ATTENUATION_GLL) then
@@ -1264,7 +1264,7 @@
 
   subroutine meshfem3D_models_getatten_val(idoubling,xmesh,ymesh,zmesh,r_prem, &
                                            ispec, i, j, k, &
-                                           tau_e,tau_s,T_c_source, &
+                                           tau_e,tau_s, &
                                            moho,Qmu,Qkappa,elem_in_crust)
 
 ! sets attenuation values tau_e and Qmu for a given point
@@ -1290,7 +1290,6 @@
   ! attenuation values
   double precision,intent(inout) :: Qkappa,Qmu
   double precision, dimension(N_SLS),intent(inout) :: tau_s, tau_e
-  double precision,intent(inout)  :: T_c_source
 
   logical,intent(in) :: elem_in_crust
 
@@ -1376,7 +1375,7 @@
   endif
 
   ! Get tau_e from tau_s and Qmu
-  call model_attenuation_getstored_tau(Qmu, T_c_source, tau_s, tau_e)
+  call model_attenuation_getstored_tau(Qmu, tau_s, tau_e)
 
   end subroutine meshfem3D_models_getatten_val
 
