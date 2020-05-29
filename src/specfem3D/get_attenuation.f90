@@ -114,7 +114,7 @@
   ATT_F_C_SOURCE = f_c_source
 
   ! debug
-  !print*,'debug: rank ',myrank,' attenuation center frequency = ',ATT_F_C_SOURCE,'region',iregion_code
+  !print *,'debug: rank ',myrank,' attenuation center frequency = ',ATT_F_C_SOURCE,'region',iregion_code
 
   ! This is really tau_e, not factor_common
   factor_common(:,:,:,:,:) = real( factor_common(:,:,:,:,:) * scale_t_inv ,kind=CUSTOM_REAL)
