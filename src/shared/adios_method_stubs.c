@@ -83,6 +83,8 @@ void FC_FUNC_(save_forward_arrays_undoatt_adios,SAVE_FORWARD_ARRAYS_UNDOATT_ADIO
 
 void FC_FUNC_(save_intermediate_forward_arrays_adios,SAVE_INTERMEDIATE_FORWARD_ARRAYS_ADIOS)(void) {}
 
+void FC_FUNC_(save_forward_model_at_shifted_frequency_adios,SAVE_FORWARD_MODEL_AT_SHIFTED_FREQUENCY_ADIOS)(void){}
+
 void FC_FUNC_(define_kernel_adios_variables,DEFINE_KERNEL_ADIOS_VARIABLES)(void) {}
 
 void FC_FUNC_(close_kernel_adios_file,CLOSE_KERNEL_ADIOS_FILE)(void) {}
