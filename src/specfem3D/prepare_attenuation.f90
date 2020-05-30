@@ -402,8 +402,7 @@
     ! outputs model files
     if (ADIOS_FOR_SOLVER_MESHFILES) then
       ! adios file output
-      !call save_forward_model_at_shifted_frequency_adios()
-      stop 'save_forward_model_at_shifted_frequency_adios() not implemented yet'
+      call save_forward_model_at_shifted_frequency_adios()
     else
       ! outputs model files in binary format
       call save_forward_model_at_shifted_frequency()
