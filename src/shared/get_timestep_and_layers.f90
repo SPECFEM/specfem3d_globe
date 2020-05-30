@@ -785,7 +785,7 @@
   ! in steps of 1/2 digits
   ! example: 0.0734815 -> 0.0730
   !          0.07371   -> 0.0735
-  !call get_timestep_limit_significant_digit(DT)
+  call get_timestep_limit_significant_digit(DT)
 
   ! overrides DT in case specified in Par_file
   if (USER_DT > 0.d0) then
