@@ -20,7 +20,7 @@
  ! total elements per slice =        16884
  ! total points per slice =      1121671
  !
- ! the time step of the solver will be DT =   0.189999998      (s)
+ ! the time step of the solver will be DT =   0.150000006      (s)
  ! the (approximate) minimum period resolved will be =    31.5813694      (s)
  !
  ! total for full 6-chunk mesh:
@@ -179,7 +179,7 @@
 
  logical, parameter :: ATTENUATION_1D_WITH_3D_STORAGE_VAL = .true.
 
- logical, parameter :: FORCE_VECTORIZATION_VAL = .false.
+ logical, parameter :: FORCE_VECTORIZATION_VAL = .true.
 
  logical, parameter :: UNDO_ATTENUATION_VAL = .false.
  integer, parameter :: NT_DUMP_ATTENUATION_VAL =          200

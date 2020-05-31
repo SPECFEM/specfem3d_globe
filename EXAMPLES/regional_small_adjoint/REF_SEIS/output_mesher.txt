@@ -6,6 +6,9 @@
  Version: 7.0.3
 
 
+ Planet: Earth
+
+
  There are            4  MPI processes
  Processes are numbered from 0 to            3
 
@@ -33,15 +36,15 @@
    incorporating rotation
    incorporating attenuation using            3  standard linear solids
 
-   no 3-D lateral variations
+   no 3-D lateral variations in the mantle
    no heterogeneities in the mantle
    no crustal variations
    using unmodified 1D crustal model with two layers
-   no anisotropy
+   no transverse isotropy
    no inner-core anisotropy
    no general mantle anisotropy
 
- Reference radius of the Earth used is    6371.0000000000000       km
+ Reference radius of the globe used is    6371.0000000000000       km
 
  Central cube is at a radius of    932.00000000000000       km
  creating global slice addressing
@@ -81,11 +84,11 @@
    R_CENTRAL_CUBE =    932.000000      km
 
  Mesh resolution:
-   DT =   0.18049999999999999
-   Minimum period =    45.333333333333329       (s)
+   DT =   0.17999999999999999
+   Minimum period =    46.3312187      (s)
 
-   MIN_ATTENUATION_PERIOD =           46
-   MAX_ATTENUATION_PERIOD =         2600
+   MIN_ATTENUATION_PERIOD =    46.3312187
+   MAX_ATTENUATION_PERIOD =    2605.39600
 
 
  *******************************************
@@ -102,27 +105,27 @@
 
    ...creating mesh elements
    creating layer            1 out of           11
-      9.1%    current clock (NOT elapsed) time is: 17h 53min 13sec
+      9.1%    current clock (NOT elapsed) time is: 23h 15min 20sec
    creating layer            2 out of           11
-     18.2%    current clock (NOT elapsed) time is: 17h 53min 13sec
+     18.2%    current clock (NOT elapsed) time is: 23h 15min 20sec
    creating layer            3 out of           11
-     27.3%    current clock (NOT elapsed) time is: 17h 53min 13sec
+     27.3%    current clock (NOT elapsed) time is: 23h 15min 20sec
    creating layer            4 out of           11
-     36.4%    current clock (NOT elapsed) time is: 17h 53min 13sec
+     36.4%    current clock (NOT elapsed) time is: 23h 15min 20sec
    creating layer            5 out of           11
-     45.5%    current clock (NOT elapsed) time is: 17h 53min 13sec
+     45.5%    current clock (NOT elapsed) time is: 23h 15min 20sec
    creating layer            6 out of           11
-     54.5%    current clock (NOT elapsed) time is: 17h 53min 13sec
+     54.5%    current clock (NOT elapsed) time is: 23h 15min 20sec
    creating layer            7 out of           11
-     63.6%    current clock (NOT elapsed) time is: 17h 53min 13sec
+     63.6%    current clock (NOT elapsed) time is: 23h 15min 20sec
    creating layer            8 out of           11
-     72.7%    current clock (NOT elapsed) time is: 17h 53min 13sec
+     72.7%    current clock (NOT elapsed) time is: 23h 15min 20sec
    creating layer            9 out of           11
-     81.8%    current clock (NOT elapsed) time is: 17h 53min 13sec
+     81.8%    current clock (NOT elapsed) time is: 23h 15min 20sec
    creating layer           10 out of           11
-     90.9%    current clock (NOT elapsed) time is: 17h 53min 13sec
+     90.9%    current clock (NOT elapsed) time is: 23h 15min 20sec
    creating layer           11 out of           11
-    100.0%    current clock (NOT elapsed) time is: 17h 53min 13sec
+    100.0%    current clock (NOT elapsed) time is: 23h 15min 20sec
 
 
    ...creating global addressing
@@ -137,27 +140,27 @@
 
    ...creating mesh elements
    creating layer            1 out of           11
-      9.1%    current clock (NOT elapsed) time is: 17h 53min 13sec
+      9.1%    current clock (NOT elapsed) time is: 23h 15min 20sec
    creating layer            2 out of           11
-     18.2%    current clock (NOT elapsed) time is: 17h 53min 13sec
+     18.2%    current clock (NOT elapsed) time is: 23h 15min 20sec
    creating layer            3 out of           11
-     27.3%    current clock (NOT elapsed) time is: 17h 53min 13sec
+     27.3%    current clock (NOT elapsed) time is: 23h 15min 20sec
    creating layer            4 out of           11
-     36.4%    current clock (NOT elapsed) time is: 17h 53min 13sec
+     36.4%    current clock (NOT elapsed) time is: 23h 15min 20sec
    creating layer            5 out of           11
-     45.5%    current clock (NOT elapsed) time is: 17h 53min 13sec
+     45.5%    current clock (NOT elapsed) time is: 23h 15min 20sec
    creating layer            6 out of           11
-     54.5%    current clock (NOT elapsed) time is: 17h 53min 14sec
+     54.5%    current clock (NOT elapsed) time is: 23h 15min 20sec
    creating layer            7 out of           11
-     63.6%    current clock (NOT elapsed) time is: 17h 53min 14sec
+     63.6%    current clock (NOT elapsed) time is: 23h 15min 20sec
    creating layer            8 out of           11
-     72.7%    current clock (NOT elapsed) time is: 17h 53min 14sec
+     72.7%    current clock (NOT elapsed) time is: 23h 15min 20sec
    creating layer            9 out of           11
-     81.8%    current clock (NOT elapsed) time is: 17h 53min 14sec
+     81.8%    current clock (NOT elapsed) time is: 23h 15min 20sec
    creating layer           10 out of           11
-     90.9%    current clock (NOT elapsed) time is: 17h 53min 14sec
+     90.9%    current clock (NOT elapsed) time is: 23h 15min 20sec
    creating layer           11 out of           11
-    100.0%    current clock (NOT elapsed) time is: 17h 53min 14sec
+    100.0%    current clock (NOT elapsed) time is: 23h 15min 20sec
 
 
    ...fills global mesh points
@@ -169,6 +172,9 @@
  ----------------------------------
    Region is crust/mantle
 
+   Min Vs =    3.46000004      (km/s)
+   Max Vp =    13.6600990      (km/s)
+
    Max element edge size =    297.592163      (km)
    Min element edge size =    14.1662359      (km)
    Max/min ratio =    21.0071449
@@ -177,11 +183,11 @@
    Min Jacobian eigenvalue ratio =    4.84107584E-02
 
    Minimum period resolved =    27.6646214      (s)
-   Minimum period resolved (empirical) =    45.3333321      (s)
+   Minimum period resolved (empirical) =    46.3312187      (s)
    Maximum suggested time step =   0.165000007      (s)
 
-   for DT :   0.180500001      (s)
-   Max stability for wave velocities =   0.593640983
+   for DT :   0.180000007      (s)
+   Max stability for wave velocities =   0.591996551
  ----------------------------------
 
    saving vtk mesh files for resolution res_minimum_period...
@@ -240,10 +246,11 @@
 
    ...saving binary files
 
-   ...saving AVS or DX mesh files
+   ...saving mesh files
 
-    calculated top area:   0.26814999281575003
- calculated bottom area:    7.9982731094969020E-002
+ calculated region volume:    7.48225674E-02
+                 top area:   0.268150002
+              bottom area:    7.99827278E-02
 
  *******************************************
  creating mesh in region            2
@@ -259,9 +266,9 @@
 
    ...creating mesh elements
    creating layer            1 out of            2
-     50.0%    current clock (NOT elapsed) time is: 17h 53min 15sec
+     50.0%    current clock (NOT elapsed) time is: 23h 15min 21sec
    creating layer            2 out of            2
-    100.0%    current clock (NOT elapsed) time is: 17h 53min 15sec
+    100.0%    current clock (NOT elapsed) time is: 23h 15min 21sec
 
 
    ...creating global addressing
@@ -276,9 +283,9 @@
 
    ...creating mesh elements
    creating layer            1 out of            2
-     50.0%    current clock (NOT elapsed) time is: 17h 53min 15sec
+     50.0%    current clock (NOT elapsed) time is: 23h 15min 21sec
    creating layer            2 out of            2
-    100.0%    current clock (NOT elapsed) time is: 17h 53min 15sec
+    100.0%    current clock (NOT elapsed) time is: 23h 15min 21sec
 
 
    ...fills global mesh points
@@ -290,6 +297,9 @@
  ----------------------------------
    Region is outer core
 
+   Min Vp =    8.00000286      (km/s)
+   Max Vp =    10.2890005      (km/s)
+
    Max element edge size =    306.593292      (km)
    Min element edge size =    70.6873245      (km)
    Max/min ratio =    4.33731651
@@ -298,11 +308,11 @@
    Min Jacobian eigenvalue ratio =   0.158138558
 
    Minimum period resolved =    22.0898457      (s)
-   Minimum period resolved (empirical) =    45.3333321      (s)
+   Minimum period resolved (empirical) =    46.3312187      (s)
    Maximum suggested time step =   0.689999998      (s)
 
-   for DT :   0.180500001      (s)
-   Max stability for wave velocities =   0.143168539
+   for DT :   0.180000007      (s)
+   Max stability for wave velocities =   0.142771944
  ----------------------------------
 
    saving vtk mesh files for resolution res_minimum_period...
@@ -358,10 +368,11 @@
 
    ...saving binary files
 
-   ...saving AVS or DX mesh files
+   ...saving mesh files
 
-    calculated top area:    7.9982731094969020E-002
- calculated bottom area:    9.7926449712170370E-003
+ calculated region volume:    1.39369732E-02
+                 top area:    7.99827278E-02
+              bottom area:    9.79264453E-03
 
  *******************************************
  creating mesh in region            3
@@ -377,7 +388,7 @@
 
    ...creating mesh elements
    creating layer            1 out of            1
-    100.0%    current clock (NOT elapsed) time is: 17h 53min 15sec
+    100.0%    current clock (NOT elapsed) time is: 23h 15min 21sec
 
 
    ...creating global addressing
@@ -392,7 +403,7 @@
 
    ...creating mesh elements
    creating layer            1 out of            1
-    100.0%    current clock (NOT elapsed) time is: 17h 53min 15sec
+    100.0%    current clock (NOT elapsed) time is: 23h 15min 21sec
 
 
    ...fills global mesh points
@@ -404,6 +415,9 @@
  ----------------------------------
    Region is inner core
 
+   Min Vs =    3.50430012      (km/s)
+   Max Vp =    11.1259289      (km/s)
+
    Max element edge size =    159.256638      (km)
    Min element edge size =    117.807892      (km)
    Max/min ratio =    1.35183334
@@ -412,11 +426,11 @@
    Min Jacobian eigenvalue ratio =   0.801900446
 
    Minimum period resolved =    49.7233887      (s)
-   Minimum period resolved (empirical) =    45.3333321      (s)
+   Minimum period resolved (empirical) =    46.3312187      (s)
    Maximum suggested time step =    1.00000000      (s)
 
-   for DT :   0.180500001      (s)
-   Max stability for wave velocities =    9.87220630E-02
+   for DT :   0.180000007      (s)
+   Max stability for wave velocities =    9.84485969E-02
  ----------------------------------
 
    saving vtk mesh files for resolution res_minimum_period...
@@ -472,10 +486,11 @@
 
    ...saving binary files
 
-   ...saving AVS or DX mesh files
+   ...saving mesh files
 
-    calculated top area:    9.7926449712170370E-003
- calculated bottom area:    5.7384407175431751E-003
+ calculated region volume:    3.43970838E-04
+                 top area:    9.79264453E-03
+              bottom area:    5.73844090E-03
 
  calculated volume:    8.9103509631485250E-002
 
@@ -493,15 +508,15 @@
  Load balancing = 100 % by definition
 
 
- the time step of the solver will be DT =   0.180500001
+ the time step of the solver will be DT =   0.180000007
 
  using single precision for the calculations
 
  smallest and largest possible floating-point numbers are:    1.17549435E-38   3.40282347E+38
 
 
- Elapsed time for mesh generation and buffer creation in seconds =    2.4976699999999998
- Elapsed time for mesh generation and buffer creation in hh:mm:ss =    0 h 00 m 02 s
+ Elapsed time for mesh generation and buffer creation in seconds =   0.988319993
+ Elapsed time for mesh generation and buffer creation in hh:mm:ss =    0 h 00 m 00 s
 
  End of mesh generation
 
