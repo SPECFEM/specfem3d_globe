@@ -51,6 +51,9 @@ NPROC_ETA                       = 2
 # Mars models:
 # 1D_Sohl, 1D_Sohl_3D_crust, 1D_case65TAY, 1D_case65TAY_3D_crust
 #
+# Moon models:
+# vpremoon
+#
 # 3D models with 3D crust: append "_**crustname**" to the mantle model name
 #                          to take a 3D crustal model (by default crust2.0 is taken for 3D mantle models)
 #                          e.g. s20rts_crust1.0, s362ani_crustmaps, full_sh_crustSH, sglobe_EPcrust, etc.

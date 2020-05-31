@@ -52,15 +52,23 @@
 
  incorporating topography
    topo file            : DATA/topo_bathy/topo_bathy_marstopo4_smoothed_window_3.dat.bin
-   resolution in minutes:            4
+   resolution in minutes:    4.00000000
 
    topography/bathymetry: min/max =        -7830       21092
 
-   Elapsed time for reading in seconds =    3.1778999999999988E-002
+   Elapsed time for reading in seconds =   0.14644000000000001
 
+
+   VTK topo output: topo resolution in minutes =    4.00000000
+                    samples per degree         =    15.0000000
+                    resolution distance        =    3.94444418     (km)
+                    full globe NLAT =         2700
+                               NLON =         5400
+                               total number of points NLAT x NLON =     14580000
+                    limiting output to samples per degree         =            2
 
    elevations written to file: ./DATABASES_MPI/mesh_topo_bathy.vtk
-   min/max =   -7.58249998     /   20.9445000     (km)
+   min/max =   -7.78950024     /   20.7898750     (km)
 
 
  incorporating crustal model: crustMap
@@ -71,6 +79,10 @@
 
    Moho crustal thickness (without ice) min/max =    14.6400003       106.690002      km
 
+
+   VTK moho output: resolution =            1 deg
+                    NLAT =          180
+                    NLON =          360
 
    moho depths written to file: ./DATABASES_MPI/mesh_moho_depth.vtk
    min/max =    15.0697756     /   106.220375     (km)
@@ -115,10 +127,10 @@
 
  Mesh resolution:
    DT =   0.19000000000000000
-   Minimum period =    6.6666666666666661       (s)
+   Minimum period =    6.93359327      (s)
 
-   MIN_ATTENUATION_PERIOD =    6.91406250
-   MAX_ATTENUATION_PERIOD =    388.806305
+   MIN_ATTENUATION_PERIOD =    6.93359327
+   MAX_ATTENUATION_PERIOD =    389.904602
 
 
  *******************************************
@@ -135,25 +147,25 @@
 
    ...creating mesh elements
    creating layer            1 out of           10
-     10.0%    current clock (NOT elapsed) time is: 21h 28min 13sec
+     10.0%    current clock (NOT elapsed) time is: 23h 17min 31sec
    creating layer            2 out of           10
-     20.0%    current clock (NOT elapsed) time is: 21h 28min 13sec
+     20.0%    current clock (NOT elapsed) time is: 23h 17min 31sec
    creating layer            3 out of           10
-     30.0%    current clock (NOT elapsed) time is: 21h 28min 13sec
+     30.0%    current clock (NOT elapsed) time is: 23h 17min 31sec
    creating layer            4 out of           10
-     40.0%    current clock (NOT elapsed) time is: 21h 28min 13sec
+     40.0%    current clock (NOT elapsed) time is: 23h 17min 31sec
    creating layer            5 out of           10
-     50.0%    current clock (NOT elapsed) time is: 21h 28min 13sec
+     50.0%    current clock (NOT elapsed) time is: 23h 17min 31sec
    creating layer            6 out of           10
-     60.0%    current clock (NOT elapsed) time is: 21h 28min 13sec
+     60.0%    current clock (NOT elapsed) time is: 23h 17min 31sec
    creating layer            7 out of           10
-     70.0%    current clock (NOT elapsed) time is: 21h 28min 13sec
+     70.0%    current clock (NOT elapsed) time is: 23h 17min 31sec
    creating layer            8 out of           10
-     80.0%    current clock (NOT elapsed) time is: 21h 28min 13sec
+     80.0%    current clock (NOT elapsed) time is: 23h 17min 31sec
    creating layer            9 out of           10
-     90.0%    current clock (NOT elapsed) time is: 21h 28min 13sec
+     90.0%    current clock (NOT elapsed) time is: 23h 17min 31sec
    creating layer           10 out of           10
-    100.0%    current clock (NOT elapsed) time is: 21h 28min 14sec
+    100.0%    current clock (NOT elapsed) time is: 23h 17min 32sec
 
 
    ...creating global addressing
@@ -168,25 +180,25 @@
 
    ...creating mesh elements
    creating layer            1 out of           10
-     10.0%    current clock (NOT elapsed) time is: 21h 28min 14sec
+     10.0%    current clock (NOT elapsed) time is: 23h 17min 32sec
    creating layer            2 out of           10
-     20.0%    current clock (NOT elapsed) time is: 21h 28min 14sec
+     20.0%    current clock (NOT elapsed) time is: 23h 17min 32sec
    creating layer            3 out of           10
-     30.0%    current clock (NOT elapsed) time is: 21h 28min 14sec
+     30.0%    current clock (NOT elapsed) time is: 23h 17min 32sec
    creating layer            4 out of           10
-     40.0%    current clock (NOT elapsed) time is: 21h 28min 14sec
+     40.0%    current clock (NOT elapsed) time is: 23h 17min 32sec
    creating layer            5 out of           10
-     50.0%    current clock (NOT elapsed) time is: 21h 28min 14sec
+     50.0%    current clock (NOT elapsed) time is: 23h 17min 32sec
    creating layer            6 out of           10
-     60.0%    current clock (NOT elapsed) time is: 21h 28min 14sec
+     60.0%    current clock (NOT elapsed) time is: 23h 17min 32sec
    creating layer            7 out of           10
-     70.0%    current clock (NOT elapsed) time is: 21h 28min 14sec
+     70.0%    current clock (NOT elapsed) time is: 23h 17min 32sec
    creating layer            8 out of           10
-     80.0%    current clock (NOT elapsed) time is: 21h 28min 14sec
+     80.0%    current clock (NOT elapsed) time is: 23h 17min 32sec
    creating layer            9 out of           10
-     90.0%    current clock (NOT elapsed) time is: 21h 28min 14sec
+     90.0%    current clock (NOT elapsed) time is: 23h 17min 32sec
    creating layer           10 out of           10
-    100.0%    current clock (NOT elapsed) time is: 21h 28min 17sec
+    100.0%    current clock (NOT elapsed) time is: 23h 17min 35sec
 
 
    ...fills global mesh points
@@ -209,7 +221,7 @@
    Min Jacobian eigenvalue ratio =   0.183511242
 
    Minimum period resolved =    13.5016880      (s)
-   Minimum period resolved (empirical) =    6.66666651      (s)
+   Minimum period resolved (empirical) =    6.93359327      (s)
    Maximum suggested time step =   0.250000000      (s)
 
    for DT :   0.189999998      (s)
@@ -292,9 +304,9 @@
 
    ...creating mesh elements
    creating layer            1 out of            2
-     50.0%    current clock (NOT elapsed) time is: 21h 28min 17sec
+     50.0%    current clock (NOT elapsed) time is: 23h 17min 35sec
    creating layer            2 out of            2
-    100.0%    current clock (NOT elapsed) time is: 21h 28min 17sec
+    100.0%    current clock (NOT elapsed) time is: 23h 17min 35sec
 
 
    ...creating global addressing
@@ -309,9 +321,9 @@
 
    ...creating mesh elements
    creating layer            1 out of            2
-     50.0%    current clock (NOT elapsed) time is: 21h 28min 17sec
+     50.0%    current clock (NOT elapsed) time is: 23h 17min 35sec
    creating layer            2 out of            2
-    100.0%    current clock (NOT elapsed) time is: 21h 28min 17sec
+    100.0%    current clock (NOT elapsed) time is: 23h 17min 35sec
 
 
    ...fills global mesh points
@@ -334,7 +346,7 @@
    Min Jacobian eigenvalue ratio =   0.180479959
 
    Minimum period resolved =    12.2035303      (s)
-   Minimum period resolved (empirical) =    6.66666651      (s)
+   Minimum period resolved (empirical) =    6.93359327      (s)
    Maximum suggested time step =   0.490000010      (s)
 
    for DT :   0.189999998      (s)
@@ -414,7 +426,7 @@
 
    ...creating mesh elements
    creating layer            1 out of            1
-    100.0%    current clock (NOT elapsed) time is: 21h 28min 17sec
+    100.0%    current clock (NOT elapsed) time is: 23h 17min 35sec
 
 
    ...creating global addressing
@@ -429,7 +441,7 @@
 
    ...creating mesh elements
    creating layer            1 out of            1
-    100.0%    current clock (NOT elapsed) time is: 21h 28min 17sec
+    100.0%    current clock (NOT elapsed) time is: 23h 17min 35sec
 
 
    ...fills global mesh points
@@ -452,7 +464,7 @@
    Min Jacobian eigenvalue ratio =   0.428498775
 
    Minimum period resolved =    12.5771914      (s)
-   Minimum period resolved (empirical) =    6.66666651      (s)
+   Minimum period resolved (empirical) =    6.93359327      (s)
    Maximum suggested time step =   0.294999987      (s)
 
    for DT :   0.189999998      (s)
@@ -518,7 +530,7 @@
                  top area:    1.57684460E-03
               bottom area:    7.49256578E-04
 
- calculated volume:    2.2751774167527019E-002
+ calculated volume:    2.2751774168444917E-002
 
  Repartition of elements in regions:
  ----------------------------------
@@ -541,8 +553,8 @@
  smallest and largest possible floating-point numbers are:    1.17549435E-38   3.40282347E+38
 
 
- Elapsed time for mesh generation and buffer creation in seconds =    23.8302994
- Elapsed time for mesh generation and buffer creation in hh:mm:ss =    0 h 00 m 23 s
+ Elapsed time for mesh generation and buffer creation in seconds =    25.1602249
+ Elapsed time for mesh generation and buffer creation in hh:mm:ss =    0 h 00 m 25 s
 
  End of mesh generation
 

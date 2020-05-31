@@ -65,7 +65,7 @@
 
    topography/bathymetry: min/max =        -9026       10673
 
-   Elapsed time for reading in seconds =    4.6631999999999979E-002
+   Elapsed time for reading in seconds =   0.16394900000000001
 
 
    VTK topo output: topo resolution in minutes =    4.00000000
@@ -114,7 +114,7 @@
    R_CENTRAL_CUBE =    200.000000      km
 
  Mesh resolution:
-   DT =   0.19000000000000000
+   DT =   0.14999999999999999
    Minimum period =    31.5813694      (s)
 
    MIN_ATTENUATION_PERIOD =    31.5813694
@@ -135,27 +135,27 @@
 
    ...creating mesh elements
    creating layer            1 out of           11
-      9.1%    current clock (NOT elapsed) time is: 00h 00min 27sec
+      9.1%    current clock (NOT elapsed) time is: 23h 19min 07sec
    creating layer            2 out of           11
-     18.2%    current clock (NOT elapsed) time is: 00h 00min 28sec
+     18.2%    current clock (NOT elapsed) time is: 23h 19min 07sec
    creating layer            3 out of           11
-     27.3%    current clock (NOT elapsed) time is: 00h 00min 28sec
+     27.3%    current clock (NOT elapsed) time is: 23h 19min 07sec
    creating layer            4 out of           11
-     36.4%    current clock (NOT elapsed) time is: 00h 00min 28sec
+     36.4%    current clock (NOT elapsed) time is: 23h 19min 07sec
    creating layer            5 out of           11
-     45.5%    current clock (NOT elapsed) time is: 00h 00min 28sec
+     45.5%    current clock (NOT elapsed) time is: 23h 19min 07sec
    creating layer            6 out of           11
-     54.5%    current clock (NOT elapsed) time is: 00h 00min 28sec
+     54.5%    current clock (NOT elapsed) time is: 23h 19min 07sec
    creating layer            7 out of           11
-     63.6%    current clock (NOT elapsed) time is: 00h 00min 28sec
+     63.6%    current clock (NOT elapsed) time is: 23h 19min 07sec
    creating layer            8 out of           11
-     72.7%    current clock (NOT elapsed) time is: 00h 00min 28sec
+     72.7%    current clock (NOT elapsed) time is: 23h 19min 07sec
    creating layer            9 out of           11
-     81.8%    current clock (NOT elapsed) time is: 00h 00min 28sec
+     81.8%    current clock (NOT elapsed) time is: 23h 19min 07sec
    creating layer           10 out of           11
-     90.9%    current clock (NOT elapsed) time is: 00h 00min 28sec
+     90.9%    current clock (NOT elapsed) time is: 23h 19min 07sec
    creating layer           11 out of           11
-    100.0%    current clock (NOT elapsed) time is: 00h 00min 28sec
+    100.0%    current clock (NOT elapsed) time is: 23h 19min 07sec
 
 
    ...creating global addressing
@@ -170,27 +170,27 @@
 
    ...creating mesh elements
    creating layer            1 out of           11
-      9.1%    current clock (NOT elapsed) time is: 00h 00min 31sec
+      9.1%    current clock (NOT elapsed) time is: 23h 19min 10sec
    creating layer            2 out of           11
-     18.2%    current clock (NOT elapsed) time is: 00h 00min 31sec
+     18.2%    current clock (NOT elapsed) time is: 23h 19min 11sec
    creating layer            3 out of           11
-     27.3%    current clock (NOT elapsed) time is: 00h 00min 32sec
+     27.3%    current clock (NOT elapsed) time is: 23h 19min 11sec
    creating layer            4 out of           11
-     36.4%    current clock (NOT elapsed) time is: 00h 00min 32sec
+     36.4%    current clock (NOT elapsed) time is: 23h 19min 11sec
    creating layer            5 out of           11
-     45.5%    current clock (NOT elapsed) time is: 00h 00min 32sec
+     45.5%    current clock (NOT elapsed) time is: 23h 19min 11sec
    creating layer            6 out of           11
-     54.5%    current clock (NOT elapsed) time is: 00h 00min 32sec
+     54.5%    current clock (NOT elapsed) time is: 23h 19min 11sec
    creating layer            7 out of           11
-     63.6%    current clock (NOT elapsed) time is: 00h 00min 32sec
+     63.6%    current clock (NOT elapsed) time is: 23h 19min 11sec
    creating layer            8 out of           11
-     72.7%    current clock (NOT elapsed) time is: 00h 00min 33sec
+     72.7%    current clock (NOT elapsed) time is: 23h 19min 12sec
    creating layer            9 out of           11
-     81.8%    current clock (NOT elapsed) time is: 00h 00min 33sec
+     81.8%    current clock (NOT elapsed) time is: 23h 19min 12sec
    creating layer           10 out of           11
-     90.9%    current clock (NOT elapsed) time is: 00h 00min 34sec
+     90.9%    current clock (NOT elapsed) time is: 23h 19min 12sec
    creating layer           11 out of           11
-    100.0%    current clock (NOT elapsed) time is: 00h 00min 34sec
+    100.0%    current clock (NOT elapsed) time is: 23h 19min 13sec
 
 
    ...fills global mesh points
@@ -216,8 +216,8 @@
    Minimum period resolved (empirical) =    31.5813694      (s)
    Maximum suggested time step =   0.264999986      (s)
 
-   for DT :   0.189999998      (s)
-   Max stability for wave velocities =   0.392872512
+   for DT :   0.150000006      (s)
+   Max stability for wave velocities =   0.310162514
  ----------------------------------
 
    saving vtk mesh files for resolution res_minimum_period...
@@ -315,9 +315,9 @@
 
    ...creating mesh elements
    creating layer            1 out of            2
-     50.0%    current clock (NOT elapsed) time is: 00h 00min 38sec
+     50.0%    current clock (NOT elapsed) time is: 23h 19min 17sec
    creating layer            2 out of            2
-    100.0%    current clock (NOT elapsed) time is: 00h 00min 38sec
+    100.0%    current clock (NOT elapsed) time is: 23h 19min 17sec
 
 
    ...creating global addressing
@@ -332,9 +332,9 @@
 
    ...creating mesh elements
    creating layer            1 out of            2
-     50.0%    current clock (NOT elapsed) time is: 00h 00min 38sec
+     50.0%    current clock (NOT elapsed) time is: 23h 19min 17sec
    creating layer            2 out of            2
-    100.0%    current clock (NOT elapsed) time is: 00h 00min 38sec
+    100.0%    current clock (NOT elapsed) time is: 23h 19min 17sec
 
 
    ...fills global mesh points
@@ -360,8 +360,8 @@
    Minimum period resolved (empirical) =    31.5813694      (s)
    Maximum suggested time step =   0.400000006      (s)
 
-   for DT :   0.189999998      (s)
-   Max stability for wave velocities =   0.258611470
+   for DT :   0.150000006      (s)
+   Max stability for wave velocities =   0.204166949
  ----------------------------------
 
    saving vtk mesh files for resolution res_minimum_period...
@@ -456,7 +456,7 @@
 
    ...creating mesh elements
    creating layer            1 out of            1
-    100.0%    current clock (NOT elapsed) time is: 00h 00min 38sec
+    100.0%    current clock (NOT elapsed) time is: 23h 19min 17sec
 
    creating central cube
 
@@ -472,7 +472,7 @@
 
    ...creating mesh elements
    creating layer            1 out of            1
-    100.0%    current clock (NOT elapsed) time is: 00h 00min 38sec
+    100.0%    current clock (NOT elapsed) time is: 23h 19min 17sec
 
    creating central cube
 
@@ -499,8 +499,8 @@
    Minimum period resolved (empirical) =    31.5813694      (s)
    Maximum suggested time step =   0.439999998      (s)
 
-   for DT :   0.189999998      (s)
-   Max stability for wave velocities =   0.236574113
+   for DT :   0.150000006      (s)
+   Max stability for wave velocities =   0.186769038
  ----------------------------------
 
    saving vtk mesh files for resolution res_minimum_period...
@@ -615,15 +615,15 @@
  Load balancing = 100 % by definition
 
 
- the time step of the solver will be DT =   0.189999998
+ the time step of the solver will be DT =   0.150000006
 
  using single precision for the calculations
 
  smallest and largest possible floating-point numbers are:    1.17549435E-38   3.40282347E+38
 
 
- Elapsed time for mesh generation and buffer creation in seconds =    11.3088112
- Elapsed time for mesh generation and buffer creation in hh:mm:ss =    0 h 00 m 11 s
+ Elapsed time for mesh generation and buffer creation in seconds =    10.7539730
+ Elapsed time for mesh generation and buffer creation in hh:mm:ss =    0 h 00 m 10 s
 
  End of mesh generation
 

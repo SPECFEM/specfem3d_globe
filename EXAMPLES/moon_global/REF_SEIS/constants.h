@@ -292,6 +292,8 @@
 ! by default, we use PREM values at 1 Hz
   double precision, parameter :: ATTENUATION_f0_REFERENCE = 1.d0   ! in Hz
 
+! saves velocity model files shifted to the center frequency of the simulation attenuation period band
+  logical, parameter :: ATTENUATION_SAVE_MODEL_AT_SHIFTED_CENTER_FREQ = .false.
 
 !!-----------------------------------------------------------
 !!
@@ -811,7 +813,7 @@
   ! inner core model
   integer, parameter :: THREE_D_MODEL_INNER_CORE_ISHII = 201
 
-
+!! attenuation
 ! number of standard linear solids for attenuation
   integer, parameter :: N_SLS = 3
 
@@ -819,7 +821,7 @@
 ! ATTENUATION_COMP_RESOLUTION: Number of Digits after decimal
 ! ATTENUATION_COMP_MAXIMUM:    Maximum Q Value
   integer, parameter :: ATTENUATION_COMP_RESOLUTION = 1
-  integer, parameter :: ATTENUATION_COMP_MAXIMUM    = 5000
+  integer, parameter :: ATTENUATION_COMP_MAXIMUM    = 9000
 
 ! for determination of the attenuation period range
 ! if this is set to .true. then the hardcoded values will be used
