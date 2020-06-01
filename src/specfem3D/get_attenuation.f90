@@ -95,10 +95,6 @@
   ! checks
   if (f_c_source <= 0.d0) call exit_MPI(myrank,'Error: invalid attenuation center frequency read in from mesh file')
 
-  ! note: previous versions had a scaling factor 1000.d0 added and removed again when read in the solver.
-  !       for backward-compatibilty, we will add this factor when storing/reading the value.
-  f_c_source = f_c_source / 1000.d0
-
   ! since we read in crust/mantle region first, we check if the center frequency is the same for both regions
   if (iregion_code == IREGION_INNER_CORE) then
     if (abs(f_c_source - ATT_F_C_SOURCE) > TOL) then

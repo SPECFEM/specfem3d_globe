@@ -511,7 +511,6 @@
 
   ! takes the frequency at the logarithmic mean between min and max
   ! note: previous versions had a scaling factor 1000.d0 added and removed again when read in the solver.
-  !       for backward-compatibilty, we will add this factor when storing/reading the value.
   f_c_source = 10.0d0**(0.5 * (log10(f1) + log10(f2)))
 
   ! checks

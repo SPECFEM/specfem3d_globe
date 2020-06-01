@@ -297,10 +297,6 @@
     ! attenuation center frequency
     f_c_source = ATT_F_C_SOURCE
 
-    ! note: previous versions had a scaling factor 1000.d0 added and removed again when read in the solver.
-    !       for backward-compatibilty, we will add this factor when storing/reading the value.
-    f_c_source = 1000.d0 * f_c_source
-
     open(unit=IOUT, file=prname(1:len_trim(prname))//'attenuation.bin', &
           status='unknown', form='unformatted',action='write',iostat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error opening attenuation.bin file')

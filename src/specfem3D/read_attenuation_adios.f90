@@ -69,18 +69,14 @@
   ! opens adios file
   call open_file_adios_read_and_init_method(myadios_file,myadios_group,file_name)
 
-  ! note: for backward-compatibility, the center frequency parameter in ADIOS was stored as t_c_source
-  !       thus, we read in the parameter as "t_c_source"
-  !
-  !       todo in future version, we might want to get rid of this naming ambiguity
-  call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "t_c_source",f_c_source)
+  call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "f_c_source",f_c_source)
 
   local_dim = size (tau_s)
   start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
   call set_selection_boundingbox(sel, start, count)
 
   call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "tau_s/array", tau_s)
+                                 trim(region_name) // "tau_s_store/array", tau_s)
 
   call read_adios_perform(myadios_file)
   call delete_adios_selection(sel)

@@ -106,7 +106,7 @@
   integer :: i,j,k,ispec,iglob,ier
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: tmp_array_x, tmp_array_y, tmp_array_z
   real(kind=CUSTOM_REAL),dimension(1) :: dummy_1d
-  double precision :: f_c_source,t_c_source
+  double precision :: f_c_source
 
   ! local parameters
   character(len=MAX_STRING_LEN) :: outputname, group_name ! reg_name
@@ -747,13 +747,6 @@
     ! attenuation center frequency
     f_c_source = ATT_F_C_SOURCE
 
-    ! note: previous versions had a scaling factor 1000.d0 added and removed again when read in the solver.
-    !       for backward-compatibilty, we will add this factor when storing/reading the value.
-    f_c_source = 1000.d0 * f_c_source
-
-    ! furthermore for backward-compatibility, the center frequency parameter in ADIOS was stored as t_c_source
-    t_c_source = f_c_source
-
     write(group_name,"('SPECFEM3D_GLOBE_ATTENUATION_reg',i1)") iregion_code
 
     ! set the adios group size to 0 before incremented by calls to helpers functions.
@@ -761,7 +754,7 @@
     call init_adios_group(myadios_group,group_name)
 
     !--- Define ADIOS variables -----------------------------
-    call define_adios_scalar(myadios_group, group_size_inc, region_name_scalar, STRINGIFY_VAR(t_c_source))
+    call define_adios_scalar(myadios_group, group_size_inc, region_name_scalar, STRINGIFY_VAR(f_c_source))
 
     local_dim = size(tau_s_store)
     call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(tau_s_store))
@@ -786,7 +779,7 @@
     call set_adios_group_size(myadios_file,group_size_inc)
 
     !--- Schedule writes for the previously defined ADIOS variables
-    call write_adios_scalar(myadios_file,myadios_group,trim(region_name) // "t_c_source", t_c_source)
+    call write_adios_scalar(myadios_file,myadios_group,trim(region_name) // STRINGIFY_VAR(f_c_source))
 
     local_dim = size (tau_s_store)
     call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs_adios, local_dim, &
