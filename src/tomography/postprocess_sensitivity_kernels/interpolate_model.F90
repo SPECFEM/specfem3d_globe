@@ -1649,7 +1649,7 @@
   logical,intent(in) :: USE_FALLBACK
 
   ! local parameters
-  integer :: i,j,k,iglob,iker
+  integer :: i,j,k,iglob,iker,iglob1,iglob2
   ! interpolated point location
   integer :: ispec_selected,rank_selected
   double precision :: xi,eta,gamma
@@ -1658,7 +1658,7 @@
   ! nodes search
   double precision,dimension(3) :: xyz_target
   double precision :: dist_min
-  double precision :: mid_radius,elem_height,r
+  double precision :: elem_height,r1,r2,r_sq
   integer :: iglob_min
   integer :: i_selected,j_selected,k_selected
   ! locations
@@ -1688,6 +1688,8 @@
 
   ! debug warning about large model value differences
   logical,parameter :: DO_WARNING = .false.
+  ! debugging
+  logical,parameter :: DEBUG = .false.
 
   ! checks given ispec
   if (ispec < 1 .or. ispec > nspec_new) then
@@ -1695,13 +1697,12 @@
     stop 'Error invalid ispec in get_model_values_kdtree() routine'
   endif
 
-  ! initializes for 410 special case
-  mid_radius = 0.d0
-  elem_height = 0.d0
+  ! initializes for 410/660/topo special case
   is_critical = .false.
 
   ! searches for element using mid-point
   if (USE_MIDPOINT_SEARCH .or. DO_SEPARATION_410_650 .or. DO_SEPARATION_TOPO) then
+    ! element mid-point
     iglob = ibool2(MIDX,MIDY,MIDZ,ispec)
 
     xyz_target(1) = x2(iglob)
@@ -1709,71 +1710,85 @@
     xyz_target(3) = z2(iglob)
 
     ! finds closest point in source chunk
-    call kdtree_find_nearest_neighbor(xyz_target,iglob_min,dist_min)
+    if (USE_MIDPOINT_SEARCH) then
+      call kdtree_find_nearest_neighbor(xyz_target,iglob_min,dist_min)
 
-    ! selected source rank
-    rank_selected = int((iglob_min-1)/nspec_old)
-    ! selected closest element
-    ispec_selected = iglob_min - rank_selected * nspec_old
+      ! selected source rank
+      rank_selected = int((iglob_min-1)/nspec_old)
+      ! selected closest element
+      ispec_selected = iglob_min - rank_selected * nspec_old
 
-    ! checks if mid-point was found properly
-    call check_point_result()
+      ! checks if mid-point was found properly
+      call check_point_result()
 
-    ! debug
-    !if (myrank == 0 .and. iglob < 100) &
-    !  print *,'dist_min kdtree midpoint: ',dist_min * R_PLANET_KM,'(km)',typical_size * R_PLANET_KM
-
-    ! special case for 410-km/650-km discontinuity
-    if (DO_SEPARATION_410_650) then
-      ! point radius
-      r = sqrt(xyz_target(1)*xyz_target(1) + xyz_target(2)*xyz_target(2) + xyz_target(3)*xyz_target(3))
-
-      ! surface
-      if (r >= R220/R_PLANET) then
-        ! elements close to surface
-        is_critical = .true.
-      endif
-
-      ! 410-km discontinuity
-      if (r >= R600/R_PLANET .and. r <= R220/R_PLANET) then
-        ! elements within 220 - 600 km depth
-        is_critical = .true.
-      endif
-
-      ! 650-km discontinuity
-      if (r >= (R670 - R670_MARGIN)/R_PLANET .and. r <= (R670 + R670_MARGIN)/R_PLANET) then
-        ! elements within around 650 km depth
-        is_critical = .true.
-      endif
-    endif
-
-    ! special case for surface (moho) discontinuity
-    if (DO_SEPARATION_TOPO) then
-      ! point radius
-      r = sqrt(xyz_target(1)*xyz_target(1) + xyz_target(2)*xyz_target(2) + xyz_target(3)*xyz_target(3))
-
-      ! surface
-      if (r >= R220/R_PLANET) then
-        ! elements close to surface
-        is_critical = .true.
-      endif
-    endif
-
-    if (is_critical) then
-      ! stores mid-point radius
-      mid_radius = r
-
-      ! element height: size along a vertical edge
-      ! top point
-      iglob = ibool2(1,1,NGLLZ,ispec)
-      r = sqrt(x2(iglob)*x2(iglob) + y2(iglob)*y2(iglob) + z2(iglob)*z2(iglob))
-      ! bottom point
-      iglob = ibool2(1,1,1,ispec)
-      elem_height = r - sqrt(x2(iglob)*x2(iglob) + y2(iglob)*y2(iglob) + z2(iglob)*z2(iglob))
       ! debug
-      !if (myrank == 0) print *,'element height: ',elem_height * R_PLANET_KM,'(km)','radius: ',mid_radius*R_PLANET_KM
-    endif
+      !if (myrank == 0 .and. iglob < 100) &
+      !  print *,'dist_min kdtree midpoint: ',dist_min * R_PLANET_KM,'(km)',typical_size * R_PLANET_KM
 
+    else
+      ! uses all GLL points to find the best element
+      !
+      ! checks if element close to surface/410/660 interfaces
+      !
+      ! note: we want to make sure that for points on a discontinuity/interface,
+      !       the interpolation is done from elements on the correct side.
+      !
+      !       we thus flag elements here as critical in case they are close to such an interface.
+      !       elements with this flag will then avoid locating the closest GLL point for points being on a surface,
+      !       but rather take only internal element GLL points for the search of the best element.
+      !
+      !       for midpoint search, we located the best element using element midpoints only.
+      !       in this case, we are probably fine by finding the closest element on the correct side of an interface.
+      !
+      ! make sure elements close to an interface are flagged as "critical" for special care
+      if (DO_SEPARATION_410_650 .or. DO_SEPARATION_TOPO) then
+        ! point radius (squared)
+        r_sq = xyz_target(1)*xyz_target(1) + xyz_target(2)*xyz_target(2) + xyz_target(3)*xyz_target(3)
+
+        ! special case for 410-km/650-km discontinuity
+        if (DO_SEPARATION_410_650) then
+          ! surface
+          if (r_sq >= (R220/R_PLANET)**2) then
+            ! elements close to surface
+            is_critical = .true.
+          endif
+          ! 410-km discontinuity
+          if (r_sq >= (R600/R_PLANET)**2 .and. r_sq <= (R220/R_PLANET)**2) then
+            ! elements within 220 - 600 km depth
+            is_critical = .true.
+          endif
+          ! 650-km discontinuity
+          if (r_sq >= ((R670 - R670_MARGIN)/R_PLANET)**2 .and. r_sq <= ((R670 + R670_MARGIN)/R_PLANET)**2) then
+            ! elements within around 650 km depth
+            is_critical = .true.
+          endif
+        endif
+
+        ! special case for surface (moho) discontinuity
+        if (DO_SEPARATION_TOPO) then
+          ! surface
+          if (r_sq >= (R220/R_PLANET)**2) then
+            ! elements close to surface
+            is_critical = .true.
+          endif
+        endif
+
+        ! debugging
+        if (DEBUG .and. is_critical) then
+          ! element height: size along a vertical edge
+          ! top point
+          iglob1 = ibool2(1,1,NGLLZ,ispec)
+          r1 = sqrt(x2(iglob1)*x2(iglob1) + y2(iglob1)*y2(iglob1) + z2(iglob1)*z2(iglob1))
+          ! bottom point
+          iglob2 = ibool2(1,1,1,ispec)
+          r2 = sqrt(x2(iglob2)*x2(iglob2) + y2(iglob2)*y2(iglob2) + z2(iglob2)*z2(iglob2))
+          ! element height
+          elem_height = r1 - r2
+          ! debug
+          if (myrank == 0) print *,'element height: ',elem_height * R_PLANET_KM,'(km)','radius: ',sqrt(r_sq)*R_PLANET_KM
+        endif
+      endif
+    endif
   endif
 
   ! loops over all element GLL points
@@ -1790,31 +1805,37 @@
 
         ! kd-search for this single GLL point
         if (.not. USE_MIDPOINT_SEARCH) then
+          ! finds closest element in original mesh
+          ! search using only internal GLL points (avoid GLL points on the surface of the element)
           search_internal = .false.
 
           ! avoids getting values from "wrong" side on 410-km discontinuity,etc.
-          if (DO_SEPARATION_410_650) then
-            if (is_critical) then
-              ! GLL point radius
-              r = sqrt(x_target*x_target + y_target*y_target + z_target*z_target)
+          if (DO_SEPARATION_410_650 .or. DO_SEPARATION_TOPO) then
+            ! only points on surface of element
+            if (i == 1 .or. i == NGLLX .or. j == 1 .or. j == NGLLY .or. k == 1 .or. k == NGLLZ) then
+              ! further limits the number of internal searches
+              ! checks each critical element if the points are close to an interface/discontinuity
+              if (is_critical) then
+                ! GLL point radius (squared)
+                r_sq = x_target*x_target + y_target*y_target + z_target*z_target
 
-              ! takes corresponding internal GLL point for element search
-              ! 410-km discontinuity
-              if (r >= (R400 - R400_MARGIN)/R_PLANET .and. r <= (R400 + R400_MARGIN)/R_PLANET) search_internal = .true.
-              ! 650-km discontinuity
-              if (r >= (R670 - R670_MARGIN)/R_PLANET .and. r <= (R670 + R670_MARGIN)/R_PLANET) search_internal = .true.
-            endif
-          endif
+                if (DO_SEPARATION_410_650) then
+                  ! takes corresponding internal GLL point for element search
+                  ! 410-km discontinuity
+                  if (r_sq >= ((R400 - R400_MARGIN)/R_PLANET)**2 .and. &
+                      r_sq <= ((R400 + R400_MARGIN)/R_PLANET)**2) search_internal = .true.
+                  ! 650-km discontinuity
+                  if (r_sq >= ((R670 - R670_MARGIN)/R_PLANET)**2 .and. &
+                      r_sq <= ((R670 + R670_MARGIN)/R_PLANET)**2) search_internal = .true.
+                endif
 
-          if (DO_SEPARATION_TOPO) then
-            RTOP = R_PLANET
-            if (is_critical) then
-              ! GLL point radius
-              r = sqrt(x_target*x_target + y_target*y_target + z_target*z_target)
-
-              ! takes corresponding internal GLL point for element search
-              ! surface elements
-              if (r >= (RTOP - RTOP_MARGIN)/R_PLANET) search_internal = .true.
+                if (DO_SEPARATION_TOPO) then
+                  RTOP = R_PLANET
+                  ! takes corresponding internal GLL point for element search
+                  ! surface elements
+                  if (r_sq >= ((RTOP - RTOP_MARGIN)/R_PLANET)**2) search_internal = .true.
+                endif
+              endif
             endif
           endif
 
@@ -1842,7 +1863,7 @@
               kk = NGLLZ - 1
             endif
 
-            ! target point location
+            ! new target point location
             iglob = ibool2(ii,jj,kk,ispec)
             x_target = x2(iglob)
             y_target = y2(iglob)
