@@ -326,6 +326,7 @@
   subroutine bcast_attenuation_model_3D(one_minus_sum_beta,factor_common,factor_scale,tau_s,vnspec)
 
   use constants_solver
+  use shared_parameters, only: ATT_F_C_SOURCE
 
   implicit none
 
@@ -339,5 +340,6 @@
   call bcast_all_cr_for_database(factor_scale(1,1,1,1), size(factor_scale))
   call bcast_all_cr_for_database(factor_common(1,1,1,1,1), size(factor_common))
   call bcast_all_dp_for_database(tau_s(1), size(tau_s))
+  call bcast_all_dp_for_database(ATT_F_C_SOURCE, 1)
 
   end subroutine bcast_attenuation_model_3D
