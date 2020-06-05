@@ -178,7 +178,7 @@
   integer, parameter :: MAX_STATIONXML_LENGTH = 16182
   integer, parameter :: MAX_PARFILE_LENGTH = 20000
   integer, parameter :: MAX_CONSTANTS_LENGTH = 45000
-  integer, parameter :: MAX_TIME_STRING_LENGTH = 22
+  integer, parameter :: MAX_TIME_STRING_LENGTH = 24
 
   !--- Character strings to be written to the ASDF file
   character(len=MAX_QUAKEML_LENGTH) :: quakeml
