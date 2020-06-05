@@ -195,6 +195,7 @@ void compute_element_cm_gravity(const int tx, const int iglob, const __global fl
   float sz_l;\n\
   float factor;\n\
   int int_radius;\n\
+  int nrad_gravity;\n\
 \n\
   radius = d_rstore[0 + (3) * (iglob)];\n\
   theta = d_rstore[1 + (3) * (iglob)];\n\
@@ -207,10 +208,15 @@ void compute_element_cm_gravity(const int tx, const int iglob, const __global fl
   sin_theta = sincos(theta,  &cos_theta);\n\
   sin_phi = sincos(phi,  &cos_phi);\n\
 \n\
-  int_radius = rint(((radius) * (R_EARTH_KM)) * (10.0f)) - (1);\n\
+  nrad_gravity = 70000;\n\
+  int_radius = rint(((radius) / ((R_EARTH_KM + 9.0f) / (R_EARTH_KM))) * (nrad_gravity)) - (1);\n\
   if (int_radius < 0) {\n\
     int_radius = 0;\n\
   }\n\
+  if (int_radius > nrad_gravity - (1)) {\n\
+    int_radius = nrad_gravity - (1);\n\
+  }\n\
+\n\
   minus_g = d_minus_gravity_table[int_radius];\n\
   minus_dg = d_minus_deriv_gravity_table[int_radius];\n\
   rho = d_density_table[int_radius];\n\

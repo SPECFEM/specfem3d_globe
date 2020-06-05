@@ -47,6 +47,7 @@ module BOAST
       decl *s_l = [ Real("sx_l"), Real("sy_l"), Real("sz_l") ]
       decl factor = Real("factor")
       decl int_radius = Int("int_radius")
+      decl nrad_gravity = Int("nrad_gravity")
       comment()
 
       print radius === d_rstore[0,iglob]
@@ -75,14 +76,40 @@ module BOAST
       end
       comment()
 
-      print int_radius === rint(radius * r_earth_km * 10.0 ) - 1
-      print If(int_radius < 0 ) {
-        print int_radius === 0
-      }
+      # daniel todo: note that the CPU version removes the ellipticity factor from r
+      #              this requires the ellpticity spline which are not available yet on GPU.
+      #              we therefore omit this correction for now...
+      #
+      #r_table = radius
+      #if (ELLIPTICITY) call revert_ellipticity_rtheta(r_table,theta,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+
+      # old: int_radius = nint(10.d0 * radius * R_PLANET_KM)
+      #print int_radius === rint(radius * r_earth_km * 10.0 ) - 1
+      #print If(int_radius < 0 ) { print int_radius === 0 }
+
+      # new: int_radius = dble(int_radius) / dble(NRAD_GRAVITY) * range_max
+      #print int_radius === rint( r_table / range_max * dble(NRAD_GRAVITY) ) - 1
+      # daniel todo:
+      #   NRAD_GRAVITY set in constants.h: NRAD_GRAVITY = 70000 - this could be made an argument or constant
+      #   range_max = (R_PLANET + dble(TOPO_MAXIMUM))/R_PLANET with TOPO_MAXIMUM = 9000.0 (m, Earth)
+      # we simplify: r_table / range_max * dble(NRAD_GRAVITY)  to radius / ((r_earth_km + 9.0)/r_earth_km) * NRAD_GRAVITY
+      print nrad_gravity === 70000
+      print int_radius === rint( radius / ((r_earth_km + 9.0)/r_earth_km) * nrad_gravity) - 1
+      # limits range
+      print If(int_radius < 0){ print int_radius === 0 }
+      print If(int_radius > nrad_gravity-1){ print int_radius === nrad_gravity-1 }
+      comment()
+
       print minus_g  === d_minus_gravity_table[int_radius]
       print minus_dg === d_minus_deriv_gravity_table[int_radius]
       print rho      === d_density_table[int_radius]
       comment()
+
+      #daniel todo: new with pre-calculated arrays
+      # Cartesian components of the gravitational acceleration
+      #gxl = gravity_pre_store(1,iglob) ! minus_g*sin_theta*cos_phi * rho
+      #gyl = gravity_pre_store(2,iglob) ! minus_g*sin_theta*sin_phi * rho
+      #gzl = gravity_pre_store(3,iglob) ! minus_g*cos_theta * rho
 
       print gl[0] === minus_g*sin_theta*cos_phi
       print gl[1] === minus_g*sin_theta*sin_phi
@@ -96,6 +123,15 @@ module BOAST
       print cos_phi_sq   === cos_phi*cos_phi
       print sin_phi_sq   === sin_phi*sin_phi
       comment()
+
+      #daniel todo: new with pre-calculated arrays
+      #Hxxl = gravity_H(1,iglob) ! minus_g_over_radius*(cos_phi_sq*cos_theta_sq + sin_phi_sq) + cos_phi_sq*minus_dg*sin_theta_sq * rho
+      #Hyyl = gravity_H(2,iglob) ! minus_g_over_radius*(cos_phi_sq + cos_theta_sq*sin_phi_sq) + minus_dg*sin_phi_sq*sin_theta_sq * rho
+      #Hzzl = gravity_H(3,iglob) ! cos_theta_sq*minus_dg + minus_g_over_radius*sin_theta_sq * rho
+      #Hxyl = gravity_H(4,iglob) ! cos_phi*minus_dg_plus_g_over_radius*sin_phi*sin_theta_sq * rho
+      #Hxzl = gravity_H(5,iglob) ! cos_phi*cos_theta*minus_dg_plus_g_over_radius*sin_theta * rho
+      #Hyzl = gravity_H(6,iglob) ! cos_theta*minus_dg_plus_g_over_radius*sin_phi*sin_theta * rho
+
 
       print hxxl === minus_g_over_radius*(cos_phi_sq*cos_theta_sq + sin_phi_sq) + cos_phi_sq*minus_dg*sin_theta_sq
       print hyyl === minus_g_over_radius*(cos_phi_sq + cos_theta_sq*sin_phi_sq) + minus_dg*sin_phi_sq*sin_theta_sq
@@ -123,6 +159,12 @@ module BOAST
       print sigma[1][2].dereference === sigma[1][2].dereference - s_l[1] * gl[2];
       print sigma[2][1].dereference === sigma[2][1].dereference - s_l[2] * gl[1];
       comment()
+
+      # precompute vector
+      #factor = jacobianl(INDEX_IJK) * wgll_cube(INDEX_IJK)
+      #rho_s_H(1,INDEX_IJK) = factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl)
+      #rho_s_H(2,INDEX_IJK) = factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl)
+      #rho_s_H(3,INDEX_IJK) = factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl)
 
       print factor === jacobianl * wgll_cube[tx]
       print rho_s_H[0][0] === factor * (s_l[0]*hxxl + s_l[1]*hxyl + s_l[2]*hxzl)

@@ -175,6 +175,7 @@ static __device__ void compute_element_cm_gravity(const int tx, const int iglob,
   float sz_l;
   float factor;
   int int_radius;
+  int nrad_gravity;
 
   radius = d_rstore[0 + (3) * (iglob)];
   theta = d_rstore[1 + (3) * (iglob)];
@@ -187,10 +188,15 @@ static __device__ void compute_element_cm_gravity(const int tx, const int iglob,
   sincosf(theta,  &sin_theta,  &cos_theta);
   sincosf(phi,  &sin_phi,  &cos_phi);
 
-  int_radius = rint(((radius) * (R_EARTH_KM)) * (10.0f)) - (1);
+  nrad_gravity = 70000;
+  int_radius = rint(((radius) / ((R_EARTH_KM + 9.0f) / (R_EARTH_KM))) * (nrad_gravity)) - (1);
   if (int_radius < 0) {
     int_radius = 0;
   }
+  if (int_radius > nrad_gravity - (1)) {
+    int_radius = nrad_gravity - (1);
+  }
+
   minus_g = d_minus_gravity_table[int_radius];
   minus_dg = d_minus_deriv_gravity_table[int_radius];
   rho = d_density_table[int_radius];
@@ -433,7 +439,7 @@ static __device__ void compute_element_cm_tiso(const int offset, const float * d
 // main function
 /*----------------------------------------------*/
 
-__global__
+__global__ 
 #ifdef USE_LAUNCH_BOUNDS
 __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
 #endif

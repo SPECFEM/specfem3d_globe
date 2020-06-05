@@ -240,6 +240,7 @@ module BOAST
       decl *grad_ln_rho = [ Real("grad_x_ln_rho"), Real("grad_y_ln_rho"), Real("grad_z_ln_rho") ]
 
       decl int_radius = Int("int_radius")
+      decl nrad_gravity = Int("nrad_gravity")
 
       decl s_dummy_loc = Real("s_dummy_loc", :local => true, :dim => [Dim(ngll3)] )
 
@@ -372,10 +373,43 @@ module BOAST
               print sin_phi   === sin(phi)
             end
           end
-          print int_radius === rint(radius * r_earth_km * 10.0) - 1
+
+          # radius index
+
+          # daniel todo: note that the CPU version removes the ellipticity factor from r
+          #              this requires the ellpticity spline which are not available yet on GPU.
+          #              we therefore omit this correction for now...
+          #
+          #r_table = radius
+          #if (ELLIPTICITY) call revert_ellipticity_rtheta(r_table,theta,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+
+          # old: int_radius = nint(10.d0 * radius * R_PLANET_KM)
+          #print int_radius === rint(radius * r_earth_km * 10.0) - 1
+
+          # new: int_radius = dble(int_radius) / dble(NRAD_GRAVITY) * range_max
+          #print int_radius === rint( r_table / range_max * dble(NRAD_GRAVITY) ) - 1
+          # daniel todo:
+          #   NRAD_GRAVITY set in constants.h: NRAD_GRAVITY = 70000 - this could be made an argument or constant
+          #   range_max = (R_PLANET + dble(TOPO_MAXIMUM))/R_PLANET with TOPO_MAXIMUM = 9000.0 (m, Earth)
+          # we simplify: r_table / range_max * dble(NRAD_GRAVITY)  to radius / ((r_earth_km + 9.0)/r_earth_km) * NRAD_GRAVITY
+          print nrad_gravity === 70000
+          print int_radius === rint( radius / ((r_earth_km + 9.0) / r_earth_km) * nrad_gravity) - 1
+          # limits range
+          print If(int_radius < 0){ print int_radius === 0 }
+          print If(int_radius > nrad_gravity-1){ print int_radius === nrad_gravity-1 }
           comment()
 
           print If(!gravity => lambda {
+            # daniel todo: new with pre-calculated arrays
+            # gradient of d ln(rho)/dr in Cartesian coordinates
+            #vec_x = gravity_pre_store_outer_core(1,iglob)
+            #vec_y = gravity_pre_store_outer_core(2,iglob)
+            #vec_z = gravity_pre_store_outer_core(3,iglob)
+            # grad(rho)/rho in Cartesian components
+            #dpotentialdxl(INDEX_IJK) = dpotentialdxl(INDEX_IJK) + chi_elem(INDEX_IJK) * vec_x
+            #dpotentialdyl(INDEX_IJK) = dpotentialdyl(INDEX_IJK) + chi_elem(INDEX_IJK) * vec_y
+            #dpotentialdzl(INDEX_IJK) = dpotentialdzl(INDEX_IJK) + chi_elem(INDEX_IJK) * vec_z
+
             print grad_ln_rho[0] === sin_theta * cos_phi * d_d_ln_density_dr_table[int_radius]
             print grad_ln_rho[1] === sin_theta * sin_phi * d_d_ln_density_dr_table[int_radius]
             print grad_ln_rho[2] ===           cos_theta * d_d_ln_density_dr_table[int_radius]
@@ -384,6 +418,19 @@ module BOAST
             print dpotentialdy_with_rot === dpotentialdy_with_rot + s_dummy_loc[tx] * grad_ln_rho[1]
             print dpotentialdl[2]       === dpotentialdl[2] +       s_dummy_loc[tx] * grad_ln_rho[2]
           }, :else => lambda {
+            #daniel todo: new with pre-calculated arrays
+            # Cartesian components of the gravitational acceleration
+            # gravitational acceleration (integrated and multiply by rho / Kappa)
+            #vec_x = gravity_pre_store(1,iglob)
+            #vec_y = gravity_pre_store(2,iglob)
+            #vec_z = gravity_pre_store(3,iglob)
+            # compute divergence of displacement
+            # distinguish between single and double precision for reals
+            #gravity_term = jacobianl(INDEX_IJK) * wgll_cube(INDEX_IJK) &
+            #                   * (dpotentialdxl(INDEX_IJK) * vec_x &
+            #                    + dpotentialdyl(INDEX_IJK) * vec_y &
+            #                    + dpotentialdzl(INDEX_IJK) * vec_z)
+
             print gl[0] === sin_theta*cos_phi
             print gl[1] === sin_theta*sin_phi
             print gl[2] === cos_theta

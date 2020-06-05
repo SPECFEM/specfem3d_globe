@@ -780,6 +780,14 @@ typedef struct mesh_ {
   gpu_realw_mem d_minus_deriv_gravity_table;
   gpu_realw_mem d_density_table;
 
+  // daniel todo: new pre-computed vectors - not used yet..
+  gpu_realw_mem d_gravity_pre_store_outer_core;
+  gpu_realw_mem d_gravity_pre_store_crust_mantle;
+  gpu_realw_mem d_gravity_pre_store_inner_core;
+
+  gpu_realw_mem d_gravity_H_crust_mantle;
+  gpu_realw_mem d_gravity_H_inner_core;
+
   realw minus_g_icb;
   realw minus_g_cmb;
 

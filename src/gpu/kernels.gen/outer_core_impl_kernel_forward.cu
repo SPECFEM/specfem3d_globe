@@ -164,6 +164,7 @@ __global__ void outer_core_impl_kernel_forward(const int nb_blocks_to_compute, c
   float grad_y_ln_rho;
   float grad_z_ln_rho;
   int int_radius;
+  int nrad_gravity;
   __shared__ float s_dummy_loc[(NGLL3)];
   __shared__ float s_temp1[(NGLL3)];
   __shared__ float s_temp2[(NGLL3)];
@@ -268,7 +269,14 @@ __global__ void outer_core_impl_kernel_forward(const int nb_blocks_to_compute, c
     phi = d_rstore[2 + (3) * (iglob_1)];
     sincosf(theta,  &sin_theta,  &cos_theta);
     sincosf(phi,  &sin_phi,  &cos_phi);
-    int_radius = rint(((radius) * (R_EARTH_KM)) * (10.0f)) - (1);
+    nrad_gravity = 70000;
+    int_radius = rint(((radius) / ((R_EARTH_KM + 9.0f) / (R_EARTH_KM))) * (nrad_gravity)) - (1);
+    if (int_radius < 0) {
+      int_radius = 0;
+    }
+    if (int_radius > nrad_gravity - (1)) {
+      int_radius = nrad_gravity - (1);
+    }
 
     if ( !(GRAVITY)) {
       grad_x_ln_rho = ((sin_theta) * (cos_phi)) * (d_d_ln_density_dr_table[int_radius]);

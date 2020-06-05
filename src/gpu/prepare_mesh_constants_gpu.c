@@ -692,6 +692,55 @@ void FC_FUNC_ (prepare_fields_gravity_device,
   GPU_ERROR_CHECKING ("prepare_fields_gravity_device");
 }
 
+// daniel todo: new routine to setup gravity with pre-calculated arrays
+// note: will need more memory for array allocations
+//       not used yet...
+extern EXTERN_LANG
+void FC_FUNC_ (prepare_fields_gravity_device_new,
+               PREPARE_FIELDS_gravity_DEVICE_NEW) (long *Mesh_pointer_f,
+                                                   realw *gravity_pre_store_outer_core,
+                                                   realw *gravity_pre_store_crust_mantle,
+                                                   realw *gravity_pre_store_inner_core,
+                                                   realw *gravity_H_crust_mantle,
+                                                   realw *gravity_H_inner_core,
+                                                   realw *h_wgll_cube,
+                                                   realw *minus_g_icb,
+                                                   realw *minus_g_cmb,
+                                                   double *RHO_BOTTOM_OC,
+                                                   double *RHO_TOP_OC,
+                                                   double *R_EARTH_KM) {
+
+  TRACE ("prepare_fields_gravity_device_new");
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
+
+  // for both gravity & no gravity case
+  // (d ln (rho)/dr needed for the no gravity fluid potential)
+  gpuCreateCopy_todevice_realw (&mp->d_gravity_pre_store_outer_core, gravity_pre_store_outer_core, NDIM * mp->NGLOB_OUTER_CORE);
+
+  if (mp->gravity) {
+    // gravity case
+    mp->minus_g_icb = *minus_g_icb;
+    mp->minus_g_cmb = *minus_g_cmb;
+
+    // sets up GLL weights cubed
+    gpuSetConst (&mp->d_wgll_cube, NGLL3, h_wgll_cube);
+
+    // prepares gravity arrays
+    gpuCreateCopy_todevice_realw (&mp->d_gravity_pre_store_crust_mantle, gravity_pre_store_crust_mantle, NDIM * mp->NGLOB_CRUST_MANTLE);
+    gpuCreateCopy_todevice_realw (&mp->d_gravity_pre_store_inner_core, gravity_pre_store_inner_core, NDIM * mp->NGLOB_INNER_CORE);
+
+    gpuCreateCopy_todevice_realw (&mp->d_gravity_H_crust_mantle, gravity_H_crust_mantle, 6 * mp->NGLOB_CRUST_MANTLE);
+    gpuCreateCopy_todevice_realw (&mp->d_gravity_H_inner_core, gravity_H_inner_core, 6 * mp->NGLOB_INNER_CORE);
+  }
+
+  // constants
+  mp->RHO_BOTTOM_OC = (realw) *RHO_BOTTOM_OC;
+  mp->RHO_TOP_OC = (realw) *RHO_TOP_OC;
+  mp->R_EARTH_KM = (realw) *R_EARTH_KM;  // needed for both, gravity (crust/mantle,inner core) and non-gravity cases (outer core)
+
+  GPU_ERROR_CHECKING ("prepare_fields_gravity_device_new");
+}
+
 
 /*----------------------------------------------------------------------------------------------- */
 // ATTENUATION simulations

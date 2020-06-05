@@ -303,6 +303,13 @@ GPU_REALW_BUFFER (d_minus_gravity_table);
 GPU_REALW_BUFFER (d_minus_deriv_gravity_table);
 GPU_REALW_BUFFER (d_density_table);
 
+// daniel todo: new gravity arrays - not used yet...
+GPU_REALW_BUFFER (d_gravity_pre_store_outer_core);
+GPU_REALW_BUFFER (d_gravity_pre_store_crust_mantle);
+GPU_REALW_BUFFER (d_gravity_pre_store_inner_core);
+GPU_REALW_BUFFER (d_gravity_H_crust_mantle);
+GPU_REALW_BUFFER (d_gravity_H_inner_core);
+
 // ------------------------------------------------------------------   //
 // rotation
 // ------------------------------------------------------------------   //
