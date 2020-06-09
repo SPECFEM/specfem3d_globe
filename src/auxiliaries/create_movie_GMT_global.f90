@@ -33,10 +33,12 @@
 
 ! reads in files: OUTPUT_FILES/moviedata******
 !
-! and creates new files: ascii_movie_*** (ASCII option) /or/ bin_movie_*** (binary option)
+! and creates new files: ascii_movie_*** (ASCII option)
+!                     or   bin_movie_*** (binary option)
 !
 ! these files can then be visualized using GMT, the Generic Mapping Tools
 ! ( http://www.soest.hawaii.edu/GMT/ )
+! or the shakemovie renderer (renderOnSphere)
 !
 ! example scripts can be found in: UTILS/Visualization/GMT/
 
@@ -57,11 +59,11 @@
   logical, parameter :: NORMALIZE_VALUES = .true.
 
   ! muting source region
-  logical, parameter :: MUTE_SOURCE = .true.
+  logical :: MUTE_SOURCE = .true.
   real(kind=CUSTOM_REAL) :: RADIUS_TO_MUTE = 0.5    ! start radius in degrees
   real(kind=CUSTOM_REAL) :: STARTTIME_TO_MUTE = 0.5 ! adds seconds to shift starttime
   real(kind=CUSTOM_REAL) :: MUTE_SOURCE_MINIMAL_DISTANCE = 2.0 ! minimum taper around the source (in case of displacement movies)
-
+  real(kind=CUSTOM_REAL) :: MUTE_VELOCITY = 3.5     ! speed of surface waves (km/s)
 !---------------------
 
   integer :: i,j,it
@@ -94,14 +96,14 @@
   double precision, dimension(:), allocatable :: xp,yp,zp,field_display
 
 ! for dynamic memory allocation
-  integer :: ierror
+  integer :: ier
 
 ! movie files stored by solver
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
          store_val_x,store_val_y,store_val_z, &
          store_val_ux,store_val_uy,store_val_uz
 
-  logical :: OUTPUT_BINARY
+  logical :: OUTPUT_BINARY,temp_l
 
   real(kind=CUSTOM_REAL) :: LAT_SOURCE,LON_SOURCE,DEP_SOURCE
   real(kind=CUSTOM_REAL) :: dist_lon,dist_lat,distance,mute_factor,val
@@ -146,6 +148,10 @@
   print *,'enter output ASCII (F) or binary (T)'
   read(5,*) OUTPUT_BINARY
 
+  print *,'(optional) mute source area (T) or not (F)'
+  read(5,*,iostat=ier) temp_l
+  if (ier == 0) MUTE_SOURCE = temp_l
+
   print *
   print *,'--------'
   print *
@@ -185,35 +191,35 @@
   print *
 
   ! allocates movie arrays
-  allocate(store_val_x(ilocnum,0:NPROCTOT-1),stat=ierror)
-  if (ierror /= 0) stop 'Error while allocating store_val_x'
+  allocate(store_val_x(ilocnum,0:NPROCTOT-1),stat=ier)
+  if (ier /= 0) stop 'Error while allocating store_val_x'
 
-  allocate(store_val_y(ilocnum,0:NPROCTOT-1),stat=ierror)
-  if (ierror /= 0) stop 'Error while allocating store_val_y'
+  allocate(store_val_y(ilocnum,0:NPROCTOT-1),stat=ier)
+  if (ier /= 0) stop 'Error while allocating store_val_y'
 
-  allocate(store_val_z(ilocnum,0:NPROCTOT-1),stat=ierror)
-  if (ierror /= 0) stop 'Error while allocating store_val_z'
+  allocate(store_val_z(ilocnum,0:NPROCTOT-1),stat=ier)
+  if (ier /= 0) stop 'Error while allocating store_val_z'
 
-  allocate(store_val_ux(ilocnum,0:NPROCTOT-1),stat=ierror)
-  if (ierror /= 0) stop 'Error while allocating store_val_ux'
+  allocate(store_val_ux(ilocnum,0:NPROCTOT-1),stat=ier)
+  if (ier /= 0) stop 'Error while allocating store_val_ux'
 
-  allocate(store_val_uy(ilocnum,0:NPROCTOT-1),stat=ierror)
-  if (ierror /= 0) stop 'Error while allocating store_val_uy'
+  allocate(store_val_uy(ilocnum,0:NPROCTOT-1),stat=ier)
+  if (ier /= 0) stop 'Error while allocating store_val_uy'
 
-  allocate(store_val_uz(ilocnum,0:NPROCTOT-1),stat=ierror)
-  if (ierror /= 0) stop 'Error while allocating store_val_uz'
+  allocate(store_val_uz(ilocnum,0:NPROCTOT-1),stat=ier)
+  if (ier /= 0) stop 'Error while allocating store_val_uz'
 
-  allocate(x(NGLLX,NGLLY),stat=ierror)
-  if (ierror /= 0) stop 'Error while allocating x'
+  allocate(x(NGLLX,NGLLY),stat=ier)
+  if (ier /= 0) stop 'Error while allocating x'
 
-  allocate(y(NGLLX,NGLLY),stat=ierror)
-  if (ierror /= 0) stop 'Error while allocating y'
+  allocate(y(NGLLX,NGLLY),stat=ier)
+  if (ier /= 0) stop 'Error while allocating y'
 
-  allocate(z(NGLLX,NGLLY),stat=ierror)
-  if (ierror /= 0) stop 'Error while allocating z'
+  allocate(z(NGLLX,NGLLY),stat=ier)
+  if (ier /= 0) stop 'Error while allocating z'
 
-  allocate(displn(NGLLX,NGLLY),stat=ierror)
-  if (ierror /= 0) stop 'Error while allocating displn'
+  allocate(displn(NGLLX,NGLLY),stat=ier)
+  if (ier /= 0) stop 'Error while allocating displn'
 
 
   print *
@@ -245,17 +251,17 @@
                                       4*npointot*CUSTOM_REAL/1024.0/1024.0,' MB'
   print *
 
-  allocate(xp(npointot),stat=ierror)
-  if (ierror /= 0) stop 'Error while allocating xp'
+  allocate(xp(npointot),stat=ier)
+  if (ier /= 0) stop 'Error while allocating xp'
 
-  allocate(yp(npointot),stat=ierror)
-  if (ierror /= 0) stop 'Error while allocating yp'
+  allocate(yp(npointot),stat=ier)
+  if (ier /= 0) stop 'Error while allocating yp'
 
-  allocate(zp(npointot),stat=ierror)
-  if (ierror /= 0) stop 'Error while allocating zp'
+  allocate(zp(npointot),stat=ier)
+  if (ier /= 0) stop 'Error while allocating zp'
 
-  allocate(field_display(npointot),stat=ierror)
-  if (ierror /= 0) stop 'Error while allocating field_display'
+  allocate(field_display(npointot),stat=ier)
+  if (ier /= 0) stop 'Error while allocating field_display'
 
   ! initializes maxima history
   if (USE_AVERAGED_MAXIMUM) then
@@ -284,26 +290,48 @@
     cmt_hdur = 0.0
 
     ! reads in source lat/lon
-    open(IIN,file='DATA/CMTSOLUTION',status='old',action='read',iostat=ierror )
-    if (ierror == 0) then
-      ! skip first line, event name,timeshift,half duration
-      read(IIN,*,iostat=ierror ) line ! PDE line
-      read(IIN,*,iostat=ierror ) line ! event name
+    if (USE_FORCE_POINT_SOURCE) then
+      open(IIN,file='DATA/FORCESOLUTION',status='old',action='read',iostat=ier )
+      if (ier /= 0) stop 'DATA/FORCESOLUTION not found, necessary for muting source area'
+      ! skip first line
+      read(IIN,*,iostat=ier ) line ! FORCE 001 ..
       ! timeshift
-      read(IIN,'(a256)',iostat=ierror ) line
-      if (ierror == 0 ) read(line(12:len_trim(line)),*) cmt_t_shift
+      read(IIN,'(a256)',iostat=ier ) line
+      if (ier == 0 ) read(line(12:len_trim(line)),*) cmt_t_shift
       ! halfduration
-      read(IIN,'(a256)',iostat=ierror ) line
-      if (ierror == 0 ) read(line(15:len_trim(line)),*) cmt_hdur
+      read(IIN,'(a256)',iostat=ier ) line
+      if (ier == 0 ) read(line(15:len_trim(line)),*) cmt_hdur
       ! latitude
-      read(IIN,'(a256)',iostat=ierror ) line
-      if (ierror == 0 ) read(line(10:len_trim(line)),*) LAT_SOURCE
+      read(IIN,'(a256)',iostat=ier ) line
+      if (ier == 0 ) read(line(10:len_trim(line)),*) LAT_SOURCE
       ! longitude
-      read(IIN,'(a256)',iostat=ierror ) line
-      if (ierror == 0 ) read(line(11:len_trim(line)),*) LON_SOURCE
+      read(IIN,'(a256)',iostat=ier ) line
+      if (ier == 0 ) read(line(11:len_trim(line)),*) LON_SOURCE
       ! depth
-      read(IIN,'(a256)',iostat=ierror ) line
-      if (ierror == 0 ) read(line(7:len_trim(line)),*) DEP_SOURCE
+      read(IIN,'(a256)',iostat=ier ) line
+      if (ier == 0 ) read(line(7:len_trim(line)),*) DEP_SOURCE
+      close(IIN)
+    else
+      open(IIN,file='DATA/CMTSOLUTION',status='old',action='read',iostat=ier )
+      if (ier /= 0) stop 'DATA/CMTSOLUTION not found, necessary for muting source area'
+      ! skip first line, event name,timeshift,half duration
+      read(IIN,*,iostat=ier ) line ! PDE line
+      read(IIN,*,iostat=ier ) line ! event name
+      ! timeshift
+      read(IIN,'(a256)',iostat=ier ) line
+      if (ier == 0 ) read(line(12:len_trim(line)),*) cmt_t_shift
+      ! halfduration
+      read(IIN,'(a256)',iostat=ier ) line
+      if (ier == 0 ) read(line(15:len_trim(line)),*) cmt_hdur
+      ! latitude
+      read(IIN,'(a256)',iostat=ier ) line
+      if (ier == 0 ) read(line(10:len_trim(line)),*) LAT_SOURCE
+      ! longitude
+      read(IIN,'(a256)',iostat=ier ) line
+      if (ier == 0 ) read(line(11:len_trim(line)),*) LON_SOURCE
+      ! depth
+      read(IIN,'(a256)',iostat=ier ) line
+      if (ier == 0 ) read(line(7:len_trim(line)),*) DEP_SOURCE
       close(IIN)
     endif
     ! effective half duration in movie runs
@@ -350,8 +378,8 @@
   ! movie point locations
   outputname = "/moviedata_xyz.bin"
   open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(outputname), &
-       status='old',action='read',form='unformatted',iostat=ierror)
-  if (ierror /= 0) then
+       status='old',action='read',form='unformatted',iostat=ier)
+  if (ier /= 0) then
     print *,'Error opening file: ',trim(OUTPUT_FILES)//trim(outputname)
     stop 'Error opening moviedata file'
   endif
@@ -384,8 +412,8 @@
     ! read all the elements from the same file
     write(outputname,"('/moviedata',i6.6)") it
     open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(outputname), &
-        status='old',action='read',form='unformatted',iostat=ierror)
-    if (ierror /= 0) then
+        status='old',action='read',form='unformatted',iostat=ier)
+    if (ier /= 0) then
       print *,'Error opening file: ',trim(OUTPUT_FILES)//trim(outputname)
       stop 'Error opening moviedata file'
     endif
@@ -417,7 +445,7 @@
 
         ! approximate wavefront travel distance in degrees
         ! (~3.5 km/s wave speed for surface waves)
-        distance = 3.5 * ((it-1)*DT-t0) / (R_PLANET/1000.d0) * RADIANS_TO_DEGREES
+        distance = MUTE_VELOCITY * ((it-1)*DT-t0) / (R_PLANET/1000.d0) * RADIANS_TO_DEGREES
 
         print *,'distance approximate: ',distance,'(degrees)'
 
@@ -833,13 +861,13 @@
        write(outputname,"('/bin_movie_',i6.6,'.E')") it
       endif
       open(unit=11,file=trim(OUTPUT_FILES)//trim(outputname),status='unknown', &
-            form='unformatted',action='write',iostat=ierror)
-      if (ierror /= 0) stop 'Error opening bin_movie file'
+            form='unformatted',action='write',iostat=ier)
+      if (ier /= 0) stop 'Error opening bin_movie file'
 
       if (iframe == 1) then
         open(unit=12,file=trim(OUTPUT_FILES)//'/bin_movie.xy',status='unknown', &
-            form='unformatted',action='write',iostat=ierror)
-        if (ierror /= 0) stop 'Error opening bin_movie.xy file'
+            form='unformatted',action='write',iostat=ier)
+        if (ier /= 0) stop 'Error opening bin_movie.xy file'
       endif
     else
       if (USE_COMPONENT == 1) then
@@ -850,13 +878,13 @@
        write(outputname,"('/ascii_movie_',i6.6,'.E')") it
       endif
       open(unit=11,file=trim(OUTPUT_FILES)//trim(outputname),status='unknown', &
-            action='write',iostat=ierror)
-      if (ierror /= 0) stop 'Error opening ascii_movie file'
+            action='write',iostat=ier)
+      if (ier /= 0) stop 'Error opening ascii_movie file'
 
       if (iframe == 1) then
         open(unit=12,file=trim(OUTPUT_FILES)//'/ascii_movie.xy',status='unknown', &
-            action='write',iostat=ierror)
-        if (ierror /= 0) stop 'Error opening ascii_movie.xy file'
+            action='write',iostat=ier)
+        if (ier /= 0) stop 'Error opening ascii_movie.xy file'
       endif
     endif
     ! clear number of elements kept
