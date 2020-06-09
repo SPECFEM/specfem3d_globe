@@ -294,14 +294,13 @@
 
   ! local parameters
   integer :: ier
-  real(kind=CUSTOM_REAL) :: scaleval1,scaleval2 !,scaleval,scale_GPa
+  real(kind=CUSTOM_REAL) :: scaleval1,minvalue,maxvalue,min_all,max_all
   real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: temp_store
 
   character(len=MAX_STRING_LEN) :: filename, prname
 
-  ! scaling factors to re-dimensionalize units
+  ! scaling factor to re-dimensionalize units
   scaleval1 = sngl( sqrt(PI*GRAV*RHOAV)*(R_PLANET/1000.0d0) )
-  scaleval2 = sngl( RHOAV/1000.0d0 )
 
   ! note: since we only use shear attenuation, the shift occurs in muv values.
   !       thus, we output here only vpv, vsv or vp,vs for crust/mantle and inner core regions
@@ -324,54 +323,90 @@
     write(IMAIN,*) '  shifted model files in directory: ',trim(LOCAL_PATH)
   endif
 
+  ! user output
+  if (myrank == 0) write(IMAIN,*) '  crust/mantle:'
+
   ! transverse isotropic model
   if (TRANSVERSE_ISOTROPY) then
     ! vpv
+    temp_store(:,:,:,:) = sqrt((kappavstore_crust_mantle(:,:,:,:) &
+                          + 4.0_CUSTOM_REAL * muvstore_crust_mantle(:,:,:,:)/3.0_CUSTOM_REAL)/rhostore_crust_mantle(:,:,:,:)) &
+                          * scaleval1
+    maxvalue = maxval(temp_store)
+    minvalue = minval(temp_store)
+    call max_all_cr(maxvalue, max_all)
+    call min_all_cr(minvalue, min_all)
+    if (myrank == 0) then
+      write(IMAIN,*) '  shifted vpv min/max: ',min_all,max_all
+      call flush_IMAIN()
+    endif
+
     filename = prname(1:len_trim(prname))//'vpv_shifted.bin'
     open(unit=IOUT,file=trim(filename), &
          status='unknown',form='unformatted',action='write',iostat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error opening file '// trim(filename))
-
-    temp_store(:,:,:,:) = sqrt((kappavstore_crust_mantle(:,:,:,:) &
-                          + 4.0_CUSTOM_REAL * muvstore_crust_mantle(:,:,:,:)/3.0_CUSTOM_REAL)/rhostore_crust_mantle(:,:,:,:)) &
-                          * scaleval1
     write(IOUT) temp_store
     close(IOUT)
 
     ! vph
+    temp_store(:,:,:,:) = sqrt((kappahstore_crust_mantle(:,:,:,:) &
+                          + 4.0_CUSTOM_REAL * muhstore_crust_mantle(:,:,:,:)/3.0_CUSTOM_REAL)/rhostore_crust_mantle(:,:,:,:)) &
+                          * scaleval1
+    maxvalue = maxval(temp_store)
+    minvalue = minval(temp_store)
+    call max_all_cr(maxvalue, max_all)
+    call min_all_cr(minvalue, min_all)
+    if (myrank == 0) then
+      write(IMAIN,*) '  shifted vph min/max: ',min_all,max_all
+      call flush_IMAIN()
+    endif
+
     filename = prname(1:len_trim(prname))//'vph_shifted.bin'
     open(unit=IOUT,file=trim(filename), &
          status='unknown',form='unformatted',action='write',iostat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error opening file '// trim(filename))
-
-    temp_store(:,:,:,:) = sqrt((kappahstore_crust_mantle(:,:,:,:) &
-                          + 4.0_CUSTOM_REAL * muhstore_crust_mantle(:,:,:,:)/3.0_CUSTOM_REAL)/rhostore_crust_mantle(:,:,:,:)) &
-                          * scaleval1
     write(IOUT) temp_store
     close(IOUT)
 
     ! vsv
+    temp_store(:,:,:,:) = sqrt( muvstore_crust_mantle(:,:,:,:)/rhostore_crust_mantle(:,:,:,:) )*scaleval1
+    maxvalue = maxval(temp_store)
+    minvalue = minval(temp_store)
+    call max_all_cr(maxvalue, max_all)
+    call min_all_cr(minvalue, min_all)
+    if (myrank == 0) then
+      write(IMAIN,*) '  shifted vsv min/max: ',min_all,max_all
+      call flush_IMAIN()
+    endif
+
     filename = prname(1:len_trim(prname))//'vsv_shifted.bin'
     open(unit=IOUT,file=trim(filename), &
          status='unknown',form='unformatted',action='write',iostat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error opening file '// trim(filename))
-
-    temp_store(:,:,:,:) = sqrt( muvstore_crust_mantle(:,:,:,:)/rhostore_crust_mantle(:,:,:,:) )*scaleval1
     write(IOUT) temp_store
     close(IOUT)
 
     ! vsh
+    temp_store(:,:,:,:) = sqrt( muhstore_crust_mantle(:,:,:,:)/rhostore_crust_mantle(:,:,:,:) )*scaleval1
+    maxvalue = maxval(temp_store)
+    minvalue = minval(temp_store)
+    call max_all_cr(maxvalue, max_all)
+    call min_all_cr(minvalue, min_all)
+    if (myrank == 0) then
+      write(IMAIN,*) '  shifted vsh min/max: ',min_all,max_all
+      call flush_IMAIN()
+    endif
+
     filename = prname(1:len_trim(prname))//'vsh_shifted.bin'
     open(unit=IOUT,file=trim(filename), &
          status='unknown',form='unformatted',action='write',iostat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error opening file '// trim(filename))
-
-    temp_store(:,:,:,:) = sqrt( muhstore_crust_mantle(:,:,:,:)/rhostore_crust_mantle(:,:,:,:) )*scaleval1
     write(IOUT) temp_store
     close(IOUT)
 
     ! user output
     if (myrank == 0) then
+      write(IMAIN,*) '  written:'
       write(IMAIN,*) '    proc*_reg1_vpv_shifted.bin'
       write(IMAIN,*) '    proc*_reg1_vph_shifted.bin'
       write(IMAIN,*) '    proc*_reg1_vsv_shifted.bin'
@@ -383,29 +418,46 @@
   else
     ! isotropic model
     ! vp
+    temp_store(:,:,:,:) = sqrt((kappavstore_crust_mantle(:,:,:,:) &
+                          + 4.0_CUSTOM_REAL * muvstore_crust_mantle(:,:,:,:)/3.0_CUSTOM_REAL)/rhostore_crust_mantle(:,:,:,:)) &
+                          * scaleval1
+    maxvalue = maxval(temp_store)
+    minvalue = minval(temp_store)
+    call max_all_cr(maxvalue, max_all)
+    call min_all_cr(minvalue, min_all)
+    if (myrank == 0) then
+      write(IMAIN,*) '  shifted vp min/max: ',min_all,max_all
+      call flush_IMAIN()
+    endif
+
     filename = prname(1:len_trim(prname))//'vp_shifted.bin'
     open(unit=IOUT,file=trim(filename), &
          status='unknown',form='unformatted',action='write',iostat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error opening file '// trim(filename))
-
-    temp_store(:,:,:,:) = sqrt((kappavstore_crust_mantle(:,:,:,:) &
-                          + 4.0_CUSTOM_REAL * muvstore_crust_mantle(:,:,:,:)/3.0_CUSTOM_REAL)/rhostore_crust_mantle(:,:,:,:)) &
-                          * scaleval1
     write(IOUT) temp_store
     close(IOUT)
 
     ! vs
+    temp_store(:,:,:,:) = sqrt( muvstore_crust_mantle(:,:,:,:)/rhostore_crust_mantle(:,:,:,:) )*scaleval1
+    maxvalue = maxval(temp_store)
+    minvalue = minval(temp_store)
+    call max_all_cr(maxvalue, max_all)
+    call min_all_cr(minvalue, min_all)
+    if (myrank == 0) then
+      write(IMAIN,*) '  shifted vs min/max: ',min_all,max_all
+      call flush_IMAIN()
+    endif
+
     filename = prname(1:len_trim(prname))//'vs_shifted.bin'
     open(unit=IOUT,file=trim(filename), &
           status='unknown',form='unformatted',action='write',iostat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error opening file '// trim(filename))
-
-    temp_store(:,:,:,:) = sqrt( muvstore_crust_mantle(:,:,:,:)/rhostore_crust_mantle(:,:,:,:) )*scaleval1
     write(IOUT) temp_store
     close(IOUT)
 
     ! user output
     if (myrank == 0) then
+      write(IMAIN,*) '  written:'
       write(IMAIN,*) '    proc*_reg1_vp_shifted.bin'
       write(IMAIN,*) '    proc*_reg1_vs_shifted.bin'
       write(IMAIN,*)
@@ -425,34 +477,54 @@
   if (ier /= 0) stop 'Error allocating temp_store array'
   temp_store(:,:,:,:) = 0._CUSTOM_REAL
 
+  ! user output
+  if (myrank == 0) write(IMAIN,*) '  inner core:'
+
   if (ANISOTROPIC_INNER_CORE_VAL) then
     call exit_mpi(myrank,'ANISOTROPIC_INNER_CORE not supported yet for shifted model file output')
   else
     ! isotropic model
     ! vp
+    temp_store(:,:,:,:) = sqrt((kappavstore_inner_core(:,:,:,:) &
+                          + 4.0_CUSTOM_REAL * muvstore_inner_core(:,:,:,:)/3.0_CUSTOM_REAL)/rhostore_inner_core(:,:,:,:)) &
+                          * scaleval1
+    maxvalue = maxval(temp_store)
+    minvalue = minval(temp_store)
+    call max_all_cr(maxvalue, max_all)
+    call min_all_cr(minvalue, min_all)
+    if (myrank == 0) then
+      write(IMAIN,*) '  shifted vp min/max: ',min_all,max_all
+      call flush_IMAIN()
+    endif
+
     filename = prname(1:len_trim(prname))//'vp_shifted.bin'
     open(unit=IOUT,file=trim(filename), &
          status='unknown',form='unformatted',action='write',iostat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error opening file '// trim(filename))
-
-    temp_store(:,:,:,:) = sqrt((kappavstore_inner_core(:,:,:,:) &
-                          + 4.0_CUSTOM_REAL * muvstore_inner_core(:,:,:,:)/3.0_CUSTOM_REAL)/rhostore_inner_core(:,:,:,:)) &
-                          * scaleval1
     write(IOUT) temp_store
     close(IOUT)
 
     ! vs
+    temp_store(:,:,:,:) = sqrt( muvstore_inner_core(:,:,:,:)/rhostore_inner_core(:,:,:,:) )*scaleval1
+    maxvalue = maxval(temp_store)
+    minvalue = minval(temp_store)
+    call max_all_cr(maxvalue, max_all)
+    call min_all_cr(minvalue, min_all)
+    if (myrank == 0) then
+      write(IMAIN,*) '  shifted vs min/max: ',min_all,max_all
+      call flush_IMAIN()
+    endif
+
     filename = prname(1:len_trim(prname))//'vs_shifted.bin'
     open(unit=IOUT,file=trim(filename), &
          status='unknown',form='unformatted',action='write',iostat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error opening file '// trim(filename))
-
-    temp_store(:,:,:,:) = sqrt( muvstore_inner_core(:,:,:,:)/rhostore_inner_core(:,:,:,:) )*scaleval1
     write(IOUT) temp_store
     close(IOUT)
 
     ! user output
     if (myrank == 0) then
+      write(IMAIN,*) '  written:'
       write(IMAIN,*) '    proc*_reg3_vp_shifted.bin'
       write(IMAIN,*) '    proc*_reg3_vs_shifted.bin'
       write(IMAIN,*)
