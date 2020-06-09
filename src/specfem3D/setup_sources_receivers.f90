@@ -770,7 +770,7 @@
   integer :: isource
 
   ! makes smaller hdur for movies
-  logical,parameter :: USE_SMALLER_HDUR_MOVIE = .true.
+  logical,parameter :: USE_SMALLER_HDUR_MOVIE = .false.  ! by default off, to use same HDUR_MOVIE as specified in Par_file
 
   if (abs(minval(tshift_src)) > TINYVAL) &
     call exit_MPI(myrank,'one tshift_src must be zero, others must be positive')
@@ -788,8 +788,10 @@
     hdur = sqrt(hdur**2 + HDUR_MOVIE**2)
     if (myrank == 0) then
       write(IMAIN,*)
-      write(IMAIN,*) 'Each source is being convolved with HDUR_MOVIE = ',HDUR_MOVIE
+      write(IMAIN,*) 'Each source is being convolved with HDUR_MOVIE = ',sngl(HDUR_MOVIE)
+      write(IMAIN,*) 'Total source hdur = ',sngl(hdur),'(s)'
       write(IMAIN,*)
+      call flush_IMAIN()
     endif
   endif
 

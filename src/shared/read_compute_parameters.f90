@@ -69,6 +69,7 @@
 
   ! local parameters
   integer :: nblocks_xi,nblocks_eta
+  double precision :: T_min_res
   ! doubling layers
   integer :: ielem,elem_doubling_mantle,elem_doubling_middle_outer_core,elem_doubling_bottom_outer_core
   double precision :: DEPTH_SECOND_DOUBLING_REAL,DEPTH_THIRD_DOUBLING_REAL, &
@@ -171,8 +172,29 @@
   ! computes a default hdur_movie that creates nice looking movies.
   ! Sets HDUR_MOVIE as the minimum period the mesh can resolve
   if (HDUR_MOVIE <= TINYVAL) then
-    HDUR_MOVIE = 1.2d0*max(240.d0/NEX_XI*18.d0*ANGULAR_WIDTH_XI_IN_DEGREES/90.d0, &
-                           240.d0/NEX_ETA*18.d0*ANGULAR_WIDTH_ETA_IN_DEGREES/90.d0)
+    ! for an estimate based on NGLL == 5, assuming that the number of points per wavelength
+    ! coincides with the number of GLL points and thus the element size is the same length a the minimum wavelength:
+    !
+    !   Earth: 2 * PI * 6371km / 4 / 256 / 2.3 km/s ~ 17 s
+    !
+    !   Mars : 2 * PI * 3390km / 4 / 256 / 4.0 km/s ~ 5 s
+    !
+    !   Moon : 2 * PI * 1737.1km / 4 /256 / 1.8 km/s ~ 6 s
+    !
+    ! adding a second for smoother wavefields
+    select case(PLANET_TYPE)
+    case (IPLANET_EARTH)
+      T_min_res = 17.0 + 1.0
+    case (IPLANET_MARS)
+      T_min_res = 5.0 + 1.0
+    case (IPLANET_MOON)
+      T_min_res = 6.0 + 1.0
+    case default
+      stop 'Invalid planet, type for HDUR_MOVIE estimation not recognized yet'
+    end select
+    ! minimum hdur for movies
+    HDUR_MOVIE = 1.2d0*max(240.d0/NEX_XI * T_min_res * ANGULAR_WIDTH_XI_IN_DEGREES/90.d0, &
+                           240.d0/NEX_ETA * T_min_res * ANGULAR_WIDTH_ETA_IN_DEGREES/90.d0)
   endif
   ! noise simulations require MOVIE_SURFACE flag to output wavefield at Earth's surface;
   ! however they don't need to convolve the source time function with any HDUR_MOVIE
