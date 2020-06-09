@@ -33,9 +33,7 @@
   use constants
   use shared_parameters
 
-  use specfem_par, only: NSOURCES,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
-    factor_force_source, &
-    NSTEP,DT,t0,tshift_src,hdur
+  use specfem_par, only: Mxx,Myy,Mzz,Mxy,Mxz,Myz,factor_force_source,t0,tshift_src,hdur
 
   implicit none
 

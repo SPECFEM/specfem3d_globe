@@ -68,6 +68,7 @@
     double precision, dimension(:,:), allocatable :: tau_e_storage
     double precision, dimension(:), allocatable   :: Qmu_storage
     integer :: Q_resolution
+    integer :: idummy         ! padding 4 bytes to align the structure
   end type model_attenuation_storage_var
   type (model_attenuation_storage_var) :: AM_S
   ! model_attenuation_storage_var

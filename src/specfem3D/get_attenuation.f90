@@ -179,7 +179,7 @@
   integer :: i
 
   tauinv(:) = 0.d0
-  where(tau_s(:) > 0.d0) tauinv(:) = - 1.0d0 / tau_s(:)
+  where(abs(tau_s(:)) > 0.d0) tauinv(:) = - 1.0d0 / tau_s(:)
 
   beta(:) = 1.0d0 + tau_e(:) * tauinv(:)     ! 1 - tau_e / tau_s
 

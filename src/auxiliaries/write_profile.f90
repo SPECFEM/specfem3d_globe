@@ -953,9 +953,8 @@
   subroutine write_profile_add_topography(r_prem,idoubling,elevation)
 
   use constants, only: IFLAG_CRUST,IFLAG_80_MOHO,IFLAG_220_80,R_UNIT_SPHERE
-  use shared_parameters, only: R_PLANET
-  use meshfem3D_models_par
   use shared_parameters
+  use meshfem3D_models_par
 
   implicit none
 
