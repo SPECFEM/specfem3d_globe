@@ -896,6 +896,43 @@
            + accel_crust_mantle(2,iglob) * b_accel_crust_mantle(2,iglob) &
            + accel_crust_mantle(3,iglob) * b_accel_crust_mantle(3,iglob) )
 
+        hess_kl_rho_crust_mantle(INDEX_IJK,ispec) =  &
+          hess_kl_rho_crust_mantle(INDEX_IJK,ispec) &
+          + deltat * (b_xix_crust_mantle(INDEX_IJK, ispec) * xix_crust_mantle(INDEX_IJK, ispec) &
+          + b_etay_crust_mantle(INDEX_IJK, ispec) * etay_crust_mantle(INDEX_IJK, ispec) &
+          + b_gammaz_crust_mantle(INDEX_IJK, ispec) * gammaz_crust_mantle(INDEX_IJK, ispec))
+
+        hess_kl_kappa_crust_mantle(INDEX_IJK,ispec) =  &
+          hess_kl_kappa_crust_mantle(INDEX_IJK,ispec) &
+          + deltat * ( b_xix_crust_mantle(INDEX_IJK, ispec) + &
+                     + b_etay_crust_mantle(INDEX_IJK, ispec) &
+                     + b_gammaz_crust_mantle(INDEX_IJK, ispec)) &
+                   * ( xix_crust_mantle(INDEX_IJK, ispec) + &
+                     + etay_crust_mantle(INDEX_IJK, ispec) &
+                     + gammaz_crust_mantle(INDEX_IJK, ispec)) &
+
+        hess_kl_mu_crust_mantle(INDEX_IJK,ispec) =  &
+          hess_kl_mu_crust_mantle(INDEX_IJK,ispec) &
+          + deltat * (  (b_xiz_crust_mantle(INDEX_IJK, ispec) + b_gammax_crust_mantle(INDEX_IJK, ispec)) &
+                        * (xiz_crust_mantle(INDEX_IJK, ispec) + gammax_crust_mantle(INDEX_IJK, ispec)) &
+                      + (b_xiy_crust_mantle(INDEX_IJK, ispec) + b_etax_crust_mantle(INDEX_IJK, ispec)) &
+                        * (xiy_crust_mantle(INDEX_IJK, ispec) + etax_crust_mantle(INDEX_IJK, ispec)) &
+                      + (b_etaz_crust_mantle(INDEX_IJK, ispec) + b_gammay_crust_mantle(INDEX_IJK, ispec)) &
+                        * (etaz_crust_mantle(INDEX_IJK, ispec) + gammay_crust_mantle(INDEX_IJK, ispec)))
+
+        ! for verification only. will not be put into the final code
+        ! combine mu and kappa kernel to get Vp and Vs hessian kernel
+        ! only need to be computed once at the end after time marching
+        coef = 2._CUSTOM_REAL * (1._CUSTOM_REAL + 4._CUSTOM_REAL / 3._CUSTOM_REAL * &
+                     muvstore_crust_mantle(INDEX_IJK, ispec) / kappavstore_crust_mantle(INDEX_IJK, ispec))
+        hess_kl_vp_crust_mantle(INDEX_IJK, ispec) =  &
+          (coef ** 2) * hess_kl_kappa_crust_mantle(INDEX_IJK, ispec)
+        hess_kl_vs_crust_mantle(INDEX_IJK, ispec) = &
+          4._CUSTOM_REAL * hess_kl_mu_crust_mantle + &
+          64._CUSTOM_REAL/ 9._CUSTOM_REAL &
+          * (muvstore_crust_mantle(INDEX_IJK, ispec) / kappavstore_crust_mantle(INDEX_IJK, ispec)) &
+          * hess_kl_kappa_crust_mantle
+
       ENDDO_LOOP_IJK
 
     enddo
