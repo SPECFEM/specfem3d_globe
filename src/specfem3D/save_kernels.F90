@@ -1175,8 +1175,8 @@
               mu0 = mu0store_crust_mantle(i,j,k,ispec) ! original values from 1D background reference model
               if (abs(mu0) > TINYVAL) then
                 mu0 = mu0 * scale_GPa  ! scales to GPa
-                Gc_prime_kl_crust_mantle(i,j,k,ispec) = Gc_kl_crust_mantle(i,j,k,ispec) / mu0
-                Gs_prime_kl_crust_mantle(i,j,k,ispec) = Gs_kl_crust_mantle(i,j,k,ispec) / mu0
+                Gc_prime_kl_crust_mantle(i,j,k,ispec) = Gc_kl_crust_mantle(i,j,k,ispec) * mu0
+                Gs_prime_kl_crust_mantle(i,j,k,ispec) = Gs_kl_crust_mantle(i,j,k,ispec) * mu0
               else
                 Gc_prime_kl_crust_mantle(i,j,k,ispec) = 0.0_CUSTOM_REAL
                 Gs_prime_kl_crust_mantle(i,j,k,ispec) = 0.0_CUSTOM_REAL
