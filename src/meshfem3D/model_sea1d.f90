@@ -83,6 +83,8 @@
   subroutine model_sea1d(x,rho,vp,vs,Qkappa,Qmu,iregion_code)
 
   use constants
+  use shared_parameters, only: R_PLANET,RHOAV
+
   use model_sea1d_par
 
   implicit none
@@ -106,7 +108,7 @@
 !! DK DK checked yet
 
 ! compute real physical radius in meters
-  r = x * R_EARTH
+  r = x * R_PLANET
 
   i = 1
   do while(r >= SEA1DM_V_radius_sea1d(i) .and. i /= NR_SEA1D)
@@ -150,8 +152,8 @@
 ! time scaling (s^{-1}) is done with scaleval
   scaleval=dsqrt(PI*GRAV*RHOAV)
   rho=rho*1000.0d0/RHOAV
-  vp=vp*1000.0d0/(R_EARTH*scaleval)
-  vs=vs*1000.0d0/(R_EARTH*scaleval)
+  vp=vp*1000.0d0/(R_PLANET*scaleval)
+  vs=vs*1000.0d0/(R_PLANET*scaleval)
 
   end subroutine model_sea1d
 

@@ -71,9 +71,6 @@
 #ifndef IFLAG_IN_FICTITIOUS_CUBE
 #define IFLAG_IN_FICTITIOUS_CUBE 11
 #endif
-#ifndef R_EARTH_KM
-#define R_EARTH_KM 6371.0f
-#endif
 #ifndef COLORING_MIN_NSPEC_INNER_CORE
 #define COLORING_MIN_NSPEC_INNER_CORE 1000
 #endif
@@ -106,10 +103,13 @@ __global__ void compute_stacey_elastic_kernel(const float * veloc, float * accel
   float tz;
   float jacobianw;
   float fac1;
+
   igll = threadIdx.x;
   iface = blockIdx.x + (blockIdx.y) * (gridDim.x);
+
   if (iface < num_abs_boundary_faces) {
     ispec = abs_boundary_ispec[iface] - (1);
+
     switch (interface_type) {
       case 0 :
         if (nkmin_xi[INDEX2(2, 0, iface)] == 0 || njmin[INDEX2(2, 0, iface)] == 0) {
@@ -172,6 +172,7 @@ __global__ void compute_stacey_elastic_kernel(const float * veloc, float * accel
         fac1 = wgllwgll[(k) * (NGLLX) + i];
         break;
     }
+
     iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)] - (1);
     vx = veloc[(iglob) * (3) + 0];
     vy = veloc[(iglob) * (3) + 1];

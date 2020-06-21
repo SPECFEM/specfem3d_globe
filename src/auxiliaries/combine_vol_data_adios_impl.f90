@@ -27,7 +27,8 @@
 
 module combine_vol_data_adios_mod
 
-  use adios_read_mod
+  use adios_helpers_mod
+  use manager_adios
 
   implicit none
 
@@ -81,34 +82,13 @@ subroutine read_args_adios(arg, MAX_NUM_NODES, node_list, num_node, &
   character(len=MAX_STRING_LEN) :: sline,slice_list_name
   integer :: i, ios, njunk, iregion
 
+  ! initializes
+  num_node = 0
+  iregion = 0
+
+  ! gets arguments
   if ((command_argument_count() == 6) .or. (command_argument_count() == 7)) then
-    num_node = 0
     slice_list_name = arg(1)
-    if (trim(slice_list_name) == 'all') then
-      ! combines all slices
-      do i = 0,NPROCTOT-1
-        num_node = num_node + 1
-        if (num_node > MAX_NUM_NODES ) stop 'Error number of slices exceeds MAX_NUM_NODES...'
-        node_list(num_node) = i
-      enddo
-    else
-      ! reads in slices file
-      open(unit = IIN, file = trim(slice_list_name), status = 'unknown',iostat = ios)
-      if (ios /= 0) then
-        print *,'Error opening slice file ',trim(slice_list_name)
-        stop
-      endif
-      do while ( 1 == 1)
-        read(IIN,'(a)',iostat=ios) sline
-        if (ios /= 0) exit
-        read(sline,*,iostat=ios) njunk
-        if (ios /= 0) exit
-        num_node = num_node + 1
-        if (num_node > MAX_NUM_NODES ) stop 'Error number of slices exceeds MAX_NUM_NODES...'
-        node_list(num_node) = njunk
-      enddo
-      close(IIN)
-    endif
     var_name = arg(2)
     value_file_name = arg(3)
     mesh_file_name = arg(4)
@@ -117,12 +97,44 @@ subroutine read_args_adios(arg, MAX_NUM_NODES, node_list, num_node, &
   else
     call print_usage_adios()
   endif
-
-  iregion = 0
   if (command_argument_count() == 7) then
     read(arg(7),*) iregion
   endif
-  if (iregion > 3 .or. iregion < 0) stop 'Iregion = 0,1,2,3'
+
+  !debug
+  !print *,'debug: read adios: arguments: ',trim(slice_list_name),"|",trim(var_name),"|", &
+  !        trim(value_file_name),"|",trim(mesh_file_name),"|",trim(outdir),"|",ires,"|",iregion
+
+  ! check
+  if (iregion > 3 .or. iregion < 0) stop 'Iregion must be = 0,1,2,3'
+
+  ! gets slice list
+  if (trim(slice_list_name) == 'all') then
+    ! combines all slices
+    do i = 0,NPROCTOT-1
+      num_node = num_node + 1
+      if (num_node > MAX_NUM_NODES ) stop 'Error number of slices exceeds MAX_NUM_NODES...'
+      node_list(num_node) = i
+    enddo
+  else
+    ! reads in slices file
+    open(unit = IIN, file = trim(slice_list_name), status = 'unknown',iostat = ios)
+    if (ios /= 0) then
+      print *,'Error opening slice file ',trim(slice_list_name)
+      stop
+    endif
+    do while ( 1 == 1)
+      read(IIN,'(a)',iostat=ios) sline
+      if (ios /= 0) exit
+      read(sline,*,iostat=ios) njunk
+      if (ios /= 0) exit
+      num_node = num_node + 1
+      if (num_node > MAX_NUM_NODES ) stop 'Error number of slices exceeds MAX_NUM_NODES...'
+      node_list(num_node) = njunk
+    enddo
+    close(IIN)
+  endif
+
   if (iregion == 0) then
     irs = 1
     ire = 3
@@ -137,26 +149,37 @@ end subroutine read_args_adios
 !=============================================================================
 !> Open ADIOS value and mesh files, read mode
 
-subroutine init_adios(value_file_name, mesh_file_name, value_handle, mesh_handle)
+subroutine init_adios(value_file_name, mesh_file_name)
 
   implicit none
   ! Parameters
   character(len=*), intent(in) :: value_file_name, mesh_file_name
-  integer(kind=8), intent(out) :: value_handle, mesh_handle
-  ! Variables
-  integer :: ier
-  integer :: comm
 
-  call world_duplicate(comm)
+  ! debug
+  logical, parameter :: DEBUG = .false.
+  integer :: nglob,nspec
 
-  call adios_read_init_method(ADIOS_READ_METHOD_BP, comm, "verbose=1", ier)
-  if (ier /= 0 ) stop 'Error in adios_read_init_method()'
+  ! initializes adios
+  call initialize_adios()
 
-  call adios_read_open_file(mesh_handle, trim(mesh_file_name), 0, comm, ier)
-  if (ier /= 0 ) stop 'Error opening adios mesh file with adios_read_open_file()'
+  ! initializes read method and opens mesh file (using default handle)
+  call init_adios_group(myadios_group,"MeshReader")
+  call open_file_adios_read_and_init_method(myadios_file,myadios_group,mesh_file_name)
 
-  call adios_read_open_file(value_handle, trim(value_file_name), 0, comm, ier)
-  if (ier /= 0 ) stop 'Error opening value file with adios_read_open_file()'
+  ! opens second adios file for reading data values
+  call init_adios_group(myadios_val_group,"ValReader")
+  call open_file_adios_read(myadios_val_file,myadios_val_group,value_file_name)
+
+  ! debug output list variables and attributs in mesh file
+  if (DEBUG) then
+    call show_adios_file_variables(myadios_file,myadios_group,mesh_file_name)
+    call show_adios_file_variables(myadios_val_file,myadios_val_group,value_file_name)
+    ! checks reading nglob/nspec values
+    print *,'mesh file: ',trim(mesh_file_name)
+    call read_adios_scalar(myadios_file,myadios_group,0,"reg1/nglob",nglob)
+    call read_adios_scalar(myadios_file,myadios_group,0,"reg1/nspec",nspec)
+    print *,'  nglob/nspec = ',nglob,"/",nspec
+  endif
 
 end subroutine init_adios
 
@@ -164,111 +187,114 @@ end subroutine init_adios
 !=============================================================================
 !> Open ADIOS value and mesh files, read mode
 
-subroutine clean_adios(value_handle, mesh_handle)
+subroutine clean_adios()
 
   implicit none
-  ! Parameters
-  integer(kind=8), intent(in) :: value_handle, mesh_handle
-  ! Variables
-  integer :: ier
 
-  call adios_read_close(mesh_handle,ier)
-  call adios_read_close(value_handle,ier)
-  call adios_read_finalize_method(ADIOS_READ_METHOD_BP, ier)
+  ! closes file with data values
+  call close_file_adios_read(myadios_val_file)
+
+  ! closes default file and finalizes read method
+  call close_file_adios_read_and_finalize_method(myadios_file)
+
+  ! finalizes
+  call finalize_adios()
+
 end subroutine clean_adios
 
 
 !=============================================================================
 
-subroutine read_scalars_adios_mesh(mesh_handle, iproc, ir, nglob, nspec)
+subroutine read_scalars_adios_mesh(iproc, ir, nglob, nspec)
 
   implicit none
   ! Parameters
-  integer(kind=8), intent(in) :: mesh_handle
   integer, intent(in) :: iproc, ir
   integer, intent(out) :: nglob, nspec
   ! Variables
-  integer(kind=8) :: sel
+  !integer(kind=8) :: sel
   character(len=80) :: reg_name
-  integer :: ier
+  ! debug
+  logical, parameter :: DEBUG = .false.
+  !character(len=1024) :: err_message
+  !integer :: ier
 
-  write(reg_name, '(a,i1)') trim("reg"), ir
+  ! region name
+  write(reg_name,"('reg',i1,'/')") ir
 
-  call adios_selection_writeblock(sel, iproc)
-  call adios_schedule_read(mesh_handle, sel, trim(reg_name) // "/nglob", 0, 1, nglob, ier)
-  if (ier /= 0) then
-    print *
-    print * ,'Error adios: could not read parameter: ',trim(reg_name) // "/nglob"
-    print * ,'             please check if your input mesh file is correct...'
-    print *
-    stop 'Error adios adios_schedule_read() for nglob'
+  ! debug output
+  if (DEBUG) then
+    call read_adios_scalar(myadios_file,myadios_group,iproc,trim(reg_name) // "nglob",nglob)
+    ! note: adios_get_scalar here retrieves the same nglob for everyone (from writer rank 0)
+    !call adios_get_scalar(myadios_file, trim(reg_name)//"nglob", nglob, ier)
+    !if (ier /= 0) then
+    !  call adios_errmsg(err_message)
+    !  print *,'Error adios: could not read parameter: ',trim(reg_name)//"nglob"
+    !  print *,trim(err_message)
+    !  stop 'Error adios helper read scalar'
+    !endif
+
+    call read_adios_scalar(myadios_file,myadios_group,iproc,trim(reg_name) // "nspec",nspec)
+    !call adios_get_scalar(myadios_file, trim(reg_name)//"nspec", nspec, ier)
+    !if (ier /= 0) then
+    !  call adios_errmsg(err_message)
+    !  print *,'Error adios: could not read parameter: ',trim(reg_name)//"nspec"
+    !  print *,trim(err_message)
+    !  stop 'Error adios helper read scalar'
+    !endif
+
+    print *,'read nglob/nspec: ',iproc,ir,nglob,nspec
   endif
 
-  call adios_schedule_read(mesh_handle, sel, trim(reg_name) // "/nspec", 0, 1, nspec, ier)
-  if (ier /= 0 ) stop 'Error adios adios_schedule_read() for nspec'
-
-  call adios_perform_reads(mesh_handle, ier)
-  if (ier /= 0 ) stop 'Error adios: perform reading nglob and nspec failed'
+  ! reads nglob & nspec
+  ! the following adios calls allow to have different nglob/nspec values for different processes (iproc)
+  call read_adios_scalar(myadios_file,myadios_group,iproc,trim(reg_name) // "nglob",nglob)
+  call read_adios_scalar(myadios_file,myadios_group,iproc,trim(reg_name) // "nspec",nspec)
 
 end subroutine read_scalars_adios_mesh
 
 
 !=============================================================================
 
-subroutine read_coordinates_adios_mesh(mesh_handle, iproc, ir, nglob, nspec, &
+subroutine read_coordinates_adios_mesh(iproc, ir, nglob, nspec, &
                                        xstore, ystore, zstore, ibool)
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
 
   implicit none
   ! Parameters
-  integer(kind=8), intent(in) :: mesh_handle
   integer, intent(in) :: iproc, ir, nglob, nspec
   real(kind=CUSTOM_REAL),dimension(:), intent(inout) :: xstore, ystore, zstore
   integer, dimension(:,:,:,:), intent(inout) :: ibool
   ! Variables
   character(len=80) :: reg_name
-  integer(kind=8), dimension(1) :: start, count_ad
-  integer(kind=8) :: sel_coord, sel_ibool, sel_scalar
-  integer :: offset_coord, offset_ibool, ier
+  integer(kind=8), dimension(1) :: start, count
+  integer(kind=8) :: sel_coord, sel_ibool
+  integer(kind=8) :: offset_coord, offset_ibool
 
-  write(reg_name, '(a,i1, a)') trim("reg"), ir, "/"
+  write(reg_name,"('reg',i1,'/')") ir
 
-  call adios_selection_writeblock(sel_scalar, iproc)
-  call adios_schedule_read(mesh_handle, sel_scalar, trim(reg_name) // "ibool/offset", &
-                           0, 1, offset_ibool, ier)
-  if (ier /= 0) then
-    print *
-    print * ,'Error adios: could not read parameter: ',trim(reg_name) // "ibool/offset"
-    print * ,'             please check if your input mesh file is correct...'
-    print *
-    stop 'Error adios adios_schedule_read() for ibool/offset'
-  endif
-
-
-  call adios_schedule_read(mesh_handle, sel_scalar, trim(reg_name) // "x_global/offset", &
-                           0, 1, offset_coord, ier)
-  if (ier /= 0 ) stop 'Error adios: reading x_global/offset'
-
-  call adios_perform_reads(mesh_handle, ier)
-  if (ier /= 0 ) stop 'Error adios: perform reading mesh file offsets failed'
+  call read_adios_scalar(myadios_file,myadios_group,iproc,trim(reg_name) // "ibool/offset",offset_ibool)
+  call read_adios_scalar(myadios_file,myadios_group,iproc,trim(reg_name) // "x_global/offset",offset_coord)
 
   start(1) = offset_ibool
-  count_ad(1) = NGLLX * NGLLY * NGLLZ * nspec
-  call adios_selection_boundingbox (sel_ibool , 1, start, count_ad)
-  call adios_schedule_read(mesh_handle, sel_ibool, trim(reg_name) // "ibool/array", &
-                           0, 1, ibool, ier)
+  count(1) = NGLLX * NGLLY * NGLLZ * nspec
+  call set_selection_boundingbox(sel_ibool , start, count)
+
+  call read_adios_schedule_array(myadios_file, myadios_group, sel_ibool, start, count, trim(reg_name) // "ibool/array", ibool)
 
   start(1) = offset_coord
-  count_ad(1) = nglob
-  call adios_selection_boundingbox (sel_coord , 1, start, count_ad)
-  call adios_schedule_read(mesh_handle, sel_coord, trim(reg_name) // "x_global/array", &
-                           0, 1, xstore, ier)
-  call adios_schedule_read(mesh_handle, sel_coord, trim(reg_name) // "y_global/array", &
-                           0, 1, ystore, ier)
-  call adios_schedule_read(mesh_handle, sel_coord, trim(reg_name) // "z_global/array", &
-                           0, 1, zstore, ier)
-  call adios_perform_reads(mesh_handle, ier)
+  count(1) = nglob
+  call set_selection_boundingbox(sel_coord, start, count)
+
+  call read_adios_schedule_array(myadios_file, myadios_group, sel_coord, start, count, trim(reg_name) // "x_global/array", xstore)
+  call read_adios_schedule_array(myadios_file, myadios_group, sel_coord, start, count, trim(reg_name) // "y_global/array", ystore)
+  call read_adios_schedule_array(myadios_file, myadios_group, sel_coord, start, count, trim(reg_name) // "z_global/array", zstore)
+
+  call read_adios_perform(myadios_file)
+
+  call delete_adios_selection(sel_ibool)
+  call delete_adios_selection(sel_coord)
 
 end subroutine read_coordinates_adios_mesh
 
@@ -276,26 +302,25 @@ end subroutine read_coordinates_adios_mesh
 !=============================================================================
 !> reads in data from ADIOS value file
 
-subroutine read_values_adios(value_handle, var_name, iproc, ir, nspec, data)
+subroutine read_values_adios(var_name, iproc, ir, nspec, data)
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,IREGION_CRUST_MANTLE,IREGION_INNER_CORE,IREGION_OUTER_CORE
 
   implicit none
   ! Parameters
-  integer(kind=8), intent(in) :: value_handle
   character(len=*), intent(in) :: var_name
   integer, intent(in) :: iproc, ir, nspec
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), intent(inout) :: data
   ! Variables
-  integer(kind=8), dimension(1) :: start, count_ad
+  integer(kind=8), dimension(1) :: start, count
   integer(kind=8) :: sel
-  integer :: offset, ier
+  integer(kind=8) :: offset
   character(len=128) :: data_name
   character(len=8) :: reg_name
   logical :: is_kernel
 
   ! note: we can either visualize
-  !         wavespeed arrays (in DATABASES_MPI/solver_meshfiles.bp)
+  !         wavespeed arrays (in DATABASES_MPI/model_gll.bp)
   !                          (e.g. rho,vp,vs,vph,vpv,vsh,..)
   !       or
   !         sensitivity kernels (in OUTPUT_FILES/kernels.bp)
@@ -308,8 +333,15 @@ subroutine read_values_adios(value_handle, var_name, iproc, ir, nspec, data)
   ! i.e. if the ending is "_kl" we assume it is a kernel name
   !
   is_kernel = .false.
+  ! example: alpha_kl checks ending '_kl'
   if (len_trim(var_name) > 3) then
     if (var_name(len_trim(var_name)-2:len_trim(var_name)) == '_kl') then
+      is_kernel = .true.
+    endif
+  endif
+  ! example: alpha_kl_crust_mantle checks ending '_kl_crust_mantle'
+  if (len_trim(var_name) > 16) then
+    if (var_name(len_trim(var_name)-15:len_trim(var_name)) == '_kl_crust_mantle') then
       is_kernel = .true.
     endif
   endif
@@ -322,48 +354,47 @@ subroutine read_values_adios(value_handle, var_name, iproc, ir, nspec, data)
     !
     ! note: this must match the naming convention used
     !       in file save_kernels_adios.F90
-    select case (ir)
-    case (IREGION_CRUST_MANTLE)
-      data_name = trim(var_name) // "_crust_mantle"
-    case (IREGION_OUTER_CORE)
-      data_name = trim(var_name) // "_outer_core"
-    case (IREGION_INNER_CORE)
-      data_name = trim(var_name) // "_inner_core"
-    case default
-      stop 'Error wrong region code in read_values_adios() routine'
-    end select
+    if (var_name(len_trim(var_name)-2:len_trim(var_name)) == '_kl') then
+      select case (ir)
+      case (IREGION_CRUST_MANTLE)
+        data_name = trim(var_name) // "_crust_mantle"
+      case (IREGION_OUTER_CORE)
+        data_name = trim(var_name) // "_outer_core"
+      case (IREGION_INNER_CORE)
+        data_name = trim(var_name) // "_inner_core"
+      case default
+        stop 'Error wrong region code in read_values_adios() routine'
+      end select
+    else
+      ! example: alpha_kl_crust_mantle
+      data_name = trim(var_name)
+    endif
   else
     ! for wavespeed name: rho,vp,..
     ! adds region name: var_name = "rho" -> reg1/rho
-    write(reg_name, '(a,i1, a)') trim("reg"), ir, "/"
+    write(reg_name,"('reg',i1,'/')") ir
     data_name = trim(reg_name) // trim(var_name)
   endif
 
-  ! reads in data offset
-  call adios_selection_writeblock(sel, iproc)
+  ! gets data values
+  if (.true.) then
+    ! default
+    ! assumes GLL type array size (NGLLX,NGLLY,NGLLZ,nspec)
+    call read_adios_array(myadios_val_file,myadios_val_group,iproc,nspec,trim(data_name),data)
+  else
+    ! reads in data offset
+    call read_adios_scalar(myadios_val_file,myadios_val_group,iproc,trim(data_name) // "/offset",offset)
 
-  call adios_schedule_read(value_handle, sel, trim(data_name) // "/offset", 0, 1, offset, ier)
-  if (ier /= 0) then
-    print *
-    print * ,'Error adios: could not read parameter: ',trim(data_name) // "/offset"
-    print * ,'             please check if your input data file is correct...'
-    print *
-    stop 'Error adios adios_schedule_read() for data offset'
+    ! reads in data array
+    start(1) = offset
+    count(1) = NGLLX * NGLLY * NGLLZ * nspec
+    call set_selection_boundingbox(sel , start, count)
+
+    call read_adios_schedule_array(myadios_val_file, myadios_val_group, sel, start, count, trim(data_name) // "/array", data)
+    call read_adios_perform(myadios_val_file)
+
+    call delete_adios_selection(sel)
   endif
-
-  call adios_perform_reads(value_handle, ier)
-  if (ier /= 0 ) stop 'Error adios: perform reading data offset failed'
-
-  ! reads in data array
-  start(1) = offset
-  count_ad(1) = NGLLX * NGLLY * NGLLZ * nspec
-  call adios_selection_boundingbox (sel , 1, start, count_ad)
-
-  call adios_schedule_read(value_handle, sel, trim(data_name) // "/array", 0, 1, data, ier)
-  if (ier /= 0 ) stop 'Error adios reading data array'
-
-  call adios_perform_reads(value_handle, ier)
-  if (ier /= 0 ) stop 'Error adios perform reading of data array'
 
 end subroutine read_values_adios
 

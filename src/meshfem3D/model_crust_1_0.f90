@@ -114,15 +114,17 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_crust_1_0(lat,lon,x,vp,vs,rho,moho,found_crust,elem_in_crust)
+  subroutine model_crust_1_0(lat,lon,x,vp,vs,rho,moho,sediment,found_crust,elem_in_crust)
 
   use constants
+  use shared_parameters, only: R_PLANET_KM,RHOAV
+
   use model_crust_1_0_par
 
   implicit none
 
   double precision,intent(in) :: lat,lon,x
-  double precision,intent(out) :: vp,vs,rho,moho
+  double precision,intent(out) :: vp,vs,rho,moho,sediment
   logical,intent(out) :: found_crust
   logical,intent(in) :: elem_in_crust
 
@@ -138,6 +140,7 @@
   vs = ZERO
   rho = ZERO
   moho = ZERO
+  sediment = ZERO
 
   ! gets smoothed structure
   call crust_1_0_CAPsmoothed(lat,lon,vps,vss,rhos,thicks)
@@ -157,7 +160,7 @@
   h_uc = h_sed + thicks(6)
 
   ! non-dimensionalization factor
-  scaleval = ONE / R_EARTH_KM
+  scaleval = ONE / R_PLANET_KM
 
   ! non-dimensionalize thicknesses (given in km)
 
@@ -178,6 +181,11 @@
 
   ! no matter if found_crust is true or false, compute moho thickness
   moho = (h_uc + thicks(7) + thicks(8)) * scaleval
+
+  ! sediment thickness
+  if (INCLUDE_SEDIMENTS_IN_CRUST) then
+    sediment = h_sed * scaleval
+  endif
 
   ! gets corresponding crustal velocities and density
   found_crust = .true.
@@ -224,7 +232,7 @@
 
   ! non-dimensionalize
   if (found_crust) then
-    scaleval = ONE / ( R_EARTH_KM * dsqrt(PI*GRAV*RHOAV) )
+    scaleval = ONE / ( R_PLANET_KM * dsqrt(PI*GRAV*RHOAV) )
     vp = vp * scaleval
     vs = vs * scaleval
     rho = rho * 1000.0d0 / RHOAV
@@ -239,6 +247,7 @@
   subroutine read_crust_1_0_model()
 
   use constants
+  use shared_parameters, only: R_PLANET_KM,RHOAV
   use model_crust_1_0_par
 
   implicit none
@@ -251,7 +260,7 @@
   ! crustal / sediment thickness
   double precision, dimension(:,:),allocatable :: thc,ths
   double precision :: lat,lon,x
-  double precision :: vp,vs,rho,moho
+  double precision :: vp,vs,rho,moho,sediment
   double precision :: h_moho_min,h_moho_max
   logical :: found_crust
 
@@ -411,14 +420,14 @@
       do i = 1,CRUST_NLO
         lon = -180.d0 + i - 0.5d0
         x = 1.0d0
-        call model_crust_1_0(lat,lon,x,vp,vs,rho,moho,found_crust,.false.)
+        call model_crust_1_0(lat,lon,x,vp,vs,rho,moho,sediment,found_crust,.false.)
 
         ! limit moho thickness
         if (moho > h_moho_max) h_moho_max = moho
         if (moho < h_moho_min) h_moho_min = moho
 
-        write(77,*)lat,lon,moho*R_EARTH_KM, &
-         vp*(R_EARTH_KM*dsqrt(PI*GRAV*RHOAV)),vs*(R_EARTH_KM*dsqrt(PI*GRAV*RHOAV)),rho*(RHOAV/1000.0d0)
+        write(77,*)lat,lon,moho*R_PLANET_KM, &
+         vp*(R_PLANET_KM*dsqrt(PI*GRAV*RHOAV)),vs*(R_PLANET_KM*dsqrt(PI*GRAV*RHOAV)),rho*(RHOAV/1000.0d0)
       enddo
     enddo
     close(77)

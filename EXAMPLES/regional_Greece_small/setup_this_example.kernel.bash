@@ -22,7 +22,7 @@ echo
 
 if [ ! -f SEM/STATIONS_ADJOINT  ]; then
   echo "must have adjoint source station files in directory: SEM/"
-  exit
+  exit 1
 fi
 cp SEM/STATIONS_ADJOINT DATA/
 
@@ -42,6 +42,9 @@ sed -i "s:SAVE_FORWARD.*:SAVE_FORWARD                    = .true.:g"  DATA/Par_f
 make clean
 make -j4 all
 
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
+
 # backup of constants setup
 cp setup/* $currentdir/OUTPUT_FILES/
 cp OUTPUT_FILES/values_from_mesher.h $currentdir/OUTPUT_FILES/values_from_mesher.h.compilation
@@ -51,11 +54,12 @@ cd $currentdir
 
 # copy executables
 mkdir -p bin
-rm -rf bin/*
-cp ../../bin/xmeshfem3D ./bin/
-cp ../../bin/xspecfem3D ./bin/xspecfem3D.kernel
-cp ../../bin/xcombine_vol_data ./bin/
-cp ../../bin/xcombine_vol_data_vtk ./bin/
+rm -rf bin/x*
+cp -v ../../bin/x* ./bin/
+cp -v ../../bin/xspecfem3D ./bin/xspecfem3D.kernel
+
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
 # links data directories needed to run example in this current directory with s362ani
 cd DATA/
@@ -66,8 +70,13 @@ ln -s ../../../DATA/topo_bathy
 cd ../
 
 # copy useful script
-cp ../../utils/change_simulation_type.pl ./
+if [ ! -f ./change_simulation_type.pl ]; then
+ln -s ../../utils/change_simulation_type.pl
+fi
 cp DATA/Par_file DATA/Par_file.org
+
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
 echo `date`
 

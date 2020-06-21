@@ -195,10 +195,9 @@ endif
 @COND_MIC_FALSE@MIC = no
 
 @COND_MIC_TRUE@MIC_FLAGS = -mmic #-qopt-report2 -qopt-report-phase=vec
-@COND_MIC_FALSE@MIC_FLAGS =
 
-FCFLAGS += $(MIC_FLAGS)
-CPPFLAGS += $(MIC_FLAGS)
+@COND_MIC_TRUE@FCFLAGS += $(MIC_FLAGS)
+@COND_MIC_TRUE@CPPFLAGS += $(MIC_FLAGS)
 
 #######################################
 ####
@@ -212,7 +211,7 @@ CPPFLAGS += $(MIC_FLAGS)
 @COND_XSMM_TRUE@XSMM = yes
 @COND_XSMM_FALSE@XSMM = no
 
-@COND_XSMM_TRUE@FCFLAGS += $(FC_DEFINE)XSMM -I@LIBXSMM_INC@
+@COND_XSMM_TRUE@FCFLAGS += $(FC_DEFINE)USE_XSMM -I@LIBXSMM_INC@
 @COND_XSMM_TRUE@MPILIBS += -L@LIBXSMM_LIBS@ -lxsmmf -lxsmm -L@BLAS_LIBS@ -lblas
 
 #######################################
@@ -225,10 +224,7 @@ CPPFLAGS += $(MIC_FLAGS)
 @COND_OMP_TRUE@OPENMP = yes
 @COND_OMP_FALSE@OPENMP = no
 
-@COND_OMP_TRUE@OMP_FLAGS = @OMP_FCFLAGS@ $(FC_DEFINE)USE_OPENMP #$(FC_DEFINE)USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
-@COND_OMP_FALSE@OMP_FLAGS =
-
-FCFLAGS += $(OMP_FLAGS)
+@COND_OMP_TRUE@FCFLAGS += $(FC_DEFINE)USE_OPENMP @OMP_FCFLAGS@  #$(FC_DEFINE)USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
 
 #######################################
 ####
@@ -240,9 +236,9 @@ FCFLAGS += $(OMP_FLAGS)
 @COND_VTK_TRUE@VTK = yes
 @COND_VTK_FALSE@VTK = no
 
-CPPFLAGS += @VTK_INCLUDES@
-LDFLAGS += @VTK_LDFLAGS@
-MPILIBS += @VTK_LIBS@
+@COND_VTK_TRUE@CPPFLAGS += @VTK_INCLUDES@
+@COND_VTK_TRUE@LDFLAGS += @VTK_LDFLAGS@
+@COND_VTK_TRUE@MPILIBS += @VTK_LIBS@
 
 #######################################
 ####
@@ -254,11 +250,33 @@ MPILIBS += @VTK_LIBS@
 @COND_ADIOS_TRUE@ADIOS = yes
 @COND_ADIOS_FALSE@ADIOS = no
 
-@COND_ADIOS_TRUE@ADIOS_DEF = $(FC_DEFINE)ADIOS_INPUT
+@COND_ADIOS_TRUE@ADIOS_DEF = $(FC_DEFINE)USE_ADIOS
 @COND_ADIOS_FALSE@ADIOS_DEF =
 
-FCFLAGS += @ADIOS_FCFLAGS@
-MPILIBS += @ADIOS_LIBS@
+@COND_ADIOS_TRUE@FCFLAGS += @ADIOS_FCFLAGS@ $(ADIOS_DEF)
+@COND_ADIOS_TRUE@MPILIBS += @ADIOS_LIBS@
+
+#######################################
+####
+#### ADIOS2
+#### with configure: ./configure --with-adios2 ADIOS2_CONFIG=..
+####
+#######################################
+
+@COND_ADIOS2_TRUE@ADIOS2 = yes
+@COND_ADIOS2_FALSE@ADIOS2 = no
+
+@COND_ADIOS2_TRUE@ADIOS2_DEF = $(FC_DEFINE)USE_ADIOS2
+@COND_ADIOS2_FALSE@ADIOS2_DEF =
+
+@COND_ADIOS2_TRUE@FCFLAGS += @ADIOS2_FCFLAGS@ $(ADIOS2_DEF)
+@COND_ADIOS2_TRUE@MPILIBS += @ADIOS2_LIBS@
+
+@COND_ADIOS2_TRUE@CPPFLAGS += @ADIOS2_CFLAGS@
+@COND_ADIOS2_TRUE@MPILIBS += @ADIOS2_CLIBS@
+
+@COND_ADIOS2_TRUE@MPICC = @MPICC@
+@COND_ADIOS2_FALSE@MPICC = $(CC)
 
 #######################################
 ####
@@ -271,7 +289,7 @@ MPILIBS += @ADIOS_LIBS@
 @COND_ASDF_FALSE@ASDF = no
 
 #FCFLAGS += @ASDF_FCFLAGS@
-MPILIBS += @ASDF_LIBS@
+@COND_ASDF_TRUE@MPILIBS += @ASDF_LIBS@ -lasdf -lhdf5hl_fortran -lhdf5_hl -lhdf5 -lstdc++
 
 #######################################
 ####
@@ -279,6 +297,7 @@ MPILIBS += @ASDF_LIBS@
 #### with configure: ./configure --with-vec ..
 ####
 #######################################
+
 @COND_VECTORIZATION_TRUE@FORCE_VECTORIZATION = yes
 @COND_VECTORIZATION_FALSE@FORCE_VECTORIZATION = no
 
@@ -288,12 +307,14 @@ MPILIBS += @ASDF_LIBS@
 #### with configure: ./configure --with-cem CEM_LIBS=.. CEM_FCFLAGS=..
 ####
 #######################################
+# (requires Netcdf support)
 
 @COND_CEM_TRUE@CEM = yes
 @COND_CEM_FALSE@CEM = no
 
-FCFLAGS += @CEM_FCFLAGS@
-MPILIBS += @CEM_LIBS@
+# adds compiler flag
+@COND_CEM_TRUE@FCFLAGS += ${FC_DEFINE}USE_CEM @CEM_FCFLAGS@
+@COND_CEM_TRUE@MPILIBS += @CEM_LIBS@
 
 
 #######################################
@@ -327,18 +348,19 @@ OUTPUT = $B/OUTPUT_FILES
 
 # code subdirectories
 SUBDIRS = \
-	shared \
-	create_header_file \
-	meshfem3D \
-	specfem3D \
 	auxiliaries \
-	tomography/postprocess_sensitivity_kernels \
+	create_header_file \
+	gpu \
+	meshfem3D \
+	shared \
+	specfem3D \
 	tomography \
+	tomography/postprocess_sensitivity_kernels \
 	$(EMPTY_MACRO)
 
-ifeq ($(HAS_GPU),yes)
-  SUBDIRS := gpu $(SUBDIRS)
-endif
+#ifeq ($(HAS_GPU),yes)
+#  SUBDIRS := gpu $(SUBDIRS)
+#endif
 
 # default targets
 DEFAULT = \
@@ -361,6 +383,13 @@ DEFAULT += 	\
 	xcombine_vol_data_vtk_adios \
 	$(EMPTY_MACRO)
 endif
+
+#ifeq ($(ADIOS2), yes)
+#DEFAULT += 	\
+#	xcombine_vol_data_adios2 \
+#	xcombine_vol_data_vtk_adios2 \
+#	$(EMPTY_MACRO)
+#endif
 
 all: default aux movies postprocess tomography
 
@@ -427,6 +456,10 @@ ifeq ($(ADIOS), yes)
 	@echo "    xcombine_vol_data_adios"
 	@echo "    xcombine_vol_data_vtk_adios"
 endif
+ifeq ($(ADIOS2), yes)
+	@echo "    xcombine_vol_data_adios2"
+	@echo "    xcombine_vol_data_vtk_adios2"
+endif
 	@echo "    xcombine_surf_data"
 	@echo "    xcombine_AVS_DX"
 	@echo "    xconvolve_source_timefunction"
@@ -445,8 +478,12 @@ endif
 	@echo "    xdifference_sem"
 	@echo "    xinterpolate_model"
 	@echo "    xsmooth_sem"
+	@echo "    xsmooth_laplacian_sem"
 ifeq ($(ADIOS), yes)
 	@echo "    xconvert_model_file_adios"
+endif
+ifeq ($(ADIOS2), yes)
+	@echo "    xconvert_model_file_adios2"
 endif
 	@echo ""
 	@echo "- tomography tools: [make tomography]"

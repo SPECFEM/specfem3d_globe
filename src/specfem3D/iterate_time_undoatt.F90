@@ -157,19 +157,19 @@
 
   ! synchronize all processes to make sure everybody is ready to start time loop
   call synchronize_all()
-  if (myrank == 0) write(IMAIN,*) 'All processes are synchronized before time loop'
-
   if (myrank == 0) then
+    write(IMAIN,*) 'All processes are synchronized before time loop (undoatt)'
     write(IMAIN,*)
     write(IMAIN,*) 'Starting time iteration loop (undoatt)...'
     write(IMAIN,*)
     call flush_IMAIN()
   endif
+  call synchronize_all()
 
   ! create an empty file to monitor the start of the simulation
   if (myrank == 0) then
     open(unit=IOUT,file=trim(OUTPUT_FILES)//'/starttimeloop.txt',status='unknown',action='write')
-    write(IOUT,*) 'hello, starting time loop'
+    write(IOUT,*) 'hello, starting time loop in iterate_time_undoatt() routine'
     close(IOUT)
   endif
 
@@ -204,7 +204,7 @@
       ! note: after reading the restart files of displacement back from disk, recompute the strain from displacement;
       !       this is better than storing the strain to disk as well, which would drastically increase I/O volume
       ! computes strain based on current backward/reconstructed wavefield
-      if (COMPUTE_AND_STORE_STRAIN) call it_compute_strain_att_backward()
+      if (COMPUTE_AND_STORE_STRAIN) call compute_strain_att_backward()
     endif
 
     ! time loop within this iteration subset
@@ -366,7 +366,7 @@
       seismo_current = seismo_current_temp
 
       ! computes strain based on current adjoint wavefield
-      if (COMPUTE_AND_STORE_STRAIN) call it_compute_strain_att()
+      if (COMPUTE_AND_STORE_STRAIN) call compute_strain_att()
 
       ! adjoint wavefield simulation
       do it_of_this_subset = 1, it_subset_end
@@ -377,10 +377,10 @@
         ! transfers wavefields from CPU to GPU
         if (GPU_MODE) then
           ! daniel debug: check if these transfers could be made async to overlap
-           call transfer_ofs_b_displ_cm_to_device(NDIM*NGLOB_CRUST_MANTLE_ADJOINT,it_subset_end-it_of_this_subset+1, &
-                                                  b_displ_cm_store_buffer,Mesh_pointer)
-           call transfer_ofs_b_displ_ic_to_device(NDIM*NGLOB_INNER_CORE_ADJOINT,it_subset_end-it_of_this_subset+1, &
-                                                  b_displ_ic_store_buffer,Mesh_pointer)
+          call transfer_ofs_b_displ_cm_to_device(NDIM*NGLOB_CRUST_MANTLE_ADJOINT,it_subset_end-it_of_this_subset+1, &
+                                                 b_displ_cm_store_buffer,Mesh_pointer)
+          call transfer_ofs_b_displ_ic_to_device(NDIM*NGLOB_INNER_CORE_ADJOINT,it_subset_end-it_of_this_subset+1, &
+                                                 b_displ_ic_store_buffer,Mesh_pointer)
           call transfer_ofs_b_displ_oc_to_device(NGLOB_OUTER_CORE_ADJOINT,it_subset_end-it_of_this_subset+1, &
                                                  b_displ_oc_store_buffer,Mesh_pointer)
           call transfer_ofs_b_accel_oc_to_device(NGLOB_OUTER_CORE_ADJOINT,it_subset_end-it_of_this_subset+1, &
@@ -493,201 +493,3 @@
   endif
 
   end subroutine iterate_time_undoatt
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-! compute the strain in the whole crust/mantle and inner core domains
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine it_compute_strain_att()
-
-  use specfem_par
-  use specfem_par_crustmantle
-  use specfem_par_innercore
-
-  implicit none
-  ! local parameters
-  integer :: ispec
-
-  ! computes strain based on forward wavefield displ
-  if (.not. GPU_MODE) then
-
-    ! checks
-    if (USE_DEVILLE_PRODUCTS_VAL) then
-
-      ! inner core
-      do ispec = 1, NSPEC_INNER_CORE
-        call compute_element_strain_att_Dev(ispec,NGLOB_INNER_CORE,NSPEC_INNER_CORE, &
-                                            displ_inner_core,veloc_inner_core,0._CUSTOM_REAL, &
-                                            ibool_inner_core, &
-                                            hprime_xx,hprime_xxT, &
-                                            deriv_mapping_inner_core, &
-                                            epsilondev_xx_inner_core, &
-                                            epsilondev_yy_inner_core, &
-                                            epsilondev_xy_inner_core, &
-                                            epsilondev_xz_inner_core, &
-                                            epsilondev_yz_inner_core, &
-                                            NSPEC_INNER_CORE_STRAIN_ONLY,eps_trace_over_3_inner_core)
-      enddo
-      ! crust mantle
-      do ispec = 1, NSPEC_crust_mantle
-        call compute_element_strain_att_Dev(ispec,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE, &
-                                            displ_crust_mantle,veloc_crust_mantle,0._CUSTOM_REAL, &
-                                            ibool_crust_mantle, &
-                                            hprime_xx,hprime_xxT, &
-                                            deriv_mapping_crust_mantle, &
-                                            epsilondev_xx_crust_mantle, &
-                                            epsilondev_yy_crust_mantle, &
-                                            epsilondev_xy_crust_mantle, &
-                                            epsilondev_xz_crust_mantle, &
-                                            epsilondev_yz_crust_mantle, &
-                                            NSPEC_CRUST_MANTLE_STRAIN_ONLY,eps_trace_over_3_crust_mantle)
-      enddo
-
-    else
-
-      ! inner core
-      do ispec = 1, NSPEC_INNER_CORE
-        call compute_element_strain_att_noDev(ispec,NGLOB_INNER_CORE,NSPEC_INNER_CORE, &
-                                              displ_inner_core,veloc_inner_core,0._CUSTOM_REAL, &
-                                              ibool_inner_core, &
-                                              hprime_xx,hprime_yy,hprime_zz, &
-                                              xix_inner_core,xiy_inner_core,xiz_inner_core, &
-                                              etax_inner_core,etay_inner_core,etaz_inner_core, &
-                                              gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
-                                              epsilondev_xx_inner_core, &
-                                              epsilondev_yy_inner_core, &
-                                              epsilondev_xy_inner_core, &
-                                              epsilondev_xz_inner_core, &
-                                              epsilondev_yz_inner_core, &
-                                              NSPEC_INNER_CORE_STRAIN_ONLY,eps_trace_over_3_inner_core)
-      enddo
-      ! crust mantle
-      do ispec = 1, NSPEC_CRUST_MANTLE
-        call compute_element_strain_att_noDev(ispec,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE, &
-                                              displ_crust_mantle,veloc_crust_mantle,0._CUSTOM_REAL, &
-                                              ibool_crust_mantle, &
-                                              hprime_xx,hprime_yy,hprime_zz, &
-                                              xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-                                              etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
-                                              gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-                                              epsilondev_xx_crust_mantle, &
-                                              epsilondev_yy_crust_mantle, &
-                                              epsilondev_xy_crust_mantle, &
-                                              epsilondev_xz_crust_mantle, &
-                                              epsilondev_yz_crust_mantle, &
-                                              NSPEC_CRUST_MANTLE_STRAIN_ONLY,eps_trace_over_3_crust_mantle)
-      enddo
-    endif
-
-  else
-
-    ! calculates strains on GPU
-    ! note: deltat is zero, thus strain is computed based on < displ(:,:) > rather than < displ(:,:) + deltat * veloc(:,:) >
-    !       nevertheless, we implement < displ(:,:) + deltat * veloc(:,:) > in order to have a more general calculation
-    !       as done in the CPU routine as well
-    call compute_strain_gpu(Mesh_pointer,0._CUSTOM_REAL,1)
-
-  endif ! GPU_MODE
-
-  end subroutine it_compute_strain_att
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine it_compute_strain_att_backward()
-
-  use specfem_par
-  use specfem_par_crustmantle
-  use specfem_par_innercore
-
-  implicit none
-
-  ! local parameters
-  integer :: ispec
-
-  ! computes strain based on backward/reconstructed wavefield b_displ
-  if (.not. GPU_MODE) then
-
-    ! checks
-    if (USE_DEVILLE_PRODUCTS_VAL) then
-
-      ! inner core
-      do ispec = 1, NSPEC_INNER_CORE
-        call compute_element_strain_att_Dev(ispec,NGLOB_INNER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
-                                            b_displ_inner_core,b_veloc_inner_core,0._CUSTOM_REAL, &
-                                            ibool_inner_core, &
-                                            hprime_xx,hprime_xxT, &
-                                            deriv_mapping_inner_core, &
-                                            b_epsilondev_xx_inner_core, &
-                                            b_epsilondev_yy_inner_core, &
-                                            b_epsilondev_xy_inner_core, &
-                                            b_epsilondev_xz_inner_core, &
-                                            b_epsilondev_yz_inner_core, &
-                                            NSPEC_INNER_CORE_STRAIN_ONLY,b_eps_trace_over_3_inner_core)
-      enddo
-
-      ! crust mantle
-      do ispec = 1, NSPEC_CRUST_MANTLE
-        call compute_element_strain_att_Dev(ispec,NGLOB_CRUST_MANTLE_ADJOINT,NSPEC_CRUST_MANTLE_ADJOINT, &
-                                            b_displ_crust_mantle,b_veloc_crust_mantle,0._CUSTOM_REAL, &
-                                            ibool_crust_mantle, &
-                                            hprime_xx,hprime_xxT, &
-                                            deriv_mapping_crust_mantle, &
-                                            b_epsilondev_xx_crust_mantle, &
-                                            b_epsilondev_yy_crust_mantle, &
-                                            b_epsilondev_xy_crust_mantle, &
-                                            b_epsilondev_xz_crust_mantle, &
-                                            b_epsilondev_yz_crust_mantle, &
-                                            NSPEC_CRUST_MANTLE_STRAIN_ONLY,b_eps_trace_over_3_crust_mantle)
-      enddo
-
-    else
-
-      ! inner core
-      do ispec = 1, NSPEC_INNER_CORE
-        call compute_element_strain_att_noDev(ispec,NGLOB_INNER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
-                                              b_displ_inner_core,b_veloc_inner_core,0._CUSTOM_REAL, &
-                                              ibool_inner_core, &
-                                              hprime_xx,hprime_yy,hprime_zz, &
-                                              xix_inner_core,xiy_inner_core,xiz_inner_core, &
-                                              etax_inner_core,etay_inner_core,etaz_inner_core, &
-                                              gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
-                                              b_epsilondev_xx_inner_core, &
-                                              b_epsilondev_yy_inner_core, &
-                                              b_epsilondev_xy_inner_core, &
-                                              b_epsilondev_xz_inner_core, &
-                                              b_epsilondev_yz_inner_core, &
-                                              NSPEC_INNER_CORE_STRAIN_ONLY,b_eps_trace_over_3_inner_core)
-      enddo
-      ! crust mantle
-      do ispec = 1, NSPEC_crust_mantle
-        call compute_element_strain_att_noDev(ispec,NGLOB_CRUST_MANTLE_ADJOINT,NSPEC_CRUST_MANTLE_ADJOINT, &
-                                              b_displ_crust_mantle,b_veloc_crust_mantle,0._CUSTOM_REAL, &
-                                              ibool_crust_mantle, &
-                                              hprime_xx,hprime_yy,hprime_zz, &
-                                              xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-                                              etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
-                                              gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-                                              b_epsilondev_xx_crust_mantle, &
-                                              b_epsilondev_yy_crust_mantle, &
-                                              b_epsilondev_xy_crust_mantle, &
-                                              b_epsilondev_xz_crust_mantle, &
-                                              b_epsilondev_yz_crust_mantle, &
-                                              NSPEC_CRUST_MANTLE_STRAIN_ONLY,b_eps_trace_over_3_crust_mantle)
-      enddo
-    endif
-
-  else
-
-    ! calculates strains on GPU
-    call compute_strain_gpu(Mesh_pointer,0._CUSTOM_REAL,3)
-
-  endif ! GPU_MODE
-
-  end subroutine it_compute_strain_att_backward
-

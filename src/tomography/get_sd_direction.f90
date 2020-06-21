@@ -42,6 +42,13 @@ subroutine get_gradient_steepest_iso()
   real(kind=CUSTOM_REAL) :: min_beta,min_rho,max_beta,max_rho,min_bulk,max_bulk
   integer :: iglob
   integer :: i,j,k,ispec,ier
+  real(kind=CUSTOM_REAL) :: KERNEL_R_TOP,KERNEL_R_BOTTOM
+
+  ! normalized radii
+  ! top at 50km depth
+  KERNEL_R_TOP = (R_PLANET_KM - 50.0 ) / R_PLANET_KM ! shallow depth
+  ! bottom at 100km depth
+  KERNEL_R_BOTTOM = (R_PLANET_KM - 100.0 ) / R_PLANET_KM ! deep depth
 
   ! allocate arrays for storing gradient
   ! isotropic arrays
@@ -80,7 +87,7 @@ subroutine get_gradient_steepest_iso()
               r = sqrt( x(iglob)*x(iglob) + y(iglob)*y(iglob) + z(iglob)*z(iglob) )
 
               ! stores maximum kernel betav value in this depth slice, since betav is most likely dominating
-              if (r < R_top .and. r > R_bottom) then
+              if (r < KERNEL_R_top .and. r > KERNEL_R_bottom) then
                 ! shear kernel value
                 max_beta = abs( kernel_beta(i,j,k,ispec) )
                 if (max < max_beta) then
@@ -129,7 +136,7 @@ subroutine get_gradient_steepest_iso()
     ! maximum of all processes stored in max_vsv
     call max_all_cr(max,max_beta)
     max = max_beta
-    depth_max = R_EARTH_KM *( 1.0 - depth_max )
+    depth_max = R_PLANET_KM *( 1.0 - depth_max )
   endif
 
   ! determines step length based on maximum gradient value (either shear or bulk)
@@ -138,7 +145,7 @@ subroutine get_gradient_steepest_iso()
     ! determines maximum kernel betav value within given radius
     if (USE_DEPTH_RANGE_MAXIMUM) then
       print *,'  using depth maximum: '
-      print *,'  between depths (top/bottom)   : ',R_top,R_bottom
+      print *,'  between depths (top/bottom)   : ',KERNEL_R_top,KERNEL_R_bottom
       print *,'  maximum kernel value          : ',max
       print *,'  depth of maximum kernel value : ',depth_max
       print *
@@ -252,6 +259,13 @@ subroutine get_gradient_steepest_tiso()
   real(kind=CUSTOM_REAL) :: minmax(4)
   integer :: iglob
   integer :: i,j,k,ispec,ier
+  real(kind=CUSTOM_REAL) :: KERNEL_R_TOP,KERNEL_R_BOTTOM
+
+  ! normalized radii
+  ! top at 50km depth
+  KERNEL_R_TOP = (R_PLANET_KM - 50.0 ) / R_PLANET_KM ! shallow depth
+  ! bottom at 100km depth
+  KERNEL_R_BOTTOM = (R_PLANET_KM - 100.0 ) / R_PLANET_KM ! deep depth
 
   ! allocate arrays for storing gradient
   ! transversely isotropic arrays
@@ -293,7 +307,7 @@ subroutine get_gradient_steepest_tiso()
               r = sqrt( x(iglob)*x(iglob) + y(iglob)*y(iglob) + z(iglob)*z(iglob) )
 
               ! stores maximum kernel betav value in this depth slice, since betav is most likely dominating
-              if (r < R_top .and. r > R_bottom) then
+              if (r < KERNEL_R_top .and. r > KERNEL_R_bottom) then
                 ! kernel betav value
                 max_vsv = abs( kernel_betav(i,j,k,ispec) )
                 if (max < max_vsv) then
@@ -338,7 +352,7 @@ subroutine get_gradient_steepest_tiso()
     ! maximum of all processes stored in max_vsv
     call max_all_cr(max,max_vsv)
     max = max_vsv
-    depth_max = R_EARTH_KM *( 1.0 - depth_max )
+    depth_max = R_PLANET_KM *( 1.0 - depth_max )
   endif
 
   ! determines step length
@@ -348,7 +362,7 @@ subroutine get_gradient_steepest_tiso()
     ! determines maximum kernel betav value within given radius
     if (USE_DEPTH_RANGE_MAXIMUM) then
       print *,'  using depth maximum: '
-      print *,'  between depths (top/bottom)   : ',R_top,R_bottom
+      print *,'  between depths (top/bottom)   : ',KERNEL_R_top,KERNEL_R_bottom
       print *,'  maximum kernel value          : ',max
       print *,'  depth of maximum kernel value : ',depth_max
       print *

@@ -25,100 +25,71 @@
 !
 !=====================================================================
 
-  subroutine create_central_cube(ichunk,ispec,iaddx,iaddy,iaddz,ipass, &
-                        nspec,NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,R_CENTRAL_CUBE, &
-                        iproc_xi,iproc_eta,NPROC_XI,NPROC_ETA,ratio_divide_central_cube, &
-                        iMPIcut_xi,iMPIcut_eta,iboun, &
-                        idoubling,iregion_code,xstore,ystore,zstore, &
-                        shape3D,rmin,rmax,rhostore,dvpstore, &
-                        kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-                        xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
-                        gammaxstore,gammaystore,gammazstore,nspec_actually, &
-                        c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-                        c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-                        c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                        nspec_ani,nspec_stacey, &
-                        rho_vp,rho_vs,xigll,yigll,zigll, &
-                        ispec_is_tiso)
+  subroutine create_central_cube(ichunk,ispec_count,ipass, &
+                                 nspec,NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+                                 iproc_xi,iproc_eta,NPROC_XI,NPROC_ETA, &
+                                 iMPIcut_xi,iMPIcut_eta, &
+                                 idoubling,iregion_code, &
+                                 rmin,rmax,R_CENTRAL_CUBE, &
+                                 ispec_is_tiso)
 
 ! creates the inner core cube of the mesh
 
-  use constants
-  use meshfem3D_models_par, only: myrank
+  use constants, only: NGNOD,myrank, &
+    IFLAG_BOTTOM_CENTRAL_CUBE,IFLAG_TOP_CENTRAL_CUBE,IFLAG_MIDDLE_CENTRAL_CUBE,IFLAG_IN_FICTITIOUS_CUBE, &
+    CHUNK_AB,CHUNK_AB_ANTIPODE, &
+    CHUNK_AC,CHUNK_AC_ANTIPODE, &
+    CHUNK_BC,CHUNK_BC_ANTIPODE
+
+  use shared_parameters, only: ratio_divide_central_cube,R_PLANET
+
+  use meshfem3D_par, only: &
+    xstore,ystore,zstore
+
+  use regions_mesh_par, only: &
+    xigll,yigll,zigll,shape3D
+
+  use regions_mesh_par2, only: &
+    iboun
 
   implicit none
 
-  integer :: ratio_divide_central_cube
+  integer, intent(in) :: ichunk,ipass
+
+  integer, intent(inout) :: ispec_count
 
 ! correct number of spectral elements in each block depending on chunk type
-  integer nspec,nspec_stacey
+  integer, intent(in) :: nspec
+  integer, intent(in) :: NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
+  integer, intent(in) :: iproc_xi,iproc_eta
+  integer, intent(in) :: NPROC_XI,NPROC_ETA
 
-  integer NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
-
-  integer NPROC_XI,NPROC_ETA
-
-  double precision R_CENTRAL_CUBE
-
-! arrays with the mesh in double precision
-  double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision ystore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision zstore(NGLLX,NGLLY,NGLLZ,nspec)
-
-! topology of the elements
-  integer, dimension(NGNOD) :: iaddx,iaddy,iaddz
-
-! code for the four regions of the mesh
-  integer iregion_code
-
-! Gauss-Lobatto-Legendre points and weights of integration
-  double precision xigll(NGLLX),yigll(NGLLY),zigll(NGLLZ)
-
-! 3D shape functions and their derivatives
-  double precision shape3D(NGNOD,NGLLX,NGLLY,NGLLZ)
-
-  integer idoubling(nspec)
-
-! for model density and anisotropy
-  integer nspec_ani
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
-    rhostore,dvpstore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore
-
-! the 21 coefficients for an anisotropic medium in reduced notation
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_ani) :: &
-    c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-    c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-    c36store,c44store,c45store,c46store,c55store,c56store,c66store
-
-! boundary locator
-  logical iboun(6,nspec)
-
-! arrays with mesh parameters
-  integer nspec_actually
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_actually) :: &
-    xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore
+  double precision, intent(in) :: R_CENTRAL_CUBE
 
 ! MPI cut-planes parameters along xi and along eta
-  logical, dimension(2,nspec) :: iMPIcut_xi,iMPIcut_eta
+  logical, dimension(2,nspec), intent(inout) :: iMPIcut_xi,iMPIcut_eta
 
-! Stacey, indices for Clayton-Engquist absorbing conditions
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_stacey) :: rho_vp,rho_vs
+! code for the four regions of the mesh
+  integer, intent(in) :: iregion_code
 
-  integer ispec
-  integer iproc_xi,iproc_eta,ichunk,ipass
+  integer, intent(inout) :: idoubling(nspec)
 
-  logical, dimension(nspec) :: ispec_is_tiso
-
-  !local parameters
-  double precision, dimension(NGNOD) :: xelm,yelm,zelm
   ! parameters needed to store the radii of the grid points in the spherically symmetric Earth
-  double precision :: rmin,rmax
+  double precision,intent(inout) :: rmin,rmax
+
+  logical, dimension(nspec), intent(inout) :: ispec_is_tiso
+
+  ! local parameters
+  double precision, dimension(NGNOD) :: xelm,yelm,zelm
   ! to define the central cube in the inner core
   double precision :: radius_cube
   double precision :: xgrid_central_cube,ygrid_central_cube,zgrid_central_cube
-  integer ix,iy,iz,ia
-  integer nx_central_cube,ny_central_cube,nz_central_cube
+  integer :: ix,iy,iz,ia
+  integer :: nx_central_cube,ny_central_cube,nz_central_cube
   ! the height at which the central cube is cut
   integer :: nz_inf_limit
+  ! topology of the elements
+  integer, dimension(NGNOD) :: iaddx,iaddy,iaddz
 
   ! create the shape of a regular mesh element in the inner core
   call hex_nodes(iaddx,iaddy,iaddz)
@@ -130,7 +101,7 @@
   nz_central_cube = NEX_XI / ratio_divide_central_cube
 
   ! size of the cube along Cartesian axes before rotation
-  radius_cube = (R_CENTRAL_CUBE / R_EARTH) / sqrt(3.d0)
+  radius_cube = (R_CENTRAL_CUBE / R_PLANET) / sqrt(3.d0)
 
   ! define spectral elements in central cube
   do iz = 0,2*nz_central_cube-2,2
@@ -139,16 +110,16 @@
 
         ! radii that define the shell, we know that we are in the central cube
         rmin = 0.d0
-        rmax = R_CENTRAL_CUBE / R_EARTH
+        rmax = R_CENTRAL_CUBE / R_PLANET
 
         ! loop over the NGNOD nodes
         do ia = 1,NGNOD
 
           ! flat cubed sphere with correct mapping
           call compute_coord_central_cube(ix+iaddx(ia),iy+iaddy(ia),iz+iaddz(ia), &
-                        xgrid_central_cube,ygrid_central_cube,zgrid_central_cube, &
-                        iproc_xi,iproc_eta,NPROC_XI,NPROC_ETA,nx_central_cube, &
-                        ny_central_cube,nz_central_cube,radius_cube)
+                                          xgrid_central_cube,ygrid_central_cube,zgrid_central_cube, &
+                                          iproc_xi,iproc_eta,NPROC_XI,NPROC_ETA,nx_central_cube, &
+                                          ny_central_cube,nz_central_cube,radius_cube)
 
           if (ichunk == CHUNK_AB) then
             xelm(ia) = - ygrid_central_cube
@@ -187,27 +158,27 @@
         enddo
 
         ! add one spectral element to the list
-        ispec = ispec + 1
-        if (ispec > nspec) call exit_MPI(myrank,'ispec greater than nspec in central cube creation')
+        ispec_count = ispec_count + 1
+        if (ispec_count > nspec) call exit_MPI(myrank,'ispec greater than nspec in central cube creation')
 
         ! new get_flag_boundaries
         ! xmin & xmax
         if (ix == 0) then
-          iMPIcut_xi(1,ispec) = .true.
-          if (iproc_xi == 0) iboun(1,ispec)= .true.
+          iMPIcut_xi(1,ispec_count) = .true.
+          if (iproc_xi == 0) iboun(1,ispec_count)= .true.
         endif
         if (ix == 2*nx_central_cube-2) then
-          iMPIcut_xi(2,ispec) = .true.
-          if (iproc_xi == NPROC_XI-1) iboun(2,ispec)= .true.
+          iMPIcut_xi(2,ispec_count) = .true.
+          if (iproc_xi == NPROC_XI-1) iboun(2,ispec_count)= .true.
         endif
         ! ymin & ymax
         if (iy == 0) then
-          iMPIcut_eta(1,ispec) = .true.
-          if (iproc_eta == 0) iboun(3,ispec)= .true.
+          iMPIcut_eta(1,ispec_count) = .true.
+          if (iproc_eta == 0) iboun(3,ispec_count)= .true.
         endif
         if (iy == 2*ny_central_cube-2) then
-          iMPIcut_eta(2,ispec) = .true.
-          if (iproc_eta == NPROC_ETA-1) iboun(4,ispec)= .true.
+          iMPIcut_eta(2,ispec_count) = .true.
+          if (iproc_eta == NPROC_ETA-1) iboun(4,ispec_count)= .true.
         endif
 
         ! define the doubling flag of this element
@@ -226,31 +197,23 @@
 
         if (ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
           if (iz == nz_inf_limit) then
-            idoubling(ispec) = IFLAG_BOTTOM_CENTRAL_CUBE
+            idoubling(ispec_count) = IFLAG_BOTTOM_CENTRAL_CUBE
           else if (iz == 2*nz_central_cube-2) then
-            idoubling(ispec) = IFLAG_TOP_CENTRAL_CUBE
+            idoubling(ispec_count) = IFLAG_TOP_CENTRAL_CUBE
           else if (iz > nz_inf_limit .and. iz < 2*nz_central_cube-2) then
-            idoubling(ispec) = IFLAG_MIDDLE_CENTRAL_CUBE
+            idoubling(ispec_count) = IFLAG_MIDDLE_CENTRAL_CUBE
           else
-            idoubling(ispec) = IFLAG_IN_FICTITIOUS_CUBE
+            idoubling(ispec_count) = IFLAG_IN_FICTITIOUS_CUBE
           endif
         else
-          idoubling(ispec) = IFLAG_IN_FICTITIOUS_CUBE
+          idoubling(ispec_count) = IFLAG_IN_FICTITIOUS_CUBE
         endif
 
         ! compute several rheological and geometrical properties for this spectral element
-        call compute_element_properties(ispec,iregion_code,idoubling,ipass, &
-                         xstore,ystore,zstore,nspec, &
-                         xelm,yelm,zelm,shape3D,rmin,rmax,rhostore,dvpstore, &
-                         kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-                         xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
-                         gammaxstore,gammaystore,gammazstore,nspec_actually, &
-                         c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-                         c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-                         c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                         nspec_ani,nspec_stacey, &
-                         rho_vp,rho_vs, &
-                         xigll,yigll,zigll,ispec_is_tiso)
+        call compute_element_properties(ispec_count,iregion_code,idoubling,ipass, &
+                                        xstore,ystore,zstore,nspec, &
+                                        xelm,yelm,zelm,shape3D,rmin,rmax, &
+                                        xigll,yigll,zigll,ispec_is_tiso)
       enddo
     enddo
   enddo

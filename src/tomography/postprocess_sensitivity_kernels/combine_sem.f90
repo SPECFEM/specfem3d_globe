@@ -65,11 +65,12 @@ program combine_sem_globe
 
   integer, parameter :: NARGS = 3
 
-  character(len=MAX_STRING_LEN) :: kernel_paths(MAX_KERNEL_PATHS),kernel_names(MAX_KERNEL_NAMES)
-  character(len=MAX_STRING_LEN) :: sline,output_dir,input_file,kernel_names_comma_delimited, kernel_name
   character(len=MAX_STRING_LEN) :: arg(NARGS)
+  character(len=MAX_STRING_LEN) :: kernel_paths(MAX_KERNEL_PATHS)
+  character(len=MAX_STRING_LEN),dimension(MAX_KERNEL_NAMES) :: kernel_names
+  character(len=MAX_STRING_LEN) :: sline,output_dir,input_file,kernel_names_comma_delimited, kernel_name
   integer :: i,ier,iker,npath,nker
-
+  integer :: sizeprocs
 
   call init_mpi()
   call world_size(sizeprocs)

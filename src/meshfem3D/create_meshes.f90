@@ -27,6 +27,7 @@
 
   subroutine create_meshes()
 
+  use shared_parameters, only: T_min_period
   use meshfem3D_par
 
   implicit none
@@ -39,8 +40,13 @@
   ! user output
   if (myrank == 0) then
     write(IMAIN,*) 'Radial Meshing parameters:'
-    write(IMAIN,*) '  CHUNK WIDTH XI/ETA =', ANGULAR_WIDTH_XI_IN_DEGREES,'/',ANGULAR_WIDTH_ETA_IN_DEGREES
-    write(IMAIN,*) '  NEX XI/ETA =', NEX_XI,'/',NEX_ETA
+    write(IMAIN,*) '  NCHUNKS                = ',NCHUNKS
+    write(IMAIN,*)
+    write(IMAIN,*) '  CENTER LAT/LON:          ',sngl(CENTER_LATITUDE_IN_DEGREES),'/',sngl(CENTER_LONGITUDE_IN_DEGREES)
+    write(IMAIN,*) '  GAMMA_ROTATION_AZIMUTH:  ',sngl(GAMMA_ROTATION_AZIMUTH)
+    write(IMAIN,*)
+    write(IMAIN,*) '  CHUNK WIDTH XI/ETA:      ',sngl(ANGULAR_WIDTH_XI_IN_DEGREES),'/',sngl(ANGULAR_WIDTH_ETA_IN_DEGREES)
+    write(IMAIN,*) '  NEX XI/ETA:              ', NEX_XI,'/',NEX_ETA
     write(IMAIN,*)
     write(IMAIN,*) '  NER_CRUST:               ', NER_CRUST
     write(IMAIN,*) '  NER_80_MOHO:             ', NER_80_MOHO
@@ -59,14 +65,15 @@
     write(IMAIN,*)
     write(IMAIN,*) 'Mesh resolution:'
     write(IMAIN,*) '  DT = ',DT
-    write(IMAIN,*) '  Minimum period = ', &
-                   max(ANGULAR_WIDTH_ETA_IN_DEGREES,ANGULAR_WIDTH_XI_IN_DEGREES)/90.0 * 256.0/min(NEX_ETA,NEX_XI) * 17.0,' (s)'
+    write(IMAIN,*) '  Minimum period = ',sngl(T_min_period),' (s)'
+    ! attenuation range
     write(IMAIN,*)
-    write(IMAIN,*) '  MIN_ATTENUATION_PERIOD = ',MIN_ATTENUATION_PERIOD
-    write(IMAIN,*) '  MAX_ATTENUATION_PERIOD = ',MAX_ATTENUATION_PERIOD
+    write(IMAIN,*) '  MIN_ATTENUATION_PERIOD = ',sngl(MIN_ATTENUATION_PERIOD)
+    write(IMAIN,*) '  MAX_ATTENUATION_PERIOD = ',sngl(MAX_ATTENUATION_PERIOD)
     write(IMAIN,*)
     call flush_IMAIN()
   endif
+  call synchronize_all()
 
   ! get addressing for this process
   ichunk = ichunk_slice(myrank)

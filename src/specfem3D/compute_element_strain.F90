@@ -125,7 +125,7 @@
     duzdxl_plus_duxdzl = duzdxl + duxdzl
     duzdyl_plus_duydzl = duzdyl + duydzl
 
-    ! strains
+    ! deviatoric strains
     templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
     eps_trace_over_3_loc(INDEX_IJK) = templ
     epsilondev_loc(1,INDEX_IJK) = duxdxl - templ

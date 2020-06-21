@@ -35,27 +35,30 @@
 !
 !  Qinya Liu, Caltech, May 2007
 
-  implicit none
+  use constants, only: &
+    CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
 
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
+  use constants_solver, only: &
+    NGLOB_CRUST_MANTLE,NGLOB_INNER_CORE,NGLOB_OUTER_CORE,NSPEC_CRUST_MANTLE,NSPEC_INNER_CORE,NSPEC_OUTER_CORE
+
+  implicit none
 
   character(len=150) :: infile, s_num, outfile, s_ireg
   integer :: num, i, nspec, nglob, ireg
 
+  ! uses nspec_crust_mantle for allocation as this is the maximum possible size
+  integer,dimension(:,:,:,:),allocatable :: idummy_sem ! ibool
+  integer,dimension(:),allocatable :: idummy_arr  !idoubling
+  logical,dimension(:),allocatable :: ldummy_arr  ! ispec_is_tiso
+
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: junk
+  real(kind=CUSTOM_REAL), dimension(:),allocatable :: junk1
+  !real(kind=CUSTOM_REAL) :: junk2
+
   integer :: ier
   integer :: idummy
 
-  ! uses nspec_crust_mantle for allocation as this is the maximum possible size
-  integer,dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: idummy_sem ! ibool
-  integer,dimension(NSPEC_CRUST_MANTLE) :: idummy_arr  !idoubling
-  logical,dimension(NSPEC_CRUST_MANTLE) :: ldummy_arr  ! ispec_is_tiso
-
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: junk
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: junk1
-  !real(kind=CUSTOM_REAL) :: junk2
-
+  ! gets arguments
   call get_command_argument(1,infile)
   call get_command_argument(2,s_ireg)
   call get_command_argument(3,s_num)
@@ -105,6 +108,14 @@
   print *
   print *,"  output to file: ",trim(outfile)
   print *
+
+  allocate(idummy_sem(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE)) ! ibool
+  allocate(idummy_arr(NSPEC_CRUST_MANTLE))  !idoubling
+  allocate(ldummy_arr(NSPEC_CRUST_MANTLE))  ! ispec_is_tiso
+
+  allocate(junk(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE), &
+           junk1(NGLOB_CRUST_MANTLE),stat=ier)
+  if (ier /= 0) stop 'Error allocating dummy arrays'
 
   ! opens solver_data file
   open(11,file=trim(infile),status='old',form='unformatted',iostat=ier)
@@ -186,6 +197,10 @@
   print *
   print *,"done extracting, see file: ",trim(outfile)
   print *
+
+  ! frees arrays
+  deallocate(idummy_sem,idummy_arr,ldummy_arr)
+  deallocate(junk,junk1)
 
   end program extract_databases
 

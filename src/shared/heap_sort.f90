@@ -44,7 +44,7 @@
 
   ! builds heap
   do i = N/2, 1, -1
-    call heap_sort_siftdown(N,array,i,N)
+    call heap_sort_siftdown_array(N,array,i,N)
   enddo
 
   ! sorts array
@@ -53,22 +53,23 @@
     tmp = array(1)
     array(1) = array(i)
     array(i) = tmp
-    call heap_sort_siftdown(N,array,1,i-1)
+    call heap_sort_siftdown_array(N,array,1,i-1)
   enddo
 
-  contains
+  end subroutine heap_sort
+
 
 !
 !----
 !
 
-  subroutine heap_sort_siftdown(N,array,start,bottom)
+  subroutine heap_sort_siftdown_array(N,array,start,bottom)
 
   implicit none
 
   integer,intent(in):: N
   integer,dimension(N),intent(inout) :: array
-  integer :: start,bottom
+  integer,intent(in) :: start,bottom
 
   ! local parameters
   integer :: i,j
@@ -94,9 +95,8 @@
   array(i) = tmp
   return
 
-  end subroutine heap_sort_siftdown
+  end subroutine heap_sort_siftdown_array
 
-  end subroutine heap_sort
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -140,7 +140,7 @@
 
   ! builds heap
   do i = N/2, 1, -1
-    call heap_sort_siftdown(i, N)
+    call heap_sort_siftdown_xy(N, X, Y, i, N)
   enddo
 
   ! sorts array
@@ -153,49 +153,52 @@
     Y(1) = Y(i)
     Y(i) = itmp
 
-    call heap_sort_siftdown(1, i - 1)
+    call heap_sort_siftdown_xy(N, X, Y, 1, i - 1)
   enddo
+
+  end subroutine heap_sort_local
 
 !
 !----
 !
 
-  contains
+  subroutine heap_sort_siftdown_xy(N, X, Y, start, bottom)
 
-    subroutine heap_sort_siftdown(start, bottom)
+  implicit none
 
-    implicit none
+  integer, intent(in) :: N
+  double precision, dimension(N), intent(inout) :: X
+  integer, dimension(N), intent(inout) :: Y
+  integer, intent(in) :: start, bottom
 
-    integer, intent(in) :: start, bottom
+  ! local parameters
+  integer :: i, j
+  double precision :: xtmp
+  integer :: ytmp
 
-    ! local parameters
-    integer :: i, j
-    double precision :: xtmp
-    integer :: ytmp
+  i = start
+  xtmp = X(i)
+  ytmp = Y(i)
 
-    i = start
-    xtmp = X(i)
-    ytmp = Y(i)
+  j = 2 * i
+  do while (j <= bottom)
+    ! chooses larger value first in this section
+    if (j < bottom) then
+      if (X(j) <= X(j+1)) j = j + 1
+    endif
 
+    ! checks if section already smaller than initial value
+    if (X(j) < xtmp) exit
+
+    X(i) = X(j)
+    Y(i) = Y(j)
+    i = j
     j = 2 * i
-    do while (j <= bottom)
-      ! chooses larger value first in this section
-      if (j < bottom) then
-        if (X(j) <= X(j+1)) j = j + 1
-      endif
+  enddo
 
-      ! checks if section already smaller than initial value
-      if (X(j) < xtmp) exit
+  X(i) = xtmp
+  Y(i) = ytmp
 
-      X(i) = X(j)
-      Y(i) = Y(j)
-      i = j
-      j = 2 * i
-    enddo
+  end subroutine heap_sort_siftdown_xy
 
-    X(i) = xtmp
-    Y(i) = ytmp
 
-    end subroutine heap_sort_siftdown
-
-  end subroutine heap_sort_local

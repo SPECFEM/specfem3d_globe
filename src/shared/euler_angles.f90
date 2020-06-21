@@ -33,11 +33,12 @@
 
   implicit none
 
-  double precision rotation_matrix(3,3)
-  double precision CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH
+  double precision,intent(out) :: rotation_matrix(3,3)
+  double precision,intent(in) :: CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH
 
-  double precision alpha,beta,gamma
-  double precision sina,cosa,sinb,cosb,sing,cosg
+  ! local parameters
+  double precision :: alpha,beta,gamma
+  double precision :: sina,cosa,sinb,cosb,sing,cosg
 
 ! compute colatitude and longitude and convert to radians
   alpha = CENTER_LONGITUDE_IN_DEGREES * DEGREES_TO_RADIANS

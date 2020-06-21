@@ -35,7 +35,7 @@
 !
 ! returns: sorted indexing array (ibool),  reordering array (iglob) & number of global points (nglob)
 
-  use constants
+  use constants, only: NDIM,SMALLVALTOL
 
   implicit none
 
@@ -112,6 +112,7 @@
 
   ! assign global node numbers (now sorted lexicographically)
   ig = 0
+  iglob(:) = 0
   do i = 1,npointot
     ! eliminate the multiples by using a single (new) point number for all the points that have the same X Y Z after sorting
     if (ifseg(i)) ig = ig + 1
@@ -139,6 +140,7 @@
   subroutine heap_sort_multi(N, dx, dy, dz, ia, ib)
 
   implicit none
+
   integer, intent(in) :: N
   double precision, dimension(N), intent(inout) :: dx
   double precision, dimension(N), intent(inout) :: dy
@@ -146,6 +148,7 @@
   integer, dimension(N), intent(inout) :: ia
   integer, dimension(N), intent(inout) :: ib
 
+  ! local parameters
   integer :: i
 
   ! checks if anything to do
@@ -153,98 +156,139 @@
 
   ! builds heap
   do i = N/2, 1, -1
-    call heap_sort_siftdown(i, n)
+    call heap_sort_siftdown(N, dx, dy, dz, ia, ib, i, n)
   enddo
 
   ! sorts array
   do i = N, 2, -1
     ! swaps last and first entry in this section
-    call dswap(dx, 1, i)
-    call dswap(dy, 1, i)
-    call dswap(dz, 1, i)
-    call iswap(ia, 1, i)
-    call iswap(ib, 1, i)
-    call heap_sort_siftdown(1, i - 1)
+    call dswap(N, dx, 1, i)
+    call dswap(N, dy, 1, i)
+    call dswap(N, dz, 1, i)
+    call iswap(N, ia, 1, i)
+    call iswap(N, ib, 1, i)
+    call heap_sort_siftdown(N, dx, dy, dz, ia, ib, 1, i - 1)
   enddo
 
-  contains
-
-! this directive avoids triggering a random bug in Intel ifort v13 (in the compiler, not in SPECFEM),
-! fixed in later versions of Intel ifort, which also ignore this directive because it was discontinued
-!$DIR NOOPTIMIZE
-    subroutine dswap(A, i, j)
-
-    double precision, dimension(:), intent(inout) :: A
-    integer, intent(in) :: i
-    integer, intent(in) :: j
-
-    double precision :: tmp
-
-    tmp = A(i)
-    A(i) = A(j)
-    A(j) = tmp
-
-    end subroutine
-
-    subroutine iswap(A, i, j)
-
-    integer, dimension(:), intent(inout) :: A
-    integer, intent(in) :: i
-    integer, intent(in) :: j
-
-    integer :: tmp
-
-    tmp = A(i)
-    A(i) = A(j)
-    A(j) = tmp
-
-    end subroutine
-
-! this directive avoids triggering a random bug in Intel ifort v13 (in the compiler, not in SPECFEM),
-! fixed in later versions of Intel ifort, which also ignore this directive because it was discontinued
-!$DIR NOOPTIMIZE
-    subroutine heap_sort_siftdown(start, bottom)
-
-    integer, intent(in) :: start
-    integer, intent(in) :: bottom
-
-    integer :: i, j
-    double precision :: xtmp, ytmp, ztmp
-    integer :: atmp, btmp
-
-    i = start
-    xtmp = dx(i)
-    ytmp = dy(i)
-    ztmp = dz(i)
-    atmp = ia(i)
-    btmp = ib(i)
-
-    j = 2 * i
-    do while (j <= bottom)
-      ! chooses larger value first in this section
-      if (j < bottom) then
-        if (dx(j) <= dx(j+1)) j = j + 1
-      endif
-
-      ! checks if section already smaller than initial value
-      if (dx(j) < xtmp) exit
-
-      dx(i) = dx(j)
-      dy(i) = dy(j)
-      dz(i) = dz(j)
-      ia(i) = ia(j)
-      ib(i) = ib(j)
-      i = j
-      j = 2 * i
-    enddo
-
-    dx(i) = xtmp
-    dy(i) = ytmp
-    dz(i) = ztmp
-    ia(i) = atmp
-    ib(i) = btmp
-
-    end subroutine heap_sort_siftdown
-
   end subroutine heap_sort_multi
+
+!
+!--------------------
+!
+
+
+! note: there seems to be an issue with compiler optimizations when calling these subroutines in contains-sections.
+!       in particular, when these routines are subroutines within a contains-section of the above heap_sort_multi() routine,
+!       compilers such as Intel and Cray will produce wrong results when an aggressive optimization (i.e., -O3) was chosen.
+!       this will lead to errors such as
+!       "
+!         incorrect total number of points found: myrank,nglob_new,nglob = ..
+!       "
+!       thus, we put them here as "independent" subroutines, outside of the scope of the above heap_sort_multi() routine.
+!       this helps avoiding issues with the compiler optimizations.
+
+
+! this directive avoids triggering a random bug in Intel ifort v13 (in the compiler, not in SPECFEM),
+! fixed in later versions of Intel ifort, which also ignore this directive because it was discontinued
+!$DIR NOOPTIMIZE
+  subroutine dswap(N, A, i, j)
+
+  implicit none
+
+  integer, intent(in) :: N
+  double precision, dimension(N), intent(inout) :: A
+  integer, intent(in) :: i
+  integer, intent(in) :: j
+
+  ! local parameters
+  double precision :: tmp
+
+  tmp = A(i)
+  A(i) = A(j)
+  A(j) = tmp
+
+  end subroutine
+
+!
+!--------------------
+!
+
+  subroutine iswap(N, A, i, j)
+
+  implicit none
+
+  integer, intent(in) :: N
+  integer, dimension(N), intent(inout) :: A
+  integer, intent(in) :: i
+  integer, intent(in) :: j
+
+  ! local parameters
+  integer :: tmp
+
+  tmp = A(i)
+  A(i) = A(j)
+  A(j) = tmp
+
+  end subroutine
+
+!
+!--------------------
+!
+
+! this directive avoids triggering a random bug in Intel ifort v13 (in the compiler, not in SPECFEM),
+! fixed in later versions of Intel ifort, which also ignore this directive because it was discontinued
+!$DIR NOOPTIMIZE
+  subroutine heap_sort_siftdown(N, dx, dy, dz, ia, ib, start, bottom)
+
+  implicit none
+
+  integer, intent(in) :: N
+  double precision, dimension(N), intent(inout) :: dx
+  double precision, dimension(N), intent(inout) :: dy
+  double precision, dimension(N), intent(inout) :: dz
+  integer, dimension(N), intent(inout) :: ia
+  integer, dimension(N), intent(inout) :: ib
+
+  integer, intent(in) :: start
+  integer, intent(in) :: bottom
+
+  ! local parameters
+  integer :: i, j
+  double precision :: xtmp, ytmp, ztmp
+  integer :: atmp, btmp
+
+  i = start
+  xtmp = dx(i)
+  ytmp = dy(i)
+  ztmp = dz(i)
+  atmp = ia(i)
+  btmp = ib(i)
+
+  j = 2 * i
+  do while (j <= bottom)
+    ! chooses larger value first in this section
+    if (j < bottom) then
+      if (dx(j) <= dx(j+1)) j = j + 1
+    endif
+
+    ! checks if section already smaller than initial value
+    if (dx(j) < xtmp) exit
+
+    dx(i) = dx(j)
+    dy(i) = dy(j)
+    dz(i) = dz(j)
+    ia(i) = ia(j)
+    ib(i) = ib(j)
+    i = j
+    j = 2 * i
+  enddo
+
+  dx(i) = xtmp
+  dy(i) = ytmp
+  dz(i) = ztmp
+  ia(i) = atmp
+  ib(i) = btmp
+
+  end subroutine heap_sort_siftdown
+
 

@@ -133,7 +133,9 @@
   implicit none
 
   ! local parameters
-  integer :: ier
+  integer :: ier,npoints_all,nspecel_all
+  integer, dimension(:), allocatable :: num_ibool_3dmovie
+  logical, dimension(:), allocatable :: mask_ibool_3dmovie
 
   ! checks if anything to do
   if (.not. MOVIE_VOLUME) return
@@ -148,30 +150,44 @@
   ! the following has to be true for the the array dimensions of eps to match with those of rstore etc..
   ! note that epsilondev and eps_trace_over_3 don't have the same dimensions.. could cause trouble
   if (NSPEC_CRUST_MANTLE_STR_OR_ATT /= NSPEC_CRUST_MANTLE) &
-    stop 'NSPEC_CRUST_MANTLE_STRAINS_ATT /= NSPEC_CRUST_MANTLE'
+    stop 'NSPEC_CRUST_MANTLE_STRAINS_ATT /= NSPEC_CRUST_MANTLE, please recompile'
   if (NSPEC_CRUST_MANTLE_STRAIN_ONLY /= NSPEC_CRUST_MANTLE) &
-    stop 'NSPEC_CRUST_MANTLE_STRAIN_ONLY /= NSPEC_CRUST_MANTLE'
+    stop 'NSPEC_CRUST_MANTLE_STRAIN_ONLY /= NSPEC_CRUST_MANTLE, please recompile'
   ! checks movie type
   if (MOVIE_VOLUME_TYPE < 1 .or. MOVIE_VOLUME_TYPE > 9) &
     stop 'MOVIE_VOLUME_TYPE has to be in range from 1 to 9'
 
-  allocate(mask_ibool(NGLOB_CRUST_MANTLE_3DMOVIE), &
-           num_ibool_3dmovie(NGLOB_CRUST_MANTLE_3DMOVIE), &
-           mask_3dmovie(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE), &
+  allocate(mask_3dmovie(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE), &
            muvstore_crust_mantle_3dmovie(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE),stat=ier)
   if (ier /= 0 ) stop 'Error allocating arrays muvstore_crust_mantle_3dmovie,..'
 
+  ! temporary arrays
+  allocate(mask_ibool_3dmovie(NGLOB_CRUST_MANTLE_3DMOVIE), &
+           num_ibool_3dmovie(NGLOB_CRUST_MANTLE_3DMOVIE),stat=ier)
+  if (ier /= 0 ) stop 'Error allocating arrays mask_ibool_3dmovie,..'
+
   ! counts total number of points for movie file output
-  call movie_volume_count_points()
+  call movie_volume_count_points(num_ibool_3dmovie,mask_ibool_3dmovie)
+
+  ! total for all slices
+  call sum_all_i(npoints_3dmovie,npoints_all)
+  call sum_all_i(nspecel_3dmovie,nspecel_all)
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  Movie volume:'
+    write(IMAIN,*) '  total number of points   = ',npoints_all
+    write(IMAIN,*) '  total number of elements = ',nspecel_all
+    call flush_IMAIN()
+  endif
 
   allocate(nu_3dmovie(3,3,npoints_3dmovie),stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating nu for 3D movie')
 
-  call write_movie_volume_mesh(nu_3dmovie,num_ibool_3dmovie,mask_3dmovie,mask_ibool, &
+  call write_movie_volume_mesh(nu_3dmovie,num_ibool_3dmovie,mask_3dmovie,mask_ibool_3dmovie, &
                                           muvstore_crust_mantle_3dmovie,npoints_3dmovie)
 
   if (myrank == 0) then
-    write(IMAIN,*) '  Movie volume:'
     write(IMAIN,*) '  Writing to movie3D*** files on local disk databases directory'
     select case (MOVIE_VOLUME_TYPE)
     case (1)
@@ -202,6 +218,9 @@
     write(IMAIN,*) '  Starting at time step:',MOVIE_START, 'ending at:',MOVIE_STOP,'every: ',NTSTEP_BETWEEN_FRAMES
     call flush_IMAIN()
   endif
+
+  deallocate(mask_ibool_3dmovie)
+  deallocate(num_ibool_3dmovie)
 
   call synchronize_all()
 

@@ -55,11 +55,13 @@ by Dennis McRitchie (Princeton University, USA)
 #include <stdio.h>
 #include <string.h>
 #include <regex.h>
+#include <time.h>
 
 #ifndef LINE_MAX
 #define LINE_MAX 255
 #endif
 
+/*===============================================================*/
 /*
  * Mac OS X's gcc does not support strnlen and strndup.
  * So we define them here conditionally, to avoid duplicate definitions
@@ -109,11 +111,15 @@ FC_FUNC_(param_open,PARAM_OPEN)(char * filename, int * length, int * ierr)
   *ierr = 0;
 }
 
+/* ----------------------------------------------------------------------------- */
+
 void
 FC_FUNC_(param_close,PARAM_CLOSE)()
 {
   fclose(fid);
 }
+
+/* ----------------------------------------------------------------------------- */
 
 void
 FC_FUNC_(param_read,PARAM_READ)(char * string_read, int * string_read_len, char * name, int * name_len, int * ierr)
@@ -183,6 +189,7 @@ FC_FUNC_(param_read,PARAM_READ)(char * string_read, int * string_read_len, char 
     //    printf("Line read = %s\n", line);
     // If we have a match, extract the keyword from the line.
     keyword = strndup(line+parameter[1].rm_so, parameter[1].rm_eo-parameter[1].rm_so);
+
     // If the keyword is not the one we're looking for, check the next line.
     if (strcmp(keyword, namecopy) != 0) {
       free(keyword);
@@ -192,21 +199,65 @@ FC_FUNC_(param_read,PARAM_READ)(char * string_read, int * string_read_len, char 
     regfree(&compiled_pattern);
     // If it matches, extract the value from the line.
     value = strndup(line+parameter[2].rm_so, parameter[2].rm_eo-parameter[2].rm_so);
+
     // Clear out the return string with blanks, copy the value into it, and return.
     memset(string_read, ' ', *string_read_len);
+
     value_len = strlen(value);
-    if (value_len > (size_t)*string_read_len)
-      value_len = *string_read_len;
+    // makes sure there is a character left for NUL termination
+    if (value_len > (size_t)*string_read_len - 1) value_len = *string_read_len - 1;
+
     strncpy(string_read, value, value_len);
+
     free(value);
     free(namecopy);
     *ierr = 0;
     return;
   }
   // If no keyword matches, print out error and die.
-  printf("No match in parameter file for keyword '%s'\n", namecopy);
+  //printf("No match in parameter file for keyword '%s'\n", namecopy);
   free(namecopy);
   regfree(&compiled_pattern);
   *ierr = 1;
+  return;
+}
+
+
+/* ----------------------------------------------------------------------------- */
+
+// time function
+
+/* ----------------------------------------------------------------------------- */
+
+void
+FC_FUNC_(get_utctime_params,GET_UTCTIME_PARAMS)(int* stime_in,
+                                                int* iyr, int* imo, int* ida,
+                                                int* ihr, int* imin, int* isec) {
+
+// note: gmtime() function in C/C++ is C99 standard. however, gmtime() in fortran is an extension and differs between compilers.
+//       here we use this wrapper function to convert an input time (integer) to an UTC output time
+
+  time_t stime;
+  struct tm * ptm;
+
+  // converts to time_t value
+  stime = (time_t) *stime_in;
+
+  // converts to tm structure as UTC time
+  ptm = gmtime( &stime);
+  if (ptm == NULL){
+    fprintf(stderr, "Error calling gmtime() in get_utctime_params routine, exiting..\n");
+    exit(-1);
+  }
+
+  // sets time values as integers
+  *iyr = ptm->tm_year;
+  *imo = ptm->tm_mon;
+  *ida = ptm->tm_mday;
+
+  *ihr = ptm->tm_hour;
+  *imin = ptm->tm_min;
+  *isec = ptm->tm_sec;
+
   return;
 }

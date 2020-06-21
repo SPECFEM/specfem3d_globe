@@ -1,0 +1,28 @@
+----------------------------------------------------------
+README
+----------------------------------------------------------
+
+This example creates a regional mesh using 1D model AK135 
+and runs a "purely" adjoint simulation (SIMULATION_TYPE == 2).
+It back-projects the seismic wavefield recorded at stations in file DATA/STATIONS_ADJOINT.
+
+The simulation is setup to use 4 CPUs only, thus can be run locally on a desktop machine
+(needs to have MPI installed).
+
+
+running adjoint simulation:
+---------------------------
+
+type:
+./run_this_example.sh
+
+to setup this directory for the simulation and to run a corresponding
+script "run_mesher_solver.bash".
+
+The simulation is accurate down to a shortest period of ~ 45 s.
+(minimum period resolved ~ (256/NEX_XI) * (ANGULAR_WIDTH_XI_IN_DEGREES/90) * 17)
+ 
+Reference output for comparisons are provided in the directory: REF_SEIS/
+
+Please modify these scripts according to your specifics.
+

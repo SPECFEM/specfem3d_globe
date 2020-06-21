@@ -48,6 +48,12 @@ NPROC_ETA                       = 5
 # 3D crustal models:
 # crust1.0, crust2.0, EPcrust, EuCRUST, crustmaps, crustSH
 #
+# Mars models:
+# 1D_Sohl, 1D_Sohl_3D_crust, 1D_case65TAY, 1D_case65TAY_3D_crust
+#
+# Moon models:
+# vpremoon
+#
 # 3D models with 3D crust: append "_**crustname**" to the mantle model name
 #                          to take a 3D crustal model (by default crust2.0 is taken for 3D mantle models)
 #                          e.g. s20rts_crust1.0, s362ani_crustmaps, full_sh_crustSH, sglobe_EPcrust, etc.
@@ -251,6 +257,11 @@ ANISOTROPIC_KL                  = .true.
 # rather than fully anisotropic kernels when ANISOTROPIC_KL above is set to .true.
 # means to save radial anisotropic kernels, i.e., sensitivity kernels for beta_v, beta_h, etc.
 SAVE_TRANSVERSE_KL_ONLY         = .true.
+
+# output only the kernels used for the current azimuthally anisotropic inversions of surface waves,
+# i.e., bulk_c, bulk_betav, bulk_betah, eta, Gc_prime, Gs_prime and rho
+# (Gc' & Gs' which are the normalized Gc & Gs kernels by isotropic \rho\beta of the 1D reference model)
+SAVE_AZIMUTHAL_ANISO_KL_ONLY    = .false.
 
 # output approximate Hessian in crust mantle region.
 # means to save the preconditioning for gradients, they are cross correlations between forward and adjoint accelerations.

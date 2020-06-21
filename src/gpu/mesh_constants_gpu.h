@@ -47,6 +47,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 
@@ -69,7 +70,6 @@ typedef float realw;
 // debug: outputs traces
 #define DEBUG 0
 #if DEBUG == 1
-#pragma message ("\nCompiling with: DEBUG enabled\n")
 #define TRACE(x) printf ("%s\n", x); fflush(stdout);
 #define TRACE_EXTENDED(x) printf ("%s --- function %s file %s line %d \n",x,__func__,__FILE__,__LINE__); fflush(stdout);
 #else
@@ -78,7 +78,6 @@ typedef float realw;
 // more outputs
 #define MAXDEBUG 0
 #if MAXDEBUG == 1
-#pragma message ("\nCompiling with: MAXDEBUG enabled\n")
 #define LOG(x) printf ("%s\n", x)
 #define PRINT5(var, offset) for (;print_count<5;print_count++) printf ("var (%d)=%2.20f\n", print_count, var[offset+print_count]);
 #define PRINT10(var) if (print_count<10) { printf ("var=%1.20e\n", var); print_count++; }
@@ -91,7 +90,6 @@ typedef float realw;
 // debug: run backward simulations with/without GPU routines and empty arrays for debugging
 #define DEBUG_BACKWARD_SIMULATIONS 0
 #if DEBUG_BACKWARD_SIMULATIONS == 1
-#pragma message ("\nCompiling with: DEBUG_BACKWARD_SIMULATIONS enabled\n")
 #define DEBUG_BACKWARD_ASSEMBLY_OC()  return;
 #define DEBUG_BACKWARD_ASSEMBLY_IC()  return;
 #define DEBUG_BACKWARD_ASSEMBLY_CM()  return;
@@ -123,7 +121,6 @@ typedef float realw;
 // (note: this synchronizes many calls, thus e.g. no asynchronous memcpy possible)
 #define ENABLE_VERY_SLOW_ERROR_CHECKING 0
 #if ENABLE_VERY_SLOW_ERROR_CHECKING == 1
-#pragma message ("\nCompiling with: ENABLE_VERY_SLOW_ERROR_CHECKING enabled\n")
 #define GPU_ERROR_CHECKING(x) exit_on_gpu_error(x);
 #else
 #define GPU_ERROR_CHECKING(x)
@@ -161,12 +158,6 @@ typedef float realw;
 // inner core : fictitious elements id (from constants.h)
 #define IFLAG_IN_FICTITIOUS_CUBE  11
 
-// R_EARTH_KM is the radius of the bottom of the oceans (radius of Earth in km)
-#define R_EARTH_KM 6371.0f
-
-// uncomment line below for PREM with oceans
-//#define R_EARTH_KM 6368.0f
-
 // Asynchronous memory copies between GPU and CPU
 // (set to 0 for synchronuous/blocking copies, set to 1 for asynchronuous copies)
 #define GPU_ASYNC_COPY 1
@@ -183,9 +174,6 @@ typedef float realw;
 // (optional) pre-processing directive used in kernels: if defined check that it is also set in src/shared/constants.h:
 // leads up to ~ 5% performance increase
 //#define USE_MESH_COLORING_GPU
-#ifdef USE_MESH_COLORING_GPU
-#pragma message ("\nCompiling with: USE_MESH_COLORING_GPU enabled\n")
-#endif
 
 // note: mesh coloring has a tradeoff between extra costs for looping over colors
 //          and slowliness of atomic updates;
@@ -214,20 +202,12 @@ typedef float realw;
 
 #ifdef USE_CUDA
   // CUDA version >= 4.0 needed for cudaTextureType1D and cudaDeviceSynchronize()
-  #if CUDA_VERSION < 4000
+  #if CUDA_VERSION < 4000 || (defined (__CUDACC_VER_MAJOR__) && (__CUDACC_VER_MAJOR__ < 4))
     #undef USE_TEXTURES_FIELDS
     #undef USE_TEXTURES_CONSTANTS
-    #pragma message ("\nCompiling for CUDA version < 4.0\n")
   #endif
 #endif
 
-// compiling info
-#ifdef USE_TEXTURES_FIELDS
-#pragma message ("\nCompiling with: USE_TEXTURES_FIELDS enabled\n")
-#endif
-#ifdef USE_TEXTURES_CONSTANTS
-#pragma message ("\nCompiling with: USE_TEXTURES_CONSTANTS enabled\n")
-#endif
 
 // (optional) unrolling loops
 // leads up to ~10% performance increase in OpenCL and ~1% in Cuda
@@ -236,6 +216,9 @@ typedef float realw;
 // CUDA compiler specifications
 // (optional) use launch_bounds specification to increase compiler optimization
 #ifdef GPU_DEVICE_K20
+// specifics see: https://docs.nvidia.com/cuda/kepler-tuning-guide/index.html
+// maximum shared memory per thread block 48KB
+//
 // note: main kernel is Kernel_2_crust_mantle_impl() which is limited by register usage to only 5 active blocks
 //       while shared memory usage would allow up to 7 blocks (see profiling with nvcc...)
 //       here we specifiy to launch 7 blocks to increase occupancy and let the compiler reduce registers
@@ -249,16 +232,22 @@ typedef float realw;
 //
 // using launch_bounds leads to ~ 20% performance increase on Kepler GPUs
 // (uncomment if not desired)
-#pragma message ("\nCompiling with: USE_LAUNCH_BOUNDS enabled for K20\n")
 #define USE_LAUNCH_BOUNDS
 #define LAUNCH_MIN_BLOCKS 7
 #endif
 
 #ifdef GPU_DEVICE_Maxwell
+// specifics see: https://docs.nvidia.com/cuda/maxwell-tuning-guide/index.html
+// register file size 64k 32-bit registers per SM
+// shared memory 64KB for GM107 and 96KB for GM204
 #undef USE_LAUNCH_BOUNDS
 #endif
 
 #ifdef GPU_DEVICE_Pascal
+// specifics see: https://docs.nvidia.com/cuda/pascal-tuning-guide/index.html
+// register file size 64k 32-bit registers per SM
+// shared memory 64KB for GP100 and 96KB for GP104
+//
 // Pascal P100: by default, the crust_mantle_impl_kernel_forward kernel uses 80 registers.
 //              80 * 128 threads -> 10240 registers    for Pascal: total of 65536 -> limits active blocks to 6
 //              using launch bounds to increase the number of blocks will lead to register spilling.
@@ -268,6 +257,11 @@ typedef float realw;
 #endif
 
 #ifdef GPU_DEVICE_Volta
+// specifics see: https://docs.nvidia.com/cuda/volta-tuning-guide/index.html
+// register file size 64k 32-bit registers per SM
+// shared memory size 96KB per SM (maximum shared memory per thread block)
+// maximum registers 255 per thread
+//
 // Volta V100: Using --ptxas-options -v flags, by default
 //             crust_mantle_impl_kernel_forward kernel Used 81 registers, 6200 bytes smem, 948 bytes cmem[0]
 //             81 * 128 threads -> 10368 registers     for Volta: total of 65536 -> limits active blocks to 6
@@ -275,6 +269,12 @@ typedef float realw;
 //             For Volta, the spilling slows down the kernels by ~5%
 #undef USE_LAUNCH_BOUNDS
 //#define LAUNCH_MIN_BLOCKS 6  // with 6 blocks, kernel uses 80 registers and would lead to ~1% speed up
+#if defined (__CUDACC_VER_MAJOR__) && (__CUDACC_VER_MAJOR__ >= 10)
+// CUDA graphs: (experimental feature) requires compilation with CUDA toolkit versions >= 10.0
+//              uses graphs instead of separate kernel launches (for accel/veloc updates)
+//              to minimize launch time overheads for very small kernels
+//#define USE_CUDA_GRAPHS
+#endif
 #endif
 
 
@@ -282,9 +282,9 @@ typedef float realw;
 
 // kernel block size for updating displacements/potential (Newmark time scheme)
 // current hardware: 128 is slightly faster than 256 (~ 4%)
-#define BLOCKSIZE_KERNEL1 128
-#define BLOCKSIZE_KERNEL3 128
-#define BLOCKSIZE_TRANSFER 256
+#define BLOCKSIZE_KERNEL1 128     // update displ kernels
+#define BLOCKSIZE_KERNEL3 128     // update veloc / multiply accel kernels
+#define BLOCKSIZE_TRANSFER 256    // transfer host-device kernels, get maximum kernels
 
 // maximum grid dimension in one direction of GPU
 #define MAXIMUM_GRID_DIM 65535
@@ -761,7 +761,9 @@ typedef struct mesh_ {
   int exact_mass_matrix_for_rotation;
   int oceans;
   int anisotropic_inner_core;
-  int save_boundary_mesh;
+  int save_kernels_boundary;
+  int save_kernels_oc;
+  int save_kernels_ic;
 
   int anisotropic_kl;
   int approximate_hess_kl;
@@ -783,6 +785,7 @@ typedef struct mesh_ {
 
   realw RHO_BOTTOM_OC;
   realw RHO_TOP_OC;
+  realw R_EARTH_KM;
 
   // ------------------------------------------------------------------   //
   // rotation
@@ -823,19 +826,30 @@ typedef struct mesh_ {
   gpu_realw_mem d_station_strain_field;
   realw* h_station_strain_field;
 
+  // lagrange weights of receivers
+  gpu_realw_mem d_hxir;
+  gpu_realw_mem d_hetar;
+  gpu_realw_mem d_hgammar;
+
   // adjoint receivers/sources
   int nadj_rec_local;
+
   gpu_realw_mem d_source_adjoint;
   realw *h_source_adjoint;
-  gpu_int_mem d_pre_computed_irec;
 
-  // lagrange weights of receivers
-  gpu_realw_mem d_xir;
-  gpu_realw_mem d_etar;
-  gpu_realw_mem d_gammar;
+  gpu_int_mem d_number_adjsources_global;
+
+  // lagrange weights of adjoint sources
+  gpu_realw_mem d_hxir_adj;
+  gpu_realw_mem d_hetar_adj;
+  gpu_realw_mem d_hgammar_adj;
 
   // norm checking
   gpu_realw_mem d_norm_max;
+  gpu_realw_mem d_norm_strain_max;
+
+  realw *h_norm_max;
+  realw *h_norm_strain_max;
 
   // ------------------------------------------------------------------   //
   // assembly
@@ -1000,6 +1014,9 @@ typedef struct mesh_ {
   cl_mem h_pinned_recv_accel_buffer_oc;
   cl_mem h_pinned_b_send_accel_buffer_oc;
   cl_mem h_pinned_b_recv_accel_buffer_oc;
+
+  cl_mem h_pinned_norm_max;
+  cl_mem h_pinned_norm_strain_max;
 #endif
 
   // streams
@@ -1007,6 +1024,31 @@ typedef struct mesh_ {
   // overlapped memcpy streams
   cudaStream_t compute_stream;
   cudaStream_t copy_stream;
+
+  // event
+  cudaEvent_t kernel_event;
+
+  // graphs
+#ifdef USE_CUDA_GRAPHS
+  int use_graph_call_elastic;
+  int use_graph_call_acoustic;
+  int use_graph_call_norm;
+  int use_graph_call_norm_strain;
+  int init_graph_elastic;
+  int init_graph_acoustic;
+  int init_graph_norm;
+  int init_graph_norm_strain;
+  // CUDA graphs (version >= 10)
+  cudaGraph_t graph_elastic;
+  cudaGraph_t graph_acoustic;
+  cudaGraph_t graph_norm;
+  cudaGraph_t graph_norm_strain;
+  cudaGraphExec_t graphExec_elastic;
+  cudaGraphExec_t graphExec_acoustic;
+  cudaGraphExec_t graphExec_norm;
+  cudaGraphExec_t graphExec_norm_strain;
+#endif
+
 #endif
 
 #ifdef USE_OPENCL
@@ -1068,6 +1110,10 @@ void gpuCopy_todevice_double (gpu_double_mem *d_array_addr_ptr, double *h_array,
 void gpuCopy_todevice_int (gpu_int_mem *d_array_addr_ptr, int *h_array, size_t size);
 
 void gpuCopy_from_device_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array, size_t size);
+
+void gpuCopy_from_device_realw_asyncEvent (Mesh *mp, gpu_realw_mem *d_array_addr_ptr, realw *h_array, size_t size);
+void gpuRecordEvent(Mesh *mp);
+void gpuWaitEvent (Mesh *mp);
 
 void gpuCopy_todevice_realw_offset (gpu_realw_mem *d_array_addr_ptr, realw *h_array, size_t size, size_t offset);
 void gpuCopy_from_device_realw_offset (gpu_realw_mem *d_array_addr_ptr, realw *h_array, size_t size, size_t offset);

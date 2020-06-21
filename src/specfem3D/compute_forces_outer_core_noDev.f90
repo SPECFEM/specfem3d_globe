@@ -26,7 +26,7 @@
 !=====================================================================
 
   subroutine compute_forces_outer_core_noDev(timeval,deltat,two_omega_earth, &
-                                             NSPEC,NGLOB, &
+                                             NSPEC_ROT,NGLOB, &
                                              A_array_rotation,B_array_rotation, &
                                              A_array_rotation_lddrk,B_array_rotation_lddrk, &
                                              displfluid,accelfluid, &
@@ -52,14 +52,14 @@
 
   implicit none
 
-  integer,intent(in) :: NSPEC,NGLOB
+  integer,intent(in) :: NSPEC_ROT,NGLOB
 
   ! for the Euler scheme for rotation
   real(kind=CUSTOM_REAL),intent(in) :: timeval,deltat,two_omega_earth
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(inout) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_ROT),intent(inout) :: &
     A_array_rotation,B_array_rotation
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(inout) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_ROT),intent(inout) :: &
     A_array_rotation_lddrk,B_array_rotation_lddrk
 
   ! displacement and acceleration

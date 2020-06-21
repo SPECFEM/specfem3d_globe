@@ -82,9 +82,6 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifndef IFLAG_IN_FICTITIOUS_CUBE\n\
 #define IFLAG_IN_FICTITIOUS_CUBE 11\n\
 #endif\n\
-#ifndef R_EARTH_KM\n\
-#define R_EARTH_KM 6371.0f\n\
-#endif\n\
 #ifndef COLORING_MIN_NSPEC_INNER_CORE\n\
 #define COLORING_MIN_NSPEC_INNER_CORE 1000\n\
 #endif\n\
@@ -97,7 +94,9 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 \n\
 __kernel void update_accel_elastic_kernel(__global float * accel, const __global float * veloc, const int size, const float two_omega_earth, const __global float * rmassx, const __global float * rmassy, const __global float * rmassz){\n\
   int id;\n\
+\n\
   id = get_global_id(0) + (get_group_id(1)) * (get_global_size(0));\n\
+\n\
   if (id < size) {\n\
     accel[(id) * (3)] = (accel[(id) * (3)]) * (rmassx[id]) + (two_omega_earth) * (veloc[(id) * (3) + 1]);\n\
     accel[(id) * (3) + 1] = (accel[(id) * (3) + 1]) * (rmassy[id]) - ((two_omega_earth) * (veloc[(id) * (3)]));\n\

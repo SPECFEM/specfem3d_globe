@@ -71,9 +71,6 @@
 #ifndef IFLAG_IN_FICTITIOUS_CUBE
 #define IFLAG_IN_FICTITIOUS_CUBE 11
 #endif
-#ifndef R_EARTH_KM
-#define R_EARTH_KM 6371.0f
-#endif
 #ifndef COLORING_MIN_NSPEC_INNER_CORE
 #define COLORING_MIN_NSPEC_INNER_CORE 1000
 #endif
@@ -86,7 +83,9 @@
 
 __global__ void update_accel_acoustic_kernel(float * accel, const int size, const float * rmass){
   int id;
+
   id = threadIdx.x + (blockIdx.x) * (blockDim.x) + (blockIdx.y) * ((gridDim.x) * (blockDim.x));
+
   if (id < size) {
     accel[id] = (accel[id]) * (rmass[id]);
   }

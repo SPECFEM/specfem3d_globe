@@ -32,13 +32,14 @@
   implicit none
 
   ! local parameters
-  integer :: i,j,k
+  integer :: i,j,k,ier
+  integer, dimension(:),allocatable :: ichunk_slice,iproc_xi_slice,iproc_eta_slice
 
   ! set up GLL points, weights and derivation matrices
   call define_derivation_matrices(xigll,yigll,zigll,wxgll,wygll,wzgll, &
-                                 hprime_xx,hprime_yy,hprime_zz, &
-                                 hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
-                                 wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube)
+                                  hprime_xx,hprime_yy,hprime_zz, &
+                                  hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
+                                  wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube)
 
   ! define a 3D extension in order to be able to force vectorization in the compute_forces_**_Dev routines
   do k = 1,NGLLZ
@@ -64,5 +65,31 @@
       enddo
     enddo
   endif
+
+  ! addressing
+  ! 2-D addressing (needed for Stacey boundaries and regular grid kernels)
+  allocate(addressing(NCHUNKS_VAL,0:NPROC_XI_VAL-1,0:NPROC_ETA_VAL-1),stat=ier)
+  if (ier /= 0) stop 'Error allocating array addressing'
+  addressing(:,:,:) = -1
+
+  allocate(ichunk_slice(0:NPROCTOT_VAL-1), &
+           iproc_xi_slice(0:NPROCTOT_VAL-1), &
+           iproc_eta_slice(0:NPROCTOT_VAL-1),stat=ier)
+  if (ier /= 0) stop 'Error allocating arrays ichunk_slice,...'
+
+  ! safety check
+  if (NPROC /= NPROC_ETA_VAL * NPROC_XI_VAL) stop 'Error invalid NPROC not matching NPROC_ETA * NPROC_XI value'
+
+  ! creates global slice addressing for solver
+  call create_addressing(NCHUNKS_VAL,NPROC,NPROC_ETA_VAL,NPROC_XI_VAL,NPROCTOT_VAL, &
+                         addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice, &
+                         OUTPUT_FILES)
+
+  ! determine chunk number and local slice coordinates using addressing
+  ! (needed for Stacey conditions)
+  ichunk = ichunk_slice(myrank)
+
+  ! frees temporary arrays
+  deallocate(ichunk_slice,iproc_xi_slice,iproc_eta_slice)
 
   end subroutine setup_GLL_points

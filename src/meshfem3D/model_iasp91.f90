@@ -45,6 +45,7 @@
 ! model: scaling of the P wave velocity based on Birch's law. Both options are fine.
 
   use constants
+  use shared_parameters, only: R_PLANET,RHOAV
 
   implicit none
 
@@ -66,10 +67,10 @@
   double precision :: x1,x2
 
 ! compute real physical radius in meters
-  r = x * R_EARTH
+  r = x * R_PLANET
 
-  x1 = R120 / R_EARTH
-  x2 = RMOHO / R_EARTH
+  x1 = R120 / R_PLANET
+  x2 = RMOHO / R_PLANET
 
   ! check flags to make sure we correctly honor the discontinuities
   ! we use strict inequalities since r has been slightly changed in mesher
@@ -204,8 +205,8 @@
 
   else if (SUPPRESS_CRUSTAL_MESH) then
   !! DK DK extend the Moho up to the surface instead of the crust
-          vp = 8.78541d0-0.74953d0*(RMOHO / R_EARTH)
-          vs = 6.706231d0-2.248585d0*(RMOHO / R_EARTH)
+          vp = 8.78541d0-0.74953d0*(RMOHO / R_PLANET)
+          vs = 6.706231d0-2.248585d0*(RMOHO / R_PLANET)
           rho = 3.3198d0
           Qmu = 600.0d0
           Qkappa = 57827.0d0
@@ -247,8 +248,8 @@
   scaleval = dsqrt(PI*GRAV*RHOAV)
 
   rho = rho*1000.0d0/RHOAV
-  vp = vp*1000.0d0/(R_EARTH*scaleval)
-  vs = vs*1000.0d0/(R_EARTH*scaleval)
+  vp = vp*1000.0d0/(R_PLANET*scaleval)
+  vs = vs*1000.0d0/(R_PLANET*scaleval)
 
   end subroutine model_iasp91
 

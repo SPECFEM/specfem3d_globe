@@ -821,8 +821,8 @@
 
   ! allocate temporary array for corners
   allocate(iprocscorners(3,NCORNERSCHUNKS), &
-          itypecorner(3,NCORNERSCHUNKS), &
-          stat=ier)
+           itypecorner(3,NCORNERSCHUNKS), &
+           stat=ier)
   if (ier /= 0 ) call exit_mpi(myrank,'Error allocating iproccorner arrays')
 
   ! initializes corner arrays

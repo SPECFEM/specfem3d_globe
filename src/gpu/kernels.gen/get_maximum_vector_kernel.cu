@@ -71,9 +71,6 @@
 #ifndef IFLAG_IN_FICTITIOUS_CUBE
 #define IFLAG_IN_FICTITIOUS_CUBE 11
 #endif
-#ifndef R_EARTH_KM
-#define R_EARTH_KM 6371.0f
-#endif
 #ifndef COLORING_MIN_NSPEC_INNER_CORE
 #define COLORING_MIN_NSPEC_INNER_CORE 1000
 #endif
@@ -90,11 +87,14 @@ __global__ void get_maximum_vector_kernel(const float * array, const int size, f
   int bx;
   int i;
   int s;
+
   tid = threadIdx.x;
   bx = (blockIdx.y) * (gridDim.x) + blockIdx.x;
   i = tid + (bx) * (blockDim.x);
+
   sdata[tid] = (i < size ? sqrt((array[(i) * (3) + 0]) * (array[(i) * (3) + 0]) + (array[(i) * (3) + 1]) * (array[(i) * (3) + 1]) + (array[(i) * (3) + 2]) * (array[(i) * (3) + 2])) : 0.0f);
   __syncthreads();
+
   s = (blockDim.x) / (2);
   while (s > 0) {
     if (tid < s) {
@@ -105,6 +105,7 @@ __global__ void get_maximum_vector_kernel(const float * array, const int size, f
     s = s >> 1;
     __syncthreads();
   }
+
   if (tid == 0) {
     d_max[bx] = sdata[0];
   }

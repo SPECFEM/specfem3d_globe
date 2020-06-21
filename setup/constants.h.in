@@ -69,13 +69,15 @@
 
 ! input, output and main MPI I/O files
 ! note: careful with these unit numbers, we mostly use units in the 40-50 range.
-!       cray Fortran e.g. reserves 0,5,6 (standard error,input,output units) and 100-102
-  integer, parameter :: ISTANDARD_OUTPUT = 6
+!       cray Fortran e.g. reserves 0,5,6 (standard error,input,output units) and 100,101,102 (input,output,error unit)
+  integer, parameter :: ISTANDARD_OUTPUT = 6     ! or for cray: 101
+! I/O unit for file input,output
   integer, parameter :: IIN = 40,IOUT = 41
 ! uncomment this to write messages to a text file
   integer, parameter :: IMAIN = 42
 ! uncomment this to write messages to the screen (slows down the code)
 ! integer, parameter :: IMAIN = ISTANDARD_OUTPUT
+
 ! I/O unit for noise data files
   integer, parameter :: IIN_NOISE = 43,IOUT_NOISE = 44
 ! I/O unit for adjoint source files
@@ -87,58 +89,79 @@
 ! I/O unit for sac files
   integer, parameter :: IOUT_SAC = 48
 
-! R_EARTH is the radius of the bottom of the oceans (radius of Earth in m)
-  double precision, parameter :: R_EARTH = 6371000.d0
+!!-----------------------------------------------------------
+!!
+!! Earth
+!!
+!!-----------------------------------------------------------
+! EARTH_R is the radius of the bottom of the oceans (radius of Earth in m)
+  double precision, parameter :: EARTH_R = 6371000.d0
 ! uncomment line below for PREM with oceans
-! double precision, parameter :: R_EARTH = 6368000.d0
+! double precision, parameter :: EARTH_R = 6368000.d0
 
 ! radius of the Earth in km
-  double precision, parameter :: R_EARTH_KM = R_EARTH / 1000.d0
+  double precision, parameter :: EARTH_R_KM = EARTH_R / 1000.d0
 
 ! average density in the full Earth to normalize equation
-  double precision, parameter :: RHOAV = 5514.3d0
-
-! maximum number of chunks (full sphere)
-  integer, parameter :: NCHUNKS_MAX = 6
+  double precision, parameter :: EARTH_RHOAV = 5514.3d0
 
 !!-----------------------------------------------------------
 !!
 !! for topography/bathymetry model
 !!
 !!-----------------------------------------------------------
-!! (uncomment desired resolution)
-
-!---  ETOPO4 4-minute model
+!--- ETOPO5 5-minute model, smoothed Harvard version (not provided in package, see DATA/topo_bathy/ for more infos)
 ! size of topography and bathymetry file
-  integer, parameter :: NX_BATHY = 5400,NY_BATHY = 2700
+  integer, parameter :: NX_BATHY_5 = 4320,NY_BATHY_5 = 2160
 ! resolution of topography file in minutes
-  integer, parameter :: RESOLUTION_TOPO_FILE = 4
+  double precision, parameter :: RESOLUTION_TOPO_FILE_5 = 5.0
 ! pathname of the topography file
-! character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo4_from_etopo2_subsampled.bin'
-  character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo4_smoothed_window_7.bin'
+  character (len=*), parameter :: PATHNAME_TOPO_FILE_5 = &
+    'DATA/topo_bathy/topo_bathy_etopo5_smoothed_Harvard.dat'
 
-!--- ETOPO2 2-minute model
+!---  ETOPO4 4-minute model (default)
 ! size of topography and bathymetry file
-! integer, parameter :: NX_BATHY = 10800,NY_BATHY = 5400
+  integer, parameter :: NX_BATHY_4 = 5400,NY_BATHY_4 = 2700
 ! resolution of topography file in minutes
-! integer, parameter :: RESOLUTION_TOPO_FILE = 2
+  double precision, parameter :: RESOLUTION_TOPO_FILE_4 = 4.0
 ! pathname of the topography file
-! character (len=*), parameter :: PATHNAME_TOPO_FILE = &
-!                      'DATA/topo_bathy/topo_bathy_etopo1_ice_c_resampled_at_2minutes_original_unmodified_unsmoothed.bin'
-! character (len=*), parameter :: PATHNAME_TOPO_FILE = &
-!                      'DATA/topo_bathy/topo_bathy_etopo1_ice_c_resampled_at_2minutes_smoothed_window_3.bin'
-! character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo2v2c_original_unmodified_unsmoothed.bin'
-! character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo2v2c_smoothed_window_3.bin'
+! character (len=*), parameter :: PATHNAME_TOPO_FILE_4 = &
+!    'DATA/topo_bathy/topo_bathy_etopo4_from_etopo2_subsampled.bin'
+  character (len=*), parameter :: PATHNAME_TOPO_FILE_4 = &
+    'DATA/topo_bathy/topo_bathy_etopo4_smoothed_window_7.bin'
 
-!--- ETOPO1 1-minute model
+!--- ETOPO2 2-minute model (not provided in package, see DATA/topo_bathy/ for more infos)
 ! size of topography and bathymetry file
-! integer, parameter :: NX_BATHY = 21600,NY_BATHY = 10800
+  integer, parameter :: NX_BATHY_2 = 10800,NY_BATHY_2 = 5400
 ! resolution of topography file in minutes
-! integer, parameter :: RESOLUTION_TOPO_FILE = 1
+  double precision, parameter :: RESOLUTION_TOPO_FILE_2 = 2.0
 ! pathname of the topography file
-! character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo1_ice_c_original_unmodified_unsmoothed.bin'
-! character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo1_ice_c_smoothed_window_3.bin'
+! character (len=*), parameter :: PATHNAME_TOPO_FILE_2 = &
+!    'DATA/topo_bathy/topo_bathy_etopo1_ice_c_resampled_at_2minutes_original_unmodified_unsmoothed.bin'
+! character (len=*), parameter :: PATHNAME_TOPO_FILE_2 = &
+!    'DATA/topo_bathy/topo_bathy_etopo1_ice_c_resampled_at_2minutes_smoothed_window_3.bin'
+! character (len=*), parameter :: PATHNAME_TOPO_FILE_2 = &
+!    'DATA/topo_bathy/topo_bathy_etopo2v2c_original_unmodified_unsmoothed.bin'
+  character (len=*), parameter :: PATHNAME_TOPO_FILE_2 = &
+    'DATA/topo_bathy/topo_bathy_etopo2v2c_smoothed_window_3.bin'
 
+!--- ETOPO1 1-minute model (not provided in package, see DATA/topo_bathy/ for more infos)
+! size of topography and bathymetry file
+  integer, parameter :: NX_BATHY_1 = 21600,NY_BATHY_1 = 10800
+! resolution of topography file in minutes
+  double precision, parameter :: RESOLUTION_TOPO_FILE_1 = 1.0
+! pathname of the topography file
+!  character (len=*), parameter :: PATHNAME_TOPO_FILE_1 = &
+!    'DATA/topo_bathy/topo_bathy_etopo1_ice_c_original_unmodified_unsmoothed.bin'
+  character (len=*), parameter :: PATHNAME_TOPO_FILE_1 = &
+    'DATA/topo_bathy/topo_bathy_etopo1_ice_c_smoothed_window_3.bin'
+
+!--- Default
+! Topography defaults to ETOPO4
+  integer, parameter :: EARTH_NX_BATHY = NX_BATHY_4
+  integer, parameter :: EARTH_NY_BATHY = NY_BATHY_4
+  double precision, parameter :: EARTH_RESOLUTION_TOPO_FILE = RESOLUTION_TOPO_FILE_4
+  character (len=*), parameter :: EARTH_PATHNAME_TOPO_FILE = PATHNAME_TOPO_FILE_4
 
 ! For the reference ellipsoid to convert geographic latitudes to geocentric:
 !
@@ -161,8 +184,8 @@
 !
 ! As a comparison, the classical World Geodetic System reference ellipsoid WGS 84
 ! (see e.g. http://en.wikipedia.org/wiki/World_Geodetic_System) has f = 1/298.2572236.
-  double precision, parameter :: FLATTENING_F = 1.d0 / 299.8d0
-  double precision, parameter :: ONE_MINUS_F_SQUARED = (1.d0 - FLATTENING_F)**2
+  double precision, parameter :: EARTH_FLATTENING_F = 1.d0 / 299.8d0
+  double precision, parameter :: EARTH_ONE_MINUS_F_SQUARED = (1.d0 - EARTH_FLATTENING_F)**2
 
 ! Use GLL points to capture TOPOGRAPHY and ELLIPTICITY (experimental feature, currently does not work, DO NOT USE)
   logical, parameter :: USE_GLL = .false.
@@ -170,8 +193,8 @@
 ! the code will print an error message and stop if it finds that the topography input file
 ! contains values outside this range.
 ! we take a safety margin just in case of a smoothed or modified model, which can locally create slightly different values
-  integer, parameter :: TOPO_MINIMUM = - 11200 ! (max depth in m, Mariana trench)
-  integer, parameter :: TOPO_MAXIMUM = + 9000 ! (height in m, Mount Everest)
+  integer, parameter :: EARTH_TOPO_MINIMUM = - 11200 ! (max depth in m, Mariana trench)
+  integer, parameter :: EARTH_TOPO_MAXIMUM = + 9000 ! (height in m, Mount Everest)
 
 ! minimum thickness in meters to include the effect of the oceans and topo
   double precision, parameter :: MINIMUM_THICKNESS_3D_OCEANS = 50.d0
@@ -249,7 +272,7 @@
 
 ! distance threshold (in km) above which we consider that a receiver
 ! is located outside the mesh and therefore excluded from the station list
-  double precision, parameter :: THRESHOLD_EXCLUDE_STATION = 50.d0
+  double precision, parameter :: THRESHOLD_EXCLUDE_STATION = 5.d0
 
 ! This parameter flags whether or not we will use an external source
 ! time function. Set to false by default.
@@ -265,6 +288,12 @@
 ! (always safe to leave that to true; in the case of 1D attenuation models, setting it to false can save some memory storage)
   logical, parameter :: ATTENUATION_1D_WITH_3D_STORAGE  = .true.
 
+! reference frequency of anelastic model
+! by default, we use PREM values at 1 Hz
+  double precision, parameter :: ATTENUATION_f0_REFERENCE = 1.d0   ! in Hz
+
+! saves velocity model files shifted to the center frequency of the simulation attenuation period band
+  logical, parameter :: ATTENUATION_SAVE_MODEL_AT_SHIFTED_CENTER_FREQ = .false.
 
 !!-----------------------------------------------------------
 !!
@@ -284,6 +313,9 @@
 !!
 !!-----------------------------------------------------------
 
+! maximum number of chunks (full sphere)
+  integer, parameter :: NCHUNKS_MAX = 6
+
 ! Courant number for time step suggestion
 ! (empirical choice for distorted elements to estimate time step)
   double precision,parameter :: COURANT_SUGGESTED = 0.55d0
@@ -294,15 +326,11 @@
 ! the first doubling is implemented right below the Moho
 ! it seems optimal to implement the three other doublings at these depths
 ! in the mantle
-  double precision, parameter :: DEPTH_SECOND_DOUBLING_OPTIMAL = 1650000.d0
+  double precision, parameter :: EARTH_DEPTH_SECOND_DOUBLING_OPTIMAL = 1650000.d0
 ! in the outer core
-  double precision, parameter :: DEPTH_THIRD_DOUBLING_OPTIMAL  = 3860000.d0
+  double precision, parameter :: EARTH_DEPTH_THIRD_DOUBLING_OPTIMAL  = 3860000.d0
 ! in the outer core
-  double precision, parameter :: DEPTH_FOURTH_DOUBLING_OPTIMAL = 5000000.d0
-
-! Boundary Mesh -- save Moho, 400, 670 km discontinuity topology files (in
-! the mesher) and use them for the computation of boundary kernel (in the solver)
-  logical, parameter :: SAVE_BOUNDARY_MESH = .false.
+  double precision, parameter :: EARTH_DEPTH_FOURTH_DOUBLING_OPTIMAL = 5000000.d0
 
 ! to suppress element stretching for 3D moho surface
   logical,parameter :: SUPPRESS_MOHO_STRETCHING = .false.
@@ -310,6 +338,9 @@
 ! to suppress element stretching at 410/660 internal topography
 ! (i.e. creates mesh without 410/660 topography for Harvard model (s362ani,..))
   logical,parameter :: SUPPRESS_INTERNAL_TOPOGRAPHY = .false.
+
+! by default, SAVE_MESH_FILES will use VTK formats; this will also output additional AVS_DX format files
+  logical,parameter :: SAVE_MESHFILES_AVS_DX_FORMAT = .false.
 
 !!-----------------------------------------------------------
 !!
@@ -344,10 +375,55 @@
 !!
 !!-----------------------------------------------------------
 
-  integer, parameter :: ADIOS_BUFFER_SIZE_IN_MB = 200
+  integer, parameter :: ADIOS_BUFFER_SIZE_IN_MB = 400
   character(len=*), parameter :: ADIOS_TRANSPORT_METHOD = "MPI"
-  character(len=*), parameter :: ADIOS_TRANSPORT_METHOD_UNDO_ATT = "MPI"   ! or check with: "POSIX"
+
+! ADIOS transport methods for undo save_frame** data files (see ADIOS manual for details)
+!! MPI (default)
+  character(len=*), parameter :: ADIOS_TRANSPORT_METHOD_UNDO_ATT = "MPI"   ! or check with: "POSIX", "MPI_AGGREGATE",..
   character(len=*), parameter :: ADIOS_METHOD_PARAMS_UNDO_ATT =  ''
+! or
+!! POSIX
+!  character(len=*), parameter :: ADIOS_TRANSPORT_METHOD_UNDO_ATT = "POSIX"
+!  character(len=*), parameter :: ADIOS_METHOD_PARAMS_UNDO_ATT =  ''
+! or
+!! MPI_AGGREGATE
+!  character(len=*), parameter :: ADIOS_TRANSPORT_METHOD_UNDO_ATT = "MPI_AGGREGATE"
+!  character(len=*), parameter :: ADIOS_METHOD_PARAMS_UNDO_ATT =  "num_aggregators=64,num_ost=672"
+! or
+!! MPI_LUSTRE
+!  character(len=*), parameter :: ADIOS_TRANSPORT_METHOD_UNDO_ATT = "MPI_LUSTRE"
+!  character(len=*), parameter :: ADIOS_METHOD_PARAMS_UNDO_ATT =  "stripe_count=16,stripe_size=4194304,block_size=4194304"
+
+
+!!-----------------------------------------------------------
+!!
+!! ADIOS2 Related values
+!!
+!!-----------------------------------------------------------
+
+! ADIOS2 engines
+!! note on native engine types:
+!!  - "MPI" is not supported yet by adios2 version (current 2.4.0), check out in future.
+!!  - "BPfile" doesn't support file appending yet, which is needed at the moment.
+!!  - "BP3" would allow for backward compatibility to ADIOS 1.x, but doesn't support file appending yet.
+!!  - "BP4" is the new adios2 format with enhanced capabilities.
+!! we will use "BP4" by default.
+!!
+!! BP4
+!! format details: https://adios2.readthedocs.io/en/latest/engines/engines.html#bp4
+!!
+!! note: parameter SubStreams=64 for larger runs with NPROCS > 64 creates problems when reading scalar values (in appended mode),
+!!       try to avoid it for now as default parameter.
+!!       for undo_att, it seems to work however and can be used in ADIOS2_ENGINE_PARAMS_UNDO_ATT setting.
+!!
+!!       in future adios2 versions, re-evalute if parameters could be "SubStreams=64,MaxBufferSize=800Mb" for larger runs
+  character(len=*), parameter :: ADIOS2_ENGINE_DEFAULT = "BP4"
+  character(len=*), parameter :: ADIOS2_ENGINE_PARAMS_DEFAULT = "" ! add "MaxBufferSize=800Mb" for larger runs
+
+  character(len=*), parameter :: ADIOS2_ENGINE_UNDO_ATT = "BP4"
+  character(len=*), parameter :: ADIOS2_ENGINE_PARAMS_UNDO_ATT = "" ! add "SubStreams=64,MaxBufferSize=800Mb" for larger runs
+
 
 !!-----------------------------------------------------------
 !!
@@ -355,7 +431,17 @@
 !!
 !!-----------------------------------------------------------
 
- logical, parameter :: OUTPUT_PROVENANCE = .false.
+! keeps track of everything
+  logical, parameter :: ASDF_OUTPUT_PROVENANCE = .false.
+
+! ASDF string lengths
+  integer, parameter :: ASDF_MAX_STRING_LENGTH = 1024
+  integer, parameter :: ASDF_MAX_QUAKEML_LENGTH = 8096
+  integer, parameter :: ASDF_MAX_STATIONXML_LENGTH = 16182
+  integer, parameter :: ASDF_MAX_PARFILE_LENGTH = 20000
+  integer, parameter :: ASDF_MAX_CONSTANTS_LENGTH = 45000
+  integer, parameter :: ASDF_MAX_TIME_STRING_LENGTH = 22
+
 
 !!-----------------------------------------------------------
 !!
@@ -374,6 +460,21 @@
   real, parameter :: KL_REG_MAX_LON = 360.0
   real, parameter :: KL_REG_MIN_LAT = -90.0
   real, parameter :: KL_REG_MAX_LAT = +90.0
+
+! by default, we turn kernel computations in the outer and inner core and for topology kernels off
+!
+! kernels for outer core
+  logical, parameter :: SAVE_KERNELS_OC = .false.
+
+! kernels for inner core
+  logical, parameter :: SAVE_KERNELS_IC = .false.
+
+! kernels for MOHO, 400, 670, CMB and ICB discontinuities
+  logical, parameter :: SAVE_KERNELS_BOUNDARY = .false.
+
+! Boundary Mesh -- save Moho, 400, 670 km discontinuity topology files (in
+! the mesher) and use them for the computation of boundary kernel (in the solver)
+  logical, parameter :: SAVE_BOUNDARY_MESH = SAVE_KERNELS_BOUNDARY
 
 
 !!-----------------------------------------------------------
@@ -448,16 +549,16 @@
 
 ! position of the center of mass of the Earth for this density model and mesh,
 ! but first convert it to meters and then make it non-dimensional
-  double precision, parameter :: x_shift =   0.606220633681674d0 * 1000.d0 / R_EARTH !    km
-  double precision, parameter :: y_shift =   0.433103991863316d0 * 1000.d0 / R_EARTH !    km
-  double precision, parameter :: z_shift =   0.520078637496872d0 * 1000.d0 / R_EARTH !    km
+  double precision, parameter :: x_shift =   0.606220633681674d0 * 1000.d0 / EARTH_R !    km
+  double precision, parameter :: y_shift =   0.433103991863316d0 * 1000.d0 / EARTH_R !    km
+  double precision, parameter :: z_shift =   0.520078637496872d0 * 1000.d0 / EARTH_R !    km
 !    distance to center =   0.908605697566306       km
 
 ! altitude of the observation points in km
   double precision, parameter :: altitude_of_observation_points = 255.d0
 
 ! elevation ratio of the points at which we observe
-  double precision, parameter :: observation_elevation_ratio = (R_EARTH_KM + altitude_of_observation_points) / R_EARTH_KM
+  double precision, parameter :: observation_elevation_ratio = (EARTH_R_KM + altitude_of_observation_points) / EARTH_R_KM
 
 ! compute the contribution of the crust only (otherwise by default compute the contribution of the whole Earth)
   logical, parameter :: COMPUTE_CRUST_CONTRIB_ONLY = .false.
@@ -474,8 +575,8 @@
   integer, parameter :: NY_OBSERVATION = NX_OBSERVATION
 
 ! the code will display sample output values at this particular point as a check
-  integer, parameter :: ixr = max(NX_OBSERVATION / 3, 1)
-  integer, parameter :: iyr = max(NY_OBSERVATION / 4, 1)
+  integer, parameter :: ixr = max(int(NX_OBSERVATION / 3.0), 1)
+  integer, parameter :: iyr = max(int(NY_OBSERVATION / 4.0), 1)
   integer, parameter :: ichunkr = 3
 
 ! how often (every how many spectral elements computed) we print a timestamp to monitor the behavior of the code
@@ -572,11 +673,12 @@
 !! DK DK April 2014: switched to the 2010 Committee on Data for Science and Technology (CODATA) recommended value
 !! DK DK see e.g. http://www.physics.nist.gov/cgi-bin/cuu/Value?bg
 !! DK DK and http://en.wikipedia.org/wiki/Gravitational_constant
-! double precision, parameter :: GRAV = 6.6723d-11
-  double precision, parameter :: GRAV = 6.67384d-11
+!! double precision, parameter :: GRAV = 6.6723d-11
+!! double precision, parameter :: GRAV = 6.67430d-11  ! newer suggestion by CODATA 2018
+  double precision, parameter :: GRAV = 6.67384d-11  ! CODATA 2010
 
 ! standard gravity at the surface of the Earth
-  double precision, parameter :: STANDARD_GRAVITY_EARTH = 9.80665d0 ! in m.s-2
+  double precision, parameter :: EARTH_STANDARD_GRAVITY = 9.80665d0 ! in m.s-2
 
 ! a few useful constants
   double precision, parameter :: ZERO = 0.d0,ONE = 1.d0,TWO = 2.d0,HALF = 0.5d0
@@ -600,11 +702,11 @@
   double precision, parameter :: R_UNIT_SPHERE = ONE
 
 ! fixed thickness of 3 km for PREM oceans
-  double precision, parameter :: THICKNESS_OCEANS_PREM = 3000.d0 / R_EARTH
+  double precision, parameter :: THICKNESS_OCEANS_PREM = 3000.d0 / EARTH_R
 
 ! shortest radius at which crust is implemented (80 km depth)
 ! to be constistent with the D80 discontinuity, we impose the crust only above it
-  double precision, parameter :: R_DEEPEST_CRUST = (R_EARTH - 80000.d0) / R_EARTH
+  double precision, parameter :: EARTH_R_DEEPEST_CRUST = (EARTH_R - 80000.d0) / EARTH_R
 
 ! definition of an Eotvos compared to S.I. units.
 ! The unit of gravity gradient is the Eotvos, which is equivalent to 1e-9 s-2 (or 1e-4 mGal/m).
@@ -623,6 +725,12 @@
 
 ! maximum number of regions in the mesh
   integer, parameter :: MAX_NUM_REGIONS = 3
+
+! define flag for planet
+! strictly speaking, the moon is not a planet but a natural satellite. well, let's stay with IPLANET_** for now.
+  integer, parameter :: IPLANET_EARTH = 1
+  integer, parameter :: IPLANET_MARS = 2
+  integer, parameter :: IPLANET_MOON = 3
 
 ! define flag for regions of the global Earth mesh
   integer, parameter :: IREGION_CRUST_MANTLE = 1
@@ -671,6 +779,11 @@
   integer, parameter :: REFERENCE_MODEL_1DREF = 5
   integer, parameter :: REFERENCE_MODEL_JP1D  = 6
   integer, parameter :: REFERENCE_MODEL_SEA1D = 7
+  integer, parameter :: REFERENCE_MODEL_SOHL = 8        ! Mars
+  integer, parameter :: REFERENCE_MODEL_SOHL_B = 9      ! Mars
+  integer, parameter :: REFERENCE_MODEL_CASE65TAY = 10  ! Mars
+  integer, parameter :: REFERENCE_MODEL_VPREMOON = 11   ! Moon
+  integer, parameter :: REFERENCE_MODEL_MOON_MEENA = 12 ! Moon
 
 ! crustal model constants
   integer, parameter :: ICRUST_CRUST1    = 1    ! Crust1.0
@@ -696,7 +809,11 @@
   integer, parameter :: THREE_D_MODEL_MANTLE_SH     = 113
   integer, parameter :: THREE_D_MODEL_SGLOBE        = 114
   integer, parameter :: THREE_D_MODEL_SGLOBE_ISO    = 115
+  integer, parameter :: THREE_D_MODEL_ANISO_MANTLE  = 116
+  ! inner core model
+  integer, parameter :: THREE_D_MODEL_INNER_CORE_ISHII = 201
 
+!! attenuation
 ! number of standard linear solids for attenuation
   integer, parameter :: N_SLS = 3
 
@@ -704,7 +821,7 @@
 ! ATTENUATION_COMP_RESOLUTION: Number of Digits after decimal
 ! ATTENUATION_COMP_MAXIMUM:    Maximum Q Value
   integer, parameter :: ATTENUATION_COMP_RESOLUTION = 1
-  integer, parameter :: ATTENUATION_COMP_MAXIMUM    = 5000
+  integer, parameter :: ATTENUATION_COMP_MAXIMUM    = 9000
 
 ! for determination of the attenuation period range
 ! if this is set to .true. then the hardcoded values will be used
@@ -739,7 +856,7 @@
   integer, parameter :: NUMCORNERS_SHARED = 4
 
 ! number of layers in PREM
-  integer, parameter :: NR = 640
+  integer, parameter :: NR_DENSITY = 640
 
 ! smallest real number on many machines =  1.1754944E-38
 ! largest real number on many machines =  3.4028235E+38
@@ -777,28 +894,12 @@
   integer, parameter :: NUM_ITER = 5
 
 ! number of hours per day for rotation rate of the Earth
-  double precision, parameter :: HOURS_PER_DAY = 24.d0
-  double precision, parameter :: SECONDS_PER_HOUR = 3600.d0
+  double precision, parameter :: EARTH_HOURS_PER_DAY = 24.d0
+  double precision, parameter :: EARTH_SECONDS_PER_HOUR = 3600.d0
 
 ! for lookup table for gravity every 100 m in radial direction of Earth model
   integer, parameter :: NRAD_GRAVITY = 70000
 
-!!-----------------------------------------------------------
-!!
-!! model constants
-!!
-!!-----------------------------------------------------------
-
-! The meaningful range of Zhao et al. (1994) model is as follows:
-!        latitude : 32 - 45 N
-!        longitude: 130-145 E
-!        depth    : 0  - 500 km
-! The deepest Moho beneath Japan is 40 km
-  double precision,parameter :: JP3D_LAT_MAX = 45.d0
-  double precision,parameter :: JP3D_LAT_MIN = 32.d0
-  double precision,parameter :: JP3D_LON_MAX = 145.d0
-  double precision,parameter :: JP3D_LON_MIN = 130.d0
-  double precision,parameter :: JP3D_DEP_MAX = 500.d0
 
 !!-----------------------------------------------------------
 !!
@@ -833,20 +934,20 @@
 ! for the stretching of crustal elements in the case of 3D models
 ! (values are chosen for 3D models to have RMOHO_FICTICIOUS at 35 km
 !  and RMIDDLE_CRUST to become 15 km with stretching function stretch_tab)
-  double precision, parameter :: MAX_RATIO_CRUST_STRETCHING = 0.75d0
-  double precision, parameter :: RMOHO_STRETCH_ADJUSTMENT = 5000.d0 ! moho up to 35km
-  double precision, parameter :: R80_STRETCH_ADJUSTMENT = -40000.d0 ! r80 down to 120km
+  double precision, parameter :: EARTH_MAX_RATIO_CRUST_STRETCHING = 0.75d0
+  double precision, parameter :: EARTH_RMOHO_STRETCH_ADJUSTMENT = 5000.d0 ! moho up to 35km
+  double precision, parameter :: EARTH_R80_STRETCH_ADJUSTMENT = -40000.d0 ! r80 down to 120km
 
 ! adapted regional moho stretching
 ! 1 chunk simulations, 3-layer crust
-  logical, parameter :: REGIONAL_MOHO_MESH = .false.
-  logical, parameter :: REGIONAL_MOHO_MESH_EUROPE = .false. ! used only for fixing time step
-  logical, parameter :: REGIONAL_MOHO_MESH_ASIA = .false.   ! used only for fixing time step
-  logical, parameter :: HONOR_DEEP_MOHO = .false.
+  logical, parameter :: EARTH_REGIONAL_MOHO_MESH = .false.
+  logical, parameter :: EARTH_REGIONAL_MOHO_MESH_EUROPE = .false. ! used only for fixing time step
+  logical, parameter :: EARTH_REGIONAL_MOHO_MESH_ASIA = .false.   ! used only for fixing time step
+  logical, parameter :: EARTH_HONOR_DEEP_MOHO = .false.
 !!-- uncomment for e.g. Europe case, where deep moho is rare
-!  double precision, parameter :: RMOHO_STRETCH_ADJUSTMENT = -15000.d0  ! moho mesh boundary down to 55km
+!  double precision, parameter :: EARTH_RMOHO_STRETCH_ADJUSTMENT = -15000.d0  ! moho mesh boundary down to 55km
 !!-- uncomment for deep moho cases, e.g. Asia case (Himalayan moho)
-!  double precision, parameter :: RMOHO_STRETCH_ADJUSTMENT = -20000.d0  ! moho mesh boundary down to 60km
+!  double precision, parameter :: EARTH_RMOHO_STRETCH_ADJUSTMENT = -20000.d0  ! moho mesh boundary down to 60km
 
 !!-----------------------------------------------------------
 !!
@@ -855,7 +956,7 @@
 !!-----------------------------------------------------------
 
 ! to suppress the crustal layers
-! (replaced by an extension of the mantle: R_EARTH is not modified, but no more crustal doubling)
+! (replaced by an extension of the mantle: EARTH_R is not modified, but no more crustal doubling)
   logical, parameter :: SUPPRESS_CRUSTAL_MESH = .false.
 
 ! to inflate the central cube (set to 0.d0 for a non-inflated cube)
@@ -920,3 +1021,178 @@
     (/0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,0.249351723343_CUSTOM_REAL, &
       0.466911705055_CUSTOM_REAL,0.582030414044_CUSTOM_REAL,0.847252983783_CUSTOM_REAL/)
 
+
+!!-----------------------------------------------------------
+!!
+!! Mars
+!!
+!!-----------------------------------------------------------
+! Model MARS
+  double precision, parameter :: MARS_R = 3390000.d0
+  double precision, parameter :: R_MARS = MARS_R
+
+! radius of the MARS in km
+  double precision, parameter :: MARS_R_KM = MARS_R / 1000.d0
+  double precision, parameter :: R_MARS_KM = MARS_R_KM
+
+! average density in the full MARS to normalize equation
+  double precision, parameter :: MARS_RHOAV = 3393.0d0
+
+! Topography
+!--- 4-minute model
+! size of topography and bathymetry file
+  integer, parameter :: MARS_NX_BATHY_4 = 5400,MARS_NY_BATHY_4 = 2700
+! resolution of topography file in minutes
+  double precision, parameter :: MARS_RESOLUTION_TOPO_FILE_4 = 4.0
+! pathname of the topography file
+  character (len=*), parameter :: MARS_PATHNAME_TOPO_FILE_4 = 'DATA/topo_bathy/topo_bathy_marstopo4_smoothed_window_3.dat.bin'
+!--- Default
+! Topography defaults to 4-minute
+  integer, parameter :: MARS_NX_BATHY = MARS_NX_BATHY_4
+  integer, parameter :: MARS_NY_BATHY = MARS_NY_BATHY_4
+  double precision, parameter :: MARS_RESOLUTION_TOPO_FILE = MARS_RESOLUTION_TOPO_FILE_4
+  character (len=*), parameter :: MARS_PATHNAME_TOPO_FILE = MARS_PATHNAME_TOPO_FILE_4
+
+! Topography value min/max range
+  integer, parameter :: MARS_TOPO_MINIMUM = - 8000 ! (max depth in m, Mars)
+  integer, parameter :: MARS_TOPO_MAXIMUM = + 23200 ! (height in m, Olympus Mons)
+
+! For the reference ellipsoid to convert geographic latitudes to geocentric:
+! Mars flattening (https://en.wikipedia.org/wiki/Mars): 0.00589 +/- 0.00015 -> 1/f with f ~ 169.77
+! Smith et al. 1999, The global topography of Mars and implications for surface evolution. Science 284(5419), 1495-1503
+! uses f = 169.8
+  double precision, parameter :: MARS_FLATTENING_F = 1.d0 / 169.8d0
+  double precision, parameter :: MARS_ONE_MINUS_F_SQUARED = (1.d0 - MARS_FLATTENING_F)**2
+
+! doubling layers
+  double precision, parameter :: MARS_DEPTH_SECOND_DOUBLING_OPTIMAL = 1200000.d0
+  double precision, parameter :: MARS_DEPTH_THIRD_DOUBLING_OPTIMAL  = 2090000.d0
+  double precision, parameter :: MARS_DEPTH_FOURTH_DOUBLING_OPTIMAL = 2690000.d0
+
+! standard gravity at the surface
+  double precision, parameter :: MARS_STANDARD_GRAVITY = 3.71d0 ! in m.s-2
+
+! shortest radius at which crust is implemented (150 km depth)
+! we impose the crust only above it
+  double precision, parameter :: MARS_R_DEEPEST_CRUST = (MARS_R - 150000.d0) / MARS_R
+
+! number of hours per day for rotation rate of the planet Mars (24:39:35)
+  double precision, parameter :: MARS_HOURS_PER_DAY = 24.658d0
+  double precision, parameter :: MARS_SECONDS_PER_HOUR = 3600.d0
+
+! for the stretching of crustal elements in the case of 3D models
+  double precision, parameter :: MARS_MAX_RATIO_CRUST_STRETCHING = 0.9d0 ! choose ratio < 1 for stretching effect
+  double precision, parameter :: MARS_RMOHO_STRETCH_ADJUSTMENT = 0.d0 ! moho at 110 km
+  double precision, parameter :: MARS_R80_STRETCH_ADJUSTMENT =   0.d0 ! r80  at 334.5 km
+
+!!double precision, parameter :: MARS_MAX_RATIO_CRUST_STRETCHING = 0.7d0 ! choose ratio < 1 for stretching effect
+!!double precision, parameter :: MARS_RMOHO_STRETCH_ADJUSTMENT = -10000.d0 ! moho down to 120 km
+!!double precision, parameter :: MARS_R80_STRETCH_ADJUSTMENT =   -20000.d0 ! r80 down to 120km
+
+! adapted regional moho stretching (use only for special areas to optimize a local mesh)
+! 1~6 chunk simulation, 5-layer crust
+  logical, parameter :: MARS_REGIONAL_MOHO_MESH = .false.
+  logical, parameter :: MARS_HONOR_DEEP_MOHO = .false.
+
+
+!!-----------------------------------------------------------
+!!
+!! Moon
+!!
+!!-----------------------------------------------------------
+! Model Moon
+!
+! mostly based on VPREMOON model:
+! Garcia, R.F., J. Gagnepain-Beyneix, S. Chevrot and Ph. Lognonne, 2011.
+! Very preliminary reference Moon model,
+! Physics of the Earth and Planetary Interiors, 188, 96-113.
+!
+! NASA fact infos: https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html
+! some of these NASA values are different with respect to the seismologically preferred ones below.
+!
+! average Moon radius
+  double precision, parameter :: MOON_R = 1737100.d0
+  double precision, parameter :: R_MOON = MOON_R
+
+! radius of the Moon in km
+  double precision, parameter :: MOON_R_KM = MOON_R / 1000.d0
+  double precision, parameter :: R_MOON_KM = MOON_R_KM
+
+! average density in the full MOON to normalize equation
+  double precision, parameter :: MOON_RHOAV = 3344.0d0    ! from NASA fact sheet
+
+! Topography
+!--- 4-minute model
+  integer, parameter :: MOON_NX_BATHY_4 = 5400,MOON_NY_BATHY_4 = 2700
+! resolution of topography file in minutes
+  double precision, parameter :: MOON_RESOLUTION_TOPO_FILE_4 = 4.0
+! pathname of the topography file
+  character (len=*), parameter :: MOON_PATHNAME_TOPO_FILE_4 = 'DATA/topo_bathy/topo_bathy_moon4_smoothed_window_0.dat.bin'
+!--- 2-minute
+  integer, parameter :: MOON_NX_BATHY_2 = 10800,MOON_NY_BATHY_2 = 5400
+! resolution of topography file in minutes
+  double precision, parameter :: MOON_RESOLUTION_TOPO_FILE_2 = 2.0
+! pathname of the topography file
+  character (len=*), parameter :: MOON_PATHNAME_TOPO_FILE_2 = 'DATA/topo_bathy/topo_bathy_moon2_smoothed_window_0.dat.bin'
+!--- 1-minute
+  integer, parameter :: MOON_NX_BATHY_1 = 21600,MOON_NY_BATHY_1 = 10800
+! resolution of topography file in minutes
+  double precision, parameter :: MOON_RESOLUTION_TOPO_FILE_1 = 1.0
+! pathname of the topography file
+  character (len=*), parameter :: MOON_PATHNAME_TOPO_FILE_1 = 'DATA/topo_bathy/topo_bathy_moon1_smoothed_window_0.dat.bin'
+!--- custom resolution < 1-minute model
+! size of topography and bathymetry file
+  integer, parameter :: MOON_NX_BATHY_C = 23040,MOON_NY_BATHY_C = 11520
+! resolution of topography file in minutes
+  double precision, parameter :: MOON_RESOLUTION_TOPO_FILE_C = 0.94d0
+! pathname of the topography file
+  character (len=*), parameter :: MOON_PATHNAME_TOPO_FILE_C = 'DATA/topo_bathy/interface.bin'
+!--- Default
+! Topography defaults to 4-minute
+  integer, parameter :: MOON_NX_BATHY = MOON_NX_BATHY_4
+  integer, parameter :: MOON_NY_BATHY = MOON_NY_BATHY_4
+  double precision, parameter :: MOON_RESOLUTION_TOPO_FILE = MOON_RESOLUTION_TOPO_FILE_4
+  character (len=*), parameter :: MOON_PATHNAME_TOPO_FILE = MOON_PATHNAME_TOPO_FILE_4
+
+! Topography value min/max range
+  integer, parameter :: MOON_TOPO_MINIMUM = -9130 ! (max depth in m)
+  integer, parameter :: MOON_TOPO_MAXIMUM = 10780 ! (height in m)
+
+! For the reference ellipsoid to convert geographic latitudes to geocentric:
+! Moon flattening:
+! NASA fact sheet has flattening = 0.0012 = 1/833.3
+!
+! Note: Steinberger et al. (2015, PEPI 245, 26-39) argue that due to non-equilibrum flattening of the Moon
+!       there is no reference ellipsoid to refer to. Thus, they prefer a sphere with a "frozen"-in shape.
+!
+!       We could in principle do the same, as the Moon topography is also given in absolute values (radius).
+!       However, for now we take topography as the +/- elevation value with respect to a reference surface radius.
+!
+! For flattening, here preferred: 1/901 = 0.00110987791
+  double precision, parameter :: MOON_FLATTENING_F = 1.d0 / 901.0d0
+  double precision, parameter :: MOON_ONE_MINUS_F_SQUARED = (1.d0 - MOON_FLATTENING_F)**2
+
+! doubling layers
+  double precision, parameter :: MOON_DEPTH_SECOND_DOUBLING_OPTIMAL = 771000.d0    ! between RTOPDDOUBLEPRIME and R771
+  double precision, parameter :: MOON_DEPTH_THIRD_DOUBLING_OPTIMAL  = 1380000.d0    ! inside outer core (closer to top)
+  double precision, parameter :: MOON_DEPTH_FOURTH_DOUBLING_OPTIMAL = 1420000.d0    ! inside outer core (closer to bottom)
+
+! standard gravity at the surface
+  double precision, parameter :: MOON_STANDARD_GRAVITY = 1.62d0 ! in m.s-2
+
+! shortest radius at which crust is implemented (39 km depth)
+! we impose the crust only above it
+  double precision, parameter :: MOON_R_DEEPEST_CRUST = (MOON_R - 39000.d0) / MOON_R
+
+! number of hours per day for rotation rate of the Moon
+  double precision, parameter :: MOON_HOURS_PER_DAY = 27.322d0
+  double precision, parameter :: MOON_SECONDS_PER_HOUR = 3600.d0
+
+! for the stretching of crustal elements in the case of 3D models
+  double precision, parameter :: MOON_MAX_RATIO_CRUST_STRETCHING = 0.7d0 ! 0.75
+  double precision, parameter :: MOON_RMOHO_STRETCH_ADJUSTMENT = -10000.d0 ! moho down
+  double precision, parameter :: MOON_R80_STRETCH_ADJUSTMENT =   -20000.d0 ! r80 down
+
+! adapted regional moho stretching (use only for special areas to optimize a local mesh)
+  logical, parameter :: MOON_REGIONAL_MOHO_MESH = .false.
+  logical, parameter :: MOON_HONOR_DEEP_MOHO = .false.

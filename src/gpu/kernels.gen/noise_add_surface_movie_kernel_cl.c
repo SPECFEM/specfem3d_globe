@@ -82,9 +82,6 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifndef IFLAG_IN_FICTITIOUS_CUBE\n\
 #define IFLAG_IN_FICTITIOUS_CUBE 11\n\
 #endif\n\
-#ifndef R_EARTH_KM\n\
-#define R_EARTH_KM 6371.0f\n\
-#endif\n\
 #ifndef COLORING_MIN_NSPEC_INNER_CORE\n\
 #define COLORING_MIN_NSPEC_INNER_CORE 1000\n\
 #endif\n\
@@ -98,8 +95,10 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 __kernel void noise_add_surface_movie_kernel(__global float * accel, const __global int * ibool, const __global int * ibelm_top, const int nspec_top, const __global float * noise_surface_movie, const __global float * normal_x_noise, const __global float * normal_y_noise, const __global float * normal_z_noise, const __global float * mask_noise, const __global float * jacobian2D, const __global float * wgllwgll){\n\
   int igll;\n\
   int iface;\n\
+\n\
   igll = get_local_id(0);\n\
   iface = get_group_id(0) + (get_group_id(1)) * (get_num_groups(0));\n\
+\n\
   if (iface < nspec_top) {\n\
     int i;\n\
     int j;\n\
@@ -112,12 +111,14 @@ __kernel void noise_add_surface_movie_kernel(__global float * accel, const __glo
     float normal_x;\n\
     float normal_y;\n\
     float normal_z;\n\
+\n\
     ispec = ibelm_top[iface] - (1);\n\
     k = NGLLX - (1);\n\
     j = (igll) / (NGLLX);\n\
     i = igll - ((j) * (NGLLX));\n\
     iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)] - (1);\n\
     ipoin = (NGLL2) * (iface) + igll;\n\
+\n\
     normal_x = normal_x_noise[ipoin];\n\
     normal_y = normal_y_noise[ipoin];\n\
     normal_z = normal_z_noise[ipoin];\n\
@@ -126,6 +127,7 @@ __kernel void noise_add_surface_movie_kernel(__global float * accel, const __glo
     eta = eta + (noise_surface_movie[INDEX3(NDIM, NGLL2, 1, igll, iface)]) * (normal_y);\n\
     eta = eta + (noise_surface_movie[INDEX3(NDIM, NGLL2, 2, igll, iface)]) * (normal_z);\n\
     jacobianw = (wgllwgll[(j) * (NGLLX) + i]) * (jacobian2D[igll + (NGLL2) * (iface)]);\n\
+\n\
     atomicAdd(accel + (iglob) * (3) + 0, (((eta) * (mask_noise[ipoin])) * (normal_x)) * (jacobianw));\n\
     atomicAdd(accel + (iglob) * (3) + 1, (((eta) * (mask_noise[ipoin])) * (normal_y)) * (jacobianw));\n\
     atomicAdd(accel + (iglob) * (3) + 2, (((eta) * (mask_noise[ipoin])) * (normal_z)) * (jacobianw));\n\

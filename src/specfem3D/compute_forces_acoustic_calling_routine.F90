@@ -179,7 +179,6 @@
   enddo ! iphase
 
   ! multiply by the inverse of the mass matrix
-
   if (.not. GPU_MODE) then
     ! on CPU
     call multiply_accel_acoustic(NGLOB_OUTER_CORE,accel_outer_core,rmass_outer_core)
@@ -188,7 +187,6 @@
     ! includes FORWARD_OR_ADJOINT == 1
     call multiply_accel_acoustic_gpu(Mesh_pointer,1)
   endif
-
 
   ! time schemes
   if (USE_LDDRK) then
@@ -420,7 +418,7 @@
 !
 
   subroutine compute_forces_outer_core(timeval,deltat,two_omega_earth, &
-                                       NSPEC,NGLOB, &
+                                       NSPEC_ROT,NGLOB, &
                                        A_array_rotation,B_array_rotation, &
                                        A_array_rotation_lddrk,B_array_rotation_lddrk, &
                                        displfluid,accelfluid, &
@@ -436,14 +434,14 @@
 
   implicit none
 
-  integer,intent(in) :: NSPEC,NGLOB
+  integer,intent(in) :: NSPEC_ROT,NGLOB
 
   ! for the Euler scheme for rotation
   real(kind=CUSTOM_REAL),intent(in) :: timeval,deltat,two_omega_earth
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(inout) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_ROT),intent(inout) :: &
     A_array_rotation,B_array_rotation
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(inout) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_ROT),intent(inout) :: &
     A_array_rotation_lddrk,B_array_rotation_lddrk
 
   ! displacement and acceleration
@@ -460,7 +458,7 @@
   if (USE_DEVILLE_PRODUCTS_VAL) then
     ! uses Deville et al. (2002) routine
     call compute_forces_outer_core_Dev(timeval,deltat,two_omega_earth, &
-                                       NSPEC,NGLOB, &
+                                       NSPEC_ROT,NGLOB, &
                                        A_array_rotation,B_array_rotation, &
                                        A_array_rotation_lddrk,B_array_rotation_lddrk, &
                                        displfluid,accelfluid, &
@@ -468,7 +466,7 @@
   else
     ! div_displ_outer_core is initialized to zero in the following subroutine.
     call compute_forces_outer_core_noDev(timeval,deltat,two_omega_earth, &
-                                         NSPEC,NGLOB, &
+                                         NSPEC_ROT,NGLOB, &
                                          A_array_rotation,B_array_rotation, &
                                          A_array_rotation_lddrk,B_array_rotation_lddrk, &
                                          displfluid,accelfluid, &

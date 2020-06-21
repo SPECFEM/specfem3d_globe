@@ -1,0 +1,28 @@
+------------------------------------
+README
+------------------------------------
+
+Example of a regional simulation for Mars
+
+Simulation uses a 1D Mars model (Sohl & Spohn, 1997) together with topography and a 3D crustal model.
+The setup runs on 4 CPU cores (MPI processes), with a runtime of about 1 min.
+
+The station used is the very broadband seismometer ELYSE placed by the InSight mission lander.
+
+
+1. forward simulation:
+----------------------
+
+type:
+./run_this_example.sh
+
+to setup this directory for the simulation and to run a corresponding
+script "run_mesher_solver.bash".
+
+The simulation is accurate down to a shortest period of ~ 6 s.
+(minimum period resolved ~ (256/NEX_XI) * (ANGULAR_WIDTH/90) * 5 = (256/32) * (15/90) * 5 ~ 6.6 s)
+ 
+Reference seismograms for comparisons are provided in the directory: REF_SEIS/
+Please modify the setup and scripts according to your specifics.
+
+

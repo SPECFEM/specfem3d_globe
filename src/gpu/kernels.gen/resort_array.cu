@@ -71,9 +71,6 @@
 #ifndef IFLAG_IN_FICTITIOUS_CUBE
 #define IFLAG_IN_FICTITIOUS_CUBE 11
 #endif
-#ifndef R_EARTH_KM
-#define R_EARTH_KM 6371.0f
-#endif
 #ifndef COLORING_MIN_NSPEC_INNER_CORE
 #define COLORING_MIN_NSPEC_INNER_CORE 1000
 #endif
@@ -93,7 +90,9 @@ __global__ void resort_array(float * old_array, const int NSPEC){
   unsigned int tx;
   unsigned int offset;
   __shared__ float sh_tmp[(2625)];
+
   ispec = blockIdx.x + (blockIdx.y) * (gridDim.x);
+
   if (ispec < NSPEC) {
     tx = threadIdx.x;
     offset = ((ispec) * (NGLL3)) * (21) + tx;
@@ -102,6 +101,7 @@ __global__ void resort_array(float * old_array, const int NSPEC){
     }
   }
   __syncthreads();
+
   if (ispec < NSPEC) {
     for (i = 0; i <= 20; i += 1) {
       id = (i) * (NGLL3) + tx;

@@ -136,8 +136,8 @@
 
   if (exists_main_Par_file .and. exists_run0001_Par_file) then
     print *
-    print *,'cannot have both DATA/Par_file and run0001/DATA/Par_file present, please remove one of them'
-    stop 'error: two different copies of the Par_file'
+    print *,'Cannot have both DATA/Par_file and run0001/DATA/Par_file present, please remove one of them'
+    stop 'Error: two different copies of the Par_file'
   endif
 
   call param_open(filename_main, len(filename_main), ier)
@@ -145,8 +145,8 @@
     call param_open(filename_run0001, len(filename_run0001), ier)
     if (ier /= 0) then
       print *
-      print *,'opening file failed, please check your file path and run-directory.'
-      stop 'error opening Par_file'
+      print *,'Opening file failed, please check your file path and run-directory.'
+      stop 'Error opening Par_file'
     endif
   endif
 

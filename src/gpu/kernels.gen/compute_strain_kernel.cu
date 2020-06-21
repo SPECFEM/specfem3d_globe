@@ -71,9 +71,6 @@
 #ifndef IFLAG_IN_FICTITIOUS_CUBE
 #define IFLAG_IN_FICTITIOUS_CUBE 11
 #endif
-#ifndef R_EARTH_KM
-#define R_EARTH_KM 6371.0f
-#endif
 #ifndef COLORING_MIN_NSPEC_INNER_CORE
 #define COLORING_MIN_NSPEC_INNER_CORE 1000
 #endif
@@ -122,10 +119,12 @@ static __device__ void compute_element_strain_undoatt(const int ispec, const int
   float fac1;
   float fac2;
   float fac3;
+
   tx = threadIdx.x;
   K = (tx) / (NGLL2);
   J = (tx - ((K) * (NGLL2))) / (NGLLX);
   I = tx - ((K) * (NGLL2)) - ((J) * (NGLLX));
+
   tempx1l = 0.0f;
   tempx2l = 0.0f;
   tempx3l = 0.0f;
@@ -135,6 +134,7 @@ static __device__ void compute_element_strain_undoatt(const int ispec, const int
   tempz1l = 0.0f;
   tempz2l = 0.0f;
   tempz3l = 0.0f;
+
   for (l = 0; l <= NGLLX - (1); l += 1) {
     fac1 = sh_hprime_xx[(l) * (NGLLX) + I];
     tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + l]) * (fac1);
@@ -149,6 +149,7 @@ static __device__ void compute_element_strain_undoatt(const int ispec, const int
     tempy3l = tempy3l + (s_dummyy_loc[(l) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
     tempz3l = tempz3l + (s_dummyz_loc[(l) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
   }
+
   offset = (ispec) * (NGLL3_PADDED) + tx;
   xixl = d_xix[offset];
   etaxl = d_etax[offset];
@@ -168,6 +169,7 @@ static __device__ void compute_element_strain_undoatt(const int ispec, const int
   duzdxl = (xixl) * (tempz1l) + (etaxl) * (tempz2l) + (gammaxl) * (tempz3l);
   duzdyl = (xiyl) * (tempz1l) + (etayl) * (tempz2l) + (gammayl) * (tempz3l);
   duzdzl = (xizl) * (tempz1l) + (etazl) * (tempz2l) + (gammazl) * (tempz3l);
+
   templ = (duxdxl + duydyl + duzdzl) * (0.3333333333333333f);
   epsilondev_loc[0] = duxdxl - (templ);
   epsilondev_loc[1] = duydyl - (templ);
@@ -187,12 +189,15 @@ __global__ void compute_strain_kernel(const float * d_displ, const float * d_vel
   __shared__ float s_dummyy_loc[(NGLL3)];
   __shared__ float s_dummyz_loc[(NGLL3)];
   __shared__ float sh_hprime_xx[(NGLL2)];
+
   ispec = blockIdx.x + (blockIdx.y) * (gridDim.x);
   ijk_ispec = threadIdx.x + (NGLL3) * (ispec);
   tx = threadIdx.x;
+
   if (tx < NGLL2) {
     sh_hprime_xx[tx] = d_hprime_xx[tx];
   }
+
   if (ispec < NSPEC) {
     iglob = d_ibool[ijk_ispec] - (1);
     s_dummyx_loc[tx] = d_displ[0 + (3) * (iglob)] + (deltat) * (d_veloc[0 + (3) * (iglob)]);
@@ -200,8 +205,10 @@ __global__ void compute_strain_kernel(const float * d_displ, const float * d_vel
     s_dummyz_loc[tx] = d_displ[2 + (3) * (iglob)] + (deltat) * (d_veloc[2 + (3) * (iglob)]);
   }
   __syncthreads();
+
   if (ispec < NSPEC) {
     compute_element_strain_undoatt(ispec, ijk_ispec, d_ibool, s_dummyx_loc, s_dummyy_loc, s_dummyz_loc, d_xix, d_xiy, d_xiz, d_etax, d_etay, d_etaz, d_gammax, d_gammay, d_gammaz, sh_hprime_xx, epsdev,  &eps_trace_over_3);
+
     if (NSPEC_STRAIN_ONLY == 1) {
       epsilon_trace_over_3[tx] = eps_trace_over_3;
     } else {

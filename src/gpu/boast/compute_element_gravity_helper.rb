@@ -1,5 +1,5 @@
 module BOAST
-  def BOAST::compute_element_gravity( type, n_gll3 = 125, r_earth_km = 6371.0 )
+  def BOAST::compute_element_gravity( type, n_gll3 = 125)
     if type == :inner_core then
       function_name = "compute_element_ic_gravity"
     elsif type == :crust_mantle then
@@ -33,6 +33,7 @@ module BOAST
     v.push *rho_s_H = [1,2,3].collect {|n|
                                      Real("rho_s_H#{n}", :dir => :inout, :dim => [Dim()], :private => true )
     }
+    v.push r_earth_km               = Real("R_EARTH_KM", :dir => :in)
 
     p = Procedure(function_name, v, :local => true) {
       decl radius = Real("radius"), theta = Real("theta"), phi = Real("phi")
@@ -46,14 +47,17 @@ module BOAST
       decl *s_l = [ Real("sx_l"), Real("sy_l"), Real("sz_l") ]
       decl factor = Real("factor")
       decl int_radius = Int("int_radius")
+      comment()
 
       print radius === d_rstore[0,iglob]
       print theta === d_rstore[1,iglob]
       print phi === d_rstore[2,iglob]
+      comment()
 
       print If(radius < ( 100.0 / (r_earth_km*1000.0))) {
         print radius ===  100.0 / (r_earth_km*1000.0)
       }
+      comment()
 
       if (get_lang == CL) then
         print sin_theta === sincos(theta, cos_theta.address)
@@ -69,6 +73,8 @@ module BOAST
           print sin_phi   === sin(phi)
         end
       end
+      comment()
+
       print int_radius === rint(radius * r_earth_km * 10.0 ) - 1
       print If(int_radius < 0 ) {
         print int_radius === 0
@@ -76,6 +82,7 @@ module BOAST
       print minus_g  === d_minus_gravity_table[int_radius]
       print minus_dg === d_minus_deriv_gravity_table[int_radius]
       print rho      === d_density_table[int_radius]
+      comment()
 
       print gl[0] === minus_g*sin_theta*cos_phi
       print gl[1] === minus_g*sin_theta*sin_phi
@@ -88,6 +95,7 @@ module BOAST
       print sin_theta_sq === sin_theta*sin_theta
       print cos_phi_sq   === cos_phi*cos_phi
       print sin_phi_sq   === sin_phi*sin_phi
+      comment()
 
       print hxxl === minus_g_over_radius*(cos_phi_sq*cos_theta_sq + sin_phi_sq) + cos_phi_sq*minus_dg*sin_theta_sq
       print hyyl === minus_g_over_radius*(cos_phi_sq + cos_theta_sq*sin_phi_sq) + minus_dg*sin_phi_sq*sin_theta_sq
@@ -95,10 +103,13 @@ module BOAST
       print hxyl === cos_phi*minus_dg_plus_g_over_radius*sin_phi*sin_theta_sq
       print hxzl === cos_phi*cos_theta*minus_dg_plus_g_over_radius*sin_theta
       print hyzl === cos_theta*minus_dg_plus_g_over_radius*sin_phi*sin_theta
+      comment()
 
       (0..2).each { |indx|
         print s_l[indx] === rho * s_dummy_loc[indx][tx]
       }
+      comment()
+
       print sigma[0][0].dereference === sigma[0][0].dereference + s_l[1]*gl[1] + s_l[2]*gl[2];
       print sigma[1][1].dereference === sigma[1][1].dereference + s_l[0]*gl[0] + s_l[2]*gl[2];
       print sigma[2][2].dereference === sigma[2][2].dereference + s_l[0]*gl[0] + s_l[1]*gl[1];
@@ -111,6 +122,7 @@ module BOAST
 
       print sigma[1][2].dereference === sigma[1][2].dereference - s_l[1] * gl[2];
       print sigma[2][1].dereference === sigma[2][1].dereference - s_l[2] * gl[1];
+      comment()
 
       print factor === jacobianl * wgll_cube[tx]
       print rho_s_H[0][0] === factor * (s_l[0]*hxxl + s_l[1]*hxyl + s_l[2]*hxzl)

@@ -62,6 +62,11 @@
     call flush_IMAIN()
   endif
 
+  ! note: after allocation, arrays have not been mapped to memory yet. this will be done with the first initialization.
+  !       it is thus unlikely, that any of the allocate() routines here will fail.
+  !       todo: we could move these allocation statements closer to the initialization and allocate only after
+  !             the previous arrays have been initialized/mapped to memory.
+
   ! allocates arrays
   allocate(displ_crust_mantle(NDIM,NGLOB_CRUST_MANTLE), &
            veloc_crust_mantle(NDIM,NGLOB_CRUST_MANTLE), &
@@ -164,11 +169,10 @@
            R_yz_inner_core(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_ATTENUATION),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays R_xx_inner_core,..'
 
-  if (ROTATION_VAL) then
-    allocate(A_array_rotation(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION), &
-             B_array_rotation(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION),stat=ier)
-    if (ier /= 0) stop 'Error allocating arrays A_array_rotation,..'
-  endif
+  ! needed for subroutine calls
+  allocate(A_array_rotation(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION), &
+           B_array_rotation(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION),stat=ier)
+  if (ier /= 0) stop 'Error allocating arrays A_array_rotation,..'
 
   ! allocates backward/reconstructed arrays (dummy in case of forward simulation)
   allocate(b_displ_crust_mantle(NDIM,NGLOB_CRUST_MANTLE_ADJOINT), &
@@ -202,12 +206,10 @@
 
   ! initializes backward/reconstructed arrays
   if (SIMULATION_TYPE == 3) then
-    if (ROTATION_VAL) then
-      allocate(b_A_array_rotation(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROT_ADJOINT), &
-               b_B_array_rotation(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROT_ADJOINT),stat=ier)
-      if (ier /= 0) stop 'Error allocating arrays b_A_array_rotation,..'
-    endif
-
+    ! needed for subroutine calls
+    allocate(b_A_array_rotation(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROT_ADJOINT), &
+             b_B_array_rotation(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROT_ADJOINT),stat=ier)
+    if (ier /= 0) stop 'Error allocating arrays b_A_array_rotation,..'
   endif
 
   ! Runge-Kutta time scheme
@@ -367,40 +369,21 @@
            alpha_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays rho_kl,.. in crust_mantle'
 
-  allocate(rho_kl_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT), &
-           beta_kl_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT), &
-           alpha_kl_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT),stat=ier)
+  if (SAVE_KERNELS_IC) then
+    allocate(rho_kl_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT), &
+             beta_kl_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT), &
+             alpha_kl_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT),stat=ier)
+  else
+    ! dummy (for function call arguments)
+    allocate(rho_kl_inner_core(1,1,1,1), &
+             beta_kl_inner_core(1,1,1,1), &
+             alpha_kl_inner_core(1,1,1,1),stat=ier)
+  endif
   if (ier /= 0) stop 'Error allocating arrays rho_kl,.. in inner_core'
 
-  allocate(rho_kl_outer_core(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT), &
-           alpha_kl_outer_core(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT),stat=ier)
-  if (ier /= 0) stop 'Error allocating arrays rho_kl,.. in outer_core'
-
-  allocate(vector_accel_outer_core(NDIM,NGLOB_OUTER_CORE_ADJOINT), &
-           vector_displ_outer_core(NDIM,NGLOB_OUTER_CORE_ADJOINT), &
-           b_vector_displ_outer_core(NDIM,NGLOB_OUTER_CORE_ADJOINT),stat=ier)
-  if (ier /= 0) stop 'Error allocating arrays vector_accel_outer_core,..'
-
-
-  if (SIMULATION_TYPE == 3) then
-    ! noise strength kernel
-    if (NOISE_TOMOGRAPHY == 3) then
-      allocate( sigma_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
-      if (ier /= 0 ) call exit_MPI(myrank,'Error allocating noise sigma kernel')
-    endif
-
-    ! approximate Hessian
-    if (APPROXIMATE_HESS_KL) then
-      allocate( hess_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
-      if (ier /= 0 ) call exit_MPI(myrank,'Error allocating Hessian')
-    endif
-
-    ! For anisotropic kernels (in crust_mantle only)
-    if (ANISOTROPIC_KL) then
-      allocate( cijkl_kl_crust_mantle(21,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
-      if (ier /= 0 ) call exit_MPI(myrank,'Error allocating full cijkl kernel in crust_mantle')
-    endif
-
+  if (SAVE_KERNELS_OC) then
+    allocate(rho_kl_outer_core(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT), &
+             alpha_kl_outer_core(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT),stat=ier)
     ! deviatoric kernel check
     if (deviatoric_outercore) then
       nspec_beta_kl_outer_core = NSPEC_OUTER_CORE_ADJOINT
@@ -409,6 +392,44 @@
     endif
     allocate(beta_kl_outer_core(NGLLX,NGLLY,NGLLZ,nspec_beta_kl_outer_core),stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating beta outercore')
+  else
+    ! dummy
+    allocate(rho_kl_outer_core(1,1,1,1), &
+             alpha_kl_outer_core(1,1,1,1),stat=ier)
+    allocate(beta_kl_outer_core(1,1,1,1),stat=ier)
+  endif
+  if (ier /= 0) stop 'Error allocating arrays rho_kl,.. in outer_core'
+
+  if (SAVE_KERNELS_OC .or. SAVE_KERNELS_BOUNDARY) then
+    allocate(vector_accel_outer_core(NDIM,NGLOB_OUTER_CORE_ADJOINT), &
+             vector_displ_outer_core(NDIM,NGLOB_OUTER_CORE_ADJOINT), &
+             b_vector_displ_outer_core(NDIM,NGLOB_OUTER_CORE_ADJOINT),stat=ier)
+  else
+    ! dummy
+    allocate(vector_accel_outer_core(1,1), &
+             vector_displ_outer_core(1,1), &
+             b_vector_displ_outer_core(1,1),stat=ier)
+  endif
+  if (ier /= 0) stop 'Error allocating arrays vector_accel_outer_core,..'
+
+  if (SIMULATION_TYPE == 3) then
+    ! noise strength kernel
+    if (NOISE_TOMOGRAPHY == 3) then
+      allocate(sigma_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
+      if (ier /= 0 ) call exit_MPI(myrank,'Error allocating noise sigma kernel')
+    endif
+
+    ! approximate Hessian
+    if (APPROXIMATE_HESS_KL) then
+      allocate(hess_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
+      if (ier /= 0 ) call exit_MPI(myrank,'Error allocating Hessian')
+    endif
+
+    ! For anisotropic kernels (in crust_mantle only)
+    if (ANISOTROPIC_KL) then
+      allocate(cijkl_kl_crust_mantle(21,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
+      if (ier /= 0 ) call exit_MPI(myrank,'Error allocating full cijkl kernel in crust_mantle')
+    endif
   endif
 
   ! initializes kernel values
@@ -459,6 +480,8 @@
   integer :: i
 #endif
 
+! note: after allocation, arrays have not been mapped to memory yet. this will be done with the first initialization here.
+
   ! put negligible initial value to avoid very slow underflow trapping
   if (FIX_UNDERFLOW_PROBLEM) then
     init_value = VERYSMALLVAL
@@ -467,8 +490,7 @@
   endif
 
 #ifdef WAVEFIELD_INIT_WITH_OMP_PER_REGION
-! note: after allocation, arrays have not been mapped to memory yet. this will be done with the first initialization here.
-!       we initialize arrays the same way as we access them with OpenMP threads in compute_forces***() routines.
+! note: we initialize arrays the same way as we access them with OpenMP threads in compute_forces***() routines.
 !       this ensures that memory blocks close to the thread location (on the corresponding CPU-core) will be mapped,
 !       which should speedup (at least the OpenMP-) code.
 
@@ -900,15 +922,18 @@
     cijkl_kl_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
   endif
 
-  rho_kl_outer_core(:,:,:,:) = 0._CUSTOM_REAL
-  alpha_kl_outer_core(:,:,:,:) = 0._CUSTOM_REAL
+  if (SAVE_KERNELS_OC) then
+    rho_kl_outer_core(:,:,:,:) = 0._CUSTOM_REAL
+    alpha_kl_outer_core(:,:,:,:) = 0._CUSTOM_REAL
+    ! deviatoric kernel check
+    beta_kl_outer_core(:,:,:,:) = 0._CUSTOM_REAL
+  endif
 
-  rho_kl_inner_core(:,:,:,:) = 0._CUSTOM_REAL
-  beta_kl_inner_core(:,:,:,:) = 0._CUSTOM_REAL
-  alpha_kl_inner_core(:,:,:,:) = 0._CUSTOM_REAL
-
-  ! deviatoric kernel check
-  beta_kl_outer_core(:,:,:,:) = 0._CUSTOM_REAL
+  if (SAVE_KERNELS_IC) then
+    rho_kl_inner_core(:,:,:,:) = 0._CUSTOM_REAL
+    beta_kl_inner_core(:,:,:,:) = 0._CUSTOM_REAL
+    alpha_kl_inner_core(:,:,:,:) = 0._CUSTOM_REAL
+  endif
 
   end subroutine init_kernels
 

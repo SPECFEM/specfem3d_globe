@@ -40,6 +40,8 @@
 
 static int fd;
 
+/* ----------------------------------------------------------------------------- */
+
 void
 FC_FUNC_(open_file_create,OPEN_FILE)(char *file) {
   fd = open(file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
@@ -62,6 +64,8 @@ void
 FC_FUNC_(close_file,CLOSE_FILE)() {
   close(fd);
 }
+
+/* ----------------------------------------------------------------------------- */
 
 void
 FC_FUNC_(write_integer,WRITE_INTEGER)(int *z) {
@@ -95,6 +99,8 @@ FC_FUNC_(write_character,WRITE_CHARACTER)(char *z, int *lchar) {
   }
 }
 
+/* ----------------------------------------------------------------------------- */
+
 void
 FC_FUNC_(open_file_fd,OPEN_FILE_FD)(char *file, int *pfd) {
   *pfd = open(file, O_WRONLY | O_CREAT, 0644);
@@ -108,6 +114,8 @@ void
 FC_FUNC_(close_file_fd,CLOSE_FILE_FD)(int *pfd) {
   close(*pfd);
 }
+
+/* ----------------------------------------------------------------------------- */
 
 void
 FC_FUNC_(write_integer_fd,WRITE_INTEGER_FD)(int *pfd, int *z) {
@@ -155,7 +163,7 @@ FC_FUNC_(write_character_fd,WRITE_CHARACTER_FD)(int *pfd, char *z, int *lchar) {
 
  --------------------------------------- */
 
-#define __USE_GNU
+//#define __USE_GNU  // has issues with gcc 5.5.x version? ".. error: unknown type name '__locale_t' .."
 #include <string.h>
 
 #define MIN(x,y) ((x) < (y) ? (x) : (y))
@@ -282,6 +290,8 @@ void close_file_abs_fbin(int * fid) {
   free(work_buffer[*fid]);
 }
 
+/* ----------------------------------------------------------------------------- */
+
 void write_abs_fbin(int *fid, char *buffer, int *length, int *index) {
 // writes binary file data in chunks of MAX_B
 //
@@ -342,8 +352,9 @@ void write_abs_buffer_fbin(int *fid, char *buffer, int *length, int *index, int 
   }
 }
 
+/* ----------------------------------------------------------------------------- */
 
-void read_abs_fbin(int *fid, char *buffer, int *length, int *index) {
+void read_abs_fbin(int *fid, char *buffer, int *length, int *index, int *shift) {
 // reads binary file data in chunks of MAX_B
 
   FILE *ft;
@@ -354,7 +365,7 @@ void read_abs_fbin(int *fid, char *buffer, int *length, int *index) {
   ft = fp_abs[*fid];
 
   // positions file pointer (for reverse time access)
-  pos = ((long long)*length) * (*index -1 );
+  pos = ((long long)*length) * (*index -1 ) + (*shift);
 
   ret = fseek(ft, pos , SEEK_SET);
   if (ret != 0 ) {
@@ -609,6 +620,7 @@ void close_file_abs_map(int * fid) {
   close(map_fd_abs[*fid]);
 }
 
+/* ----------------------------------------------------------------------------- */
 
 void write_abs_map(int *fid, char *buffer, int *length , int *index) {
   char *map;
@@ -637,15 +649,16 @@ void write_abs_buffer_map(int *fid, char *buffer, int *length , int *index, int*
   memcpy( &map[offset], buffer, *length );
 }
 
+/* ----------------------------------------------------------------------------- */
 
-void read_abs_map(int *fid, char *buffer, int *length , int *index) {
+void read_abs_map(int *fid, char *buffer, int *length , int *index, int *shift) {
   char *map;
   long long offset;
 
   map = map_abs[*fid];
 
   // offset in bytes
-  offset =  ((long long)*index -1 ) * (*length) ;
+  offset =  ((long long)*index -1 ) * (*length) + (*shift);
 
   // copies map to buffer
   memcpy( buffer, &map[offset], *length );
@@ -665,6 +678,7 @@ void read_abs_buffer_map(int *fid, char *buffer, int *length , int *index, int *
   memcpy( buffer, &map[offset], *length );
 }
 
+/* ----------------------------------------------------------------------------- */
 
 /*
 
@@ -713,6 +727,8 @@ FC_FUNC_(close_file_abs,CLOSE_FILES_ABS)(int *fid)
 #endif
 }
 
+/* ----------------------------------------------------------------------------- */
+
 // read/write wrappers
 void
 FC_FUNC_(write_abs,WRITE_ABS)(int *fid, char *buffer, int *length , int *index)
@@ -727,12 +743,26 @@ FC_FUNC_(write_abs,WRITE_ABS)(int *fid, char *buffer, int *length , int *index)
 void
 FC_FUNC_(read_abs,READ_ABS)(int *fid, char *buffer, int *length , int *index)
 {
+  int shift = 0;
+
 #ifdef USE_MAP_FUNCTION
-  read_abs_map(fid,buffer,length,index);
+  read_abs_map(fid,buffer,length,index, &shift);
 #else
-  read_abs_fbin(fid,buffer,length,index);
+  read_abs_fbin(fid,buffer,length,index, &shift);
 #endif
 }
+
+void
+FC_FUNC_(read_abs_shifted,READ_ABS)(int *fid, char *buffer, int *length , int *index, int *shift)
+{
+#ifdef USE_MAP_FUNCTION
+  read_abs_map(fid,buffer,length,index,shift);
+#else
+  read_abs_fbin(fid,buffer,length,index,shift);
+#endif
+}
+
+/* ----------------------------------------------------------------------------- */
 
 // buffered read/write wrappers
 void

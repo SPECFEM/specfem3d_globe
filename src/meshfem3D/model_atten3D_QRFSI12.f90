@@ -187,7 +187,11 @@
   subroutine model_atten3D_QRFSI12(radius,theta,phi,Qmu,idoubling)
 
   use constants
+  use shared_parameters, only: R_PLANET_KM
+
   use model_atten3D_QRFSI12_par
+
+  use model_prem_par, only: PREM_RMOHO
 
   implicit none
 
@@ -203,8 +207,6 @@
   real(kind=4) :: shdep(NSQ)
   real(kind=4) :: xlmvec(NSQ**2)
 
-  double precision, parameter :: rmoho_prem = R_EARTH_KM - 24.4d0
-  double precision, parameter :: rcmb = 3480.0d0
 
   ! in Colleen's original code theta refers to the latitude.  Here we have redefined theta to be colatitude
   ! to agree with the rest of specfem
@@ -218,8 +220,10 @@
   ! only checks radius for crust, idoubling is misleading for oceanic crust
   ! when we want to expand mantle up to surface...
 
+  ! radius given in km
+
 !  !if (idoubling == IFLAG_CRUST .or. radius >= rmoho) then
-  if (radius >= rmoho_prem) then
+  if (radius >= PREM_RMOHO/1000.d0) then
   !   print *,'QRFSI12: we are in the crust'
      Qmu = 600.0d0
   else if (idoubling == IFLAG_INNER_CORE_NORMAL .or. idoubling == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
@@ -245,7 +249,7 @@
 
     ! we are in the mantle
 
-    depth = R_EARTH_KM - radius
+    depth = R_PLANET_KM - radius
 
     !debug
     !   print *,'QRFSI12: we are in the mantle at depth',depth

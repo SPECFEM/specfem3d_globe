@@ -71,9 +71,6 @@
 #ifndef IFLAG_IN_FICTITIOUS_CUBE
 #define IFLAG_IN_FICTITIOUS_CUBE 11
 #endif
-#ifndef R_EARTH_KM
-#define R_EARTH_KM 6371.0f
-#endif
 #ifndef COLORING_MIN_NSPEC_INNER_CORE
 #define COLORING_MIN_NSPEC_INNER_CORE 1000
 #endif
@@ -93,10 +90,12 @@ static __device__ void compute_element_ic_att_stress(const int tx, const int wor
   int i_sls;
   float R_xx_val;
   float R_yy_val;
+
   for (i_sls = 0; i_sls <= N_SLS - (1); i_sls += 1) {
     offset = tx + (NGLL3) * (i_sls + (N_SLS) * (working_element));
     R_xx_val = R_xx[offset];
     R_yy_val = R_yy[offset];
+
     sigma_xx[0] = sigma_xx[0] - (R_xx_val);
     sigma_yy[0] = sigma_yy[0] - (R_yy_val);
     sigma_zz[0] = sigma_zz[0] + R_xx_val + R_yy_val;
@@ -106,7 +105,7 @@ static __device__ void compute_element_ic_att_stress(const int tx, const int wor
   }
 }
 
-static __device__ void compute_element_ic_att_memory(const int tx, const int working_element, const float * d_muv, const float * factor_common, const float * alphaval, const float * betaval, const float * gammaval, float * R_xx, float * R_yy, float * R_xy, float * R_xz, float * R_yz, const float * epsilondev_xx, const float * epsilondev_yy, const float * epsilondev_xy, const float * epsilondev_xz, const float * epsilondev_yz, const float epsilondev_xx_loc, const float epsilondev_yy_loc, const float epsilondev_xy_loc, const float epsilondev_xz_loc, const float epsilondev_yz_loc, const int USE_3D_ATTENUATION_ARRAYS){
+static __device__ void compute_element_ic_att_memory(const int tx, const int working_element, const float * d_muvstore, const float * factor_common, const float * alphaval, const float * betaval, const float * gammaval, float * R_xx, float * R_yy, float * R_xy, float * R_xz, float * R_yz, const float * epsilondev_xx, const float * epsilondev_yy, const float * epsilondev_xy, const float * epsilondev_xz, const float * epsilondev_yz, const float epsilondev_xx_loc, const float epsilondev_yy_loc, const float epsilondev_xy_loc, const float epsilondev_xz_loc, const float epsilondev_yz_loc, const int USE_3D_ATTENUATION_ARRAYS){
   int offset;
   int i_sls;
   float mul;
@@ -116,7 +115,9 @@ static __device__ void compute_element_ic_att_memory(const int tx, const int wor
   float factor_loc;
   float sn;
   float snp1;
-  mul = d_muv[tx + (NGLL3_PADDED) * (working_element)];
+
+  mul = d_muvstore[tx + (NGLL3_PADDED) * (working_element)];
+
   for (i_sls = 0; i_sls <= N_SLS - (1); i_sls += 1) {
     offset = tx + (NGLL3) * (i_sls + (N_SLS) * (working_element));
     if (USE_3D_ATTENUATION_ARRAYS) {
@@ -127,6 +128,7 @@ static __device__ void compute_element_ic_att_memory(const int tx, const int wor
     alphaval_loc = alphaval[i_sls];
     betaval_loc = betaval[i_sls];
     gammaval_loc = gammaval[i_sls];
+
     sn = (factor_loc) * (epsilondev_xx[tx + (NGLL3) * (working_element)]);
     snp1 = (factor_loc) * (epsilondev_xx_loc);
     R_xx[offset] = (alphaval_loc) * (R_xx[offset]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);
@@ -145,7 +147,7 @@ static __device__ void compute_element_ic_att_memory(const int tx, const int wor
   }
 }
 
-static __device__ void compute_element_ic_gravity(const int tx, const int iglob, const float * __restrict__ d_rstore, const float * __restrict__ d_minus_gravity_table, const float * __restrict__ d_minus_deriv_gravity_table, const float * __restrict__ d_density_table, const float * __restrict__ wgll_cube, const float jacobianl, const float * s_dummyx_loc, const float * s_dummyy_loc, const float * s_dummyz_loc, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_yx, float * sigma_xz, float * sigma_zx, float * sigma_yz, float * sigma_zy, float * rho_s_H1, float * rho_s_H2, float * rho_s_H3){
+static __device__ void compute_element_ic_gravity(const int tx, const int iglob, const float * __restrict__ d_rstore, const float * __restrict__ d_minus_gravity_table, const float * __restrict__ d_minus_deriv_gravity_table, const float * __restrict__ d_density_table, const float * __restrict__ wgll_cube, const float jacobianl, const float * s_dummyx_loc, const float * s_dummyy_loc, const float * s_dummyz_loc, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_yx, float * sigma_xz, float * sigma_zx, float * sigma_yz, float * sigma_zy, float * rho_s_H1, float * rho_s_H2, float * rho_s_H3, const float R_EARTH_KM){
   float radius;
   float theta;
   float phi;
@@ -176,21 +178,26 @@ static __device__ void compute_element_ic_gravity(const int tx, const int iglob,
   float sz_l;
   float factor;
   int int_radius;
+
   radius = d_rstore[0 + (3) * (iglob)];
   theta = d_rstore[1 + (3) * (iglob)];
   phi = d_rstore[2 + (3) * (iglob)];
-  if (radius < 1.5696123057604773e-05f) {
-    radius = 1.5696123057604773e-05f;
+
+  if (radius < (100.0f) / ((R_EARTH_KM) * (1000.0f))) {
+    radius = (100.0f) / ((R_EARTH_KM) * (1000.0f));
   }
+
   sincosf(theta,  &sin_theta,  &cos_theta);
   sincosf(phi,  &sin_phi,  &cos_phi);
-  int_radius = rint(((radius) * (6371.0f)) * (10.0f)) - (1);
+
+  int_radius = rint(((radius) * (R_EARTH_KM)) * (10.0f)) - (1);
   if (int_radius < 0) {
     int_radius = 0;
   }
   minus_g = d_minus_gravity_table[int_radius];
   minus_dg = d_minus_deriv_gravity_table[int_radius];
   rho = d_density_table[int_radius];
+
   gxl = ((minus_g) * (sin_theta)) * (cos_phi);
   gyl = ((minus_g) * (sin_theta)) * (sin_phi);
   gzl = (minus_g) * (cos_theta);
@@ -200,15 +207,18 @@ static __device__ void compute_element_ic_gravity(const int tx, const int iglob,
   sin_theta_sq = (sin_theta) * (sin_theta);
   cos_phi_sq = (cos_phi) * (cos_phi);
   sin_phi_sq = (sin_phi) * (sin_phi);
+
   Hxxl = (minus_g_over_radius) * ((cos_phi_sq) * (cos_theta_sq) + sin_phi_sq) + ((cos_phi_sq) * (minus_dg)) * (sin_theta_sq);
   Hyyl = (minus_g_over_radius) * (cos_phi_sq + (cos_theta_sq) * (sin_phi_sq)) + ((minus_dg) * (sin_phi_sq)) * (sin_theta_sq);
   Hzzl = (cos_theta_sq) * (minus_dg) + (minus_g_over_radius) * (sin_theta_sq);
   Hxyl = (((cos_phi) * (minus_dg_plus_g_over_radius)) * (sin_phi)) * (sin_theta_sq);
   Hxzl = (((cos_phi) * (cos_theta)) * (minus_dg_plus_g_over_radius)) * (sin_theta);
   Hyzl = (((cos_theta) * (minus_dg_plus_g_over_radius)) * (sin_phi)) * (sin_theta);
+
   sx_l = (rho) * (s_dummyx_loc[tx]);
   sy_l = (rho) * (s_dummyy_loc[tx]);
   sz_l = (rho) * (s_dummyz_loc[tx]);
+
   *(sigma_xx) = *(sigma_xx) + (sy_l) * (gyl) + (sz_l) * (gzl);
   *(sigma_yy) = *(sigma_yy) + (sx_l) * (gxl) + (sz_l) * (gzl);
   *(sigma_zz) = *(sigma_zz) + (sx_l) * (gxl) + (sy_l) * (gyl);
@@ -218,10 +228,49 @@ static __device__ void compute_element_ic_gravity(const int tx, const int iglob,
   *(sigma_zx) = *(sigma_zx) - ((sz_l) * (gxl));
   *(sigma_yz) = *(sigma_yz) - ((sy_l) * (gzl));
   *(sigma_zy) = *(sigma_zy) - ((sz_l) * (gyl));
+
   factor = (jacobianl) * (wgll_cube[tx]);
   rho_s_H1[0] = (factor) * ((sx_l) * (Hxxl) + (sy_l) * (Hxyl) + (sz_l) * (Hxzl));
   rho_s_H2[0] = (factor) * ((sx_l) * (Hxyl) + (sy_l) * (Hyyl) + (sz_l) * (Hyzl));
   rho_s_H3[0] = (factor) * ((sx_l) * (Hxzl) + (sy_l) * (Hyzl) + (sz_l) * (Hzzl));
+}
+
+static __device__ void compute_element_ic_aniso(const int offset, const float * __restrict__ d_c11store, const float * __restrict__ d_c12store, const float * __restrict__ d_c13store, const float * __restrict__ d_c33store, const float * __restrict__ d_c44store, const float duxdxl, const float duydyl, const float duzdzl, const float duxdyl_plus_duydxl, const float duzdxl_plus_duxdzl, const float duzdyl_plus_duydzl, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){
+  float c11;
+  float c12;
+  float c13;
+  float c33;
+  float c44;
+  float c66;
+  c11 = d_c11store[offset];
+  c12 = d_c12store[offset];
+  c13 = d_c13store[offset];
+  c33 = d_c33store[offset];
+  c44 = d_c44store[offset];
+  c66 = (0.5f) * (c11 - (c12));
+  *(sigma_xx) = (c11) * (duxdxl) + (c12) * (duydyl) + (c13) * (duzdzl);
+  *(sigma_yy) = (c12) * (duxdxl) + (c11) * (duydyl) + (c13) * (duzdzl);
+  *(sigma_zz) = (c13) * (duxdxl) + (c13) * (duydyl) + (c33) * (duzdzl);
+  *(sigma_xy) = (c66) * (duxdyl_plus_duydxl);
+  *(sigma_xz) = (c44) * (duzdxl_plus_duxdzl);
+  *(sigma_yz) = (c44) * (duzdyl_plus_duydzl);
+}
+
+static __device__ void compute_element_ic_iso(const int offset, const float * d_kappavstore, const float * d_muvstore, const float duxdxl, const float duydyl, const float duzdzl, const float duxdxl_plus_duydyl, const float duxdxl_plus_duzdzl, const float duydyl_plus_duzdzl, const float duxdyl_plus_duydxl, const float duzdxl_plus_duxdzl, const float duzdyl_plus_duydzl, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){
+  float lambdal;
+  float mul;
+  float lambdalplus2mul;
+  float kappal;
+  kappal = d_kappavstore[offset];
+  mul = d_muvstore[offset];
+  lambdalplus2mul = kappal + (mul) * (1.3333333333333333f);
+  lambdal = lambdalplus2mul - ((mul) * (2.0f));
+  *(sigma_xx) = (lambdalplus2mul) * (duxdxl) + (lambdal) * (duydyl_plus_duzdzl);
+  *(sigma_yy) = (lambdalplus2mul) * (duydyl) + (lambdal) * (duxdxl_plus_duzdzl);
+  *(sigma_zz) = (lambdalplus2mul) * (duzdzl) + (lambdal) * (duxdxl_plus_duydyl);
+  *(sigma_xy) = (mul) * (duxdyl_plus_duydxl);
+  *(sigma_xz) = (mul) * (duzdxl_plus_duxdzl);
+  *(sigma_yz) = (mul) * (duzdyl_plus_duydzl);
 }
 
 
@@ -233,7 +282,7 @@ __global__
 #ifdef USE_LAUNCH_BOUNDS
 __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
 #endif
- void inner_core_impl_kernel_adjoint(const int nb_blocks_to_compute, const int * d_ibool, const int * d_idoubling, const int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const float deltat, const int use_mesh_coloring_gpu, const float * __restrict__ d_displ, float * d_accel, const float * __restrict__ d_xix, const float * __restrict__ d_xiy, const float * __restrict__ d_xiz, const float * __restrict__ d_etax, const float * __restrict__ d_etay, const float * __restrict__ d_etaz, const float * __restrict__ d_gammax, const float * __restrict__ d_gammay, const float * __restrict__ d_gammaz, const float * __restrict__ d_hprime_xx, const float * __restrict__ d_hprimewgll_xx, const float * __restrict__ d_wgllwgll_xy, const float * __restrict__ d_wgllwgll_xz, const float * __restrict__ d_wgllwgll_yz, const float * __restrict__ d_kappavstore, const float * __restrict__ d_muvstore, const int COMPUTE_AND_STORE_STRAIN, float * epsilondev_xx, float * epsilondev_yy, float * epsilondev_xy, float * epsilondev_xz, float * epsilondev_yz, float * epsilon_trace_over_3, const int ATTENUATION, const int PARTIAL_PHYS_DISPERSION_ONLY, const int USE_3D_ATTENUATION_ARRAYS, const float * __restrict__ one_minus_sum_beta, const float * __restrict__ factor_common, float * R_xx, float * R_yy, float * R_xy, float * R_xz, float * R_yz, const float * __restrict__ alphaval, const float * __restrict__ betaval, const float * __restrict__ gammaval, const int ANISOTROPY, const float * __restrict__ d_c11store, const float * __restrict__ d_c12store, const float * __restrict__ d_c13store, const float * __restrict__ d_c33store, const float * __restrict__ d_c44store, const int GRAVITY, const float * __restrict__ d_rstore, const float * __restrict__ d_minus_gravity_table, const float * __restrict__ d_minus_deriv_gravity_table, const float * __restrict__ d_density_table, const float * __restrict__ wgll_cube, const int NSPEC_INNER_CORE_STRAIN_ONLY, const int NSPEC_INNER_CORE){
+ void inner_core_impl_kernel_adjoint(const int nb_blocks_to_compute, const int * d_ibool, const int * d_idoubling, const int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const float deltat, const int use_mesh_coloring_gpu, const float * __restrict__ d_displ, float * d_accel, const float * __restrict__ d_xix, const float * __restrict__ d_xiy, const float * __restrict__ d_xiz, const float * __restrict__ d_etax, const float * __restrict__ d_etay, const float * __restrict__ d_etaz, const float * __restrict__ d_gammax, const float * __restrict__ d_gammay, const float * __restrict__ d_gammaz, const float * __restrict__ d_hprime_xx, const float * __restrict__ d_hprimewgll_xx, const float * __restrict__ d_wgllwgll_xy, const float * __restrict__ d_wgllwgll_xz, const float * __restrict__ d_wgllwgll_yz, const float * __restrict__ d_kappavstore, const float * __restrict__ d_muvstore, const int COMPUTE_AND_STORE_STRAIN, float * epsilondev_xx, float * epsilondev_yy, float * epsilondev_xy, float * epsilondev_xz, float * epsilondev_yz, float * epsilon_trace_over_3, const int ATTENUATION, const int PARTIAL_PHYS_DISPERSION_ONLY, const int USE_3D_ATTENUATION_ARRAYS, const float * __restrict__ one_minus_sum_beta, const float * __restrict__ factor_common, float * R_xx, float * R_yy, float * R_xy, float * R_xz, float * R_yz, const float * __restrict__ alphaval, const float * __restrict__ betaval, const float * __restrict__ gammaval, const int ANISOTROPY, const float * __restrict__ d_c11store, const float * __restrict__ d_c12store, const float * __restrict__ d_c13store, const float * __restrict__ d_c33store, const float * __restrict__ d_c44store, const int GRAVITY, const float * __restrict__ d_rstore, const float * __restrict__ d_minus_gravity_table, const float * __restrict__ d_minus_deriv_gravity_table, const float * __restrict__ d_density_table, const float R_EARTH_KM, const float * __restrict__ wgll_cube, const int NSPEC_INNER_CORE_STRAIN_ONLY, const int NSPEC_INNER_CORE){
   int bx;
   int tx;
   int K;
@@ -284,12 +333,6 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
   float fac1;
   float fac2;
   float fac3;
-  float lambdal;
-  float mul;
-  float lambdalplus2mul;
-  float kappal;
-  float mul_iso;
-  float mul_aniso;
   float sigma_xx;
   float sigma_xy;
   float sigma_xz;
@@ -304,11 +347,6 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
   float epsilondev_xy_loc_1;
   float epsilondev_xz_loc_1;
   float epsilondev_yz_loc_1;
-  float c11;
-  float c12;
-  float c13;
-  float c33;
-  float c44;
   float sum_terms1;
   float sum_terms2;
   float sum_terms3;
@@ -506,49 +544,10 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
       }
     }
 
-    kappal = d_kappavstore[offset];
-    mul = d_muvstore[offset];
-
-    if (ATTENUATION) {
-      if (USE_3D_ATTENUATION_ARRAYS) {
-        mul_iso = (mul) * (one_minus_sum_beta[tx + (working_element) * (NGLL3)]);
-        mul_aniso = (mul) * (one_minus_sum_beta[tx + (working_element) * (NGLL3)] - (1.0f));
-      } else {
-        mul_iso = (mul) * (one_minus_sum_beta[working_element]);
-        mul_aniso = (mul) * (one_minus_sum_beta[working_element] - (1.0f));
-      }
-    } else {
-      mul_iso = mul;
-    }
-
     if (ANISOTROPY) {
-      c11 = d_c11store[offset];
-      c12 = d_c12store[offset];
-      c13 = d_c13store[offset];
-      c33 = d_c33store[offset];
-      c44 = d_c44store[offset];
-      if (ATTENUATION) {
-        c11 = c11 + (mul_aniso) * (1.3333333333333333f);
-        c12 = c12 - ((mul_aniso) * (0.6666666666666666f));
-        c13 = c13 - ((mul_aniso) * (0.6666666666666666f));
-        c33 = c33 + (mul_aniso) * (1.3333333333333333f);
-        c44 = c44 + mul_aniso;
-      }
-      sigma_xx = (c11) * (duxdxl) + (c12) * (duydyl) + (c13) * (duzdzl);
-      sigma_yy = (c12) * (duxdxl) + (c11) * (duydyl) + (c13) * (duzdzl);
-      sigma_zz = (c13) * (duxdxl) + (c13) * (duydyl) + (c33) * (duzdzl);
-      sigma_xy = ((c11 - (c12)) * (duxdyl_plus_duydxl)) * (0.5f);
-      sigma_xz = (c44) * (duzdxl_plus_duxdzl);
-      sigma_yz = (c44) * (duzdyl_plus_duydzl);
+      compute_element_ic_aniso(offset, d_c11store, d_c12store, d_c13store, d_c33store, d_c44store, duxdxl, duydyl, duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);
     } else {
-      lambdalplus2mul = kappal + (mul_iso) * (1.3333333333333333f);
-      lambdal = lambdalplus2mul - ((mul_iso) * (2.0f));
-      sigma_xx = (lambdalplus2mul) * (duxdxl) + (lambdal) * (duydyl_plus_duzdzl);
-      sigma_yy = (lambdalplus2mul) * (duydyl) + (lambdal) * (duxdxl_plus_duzdzl);
-      sigma_zz = (lambdalplus2mul) * (duzdzl) + (lambdal) * (duxdxl_plus_duydyl);
-      sigma_xy = (mul) * (duxdyl_plus_duydxl);
-      sigma_xz = (mul) * (duzdxl_plus_duxdzl);
-      sigma_yz = (mul) * (duzdyl_plus_duydzl);
+      compute_element_ic_iso(offset, d_kappavstore, d_muvstore, duxdxl, duydyl, duzdzl, duxdxl_plus_duydyl, duxdxl_plus_duzdzl, duydyl_plus_duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);
     }
 
     if (ATTENUATION &&  !(PARTIAL_PHYS_DISPERSION_ONLY)) {
@@ -561,7 +560,7 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
     jacobianl = (1.0f) / ((xixl) * ((etayl) * (gammazl) - ((etazl) * (gammayl))) - ((xiyl) * ((etaxl) * (gammazl) - ((etazl) * (gammaxl)))) + (xizl) * ((etaxl) * (gammayl) - ((etayl) * (gammaxl))));
 
     if (GRAVITY) {
-      compute_element_ic_gravity(tx, iglob_1, d_rstore, d_minus_gravity_table, d_minus_deriv_gravity_table, d_density_table, wgll_cube, jacobianl, s_dummyx_loc, s_dummyy_loc, s_dummyz_loc,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_yx,  &sigma_xz,  &sigma_zx,  &sigma_yz,  &sigma_zy,  &rho_s_H_1_1,  &rho_s_H_1_2,  &rho_s_H_1_3);
+      compute_element_ic_gravity(tx, iglob_1, d_rstore, d_minus_gravity_table, d_minus_deriv_gravity_table, d_density_table, wgll_cube, jacobianl, s_dummyx_loc, s_dummyy_loc, s_dummyz_loc,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_yx,  &sigma_xz,  &sigma_zx,  &sigma_yz,  &sigma_zy,  &rho_s_H_1_1,  &rho_s_H_1_2,  &rho_s_H_1_3, R_EARTH_KM);
     }
 
     s_tempx1[tx] = (jacobianl) * ((sigma_xx) * (xixl) + (sigma_yx) * (xiyl) + (sigma_zx) * (xizl));

@@ -28,14 +28,19 @@
 
 module tomography_par
 
-  use constants, only: CUSTOM_REAL,MAX_STRING_LEN, &
+  use constants, only: &
+    CUSTOM_REAL,MAX_STRING_LEN, &
     NGLLX,NGLLY,NGLLZ,IIN,IOUT, &
-    FOUR_THIRDS,R_EARTH_KM,GAUSSALPHA,GAUSSBETA
+    FOUR_THIRDS,GAUSSALPHA,GAUSSBETA
 
-  implicit none
+  use shared_parameters, only: R_PLANET_KM
 
   ! array dimensions for static compilation
-  include "OUTPUT_FILES/values_from_mesher.h"
+  use constants_solver, only: &
+    NCHUNKS_VAL,NPROCTOT_VAL,NPROC_XI_VAL,NPROC_ETA_VAL, &
+    NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE
+
+  implicit none
 
   ! tomography parameter settings
   include "constants_tomography.h"
@@ -151,5 +156,4 @@ module tomography_model_tiso
         model_vpv_new,model_vph_new,model_vsv_new,model_vsh_new,model_eta_new,model_rho_new
 
 end module tomography_model_tiso
-
 

@@ -45,8 +45,6 @@
 
   implicit none
 
-  include "OUTPUT_FILES/values_from_mesher.h"
-
 !---------------------
 ! USER PARAMETER
 
@@ -419,7 +417,7 @@
 
         ! approximate wavefront travel distance in degrees
         ! (~3.5 km/s wave speed for surface waves)
-        distance = 3.5 * ((it-1)*DT-t0) / R_EARTH_KM * RADIANS_TO_DEGREES
+        distance = 3.5 * ((it-1)*DT-t0) / (R_PLANET/1000.d0) * RADIANS_TO_DEGREES
 
         print *,'distance approximate: ',distance,'(degrees)'
 
@@ -742,7 +740,7 @@
 
         if (max_absol < max_average) then
           ! distance (in degree) of surface waves travelled
-          distance = 3.5 * ((it-1)*DT-t0) / R_EARTH_KM * RADIANS_TO_DEGREES
+          distance = 3.5 * ((it-1)*DT-t0) / (R_PLANET/1000.d0) * RADIANS_TO_DEGREES
           if (distance > 10.0 .and. distance <= 20.0) then
             ! smooth transition between 10 and 20 degrees
             ! sets positive and negative maximum

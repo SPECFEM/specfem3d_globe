@@ -40,14 +40,14 @@
 
   implicit none
 
-  integer :: nspec
+  integer,intent(in) :: nspec
 
-  logical,dimension(2,nspec) :: iMPIcut_xi,iMPIcut_eta
+  logical,dimension(2,nspec),intent(in) :: iMPIcut_xi,iMPIcut_eta
 
-  integer,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
-  integer,dimension(nspec) :: idoubling
+  integer,dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
+  integer,dimension(nspec),intent(in) :: idoubling
 
-  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
+  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: xstore,ystore,zstore
 
   ! logical mask used to create arrays ibool1D
   integer :: npointot
@@ -57,10 +57,10 @@
   integer :: iregion
 
   integer :: NGLOB1D_RADIAL_MAX
-  integer,dimension(NGLOB1D_RADIAL_MAX) :: ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
-                                           ibool1D_leftxi_righteta,ibool1D_rightxi_righteta
-  double precision,dimension(NGLOB1D_RADIAL_MAX,NDIM) :: xyz1D_leftxi_lefteta,xyz1D_rightxi_lefteta, &
-                                                         xyz1D_leftxi_righteta,xyz1D_rightxi_righteta
+  integer,dimension(NGLOB1D_RADIAL_MAX),intent(inout) :: ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
+                                                         ibool1D_leftxi_righteta,ibool1D_rightxi_righteta
+  double precision,dimension(NGLOB1D_RADIAL_MAX,NDIM),intent(inout) :: xyz1D_leftxi_lefteta,xyz1D_rightxi_lefteta, &
+                                                                       xyz1D_leftxi_righteta,xyz1D_rightxi_righteta
 
   ! processor identification
   character(len=MAX_STRING_LEN) :: prname

@@ -60,22 +60,20 @@
   real(kind=CUSTOM_REAL) :: one_minus_sum_beta_use,minus_sum_beta
 
   ! tiso elements
-  real(kind=CUSTOM_REAL) :: rhovphsq,sinphifour,cosphisq,sinphisq,costhetasq,rhovsvsq,sinthetasq, &
-        cosphifour,costhetafour,rhovpvsq,sinthetafour,rhovshsq,cosfourphi, &
-        costwotheta,cosfourtheta,sintwophisq,costheta,sinphi,sintheta,cosphi, &
-        sintwotheta,costwophi,sintwophi,costwothetasq,costwophisq,phi,theta
+  real(kind=CUSTOM_REAL) :: rhovphsq,rhovpvsq,rhovshsq,rhovsvsq,eta_aniso,phi,theta
+  real(kind=CUSTOM_REAL) :: kappavl,kappahl,muvl,muhl,mul
 
   ! aniso element
-  real(kind=CUSTOM_REAL) :: c11,c12,c13,c22,c23,c33,c44,c55,c66
+  real(kind=CUSTOM_REAL) :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+                            c33,c34,c35,c36,c44,c45,c46,c55,c56,c66
 
-  real(kind=CUSTOM_REAL) :: two_rhovsvsq,two_rhovshsq ! two_rhovpvsq,two_rhovphsq
-  real(kind=CUSTOM_REAL) :: four_rhovsvsq,four_rhovshsq ! four_rhovpvsq,four_rhovphsq
-
-  real(kind=CUSTOM_REAL) :: twoetaminone,etaminone,eta_aniso
-  real(kind=CUSTOM_REAL) :: two_eta_aniso,four_eta_aniso,six_eta_aniso
-
-  real(kind=CUSTOM_REAL) :: templ1,templ1_cos,templ2,templ2_cos,templ3,templ3_two,templ3_cos
-  real(kind=CUSTOM_REAL) :: kappavl,kappahl,muvl,muhl,mul
+  ! for rotations
+  double precision :: g11,g12,g13,g14,g15,g16,g22,g23,g24,g25,g26, &
+                      g33,g34,g35,g36,g44,g45,g46,g55,g56,g66
+  double precision :: d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26, &
+                      d33,d34,d35,d36,d44,d45,d46,d55,d56,d66
+  double precision :: phi_dble,theta_dble
+  double precision :: A_dble,F_dble,L_dble,N_dble !,C_dble
 
   integer :: ispec,iglob,i_SLS,icount,icount_iso
 
@@ -88,14 +86,18 @@
   integer :: i,j,k
 #endif
 
-  ! checks if anything to do
-  ! GPU kernels still use original arrays
-  if (GPU_MODE) return
-
   ! user output
   if (myrank == 0) then
     write(IMAIN,*) "preparing elastic element arrays"
     call flush_IMAIN()
+  endif
+
+  ! user output
+  if (ATTENUATION_VAL) then
+    if (myrank == 0) then
+      write(IMAIN,*) "  using attenuation: shifting to unrelaxed moduli"
+      call flush_IMAIN()
+    endif
   endif
 
   ! crust/mantle
@@ -113,26 +115,81 @@
 
 ! openmp solver
 !$OMP PARALLEL DEFAULT(SHARED) &
-!$OMP PRIVATE(ispec, &
+!$OMP PRIVATE(ispec,iglob, &
 #ifdef FORCE_VECTORIZATION
 !$OMP ijk, &
 #else
 !$OMP i,j,k, &
 #endif
-!$OMP minus_sum_beta,mul,c11,c12,c13,c22,c23,c33,c44,c55,c66)
+!$OMP minus_sum_beta,mul,muvl,muhl,eta_aniso, &
+!$OMP theta_dble,phi_dble, &
+!$OMP d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26,d33,d34,d35,d36,d44,d45,d46,d55,d56,d66, &
+!$OMP g11,g12,g13,g14,g15,g16,g22,g23,g24,g25,g26,g33,g34,g35,g36,g44,g45,g46,g55,g56,g66, &
+!$OMP A_dble,F_dble,L_dble,N_dble)
 !$OMP DO
       do ispec = 1,NSPEC_CRUST_MANTLE
         ! all elements are fully anisotropic
         DO_LOOP_IJK
-          c11 = c11store_crust_mantle(INDEX_IJK,ispec)
-          c12 = c12store_crust_mantle(INDEX_IJK,ispec)
-          c13 = c13store_crust_mantle(INDEX_IJK,ispec)
-          c22 = c22store_crust_mantle(INDEX_IJK,ispec)
-          c23 = c23store_crust_mantle(INDEX_IJK,ispec)
-          c33 = c33store_crust_mantle(INDEX_IJK,ispec)
-          c44 = c44store_crust_mantle(INDEX_IJK,ispec)
-          c55 = c55store_crust_mantle(INDEX_IJK,ispec)
-          c66 = c66store_crust_mantle(INDEX_IJK,ispec)
+          ! Sieminski, 2007:
+          ! A = 1/8 (3 C11 + 3 C22 + 2 C12 + 4 C66)
+          ! C = C33
+          ! N = 1/8 (C11 + C22 - 2 C12 + 4 C66)
+          ! L = 1/2 (C44 + C55)
+          ! F = 1/2 (C13 + C23)
+          !
+          ! Anderson & Dziewonski, 1982: "Upper mantle anisotropy: evidence from free oscillations", GJR
+          ! A = rho * vph**2
+          ! C = rho * vpv**2
+          ! N = rho * vsh**2
+          ! L = rho * vsv**2
+          ! F = eta * (A - 2*L)
+          !
+          ! for radial axis symmetry and transversely isotropic media this simplifies to:
+          ! A = C11 = rho * vph**2 = kappah + 4/3 muh
+          ! C = C33 = rho * vpv**2 = kappav + 4/3 muv
+          ! N = C66 = rho * vsh**2 = muh
+          ! L = C44 = rho * vsv**2 = muv
+          ! F = C13 = eta * (A - 2*L)
+          ! and
+          ! C12 = C11 - 2 C66 = A - 2*N = rho * vph**2 - 2 * rho * vsh**2 = kappah + 4/3 muh - 2 muh = kappah - 2/3 muh
+          ! C22 = C11
+          ! C23 = C13
+          ! C55 = C44
+          ! C66 = N = rho * vsh**2 = muh = (C11-C12)/2
+          !
+          ! shear moduli scaling:
+          ! muvl = muvl * one_minus_sum_beta_use = muvl*( 1 - sum_beta) = muvl - muvl*sum_beta = muvl + muvl*minus_sum_beta
+          ! muhl = muhl * one_minus_sum_beta_use
+          !
+          ! rho vsv**2 = muv -> L = L * (1 - sum_beta) = L - L * sum_beta = L + muv * minus_sum_beta
+          ! rho vsh**2 = muh -> N = N + muh * minus_sum_beta
+          !
+          ! rho vph**2 = A = kappah + 4/3 muh -> kappah + 4/3 muh * (1 - sum_beta) = kappah + 4/3 muh - 4/3 muh*sum_beta
+          ! rho vpv**2 = C = kappav + 4/3 muv -> kappav + 4/3 muv - 4/3 muv*sum_beta
+          !
+          ! -> scaling for Love parameters:
+          ! A' = A - 4/3 muh*sum_beta
+          ! C' = C - 4/3 muv*sum_beta
+          ! N' = N * (1 - sum_beta) = N - muh*sum_beta
+          ! L' = L * (1 - sum_beta) = L - muv*sum_beta
+          !
+          ! -> scaling for tensor elements:
+          ! c11' = c11 - 4/3 muh*sum_beta  ! A
+          ! c33' = c33 - 4/3 muv*sum_beta  ! C
+          ! c66' = c66 - muh*sum_beta      ! N
+          ! c44' = c44 - muv*sum_beta      ! L
+          !
+          ! c55' = c55 - muv*sum_beta      ! to be consistent with tiso case c55 == c44
+          ! c22' = c22 - 4/3 muh*sum_beta  ! to be consistent with tiso case c22 == c11
+          !
+          ! c13' = F' = eta*(A' - 2*L') = eta*(A - 4/3 muh*sum_beta - 2*(L - muv*sum_beta))
+          !                             = c13 + eta*( 2*muv*sum_beta - 4/3 muh*sum_beta)
+          !                             = c13 + eta*( 4/3 muh * minus_sum_beta - 2 muv * minus_sum_beta)
+          ! c23' = c23 + eta*( 2*muv*sum_beta - 4/3 muh*sum_beta) ! be consistent with tiso case c23 == c13
+          !
+          ! c12' = A' - 2*N' = A - 4/3 muh*sum_beta - 2*(N - muh*sum_beta) = A - 2*N - 4/3 muh*sum_beta + 2 muh*sum_beta
+          !                                                                = c12 + 2/3 muh*sum_beta
+
 
           ! precompute terms for attenuation if needed
           if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
@@ -140,27 +197,149 @@
           else
             minus_sum_beta =  one_minus_sum_beta_crust_mantle(1,1,1,ispec) - 1.0_CUSTOM_REAL
           endif
-          mul = c44 * minus_sum_beta
-          c11 = c11 + FOUR_THIRDS * mul ! * minus_sum_beta * mul
-          c12 = c12 - TWO_THIRDS * mul
-          c13 = c13 - TWO_THIRDS * mul
-          c22 = c22 + FOUR_THIRDS * mul
-          c23 = c23 - TWO_THIRDS * mul
-          c33 = c33 + FOUR_THIRDS * mul
-          c44 = c44 + mul
-          c55 = c55 + mul
-          c66 = c66 + mul
+
+          ! original routine...
+          !
+          ! shifts moduli to unrelaxed ones
+          ! this is the original routine to shift moduli, using only muv (from c44) to scale
+          !  c11 = c11store_crust_mantle(INDEX_IJK,ispec)
+          !  c12 = c12store_crust_mantle(INDEX_IJK,ispec)
+          !  c13 = c13store_crust_mantle(INDEX_IJK,ispec)
+          !  c22 = c22store_crust_mantle(INDEX_IJK,ispec)
+          !  c23 = c23store_crust_mantle(INDEX_IJK,ispec)
+          !  c33 = c33store_crust_mantle(INDEX_IJK,ispec)
+          !  c44 = c44store_crust_mantle(INDEX_IJK,ispec)
+          !  c55 = c55store_crust_mantle(INDEX_IJK,ispec)
+          !  c66 = c66store_crust_mantle(INDEX_IJK,ispec)
+          !
+          !  mul = c44 * minus_sum_beta
+          !
+          !  c11 = c11 + FOUR_THIRDS * mul ! * minus_sum_beta * mul
+          !  c12 = c12 - TWO_THIRDS * mul
+          !  c13 = c13 - TWO_THIRDS * mul
+          !  c22 = c22 + FOUR_THIRDS * mul
+          !  c23 = c23 - TWO_THIRDS * mul
+          !  c33 = c33 + FOUR_THIRDS * mul
+          !  c44 = c44 + mul
+          !  c55 = c55 + mul
+          !  c66 = c66 + mul
+          !
+          !  ! stores unrelaxed factors
+          !  c11store_crust_mantle(INDEX_IJK,ispec) = c11
+          !  c12store_crust_mantle(INDEX_IJK,ispec) = c12
+          !  c13store_crust_mantle(INDEX_IJK,ispec) = c13
+          !  c22store_crust_mantle(INDEX_IJK,ispec) = c22
+          !  c23store_crust_mantle(INDEX_IJK,ispec) = c23
+          !  c33store_crust_mantle(INDEX_IJK,ispec) = c33
+          !  c44store_crust_mantle(INDEX_IJK,ispec) = c44
+          !  c55store_crust_mantle(INDEX_IJK,ispec) = c55
+          !  c66store_crust_mantle(INDEX_IJK,ispec) = c66
+
+          ! new routine
+          ! unrelaxed moduli shift using muv and muh scaling
+          ! also, needs adaptation in save_kernels.f90 to shift back accordingly
+
+          ! local position (d_ij given in radial direction)
+          ! only in case needed for rotation
+          iglob = ibool_crust_mantle(INDEX_IJK,ispec)
+          theta_dble = rstore_crust_mantle(2,iglob)
+          phi_dble = rstore_crust_mantle(3,iglob)
+          call reduce(theta_dble,phi_dble)
+
+          g11 = c11store_crust_mantle(INDEX_IJK,ispec)
+          g12 = c12store_crust_mantle(INDEX_IJK,ispec)
+          g13 = c13store_crust_mantle(INDEX_IJK,ispec)
+          g14 = c14store_crust_mantle(INDEX_IJK,ispec)
+          g15 = c15store_crust_mantle(INDEX_IJK,ispec)
+          g16 = c16store_crust_mantle(INDEX_IJK,ispec)
+          g22 = c22store_crust_mantle(INDEX_IJK,ispec)
+          g23 = c23store_crust_mantle(INDEX_IJK,ispec)
+          g24 = c24store_crust_mantle(INDEX_IJK,ispec)
+          g25 = c25store_crust_mantle(INDEX_IJK,ispec)
+          g26 = c26store_crust_mantle(INDEX_IJK,ispec)
+          g33 = c33store_crust_mantle(INDEX_IJK,ispec)
+          g34 = c34store_crust_mantle(INDEX_IJK,ispec)
+          g35 = c35store_crust_mantle(INDEX_IJK,ispec)
+          g36 = c36store_crust_mantle(INDEX_IJK,ispec)
+          g44 = c44store_crust_mantle(INDEX_IJK,ispec)
+          g45 = c45store_crust_mantle(INDEX_IJK,ispec)
+          g46 = c46store_crust_mantle(INDEX_IJK,ispec)
+          g55 = c55store_crust_mantle(INDEX_IJK,ispec)
+          g56 = c56store_crust_mantle(INDEX_IJK,ispec)
+          g66 = c66store_crust_mantle(INDEX_IJK,ispec)
+
+          call rotate_tensor_global_to_radial(theta_dble,phi_dble, &
+                                  d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26, &
+                                  d33,d34,d35,d36,d44,d45,d46,d55,d56,d66, &
+                                  g11,g12,g13,g14,g15,g16,g22,g23,g24,g25,g26, &
+                                  g33,g34,g35,g36,g44,g45,g46,g55,g56,g66)
+
+          ! new: shifts shear moduli by separating muv and muh factors.
+          !      still needs rotations to rotate back and forth from SPECFEM global axis to a radial symmetry axis
+          !      since this shift assumes a radial symmetry
+          A_dble = 0.125d0 * (3.d0 * d11 + 3.d0 * d22 + 2.d0 * d12 + 4.d0 * d66)
+          !C_dble = d33
+          N_dble = 0.125d0 * (d11 + d22 - 2.d0 * d12 + 4.d0 * d66)
+          L_dble = 0.5d0 * (d44 + d55)
+          F_dble = 0.5d0 * (d13 + d23)
+
+          eta_aniso = F_dble / (A_dble - 2.d0*L_dble)   ! eta = F / (A-2L)
+
+          muvl = L_dble * minus_sum_beta     ! c44 - > L - > muv
+          muhl = N_dble * minus_sum_beta     ! c66 - > N - > muh
+
+          d11 = d11 + FOUR_THIRDS * muhl ! * minus_sum_beta * mul
+          d12 = d12 - TWO_THIRDS * muhl
+          d13 = d13 + eta_aniso * (FOUR_THIRDS * muhl - 2.d0*muvl)
+          d22 = d22 + FOUR_THIRDS * muhl
+          d23 = d23 + eta_aniso * (FOUR_THIRDS * muhl - 2.d0*muvl)
+          d33 = d33 + FOUR_THIRDS * muvl
+          d44 = d44 + muvl
+          d55 = d55 + muvl
+          d66 = d66 + muhl
+
+          ! debug
+          !if (myrank == 0 .and. ispec == 1000 .and. ijk == 1) &
+          !  print *,'debug: original moduli unrelaxing A,N,L,F,eta',A_dble,N_dble,L_dble,F_dble,eta_aniso,'mu',muvl,muhl
+
+          ! rotates to global reference system
+          call rotate_tensor_radial_to_global(theta_dble,phi_dble, &
+                                              d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26, &
+                                              d33,d34,d35,d36,d44,d45,d46,d55,d56,d66, &
+                                              g11,g12,g13,g14,g15,g16,g22,g23,g24,g25,g26, &
+                                              g33,g34,g35,g36,g44,g45,g46,g55,g56,g66)
 
           ! stores unrelaxed factors
-          c11store_crust_mantle(INDEX_IJK,ispec) = c11
-          c12store_crust_mantle(INDEX_IJK,ispec) = c12
-          c13store_crust_mantle(INDEX_IJK,ispec) = c13
-          c22store_crust_mantle(INDEX_IJK,ispec) = c22
-          c23store_crust_mantle(INDEX_IJK,ispec) = c23
-          c33store_crust_mantle(INDEX_IJK,ispec) = c33
-          c44store_crust_mantle(INDEX_IJK,ispec) = c44
-          c55store_crust_mantle(INDEX_IJK,ispec) = c55
-          c66store_crust_mantle(INDEX_IJK,ispec) = c66
+          c11store_crust_mantle(INDEX_IJK,ispec) = real(g11,kind=CUSTOM_REAL)
+          c12store_crust_mantle(INDEX_IJK,ispec) = real(g12,kind=CUSTOM_REAL)
+          c13store_crust_mantle(INDEX_IJK,ispec) = real(g13,kind=CUSTOM_REAL)
+          c14store_crust_mantle(INDEX_IJK,ispec) = real(g14,kind=CUSTOM_REAL)
+          c15store_crust_mantle(INDEX_IJK,ispec) = real(g15,kind=CUSTOM_REAL)
+          c16store_crust_mantle(INDEX_IJK,ispec) = real(g16,kind=CUSTOM_REAL)
+          c22store_crust_mantle(INDEX_IJK,ispec) = real(g22,kind=CUSTOM_REAL)
+          c23store_crust_mantle(INDEX_IJK,ispec) = real(g23,kind=CUSTOM_REAL)
+          c24store_crust_mantle(INDEX_IJK,ispec) = real(g24,kind=CUSTOM_REAL)
+          c25store_crust_mantle(INDEX_IJK,ispec) = real(g25,kind=CUSTOM_REAL)
+          c26store_crust_mantle(INDEX_IJK,ispec) = real(g26,kind=CUSTOM_REAL)
+          c33store_crust_mantle(INDEX_IJK,ispec) = real(g33,kind=CUSTOM_REAL)
+          c34store_crust_mantle(INDEX_IJK,ispec) = real(g34,kind=CUSTOM_REAL)
+          c35store_crust_mantle(INDEX_IJK,ispec) = real(g35,kind=CUSTOM_REAL)
+          c36store_crust_mantle(INDEX_IJK,ispec) = real(g36,kind=CUSTOM_REAL)
+          c44store_crust_mantle(INDEX_IJK,ispec) = real(g44,kind=CUSTOM_REAL)
+          c45store_crust_mantle(INDEX_IJK,ispec) = real(g45,kind=CUSTOM_REAL)
+          c46store_crust_mantle(INDEX_IJK,ispec) = real(g46,kind=CUSTOM_REAL)
+          c55store_crust_mantle(INDEX_IJK,ispec) = real(g55,kind=CUSTOM_REAL)
+          c56store_crust_mantle(INDEX_IJK,ispec) = real(g56,kind=CUSTOM_REAL)
+          c66store_crust_mantle(INDEX_IJK,ispec) = real(g66,kind=CUSTOM_REAL)
+
+          ! for solving memory-variables, modulus defect \delta \mu_l (Komatitsch, 2002, eq. (11) & (13))
+          ! note: for solving the memory variables, we will only use the modulus defect
+          !       associated with muv. this is consistent with the implementation for tiso below.
+          !
+          !       however, to properly account for shear attenuation, one might have to add also
+          !       memory-variables for a modulus defect associated with muh.
+          muvstore_crust_mantle(INDEX_IJK,ispec) = real(d44,kind=CUSTOM_REAL)
+
         ENDDO_LOOP_IJK
 
         ! counter
@@ -235,6 +414,7 @@
 
           ! stores unrelaxed shear moduli
           muvstore_crust_mantle(INDEX_IJK,ispec) = muvl
+          muhstore_crust_mantle(INDEX_IJK,ispec) = muhl
 
           rhovpvsq = kappavl + FOUR_THIRDS * muvl  !!! that is C
           rhovphsq = kappahl + FOUR_THIRDS * muhl  !!! that is A
@@ -251,162 +431,33 @@
           theta = rstore_crust_mantle(2,iglob)
           phi = rstore_crust_mantle(3,iglob)
 
-          ! precompute some products to reduce the CPU time
+          ! rotates radial to global reference
+          call rotate_tensor_tiso_to_cij(theta,phi, &
+                                         rhovphsq,rhovpvsq,rhovsvsq,rhovshsq,eta_aniso, &
+                                         c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+                                         c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
 
-          costheta = cos(theta)
-          sintheta = sin(theta)
-          cosphi = cos(phi)
-          sinphi = sin(phi)
-
-          costhetasq = costheta * costheta
-          sinthetasq = sintheta * sintheta
-          cosphisq = cosphi * cosphi
-          sinphisq = sinphi * sinphi
-
-          costhetafour = costhetasq * costhetasq
-          sinthetafour = sinthetasq * sinthetasq
-          cosphifour = cosphisq * cosphisq
-          sinphifour = sinphisq * sinphisq
-
-          costwotheta = cos(2.0_CUSTOM_REAL*theta)
-          sintwotheta = sin(2.0_CUSTOM_REAL*theta)
-          costwophi = cos(2.0_CUSTOM_REAL*phi)
-          sintwophi = sin(2.0_CUSTOM_REAL*phi)
-
-          cosfourtheta = cos(4.0_CUSTOM_REAL*theta)
-          cosfourphi = cos(4.0_CUSTOM_REAL*phi)
-
-          costwothetasq = costwotheta * costwotheta
-
-          costwophisq = costwophi * costwophi
-          sintwophisq = sintwophi * sintwophi
-
-          etaminone = eta_aniso - 1.0_CUSTOM_REAL
-          twoetaminone = 2.0_CUSTOM_REAL * eta_aniso - 1.0_CUSTOM_REAL
-
-          ! precompute some products to reduce the CPU time
-          two_eta_aniso = 2.0_CUSTOM_REAL*eta_aniso
-          four_eta_aniso = 4.0_CUSTOM_REAL*eta_aniso
-          six_eta_aniso = 6.0_CUSTOM_REAL*eta_aniso
-
-          two_rhovsvsq = 2.0_CUSTOM_REAL*rhovsvsq
-          two_rhovshsq = 2.0_CUSTOM_REAL*rhovshsq
-          four_rhovsvsq = 4.0_CUSTOM_REAL*rhovsvsq
-          four_rhovshsq = 4.0_CUSTOM_REAL*rhovshsq
-
-          ! pre-compute temporary values
-          templ1 = four_rhovsvsq - rhovpvsq + twoetaminone*rhovphsq - four_eta_aniso*rhovsvsq
-          templ1_cos = rhovphsq - rhovpvsq + costwotheta*templ1
-          templ2 = four_rhovsvsq - rhovpvsq - rhovphsq + two_eta_aniso*rhovphsq - four_eta_aniso*rhovsvsq
-          templ2_cos = rhovpvsq - rhovphsq + costwotheta*templ2
-          templ3 = rhovphsq + rhovpvsq - two_eta_aniso*rhovphsq + four_eta_aniso*rhovsvsq
-          templ3_two = templ3 - two_rhovshsq - two_rhovsvsq
-          templ3_cos = templ3_two + costwotheta*templ2
-
-          ! reordering operations to facilitate compilation, avoiding divisions, using locality for temporary values
-          c11store_crust_mantle(INDEX_IJK,ispec) = rhovphsq*sinphifour &
-                + 2.0_CUSTOM_REAL*cosphisq*sinphisq* &
-                ( rhovphsq*costhetasq + sinthetasq*(eta_aniso*rhovphsq + two_rhovsvsq - two_eta_aniso*rhovsvsq) ) &
-                + cosphifour*(rhovphsq*costhetafour &
-                  + 2.0_CUSTOM_REAL*costhetasq*sinthetasq*(eta_aniso*rhovphsq + two_rhovsvsq - two_eta_aniso*rhovsvsq) &
-                  + rhovpvsq*sinthetafour)
-
-          c12store_crust_mantle(INDEX_IJK,ispec) = 0.25_CUSTOM_REAL*costhetasq &
-                *(rhovphsq - two_rhovshsq)*(3.0_CUSTOM_REAL + cosfourphi) &
-                - four_rhovshsq*cosphisq*costhetasq*sinphisq &
-                + 0.03125_CUSTOM_REAL*rhovphsq*sintwophisq*(11.0_CUSTOM_REAL + cosfourtheta + 4.0*costwotheta) &
-                + eta_aniso*sinthetasq*(rhovphsq - two_rhovsvsq) &
-                           *(cosphifour + sinphifour + 2.0_CUSTOM_REAL*cosphisq*costhetasq*sinphisq) &
-                + rhovpvsq*cosphisq*sinphisq*sinthetafour &
-                - rhovsvsq*sintwophisq*sinthetafour
-
-          c13store_crust_mantle(INDEX_IJK,ispec) = 0.125_CUSTOM_REAL*cosphisq &
-                *(rhovphsq + six_eta_aniso*rhovphsq + rhovpvsq - four_rhovsvsq &
-                      - 12.0_CUSTOM_REAL*eta_aniso*rhovsvsq + cosfourtheta*templ1) &
-                + sinphisq*(eta_aniso*costhetasq*(rhovphsq - two_rhovsvsq) + sinthetasq*(rhovphsq - two_rhovshsq))
-
-          ! uses temporary templ1 from c13
-          c15store_crust_mantle(INDEX_IJK,ispec) = cosphi*costheta*sintheta* &
-                ( 0.5_CUSTOM_REAL*cosphisq* (rhovpvsq - rhovphsq + costwotheta*templ1) &
-                  + etaminone*sinphisq*(rhovphsq - two_rhovsvsq))
-
-          c14store_crust_mantle(INDEX_IJK,ispec) = costheta*sinphi*sintheta* &
-                ( 0.5_CUSTOM_REAL*cosphisq*(templ2_cos + four_rhovshsq - four_rhovsvsq) &
-                  + sinphisq*(etaminone*rhovphsq + 2.0_CUSTOM_REAL*(rhovshsq - eta_aniso*rhovsvsq)) )
-
-          ! uses temporary templ2_cos from c14
-          c16store_crust_mantle(INDEX_IJK,ispec) = 0.5_CUSTOM_REAL*cosphi*sinphi*sinthetasq* &
-                ( cosphisq*templ2_cos &
-                  + 2.0_CUSTOM_REAL*etaminone*sinphisq*(rhovphsq - two_rhovsvsq) )
-
-          c22store_crust_mantle(INDEX_IJK,ispec) = rhovphsq*cosphifour + 2.0_CUSTOM_REAL*cosphisq*sinphisq* &
-                (rhovphsq*costhetasq + sinthetasq*(eta_aniso*rhovphsq + two_rhovsvsq - two_eta_aniso*rhovsvsq)) &
-                + sinphifour* &
-                (rhovphsq*costhetafour + 2.0_CUSTOM_REAL*costhetasq*sinthetasq*(eta_aniso*rhovphsq &
-                      + two_rhovsvsq - two_eta_aniso*rhovsvsq) + rhovpvsq*sinthetafour)
-
-          ! uses temporary templ1 from c13
-          c23store_crust_mantle(INDEX_IJK,ispec) = 0.125_CUSTOM_REAL*sinphisq*(rhovphsq + six_eta_aniso*rhovphsq &
-                  + rhovpvsq - four_rhovsvsq - 12.0_CUSTOM_REAL*eta_aniso*rhovsvsq + cosfourtheta*templ1) &
-                + cosphisq*(eta_aniso*costhetasq*(rhovphsq - two_rhovsvsq) + sinthetasq*(rhovphsq - two_rhovshsq))
-
-          ! uses temporary templ1 from c13
-          c24store_crust_mantle(INDEX_IJK,ispec) = costheta*sinphi*sintheta* &
-                ( etaminone*cosphisq*(rhovphsq - two_rhovsvsq) &
-                  + 0.5_CUSTOM_REAL*sinphisq*(rhovpvsq - rhovphsq + costwotheta*templ1) )
-
-          ! uses temporary templ2_cos from c14
-          c25store_crust_mantle(INDEX_IJK,ispec) = cosphi*costheta*sintheta* &
-                ( cosphisq*(etaminone*rhovphsq + 2.0_CUSTOM_REAL*(rhovshsq - eta_aniso*rhovsvsq)) &
-                  + 0.5_CUSTOM_REAL*sinphisq*(templ2_cos + four_rhovshsq - four_rhovsvsq) )
-
-          ! uses temporary templ2_cos from c14
-          c26store_crust_mantle(INDEX_IJK,ispec) = 0.5_CUSTOM_REAL*cosphi*sinphi*sinthetasq* &
-                ( 2.0_CUSTOM_REAL*etaminone*cosphisq*(rhovphsq - two_rhovsvsq) &
-                  + sinphisq*templ2_cos )
-
-          c33store_crust_mantle(INDEX_IJK,ispec) = rhovpvsq*costhetafour &
-                + 2.0_CUSTOM_REAL*costhetasq*sinthetasq*(two_rhovsvsq + eta_aniso*(rhovphsq - two_rhovsvsq)) &
-                + rhovphsq*sinthetafour
-
-          ! uses temporary templ1_cos from c13
-          c34store_crust_mantle(INDEX_IJK,ispec) = - 0.25_CUSTOM_REAL*sinphi*sintwotheta*templ1_cos
-
-          ! uses temporary templ1_cos from c34
-          c35store_crust_mantle(INDEX_IJK,ispec) = - 0.25_CUSTOM_REAL*cosphi*sintwotheta*templ1_cos
-
-          ! uses temporary templ1_cos from c34
-          c36store_crust_mantle(INDEX_IJK,ispec) = - 0.25_CUSTOM_REAL*sintwophi*sinthetasq &
-                *(templ1_cos - four_rhovshsq + four_rhovsvsq)
-
-          c44store_crust_mantle(INDEX_IJK,ispec) = cosphisq*(rhovsvsq*costhetasq + rhovshsq*sinthetasq) &
-                + sinphisq*(rhovsvsq*costwothetasq + costhetasq*sinthetasq*templ3)
-
-          ! uses temporary templ3 from c44
-          c46store_crust_mantle(INDEX_IJK,ispec) = - cosphi*costheta*sintheta* &
-                  ( cosphisq*(rhovshsq - rhovsvsq) - 0.5_CUSTOM_REAL*sinphisq*templ3_cos  )
-
-          ! uses templ3 from c46
-          c45store_crust_mantle(INDEX_IJK,ispec) = 0.25_CUSTOM_REAL*sintwophi*sinthetasq* &
-                (templ3_two + costwotheta*(rhovphsq + rhovpvsq - two_eta_aniso*rhovphsq + 4.0_CUSTOM_REAL*etaminone*rhovsvsq))
-
-          c55store_crust_mantle(INDEX_IJK,ispec) = sinphisq*(rhovsvsq*costhetasq + rhovshsq*sinthetasq) &
-                + cosphisq*(rhovsvsq*costwothetasq &
-                    + costhetasq*sinthetasq*(rhovphsq - two_eta_aniso*rhovphsq + rhovpvsq + four_eta_aniso*rhovsvsq) )
-
-          ! uses temporary templ3_cos from c46
-          c56store_crust_mantle(INDEX_IJK,ispec) = costheta*sinphi*sintheta* &
-                ( 0.5_CUSTOM_REAL*cosphisq*templ3_cos + sinphisq*(rhovsvsq - rhovshsq) )
-
-          c66store_crust_mantle(INDEX_IJK,ispec) = rhovshsq*costwophisq*costhetasq &
-                - 2.0_CUSTOM_REAL*cosphisq*costhetasq*sinphisq*(rhovphsq - two_rhovshsq) &
-                + 0.03125_CUSTOM_REAL*rhovphsq*sintwophisq*(11.0_CUSTOM_REAL + 4.0_CUSTOM_REAL*costwotheta + cosfourtheta) &
-                - 0.125_CUSTOM_REAL*rhovsvsq*sinthetasq* &
-                ( -6.0_CUSTOM_REAL - 2.0_CUSTOM_REAL*costwotheta - 2.0_CUSTOM_REAL*cosfourphi &
-                          + cos(4.0_CUSTOM_REAL*phi - 2.0_CUSTOM_REAL*theta) &
-                          + cos(2.0_CUSTOM_REAL*(2.0_CUSTOM_REAL*phi + theta)) ) &
-                + rhovpvsq*cosphisq*sinphisq*sinthetafour &
-                - 0.5_CUSTOM_REAL*eta_aniso*sintwophisq*sinthetafour*(rhovphsq - two_rhovsvsq)
+          c11store_crust_mantle(INDEX_IJK,ispec) = c11
+          c12store_crust_mantle(INDEX_IJK,ispec) = c12
+          c13store_crust_mantle(INDEX_IJK,ispec) = c13
+          c14store_crust_mantle(INDEX_IJK,ispec) = c14
+          c15store_crust_mantle(INDEX_IJK,ispec) = c15
+          c16store_crust_mantle(INDEX_IJK,ispec) = c16
+          c22store_crust_mantle(INDEX_IJK,ispec) = c22
+          c23store_crust_mantle(INDEX_IJK,ispec) = c23
+          c24store_crust_mantle(INDEX_IJK,ispec) = c24
+          c25store_crust_mantle(INDEX_IJK,ispec) = c25
+          c26store_crust_mantle(INDEX_IJK,ispec) = c26
+          c33store_crust_mantle(INDEX_IJK,ispec) = c33
+          c34store_crust_mantle(INDEX_IJK,ispec) = c34
+          c35store_crust_mantle(INDEX_IJK,ispec) = c35
+          c36store_crust_mantle(INDEX_IJK,ispec) = c36
+          c44store_crust_mantle(INDEX_IJK,ispec) = c44
+          c45store_crust_mantle(INDEX_IJK,ispec) = c45
+          c46store_crust_mantle(INDEX_IJK,ispec) = c46
+          c55store_crust_mantle(INDEX_IJK,ispec) = c55
+          c56store_crust_mantle(INDEX_IJK,ispec) = c56
+          c66store_crust_mantle(INDEX_IJK,ispec) = c66
         ENDDO_LOOP_IJK
 
         ! counter
@@ -446,14 +497,13 @@
       write(IMAIN,*) "  iso elements  = ",icount_iso
       call flush_IMAIN()
     endif
-
     if (icount > NSPECMAX_TISO_MANTLE) stop 'Error invalid number of tiso elements in prepare_timerun_aniso'
     if (icount_iso > NSPECMAX_ISO_MANTLE) stop 'Error invalid number of iso elements in prepare_timerun_aniso'
+  endif ! ANISOTROPIC_3D_MANTLE_VAL
 
-    ! since we scale muv and c11,.. stores we must divide with this factor to use the relaxed moduli for the modulus defect
-    ! calculation in updating the memory variables
-    if (ATTENUATION_VAL) then
-
+  ! since we scale muv and c11,.. stores we must divide with this factor to use the relaxed moduli for the modulus defect
+  ! calculation in updating the memory variables
+  if (ATTENUATION_VAL) then
 ! openmp solver
 !$OMP PARALLEL DEFAULT(SHARED) &
 !$OMP PRIVATE(ispec,i_SLS, &
@@ -464,41 +514,41 @@
 #endif
 !$OMP one_minus_sum_beta_use)
 !$OMP DO
-      do ispec = 1,NSPEC_CRUST_MANTLE
-        DO_LOOP_IJK
-          ! gets factor
-          if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
-            one_minus_sum_beta_use = one_minus_sum_beta_crust_mantle(INDEX_IJK,ispec)
-          else
-            one_minus_sum_beta_use = one_minus_sum_beta_crust_mantle(1,1,1,ispec)
-          endif
+    do ispec = 1,NSPEC_CRUST_MANTLE
+      DO_LOOP_IJK
+        ! gets factor
+        if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
+          one_minus_sum_beta_use = one_minus_sum_beta_crust_mantle(INDEX_IJK,ispec)
+        else
+          one_minus_sum_beta_use = one_minus_sum_beta_crust_mantle(1,1,1,ispec)
+        endif
 
-          ! corrects factor_common to obtain relaxed moduli in moduli defect
-          do i_SLS = 1,N_SLS
-            if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
-              factor_common_crust_mantle(INDEX_IJK,i_SLS,ispec) = &
-                  factor_common_crust_mantle(INDEX_IJK,i_SLS,ispec) / one_minus_sum_beta_use
-            else
-              factor_common_crust_mantle(1,1,1,i_SLS,ispec) = &
-                  factor_common_crust_mantle(1,1,1,i_SLS,ispec) / one_minus_sum_beta_use
-            endif
-          enddo
-        ENDDO_LOOP_IJK
-      enddo
+        ! corrects factor_common to obtain relaxed moduli in moduli defect
+        do i_SLS = 1,N_SLS
+          if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
+            factor_common_crust_mantle(INDEX_IJK,i_SLS,ispec) = &
+                factor_common_crust_mantle(INDEX_IJK,i_SLS,ispec) / one_minus_sum_beta_use
+          else
+            factor_common_crust_mantle(1,1,1,i_SLS,ispec) = &
+                factor_common_crust_mantle(1,1,1,i_SLS,ispec) / one_minus_sum_beta_use
+          endif
+        enddo
+      ENDDO_LOOP_IJK
+    enddo
 !$OMP ENDDO
 !$OMP END PARALLEL
-    endif ! ATTENUATION_VAL
-  endif
+  endif ! ATTENUATION_VAL
 
   ! inner core
-  if (ATTENUATION_VAL) then
-    ! only scales for attenuation
-    if (ANISOTROPIC_INNER_CORE_VAL) then
-      ! user output
-      if (myrank == 0) then
-        write(IMAIN,*) "  inner core anisotropic elements"
-        call flush_IMAIN()
-      endif
+  if (ANISOTROPIC_INNER_CORE_VAL) then
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) "  inner core anisotropic elements"
+      call flush_IMAIN()
+    endif
+
+    if (ATTENUATION_VAL) then
+      ! only scales for attenuation
 
       ! anisotropic inner core elements
       icount = 0
@@ -553,8 +603,9 @@
           ! please check:
           ! shear along [100] direction: mul = c44
           ! instead of
-          !mul = muvstore(INDEX_IJK,ispec) * minus_sum_beta
+          !   > mul = muvstore(INDEX_IJK,ispec) * minus_sum_beta
           ! this would be following the implementation from above for fully anisotropic elements...
+          !
           mul = c44 * minus_sum_beta
 
           c11 = c11 + FOUR_THIRDS * mul ! * minus_sum_beta * mul
@@ -569,6 +620,9 @@
           c13store_inner_core(INDEX_IJK,ispec) = c13
           c33store_inner_core(INDEX_IJK,ispec) = c33
           c44store_inner_core(INDEX_IJK,ispec) = c44
+
+          ! for solving memory-variables, modulus defect \delta \mu_l (Komatitsch, 2002, eq. (11) & (13))
+          muvstore_inner_core(INDEX_IJK,ispec) = c44
         ENDDO_LOOP_IJK
         ! counter
 !$OMP ATOMIC
@@ -582,14 +636,17 @@
         write(IMAIN,*) "  aniso elements = ",icount
         call flush_IMAIN()
       endif
+    endif ! ATTENUATION
+  else
+    ! isotropic inner core elements
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) "  inner core isotropic elements"
+      call flush_IMAIN()
+    endif
 
-    else
-      ! isotropic inner core elements
-      ! user output
-      if (myrank == 0) then
-        write(IMAIN,*) "  inner core isotropic elements"
-        call flush_IMAIN()
-      endif
+    if (ATTENUATION_VAL) then
+      ! only scales for attenuation
 
       icount_iso = 0
 
@@ -637,7 +694,11 @@
         write(IMAIN,*) "  iso elements  = ",icount_iso
         call flush_IMAIN()
       endif
-    endif
+    endif ! ATTENUATION
+  endif ! anisotropic/isotropic inner core
+
+  if (ATTENUATION_VAL) then
+    ! only scales for attenuation
 
     ! since we scale muv and c11,.. stores we must divide with this factor to use the relaxed moduli for the modulus defect
     ! calculation in updating the memory variables
@@ -678,7 +739,7 @@
     enddo
 !$OMP ENDDO
 !$OMP END PARALLEL
-  endif
+  endif ! ATTENUATION
 
   ! synchronizes processes
   call synchronize_all()

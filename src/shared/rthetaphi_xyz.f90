@@ -29,7 +29,7 @@
 
 ! convert x y z to r theta phi, single precision call
 
-  use constants, only: CUSTOM_REAL,SIZE_REAL,SMALL_VAL_ANGLE,ZERO
+  use constants, only: CUSTOM_REAL,SMALL_VAL_ANGLE,ZERO
 
   implicit none
 
@@ -69,7 +69,7 @@
   double precision, intent(in) :: x,y,z
   double precision, intent(out) :: r,theta,phi
 
-  double precision xmesh,ymesh,zmesh
+  double precision :: xmesh,ymesh,zmesh
 
   xmesh = x
   ymesh = y
@@ -330,7 +330,8 @@
 ! Anyway, I'm sorry that I'm not giving a clear answer, but hopefully this
 ! gives some thoughts.
 
-  use constants, only: PI_OVER_TWO,TINYVAL,ASSUME_PERFECT_SPHERE,USE_OLD_VERSION_5_1_5_FORMAT,ONE_MINUS_F_SQUARED
+  use constants, only: PI_OVER_TWO,TINYVAL,ASSUME_PERFECT_SPHERE,USE_OLD_VERSION_5_1_5_FORMAT
+  use shared_parameters, only: ONE_MINUS_F_SQUARED
 
   implicit none
 
@@ -342,7 +343,10 @@
   !         with eccentricity e^2 = 1 - (1-f)^2
   ! see about Earth flattening in constants.h: flattening factor changed to 1/299.8
   !                                            f = 1/299.8 -> 1/( (1-f)^2 ) = 1.0067046409645724
-  double precision, parameter :: FACTOR_TAN = 1.d0 / ONE_MINUS_F_SQUARED
+  double precision :: FACTOR_TAN
+
+  ! factor
+  FACTOR_TAN = 1.d0 / ONE_MINUS_F_SQUARED
 
   ! note: instead of 1/tan(theta) we take cos(theta)/sin(theta) and avoid division by zero
 
@@ -369,7 +373,7 @@
 
 ! converts geocentric colatitude (theta) to geographic colatitude (theta_prime) (in radians)
 
-  use constants, only: PI_OVER_TWO,TINYVAL,CUSTOM_REAL,SIZE_REAL,ASSUME_PERFECT_SPHERE
+  use constants, only: CUSTOM_REAL
 
   implicit none
 
@@ -396,7 +400,8 @@
 
 ! converts geographic latitude (lat_prime) (in degrees) to geocentric colatitude (theta) (in radians)
 
-  use constants, only: PI_OVER_TWO,DEGREES_TO_RADIANS,ASSUME_PERFECT_SPHERE,ONE_MINUS_F_SQUARED
+  use constants, only: PI_OVER_TWO,DEGREES_TO_RADIANS,ASSUME_PERFECT_SPHERE
+  use shared_parameters, only: ONE_MINUS_F_SQUARED
 
   implicit none
 

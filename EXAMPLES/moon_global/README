@@ -1,0 +1,72 @@
+------------------------------------
+README
+------------------------------------
+
+Example of a global simulation for Moon
+
+Simulation uses a 1D Moon model (VPREMOON by Garcia et al., 2011) together with topography.
+The setup runs on 6 CPU cores (MPI processes), with a runtime of about 5 min.
+
+The stations are the Apollo Passive Seismic Experiments (Apollo) seismometers.
+The event is the large meteoroid impact on May 13, 1972 (day 134, 1972), impact time 08:46:42.5 +/- 1s 
+The impact happened ~145km north of Apollo 14 station, all four Apollo mission seismometers were operational.
+
+
+Note about station locations:
+
+There are still some differing reports about the exact lat/lon positions of the Apollo seismometers.
+The station locations reported by FDSN are quite coarse:
+https://www.fdsn.org/networks/detail/XA_1969/
+
+S12        XA        -3.04      -23.42     
+S14        XA        -3.65      -17.48     
+S15        XA        26.08        3.66    
+S16        XA        -8.97       15.51   
+
+
+The locations from the description by R. Yamada, DARTS:
+https://www.darts.isas.jaxa.jp/planet/seismology/apollo/The_Description_of_Apollo_Seismic_Experiments.pdf
+https://www.darts.isas.jaxa.jp/planet/seismology/apollo/ASE.html
+
+S12        XA        -3.0094     -23.4246     
+S14        XA        -3.6440     -17.4775  
+S15        XA        26.1341       3.6298    
+S16        XA        -8.9754      15.4981   
+
+The locations determined by Ceri Nunn, JPL:
+https://github.com/cerinunn/pdart
+https://github.com/cerinunn/pdart/blob/master/diffusion/view_catalog_with_envelopes.py
+https://seiscode.iris.washington.edu/attachments/1290/XA.1969-1977.xml
+
+S12        XA        -3.01084     -23.42456       0.0    0.0
+S14        XA        -3.6445      -17.47753       0.0    0.0
+S15        XA        26.13407       3.62981       0.0    0.0
+S16        XA        -8.97577      15.49649       0.0    0.0
+
+
+Here, we choose the reported positions from Ceri Nunn for Planetary Data Archiving, Restoration, and Tools (PDART) 
+for the Apollo missions.
+
+Data: IRIS is not providing the Passive Seismic Experiments (PSE) Apollo data anymore. 
+      Raw data can be found on:
+        - Darts (http://darts.isas.jaxa.jp/pub/apollo/pse/) 
+        - IPGP datacenter (http://datacenter.ipgp.fr/metadata/XA/ and ftp://ftpcdd.ipgp.fr/data/XA/)
+
+
+
+1. forward simulation:
+----------------------
+
+type:
+./run_this_example.sh
+
+to setup this directory for the simulation and to run a corresponding
+script "run_mesher_solver.bash".
+
+The simulation is accurate down to a shortest period of ~ 32 s.
+(minimum period resolved ~ (256/NEX_XI) * (ANGULAR_WIDTH/90) * 6 = (256/48) * (90/90) * 6 ~ 32 s)
+ 
+Reference seismograms for comparisons are provided in the directory: REF_SEIS/
+Please modify the setup and scripts according to your specifics.
+
+

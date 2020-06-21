@@ -137,9 +137,8 @@
 
 !! compute memory usage per processor core
 ! evaluate the amount of static memory needed by the solver
-        call memory_eval(doubling_index,this_region_has_a_doubling, &
-                         ner,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-                         ratio_sampling_array,NPROCTOT, &
+        call memory_eval(NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+                         NPROCTOT, &
                          NSPEC,NGLOB, &
                          NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
                          NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &

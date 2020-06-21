@@ -71,9 +71,6 @@
 #ifndef IFLAG_IN_FICTITIOUS_CUBE
 #define IFLAG_IN_FICTITIOUS_CUBE 11
 #endif
-#ifndef R_EARTH_KM
-#define R_EARTH_KM 6371.0f
-#endif
 #ifndef COLORING_MIN_NSPEC_INNER_CORE
 #define COLORING_MIN_NSPEC_INNER_CORE 1000
 #endif
@@ -86,7 +83,9 @@
 
 __global__ void update_disp_veloc_kernel(float * displ, float * veloc, float * accel, const int size, const float deltat, const float deltatsqover2, const float deltatover2){
   int id;
+
   id = threadIdx.x + (blockIdx.x) * (blockDim.x) + (blockIdx.y) * ((gridDim.x) * (blockDim.x));
+
   if (id < size) {
     displ[id] = displ[id] + (deltat) * (veloc[id]) + (deltatsqover2) * (accel[id]);
     veloc[id] = veloc[id] + (deltatover2) * (accel[id]);

@@ -240,7 +240,7 @@ module specfem_par
 
   ! for ellipticity
   integer :: nspl
-  double precision,dimension(NR) :: rspl,espl,espl2
+  double precision,dimension(NR_DENSITY) :: rspl,ellipicity_spline,ellipicity_spline2
 
   !-----------------------------------------------------------------
   ! rotation
@@ -265,8 +265,6 @@ module specfem_par
     gravity_pre_store_inner_core
   real(kind=CUSTOM_REAL), dimension(:,:),allocatable :: gravity_H_crust_mantle,gravity_H_inner_core
 
-
-
   !-----------------------------------------------------------------
   ! sources
   !-----------------------------------------------------------------
@@ -281,8 +279,11 @@ module specfem_par
   double precision, dimension(:), allocatable :: xi_source,eta_source,gamma_source
   double precision, dimension(:), allocatable :: tshift_src,hdur,hdur_Gaussian
   double precision, dimension(:), allocatable :: theta_source,phi_source
+
   double precision :: Mrr,Mtt,Mpp,Mrt,Mrp,Mtp,Mw,M0
   double precision :: t0
+  double precision :: min_tshift_src_original
+  double precision :: source_final_distance_max
 
   ! External source time function.
   double precision, dimension(:), allocatable :: stfArray_external
@@ -294,25 +295,29 @@ module specfem_par
   ! receiver information
   integer :: nrec,nrec_local
   integer, dimension(:), allocatable :: islice_selected_rec,ispec_selected_rec
-  integer, dimension(:), allocatable :: number_receiver_global
+  integer, dimension(:), allocatable :: islice_num_rec_local
+
   double precision, dimension(:), allocatable :: xi_receiver,eta_receiver,gamma_receiver
-  double precision, dimension(:,:,:), allocatable :: nu
+  double precision, dimension(:,:,:), allocatable :: nu_rec
   double precision, allocatable, dimension(:) :: stlat,stlon,stele,stbur
+  double precision :: receiver_final_distance_max
+
   character(len=MAX_LENGTH_STATION_NAME), dimension(:), allocatable  :: station_name
   character(len=MAX_LENGTH_NETWORK_NAME), dimension(:), allocatable :: network_name
   character(len=MAX_STRING_LEN) :: STATIONS_FILE
 
   ! Lagrange interpolators at receivers
-  double precision, dimension(:,:), allocatable :: hxir_store,hetar_store,hgammar_store
-  double precision, dimension(:,:,:,:), allocatable :: hlagrange_store
+  integer, dimension(:), allocatable, target :: number_receiver_global
+  double precision, dimension(:,:), allocatable, target :: hxir_store,hetar_store,hgammar_store
 
-  ! ADJOINT sources
+  ! adjoint sources
+  integer :: nadj_rec_local
+  integer, dimension(:), pointer :: number_adjsources_global
+  double precision, dimension(:,:), pointer :: hxir_adjstore,hetar_adjstore,hgammar_adjstore
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: source_adjoint
   ! asynchronous read buffer when IO_ASYNC_COPY is set
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: buffer_source_adjoint
 
-
-  integer :: nadj_rec_local
   integer :: NSTEP_SUB_ADJ  ! to read input in chunks
 
   integer, dimension(:,:), allocatable :: iadjsrc ! to read input in chunks
@@ -333,22 +338,23 @@ module specfem_par
   integer :: it_begin,it_end
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: seismograms
   integer :: seismo_offset, seismo_current
+
+  ! strain seismograms
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: seismograms_eps
+
   ! adjoint seismograms
   integer :: it_adj_written
 
   ! for SAC headers for seismograms
   integer :: yr_SAC,jda_SAC,mo_SAC,da_SAC,ho_SAC,mi_SAC
   double precision :: sec_SAC
+
   real :: mb_SAC ! body-wave magnitude
   real :: ms_SAC ! surface-wave magnitude (for ASDF QuakeML file)
   double precision :: t_cmt_SAC,t_shift_SAC
   double precision :: elat_SAC,elon_SAC,depth_SAC, &
     cmt_lat_SAC,cmt_lon_SAC,cmt_depth_SAC,cmt_hdur_SAC
   character(len=20) :: event_name_SAC
-
-  ! for ASDF start time
-  integer :: yr, jda, mo, da, ho, mi
-  double precision :: sec
 
   ! strain flag
   logical :: COMPUTE_AND_STORE_STRAIN
@@ -431,7 +437,7 @@ module specfem_par
   ! ASDF
   !-----------------------------------------------------------------
   ! asdf file handle
-  integer :: current_asdf_handle
+  integer(kind=8) :: current_asdf_handle
 
   !-----------------------------------------------------------------
   ! time scheme
@@ -476,6 +482,32 @@ module specfem_par
 
   ! for saving/reading stacey boundary contributions
   logical :: SAVE_STACEY
+
+  !-----------------------------------------------------------------
+  ! point search
+  !-----------------------------------------------------------------
+  ! (i,j,k) indices of the control/anchor points of the element
+  integer :: anchor_iax(NGNOD),anchor_iay(NGNOD),anchor_iaz(NGNOD)
+
+  ! coordinates of element midpoints
+  double precision, allocatable, dimension(:,:) :: xyz_midpoints
+
+  ! search range: single slice dimensions
+  double precision :: lat_min,lat_max,lon_min,lon_max
+
+  ! search margin in degrees
+  double precision,parameter :: LAT_LON_MARGIN = 2.d0
+
+  ! estimated typical element size (at surface)
+  double precision :: element_size
+
+  ! typical element search distance squared
+  double precision :: typical_size_squared
+
+  ! adjacency arrays
+  integer,dimension(:),allocatable :: xadj   ! adjacency indexing
+  integer,dimension(:),allocatable :: adjncy ! adjacency
+  integer :: num_neighbors_all
 
 end module specfem_par
 
@@ -531,6 +563,8 @@ module specfem_par_crustmantle
     c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
     c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
     c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle
+
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: mu0store_crust_mantle
 
   ! flag for transversely isotropic elements
   logical, dimension(:),allocatable :: ispec_is_tiso_crust_mantle
@@ -630,7 +664,6 @@ module specfem_par_crustmantle
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: hess_kl_crust_mantle
 
   ! Boundary Mesh and Kernels
-  integer :: k_top,k_bot,iregion_code
   integer, dimension(:), allocatable :: ibelm_moho_top,ibelm_moho_bot
   integer, dimension(:), allocatable :: ibelm_400_top,ibelm_400_bot
   integer, dimension(:), allocatable :: ibelm_670_top,ibelm_670_bot
@@ -719,7 +752,6 @@ module specfem_par_innercore
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: sum_terms_inner_core
 
   ! material parameters
-  ! (note: muvstore also needed for attenuation in case of anisotropic inner core)
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
     rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core
 
@@ -993,10 +1025,8 @@ module specfem_par_movie
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: nu_3dmovie
 
   integer :: npoints_3dmovie,nspecel_3dmovie
-  integer, dimension(:), allocatable :: num_ibool_3dmovie
 
   logical, dimension(:,:,:,:), allocatable :: mask_3dmovie
-  logical, dimension(:), allocatable :: mask_ibool
 
   ! outer core
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
@@ -1022,7 +1052,7 @@ end module specfem_par_movie
 
 !=====================================================================
 
-#ifdef XSMM
+#ifdef USE_XSMM
 
 module my_libxsmm
 

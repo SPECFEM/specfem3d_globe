@@ -59,6 +59,12 @@
 
   integer :: ier
 
+  ! user info
+  if (myrank == 0) then
+    write(IMAIN,*) 'broadcast model: GAPP2'
+    call flush_IMAIN()
+  endif
+
   ! allocates arrays only when called and needed
   allocate(dep(0:mr),dep1(0:mr1),vp1(0:mr1),vp3(ma,mo,mr), &
           stat=ier)
@@ -96,7 +102,7 @@
 
   implicit none
 
-  integer i,ir,ia,io,ier
+  integer :: i,ir,ia,io,ier
   character(len=MAX_STRING_LEN), parameter :: GAPP2 = 'DATA/3dvpGAP_P2'
 
 !...........................................input data
@@ -178,16 +184,16 @@
 
   implicit none
 
-  integer id,ia,io,icon
-  real d,dtheta,dphi
+  integer :: id,ia,io,icon
+  real :: d,dtheta,dphi
 
-  double precision radius,theta,phi,dvs,dvp,drho
+  double precision :: radius,theta,phi,dvs,dvp,drho
 
 ! factor to convert perturbations in shear speed to perturbations in density
   double precision, parameter :: SCALE_VS =  1.40d0
   double precision, parameter :: SCALE_RHO = 0.0d0
 
-  double precision, parameter :: R_EARTH_ = R_EARTH_KM
+  double precision, parameter :: R_EARTH_ = EARTH_R_KM
   double precision, parameter :: ZERO_ = 0.d0
 
 !.....................................
@@ -197,15 +203,15 @@
   drho = ZERO_
 
   ! increments in latitude/longitude (in rad)
-  dtheta = dela * DEGREES_TO_RADIANS
-  dphi = delo * DEGREES_TO_RADIANS
+  dtheta = real(dela * DEGREES_TO_RADIANS)
+  dphi = real(delo * DEGREES_TO_RADIANS)
 
   ! depth given in km
-  d=R_EARTH_-radius*R_EARTH_
+  d = real(R_EARTH_ - radius*R_EARTH_)
 
   call d2id(d,nnr,dep,id,icon)
   if (icon /= 0) then
-     write(*,*)icon
+     write(*,*) icon
      write(*,*) radius,theta,phi,dvp,dvs,drho
   endif
 
@@ -217,7 +223,7 @@
   endif
   ! longitude
   if (phi < 0.0d0) phi = phi + 2.*PI
-  io=int(phi / dphi) + 1
+  io = int(phi / dphi) + 1
   if (io > no) io=io-no
 
   ! velocity and density perturbations
@@ -243,22 +249,29 @@
 !   icon  o   condition code
 !              0:normal, -99:above the surface, 99:below the cmb
 !.................................................................
-    integer i, mr, id, icon
-    real d,dmax,dmin
-    real di(0:mr)
+    integer, intent(in) :: mr
+    integer, intent(out) :: id, icon
+    real,intent(in) :: d
+    real,intent(in) :: di(0:mr)
+
+    integer :: i
+    real :: dmax,dmin
+
+    id = 0
     icon = 0
-    dmax=di(mr)
-    dmin=di(0)
+    dmax = di(mr)
+    dmin = di(0)
+
     if (d > dmax) then
-       icon=99
+       icon = 99
     else if (d < dmin) then
-       icon=-99
+       icon = -99
     else if (d == dmax) then
-       id=mr+1
+       id = mr+1
     else
        do i = 0, mr
           if (d < di(i)) then
-             id=i
+             id = i
              goto 900
           endif
        enddo

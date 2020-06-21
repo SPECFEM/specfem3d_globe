@@ -35,7 +35,7 @@
 
   use manager_adios
 
-#ifdef XSMM
+#ifdef USE_XSMM
   use my_libxsmm
 #endif
 
@@ -126,15 +126,17 @@
   endif
 
   ! asdf finalizes
-  if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3 &
-       .and. READ_ADJSRC_ASDF) then
+  if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3 .and. READ_ADJSRC_ASDF) then
     call asdf_cleanup()
   endif
 
-#ifdef XSMM
+#ifdef USE_XSMM
   ! finalizes LIBXSMM
   call libxsmm_finalize()
 #endif
+
+  ! synchronize all
+  call synchronize_all()
 
   ! frees dynamically allocated memory
   call finalize_simulation_cleanup()
@@ -167,17 +169,29 @@
   use specfem_par_movie
   implicit none
 
+  ! from here on, no gpu data is needed anymore
+  ! frees allocated memory on GPU
+  if (GPU_MODE) call prepare_cleanup_device(Mesh_pointer,NCHUNKS_VAL)
+
   ! mass matrices
   ! crust/mantle
   if ((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. &
       (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL)) then
-    deallocate(rmassx_crust_mantle,rmassy_crust_mantle)
+    if (USE_LDDRK) then
+      nullify(rmassx_crust_mantle,rmassy_crust_mantle)
+    else
+      deallocate(rmassx_crust_mantle,rmassy_crust_mantle)
+    endif
   else
     nullify(rmassx_crust_mantle,rmassy_crust_mantle)
   endif
   if (SIMULATION_TYPE == 3) then
     if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) then
-      deallocate(b_rmassx_crust_mantle,b_rmassy_crust_mantle)
+      if (USE_LDDRK) then
+        nullify(b_rmassx_crust_mantle,b_rmassy_crust_mantle)
+      else
+        deallocate(b_rmassx_crust_mantle,b_rmassy_crust_mantle)
+      endif
     else
       nullify(b_rmassx_crust_mantle,b_rmassy_crust_mantle)
     endif
@@ -267,8 +281,7 @@
     deallocate(comp_dir_vect_source_N)
     deallocate(comp_dir_vect_source_Z_UP)
   endif
-
-  if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) deallocate(sourcearrays)
+  deallocate(sourcearrays)
   if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
     deallocate(iadj_vec)
     if (nadj_rec_local > 0) then
@@ -281,19 +294,20 @@
   ! receivers
   deallocate(islice_selected_rec,ispec_selected_rec, &
              xi_receiver,eta_receiver,gamma_receiver)
+  if (myrank == 0 .and. WRITE_SEISMOGRAMS_BY_MASTER) deallocate(islice_num_rec_local)
   deallocate(station_name,network_name, &
              stlat,stlon,stele,stbur)
-  deallocate(nu,number_receiver_global)
+  deallocate(nu_rec,number_receiver_global)
   if (nrec_local > 0) then
     deallocate(hxir_store, &
                hetar_store, &
                hgammar_store)
-    deallocate(hlagrange_store)
     if (SIMULATION_TYPE == 2) then
       deallocate(moment_der,stshift_der)
     endif
   endif
   deallocate(seismograms)
+  if (SAVE_SEISMOGRAMS_STRAIN) deallocate(seismograms_eps)
 
   ! kernels
   if (SIMULATION_TYPE == 3) then
@@ -310,6 +324,7 @@
   endif
   if (MOVIE_VOLUME) then
     deallocate(nu_3dmovie)
+    deallocate(mask_3dmovie,muvstore_crust_mantle_3dmovie)
   endif
 
   ! noise simulations

@@ -71,9 +71,6 @@
 #ifndef IFLAG_IN_FICTITIOUS_CUBE
 #define IFLAG_IN_FICTITIOUS_CUBE 11
 #endif
-#ifndef R_EARTH_KM
-#define R_EARTH_KM 6371.0f
-#endif
 #ifndef COLORING_MIN_NSPEC_INNER_CORE
 #define COLORING_MIN_NSPEC_INNER_CORE 1000
 #endif
@@ -86,7 +83,9 @@
 
 __global__ void update_accel_elastic_kernel(float * accel, const float * veloc, const int size, const float two_omega_earth, const float * rmassx, const float * rmassy, const float * rmassz){
   int id;
+
   id = threadIdx.x + (blockIdx.x) * (blockDim.x) + (blockIdx.y) * ((gridDim.x) * (blockDim.x));
+
   if (id < size) {
     accel[(id) * (3)] = (accel[(id) * (3)]) * (rmassx[id]) + (two_omega_earth) * (veloc[(id) * (3) + 1]);
     accel[(id) * (3) + 1] = (accel[(id) * (3) + 1]) * (rmassy[id]) - ((two_omega_earth) * (veloc[(id) * (3)]));

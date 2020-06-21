@@ -71,9 +71,6 @@
 #ifndef IFLAG_IN_FICTITIOUS_CUBE
 #define IFLAG_IN_FICTITIOUS_CUBE 11
 #endif
-#ifndef R_EARTH_KM
-#define R_EARTH_KM 6371.0f
-#endif
 #ifndef COLORING_MIN_NSPEC_INNER_CORE
 #define COLORING_MIN_NSPEC_INNER_CORE 1000
 #endif
@@ -85,16 +82,19 @@
 #endif
 
 __global__ void write_seismograms_transfer_from_device_kernel(const int * number_receiver_global, const int * ispec_selected_rec, const int * ibool, float * station_seismo_field, const float * d_field, const int nrec_local){
+  int iglob;
   int tx;
   int irec;
   int ispec;
-  int iglob;
   int blockID;
+
   blockID = blockIdx.x + (blockIdx.y) * (gridDim.x);
   tx = threadIdx.x;
+
   if (blockID < nrec_local) {
     irec = number_receiver_global[blockID] - (1);
     ispec = ispec_selected_rec[irec] - (1);
+
     iglob = ibool[tx + (NGLL3) * (ispec)] - (1);
     station_seismo_field[((NGLL3) * (3)) * (blockID) + (tx) * (3) + 0] = d_field[(iglob) * (3) + 0];
     station_seismo_field[((NGLL3) * (3)) * (blockID) + (tx) * (3) + 1] = d_field[(iglob) * (3) + 1];

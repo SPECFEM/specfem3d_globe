@@ -25,14 +25,26 @@
 !
 !=====================================================================
 
-!> Tools to setup and cleanup ADIOS,
+!-------------------------------------------------------------------------------
+!> Tools for ADIOS/ADIOS2,
 !> contains wrapper subroutines for common adios calls
 !
 ! note: adios library calls use a format like "adios_do_something***()"
 !       our own wrapper functions thus will rather use something like "do_something_adios***()"
 !       to better distinguish between library functions and wrappers.
+!-------------------------------------------------------------------------------
+
+#include "config.fh"
+
 
 module manager_adios
+
+#if defined(USE_ADIOS)
+  use adios_write_mod
+  use adios_read_mod
+#elif defined(USE_ADIOS2)
+  use adios2
+#endif
 
   implicit none
 
@@ -40,57 +52,93 @@ module manager_adios
 
   ! MPI copies of communicator and rank
   integer :: comm_adios
-  integer :: myrank_adios
-
+  integer,public :: myrank_adios
   integer,public :: sizeprocs_adios
 
   ! initialized flag
   logical :: is_adios_initialized
+  logical, public :: is_adios_version1
+  logical, public :: is_adios_version2
 
-#ifdef ADIOS_INPUT
-  ! adios error message
-  character(len=1024) :: err_message
+  ! for undo_att snapshots: single file per iteration step (or only one file for all steps)
+  logical, parameter, public :: ADIOS_SAVE_ALL_SNAPSHOTS_IN_ONE_FILE = .true.
+
+#if defined(USE_ADIOS)
+  ! adios
   character(len=*),parameter :: ADIOS_VERBOSITY = "verbose=1" ! lowest level: verbose=1
+  ! default file handle for read/write
+  integer(kind=8), public :: myadios_file
+  ! IO group
+  integer(kind=8), public :: myadios_group
+
+  ! additional file handle for read/write value file
+  integer(kind=8), public :: myadios_val_file
+  integer(kind=8), public :: myadios_val_group
+
+  ! for undo att
+  integer(kind=8), public :: myadios_fwd_group
+  integer(kind=8), public :: myadios_fwd_file
+  logical, public :: is_initialized_fwd_group
+
+#elif defined(USE_ADIOS2)
+  ! adios2 main object
+  type(adios2_adios), public:: myadios2_obj
+  ! default file handle for read/write
+  type(adios2_engine), public :: myadios_file
+  ! IO group
+  type(adios2_io), public :: myadios_group
+
+  ! additional file handle for read/write value file
+  type(adios2_engine), public :: myadios_val_file
+  type(adios2_io), public :: myadios_val_group
+
+  ! for undo att
+  type(adios2_io), public :: myadios_fwd_group
+  type(adios2_engine), public:: myadios_fwd_file
+  logical, public :: is_initialized_fwd_group
+
+  ! debugging mode
+  ! note: adios2 still in development stage, let's keep debug mode on
+  logical,parameter :: USE_ADIOS2_DEBUG_MODE = .true.
+
 #endif
 
-  ! debugging
-  logical,parameter :: DEBUG = .false.
-
   ! public accessibility
-
-  ! file handle for read/write
-  integer(kind=8),public :: file_handle_adios
-
-  ! public routines
   public :: initialize_adios
   public :: finalize_adios
-  public :: close_file_adios
 
 ! only available with ADIOS compilation support
 ! to clearly separate adios version and non-adios version of same tools
-#ifdef ADIOS_INPUT
-  public :: close_file_adios_read
-  public :: init_adios_group
-  public :: set_adios_group_size
-  ! reading
-  public :: read_adios_array_gll
-  public :: read_adios_array_gll_int
-  public :: read_adios_array_1d
-  public :: read_adios_array_1d_int
-  public :: read_adios_scalar_int
-  public :: read_adios_scalar_int_only_rank
-  ! writing
-  public :: write_adios_array_gll
-  public :: write_adios_scalar_int
+#if defined(USE_ADIOS) || defined(USE_ADIOS2)
   ! file opening
-  public :: open_file_adios_read
+  public :: open_file_adios_read_and_init_method
   public :: open_file_adios_read_only_rank
+  public :: open_file_adios_read
   public :: open_file_adios_write
   public :: open_file_adios_write_append
-#endif
+
+  ! file closing
+  public :: close_file_adios
+  public :: close_file_adios_read_and_finalize_method
+  public :: close_file_adios_read_and_finalize_method_only_rank
+  public :: close_file_adios_read
+
+  ! groups
+  public :: init_adios_group
+  public :: init_adios_group_undo_att
+  public :: set_adios_group_size
+  public :: set_selection_boundingbox
+  public :: delete_adios_selection
+  public :: get_adios_group
+  public :: flush_adios_group_all
+
+  ! check
+  public :: check_adios_err
+  public :: show_adios_file_variables
+
+#endif  /* USE_ADIOS or USE_ADIOS2 */
 
 contains
-
 
 !-------------------------------------------------------------------------------
 !
@@ -102,34 +150,39 @@ contains
 
 !> Initialize ADIOS and setup the xml output file
 
+#if defined(USE_ADIOS)
   use constants, only: ADIOS_BUFFER_SIZE_IN_MB
 
-#ifdef ADIOS_INPUT
-  use adios_write_mod, only: adios_init_noxml
-#ifdef ADIOS_VERSION_OLD
+!#ifdef ADIOS_VERSION_OLD
   ! ADIOS versions <= 1.9
   ! adios_set_max_buffer_size not defined yet
-#else
+!#else
   ! ADIOS versions >= 1.10
-  use adios_write_mod, only: adios_set_max_buffer_size
-#endif
+  !use adios_write_mod, only: adios_set_max_buffer_size
+!#endif
+
+#elif defined(USE_ADIOS2)
+  use constants, only: CUSTOM_REAL, SIZE_REAL
 #endif
 
   implicit none
 
   ! local parameters
-#ifdef ADIOS_INPUT
+#if defined(USE_ADIOS) || defined(USE_ADIOS2)
   integer :: ier
 #endif
 
+  TRACE_ADIOS('initialize_adios')
+
   ! initializes
   is_adios_initialized = .false.
+  is_adios_version1 = .false.
+  is_adios_version2 = .false.
   comm_adios = 0
   myrank_adios = -1
-  file_handle_adios = 0
+  sizeprocs_adios = 0
 
-#ifdef ADIOS_INPUT
-
+#if defined(USE_ADIOS) || defined(USE_ADIOS2)
   ! gets MPI communicator for adios calls
   call world_duplicate(comm_adios)
 
@@ -137,13 +190,21 @@ contains
   call world_rank_comm(myrank_adios,comm_adios)
 
   ! number of MPI processes
-  call world_size(sizeprocs_adios)
+  call world_size_comm(sizeprocs_adios,comm_adios)
+
+  ! checks
+  if (sizeprocs_adios == 0) &
+    stop 'Error adios initialization got zero processes'
+
+#if defined(USE_ADIOS)
+  ! ADIOS 1
+  is_adios_version1 = .true.
 
   call adios_init_noxml (comm_adios, ier)
   ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
   !       e.g., version 1.5.0 returns 1 here
   !print *,'adios init return: ',ier
-  !if (ier /= 0 ) stop 'Error setting up ADIOS: calling adios_init_noxml() routine failed'
+  !if (ier /= 0) stop 'Error setting up ADIOS: calling adios_init_noxml() routine failed'
 
 ! ask/check at configuration step for adios version 1.10 or higher?
 #ifdef ADIOS_VERSION_OLD
@@ -153,24 +214,50 @@ contains
   ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
   !       e.g., version 1.5.0 returns 1 if called first time, 0 if already called
   !print *,'adios allocate buffer return: ',ier
-  !call check_adios_err(myrank_adios,ier)
+  !call check_adios_err(ier,"Error allocate buffer")
 #else
   ! ADIOS versions >= 1.10
   call adios_set_max_buffer_size(ADIOS_BUFFER_SIZE_IN_MB)
 #endif
 
+  ! initializes file handles
+  myadios_file = 0
+  myadios_group = 0
+  myadios_fwd_file = 0
+  myadios_fwd_group = 0
+  myadios_val_file = 0
+  myadios_val_group = 0
+
+#elif defined(USE_ADIOS2)
+  ! ADIOS 2
+  is_adios_version2 = .true.
+
+  ! Create adios handler passing the communicator, debug mode and error flag
+  ! adios2 duplicates the communicator for its internal use
+  if (USE_ADIOS2_DEBUG_MODE) then
+    call adios2_init(myadios2_obj, comm_adios, adios2_debug_mode_on, ier)
+  else
+    call adios2_init(myadios2_obj, comm_adios, adios2_debug_mode_off, ier)
+  endif
+  if (ier /= 0) stop 'Error setting up ADIOS2: calling adios2_init() routine failed'
+
+#endif
+
   ! sets flag
   is_adios_initialized = .true.
 
-#else
+  ! for undo att
+  is_initialized_fwd_group = .false.
 
+#else
+  ! no adios compilation support
   ! gets rank
   call world_rank(myrank_adios)
 
   ! compilation without ADIOS support
   if (myrank_adios == 0) then
     print *, "Error: ADIOS enabled without ADIOS Support."
-    print *, "To enable ADIOS support, reconfigure with --with-adios flag."
+    print *, "To enable ADIOS support, reconfigure with --with-adios or --with-adios2 flag."
   endif
   ! safety stop
   call exit_MPI(myrank_adios,"Error ADIOS manager: intitialize called without compilation support")
@@ -187,76 +274,75 @@ contains
 
 !> Finalize ADIOS. Must be called once everything is written down.
 
-#ifdef ADIOS_INPUT
-  use adios_write_mod, only: adios_finalize
-#endif
-
   implicit none
 
   ! local parameters
-#ifdef ADIOS_INPUT
+#if defined(USE_ADIOS) || defined(USE_ADIOS2)
   integer :: ier
+  logical, external :: is_valid_comm
 #endif
+
+  TRACE_ADIOS('finalize_adios')
 
   ! synchronizes all first
   call synchronize_all_comm(comm_adios)
 
-#ifdef ADIOS_INPUT
+#if defined(USE_ADIOS)
+  ! ADIOS 1
+  ! checks to close file at the end of run
+  if (is_initialized_fwd_group .and. myadios_fwd_file /= 0) then
+    ! debug
+    print *,'Warning: rank ',myrank_adios,' has myadios_fwd_file still open, please check reading adios forward snapshots.'
+    ! this might crash with a seg-fault if still open for kernel runs...
+    call adios_close(myadios_fwd_file, ier)
+    call check_adios_err(ier,"Error closing adios fwd file")
+  endif
+
+  ! double-check file handles
+  if (myadios_file /= 0) stop 'Error adios file myadios_file still open, please check.'
+  if (myadios_val_file /= 0) stop 'Error adios file myadios_val_file still open, please check.'
+  if (myadios_fwd_file /= 0) stop 'Error adios file myadios_fwd_file still open, please check.'
+
+  ! wait until finalized, synchronizes all using adios communicator
+  call synchronize_all_comm(comm_adios)
+
   ! finalize
   call adios_finalize(myrank_adios, ier)
   if (ier /= 0 ) stop 'Error cleaning up ADIOS: calling adios_finalize() routine failed'
 
   ! frees (duplicate) MPI communicator
-  call world_comm_free(comm_adios)
+  if (is_valid_comm(comm_adios)) call world_comm_free(comm_adios)
+
+#elif defined(USE_ADIOS2)
+  ! checks to close file at the end of run
+  if (is_initialized_fwd_group .and. myadios_fwd_file%valid) then
+    call adios2_close(myadios_fwd_file, ier)
+    call check_adios_err(ier,"Error closing adios fwd file")
+  endif
+
+  ! double-check file handles
+  if (myadios_file%valid) stop 'Error adios2 file myadios_file still open, please check.'
+  if (myadios_val_file%valid) stop 'Error adios2 file myadios_val_file still open, please check.'
+  if (myadios_fwd_file%valid) stop 'Error adios2 file myadios_fwd_file still open, please check.'
+
+  ! wait until finalized, synchronizes all using adios communicator
+  call synchronize_all_comm(comm_adios)
+
+  ! finalize
+  call adios2_finalize(myadios2_obj, ier)
+  if (ier /= 0 ) stop 'Error cleaning up ADIOS2: calling adios2_finalize() routine failed'
+
+  ! adios2 internally calls MPI_Comm_dup and frees (duplicate) MPI communicator when finalizing.
+  ! since we called an explicit duplicator, we also free it.
+  if (is_valid_comm(comm_adios)) call world_comm_free(comm_adios)
 
 #else
   ! safety stop
   call exit_MPI(myrank_adios,"Error ADIOS manager: finalize called without compilation support")
+
 #endif
 
   end subroutine finalize_adios
-
-!
-!-------------------------------------------------------------------------------
-!
-
-
-  subroutine close_file_adios()
-
-#ifdef ADIOS_INPUT
-  use adios_write_mod, only: adios_close
-  use adios_read_mod, only: adios_errmsg
-#endif
-
-  implicit none
-
-  ! Variables
-#ifdef ADIOS_INPUT
-  integer :: ier
-
-  ! closes file
-  call adios_close(file_handle_adios, ier)
-  if (ier /= 0) then
-    call adios_errmsg(err_message)
-    print *,'Error closing adios file'
-    print *,trim(err_message)
-    stop 'Error closing ADIOS file: calling adios_close() routine failed'
-  endif
-
-  ! sets explicitly to zero
-  file_handle_adios = 0
-
-  ! synchronizes all processes
-  call synchronize_all_comm(comm_adios)
-
-#else
-
-  ! safety stop
-  call exit_MPI(myrank_adios,"Error ADIOS manager: close file called without compilation support")
-
-#endif
-
-  end subroutine close_file_adios
 
 
 !-------------------------------------------------------------------------------
@@ -265,188 +351,127 @@ contains
 !
 !-------------------------------------------------------------------------------
 
+!-------------------------------------------------------------------------------
+!
+! file opening
+!
+!-------------------------------------------------------------------------------
 
+#if defined(USE_ADIOS) || defined(USE_ADIOS2)
 ! only available with ADIOS compilation support
 ! to clearly separate adios version and non-adios version of same tools
-#ifdef ADIOS_INPUT
 
-  subroutine close_file_adios_read()
-
-  use adios_read_mod, only: adios_read_close,adios_read_finalize_method,ADIOS_READ_METHOD_BP
-
-  implicit none
-
-  ! local parameters
-  integer :: ier
-
-  call adios_read_close(file_handle_adios,ier)
-  if (ier /= 0 ) stop 'Error helper adios read close'
-
-  call adios_read_finalize_method(ADIOS_READ_METHOD_BP, ier)
-  if (ier /= 0 ) stop 'Error helper adios read finalize'
-
-  end subroutine close_file_adios_read
-
-#endif
-
-!
-!---------------------------------------------------------------------------------
-!
-
-
-! only available with ADIOS compilation support
-! to clearly separate adios version and non-adios version of same tools
-#ifdef ADIOS_INPUT
-
-  subroutine init_adios_group(adios_group,group_name)
+  subroutine open_file_adios_read_and_init_method(adios_handle,adios_group,filename)
 
 ! useful to read in data from the same number of processors
 ! as the data was written from
 
-  use constants, only: ADIOS_TRANSPORT_METHOD
-
-  use adios_write_mod, only: adios_declare_group,adios_select_method
+#if defined(USE_ADIOS2)
+  use constants, only: ADIOS2_ENGINE_DEFAULT,ADIOS2_ENGINE_PARAMS_DEFAULT
+#endif
 
   implicit none
 
-  integer(kind=8),intent(inout) :: adios_group
-  character(len=*),intent(in) :: group_name
-
-  ! local parameters
-  integer :: ier
-
-  ! check
-  if (.not. is_adios_initialized) &
-    stop 'Error intializing for adios group init: please initialize adios first using intitialize_adios() routine'
-
+#if defined(USE_ADIOS)
+  ! adios
+  integer(kind=8), intent(out) :: adios_handle
+  integer(kind=8), intent(in) :: adios_group
+#elif defined(USE_ADIOS2)
+  ! adios2
+  type(adios2_engine), intent(out) :: adios_handle
+  type(adios2_io), intent(inout) :: adios_group
   ! debug
-  if (DEBUG) print *,'***debug ADIOS: rank ',myrank_adios,' init group ',trim(group_name),'****'
-
-  ! initializes adios group
-  call adios_declare_group(adios_group, group_name, '', 0, ier)
-  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
-  !call check_adios_err(myrank,ier)
-
-  ! We set the transport method to 'MPI'. This seems to be the correct choice
-  ! for now. We might want to move this to the constant.h file later on.
-  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, '', '', ier)
-  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
-  !call check_adios_err(myrank,ier)
-
-  end subroutine init_adios_group
-
+  !integer(kind=8) :: steps
 #endif
-
-!
-!---------------------------------------------------------------------------------
-!
-
-! only available with ADIOS compilation support
-! to clearly separate adios version and non-adios version of same tools
-#ifdef ADIOS_INPUT
-
-  subroutine set_adios_group_size(groupsize)
-
-  use adios_write_mod, only: adios_group_size
-
-  implicit none
-
-  integer(kind=8),intent(in) :: groupsize
+  character(len=*), intent(in) :: filename
 
   ! local parameters
   integer :: ier
-  integer(kind=8) :: totalsize
 
-  ! checks if file handle valid
-  if (file_handle_adios == 0) stop 'Invalid ADIOS file handle in set_adios_group_size()'
-
-  call adios_group_size(file_handle_adios, groupsize, totalsize, ier)
-  if (ier /= 0 ) stop 'Error calling adios_group_size() routine failed'
-
-  end subroutine set_adios_group_size
-
-#endif
-
-
-!
-!---------------------------------------------------------------------------------
-!
-
-
-! only available with ADIOS compilation support
-! to clearly separate adios version and non-adios version of same tools
-#ifdef ADIOS_INPUT
-
-  subroutine open_file_adios_read(filename)
-
-! useful to read in data from the same number of processors
-! as the data was written from
-
-  use adios_read_mod, only: adios_read_open_file,adios_read_init_method,ADIOS_READ_METHOD_BP,adios_errmsg
-
-  implicit none
-
-  character(len=*),intent(in) :: filename
-
-  ! local parameters
-  integer :: ier
+  TRACE_ADIOS_ARG('open_file_adios_read_and_init_method: file '//trim(filename)//' - rank ',myrank_adios)
 
   ! check
   if (.not. is_adios_initialized) &
     stop 'Error intializing for adios read: please initialize adios first using intitialize_adios() routine'
 
   ! initializes read method
+#if defined(USE_ADIOS)
+  ! ADIOS 1
   call adios_read_init_method(ADIOS_READ_METHOD_BP, comm_adios, ADIOS_VERBOSITY, ier)
-  if (ier /= 0 ) then
-    call adios_errmsg(err_message)
-    print *,'Error initializing read adios for file: ',trim(filename)
-    print *,trim(err_message)
-    stop 'Error initializing adios read method'
-  endif
-
-  ! debug
-  if (DEBUG) print *,'***debug ADIOS: rank ',myrank_adios,' read open file ',trim(filename),'****'
+  call check_adios_err(ier,"Error initializing read adios for file: "//trim(filename))
 
   ! opens file
-  call adios_read_open_file(file_handle_adios, trim(filename), 0, comm_adios, ier)
-  if (ier /= 0) then
-    call adios_errmsg(err_message)
-    print *,'Error opening adios file for reading: ',trim(filename)
-    print *,trim(err_message)
-    stop 'Error opening adios file'
+  call adios_read_open_file(adios_handle, trim(filename), 0, comm_adios, ier)
+  call check_adios_err(ier,"Error opening adios file for reading: "//trim(filename))
+
+  ! to avoid compiler warning
+  ier = adios_group
+
+#elif defined(USE_ADIOS2)
+  ! ADIOS 2
+  ! in case no io_group given, will need one for inquiry
+  if (.not. adios_group%valid) then
+    call adios2_declare_io(adios_group, myadios2_obj, "Reader", ier)
+    call check_adios_err(ier,"Error declaring an ADIOS2 IO group in open_file_adios_read_and_init_method()")
+
+    ! Set engine and parameters
+    call adios2_set_engine(adios_group, ADIOS2_ENGINE_DEFAULT, ier)
+    call check_adios_err(ier,"Error setting engine for ADIOS2 IO group in open_file_adios_read_and_init_method()")
+
+    ! Set default parameters
+    call adios2_set_parameters(adios_group, ADIOS2_ENGINE_PARAMS_DEFAULT, ier)
+    call check_adios_err(ier,"Error setting parameters for ADIOS2 IO group in open_file_adios_read_and_init_method()")
   endif
+
+  ! Open the handle to file containing all the ADIOS variables for the current io group
+  call adios2_open(adios_handle, adios_group, trim(filename), adios2_mode_read, comm_adios, ier)
+  call check_adios_err(ier,"Error opening adios2 file "//trim(filename))
+
+  ! debug
+  !call adios2_steps(steps,adios_handle,ier)
+  !call check_adios_err(ier,"Error adios2 getting steps for file "//trim(filename))
+  !print *,'debug adios: file steps ',steps
+
+#endif
 
   ! synchronizes all processes
   call synchronize_all_comm(comm_adios)
 
-  end subroutine open_file_adios_read
+  end subroutine open_file_adios_read_and_init_method
 
 #endif
-
 !
 !---------------------------------------------------------------------------------
 !
-
+#if defined(USE_ADIOS) || defined(USE_ADIOS2)
 ! only available with ADIOS compilation support
 ! to clearly separate adios version and non-adios version of same tools
-#ifdef ADIOS_INPUT
 
-  subroutine open_file_adios_read_only_rank(rank,filename)
+  subroutine open_file_adios_read_only_rank(adios_handle,adios_group,rank,filename)
 
 ! only single process is reading, useful for file inquiry
 
-  use adios_read_mod, only: adios_read_open_file,adios_read_init_method,ADIOS_READ_METHOD_BP, &
-    adios_inq_file,adios_inq_varnames,adios_inq_attrnames
-
   implicit none
 
-  integer,intent(in) :: rank
-  character(len=*),intent(in) :: filename
+#if defined(USE_ADIOS)
+  ! adios
+  integer(kind=8), intent(out) :: adios_handle
+  integer(kind=8), intent(in) :: adios_group
+#elif defined(USE_ADIOS2)
+  ! adios2
+  type(adios2_engine), intent(out) :: adios_handle
+  type(adios2_io), intent(in) :: adios_group
+#endif
+  integer, intent(in) :: rank
+  character(len=*), intent(in) :: filename
 
   ! local parameters
   integer :: ier
   integer :: comm_dummy
   character(len=128) :: name !uses a string copy, trying to prevent a memory corruption issue somewhere in adios...
+  logical, parameter :: DEBUG = .false.
+
+  TRACE_ADIOS_ARG('open_file_adios_read_only_rank: file '//trim(filename)//' - rank ',myrank_adios)
 
   ! only specified rank proceeds
   if (myrank_adios /= rank) return
@@ -456,78 +481,155 @@ contains
 
   ! copies name
   if (len_trim(filename) > 128) then
-    stop 'Error filename provided too long'
+    stop 'Error adios filename provided is too long'
   else
     name = trim(filename)
   endif
 
   ! initializes read method
+#if defined(USE_ADIOS)
   call adios_read_init_method(ADIOS_READ_METHOD_BP, comm_dummy, ADIOS_VERBOSITY, ier)
-  if (ier /= 0 ) then
-    call adios_errmsg(err_message)
-    print *, 'Error initializing read adios by master for file: ',trim(name)
-    print *,trim(err_message)
-    stop 'Error initializing adios read by master method'
-  endif
-
-  ! debug
-  if (DEBUG) print *,'***debug ADIOS: only rank ',myrank_adios,' read open file ',trim(filename),'****'
+  call check_adios_err(ier,"Error initializing read adios by master for file: "//trim(name))
 
   ! opens file
-  call adios_read_open_file(file_handle_adios, trim(name), 0, comm_dummy, ier)
-  if (ier /= 0) then
-    call adios_errmsg(err_message)
-    print *, 'Error opening adios file for reading: ',trim(name)
-    print *,trim(err_message)
-    stop 'Error opening adios file'
-  endif
+  call adios_read_open_file(adios_handle, trim(name), 0, comm_dummy, ier)
+  call check_adios_err(ier,"Error opening adios file for reading: "//trim(name))
+
+  ! to avoid compiler warning
+  ier = adios_group
+
+#elif defined(USE_ADIOS2)
+  ! MPI version only to pass a communicator other than the one from adios_init
+  call adios2_open(adios_handle, adios_group, trim(name), adios2_mode_read, comm_dummy, ier)
+  call check_adios_err(ier,"Error opening adios2 file with MPI comm for reading: "//trim(name))
+
+#endif
 
   ! shows file contents
-  call show_adios_file_variables(name)
+  if (DEBUG) then
+    call show_adios_file_variables(adios_handle,adios_group,name)
+  endif
+
+  ! do not synchronize across adios processes
+  ! this is only called by a single process (using MPI_COMM_SELF for adios i/o).
 
   end subroutine open_file_adios_read_only_rank
 
 #endif
-
 !
-!-------------------------------------------------------------------------------
+!---------------------------------------------------------------------------------
 !
-
+#if defined(USE_ADIOS) || defined(USE_ADIOS2)
 ! only available with ADIOS compilation support
 ! to clearly separate adios version and non-adios version of same tools
-#ifdef ADIOS_INPUT
 
-  subroutine open_file_adios_write(filename,group_name)
+  subroutine open_file_adios_read(adios_handle,adios_group,filename)
 
-! opens adios file for writing
-
-  use adios_write_mod, only: adios_open
+! useful to read in data from the same number of processors as the data was written from;
+! assumes read init method has been set already, will only open file
 
   implicit none
 
-  character(len=*),intent(in) :: filename
+#if defined(USE_ADIOS)
+  ! adios
+  integer(kind=8), intent(out) :: adios_handle
+  integer(kind=8), intent(in) :: adios_group
+#elif defined(USE_ADIOS2)
+  ! adios2
+  type(adios2_engine), intent(out) :: adios_handle
+  type(adios2_io), intent(in) :: adios_group
+#endif
+  character(len=*), intent(in) :: filename
+
+  ! local parameters
+  integer :: ier
+
+  TRACE_ADIOS_ARG('open_file_adios_read: file '//trim(filename)//' - rank ',myrank_adios)
+
+  ! check
+  if (.not. is_adios_initialized) &
+    stop 'Error intializing for adios read: please initialize adios first using intitialize_adios() routine'
+
+  ! initializes read method
+#if defined(USE_ADIOS)
+  ! ADIOS 1
+
+  ! opens file
+  call adios_read_open_file(adios_handle, trim(filename), 0, comm_adios, ier)
+  call check_adios_err(ier,"Error opening adios file for reading: "//trim(filename))
+
+  ! to avoid compiler warning
+  ier = adios_group
+
+#elif defined(USE_ADIOS2)
+  ! ADIOS 2
+  ! Open the handle to file containing all the ADIOS variables for the current io group
+  call adios2_open(adios_handle, adios_group, trim(filename), adios2_mode_read, comm_adios, ier)
+  call check_adios_err(ier,"Error opening adios2 file "//trim(filename))
+#endif
+
+  ! synchronizes all processes
+  call synchronize_all_comm(comm_adios)
+
+  end subroutine open_file_adios_read
+
+#endif
+!
+!-------------------------------------------------------------------------------
+!
+#if defined(USE_ADIOS) || defined(USE_ADIOS2)
+! only available with ADIOS compilation support
+! to clearly separate adios version and non-adios version of same tools
+
+  subroutine open_file_adios_write(adios_handle,adios_group,filename,group_name)
+
+! opens adios file for writing
+
+  implicit none
+
+#if defined(USE_ADIOS)
+  ! adios
+  integer(kind=8), intent(out) :: adios_handle
+  integer(kind=8), intent(in) :: adios_group
+#elif defined(USE_ADIOS2)
+  ! adios2
+  type(adios2_engine), intent(out) :: adios_handle
+  type(adios2_io), intent(in) :: adios_group
+#endif
+  character(len=*), intent(in) :: filename
   character(len=*) :: group_name
 
   ! local parameters
   integer :: ier
 
+  TRACE_ADIOS_ARG('open_file_adios_write: file '//trim(filename)//' (for writing) - rank ',myrank_adios)
+
   ! check
   if (.not. is_adios_initialized) &
-    stop 'Error intializing for adios write: please initialize adios first using intitialize_adios() routine'
-
-  ! debug
-  if (DEBUG) print *,'***debug ADIOS: rank ',myrank_adios,' open file ',trim(filename),' (for writing) ****'
+    stop 'Error intializing for adios write: please initialize adios first using initialize_adios() routine'
 
   ! opens file
-  call adios_open(file_handle_adios, group_name, trim(filename), "w", comm_adios, ier)
+#if defined(USE_ADIOS)
+  ! ADIOS 1
+  ! checks group
+  if (len_trim(group_name) == 0) stop 'Error: group name has zero length in open_file_adios_write() routine'
 
-  if (ier /= 0) then
-    call adios_errmsg(err_message)
-    print *,'Error opening adios file for writing: ',trim(filename)
-    print *,'Error rank',myrank_adios,'- group name ',trim(group_name)
-    print *,trim(err_message)
-    stop 'Error opening adios file'
-  endif
+  call adios_open(adios_handle, group_name, trim(filename), "w", comm_adios, ier)
+  call check_adios_err(ier,"Error opening adios file for writing: "//trim(filename)//" group: "//trim(group_name))
+
+  ! to avoid compiler warning
+  ier = adios_group
+
+#elif defined(USE_ADIOS2)
+  ! ADIOS 2
+  ! checks group
+  if (.not. adios_group%valid) stop 'Invalid adios2 group in open_file_adios_write() routine'
+
+  ! Open the handle to file containing all the ADIOS variables
+  call adios2_open(adios_handle, adios_group, trim(filename), adios2_mode_write, comm_adios, ier)
+  call check_adios_err(ier,"Error opening adios file for writing: "//trim(filename)//" group: "//trim(group_name))
+
+#endif
 
   ! synchronizes all processes
   call synchronize_all_comm(comm_adios)
@@ -535,47 +637,73 @@ contains
   end subroutine open_file_adios_write
 
 #endif
-
-
 !
 !-------------------------------------------------------------------------------
 !
-
+#if defined(USE_ADIOS) || defined(USE_ADIOS2)
 ! only available with ADIOS compilation support
 ! to clearly separate adios version and non-adios version of same tools
-#ifdef ADIOS_INPUT
 
-  subroutine open_file_adios_write_append(filename,group_name)
+  subroutine open_file_adios_write_append(adios_handle,adios_group,filename,group_name)
 
 ! open adios file for appending data
 
-  use adios_write_mod, only: adios_open
-
   implicit none
 
-  character(len=*),intent(in) :: filename
+#if defined(USE_ADIOS)
+  ! adios
+  integer(kind=8), intent(out) :: adios_handle
+  integer(kind=8), intent(in) :: adios_group
+#elif defined(USE_ADIOS2)
+  ! adios2
+  type(adios2_engine), intent(out) :: adios_handle
+  type(adios2_io), intent(in) :: adios_group
+  !integer :: step_status
+#endif
+  character(len=*), intent(in) :: filename
   character(len=*) :: group_name
 
   ! local parameters
   integer :: ier
 
+  TRACE_ADIOS_ARG('open_file_adios_write_append: file '//trim(filename)//' (for appending) - rank ',myrank_adios)
+
   ! check
   if (.not. is_adios_initialized) &
     stop 'Error intializing for adios write: please initialize adios first using intitialize_adios() routine'
 
-  ! debug
-  if (DEBUG) print *,'***debug ADIOS: rank ',myrank_adios,' open file ',trim(filename),' (for appending) ****'
-
   ! opens file
-  call adios_open(file_handle_adios, group_name, trim(filename), "a", comm_adios, ier)
+#if defined(USE_ADIOS)
+  ! ADIOS 1
+  ! checks group
+  if (len_trim(group_name) == 0) &
+    stop 'Error: group name has zero length in open_file_adios_write_append() routine'
 
-  if (ier /= 0) then
-    call adios_errmsg(err_message)
-    print *,'Error opening adios file for appending: ',trim(filename)
-    print *,'Error rank',myrank_adios,'- group name ',trim(group_name)
-    print *,trim(err_message)
-    stop 'Error opening adios file'
-  endif
+  ! opens file in append mode
+  call adios_open(adios_handle, group_name, trim(filename), "a", comm_adios, ier)
+  call check_adios_err(ier,"Error opening adios file for appending: "//trim(filename)//" group: "//trim(group_name))
+
+  ! to avoid compiler warning
+  ier = adios_group
+
+#elif defined(USE_ADIOS2)
+  ! ADIOS 2
+  ! checks group
+  if (.not. adios_group%valid) &
+    stop 'Invalid adios2 group in open_file_adios_write_append() routine'
+
+  ! opens file in append mode
+  call adios2_open(adios_handle, adios_group, trim(filename), adios2_mode_append, comm_adios, ier)
+  call check_adios_err(ier,"Error opening adios2 file for appending: "//trim(filename)//" group: "//trim(group_name))
+
+  ! note: opening the same file will increase the step count for all subsequent variable writes.
+  !       this can cause problems when reading back in and selecting a corresponding variable selection.
+  ! this has no effect though...
+  !call adios2_begin_step(adios_handle, adios2_step_mode_append, -1.0, step_status, ier)
+  !call check_adios_err(ier,"Error begin step for appending: "//trim(filename)//" group: "//trim(group_name))
+  !if (step_status /= adios2_step_status_ok) stop 'Error adios2 begin step for appending to file'
+
+#endif
 
   ! synchronizes all processes
   call synchronize_all_comm(comm_adios)
@@ -585,156 +713,693 @@ contains
 #endif
 
 
+!-------------------------------------------------------------------------------
+!
+! file closing
 !
 !---------------------------------------------------------------------------------
-!
 
+#if defined(USE_ADIOS) || defined(USE_ADIOS2)
 ! only available with ADIOS compilation support
 ! to clearly separate adios version and non-adios version of same tools
-#ifdef ADIOS_INPUT
 
-  subroutine read_adios_scalar_int(rank,scalar_name,scalar)
-
-! reads in a single integer value
-
-  use adios_read_mod, only: adios_schedule_read,adios_perform_reads
+  subroutine close_file_adios(adios_handle)
 
   implicit none
 
-  integer, intent(in) :: rank
-
-  integer, intent(out) :: scalar
-  character(len=*),intent(in) :: scalar_name
+#if defined(USE_ADIOS)
+  ! adios
+  integer(kind=8), intent(inout) :: adios_handle
+#elif defined(USE_ADIOS2)
+  ! adios2
+  type(adios2_engine), intent(inout) :: adios_handle
+#endif
 
   ! local parameters
   integer :: ier
-  integer(kind=8) :: sel
 
-  ! selects data block
-  call adios_selection_writeblock(sel, rank)
+  TRACE_ADIOS('close_file_adios')
 
-  ! reads array
-  call adios_schedule_read(file_handle_adios, sel, trim(scalar_name), 0, 1, scalar, ier)
-  if (ier /= 0) then
-    call adios_errmsg(err_message)
-    print *,'Error adios: could not read parameter: ',trim(scalar_name)
-    print *,trim(err_message)
-    stop 'Error adios helper read scalar'
-  endif
+#if defined(USE_ADIOS)
+  ! ADIOS 1
+  ! closes file
+  call adios_close(adios_handle, ier)
+  call check_adios_err(ier,"Error closing adios file")
 
-  call adios_perform_reads(file_handle_adios, ier)
-  if (ier /= 0 ) stop 'Error helper adios read scalar failed'
+  ! sets explicitly to zero
+  adios_handle = 0
 
-  end subroutine read_adios_scalar_int
+#elif defined(USE_ADIOS2)
+  ! ADIOS 2
+  ! close file
+  call adios2_close(adios_handle, ier)
+  call check_adios_err(ier,"Error closing adios2 file")
 
 #endif
 
+  ! synchronizes all processes
+  call synchronize_all_comm(comm_adios)
+
+  end subroutine close_file_adios
+
+#endif
 !
 !---------------------------------------------------------------------------------
 !
-
+#if defined(USE_ADIOS) || defined(USE_ADIOS2)
 ! only available with ADIOS compilation support
 ! to clearly separate adios version and non-adios version of same tools
-#ifdef ADIOS_INPUT
 
-  subroutine read_adios_scalar_int_only_rank(rank,scalar_name,scalar)
-
-  use adios_read_mod, only: adios_get_scalar
+  subroutine close_file_adios_read_and_finalize_method(adios_handle)
 
   implicit none
 
-  integer, intent(in) :: rank
-
-  integer, intent(out) :: scalar
-  character(len=*),intent(in) :: scalar_name
+#if defined(USE_ADIOS)
+  ! adios
+  integer(kind=8), intent(inout) :: adios_handle
+#elif defined(USE_ADIOS2)
+  ! adios2
+  type(adios2_engine), intent(inout) :: adios_handle
+#endif
 
   ! local parameters
   integer :: ier
-  !integer(kind=8) :: sel
-  character(len=128) :: name !uses a string copy, trying to prevent a memory corruption issue somewhere in adios...
 
-  ! checks if anything to do
+  TRACE_ADIOS('close_file_adios_read_and_finalize')
+
+#if defined(USE_ADIOS)
+  ! ADIOS 1
+  call adios_read_close(adios_handle,ier)
+  if (ier /= 0 ) stop 'Error helper adios read close in close_file_adios_read_and_finalize() routine'
+
+  ! sets explicitly to zero
+  adios_handle = 0
+
+  ! finalizes file opened with adios_read_init_method()
+  call adios_read_finalize_method(ADIOS_READ_METHOD_BP, ier)
+  if (ier /= 0 ) stop 'Error helper adios read finalize'
+
+#elif defined(USE_ADIOS2)
+  ! ADIOS 2
+  ! no special case, file just has been opened with adios2_mode_read flag
+  call adios2_close(adios_handle, ier)
+  call check_adios_err(ier,"Error closing adios file close_file_adios_read_and_finalize() routine")
+
+#endif
+
+  ! synchronizes all processes
+  call synchronize_all_comm(comm_adios)
+
+  end subroutine close_file_adios_read_and_finalize_method
+
+#endif
+!
+!---------------------------------------------------------------------------------
+!
+#if defined(USE_ADIOS) || defined(USE_ADIOS2)
+! only available with ADIOS compilation support
+! to clearly separate adios version and non-adios version of same tools
+
+  subroutine close_file_adios_read_and_finalize_method_only_rank(adios_handle,rank)
+
+! only single process closes
+
+  implicit none
+
+#if defined(USE_ADIOS)
+  ! adios
+  integer(kind=8), intent(inout) :: adios_handle
+#elif defined(USE_ADIOS2)
+  ! adios2
+  type(adios2_engine), intent(inout) :: adios_handle
+#endif
+  integer, intent(in) :: rank
+  ! local parameters
+  integer :: ier
+
+  TRACE_ADIOS('close_file_adios_read_and_finalize')
+
+  ! only specified rank proceeds
   if (myrank_adios /= rank) return
 
-  ! copies name
-  if (len_trim(scalar_name) > 128) then
-    stop 'Error scalar name provided too long'
-  else
-    name = trim(scalar_name)
-  endif
+#if defined(USE_ADIOS)
+  ! ADIOS 1
+  call adios_read_close(adios_handle,ier)
+  if (ier /= 0 ) stop 'Error helper adios read close in close_file_adios_read_and_finalize() routine'
 
-  ! quick read of metadata
-  call adios_get_scalar(file_handle_adios, trim(name), scalar, ier)
-  if (ier /= 0) then
-    call adios_errmsg(err_message)
-    print *,'Error adios: could not read parameter: ',trim(name)
-    print *,trim(err_message)
-    stop 'Error adios helper read scalar'
-  endif
+  ! sets explicitly to zero
+  adios_handle = 0
 
-  ! single read of an integer
-  !sel = 0
-  !call adios_schedule_read(file_handle_adios, sel, trim(scalar_name), 0, 1, scalar, ier)
-  !if (ier /= 0) then
-  !  call adios_errmsg(err_message)
-  !  print * ,'Error adios: could not read parameter: ',trim(scalar_name)
-  !  print *,trim(err_message)
-  !  stop 'Error adios helper read scalar'
-  !endif
-  !call adios_perform_reads(file_handle_adios, ier)
-  !if (ier /= 0 ) stop 'Error helper adios read scalar failed'
+  ! finalizes file opened with adios_read_init_method()
+  call adios_read_finalize_method(ADIOS_READ_METHOD_BP, ier)
+  if (ier /= 0 ) stop 'Error helper adios read finalize'
 
-  end subroutine read_adios_scalar_int_only_rank
+#elif defined(USE_ADIOS2)
+  ! ADIOS 2
+  ! no special case, file just has been opened with adios2_mode_read flag
+  call adios2_close(adios_handle, ier)
+  call check_adios_err(ier,"Error closing adios file close_file_adios_read_and_finalize() routine")
+
+#endif
+
+  ! do not synchronize after closing, as it will be called also by a single process in interpolate_model.F90
+  ! and thus would stall the program execution.
+  !
+  ! do not: synchronizes all processes
+  ! >call synchronize_all_comm(comm_adios)
+
+  end subroutine close_file_adios_read_and_finalize_method_only_rank
 
 #endif
 
 !
 !---------------------------------------------------------------------------------
 !
-
+#if defined(USE_ADIOS) || defined(USE_ADIOS2)
 ! only available with ADIOS compilation support
 ! to clearly separate adios version and non-adios version of same tools
-#ifdef ADIOS_INPUT
 
-  subroutine show_adios_file_variables(filename)
+  subroutine close_file_adios_read(adios_handle)
+
+  implicit none
+
+#if defined(USE_ADIOS)
+  ! adios
+  integer(kind=8), intent(inout) :: adios_handle
+#elif defined(USE_ADIOS2)
+  ! adios2
+  type(adios2_engine), intent(inout) :: adios_handle
+#endif
+
+  ! local parameters
+  integer :: ier
+
+  TRACE_ADIOS('close_file_adios_read')
+
+#if defined(USE_ADIOS)
+  ! ADIOS 1
+  ! check
+  if (adios_handle == 0) stop 'Error: adios handle invalid in close_file_adios_read()'
+
+  ! closes
+  call adios_read_close(adios_handle,ier)
+  if (ier /= 0 ) stop 'Error helper adios read close with file handle'
+
+  ! sets explicitly to zero
+  adios_handle = 0
+
+#elif defined(USE_ADIOS2)
+  ! ADIOS 2
+  if (.not. adios_handle%valid) stop 'Error: adios2 handle invalid in close_file_adios_read()'
+
+  ! no special case, file just has been opened with adios2_mode_read flag
+  call adios2_close(adios_handle, ier)
+  call check_adios_err(ier,"Error closing adios2 file with handle")
+
+#endif
+
+  ! synchronizes all processes
+  call synchronize_all_comm(comm_adios)
+
+  end subroutine close_file_adios_read
+
+#endif
+
+
+!-------------------------------------------------------------------------------
+!
+! I/O groups
+!
+!---------------------------------------------------------------------------------
+
+#if defined(USE_ADIOS) || defined(USE_ADIOS2)
+! only available with ADIOS compilation support
+! to clearly separate adios version and non-adios version of same tools
+
+  subroutine init_adios_group(adios_group,group_name)
+
+! useful to read in data from the same number of processors
+! as the data was written from
+
+#if defined(USE_ADIOS)
+  use constants, only: ADIOS_TRANSPORT_METHOD
+#elif defined(USE_ADIOS2)
+  use constants, only: ADIOS2_ENGINE_DEFAULT,ADIOS2_ENGINE_PARAMS_DEFAULT
+#endif
+
+  implicit none
+
+#if defined(USE_ADIOS)
+  integer(kind=8), intent(inout) :: adios_group
+#elif defined(USE_ADIOS2)
+  type(adios2_io), intent(inout) :: adios_group
+#endif
+
+  character(len=*), intent(in) :: group_name
+
+  ! local parameters
+  integer :: ier
+
+  TRACE_ADIOS_ARG('init_adios_group: group '//trim(group_name)//' - rank ',myrank_adios)
+
+  ! check
+  if (.not. is_adios_initialized) &
+    stop 'Error intializing for adios group init: please initialize adios first using initialize_adios() routine'
+
+  ! initializes adios group
+#if defined(USE_ADIOS)
+  ! ADIOS 1
+  call adios_declare_group(adios_group, group_name, '', 0, ier)
+  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+  !call check_adios_err(ier,"Error declare group")
+
+  ! We set the transport method to 'MPI'. This seems to be the correct choice
+  ! for now. We might want to move this to the constant.h file later on.
+  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, '', '', ier)
+  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+  !call check_adios_err(ier,"Error select method")
+
+#elif defined(USE_ADIOS2)
+  ! Create the ADIOS IO group which will contain all variables and attributes
+  call adios2_declare_io(adios_group, myadios2_obj, group_name, ier)
+  call check_adios_err(ier,"Error declaring an ADIOS2 IO group in init_adios_group()")
+
+  ! Set engine and parameters
+  call adios2_set_engine(adios_group, ADIOS2_ENGINE_DEFAULT, ier)
+  call check_adios_err(ier,"Error setting engine for ADIOS2 IO group in init_adios_group()")
+
+  ! Set default parameters
+  call adios2_set_parameters(adios_group, ADIOS2_ENGINE_PARAMS_DEFAULT, ier)
+  call check_adios_err(ier,"Error setting parameters for ADIOS2 IO group in init_adios_group()")
+
+  ! sets current group in case we have no group yet set
+  if (.not. myadios_group%valid) myadios_group = adios_group
+#endif
+
+  end subroutine init_adios_group
+
+#endif
+!
+!---------------------------------------------------------------------------------
+!
+#if defined(USE_ADIOS) || defined(USE_ADIOS2)
+! only available with ADIOS compilation support
+! to clearly separate adios version and non-adios version of same tools
+
+  subroutine init_adios_group_undo_att(adios_group,group_name)
+
+#if defined(USE_ADIOS)
+  use constants, only: ADIOS_TRANSPORT_METHOD_UNDO_ATT,ADIOS_METHOD_PARAMS_UNDO_ATT
+#elif defined(USE_ADIOS2)
+  use constants, only: ADIOS2_ENGINE_UNDO_ATT,ADIOS2_ENGINE_PARAMS_UNDO_ATT
+#endif
+
+  implicit none
+
+#if defined(USE_ADIOS)
+  integer(kind=8), intent(inout) :: adios_group
+#elif defined(USE_ADIOS2)
+  type(adios2_io), intent(inout) :: adios_group
+#endif
+  character(len=*), intent(in) :: group_name
+
+  ! local parameters
+  integer :: ier
+
+  TRACE_ADIOS_ARG('init_adios_group_undo_att: group '//trim(group_name)//' - rank ',myrank_adios)
+
+  ! initializes adios group
+#if defined(USE_ADIOS)
+  ! ADIOS 1
+  call adios_declare_group(adios_group, group_name, "iter", 0, ier)
+  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+  !call check_adios_err(ier,"Error declare group")
+
+  ! sets transport method
+  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD_UNDO_ATT, ADIOS_METHOD_PARAMS_UNDO_ATT, '', ier)
+  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+  !call check_adios_err(ier,"Error select method")
+
+#elif defined(USE_ADIOS2)
+  ! ADIOS 2
+  ! note: no special case, same engine & parameters as for "normal" io groups.
+  !       we could try out different transport methods & parameters for performance
+
+  ! Create the ADIOS IO group which will contain all variables and attributes
+  call adios2_declare_io(adios_group, myadios2_obj, group_name, ier)
+  call check_adios_err(ier,"Error declaring an ADIOS2 IO group in init_adios_group_undo_att()")
+
+  ! Set engine and parameters: ADIOS2_ENGINE_UNDO_ATT or ADIOS2_ENGINE_DEFAULT
+  call adios2_set_engine(adios_group, ADIOS2_ENGINE_UNDO_ATT, ier)
+  call check_adios_err(ier,"Error setting engine for ADIOS2 IO group in init_adios_group_undo_att()")
+
+  ! Set parameters: ADIOS2_ENGINE_PARAMS_UNDO_ATT or ADIOS2_ENGINE_PARAMS_DEFAULT
+  call adios2_set_parameters(adios_group, ADIOS2_ENGINE_PARAMS_UNDO_ATT, ier)
+  call check_adios_err(ier,"Error setting parameters for ADIOS2 IO group in init_adios_group_undo_att()")
+
+#endif
+
+  end subroutine init_adios_group_undo_att
+
+#endif
+!
+!---------------------------------------------------------------------------------
+!
+#if defined(USE_ADIOS) || defined(USE_ADIOS2)
+! only available with ADIOS compilation support
+! to clearly separate adios version and non-adios version of same tools
+
+  subroutine set_adios_group_size(adios_handle,groupsize)
+
+  implicit none
+
+#if defined(USE_ADIOS)
+  ! adios
+  integer(kind=8), intent(inout) :: adios_handle
+#elif defined(USE_ADIOS2)
+  ! adios2
+  type(adios2_engine), intent(inout) :: adios_handle
+#endif
+  integer(kind=8), intent(in) :: groupsize
+
+  ! local parameters
+  integer :: ier
+  integer(kind=8) :: totalsize
+
+  TRACE_ADIOS_L2('set_adios_group_size')
+
+#if defined(USE_ADIOS)
+  ! ADIOS 1
+  ! checks if file handle valid
+  if (adios_handle == 0) stop 'Invalid ADIOS file handle argument in set_adios_group_size()'
+
+  call adios_group_size(adios_handle, groupsize, totalsize, ier)
+  if (ier /= 0 ) stop 'Error calling adios_group_size() routine failed'
+
+#elif defined(USE_ADIOS2)
+  ! ADIOS 2
+  ! no need to explicitly specify io group size (adios_group_size has become optional since adios 1.10)
+  ! check to avoid compiler warning
+  if (.not. adios_handle%valid) stop 'Invalid ADIOS2 file handle argument in set_adios_group_size()'
+
+  ! to avoid compiler warning
+  totalsize = groupsize
+  ier = 0
+#endif
+
+  end subroutine set_adios_group_size
+
+#endif
+!
+!---------------------------------------------------------------------------------
+!
+#if defined(USE_ADIOS) || defined(USE_ADIOS2)
+! only available with ADIOS compilation support
+! to clearly separate adios version and non-adios version of same tools
+
+  subroutine get_adios_group(adios_group,group_name,adios_handle)
+
+  implicit none
+
+#if defined(USE_ADIOS)
+  ! adios
+  integer(kind=8), intent(inout) :: adios_group
+  integer(kind=8), intent(in) :: adios_handle
+  ! groups
+  character (len=128), dimension(:), allocatable :: fnamelist
+  integer :: group_count,i
+#elif defined(USE_ADIOS2)
+  ! adios2
+  type(adios2_io), intent(inout) :: adios_group
+  type(adios2_engine), intent(in) :: adios_handle
+#endif
+  character(len=*), intent(in) :: group_name
+
+  ! local parameters
+  integer :: ier
+
+  TRACE_ADIOS('get_adios_group')
+
+  ! check
+  if (.not. is_adios_initialized) &
+    stop 'Error: ADIOS is not intialized for get_adios_group() call'
+
+#if defined(USE_ADIOS)
+  ! ADIOS 1
+  ! check
+  if (adios_handle == 0) stop 'Invalid ADIOS file handle in get_adios_group()'
+
+  ! gets groups
+  call adios_inq_ngroups(adios_handle, group_count, ier)
+  if (ier /= 0) stop 'Error calling adios_inq_ngroups()'
+
+  if (group_count > 0) then
+    allocate (fnamelist(group_count),stat=ier)
+    if (ier /= 0) stop 'Error allocating namelist array'
+
+    ! gets group names
+    call adios_inq_groupnames(adios_handle, fnamelist, ier)
+    if (ier /= 0) stop 'Error calling adios_inq_groupnames()'
+
+    ! selects group
+    do i = 1,group_count
+      if (trim(group_name) == trim(fnamelist(i))) then
+        ! adios group ids start from 0 to N-1
+        adios_group = i - 1
+        exit
+      endif
+    enddo
+    deallocate (fnamelist)
+  else
+    ! group not found
+    adios_group = 0
+    print *, 'Error: no group found in get_adios_group() by name :',trim(group_name)
+    stop 'adios group not found in get_adios_group()'
+  endif
+
+#elif defined(USE_ADIOS2)
+  ! ADIOS 2
+  ! check
+  if (.not. myadios2_obj%valid) &
+    stop 'Invalid ADIOS2 object component in get_adios_group()'
+  if (.not. adios_handle%valid) &
+    stop 'Invalid ADIOS2 file handle in get_adios_group()'
+
+  ! gets io group by name
+  call adios2_at_io(adios_group, myadios2_obj, group_name, ier)
+  call check_adios_err(ier,"Error calling adios2_at_io() for group "//trim(group_name))
+
+  if (.not. adios_group%valid) then
+    print *,'Error: adios2 group not found for group name: ',trim(group_name)
+    stop 'Invalid ADIOS2 group in get_adios_group()'
+  endif
+
+#endif
+
+  end subroutine get_adios_group
+
+#endif
+!
+!---------------------------------------------------------------------------------
+!
+#if defined(USE_ADIOS) || defined(USE_ADIOS2)
+! only available with ADIOS compilation support
+! to clearly separate adios version and non-adios version of same tools
+
+  subroutine flush_adios_group_all(adios_group)
+
+  implicit none
+
+#if defined(USE_ADIOS)
+  integer(kind=8), intent(inout) :: adios_group
+#elif defined(USE_ADIOS2)
+  type(adios2_io), intent(inout) :: adios_group
+#endif
+
+  ! local parameters
+  integer :: ier
+
+  TRACE_ADIOS('flush_adios_group_all')
+
+  ! initializes adios group
+#if defined(USE_ADIOS)
+  ! ADIOS 1
+  ! no flush all
+  ! to avoid compiler warning
+  ier = adios_group
+
+#elif defined(USE_ADIOS2)
+  ! ADIOS 2
+  ! flush all engines
+  if (adios_group%valid) then
+    call adios2_flush_all_engines(adios_group,ier)
+    if (ier /= 0 ) stop 'Error cleaning up ADIOS2: calling adios2_flush_all_engines() failed'
+  endif
+
+#endif
+
+  end subroutine flush_adios_group_all
+
+#endif
+
+!-------------------------------------------------------------------------------
+!
+! data selections
+!
+!---------------------------------------------------------------------------------
+
+#if defined(USE_ADIOS) || defined(USE_ADIOS2)
+! only available with ADIOS compilation support
+! to clearly separate adios version and non-adios version of same tools
+
+  subroutine set_selection_boundingbox(sel,start,count)
+
+  implicit none
+
+  integer(kind=8), intent(inout) :: sel
+  integer(kind=8), dimension(1), intent(in) :: start, count
+
+  TRACE_ADIOS_L2('set_selection_boundingbox')
+
+#if defined(USE_ADIOS)
+  ! ADIOS 1
+  call adios_selection_boundingbox(sel , 1, start, count)
+
+#elif defined(USE_ADIOS2)
+  ! ADIOS 2
+  ! no need to explicitly specify, will work with start/count directly
+
+  ! to avoid compiler warning
+  sel = count(1)
+  sel = start(1)
+  sel = 0
+
+#endif
+
+  end subroutine set_selection_boundingbox
+
+#endif
+!
+!---------------------------------------------------------------------------------
+!
+#if defined(USE_ADIOS) || defined(USE_ADIOS2)
+! only available with ADIOS compilation support
+! to clearly separate adios version and non-adios version of same tools
+
+  subroutine delete_adios_selection(sel)
+
+  implicit none
+
+  integer(kind=8), intent(inout) :: sel
+
+  TRACE_ADIOS_L2('delete_adios_selection')
+
+#if defined(USE_ADIOS)
+  ! ADIOS 1
+  call adios_selection_delete(sel)
+
+#elif defined(USE_ADIOS2)
+  ! ADIOS 2
+  ! unused, just set it to zero
+  sel = 0
+#endif
+
+  end subroutine delete_adios_selection
+
+#endif
+
+
+!-------------------------------------------------------------------------------
+!
+! inquiry / user outputs
+!
+!---------------------------------------------------------------------------------
+
+#if defined(USE_ADIOS) || defined(USE_ADIOS2)
+! only available with ADIOS compilation support
+! to clearly separate adios version and non-adios version of same tools
+
+  subroutine show_adios_file_variables(adios_handle,adios_group,filename)
 
 ! file inquiry showing all adios file variables
 
-  use adios_read_mod, only: adios_read_open_file,adios_read_init_method,ADIOS_READ_METHOD_BP, &
-    adios_inq_file,adios_inq_varnames,adios_inq_attrnames
-
   implicit none
 
-  character(len=*),intent(in) :: filename
+#if defined(USE_ADIOS)
+  ! adios
+  integer(kind=8), intent(in) :: adios_handle
+  integer(kind=8), intent(in) :: adios_group
+#elif defined(USE_ADIOS2)
+  ! adios2
+  type(adios2_engine), intent(in) :: adios_handle
+  type(adios2_io), intent(in) :: adios_group
+#endif
+  character(len=*), intent(in) :: filename
 
   ! local parameters
-  integer :: i,ier
-  integer :: variable_count, attribute_count, group_count
-  integer :: timestep_first, timestep_last
-  character (len=128), dimension(:), allocatable :: fnamelist
+  integer :: ier
+  integer :: variable_count, attribute_count
 
   ! file inquiry
-  call adios_inq_file(file_handle_adios,variable_count,attribute_count,timestep_first,timestep_last,ier)
-  if (ier /= 0) then
-    ! show error message
-    call adios_errmsg(err_message)
-    print *,'Error inquiring adios file for reading: ',trim(filename)
-    print *,trim(err_message)
-    stop 'Error inquiring adios file'
-  endif
+#if defined(USE_ADIOS)
+  ! ADIOS 1
+  integer :: timestep_first, timestep_last
+  character (len=128), dimension(:), allocatable :: fnamelist
+  character (len=128) :: vname
+  integer :: vtype, vnsteps, vndim
+  integer(kind=8), dimension(3) :: dims
+  integer :: group_count,i
 
+  ! file inquiry
+  call adios_inq_file(adios_handle, variable_count, attribute_count, timestep_first, timestep_last, ier)
+  call check_adios_err(ier,"Error inquiring adios file for reading: "//trim(filename))
+
+  ! debug
+  !print *,'debug: rank ',myrank_adios,' adios_inq_file: ',variable_count,attribute_count,timestep_first,timestep_last,ier
+
+  ! user output
+  print *,'file name: ',trim(filename)
   ! variables
   if (variable_count > 0) then
+    ! user output
+    print *,'variables: ',variable_count
+
     allocate (fnamelist(variable_count),stat=ier)
     if (ier /= 0) stop 'Error allocating namelist array'
 
     ! gets variable names
-    call adios_inq_varnames(file_handle_adios, fnamelist, ier)
+    call adios_inq_varnames(adios_handle, fnamelist, ier)
+    if (ier /= 0) stop 'Error in adios_inq_varnames call'
 
     ! user output
-    print *,'variables: ',variable_count
     do i = 1,variable_count
-      print *,'  ',trim(fnamelist(i))
+      vname = trim(fnamelist(i)) ! variable name
+      print *,'  id:',i-1,' ',trim(vname)
+      dims(:) = 0
+      ! vtype
+      ! 0 byte
+      ! 1 short
+      ! 2 integer
+      ! 4 long
+      ! 5 real
+      ! 6 double
+      ! 7 long double
+      ! 9 string
+      ! 10 complex
+      ! 11 double_complex
+      ! 50 unsigned_byte
+      ! 51 unsigned_short
+      ! 52 unsigned_integer
+      ! 54 unsigned_long
+      call adios_inq_var (adios_handle, trim(vname), vtype, vnsteps, vndim, dims, ier)
+      call check_adios_err(ier,"Error inquiring adios variable failed: "//trim(vname))
+      if (vndim == 0) then
+        ! scalar variable
+        print *,'    scalar type/nsteps/ndim ',vtype,vnsteps,vndim
+      else
+        ! array variable
+        print *,'    array  type/nsteps/ndim ',vtype,vnsteps,vndim,' dims ',dims(1:vndim)
+      endif
     enddo
     deallocate(fnamelist)
   else
@@ -744,35 +1409,41 @@ contains
 
   ! attributes
   if (attribute_count > 0) then
-    allocate (fnamelist(variable_count),stat=ier)
+    ! user output
+    print *,'attributes: ',attribute_count
+
+    allocate (fnamelist(attribute_count),stat=ier)
     if (ier /= 0) stop 'Error allocating namelist array'
 
     ! gets attribute names
-    call adios_inq_attrnames(file_handle_adios, fnamelist, ier)
+    call adios_inq_attrnames(adios_handle, fnamelist, ier)
+    if (ier /= 0) stop 'Error in adios_inq_attrnames call'
 
     ! user output
-    print *,'attributes: ',attribute_count
     do i = 1,attribute_count
-      print *,'  ',trim(fnamelist(i))
+      print *,'  id:',i-1,' ',trim(fnamelist(i))
     enddo
     deallocate(fnamelist)
   else
     print *,'  no attributes'
   endif
   print *
+  print *,'timesteps: first/last',timestep_first,'/',timestep_last
 
   ! groups
-  call adios_inq_ngroups(file_handle_adios, group_count, ier)
+  call adios_inq_ngroups(adios_handle, group_count, ier)
 
   if (group_count > 0) then
+    ! user output
+    print *,'groups: ',group_count
+
     allocate (fnamelist(group_count),stat=ier)
     if (ier /= 0) stop 'Error allocating namelist array'
 
     ! gets group names
-    call adios_inq_groupnames(file_handle_adios, fnamelist, ier)
+    call adios_inq_groupnames(adios_handle, fnamelist, ier)
 
     ! user output
-    print *,'groups: ',group_count
     do i = 1,group_count
       print *,'  ',trim(fnamelist(i))
     enddo
@@ -782,352 +1453,113 @@ contains
   endif
   print *
 
+  ! to avoid compiler warning
+  ier = adios_group
+
+#elif defined(USE_ADIOS2)
+  ! ADIOS 2
+  ! note: inquiry functionality in adios 2 quite different to version 1
+  !       for Fortran bindings, unfortunately there is no adios2_inquire_all_*** functionality
+  !       thus, we have no way to inquire and list all variables in a file using Fortran commands.
+  !
+  ! only checks
+  if (.not. myadios2_obj%valid) then
+    call check_adios_err(ier,"Error inquiring adios2 file for reading: "//trim(filename))
+    stop 'Error adios2 object not valid yet'
+  endif
+  if (.not. adios_handle%valid) stop 'Error adios2 invalid file handle in show_adios_file_variables()'
+  if (.not. adios_group%valid) stop 'Error adios2 invalid group in show_adios_file_variables()'
+
+  ! in case no io_group given, will need one for inquiry
+  !if (.not. adios_group%valid) then
+  !  call adios2_declare_io(adios_group, myadios2_obj, "Reader", ier)
+  !  call check_adios_err(ier,"Error declaring an ADIOS2 IO group in show_adios_file_variables()")
+  !endif
+
+  ! user output
+  if (myrank_adios == 0) then
+    print *,'file name: ',trim(filename)
+
+    ! inquire all variables
+    ! Fortran binding not supported yet by adios2
+    !call adios2_inquire_all_variables(vars,variable_count,adios_group)
+    ! C-wrapper
+    call get_adios2_all_variables_count(variable_count,adios_group)
+    print *,'number of variables: ',variable_count
+    ! variables
+    if (variable_count > 0) then
+      call show_adios2_all_variables(adios_group)
+    else
+      print *,'  no variables'
+    endif
+    print *
+
+    ! inquire all attributes
+    ! Fortran binding not supported yet by adios2
+    !call adios2_inquire_all_attributes(atts,attribute_count,adios_group)
+    ! C-wrapper
+    call get_adios2_all_variables_count(attribute_count,adios_group)
+    ! user output
+    print *,'number of attributes: ',attribute_count
+    ! attributes
+    if (attribute_count > 0) then
+      if (myrank_adios == 0) call show_adios2_all_variables(adios_group)
+    else
+      print *,'  no attributes'
+    endif
+    print *
+  endif
+
+#endif
+
   end subroutine show_adios_file_variables
 
 #endif
 
 
-!
-!---------------------------------------------------------------------------------
-!
-
-! only available with ADIOS compilation support
-! to clearly separate adios version and non-adios version of same tools
-#ifdef ADIOS_INPUT
-
-  subroutine read_adios_array_gll(rank,nspec,array_name,array_gll)
-
-  use adios_read_mod, only: adios_get_scalar,adios_selection_boundingbox,adios_schedule_read,adios_perform_reads
-
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
-
-  implicit none
-
-  integer,intent(in) :: rank
-  integer,intent(in) :: nspec
-
-  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(out) :: array_gll
-  character(len=*),intent(in) :: array_name
-
-  ! local parameters
-  integer :: ier
-  integer :: local_dim
-  integer(kind=8) :: sel
-  integer(kind=8) :: sel_start(1),count_ad(1)
-
-  array_gll(:,:,:,:) = 0.0_CUSTOM_REAL
-
-  call adios_get_scalar(file_handle_adios, trim(array_name)//"/local_dim",local_dim, ier)
-  if (ier /= 0 ) then
-    call adios_errmsg(err_message)
-    print *,'Error adios: reading array ',trim(array_name),' failed'
-    print *,trim(err_message)
-    stop 'Error adios helper read array'
-  endif
-
-  ! allow any rank to read from another rank-segment
-  !! checks rank
-  !!if (myrank_adios /= rank) &
-  !!  stop 'Error invalid rank for reading adios GLL array'
-
-  sel_start(1) = local_dim * rank
-  count_ad(1) = NGLLX * NGLLY * NGLLZ * nspec
-  call adios_selection_boundingbox(sel, 1, sel_start, count_ad)
-
-  ! reads selected array
-  call adios_schedule_read(file_handle_adios, sel,trim(array_name)//"/array",0, 1, array_gll, ier)
-  if (ier /= 0 ) then
-    print *,'Error adios: scheduling read of array ',trim(array_name),' failed'
-    stop 'Error adios helper schedule read array'
-  endif
-
-  call adios_perform_reads(file_handle_adios, ier)
-  if (ier /= 0 ) then
-    print *,'Error adios: performing read of array ',trim(array_name),' failed'
-    stop 'Error adios helper perform read array'
-  endif
-
-  end subroutine read_adios_array_gll
-
-#endif
-
-!
-!---------------------------------------------------------------------------------
-!
-
-! only available with ADIOS compilation support
-! to clearly separate adios version and non-adios version of same tools
-#ifdef ADIOS_INPUT
-
-  subroutine read_adios_array_gll_int(rank,nspec,array_name,array_gll)
-
-  use adios_read_mod, only: adios_get_scalar,adios_selection_boundingbox,adios_schedule_read,adios_perform_reads
-
-  use constants, only: NGLLX,NGLLY,NGLLZ
-
-  implicit none
-
-  integer,intent(in) :: rank
-  integer,intent(in) :: nspec
-
-  integer,dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(out) :: array_gll
-  character(len=*),intent(in) :: array_name
-
-  ! local parameters
-  integer :: ier
-  integer :: local_dim
-  integer(kind=8) :: sel
-  integer(kind=8) :: sel_start(1),count_ad(1)
-
-  array_gll(:,:,:,:) = 0
-
-  call adios_get_scalar(file_handle_adios, trim(array_name)//"/local_dim",local_dim, ier)
-  if (ier /= 0 ) then
-    print *,'Error adios: reading array ',trim(array_name),' failed'
-    stop 'Error adios helper read array'
-  endif
-
-  ! allow any rank to read from another rank-segment
-  !! checks rank
-  !!if (myrank_adios /= rank) &
-  !!  stop 'Error invalid rank for reading adios GLL array'
-
-  sel_start(1) = local_dim * rank
-  count_ad(1) = NGLLX * NGLLY * NGLLZ * nspec
-  call adios_selection_boundingbox(sel, 1, sel_start, count_ad)
-
-  ! reads selected array
-  call adios_schedule_read(file_handle_adios, sel,trim(array_name)//"/array",0, 1, array_gll, ier)
-  if (ier /= 0 ) then
-    print *,'Error adios: scheduling read of array ',trim(array_name),' failed'
-    stop 'Error adios helper schedule read array'
-  endif
-
-  call adios_perform_reads(file_handle_adios, ier)
-  if (ier /= 0 ) then
-    print *,'Error adios: performing read of array ',trim(array_name),' failed'
-    stop 'Error adios helper perform read array'
-  endif
-
-  end subroutine read_adios_array_gll_int
-
-#endif
-
-!
-!---------------------------------------------------------------------------------
-!
-
-! only available with ADIOS compilation support
-! to clearly separate adios version and non-adios version of same tools
-#ifdef ADIOS_INPUT
-
-  subroutine read_adios_array_1d(rank,nsize,array_name,array_1d)
-
-  use adios_read_mod, only: adios_get_scalar,adios_selection_boundingbox,adios_schedule_read,adios_perform_reads
-
-  use constants, only: CUSTOM_REAL
-
-  implicit none
-
-  integer,intent(in) :: rank
-  integer,intent(in) :: nsize
-
-  real(kind=CUSTOM_REAL),dimension(nsize),intent(out) :: array_1d
-  character(len=*),intent(in) :: array_name
-
-  ! local parameters
-  integer :: ier
-  integer :: local_dim
-  integer(kind=8) :: sel
-  integer(kind=8) :: sel_start(1),count_ad(1)
-  !integer :: offset
-
-  ! allow any rank to read from another rank-segment
-  !! checks rank
-  !!if (myrank_adios /= rank) &
-  !!  stop 'Error invalid rank for reading adios GLL array'
-
-  ! initializes
-  array_1d(:) = 0
-
-  ! gets local_dim metadata
-  call adios_get_scalar(file_handle_adios, trim(array_name)//"/local_dim",local_dim, ier)
-  if (ier /= 0 ) then
-    print *,'Error adios: reading array ',trim(array_name),' failed'
-    stop 'Error adios helper read array'
-  endif
-
-  sel_start(1) = local_dim * rank
-  count_ad(1) = nsize
-
-  ! gets offset (offset is the same as: local_dim * rank)
-  !call adios_selection_writeblock(sel,rank)
-  !call adios_schedule_read(file_handle_adios, sel, trim(array_name)//"/offset", 0, 1, offset, ier)
-  !if (ier /= 0 ) stop 'Error adios: reading offset'
-  !call adios_perform_reads(file_handle_adios, ier)
-  !if (ier /= 0 ) stop 'Error adios: perform reading mesh file offsets failed'
-  !sel_start(1) = offset
-  !count_ad(1) = nsize
-
-  call adios_selection_boundingbox(sel, 1, sel_start, count_ad)
-
-  ! reads selected array
-  call adios_schedule_read(file_handle_adios, sel,trim(array_name)//"/array",0, 1, array_1d, ier)
-  if (ier /= 0 ) then
-    print *,'Error adios: scheduling read of array ',trim(array_name),' failed'
-    stop 'Error adios helper schedule read array'
-  endif
-
-  call adios_perform_reads(file_handle_adios, ier)
-  if (ier /= 0 ) then
-    print *,'Error adios: performing read of array ',trim(array_name),' failed'
-    stop 'Error adios helper perform read array'
-  endif
-
-  end subroutine read_adios_array_1d
-
-#endif
-
-
-!
-!---------------------------------------------------------------------------------
-!
-
-! only available with ADIOS compilation support
-! to clearly separate adios version and non-adios version of same tools
-#ifdef ADIOS_INPUT
-
-  subroutine read_adios_array_1d_int(rank,nsize,array_name,array_1d)
-
-  use adios_read_mod, only: adios_get_scalar,adios_selection_boundingbox,adios_schedule_read,adios_perform_reads
-
-  use constants, only: NGLLX,NGLLY,NGLLZ
-
-  implicit none
-
-  integer,intent(in) :: rank
-  integer,intent(in) :: nsize
-
-  integer,dimension(nsize),intent(out) :: array_1d
-  character(len=*),intent(in) :: array_name
-
-  ! local parameters
-  integer :: ier
-  integer :: local_dim
-  integer(kind=8) :: sel
-  integer(kind=8) :: sel_start(1),count_ad(1)
-  !integer :: offset
-
-  array_1d(:) = 0
-
-  call adios_get_scalar(file_handle_adios, trim(array_name)//"/local_dim",local_dim, ier)
-  if (ier /= 0 ) then
-    print *,'Error adios: reading array ',trim(array_name),' failed'
-    stop 'Error adios helper read array'
-  endif
-
-  sel_start(1) = local_dim * rank
-  count_ad(1) = nsize
-
-  call adios_selection_boundingbox(sel, 1, sel_start, count_ad)
-
-  ! reads selected array
-  call adios_schedule_read(file_handle_adios, sel,trim(array_name)//"/array", 0, 1, array_1d, ier)
-  if (ier /= 0 ) then
-    print *,'Error adios: scheduling read of array ',trim(array_name),' failed'
-    stop 'Error adios helper schedule read array'
-  endif
-
-  call adios_perform_reads(file_handle_adios, ier)
-  if (ier /= 0 ) then
-    print *,'Error adios: performing read of array ',trim(array_name),' failed'
-    stop 'Error adios helper perform read array'
-  endif
-
-  end subroutine read_adios_array_1d_int
-
-#endif
-
 !-------------------------------------------------------------------------------
-! ADIOS writing
+!
+! error checking
+!
 !-------------------------------------------------------------------------------
 
+#if defined(USE_ADIOS) || defined(USE_ADIOS2)
 ! only available with ADIOS compilation support
 ! to clearly separate adios version and non-adios version of same tools
-#ifdef ADIOS_INPUT
 
-  subroutine write_adios_scalar_int(scalar_name,scalar)
+!> Get the ADIOS error message from an adios error number if there is an error.
+!! \param ier The error code considered.
+!! \param msg additional error message.
 
-! writes a single scalar
-
-  use adios_write_mod, only: adios_write
+  subroutine check_adios_err(ier,msg)
 
   implicit none
+  integer, intent(in) :: ier
+  character(len=*), intent(in) :: msg
 
-  integer, intent(in) :: scalar
-  character(len=*),intent(in) :: scalar_name
+#if defined(USE_ADIOS)
+  ! ADIOS 1
+  ! error message
+  character(len=1024) :: err_message
 
-  ! local parameters
-  integer :: ier
-
-  ! checks if file handle valid
-  if (file_handle_adios == 0) stop 'Invalid ADIOS file handle in write_adios_scalar_int()'
-
-  ! writes scalar (either buffered or directly to disk)
-  call adios_write(file_handle_adios, trim(scalar_name), scalar, ier)
   if (ier /= 0) then
+    print *,'Error: process ',myrank_adios,' has ADIOS error ',ier
+    print *,'Error message: ',trim(msg)
     call adios_errmsg(err_message)
-    print *,'Error adios: could not write parameter: ',trim(scalar_name)
-    print *,trim(err_message)
-    stop 'Error adios helper write scalar'
+    print *,'Error message ADIOS: ',trim(err_message)
+    call exit_mpi(myrank_adios,'ADIOS error')
   endif
 
-  end subroutine write_adios_scalar_int
-
+#elif defined(USE_ADIOS2)
+  ! ADIOS 2
+  if (ier /= adios2_error_none) then
+    print *,'Error: process ',myrank_adios,' has ADIOS2 error ',ier
+    print *,'Error message: ',trim(msg)
+    call exit_mpi(myrank_adios,'ADIOS2 error')
+  endif
 #endif
 
-!-------------------------------------------------------------------------------
-
-! only available with ADIOS compilation support
-! to clearly separate adios version and non-adios version of same tools
-#ifdef ADIOS_INPUT
-
-  subroutine write_adios_array_gll(rank,nspec,array_name,array_gll)
-
-! writes a GLL array
-
-  use adios_helpers_writers_mod, only: write_adios_global_1d_array
-
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
-
-  implicit none
-
-  integer,intent(in) :: rank
-  integer,intent(in) :: nspec
-
-  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: array_gll
-  character(len=*),intent(in) :: array_name
-
-  ! local parameters
-  integer :: ier
-  integer :: local_dim
-
-  ! checks if file handle valid
-  if (file_handle_adios == 0) stop 'Invalid ADIOS file handle in write_adios_array_gll()'
-
-  ! array size
-  local_dim = NGLLX * NGLLY * NGLLZ * nspec
-
-  ! writes array
-  call write_adios_global_1d_array(file_handle_adios,rank,sizeprocs_adios,local_dim,trim(array_name),array_gll)
-  if (ier /= 0) then
-    call adios_errmsg(err_message)
-    print *,'Error adios: could not write array parameter: ',trim(array_name)
-    print *,trim(err_message)
-    stop 'Error adios helper write array'
-  endif
-
-  end subroutine write_adios_array_gll
+  end subroutine check_adios_err
 
 #endif
 

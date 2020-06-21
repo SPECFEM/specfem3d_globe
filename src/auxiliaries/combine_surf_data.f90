@@ -29,31 +29,40 @@ program combine_surf_data
 
   ! combines the database files on several slices.
 
-  use constants
+  use constants, only: &
+    CUSTOM_REAL,MAX_STRING_LEN,IIN,NGLLX,NGLLY,NGLLZ
+
+  use constants_solver, only: &
+    NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE,NSPEC_OUTER_CORE,NSPEC_INNER_CORE
 
   implicit none
 
-  include "OUTPUT_FILES/values_from_mesher.h"
-
-  integer,parameter :: MAX_NUM_NODES = 400
-
-  integer i,j,k,ispec_surf,ios,it,num_node,njunk,ires,idimval,iproc,njunk1,njunk2,njunk3,inx,iny
-  character(len=MAX_STRING_LEN) :: arg(20),sline,filename,surfname,reg_name,belm_name, indir, outdir
+  character(len=MAX_STRING_LEN) :: arg(20)
+  character(len=MAX_STRING_LEN) :: sline,filename,surfname,reg_name,belm_name, indir, outdir
   character(len=MAX_STRING_LEN) :: mesh_file, pt_mesh_file, em_mesh_file, command_name
+
   logical :: HIGH_RESOLUTION_MESH,FILE_ARRAY_IS_3D
-  integer :: node_list(MAX_NUM_NODES),nspec(MAX_NUM_NODES),nglob(MAX_NUM_NODES)
+
+  integer :: num_node
+  integer,dimension(:),allocatable :: node_list,nspec_list,nglob_list
 
   character(len=MAX_STRING_LEN) :: prname,dimen_name,prname2,nspec2D_file,dimension_file
   character(len=MAX_STRING_LEN) :: ibelm_surf_file,data_file,ibool_file
+
   integer :: nspec2D_moho_val, nspec2D_400_val, nspec2D_670_val, nspec_surf
   integer :: npoint,nelement, npoint_total,nelement_total, pfd,efd, np, ne, numpoin
   integer, allocatable :: ibelm_surf(:)
   real(kind=CUSTOM_REAL), allocatable :: data_2D(:,:,:), data_3D(:,:,:,:)
-  integer ibool(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),num_ibool(NGLOB_CRUST_MANTLE)
-  real(kind=CUSTOM_REAL),dimension(NGLOB_CRUST_MANTLE) :: xstore, ystore, zstore
-  logical mask_ibool(NGLOB_CRUST_MANTLE)
-  real dat, x, y, z
-  integer ispec, iglob, iglob1, iglob2, iglob3, iglob4, n1, n2, n3, n4, nex
+
+  integer, dimension(:,:,:,:), allocatable :: ibool
+  integer, dimension(:), allocatable :: num_ibool
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: xstore, ystore, zstore
+  logical, dimension(:), allocatable :: mask_ibool
+
+  real :: dat, x, y, z
+  integer :: ispec, iglob, iglob1, iglob2, iglob3, iglob4, n1, n2, n3, n4, nex
+  integer :: i,j,k,ispec_surf,ier
+  integer :: it,njunk,ires,idimval,iproc,njunk1,njunk2,njunk3,inx,iny
 
 
 ! ------------------ program starts here -------------------
@@ -80,14 +89,35 @@ program combine_surf_data
              stop 'This program needs that NSPEC_CRUST_MANTLE > NSPEC_OUTER_CORE and NSPEC_INNER_CORE'
 
   ! get slice list
+  open(unit = IIN, file = trim(arg(1)), status = 'unknown',iostat = ier)
+  if (ier /= 0) stop 'Error opening file'
+
+  ! gets number of lines
   num_node = 0
-  open(unit = IIN, file = trim(arg(1)), status = 'unknown',iostat = ios)
-  if (ios /= 0) stop 'Error opening file'
   do while (1 == 1)
-    read(IIN,'(a)',iostat=ios) sline
-    if (ios /= 0) exit
-    read(sline,*,iostat=ios) njunk
-    if (ios /= 0) exit
+    read(IIN,'(a)',iostat=ier) sline
+    if (ier /= 0) exit
+    read(sline,*,iostat=ier) njunk
+    if (ier /= 0) exit
+    num_node = num_node + 1
+  enddo
+
+  allocate(node_list(num_node), &
+           nspec_list(num_node), &
+           nglob_list(num_node), stat=ier)
+  if (ier /= 0) stop 'Error allocating list arrays'
+  node_list(:) = 0
+  nspec_list(:) = 0
+  nglob_list(:) = 0
+
+  ! reads in list
+  rewind(IIN)
+  num_node = 0
+  do while (1 == 1)
+    read(IIN,'(a)',iostat=ier) sline
+    if (ier /= 0) exit
+    read(sline,*,iostat=ier) njunk
+    if (ier /= 0) exit
     num_node = num_node + 1
     node_list(num_node) = njunk
   enddo
@@ -153,6 +183,7 @@ program combine_surf_data
     if (trim(surfname) == '670') nspec_surf = nspec2D_670_val
   endif
   close(IIN)
+
   nex = int(dsqrt(nspec_surf*1.0d0))
   if (HIGH_RESOLUTION_MESH) then
     npoint = (nex*(NGLLX-1)+1) * (nex*(NGLLY-1)+1)
@@ -170,13 +201,14 @@ program combine_surf_data
   ! ========= write points and elements files ===================
   dimen_name = trim(reg_name)//'solver_data.bin'
   allocate(ibelm_surf(nspec_surf))
+
   do it = 1, num_node
     write(prname,'(a,i6.6,a)') trim(indir)//'/proc',node_list(it),'_'
     dimension_file = trim(prname) // trim(dimen_name)
-    open(unit=IIN,file=trim(dimension_file),status='old',action='read', iostat = ios, form='unformatted')
-    if (ios /= 0) stop 'Error opening file'
-    read(IIN) nspec(it)
-    read(IIN) nglob(it)
+    open(unit=IIN,file=trim(dimension_file),status='old',action='read', iostat = ier, form='unformatted')
+    if (ier /= 0) stop 'Error opening file'
+    read(IIN) nspec_list(it)
+    read(IIN) nglob_list(it)
     close(IIN)
   enddo
 
@@ -185,6 +217,14 @@ program combine_surf_data
   else
     allocate(data_2D(NGLLX,NGLLY,nspec_surf))
   endif
+
+  allocate(ibool(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE), &
+           xstore(NGLOB_CRUST_MANTLE), &
+           ystore(NGLOB_CRUST_MANTLE), &
+           zstore(NGLOB_CRUST_MANTLE), &
+           num_ibool(NGLOB_CRUST_MANTLE), &
+           mask_ibool(NGLOB_CRUST_MANTLE),stat=ier)
+  if (ier /= 0) stop 'Error allocating mesh arrays'
 
   ! open Paraview output mesh file
   write(mesh_file,'(a,i1,a)') trim(outdir)//'/'//trim(filename)//'.surf'
@@ -214,8 +254,8 @@ program combine_surf_data
     ! surface topology file
     ibelm_surf_file = trim(prname) // trim(belm_name)
     print *, trim(ibelm_surf_file)
-    open(unit = IIN,file = trim(ibelm_surf_file),status='old', iostat = ios, form='unformatted')
-    if (ios /= 0) then
+    open(unit = IIN,file = trim(ibelm_surf_file),status='old', iostat = ier, form='unformatted')
+    if (ier /= 0) then
       print *,'Error opening ',trim(ibelm_surf_file); stop
     endif
     if (trim(surfname) == 'Moho' .or. trim(surfname) == '400' .or. trim(surfname) == '670') then
@@ -243,13 +283,13 @@ program combine_surf_data
     ! datafile
     data_file = trim(prname2)//trim(filename)//'.bin'
     print *, trim(data_file)
-    open(unit = IIN,file = trim(data_file),status='old', iostat = ios,form ='unformatted')
-    if (ios /= 0) then
+    open(unit = IIN,file = trim(data_file),status='old', iostat = ier,form ='unformatted')
+    if (ier /= 0) then
       print *,'Error opening ',trim(data_file); stop
     endif
     if (FILE_ARRAY_IS_3D) then
-      read(IIN) data_3D(:,:,:,1:nspec(it))
-   else
+      read(IIN) data_3D(:,:,:,1:nspec_list(it))
+    else
       read(IIN) data_2D
     endif
     close(IIN)
@@ -257,16 +297,16 @@ program combine_surf_data
     ! ibool file
     ibool_file = trim(prname2) // 'solver_data.bin'
     print *, trim(ibool_file)
-    open(unit = IIN,file = trim(ibool_file),status='old', iostat = ios, form='unformatted')
-    if (ios /= 0) then
+    open(unit = IIN,file = trim(ibool_file),status='old', iostat = ier, form='unformatted')
+    if (ier /= 0) then
       print *,'Error opening ',trim(ibool_file); stop
     endif
-    read(IIN) nspec(it)
-    read(IIN) nglob(it)
-    read(IIN) xstore(1:nglob(it))
-    read(IIN) ystore(1:nglob(it))
-    read(IIN) zstore(1:nglob(it))
-    read(IIN) ibool(:,:,:,1:nspec(it))
+    read(IIN) nspec_list(it)
+    read(IIN) nglob_list(it)
+    read(IIN) xstore(1:nglob_list(it))
+    read(IIN) ystore(1:nglob_list(it))
+    read(IIN) zstore(1:nglob_list(it))
+    read(IIN) ibool(:,:,:,1:nspec_list(it))
     close(IIN)
 
     mask_ibool(:) = .false.
@@ -346,6 +386,10 @@ program combine_surf_data
 
   print *, 'Done writing '//trim(mesh_file)
   print *, ' '
+
+  ! free arrays
+  deallocate(node_list,nspec_list,nglob_list)
+  deallocate(ibool,xstore,ystore,zstore,num_ibool,mask_ibool)
 
 end program combine_surf_data
 

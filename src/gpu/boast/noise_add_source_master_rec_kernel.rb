@@ -24,10 +24,12 @@ module BOAST
         decl tx  = Int("tx")
         decl ispec = Int("ispec")
         decl iglob = Int("iglob")
+        comment()
 
         print tx === get_local_id(0)
         print ispec === ispec_selected_rec[irec_master_noise] - 1
         print iglob === ibool[tx + ngll3*ispec] - 1
+        comment()
 
         (0..2).each { |i|
           print atomicAdd(accel + iglob*3 + i, noise_sourcearray[tx*3 + ngll3*3*it + i])

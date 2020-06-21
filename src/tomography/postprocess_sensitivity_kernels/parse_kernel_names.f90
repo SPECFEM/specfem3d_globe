@@ -33,27 +33,38 @@
   implicit none
 
   character(len=MAX_STRING_LEN),intent(in) :: kernel_names_comma_delimited
-  character(len=MAX_STRING_LEN),intent(inout) :: kernel_names(MAX_KERNEL_NAMES)
+  character(len=MAX_STRING_LEN),dimension(MAX_KERNEL_NAMES),intent(out) :: kernel_names
   integer,intent(out) :: nker
 
   ! local parameters
   integer :: iker
-  character(len=MAX_STRING_LEN) :: tmp
-  character,parameter :: delimiter = ','
+  character(len=MAX_STRING_LEN) :: tmp,kernel_name
+  character(len=1),parameter :: delimiter = ','
+
+  ! safety check
+  if (len_trim(kernel_names_comma_delimited) == 0) then
+    print *,'Error: empty kernel name as first entry ',kernel_names_comma_delimited
+    print *,'Please provide a kernel name'
+    stop 'Error empty kernel name string'
+  endif
 
   ! gets first name/token
   iker = 1
-  call strtok(kernel_names_comma_delimited, delimiter, kernel_names(iker))
+  call tokenize_string(kernel_names_comma_delimited, delimiter, kernel_name)
+  kernel_names(iker) = kernel_name
 
-  ! null-string as first argument for successive strtok-calls
+  ! null-string as first argument for successive tokenize_string-calls
   tmp(1:1) = char(0)
 
-  ! gets next names/tokens (strtok will return null-terminated token when finished)
+  ! gets next names/tokens (tokenize_string will return null-terminated token when finished)
   do while (kernel_names(iker)(1:1) /= char(0))
     ! increases name/token number
     iker = iker + 1
+    if (iker > MAX_KERNEL_NAMES) stop 'number of tokens exceeds MAX_KERNEL_NAMES'
+
     ! gets next successive token (with null-terminated string as first argument)
-    call strtok(tmp, delimiter, kernel_names(iker))
+    call tokenize_string(tmp, delimiter, kernel_name)
+    kernel_names(iker) = kernel_name
   enddo
 
   ! number of kernel names
@@ -77,7 +88,10 @@
 
 ! The following utility function was modified from http://Fortranwiki.org/Fortran/show/strtok
 !
-  subroutine strtok (source_string, delimiter, token)
+
+! note: IBM's xlf compiler seems to have an issue with a subroutine name "strtok".
+!    we're using a more Fortran-like name.
+  subroutine tokenize_string (source_string, delimiter, token)
 
 !     @(#) Tokenize a string in a similar manner to C routine strtok(3c).
 !
@@ -113,15 +127,18 @@
   !     LOCAL VALUES:
   integer :: ibegin        ! beginning of token to return
   integer :: ifinish       ! end of token to return
+  integer :: length
 
   ! initialize stored copy of input string and pointer into input string on first call
   if (source_string(1:1) /= char(0)) then
-    isaved_start = 1                 ! beginning of unprocessed data
-    saved_string = source_string     ! save input string from first call in series
-    isource_len = LEN(saved_string)  ! length of input string from first call
+    isaved_start = 1                      ! beginning of unprocessed data
+    saved_string = trim(source_string)    ! save input string from first call in series
+    isource_len = len_trim(saved_string)  ! length of input string from first call
   endif
 
-  token = ''
+  ! token = '' is not allowed by IBM's xlf compiler. assigning empty strings is non-standard Fortran.
+  ! as a work-around, we set a null character '' here to initialize the string
+  token = char(0)
   ibegin = isaved_start
 
   ! sets first index ibegin to beginning of (next) token
@@ -136,7 +153,7 @@
   enddo
 
   if (ibegin > isource_len) then
-    token = char(0)
+    token(1:1) = char(0)
     return
   endif
 
@@ -151,12 +168,21 @@
       ! exits do-loop
       exit
     endif
+    ! avoids accessing saved_string in next if-statement out of bounds
+    if (ifinish > isource_len) exit
   enddo
 
   ! sets token string
   !strtok = "["//saved_string(ibegin:ifinish-1)//"]"
-  token = saved_string(ibegin:ifinish-1)
+  ! IBM's xlf compiler doesn't like assigining strings of zero lengths?
+  length = ifinish-1 - ibegin + 1
+  if (length > 0 .and. length < MAX_STRING_LEN) then
+    token = saved_string(ibegin:ifinish-1)
+  else
+    stop 'invalid token, either too short or too long'
+  endif
+
   isaved_start = ifinish
 
-  end subroutine strtok
+  end subroutine tokenize_string
 

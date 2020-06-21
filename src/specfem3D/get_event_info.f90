@@ -320,8 +320,11 @@
       !print *,'line ----',string(istart:iend),'----'
 
       ! read header with event information
-      read(string(1:istart-1),*) datasource
-      read(string(istart:iend),*) yr,mo,da,ho,mi,sec,elat_pde,elon_pde,depth_pde,mb,ms
+      if (isource == 1) then
+        ! origin time of first source listed will be taken as reference
+        read(string(1:istart-1),*) datasource
+        read(string(istart:iend),*) yr,mo,da,ho,mi,sec,elat_pde,elon_pde,depth_pde,mb,ms
+      endif
 
       jda = julian_day(yr,mo,da)
 

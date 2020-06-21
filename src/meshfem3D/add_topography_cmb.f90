@@ -30,6 +30,7 @@
 ! this is only a placeholder function, which is not used yet...user must supply the subtopo_cmb() routine
 
   use constants
+  use shared_parameters, only: R_PLANET,R_PLANET_KM
   use meshfem3D_par, only: RTOPDDOUBLEPRIME,RCMB
 
   implicit none
@@ -65,18 +66,18 @@
 
     ! non-dimensionalize the topography, which is in km
     ! positive for a depression, so change the sign for a perturbation in radius
-    topocmb = -topocmb / R_EARTH_KM
+    topocmb = -topocmb / R_PLANET_KM
 
     ! start stretching a distance RTOPDDOUBLEPRIME - RCMB below the CMB
     ! and finish at RTOPDDOUBLEPRIME of D_double_prime
-    r_start = (RCMB - (RTOPDDOUBLEPRIME - RCMB))/R_EARTH
+    r_start = (RCMB - (RTOPDDOUBLEPRIME - RCMB))/R_PLANET
     gamma = 0.0d0
-    if (r >= RCMB/R_EARTH .and. r <= RTOPDDOUBLEPRIME/R_EARTH) then
+    if (r >= RCMB/R_PLANET .and. r <= RTOPDDOUBLEPRIME/R_PLANET) then
       ! stretching between RCMB and RTOPDDOUBLEPRIME
-      gamma = (RTOPDDOUBLEPRIME/R_EARTH - r) / (RTOPDDOUBLEPRIME/R_EARTH - RCMB/R_EARTH)
-    else if (r >= r_start .and. r <= RCMB/R_EARTH) then
+      gamma = (RTOPDDOUBLEPRIME/R_PLANET - r) / (RTOPDDOUBLEPRIME/R_PLANET - RCMB/R_PLANET)
+    else if (r >= r_start .and. r <= RCMB/R_PLANET) then
       ! stretching between r_start and RCMB
-      gamma = (r - r_start) / (RCMB/R_EARTH - r_start)
+      gamma = (r - r_start) / (RCMB/R_PLANET - r_start)
     endif
     if (gamma < -0.0001 .or. gamma > 1.0001) call exit_MPI(myrank,'incorrect value of gamma for CMB topography')
 

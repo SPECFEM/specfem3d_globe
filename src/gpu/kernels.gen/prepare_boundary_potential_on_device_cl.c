@@ -82,9 +82,6 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifndef IFLAG_IN_FICTITIOUS_CUBE\n\
 #define IFLAG_IN_FICTITIOUS_CUBE 11\n\
 #endif\n\
-#ifndef R_EARTH_KM\n\
-#define R_EARTH_KM 6371.0f\n\
-#endif\n\
 #ifndef COLORING_MIN_NSPEC_INNER_CORE\n\
 #define COLORING_MIN_NSPEC_INNER_CORE 1000\n\
 #endif\n\
@@ -100,7 +97,9 @@ __kernel void prepare_boundary_potential_on_device(const __global float * d_pote
   int iglob;\n\
   int iloc;\n\
   int iinterface;\n\
+\n\
   id = get_global_id(0) + (get_global_size(0)) * (get_global_id(1));\n\
+\n\
   for (iinterface = 0; iinterface <= num_interfaces - (1); iinterface += 1) {\n\
     if (id < d_nibool_interfaces[iinterface]) {\n\
       iloc = id + (max_nibool_interfaces) * (iinterface);\n\

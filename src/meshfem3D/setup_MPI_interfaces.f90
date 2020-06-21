@@ -52,7 +52,7 @@
   ! allocates temporary arrays for setup routines
   ! estimates a maximum size of needed arrays
   MAX_NEIGHBORS = 8 + NCORNERSCHUNKS
-  if (INCLUDE_CENTRAL_CUBE ) MAX_NEIGHBORS = MAX_NEIGHBORS + NUMMSGS_FACES
+  if (INCLUDE_CENTRAL_CUBE) MAX_NEIGHBORS = MAX_NEIGHBORS + NUMMSGS_FACES
 
   allocate(my_neighbors(MAX_NEIGHBORS), &
            nibool_neighbors(MAX_NEIGHBORS),stat=ier)
@@ -152,6 +152,7 @@
     buffer_send_faces_scalar,buffer_received_faces_scalar
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: test_flag
   integer,dimension(:),allocatable :: dummy_i
+  logical :: add_central_cube
   integer :: i,ier
   !----------------------
   ! debug file output
@@ -161,11 +162,13 @@
 
   ! sets up MPI interfaces
   ! crust mantle region
-  if (myrank == 0 ) write(IMAIN,*) 'crust mantle MPI:'
+  if (myrank == 0 ) then
+    write(IMAIN,*) 'crust mantle MPI:'
+    call flush_IMAIN()
+  endif
 
   if (NPROCTOT > 1) then
-    allocate(test_flag(NGLOB_CRUST_MANTLE), &
-            stat=ier)
+    allocate(test_flag(NGLOB_CRUST_MANTLE),stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating test_flag')
 
     ! sets flag to rank id (+1 to avoid problems with zero rank)
@@ -173,18 +176,19 @@
 
     ! assembles values
     call assemble_MPI_scalar_block(test_flag,NGLOB_CRUST_MANTLE, &
-              iproc_xi,iproc_eta,ichunk,addressing, &
-              iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
-              npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
-              iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
-              iprocfrom_faces,iprocto_faces,imsg_type, &
-              iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-              buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
-              buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
-              NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-              NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
-              NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE), &
-              NGLOB2DMAX_XY,NCHUNKS)
+                                   iproc_xi,iproc_eta,ichunk,addressing, &
+                                   iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle, &
+                                   iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
+                                   npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+                                   iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
+                                   iprocfrom_faces,iprocto_faces,imsg_type, &
+                                   iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+                                   buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
+                                   buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
+                                   NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
+                                   NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
+                                   NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE), &
+                                   NGLOB2DMAX_XY,NCHUNKS)
 
     ! removes own myrank id (+1)
     test_flag(:) = test_flag(:) - ( myrank + 1.0)
@@ -192,6 +196,7 @@
     allocate(dummy_i(NSPEC_CRUST_MANTLE),stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating dummy_i')
     dummy_i(:) = 0
+    add_central_cube = .false.
 
     ! determines neighbor rank for shared faces
     call get_MPI_interfaces(myrank,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE, &
@@ -199,7 +204,7 @@
                               num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
                               max_nibool,MAX_NEIGHBORS, &
                               ibool,is_on_a_slice_edge, &
-                              IREGION_CRUST_MANTLE,.false.,dummy_i,INCLUDE_CENTRAL_CUBE, &
+                              IREGION_CRUST_MANTLE,add_central_cube,dummy_i,INCLUDE_CENTRAL_CUBE, &
                               xstore_glob,ystore_glob,zstore_glob,NPROCTOT)
 
     deallocate(test_flag)
@@ -291,6 +296,7 @@
     buffer_send_faces_scalar,buffer_received_faces_scalar
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: test_flag
   integer,dimension(:),allocatable :: dummy_i
+  logical :: add_central_cube
   integer :: i,ier
   !----------------------
   ! debug file output
@@ -300,11 +306,13 @@
 
   ! sets up MPI interfaces
   ! outer core region
-  if (myrank == 0 ) write(IMAIN,*) 'outer core MPI:'
+  if (myrank == 0 ) then
+    write(IMAIN,*) 'outer core MPI:'
+    call flush_IMAIN()
+  endif
 
   if (NPROCTOT > 1) then
-    allocate(test_flag(NGLOB_OUTER_CORE), &
-            stat=ier)
+    allocate(test_flag(NGLOB_OUTER_CORE),stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating test_flag outer core')
 
     ! sets flag to rank id (+1 to avoid problems with zero rank)
@@ -326,13 +334,13 @@
                                    NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE), &
                                    NGLOB2DMAX_XY,NCHUNKS)
 
-
     ! removes own myrank id (+1)
     test_flag(:) = test_flag(:) - ( myrank + 1.0)
 
     allocate(dummy_i(NSPEC_OUTER_CORE),stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating dummy_i')
     dummy_i(:) = 0
+    add_central_cube = .false.
 
     ! determines neighbor rank for shared faces
     call get_MPI_interfaces(myrank,NGLOB_OUTER_CORE,NSPEC_OUTER_CORE, &
@@ -340,7 +348,7 @@
                             num_interfaces_outer_core,max_nibool_interfaces_oc, &
                             max_nibool,MAX_NEIGHBORS, &
                             ibool,is_on_a_slice_edge, &
-                            IREGION_OUTER_CORE,.false.,dummy_i,INCLUDE_CENTRAL_CUBE, &
+                            IREGION_OUTER_CORE,add_central_cube,dummy_i,INCLUDE_CENTRAL_CUBE, &
                             xstore_glob,ystore_glob,zstore_glob,NPROCTOT)
 
     deallocate(test_flag)
@@ -432,6 +440,7 @@
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: test_flag
   integer :: i,j,k,ispec,iglob,ier
   integer :: ndim_assemble
+  logical :: add_central_cube
   !----------------------
   ! debug file output
   logical,parameter :: DEBUG = .false.
@@ -440,11 +449,13 @@
 
   ! sets up MPI interfaces
   ! inner core
-  if (myrank == 0 ) write(IMAIN,*) 'inner core MPI:'
+  if (myrank == 0 ) then
+    write(IMAIN,*) 'inner core MPI:'
+    call flush_IMAIN()
+  endif
 
   if (NPROCTOT > 1) then
-    allocate(test_flag(NGLOB_INNER_CORE), &
-            stat=ier)
+    allocate(test_flag(NGLOB_INNER_CORE),stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating test_flag inner core')
 
     ! sets flag to rank id (+1 to avoid problems with zero rank)
@@ -465,18 +476,19 @@
 
     ! assembles values
     call assemble_MPI_scalar_block(test_flag,NGLOB_INNER_CORE, &
-              iproc_xi,iproc_eta,ichunk,addressing, &
-              iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
-              npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
-              iboolfaces_inner_core,iboolcorner_inner_core, &
-              iprocfrom_faces,iprocto_faces,imsg_type, &
-              iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-              buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
-              buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
-              NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-              NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_INNER_CORE), &
-              NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE), &
-              NGLOB2DMAX_XY,NCHUNKS)
+                                   iproc_xi,iproc_eta,ichunk,addressing, &
+                                   iboolleft_xi_inner_core,iboolright_xi_inner_core, &
+                                   iboolleft_eta_inner_core,iboolright_eta_inner_core, &
+                                   npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+                                   iboolfaces_inner_core,iboolcorner_inner_core, &
+                                   iprocfrom_faces,iprocto_faces,imsg_type, &
+                                   iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+                                   buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
+                                   buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
+                                   NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
+                                   NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_INNER_CORE), &
+                                   NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE), &
+                                   NGLOB2DMAX_XY,NCHUNKS)
 
     ! debug: idoubling inner core
     if (DEBUG) then
@@ -490,21 +502,24 @@
     ! including central cube
     if (INCLUDE_CENTRAL_CUBE) then
       ! user output
-      if (myrank == 0 ) write(IMAIN,*) 'inner core with central cube MPI:'
+      if (myrank == 0 ) then
+        write(IMAIN,*) 'inner core with central cube MPI:'
+        call flush_IMAIN()
+      endif
 
       ! test_flag is a scalar, not a vector
       ndim_assemble = 1
 
       ! use central cube buffers to assemble the inner core mass matrix with the central cube
       call assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_from_slices_to_cube, &
-                   npoin2D_cube_from_slices, buffer_all_cube_from_slices, &
-                   buffer_slices, buffer_slices2, ibool_central_cube, &
-                   receiver_cube_from_slices, ibool, &
-                   idoubling, NSPEC_INNER_CORE, &
-                   ibelm_bottom_inner_core, NSPEC2D_BOTTOM(IREGION_INNER_CORE), &
-                   NGLOB_INNER_CORE, &
-                   test_flag,ndim_assemble, &
-                   iproc_eta,addressing,NCHUNKS,NPROC_XI,NPROC_ETA)
+                                           npoin2D_cube_from_slices, buffer_all_cube_from_slices, &
+                                           buffer_slices, buffer_slices2, ibool_central_cube, &
+                                           receiver_cube_from_slices, ibool, &
+                                           idoubling, NSPEC_INNER_CORE, &
+                                           ibelm_bottom_inner_core, NSPEC2D_BOTTOM(IREGION_INNER_CORE), &
+                                           NGLOB_INNER_CORE, &
+                                           test_flag,ndim_assemble, &
+                                           iproc_eta,addressing,NCHUNKS,NPROC_XI,NPROC_ETA)
 
       ! frees array not needed anymore
       deallocate(ibelm_bottom_inner_core)
@@ -514,6 +529,9 @@
     ! removes own myrank id (+1)
     test_flag = test_flag - ( myrank + 1.0)
     where( test_flag < 0.0 ) test_flag = 0.0
+
+    ! gets new interfaces for inner_core without central cube yet
+    add_central_cube = .false.
 
     ! debug: in sequential order, for testing purpose
     !do i = 0,NPROCTOT - 1
@@ -525,20 +543,19 @@
     !                          num_interfaces_inner_core,max_nibool_interfaces_ic, &
     !                          max_nibool,MAX_NEIGHBORS, &
     !                          ibool,is_on_a_slice_edge, &
-    !                          IREGION_INNER_CORE,.false.,idoubling,INCLUDE_CENTRAL_CUBE, &
+    !                          IREGION_INNER_CORE,add_central_cube,idoubling,INCLUDE_CENTRAL_CUBE, &
     !                          xstore_glob,ystore_glob,zstore_glob,NPROCTOT)
     !  endif
     !  call synchronize_all()
     !enddo
 
-    ! gets new interfaces for inner_core without central cube yet
     ! determines neighbor rank for shared faces
     call get_MPI_interfaces(myrank,NGLOB_INNER_CORE,NSPEC_INNER_CORE, &
                           test_flag,my_neighbors,nibool_neighbors,ibool_neighbors, &
                           num_interfaces_inner_core,max_nibool_interfaces_ic, &
                           max_nibool,MAX_NEIGHBORS, &
                           ibool,is_on_a_slice_edge, &
-                          IREGION_INNER_CORE,.false.,idoubling,INCLUDE_CENTRAL_CUBE, &
+                          IREGION_INNER_CORE,add_central_cube,idoubling,INCLUDE_CENTRAL_CUBE, &
                           xstore_glob,ystore_glob,zstore_glob,NPROCTOT)
 
     deallocate(test_flag)

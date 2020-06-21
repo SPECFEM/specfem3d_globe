@@ -605,6 +605,9 @@
       do jstab = 1,4
         if (jstab /= istab) then
 
+          ipointnumber1_vert = 0
+          ipointnumber2_vert = 0
+
           if (istab == 1) then
             ipointnumber1_vert = iglob1
           else if (istab == 2) then
@@ -728,13 +731,13 @@
   else
 
 ! regular scaling to real distance if no topography
-    elevation_sphere(:) = R_EARTH * elevation_sphere(:)
+    elevation_sphere(:) = R_PLANET * elevation_sphere(:)
 
   endif
 
   if (icolor == 5 .or. icolor == 6) then
 
-   if (ISOTROPIC_3D_MANTLE) then
+   if (MODEL_3D_MANTLE_PERTUBATIONS) then
 
 ! compute absolute maximum for dvp
     rnorm_factor = maxval(dabs(dvp(:)))

@@ -25,14 +25,43 @@
 !
 !=====================================================================
 
+
   subroutine read_compute_parameters()
 
+! call this read_compute_parameters() routine to read the Par_file and get the necessary parameter setup for the computations
+!
+! note: we split the read_compute_parameters() routine into two separate routine calls
+!       to make it easier for testing the reading of the parameter file, i.e., read_parameter_file(), and
+!       calling the compute_parameters routine, i.e., rcp_compute_parameters(), by unit testing:
+!       > make tests
+!       for example for test programs in tests/meshfem3D/
+
+  use shared_parameters
+
+  implicit none
+
+  ! reads in Par_file values
+  call read_parameter_file()
+
+  ! sets parameters for computation
+  call rcp_compute_parameters()
+
+  end subroutine read_compute_parameters
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine rcp_compute_parameters()
+
+! sets parameters for computation based on Par_file settings
+
   use constants, only: &
-    TINYVAL,R_EARTH_KM,DEGREES_TO_RADIANS, &
+    TINYVAL,DEGREES_TO_RADIANS, &
     SUPPRESS_CRUSTAL_MESH,ADD_4TH_DOUBLING, &
     DO_BENCHMARK_RUN_ONLY,NSTEP_FOR_BENCHMARK, &
     IREGION_CRUST_MANTLE,IREGION_INNER_CORE, &
-    NGLLX,NGLLY,NGLLZ,ATTENUATION_1D_WITH_3D_STORAGE
+    NGLLX,NGLLY,NGLLZ,ATTENUATION_1D_WITH_3D_STORAGE,myrank
 
   use shared_parameters
 
@@ -44,7 +73,7 @@
   integer :: ielem,elem_doubling_mantle,elem_doubling_middle_outer_core,elem_doubling_bottom_outer_core
   double precision :: DEPTH_SECOND_DOUBLING_REAL,DEPTH_THIRD_DOUBLING_REAL, &
                           DEPTH_FOURTH_DOUBLING_REAL,distance,distance_min,zval
-  integer :: ifirst_region, ilast_region, iter_region, iter_layer, doubling, padding, tmp_sum, tmp_sum_xi, tmp_sum_eta
+  integer :: doubling, padding, tmp_sum, tmp_sum_xi, tmp_sum_eta
   ! layers
   integer ::  NUMBER_OF_MESH_LAYERS,layer_offset,nspec2D_xi_sb,nspec2D_eta_sb, &
               nb_lay_sb, nspec_sb, nglob_vol, nglob_surf, nglob_edge
@@ -53,20 +82,8 @@
               normal_doubling, nglob_center_edge, nglob_corner_edge, nglob_border_edge
   integer :: tmp_sum_nglob2D_xi, tmp_sum_nglob2D_eta,divider,nglob_edges_h,nglob_edge_v,to_remove
 
-  ! reads in Par_file values
-  call read_parameter_file()
-
   ! count the total number of sources in the CMTSOLUTION file
   call count_number_of_sources(NSOURCES)
-
-  ! converts values to radians
-  MOVIE_EAST = MOVIE_EAST_DEG * DEGREES_TO_RADIANS
-  MOVIE_WEST = MOVIE_WEST_DEG * DEGREES_TO_RADIANS
-  MOVIE_NORTH = (90.0d0 - MOVIE_NORTH_DEG) * DEGREES_TO_RADIANS ! converting from latitude to colatitude
-  MOVIE_SOUTH = (90.0d0 - MOVIE_SOUTH_DEG) * DEGREES_TO_RADIANS
-  ! converts movie top/bottom depths to radii
-  MOVIE_TOP = (R_EARTH_KM-MOVIE_TOP_KM)/R_EARTH_KM
-  MOVIE_BOTTOM = (R_EARTH_KM-MOVIE_BOTTOM_KM)/R_EARTH_KM
 
   ! include central cube or not
   ! use regular cubed sphere instead of cube for large distances
@@ -88,6 +105,9 @@
     NEX_ETA = NEX_XI
     NPROC_ETA = NPROC_XI
   endif
+
+  ! make sure single run simulation setting valid
+  if (NUMBER_OF_RUNS == 1) NUMBER_OF_THIS_RUN = 1
 
   ! turns on/off corresponding 1-D/3-D model flags
   ! and sets radius for each discontinuity and ocean density values
@@ -122,8 +142,29 @@
   ! if doing benchmark runs to measure scaling of the code for a limited number of time steps only
   if (DO_BENCHMARK_RUN_ONLY) NSTEP = NSTEP_FOR_BENCHMARK
 
+  ! overrides NSTEP in case specified in Par_file
+  if (USER_NSTEP > 0) then
+    ! overrides NSTEP
+    if (myrank == 0) then
+      print *,'simulation number of time steps:'
+      print *,'  NSTEP determined = ',NSTEP
+      print *,'  Par_file: user overrides with specified NSTEP = ',USER_NSTEP
+      print *
+    endif
+    NSTEP = USER_NSTEP
+  endif
+
   ! debug
   !print *,'initial time steps = ',NSTEP,' record length = ',RECORD_LENGTH_IN_MINUTES,' DT = ',DT
+
+  ! movies: converts values to radians
+  MOVIE_EAST = MOVIE_EAST_DEG * DEGREES_TO_RADIANS
+  MOVIE_WEST = MOVIE_WEST_DEG * DEGREES_TO_RADIANS
+  MOVIE_NORTH = (90.0d0 - MOVIE_NORTH_DEG) * DEGREES_TO_RADIANS ! converting from latitude to colatitude
+  MOVIE_SOUTH = (90.0d0 - MOVIE_SOUTH_DEG) * DEGREES_TO_RADIANS
+  ! converts movie top/bottom depths to radii
+  MOVIE_TOP = (R_PLANET_KM-MOVIE_TOP_KM)/R_PLANET_KM
+  MOVIE_BOTTOM = (R_PLANET_KM-MOVIE_BOTTOM_KM)/R_PLANET_KM
 
   ! half-time duration
   !
@@ -181,20 +222,12 @@
   NPROCTOT = NCHUNKS * NPROC
 
   !  definition of general mesh parameters
-  call define_all_layers(NER_CRUST,NER_80_MOHO,NER_220_80, &
-                        NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
-                        NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
-                        NER_TOP_CENTRAL_CUBE_ICB, &
-                        RMIDDLE_CRUST,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-                        R_CENTRAL_CUBE,RMOHO_FICTITIOUS_IN_MESHER,R80_FICTITIOUS_IN_MESHER, &
-                        ONE_CRUST,ner,ratio_sampling_array, &
-                        NUMBER_OF_MESH_LAYERS,layer_offset,last_doubling_layer, &
-                        r_bottom,r_top,this_region_has_a_doubling, &
-                        ielem,elem_doubling_mantle,elem_doubling_middle_outer_core, &
-                        elem_doubling_bottom_outer_core, &
-                        DEPTH_SECOND_DOUBLING_REAL,DEPTH_THIRD_DOUBLING_REAL, &
-                        DEPTH_FOURTH_DOUBLING_REAL,distance,distance_min,zval, &
-                        doubling_index,rmins,rmaxs)
+  call define_all_layers(NUMBER_OF_MESH_LAYERS,layer_offset,last_doubling_layer, &
+                         ielem,elem_doubling_mantle,elem_doubling_middle_outer_core, &
+                         elem_doubling_bottom_outer_core, &
+                         DEPTH_SECOND_DOUBLING_REAL,DEPTH_THIRD_DOUBLING_REAL, &
+                         DEPTH_FOURTH_DOUBLING_REAL,distance,distance_min,zval, &
+                         rmins,rmaxs)
 
   ! calculates number of elements (NSPEC_REGIONS)
   call count_elements(NEX_XI,NEX_ETA,NEX_PER_PROC_XI,NPROC, &
@@ -204,8 +237,6 @@
                         NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
                         NSPEC1D_RADIAL, &
                         NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
-                        ner,ratio_sampling_array,this_region_has_a_doubling, &
-                        ifirst_region,ilast_region,iter_region,iter_layer, &
                         doubling,tmp_sum,tmp_sum_xi,tmp_sum_eta, &
                         NUMBER_OF_MESH_LAYERS,layer_offset,nspec2D_xi_sb,nspec2D_eta_sb, &
                         nb_lay_sb, nspec_sb, nglob_surf, &
@@ -220,12 +251,10 @@
                         NSPEC1D_RADIAL,NGLOB1D_RADIAL, &
                         NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
                         NGLOB_REGIONS, &
-                        nblocks_xi,nblocks_eta,ner,ratio_sampling_array, &
-                        this_region_has_a_doubling, &
-                        ifirst_region, ilast_region, iter_region, iter_layer, &
+                        nblocks_xi,nblocks_eta, &
                         doubling, padding, tmp_sum, &
                         INCLUDE_CENTRAL_CUBE,NER_TOP_CENTRAL_CUBE_ICB,NEX_XI, &
-                        NUMBER_OF_MESH_LAYERS,layer_offset, &
+                        NUMBER_OF_MESH_LAYERS, layer_offset, &
                         nb_lay_sb, nglob_vol, nglob_surf, nglob_edge, &
                         CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, &
                         last_doubling_layer, cut_doubling, nglob_int_surf_xi, nglob_int_surf_eta,nglob_ext_surf, &
@@ -243,8 +272,8 @@
       ATT2 = 1
       ATT3 = 1
     endif
-    ATT4 = NSPEC_REGIONS(IREGION_CRUST_MANTLE)
-    ATT5 = NSPEC_REGIONS(IREGION_INNER_CORE)
+    ATT4 = NSPEC_REGIONS(IREGION_CRUST_MANTLE)  ! only used for header file in save_header_file.F90
+    ATT5 = NSPEC_REGIONS(IREGION_INNER_CORE)    ! only used for header file
   else
      ATT1 = 1
      ATT2 = 1
@@ -253,7 +282,7 @@
      ATT5 = 1
   endif
 
-  end subroutine read_compute_parameters
+  end subroutine rcp_compute_parameters
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -290,6 +319,15 @@
   if (NCHUNKS > 2 .and. abs(ANGULAR_WIDTH_ETA_IN_DEGREES - 90.d0) > 0.00000001d0) &
     stop 'ANGULAR_WIDTH_ETA_IN_DEGREES must be 90 for more than two chunks'
 
+  if (NUMBER_OF_RUNS < 1) &
+    stop 'NUMBER_OF_RUNS must be at least 1'
+
+  if (NUMBER_OF_THIS_RUN > NUMBER_OF_RUNS) &
+    stop 'NUMBER_OF_THIS_RUN cannot be larger than NUMBER_OF_RUNS'
+
+  if (SIMULATION_TYPE /= 1 .and. NUMBER_OF_RUNS /= 1) &
+    stop 'Only 1 run for SIMULATION_TYPE = 2/3'
+
   if (ABSORBING_CONDITIONS .and. NCHUNKS == 6) &
     stop 'cannot have absorbing conditions in the full Earth'
 
@@ -301,6 +339,12 @@
 
   if (SAVE_TRANSVERSE_KL_ONLY .and. .not. ANISOTROPIC_KL) &
     stop 'Please set ANISOTROPIC_KL to .true. in Par_file to use SAVE_TRANSVERSE_KL_ONLY'
+
+  if (SAVE_AZIMUTHAL_ANISO_KL_ONLY .and. .not. ANISOTROPIC_KL) &
+    stop 'Please set ANISOTROPIC_KL to .true. in Par_file to use SAVE_AZIMUTHAL_ANISO_KL_ONLY'
+
+  if (SAVE_TRANSVERSE_KL_ONLY .and. SAVE_AZIMUTHAL_ANISO_KL_ONLY) &
+    stop 'Please set either SAVE_TRANSVERSE_KL_ONLY or SAVE_AZIMUTHAL_ANISO_KL_ONLY to .true., keep the other one .false.'
 
   if (PARTIAL_PHYS_DISPERSION_ONLY .and. UNDO_ATTENUATION) &
     stop 'cannot have both PARTIAL_PHYS_DISPERSION_ONLY and UNDO_ATTENUATION, they are mutually exclusive'
@@ -407,6 +451,10 @@
   ! in the case of GRAVITY_INTEGRALS we should always use double precision
   if (GRAVITY_INTEGRALS .and. CUSTOM_REAL /= SIZE_DOUBLE) &
     stop 'for GRAVITY_INTEGRALS use double precision i.e. configure the code with --enable-double-precision'
+
+  ! adjoint simulations: seismogram output only works if each process writes out its local seismos
+  if (WRITE_SEISMOGRAMS_BY_MASTER .and. SIMULATION_TYPE == 2) &
+    stop 'For SIMULATION_TYPE == 2, please set WRITE_SEISMOGRAMS_BY_MASTER to .false.'
 
   end subroutine rcp_check_parameters
 

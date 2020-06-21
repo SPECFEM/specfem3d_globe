@@ -82,9 +82,6 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifndef IFLAG_IN_FICTITIOUS_CUBE\n\
 #define IFLAG_IN_FICTITIOUS_CUBE 11\n\
 #endif\n\
-#ifndef R_EARTH_KM\n\
-#define R_EARTH_KM 6371.0f\n\
-#endif\n\
 #ifndef COLORING_MIN_NSPEC_INNER_CORE\n\
 #define COLORING_MIN_NSPEC_INNER_CORE 1000\n\
 #endif\n\
@@ -106,10 +103,13 @@ __kernel void compute_stacey_acoustic_kernel(const __global float * potential_do
   float sn;\n\
   float jacobianw;\n\
   float fac1;\n\
+\n\
   igll = get_local_id(0);\n\
   iface = get_group_id(0) + (get_group_id(1)) * (get_num_groups(0));\n\
+\n\
   if (iface < num_abs_boundary_faces) {\n\
     ispec = abs_boundary_ispec[iface] - (1);\n\
+\n\
     switch (interface_type) {\n\
       case 4 :\n\
         if (nkmin_xi[INDEX2(2, 0, iface)] == 0 || njmin[INDEX2(2, 0, iface)] == 0) {\n\
@@ -184,6 +184,7 @@ __kernel void compute_stacey_acoustic_kernel(const __global float * potential_do
         fac1 = wgllwgll[(j) * (NGLLX) + i];\n\
         break;\n\
     }\n\
+\n\
     iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)] - (1);\n\
     sn = (potential_dot_acoustic[iglob]) / (vpstore[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)]);\n\
     jacobianw = (abs_boundary_jacobian2D[INDEX2(NGLL2, igll, iface)]) * (fac1);\n\

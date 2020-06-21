@@ -67,16 +67,14 @@
   call prepare_attenuation()
 
   ! precomputes iso/tiso/aniso elastic element factors
+  ! (careful with the order, prepare_attenuation() should be called before this one)
   call prepare_elastic_elements()
 
   ! allocates & initializes arrays
   call prepare_wavefields()
 
-  ! reads files back from local disk or MT tape system if restart file
-  ! note: for SIMULATION_TYPE 3 simulations, the stored wavefields
-  !          will be read in the time loop after the Newmark time scheme update.
-  !          this makes indexing and timing easier to match with adjoint wavefields indexing.
-  call read_forward_arrays_startrun()
+  ! sets up restarting/checkpointing
+  call prepare_timerun_restarting()
 
   ! prepares Stacey boundary arrays for re-construction of wavefields
   call prepare_stacey()
@@ -116,6 +114,7 @@
     endif
     write(IMAIN,*) '           time step: ',sngl(DT),' s'
     write(IMAIN,*) 'number of time steps: ',NSTEP
+    write(IMAIN,*) '  current time steps: ',it_begin,' to ',it_end
     write(IMAIN,*) 'total simulated time: ',sngl(((NSTEP-1)*DT-t0)/60.d0),' minutes'
     write(IMAIN,*) 'start time          :',sngl(-t0),' seconds'
     write(IMAIN,*)
@@ -156,7 +155,7 @@
   if (myrank == 0) then
 
     write(IMAIN,*)
-    write(IMAIN,*) 'Reference radius of the Earth used is ',R_EARTH_KM,' km'
+    write(IMAIN,*) 'Reference radius of the globe used is ',R_PLANET_KM,' km'
     write(IMAIN,*)
 
     write(IMAIN,*)
@@ -245,7 +244,6 @@
   !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
-
 
   ! mass matrices need to be assembled with MPI here once and for all
   call prepare_timerun_rmass_assembly()
@@ -356,10 +354,10 @@
   ! ocean load
   if (OCEANS_VAL) then
     call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
-                        rmass_ocean_load, &
-                        num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
-                        nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle, &
-                        my_neighbors_crust_mantle)
+                             rmass_ocean_load, &
+                             num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
+                             nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle, &
+                             my_neighbors_crust_mantle)
   endif
 
   ! crust and mantle
@@ -399,8 +397,6 @@
                                my_neighbors_crust_mantle)
     endif
   endif
-
-
 
   ! outer core
   call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
@@ -581,7 +577,7 @@
   scale_t = ONE/dsqrt(PI*GRAV*RHOAV)
   scale_t_inv = dsqrt(PI*GRAV*RHOAV)
 
-  scale_displ = R_EARTH
+  scale_displ = R_PLANET
   scale_displ_inv = ONE / scale_displ
 
   scale_veloc = scale_displ * scale_t_inv
@@ -635,4 +631,58 @@
   call synchronize_all()
 
   end subroutine prepare_timerun_constants
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine prepare_timerun_restarting()
+
+! sets up restarting/checkpointing
+
+  use specfem_par
+  implicit none
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) "preparing number of runs"
+    write(IMAIN,*) "  number of runs    : ",NUMBER_OF_RUNS
+    write(IMAIN,*) "  number of this run: ",NUMBER_OF_THIS_RUN
+    call flush_IMAIN()
+  endif
+
+  ! safety checks for run/checkpoint number
+  if (NUMBER_OF_RUNS < 1 .or. NUMBER_OF_RUNS > NSTEP) &
+    stop 'number of restart runs can not be less than 1 or greater than NSTEP'
+
+  if (NUMBER_OF_THIS_RUN < 1 .or. NUMBER_OF_THIS_RUN > NUMBER_OF_RUNS) &
+    stop 'incorrect run number'
+
+  if (SIMULATION_TYPE /= 1 .and. NUMBER_OF_RUNS /= 1) &
+    stop 'Only 1 run for SIMULATION_TYPE = 2/3'
+
+  ! define correct time steps if restart files
+  ! set start/end steps for time iteration loop
+  it_begin = (NUMBER_OF_THIS_RUN - 1) * (NSTEP / NUMBER_OF_RUNS) + 1
+  if (NUMBER_OF_THIS_RUN < NUMBER_OF_RUNS) then
+    it_end = NUMBER_OF_THIS_RUN * (NSTEP / NUMBER_OF_RUNS)
+  else
+    ! Last run may be a bit larger
+    it_end = NSTEP
+  endif
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) "  time stepping     : begin/end = ",it_begin,"/",it_end
+    call flush_IMAIN()
+  endif
+
+  ! reads files back from local disk or MT tape system if restart file
+  !
+  ! note: for SIMULATION_TYPE 3 simulations, the stored wavefields
+  !          will be read in the time loop after the Newmark time scheme update.
+  !          this makes indexing and timing easier to match with adjoint wavefields indexing.
+  call read_forward_arrays_startrun()
+
+  end subroutine prepare_timerun_restarting
 

@@ -20,8 +20,8 @@
  ! total elements per slice =        12432
  ! total points per slice =       832031
  !
- ! the time step of the solver will be DT =   0.126792654      (s)
- ! the (approximate) minimum period resolved will be =    15.1111107      (s)
+ ! the time step of the solver will be DT =   0.125000000      (s)
+ ! the (approximate) minimum period resolved will be =    15.4437399      (s)
  !
  ! total for full 1-chunk mesh:
  ! ---------------------------
@@ -79,10 +79,10 @@
  !  by typing "size -d bin/xspecfem3D"
  !  after compiling the code with the DATA/Par_file you plan to use)
  !
- ! size of static arrays per slice =    533.82314399999996       MB
- !                                 =    509.09342193603516       MiB
- !                                 =   0.53382314399999997       GB
- !                                 =   0.49716154485940933       GiB
+ ! size of static arrays per slice =    533.82364399999994       MB
+ !                                 =    509.09389877319336       MiB
+ !                                 =   0.53382364400000004       GB
+ !                                 =   0.49716201052069664       GiB
  !
  ! (should be below to 80% or 90% of the memory installed per core)
  ! (if significantly more, the job will not run by lack of memory )
@@ -91,12 +91,12 @@
  ! (but that can be perfectly acceptable if you can afford it and
  !  want faster results by using more cores)
  !
- ! size of static arrays for all slices =    2135.2925759999998       MB
- !                                      =    2036.3736877441406       MiB
- !                                      =    2.1352925759999999       GB
- !                                      =    1.9886461794376373       GiB
- !                                      =    2.1352925759999999E-003  TB
- !                                      =    1.9420372846070677E-003  TiB
+ ! size of static arrays for all slices =    2135.2945759999998       MB
+ !                                      =    2036.3755950927734       MiB
+ !                                      =    2.1352945760000002       GB
+ !                                      =    1.9886480420827866       GiB
+ !                                      =    2.1352945760000001E-003  TB
+ !                                      =    1.9420391035964713E-003  TiB
  !
 
  integer, parameter :: NEX_XI_VAL =           64

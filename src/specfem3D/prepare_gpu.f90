@@ -73,11 +73,9 @@
   call prepare_constants_device(Mesh_pointer,myrank,NGLLX, &
                                 hprime_xx,hprimewgll_xx, &
                                 wgllwgll_xy,wgllwgll_xz,wgllwgll_yz, &
-                                NSOURCES, nsources_local, &
-                                sourcearrays, &
+                                NSOURCES, nsources_local, sourcearrays, &
                                 islice_selected_source,ispec_selected_source, &
-                                nrec, nrec_local, nadj_rec_local, &
-                                number_receiver_global, &
+                                nrec, nrec_local, number_receiver_global, &
                                 islice_selected_rec,ispec_selected_rec, &
                                 NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
                                 NSPEC_CRUST_MANTLE_STRAIN_ONLY, &
@@ -93,13 +91,24 @@
                                 PARTIAL_PHYS_DISPERSION_ONLY,USE_3D_ATTENUATION_ARRAYS, &
                                 COMPUTE_AND_STORE_STRAIN, &
                                 ANISOTROPIC_3D_MANTLE_VAL,ANISOTROPIC_INNER_CORE_VAL, &
-                                SAVE_BOUNDARY_MESH, &
+                                SAVE_KERNELS_OC, &
+                                SAVE_KERNELS_IC, &
+                                SAVE_KERNELS_BOUNDARY, &
                                 USE_MESH_COLORING_GPU, &
                                 ANISOTROPIC_KL,APPROXIMATE_HESS_KL, &
-                                deltat,b_deltat, &
+                                deltat, &
                                 GPU_ASYNC_COPY, &
-                                hxir_store,hetar_store,hgammar_store,nu)
+                                hxir_store,hetar_store,hgammar_store,nu_rec, &
+                                SAVE_SEISMOGRAMS_STRAIN)
+
+  if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
+    ! adjoint/kernel fields
+    call prepare_constants_adjoint_device(Mesh_pointer,b_deltat, &
+                                          nadj_rec_local,number_adjsources_global, &
+                                          hxir_adjstore,hetar_adjstore,hgammar_adjstore)
+  endif
   call synchronize_all()
+
 
   ! prepares rotation arrays
   if (ROTATION_VAL) then
@@ -162,7 +171,7 @@
                                      wgll_cube, &
                                      NRAD_GRAVITY, &
                                      minus_g_icb,minus_g_cmb, &
-                                     RHO_BOTTOM_OC,RHO_TOP_OC)
+                                     RHO_BOTTOM_OC,RHO_TOP_OC,R_PLANET_KM)
 
   deallocate(cr_d_ln_density_dr_table,cr_minus_rho_g_over_kappa_fluid, &
              cr_minus_gravity_table,cr_minus_deriv_gravity_table, &
@@ -337,9 +346,9 @@
     call synchronize_all()
 
     call prepare_oceans_device(Mesh_pointer,npoin_oceans, &
-                              ibool_ocean_load, &
-                              rmass_ocean_load_selected, &
-                              normal_ocean_load)
+                               ibool_ocean_load, &
+                               rmass_ocean_load_selected, &
+                               normal_ocean_load)
   endif
   call synchronize_all()
 
@@ -774,7 +783,7 @@
     ! user output
     if (myrank == 0) then
       write(IMAIN,*)
-      write(IMAIN,*) "  minimum memory requested     : ",memory_size / 1024. / 1024.,"MB per process"
+      write(IMAIN,*) "  minimum memory requested     : ",sngl(memory_size / 1024.d0 / 1024.d0),"MB per process"
       write(IMAIN,*)
       call flush_IMAIN()
     endif

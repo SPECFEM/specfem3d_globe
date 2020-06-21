@@ -30,25 +30,30 @@
                                         xstore,ystore,zstore,nspec, &
                                         xelm,yelm,zelm,shape3D, &
                                         rmin,rmax, &
-                                        rhostore,dvpstore, &
-                                        kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-                                        xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
-                                        gammaxstore,gammaystore,gammazstore,nspec_actually, &
-                                        c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-                                        c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-                                        c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                                        nspec_ani,nspec_stacey, &
-                                        rho_vp,rho_vs, &
                                         xigll,yigll,zigll,ispec_is_tiso)
-  use constants
-  use meshfem3D_models_par, only: myrank, &
-    TOPOGRAPHY,ELLIPTICITY,CRUSTAL,CASE_3D,THREE_D_MODEL, &
-    ibathy_topo,nspl,rspl,espl,espl2
+
+  use constants, only: NGLLX,NGLLY,NGLLZ,NGNOD,CUSTOM_REAL, &
+    IFLAG_220_80,IFLAG_670_220,IFLAG_80_MOHO,IFLAG_MANTLE_NORMAL,IFLAG_CRUST, &
+    IFLAG_OUTER_CORE_NORMAL,IFLAG_IN_FICTITIOUS_CUBE, &
+    IREGION_CRUST_MANTLE,SUPPRESS_INTERNAL_TOPOGRAPHY,USE_GLL
+
+  use meshfem3D_models_par, only: &
+    TOPOGRAPHY,ELLIPTICITY,CRUSTAL,CASE_3D, &
+    THREE_D_MODEL,THREE_D_MODEL_MANTLE_SH,THREE_D_MODEL_S29EA, &
+    THREE_D_MODEL_S362ANI,THREE_D_MODEL_S362WMANI,THREE_D_MODEL_S362ANI_PREM, &
+    ibathy_topo,nspl,rspl,ellipicity_spline,ellipicity_spline2, &
+    REGIONAL_MOHO_MESH
+
+
+  use regions_mesh_par2, only: &
+    xixstore,xiystore,xizstore, &
+    etaxstore,etaystore,etazstore, &
+    gammaxstore,gammaystore,gammazstore
 
   implicit none
 
   ! correct number of spectral elements in each block depending on chunk type
-  integer,intent(in) :: ispec,nspec,nspec_stacey
+  integer,intent(in) :: ispec,nspec
 
 ! arrays with the mesh in double precision
   double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(inout) :: xstore,ystore,zstore
@@ -68,25 +73,6 @@
 ! in the spherically symmetric Earth
   integer,dimension(nspec),intent(in) :: idoubling
   double precision,intent(in) :: rmin,rmax
-
-! for model density and anisotropy
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(out) :: rhostore,dvpstore,kappavstore, &
-    kappahstore,muvstore,muhstore,eta_anisostore
-
-! the 21 coefficients for an anisotropic medium in reduced notation
-  integer,intent(in) :: nspec_ani
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_ani),intent(out) :: &
-    c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-    c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-    c36store,c44store,c45store,c46store,c55store,c56store,c66store
-
-! arrays with mesh parameters
-  integer,intent(in) :: nspec_actually
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_actually),intent(out) :: &
-    xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore
-
-! Stacey, indices for Clayton-Engquist absorbing conditions
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_stacey),intent(out) :: rho_vp,rho_vs
 
   ! Parameters used to calculate Jacobian based upon 125 GLL points
   double precision,intent(in) :: xigll(NGLLX)
@@ -121,10 +107,10 @@
         !
         ! differentiate between regional and global meshing
         if (REGIONAL_MOHO_MESH) then
-          call moho_stretching_honor_crust_reg(myrank,xelm,yelm,zelm, &
+          call moho_stretching_honor_crust_reg(xelm,yelm,zelm, &
                                                elem_in_crust,elem_in_mantle)
         else
-          call moho_stretching_honor_crust(myrank,xelm,yelm,zelm, &
+          call moho_stretching_honor_crust(xelm,yelm,zelm, &
                                            elem_in_crust,elem_in_mantle)
         endif
       else
@@ -146,6 +132,7 @@
 
   ! sets element tiso flag
   call compute_element_tiso_flag(elem_is_tiso,elem_in_mantle,iregion_code,ispec,nspec,idoubling)
+
   ! stores as element flags
   ispec_is_tiso(ispec) = elem_is_tiso
 
@@ -157,12 +144,6 @@
   ! (only needed for second meshing phase)
   if (ipass == 2) then
     call get_model(iregion_code,ispec,nspec,idoubling(ispec), &
-                   kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-                   rhostore,dvpstore,nspec_ani, &
-                   c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-                   c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-                   c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                   nspec_stacey,rho_vp,rho_vs, &
                    xstore,ystore,zstore, &
                    rmin,rmax, &
                    elem_in_crust,elem_in_mantle)
@@ -241,19 +222,17 @@
     !           call add_topography_icb(xelm,yelm,zelm)
   endif
 
-
   ! make the Earth elliptical
   if (ELLIPTICITY) then
     ! note: after adding ellipticity, the mesh becomes elliptical and geocentric and geodetic/geographic colatitudes differ.
     if (USE_GLL) then
       ! make the Earth's ellipticity, use GLL points
-      call get_ellipticity_gll(xstore,ystore,zstore,ispec,nspec,nspl,rspl,espl,espl2)
+      call get_ellipticity_gll(xstore,ystore,zstore,ispec,nspec,nspl,rspl,ellipicity_spline,ellipicity_spline2)
     else
       ! make the Earth's ellipticity, use element anchor points
-      call get_ellipticity(xelm,yelm,zelm,nspl,rspl,espl,espl2)
+      call get_ellipticity(xelm,yelm,zelm,nspl,rspl,ellipicity_spline,ellipicity_spline2)
     endif
   endif
-
 
   ! re-interpolates and creates the GLL point locations since the anchor points might have moved
   !
@@ -268,13 +247,14 @@
   ! updates Jacobian
   ! (only needed for second meshing phase)
   if (ipass == 2) then
-    call recalc_jacobian_gll3D(xstore,ystore,zstore,xigll,yigll,zigll, &
-                               ispec,nspec, &
-                               xixstore,xiystore,xizstore, &
-                               etaxstore,etaystore,etazstore, &
-                               gammaxstore,gammaystore,gammazstore)
+    if (idoubling(ispec) /= IFLAG_IN_FICTITIOUS_CUBE) then
+      call recalc_jacobian_gll3D(xstore,ystore,zstore,xigll,yigll,zigll, &
+                                 ispec,nspec, &
+                                 xixstore,xiystore,xizstore, &
+                                 etaxstore,etaystore,etazstore, &
+                                 gammaxstore,gammaystore,gammazstore)
+    endif
   endif
-
 
   end subroutine compute_element_properties
 
@@ -285,17 +265,17 @@
   subroutine compute_element_GLL_locations(xelm,yelm,zelm,ispec,nspec, &
                                            xstore,ystore,zstore,shape3D)
 
-  use constants
+  use constants, only: NGLLX,NGLLY,NGLLZ,NGNOD,ZERO
 
   implicit none
 
-  integer :: ispec,nspec
+  integer,intent(in) :: ispec,nspec
 
-  double precision,dimension(NGNOD) :: xelm,yelm,zelm
+  double precision,dimension(NGNOD),intent(in) :: xelm,yelm,zelm
 
-  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
+  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(inout) :: xstore,ystore,zstore
 
-  double precision,dimension(NGNOD,NGLLX,NGLLY,NGLLZ) :: shape3D
+  double precision,dimension(NGNOD,NGLLX,NGLLY,NGLLZ),intent(in) :: shape3D
 
   ! local parameters
   double precision :: xmesh,ymesh,zmesh
@@ -337,7 +317,10 @@
 
 ! sets transverse isotropic flag for elements in crust/mantle
 
-  use constants
+  use constants, only: IMAIN,myrank,USE_OLD_VERSION_7_0_0_FORMAT,USE_OLD_VERSION_5_1_5_FORMAT, &
+    IFLAG_CRUST,IFLAG_220_80,IFLAG_80_MOHO,IFLAG_670_220,IFLAG_MANTLE_NORMAL,IREGION_CRUST_MANTLE, &
+    REFERENCE_MODEL_1DREF,REFERENCE_MODEL_1DREF, &
+    THREE_D_MODEL_S362WMANI,THREE_D_MODEL_SGLOBE
 
   use meshfem3D_models_par, only: &
     TRANSVERSE_ISOTROPY,USE_FULL_TISO_MANTLE,REFERENCE_1D_MODEL,THREE_D_MODEL
@@ -350,12 +333,31 @@
   integer,intent(in) :: nspec
   integer,dimension(nspec),intent(in) :: idoubling
 
+  ! local parameters
+  logical, save :: is_first_call = .true.
+
   ! initializes
   elem_is_tiso = .false.
 
   ! checks if anything to do
   if (.not. TRANSVERSE_ISOTROPY) return
   if (iregion_code /= IREGION_CRUST_MANTLE) return
+
+  ! user output
+  if (is_first_call) then
+    is_first_call = .false.
+    if (myrank == 0) then
+      ! only output once
+      write(IMAIN,*) '  setting tiso flags in mantle model'
+      if (USE_FULL_TISO_MANTLE) &
+        write(IMAIN,*) '    using fully transverse isotopic mantle'
+      if (USE_OLD_VERSION_7_0_0_FORMAT) &
+        write(IMAIN,*) '    using formatting from version 7.0.0'
+      if (USE_OLD_VERSION_5_1_5_FORMAT) &
+        write(IMAIN,*) '    using formatting from version 5.1.5'
+      call flush_IMAIN()
+    endif
+  endif
 
   ! transverse isotropic models
   ! modifies tiso to have it for all mantle elements

@@ -31,25 +31,11 @@
 ! in all the slices using an MPI reduction
 ! and output timestamp file to check that simulation is running fine
 
-  use constants, only: CUSTOM_REAL,IMAIN,R_EARTH, &
-    ADD_TIME_ESTIMATE_ELSEWHERE,HOURS_TIME_DIFFERENCE,MINUTES_TIME_DIFFERENCE, &
-    STABILITY_THRESHOLD,mygroup
-
-  use specfem_par, only: &
-    GPU_MODE,Mesh_pointer, &
-    COMPUTE_AND_STORE_STRAIN, &
-    SIMULATION_TYPE,scale_displ,time_start,DT,t0, &
-    NSTEP,it,it_begin,it_end,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN, &
-    myrank,UNDO_ATTENUATION,NUMBER_OF_SIMULTANEOUS_RUNS,I_am_running_on_a_slow_node
-
-  use specfem_par_crustmantle, only: displ_crust_mantle,b_displ_crust_mantle, &
-    eps_trace_over_3_crust_mantle, &
-    epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
-    epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle
-
-  use specfem_par_innercore, only: displ_inner_core,b_displ_inner_core
-
-  use specfem_par_outercore, only: displ_outer_core,b_displ_outer_core
+  !use constants
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_innercore
+  use specfem_par_outercore
 
   implicit none
 
@@ -57,20 +43,24 @@
 ! and exclude them from the runs in order not to slow down all the others when NUMBER_OF_SIMULTANEOUS_RUNS > 1.
 ! That option purposely does nothing when NUMBER_OF_SIMULTANEOUS_RUNS == 1.
   logical, parameter :: CHECK_FOR_SLOW_NODES = .false.  ! option off by default
+
 ! we accept nodes that are up to that factor slower than a normal (expected) run time, but not more than that
   double precision, parameter :: TOLERANCE_FACTOR_FOR_SLOW_NODES = 2.d0
+
 ! this is the reference time per time step expected for a normal run for the same mesh and same problem on the same machine,
 ! please adjust it carefully for your own problem (cut and paste it from the output of a run that went well for the same problem)
   double precision, parameter :: REFERENCE_TIME_PER_TIME_STEP_ON_NORMAL_NODES = 2.67d-3
+
 ! do not check before MIN_TIME_STEPS_FOR_SLOW_NODES time steps
 ! because the time step estimate (which is an average) may then be unreliable
   integer, parameter :: MIN_TIME_STEPS_FOR_SLOW_NODES = 200
 
   ! local parameters
   ! maximum of the norm of the displacement and of the potential in the fluid
-  real(kind=CUSTOM_REAL) Usolidnorm,Usolidnorm_all,Ufluidnorm,Ufluidnorm_all
-  real(kind=CUSTOM_REAL) Strain_norm,Strain_norm_all,Strain2_norm,Strain2_norm_all
-  real(kind=CUSTOM_REAL) b_Usolidnorm,b_Usolidnorm_all,b_Ufluidnorm,b_Ufluidnorm_all
+  real(kind=CUSTOM_REAL) :: Usolidnorm,Usolidnorm_all,Ufluidnorm,Ufluidnorm_all
+  real(kind=CUSTOM_REAL) :: Strain_norm,Strain_norm_all,Strain2_norm,Strain2_norm_all
+  real(kind=CUSTOM_REAL) :: b_Usolidnorm,b_Usolidnorm_all,b_Ufluidnorm,b_Ufluidnorm_all
+  real(kind=CUSTOM_REAL) :: norm_cm,norm_ic
   ! timer MPI
   double precision :: tCPU
   double precision, external :: wtime
@@ -95,34 +85,78 @@
              timestamp_remote,year_remote,mon_remote,day_remote,hr_remote,minutes_remote,day_of_week_remote
   integer, external :: idaywk
 
+  ! debugging
+  integer :: iglob,pos(1)
+  double precision :: r,phi,theta
+  logical, parameter :: DEBUG = .false.
+
+  ! slow node detection
   I_am_running_on_a_slow_node = .false.
 
   ! compute maximum of norm of displacement in each slice
   if (.not. GPU_MODE) then
     ! on CPU
-    Usolidnorm = max( maxval(sqrt(displ_crust_mantle(1,:)**2 + &
-                                  displ_crust_mantle(2,:)**2 + &
-                                  displ_crust_mantle(3,:)**2)), &
-                      maxval(sqrt(displ_inner_core(1,:)**2 + &
-                                  displ_inner_core(2,:)**2 + &
-                                  displ_inner_core(3,:)**2)))
-
+    norm_cm = maxval(sqrt(displ_crust_mantle(1,:)**2 + displ_crust_mantle(2,:)**2 + displ_crust_mantle(3,:)**2))
+    norm_ic = maxval(sqrt(displ_inner_core(1,:)**2 + displ_inner_core(2,:)**2 + displ_inner_core(3,:)**2))
+    Usolidnorm = max(norm_cm,norm_ic)
     Ufluidnorm = maxval(abs(displ_outer_core))
   else
     ! on GPU
     ! way 2: just get maximum of fields from GPU
-    call check_norm_elastic_from_device(Usolidnorm,Mesh_pointer,1)
-    call check_norm_acoustic_from_device(Ufluidnorm,Mesh_pointer,1)
+    call check_norm_elastic_acoustic_from_device(Usolidnorm,Ufluidnorm,Mesh_pointer,1)
+  endif
+
+  !debug
+  if (DEBUG) then
+    ! in case the simulations becomes unstable, this will provide some more infos to find out where.
+    ! also, in the Par_file one could set:
+    !    ..
+    !    NTSTEP_BETWEEN_OUTPUT_INFO      = 1
+    !    ..
+    ! to run this check after each wavefield increment
+    !
+    ! output norms and maximum values
+    print *,'debug: stability rank ',myrank,' it ',it,' norm ',Usolidnorm,Ufluidnorm,' displ CM/OC/IC ', &
+            maxval(abs(displ_crust_mantle)),maxval(abs(displ_outer_core)),maxval(abs(displ_inner_core))
+    print *,'debug: stability rank ',myrank,' it ',it,' displ CM x/y/z ', &
+            maxval(abs(displ_crust_mantle(1,:))),maxval(abs(displ_crust_mantle(2,:))),maxval(abs(displ_crust_mantle(3,:)))
+    print *,'debug: stability rank ',myrank,' it ',it,' displ IC x/y/z ', &
+            maxval(abs(displ_inner_core(1,:))),maxval(abs(displ_inner_core(2,:))),maxval(abs(displ_inner_core(3,:)))
+    print *,'debug: stability rank ',myrank,' it ',it,' accel CM/OC,IC', &
+            maxval(abs(accel_crust_mantle)),maxval(abs(accel_outer_core)),maxval(abs(accel_inner_core))
+    ! maximum on vertical
+    pos = maxloc(abs(displ_crust_mantle(3,:)))
+    ! position of maximum
+    iglob = pos(1)
+    r = dble(rstore_crust_mantle(1,iglob))
+    theta = dble(rstore_crust_mantle(2,iglob))
+    phi = dble(rstore_crust_mantle(3,iglob))
+    print *,'debug: rank ',myrank,' it ',it,' stability iglob ',iglob,' position r/lat/lon ', &
+            r*R_PLANET_KM,(PI/2.0-theta)*180.0/PI,phi*180.0/PI
+    !flush(101) ! stdout on cray
+    call synchronize_all()
   endif
 
   ! check stability of the code, exit if unstable
   ! negative values can occur with some compilers when the unstable value is greater
   ! than the greatest possible floating-point number of the machine
-! this trick checks for NaN (Not a Number), which is not even equal to itself
-  if (Usolidnorm > STABILITY_THRESHOLD .or. Usolidnorm < 0 .or. Usolidnorm /= Usolidnorm) &
+  ! this trick checks for NaN (Not a Number), which is not even equal to itself
+  if (Usolidnorm > STABILITY_THRESHOLD .or. Usolidnorm < 0 .or. Usolidnorm /= Usolidnorm) then
+    print *,'Error: simulation became unstable in solid, process',myrank
+    if (GPU_MODE) then
+      print *,'     norm solid = ',Usolidnorm
+    else
+      print *,'     norm crust/mantle = ',norm_cm,' inner core = ',norm_ic
+    endif
+    print *,'Please check time step setting in get_timestep_and_layers.f90, exiting...'
     call exit_MPI(myrank,'forward simulation became unstable in solid and blew up')
-  if (Ufluidnorm > STABILITY_THRESHOLD .or. Ufluidnorm < 0 .or. Ufluidnorm /= Ufluidnorm) &
+  endif
+  if (Ufluidnorm > STABILITY_THRESHOLD .or. Ufluidnorm < 0 .or. Ufluidnorm /= Ufluidnorm) then
+    print *,'Error: simulation became unstable in fluid, process',myrank
+    print *,'        norm fluid = ',Ufluidnorm
+    print *,'Please check time step setting in get_timestep_and_layers.f90, exiting...'
     call exit_MPI(myrank,'forward simulation became unstable in fluid and blew up')
+  endif
 
   ! compute the maximum of the maxima for all the slices using an MPI reduction
   call max_all_cr(Usolidnorm,Usolidnorm_all)
@@ -141,8 +175,7 @@
       b_Ufluidnorm = maxval(abs(b_displ_outer_core))
     else
       ! on GPU
-      call check_norm_elastic_from_device(b_Usolidnorm,Mesh_pointer,3)
-      call check_norm_acoustic_from_device(b_Ufluidnorm,Mesh_pointer,3)
+      call check_norm_elastic_acoustic_from_device(b_Usolidnorm,b_Ufluidnorm,Mesh_pointer,3)
     endif
 
 ! this trick checks for NaN (Not a Number), which is not even equal to itself
@@ -356,14 +389,27 @@
     ! check stability of the code, exit if unstable
     ! negative values can occur with some compilers when the unstable value is greater
     ! than the greatest possible floating-point number of the machine
-! this trick checks for NaN (Not a Number), which is not even equal to itself
-    if (Usolidnorm_all > STABILITY_THRESHOLD .or. Usolidnorm_all < 0 .or. Usolidnorm_all /= Usolidnorm_all) &
+    ! this trick checks for NaN (Not a Number), which is not even equal to itself
+    if (Usolidnorm_all > STABILITY_THRESHOLD .or. Usolidnorm_all < 0 .or. Usolidnorm_all /= Usolidnorm_all) then
+      print *,'Error: simulation became unstable'
+      if (GPU_MODE) then
+        print *,'       all processes total norm solid = ',Usolidnorm_all
+      else
+        print *,'       rank 0: norm crust/mantle = ',norm_cm,' inner core = ',norm_ic
+        print *,'       all processes total norm solid = ',Usolidnorm_all
+      endif
+      print *,'Please check time step setting in get_timestep_and_layers.f90, exiting...'
       call exit_MPI(myrank,'forward simulation became unstable and blew up in the solid')
-    if (Ufluidnorm_all > STABILITY_THRESHOLD .or. Ufluidnorm_all < 0 .or. Ufluidnorm_all /= Ufluidnorm_all) &
+    endif
+    if (Ufluidnorm_all > STABILITY_THRESHOLD .or. Ufluidnorm_all < 0 .or. Ufluidnorm_all /= Ufluidnorm_all) then
+      print *,'Error: simulation became unstable'
+      print *,'       all processes total norm fluid = ',Ufluidnorm_all
+      print *,'Please check time step setting in get_timestep_and_layers.f90, exiting...'
       call exit_MPI(myrank,'forward simulation became unstable and blew up in the fluid')
+    endif
 
     if (SIMULATION_TYPE == 3 .and. .not. UNDO_ATTENUATION) then
-! this trick checks for NaN (Not a Number), which is not even equal to itself
+      ! this trick checks for NaN (Not a Number), which is not even equal to itself
       if (b_Usolidnorm_all > STABILITY_THRESHOLD .or. b_Usolidnorm_all < 0 .or. b_Usolidnorm_all /= b_Usolidnorm_all) &
         call exit_MPI(myrank,'backward simulation became unstable and blew up in the solid')
       if (b_Ufluidnorm_all > STABILITY_THRESHOLD .or. b_Ufluidnorm_all < 0 .or. b_Ufluidnorm_all /= b_Ufluidnorm_all) &
@@ -382,8 +428,7 @@
 
 ! only for backward/reconstructed wavefield
 
-  use constants, only: CUSTOM_REAL,IMAIN,R_EARTH, &
-    ADD_TIME_ESTIMATE_ELSEWHERE,HOURS_TIME_DIFFERENCE,MINUTES_TIME_DIFFERENCE,STABILITY_THRESHOLD
+  use constants, only: CUSTOM_REAL,IMAIN,STABILITY_THRESHOLD
 
   use specfem_par, only: &
     GPU_MODE,Mesh_pointer, &
@@ -427,8 +472,7 @@
     b_Ufluidnorm = maxval(abs(b_displ_outer_core))
   else
     ! on GPU
-    call check_norm_elastic_from_device(b_Usolidnorm,Mesh_pointer,3)
-    call check_norm_acoustic_from_device(b_Ufluidnorm,Mesh_pointer,3)
+    call check_norm_elastic_acoustic_from_device(b_Usolidnorm,b_Ufluidnorm,Mesh_pointer,3)
   endif
 
 ! this trick checks for NaN (Not a Number), which is not even equal to itself
@@ -525,8 +569,8 @@
   implicit none
 
   ! maximum of the norm of the displacement and of the potential in the fluid
-  real(kind=CUSTOM_REAL) Usolidnorm_all,Ufluidnorm_all
-  real(kind=CUSTOM_REAL) b_Usolidnorm_all,b_Ufluidnorm_all
+  real(kind=CUSTOM_REAL) :: Usolidnorm_all,Ufluidnorm_all
+  real(kind=CUSTOM_REAL) :: b_Usolidnorm_all,b_Ufluidnorm_all
 
   ! timer MPI
   double precision :: tCPU,t_remain,t_total
@@ -558,6 +602,8 @@
   ! write time stamp file to give information about progression of simulation
   if (SIMULATION_TYPE == 1) then
     write(outputname,"('/timestamp_forward',i6.6)") it
+  else if (SIMULATION_TYPE == 2) then
+    write(outputname,"('/timestamp_adjoint',i6.6)") it
   else
     write(outputname,"('/timestamp_backward_and_adjoint',i6.6)") it
   endif
@@ -692,6 +738,7 @@
     write(IMAIN,*) 'Time-Loop Complete. Timing info:'
     write(IMAIN,*) 'Total elapsed time in seconds = ',tCPU
     write(IMAIN,"(' Total elapsed time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
+    write(IMAIN,*)
     call flush_IMAIN()
   endif
 

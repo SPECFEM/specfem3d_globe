@@ -68,18 +68,22 @@ tomography_MODULES = \
 ####
 #### ADIOS versions
 ####
-ifeq ($(ADIOS),yes)
 
-tomography_TARGETS += \
+adios_tomography_TARGETS += \
 	$E/xsum_kernels_adios \
 	$(EMPTY_MACRO)
 
-tomography_OBJECTS += \
+adios_tomography_OBJECTS += \
 	$(xsum_kernels_adios_OBJECTS) \
 	$(EMPTY_MACRO)
 
+ifeq ($(ADIOS),yes)
+tomography_TARGETS += $(adios_tomography_TARGETS)
+tomography_OBJECTS += $(adios_tomography_OBJECTS)
+else ifeq ($(ADIOS2),yes)
+tomography_TARGETS += $(adios_tomography_TARGETS)
+tomography_OBJECTS += $(adios_tomography_OBJECTS)
 endif
-
 
 
 ####
@@ -118,6 +122,7 @@ xadd_model_OBJECTS = \
 
 xadd_model_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
+	$O/specfem3D_par.solverstatic_module.o \
 	$O/parallel.sharedmpi.o \
 	$O/exit_mpi.shared.o \
 	$O/gll_library.shared.o \
@@ -183,7 +188,9 @@ xsum_kernels_OBJECTS = \
 
 xsum_kernels_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
+	$O/specfem3D_par.solverstatic_module.o \
 	$O/parallel.sharedmpi.o \
+	$O/exit_mpi.shared.o \
 	$O/param_reader.cc.o \
 	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
@@ -202,8 +209,10 @@ xsum_kernels_adios_OBJECTS = \
 
 xsum_kernels_adios_SHARED_OBJECTS = \
 	$(xsum_kernels_SHARED_OBJECTS) \
-	$O/adios_helpers_definitions.shared_adios_module.o \
-	$O/adios_helpers_writers.shared_adios_module.o \
+	$O/adios_helpers_addons.shared_adios_cc.o \
+	$O/adios_helpers_definitions.shared_adios.o \
+	$O/adios_helpers_readers.shared_adios.o \
+	$O/adios_helpers_writers.shared_adios.o \
 	$O/adios_helpers.shared_adios.o \
 	$O/adios_manager.shared_adios_module.o \
 	$(EMPTY_MACRO)
@@ -225,6 +234,7 @@ xsum_preconditioned_kernels_OBJECTS = \
 
 xsum_preconditioned_kernels_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
+	$O/specfem3D_par.solverstatic_module.o \
 	$O/parallel.sharedmpi.o \
 	$O/param_reader.cc.o \
 	$O/read_parameter_file.shared.o \
@@ -243,7 +253,7 @@ $(tomography_OBJECTS): S := ${S_TOP}/src/tomography
 ###
 ### Model dependencies
 ###
-$O/tomography_par.tomo_module.o: $O/shared_par.shared_module.o
+$O/tomography_par.tomo_module.o: $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o
 
 
 ####
@@ -269,6 +279,6 @@ $O/%.tomo_adios.o: $S/%.f90 $O/tomography_par.tomo_module.o $O/parallel.sharedmp
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.tomo_adios.o: $S/%.F90 $O/tomography_par.tomo_module.o $O/parallel.sharedmpi.o $O/adios_helpers.shared_adios.o
-	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(ADIOS_DEF)
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(FC_DEFINE)USE_ADIOS_INSTEAD_OF_MESH
 
 

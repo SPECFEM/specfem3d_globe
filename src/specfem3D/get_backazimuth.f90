@@ -42,19 +42,19 @@
   double precision phsrad, sc, sd, ss
   double precision temp, therad, thg, thsrad
 
-  double precision, parameter :: rad = 6378.160d0
+  !double precision, parameter :: rad = 6378.160d0
   double precision, parameter :: fl = 0.00335293d0
   double precision, parameter :: twopideg = 360.d0
-  double precision, parameter :: c00 = 1.d0
-  double precision, parameter :: c01 = 0.25d0
-  double precision, parameter :: c02 = -4.6875d-02
-  double precision, parameter :: c03 = 1.953125d-02
-  double precision, parameter :: c21 = -0.125d0
-  double precision, parameter :: c22 = 3.125d-02
-  double precision, parameter :: c23 = -1.46484375d-02
-  double precision, parameter :: c42 = -3.90625d-03
-  double precision, parameter :: c43 = 2.9296875d-03
-  double precision, parameter :: degtokm = 111.3199d0
+  !double precision, parameter :: c00 = 1.d0
+  !double precision, parameter :: c01 = 0.25d0
+  !double precision, parameter :: c02 = -4.6875d-02
+  !double precision, parameter :: c03 = 1.953125d-02
+  !double precision, parameter :: c21 = -0.125d0
+  !double precision, parameter :: c22 = 3.125d-02
+  !double precision, parameter :: c23 = -1.46484375d-02
+  !double precision, parameter :: c42 = -3.90625d-03
+  !double precision, parameter :: c43 = 2.9296875d-03
+  !double precision, parameter :: degtokm = 111.3199d0
   double precision, parameter :: TORAD = DEGREES_TO_RADIANS
   double precision, parameter :: TODEG = RADIANS_TO_DEGREES
 
@@ -112,9 +112,9 @@
   !   correction given by: 1-EC2=1-2*FL+FL*FL
 
   if (the == 90 .or. the == -90) then         ! special attention at the poles
-              thg = the*TORAD                   ! ... to avoid division by zero.
+    thg = the*TORAD                   ! ... to avoid division by zero.
   else
-              thg = atan( onemec2*tan( therad ) )
+    thg = atan( onemec2*tan( therad ) )
   endif
 
   d = sin( pherad )
@@ -126,7 +126,6 @@
   g = -c*e
   h = c*d
 
-
   ! -- Convert to radians.
   temp = Ths
   if (temp == 0. ) temp = 1.0d-08
@@ -135,9 +134,9 @@
 
   ! -- Calculate some trig constants.
   if (Ths == 90 .or. Ths == -90) then
-        thg = Ths * TORAD
+    thg = Ths * TORAD
   else
-        thg = atan( onemec2*tan( thsrad ) )
+    thg = atan( onemec2*tan( thsrad ) )
   endif
 
   d1 = sin( phsrad )
@@ -170,4 +169,4 @@
   if (Baz < 0. ) &
       Baz = Baz + twopideg
 
-end subroutine get_backazimuth
+  end subroutine get_backazimuth

@@ -334,6 +334,7 @@ void gpuCopy_from_device_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array,
 #endif
 }
 
+// copy with offset
 void gpuCopy_from_device_realw_offset (gpu_realw_mem *d_array_addr_ptr, realw *h_array, size_t size, size_t offset) {
 
   TRACE ("gpuCopy_from_device_realw");
@@ -352,6 +353,119 @@ void gpuCopy_from_device_realw_offset (gpu_realw_mem *d_array_addr_ptr, realw *h
   }
 #endif
 }
+
+/* ----------------------------------------------------------------------------------------------- */
+
+// asynchronuous with event synchronization
+
+/* ----------------------------------------------------------------------------------------------- */
+
+void gpuCopy_from_device_realw_asyncEvent (Mesh *mp, gpu_realw_mem *d_array_addr_ptr, realw *h_array, size_t size) {
+
+  TRACE ("gpuCopy_from_device_realw_asyncEvent");
+
+#ifdef USE_OPENCL
+  if (run_opencl) {
+    // non-blocking copy
+    if (GPU_ASYNC_COPY) {
+      // asynchronuous copy
+      //
+      // note: if host array is not pinned, then call will become blocking
+
+      // waits until compute kernel is finished before starting async memcpy
+      clCheck (clFinish (mocl.command_queue));
+
+      if (mp->has_last_copy_evt) {
+        clCheck (clReleaseEvent (mp->last_copy_evt));
+      }
+      clCheck (clEnqueueReadBuffer (mocl.copy_queue, d_array_addr_ptr->ocl, CL_FALSE, 0, sizeof (realw) * size, h_array,
+               0, NULL, &mp->last_copy_evt));
+
+      mp->has_last_copy_evt = 1;
+    }else{
+      // blocking copy
+      // copies memory from GPU back to CPU
+      clCheck (clEnqueueReadBuffer (mocl.command_queue, d_array_addr_ptr->ocl, CL_TRUE, 0, sizeof (realw) * size, h_array,
+               0, NULL, NULL));
+    }
+  }
+#endif
+#ifdef USE_CUDA
+  if (run_cuda) {
+    if (GPU_ASYNC_COPY) {
+      // asynchronuous copy
+      //
+      // note: if host array is not pinned, then call will become blocking
+
+      // waits until compute kernel is finished before starting async memcpy
+      //
+      // do not use: cudaStreamSynchronize(mp->compute_stream);
+      //             this would break the graph capturing...
+      //
+      // uses event synchronization instead
+      print_CUDA_error_if_any(cudaStreamWaitEvent(mp->copy_stream, mp->kernel_event, 0),32000);
+
+      // copies buffer to CPU
+      print_CUDA_error_if_any(cudaMemcpyAsync(h_array,d_array_addr_ptr->cuda, sizeof(realw)*size, cudaMemcpyDeviceToHost,mp->copy_stream),33000);
+
+      // creates event record
+      print_CUDA_error_if_any(cudaEventRecord(mp->kernel_event, mp->copy_stream),32001);
+    }else{
+      // blocking
+      // note: cudaMemcpy implicitly synchronizes all other cuda operations
+      //       however, stream capturing for graphs don't like this.
+      //       it prefers explicit kernel dependencies, thus we use event synchronization above.
+      print_CUDA_error_if_any(cudaMemcpy(h_array,d_array_addr_ptr->cuda, sizeof(realw)*size, cudaMemcpyDeviceToHost),34001);
+    }
+  }
+#endif
+}
+
+/* ----------------------------------------------------------------------------------------------- */
+
+void gpuRecordEvent(Mesh *mp){
+
+  TRACE ("gpuRecordEvent");
+
+#ifdef USE_CUDA
+  if (run_cuda) {
+    if (GPU_ASYNC_COPY) {
+      // record event on compute stream
+      print_CUDA_error_if_any(cudaEventRecord(mp->kernel_event, mp->compute_stream),31000);
+    }
+  }
+#endif
+}
+
+/* ----------------------------------------------------------------------------------------------- */
+
+void gpuWaitEvent (Mesh *mp) {
+
+  TRACE ("gpuWaitEvent");
+
+  // waits for event in copy stream to finish
+  if (GPU_ASYNC_COPY) {
+#ifdef USE_OPENCL
+    if (run_opencl){
+      // waits until previous copy finished
+      clCheck (clFinish (mocl.copy_queue));
+      if (mp->has_last_copy_evt){
+        clCheck (clReleaseEvent (mp->last_copy_evt));
+        mp->has_last_copy_evt = 0;
+      }
+    }
+#endif
+#ifdef USE_CUDA
+    if (run_cuda) {
+      print_CUDA_error_if_any(cudaStreamWaitEvent(mp->compute_stream, mp->kernel_event, 0),34000);
+    }
+#endif
+  }
+}
+
+/* ----------------------------------------------------------------------------------------------- */
+
+// allocations
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -537,7 +651,7 @@ void gpuReset() {
   // cuda version
 #ifdef USE_CUDA
   if (run_cuda) {
-#if CUDA_VERSION < 4000
+#if CUDA_VERSION < 4000 || (defined (__CUDACC_VER_MAJOR__) && (__CUDACC_VER_MAJOR__ < 4))
     cudaThreadExit();
 #else
     cudaDeviceReset();
@@ -564,7 +678,7 @@ void gpuSynchronize() {
   // cuda version
 #ifdef USE_CUDA
   if (run_cuda) {
-#if CUDA_VERSION < 4000
+#if CUDA_VERSION < 4000 || (defined (__CUDACC_VER_MAJOR__) && (__CUDACC_VER_MAJOR__ < 4))
     cudaThreadSynchronize();
 #else
     cudaDeviceSynchronize();
@@ -763,7 +877,12 @@ void exit_on_gpu_error (const char *kernel_name) {
 #endif
 #ifdef USE_CUDA
   if (run_cuda) {
+    // synchronizes GPU
+#if CUDA_VERSION < 4000 || (defined (__CUDACC_VER_MAJOR__) && (__CUDACC_VER_MAJOR__ < 4))
     cudaThreadSynchronize();
+#else
+    cudaDeviceSynchronize();
+#endif
     cudaError_t err = cudaGetLastError();
     error = err != cudaSuccess;
     strerr = cudaGetErrorString(err);

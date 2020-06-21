@@ -55,8 +55,11 @@ module BOAST
       make_specfem3d_header
       open p
       decl id = Int("id")
+      comment()
 
       print id === get_global_id(0) + get_group_id(1)*get_global_size(0)
+      comment()
+
       print If(id < size ) {
         case type
         when :disp_veloc, :potential
@@ -77,7 +80,6 @@ module BOAST
           print veloc[id] === veloc[id] + deltatover2*accel[id]
         end
       }
-
       close p
     end
     pop_env( :array_start )

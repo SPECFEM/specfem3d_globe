@@ -82,9 +82,6 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifndef IFLAG_IN_FICTITIOUS_CUBE\n\
 #define IFLAG_IN_FICTITIOUS_CUBE 11\n\
 #endif\n\
-#ifndef R_EARTH_KM\n\
-#define R_EARTH_KM 6371.0f\n\
-#endif\n\
 #ifndef COLORING_MIN_NSPEC_INNER_CORE\n\
 #define COLORING_MIN_NSPEC_INNER_CORE 1000\n\
 #endif\n\
@@ -99,15 +96,16 @@ __kernel void write_seismograms_transfer_strain_from_device_kernel(const __globa
   int tx;\n\
   int irec;\n\
   int ispec;\n\
-  int iglob;\n\
   int blockID;\n\
+\n\
   blockID = get_group_id(0) + (get_group_id(1)) * (get_num_groups(0));\n\
   tx = get_local_id(0);\n\
+\n\
   if (blockID < nrec_local) {\n\
     irec = number_receiver_global[blockID] - (1);\n\
     ispec = ispec_selected_rec[irec] - (1);\n\
-    iglob = ibool[tx + (NGLL3) * (ispec)] - (1);\n\
-    station_strain_field[(NGLL3) * (blockID) + tx] = d_field[iglob];\n\
+\n\
+    station_strain_field[(NGLL3) * (blockID) + tx] = d_field[(NGLL3) * (ispec) + tx];\n\
   }\n\
 }\n\
 ";

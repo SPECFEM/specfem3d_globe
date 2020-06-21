@@ -143,6 +143,7 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_rstore_outer_core.ocl));
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_d_ln_density_dr_table.ocl));
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_minus_rho_g_over_kappa_fluid.ocl));
+    clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (realw), (void *) &mp->R_EARTH_KM));
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_wgll_cube.ocl));
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (int), (void *) &mp->rotation));
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (realw), (void *) &timeval));
@@ -206,6 +207,7 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
                                                                mp->d_rstore_outer_core.cuda,
                                                                mp->d_d_ln_density_dr_table.cuda,
                                                                mp->d_minus_rho_g_over_kappa_fluid.cuda,
+                                                               mp->R_EARTH_KM,
                                                                mp->d_wgll_cube.cuda,
                                                                mp->rotation,
                                                                timeval,

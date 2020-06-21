@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # fortran/openMPI compiler
-sudo apt-get install gfortran libgomp1 openmpi-bin libopenmpi-dev
+sudo apt-get install -y gfortran libgomp1 openmpi-bin libopenmpi-dev
 
 # python script needs numpy
 echo "Python on path: `which python`"
@@ -23,7 +23,8 @@ ${CC} --version
 
 # installs the CUDA toolkit
 if [ "$CUDA" == "true" ]; then
-  echo "Installing CUDA library"
+  echo "Installing CUDA library version"
+  echo "CUDA version: ${CUDA_VERSION}"
   # note: travis could stall and time out here
   #       one could try to add: travis_retry sudo dpgk -i ..
   #       https://docs.travis-ci.com/user/common-build-problems/#travis_retry
@@ -47,7 +48,7 @@ if [ "$CUDA" == "true" ]; then
   # CUDA_PACKAGES="cuda-drivers cuda-core-${CUDA_APT} cuda-cudart-dev-${CUDA_APT} cuda-cufft-dev-${CUDA_APT}";
   CUDA_PACKAGES="cuda-drivers cuda-core-${CUDA_APT} cuda-cudart-dev-${CUDA_APT}"
   echo "Installing ${CUDA_PACKAGES}"
-  sudo apt-get install -y ${CUDA_PACKAGES}
+  sudo apt-get install -y --no-install-recommends ${CUDA_PACKAGES}
   sudo apt-get clean
   export CUDA_HOME=/usr/local/cuda-${CUDA_VERSION:0:3}
   export LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}

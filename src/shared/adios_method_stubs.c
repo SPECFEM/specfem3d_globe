@@ -48,7 +48,7 @@ void FC_FUNC_(save_arrays_solver_adios,SAVE_ARRAYS_SOLVER_ADIOS)(int* idoubling,
                                                                  int* NSPEC2DMAX_XMIN_XMAX, int* NSPEC2DMAX_YMIN_YMAX,
                                                                  int* NSPEC2D_TOP, int* NSPEC2D_BOTTOM) {}
 
-void FC_FUNC_(save_arrays_solver_meshfiles_adios,SAVE_ARRAYS_SOLVER_MESHFILES_ADIOS)(void) {}
+void FC_FUNC_(save_model_meshfiles_adios,SAVE_MODEL_MESHFILES_ADIOS)(void) {}
 
 void FC_FUNC_(save_arrays_boundary_adios,SAVE_ARRAYS_BOUNDARY_ADIOS)(void) {}
 
@@ -56,6 +56,8 @@ void FC_FUNC_(save_mpi_arrays_adios,SAVE_MPI_ARRAYS_ADIOS)(void) {}
 
 void FC_FUNC_(write_avs_dx_output_adios,WRITE_AVS_DX_OUTPUT_ADIOS)(int* npointot, int* iregion_code,
                                                                    int* num_ibool_AVS_DX, int* mask_ibool) {}
+
+void FC_FUNC_(read_gll_qmu_model_adios,READ_GLL_QMU_MODEL_ADIOS)(void) {}
 
 // for xspecfem3D compilation
 
@@ -71,11 +73,7 @@ void FC_FUNC_(read_intermediate_forward_arrays_adios,READ_INTERMEDIATE_FORWARD_A
 
 void FC_FUNC_(read_mesh_databases_coupling_adios,READ_MESH_DATABASES_COUPLING_ADIOS)(void) {}
 
-void FC_FUNC_(read_mesh_databases_mpi_cm_adios,READ_MESH_DATABASES_MPI_CM_ADIOS)(void) {}
-
-void FC_FUNC_(read_mesh_databases_mpi_ic_adios,READ_MESH_DATABASES_MPI_IC_ADIOS)(void) {}
-
-void FC_FUNC_(read_mesh_databases_mpi_oc_adios,READ_MESH_DATABASES_MPI_OC_ADIOS)(void) {}
+void FC_FUNC_(read_mesh_databases_mpi_adios,READ_MESH_DATABASES_MPI_ADIOS)(int* iregion_code) {}
 
 void FC_FUNC_(read_mesh_databases_stacey_adios,READ_MESH_DATABASES_STACEY_ADIOS)(void) {}
 
@@ -85,7 +83,11 @@ void FC_FUNC_(save_forward_arrays_undoatt_adios,SAVE_FORWARD_ARRAYS_UNDOATT_ADIO
 
 void FC_FUNC_(save_intermediate_forward_arrays_adios,SAVE_INTERMEDIATE_FORWARD_ARRAYS_ADIOS)(void) {}
 
+void FC_FUNC_(save_forward_model_at_shifted_frequency_adios,SAVE_FORWARD_MODEL_AT_SHIFTED_FREQUENCY_ADIOS)(void){}
+
 void FC_FUNC_(define_kernel_adios_variables,DEFINE_KERNEL_ADIOS_VARIABLES)(void) {}
+
+void FC_FUNC_(close_kernel_adios_file,CLOSE_KERNEL_ADIOS_FILE)(void) {}
 
 void FC_FUNC_(write_kernels_cm_ani_adios,WRITE_KERNELS_CM_ADIOS)(void) {}
 

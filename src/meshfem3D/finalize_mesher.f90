@@ -66,16 +66,40 @@
     ! check total Earth mass
     if (NCHUNKS == 6) then
       write(IMAIN,*)
-      write(IMAIN,*) 'computed total Earth mass for this density model and mesh: '
-      write(IMAIN,*) '   ',sngl(Earth_mass_total),' kg'
-      write(IMAIN,*) '   (should be not too far from 5.974E+24 kg)'
+      select case(PLANET_TYPE)
+      case (IPLANET_EARTH)
+        ! Earth
+        write(IMAIN,*) 'computed total Earth mass for this density model and mesh: '
+        write(IMAIN,*) '   ',sngl(Earth_mass_total),' kg'
+        write(IMAIN,*) '   (should be not too far from 5.974E+24 kg)'
+        write(IMAIN,*)
+        ! take into account the fact that dimensions have been non-dimensionalized by dividing them by R_PLANET
+        write(IMAIN,*) 'average density for this density model and mesh: '
+        write(IMAIN,*) '   ',sngl(Earth_mass_total / (volume_total * R_PLANET**3)),' kg/m3'
+        write(IMAIN,*) '   (should be not too far from 5514 kg/m3)'
+      case (IPLANET_MARS)
+        ! Mars
+        write(IMAIN,*) 'computed total Mars mass for this density model and mesh: '
+        write(IMAIN,*) '   ',sngl(Earth_mass_total),' kg'
+        write(IMAIN,*) '   (should be not too far from 6.417E+23 kg)'
+        write(IMAIN,*)
+        ! take into account the fact that dimensions have been non-dimensionalized by dividing them by R_PLANET
+        write(IMAIN,*) 'average density for this density model and mesh: '
+        write(IMAIN,*) '   ',sngl(Earth_mass_total / (volume_total * R_PLANET**3)),' kg/m3'
+        write(IMAIN,*) '   (should be not too far from 3933 kg/m3)'
+      case (IPLANET_MOON)
+        ! Moon
+        write(IMAIN,*) 'computed total Moon mass for this density model and mesh: '
+        write(IMAIN,*) '   ',sngl(Earth_mass_total),' kg'
+        write(IMAIN,*) '   (should be not too far from 7.347E+22 kg)'
+        write(IMAIN,*)
+        ! take into account the fact that dimensions have been non-dimensionalized by dividing them by R_PLANET
+        write(IMAIN,*) 'average density for this density model and mesh: '
+        write(IMAIN,*) '   ',sngl(Earth_mass_total / (volume_total * R_PLANET**3)),' kg/m3'
+        write(IMAIN,*) '   (should be not too far from 3344 kg/m3)'
+      end select
       write(IMAIN,*)
-      ! take into account the fact that dimensions have been non-dimensionalized by dividing them by R_EARTH
-      write(IMAIN,*) 'average density for this density model and mesh: '
-      write(IMAIN,*) '   ',sngl(Earth_mass_total / (volume_total * R_EARTH**3)),' kg/m3'
-      write(IMAIN,*) '   (should be not too far from 5514 kg/m3)'
-      write(IMAIN,*)
-      write(IMAIN,*) 'position of the center of mass of the Earth for this density model and mesh: '
+      write(IMAIN,*) 'position of the center of mass of the globe for this density model and mesh: '
       write(IMAIN,*) '   x = ',sngl((Earth_center_of_mass_x_total / Earth_mass_total) / 1000.d0),' km'
       write(IMAIN,*) '   y = ',sngl((Earth_center_of_mass_y_total / Earth_mass_total) / 1000.d0),' km'
       write(IMAIN,*) '   z = ',sngl((Earth_center_of_mass_z_total / Earth_mass_total) / 1000.d0),' km'
@@ -145,11 +169,16 @@
   deallocate(iproc_xi_slice)
   deallocate(iproc_eta_slice)
 
+  ! ADIOS
+  if (ADIOS_ENABLED) then
+    call finalize_adios()
+  endif
+
   ! elapsed time since beginning of mesh generation
   if (myrank == 0) then
     tCPU = wtime() - time_start
     write(IMAIN,*)
-    write(IMAIN,*) 'Elapsed time for mesh generation and buffer creation in seconds = ',tCPU
+    write(IMAIN,*) 'Elapsed time for mesh generation and buffer creation in seconds = ',sngl(tCPU)
     write(IMAIN,"(' Elapsed time for mesh generation and buffer creation in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
               int(tCPU/3600),int( (tCPU - int(tCPU/3600)*3600)/60 ),int(tCPU - int(tCPU/60) * 60)
     write(IMAIN,*)
@@ -158,15 +187,11 @@
     call flush_IMAIN()
 
     ! close main output file
-    close(IMAIN)
+    if (IMAIN /= ISTANDARD_OUTPUT) close(IMAIN)
   endif
 
   ! synchronize all the processes to make sure everybody has finished
   call synchronize_all()
-
-  if (ADIOS_ENABLED) then
-    call finalize_adios()
-  endif
 
   end subroutine finalize_mesher
 

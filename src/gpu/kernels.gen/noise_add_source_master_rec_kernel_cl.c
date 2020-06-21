@@ -82,9 +82,6 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifndef IFLAG_IN_FICTITIOUS_CUBE\n\
 #define IFLAG_IN_FICTITIOUS_CUBE 11\n\
 #endif\n\
-#ifndef R_EARTH_KM\n\
-#define R_EARTH_KM 6371.0f\n\
-#endif\n\
 #ifndef COLORING_MIN_NSPEC_INNER_CORE\n\
 #define COLORING_MIN_NSPEC_INNER_CORE 1000\n\
 #endif\n\
@@ -99,9 +96,11 @@ __kernel void noise_add_source_master_rec_kernel(const __global int * ibool, con
   int tx;\n\
   int ispec;\n\
   int iglob;\n\
+\n\
   tx = get_local_id(0);\n\
   ispec = ispec_selected_rec[irec_master_noise] - (1);\n\
   iglob = ibool[tx + (NGLL3) * (ispec)] - (1);\n\
+\n\
   atomicAdd(accel + (iglob) * (3) + 0, noise_sourcearray[(tx) * (3) + ((NGLL3) * (3)) * (it) + 0]);\n\
   atomicAdd(accel + (iglob) * (3) + 1, noise_sourcearray[(tx) * (3) + ((NGLL3) * (3)) * (it) + 1]);\n\
   atomicAdd(accel + (iglob) * (3) + 2, noise_sourcearray[(tx) * (3) + ((NGLL3) * (3)) * (it) + 2]);\n\

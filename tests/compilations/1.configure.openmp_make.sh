@@ -1,16 +1,12 @@
 #!/bin/bash
 ###################################################
 
-# test name
-NAME="1.configure.openmp_make"
-
 # configuration parameters
 CONF_PARAM="--enable-openmp --enable-vectorization"
 
 ###################################################
-
-
 testdir=`pwd`
+me=`basename "$0"`
 
 # sets source directory
 cd $ROOT/
@@ -20,7 +16,7 @@ cd $testdir/
 
 # title
 echo >> $testdir/results.log
-echo "$NAME in: $testdir" >> $testdir/results.log
+echo "$me in: $testdir" >> $testdir/results.log
 echo >> $testdir/results.log
 
 #cleanup

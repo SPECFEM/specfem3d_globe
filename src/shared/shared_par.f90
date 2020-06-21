@@ -41,7 +41,6 @@
   ! we put a default value here
   logical :: I_should_read_the_database = .true.
 
-
   end module constants
 
 !
@@ -70,7 +69,8 @@
              ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER, &
              SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,READ_ADJSRC_ASDF
 
-  logical :: SAVE_SEISMOGRAMS_STRAIN,SAVE_SEISMOGRAMS_IN_ADJOINT_RUN
+  logical :: SAVE_SEISMOGRAMS_STRAIN ! option under development (see Hom Nath commit 2deb0fa89), no functionality implemented yet
+  logical :: SAVE_SEISMOGRAMS_IN_ADJOINT_RUN
 
   ! sources
   logical :: USE_FORCE_POINT_SOURCE
@@ -103,7 +103,7 @@
 
   ! file directories
   character(len=MAX_STRING_LEN) :: OUTPUT_FILES
-  character(len=MAX_STRING_LEN) :: MODEL
+  character(len=MAX_STRING_LEN) :: MODEL,MODEL_NAME
   character(len=MAX_STRING_LEN) :: LOCAL_PATH,LOCAL_TMP_PATH
 
   ! attenuation parameters
@@ -125,8 +125,13 @@
   logical :: EXACT_MASS_MATRIX_FOR_ROTATION
 
   ! adjoint kernels
-  logical :: SAVE_REGULAR_KL,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL_ONLY, &
-             APPROXIMATE_HESS_KL,USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK
+  logical :: SAVE_REGULAR_KL, &
+             ANISOTROPIC_KL, &
+             SAVE_TRANSVERSE_KL_ONLY, &
+             SAVE_AZIMUTHAL_ANISO_KL_ONLY, &
+             APPROXIMATE_HESS_KL
+
+  logical :: USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK
 
   ! for simultaneous runs from the same batch job
   integer :: NUMBER_OF_SIMULTANEOUS_RUNS
@@ -144,6 +149,10 @@
              ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_SOLVER_MESHFILES, &
              ADIOS_FOR_AVS_DX,ADIOS_FOR_KERNELS,ADIOS_FOR_MODELS,ADIOS_FOR_UNDO_ATTENUATION
 
+  ! (optional) parameters
+  double precision :: USER_DT = -1.0  ! negative values will be ignored by default
+  integer :: USER_NSTEP = -1          ! negative to ignore by default
+
   end module shared_input_parameters
 
 !
@@ -155,7 +164,18 @@
   ! parameters to be computed based upon parameters above read from file
 
   use constants, only: MAX_NUM_REGIONS,MAX_NUMBER_OF_MESH_LAYERS, &
-    NB_SQUARE_CORNERS,NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE
+    NB_SQUARE_CORNERS,NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE,MAX_STRING_LEN
+
+  use constants, only: IPLANET_EARTH,IPLANET_MARS,IPLANET_MOON
+
+  use constants, only: &
+    EARTH_R,EARTH_R_KM, &
+    EARTH_STANDARD_GRAVITY,EARTH_RHOAV, &
+    EARTH_NX_BATHY,EARTH_NY_BATHY,EARTH_TOPO_MAXIMUM,EARTH_TOPO_MINIMUM, &
+    EARTH_PATHNAME_TOPO_FILE,EARTH_RESOLUTION_TOPO_FILE, &
+    EARTH_HOURS_PER_DAY,EARTH_SECONDS_PER_HOUR,EARTH_ONE_MINUS_F_SQUARED, &
+    EARTH_HONOR_DEEP_MOHO,EARTH_R_DEEPEST_CRUST,EARTH_REGIONAL_MOHO_MESH, &
+    EARTH_MAX_RATIO_CRUST_STRETCHING,EARTH_RMOHO_STRETCH_ADJUSTMENT,EARTH_R80_STRETCH_ADJUSTMENT
 
   implicit none
 
@@ -166,6 +186,9 @@
   ! number of time steps
   integer :: NSTEP
   double precision :: DT
+
+  ! shortest minimum period resolved by mesh (empirical formula)
+  double precision :: T_min_period
 
   ! number of sources given in CMTSOLUTION file
   integer :: NSOURCES
@@ -178,9 +201,12 @@
              NER_TOP_CENTRAL_CUBE_ICB, &
              NEX_XI,NEX_ETA
 
-
   ! attenuation
-  integer :: MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD
+  ! attenuation period band min/max
+  double precision :: MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD
+  ! logarithmic center frequency (center of attenuation band)
+  double precision :: ATT_F_C_SOURCE
+  ! attenuation array sizes
   integer :: ATT1,ATT2,ATT3,ATT4,ATT5
 
   ! radii of layers
@@ -196,12 +222,19 @@
   double precision :: MOVIE_TOP,MOVIE_BOTTOM,MOVIE_EAST,MOVIE_WEST, &
                       MOVIE_NORTH,MOVIE_SOUTH
   ! model flags
-  integer :: REFERENCE_1D_MODEL,REFERENCE_CRUSTAL_MODEL,THREE_D_MODEL
+  integer :: REFERENCE_1D_MODEL,REFERENCE_CRUSTAL_MODEL
+  integer :: THREE_D_MODEL,THREE_D_MODEL_IC
 
   logical :: TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-             CRUSTAL,ONE_CRUST,ISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE, &
-             CEM_REQUEST,CEM_ACCEPT
+             CRUSTAL,ONE_CRUST
+  logical :: MODEL_3D_MANTLE_PERTUBATIONS,HETEROGEN_3D_MANTLE
+  logical :: CEM_REQUEST,CEM_ACCEPT
+
+  logical :: MODEL_GLL
+  integer :: MODEL_GLL_TYPE
+
   logical :: ATTENUATION_3D
+  logical :: ATTENUATION_GLL
   logical :: INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE
 
   logical :: EMULATE_ONLY = .false.
@@ -221,7 +254,8 @@
   integer, dimension(MAX_NUM_REGIONS) :: NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
   integer, dimension(MAX_NUM_REGIONS) :: NGLOB1D_RADIAL
 
-  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
+  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner_mesh_layers
+  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ratio_sampling_array
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
 
   double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
@@ -235,6 +269,57 @@
   logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
   integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
   integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
+
+! default planet
+!
+! note: for different planets, we will re-set R_EARTH, RHOAV, .. after reading the Par_file
+!       to avoid problems when they are used to non-dimensionalize all parameters.
+!
+!       see routine get_model_planet_constants() in get_model_parameters.F90
+!
+  ! default planet Earth
+  integer :: PLANET_TYPE = IPLANET_EARTH
+
+  ! gravity
+  double precision :: STANDARD_GRAVITY = EARTH_STANDARD_GRAVITY
+
+  ! flattening / eccentricity
+  double precision :: ONE_MINUS_F_SQUARED = EARTH_ONE_MINUS_F_SQUARED
+
+  ! topo
+  character (len=MAX_STRING_LEN) :: PATHNAME_TOPO_FILE = EARTH_PATHNAME_TOPO_FILE
+  integer :: NX_BATHY = EARTH_NX_BATHY
+  integer :: NY_BATHY = EARTH_NY_BATHY
+  double precision :: RESOLUTION_TOPO_FILE = EARTH_RESOLUTION_TOPO_FILE
+  integer :: TOPO_MINIMUM = EARTH_TOPO_MINIMUM
+  integer :: TOPO_MAXIMUM = EARTH_TOPO_MAXIMUM
+
+  ! planet constants
+  ! radius of globe
+  ! we still use R_EARTH, but will mostly shift to R_PLANET to allow for different planets
+  double precision :: R_EARTH = EARTH_R    ! default: earth
+  double precision :: R_EARTH_KM = EARTH_R_KM
+
+  ! physical surface radius
+  double precision :: R_PLANET = EARTH_R
+  double precision :: R_PLANET_KM = EARTH_R / 1000.d0
+
+  ! average density
+  double precision :: RHOAV = EARTH_RHOAV  ! default: earth density
+
+  ! crust
+  double precision :: R_DEEPEST_CRUST = EARTH_R_DEEPEST_CRUST
+
+  ! rotation
+  double precision :: HOURS_PER_DAY = EARTH_HOURS_PER_DAY
+  double precision :: SECONDS_PER_HOUR = EARTH_SECONDS_PER_HOUR
+
+  ! mesh
+  double precision :: MAX_RATIO_CRUST_STRETCHING = EARTH_MAX_RATIO_CRUST_STRETCHING
+  double precision :: RMOHO_STRETCH_ADJUSTMENT = EARTH_RMOHO_STRETCH_ADJUSTMENT
+  double precision :: R80_STRETCH_ADJUSTMENT = EARTH_R80_STRETCH_ADJUSTMENT
+  logical :: REGIONAL_MOHO_MESH = EARTH_REGIONAL_MOHO_MESH
+  logical :: HONOR_DEEP_MOHO = EARTH_HONOR_DEEP_MOHO
 
   end module shared_compute_parameters
 

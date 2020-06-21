@@ -29,9 +29,9 @@
                      DT,NSOURCES,min_tshift_src_original)
 
   use constants, only: IIN,IMAIN,EXTERNAL_SOURCE_TIME_FUNCTION, &
-    RHOAV,R_EARTH,PI,GRAV,TINYVAL,MAX_STRING_LEN,mygroup
+    PI,GRAV,MAX_STRING_LEN,mygroup
 
-  use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS,NOISE_TOMOGRAPHY
+  use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS,NOISE_TOMOGRAPHY,R_PLANET,RHOAV
 
   implicit none
 
@@ -63,6 +63,13 @@
   hdur(:) = 0.d0
   moment_tensor(:,:) = 0.d0
 
+  ! origin time
+  yr = 0
+  da = 0
+  ho = -1
+  mi = -1
+  sec = -1.d0
+
 !
 !---- read hypocenter info
 !
@@ -78,13 +85,6 @@
 
 ! read source number isource
   do isource = 1,NSOURCES
-
-    ! initializes
-    yr = 0
-    da = 0
-    ho = -1
-    mi = -1
-    sec = -1.d0
 
     ! gets header line
     read(IIN,"(a256)",iostat=ier) string
@@ -154,26 +154,29 @@
       !print *,itype,'line ----',string(istart:iend),'----'
 
       ! reads in event time information
-      select case (itype)
-      case (1)
-        ! year (as integer value)
-        read(string(istart:iend),*) yr
-      case (2)
-        ! month (as integer value)
-        read(string(istart:iend),*) mo
-      case (3)
-        ! day (as integer value)
-        read(string(istart:iend),*) da
-      case (4)
-        ! hour (as integer value)
-        read(string(istart:iend),*) ho
-      case (5)
-        ! minutes (as integer value)
-        read(string(istart:iend),*) mi
-      case (6)
-        ! seconds (as float value)
-        read(string(istart:iend),*) sec
-      end select
+      ! in case of multiple sources, time refers to the first entry only
+      if (isource == 1) then
+        select case (itype)
+        case (1)
+          ! year (as integer value)
+          read(string(istart:iend),*) yr
+        case (2)
+          ! month (as integer value)
+          read(string(istart:iend),*) mo
+        case (3)
+          ! day (as integer value)
+          read(string(istart:iend),*) da
+        case (4)
+          ! hour (as integer value)
+          read(string(istart:iend),*) ho
+        case (5)
+          ! minutes (as integer value)
+          read(string(istart:iend),*) mi
+        case (6)
+          ! seconds (as float value)
+          read(string(istart:iend),*) sec
+        end select
+      endif
 
       ! advances string
       istart = iend + 1
@@ -319,7 +322,7 @@
     !-------------POINT FORCE-----------------------------------------------
       ! null half-duration indicates a Heaviside
       ! replace with very short error function
-      if (hdur(isource) < 5. * DT ) hdur(isource) = 5. * DT
+      if (hdur(isource) < 5.d0 * DT ) hdur(isource) = 5.d0 * DT
     !endif
 
   enddo
@@ -351,7 +354,7 @@
 ! thus 1 Newton = 100,000 dynes
 ! therefore 1 dyne.cm = 1e-7 Newton.m
 !
-  scaleM = 1.d7 * RHOAV * (R_EARTH**5) * PI*GRAV*RHOAV
+  scaleM = 1.d7 * RHOAV * (R_PLANET**5) * PI*GRAV*RHOAV
   moment_tensor(:,:) = moment_tensor(:,:) / scaleM
 
   contains
@@ -400,11 +403,13 @@
 
   ! calculates scalar moment (M0)
 
-  use constants, only: RHOAV,R_EARTH,PI,GRAV
+  use constants, only: PI,GRAV
+  use shared_parameters, only: R_PLANET,RHOAV
 
   implicit none
 
   double precision, intent(in) :: Mxx,Myy,Mzz,Mxy,Mxz,Myz
+
   ! local parameters
   double precision :: scalar_moment,scaleM
 
@@ -437,7 +442,7 @@
   ! 1 Newton is 1 kg * 1 m / (1 second)^2
   ! thus 1 Newton = 100,000 dynes
   ! therefore 1 dyne.cm = 1e-7 Newton.m
-  scaleM = 1.d7 * RHOAV * (R_EARTH**5) * PI * GRAV * RHOAV
+  scaleM = 1.d7 * RHOAV * (R_PLANET**5) * PI * GRAV * RHOAV
 
   ! return value (in dyne-cm)
   get_cmt_scalar_moment = scalar_moment * scaleM
@@ -455,12 +460,38 @@
   implicit none
 
   double precision, intent(in) :: Mxx,Myy,Mzz,Mxy,Mxz,Myz
+
   ! local parameters
   double precision :: M0,Mw
   double precision,external :: get_cmt_scalar_moment
+  double precision,external :: get_cmt_moment_magnitude_from_M0
 
   ! scalar moment
   M0 = get_cmt_scalar_moment(Mxx,Myy,Mzz,Mxy,Mxz,Myz)
+
+  ! moment magnitude
+  Mw = get_cmt_moment_magnitude_from_M0(M0)
+
+  ! return value
+  get_cmt_moment_magnitude = Mw
+
+  end function
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  double precision function get_cmt_moment_magnitude_from_M0(M0)
+
+  ! calculates moment magnitude (Mw) from seismic moment M0
+
+  implicit none
+
+  double precision, intent(in) :: M0
+
+  ! local parameters
+  double precision :: Mw
 
   ! moment magnitude by Hanks & Kanamori, 1979
   ! Mw = 2/3 log( M0 ) - 10.7       (dyne-cm)
@@ -479,12 +510,13 @@
   ! see: http://earthquake.usgs.gov/aboutus/docs/020204mag_policy.php
 
   if (M0 > 0.d0) then
-    Mw = 2.d0/3.d0 * log10( M0 ) - 10.7
+    Mw = 2.d0/3.d0 * log10( M0 ) - 10.7d0
   else
     Mw = 0.d0
   endif
 
   ! return value
-  get_cmt_moment_magnitude = Mw
+  get_cmt_moment_magnitude_from_M0 = Mw
 
   end function
+

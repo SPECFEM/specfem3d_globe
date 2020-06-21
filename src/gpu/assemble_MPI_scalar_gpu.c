@@ -40,10 +40,10 @@
 // (elements on boundary)
 
 extern EXTERN_LANG
-void FC_FUNC_ (transfer_boun_pot_from_device,
-               TRANSFER_BOUN_POT_FROM_DEVICE) (long *Mesh_pointer_f,
-                                               realw *send_buffer,
-                                               int *FORWARD_OR_ADJOINT) {
+void FC_FUNC_(transfer_boun_pot_from_device,
+              TRANSFER_BOUN_POT_FROM_DEVICE) (long *Mesh_pointer_f,
+                                              realw *send_buffer,
+                                              int *FORWARD_OR_ADJOINT) {
 
   TRACE ("transfer_boun_pot_from_device");
   int size_mpi_buffer;

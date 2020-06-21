@@ -18,13 +18,13 @@ module BOAST
       raise "Unsupported type : #{type}!"
     end
 
-    number_receiver_global = Int( "number_receiver_global", :dir => :in, :dim => [Dim()] )
-    ispec_selected_rec =     Int( "ispec_selected_rec",     :dir => :in, :dim => [Dim()] )
-    ibool =                  Int( "ibool",                  :dir => :in, :dim => [Dim()] )
-    d_field =          Real("d_field",          :dir => :in,:dim => [Dim()] )
-    nrec_local =             Int( "nrec_local",             :dir => :in)
+    number_receiver_global = Int("number_receiver_global",  :dir => :in, :dim => [Dim()] )
+    ispec_selected_rec     = Int("ispec_selected_rec",      :dir => :in, :dim => [Dim()] )
+    ibool                  = Int("ibool",                   :dir => :in, :dim => [Dim()] )
+    d_field                = Real("d_field",                :dir => :in, :dim => [Dim()] )
+    nrec_local             = Int("nrec_local",              :dir => :in)
 
-    ngll3 =                  Int("NGLL3",                   :const => n_gll3)
+    ngll3                  = Int("NGLL3",                   :const => n_gll3)
 
     p = Procedure(function_name, [number_receiver_global,ispec_selected_rec,ibool,station_field,d_field,nrec_local])
     if (get_lang == CUDA and ref) then
@@ -34,26 +34,37 @@ module BOAST
       open p
       blockID    = Int("blockID")
       tx         = Int("tx")
-      iglob      = Int("iglob")
       irec       = Int("irec")
       ispec      = Int("ispec")
-      decl tx, irec, ispec, iglob
+      if type == :transfer then
+        iglob      = Int("iglob")
+        decl iglob
+      end
+      decl tx, irec, ispec
       decl blockID
+      comment()
+
       print blockID === get_group_id(0)+get_group_id(1)*get_num_groups(0)
       print tx      === get_local_id(0)
+      comment()
+
       print If(blockID<nrec_local) {
         print irec === number_receiver_global[blockID] - 1
         print ispec === ispec_selected_rec[irec] - 1
-        print iglob === ibool[tx + ngll3*ispec] - 1
+        comment()
+
+        # copy element values to output array
         if type == :transfer then
+          # from displ array (NDIM,NGLOB)
+          print iglob === ibool[tx + ngll3*ispec] - 1
           (0..2).each { |i|
             print station_field[ngll3*3*blockID + tx*3 + i] === d_field[iglob*3+i]
           }
         else
-          print station_field[ngll3*blockID + tx] === d_field[iglob];
+          # from strain epsilon_xx arrays (NGLLX,NGLLY,NGLLZ,nspec)
+          print station_field[ngll3*blockID + tx] === d_field[ngll3*ispec + tx];
         end
       }
-
       close p
     else
       raise "Unsupported language!"

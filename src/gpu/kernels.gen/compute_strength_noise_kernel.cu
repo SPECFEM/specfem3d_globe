@@ -71,9 +71,6 @@
 #ifndef IFLAG_IN_FICTITIOUS_CUBE
 #define IFLAG_IN_FICTITIOUS_CUBE 11
 #endif
-#ifndef R_EARTH_KM
-#define R_EARTH_KM 6371.0f
-#endif
 #ifndef COLORING_MIN_NSPEC_INNER_CORE
 #define COLORING_MIN_NSPEC_INNER_CORE 1000
 #endif
@@ -94,16 +91,22 @@ __global__ void compute_strength_noise_kernel(const float * displ, const int * i
   int k;
   int iglob;
   float eta;
+
   iface = blockIdx.x + (blockIdx.y) * (gridDim.x);
+
   if (iface < nspec_top) {
     ispec = ibelm_top[iface] - (1);
     igll = threadIdx.x;
     ipoin = igll + (NGLL2) * (iface);
+
     k = NGLLX - (1);
     j = (igll) / (NGLLX);
     i = igll - ((j) * (NGLLX));
+
     iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)] - (1);
+
     eta = (noise_surface_movie[INDEX3(NDIM, NGLL2, 0, igll, iface)]) * (normal_x_noise[ipoin]) + (noise_surface_movie[INDEX3(NDIM, NGLL2, 1, igll, iface)]) * (normal_y_noise[ipoin]) + (noise_surface_movie[INDEX3(NDIM, NGLL2, 2, igll, iface)]) * (normal_z_noise[ipoin]);
+
     Sigma_kl[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)] = Sigma_kl[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)] + ((deltat) * (eta)) * ((normal_x_noise[ipoin]) * (displ[0 + (3) * (iglob)]) + (normal_y_noise[ipoin]) * (displ[1 + (3) * (iglob)]) + (normal_z_noise[ipoin]) * (displ[2 + (3) * (iglob)]));
   }
 }

@@ -71,9 +71,6 @@
 #ifndef IFLAG_IN_FICTITIOUS_CUBE
 #define IFLAG_IN_FICTITIOUS_CUBE 11
 #endif
-#ifndef R_EARTH_KM
-#define R_EARTH_KM 6371.0f
-#endif
 #ifndef COLORING_MIN_NSPEC_INNER_CORE
 #define COLORING_MIN_NSPEC_INNER_CORE 1000
 #endif
@@ -89,7 +86,9 @@ __global__ void prepare_boundary_accel_on_device(const float * d_accel, float * 
   int iglob;
   int iloc;
   int iinterface;
+
   id = threadIdx.x + (blockIdx.x) * (blockDim.x) + ((gridDim.x) * (blockDim.x)) * (threadIdx.y + (blockIdx.y) * (blockDim.y));
+
   for (iinterface = 0; iinterface <= num_interfaces - (1); iinterface += 1) {
     if (id < d_nibool_interfaces[iinterface]) {
       iloc = id + (max_nibool_interfaces) * (iinterface);

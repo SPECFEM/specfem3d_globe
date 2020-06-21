@@ -25,9 +25,6 @@
 !
 !=====================================================================
 
-! we switch between vectorized and non-vectorized version by using pre-processor flag FORCE_VECTORIZATION
-! and macros INDEX_IJK, DO_LOOP_IJK, ENDDO_LOOP_IJK defined in config.fh
-#include "config.fh"
 
   subroutine compute_seismograms(nglob,displ,seismo_current,seismograms)
 
@@ -35,8 +32,8 @@
 
   use specfem_par, only: &
     NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-    nrec_local,nu,ispec_selected_rec,number_receiver_global, &
-    scale_displ,hlagrange_store
+    nrec_local,nu_rec,ispec_selected_rec,number_receiver_global, &
+    scale_displ,hxir_store,hetar_store,hgammar_store
 
   use specfem_par_crustmantle, only: ibool_crust_mantle
 
@@ -53,11 +50,7 @@
   ! local parameters
   double precision :: uxd,uyd,uzd,hlagrange
   integer :: ispec,iglob,irec_local,irec
-#ifdef FORCE_VECTORIZATION
-  integer :: ijk
-#else
   integer :: i,j,k
-#endif
 
   do irec_local = 1,nrec_local
 
@@ -71,23 +64,26 @@
     uyd = ZERO
     uzd = ZERO
 
-    DO_LOOP_IJK
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+          iglob = ibool_crust_mantle(i,j,k,ispec)
 
-      iglob = ibool_crust_mantle(INDEX_IJK,ispec)
+          hlagrange = hxir_store(i,irec_local) * hetar_store(j,irec_local) * hgammar_store(k,irec_local)
 
-      hlagrange = hlagrange_store(INDEX_IJK,irec_local)
+          uxd = uxd + dble(displ(1,iglob))*hlagrange
+          uyd = uyd + dble(displ(2,iglob))*hlagrange
+          uzd = uzd + dble(displ(3,iglob))*hlagrange
 
-      uxd = uxd + dble(displ(1,iglob))*hlagrange
-      uyd = uyd + dble(displ(2,iglob))*hlagrange
-      uzd = uzd + dble(displ(3,iglob))*hlagrange
-
-    ENDDO_LOOP_IJK
+        enddo
+      enddo
+    enddo
 
     ! store North, East and Vertical components
     ! distinguish between single and double precision for reals
-    seismograms(:,irec_local,seismo_current) = real(scale_displ*(nu(:,1,irec)*uxd + &
-                                                                 nu(:,2,irec)*uyd + &
-                                                                 nu(:,3,irec)*uzd), &
+    seismograms(:,irec_local,seismo_current) = real(scale_displ*(nu_rec(:,1,irec)*uxd + &
+                                                                 nu_rec(:,2,irec)*uyd + &
+                                                                 nu_rec(:,3,irec)*uzd), &
                                                     kind=CUSTOM_REAL)
 
   enddo
@@ -107,7 +103,7 @@
                                          seismograms)
 
   use constants_solver, only: &
-    CUSTOM_REAL,SIZE_REAL,ZERO,ONE,PI,GRAV,RHOAV,NGLLX,NGLLY,NGLLZ, NGLLCUBE, &
+    CUSTOM_REAL,ZERO,PI,NGLLX,NGLLY,NGLLZ, &
     NDIM,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE, &
     NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_CRUST_MANTLE_STR_OR_ATT
 
@@ -115,7 +111,6 @@
     NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS,UNDO_ATTENUATION, &
     nrec_local, &
     nu_source,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
-    hlagrange_store, &
     hxir_store,hpxir_store,hetar_store,hpetar_store,hgammar_store,hpgammar_store, &
     tshift_src,hdur_Gaussian, &
     DT,t0,deltat,it, &
@@ -167,24 +162,9 @@
 
   double precision :: hxir(NGLLX), hetar(NGLLY), hgammar(NGLLZ), &
                       hpxir(NGLLX),hpetar(NGLLY),hpgammar(NGLLZ)
-#ifdef FORCE_VECTORIZATION
-  integer :: ijk
-#else
   integer :: i,j,k
-#endif
 
   do irec_local = 1,nrec_local
-
-    ! initializes
-    uxd = ZERO
-    uyd = ZERO
-    uzd = ZERO
-    eps_trace = ZERO
-    dxx = ZERO
-    dyy = ZERO
-    dxy = ZERO
-    dxz = ZERO
-    dyz = ZERO
 
     ! gets global number of that receiver
     irec = number_receiver_global(irec_local)
@@ -212,28 +192,42 @@
       epsilondev_loc_matrix(5,:,:,:) = epsilondev_yz_crust_mantle(:,:,:,ispec)
     endif
 
+    ! initializes
+    uxd = ZERO
+    uyd = ZERO
+    uzd = ZERO
+    eps_trace = ZERO
+    dxx = ZERO
+    dyy = ZERO
+    dxy = ZERO
+    dxz = ZERO
+    dyz = ZERO
+
     ! perform the general interpolation using Lagrange polynomials
-    DO_LOOP_IJK
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
 
-      iglob = ibool_crust_mantle(INDEX_IJK,ispec)
+          iglob = ibool_crust_mantle(i,j,k,ispec)
 
-      hlagrange = hlagrange_store(INDEX_IJK,irec_local)
+          hlagrange = hxir_store(i,irec_local) * hetar_store(j,irec_local) * hgammar_store(k,irec_local)
 
-      uxd = uxd + dble(displ_crust_mantle(1,iglob))*hlagrange
-      uyd = uyd + dble(displ_crust_mantle(2,iglob))*hlagrange
-      uzd = uzd + dble(displ_crust_mantle(3,iglob))*hlagrange
+          uxd = uxd + dble(displ_crust_mantle(1,iglob))*hlagrange
+          uyd = uyd + dble(displ_crust_mantle(2,iglob))*hlagrange
+          uzd = uzd + dble(displ_crust_mantle(3,iglob))*hlagrange
 
-      eps_trace = eps_trace + dble(eps_trace_over_3_loc(INDEX_IJK))*hlagrange
+          eps_trace = eps_trace + dble(eps_trace_over_3_loc(i,j,k))*hlagrange
 
-      dxx = dxx + dble(epsilondev_loc_matrix(1,INDEX_IJK))*hlagrange
-      dyy = dyy + dble(epsilondev_loc_matrix(2,INDEX_IJK))*hlagrange
-      dxy = dxy + dble(epsilondev_loc_matrix(3,INDEX_IJK))*hlagrange
-      dxz = dxz + dble(epsilondev_loc_matrix(4,INDEX_IJK))*hlagrange
-      dyz = dyz + dble(epsilondev_loc_matrix(5,INDEX_IJK))*hlagrange
+          dxx = dxx + dble(epsilondev_loc_matrix(1,i,j,k))*hlagrange
+          dyy = dyy + dble(epsilondev_loc_matrix(2,i,j,k))*hlagrange
+          dxy = dxy + dble(epsilondev_loc_matrix(3,i,j,k))*hlagrange
+          dxz = dxz + dble(epsilondev_loc_matrix(4,i,j,k))*hlagrange
+          dyz = dyz + dble(epsilondev_loc_matrix(5,i,j,k))*hlagrange
 
-      displ_s(:,INDEX_IJK) = displ_crust_mantle(:,iglob)
-
-    ENDDO_LOOP_IJK
+          displ_s(:,i,j,k) = displ_crust_mantle(:,iglob)
+        enddo
+      enddo
+    enddo
 
     eps_loc(1,1) = eps_trace + dxx
     eps_loc(2,2) = eps_trace + dyy
@@ -245,8 +239,10 @@
     eps_loc(3,1) = dxz
     eps_loc(3,2) = dyz
 
-    eps_loc_new(:,:) = eps_loc(:,:)
-    ! rotate to the local Cartesian coordinates (n-e-z):  eps_new=P*eps*P'
+    ! un-rotated
+    !eps_loc_new(:,:) = eps_loc(:,:)
+    !
+    ! rotate to the local Cartesian coordinates (n-e-z):  eps_new = P*eps*P'
     eps_loc_new(:,:) = matmul(matmul(nu_source(:,:,irec),eps_loc(:,:)), transpose(nu_source(:,:,irec)))
 
     ! distinguish between single and double precision for reals
@@ -256,6 +252,7 @@
     seismograms(4,irec_local,it-it_adj_written) = real(eps_loc_new(1,2), kind=CUSTOM_REAL)
     seismograms(5,irec_local,it-it_adj_written) = real(eps_loc_new(1,3), kind=CUSTOM_REAL)
     seismograms(6,irec_local,it-it_adj_written) = real(eps_loc_new(2,3), kind=CUSTOM_REAL)
+
     seismograms(7:9,irec_local,it-it_adj_written) = real(scale_displ*(nu_source(:,1,irec)*uxd + &
                                                                       nu_source(:,2,irec)*uyd + &
                                                                       nu_source(:,3,irec)*uzd), &
@@ -263,23 +260,25 @@
 
     ! interpolators
     ! note: we explicitly copy the store arrays to local temporary arrays here
-    !       the array indexing (irec_local,:) is non-contiguous and compilers would have to do this anyway
-    hxir(:) = hxir_store(irec_local,:)
-    hetar(:) = hetar_store(irec_local,:)
-    hgammar(:) = hgammar_store(irec_local,:)
-    hpxir(:) = hpxir_store(irec_local,:)
-    hpetar(:) = hpetar_store(irec_local,:)
-    hpgammar(:) = hpgammar_store(irec_local,:)
+    !       array indexing (irec_local,:) would be non-contiguous and compilers would have to do this anyway.
+    !       since we now use (:,irec_local), we could however skip this... still, we keep it as an explicit way.
+    hxir(:) = hxir_store(:,irec_local)
+    hetar(:) = hetar_store(:,irec_local)
+    hgammar(:) = hgammar_store(:,irec_local)
+    hpxir(:) = hpxir_store(:,irec_local)
+    hpetar(:) = hpetar_store(:,irec_local)
+    hpgammar(:) = hpgammar_store(:,irec_local)
 
     ! Frechet derivatives of the source
     call compute_adj_source_frechet(displ_s,Mxx(irec),Myy(irec),Mzz(irec), &
-                Mxy(irec),Mxz(irec),Myz(irec),eps_s,eps_m_s,eps_m_l_s, &
-                hxir,hetar,hgammar, &
-                hpxir,hpetar,hpgammar, &
-                hprime_xx,hprime_yy,hprime_zz, &
-                xix_crust_mantle(1,1,1,ispec),xiy_crust_mantle(1,1,1,ispec),xiz_crust_mantle(1,1,1,ispec), &
-                etax_crust_mantle(1,1,1,ispec),etay_crust_mantle(1,1,1,ispec),etaz_crust_mantle(1,1,1,ispec), &
-                gammax_crust_mantle(1,1,1,ispec),gammay_crust_mantle(1,1,1,ispec),gammaz_crust_mantle(1,1,1,ispec))
+                            Mxy(irec),Mxz(irec),Myz(irec), &
+                            eps_s,eps_m_s,eps_m_l_s, &
+                            hxir,hetar,hgammar, &
+                            hpxir,hpetar,hpgammar, &
+                            hprime_xx,hprime_yy,hprime_zz, &
+                            xix_crust_mantle(1,1,1,ispec),xiy_crust_mantle(1,1,1,ispec),xiz_crust_mantle(1,1,1,ispec), &
+                            etax_crust_mantle(1,1,1,ispec),etay_crust_mantle(1,1,1,ispec),etaz_crust_mantle(1,1,1,ispec), &
+                            gammax_crust_mantle(1,1,1,ispec),gammay_crust_mantle(1,1,1,ispec),gammaz_crust_mantle(1,1,1,ispec))
 
     timeval = dble(NSTEP-it)*DT-t0-tshift_src(irec)
 
@@ -365,3 +364,200 @@
 !
 !  end subroutine compute_seismograms_undoatt
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine compute_seismograms_strain(nglob,displ)
+
+  use constants, only: CUSTOM_REAL,NDIM,NGLLX,NGLLY,NGLLZ
+
+  use specfem_par, only: &
+    nrec_local,nu_rec,ispec_selected_rec,number_receiver_global, &
+    hxir_store,hetar_store,hgammar_store, &
+    hprime_xx,hprime_yy,hprime_zz, &
+    seismograms_eps, &
+    seismo_current
+
+  use specfem_par_crustmantle, only: &
+    ibool_crust_mantle, &
+    xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
+    etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
+    gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle
+
+  implicit none
+
+  ! input
+  integer,intent(in) :: nglob
+  real(kind=CUSTOM_REAL),dimension(NDIM,nglob),intent(in) :: displ
+
+  ! local parameters
+  double precision :: hxir(NGLLX), hetar(NGLLY), hgammar(NGLLZ)
+  real(kind=CUSTOM_REAL) :: tempx1l,tempx2l,tempx3l,tempy1l,tempy2l,tempy3l,tempz1l,tempz2l,tempz3l
+  real(kind=CUSTOM_REAL) :: hp1,hp2,hp3
+  real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl
+  real(kind=CUSTOM_REAL) :: duxdxl,duxdyl,duxdzl,duydxl,duydyl,duydzl,duzdxl,duzdyl,duzdzl
+  real(kind=CUSTOM_REAL) :: eps_xx,eps_yy,eps_zz,eps_xy,eps_xz,eps_yz
+  real(kind=CUSTOM_REAL) :: hlagrange
+
+  real(kind=CUSTOM_REAL),dimension(NDIM,NDIM) :: eps_loc,eps_loc_new
+  real(kind=CUSTOM_REAL),dimension(NDIM,NDIM,NGLLX,NGLLY,NGLLZ) :: eps_array
+  real(kind=CUSTOM_REAL),dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: displ_elem
+
+  integer :: irec_local,irec
+  integer :: iglob,ispec,i,j,k,l
+
+  do irec_local = 1,nrec_local
+
+    ! gets global number of that receiver
+    irec = number_receiver_global(irec_local)
+
+    ! gets element id
+    ispec = ispec_selected_rec(irec)
+
+    ! fetches local element displacements
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+          iglob = ibool_crust_mantle(i,j,k,ispec)
+          displ_elem(:,i,j,k) = displ(:,iglob)
+        enddo
+      enddo
+    enddo
+
+    ! first compute the strain at all the GLL points of the source element
+    do k = 1, NGLLZ
+      do j = 1, NGLLY
+        do i = 1, NGLLX
+          tempx1l = 0._CUSTOM_REAL
+          tempx2l = 0._CUSTOM_REAL
+          tempx3l = 0._CUSTOM_REAL
+
+          tempy1l = 0._CUSTOM_REAL
+          tempy2l = 0._CUSTOM_REAL
+          tempy3l = 0._CUSTOM_REAL
+
+          tempz1l = 0._CUSTOM_REAL
+          tempz2l = 0._CUSTOM_REAL
+          tempz3l = 0._CUSTOM_REAL
+
+          do l = 1,NGLLX
+            hp1 = hprime_xx(i,l)
+            tempx1l = tempx1l + displ_elem(1,l,j,k)*hp1
+            tempy1l = tempy1l + displ_elem(2,l,j,k)*hp1
+            tempz1l = tempz1l + displ_elem(3,l,j,k)*hp1
+
+            hp2 = hprime_yy(j,l)
+            tempx2l = tempx2l + displ_elem(1,i,l,k)*hp2
+            tempy2l = tempy2l + displ_elem(2,i,l,k)*hp2
+            tempz2l = tempz2l + displ_elem(3,i,l,k)*hp2
+
+            hp3 = hprime_zz(k,l)
+            tempx3l = tempx3l + displ_elem(1,i,j,l)*hp3
+            tempy3l = tempy3l + displ_elem(2,i,j,l)*hp3
+            tempz3l = tempz3l + displ_elem(3,i,j,l)*hp3
+          enddo
+
+          ! derivatives dudx,..
+          xixl = xix_crust_mantle(i,j,k,ispec)
+          xiyl = xiy_crust_mantle(i,j,k,ispec)
+          xizl = xiz_crust_mantle(i,j,k,ispec)
+          etaxl = etax_crust_mantle(i,j,k,ispec)
+          etayl = etay_crust_mantle(i,j,k,ispec)
+          etazl = etaz_crust_mantle(i,j,k,ispec)
+          gammaxl = gammax_crust_mantle(i,j,k,ispec)
+          gammayl = gammay_crust_mantle(i,j,k,ispec)
+          gammazl = gammaz_crust_mantle(i,j,k,ispec)
+
+          duxdxl = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
+          duxdyl = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
+          duxdzl = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
+
+          duydxl = xixl*tempy1l + etaxl*tempy2l + gammaxl*tempy3l
+          duydyl = xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l
+          duydzl = xizl*tempy1l + etazl*tempy2l + gammazl*tempy3l
+
+          duzdxl = xixl*tempz1l + etaxl*tempz2l + gammaxl*tempz3l
+          duzdyl = xiyl*tempz1l + etayl*tempz2l + gammayl*tempz3l
+          duzdzl = xizl*tempz1l + etazl*tempz2l + gammazl*tempz3l
+
+          ! strain eps_jk
+          ! symmetric strain definition: \epsilon = 1/2 ( grad(u) + grad(u)^T )
+          eps_xx = duxdxl                                 ! dx/dx
+          eps_xy = 0.5_CUSTOM_REAL * (duxdyl + duydxl)    ! dx/dy
+          eps_xz = 0.5_CUSTOM_REAL * (duxdzl + duzdxl)    ! dx/dz
+          eps_yy = duydyl                                 ! dy/dy
+          eps_yz = 0.5_CUSTOM_REAL * (duydzl + duzdyl)    ! dy/dz
+          eps_zz = duzdzl                                 ! dz/dz
+
+          ! stores local element strain array
+          eps_array(1,1,i,j,k) = eps_xx
+          eps_array(2,1,i,j,k) = eps_xy      ! symmetry dx/dy = dy/dx
+          eps_array(3,1,i,j,k) = eps_xz      ! symmetry dx/dz = dz/dx
+          eps_array(1,2,i,j,k) = eps_xy
+          eps_array(2,2,i,j,k) = eps_yy
+          eps_array(3,2,i,j,k) = eps_yz
+          eps_array(1,3,i,j,k) = eps_xz
+          eps_array(2,3,i,j,k) = eps_yz
+          eps_array(3,3,i,j,k) = eps_zz
+        enddo
+      enddo
+    enddo
+
+    hxir(:) = hxir_store(:,irec_local)
+    hetar(:) = hetar_store(:,irec_local)
+    hgammar(:) = hgammar_store(:,irec_local)
+
+    ! interpolate the strain at actual receiver locations within the element from eps_array(:,:,i,j,k)
+    eps_loc(:,:) = 0.0_CUSTOM_REAL
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+          hlagrange = hxir(i)*hetar(j)*hgammar(k)
+          eps_loc(1,1) = eps_loc(1,1) + eps_array(1,1,i,j,k)*hlagrange
+          eps_loc(1,2) = eps_loc(1,2) + eps_array(1,2,i,j,k)*hlagrange
+          eps_loc(1,3) = eps_loc(1,3) + eps_array(1,3,i,j,k)*hlagrange
+          eps_loc(2,2) = eps_loc(2,2) + eps_array(2,2,i,j,k)*hlagrange
+          eps_loc(2,3) = eps_loc(2,3) + eps_array(2,3,i,j,k)*hlagrange
+          eps_loc(3,3) = eps_loc(3,3) + eps_array(3,3,i,j,k)*hlagrange
+        enddo
+      enddo
+    enddo
+    ! for completion purpose, symmetries
+    eps_loc(2,1) = eps_loc(1,2)
+    eps_loc(3,1) = eps_loc(1,3)
+    eps_loc(3,2) = eps_loc(2,3)
+
+    ! stores North, East and Vertical components
+    !
+    ! un-rotated
+    !eps_loc_new(:,:) = eps_loc(:,:)
+    !
+    ! rotates from global x-y-z to the local coordinates (n-e-z):  eps_new = P*eps*P'
+    ! nu is the rotation matrix from ECEF to local N-E-UP as defined.
+    ! thus, if the nu is the rotation matrix that transforms coordinates from the global system (x,y,z) to the local
+    ! coordinate system (N,E,V), e.g., a tensor is transformed as
+    ! T_L = \nu * T_g * \nu^T
+    !
+    ! global -> local (n-e-up)
+    ! eps_xx -> eps_nn
+    ! eps_yy -> eps_ee
+    ! eps_zz -> eps_zz (z in radial direction up)
+    ! eps_xy -> eps_ne
+    ! eps_xz -> eps_nz
+    ! eps_yz -> eps_ez
+    eps_loc_new(:,:) = matmul(matmul(nu_rec(:,:,irec),eps_loc(:,:)), transpose(nu_rec(:,:,irec)))
+
+    ! distinguish between single and double precision for reals
+    !
+    ! note: strain is dimensionless, no scaling to dimensionalize it needed (as for example for displacement seismograms)
+    seismograms_eps(1,irec_local,seismo_current) = real(eps_loc_new(1,1), kind=CUSTOM_REAL)  ! \eps_nn
+    seismograms_eps(2,irec_local,seismo_current) = real(eps_loc_new(2,2), kind=CUSTOM_REAL)  ! \eps_ee
+    seismograms_eps(3,irec_local,seismo_current) = real(eps_loc_new(3,3), kind=CUSTOM_REAL)  ! \eps_zz
+    seismograms_eps(4,irec_local,seismo_current) = real(eps_loc_new(1,2), kind=CUSTOM_REAL)  ! \eps_ne
+    seismograms_eps(5,irec_local,seismo_current) = real(eps_loc_new(1,3), kind=CUSTOM_REAL)  ! \eps_nz
+    seismograms_eps(6,irec_local,seismo_current) = real(eps_loc_new(2,3), kind=CUSTOM_REAL)  ! \eps_ez
+
+  enddo ! irec_local
+
+  end subroutine compute_seismograms_strain

@@ -262,18 +262,19 @@
 !-----------------------------------------------------------------------------------------
 !
 
-  subroutine crust_sh(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,found_crust,elem_in_crust)
+  subroutine crust_sh(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,sediment,found_crust,elem_in_crust)
 
 ! gets crustal value for location lat/lon/r
 
-  use constants, only: ZERO,PI,GRAV,RHOAV,R_EARTH,R_EARTH_KM
+  use constants, only: ZERO,PI,GRAV
+  use shared_parameters, only: R_PLANET,RHOAV
 
   use model_full_sh_crust_par
 
   implicit none
 
   double precision,intent(in) :: lat,lon,r
-  double precision,intent(out) :: vpvc,vphc,vsvc,vshc,etac,rhoc,moho
+  double precision,intent(out) :: vpvc,vphc,vsvc,vshc,etac,rhoc,moho,sediment
   logical,intent(out) :: found_crust
   logical,intent(in) :: elem_in_crust
 
@@ -295,6 +296,7 @@
   vphc = ZERO !km/s
   rhoc = ZERO !g/cm^3
   moho = ZERO !km
+  sediment = ZERO
   etac = ZERO
   do l = 1,NSH_40
     vsvc = vsvc + CRUST_SH_V_vsv(l)*dble(shcof(l))
@@ -330,7 +332,7 @@
     found_crust = .true.
   else
     ! checks if depth of position above/below moho
-    depth = (1.d0 - r) * R_EARTH_KM
+    depth = (1.d0 - r) * (R_PLANET/1000.d0)
     !debug
     !print *,'sh crust: depth = ',depth,' moho = ',moho
     if (depth <= moho) then
@@ -339,13 +341,17 @@
   endif
 
   ! scales (non-dimensionalizes) values
-  moho = moho * 1000.d0/R_EARTH
+  moho = moho * 1000.d0/R_PLANET
+
+  ! no sediment thickness information
+  sediment = 0.d0
+
   if (found_crust) then
     scaleval = dsqrt(PI*GRAV*RHOAV)
-    vsvc = vsvc * 1000.d0/(R_EARTH*scaleval)
-    vshc = vshc * 1000.d0/(R_EARTH*scaleval)
-    vpvc = vpvc * 1000.d0/(R_EARTH*scaleval)
-    vphc = vphc * 1000.d0/(R_EARTH*scaleval)
+    vsvc = vsvc * 1000.d0/(R_PLANET*scaleval)
+    vshc = vshc * 1000.d0/(R_PLANET*scaleval)
+    vpvc = vpvc * 1000.d0/(R_PLANET*scaleval)
+    vphc = vphc * 1000.d0/(R_PLANET*scaleval)
     rhoc = rhoc * 1000.d0/RHOAV
   endif
 
@@ -397,6 +403,12 @@
   implicit none
 
   integer :: ier
+
+  ! user info
+  if (myrank == 0) then
+    write(IMAIN,*) 'broadcast model: full_sh'
+    call flush_IMAIN()
+  endif
 
   ! model_mantle_sh_variables
   allocate(MANTLE_SH_V_dvsh(0:NK_20,1:NSH_20), &   ! Full TI
@@ -685,6 +697,7 @@
   subroutine mantle_sh(lat,lon,radius,dvpv,dvph,dvsv,dvsh,deta,drho)
 
   use constants, only: ZERO
+  use shared_parameters, only: R_PLANET
 
   use model_full_sh_mantle_par
 
@@ -697,7 +710,6 @@
 
   double precision, parameter :: RMOHO_ = 6346600.d0
   double precision, parameter :: RCMB_ = 3480000.d0
-  double precision, parameter :: R_EARTH_ = 6371000.d0
 
   integer :: l,k
   double precision :: r_moho,r_cmb,xr
@@ -712,8 +724,8 @@
   drho = ZERO
   deta = ZERO
 
-  r_moho = RMOHO_ / R_EARTH_
-  r_cmb = RCMB_ / R_EARTH_
+  r_moho = RMOHO_ / R_PLANET
+  r_cmb = RCMB_ / R_PLANET
   if (radius >= r_moho .or. radius <= r_cmb) return
 
   ! get spherical harmonics coefficients
@@ -1058,6 +1070,7 @@
   subroutine add_topography_sh_mantle(xelm,yelm,zelm)
 
   use constants
+  use shared_parameters, only: R_PLANET
 
   use meshfem3D_par, only: R220,R400,R670,R771
 
@@ -1114,7 +1127,7 @@
     endif
 
     ! stretching occurs between 220 and 770
-    if (r > R220/R_EARTH .or. r < R771/R_EARTH) cycle
+    if (r > R220/R_PLANET .or. r < R771/R_PLANET) cycle
 
     topo410 = 0.d0
     topo650 = 0.d0
@@ -1141,25 +1154,25 @@
 
     ! non-dimensionalize the topography, which is in km
     ! positive for a depression, so change the sign for a perturbation in radius
-    topo410 = -(topo410) / R_EARTH_KM
-    topo650 = -(topo650) / R_EARTH_KM
+    topo410 = -(topo410) / (R_PLANET/1000.d0)
+    topo650 = -(topo650) / (R_PLANET/1000.d0)
 
     gamma = 0.d0
-    if (r >= R400/R_EARTH .and. r <= R220/R_EARTH) then
+    if (r >= R400/R_PLANET .and. r <= R220/R_PLANET) then
       ! stretching between R220 and R400
-      gamma = (R220/R_EARTH - r) / (R220/R_EARTH - R400/R_EARTH)
+      gamma = (R220/R_PLANET - r) / (R220/R_PLANET - R400/R_PLANET)
       xelm(ia) = x*(ONE + gamma * topo410 / r)
       yelm(ia) = y*(ONE + gamma * topo410 / r)
       zelm(ia) = z*(ONE + gamma * topo410 / r)
-    else if (r >= R771/R_EARTH .and. r <= R670/R_EARTH) then
+    else if (r >= R771/R_PLANET .and. r <= R670/R_PLANET) then
       ! stretching between R771 and R670
-      gamma = (r - R771/R_EARTH) / (R670/R_EARTH - R771/R_EARTH)
+      gamma = (r - R771/R_PLANET) / (R670/R_PLANET - R771/R_PLANET)
       xelm(ia) = x*(ONE + gamma * topo650 / r)
       yelm(ia) = y*(ONE + gamma * topo650 / r)
       zelm(ia) = z*(ONE + gamma * topo650 / r)
-    else if (r > R670/R_EARTH .and. r < R400/R_EARTH) then
+    else if (r > R670/R_PLANET .and. r < R400/R_PLANET) then
       ! stretching between R670 and R400
-      gamma = (R400/R_EARTH - r) / (R400/R_EARTH - R670/R_EARTH)
+      gamma = (R400/R_PLANET - r) / (R400/R_PLANET - R670/R_PLANET)
       xelm(ia) = x*(ONE + (topo410 + gamma * (topo650 - topo410)) / r)
       yelm(ia) = y*(ONE + (topo410 + gamma * (topo650 - topo410)) / r)
       zelm(ia) = z*(ONE + (topo410 + gamma * (topo650 - topo410)) / r)
@@ -1176,13 +1189,14 @@
     call min_all_cr(min_650,min_650_all)
     call max_all_cr(max_650,max_650_all)
     if (myrank == 0) then
-      if (r <= R220/R_EARTH .and. r >= R771/R_EARTH) then
+      if (r <= R220/R_PLANET .and. r >= R771/R_PLANET) then
         print *,'add_topography_410_650: min/max_410 = ',min_410_all,max_410_all,'min/max_650 = ',min_650_all,max_650_all
       endif
     endif
-    !if (r <= R220/R_EARTH .and. r >= R771/R_EARTH) then
+    !if (r <= R220/R_PLANET .and. r >= R771/R_PLANET) then
     !  print *,myrank,'add_topography_410_650: min/max_410 = ',min_410,max_410,'min/max_650 = ',min_650,max_650
-    !  print *,myrank,'add_topography_410_650: depth = ',(1.d0 - r)*R_EARTH_KM,' 410-km = ',topo410out,' 650-km = ',topo650out
+    !  print *,myrank,'add_topography_410_650: depth = ',(1.d0 - r)*(R_PLANET/1000.d0), &
+    !         ' 410-km = ',topo410out,' 650-km = ',topo650out
     !endif
   endif
 
@@ -1229,7 +1243,7 @@
 
   use constants
 
-  use shared_parameters, only: RCMB,RTOPDDOUBLEPRIME
+  use shared_parameters, only: R_PLANET,RCMB,RTOPDDOUBLEPRIME
 
   implicit none
 
@@ -1270,18 +1284,18 @@
 
     ! non-dimensionalize the topography, which is in km
     ! positive for a depression, so change the sign for a perturbation in radius
-    topocmb = -topocmb / R_EARTH_KM
+    topocmb = -topocmb / (R_PLANET/1000.d0)
 
     ! start stretching a distance RTOPDDOUBLEPRIME - RCMB below the CMB
     ! and finish at RTOPDDOUBLEPRIME of D_double_prime
-    r_start = (RCMB - (RTOPDDOUBLEPRIME - RCMB))/R_EARTH
+    r_start = (RCMB - (RTOPDDOUBLEPRIME - RCMB))/R_PLANET
     gamma = 0.0d0
-    if (r >= RCMB/R_EARTH .and. r <= RTOPDDOUBLEPRIME/R_EARTH) then
+    if (r >= RCMB/R_PLANET .and. r <= RTOPDDOUBLEPRIME/R_PLANET) then
       ! stretching between RCMB and RTOPDDOUBLEPRIME
-      gamma = (RTOPDDOUBLEPRIME/R_EARTH - r) / (RTOPDDOUBLEPRIME/R_EARTH - RCMB/R_EARTH)
-    else if (r >= r_start .and. r <= RCMB/R_EARTH) then
+      gamma = (RTOPDDOUBLEPRIME/R_PLANET - r) / (RTOPDDOUBLEPRIME/R_PLANET - RCMB/R_PLANET)
+    else if (r >= r_start .and. r <= RCMB/R_PLANET) then
       ! stretching between r_start and RCMB
-      gamma = (r - r_start) / (RCMB/R_EARTH - r_start)
+      gamma = (r - r_start) / (RCMB/R_PLANET - r_start)
     endif
     if (gamma < -0.0001 .or. gamma > 1.0001) call exit_MPI(myrank,'incorrect value of gamma for CMB topography')
 

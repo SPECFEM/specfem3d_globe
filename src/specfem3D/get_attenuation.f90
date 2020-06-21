@@ -32,6 +32,9 @@
                                       factor_scale, tau_s, vnspec)
 
   use constants_solver
+
+  use shared_parameters, only: ATT_F_C_SOURCE
+
   use specfem_par, only: ATTENUATION_VAL,ADIOS_FOR_ARRAYS_SOLVER,LOCAL_PATH, &
     scale_t_inv
 
@@ -51,20 +54,30 @@
   ! local parameters
   integer :: i,j,k,ispec,ier,i_sls
   double precision, dimension(N_SLS) :: tau_e, fc
-  double precision :: omsb, Q_mu, sf, T_c_source
+  double precision :: omsb, Q_mu, sf
+  double precision :: f_c_source  ! frequency
+  double precision :: T_c_source  ! period
   character(len=MAX_STRING_LEN) :: prname
+
+  double precision, parameter :: TOL = 1.d-9
 
   ! checks if attenuation is on and anything to do
   if (.not. ATTENUATION_VAL) return
   if (.not. I_should_read_the_database) return
 
+  ! initializes
+  tau_s(:) = 0.d0
+  factor_common(:,:,:,:,:) = 0._CUSTOM_REAL
+  factor_scale(:,:,:,:) = 0._CUSTOM_REAL
+  f_c_source = 0.d0
+
   ! All of the following reads use the output parameters as their temporary arrays
   ! use the filename to determine the actual contents of the read
   if (ADIOS_FOR_ARRAYS_SOLVER) then
-    call read_attenuation_adios(iregion_code, &
-                                factor_common, factor_scale, tau_s, vnspec, T_c_source)
+    ! ADIOS format
+    call read_attenuation_adios(iregion_code,factor_common, factor_scale, tau_s, vnspec, f_c_source)
   else
-
+    ! binary format
     ! opens corresponding databases file
     call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
 
@@ -75,14 +88,44 @@
     read(IIN) tau_s
     read(IIN) factor_common ! tau_e_store
     read(IIN) factor_scale  ! Qmu_store
-    read(IIN) T_c_source
+    read(IIN) f_c_source    ! center frequency
     close(IIN)
   endif
 
-  factor_common(:,:,:,:,:) = factor_common(:,:,:,:,:) * scale_t_inv ! This is really tau_e, not factor_common
+  ! checks
+  if (f_c_source <= 0.d0) call exit_MPI(myrank,'Error: invalid attenuation center frequency read in from mesh file')
+
+  ! since we read in crust/mantle region first, we check if the center frequency is the same for both regions
+  if (iregion_code == IREGION_INNER_CORE) then
+    if (abs(f_c_source - ATT_F_C_SOURCE) > TOL) then
+      print *,'Error: different center frequencies for crust/mantle and inner core regions:'
+      print *,'  crust/mantle center frequency: ',ATT_F_C_SOURCE
+      print *,'  inner core   center frequency: ',f_c_source
+      print *,'Please check if the mesh files are correct.'
+      call exit_MPI(myrank,'Error different center frequencies for crust/mantle and inner core regions')
+    endif
+  endif
+
+  ! stores center frequency as shared parameter
+  ATT_F_C_SOURCE = f_c_source
+
+  ! debug
+  !print *,'debug: rank ',myrank,' attenuation center frequency = ',ATT_F_C_SOURCE,'region',iregion_code
+
+  ! This is really tau_e, not factor_common
+  factor_common(:,:,:,:,:) = real( factor_common(:,:,:,:,:) * scale_t_inv ,kind=CUSTOM_REAL)
   tau_s(:)                 = tau_s(:) * scale_t_inv
-  T_c_source               = 1000.0d0 / T_c_source
-  T_c_source               = T_c_source * scale_t_inv
+
+  ! converts center frequency to center period
+  ! note: the mesher stores the center frequency f_c_source.
+  !       here we invert it to have the center period T_c_source
+  if (f_c_source > 0.d0) then
+    T_c_source = 1.0d0 / f_c_source
+  else
+    T_c_source = 0.d0
+  endif
+  ! non-dimensionalizes
+  T_c_source = T_c_source * scale_t_inv
 
   ! loops over elements
   do ispec = 1, vnspec
@@ -94,7 +137,7 @@
           do i_sls = 1,N_SLS
             tau_e(i_sls) = factor_common(i,j,k,i_sls,ispec)
           enddo
-          Q_mu     = factor_scale(i,j,k,ispec)
+          Q_mu = factor_scale(i,j,k,ispec)
 
           ! Determine the factor_common and one_minus_sum_beta from tau_s and tau_e
           call get_attenuation_property_values(tau_s, tau_e, fc, omsb)
@@ -135,12 +178,13 @@
   double precision, dimension(N_SLS) :: tauinv,beta
   integer :: i
 
-  tauinv(:) = -1.0d0 / tau_s(:)
+  tauinv(:) = 0.d0
+  where(tau_s(:) > 0.d0) tauinv(:) = - 1.0d0 / tau_s(:)
 
-  beta(:) = 1.0d0 - tau_e(:) / tau_s(:)
-  one_minus_sum_beta = 1.0d0
+  beta(:) = 1.0d0 + tau_e(:) * tauinv(:)     ! 1 - tau_e / tau_s
 
   ! factor to scale from relaxed to unrelaxed moduli: see e.g. Komatitsch & Tromp 1999, eq. (7)
+  one_minus_sum_beta = 1.0d0
   do i = 1,N_SLS
      one_minus_sum_beta = one_minus_sum_beta - beta(i)
   enddo
@@ -161,29 +205,34 @@
 
   subroutine get_attenuation_scale_factor(T_c_source, tau_mu, tau_sigma, Q_mu, scale_factor)
 
-  use constants, only: ZERO,ONE,TWO,PI,GRAV,RHOAV,TWO_PI,N_SLS,myrank
+  use constants, only: ZERO,ONE,TWO,PI,TWO_PI,N_SLS,ATTENUATION_f0_REFERENCE,myrank
   use specfem_par, only: scale_t
 
   implicit none
 
-  double precision,intent(in) :: T_c_source,Q_mu
+  double precision,intent(in) :: T_c_source  ! center period
+  double precision,intent(in) :: Q_mu
   double precision, dimension(N_SLS),intent(in) :: tau_mu, tau_sigma
 
   double precision,intent(out) :: scale_factor
 
   ! local parameters
-  double precision :: f_c_source, w_c_source, f_0_prem
+  double precision :: f_c_source, w_c_source,f_0_model
   double precision :: factor_scale_mu0, factor_scale_mu
-  double precision :: a_val, b_val
+  double precision :: a_val, b_val, denom
   double precision :: big_omega
   integer :: i
 
   !--- compute central angular frequency of source (non dimensionalized)
-  f_c_source = ONE / T_c_source
+  if (T_c_source > 0.d0) then
+    f_c_source = ONE / T_c_source
+  else
+    f_c_source = 0.d0
+  endif
   w_c_source = TWO_PI * f_c_source
 
-  !--- non dimensionalize PREM reference of 1 second
-  f_0_prem = ONE / ( ONE / scale_t)
+  !--- non dimensionalize (e.g., PREM reference of 1 second)
+  f_0_model = ATTENUATION_f0_REFERENCE * scale_t  ! original f_0_prem = ONE / ( ONE / scale_t)
 
 !--- quantity by which to scale mu_0 to get mu
 ! this formula can be found for instance in
@@ -192,23 +241,36 @@
 ! Geophys. J. R. Astron. Soc., vol. 47, pp. 41-58 (1976)
 ! and in Aki, K. and Richards, P. G., Quantitative seismology, theory and methods,
 ! W. H. Freeman, (1980), second edition, sections 5.5 and 5.5.2, eq. (5.81) p. 170
-  factor_scale_mu0 = ONE + TWO * log(f_c_source / f_0_prem) / (PI * Q_mu)
+  if (f_0_model > 0.d0) then
+    factor_scale_mu0 = ONE + TWO * log(f_c_source / f_0_model) / (PI * Q_mu)
+  else
+    factor_scale_mu0 = ONE
+  endif
 
   !--- compute a, b and Omega parameters, also compute one minus sum of betas
   a_val = ONE
   b_val = ZERO
 
   do i = 1,N_SLS
-    a_val = a_val - w_c_source * w_c_source * tau_mu(i) * &
-      (tau_mu(i) - tau_sigma(i)) / (1.d0 + w_c_source * w_c_source * tau_mu(i) * tau_mu(i))
-    b_val = b_val + w_c_source * (tau_mu(i) - tau_sigma(i)) / &
-      (1.d0 + w_c_source * w_c_source * tau_mu(i) * tau_mu(i))
+    denom = 1.d0 + w_c_source * w_c_source * tau_mu(i) * tau_mu(i)
+    if (denom /= 0.d0) then
+      a_val = a_val - w_c_source * w_c_source * tau_mu(i) * (tau_mu(i) - tau_sigma(i)) / denom
+      b_val = b_val + w_c_source * (tau_mu(i) - tau_sigma(i)) / denom
+    endif
   enddo
 
-  big_omega = a_val*(sqrt(1.d0 + b_val*b_val/(a_val*a_val))-1.d0)
+  if (a_val /= 0.d0) then
+    big_omega = a_val*(sqrt(1.d0 + b_val*b_val/(a_val*a_val))-1.d0)
+  else
+    big_omega = 0.d0
+  endif
 
   !--- quantity by which to scale mu to get mu_relaxed
-  factor_scale_mu = b_val * b_val / (TWO * big_omega)
+  if (big_omega /= 0.d0) then
+    factor_scale_mu = b_val * b_val / (TWO * big_omega)
+  else
+    factor_scale_mu = ONE
+  endif
 
   !--- total factor by which to scale mu0
   scale_factor = factor_scale_mu * factor_scale_mu0
@@ -238,14 +300,22 @@
   ! local parameters
   double precision, dimension(N_SLS) :: tauinv
 
+  ! inverse of tau_s
   tauinv(:) = - 1.d0 / tau_s(:)
 
-  alphaval(:) = 1.d0 + deltat*tauinv(:) + deltat**2*tauinv(:)**2 / 2.d0 &
-                  + deltat**3*tauinv(:)**3 / 6.d0 + deltat**4*tauinv(:)**4 / 24.d0
-  betaval(:)  = deltat / 2.d0 + deltat**2*tauinv(:) / 3.d0 &
-                  + deltat**3*tauinv(:)**2 / 8.d0 + deltat**4*tauinv(:)**3 / 24.d0
-  gammaval(:) = deltat / 2.d0 + deltat**2*tauinv(:) / 6.d0 &
-                  + deltat**3*tauinv(:)**2 / 24.d0
+  ! runge-kutta coefficients
+  ! see e.g.: Savage et al. (BSSA, 2010): eq. (11)
+  alphaval(:) = 1.d0 + deltat * tauinv(:) &
+                  + deltat**2 * tauinv(:)**2 / 2.d0 &
+                  + deltat**3 * tauinv(:)**3 / 6.d0 &
+                  + deltat**4 * tauinv(:)**4 / 24.d0
+  betaval(:)  = deltat / 2.d0 &
+                  + deltat**2 * tauinv(:) / 3.d0 &
+                  + deltat**3 * tauinv(:)**2 / 8.d0 &
+                  + deltat**4 * tauinv(:)**3 / 24.d0
+  gammaval(:) = deltat / 2.d0 &
+                  + deltat**2 * tauinv(:) / 6.d0 &
+                  + deltat**3 * tauinv(:)**2 / 24.d0
 
   end subroutine get_attenuation_memory_values
 

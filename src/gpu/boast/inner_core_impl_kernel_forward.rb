@@ -18,14 +18,21 @@ module BOAST
   end
 
   require "./compute_element_gravity_helper.rb"
-  def BOAST::compute_element_ic_gravity( n_gll3 = 125, r_earth_km = 6371.0 )
-    return BOAST::compute_element_gravity( :inner_core, n_gll3, r_earth_km )
+  def BOAST::compute_element_ic_gravity( n_gll3 = 125 )
+    return BOAST::compute_element_gravity( :inner_core, n_gll3 )
   end
 
-  def BOAST::compute_element_cm_gravity( n_gll3 = 125, r_earth_km = 6371.0 )
-    return compute_element_gravity( :crust_mantle, n_gll3, r_earth_km )
+  def BOAST::compute_element_cm_gravity( n_gll3 = 125 )
+    return compute_element_gravity( :crust_mantle, n_gll3 )
   end
 
+#----------------------------------------------------------------------
+##
+## defines compute element subroutines
+##
+#----------------------------------------------------------------------
+
+## crust/mantle
   def BOAST::compute_element_cm_aniso
     function_name = "compute_element_cm_aniso"
     v = []
@@ -40,8 +47,6 @@ module BOAST
                 }
               }
     v.push *(d_cstore.flatten.reject { |e| e.nil? })
-    v.push attenuation = Int( "ATTENUATION", :dir => :in)
-    v.push one_minus_sum_beta_use = Real("one_minus_sum_beta_use", :dir => :in )
     dudl = ["x", "y", "z"].collect { |a1|
       ["x", "y", "z"].collect { |a2|
         Real("du#{a1}d#{a2}l", :dir => :in)
@@ -70,28 +75,28 @@ module BOAST
             }
           }
       decl *(c.flatten.reject { |e| e.nil? })
-      decl mul = Real("mul")
-      decl minus_sum_beta = Real("minus_sum_beta")
 
       (0..5).each { |indx1|
         (0..5).each { |indx2|
           print c[indx1][indx2] === d_cstore[indx1][indx2][offset] unless indx2 < indx1
         }
       }
-      print If(attenuation) {
-        print minus_sum_beta === one_minus_sum_beta_use - 1.0
-        print mul === c[3][3] * minus_sum_beta
 
-        print c[0][0] === c[0][0] + mul * 1.33333333333333333333
-        print c[0][1] === c[0][1] - mul * 0.66666666666666666666
-        print c[0][2] === c[0][2] - mul * 0.66666666666666666666
-        print c[1][1] === c[1][1] + mul * 1.33333333333333333333
-        print c[1][2] === c[1][2] - mul * 0.66666666666666666666
-        print c[2][2] === c[2][2] + mul * 1.33333333333333333333
-        print c[3][3] === c[3][3] + mul
-        print c[4][4] === c[4][4] + mul
-        print c[5][5] === c[5][5] + mul
-      }
+      # not needed anymore, scaling will be done in prepare_elastic_elements.F90
+      #print If(attenuation) {
+      #  print minus_sum_beta === one_minus_sum_beta_use - 1.0
+      #  print mul === c[3][3] * minus_sum_beta
+      #
+      #  print c[0][0] === c[0][0] + mul * 1.33333333333333333333
+      #  print c[0][1] === c[0][1] - mul * 0.66666666666666666666
+      #  print c[0][2] === c[0][2] - mul * 0.66666666666666666666
+      #  print c[1][1] === c[1][1] + mul * 1.33333333333333333333
+      #  print c[1][2] === c[1][2] - mul * 0.66666666666666666666
+      #  print c[2][2] === c[2][2] + mul * 1.33333333333333333333
+      #  print c[3][3] === c[3][3] + mul
+      #  print c[4][4] === c[4][4] + mul
+      #  print c[5][5] === c[5][5] + mul
+      #}
       print sigma_xx.dereference === c[0][0]*dudl[0][0] + c[0][5]*duxdyl_plus_duydxl + c[0][1]*dudl[1][1] \
                                    + c[0][4]*duzdxl_plus_duxdzl + c[0][3]*duzdyl_plus_duydzl + c[0][2]*dudl[2][2]
       print sigma_yy.dereference === c[0][1]*dudl[0][0] + c[1][5]*duxdyl_plus_duydxl + c[1][1]*dudl[1][1] \
@@ -114,8 +119,6 @@ module BOAST
     v.push offset = Int( "offset", :dir => :in)
     v.push d_kappavstore          = Real("d_kappavstore",          :dir => :in, :dim => [Dim()])
     v.push d_muvstore             = Real("d_muvstore",             :dir => :in, :dim => [Dim()])
-    v.push attenuation            = Int( "ATTENUATION",            :dir => :in)
-    v.push one_minus_sum_beta_use = Real("one_minus_sum_beta_use", :dir => :in )
     v.push *dudl = ["x", "y", "z"].collect { |a1|
       Real("du#{a1}d#{a1}l", :dir => :in)
     }
@@ -137,9 +140,11 @@ module BOAST
 
       print kappal === d_kappavstore[offset]
       print mul === d_muvstore[offset]
-      print If(attenuation) {
-        print mul === mul * one_minus_sum_beta_use
-      }
+
+      # not needed, scaling for attenuation will be done in prepare_elastic_elements.F90
+      #print If(attenuation) {
+      #  print mul === mul * one_minus_sum_beta_use
+      #}
 
       print lambdalplus2mul === kappal + mul * 1.33333333333333333333
       print lambdal === lambdalplus2mul - mul * 2.0
@@ -164,8 +169,6 @@ module BOAST
     v.push d_kappahstore          = Real("d_kappahstore",          :dir => :in, :dim => [Dim()])
     v.push d_muhstore             = Real("d_muhstore",             :dir => :in, :dim => [Dim()])
     v.push d_eta_anisostore       = Real("d_eta_anisostore",       :dir => :in, :dim => [Dim()])
-    v.push attenuation            = Int( "ATTENUATION",            :dir => :in)
-    v.push one_minus_sum_beta_use = Real("one_minus_sum_beta_use", :dir => :in )
     dudl = ["x", "y", "z"].collect { |a1|
       ["x", "y", "z"].collect { |a2|
         Real("du#{a1}d#{a2}l", :dir => :in)
@@ -176,7 +179,6 @@ module BOAST
     v.push duzdxl_plus_duxdzl     = Real("duzdxl_plus_duxdzl", :dir => :in)
     v.push duzdyl_plus_duydzl     = Real("duzdyl_plus_duydzl", :dir => :in)
     v.push iglob                  = Int( "iglob",              :dir => :in)
-#    v.push nglob                  = Int( "NGLOB",              :dir => :in)
     v.push d_rstore               = Real("d_rstore",           :dir => :in,  :dim => [Dim(3), Dim()])
     v.push sigma_xx               = Real("sigma_xx",           :dir => :out, :dim => [Dim()], :private => true )
     v.push sigma_yy               = Real("sigma_yy",           :dir => :out, :dim => [Dim()], :private => true )
@@ -214,13 +216,14 @@ module BOAST
       print kappahl === d_kappahstore[offset]
       print muhl === d_muhstore[offset]
 
-      print If(attenuation) {
-        print muvl === muvl * one_minus_sum_beta_use
-        print muhl === muhl * one_minus_sum_beta_use
-      }
+      # not needed, scaling for attenuation will be done in prepare_elastic_elements.F90
+      #print If(attenuation) {
+      #  print muvl === muvl * one_minus_sum_beta_use
+      #  print muhl === muhl * one_minus_sum_beta_use
+      #}
+
       print rhovpvsq === kappavl + muvl * 1.33333333333333333333
       print rhovphsq === kappahl + muhl * 1.33333333333333333333
-
 
       print rhovsvsq === muvl
       print rhovshsq === muhl
@@ -408,11 +411,113 @@ module BOAST
     return p
   end
 
-  def BOAST::inner_core_impl_kernel_forward(ref = true, elem_per_thread = 1, mesh_coloring = false, textures_fields = false, textures_constants = false, unroll_loops = true, n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128, n_sls = 3, r_earth_km = 6371.0, coloring_min_nspec_inner_core = 1000, i_flag_in_fictitious_cube = 11)
-    return BOAST::impl_kernel(:inner_core, true, ref, elem_per_thread, mesh_coloring, textures_fields, textures_constants, unroll_loops, n_gllx, n_gll2, n_gll3, n_gll3_padded, n_sls, r_earth_km, coloring_min_nspec_inner_core, i_flag_in_fictitious_cube)
+
+#----------------------------------------------------------------------
+
+## inner core
+
+  def BOAST::compute_element_ic_aniso
+    function_name = "compute_element_ic_aniso"
+    v = []
+    v.push offset = Int( "offset", :dir => :in)
+    v.push d_c11store              = Real("d_c11store",              :dir => :in, :restrict => true, :dim => [Dim()] )
+    v.push d_c12store              = Real("d_c12store",              :dir => :in, :restrict => true, :dim => [Dim()] )
+    v.push d_c13store              = Real("d_c13store",              :dir => :in, :restrict => true, :dim => [Dim()] )
+    v.push d_c33store              = Real("d_c33store",              :dir => :in, :restrict => true, :dim => [Dim()] )
+    v.push d_c44store              = Real("d_c44store",              :dir => :in, :restrict => true, :dim => [Dim()] )
+    v.push *dudl = ["x", "y", "z"].collect { |a1|
+      Real("du#{a1}d#{a1}l", :dir => :in)
+    }
+    # elements outside the diagonal are unused
+    v.push duxdyl_plus_duydxl = Real("duxdyl_plus_duydxl", :dir => :in)
+    v.push duzdxl_plus_duxdzl = Real("duzdxl_plus_duxdzl", :dir => :in)
+    v.push duzdyl_plus_duydzl = Real("duzdyl_plus_duydzl", :dir => :in)
+    v.push sigma_xx = Real("sigma_xx", :dir => :out, :dim => [Dim()], :private => true )
+    v.push sigma_yy = Real("sigma_yy", :dir => :out, :dim => [Dim()], :private => true )
+    v.push sigma_zz = Real("sigma_zz", :dir => :out, :dim => [Dim()], :private => true )
+    v.push sigma_xy = Real("sigma_xy", :dir => :out, :dim => [Dim()], :private => true )
+    v.push sigma_xz = Real("sigma_xz", :dir => :out, :dim => [Dim()], :private => true )
+    v.push sigma_yz = Real("sigma_yz", :dir => :out, :dim => [Dim()], :private => true )
+
+    p = Procedure( function_name, v, :local => true ) {
+      decl c11 = Real("c11")
+      decl c12 = Real("c12")
+      decl c13 = Real("c13")
+      decl c33 = Real("c33")
+      decl c44 = Real("c44")
+      decl c66 = Real("c66")
+
+      print c11 === d_c11store[offset]
+      print c12 === d_c12store[offset]
+      print c13 === d_c13store[offset]
+      print c33 === d_c33store[offset]
+      print c44 === d_c44store[offset]
+      print c66 === 0.5 * (c11-c12)
+
+      print sigma_xx.dereference === c11*dudl[0] + c12*dudl[1] + c13*dudl[2]
+      print sigma_yy.dereference === c12*dudl[0] + c11*dudl[1] + c13*dudl[2]
+      print sigma_zz.dereference === c13*dudl[0] + c13*dudl[1] + c33*dudl[2]
+      print sigma_xy.dereference === c66*duxdyl_plus_duydxl
+      print sigma_xz.dereference === c44*duzdxl_plus_duxdzl
+      print sigma_yz.dereference === c44*duzdyl_plus_duydzl
+    }
+    return p
   end
 
-  def BOAST::impl_kernel(type, forward, ref = true, elem_per_thread = 1, mesh_coloring = false, textures_fields = false, textures_constants = false, unroll_loops = false, n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128, n_sls = 3, r_earth_km = 6371.0, coloring_min_nspec_inner_core = 1000, i_flag_in_fictitious_cube = 11, launch_bounds = false, min_blocks = 7)
+  def BOAST::compute_element_ic_iso
+    function_name = "compute_element_ic_iso"
+    v = []
+    v.push offset = Int( "offset", :dir => :in)
+    v.push d_kappavstore          = Real("d_kappavstore",          :dir => :in, :dim => [Dim()])
+    v.push d_muvstore             = Real("d_muvstore",             :dir => :in, :dim => [Dim()])
+    v.push *dudl = ["x", "y", "z"].collect { |a1|
+      Real("du#{a1}d#{a1}l", :dir => :in)
+    }
+    v.push duxdxl_plus_duydyl     = Real("duxdxl_plus_duydyl", :dir => :in)
+    v.push duxdxl_plus_duzdzl     = Real("duxdxl_plus_duzdzl", :dir => :in)
+    v.push duydyl_plus_duzdzl     = Real("duydyl_plus_duzdzl", :dir => :in)
+    v.push duxdyl_plus_duydxl     = Real("duxdyl_plus_duydxl", :dir => :in)
+    v.push duzdxl_plus_duxdzl     = Real("duzdxl_plus_duxdzl", :dir => :in)
+    v.push duzdyl_plus_duydzl     = Real("duzdyl_plus_duydzl", :dir => :in)
+    v.push sigma_xx               = Real("sigma_xx",           :dir => :out, :dim => [Dim()], :private => true )
+    v.push sigma_yy               = Real("sigma_yy",           :dir => :out, :dim => [Dim()], :private => true )
+    v.push sigma_zz               = Real("sigma_zz",           :dir => :out, :dim => [Dim()], :private => true )
+    v.push sigma_xy               = Real("sigma_xy",           :dir => :out, :dim => [Dim()], :private => true )
+    v.push sigma_xz               = Real("sigma_xz",           :dir => :out, :dim => [Dim()], :private => true )
+    v.push sigma_yz               = Real("sigma_yz",           :dir => :out, :dim => [Dim()], :private => true )
+
+    p = Procedure( function_name, v, :local => true ) {
+      decl lambdal = Real("lambdal"), mul = Real("mul"), lambdalplus2mul = Real("lambdalplus2mul"), kappal = Real("kappal")
+
+      print kappal === d_kappavstore[offset]
+      print mul === d_muvstore[offset]
+
+      print lambdalplus2mul === kappal + mul * 1.33333333333333333333
+      print lambdal === lambdalplus2mul - mul * 2.0
+
+      print sigma_xx.dereference === lambdalplus2mul*dudl[0] + lambdal*duydyl_plus_duzdzl
+      print sigma_yy.dereference === lambdalplus2mul*dudl[1] + lambdal*duxdxl_plus_duzdzl
+      print sigma_zz.dereference === lambdalplus2mul*dudl[2] + lambdal*duxdxl_plus_duydyl
+
+      print sigma_xy.dereference === mul*duxdyl_plus_duydxl
+      print sigma_xz.dereference === mul*duzdxl_plus_duxdzl
+      print sigma_yz.dereference === mul*duzdyl_plus_duydzl
+    }
+    return p
+  end
+
+
+#----------------------------------------------------------------------
+#
+# main kernel
+#
+#----------------------------------------------------------------------
+
+  def BOAST::inner_core_impl_kernel_forward(ref = true, elem_per_thread = 1, mesh_coloring = false, textures_fields = false, textures_constants = false, unroll_loops = true, n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128, n_sls = 3, coloring_min_nspec_inner_core = 1000, i_flag_in_fictitious_cube = 11)
+    return BOAST::impl_kernel(:inner_core, true, ref, elem_per_thread, mesh_coloring, textures_fields, textures_constants, unroll_loops, n_gllx, n_gll2, n_gll3, n_gll3_padded, n_sls, coloring_min_nspec_inner_core, i_flag_in_fictitious_cube)
+  end
+
+  def BOAST::impl_kernel(type, forward, ref = true, elem_per_thread = 1, mesh_coloring = false, textures_fields = false, textures_constants = false, unroll_loops = false, n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128, n_sls = 3, coloring_min_nspec_inner_core = 1000, i_flag_in_fictitious_cube = 11, launch_bounds = false, min_blocks = 7)
     push_env( :array_start => 0 )
     kernel = CKernel::new
     v = []
@@ -429,7 +534,6 @@ module BOAST
       function_name += "_adjoint"
     end
     v.push nb_blocks_to_compute    = Int("nb_blocks_to_compute",     :dir => :in)
-    #v.push nglob                   = Int("NGLOB",                    :dir => :in)
     v.push d_ibool                 = Int("d_ibool",                  :dir => :in, :dim => [Dim()] )
     if type == :inner_core then
       v.push d_idoubling           = Int("d_idoubling",              :dir => :in, :dim => [Dim()] )
@@ -502,6 +606,7 @@ module BOAST
     v.push d_minus_gravity_table   = Real("d_minus_gravity_table",   :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push d_minus_deriv_gravity_table = Real("d_minus_deriv_gravity_table", :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push d_density_table         = Real("d_density_table",         :dir => :in, :restrict => true, :dim => [Dim()] )
+    v.push r_earth_km              = Real( "R_EARTH_KM",             :dir => :in)
     v.push wgll_cube               = Real("wgll_cube",               :dir => :in, :restrict => true, :dim => [Dim()] )
     if type == :inner_core then
       v.push nspec_strain_only = Int( "NSPEC_INNER_CORE_STRAIN_ONLY", :dir => :in)
@@ -560,7 +665,7 @@ module BOAST
     if (get_lang == CUDA and ref) then
       get_output.print File::read("references/#{function_name}.cu".gsub("_forward","").gsub("_adjoint",""))
     elsif(get_lang == CL or get_lang == CUDA) then
-      make_specfem3d_header(:ngllx => n_gllx, :ngll2 => n_gll2, :ngll3 => n_gll3, :ngll3_padded => n_gll3_padded, :n_sls => n_sls, :r_earth_km => r_earth_km, :coloring_min_nspec_inner_core => coloring_min_nspec_inner_core, :iflag_in_fictitious_cube => i_flag_in_fictitious_cube)
+      make_specfem3d_header(:ngllx => n_gllx, :ngll2 => n_gll2, :ngll3 => n_gll3, :ngll3_padded => n_gll3_padded, :n_sls => n_sls, :coloring_min_nspec_inner_core => coloring_min_nspec_inner_core, :iflag_in_fictitious_cube => i_flag_in_fictitious_cube)
       if type == :inner_core then
         #DEACTIVATE USE TEXTURES CONSTANTS
         get_output.puts "#ifdef #{use_textures_constants}"
@@ -580,11 +685,11 @@ module BOAST
       if type == :inner_core then
         sub_compute_element_att_stress =  compute_element_ic_att_stress(n_gll3, n_sls)
         sub_compute_element_att_memory =  compute_element_ic_att_memory(n_gll3, n_gll3_padded, n_sls)
-        sub_compute_element_gravity =  compute_element_ic_gravity(n_gll3, r_earth_km)
+        sub_compute_element_gravity =  compute_element_ic_gravity(n_gll3)
       elsif type == :crust_mantle then
         sub_compute_element_att_stress =  compute_element_cm_att_stress(n_gll3, n_sls)
         sub_compute_element_att_memory =  compute_element_cm_att_memory(n_gll3, n_gll3_padded, n_sls)
-        sub_compute_element_gravity =  compute_element_cm_gravity(n_gll3, r_earth_km)
+        sub_compute_element_gravity =  compute_element_cm_gravity(n_gll3)
       end
       # function definitions
       comment()
@@ -594,7 +699,14 @@ module BOAST
       comment()
       print sub_compute_element_gravity
       comment()
-      if type == :crust_mantle then
+      if type == :inner_core then
+        sub_compute_element_ic_aniso = compute_element_ic_aniso
+        print sub_compute_element_ic_aniso
+        comment()
+        sub_compute_element_ic_iso = compute_element_ic_iso
+        print sub_compute_element_ic_iso
+        comment()
+      elsif type == :crust_mantle then
         sub_compute_element_cm_aniso = compute_element_cm_aniso
         print sub_compute_element_cm_aniso
         comment()
@@ -686,16 +798,6 @@ module BOAST
       decl *fac = [1,2,3].collect {|n|
         Real("fac#{n}")
       }
-      if type == :inner_core then
-        decl lambdal = Real("lambdal")
-        decl mul = Real("mul")
-        decl lambdalplus2mul = Real("lambdalplus2mul")
-        decl kappal = Real("kappal")
-        decl mul_iso = Real("mul_iso")
-        decl mul_aniso = Real("mul_aniso")
-      elsif type == :crust_mantle then
-        decl one_minus_sum_beta_use = Real("one_minus_sum_beta_use")
-      end
 
       sigma = ["x", "y", "z"].collect { |a1|
         ["x", "y", "z"].collect { |a2|
@@ -708,13 +810,7 @@ module BOAST
       decl *epsilondev_xy_loc = (1..elem_per_thread).collect{ |e_i| Real("epsilondev_xy_loc_#{e_i}") }
       decl *epsilondev_xz_loc = (1..elem_per_thread).collect{ |e_i| Real("epsilondev_xz_loc_#{e_i}") }
       decl *epsilondev_yz_loc = (1..elem_per_thread).collect{ |e_i| Real("epsilondev_yz_loc_#{e_i}") }
-      if type == :inner_core then
-        decl c11 = Real("c11")
-        decl c12 = Real("c12")
-        decl c13 = Real("c13")
-        decl c33 = Real("c33")
-        decl c44 = Real("c44")
-      end
+
       decl *sum_terms = [1,2,3].collect {|n|
         Real("sum_terms#{n}")
       }
@@ -873,96 +969,63 @@ module BOAST
           comment()
 
           if type == :inner_core then
-            print kappal === d_kappavstore[offset]
-            print mul === d_muvstore[offset]
-            comment()
-
-            print If(attenuation => lambda {
-              print If(use_3d_attenuation_arrays => lambda {
-                print mul_iso  === mul * one_minus_sum_beta[tx+working_element*ngll3]
-                print mul_aniso === mul * ( one_minus_sum_beta[tx+working_element*ngll3] - 1.0 )
-              }, :else => lambda {
-                print mul_iso  === mul * one_minus_sum_beta[working_element]
-                print mul_aniso === mul * ( one_minus_sum_beta[working_element] - 1.0 )
-              })
-            }, :else => lambda {
-              print mul_iso === mul
-            })
-            comment()
-
             print If(anisotropy => lambda {
-              print c11 === d_c11store[offset]
-              print c12 === d_c12store[offset]
-              print c13 === d_c13store[offset]
-              print c33 === d_c33store[offset]
-              print c44 === d_c44store[offset]
-              print If(attenuation) {
-                print c11 === c11 + mul_aniso * 1.33333333333333333333
-                print c12 === c12 - mul_aniso * 0.66666666666666666666
-                print c13 === c13 - mul_aniso * 0.66666666666666666666
-                print c33 === c33 + mul_aniso * 1.33333333333333333333
-                print c44 === c44 + mul_aniso
-              }
-              print sigma[0][0] === c11*dudl[0][0] + c12*dudl[1][1] + c13*dudl[2][2]
-              print sigma[1][1] === c12*dudl[0][0] + c11*dudl[1][1] + c13*dudl[2][2]
-              print sigma[2][2] === c13*dudl[0][0] + c13*dudl[1][1] + c33*dudl[2][2]
-              print sigma[0][1] === (c11-c12)*duxdyl_plus_duydxl*0.5
-              print sigma[0][2] === c44*duzdxl_plus_duxdzl
-              print sigma[1][2] === c44*duzdyl_plus_duydzl
+              print sub_compute_element_ic_aniso.call( offset,
+                                                       d_c11store,d_c12store,d_c13store,d_c33store,d_c44store,
+                                                       dudl[0][0], dudl[1][1], dudl[2][2],
+                                                       duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,
+                                                       sigma[0][0].address, sigma[1][1].address, sigma[2][2].address,
+                                                       sigma[0][1].address, sigma[0][2].address, sigma[1][2].address )
             }, :else => lambda {
-              print lambdalplus2mul === kappal + mul_iso * 1.33333333333333333333
-              print lambdal === lambdalplus2mul - mul_iso * 2.0
-
-              print sigma[0][0] === lambdalplus2mul*dudl[0][0] + lambdal*duydyl_plus_duzdzl
-              print sigma[1][1] === lambdalplus2mul*dudl[1][1] + lambdal*duxdxl_plus_duzdzl
-              print sigma[2][2] === lambdalplus2mul*dudl[2][2] + lambdal*duxdxl_plus_duydyl
-
-              print sigma[0][1] === mul*duxdyl_plus_duydxl
-              print sigma[0][2] === mul*duzdxl_plus_duxdzl
-              print sigma[1][2] === mul*duzdyl_plus_duydzl
+              print sub_compute_element_ic_iso.call( offset,
+                                                     d_kappavstore,d_muvstore,
+                                                     dudl[0][0], dudl[1][1], dudl[2][2],
+                                                     duxdxl_plus_duydyl, duxdxl_plus_duzdzl, duydyl_plus_duzdzl,
+                                                     duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,
+                                                     sigma[0][0].address, sigma[1][1].address, sigma[2][2].address,
+                                                     sigma[0][1].address, sigma[0][2].address, sigma[1][2].address )
             })
           elsif type == :crust_mantle then
-            print If(attenuation) {
-              print If(use_3d_attenuation_arrays => lambda {
-                print one_minus_sum_beta_use === one_minus_sum_beta[tx+working_element*ngll3]
-              }, :else => lambda {
-                print one_minus_sum_beta_use === one_minus_sum_beta[working_element]
-              })
-            }
-            comment()
-
             print If(anisotropy => lambda {
+              # fully anisotropic element
               print sub_compute_element_cm_aniso.call( offset,
                                                       *(d_cstore.flatten.reject { |e| e.nil?}),
-                                                      attenuation,
-                                                      one_minus_sum_beta_use,
                                                       *(dudl.flatten),
                                                       duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,
                                                       sigma[0][0].address, sigma[1][1].address, sigma[2][2].address,
                                                       sigma[0][1].address, sigma[0][2].address, sigma[1][2].address )
             }, :else => lambda {
               print If( ! d_ispec_is_tiso[working_element] => lambda {
+                # isotropic element
                 print sub_compute_element_cm_iso.call( offset,
                                                        d_kappavstore,d_muvstore,
-                                                       attenuation,
-                                                       one_minus_sum_beta_use,
                                                        dudl[0][0], dudl[1][1], dudl[2][2],
                                                        duxdxl_plus_duydyl, duxdxl_plus_duzdzl, duydyl_plus_duzdzl,
                                                        duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,
                                                        sigma[0][0].address, sigma[1][1].address, sigma[2][2].address,
                                                        sigma[0][1].address, sigma[0][2].address, sigma[1][2].address )
               }, :else => lambda {
+                # tiso element
                 print sub_compute_element_cm_tiso.call( offset,
-                                                   d_kappavstore, d_muvstore,
-                                                   d_kappahstore, d_muhstore, d_eta_anisostore,
-                                                   attenuation,
-                                                   one_minus_sum_beta_use,
-                                                   *(dudl.flatten),
-                                                   duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,
-                                                   iglob[elem_index], #nglob,
-                                                   d_rstore,
-                                                   sigma[0][0].address, sigma[1][1].address, sigma[2][2].address,
-                                                   sigma[0][1].address, sigma[0][2].address, sigma[1][2].address )
+                                                        d_kappavstore, d_muvstore,
+                                                        d_kappahstore, d_muhstore, d_eta_anisostore,
+                                                        *(dudl.flatten),
+                                                        duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,
+                                                        iglob[elem_index],
+                                                        d_rstore,
+                                                        sigma[0][0].address, sigma[1][1].address, sigma[2][2].address,
+                                                        sigma[0][1].address, sigma[0][2].address, sigma[1][2].address )
+
+                # note: CPU routine treats tiso element as fully anisotropic
+                #       this requires all cij store arrays and adds quite a bit of memory consumption.
+                #       thus, for now we still use the tiso routine above instead... maybe for future use
+                #
+                # print sub_compute_element_cm_aniso.call( offset,
+                #                                        *(d_cstore.flatten.reject { |e| e.nil?}),
+                #                                        *(dudl.flatten),
+                #                                        duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,
+                #                                        sigma[0][0].address, sigma[1][1].address, sigma[2][2].address,
+                #                                        sigma[0][1].address, sigma[0][2].address, sigma[1][2].address )
               })
             })
           end
@@ -994,7 +1057,8 @@ module BOAST
                                    sigma[0][0].address, sigma[1][1].address, sigma[2][2].address,\
                                    sigma[0][1].address, sigma[1][0].address, sigma[0][2].address,\
                                    sigma[2][0].address, sigma[1][2].address, sigma[2][1].address,\
-                                   rho_s_H[elem_index][0].address, rho_s_H[elem_index][1].address, rho_s_H[elem_index][2].address)
+                                   rho_s_H[elem_index][0].address, rho_s_H[elem_index][1].address, rho_s_H[elem_index][2].address,\
+                                   r_earth_km)
           }
           comment()
 
@@ -1124,11 +1188,8 @@ module BOAST
                         epsilondev_yy_loc[elem_index],\
                         epsilondev_xy_loc[elem_index],\
                         epsilondev_xz_loc[elem_index],\
-                        epsilondev_yz_loc[elem_index]]
-            if type == :crust_mantle then
-              __params += [d_cstore[3][3], anisotropy]
-            end
-            __params.push use_3d_attenuation_arrays
+                        epsilondev_yz_loc[elem_index],\
+                        use_3d_attenuation_arrays]
             print sub_compute_element_att_memory.call( *__params )
           }
           comment()

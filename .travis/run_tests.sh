@@ -14,6 +14,12 @@ case "$TESTDIR" in
   2) dir=EXAMPLES/global_small/ ;;
   3) dir=EXAMPLES/point_force/ ;;
   4) dir=EXAMPLES/regular_kernel/ ;;
+  5) dir=EXAMPLES/global_sglobe/ ;;
+  6) dir=EXAMPLES/global_full_sphericalharmonic_model/ ;;
+  7) dir=EXAMPLES/regional_s40rts/ ;;
+  8) dir=EXAMPLES/regional_small_adjoint/ ;;
+  9) dir=EXAMPLES/mars_regional/ ;;
+  10) dir=EXAMPLES/moon_global/ ;;
   *) dir=EXAMPLES/regional_Greece_small/ ;;
 esac
 
@@ -63,8 +69,13 @@ if [ "$TESTCOV" == "1" ]; then
   ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TESTFLAGS} FLAGS_CHECK="-fprofile-arcs -ftest-coverage -O0" CFLAGS="-coverage -O0"
 else
   if [ "$CUDA" == "true" ]; then
-    echo "configuration: for cuda"
-    ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TESTFLAGS} CUDA_LIB="${CUDA_HOME}/lib64" CUDA_INC="${CUDA_HOME}/include" CUDA_FLAGS="-Xcompiler -Wall,-Wno-unused-function,-Wno-unused-const-variable,-Wfatal-errors -g -G"
+    if [ "$OPENCL" == "true" ]; then
+      echo "configuration: for opencl" # uses libOpenCL provided from CUDA package
+      ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TESTFLAGS} OCL_CPU_FLAGS="-g -Wall -std=c99 -DWITH_MPI" OCL_GPU_FLAGS="-Werror" OCL_INC="${CUDA_HOME}/include" OCL_LIB="${CUDA_HOME}/lib64" OCL_LIBS="-lOpenCL"
+    else
+      echo "configuration: for cuda"
+      ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TESTFLAGS} CUDA_LIB="${CUDA_HOME}/lib64" CUDA_INC="${CUDA_HOME}/include" CUDA_FLAGS="-Xcompiler -Wall,-Wno-unused-function,-Wno-unused-const-variable,-Wfatal-errors -g -G"
+    fi
   else
     echo "configuration: default"
     ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TESTFLAGS}
@@ -176,6 +187,42 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "2" ]; then
   cd $WORKDIR
 fi
 echo -en 'travis_fold:end:coverage.global-small\\r'
+
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.regional-s40rts\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "2" ]; then
+  ##
+  ## testing regional s40rts
+  ##
+  cd EXAMPLES/regional_s40rts/
+  sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
+  ./run_this_example.sh
+  cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.regional-s40rts\\r'
+
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.mars-regional\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
+  ##
+  ## testing mars regional
+  ##
+  cd EXAMPLES/mars_regional/
+  sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
+  ./run_this_example.sh
+  cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.mars-regional\\r'
+
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.moon-global\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
+  ##
+  ## testing moon global
+  ##
+  cd EXAMPLES/moon_global/
+  sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
+  ./run_this_example.sh
+  cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.moon-global\\r'
 
 
 # done

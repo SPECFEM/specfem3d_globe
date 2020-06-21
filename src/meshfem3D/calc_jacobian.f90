@@ -46,8 +46,10 @@
                                    etaxstore,etaystore,etazstore, &
                                    gammaxstore,gammaystore,gammazstore)
 
-  use constants, only: myrank,NGLLX,NGLLY,NGLLZ,CUSTOM_REAL,SIZE_REAL, &
-    ZERO,ONE,TINYVAL,VERYSMALLVAL,R_EARTH_KM,RADIANS_TO_DEGREES
+  use constants, only: myrank,NGLLX,NGLLY,NGLLZ,CUSTOM_REAL, &
+    ZERO,ONE,TINYVAL,VERYSMALLVAL,RADIANS_TO_DEGREES
+
+  use shared_parameters, only: R_PLANET_KM
 
   implicit none
 
@@ -61,31 +63,31 @@
   double precision, dimension(NGLLZ),intent(in) :: zigll
 
   ! output results
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(out) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(inout) :: &
     xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
     gammaxstore,gammaystore,gammazstore
 
   ! local parameters for this subroutine
-  double precision,dimension(NGLLX):: hxir,hpxir
-  double precision,dimension(NGLLY):: hetar,hpetar
-  double precision,dimension(NGLLZ):: hgammar,hpgammar
+  double precision,dimension(NGLLX) :: hxir,hpxir
+  double precision,dimension(NGLLY) :: hetar,hpetar
+  double precision,dimension(NGLLZ) :: hgammar,hpgammar
 
-  double precision:: xxi,xeta,xgamma,yxi,yeta,ygamma,zxi,zeta,zgamma
-  double precision:: xi,eta,gamma
+  double precision :: xxi,xeta,xgamma,yxi,yeta,ygamma,zxi,zeta,zgamma
+  double precision :: xi,eta,gamma
 
-  double precision:: hlagrange,hlagrange_xi,hlagrange_eta,hlagrange_gamma
-  double precision:: jacobian,jacobian_inv
-  double precision:: xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
-  double precision:: r,theta,phi
-  double precision:: x,y,z
+  double precision :: hlagrange,hlagrange_xi,hlagrange_eta,hlagrange_gamma
+  double precision :: jacobian,jacobian_inv
+  double precision :: xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
+  double precision :: r,theta,phi
+  double precision :: x,y,z
 
-  integer:: i,j,k,i1,j1,k1
+  integer :: i,j,k,i1,j1,k1
 
   ! test parameters which can be deleted
   logical, parameter :: DEBUG = .false.
 
-  double precision:: xmesh,ymesh,zmesh
-  double precision:: sumshape,sumdershapexi,sumdershapeeta,sumdershapegamma
+  double precision :: xmesh,ymesh,zmesh
+  double precision :: sumshape,sumdershapexi,sumdershapeeta,sumdershapegamma
 
   ! first go over all 125 GLL points
   do k = 1,NGLLZ
@@ -197,11 +199,12 @@
           ! note: the mesh can have ellipticity, thus the geocentric colatitude might differ from the geographic one
           !
           ! converts position to geocentric coordinates
-          call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r,theta,phi)
-          print *,'Error Jacobian rank:',myrank
-          print *,'  location r/lat/lon: ',r*R_EARTH_KM, &
-            90.0-(theta*RADIANS_TO_DEGREES),phi*RADIANS_TO_DEGREES
-          print *,'  Jacobian: ',jacobian
+          print *,'Error Jacobian rank:',myrank,'has invalid Jacobian ',jacobian
+          print *,'  Jacobian: ',jacobian,'xxi/eta/gamma',xxi,xeta,xgamma,'yxi/eta/gamma',yxi,yeta,ygamma,'zxi',zxi/zeta,zgamma
+          print *,'  location x/y/z: ',xstore(i,j,k,ispec),ystore(i,j,k,ispec),zstore(i,j,k,ispec)
+          call xyz_2_rthetaphi_dble(xstore(i,j,k,ispec),ystore(i,j,k,ispec),zstore(i,j,k,ispec),r,theta,phi)
+          print *,'  location r    : ',sngl(r*R_PLANET_KM),'km - lat/lon: ', &
+                  sngl(90.0-(theta*RADIANS_TO_DEGREES)),sngl(phi*RADIANS_TO_DEGREES)
           call exit_MPI(myrank,'3D Jacobian undefined in recalc_jacobian_gll3D.f90')
         endif
 
@@ -267,8 +270,8 @@
   double precision,dimension(NGLLB),intent(in) :: yigll
 
   ! output results
-  real(kind=CUSTOM_REAL),dimension(NGLLA,NGLLB,NSPEC2DMAX_AB),intent(out) :: jacobian2D
-  real(kind=CUSTOM_REAL),dimension(3,NGLLA,NGLLB,NSPEC2DMAX_AB),intent(out) :: normal
+  real(kind=CUSTOM_REAL),dimension(NGLLA,NGLLB,NSPEC2DMAX_AB),intent(inout) :: jacobian2D
+  real(kind=CUSTOM_REAL),dimension(3,NGLLA,NGLLB,NSPEC2DMAX_AB),intent(inout) :: normal
 
   ! local parameters in this subroutine
   integer :: i,j,i1,j1

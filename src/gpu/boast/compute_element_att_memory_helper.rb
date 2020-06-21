@@ -11,7 +11,7 @@ module BOAST
     v = []
     v.push tx                = Int( "tx",                :dir => :in)
     v.push working_element   = Int( "working_element",   :dir => :in)
-    v.push d_muv             = Real("d_muv",             :dir => :in, :dim => [Dim()] )
+    v.push d_muvstore        = Real("d_muvstore",        :dir => :in, :dim => [Dim()] )
     v.push factor_common     = Real("factor_common",     :dir => :in, :dim => [Dim()] )
     v.push alphaval          = Real("alphaval",          :dir => :in, :dim => [Dim()] )
     v.push betaval           = Real("betaval",           :dir => :in, :dim => [Dim()] )
@@ -31,10 +31,6 @@ module BOAST
     v.push epsilondev_xy_loc = Real("epsilondev_xy_loc", :dir => :in)
     v.push epsilondev_xz_loc = Real("epsilondev_xz_loc", :dir => :in)
     v.push epsilondev_yz_loc = Real("epsilondev_yz_loc", :dir => :in)
-    if type == :crust_mantle then
-      v.push d_c44store      = Real("d_c44store",        :dir => :in, :dim => [Dim()])
-      v.push anisotropy      = Int( "ANISOTROPY",        :dir => :in)
-    end
     v.push use_3d_attenuation_arrays = Int( "USE_3D_ATTENUATION_ARRAYS",    :dir => :in)
 
     ngll3 = Int("NGLL3", :const => n_gll3)
@@ -51,15 +47,11 @@ module BOAST
       decl factor_loc = Real("factor_loc")
       decl sn = Real("sn")
       decl snp1 = Real("snp1")
-      if type == :crust_mantle then
-        print If(anisotropy => lambda {
-          print mul === d_c44store[tx + ngll3_padded*working_element]
-        }, :else => lambda {
-          print mul === d_muv[tx + ngll3_padded*working_element]
-        })
-      else
-        print mul === d_muv[tx + ngll3_padded*working_element]
-      end
+      comment()
+
+      print mul === d_muvstore[tx + ngll3_padded*working_element]
+      comment()
+
       print For( i_sls, 0, nsls - 1 ) {
         # indices
         # note: index for R_xx,... here is (i,j,k,i_sls,ispec) and not (i,j,k,ispec,i_sls) as in local version
@@ -75,6 +67,7 @@ module BOAST
         print alphaval_loc === alphaval[i_sls]
         print  betaval_loc ===  betaval[i_sls]
         print gammaval_loc === gammaval[i_sls]
+        comment()
 
         [[r_xx, epsilondev_xx, epsilondev_xx_loc],
          [r_yy, epsilondev_yy, epsilondev_yy_loc],

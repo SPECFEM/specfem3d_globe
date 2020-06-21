@@ -29,8 +29,7 @@
                                     test_flag,my_neighbors,nibool_neighbors,ibool_neighbors, &
                                     num_interfaces,max_nibool_interfaces, &
                                     max_nibool,MAX_NEIGHBORS, &
-                                    ibool, &
-                                    is_on_a_slice_edge, &
+                                    ibool,is_on_a_slice_edge, &
                                     IREGION,add_central_cube,idoubling,INCLUDE_CENTRAL_CUBE, &
                                     xstore,ystore,zstore,NPROCTOT)
 
@@ -59,18 +58,27 @@
 
   real(kind=CUSTOM_REAL),dimension(NGLOB),intent(in) :: xstore,ystore,zstore
 
-  integer :: NPROCTOT
+  integer,intent(in) :: NPROCTOT
 
   ! local parameters
-  integer :: ispec,iglob,j,k
+  integer :: ispec,iglob,j,k,ier
   integer :: iface,iedge,icorner
   integer :: ii,iinterface,icurrent,rank
   integer :: npoin
   logical :: is_done,ispec_is_outer
-  integer,dimension(NGLOB) :: work_test_flag
-  logical,dimension(NSPEC) :: work_ispec_is_outer
+  ! allocatable work arrays (too avoid segmentation faults for large arrays)
+  integer,dimension(:),allocatable :: work_test_flag
+  logical,dimension(:),allocatable :: work_ispec_is_outer
 
   integer,parameter :: MID = (NGLLX+1)/2
+
+  ! debug
+  !print *,'MPI interface: b',IREGION,add_central_cube,INCLUDE_CENTRAL_CUBE
+
+  ! allocates work arrays
+  allocate(work_test_flag(NGLOB), &
+           work_ispec_is_outer(NSPEC),stat=ier)
+  if (ier /= 0) stop 'Error allocating work arrays'
 
   ! initializes
   if (add_central_cube) then
@@ -570,6 +578,9 @@
   ! re-sets flags for outer elements
   is_on_a_slice_edge(:) = work_ispec_is_outer(:)
 
+  ! frees arrays
+  deallocate(work_test_flag,work_ispec_is_outer)
+
   end subroutine get_MPI_interfaces
 
 !
@@ -579,7 +590,7 @@
   subroutine sort_MPI_interface(myrank,npoin,ibool_n, &
                                     NGLOB,xstore,ystore,zstore)
 
-  use constants, only: CUSTOM_REAL,SIZE_REAL
+  use constants, only: CUSTOM_REAL
 
   implicit none
 
@@ -700,9 +711,10 @@
   if (work_test_flag(iglob) <= 0) then
     ! we might have missed an interface point on an edge, just re-set to missing value
     print *,'warning ',myrank,' flag: missed rank=',rank
-    print *,'  flag=',work_test_flag(iglob),'missed iglob=',iglob,'interface=',icurrent
+    print *,'  flag=',work_test_flag(iglob),'missed iglob=',iglob,'interface=',icurrent,'is_face_edge',is_face_edge
     print *
   endif
+
   ! we might have missed an interface point on an edge, just re-set to missing value
   if (is_face_edge) then
     if (work_test_flag(iglob) < (rank + 1)) then

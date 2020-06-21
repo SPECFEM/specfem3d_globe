@@ -95,16 +95,6 @@
   endif
   call read_mesh_databases_coupling()
 
-  ! reads "addressing.txt" 2-D addressing (needed for Stacey boundaries and
-  ! regular grid kernels)
-  if (SYNC_READING ) call synchronize_all()
-  if (myrank == 0) then
-    write(IMAIN,*) '  reading in addressing...'
-    call flush_IMAIN()
-  endif
-  allocate(addressing(NCHUNKS_VAL,0:NPROC_XI_VAL-1,0:NPROC_ETA_VAL-1))
-  call read_mesh_databases_addressing()
-
   ! sets up MPI interfaces, inner/outer elements and mesh coloring
   if (SYNC_READING ) call synchronize_all()
   if (myrank == 0) then
@@ -170,29 +160,22 @@
 
   ! local parameters
   integer :: nspec_iso,nspec_tiso,nspec_ani
-  logical :: READ_KAPPA_MU,READ_TISO
   ! dummy array that does not need to be actually read
   integer, dimension(:),allocatable :: dummy_idoubling
   integer :: ier
 
   ! crust and mantle
-
+  nspec_iso = NSPEC_CRUST_MANTLE
   if (ANISOTROPIC_3D_MANTLE_VAL) then
-    READ_KAPPA_MU = .false.
-    READ_TISO = .false.
-    nspec_iso = NSPECMAX_ISO_MANTLE ! 1
     nspec_tiso = NSPECMAX_TISO_MANTLE ! 1
     nspec_ani = NSPEC_CRUST_MANTLE
   else
-    READ_KAPPA_MU = .true.
-    nspec_iso = NSPEC_CRUST_MANTLE
     if (TRANSVERSE_ISOTROPY_VAL) then
       nspec_tiso = NSPECMAX_TISO_MANTLE
     else
       nspec_tiso = 1
     endif
     nspec_ani = NSPECMAX_ANISO_MANTLE ! 1
-    READ_TISO = .true.
   endif
 
   ! sets number of top elements for surface movies & noise tomography
@@ -201,6 +184,7 @@
   ! allocates dummy array
   allocate(dummy_idoubling(NSPEC_CRUST_MANTLE),stat=ier)
   if (ier /= 0 ) call exit_mpi(myrank,'Error allocating dummy idoubling in crust_mantle')
+  dummy_idoubling(:) = 0
 
   ! allocates mass matrices in this slice (will be fully assembled in the solver)
   !
@@ -213,26 +197,35 @@
 
   allocate(rmassz_crust_mantle(NGLOB_CRUST_MANTLE),stat=ier)
   if (ier /= 0) stop 'Error allocating rmassz in crust_mantle'
+  rmassz_crust_mantle(:) = 0.0_CUSTOM_REAL
 
   ! allocates mass matrices
   allocate(rmassx_crust_mantle(NGLOB_XY_CM), &
            rmassy_crust_mantle(NGLOB_XY_CM),stat=ier)
   if (ier /= 0) stop 'Error allocating rmassx, rmassy in crust_mantle'
+  rmassx_crust_mantle(:) = 0.0_CUSTOM_REAL
+  rmassy_crust_mantle(:) = 0.0_CUSTOM_REAL
 
   ! b_rmassx and b_rmassy will be different to rmassx and rmassy
   ! needs new arrays
   allocate(b_rmassx_crust_mantle(NGLOB_XY_CM), &
            b_rmassy_crust_mantle(NGLOB_XY_CM),stat=ier)
   if (ier /= 0) stop 'Error allocating b_rmassx, b_rmassy in crust_mantle'
+  b_rmassx_crust_mantle(:) = 0.0_CUSTOM_REAL
+  b_rmassy_crust_mantle(:) = 0.0_CUSTOM_REAL
 
   ! x/y/z locations
   allocate(xstore_crust_mantle(NGLOB_CRUST_MANTLE), &
            ystore_crust_mantle(NGLOB_CRUST_MANTLE), &
            zstore_crust_mantle(NGLOB_CRUST_MANTLE),stat=ier)
   if (ier /= 0) stop 'Error allocating x/y/zstore in crust_mantle'
+  xstore_crust_mantle(:) = 0.0_CUSTOM_REAL
+  ystore_crust_mantle(:) = 0.0_CUSTOM_REAL
+  zstore_crust_mantle(:) = 0.0_CUSTOM_REAL
 
   allocate(rmass_ocean_load(NGLOB_CRUST_MANTLE_OCEANS),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays rmass_ocean_load,..'
+  rmass_ocean_load(:) = 0.0_CUSTOM_REAL
 
   allocate(ibool_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE), &
            xix_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE), &
@@ -245,16 +238,32 @@
            gammay_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE), &
            gammaz_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays ibool_crust_mantle,..'
+  ibool_crust_mantle(:,:,:,:) = 0
+  xix_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  xiy_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  xiz_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  etax_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  etay_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  etaz_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  gammax_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  gammay_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  gammaz_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
 
-  allocate(rhostore_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE), &
-           kappavstore_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE), &
-           muvstore_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE),stat=ier)
+  allocate(rhostore_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE), &
+           kappavstore_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE), &
+           muvstore_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays rhostore_crust_mantle,..'
+  rhostore_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  kappavstore_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  muvstore_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
 
   allocate(kappahstore_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE), &
            muhstore_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE), &
            eta_anisostore_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays kappahstore_crust_mantle,..'
+  kappahstore_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  muhstore_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  eta_anisostore_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
 
   if (.not. ANISOTROPIC_3D_MANTLE_VAL) then
     ! allocates c11stores,.. for tiso elements
@@ -305,13 +314,42 @@
              c66store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE),stat=ier)
     if (ier /= 0) stop 'Error allocating arrays c11store_crust_mantle,..'
   endif
+  c11store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c12store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c13store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c14store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c15store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c16store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c22store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c23store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c24store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c25store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c26store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c33store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c34store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c35store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c36store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c44store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c45store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c46store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c55store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c56store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c66store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+
+  ! for azimuthal
+  allocate(mu0store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),stat=ier)
+  if (ier /= 0) stop 'Error allocating mu0 array'
+  mu0store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
 
   allocate(ispec_is_tiso_crust_mantle(NSPEC_CRUST_MANTLE),stat=ier)
   if (ier /= 0) stop 'Error allocating array ispec_is_tiso_crust_mantle'
+  ispec_is_tiso_crust_mantle(:) = .false.
 
   allocate(rho_vp_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STACEY), &
            rho_vs_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STACEY),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays rho_vp_crust_mantle,..'
+  rho_vp_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  rho_vs_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
 
   ! reads databases file
   if (I_should_read_the_database) then
@@ -333,10 +371,10 @@
                                     c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
                                     c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
                                     c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
+                                    mu0store_crust_mantle, &
                                     ibool_crust_mantle,dummy_idoubling,ispec_is_tiso_crust_mantle, &
                                     rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
                                     NGLOB_CRUST_MANTLE_OCEANS,rmass_ocean_load, &
-                                    READ_KAPPA_MU,READ_TISO, &
                                     b_rmassx_crust_mantle,b_rmassy_crust_mantle)
     else
       call read_arrays_solver(IREGION_CRUST_MANTLE, &
@@ -356,21 +394,26 @@
                               c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
                               c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
                               c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
+                              mu0store_crust_mantle, &
                               ibool_crust_mantle,dummy_idoubling,ispec_is_tiso_crust_mantle, &
                               rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
                               NGLOB_CRUST_MANTLE_OCEANS,rmass_ocean_load, &
-                              READ_KAPPA_MU,READ_TISO, &
                               b_rmassx_crust_mantle,b_rmassy_crust_mantle)
     endif
   endif
   call bcast_mesh_databases_CM()
 
   ! check that the number of points in this slice is correct
-  if (minval(ibool_crust_mantle(:,:,:,:)) /= 1) &
-      call exit_MPI(myrank,'incorrect global numbering: iboolmin is not equal to 1 in crust and mantle')
-  if (maxval(ibool_crust_mantle(:,:,:,:)) /= NGLOB_CRUST_MANTLE) &
-      call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in crust and mantle')
-
+  if (minval(ibool_crust_mantle(:,:,:,:)) /= 1) then
+    print *,'Error: rank ',myrank,' has invalid crust_mantle ibool indexing min/max = ', &
+            minval(ibool_crust_mantle(:,:,:,:)),maxval(ibool_crust_mantle(:,:,:,:)),'max glob = ',NGLOB_CRUST_MANTLE
+    call exit_MPI(myrank,'incorrect global numbering: iboolmin is not equal to 1 in crust and mantle')
+  endif
+  if (maxval(ibool_crust_mantle(:,:,:,:)) /= NGLOB_CRUST_MANTLE) then
+    print *,'Error: rank ',myrank,' has invalid ibool indexing min/max = ', &
+            minval(ibool_crust_mantle(:,:,:,:)),maxval(ibool_crust_mantle(:,:,:,:)), 'max glob =',NGLOB_CRUST_MANTLE
+    call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in crust and mantle')
+  endif
   deallocate(dummy_idoubling)
 
   ! mass matrix corrections
@@ -423,6 +466,11 @@
     nullify(b_rmassz_crust_mantle)
   endif
 
+  ! only needed for azimuthal kernels
+  if (.not. (SIMULATION_TYPE == 3 .and. (ANISOTROPIC_KL .and. SAVE_AZIMUTHAL_ANISO_KL_ONLY))) then
+    deallocate(mu0store_crust_mantle)
+  endif
+
   end subroutine read_mesh_databases_CM
 
 !
@@ -440,7 +488,6 @@
 
   ! local parameters
   integer :: nspec_iso,nspec_tiso,nspec_ani,NGLOB_XY_dummy
-  logical :: READ_KAPPA_MU,READ_TISO
   integer :: ier
 
   ! dummy array that does not need to be actually read
@@ -452,8 +499,6 @@
 
   ! outer core (no anisotropy nor S velocity)
   ! rmass_ocean_load is not used in this routine because it is meaningless in the outer core
-  READ_KAPPA_MU = .false.
-  READ_TISO = .false.
   nspec_iso = NSPEC_OUTER_CORE
   nspec_tiso = 1
   nspec_ani = 1
@@ -515,10 +560,10 @@
                                     dummy_array,dummy_array,dummy_array, &
                                     dummy_array,dummy_array,dummy_array, &
                                     dummy_array,dummy_array,dummy_array, &
+                                    dummy_array, &
                                     ibool_outer_core,dummy_idoubling_outer_core,dummy_ispec_is_tiso, &
                                     dummy_rmass,dummy_rmass,rmass_outer_core, &
                                     1,dummy_array, &
-                                    READ_KAPPA_MU,READ_TISO, &
                                     dummy_rmass,dummy_rmass)
     else
       call read_arrays_solver(IREGION_OUTER_CORE, &
@@ -538,10 +583,10 @@
                               dummy_array,dummy_array,dummy_array, &
                               dummy_array,dummy_array,dummy_array, &
                               dummy_array,dummy_array,dummy_array, &
+                              dummy_array, &
                               ibool_outer_core,dummy_idoubling_outer_core,dummy_ispec_is_tiso, &
                               dummy_rmass,dummy_rmass,rmass_outer_core, &
                               1, dummy_array, &
-                              READ_KAPPA_MU,READ_TISO, &
                               dummy_rmass,dummy_rmass)
     endif
   endif
@@ -550,10 +595,14 @@
   deallocate(dummy_idoubling_outer_core,dummy_ispec_is_tiso,dummy_rmass)
 
   ! check that the number of points in this slice is correct
-  ! check that the number of points in this slice is correct
-  if (minval(ibool_outer_core(:,:,:,:)) /= 1) &
-      call exit_MPI(myrank,'incorrect global numbering: iboolmin is not equal to 1 in outer core')
+  if (minval(ibool_outer_core(:,:,:,:)) /= 1) then
+    print *,'Error: rank ',myrank,' has invalid outer_core ibool indexing min/max = ', &
+            minval(ibool_outer_core(:,:,:,:)),maxval(ibool_outer_core(:,:,:,:)),'max glob = ',NGLOB_OUTER_CORE
+    call exit_MPI(myrank,'incorrect global numbering: iboolmin is not equal to 1 in outer core')
+  endif
   if (maxval(ibool_outer_core(:,:,:,:)) /= NGLOB_OUTER_CORE) then
+    print *,'Error: rank ',myrank,' has invalid ibool indexing min/max = ', &
+            minval(ibool_outer_core(:,:,:,:)),maxval(ibool_outer_core(:,:,:,:)),'max glob = ',NGLOB_OUTER_CORE
     call exit_MPI(myrank, 'incorrect global numbering: iboolmax does not equal nglob in outer core')
   endif
 
@@ -581,7 +630,6 @@
 
   ! local parameters
   integer :: nspec_iso,nspec_tiso,nspec_ani
-  logical :: READ_KAPPA_MU,READ_TISO
   integer :: ier
 
   ! dummy array that does not need to be actually read
@@ -590,8 +638,6 @@
 
   ! inner core (no anisotropy)
   ! rmass_ocean_load is not used in this routine because it is meaningless in the inner core
-  READ_KAPPA_MU = .true. ! (muvstore needed for attenuation)
-  READ_TISO = .false.
   nspec_iso = NSPEC_INNER_CORE
   nspec_tiso = 1
   if (ANISOTROPIC_INNER_CORE_VAL) then
@@ -677,10 +723,10 @@
                                     dummy_array,dummy_array,dummy_array, &
                                     c44store_inner_core,dummy_array,dummy_array, &
                                     dummy_array,dummy_array,dummy_array, &
+                                    dummy_array, &
                                     ibool_inner_core,idoubling_inner_core,dummy_ispec_is_tiso, &
                                     rmassx_inner_core,rmassy_inner_core,rmassz_inner_core, &
                                     1,dummy_array, &
-                                    READ_KAPPA_MU,READ_TISO, &
                                     b_rmassx_inner_core,b_rmassy_inner_core)
     else
       call read_arrays_solver(IREGION_INNER_CORE, &
@@ -700,10 +746,10 @@
                               dummy_array,dummy_array,dummy_array, &
                               c44store_inner_core,dummy_array,dummy_array, &
                               dummy_array,dummy_array,dummy_array, &
+                              dummy_array, &
                               ibool_inner_core,idoubling_inner_core,dummy_ispec_is_tiso, &
                               rmassx_inner_core,rmassy_inner_core,rmassz_inner_core, &
                               1,dummy_array, &
-                              READ_KAPPA_MU,READ_TISO, &
                               b_rmassx_inner_core,b_rmassy_inner_core)
     endif
   endif
@@ -712,8 +758,11 @@
   deallocate(dummy_ispec_is_tiso)
 
   ! check that the number of points in this slice is correct
-  if (minval(ibool_inner_core(:,:,:,:)) /= 1 .or. maxval(ibool_inner_core(:,:,:,:)) /= NGLOB_INNER_CORE) &
-    call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in inner core')
+  if (minval(ibool_inner_core(:,:,:,:)) /= 1 .or. maxval(ibool_inner_core(:,:,:,:)) /= NGLOB_INNER_CORE) then
+    print *,'Error: rank ',myrank,' has invalid inner_core ibool indexing min/max = ', &
+            minval(ibool_inner_core(:,:,:,:)),maxval(ibool_inner_core(:,:,:,:)),'max glob = ',NGLOB_INNER_CORE
+    call exit_MPI(myrank,'incorrect global numbering: iboolmin/max does not equal 1/nglob in inner core')
+  endif
 
   ! mass matrix corrections
   if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) then
@@ -1024,9 +1073,6 @@
              icb_kl_bot(NGLLX,NGLLY,NSPEC2D_ICB),stat=ier)
     if (ier /= 0) stop 'Error allocating arrays moho_kl,.. '
 
-    k_top = 1
-    k_bot = NGLLZ
-
     ! initialization
     moho_kl(:,:,:) = 0._CUSTOM_REAL
     d400_kl(:,:,:) = 0._CUSTOM_REAL
@@ -1159,19 +1205,56 @@
 
   ! local parameters
   real :: percentage_edge
-  integer :: ier
+  integer :: ier,i,num_poin,num_elements
+  integer ::iglob_min,iglob_max
+  integer ::ispec_min,ispec_max
 
   ! read MPI interfaces from file
 
   ! crust mantle
   if (I_should_read_the_database) then
     if (ADIOS_FOR_MPI_ARRAYS) then
-      call read_mesh_databases_MPI_CM_adios()
+      call read_mesh_databases_MPI_adios(IREGION_CRUST_MANTLE)
     else
       call read_mesh_databases_MPI_CM()
     endif
   endif
   call bcast_mesh_databases_MPI_CM()
+
+  ! checks interface values read
+  if (minval(my_neighbors_crust_mantle) < 0 .or. maxval(my_neighbors_crust_mantle) >= NPROCTOT) then
+    print *,'Error: invalid MPI neighbors min/max',minval(my_neighbors_crust_mantle),maxval(my_neighbors_crust_mantle),NPROCTOT
+    call exit_mpi(myrank,'Error invalid MPI neighbors crust_mantle')
+  endif
+  do i = 1,num_interfaces_crust_mantle
+    ! number of points on interface
+    num_poin = nibool_interfaces_crust_mantle(i)
+    if (num_poin <= 0 .or. num_poin > NGLOB_CRUST_MANTLE) then
+      print *,'Error: invalid nibool_interfaces_crust_mantle ',num_poin,'interface',i,'nglob',NGLOB_CRUST_MANTLE
+      call exit_mpi(myrank,'Error invalid nibool_interfaces_crust_mantle')
+    endif
+    ! iglob min/max
+    iglob_min = minval(ibool_interfaces_crust_mantle(1:num_poin,i))
+    iglob_max = maxval(ibool_interfaces_crust_mantle(1:num_poin,i))
+    if (iglob_min <= 0 .or. iglob_max > NGLOB_CRUST_MANTLE) then
+      print *,'Error: invalid ibool_interfaces_crust_mantle min/max ',iglob_min,iglob_max,'interface',i,'nglob',NGLOB_CRUST_MANTLE
+      call exit_mpi(myrank,'Error invalid ibool_interfaces_crust_mantle')
+    endif
+  enddo
+  do i = 1,2
+    if (i == 1) then
+      num_elements = nspec_outer_crust_mantle
+    else
+      num_elements = nspec_inner_crust_mantle
+    endif
+    ispec_min = minval(phase_ispec_inner_crust_mantle(1:num_elements,i))
+    ispec_max = maxval(phase_ispec_inner_crust_mantle(1:num_elements,i))
+    if (ispec_min <= 0 .or. ispec_max > NSPEC_CRUST_MANTLE) then
+      print *,'Error: invalid phase_ispec_inner_crust_mantle min/max ',ispec_min,ispec_max,'phase',i, &
+              nspec_outer_crust_mantle,nspec_inner_crust_mantle,'nspec',NSPEC_CRUST_MANTLE
+      call exit_mpi(myrank,'Error invalid phase_ispec_inner_crust_mantle')
+    endif
+  enddo
 
   allocate(buffer_send_vector_crust_mantle(NDIM,max_nibool_interfaces_cm,num_interfaces_crust_mantle), &
            buffer_recv_vector_crust_mantle(NDIM,max_nibool_interfaces_cm,num_interfaces_crust_mantle), &
@@ -1192,12 +1275,47 @@
   ! outer core
   if (I_should_read_the_database) then
     if (ADIOS_FOR_MPI_ARRAYS) then
-      call read_mesh_databases_MPI_OC_adios()
+      call read_mesh_databases_MPI_adios(IREGION_OUTER_CORE)
     else
       call read_mesh_databases_MPI_OC()
     endif
   endif
   call bcast_mesh_databases_MPI_OC()
+
+  ! checks interface values read
+  if (minval(my_neighbors_outer_core) < 0 .or. maxval(my_neighbors_outer_core) >= NPROCTOT) then
+    print *,'Error: invalid MPI neighbors min/max',minval(my_neighbors_outer_core),maxval(my_neighbors_outer_core),NPROCTOT
+    call exit_mpi(myrank,'Error invalid MPI neighbors outer_core')
+  endif
+  do i = 1,num_interfaces_outer_core
+    ! number of points on interface
+    num_poin = nibool_interfaces_outer_core(i)
+    if (num_poin <= 0 .or. num_poin > NGLOB_outer_core) then
+      print *,'Error: invalid nibool_interfaces_outer_core ',num_poin,'interface',i,'nglob',NGLOB_outer_core
+      call exit_mpi(myrank,'Error invalid nibool_interfaces_outer_core')
+    endif
+    ! iglob min/max
+    iglob_min = minval(ibool_interfaces_outer_core(1:num_poin,i))
+    iglob_max = maxval(ibool_interfaces_outer_core(1:num_poin,i))
+    if (iglob_min <= 0 .or. iglob_max > NGLOB_outer_core) then
+      print *,'Error: invalid ibool_interfaces_outer_core min/max ',iglob_min,iglob_max,'interface',i,'nglob',NGLOB_outer_core
+      call exit_mpi(myrank,'Error invalid ibool_interfaces_outer_core')
+    endif
+  enddo
+  do i = 1,2
+    if (i == 1) then
+      num_elements = nspec_outer_outer_core
+    else
+      num_elements = nspec_inner_outer_core
+    endif
+    ispec_min = minval(phase_ispec_inner_outer_core(1:num_elements,i))
+    ispec_max = maxval(phase_ispec_inner_outer_core(1:num_elements,i))
+    if (ispec_min <= 0 .or. ispec_max > NSPEC_OUTER_CORE) then
+      print *,'Error: invalid phase_ispec_inner_outer_core min/max ',ispec_min,ispec_max,'phase',i, &
+              nspec_outer_outer_core,nspec_inner_outer_core,'nspec',NSPEC_OUTER_CORE
+      call exit_mpi(myrank,'Error invalid phase_ispec_inner_outer_core')
+    endif
+  enddo
 
   allocate(buffer_send_scalar_outer_core(max_nibool_interfaces_oc,num_interfaces_outer_core), &
            buffer_recv_scalar_outer_core(max_nibool_interfaces_oc,num_interfaces_outer_core), &
@@ -1218,12 +1336,47 @@
   ! inner core
   if (I_should_read_the_database) then
     if (ADIOS_FOR_MPI_ARRAYS) then
-      call read_mesh_databases_MPI_IC_adios()
+      call read_mesh_databases_MPI_adios(IREGION_INNER_CORE)
     else
       call read_mesh_databases_MPI_IC()
     endif
   endif
   call bcast_mesh_databases_MPI_IC()
+
+  ! checks interface values read
+  if (minval(my_neighbors_inner_core) < 0 .or. maxval(my_neighbors_inner_core) >= NPROCTOT) then
+    print *,'Error: invalid MPI neighbors min/max',minval(my_neighbors_inner_core),maxval(my_neighbors_inner_core),NPROCTOT
+    call exit_mpi(myrank,'Error invalid MPI neighbors inner_core')
+  endif
+  do i = 1,num_interfaces_inner_core
+    ! number of points on interface
+    num_poin = nibool_interfaces_inner_core(i)
+    if (num_poin <= 0 .or. num_poin > NGLOB_inner_core) then
+      print *,'Error: invalid nibool_interfaces_inner_core ',num_poin,'interface',i,'nglob',NGLOB_inner_core
+      call exit_mpi(myrank,'Error invalid nibool_interfaces_inner_core')
+    endif
+    ! iglob min/max
+    iglob_min = minval(ibool_interfaces_inner_core(1:num_poin,i))
+    iglob_max = maxval(ibool_interfaces_inner_core(1:num_poin,i))
+    if (iglob_min <= 0 .or. iglob_max > NGLOB_inner_core) then
+      print *,'Error: invalid ibool_interfaces_inner_core min/max ',iglob_min,iglob_max,'interface',i,'nglob',NGLOB_inner_core
+      call exit_mpi(myrank,'Error invalid ibool_interfaces_inner_core')
+    endif
+  enddo
+  do i = 1,2
+    if (i == 1) then
+      num_elements = nspec_outer_inner_core
+    else
+      num_elements = nspec_inner_inner_core
+    endif
+    ispec_min = minval(phase_ispec_inner_inner_core(1:num_elements,i))
+    ispec_max = maxval(phase_ispec_inner_inner_core(1:num_elements,i))
+    if (ispec_min <= 0 .or. ispec_max > NSPEC_INNER_CORE) then
+      print *,'Error: invalid phase_ispec_inner_inner_core min/max ',ispec_min,ispec_max,'phase',i, &
+              nspec_outer_inner_core,nspec_inner_inner_core,'nspec',NSPEC_INNER_CORE
+      call exit_mpi(myrank,'Error invalid phase_ispec_inner_inner_core')
+    endif
+  enddo
 
   allocate(buffer_send_vector_inner_core(NDIM,max_nibool_interfaces_ic,num_interfaces_inner_core), &
            buffer_recv_vector_inner_core(NDIM,max_nibool_interfaces_ic,num_interfaces_inner_core), &
@@ -1744,6 +1897,7 @@
   call bcast_all_cr_for_database(kappahstore_crust_mantle(1,1,1,1), size(kappahstore_crust_mantle))
   call bcast_all_cr_for_database(muhstore_crust_mantle(1,1,1,1), size(muhstore_crust_mantle))
   call bcast_all_cr_for_database(eta_anisostore_crust_mantle(1,1,1,1), size(eta_anisostore_crust_mantle))
+
   call bcast_all_cr_for_database(c11store_crust_mantle(1,1,1,1), size(c11store_crust_mantle))
   call bcast_all_cr_for_database(c12store_crust_mantle(1,1,1,1), size(c12store_crust_mantle))
   call bcast_all_cr_for_database(c13store_crust_mantle(1,1,1,1), size(c13store_crust_mantle))
@@ -1765,6 +1919,8 @@
   call bcast_all_cr_for_database(c55store_crust_mantle(1,1,1,1), size(c55store_crust_mantle))
   call bcast_all_cr_for_database(c56store_crust_mantle(1,1,1,1), size(c56store_crust_mantle))
   call bcast_all_cr_for_database(c66store_crust_mantle(1,1,1,1), size(c66store_crust_mantle))
+  call bcast_all_cr_for_database(mu0store_crust_mantle(1,1,1,1), size(mu0store_crust_mantle))
+
   call bcast_all_i_for_database(ibool_crust_mantle(1,1,1,1), size(ibool_crust_mantle))
   call bcast_all_l_for_database(ispec_is_tiso_crust_mantle(1), size(ispec_is_tiso_crust_mantle))
   call bcast_all_cr_for_database(rmassx_crust_mantle(1), size(rmassx_crust_mantle))

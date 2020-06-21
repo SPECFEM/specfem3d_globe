@@ -34,8 +34,6 @@ module asdf_data
 
   implicit none
 
-  private
-
   type asdf_record
     real, pointer :: record(:)
   end type asdf_record

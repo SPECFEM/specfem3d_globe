@@ -101,6 +101,12 @@
 
   implicit none
 
+  ! user info
+  if (myrank == 0) then
+    write(IMAIN,*) 'broadcast model: PPM'
+    call flush_IMAIN()
+  endif
+
   ! upper mantle structure
   if (myrank == 0) call read_model_ppm()
 
@@ -316,6 +322,8 @@
 ! returns dvs,dvp and drho for given radius,theta,phi location
 
   use constants
+  use shared_parameters, only: R_PLANET_KM
+
   use model_ppm_par
 
   implicit none
@@ -330,7 +338,7 @@
   double precision:: g_dvs,g_depth,g_lat,g_lon,x,g_weight,weight_sum,weight_prod
 
   double precision,parameter:: const_a = sigma_v/3.0
-  double precision,parameter:: const_b = sigma_h/3.0/(R_EARTH_KM*DEGREES_TO_RADIANS)
+  double precision,parameter:: const_b = sigma_h/3.0
 
   ! initialize
   dvs = 0.0d0
@@ -338,7 +346,7 @@
   drho = 0.0d0
 
   ! depth of given radius (in km)
-  r_depth = R_EARTH_KM*(1.0 - radius)  ! radius is normalized between [0,1]
+  r_depth = R_PLANET_KM*(1.0 - radius)  ! radius is normalized between [0,1]
   if (r_depth > PPM_maxdepth .or. r_depth < PPM_mindepth) return
 
   lat=(PI_OVER_TWO-theta)*RADIANS_TO_DEGREES
@@ -357,22 +365,23 @@
   ! loop over neighboring points
   dvs = 0.0
   weight_sum = 0.0
+
   do i=-NUM_GAUSSPOINTS,NUM_GAUSSPOINTS
     g_depth = r_depth + i*const_a
     do j=-NUM_GAUSSPOINTS,NUM_GAUSSPOINTS
-      g_lon = lon + j*const_b
+      g_lon = lon + j*const_b/(R_PLANET_KM*DEGREES_TO_RADIANS)
       do k=-NUM_GAUSSPOINTS,NUM_GAUSSPOINTS
-        g_lat = lat + k*const_b
+        g_lat = lat + k*const_b/(R_PLANET_KM*DEGREES_TO_RADIANS)
 
         call get_PPMmodel_value(g_lat,g_lon,g_depth,g_dvs)
 
         ! horizontal weighting
-        x = (g_lat-lat)*DEGREES_TO_RADIANS*R_EARTH_KM
+        x = (g_lat-lat)*DEGREES_TO_RADIANS*R_PLANET_KM
         call get_Gaussianweight(x,sigma_h,g_weight)
         g_dvs = g_dvs*g_weight
         weight_prod = g_weight
 
-        x = (g_lon-lon)*DEGREES_TO_RADIANS*R_EARTH_KM
+        x = (g_lon-lon)*DEGREES_TO_RADIANS*R_PLANET_KM
         call get_Gaussianweight(x,sigma_h,g_weight)
         g_dvs = g_dvs*g_weight
         weight_prod = weight_prod * g_weight
@@ -482,7 +491,7 @@
 
   double precision:: x,sigma,weight
 
-  double precision,parameter:: one_over2pisqrt = 0.3989422804014327
+  !double precision,parameter:: one_over2pisqrt = 0.3989422804014327
 
   ! normalized version
   !weight = one_over2pisqrt*exp(-0.5*x*x/(sigma*sigma))/sigma
@@ -501,14 +510,16 @@
                           iregion_code,xixstore,xiystore,xizstore, &
                           etaxstore,etaystore,etazstore, &
                           gammaxstore,gammaystore,gammazstore, &
-                          xstore,ystore,zstore,rhostore,dvpstore, &
+                          xstore,ystore,zstore,rhostore, &
                           kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-                          nspec,HETEROGEN_3D_MANTLE, &
+                          nspec, &
                           NEX_XI,NCHUNKS,ABSORBING_CONDITIONS)
 
 ! smooth model parameters
 
   use constants
+  use shared_parameters, only: R_PLANET,R_PLANET_KM
+
   use model_ppm_par, only: &
     PPM_maxlat,PPM_maxlon,PPM_minlat,PPM_minlon,PPM_maxdepth,PPM_mindepth
 
@@ -521,7 +532,6 @@
   integer nspec,nspec_stacey,NCHUNKS
 
   logical ABSORBING_CONDITIONS
-  logical HETEROGEN_3D_MANTLE
 
 ! arrays with Jacobian matrix
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
@@ -533,7 +543,7 @@
   double precision zstore(NGLLX,NGLLY,NGLLZ,nspec)
 
 ! for anisotropy
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: rhostore,dvpstore,kappavstore,kappahstore, &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: rhostore,kappavstore,kappahstore, &
         muvstore,muhstore,eta_anisostore
 
 ! Stacey
@@ -610,7 +620,7 @@
 
 
   sizeprocs = NCHUNKS*NPROC_XI*NPROC_ETA
-  element_size = (TWO_PI*R_EARTH/1000.d0)/(4*NEX_XI)
+  element_size = (TWO_PI*R_PLANET/1000.d0)/(4*NEX_XI)
 
   if (myrank == 0) then
     write(IMAIN, *) "model smoothing defaults:"
@@ -624,12 +634,12 @@
   if (nchunks == 0) call exit_mpi(myrank,'no chunks')
 
   element_size = element_size * 1000  ! e.g. 9 km on the surface, 36 km at CMB
-  element_size = element_size / R_EARTH
+  element_size = element_size / R_PLANET
 
   sigma_h = sigma_h * 1000.0 ! m
-  sigma_h = sigma_h / R_EARTH ! scale
+  sigma_h = sigma_h / R_PLANET ! scale
   sigma_v = sigma_v * 1000.0 ! m
-  sigma_v = sigma_v / R_EARTH ! scale
+  sigma_v = sigma_v / R_PLANET ! scale
 
   sigma_h2 = sigma_h ** 2
   sigma_v2 = sigma_v ** 2
@@ -793,9 +803,6 @@
       ks_muv(:,:,:,:) = muvstore(:,:,:,:)
       ks_muh(:,:,:,:) = muhstore(:,:,:,:)
       ks_eta(:,:,:,:) = eta_anisostore(:,:,:,:)
-      if (HETEROGEN_3D_MANTLE) then
-        ks_dvp(:,:,:,:) = dvpstore(:,:,:,:)
-      endif
       if (ABSORBING_CONDITIONS) then
         if (iregion_code == IREGION_CRUST_MANTLE) then
           ks_rhovp(:,:,:,1:nspec_stacey) = rho_vp(:,:,:,1:nspec_stacey)
@@ -901,7 +908,7 @@
         call get_distance_vec(dist_h,dist_v,cx0(ispec),cy0(ispec),cz0(ispec), &
                               cx(ispec2),cy(ispec2),cz(ispec2))
 
-        ! note: distances and sigmah, sigmav are normalized by R_EARTH
+        ! note: distances and sigmah, sigmav are normalized by R_PLANET
 
         ! checks distance between centers of elements
         if (dist_h > sigma_h3 .or. dist_v > sigma_v3 ) cycle
@@ -959,15 +966,15 @@
   maxdepth = PPM_maxdepth
   mindepth = PPM_mindepth
 
-  margin_v = sigma_v*R_EARTH/1000.0 ! in km
-  margin_h = sigma_h*R_EARTH/1000.0 * 180.0/(R_EARTH_KM*PI) ! in degree
+  margin_v = sigma_v*R_PLANET/1000.0 ! in km
+  margin_h = sigma_h*R_PLANET/1000.0 * 180.0/(R_PLANET_KM*PI) ! in degree
 
   ! computes the smoothed values
   do ispec = 1, nspec
 
     ! depth of given radius (in km)
     call xyz_2_rthetaphi(cx0(ispec),cy0(ispec),cz0(ispec),radius,theta,phi)
-    r_depth = R_EARTH_KM - radius*R_EARTH_KM  ! radius is normalized between [0,1]
+    r_depth = R_PLANET_KM - radius*R_PLANET_KM  ! radius is normalized between [0,1]
     if (r_depth >= maxdepth+margin_v .or. r_depth+margin_v < mindepth) cycle
 
     lat=(PI/2.0d0-theta)*180.0d0/PI
@@ -996,9 +1003,6 @@
             muvstore(i,j,k,ispec) = tk_muv(i,j,k,ispec) / bk(i,j,k,ispec)
             muhstore(i,j,k,ispec) = tk_muh(i,j,k,ispec) / bk(i,j,k,ispec)
             eta_anisostore(i,j,k,ispec) = tk_eta(i,j,k,ispec) / bk(i,j,k,ispec)
-            if (HETEROGEN_3D_MANTLE) then
-              dvpstore(i,j,k,ispec) = tk_dvp(i,j,k,ispec) / bk(i,j,k,ispec)
-            endif
           endif
 
         enddo
@@ -1012,7 +1016,7 @@
 
         ! depth of given radius (in km)
         call xyz_2_rthetaphi(cx0(ispec),cy0(ispec),cz0(ispec),radius,theta,phi)
-        r_depth = R_EARTH_KM - radius*R_EARTH_KM  ! radius is normalized between [0,1]
+        r_depth = R_PLANET_KM - radius*R_PLANET_KM  ! radius is normalized between [0,1]
         if (r_depth >= maxdepth+margin_v .or. r_depth+margin_v < mindepth) cycle
 
         lat=(PI/2.0d0-theta)*180.0d0/PI

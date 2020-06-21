@@ -79,7 +79,7 @@ void FC_FUNC_ (prepare_constants_device,
                                           int *NSOURCES, int *nsources_local,
                                           realw *h_sourcearrays,
                                           int *h_islice_selected_source, int *h_ispec_selected_source,
-                                          int *nrec, int *nrec_local, int *nadj_rec_local,
+                                          int *nrec, int *nrec_local,
                                           int *h_number_receiver_global,
                                           int *h_islice_selected_rec, int *h_ispec_selected_rec,
                                           int *NSPEC_CRUST_MANTLE, int *NGLOB_CRUST_MANTLE,
@@ -96,12 +96,15 @@ void FC_FUNC_ (prepare_constants_device,
                                           int *PARTIAL_PHYS_DISPERSION_ONLY_f, int *USE_3D_ATTENUATION_ARRAYS_f,
                                           int *COMPUTE_AND_STORE_STRAIN_f,
                                           int *ANISOTROPIC_3D_MANTLE_f, int *ANISOTROPIC_INNER_CORE_f,
-                                          int *SAVE_BOUNDARY_MESH_f,
+                                          int *SAVE_KERNELS_OC_f,
+                                          int *SAVE_KERNELS_IC_f,
+                                          int *SAVE_KERNELS_BOUNDARY_f,
                                           int *USE_MESH_COLORING_GPU_f,
                                           int *ANISOTROPIC_KL_f, int *APPROXIMATE_HESS_KL_f,
-                                          realw *deltat_f, realw *b_deltat_f,
+                                          realw *deltat_f,
                                           int *GPU_ASYNC_COPY_f,
-                                          double * h_xir,double * h_etar,double * h_gammar,double * h_nu ) {
+                                          double * h_hxir_store,double * h_hetar_store,double * h_hgammar_store,double * h_nu,
+                                          int *SAVE_SEISMOGRAMS_STRAIN_f) {
 
   TRACE ("prepare_constants_device");
 
@@ -132,6 +135,18 @@ void FC_FUNC_ (prepare_constants_device,
   // MPI process rank
   mp->myrank = *myrank_f;
 
+  // simulation type
+  mp->simulation_type = *SIMULATION_TYPE;
+  mp->noise_tomography = *NOISE_TOMOGRAPHY;
+
+  if (mp->simulation_type != 1 && mp->simulation_type != 2 && mp->simulation_type != 3 ) {
+    exit_on_error ("SIMULATION_TYPE must be set to 1,2 or 3 for GPU devices; please re-compile");
+  }
+  if (mp->noise_tomography != 0 && mp->noise_tomography != 1 && mp->noise_tomography != 2 && mp->noise_tomography != 3 ) {
+    exit_on_error ("NOISE_TOMOGRAPHY must be set to 0,1,2 or 3 for GPU devices; please re-compile");
+  }
+
+
 #ifdef USE_CUDA
   if (run_cuda) {
     // setup two streams, one for compute and one for host<->device memory copies
@@ -148,6 +163,50 @@ void FC_FUNC_ (prepare_constants_device,
     print_CUDA_error_if_any( cudaStreamCreate(&mp->compute_stream), 101);
     // copy stream (needed to transfer MPI buffers)
     if (GPU_ASYNC_COPY) print_CUDA_error_if_any( cudaStreamCreate(&mp->copy_stream), 102);
+
+    // graphs
+#ifdef USE_CUDA_GRAPHS
+    // CUDA graphs (version >= 10)
+    //
+    // we will create graphs for updating velocity/accelerations after the main iphase-loop of the stiffness calculations.
+    // those kernels are very small (multiply accel, ocean coupling, velocity update),
+    // thus launching each one separately creates an overhead.
+    // we will capture 2 graphs for elastic and acoustic updates and call the graphs instead.
+    //
+    // experimental feature
+    //
+    // initializes
+    mp->init_graph_elastic = 0;
+    mp->use_graph_call_elastic = 0;
+    mp->init_graph_acoustic = 0;
+    mp->use_graph_call_acoustic = 0;
+    mp->init_graph_norm = 0;
+    mp->use_graph_call_norm = 0;
+    mp->init_graph_norm_strain = 0;
+    mp->use_graph_call_norm_strain = 0;
+    // turns graphs on for only for forward runs for now...
+    //
+    // first, we set init_graph_** to capture cuda kernel calls. after capturing the first time we met these calls,
+    // we will set use_graph_call_** to true to then use the graph launch instead of explicit kernel calls.
+    if (mp->simulation_type == 1){
+      // initializes graph setup
+      mp->init_graph_elastic = 1;       // elastic veloc update graph
+      mp->use_graph_call_elastic = 0;
+      mp->init_graph_acoustic = 1;      // acoustic veloc update graph
+      mp->use_graph_call_acoustic = 0;
+      // debug
+      //if (mp->myrank == 0) printf("Graph: using CUDA graph\n");
+      if (GPU_ASYNC_COPY){
+        // check norm and norm strain graphs require async copies between host-device
+        mp->init_graph_norm = 1;              // check norm graph
+        mp->use_graph_call_norm = 0;
+        mp->init_graph_norm_strain = 1;       // check strain norm graph
+        mp->use_graph_call_norm_strain = 0;
+        //debug
+        //if (mp->myrank == 0) printf("Graph: using CUDA graph for stability check of norms of wavefield and strain\n");
+      }
+    }
+#endif
   }
 #endif
 
@@ -235,10 +294,6 @@ void FC_FUNC_ (prepare_constants_device,
   mp->NGLOB_INNER_CORE = *NGLOB_INNER_CORE;
   mp->NSPEC_INNER_CORE_STRAIN_ONLY = *NSPEC_INNER_CORE_STRAIN_ONLY;
 
-  // simulation type
-  mp->simulation_type = *SIMULATION_TYPE;
-  mp->noise_tomography = *NOISE_TOMOGRAPHY;
-
   // simulation flags initialization
   mp->save_forward = *SAVE_FORWARD_f;
   mp->absorbing_conditions = *ABSORBING_CONDITIONS_f;
@@ -255,7 +310,10 @@ void FC_FUNC_ (prepare_constants_device,
   mp->compute_and_store_strain = *COMPUTE_AND_STORE_STRAIN_f;
   mp->anisotropic_3D_mantle = *ANISOTROPIC_3D_MANTLE_f;
   mp->anisotropic_inner_core = *ANISOTROPIC_INNER_CORE_f;
-  mp->save_boundary_mesh = *SAVE_BOUNDARY_MESH_f;
+
+  mp->save_kernels_oc = *SAVE_KERNELS_OC_f;
+  mp->save_kernels_ic = *SAVE_KERNELS_IC_f;
+  mp->save_kernels_boundary = *SAVE_KERNELS_BOUNDARY_f;
 
   mp->anisotropic_kl = *ANISOTROPIC_KL_f;
   mp->approximate_hess_kl = *APPROXIMATE_HESS_KL_f;
@@ -297,41 +355,39 @@ void FC_FUNC_ (prepare_constants_device,
 
   // receiver stations
   // note that:   size (number_receiver_global) = nrec_local
-  //                   size (ispec_selected_rec) = nrec
+  //              size (ispec_selected_rec) = nrec
   // number of receiver located in this partition
-
   mp->nrec_local = *nrec_local;
   if (mp->nrec_local > 0) {
     gpuCreateCopy_todevice_int (&mp->d_number_receiver_global, h_number_receiver_global, mp->nrec_local);
     // for seismograms
     if (mp->simulation_type == 1 || mp->simulation_type == 3 ) {
-
+      // forward/kernel simulations
       realw * xir    = (realw *)malloc(NGLLX * mp->nrec_local*sizeof(realw));
       realw * etar   = (realw *)malloc(NGLLX * mp->nrec_local*sizeof(realw));
       realw * gammar = (realw *)malloc(NGLLX * mp->nrec_local*sizeof(realw));
-      int i;
-      for (i=0;i<NGLLX * mp->nrec_local;i++){
-        xir[i]    = (realw)h_xir[i];
-        etar[i]   = (realw)h_etar[i];
-        gammar[i] = (realw)h_gammar[i];
+      // converts to double to realw arrays, assumes NGLLX == NGLLY == NGLLZ
+      for (int i=0;i<NGLLX * mp->nrec_local;i++){
+        xir[i]    = (realw)h_hxir_store[i];
+        etar[i]   = (realw)h_hetar_store[i];
+        gammar[i] = (realw)h_hgammar_store[i];
       }
-      gpuCreateCopy_todevice_realw (&mp->d_xir   , xir     , NGLLX * mp->nrec_local);
-      gpuCreateCopy_todevice_realw (&mp->d_etar  , etar    , NGLLX * mp->nrec_local);
-      gpuCreateCopy_todevice_realw (&mp->d_gammar, gammar  , NGLLX * mp->nrec_local);
+      gpuCreateCopy_todevice_realw (&mp->d_hxir   , xir     , NGLLX * mp->nrec_local);
+      gpuCreateCopy_todevice_realw (&mp->d_hetar  , etar    , NGLLX * mp->nrec_local);
+      gpuCreateCopy_todevice_realw (&mp->d_hgammar, gammar  , NGLLX * mp->nrec_local);
       free(xir);
       free(etar);
       free(gammar);
 
+      // local seismograms
       gpuMalloc_realw (&mp->d_seismograms, NDIM * mp->nrec_local);
 
+      // orientation
       float* nu;
-      nu=(float*)malloc(9 * sizeof(float) * mp->nrec_local);
-      int irec_loc=0;
-
-      for (i=0;i < (*nrec);i++)
-      {
-        if ( mp->myrank == h_islice_selected_rec[i])
-        {
+      nu = (float*) malloc(9 * sizeof(float) * mp->nrec_local);
+      int irec_loc = 0;
+      for (int i=0;i < (*nrec);i++) {
+        if ( mp->myrank == h_islice_selected_rec[i]) {
          int j;
          for (j=0;j < 9;j++) nu[j + 9*irec_loc] = (float)h_nu[j + 9*i];
          irec_loc = irec_loc + 1;
@@ -339,9 +395,11 @@ void FC_FUNC_ (prepare_constants_device,
       }
       gpuCreateCopy_todevice_realw (&mp->d_nu, nu, 3*3* mp->nrec_local);
       free(nu);
+    }
 
-    } else if (mp->simulation_type == 2) {
-
+    if (mp->simulation_type == 2 || *SAVE_SEISMOGRAMS_STRAIN_f) {
+      // adjoint simulations or strain seismograms
+      // seismograms will still be computed on CPU, no need for interpolators hxi,heta,hgamma
       // for transferring values from GPU to CPU
       if (GPU_ASYNC_COPY) {
 #ifdef USE_OPENCL
@@ -367,43 +425,150 @@ void FC_FUNC_ (prepare_constants_device,
       if (mp->h_station_strain_field == NULL) { exit_on_error("h_station_strain_field not allocated \n"); }
     }
   }
-
   gpuCreateCopy_todevice_int (&mp->d_ispec_selected_rec, h_ispec_selected_rec, *nrec);
+  mp->nadj_rec_local = 0;
 
-  // receiver adjoint source arrays only used for noise and adjoint simulations
+  // for rotation and new attenuation
+  mp->deltat = *deltat_f;
+  mp->b_deltat = 0.f;
+
+  // initializes for rotational effects
+  mp->two_omega_earth = 0.f;
+  mp->b_two_omega_earth = 0.f;
+
+#ifdef USE_OPENCL
+  if (run_opencl) {
+    mp->has_last_copy_evt = 0;
+  }
+#endif
+
+  // buffer for norm checking at every timestamp
+  int blocksize = BLOCKSIZE_TRANSFER;
+
+  int size,size_padded;
+  int num_blocks_x,num_blocks_y;
+
+  // buffer for crust_mantle arrays has maximum size
+  int size_block_norm,size_block_norm_strain;
+
+  // norm arrays
+  size = mp->NGLOB_CRUST_MANTLE;
+
+  size_padded = ((int) ceil (((double) size) / ((double) blocksize))) * blocksize;
+  get_blocks_xy (size_padded / blocksize, &num_blocks_x, &num_blocks_y);
+
+  size_block_norm = num_blocks_x * num_blocks_y;
+
+  // norm strain arrays
+  if (mp->compute_and_store_strain){
+    size = MAX(mp->NGLOB_CRUST_MANTLE, NGLL3 * (mp->NSPEC_CRUST_MANTLE));
+
+    size_padded = ((int) ceil (((double) size) / ((double) blocksize))) * blocksize;
+    get_blocks_xy (size_padded / blocksize, &num_blocks_x, &num_blocks_y);
+
+    size_block_norm_strain = num_blocks_x * num_blocks_y;
+  } else{
+    // dummy
+    size_block_norm_strain = 1;
+  }
+
+  // creates buffer on GPU for maximum array values
+  gpuMalloc_realw (&mp->d_norm_max, 3 * size_block_norm);        // factor 3 for fluid/cm/ic
+  gpuMalloc_realw (&mp->d_norm_strain_max, 6 * size_block_norm_strain); // factor 6 for strain trace,xx,yy,..
+  // initializes values to zero
+  gpuMemset_realw (&mp->d_norm_max, 3 * size_block_norm, 0);
+  gpuMemset_realw (&mp->d_norm_strain_max, 6 * size_block_norm_strain, 0);
+
+  // creates pinned host buffer
+  if (GPU_ASYNC_COPY) {
+#ifdef USE_OPENCL
+    if (run_opencl) {
+        ALLOC_PINNED_BUFFER_OCL(norm_max, 3 * size_block_norm * sizeof(realw));
+        ALLOC_PINNED_BUFFER_OCL(norm_strain_max, 6 * size_block_norm_strain * sizeof(realw));
+      }
+#endif
+#ifdef USE_CUDA
+    if (run_cuda) {
+      // note: Allocate pinned buffers otherwise cudaMemcpyAsync() will behave like cudaMemcpy(), i.e. synchronously.
+      print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_norm_max), 3 * size_block_norm * sizeof(realw)),8001);
+      print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_norm_strain_max), 6 * size_block_norm_strain * sizeof(realw)),8002);
+      print_CUDA_error_if_any(cudaEventCreate(&mp->kernel_event),8003);
+    }
+#endif
+  } else {
+    mp->h_norm_max = (realw *) malloc (3 * size_block_norm * sizeof (realw));
+    if (mp->h_norm_max == NULL) exit_on_error ("h_norm_max not allocated\n");
+    mp->h_norm_strain_max = (realw *) malloc (6 * size_block_norm_strain * sizeof (realw));
+    if (mp->h_norm_strain_max == NULL) exit_on_error ("h_norm_strain_max not allocated\n");
+  }
+
+  // synchronizes gpu calls
+  gpuSynchronize();
+
+  GPU_ERROR_CHECKING ("prepare_constants_device");
+}
+
+
+/*----------------------------------------------------------------------------------------------- */
+
+
+extern EXTERN_LANG
+void FC_FUNC_ (prepare_constants_adjoint_device,
+               PREPARE_CONSTANTS_ADJOINT_DEVICE) (long *Mesh_pointer_f,
+                                                  realw *b_deltat_f,
+                                                  int *nadj_rec_local, int *h_number_adjsources_global,
+                                                  double * h_hxir_adjstore,
+                                                  double * h_hetar_adjstore,
+                                                  double * h_hgammar_adjstore) {
+
+  TRACE ("prepare_constants_adjoint_device");
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
+
+  // safety checks
+  if (mp->simulation_type != 2 && mp->simulation_type != 3)
+    exit_on_error ("prepare_constants_adjoint_device: invalid simulation type\n");
+
+  // backward run
+  if (mp->simulation_type == 3) {
+    mp->b_deltat = *b_deltat_f;
+  }
+
+  // receiver adjoint source arrays only (used for noise and adjoint simulations)
   // adjoint source arrays
-
   mp->nadj_rec_local = *nadj_rec_local;
   if (mp->nadj_rec_local > 0) {
     // adjoint simulations
-    // checks simulation flag
-    if (mp->simulation_type != 2 && mp->simulation_type != 3 )
-      exit_on_error ("prepare_constants_device: nadj_rec_local invalid with simulation type\n");
-
-    // prepares local irec array:
-    gpuMalloc_int (&mp->d_pre_computed_irec, mp->nadj_rec_local);
-
-    // the irec_local variable needs to be precomputed (as
-    // h_pre_comp..), because normally it is in the loop updating accel,
-    // and due to how it's incremented, it cannot be parallelized
-    int *h_pre_computed_irec = (int *) malloc (mp->nadj_rec_local * sizeof (int));
-    if (h_pre_computed_irec == NULL) exit_on_error ("h_pre_computed_irec not allocated\n");
-
-    // sets up local irec array
-    int irec_local = 0;
-    int irec;
-    for (irec = 0; irec < *nrec; irec++) {
-      if (mp->myrank == h_islice_selected_rec[irec]) {
-        irec_local++;
-        h_pre_computed_irec[irec_local-1] = irec;
-      }
+    if (mp->simulation_type == 2){
+      gpuCreateCopy_todevice_int (&mp->d_number_adjsources_global, h_number_adjsources_global, mp->nadj_rec_local);
+    }else{
+      mp->d_number_adjsources_global = gpuTakeRef(mp->d_number_receiver_global);
     }
-    if (irec_local != mp->nadj_rec_local) exit_on_error ("prepare_constants_device: irec_local not equal to nadj_rec_local\n");
 
-    // copies values onto GPU
-    gpuCopy_todevice_int (&mp->d_pre_computed_irec, h_pre_computed_irec, mp->nadj_rec_local);
-
-    free (h_pre_computed_irec);
+    if (mp->simulation_type == 2){
+      // adjoint simulations
+      // hxir for receivers and hxir_adj for adjoint source might be different
+      realw * xir_adj    = (realw *)malloc(NGLLX * mp->nadj_rec_local*sizeof(realw));
+      realw * etar_adj   = (realw *)malloc(NGLLX * mp->nadj_rec_local*sizeof(realw));
+      realw * gammar_adj = (realw *)malloc(NGLLX * mp->nadj_rec_local*sizeof(realw));
+      // converts to double to realw arrays, assumes NGLLX == NGLLY == NGLLZ
+      for (int i=0;i<NGLLX * mp->nadj_rec_local;i++){
+        xir_adj[i]    = (realw)h_hxir_adjstore[i];
+        etar_adj[i]   = (realw)h_hetar_adjstore[i];
+        gammar_adj[i] = (realw)h_hgammar_adjstore[i];
+      }
+      gpuCreateCopy_todevice_realw (&mp->d_hxir_adj   , xir_adj     , NGLLX * mp->nadj_rec_local);
+      gpuCreateCopy_todevice_realw (&mp->d_hetar_adj  , etar_adj    , NGLLX * mp->nadj_rec_local);
+      gpuCreateCopy_todevice_realw (&mp->d_hgammar_adj, gammar_adj  , NGLLX * mp->nadj_rec_local);
+      free(xir_adj);
+      free(etar_adj);
+      free(gammar_adj);
+    }else{
+      // kernel simulation
+      // adjoint source arrays and receiver arrays are the same, no need to allocate new arrays, just point to the existing ones
+      mp->d_hxir_adj = gpuTakeRef(mp->d_hxir);
+      mp->d_hetar_adj = gpuTakeRef(mp->d_hetar);
+      mp->d_hgammar_adj = gpuTakeRef(mp->d_hgammar);
+    }
 
     // temporary array to prepare extracted source array values
     if (GPU_ASYNC_COPY) {
@@ -426,44 +591,10 @@ void FC_FUNC_ (prepare_constants_device,
     gpuMalloc_realw (&mp->d_source_adjoint, mp->nadj_rec_local * NDIM );
   }
 
-  // for rotation and new attenuation
-  mp->deltat = *deltat_f;
-  if (mp->simulation_type == 3) {
-    mp->b_deltat = *b_deltat_f;
-  }
-
-  // initializes for rotational effects
-  mp->two_omega_earth = 0.f;
-  mp->b_two_omega_earth = 0.f;
-
-#ifdef USE_OPENCL
-  if (run_opencl) {
-    mp->has_last_copy_evt = 0;
-  }
-#endif
-
-  // buffer for norm checking at every timestamp
-  int blocksize = BLOCKSIZE_TRANSFER;
-
-  int size,size_padded;
-  int num_blocks_x,num_blocks_y;
-
-  // buffer for crust_mantle arrays has maximum size
-  if (mp->compute_and_store_strain){
-    size = MAX(mp->NGLOB_CRUST_MANTLE, NGLL3 * (mp->NSPEC_CRUST_MANTLE));
-  } else{
-    size = mp->NGLOB_CRUST_MANTLE;
-  }
-  size_padded = ((int) ceil (((double) size) / ((double) blocksize))) * blocksize;
-  get_blocks_xy (size_padded / blocksize, &num_blocks_x, &num_blocks_y);
-
-  // creates buffer on GPU for maximum array values
-  gpuMalloc_realw (&mp->d_norm_max, num_blocks_x * num_blocks_y);
-
   // synchronizes gpu calls
   gpuSynchronize();
 
-  GPU_ERROR_CHECKING ("prepare_constants_device");
+  GPU_ERROR_CHECKING ("prepare_constants_adjoint_device");
 }
 
 /*----------------------------------------------------------------------------------------------- */
@@ -486,7 +617,6 @@ void FC_FUNC_ (prepare_fields_rotation_device,
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // arrays only needed when rotation is required
-
   if (! mp->rotation) {exit_on_error("prepare_fields_rotation_device: rotation flag not properly initialized");}
 
   // checks array size
@@ -528,7 +658,8 @@ void FC_FUNC_ (prepare_fields_gravity_device,
                                                realw *minus_g_icb,
                                                realw *minus_g_cmb,
                                                double *RHO_BOTTOM_OC,
-                                               double *RHO_TOP_OC) {
+                                               double *RHO_TOP_OC,
+                                               double *R_EARTH_KM) {
 
   TRACE ("prepare_fields_gravity_device");
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
@@ -556,6 +687,7 @@ void FC_FUNC_ (prepare_fields_gravity_device,
   // constants
   mp->RHO_BOTTOM_OC = (realw) *RHO_BOTTOM_OC;
   mp->RHO_TOP_OC = (realw) *RHO_TOP_OC;
+  mp->R_EARTH_KM = (realw) *R_EARTH_KM;  // needed for both, gravity (crust/mantle,inner core) and non-gravity cases (outer core)
 
   GPU_ERROR_CHECKING ("prepare_fields_gravity_device");
 }
@@ -1434,19 +1566,19 @@ void FC_FUNC_ (prepare_crust_mantle_device,
     // no anisotropy
     // only needed if not anisotropic 3D mantle
 
-    // transverse isotropic elements
-
     // transverse isotropy flag
     gpuCreateCopy_todevice_int (&mp->d_ispec_is_tiso_crust_mantle, h_ispec_is_tiso, mp->NSPEC_CRUST_MANTLE);
 
-    // kappavstore, kappahstore
+    // isotropic elements
+    // kappavstore
     gpuMalloc_realw (&mp->d_kappavstore_crust_mantle, size_padded_iso);
-    gpuMalloc_realw (&mp->d_kappahstore_crust_mantle, size_padded_tiso);
-
-    // muvstore, muhstore
+    // muvstore
     gpuMalloc_realw (&mp->d_muvstore_crust_mantle, size_padded_iso);
-    gpuMalloc_realw (&mp->d_muhstore_crust_mantle, size_padded_tiso);
 
+    // transverse isotropic elements
+    // need additional kappah,muh and eta
+    gpuMalloc_realw (&mp->d_kappahstore_crust_mantle, size_padded_tiso);
+    gpuMalloc_realw (&mp->d_muhstore_crust_mantle, size_padded_tiso);
     // eta_anisostore
     gpuMalloc_realw (&mp->d_eta_anisostore_crust_mantle, size_padded_tiso);
 
@@ -1636,10 +1768,30 @@ void FC_FUNC_ (prepare_crust_mantle_device,
                                            NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
     }
 #endif
+
+    // muvstore (needed for attenuation)
+    gpuMalloc_realw (&mp->d_muvstore_crust_mantle, size_padded);
+    // transfer with padding
+#ifdef USE_OPENCL
+    if (run_opencl) {
+      for (int i = 0; i < mp->NSPEC_CRUST_MANTLE; i++) {
+        int offset = i * NGLL3_PADDED * sizeof (realw);
+        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_muvstore_crust_mantle.ocl, CL_FALSE, offset,
+                                       NGLL3*sizeof (realw), &h_muv[i*NGLL3], 0, NULL, NULL));
+      }
+    }
+#endif
+#ifdef USE_CUDA
+    if (run_cuda) {
+      // faster (small memcpy above have low bandwidth...)
+      print_CUDA_error_if_any(cudaMemcpy2D(mp->d_muvstore_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), h_muv,
+                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),48100);
+    }
+#endif
   }
 
   // needed for boundary kernel calculations
-  if (mp->simulation_type == 3 && mp->save_boundary_mesh) {
+  if (mp->simulation_type == 3 && mp->save_kernels_boundary) {
     gpuMalloc_realw (&mp->d_rhostore_crust_mantle, size_padded);
 
     int i;
@@ -2097,15 +2249,17 @@ void FC_FUNC_ (prepare_outer_core_device,
     mp->d_b_rmass_outer_core = gpuTakeRef(mp->d_rmass_outer_core);
 
     //kernels
-    size_t size = NGLL3 * (mp->NSPEC_OUTER_CORE);
+    if (mp->save_kernels_oc){
+      size_t size = NGLL3 * (mp->NSPEC_OUTER_CORE);
 
-    // density kernel
-    gpuMalloc_realw (&mp->d_rho_kl_outer_core, size);
-    gpuMemset_realw (&mp->d_rho_kl_outer_core, size, 0);
+      // density kernel
+      gpuMalloc_realw (&mp->d_rho_kl_outer_core, size);
+      gpuMemset_realw (&mp->d_rho_kl_outer_core, size, 0);
 
-    // isotropic kernel
-    gpuMalloc_realw (&mp->d_alpha_kl_outer_core, size);
-    gpuMemset_realw (&mp->d_alpha_kl_outer_core, size, 0);
+      // isotropic kernel
+      gpuMalloc_realw (&mp->d_alpha_kl_outer_core, size);
+      gpuMemset_realw (&mp->d_alpha_kl_outer_core, size, 0);
+    }
   }
 
   // mesh coloring
@@ -2311,7 +2465,7 @@ void FC_FUNC_ (prepare_inner_core_device,
   }
 
   // needed for boundary kernel calculations
-  if (mp->simulation_type == 3 && mp->save_boundary_mesh) {
+  if (mp->simulation_type == 3 && mp->save_kernels_boundary) {
     gpuMalloc_realw (&mp->d_rhostore_inner_core, size_padded);
 
 #ifdef USE_OPENCL
@@ -2466,20 +2620,21 @@ void FC_FUNC_ (prepare_inner_core_device,
       mp->d_b_rmassy_inner_core = gpuTakeRef(mp->d_rmassy_inner_core);
     }
 
-
     // kernels
-    size = NGLL3 * (mp->NSPEC_INNER_CORE);
+    if (mp->save_kernels_ic) {
+      size = NGLL3 * (mp->NSPEC_INNER_CORE);
 
-    // density kernel
-    gpuMalloc_realw (&mp->d_rho_kl_inner_core, size);
-    gpuMemset_realw (&mp->d_rho_kl_inner_core, size, 0);
+      // density kernel
+      gpuMalloc_realw (&mp->d_rho_kl_inner_core, size);
+      gpuMemset_realw (&mp->d_rho_kl_inner_core, size, 0);
 
-    // isotropic kernel
-    gpuMalloc_realw (&mp->d_alpha_kl_inner_core, size);
-    gpuMemset_realw (&mp->d_alpha_kl_inner_core, size, 0);
+      // isotropic kernel
+      gpuMalloc_realw (&mp->d_alpha_kl_inner_core, size);
+      gpuMemset_realw (&mp->d_alpha_kl_inner_core, size, 0);
 
-    gpuMalloc_realw (&mp->d_beta_kl_inner_core, size);
-    gpuMemset_realw (&mp->d_beta_kl_inner_core, size, 0);
+      gpuMalloc_realw (&mp->d_beta_kl_inner_core, size);
+      gpuMemset_realw (&mp->d_beta_kl_inner_core, size, 0);
+    }
   }
 
   // mesh coloring
@@ -2683,9 +2838,9 @@ void FC_FUNC_ (prepare_cleanup_device,
   if (mp->nrec_local > 0) {
     gpuFree (&mp->d_number_receiver_global);
     if (mp->simulation_type == 1 || mp->simulation_type == 3 ) {
-      gpuFree (&mp->d_xir);
-      gpuFree (&mp->d_etar);
-      gpuFree (&mp->d_gammar);
+      gpuFree (&mp->d_hxir);
+      gpuFree (&mp->d_hetar);
+      gpuFree (&mp->d_hgammar);
       gpuFree (&mp->d_nu);
       gpuFree (&mp->d_seismograms);
     }else {
@@ -2696,10 +2851,31 @@ void FC_FUNC_ (prepare_cleanup_device,
   gpuFree (&mp->d_ispec_selected_rec);
   if (mp->nadj_rec_local > 0) {
     gpuFree (&mp->d_source_adjoint);
-    gpuFree (&mp->d_pre_computed_irec);
+    if (mp->simulation_type == 2){
+      gpuFree (&mp->d_number_adjsources_global);
+      gpuFree (&mp->d_hxir_adj);
+      gpuFree (&mp->d_hetar_adj);
+      gpuFree (&mp->d_hgammar_adj);
+    }
   }
 
+  if (GPU_ASYNC_COPY){
+#ifdef USE_OPENCL
+    if (run_opencl){
+      RELEASE_PINNED_BUFFER_OCL (norm_max);
+      RELEASE_PINNED_BUFFER_OCL (norm_strain_max);
+    }
+#endif
+#ifdef USE_CUDA
+    if (run_cuda){
+      cudaFreeHost(mp->h_norm_max);
+      cudaFreeHost(mp->h_norm_strain_max);
+      cudaEventDestroy(mp->kernel_event);
+    }
+#endif
+  }
   gpuFree (&mp->d_norm_max);
+  gpuFree (&mp->d_norm_strain_max);
 
   //------------------------------------------
   // rotation arrays
@@ -2963,7 +3139,7 @@ void FC_FUNC_ (prepare_cleanup_device,
     gpuFree (&mp->d_c66store_crust_mantle);
   }
 
-  if (mp->simulation_type == 3 && mp->save_boundary_mesh) {
+  if (mp->simulation_type == 3 && mp->save_kernels_boundary) {
     gpuFree (&mp->d_rhostore_crust_mantle);
   }
 
@@ -3053,7 +3229,7 @@ void FC_FUNC_ (prepare_cleanup_device,
   // mass matrix
   gpuFree (&mp->d_rmass_outer_core);
 
-  if (mp->simulation_type == 3) {
+  if (mp->simulation_type == 3 && mp->save_kernels_oc) {
     gpuFree (&mp->d_rho_kl_outer_core);
     gpuFree (&mp->d_alpha_kl_outer_core);
   }
@@ -3082,7 +3258,7 @@ void FC_FUNC_ (prepare_cleanup_device,
     gpuFree (&mp->d_c44store_inner_core);
   }
 
-  if (mp->simulation_type == 3 && mp->save_boundary_mesh) {
+  if (mp->simulation_type == 3 && mp->save_kernels_boundary) {
     gpuFree (&mp->d_rhostore_inner_core);
   }
 
@@ -3121,9 +3297,11 @@ void FC_FUNC_ (prepare_cleanup_device,
       gpuFree (&mp->d_b_rmassy_inner_core);
     }
     // kernels
-    gpuFree (&mp->d_rho_kl_inner_core);
-    gpuFree (&mp->d_alpha_kl_inner_core);
-    gpuFree (&mp->d_beta_kl_inner_core);
+    if (mp->save_kernels_ic){
+      gpuFree (&mp->d_rho_kl_inner_core);
+      gpuFree (&mp->d_alpha_kl_inner_core);
+      gpuFree (&mp->d_beta_kl_inner_core);
+    }
   }
 
   //------------------------------------------
@@ -3175,6 +3353,25 @@ void FC_FUNC_ (prepare_cleanup_device,
   if (run_cuda) {
     cudaStreamDestroy(mp->compute_stream);
     if (GPU_ASYNC_COPY) cudaStreamDestroy(mp->copy_stream);
+    // graphs
+#ifdef USE_CUDA_GRAPHS
+    if (mp->use_graph_call_elastic) {
+      cudaGraphExecDestroy(mp->graphExec_elastic);
+      cudaGraphDestroy(mp->graph_elastic);
+    }
+    if (mp->use_graph_call_acoustic) {
+      cudaGraphExecDestroy(mp->graphExec_acoustic);
+      cudaGraphDestroy(mp->graph_acoustic);
+    }
+    if (mp->use_graph_call_norm) {
+      cudaGraphExecDestroy(mp->graphExec_norm);
+      cudaGraphDestroy(mp->graph_norm);
+    }
+    if (mp->use_graph_call_norm_strain) {
+      cudaGraphExecDestroy(mp->graphExec_norm_strain);
+      cudaGraphDestroy(mp->graph_norm_strain);
+    }
+#endif
   }
 #endif
 

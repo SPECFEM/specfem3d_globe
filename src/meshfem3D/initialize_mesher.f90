@@ -49,10 +49,10 @@
   call world_size(sizeprocs)
   call world_rank(myrank)
 
-! set the base pathname for output files
+  ! set the base pathname for output files
   OUTPUT_FILES = OUTPUT_FILES_BASE
 
-! open main output file, only written to by process 0
+  ! open main output file, only written to by process 0
   if (myrank == 0) then
     if (IMAIN /= ISTANDARD_OUTPUT) &
       open(unit=IMAIN,file=trim(OUTPUT_FILES)//'/output_mesher.txt',status='unknown')
@@ -67,7 +67,7 @@
     call flush_IMAIN()
   endif
 
-! get MPI starting time
+  ! get MPI starting time
   time_start = wtime()
 
   if (myrank == 0) then
@@ -86,6 +86,41 @@
 
   ! synchronizes processes
   call synchronize_all()
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*)
+    select case(PLANET_TYPE)
+    case (IPLANET_EARTH)
+      write(IMAIN,*) 'Planet: Earth'
+    case (IPLANET_MARS)
+      write(IMAIN,*) 'Planet: Mars'
+    case (IPLANET_MOON)
+      write(IMAIN,*) 'Natural satellite: Moon'
+    case default
+      call exit_MPI(myrank,'Invalid planet, type not recognized yet')
+    end select
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  ! additional initialization on this system (ADIOS,OpenMP,..)
+  call im_initialize_system()
+
+  end subroutine initialize_mesher
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine im_initialize_system()
+
+  use meshfem3D_par
+  use meshfem3D_models_par
+
+  use manager_adios
+
+  implicit none
 
   ! compute rotation matrix from Euler angles
   ANGULAR_WIDTH_XI_RAD = ANGULAR_WIDTH_XI_IN_DEGREES * DEGREES_TO_RADIANS
@@ -106,4 +141,10 @@
   ! OpenMP
   call init_openmp()
 
-  end subroutine initialize_mesher
+  ! synchronizes processes
+  call synchronize_all()
+
+  end subroutine im_initialize_system
+
+
+

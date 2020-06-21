@@ -24,8 +24,8 @@ module BOAST
       decl b_rotation = Real("B_rotation")
       decl source_euler_A = Real("source_euler_A")
       decl source_euler_B = Real("source_euler_B")
-
       comment()
+
       comment("  // store the source for the Euler scheme for A_rotation and B_rotation")
       if (get_lang == CL) then
         print sin_two_omega_t === sincos(two_omega_earth*time, cos_two_omega_t.address)
@@ -37,8 +37,8 @@ module BOAST
           print sin_two_omega_t === sin(two_omega_earth*time)
         end
       end
-
       comment()
+
       comment("  // time step deltat of Euler scheme is included in the source")
       print two_omega_deltat === deltat * two_omega_earth
 
@@ -50,8 +50,8 @@ module BOAST
 
       print dpotentialdx_with_rot[0] === dpotentialdxl + ( a_rotation*cos_two_omega_t + b_rotation*sin_two_omega_t)
       print dpotentialdy_with_rot[0] === dpotentialdyl + (-a_rotation*sin_two_omega_t + b_rotation*cos_two_omega_t)
-
       comment()
+
       comment("  // updates rotation term with Euler scheme (non-padded offset)")
       print d_A_array_rotation[tx + working_element*ngll3] === d_A_array_rotation[tx + working_element*ngll3] + source_euler_A
       print d_B_array_rotation[tx + working_element*ngll3] === d_B_array_rotation[tx + working_element*ngll3] + source_euler_B
@@ -59,11 +59,11 @@ module BOAST
     return p
   end
 
-  def BOAST::outer_core_impl_kernel_forward(ref = true, elem_per_thread = 1, mesh_coloring = false, textures_fields = false, textures_constants = false, unroll_loops = false, n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128, r_earth_km = 6371.0, coloring_min_nspec_outer_core = 1000)
-    return BOAST::outer_core_impl_kernel(true, ref, elem_per_thread, mesh_coloring, textures_fields, textures_constants, unroll_loops, n_gllx, n_gll2, n_gll3, n_gll3_padded, r_earth_km, coloring_min_nspec_outer_core)
+  def BOAST::outer_core_impl_kernel_forward(ref = true, elem_per_thread = 1, mesh_coloring = false, textures_fields = false, textures_constants = false, unroll_loops = false, n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128, coloring_min_nspec_outer_core = 1000)
+    return BOAST::outer_core_impl_kernel(true, ref, elem_per_thread, mesh_coloring, textures_fields, textures_constants, unroll_loops, n_gllx, n_gll2, n_gll3, n_gll3_padded, coloring_min_nspec_outer_core)
   end
 
-  def BOAST::outer_core_impl_kernel(forward, ref = true, elem_per_thread = 1, mesh_coloring = false, textures_fields = false, textures_constants = false, unroll_loops = false, n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128, r_earth_km = 6371.0, coloring_min_nspec_outer_core = 1000)
+  def BOAST::outer_core_impl_kernel(forward, ref = true, elem_per_thread = 1, mesh_coloring = false, textures_fields = false, textures_constants = false, unroll_loops = false, n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128, coloring_min_nspec_outer_core = 1000)
     push_env( :array_start => 0 )
     kernel = CKernel::new
     v = []
@@ -99,6 +99,7 @@ module BOAST
     v.push d_rstore                = Real("d_rstore",                :dir => :in, :restrict => true, :dim => [Dim(3), Dim()] )
     v.push d_d_ln_density_dr_table = Real("d_d_ln_density_dr_table", :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push d_minus_rho_g_over_kappa_fluid = Real("d_minus_rho_g_over_kappa_fluid", :dir => :in, :restrict => true, :dim => [Dim()] )
+    v.push r_earth_km              = Real( "R_EARTH_KM",             :dir => :in)
     v.push wgll_cube               = Real("wgll_cube",               :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push rotation                = Int( "ROTATION",                :dir => :in)
     v.push time                    = Real("time",                    :dir => :in)
@@ -112,7 +113,6 @@ module BOAST
     ngll2        = Int("NGLL2", :const => n_gll2)
     ngll3        = Int("NGLL3", :const => n_gll3)
     ngll3_padded = Int("NGLL3_PADDED", :const => n_gll3_padded)
-    rearth_km    = Int("R_EARTH_KM", :const => r_earth_km)
 
     use_mesh_coloring       = Int("USE_MESH_COLORING_GPU",   :const => mesh_coloring)
     use_textures_constants  = Int("USE_TEXTURES_CONSTANTS",  :const => textures_constants)
@@ -139,7 +139,7 @@ module BOAST
       get_output.print File::read("references/#{function_name}.cu".gsub("_forward","").gsub("_adjoint",""))
     elsif(get_lang == CL or get_lang == CUDA) then
       # header
-      make_specfem3d_header(:ngllx => n_gllx, :ngll2 => n_gll2, :ngll3 => n_gll3, :ngll3_padded => n_gll3_padded, :r_earth_km => r_earth_km,
+      make_specfem3d_header(:ngllx => n_gllx, :ngll2 => n_gll2, :ngll3 => n_gll3, :ngll3_padded => n_gll3_padded,
                             :coloring_min_nspec_outer_core => coloring_min_nspec_outer_core)
 
       #DEACTIVATE USE TEXTURES CONSTANTS
@@ -249,6 +249,7 @@ module BOAST
 
       decl sh_hprime_xx     = Real("sh_hprime_xx",     :local => true, :dim => [Dim(ngll2)] )
       decl sh_hprimewgll_xx = Real("sh_hprimewgll_xx", :local => true, :dim => [Dim(ngll2)] )
+      comment()
 
       print bx === get_group_id(1)*get_num_groups(0)+get_group_id(0)
 
@@ -298,15 +299,17 @@ module BOAST
         }
       }
       print barrier(:local)
+      comment()
 
 
-elem_per_thread.times { |elem_index|
-  if elem_per_thread > 1 then
-        print tx === get_local_id(0) + ngll3_padded * elem_index / elem_per_thread
-  end
+      elem_per_thread.times { |elem_index|
+        if elem_per_thread > 1 then
+          print tx === get_local_id(0) + ngll3_padded * elem_index / elem_per_thread
+        end
         print k === tx/ngll2
         print j === (tx-k*ngll2)/ngllx
         print i === tx - k*ngll2 - j*ngllx
+        comment()
 
         print If(active[elem_index]) {
           (0..2).each { |indx| print templ[indx] === 0.0 }
@@ -320,17 +323,21 @@ elem_per_thread.times { |elem_index|
           get_output.puts "#else"
             print for_loop
           get_output.puts "#endif"
+          comment()
+
           print offset === working_element*ngll3_padded + tx
           (0..2).each { |indx|
             print xil[indx]    === d_xi[indx][offset]
             print etal[indx]   === d_eta[indx][offset]
             print gammal[indx] === d_gamma[indx][offset]
           }
+          comment()
 
           print jacobianl === Expression("/", 1.0, xil[0]*(etal[1]*gammal[2] - etal[2]*gammal[1]) - xil[1]*(etal[0]*gammal[2] - etal[2]*gammal[0]) + xil[2]*(etal[0]*gammal[1] - etal[1]*gammal[0]))
           (0..2).each { |indx|
             print dpotentialdl[indx] === xil[indx]*templ[0] + etal[indx]*templ[1] + gammal[indx]*templ[2]
           }
+          comment()
 
           print If(rotation => lambda {
             print sub_kernel.call(tx,working_element,\
@@ -345,6 +352,7 @@ elem_per_thread.times { |elem_index|
             print dpotentialdx_with_rot === dpotentialdl[0]
             print dpotentialdy_with_rot === dpotentialdl[1]
           })
+          comment()
 
           print radius === d_rstore[0,iglob[elem_index]]
           print theta  === d_rstore[1,iglob[elem_index]]
@@ -364,7 +372,9 @@ elem_per_thread.times { |elem_index|
               print sin_phi   === sin(phi)
             end
           end
-          print int_radius === rint(radius * rearth_km * 10.0) - 1
+          print int_radius === rint(radius * r_earth_km * 10.0) - 1
+          comment()
+
           print If(!gravity => lambda {
             print grad_ln_rho[0] === sin_theta * cos_phi * d_d_ln_density_dr_table[int_radius]
             print grad_ln_rho[1] === sin_theta * sin_phi * d_d_ln_density_dr_table[int_radius]
@@ -381,21 +391,25 @@ elem_per_thread.times { |elem_index|
             print gravity_term[elem_index] === d_minus_rho_g_over_kappa_fluid[int_radius] * jacobianl * wgll_cube[tx] * \
                                    (dpotentialdx_with_rot*gl[0] + dpotentialdy_with_rot*gl[1] + dpotentialdl[2]*gl[2])
           })
+          comment()
 
           print s_temp[0][tx] === jacobianl*(   xil[0]*dpotentialdx_with_rot +    xil[1]*dpotentialdy_with_rot +    xil[2]*dpotentialdl[2])
           print s_temp[1][tx] === jacobianl*(  etal[0]*dpotentialdx_with_rot +   etal[1]*dpotentialdy_with_rot +   etal[2]*dpotentialdl[2])
           print s_temp[2][tx] === jacobianl*(gammal[0]*dpotentialdx_with_rot + gammal[1]*dpotentialdy_with_rot + gammal[2]*dpotentialdl[2])
         }
-}
-        print barrier(:local)
+      }
+      print barrier(:local)
+      comment()
 
-elem_per_thread.times { |elem_index|
-  if elem_per_thread > 1 then
-        print tx === get_local_id(0) + ngll3_padded * elem_index / elem_per_thread
-        print k === tx/ngll2
-        print j === (tx-k*ngll2)/ngllx
-        print i === tx - k*ngll2 - j*ngllx
-  end
+      elem_per_thread.times { |elem_index|
+        if elem_per_thread > 1 then
+          print tx === get_local_id(0) + ngll3_padded * elem_index / elem_per_thread
+          print k === tx/ngll2
+          print j === (tx-k*ngll2)/ngllx
+          print i === tx - k*ngll2 - j*ngllx
+        end
+        comment()
+
         print If(active[elem_index]) {
           (0..2).each { |indx| print templ[indx] === 0.0 }
           for_loop = For(l, 0, ngllx-1) {
@@ -408,6 +422,8 @@ elem_per_thread.times { |elem_index|
           get_output.puts "#else"
             print for_loop
           get_output.puts "#endif"
+          comment()
+
           print sum_terms === -(wgllwgll_yz[k*ngllx+j]*templ[0] + wgllwgll_xz[k*ngllx+i]*templ[1] + wgllwgll_xy[j*ngllx+i]*templ[2])
 
           print If(gravity) {
@@ -435,7 +451,7 @@ elem_per_thread.times { |elem_index|
             })
           get_output.puts "#endif"
         }
-}
+      }
       close p
     else
       raise "Unsupported language!"

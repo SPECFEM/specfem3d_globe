@@ -61,6 +61,17 @@
 
   module model_jp3d_par
 
+! The meaningful range of Zhao et al. (1994) model is as follows:
+!        latitude : 32 - 45 N
+!        longitude: 130-145 E
+!        depth    : 0  - 500 km
+! The deepest Moho beneath Japan is 40 km
+  double precision, parameter :: JP3D_LAT_MAX = 45.d0
+  double precision, parameter :: JP3D_LAT_MIN = 32.d0
+  double precision, parameter :: JP3D_LON_MAX = 145.d0
+  double precision, parameter :: JP3D_LON_MIN = 130.d0
+  double precision, parameter :: JP3D_DEP_MAX = 500.d0
+
   ! Japan 3D model (Zhao, 1994) constants
   integer, parameter :: MPA=42,MRA=48,MHA=21,MPB=42,MRB=48,MHB=18
   integer, parameter :: MKA=2101,MKB=2101
@@ -132,20 +143,26 @@
 
   integer :: ier
 
+  ! user info
+  if (myrank == 0) then
+    write(IMAIN,*) 'broadcast model: JP3D'
+    call flush_IMAIN()
+  endif
+
   ! allocates arrays
 ! model_jp3d_variables
   allocate(JP3DM_PNA(MPA),JP3DM_RNA(MRA),JP3DM_HNA(MHA), &
-          JP3DM_PNB(MPB),JP3DM_RNB(MRB),JP3DM_HNB(MHB), &
-          JP3DM_VELAP(MPA,MRA,MHA), &
-          JP3DM_VELBP(MPB,MRB,MHB), &
-          JP3DM_PN(51),JP3DM_RRN(63), &
-          JP3DM_DEPA(51,63),JP3DM_DEPB(51,63),JP3DM_DEPC(51,63), &
-          JP3DM_WV(8),JP3DM_VP(29),JP3DM_VS(29), &
-          JP3DM_RA(29),JP3DM_DEPJ(29), &
-          JP3DM_IPLOCA(MKA),JP3DM_IRLOCA(MKA), &
-          JP3DM_IHLOCA(MKA),JP3DM_IPLOCB(MKB), &
-          JP3DM_IRLOCB(MKB),JP3DM_IHLOCB(MKB), &
-          stat=ier)
+           JP3DM_PNB(MPB),JP3DM_RNB(MRB),JP3DM_HNB(MHB), &
+           JP3DM_VELAP(MPA,MRA,MHA), &
+           JP3DM_VELBP(MPB,MRB,MHB), &
+           JP3DM_PN(51),JP3DM_RRN(63), &
+           JP3DM_DEPA(51,63),JP3DM_DEPB(51,63),JP3DM_DEPC(51,63), &
+           JP3DM_WV(8),JP3DM_VP(29),JP3DM_VS(29), &
+           JP3DM_RA(29),JP3DM_DEPJ(29), &
+           JP3DM_IPLOCA(MKA),JP3DM_IRLOCA(MKA), &
+           JP3DM_IHLOCA(MKA),JP3DM_IPLOCB(MKB), &
+           JP3DM_IRLOCB(MKB),JP3DM_IHLOCB(MKB), &
+           stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating JP3D arrays')
 
   ! master reads in values
@@ -220,8 +237,8 @@
 
   subroutine read_jp3d_iso_zhao_model()
 
-  use constants
-  use model_jp3d_par
+!  use constants
+!  use model_jp3d_par
 
   implicit none
 
@@ -242,70 +259,97 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_jp3d_iso_zhao(radius,theta,phi,vp,vs,dvp,dvs,rho,found_crust)
+  subroutine model_jp3d_iso_zhao(radius,theta,phi,vp,vs,dvp,dvs,rho,moho,sediment,found_crust,is_inside_region)
 
-  use constants
+  use constants, only: ONE,PI,GRAV,DEGREES_TO_RADIANS
+  use shared_parameters, only: R_PLANET,RHOAV
+
   use model_jp3d_par
 
   implicit none
 
-  logical found_crust
-  double precision :: radius,theta,phi,vp,vs,dvs,dvp,rho
+  double precision,intent(in) :: radius,theta,phi
+  double precision,intent(inout) :: vp,vs,dvs,dvp,rho,moho,sediment
+  logical,intent(inout) ::  found_crust
+  logical,intent(out) ::  is_inside_region
+
+  ! local parameters
   double precision :: PE,RE,HE,H1,H2,H3,scaleval
   integer :: LAY
 
+  ! initializes perturbations
+  dvp = 0.d0
+  dvs = 0.d0
+  is_inside_region = .false.
 
-  found_crust = .false.
+  ! only defined within JP3D region
+  if (theta >= (PI/2.d0 - JP3D_LAT_MAX*DEGREES_TO_RADIANS) .and. theta <= (PI/2.d0 - JP3D_LAT_MIN*DEGREES_TO_RADIANS) &
+      .and. phi >= JP3D_LON_MIN*DEGREES_TO_RADIANS .and. phi <= JP3D_LON_MAX*DEGREES_TO_RADIANS) then
 
-  PE = theta
-  RE = phi
-  HE = (ONE - radius)*R_EARTH_KM
-!  calculate depths of the Conrad, the Moho and
-!  the plate boundary beneath the location (PHI,RAM)
-  CALL HLAY(PE,RE,H1,1)
-  CALL HLAY(PE,RE,H2,2)
-  CALL HLAY(PE,RE,H3,3)
-!   when LAY = 1, the focus is in the upper crust;
-!   when LAY = 2, the focus is in the lower crust;
-!   when LAY = 3, the focus is in the mantle wedge;
-!   when LAY = 4, the focus is beneath the plate boundary.
-  if (HE <= H1) then
-     LAY = 1
-     found_crust = .true.
-  else if (HE > H1 .and. HE <= H2) then
-     LAY = 2
-     found_crust = .true.
-  else if (HE > H2 .and. HE <= H3) then
-     LAY = 3
-  ELSE
-     LAY = 4
+    ! makes sure radius is fine
+    if (radius > (R_PLANET - JP3D_DEP_MAX*1000.d0)/R_PLANET) then
+      is_inside_region = .true.
+
+      found_crust = .false.
+
+      PE = theta
+      RE = phi
+      HE = (ONE - radius)*(R_PLANET/1000.d0)
+
+      !  calculate depths of the Conrad, the Moho and
+      !  the plate boundary beneath the location (PHI,RAM)
+      CALL HLAY(PE,RE,H1,1)
+      CALL HLAY(PE,RE,H2,2)
+      CALL HLAY(PE,RE,H3,3)
+      !   when LAY = 1, the focus is in the upper crust;
+      !   when LAY = 2, the focus is in the lower crust;
+      !   when LAY = 3, the focus is in the mantle wedge;
+      !   when LAY = 4, the focus is beneath the plate boundary.
+      if (HE <= H1) then
+         LAY = 1
+         found_crust = .true.
+      else if (HE > H1 .and. HE <= H2) then
+         LAY = 2
+         found_crust = .true.
+      else if (HE > H2 .and. HE <= H3) then
+         LAY = 3
+      ELSE
+         LAY = 4
+      endif
+
+      CALL VEL1D(HE,vp,LAY,1)
+      CALL VEL1D(HE,vs,LAY,2)
+      CALL VEL3(PE,RE,HE,dvp,LAY)
+
+      dvp = 0.01d0*dvp
+      dvs = 1.5d0*dvp
+      vp = vp*(1.0d0+dvp)
+      vs = vs*(1.0d0+dvs)
+
+      ! moho
+      moho = H2 * 1000.d0 / R_PLANET  ! non-dimensionalizes
+      ! no information about sediment layers
+      sediment = 0.d0
+
+      ! determine rho
+      if (LAY == 1) then
+        rho = 2.6
+      endif
+      if (LAY == 2) then
+        rho = 2.9
+      endif
+      if (LAY > 2) then
+        rho = 3.3+(vs-4.4)*0.66667
+      endif
+
+      ! non-dimensionalize
+      ! time scaling (s^{-1}) is done with scaleval
+      scaleval = dsqrt(PI*GRAV*RHOAV)
+      rho = rho*1000.0d0/RHOAV
+      vp = vp*1000.0d0/(R_PLANET*scaleval)
+      vs = vs*1000.0d0/(R_PLANET*scaleval)
+    endif
   endif
-
-  CALL VEL1D(HE,vp,LAY,1)
-  CALL VEL1D(HE,vs,LAY,2)
-  CALL VEL3(PE,RE,HE,dvp,LAY)
-
-  dvp = 0.01d0*dvp
-  dvs = 1.5d0*dvp
-  vp = vp*(1.0d0+dvp)
-  vs = vs*(1.0d0+dvs)
-
-! determine rho
-  if (LAY == 1) then
-     rho=2.6
-  endif
-  if (LAY == 2) then
-     rho=2.9
-  endif
-  if (LAY > 2) then
-     rho=3.3+(vs-4.4)*0.66667
-  endif
-! non-dimensionalize
-! time scaling (s^{-1}) is done with scaleval
-  scaleval=dsqrt(PI*GRAV*RHOAV)
-  rho=rho*1000.0d0/RHOAV
-  vp=vp*1000.0d0/(R_EARTH*scaleval)
-  vs=vs*1000.0d0/(R_EARTH*scaleval)
 
   end subroutine model_jp3d_iso_zhao
 
@@ -414,33 +458,40 @@
 !
 !-------------------------------------------------------------------------------------------------
 !
-      subroutine LOCX(PNX,RNX,HNX,NPX,NRX,NHX,MKX, &
+  subroutine LOCX(PNX,RNX,HNX,NPX,NRX,NHX,MKX, &
                  PLX,RLX,HLX,IPLOCX,IRLOCX,IHLOCX)
-     integer ::  NPX,NRX,NHX,MKX,IPLOCX(MKX),IRLOCX(MKX),IHLOCX(MKX)
-     integer ::  IPMAX,IP,IP1,IRMAX,IR,IR1,IH1,IH,IHMAX,I
-     double precision :: PNX(NPX),RNX(NRX),HNX(NHX)
-     double precision :: PLX,RLX,HLX,PNOW,RNOW,HNOW
+
+  integer ::  NPX,NRX,NHX,MKX,IPLOCX(MKX),IRLOCX(MKX),IHLOCX(MKX)
+  integer ::  IPMAX,IP,IP1,IRMAX,IR,IR1,IH1,IH,IHMAX,I
+  double precision :: PNX(NPX),RNX(NRX),HNX(NHX)
+  double precision :: PLX,RLX,HLX,PNOW,RNOW,HNOW
+
       PLX      = 1.0-PNX(1)*100.0
       IPMAX    = IDNINT(PNX(NPX)*100.0+PLX)
       IP       = 1
+
       DO 10 I  = 1,IPMAX
       IP1      = IP+1
       PNOW     = (FLOAT(I)-PLX)/100.0
       if (PNOW >= PNX(IP1))   IP = IP1
       IPLOCX(I)= IP
 10    continue
+
       RLX      = 1.0-RNX(1)*100.0
       IRMAX    = IDNINT(RNX(NRX)*100.0+RLX)
       IR       = 1
+
       DO 20 I  = 1,IRMAX
       IR1      = IR+1
       RNOW     = (FLOAT(I)-RLX)/100.0
       if (RNOW >= RNX(IR1))   IR = IR1
       IRLOCX(I)= IR
 20    continue
+
       HLX      = 1.0-HNX(1)
       IHMAX    = IDNINT(HNX(NHX)+HLX)
       IH       = 1
+
       DO 30 I  = 1,IHMAX
       IH1      = IH+1
       HNOW     = FLOAT(I)-HLX
@@ -448,7 +499,7 @@
       IHLOCX(I)= IH
 30    continue
 
-      END
+  END
 
 !
 !-------------------------------------------------------------------------------------------
@@ -456,7 +507,7 @@
 
   subroutine VEL3(PE,RE,HE,V,LAY)
 
-  use constants
+  use constants, only: DEGREES_TO_RADIANS
   use model_jp3d_par
 
   implicit none
@@ -468,6 +519,7 @@
   JP3DM_P     = 90.0-PE/DEGREES_TO_RADIANS
   JP3DM_R     = RE/DEGREES_TO_RADIANS
   JP3DM_H     = HE
+
   if (LAY <= 3) then
      CALL PRHF(JP3DM_IPLOCA,JP3DM_IRLOCA,JP3DM_IHLOCA,JP3DM_PLA,JP3DM_RLA,JP3DM_HLA, &
           JP3DM_PNA,JP3DM_RNA,JP3DM_HNA,MPA,MRA,MHA,MKA)
@@ -501,7 +553,6 @@
 
   subroutine VABPS(MP,MR,MH,V,VEL)
 
-  use constants
   use model_jp3d_par
 
   implicit none
@@ -524,6 +575,7 @@
   subroutine INTMAP(R,IRLOC,NNR,RL,IR)
 
   implicit none
+
   integer :: NNR,IRLOC(NNR),IS,IR
   double precision :: R,RL
 
@@ -539,7 +591,6 @@
   subroutine PRHF(IPLOCX,IRLOCX,IHLOCX,PLX,RLX,HLX, &
                       PNX,RNX,HNX,MPX,MRX,MHX,MKX)
 
-  use constants
   use model_jp3d_par
 
   implicit none
@@ -576,7 +627,7 @@
 
   subroutine HLAY(PE,RE,HE,IJK)
 
-  use constants
+  use constants, only: DEGREES_TO_RADIANS
   use model_jp3d_par
 
   implicit none
@@ -629,6 +680,7 @@
   subroutine LIMIT(C1,C2,C)
 
   implicit none
+
   double precision :: A1,A2,C1,C2,C
 
   A1    = dmin1(C1,C2)
@@ -644,7 +696,6 @@
 
   subroutine VEL1D(HE,V,LAY,IPS)
 
-  use constants
   use model_jp3d_par
 
   implicit none
@@ -677,7 +728,6 @@
 
   subroutine INPUTJP()
 
-  use constants
   use model_jp3d_par
 
   implicit none
@@ -713,7 +763,6 @@
 
   subroutine JPMODEL(IPS,H,V)
 
-  use constants
   use model_jp3d_par
 
   implicit none

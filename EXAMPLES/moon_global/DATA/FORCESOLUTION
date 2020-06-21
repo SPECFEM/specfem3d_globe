@@ -1,0 +1,11 @@
+FORCE 001                    ! meteoroid impact: May 13 (day 134), 1972, 08:46:42.5 +/- 1 s
+time shift:        0.0000    ! s
+half duration:     1.0       ! Half duration (s) for Gaussian/Step function, frequency (Hz) for Ricker
+latitude:          1.1       ! Degree (1.1 N, 16.9 W) +/- 0.2 degree 
+longitude:       -16.9       ! Degree
+depth:             0.0       ! km
+source time function: 0      ! 0=Gaussian function, 1=Ricker wavelet, 2=Step function
+factor force source:              5.d+9     ! Newton  (?)
+component dir vect source E:      0.d0      ! vertical impact (?)
+component dir vect source N:      0.d0       
+component dir vect source Z_UP:  -1.d0

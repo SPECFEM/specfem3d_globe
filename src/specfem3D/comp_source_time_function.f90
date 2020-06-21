@@ -70,6 +70,24 @@
 !
 
 
+  double precision function comp_source_time_function_mono(t,f0)
+
+  use constants, only: PI
+
+  implicit none
+
+  double precision,intent(in) :: t,f0
+
+  comp_source_time_function_mono = sin(2.d0 * PI * f0 * t)
+
+  ! monochromatic source time function
+
+  end function comp_source_time_function_mono
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
   double precision function comp_source_time_function_rickr(t,f0)
 
   use constants, only: PI

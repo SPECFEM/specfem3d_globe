@@ -28,11 +28,12 @@
 
 module postprocess_par
 
-  use shared_input_parameters, only: LOCAL_PATH
-
   use constants, only: CUSTOM_REAL,MAX_STRING_LEN, &
     NGLLX,NGLLY,NGLLZ,IIN,IOUT, &
-    FOUR_THIRDS,R_EARTH_KM,GAUSSALPHA,GAUSSBETA
+    FOUR_THIRDS,GAUSSALPHA,GAUSSBETA, &
+    myrank
+
+  use shared_parameters, only: LOCAL_PATH,R_PLANET_KM
 
   implicit none
 
@@ -40,7 +41,7 @@ module postprocess_par
   include "OUTPUT_FILES/values_from_mesher.h"
 
   ! maximum number of kernel names (comma-separated e.g. vsv,vsh,vpv,vph,eta,rho -> 6 kernel names)
-  integer,parameter :: MAX_KERNEL_NAMES = 255
+  integer,parameter :: MAX_KERNEL_NAMES = 24
 
   ! maximum number of kernel directory paths (e.g. for summing kernels from different events)
   integer,parameter :: MAX_KERNEL_PATHS = 65535
@@ -52,9 +53,6 @@ module postprocess_par
   real(kind=CUSTOM_REAL), dimension(:),allocatable :: x, y, z
   integer, dimension(:,:,:,:),allocatable :: ibool
   logical, dimension(:),allocatable :: ispec_is_tiso
-
-  ! MPI process
-  integer :: myrank,sizeprocs
 
 end module postprocess_par
 

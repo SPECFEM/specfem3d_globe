@@ -32,7 +32,9 @@
 
   program xcreate_movie_AVS_DX
 
-  use constants
+  use constants, only: &
+    CUSTOM_REAL,MAX_STRING_LEN,IOUT,NGLLX,NGLLY,NGNOD2D_AVS_DX,PI_OVER_TWO,RADIANS_TO_DEGREES
+
   use shared_parameters, only: &
     NEX_XI,NEX_ETA,NSTEP,NTSTEP_BETWEEN_FRAMES, &
     NCHUNKS,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
@@ -51,12 +53,12 @@
 ! threshold in percent of the maximum below which we cut the amplitude
   real(kind=CUSTOM_REAL), parameter :: THRESHOLD = 1._CUSTOM_REAL / 100._CUSTOM_REAL
 
-! flag to apply non linear scaling to normalized norm of displacement
-  logical, parameter :: NONLINEAR_SCALING = .false.
-
 ! uses fixed max_value to normalize instead of max of current wavefield
   logical, parameter :: FIX_SCALING = .false.
   real,parameter:: MAX_VALUE = 1.0
+
+! flag to apply non linear scaling to normalized norm of displacement
+  logical, parameter :: NONLINEAR_SCALING = .false.
 
 ! coefficient of power law used for non linear scaling
   real(kind=CUSTOM_REAL), parameter :: POWER_SCALING = 0.30_CUSTOM_REAL
@@ -579,9 +581,9 @@
       if (NONLINEAR_SCALING) then
         print *,'nonlinear scaling... '
         where(field_display(:) >= 0.)
-          field_display = field_display ** POWER_SCALING
+          field_display(:) = field_display(:) ** POWER_SCALING
         elsewhere
-          field_display = - abs(field_display) ** POWER_SCALING
+          field_display(:) = - abs(field_display(:)) ** POWER_SCALING
         endwhere
       endif
 
@@ -873,8 +875,6 @@
   use shared_parameters
 
   implicit none
-
-  include "OUTPUT_FILES/values_from_mesher.h"
 
   print *
   print *,'reading parameter file'
