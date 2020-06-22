@@ -422,6 +422,9 @@
     ! approximate Hessian
     if (APPROXIMATE_HESS_KL) then
       allocate(hess_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
+      allocate(hess_kl_rho_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
+      allocate(hess_kl_kappa_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
+      allocate(hess_kl_mu_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'Error allocating Hessian')
     endif
 
@@ -915,6 +918,9 @@
   ! approximate Hessian
   if (APPROXIMATE_HESS_KL) then
     hess_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
+    hess_kl_rho_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
+    hess_kl_kappa_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
+    hess_kl_mu_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
   endif
 
   ! For anisotropic kernels (in crust_mantle only)

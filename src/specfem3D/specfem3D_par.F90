@@ -662,6 +662,10 @@ module specfem_par_crustmantle
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: cijkl_kl_crust_mantle
   ! approximate Hessian
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: hess_kl_crust_mantle
+  ! approximate Hessian using rho, kappa and mu parametrization (diagonal part only)
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: hess_kl_rho_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: hess_kl_kappa_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: hess_kl_mu_crust_mantle
 
   ! Boundary Mesh and Kernels
   integer, dimension(:), allocatable :: ibelm_moho_top,ibelm_moho_bot
