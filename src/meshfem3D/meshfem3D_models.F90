@@ -354,8 +354,13 @@
         ! calculates isotropic values
         vp = sqrt(((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
                   + (8.d0 - 8.d0*eta_aniso)*vsv*vsv)/15.d0)
-        vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
+        if (iregion_code == IREGION_OUTER_CORE) then
+            ! fluid with zero shear speed
+            vs = 0.d0
+        else
+            vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
                   + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0)
+        end if
 
         !daniel todo:
         ! specific 3D models with PREM references which would become too fast at shorter periods ( < 40s Love waves)
@@ -396,9 +401,13 @@
       ! calculates isotropic values
       vp = sqrt(((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
                 + (8.d0 - 8.d0*eta_aniso)*vsv*vsv)/15.d0)
-      vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
+      if (iregion_code == IREGION_OUTER_CORE) then
+          ! fluid with zero shear speed
+          vs = 0.d0
+      else
+          vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
                 + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0)
-
+      end if      
       if (.not. TRANSVERSE_ISOTROPY) then
         if (.not. (MODEL_3D_MANTLE_PERTUBATIONS .and. iregion_code == IREGION_CRUST_MANTLE)) then
           ! this case here is only executed for 1D_ref_iso
@@ -716,7 +725,7 @@
             ! isotropic average (considers anisotropic parameterization eta,vsv,vsh,vpv,vph)
             vp = sqrt(((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
                       + (8.d0 - 8.d0*eta_aniso)*vsv*vsv)/15.d0)
-            vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
+            vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv & 
                       + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0)
             vpv = vp
             vph = vp
@@ -819,11 +828,11 @@
                                   vpv,vph,vsv,vsh,rho,eta_aniso)
       ! converts to isotropic values
       if (.not. TRANSVERSE_ISOTROPY) then
-        ! converts further to iso
+        ! converts further to iso        
         vp = sqrt( ((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
-                  + (8.d0 - 8.d0*eta_aniso)*vsv*vsv)/15.d0 )
+                  + (8.d0 - 8.d0*eta_aniso)*vsv*vsv)/15.d0 )        
         vs = sqrt( ((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
-                          + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0 )
+                  + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0 )
         vpv = vp
         vph = vp
         vsv = vs
@@ -892,8 +901,7 @@
         vp = sqrt( ((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
                   + (8.d0 - 8.d0*eta_aniso)*vsv*vsv)/15.d0 )
         vs = sqrt( ((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
-                          + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0 )
-
+                  + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0 )
         ! fills the rest of the mantle with the isotropic model
         !
         ! note: no rotation needed as for isotropic case, there is no pre-defined symmetry axis
@@ -996,8 +1004,7 @@
         vp = sqrt( ((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
                   + (8.d0 - 8.d0*eta_aniso)*vsv*vsv)/15.d0 )
         vs = sqrt( ((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
-                          + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0 )
-
+                  + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0 )
         c11 = rho*vp*vp
         c12 = rho*(vp*vp - 2.d0*vs*vs)
         c13 = c12
