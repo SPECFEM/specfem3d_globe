@@ -47,6 +47,8 @@
 !! x being the variable name inside the code.
 #ifdef __INTEL_COMPILER
 #define STRINGIFY_VAR(a) #a, a
+#elif __PGI
+#define STRINGIFY_VAR(a) #a, a
 #else
 #define STRINGIFY_VAR(a) "a", a
 #endif
