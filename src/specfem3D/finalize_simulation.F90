@@ -313,9 +313,9 @@
   if (SIMULATION_TYPE == 3) then
     if (APPROXIMATE_HESS_KL) then
       deallocate(hess_kl_crust_mantle)
-      deallocate(hess_kl_rho_crust_mantle)
-      deallocate(hess_kl_kappa_crust_mantle)
-      deallocate(hess_kl_mu_crust_mantle)
+      deallocate(hess_rho_kl_crust_mantle)
+      deallocate(hess_kappa_kl_crust_mantle)
+      deallocate(hess_mu_kl_crust_mantle)
     endif
     deallocate(beta_kl_outer_core)
   endif

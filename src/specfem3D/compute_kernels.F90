@@ -860,7 +860,7 @@
 
   implicit none
 
-  logical :: USE_SOURCE_RECEIVER_HESSIAN = .False.
+  logical, parameter :: USE_SOURCE_RECEIVER_HESSIAN = .False.
   real(kind=CUSTOM_REAL), dimension(3, 3) :: veloc_deriv, b_veloc_deriv
   real(kind=CUSTOM_REAL) :: hess_rho, hess_kappa, hess_mu
 
@@ -951,12 +951,12 @@
 
         endif
 
-        hess_kl_rho_crust_mantle(INDEX_IJK, ispec) = &
-          hess_kl_rho_crust_mantle(INDEX_IJK, ispec) + deltat * hess_rho
-        hess_kl_kappa_crust_mantle(INDEX_IJK, ispec) = &
-          hess_kl_kappa_crust_mantle(INDEX_IJK, ispec) + deltat * hess_rho
-        hess_kl_mu_crust_mantle(INDEX_IJK, ispec) = &
-          hess_kl_mu_crust_mantle(INDEX_IJK, ispec) + deltat * hess_rho
+        hess_rho_kl_crust_mantle(INDEX_IJK, ispec) = &
+          hess_rho_kl_crust_mantle(INDEX_IJK, ispec) + deltat * hess_rho
+        hess_kappa_kl_crust_mantle(INDEX_IJK, ispec) = &
+          hess_kappa_kl_crust_mantle(INDEX_IJK, ispec) + deltat * hess_rho
+        hess_mu_kl_crust_mantle(INDEX_IJK, ispec) = &
+          hess_mu_kl_crust_mantle(INDEX_IJK, ispec) + deltat * hess_rho
 
       ENDDO_LOOP_IJK
 

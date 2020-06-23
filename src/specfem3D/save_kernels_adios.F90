@@ -246,7 +246,17 @@
     if (APPROXIMATE_HESS_KL) then
       !call save_kernels_Hessian()
       local_dim = NSPEC_CRUST_MANTLE_ADJOINT* NGLLX * NGLLY * NGLLZ
-      call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, '', STRINGIFY_VAR(hess_kl_crust_mantle))
+      call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, '', &
+                                       STRINGIFY_VAR(hess_kl_crust_mantle))
+
+      call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, '', &
+                                       STRINGIFY_VAR(hess_rho_kl_crust_mantle))
+
+      call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, '', &
+                                       STRINGIFY_VAR(hess_kappa_kl_crust_mantle))
+
+      call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, '', &
+                                       STRINGIFY_VAR(hess_mu_kl_crust_mantle))
     endif
   endif
 
@@ -637,6 +647,15 @@
   ! stores into file
   call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs_adios, local_dim, &
                                    STRINGIFY_VAR(hess_kl_crust_mantle))
+
+  call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs_adios, local_dim, &
+                                   STRINGIFY_VAR(hess_rho_kl_crust_mantle))
+
+  call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs_adios, local_dim, &
+                                   STRINGIFY_VAR(hess_kappa_kl_crust_mantle))
+
+  call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs_adios, local_dim, &
+                                   STRINGIFY_VAR(hess_mu_kl_crust_mantle))
 
   ! sync adios2 writes before loosing the temporary scope of the arrays
   if (is_adios_version2) call write_adios_perform(myadios_file)

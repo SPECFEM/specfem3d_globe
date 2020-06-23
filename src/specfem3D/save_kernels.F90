@@ -1998,6 +1998,19 @@
     open(unit=IOUT,file=trim(prname)//'hess_kernel.bin',status='unknown',form='unformatted',action='write')
     write(IOUT) hess_kl_crust_mantle
     close(IOUT)
+
+    open(unit=IOUT,file=trim(prname)//'hess_rho_kernel.bin',status='unknown',form='unformatted',action='write')
+    write(IOUT) hess_rho_kl_crust_mantle
+    close(IOUT)
+
+    open(unit=IOUT,file=trim(prname)//'hess_kappa_kernel.bin',status='unknown',form='unformatted',action='write')
+    write(IOUT) hess_kappa_kl_crust_mantle
+    close(IOUT)
+
+    open(unit=IOUT,file=trim(prname)//'hess_mu_kernel.bin',status='unknown',form='unformatted',action='write')
+    write(IOUT) hess_mu_kl_crust_mantle
+    close(IOUT)
+
   endif
 
   end subroutine save_kernels_Hessian
