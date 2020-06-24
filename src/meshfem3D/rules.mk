@@ -319,6 +319,7 @@ $O/model_attenuation.check.o: \
 	$O/model_1066a.check.o \
 	$O/model_sea1d.check.o \
 	$O/model_case65TAY.check.o \
+	$O/model_vpremoon.shared.o \
 	$(EMPTY_MACRO)
 
 $O/meshfem3D_par.check_module.o: $O/adios_manager.shared_adios_module.o
