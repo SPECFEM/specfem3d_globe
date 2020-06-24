@@ -319,6 +319,7 @@
     endif
   endif
   rmassz_crust_mantle = 1._CUSTOM_REAL / rmassz_crust_mantle
+
   ! inner core
   if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) then
      rmassx_inner_core = 1._CUSTOM_REAL / rmassx_inner_core

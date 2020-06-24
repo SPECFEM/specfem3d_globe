@@ -295,9 +295,8 @@
 
   ! re-sets attenuation flags
   if (.not. ATTENUATION) then
-    ! turns off both PARTIAL_PHYS_DISPERSION_ONLY and UNDO_ATTENUATION when ATTENUATION is off in the Par_file
+    ! turns off PARTIAL_PHYS_DISPERSION_ONLY when ATTENUATION is off in the Par_file
     PARTIAL_PHYS_DISPERSION_ONLY = .false.
-    UNDO_ATTENUATION = .false.
   endif
 
   ! re-sets ADIOS flags
@@ -393,8 +392,10 @@
   if (ADIOS_ENABLED .and. SAVE_REGULAR_KL ) &
     stop 'ADIOS_ENABLED support not implemented yet for SAVE_REGULAR_KL'
 
-  if (USE_LDDRK .and. SIMULATION_TYPE == 3 ) &
-    stop 'USE_LDDRK support not implemented yet for SIMULATION_TYPE == 3'
+  ! LDDRK
+  if (USE_LDDRK .and. (ABSORBING_CONDITIONS .and. .not. UNDO_ATTENUATION) ) &
+    stop 'USE_LDDRK support requires to use UNDO_ATTENUATION when absorbing boundaries are turned on'
+
   if (USE_LDDRK .and. GPU_MODE ) &
     stop 'USE_LDDRK support not implemented yet for GPU simulations'
 

@@ -47,7 +47,12 @@
 
   ! sets current initial time
   if (USE_LDDRK) then
-    time_t = dble(it-1)*DT + dble(C_LDDRK(istage))*DT - t0
+    ! LDDRK
+    ! note: the LDDRK scheme updates displacement after the stiffness computations and
+    !       after adding boundary/coupling/source terms.
+    !       thus, at each time loop step it, displ(:) is still at (n) and not (n+1) like for the Newmark scheme
+    !       when entering this routine. we therefore at an additional -DT to have the corresponding timing for the source.
+    time_t = dble(it-1-1)*DT + dble(C_LDDRK(istage))*DT - t0
   else
     time_t = dble(it-1)*DT - t0
   endif
@@ -190,16 +195,14 @@
 !       cray version 8.6.x needs -O0 when debugging flags are used. as a work around, the following
 !       debugging flags work for crayftn: -g -G0 -O0 -Rb -eF -rm -eC -eD -ec -en -eI -ea
 
-    ! adjoint source array index
-    ivec_index = iadj_vec(it)
-
     ! receivers act as sources
     do irec_local = 1, nadj_rec_local
       ! adjoint source time function (trace)
-      stf_array(:) = source_adjoint(:,irec_local,ivec_index)
+      call get_stf_adjoint_source(irec_local,stf_array)
 
       ! receiver location
       irec = number_adjsources_global(irec_local)
+
       ! element index
       ispec = ispec_selected_rec(irec)
 
@@ -391,7 +394,18 @@
   !
   ! sets current initial time
   if (USE_LDDRK) then
-    time_t = dble(NSTEP-it_tmp)*DT - dble(C_LDDRK(istage))*DT - t0
+    ! LDDRK
+    ! note: the LDDRK scheme updates displacement after the stiffness computations and
+    !       after adding boundary/coupling/source terms.
+    !       thus, at each time loop step it, displ(:) is still at (n) and not (n+1) like for the Newmark scheme
+    !       when entering this routine. we therefore at an additional -DT to have the corresponding timing for the source.
+    if (UNDO_ATTENUATION) then
+      ! stepping moves forward from snapshot position
+      time_t = dble(NSTEP-it_tmp-1)*DT + dble(C_LDDRK(istage))*DT - t0
+    else
+      ! stepping backwards
+      time_t = dble(NSTEP-it_tmp-1)*DT - dble(C_LDDRK(istage))*DT - t0
+    endif
   else
     time_t = dble(NSTEP-it_tmp)*DT - t0
   endif
@@ -508,3 +522,137 @@
   get_stf_viscoelastic = stf
 
   end function get_stf_viscoelastic
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine get_stf_adjoint_source(irec_local,stf_array)
+
+  use constants, only: CUSTOM_REAL,NDIM,C_LDDRK
+
+  use specfem_par, only: it,NSTEP,NTSTEP_BETWEEN_READ_ADJSRC, &
+    source_adjoint,iadj_vec, &
+    USE_LDDRK,istage
+
+  !debug
+  !use specfem_par, only: myrank,NSTAGE_TIME_SCHEME
+
+  implicit none
+
+! note: defining it as a subroutine here instead of a function. fortran90/95 could return arrays as function, but would need
+!       an interface definition in the subroutine which calls it (or put the function into a module).
+!       so far, specfem doesn't use this technique and there are no such interface definitions within subroutines.
+!       so let's just use a subroutine call for this.
+
+  integer,intent(in) :: irec_local
+  real(kind=CUSTOM_REAL),dimension(NDIM),intent(out) :: stf_array
+
+  ! local parameters
+  integer :: ivec_index
+  double precision,dimension(NDIM) :: stf
+  ! cubic interpolation
+  integer :: ivec_index0,ivec_index1,ivec_index2,ivec_index3,idx
+  double precision,dimension(NDIM) :: p0,p1,p2,p3
+  double precision,dimension(NDIM) :: a,b,c,d
+  double precision :: t
+
+  ! gets stf for adjoint source
+  if (USE_LDDRK) then
+    ! LDDRK
+    ! needs interpolation for different stages. the adjoint trace has only points stored at it,
+    ! and not for the additional NSTAGES of the LDDRK scheme. we will interpolate between it and it+1 points.
+    !
+    ! note: due to the update step to displ(n+1) at the end of the compute_forces** routine as compared to the Newmark scheme
+    !       (which does it before the compute_forces**), we have to shift the adjoint source by -1.
+    !       iadj_vec(it) goes from iadj_vec(1) = 1000, iadj_vec(2) = 999 to iadj_vec(1000) = 1
+    if (istage == 1) then
+      ! exact position at time it
+      if (it == 1) then
+        idx = it
+      else
+        idx = it - 1
+      endif
+      ivec_index = iadj_vec(idx)
+      ! adjoint source time function for 3 components
+      stf(:) = source_adjoint(:,irec_local,ivec_index)
+    else
+      ! position at time it + ct where the fraction ct = C_LDDRK(istage) between ]0,1[
+      ! thus, we will need to interpolate between it and it + 1 points of the adjoint source
+      !
+      ! Catmull-Rom (cubic) interpolation:
+      ! needs 4 points p0,p1,p2,p3 and interpolates point p(t) between point p1 and p2
+      ! see: https://www.iquilezles.org/www/articles/minispline/minispline.htm
+      t = C_LDDRK(istage)
+      ! shift index by -1 due to LDDRK scheme
+      if (it == 1) then
+        idx = 1
+      else
+        idx = it - 1
+      endif
+      ivec_index = iadj_vec(idx)
+
+      ! interpolation points
+      ! note: at the boundaries it == 1, it < NSTEP-1, having "no" control points p0,p3 or end point p2 is probably still fine
+      !       as we usually taper the adjoint source at the end, so the interpolation could shrink down to just taking
+      !       the value at it. still, we take the limited values and mimick interpolation even in these cases.
+      if (idx == 1) then
+        ivec_index0 = iadj_vec(idx)
+        ivec_index1 = iadj_vec(idx)
+        ivec_index2 = iadj_vec(idx+1)
+        ivec_index3 = iadj_vec(idx+2)
+      else if (idx == NSTEP - 1) then
+        ivec_index0 = iadj_vec(idx-1)
+        ivec_index1 = iadj_vec(idx)
+        ivec_index2 = iadj_vec(idx+1)
+        ivec_index3 = iadj_vec(idx+1)
+      else if (idx == NSTEP) then
+        ivec_index0 = iadj_vec(idx-1)
+        ivec_index1 = iadj_vec(idx)
+        ivec_index2 = iadj_vec(idx)
+        ivec_index3 = iadj_vec(idx)
+      else
+        ! it > 1 .and. it < NSTEP-1
+        ivec_index0 = iadj_vec(idx-1)
+        ivec_index1 = iadj_vec(idx)
+        ivec_index2 = iadj_vec(idx+1)
+        ivec_index3 = iadj_vec(idx+2)
+      endif
+      ! checks bounds
+      if (ivec_index0 < 1) ivec_index0 = 1
+      if (ivec_index1 < 1) ivec_index1 = 1
+      if (ivec_index2 < 1) ivec_index2 = 1
+      if (ivec_index3 < 1) ivec_index3 = 1
+      if (ivec_index0 > NTSTEP_BETWEEN_READ_ADJSRC) ivec_index0 = NTSTEP_BETWEEN_READ_ADJSRC
+      if (ivec_index1 > NTSTEP_BETWEEN_READ_ADJSRC) ivec_index1 = NTSTEP_BETWEEN_READ_ADJSRC
+      if (ivec_index2 > NTSTEP_BETWEEN_READ_ADJSRC) ivec_index2 = NTSTEP_BETWEEN_READ_ADJSRC
+      if (ivec_index3 > NTSTEP_BETWEEN_READ_ADJSRC) ivec_index3 = NTSTEP_BETWEEN_READ_ADJSRC
+      ! interpolation points
+      p0(:) = source_adjoint(:,irec_local,ivec_index0)
+      p1(:) = source_adjoint(:,irec_local,ivec_index1)
+      p2(:) = source_adjoint(:,irec_local,ivec_index2)
+      p3(:) = source_adjoint(:,irec_local,ivec_index3)
+      ! Catmull-Rom interpolation
+      a(:) = 2.d0 * p1(:)
+      b(:) = p2(:) - p0(:)
+      c(:) = 2.d0 * p0(:) - 5.d0 * p1(:) + 4.d0 * p2(:) - p3(:)
+      d(:) = -p0(:) + 3.d0 * p1(:) - 3.d0 * p2(:) + p3(:)
+      ! cubic polynomial: a + b * t + c * t^2 + d * t^3
+      stf(:) = 0.5d0 * ( a(:) + (b(:) * t) + (c(:) * t * t) + (d(:) * t * t * t) )
+    endif
+  else
+    ! Newmark
+    ! has 1 stage, at index iadj_vec
+    ! adjoint source array index
+    ivec_index = iadj_vec(it)
+    ! adjoint source time function for 3 components
+    stf(:) = source_adjoint(:,irec_local,ivec_index)
+  endif
+
+  ! return value
+  stf_array(:) = real(stf(:),kind=CUSTOM_REAL)
+
+  !debug
+  !if (irec_local == 1) print *,myrank,(it-1)*NSTAGE_TIME_SCHEME + istage,stf_array(1),stf_array(2),stf_array(3),'#i #stf'
+
+  end subroutine get_stf_adjoint_source

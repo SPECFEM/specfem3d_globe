@@ -214,9 +214,7 @@
 
   ! Runge-Kutta time scheme
   if (USE_LDDRK) then
-    ! checks
-    if (SIMULATION_TYPE /= 1 .or. SAVE_FORWARD .or. NOISE_TOMOGRAPHY /= 0) &
-        stop 'Error: LDDRK is not implemented for adjoint or noise tomography'
+    ! LDDRK time scheme
 
     ! number of stages for scheme
     NSTAGE_TIME_SCHEME = NSTAGE   ! 6 stages
