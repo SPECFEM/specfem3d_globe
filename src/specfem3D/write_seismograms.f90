@@ -27,7 +27,7 @@
 
   subroutine write_seismograms()
 
-  use constants, only: IMAIN
+  use constants, only: IMAIN,OUTPUT_ADJOINT_WAVEFIELD_SEISMOGRAMS
 
   use constants_solver, only: NGLOB_CRUST_MANTLE,NGLOB_CRUST_MANTLE_ADJOINT
 
@@ -107,7 +107,13 @@
       if (.not. GPU_MODE) then
         ! on CPU
         if (.not. ( SIMULATION_TYPE == 3 .and. (.not. SAVE_SEISMOGRAMS_IN_ADJOINT_RUN)) ) then
-          call compute_seismograms(NGLOB_CRUST_MANTLE_ADJOINT,b_displ_crust_mantle,seismo_current,seismograms)
+          if (OUTPUT_ADJOINT_WAVEFIELD_SEISMOGRAMS) then
+            ! uncomment to output adjoint wavefield instead for seismogram output
+            call compute_seismograms(NGLOB_CRUST_MANTLE_ADJOINT,displ_crust_mantle,seismo_current,seismograms)
+          else
+            ! default, backward reconstructed wavefield seismos
+            call compute_seismograms(NGLOB_CRUST_MANTLE_ADJOINT,b_displ_crust_mantle,seismo_current,seismograms)
+          endif
         endif
       else
         ! on GPU

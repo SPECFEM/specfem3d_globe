@@ -45,9 +45,14 @@
 
   ! current simulated time
   if (USE_LDDRK) then
-    timeval = real((dble(it-1)*DT+dble(C_LDDRK(istage))*DT-t0)*scale_t_inv, kind=CUSTOM_REAL)
+    ! LDDRK
+    ! note: the LDDRK scheme updates displacement after the stiffness computations and
+    !       after adding boundary/coupling/source terms.
+    !       thus, at each time loop step it, displ(:) is still at (n) and not (n+1) like for the Newmark scheme
+    !       when entering this routine. we therefore at an additional -DT to have the corresponding timing for the source.
+    timeval = real((dble(it-1-1)*DT + dble(C_LDDRK(istage))*DT - t0)*scale_t_inv, kind=CUSTOM_REAL)
   else
-    timeval = real((dble(it-1)*DT-t0)*scale_t_inv, kind=CUSTOM_REAL)
+    timeval = real((dble(it-1)*DT - t0)*scale_t_inv, kind=CUSTOM_REAL)
   endif
 
   ! ****************************************************
@@ -152,6 +157,7 @@
                                      buffer_recv_scalar_outer_core,num_interfaces_outer_core, &
                                      max_nibool_interfaces_oc, &
                                      nibool_interfaces_outer_core,ibool_interfaces_outer_core, &
+                                     my_neighbors_outer_core, &
                                      request_send_scalar_oc,request_recv_scalar_oc)
         else
           ! on GPU
@@ -248,14 +254,24 @@
 
   ! current simulated time
   if (USE_LDDRK) then
-    b_timeval = real((dble(NSTEP-it_tmp)*DT-dble(C_LDDRK(istage))*DT-t0)*scale_t_inv, kind=CUSTOM_REAL)
+    ! LDDRK
+    ! note: the LDDRK scheme updates displacement after the stiffness computations and
+    !       after adding boundary/coupling/source terms.
+    !       thus, at each time loop step it, displ(:) is still at (n) and not (n+1) like for the Newmark scheme
+    !       when entering this routine. we therefore at an additional -DT to have the corresponding timing for the source.
+    if (UNDO_ATTENUATION) then
+      ! stepping moves forward from snapshot position
+      b_timeval = real((dble(NSTEP-it_tmp-1)*DT + dble(C_LDDRK(istage))*DT - t0)*scale_t_inv, kind=CUSTOM_REAL)
+    else
+      ! stepping backwards
+      b_timeval = real((dble(NSTEP-it_tmp-1)*DT - dble(C_LDDRK(istage))*DT - t0)*scale_t_inv, kind=CUSTOM_REAL)
+    endif
   else
-    b_timeval = real((dble(NSTEP-it_tmp)*DT-t0)*scale_t_inv, kind=CUSTOM_REAL)
+    b_timeval = real((dble(NSTEP-it_tmp)*DT - t0)*scale_t_inv, kind=CUSTOM_REAL)
   endif
 
   !debug
   !if (myrank == 0 ) print *,'compute_forces_acoustic_backward: it = ',it_tmp
-
 
   ! ****************************************************
   !   big loop over all spectral elements in the fluid
@@ -367,6 +383,7 @@
                                    b_buffer_recv_scalar_outer_core,num_interfaces_outer_core, &
                                    max_nibool_interfaces_oc, &
                                    nibool_interfaces_outer_core,ibool_interfaces_outer_core, &
+                                   my_neighbors_outer_core, &
                                    b_request_send_scalar_oc,b_request_recv_scalar_oc)
       else
         ! on GPU

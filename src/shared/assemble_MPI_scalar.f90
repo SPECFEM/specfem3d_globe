@@ -197,11 +197,12 @@
                                    buffer_recv_scalar,num_interfaces, &
                                    max_nibool_interfaces, &
                                    nibool_interfaces,ibool_interfaces, &
+                                   my_neighbors, &
                                    request_send_scalar,request_recv_scalar)
 
 ! waits for send/receiver to be completed and assembles contributions
 
-  use constants, only: CUSTOM_REAL,itag
+  use constants, only: myrank,CUSTOM_REAL,itag,DO_ORDERED_ASSEMBLY
 
   implicit none
 
@@ -217,11 +218,32 @@
   integer, dimension(max_nibool_interfaces,num_interfaces),intent(in) :: ibool_interfaces
   integer, dimension(num_interfaces) :: request_send_scalar,request_recv_scalar
 
+  integer, dimension(num_interfaces),intent(in) :: my_neighbors
+
   ! local parameters
   integer :: ipoin,iinterface
+  integer :: iglob
+  ! ordered assembly
+  real(kind=CUSTOM_REAL), dimension(max_nibool_interfaces,num_interfaces) :: mybuffer
+  logical :: need_add_my_contrib
 
 ! assemble only if more than one partition
   if (NPROC > 1) then
+
+    ! ordered assembly
+    if (DO_ORDERED_ASSEMBLY) then
+      ! stores own mpi buffer values and set them to zero right away to avoid counting it more than once during assembly:
+      ! buffers of higher rank get zeros on nodes shared with current buffer
+      !
+      ! move interface values of array_val to local buffers
+      do iinterface = 1, num_interfaces
+        do ipoin = 1, nibool_interfaces(iinterface)
+          iglob = ibool_interfaces(ipoin,iinterface)
+          mybuffer(ipoin,iinterface) = array_val(iglob)
+          array_val(iglob) = 0._CUSTOM_REAL
+        enddo
+      enddo
+    endif
 
     ! wait for communications completion (recv)
     do iinterface = 1, num_interfaces
@@ -229,13 +251,32 @@
     enddo
 
     ! adding contributions of neighbors
-    do iinterface = 1, num_interfaces
-      do ipoin = 1, nibool_interfaces(iinterface)
-        array_val(ibool_interfaces(ipoin,iinterface)) = &
-             array_val(ibool_interfaces(ipoin,iinterface)) &
-             + buffer_recv_scalar(ipoin,iinterface)
+    ! ordered assembly
+    if (DO_ORDERED_ASSEMBLY) then
+      ! The goal of this version is to avoid different round-off errors in different processors.
+      ! The contribution of each processor is added following the order of its rank.
+      ! This guarantees that the sums are done in the same order on all processors.
+      !
+      ! adding all contributions in order of processor rank
+      need_add_my_contrib = .true.
+      do iinterface = 1, num_interfaces
+        if (need_add_my_contrib .and. myrank < my_neighbors(iinterface)) call add_my_contrib_scalar()
+        do ipoin = 1, nibool_interfaces(iinterface)
+          iglob = ibool_interfaces(ipoin,iinterface)
+          array_val(iglob) = array_val(iglob) + buffer_recv_scalar(ipoin,iinterface)
+        enddo
       enddo
-    enddo
+      if (need_add_my_contrib) call add_my_contrib_scalar()
+
+    else
+      ! default assembly
+      do iinterface = 1, num_interfaces
+        do ipoin = 1, nibool_interfaces(iinterface)
+          iglob = ibool_interfaces(ipoin,iinterface)
+          array_val(iglob) = array_val(iglob) + buffer_recv_scalar(ipoin,iinterface)
+        enddo
+      enddo
+    endif
 
     ! wait for communications completion (send)
     do iinterface = 1, num_interfaces
@@ -243,6 +284,22 @@
     enddo
 
   endif
+
+  contains
+
+    subroutine add_my_contrib_scalar()
+
+    integer :: my_iinterface,my_ipoin
+
+    do my_iinterface = 1, num_interfaces
+      do my_ipoin = 1, nibool_interfaces(my_iinterface)
+        iglob = ibool_interfaces(my_ipoin,my_iinterface)
+        array_val(iglob) = array_val(iglob) + mybuffer(my_ipoin,my_iinterface)
+      enddo
+    enddo
+    need_add_my_contrib = .false.
+
+    end subroutine add_my_contrib_scalar
 
   end subroutine assemble_MPI_scalar_w
 
