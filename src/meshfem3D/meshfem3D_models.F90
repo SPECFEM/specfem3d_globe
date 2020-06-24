@@ -360,7 +360,7 @@
         else
             vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
                   + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0)
-        end if
+        endif
 
         !daniel todo:
         ! specific 3D models with PREM references which would become too fast at shorter periods ( < 40s Love waves)
@@ -407,7 +407,7 @@
       else
           vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
                 + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0)
-      end if      
+      endif
       if (.not. TRANSVERSE_ISOTROPY) then
         if (.not. (MODEL_3D_MANTLE_PERTUBATIONS .and. iregion_code == IREGION_CRUST_MANTLE)) then
           ! this case here is only executed for 1D_ref_iso
@@ -725,7 +725,7 @@
             ! isotropic average (considers anisotropic parameterization eta,vsv,vsh,vpv,vph)
             vp = sqrt(((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
                       + (8.d0 - 8.d0*eta_aniso)*vsv*vsv)/15.d0)
-            vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv & 
+            vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
                       + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0)
             vpv = vp
             vph = vp
@@ -828,9 +828,9 @@
                                   vpv,vph,vsv,vsh,rho,eta_aniso)
       ! converts to isotropic values
       if (.not. TRANSVERSE_ISOTROPY) then
-        ! converts further to iso        
+        ! converts further to iso
         vp = sqrt( ((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
-                  + (8.d0 - 8.d0*eta_aniso)*vsv*vsv)/15.d0 )        
+                  + (8.d0 - 8.d0*eta_aniso)*vsv*vsv)/15.d0 )
         vs = sqrt( ((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
                   + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0 )
         vpv = vp

@@ -173,7 +173,7 @@
           vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
                     + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0)
         endif
-        
+
         ! stores 1D isotropic mu0 = (rho * Vs*Vs) values
         mu0 = rho * vs*vs
         mu0store(i,j,k,ispec) = real( mu0, kind=CUSTOM_REAL)

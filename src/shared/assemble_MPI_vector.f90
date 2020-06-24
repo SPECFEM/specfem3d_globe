@@ -242,7 +242,7 @@
 
     ! ordered assembly
     if (DO_ORDERED_ASSEMBLY) then
-      ! stores own mpi buffer values and set them to zero right away to avoid counting it more than once during assembly:
+      ! stores own MPI buffer values and set them to zero right away to avoid counting it more than once during assembly:
       ! buffers of higher rank get zeros on nodes shared with current buffer
       !
       ! move interface values of array_val to local buffers

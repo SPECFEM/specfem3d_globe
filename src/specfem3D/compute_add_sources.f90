@@ -540,7 +540,7 @@
 
   implicit none
 
-! note: defining it as a subroutine here instead of a function. fortran90/95 could return arrays as function, but would need
+! note: defining it as a subroutine here instead of a function. Fortran90/95 could return arrays as function, but would need
 !       an interface definition in the subroutine which calls it (or put the function into a module).
 !       so far, specfem doesn't use this technique and there are no such interface definitions within subroutines.
 !       so let's just use a subroutine call for this.
