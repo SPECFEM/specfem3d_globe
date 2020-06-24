@@ -1,409 +1,17 @@
-running example: Wed Nov 27 23:29:58 +03 2019
-directory: /Users/Shared/SPECFEM3D_GLOBE/EXAMPLES/regional_s40rts
-(will take about 2 minutes)
-
-
-   setting up example...
-
-cleaning all
-rm -f  ./obj/shared_par.shared_module.o ./obj/adios_manager.shared_adios_module.o ./obj/adios2_manager.shared_adios2_module.o ./obj/auto_ner.shared.o ./obj/binary_c_io.cc.o ./obj/broadcast_computed_parameters.shared.o ./obj/calendar.shared.o ./obj/count_elements.shared.o ./obj/count_number_of_sources.shared.o ./obj/count_points.shared.o ./obj/create_addressing.shared.o ./obj/create_name_database.shared.o ./obj/create_serial_name_database.shared.o ./obj/define_all_layers.shared.o ./obj/euler_angles.shared.o ./obj/exit_mpi.shared.o ./obj/flush_system.shared.o ./obj/get_all_eight_slices.shared.o ./obj/get_global.shared.o ./obj/get_model_parameters.shared.o ./obj/get_timestep_and_layers.shared.o ./obj/gll_library.shared.o ./obj/heap_sort.shared.o ./obj/hex_nodes.shared.o ./obj/init_openmp.shared.o ./obj/interpolate.shared.o ./obj/intgrl.shared.o ./obj/lagrange_poly.shared.o ./obj/make_ellipticity.shared.o ./obj/memory_eval.shared.o ./obj/model_prem.shared.o ./obj/model_Sohl.shared.o ./obj/model_topo_bathy.shared.o ./obj/parallel.sharedmpi.o ./obj/param_reader.cc.o ./obj/read_compute_parameters.shared.o ./obj/read_parameter_file.shared.o ./obj/read_value_parameters.shared.o ./obj/recompute_jacobian.shared.o ./obj/reduce.shared.o ./obj/rotate_tensor.shared.o ./obj/rthetaphi_xyz.shared.o ./obj/save_header_file.shared.o ./obj/search_kdtree.shared.o ./obj/smooth_weights_vec.shared.o ./obj/sort_array_coordinates.shared.o ./obj/spline_routines.shared.o ./obj/write_VTK_file.shared.o ./obj/ylm.shared.o  ./obj/adios_helpers_definitions.shared_adios_module.o ./obj/adios_helpers_writers.shared_adios_module.o ./obj/adios_helpers.shared_adios.o  ./obj/asdf_manager.shared_asdf.o  ./obj/constants.mod ./obj/manager_adios.mod ./obj/manager_adios2.mod ./obj/my_mpi.mod ./obj/shared_input_parameters.mod ./obj/shared_compute_parameters.mod ./obj/shared_parameters.mod ./obj/kdtree_search.mod  ./obj/adios_helpers_definitions_mod.mod ./obj/adios_helpers_mod.mod ./obj/adios_helpers_writers_mod.mod  ./obj/shared_par.shared_module.o ./obj/adios_manager.shared_adios_module.o ./obj/adios2_manager.shared_adios2_module.o ./obj/auto_ner.shared.o ./obj/binary_c_io.cc.o ./obj/broadcast_computed_parameters.shared.o ./obj/calendar.shared.o ./obj/count_elements.shared.o ./obj/count_number_of_sources.shared.o ./obj/count_points.shared.o ./obj/create_addressing.shared.o ./obj/create_name_database.shared.o ./obj/create_serial_name_database.shared.o ./obj/define_all_layers.shared.o ./obj/euler_angles.shared.o ./obj/exit_mpi.shared.o ./obj/flush_system.shared.o ./obj/get_all_eight_slices.shared.o ./obj/get_global.shared.o ./obj/get_model_parameters.shared.o ./obj/get_timestep_and_layers.shared.o ./obj/gll_library.shared.o ./obj/heap_sort.shared.o ./obj/hex_nodes.shared.o ./obj/init_openmp.shared.o ./obj/interpolate.shared.o ./obj/intgrl.shared.o ./obj/lagrange_poly.shared.o ./obj/make_ellipticity.shared.o ./obj/memory_eval.shared.o ./obj/model_prem.shared.o ./obj/model_Sohl.shared.o ./obj/model_topo_bathy.shared.o ./obj/parallel.sharedmpi.o ./obj/param_reader.cc.o ./obj/read_compute_parameters.shared.o ./obj/read_parameter_file.shared.o ./obj/read_value_parameters.shared.o ./obj/recompute_jacobian.shared.o ./obj/reduce.shared.o ./obj/rotate_tensor.shared.o ./obj/rthetaphi_xyz.shared.o ./obj/save_header_file.shared.o ./obj/search_kdtree.shared.o ./obj/smooth_weights_vec.shared.o ./obj/sort_array_coordinates.shared.o ./obj/spline_routines.shared.o ./obj/write_VTK_file.shared.o ./obj/ylm.shared.o  ./obj/adios_helpers_definitions.shared_adios_module.o ./obj/adios_helpers_writers.shared_adios_module.o ./obj/adios_helpers.shared_adios.o  ./obj/asdf_manager.shared_asdf.o    ./obj/create_header_file.header.o   ./bin/xcreate_header_file ./OUTPUT_FILES/values_from_mesher.h   ./obj/meshfem3D.check.o  ./obj/meshfem3D_par.check_module.o ./obj/meshfem3D_models.check.o ./obj/add_missing_nodes.check.o ./obj/add_topography.check.o ./obj/add_topography_410_650.check.o ./obj/add_topography_cmb.check.o ./obj/add_topography_icb.check.o ./obj/assemble_MPI_central_cube_mesh.check.o ./obj/assemble_MPI_scalar_mesh.check.o ./obj/assemble_MPI_vector_mesh.check.o ./obj/calc_jacobian.check.o ./obj/check_mesh_resolution.check.o ./obj/compute_coordinates_grid.check.o ./obj/compute_element_properties.check.o ./obj/compute_volumes_and_areas.check.o ./obj/create_central_cube.check.o ./obj/create_central_cube_buffers.check.o ./obj/create_chunk_buffers.check.o ./obj/create_doubling_elements.check.o ./obj/create_mass_matrices.check.o ./obj/create_meshes.check.o ./obj/create_MPI_interfaces.check.o ./obj/create_regions_mesh.check.o ./obj/create_regions_elements.check.o ./obj/create_regular_elements.check.o ./obj/define_superbrick.check.o ./obj/finalize_mesher.check.o ./obj/fix_non_blocking_flags.check.o ./obj/get_absorb.check.o ./obj/get_ellipticity.check.o ./obj/get_jacobian_boundaries.check.o ./obj/get_jacobian_discontinuities.check.o ./obj/get_model.check.o ./obj/get_MPI_1D_buffers.check.o ./obj/get_MPI_cutplanes_eta.check.o ./obj/get_MPI_cutplanes_xi.check.o ./obj/get_MPI_interfaces.check.o ./obj/get_perm_color.check.o ./obj/get_shape2D.check.o ./obj/get_shape3D.check.o ./obj/gravity_integrals.check.o ./obj/initialize_layers.check.o ./obj/initialize_mesher.check.o ./obj/lgndr.check.o ./obj/model_1dref.check.o ./obj/model_1066a.check.o ./obj/model_ak135.check.o ./obj/model_sea1d.check.o ./obj/model_aniso_inner_core.check.o ./obj/model_aniso_mantle.check.o ./obj/model_atten3D_QRFSI12.check.o ./obj/model_attenuation_gll.check.o ./obj/model_attenuation.check.o ./obj/model_crust_1_0.check.o ./obj/model_crust_2_0.check.o ./obj/model_crustmaps.check.o ./obj/model_eucrust.check.o ./obj/model_epcrust.check.o ./obj/model_full_sh.check.o ./obj/model_gapp2.check.o ./obj/model_gll.check.o ./obj/model_heterogen_mantle.check.o ./obj/model_iasp91.check.o ./obj/model_jp1d.check.o ./obj/model_jp3d.check.o ./obj/model_ppm.check.o ./obj/model_s20rts.check.o ./obj/model_s40rts.check.o ./obj/model_s362ani.check.o ./obj/model_sea99_s.check.o ./obj/model_sglobe.check.o ./obj/moho_stretching.check.o ./obj/save_arrays_solver.check.o ./obj/save_model_meshfiles.check.o ./obj/setup_color_perm.check.o ./obj/setup_counters.check.o ./obj/setup_inner_outer.check.o ./obj/setup_model.check.o ./obj/setup_MPI_interfaces.check.o ./obj/stretching_function.check.o ./obj/test_MPI_interfaces.check.o ./obj/write_AVS_DX_global_chunks_data.check.o ./obj/write_AVS_DX_global_data.check.o ./obj/write_AVS_DX_global_faces_data.check.o ./obj/write_AVS_DX_output.check.o ./obj/write_AVS_DX_surface_data.check.o   ./obj/write_AVS_DX_global_chunks_data_adios.check_adios_module.o ./obj/write_AVS_DX_global_data_adios.check_adios_module.o ./obj/write_AVS_DX_global_faces_data_adios.check_adios_module.o ./obj/write_AVS_DX_output_adios.check_adios.o ./obj/write_AVS_DX_surface_data_adios.check_adios_module.o ./obj/get_absorb_adios.check_adios.o ./obj/model_gll_adios.check_adios.o ./obj/model_attenuation_gll_adios.check_adios.o ./obj/save_arrays_solver_adios.check_adios.o ./obj/save_model_meshfiles_adios.check_adios.o  ./obj/regions_mesh_par.mod ./obj/regions_mesh_par2.mod ./obj/mpi_interfaces_par.mod ./obj/gapp2_mantle_model_constants.mod ./obj/manager_adios_par.mod ./obj/meshfem3d_models_par.mod ./obj/meshfem3d_par.mod ./obj/mpi_crust_mantle_par.mod ./obj/mpi_inner_core_par.mod ./obj/mpi_outer_core_par.mod ./obj/model_1066a_par.mod ./obj/model_1dref_par.mod ./obj/model_ak135_par.mod ./obj/model_aniso_mantle_par.mod ./obj/model_atten3d_qrfsi12_par.mod ./obj/model_crust_1_0_par.mod ./obj/model_crust_2_0_par.mod ./obj/model_crustmaps_par.mod ./obj/model_epcrust_par.mod ./obj/model_eucrust_par.mod ./obj/model_full_sh_crust_par.mod ./obj/model_full_sh_mantle_par.mod ./obj/model_gll_par.mod ./obj/model_gll_qmu_par.mod ./obj/model_heterogen_mantle_par.mod ./obj/model_jp3d_par.mod ./obj/model_ppm_par.mod ./obj/model_s20rts_par.mod ./obj/model_s362ani_par.mod ./obj/model_s40rts_par.mod ./obj/model_sea1d_par.mod ./obj/model_sea99_s_par.mod ./obj/model_sglobe_par.mod ./obj/avs_dx_global_chunks_mod.mod ./obj/avs_dx_global_mod.mod ./obj/avs_dx_global_faces_mod.mod ./obj/avs_dx_surface_mod.mod  ./bin/xmeshfem3D   ./obj/specfem3D.solverstatic.o  ./obj/assemble_MPI_scalar.solver.o ./obj/assemble_MPI_vector.solver.o ./obj/comp_source_spectrum.solver.o ./obj/compute_adj_source_frechet.solver.o ./obj/convert_time.solver.o ./obj/define_derivation_matrices.solver.o ./obj/file_io_threads.cc.o ./obj/force_ftz.cc.o ./obj/get_backazimuth.solver.o ./obj/get_cmt.solver.o ./obj/get_force.solver.o ./obj/get_event_info.solver.o ./obj/make_gravity.solver.o ./obj/netlib_specfun_erf.solver.o  ./obj/asdf_data.solverstatic_module.o ./obj/comp_source_time_function.solverstatic.o ./obj/specfem3D_par.solverstatic_module.o ./obj/write_seismograms.solverstatic.o ./obj/check_stability.solverstatic.o ./obj/compute_add_sources.solverstatic.o ./obj/compute_arrays_source.solverstatic.o ./obj/compute_boundary_kernel.solverstatic.o ./obj/compute_coupling.solverstatic.o ./obj/compute_element.solverstatic.o ./obj/compute_element_att_memory.solverstatic.o ./obj/compute_element_strain.solverstatic.o ./obj/compute_forces_acoustic_calling_routine.solverstatic.o ./obj/compute_forces_viscoelastic_calling_routine.solverstatic.o ./obj/compute_forces_crust_mantle_noDev.solverstatic.o ./obj/compute_forces_crust_mantle_Dev.solverstatic.o ./obj/compute_forces_inner_core_noDev.solverstatic.o ./obj/compute_forces_inner_core_Dev.solverstatic.o ./obj/compute_forces_outer_core_noDev.solverstatic.o ./obj/compute_forces_outer_core_Dev.solverstatic.o ./obj/compute_kernels.solverstatic.o ./obj/compute_seismograms.solverstatic.o ./obj/compute_stacey_crust_mantle.solverstatic.o ./obj/compute_stacey_outer_core.solverstatic.o ./obj/finalize_simulation.solverstatic.o ./obj/get_attenuation.solverstatic.o ./obj/initialize_simulation.solverstatic.o ./obj/iterate_time.solverstatic.o ./obj/iterate_time_undoatt.solverstatic.o ./obj/locate_point.solverstatic.o ./obj/locate_receivers.solverstatic.o ./obj/locate_regular_points.solverstatic.o ./obj/locate_sources.solverstatic.o ./obj/multiply_arrays_source.solverstatic.o ./obj/noise_tomography.solverstatic.o ./obj/prepare_attenuation.solverstatic.o ./obj/prepare_elastic_elements.solverstatic.o ./obj/prepare_gpu.solverstatic.o ./obj/prepare_gravity.solverstatic.o ./obj/prepare_movie.solverstatic.o ./obj/prepare_noise.solverstatic.o ./obj/prepare_oceans.solverstatic.o ./obj/prepare_optimized_arrays.solverstatic.o ./obj/prepare_stacey.solverstatic.o ./obj/prepare_timerun.solverstatic.o ./obj/prepare_vtk_window.solverstatic.o ./obj/prepare_wavefields.solverstatic.o ./obj/print_stf_file.solverstatic.o ./obj/read_adjoint_sources.solverstatic.o ./obj/read_arrays_solver.solverstatic.o ./obj/read_forward_arrays.solverstatic.o ./obj/read_mesh_databases.solverstatic.o ./obj/read_topography_bathymetry.solverstatic.o ./obj/save_forward_arrays.solverstatic.o ./obj/save_kernels.solverstatic.o ./obj/save_regular_kernels.solverstatic.o ./obj/setup_GLL_points.solverstatic.o ./obj/setup_sources_receivers.solverstatic.o ./obj/update_displacement_LDDRK.solverstatic.o ./obj/update_displacement_Newmark.solverstatic.o ./obj/write_movie_output.solverstatic.o ./obj/write_movie_volume.solverstatic.o ./obj/write_movie_surface.solverstatic.o ./obj/write_output_ASCII.solverstatic.o ./obj/write_output_SAC.solverstatic.o  ./obj/specfem3D_gpu_method_stubs.cc.o  ./obj/read_arrays_solver_adios.solverstatic_adios.o ./obj/read_attenuation_adios.solverstatic_adios.o ./obj/read_forward_arrays_adios.solverstatic_adios.o ./obj/read_mesh_databases_adios.solverstatic_adios.o ./obj/save_forward_arrays_adios.solverstatic_adios.o ./obj/save_kernels_adios.solverstatic_adios.o  ./obj/write_output_ASDF.solverstatic.o ./obj/read_adjoint_sources_ASDF.solverstatic.o  ./obj/visual_vtk_stubs.visualc.o   ./obj/asdf_data.mod ./obj/constants_solver.mod ./obj/manager_adios_par.mod ./obj/specfem_par.mod ./obj/specfem_par_crustmantle.mod ./obj/specfem_par_innercore.mod ./obj/specfem_par_outercore.mod ./obj/specfem_par_noise.mod ./obj/specfem_par_movie.mod  ./bin/xspecfem3D   ./obj/convolve_source_timefunction.aux.o  ./obj/detect_duplicates_stations_file.aux.o  ./obj/combine_AVS_DX.aux.o ./obj/get_cmt.solver.o  ./obj/combine_paraview_strain_data.auxsolver.o  ./obj/combine_surf_data.auxsolver.o  ./obj/combine_vol_data.auxsolver.o  ./obj/combine_vol_data.auxadios.o ./obj/combine_vol_data_adios_impl.auxmpi.o  ./obj/combine_vol_data.auxsolver_vtk.o  ./obj/combine_vol_data.auxadios_vtk.o ./obj/combine_vol_data_adios_impl.auxmpi.o  ./obj/create_movie_AVS_DX.aux.o  ./obj/create_movie_GMT_global.aux.o  ./obj/extract_database.aux.o ./obj/specfem3D_par.solverstatic_module.o  ./obj/write_profile.aux.o  ./obj/get_model.check.o ./obj/lgndr.check.o ./obj/meshfem3D_models.check.o ./obj/meshfem3D_par.check_module.o ./obj/model_1dref.check.o ./obj/model_1066a.check.o ./obj/model_ak135.check.o ./obj/model_sea1d.check.o ./obj/model_aniso_inner_core.check.o ./obj/model_aniso_mantle.check.o ./obj/model_atten3D_QRFSI12.check.o ./obj/model_attenuation_gll.check.o ./obj/model_attenuation.check.o ./obj/model_crust_1_0.check.o ./obj/model_crust_2_0.check.o ./obj/model_crustmaps.check.o ./obj/model_eucrust.check.o ./obj/model_epcrust.check.o ./obj/model_full_sh.check.o ./obj/model_gapp2.check.o ./obj/model_gll.check.o ./obj/model_heterogen_mantle.check.o ./obj/model_iasp91.check.o ./obj/model_jp1d.check.o ./obj/model_jp3d.check.o ./obj/model_ppm.check.o ./obj/model_s20rts.check.o ./obj/model_s40rts.check.o ./obj/model_s362ani.check.o ./obj/model_sea99_s.check.o ./obj/model_sglobe.check.o  ./obj/model_gll_adios.check_adios.o ./obj/model_attenuation_gll_adios.check_adios.o   ./obj/combine_vol_data_adios_mod.mod  ./bin/xconvolve_source_timefunction ./bin/xdetect_duplicates_stations_file ./bin/xcombine_AVS_DX ./bin/xcombine_paraview_strain_data ./bin/xcombine_vol_data ./bin/xcombine_vol_data_vtk ./bin/xcombine_surf_data ./bin/xcreate_movie_AVS_DX ./bin/xcreate_movie_GMT_global ./bin/xextract_database ./bin/xwrite_profile  ./bin/xcombine_vol_data_adios ./bin/xcombine_vol_data_vtk_adios   ./obj/postprocess_par.postprocess_module.o ./obj/addition_sem.postprocess.o  ./obj/postprocess_par.postprocess_module.o ./obj/parse_kernel_names.postprocess.o ./obj/clip_sem.postprocess.o  ./obj/postprocess_par.postprocess_module.o ./obj/parse_kernel_names.postprocess.o ./obj/combine_sem.postprocess.o  ./obj/postprocess_par.postprocess_module.o ./obj/difference_sem.postprocess.o  ./obj/postprocess_par.postprocess_module.o ./obj/interpolate_model.postprocess.o  ./obj/postprocess_par.postprocess_module.o ./obj/create_cross_section.postprocess.o ./obj/parse_kernel_names.postprocess.o  ./obj/postprocess_par.postprocess_module.o ./obj/parse_kernel_names.postprocess.o ./obj/smooth_sem.postprocess.o  ./obj/convert_model_file_adios.postprocess_adios.o   ./obj/postprocess_par.postprocess_module.o ./obj/interpolate_model.postprocess_adios.o   ./obj/postprocess_par.mod  ./bin/xaddition_sem ./bin/xclip_sem ./bin/xcombine_sem ./bin/xdifference_sem ./bin/xinterpolate_model ./bin/xcreate_cross_section ./bin/xsmooth_sem  ./bin/xconvert_model_file_adios ./bin/xinterpolate_model_adios   ./obj/add_model_iso.tomo.o ./obj/tomography_par.tomo_module.o ./obj/compute_kernel_integral.tomo.o ./obj/get_cg_direction.tomo.o ./obj/get_sd_direction.tomo.o ./obj/read_kernels.tomo.o ./obj/read_kernels_cg.tomo.o ./obj/read_model.tomo.o ./obj/read_parameters_tomo.tomo.o ./obj/write_gradient.tomo.o ./obj/write_new_model.tomo.o ./obj/write_new_model_perturbations.tomo.o   ./obj/add_model_tiso.tomo.o ./obj/tomography_par.tomo_module.o ./obj/compute_kernel_integral.tomo.o ./obj/get_cg_direction.tomo.o ./obj/get_sd_direction.tomo.o ./obj/read_kernels.tomo.o ./obj/read_kernels_cg.tomo.o ./obj/read_model.tomo.o ./obj/read_parameters_tomo.tomo.o ./obj/write_gradient.tomo.o ./obj/write_new_model.tomo.o ./obj/write_new_model_perturbations.tomo.o   ./obj/add_model_tiso_cg.tomo.o ./obj/tomography_par.tomo_module.o ./obj/compute_kernel_integral.tomo.o ./obj/get_cg_direction.tomo.o ./obj/get_sd_direction.tomo.o ./obj/read_kernels.tomo.o ./obj/read_kernels_cg.tomo.o ./obj/read_model.tomo.o ./obj/read_parameters_tomo.tomo.o ./obj/write_gradient.tomo.o ./obj/write_new_model.tomo.o ./obj/write_new_model_perturbations.tomo.o   ./obj/add_model_tiso_iso.tomo.o ./obj/tomography_par.tomo_module.o ./obj/compute_kernel_integral.tomo.o ./obj/get_cg_direction.tomo.o ./obj/get_sd_direction.tomo.o ./obj/read_kernels.tomo.o ./obj/read_kernels_cg.tomo.o ./obj/read_model.tomo.o ./obj/read_parameters_tomo.tomo.o ./obj/write_gradient.tomo.o ./obj/write_new_model.tomo.o ./obj/write_new_model_perturbations.tomo.o   ./obj/tomography_par.tomo_module.o ./obj/sum_kernels.tomo.o  ./obj/tomography_par.tomo_module.o ./obj/sum_preconditioned_kernels.tomo.o   ./obj/tomography_par.tomo_module.o ./obj/sum_kernels.tomo_adios.o   ./obj/tomography_par.mod ./obj/tomography_kernels_iso.mod ./obj/tomography_kernels_tiso.mod ./obj/tomography_kernels_tiso_cg.mod ./obj/tomography_model_tiso.mod ./obj/tomography_model_iso.mod  ./bin/xadd_model_iso ./bin/xadd_model_tiso ./bin/xadd_model_tiso_cg ./bin/xadd_model_tiso_iso ./bin/xsum_kernels ./bin/xsum_preconditioned_kernels  ./bin/xsum_kernels_adios 
-rm -f ./bin/*__genmod.*
-rm -f ./obj/*__genmod.*
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/shared_par.shared_module.o src/shared/shared_par.f90
-gcc -c -I./setup  -DFORCE_VECTORIZATION -O3 -Wall -std=c99 -o obj/param_reader.cc.o src/shared/param_reader.c
-gcc -c -I./setup  -DFORCE_VECTORIZATION -O3 -Wall -std=c99 -o obj/binary_c_io.cc.o src/shared/binary_c_io.c
-gcc -c -I./setup  -DFORCE_VECTORIZATION -O3 -Wall -std=c99 -o obj/file_io_threads.cc.o src/specfem3D/file_io_threads.c
-gcc -c -I./setup  -DFORCE_VECTORIZATION -O3 -Wall -std=c99 -o obj/force_ftz.cc.o src/specfem3D/force_ftz.c
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/get_backazimuth.solver.o src/specfem3D/get_backazimuth.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/get_cmt.solver.o src/specfem3D/get_cmt.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/get_force.solver.o src/specfem3D/get_force.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/get_event_info.solver.o src/specfem3D/get_event_info.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/make_gravity.solver.o src/specfem3D/make_gravity.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/netlib_specfun_erf.solver.o src/specfem3D/netlib_specfun_erf.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/search_kdtree.shared.o src/shared/search_kdtree.f90
-gcc -c -I./setup  -DFORCE_VECTORIZATION -O3 -Wall -std=c99 -o obj/specfem3D_gpu_method_stubs.cc.o src/specfem3D/specfem3D_gpu_method_stubs.c
-gcc -c -I./setup  -DFORCE_VECTORIZATION  -o obj/visual_vtk_stubs.visualc.o src/specfem3D/visual_vtk_stubs.c
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/calendar.shared.o src/shared/calendar.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/recompute_jacobian.shared.o src/shared/recompute_jacobian.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/asdf_manager.shared_asdf.o src/shared/asdf_manager.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/create_serial_name_database.shared.o src/shared/create_serial_name_database.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/interpolate.shared.o src/shared/interpolate.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/auto_ner.shared.o src/shared/auto_ner.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/count_elements.shared.o src/shared/count_elements.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/count_number_of_sources.shared.o src/shared/count_number_of_sources.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/count_points.shared.o src/shared/count_points.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/define_all_layers.shared.o src/shared/define_all_layers.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/euler_angles.shared.o src/shared/euler_angles.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/get_model_parameters.shared.o src/shared/get_model_parameters.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/get_timestep_and_layers.shared.o src/shared/get_timestep_and_layers.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/memory_eval.shared.o src/shared/memory_eval.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/read_compute_parameters.shared.o src/shared/read_compute_parameters.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/read_parameter_file.shared.o src/shared/read_parameter_file.F90 -DHAVE_ADIOS 
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/read_value_parameters.shared.o src/shared/read_value_parameters.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/reduce.shared.o src/shared/reduce.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/rthetaphi_xyz.shared.o src/shared/rthetaphi_xyz.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/save_header_file.shared.o src/shared/save_header_file.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/create_header_file.header.o src/create_header_file/create_header_file.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/adios_helpers_writers.shared_adios_module.o src/shared/adios_helpers_writers.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/broadcast_computed_parameters.shared.o src/shared/broadcast_computed_parameters.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/create_addressing.shared.o src/shared/create_addressing.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/create_name_database.shared.o src/shared/create_name_database.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/exit_mpi.shared.o src/shared/exit_mpi.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/flush_system.shared.o src/shared/flush_system.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/get_all_eight_slices.shared.o src/shared/get_all_eight_slices.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/get_global.shared.o src/shared/get_global.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/gll_library.shared.o src/shared/gll_library.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/heap_sort.shared.o src/shared/heap_sort.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/hex_nodes.shared.o src/shared/hex_nodes.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/init_openmp.shared.o src/shared/init_openmp.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/intgrl.shared.o src/shared/intgrl.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/lagrange_poly.shared.o src/shared/lagrange_poly.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/make_ellipticity.shared.o src/shared/make_ellipticity.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/model_prem.shared.o src/shared/model_prem.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/model_Sohl.shared.o src/shared/model_Sohl.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/model_topo_bathy.shared.o src/shared/model_topo_bathy.f90
-mpif90  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/parallel.sharedmpi.o src/shared/parallel.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/rotate_tensor.shared.o src/shared/rotate_tensor.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/smooth_weights_vec.shared.o src/shared/smooth_weights_vec.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/sort_array_coordinates.shared.o src/shared/sort_array_coordinates.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/spline_routines.shared.o src/shared/spline_routines.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/write_VTK_file.shared.o src/shared/write_VTK_file.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/ylm.shared.o src/shared/ylm.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/adios_helpers_definitions.shared_adios_module.o src/shared/adios_helpers_definitions.f90
- == Rule 2 triggered for src/shared/adios2_manager.F90 
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/adios2_manager.shared_adios2_module.o src/shared/adios2_manager.F90 
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/assemble_MPI_scalar.solver.o src/specfem3D/assemble_MPI_scalar.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/assemble_MPI_vector.solver.o src/specfem3D/assemble_MPI_vector.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/comp_source_spectrum.solver.o src/specfem3D/comp_source_spectrum.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/compute_adj_source_frechet.solver.o src/specfem3D/compute_adj_source_frechet.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/convert_time.solver.o src/specfem3D/convert_time.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/define_derivation_matrices.solver.o src/specfem3D/define_derivation_matrices.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -o bin/xcreate_header_file obj/shared_par.shared_module.o obj/auto_ner.shared.o obj/count_elements.shared.o obj/count_number_of_sources.shared.o obj/count_points.shared.o obj/define_all_layers.shared.o obj/euler_angles.shared.o obj/get_model_parameters.shared.o obj/get_timestep_and_layers.shared.o obj/memory_eval.shared.o obj/param_reader.cc.o obj/read_compute_parameters.shared.o obj/read_parameter_file.shared.o obj/read_value_parameters.shared.o obj/reduce.shared.o obj/rthetaphi_xyz.shared.o obj/save_header_file.shared.o obj/create_header_file.header.o
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/adios_manager.shared_adios_module.o src/shared/adios_manager.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/adios_helpers.shared_adios.o src/shared/adios_helpers.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/meshfem3D_par.check_module.o src/meshfem3D/meshfem3D_par.f90
-
-running xcreate_header_file...
-
-./bin/xcreate_header_file
-
- creating file OUTPUT_FILES/values_from_mesher.h to compile solver with correct values
-
- edit file OUTPUT_FILES/values_from_mesher.h to see
- some statistics about the mesh
-
- number of processors =            4
-
- maximum number of points per region =        38773
-
- total elements per slice =          585
- total points per slice =        42695
-
- the time step of the solver will be DT =   0.118749999      (s)
- the (approximate) minimum period resolved will be =    90.6666641      (s)
-
- current record length is =    8.00000000     min
- current minimum number of time steps will be =         4100
-
- MOVIE_VOLUME : F
- MOVIE_SURFACE: T
- Saving movie frames every         200
-
- on NEC SX, make sure "loopcnt=" parameter
- in Makefile is greater than max vector length =       116319
-
- approximate static memory needed by the solver:
- ----------------------------------------------
-
- (lower bound, usually the real amount used is 5% to 10% higher)
-
- (you can get a more precise estimate of the size used per MPI process
-  by typing "size -d bin/xspecfem3D"
-  after compiling the code with the DATA/Par_file you plan to use)
-
- size of static arrays per slice =    84.136532000000003       MB
-                                 =    80.238849639892578       MiB
-                                 =    8.4136532000000000E-002  GB
-                                 =    7.8358251601457596E-002  GiB
-
-    (should be below 80% or 90% of the memory installed per core)
-    (if significantly more, the job will not run by lack of memory)
-    (note that if significantly less, you waste a significant amount
-     of memory per processor core)
-    (but that can be perfectly acceptable if you can afford it and
-     want faster results by using more cores)
-
- size of static arrays for all slices =    336.54612800000001       MB
-                                      =    320.95539855957031       MiB
-                                      =   0.33654612800000000       GB
-                                      =   0.31343300640583038       GiB
-                                      =    3.3654612799999999E-004  TB
-                                      =    3.0608692031819373E-004  TiB
-
-
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/specfem3D_par.solverstatic_module.o src/specfem3D/specfem3D_par.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/asdf_data.solverstatic_module.o src/specfem3D/asdf_data.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/combine_AVS_DX.aux.o src/auxiliaries/combine_AVS_DX.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/convolve_source_timefunction.aux.o src/auxiliaries/convolve_source_timefunction.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/create_movie_AVS_DX.aux.o src/auxiliaries/create_movie_AVS_DX.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/create_movie_GMT_global.aux.o src/auxiliaries/create_movie_GMT_global.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/detect_duplicates_stations_file.aux.o src/auxiliaries/detect_duplicates_stations_file.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/combine_paraview_strain_data.auxsolver.o src/auxiliaries/combine_paraview_strain_data.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/extract_database.aux.o src/auxiliaries/extract_database.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/postprocess_par.postprocess_module.o src/tomography/postprocess_sensitivity_kernels/postprocess_par.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/tomography_par.tomo_module.o src/tomography/tomography_par.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/meshfem3D.check.o src/meshfem3D/meshfem3D.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/meshfem3D_models.check.o src/meshfem3D/meshfem3D_models.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/add_missing_nodes.check.o src/meshfem3D/add_missing_nodes.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/add_topography.check.o src/meshfem3D/add_topography.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/add_topography_410_650.check.o src/meshfem3D/add_topography_410_650.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/add_topography_cmb.check.o src/meshfem3D/add_topography_cmb.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/add_topography_icb.check.o src/meshfem3D/add_topography_icb.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/assemble_MPI_central_cube_mesh.check.o src/meshfem3D/assemble_MPI_central_cube_mesh.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/assemble_MPI_scalar_mesh.check.o src/meshfem3D/assemble_MPI_scalar_mesh.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/assemble_MPI_vector_mesh.check.o src/meshfem3D/assemble_MPI_vector_mesh.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/calc_jacobian.check.o src/meshfem3D/calc_jacobian.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/check_mesh_resolution.check.o src/meshfem3D/check_mesh_resolution.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/compute_coordinates_grid.check.o src/meshfem3D/compute_coordinates_grid.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/compute_element_properties.check.o src/meshfem3D/compute_element_properties.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/compute_volumes_and_areas.check.o src/meshfem3D/compute_volumes_and_areas.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/create_central_cube.check.o src/meshfem3D/create_central_cube.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/create_central_cube_buffers.check.o src/meshfem3D/create_central_cube_buffers.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/create_chunk_buffers.check.o src/meshfem3D/create_chunk_buffers.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/create_doubling_elements.check.o src/meshfem3D/create_doubling_elements.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/create_mass_matrices.check.o src/meshfem3D/create_mass_matrices.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/create_meshes.check.o src/meshfem3D/create_meshes.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/create_MPI_interfaces.check.o src/meshfem3D/create_MPI_interfaces.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/create_regions_mesh.check.o src/meshfem3D/create_regions_mesh.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/create_regions_elements.check.o src/meshfem3D/create_regions_elements.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/create_regular_elements.check.o src/meshfem3D/create_regular_elements.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/define_superbrick.check.o src/meshfem3D/define_superbrick.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/finalize_mesher.check.o src/meshfem3D/finalize_mesher.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/fix_non_blocking_flags.check.o src/meshfem3D/fix_non_blocking_flags.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/get_absorb.check.o src/meshfem3D/get_absorb.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/get_ellipticity.check.o src/meshfem3D/get_ellipticity.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/get_jacobian_boundaries.check.o src/meshfem3D/get_jacobian_boundaries.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/get_jacobian_discontinuities.check.o src/meshfem3D/get_jacobian_discontinuities.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/get_model.check.o src/meshfem3D/get_model.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/get_MPI_1D_buffers.check.o src/meshfem3D/get_MPI_1D_buffers.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/get_MPI_cutplanes_eta.check.o src/meshfem3D/get_MPI_cutplanes_eta.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/get_MPI_cutplanes_xi.check.o src/meshfem3D/get_MPI_cutplanes_xi.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/get_MPI_interfaces.check.o src/meshfem3D/get_MPI_interfaces.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/get_perm_color.check.o src/meshfem3D/get_perm_color.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/get_shape2D.check.o src/meshfem3D/get_shape2D.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/get_shape3D.check.o src/meshfem3D/get_shape3D.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/gravity_integrals.check.o src/meshfem3D/gravity_integrals.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/initialize_layers.check.o src/meshfem3D/initialize_layers.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/initialize_mesher.check.o src/meshfem3D/initialize_mesher.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/lgndr.check.o src/meshfem3D/lgndr.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/model_1dref.check.o src/meshfem3D/model_1dref.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/model_1066a.check.o src/meshfem3D/model_1066a.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/model_ak135.check.o src/meshfem3D/model_ak135.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/model_sea1d.check.o src/meshfem3D/model_sea1d.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/model_aniso_inner_core.check.o src/meshfem3D/model_aniso_inner_core.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/model_aniso_mantle.check.o src/meshfem3D/model_aniso_mantle.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/model_atten3D_QRFSI12.check.o src/meshfem3D/model_atten3D_QRFSI12.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/model_gll.check.o src/meshfem3D/model_gll.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/model_crust_1_0.check.o src/meshfem3D/model_crust_1_0.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/model_crust_2_0.check.o src/meshfem3D/model_crust_2_0.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/model_crustmaps.check.o src/meshfem3D/model_crustmaps.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/model_eucrust.check.o src/meshfem3D/model_eucrust.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/model_epcrust.check.o src/meshfem3D/model_epcrust.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/model_full_sh.check.o src/meshfem3D/model_full_sh.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/model_gapp2.check.o src/meshfem3D/model_gapp2.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/model_heterogen_mantle.check.o src/meshfem3D/model_heterogen_mantle.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/model_iasp91.check.o src/meshfem3D/model_iasp91.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/model_jp1d.check.o src/meshfem3D/model_jp1d.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/model_jp3d.check.o src/meshfem3D/model_jp3d.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/model_ppm.check.o src/meshfem3D/model_ppm.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/model_s20rts.check.o src/meshfem3D/model_s20rts.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/model_s40rts.check.o src/meshfem3D/model_s40rts.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/model_s362ani.check.o src/meshfem3D/model_s362ani.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/model_sea99_s.check.o src/meshfem3D/model_sea99_s.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/model_sglobe.check.o src/meshfem3D/model_sglobe.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/moho_stretching.check.o src/meshfem3D/moho_stretching.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/save_arrays_solver.check.o src/meshfem3D/save_arrays_solver.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/save_model_meshfiles.check.o src/meshfem3D/save_model_meshfiles.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/setup_color_perm.check.o src/meshfem3D/setup_color_perm.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/setup_counters.check.o src/meshfem3D/setup_counters.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/setup_inner_outer.check.o src/meshfem3D/setup_inner_outer.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/setup_model.check.o src/meshfem3D/setup_model.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/setup_MPI_interfaces.check.o src/meshfem3D/setup_MPI_interfaces.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/stretching_function.check.o src/meshfem3D/stretching_function.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/test_MPI_interfaces.check.o src/meshfem3D/test_MPI_interfaces.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/write_AVS_DX_global_chunks_data.check.o src/meshfem3D/write_AVS_DX_global_chunks_data.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/write_AVS_DX_global_data.check.o src/meshfem3D/write_AVS_DX_global_data.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/write_AVS_DX_global_faces_data.check.o src/meshfem3D/write_AVS_DX_global_faces_data.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/write_AVS_DX_output.check.o src/meshfem3D/write_AVS_DX_output.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/write_AVS_DX_surface_data.check.o src/meshfem3D/write_AVS_DX_surface_data.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/write_AVS_DX_global_chunks_data_adios.check_adios_module.o src/meshfem3D/write_AVS_DX_global_chunks_data_adios.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/write_AVS_DX_global_data_adios.check_adios_module.o src/meshfem3D/write_AVS_DX_global_data_adios.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/write_AVS_DX_global_faces_data_adios.check_adios_module.o src/meshfem3D/write_AVS_DX_global_faces_data_adios.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/write_AVS_DX_surface_data_adios.check_adios_module.o src/meshfem3D/write_AVS_DX_surface_data_adios.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/get_absorb_adios.check_adios.o src/meshfem3D/get_absorb_adios.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/model_gll_adios.check_adios.o src/meshfem3D/model_gll_adios.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/save_arrays_solver_adios.check_adios.o src/meshfem3D/save_arrays_solver_adios.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/save_model_meshfiles_adios.check_adios.o src/meshfem3D/save_model_meshfiles_adios.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/specfem3D.solverstatic.o src/specfem3D/specfem3D.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/comp_source_time_function.solverstatic.o src/specfem3D/comp_source_time_function.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/write_seismograms.solverstatic.o src/specfem3D/write_seismograms.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/check_stability.solverstatic.o src/specfem3D/check_stability.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/compute_add_sources.solverstatic.o src/specfem3D/compute_add_sources.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/compute_arrays_source.solverstatic.o src/specfem3D/compute_arrays_source.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/compute_boundary_kernel.solverstatic.o src/specfem3D/compute_boundary_kernel.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/compute_coupling.solverstatic.o src/specfem3D/compute_coupling.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/compute_element.solverstatic.o src/specfem3D/compute_element.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/compute_element_att_memory.solverstatic.o src/specfem3D/compute_element_att_memory.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/compute_element_strain.solverstatic.o src/specfem3D/compute_element_strain.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/compute_forces_acoustic_calling_routine.solverstatic.o src/specfem3D/compute_forces_acoustic_calling_routine.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/compute_forces_viscoelastic_calling_routine.solverstatic.o src/specfem3D/compute_forces_viscoelastic_calling_routine.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/compute_forces_crust_mantle_noDev.solverstatic.o src/specfem3D/compute_forces_crust_mantle_noDev.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/compute_forces_crust_mantle_Dev.solverstatic.o src/specfem3D/compute_forces_crust_mantle_Dev.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/compute_forces_inner_core_noDev.solverstatic.o src/specfem3D/compute_forces_inner_core_noDev.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/compute_forces_inner_core_Dev.solverstatic.o src/specfem3D/compute_forces_inner_core_Dev.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/compute_forces_outer_core_noDev.solverstatic.o src/specfem3D/compute_forces_outer_core_noDev.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/compute_forces_outer_core_Dev.solverstatic.o src/specfem3D/compute_forces_outer_core_Dev.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/compute_kernels.solverstatic.o src/specfem3D/compute_kernels.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/compute_seismograms.solverstatic.o src/specfem3D/compute_seismograms.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/compute_stacey_crust_mantle.solverstatic.o src/specfem3D/compute_stacey_crust_mantle.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/compute_stacey_outer_core.solverstatic.o src/specfem3D/compute_stacey_outer_core.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/finalize_simulation.solverstatic.o src/specfem3D/finalize_simulation.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/get_attenuation.solverstatic.o src/specfem3D/get_attenuation.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/initialize_simulation.solverstatic.o src/specfem3D/initialize_simulation.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/iterate_time.solverstatic.o src/specfem3D/iterate_time.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/iterate_time_undoatt.solverstatic.o src/specfem3D/iterate_time_undoatt.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/locate_point.solverstatic.o src/specfem3D/locate_point.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/locate_receivers.solverstatic.o src/specfem3D/locate_receivers.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/locate_regular_points.solverstatic.o src/specfem3D/locate_regular_points.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/locate_sources.solverstatic.o src/specfem3D/locate_sources.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/multiply_arrays_source.solverstatic.o src/specfem3D/multiply_arrays_source.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/noise_tomography.solverstatic.o src/specfem3D/noise_tomography.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/prepare_attenuation.solverstatic.o src/specfem3D/prepare_attenuation.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/prepare_elastic_elements.solverstatic.o src/specfem3D/prepare_elastic_elements.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/prepare_gpu.solverstatic.o src/specfem3D/prepare_gpu.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/prepare_gravity.solverstatic.o src/specfem3D/prepare_gravity.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/prepare_movie.solverstatic.o src/specfem3D/prepare_movie.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/prepare_noise.solverstatic.o src/specfem3D/prepare_noise.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/prepare_oceans.solverstatic.o src/specfem3D/prepare_oceans.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/prepare_optimized_arrays.solverstatic.o src/specfem3D/prepare_optimized_arrays.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/prepare_stacey.solverstatic.o src/specfem3D/prepare_stacey.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/prepare_timerun.solverstatic.o src/specfem3D/prepare_timerun.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/prepare_vtk_window.solverstatic.o src/specfem3D/prepare_vtk_window.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/prepare_wavefields.solverstatic.o src/specfem3D/prepare_wavefields.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/print_stf_file.solverstatic.o src/specfem3D/print_stf_file.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/read_adjoint_sources.solverstatic.o src/specfem3D/read_adjoint_sources.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/read_arrays_solver.solverstatic.o src/specfem3D/read_arrays_solver.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/read_forward_arrays.solverstatic.o src/specfem3D/read_forward_arrays.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/read_mesh_databases.solverstatic.o src/specfem3D/read_mesh_databases.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/read_topography_bathymetry.solverstatic.o src/specfem3D/read_topography_bathymetry.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/save_forward_arrays.solverstatic.o src/specfem3D/save_forward_arrays.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/save_kernels.solverstatic.o src/specfem3D/save_kernels.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/save_regular_kernels.solverstatic.o src/specfem3D/save_regular_kernels.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/setup_GLL_points.solverstatic.o src/specfem3D/setup_GLL_points.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/setup_sources_receivers.solverstatic.o src/specfem3D/setup_sources_receivers.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/update_displacement_LDDRK.solverstatic.o src/specfem3D/update_displacement_LDDRK.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/update_displacement_Newmark.solverstatic.o src/specfem3D/update_displacement_Newmark.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/write_movie_output.solverstatic.o src/specfem3D/write_movie_output.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/write_movie_volume.solverstatic.o src/specfem3D/write_movie_volume.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/write_movie_surface.solverstatic.o src/specfem3D/write_movie_surface.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/write_output_ASCII.solverstatic.o src/specfem3D/write_output_ASCII.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/write_output_SAC.solverstatic.o src/specfem3D/write_output_SAC.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/read_arrays_solver_adios.solverstatic_adios.o src/specfem3D/read_arrays_solver_adios.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/read_attenuation_adios.solverstatic_adios.o src/specfem3D/read_attenuation_adios.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/read_forward_arrays_adios.solverstatic_adios.o src/specfem3D/read_forward_arrays_adios.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/read_mesh_databases_adios.solverstatic_adios.o src/specfem3D/read_mesh_databases_adios.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/save_forward_arrays_adios.solverstatic_adios.o src/specfem3D/save_forward_arrays_adios.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/save_kernels_adios.solverstatic_adios.o src/specfem3D/save_kernels_adios.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/write_output_ASDF.solverstatic.o src/specfem3D/write_output_ASDF.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/read_adjoint_sources_ASDF.solverstatic.o src/specfem3D/read_adjoint_sources_ASDF.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -o bin/xcombine_AVS_DX obj/combine_AVS_DX.aux.o obj/get_cmt.solver.o obj/shared_par.shared_module.o obj/auto_ner.shared.o obj/calendar.shared.o obj/count_elements.shared.o obj/count_number_of_sources.shared.o obj/count_points.shared.o obj/create_serial_name_database.shared.o obj/define_all_layers.shared.o obj/get_model_parameters.shared.o obj/get_timestep_and_layers.shared.o obj/param_reader.cc.o obj/read_compute_parameters.shared.o obj/read_parameter_file.shared.o obj/read_value_parameters.shared.o obj/reduce.shared.o obj/rthetaphi_xyz.shared.o
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/combine_surf_data.auxsolver.o src/auxiliaries/combine_surf_data.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/combine_vol_data.auxsolver.o src/auxiliaries/combine_vol_data.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/combine_vol_data.auxsolver_vtk.o src/auxiliaries/combine_vol_data.F90 -DUSE_VTK_INSTEAD_OF_MESH
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -o bin/xconvolve_source_timefunction obj/convolve_source_timefunction.aux.o obj/shared_par.shared_module.o
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -o bin/xcreate_movie_AVS_DX obj/create_movie_AVS_DX.aux.o obj/shared_par.shared_module.o obj/auto_ner.shared.o obj/count_elements.shared.o obj/count_number_of_sources.shared.o obj/count_points.shared.o obj/define_all_layers.shared.o obj/get_global.shared.o obj/get_model_parameters.shared.o obj/get_timestep_and_layers.shared.o obj/param_reader.cc.o obj/read_compute_parameters.shared.o obj/read_parameter_file.shared.o obj/read_value_parameters.shared.o obj/reduce.shared.o obj/rthetaphi_xyz.shared.o obj/sort_array_coordinates.shared.o
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -o bin/xcreate_movie_GMT_global obj/create_movie_GMT_global.aux.o obj/shared_par.shared_module.o obj/auto_ner.shared.o obj/count_elements.shared.o obj/count_number_of_sources.shared.o obj/count_points.shared.o obj/define_all_layers.shared.o obj/get_model_parameters.shared.o obj/get_timestep_and_layers.shared.o obj/param_reader.cc.o obj/read_compute_parameters.shared.o obj/read_parameter_file.shared.o obj/read_value_parameters.shared.o obj/reduce.shared.o obj/rthetaphi_xyz.shared.o
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/write_profile.aux.o src/auxiliaries/write_profile.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/combine_vol_data_adios_impl.auxmpi.o src/auxiliaries/combine_vol_data_adios_impl.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -o bin/xdetect_duplicates_stations_file obj/detect_duplicates_stations_file.aux.o obj/shared_par.shared_module.o
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -o bin/xcombine_paraview_strain_data obj/combine_paraview_strain_data.auxsolver.o obj/shared_par.shared_module.o obj/specfem3D_par.solverstatic_module.o obj/binary_c_io.cc.o obj/reduce.shared.o obj/rthetaphi_xyz.shared.o obj/write_VTK_file.shared.o
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -o bin/xextract_database obj/extract_database.aux.o obj/specfem3D_par.solverstatic_module.o obj/shared_par.shared_module.o
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/addition_sem.postprocess.o src/tomography/postprocess_sensitivity_kernels/addition_sem.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/parse_kernel_names.postprocess.o src/tomography/postprocess_sensitivity_kernels/parse_kernel_names.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/clip_sem.postprocess.o src/tomography/postprocess_sensitivity_kernels/clip_sem.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/combine_sem.postprocess.o src/tomography/postprocess_sensitivity_kernels/combine_sem.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/difference_sem.postprocess.o src/tomography/postprocess_sensitivity_kernels/difference_sem.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/interpolate_model.postprocess.o src/tomography/postprocess_sensitivity_kernels/interpolate_model.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/create_cross_section.postprocess.o src/tomography/postprocess_sensitivity_kernels/create_cross_section.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/smooth_sem.postprocess.o src/tomography/postprocess_sensitivity_kernels/smooth_sem.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/convert_model_file_adios.postprocess_adios.o src/tomography/postprocess_sensitivity_kernels/convert_model_file_adios.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/interpolate_model.postprocess_adios.o src/tomography/postprocess_sensitivity_kernels/interpolate_model.F90 -DUSE_ADIOS_INSTEAD_OF_MESH
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/add_model_iso.tomo.o src/tomography/add_model_iso.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/compute_kernel_integral.tomo.o src/tomography/compute_kernel_integral.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/get_cg_direction.tomo.o src/tomography/get_cg_direction.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/get_sd_direction.tomo.o src/tomography/get_sd_direction.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/read_kernels.tomo.o src/tomography/read_kernels.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/read_kernels_cg.tomo.o src/tomography/read_kernels_cg.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/read_model.tomo.o src/tomography/read_model.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/read_parameters_tomo.tomo.o src/tomography/read_parameters_tomo.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/write_gradient.tomo.o src/tomography/write_gradient.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/write_new_model.tomo.o src/tomography/write_new_model.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/write_new_model_perturbations.tomo.o src/tomography/write_new_model_perturbations.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/add_model_tiso.tomo.o src/tomography/add_model_tiso.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/add_model_tiso_cg.tomo.o src/tomography/add_model_tiso_cg.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/add_model_tiso_iso.tomo.o src/tomography/add_model_tiso_iso.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/sum_kernels.tomo.o src/tomography/sum_kernels.F90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/sum_preconditioned_kernels.tomo.o src/tomography/sum_preconditioned_kernels.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/sum_kernels.tomo_adios.o src/tomography/sum_kernels.F90 -DUSE_ADIOS_INSTEAD_OF_MESH
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/model_attenuation_gll.check.o src/meshfem3D/model_attenuation_gll.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/model_attenuation.check.o src/meshfem3D/model_attenuation.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/write_AVS_DX_output_adios.check_adios.o src/meshfem3D/write_AVS_DX_output_adios.f90
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/model_attenuation_gll_adios.check_adios.o src/meshfem3D/model_attenuation_gll_adios.f90
-
-building xspecfem3D 
-
-mpif90  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -o bin/xspecfem3D obj/specfem3D.solverstatic.o obj/assemble_MPI_scalar.solver.o obj/assemble_MPI_vector.solver.o obj/comp_source_spectrum.solver.o obj/compute_adj_source_frechet.solver.o obj/convert_time.solver.o obj/define_derivation_matrices.solver.o obj/file_io_threads.cc.o obj/force_ftz.cc.o obj/get_backazimuth.solver.o obj/get_cmt.solver.o obj/get_force.solver.o obj/get_event_info.solver.o obj/make_gravity.solver.o obj/netlib_specfun_erf.solver.o obj/asdf_data.solverstatic_module.o obj/comp_source_time_function.solverstatic.o obj/specfem3D_par.solverstatic_module.o obj/write_seismograms.solverstatic.o obj/check_stability.solverstatic.o obj/compute_add_sources.solverstatic.o obj/compute_arrays_source.solverstatic.o obj/compute_boundary_kernel.solverstatic.o obj/compute_coupling.solverstatic.o obj/compute_element.solverstatic.o obj/compute_element_att_memory.solverstatic.o obj/compute_element_strain.solverstatic.o obj/compute_forces_acoustic_calling_routine.solverstatic.o obj/compute_forces_viscoelastic_calling_routine.solverstatic.o obj/compute_forces_crust_mantle_noDev.solverstatic.o obj/compute_forces_crust_mantle_Dev.solverstatic.o obj/compute_forces_inner_core_noDev.solverstatic.o obj/compute_forces_inner_core_Dev.solverstatic.o obj/compute_forces_outer_core_noDev.solverstatic.o obj/compute_forces_outer_core_Dev.solverstatic.o obj/compute_kernels.solverstatic.o obj/compute_seismograms.solverstatic.o obj/compute_stacey_crust_mantle.solverstatic.o obj/compute_stacey_outer_core.solverstatic.o obj/finalize_simulation.solverstatic.o obj/get_attenuation.solverstatic.o obj/initialize_simulation.solverstatic.o obj/iterate_time.solverstatic.o obj/iterate_time_undoatt.solverstatic.o obj/locate_point.solverstatic.o obj/locate_receivers.solverstatic.o obj/locate_regular_points.solverstatic.o obj/locate_sources.solverstatic.o obj/multiply_arrays_source.solverstatic.o obj/noise_tomography.solverstatic.o obj/prepare_attenuation.solverstatic.o obj/prepare_elastic_elements.solverstatic.o obj/prepare_gpu.solverstatic.o obj/prepare_gravity.solverstatic.o obj/prepare_movie.solverstatic.o obj/prepare_noise.solverstatic.o obj/prepare_oceans.solverstatic.o obj/prepare_optimized_arrays.solverstatic.o obj/prepare_stacey.solverstatic.o obj/prepare_timerun.solverstatic.o obj/prepare_vtk_window.solverstatic.o obj/prepare_wavefields.solverstatic.o obj/print_stf_file.solverstatic.o obj/read_adjoint_sources.solverstatic.o obj/read_arrays_solver.solverstatic.o obj/read_forward_arrays.solverstatic.o obj/read_mesh_databases.solverstatic.o obj/read_topography_bathymetry.solverstatic.o obj/save_forward_arrays.solverstatic.o obj/save_kernels.solverstatic.o obj/save_regular_kernels.solverstatic.o obj/setup_GLL_points.solverstatic.o obj/setup_sources_receivers.solverstatic.o obj/update_displacement_LDDRK.solverstatic.o obj/update_displacement_Newmark.solverstatic.o obj/write_movie_output.solverstatic.o obj/write_movie_volume.solverstatic.o obj/write_movie_surface.solverstatic.o obj/write_output_ASCII.solverstatic.o obj/write_output_SAC.solverstatic.o obj/specfem3D_gpu_method_stubs.cc.o obj/read_arrays_solver_adios.solverstatic_adios.o obj/read_attenuation_adios.solverstatic_adios.o obj/read_forward_arrays_adios.solverstatic_adios.o obj/read_mesh_databases_adios.solverstatic_adios.o obj/save_forward_arrays_adios.solverstatic_adios.o obj/save_kernels_adios.solverstatic_adios.o obj/write_output_ASDF.solverstatic.o obj/read_adjoint_sources_ASDF.solverstatic.o obj/visual_vtk_stubs.visualc.o obj/shared_par.shared_module.o obj/adios_manager.shared_adios_module.o obj/adios2_manager.shared_adios2_module.o obj/auto_ner.shared.o obj/binary_c_io.cc.o obj/broadcast_computed_parameters.shared.o obj/calendar.shared.o obj/count_elements.shared.o obj/count_number_of_sources.shared.o obj/count_points.shared.o obj/create_addressing.shared.o obj/create_name_database.shared.o obj/define_all_layers.shared.o obj/exit_mpi.shared.o obj/flush_system.shared.o obj/get_model_parameters.shared.o obj/get_timestep_and_layers.shared.o obj/gll_library.shared.o obj/heap_sort.shared.o obj/hex_nodes.shared.o obj/init_openmp.shared.o obj/intgrl.shared.o obj/lagrange_poly.shared.o obj/make_ellipticity.shared.o obj/model_prem.shared.o obj/model_Sohl.shared.o obj/model_topo_bathy.shared.o obj/parallel.sharedmpi.o obj/param_reader.cc.o obj/read_compute_parameters.shared.o obj/read_parameter_file.shared.o obj/read_value_parameters.shared.o obj/recompute_jacobian.shared.o obj/reduce.shared.o obj/rotate_tensor.shared.o obj/rthetaphi_xyz.shared.o obj/search_kdtree.shared.o obj/spline_routines.shared.o obj/write_VTK_file.shared.o obj/adios_helpers_definitions.shared_adios_module.o obj/adios_helpers_writers.shared_adios_module.o obj/adios_helpers.shared_adios.o obj/asdf_manager.shared_asdf.o   -L/opt/adios/adios/lib -ladiosf -L/usr/lib/ -L/opt/asdf-library/lib -L/opt/hdf5/hdf5-1.10.5/lib -lasdf -lhdf5hl_fortran -lhdf5_hl -lhdf5 -lstdc++  
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -o bin/xcombine_surf_data obj/combine_surf_data.auxsolver.o obj/shared_par.shared_module.o obj/specfem3D_par.solverstatic_module.o obj/binary_c_io.cc.o obj/flush_system.shared.o
-mpif90  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -o bin/xcombine_vol_data obj/combine_vol_data.auxsolver.o obj/shared_par.shared_module.o obj/specfem3D_par.solverstatic_module.o obj/binary_c_io.cc.o obj/exit_mpi.shared.o obj/flush_system.shared.o obj/intgrl.shared.o obj/make_ellipticity.shared.o obj/model_prem.shared.o obj/model_Sohl.shared.o obj/parallel.sharedmpi.o obj/read_parameter_file.shared.o obj/read_value_parameters.shared.o obj/param_reader.cc.o obj/reduce.shared.o obj/rthetaphi_xyz.shared.o obj/spline_routines.shared.o  -L/opt/adios/adios/lib -ladiosf -L/usr/lib/ -L/opt/asdf-library/lib -L/opt/hdf5/hdf5-1.10.5/lib -lasdf -lhdf5hl_fortran -lhdf5_hl -lhdf5 -lstdc++
-
-mpif90  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -o bin/xcombine_vol_data_vtk obj/combine_vol_data.auxsolver_vtk.o obj/shared_par.shared_module.o obj/specfem3D_par.solverstatic_module.o obj/binary_c_io.cc.o obj/exit_mpi.shared.o obj/flush_system.shared.o obj/intgrl.shared.o obj/make_ellipticity.shared.o obj/model_prem.shared.o obj/model_Sohl.shared.o obj/parallel.sharedmpi.o obj/read_parameter_file.shared.o obj/read_value_parameters.shared.o obj/param_reader.cc.o obj/reduce.shared.o obj/rthetaphi_xyz.shared.o obj/spline_routines.shared.o obj/write_VTK_file.shared.o  -L/opt/adios/adios/lib -ladiosf -L/usr/lib/ -L/opt/asdf-library/lib -L/opt/hdf5/hdf5-1.10.5/lib -lasdf -lhdf5hl_fortran -lhdf5_hl -lhdf5 -lstdc++
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/combine_vol_data.auxadios.o src/auxiliaries/combine_vol_data.F90 -DUSE_ADIOS_INSTEAD_OF_MESH
-gfortran  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -J./obj -I./obj -I.  -I. -I./setup -c -o obj/combine_vol_data.auxadios_vtk.o src/auxiliaries/combine_vol_data.F90 -DUSE_ADIOS_INSTEAD_OF_MESH -DUSE_VTK_INSTEAD_OF_MESH
-mpif90  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -o bin/xaddition_sem obj/postprocess_par.postprocess_module.o obj/addition_sem.postprocess.o obj/shared_par.shared_module.o obj/parallel.sharedmpi.o obj/exit_mpi.shared.o obj/param_reader.cc.o obj/read_parameter_file.shared.o obj/read_value_parameters.shared.o
-mpif90  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -o bin/xclip_sem obj/postprocess_par.postprocess_module.o obj/parse_kernel_names.postprocess.o obj/clip_sem.postprocess.o obj/shared_par.shared_module.o obj/parallel.sharedmpi.o obj/param_reader.cc.o obj/read_parameter_file.shared.o obj/read_value_parameters.shared.o  -L/opt/adios/adios/lib -ladiosf -L/usr/lib/ -L/opt/asdf-library/lib -L/opt/hdf5/hdf5-1.10.5/lib -lasdf -lhdf5hl_fortran -lhdf5_hl -lhdf5 -lstdc++
-mpif90  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -o bin/xcombine_sem obj/postprocess_par.postprocess_module.o obj/parse_kernel_names.postprocess.o obj/combine_sem.postprocess.o obj/shared_par.shared_module.o obj/parallel.sharedmpi.o obj/param_reader.cc.o obj/read_parameter_file.shared.o obj/read_value_parameters.shared.o  -L/opt/adios/adios/lib -ladiosf -L/usr/lib/ -L/opt/asdf-library/lib -L/opt/hdf5/hdf5-1.10.5/lib -lasdf -lhdf5hl_fortran -lhdf5_hl -lhdf5 -lstdc++
-mpif90  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -o bin/xdifference_sem obj/postprocess_par.postprocess_module.o obj/difference_sem.postprocess.o obj/shared_par.shared_module.o obj/parallel.sharedmpi.o obj/exit_mpi.shared.o obj/param_reader.cc.o obj/read_parameter_file.shared.o obj/read_value_parameters.shared.o
-mpif90  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -o bin/xinterpolate_model obj/postprocess_par.postprocess_module.o obj/interpolate_model.postprocess.o obj/shared_par.shared_module.o obj/parallel.sharedmpi.o obj/gll_library.shared.o obj/heap_sort.shared.o obj/hex_nodes.shared.o obj/interpolate.shared.o obj/lagrange_poly.shared.o obj/recompute_jacobian.shared.o obj/search_kdtree.shared.o obj/param_reader.cc.o obj/read_parameter_file.shared.o obj/read_value_parameters.shared.o  -L/opt/adios/adios/lib -ladiosf -L/usr/lib/ -L/opt/asdf-library/lib -L/opt/hdf5/hdf5-1.10.5/lib -lasdf -lhdf5hl_fortran -lhdf5_hl -lhdf5 -lstdc++
-mpif90  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -o bin/xcreate_cross_section obj/postprocess_par.postprocess_module.o obj/create_cross_section.postprocess.o obj/parse_kernel_names.postprocess.o obj/shared_par.shared_module.o obj/parallel.sharedmpi.o obj/binary_c_io.cc.o obj/create_name_database.shared.o obj/exit_mpi.shared.o obj/flush_system.shared.o obj/gll_library.shared.o obj/heap_sort.shared.o obj/hex_nodes.shared.o obj/interpolate.shared.o obj/intgrl.shared.o obj/lagrange_poly.shared.o obj/make_ellipticity.shared.o obj/model_prem.shared.o obj/model_Sohl.shared.o obj/model_topo_bathy.shared.o obj/recompute_jacobian.shared.o obj/reduce.shared.o obj/rthetaphi_xyz.shared.o obj/search_kdtree.shared.o obj/spline_routines.shared.o obj/param_reader.cc.o obj/read_parameter_file.shared.o obj/read_value_parameters.shared.o  -L/opt/adios/adios/lib -ladiosf -L/usr/lib/ -L/opt/asdf-library/lib -L/opt/hdf5/hdf5-1.10.5/lib -lasdf -lhdf5hl_fortran -lhdf5_hl -lhdf5 -lstdc++
-mpif90  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -o bin/xsmooth_sem obj/postprocess_par.postprocess_module.o obj/parse_kernel_names.postprocess.o obj/smooth_sem.postprocess.o obj/shared_par.shared_module.o obj/parallel.sharedmpi.o obj/exit_mpi.shared.o obj/get_all_eight_slices.shared.o obj/gll_library.shared.o obj/heap_sort.shared.o obj/reduce.shared.o obj/rthetaphi_xyz.shared.o obj/search_kdtree.shared.o obj/smooth_weights_vec.shared.o obj/write_VTK_file.shared.o obj/param_reader.cc.o obj/read_parameter_file.shared.o obj/read_value_parameters.shared.o  -L/opt/adios/adios/lib -ladiosf -L/usr/lib/ -L/opt/asdf-library/lib -L/opt/hdf5/hdf5-1.10.5/lib -lasdf -lhdf5hl_fortran -lhdf5_hl -lhdf5 -lstdc++
-mpif90  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -o bin/xconvert_model_file_adios obj/convert_model_file_adios.postprocess_adios.o obj/shared_par.shared_module.o obj/parallel.sharedmpi.o obj/param_reader.cc.o obj/read_parameter_file.shared.o obj/read_value_parameters.shared.o obj/adios_helpers_definitions.shared_adios_module.o obj/adios_helpers_writers.shared_adios_module.o obj/adios_helpers.shared_adios.o obj/adios_manager.shared_adios_module.o  -L/opt/adios/adios/lib -ladiosf -L/usr/lib/ -L/opt/asdf-library/lib -L/opt/hdf5/hdf5-1.10.5/lib -lasdf -lhdf5hl_fortran -lhdf5_hl -lhdf5 -lstdc++
-mpif90  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -o bin/xinterpolate_model_adios obj/postprocess_par.postprocess_module.o obj/interpolate_model.postprocess_adios.o obj/shared_par.shared_module.o obj/parallel.sharedmpi.o obj/gll_library.shared.o obj/heap_sort.shared.o obj/hex_nodes.shared.o obj/interpolate.shared.o obj/lagrange_poly.shared.o obj/recompute_jacobian.shared.o obj/search_kdtree.shared.o obj/param_reader.cc.o obj/read_parameter_file.shared.o obj/read_value_parameters.shared.o obj/adios_helpers_definitions.shared_adios_module.o obj/adios_helpers_writers.shared_adios_module.o obj/adios_helpers.shared_adios.o obj/adios_manager.shared_adios_module.o  -L/opt/adios/adios/lib -ladiosf -L/usr/lib/ -L/opt/asdf-library/lib -L/opt/hdf5/hdf5-1.10.5/lib -lasdf -lhdf5hl_fortran -lhdf5_hl -lhdf5 -lstdc++
-mpif90  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -o bin/xsum_kernels obj/tomography_par.tomo_module.o obj/sum_kernels.tomo.o obj/shared_par.shared_module.o obj/specfem3D_par.solverstatic_module.o obj/parallel.sharedmpi.o obj/param_reader.cc.o obj/read_parameter_file.shared.o obj/read_value_parameters.shared.o  -L/opt/adios/adios/lib -ladiosf -L/usr/lib/ -L/opt/asdf-library/lib -L/opt/hdf5/hdf5-1.10.5/lib -lasdf -lhdf5hl_fortran -lhdf5_hl -lhdf5 -lstdc++
-mpif90  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -o bin/xsum_preconditioned_kernels obj/tomography_par.tomo_module.o obj/sum_preconditioned_kernels.tomo.o obj/shared_par.shared_module.o obj/specfem3D_par.solverstatic_module.o obj/parallel.sharedmpi.o obj/param_reader.cc.o obj/read_parameter_file.shared.o obj/read_value_parameters.shared.o  -L/opt/adios/adios/lib -ladiosf -L/usr/lib/ -L/opt/asdf-library/lib -L/opt/hdf5/hdf5-1.10.5/lib -lasdf -lhdf5hl_fortran -lhdf5_hl -lhdf5 -lstdc++
-mpif90  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -o bin/xsum_kernels_adios obj/tomography_par.tomo_module.o obj/sum_kernels.tomo_adios.o obj/shared_par.shared_module.o obj/specfem3D_par.solverstatic_module.o obj/parallel.sharedmpi.o obj/param_reader.cc.o obj/read_parameter_file.shared.o obj/read_value_parameters.shared.o obj/adios_helpers_definitions.shared_adios_module.o obj/adios_helpers_writers.shared_adios_module.o obj/adios_helpers.shared_adios.o obj/adios_manager.shared_adios_module.o  -L/opt/adios/adios/lib -ladiosf -L/usr/lib/ -L/opt/asdf-library/lib -L/opt/hdf5/hdf5-1.10.5/lib -lasdf -lhdf5hl_fortran -lhdf5_hl -lhdf5 -lstdc++
-mpif90  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -o bin/xmeshfem3D obj/shared_par.shared_module.o obj/adios_manager.shared_adios_module.o obj/auto_ner.shared.o obj/binary_c_io.cc.o obj/broadcast_computed_parameters.shared.o obj/count_elements.shared.o obj/count_number_of_sources.shared.o obj/count_points.shared.o obj/create_addressing.shared.o obj/create_name_database.shared.o obj/define_all_layers.shared.o obj/euler_angles.shared.o obj/exit_mpi.shared.o obj/flush_system.shared.o obj/get_all_eight_slices.shared.o obj/get_global.shared.o obj/get_model_parameters.shared.o obj/get_timestep_and_layers.shared.o obj/gll_library.shared.o obj/heap_sort.shared.o obj/hex_nodes.shared.o obj/init_openmp.shared.o obj/intgrl.shared.o obj/lagrange_poly.shared.o obj/make_ellipticity.shared.o obj/memory_eval.shared.o obj/model_prem.shared.o obj/model_Sohl.shared.o obj/model_topo_bathy.shared.o obj/parallel.sharedmpi.o obj/param_reader.cc.o obj/read_compute_parameters.shared.o obj/read_parameter_file.shared.o obj/read_value_parameters.shared.o obj/reduce.shared.o obj/rotate_tensor.shared.o obj/rthetaphi_xyz.shared.o obj/save_header_file.shared.o obj/smooth_weights_vec.shared.o obj/sort_array_coordinates.shared.o obj/spline_routines.shared.o obj/write_VTK_file.shared.o obj/ylm.shared.o obj/adios_helpers_definitions.shared_adios_module.o obj/adios_helpers_writers.shared_adios_module.o obj/adios_helpers.shared_adios.o obj/meshfem3D.check.o obj/meshfem3D_par.check_module.o obj/meshfem3D_models.check.o obj/add_missing_nodes.check.o obj/add_topography.check.o obj/add_topography_410_650.check.o obj/add_topography_cmb.check.o obj/add_topography_icb.check.o obj/assemble_MPI_central_cube_mesh.check.o obj/assemble_MPI_scalar_mesh.check.o obj/assemble_MPI_vector_mesh.check.o obj/calc_jacobian.check.o obj/check_mesh_resolution.check.o obj/compute_coordinates_grid.check.o obj/compute_element_properties.check.o obj/compute_volumes_and_areas.check.o obj/create_central_cube.check.o obj/create_central_cube_buffers.check.o obj/create_chunk_buffers.check.o obj/create_doubling_elements.check.o obj/create_mass_matrices.check.o obj/create_meshes.check.o obj/create_MPI_interfaces.check.o obj/create_regions_mesh.check.o obj/create_regions_elements.check.o obj/create_regular_elements.check.o obj/define_superbrick.check.o obj/finalize_mesher.check.o obj/fix_non_blocking_flags.check.o obj/get_absorb.check.o obj/get_ellipticity.check.o obj/get_jacobian_boundaries.check.o obj/get_jacobian_discontinuities.check.o obj/get_model.check.o obj/get_MPI_1D_buffers.check.o obj/get_MPI_cutplanes_eta.check.o obj/get_MPI_cutplanes_xi.check.o obj/get_MPI_interfaces.check.o obj/get_perm_color.check.o obj/get_shape2D.check.o obj/get_shape3D.check.o obj/gravity_integrals.check.o obj/initialize_layers.check.o obj/initialize_mesher.check.o obj/lgndr.check.o obj/model_1dref.check.o obj/model_1066a.check.o obj/model_ak135.check.o obj/model_sea1d.check.o obj/model_aniso_inner_core.check.o obj/model_aniso_mantle.check.o obj/model_atten3D_QRFSI12.check.o obj/model_attenuation_gll.check.o obj/model_attenuation.check.o obj/model_crust_1_0.check.o obj/model_crust_2_0.check.o obj/model_crustmaps.check.o obj/model_eucrust.check.o obj/model_epcrust.check.o obj/model_full_sh.check.o obj/model_gapp2.check.o obj/model_gll.check.o obj/model_heterogen_mantle.check.o obj/model_iasp91.check.o obj/model_jp1d.check.o obj/model_jp3d.check.o obj/model_ppm.check.o obj/model_s20rts.check.o obj/model_s40rts.check.o obj/model_s362ani.check.o obj/model_sea99_s.check.o obj/model_sglobe.check.o obj/moho_stretching.check.o obj/save_arrays_solver.check.o obj/save_model_meshfiles.check.o obj/setup_color_perm.check.o obj/setup_counters.check.o obj/setup_inner_outer.check.o obj/setup_model.check.o obj/setup_MPI_interfaces.check.o obj/stretching_function.check.o obj/test_MPI_interfaces.check.o obj/write_AVS_DX_global_chunks_data.check.o obj/write_AVS_DX_global_data.check.o obj/write_AVS_DX_global_faces_data.check.o obj/write_AVS_DX_output.check.o obj/write_AVS_DX_surface_data.check.o obj/write_AVS_DX_global_chunks_data_adios.check_adios_module.o obj/write_AVS_DX_global_data_adios.check_adios_module.o obj/write_AVS_DX_global_faces_data_adios.check_adios_module.o obj/write_AVS_DX_output_adios.check_adios.o obj/write_AVS_DX_surface_data_adios.check_adios_module.o obj/get_absorb_adios.check_adios.o obj/model_gll_adios.check_adios.o obj/model_attenuation_gll_adios.check_adios.o obj/save_arrays_solver_adios.check_adios.o obj/save_model_meshfiles_adios.check_adios.o   -L/opt/adios/adios/lib -ladiosf -L/usr/lib/ -L/opt/asdf-library/lib -L/opt/hdf5/hdf5-1.10.5/lib -lasdf -lhdf5hl_fortran -lhdf5_hl -lhdf5 -lstdc++ 
-mpif90  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -o bin/xwrite_profile obj/write_profile.aux.o obj/get_model.check.o obj/lgndr.check.o obj/meshfem3D_models.check.o obj/meshfem3D_par.check_module.o obj/model_1dref.check.o obj/model_1066a.check.o obj/model_ak135.check.o obj/model_sea1d.check.o obj/model_aniso_inner_core.check.o obj/model_aniso_mantle.check.o obj/model_atten3D_QRFSI12.check.o obj/model_attenuation_gll.check.o obj/model_attenuation.check.o obj/model_crust_1_0.check.o obj/model_crust_2_0.check.o obj/model_crustmaps.check.o obj/model_eucrust.check.o obj/model_epcrust.check.o obj/model_full_sh.check.o obj/model_gapp2.check.o obj/model_gll.check.o obj/model_heterogen_mantle.check.o obj/model_iasp91.check.o obj/model_jp1d.check.o obj/model_jp3d.check.o obj/model_ppm.check.o obj/model_s20rts.check.o obj/model_s40rts.check.o obj/model_s362ani.check.o obj/model_sea99_s.check.o obj/model_sglobe.check.o obj/model_gll_adios.check_adios.o obj/model_attenuation_gll_adios.check_adios.o obj/adios_manager.shared_adios_module.o obj/shared_par.shared_module.o obj/auto_ner.shared.o obj/binary_c_io.cc.o obj/count_elements.shared.o obj/count_number_of_sources.shared.o obj/count_points.shared.o obj/create_name_database.shared.o obj/define_all_layers.shared.o obj/exit_mpi.shared.o obj/flush_system.shared.o obj/get_all_eight_slices.shared.o obj/get_global.shared.o obj/get_model_parameters.shared.o obj/get_timestep_and_layers.shared.o obj/gll_library.shared.o obj/heap_sort.shared.o obj/intgrl.shared.o obj/make_ellipticity.shared.o obj/model_prem.shared.o obj/model_Sohl.shared.o obj/model_topo_bathy.shared.o obj/parallel.sharedmpi.o obj/param_reader.cc.o obj/read_compute_parameters.shared.o obj/read_parameter_file.shared.o obj/read_value_parameters.shared.o obj/reduce.shared.o obj/rotate_tensor.shared.o obj/rthetaphi_xyz.shared.o obj/smooth_weights_vec.shared.o obj/sort_array_coordinates.shared.o obj/spline_routines.shared.o obj/write_VTK_file.shared.o obj/ylm.shared.o obj/adios_helpers_definitions.shared_adios_module.o obj/adios_helpers_writers.shared_adios_module.o obj/adios_helpers.shared_adios.o   -L/opt/adios/adios/lib -ladiosf -L/usr/lib/ -L/opt/asdf-library/lib -L/opt/hdf5/hdf5-1.10.5/lib -lasdf -lhdf5hl_fortran -lhdf5_hl -lhdf5 -lstdc++ 
-mpif90  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -o bin/xcombine_vol_data_adios obj/combine_vol_data.auxadios.o obj/combine_vol_data_adios_impl.auxmpi.o obj/shared_par.shared_module.o obj/specfem3D_par.solverstatic_module.o obj/binary_c_io.cc.o obj/exit_mpi.shared.o obj/flush_system.shared.o obj/intgrl.shared.o obj/make_ellipticity.shared.o obj/model_prem.shared.o obj/model_Sohl.shared.o obj/parallel.sharedmpi.o obj/read_parameter_file.shared.o obj/read_value_parameters.shared.o obj/param_reader.cc.o obj/reduce.shared.o obj/rthetaphi_xyz.shared.o obj/spline_routines.shared.o  -L/opt/adios/adios/lib -ladiosf -L/usr/lib/ -L/opt/asdf-library/lib -L/opt/hdf5/hdf5-1.10.5/lib -lasdf -lhdf5hl_fortran -lhdf5_hl -lhdf5 -lstdc++
-mpif90  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -o bin/xcombine_vol_data_vtk_adios obj/combine_vol_data.auxadios_vtk.o obj/combine_vol_data_adios_impl.auxmpi.o obj/shared_par.shared_module.o obj/specfem3D_par.solverstatic_module.o obj/binary_c_io.cc.o obj/exit_mpi.shared.o obj/flush_system.shared.o obj/intgrl.shared.o obj/make_ellipticity.shared.o obj/model_prem.shared.o obj/model_Sohl.shared.o obj/parallel.sharedmpi.o obj/read_parameter_file.shared.o obj/read_value_parameters.shared.o obj/param_reader.cc.o obj/reduce.shared.o obj/rthetaphi_xyz.shared.o obj/spline_routines.shared.o obj/write_VTK_file.shared.o  -L/opt/adios/adios/lib -ladiosf -L/usr/lib/ -L/opt/asdf-library/lib -L/opt/hdf5/hdf5-1.10.5/lib -lasdf -lhdf5hl_fortran -lhdf5_hl -lhdf5 -lstdc++
-mpif90  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -o bin/xadd_model_iso obj/add_model_iso.tomo.o obj/tomography_par.tomo_module.o obj/compute_kernel_integral.tomo.o obj/get_cg_direction.tomo.o obj/get_sd_direction.tomo.o obj/read_kernels.tomo.o obj/read_kernels_cg.tomo.o obj/read_model.tomo.o obj/read_parameters_tomo.tomo.o obj/write_gradient.tomo.o obj/write_new_model.tomo.o obj/write_new_model_perturbations.tomo.o obj/shared_par.shared_module.o obj/specfem3D_par.solverstatic_module.o obj/parallel.sharedmpi.o obj/exit_mpi.shared.o obj/gll_library.shared.o obj/param_reader.cc.o obj/read_parameter_file.shared.o obj/read_value_parameters.shared.o  -L/opt/adios/adios/lib -ladiosf -L/usr/lib/ -L/opt/asdf-library/lib -L/opt/hdf5/hdf5-1.10.5/lib -lasdf -lhdf5hl_fortran -lhdf5_hl -lhdf5 -lstdc++
-mpif90  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -o bin/xadd_model_tiso obj/add_model_tiso.tomo.o obj/tomography_par.tomo_module.o obj/compute_kernel_integral.tomo.o obj/get_cg_direction.tomo.o obj/get_sd_direction.tomo.o obj/read_kernels.tomo.o obj/read_kernels_cg.tomo.o obj/read_model.tomo.o obj/read_parameters_tomo.tomo.o obj/write_gradient.tomo.o obj/write_new_model.tomo.o obj/write_new_model_perturbations.tomo.o obj/shared_par.shared_module.o obj/specfem3D_par.solverstatic_module.o obj/parallel.sharedmpi.o obj/exit_mpi.shared.o obj/gll_library.shared.o obj/param_reader.cc.o obj/read_parameter_file.shared.o obj/read_value_parameters.shared.o  -L/opt/adios/adios/lib -ladiosf -L/usr/lib/ -L/opt/asdf-library/lib -L/opt/hdf5/hdf5-1.10.5/lib -lasdf -lhdf5hl_fortran -lhdf5_hl -lhdf5 -lstdc++
-mpif90  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -o bin/xadd_model_tiso_cg obj/add_model_tiso_cg.tomo.o obj/tomography_par.tomo_module.o obj/compute_kernel_integral.tomo.o obj/get_cg_direction.tomo.o obj/get_sd_direction.tomo.o obj/read_kernels.tomo.o obj/read_kernels_cg.tomo.o obj/read_model.tomo.o obj/read_parameters_tomo.tomo.o obj/write_gradient.tomo.o obj/write_new_model.tomo.o obj/write_new_model_perturbations.tomo.o obj/shared_par.shared_module.o obj/specfem3D_par.solverstatic_module.o obj/parallel.sharedmpi.o obj/exit_mpi.shared.o obj/gll_library.shared.o obj/param_reader.cc.o obj/read_parameter_file.shared.o obj/read_value_parameters.shared.o  -L/opt/adios/adios/lib -ladiosf -L/usr/lib/ -L/opt/asdf-library/lib -L/opt/hdf5/hdf5-1.10.5/lib -lasdf -lhdf5hl_fortran -lhdf5_hl -lhdf5 -lstdc++
-mpif90  -DUSE_ADIOS -I/opt/adios/adios/include -O3 -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized -DADIOS_VERSION_OLD  -DFORCE_VECTORIZATION -o bin/xadd_model_tiso_iso obj/add_model_tiso_iso.tomo.o obj/tomography_par.tomo_module.o obj/compute_kernel_integral.tomo.o obj/get_cg_direction.tomo.o obj/get_sd_direction.tomo.o obj/read_kernels.tomo.o obj/read_kernels_cg.tomo.o obj/read_model.tomo.o obj/read_parameters_tomo.tomo.o obj/write_gradient.tomo.o obj/write_new_model.tomo.o obj/write_new_model_perturbations.tomo.o obj/shared_par.shared_module.o obj/specfem3D_par.solverstatic_module.o obj/parallel.sharedmpi.o obj/exit_mpi.shared.o obj/gll_library.shared.o obj/param_reader.cc.o obj/read_parameter_file.shared.o obj/read_value_parameters.shared.o  -L/opt/adios/adios/lib -ladiosf -L/usr/lib/ -L/opt/asdf-library/lib -L/opt/hdf5/hdf5-1.10.5/lib -lasdf -lhdf5hl_fortran -lhdf5_hl -lhdf5 -lstdc++
-
   running script...
 
 
-Wed Nov 27 23:30:43 +03 2019
+Thu Jun 25 01:02:50 CEST 2020
 starting MPI mesher on 4 processors
 
-  mesher done: Wed Nov 27 23:30:52 +03 2019
+  mesher done: Thu Jun 25 01:02:59 CEST 2020
 
 
-Wed Nov 27 23:30:54 +03 2019
+Thu Jun 25 01:03:01 CEST 2020
 starting run in current directory /Users/Shared/SPECFEM3D_GLOBE/EXAMPLES/regional_s40rts
 
 finished successfully
-Wed Nov 27 23:31:28 +03 2019
+Thu Jun 25 01:03:37 CEST 2020
 
   creating movie files...
 
@@ -420,7 +28,7 @@ Wed Nov 27 23:31:28 +03 2019
  movie frames have been saved every          200  time steps
 
  enter first time step of movie (e.g. 1)
- enter last time step of movie (e.g.         4100 or -1 for all)
+ enter last time step of movie (e.g.         4200 or -1 for all)
  enter component (e.g. 1=Z, 2=N, 3=E)
 
  --------
@@ -435,9 +43,9 @@ Wed Nov 27 23:31:28 +03 2019
  Allocating arrays for reading data of size         6400 =  0.146484375     MB
 
 
- looping from            1  to         4100  every          200  time steps
+ looping from            1  to         4200  every          200  time steps
 
- total number of frames will be           20
+ total number of frames will be           21
 
  there are a total of         4096  OpenDX "elements" at the surface
 
@@ -446,17 +54,17 @@ Wed Nov 27 23:31:28 +03 2019
 
 
 
- reading snapshot time step          200  out of         4100
+ reading snapshot time step          200  out of         4200
 
    file ./OUTPUT_FILES//moviedata000200
 
-   data ux min/max:   -6.34832395E-05   1.70474395E-05
-   data uy min/max:   -4.09927052E-05   3.41349332E-05
-   data uz min/max:   -3.04550140E-05   2.23839324E-05
+   data ux min/max:   -3.82579401E-06   1.31602837E-06
+   data uy min/max:   -2.82825658E-06   2.53267262E-06
+   data uz min/max:   -2.12205418E-06   1.26115481E-06
 
 
- minimum amplitude in current snapshot =   -1.4115188605501316E-005
- maximum amplitude in current snapshot =    3.6160179206490284E-006
+ minimum amplitude in current snapshot =   -1.0090464002132649E-006
+ maximum amplitude in current snapshot =    2.9661185863005812E-007
 
  sorting... 
  sorting list of points
@@ -464,17 +72,17 @@ Wed Nov 27 23:31:28 +03 2019
  found a total of         4225  points
  initial number of points (with multiples) was        16384
 
- reading snapshot time step          400  out of         4100
+ reading snapshot time step          400  out of         4200
 
    file ./OUTPUT_FILES//moviedata000400
 
-   data ux min/max:   -1.41032142E-04   9.01699095E-05
-   data uy min/max:   -1.37534429E-04   1.10167341E-04
-   data uz min/max:   -7.51674015E-05   7.06332212E-05
+   data ux min/max:   -3.45799199E-05   1.25647475E-05
+   data uy min/max:   -2.52968530E-05   2.08870842E-05
+   data uz min/max:   -1.73025710E-05   1.38245368E-05
 
 
- minimum amplitude in current snapshot =   -1.9409031665418297E-005
- maximum amplitude in current snapshot =    1.8685301256482489E-005
+ minimum amplitude in current snapshot =   -7.0498772402061149E-006
+ maximum amplitude in current snapshot =    2.2430267563322559E-006
 
  sorting... 
  sorting list of points
@@ -482,17 +90,17 @@ Wed Nov 27 23:31:28 +03 2019
  found a total of         4225  points
  initial number of points (with multiples) was        16384
 
- reading snapshot time step          600  out of         4100
+ reading snapshot time step          600  out of         4200
 
    file ./OUTPUT_FILES//moviedata000600
 
-   data ux min/max:   -2.17753222E-05   2.23583156E-05
-   data uy min/max:   -2.69823850E-05   2.13998537E-05
-   data uz min/max:   -1.70299718E-05   1.45691520E-05
+   data ux min/max:   -8.77085622E-05   3.83869301E-05
+   data uy min/max:   -6.94557020E-05   5.74437108E-05
+   data uz min/max:   -4.40133626E-05   3.81502832E-05
 
 
- minimum amplitude in current snapshot =   -1.3148262951290235E-005
- maximum amplitude in current snapshot =    1.1183896276634187E-005
+ minimum amplitude in current snapshot =   -1.5717025235062465E-005
+ maximum amplitude in current snapshot =    7.4518447945592925E-006
 
  sorting... 
  sorting list of points
@@ -500,17 +108,17 @@ Wed Nov 27 23:31:28 +03 2019
  found a total of         4225  points
  initial number of points (with multiples) was        16384
 
- reading snapshot time step          800  out of         4100
+ reading snapshot time step          800  out of         4200
 
    file ./OUTPUT_FILES//moviedata000800
 
-   data ux min/max:   -1.96037381E-05   2.45018000E-05
-   data uy min/max:   -2.01697785E-05   2.09915634E-05
-   data uz min/max:   -1.07631367E-05   1.14936383E-05
+   data ux min/max:   -6.81605961E-05   3.41088598E-05
+   data uy min/max:   -5.60522712E-05   4.66405399E-05
+   data uz min/max:   -3.34580836E-05   3.10948744E-05
 
 
- minimum amplitude in current snapshot =   -1.0639325410011224E-005
- maximum amplitude in current snapshot =    8.5298906924435869E-006
+ minimum amplitude in current snapshot =   -1.0571029633865692E-005
+ maximum amplitude in current snapshot =    8.1014286479330622E-006
 
  sorting... 
  sorting list of points
@@ -518,17 +126,17 @@ Wed Nov 27 23:31:28 +03 2019
  found a total of         4225  points
  initial number of points (with multiples) was        16384
 
- reading snapshot time step         1000  out of         4100
+ reading snapshot time step         1000  out of         4200
 
    file ./OUTPUT_FILES//moviedata001000
 
-   data ux min/max:   -1.69195337E-05   1.95122466E-05
-   data uy min/max:   -2.10034505E-05   1.60105556E-05
-   data uz min/max:   -1.08503536E-05   9.07607591E-06
+   data ux min/max:   -1.51160839E-05   6.19841558E-06
+   data uy min/max:   -1.08901540E-05   9.02893680E-06
+   data uz min/max:   -6.63174387E-06   6.55920667E-06
 
 
- minimum amplitude in current snapshot =   -6.3935776779544540E-006
- maximum amplitude in current snapshot =    6.3970542214519810E-006
+ minimum amplitude in current snapshot =   -2.8548356567625888E-006
+ maximum amplitude in current snapshot =    2.5316098799521569E-006
 
  sorting... 
  sorting list of points
@@ -536,17 +144,17 @@ Wed Nov 27 23:31:28 +03 2019
  found a total of         4225  points
  initial number of points (with multiples) was        16384
 
- reading snapshot time step         1200  out of         4100
+ reading snapshot time step         1200  out of         4200
 
    file ./OUTPUT_FILES//moviedata001200
 
-   data ux min/max:   -1.33314124E-05   1.70384865E-05
-   data uy min/max:   -1.56613860E-05   1.38247760E-05
-   data uz min/max:   -9.02506599E-06   7.93022809E-06
+   data ux min/max:   -3.23602899E-06   3.19201763E-06
+   data uy min/max:   -3.59101773E-06   3.40379165E-06
+   data uz min/max:   -2.97669453E-06   2.24611449E-06
 
 
- minimum amplitude in current snapshot =   -5.9061176216346212E-006
- maximum amplitude in current snapshot =    6.9813809204788413E-006
+ minimum amplitude in current snapshot =   -2.5111560262303101E-006
+ maximum amplitude in current snapshot =    1.9196534140064614E-006
 
  sorting... 
  sorting list of points
@@ -554,17 +162,17 @@ Wed Nov 27 23:31:28 +03 2019
  found a total of         4225  points
  initial number of points (with multiples) was        16384
 
- reading snapshot time step         1400  out of         4100
+ reading snapshot time step         1400  out of         4200
 
    file ./OUTPUT_FILES//moviedata001400
 
-   data ux min/max:   -1.04943520E-05   1.39562762E-05
-   data uy min/max:   -1.39253752E-05   1.29937862E-05
-   data uz min/max:   -7.61823139E-06   6.66417463E-06
+   data ux min/max:   -2.55587952E-06   2.83560189E-06
+   data uy min/max:   -3.02662784E-06   2.73863020E-06
+   data uz min/max:   -2.04087428E-06   2.03727018E-06
 
 
- minimum amplitude in current snapshot =   -4.8379101826867554E-006
- maximum amplitude in current snapshot =    5.1396109483903274E-006
+ minimum amplitude in current snapshot =   -1.8872333384933881E-006
+ maximum amplitude in current snapshot =    1.9599735878728097E-006
 
  sorting... 
  sorting list of points
@@ -572,17 +180,17 @@ Wed Nov 27 23:31:28 +03 2019
  found a total of         4225  points
  initial number of points (with multiples) was        16384
 
- reading snapshot time step         1600  out of         4100
+ reading snapshot time step         1600  out of         4200
 
    file ./OUTPUT_FILES//moviedata001600
 
-   data ux min/max:   -1.05605686E-05   1.27119711E-05
-   data uy min/max:   -1.35270739E-05   1.06163370E-05
-   data uz min/max:   -7.45964689E-06   5.57657813E-06
+   data ux min/max:   -2.26720294E-06   2.55989539E-06
+   data uy min/max:   -2.57931742E-06   2.36371557E-06
+   data uz min/max:   -1.69175939E-06   1.90798573E-06
 
 
- minimum amplitude in current snapshot =   -4.3992245082336012E-006
- maximum amplitude in current snapshot =    4.2198485061817337E-006
+ minimum amplitude in current snapshot =   -1.4771288761039614E-006
+ maximum amplitude in current snapshot =    1.8205835203843890E-006
 
  sorting... 
  sorting list of points
@@ -590,17 +198,17 @@ Wed Nov 27 23:31:28 +03 2019
  found a total of         4225  points
  initial number of points (with multiples) was        16384
 
- reading snapshot time step         1800  out of         4100
+ reading snapshot time step         1800  out of         4200
 
    file ./OUTPUT_FILES//moviedata001800
 
-   data ux min/max:   -9.70126257E-06   1.09069015E-05
-   data uy min/max:   -1.19124143E-05   1.02791982E-05
-   data uz min/max:   -6.72076521E-06   5.25810265E-06
+   data ux min/max:   -1.87927310E-06   2.09684299E-06
+   data uy min/max:   -2.28405224E-06   2.11298288E-06
+   data uz min/max:   -1.51696588E-06   1.73223418E-06
 
 
- minimum amplitude in current snapshot =   -3.9820797610445879E-006
- maximum amplitude in current snapshot =    4.0161039578379132E-006
+ minimum amplitude in current snapshot =   -1.2053405953338370E-006
+ maximum amplitude in current snapshot =    1.7257121953662136E-006
 
  sorting... 
  sorting list of points
@@ -608,17 +216,17 @@ Wed Nov 27 23:31:28 +03 2019
  found a total of         4225  points
  initial number of points (with multiples) was        16384
 
- reading snapshot time step         2000  out of         4100
+ reading snapshot time step         2000  out of         4200
 
    file ./OUTPUT_FILES//moviedata002000
 
-   data ux min/max:   -8.66820574E-06   1.00256411E-05
-   data uy min/max:   -1.14408294E-05   8.83434859E-06
-   data uz min/max:   -5.29673071E-06   4.60427509E-06
+   data ux min/max:   -1.64798007E-06   1.80351924E-06
+   data uy min/max:   -2.08029996E-06   1.85889348E-06
+   data uz min/max:   -1.33460708E-06   1.50278606E-06
 
 
- minimum amplitude in current snapshot =   -3.6938022276444826E-006
- maximum amplitude in current snapshot =    3.6313938380772015E-006
+ minimum amplitude in current snapshot =   -1.0561332146608038E-006
+ maximum amplitude in current snapshot =    1.5547816474281717E-006
 
  sorting... 
  sorting list of points
@@ -626,17 +234,17 @@ Wed Nov 27 23:31:28 +03 2019
  found a total of         4225  points
  initial number of points (with multiples) was        16384
 
- reading snapshot time step         2200  out of         4100
+ reading snapshot time step         2200  out of         4200
 
    file ./OUTPUT_FILES//moviedata002200
 
-   data ux min/max:   -7.53883523E-06   9.76121464E-06
-   data uy min/max:   -1.03605062E-05   8.70487838E-06
-   data uz min/max:   -5.01677687E-06   4.04143793E-06
+   data ux min/max:   -1.48633956E-06   1.53676638E-06
+   data uy min/max:   -1.86075044E-06   1.66404050E-06
+   data uz min/max:   -1.15457340E-06   1.37526638E-06
 
 
- minimum amplitude in current snapshot =   -2.9820143936376553E-006
- maximum amplitude in current snapshot =    3.4338140721956734E-006
+ minimum amplitude in current snapshot =   -1.0618168744258583E-006
+ maximum amplitude in current snapshot =    1.4224244750948856E-006
 
  sorting... 
  sorting list of points
@@ -644,17 +252,17 @@ Wed Nov 27 23:31:28 +03 2019
  found a total of         4225  points
  initial number of points (with multiples) was        16384
 
- reading snapshot time step         2400  out of         4100
+ reading snapshot time step         2400  out of         4200
 
    file ./OUTPUT_FILES//moviedata002400
 
-   data ux min/max:   -8.80815423E-06   1.10566953E-05
-   data uy min/max:   -1.04466098E-05   8.63703372E-06
-   data uz min/max:   -6.48437663E-06   3.90019841E-06
+   data ux min/max:   -1.38433370E-06   1.46181014E-06
+   data uy min/max:   -1.67643293E-06   1.49286473E-06
+   data uz min/max:   -9.93696517E-07   1.32676109E-06
 
 
- minimum amplitude in current snapshot =   -2.8995912089158082E-006
- maximum amplitude in current snapshot =    3.8140819924592506E-006
+ minimum amplitude in current snapshot =   -9.5881171091605211E-007
+ maximum amplitude in current snapshot =    1.3581018265540479E-006
 
  sorting... 
  sorting list of points
@@ -662,17 +270,17 @@ Wed Nov 27 23:31:28 +03 2019
  found a total of         4225  points
  initial number of points (with multiples) was        16384
 
- reading snapshot time step         2600  out of         4100
+ reading snapshot time step         2600  out of         4200
 
    file ./OUTPUT_FILES//moviedata002600
 
-   data ux min/max:   -8.11830614E-06   8.89023067E-06
-   data uy min/max:   -9.83738209E-06   7.99339614E-06
-   data uz min/max:   -4.89428066E-06   3.56064243E-06
+   data ux min/max:   -1.27246210E-06   1.33432036E-06
+   data uy min/max:   -1.56886301E-06   1.37845905E-06
+   data uz min/max:   -9.25458266E-07   1.28804015E-06
 
 
- minimum amplitude in current snapshot =   -2.6266779968864284E-006
- maximum amplitude in current snapshot =    3.0232840799726546E-006
+ minimum amplitude in current snapshot =   -9.0003254626935814E-007
+ maximum amplitude in current snapshot =    1.2692030395555776E-006
 
  sorting... 
  sorting list of points
@@ -680,17 +288,17 @@ Wed Nov 27 23:31:28 +03 2019
  found a total of         4225  points
  initial number of points (with multiples) was        16384
 
- reading snapshot time step         2800  out of         4100
+ reading snapshot time step         2800  out of         4200
 
    file ./OUTPUT_FILES//moviedata002800
 
-   data ux min/max:   -7.33832667E-06   8.58175918E-06
-   data uy min/max:   -9.00343821E-06   7.58830311E-06
-   data uz min/max:   -4.34574849E-06   3.20183744E-06
+   data ux min/max:   -1.22835957E-06   1.30729200E-06
+   data uy min/max:   -1.48005188E-06   1.27585747E-06
+   data uz min/max:   -8.42170152E-07   1.12434782E-06
 
 
- minimum amplitude in current snapshot =   -2.3394090931105893E-006
- maximum amplitude in current snapshot =    3.4091367524524685E-006
+ minimum amplitude in current snapshot =   -8.6848945102246944E-007
+ maximum amplitude in current snapshot =    1.1962895314354682E-006
 
  sorting... 
  sorting list of points
@@ -698,17 +306,17 @@ Wed Nov 27 23:31:28 +03 2019
  found a total of         4225  points
  initial number of points (with multiples) was        16384
 
- reading snapshot time step         3000  out of         4100
+ reading snapshot time step         3000  out of         4200
 
    file ./OUTPUT_FILES//moviedata003000
 
-   data ux min/max:   -5.86108081E-06   7.56643976E-06
-   data uy min/max:   -9.10594463E-06   6.91593959E-06
-   data uz min/max:   -4.21767118E-06   3.07853429E-06
+   data ux min/max:   -1.17890966E-06   1.20696870E-06
+   data uy min/max:   -1.42220574E-06   1.19883350E-06
+   data uz min/max:   -7.96417226E-07   1.13240753E-06
 
 
- minimum amplitude in current snapshot =   -2.4898265564843314E-006
- maximum amplitude in current snapshot =    2.9420830287563149E-006
+ minimum amplitude in current snapshot =   -7.7607944604096701E-007
+ maximum amplitude in current snapshot =    1.1393588010832900E-006
 
  sorting... 
  sorting list of points
@@ -716,17 +324,17 @@ Wed Nov 27 23:31:28 +03 2019
  found a total of         4225  points
  initial number of points (with multiples) was        16384
 
- reading snapshot time step         3200  out of         4100
+ reading snapshot time step         3200  out of         4200
 
    file ./OUTPUT_FILES//moviedata003200
 
-   data ux min/max:   -5.30443003E-06   7.65870118E-06
-   data uy min/max:   -8.64496997E-06   7.60751755E-06
-   data uz min/max:   -4.10849862E-06   3.16279375E-06
+   data ux min/max:   -1.12439488E-06   1.16223180E-06
+   data uy min/max:   -1.33074036E-06   1.12329610E-06
+   data uz min/max:   -8.00790531E-07   1.07031622E-06
 
 
- minimum amplitude in current snapshot =   -2.3443108148057945E-006
- maximum amplitude in current snapshot =    3.8236435102589894E-006
+ minimum amplitude in current snapshot =   -7.6755179634346860E-007
+ maximum amplitude in current snapshot =    1.0811908168761875E-006
 
  sorting... 
  sorting list of points
@@ -734,17 +342,17 @@ Wed Nov 27 23:31:28 +03 2019
  found a total of         4225  points
  initial number of points (with multiples) was        16384
 
- reading snapshot time step         3400  out of         4100
+ reading snapshot time step         3400  out of         4200
 
    file ./OUTPUT_FILES//moviedata003400
 
-   data ux min/max:   -5.25982978E-06   7.58988836E-06
-   data uy min/max:   -8.34966886E-06   7.06885294E-06
-   data uz min/max:   -3.97466238E-06   3.08110293E-06
+   data ux min/max:   -1.06762388E-06   1.20191987E-06
+   data uy min/max:   -1.31146305E-06   1.04702690E-06
+   data uz min/max:   -7.32712465E-07   1.02432045E-06
 
 
- minimum amplitude in current snapshot =   -2.5865058432827936E-006
- maximum amplitude in current snapshot =    3.1926304018270457E-006
+ minimum amplitude in current snapshot =   -7.4668173510872293E-007
+ maximum amplitude in current snapshot =    1.0397264986750088E-006
 
  sorting... 
  sorting list of points
@@ -752,17 +360,17 @@ Wed Nov 27 23:31:28 +03 2019
  found a total of         4225  points
  initial number of points (with multiples) was        16384
 
- reading snapshot time step         3600  out of         4100
+ reading snapshot time step         3600  out of         4200
 
    file ./OUTPUT_FILES//moviedata003600
 
-   data ux min/max:   -5.49702463E-06   7.06892979E-06
-   data uy min/max:   -7.62786021E-06   7.01865702E-06
-   data uz min/max:   -3.93725804E-06   2.94043730E-06
+   data ux min/max:   -9.91200068E-07   1.13240662E-06
+   data uy min/max:   -1.26890848E-06   1.02309673E-06
+   data uz min/max:   -7.01376962E-07   1.01107776E-06
 
 
- minimum amplitude in current snapshot =   -1.9207604964321945E-006
- maximum amplitude in current snapshot =    2.4271107577078510E-006
+ minimum amplitude in current snapshot =   -7.1153266389956116E-007
+ maximum amplitude in current snapshot =    1.0642456800269429E-006
 
  sorting... 
  sorting list of points
@@ -770,17 +378,17 @@ Wed Nov 27 23:31:28 +03 2019
  found a total of         4225  points
  initial number of points (with multiples) was        16384
 
- reading snapshot time step         3800  out of         4100
+ reading snapshot time step         3800  out of         4200
 
    file ./OUTPUT_FILES//moviedata003800
 
-   data ux min/max:   -5.21400079E-06   7.05062257E-06
-   data uy min/max:   -7.10018367E-06   6.95796689E-06
-   data uz min/max:   -4.07843845E-06   3.28270107E-06
+   data ux min/max:   -9.44014346E-07   1.13762326E-06
+   data uy min/max:   -1.25730514E-06   9.79413471E-07
+   data uz min/max:   -6.77003129E-07   9.79559331E-07
 
 
- minimum amplitude in current snapshot =   -2.2722961148247123E-006
- maximum amplitude in current snapshot =    2.0961124391760677E-006
+ minimum amplitude in current snapshot =   -6.6663187681115232E-007
+ maximum amplitude in current snapshot =    9.5193013294192497E-007
 
  sorting... 
  sorting list of points
@@ -788,17 +396,35 @@ Wed Nov 27 23:31:28 +03 2019
  found a total of         4225  points
  initial number of points (with multiples) was        16384
 
- reading snapshot time step         4000  out of         4100
+ reading snapshot time step         4000  out of         4200
 
    file ./OUTPUT_FILES//moviedata004000
 
-   data ux min/max:   -4.80190101E-06   6.32759520E-06
-   data uy min/max:   -7.28195209E-06   6.85888062E-06
-   data uz min/max:   -3.41000646E-06   2.89460741E-06
+   data ux min/max:   -9.40803034E-07   1.16135891E-06
+   data uy min/max:   -1.23403538E-06   9.41963435E-07
+   data uz min/max:   -6.56833720E-07   9.25326788E-07
 
 
- minimum amplitude in current snapshot =   -2.0032866814290173E-006
- maximum amplitude in current snapshot =    1.8146062075174996E-006
+ minimum amplitude in current snapshot =   -6.7455761154633365E-007
+ maximum amplitude in current snapshot =    8.4858163518219953E-007
+
+ sorting... 
+ sorting list of points
+
+ found a total of         4225  points
+ initial number of points (with multiples) was        16384
+
+ reading snapshot time step         4200  out of         4200
+
+   file ./OUTPUT_FILES//moviedata004200
+
+   data ux min/max:   -9.78930984E-07   1.15017497E-06
+   data uy min/max:   -1.23481868E-06   1.01571936E-06
+   data uz min/max:   -6.59688453E-07   8.15899341E-07
+
+
+ minimum amplitude in current snapshot =   -6.5757330958149396E-007
+ maximum amplitude in current snapshot =    7.7603709769391571E-007
 
  sorting... 
  sorting list of points
@@ -811,4 +437,4 @@ Wed Nov 27 23:31:28 +03 2019
  AVS files are stored in ./OUTPUT_FILES//AVS_*.inp
 
 
-Wed Nov 27 23:31:29 +03 2019
+Thu Jun 25 01:03:38 CEST 2020

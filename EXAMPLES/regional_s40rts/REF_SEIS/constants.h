@@ -476,6 +476,8 @@
 ! the mesher) and use them for the computation of boundary kernel (in the solver)
   logical, parameter :: SAVE_BOUNDARY_MESH = SAVE_KERNELS_BOUNDARY
 
+! flag to write seismograms with adjoint wavefield instead of backward, reconstructed wavefield
+  logical, parameter :: OUTPUT_ADJOINT_WAVEFIELD_SEISMOGRAMS = .false.
 
 !!-----------------------------------------------------------
 !!
@@ -588,6 +590,10 @@
 !! debugging flags
 !!
 !!-----------------------------------------------------------
+
+! flag to turn on ordered assembly, where the the order of the summation depends on the order of MPI ranks.
+! used for testing
+  logical, parameter :: DO_ORDERED_ASSEMBLY = .false.
 
 ! flags to actually assemble with MPI or not
 ! and to actually match fluid and solid regions of the Earth or not
