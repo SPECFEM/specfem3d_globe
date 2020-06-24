@@ -265,12 +265,10 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
     clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c55store.ocl));
     clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c56store.ocl));
     clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c66store.ocl));
-    clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (int), (void *) &mp->gravity));
     clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_rstore_crust_mantle.ocl));
-    clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_minus_gravity_table.ocl));
-    clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_minus_deriv_gravity_table.ocl));
-    clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_density_table.ocl));
-    clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (realw), (void *) &mp->R_EARTH_KM));
+    clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (int), (void *) &mp->gravity));
+    clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_gravity_pre_store_crust_mantle.ocl));
+    clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_gravity_H_crust_mantle.ocl));
     clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_wgll_cube.ocl));
     clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (int), (void *) &mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY));
 #ifdef USE_TEXTURES_FIELDS
@@ -359,12 +357,10 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
                                                                  d_c34store.cuda,d_c35store.cuda,d_c36store.cuda,
                                                                  d_c44store.cuda,d_c45store.cuda,d_c46store.cuda,
                                                                  d_c55store.cuda,d_c56store.cuda,d_c66store.cuda,
-                                                                 mp->gravity,
                                                                  mp->d_rstore_crust_mantle.cuda,
-                                                                 mp->d_minus_gravity_table.cuda,
-                                                                 mp->d_minus_deriv_gravity_table.cuda,
-                                                                 mp->d_density_table.cuda,
-                                                                 mp->R_EARTH_KM,
+                                                                 mp->gravity,
+                                                                 mp->d_gravity_pre_store_crust_mantle.cuda,
+                                                                 mp->d_gravity_H_crust_mantle.cuda,
                                                                  mp->d_wgll_cube.cuda,
                                                                  mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY);
   }

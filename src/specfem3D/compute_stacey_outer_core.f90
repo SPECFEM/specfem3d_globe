@@ -70,7 +70,7 @@
   !           simple approach is still fastest. (assuming that files are accessed on a local scratch disk)
 
   ! checks
-  if (SIMULATION_TYPE == 3 ) return
+  if (SIMULATION_TYPE == 3) return
 
   ! outer core
 
@@ -101,7 +101,7 @@
           i = 1
           do k = nkmin_xi_outer_core(1,ispec2D),NGLLZ
             do j = njmin_outer_core(1,ispec2D),njmax_outer_core(1,ispec2D)
-              iglob=ibool_outer_core(i,j,k,ispec)
+              iglob = ibool_outer_core(i,j,k,ispec)
 
               sn = veloc_outer_core(iglob)/vp_outer_core(i,j,k,ispec)
 
@@ -133,10 +133,10 @@
           ! exclude elements that are not on absorbing edges
           if (nkmin_xi_outer_core(2,ispec2D) == 0 .or. njmin_outer_core(2,ispec2D) == 0) cycle
 
-          i=NGLLX
-          do k=nkmin_xi_outer_core(2,ispec2D),NGLLZ
-            do j=njmin_outer_core(2,ispec2D),njmax_outer_core(2,ispec2D)
-              iglob=ibool_outer_core(i,j,k,ispec)
+          i = NGLLX
+          do k = nkmin_xi_outer_core(2,ispec2D),NGLLZ
+            do j = njmin_outer_core(2,ispec2D),njmax_outer_core(2,ispec2D)
+              iglob = ibool_outer_core(i,j,k,ispec)
 
               sn = veloc_outer_core(iglob)/vp_outer_core(i,j,k,ispec)
 
@@ -170,7 +170,7 @@
         j = 1
         do k = nkmin_eta_outer_core(1,ispec2D),NGLLZ
           do i = nimin_outer_core(1,ispec2D),nimax_outer_core(1,ispec2D)
-            iglob=ibool_outer_core(i,j,k,ispec)
+            iglob = ibool_outer_core(i,j,k,ispec)
 
             sn = veloc_outer_core(iglob)/vp_outer_core(i,j,k,ispec)
 
@@ -200,10 +200,10 @@
         ! exclude elements that are not on absorbing edges
         if (nkmin_eta_outer_core(2,ispec2D) == 0 .or. nimin_outer_core(2,ispec2D) == 0) cycle
 
-        j=NGLLY
-        do k=nkmin_eta_outer_core(2,ispec2D),NGLLZ
-          do i=nimin_outer_core(2,ispec2D),nimax_outer_core(2,ispec2D)
-            iglob=ibool_outer_core(i,j,k,ispec)
+        j = NGLLY
+        do k = nkmin_eta_outer_core(2,ispec2D),NGLLZ
+          do i = nimin_outer_core(2,ispec2D),nimax_outer_core(2,ispec2D)
+            iglob = ibool_outer_core(i,j,k,ispec)
 
             sn = veloc_outer_core(iglob)/vp_outer_core(i,j,k,ispec)
 
@@ -395,7 +395,7 @@
         ! on CPU
         do ispec2D = 1,nspec2D_xmin_outer_core
 
-          ispec=ibelm_xmin_outer_core(ispec2D)
+          ispec = ibelm_xmin_outer_core(ispec2D)
 
           ! exclude elements that are not on absorbing edges
           if (nkmin_xi_outer_core(1,ispec2D) == 0 .or. njmin_outer_core(1,ispec2D) == 0) cycle
@@ -403,7 +403,7 @@
           i = 1
           do k = nkmin_xi_outer_core(1,ispec2D),NGLLZ
             do j = njmin_outer_core(1,ispec2D),njmax_outer_core(1,ispec2D)
-              iglob=ibool_outer_core(i,j,k,ispec)
+              iglob = ibool_outer_core(i,j,k,ispec)
 
               b_accel_outer_core(iglob) = b_accel_outer_core(iglob) - absorb_xmin_outer_core(j,k,ispec2D)
             enddo
@@ -428,15 +428,15 @@
         ! on CPU
         do ispec2D = 1,nspec2D_xmax_outer_core
 
-          ispec=ibelm_xmax_outer_core(ispec2D)
+          ispec = ibelm_xmax_outer_core(ispec2D)
 
           ! exclude elements that are not on absorbing edges
           if (nkmin_xi_outer_core(2,ispec2D) == 0 .or. njmin_outer_core(2,ispec2D) == 0) cycle
 
-          i=NGLLX
-          do k=nkmin_xi_outer_core(2,ispec2D),NGLLZ
-            do j=njmin_outer_core(2,ispec2D),njmax_outer_core(2,ispec2D)
-              iglob=ibool_outer_core(i,j,k,ispec)
+          i = NGLLX
+          do k = nkmin_xi_outer_core(2,ispec2D),NGLLZ
+            do j = njmin_outer_core(2,ispec2D),njmax_outer_core(2,ispec2D)
+              iglob = ibool_outer_core(i,j,k,ispec)
 
               b_accel_outer_core(iglob) = b_accel_outer_core(iglob) - absorb_xmax_outer_core(j,k,ispec2D)
             enddo
@@ -459,7 +459,7 @@
       ! on CPU
       do ispec2D = 1,nspec2D_ymin_outer_core
 
-        ispec=ibelm_ymin_outer_core(ispec2D)
+        ispec = ibelm_ymin_outer_core(ispec2D)
 
         ! exclude elements that are not on absorbing edges
         if (nkmin_eta_outer_core(1,ispec2D) == 0 .or. nimin_outer_core(1,ispec2D) == 0) cycle
@@ -467,7 +467,7 @@
         j = 1
         do k = nkmin_eta_outer_core(1,ispec2D),NGLLZ
           do i = nimin_outer_core(1,ispec2D),nimax_outer_core(1,ispec2D)
-            iglob=ibool_outer_core(i,j,k,ispec)
+            iglob = ibool_outer_core(i,j,k,ispec)
 
             b_accel_outer_core(iglob) = b_accel_outer_core(iglob) - absorb_ymin_outer_core(i,k,ispec2D)
           enddo
@@ -489,15 +489,15 @@
       ! on CPU
       do ispec2D = 1,nspec2D_ymax_outer_core
 
-        ispec=ibelm_ymax_outer_core(ispec2D)
+        ispec = ibelm_ymax_outer_core(ispec2D)
 
         ! exclude elements that are not on absorbing edges
         if (nkmin_eta_outer_core(2,ispec2D) == 0 .or. nimin_outer_core(2,ispec2D) == 0) cycle
 
-        j=NGLLY
-        do k=nkmin_eta_outer_core(2,ispec2D),NGLLZ
-          do i=nimin_outer_core(2,ispec2D),nimax_outer_core(2,ispec2D)
-            iglob=ibool_outer_core(i,j,k,ispec)
+        j = NGLLY
+        do k = nkmin_eta_outer_core(2,ispec2D),NGLLZ
+          do i = nimin_outer_core(2,ispec2D),nimax_outer_core(2,ispec2D)
+            iglob = ibool_outer_core(i,j,k,ispec)
 
             b_accel_outer_core(iglob) = b_accel_outer_core(iglob) - absorb_ymax_outer_core(i,k,ispec2D)
           enddo
@@ -575,7 +575,7 @@
   integer :: i,j,k,ispec2D,ispec,iglob
 
   ! checks
-  if (SIMULATION_TYPE /= 3 ) return
+  if (SIMULATION_TYPE /= 3) return
   if (SAVE_FORWARD) return
   if (.not. UNDO_ATTENUATION) stop 'Error invalid UNDO_ATTENUATION flag for compute_stacey_oc_backward_undoatt()'
 

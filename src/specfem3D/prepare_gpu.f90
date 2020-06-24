@@ -39,13 +39,8 @@
   implicit none
 
   ! local parameters
-  integer :: ier
+  !integer :: ier
   real :: free_mb,used_mb,total_mb
-  ! dummy CUSTOM_REAL variables to convert from double precision
-  real(kind=CUSTOM_REAL),dimension(:),allocatable:: &
-    cr_d_ln_density_dr_table,cr_minus_rho_g_over_kappa_fluid, &
-    cr_minus_gravity_table,cr_minus_deriv_gravity_table, &
-    cr_density_table
   logical :: USE_3D_ATTENUATION_ARRAYS
   real(kind=CUSTOM_REAL) :: dummy
 
@@ -145,37 +140,17 @@
   endif
   call synchronize_all()
 
-  allocate(cr_d_ln_density_dr_table(NRAD_GRAVITY), &
-           cr_minus_rho_g_over_kappa_fluid(NRAD_GRAVITY), &
-           cr_minus_gravity_table(NRAD_GRAVITY), &
-           cr_minus_deriv_gravity_table(NRAD_GRAVITY), &
-           cr_density_table(NRAD_GRAVITY), &
-           stat=ier)
-  if (ier /= 0 ) stop 'Error allocating cr_minus_rho_g_over_kappa_fluid, etc...'
-
-  ! d_ln_density_dr_table needed for no gravity case
-  cr_d_ln_density_dr_table(:) = real(d_ln_density_dr_table(:), kind=CUSTOM_REAL)
-  ! these are needed for gravity cases only
-  cr_minus_rho_g_over_kappa_fluid(:) = real(minus_rho_g_over_kappa_fluid(:), kind=CUSTOM_REAL)
-  cr_minus_gravity_table(:) = real(minus_gravity_table(:), kind=CUSTOM_REAL)
-  cr_minus_deriv_gravity_table(:) = real(minus_deriv_gravity_table(:), kind=CUSTOM_REAL)
-  cr_density_table(:) = real(density_table(:), kind=CUSTOM_REAL)
-
-  ! prepares on GPU
+  ! gravity uses pre-calculated arrays
   call prepare_fields_gravity_device(Mesh_pointer, &
-                                     cr_d_ln_density_dr_table, &
-                                     cr_minus_rho_g_over_kappa_fluid, &
-                                     cr_minus_gravity_table, &
-                                     cr_minus_deriv_gravity_table, &
-                                     cr_density_table, &
+                                     gravity_pre_store_outer_core, &
+                                     gravity_pre_store_crust_mantle, &
+                                     gravity_pre_store_inner_core, &
+                                     gravity_H_crust_mantle, &
+                                     gravity_H_inner_core, &
                                      wgll_cube, &
-                                     NRAD_GRAVITY, &
                                      minus_g_icb,minus_g_cmb, &
-                                     RHO_BOTTOM_OC,RHO_TOP_OC,R_PLANET_KM)
+                                     RHO_BOTTOM_OC,RHO_TOP_OC)
 
-  deallocate(cr_d_ln_density_dr_table,cr_minus_rho_g_over_kappa_fluid, &
-             cr_minus_gravity_table,cr_minus_deriv_gravity_table, &
-             cr_density_table)
   call synchronize_all()
 
   ! prepares attenuation arrays
@@ -614,12 +589,17 @@
     endif
 
     ! gravity
+    ! d_gravity_pre_store_outer_core
+    memory_size = memory_size + NDIM * NGLOB_OUTER_CORE * dble(CUSTOM_REAL)
     if (GRAVITY_VAL) then
-      ! d_minus_rho_g_over_kappa_fluid,..
-      memory_size = memory_size + 4.d0 * NRAD_GRAVITY * dble(CUSTOM_REAL)
-    else
-      ! d_d_ln_density_dr_table
-      memory_size = memory_size + NRAD_GRAVITY * dble(CUSTOM_REAL)
+      ! d_gravity_pre_store_crust_mantle
+      memory_size = memory_size + NDIM * NGLOB_CRUST_MANTLE * dble(CUSTOM_REAL)
+      ! d_gravity_pre_store_inner_core
+      memory_size = memory_size + NDIM * NGLOB_INNER_CORE * dble(CUSTOM_REAL)
+      ! d_gravity_H_crust_mantle
+      memory_size = memory_size + 6 * NGLOB_CRUST_MANTLE * dble(CUSTOM_REAL)
+      ! d_gravity_H_inner_core
+      memory_size = memory_size + 6 * NGLOB_INNER_CORE * dble(CUSTOM_REAL)
     endif
 
     ! attenuation
@@ -740,10 +720,6 @@
       ! padded c11,..
       memory_size = memory_size + 5.d0 * NGLL3_PADDED * NSPEC_INNER_CORE * dble(CUSTOM_REAL)
     endif
-    ! rstore
-    if (GRAVITY_VAL) then
-      memory_size = memory_size + 3.d0 * NGLOB_INNER_CORE * dble(CUSTOM_REAL)
-    endif
     ! d_phase_ispec_inner_crust_mantle
     memory_size = memory_size + 2 * num_phase_ispec_crust_mantle * dble(SIZE_INTEGER)
     ! d_displ,..
@@ -768,8 +744,6 @@
     memory_size = memory_size + NGLL3_PADDED * NSPEC_OUTER_CORE * dble(CUSTOM_REAL)
     ! ibool
     memory_size = memory_size + NGLL3 * NSPEC_OUTER_CORE * dble(SIZE_INTEGER)
-    ! d_rstore_outer_core,..
-    memory_size = memory_size + 3.d0 * NGLOB_OUTER_CORE * dble(CUSTOM_REAL)
     ! d_phase_ispec_inner_outer_core
     memory_size = memory_size + 2.d0 * num_phase_ispec_outer_core * dble(SIZE_INTEGER)
     ! d_displ_outer,..

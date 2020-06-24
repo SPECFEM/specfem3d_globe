@@ -600,13 +600,11 @@ module BOAST
         }
       }
       v.push *(d_cstore.flatten.reject { |e| e.nil? })
+      v.push d_rstore                = Real("d_rstore",                :dir => :in, :restrict => true, :dim => [Dim(3), Dim()] )
     end
     v.push gravity                 = Int( "GRAVITY",                 :dir => :in)
-    v.push d_rstore                = Real("d_rstore",                :dir => :in, :restrict => true, :dim => [Dim(3), Dim()] )
-    v.push d_minus_gravity_table   = Real("d_minus_gravity_table",   :dir => :in, :restrict => true, :dim => [Dim()] )
-    v.push d_minus_deriv_gravity_table = Real("d_minus_deriv_gravity_table", :dir => :in, :restrict => true, :dim => [Dim()] )
-    v.push d_density_table         = Real("d_density_table",         :dir => :in, :restrict => true, :dim => [Dim()] )
-    v.push r_earth_km              = Real( "R_EARTH_KM",             :dir => :in)
+    v.push d_gravity_pre_store     = Real("d_gravity_pre_store",     :dir => :in, :restrict => true, :dim => [Dim(3), Dim()] )
+    v.push d_gravity_H             = Real("d_gravity_H",             :dir => :in, :restrict => true, :dim => [Dim(6), Dim()] )
     v.push wgll_cube               = Real("wgll_cube",               :dir => :in, :restrict => true, :dim => [Dim()] )
     if type == :inner_core then
       v.push nspec_strain_only = Int( "NSPEC_INNER_CORE_STRAIN_ONLY", :dir => :in)
@@ -969,6 +967,7 @@ module BOAST
           comment()
 
           if type == :inner_core then
+            # inner core
             print If(anisotropy => lambda {
               print sub_compute_element_ic_aniso.call( offset,
                                                        d_c11store,d_c12store,d_c13store,d_c33store,d_c44store,
@@ -986,6 +985,7 @@ module BOAST
                                                      sigma[0][1].address, sigma[0][2].address, sigma[1][2].address )
             })
           elsif type == :crust_mantle then
+            # crust mantle
             print If(anisotropy => lambda {
               # fully anisotropic element
               print sub_compute_element_cm_aniso.call( offset,
@@ -1050,15 +1050,14 @@ module BOAST
 
           print If(gravity) {
             print sub_compute_element_gravity.call(tx, iglob[elem_index],\
-                                   d_rstore,\
-                                   d_minus_gravity_table, d_minus_deriv_gravity_table, d_density_table,\
+                                   d_gravity_pre_store,\
+                                   d_gravity_H,\
                                    wgll_cube, jacobianl,\
                                    s_dummy_loc[0], s_dummy_loc[1], s_dummy_loc[2],\
                                    sigma[0][0].address, sigma[1][1].address, sigma[2][2].address,\
                                    sigma[0][1].address, sigma[1][0].address, sigma[0][2].address,\
                                    sigma[2][0].address, sigma[1][2].address, sigma[2][1].address,\
-                                   rho_s_H[elem_index][0].address, rho_s_H[elem_index][1].address, rho_s_H[elem_index][2].address,\
-                                   r_earth_km)
+                                   rho_s_H[elem_index][0].address, rho_s_H[elem_index][1].address, rho_s_H[elem_index][2].address)
           }
           comment()
 

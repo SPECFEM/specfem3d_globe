@@ -160,6 +160,10 @@
             scale_factor = factor_scale_crust_mantle(1,1,1,ispec)
           endif
 
+!daniel debug
+!if (myrank == 0 .and. i == 1 .and. j == 1 .and. k == 1 .and. mod(ispec-1,100) == 0) &
+!  print *,'debug: CM scale_factor = ',scale_factor,ispec
+
           if (ANISOTROPIC_3D_MANTLE_VAL) then
             ! anisotropic element
             scale_factor_minus_one = scale_factor - 1.d0
@@ -324,6 +328,10 @@
           else
             scale_factor = factor_scale_inner_core(1,1,1,ispec)
           endif
+
+!daniel debug
+!if (myrank == 0 .and. i == 1 .and. j == 1 .and. k == 1 .and. mod(ispec-1,100) == 0) &
+!  print *,'debug: IC scale_factor = ',scale_factor,ispec
 
           if (ANISOTROPIC_INNER_CORE_VAL) then
             scale_factor_minus_one = scale_factor - 1.d0

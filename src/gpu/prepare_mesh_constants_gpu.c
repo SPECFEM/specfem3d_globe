@@ -645,72 +645,23 @@ void FC_FUNC_ (prepare_fields_rotation_device,
 // GRAVITY simulations
 /*----------------------------------------------------------------------------------------------- */
 
+// new routine to setup gravity with pre-calculated arrays
+// note: will need more memory for array allocations
 extern EXTERN_LANG
 void FC_FUNC_ (prepare_fields_gravity_device,
                PREPARE_FIELDS_gravity_DEVICE) (long *Mesh_pointer_f,
-                                               realw *d_ln_density_dr_table,
-                                               realw *minus_rho_g_over_kappa_fluid,
-                                               realw *minus_gravity_table,
-                                               realw *minus_deriv_gravity_table,
-                                               realw *density_table,
+                                               realw *gravity_pre_store_outer_core,
+                                               realw *gravity_pre_store_crust_mantle,
+                                               realw *gravity_pre_store_inner_core,
+                                               realw *gravity_H_crust_mantle,
+                                               realw *gravity_H_inner_core,
                                                realw *h_wgll_cube,
-                                               int *NRAD_GRAVITY,
                                                realw *minus_g_icb,
                                                realw *minus_g_cmb,
                                                double *RHO_BOTTOM_OC,
-                                               double *RHO_TOP_OC,
-                                               double *R_EARTH_KM) {
+                                               double *RHO_TOP_OC) {
 
   TRACE ("prepare_fields_gravity_device");
-  Mesh *mp = (Mesh *) *Mesh_pointer_f;
-
-  if (!mp->gravity) {
-    // no gravity case
-    // d ln (rho)/dr needed for the no gravity fluid potential
-    gpuCreateCopy_todevice_realw (&mp->d_d_ln_density_dr_table, d_ln_density_dr_table, *NRAD_GRAVITY);
-
-  } else {
-    // gravity case
-    mp->minus_g_icb = *minus_g_icb;
-    mp->minus_g_cmb = *minus_g_cmb;
-
-    // sets up GLL weights cubed
-    gpuSetConst (&mp->d_wgll_cube, NGLL3, h_wgll_cube);
-
-    // prepares gravity arrays
-    gpuCreateCopy_todevice_realw (&mp->d_minus_rho_g_over_kappa_fluid, minus_rho_g_over_kappa_fluid, *NRAD_GRAVITY);
-    gpuCreateCopy_todevice_realw (&mp->d_minus_gravity_table, minus_gravity_table, *NRAD_GRAVITY);
-    gpuCreateCopy_todevice_realw (&mp->d_minus_deriv_gravity_table, minus_deriv_gravity_table, *NRAD_GRAVITY);
-    gpuCreateCopy_todevice_realw (&mp->d_density_table, density_table, *NRAD_GRAVITY);
-  }
-
-  // constants
-  mp->RHO_BOTTOM_OC = (realw) *RHO_BOTTOM_OC;
-  mp->RHO_TOP_OC = (realw) *RHO_TOP_OC;
-  mp->R_EARTH_KM = (realw) *R_EARTH_KM;  // needed for both, gravity (crust/mantle,inner core) and non-gravity cases (outer core)
-
-  GPU_ERROR_CHECKING ("prepare_fields_gravity_device");
-}
-
-// daniel todo: new routine to setup gravity with pre-calculated arrays
-// note: will need more memory for array allocations
-//       not used yet...
-extern EXTERN_LANG
-void FC_FUNC_ (prepare_fields_gravity_device_new,
-               PREPARE_FIELDS_gravity_DEVICE_NEW) (long *Mesh_pointer_f,
-                                                   realw *gravity_pre_store_outer_core,
-                                                   realw *gravity_pre_store_crust_mantle,
-                                                   realw *gravity_pre_store_inner_core,
-                                                   realw *gravity_H_crust_mantle,
-                                                   realw *gravity_H_inner_core,
-                                                   realw *h_wgll_cube,
-                                                   realw *minus_g_icb,
-                                                   realw *minus_g_cmb,
-                                                   double *RHO_BOTTOM_OC,
-                                                   double *RHO_TOP_OC,
-                                                   double *R_EARTH_KM) {
-
-  TRACE ("prepare_fields_gravity_device_new");
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // for both gravity & no gravity case
@@ -736,9 +687,8 @@ void FC_FUNC_ (prepare_fields_gravity_device_new,
   // constants
   mp->RHO_BOTTOM_OC = (realw) *RHO_BOTTOM_OC;
   mp->RHO_TOP_OC = (realw) *RHO_TOP_OC;
-  mp->R_EARTH_KM = (realw) *R_EARTH_KM;  // needed for both, gravity (crust/mantle,inner core) and non-gravity cases (outer core)
 
-  GPU_ERROR_CHECKING ("prepare_fields_gravity_device_new");
+  GPU_ERROR_CHECKING ("prepare_fields_gravity_device");
 }
 
 
@@ -2180,11 +2130,6 @@ void FC_FUNC_ (prepare_outer_core_device,
   // global indexing
   gpuCreateCopy_todevice_int (&mp->d_ibool_outer_core, h_ibool, NGLL3 * (mp->NSPEC_OUTER_CORE));
 
-  // mesh locations
-
-  // always needed
-  gpuCreateCopy_todevice_realw (&mp->d_rstore_outer_core, h_rstore, NDIM * size_glob);
-
   // inner/outer elements
 
   mp->num_phase_ispec_outer_core = *num_phase_ispec;
@@ -2542,14 +2487,6 @@ void FC_FUNC_ (prepare_inner_core_device,
   // fictious element flags
 
   gpuCreateCopy_todevice_int (&mp->d_idoubling_inner_core, h_idoubling_inner_core, mp->NSPEC_INNER_CORE);
-
-  // mesh locations
-
-  // only needed when gravity is on
-
-  if (mp->gravity) {
-    gpuCreateCopy_todevice_realw (&mp->d_rstore_inner_core, h_rstore, NDIM * size_glob);
-  }
 
   // inner/outer elements
   mp->num_phase_ispec_inner_core = *num_phase_ispec;
@@ -2941,13 +2878,12 @@ void FC_FUNC_ (prepare_cleanup_device,
   //------------------------------------------
   // gravity arrays
   //------------------------------------------
-  if (! mp->gravity) {
-    gpuFree (&mp->d_d_ln_density_dr_table);
-  } else {
-    gpuFree (&mp->d_minus_rho_g_over_kappa_fluid);
-    gpuFree (&mp->d_minus_gravity_table);
-    gpuFree (&mp->d_minus_deriv_gravity_table);
-    gpuFree (&mp->d_density_table);
+  gpuFree (&mp->d_gravity_pre_store_outer_core);
+  if (mp->gravity) {
+    gpuFree (&mp->d_gravity_pre_store_crust_mantle);
+    gpuFree (&mp->d_gravity_pre_store_inner_core);
+    gpuFree (&mp->d_gravity_H_crust_mantle);
+    gpuFree (&mp->d_gravity_H_inner_core);
   }
 
   //------------------------------------------
@@ -3253,8 +3189,6 @@ void FC_FUNC_ (prepare_cleanup_device,
 
   gpuFree (&mp->d_ibool_outer_core);
 
-  gpuFree (&mp->d_rstore_outer_core);
-
   gpuFree (&mp->d_phase_ispec_inner_outer_core);
 
   gpuFree (&mp->d_ibelm_top_outer_core);
@@ -3313,11 +3247,6 @@ void FC_FUNC_ (prepare_cleanup_device,
 
   gpuFree (&mp->d_ibool_inner_core);
   gpuFree (&mp->d_idoubling_inner_core);
-
-  // gravity
-  if (mp->gravity) {
-    gpuFree (&mp->d_rstore_inner_core);
-  }
 
   gpuFree (&mp->d_phase_ispec_inner_inner_core);
   gpuFree (&mp->d_ibelm_top_inner_core);

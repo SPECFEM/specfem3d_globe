@@ -440,7 +440,7 @@ typedef struct mesh_ {
   gpu_int_mem d_ispec_is_tiso_crust_mantle;
 
   // mesh locations
-  gpu_realw_mem d_rstore_crust_mantle;
+  gpu_realw_mem d_rstore_crust_mantle;  // needed for tiso
 
   // anisotropic 3D mantle
   gpu_realw_mem d_c11store_crust_mantle;
@@ -554,9 +554,6 @@ typedef struct mesh_ {
   // global indexing
   gpu_int_mem d_ibool_outer_core;
 
-  // mesh locations
-  gpu_realw_mem d_rstore_outer_core;
-
   // wavefields
   // displacement, velocity, acceleration
   gpu_realw_mem d_displ_outer_core;
@@ -628,9 +625,6 @@ typedef struct mesh_ {
   // global indexing
   gpu_int_mem d_ibool_inner_core;
   gpu_int_mem d_idoubling_inner_core;
-
-  // mesh locations
-  gpu_realw_mem d_rstore_inner_core;
 
   // anisotropic 3D mantle
   gpu_realw_mem d_c11store_inner_core;
@@ -774,13 +768,6 @@ typedef struct mesh_ {
   // ------------------------------------------------------------------   //
   // gravity
   // ------------------------------------------------------------------   //
-  gpu_realw_mem d_d_ln_density_dr_table;   // needed also for no gravity case
-  gpu_realw_mem d_minus_rho_g_over_kappa_fluid;
-  gpu_realw_mem d_minus_gravity_table;
-  gpu_realw_mem d_minus_deriv_gravity_table;
-  gpu_realw_mem d_density_table;
-
-  // daniel todo: new pre-computed vectors - not used yet..
   gpu_realw_mem d_gravity_pre_store_outer_core;
   gpu_realw_mem d_gravity_pre_store_crust_mantle;
   gpu_realw_mem d_gravity_pre_store_inner_core;

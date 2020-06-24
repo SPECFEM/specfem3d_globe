@@ -155,9 +155,6 @@ GPU_REALW_BUFFER (d_b_rmass_outer_core);
 // global indexing
 GPU_INT_BUFFER (d_ibool_outer_core);
 
-// mesh locations
-GPU_REALW_BUFFER (d_rstore_outer_core);
-
 // wavefields
 GPU_REALW_BUFFER (d_displ_outer_core);
 GPU_REALW_BUFFER (d_veloc_outer_core);
@@ -213,9 +210,6 @@ GPU_REALW_BUFFER (d_b_rmassz_inner_core);
 // global indexing
 GPU_INT_BUFFER (d_ibool_inner_core);
 GPU_INT_BUFFER (d_idoubling_inner_core);
-
-// mesh locations
-GPU_REALW_BUFFER (d_rstore_inner_core);
 
 // anisotropic 3D mantle
 GPU_REALW_BUFFER (d_c11store_inner_core);
@@ -297,13 +291,6 @@ GPU_REALW_BUFFER (d_wgll_cube);
 // ------------------------------------------------------------------   //
 // gravity
 // ------------------------------------------------------------------   //
-GPU_REALW_BUFFER (d_d_ln_density_dr_table);
-GPU_REALW_BUFFER (d_minus_rho_g_over_kappa_fluid);
-GPU_REALW_BUFFER (d_minus_gravity_table);
-GPU_REALW_BUFFER (d_minus_deriv_gravity_table);
-GPU_REALW_BUFFER (d_density_table);
-
-// daniel todo: new gravity arrays - not used yet...
 GPU_REALW_BUFFER (d_gravity_pre_store_outer_core);
 GPU_REALW_BUFFER (d_gravity_pre_store_crust_mantle);
 GPU_REALW_BUFFER (d_gravity_pre_store_inner_core);
