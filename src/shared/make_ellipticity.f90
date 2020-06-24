@@ -314,7 +314,7 @@
       do i = 1,NR_DENSITY
         radius = r(i)
         ! get ellipticity using spline evaluation
-        call spline_evaluation(rspl,ellipicity_spline,ellipicity_spline2,nspl,r,ell)
+        call spline_evaluation(rspl,ellipicity_spline,ellipicity_spline2,nspl,radius,ell)
         print *,radius*R_PLANET_KM,ell,radau(i),k(i),radius,i
       enddo
       print *
