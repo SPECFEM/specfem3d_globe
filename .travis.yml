@@ -84,6 +84,9 @@ env:
     # regional moon
     - TESTID=19 TESTDIR=10 TESTCOV=0 TESTFLAGS="" CUDA=false
 
+    # regional LDDRK
+    - TESTID=20 TESTDIR=11 TESTCOV=0 TESTFLAGS="--enable-vectorization" CUDA=false
+
 before_install:
   # informations on git
   - |
