@@ -861,7 +861,8 @@
   implicit none
 
   logical, parameter :: USE_SOURCE_RECEIVER_HESSIAN = .False.
-  real(kind=CUSTOM_REAL), dimension(3, 3) :: veloc_deriv, b_veloc_deriv
+  real(kind=CUSTOM_REAL), dimension(3, 3, NGLLX, NGLLY, NGLLZ) :: veloc_grad, b_veloc_grad
+  real(kind=CUSTOM_REAL), dimension(3, 3) :: vgrad, b_vgrad
   real(kind=CUSTOM_REAL) :: hess_rho, hess_kappa, hess_mu
 
   ! local parameters
@@ -872,12 +873,12 @@
   integer :: i,j,k
 
   interface
-    subroutine calculate_spatial_deriv_crust_mantle(veloc, veloc_sderiv, i, j, k, ispec)
+    subroutine compute_gradient_crust_mantle(veloc, veloc_sderiv, ispec)
       use constants_solver
       real(kind=CUSTOM_REAL), dimension(:, :), intent(in) :: veloc
-      real(kind=CUSTOM_REAL), dimension(3, 3), intent(inout) :: veloc_sderiv
-      integer, intent(in) :: i, j, k, ispec
-    end subroutine calculate_spatial_deriv_crust_mantle
+      real(kind=CUSTOM_REAL), dimension(3, 3, NGLLX, NGLLY, NGLLZ), intent(inout) :: veloc_sderiv
+      integer, intent(in) :: ispec
+    end subroutine compute_gradient_crust_mantle
   end interface
 
   if (.not. GPU_MODE) then
@@ -901,12 +902,6 @@
 
         iglob = ibool_crust_mantle(INDEX_IJK,ispec)
 
-#ifdef FORCE_VECTORIZATION
-        k = ijk / (NGLLY * NGLLX)
-        j = (ijk - k*NGLLY*NGLLX) / NGLLX
-        i = ijk - k * NGLLY * NGLLX - j * NGLLX
-#endif
-
         ! approximates Hessian
         ! term with adjoint acceleration and backward/reconstructed acceleration
         hess_kl_crust_mantle(INDEX_IJK,ispec) =  hess_kl_crust_mantle(INDEX_IJK,ispec) &
@@ -914,55 +909,56 @@
            + accel_crust_mantle(2,iglob) * b_accel_crust_mantle(2,iglob) &
            + accel_crust_mantle(3,iglob) * b_accel_crust_mantle(3,iglob) )
 
-        call calculate_spatial_deriv_crust_mantle(veloc_crust_mantle, veloc_deriv, i, j, k, ispec)
-
-        if (.NOT. USE_SOURCE_RECEIVER_HESSIAN) then
-          ! use source-source hessian kernels
-          ! hess_rho = Vx,x * Vx,x + Vy,y * Vy,y + Vz,z * Vz,z
-          hess_rho = veloc_deriv(1, 1) * veloc_deriv(1, 1) &
-                   + veloc_deriv(2, 2) * veloc_deriv(2, 2) &
-                   + veloc_deriv(3, 3) * veloc_deriv(3, 3)
-
-          ! hess_kappa = (Vx,x + Vy,y + Vz,z) * (Vx,x + Vy,y + Vz,z)
-          hess_kappa = (veloc_deriv(1, 1) + veloc_deriv(2, 2) + veloc_deriv(3, 3)) &
-                     * (veloc_deriv(1, 1) + veloc_deriv(2, 2) + veloc_deriv(3, 3))
-
-          !hess_mu = (Vx,y + Vy,x) * (Vx,y + Vy,x)
-          !        + (Vy,z + Vz,y) * (Vy,z + Vz,y)
-          !        + (Vx,z + Vz,x) * (Vx,z + Vz,x)
-          hess_mu = (veloc_deriv(1, 2) + veloc_deriv(2, 1)) * (veloc_deriv(1, 2) + veloc_deriv(2, 1)) &
-                  + (veloc_deriv(2, 3) + veloc_deriv(3, 2)) * (veloc_deriv(2, 3) + veloc_deriv(3, 2)) &
-                  + (veloc_deriv(1, 3) + veloc_deriv(3, 1)) * (veloc_deriv(1, 3) + veloc_deriv(3, 1))
-        else
-          ! use source-source hessian kernels
-          call calculate_spatial_deriv_crust_mantle(b_veloc_crust_mantle, b_veloc_deriv, i, j, k, ispec)
-
-          ! replace the second filed V with adjoint field b_V
-          hess_rho = veloc_deriv(1, 1) * b_veloc_deriv(1, 1) &
-                   + veloc_deriv(2, 2) * b_veloc_deriv(2, 2) &
-                   + veloc_deriv(3, 3) * b_veloc_deriv(3, 3)
-
-          hess_kappa = (veloc_deriv(1, 1) + veloc_deriv(2, 2) + veloc_deriv(3, 3)) &
-                     * (b_veloc_deriv(1, 1) + b_veloc_deriv(2, 2) + b_veloc_deriv(3, 3))
-
-          hess_mu = (veloc_deriv(1, 2) + veloc_deriv(2, 1)) * (b_veloc_deriv(1, 2) + b_veloc_deriv(2, 1)) &
-                  + (veloc_deriv(2, 3) + veloc_deriv(3, 2)) * (b_veloc_deriv(2, 3) + b_veloc_deriv(3, 2)) &
-                  + (veloc_deriv(1, 3) + veloc_deriv(3, 1)) * (b_veloc_deriv(1, 3) + b_veloc_deriv(3, 1))
-
-        endif
-
-        hess_rho_kl_crust_mantle(INDEX_IJK, ispec) = &
-          hess_rho_kl_crust_mantle(INDEX_IJK, ispec) + deltat * hess_rho
-        hess_kappa_kl_crust_mantle(INDEX_IJK, ispec) = &
-          hess_kappa_kl_crust_mantle(INDEX_IJK, ispec) + deltat * hess_rho
-        hess_mu_kl_crust_mantle(INDEX_IJK, ispec) = &
-          hess_mu_kl_crust_mantle(INDEX_IJK, ispec) + deltat * hess_rho
-
       ENDDO_LOOP_IJK
 
     enddo
 !$OMP ENDDO
 !$OMP END PARALLEL
+
+    do ispec = 1, NSPEC_CRUST_MANTLE
+
+      call compute_gradient_crust_mantle(veloc_crust_mantle, veloc_grad, ispec)
+
+      if ( USE_SOURCE_RECEIVER_HESSIAN ) then
+        ! if using source-recevier hessian, calculate the velocity gradient of backward adjoint wavefield
+        call compute_gradient_crust_mantle(b_veloc_crust_mantle, b_veloc_grad, ispec)
+      else
+        ! if using source-source hessian, set the b_veloc_grad same as the wavefield
+        b_veloc_grad = veloc_grad
+      endif
+
+      do k=1,NGLLZ
+        do j=1, NGLLY
+          do i=1, NGLLX
+            vgrad = veloc_grad(:, :, i, j, k)
+            b_vgrad = b_veloc_grad(:, :, i, j, k)
+            ! hess_rho = Vx,x * b_Vx,x + Vy,y * b_Vy,y + Vz,z * b_Vz,z
+            hess_rho = vgrad(1, 1) * b_vgrad(1, 1) &
+                     + vgrad(2, 2) * b_vgrad(2, 2) &
+                     + vgrad(3, 3) * b_vgrad(3, 3)
+
+            ! hess_kappa = (Vx,x + Vy,y + Vz,z) * (b_Vx,x + b_Vy,y + b_Vz,z)
+            hess_kappa = (vgrad(1, 1) + vgrad(2, 2) + vgrad(3, 3)) &
+                       * (b_vgrad(1, 1) + b_vgrad(2, 2) + b_vgrad(3, 3))
+
+            !hess_mu = (Vx,y + Vy,x) * (b_Vx,y + b_Vy,x)
+            !        + (Vy,z + Vz,y) * (b_Vy,z + b_Vz,y)
+            !        + (Vx,z + Vz,x) * (b_Vx,z + b_Vz,x)
+            hess_mu = (vgrad(1, 2) + vgrad(2, 1)) * (b_vgrad(1, 2) + b_vgrad(2, 1)) &
+                    + (vgrad(2, 3) + vgrad(3, 2)) * (b_vgrad(2, 3) + b_vgrad(3, 2)) &
+                    + (vgrad(1, 3) + vgrad(3, 1)) * (b_vgrad(1, 3) + b_vgrad(3, 1))
+          enddo
+        enddo
+      enddo
+
+      hess_rho_kl_crust_mantle(i, j, k, ispec) = &
+        hess_rho_kl_crust_mantle(i, j, k, ispec) + deltat * hess_rho
+      hess_kappa_kl_crust_mantle(i, j, k, ispec) = &
+        hess_kappa_kl_crust_mantle(i, j, k, ispec) + deltat * hess_rho
+      hess_mu_kl_crust_mantle(i, j, k, ispec) = &
+        hess_mu_kl_crust_mantle(i, j, k, ispec) + deltat * hess_rho
+
+    enddo  ! end ispec
 
   else
     ! updates kernel contribution on GPU
@@ -978,107 +974,100 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  ! Calculate the spatical derivatives of the field f at GLL point (i, j, k, ispec).
-  ! The values are stored as:
+  ! Calculate the gradients (spatical derivatives) of the field f for 1 spectral-element.
+  ! The gradients for each GLL point are stored as:
   ! | df_x/dx, df_y/dx, df_z/dx |
   ! | df_x/dy, df_y/dy, df_z/dy |
   ! | df_x/dz, df_y/dz, df_z/dz |
 
-  subroutine calculate_spatial_deriv_crust_mantle(field, field_sderiv, i, j, k, ispec)
+  subroutine compute_gradient_crust_mantle(field, grad, ispec)
 
     use constants_solver
     use specfem_par, only: hprime_xx, hprime_yy, hprime_zz
-    use specfem_par_crustmantle, only : ibool_crust_mantle, deriv_mapping_crust_mantle
+    use specfem_par_crustmantle, only : ibool_crust_mantle, deriv_mapping_crust_mantle, &
+      xix_crust_mantle, xiy_crust_mantle, xiz_crust_mantle, &
+      etax_crust_mantle, etay_crust_mantle, etaz_crust_mantle, &
+      gammax_crust_mantle, gammay_crust_mantle, gammaz_crust_mantle
 
     implicit none
 
     ! global array of the filed
     real(kind=CUSTOM_REAL), dimension(:, :), intent(in) :: field
-    real(kind=CUSTOM_REAL), dimension(3, 3), intent(inout) :: field_sderiv
-    integer, intent(in) :: i, j, k, ispec
+    real(kind=CUSTOM_REAL), dimension(3, 3, NGLLX, NGLLY, NGLLZ), intent(inout) :: grad
+    integer, intent(in) :: ispec
 
-    integer :: l
+    integer :: i, j, k, l
 
-#ifdef FORCE_VECTORIZATION
-    integer :: ljk, ilk, ijl
-#endif
     integer :: iglob
     real(kind=CUSTOM_REAL) :: tempx1l, tempx2l, tempx3l, &
       tempy1l, tempy2l, tempy3l, tempz1l, tempz2l, tempz3l
     real(kind=CUSTOM_REAL) :: xixl, xiyl, xizl, &
       etaxl, etayl, etazl, gammaxl, gammayl, gammazl
 
-    tempx1l = 0._CUSTOM_REAL
-    tempx2l = 0._CUSTOM_REAL
-    tempx3l = 0._CUSTOM_REAL
-    tempy1l = 0._CUSTOM_REAL
-    tempy2l = 0._CUSTOM_REAL
-    tempy3l = 0._CUSTOM_REAL
-    tempz1l = 0._CUSTOM_REAL
-    tempz2l = 0._CUSTOM_REAL
-    tempz3l = 0._CUSTOM_REAL
+    grad = 0._CUSTOM_REAL
 
-    do l = 1, NGLLX
-#ifdef FORCE_VECTORIZATION
-      ljk = k * NGLLY * NGLLX + j * NGLLX + l
-      iglob = ibool_crust_mantle(ljk, 1, 1, ispec)
-#else
-      iglob = ibool_crust_mantle(l, j, k, ispec)
-#endif
-      tempx1l = tempx1l + field(1, iglob) * hprime_xx(i, l)
-      tempy1l = tempy1l + field(2, iglob) * hprime_xx(i, l)
-      tempz1l = tempz1l + field(3, iglob) * hprime_xx(i, l)
-    enddo
+    do k=1, NGLLZ
+      do j=1, NGLLY
+        do i=1, NGLLX
 
-    do l = 1, NGLLY
-#ifdef FORCE_VECTORIZATION
-      ilk = k * NGLLY * NGLLX + l * NGLLX + i
-      iglob = ibool_crust_mantle(ilk, 1, 1, ispec)
-#else
-      iglob = ibool_crust_mantle(i, l, k, ispec)
-#endif
-      tempx2l = tempx2l + field(1, iglob) * hprime_yy(j, l)
-      tempy2l = tempy2l + field(2, iglob) * hprime_yy(j, l)
-      tempz2l = tempz2l + field(3, iglob) * hprime_yy(j, l)
-    enddo
+          tempx1l = 0._CUSTOM_REAL
+          tempx2l = 0._CUSTOM_REAL
+          tempx3l = 0._CUSTOM_REAL
+          tempy1l = 0._CUSTOM_REAL
+          tempy2l = 0._CUSTOM_REAL
+          tempy3l = 0._CUSTOM_REAL
+          tempz1l = 0._CUSTOM_REAL
+          tempz2l = 0._CUSTOM_REAL
+          tempz3l = 0._CUSTOM_REAL
 
-    do l = 1, NGLLY
-#ifdef FORCE_VECTORIZATION
-      ijl = l * NGLLY * NGLLX + j * NGLLX + i
-      iglob = ibool_crust_mantle(ijl, 1, 1, ispec)
-#else
-      iglob = ibool_crust_mantle(i, j, l, ispec)
-#endif
-      tempx3l = tempx3l + field(1, iglob) * hprime_zz(k, l)
-      tempy3l = tempy3l + field(2, iglob) * hprime_zz(k, l)
-      tempz3l = tempz3l + field(3, iglob) * hprime_zz(k, l)
-    enddo
+          do l = 1, NGLLX
+            iglob = ibool_crust_mantle(l, j, k, ispec)
+            tempx1l = tempx1l + field(1, iglob) * hprime_xx(i, l)
+            tempy1l = tempy1l + field(2, iglob) * hprime_xx(i, l)
+            tempz1l = tempz1l + field(3, iglob) * hprime_xx(i, l)
+          enddo
 
-    xixl = deriv_mapping_crust_mantle(1, i, j, k, ispec)
-    xiyl = deriv_mapping_crust_mantle(2, i, j, k, ispec)
-    xizl = deriv_mapping_crust_mantle(3, i, j, k, ispec)
+          do l = 1, NGLLY
+            iglob = ibool_crust_mantle(i, l, k, ispec)
+            tempx2l = tempx2l + field(1, iglob) * hprime_yy(j, l)
+            tempy2l = tempy2l + field(2, iglob) * hprime_yy(j, l)
+            tempz2l = tempz2l + field(3, iglob) * hprime_yy(j, l)
+          enddo
 
-    etaxl = deriv_mapping_crust_mantle(4, i, j, k, ispec)
-    etayl = deriv_mapping_crust_mantle(5, i, j, k, ispec)
-    etazl = deriv_mapping_crust_mantle(6, i, j, k, ispec)
+          do l = 1, NGLLY
+            iglob = ibool_crust_mantle(i, j, l, ispec)
+            tempx3l = tempx3l + field(1, iglob) * hprime_zz(k, l)
+            tempy3l = tempy3l + field(2, iglob) * hprime_zz(k, l)
+            tempz3l = tempz3l + field(3, iglob) * hprime_zz(k, l)
+          enddo
 
-    gammaxl = deriv_mapping_crust_mantle(7, i, j, k, ispec)
-    gammayl = deriv_mapping_crust_mantle(8, i, j, k, ispec)
-    gammazl = deriv_mapping_crust_mantle(9, i, j, k, ispec)
+          xixl = xix_crust_mantle(i, j, k, ispec)
+          xiyl = xiy_crust_mantle(i, j, k, ispec)
+          xizl = xiz_crust_mantle(i, j, k, ispec)
+          etaxl = etax_crust_mantle(i, j, k, ispec)
+          etayl = etay_crust_mantle(i, j, k, ispec)
+          etazl = etaz_crust_mantle(i, j, k, ispec)
+          gammaxl = gammax_crust_mantle(i, j, k, ispec)
+          gammayl = gammay_crust_mantle(i, j, k, ispec)
+          gammazl = gammaz_crust_mantle(i, j, k, ispec)
 
-    ! df_x/dx, df_x/dy, df_x/dz
-    field_sderiv(1, 1) = tempx1l * xixl + tempx2l * etaxl + tempx3l * gammaxl
-    field_sderiv(1, 1) = tempx1l * xiyl + tempx2l * etayl + tempx3l * gammayl
-    field_sderiv(2, 1) = tempx1l * xizl + tempx2l * etazl + tempx3l * gammazl
+          ! df_x/dx, df_x/dy, df_x/dz
+          grad(1, 1, i, j, k) = tempx1l * xixl + tempx2l * etaxl + tempx3l * gammaxl
+          grad(2, 1, i, j, k) = tempx1l * xiyl + tempx2l * etayl + tempx3l * gammayl
+          grad(3, 1, i, j, k) = tempx1l * xizl + tempx2l * etazl + tempx3l * gammazl
 
-    ! df_y/dx, df_y/dy, df_y/dz
-    field_sderiv(1, 2) = tempy1l * xixl + tempy2l * etaxl + tempy3l * gammaxl
-    field_sderiv(2, 2) = tempy1l * xiyl + tempy2l * etayl + tempy3l * gammayl
-    field_sderiv(3, 2) = tempy1l * xizl + tempy2l * etazl + tempy3l * gammazl
+          ! df_y/dx, df_y/dy, df_y/dz
+          grad(1, 2, i, j, k) = tempy1l * xixl + tempy2l * etaxl + tempy3l * gammaxl
+          grad(2, 2, i, j, k) = tempy1l * xiyl + tempy2l * etayl + tempy3l * gammayl
+          grad(3, 2, i, j, k) = tempy1l * xizl + tempy2l * etazl + tempy3l * gammazl
 
-    ! df_z/dx, df_z/dy, df_z/dz
-    field_sderiv(1, 3) = tempz1l * xixl + tempz2l * etaxl + tempz3l * gammaxl
-    field_sderiv(2, 3) = tempz1l * xiyl + tempz2l * etayl + tempz3l * gammayl
-    field_sderiv(3, 3) = tempz1l * xizl + tempz2l * etazl + tempz3l * gammazl
+          ! df_z/dx, df_z/dy, df_z/dz
+          grad(1, 3, i, j, k) = tempz1l * xixl + tempz2l * etaxl + tempz3l * gammaxl
+          grad(2, 3, i, j, k) = tempz1l * xiyl + tempz2l * etayl + tempz3l * gammayl
+          grad(3, 3, i, j, k) = tempz1l * xizl + tempz2l * etazl + tempz3l * gammazl
 
-  end subroutine calculate_spatial_deriv_crust_mantle
+        enddo  ! end i
+      enddo  ! end j
+    enddo  ! end k
+
+  end subroutine compute_gradient_crust_mantle
