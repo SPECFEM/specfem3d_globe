@@ -873,10 +873,10 @@
   integer :: i,j,k
 
   interface
-    subroutine compute_gradient_crust_mantle(veloc, veloc_sderiv, ispec)
+    subroutine compute_gradient_crust_mantle(field, grad, ispec)
       use constants_solver
-      real(kind=CUSTOM_REAL), dimension(:, :), intent(in) :: veloc
-      real(kind=CUSTOM_REAL), dimension(3, 3, NGLLX, NGLLY, NGLLZ), intent(inout) :: veloc_sderiv
+      real(kind=CUSTOM_REAL), dimension(:, :), intent(in) :: field
+      real(kind=CUSTOM_REAL), dimension(3, 3, NGLLX, NGLLY, NGLLZ), intent(inout) :: grad
       integer, intent(in) :: ispec
     end subroutine compute_gradient_crust_mantle
   end interface
