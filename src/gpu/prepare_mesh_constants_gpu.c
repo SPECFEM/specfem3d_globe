@@ -1968,6 +1968,15 @@ void FC_FUNC_ (prepare_crust_mantle_device,
     if (mp->approximate_hess_kl) {
       gpuMalloc_realw (&mp->d_hess_kl_crust_mantle, size);
       gpuMemset_realw (&mp->d_hess_kl_crust_mantle, size, 0);
+
+      gpuMalloc_realw (&mp->d_hess_rho_kl_crust_mantle, size);
+      gpuMemset_realw (&mp->d_hess_rho_kl_crust_mantle, size, 0);
+
+      gpuMalloc_realw (&mp->d_hess_kappa_kl_crust_mantle, size);
+      gpuMemset_realw (&mp->d_hess_kappa_kl_crust_mantle, size, 0);
+
+      gpuMalloc_realw (&mp->d_hess_mu_kl_crust_mantle, size);
+      gpuMemset_realw (&mp->d_hess_mu_kl_crust_mantle, size, 0);
     }
   }
 

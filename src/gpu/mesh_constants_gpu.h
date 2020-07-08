@@ -512,6 +512,9 @@ typedef struct mesh_ {
   gpu_realw_mem d_beta_kl_crust_mantle;
   gpu_realw_mem d_cijkl_kl_crust_mantle;
   gpu_realw_mem d_hess_kl_crust_mantle;
+  gpu_realw_mem d_hess_rho_kl_crust_mantle;
+  gpu_realw_mem d_hess_kappa_kl_crust_mantle;
+  gpu_realw_mem d_hess_mu_kl_crust_mantle;
 
   // inner / outer elements
   gpu_int_mem d_phase_ispec_inner_crust_mantle;

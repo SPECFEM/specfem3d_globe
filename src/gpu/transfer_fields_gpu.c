@@ -1224,6 +1224,9 @@ void FC_FUNC_(transfer_kernels_hess_cm_tohost,
 
   // copies array to CPU
   gpuCopy_from_device_realw (&mp->d_hess_kl_crust_mantle, h_hess_kl, NGLL3 * (*NSPEC));
+  gpuCopy_from_device_realw (&mp->d_hess_rho_kl_crust_mantle, h_hess_kl, NGLL3 * (*NSPEC));
+  gpuCopy_from_device_realw (&mp->d_hess_kappa_kl_crust_mantle, h_hess_kl, NGLL3 * (*NSPEC));
+  gpuCopy_from_device_realw (&mp->d_hess_mu_kl_crust_mantle, h_hess_kl, NGLL3 * (*NSPEC));
 
   GPU_ERROR_CHECKING ("after transfer_kernels_hess_cm_tohost");
 }

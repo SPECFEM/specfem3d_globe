@@ -704,6 +704,16 @@ void FC_FUNC_ (compute_kernels_hess_gpu,
                                                                mp->d_hess_kl_crust_mantle.cuda,
                                                                deltat,
                                                                mp->NSPEC_CRUST_MANTLE);
+
+    compute_kappa_mu_hess_kernel<<<grid,threads,0,mp->compute_stream>>>(
+        mp->d_ibool_crust_mantle.cuda,
+        mp->d_accel_crust_mantle.cuda,
+        mp->d_b_accel_crust_mantle.cuda,
+        mp->d_hess_rho_kl_crust_mantle.cuda,
+        mp->d_hess_kappa_kl_crust_mantle.cuda,
+        mp->d_hess_mu_kl_crust_mantle.cuda,
+        deltat,
+        mp->NSPEC_CRUST_MANTLE);
   }
 #endif
 

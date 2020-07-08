@@ -127,6 +127,9 @@ GPU_REALW_BUFFER (d_alpha_kl_crust_mantle);
 GPU_REALW_BUFFER (d_beta_kl_crust_mantle);
 GPU_REALW_BUFFER (d_cijkl_kl_crust_mantle);
 GPU_REALW_BUFFER (d_hess_kl_crust_mantle);
+GPU_REALW_BUFFER (d_hess_rho_kl_crust_mantle);
+GPU_REALW_BUFFER (d_hess_kappa_kl_crust_mantle);
+GPU_REALW_BUFFER (d_hess_mu_kl_crust_mantle);
 
 // inner / outer elements
 GPU_INT_BUFFER (d_phase_ispec_inner_crust_mantle);
