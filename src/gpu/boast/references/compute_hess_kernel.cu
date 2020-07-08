@@ -145,7 +145,7 @@ __global__ void compute_kappa_mu_hess_kernel(int *ibool,
   __shared__ realw sh_b_velocz[NGLL3];
 
   realw vgrad[9], b_vgrad[9];
-  float hess_rhol, hess_kappal, hess_mul;
+  realw hess_rhol, hess_kappal, hess_mul;
 
   if(ispec < NSPEC_AB) {
     iglob = d_ibool[ijk_ispec] - 1;
