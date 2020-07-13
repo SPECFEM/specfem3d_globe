@@ -181,7 +181,11 @@ __global__ void compute_kappa_mu_hess_kernel(int *ibool,
 
     if (USE_SOURCE_RECEIVER_HESSIAN) {
       // compute the gradient of velocity (forward) field
-      compute_gradient(sh_b_velocx, sh_b_velocy, sh_b_velocz, b_vgrad);
+      compute_gradient(ispec,
+          sh_b_velocx, sh_b_velocy, sh_b_velocz,
+          d_xix,d_xiy,d_xiz,d_etax,d_etay,d_etaz,d_gammax,d_gammay,d_gammaz,
+          sh_hprime_xx,
+          b_vgrad);
     } else {
       // if using source-source hessian, then just copy the forward velocity gradient
       for(int i=0; i<9; ++i) {
