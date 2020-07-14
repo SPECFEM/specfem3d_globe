@@ -13,6 +13,7 @@
 #include "compute_hess_kernel_cl.c"
 #include "compute_iso_kernel_cl.c"
 #include "compute_iso_undoatt_kernel_cl.c"
+#include "compute_kappa_mu_hess_kernel_cl.c"
 #include "compute_rho_kernel_cl.c"
 #include "compute_seismograms_kernel_cl.c"
 #include "compute_stacey_acoustic_backward_kernel_cl.c"

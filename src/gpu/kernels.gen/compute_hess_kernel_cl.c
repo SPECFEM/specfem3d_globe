@@ -92,7 +92,7 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #define BLOCKSIZE_TRANSFER 256\n\
 #endif\n\
 \n\
-__kernel void compute_hess_kernel(const __global int * ibool, const __global float * accel, const __global float * b_accel, __global float * hess_kl, const float deltat, const int NSPEC_AB){\n\
+__kernel void compute_hess_kernel(const __global int * ibool, const __global float * accel, const __global float * b_accel, __global float * hess_kl, const float deltat, const int NSPEC_AB, const int USE_SOURCE_RECEIVER_HESSIAN){\n\
   int ispec;\n\
   int ijk_ispec;\n\
   int iglob;\n\
@@ -103,7 +103,11 @@ __kernel void compute_hess_kernel(const __global int * ibool, const __global flo
     ijk_ispec = get_local_id(0) + (NGLL3) * (ispec);\n\
     iglob = ibool[ijk_ispec] - (1);\n\
 \n\
-    hess_kl[ijk_ispec] = hess_kl[ijk_ispec] + (deltat) * ((accel[0 + (3) * (iglob)]) * (b_accel[0 + (3) * (iglob)]) + (accel[1 + (3) * (iglob)]) * (b_accel[1 + (3) * (iglob)]) + (accel[2 + (3) * (iglob)]) * (b_accel[2 + (3) * (iglob)]));\n\
+    if (USE_SOURCE_RECEIVER_HESSIAN) {\n\
+      hess_kl[ijk_ispec] = hess_kl[ijk_ispec] + (deltat) * ((accel[0 + (3) * (iglob)]) * (b_accel[0 + (3) * (iglob)]) + (accel[1 + (3) * (iglob)]) * (b_accel[1 + (3) * (iglob)]) + (accel[2 + (3) * (iglob)]) * (b_accel[2 + (3) * (iglob)]));\n\
+    } else {\n\
+      hess_kl[ijk_ispec] = hess_kl[ijk_ispec] + (deltat) * ((accel[0 + (3) * (iglob)]) * (accel[0 + (3) * (iglob)]) + (accel[1 + (3) * (iglob)]) * (accel[1 + (3) * (iglob)]) + (accel[2 + (3) * (iglob)]) * (accel[2 + (3) * (iglob)]));\n\
+    }\n\
   }\n\
 }\n\
 ";

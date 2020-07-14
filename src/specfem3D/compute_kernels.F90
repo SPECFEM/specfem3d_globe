@@ -975,7 +975,7 @@
 
     use constants_solver
     use specfem_par, only: hprime_xx, hprime_yy, hprime_zz
-    use specfem_par_crustmantle, only : ibool_crust_mantle, deriv_mapping_crust_mantle, &
+    use specfem_par_crustmantle, only : ibool_crust_mantle, &
       xix_crust_mantle, xiy_crust_mantle, xiz_crust_mantle, &
       etax_crust_mantle, etay_crust_mantle, etaz_crust_mantle, &
       gammax_crust_mantle, gammay_crust_mantle, gammaz_crust_mantle

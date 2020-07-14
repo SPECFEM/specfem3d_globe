@@ -669,6 +669,8 @@ void FC_FUNC_ (compute_kernels_hess_gpu,
   int num_blocks_x, num_blocks_y;
   get_blocks_xy (mp->NSPEC_CRUST_MANTLE, &num_blocks_x, &num_blocks_y);
 
+  const int USE_SOURCE_RECEIVER_HESSIAN = 1;
+
 #ifdef USE_OPENCL
   if (run_opencl) {
     size_t global_work_size[2];
@@ -703,17 +705,29 @@ void FC_FUNC_ (compute_kernels_hess_gpu,
                                                                mp->d_b_accel_crust_mantle.cuda,
                                                                mp->d_hess_kl_crust_mantle.cuda,
                                                                deltat,
-                                                               mp->NSPEC_CRUST_MANTLE);
+                                                               mp->NSPEC_CRUST_MANTLE,
+                                                               USE_SOURCE_RECEIVER_HESSIAN);
 
     compute_kappa_mu_hess_kernel<<<grid,threads,0,mp->compute_stream>>>(
         mp->d_ibool_crust_mantle.cuda,
-        mp->d_accel_crust_mantle.cuda,
-        mp->d_b_accel_crust_mantle.cuda,
+        mp->d_veloc_crust_mantle.cuda,
+        mp->d_b_veloc_crust_mantle.cuda,
+        mp->d_xix_crust_mantle.cuda,
+        mp->d_xiy_crust_mantle.cuda,
+        mp->d_xiz_crust_mantle.cuda,
+        mp->d_etax_crust_mantle.cuda,
+        mp->d_etay_crust_mantle.cuda,
+        mp->d_etaz_crust_mantle.cuda,
+        mp->d_gammax_crust_mantle.cuda,
+        mp->d_gammay_crust_mantle.cuda,
+        mp->d_gammaz_crust_mantle.cuda,
+        mp->d_hprime_xx.cuda,
+        deltat,
         mp->d_hess_rho_kl_crust_mantle.cuda,
         mp->d_hess_kappa_kl_crust_mantle.cuda,
         mp->d_hess_mu_kl_crust_mantle.cuda,
-        deltat,
-        mp->NSPEC_CRUST_MANTLE);
+        mp->NSPEC_CRUST_MANTLE,
+        USE_SOURCE_RECEIVER_HESSIAN);
   }
 #endif
 

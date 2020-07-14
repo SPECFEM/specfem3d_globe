@@ -72,6 +72,7 @@ small_kernels = [
 :compute_iso_kernel,
 :compute_ani_kernel,
 :compute_hess_kernel,
+:compute_kappa_mu_hess_kernel,
 :compute_acoustic_kernel,
 :compute_strength_noise_kernel,
 :compute_ani_undoatt_kernel,
