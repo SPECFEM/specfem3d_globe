@@ -693,6 +693,30 @@ void FC_FUNC_ (compute_kernels_hess_gpu,
 
     clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_hess_kernel, 2, NULL,
                                      global_work_size, local_work_size, 0, NULL, NULL));
+
+    // approximate hessian for rho, kappa, mu
+    clCheck (clSetKernelArg (mocl.kernels.compute_kappa_mu_hess_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ibool_crust_mantle.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_kappa_mu_hess_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_veloc_crust_mantle.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_kappa_mu_hess_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_veloc_crust_mantle.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_kappa_mu_hess_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_xix_crust_mantle.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_kappa_mu_hess_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_xiy_crust_mantle.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_kappa_mu_hess_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_xiz_crust_mantle.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_kappa_mu_hess_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_etax_crust_mantle.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_kappa_mu_hess_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_etay_crust_mantle.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_kappa_mu_hess_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_etaz_crust_mantle.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_kappa_mu_hess_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_gammax_crust_mantle.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_kappa_mu_hess_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_gammay_crust_mantle.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_kappa_mu_hess_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_gammaz_crust_mantle.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_kappa_mu_hess_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_hprime_xx.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_kappa_mu_hess_kernel, idx++, sizeof (realw), (void *) &deltat));
+    clCheck (clSetKernelArg (mocl.kernels.compute_kappa_mu_hess_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_hess_rho_kl_crust_mantle.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_kappa_mu_hess_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_hess_kappa_kl_crust_mantle.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_kappa_mu_hess_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_hess_mu_kl_crust_mantle.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_kappa_mu_hess_kernel, idx++, sizeof (int), (void *) &mp->NSPEC_CRUST_MANTLE));
+    clCheck (clSetKernelArg (mocl.kernels.compute_kappa_mu_hess_kernel, idx++, sizeof (int), (void *) &USE_SOURCE_RECEIVER_HESSIAN));
+
+    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_kappa_mu_hess_kernel, 2, NULL,
+                                     global_work_size, local_work_size, 0, NULL, NULL));
   }
 #endif
 #ifdef USE_CUDA
