@@ -283,10 +283,11 @@
 !! for attenuation
 !!
 !!-----------------------------------------------------------
-
-! in the case of 1D attenuation models, use NGLL^3 storage of the attenuation constants in each GLL spectral element anyway
-! (always safe to leave that to true; in the case of 1D attenuation models, setting it to false can save some memory storage)
-  logical, parameter :: ATTENUATION_1D_WITH_3D_STORAGE  = .true.
+! note: We compute a constant Q behavior over a frequency absorption-band using a series of standard linear solids (SLS).
+!       The absorption-band limits are determined by the maximum frequency (or minimum period) resolved by the mesh.
+!       We shift the velocities to the logarithmic center frequency of this simulation frequency absorption-band,
+!       accounting for physical dispersion effects of the Q model, assuming that the provided velocity model values
+!       refer to a reference frequency f0 specified below.
 
 ! reference frequency of anelastic model
 ! by default, we use PREM values at 1 Hz
@@ -294,6 +295,10 @@
 
 ! saves velocity model files shifted to the center frequency of the simulation attenuation period band
   logical, parameter :: ATTENUATION_SAVE_MODEL_AT_SHIFTED_CENTER_FREQ = .false.
+
+! in the case of 1D attenuation models, use NGLL^3 storage of the attenuation constants in each GLL spectral element anyway
+! (always safe to leave that to true; in the case of 1D attenuation models, setting it to false can save some memory storage)
+  logical, parameter :: ATTENUATION_1D_WITH_3D_STORAGE  = .true.
 
 !!-----------------------------------------------------------
 !!

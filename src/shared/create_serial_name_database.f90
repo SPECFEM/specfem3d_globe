@@ -26,7 +26,7 @@
 !=====================================================================
 
   subroutine create_serial_name_database(prname,iproc,iregion_code, &
-      LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
+                                         LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
 
 ! create name of the database for serial codes (AVS_DX and codes to check buffers)
 

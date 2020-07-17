@@ -50,9 +50,7 @@ cd $currentdir
 # copy executables
 mkdir -p bin
 rm -rf bin/*
-cp ../../bin/xmeshfem3D ./bin/
-cp ../../bin/xspecfem3D ./bin/
-cp ../../bin/xcombine_vol_data* ./bin/
+cp ../../bin/x* ./bin/
 
 # links data directories needed to run example in this current directory with s362ani
 cd DATA/

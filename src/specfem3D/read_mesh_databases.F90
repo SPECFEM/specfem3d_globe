@@ -1166,7 +1166,7 @@
   endif ! I_should_read_the_database
 
   call bcast_all_i_for_database(ichunk, 1)
-  call bcast_all_i_for_database(addressing(1,0,0), size(addressing))
+  call bcast_all_i_for_database(addressing(1,0,0), size(addressing,kind=4))
 
   end subroutine read_mesh_databases_addressing
 
@@ -1853,63 +1853,66 @@
   use specfem_par_crustmantle
   implicit none
 
+! note: the size(..) function returns either integer(kind=4) or integer(kind=8)
+!       depending on compiler flags (-mcmedium), thus adding a kind argument to have integer(kind=4) output
+
   !call bcast_all_i_for_database(NSPEC_CRUST_MANTLE, 1)
   !call bcast_all_i_for_database(NGLOB_CRUST_MANTLE, 1)
   !call bcast_all_i_for_database(NGLOB_XY_CM, 1)
-  call bcast_all_cr_for_database(rho_vp_crust_mantle(1,1,1,1), size(rho_vp_crust_mantle))
-  call bcast_all_cr_for_database(rho_vs_crust_mantle(1,1,1,1), size(rho_vs_crust_mantle))
+  call bcast_all_cr_for_database(rho_vp_crust_mantle(1,1,1,1), size(rho_vp_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(rho_vs_crust_mantle(1,1,1,1), size(rho_vs_crust_mantle,kind=4))
 
-  call bcast_all_cr_for_database(xstore_crust_mantle(1), size(xstore_crust_mantle))
-  call bcast_all_cr_for_database(ystore_crust_mantle(1), size(ystore_crust_mantle))
-  call bcast_all_cr_for_database(zstore_crust_mantle(1), size(zstore_crust_mantle))
-  call bcast_all_cr_for_database(xix_crust_mantle(1,1,1,1), size(xix_crust_mantle))
-  call bcast_all_cr_for_database(xiy_crust_mantle(1,1,1,1), size(xiy_crust_mantle))
-  call bcast_all_cr_for_database(xiz_crust_mantle(1,1,1,1), size(xiz_crust_mantle))
-  call bcast_all_cr_for_database(etax_crust_mantle(1,1,1,1), size(etax_crust_mantle))
-  call bcast_all_cr_for_database(etay_crust_mantle(1,1,1,1), size(etay_crust_mantle))
-  call bcast_all_cr_for_database(etaz_crust_mantle(1,1,1,1), size(etaz_crust_mantle))
-  call bcast_all_cr_for_database(gammax_crust_mantle(1,1,1,1), size(gammax_crust_mantle))
-  call bcast_all_cr_for_database(gammay_crust_mantle(1,1,1,1), size(gammay_crust_mantle))
-  call bcast_all_cr_for_database(gammaz_crust_mantle(1,1,1,1), size(gammaz_crust_mantle))
-  call bcast_all_cr_for_database(rhostore_crust_mantle(1,1,1,1), size(rhostore_crust_mantle))
-  call bcast_all_cr_for_database(kappavstore_crust_mantle(1,1,1,1), size(kappavstore_crust_mantle))
-  call bcast_all_cr_for_database(muvstore_crust_mantle(1,1,1,1), size(muvstore_crust_mantle))
-  call bcast_all_cr_for_database(kappahstore_crust_mantle(1,1,1,1), size(kappahstore_crust_mantle))
-  call bcast_all_cr_for_database(muhstore_crust_mantle(1,1,1,1), size(muhstore_crust_mantle))
-  call bcast_all_cr_for_database(eta_anisostore_crust_mantle(1,1,1,1), size(eta_anisostore_crust_mantle))
+  call bcast_all_cr_for_database(xstore_crust_mantle(1), size(xstore_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(ystore_crust_mantle(1), size(ystore_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(zstore_crust_mantle(1), size(zstore_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(xix_crust_mantle(1,1,1,1), size(xix_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(xiy_crust_mantle(1,1,1,1), size(xiy_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(xiz_crust_mantle(1,1,1,1), size(xiz_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(etax_crust_mantle(1,1,1,1), size(etax_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(etay_crust_mantle(1,1,1,1), size(etay_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(etaz_crust_mantle(1,1,1,1), size(etaz_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(gammax_crust_mantle(1,1,1,1), size(gammax_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(gammay_crust_mantle(1,1,1,1), size(gammay_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(gammaz_crust_mantle(1,1,1,1), size(gammaz_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(rhostore_crust_mantle(1,1,1,1), size(rhostore_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(kappavstore_crust_mantle(1,1,1,1), size(kappavstore_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(muvstore_crust_mantle(1,1,1,1), size(muvstore_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(kappahstore_crust_mantle(1,1,1,1), size(kappahstore_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(muhstore_crust_mantle(1,1,1,1), size(muhstore_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(eta_anisostore_crust_mantle(1,1,1,1), size(eta_anisostore_crust_mantle,kind=4))
 
-  call bcast_all_cr_for_database(c11store_crust_mantle(1,1,1,1), size(c11store_crust_mantle))
-  call bcast_all_cr_for_database(c12store_crust_mantle(1,1,1,1), size(c12store_crust_mantle))
-  call bcast_all_cr_for_database(c13store_crust_mantle(1,1,1,1), size(c13store_crust_mantle))
-  call bcast_all_cr_for_database(c14store_crust_mantle(1,1,1,1), size(c14store_crust_mantle))
-  call bcast_all_cr_for_database(c15store_crust_mantle(1,1,1,1), size(c15store_crust_mantle))
-  call bcast_all_cr_for_database(c16store_crust_mantle(1,1,1,1), size(c16store_crust_mantle))
-  call bcast_all_cr_for_database(c22store_crust_mantle(1,1,1,1), size(c22store_crust_mantle))
-  call bcast_all_cr_for_database(c23store_crust_mantle(1,1,1,1), size(c23store_crust_mantle))
-  call bcast_all_cr_for_database(c24store_crust_mantle(1,1,1,1), size(c24store_crust_mantle))
-  call bcast_all_cr_for_database(c25store_crust_mantle(1,1,1,1), size(c25store_crust_mantle))
-  call bcast_all_cr_for_database(c26store_crust_mantle(1,1,1,1), size(c26store_crust_mantle))
-  call bcast_all_cr_for_database(c33store_crust_mantle(1,1,1,1), size(c33store_crust_mantle))
-  call bcast_all_cr_for_database(c34store_crust_mantle(1,1,1,1), size(c34store_crust_mantle))
-  call bcast_all_cr_for_database(c35store_crust_mantle(1,1,1,1), size(c35store_crust_mantle))
-  call bcast_all_cr_for_database(c36store_crust_mantle(1,1,1,1), size(c36store_crust_mantle))
-  call bcast_all_cr_for_database(c44store_crust_mantle(1,1,1,1), size(c44store_crust_mantle))
-  call bcast_all_cr_for_database(c45store_crust_mantle(1,1,1,1), size(c45store_crust_mantle))
-  call bcast_all_cr_for_database(c46store_crust_mantle(1,1,1,1), size(c46store_crust_mantle))
-  call bcast_all_cr_for_database(c55store_crust_mantle(1,1,1,1), size(c55store_crust_mantle))
-  call bcast_all_cr_for_database(c56store_crust_mantle(1,1,1,1), size(c56store_crust_mantle))
-  call bcast_all_cr_for_database(c66store_crust_mantle(1,1,1,1), size(c66store_crust_mantle))
-  call bcast_all_cr_for_database(mu0store_crust_mantle(1,1,1,1), size(mu0store_crust_mantle))
+  call bcast_all_cr_for_database(c11store_crust_mantle(1,1,1,1), size(c11store_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(c12store_crust_mantle(1,1,1,1), size(c12store_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(c13store_crust_mantle(1,1,1,1), size(c13store_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(c14store_crust_mantle(1,1,1,1), size(c14store_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(c15store_crust_mantle(1,1,1,1), size(c15store_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(c16store_crust_mantle(1,1,1,1), size(c16store_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(c22store_crust_mantle(1,1,1,1), size(c22store_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(c23store_crust_mantle(1,1,1,1), size(c23store_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(c24store_crust_mantle(1,1,1,1), size(c24store_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(c25store_crust_mantle(1,1,1,1), size(c25store_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(c26store_crust_mantle(1,1,1,1), size(c26store_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(c33store_crust_mantle(1,1,1,1), size(c33store_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(c34store_crust_mantle(1,1,1,1), size(c34store_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(c35store_crust_mantle(1,1,1,1), size(c35store_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(c36store_crust_mantle(1,1,1,1), size(c36store_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(c44store_crust_mantle(1,1,1,1), size(c44store_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(c45store_crust_mantle(1,1,1,1), size(c45store_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(c46store_crust_mantle(1,1,1,1), size(c46store_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(c55store_crust_mantle(1,1,1,1), size(c55store_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(c56store_crust_mantle(1,1,1,1), size(c56store_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(c66store_crust_mantle(1,1,1,1), size(c66store_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(mu0store_crust_mantle(1,1,1,1), size(mu0store_crust_mantle,kind=4))
 
-  call bcast_all_i_for_database(ibool_crust_mantle(1,1,1,1), size(ibool_crust_mantle))
-  call bcast_all_l_for_database(ispec_is_tiso_crust_mantle(1), size(ispec_is_tiso_crust_mantle))
-  call bcast_all_cr_for_database(rmassx_crust_mantle(1), size(rmassx_crust_mantle))
-  call bcast_all_cr_for_database(rmassy_crust_mantle(1), size(rmassy_crust_mantle))
-  call bcast_all_cr_for_database(rmassz_crust_mantle(1), size(rmassz_crust_mantle))
+  call bcast_all_i_for_database(ibool_crust_mantle(1,1,1,1), size(ibool_crust_mantle,kind=4))
+  call bcast_all_l_for_database(ispec_is_tiso_crust_mantle(1), size(ispec_is_tiso_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(rmassx_crust_mantle(1), size(rmassx_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(rmassy_crust_mantle(1), size(rmassy_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(rmassz_crust_mantle(1), size(rmassz_crust_mantle,kind=4))
   !call bcast_all_i_for_database(NGLOB_CRUST_MANTLE_OCEANS, 1)
-  call bcast_all_cr_for_database(rmass_ocean_load(1), size(rmass_ocean_load))
-  call bcast_all_cr_for_database(b_rmassx_crust_mantle(1), size(b_rmassx_crust_mantle))
-  call bcast_all_cr_for_database(b_rmassy_crust_mantle(1), size(b_rmassy_crust_mantle))
+  call bcast_all_cr_for_database(rmass_ocean_load(1), size(rmass_ocean_load,kind=4))
+  call bcast_all_cr_for_database(b_rmassx_crust_mantle(1), size(b_rmassx_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(b_rmassy_crust_mantle(1), size(b_rmassy_crust_mantle,kind=4))
 
   end subroutine bcast_mesh_databases_CM
 
@@ -1925,23 +1928,23 @@
 
   !call bcast_all_i_for_database(NSPEC_OUTER_CORE, 1)
   !call bcast_all_i_for_database(NGLOB_OUTER_CORE, 1)
-  call bcast_all_cr_for_database(vp_outer_core(1,1,1,1), size(vp_outer_core))
-  call bcast_all_cr_for_database(xstore_outer_core(1), size(xstore_outer_core))
-  call bcast_all_cr_for_database(ystore_outer_core(1), size(ystore_outer_core))
-  call bcast_all_cr_for_database(zstore_outer_core(1), size(zstore_outer_core))
-  call bcast_all_cr_for_database(xix_outer_core(1,1,1,1), size(xix_outer_core))
-  call bcast_all_cr_for_database(xiy_outer_core(1,1,1,1), size(xiy_outer_core))
-  call bcast_all_cr_for_database(xiz_outer_core(1,1,1,1), size(xiz_outer_core))
-  call bcast_all_cr_for_database(etax_outer_core(1,1,1,1), size(etax_outer_core))
-  call bcast_all_cr_for_database(etay_outer_core(1,1,1,1), size(etay_outer_core))
-  call bcast_all_cr_for_database(etaz_outer_core(1,1,1,1), size(etaz_outer_core))
-  call bcast_all_cr_for_database(gammax_outer_core(1,1,1,1), size(gammax_outer_core))
-  call bcast_all_cr_for_database(gammay_outer_core(1,1,1,1), size(gammay_outer_core))
-  call bcast_all_cr_for_database(gammaz_outer_core(1,1,1,1), size(gammaz_outer_core))
-  call bcast_all_cr_for_database(rhostore_outer_core(1,1,1,1), size(rhostore_outer_core))
-  call bcast_all_cr_for_database(kappavstore_outer_core(1,1,1,1), size(kappavstore_outer_core))
-  call bcast_all_i_for_database(ibool_outer_core(1,1,1,1), size(ibool_outer_core))
-  call bcast_all_cr_for_database(rmass_outer_core(1), size(rmass_outer_core))
+  call bcast_all_cr_for_database(vp_outer_core(1,1,1,1), size(vp_outer_core,kind=4))
+  call bcast_all_cr_for_database(xstore_outer_core(1), size(xstore_outer_core,kind=4))
+  call bcast_all_cr_for_database(ystore_outer_core(1), size(ystore_outer_core,kind=4))
+  call bcast_all_cr_for_database(zstore_outer_core(1), size(zstore_outer_core,kind=4))
+  call bcast_all_cr_for_database(xix_outer_core(1,1,1,1), size(xix_outer_core,kind=4))
+  call bcast_all_cr_for_database(xiy_outer_core(1,1,1,1), size(xiy_outer_core,kind=4))
+  call bcast_all_cr_for_database(xiz_outer_core(1,1,1,1), size(xiz_outer_core,kind=4))
+  call bcast_all_cr_for_database(etax_outer_core(1,1,1,1), size(etax_outer_core,kind=4))
+  call bcast_all_cr_for_database(etay_outer_core(1,1,1,1), size(etay_outer_core,kind=4))
+  call bcast_all_cr_for_database(etaz_outer_core(1,1,1,1), size(etaz_outer_core,kind=4))
+  call bcast_all_cr_for_database(gammax_outer_core(1,1,1,1), size(gammax_outer_core,kind=4))
+  call bcast_all_cr_for_database(gammay_outer_core(1,1,1,1), size(gammay_outer_core,kind=4))
+  call bcast_all_cr_for_database(gammaz_outer_core(1,1,1,1), size(gammaz_outer_core,kind=4))
+  call bcast_all_cr_for_database(rhostore_outer_core(1,1,1,1), size(rhostore_outer_core,kind=4))
+  call bcast_all_cr_for_database(kappavstore_outer_core(1,1,1,1), size(kappavstore_outer_core,kind=4))
+  call bcast_all_i_for_database(ibool_outer_core(1,1,1,1), size(ibool_outer_core,kind=4))
+  call bcast_all_cr_for_database(rmass_outer_core(1), size(rmass_outer_core,kind=4))
 
   end subroutine bcast_mesh_databases_OC
 
@@ -1958,33 +1961,33 @@
   !call bcast_all_i_for_database(NSPEC_INNER_CORE, 1)
   !call bcast_all_i_for_database(NGLOB_INNER_CORE, 1)
   !call bcast_all_i_for_database(NGLOB_XY_IC, 1)
-  call bcast_all_cr_for_database(xstore_inner_core(1), size(xstore_inner_core))
-  call bcast_all_cr_for_database(ystore_inner_core(1), size(ystore_inner_core))
-  call bcast_all_cr_for_database(zstore_inner_core(1), size(zstore_inner_core))
-  call bcast_all_cr_for_database(xix_inner_core(1,1,1,1), size(xix_inner_core))
-  call bcast_all_cr_for_database(xiy_inner_core(1,1,1,1), size(xiy_inner_core))
-  call bcast_all_cr_for_database(xiz_inner_core(1,1,1,1), size(xiz_inner_core))
-  call bcast_all_cr_for_database(etax_inner_core(1,1,1,1), size(etax_inner_core))
-  call bcast_all_cr_for_database(etay_inner_core(1,1,1,1), size(etay_inner_core))
-  call bcast_all_cr_for_database(etaz_inner_core(1,1,1,1), size(etaz_inner_core))
-  call bcast_all_cr_for_database(gammax_inner_core(1,1,1,1), size(gammax_inner_core))
-  call bcast_all_cr_for_database(gammay_inner_core(1,1,1,1), size(gammay_inner_core))
-  call bcast_all_cr_for_database(gammaz_inner_core(1,1,1,1), size(gammaz_inner_core))
-  call bcast_all_cr_for_database(rhostore_inner_core(1,1,1,1), size(rhostore_inner_core))
-  call bcast_all_cr_for_database(kappavstore_inner_core(1,1,1,1), size(kappavstore_inner_core))
-  call bcast_all_cr_for_database(muvstore_inner_core(1,1,1,1), size(muvstore_inner_core))
-  call bcast_all_cr_for_database(c11store_inner_core(1,1,1,1), size(c11store_inner_core))
-  call bcast_all_cr_for_database(c12store_inner_core(1,1,1,1), size(c12store_inner_core))
-  call bcast_all_cr_for_database(c13store_inner_core(1,1,1,1), size(c13store_inner_core))
-  call bcast_all_cr_for_database(c33store_inner_core(1,1,1,1), size(c33store_inner_core))
-  call bcast_all_cr_for_database(c44store_inner_core(1,1,1,1), size(c44store_inner_core))
-  call bcast_all_i_for_database(ibool_inner_core(1,1,1,1), size(ibool_inner_core))
-  call bcast_all_i_for_database(idoubling_inner_core(1), size(idoubling_inner_core))
-  call bcast_all_cr_for_database(rmassx_inner_core(1), size(rmassx_inner_core))
-  call bcast_all_cr_for_database(rmassy_inner_core(1), size(rmassy_inner_core))
-  call bcast_all_cr_for_database(rmassz_inner_core(1), size(rmassz_inner_core))
-  call bcast_all_cr_for_database(b_rmassx_inner_core(1), size(b_rmassx_inner_core))
-  call bcast_all_cr_for_database(b_rmassy_inner_core(1), size(b_rmassy_inner_core))
+  call bcast_all_cr_for_database(xstore_inner_core(1), size(xstore_inner_core,kind=4))
+  call bcast_all_cr_for_database(ystore_inner_core(1), size(ystore_inner_core,kind=4))
+  call bcast_all_cr_for_database(zstore_inner_core(1), size(zstore_inner_core,kind=4))
+  call bcast_all_cr_for_database(xix_inner_core(1,1,1,1), size(xix_inner_core,kind=4))
+  call bcast_all_cr_for_database(xiy_inner_core(1,1,1,1), size(xiy_inner_core,kind=4))
+  call bcast_all_cr_for_database(xiz_inner_core(1,1,1,1), size(xiz_inner_core,kind=4))
+  call bcast_all_cr_for_database(etax_inner_core(1,1,1,1), size(etax_inner_core,kind=4))
+  call bcast_all_cr_for_database(etay_inner_core(1,1,1,1), size(etay_inner_core,kind=4))
+  call bcast_all_cr_for_database(etaz_inner_core(1,1,1,1), size(etaz_inner_core,kind=4))
+  call bcast_all_cr_for_database(gammax_inner_core(1,1,1,1), size(gammax_inner_core,kind=4))
+  call bcast_all_cr_for_database(gammay_inner_core(1,1,1,1), size(gammay_inner_core,kind=4))
+  call bcast_all_cr_for_database(gammaz_inner_core(1,1,1,1), size(gammaz_inner_core,kind=4))
+  call bcast_all_cr_for_database(rhostore_inner_core(1,1,1,1), size(rhostore_inner_core,kind=4))
+  call bcast_all_cr_for_database(kappavstore_inner_core(1,1,1,1), size(kappavstore_inner_core,kind=4))
+  call bcast_all_cr_for_database(muvstore_inner_core(1,1,1,1), size(muvstore_inner_core,kind=4))
+  call bcast_all_cr_for_database(c11store_inner_core(1,1,1,1), size(c11store_inner_core,kind=4))
+  call bcast_all_cr_for_database(c12store_inner_core(1,1,1,1), size(c12store_inner_core,kind=4))
+  call bcast_all_cr_for_database(c13store_inner_core(1,1,1,1), size(c13store_inner_core,kind=4))
+  call bcast_all_cr_for_database(c33store_inner_core(1,1,1,1), size(c33store_inner_core,kind=4))
+  call bcast_all_cr_for_database(c44store_inner_core(1,1,1,1), size(c44store_inner_core,kind=4))
+  call bcast_all_i_for_database(ibool_inner_core(1,1,1,1), size(ibool_inner_core,kind=4))
+  call bcast_all_i_for_database(idoubling_inner_core(1), size(idoubling_inner_core,kind=4))
+  call bcast_all_cr_for_database(rmassx_inner_core(1), size(rmassx_inner_core,kind=4))
+  call bcast_all_cr_for_database(rmassy_inner_core(1), size(rmassy_inner_core,kind=4))
+  call bcast_all_cr_for_database(rmassz_inner_core(1), size(rmassz_inner_core,kind=4))
+  call bcast_all_cr_for_database(b_rmassx_inner_core(1), size(b_rmassx_inner_core,kind=4))
+  call bcast_all_cr_for_database(b_rmassy_inner_core(1), size(b_rmassy_inner_core,kind=4))
 
   end subroutine bcast_mesh_databases_IC
 
@@ -2006,26 +2009,26 @@
   call bcast_all_i_for_database(nspec2D_ymin_crust_mantle, 1)
   call bcast_all_i_for_database(nspec2D_ymax_crust_mantle, 1)
 
-  call bcast_all_i_for_database(ibelm_xmin_crust_mantle(1), size(ibelm_xmin_crust_mantle))
-  call bcast_all_i_for_database(ibelm_xmax_crust_mantle(1), size(ibelm_xmax_crust_mantle))
-  call bcast_all_i_for_database(ibelm_ymin_crust_mantle(1), size(ibelm_ymin_crust_mantle))
-  call bcast_all_i_for_database(ibelm_ymax_crust_mantle(1), size(ibelm_ymax_crust_mantle))
-  call bcast_all_i_for_database(ibelm_bottom_crust_mantle(1), size(ibelm_bottom_crust_mantle))
-  call bcast_all_i_for_database(ibelm_top_crust_mantle(1), size(ibelm_top_crust_mantle))
+  call bcast_all_i_for_database(ibelm_xmin_crust_mantle(1), size(ibelm_xmin_crust_mantle,kind=4))
+  call bcast_all_i_for_database(ibelm_xmax_crust_mantle(1), size(ibelm_xmax_crust_mantle,kind=4))
+  call bcast_all_i_for_database(ibelm_ymin_crust_mantle(1), size(ibelm_ymin_crust_mantle,kind=4))
+  call bcast_all_i_for_database(ibelm_ymax_crust_mantle(1), size(ibelm_ymax_crust_mantle,kind=4))
+  call bcast_all_i_for_database(ibelm_bottom_crust_mantle(1), size(ibelm_bottom_crust_mantle,kind=4))
+  call bcast_all_i_for_database(ibelm_top_crust_mantle(1), size(ibelm_top_crust_mantle,kind=4))
 
-  call bcast_all_cr_for_database(normal_xmin_crust_mantle(1,1,1,1), size(normal_xmin_crust_mantle))
-  call bcast_all_cr_for_database(normal_xmax_crust_mantle(1,1,1,1), size(normal_xmax_crust_mantle))
-  call bcast_all_cr_for_database(normal_ymin_crust_mantle(1,1,1,1), size(normal_ymin_crust_mantle))
-  call bcast_all_cr_for_database(normal_ymax_crust_mantle(1,1,1,1), size(normal_ymax_crust_mantle))
-  call bcast_all_cr_for_database(normal_bottom_crust_mantle(1,1,1,1), size(normal_bottom_crust_mantle))
-  call bcast_all_cr_for_database(normal_top_crust_mantle(1,1,1,1), size(normal_top_crust_mantle))
+  call bcast_all_cr_for_database(normal_xmin_crust_mantle(1,1,1,1), size(normal_xmin_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(normal_xmax_crust_mantle(1,1,1,1), size(normal_xmax_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(normal_ymin_crust_mantle(1,1,1,1), size(normal_ymin_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(normal_ymax_crust_mantle(1,1,1,1), size(normal_ymax_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(normal_bottom_crust_mantle(1,1,1,1), size(normal_bottom_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(normal_top_crust_mantle(1,1,1,1), size(normal_top_crust_mantle,kind=4))
 
-  call bcast_all_cr_for_database(jacobian2D_xmin_crust_mantle(1,1,1), size(jacobian2D_xmin_crust_mantle))
-  call bcast_all_cr_for_database(jacobian2D_xmax_crust_mantle(1,1,1), size(jacobian2D_xmax_crust_mantle))
-  call bcast_all_cr_for_database(jacobian2D_ymin_crust_mantle(1,1,1), size(jacobian2D_ymin_crust_mantle))
-  call bcast_all_cr_for_database(jacobian2D_ymax_crust_mantle(1,1,1), size(jacobian2D_ymax_crust_mantle))
-  call bcast_all_cr_for_database(jacobian2D_bottom_crust_mantle(1,1,1), size(jacobian2D_bottom_crust_mantle))
-  call bcast_all_cr_for_database(jacobian2D_top_crust_mantle(1,1,1), size(jacobian2D_top_crust_mantle))
+  call bcast_all_cr_for_database(jacobian2D_xmin_crust_mantle(1,1,1), size(jacobian2D_xmin_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(jacobian2D_xmax_crust_mantle(1,1,1), size(jacobian2D_xmax_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(jacobian2D_ymin_crust_mantle(1,1,1), size(jacobian2D_ymin_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(jacobian2D_ymax_crust_mantle(1,1,1), size(jacobian2D_ymax_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(jacobian2D_bottom_crust_mantle(1,1,1), size(jacobian2D_bottom_crust_mantle,kind=4))
+  call bcast_all_cr_for_database(jacobian2D_top_crust_mantle(1,1,1), size(jacobian2D_top_crust_mantle,kind=4))
 
   call bcast_all_i_for_database(nspec2D_xmin_outer_core, 1)
   call bcast_all_i_for_database(nspec2D_xmax_outer_core, 1)
@@ -2033,26 +2036,26 @@
   call bcast_all_i_for_database(nspec2D_ymax_outer_core, 1)
   call bcast_all_i_for_database(nspec2D_zmin_outer_core, 1)
 
-  call bcast_all_i_for_database(ibelm_xmin_outer_core(1), size(ibelm_xmin_outer_core))
-  call bcast_all_i_for_database(ibelm_xmax_outer_core(1), size(ibelm_xmax_outer_core))
-  call bcast_all_i_for_database(ibelm_ymin_outer_core(1), size(ibelm_ymin_outer_core))
-  call bcast_all_i_for_database(ibelm_ymax_outer_core(1), size(ibelm_ymax_outer_core))
-  call bcast_all_i_for_database(ibelm_bottom_outer_core(1), size(ibelm_bottom_outer_core))
-  call bcast_all_i_for_database(ibelm_top_outer_core(1), size(ibelm_top_outer_core))
+  call bcast_all_i_for_database(ibelm_xmin_outer_core(1), size(ibelm_xmin_outer_core,kind=4))
+  call bcast_all_i_for_database(ibelm_xmax_outer_core(1), size(ibelm_xmax_outer_core,kind=4))
+  call bcast_all_i_for_database(ibelm_ymin_outer_core(1), size(ibelm_ymin_outer_core,kind=4))
+  call bcast_all_i_for_database(ibelm_ymax_outer_core(1), size(ibelm_ymax_outer_core,kind=4))
+  call bcast_all_i_for_database(ibelm_bottom_outer_core(1), size(ibelm_bottom_outer_core,kind=4))
+  call bcast_all_i_for_database(ibelm_top_outer_core(1), size(ibelm_top_outer_core,kind=4))
 
-  call bcast_all_cr_for_database(normal_xmin_outer_core(1,1,1,1), size(normal_xmin_outer_core))
-  call bcast_all_cr_for_database(normal_xmax_outer_core(1,1,1,1), size(normal_xmax_outer_core))
-  call bcast_all_cr_for_database(normal_ymin_outer_core(1,1,1,1), size(normal_ymin_outer_core))
-  call bcast_all_cr_for_database(normal_ymax_outer_core(1,1,1,1), size(normal_ymax_outer_core))
-  call bcast_all_cr_for_database(normal_bottom_outer_core(1,1,1,1), size(normal_bottom_outer_core))
-  call bcast_all_cr_for_database(normal_top_outer_core(1,1,1,1), size(normal_top_outer_core))
+  call bcast_all_cr_for_database(normal_xmin_outer_core(1,1,1,1), size(normal_xmin_outer_core,kind=4))
+  call bcast_all_cr_for_database(normal_xmax_outer_core(1,1,1,1), size(normal_xmax_outer_core,kind=4))
+  call bcast_all_cr_for_database(normal_ymin_outer_core(1,1,1,1), size(normal_ymin_outer_core,kind=4))
+  call bcast_all_cr_for_database(normal_ymax_outer_core(1,1,1,1), size(normal_ymax_outer_core,kind=4))
+  call bcast_all_cr_for_database(normal_bottom_outer_core(1,1,1,1), size(normal_bottom_outer_core,kind=4))
+  call bcast_all_cr_for_database(normal_top_outer_core(1,1,1,1), size(normal_top_outer_core,kind=4))
 
-  call bcast_all_cr_for_database(jacobian2D_xmin_outer_core(1,1,1), size(jacobian2D_xmin_outer_core))
-  call bcast_all_cr_for_database(jacobian2D_xmax_outer_core(1,1,1), size(jacobian2D_xmax_outer_core))
-  call bcast_all_cr_for_database(jacobian2D_ymin_outer_core(1,1,1), size(jacobian2D_ymin_outer_core))
-  call bcast_all_cr_for_database(jacobian2D_ymax_outer_core(1,1,1), size(jacobian2D_ymax_outer_core))
-  call bcast_all_cr_for_database(jacobian2D_bottom_outer_core(1,1,1), size(jacobian2D_bottom_outer_core))
-  call bcast_all_cr_for_database(jacobian2D_top_outer_core(1,1,1), size(jacobian2D_top_outer_core))
+  call bcast_all_cr_for_database(jacobian2D_xmin_outer_core(1,1,1), size(jacobian2D_xmin_outer_core,kind=4))
+  call bcast_all_cr_for_database(jacobian2D_xmax_outer_core(1,1,1), size(jacobian2D_xmax_outer_core,kind=4))
+  call bcast_all_cr_for_database(jacobian2D_ymin_outer_core(1,1,1), size(jacobian2D_ymin_outer_core,kind=4))
+  call bcast_all_cr_for_database(jacobian2D_ymax_outer_core(1,1,1), size(jacobian2D_ymax_outer_core,kind=4))
+  call bcast_all_cr_for_database(jacobian2D_bottom_outer_core(1,1,1), size(jacobian2D_bottom_outer_core,kind=4))
+  call bcast_all_cr_for_database(jacobian2D_top_outer_core(1,1,1), size(jacobian2D_top_outer_core,kind=4))
 
   call bcast_all_i_for_database(nspec2D_xmin_inner_core, 1)
   call bcast_all_i_for_database(nspec2D_xmax_inner_core, 1)
@@ -2060,24 +2063,24 @@
   call bcast_all_i_for_database(nspec2D_ymax_inner_core, 1)
 
     ! boundary parameters
-  call bcast_all_i_for_database(ibelm_xmin_inner_core(1), size(ibelm_xmin_inner_core))
-  call bcast_all_i_for_database(ibelm_xmax_inner_core(1), size(ibelm_xmax_inner_core))
-  call bcast_all_i_for_database(ibelm_ymin_inner_core(1), size(ibelm_ymin_inner_core))
-  call bcast_all_i_for_database(ibelm_ymax_inner_core(1), size(ibelm_ymax_inner_core))
-  call bcast_all_i_for_database(ibelm_bottom_inner_core(1), size(ibelm_bottom_inner_core))
-  call bcast_all_i_for_database(ibelm_top_inner_core(1), size(ibelm_top_inner_core))
+  call bcast_all_i_for_database(ibelm_xmin_inner_core(1), size(ibelm_xmin_inner_core,kind=4))
+  call bcast_all_i_for_database(ibelm_xmax_inner_core(1), size(ibelm_xmax_inner_core,kind=4))
+  call bcast_all_i_for_database(ibelm_ymin_inner_core(1), size(ibelm_ymin_inner_core,kind=4))
+  call bcast_all_i_for_database(ibelm_ymax_inner_core(1), size(ibelm_ymax_inner_core,kind=4))
+  call bcast_all_i_for_database(ibelm_bottom_inner_core(1), size(ibelm_bottom_inner_core,kind=4))
+  call bcast_all_i_for_database(ibelm_top_inner_core(1), size(ibelm_top_inner_core,kind=4))
 
   ! -- Boundary Mesh for crust and mantle ---
   if (SAVE_BOUNDARY_MESH .and. SIMULATION_TYPE == 3) then
-    call bcast_all_i_for_database(ibelm_moho_top(1), size(ibelm_moho_top))
-    call bcast_all_i_for_database(ibelm_moho_bot(1), size(ibelm_moho_bot))
-    call bcast_all_i_for_database(ibelm_400_top(1), size(ibelm_400_top))
-    call bcast_all_i_for_database(ibelm_400_bot(1), size(ibelm_400_bot))
-    call bcast_all_i_for_database(ibelm_670_top(1), size(ibelm_670_top))
-    call bcast_all_i_for_database(ibelm_670_bot(1), size(ibelm_670_bot))
-    call bcast_all_cr_for_database(normal_moho(1,1,1,1), size(normal_moho))
-    call bcast_all_cr_for_database(normal_400(1,1,1,1), size(normal_400))
-    call bcast_all_cr_for_database(normal_670(1,1,1,1), size(normal_670))
+    call bcast_all_i_for_database(ibelm_moho_top(1), size(ibelm_moho_top,kind=4))
+    call bcast_all_i_for_database(ibelm_moho_bot(1), size(ibelm_moho_bot,kind=4))
+    call bcast_all_i_for_database(ibelm_400_top(1), size(ibelm_400_top,kind=4))
+    call bcast_all_i_for_database(ibelm_400_bot(1), size(ibelm_400_bot,kind=4))
+    call bcast_all_i_for_database(ibelm_670_top(1), size(ibelm_670_top,kind=4))
+    call bcast_all_i_for_database(ibelm_670_bot(1), size(ibelm_670_bot,kind=4))
+    call bcast_all_cr_for_database(normal_moho(1,1,1,1), size(normal_moho,kind=4))
+    call bcast_all_cr_for_database(normal_400(1,1,1,1), size(normal_400,kind=4))
+    call bcast_all_cr_for_database(normal_670(1,1,1,1), size(normal_670,kind=4))
   endif
 
   end subroutine bcast_mesh_databases_coupling
@@ -2115,9 +2118,9 @@
       if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array ibool_interfaces_crust_mantle')
     endif
 
-    call bcast_all_i_for_database(my_neighbors_crust_mantle(1), size(my_neighbors_crust_mantle))
-    call bcast_all_i_for_database(nibool_interfaces_crust_mantle(1), size(nibool_interfaces_crust_mantle))
-    call bcast_all_i_for_database(ibool_interfaces_crust_mantle(1,1), size(ibool_interfaces_crust_mantle))
+    call bcast_all_i_for_database(my_neighbors_crust_mantle(1), size(my_neighbors_crust_mantle,kind=4))
+    call bcast_all_i_for_database(nibool_interfaces_crust_mantle(1), size(nibool_interfaces_crust_mantle,kind=4))
+    call bcast_all_i_for_database(ibool_interfaces_crust_mantle(1,1), size(ibool_interfaces_crust_mantle,kind=4))
   else
     ! dummy array
     max_nibool_interfaces_cm = 0
@@ -2142,7 +2145,7 @@
   endif
 
   if (num_phase_ispec_crust_mantle > 0) then
-    call bcast_all_i_for_database(phase_ispec_inner_crust_mantle(1,1), size(phase_ispec_inner_crust_mantle))
+    call bcast_all_i_for_database(phase_ispec_inner_crust_mantle(1,1), size(phase_ispec_inner_crust_mantle,kind=4))
   endif
 
   ! mesh coloring for GPUs
@@ -2158,7 +2161,7 @@
         call exit_mpi(myrank,'Error allocating num_elem_colors_crust_mantle array')
     endif
 
-    call bcast_all_i_for_database(num_elem_colors_crust_mantle(1), size(num_elem_colors_crust_mantle))
+    call bcast_all_i_for_database(num_elem_colors_crust_mantle(1), size(num_elem_colors_crust_mantle,kind=4))
   else
     ! allocates dummy arrays
     num_colors_outer_crust_mantle = 0
@@ -2206,9 +2209,9 @@
   endif
 
   if (num_interfaces_outer_core > 0) then
-    call bcast_all_i_for_database(my_neighbors_outer_core(1), size(my_neighbors_outer_core))
-    call bcast_all_i_for_database(nibool_interfaces_outer_core(1), size(nibool_interfaces_outer_core))
-    call bcast_all_i_for_database(ibool_interfaces_outer_core(1,1), size(ibool_interfaces_outer_core))
+    call bcast_all_i_for_database(my_neighbors_outer_core(1), size(my_neighbors_outer_core,kind=4))
+    call bcast_all_i_for_database(nibool_interfaces_outer_core(1), size(nibool_interfaces_outer_core,kind=4))
+    call bcast_all_i_for_database(ibool_interfaces_outer_core(1,1), size(ibool_interfaces_outer_core,kind=4))
   else
     ! dummy array
     max_nibool_interfaces_oc = 0
@@ -2233,7 +2236,7 @@
   endif
 
   if (num_phase_ispec_outer_core > 0) then
-    call bcast_all_i_for_database(phase_ispec_inner_outer_core(1,1), size(phase_ispec_inner_outer_core))
+    call bcast_all_i_for_database(phase_ispec_inner_outer_core(1,1), size(phase_ispec_inner_outer_core,kind=4))
   endif
 
   ! mesh coloring for GPUs
@@ -2249,7 +2252,7 @@
         call exit_mpi(myrank,'Error allocating num_elem_colors_outer_core array')
     endif
 
-    call bcast_all_i_for_database(num_elem_colors_outer_core(1), size(num_elem_colors_outer_core))
+    call bcast_all_i_for_database(num_elem_colors_outer_core(1), size(num_elem_colors_outer_core,kind=4))
   else
     ! allocates dummy arrays
     num_colors_outer_outer_core = 0
@@ -2295,9 +2298,9 @@
       if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array ibool_interfaces_inner_core')
     endif
 
-    call bcast_all_i_for_database(my_neighbors_inner_core(1), size(my_neighbors_inner_core))
-    call bcast_all_i_for_database(nibool_interfaces_inner_core(1), size(nibool_interfaces_inner_core))
-    call bcast_all_i_for_database(ibool_interfaces_inner_core(1,1), size(ibool_interfaces_inner_core))
+    call bcast_all_i_for_database(my_neighbors_inner_core(1), size(my_neighbors_inner_core,kind=4))
+    call bcast_all_i_for_database(nibool_interfaces_inner_core(1), size(nibool_interfaces_inner_core,kind=4))
+    call bcast_all_i_for_database(ibool_interfaces_inner_core(1,1), size(ibool_interfaces_inner_core,kind=4))
   else
     ! dummy array
     max_nibool_interfaces_ic = 0
@@ -2322,7 +2325,7 @@
   endif
 
   if (num_phase_ispec_inner_core > 0) then
-    call bcast_all_i_for_database(phase_ispec_inner_inner_core(1,1), size(phase_ispec_inner_inner_core))
+    call bcast_all_i_for_database(phase_ispec_inner_inner_core(1,1), size(phase_ispec_inner_inner_core,kind=4))
   endif
 
   ! mesh coloring for GPUs
@@ -2338,7 +2341,7 @@
         call exit_mpi(myrank,'Error allocating num_elem_colors_inner_core array')
     endif
 
-    call bcast_all_i_for_database(num_elem_colors_inner_core(1), size(num_elem_colors_inner_core))
+    call bcast_all_i_for_database(num_elem_colors_inner_core(1), size(num_elem_colors_inner_core,kind=4))
   else
     ! allocates dummy arrays
     num_colors_outer_inner_core = 0
@@ -2367,19 +2370,19 @@
   implicit none
 
   ! crust and mantle
-  call bcast_all_i_for_database(nimin_crust_mantle(1,1), size(nimin_crust_mantle))
-  call bcast_all_i_for_database(nimax_crust_mantle(1,1), size(nimax_crust_mantle))
-  call bcast_all_i_for_database(njmin_crust_mantle(1,1), size(njmin_crust_mantle))
-  call bcast_all_i_for_database(njmax_crust_mantle(1,1), size(njmax_crust_mantle))
-  call bcast_all_i_for_database(nkmin_xi_crust_mantle(1,1), size(nkmin_xi_crust_mantle))
-  call bcast_all_i_for_database(nkmin_eta_crust_mantle(1,1), size(nkmin_eta_crust_mantle))
+  call bcast_all_i_for_database(nimin_crust_mantle(1,1), size(nimin_crust_mantle,kind=4))
+  call bcast_all_i_for_database(nimax_crust_mantle(1,1), size(nimax_crust_mantle,kind=4))
+  call bcast_all_i_for_database(njmin_crust_mantle(1,1), size(njmin_crust_mantle,kind=4))
+  call bcast_all_i_for_database(njmax_crust_mantle(1,1), size(njmax_crust_mantle,kind=4))
+  call bcast_all_i_for_database(nkmin_xi_crust_mantle(1,1), size(nkmin_xi_crust_mantle,kind=4))
+  call bcast_all_i_for_database(nkmin_eta_crust_mantle(1,1), size(nkmin_eta_crust_mantle,kind=4))
 
   ! outer core
-  call bcast_all_i_for_database(nimin_outer_core(1,1), size(nimin_outer_core))
-  call bcast_all_i_for_database(nimax_outer_core(1,1), size(nimax_outer_core))
-  call bcast_all_i_for_database(njmin_outer_core(1,1), size(njmin_outer_core))
-  call bcast_all_i_for_database(njmax_outer_core(1,1), size(njmax_outer_core))
-  call bcast_all_i_for_database(nkmin_xi_outer_core(1,1), size(nkmin_xi_outer_core))
-  call bcast_all_i_for_database(nkmin_eta_outer_core(1,1), size(nkmin_eta_outer_core))
+  call bcast_all_i_for_database(nimin_outer_core(1,1), size(nimin_outer_core,kind=4))
+  call bcast_all_i_for_database(nimax_outer_core(1,1), size(nimax_outer_core,kind=4))
+  call bcast_all_i_for_database(njmin_outer_core(1,1), size(njmin_outer_core,kind=4))
+  call bcast_all_i_for_database(njmax_outer_core(1,1), size(njmax_outer_core,kind=4))
+  call bcast_all_i_for_database(nkmin_xi_outer_core(1,1), size(nkmin_xi_outer_core,kind=4))
+  call bcast_all_i_for_database(nkmin_eta_outer_core(1,1), size(nkmin_eta_outer_core,kind=4))
 
   end subroutine bcast_mesh_databases_stacey

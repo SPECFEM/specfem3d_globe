@@ -224,8 +224,8 @@
 
         ! define elastic parameters in the model
         rhostore(i,j,k,ispec) = real(rho, kind=CUSTOM_REAL)
-        kappavstore(i,j,k,ispec) = real(rho*(vpv*vpv - 4.d0*vsv*vsv/3.d0), kind=CUSTOM_REAL)
-        kappahstore(i,j,k,ispec) = real(rho*(vph*vph - 4.d0*vsh*vsh/3.d0), kind=CUSTOM_REAL)
+        kappavstore(i,j,k,ispec) = real(rho*(vpv*vpv - 4.d0/3.d0*vsv*vsv), kind=CUSTOM_REAL)
+        kappahstore(i,j,k,ispec) = real(rho*(vph*vph - 4.d0/3.d0*vsh*vsh), kind=CUSTOM_REAL)
         muvstore(i,j,k,ispec) = real(rho*vsv*vsv, kind=CUSTOM_REAL)
         muhstore(i,j,k,ispec) = real(rho*vsh*vsh, kind=CUSTOM_REAL)
         eta_anisostore(i,j,k,ispec) = real(eta_aniso, kind=CUSTOM_REAL)

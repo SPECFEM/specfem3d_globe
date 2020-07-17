@@ -1414,11 +1414,8 @@
   ! checks if anything to do
   if (.not. MODEL_GLL) return
 
-  ! only valid for crust/mantle region at the moment...
-  if (iregion_code /= IREGION_CRUST_MANTLE) return
-
   ! over-impose values from model GLL values
-  call model_gll_impose_val(xmesh,ymesh,zmesh,ispec,i,j,k, &
+  call model_gll_impose_val(iregion_code,xmesh,ymesh,zmesh,ispec,i,j,k, &
                             vpv,vph,vsv,vsh,rho,eta_aniso, &
                             c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
                             c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)

@@ -41,8 +41,8 @@
   ! local parameters
   double precision, dimension(N_SLS) :: alphaval_dble, betaval_dble, gammaval_dble
   double precision :: scale_factor,scale_factor_minus_one
-
   real(kind=CUSTOM_REAL) :: mul,muvl,muhl,eta_aniso
+  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: factor_scale_relaxed_crust_mantle,factor_scale_relaxed_inner_core
   ! aniso element
   !real(kind=CUSTOM_REAL) :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
   !                          c33,c34,c35,c36,c44,c45,c46,c55,c56,c66
@@ -53,6 +53,7 @@
                       d33,d34,d35,d36,d44,d45,d46,d55,d56,d66
   double precision :: phi_dble,theta_dble
   double precision :: A_dble,F_dble,L_dble,N_dble!,C_dble
+  double precision :: f0_reference
 
   integer :: ispec,i,j,k,ier,iglob
 
@@ -94,17 +95,32 @@
   one_minus_sum_beta_inner_core(:,:,:,:) = 0.0_CUSTOM_REAL
   factor_scale_inner_core(:,:,:,:) = 0.0_CUSTOM_REAL
 
-  ! reads in attenuation values
+  ! used for reading in and shifted value output
+  allocate(factor_scale_relaxed_crust_mantle(ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT4_VAL),stat=ier)
+  if (ier /= 0) stop 'Error allocating arrays factor_scale_relaxed_crust_mantle'
+  factor_scale_relaxed_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+
+  allocate(factor_scale_relaxed_inner_core(ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT5_VAL),stat=ier)
+  if (ier /= 0) stop 'Error allocating arrays factor_scale_relaxed_inner_core'
+  factor_scale_relaxed_inner_core(:,:,:,:) = 0.0_CUSTOM_REAL
+
+  ! reference frequency for model velocities (e.g., PREM at 1 Hz)
+  f0_reference = ATTENUATION_f0_REFERENCE
+
+  ! gets attenuation values
   ! CRUST_MANTLE ATTENUATION
   call get_attenuation_model_3D(IREGION_CRUST_MANTLE, &
                                 one_minus_sum_beta_crust_mantle, &
                                 factor_common_crust_mantle, &
-                                factor_scale_crust_mantle,tau_sigma_dble, &
-                                NSPEC_CRUST_MANTLE)
+                                factor_scale_crust_mantle, &
+                                factor_scale_relaxed_crust_mantle, &
+                                tau_sigma_dble, &
+                                NSPEC_CRUST_MANTLE,f0_reference)
 
   call bcast_attenuation_model_3D(one_minus_sum_beta_crust_mantle, &
                                   factor_common_crust_mantle, &
                                   factor_scale_crust_mantle, &
+                                  factor_scale_relaxed_crust_mantle, &
                                   tau_sigma_dble, &
                                   NSPEC_CRUST_MANTLE)
 
@@ -112,12 +128,15 @@
   call get_attenuation_model_3D(IREGION_INNER_CORE, &
                                 one_minus_sum_beta_inner_core, &
                                 factor_common_inner_core, &
-                                factor_scale_inner_core,tau_sigma_dble, &
-                                NSPEC_INNER_CORE)
+                                factor_scale_inner_core, &
+                                factor_scale_relaxed_inner_core, &
+                                tau_sigma_dble, &
+                                NSPEC_INNER_CORE,f0_reference)
 
   call bcast_attenuation_model_3D(one_minus_sum_beta_inner_core, &
                                   factor_common_inner_core, &
                                   factor_scale_inner_core, &
+                                  factor_scale_relaxed_inner_core, &
                                   tau_sigma_dble, &
                                   NSPEC_INNER_CORE)
 
@@ -126,6 +145,12 @@
   !if (myrank == 0) print *,'debug: original moduli c11',c11store_crust_mantle(1,1,1,1000),c11store_crust_mantle(3,3,3,3000)
   !if (myrank == 0) print *,'debug: original moduli c44',c44store_crust_mantle(1,1,1,1000),c44store_crust_mantle(3,3,3,3000)
 
+  ! note: the factor "scale_factor" below includes both the scaling to the center frequency
+  !       as well as the conversion to the relaxed moduli. the final result when multiplying with this factor
+  !       will be the relaxed modulus value (given the SLS approximation).
+  !       we will need the relaxed and unrelaxed values to determine the modulus defect (necessary to propagate
+  !       the memory variables) and for the stress computation (which uses the unrelaxed values).
+  !
   ! physical dispersion: scales moduli from reference frequency to simulation (source) center frequency
   !
   ! if attenuation is on, shift PREM to right frequency
@@ -145,7 +170,15 @@
   ! because "mu" is related to the square of velocity.
   !
   ! mu(omega_c) = mu(omega_0)[ 1 + 2/(pi Q_mu) ln(omega_c / omega_0) ]
-
+  !
+  ! once this shifted modulus value is given, we approximate the relaxed value given the standard linear solids
+  ! in routine get_attenuation_scale_factor() by:
+  !
+  !  M_relaxed = M(w_c_source) * B**2 / Omega
+  !
+  ! see Liu 1976 eq. (20), where here we use the expression for modulus, Omega = Omega(w_c_source), B = B(w_c_source).
+  ! Liu's eq. (20) would be given for phase velocities v_p = sqrt( M(w_c_source)/rho) and v_e = sqrt( M_relaxed/rho).
+  !
   ! rescale in crust and mantle
   do ispec = 1,NSPEC_CRUST_MANTLE
     do k = 1,NGLLZ
@@ -159,10 +192,6 @@
           else
             scale_factor = factor_scale_crust_mantle(1,1,1,ispec)
           endif
-
-!daniel debug
-!if (myrank == 0 .and. i == 1 .and. j == 1 .and. k == 1 .and. mod(ispec-1,100) == 0) &
-!  print *,'debug: CM scale_factor = ',scale_factor,ispec
 
           if (ANISOTROPIC_3D_MANTLE_VAL) then
             ! anisotropic element
@@ -329,10 +358,6 @@
             scale_factor = factor_scale_inner_core(1,1,1,ispec)
           endif
 
-!daniel debug
-!if (myrank == 0 .and. i == 1 .and. j == 1 .and. k == 1 .and. mod(ispec-1,100) == 0) &
-!  print *,'debug: IC scale_factor = ',scale_factor,ispec
-
           if (ANISOTROPIC_INNER_CORE_VAL) then
             scale_factor_minus_one = scale_factor - 1.d0
 
@@ -400,22 +425,30 @@
     ! user output
     call synchronize_all()
     if (myrank == 0) then
-      write(IMAIN,*) '  saving velocity model at shifted center frequency...'
-      write(IMAIN,*) '    new reference frequency (ATTENUATION_f0_REFERENCE) for anelastic model: ',sngl(ATT_F_C_SOURCE),'(Hz)'
       write(IMAIN,*)
-      write(IMAIN,*) '    shear attenuation affects: (vp,vs) or (vpv,vph,vsv,vsh)'
+      write(IMAIN,*) '  saving velocity model at shifted center frequency...'
+      write(IMAIN,*) '  new reference frequency (ATTENUATION_f0_REFERENCE) for anelastic model: ',ATT_F_C_SOURCE,'(Hz)'
+      if (TRANSVERSE_ISOTROPY) then
+        write(IMAIN,*) '  shear attenuation affects: (vpv,vph,vsv,vsh)'
+      else
+        write(IMAIN,*) '  shear attenuation affects: (vp,vs)'
+      endif
+      write(IMAIN,*)
       call flush_IMAIN()
     endif
 
     ! outputs model files
     if (ADIOS_FOR_SOLVER_MESHFILES) then
       ! adios file output
-      call save_forward_model_at_shifted_frequency_adios()
+      call save_forward_model_at_shifted_frequency_adios(factor_scale_relaxed_crust_mantle,factor_scale_relaxed_inner_core)
     else
       ! outputs model files in binary format
-      call save_forward_model_at_shifted_frequency()
+      call save_forward_model_at_shifted_frequency(factor_scale_relaxed_crust_mantle,factor_scale_relaxed_inner_core)
     endif
   endif
+
+  ! frees memory
+  deallocate(factor_scale_relaxed_crust_mantle,factor_scale_relaxed_inner_core)
 
   ! synchronizes processes
   call synchronize_all()

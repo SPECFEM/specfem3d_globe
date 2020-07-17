@@ -658,7 +658,7 @@ end module my_mpi
 
   include "precision.h"
 
-  integer countval
+  integer :: countval
   ! by not specifying any dimensions for the buffer here we can use this routine for arrays of any number
   ! of indices, provided we call the routine using the first memory cell of that multidimensional array,
   ! i.e. for instance buffer(1,1,1) if the array has three dimensions with indices that all start at 1.

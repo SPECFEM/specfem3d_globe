@@ -568,7 +568,7 @@
                                             g11,g12,g13,g14,g15,g16,g22,g23,g24,g25,g26, &
                                             g33,g34,g35,g36,g44,g45,g46,g55,g56,g66)
 
-        ! forward shifts like: (see prepate_attenuation)
+        ! forward shifts like: (see prepare_attenuation)
         !  A_dble = 0.125d0 * (3.d0 * d11 + 3.d0 * d22 + 2.d0 * d12 + 4.d0 * d66)
         !  N_dble = 0.125d0 * (d11 + d22 - 2.d0 * d12 + 4.d0 * d66)
         !  L_dble = 0.5d0 * (d44 + d55)
