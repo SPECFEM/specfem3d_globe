@@ -22,6 +22,7 @@ DEPRECATED_RENAMED_PARAMETERS = [ \
   ("OCEANS", "APPROXIMATE_OCEAN_LOAD"), \
   ("NZ_DOUGLING_1", "NZ_DOUBLING_1"), \
   ("NZ_DOUGLING_2", "NZ_DOUBLING_2"), \
+  ("WRITE_SEISMOGRAMS_BY_MASTER", "WRITE_SEISMOGRAMS_BY_MAIN") \
 ]
 
 # exclude other possible files with similar name, but with different format
