@@ -151,7 +151,7 @@ __global__ void compute_strain_kernel(realw* d_displ,
     s_dummyy_loc[tx] = d_displ[iglob*3 + 1] + deltat * d_veloc[iglob*3 + 1];
     s_dummyz_loc[tx] = d_displ[iglob*3 + 2] + deltat * d_veloc[iglob*3 + 2];
 
-    // master thread loads hprime
+    // main thread loads hprime
     if (threadIdx.x == 0){
       for(int m=0; m < NGLL2; m++){
         // hprime

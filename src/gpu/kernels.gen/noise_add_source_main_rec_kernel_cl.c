@@ -31,7 +31,7 @@
 !=====================================================================
 */
 
-const char * noise_add_source_master_rec_kernel_program = "\
+const char * noise_add_source_main_rec_kernel_program = "\
 inline void atomicAdd(volatile __global float *source, const float val) {\n\
   union {\n\
     unsigned int iVal;\n\
@@ -92,13 +92,13 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #define BLOCKSIZE_TRANSFER 256\n\
 #endif\n\
 \n\
-__kernel void noise_add_source_master_rec_kernel(const __global int * ibool, const __global int * ispec_selected_rec, const int irec_master_noise, __global float * accel, const __global float * noise_sourcearray, const int it){\n\
+__kernel void noise_add_source_main_rec_kernel(const __global int * ibool, const __global int * ispec_selected_rec, const int irec_main_noise, __global float * accel, const __global float * noise_sourcearray, const int it){\n\
   int tx;\n\
   int ispec;\n\
   int iglob;\n\
 \n\
   tx = get_local_id(0);\n\
-  ispec = ispec_selected_rec[irec_master_noise] - (1);\n\
+  ispec = ispec_selected_rec[irec_main_noise] - (1);\n\
   iglob = ibool[tx + (NGLL3) * (ispec)] - (1);\n\
 \n\
   atomicAdd(accel + (iglob) * (3) + 0, noise_sourcearray[(tx) * (3) + ((NGLL3) * (3)) * (it) + 0]);\n\

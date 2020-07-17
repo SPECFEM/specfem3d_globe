@@ -113,7 +113,7 @@
            stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating crustmaps np/sp arrays')
 
-  ! master reads in crust maps
+  ! main reads in crust maps
   if (myrank == 0) call read_general_crustmap()
 
   ! broadcasts values to all processes

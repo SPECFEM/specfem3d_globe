@@ -375,7 +375,7 @@
   ! communication pattern for faces between chunks
   integer, dimension(:),allocatable :: iprocfrom_faces,iprocto_faces,imsg_type
   ! communication pattern for corners between chunks
-  integer, dimension(:),allocatable :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
+  integer, dimension(:),allocatable :: iproc_main_corners,iproc_worker1_corners,iproc_worker2_corners
 
   ! indirect addressing for each corner of the chunks
   integer, dimension(:,:),allocatable :: iboolcorner

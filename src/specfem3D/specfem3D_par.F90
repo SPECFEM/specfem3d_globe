@@ -981,7 +981,7 @@ module specfem_par_noise
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: noise_surface_movie
 
   integer :: num_noise_surface_points
-  integer :: irec_master_noise
+  integer :: irec_main_noise
   integer :: nsources_local_noise
 
   ! noise buffer for file i/o
@@ -1041,7 +1041,7 @@ module specfem_par_movie
 #endif
   real,dimension(:),allocatable :: vtkdata
   logical,dimension(:),allocatable :: vtkmask
-  ! multi-MPI processes, gather data arrays on master
+  ! multi-MPI processes, gather data arrays on main
   real,dimension(:),allocatable :: vtkdata_all
   integer,dimension(:),allocatable :: vtkdata_points_all
   integer,dimension(:),allocatable :: vtkdata_offset_all

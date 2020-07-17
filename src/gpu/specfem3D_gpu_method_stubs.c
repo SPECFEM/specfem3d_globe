@@ -310,11 +310,11 @@ void FC_FUNC_ (noise_transfer_surface_to_host,
                NOISE_TRANSFER_SURFACE_TO_HOST) (long *Mesh_pointer_f,
                                                 realw *h_noise_surface_movie) {}
 
-void FC_FUNC_ (noise_add_source_master_rec_gpu,
-               NOISE_ADD_SOURCE_MASTER_REC_GPU) (long *Mesh_pointer_f,
-                                                 int *it_f,
-                                                 int *irec_master_noise_f,
-                                                 int *islice_selected_rec) {}
+void FC_FUNC_ (noise_add_source_main_rec_gpu,
+               NOISE_ADD_SOURCE_MAIN_REC_GPU) (long *Mesh_pointer_f,
+                                               int *it_f,
+                                               int *irec_main_noise_f,
+                                               int *islice_selected_rec) {}
 
 void FC_FUNC_ (noise_add_surface_movie_gpu,
                NOISE_ADD_SURFACE_MOVIE_GPU) (long *Mesh_pointer_f,

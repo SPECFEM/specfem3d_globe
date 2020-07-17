@@ -670,7 +670,7 @@ contains
     p(:)  = 0.
     Ap(:) = 0.
     !! niter_cg_max = nglob !300 !nglob   ! could be changed, here it's the theoretical maximum value
-                                       ! warning should be bcast from master...
+                                          ! warning should be bcast from main...
 
     ! Compute As and form residuals, use them as fir direction
     ! As = 0 because we assume s=0

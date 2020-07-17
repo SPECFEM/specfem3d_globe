@@ -261,7 +261,7 @@ e.g., on titan enable environment CRAY_CUDA_MPS=1 to use a single GPU with multi
   FILE* fp;
   int do_output_info = 0;
 
-  // by default, only master process outputs device info to avoid file cluttering
+  // by default, only main process outputs device info to avoid file cluttering
   if (myrank == 0) {
     do_output_info = 1;
     sprintf(filename, "OUTPUT_FILES/gpu_device_info.txt");
@@ -412,7 +412,7 @@ static void initialize_ocl_device(const char *platform_filter, const char *devic
   FILE *fp;
   int do_output_info = 0;
 
-  // by default, only master process outputs device info to avoid file cluttering
+  // by default, only main process outputs device info to avoid file cluttering
   if (myrank == 0) {
     do_output_info = 1;
     sprintf(filename, "OUTPUT_FILES/gpu_device_info.txt");

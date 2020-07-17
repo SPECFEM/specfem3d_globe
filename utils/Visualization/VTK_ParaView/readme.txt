@@ -26,7 +26,7 @@ http://www.paraview.org/
   4. visualizing in Paraview. After loading in the .vtu file, you can generate the source-
      receiver cross-section using the normals given by global_slice_number.pl
 
-  Yes, it is a pretty painful process. You can certainly streamline them using a master bash
+  Yes, it is a pretty painful process. You can certainly streamline them using a main bash
   script. To make life easier, you can use VTK scripts instead of Paraview in step 4.
 
   Good luck!

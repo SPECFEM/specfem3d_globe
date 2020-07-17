@@ -75,7 +75,7 @@
     call read_compute_parameters()
   endif
 
-  ! broadcast parameters read from master to all processes
+  ! broadcast parameters read from main to all processes
   call broadcast_computed_parameters()
 
   ! check that the code is running with the requested number of processes

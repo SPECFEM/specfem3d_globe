@@ -1458,7 +1458,7 @@
 
   character(len=MAX_STRING_LEN) :: filename
 
-  ! only master process writes file
+  ! only main process writes file
   if (myrank /= 0) return
 
   write(IMAIN,*)
@@ -1599,7 +1599,7 @@
 
   character(len=MAX_STRING_LEN) :: filename
 
-  ! only master process writes file
+  ! only main process writes file
   if (myrank /= 0) return
 
   ! number of samples per degree

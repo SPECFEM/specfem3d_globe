@@ -841,7 +841,7 @@
 
 ! note: Please make sure to broadcast the values below in broadcast_computed_parameters.f90
 !
-!       here, only the master process is setting the new defaults.
+!       here, only the main process is setting the new defaults.
 !       thus, they need to be broadcast to all other processes.
 !       this will be done in routine broadcast_computed_parameters().
 

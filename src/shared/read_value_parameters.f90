@@ -104,7 +104,7 @@
 
 !--------------------
 
-  subroutine open_parameter_file_from_master_only(ier)
+  subroutine open_parameter_file_from_main_only(ier)
 
   implicit none
 
@@ -115,7 +115,7 @@
   filename_main = 'DATA/Par_file'
 
 ! also see if we are running several independent runs in parallel
-! to do so, add the right directory for that run for the master process only here
+! to do so, add the right directory for that run for the main process only here
   filename_run0001 = 'run0001/'//filename_main(1:len_trim(filename_main))
 
   call param_open(filename_main, len(filename_main), ier)
@@ -150,7 +150,7 @@
     endif
   endif
 
-  end subroutine open_parameter_file_from_master_only
+  end subroutine open_parameter_file_from_main_only
 
 !--------------------
 

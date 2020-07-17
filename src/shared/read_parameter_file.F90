@@ -208,8 +208,8 @@
   if (ier /= 0) stop 'an error occurred while reading the parameter file: OUTPUT_ASDF'
   call read_value_logical(ROTATE_SEISMOGRAMS_RT, 'ROTATE_SEISMOGRAMS_RT', ier)
   if (ier /= 0) stop 'an error occurred while reading the parameter file: ROTATE_SEISMOGRAMS_RT'
-  call read_value_logical(WRITE_SEISMOGRAMS_BY_MASTER, 'WRITE_SEISMOGRAMS_BY_MASTER', ier)
-  if (ier /= 0) stop 'an error occurred while reading the parameter file: WRITE_SEISMOGRAMS_BY_MASTER'
+  call read_value_logical(WRITE_SEISMOGRAMS_BY_MAIN, 'WRITE_SEISMOGRAMS_BY_MAIN', ier)
+  if (ier /= 0) stop 'an error occurred while reading the parameter file: WRITE_SEISMOGRAMS_BY_MAIN'
   call read_value_logical(SAVE_ALL_SEISMOS_IN_ONE_FILE, 'SAVE_ALL_SEISMOS_IN_ONE_FILE', ier)
   if (ier /= 0) stop 'an error occurred while reading the parameter file: SAVE_ALL_SEISMOS_IN_ONE_FILE'
   call read_value_logical(USE_BINARY_FOR_LARGE_FILE, 'USE_BINARY_FOR_LARGE_FILE', ier)

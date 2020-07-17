@@ -56,7 +56,7 @@
 
   character(len=20), intent(out) :: event_name
 
-  ! get event information for SAC header on the master
+  ! get event information for SAC header on the main proc
   if (myrank == 0) then
 
     ! note: mb as (body wave) moment magnitude is not used any further,
@@ -77,7 +77,7 @@
 
   endif
 
-  ! broadcast the information read on the master to the nodes
+  ! broadcast the information read on the main node to all the nodes
   call bcast_all_singlei(yr)
   call bcast_all_singlei(jda)
   call bcast_all_singlei(mo)

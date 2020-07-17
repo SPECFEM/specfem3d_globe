@@ -36,20 +36,20 @@
 
   integer imsg
   integer ipoin1D
-  integer iboolmaster,iboolworker1,iboolworker2
-  integer npoin1D_master,npoin1D_worker1,npoin1D_worker2
+  integer iboolmain,iboolworker1,iboolworker2
+  integer npoin1D_main,npoin1D_worker1,npoin1D_worker2
   integer iregion_code,iproc
 
 ! number of corners between chunks
   integer NCORNERSCHUNKS
 
-  double precision xmaster,ymaster,zmaster
+  double precision xmain,ymain,zmain
   double precision xworker1,yworker1,zworker1
   double precision xworker2,yworker2,zworker2
   double precision diff1,diff2
 
 ! communication pattern for corners between chunks
-  integer, dimension(:), allocatable :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
+  integer, dimension(:), allocatable :: iproc_main_corners,iproc_worker1_corners,iproc_worker2_corners
 
   character(len=MAX_STRING_LEN) filename,prname
 
@@ -84,7 +84,7 @@
   print *
 
 ! allocate array for messages for corners
-  allocate(iproc_master_corners(NCORNERSCHUNKS))
+  allocate(iproc_main_corners(NCORNERSCHUNKS))
   allocate(iproc_worker1_corners(NCORNERSCHUNKS))
   allocate(iproc_worker2_corners(NCORNERSCHUNKS))
 
@@ -94,12 +94,12 @@
 ! file with the list of processors for each message for corners
   open(unit=IIN,file=trim(OUTPUT_FILES)//'/list_messages_corners.txt',status='old',action='read')
   do imsg = 1,NCORNERSCHUNKS
-  read(IIN,*) iproc_master_corners(imsg),iproc_worker1_corners(imsg), &
+  read(IIN,*) iproc_main_corners(imsg),iproc_worker1_corners(imsg), &
                           iproc_worker2_corners(imsg)
-  if (iproc_master_corners(imsg) < 0 &
+  if (iproc_main_corners(imsg) < 0 &
     .or. iproc_worker1_corners(imsg) < 0 &
     .or. iproc_worker2_corners(imsg) < 0 &
-    .or. iproc_master_corners(imsg) > NPROCTOT-1 &
+    .or. iproc_main_corners(imsg) > NPROCTOT-1 &
     .or. iproc_worker1_corners(imsg) > NPROCTOT-1 &
     .or. iproc_worker2_corners(imsg) > NPROCTOT-1) &
       stop 'incorrect chunk corner numbering'
@@ -121,9 +121,9 @@
 
 ! read 1-D buffers for the corners
 
-! master
-  write(filename,"('buffer_corners_chunks_master_msg',i6.6,'.txt')") imsg
-  iproc = iproc_master_corners(imsg)
+! main
+  write(filename,"('buffer_corners_chunks_main_msg',i6.6,'.txt')") imsg
+  iproc = iproc_main_corners(imsg)
   call create_serial_name_database(prname,iproc,iregion_code, &
       LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
   open(unit=34,file=prname(1:len_trim(prname))//filename,status='old',action='read')
@@ -147,7 +147,7 @@
 
   write(*,*) 'reading MPI 1D buffers for 3 procs corner'
 
-  read(34,*) npoin1D_master
+  read(34,*) npoin1D_main
   read(35,*) npoin1D_worker1
 ! if only two chunks then there is no second worker
   if (NCHUNKS /= 2) then
@@ -156,7 +156,7 @@
     npoin1D_worker2 = npoin1D_worker1
   endif
 
-  if (npoin1D_master /= NGLOB1D_RADIAL(iregion_code) .or. &
+  if (npoin1D_main /= NGLOB1D_RADIAL(iregion_code) .or. &
      npoin1D_worker1 /= NGLOB1D_RADIAL(iregion_code) .or. &
      npoin1D_worker2 /= NGLOB1D_RADIAL(iregion_code)) then
               stop 'incorrect total number of points'
@@ -167,28 +167,28 @@
 ! check all the points based upon their coordinates
   do ipoin1D = 1, NGLOB1D_RADIAL(iregion_code)
 
-  read(34,*) iboolmaster,xmaster,ymaster,zmaster
+  read(34,*) iboolmain,xmain,ymain,zmain
   read(35,*) iboolworker1,xworker1,yworker1,zworker1
 ! if only two chunks then there is no second worker
   if (NCHUNKS /= 2) read(36,*) iboolworker2,xworker2,yworker2,zworker2
 
-  diff1 = dmax1(dabs(xmaster-xworker1),dabs(ymaster-yworker1),dabs(zmaster-zworker1))
+  diff1 = dmax1(dabs(xmain-xworker1),dabs(ymain-yworker1),dabs(zmain-zworker1))
   if (diff1 > 0.0000001d0) then
-    print *,'different : ',ipoin1D,iboolmaster,iboolworker1,diff1
-    print *,'xmaster,xworker1 = ',xmaster,xworker1
-    print *,'ymaster,yworker1 = ',ymaster,yworker1
-    print *,'zmaster,zworker1 = ',zmaster,zworker1
+    print *,'different : ',ipoin1D,iboolmain,iboolworker1,diff1
+    print *,'xmain,xworker1 = ',xmain,xworker1
+    print *,'ymain,yworker1 = ',ymain,yworker1
+    print *,'zmain,zworker1 = ',zmain,zworker1
     stop 'error: different'
   endif
 
 ! if only two chunks then there is no second worker
   if (NCHUNKS /= 2) then
-    diff2 = dmax1(dabs(xmaster-xworker2),dabs(ymaster-yworker2),dabs(zmaster-zworker2))
+    diff2 = dmax1(dabs(xmain-xworker2),dabs(ymain-yworker2),dabs(zmain-zworker2))
     if (diff2 > 0.0000001d0) then
-      print *,'different : ',ipoin1D,iboolmaster,iboolworker2,diff2
-      print *,'xmaster,xworker2 = ',xmaster,xworker2
-      print *,'ymaster,yworker2 = ',ymaster,yworker2
-      print *,'zmaster,zworker2 = ',zmaster,zworker2
+      print *,'different : ',ipoin1D,iboolmain,iboolworker2,diff2
+      print *,'xmain,xworker2 = ',xmain,xworker2
+      print *,'ymain,yworker2 = ',ymain,yworker2
+      print *,'zmain,zworker2 = ',zmain,zworker2
       stop 'error: different'
     endif
   endif

@@ -85,7 +85,7 @@
   if (ier /= 0) call exit_MPI(myrank,'Error allocating dvpstore array')
   dvpstore(:,:,:,:) = 0._CUSTOM_REAL
 
-  ! master process reads in model
+  ! main process reads in model
   if (myrank == 0) then
      write(IMAIN,*) 'Reading in model_heterogen_mantle.'
      call flush_IMAIN()
@@ -96,7 +96,7 @@
      call flush_IMAIN()
   endif
 
-  ! broadcast the information read on the master to the nodes
+  ! broadcast the information read on the main node to all the nodes
   call bcast_all_dp(HMM_rho_in,N_R*N_THETA*N_PHI)
 
   if (myrank == 0) then

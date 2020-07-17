@@ -763,7 +763,7 @@
   if (USE_FORCE_POINT_SOURCE) then
     ! point forces
     if (myrank == 0) then
-      ! only master process reads in FORCESOLUTION file
+      ! only main process reads in FORCESOLUTION file
       call get_force(tshift_src,hdur,srclat,srclon,srcdepth,DT,NSOURCES, &
                      min_tshift_src_original,force_stf,factor_force_source, &
                      comp_dir_vect_source_E,comp_dir_vect_source_N,comp_dir_vect_source_Z_UP)
@@ -777,7 +777,7 @@
   else
     ! CMT moment tensors
     if (myrank == 0) then
-      ! only master process reads in CMTSOLUTION file
+      ! only main process reads in CMTSOLUTION file
       call get_cmt(yr,jda,mo,da,ho,mi,sec,tshift_src,hdur,srclat,srclon,srcdepth,moment_tensor, &
                    DT,NSOURCES,min_tshift_src_original)
     endif
@@ -785,7 +785,7 @@
     call bcast_all_dp(moment_tensor,6*NSOURCES)
   endif
 
-  ! broadcast the information read on the master to the nodes
+  ! broadcast the information read on the main node to all the nodes
   call bcast_all_dp(tshift_src,NSOURCES)
   call bcast_all_dp(hdur,NSOURCES)
   call bcast_all_dp(srclat,NSOURCES)

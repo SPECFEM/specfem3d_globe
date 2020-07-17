@@ -686,8 +686,8 @@
 #else
   ! initialization without OpenMP, most direct way
   !
-  ! note: when using OpenMP for simulations, this initialization will be executed by the master thread (for each MPI) process
-  !       and thus memory might be mapped closer to master thread than later on the additional OpenMP threads
+  ! note: when using OpenMP for simulations, this initialization will be executed by the main thread (for each MPI) process
+  !       and thus memory might be mapped closer to main thread than later on the additional OpenMP threads
 
   ! initialize arrays to zero
   displ_crust_mantle(:,:) = init_value

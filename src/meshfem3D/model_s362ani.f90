@@ -134,7 +134,7 @@
   itypehpa(:) = 0
   numcoe(:) = 0
 
-  ! master process
+  ! main process
   if (myrank == 0) call read_model_s362ani(THREE_D_MODEL)
 
   call bcast_all_singlei(numker)

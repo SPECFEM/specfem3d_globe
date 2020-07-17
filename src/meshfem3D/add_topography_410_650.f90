@@ -134,7 +134,7 @@
 
   ! debug
   if (DEBUG_STATISTICS) then
-    ! collects min/max on master
+    ! collects min/max on main
     call min_all_cr(min_410,min_410_all)
     call max_all_cr(max_410,max_410_all)
     call min_all_cr(min_650,min_650_all)

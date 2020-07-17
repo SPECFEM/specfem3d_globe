@@ -92,7 +92,7 @@
 
   ! frees arrays not needed any further
   deallocate(iprocfrom_faces,iprocto_faces,imsg_type)
-  deallocate(iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners)
+  deallocate(iproc_main_corners,iproc_worker1_corners,iproc_worker2_corners)
   deallocate(buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar)
   deallocate(buffer_send_chunkcorn_vector,buffer_recv_chunkcorn_vector)
 
@@ -182,7 +182,7 @@
                                    npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
                                    iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
                                    iprocfrom_faces,iprocto_faces,imsg_type, &
-                                   iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+                                   iproc_main_corners,iproc_worker1_corners,iproc_worker2_corners, &
                                    buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
                                    buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
                                    NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
@@ -326,7 +326,7 @@
                                    npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
                                    iboolfaces_outer_core,iboolcorner_outer_core, &
                                    iprocfrom_faces,iprocto_faces,imsg_type, &
-                                   iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+                                   iproc_main_corners,iproc_worker1_corners,iproc_worker2_corners, &
                                    buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
                                    buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
                                    NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
@@ -482,7 +482,7 @@
                                    npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
                                    iboolfaces_inner_core,iboolcorner_inner_core, &
                                    iprocfrom_faces,iprocto_faces,imsg_type, &
-                                   iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+                                   iproc_main_corners,iproc_worker1_corners,iproc_worker2_corners, &
                                    buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
                                    buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
                                    NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &

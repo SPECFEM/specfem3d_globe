@@ -117,7 +117,7 @@
   ! the variables read are declared and stored in structure SGLOBE_V
   if (myrank == 0) call read_model_SGLOBE()
 
-  ! broadcast the information read on the master to the nodes
+  ! broadcast the information read on the main node to all the nodes
   call bcast_all_dp(SGLOBE_V_dvsv_a,(NK_20+1)*(NS_35+1)*(NS_35+1))
   call bcast_all_dp(SGLOBE_V_dvsv_b,(NK_20+1)*(NS_35+1)*(NS_35+1))
   call bcast_all_dp(SGLOBE_V_dvsh_a,(NK_20+1)*(NS_35+1)*(NS_35+1))

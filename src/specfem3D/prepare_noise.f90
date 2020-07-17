@@ -109,7 +109,7 @@
     call flush_IMAIN()
   endif
   if (NOISE_TOMOGRAPHY == 1) then
-    ! master noise source (only needed for 1. step)
+    ! main noise source (only needed for 1. step)
     allocate(noise_sourcearray(NDIM,NGLLX,NGLLY,NGLLZ,NSTEP),stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating noise source array')
   else
@@ -176,8 +176,8 @@
     write(IMAIN,*)
     select case (NOISE_TOMOGRAPHY)
     case (1)
-      write(IMAIN,*) "  noise source uses master record id = ",irec_master_noise
-      write(IMAIN,*) "  noise master station: ",trim(network_name(irec_master_noise))//'.'//trim(station_name(irec_master_noise))
+      write(IMAIN,*) "  noise source uses main record id = ",irec_main_noise
+      write(IMAIN,*) "  noise main station: ",trim(network_name(irec_main_noise))//'.'//trim(station_name(irec_main_noise))
     case (2)
       write(IMAIN,*) "  noise source uses ensemble forward source"
     case (3)
@@ -188,8 +188,8 @@
     call flush_IMAIN()
   endif
 
-  ! user output of distances to master station
-  if (NOISE_TOMOGRAPHY == 1) call print_master_distances_noise()
+  ! user output of distances to main station
+  if (NOISE_TOMOGRAPHY == 1) call print_main_distances_noise()
 
   ! synchronizes processes
   call synchronize_all()

@@ -83,7 +83,7 @@
            stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating EPcrust arrays')
 
-  ! read EPCRUST model on master
+  ! read EPCRUST model on main
   if (myrank == 0) call read_epcrust_model()
 
   ! broadcast EPCRUST model

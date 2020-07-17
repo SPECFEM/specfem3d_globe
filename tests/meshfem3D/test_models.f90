@@ -136,7 +136,7 @@ end program test_models
     call rcp_compute_parameters()
   endif
 
-  ! broadcast parameters read from master to all processes
+  ! broadcast parameters read from main process to all processes
   call broadcast_computed_parameters()
 
   ! synchronizes processes

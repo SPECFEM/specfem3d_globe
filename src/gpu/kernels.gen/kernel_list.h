@@ -27,7 +27,7 @@ BOAST_KERNEL(get_maximum_scalar_kernel);
 BOAST_KERNEL(get_maximum_vector_kernel);
 BOAST_KERNEL(inner_core_impl_kernel_adjoint);
 BOAST_KERNEL(inner_core_impl_kernel_forward);
-BOAST_KERNEL(noise_add_source_master_rec_kernel);
+BOAST_KERNEL(noise_add_source_main_rec_kernel);
 BOAST_KERNEL(noise_add_surface_movie_kernel);
 BOAST_KERNEL(noise_transfer_surface_to_host_kernel);
 BOAST_KERNEL(outer_core_impl_kernel_adjoint);

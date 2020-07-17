@@ -102,7 +102,7 @@
   ! the variables read are declared and stored in structure model_crust_1_0_par
   if (myrank == 0) call read_crust_1_0_model()
 
-  ! broadcast the information read on the master to the nodes
+  ! broadcast the information read on the main node to all the nodes
   call bcast_all_dp(crust_thickness,CRUST_NP*CRUST_NLA*CRUST_NLO)
   call bcast_all_dp(crust_vp,CRUST_NP*CRUST_NLA*CRUST_NLO)
   call bcast_all_dp(crust_vs,CRUST_NP*CRUST_NLA*CRUST_NLO)

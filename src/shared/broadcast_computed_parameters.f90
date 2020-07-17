@@ -48,9 +48,9 @@
   bcast_logical(:) = .false.
   bcast_double_precision(:) = 0.d0
 
-  ! master process prepares broadcasting arrays
+  ! main process prepares broadcasting arrays
   if (myrank == 0) then
-    ! simple way to pass parameters in arrays from master to all other processes
+    ! simple way to pass parameters in arrays from main to all other processes
     ! rather than single values one by one to reduce MPI communication calls:
     ! sets up broadcasting array
     bcast_integer = (/ &
@@ -89,7 +89,7 @@
             USE_FORCE_POINT_SOURCE,SAVE_SEISMOGRAMS_STRAIN,SAVE_SEISMOGRAMS_IN_ADJOINT_RUN, &
             OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
             OUTPUT_SEISMOS_ASDF, &
-            ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,USE_BINARY_FOR_LARGE_FILE, &
+            ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MAIN,USE_BINARY_FOR_LARGE_FILE, &
             READ_ADJSRC_ASDF,SAVE_REGULAR_KL, &
             PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION, &
             USE_LDDRK,INCREASE_CFL_FOR_LDDRK, &
@@ -119,7 +119,7 @@
             RECORD_LENGTH_IN_MINUTES, USER_DT /)
   endif
 
-  ! broadcasts the information read on the master to the nodes
+  ! broadcasts the information read on the main to the nodes
   call bcast_all_i(bcast_integer,nparam_i)
   call bcast_all_l(bcast_logical,nparam_l)
   call bcast_all_dp(bcast_double_precision,nparam_dp)
@@ -188,7 +188,7 @@
   ! empirical minimum period resolved estimation
   call bcast_all_singledp(T_min_period)
 
-  ! non-master processes set their parameters
+  ! non-main processes set their parameters
   if (myrank /= 0) then
 
     ! please, be careful with ordering and counting here
@@ -272,16 +272,16 @@
     SAVE_ALL_SEISMOS_IN_ONE_FILE = bcast_logical(28)
     HONOR_1D_SPHERICAL_MOHO = bcast_logical(29)
     MOVIE_COARSE = bcast_logical(30)
-    USE_FORCE_POINT_SOURCE= bcast_logical(31)
-    SAVE_SEISMOGRAMS_STRAIN= bcast_logical(32)
-    SAVE_SEISMOGRAMS_IN_ADJOINT_RUN= bcast_logical(33)
-    OUTPUT_SEISMOS_ASCII_TEXT= bcast_logical(34)
-    OUTPUT_SEISMOS_SAC_ALPHANUM= bcast_logical(35)
-    OUTPUT_SEISMOS_SAC_BINARY= bcast_logical(36)
+    USE_FORCE_POINT_SOURCE = bcast_logical(31)
+    SAVE_SEISMOGRAMS_STRAIN = bcast_logical(32)
+    SAVE_SEISMOGRAMS_IN_ADJOINT_RUN = bcast_logical(33)
+    OUTPUT_SEISMOS_ASCII_TEXT = bcast_logical(34)
+    OUTPUT_SEISMOS_SAC_ALPHANUM = bcast_logical(35)
+    OUTPUT_SEISMOS_SAC_BINARY = bcast_logical(36)
     OUTPUT_SEISMOS_ASDF = bcast_logical(37)
-    ROTATE_SEISMOGRAMS_RT= bcast_logical(38)
-    WRITE_SEISMOGRAMS_BY_MASTER= bcast_logical(39)
-    USE_BINARY_FOR_LARGE_FILE= bcast_logical(40)
+    ROTATE_SEISMOGRAMS_RT = bcast_logical(38)
+    WRITE_SEISMOGRAMS_BY_MAIN = bcast_logical(39)
+    USE_BINARY_FOR_LARGE_FILE = bcast_logical(40)
     READ_ADJSRC_ASDF = bcast_logical(41)
     SAVE_REGULAR_KL = bcast_logical(42)
     PARTIAL_PHYS_DISPERSION_ONLY = bcast_logical(43)

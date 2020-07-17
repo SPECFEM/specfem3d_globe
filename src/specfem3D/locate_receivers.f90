@@ -147,7 +147,7 @@
            final_distance(nrec),stat=ier)
   if (ier /= 0) call exit_MPI(myrank,'Error allocating temporary receiver arrays')
 
-  ! read that STATIONS file on the master
+  ! read that STATIONS file on the main
   call read_receiver_locations()
 
   ! loop on all the stations to locate them in the mesh
@@ -353,7 +353,7 @@
 
     ! gather arrays
     if (myrank == 0) then
-      ! only master process needs full arrays allocated
+      ! only main process needs full arrays allocated
       allocate(ispec_selected_all(nrec_SUBSET_current_size,0:NPROCTOT_VAL-1), &
                xi_all(nrec_SUBSET_current_size,0:NPROCTOT_VAL-1), &
                eta_all(nrec_SUBSET_current_size,0:NPROCTOT_VAL-1), &
@@ -778,7 +778,7 @@
 
   endif
 
-  ! broadcast the information read on the master to the nodes
+  ! broadcast the information read on the main node to all the nodes
   call bcast_all_ch_array(station_name,nrec,MAX_LENGTH_STATION_NAME)
   call bcast_all_ch_array(network_name,nrec,MAX_LENGTH_NETWORK_NAME)
   call bcast_all_dp(stlat,nrec)

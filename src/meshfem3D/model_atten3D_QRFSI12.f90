@@ -84,7 +84,7 @@
            stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating QRFSI12_Q model arrays')
 
-  ! master process reads in file values
+  ! main process reads in file values
   if (myrank == 0) call read_atten_model_3D_QRFSI12()
 
   ! broadcasts to all processes

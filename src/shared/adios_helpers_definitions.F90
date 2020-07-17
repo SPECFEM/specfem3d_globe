@@ -237,7 +237,7 @@ subroutine define_adios_scalar_double (adios_group, group_size_inc, path, name, 
 #elif defined(USE_ADIOS2)
   ! ADIOS 2
   ! note: we won't store the variable object, but get it back by adios2_inquire_** for writing
-  ! defines scalar as global variable (same for all processes, would be enough to be stored by master process myrank==0)
+  ! defines scalar as global variable (same for all processes, would be enough to be stored by main process myrank==0)
   ! > call adios2_define_variable(v, adios_group, trim(full_name), adios2_type_real8, ier)
   ! defines scalar as local variable (value can vary between processes)
   ! > call adios2_define_variable(v, adios_group, trim(full_name), adios2_type_real8, &
@@ -322,7 +322,7 @@ subroutine define_adios_scalar_float(adios_group, group_size_inc, path, name, va
 #elif defined(USE_ADIOS2)
   ! ADIOS 2
   ! note: we won't store the variable object, but get it back by adios2_inquire_** for writing
-  ! defines scalar as global variable (same for all processes, would be enough to be stored by master process myrank==0)
+  ! defines scalar as global variable (same for all processes, would be enough to be stored by main process myrank==0)
   ! > call adios2_define_variable(v, adios_group, trim(full_name), adios2_type_real4, ier)
   ! defines scalar as local variable (value can vary between processes)
   ! > call adios2_define_variable(v, adios_group, trim(full_name), adios2_type_real4, &
@@ -420,7 +420,7 @@ subroutine define_adios_scalar_integer(adios_group, group_size_inc, path, name, 
   !         however, using 1-D arrays will use adios2_set_selection() which succeeds also for appended variables.
   !         until adios2 fixes this, we will use the 1-D work-around.
 
-  ! defines scalar as global variable (same for all processes, would be enough to be stored by master process myrank==0)
+  ! defines scalar as global variable (same for all processes, would be enough to be stored by main process myrank==0)
   ! > call adios2_define_variable(v, adios_group, trim(full_name), adios2_type_integer4, ier)
   !
   ! defines scalar as local variable (value can vary between processes)
@@ -507,7 +507,7 @@ subroutine define_adios_scalar_long(adios_group, group_size_inc, path, name, var
   ! ADIOS 2
   ! note: we won't store the variable object, but get it back by adios2_inquire_** for writing
   ! defines global variable
-  ! defines scalar as global variable (same for all processes, would be enough to be stored by master process myrank==0)
+  ! defines scalar as global variable (same for all processes, would be enough to be stored by main process myrank==0)
   ! > call adios2_define_variable(v, adios_group, trim(full_name), adios2_type_integer8, ier)
   ! defines scalar as local variable (value can vary between processes)
   ! > call adios2_define_variable(v, adios_group, trim(full_name), adios2_type_integer8, &
@@ -594,7 +594,7 @@ subroutine define_adios_scalar_byte (adios_group, group_size_inc, name, path, va
   ! ADIOS 2
   ! note: we won't store the variable object, but get it back by adios2_inquire_** for writing
   ! defines global variable
-  ! defines scalar as global variable (same for all processes, would be enough to be stored by master process myrank==0)
+  ! defines scalar as global variable (same for all processes, would be enough to be stored by main process myrank==0)
   ! > call adios2_define_variable(v, adios_group, trim(full_name), adios2_type_integer1, ier)
   ! defines scalar as local variable (value can vary between processes)
   ! > call adios2_define_variable(v, adios_group, trim(full_name), adios2_type_integer1, &

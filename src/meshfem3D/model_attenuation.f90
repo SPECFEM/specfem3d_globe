@@ -126,7 +126,7 @@
 
   implicit none
 
-  ! master process determines period ranges
+  ! main process determines period ranges
   if (myrank == 0) call read_attenuation_model()
 
   ! broadcasts to all others

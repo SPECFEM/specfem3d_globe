@@ -1101,7 +1101,7 @@
       close(IIN)
     endif
 
-    ! broadcast the information read on the master to the nodes
+    ! broadcast the information read on the main to the nodes
     call bcast_all_i(addressing,NCHUNKS_VAL*NPROC_XI_VAL*NPROC_ETA_VAL)
     call bcast_all_i(ichunk_slice,NPROCTOT_VAL)
     call bcast_all_i(iproc_xi_slice,NPROCTOT_VAL)
@@ -1783,7 +1783,7 @@
   endif
 
   if (myrank == 0) then
-    ! master process
+    ! main process
     allocate(slice_number(kl_reg_grid%npts_total),stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating slice_number array')
 
@@ -1816,7 +1816,7 @@
 
     deallocate(slice_number)
   else
-    ! slave processes
+    ! secondary processes
     call recv_singlei(npoints_slice_reg,0,myrank)
     if (npoints_slice_reg > 0) then
       call recv_i(points_slice_reg,npoints_slice_reg,0,2*myrank)

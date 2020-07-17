@@ -73,7 +73,7 @@ you must add calls to \texttt{MPI\_BCAST} in the subroutine \texttt{model\_crust
 after the call to the \texttt{read\_crust\_model} subroutine that
 reads the isotropic mantle model once and for all in the mesher. This
 is done in order to read the (potentially large) model data files
-on the master node (which is the processor of rank 0 in our code)
+on the main node (which is the processor of rank 0 in our code)
 only and then send a copy to all the other nodes using an MPI broadcast,
 rather than using an implementation in which all the nodes would read
 the same model data files from a remotely-mounted home file system,
@@ -86,7 +86,7 @@ from \texttt{model\_crust.f90,} we write:
 ! the variables read are declared and stored in structure CM_V
   if(myrank == 0) call read_crust_model(CM_V)
 
-! broadcast the information read on the master to the nodes
+! broadcast the information read on the main node to all the nodes
   call MPI_BCAST(CM_V%thlr,NKEYS_CRUST*NLAYERS_CRUST,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(CM_V%velocp,NKEYS_CRUST*NLAYERS_CRUST,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(CM_V%velocs,NKEYS_CRUST*NLAYERS_CRUST,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
@@ -164,7 +164,7 @@ you must add calls to \texttt{MPI\_BCAST} in the subroutine \texttt{model\_s20rt
 after the call to the \texttt{read\_model\_s20rts} subroutine that
 reads the isotropic mantle model once and for all in the mesher. This
 is done in order to read the (potentially large) model data files
-on the master node (which is the processor of rank 0 in our code)
+on the main node (which is the processor of rank 0 in our code)
 only and then send a copy to all the other nodes using an MPI broadcast,
 rather than using an implementation in which all the nodes would read
 the same model data files from a remotely-mounted home file system,
@@ -177,7 +177,7 @@ from \texttt{model\_s20rts.f90,} we write:
 ! the variables read are declared and stored in structure D3MM_V
   if(myrank == 0) call read_model_s20rts(D3MM_V)
 
-! broadcast the information read on the master to the nodes
+! broadcast the information read on the main node to all the nodes
   call MPI_BCAST(D3MM_V%dvs_a,(NK+1)*(NS+1)*(NS+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(D3MM_V%dvs_b,(NK+1)*(NS+1)*(NS+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(D3MM_V%dvp_a,(NK+1)*(NS+1)*(NS+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
@@ -251,7 +251,7 @@ you must add calls to \texttt{MPI\_BCAST} in file \texttt{model\_aniso\_mantle.f
 after the call to the \texttt{read\_aniso\_mantle\_model} subroutine
 that reads the anisotropic mantle model once and for all in the mesher.
 This is done in order to read the (potentially large) model data files
-on the master node (which is the processor of rank 0 in our code)
+on the main node (which is the processor of rank 0 in our code)
 only and then send a copy to all the other nodes using an MPI broadcast,
 rather than using an implementation in which all the nodes would read
 the same model data files from a remotely-mounted home file system,
@@ -264,7 +264,7 @@ from \texttt{model\_aniso\_mantle.f90,} we write:
 ! the variables read are declared and stored in structure AMM_V
   if(myrank == 0) call read_aniso_mantle_model(AMM_V)
 
-! broadcast the information read on the master to the nodes
+! broadcast the information read on the main node to all the nodes
   call MPI_BCAST(AMM_V%npar1,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(AMM_V%beta,14*34*37*73,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(AMM_V%pro,47,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)

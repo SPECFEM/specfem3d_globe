@@ -84,13 +84,13 @@
 
   ! allocates arrays for gathering movie point locations
   if (myrank == 0) then
-    ! only master needs full arrays
+    ! only main needs full arrays
     allocate(store_val_x_all(nmovie_points,0:NPROCTOT_VAL-1), &
              store_val_y_all(nmovie_points,0:NPROCTOT_VAL-1), &
              store_val_z_all(nmovie_points,0:NPROCTOT_VAL-1),stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating movie surface all arrays')
   else
-    ! slave processes only need dummy arrays
+    ! secondary processes only need dummy arrays
     allocate(store_val_x_all(1,1), &
              store_val_y_all(1,1), &
              store_val_z_all(1,1),stat=ier)
@@ -121,7 +121,7 @@
   npoin = ipoin
   if (npoin /= nmovie_points ) call exit_mpi(myrank,'Error number of movie points not equal to nmovie_points')
 
-  ! gather info on master proc
+  ! gather info on main proc
   call gather_all_cr(store_val_x,nmovie_points,store_val_x_all,nmovie_points,NPROCTOT_VAL)
   call gather_all_cr(store_val_y,nmovie_points,store_val_y_all,nmovie_points,NPROCTOT_VAL)
   call gather_all_cr(store_val_z,nmovie_points,store_val_z_all,nmovie_points,NPROCTOT_VAL)
@@ -200,7 +200,7 @@
     enddo
   enddo
 
-  ! gather info on master proc
+  ! gather info on main proc
   ! wavefield
   call gather_all_cr(store_val_ux,nmovie_points,store_val_ux_all,nmovie_points,NPROCTOT_VAL)
   call gather_all_cr(store_val_uy,nmovie_points,store_val_uy_all,nmovie_points,NPROCTOT_VAL)

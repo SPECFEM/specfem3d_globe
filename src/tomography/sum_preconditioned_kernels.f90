@@ -365,7 +365,7 @@ subroutine invert_hess( hess_matrix )
   ! maximum value of Hessian
   maxh = maxval( abs(hess_matrix) )
 
-  ! determines maximum from all slices on master
+  ! determines maximum from all slices on main
   call max_allreduce_cr(maxh,maxh_all)
 
   ! user output

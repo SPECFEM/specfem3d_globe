@@ -81,7 +81,7 @@ program test_save
     call rcp_compute_parameters()
   endif
 
-  ! broadcast parameters read from master to all processes
+  ! broadcast parameters read from main process to all processes
   call broadcast_computed_parameters()
 
   ! tests further calls from initialize_mesher.f90
@@ -96,7 +96,7 @@ program test_save
   ! outputs mesh info and saves new header file
   call finalize_mesher()
 
-  ! results only on master available
+  ! results only on main available
   if (myrank == 0) then
     print *
     print *,'Checks:'

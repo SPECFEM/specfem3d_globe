@@ -87,7 +87,7 @@
   ! the variables read are declared and stored in structure CRUST_SH_V
   if (myrank == 0) call read_crust_sh_model()
 
-  ! broadcast the information read on the master to the nodes
+  ! broadcast the information read on the main node to all the nodes
   call bcast_all_dp(CRUST_SH_V_vsh,NSH_40)
   call bcast_all_dp(CRUST_SH_V_vsv,NSH_40)
   call bcast_all_dp(CRUST_SH_V_vph,NSH_40)
@@ -429,7 +429,7 @@
   ! the variables read are declared and stored in structure S20RTS_V
   if (myrank == 0) call read_model_mantle_sh()
 
-  ! broadcast the information read on the master to the nodes
+  ! broadcast the information read on the main node to all the nodes
   call bcast_all_dp(MANTLE_SH_V_dvsh,(NK_20+1)*(NSH_20))
   call bcast_all_dp(MANTLE_SH_V_dvsv,(NK_20+1)*(NSH_20))
   call bcast_all_dp(MANTLE_SH_V_dvph,(NK_20+1)*(NSH_20))
@@ -1183,7 +1183,7 @@
 
   ! debug
   if (DEBUG_STATISTICS) then
-    ! collects min/max on master
+    ! collects min/max on main
     call min_all_cr(min_410,min_410_all)
     call max_all_cr(max_410,max_410_all)
     call min_all_cr(min_650,min_650_all)

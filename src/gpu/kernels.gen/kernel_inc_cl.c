@@ -27,7 +27,7 @@
 #include "get_maximum_vector_kernel_cl.c"
 #include "inner_core_impl_kernel_adjoint_cl.c"
 #include "inner_core_impl_kernel_forward_cl.c"
-#include "noise_add_source_master_rec_kernel_cl.c"
+#include "noise_add_source_main_rec_kernel_cl.c"
 #include "noise_add_surface_movie_kernel_cl.c"
 #include "noise_transfer_surface_to_host_kernel_cl.c"
 #include "outer_core_impl_kernel_adjoint_cl.c"

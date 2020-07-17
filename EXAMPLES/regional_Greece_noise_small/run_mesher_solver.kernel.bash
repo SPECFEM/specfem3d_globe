@@ -73,8 +73,8 @@ sed -i "s:^SIMULATION_TYPE .*:SIMULATION_TYPE                 = 1:g" DATA/Par_fi
 sed -i "s:^NOISE_TOMOGRAPHY .*:NOISE_TOMOGRAPHY                = 1:g" DATA/Par_file
 sed -i "s:^SAVE_FORWARD .*:SAVE_FORWARD                    = .false.:g" DATA/Par_file
 
-# master noise source: receiver id for station S001
-echo "2" > NOISE_TOMOGRAPHY/irec_master_noise
+# main noise source: receiver id for station S001
+echo "2" > NOISE_TOMOGRAPHY/irec_main_noise
 
 mpirun -np $numnodes $PWD/bin/xspecfem3D
 output=$?
@@ -126,7 +126,7 @@ sed -i "s:^NOISE_TOMOGRAPHY .*:NOISE_TOMOGRAPHY                = 3:g" DATA/Par_f
 sed -i "s:^SAVE_FORWARD .*:SAVE_FORWARD                    = .false.:g" DATA/Par_file
 
 # single adjoint source
-echo "1" > NOISE_TOMOGRAPHY/irec_master_noise
+echo "1" > NOISE_TOMOGRAPHY/irec_main_noise
 
 mpirun -np $numnodes $PWD/bin/xspecfem3D
 output=$?
