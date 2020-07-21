@@ -134,7 +134,7 @@ else
   fi
 
   # regional noise
-  if [ "$TESTID" == "9" ]; then
+  if [ "$TESTID" == "21" ]; then
     sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.1:" DATA/Par_file
     sed -i "s:2999:199:g" run_this_example.kernel.sh
     # uses kernel script by default
@@ -148,6 +148,13 @@ else
 
   # default script
   ./run_this_example.sh
+
+  # checks script return code
+  if [[ $? -ne 0 ]]; then
+    # cleanup
+    rm -rf OUTPUT_FILES* DATABASES_MPI*
+    exit 1
+  fi
 
   # seismogram comparison
   if [ "$TESTCOV" == "0" ] && [ ! "$TESTID" == "7" ] && [ ! "$TESTID" == "8" ] && [ ! "$TESTID" == "21" ]; then
@@ -249,7 +256,7 @@ echo -en 'travis_fold:end:coverage.regional-LDDRK\\r'
 echo 'Coverage...' && echo -en 'travis_fold:start:coverage.regional-noise\\r'
 if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
-  ## testing regional LDDRK
+  ## testing regional noise
   ##
   cd EXAMPLES/regional_Greece_noise_small/
   sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.1:" DATA/Par_file
