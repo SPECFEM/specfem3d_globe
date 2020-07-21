@@ -52,7 +52,7 @@
 
  incorporating topography
    topo file            : DATA/topo_bathy/topo_bathy_etopo4_smoothed_window_7.bin
-   resolution in minutes:    4.00000000    
+   resolution in minutes:    4.00000000
 
    topography/bathymetry: min/max =        -7747        5507
 
@@ -71,10 +71,10 @@
  Radial Meshing parameters:
    NCHUNKS                =            1
 
-   CENTER LAT/LON:             40.0000000     /   25.0000000    
-   GAMMA_ROTATION_AZIMUTH:     0.00000000    
+   CENTER LAT/LON:             40.0000000     /   25.0000000
+   GAMMA_ROTATION_AZIMUTH:     0.00000000
 
-   CHUNK WIDTH XI/ETA:         20.0000000     /   20.0000000    
+   CHUNK WIDTH XI/ETA:         20.0000000     /   20.0000000
    NEX XI/ETA:                        48 /          48
 
    NER_CRUST:                          2
@@ -93,11 +93,11 @@
    R_CENTRAL_CUBE =    930.000000      km
 
  Mesh resolution:
-   DT =   0.16500000000000001     
+   DT =   0.16500000000000001
    Minimum period =    20.5916538      (s)
 
-   MIN_ATTENUATION_PERIOD =    20.5916538    
-   MAX_ATTENUATION_PERIOD =    1157.95374    
+   MIN_ATTENUATION_PERIOD =    20.5916538
+   MAX_ATTENUATION_PERIOD =    1157.95374
 
 
  *******************************************
@@ -108,11 +108,11 @@
 
  first pass
 
-   ...allocating arrays 
+   ...allocating arrays
 
-   ...setting up layers 
+   ...setting up layers
 
-   ...creating mesh elements 
+   ...creating mesh elements
    creating layer            1 out of           11
       9.1%    current clock (NOT elapsed) time is: 14h 50min 22sec
    creating layer            2 out of           11
@@ -143,11 +143,11 @@
 
  second pass
 
-   ...allocating arrays 
+   ...allocating arrays
 
-   ...setting up layers 
+   ...setting up layers
 
-   ...creating mesh elements 
+   ...creating mesh elements
    creating layer            1 out of           11
       9.1%    current clock (NOT elapsed) time is: 14h 50min 22sec
    creating layer            2 out of           11
@@ -172,7 +172,7 @@
     100.0%    current clock (NOT elapsed) time is: 14h 50min 23sec
 
 
-   ...fills global mesh points 
+   ...fills global mesh points
 
    ...checking mesh resolution and time step
 
@@ -186,17 +186,17 @@
 
    Max element edge size =    140.768433      (km)
    Min element edge size =    9.22769928      (km)
-   Max/min ratio =    15.2549868    
+   Max/min ratio =    15.2549868
 
-   Max Jacobian eigenvalue ratio =   0.997248769    
-   Min Jacobian eigenvalue ratio =   0.130511045    
+   Max Jacobian eigenvalue ratio =   0.997248769
+   Min Jacobian eigenvalue ratio =   0.130511045
 
    Minimum period resolved =    23.7202263      (s)
    Minimum period resolved (empirical) =    20.5916538      (s)
    Maximum suggested time step =   0.125000000      (s)
 
    for DT :   0.165000007      (s)
-   Max stability for wave velocities =   0.704165220    
+   Max stability for wave velocities =   0.704165220
  ----------------------------------
 
 
@@ -238,7 +238,7 @@
    total unique MPI interface points:       50180
 
 
-   ...element inner/outer separation 
+   ...element inner/outer separation
 
  for overlapping of communications with calculations:
 
@@ -246,7 +246,7 @@
  percentage of volume elements in crust/mantle    85.2852859     %
 
 
-   ...element mesh coloring 
+   ...element mesh coloring
    mesh coloring:  F
 
    ...creating mass matrix
@@ -256,7 +256,7 @@
    ...saving binary files
 
  calculated region volume:    3.36238332E-02
-                 top area:   0.120565511    
+                 top area:   0.120565511
               bottom area:    3.59782837E-02
 
  *******************************************
@@ -267,11 +267,11 @@
 
  first pass
 
-   ...allocating arrays 
+   ...allocating arrays
 
-   ...setting up layers 
+   ...setting up layers
 
-   ...creating mesh elements 
+   ...creating mesh elements
    creating layer            1 out of            2
      50.0%    current clock (NOT elapsed) time is: 14h 50min 24sec
    creating layer            2 out of            2
@@ -284,18 +284,18 @@
 
  second pass
 
-   ...allocating arrays 
+   ...allocating arrays
 
-   ...setting up layers 
+   ...setting up layers
 
-   ...creating mesh elements 
+   ...creating mesh elements
    creating layer            1 out of            2
      50.0%    current clock (NOT elapsed) time is: 14h 50min 24sec
    creating layer            2 out of            2
     100.0%    current clock (NOT elapsed) time is: 14h 50min 24sec
 
 
-   ...fills global mesh points 
+   ...fills global mesh points
 
    ...checking mesh resolution and time step
 
@@ -309,17 +309,17 @@
 
    Max element edge size =    161.395294      (km)
    Min element edge size =    53.7503471      (km)
-   Max/min ratio =    3.00268364    
+   Max/min ratio =    3.00268364
 
-   Max Jacobian eigenvalue ratio =   0.997575641    
-   Min Jacobian eigenvalue ratio =   0.222472936    
+   Max Jacobian eigenvalue ratio =   0.997575641
+   Min Jacobian eigenvalue ratio =   0.222472936
 
    Minimum period resolved =    15.1955490      (s)
    Minimum period resolved (empirical) =    20.5916538      (s)
    Maximum suggested time step =   0.529999971      (s)
 
    for DT :   0.165000007      (s)
-   Max stability for wave velocities =   0.170344114    
+   Max stability for wave velocities =   0.170344114
  ----------------------------------
 
 
@@ -361,12 +361,12 @@
    total assembled MPI interface points:       13364
 
 
-   ...element inner/outer separation 
+   ...element inner/outer separation
  percentage of edge elements in outer core    36.6255150     %
  percentage of volume elements in outer core    63.3744850     %
 
 
-   ...element mesh coloring 
+   ...element mesh coloring
    mesh coloring:  F
 
    ...creating mass matrix
@@ -385,11 +385,11 @@
 
  first pass
 
-   ...allocating arrays 
+   ...allocating arrays
 
-   ...setting up layers 
+   ...setting up layers
 
-   ...creating mesh elements 
+   ...creating mesh elements
    creating layer            1 out of            1
     100.0%    current clock (NOT elapsed) time is: 14h 50min 24sec
 
@@ -400,16 +400,16 @@
 
  second pass
 
-   ...allocating arrays 
+   ...allocating arrays
 
-   ...setting up layers 
+   ...setting up layers
 
-   ...creating mesh elements 
+   ...creating mesh elements
    creating layer            1 out of            1
     100.0%    current clock (NOT elapsed) time is: 14h 50min 24sec
 
 
-   ...fills global mesh points 
+   ...fills global mesh points
 
    ...checking mesh resolution and time step
 
@@ -423,17 +423,17 @@
 
    Max element edge size =    97.0213470      (km)
    Min element edge size =    53.2454185      (km)
-   Max/min ratio =    1.82215393    
+   Max/min ratio =    1.82215393
 
-   Max Jacobian eigenvalue ratio =   0.732522249    
-   Min Jacobian eigenvalue ratio =   0.541596830    
+   Max Jacobian eigenvalue ratio =   0.732522249
+   Min Jacobian eigenvalue ratio =   0.541596830
 
    Minimum period resolved =    23.2791367      (s)
    Minimum period resolved (empirical) =    20.5916538      (s)
    Maximum suggested time step =   0.449999988      (s)
 
    for DT :   0.165000007      (s)
-   Max stability for wave velocities =   0.199682057    
+   Max stability for wave velocities =   0.199682057
  ----------------------------------
 
 
@@ -475,12 +475,12 @@
    total assembled MPI interface points:        1300
 
 
-   ...element inner/outer separation 
+   ...element inner/outer separation
  percentage of edge elements in inner core    55.5555573     %
  percentage of volume elements in inner core    44.4444427     %
 
 
-   ...element mesh coloring 
+   ...element mesh coloring
    mesh coloring:  F
 
    ...creating mass matrix
@@ -507,14 +507,14 @@
  Load balancing = 100 % by definition
 
 
- the time step of the solver will be DT =   0.165000007    
+ the time step of the solver will be DT =   0.165000007
 
  using single precision for the calculations
 
  smallest and largest possible floating-point numbers are:    1.17549435E-38   3.40282347E+38
 
 
- Elapsed time for mesh generation and buffer creation in seconds =    2.84225011    
+ Elapsed time for mesh generation and buffer creation in seconds =    2.84225011
  Elapsed time for mesh generation and buffer creation in hh:mm:ss =    0 h 00 m 02 s
 
  End of mesh generation

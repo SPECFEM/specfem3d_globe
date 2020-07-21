@@ -87,6 +87,9 @@ env:
     # regional LDDRK
     - TESTID=20 TESTDIR=11 TESTCOV=0 TESTFLAGS="--enable-vectorization" CUDA=false
 
+    # regional noise example
+    - TESTID=21 TESTDIR=12 TESTCOV=0 TESTFLAGS="--enable-vectorization" CUDA=false
+
 before_install:
   # informations on git
   - |

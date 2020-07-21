@@ -21,6 +21,7 @@ case "$TESTDIR" in
   9) dir=EXAMPLES/mars_regional/ ;;
   10) dir=EXAMPLES/moon_global/ ;;
   11) dir=EXAMPLES/regional_Greece_small_LDDRK/ ;;
+  12) dir=EXAMPLES/regional_Greece_noise_small/ ;;
   *) dir=EXAMPLES/regional_Greece_small/ ;;
 esac
 
@@ -132,6 +133,14 @@ else
     sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.1:" DATA/Par_file
   fi
 
+  # regional noise
+  if [ "$TESTID" == "9" ]; then
+    sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.1:" DATA/Par_file
+    sed -i "s:2999:199:g" run_this_example.kernel.sh
+    # uses kernel script by default
+    cp -v run_this_example.kernel.sh run_this_example.sh
+  fi
+
   # coverage run
   if [ "$TESTCOV" == "1" ]; then
     sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
@@ -141,7 +150,7 @@ else
   ./run_this_example.sh
 
   # seismogram comparison
-  if [ "$TESTCOV" == "0" ] && [ ! "$TESTID" == "7" ] && [ ! "$TESTID" == "8" ]; then
+  if [ "$TESTCOV" == "0" ] && [ ! "$TESTID" == "7" ] && [ ! "$TESTID" == "8" ] && [ ! "$TESTID" == "21" ]; then
     my_test
   fi
   cd $WORKDIR
@@ -236,6 +245,19 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   cd $WORKDIR
 fi
 echo -en 'travis_fold:end:coverage.regional-LDDRK\\r'
+
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.regional-noise\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
+  ##
+  ## testing regional LDDRK
+  ##
+  cd EXAMPLES/regional_Greece_noise_small/
+  sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.1:" DATA/Par_file
+  sed -i "s:2999:199:g" run_this_example.kernel.sh
+  ./run_this_example.kernel.sh
+  cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.regional-noise\\r'
 
 
 # done

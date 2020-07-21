@@ -62,7 +62,7 @@ cd ../
 
 
 ## creates noise spectrum
-./run_generate_S_squared.sh 2999 0.165 
+./run_generate_S_squared.sh 2999 0.165
 
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi
