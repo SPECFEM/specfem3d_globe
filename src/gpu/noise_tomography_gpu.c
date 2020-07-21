@@ -98,7 +98,7 @@ void FC_FUNC_ (noise_add_source_main_rec_gpu,
                NOISE_ADD_SOURCE_MAIN_REC_GPU) (long *Mesh_pointer_f,
                                                int *it_f,
                                                int *irec_main_noise_f,
-                                               int *islice_selected_rec) {
+                                               int *h_islice_selected_rec) {
 
   TRACE ("noise_add_source_main_rec_cu");
 
@@ -106,10 +106,16 @@ void FC_FUNC_ (noise_add_source_main_rec_gpu,
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   int it = *it_f - 1;   // -1 for Fortran -> C indexing differences
-  int irec_main_noise = *irec_main_noise_f-1;
+  int irec_main_noise = *irec_main_noise_f - 1;
+
+  //debug
+  //printf("debug: noise add source irec_main_noise %d it %d rank %d\n",irec_main_noise,it,mp->myrank);
+  //for (int irec = 0; irec < 2; irec++){
+  //  printf("debug: noise add source irec %d slice %d\n",irec,h_islice_selected_rec[irec]);
+  //}
 
   // checks if we are in slice with main station
-  if (mp->myrank /= islice_selected_rec[irec_main_noise]) return;
+  if (mp->myrank != h_islice_selected_rec[irec_main_noise]) return;
 
   // adds noise source at main location
 #ifdef USE_OPENCL
