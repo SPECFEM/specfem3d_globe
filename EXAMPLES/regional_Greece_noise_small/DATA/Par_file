@@ -77,7 +77,7 @@ ATTENUATION                     = .true.
 ABSORBING_CONDITIONS            = .true.
 
 # record length in minutes
-RECORD_LENGTH_IN_MINUTES        = 5.0d0
+RECORD_LENGTH_IN_MINUTES        = 4.0d0
 
 # to undo attenuation for sensitivity kernel calculations or forward runs with SAVE_FORWARD
 # use one (and only one) of the two flags below. UNDO_ATTENUATION is much better (it is exact)
@@ -214,7 +214,7 @@ SAVE_SEISMOGRAMS_STRAIN         = .false.
 
 # save seismograms also when running the adjoint runs for an inverse problem
 # (usually they are unused and not very meaningful, leave this off in almost all cases)
-SAVE_SEISMOGRAMS_IN_ADJOINT_RUN = .false.
+SAVE_SEISMOGRAMS_IN_ADJOINT_RUN = .true.
 
 # output format for the seismograms (one can use either or all of the three formats)
 OUTPUT_SEISMOS_ASCII_TEXT       = .true.

@@ -1,13 +1,6 @@
 #!/bin/bash
 
-###########################################################
-# USER PARAMETERS
-
-## 4 CPUs
-NPROC=4
-
-###########################################################
-
+# gets settings from Par_file
 
 BASEMPIDIR=`grep ^LOCAL_PATH DATA/Par_file | cut -d = -f 2 `
 
@@ -21,11 +14,6 @@ NCHUNKS=`grep ^NCHUNKS DATA/Par_file | cut -d = -f 2 `
 # total number of nodes is the product of the values read
 numnodes=$(( $NCHUNKS * $NPROC_XI * $NPROC_ETA ))
 
-if [ ! "$numnodes" == "$NPROC" ]; then
-  echo "error: Par_file for $numnodes CPUs"
-  exit 1
-fi
-
 mkdir -p OUTPUT_FILES
 
 # backup files used for this simulation
@@ -34,7 +22,8 @@ cp DATA/STATIONS OUTPUT_FILES/
 cp DATA/CMTSOLUTION OUTPUT_FILES/
 
 cp DATA/Par_file DATA/Par_file.org
-
+# clean
+rm -rf OUTPUT_FILES_1 OUTPUT_FILES_2
 
 ##
 ## mesh generation
@@ -47,12 +36,11 @@ echo "starting MPI mesher on $numnodes processors"
 echo
 
 mpirun -np $numnodes $PWD/bin/xmeshfem3D
-output=$?
-if [ ! "$output" == "0" ]; then
-  exit 1
-fi
 
-echo "  mesher done: $output `date`"
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
+
+echo "  mesher done: `date`"
 echo
 
 # backup important files addressing.txt
@@ -62,12 +50,11 @@ cp OUTPUT_FILES/*.txt $BASEMPIDIR/
 ##
 ## forward simulation - ensemble forward source
 ##
-# set up addressing
-#cp $BASEMPIDIR/addr*.txt OUTPUT_FILES/
 sleep 1
+
 echo
 echo `date`
-echo starting 0.1 run in current directory $PWD
+echo starting 1. run in current directory $PWD
 echo
 
 sed -i "s:^SIMULATION_TYPE .*:SIMULATION_TYPE                 = 1:g" DATA/Par_file
@@ -78,26 +65,25 @@ sed -i "s:^SAVE_FORWARD .*:SAVE_FORWARD                    = .false.:g" DATA/Par
 echo "2" > NOISE_TOMOGRAPHY/irec_main_noise
 
 mpirun -np $numnodes $PWD/bin/xspecfem3D
-output=$?
-if [ ! "$output" == "0" ]; then
-  exit 1
-fi
 
-echo "solver done: $output `date`"
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
+
+echo "solver done: `date`"
 echo "moving OUTPUT_FILES..."
+mv -v OUTPUT_FILES OUTPUT_FILES_1
 
-rm -rf OUTPUT_FILES_0.1
-mv OUTPUT_FILES OUTPUT_FILES_0.1
 mkdir -p OUTPUT_FILES
-cp $BASEMPIDIR/addr*.txt OUTPUT_FILES/
+echo
 
 ##
 ## forward simulation - ensemble forward wavefield
 ##
 sleep 1
+
 echo
 echo `date`
-echo starting 0.2 run in current directory $PWD
+echo starting 2. run in current directory $PWD
 echo
 
 sed -i "s:^SIMULATION_TYPE .*:SIMULATION_TYPE                 = 1:g" DATA/Par_file
@@ -105,27 +91,26 @@ sed -i "s:^NOISE_TOMOGRAPHY .*:NOISE_TOMOGRAPHY                = 2:g" DATA/Par_f
 sed -i "s:^SAVE_FORWARD .*:SAVE_FORWARD                    = .true.:g" DATA/Par_file
 
 mpirun -np $numnodes $PWD/bin/xspecfem3D
-output=$?
-if [ ! "$output" == "0" ]; then
-  exit 1
-fi
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
-echo "solver done: $output `date`"
+echo "solver done: `date`"
 echo "moving OUTPUT_FILES..."
+mv -v OUTPUT_FILES OUTPUT_FILES_2
 
-rm -rf OUTPUT_FILES_0.2
-mv OUTPUT_FILES OUTPUT_FILES_0.2
-mkdir -p OUTPUT_FILES
-cp $BASEMPIDIR/addr*.txt OUTPUT_FILES/
-
+#mkdir -p OUTPUT_FILES
+#cp $BASEMPIDIR/addr*.txt OUTPUT_FILES/
+echo
 
 ##
 ## prepare adjoint source
 ##
 echo `date`
 echo "prepare adjoint source..."
-
-./SEM/create_adjoint_source.sh
+cd SEM/
+./create_adjoint_source.sh ../OUTPUT_FILES_2
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
 echo "done"
 echo `date`

@@ -3,6 +3,7 @@
 # based on
 # NOISE_TOMOGRAPHY.m
 from __future__ import print_function
+
 import os,sys
 
 import numpy as np
@@ -20,7 +21,7 @@ if show_figures:
 def PetersonNoiseModel(Period,s=''):
 
     #debug
-    #print "PetersonNoiseModel: ",Period,s
+    #print("PetersonNoiseModel: ",Period,s)
 
     # initialize
     accel = 0.0
@@ -68,7 +69,7 @@ def PetersonNoiseModel(Period,s=''):
         displ = accel + 20.0 * log10(100000.0**2 / 4.0 / pi ** 2)
 
     #debug
-    #print "PetersonNoiseModel: ",accel,veloc,displ
+    #print("PetersonNoiseModel: ",accel,veloc,displ)
 
     return accel,veloc,displ
 
@@ -144,8 +145,14 @@ def NOISE_TOMOGRAPHY(NSTEP=None,dt=None,Tmin=None,Tmax=None,NOISE_MODEL=None,sho
     fmax = 1.0 / 2.0 / dt
     df = 1.0 / T
 
-    f = np.concatenate([arange(0.0,fmax+df,df),arange(-fmax,-df+df,df)])
-    #print f,len(f)
+    # f should have length == NSTEP
+    # using +df/2 to make sure that rounding doesn't lead to length problems
+    f = np.concatenate([arange(0.0,fmax+df/2,df),arange(-fmax,-df+df/2,df)])
+
+    #debug
+    #print("degug: NSTEP,T,fmax,df ",NSTEP,T,fmax,df)
+    #print("debug: range ",len(arange(0.0,fmax+df,df)),len(arange(-fmax,-df+df/2,df)))
+    #print("debug: f",f,len(f))
 
     ## checks length
     if T < Tmax:

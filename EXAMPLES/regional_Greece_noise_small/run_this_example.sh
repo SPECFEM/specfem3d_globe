@@ -36,7 +36,10 @@ cd ../../
 # compiles for a forward simulation
 cp $currentdir/DATA/Par_file DATA/Par_file
 make clean
-make all
+make -j4 all
+
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
 # backup of constants setup
 cp setup/* $currentdir/OUTPUT_FILES/
@@ -47,10 +50,7 @@ cd $currentdir
 
 # copy executables
 mkdir -p bin
-cp ../../bin/xmeshfem3D ./bin/
-cp ../../bin/xspecfem3D ./bin/
-cp ../../bin/xcombine_vol_data ./bin/
-cp ../../bin/xcombine_vol_data_vtk ./bin/
+cp ../../bin/x* ./bin/
 
 # links data directories needed to run example in this current directory with s362ani
 cd DATA/
@@ -60,8 +60,12 @@ ln -s ../../../DATA/QRFSI12
 ln -s ../../../DATA/topo_bathy
 cd ../
 
-# creates noise spectrum
-./xgenerate_noise_source.sh 3599  0.169376865
+
+## creates noise spectrum
+./run_generate_S_squared.sh 2999 0.165 
+
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
 # run mesher & solver
 echo
@@ -69,6 +73,9 @@ echo "  running script..."
 echo
 ./run_mesher_solver.bash
 
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
-echo `date`
+echo "done `date`"
+echo
 
