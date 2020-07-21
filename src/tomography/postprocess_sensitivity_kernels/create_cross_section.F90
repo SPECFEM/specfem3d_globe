@@ -195,7 +195,7 @@
         if (myrank == 0) then
           print *
           print *,' Usage: xcreate_cross_section param section-param mesh-dir/ model-dir/ output-dir/ ' // &
-                  'topoography-flag ellipticity-flag'
+                  'topography-flag ellipticity-flag'
           print *
           print *,' with'
           print *,'   param         - model parameter name (e.g. vpv)'
@@ -216,7 +216,7 @@
           print *,'   model-dir/    - directoy which holds model files (e.g. proc***_vpv.bin)'
           print *,'   output-dir/   - output directory with topology files (e.g. proc***_solver_data.bin)'
           print *
-          print *,'   topoography-flag - depth will be taken with respect to surface topography (0 == off / 1 == on);'
+          print *,'   topography-flag  - depth will be taken with respect to surface topography (0 == off / 1 == on);'
           print *,'                      if no topography is used, then depth is with respect to sea-level'
           print *,'   ellipticity-flag - depth will consider Earth ellipticity (0 == off / 1 == on);'
           print *,'                      if no ellipticity is used, Earth shape is assumed to be perfectly spherical'

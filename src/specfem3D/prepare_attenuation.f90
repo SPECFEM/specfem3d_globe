@@ -76,9 +76,11 @@
     write(IMAIN,*) "  based on a series of Zener standard linear solids (SLS)."
     write(IMAIN,*) "  Approximation is performed in the following frequency band:"
     write(IMAIN,*)
-    write(IMAIN,*) "  number of SLS bodies:",N_SLS
-    write(IMAIN,*) "  Reference frequency of anelastic model (Hz):",sngl(ATTENUATION_f0_REFERENCE)
-    write(IMAIN,*) "                                   period (s):",sngl(1.0/ATTENUATION_f0_REFERENCE)
+    write(IMAIN,*) "  number of SLS bodies: ",N_SLS
+    write(IMAIN,*) "  partial attenuation, physical dispersion only: ",PARTIAL_PHYS_DISPERSION_ONLY_VAL
+    write(IMAIN,*)
+    write(IMAIN,*) "  Reference frequency of anelastic model (Hz): ",sngl(ATTENUATION_f0_REFERENCE)
+    write(IMAIN,*) "                                   period (s): ",sngl(1.0/ATTENUATION_f0_REFERENCE)
     call flush_IMAIN()
   endif
 
