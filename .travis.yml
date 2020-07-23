@@ -63,7 +63,7 @@ env:
     # regular kernel example
     - TESTID=12 TESTDIR=4 TESTCOV=0 TESTFLAGS="--enable-vectorization" CUDA=false
 
-    # global_sgloberani
+    # regional_sgloberani
     - TESTID=13 TESTDIR=5 TESTCOV=0 TESTFLAGS="--enable-vectorization" CUDA=false
 
     # global_full_sphericalharmonic_model
