@@ -301,13 +301,13 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_crustmaps(lat,lon,x,vp,vs,rho,moho,sediment,found_crust,elem_in_crust)
+  subroutine model_crustmaps(lat,lon,x,vp,vs,rho,moho,sediment,found_crust,elem_in_crust,moho_only)
 
 ! Matthias Meschede
 ! read smooth crust2.0 model (0.25 degree resolution) with eucrust
 ! based on software routines provided with the crust2.0 model by Bassin et al.
 
-  use constants, only: PI,GRAV,INCLUDE_SEDIMENTS_IN_CRUST
+  use constants, only: PI,GRAV,ZERO,INCLUDE_SEDIMENTS_IN_CRUST
   use shared_parameters, only: R_PLANET,RHOAV
 
   use model_crustmaps_par
@@ -318,7 +318,7 @@
   double precision,intent(inout) :: vp,vs,rho
   double precision,intent(inout) :: moho,sediment
   logical,intent(out) :: found_crust
-  logical,intent(in) :: elem_in_crust
+  logical,intent(in) :: elem_in_crust,moho_only
 
   ! local parameters
   double precision :: h_sed,h_uc
@@ -326,6 +326,15 @@
   double precision,dimension(NLAYERS_CRUSTMAP) :: vps,vss,rhos,thicks
   double precision,parameter :: THICKNESS_TOL = 1.d-9 ! to skip zero-thickness layers
 
+  ! initializes
+  vp = ZERO
+  vs = ZERO
+  rho = ZERO
+  moho = ZERO
+  sediment = ZERO
+  found_crust = .true.
+
+  ! gets crustal values
   call read_crustmaps(lat,lon,vps,vss,rhos,thicks)
 
   ! format:
@@ -352,7 +361,17 @@
   ! moho
   x7 = (R_PLANET - (h_uc+thicks(4)+thicks(5))*1000.0d0)/R_PLANET
 
-  found_crust = .true.
+  ! moho
+  moho = (h_uc+thicks(4)+thicks(5))*1000.0d0/R_PLANET ! non-dimensionalizes
+
+  ! checks if anything further to do
+  if (moho_only) return
+
+  ! sediment thickness
+  if (INCLUDE_SEDIMENTS_IN_CRUST) then
+    sediment = h_sed * 1000.d0/R_PLANET ! non-dimensionalizes
+  endif
+
 ! if (x > x3 .and. INCLUDE_SEDIMENTS_IN_CRUST .and. h_sed > MINIMUM_SEDIMENT_THICKNESS) then
   if (x > x3 .and. INCLUDE_SEDIMENTS_IN_CRUST .and. thicks(1) > THICKNESS_TOL) then
    vp = vps(1)
@@ -393,14 +412,6 @@
     !rho = 20.0*1000.0d0/RHOAV
     ! uses default input values
     continue
-  endif
-
-  ! moho
-  moho = (h_uc+thicks(4)+thicks(5))*1000.0d0/R_PLANET ! non-dimensionalizes
-
-  ! sediment thickness
-  if (INCLUDE_SEDIMENTS_IN_CRUST) then
-    sediment = h_sed * 1000.d0/R_PLANET ! non-dimensionalizes
   endif
 
   end subroutine model_crustmaps

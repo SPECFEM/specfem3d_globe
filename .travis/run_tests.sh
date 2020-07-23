@@ -14,7 +14,7 @@ case "$TESTDIR" in
   2) dir=EXAMPLES/global_small/ ;;
   3) dir=EXAMPLES/point_force/ ;;
   4) dir=EXAMPLES/regular_kernel/ ;;
-  5) dir=EXAMPLES/global_sglobe/ ;;
+  5) dir=EXAMPLES/global_sgloberani/ ;;
   6) dir=EXAMPLES/global_full_sphericalharmonic_model/ ;;
   7) dir=EXAMPLES/regional_s40rts/ ;;
   8) dir=EXAMPLES/regional_small_adjoint/ ;;
@@ -133,6 +133,11 @@ else
     sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.1:" DATA/Par_file
   fi
 
+  # global_sgloberani
+  if [ "$TESTID" == "13" ]; then
+    sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.1:" DATA/Par_file
+  fi
+
   # regional noise
   if [ "$TESTID" == "21" ]; then
     sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.1:" DATA/Par_file
@@ -204,6 +209,18 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "2" ]; then
   cd $WORKDIR
 fi
 echo -en 'travis_fold:end:coverage.global-small\\r'
+
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.global-sgloberani\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "2" ]; then
+  ##
+  ## testing global_sgloberani
+  ##
+  cd EXAMPLES/global_sgloberani/
+  sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
+  ./run_this_example.sh
+  cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.global-sgloberani\\r'
 
 echo 'Coverage...' && echo -en 'travis_fold:start:coverage.regional-s40rts\\r'
 if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "2" ]; then

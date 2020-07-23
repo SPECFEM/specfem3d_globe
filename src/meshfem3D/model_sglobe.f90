@@ -58,6 +58,11 @@
 !                          - sgloberani_aniso: uses transversely isotropic model perturbations dvsv and dvsh
 !                          - sgloberani_iso  : uses isotropic model perturbations dvs
 !                        both with respect to transversely isotropic PREM
+!
+!   Elodie Kendall, Daniel Peter, 2020:
+!   - changes dvp and drho to be scaled from dvs by default
+!   - adds SGLOBE-rani's crustal model, where crustal thicknesses are modified with respect to original CRUST2.0 model.
+!
 !--------------------------------------------------------------------------------------------------
 
   module model_sglobe_par
@@ -223,14 +228,14 @@
 
 !---------------------------
 
-  subroutine mantle_sglobe(radius,theta,phi,dvsv,dvsh,dvp,drho)
+  subroutine mantle_sglobe(radius,theta,phi,vsv_in,vsh_in,dvsv,dvsh,dvp,drho)
 
   use constants
   use model_sglobe_par
 
   implicit none
 
-  double precision, intent(in) :: radius,theta,phi
+  double precision, intent(in) :: radius,theta,phi,vsv_in,vsh_in
   double precision, intent(out) :: dvsv,dvsh,dvp,drho
 
   ! local parameters
@@ -238,12 +243,14 @@
   !-----------------------------------------------------------------------------
   ! Density scaling:
   ! factor to convert perturbations in shear speed to perturbations in density
-  double precision, parameter :: SCALE_RHO = 0.40d0
+  double precision, parameter :: SCALE_RHO = 0.4d0   ! scaling factor used in the inversion by Chang et al.
 
   ! Vp model scaling:
   ! factor to convert perturbations in vs speed to perturbations in vp
-  logical :: USE_VP_SCALING = .false.             ! for .false., the P12 model will be taken for vp perturbations to PREM
-  double precision, parameter :: SCALE_VP = 0.5d0 ! scaling factor used in the inversion by Chang et al.
+  double precision, parameter :: SCALE_VP = 0.5d0    ! scaling factor used in the inversion by Chang et al.
+
+  ! flag to use different vp scaling, the P12 model will be taken for vp perturbations to PREM
+  logical :: USE_P12_VP_PERTURBATION = .false.
 
   !-----------------------------------------------------------------------------
 
@@ -258,6 +265,7 @@
   double precision :: sglobe_rsple,radial_basis(0:NK_20)
   double precision :: sint,cost,x(2*NS_35+1),dx(2*NS_35+1)
   double precision :: dvs
+  double precision :: vs_prem,vs_new,vsh_new,vsv_new
 
   dvsv = 0.d0
   dvsh = 0.d0
@@ -269,11 +277,13 @@
   r_cmb = RCMB_ / R_EARTH_
   if (radius >= r_moho .or. radius <= r_cmb) return
 
+  ! radial splines
   xr = -1.0d0+2.0d0*(radius-r_cmb)/(r_moho-r_cmb)
   do k = 0,NK_20
     radial_basis(k) = sglobe_rsple(1,NK_20+1,SGLOBE_V_spknt(1),SGLOBE_V_qq0(1,NK_20+1-k),SGLOBE_V_qq(1,1,NK_20+1-k),xr)
   enddo
 
+  ! perturbations from model files
   do l = 0,NS_35
     sint = dsin(theta)
     cost = dcos(theta)
@@ -312,14 +322,30 @@
     enddo
   enddo
 
-  ! scales density perturbation from Vsv
-  drho = SCALE_RHO*dvsv
+  ! initial vs (value from 1D reference model)
+  vs_prem = sqrt( 0.5d0 * (vsv_in*vsv_in + vsh_in*vsh_in) )
+
+  ! checks
+  if (vs_prem == 0.d0) stop 'Invalid vs_prem value in model sglobe'
+
+  ! updated vs
+  vsv_new = vsv_in * (1.0d0 + dvsv)
+  vsh_new = vsh_in * (1.0d0 + dvsh)
+
+  vs_new = sqrt( 0.5d0 * (vsv_new*vsv_new + vsh_new*vsh_new) )
+  dvs = (vs_new - vs_prem)/vs_prem
+
+  ! scaling from dvs
+  drho = SCALE_RHO * dvs
 
   ! alternative Vp perturbation:
-  ! instead of taking dvp from P12 (like S20RTS), uses a scaling from Vs as mentioned in Chang et al. (2015)
-  if (USE_VP_SCALING) then
-    dvs = sqrt( SCALE_VP * (dvsv**2 + dvsh**2) )
-    dvp = 0.5 * dvs
+  if (USE_P12_VP_PERTURBATION) then
+    ! uses original dvp from P12 file (like S20RTS)
+    continue
+  else
+    ! uses a scaling from Vs as mentioned in Chang et al. (2015)
+    !dvs = sqrt( SCALE_VP * (dvsv**2 + dvsh**2) )  ! would be based on perturbations dvsv,dvsh only, different to dvs above
+    dvp = SCALE_VP * dvs
   endif
 
   end subroutine mantle_sglobe
