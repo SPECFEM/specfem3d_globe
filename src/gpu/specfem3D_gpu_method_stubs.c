@@ -124,13 +124,13 @@ void FC_FUNC_ (compute_add_sources_adjoint_gpu,
 void FC_FUNC_(transfer_adj_to_device,
               TRANSFER_ADJ_TO_DEVICE)(long* Mesh_pointer_f,
                                       int* h_nrec,
-                                      realw* h_source_adjoint,
+                                      realw* h_stf_array_adjoint,
                                       int* h_islice_selected_rec) {}
 
 void FC_FUNC_(transfer_adj_to_device_async,
               TRANSFER_ADJ_TO_DEVICE_ASYNC)(long *Mesh_pointer_f,
                                             int *h_nrec,
-                                            realw *h_source_adjoint,
+                                            realw *h_stf_array_adjoint,
                                             int *h_islice_selected_rec) {}
 
 
@@ -187,6 +187,7 @@ void FC_FUNC_ (compute_forces_outer_core_gpu,
                COMPUTE_FORCES_OUTER_CORE_GPU) (long *Mesh_pointer_f,
                                                int *iphase,
                                                realw *timeval_f,
+                                               realw *alpha_lddrk_f,realw *beta_lddrk_f,
                                                int *FORWARD_OR_ADJOINT_f) {}
 
 
@@ -314,7 +315,7 @@ void FC_FUNC_ (noise_add_source_main_rec_gpu,
                NOISE_ADD_SOURCE_MAIN_REC_GPU) (long *Mesh_pointer_f,
                                                int *it_f,
                                                int *irec_main_noise_f,
-                                               int *islice_selected_rec) {}
+                                               int *h_islice_selected_rec) {}
 
 void FC_FUNC_ (noise_add_surface_movie_gpu,
                NOISE_ADD_SURFACE_MOVIE_GPU) (long *Mesh_pointer_f,
@@ -841,6 +842,25 @@ void FC_FUNC_(register_host_array,
 
 void FC_FUNC_(unregister_host_array,
               UNREGISTER_HOST_ARRAY)(realw *h_array) {}
+
+
+//
+// src/gpu/update_displacement_LDDRK_gpu.c
+//
+
+void FC_FUNC_ (update_displ_lddrk_gpu,
+               UPDATE_DISPL_LDDRK_GPU) (long *Mesh_pointer_f,
+                                        int *FORWARD_OR_ADJOINT) {}
+
+void FC_FUNC_ (update_elastic_lddrk_gpu,
+               UPDATE_ELASTIC_LDDRK_GPU) (long *Mesh_pointer_f,
+                                          realw *alpha_lddrk_f, realw *beta_lddrk_f,
+                                          int *FORWARD_OR_ADJOINT) {}
+
+void FC_FUNC_ (update_acoustic_lddrk_gpu,
+               UPDATE_ACOUSTIC_LDDRK_GPU) (long *Mesh_pointer_f,
+                                           realw *alpha_lddrk_f, realw *beta_lddrk_f,
+                                           int *FORWARD_OR_ADJOINT) {}
 
 
 //

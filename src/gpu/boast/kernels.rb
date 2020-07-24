@@ -68,6 +68,8 @@ small_kernels = [
 :update_veloc_elastic_kernel,
 :update_accel_acoustic_kernel,
 :update_veloc_acoustic_kernel,
+:update_acoustic_lddrk_kernel,
+:update_elastic_lddrk_kernel,
 :compute_rho_kernel,
 :compute_iso_kernel,
 :compute_ani_kernel,

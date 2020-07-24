@@ -335,8 +335,9 @@
     endif
     call synchronize_all()
 
-    stop 'prepare_lddrk_device not implemented yet'
-    !call prepare_lddrk_device(Mesh_pointer)
+    call prepare_lddrk_device(Mesh_pointer)
+
+    call synchronize_all()
   endif
 
   ! crust/mantle region
@@ -750,6 +751,23 @@
     memory_size = memory_size + 3.d0 * NGLOB_OUTER_CORE * dble(CUSTOM_REAL)
     ! d_rmass_outer_core
     memory_size = memory_size + NGLOB_OUTER_CORE * dble(CUSTOM_REAL)
+
+    ! LDDRK arrays
+    if (USE_LDDRK) then
+      ! wavefields intermediate
+      ! d_displ_crust_mantle_lddrk,.. + d_displ_inner_core_lddrk
+      memory_size = memory_size + 2.d0 * NDIM * NGLOB_AB * dble(CUSTOM_REAL)
+      ! d_displ_outer_core_lddrk,d_veloc_outer_core_lddrk
+      memory_size = memory_size + 2.d0 * NGLOB_OUTER_CORE * dble(CUSTOM_REAL)
+      if (ROTATION_VAL) then
+        ! d_A_array_rotation_lddrk,d_B_array_rotation_lddrk
+        memory_size = memory_size + 2.d0 * NGLL3 * NSPEC_OUTER_CORE * dble(CUSTOM_REAL)
+      endif
+      if (ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY) then
+        ! d_R_xx_crust_mantle_lddrk,.. + d_R_xx_inner_core_lddrk,..
+        memory_size = memory_size + 5.d0 * N_SLS * NGLL3 * NSPEC_AB * dble(CUSTOM_REAL)
+      endif
+    endif
 
     ! poor estimate for kernel simulations...
     if (SIMULATION_TYPE == 3) memory_size = 2.d0 * memory_size

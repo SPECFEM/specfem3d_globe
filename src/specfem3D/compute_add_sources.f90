@@ -130,7 +130,7 @@
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM
 
   use specfem_par, only: myrank,it,it_begin,it_end,NTSTEP_BETWEEN_READ_ADJSRC, &
-    nadj_rec_local,hxir_adjstore,hetar_adjstore,hgammar_adjstore,number_adjsources_global,source_adjoint, &
+    nadj_rec_local,hxir_adjstore,hetar_adjstore,hgammar_adjstore,number_adjsources_global, &
     islice_selected_rec,ispec_selected_rec,nrec,iadj_vec, &
     GPU_MODE,GPU_ASYNC_COPY,Mesh_pointer
 
@@ -141,6 +141,8 @@
   ! local parameters
   real(kind=CUSTOM_REAL),dimension(NDIM) :: stf_array
   real(kind=CUSTOM_REAL) :: hlagrange
+  real(kind=CUSTOM_REAL),dimension(NDIM,nadj_rec_local) :: stf_array_adjoint
+
   integer :: irec,irec_local,i,j,k,iglob,ispec
   integer :: ivec_index
   logical :: ibool_read_adj_arrays
@@ -198,7 +200,7 @@
     ! receivers act as sources
     do irec_local = 1, nadj_rec_local
       ! adjoint source time function (trace)
-      call get_stf_adjoint_source(irec_local,stf_array)
+      call get_stf_adjoint_source(it,irec_local,stf_array)
 
       ! receiver location
       irec = number_adjsources_global(irec_local)
@@ -285,21 +287,25 @@
     ! note: adjoint sourcearrays can become very big when used with many receiver stations
     !       we overlap here the memory transfer to GPUs
 
-    ! current time index
-    ivec_index = iadj_vec(it)
+    ! receivers act as sources
+    ! determines STF contribution for each local adjoint source (taking account of LDDRK scheme stages)
+    do irec_local = 1, nadj_rec_local
+      ! adjoint source time function (trace)
+      call get_stf_adjoint_source(it,irec_local,stf_array)
+      ! stores stf for all local adjoint sources
+      stf_array_adjoint(:,irec_local) = stf_array(:)
+    enddo
 
     if (GPU_ASYNC_COPY) then
       ! only synchronously transfers array at beginning or whenever new arrays were read in
       if (ibool_read_adj_arrays) then
         ! transfers adjoint arrays to GPU device memory
         ! note: function call passes pointer to array source_adjoint at corresponding time slice
-        call transfer_adj_to_device(Mesh_pointer,nrec,source_adjoint(1,1,ivec_index), &
-                                    islice_selected_rec)
+        call transfer_adj_to_device(Mesh_pointer,nrec,stf_array_adjoint,islice_selected_rec)
       endif
     else
       ! synchronously transfers adjoint arrays to GPU device memory before adding adjoint sources on GPU
-      call transfer_adj_to_device(Mesh_pointer,nrec,source_adjoint(1,1,ivec_index), &
-                                  islice_selected_rec)
+      call transfer_adj_to_device(Mesh_pointer,nrec,stf_array_adjoint,islice_selected_rec)
     endif
 
     ! adds adjoint source contributions
@@ -311,19 +317,25 @@
       if ((.not. ibool_read_adj_arrays) .and. &
           (.not. mod(it,NTSTEP_BETWEEN_READ_ADJSRC) == 0) .and. &
           (.not. it == it_end)) then
-        ! next time index
-        ivec_index = iadj_vec(it+1)
 
         ! checks next index
+        ivec_index = iadj_vec(it+1)
         if (ivec_index < 1 .or. ivec_index > NTSTEP_BETWEEN_READ_ADJSRC) then
           print *,'Error iadj_vec bounds: rank',myrank,' it = ',it,' index = ',ivec_index, &
-                 'out of bounds ',1,'to',NTSTEP_BETWEEN_READ_ADJSRC
+                  'out of bounds ',1,'to',NTSTEP_BETWEEN_READ_ADJSRC
           call exit_MPI(myrank,'Error iadj_vec index bounds')
         endif
 
+        ! next time index
+        do irec_local = 1, nadj_rec_local
+          ! adjoint source time function (trace)
+          call get_stf_adjoint_source(it+1,irec_local,stf_array)
+          ! stores stf for all local adjoint sources
+          stf_array_adjoint(:,irec_local) = stf_array(:)
+        enddo
+
         ! asynchronously transfers next time slice
-        call transfer_adj_to_device_async(Mesh_pointer,nrec,source_adjoint(1,1,ivec_index), &
-                                          islice_selected_rec)
+        call transfer_adj_to_device_async(Mesh_pointer,nrec,stf_array_adjoint,islice_selected_rec)
       endif
     endif
 
@@ -527,11 +539,11 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine get_stf_adjoint_source(irec_local,stf_array)
+  subroutine get_stf_adjoint_source(it_in,irec_local,stf_array)
 
   use constants, only: CUSTOM_REAL,NDIM,C_LDDRK
 
-  use specfem_par, only: it,NSTEP,NTSTEP_BETWEEN_READ_ADJSRC, &
+  use specfem_par, only: NSTEP,NTSTEP_BETWEEN_READ_ADJSRC, &
     source_adjoint,iadj_vec, &
     USE_LDDRK,istage
 
@@ -545,7 +557,7 @@
 !       so far, specfem doesn't use this technique and there are no such interface definitions within subroutines.
 !       so let's just use a subroutine call for this.
 
-  integer,intent(in) :: irec_local
+  integer,intent(in) :: it_in,irec_local
   real(kind=CUSTOM_REAL),dimension(NDIM),intent(out) :: stf_array
 
   ! local parameters
@@ -568,10 +580,10 @@
     !       iadj_vec(it) goes from iadj_vec(1) = 1000, iadj_vec(2) = 999 to iadj_vec(1000) = 1
     if (istage == 1) then
       ! exact position at time it
-      if (it == 1) then
-        idx = it
+      if (it_in == 1) then
+        idx = it_in
       else
-        idx = it - 1
+        idx = it_in - 1
       endif
       ivec_index = iadj_vec(idx)
       ! adjoint source time function for 3 components
@@ -585,10 +597,10 @@
       ! see: https://www.iquilezles.org/www/articles/minispline/minispline.htm
       t = C_LDDRK(istage)
       ! shift index by -1 due to LDDRK scheme
-      if (it == 1) then
+      if (it_in == 1) then
         idx = 1
       else
-        idx = it - 1
+        idx = it_in - 1
       endif
       ivec_index = iadj_vec(idx)
 
@@ -644,7 +656,7 @@
     ! Newmark
     ! has 1 stage, at index iadj_vec
     ! adjoint source array index
-    ivec_index = iadj_vec(it)
+    ivec_index = iadj_vec(it_in)
     ! adjoint source time function for 3 components
     stf(:) = source_adjoint(:,irec_local,ivec_index)
   endif
@@ -653,6 +665,6 @@
   stf_array(:) = real(stf(:),kind=CUSTOM_REAL)
 
   !debug
-  !if (irec_local == 1) print *,myrank,(it-1)*NSTAGE_TIME_SCHEME + istage,stf_array(1),stf_array(2),stf_array(3),'#i #stf'
+  !if (irec_local == 1) print *,myrank,(it_in-1)*NSTAGE_TIME_SCHEME + istage,stf_array(1),stf_array(2),stf_array(3),'#i #stf'
 
   end subroutine get_stf_adjoint_source

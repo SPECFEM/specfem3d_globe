@@ -662,6 +662,9 @@
   if (SIMULATION_TYPE /= 1 .and. NUMBER_OF_RUNS /= 1) &
     stop 'Only 1 run for SIMULATION_TYPE = 2/3'
 
+  if (USE_LDDRK .and. NUMBER_OF_RUNS > 1) &
+     stop 'USE_LDDRK not supported yet for restarting simulations with NUMBER_OF_RUNS > 1'
+
   ! define correct time steps if restart files
   ! set start/end steps for time iteration loop
   it_begin = (NUMBER_OF_THIS_RUN - 1) * (NSTEP / NUMBER_OF_RUNS) + 1

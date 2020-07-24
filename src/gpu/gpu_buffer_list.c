@@ -331,7 +331,7 @@ GPU_REALW_BUFFER (d_hgammar);
 
 // adjoint sources
 GPU_INT_BUFFER (d_number_adjsources_global);
-GPU_REALW_BUFFER (d_source_adjoint);
+GPU_REALW_BUFFER (d_stf_array_adjoint);
 GPU_REALW_BUFFER (d_hxir_adj);
 GPU_REALW_BUFFER (d_hetar_adj);
 GPU_REALW_BUFFER (d_hgammar_adj);
@@ -418,3 +418,45 @@ GPU_INT_BUFFER (d_ibelm_top_crust_mantle);
 GPU_REALW_BUFFER (d_jacobian2D_top_crust_mantle);
 GPU_REALW_BUFFER (d_Sigma_kl);
 
+// ------------------------------------------------------------------   //
+// LDDRK
+// ------------------------------------------------------------------   //
+// wavefields intermediate
+GPU_REALW_BUFFER (d_displ_crust_mantle_lddrk);
+GPU_REALW_BUFFER (d_veloc_crust_mantle_lddrk);
+GPU_REALW_BUFFER (d_b_displ_crust_mantle_lddrk);
+GPU_REALW_BUFFER (d_b_veloc_crust_mantle_lddrk);
+GPU_REALW_BUFFER (d_displ_outer_core_lddrk);
+GPU_REALW_BUFFER (d_veloc_outer_core_lddrk);
+GPU_REALW_BUFFER (d_b_displ_outer_core_lddrk);
+GPU_REALW_BUFFER (d_b_veloc_outer_core_lddrk);
+GPU_REALW_BUFFER (d_displ_inner_core_lddrk);
+GPU_REALW_BUFFER (d_veloc_inner_core_lddrk);
+GPU_REALW_BUFFER (d_b_displ_inner_core_lddrk);
+GPU_REALW_BUFFER (d_b_veloc_inner_core_lddrk);
+// rotation
+GPU_REALW_BUFFER (d_A_array_rotation_lddrk);
+GPU_REALW_BUFFER (d_B_array_rotation_lddrk);
+GPU_REALW_BUFFER (d_b_A_array_rotation_lddrk);
+GPU_REALW_BUFFER (d_b_B_array_rotation_lddrk);
+// attenuation
+GPU_REALW_BUFFER (d_R_xx_crust_mantle_lddrk);
+GPU_REALW_BUFFER (d_R_yy_crust_mantle_lddrk);
+GPU_REALW_BUFFER (d_R_xy_crust_mantle_lddrk);
+GPU_REALW_BUFFER (d_R_xz_crust_mantle_lddrk);
+GPU_REALW_BUFFER (d_R_yz_crust_mantle_lddrk);
+GPU_REALW_BUFFER (d_b_R_xx_crust_mantle_lddrk);
+GPU_REALW_BUFFER (d_b_R_yy_crust_mantle_lddrk);
+GPU_REALW_BUFFER (d_b_R_xy_crust_mantle_lddrk);
+GPU_REALW_BUFFER (d_b_R_xz_crust_mantle_lddrk);
+GPU_REALW_BUFFER (d_b_R_yz_crust_mantle_lddrk);
+GPU_REALW_BUFFER (d_R_xx_inner_core_lddrk);
+GPU_REALW_BUFFER (d_R_yy_inner_core_lddrk);
+GPU_REALW_BUFFER (d_R_xy_inner_core_lddrk);
+GPU_REALW_BUFFER (d_R_xz_inner_core_lddrk);
+GPU_REALW_BUFFER (d_R_yz_inner_core_lddrk);
+GPU_REALW_BUFFER (d_b_R_xx_inner_core_lddrk);
+GPU_REALW_BUFFER (d_b_R_yy_inner_core_lddrk);
+GPU_REALW_BUFFER (d_b_R_xy_inner_core_lddrk);
+GPU_REALW_BUFFER (d_b_R_xz_inner_core_lddrk);
+GPU_REALW_BUFFER (d_b_R_yz_inner_core_lddrk);

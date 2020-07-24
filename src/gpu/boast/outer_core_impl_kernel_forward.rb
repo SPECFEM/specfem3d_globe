@@ -9,6 +9,11 @@ module BOAST
     v.push deltat                = Real("deltat",                :dir => :in)
     v.push d_A_array_rotation    = Real("d_A_array_rotation",    :dir => :inout, :dim => [Dim()] )
     v.push d_B_array_rotation    = Real("d_B_array_rotation",    :dir => :inout, :dim => [Dim()] )
+    v.push d_A_array_rotation_lddrk = Real("d_A_array_rotation_lddrk",    :dir => :inout, :dim => [Dim()] )
+    v.push d_B_array_rotation_lddrk = Real("d_B_array_rotation_lddrk",    :dir => :inout, :dim => [Dim()] )
+    v.push alpha_lddrk           = Real("alpha_lddrk",           :dir => :in)
+    v.push beta_lddrk            = Real("beta_lddrk",            :dir => :in)
+    v.push use_lddrk             = Int( "use_lddrk",             :dir => :in)
     v.push dpotentialdxl         = Real("dpotentialdxl",         :dir => :in)
     v.push dpotentialdyl         = Real("dpotentialdyl",         :dir => :in)
     v.push dpotentialdx_with_rot = Real("dpotentialdx_with_rot", :dir => :out, :dim => [Dim(1)], :private => true)
@@ -53,8 +58,21 @@ module BOAST
       comment()
 
       comment("  // updates rotation term with Euler scheme (non-padded offset)")
-      print d_A_array_rotation[tx + working_element*ngll3] === d_A_array_rotation[tx + working_element*ngll3] + source_euler_A
-      print d_B_array_rotation[tx + working_element*ngll3] === d_B_array_rotation[tx + working_element*ngll3] + source_euler_B
+      print If(!use_lddrk => lambda {
+        # non-LDDRK update
+        print d_A_array_rotation[tx + working_element*ngll3] === d_A_array_rotation[tx + working_element*ngll3] + source_euler_A
+        print d_B_array_rotation[tx + working_element*ngll3] === d_B_array_rotation[tx + working_element*ngll3] + source_euler_B
+      }, :else => lambda {
+        # LDDRK update
+        print d_A_array_rotation_lddrk[tx + working_element*ngll3] === \
+                alpha_lddrk * d_A_array_rotation_lddrk[tx + working_element*ngll3] + source_euler_A
+        print d_B_array_rotation_lddrk[tx + working_element*ngll3] === \
+                alpha_lddrk * d_B_array_rotation_lddrk[tx + working_element*ngll3] + source_euler_B
+        print d_A_array_rotation[tx + working_element*ngll3] === \
+                d_A_array_rotation[tx + working_element*ngll3] + beta_lddrk * d_A_array_rotation_lddrk[tx + working_element*ngll3]
+        print d_B_array_rotation[tx + working_element*ngll3] === \
+                d_B_array_rotation[tx + working_element*ngll3] + beta_lddrk * d_B_array_rotation_lddrk[tx + working_element*ngll3]
+      })
     }
     return p
   end
@@ -104,6 +122,11 @@ module BOAST
     v.push deltat                  = Real("deltat",                  :dir => :in)
     v.push d_A_array_rotation      = Real("d_A_array_rotation",      :dir => :inout, :dim => [Dim()] )
     v.push d_B_array_rotation      = Real("d_B_array_rotation",      :dir => :inout, :dim => [Dim()] )
+    v.push d_A_array_rotation_lddrk = Real("d_A_array_rotation_lddrk",      :dir => :inout, :dim => [Dim()] )
+    v.push d_B_array_rotation_lddrk = Real("d_B_array_rotation_lddrk",      :dir => :inout, :dim => [Dim()] )
+    v.push alpha_lddrk             = Real("alpha_lddrk",             :dir => :in)
+    v.push beta_lddrk              = Real("beta_lddrk",              :dir => :in)
+    v.push use_lddrk               = Int( "use_lddrk",               :dir => :in)
     v.push nspec_outer_core        = Int( "NSPEC_OUTER_CORE",        :dir => :in)
 
     ngllx        = Int("NGLLX", :const => n_gllx)
@@ -336,6 +359,9 @@ module BOAST
                                   time,two_omega_earth,deltat,\
                                   d_A_array_rotation,\
                                   d_B_array_rotation,\
+                                  d_A_array_rotation_lddrk,\
+                                  d_B_array_rotation_lddrk,\
+                                  alpha_lddrk,beta_lddrk,use_lddrk, \
                                   dpotentialdl[0],\
                                   dpotentialdl[1],\
                                   dpotentialdx_with_rot.address,\

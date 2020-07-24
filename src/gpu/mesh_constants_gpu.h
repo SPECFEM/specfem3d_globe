@@ -829,8 +829,8 @@ typedef struct mesh_ {
   // adjoint receivers/sources
   int nadj_rec_local;
 
-  gpu_realw_mem d_source_adjoint;
-  realw *h_source_adjoint;
+  gpu_realw_mem d_stf_array_adjoint;
+  realw *h_stf_array_adjoint;
 
   gpu_int_mem d_number_adjsources_global;
 
@@ -990,7 +990,7 @@ typedef struct mesh_ {
 #ifdef USE_OPENCL
   // pinned memory allocated by ALLOC_PINNED_BUFFER_OCL
   cl_mem h_pinned_station_seismo_field;
-  cl_mem h_pinned_source_adjoint;
+  cl_mem h_pinned_stf_array_adjoint;
 
   // crust mantle
   cl_mem h_pinned_send_accel_buffer_cm;
@@ -1087,7 +1087,46 @@ typedef struct mesh_ {
   // LDDRK
   // ------------------------------------------------------------------ //
   int use_lddrk;
-  // daniel debug: todo - add lddrk arrays here and in gpu_buffer_list.c for initialization
+  // wavefields intermediate
+  gpu_realw_mem d_displ_crust_mantle_lddrk;
+  gpu_realw_mem d_veloc_crust_mantle_lddrk;
+  gpu_realw_mem d_displ_outer_core_lddrk;
+  gpu_realw_mem d_veloc_outer_core_lddrk;
+  gpu_realw_mem d_displ_inner_core_lddrk;
+  gpu_realw_mem d_veloc_inner_core_lddrk;
+  // backward/reconstructed elastic wavefield
+  gpu_realw_mem d_b_displ_crust_mantle_lddrk;
+  gpu_realw_mem d_b_veloc_crust_mantle_lddrk;
+  gpu_realw_mem d_b_displ_outer_core_lddrk;
+  gpu_realw_mem d_b_veloc_outer_core_lddrk;
+  gpu_realw_mem d_b_displ_inner_core_lddrk;
+  gpu_realw_mem d_b_veloc_inner_core_lddrk;
+  // rotation
+  gpu_realw_mem d_A_array_rotation_lddrk;
+  gpu_realw_mem d_B_array_rotation_lddrk;
+  gpu_realw_mem d_b_A_array_rotation_lddrk;
+  gpu_realw_mem d_b_B_array_rotation_lddrk;
+  // attenuation
+  gpu_realw_mem d_R_xx_crust_mantle_lddrk;
+  gpu_realw_mem d_R_yy_crust_mantle_lddrk;
+  gpu_realw_mem d_R_xy_crust_mantle_lddrk;
+  gpu_realw_mem d_R_xz_crust_mantle_lddrk;
+  gpu_realw_mem d_R_yz_crust_mantle_lddrk;
+  gpu_realw_mem d_b_R_xx_crust_mantle_lddrk;
+  gpu_realw_mem d_b_R_yy_crust_mantle_lddrk;
+  gpu_realw_mem d_b_R_xy_crust_mantle_lddrk;
+  gpu_realw_mem d_b_R_xz_crust_mantle_lddrk;
+  gpu_realw_mem d_b_R_yz_crust_mantle_lddrk;
+  gpu_realw_mem d_R_xx_inner_core_lddrk;
+  gpu_realw_mem d_R_yy_inner_core_lddrk;
+  gpu_realw_mem d_R_xy_inner_core_lddrk;
+  gpu_realw_mem d_R_xz_inner_core_lddrk;
+  gpu_realw_mem d_R_yz_inner_core_lddrk;
+  gpu_realw_mem d_b_R_xx_inner_core_lddrk;
+  gpu_realw_mem d_b_R_yy_inner_core_lddrk;
+  gpu_realw_mem d_b_R_xy_inner_core_lddrk;
+  gpu_realw_mem d_b_R_xz_inner_core_lddrk;
+  gpu_realw_mem d_b_R_yz_inner_core_lddrk;
 
 } Mesh;
 

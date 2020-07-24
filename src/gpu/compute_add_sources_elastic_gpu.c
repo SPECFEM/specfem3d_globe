@@ -180,7 +180,7 @@ void FC_FUNC_ (compute_add_sources_adjoint_gpu,
                COMPUTE_ADD_SOURCES_ADJOINT_GPU) (long *Mesh_pointer_f) {
 
   // adds adjoint sources
-  // note: call this routine after transfer_adj_to_device**() to have correct adjoint sourcearrays in array d_source_adjoint
+  // note: call this routine after transfer_adj_to_device**() to have correct adjoint sourcearrays in array d_stf_array_adjoint
 
   TRACE("compute_add_sources_adjoint_gpu");
 
@@ -214,7 +214,7 @@ void FC_FUNC_ (compute_add_sources_adjoint_gpu,
     }
 
     clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_adjoint_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_accel_crust_mantle.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_adjoint_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_source_adjoint.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_adjoint_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_stf_array_adjoint.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_adjoint_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_hxir_adj.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_adjoint_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_hetar_adj.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_adjoint_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_hgammar_adj.ocl));
@@ -254,7 +254,7 @@ void FC_FUNC_ (compute_add_sources_adjoint_gpu,
     dim3 threads(NGLLX,NGLLX,NGLLX);
 
     compute_add_sources_adjoint_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_accel_crust_mantle.cuda,
-                                                                              mp->d_source_adjoint.cuda,
+                                                                              mp->d_stf_array_adjoint.cuda,
                                                                               mp->d_hxir_adj.cuda,
                                                                               mp->d_hetar_adj.cuda,
                                                                               mp->d_hgammar_adj.cuda,
@@ -276,7 +276,7 @@ extern EXTERN_LANG
 void FC_FUNC_(transfer_adj_to_device,
               TRANSFER_ADJ_TO_DEVICE)(long* Mesh_pointer_f,
                                       int* h_nrec,
-                                      realw* h_source_adjoint,
+                                      realw* h_stf_array_adjoint,
                                       int* h_islice_selected_rec) {
 
   // transfers adjoint source arrays synchronously to GPU
@@ -298,14 +298,9 @@ void FC_FUNC_(transfer_adj_to_device,
   for (irec = 0; irec < nrec; irec++) {
     if (mp->myrank == h_islice_selected_rec[irec]) {
       // takes only local sources
-        mp->h_source_adjoint[INDEX2(NDIM,0,irec_local)]
-              = h_source_adjoint[INDEX2(NDIM,0,irec_local)];
-
-        mp->h_source_adjoint[INDEX2(NDIM,1,irec_local)]
-              = h_source_adjoint[INDEX2(NDIM,1,irec_local)];
-
-        mp->h_source_adjoint[INDEX2(NDIM,2,irec_local)]
-              = h_source_adjoint[INDEX2(NDIM,2,irec_local)];
+      mp->h_stf_array_adjoint[INDEX2(NDIM,0,irec_local)] = h_stf_array_adjoint[INDEX2(NDIM,0,irec_local)];
+      mp->h_stf_array_adjoint[INDEX2(NDIM,1,irec_local)] = h_stf_array_adjoint[INDEX2(NDIM,1,irec_local)];
+      mp->h_stf_array_adjoint[INDEX2(NDIM,2,irec_local)] = h_stf_array_adjoint[INDEX2(NDIM,2,irec_local)];
 
       // increases local receivers counter
       irec_local++;
@@ -317,9 +312,9 @@ void FC_FUNC_(transfer_adj_to_device,
   }
 
   // copies extracted array values onto GPU
-  gpuCopy_todevice_realw (&mp->d_source_adjoint, mp->h_source_adjoint, mp->nadj_rec_local * NDIM );
+  gpuCopy_todevice_realw (&mp->d_stf_array_adjoint, mp->h_stf_array_adjoint, mp->nadj_rec_local * NDIM );
 
-  GPU_ERROR_CHECKING ("compute_add_sources_adjoint_gpu");
+  GPU_ERROR_CHECKING ("transfer_adj_to_device");
 }
 
 
@@ -330,7 +325,7 @@ extern EXTERN_LANG
 void FC_FUNC_(transfer_adj_to_device_async,
               TRANSFER_ADJ_TO_DEVICE_ASYNC)(long *Mesh_pointer_f,
                                             int *h_nrec,
-                                            realw *h_source_adjoint,
+                                            realw *h_stf_array_adjoint,
                                             int *h_islice_selected_rec) {
   // asynchronous transfer for next adjoint source arrays from host to device
 
@@ -344,8 +339,7 @@ void FC_FUNC_(transfer_adj_to_device_async,
 
   // checks async-memcpy
   if (! GPU_ASYNC_COPY) {
-    exit_on_error("transfer_adj_to_device_async must be called with GPU_ASYNC_COPY == 1, \
-please check mesh_constants_cuda.h");
+    exit_on_error("transfer_adj_to_device_async must be called with GPU_ASYNC_COPY == 1, please check mesh_constants_cuda.h");
   }
 
   // total number of receivers/adjoint sources
@@ -373,14 +367,9 @@ please check mesh_constants_cuda.h");
   for (irec = 0; irec < nrec; irec++) {
     if (mp->myrank == h_islice_selected_rec[irec]) {
       // takes only local sources
-        mp->h_source_adjoint[INDEX2(NDIM,0,irec_local)]
-              = h_source_adjoint[INDEX2(NDIM,0,irec_local)];
-
-        mp->h_source_adjoint[INDEX2(NDIM,1,irec_local)]
-              = h_source_adjoint[INDEX2(NDIM,1,irec_local)];
-
-        mp->h_source_adjoint[INDEX2(NDIM,2,irec_local)]
-              = h_source_adjoint[INDEX2(NDIM,2,irec_local)];
+      mp->h_stf_array_adjoint[INDEX2(NDIM,0,irec_local)] = h_stf_array_adjoint[INDEX2(NDIM,0,irec_local)];
+      mp->h_stf_array_adjoint[INDEX2(NDIM,1,irec_local)] = h_stf_array_adjoint[INDEX2(NDIM,1,irec_local)];
+      mp->h_stf_array_adjoint[INDEX2(NDIM,2,irec_local)] = h_stf_array_adjoint[INDEX2(NDIM,2,irec_local)];
 
       // increases local receivers counter
       irec_local++;
@@ -402,9 +391,9 @@ please check mesh_constants_cuda.h");
       clCheck (clReleaseEvent (mp->last_copy_evt));
     }
 
-    clCheck (clEnqueueWriteBuffer (mocl.copy_queue, mp->d_source_adjoint.ocl, CL_FALSE, 0,
+    clCheck (clEnqueueWriteBuffer (mocl.copy_queue, mp->d_stf_array_adjoint.ocl, CL_FALSE, 0,
                                    mp->nadj_rec_local * NDIM * sizeof (realw),
-                                   mp->h_source_adjoint, num_evt, copy_evt, &mp->last_copy_evt));
+                                   mp->h_stf_array_adjoint, num_evt, copy_evt, &mp->last_copy_evt));
     mp->has_last_copy_evt = 1;
   }
 #endif
@@ -415,7 +404,7 @@ please check mesh_constants_cuda.h");
 
     // copies extracted array values onto GPU
     // (asynchronous copy to GPU using copy_stream)
-    cudaMemcpyAsync(mp->d_source_adjoint.cuda, mp->h_source_adjoint,(mp->nadj_rec_local)*NDIM*sizeof(realw),
+    cudaMemcpyAsync(mp->d_stf_array_adjoint.cuda, mp->h_stf_array_adjoint,(mp->nadj_rec_local)*NDIM*sizeof(realw),
                     cudaMemcpyHostToDevice,mp->copy_stream);
   }
 #endif

@@ -38,7 +38,9 @@ cuda_kernels_OBJS := \
 	$O/resort_array.cuda-kernel.o \
 	$O/update_accel_acoustic_kernel.cuda-kernel.o \
 	$O/update_accel_elastic_kernel.cuda-kernel.o \
+	$O/update_acoustic_lddrk_kernel.cuda-kernel.o \
 	$O/update_disp_veloc_kernel.cuda-kernel.o \
+	$O/update_elastic_lddrk_kernel.cuda-kernel.o \
 	$O/update_potential_kernel.cuda-kernel.o \
 	$O/update_veloc_acoustic_kernel.cuda-kernel.o \
 	$O/update_veloc_elastic_kernel.cuda-kernel.o \
