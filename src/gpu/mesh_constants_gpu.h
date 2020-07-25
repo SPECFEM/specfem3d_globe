@@ -1087,6 +1087,7 @@ typedef struct mesh_ {
   // LDDRK
   // ------------------------------------------------------------------ //
   int use_lddrk;
+  gpu_realw_mem d_tau_sigmainvval;
   // wavefields intermediate
   gpu_realw_mem d_displ_crust_mantle_lddrk;
   gpu_realw_mem d_veloc_crust_mantle_lddrk;

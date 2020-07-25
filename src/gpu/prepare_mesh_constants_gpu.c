@@ -725,7 +725,8 @@ void FC_FUNC_ (prepare_fields_attenuat_device,
                                                 realw *factor_common_inner_core,
                                                 realw *one_minus_sum_beta_inner_core,
                                                 realw *alphaval, realw *betaval, realw *gammaval,
-                                                realw *b_alphaval, realw *b_betaval, realw *b_gammaval) {
+                                                realw *b_alphaval, realw *b_betaval, realw *b_gammaval,
+                                                int *N_SLS_f) {
 
   TRACE ("prepare_fields_attenuat_device");
   int R_size1, R_size2, R_size3;
@@ -733,6 +734,7 @@ void FC_FUNC_ (prepare_fields_attenuat_device,
 
   // checks flag
   if (! mp->attenuation) { exit_on_error("prepare_fields_attenuat_device attenuation not properly initialized"); }
+  if (*N_SLS_f != N_SLS) { exit_on_error("N_SLS must be the same for CPU and GPU, please check setting in mesh_constants_gpu.h"); }
 
   // crust_mantle
   R_size1 = N_SLS*NGLL3*mp->NSPEC_CRUST_MANTLE;
@@ -1404,7 +1406,8 @@ void FC_FUNC_ (prepare_oceans_device,
 
 extern EXTERN_LANG
 void FC_FUNC_ (prepare_lddrk_device,
-               PREPARE_LDDRK_DEVICE) (long *Mesh_pointer_f) {
+               PREPARE_LDDRK_DEVICE) (long *Mesh_pointer_f,
+                                      realw *tau_sigmainvval) {
 
   // prepares LDDRK time scheme arrays on GPU
   TRACE ("prepare_lddrk_device");
@@ -1472,13 +1475,13 @@ void FC_FUNC_ (prepare_lddrk_device,
       gpuMemset_realw (&mp->d_b_A_array_rotation_lddrk, size, 0);
       gpuMemset_realw (&mp->d_b_B_array_rotation_lddrk, size, 0);
     }
-    exit_on_error ("prepare_lddrk_device USE_LDDRK and ROTATION not implemented yet on GPUs");
   }
 
   // attenuation
   if (mp->attenuation){
     if (! mp->partial_phys_dispersion_only) {
       // memory variables
+      gpuCreateCopy_todevice_realw (&mp->d_tau_sigmainvval, tau_sigmainvval, N_SLS);
       // crust/mantle
       size = N_SLS * NGLL3 * mp->NSPEC_CRUST_MANTLE;
       gpuMalloc_realw (&mp->d_R_xx_crust_mantle_lddrk, size);
@@ -1529,7 +1532,6 @@ void FC_FUNC_ (prepare_lddrk_device,
         gpuMemset_realw (&mp->d_b_R_xz_inner_core_lddrk, size, 0);
         gpuMemset_realw (&mp->d_b_R_yz_inner_core_lddrk, size, 0);
       }
-      exit_on_error ("prepare_lddrk_device USE_LDDRK and full ATTENUATION not implemented yet on GPUs");
     }
   }
 
@@ -3020,6 +3022,7 @@ void FC_FUNC_ (prepare_cleanup_device,
         gpuFree (&mp->d_R_xy_inner_core_lddrk);
         gpuFree (&mp->d_R_xz_inner_core_lddrk);
         gpuFree (&mp->d_R_yz_inner_core_lddrk);
+        gpuFree (&mp->d_tau_sigmainvval);
         if (mp->simulation_type == 3) {
           gpuFree (&mp->d_b_R_xx_crust_mantle_lddrk);
           gpuFree (&mp->d_b_R_yy_crust_mantle_lddrk);

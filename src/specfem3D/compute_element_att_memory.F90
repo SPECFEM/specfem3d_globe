@@ -170,7 +170,7 @@
 ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
 
   use constants_solver
-  use specfem_par, only: tau_sigma_CUSTOM_REAL,istage
+  use specfem_par, only: tau_sigmainv_CUSTOM_REAL,istage
 
   implicit none
 
@@ -232,23 +232,23 @@
 
       R_xx_lddrk(INDEX_IJK,i_SLS,ispec) = ALPHA_LDDRK(istage) * R_xx_lddrk(INDEX_IJK,i_SLS,ispec) &
                        + deltat * ( factor_common_c44_muv(INDEX_IJK) * epsilondev_loc(INDEX_IJK,1) &
-                                    - R_xx(INDEX_IJK,i_SLS,ispec)*(1._CUSTOM_REAL/tau_sigma_CUSTOM_REAL(i_SLS)) )
+                                    - R_xx(INDEX_IJK,i_SLS,ispec)*tau_sigmainv_CUSTOM_REAL(i_SLS) )
 
       R_yy_lddrk(INDEX_IJK,i_SLS,ispec) = ALPHA_LDDRK(istage) * R_yy_lddrk(INDEX_IJK,i_SLS,ispec) &
                        + deltat * ( factor_common_c44_muv(INDEX_IJK) * epsilondev_loc(INDEX_IJK,2) &
-                                    - R_yy(INDEX_IJK,i_SLS,ispec)*(1._CUSTOM_REAL/tau_sigma_CUSTOM_REAL(i_SLS)) )
+                                    - R_yy(INDEX_IJK,i_SLS,ispec)*tau_sigmainv_CUSTOM_REAL(i_SLS) )
 
       R_xy_lddrk(INDEX_IJK,i_SLS,ispec) = ALPHA_LDDRK(istage) * R_xy_lddrk(INDEX_IJK,i_SLS,ispec) &
                        + deltat * ( factor_common_c44_muv(INDEX_IJK) * epsilondev_loc(INDEX_IJK,3) &
-                                    - R_xy(INDEX_IJK,i_SLS,ispec)*(1._CUSTOM_REAL/tau_sigma_CUSTOM_REAL(i_SLS)) )
+                                    - R_xy(INDEX_IJK,i_SLS,ispec)*tau_sigmainv_CUSTOM_REAL(i_SLS) )
 
       R_xz_lddrk(INDEX_IJK,i_SLS,ispec) = ALPHA_LDDRK(istage) * R_xz_lddrk(INDEX_IJK,i_SLS,ispec) &
                        + deltat * ( factor_common_c44_muv(INDEX_IJK) * epsilondev_loc(INDEX_IJK,4) &
-                                    - R_xz(INDEX_IJK,i_SLS,ispec)*(1._CUSTOM_REAL/tau_sigma_CUSTOM_REAL(i_SLS)) )
+                                    - R_xz(INDEX_IJK,i_SLS,ispec)*tau_sigmainv_CUSTOM_REAL(i_SLS) )
 
       R_yz_lddrk(INDEX_IJK,i_SLS,ispec) = ALPHA_LDDRK(istage) * R_yz_lddrk(INDEX_IJK,i_SLS,ispec) &
                        + deltat * ( factor_common_c44_muv(INDEX_IJK) * epsilondev_loc(INDEX_IJK,5) &
-                                    - R_yz(INDEX_IJK,i_SLS,ispec)*(1._CUSTOM_REAL/tau_sigma_CUSTOM_REAL(i_SLS)) )
+                                    - R_yz(INDEX_IJK,i_SLS,ispec)*tau_sigmainv_CUSTOM_REAL(i_SLS) )
 
       R_xx(INDEX_IJK,i_SLS,ispec) = R_xx(INDEX_IJK,i_SLS,ispec) + BETA_LDDRK(istage) * R_xx_lddrk(INDEX_IJK,i_SLS,ispec)
       R_yy(INDEX_IJK,i_SLS,ispec) = R_yy(INDEX_IJK,i_SLS,ispec) + BETA_LDDRK(istage) * R_yy_lddrk(INDEX_IJK,i_SLS,ispec)
@@ -404,7 +404,7 @@
 ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
 
   use constants_solver
-  use specfem_par, only: tau_sigma_CUSTOM_REAL,istage
+  use specfem_par, only: tau_sigmainv_CUSTOM_REAL,istage
 
   implicit none
 
@@ -466,23 +466,23 @@
 
       R_xx_lddrk(INDEX_IJK,i_SLS,ispec) = ALPHA_LDDRK(istage) * R_xx_lddrk(INDEX_IJK,i_SLS,ispec) &
         + deltat * ( factor_common_use(INDEX_IJK)*epsilondev_loc(INDEX_IJK,1) &
-                     - R_xx(INDEX_IJK,i_SLS,ispec)*(1.0_CUSTOM_REAL/tau_sigma_CUSTOM_REAL(i_SLS)) )
+                     - R_xx(INDEX_IJK,i_SLS,ispec)*tau_sigmainv_CUSTOM_REAL(i_SLS) )
 
       R_yy_lddrk(INDEX_IJK,i_SLS,ispec) = ALPHA_LDDRK(istage) * R_yy_lddrk(INDEX_IJK,i_SLS,ispec) &
         + deltat * ( factor_common_use(INDEX_IJK)*epsilondev_loc(INDEX_IJK,2) &
-                     - R_yy(INDEX_IJK,i_SLS,ispec)*(1.0_CUSTOM_REAL/tau_sigma_CUSTOM_REAL(i_SLS)) )
+                     - R_yy(INDEX_IJK,i_SLS,ispec)*tau_sigmainv_CUSTOM_REAL(i_SLS) )
 
       R_xy_lddrk(INDEX_IJK,i_SLS,ispec) = ALPHA_LDDRK(istage) * R_xy_lddrk(INDEX_IJK,i_SLS,ispec) &
         + deltat * ( factor_common_use(INDEX_IJK)*epsilondev_loc(INDEX_IJK,3) &
-                     - R_xy(INDEX_IJK,i_SLS,ispec)*(1.0_CUSTOM_REAL/tau_sigma_CUSTOM_REAL(i_SLS)) )
+                     - R_xy(INDEX_IJK,i_SLS,ispec)*tau_sigmainv_CUSTOM_REAL(i_SLS) )
 
       R_xz_lddrk(INDEX_IJK,i_SLS,ispec) = ALPHA_LDDRK(istage) * R_xz_lddrk(INDEX_IJK,i_SLS,ispec) &
         + deltat * ( factor_common_use(INDEX_IJK)*epsilondev_loc(INDEX_IJK,4) &
-                     - R_xz(INDEX_IJK,i_SLS,ispec)*(1.0_CUSTOM_REAL/tau_sigma_CUSTOM_REAL(i_SLS)) )
+                     - R_xz(INDEX_IJK,i_SLS,ispec)*tau_sigmainv_CUSTOM_REAL(i_SLS) )
 
       R_yz_lddrk(INDEX_IJK,i_SLS,ispec) = ALPHA_LDDRK(istage) * R_yz_lddrk(INDEX_IJK,i_SLS,ispec) &
         + deltat * ( factor_common_use(INDEX_IJK)*epsilondev_loc(INDEX_IJK,5) &
-                     - R_yz(INDEX_IJK,i_SLS,ispec)*(1.0_CUSTOM_REAL/tau_sigma_CUSTOM_REAL(i_SLS)) )
+                     - R_yz(INDEX_IJK,i_SLS,ispec)*tau_sigmainv_CUSTOM_REAL(i_SLS) )
 
       R_xx(INDEX_IJK,i_SLS,ispec) = R_xx(INDEX_IJK,i_SLS,ispec) + BETA_LDDRK(istage) * R_xx_lddrk(INDEX_IJK,i_SLS,ispec)
       R_yy(INDEX_IJK,i_SLS,ispec) = R_yy(INDEX_IJK,i_SLS,ispec) + BETA_LDDRK(istage) * R_yy_lddrk(INDEX_IJK,i_SLS,ispec)

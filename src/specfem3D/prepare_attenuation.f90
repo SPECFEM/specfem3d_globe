@@ -398,7 +398,8 @@
   endif
 
   if (USE_LDDRK) then
-    tau_sigma_CUSTOM_REAL(:) = real(tau_sigma_dble(:), kind=CUSTOM_REAL)
+    ! inverts tau_sigma as we only need 1/tau_sigma factors
+    tau_sigmainv_CUSTOM_REAL(:) = real(1.d0/tau_sigma_dble(:), kind=CUSTOM_REAL)
   endif
 
   if (UNDO_ATTENUATION) then

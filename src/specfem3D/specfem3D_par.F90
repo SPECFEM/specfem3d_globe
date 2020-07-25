@@ -455,7 +455,7 @@ module specfem_par
 
   ! LDDRK time scheme
   integer :: NSTAGE_TIME_SCHEME,istage
-  real(kind=CUSTOM_REAL),dimension(N_SLS) :: tau_sigma_CUSTOM_REAL
+  real(kind=CUSTOM_REAL),dimension(N_SLS) :: tau_sigmainv_CUSTOM_REAL
 
   ! UNDO_ATTENUATION
   integer :: NT_DUMP_ATTENUATION,NSUBSET_ITERATIONS

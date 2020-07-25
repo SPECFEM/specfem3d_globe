@@ -421,6 +421,7 @@ GPU_REALW_BUFFER (d_Sigma_kl);
 // ------------------------------------------------------------------   //
 // LDDRK
 // ------------------------------------------------------------------   //
+GPU_REALW_BUFFER (d_tau_sigmainvval);
 // wavefields intermediate
 GPU_REALW_BUFFER (d_displ_crust_mantle_lddrk);
 GPU_REALW_BUFFER (d_veloc_crust_mantle_lddrk);

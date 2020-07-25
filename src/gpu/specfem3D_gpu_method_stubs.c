@@ -166,6 +166,7 @@ void FC_FUNC_ (compute_coupling_ocean_gpu,
 void FC_FUNC_ (compute_forces_crust_mantle_gpu,
                COMPUTE_FORCES_CRUST_MANTLE_GPU) (long *Mesh_pointer_f,
                                                  int *iphase,
+                                                 realw *alpha_lddrk_f, realw *beta_lddrk_f,
                                                  int *FORWARD_OR_ADJOINT_f) {}
 
 
@@ -176,6 +177,7 @@ void FC_FUNC_ (compute_forces_crust_mantle_gpu,
 void FC_FUNC_ (compute_forces_inner_core_gpu,
                COMPUTE_FORCES_INNER_CORE_GPU) (long *Mesh_pointer_f,
                                                int *iphase,
+                                               realw *alpha_lddrk_f, realw *beta_lddrk_f,
                                                int *FORWARD_OR_ADJOINT_f) {}
 
 
@@ -420,7 +422,8 @@ void FC_FUNC_ (prepare_fields_attenuat_device,
                                                 realw *factor_common_inner_core,
                                                 realw *one_minus_sum_beta_inner_core,
                                                 realw *alphaval, realw *betaval, realw *gammaval,
-                                                realw *b_alphaval, realw *b_betaval, realw *b_gammaval) {}
+                                                realw *b_alphaval, realw *b_betaval, realw *b_gammaval,
+                                                int *N_SLS_f) {}
 
 void FC_FUNC_ (prepare_fields_strain_device,
                PREPARE_FIELDS_STRAIN_DEVICE) (long *Mesh_pointer_f,
@@ -513,7 +516,8 @@ void FC_FUNC_ (prepare_oceans_device,
                                        realw *h_normal_ocean_load) {}
 
 void FC_FUNC_ (prepare_lddrk_device,
-               PREPARE_LDDRK_DEVICE) (long *Mesh_pointer_f) {}
+               PREPARE_LDDRK_DEVICE) (long *Mesh_pointer_f,
+                                      realw *tau_sigmainvval) {}
 
 void FC_FUNC_ (prepare_crust_mantle_device,
                PREPARE_CRUST_MANTLE_DEVICE) (long *Mesh_pointer_f,

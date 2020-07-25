@@ -396,9 +396,6 @@
   if (USE_LDDRK .and. (ABSORBING_CONDITIONS .and. .not. UNDO_ATTENUATION) ) &
     stop 'USE_LDDRK support requires to use UNDO_ATTENUATION when absorbing boundaries are turned on'
 
-  if (USE_LDDRK .and. GPU_MODE .and. ATTENUATION .and. (.not. PARTIAL_PHYS_DISPERSION_ONLY)) &
-    stop 'USE_LDDRK support not implemented yet for GPU simulations with full ATTENUATION'
-
   if (UNDO_ATTENUATION .and. MOVIE_VOLUME .and. MOVIE_VOLUME_TYPE == 4 ) &
     stop 'UNDO_ATTENUATION support not implemented yet for MOVIE_VOLUME_TYPE == 4 simulations'
   if (UNDO_ATTENUATION .and. SIMULATION_TYPE == 3 .and. (MOVIE_VOLUME .or. MOVIE_SURFACE) ) &

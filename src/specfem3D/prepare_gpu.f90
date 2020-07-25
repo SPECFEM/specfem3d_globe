@@ -176,7 +176,7 @@
                                           factor_common_inner_core, &
                                           one_minus_sum_beta_inner_core, &
                                           alphaval,betaval,gammaval, &
-                                          b_alphaval,b_betaval,b_gammaval)
+                                          b_alphaval,b_betaval,b_gammaval,N_SLS)
     else
       call prepare_fields_attenuat_device(Mesh_pointer, &
                                           R_xx_crust_mantle,R_yy_crust_mantle,R_xy_crust_mantle, &
@@ -192,7 +192,7 @@
                                           factor_common_inner_core, &
                                           one_minus_sum_beta_inner_core, &
                                           alphaval,betaval,gammaval, &
-                                          dummy,dummy,dummy)
+                                          dummy,dummy,dummy,N_SLS)
 
     endif
   endif
@@ -335,7 +335,7 @@
     endif
     call synchronize_all()
 
-    call prepare_lddrk_device(Mesh_pointer)
+    call prepare_lddrk_device(Mesh_pointer,tau_sigmainv_CUSTOM_REAL)
 
     call synchronize_all()
   endif
