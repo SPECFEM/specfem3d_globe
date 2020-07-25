@@ -239,9 +239,9 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_xy_lddrk.ocl));
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_xz_lddrk.ocl));
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_yz_lddrk.ocl));
-    clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (realw), (void *) &alpha_lddrk));
-    clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (realw), (void *) &beta_lddrk));
-    clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (int), (void *) &mp->use_lddrk));
+    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (realw), (void *) &alpha_lddrk));
+    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (realw), (void *) &beta_lddrk));
+    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->use_lddrk));
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &alphaval.ocl));
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &betaval.ocl));
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &gammaval.ocl));
