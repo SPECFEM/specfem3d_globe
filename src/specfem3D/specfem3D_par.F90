@@ -249,7 +249,7 @@ module specfem_par
   ! non-dimensionalized rotation rate of the Earth times two
   real(kind=CUSTOM_REAL) :: two_omega_earth
   !ADJOINT
-  real(kind=CUSTOM_REAL) b_two_omega_earth
+  real(kind=CUSTOM_REAL) :: b_two_omega_earth
 
   !-----------------------------------------------------------------
   ! gravity
@@ -257,7 +257,7 @@ module specfem_par
 
   ! lookup table every km for gravity
   real(kind=CUSTOM_REAL) :: minus_g_cmb,minus_g_icb
-  double precision, dimension(NRAD_GRAVITY) :: minus_gravity_table, &
+  double precision, dimension(:),allocatable :: minus_gravity_table, &
     minus_deriv_gravity_table,density_table,d_ln_density_dr_table,minus_rho_g_over_kappa_fluid
 
   ! pre-computed vectors

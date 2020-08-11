@@ -58,6 +58,9 @@
   double precision,dimension(:),allocatable :: QRFSI12_Q_spknt
   double precision,dimension(:),allocatable :: QRFSI12_Q_refdepth,QRFSI12_Q_refqmu
 
+  ! helper array
+  real(kind=4),dimension(:),allocatable :: xlmvec
+
   end module model_atten3D_QRFSI12_par
 
 !
@@ -101,6 +104,11 @@
     write(IMAIN,*)
     call flush_IMAIN()
   endif
+
+  ! helper array
+  allocate(xlmvec(NSQ**2),stat=ier)
+  if (ier /= 0) stop 'Error allocating helper array'
+  xlmvec(:) = 0.0
 
   end subroutine
 
@@ -205,7 +213,6 @@
   real(kind=4) :: splpts(NKQ),splcon(NKQ),splcond(NKQ)
   real(kind=4) :: depth,ylat,xlon
   real(kind=4) :: shdep(NSQ)
-  real(kind=4) :: xlmvec(NSQ**2)
 
 
   ! in Colleen's original code theta refers to the latitude.  Here we have redefined theta to be colatitude
@@ -275,13 +282,17 @@
       do n = 1,NKQ
         splpts(n) = QRFSI12_Q_spknt(n)
       enddo
+
       call vbspl(depth,NKQ,splpts,splcon,splcond)
+
       do n = 1,NKQ
         do j = 1,NSQ
           shdep(j) = shdep(j)+(splcon(n)*QRFSI12_Q_dqmu(n,j))
         enddo
       enddo
+
       call ylm(ylat,xlon,MAXL_Q,xlmvec)
+
       dqmu = 0.0
       do k = 1,NSQ
         dqmu = dqmu+xlmvec(k)*shdep(k)

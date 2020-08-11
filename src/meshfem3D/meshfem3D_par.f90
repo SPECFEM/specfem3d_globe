@@ -228,7 +228,7 @@
 
   ! 3D shape functions and their derivatives
   double precision, dimension(NGNOD,NGLLX,NGLLY,NGLLZ) :: shape3D
-  double precision, dimension(NDIM,NGNOD,NGLLX,NGLLY,NGLLZ) :: dershape3D
+  double precision, dimension(:,:,:,:,:),allocatable :: dershape3D
 
   ! 2D shape functions and their derivatives
   double precision, dimension(NGNOD2D,NGLLY,NGLLZ) :: shape2D_x

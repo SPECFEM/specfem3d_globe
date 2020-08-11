@@ -153,7 +153,7 @@
   ! cross-section infos
   integer :: section_type
   integer :: nsection_params
-  character(len=MAX_STRING_LEN),dimension(MAX_KERNEL_NAMES) :: param_args
+  character(len=MAX_STRING_LEN),dimension(:),allocatable :: param_args
 
   ! depth with respect to with topography
   logical :: TOPOGRAPHY
@@ -227,6 +227,11 @@
     enddo
   endif
   call synchronize_all()
+
+  ! allocates arrays
+  allocate(param_args(MAX_KERNEL_NAMES),stat=ier)
+  if (ier /= 0) stop 'Error allocating param_args array'
+  param_args(:) = ''
 
   ! initializes cross section type
   section_type = 0

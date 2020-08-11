@@ -59,8 +59,8 @@
   ! model_crust_variables
   ! Vp, Vs and density
   double precision, dimension(:,:), allocatable :: crust_vp,crust_vs,crust_rho
-  character(len=5) :: abbreviation(CRUST_NLA/2,CRUST_NLA)
-  character(len=5) :: code(CRUST_NLO)
+  character(len=5),dimension(:,:),allocatable :: abbreviation
+  character(len=5),dimension(:),allocatable :: code
 
   ! layer thickness
   double precision, dimension(:,:), allocatable :: crust_thickness
@@ -98,6 +98,13 @@
   crust_vs(:,:) = ZERO
   crust_rho(:,:) = ZERO
   crust_thickness(:,:) = ZERO
+
+  ! allocates arrays
+  allocate(abbreviation(CRUST_NLA/2,CRUST_NLA), &
+           code(CRUST_NLO),stat=ier)
+  if (ier /= 0) stop 'Error allocating abbrev.. arrays'
+  abbreviation(:,:) = ''
+  code(:) = ''
 
   ! the variables read are declared and stored in structure model_sglobecrust_par
   if (myrank == 0) call read_sglobecrust_model()

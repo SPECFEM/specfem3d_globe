@@ -66,8 +66,7 @@ program combine_sem_globe
   integer, parameter :: NARGS = 3
 
   character(len=MAX_STRING_LEN) :: arg(NARGS)
-  character(len=MAX_STRING_LEN) :: kernel_paths(MAX_KERNEL_PATHS)
-  character(len=MAX_STRING_LEN),dimension(MAX_KERNEL_NAMES) :: kernel_names
+  character(len=MAX_STRING_LEN),dimension(:),allocatable :: kernel_paths,kernel_names
   character(len=MAX_STRING_LEN) :: sline,output_dir,input_file,kernel_names_comma_delimited, kernel_name
   integer :: i,ier,iker,npath,nker
   integer :: sizeprocs
@@ -102,6 +101,13 @@ program combine_sem_globe
     write(*,*) 'Running XCOMBINE_SEM'
     write(*,*)
   endif
+
+  ! allocates arrays
+  allocate(kernel_paths(MAX_KERNEL_PATHS), &
+           kernel_names(MAX_KERNEL_NAMES),stat=ier)
+  if (ier /= 0) stop 'Error allocating kernel_paths array'
+  kernel_paths(:) = ''
+  kernel_names(:) = ''
 
   ! parse command line arguments
   do i = 1, NARGS

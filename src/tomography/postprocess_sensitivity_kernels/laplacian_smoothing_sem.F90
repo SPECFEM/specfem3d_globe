@@ -98,7 +98,7 @@ program smooth_laplacian_sem
 
 
   character(len=MAX_STRING_LEN),dimension(NARGS) :: arg
-  character(len=MAX_STRING_LEN),dimension(MAX_KERNEL_NAMES) :: kernel_names
+  character(len=MAX_STRING_LEN),dimension(:),allocatable :: kernel_names
   character(len=MAX_STRING_LEN) :: kernel_names_comma_delimited
   character(len=MAX_STRING_LEN) :: kernel_name, topo_dir
 
@@ -189,6 +189,11 @@ program smooth_laplacian_sem
      print *
   endif
   call synchronize_all()
+
+  ! allocates arrays
+  allocate(kernel_names(MAX_KERNEL_NAMES),stat=ier)
+  if (ier /= 0) stop 'Error allocating kernel_names array'
+  kernel_names(:) = ''
 
   ! parse command line arguments
   do i = 1, NARGS

@@ -83,6 +83,8 @@ else
     ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TESTFLAGS}
   fi
 fi
+if [[ $? -ne 0 ]]; then exit 1; fi
+
 # we output to console
 sed -i "s:IMAIN .*:IMAIN = ISTANDARD_OUTPUT:" setup/constants.h
 
@@ -96,6 +98,7 @@ echo -en 'travis_fold:end:configure\\r'
 echo 'Build...' && echo -en 'travis_fold:start:build\\r'
 echo "compilation:"
 make clean
+if [[ $? -ne 0 ]]; then exit 1; fi
 echo -en 'travis_fold:end:build\\r'
 
 
@@ -162,6 +165,7 @@ else
   fi
   cd $WORKDIR
 fi
+if [[ $? -ne 0 ]]; then exit 1; fi
 echo -en 'travis_fold:end:tests\\r'
 
 
@@ -177,6 +181,7 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   cd EXAMPLES/point_force/
   sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
   ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
   cd $WORKDIR
 fi
 echo -en 'travis_fold:end:coverage.point-force\\r'
@@ -189,6 +194,7 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   cd EXAMPLES/regular_kernel/
   sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
   ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
   cd $WORKDIR
 fi
 echo -en 'travis_fold:end:coverage.regular-kernel\\r'
@@ -201,6 +207,7 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "2" ]; then
   cd EXAMPLES/global_small/
   sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
   ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
   cd $WORKDIR
 fi
 echo -en 'travis_fold:end:coverage.global-small\\r'
@@ -213,6 +220,7 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "2" ]; then
   cd EXAMPLES/regional_sgloberani/
   sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
   ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
   cd $WORKDIR
 fi
 echo -en 'travis_fold:end:coverage.regional-sgloberani\\r'
@@ -225,6 +233,7 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "2" ]; then
   cd EXAMPLES/regional_s40rts/
   sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
   ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
   cd $WORKDIR
 fi
 echo -en 'travis_fold:end:coverage.regional-s40rts\\r'
@@ -237,6 +246,7 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   cd EXAMPLES/mars_regional/
   sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
   ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
   cd $WORKDIR
 fi
 echo -en 'travis_fold:end:coverage.mars-regional\\r'
@@ -249,6 +259,7 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   cd EXAMPLES/moon_global/
   sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
   ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
   cd $WORKDIR
 fi
 echo -en 'travis_fold:end:coverage.moon-global\\r'
@@ -261,6 +272,7 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   cd EXAMPLES/regional_Greece_small_LDDRK/
   sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
   ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
   cd $WORKDIR
 fi
 echo -en 'travis_fold:end:coverage.regional-LDDRK\\r'
@@ -274,6 +286,7 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.1:" DATA/Par_file
   sed -i "s:2999:199:g" run_this_example.kernel.sh
   ./run_this_example.kernel.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
   cd $WORKDIR
 fi
 echo -en 'travis_fold:end:coverage.regional-noise\\r'
