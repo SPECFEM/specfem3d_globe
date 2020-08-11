@@ -228,6 +228,9 @@
 
   ! 3D shape functions and their derivatives
   double precision, dimension(NGNOD,NGLLX,NGLLY,NGLLZ) :: shape3D
+
+  ! note: having an array size > 64k, which is the stack default limit on MacOS, it would lead to compilation
+  !       warnings/issues with newer gcc version 10.x; using allocatable array instead
   double precision, dimension(:,:,:,:,:),allocatable :: dershape3D
 
   ! 2D shape functions and their derivatives
