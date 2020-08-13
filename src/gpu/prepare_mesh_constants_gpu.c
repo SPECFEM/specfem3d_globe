@@ -3190,6 +3190,9 @@ void FC_FUNC_ (prepare_cleanup_device,
     }
     if (mp->approximate_hess_kl) {
       gpuFree (&mp->d_hess_kl_crust_mantle);
+      gpuFree (&mp->d_hess_rho_kl_crust_mantle);
+      gpuFree (&mp->d_hess_kappa_kl_crust_mantle);
+      gpuFree (&mp->d_hess_mu_kl_crust_mantle);
     }
   }
 

@@ -836,6 +836,9 @@ void FC_FUNC_(transfer_kernels_noise_to_host,
 void FC_FUNC_(transfer_kernels_hess_cm_tohost,
               TRANSFER_KERNELS_HESS_CM_TOHOST)(long *Mesh_pointer_f,
                                                realw *h_hess_kl,
+                                               realw *h_hess_rho_kl,
+                                               realw *h_hess_kappa_kl,
+                                               realw *h_hess_mu_kl,
                                                int *NSPEC) {}
 
 void FC_FUNC_(register_host_array,

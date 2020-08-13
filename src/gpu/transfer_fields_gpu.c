@@ -1216,6 +1216,9 @@ extern EXTERN_LANG
 void FC_FUNC_(transfer_kernels_hess_cm_tohost,
               TRANSFER_KERNELS_HESS_CM_TOHOST)(long *Mesh_pointer_f,
                                                realw *h_hess_kl,
+                                               realw *h_hess_rho_kl,
+                                               realw *h_hess_kappa_kl,
+                                               realw *h_hess_mu_kl,
                                                int *NSPEC) {
   TRACE("transfer_kernels_hess_cm_tohost");
 
@@ -1224,9 +1227,9 @@ void FC_FUNC_(transfer_kernels_hess_cm_tohost,
 
   // copies array to CPU
   gpuCopy_from_device_realw (&mp->d_hess_kl_crust_mantle, h_hess_kl, NGLL3 * (*NSPEC));
-  gpuCopy_from_device_realw (&mp->d_hess_rho_kl_crust_mantle, h_hess_kl, NGLL3 * (*NSPEC));
-  gpuCopy_from_device_realw (&mp->d_hess_kappa_kl_crust_mantle, h_hess_kl, NGLL3 * (*NSPEC));
-  gpuCopy_from_device_realw (&mp->d_hess_mu_kl_crust_mantle, h_hess_kl, NGLL3 * (*NSPEC));
+  gpuCopy_from_device_realw (&mp->d_hess_rho_kl_crust_mantle, h_hess_rho_kl, NGLL3 * (*NSPEC));
+  gpuCopy_from_device_realw (&mp->d_hess_kappa_kl_crust_mantle, h_hess_kappa_kl, NGLL3 * (*NSPEC));
+  gpuCopy_from_device_realw (&mp->d_hess_mu_kl_crust_mantle, h_hess_mu_kl, NGLL3 * (*NSPEC));
 
   GPU_ERROR_CHECKING ("after transfer_kernels_hess_cm_tohost");
 }
