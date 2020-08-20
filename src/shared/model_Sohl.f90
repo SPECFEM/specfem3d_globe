@@ -142,7 +142,7 @@
   ! check flags to make sure we correctly honor the discontinuities
   ! we use strict inequalities since r has been slightly changed in mesher
 
-  ! note: using stop statements, not exit_mpi() calls to avoid the need for mpi libraries when linking xcreate_header_file
+  ! note: using stop statements, not exit_mpi() calls to avoid the need for MPI libraries when linking xcreate_header_file
 
   if (check_doubling_flag) then
     !
