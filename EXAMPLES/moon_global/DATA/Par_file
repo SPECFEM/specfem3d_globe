@@ -207,6 +207,10 @@ NTSTEP_BETWEEN_READ_ADJSRC      = 1000000
 # its norm is ignored and the norm of the force used is the factor force source times the source time function.
 USE_FORCE_POINT_SOURCE          = .true.
 
+# use monochromatic source time function instead of Heaviside for CMTSOLUTION moment-tensor source.
+# half duration is interpreted as a PERIOD just to avoid changing CMTSOLUTION file format
+USE_MONOCHROMATIC_CMT_SOURCE    = .false.
+
 # option to save strain seismograms
 # this option is useful for strain Green's tensor
 # this feature is currently under development
