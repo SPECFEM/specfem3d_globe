@@ -79,11 +79,11 @@
   double precision,intent(in) :: t,f0
   double precision :: tt
   integer :: taper
-  
+
   tt = 2 * PI * f0 * t
   taper = ceiling(TAPER_MONOCHROMATIC_SOURCE * f0)
 
-  if (t .lt. taper / f0) then
+  if (t < taper / f0) then
     comp_source_time_function_mono = sin(tt) * (0.5 - 0.5 * cos(tt / taper / 2.0))
   else
     comp_source_time_function_mono = sin(tt)
