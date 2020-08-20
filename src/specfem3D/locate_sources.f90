@@ -50,7 +50,7 @@
 
   ! forces
   use specfem_par, only: &
-    USE_FORCE_POINT_SOURCE,force_stf,factor_force_source, &
+    USE_FORCE_POINT_SOURCE, USE_MONOCHROMATIC_CMT_SOURCE,force_stf,factor_force_source, &
     comp_dir_vect_source_E,comp_dir_vect_source_N,comp_dir_vect_source_Z_UP
 
   use specfem_par, only: &
@@ -535,6 +535,12 @@
             case default
               stop 'unsupported force_stf value!'
             end select
+          else if (USE_MONOCHROMATIC_CMT_SOURCE) then
+            ! moment tensor
+            write(IMAIN,*) '    using monochromatic source time function'
+            ! add message if source is monochromatic
+            write(IMAIN,*)
+            write(IMAIN,*) '    period: ',hdur(isource),' seconds'
           else
             ! moment tensor
             write(IMAIN,*) '    using (quasi) Heaviside source time function'

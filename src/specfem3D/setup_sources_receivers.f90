@@ -828,8 +828,13 @@
     t0 = - t0
   else
     ! moment tensors
+    if (USE_MONOCHROMATIC_CMT_SOURCE) then
+    ! (based on monochromatic functions)
+      t0 = 0.d0
+    else
     ! (based on Heaviside functions)
-    t0 = - 1.5d0 * minval( tshift_src(:) - hdur(:) )
+      t0 = - 1.5d0 * minval( tshift_src(:) - hdur(:) )
+    endif
   endif
 
   ! uses an external file for source time function, which starts at time 0.0

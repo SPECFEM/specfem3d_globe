@@ -473,7 +473,7 @@
 
 ! returns source time function value for specified time
 
-  use specfem_par, only: USE_FORCE_POINT_SOURCE,force_stf,hdur,hdur_Gaussian
+  use specfem_par, only: USE_FORCE_POINT_SOURCE,USE_MONOCHROMATIC_CMT_SOURCE,force_stf,hdur,hdur_Gaussian
 
   implicit none
 
@@ -515,7 +515,12 @@
   else
     ! moment-tensor
     ! Heaviside source time function
-    stf = comp_source_time_function(time_source_dble,hdur_Gaussian(isource))
+    if (USE_MONOCHROMATIC_CMT_SOURCE) then
+      f0 = 1.d0 / hdur(isource) ! using half duration as a FREQUENCY just to avoid changing CMTSOLUTION file format
+      stf = comp_source_time_function_mono(time_source_dble,f0)
+    else
+      stf = comp_source_time_function(time_source_dble,hdur_Gaussian(isource))
+    endif
   endif
 
   ! return value

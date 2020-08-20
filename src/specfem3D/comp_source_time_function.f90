@@ -72,13 +72,22 @@
 
   double precision function comp_source_time_function_mono(t,f0)
 
-  use constants, only: PI
+  use constants, only: PI,TAPER_MONOCHROMATIC_SOURCE
 
   implicit none
 
   double precision,intent(in) :: t,f0
+  double precision :: tt
+  integer :: taper
+  
+  tt = 2 * PI * f0 * t
+  taper = ceiling(TAPER_MONOCHROMATIC_SOURCE * f0)
 
-  comp_source_time_function_mono = sin(2.d0 * PI * f0 * t)
+  if (t .lt. taper / f0) then
+    comp_source_time_function_mono = sin(tt) * (0.5 - 0.5 * cos(tt / taper / 2.0))
+  else
+    comp_source_time_function_mono = sin(tt)
+  endif
 
   ! monochromatic source time function
 
