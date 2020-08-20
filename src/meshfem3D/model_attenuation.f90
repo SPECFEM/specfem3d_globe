@@ -126,7 +126,7 @@
 
   implicit none
 
-  ! master process determines period ranges
+  ! main process determines period ranges
   if (myrank == 0) call read_attenuation_model()
 
   ! broadcasts to all others
@@ -442,6 +442,7 @@
   if (Qmu <= 0.0d0) Qmu = ATTENUATION_COMP_MAXIMUM
   if (Qmu > ATTENUATION_COMP_MAXIMUM) Qmu = ATTENUATION_COMP_MAXIMUM
 
+  ! won't get executed since Qmu not zero anymore, but left here...
   if (rw > 0 .and. Qmu == 0.0d0) then
     ! read
     Qmu = 0.0d0

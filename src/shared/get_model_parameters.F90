@@ -169,7 +169,7 @@
   endif
 
   ! 3D crust options
-  ! model name has "_crustmaps", "_crust1.0", "_crust2.0", "_epcrust", "_eucrust", "_crustSH" appended:
+  ! model name has "_crustmaps", "_crust1.0", "_crust2.0", "_epcrust", "_eucrust", "_crustSH", "_sglobecrust" appended:
   ! "MODEL   = **model**_crust1.0" ..
   !
   ! this will use the corresponding 3D crustal model instead of the default crust (usually CRUST2.0).
@@ -216,6 +216,13 @@
     impose_crust = ICRUST_CRUST_SH
     ! in case it has an ending for the crust, remove it from the name
     MODEL_ROOT = MODEL_ROOT(1: len_trim(MODEL_ROOT)-8)
+  endif
+  ! checks with '_sglobecrust' option
+  if (len_trim(MODEL_ROOT) > 12 ) ending = MODEL_ROOT(len_trim(MODEL_ROOT)-11:len_trim(MODEL_ROOT))
+  if (trim(ending) == '_sglobecrust') then
+    impose_crust = ICRUST_SGLOBECRUST
+    ! in case it has an ending for the crust, remove it from the name
+    MODEL_ROOT = MODEL_ROOT(1: len_trim(MODEL_ROOT)-12)
   endif
 
   ! save main model name (without appended options)
@@ -539,6 +546,8 @@
 
   case ('sgloberani_aniso')
     ! anisotropic perturbations to PREM
+    REFERENCE_1D_MODEL = REFERENCE_MODEL_PREM
+    REFERENCE_CRUSTAL_MODEL = ICRUST_SGLOBECRUST
     CASE_3D = .true.
     CRUSTAL = .true.
     MODEL_3D_MANTLE_PERTUBATIONS = .true.
@@ -548,6 +557,8 @@
 
   case ('sgloberani_iso')
     ! isotropic perturbations to PREM
+    REFERENCE_1D_MODEL = REFERENCE_MODEL_PREM
+    REFERENCE_CRUSTAL_MODEL = ICRUST_SGLOBECRUST
     CASE_3D = .true.
     CRUSTAL = .true.
     MODEL_3D_MANTLE_PERTUBATIONS = .true.
@@ -841,7 +852,7 @@
 
 ! note: Please make sure to broadcast the values below in broadcast_computed_parameters.f90
 !
-!       here, only the master process is setting the new defaults.
+!       here, only the main process is setting the new defaults.
 !       thus, they need to be broadcast to all other processes.
 !       this will be done in routine broadcast_computed_parameters().
 

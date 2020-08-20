@@ -924,6 +924,13 @@
   ! topology of the elements
   integer, dimension(NGNOD) :: iaddx,iaddy,iaddz
 
+  ! allocates array
+  if (.not. allocated(dershape3D)) then
+    allocate(dershape3D(NDIM,NGNOD,NGLLX,NGLLY,NGLLZ),stat=ier)
+    if (ier /= 0) stop 'Error allocating dershape3D array'
+    dershape3D(:,:,:,:,:) = 0.d0
+  endif
+
   ! do only once
   if (ipass == 1) then
     ! set up coordinates of the Gauss-Lobatto-Legendre points

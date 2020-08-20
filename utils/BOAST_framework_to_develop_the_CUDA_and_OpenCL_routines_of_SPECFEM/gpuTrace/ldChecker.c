@@ -960,7 +960,7 @@ void buffer_released (struct ld_mem_s *ldBuffer) {
 void debug(const char *format, ...) {
   va_list args;
 
-  ONLY_MPI_MASTER();
+  ONLY_MPI_MAIN();
 
   va_start(args, format);
 
@@ -973,7 +973,7 @@ void debug(const char *format, ...) {
 void info(const char *format, ...) {
   va_list args;
 
-  ONLY_MPI_MASTER();
+  ONLY_MPI_MAIN();
 
   va_start(args, format);
 
@@ -986,7 +986,7 @@ void info(const char *format, ...) {
 void warning(const char *format, ...) {
   va_list args;
 
-  ONLY_MPI_MASTER();
+  ONLY_MPI_MAIN();
 
   va_start(args, format);
 
@@ -1014,7 +1014,7 @@ void error(const char *format, ...) {
 void gpu_info(const char *format, ...) {
   va_list args;
 
-  ONLY_MPI_MASTER();
+  ONLY_MPI_MAIN();
 
   va_start(args, format);
 
@@ -1026,7 +1026,7 @@ void gpu_info(const char *format, ...) {
 void gpu_trace(const char *format, ...) {
   va_list args;
 
-  ONLY_MPI_MASTER();
+  ONLY_MPI_MAIN();
 
   va_start(args, format);
 

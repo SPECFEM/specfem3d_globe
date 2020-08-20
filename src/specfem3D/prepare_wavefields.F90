@@ -209,8 +209,12 @@
     ! needed for subroutine calls
     allocate(b_A_array_rotation(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROT_ADJOINT), &
              b_B_array_rotation(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROT_ADJOINT),stat=ier)
-    if (ier /= 0) stop 'Error allocating arrays b_A_array_rotation,..'
+  else
+    ! dummy allocation (needed for subroutine calls)
+    allocate(b_A_array_rotation(1,1,1,1), &
+             b_B_array_rotation(1,1,1,1),stat=ier)
   endif
+  if (ier /= 0) stop 'Error allocating arrays b_A_array_rotation,..'
 
   ! Runge-Kutta time scheme
   if (USE_LDDRK) then
@@ -686,8 +690,8 @@
 #else
   ! initialization without OpenMP, most direct way
   !
-  ! note: when using OpenMP for simulations, this initialization will be executed by the master thread (for each MPI) process
-  !       and thus memory might be mapped closer to master thread than later on the additional OpenMP threads
+  ! note: when using OpenMP for simulations, this initialization will be executed by the main thread (for each MPI) process
+  !       and thus memory might be mapped closer to main thread than later on the additional OpenMP threads
 
   ! initialize arrays to zero
   displ_crust_mantle(:,:) = init_value

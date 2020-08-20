@@ -109,12 +109,12 @@ static __device__ void compute_element_ic_att_memory(const int tx, const int wor
   int offset;
   int i_sls;
   float mul;
-  float alphaval_loc;
-  float betaval_loc;
-  float gammaval_loc;
   float factor_loc;
   float sn;
   float snp1;
+  float alphaval_loc;
+  float betaval_loc;
+  float gammaval_loc;
 
   mul = d_muvstore[tx + (NGLL3_PADDED) * (working_element)];
 
@@ -144,6 +144,49 @@ static __device__ void compute_element_ic_att_memory(const int tx, const int wor
     sn = (factor_loc) * (epsilondev_yz[tx + (NGLL3) * (working_element)]);
     snp1 = (factor_loc) * (epsilondev_yz_loc);
     R_yz[offset] = (alphaval_loc) * (R_yz[offset]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);
+  }
+}
+
+static __device__ void compute_element_ic_att_memory_lddrk(const int tx, const int working_element, const float * d_muvstore, const float * factor_common, const float * tau_sigmainvval, float * R_xx, float * R_yy, float * R_xy, float * R_xz, float * R_yz, float * R_xx_lddrk, float * R_yy_lddrk, float * R_xy_lddrk, float * R_xz_lddrk, float * R_yz_lddrk, const float alpha_lddrk, const float beta_lddrk, const float deltat, const float epsilondev_xx_loc, const float epsilondev_yy_loc, const float epsilondev_xy_loc, const float epsilondev_xz_loc, const float epsilondev_yz_loc, const int USE_3D_ATTENUATION_ARRAYS){
+  int offset;
+  int i_sls;
+  float mul;
+  float factor_loc;
+  float sn;
+  float snp1;
+  float tau_sigmainv_loc;
+
+  mul = d_muvstore[tx + (NGLL3_PADDED) * (working_element)];
+
+  for (i_sls = 0; i_sls <= N_SLS - (1); i_sls += 1) {
+    offset = tx + (NGLL3) * (i_sls + (N_SLS) * (working_element));
+    if (USE_3D_ATTENUATION_ARRAYS) {
+      factor_loc = (mul) * (factor_common[offset]);
+    } else {
+      factor_loc = (mul) * (factor_common[i_sls + (N_SLS) * (working_element)]);
+    }
+    tau_sigmainv_loc = tau_sigmainvval[i_sls];
+
+    sn = (tau_sigmainv_loc) * (R_xx[offset]);
+    snp1 = (factor_loc) * (epsilondev_xx_loc);
+    R_xx_lddrk[offset] = (alpha_lddrk) * (R_xx_lddrk[offset]) + (deltat) * (snp1 - (sn));
+    R_xx[offset] = R_xx[offset] + (beta_lddrk) * (R_xx_lddrk[offset]);
+    sn = (tau_sigmainv_loc) * (R_yy[offset]);
+    snp1 = (factor_loc) * (epsilondev_yy_loc);
+    R_yy_lddrk[offset] = (alpha_lddrk) * (R_yy_lddrk[offset]) + (deltat) * (snp1 - (sn));
+    R_yy[offset] = R_yy[offset] + (beta_lddrk) * (R_yy_lddrk[offset]);
+    sn = (tau_sigmainv_loc) * (R_xy[offset]);
+    snp1 = (factor_loc) * (epsilondev_xy_loc);
+    R_xy_lddrk[offset] = (alpha_lddrk) * (R_xy_lddrk[offset]) + (deltat) * (snp1 - (sn));
+    R_xy[offset] = R_xy[offset] + (beta_lddrk) * (R_xy_lddrk[offset]);
+    sn = (tau_sigmainv_loc) * (R_xz[offset]);
+    snp1 = (factor_loc) * (epsilondev_xz_loc);
+    R_xz_lddrk[offset] = (alpha_lddrk) * (R_xz_lddrk[offset]) + (deltat) * (snp1 - (sn));
+    R_xz[offset] = R_xz[offset] + (beta_lddrk) * (R_xz_lddrk[offset]);
+    sn = (tau_sigmainv_loc) * (R_yz[offset]);
+    snp1 = (factor_loc) * (epsilondev_yz_loc);
+    R_yz_lddrk[offset] = (alpha_lddrk) * (R_yz_lddrk[offset]) + (deltat) * (snp1 - (sn));
+    R_yz[offset] = R_yz[offset] + (beta_lddrk) * (R_yz_lddrk[offset]);
   }
 }
 
@@ -240,7 +283,7 @@ __global__
 #ifdef USE_LAUNCH_BOUNDS
 __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
 #endif
- void inner_core_impl_kernel_adjoint(const int nb_blocks_to_compute, const int * d_ibool, const int * d_idoubling, const int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const float deltat, const int use_mesh_coloring_gpu, const float * __restrict__ d_displ, float * d_accel, const float * __restrict__ d_xix, const float * __restrict__ d_xiy, const float * __restrict__ d_xiz, const float * __restrict__ d_etax, const float * __restrict__ d_etay, const float * __restrict__ d_etaz, const float * __restrict__ d_gammax, const float * __restrict__ d_gammay, const float * __restrict__ d_gammaz, const float * __restrict__ d_hprime_xx, const float * __restrict__ d_hprimewgll_xx, const float * __restrict__ d_wgllwgll_xy, const float * __restrict__ d_wgllwgll_xz, const float * __restrict__ d_wgllwgll_yz, const float * __restrict__ d_kappavstore, const float * __restrict__ d_muvstore, const int COMPUTE_AND_STORE_STRAIN, float * epsilondev_xx, float * epsilondev_yy, float * epsilondev_xy, float * epsilondev_xz, float * epsilondev_yz, float * epsilon_trace_over_3, const int ATTENUATION, const int PARTIAL_PHYS_DISPERSION_ONLY, const int USE_3D_ATTENUATION_ARRAYS, const float * __restrict__ one_minus_sum_beta, const float * __restrict__ factor_common, float * R_xx, float * R_yy, float * R_xy, float * R_xz, float * R_yz, const float * __restrict__ alphaval, const float * __restrict__ betaval, const float * __restrict__ gammaval, const int ANISOTROPY, const float * __restrict__ d_c11store, const float * __restrict__ d_c12store, const float * __restrict__ d_c13store, const float * __restrict__ d_c33store, const float * __restrict__ d_c44store, const int GRAVITY, const float * __restrict__ d_gravity_pre_store, const float * __restrict__ d_gravity_H, const float * __restrict__ wgll_cube, const int NSPEC_INNER_CORE_STRAIN_ONLY, const int NSPEC_INNER_CORE){
+ void inner_core_impl_kernel_adjoint(const int nb_blocks_to_compute, const int * d_ibool, const int * d_idoubling, const int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const float deltat, const int use_mesh_coloring_gpu, const float * __restrict__ d_displ, float * d_accel, const float * __restrict__ d_xix, const float * __restrict__ d_xiy, const float * __restrict__ d_xiz, const float * __restrict__ d_etax, const float * __restrict__ d_etay, const float * __restrict__ d_etaz, const float * __restrict__ d_gammax, const float * __restrict__ d_gammay, const float * __restrict__ d_gammaz, const float * __restrict__ d_hprime_xx, const float * __restrict__ d_hprimewgll_xx, const float * __restrict__ d_wgllwgll_xy, const float * __restrict__ d_wgllwgll_xz, const float * __restrict__ d_wgllwgll_yz, const float * __restrict__ d_kappavstore, const float * __restrict__ d_muvstore, const int COMPUTE_AND_STORE_STRAIN, float * epsilondev_xx, float * epsilondev_yy, float * epsilondev_xy, float * epsilondev_xz, float * epsilondev_yz, float * epsilon_trace_over_3, const int ATTENUATION, const int PARTIAL_PHYS_DISPERSION_ONLY, const int USE_3D_ATTENUATION_ARRAYS, const float * __restrict__ one_minus_sum_beta, const float * __restrict__ factor_common, float * R_xx, float * R_yy, float * R_xy, float * R_xz, float * R_yz, float * R_xx_lddrk, float * R_yy_lddrk, float * R_xy_lddrk, float * R_xz_lddrk, float * R_yz_lddrk, const float alpha_lddrk, const float beta_lddrk, const int use_lddrk, const float * __restrict__ alphaval, const float * __restrict__ betaval, const float * __restrict__ gammaval, const float * __restrict__ tau_sigmainvval, const int ANISOTROPY, const float * __restrict__ d_c11store, const float * __restrict__ d_c12store, const float * __restrict__ d_c13store, const float * __restrict__ d_c33store, const float * __restrict__ d_c44store, const int GRAVITY, const float * __restrict__ d_gravity_pre_store, const float * __restrict__ d_gravity_H, const float * __restrict__ wgll_cube, const int NSPEC_INNER_CORE_STRAIN_ONLY, const int NSPEC_INNER_CORE){
   int bx;
   int tx;
   int K;
@@ -686,7 +729,11 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
 #endif
 
     if (ATTENUATION &&  !(PARTIAL_PHYS_DISPERSION_ONLY)) {
-      compute_element_ic_att_memory(tx, working_element, d_muvstore, factor_common, alphaval, betaval, gammaval, R_xx, R_yy, R_xy, R_xz, R_yz, epsilondev_xx, epsilondev_yy, epsilondev_xy, epsilondev_xz, epsilondev_yz, epsilondev_xx_loc_1, epsilondev_yy_loc_1, epsilondev_xy_loc_1, epsilondev_xz_loc_1, epsilondev_yz_loc_1, USE_3D_ATTENUATION_ARRAYS);
+      if ( !(use_lddrk)) {
+        compute_element_ic_att_memory(tx, working_element, d_muvstore, factor_common, alphaval, betaval, gammaval, R_xx, R_yy, R_xy, R_xz, R_yz, epsilondev_xx, epsilondev_yy, epsilondev_xy, epsilondev_xz, epsilondev_yz, epsilondev_xx_loc_1, epsilondev_yy_loc_1, epsilondev_xy_loc_1, epsilondev_xz_loc_1, epsilondev_yz_loc_1, USE_3D_ATTENUATION_ARRAYS);
+      } else {
+        compute_element_ic_att_memory_lddrk(tx, working_element, d_muvstore, factor_common, tau_sigmainvval, R_xx, R_yy, R_xy, R_xz, R_yz, R_xx_lddrk, R_yy_lddrk, R_xy_lddrk, R_xz_lddrk, R_yz_lddrk, alpha_lddrk, beta_lddrk, deltat, epsilondev_xx_loc_1, epsilondev_yy_loc_1, epsilondev_xy_loc_1, epsilondev_xz_loc_1, epsilondev_yz_loc_1, USE_3D_ATTENUATION_ARRAYS);
+      }
     }
 
     if (COMPUTE_AND_STORE_STRAIN) {

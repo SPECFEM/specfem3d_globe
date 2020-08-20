@@ -74,7 +74,7 @@
     call read_compute_parameters()
   endif
 
-  ! broadcast parameters read from master to all processes
+  ! broadcast parameters read from main to all processes
   call broadcast_computed_parameters()
 
   ! check that the code is running with the requested nb of processes
@@ -259,7 +259,7 @@
     close(IIN)
   endif
 
-  ! broadcast the information read on the master to the nodes
+  ! broadcast the information read on the main node to all the nodes
   call bcast_all_singlei(nrec)
 
   ! checks number of total receivers
@@ -529,8 +529,8 @@
     endif
   endif
 
-  if (SAVE_SEISMOGRAMS_STRAIN .and. WRITE_SEISMOGRAMS_BY_MASTER) &
-    call exit_MPI(myrank,'For SAVE_SEISMOGRAMS_STRAIN, please set WRITE_SEISMOGRAMS_BY_MASTER to .false.')
+  if (SAVE_SEISMOGRAMS_STRAIN .and. WRITE_SEISMOGRAMS_BY_MAIN) &
+    call exit_MPI(myrank,'For SAVE_SEISMOGRAMS_STRAIN, please set WRITE_SEISMOGRAMS_BY_MAIN to .false.')
 
   end subroutine initialize_simulation_check
 

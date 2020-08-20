@@ -129,7 +129,7 @@
   ! gets maximum interfaces from all processes
   call max_all_i(num_interfaces,max_num)
 
-  ! master gathers info
+  ! main gathers info
   if (myrank == 0) then
     ! user output
     write(IMAIN,*) '  maximum interfaces:',max_num
@@ -148,7 +148,7 @@
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating dummy_i for test interfaces')
     dummy_i(:) = 0
 
-    ! sets info for master process
+    ! sets info for main process
     test_interfaces(1:num_interfaces,0) = my_neighbors(1:num_interfaces)
     test_interfaces_nibool(1:num_interfaces,0) = nibool_interfaces(1:num_interfaces)
     dummy_i(0) = num_interfaces
@@ -164,7 +164,7 @@
       endif
     enddo
   else
-    ! sends info to master process
+    ! sends info to main process
     call send_singlei(num_interfaces,0,itag)
     if (num_interfaces > 0) then
       call send_i(my_neighbors(1:num_interfaces),num_interfaces,0,itag)

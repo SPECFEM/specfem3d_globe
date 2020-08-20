@@ -316,7 +316,7 @@
 !      more flexible routines for mesh design, new inflated central cube
 !      with optimized shape, far fewer mesh files saved by the mesher,
 !      global arrays sorted to speed up the simulation, seismos can be
-!      written by the master, one more doubling level at the bottom
+!      written by the main process, one more doubling level at the bottom
 !      of the outer core if needed (off by default)
 !
 ! v. 3.6 Many people, many affiliations, September 2006:

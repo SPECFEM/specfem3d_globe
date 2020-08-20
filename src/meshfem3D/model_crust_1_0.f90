@@ -102,7 +102,7 @@
   ! the variables read are declared and stored in structure model_crust_1_0_par
   if (myrank == 0) call read_crust_1_0_model()
 
-  ! broadcast the information read on the master to the nodes
+  ! broadcast the information read on the main node to all the nodes
   call bcast_all_dp(crust_thickness,CRUST_NP*CRUST_NLA*CRUST_NLO)
   call bcast_all_dp(crust_vp,CRUST_NP*CRUST_NLA*CRUST_NLO)
   call bcast_all_dp(crust_vs,CRUST_NP*CRUST_NLA*CRUST_NLO)
@@ -114,7 +114,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_crust_1_0(lat,lon,x,vp,vs,rho,moho,sediment,found_crust,elem_in_crust)
+  subroutine model_crust_1_0(lat,lon,x,vp,vs,rho,moho,sediment,found_crust,elem_in_crust,moho_only)
 
   use constants
   use shared_parameters, only: R_PLANET_KM,RHOAV
@@ -126,7 +126,7 @@
   double precision,intent(in) :: lat,lon,x
   double precision,intent(out) :: vp,vs,rho,moho,sediment
   logical,intent(out) :: found_crust
-  logical,intent(in) :: elem_in_crust
+  logical,intent(in) :: elem_in_crust,moho_only
 
   ! local parameters
   double precision :: thicks_2
@@ -141,6 +141,7 @@
   rho = ZERO
   moho = ZERO
   sediment = ZERO
+  found_crust = .true.
 
   ! gets smoothed structure
   call crust_1_0_CAPsmoothed(lat,lon,vps,vss,rhos,thicks)
@@ -182,13 +183,13 @@
   ! no matter if found_crust is true or false, compute moho thickness
   moho = (h_uc + thicks(7) + thicks(8)) * scaleval
 
+  ! checks if anything further to do
+  if (moho_only) return
+
   ! sediment thickness
   if (INCLUDE_SEDIMENTS_IN_CRUST) then
     sediment = h_sed * scaleval
   endif
-
-  ! gets corresponding crustal velocities and density
-  found_crust = .true.
 
   ! gets corresponding crustal velocities and density
   if (x > x2 .and. INCLUDE_ICE_IN_CRUST) then
@@ -420,7 +421,7 @@
       do i = 1,CRUST_NLO
         lon = -180.d0 + i - 0.5d0
         x = 1.0d0
-        call model_crust_1_0(lat,lon,x,vp,vs,rho,moho,sediment,found_crust,.false.)
+        call model_crust_1_0(lat,lon,x,vp,vs,rho,moho,sediment,found_crust,.false.,.false.)
 
         ! limit moho thickness
         if (moho > h_moho_max) h_moho_max = moho

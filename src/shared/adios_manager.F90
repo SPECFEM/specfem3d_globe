@@ -489,7 +489,7 @@ contains
   ! initializes read method
 #if defined(USE_ADIOS)
   call adios_read_init_method(ADIOS_READ_METHOD_BP, comm_dummy, ADIOS_VERBOSITY, ier)
-  call check_adios_err(ier,"Error initializing read adios by master for file: "//trim(name))
+  call check_adios_err(ier,"Error initializing read adios by main for file: "//trim(name))
 
   ! opens file
   call adios_read_open_file(adios_handle, trim(name), 0, comm_dummy, ier)

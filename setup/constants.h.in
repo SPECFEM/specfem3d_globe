@@ -286,10 +286,11 @@
 !! for attenuation
 !!
 !!-----------------------------------------------------------
-
-! in the case of 1D attenuation models, use NGLL^3 storage of the attenuation constants in each GLL spectral element anyway
-! (always safe to leave that to true; in the case of 1D attenuation models, setting it to false can save some memory storage)
-  logical, parameter :: ATTENUATION_1D_WITH_3D_STORAGE  = .true.
+! note: We compute a constant Q behavior over a frequency absorption-band using a series of standard linear solids (SLS).
+!       The absorption-band limits are determined by the maximum frequency (or minimum period) resolved by the mesh.
+!       We shift the velocities to the logarithmic center frequency of this simulation frequency absorption-band,
+!       accounting for physical dispersion effects of the Q model, assuming that the provided velocity model values
+!       refer to a reference frequency f0 specified below.
 
 ! reference frequency of anelastic model
 ! by default, we use PREM values at 1 Hz
@@ -297,6 +298,10 @@
 
 ! saves velocity model files shifted to the center frequency of the simulation attenuation period band
   logical, parameter :: ATTENUATION_SAVE_MODEL_AT_SHIFTED_CENTER_FREQ = .false.
+
+! in the case of 1D attenuation models, use NGLL^3 storage of the attenuation constants in each GLL spectral element anyway
+! (always safe to leave that to true; in the case of 1D attenuation models, setting it to false can save some memory storage)
+  logical, parameter :: ATTENUATION_1D_WITH_3D_STORAGE  = .true.
 
 !!-----------------------------------------------------------
 !!
@@ -795,12 +800,13 @@
   integer, parameter :: REFERENCE_MODEL_MOON_MEENA = 12 ! Moon
 
 ! crustal model constants
-  integer, parameter :: ICRUST_CRUST1    = 1    ! Crust1.0
-  integer, parameter :: ICRUST_CRUST2    = 2    ! Crust2.0
-  integer, parameter :: ICRUST_CRUSTMAPS = 3    ! Crustmaps
-  integer, parameter :: ICRUST_EPCRUST   = 4    ! EPcrust
-  integer, parameter :: ICRUST_CRUST_SH  = 5    ! Spherical-Harmonics Crust
-  integer, parameter :: ICRUST_EUCRUST   = 6    ! EUcrust07
+  integer, parameter :: ICRUST_CRUST1      = 1    ! Crust1.0
+  integer, parameter :: ICRUST_CRUST2      = 2    ! Crust2.0
+  integer, parameter :: ICRUST_CRUSTMAPS   = 3    ! Crustmaps
+  integer, parameter :: ICRUST_EPCRUST     = 4    ! EPcrust
+  integer, parameter :: ICRUST_CRUST_SH    = 5    ! Spherical-Harmonics Crust
+  integer, parameter :: ICRUST_EUCRUST     = 6    ! EUcrust07
+  integer, parameter :: ICRUST_SGLOBECRUST = 7    ! modified Crust2.0 for SGLOBE-rani
 
 ! define flag for 3D Earth model
   integer, parameter :: THREE_D_MODEL_S20RTS        = 101

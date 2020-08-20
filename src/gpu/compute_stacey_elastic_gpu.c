@@ -330,7 +330,7 @@ void FC_FUNC_ (compute_stacey_elastic_undoatt_gpu,
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // checks if anything to do
-  if (mp->simulation_type /= 3 || mp->save_forward) return;
+  if (mp->simulation_type != 3 || mp->save_forward) return;
 
   // absorbing boundary type
   int interface_type = *itype;

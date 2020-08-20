@@ -56,7 +56,12 @@
     integer :: nspec
     integer :: dummy_pad ! padding 4 bytes to align the structure
   end type model_gll_variables
+
+  ! crust/mantle model
   type (model_gll_variables) :: MGLL_V
+
+  ! inner core model
+  type (model_gll_variables) :: MGLL_V_IC
 
   ! model GLL type: 1 == iso, 2 == tiso, 3 == azi
   integer :: MGLL_TYPE
@@ -81,7 +86,6 @@
 
   ! local parameters
   double precision :: scaleval
-  real(kind=CUSTOM_REAL) :: minvalue,maxvalue,min_all,max_all
   integer :: ier
 
   ! sets type (iso,tiso,azi)
@@ -89,6 +93,7 @@
 
   ! sets number of elements (crust/mantle region)
   MGLL_V%nspec = NSPEC_REGIONS(IREGION_CRUST_MANTLE)
+  MGLL_V_IC%nspec = 0
 
   ! user output
   if (myrank == 0) then
@@ -168,67 +173,63 @@
   case (1)
     ! isotropic model
     if (myrank == 0) then
-      write(IMAIN,*)'model GLL: isotropic'
+      write(IMAIN,*) 'model GLL: isotropic'
       call flush_IMAIN()
     endif
-    ! Vs
-    call print_min_max_all(MGLL_V%vs_new,"vs new")
     ! Vp
-    call print_min_max_all(MGLL_V%vp_new,"vp new")
+    call print_gll_min_max_all(MGLL_V%nspec,MGLL_V%vp_new,"vp new")
+    ! Vs
+    call print_gll_min_max_all(MGLL_V%nspec,MGLL_V%vs_new,"vs new")
 
   case (2)
     ! transverse
     if (myrank == 0) then
       ! transverse isotropic model
-      write(IMAIN,*)'model GLL: transverse isotropic'
+      write(IMAIN,*) 'model GLL: transverse isotropic'
       call flush_IMAIN()
     endif
-    ! Vsv
-    call print_min_max_all(MGLL_V%vsv_new,"vsv new")
-    ! Vsh
-    call print_min_max_all(MGLL_V%vsh_new,"vsh new")
     ! Vpv
-    call print_min_max_all(MGLL_V%vpv_new,"vpv new")
+    call print_gll_min_max_all(MGLL_V%nspec,MGLL_V%vpv_new,"vpv new")
     ! Vph
-    call print_min_max_all(MGLL_V%vph_new,"vph new")
+    call print_gll_min_max_all(MGLL_V%nspec,MGLL_V%vph_new,"vph new")
+    ! Vsv
+    call print_gll_min_max_all(MGLL_V%nspec,MGLL_V%vsv_new,"vsv new")
+    ! Vsh
+    call print_gll_min_max_all(MGLL_V%nspec,MGLL_V%vsh_new,"vsh new")
     ! eta
-    call print_min_max_all(MGLL_V%eta_new,"eta new")
+    call print_gll_min_max_all(MGLL_V%nspec,MGLL_V%eta_new,"eta new")
 
   case (3)
     ! azimuthal model
     if (myrank == 0) then
       ! azimuthal anisotropic model
-      write(IMAIN,*)'model GLL: azimuthal anisotropic'
+      write(IMAIN,*) 'model GLL: azimuthal anisotropic'
       call flush_IMAIN()
     endif
-    ! Vsv
-    call print_min_max_all(MGLL_V%vsv_new,"vsv new")
-    ! Vsh
-    call print_min_max_all(MGLL_V%vsh_new,"vsh new")
     ! Vpv
-    call print_min_max_all(MGLL_V%vpv_new,"vpv new")
+    call print_gll_min_max_all(MGLL_V%nspec,MGLL_V%vpv_new,"vpv new")
     ! Vph
-    call print_min_max_all(MGLL_V%vph_new,"vph new")
+    call print_gll_min_max_all(MGLL_V%nspec,MGLL_V%vph_new,"vph new")
+    ! Vsv
+    call print_gll_min_max_all(MGLL_V%nspec,MGLL_V%vsv_new,"vsv new")
+    ! Vsh
+    call print_gll_min_max_all(MGLL_V%nspec,MGLL_V%vsh_new,"vsh new")
     ! eta
-    call print_min_max_all(MGLL_V%eta_new,"eta new")
+    call print_gll_min_max_all(MGLL_V%nspec,MGLL_V%eta_new,"eta new")
     ! Gc_prime
-    call print_min_max_all(MGLL_V%Gc_prime_new,"Gc_prime new")
+    call print_gll_min_max_all(MGLL_V%nspec,MGLL_V%Gc_prime_new,"Gc_prime new")
     ! Gs_prime
-    call print_min_max_all(MGLL_V%Gs_prime_new,"Gs_prime new")
+    call print_gll_min_max_all(MGLL_V%nspec,MGLL_V%Gs_prime_new,"Gs_prime new")
     ! mu0
-    call print_min_max_all(MGLL_V%mu0_new,"mu0 new")
+    call print_gll_min_max_all(MGLL_V%nspec,MGLL_V%mu0_new,"mu0 new")
 
   case default
     stop 'New MGLL_TYPE, velocity range check not implemented yet'
   end select
 
   ! density
-  maxvalue = maxval( MGLL_V%rho_new )
-  minvalue = minval( MGLL_V%rho_new )
-  call max_all_cr(maxvalue, max_all)
-  call min_all_cr(minvalue, min_all)
+  call print_gll_min_max_all(MGLL_V%nspec,MGLL_V%rho_new,"rho new")
   if (myrank == 0) then
-    write(IMAIN,*) '  rho new min/max: ',min_all,max_all
     write(IMAIN,*)
     call flush_IMAIN()
   endif
@@ -270,6 +271,30 @@
 
     ! eta is already non-dimensional
   end select
+
+  ! (optional) inner core
+  if (MGLL_V_IC%nspec > 0) then
+    ! only isotropic
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) '  with inner core (vp,vs,rho):'
+      call flush_IMAIN()
+    endif
+    call print_gll_min_max_all(MGLL_V_IC%nspec,MGLL_V_IC%vp_new,"vp new")
+    call print_gll_min_max_all(MGLL_V_IC%nspec,MGLL_V_IC%vs_new,"vs new")
+    call print_gll_min_max_all(MGLL_V_IC%nspec,MGLL_V_IC%rho_new,"rho new")
+    if (myrank == 0) then
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
+    ! non-dimensionalizes
+    MGLL_V_IC%scale_velocity = 1000.0d0/(R_PLANET*scaleval)
+    MGLL_V_IC%scale_density  =  1000.0d0/RHOAV
+    MGLL_V_IC%vp_new = MGLL_V_IC%vp_new * MGLL_V_IC%scale_velocity
+    MGLL_V_IC%vs_new = MGLL_V_IC%vs_new * MGLL_V_IC%scale_velocity
+    MGLL_V_IC%rho_new = MGLL_V_IC%rho_new * MGLL_V_IC%scale_density
+  endif
+
   call synchronize_all()
 
   end subroutine model_gll_broadcast
@@ -279,39 +304,10 @@
 !
 
 
-  subroutine print_min_max_all(array,name)
-
-  use constants, only: CUSTOM_REAL,IMAIN,NGLLX,NGLLY,NGLLZ,myrank
-  use model_gll_par, only: MGLL_V
-
-  implicit none
-
-  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,MGLL_V%nspec),intent(in) :: array
-  character(len=*),intent(in) :: name
-  ! local parameters
-  real(kind=CUSTOM_REAL) :: minvalue,maxvalue,min_all,max_all
-
-  maxvalue = maxval( array )
-  minvalue = minval( array )
-  call max_all_cr(maxvalue, max_all)
-  call min_all_cr(minvalue, min_all)
-
-  if (myrank == 0) then
-    write(IMAIN,*) '  '//trim(name)//' min/max: ',min_all,max_all
-    write(IMAIN,*)
-    call flush_IMAIN()
-  endif
-
-  end subroutine
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-
   subroutine read_gll_model(rank)
 
-  use constants
+  use constants, only: MAX_STRING_LEN,IMAIN,NGLLX,NGLLY,NGLLZ,PATHNAME_GLL_modeldir,myrank
+
   use shared_parameters, only: NCHUNKS,NPROCTOT,NPROC_XI,NPROC_ETA,NEX_XI,NEX_ETA
 
   use model_gll_par
@@ -404,7 +400,10 @@
 
   subroutine read_gll_modelfiles(rank)
 
-  use constants, only: MAX_STRING_LEN,IMAIN,IIN,PATHNAME_GLL_modeldir
+  use constants, only: MAX_STRING_LEN,IMAIN,IIN,PATHNAME_GLL_modeldir, &
+    NGLLX,NGLLY,NGLLZ,IREGION_INNER_CORE
+
+  use shared_parameters, only: NSPEC_REGIONS
 
   use model_gll_par
 
@@ -414,8 +413,10 @@
 
   ! local parameters
   integer :: ier
-  character(len=MAX_STRING_LEN) :: prname
+  character(len=MAX_STRING_LEN) :: prname,filename
+  logical :: has_innercore,has_innercore_all
 
+  ! crust/mantle model
   ! for example: DATA/GLL/proc000000_reg1_rho.bin
   !
   ! root name
@@ -431,20 +432,20 @@
     endif
 
     ! vp mesh
-    open(unit=IIN,file=prname(1:len_trim(prname))//'vp.bin', &
-          status='old',action='read',form='unformatted',iostat=ier)
+    filename = prname(1:len_trim(prname))//'vp.bin'
+    open(unit=IIN,file=trim(filename),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
-      write(IMAIN,*) 'Error opening: ',prname(1:len_trim(prname))//'vp.bin'
+      write(IMAIN,*) 'Error opening: ',trim(filename)
       call exit_MPI(rank,'Error model GLL')
     endif
     read(IIN) MGLL_V%vp_new(:,:,:,1:MGLL_V%nspec)
     close(IIN)
 
     ! vs mesh
-    open(unit=IIN,file=prname(1:len_trim(prname))//'vs.bin', &
-         status='old',action='read',form='unformatted',iostat=ier)
+    filename = prname(1:len_trim(prname))//'vs.bin'
+    open(unit=IIN,file=trim(filename),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
-      print *,'Error opening: ',prname(1:len_trim(prname))//'vs.bin'
+      print *,'Error opening: ',trim(filename)
       call exit_MPI(rank,'Error model GLL')
     endif
     read(IIN) MGLL_V%vs_new(:,:,:,1:MGLL_V%nspec)
@@ -458,48 +459,48 @@
     endif
 
     ! vpv/vph mesh
-    open(unit=IIN,file=prname(1:len_trim(prname))//'vpv.bin', &
-          status='old',action='read',form='unformatted',iostat=ier)
+    filename = prname(1:len_trim(prname))//'vpv.bin'
+    open(unit=IIN,file=trim(filename),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
-      write(IMAIN,*) 'Error opening: ',prname(1:len_trim(prname))//'vpv.bin'
+      write(IMAIN,*) 'Error opening: ',trim(filename)
       call exit_MPI(rank,'Error model GLL')
     endif
     read(IIN) MGLL_V%vpv_new(:,:,:,1:MGLL_V%nspec)
     close(IIN)
 
-    open(unit=IIN,file=prname(1:len_trim(prname))//'vph.bin', &
-          status='old',action='read',form='unformatted',iostat=ier)
+    filename = prname(1:len_trim(prname))//'vph.bin'
+    open(unit=IIN,file=trim(filename),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
-      write(IMAIN,*) 'Error opening: ',prname(1:len_trim(prname))//'vph.bin'
+      write(IMAIN,*) 'Error opening: ',trim(filename)
       call exit_MPI(rank,'Error model GLL')
     endif
     read(IIN) MGLL_V%vph_new(:,:,:,1:MGLL_V%nspec)
     close(IIN)
 
     ! vsv/vsh mesh
-    open(unit=IIN,file=prname(1:len_trim(prname))//'vsv.bin', &
-         status='old',action='read',form='unformatted',iostat=ier)
+    filename = prname(1:len_trim(prname))//'vsv.bin'
+    open(unit=IIN,file=trim(filename),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
-      print *,'Error opening: ',prname(1:len_trim(prname))//'vsv.bin'
+      print *,'Error opening: ',trim(filename)
       call exit_MPI(rank,'Error model GLL')
     endif
     read(IIN) MGLL_V%vsv_new(:,:,:,1:MGLL_V%nspec)
     close(IIN)
 
-    open(unit=IIN,file=prname(1:len_trim(prname))//'vsh.bin', &
-         status='old',action='read',form='unformatted',iostat=ier)
+    filename = prname(1:len_trim(prname))//'vsh.bin'
+    open(unit=IIN,file=trim(filename),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
-      print *,'Error opening: ',prname(1:len_trim(prname))//'vsh.bin'
+      print *,'Error opening: ',trim(filename)
       call exit_MPI(rank,'Error model GLL')
     endif
     read(IIN) MGLL_V%vsh_new(:,:,:,1:MGLL_V%nspec)
     close(IIN)
 
     ! eta mesh
-    open(unit=IIN,file=prname(1:len_trim(prname))//'eta.bin', &
-         status='old',action='read',form='unformatted',iostat=ier)
+    filename = prname(1:len_trim(prname))//'eta.bin'
+    open(unit=IIN,file=trim(filename),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
-      print *,'Error opening: ',prname(1:len_trim(prname))//'eta.bin'
+      print *,'Error opening: ',trim(filename)
       call exit_MPI(rank,'Error model GLL')
     endif
     read(IIN) MGLL_V%eta_new(:,:,:,1:MGLL_V%nspec)
@@ -513,67 +514,68 @@
     endif
 
     ! vpv/vph mesh
-    open(unit=IIN,file=prname(1:len_trim(prname))//'vpv.bin', &
-          status='old',action='read',form='unformatted',iostat=ier)
+    filename = prname(1:len_trim(prname))//'vpv.bin'
+    open(unit=IIN,file=trim(filename),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
-      write(IMAIN,*) 'Error opening: ',prname(1:len_trim(prname))//'vpv.bin'
+      write(IMAIN,*) 'Error opening: ',trim(filename)
       call exit_MPI(rank,'Error model GLL')
     endif
     read(IIN) MGLL_V%vpv_new(:,:,:,1:MGLL_V%nspec)
     close(IIN)
 
-    open(unit=IIN,file=prname(1:len_trim(prname))//'vph.bin', &
-          status='old',action='read',form='unformatted',iostat=ier)
+    filename = prname(1:len_trim(prname))//'vph.bin'
+    open(unit=IIN,file=trim(filename),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
-      write(IMAIN,*) 'Error opening: ',prname(1:len_trim(prname))//'vph.bin'
+      write(IMAIN,*) 'Error opening: ',trim(filename)
       call exit_MPI(rank,'Error model GLL')
     endif
     read(IIN) MGLL_V%vph_new(:,:,:,1:MGLL_V%nspec)
     close(IIN)
 
     ! vsv/vsh mesh
-    open(unit=IIN,file=prname(1:len_trim(prname))//'vsv.bin', &
-         status='old',action='read',form='unformatted',iostat=ier)
+    filename = prname(1:len_trim(prname))//'vsv.bin'
+    open(unit=IIN,file=trim(filename),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
-      print *,'Error opening: ',prname(1:len_trim(prname))//'vsv.bin'
+      print *,'Error opening: ',trim(filename)
       call exit_MPI(rank,'Error model GLL')
     endif
     read(IIN) MGLL_V%vsv_new(:,:,:,1:MGLL_V%nspec)
     close(IIN)
 
-    open(unit=IIN,file=prname(1:len_trim(prname))//'vsh.bin', &
-         status='old',action='read',form='unformatted',iostat=ier)
+    filename = prname(1:len_trim(prname))//'vsh.bin'
+    open(unit=IIN,file=trim(filename),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
-      print *,'Error opening: ',prname(1:len_trim(prname))//'vsh.bin'
+      print *,'Error opening: ',trim(filename)
       call exit_MPI(rank,'Error model GLL')
     endif
     read(IIN) MGLL_V%vsh_new(:,:,:,1:MGLL_V%nspec)
     close(IIN)
 
     ! eta mesh
-    open(unit=IIN,file=prname(1:len_trim(prname))//'eta.bin', &
-         status='old',action='read',form='unformatted',iostat=ier)
+    filename = prname(1:len_trim(prname))//'eta.bin'
+    open(unit=IIN,file=trim(filename),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
-      print *,'Error opening: ',prname(1:len_trim(prname))//'eta.bin'
+      print *,'Error opening: ',trim(filename)
       call exit_MPI(rank,'Error model GLL')
     endif
     read(IIN) MGLL_V%eta_new(:,:,:,1:MGLL_V%nspec)
     close(IIN)
 
     ! Gc_prime
-    open(unit=IIN,file=prname(1:len_trim(prname))//'Gc_prime.bin', &
-         status='old',action='read',form='unformatted',iostat=ier)
+    filename = prname(1:len_trim(prname))//'Gc_prime.bin'
+    open(unit=IIN,file=trim(filename),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
-      print *,'Error opening: ',prname(1:len_trim(prname))//'Gc_prime.bin'
+      print *,'Error opening: ',trim(filename)
       call exit_MPI(rank,'Error model GLL')
     endif
     read(IIN) MGLL_V%Gc_prime_new(:,:,:,1:MGLL_V%nspec)
     close(IIN)
+
     ! Gs_prime
-    open(unit=IIN,file=prname(1:len_trim(prname))//'Gs_prime.bin', &
-         status='old',action='read',form='unformatted',iostat=ier)
+    filename = prname(1:len_trim(prname))//'Gs_prime.bin'
+    open(unit=IIN,file=trim(filename),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
-      print *,'Error opening: ',prname(1:len_trim(prname))//'Gs_prime.bin'
+      print *,'Error opening: ',trim(filename)
       call exit_MPI(rank,'Error model GLL')
     endif
     read(IIN) MGLL_V%Gs_prime_new(:,:,:,1:MGLL_V%nspec)
@@ -581,10 +583,10 @@
 
     ! mu0
     if (.true.) then  ! by default try to read in mu0
-      open(unit=IIN,file=prname(1:len_trim(prname))//'mu0.bin', &
-           status='old',action='read',form='unformatted',iostat=ier)
+      filename = prname(1:len_trim(prname))//'mu0.bin'
+      open(unit=IIN,file=trim(filename),status='old',action='read',form='unformatted',iostat=ier)
       if (ier /= 0) then
-        print *,'Error opening: ',prname(1:len_trim(prname))//'mu0.bin'
+        print *,'Error opening: ',trim(filename)
         call exit_MPI(rank,'Error model GLL')
       endif
       read(IIN) MGLL_V%mu0_new(:,:,:,1:MGLL_V%nspec)
@@ -598,14 +600,72 @@
   end select
 
   ! rho mesh
-  open(unit=IIN,file=prname(1:len_trim(prname))//'rho.bin', &
-       status='old',action='read',form='unformatted',iostat=ier)
+  filename = prname(1:len_trim(prname))//'rho.bin'
+  open(unit=IIN,file=trim(filename),status='old',action='read',form='unformatted',iostat=ier)
   if (ier /= 0) then
-    print *,'Error opening: ',prname(1:len_trim(prname))//'rho.bin'
+    print *,'Error opening: ',trim(filename)
     call exit_MPI(rank,'Error model GLL')
   endif
   read(IIN) MGLL_V%rho_new(:,:,:,1:MGLL_V%nspec)
   close(IIN)
+
+  ! inner core model
+  ! for example: DATA/GLL/proc000000_reg3_rho.bin
+  !
+  ! root name
+  write(prname,'(a,i6.6,a)') PATHNAME_GLL_modeldir(1:len_trim(PATHNAME_GLL_modeldir))//'proc',rank,'_reg3_'
+
+  ! checks if rho file exists for inner core
+  filename = prname(1:len_trim(prname))//'rho.bin'
+  inquire(file=trim(filename),exist=has_innercore)
+
+  ! if file found, all processes will try to read in inner core files
+  call any_all_l(has_innercore,has_innercore_all)
+
+  ! reads in files
+  if (has_innercore_all) then
+    ! only isotropic model file supported so far for inner core
+    MGLL_V_IC%nspec = NSPEC_REGIONS(IREGION_INNER_CORE)
+
+    ! allocates arrays
+    allocate( MGLL_V_IC%vp_new(NGLLX,NGLLY,NGLLZ,MGLL_V_IC%nspec), &
+              MGLL_V_IC%vs_new(NGLLX,NGLLY,NGLLZ,MGLL_V_IC%nspec), stat=ier)
+    if (ier /= 0 ) call exit_MPI(rank,'Error allocating inner core vp_new,.. arrays')
+    MGLL_V_IC%vp_new(:,:,:,:) = 0.0_CUSTOM_REAL
+    MGLL_V_IC%vs_new(:,:,:,:) = 0.0_CUSTOM_REAL
+
+    allocate( MGLL_V_IC%rho_new(NGLLX,NGLLY,NGLLZ,MGLL_V_IC%nspec), stat=ier)
+    if (ier /= 0 ) call exit_MPI(rank,'Error allocating inner core rho_new,.. arrays')
+    MGLL_V_IC%rho_new(:,:,:,:) = 0.0_CUSTOM_REAL
+
+    ! rho mesh
+    filename = prname(1:len_trim(prname))//'rho.bin'
+    open(unit=IIN,file=trim(filename),status='old',action='read',form='unformatted',iostat=ier)
+    if (ier /= 0) then
+      print *,'Error opening: ',trim(filename)
+      call exit_MPI(rank,'Error model GLL')
+    endif
+    read(IIN) MGLL_V_IC%rho_new(:,:,:,1:MGLL_V_IC%nspec)
+    close(IIN)
+    ! vp mesh
+    filename = prname(1:len_trim(prname))//'vp.bin'
+    open(unit=IIN,file=trim(filename),status='old',action='read',form='unformatted',iostat=ier)
+    if (ier /= 0) then
+      write(IMAIN,*) 'Error opening: ',trim(filename)
+      call exit_MPI(rank,'Error model GLL')
+    endif
+    read(IIN) MGLL_V_IC%vp_new(:,:,:,1:MGLL_V_IC%nspec)
+    close(IIN)
+    ! vs mesh
+    filename = prname(1:len_trim(prname))//'vs.bin'
+    open(unit=IIN,file=trim(filename),status='old',action='read',form='unformatted',iostat=ier)
+    if (ier /= 0) then
+      print *,'Error opening: ',trim(filename)
+      call exit_MPI(rank,'Error model GLL')
+    endif
+    read(IIN) MGLL_V_IC%vs_new(:,:,:,1:MGLL_V_IC%nspec)
+    close(IIN)
+  endif
 
   end subroutine read_gll_modelfiles
 
@@ -613,14 +673,14 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_gll_impose_val(xmesh,ymesh,zmesh,ispec,i,j,k, &
+  subroutine model_gll_impose_val(iregion_code,xmesh,ymesh,zmesh,ispec,i,j,k, &
                                   vpv,vph,vsv,vsh,rho,eta_aniso, &
                                   c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
                                   c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
 
 ! sets model parameters for specified GLL point (i,j,k,ispec)
 
-  use constants, only: myrank
+  use constants, only: myrank,IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE
 
   use shared_parameters, only: ANISOTROPIC_3D_MANTLE
 
@@ -628,6 +688,7 @@
 
   implicit none
 
+  integer,intent(in) :: iregion_code
   double precision,intent(in) :: xmesh,ymesh,zmesh
   integer,intent(in) :: ispec,i,j,k
 
@@ -639,24 +700,86 @@
   double precision :: vp,vs
   double precision :: Gc_prime,Gs_prime,mu0
 
-  ! safety check
-  if (ispec > MGLL_V%nspec) then
-    call exit_MPI(myrank,'model GLL: ispec too big')
-  endif
+  ! only valid for crust/mantle region at the moment...
+  select case(iregion_code)
+  case (IREGION_CRUST_MANTLE)
+    ! crust/mantle
+    ! safety check
+    if (ispec > MGLL_V%nspec) then
+      call exit_MPI(myrank,'model GLL: ispec too big')
+    endif
 
-  ! initializes
-  Gc_prime = 0.d0
-  Gs_prime = 0.d0
+    ! initializes
+    Gc_prime = 0.d0
+    Gs_prime = 0.d0
 
-  ! gets model values
-  select case(MGLL_TYPE)
-  case (1)
+    ! gets model values
+    select case(MGLL_TYPE)
+    case (1)
+      ! isotropic model
+      ! takes stored GLL values from file
+      ! ( note that these values are non-dimensionalized)
+      vp = dble( MGLL_V%vp_new(i,j,k,ispec) )
+      vs = dble( MGLL_V%vs_new(i,j,k,ispec) )
+      rho = dble( MGLL_V%rho_new(i,j,k,ispec) )
+
+      ! isotropic model
+      vpv = vp
+      vph = vp
+      vsv = vs
+      vsh = vs
+      rho = rho
+      eta_aniso = 1.0d0
+
+    case (2)
+      ! transverse model parameters
+      ! takes stored GLL values from file
+      vph = dble( MGLL_V%vph_new(i,j,k,ispec) )
+      vpv = dble( MGLL_V%vpv_new(i,j,k,ispec) )
+      vsh = dble( MGLL_V%vsh_new(i,j,k,ispec) )
+      vsv = dble( MGLL_V%vsv_new(i,j,k,ispec) )
+      rho = dble( MGLL_V%rho_new(i,j,k,ispec) )
+      eta_aniso = dble( MGLL_V%eta_new(i,j,k,ispec) )
+
+    case (3)
+      ! azimuthal model
+      vph = dble( MGLL_V%vph_new(i,j,k,ispec) )
+      vpv = dble( MGLL_V%vpv_new(i,j,k,ispec) )
+      vsh = dble( MGLL_V%vsh_new(i,j,k,ispec) )
+      vsv = dble( MGLL_V%vsv_new(i,j,k,ispec) )
+      rho = dble( MGLL_V%rho_new(i,j,k,ispec) )
+      eta_aniso = dble( MGLL_V%eta_new(i,j,k,ispec) )
+      Gc_prime = dble( MGLL_V%Gc_prime_new(i,j,k,ispec) )
+      Gs_prime = dble( MGLL_V%Gs_prime_new(i,j,k,ispec) )
+      mu0 = dble( MGLL_V%mu0_new(i,j,k,ispec) )
+    case default
+      stop 'Invalid MGLL_TYPE, imposing val not implemented yet'
+    end select
+
+    ! converts to cij parameters
+    if (ANISOTROPIC_3D_MANTLE) then
+        ! parameters need to be converted to cijkl
+        call model_gll_build_cij(xmesh,ymesh,zmesh, &
+                                 vph,vpv,vsh,vsv,rho,eta_aniso,Gc_prime,Gs_prime,mu0, &
+                                 c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+                                 c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
+    endif ! ANISOTROPIC_3D_MANTLE
+
+  case (IREGION_OUTER_CORE)
+    ! outer core, no GLL model implemented yet
+    continue
+
+  case (IREGION_INNER_CORE)
+    ! inner core
+    ! checks if anything to do
+    if (MGLL_V_IC%nspec == 0) return
+
     ! isotropic model
     ! takes stored GLL values from file
     ! ( note that these values are non-dimensionalized)
-    vp = dble( MGLL_V%vp_new(i,j,k,ispec) )
-    vs = dble( MGLL_V%vs_new(i,j,k,ispec) )
-    rho = dble( MGLL_V%rho_new(i,j,k,ispec) )
+    vp = dble( MGLL_V_IC%vp_new(i,j,k,ispec) )
+    vs = dble( MGLL_V_IC%vs_new(i,j,k,ispec) )
+    rho = dble( MGLL_V_IC%rho_new(i,j,k,ispec) )
 
     ! isotropic model
     vpv = vp
@@ -666,39 +789,7 @@
     rho = rho
     eta_aniso = 1.0d0
 
-  case (2)
-    ! transverse model parameters
-    ! takes stored GLL values from file
-    vph = dble( MGLL_V%vph_new(i,j,k,ispec) )
-    vpv = dble( MGLL_V%vpv_new(i,j,k,ispec) )
-    vsh = dble( MGLL_V%vsh_new(i,j,k,ispec) )
-    vsv = dble( MGLL_V%vsv_new(i,j,k,ispec) )
-    rho = dble( MGLL_V%rho_new(i,j,k,ispec) )
-    eta_aniso = dble( MGLL_V%eta_new(i,j,k,ispec) )
-
-  case (3)
-    ! azimuthal model
-    vph = dble( MGLL_V%vph_new(i,j,k,ispec) )
-    vpv = dble( MGLL_V%vpv_new(i,j,k,ispec) )
-    vsh = dble( MGLL_V%vsh_new(i,j,k,ispec) )
-    vsv = dble( MGLL_V%vsv_new(i,j,k,ispec) )
-    rho = dble( MGLL_V%rho_new(i,j,k,ispec) )
-    eta_aniso = dble( MGLL_V%eta_new(i,j,k,ispec) )
-    Gc_prime = dble( MGLL_V%Gc_prime_new(i,j,k,ispec) )
-    Gs_prime = dble( MGLL_V%Gs_prime_new(i,j,k,ispec) )
-    mu0 = dble( MGLL_V%mu0_new(i,j,k,ispec) )
-  case default
-    stop 'Invalid MGLL_TYPE, imposing val not implemented yet'
   end select
-
-  ! converts to cij parameters
-  if (ANISOTROPIC_3D_MANTLE) then
-      ! parameters need to be converted to cijkl
-      call model_gll_build_cij(xmesh,ymesh,zmesh, &
-                               vph,vpv,vsh,vsv,rho,eta_aniso,Gc_prime,Gs_prime,mu0, &
-                               c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
-                               c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
-  endif ! ANISOTROPIC_3D_MANTLE
 
   end subroutine model_gll_impose_val
 

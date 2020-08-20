@@ -56,6 +56,7 @@ gpu_specfem3D_OBJECTS = \
 	$O/prepare_mesh_constants_gpu.o \
 	$O/transfer_fields_gpu.o \
 	$O/update_displacement_gpu.o \
+	$O/update_displacement_LDDRK_gpu.o \
 	$O/write_seismograms_gpu.o \
 	$O/save_and_compare_cpu_vs_gpu.o \
 	$(EMPTY_MACRO)

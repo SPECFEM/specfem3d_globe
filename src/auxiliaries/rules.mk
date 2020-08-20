@@ -157,6 +157,9 @@ xcombine_AVS_DX_SHARED_OBJECTS = \
 	$O/define_all_layers.shared.o \
 	$O/get_model_parameters.shared.o \
 	$O/get_timestep_and_layers.shared.o \
+	$O/model_prem.shared.o \
+	$O/model_Sohl.shared.o \
+	$O/model_vpremoon.shared.o \
 	$O/param_reader.cc.o \
 	$O/read_compute_parameters.shared.o \
 	$O/read_parameter_file.shared.o \
@@ -373,6 +376,9 @@ xcreate_movie_AVS_DX_SHARED_OBJECTS = \
 	$O/get_global.shared.o \
 	$O/get_model_parameters.shared.o \
 	$O/get_timestep_and_layers.shared.o \
+	$O/model_prem.shared.o \
+	$O/model_Sohl.shared.o \
+	$O/model_vpremoon.shared.o \
 	$O/param_reader.cc.o \
 	$O/read_compute_parameters.shared.o \
 	$O/read_parameter_file.shared.o \
@@ -400,6 +406,9 @@ xcreate_movie_GMT_global_SHARED_OBJECTS = \
 	$O/define_all_layers.shared.o \
 	$O/get_model_parameters.shared.o \
 	$O/get_timestep_and_layers.shared.o \
+	$O/model_prem.shared.o \
+	$O/model_Sohl.shared.o \
+	$O/model_vpremoon.shared.o \
 	$O/param_reader.cc.o \
 	$O/read_compute_parameters.shared.o \
 	$O/read_parameter_file.shared.o \
@@ -468,6 +477,7 @@ xwrite_profile_OBJECTS += \
 	$O/model_s362ani.check.o \
 	$O/model_sea99_s.check.o \
 	$O/model_sglobe.check.o \
+	$O/model_sglobecrust.check.o \
 	$(EMPTY_MACRO)
 
 # from src/shared/

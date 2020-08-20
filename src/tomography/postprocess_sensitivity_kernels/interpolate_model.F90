@@ -367,7 +367,7 @@
   call init_adios_group(myadios_group,"Interpolator")
 #endif
 
-  !  master process gets old, source mesh dimension
+  !  main process gets old, source mesh dimension
   if (myrank == 0) then
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
@@ -487,9 +487,9 @@
       stop 'Error invalid number of processes for old setup found'
     endif
 
-  endif ! master
+  endif ! main
 
-  ! master broadcasts to all other processes (assumes all slices have equal nspec/nglob values)
+  ! main broadcasts to all other processes (assumes all slices have equal nspec/nglob values)
   call bcast_all_singlei(nspec_old)
   call bcast_all_singlei(nglob_old)
   call bcast_all_singlei(nproctot_old)

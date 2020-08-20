@@ -45,7 +45,7 @@
 
 ! adds doubling elements to the different regions of the mesh
 
-  use constants, only: myrank,CUSTOM_REAL, &
+  use constants, only: myrank,CUSTOM_REAL,IMAIN, &
     NGLLX,NGLLY,NGLLZ,NGNOD,NDIM,NGNOD2D,NDIM2D,NGNOD_EIGHT_CORNERS, &
     MAX_NUMBER_OF_MESH_LAYERS, &
     NGLOB_DOUBLING_SUPERBRICK,NSPEC_DOUBLING_SUPERBRICK,NSPEC_DOUBLING_BASICBRICK,NSPEC_SUPERBRICK_1L, &
@@ -163,6 +163,12 @@
   nelements = NEX_PER_PROC_XI/(step_mult*ratio_sampling_array(ilayer)) &
             * NEX_PER_PROC_ETA/(step_mult*ratio_sampling_array(ilayer)) &
             * nspec_sb
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '    number of doubling elements = ',nelements
+    call flush_IMAIN()
+  endif
 
   ! fill mapping to be able to parallelize loops below
   allocate(map_ispec(nelements),stat=ier)

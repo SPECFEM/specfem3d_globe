@@ -383,6 +383,9 @@
   if (UNDO_ATTENUATION .and. NUMBER_OF_THIS_RUN > 1) &
     stop 'we currently do not support NUMBER_OF_THIS_RUN > 1 in the case of UNDO_ATTENUATION'
 
+  if (USE_LDDRK .and. NUMBER_OF_RUNS > 1) &
+    stop 'NUMBER_OF_RUNS should be == 1 for now when using USE_LDDRK'
+
   ! check that reals are either 4 or 8 bytes
   if (CUSTOM_REAL /= SIZE_REAL .and. CUSTOM_REAL /= SIZE_DOUBLE) &
     stop 'wrong size of CUSTOM_REAL for reals'
@@ -475,8 +478,8 @@
     stop 'for GRAVITY_INTEGRALS use double precision i.e. configure the code with --enable-double-precision'
 
   ! adjoint simulations: seismogram output only works if each process writes out its local seismos
-  if (WRITE_SEISMOGRAMS_BY_MASTER .and. SIMULATION_TYPE == 2) &
-    stop 'For SIMULATION_TYPE == 2, please set WRITE_SEISMOGRAMS_BY_MASTER to .false.'
+  if (WRITE_SEISMOGRAMS_BY_MAIN .and. SIMULATION_TYPE == 2) &
+    stop 'For SIMULATION_TYPE == 2, please set WRITE_SEISMOGRAMS_BY_MAIN to .false.'
 
   end subroutine rcp_check_parameters
 

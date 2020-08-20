@@ -75,7 +75,7 @@
   ! the variables read are declared in the module
   if (myrank == 0) call read_mantle_gapmodel()
 
-  ! master process broadcasts data to all processes
+  ! main process broadcasts data to all processes
   call bcast_all_r(dep,mr+1)
   call bcast_all_r(dep1,mr1+1)
   call bcast_all_r(vp1,mr1+1)

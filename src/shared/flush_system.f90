@@ -37,7 +37,7 @@
 
   implicit none
 
-  ! only master process writes out to main output file
+  ! only main process writes out to main output file
   ! file I/O in Fortran is buffered by default
   !
   ! note: Fortran2003 includes a FLUSH statement
@@ -73,4 +73,3 @@
   call system(trim(command))
 
   end subroutine system_command
-

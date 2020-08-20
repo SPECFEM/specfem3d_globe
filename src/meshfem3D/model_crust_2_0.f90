@@ -57,11 +57,14 @@
   ! model_crust_variables
   ! Vp, Vs and density
   double precision, dimension(:,:), allocatable :: crust_vp,crust_vs,crust_rho
-  character(len=2) :: abbreviation(CRUST_NLA/2,CRUST_NLA)
-  character(len=2) :: code(CRUST_NLO)
+  character(len=2),dimension(:,:),allocatable :: abbreviation
+  character(len=2),dimension(:),allocatable :: code
 
   ! layer thickness
   double precision, dimension(:,:), allocatable :: crust_thickness
+
+  ! hash table
+  integer, dimension(:), allocatable :: crustalhash_to_key
 
   end module model_crust_2_0_par
 
@@ -78,7 +81,7 @@
 
   implicit none
 
-  integer :: ier
+  integer :: ier,i,ihash
 
   ! allocate crustal arrays
   allocate(crust_thickness(CRUST_NP,CRUST_NLO), &
@@ -94,10 +97,17 @@
   crust_rho(:,:) = ZERO
   crust_thickness(:,:) = ZERO
 
+  ! allocates model arrays
+  allocate(abbreviation(CRUST_NLA/2,CRUST_NLA), &
+           code(CRUST_NLO),stat=ier)
+  if (ier /= 0) stop 'Error allocating abbrev.. arrays'
+  abbreviation(:,:) = ''
+  code(:) = ''
+
   ! the variables read are declared and stored in structure model_crust_2_0_par
   if (myrank == 0) call read_crust_2_0_model()
 
-  ! broadcast the information read on the master to the nodes
+  ! broadcast the information read on the main node to all the nodes
   call bcast_all_dp(crust_thickness,CRUST_NLO*CRUST_NP)
   call bcast_all_dp(crust_vp,CRUST_NLO*CRUST_NP)
   call bcast_all_dp(crust_vs,CRUST_NLO*CRUST_NP)
@@ -106,13 +116,23 @@
   call bcast_all_ch_array2(abbreviation,CRUST_NLA/2,CRUST_NLA,2)
   call bcast_all_ch_array(code,CRUST_NLO,2)
 
+  ! fill in the hash table
+  allocate(crustalhash_to_key(128*128),stat=ier)
+  if (ier /= 0) stop 'Error allocating crustalhash table'
+  crustalhash_to_key(:) = -1
+  do i = 1,CRUST_NLO
+    call hash_crustal_type(code(i), ihash)
+    if (crustalhash_to_key(ihash) /= -1) stop 'Error in crust_2_0_CAPsmoothed: hash table collision'
+    crustalhash_to_key(ihash) = i
+  enddo
+
   end subroutine model_crust_2_0_broadcast
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_crust_2_0(lat,lon,x,vp,vs,rho,moho,sediment,found_crust,elem_in_crust)
+  subroutine model_crust_2_0(lat,lon,x,vp,vs,rho,moho,sediment,found_crust,elem_in_crust,moho_only)
 
   use constants
   use shared_parameters, only: R_PLANET_KM,RHOAV
@@ -124,7 +144,7 @@
   double precision,intent(in) :: lat,lon,x
   double precision,intent(out) :: vp,vs,rho,moho,sediment
   logical,intent(out) :: found_crust
-  logical,intent(in) :: elem_in_crust
+  logical,intent(in) :: elem_in_crust,moho_only
 
   ! local parameters
   double precision :: thicks_1
@@ -139,10 +159,11 @@
   rho = ZERO
   moho = ZERO
   sediment = ZERO
+  found_crust = .true.
 
   ! gets smoothed structure
   call crust_2_0_CAPsmoothed(lat,lon,vps,vss,rhos,thicks,abbreviation, &
-                             code,crust_thickness,crust_vp,crust_vs,crust_rho)
+                             crust_thickness,crust_vp,crust_vs,crust_rho)
 
   ! note: for seismic wave propagation in general we ignore the water and ice sheets (oceans are re-added later as an ocean load)
   ! note: but for gravity integral calculations we include the ice
@@ -179,13 +200,13 @@
   ! no matter if found_crust is true or false, compute moho thickness
   moho = (h_uc + thicks(6) + thicks(7)) * scaleval
 
+  ! checks if anything further to do
+  if (moho_only) return
+
   ! sediment thickness
   if (INCLUDE_SEDIMENTS_IN_CRUST) then
     sediment = h_sed * scaleval
   endif
-
-  ! gets corresponding crustal velocities and density
-  found_crust = .true.
 
   ! gets corresponding crustal velocities and density
   if (x > x1 .and. INCLUDE_ICE_IN_CRUST) then
@@ -316,7 +337,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine crust_2_0_CAPsmoothed(lat,lon,velp,vels,rho,thick,abbreviation,code,crust_thickness,crust_vp,crust_vs,crust_rho)
+  subroutine crust_2_0_CAPsmoothed(lat,lon,velp,vels,rho,thick,abbreviation,crust_thickness,crust_vp,crust_vs,crust_rho)
 
 ! crustal vp and vs in km/s, layer thickness in km
 !
@@ -325,7 +346,7 @@
 ! The cap is first rotated to the North Pole for easier implementation.
 
   use constants
-  use model_crust_2_0_par, only: CRUST_NP,CRUST_NLO,CRUST_NLA
+  use model_crust_2_0_par, only: CRUST_NP,CRUST_NLO,CRUST_NLA,crustalhash_to_key
 
   implicit none
 
@@ -338,7 +359,6 @@
   double precision,dimension(CRUST_NP) :: rho,thick,velp,vels
   double precision,dimension(CRUST_NP,CRUST_NLO) :: crust_thickness,crust_vp,crust_vs,crust_rho
 
-  character(len=2) :: code(CRUST_NLO)
   character(len=2) :: abbreviation(CRUST_NLA/2,CRUST_NLA)
 
   !-------------------------------
@@ -363,16 +383,7 @@
   character(len=2) :: crustaltype
 
   ! small hash table to convert crustal types to key
-  integer, dimension(128*128) :: crustalhash_to_key
   integer :: ihash, crustalkey
-
-  ! fill in the hash table
-  crustalhash_to_key(:) = -1
-  do i = 1,CRUST_NLO
-    call hash_crustal_type(code(i), ihash)
-    if (crustalhash_to_key(ihash) /= -1) stop 'Error in crust_2_0_CAPsmoothed: hash table collision'
-    crustalhash_to_key(ihash) = i
-  enddo
 
   ! checks latitude/longitude
   if (lat > 90.0d0 .or. lat < -90.0d0 .or. lon > 180.0d0 .or. lon < -180.0d0) then
@@ -425,7 +436,7 @@
 
     ! gets crust values
     call get_crust_2_0_structure(crustalkey,velpl,velsl,rhol,thickl, &
-                            crust_thickness,crust_vp,crust_vs,crust_rho)
+                                 crust_thickness,crust_vp,crust_vs,crust_rho)
 
     ! sediment thickness
     h_sed = thickl(3) + thickl(4)

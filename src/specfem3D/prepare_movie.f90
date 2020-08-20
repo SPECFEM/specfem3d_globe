@@ -91,13 +91,13 @@
 
   ! allocates arrays for gathering wavefield values
   if (myrank == 0) then
-    ! only master needs full arrays
+    ! only main needs full arrays
     allocate(store_val_ux_all(nmovie_points,0:NPROCTOT_VAL-1), &
              store_val_uy_all(nmovie_points,0:NPROCTOT_VAL-1), &
              store_val_uz_all(nmovie_points,0:NPROCTOT_VAL-1),stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating movie surface all arrays')
   else
-    ! slave processes only need dummy arrays
+    ! secondary processes only need dummy arrays
     allocate(store_val_ux_all(1,1), &
              store_val_uy_all(1,1), &
              store_val_uz_all(1,1),stat=ier)

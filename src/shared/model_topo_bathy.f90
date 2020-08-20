@@ -70,7 +70,7 @@
     ! get MPI starting time
     time1 = wtime()
 
-    ! read/save topo file on master
+    ! read/save topo file on main proc
     if (ending == '.dat') then
       call read_topo_bathy_file_dat_text(ibathy_topo)
     else
@@ -93,7 +93,7 @@
     if (PLOT_PNM_IMAGE_TOPO_BATHY) call plot_topo_bathy_pnm(ibathy_topo)
   endif
 
-  ! broadcast the information read on the master to the nodes
+  ! broadcast the information read on the main node to all the nodes
   call bcast_all_i(ibathy_topo,NX_BATHY*NY_BATHY)
 
   end subroutine model_topo_bathy_broadcast
@@ -289,7 +289,7 @@
   integer :: ier
 
   ! create the name for the database of the current slide and region
-  ! only master needs to save this
+  ! only main needs to save this
   call create_name_database(prname,0,IREGION_CRUST_MANTLE,LOCAL_PATH)
 
   ! saves topography and bathymetry file for solver
@@ -329,7 +329,7 @@
   integer :: ier
 
   ! create the name for the database of the current slide and region
-  ! only master needs to save this
+  ! only main needs to save this
   call create_name_database(prname,0,IREGION_CRUST_MANTLE,LOCAL_PATH)
 
   ! reads topography and bathymetry file from saved database file

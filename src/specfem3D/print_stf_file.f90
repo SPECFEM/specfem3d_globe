@@ -52,7 +52,7 @@
   ! number of points to plot the source time function and spectrum
   integer, parameter :: NSAMP_PLOT_SOURCE = 1000
 
-  ! only master process outputs stf
+  ! only main process outputs stf
   if (myrank /= 0) return
 
   ! user output

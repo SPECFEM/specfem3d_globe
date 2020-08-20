@@ -31,7 +31,7 @@
 !=====================================================================
 */
 
-const char * noise_add_source_master_rec_kernel_program = "\
+const char * update_elastic_lddrk_kernel_program = "\
 inline void atomicAdd(volatile __global float *source, const float val) {\n\
   union {\n\
     unsigned int iVal;\n\
@@ -92,17 +92,24 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #define BLOCKSIZE_TRANSFER 256\n\
 #endif\n\
 \n\
-__kernel void noise_add_source_master_rec_kernel(const __global int * ibool, const __global int * ispec_selected_rec, const int irec_master_noise, __global float * accel, const __global float * noise_sourcearray, const int it){\n\
-  int tx;\n\
-  int ispec;\n\
-  int iglob;\n\
+__kernel void update_elastic_lddrk_kernel(__global float * displ, __global float * veloc, const __global float * accel, __global float * displ_lddrk, __global float * veloc_lddrk, const float alpha_lddrk, const float beta_lddrk, const float deltat, const int size){\n\
+  int id;\n\
 \n\
-  tx = get_local_id(0);\n\
-  ispec = ispec_selected_rec[irec_master_noise] - (1);\n\
-  iglob = ibool[tx + (NGLL3) * (ispec)] - (1);\n\
+  id = get_global_id(0) + (get_group_id(1)) * (get_global_size(0));\n\
 \n\
-  atomicAdd(accel + (iglob) * (3) + 0, noise_sourcearray[(tx) * (3) + ((NGLL3) * (3)) * (it) + 0]);\n\
-  atomicAdd(accel + (iglob) * (3) + 1, noise_sourcearray[(tx) * (3) + ((NGLL3) * (3)) * (it) + 1]);\n\
-  atomicAdd(accel + (iglob) * (3) + 2, noise_sourcearray[(tx) * (3) + ((NGLL3) * (3)) * (it) + 2]);\n\
+  if (id < size) {\n\
+    veloc_lddrk[(id) * (3)] = (alpha_lddrk) * (veloc_lddrk[(id) * (3)]) + (deltat) * (accel[(id) * (3)]);\n\
+    veloc_lddrk[(id) * (3) + 1] = (alpha_lddrk) * (veloc_lddrk[(id) * (3) + 1]) + (deltat) * (accel[(id) * (3) + 1]);\n\
+    veloc_lddrk[(id) * (3) + 2] = (alpha_lddrk) * (veloc_lddrk[(id) * (3) + 2]) + (deltat) * (accel[(id) * (3) + 2]);\n\
+    displ_lddrk[(id) * (3)] = (alpha_lddrk) * (displ_lddrk[(id) * (3)]) + (deltat) * (veloc[(id) * (3)]);\n\
+    displ_lddrk[(id) * (3) + 1] = (alpha_lddrk) * (displ_lddrk[(id) * (3) + 1]) + (deltat) * (veloc[(id) * (3) + 1]);\n\
+    displ_lddrk[(id) * (3) + 2] = (alpha_lddrk) * (displ_lddrk[(id) * (3) + 2]) + (deltat) * (veloc[(id) * (3) + 2]);\n\
+    veloc[(id) * (3)] = veloc[(id) * (3)] + (beta_lddrk) * (veloc_lddrk[(id) * (3)]);\n\
+    veloc[(id) * (3) + 1] = veloc[(id) * (3) + 1] + (beta_lddrk) * (veloc_lddrk[(id) * (3) + 1]);\n\
+    veloc[(id) * (3) + 2] = veloc[(id) * (3) + 2] + (beta_lddrk) * (veloc_lddrk[(id) * (3) + 2]);\n\
+    displ[(id) * (3)] = displ[(id) * (3)] + (beta_lddrk) * (displ_lddrk[(id) * (3)]);\n\
+    displ[(id) * (3) + 1] = displ[(id) * (3) + 1] + (beta_lddrk) * (displ_lddrk[(id) * (3) + 1]);\n\
+    displ[(id) * (3) + 2] = displ[(id) * (3) + 2] + (beta_lddrk) * (displ_lddrk[(id) * (3) + 2]);\n\
+  }\n\
 }\n\
 ";

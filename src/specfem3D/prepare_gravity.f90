@@ -38,8 +38,8 @@
   implicit none
 
   ! local parameters
-  double precision,dimension(NR_DENSITY) :: rspl_gravity,gravity_spline,gravity_spline2
-  double precision,dimension(NRAD_GRAVITY) :: r
+  double precision,dimension(:),allocatable :: rspl_gravity,gravity_spline,gravity_spline2
+  double precision,dimension(:),allocatable :: r
   double precision :: radius,radius_km,g,dg,range_max
   double precision :: g_cmb_dble,g_icb_dble
   double precision :: rho,drhodr,vp,vs,Qkappa,Qmu
@@ -66,13 +66,33 @@
     call flush_IMAIN()
   endif
 
+  ! allocates gravity arrays
+  allocate(minus_gravity_table(NRAD_GRAVITY), &
+           minus_deriv_gravity_table(NRAD_GRAVITY), &
+           density_table(NRAD_GRAVITY), &
+           d_ln_density_dr_table(NRAD_GRAVITY), &
+           minus_rho_g_over_kappa_fluid(NRAD_GRAVITY),stat=ier)
+  if (ier /= 0) stop 'Error allocating gravity arrays'
+  minus_gravity_table(:) = 0.d0
+  minus_deriv_gravity_table(:) = 0.d0
+  density_table(:) = 0.d0
+  d_ln_density_dr_table(:) = 0.d0
+  minus_rho_g_over_kappa_fluid(:) = 0.d0
+
   ! outer core
   ! to hold pre-computed vectors (different between gravity or no gravity case)
   allocate(gravity_pre_store_outer_core(NDIM,NGLOB_OUTER_CORE),stat=ier)
   if (ier /= 0) stop 'Error allocating gravity_grad_ln_density_dr array'
   gravity_pre_store_outer_core(:,:) = 0._CUSTOM_REAL
 
+  ! helper arrays
+  allocate(r(NRAD_GRAVITY), &
+           rspl_gravity(NR_DENSITY), &
+           gravity_spline(NR_DENSITY), &
+           gravity_spline2(NR_DENSITY),stat=ier)
+  if (ier /= 0) stop 'Error allocating gravity helper arrays'
   ! initializes spline coefficients
+  r(:) = 0.d0
   rspl_gravity(:) = 0.d0
   gravity_spline(:) = 0.d0
   gravity_spline2(:) = 0.d0

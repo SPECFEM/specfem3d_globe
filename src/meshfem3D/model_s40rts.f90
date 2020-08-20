@@ -109,7 +109,7 @@
   ! the variables read are declared and stored in structure S40RTS_V
   if (myrank == 0) call read_model_s40rts()
 
-  ! broadcast the information read on the master to the nodes
+  ! broadcast the information read on the main node to all the nodes
   call bcast_all_dp(S40RTS_V_dvs_a,(NK_20+1)*(NS_40+1)*(NS_40+1))
   call bcast_all_dp(S40RTS_V_dvs_b,(NK_20+1)*(NS_40+1)*(NS_40+1))
   call bcast_all_dp(S40RTS_V_dvp_a,(NK_20+1)*(NS_40+1)*(NS_40+1))

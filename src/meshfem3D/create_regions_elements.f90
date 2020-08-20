@@ -193,7 +193,10 @@
   ! define central cube in inner core
   if (INCLUDE_CENTRAL_CUBE .and. iregion_code == IREGION_INNER_CORE) then
     ! user output
-    if (myrank == 0 ) write(IMAIN,*) '  creating central cube'
+    if (myrank == 0 ) then
+      write(IMAIN,*) '  creating central cube'
+      call flush_IMAIN()
+    endif
 
     call create_central_cube(ichunk,ispec_count,ipass, &
                              nspec,NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &

@@ -249,7 +249,7 @@ module specfem_par
   ! non-dimensionalized rotation rate of the Earth times two
   real(kind=CUSTOM_REAL) :: two_omega_earth
   !ADJOINT
-  real(kind=CUSTOM_REAL) b_two_omega_earth
+  real(kind=CUSTOM_REAL) :: b_two_omega_earth
 
   !-----------------------------------------------------------------
   ! gravity
@@ -257,7 +257,7 @@ module specfem_par
 
   ! lookup table every km for gravity
   real(kind=CUSTOM_REAL) :: minus_g_cmb,minus_g_icb
-  double precision, dimension(NRAD_GRAVITY) :: minus_gravity_table, &
+  double precision, dimension(:),allocatable :: minus_gravity_table, &
     minus_deriv_gravity_table,density_table,d_ln_density_dr_table,minus_rho_g_over_kappa_fluid
 
   ! pre-computed vectors
@@ -455,7 +455,7 @@ module specfem_par
 
   ! LDDRK time scheme
   integer :: NSTAGE_TIME_SCHEME,istage
-  real(kind=CUSTOM_REAL),dimension(N_SLS) :: tau_sigma_CUSTOM_REAL
+  real(kind=CUSTOM_REAL),dimension(N_SLS) :: tau_sigmainv_CUSTOM_REAL
 
   ! UNDO_ATTENUATION
   integer :: NT_DUMP_ATTENUATION,NSUBSET_ITERATIONS
@@ -981,7 +981,7 @@ module specfem_par_noise
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: noise_surface_movie
 
   integer :: num_noise_surface_points
-  integer :: irec_master_noise
+  integer :: irec_main_noise
   integer :: nsources_local_noise
 
   ! noise buffer for file i/o
@@ -1041,7 +1041,7 @@ module specfem_par_movie
 #endif
   real,dimension(:),allocatable :: vtkdata
   logical,dimension(:),allocatable :: vtkmask
-  ! multi-MPI processes, gather data arrays on master
+  ! multi-MPI processes, gather data arrays on main
   real,dimension(:),allocatable :: vtkdata_all
   integer,dimension(:),allocatable :: vtkdata_points_all
   integer,dimension(:),allocatable :: vtkdata_offset_all

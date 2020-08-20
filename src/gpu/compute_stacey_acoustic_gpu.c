@@ -343,7 +343,7 @@ void FC_FUNC_ (compute_stacey_acoustic_undoatt_gpu,
   gpu_realw_mem d_wgllwgll;
 
   // checks if anything to do
-  if (mp->simulation_type /= 3 || mp->save_forward) return;
+  if (mp->simulation_type != 3 || mp->save_forward) return;
 
   // absorbing boundary type
   int interface_type = *itype;

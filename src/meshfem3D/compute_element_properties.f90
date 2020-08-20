@@ -32,7 +32,7 @@
                                         rmin,rmax, &
                                         xigll,yigll,zigll,ispec_is_tiso)
 
-  use constants, only: NGLLX,NGLLY,NGLLZ,NGNOD,CUSTOM_REAL, &
+  use constants, only: myrank,NGLLX,NGLLY,NGLLZ,NGNOD,CUSTOM_REAL, &
     IFLAG_220_80,IFLAG_670_220,IFLAG_80_MOHO,IFLAG_MANTLE_NORMAL,IFLAG_CRUST, &
     IFLAG_OUTER_CORE_NORMAL,IFLAG_IN_FICTITIOUS_CUBE, &
     IREGION_CRUST_MANTLE,SUPPRESS_INTERNAL_TOPOGRAPHY,USE_GLL
@@ -87,12 +87,20 @@
   ! flag for transverse isotropic elements
   logical :: elem_is_tiso
 
+  !debug
+  logical, parameter :: DEBUG_OUTPUT = .false.
+
 ! note: at this point, the mesh is still perfectly spherical
 
   ! flag if element completely in crust (all corners above moho)
   elem_in_crust = .false.
   ! flag if element completely in mantle (all corners below moho)
   elem_in_mantle = .false.
+
+  !debug
+  if (DEBUG_OUTPUT) then
+    if (myrank == 0) print *,'element ',ispec,' properties:'
+  endif
 
   ! add topography of the Moho *before* adding the 3D crustal velocity model so that the stretched
   ! mesh gets assigned the right model values
@@ -127,7 +135,10 @@
         elem_in_mantle = .true.
       endif
     endif
-
+    !debug
+    if (DEBUG_OUTPUT) then
+      if (myrank == 0) print *,'  in crust',elem_in_crust,' in mantle ',elem_in_mantle
+    endif
   endif ! IREGION_CRUST_MANTLE
 
   ! sets element tiso flag
@@ -136,9 +147,19 @@
   ! stores as element flags
   ispec_is_tiso(ispec) = elem_is_tiso
 
+  !debug
+  if (DEBUG_OUTPUT) then
+    if (myrank == 0) print *,'  tiso flag ',elem_is_tiso
+  endif
+
   ! interpolates and stores GLL point locations
   call compute_element_GLL_locations(xelm,yelm,zelm,ispec,nspec, &
                                      xstore,ystore,zstore,shape3D)
+
+  !debug
+  if (DEBUG_OUTPUT) then
+    if (myrank == 0) print *,'  locations done'
+  endif
 
   ! computes velocity/density/... values for the chosen Earth model
   ! (only needed for second meshing phase)
@@ -147,7 +168,13 @@
                    xstore,ystore,zstore, &
                    rmin,rmax, &
                    elem_in_crust,elem_in_mantle)
+
+    !debug
+    if (DEBUG_OUTPUT) then
+      if (myrank == 0) print *,'  model properties done'
+    endif
   endif
+
 
   ! either use GLL points or anchor points to capture TOPOGRAPHY and ELLIPTICITY
   !
@@ -169,7 +196,13 @@
         call add_topography(xelm,yelm,zelm,ibathy_topo)
       endif
     endif
+
+    !debug
+    if (DEBUG_OUTPUT) then
+      if (myrank == 0) print *,'  topography done'
+    endif
   endif
+
 
   ! adds topography on 410 km and 650 km discontinuity in model S362ANI
   if (.not. SUPPRESS_INTERNAL_TOPOGRAPHY) then
@@ -220,6 +253,11 @@
     ! .or. idoubling(ispec)==IFLAG_BOTTOM_CENTRAL_CUBE .or. idoubling(ispec)==IFLAG_TOP_CENTRAL_CUBE &
     ! .or. idoubling(ispec)==IFLAG_IN_FICTITIOUS_CUBE)) &
     !           call add_topography_icb(xelm,yelm,zelm)
+
+    !debug
+    if (DEBUG_OUTPUT) then
+      if (myrank == 0) print *,'  internal topography done'
+    endif
   endif
 
   ! make the Earth elliptical
@@ -232,6 +270,11 @@
       ! make the Earth's ellipticity, use element anchor points
       call get_ellipticity(xelm,yelm,zelm,nspl,rspl,ellipicity_spline,ellipicity_spline2)
     endif
+
+    !debug
+    if (DEBUG_OUTPUT) then
+      if (myrank == 0) print *,'  ellipticity done'
+    endif
   endif
 
   ! re-interpolates and creates the GLL point locations since the anchor points might have moved
@@ -242,6 +285,11 @@
   if (.not. USE_GLL) then
     call compute_element_GLL_locations(xelm,yelm,zelm,ispec,nspec, &
                                        xstore,ystore,zstore,shape3D)
+
+    !debug
+    if (DEBUG_OUTPUT) then
+      if (myrank == 0) print *,'  GLL locations done'
+    endif
   endif
 
   ! updates Jacobian
@@ -253,6 +301,11 @@
                                  xixstore,xiystore,xizstore, &
                                  etaxstore,etaystore,etazstore, &
                                  gammaxstore,gammaystore,gammazstore)
+    endif
+
+    !debug
+    if (DEBUG_OUTPUT) then
+      if (myrank == 0) print *,'  jacobian done'
     endif
   endif
 
@@ -491,5 +544,8 @@
     continue
 
   end select
+
+  !debug
+  !if (myrank == 0) print *,'  element ',ispec,' tiso flag: ',elem_is_tiso
 
   end subroutine compute_element_tiso_flag

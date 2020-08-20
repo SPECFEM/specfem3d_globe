@@ -61,7 +61,7 @@
     ibathy_topo(:,:) = 0
 
     if (I_should_read_the_database) then
-      ! master reads file
+      ! main reads file
       if (myrank == 0) then
         ! user output
         write(IMAIN,*) 'topography:'
@@ -73,7 +73,7 @@
         call read_topo_bathy_database(ibathy_topo, topo_path)
       endif
 
-      ! broadcast the information read on the master to the nodes
+      ! broadcast the information read on the main to the nodes
       call bcast_all_i(ibathy_topo,NX_BATHY*NY_BATHY)
     endif
     call bcast_ibathy_topo()

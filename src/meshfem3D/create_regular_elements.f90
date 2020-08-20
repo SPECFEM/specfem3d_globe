@@ -47,7 +47,7 @@
 ! adds a regular spectral element to the different regions of the mesh
 
   use constants, only: myrank,NDIM,CUSTOM_REAL,NGLLX,NGLLY,NGNOD,NGNOD_EIGHT_CORNERS,SUPPRESS_CRUSTAL_MESH, &
-    SAVE_BOUNDARY_MESH,IREGION_CRUST_MANTLE
+    SAVE_BOUNDARY_MESH,IREGION_CRUST_MANTLE,IMAIN
 
   use shared_parameters, only: ner_mesh_layers,ratio_sampling_array,doubling_index,r_bottom,r_top
 
@@ -128,6 +128,12 @@
   nelements = NEX_PER_PROC_XI/ratio_sampling_array(ilayer) &
             * NEX_PER_PROC_ETA/ratio_sampling_array(ilayer) &
             * ner_without_doubling
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '    number of regular elements  = ',nelements
+    call flush_IMAIN()
+  endif
 
   ! fill mapping to be able to parallelize loops below
   allocate(map_ispec(nelements),stat=ier)

@@ -498,7 +498,7 @@
 !  integer, dimension(:,:),allocatable :: idoubling_all
 !  real(kind=CUSTOM_REAL), dimension(nglob) :: tmp
 !
-!  ! master collect arrays
+!  ! main collect arrays
 !  if (myrank == 0) then
 !    allocate(store_val_x_all(nglob,0:NPROCTOT-1), &
 !            store_val_y_all(nglob,0:NPROCTOT-1), &
@@ -522,7 +522,7 @@
 !    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating dummy stores')
 !  endif
 !
-!  ! gather info on master proc
+!  ! gather info on main proc
 !  call gather_all_cr(xstore_dummy,nglob,store_val_x_all,nglob,NPROCTOT)
 !  call gather_all_cr(ystore_dummy,nglob,store_val_y_all,nglob,NPROCTOT)
 !  call gather_all_cr(zstore_dummy,nglob,store_val_z_all,nglob,NPROCTOT)
