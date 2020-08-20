@@ -173,6 +173,9 @@
 
   ! check flags to make sure we correctly honor the discontinuities
   ! we use strict inequalities since r has been slightly changed in mesher
+
+  ! note: using stop statements, not exit_mpi() calls to avoid the need for mpi libraries when linking xcreate_header_file
+
   if (check_doubling_flag) then
     !
     !--- inner core
@@ -188,37 +191,37 @@
           idoubling /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
           idoubling /= IFLAG_TOP_CENTRAL_CUBE .and. &
           idoubling /= IFLAG_IN_FICTITIOUS_CUBE) &
-           call exit_MPI(myrank,'wrong doubling flag for inner core point in model_vpremoon()')
+           stop 'wrong doubling flag for inner core point in model_vpremoon()'
     !
     !--- outer core
     !
     else if (r > VPREMOON_RICB .and. r < VPREMOON_RCMB) then
       if (idoubling /= IFLAG_OUTER_CORE_NORMAL) &
-        call exit_MPI(myrank,'wrong doubling flag for outer core point in model_vpremoon()')
+        stop 'wrong doubling flag for outer core point in model_vpremoon()'
     !
     !--- D" at the base of the mantle
     !
     else if (r > VPREMOON_RCMB .and. r < VPREMOON_RTOPDDOUBLEPRIME) then
       if (idoubling /= IFLAG_MANTLE_NORMAL) &
-        call exit_MPI(myrank,'wrong doubling flag for D" point in model_vpremoon()')
+        stop 'wrong doubling flag for D" point in model_vpremoon()'
     !
     !--- mantle: from top of D" to d670
     !
     else if (r > VPREMOON_RTOPDDOUBLEPRIME .and. r < VPREMOON_R670) then
       if (idoubling /= IFLAG_MANTLE_NORMAL) &
-        call exit_MPI(myrank,'wrong doubling flag for top D" - > d670 point in model_vpremoon()')
+        stop 'wrong doubling flag for top D" - > d670 point in model_vpremoon()'
     !
     !--- mantle: from d670 to d220
     !
     else if (r > VPREMOON_R670 .and. r < VPREMOON_R220) then
       if (idoubling /= IFLAG_670_220) &
-        call exit_MPI(myrank,'wrong doubling flag for d670 - > d220 point in model_vpremoon()')
+        stop 'wrong doubling flag for d670 - > d220 point in model_vpremoon()'
     !
     !--- mantle and crust: from d220 to MOHO and then to surface
     !
     else if (r > VPREMOON_R220) then
       if (idoubling /= IFLAG_220_80 .and. idoubling /= IFLAG_80_MOHO .and. idoubling /= IFLAG_CRUST) &
-        call exit_MPI(myrank,'wrong doubling flag for d220 - > Moho - > surface point in model_vpremoon()')
+        stop 'wrong doubling flag for d220 - > Moho - > surface point in model_vpremoon()'
     endif
   endif
 
@@ -363,7 +366,7 @@
            VPREMOON_Qmu(NR_VPREMOON_layers), &
            VPREMOON_Qmu_original(NR_VPREMOON_layers), &
            stat=ier)
-  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating VPREMOON arrays')
+  if (ier /= 0 ) stop 'Error allocating VPREMOON arrays'
 
   ! read in layering
   ! note: table 6 starts from top surface to inner core
@@ -470,11 +473,11 @@
   ! checks data table
   ! ICB at radius(33)
   if (abs(RICB - VPREMOON_radius(2)) > TOL) &
-    call exit_MPI(myrank,'Error: vpremoon radius RICB and model radius index not matching')
+    stop 'Error: vpremoon radius RICB and model radius index not matching'
   if (abs(RCMB - VPREMOON_radius(4)) > TOL) &
-    call exit_MPI(myrank,'Error: vpremoon radius RCMB and model radius index not matching')
+    stop 'Error: vpremoon radius RCMB and model radius index not matching'
   if (abs(ROCEAN - VPREMOON_radius(NR_VPREMOON_layers)) > TOL) &
-    call exit_MPI(myrank,'Error: vpremoon radius ROCEAN and model radius index not matching')
+    stop 'Error: vpremoon radius ROCEAN and model radius index not matching'
 
   ! stores Qmu original values (without CRUSTAL modifications) for further use in attenuation routine
   VPREMOON_Qmu_original(:) = VPREMOON_Qmu(:)
