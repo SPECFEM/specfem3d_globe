@@ -290,6 +290,10 @@
 ! Evolution of the code:
 ! ---------------------
 !
+! v. 8.0, many developers, September 2020:
+!     support for new earth, moon & mars models, ADIOS2 file I/O support, GLL models for azimuthal anisotropy & Q,
+!     LDDRK on GPU support, Laplacian smoothing, monochromatic source time functions.
+!
 ! v. 7.0, many developers, January 2015:
 !     simultaneous MPI runs, ADIOS file I/O support, ASDF seismograms, new seismogram names, tomography tools,
 !     CUDA and OpenCL GPU support, CEM model support, updates AK135 model, binary topography files,
