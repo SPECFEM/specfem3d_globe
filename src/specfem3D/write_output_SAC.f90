@@ -73,7 +73,7 @@
   real :: DEPMAX
   real :: SCALE_F
   real :: ODELTA
-  real ::  B,E,O,A
+  real :: B,E,O,A
   real :: STLA,STLO,STEL,STDP
   real :: EVLA,EVLO,EVEL,EVDP
   real :: MAG,DIST,AZ,BAZ,GCARC
@@ -297,8 +297,8 @@
   NVHDR=6 ! SAC header version number. Current is 6
 
   ! CSS3.0 variables:
-  NORID =int(undef) !origin ID
-  NEVID =int(undef) !event  ID
+  NORID = int(undef) !origin ID
+  NEVID = int(undef) !event  ID
   !NWVID =undef !waveform ID
 
   ! NUMBER of POINTS:
@@ -312,10 +312,10 @@
   IQUAL  = int(undef) ! quality
   ISYNTH = int(undef) ! 1 real data, 2...n synth. flag
   ! permission flags:
-  LEVEN =1 ! evenly spaced data [REQUIRED]
-  LPSPOL=1 ! ? pos. polarity of components (has to be TRUE for LCALDA=1)
-  LOVROK=1 ! 1: OK to overwrite file on disk
-  LCALDA=1 ! 1: calculate DIST, AZ, BAZ, and GCARC, 0: do nothing
+  LEVEN  = 1 ! evenly spaced data [REQUIRED]
+  LPSPOL = 1 ! ? pos. polarity of components (has to be TRUE for LCALDA=1)
+  LOVROK = 1 ! 1: OK to overwrite file on disk
+  LCALDA = 1 ! 1: calculate DIST, AZ, BAZ, and GCARC, 0: do nothing
   ! ------------------end format 5I10---------
   !
   !----------------------------------

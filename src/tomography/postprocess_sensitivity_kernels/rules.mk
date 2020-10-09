@@ -119,6 +119,7 @@ tomography/postprocess_sensitivity_kernels: postprocess
 ## xconvert_model_file_adios
 ##
 xconvert_model_file_adios_OBJECTS = \
+	$O/postprocess_par.postprocess_module.o \
 	$O/convert_model_file_adios.postprocess_adios.o \
 	$(EMPTY_MACRO)
 
@@ -126,6 +127,7 @@ xconvert_model_file_adios_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/parallel.sharedmpi.o \
 	$O/exit_mpi.shared.o \
+	$O/flush_system.shared.o \
 	$O/param_reader.cc.o \
 	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
@@ -152,6 +154,7 @@ xaddition_sem_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/parallel.sharedmpi.o \
 	$O/exit_mpi.shared.o \
+	$O/flush_system.shared.o \
 	$O/param_reader.cc.o \
 	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
@@ -214,6 +217,7 @@ xdifference_sem_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/parallel.sharedmpi.o \
 	$O/exit_mpi.shared.o \
+	$O/flush_system.shared.o \
 	$O/param_reader.cc.o \
 	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
@@ -234,6 +238,7 @@ xinterpolate_model_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/parallel.sharedmpi.o \
 	$O/exit_mpi.shared.o \
+	$O/flush_system.shared.o \
 	$O/gll_library.shared.o \
 	$O/heap_sort.shared.o \
 	$O/hex_nodes.shared.o \
@@ -293,6 +298,7 @@ xsmooth_sem_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/parallel.sharedmpi.o \
 	$O/exit_mpi.shared.o \
+	$O/flush_system.shared.o \
 	$O/get_all_eight_slices.shared.o \
 	$O/gll_library.shared.o \
 	$O/heap_sort.shared.o \
@@ -355,6 +361,7 @@ xsmooth_laplacian_sem_SHARED_OBJECTS = \
 	$O/parallel.sharedmpi.o \
 	$O/assemble_MPI_scalar.shared.o \
 	$O/exit_mpi.shared.o \
+	$O/flush_system.shared.o \
 	$O/gll_library.shared.o \
 	$O/lagrange_poly.shared.o \
 	$O/param_reader.cc.o \

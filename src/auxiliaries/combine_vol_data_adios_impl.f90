@@ -40,14 +40,12 @@ subroutine print_usage_adios()
 
   implicit none
   print *, 'Usage: '
-  print *, '   xcombine_data slice_list varname var_file mesh_file ' // &
-           'output_dir high/low-resolution region'
+  print *, '   xcombine_data slice_list varname var_file mesh_file output_dir high/low-resolution region'
   print *
   print *, '* possible varnames are '
   print *, '   rho, vp, vs, kappastore, mustore, alpha_kl, beta_kl, etc'
   print *
-  print *, '   that are stored in the local directory as ' // &
-           'real(kind=CUSTOM_REAL) varname(NGLLX,NGLLY,NGLLZ,NSPEC)  '
+  print *, '   that are stored in the local directory as real(kind=CUSTOM_REAL) varname(NGLLX,NGLLY,NGLLZ,NSPEC)  '
   print *, '   in a datafile var_file.bp'
   print *
   print *, '* mesh_files: are used to link variable to the topology (e.g. DATABASES_MPI/solver_data.bp)'

@@ -314,26 +314,16 @@
              c66store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE),stat=ier)
     if (ier /= 0) stop 'Error allocating arrays c11store_crust_mantle,..'
   endif
-  c11store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
-  c12store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
-  c13store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
-  c14store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
-  c15store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
-  c16store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
-  c22store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
-  c23store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
-  c24store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
-  c25store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
-  c26store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
-  c33store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
-  c34store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
-  c35store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
-  c36store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
-  c44store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
-  c45store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
-  c46store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
-  c55store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
-  c56store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c11store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL; c12store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c13store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL; c14store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c15store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL; c16store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c22store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL; c23store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c24store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL; c25store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c26store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL; c33store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c34store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL; c35store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c36store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL; c44store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c45store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL; c46store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  c55store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL; c56store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
   c66store_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
 
   ! for azimuthal
@@ -501,12 +491,14 @@
            dummy_idoubling_outer_core(NSPEC_OUTER_CORE), &
            stat=ier)
   if (ier /= 0) stop 'Error allocating dummy rmass and dummy ispec/idoubling in outer core'
+  dummy_rmass(:) = 0.0; dummy_ispec_is_tiso(:) = .false.; dummy_idoubling_outer_core(:) = 0
 
   ! x/y/z locations
   allocate(xstore_outer_core(NGLOB_OUTER_CORE), &
            ystore_outer_core(NGLOB_OUTER_CORE), &
            zstore_outer_core(NGLOB_OUTER_CORE),stat=ier)
   if (ier /= 0) stop 'Error allocating x/y/zstore in outer core'
+  xstore_outer_core(:) = 0.0; ystore_outer_core(:) = 0.0; zstore_outer_core(:) = 0.0
 
   allocate(ibool_outer_core(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE), &
            xix_outer_core(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE), &
@@ -519,16 +511,23 @@
            gammay_outer_core(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE), &
            gammaz_outer_core(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays ibool_outer_core,..'
+  ibool_outer_core(:,:,:,:) = 0
+  xix_outer_core(:,:,:,:) = 0.0; xiy_outer_core(:,:,:,:) = 0.0; xiz_outer_core(:,:,:,:) = 0.0
+  etax_outer_core(:,:,:,:) = 0.0; etay_outer_core(:,:,:,:) = 0.0; etaz_outer_core(:,:,:,:) = 0.0
+  gammax_outer_core(:,:,:,:) = 0.0; gammay_outer_core(:,:,:,:) = 0.0; gammaz_outer_core(:,:,:,:) = 0.0
 
   allocate(rhostore_outer_core(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE), &
            kappavstore_outer_core(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays rhostore_outer_core,..'
+  rhostore_outer_core(:,:,:,:) = 0.0; kappavstore_outer_core(:,:,:,:) = 0.0
 
   allocate(rmass_outer_core(NGLOB_OUTER_CORE),stat=ier)
   if (ier /= 0) stop 'Error allocating array rmass_outer_core'
+  rmass_outer_core(:) = 0.0
 
   allocate(vp_outer_core(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_STACEY),stat=ier)
   if (ier /= 0) stop 'Error allocating array vp_outer_core'
+  vp_outer_core(:,:,:,:) = 0.0
 
   ! reads in mesh arrays
   if (I_should_read_the_database) then
@@ -639,6 +638,7 @@
   allocate(dummy_ispec_is_tiso(NSPEC_INNER_CORE), &
            stat=ier)
   if (ier /= 0) stop 'Error allocating dummy ispec in inner core'
+  dummy_ispec_is_tiso(:) = .false.
 
   ! allocates mass matrices in this slice (will be fully assembled in the solver)
   !
@@ -650,21 +650,25 @@
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
   allocate(rmassz_inner_core(NGLOB_INNER_CORE),stat=ier)
   if (ier /= 0) stop 'Error allocating rmassz in inner_core'
+  rmassz_inner_core(:) = 0.0
 
   allocate(rmassx_inner_core(NGLOB_XY_IC), &
            rmassy_inner_core(NGLOB_XY_IC),stat=ier)
   if (ier /= 0) stop 'Error allocating rmassx, rmassy in inner_core'
+  rmassx_inner_core(:) = 0.0; rmassy_inner_core(:) = 0.0
 
   ! b_rmassx and b_rmassy maybe different to rmassx,rmassy
   allocate(b_rmassx_inner_core(NGLOB_XY_IC), &
            b_rmassy_inner_core(NGLOB_XY_IC),stat=ier)
   if (ier /= 0) stop 'Error allocating b_rmassx, b_rmassy in inner_core'
+  b_rmassx_inner_core(:) = 0.0; b_rmassy_inner_core(:) = 0.0
 
   ! x/y/z locations
   allocate(xstore_inner_core(NGLOB_INNER_CORE), &
            ystore_inner_core(NGLOB_INNER_CORE), &
            zstore_inner_core(NGLOB_INNER_CORE),stat=ier)
   if (ier /= 0) stop 'Error allocating x/y/zstore in inner core'
+  xstore_inner_core(:) = 0.0; ystore_inner_core(:) = 0.0; zstore_inner_core(:) = 0.0
 
   allocate(ibool_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE), &
            xix_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE), &
@@ -677,11 +681,16 @@
            gammay_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE), &
            gammaz_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays ibool_inner_core,..'
+  ibool_inner_core(:,:,:,:) = 0
+  xix_inner_core(:,:,:,:) = 0.0; xiy_inner_core(:,:,:,:) = 0.0; xiz_inner_core(:,:,:,:) = 0.0
+  etax_inner_core(:,:,:,:) = 0.0; etay_inner_core(:,:,:,:) = 0.0; etaz_inner_core(:,:,:,:) = 0.0
+  gammax_inner_core(:,:,:,:) = 0.0; gammay_inner_core(:,:,:,:) = 0.0; gammaz_inner_core(:,:,:,:) = 0.0
 
   allocate(rhostore_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE), &
            kappavstore_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE), &
            muvstore_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays rhostore_inner_core,..'
+  rhostore_inner_core(:,:,:,:) = 0.0; kappavstore_inner_core(:,:,:,:) = 0.0; muvstore_inner_core(:,:,:,:) = 0.0
 
   allocate(c11store_inner_core(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_IC), &
            c33store_inner_core(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_IC), &
@@ -689,9 +698,12 @@
            c13store_inner_core(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_IC), &
            c44store_inner_core(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_IC),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays c11store_inner_core,..'
+  c11store_inner_core(:,:,:,:) = 0.0; c33store_inner_core(:,:,:,:) = 0.0; c12store_inner_core(:,:,:,:) = 0.0
+  c13store_inner_core(:,:,:,:) = 0.0; c44store_inner_core(:,:,:,:) = 0.0
 
   allocate(idoubling_inner_core(NSPEC_INNER_CORE),stat=ier)
   if (ier /= 0) stop 'Error allocating array idoubling_inner_core'
+  idoubling_inner_core(:) = 0
 
   ! reads in arrays
   if (I_should_read_the_database) then
@@ -827,6 +839,10 @@
            normal_400(NDIM,NGLLX,NGLLY,NSPEC2D_400), &
            normal_670(NDIM,NGLLX,NGLLY,NSPEC2D_670),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays ibelm_moho_top,..'
+  ibelm_moho_top(:) = 0; ibelm_moho_bot(:) = 0
+  ibelm_400_top(:) = 0; ibelm_400_bot(:) = 0
+  ibelm_670_top(:) = 0; ibelm_670_bot(:) = 0
+  normal_moho(:,:,:,:) = 0.0; normal_400(:,:,:,:) = 0.0; normal_670(:,:,:,:) = 0.0
 
   allocate(ibelm_xmin_crust_mantle(NSPEC2DMAX_XMIN_XMAX_CM),ibelm_xmax_crust_mantle(NSPEC2DMAX_XMIN_XMAX_CM), &
            ibelm_ymin_crust_mantle(NSPEC2DMAX_YMIN_YMAX_CM),ibelm_ymax_crust_mantle(NSPEC2DMAX_YMIN_YMAX_CM), &
@@ -844,6 +860,15 @@
            jacobian2D_ymin_crust_mantle(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX_CM), &
            jacobian2D_ymax_crust_mantle(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX_CM),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays ibelm_xmin_crust_mantle,..'
+  ibelm_xmin_crust_mantle(:) = 0; ibelm_xmax_crust_mantle(:) = 0
+  ibelm_ymin_crust_mantle(:) = 0; ibelm_ymax_crust_mantle(:) = 0
+  ibelm_bottom_crust_mantle(:) = 0; ibelm_top_crust_mantle(:) = 0
+  normal_xmin_crust_mantle(:,:,:,:) = 0.0; normal_xmax_crust_mantle(:,:,:,:) = 0.0
+  normal_ymin_crust_mantle(:,:,:,:) = 0.0; normal_ymax_crust_mantle(:,:,:,:) = 0.0
+  normal_bottom_crust_mantle(:,:,:,:) = 0.0; normal_top_crust_mantle(:,:,:,:) = 0.0
+  jacobian2D_xmin_crust_mantle(:,:,:) = 0.0; jacobian2D_xmax_crust_mantle(:,:,:) = 0.0
+  jacobian2D_ymin_crust_mantle(:,:,:) = 0.0; jacobian2D_ymax_crust_mantle(:,:,:) = 0.0
+  jacobian2D_bottom_crust_mantle(:,:,:) = 0.0; jacobian2D_top_crust_mantle(:,:,:) = 0.0
 
   allocate(ibelm_xmin_outer_core(NSPEC2DMAX_XMIN_XMAX_OC),ibelm_xmax_outer_core(NSPEC2DMAX_XMIN_XMAX_OC), &
            ibelm_ymin_outer_core(NSPEC2DMAX_YMIN_YMAX_OC),ibelm_ymax_outer_core(NSPEC2DMAX_YMIN_YMAX_OC), &
@@ -861,11 +886,24 @@
            jacobian2D_ymin_outer_core(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX_OC), &
            jacobian2D_ymax_outer_core(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX_OC),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays ibelm_xmin_outer_core,..'
+  ibelm_xmin_outer_core(:) = 0; ibelm_xmax_outer_core(:) = 0
+  ibelm_ymin_outer_core(:) = 0; ibelm_ymax_outer_core(:) = 0
+  ibelm_bottom_outer_core(:) = 0; ibelm_top_outer_core(:) = 0
+  normal_xmin_outer_core(:,:,:,:) = 0.0; normal_xmax_outer_core(:,:,:,:) = 0.0
+  normal_ymin_outer_core(:,:,:,:) = 0.0; normal_ymax_outer_core(:,:,:,:) = 0.0
+  normal_bottom_outer_core(:,:,:,:) = 0.0; normal_top_outer_core(:,:,:,:) = 0.0
+  jacobian2D_xmin_outer_core(:,:,:) = 0.0; jacobian2D_xmax_outer_core(:,:,:) = 0.0
+  jacobian2D_ymin_outer_core(:,:,:) = 0.0; jacobian2D_ymax_outer_core(:,:,:) = 0.0
+  jacobian2D_bottom_outer_core(:,:,:) = 0.0; jacobian2D_top_outer_core(:,:,:) = 0.0
+
 
   allocate(ibelm_xmin_inner_core(NSPEC2DMAX_XMIN_XMAX_IC),ibelm_xmax_inner_core(NSPEC2DMAX_XMIN_XMAX_IC), &
            ibelm_ymin_inner_core(NSPEC2DMAX_YMIN_YMAX_IC),ibelm_ymax_inner_core(NSPEC2DMAX_YMIN_YMAX_IC), &
            ibelm_bottom_inner_core(NSPEC2D_BOTTOM_IC),ibelm_top_inner_core(NSPEC2D_TOP_IC),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays ibelm_xmin_inner_core,..'
+  ibelm_xmin_inner_core(:) = 0; ibelm_xmax_inner_core(:) = 0
+  ibelm_ymin_inner_core(:) = 0; ibelm_ymax_inner_core(:) = 0
+  ibelm_bottom_inner_core(:) = 0; ibelm_top_inner_core(:) = 0
 
   ! reads in arrays
   if (I_should_read_the_database) then
@@ -1052,13 +1090,12 @@
              icb_kl_top(NGLLX,NGLLY,NSPEC2D_ICB), &
              icb_kl_bot(NGLLX,NGLLY,NSPEC2D_ICB),stat=ier)
     if (ier /= 0) stop 'Error allocating arrays moho_kl,.. '
-
     ! initialization
-    moho_kl(:,:,:) = 0._CUSTOM_REAL
-    d400_kl(:,:,:) = 0._CUSTOM_REAL
-    d670_kl(:,:,:) = 0._CUSTOM_REAL
-    cmb_kl(:,:,:) = 0._CUSTOM_REAL
-    icb_kl(:,:,:) = 0._CUSTOM_REAL
+    moho_kl(:,:,:) = 0._CUSTOM_REAL; moho_kl_top(:,:,:) = 0._CUSTOM_REAL; moho_kl_bot(:,:,:) = 0._CUSTOM_REAL
+    d400_kl(:,:,:) = 0._CUSTOM_REAL; d400_kl_top(:,:,:) = 0._CUSTOM_REAL; d400_kl_bot(:,:,:) = 0._CUSTOM_REAL
+    d670_kl(:,:,:) = 0._CUSTOM_REAL; d670_kl_top(:,:,:) = 0._CUSTOM_REAL; d670_kl_bot(:,:,:) = 0._CUSTOM_REAL
+    cmb_kl(:,:,:) = 0._CUSTOM_REAL; cmb_kl_top(:,:,:) = 0._CUSTOM_REAL; cmb_kl_bot(:,:,:) = 0._CUSTOM_REAL
+    icb_kl(:,:,:) = 0._CUSTOM_REAL; icb_kl_top(:,:,:) = 0._CUSTOM_REAL; icb_kl_bot(:,:,:) = 0._CUSTOM_REAL
   endif
 
   end subroutine read_mesh_databases_coupling
@@ -1242,6 +1279,8 @@
            request_recv_vector_cm(num_interfaces_crust_mantle), &
            stat=ier)
   if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array buffer_send_vector_crust_mantle etc.')
+  buffer_send_vector_crust_mantle(:,:,:) = 0.0; buffer_recv_vector_crust_mantle(:,:,:) = 0.0
+  request_send_vector_cm(:) = 0; request_recv_vector_cm(:) = 0
 
   if (SIMULATION_TYPE == 3) then
     allocate(b_buffer_send_vector_cm(NDIM,max_nibool_interfaces_cm,num_interfaces_crust_mantle), &
@@ -1250,6 +1289,8 @@
              b_request_recv_vector_cm(num_interfaces_crust_mantle), &
              stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array b_buffer_send_vector_cm etc.')
+    b_buffer_send_vector_cm(:,:,:) = 0.0; b_buffer_recv_vector_cm(:,:,:) = 0.0
+    b_request_send_vector_cm(:) = 0; b_request_recv_vector_cm(:) = 0
   endif
 
   ! outer core
@@ -1303,6 +1344,8 @@
            request_recv_scalar_oc(num_interfaces_outer_core), &
            stat=ier)
   if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array buffer_send_vector_outer_core etc.')
+  buffer_send_scalar_outer_core(:,:) = 0.0; buffer_recv_scalar_outer_core(:,:) = 0.0
+  request_send_scalar_oc(:) = 0; request_recv_scalar_oc(:) = 0
 
   if (SIMULATION_TYPE == 3) then
     allocate(b_buffer_send_scalar_outer_core(max_nibool_interfaces_oc,num_interfaces_outer_core), &
@@ -1311,6 +1354,8 @@
              b_request_recv_scalar_oc(num_interfaces_outer_core), &
              stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array b_buffer_send_vector_outer_core etc.')
+    b_buffer_send_scalar_outer_core(:,:) = 0.0; b_buffer_recv_scalar_outer_core(:,:) = 0.0
+    b_request_send_scalar_oc(:) = 0; b_request_recv_scalar_oc(:) = 0
   endif
 
   ! inner core
@@ -1364,6 +1409,8 @@
            request_recv_vector_ic(num_interfaces_inner_core), &
            stat=ier)
   if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array buffer_send_vector_inner_core etc.')
+  buffer_send_vector_inner_core(:,:,:) = 0.0; buffer_recv_vector_inner_core(:,:,:) = 0.0
+  request_send_vector_ic(:) = 0; request_recv_vector_ic(:) = 0
 
   if (SIMULATION_TYPE == 3) then
     allocate(b_buffer_send_vector_inner_core(NDIM,max_nibool_interfaces_ic,num_interfaces_inner_core), &
@@ -1372,6 +1419,8 @@
              b_request_recv_vector_ic(num_interfaces_inner_core), &
              stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array b_buffer_send_vector_inner_core etc.')
+    b_buffer_send_vector_inner_core(:,:,:) = 0.0; b_buffer_recv_vector_inner_core(:,:,:) = 0.0
+    b_request_send_vector_ic(:) = 0; b_request_recv_vector_ic(:) = 0
   endif
 
   ! user output
@@ -1425,16 +1474,17 @@
   ! MPI interfaces
   read(IIN) num_interfaces_crust_mantle
   allocate(my_neighbors_crust_mantle(num_interfaces_crust_mantle), &
-          nibool_interfaces_crust_mantle(num_interfaces_crust_mantle), &
-          stat=ier)
-  if (ier /= 0 ) &
-    call exit_mpi(myrank,'Error allocating array my_neighbors_crust_mantle etc.')
+           nibool_interfaces_crust_mantle(num_interfaces_crust_mantle), &
+           stat=ier)
+  if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array my_neighbors_crust_mantle etc.')
+  my_neighbors_crust_mantle(:) = 0; nibool_interfaces_crust_mantle(:) = 0
 
   if (num_interfaces_crust_mantle > 0) then
     read(IIN) max_nibool_interfaces_cm
     allocate(ibool_interfaces_crust_mantle(max_nibool_interfaces_cm,num_interfaces_crust_mantle), &
             stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array ibool_interfaces_crust_mantle')
+    ibool_interfaces_crust_mantle(:,:) = 0
 
     read(IIN) my_neighbors_crust_mantle
     read(IIN) nibool_interfaces_crust_mantle
@@ -1444,18 +1494,18 @@
     max_nibool_interfaces_cm = 0
     allocate(ibool_interfaces_crust_mantle(0,0),stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array dummy ibool_interfaces_crust_mantle')
+    ibool_interfaces_crust_mantle(:,:) = 0
   endif
 
   ! inner / outer elements
   read(IIN) nspec_inner_crust_mantle,nspec_outer_crust_mantle
   read(IIN) num_phase_ispec_crust_mantle
-  if (num_phase_ispec_crust_mantle < 0 ) &
-    call exit_mpi(myrank,'Error num_phase_ispec_crust_mantle is < zero')
+  if (num_phase_ispec_crust_mantle < 0 ) call exit_mpi(myrank,'Error num_phase_ispec_crust_mantle is < zero')
 
   allocate(phase_ispec_inner_crust_mantle(num_phase_ispec_crust_mantle,2), &
           stat=ier)
-  if (ier /= 0 ) &
-    call exit_mpi(myrank,'Error allocating array phase_ispec_inner_crust_mantle')
+  if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array phase_ispec_inner_crust_mantle')
+  phase_ispec_inner_crust_mantle(:,:) = 0
 
   if (num_phase_ispec_crust_mantle > 0 ) read(IIN) phase_ispec_inner_crust_mantle
 
@@ -1466,8 +1516,8 @@
 
     allocate(num_elem_colors_crust_mantle(num_colors_outer_crust_mantle + num_colors_inner_crust_mantle), &
             stat=ier)
-    if (ier /= 0 ) &
-      call exit_mpi(myrank,'Error allocating num_elem_colors_crust_mantle array')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating num_elem_colors_crust_mantle array')
+    num_elem_colors_crust_mantle(:) = 0
 
     read(IIN) num_elem_colors_crust_mantle
   else
@@ -1476,8 +1526,8 @@
     num_colors_inner_crust_mantle = 0
     allocate(num_elem_colors_crust_mantle(num_colors_outer_crust_mantle + num_colors_inner_crust_mantle), &
             stat=ier)
-    if (ier /= 0 ) &
-      call exit_mpi(myrank,'Error allocating num_elem_colors_crust_mantle array')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating num_elem_colors_crust_mantle array')
+    num_elem_colors_crust_mantle(:) = 0
   endif
 
   close(IIN)
@@ -1512,14 +1562,15 @@
   allocate(my_neighbors_outer_core(num_interfaces_outer_core), &
           nibool_interfaces_outer_core(num_interfaces_outer_core), &
           stat=ier)
-  if (ier /= 0 ) &
-    call exit_mpi(myrank,'Error allocating array my_neighbors_outer_core etc.')
+  if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array my_neighbors_outer_core etc.')
+  my_neighbors_outer_core(:) = 0; nibool_interfaces_outer_core(:) = 0
 
   if (num_interfaces_outer_core > 0) then
     read(IIN) max_nibool_interfaces_oc
     allocate(ibool_interfaces_outer_core(max_nibool_interfaces_oc,num_interfaces_outer_core), &
             stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array ibool_interfaces_outer_core')
+    ibool_interfaces_outer_core(:,:) = 0
 
     read(IIN) my_neighbors_outer_core
     read(IIN) nibool_interfaces_outer_core
@@ -1529,18 +1580,18 @@
     max_nibool_interfaces_oc = 0
     allocate(ibool_interfaces_outer_core(0,0),stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array dummy ibool_interfaces_outer_core')
+    ibool_interfaces_outer_core(:,:) = 0
   endif
 
   ! inner / outer elements
   read(IIN) nspec_inner_outer_core,nspec_outer_outer_core
   read(IIN) num_phase_ispec_outer_core
-  if (num_phase_ispec_outer_core < 0 ) &
-    call exit_mpi(myrank,'Error num_phase_ispec_outer_core is < zero')
+  if (num_phase_ispec_outer_core < 0 ) call exit_mpi(myrank,'Error num_phase_ispec_outer_core is < zero')
 
   allocate(phase_ispec_inner_outer_core(num_phase_ispec_outer_core,2), &
           stat=ier)
-  if (ier /= 0 ) &
-    call exit_mpi(myrank,'Error allocating array phase_ispec_inner_outer_core')
+  if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array phase_ispec_inner_outer_core')
+  phase_ispec_inner_outer_core(:,:) = 0
 
   if (num_phase_ispec_outer_core > 0 ) read(IIN) phase_ispec_inner_outer_core
 
@@ -1551,8 +1602,8 @@
 
     allocate(num_elem_colors_outer_core(num_colors_outer_outer_core + num_colors_inner_outer_core), &
             stat=ier)
-    if (ier /= 0 ) &
-      call exit_mpi(myrank,'Error allocating num_elem_colors_outer_core array')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating num_elem_colors_outer_core array')
+    num_elem_colors_outer_core(:) = 0
 
     read(IIN) num_elem_colors_outer_core
   else
@@ -1561,8 +1612,8 @@
     num_colors_inner_outer_core = 0
     allocate(num_elem_colors_outer_core(num_colors_outer_outer_core + num_colors_inner_outer_core), &
             stat=ier)
-    if (ier /= 0 ) &
-      call exit_mpi(myrank,'Error allocating num_elem_colors_outer_core array')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating num_elem_colors_outer_core array')
+    num_elem_colors_outer_core(:) = 0
   endif
 
   close(IIN)
@@ -1596,14 +1647,15 @@
   allocate(my_neighbors_inner_core(num_interfaces_inner_core), &
           nibool_interfaces_inner_core(num_interfaces_inner_core), &
           stat=ier)
-  if (ier /= 0 ) &
-    call exit_mpi(myrank,'Error allocating array my_neighbors_inner_core etc.')
+  if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array my_neighbors_inner_core etc.')
+  my_neighbors_inner_core(:) = 0; nibool_interfaces_inner_core(:) = 0
 
   if (num_interfaces_inner_core > 0) then
     read(IIN) max_nibool_interfaces_ic
     allocate(ibool_interfaces_inner_core(max_nibool_interfaces_ic,num_interfaces_inner_core), &
             stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array ibool_interfaces_inner_core')
+    ibool_interfaces_inner_core(:,:) = 0
 
     read(IIN) my_neighbors_inner_core
     read(IIN) nibool_interfaces_inner_core
@@ -1613,18 +1665,18 @@
     max_nibool_interfaces_ic = 0
     allocate(ibool_interfaces_inner_core(0,0),stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array dummy ibool_interfaces_inner_core')
+    ibool_interfaces_inner_core(:,:) = 0
   endif
 
   ! inner / outer elements
   read(IIN) nspec_inner_inner_core,nspec_outer_inner_core
   read(IIN) num_phase_ispec_inner_core
-  if (num_phase_ispec_inner_core < 0 ) &
-    call exit_mpi(myrank,'Error num_phase_ispec_inner_core is < zero')
+  if (num_phase_ispec_inner_core < 0 ) call exit_mpi(myrank,'Error num_phase_ispec_inner_core is < zero')
 
   allocate(phase_ispec_inner_inner_core(num_phase_ispec_inner_core,2), &
           stat=ier)
-  if (ier /= 0 ) &
-    call exit_mpi(myrank,'Error allocating array phase_ispec_inner_inner_core')
+  if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array phase_ispec_inner_inner_core')
+  phase_ispec_inner_inner_core(:,:) = 0
 
   if (num_phase_ispec_inner_core > 0 ) read(IIN) phase_ispec_inner_inner_core
 
@@ -1635,8 +1687,8 @@
 
     allocate(num_elem_colors_inner_core(num_colors_outer_inner_core + num_colors_inner_inner_core), &
             stat=ier)
-    if (ier /= 0 ) &
-      call exit_mpi(myrank,'Error allocating num_elem_colors_inner_core array')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating num_elem_colors_inner_core array')
+    num_elem_colors_inner_core(:) = 0
 
     read(IIN) num_elem_colors_inner_core
   else
@@ -1645,8 +1697,8 @@
     num_colors_inner_inner_core = 0
     allocate(num_elem_colors_inner_core(num_colors_outer_inner_core + num_colors_inner_inner_core), &
             stat=ier)
-    if (ier /= 0 ) &
-      call exit_mpi(myrank,'Error allocating num_elem_colors_inner_core array')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating num_elem_colors_inner_core array')
+    num_elem_colors_inner_core(:) = 0
   endif
 
   close(IIN)
@@ -1678,6 +1730,9 @@
            njmax_crust_mantle(2,NSPEC2DMAX_XMIN_XMAX_CM), &
            nkmin_xi_crust_mantle(2,NSPEC2DMAX_XMIN_XMAX_CM),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays nimin_crust_mantle,..'
+  nimin_crust_mantle(:,:) = 0; nimax_crust_mantle(:,:) = 0
+  njmin_crust_mantle(:,:) = 0; njmax_crust_mantle(:,:) = 0
+  nkmin_eta_crust_mantle(:,:) = 0; nkmin_xi_crust_mantle(:,:) = 0
 
   allocate(nimin_outer_core(2,NSPEC2DMAX_YMIN_YMAX_OC), &
            nimax_outer_core(2,NSPEC2DMAX_YMIN_YMAX_OC), &
@@ -1686,6 +1741,9 @@
            njmax_outer_core(2,NSPEC2DMAX_XMIN_XMAX_OC), &
            nkmin_xi_outer_core(2,NSPEC2DMAX_XMIN_XMAX_OC),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays nimin_outer_core,..'
+  nimin_outer_core(:,:) = 0; nimax_outer_core(:,:) = 0
+  njmin_outer_core(:,:) = 0; njmax_outer_core(:,:) = 0
+  nkmin_eta_outer_core(:,:) = 0; nkmin_xi_outer_core(:,:) = 0
 
   ! reads in arrays
   if (I_should_read_the_database) then
@@ -1765,6 +1823,8 @@
            hetar_reg(NGLLY, NM_KL_REG_PTS), &
            hgammar_reg(NGLLZ, NM_KL_REG_PTS),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays points_slice_reg,..'
+  points_slice_reg(:) = 0; ispec_reg(:) = 0
+  hxir_reg(:,:) = 0.0; hetar_reg(:,:) = 0.0; hgammar_reg(:,:) = 0.0
 
   allocate(kl_reg_grid%rlayer(NM_KL_REG_LAYER), &
            kl_reg_grid%ndoubling(NM_KL_REG_LAYER), &
@@ -1772,6 +1832,9 @@
            kl_reg_grid%nlon(NM_KL_REG_LAYER), &
            kl_reg_grid%npts_before_layer(NM_KL_REG_LAYER+1),stat=ier)
   if (ier /= 0) stop 'Error allocating kl_reg_grid arrays'
+  kl_reg_grid%rlayer(:) = 0.0; kl_reg_grid%ndoubling(:) = 0
+  kl_reg_grid%nlat(:) = 0; kl_reg_grid%nlon(:) = 0
+  kl_reg_grid%npts_before_layer(:) = 0
 
   ! reads in mesh inputs from file (see: PATHNAME_KL_REG = 'DATA/kl_reg_grid.txt' in constants.h)
   call read_kl_regular_grid(kl_reg_grid)
@@ -1786,6 +1849,7 @@
     ! main process
     allocate(slice_number(kl_reg_grid%npts_total),stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating slice_number array')
+    slice_number(:) = 0
 
     ! print *, 'slice npts =', kl_reg_grid%npts_total
     call find_regular_grid_slice_number(slice_number, kl_reg_grid)
@@ -2107,8 +2171,8 @@
     allocate(my_neighbors_crust_mantle(num_interfaces_crust_mantle), &
             nibool_interfaces_crust_mantle(num_interfaces_crust_mantle), &
             stat=ier)
-    if (ier /= 0 ) &
-      call exit_mpi(myrank,'Error allocating array my_neighbors_crust_mantle etc.')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array my_neighbors_crust_mantle etc.')
+    my_neighbors_crust_mantle(:) = 0; nibool_interfaces_crust_mantle(:) = 0
   endif
   if (num_interfaces_crust_mantle > 0) then
     call bcast_all_i_for_database(max_nibool_interfaces_cm, 1)
@@ -2116,6 +2180,7 @@
       allocate(ibool_interfaces_crust_mantle(max_nibool_interfaces_cm,num_interfaces_crust_mantle), &
               stat=ier)
       if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array ibool_interfaces_crust_mantle')
+      ibool_interfaces_crust_mantle(:,:) = 0
     endif
 
     call bcast_all_i_for_database(my_neighbors_crust_mantle(1), size(my_neighbors_crust_mantle,kind=4))
@@ -2127,6 +2192,7 @@
     if (.not. I_should_read_the_database) then
       allocate(ibool_interfaces_crust_mantle(0,0),stat=ier)
       if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array dummy ibool_interfaces_crust_mantle')
+      ibool_interfaces_crust_mantle(:,:) = 0
     endif
   endif
 
@@ -2140,8 +2206,8 @@
   if (.not. I_should_read_the_database) then
     allocate(phase_ispec_inner_crust_mantle(num_phase_ispec_crust_mantle,2), &
             stat=ier)
-    if (ier /= 0 ) &
-      call exit_mpi(myrank,'Error allocating array phase_ispec_inner_crust_mantle')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array phase_ispec_inner_crust_mantle')
+    phase_ispec_inner_crust_mantle(:,:) = 0
   endif
 
   if (num_phase_ispec_crust_mantle > 0) then
@@ -2157,8 +2223,8 @@
     if (.not. I_should_read_the_database) then
       allocate(num_elem_colors_crust_mantle(num_colors_outer_crust_mantle + num_colors_inner_crust_mantle), &
               stat=ier)
-      if (ier /= 0 ) &
-        call exit_mpi(myrank,'Error allocating num_elem_colors_crust_mantle array')
+      if (ier /= 0 ) call exit_mpi(myrank,'Error allocating num_elem_colors_crust_mantle array')
+      num_elem_colors_crust_mantle(:) = 0
     endif
 
     call bcast_all_i_for_database(num_elem_colors_crust_mantle(1), size(num_elem_colors_crust_mantle,kind=4))
@@ -2169,8 +2235,8 @@
     if (.not. I_should_read_the_database) then
       allocate(num_elem_colors_crust_mantle(num_colors_outer_crust_mantle + num_colors_inner_crust_mantle), &
               stat=ier)
-      if (ier /= 0 ) &
-        call exit_mpi(myrank,'Error allocating num_elem_colors_crust_mantle array')
+      if (ier /= 0 ) call exit_mpi(myrank,'Error allocating num_elem_colors_crust_mantle array')
+      num_elem_colors_crust_mantle(:) = 0
     endif
   endif
 
@@ -2195,8 +2261,8 @@
     allocate(my_neighbors_outer_core(num_interfaces_outer_core), &
             nibool_interfaces_outer_core(num_interfaces_outer_core), &
             stat=ier)
-    if (ier /= 0 ) &
-      call exit_mpi(myrank,'Error allocating array my_neighbors_outer_core etc.')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array my_neighbors_outer_core etc.')
+    my_neighbors_outer_core(:) = 0; nibool_interfaces_outer_core(:) = 0
   endif
 
   if (num_interfaces_outer_core > 0) then
@@ -2205,6 +2271,7 @@
       allocate(ibool_interfaces_outer_core(max_nibool_interfaces_oc,num_interfaces_outer_core), &
               stat=ier)
       if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array ibool_interfaces_outer_core')
+      ibool_interfaces_outer_core(:,:) = 0
     endif
   endif
 
@@ -2218,6 +2285,7 @@
     if (.not. I_should_read_the_database) then
       allocate(ibool_interfaces_outer_core(0,0),stat=ier)
       if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array dummy ibool_interfaces_outer_core')
+      ibool_interfaces_outer_core(:,:) = 0
     endif
   endif
 
@@ -2231,8 +2299,8 @@
   if (.not. I_should_read_the_database) then
     allocate(phase_ispec_inner_outer_core(num_phase_ispec_outer_core,2), &
             stat=ier)
-    if (ier /= 0 ) &
-      call exit_mpi(myrank,'Error allocating array phase_ispec_inner_outer_core')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array phase_ispec_inner_outer_core')
+    phase_ispec_inner_outer_core(:,:) = 0
   endif
 
   if (num_phase_ispec_outer_core > 0) then
@@ -2248,8 +2316,8 @@
     if (.not. I_should_read_the_database) then
       allocate(num_elem_colors_outer_core(num_colors_outer_outer_core + num_colors_inner_outer_core), &
               stat=ier)
-      if (ier /= 0 ) &
-        call exit_mpi(myrank,'Error allocating num_elem_colors_outer_core array')
+      if (ier /= 0 ) call exit_mpi(myrank,'Error allocating num_elem_colors_outer_core array')
+      num_elem_colors_outer_core(:) = 0
     endif
 
     call bcast_all_i_for_database(num_elem_colors_outer_core(1), size(num_elem_colors_outer_core,kind=4))
@@ -2260,8 +2328,8 @@
     if (.not. I_should_read_the_database) then
       allocate(num_elem_colors_outer_core(num_colors_outer_outer_core + num_colors_inner_outer_core), &
               stat=ier)
-      if (ier /= 0 ) &
-        call exit_mpi(myrank,'Error allocating num_elem_colors_outer_core array')
+      if (ier /= 0 ) call exit_mpi(myrank,'Error allocating num_elem_colors_outer_core array')
+      num_elem_colors_outer_core(:) = 0
     endif
   endif
 
@@ -2286,8 +2354,8 @@
     allocate(my_neighbors_inner_core(num_interfaces_inner_core), &
             nibool_interfaces_inner_core(num_interfaces_inner_core), &
             stat=ier)
-    if (ier /= 0 ) &
-      call exit_mpi(myrank,'Error allocating array my_neighbors_inner_core etc.')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array my_neighbors_inner_core etc.')
+    my_neighbors_inner_core(:) = 0; nibool_interfaces_inner_core(:) = 0
   endif
 
   if (num_interfaces_inner_core > 0) then
@@ -2296,6 +2364,7 @@
       allocate(ibool_interfaces_inner_core(max_nibool_interfaces_ic,num_interfaces_inner_core), &
               stat=ier)
       if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array ibool_interfaces_inner_core')
+      ibool_interfaces_inner_core(:,:) = 0
     endif
 
     call bcast_all_i_for_database(my_neighbors_inner_core(1), size(my_neighbors_inner_core,kind=4))
@@ -2307,6 +2376,7 @@
     if (.not. I_should_read_the_database) then
       allocate(ibool_interfaces_inner_core(0,0),stat=ier)
       if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array dummy ibool_interfaces_inner_core')
+      ibool_interfaces_inner_core(:,:) = 0
     endif
   endif
 
@@ -2320,8 +2390,8 @@
   if (.not. I_should_read_the_database) then
     allocate(phase_ispec_inner_inner_core(num_phase_ispec_inner_core,2), &
             stat=ier)
-    if (ier /= 0 ) &
-      call exit_mpi(myrank,'Error allocating array phase_ispec_inner_inner_core')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array phase_ispec_inner_inner_core')
+    phase_ispec_inner_inner_core(:,:) = 0
   endif
 
   if (num_phase_ispec_inner_core > 0) then
@@ -2337,8 +2407,8 @@
     if (.not. I_should_read_the_database) then
       allocate(num_elem_colors_inner_core(num_colors_outer_inner_core + num_colors_inner_inner_core), &
               stat=ier)
-      if (ier /= 0 ) &
-        call exit_mpi(myrank,'Error allocating num_elem_colors_inner_core array')
+      if (ier /= 0 ) call exit_mpi(myrank,'Error allocating num_elem_colors_inner_core array')
+      num_elem_colors_inner_core(:) = 0
     endif
 
     call bcast_all_i_for_database(num_elem_colors_inner_core(1), size(num_elem_colors_inner_core,kind=4))
@@ -2349,8 +2419,8 @@
     if (.not. I_should_read_the_database) then
       allocate(num_elem_colors_inner_core(num_colors_outer_inner_core + num_colors_inner_inner_core), &
               stat=ier)
-      if (ier /= 0 ) &
-        call exit_mpi(myrank,'Error allocating num_elem_colors_inner_core array')
+      if (ier /= 0 ) call exit_mpi(myrank,'Error allocating num_elem_colors_inner_core array')
+      num_elem_colors_inner_core(:) = 0
     endif
   endif
 

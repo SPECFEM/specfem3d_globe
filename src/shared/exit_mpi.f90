@@ -62,6 +62,9 @@
   ! close output file
   if (myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) close(IMAIN)
 
+  ! flushes possible left-overs from print-statements
+  call flush_stdout()
+
   ! stop all the MPI processes, and exit
   call abort_mpi()
 
@@ -91,6 +94,9 @@
   ! write error message to screen
   write(*,*) error_msg(1:len(error_msg))
   write(*,*) 'Error detected, aborting MPI...'
+
+  ! flushes possible left-overs from print-statements
+  call flush_stdout()
 
   ! stop all the MPI processes, and exit
   call abort_mpi()

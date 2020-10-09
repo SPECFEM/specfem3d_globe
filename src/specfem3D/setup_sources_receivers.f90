@@ -219,7 +219,7 @@
 
       ! counts nodes
       inodes = inodes + 1
-      if (inodes > kdtree_num_nodes ) stop 'Error index inodes bigger than kdtree_num_nodes'
+      if (inodes > kdtree_num_nodes) stop 'Error index inodes bigger than kdtree_num_nodes'
 
       ! adds node index (index points to same ispec for all internal GLL points)
       kdtree_nodes_index(inodes) = ispec
@@ -239,7 +239,7 @@
 
             ! counts nodes
             inodes = inodes + 1
-            if (inodes > kdtree_num_nodes ) stop 'Error index inodes bigger than kdtree_num_nodes'
+            if (inodes > kdtree_num_nodes) stop 'Error index inodes bigger than kdtree_num_nodes'
 
             ! adds node index (index points to same ispec for all internal GLL points)
             kdtree_nodes_index(inodes) = ispec
@@ -253,7 +253,7 @@
       enddo
     enddo
   endif
-  if (inodes /= kdtree_num_nodes ) stop 'Error index inodes does not match kdtree_num_nodes'
+  if (inodes /= kdtree_num_nodes) stop 'Error index inodes does not match kdtree_num_nodes'
 
   ! tree verbosity
   if (myrank == 0) call kdtree_set_verbose(IMAIN)
@@ -1228,6 +1228,10 @@
       ! note: in case IO_ASYNC_COPY is set, and depending of NSTEP_SUB_ADJ,
       !       this memory requirement might double.
       !       at this point, NSTEP_SUB_ADJ is not set yet...
+      if (IO_ASYNC_COPY .and. ceiling( dble(NSTEP)/dble(NTSTEP_BETWEEN_READ_ADJSRC) ) > 1) then
+        !buffer_source_adjoint(NDIM,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC)
+        sizeval = sizeval + dble(maxrec) * dble(NDIM * NTSTEP_BETWEEN_READ_ADJSRC * CUSTOM_REAL / 1024. / 1024. )
+      endif
       ! outputs info
       write(IMAIN,*) 'adjoint source arrays:'
       write(IMAIN,*) '  reading adjoint sources at every NTSTEP_BETWEEN_READ_ADJSRC = ',NTSTEP_BETWEEN_READ_ADJSRC
