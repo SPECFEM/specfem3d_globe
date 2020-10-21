@@ -269,14 +269,31 @@ typedef float realw;
 //             For Volta, the spilling slows down the kernels by ~5%
 #undef USE_LAUNCH_BOUNDS
 //#define LAUNCH_MIN_BLOCKS 6  // with 6 blocks, kernel uses 80 registers and would lead to ~1% speed up
+#endif
+
+#ifdef GPU_DEVICE_Turing
+// specifics see: https://docs.nvidia.com/cuda/turing-tuning-guide/index.html
+// register file size 64k 32-bit registers per SM
+// shared memory size 64KB per SM (maximum shared memory per thread block)
+// maximum registers 255 per thread
+#undef USE_LAUNCH_BOUNDS
+#endif
+
+#ifdef GPU_DEVICE_Ampere
+// specifics see: https://docs.nvidia.com/cuda/ampere-tuning-guide/index.html
+// register file size 64k 32-bit registers per SM
+// shared memory size 164KB per SM (maximum shared memory, 163KB per thread block)
+// maximum registers 255 per thread
+#undef USE_LAUNCH_BOUNDS
+#endif
+
+// CUDA Graphs
 #if defined (__CUDACC_VER_MAJOR__) && (__CUDACC_VER_MAJOR__ >= 10)
 // CUDA graphs: (experimental feature) requires compilation with CUDA toolkit versions >= 10.0
 //              uses graphs instead of separate kernel launches (for accel/veloc updates)
 //              to minimize launch time overheads for very small kernels
 //#define USE_CUDA_GRAPHS
 #endif
-#endif
-
 
 /*----------------------------------------------------------------------------------------------- */
 

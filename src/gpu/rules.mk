@@ -122,6 +122,12 @@ ifeq ($(CUDA),yes)
   ifeq ($(CUDA9),yes)
 	  BUILD_VERSION_TXT += (v9)
   endif
+  ifeq ($(CUDA10),yes)
+	  BUILD_VERSION_TXT += (v10)
+  endif
+  ifeq ($(CUDA11),yes)
+	  BUILD_VERSION_TXT += (v11)
+  endif
 
 endif
 
