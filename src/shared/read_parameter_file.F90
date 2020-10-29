@@ -106,6 +106,19 @@
   call read_value_logical(ABSORBING_CONDITIONS, 'ABSORBING_CONDITIONS', ier)
   if (ier /= 0) stop 'an error occurred while reading the parameter file: ABSORBING_CONDITIONS'
 
+  call read_value_logical(ABSORB_USING_GLOBAL_SPONGE, 'ABSORB_USING_GLOBAL_SPONGE', ier)
+  if (ier /= 0) stop 'an error occurred while reading the parameter file: ABSORB_USING_GLOBAL_SPONGE'
+
+  ! sponge abosbing boundary properties
+  if (ABSORB_USING_GLOBAL_SPONGE) then
+    call read_value_double_precision(SPONGE_LATITUDE_IN_DEGREES, 'SPONGE_LATITUDE_IN_DEGREES', ier)
+    if (ier /= 0) stop 'an error occurred while reading the parameter file: SPONGE_LATITUDE_IN_DEGREES...'
+    call read_value_double_precision(SPONGE_LONGITUDE_IN_DEGREES, 'SPONGE_LONGITUDE_IN_DEGREES', ier)
+    if (ier /= 0) stop 'an error occurred while reading the parameter file: SPONGE_LONGITUDE_IN_DEGREES...'
+    call read_value_double_precision(SPONGE_RADIUS_IN_DEGREES, 'SPONGE_RADIUS_IN_DEGREES', ier)
+    if (ier /= 0) stop 'an error occurred while reading the parameter file: SPONGE_RADIUS_IN_DEGREES...'
+  endif
+
   ! define the velocity model
   call read_value_string(MODEL, 'MODEL', ier)
   if (ier /= 0) stop 'an error occurred while reading the parameter file: MODEL'

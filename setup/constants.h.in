@@ -283,6 +283,18 @@
 
 !!-----------------------------------------------------------
 !!
+!! for sponge absorbing boundary
+!!
+!!-----------------------------------------------------------
+
+! decay factor at the point farthest from the boundary
+  double precision, parameter :: SPONGE_MIN_Q = 30.d0
+
+! width of the region that transits from zero attenuation to full attenuation
+  double precision, parameter :: SPONGE_WIDTH_IN_DEGREES = 15.d0
+
+!!-----------------------------------------------------------
+!!
 !! for attenuation
 !!
 !!-----------------------------------------------------------

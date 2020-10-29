@@ -76,6 +76,16 @@ ATTENUATION                     = .true.
 # absorbing boundary conditions for a regional simulation
 ABSORBING_CONDITIONS            = .true.
 
+# run global simulation for a circular region and apply high attenuation for the rest of the model
+# this creates an absorbing boundary with less reflection than stacey at a cost of 6x the computational cost
+# NCHUNKS must be set to 6 to enable this flag
+ABSORB_USING_GLOBAL_SPONGE      = .false.
+
+# location and size of the region with no sponge (the region to run simulation)
+SPONGE_LATITUDE_IN_DEGREES      = 40.d0
+SPONGE_LONGITUDE_IN_DEGREES     = 25.d0
+SPONGE_RADIUS_IN_DEGREES        = 25.d0
+
 # record length in minutes
 RECORD_LENGTH_IN_MINUTES        = 2.5d0
 
@@ -207,8 +217,9 @@ NTSTEP_BETWEEN_READ_ADJSRC      = 1000000
 # its norm is ignored and the norm of the force used is the factor force source times the source time function.
 USE_FORCE_POINT_SOURCE          = .false.
 
-# use monochromatic source time function instead of Heaviside for CMTSOLUTION moment-tensor source.
+# use monochromatic source time function for CMTSOLUTION moment-tensor source.
 # half duration is interpreted as a PERIOD just to avoid changing CMTSOLUTION file format
+# default is .false. which uses Heaviside function
 USE_MONOCHROMATIC_CMT_SOURCE    = .false.
 
 # option to save strain seismograms
