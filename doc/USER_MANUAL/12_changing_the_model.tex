@@ -107,10 +107,10 @@ the 3D crustal model.
 \subsection{Isotropic Models}\label{sub:Isotropic-Models}
 
 The 3D mantle model S20RTS \citep{RiVaWo99} is superimposed onto
-the mantle mesh by the subroutine \texttt{model\_s20rts.f90}. The
-call to this subroutine is of the form
+the mantle mesh by the subroutines in the file \texttt{model\_s20rts.f90}. The
+key call is to the subroutine
 \begin{verbatim}
-call model_s20rts(radius,theta,phi,dvs,dvp,drho,D3MM_V)
+call mantle_s20rts(radius,theta,phi,dvs,dvp,drho,D3MM_V)
 \end{verbatim}
 
 \noindent
@@ -193,13 +193,14 @@ from \texttt{model\_s20rts.f90,} we write:
 \subsection{Anisotropic Models}\label{sub:Anisotropic-Models}
 
 Three-dimensional anisotropic mantle models may be superimposed on
-the mesh based upon the subroutine
+the mesh based upon the subroutines in the file
 \begin{verbatim}
 model_aniso_mantle.f90
 \end{verbatim}
-The call to this subroutine is of the form
+
+The key call is to the subroutine
 \begin{verbatim}
-call model_aniso_mantle(r,theta,phi,rho, &
+call mantle_aniso_mantle(r,theta,phi,rho, &
          c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
          c33,c34,c35,c36,c44,c45,c46,c55,c56,c66,AMM_V)
 \end{verbatim}
