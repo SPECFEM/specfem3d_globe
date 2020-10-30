@@ -1292,11 +1292,15 @@
 !
 ! note:  only Qmu attenuation considered, Qkappa attenuation not used so far in solver...
 
-  use constants, only: N_SLS
+  use constants, only: N_SLS, &
+          SPONGE_MIN_Q,SPONGE_WIDTH_IN_DEGREES
 
   use meshfem3D_models_par
 
   use model_prem_par, only: PREM_RMOHO
+  
+  use shared_parameters, only: ABSORB_USING_GLOBAL_SPONGE, &
+          SPONGE_LATITUDE_IN_DEGREES,SPONGE_LONGITUDE_IN_DEGREES,SPONGE_RADIUS_IN_DEGREES
 
   implicit none
 
@@ -1317,6 +1321,9 @@
   ! local parameters
   double precision :: r_dummy,theta,phi,theta_degrees,phi_degrees
   double precision :: r_used
+
+  ! geographical values
+  double precision :: lat, lon, r, dist, theta_c, phi_c, dist_c, edge, sponge
 
   ! initializes
   tau_e(:)   = 0.0d0
@@ -1393,6 +1400,28 @@
 
     end select
 
+  endif
+
+  if (ABSORB_USING_GLOBAL_SPONGE) then
+    ! get distance to chunk center
+    call xyz_2_rthetaphi_dble(xmesh, ymesh, zmesh, r, theta, phi)
+
+    call lat_2_geocentric_colat_dble(SPONGE_LATITUDE_IN_DEGREES, theta_c)
+    phi_c = SPONGE_LONGITUDE_IN_DEGREES * DEGREES_TO_RADIANS
+    call reduce(theta_c, phi_c)
+
+    dist = acos(cos(theta)*cos(theta_c) + sin(theta)*sin(theta_c)*cos(phi-phi_c))
+    dist_c = SPONGE_RADIUS_IN_DEGREES * DEGREES_TO_RADIANS
+    edge = SPONGE_WIDTH_IN_DEGREES * DEGREES_TO_RADIANS
+
+    if (dist .gt. dist_c .and. Qmu .gt. SPONGE_MIN_Q) then
+      if (dist - dist_c .lt. edge) then
+        sponge = (1 + cos((dist - dist_c) / edge * PI)) / 2
+      else
+        sponge = 0.d0
+      endif
+      Qmu = SPONGE_MIN_Q + (Qmu - SPONGE_MIN_Q) * sponge
+    endif
   endif
 
   ! Get tau_e from tau_s and Qmu

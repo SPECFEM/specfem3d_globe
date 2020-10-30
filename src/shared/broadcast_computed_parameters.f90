@@ -37,10 +37,10 @@
   integer, parameter :: nparam_i = 47
   integer, dimension(nparam_i) :: bcast_integer
 
-  integer, parameter :: nparam_l = 68
+  integer, parameter :: nparam_l = 69
   logical, dimension(nparam_l) :: bcast_logical
 
-  integer, parameter :: nparam_dp = 38
+  integer, parameter :: nparam_dp = 41
   double precision, dimension(nparam_dp) :: bcast_double_precision
 
   ! initializes containers
@@ -104,7 +104,8 @@
             ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER, &
             ADIOS_FOR_SOLVER_MESHFILES,ADIOS_FOR_AVS_DX, &
             ADIOS_FOR_KERNELS,ADIOS_FOR_MODELS,ADIOS_FOR_UNDO_ATTENUATION, &
-            CEM_REQUEST,CEM_ACCEPT,BROADCAST_SAME_MESH_AND_MODEL,MODEL_GLL,USE_MONOCHROMATIC_CMT_SOURCE /)
+            CEM_REQUEST,CEM_ACCEPT,BROADCAST_SAME_MESH_AND_MODEL,MODEL_GLL, &
+            USE_MONOCHROMATIC_CMT_SOURCE, ABSORB_USING_GLOBAL_SPONGE /)
 
     bcast_double_precision = (/ &
             DT, &
@@ -116,7 +117,8 @@
             MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH, &
             RMOHO_FICTITIOUS_IN_MESHER,RATIO_BY_WHICH_TO_INCREASE_IT, &
             MEMORY_INSTALLED_PER_CORE_IN_GB,PERCENT_OF_MEM_TO_USE_PER_CORE, &
-            RECORD_LENGTH_IN_MINUTES, USER_DT /)
+            RECORD_LENGTH_IN_MINUTES, USER_DT, &
+            SPONGE_LATITUDE_IN_DEGREES,SPONGE_LONGITUDE_IN_DEGREES,SPONGE_RADIUS_IN_DEGREES /)
   endif
 
   ! broadcasts the information read on the main to the nodes
@@ -310,6 +312,7 @@
     BROADCAST_SAME_MESH_AND_MODEL = bcast_logical(66)
     MODEL_GLL = bcast_logical(67)
     USE_MONOCHROMATIC_CMT_SOURCE = bcast_logical(68)
+    ABSORB_USING_GLOBAL_SPONGE = bcast_logical(69)
 
     ! double precisions
     DT = bcast_double_precision(1)
@@ -350,6 +353,9 @@
     PERCENT_OF_MEM_TO_USE_PER_CORE = bcast_double_precision(36)
     RECORD_LENGTH_IN_MINUTES = bcast_double_precision(37)
     USER_DT = bcast_double_precision(38)
+    SPONGE_LATITUDE_IN_DEGREES = bcast_double_precision(39)
+    SPONGE_LONGITUDE_IN_DEGREES = bcast_double_precision(40)
+    SPONGE_RADIUS_IN_DEGREES = bcast_double_precision(41)
 
   endif
 
