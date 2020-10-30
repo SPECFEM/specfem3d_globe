@@ -355,7 +355,7 @@
 
   if (ABSORBING_CONDITIONS .and. NCHUNKS == 3) &
     stop 'absorbing conditions not supported for three chunks yet'
-  
+
   if (ABSORB_USING_GLOBAL_SPONGE .and. NCHUNKS /= 6) &
     stop 'Please set NCHUNKS to 6 in Par_file to use ABSORB_USING_GLOBAL_SPONGE'
 

@@ -1298,7 +1298,7 @@
   use meshfem3D_models_par
 
   use model_prem_par, only: PREM_RMOHO
-  
+
   use shared_parameters, only: ABSORB_USING_GLOBAL_SPONGE, &
           SPONGE_LATITUDE_IN_DEGREES,SPONGE_LONGITUDE_IN_DEGREES,SPONGE_RADIUS_IN_DEGREES
 
@@ -1414,8 +1414,8 @@
     dist_c = SPONGE_RADIUS_IN_DEGREES * DEGREES_TO_RADIANS
     edge = SPONGE_WIDTH_IN_DEGREES * DEGREES_TO_RADIANS
 
-    if (dist .gt. dist_c .and. Qmu .gt. SPONGE_MIN_Q) then
-      if (dist - dist_c .lt. edge) then
+    if (dist > dist_c .and. Qmu > SPONGE_MIN_Q) then
+      if (dist - dist_c < edge) then
         sponge = (1 + cos((dist - dist_c) / edge * PI)) / 2
       else
         sponge = 0.d0
