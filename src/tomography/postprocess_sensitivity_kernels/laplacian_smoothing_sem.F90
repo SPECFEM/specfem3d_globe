@@ -590,7 +590,7 @@ program smooth_laplacian_sem
      close(IIN)
 #endif
      ! Get normalization factor
-     norm_kerl = sum(mo**2)/nglob
+     norm_kerl = sum(mo**2/nglob)
      call sum_all_cr(norm_kerl, norm_ker)
      norm_ker = sqrt(norm_ker)
      call bcast_all_singlecr(norm_ker)
