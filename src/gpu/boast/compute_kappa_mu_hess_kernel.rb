@@ -215,10 +215,16 @@ module BOAST
         comment()
 
         print hess_rhol === (vgrad[0]*b_vgrad[0] + vgrad[4]*b_vgrad[4] + vgrad[8]*b_vgrad[8])
-        print hess_kappal === (vgrad[0] + vgrad[4] + vgrad[8]) * (b_vgrad[0] + b_vgrad[4] + b_vgrad[8])
+        print hess_kappal === 3.0 * (vgrad[0] + vgrad[4] + vgrad[8]) * (b_vgrad[0] + b_vgrad[4] + b_vgrad[8])
         print hess_mul === (vgrad[1] + vgrad[3]) * (b_vgrad[1] + b_vgrad[3]) \
                          + (vgrad[2] + vgrad[6]) * (b_vgrad[2] + b_vgrad[6]) \
-                         + (vgrad[5] + vgrad[7]) * (b_vgrad[5] + b_vgrad[7])
+                         + (vgrad[5] + vgrad[7]) * (b_vgrad[5] + b_vgrad[7]) \
+                         + ((2.0*vgrad[0]   - vgrad[4]       - vgrad[8]      ) * \
+                            (2.0*b_vgrad[0] - b_vgrad[4]     - b_vgrad[8]    )   \
+                          + (-vgrad[0]      + 2.0*vgrad[4]   - vgrad[8]      ) * \
+                            (-b_vgrad[0]    + 2.0*b_vgrad[4] - b_vgrad[8]    )   \
+                          + (-vgrad[0]      - vgrad[4]       + 2.0*vgrad[8]  ) * \
+                            (-b_vgrad[0]    - b_vgrad[4]     + 2.0*b_vgrad[8])) * (4.0/9.0)
         comment()
 
         print hess_rho_kl[ijk_ispec] === hess_rho_kl[ijk_ispec] + deltat * hess_rhol

@@ -244,8 +244,8 @@ __kernel void compute_kappa_mu_hess_kernel(const __global int * d_ibool, const _
     }\n\
 \n\
     hess_rhol = (vgrad[0]) * (b_vgrad[0]) + (vgrad[4]) * (b_vgrad[4]) + (vgrad[8]) * (b_vgrad[8]);\n\
-    hess_kappal = (vgrad[0] + vgrad[4] + vgrad[8]) * (b_vgrad[0] + b_vgrad[4] + b_vgrad[8]);\n\
-    hess_mul = (vgrad[1] + vgrad[3]) * (b_vgrad[1] + b_vgrad[3]) + (vgrad[2] + vgrad[6]) * (b_vgrad[2] + b_vgrad[6]) + (vgrad[5] + vgrad[7]) * (b_vgrad[5] + b_vgrad[7]);\n\
+    hess_kappal = ((3.0f) * (vgrad[0] + vgrad[4] + vgrad[8])) * (b_vgrad[0] + b_vgrad[4] + b_vgrad[8]);\n\
+    hess_mul = (vgrad[1] + vgrad[3]) * (b_vgrad[1] + b_vgrad[3]) + (vgrad[2] + vgrad[6]) * (b_vgrad[2] + b_vgrad[6]) + (vgrad[5] + vgrad[7]) * (b_vgrad[5] + b_vgrad[7]) + (((2.0f) * (vgrad[0]) - (vgrad[4]) - (vgrad[8])) * ((2.0f) * (b_vgrad[0]) - (b_vgrad[4]) - (b_vgrad[8])) + ( -(vgrad[0]) + (2.0f) * (vgrad[4]) - (vgrad[8])) * ( -(b_vgrad[0]) + (2.0f) * (b_vgrad[4]) - (b_vgrad[8])) + ( -(vgrad[0]) - (vgrad[4]) + (2.0f) * (vgrad[8])) * ( -(b_vgrad[0]) - (b_vgrad[4]) + (2.0f) * (b_vgrad[8]))) * (0.4444444444444444f);\n\
 \n\
     hess_rho_kl[ijk_ispec] = hess_rho_kl[ijk_ispec] + (deltat) * (hess_rhol);\n\
     hess_kappa_kl[ijk_ispec] = hess_kappa_kl[ijk_ispec] + (deltat) * (hess_kappal);\n\

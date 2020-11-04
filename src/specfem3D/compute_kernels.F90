@@ -865,6 +865,8 @@
   real(kind=CUSTOM_REAL), dimension(3, 3) :: vgrad, b_vgrad
   real(kind=CUSTOM_REAL) :: hess_rho, hess_kappa, hess_mu
 
+  real(kind=CUSTOM_REAL), parameter :: FOUR_NINTH = (4.0/9.0)
+
   ! local parameters
   integer :: ispec,iglob
 #ifdef FORCE_VECTORIZATION
@@ -929,15 +931,21 @@
                      + vgrad(3, 3) * b_vgrad(3, 3)
 
             ! hess_kappa = (Vx,x + Vy,y + Vz,z) * (b_Vx,x + b_Vy,y + b_Vz,z)
-            hess_kappa = (vgrad(1, 1) + vgrad(2, 2) + vgrad(3, 3)) &
+            hess_kappa = 3.0 * (vgrad(1, 1) + vgrad(2, 2) + vgrad(3, 3)) &
                        * (b_vgrad(1, 1) + b_vgrad(2, 2) + b_vgrad(3, 3))
 
             !hess_mu = (Vx,y + Vy,x) * (b_Vx,y + b_Vy,x)
             !        + (Vy,z + Vz,y) * (b_Vy,z + b_Vz,y)
             !        + (Vx,z + Vz,x) * (b_Vx,z + b_Vz,x)
-            hess_mu = (vgrad(1, 2) + vgrad(2, 1)) * (b_vgrad(1, 2) + b_vgrad(2, 1)) &
-                    + (vgrad(2, 3) + vgrad(3, 2)) * (b_vgrad(2, 3) + b_vgrad(3, 2)) &
-                    + (vgrad(1, 3) + vgrad(3, 1)) * (b_vgrad(1, 3) + b_vgrad(3, 1))
+            hess_mu = (vgrad(1, 2) + vgrad(2, 1)) * (b_vgrad(1, 2) + b_vgrad(2, 1))  &
+                    + (vgrad(2, 3) + vgrad(3, 2)) * (b_vgrad(2, 3) + b_vgrad(3, 2))  &
+                    + (vgrad(1, 3) + vgrad(3, 1)) * (b_vgrad(1, 3) + b_vgrad(3, 1))  &
+                    + ((2.0*vgrad(1, 1)   - vgrad(2, 2)       - vgrad(3, 3)      ) * &
+                       (2.0*b_vgrad(1, 1) - b_vgrad(2, 2)     - b_vgrad(3, 3)    )   &
+                     + (-vgrad(1, 1)      + 2.0*vgrad(2, 2)   - vgrad(3, 3)      ) * &
+                       (-b_vgrad(1, 1)    + 2.0*b_vgrad(2, 2) - b_vgrad(3, 3)    )   &
+                     + (-vgrad(1, 1)      - vgrad(2, 2)       + 2.0*vgrad(3, 3)  ) * &
+                       (-b_vgrad(1, 1)    - b_vgrad(2, 2)     + 2.0*b_vgrad(3, 3))) * FOUR_NINTH
           enddo
         enddo
       enddo
