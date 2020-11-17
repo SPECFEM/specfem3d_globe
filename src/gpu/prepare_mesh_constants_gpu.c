@@ -32,6 +32,9 @@
 /* ----------------------------------------------------------------------------------------------- */
 // OpenCL setup
 /* ----------------------------------------------------------------------------------------------- */
+#ifdef USE_OPENCL
+#define FAST_2D_MEMCPY
+#endif
 
 #ifdef USE_OPENCL
 #ifdef USE_TEXTURES_FIELDS
@@ -1617,6 +1620,7 @@ void FC_FUNC_ (prepare_crust_mantle_device,
   // transfer constant element data with padding
 #ifdef USE_OPENCL
   if (run_opencl) {
+#ifndef FAST_2D_MEMCPY
     int i;
     for (i = 0; i < mp->NSPEC_CRUST_MANTLE; i++) {
       int offset = i * NGLL3_PADDED * sizeof (realw);
@@ -1647,6 +1651,47 @@ void FC_FUNC_ (prepare_crust_mantle_device,
       clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_gammaz_crust_mantle.ocl, CL_FALSE, offset,
                                      NGLL3*sizeof (realw),&h_gammaz[i*NGLL3], 0, NULL, NULL));
     }
+#else
+      const size_t d_offsets[3] = {0,0,0};
+      const size_t h_offsets[3] = {0,0,0};
+      const size_t d_region[3] = {NGLL3*sizeof(realw), mp->NSPEC_CRUST_MANTLE, 1};
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_xix_crust_mantle.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				h_xix, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_xiy_crust_mantle.ocl, CL_FALSE, d_offsets,
+				     h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				     NGLL3*sizeof (realw), 0, 
+				     h_xiy, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_xiz_crust_mantle.ocl, CL_FALSE, d_offsets,
+				     h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				     NGLL3*sizeof (realw), 0, 
+				     h_xiz, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_etax_crust_mantle.ocl, CL_FALSE, d_offsets,
+				     h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				     NGLL3*sizeof (realw), 0, 
+				     h_etax, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_etay_crust_mantle.ocl, CL_FALSE, d_offsets,
+				     h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				     NGLL3*sizeof (realw), 0, 
+				     h_etay, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_etaz_crust_mantle.ocl, CL_FALSE, d_offsets,
+				     h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				     NGLL3*sizeof (realw), 0, 
+				     h_etaz, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_gammax_crust_mantle.ocl, CL_FALSE, d_offsets,
+				     h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				     NGLL3*sizeof (realw), 0, 
+				     h_gammax, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_gammay_crust_mantle.ocl, CL_FALSE, d_offsets,
+				     h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				     NGLL3*sizeof (realw), 0, 
+				     h_gammay, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_gammaz_crust_mantle.ocl, CL_FALSE, d_offsets,
+				     h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				     NGLL3*sizeof (realw), 0, 
+				     h_gammaz, 0, NULL, NULL));
+#endif
   }
 #endif
 #ifdef USE_CUDA
@@ -1705,6 +1750,7 @@ void FC_FUNC_ (prepare_crust_mantle_device,
 #ifdef USE_OPENCL
     if (run_opencl) {
       // both iso/tiso elements
+#ifndef FAST_2D_MEMCPY
       int i;
       for (i = 0; i < mp->NSPECMAX_ISO_MANTLE; i++) {
         int offset = i * NGLL3_PADDED * sizeof (realw);
@@ -1713,7 +1759,21 @@ void FC_FUNC_ (prepare_crust_mantle_device,
         clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_muvstore_crust_mantle.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &h_muv[i*NGLL3], 0, NULL, NULL));
       }
+#else
+      const size_t d_offsets[3] = {0,0,0};
+      const size_t h_offsets[3] = {0,0,0};
+      const size_t d_region[3] = {NGLL3*sizeof(realw), mp->NSPECMAX_ISO_MANTLE, 1};
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_kappavstore_crust_mantle.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				h_kappav, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_muvstore_crust_mantle.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				h_muv, 0, NULL, NULL));
+#endif
       // only tiso elements
+#ifndef FAST_2D_MEMCPY
       for (i = 0; i < mp->NSPECMAX_TISO_MANTLE; i++) {
         int offset = i * NGLL3_PADDED * sizeof (realw);
         clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_kappahstore_crust_mantle.ocl, CL_FALSE, offset,
@@ -1723,6 +1783,21 @@ void FC_FUNC_ (prepare_crust_mantle_device,
         clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_eta_anisostore_crust_mantle.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &h_eta_aniso[i*NGLL3], 0, NULL, NULL));
       }
+#else
+      const size_t d_region_2[3] = {NGLL3*sizeof(realw), mp->NSPECMAX_TISO_MANTLE, 1};
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_kappahstore_crust_mantle.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region_2, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				h_kappah, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_muhstore_crust_mantle.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region_2, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				h_muh, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_eta_anisostore_crust_mantle.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region_2, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				h_eta_aniso, 0, NULL, NULL));
+#endif
     }
 #endif
 #ifdef USE_CUDA
@@ -1771,6 +1846,7 @@ void FC_FUNC_ (prepare_crust_mantle_device,
     // transfer constant element data with padding
 #ifdef USE_OPENCL
     if (run_opencl) {
+#ifndef FAST_2D_MEMCPY
       int i;
       for (i = 0; i < mp->NSPEC_CRUST_MANTLE; i++) {
         int offset = i * NGLL3_PADDED * sizeof (realw);
@@ -1838,6 +1914,95 @@ void FC_FUNC_ (prepare_crust_mantle_device,
         clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c66store_crust_mantle.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &c66store[i*NGLL3], 0, NULL, NULL));
       }
+#else
+      const size_t d_offsets[3] = {0,0,0};
+      const size_t h_offsets[3] = {0,0,0};
+      const size_t d_region[3] = {NGLL3*sizeof(realw), mp->NSPEC_CRUST_MANTLE, 1};
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c11store_crust_mantle.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				c11store, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c12store_crust_mantle.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				c12store, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c13store_crust_mantle.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				c13store, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c14store_crust_mantle.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				c14store, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c15store_crust_mantle.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				c15store, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c16store_crust_mantle.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				c16store, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c22store_crust_mantle.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				c22store, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c23store_crust_mantle.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				c23store, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c24store_crust_mantle.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				c24store, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c25store_crust_mantle.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				c25store, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c26store_crust_mantle.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				c26store, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c33store_crust_mantle.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				c33store, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c34store_crust_mantle.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				c34store, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c35store_crust_mantle.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				c35store, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c36store_crust_mantle.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				c36store, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c44store_crust_mantle.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				c44store, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c45store_crust_mantle.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				c45store, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c46store_crust_mantle.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				c46store, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c55store_crust_mantle.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				c55store, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c56store_crust_mantle.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				c56store, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c66store_crust_mantle.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				c66store, 0, NULL, NULL));
+#endif
     }
 #endif
 #ifdef USE_CUDA
@@ -1893,11 +2058,21 @@ void FC_FUNC_ (prepare_crust_mantle_device,
     // transfer with padding
 #ifdef USE_OPENCL
     if (run_opencl) {
+#ifndef FAST_2D_MEMCPY
       for (int i = 0; i < mp->NSPEC_CRUST_MANTLE; i++) {
         int offset = i * NGLL3_PADDED * sizeof (realw);
         clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_muvstore_crust_mantle.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &h_muv[i*NGLL3], 0, NULL, NULL));
       }
+#else
+      const size_t d_offsets[3] = {0,0,0};
+      const size_t h_offsets[3] = {0,0,0};
+      const size_t d_region[3] = {NGLL3*sizeof(realw), mp->NSPEC_CRUST_MANTLE, 1};
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_muvstore_crust_mantle.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				h_muv, 0, NULL, NULL));
+#endif
     }
 #endif
 #ifdef USE_CUDA
@@ -2160,6 +2335,7 @@ void FC_FUNC_ (prepare_outer_core_device,
   // transfer constant element data with padding
 #ifdef USE_OPENCL
   if (run_opencl) {
+#ifndef FAST_2D_MEMCPY
     int i;
     for (i = 0; i < mp->NSPEC_OUTER_CORE; i++) {
       int offset = i * NGLL3_PADDED * sizeof (realw);
@@ -2193,6 +2369,52 @@ void FC_FUNC_ (prepare_outer_core_device,
       clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_kappavstore_outer_core.ocl, CL_FALSE, offset,
                                      NGLL3*sizeof (realw), &h_kappav[i*NGLL3], 0, NULL, NULL));
     }
+#else
+      const size_t d_offsets[3] = {0,0,0};
+      const size_t h_offsets[3] = {0,0,0};
+      const size_t d_region[3] = {NGLL3*sizeof(realw), mp->NSPEC_OUTER_CORE, 1};
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_xix_outer_core.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				h_xix, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_xiy_outer_core.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				h_xiy, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_xiz_outer_core.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				h_xiz, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_etax_outer_core.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				h_etax, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_etay_outer_core.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				h_etay, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_etaz_outer_core.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				h_etaz, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_gammax_outer_core.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				h_gammax, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_gammay_outer_core.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				h_gammay, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_gammaz_outer_core.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				h_gammaz, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_kappavstore_outer_core.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				h_kappav, 0, NULL, NULL));
+
+#endif
   }
 #endif
 #ifdef USE_CUDA
@@ -2230,12 +2452,23 @@ void FC_FUNC_ (prepare_outer_core_device,
 
 #ifdef USE_OPENCL
     if (run_opencl) {
+#ifndef FAST_2D_MEMCPY
       int i;
       for (i = 0; i < mp->NSPEC_OUTER_CORE; i++) {
         int offset = i * NGLL3_PADDED * sizeof (realw);
         clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_rhostore_outer_core.ocl, CL_FALSE, offset,
                                        NGLL3 * sizeof (realw), &h_rho[i*NGLL3], 0, NULL, NULL));
       }
+#else
+      const size_t d_offsets[3] = {0,0,0};
+      const size_t h_offsets[3] = {0,0,0};
+      const size_t d_region[3] = {NGLL3*sizeof(realw), mp->NSPEC_OUTER_CORE, 1};
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_rhostore_outer_core.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				h_rho, 0, NULL, NULL));
+
+#endif
     }
 #endif
 #ifdef USE_CUDA
@@ -2441,6 +2674,7 @@ void FC_FUNC_ (prepare_inner_core_device,
   // transfer constant element data with padding
 #ifdef USE_OPENCL
   if (run_opencl) {
+#ifndef FAST_2D_MEMCPY
     int i;
     for (i = 0;i < mp->NSPEC_INNER_CORE;i++) {
       int offset = i * NGLL3_PADDED * sizeof (realw);
@@ -2475,6 +2709,52 @@ void FC_FUNC_ (prepare_inner_core_device,
       clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_muvstore_inner_core.ocl, CL_FALSE, offset,
                                      NGLL3*sizeof (realw), &h_muv[i*NGLL3], 0, NULL, NULL));
     }
+#else
+      const size_t d_offsets[3] = {0,0,0};
+      const size_t h_offsets[3] = {0,0,0};
+      const size_t d_region[3] = {NGLL3*sizeof(realw), mp->NSPEC_INNER_CORE, 1};
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_xix_inner_core.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				h_xix, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_xiy_inner_core.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				h_xiy, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_xiz_inner_core.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				h_xiz, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_etax_inner_core.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				h_etax, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_etay_inner_core.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				h_etay, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_etaz_inner_core.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				h_etaz, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_gammax_inner_core.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				h_gammax, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_gammay_inner_core.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				h_gammay, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_gammaz_inner_core.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				h_gammaz, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_muvstore_inner_core.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				h_muv, 0, NULL, NULL));
+
+#endif
   }
 #endif
 #ifdef USE_CUDA
@@ -2515,12 +2795,22 @@ void FC_FUNC_ (prepare_inner_core_device,
 
 #ifdef USE_OPENCL
     if (run_opencl) {
+#ifndef FAST_2D_MEMCPY
       int i;
       for (i = 0;i < mp->NSPEC_INNER_CORE;i++) {
         int offset = i * NGLL3_PADDED * sizeof (realw);
         clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_kappavstore_inner_core.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &h_kappav[i*NGLL3], 0, NULL, NULL));
       }
+#else
+      const size_t d_offsets[3] = {0,0,0};
+      const size_t h_offsets[3] = {0,0,0};
+      const size_t d_region[3] = {NGLL3*sizeof(realw), mp->NSPEC_INNER_CORE, 1};
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_kappavstore_inner_core.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				h_kappav, 0, NULL, NULL));
+#endif
     }
 #endif
 #ifdef USE_CUDA
@@ -2541,6 +2831,7 @@ void FC_FUNC_ (prepare_inner_core_device,
     // transfer constant element data with padding
 #ifdef USE_OPENCL
     if (run_opencl) {
+#ifndef FAST_2D_MEMCPY
       int i;
       for (i = 0;i < mp->NSPEC_INNER_CORE; i++) {
         int offset = i * NGLL3_PADDED * sizeof (realw);
@@ -2559,6 +2850,31 @@ void FC_FUNC_ (prepare_inner_core_device,
         clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c44store_inner_core.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &c44store[i*NGLL3], 0, NULL, NULL));
       }
+#else
+      const size_t d_offsets[3] = {0,0,0};
+      const size_t h_offsets[3] = {0,0,0};
+      const size_t d_region[3] = {NGLL3*sizeof(realw), mp->NSPEC_INNER_CORE, 1};
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c11store_inner_core.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				c11store, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c12store_inner_core.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				c12store, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c13store_inner_core.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				c13store, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c33store_inner_core.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				c33store, 0, NULL, NULL));
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c44store_inner_core.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				c44store, 0, NULL, NULL));
+#endif
     }
 #endif
 #ifdef USE_CUDA
@@ -2584,12 +2900,23 @@ void FC_FUNC_ (prepare_inner_core_device,
 
 #ifdef USE_OPENCL
     if (run_opencl) {
+#ifndef FAST_2D_MEMCPY
       int i;
       for (i = 0; i < mp->NSPEC_INNER_CORE; i++) {
         int offset = i * NGLL3_PADDED * sizeof (realw);
         clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_rhostore_inner_core.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &h_rho[i*NGLL3], 0, NULL, NULL));
       }
+
+#else
+      const size_t d_offsets[3] = {0,0,0};
+      const size_t h_offsets[3] = {0,0,0};
+      const size_t d_region[3] = {NGLL3*sizeof(realw), mp->NSPEC_INNER_CORE, 1};
+      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_rhostore_inner_core.ocl, CL_FALSE, d_offsets,
+				h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,  
+				NGLL3*sizeof (realw), 0, 
+				h_rho, 0, NULL, NULL));
+#endif
     }
 #endif
 #ifdef USE_CUDA
