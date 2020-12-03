@@ -135,7 +135,7 @@ program smooth_sem_globe
   real(kind=CUSTOM_REAL) :: center_x0, center_y0, center_z0
   real(kind=CUSTOM_REAL) :: center_x, center_y, center_z
 
-  real(kind=CUSTOM_REAL),dimension(MAX_KERNEL_NAMES) :: min_old,max_old
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: min_old,max_old
   real(kind=CUSTOM_REAL) :: max_new, min_new
   real(kind=CUSTOM_REAL) :: max_old_all, max_new_all, min_old_all, min_new_all
 
@@ -146,7 +146,7 @@ program smooth_sem_globe
   integer :: sizeprocs
 
   character(len=MAX_STRING_LEN),dimension(NARGS) :: arg
-  character(len=MAX_STRING_LEN),dimension(MAX_KERNEL_NAMES) :: kernel_names
+  character(len=MAX_STRING_LEN),dimension(:),allocatable :: kernel_names
   character(len=MAX_STRING_LEN) :: kernel_names_comma_delimited
   character(len=MAX_STRING_LEN) :: kernel_name, topo_dir
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
@@ -272,6 +272,15 @@ program smooth_sem_globe
     print *
   endif
   call synchronize_all()
+
+  ! allocates array
+  allocate(kernel_names(MAX_KERNEL_NAMES), &
+           min_old(MAX_KERNEL_NAMES), &
+           max_old(MAX_KERNEL_NAMES),stat=ier)
+  if (ier /= 0) stop 'Error allocating kernel_names array'
+  kernel_names(:) = ''
+  min_old(:) = 0._CUSTOM_REAL
+  max_old(:) = 0._CUSTOM_REAL
 
   ! parse command line arguments
   do i = 1, NARGS

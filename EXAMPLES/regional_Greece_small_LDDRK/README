@@ -1,0 +1,41 @@
+----------------------------------------------------------
+README
+----------------------------------------------------------
+
+This example uses a higher-order LDDRK time scheme (Low-Dissipation and low-Dispersion fourth-order Runge-Kutta scheme, Berland et al. 2006).
+It creates a regional mesh using transversely isotropic PREM and runs a spectral-element simulation.
+
+The simulation is setup to use 4 CPUs only, thus can be run locally on a desktop machine
+(needs to have MPI installed).
+
+
+1. forward simulation:
+----------------------
+
+type:
+./run_this_example.sh
+
+to setup this directory for the simulation and to run a corresponding
+script "run_mesher_solver.bash".
+
+The simulation is accurate down to a shortest period of ~ 30 s.
+(minimum period resolved ~ (256/NEX_XI) * (ANGULAR_WIDTH_XI_IN_DEGREES/90) * 17)
+ 
+Reference seismograms for comparisons are provided in the directory: REF_SEIS/
+
+
+2. kernel simulation:
+---------------------
+
+type:
+./run_this_example.kernel.sh
+
+to setup this directory for the simulation and to submit a corresponding
+script "run_mesher_solver.kernel.bash".
+
+The simulation will use the adjoint source given in directory: SEM/
+to compute a travel-time sensitivity kernel.
+
+
+Please modify these scripts according to your specifics.
+

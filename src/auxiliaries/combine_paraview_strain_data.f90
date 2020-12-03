@@ -66,8 +66,8 @@ program combine_paraview_movie_data
   logical :: USE_VTK
   character(len=3) :: vtk_format
   ! global point data
-  real,dimension(:),allocatable :: total_dat
-  real,dimension(:,:),allocatable :: total_dat_xyz
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: total_dat
+  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: total_dat_xyz
   integer,dimension(:,:),allocatable :: total_dat_con
 
   ! command-line arguments
@@ -173,10 +173,10 @@ program combine_paraview_movie_data
     ! creates array to hold point data
     allocate(total_dat(npoint_all),stat=ier)
     if (ier /= 0 ) stop 'Error allocating total_dat array'
-    total_dat(:) = 0.0
+    total_dat(:) = 0.0_CUSTOM_REAL
     allocate(total_dat_xyz(3,npoint_all),stat=ier)
     if (ier /= 0 ) stop 'Error allocating total_dat_xyz array'
-    total_dat_xyz(:,:) = 0.0
+    total_dat_xyz(:,:) = 0.0_CUSTOM_REAL
     allocate(total_dat_con(8,nelement_total),stat=ier)
     if (ier /= 0 ) stop 'Error allocating total_dat_con array'
     total_dat_con(:,:) = 0

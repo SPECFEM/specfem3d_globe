@@ -38,9 +38,9 @@
   implicit none
 
   ! local parameters
-  double precision :: rspl_gravity(NR_DENSITY),gravity_spline(NR_DENSITY),gravity_spline2(NR_DENSITY)
-  double precision :: r(NRAD_GRAVITY),range_max
-  double precision :: radius,radius_km,g,dg
+  double precision,dimension(:),allocatable :: rspl_gravity,gravity_spline,gravity_spline2
+  double precision,dimension(:),allocatable :: r
+  double precision :: radius,radius_km,g,dg,range_max
   double precision :: g_cmb_dble,g_icb_dble
   double precision :: rho,drhodr,vp,vs,Qkappa,Qmu
   double precision :: theta,phi,fac
@@ -53,6 +53,7 @@
   double precision :: Hxxl,Hyyl,Hzzl,Hxyl,Hxzl,Hyzl
   double precision :: r_table
   integer :: int_radius,idummy,nspl_gravity,iglob,ier
+  integer :: index_fluid
 
   ! debugging
   logical, parameter :: DEBUG = .false.
@@ -65,13 +66,33 @@
     call flush_IMAIN()
   endif
 
+  ! allocates gravity arrays
+  allocate(minus_gravity_table(NRAD_GRAVITY), &
+           minus_deriv_gravity_table(NRAD_GRAVITY), &
+           density_table(NRAD_GRAVITY), &
+           d_ln_density_dr_table(NRAD_GRAVITY), &
+           minus_rho_g_over_kappa_fluid(NRAD_GRAVITY),stat=ier)
+  if (ier /= 0) stop 'Error allocating gravity arrays'
+  minus_gravity_table(:) = 0.d0
+  minus_deriv_gravity_table(:) = 0.d0
+  density_table(:) = 0.d0
+  d_ln_density_dr_table(:) = 0.d0
+  minus_rho_g_over_kappa_fluid(:) = 0.d0
+
   ! outer core
   ! to hold pre-computed vectors (different between gravity or no gravity case)
   allocate(gravity_pre_store_outer_core(NDIM,NGLOB_OUTER_CORE),stat=ier)
   if (ier /= 0) stop 'Error allocating gravity_grad_ln_density_dr array'
   gravity_pre_store_outer_core(:,:) = 0._CUSTOM_REAL
 
+  ! helper arrays
+  allocate(r(NRAD_GRAVITY), &
+           rspl_gravity(NR_DENSITY), &
+           gravity_spline(NR_DENSITY), &
+           gravity_spline2(NR_DENSITY),stat=ier)
+  if (ier /= 0) stop 'Error allocating gravity helper arrays'
   ! initializes spline coefficients
+  r(:) = 0.d0
   rspl_gravity(:) = 0.d0
   gravity_spline(:) = 0.d0
   gravity_spline2(:) = 0.d0
@@ -88,6 +109,17 @@
     !
     ! setting sampling points up to range_max
     r(int_radius) = dble(int_radius) / dble(NRAD_GRAVITY) * range_max
+
+    ! r in range [1.4e-5,1.001]
+    !
+    ! opposite direction: finding index for given radius? (see below for minus_rho_g_over_kappa_fluid)
+    !  old: r(int_radius) = dble(int_radius) / (R_PLANET_KM * 10.d0)
+    !       -> int_radius = r * R_PLANET_KM * 10.d0 = r * R_PLANET/1000 * 10.d0
+    !       for example: r = RCMB/R_PLANET  -> int_radius = RCMB/R_PLANET * R_PLANET/1000 * 10.d0 = RCMB/1000 * 10.d0
+    !
+    !  new: r(int_radius) = dble(int_radius) / dble(NRAD_GRAVITY) * range_max
+    !       -> int_radius = r * NRAD_GRAVITY / range_max
+    !       for example: r = RCMB/R_PLANET  -> int_radius = RCMB/R_PLANET * NRAD_GRAVITY / range_max
   enddo
 
   ! store g, rho and dg/dr=dg using normalized radius in lookup table every 100 m
@@ -131,17 +163,39 @@
       minus_gravity_table(int_radius) = - g
       minus_deriv_gravity_table(int_radius) = - dg
       density_table(int_radius) = rho
-      minus_rho_g_over_kappa_fluid(int_radius) = - g / vp**2
+      minus_rho_g_over_kappa_fluid(int_radius) = - g / vp**2     ! for fluid: vp**2 = kappa/rho
     enddo
 
     ! make sure fluid array is only assigned in outer core between 1222 and 3478 km
     ! lookup table is defined every 100 m
     do int_radius = 1,NRAD_GRAVITY
       radius_km = r(int_radius) * R_PLANET_KM
-      if (radius_km > RCMB/1000.d0 - 3.d0) &
-        minus_rho_g_over_kappa_fluid(int_radius) = minus_rho_g_over_kappa_fluid(nint((RCMB/1000.d0 - 3.d0)*10.d0))
-      if (radius_km < RICB/1000.d0 + 3.d0) &
-        minus_rho_g_over_kappa_fluid(int_radius) = minus_rho_g_over_kappa_fluid(nint((RICB/1000.d0 + 3.d0)*10.d0))
+      ! upper limit for fluid core
+      if (radius_km > RCMB/1000.d0 - 3.d0) then
+        ! gets index for fluid
+        !
+        ! old: based on int_radius = r * R_PLANET/1000 * 10.d0 = (RCMB/1000 - 3)/R_PLANET_KM * R_PLANET/1000 * 10.d0
+        !                                                      = (RCMB/1000 - 3) * 10.d0
+        !index_fluid = nint((RCMB/1000.d0 - 3.d0)*10.d0)
+        !
+        ! new: based on int_radius = r * NRAD_GRAVITY / range_max   (with r being non-dimensionalized between [0,1.001])
+        index_fluid = nint( (RCMB/1000.d0 - 3.d0)/R_PLANET_KM * NRAD_GRAVITY / range_max)
+        ! stays with fluid properties
+        minus_rho_g_over_kappa_fluid(int_radius) = minus_rho_g_over_kappa_fluid(index_fluid)
+      endif
+      ! lower limit for fluid core
+      if (radius_km < RICB/1000.d0 + 3.d0) then
+        ! gets index for fluid
+        !
+        ! old: based on int_radius = r * R_PLANET/1000 * 10.d0 = (RICB/1000 + 3)/R_PLANET_KM * R_PLANET/1000 * 10.d0
+        !                                                      = (RICB/1000 + 3) * 10.d0
+        !index_fluid = nint((RICB/1000.d0 + 3.d0)*10.d0)
+        !
+        ! new: based on int_radius = r * NRAD_GRAVITY / range_max   (with r being non-dimensionalized between [0,1.001])
+        index_fluid = nint( (RICB/1000.d0 + 3.d0)/R_PLANET_KM * NRAD_GRAVITY / range_max)
+        ! stays with fluid properties
+        minus_rho_g_over_kappa_fluid(int_radius) = minus_rho_g_over_kappa_fluid(index_fluid)
+      endif
     enddo
 
     ! compute gravity value at CMB and ICB once and for all

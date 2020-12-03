@@ -197,11 +197,12 @@
                                    buffer_recv_scalar,num_interfaces, &
                                    max_nibool_interfaces, &
                                    nibool_interfaces,ibool_interfaces, &
+                                   my_neighbors, &
                                    request_send_scalar,request_recv_scalar)
 
 ! waits for send/receiver to be completed and assembles contributions
 
-  use constants, only: CUSTOM_REAL,itag
+  use constants, only: myrank,CUSTOM_REAL,itag,DO_ORDERED_ASSEMBLY
 
   implicit none
 
@@ -217,11 +218,32 @@
   integer, dimension(max_nibool_interfaces,num_interfaces),intent(in) :: ibool_interfaces
   integer, dimension(num_interfaces) :: request_send_scalar,request_recv_scalar
 
+  integer, dimension(num_interfaces),intent(in) :: my_neighbors
+
   ! local parameters
   integer :: ipoin,iinterface
+  integer :: iglob
+  ! ordered assembly
+  real(kind=CUSTOM_REAL), dimension(max_nibool_interfaces,num_interfaces) :: mybuffer
+  logical :: need_add_my_contrib
 
 ! assemble only if more than one partition
   if (NPROC > 1) then
+
+    ! ordered assembly
+    if (DO_ORDERED_ASSEMBLY) then
+      ! stores own MPI buffer values and set them to zero right away to avoid counting it more than once during assembly:
+      ! buffers of higher rank get zeros on nodes shared with current buffer
+      !
+      ! move interface values of array_val to local buffers
+      do iinterface = 1, num_interfaces
+        do ipoin = 1, nibool_interfaces(iinterface)
+          iglob = ibool_interfaces(ipoin,iinterface)
+          mybuffer(ipoin,iinterface) = array_val(iglob)
+          array_val(iglob) = 0._CUSTOM_REAL
+        enddo
+      enddo
+    endif
 
     ! wait for communications completion (recv)
     do iinterface = 1, num_interfaces
@@ -229,13 +251,32 @@
     enddo
 
     ! adding contributions of neighbors
-    do iinterface = 1, num_interfaces
-      do ipoin = 1, nibool_interfaces(iinterface)
-        array_val(ibool_interfaces(ipoin,iinterface)) = &
-             array_val(ibool_interfaces(ipoin,iinterface)) &
-             + buffer_recv_scalar(ipoin,iinterface)
+    ! ordered assembly
+    if (DO_ORDERED_ASSEMBLY) then
+      ! The goal of this version is to avoid different round-off errors in different processors.
+      ! The contribution of each processor is added following the order of its rank.
+      ! This guarantees that the sums are done in the same order on all processors.
+      !
+      ! adding all contributions in order of processor rank
+      need_add_my_contrib = .true.
+      do iinterface = 1, num_interfaces
+        if (need_add_my_contrib .and. myrank < my_neighbors(iinterface)) call add_my_contrib_scalar()
+        do ipoin = 1, nibool_interfaces(iinterface)
+          iglob = ibool_interfaces(ipoin,iinterface)
+          array_val(iglob) = array_val(iglob) + buffer_recv_scalar(ipoin,iinterface)
+        enddo
       enddo
-    enddo
+      if (need_add_my_contrib) call add_my_contrib_scalar()
+
+    else
+      ! default assembly
+      do iinterface = 1, num_interfaces
+        do ipoin = 1, nibool_interfaces(iinterface)
+          iglob = ibool_interfaces(ipoin,iinterface)
+          array_val(iglob) = array_val(iglob) + buffer_recv_scalar(ipoin,iinterface)
+        enddo
+      enddo
+    endif
 
     ! wait for communications completion (send)
     do iinterface = 1, num_interfaces
@@ -243,6 +284,22 @@
     enddo
 
   endif
+
+  contains
+
+    subroutine add_my_contrib_scalar()
+
+    integer :: my_iinterface,my_ipoin
+
+    do my_iinterface = 1, num_interfaces
+      do my_ipoin = 1, nibool_interfaces(my_iinterface)
+        iglob = ibool_interfaces(my_ipoin,my_iinterface)
+        array_val(iglob) = array_val(iglob) + mybuffer(my_ipoin,my_iinterface)
+      enddo
+    enddo
+    need_add_my_contrib = .false.
+
+    end subroutine add_my_contrib_scalar
 
   end subroutine assemble_MPI_scalar_w
 
@@ -258,7 +315,7 @@
                                        npoin2D_faces,npoin2D_xi,npoin2D_eta, &
                                        iboolfaces,iboolcorner, &
                                        iprocfrom_faces,iprocto_faces,imsg_type, &
-                                       iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+                                       iproc_main_corners,iproc_worker1_corners,iproc_worker2_corners, &
                                        buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
                                        buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
                                        NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
@@ -308,7 +365,7 @@
   integer, dimension(NUMMSGS_FACES),intent(in) :: iprocfrom_faces,iprocto_faces,imsg_type
 
 ! communication pattern for corners between chunks
-  integer, dimension(NCORNERSCHUNKS),intent(in) :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
+  integer, dimension(NCORNERSCHUNKS),intent(in) :: iproc_main_corners,iproc_worker1_corners,iproc_worker2_corners
 
   ! local parameters
   integer :: icount_corners
@@ -557,19 +614,19 @@
 ! scheme for corners cannot deadlock even if NPROC_XI = NPROC_ETA = 1
 
 ! ***************************************************************
-!  transmit messages in forward direction (two workers -> master)
+!  transmit messages in forward direction (two workers -> main process)
 ! ***************************************************************
 
   icount_corners = 0
 
   do imsg = 1,NCORNERSCHUNKS
 
-    if (myrank == iproc_master_corners(imsg) .or. &
+    if (myrank == iproc_main_corners(imsg) .or. &
        myrank == iproc_worker1_corners(imsg) .or. &
        (NCHUNKS /= 2 .and. myrank == iproc_worker2_corners(imsg))) icount_corners = icount_corners + 1
 
-    !---- receive messages from the two workers on the master
-    if (myrank == iproc_master_corners(imsg)) then
+    !---- receive messages from the two workers on the main
+    if (myrank == iproc_main_corners(imsg)) then
 
       ! receive from worker #1 and add to local array
       sender = iproc_worker1_corners(imsg)
@@ -593,11 +650,11 @@
 
     endif
 
-    !---- send messages from the two workers to the master
+    !---- send messages from the two workers to the main
     if (myrank == iproc_worker1_corners(imsg) .or. &
                 (NCHUNKS /= 2 .and. myrank == iproc_worker2_corners(imsg))) then
 
-      receiver = iproc_master_corners(imsg)
+      receiver = iproc_main_corners(imsg)
       do ipoin1D = 1,NGLOB1D_RADIAL
         buffer_send_chunkcorn_scalar(ipoin1D) = array_val(iboolcorner(ipoin1D,icount_corners))
       enddo
@@ -606,15 +663,15 @@
     endif
 
     ! *********************************************************************
-    !  transmit messages back in opposite direction (master -> two workers)
+    !  transmit messages back in opposite direction (main process -> two workers)
     ! *********************************************************************
 
-    !---- receive messages from the master on the two workers
+    !---- receive messages from the main on the two workers
     if (myrank == iproc_worker1_corners(imsg) .or. &
                 (NCHUNKS /= 2 .and. myrank == iproc_worker2_corners(imsg))) then
 
-      ! receive from master and copy to local array
-      sender = iproc_master_corners(imsg)
+      ! receive from main and copy to local array
+      sender = iproc_main_corners(imsg)
       call recv_cr(buffer_recv_chunkcorn_scalar,NGLOB1D_RADIAL,sender,itag)
 
       do ipoin1D = 1,NGLOB1D_RADIAL
@@ -623,8 +680,8 @@
 
     endif
 
-    !---- send messages from the master to the two workers
-    if (myrank == iproc_master_corners(imsg)) then
+    !---- send messages from the main to the two workers
+    if (myrank == iproc_main_corners(imsg)) then
 
       do ipoin1D = 1,NGLOB1D_RADIAL
         buffer_send_chunkcorn_scalar(ipoin1D) = array_val(iboolcorner(ipoin1D,icount_corners))

@@ -56,8 +56,8 @@ program sum_kernels_globe
 
   implicit none
 
-  character(len=MAX_STRING_LEN) :: kernel_list(MAX_KERNEL_PATHS), sline
-  character(len=MAX_STRING_LEN) :: kernel_name
+  character(len=MAX_STRING_LEN),dimension(:),allocatable :: kernel_list
+  character(len=MAX_STRING_LEN) :: kernel_name,sline
   integer :: nker,iker
   integer :: ier,i
 
@@ -120,6 +120,11 @@ program sum_kernels_globe
     write(*,*)
     write(*,*) 'reading kernel list: ',trim(kernel_file_list)
   endif
+
+  ! allocates array
+  allocate(kernel_list(MAX_KERNEL_PATHS),stat=ier)
+  if (ier /= 0) stop 'Error allocating kernel_list array'
+  kernel_list(:) = ''
 
   ! reads in event list
   nker = 0

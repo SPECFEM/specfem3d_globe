@@ -73,6 +73,9 @@
   character(len=80) :: hsplfl(maxhpa)
   character(len=40) :: dskker(maxker)
 
+  ! helper array
+  real(kind=4),dimension(:,:),allocatable :: coef
+
   end module model_s362ani_par
 
 !
@@ -126,15 +129,16 @@
   ivarkern(:) = 0
 
   ! allocates
-  allocate(lmxhpa(maxhpa),itypehpa(maxhpa),numcoe(maxhpa),stat=ier)
+  allocate(lmxhpa(maxhpa),itypehpa(maxhpa),numcoe(maxhpa), &
+           coef(maxcoe,maxker),stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating s362ani lmxhpa, .. arrays')
-
   ! initializes
   lmxhpa(:) = 0
   itypehpa(:) = 0
   numcoe(:) = 0
+  coef(:,:) = 0.0
 
-  ! master process
+  ! main process
   if (myrank == 0) call read_model_s362ani(THREE_D_MODEL)
 
   call bcast_all_singlei(numker)
@@ -197,12 +201,12 @@
   ! reads in model parameters
   inquire(file=modeldef,exist=exists)
   if (exists) then
-    call gt3dmodl(modeldef, &
-                  numhpa,numker,numcoe,lmxhpa, &
-                  ihpakern,itypehpa,coe, &
-                  itpspl,xlaspl,xlospl,radspl, &
-                  numvar,ivarkern,varstr, &
-                  refmdl,kerstr,hsplfl,dskker)
+    call get_3dmodl(modeldef, &
+                    numhpa,numker,numcoe,lmxhpa, &
+                    ihpakern,itypehpa,coe, &
+                    itpspl,xlaspl,xlospl,radspl, &
+                    numvar,ivarkern,varstr, &
+                    refmdl,kerstr,hsplfl,dskker)
   else
     write(*,"('model ',a,' does not exist')") modeldef(1:len_trim(modeldef))
     stop 'model does not exist in s362_ani'
@@ -806,14 +810,14 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine gt3dmodl(targetfile, &
-                      numhpa,numker,numcoe,lmxhpa, &
-                      ihpakern,itypehpa,coe, &
-                      itpspl,xlatspl,xlonspl,radispl, &
-                      numvar,ivarkern,varstr, &
-                      refmdl,kerstr,hsplfl,dskker)
+  subroutine get_3dmodl(targetfile, &
+                        numhpa,numker,numcoe,lmxhpa, &
+                        ihpakern,itypehpa,coe, &
+                        itpspl,xlatspl,xlonspl,radispl, &
+                        numvar,ivarkern,varstr, &
+                        refmdl,kerstr,hsplfl,dskker)
 
-  use model_s362ani_par, only: maxcoe,maxhpa,maxker
+  use model_s362ani_par, only: maxcoe,maxhpa,maxker,coef
 
   implicit none
 
@@ -855,7 +859,6 @@
   integer :: lmaxhor(maxhpa)
   integer :: ncoefhor(maxhpa)
 
-  real(kind=4) :: coef(maxcoe,maxker)
   real(kind=4) :: xlaspl(maxcoe,maxhpa)
   real(kind=4) :: xlospl(maxcoe,maxhpa)
   real(kind=4) :: xraspl(maxcoe,maxhpa)
@@ -867,11 +870,11 @@
 
   ierror = 0
 
-  call rd3dmodl(targetfile,ierror, &
-                nmodkern,nhorpar,ityphpar, &
-                ihorpar,lmaxhor,ncoefhor, &
-                xlaspl,xlospl,xraspl,ixlspl,coef, &
-                hsplfile,refmodel,kernstri,desckern)
+  call read_3dmodl(targetfile,ierror, &
+                   nmodkern,nhorpar,ityphpar, &
+                   ihorpar,lmaxhor,ncoefhor, &
+                   xlaspl,xlospl,xraspl,ixlspl, &
+                   hsplfile,refmodel,kernstri,desckern)
 
   if (nhorpar <= maxhpa) then
     numhpa = nhorpar
@@ -935,25 +938,25 @@
 
   ! checks error
   if (ierror /= 0) then
-    print *,'Error: reading model in get3dmodel() routine failed with error code ',ierror
-    stop 'Error in model s362ani in get3dmodl() routine'
+    print *,'Error: reading model in get_3dmodl() routine failed with error code ',ierror
+    stop 'Error in model s362ani in get_3dmodl() routine'
   endif
 
-  end subroutine gt3dmodl
+  end subroutine get_3dmodl
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine rd3dmodl(filename,ierror, &
-                      nmodkern,nhorpar,ityphpar, &
-                      ihorpar,lmaxhor,ncoefhor, &
-                      xlaspl,xlospl,xraspl,ixlspl,coef, &
-                      hsplfile,refmodel,kernstri,desckern)
+  subroutine read_3dmodl(filename,ierror, &
+                         nmodkern,nhorpar,ityphpar, &
+                         ihorpar,lmaxhor,ncoefhor, &
+                         xlaspl,xlospl,xraspl,ixlspl, &
+                         hsplfile,refmodel,kernstri,desckern)
 
   use constants, only: IMAIN,IIN
 
-  use model_s362ani_par, only: maxcoe,maxhpa,maxker
+  use model_s362ani_par, only: maxcoe,maxhpa,maxker,coef
 
   implicit none
 
@@ -973,8 +976,6 @@
   real(kind=4) :: xraspl(maxcoe,maxhpa)
   integer :: ixlspl(maxcoe,maxhpa)
 
-  real(kind=4) :: coef(maxcoe,maxker)
-
   character(len=80) :: hsplfile(maxhpa)
   character(len=80) :: refmodel
   character(len=80) :: kernstri
@@ -991,7 +992,7 @@
   if (ios /= 0) then
     write(IMAIN,*) 'Error opening "', trim(filename), '": ', ios
     call flush_IMAIN()
-    call exit_MPI(0, 'Error in model s362ani in rd3dmodl() routine')
+    call exit_MPI(0, 'Error in model s362ani in read_3dmodl() routine')
   endif
 
   do while (ios == 0)
@@ -1114,7 +1115,7 @@
 
   close(IIN)
 
-  end subroutine rd3dmodl
+  end subroutine read_3dmodl
 
 !
 !-------------------------------------------------------------------------------------------------

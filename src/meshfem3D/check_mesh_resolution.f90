@@ -251,7 +251,7 @@
   pmax_glob = max(pmax_glob,pmax_reg)
 
   ! region info statistics
-  ! master collects info from all MPI slices
+  ! main collects info from all MPI slices
   cmax = cmax_reg
   call max_all_cr(cmax,cmax_reg)
 

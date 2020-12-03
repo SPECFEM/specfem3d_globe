@@ -1,11 +1,9 @@
 #!/bin/bash
 #
-# regional simulation example
+# global simulation example
 #
 # script runs mesher and solver using mpirun
-# on 4 CPUs
-#
-# synthetics have an approximate shortest period ~ 15 s
+# on 6 CPUs
 #
 # modify accordingly for your own system specifics
 ##################################################

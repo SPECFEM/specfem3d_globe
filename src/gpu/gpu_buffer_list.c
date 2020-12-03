@@ -158,9 +158,6 @@ GPU_REALW_BUFFER (d_b_rmass_outer_core);
 // global indexing
 GPU_INT_BUFFER (d_ibool_outer_core);
 
-// mesh locations
-GPU_REALW_BUFFER (d_rstore_outer_core);
-
 // wavefields
 GPU_REALW_BUFFER (d_displ_outer_core);
 GPU_REALW_BUFFER (d_veloc_outer_core);
@@ -216,9 +213,6 @@ GPU_REALW_BUFFER (d_b_rmassz_inner_core);
 // global indexing
 GPU_INT_BUFFER (d_ibool_inner_core);
 GPU_INT_BUFFER (d_idoubling_inner_core);
-
-// mesh locations
-GPU_REALW_BUFFER (d_rstore_inner_core);
 
 // anisotropic 3D mantle
 GPU_REALW_BUFFER (d_c11store_inner_core);
@@ -300,11 +294,11 @@ GPU_REALW_BUFFER (d_wgll_cube);
 // ------------------------------------------------------------------   //
 // gravity
 // ------------------------------------------------------------------   //
-GPU_REALW_BUFFER (d_d_ln_density_dr_table);
-GPU_REALW_BUFFER (d_minus_rho_g_over_kappa_fluid);
-GPU_REALW_BUFFER (d_minus_gravity_table);
-GPU_REALW_BUFFER (d_minus_deriv_gravity_table);
-GPU_REALW_BUFFER (d_density_table);
+GPU_REALW_BUFFER (d_gravity_pre_store_outer_core);
+GPU_REALW_BUFFER (d_gravity_pre_store_crust_mantle);
+GPU_REALW_BUFFER (d_gravity_pre_store_inner_core);
+GPU_REALW_BUFFER (d_gravity_H_crust_mantle);
+GPU_REALW_BUFFER (d_gravity_H_inner_core);
 
 // ------------------------------------------------------------------   //
 // rotation
@@ -340,7 +334,7 @@ GPU_REALW_BUFFER (d_hgammar);
 
 // adjoint sources
 GPU_INT_BUFFER (d_number_adjsources_global);
-GPU_REALW_BUFFER (d_source_adjoint);
+GPU_REALW_BUFFER (d_stf_array_adjoint);
 GPU_REALW_BUFFER (d_hxir_adj);
 GPU_REALW_BUFFER (d_hetar_adj);
 GPU_REALW_BUFFER (d_hgammar_adj);
@@ -427,3 +421,46 @@ GPU_INT_BUFFER (d_ibelm_top_crust_mantle);
 GPU_REALW_BUFFER (d_jacobian2D_top_crust_mantle);
 GPU_REALW_BUFFER (d_Sigma_kl);
 
+// ------------------------------------------------------------------   //
+// LDDRK
+// ------------------------------------------------------------------   //
+GPU_REALW_BUFFER (d_tau_sigmainvval);
+// wavefields intermediate
+GPU_REALW_BUFFER (d_displ_crust_mantle_lddrk);
+GPU_REALW_BUFFER (d_veloc_crust_mantle_lddrk);
+GPU_REALW_BUFFER (d_b_displ_crust_mantle_lddrk);
+GPU_REALW_BUFFER (d_b_veloc_crust_mantle_lddrk);
+GPU_REALW_BUFFER (d_displ_outer_core_lddrk);
+GPU_REALW_BUFFER (d_veloc_outer_core_lddrk);
+GPU_REALW_BUFFER (d_b_displ_outer_core_lddrk);
+GPU_REALW_BUFFER (d_b_veloc_outer_core_lddrk);
+GPU_REALW_BUFFER (d_displ_inner_core_lddrk);
+GPU_REALW_BUFFER (d_veloc_inner_core_lddrk);
+GPU_REALW_BUFFER (d_b_displ_inner_core_lddrk);
+GPU_REALW_BUFFER (d_b_veloc_inner_core_lddrk);
+// rotation
+GPU_REALW_BUFFER (d_A_array_rotation_lddrk);
+GPU_REALW_BUFFER (d_B_array_rotation_lddrk);
+GPU_REALW_BUFFER (d_b_A_array_rotation_lddrk);
+GPU_REALW_BUFFER (d_b_B_array_rotation_lddrk);
+// attenuation
+GPU_REALW_BUFFER (d_R_xx_crust_mantle_lddrk);
+GPU_REALW_BUFFER (d_R_yy_crust_mantle_lddrk);
+GPU_REALW_BUFFER (d_R_xy_crust_mantle_lddrk);
+GPU_REALW_BUFFER (d_R_xz_crust_mantle_lddrk);
+GPU_REALW_BUFFER (d_R_yz_crust_mantle_lddrk);
+GPU_REALW_BUFFER (d_b_R_xx_crust_mantle_lddrk);
+GPU_REALW_BUFFER (d_b_R_yy_crust_mantle_lddrk);
+GPU_REALW_BUFFER (d_b_R_xy_crust_mantle_lddrk);
+GPU_REALW_BUFFER (d_b_R_xz_crust_mantle_lddrk);
+GPU_REALW_BUFFER (d_b_R_yz_crust_mantle_lddrk);
+GPU_REALW_BUFFER (d_R_xx_inner_core_lddrk);
+GPU_REALW_BUFFER (d_R_yy_inner_core_lddrk);
+GPU_REALW_BUFFER (d_R_xy_inner_core_lddrk);
+GPU_REALW_BUFFER (d_R_xz_inner_core_lddrk);
+GPU_REALW_BUFFER (d_R_yz_inner_core_lddrk);
+GPU_REALW_BUFFER (d_b_R_xx_inner_core_lddrk);
+GPU_REALW_BUFFER (d_b_R_yy_inner_core_lddrk);
+GPU_REALW_BUFFER (d_b_R_xy_inner_core_lddrk);
+GPU_REALW_BUFFER (d_b_R_xz_inner_core_lddrk);
+GPU_REALW_BUFFER (d_b_R_yz_inner_core_lddrk);

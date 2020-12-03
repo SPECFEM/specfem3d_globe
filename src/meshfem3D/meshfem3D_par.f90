@@ -42,7 +42,8 @@
   use constants, only: NR_DENSITY,N_SLS, &
     PI,PI_OVER_TWO,ZERO,ONE,DEGREES_TO_RADIANS,RADIANS_TO_DEGREES, &
     IREGION_CRUST_MANTLE,IREGION_INNER_CORE,IREGION_OUTER_CORE, &
-    ICRUST_CRUST1,ICRUST_CRUST2,ICRUST_CRUSTMAPS,ICRUST_EPCRUST,ICRUST_CRUST_SH,ICRUST_EUCRUST, &
+    ICRUST_CRUST1,ICRUST_CRUST2,ICRUST_CRUSTMAPS,ICRUST_EPCRUST,ICRUST_CRUST_SH, &
+    ICRUST_EUCRUST,ICRUST_SGLOBECRUST, &
     GLL_REFERENCE_MODEL,USE_1D_REFERENCE, &
     ATTENUATION_1D_WITH_3D_STORAGE
 
@@ -227,7 +228,10 @@
 
   ! 3D shape functions and their derivatives
   double precision, dimension(NGNOD,NGLLX,NGLLY,NGLLZ) :: shape3D
-  double precision, dimension(NDIM,NGNOD,NGLLX,NGLLY,NGLLZ) :: dershape3D
+
+  ! note: having an array size > 64k, which is the stack default limit on MacOS, it would lead to compilation
+  !       warnings/issues with newer gcc version 10.x; using allocatable array instead
+  double precision, dimension(:,:,:,:,:),allocatable :: dershape3D
 
   ! 2D shape functions and their derivatives
   double precision, dimension(NGNOD2D,NGLLY,NGLLZ) :: shape2D_x
@@ -375,7 +379,7 @@
   ! communication pattern for faces between chunks
   integer, dimension(:),allocatable :: iprocfrom_faces,iprocto_faces,imsg_type
   ! communication pattern for corners between chunks
-  integer, dimension(:),allocatable :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
+  integer, dimension(:),allocatable :: iproc_main_corners,iproc_worker1_corners,iproc_worker2_corners
 
   ! indirect addressing for each corner of the chunks
   integer, dimension(:,:),allocatable :: iboolcorner

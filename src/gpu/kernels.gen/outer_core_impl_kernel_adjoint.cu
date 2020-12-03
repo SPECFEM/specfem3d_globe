@@ -87,7 +87,7 @@
 
 // fluid rotation
 
-static __device__ void compute_element_oc_rotation(const int tx, const int working_element, const float time, const float two_omega_earth, const float deltat, float * d_A_array_rotation, float * d_B_array_rotation, const float dpotentialdxl, const float dpotentialdyl, float * dpotentialdx_with_rot, float * dpotentialdy_with_rot){
+static __device__ void compute_element_oc_rotation(const int tx, const int working_element, const float time, const float two_omega_earth, const float deltat, float * d_A_array_rotation, float * d_B_array_rotation, float * d_A_array_rotation_lddrk, float * d_B_array_rotation_lddrk, const float alpha_lddrk, const float beta_lddrk, const int use_lddrk, const float dpotentialdxl, const float dpotentialdyl, float * dpotentialdx_with_rot, float * dpotentialdy_with_rot){
   float two_omega_deltat;
   float cos_two_omega_t;
   float sin_two_omega_t;
@@ -109,15 +109,22 @@ static __device__ void compute_element_oc_rotation(const int tx, const int worki
   dpotentialdy_with_rot[0] = dpotentialdyl + ( -(A_rotation)) * (sin_two_omega_t) + (B_rotation) * (cos_two_omega_t);
 
   // updates rotation term with Euler scheme (non-padded offset)
-  d_A_array_rotation[tx + (working_element) * (NGLL3)] = d_A_array_rotation[tx + (working_element) * (NGLL3)] + source_euler_A;
-  d_B_array_rotation[tx + (working_element) * (NGLL3)] = d_B_array_rotation[tx + (working_element) * (NGLL3)] + source_euler_B;
+  if ( !(use_lddrk)) {
+    d_A_array_rotation[tx + (working_element) * (NGLL3)] = d_A_array_rotation[tx + (working_element) * (NGLL3)] + source_euler_A;
+    d_B_array_rotation[tx + (working_element) * (NGLL3)] = d_B_array_rotation[tx + (working_element) * (NGLL3)] + source_euler_B;
+  } else {
+    d_A_array_rotation_lddrk[tx + (working_element) * (NGLL3)] = (alpha_lddrk) * (d_A_array_rotation_lddrk[tx + (working_element) * (NGLL3)]) + source_euler_A;
+    d_B_array_rotation_lddrk[tx + (working_element) * (NGLL3)] = (alpha_lddrk) * (d_B_array_rotation_lddrk[tx + (working_element) * (NGLL3)]) + source_euler_B;
+    d_A_array_rotation[tx + (working_element) * (NGLL3)] = d_A_array_rotation[tx + (working_element) * (NGLL3)] + (beta_lddrk) * (d_A_array_rotation_lddrk[tx + (working_element) * (NGLL3)]);
+    d_B_array_rotation[tx + (working_element) * (NGLL3)] = d_B_array_rotation[tx + (working_element) * (NGLL3)] + (beta_lddrk) * (d_B_array_rotation_lddrk[tx + (working_element) * (NGLL3)]);
+  }
 }
 
 // KERNEL 2
 //
 // for outer core ( acoustic domain )
 
-__global__ void outer_core_impl_kernel_adjoint(const int nb_blocks_to_compute, const int * d_ibool, const int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const int use_mesh_coloring_gpu, const float * __restrict__ d_potential, float * d_potential_dot_dot, const float * __restrict__ d_xix, const float * __restrict__ d_xiy, const float * __restrict__ d_xiz, const float * __restrict__ d_etax, const float * __restrict__ d_etay, const float * __restrict__ d_etaz, const float * __restrict__ d_gammax, const float * __restrict__ d_gammay, const float * __restrict__ d_gammaz, const float * __restrict__ d_hprime_xx, const float * __restrict__ d_hprimewgll_xx, const float * __restrict__ wgllwgll_xy, const float * __restrict__ wgllwgll_xz, const float * __restrict__ wgllwgll_yz, const int GRAVITY, const float * __restrict__ d_rstore, const float * __restrict__ d_d_ln_density_dr_table, const float * __restrict__ d_minus_rho_g_over_kappa_fluid, const float R_EARTH_KM, const float * __restrict__ wgll_cube, const int ROTATION, const float time, const float two_omega_earth, const float deltat, float * d_A_array_rotation, float * d_B_array_rotation, const int NSPEC_OUTER_CORE){
+__global__ void outer_core_impl_kernel_adjoint(const int nb_blocks_to_compute, const int * d_ibool, const int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const int use_mesh_coloring_gpu, const float * __restrict__ d_potential, float * d_potential_dot_dot, const float * __restrict__ d_xix, const float * __restrict__ d_xiy, const float * __restrict__ d_xiz, const float * __restrict__ d_etax, const float * __restrict__ d_etay, const float * __restrict__ d_etaz, const float * __restrict__ d_gammax, const float * __restrict__ d_gammay, const float * __restrict__ d_gammaz, const float * __restrict__ d_hprime_xx, const float * __restrict__ d_hprimewgll_xx, const float * __restrict__ wgllwgll_xy, const float * __restrict__ wgllwgll_xz, const float * __restrict__ wgllwgll_yz, const int GRAVITY, const float * __restrict__ d_gravity_pre_store_outer_core, const float * __restrict__ wgll_cube, const int ROTATION, const float time, const float two_omega_earth, const float deltat, float * d_A_array_rotation, float * d_B_array_rotation, float * d_A_array_rotation_lddrk, float * d_B_array_rotation_lddrk, const float alpha_lddrk, const float beta_lddrk, const int use_lddrk, const int NSPEC_OUTER_CORE){
   int bx;
   int tx;
   int K;
@@ -150,20 +157,9 @@ __global__ void outer_core_impl_kernel_adjoint(const int nb_blocks_to_compute, c
   float dpotentialdy_with_rot;
   float sum_terms;
   float gravity_term_1;
-  float gxl;
-  float gyl;
-  float gzl;
-  float radius;
-  float theta;
-  float phi;
-  float cos_theta;
-  float sin_theta;
-  float cos_phi;
-  float sin_phi;
-  float grad_x_ln_rho;
-  float grad_y_ln_rho;
-  float grad_z_ln_rho;
-  int int_radius;
+  float vec_x;
+  float vec_y;
+  float vec_z;
   __shared__ float s_dummy_loc[(NGLL3)];
   __shared__ float s_temp1[(NGLL3)];
   __shared__ float s_temp2[(NGLL3)];
@@ -257,31 +253,22 @@ __global__ void outer_core_impl_kernel_adjoint(const int nb_blocks_to_compute, c
     dpotentialdzl = (xizl) * (temp1l) + (etazl) * (temp2l) + (gammazl) * (temp3l);
 
     if (ROTATION) {
-      compute_element_oc_rotation(tx, working_element, time, two_omega_earth, deltat, d_A_array_rotation, d_B_array_rotation, dpotentialdxl, dpotentialdyl,  &dpotentialdx_with_rot,  &dpotentialdy_with_rot);
+      compute_element_oc_rotation(tx, working_element, time, two_omega_earth, deltat, d_A_array_rotation, d_B_array_rotation, d_A_array_rotation_lddrk, d_B_array_rotation_lddrk, alpha_lddrk, beta_lddrk, use_lddrk, dpotentialdxl, dpotentialdyl,  &dpotentialdx_with_rot,  &dpotentialdy_with_rot);
     } else {
       dpotentialdx_with_rot = dpotentialdxl;
       dpotentialdy_with_rot = dpotentialdyl;
     }
 
-    radius = d_rstore[0 + (3) * (iglob_1)];
-    theta = d_rstore[1 + (3) * (iglob_1)];
-    phi = d_rstore[2 + (3) * (iglob_1)];
-    sincosf(theta,  &sin_theta,  &cos_theta);
-    sincosf(phi,  &sin_phi,  &cos_phi);
-    int_radius = rint(((radius) * (R_EARTH_KM)) * (10.0f)) - (1);
+    vec_x = d_gravity_pre_store_outer_core[0 + (3) * (iglob_1)];
+    vec_y = d_gravity_pre_store_outer_core[1 + (3) * (iglob_1)];
+    vec_z = d_gravity_pre_store_outer_core[2 + (3) * (iglob_1)];
 
     if ( !(GRAVITY)) {
-      grad_x_ln_rho = ((sin_theta) * (cos_phi)) * (d_d_ln_density_dr_table[int_radius]);
-      grad_y_ln_rho = ((sin_theta) * (sin_phi)) * (d_d_ln_density_dr_table[int_radius]);
-      grad_z_ln_rho = (cos_theta) * (d_d_ln_density_dr_table[int_radius]);
-      dpotentialdx_with_rot = dpotentialdx_with_rot + (s_dummy_loc[tx]) * (grad_x_ln_rho);
-      dpotentialdy_with_rot = dpotentialdy_with_rot + (s_dummy_loc[tx]) * (grad_y_ln_rho);
-      dpotentialdzl = dpotentialdzl + (s_dummy_loc[tx]) * (grad_z_ln_rho);
+      dpotentialdx_with_rot = dpotentialdx_with_rot + (s_dummy_loc[tx]) * (vec_x);
+      dpotentialdy_with_rot = dpotentialdy_with_rot + (s_dummy_loc[tx]) * (vec_y);
+      dpotentialdzl = dpotentialdzl + (s_dummy_loc[tx]) * (vec_z);
     } else {
-      gxl = (sin_theta) * (cos_phi);
-      gyl = (sin_theta) * (sin_phi);
-      gzl = cos_theta;
-      gravity_term_1 = (((d_minus_rho_g_over_kappa_fluid[int_radius]) * (jacobianl)) * (wgll_cube[tx])) * ((dpotentialdx_with_rot) * (gxl) + (dpotentialdy_with_rot) * (gyl) + (dpotentialdzl) * (gzl));
+      gravity_term_1 = ((jacobianl) * (wgll_cube[tx])) * ((dpotentialdx_with_rot) * (vec_x) + (dpotentialdy_with_rot) * (vec_y) + (dpotentialdzl) * (vec_z));
     }
 
     s_temp1[tx] = (jacobianl) * ((xixl) * (dpotentialdx_with_rot) + (xiyl) * (dpotentialdy_with_rot) + (xizl) * (dpotentialdzl));

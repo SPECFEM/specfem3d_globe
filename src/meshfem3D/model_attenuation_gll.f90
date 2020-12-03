@@ -109,7 +109,7 @@
     write(IMAIN,*) 'model Qmu GLL:'
     call flush_IMAIN()
   endif
-  call print_min_max_all(MGLL_QMU_V%qmu_new,"qmu new")
+  call print_gll_min_max_all(MGLL_QMU_V%nspec,MGLL_QMU_V%qmu_new,"qmu new")
 
   call synchronize_all()
 

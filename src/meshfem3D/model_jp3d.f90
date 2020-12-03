@@ -165,7 +165,7 @@
            stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating JP3D arrays')
 
-  ! master reads in values
+  ! main reads in values
   if (myrank == 0) call read_jp3d_iso_zhao_model()
 
   ! JP3DM_V

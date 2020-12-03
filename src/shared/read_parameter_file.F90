@@ -106,6 +106,19 @@
   call read_value_logical(ABSORBING_CONDITIONS, 'ABSORBING_CONDITIONS', ier)
   if (ier /= 0) stop 'an error occurred while reading the parameter file: ABSORBING_CONDITIONS'
 
+  call read_value_logical(ABSORB_USING_GLOBAL_SPONGE, 'ABSORB_USING_GLOBAL_SPONGE', ier)
+  if (ier /= 0) stop 'an error occurred while reading the parameter file: ABSORB_USING_GLOBAL_SPONGE'
+
+  ! sponge abosbing boundary properties
+  if (ABSORB_USING_GLOBAL_SPONGE) then
+    call read_value_double_precision(SPONGE_LATITUDE_IN_DEGREES, 'SPONGE_LATITUDE_IN_DEGREES', ier)
+    if (ier /= 0) stop 'an error occurred while reading the parameter file: SPONGE_LATITUDE_IN_DEGREES...'
+    call read_value_double_precision(SPONGE_LONGITUDE_IN_DEGREES, 'SPONGE_LONGITUDE_IN_DEGREES', ier)
+    if (ier /= 0) stop 'an error occurred while reading the parameter file: SPONGE_LONGITUDE_IN_DEGREES...'
+    call read_value_double_precision(SPONGE_RADIUS_IN_DEGREES, 'SPONGE_RADIUS_IN_DEGREES', ier)
+    if (ier /= 0) stop 'an error occurred while reading the parameter file: SPONGE_RADIUS_IN_DEGREES...'
+  endif
+
   ! define the velocity model
   call read_value_string(MODEL, 'MODEL', ier)
   if (ier /= 0) stop 'an error occurred while reading the parameter file: MODEL'
@@ -190,6 +203,10 @@
   call read_value_logical(USE_FORCE_POINT_SOURCE, 'USE_FORCE_POINT_SOURCE', ier)
   if (ier /= 0) stop 'an error occurred while reading the parameter file: USE_FORCE_POINT_SOURCE'
 
+  ! monochromatic double couple source
+  call read_value_logical(USE_MONOCHROMATIC_CMT_SOURCE, 'USE_MONOCHROMATIC_CMT_SOURCE', ier)
+  if (ier /= 0) stop 'an error occurred while reading the parameter file: USE_MONOCHROMATIC_CMT_SOURCE'
+
   ! option to save strain seismograms
   call read_value_logical(SAVE_SEISMOGRAMS_STRAIN, 'SAVE_SEISMOGRAMS_STRAIN', ier)
   if (ier /= 0) stop 'an error occurred while reading the parameter file: SAVE_SEISMOGRAMS_STRAIN'
@@ -208,8 +225,8 @@
   if (ier /= 0) stop 'an error occurred while reading the parameter file: OUTPUT_ASDF'
   call read_value_logical(ROTATE_SEISMOGRAMS_RT, 'ROTATE_SEISMOGRAMS_RT', ier)
   if (ier /= 0) stop 'an error occurred while reading the parameter file: ROTATE_SEISMOGRAMS_RT'
-  call read_value_logical(WRITE_SEISMOGRAMS_BY_MASTER, 'WRITE_SEISMOGRAMS_BY_MASTER', ier)
-  if (ier /= 0) stop 'an error occurred while reading the parameter file: WRITE_SEISMOGRAMS_BY_MASTER'
+  call read_value_logical(WRITE_SEISMOGRAMS_BY_MAIN, 'WRITE_SEISMOGRAMS_BY_MAIN', ier)
+  if (ier /= 0) stop 'an error occurred while reading the parameter file: WRITE_SEISMOGRAMS_BY_MAIN'
   call read_value_logical(SAVE_ALL_SEISMOS_IN_ONE_FILE, 'SAVE_ALL_SEISMOS_IN_ONE_FILE', ier)
   if (ier /= 0) stop 'an error occurred while reading the parameter file: SAVE_ALL_SEISMOS_IN_ONE_FILE'
   call read_value_logical(USE_BINARY_FOR_LARGE_FILE, 'USE_BINARY_FOR_LARGE_FILE', ier)
@@ -295,9 +312,8 @@
 
   ! re-sets attenuation flags
   if (.not. ATTENUATION) then
-    ! turns off both PARTIAL_PHYS_DISPERSION_ONLY and UNDO_ATTENUATION when ATTENUATION is off in the Par_file
+    ! turns off PARTIAL_PHYS_DISPERSION_ONLY when ATTENUATION is off in the Par_file
     PARTIAL_PHYS_DISPERSION_ONLY = .false.
-    UNDO_ATTENUATION = .false.
   endif
 
   ! re-sets ADIOS flags
@@ -393,10 +409,9 @@
   if (ADIOS_ENABLED .and. SAVE_REGULAR_KL ) &
     stop 'ADIOS_ENABLED support not implemented yet for SAVE_REGULAR_KL'
 
-  if (USE_LDDRK .and. SIMULATION_TYPE == 3 ) &
-    stop 'USE_LDDRK support not implemented yet for SIMULATION_TYPE == 3'
-  if (USE_LDDRK .and. GPU_MODE ) &
-    stop 'USE_LDDRK support not implemented yet for GPU simulations'
+  ! LDDRK
+  if (USE_LDDRK .and. (ABSORBING_CONDITIONS .and. .not. UNDO_ATTENUATION) ) &
+    stop 'USE_LDDRK support requires to use UNDO_ATTENUATION when absorbing boundaries are turned on'
 
   if (UNDO_ATTENUATION .and. MOVIE_VOLUME .and. MOVIE_VOLUME_TYPE == 4 ) &
     stop 'UNDO_ATTENUATION support not implemented yet for MOVIE_VOLUME_TYPE == 4 simulations'

@@ -110,7 +110,7 @@
   ! upper mantle structure
   if (myrank == 0) call read_model_ppm()
 
-  ! broadcast the information read on the master to the nodes
+  ! broadcast the information read on the main node to all the nodes
   call bcast_all_singlei(PPM_num_v)
   call bcast_all_singlei(PPM_num_latperlon)
   call bcast_all_singlei(PPM_num_lonperdepth)

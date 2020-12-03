@@ -70,6 +70,11 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
                  gpu_realw_mem d_R_xy,
                  gpu_realw_mem d_R_xz,
                  gpu_realw_mem d_R_yz,
+                 gpu_realw_mem d_R_xx_lddrk,
+                 gpu_realw_mem d_R_yy_lddrk,
+                 gpu_realw_mem d_R_xy_lddrk,
+                 gpu_realw_mem d_R_xz_lddrk,
+                 gpu_realw_mem d_R_yz_lddrk,
                  gpu_realw_mem d_c11store,
                  gpu_realw_mem d_c12store,
                  gpu_realw_mem d_c13store,
@@ -86,6 +91,12 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
                  gpu_realw_mem d_b_R_xy,
                  gpu_realw_mem d_b_R_xz,
                  gpu_realw_mem d_b_R_yz,
+                 gpu_realw_mem d_b_R_xx_lddrk,
+                 gpu_realw_mem d_b_R_yy_lddrk,
+                 gpu_realw_mem d_b_R_xy_lddrk,
+                 gpu_realw_mem d_b_R_xz_lddrk,
+                 gpu_realw_mem d_b_R_yz_lddrk,
+                 realw alpha_lddrk, realw beta_lddrk,
                  int FORWARD_OR_ADJOINT) {
 
   GPU_ERROR_CHECKING ("before kernel inner_core");
@@ -109,7 +120,9 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
   gpu_realw_mem epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz;
   gpu_realw_mem epsilon_trace_over_3;
   gpu_realw_mem R_xx,R_yy,R_xy,R_xz,R_yz;
+  gpu_realw_mem R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk;
   gpu_realw_mem alphaval,betaval,gammaval;
+  gpu_realw_mem tau_sigmainvval;
 
   // sets gpu arrays
   if (FORWARD_OR_ADJOINT == 1) {
@@ -127,9 +140,15 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
     R_xy = d_R_xy;
     R_xz = d_R_xz;
     R_yz = d_R_yz;
+    R_xx_lddrk = d_R_xx_lddrk;
+    R_yy_lddrk = d_R_yy_lddrk;
+    R_xy_lddrk = d_R_xy_lddrk;
+    R_xz_lddrk = d_R_xz_lddrk;
+    R_yz_lddrk = d_R_yz_lddrk;
     alphaval = mp->d_alphaval;
     betaval = mp->d_betaval;
     gammaval = mp->d_gammaval;
+    tau_sigmainvval = mp->d_tau_sigmainvval;
   } else {
     // backward/reconstructed wavefields -> FORWARD_OR_ADJOINT == 3
     deltat = mp->b_deltat;
@@ -146,9 +165,15 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
     R_xy = d_b_R_xy;
     R_xz = d_b_R_xz;
     R_yz = d_b_R_yz;
+    R_xx_lddrk = d_b_R_xx_lddrk;
+    R_yy_lddrk = d_b_R_yy_lddrk;
+    R_xy_lddrk = d_b_R_xy_lddrk;
+    R_xz_lddrk = d_b_R_xz_lddrk;
+    R_yz_lddrk = d_b_R_yz_lddrk;
     alphaval = mp->d_b_alphaval;
     betaval = mp->d_b_betaval;
     gammaval = mp->d_b_gammaval;
+    tau_sigmainvval = mp->d_tau_sigmainvval; // only d_tau_sigmainvval
   }
 
 #ifdef USE_OPENCL
@@ -209,9 +234,18 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_xy.ocl));
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_xz.ocl));
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_yz.ocl));
+    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_xx_lddrk.ocl));
+    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_yy_lddrk.ocl));
+    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_xy_lddrk.ocl));
+    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_xz_lddrk.ocl));
+    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_yz_lddrk.ocl));
+    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (realw), (void *) &alpha_lddrk));
+    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (realw), (void *) &beta_lddrk));
+    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->use_lddrk));
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &alphaval.ocl));
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &betaval.ocl));
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &gammaval.ocl));
+    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &tau_sigmainvval.ocl));
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->anisotropic_inner_core));
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c11store.ocl));
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c12store.ocl));
@@ -219,11 +253,8 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c33store.ocl));
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c44store.ocl));
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->gravity));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_rstore_inner_core.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_minus_gravity_table.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_minus_deriv_gravity_table.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_density_table.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (realw), (void *) &mp->R_EARTH_KM));
+    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_gravity_pre_store_inner_core.ocl));
+    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_gravity_H_inner_core.ocl));
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_wgll_cube.ocl));
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->NSPEC_INNER_CORE_STRAIN_ONLY));
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->NSPEC_INNER_CORE));
@@ -294,16 +325,21 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
                                                                d_one_minus_sum_beta.cuda,
                                                                d_factor_common.cuda,
                                                                R_xx.cuda,R_yy.cuda,R_xy.cuda,R_xz.cuda,R_yz.cuda,
+                                                               R_xx_lddrk.cuda,
+                                                               R_yy_lddrk.cuda,
+                                                               R_xy_lddrk.cuda,
+                                                               R_xz_lddrk.cuda,
+                                                               R_yz_lddrk.cuda,
+                                                               alpha_lddrk,beta_lddrk,
+                                                               mp->use_lddrk,
                                                                alphaval.cuda,betaval.cuda,gammaval.cuda,
+                                                               tau_sigmainvval.cuda,
                                                                mp->anisotropic_inner_core,
                                                                d_c11store.cuda,d_c12store.cuda,d_c13store.cuda,
                                                                d_c33store.cuda,d_c44store.cuda,
                                                                mp->gravity,
-                                                               mp->d_rstore_inner_core.cuda,
-                                                               mp->d_minus_gravity_table.cuda,
-                                                               mp->d_minus_deriv_gravity_table.cuda,
-                                                               mp->d_density_table.cuda,
-                                                               mp->R_EARTH_KM,
+                                                               mp->d_gravity_pre_store_inner_core.cuda,
+                                                               mp->d_gravity_H_inner_core.cuda,
                                                                mp->d_wgll_cube.cuda,
                                                                mp->NSPEC_INNER_CORE_STRAIN_ONLY,
                                                                mp->NSPEC_INNER_CORE);
@@ -320,12 +356,15 @@ extern EXTERN_LANG
 void FC_FUNC_ (compute_forces_inner_core_gpu,
                COMPUTE_FORCES_INNER_CORE_GPU) (long *Mesh_pointer_f,
                                                int *iphase,
+                                               realw *alpha_lddrk_f, realw *beta_lddrk_f,
                                                int *FORWARD_OR_ADJOINT_f) {
 
   TRACE ("compute_forces_inner_core_gpu");
 
   //get mesh pointer out of Fortran integer container
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
+  realw alpha_lddrk = *alpha_lddrk_f;
+  realw beta_lddrk = *beta_lddrk_f;
   int FORWARD_OR_ADJOINT = *FORWARD_OR_ADJOINT_f;
 
   // safety check
@@ -487,6 +526,11 @@ void FC_FUNC_ (compute_forces_inner_core_gpu,
       INIT_OFFSET(d_R_xy_inner_core, offset_nonpadded_att1);
       INIT_OFFSET(d_R_xz_inner_core, offset_nonpadded_att1);
       INIT_OFFSET(d_R_yz_inner_core, offset_nonpadded_att1);
+      INIT_OFFSET(d_R_xx_inner_core_lddrk, offset_nonpadded_att1);
+      INIT_OFFSET(d_R_yy_inner_core_lddrk, offset_nonpadded_att1);
+      INIT_OFFSET(d_R_xy_inner_core_lddrk, offset_nonpadded_att1);
+      INIT_OFFSET(d_R_xz_inner_core_lddrk, offset_nonpadded_att1);
+      INIT_OFFSET(d_R_yz_inner_core_lddrk, offset_nonpadded_att1);
       INIT_OFFSET(d_c11store_inner_core, offset);
       INIT_OFFSET(d_c12store_inner_core, offset);
       INIT_OFFSET(d_c13store_inner_core, offset);
@@ -503,6 +547,11 @@ void FC_FUNC_ (compute_forces_inner_core_gpu,
       INIT_OFFSET(d_b_R_xy_inner_core, offset_nonpadded_att1);
       INIT_OFFSET(d_b_R_xz_inner_core, offset_nonpadded_att1);
       INIT_OFFSET(d_b_R_yz_inner_core, offset_nonpadded_att1);
+      INIT_OFFSET(d_b_R_xx_inner_core_lddrk, offset_nonpadded_att1);
+      INIT_OFFSET(d_b_R_yy_inner_core_lddrk, offset_nonpadded_att1);
+      INIT_OFFSET(d_b_R_xy_inner_core_lddrk, offset_nonpadded_att1);
+      INIT_OFFSET(d_b_R_xz_inner_core_lddrk, offset_nonpadded_att1);
+      INIT_OFFSET(d_b_R_yz_inner_core_lddrk, offset_nonpadded_att1);
 
       inner_core (nb_blocks_to_compute, mp,
                   *iphase,
@@ -532,6 +581,11 @@ void FC_FUNC_ (compute_forces_inner_core_gpu,
                   PASS_OFFSET(d_R_xy_inner_core, offset_nonpadded_att1),
                   PASS_OFFSET(d_R_xz_inner_core, offset_nonpadded_att1),
                   PASS_OFFSET(d_R_yz_inner_core, offset_nonpadded_att1),
+                  PASS_OFFSET(d_R_xx_inner_core_lddrk, offset_nonpadded_att1),
+                  PASS_OFFSET(d_R_yy_inner_core_lddrk, offset_nonpadded_att1),
+                  PASS_OFFSET(d_R_xy_inner_core_lddrk, offset_nonpadded_att1),
+                  PASS_OFFSET(d_R_xz_inner_core_lddrk, offset_nonpadded_att1),
+                  PASS_OFFSET(d_R_yz_inner_core_lddrk, offset_nonpadded_att1),
                   PASS_OFFSET(d_c11store_inner_core, offset),
                   PASS_OFFSET(d_c12store_inner_core, offset),
                   PASS_OFFSET(d_c13store_inner_core, offset),
@@ -548,6 +602,12 @@ void FC_FUNC_ (compute_forces_inner_core_gpu,
                   PASS_OFFSET(d_b_R_xy_inner_core, offset_nonpadded_att1),
                   PASS_OFFSET(d_b_R_xz_inner_core, offset_nonpadded_att1),
                   PASS_OFFSET(d_b_R_yz_inner_core, offset_nonpadded_att1),
+                  PASS_OFFSET(d_b_R_xx_inner_core_lddrk, offset_nonpadded_att1),
+                  PASS_OFFSET(d_b_R_yy_inner_core_lddrk, offset_nonpadded_att1),
+                  PASS_OFFSET(d_b_R_xy_inner_core_lddrk, offset_nonpadded_att1),
+                  PASS_OFFSET(d_b_R_xz_inner_core_lddrk, offset_nonpadded_att1),
+                  PASS_OFFSET(d_b_R_yz_inner_core_lddrk, offset_nonpadded_att1),
+                  alpha_lddrk,beta_lddrk,
                   FORWARD_OR_ADJOINT);
 
       RELEASE_OFFSET(d_ibool_inner_core, offset_nonpadded);
@@ -576,6 +636,11 @@ void FC_FUNC_ (compute_forces_inner_core_gpu,
       RELEASE_OFFSET(d_R_xy_inner_core, offset_nonpadded_att1);
       RELEASE_OFFSET(d_R_xz_inner_core, offset_nonpadded_att1);
       RELEASE_OFFSET(d_R_yz_inner_core, offset_nonpadded_att1);
+      RELEASE_OFFSET(d_R_xx_inner_core_lddrk, offset_nonpadded_att1);
+      RELEASE_OFFSET(d_R_yy_inner_core_lddrk, offset_nonpadded_att1);
+      RELEASE_OFFSET(d_R_xy_inner_core_lddrk, offset_nonpadded_att1);
+      RELEASE_OFFSET(d_R_xz_inner_core_lddrk, offset_nonpadded_att1);
+      RELEASE_OFFSET(d_R_yz_inner_core_lddrk, offset_nonpadded_att1);
       RELEASE_OFFSET(d_c11store_inner_core, offset);
       RELEASE_OFFSET(d_c12store_inner_core, offset);
       RELEASE_OFFSET(d_c13store_inner_core, offset);
@@ -592,6 +657,11 @@ void FC_FUNC_ (compute_forces_inner_core_gpu,
       RELEASE_OFFSET(d_b_R_xy_inner_core, offset_nonpadded_att1);
       RELEASE_OFFSET(d_b_R_xz_inner_core, offset_nonpadded_att1);
       RELEASE_OFFSET(d_b_R_yz_inner_core, offset_nonpadded_att1);
+      RELEASE_OFFSET(d_b_R_xx_inner_core_lddrk, offset_nonpadded_att1);
+      RELEASE_OFFSET(d_b_R_yy_inner_core_lddrk, offset_nonpadded_att1);
+      RELEASE_OFFSET(d_b_R_xy_inner_core_lddrk, offset_nonpadded_att1);
+      RELEASE_OFFSET(d_b_R_xz_inner_core_lddrk, offset_nonpadded_att1);
+      RELEASE_OFFSET(d_b_R_yz_inner_core_lddrk, offset_nonpadded_att1);
 
       // for padded and aligned arrays
       offset += nb_blocks_to_compute * NGLL3_PADDED;
@@ -645,6 +715,11 @@ void FC_FUNC_ (compute_forces_inner_core_gpu,
                 mp->d_R_xy_inner_core,
                 mp->d_R_xz_inner_core,
                 mp->d_R_yz_inner_core,
+                mp->d_R_xx_inner_core_lddrk,
+                mp->d_R_yy_inner_core_lddrk,
+                mp->d_R_xy_inner_core_lddrk,
+                mp->d_R_xz_inner_core_lddrk,
+                mp->d_R_yz_inner_core_lddrk,
                 mp->d_c11store_inner_core,
                 mp->d_c12store_inner_core,
                 mp->d_c13store_inner_core,
@@ -661,6 +736,12 @@ void FC_FUNC_ (compute_forces_inner_core_gpu,
                 mp->d_b_R_xy_inner_core,
                 mp->d_b_R_xz_inner_core,
                 mp->d_b_R_yz_inner_core,
+                mp->d_b_R_xx_inner_core_lddrk,
+                mp->d_b_R_yy_inner_core_lddrk,
+                mp->d_b_R_xy_inner_core_lddrk,
+                mp->d_b_R_xz_inner_core_lddrk,
+                mp->d_b_R_yz_inner_core_lddrk,
+                alpha_lddrk,beta_lddrk,
                 FORWARD_OR_ADJOINT);
   }
 

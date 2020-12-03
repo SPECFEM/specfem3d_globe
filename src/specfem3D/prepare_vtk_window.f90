@@ -265,7 +265,7 @@
         free_conn_offset_all(i) = sum(free_conn_nspec_all(1:i-1))
       enddo
 
-      ! global data arrays (only needed on master process)
+      ! global data arrays (only needed on main process)
       if (myrank == 0) then
         ! gather locations
         allocate(free_x_all(free_np_all), &
@@ -530,7 +530,7 @@
         vol_conn_offset_all(i) = sum(vol_conn_nspec_all(1:i-1))
       enddo
 
-      ! global data arrays (only needed on master process)
+      ! global data arrays (only needed on main process)
       if (myrank == 0) then
         ! point data
         allocate(vtkdata_all(vtkdata_numpoints_all),stat=ier)

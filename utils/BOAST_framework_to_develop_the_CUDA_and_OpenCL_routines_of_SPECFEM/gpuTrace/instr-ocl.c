@@ -209,7 +209,7 @@ cl_int clFinish (cl_command_queue command_queue) {
 
 #if ENABLE_KERNEL_PROFILING == 1
 static void print_statistics(int force) {
-  if (force || IS_MPI_MASTER()) {
+  if (force || IS_MPI_MAIN()) {
     int i;
 
     pthread_mutex_lock(&stats_lock);
@@ -241,7 +241,7 @@ cl_int clReleaseCommandQueue (cl_command_queue command_queue) {
   print_statistics(0);
 #endif
 #if ENABLE_LEAK_DETECTION == 1
-  if (IS_MPI_MASTER()) {
+  if (IS_MPI_MAIN()) {
     int i;
     struct ld_program_s *ldprogram;
     struct ld_kernel_s *ldkernel;
@@ -278,7 +278,7 @@ cl_program clCreateProgramWithSource (cl_context context,
   program->handle = real_clCreateProgramWithSource(context, count, strings,
                                                    lengths, errcode_ret);
 
-  if (!IS_MPI_MASTER()) {
+  if (!IS_MPI_MAIN()) {
     program_elt_count--;
     return program->handle;
   }
@@ -420,7 +420,7 @@ cl_kernel clCreateKernel (cl_program  program,
   ldKernel->handle = real_clCreateKernel(program, kernel_name, errcode_ret);
   ldKernel->name = kernel_name;
 
-  if (!IS_MPI_MASTER()) {
+  if (!IS_MPI_MAIN()) {
     kernel_elt_count--;
     return ldKernel->handle;
   }

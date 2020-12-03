@@ -9,6 +9,11 @@ module BOAST
     v.push deltat                = Real("deltat",                :dir => :in)
     v.push d_A_array_rotation    = Real("d_A_array_rotation",    :dir => :inout, :dim => [Dim()] )
     v.push d_B_array_rotation    = Real("d_B_array_rotation",    :dir => :inout, :dim => [Dim()] )
+    v.push d_A_array_rotation_lddrk = Real("d_A_array_rotation_lddrk",    :dir => :inout, :dim => [Dim()] )
+    v.push d_B_array_rotation_lddrk = Real("d_B_array_rotation_lddrk",    :dir => :inout, :dim => [Dim()] )
+    v.push alpha_lddrk           = Real("alpha_lddrk",           :dir => :in)
+    v.push beta_lddrk            = Real("beta_lddrk",            :dir => :in)
+    v.push use_lddrk             = Int( "use_lddrk",             :dir => :in)
     v.push dpotentialdxl         = Real("dpotentialdxl",         :dir => :in)
     v.push dpotentialdyl         = Real("dpotentialdyl",         :dir => :in)
     v.push dpotentialdx_with_rot = Real("dpotentialdx_with_rot", :dir => :out, :dim => [Dim(1)], :private => true)
@@ -53,8 +58,21 @@ module BOAST
       comment()
 
       comment("  // updates rotation term with Euler scheme (non-padded offset)")
-      print d_A_array_rotation[tx + working_element*ngll3] === d_A_array_rotation[tx + working_element*ngll3] + source_euler_A
-      print d_B_array_rotation[tx + working_element*ngll3] === d_B_array_rotation[tx + working_element*ngll3] + source_euler_B
+      print If(!use_lddrk => lambda {
+        # non-LDDRK update
+        print d_A_array_rotation[tx + working_element*ngll3] === d_A_array_rotation[tx + working_element*ngll3] + source_euler_A
+        print d_B_array_rotation[tx + working_element*ngll3] === d_B_array_rotation[tx + working_element*ngll3] + source_euler_B
+      }, :else => lambda {
+        # LDDRK update
+        print d_A_array_rotation_lddrk[tx + working_element*ngll3] === \
+                alpha_lddrk * d_A_array_rotation_lddrk[tx + working_element*ngll3] + source_euler_A
+        print d_B_array_rotation_lddrk[tx + working_element*ngll3] === \
+                alpha_lddrk * d_B_array_rotation_lddrk[tx + working_element*ngll3] + source_euler_B
+        print d_A_array_rotation[tx + working_element*ngll3] === \
+                d_A_array_rotation[tx + working_element*ngll3] + beta_lddrk * d_A_array_rotation_lddrk[tx + working_element*ngll3]
+        print d_B_array_rotation[tx + working_element*ngll3] === \
+                d_B_array_rotation[tx + working_element*ngll3] + beta_lddrk * d_B_array_rotation_lddrk[tx + working_element*ngll3]
+      })
     }
     return p
   end
@@ -96,10 +114,7 @@ module BOAST
     v.push wgllwgll_xz             = Real("wgllwgll_xz",             :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push wgllwgll_yz             = Real("wgllwgll_yz",             :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push gravity                 = Int( "GRAVITY",                 :dir => :in)
-    v.push d_rstore                = Real("d_rstore",                :dir => :in, :restrict => true, :dim => [Dim(3), Dim()] )
-    v.push d_d_ln_density_dr_table = Real("d_d_ln_density_dr_table", :dir => :in, :restrict => true, :dim => [Dim()] )
-    v.push d_minus_rho_g_over_kappa_fluid = Real("d_minus_rho_g_over_kappa_fluid", :dir => :in, :restrict => true, :dim => [Dim()] )
-    v.push r_earth_km              = Real( "R_EARTH_KM",             :dir => :in)
+    v.push gravity_pre_store_outer_core = Real("d_gravity_pre_store_outer_core",:dir => :in, :restrict => true, :dim => [Dim(3), Dim()] )
     v.push wgll_cube               = Real("wgll_cube",               :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push rotation                = Int( "ROTATION",                :dir => :in)
     v.push time                    = Real("time",                    :dir => :in)
@@ -107,6 +122,11 @@ module BOAST
     v.push deltat                  = Real("deltat",                  :dir => :in)
     v.push d_A_array_rotation      = Real("d_A_array_rotation",      :dir => :inout, :dim => [Dim()] )
     v.push d_B_array_rotation      = Real("d_B_array_rotation",      :dir => :inout, :dim => [Dim()] )
+    v.push d_A_array_rotation_lddrk = Real("d_A_array_rotation_lddrk",      :dir => :inout, :dim => [Dim()] )
+    v.push d_B_array_rotation_lddrk = Real("d_B_array_rotation_lddrk",      :dir => :inout, :dim => [Dim()] )
+    v.push alpha_lddrk             = Real("alpha_lddrk",             :dir => :in)
+    v.push beta_lddrk              = Real("beta_lddrk",              :dir => :in)
+    v.push use_lddrk               = Int( "use_lddrk",               :dir => :in)
     v.push nspec_outer_core        = Int( "NSPEC_OUTER_CORE",        :dir => :in)
 
     ngllx        = Int("NGLLX", :const => n_gllx)
@@ -232,14 +252,9 @@ module BOAST
       decl sum_terms = Real("sum_terms")
       gravity_term = (1..elem_per_thread).collect { |e_i| Real("gravity_term_#{e_i}") }
       decl *gravity_term
-      decl *gl   = [ Real("gxl"),   Real("gyl"),   Real("gzl")   ]
 
-      decl radius = Real("radius"), theta = Real("theta"), phi = Real("phi")
-      decl cos_theta = Real("cos_theta"), sin_theta = Real("sin_theta")
-      decl cos_phi   = Real("cos_phi"),   sin_phi   = Real("sin_phi")
-      decl *grad_ln_rho = [ Real("grad_x_ln_rho"), Real("grad_y_ln_rho"), Real("grad_z_ln_rho") ]
-
-      decl int_radius = Int("int_radius")
+      # gravity
+      decl vec_x = Real("vec_x"), vec_y = Real("vec_y"), vec_z = Real("vec_z")
 
       decl s_dummy_loc = Real("s_dummy_loc", :local => true, :dim => [Dim(ngll3)] )
 
@@ -344,6 +359,9 @@ module BOAST
                                   time,two_omega_earth,deltat,\
                                   d_A_array_rotation,\
                                   d_B_array_rotation,\
+                                  d_A_array_rotation_lddrk,\
+                                  d_B_array_rotation_lddrk,\
+                                  alpha_lddrk,beta_lddrk,use_lddrk, \
                                   dpotentialdl[0],\
                                   dpotentialdl[1],\
                                   dpotentialdx_with_rot.address,\
@@ -354,42 +372,20 @@ module BOAST
           })
           comment()
 
-          print radius === d_rstore[0,iglob[elem_index]]
-          print theta  === d_rstore[1,iglob[elem_index]]
-          print phi    === d_rstore[2,iglob[elem_index]]
+          # gravity way using pre-calculated arrays
+          print vec_x === gravity_pre_store_outer_core[0,iglob[elem_index]]
+          print vec_y === gravity_pre_store_outer_core[1,iglob[elem_index]]
+          print vec_z === gravity_pre_store_outer_core[2,iglob[elem_index]]
 
-          if (get_lang == CL) then
-            print sin_theta === sincos(theta, cos_theta.address)
-            print sin_phi   === sincos(phi,   cos_phi.address)
-          else
-            if (get_default_real_size == 4) then
-              print sincosf(theta, sin_theta.address, cos_theta.address)
-              print sincosf(phi,   sin_phi.address,   cos_phi.address)
-            else
-              print cos_theta === cos(theta)
-              print sin_theta === sin(theta)
-              print cos_phi   === cos(phi)
-              print sin_phi   === sin(phi)
-            end
-          end
-          print int_radius === rint(radius * r_earth_km * 10.0) - 1
           comment()
 
           print If(!gravity => lambda {
-            print grad_ln_rho[0] === sin_theta * cos_phi * d_d_ln_density_dr_table[int_radius]
-            print grad_ln_rho[1] === sin_theta * sin_phi * d_d_ln_density_dr_table[int_radius]
-            print grad_ln_rho[2] ===           cos_theta * d_d_ln_density_dr_table[int_radius]
-
-            print dpotentialdx_with_rot === dpotentialdx_with_rot + s_dummy_loc[tx] * grad_ln_rho[0]
-            print dpotentialdy_with_rot === dpotentialdy_with_rot + s_dummy_loc[tx] * grad_ln_rho[1]
-            print dpotentialdl[2]       === dpotentialdl[2] +       s_dummy_loc[tx] * grad_ln_rho[2]
+            print dpotentialdx_with_rot === dpotentialdx_with_rot + s_dummy_loc[tx] * vec_x
+            print dpotentialdy_with_rot === dpotentialdy_with_rot + s_dummy_loc[tx] * vec_y
+            print dpotentialdl[2]       === dpotentialdl[2] +       s_dummy_loc[tx] * vec_z
           }, :else => lambda {
-            print gl[0] === sin_theta*cos_phi
-            print gl[1] === sin_theta*sin_phi
-            print gl[2] === cos_theta
-
-            print gravity_term[elem_index] === d_minus_rho_g_over_kappa_fluid[int_radius] * jacobianl * wgll_cube[tx] * \
-                                   (dpotentialdx_with_rot*gl[0] + dpotentialdy_with_rot*gl[1] + dpotentialdl[2]*gl[2])
+            print gravity_term[elem_index] === jacobianl * wgll_cube[tx] * \
+                                   (dpotentialdx_with_rot * vec_x + dpotentialdy_with_rot * vec_y + dpotentialdl[2] * vec_z)
           })
           comment()
 

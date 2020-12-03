@@ -37,10 +37,10 @@
   integer, parameter :: nparam_i = 47
   integer, dimension(nparam_i) :: bcast_integer
 
-  integer, parameter :: nparam_l = 67
+  integer, parameter :: nparam_l = 69
   logical, dimension(nparam_l) :: bcast_logical
 
-  integer, parameter :: nparam_dp = 38
+  integer, parameter :: nparam_dp = 41
   double precision, dimension(nparam_dp) :: bcast_double_precision
 
   ! initializes containers
@@ -48,9 +48,9 @@
   bcast_logical(:) = .false.
   bcast_double_precision(:) = 0.d0
 
-  ! master process prepares broadcasting arrays
+  ! main process prepares broadcasting arrays
   if (myrank == 0) then
-    ! simple way to pass parameters in arrays from master to all other processes
+    ! simple way to pass parameters in arrays from main to all other processes
     ! rather than single values one by one to reduce MPI communication calls:
     ! sets up broadcasting array
     bcast_integer = (/ &
@@ -89,7 +89,7 @@
             USE_FORCE_POINT_SOURCE,SAVE_SEISMOGRAMS_STRAIN,SAVE_SEISMOGRAMS_IN_ADJOINT_RUN, &
             OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
             OUTPUT_SEISMOS_ASDF, &
-            ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,USE_BINARY_FOR_LARGE_FILE, &
+            ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MAIN,USE_BINARY_FOR_LARGE_FILE, &
             READ_ADJSRC_ASDF,SAVE_REGULAR_KL, &
             PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION, &
             USE_LDDRK,INCREASE_CFL_FOR_LDDRK, &
@@ -104,7 +104,8 @@
             ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER, &
             ADIOS_FOR_SOLVER_MESHFILES,ADIOS_FOR_AVS_DX, &
             ADIOS_FOR_KERNELS,ADIOS_FOR_MODELS,ADIOS_FOR_UNDO_ATTENUATION, &
-            CEM_REQUEST,CEM_ACCEPT,BROADCAST_SAME_MESH_AND_MODEL,MODEL_GLL /)
+            CEM_REQUEST,CEM_ACCEPT,BROADCAST_SAME_MESH_AND_MODEL,MODEL_GLL, &
+            USE_MONOCHROMATIC_CMT_SOURCE, ABSORB_USING_GLOBAL_SPONGE /)
 
     bcast_double_precision = (/ &
             DT, &
@@ -116,10 +117,11 @@
             MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH, &
             RMOHO_FICTITIOUS_IN_MESHER,RATIO_BY_WHICH_TO_INCREASE_IT, &
             MEMORY_INSTALLED_PER_CORE_IN_GB,PERCENT_OF_MEM_TO_USE_PER_CORE, &
-            RECORD_LENGTH_IN_MINUTES, USER_DT /)
+            RECORD_LENGTH_IN_MINUTES, USER_DT, &
+            SPONGE_LATITUDE_IN_DEGREES,SPONGE_LONGITUDE_IN_DEGREES,SPONGE_RADIUS_IN_DEGREES /)
   endif
 
-  ! broadcasts the information read on the master to the nodes
+  ! broadcasts the information read on the main to the nodes
   call bcast_all_i(bcast_integer,nparam_i)
   call bcast_all_l(bcast_logical,nparam_l)
   call bcast_all_dp(bcast_double_precision,nparam_dp)
@@ -188,7 +190,7 @@
   ! empirical minimum period resolved estimation
   call bcast_all_singledp(T_min_period)
 
-  ! non-master processes set their parameters
+  ! non-main processes set their parameters
   if (myrank /= 0) then
 
     ! please, be careful with ordering and counting here
@@ -272,16 +274,16 @@
     SAVE_ALL_SEISMOS_IN_ONE_FILE = bcast_logical(28)
     HONOR_1D_SPHERICAL_MOHO = bcast_logical(29)
     MOVIE_COARSE = bcast_logical(30)
-    USE_FORCE_POINT_SOURCE= bcast_logical(31)
-    SAVE_SEISMOGRAMS_STRAIN= bcast_logical(32)
-    SAVE_SEISMOGRAMS_IN_ADJOINT_RUN= bcast_logical(33)
-    OUTPUT_SEISMOS_ASCII_TEXT= bcast_logical(34)
-    OUTPUT_SEISMOS_SAC_ALPHANUM= bcast_logical(35)
-    OUTPUT_SEISMOS_SAC_BINARY= bcast_logical(36)
+    USE_FORCE_POINT_SOURCE = bcast_logical(31)
+    SAVE_SEISMOGRAMS_STRAIN = bcast_logical(32)
+    SAVE_SEISMOGRAMS_IN_ADJOINT_RUN = bcast_logical(33)
+    OUTPUT_SEISMOS_ASCII_TEXT = bcast_logical(34)
+    OUTPUT_SEISMOS_SAC_ALPHANUM = bcast_logical(35)
+    OUTPUT_SEISMOS_SAC_BINARY = bcast_logical(36)
     OUTPUT_SEISMOS_ASDF = bcast_logical(37)
-    ROTATE_SEISMOGRAMS_RT= bcast_logical(38)
-    WRITE_SEISMOGRAMS_BY_MASTER= bcast_logical(39)
-    USE_BINARY_FOR_LARGE_FILE= bcast_logical(40)
+    ROTATE_SEISMOGRAMS_RT = bcast_logical(38)
+    WRITE_SEISMOGRAMS_BY_MAIN = bcast_logical(39)
+    USE_BINARY_FOR_LARGE_FILE = bcast_logical(40)
     READ_ADJSRC_ASDF = bcast_logical(41)
     SAVE_REGULAR_KL = bcast_logical(42)
     PARTIAL_PHYS_DISPERSION_ONLY = bcast_logical(43)
@@ -309,6 +311,8 @@
     CEM_ACCEPT = bcast_logical(65)
     BROADCAST_SAME_MESH_AND_MODEL = bcast_logical(66)
     MODEL_GLL = bcast_logical(67)
+    USE_MONOCHROMATIC_CMT_SOURCE = bcast_logical(68)
+    ABSORB_USING_GLOBAL_SPONGE = bcast_logical(69)
 
     ! double precisions
     DT = bcast_double_precision(1)
@@ -349,6 +353,9 @@
     PERCENT_OF_MEM_TO_USE_PER_CORE = bcast_double_precision(36)
     RECORD_LENGTH_IN_MINUTES = bcast_double_precision(37)
     USER_DT = bcast_double_precision(38)
+    SPONGE_LATITUDE_IN_DEGREES = bcast_double_precision(39)
+    SPONGE_LONGITUDE_IN_DEGREES = bcast_double_precision(40)
+    SPONGE_RADIUS_IN_DEGREES = bcast_double_precision(41)
 
   endif
 

@@ -13,8 +13,16 @@ module BOAST
     return BOAST::compute_element_att_memory(:inner_core, n_gll3, n_gll3_padded, n_sls)
   end
 
+  def BOAST::compute_element_ic_att_memory_lddrk(n_gll3 = 125, n_gll3_padded = 128, n_sls = 3 )
+    return BOAST::compute_element_att_memory(:inner_core_lddrk, n_gll3, n_gll3_padded, n_sls)
+  end
+
   def BOAST::compute_element_cm_att_memory( n_gll3 = 125, n_gll3_padded = 128, n_sls = 3 )
     return compute_element_att_memory( :crust_mantle, n_gll3, n_gll3_padded, n_sls )
+  end
+
+  def BOAST::compute_element_cm_att_memory_lddrk( n_gll3 = 125, n_gll3_padded = 128, n_sls = 3 )
+    return compute_element_att_memory( :crust_mantle_lddrk, n_gll3, n_gll3_padded, n_sls )
   end
 
   require "./compute_element_gravity_helper.rb"
@@ -579,9 +587,18 @@ module BOAST
     v.push r_xy                    = Real("R_xy",                    :dir => :inout, :dim => [Dim()] )
     v.push r_xz                    = Real("R_xz",                    :dir => :inout, :dim => [Dim()] )
     v.push r_yz                    = Real("R_yz",                    :dir => :inout, :dim => [Dim()] )
+    v.push r_xx_lddrk              = Real("R_xx_lddrk",                    :dir => :inout, :dim => [Dim()] )
+    v.push r_yy_lddrk              = Real("R_yy_lddrk",                    :dir => :inout, :dim => [Dim()] )
+    v.push r_xy_lddrk              = Real("R_xy_lddrk",                    :dir => :inout, :dim => [Dim()] )
+    v.push r_xz_lddrk              = Real("R_xz_lddrk",                    :dir => :inout, :dim => [Dim()] )
+    v.push r_yz_lddrk              = Real("R_yz_lddrk",                    :dir => :inout, :dim => [Dim()] )
+    v.push alpha_lddrk             = Real("alpha_lddrk",             :dir => :in)
+    v.push beta_lddrk              = Real("beta_lddrk",              :dir => :in)
+    v.push use_lddrk               = Int( "use_lddrk",               :dir => :in)
     v.push alphaval                = Real("alphaval",                :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push betaval                 = Real("betaval",                 :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push gammaval                = Real("gammaval",                :dir => :in, :restrict => true, :dim => [Dim()] )
+    v.push tau_sigmainvval         = Real("tau_sigmainvval",         :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push anisotropy              = Int( "ANISOTROPY",              :dir => :in)
     if type == :inner_core then
       v.push d_c11store              = Real("d_c11store",              :dir => :in, :restrict => true, :dim => [Dim()] )
@@ -600,13 +617,11 @@ module BOAST
         }
       }
       v.push *(d_cstore.flatten.reject { |e| e.nil? })
+      v.push d_rstore                = Real("d_rstore",                :dir => :in, :restrict => true, :dim => [Dim(3), Dim()] )
     end
     v.push gravity                 = Int( "GRAVITY",                 :dir => :in)
-    v.push d_rstore                = Real("d_rstore",                :dir => :in, :restrict => true, :dim => [Dim(3), Dim()] )
-    v.push d_minus_gravity_table   = Real("d_minus_gravity_table",   :dir => :in, :restrict => true, :dim => [Dim()] )
-    v.push d_minus_deriv_gravity_table = Real("d_minus_deriv_gravity_table", :dir => :in, :restrict => true, :dim => [Dim()] )
-    v.push d_density_table         = Real("d_density_table",         :dir => :in, :restrict => true, :dim => [Dim()] )
-    v.push r_earth_km              = Real( "R_EARTH_KM",             :dir => :in)
+    v.push d_gravity_pre_store     = Real("d_gravity_pre_store",     :dir => :in, :restrict => true, :dim => [Dim(3), Dim()] )
+    v.push d_gravity_H             = Real("d_gravity_H",             :dir => :in, :restrict => true, :dim => [Dim(6), Dim()] )
     v.push wgll_cube               = Real("wgll_cube",               :dir => :in, :restrict => true, :dim => [Dim()] )
     if type == :inner_core then
       v.push nspec_strain_only = Int( "NSPEC_INNER_CORE_STRAIN_ONLY", :dir => :in)
@@ -685,10 +700,12 @@ module BOAST
       if type == :inner_core then
         sub_compute_element_att_stress =  compute_element_ic_att_stress(n_gll3, n_sls)
         sub_compute_element_att_memory =  compute_element_ic_att_memory(n_gll3, n_gll3_padded, n_sls)
+        sub_compute_element_att_memory_lddrk =  compute_element_ic_att_memory_lddrk(n_gll3, n_gll3_padded, n_sls)
         sub_compute_element_gravity =  compute_element_ic_gravity(n_gll3)
       elsif type == :crust_mantle then
         sub_compute_element_att_stress =  compute_element_cm_att_stress(n_gll3, n_sls)
         sub_compute_element_att_memory =  compute_element_cm_att_memory(n_gll3, n_gll3_padded, n_sls)
+        sub_compute_element_att_memory_lddrk =  compute_element_cm_att_memory_lddrk(n_gll3, n_gll3_padded, n_sls)
         sub_compute_element_gravity =  compute_element_cm_gravity(n_gll3)
       end
       # function definitions
@@ -696,6 +713,8 @@ module BOAST
       print sub_compute_element_att_stress
       comment()
       print sub_compute_element_att_memory
+      comment()
+      print sub_compute_element_att_memory_lddrk
       comment()
       print sub_compute_element_gravity
       comment()
@@ -969,6 +988,7 @@ module BOAST
           comment()
 
           if type == :inner_core then
+            # inner core
             print If(anisotropy => lambda {
               print sub_compute_element_ic_aniso.call( offset,
                                                        d_c11store,d_c12store,d_c13store,d_c33store,d_c44store,
@@ -986,6 +1006,7 @@ module BOAST
                                                      sigma[0][1].address, sigma[0][2].address, sigma[1][2].address )
             })
           elsif type == :crust_mantle then
+            # crust mantle
             print If(anisotropy => lambda {
               # fully anisotropic element
               print sub_compute_element_cm_aniso.call( offset,
@@ -1050,15 +1071,14 @@ module BOAST
 
           print If(gravity) {
             print sub_compute_element_gravity.call(tx, iglob[elem_index],\
-                                   d_rstore,\
-                                   d_minus_gravity_table, d_minus_deriv_gravity_table, d_density_table,\
+                                   d_gravity_pre_store,\
+                                   d_gravity_H,\
                                    wgll_cube, jacobianl,\
                                    s_dummy_loc[0], s_dummy_loc[1], s_dummy_loc[2],\
                                    sigma[0][0].address, sigma[1][1].address, sigma[2][2].address,\
                                    sigma[0][1].address, sigma[1][0].address, sigma[0][2].address,\
                                    sigma[2][0].address, sigma[1][2].address, sigma[2][1].address,\
-                                   rho_s_H[elem_index][0].address, rho_s_H[elem_index][1].address, rho_s_H[elem_index][2].address,\
-                                   r_earth_km)
+                                   rho_s_H[elem_index][0].address, rho_s_H[elem_index][1].address, rho_s_H[elem_index][2].address)
           }
           comment()
 
@@ -1178,19 +1198,38 @@ module BOAST
           get_output.puts "#endif"
           comment()
 
+          # updates R_memory
           print If(Expression("&&", attenuation, !partial_phys_dispersion_only ) ) {
-            __params = [tx, working_element,\
-                        d_muvstore, factor_common,\
-                        alphaval, betaval, gammaval,\
-                        r_xx, r_yy, r_xy, r_xz, r_yz,\
-                        epsilondev_xx, epsilondev_yy, epsilondev_xy, epsilondev_xz, epsilondev_yz,\
-                        epsilondev_xx_loc[elem_index],\
-                        epsilondev_yy_loc[elem_index],\
-                        epsilondev_xy_loc[elem_index],\
-                        epsilondev_xz_loc[elem_index],\
-                        epsilondev_yz_loc[elem_index],\
-                        use_3d_attenuation_arrays]
-            print sub_compute_element_att_memory.call( *__params )
+            print If(!use_lddrk => lambda {
+              # non-LDDRK update
+              __params = [tx, working_element,\
+                          d_muvstore, factor_common,\
+                          alphaval, betaval, gammaval,\
+                          r_xx, r_yy, r_xy, r_xz, r_yz,\
+                          epsilondev_xx, epsilondev_yy, epsilondev_xy, epsilondev_xz, epsilondev_yz,\
+                          epsilondev_xx_loc[elem_index],\
+                          epsilondev_yy_loc[elem_index],\
+                          epsilondev_xy_loc[elem_index],\
+                          epsilondev_xz_loc[elem_index],\
+                          epsilondev_yz_loc[elem_index],\
+                          use_3d_attenuation_arrays]
+              print sub_compute_element_att_memory.call( *__params )
+            }, :else => lambda {
+              # LDDRK update
+              __params = [tx, working_element,\
+                           d_muvstore, factor_common,\
+                           tau_sigmainvval,\
+                           r_xx, r_yy, r_xy, r_xz, r_yz,\
+                           r_xx_lddrk, r_yy_lddrk, r_xy_lddrk, r_xz_lddrk, r_yz_lddrk,\
+                           alpha_lddrk,beta_lddrk,deltat,\
+                           epsilondev_xx_loc[elem_index],\
+                           epsilondev_yy_loc[elem_index],\
+                           epsilondev_xy_loc[elem_index],\
+                           epsilondev_xz_loc[elem_index],\
+                           epsilondev_yz_loc[elem_index],\
+                           use_3d_attenuation_arrays]
+              print sub_compute_element_att_memory_lddrk.call( *__params )
+            })
           }
           comment()
 

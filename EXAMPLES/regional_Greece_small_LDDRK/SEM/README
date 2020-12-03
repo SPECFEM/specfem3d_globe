@@ -1,0 +1,24 @@
+----------------------------------------------------------
+README
+----------------------------------------------------------
+
+This directory contains a travel-time adjoint source for 
+station: 
+
+BEKI - Bekirli, North Anatolian Fault Passive Seismic Experiment (http://www.iris.edu/mda/YL/BEKI?timewindow=2005-2008)
+
+
+The adjoint source files were created by:
+  > ./create_adjoint_source.sh
+
+
+The time window is taken from 130 to 147.5 s. According to phtimes, it includes:
+  Pn         138.60
+  
+note: the adjoint stations file STATIONS_ADJOINT must be copied over into directory DATA/
+      for the setup of the kernel simulation. the script "run_this_example.kernel.sh" does this for you.
+
+      Keep in mind that these adjoint source files are setup specifically for this
+      default example and must match the duration length of the forward simulation. 
+      Changing the simulation length would require to recalculate these files.
+

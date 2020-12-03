@@ -100,6 +100,8 @@
 ! check flags to make sure we correctly honor the discontinuities
 ! we use strict inequalities since r has been slightly changed in mesher
 
+! note: using stop statements, not exit_mpi() calls to avoid the need for MPI libraries when linking xcreate_header_file
+
  if (check_doubling_flag) then
     !
     !--- inner core
@@ -110,37 +112,37 @@
          idoubling /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
          idoubling /= IFLAG_TOP_CENTRAL_CUBE .and. &
          idoubling /= IFLAG_IN_FICTITIOUS_CUBE) &
-           call exit_MPI(myrank,'wrong doubling flag for inner core point in model_prem_iso()')
+           stop 'wrong doubling flag for inner core point in model_prem_iso()'
     !
     !--- outer core
     !
     else if (r > PREM_RICB .and. r < PREM_RCMB) then
       if (idoubling /= IFLAG_OUTER_CORE_NORMAL) &
-        call exit_MPI(myrank,'wrong doubling flag for outer core point in model_prem_iso()')
+        stop 'wrong doubling flag for outer core point in model_prem_iso()'
     !
     !--- D" at the base of the mantle
     !
     else if (r > PREM_RCMB .and. r < PREM_RTOPDDOUBLEPRIME) then
       if (idoubling /= IFLAG_MANTLE_NORMAL) &
-        call exit_MPI(myrank,'wrong doubling flag for D" point in model_prem_iso()')
+        stop 'wrong doubling flag for D" point in model_prem_iso()'
     !
     !--- mantle: from top of D" to d670
     !
     else if (r > PREM_RTOPDDOUBLEPRIME .and. r < PREM_R670) then
       if (idoubling /= IFLAG_MANTLE_NORMAL) &
-        call exit_MPI(myrank,'wrong doubling flag for top D" to d670 point in model_prem_iso()')
+        stop 'wrong doubling flag for top D" to d670 point in model_prem_iso()'
     !
     !--- mantle: from d670 to d220
     !
     else if (r > PREM_R670 .and. r < PREM_R220) then
       if (idoubling /= IFLAG_670_220) &
-        call exit_MPI(myrank,'wrong doubling flag for d670 to d220 point in model_prem_iso()')
+        stop 'wrong doubling flag for d670 to d220 point in model_prem_iso()'
     !
     !--- mantle and crust: from d220 to MOHO and then to surface
     !
     else if (r > PREM_R220) then
       if (idoubling /= IFLAG_220_80 .and. idoubling /= IFLAG_80_MOHO .and. idoubling /= IFLAG_CRUST) &
-        call exit_MPI(myrank,'wrong doubling flag for d220 to Moho to surface point in model_prem_iso()')
+        stop 'wrong doubling flag for d220 to Moho to surface point in model_prem_iso()'
     endif
 
   endif
@@ -345,41 +347,41 @@
        idoubling /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
        idoubling /= IFLAG_TOP_CENTRAL_CUBE .and. &
        idoubling /= IFLAG_IN_FICTITIOUS_CUBE) &
-         call exit_MPI(myrank,'wrong doubling flag for inner core point in model_prem_aniso()')
+         stop 'wrong doubling flag for inner core point in model_prem_aniso()'
 !
 !--- outer core
 !
   else if (r > PREM_RICB .and. r < PREM_RCMB) then
     if (idoubling /= IFLAG_OUTER_CORE_NORMAL) &
-      call exit_MPI(myrank,'wrong doubling flag for outer core point in model_prem_aniso()')
+      stop 'wrong doubling flag for outer core point in model_prem_aniso()'
 !
 !--- D" at the base of the mantle
 !
   else if (r > PREM_RCMB .and. r < PREM_RTOPDDOUBLEPRIME) then
     if (idoubling /= IFLAG_MANTLE_NORMAL) then
       print *,'Error dprime point:',r, PREM_RCMB,PREM_RTOPDDOUBLEPRIME,idoubling,IFLAG_MANTLE_NORMAL
-      call exit_MPI(myrank,'wrong doubling flag for D" point in model_prem_aniso()')
+      stop 'wrong doubling flag for D" point in model_prem_aniso()'
     endif
 !
 !--- mantle: from top of D" to d670
 !
   else if (r > PREM_RTOPDDOUBLEPRIME .and. r < PREM_R670) then
     if (idoubling /= IFLAG_MANTLE_NORMAL) &
-      call exit_MPI(myrank,'wrong doubling flag for top D" to d670 point in model_prem_aniso()')
+      stop 'wrong doubling flag for top D" to d670 point in model_prem_aniso()'
 
 !
 !--- mantle: from d670 to d220
 !
   else if (r > PREM_R670 .and. r < PREM_R220) then
     if (idoubling /= IFLAG_670_220) &
-      call exit_MPI(myrank,'wrong doubling flag for d670 to d220 point in model_prem_aniso()')
+      stop 'wrong doubling flag for d670 to d220 point in model_prem_aniso()'
 
 !
 !--- mantle and crust: from d220 to MOHO and then to surface
 !
   else if (r > PREM_R220) then
     if (idoubling /= IFLAG_220_80 .and. idoubling /= IFLAG_80_MOHO .and. idoubling /= IFLAG_CRUST) &
-      call exit_MPI(myrank,'wrong doubling flag for d220 to Moho to surface point in model_prem_aniso()')
+      stop 'wrong doubling flag for d220 to Moho to surface point in model_prem_aniso()'
 
   endif
 
@@ -693,7 +695,7 @@
   double precision :: scaleval
 
   if (idoubling /= IFLAG_OUTER_CORE_NORMAL) &
-    call exit_MPI(myrank,'wrong doubling flag for outer core point in prem_display_outer_core()')
+    stop 'wrong doubling flag for outer core point in prem_display_outer_core()'
 
 !
 !--- outer core

@@ -33,9 +33,7 @@
   use constants
   use shared_parameters
 
-  use specfem_par, only: NSOURCES,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
-    factor_force_source, &
-    NSTEP,DT,t0,tshift_src,hdur
+  use specfem_par, only: Mxx,Myy,Mzz,Mxy,Mxz,Myz,factor_force_source,t0,tshift_src,hdur
 
   implicit none
 
@@ -54,7 +52,7 @@
   ! number of points to plot the source time function and spectrum
   integer, parameter :: NSAMP_PLOT_SOURCE = 1000
 
-  ! only master process outputs stf
+  ! only main process outputs stf
   if (myrank /= 0) return
 
   ! user output

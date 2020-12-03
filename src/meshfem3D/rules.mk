@@ -111,6 +111,7 @@ meshfem3D_MESHER_OBJECTS = \
 	$O/model_s362ani.check.o \
 	$O/model_sea99_s.check.o \
 	$O/model_sglobe.check.o \
+	$O/model_sglobecrust.check.o \
 	$O/moho_stretching.check.o \
 	$O/save_arrays_solver.check.o \
 	$O/save_model_meshfiles.check.o \
@@ -164,6 +165,7 @@ meshfem3D_MODULES = \
 	$(FC_MODDIR)/model_sea1d_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_sea99_s_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_sglobe_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_sglobecrust_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/avs_dx_global_chunks_mod.$(FC_MODEXT) \
 	$(FC_MODDIR)/avs_dx_global_mod.$(FC_MODEXT) \
 	$(FC_MODDIR)/avs_dx_global_faces_mod.$(FC_MODEXT) \
@@ -319,6 +321,7 @@ $O/model_attenuation.check.o: \
 	$O/model_1066a.check.o \
 	$O/model_sea1d.check.o \
 	$O/model_case65TAY.check.o \
+	$O/model_vpremoon.shared.o \
 	$(EMPTY_MACRO)
 
 $O/meshfem3D_par.check_module.o: $O/adios_manager.shared_adios_module.o

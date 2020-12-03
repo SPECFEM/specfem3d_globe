@@ -153,7 +153,7 @@
   ! cross-section infos
   integer :: section_type
   integer :: nsection_params
-  character(len=MAX_STRING_LEN),dimension(MAX_KERNEL_NAMES) :: param_args
+  character(len=MAX_STRING_LEN),dimension(:),allocatable :: param_args
 
   ! depth with respect to with topography
   logical :: TOPOGRAPHY
@@ -195,7 +195,7 @@
         if (myrank == 0) then
           print *
           print *,' Usage: xcreate_cross_section param section-param mesh-dir/ model-dir/ output-dir/ ' // &
-                  'topoography-flag ellipticity-flag'
+                  'topography-flag ellipticity-flag'
           print *
           print *,' with'
           print *,'   param         - model parameter name (e.g. vpv)'
@@ -216,7 +216,7 @@
           print *,'   model-dir/    - directoy which holds model files (e.g. proc***_vpv.bin)'
           print *,'   output-dir/   - output directory with topology files (e.g. proc***_solver_data.bin)'
           print *
-          print *,'   topoography-flag - depth will be taken with respect to surface topography (0 == off / 1 == on);'
+          print *,'   topography-flag  - depth will be taken with respect to surface topography (0 == off / 1 == on);'
           print *,'                      if no topography is used, then depth is with respect to sea-level'
           print *,'   ellipticity-flag - depth will consider Earth ellipticity (0 == off / 1 == on);'
           print *,'                      if no ellipticity is used, Earth shape is assumed to be perfectly spherical'
@@ -227,6 +227,11 @@
     enddo
   endif
   call synchronize_all()
+
+  ! allocates arrays
+  allocate(param_args(MAX_KERNEL_NAMES),stat=ier)
+  if (ier /= 0) stop 'Error allocating param_args array'
+  param_args(:) = ''
 
   ! initializes cross section type
   section_type = 0
@@ -689,7 +694,7 @@
     print *
   endif
 
-  ! collects best points on master
+  ! collects best points on main proc
   call collect_closest_point_values(myrank,NPROCTOT_VAL,nglob_target,model2,model_distance2)
 
   ! statistics
@@ -708,7 +713,7 @@
   endif
   call synchronize_all()
 
-  ! master process only
+  ! main process only
   if (myrank == 0) then
     ! allocates arrays for statistics
     allocate(model_diff(nglob_target), &
@@ -836,7 +841,7 @@
     ! initializes
     ibathy_topo(:,:) = 0
 
-    ! master reads file
+    ! main reads file
     if (myrank == 0) then
       ! user output
       print *,'topography:'
@@ -847,7 +852,7 @@
       print *,"  topography/bathymetry: min/max = ",minval(ibathy_topo),maxval(ibathy_topo)
     endif
 
-    ! broadcast the information read on the master to the nodes
+    ! broadcast the information read on the main node to all the nodes
     call bcast_all_i(ibathy_topo,NX_BATHY*NY_BATHY)
   endif
   call synchronize_all()
@@ -1037,7 +1042,7 @@
     ! initializes
     ibathy_topo(:,:) = 0
 
-    ! master reads file
+    ! main reads file
     if (myrank == 0) then
       ! user output
       print *,'topography:'
@@ -1048,7 +1053,7 @@
       print *,"  topography/bathymetry: min/max = ",minval(ibathy_topo),maxval(ibathy_topo)
     endif
 
-    ! broadcast the information read on the master to the nodes
+    ! broadcast the information read on the main node to all the nodes
     call bcast_all_i(ibathy_topo,NX_BATHY*NY_BATHY)
   endif
   call synchronize_all()
@@ -1217,11 +1222,11 @@
 
   integer, parameter :: itag = 11
 
-  ! master gets point distances
+  ! main gets point distances
   if (myrank == 0) then
-    ! master process collects info
+    ! main process collects info
     do iproc = 1,nproc - 1
-      ! gets buffer arrays from slave
+      ! gets buffer arrays from secondary procs
       call recv_cr(buffer, 2 * nglob_target, iproc, itag)
 
       ! checks if closer point found
@@ -1247,7 +1252,7 @@
       buffer(2,iglob) = model2(iglob)
     enddo
 
-    ! slave process sends its (distance,value) buffer to master
+    ! secondary process sends its (distance,value) buffer to main proc
     call send_cr(buffer, 2 * nglob_target, 0, itag)
   endif
 
@@ -1376,7 +1381,7 @@
   if (myrank == 0) then
     print *,'  using search radius: ',sngl(r_search * R_PLANET_KM),'(km)'
     print *
-    print *,'  points contained in master slice: ',nslice_points,' out of ',nglob_target
+    print *,'  points contained in main slice: ',nslice_points,' out of ',nglob_target
     print *
   endif
 
@@ -2155,7 +2160,7 @@
   ! factor
   FACTOR_TAN = 1.d0 / ONE_MINUS_F_SQUARED
 
-  ! note: only master rank is computing this on collected array values
+  ! note: only main rank is computing this on collected array values
   !
   ! user output
   print *,'cross-section statistics:'

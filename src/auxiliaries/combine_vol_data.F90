@@ -73,7 +73,7 @@ program combine_vol_data
   logical :: HIGH_RESOLUTION_MESH
 
   real(kind=CUSTOM_REAL) :: x, y, z
-  real :: dat
+  real(kind=CUSTOM_REAL) :: dat
   integer :: numpoin, iglob, n1, n2, n3, n4, n5, n6, n7, n8
   integer :: iglob1, iglob2, iglob3, iglob4, iglob5, iglob6, iglob7, iglob8
   integer :: nglob,nspec
@@ -110,8 +110,8 @@ program combine_vol_data
   ! VTK
   character(len=MAX_STRING_LEN) :: mesh_file
   ! global point data
-  real,dimension(:),allocatable :: total_dat
-  real,dimension(:,:),allocatable :: total_dat_xyz
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: total_dat
+  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: total_dat_xyz
   integer,dimension(:,:),allocatable :: total_dat_con
 #else
   !!! .mesh specific !!!!!!!!!!!
@@ -461,10 +461,10 @@ program combine_vol_data
     ! creates array to hold point data
     allocate(total_dat(sum(npoint(1:num_node))),stat=ier)
     if (ier /= 0 ) stop 'Error allocating total_dat array'
-    total_dat(:) = 0.0
+    total_dat(:) = 0.0_CUSTOM_REAL
     allocate(total_dat_xyz(3,sum(npoint(1:num_node))),stat=ier)
     if (ier /= 0 ) stop 'Error allocating total_dat_xyz array'
-    total_dat_xyz(:,:) = 0.0
+    total_dat_xyz(:,:) = 0.0_CUSTOM_REAL
     allocate(total_dat_con(8,sum(nelement(1:num_node))),stat=ier)
     if (ier /= 0 ) stop 'Error allocating total_dat_con array'
     total_dat_con(:,:) = 0
@@ -768,16 +768,30 @@ program combine_vol_data
 
 #ifdef USE_VTK_INSTEAD_OF_MESH
     ! VTK
+    ! default
     ! outputs unstructured grid file
     write(mesh_file,'(a,i1,a)') trim(outdir)//'/' // 'reg_',ir,'_'//trim(filename)//'.vtk'
-
     call write_VTK_movie_data(ne,np,total_dat_xyz,total_dat_con,total_dat,mesh_file,var_name)
+    print *,'written: ',trim(mesh_file)
+
+    if (.false.) then
+      ! output as unconnected single elements
+      write(mesh_file,'(a,i1,a)') trim(outdir)//'/' // 'reg_',ir,'_'//trim(filename)//'_elemental.vtk'
+      call write_VTK_movie_data_elemental(ne,np,total_dat_xyz,total_dat_con,total_dat,mesh_file,var_name)
+      print *,'written: ',trim(mesh_file)
+    endif
+
+    if (.false.) then
+      ! VTU binary format
+      write(mesh_file,'(a,i1,a)') trim(outdir)//'/' // 'reg_',ir,'_'//trim(filename)//'.vtu'
+      call write_VTU_movie_data_binary(ne,np,total_dat_xyz,total_dat_con,total_dat,mesh_file,var_name)
+      print *,'written: ',trim(mesh_file)
+    endif
+
+    print *
 
     ! free arrays for this region
     deallocate(total_dat,total_dat_xyz,total_dat_con)
-
-    print *,'written: ',trim(mesh_file)
-    print *
 #else
     ! .mesh
     call close_file_fd(pfd)

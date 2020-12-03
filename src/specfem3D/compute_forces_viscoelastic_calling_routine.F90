@@ -102,7 +102,7 @@
       ! on GPU
       ! contains forward FORWARD_OR_ADJOINT == 1
       ! for crust/mantle
-      call compute_forces_crust_mantle_gpu(Mesh_pointer,iphase,1)
+      call compute_forces_crust_mantle_gpu(Mesh_pointer,iphase,ALPHA_LDDRK(istage),BETA_LDDRK(istage),1)
 
       ! initiates asynchronous MPI transfer
       if (NPROCTOT_VAL > 1) then
@@ -121,7 +121,7 @@
       endif
 
       ! for inner core
-      call compute_forces_inner_core_gpu(Mesh_pointer,iphase,1)
+      call compute_forces_inner_core_gpu(Mesh_pointer,iphase,ALPHA_LDDRK(istage),BETA_LDDRK(istage),1)
 
       ! initiates asynchronous MPI transfer
       if (NPROCTOT_VAL > 1) then
@@ -169,7 +169,7 @@
           ! the first step of noise tomography is to use |S(\omega)|^2 as a point force source at one of the receivers.
           ! hence, instead of a moment tensor 'sourcearrays', a 'noise_sourcearray' for a point force is needed.
           ! furthermore, the CMTSOLUTION needs to be zero, i.e., no earthquakes.
-          call noise_add_source_master_rec()
+          call noise_add_source_main_rec()
 
        case (2)
           ! second step of noise tomography, i.e., read the surface movie saved at every timestep
@@ -262,6 +262,7 @@
                                 buffer_recv_vector_crust_mantle,num_interfaces_crust_mantle, &
                                 max_nibool_interfaces_cm, &
                                 nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle, &
+                                my_neighbors_crust_mantle, &
                                 request_send_vector_cm,request_recv_vector_cm)
           ! inner core
           call assemble_MPI_vector_w(NPROCTOT_VAL,NGLOB_INNER_CORE, &
@@ -269,6 +270,7 @@
                                 buffer_recv_vector_inner_core,num_interfaces_inner_core, &
                                 max_nibool_interfaces_ic, &
                                 nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
+                                my_neighbors_inner_core, &
                                 request_send_vector_ic,request_recv_vector_ic)
         else
           ! on GPU
@@ -463,7 +465,7 @@
       ! on GPU
       ! contains forward FORWARD_OR_ADJOINT == 3
       ! for crust/mantle
-      call compute_forces_crust_mantle_gpu(Mesh_pointer,iphase,3)
+      call compute_forces_crust_mantle_gpu(Mesh_pointer,iphase,ALPHA_LDDRK(istage),BETA_LDDRK(istage),3)
 
       ! initiates asynchronous MPI transfer
       if (GPU_ASYNC_COPY .and. iphase == 2) then
@@ -480,7 +482,7 @@
       endif
 
       ! for inner core
-      call compute_forces_inner_core_gpu(Mesh_pointer,iphase,3)
+      call compute_forces_inner_core_gpu(Mesh_pointer,iphase,ALPHA_LDDRK(istage),BETA_LDDRK(istage),3)
 
       ! initiates asynchronous MPI transfer
       if (GPU_ASYNC_COPY .and. iphase == 2) then
@@ -608,6 +610,7 @@
                             b_buffer_recv_vector_cm,num_interfaces_crust_mantle, &
                             max_nibool_interfaces_cm, &
                             nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle, &
+                            my_neighbors_crust_mantle, &
                             b_request_send_vector_cm,b_request_recv_vector_cm)
         ! inner core
         call assemble_MPI_vector_w(NPROCTOT_VAL,NGLOB_INNER_CORE, &
@@ -615,6 +618,7 @@
                             b_buffer_recv_vector_inner_core,num_interfaces_inner_core, &
                             max_nibool_interfaces_ic, &
                             nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
+                            my_neighbors_inner_core, &
                             b_request_send_vector_ic,b_request_recv_vector_ic)
 
       else

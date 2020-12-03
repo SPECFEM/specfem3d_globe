@@ -81,13 +81,13 @@
 #define BLOCKSIZE_TRANSFER 256
 #endif
 
-__global__ void noise_add_source_master_rec_kernel(const int * ibool, const int * ispec_selected_rec, const int irec_master_noise, float * accel, const float * noise_sourcearray, const int it){
+__global__ void noise_add_source_main_rec_kernel(const int * ibool, const int * ispec_selected_rec, const int irec_main_noise, float * accel, const float * noise_sourcearray, const int it){
   int tx;
   int ispec;
   int iglob;
 
   tx = threadIdx.x;
-  ispec = ispec_selected_rec[irec_master_noise] - (1);
+  ispec = ispec_selected_rec[irec_main_noise] - (1);
   iglob = ibool[tx + (NGLL3) * (ispec)] - (1);
 
   atomicAdd(accel + (iglob) * (3) + 0, noise_sourcearray[(tx) * (3) + ((NGLL3) * (3)) * (it) + 0]);

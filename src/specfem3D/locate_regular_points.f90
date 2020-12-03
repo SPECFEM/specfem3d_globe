@@ -48,7 +48,7 @@
     call flush_IMAIN()
   endif
 
-  ! improvements to make: read-in by master and broadcast to all slaves
+  ! improvements to make: read-in by main and broadcast to all secondary processes
   open(IIN,file=trim(PATHNAME_KL_REG),status='old',action='read',iostat=ios)
   if (ios /= 0 ) call exit_MPI(myrank,'Error opening file '//trim(PATHNAME_KL_REG)//' in read_kl_regular_grid() routine')
 

@@ -109,12 +109,12 @@ static __device__ void compute_element_ic_att_memory(const int tx, const int wor
   int offset;
   int i_sls;
   float mul;
-  float alphaval_loc;
-  float betaval_loc;
-  float gammaval_loc;
   float factor_loc;
   float sn;
   float snp1;
+  float alphaval_loc;
+  float betaval_loc;
+  float gammaval_loc;
 
   mul = d_muvstore[tx + (NGLL3_PADDED) * (working_element)];
 
@@ -147,26 +147,53 @@ static __device__ void compute_element_ic_att_memory(const int tx, const int wor
   }
 }
 
-static __device__ void compute_element_ic_gravity(const int tx, const int iglob, const float * __restrict__ d_rstore, const float * __restrict__ d_minus_gravity_table, const float * __restrict__ d_minus_deriv_gravity_table, const float * __restrict__ d_density_table, const float * __restrict__ wgll_cube, const float jacobianl, const float * s_dummyx_loc, const float * s_dummyy_loc, const float * s_dummyz_loc, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_yx, float * sigma_xz, float * sigma_zx, float * sigma_yz, float * sigma_zy, float * rho_s_H1, float * rho_s_H2, float * rho_s_H3, const float R_EARTH_KM){
-  float radius;
-  float theta;
-  float phi;
-  float cos_theta;
-  float sin_theta;
-  float cos_phi;
-  float sin_phi;
-  float cos_theta_sq;
-  float sin_theta_sq;
-  float cos_phi_sq;
-  float sin_phi_sq;
-  float minus_g;
-  float minus_dg;
-  float rho;
+static __device__ void compute_element_ic_att_memory_lddrk(const int tx, const int working_element, const float * d_muvstore, const float * factor_common, const float * tau_sigmainvval, float * R_xx, float * R_yy, float * R_xy, float * R_xz, float * R_yz, float * R_xx_lddrk, float * R_yy_lddrk, float * R_xy_lddrk, float * R_xz_lddrk, float * R_yz_lddrk, const float alpha_lddrk, const float beta_lddrk, const float deltat, const float epsilondev_xx_loc, const float epsilondev_yy_loc, const float epsilondev_xy_loc, const float epsilondev_xz_loc, const float epsilondev_yz_loc, const int USE_3D_ATTENUATION_ARRAYS){
+  int offset;
+  int i_sls;
+  float mul;
+  float factor_loc;
+  float sn;
+  float snp1;
+  float tau_sigmainv_loc;
+
+  mul = d_muvstore[tx + (NGLL3_PADDED) * (working_element)];
+
+  for (i_sls = 0; i_sls <= N_SLS - (1); i_sls += 1) {
+    offset = tx + (NGLL3) * (i_sls + (N_SLS) * (working_element));
+    if (USE_3D_ATTENUATION_ARRAYS) {
+      factor_loc = (mul) * (factor_common[offset]);
+    } else {
+      factor_loc = (mul) * (factor_common[i_sls + (N_SLS) * (working_element)]);
+    }
+    tau_sigmainv_loc = tau_sigmainvval[i_sls];
+
+    sn = (tau_sigmainv_loc) * (R_xx[offset]);
+    snp1 = (factor_loc) * (epsilondev_xx_loc);
+    R_xx_lddrk[offset] = (alpha_lddrk) * (R_xx_lddrk[offset]) + (deltat) * (snp1 - (sn));
+    R_xx[offset] = R_xx[offset] + (beta_lddrk) * (R_xx_lddrk[offset]);
+    sn = (tau_sigmainv_loc) * (R_yy[offset]);
+    snp1 = (factor_loc) * (epsilondev_yy_loc);
+    R_yy_lddrk[offset] = (alpha_lddrk) * (R_yy_lddrk[offset]) + (deltat) * (snp1 - (sn));
+    R_yy[offset] = R_yy[offset] + (beta_lddrk) * (R_yy_lddrk[offset]);
+    sn = (tau_sigmainv_loc) * (R_xy[offset]);
+    snp1 = (factor_loc) * (epsilondev_xy_loc);
+    R_xy_lddrk[offset] = (alpha_lddrk) * (R_xy_lddrk[offset]) + (deltat) * (snp1 - (sn));
+    R_xy[offset] = R_xy[offset] + (beta_lddrk) * (R_xy_lddrk[offset]);
+    sn = (tau_sigmainv_loc) * (R_xz[offset]);
+    snp1 = (factor_loc) * (epsilondev_xz_loc);
+    R_xz_lddrk[offset] = (alpha_lddrk) * (R_xz_lddrk[offset]) + (deltat) * (snp1 - (sn));
+    R_xz[offset] = R_xz[offset] + (beta_lddrk) * (R_xz_lddrk[offset]);
+    sn = (tau_sigmainv_loc) * (R_yz[offset]);
+    snp1 = (factor_loc) * (epsilondev_yz_loc);
+    R_yz_lddrk[offset] = (alpha_lddrk) * (R_yz_lddrk[offset]) + (deltat) * (snp1 - (sn));
+    R_yz[offset] = R_yz[offset] + (beta_lddrk) * (R_yz_lddrk[offset]);
+  }
+}
+
+static __device__ void compute_element_ic_gravity(const int tx, const int iglob, const float * __restrict__ d_gravity_pre_store, const float * __restrict__ d_gravity_H, const float * __restrict__ wgll_cube, const float jacobianl, const float * s_dummyx_loc, const float * s_dummyy_loc, const float * s_dummyz_loc, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_yx, float * sigma_xz, float * sigma_zx, float * sigma_yz, float * sigma_zy, float * rho_s_H1, float * rho_s_H2, float * rho_s_H3){
   float gxl;
   float gyl;
   float gzl;
-  float minus_g_over_radius;
-  float minus_dg_plus_g_over_radius;
   float Hxxl;
   float Hyyl;
   float Hzzl;
@@ -177,47 +204,21 @@ static __device__ void compute_element_ic_gravity(const int tx, const int iglob,
   float sy_l;
   float sz_l;
   float factor;
-  int int_radius;
 
-  radius = d_rstore[0 + (3) * (iglob)];
-  theta = d_rstore[1 + (3) * (iglob)];
-  phi = d_rstore[2 + (3) * (iglob)];
+  gxl = d_gravity_pre_store[0 + (3) * (iglob)];
+  gyl = d_gravity_pre_store[1 + (3) * (iglob)];
+  gzl = d_gravity_pre_store[2 + (3) * (iglob)];
 
-  if (radius < (100.0f) / ((R_EARTH_KM) * (1000.0f))) {
-    radius = (100.0f) / ((R_EARTH_KM) * (1000.0f));
-  }
+  Hxxl = d_gravity_H[0 + (6) * (iglob)];
+  Hyyl = d_gravity_H[1 + (6) * (iglob)];
+  Hzzl = d_gravity_H[2 + (6) * (iglob)];
+  Hxyl = d_gravity_H[3 + (6) * (iglob)];
+  Hxzl = d_gravity_H[4 + (6) * (iglob)];
+  Hyzl = d_gravity_H[5 + (6) * (iglob)];
 
-  sincosf(theta,  &sin_theta,  &cos_theta);
-  sincosf(phi,  &sin_phi,  &cos_phi);
-
-  int_radius = rint(((radius) * (R_EARTH_KM)) * (10.0f)) - (1);
-  if (int_radius < 0) {
-    int_radius = 0;
-  }
-  minus_g = d_minus_gravity_table[int_radius];
-  minus_dg = d_minus_deriv_gravity_table[int_radius];
-  rho = d_density_table[int_radius];
-
-  gxl = ((minus_g) * (sin_theta)) * (cos_phi);
-  gyl = ((minus_g) * (sin_theta)) * (sin_phi);
-  gzl = (minus_g) * (cos_theta);
-  minus_g_over_radius = (minus_g) / (radius);
-  minus_dg_plus_g_over_radius = minus_dg - (minus_g_over_radius);
-  cos_theta_sq = (cos_theta) * (cos_theta);
-  sin_theta_sq = (sin_theta) * (sin_theta);
-  cos_phi_sq = (cos_phi) * (cos_phi);
-  sin_phi_sq = (sin_phi) * (sin_phi);
-
-  Hxxl = (minus_g_over_radius) * ((cos_phi_sq) * (cos_theta_sq) + sin_phi_sq) + ((cos_phi_sq) * (minus_dg)) * (sin_theta_sq);
-  Hyyl = (minus_g_over_radius) * (cos_phi_sq + (cos_theta_sq) * (sin_phi_sq)) + ((minus_dg) * (sin_phi_sq)) * (sin_theta_sq);
-  Hzzl = (cos_theta_sq) * (minus_dg) + (minus_g_over_radius) * (sin_theta_sq);
-  Hxyl = (((cos_phi) * (minus_dg_plus_g_over_radius)) * (sin_phi)) * (sin_theta_sq);
-  Hxzl = (((cos_phi) * (cos_theta)) * (minus_dg_plus_g_over_radius)) * (sin_theta);
-  Hyzl = (((cos_theta) * (minus_dg_plus_g_over_radius)) * (sin_phi)) * (sin_theta);
-
-  sx_l = (rho) * (s_dummyx_loc[tx]);
-  sy_l = (rho) * (s_dummyy_loc[tx]);
-  sz_l = (rho) * (s_dummyz_loc[tx]);
+  sx_l = s_dummyx_loc[tx];
+  sy_l = s_dummyy_loc[tx];
+  sz_l = s_dummyz_loc[tx];
 
   *(sigma_xx) = *(sigma_xx) + (sy_l) * (gyl) + (sz_l) * (gzl);
   *(sigma_yy) = *(sigma_yy) + (sx_l) * (gxl) + (sz_l) * (gzl);
@@ -282,7 +283,7 @@ __global__
 #ifdef USE_LAUNCH_BOUNDS
 __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
 #endif
- void inner_core_impl_kernel_forward(const int nb_blocks_to_compute, const int * d_ibool, const int * d_idoubling, const int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const float deltat, const int use_mesh_coloring_gpu, const float * __restrict__ d_displ, float * d_accel, const float * __restrict__ d_xix, const float * __restrict__ d_xiy, const float * __restrict__ d_xiz, const float * __restrict__ d_etax, const float * __restrict__ d_etay, const float * __restrict__ d_etaz, const float * __restrict__ d_gammax, const float * __restrict__ d_gammay, const float * __restrict__ d_gammaz, const float * __restrict__ d_hprime_xx, const float * __restrict__ d_hprimewgll_xx, const float * __restrict__ d_wgllwgll_xy, const float * __restrict__ d_wgllwgll_xz, const float * __restrict__ d_wgllwgll_yz, const float * __restrict__ d_kappavstore, const float * __restrict__ d_muvstore, const int COMPUTE_AND_STORE_STRAIN, float * epsilondev_xx, float * epsilondev_yy, float * epsilondev_xy, float * epsilondev_xz, float * epsilondev_yz, float * epsilon_trace_over_3, const int ATTENUATION, const int PARTIAL_PHYS_DISPERSION_ONLY, const int USE_3D_ATTENUATION_ARRAYS, const float * __restrict__ one_minus_sum_beta, const float * __restrict__ factor_common, float * R_xx, float * R_yy, float * R_xy, float * R_xz, float * R_yz, const float * __restrict__ alphaval, const float * __restrict__ betaval, const float * __restrict__ gammaval, const int ANISOTROPY, const float * __restrict__ d_c11store, const float * __restrict__ d_c12store, const float * __restrict__ d_c13store, const float * __restrict__ d_c33store, const float * __restrict__ d_c44store, const int GRAVITY, const float * __restrict__ d_rstore, const float * __restrict__ d_minus_gravity_table, const float * __restrict__ d_minus_deriv_gravity_table, const float * __restrict__ d_density_table, const float R_EARTH_KM, const float * __restrict__ wgll_cube, const int NSPEC_INNER_CORE_STRAIN_ONLY, const int NSPEC_INNER_CORE){
+ void inner_core_impl_kernel_forward(const int nb_blocks_to_compute, const int * d_ibool, const int * d_idoubling, const int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const float deltat, const int use_mesh_coloring_gpu, const float * __restrict__ d_displ, float * d_accel, const float * __restrict__ d_xix, const float * __restrict__ d_xiy, const float * __restrict__ d_xiz, const float * __restrict__ d_etax, const float * __restrict__ d_etay, const float * __restrict__ d_etaz, const float * __restrict__ d_gammax, const float * __restrict__ d_gammay, const float * __restrict__ d_gammaz, const float * __restrict__ d_hprime_xx, const float * __restrict__ d_hprimewgll_xx, const float * __restrict__ d_wgllwgll_xy, const float * __restrict__ d_wgllwgll_xz, const float * __restrict__ d_wgllwgll_yz, const float * __restrict__ d_kappavstore, const float * __restrict__ d_muvstore, const int COMPUTE_AND_STORE_STRAIN, float * epsilondev_xx, float * epsilondev_yy, float * epsilondev_xy, float * epsilondev_xz, float * epsilondev_yz, float * epsilon_trace_over_3, const int ATTENUATION, const int PARTIAL_PHYS_DISPERSION_ONLY, const int USE_3D_ATTENUATION_ARRAYS, const float * __restrict__ one_minus_sum_beta, const float * __restrict__ factor_common, float * R_xx, float * R_yy, float * R_xy, float * R_xz, float * R_yz, float * R_xx_lddrk, float * R_yy_lddrk, float * R_xy_lddrk, float * R_xz_lddrk, float * R_yz_lddrk, const float alpha_lddrk, const float beta_lddrk, const int use_lddrk, const float * __restrict__ alphaval, const float * __restrict__ betaval, const float * __restrict__ gammaval, const float * __restrict__ tau_sigmainvval, const int ANISOTROPY, const float * __restrict__ d_c11store, const float * __restrict__ d_c12store, const float * __restrict__ d_c13store, const float * __restrict__ d_c33store, const float * __restrict__ d_c44store, const int GRAVITY, const float * __restrict__ d_gravity_pre_store, const float * __restrict__ d_gravity_H, const float * __restrict__ wgll_cube, const int NSPEC_INNER_CORE_STRAIN_ONLY, const int NSPEC_INNER_CORE){
   int bx;
   int tx;
   int K;
@@ -560,7 +561,7 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
     jacobianl = (1.0f) / ((xixl) * ((etayl) * (gammazl) - ((etazl) * (gammayl))) - ((xiyl) * ((etaxl) * (gammazl) - ((etazl) * (gammaxl)))) + (xizl) * ((etaxl) * (gammayl) - ((etayl) * (gammaxl))));
 
     if (GRAVITY) {
-      compute_element_ic_gravity(tx, iglob_1, d_rstore, d_minus_gravity_table, d_minus_deriv_gravity_table, d_density_table, wgll_cube, jacobianl, s_dummyx_loc, s_dummyy_loc, s_dummyz_loc,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_yx,  &sigma_xz,  &sigma_zx,  &sigma_yz,  &sigma_zy,  &rho_s_H_1_1,  &rho_s_H_1_2,  &rho_s_H_1_3, R_EARTH_KM);
+      compute_element_ic_gravity(tx, iglob_1, d_gravity_pre_store, d_gravity_H, wgll_cube, jacobianl, s_dummyx_loc, s_dummyy_loc, s_dummyz_loc,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_yx,  &sigma_xz,  &sigma_zx,  &sigma_yz,  &sigma_zy,  &rho_s_H_1_1,  &rho_s_H_1_2,  &rho_s_H_1_3);
     }
 
     s_tempx1[tx] = (jacobianl) * ((sigma_xx) * (xixl) + (sigma_yx) * (xiyl) + (sigma_zx) * (xizl));
@@ -728,7 +729,11 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
 #endif
 
     if (ATTENUATION &&  !(PARTIAL_PHYS_DISPERSION_ONLY)) {
-      compute_element_ic_att_memory(tx, working_element, d_muvstore, factor_common, alphaval, betaval, gammaval, R_xx, R_yy, R_xy, R_xz, R_yz, epsilondev_xx, epsilondev_yy, epsilondev_xy, epsilondev_xz, epsilondev_yz, epsilondev_xx_loc_1, epsilondev_yy_loc_1, epsilondev_xy_loc_1, epsilondev_xz_loc_1, epsilondev_yz_loc_1, USE_3D_ATTENUATION_ARRAYS);
+      if ( !(use_lddrk)) {
+        compute_element_ic_att_memory(tx, working_element, d_muvstore, factor_common, alphaval, betaval, gammaval, R_xx, R_yy, R_xy, R_xz, R_yz, epsilondev_xx, epsilondev_yy, epsilondev_xy, epsilondev_xz, epsilondev_yz, epsilondev_xx_loc_1, epsilondev_yy_loc_1, epsilondev_xy_loc_1, epsilondev_xz_loc_1, epsilondev_yz_loc_1, USE_3D_ATTENUATION_ARRAYS);
+      } else {
+        compute_element_ic_att_memory_lddrk(tx, working_element, d_muvstore, factor_common, tau_sigmainvval, R_xx, R_yy, R_xy, R_xz, R_yz, R_xx_lddrk, R_yy_lddrk, R_xy_lddrk, R_xz_lddrk, R_yz_lddrk, alpha_lddrk, beta_lddrk, deltat, epsilondev_xx_loc_1, epsilondev_yy_loc_1, epsilondev_xy_loc_1, epsilondev_xz_loc_1, epsilondev_yz_loc_1, USE_3D_ATTENUATION_ARRAYS);
+      }
     }
 
     if (COMPUTE_AND_STORE_STRAIN) {

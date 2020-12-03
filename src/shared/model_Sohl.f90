@@ -111,7 +111,7 @@
   subroutine model_Sohl(x,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &
                         ONE_CRUST,check_doubling_flag)
 
-  use constants, only: myrank,PI,GRAV, &
+  use constants, only: PI,GRAV, &
     IFLAG_CRUST,IFLAG_220_80,IFLAG_670_220,IFLAG_80_MOHO,IFLAG_MANTLE_NORMAL, &
     IFLAG_TOP_CENTRAL_CUBE,IFLAG_INNER_CORE_NORMAL,IFLAG_OUTER_CORE_NORMAL, &
     IFLAG_BOTTOM_CENTRAL_CUBE,IFLAG_IN_FICTITIOUS_CUBE,IFLAG_MIDDLE_CENTRAL_CUBE, &
@@ -136,13 +136,15 @@
   ! local parameters
   double precision :: r,scaleval, x_moho
 
-! compute real physical radius in meters
+  ! compute real physical radius in meters
   r = x * R_PLANET
 
-! check flags to make sure we correctly honor the discontinuities
-! we use strict inequalities since r has been slightly changed in mesher
+  ! check flags to make sure we correctly honor the discontinuities
+  ! we use strict inequalities since r has been slightly changed in mesher
 
- if (check_doubling_flag) then
+  ! note: using stop statements, not exit_mpi() calls to avoid the need for MPI libraries when linking xcreate_header_file
+
+  if (check_doubling_flag) then
     !
     !--- inner core
     !
@@ -157,37 +159,37 @@
           idoubling /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
           idoubling /= IFLAG_TOP_CENTRAL_CUBE .and. &
           idoubling /= IFLAG_IN_FICTITIOUS_CUBE) &
-           call exit_MPI(myrank,'wrong doubling flag for inner core point in model_Sohl()')
+           stop 'wrong doubling flag for inner core point in model_Sohl()'
     !
     !--- outer core
     !
     else if (r > SOHL_RICB .and. r < SOHL_RCMB) then
       if (idoubling /= IFLAG_OUTER_CORE_NORMAL) &
-        call exit_MPI(myrank,'wrong doubling flag for outer core point in model_Sohl()')
+        stop 'wrong doubling flag for outer core point in model_Sohl()'
     !
     !--- D" at the base of the mantle
     !
     else if (r > SOHL_RCMB .and. r < SOHL_RTOPDDOUBLEPRIME) then
       if (idoubling /= IFLAG_MANTLE_NORMAL) &
-        call exit_MPI(myrank,'wrong doubling flag for D" point in model_Sohl()')
+        stop 'wrong doubling flag for D" point in model_Sohl()'
     !
     !--- mantle: from top of D" to d670
     !
     else if (r > SOHL_RTOPDDOUBLEPRIME .and. r < SOHL_R670) then
       if (idoubling /= IFLAG_MANTLE_NORMAL) &
-        call exit_MPI(myrank,'wrong doubling flag for top D" - > d670 point in model_Sohl()')
+        stop 'wrong doubling flag for top D" - > d670 point in model_Sohl()'
     !
     !--- mantle: from d670 to d220
     !
     else if (r > SOHL_R670 .and. r < SOHL_R220) then
       if (idoubling /= IFLAG_670_220) &
-        call exit_MPI(myrank,'wrong doubling flag for d670 - > d220 point in model_Sohl()')
+        stop 'wrong doubling flag for d670 - > d220 point in model_Sohl()'
     !
     !--- mantle and crust: from d220 to MOHO and then to surface
     !
     else if (r > SOHL_R220) then
       if (idoubling /= IFLAG_220_80 .and. idoubling /= IFLAG_80_MOHO .and. idoubling /= IFLAG_CRUST) &
-        call exit_MPI(myrank,'wrong doubling flag for d220 - > Moho - > surface point in model_Sohl()')
+        stop 'wrong doubling flag for d220 - > Moho - > surface point in model_Sohl()'
     endif
 
   endif
@@ -380,7 +382,7 @@
 ! routine used for AVS or DX display of stability condition
 ! and number of points per wavelength only in the fluid outer core
 
-  use constants, only: IFLAG_OUTER_CORE_NORMAL,myrank,PI,GRAV
+  use constants, only: IFLAG_OUTER_CORE_NORMAL,PI,GRAV
   use shared_parameters, only: R_PLANET,RHOAV
 
   implicit none
@@ -396,7 +398,7 @@
   double precision :: scaleval
 
   if (idoubling /= IFLAG_OUTER_CORE_NORMAL) &
-    call exit_MPI(myrank,'wrong doubling flag for outer core point in Sohl_display_outer_core()')
+    stop 'wrong doubling flag for outer core point in Sohl_display_outer_core()'
 
 !
 !--- outer core

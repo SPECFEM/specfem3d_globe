@@ -81,6 +81,11 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
                    gpu_realw_mem d_R_xy,
                    gpu_realw_mem d_R_xz,
                    gpu_realw_mem d_R_yz,
+                   gpu_realw_mem d_R_xx_lddrk,
+                   gpu_realw_mem d_R_yy_lddrk,
+                   gpu_realw_mem d_R_xy_lddrk,
+                   gpu_realw_mem d_R_xz_lddrk,
+                   gpu_realw_mem d_R_yz_lddrk,
                    gpu_realw_mem d_c11store,
                    gpu_realw_mem d_c12store,
                    gpu_realw_mem d_c13store,
@@ -113,6 +118,12 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
                    gpu_realw_mem d_b_R_xy,
                    gpu_realw_mem d_b_R_xz,
                    gpu_realw_mem d_b_R_yz,
+                   gpu_realw_mem d_b_R_xx_lddrk,
+                   gpu_realw_mem d_b_R_yy_lddrk,
+                   gpu_realw_mem d_b_R_xy_lddrk,
+                   gpu_realw_mem d_b_R_xz_lddrk,
+                   gpu_realw_mem d_b_R_yz_lddrk,
+                   realw alpha_lddrk, realw beta_lddrk,
                    int FORWARD_OR_ADJOINT) {
 
   GPU_ERROR_CHECKING ("before kernel crust_mantle");
@@ -136,7 +147,9 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
   gpu_realw_mem epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz;
   gpu_realw_mem epsilon_trace_over_3;
   gpu_realw_mem R_xx,R_yy,R_xy,R_xz,R_yz;
+  gpu_realw_mem R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk;
   gpu_realw_mem alphaval,betaval,gammaval;
+  gpu_realw_mem tau_sigmainvval;
 
   // sets gpu arrays
   if (FORWARD_OR_ADJOINT == 1) {
@@ -154,9 +167,15 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
     R_xy = d_R_xy;
     R_xz = d_R_xz;
     R_yz = d_R_yz;
+    R_xx_lddrk = d_R_xx_lddrk;
+    R_yy_lddrk = d_R_yy_lddrk;
+    R_xy_lddrk = d_R_xy_lddrk;
+    R_xz_lddrk = d_R_xz_lddrk;
+    R_yz_lddrk = d_R_yz_lddrk;
     alphaval = mp->d_alphaval;
     betaval = mp->d_betaval;
     gammaval = mp->d_gammaval;
+    tau_sigmainvval = mp->d_tau_sigmainvval;
   } else {
     // backward/reconstructed wavefields -> FORWARD_OR_ADJOINT == 3
     deltat = mp->b_deltat;
@@ -173,9 +192,15 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
     R_xy = d_b_R_xy;
     R_xz = d_b_R_xz;
     R_yz = d_b_R_yz;
+    R_xx_lddrk = d_b_R_xx_lddrk;
+    R_yy_lddrk = d_b_R_yy_lddrk;
+    R_xy_lddrk = d_b_R_xy_lddrk;
+    R_xz_lddrk = d_b_R_xz_lddrk;
+    R_yz_lddrk = d_b_R_yz_lddrk;
     alphaval = mp->d_b_alphaval;
     betaval = mp->d_b_betaval;
     gammaval = mp->d_b_gammaval;
+    tau_sigmainvval = mp->d_tau_sigmainvval; // only d_tau_sigmainvval
   }
 
 #ifdef USE_OPENCL
@@ -240,9 +265,18 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
     clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &R_xy.ocl));
     clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &R_xz.ocl));
     clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &R_yz.ocl));
+    clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &R_xx_lddrk.ocl));
+    clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &R_yy_lddrk.ocl));
+    clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &R_xy_lddrk.ocl));
+    clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &R_xz_lddrk.ocl));
+    clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &R_yz_lddrk.ocl));
+    clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (realw), (void *) &alpha_lddrk));
+    clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (realw), (void *) &beta_lddrk));
+    clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (int), (void *) &mp->use_lddrk));
     clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &alphaval.ocl));
     clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &betaval.ocl));
     clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &gammaval.ocl));
+    clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &tau_sigmainvval.ocl));
     clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (int), (void *) &mp->anisotropic_3D_mantle));
     clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c11store.ocl));
     clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c12store.ocl));
@@ -265,12 +299,10 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
     clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c55store.ocl));
     clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c56store.ocl));
     clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c66store.ocl));
-    clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (int), (void *) &mp->gravity));
     clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_rstore_crust_mantle.ocl));
-    clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_minus_gravity_table.ocl));
-    clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_minus_deriv_gravity_table.ocl));
-    clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_density_table.ocl));
-    clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (realw), (void *) &mp->R_EARTH_KM));
+    clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (int), (void *) &mp->gravity));
+    clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_gravity_pre_store_crust_mantle.ocl));
+    clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_gravity_H_crust_mantle.ocl));
     clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_wgll_cube.ocl));
     clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (int), (void *) &mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY));
 #ifdef USE_TEXTURES_FIELDS
@@ -348,9 +380,17 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
                                                                  R_xy.cuda,
                                                                  R_xz.cuda,
                                                                  R_yz.cuda,
+                                                                 R_xx_lddrk.cuda,
+                                                                 R_yy_lddrk.cuda,
+                                                                 R_xy_lddrk.cuda,
+                                                                 R_xz_lddrk.cuda,
+                                                                 R_yz_lddrk.cuda,
+                                                                 alpha_lddrk,beta_lddrk,
+                                                                 mp->use_lddrk,
                                                                  alphaval.cuda,
                                                                  betaval.cuda,
                                                                  gammaval.cuda,
+                                                                 tau_sigmainvval.cuda,
                                                                  mp->anisotropic_3D_mantle,
                                                                  d_c11store.cuda,d_c12store.cuda,d_c13store.cuda,
                                                                  d_c14store.cuda,d_c15store.cuda,d_c16store.cuda,
@@ -359,12 +399,10 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
                                                                  d_c34store.cuda,d_c35store.cuda,d_c36store.cuda,
                                                                  d_c44store.cuda,d_c45store.cuda,d_c46store.cuda,
                                                                  d_c55store.cuda,d_c56store.cuda,d_c66store.cuda,
-                                                                 mp->gravity,
                                                                  mp->d_rstore_crust_mantle.cuda,
-                                                                 mp->d_minus_gravity_table.cuda,
-                                                                 mp->d_minus_deriv_gravity_table.cuda,
-                                                                 mp->d_density_table.cuda,
-                                                                 mp->R_EARTH_KM,
+                                                                 mp->gravity,
+                                                                 mp->d_gravity_pre_store_crust_mantle.cuda,
+                                                                 mp->d_gravity_H_crust_mantle.cuda,
                                                                  mp->d_wgll_cube.cuda,
                                                                  mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY);
   }
@@ -380,12 +418,15 @@ extern EXTERN_LANG
 void FC_FUNC_ (compute_forces_crust_mantle_gpu,
                COMPUTE_FORCES_CRUST_MANTLE_GPU) (long *Mesh_pointer_f,
                                                  int *iphase,
+                                                 realw *alpha_lddrk_f, realw *beta_lddrk_f,
                                                  int *FORWARD_OR_ADJOINT_f) {
 
   TRACE ("compute_forces_crust_mantle_gpu");
 
   // get Mesh from Fortran integer wrapper
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
+  realw alpha_lddrk = *alpha_lddrk_f;
+  realw beta_lddrk = *beta_lddrk_f;
   int FORWARD_OR_ADJOINT = *FORWARD_OR_ADJOINT_f;
 
   // safety check
@@ -504,6 +545,11 @@ void FC_FUNC_ (compute_forces_crust_mantle_gpu,
       INIT_OFFSET(d_R_xy_crust_mantle, offset_nonpadded_att1);
       INIT_OFFSET(d_R_xz_crust_mantle, offset_nonpadded_att1);
       INIT_OFFSET(d_R_yz_crust_mantle, offset_nonpadded_att1);
+      INIT_OFFSET(d_R_xx_crust_mantle_lddrk, offset_nonpadded_att1);
+      INIT_OFFSET(d_R_yy_crust_mantle_lddrk, offset_nonpadded_att1);
+      INIT_OFFSET(d_R_xy_crust_mantle_lddrk, offset_nonpadded_att1);
+      INIT_OFFSET(d_R_xz_crust_mantle_lddrk, offset_nonpadded_att1);
+      INIT_OFFSET(d_R_yz_crust_mantle_lddrk, offset_nonpadded_att1);
       INIT_OFFSET(d_c11store_crust_mantle, offset);
       INIT_OFFSET(d_c12store_crust_mantle, offset);
       INIT_OFFSET(d_c13store_crust_mantle, offset);
@@ -536,6 +582,11 @@ void FC_FUNC_ (compute_forces_crust_mantle_gpu,
       INIT_OFFSET(d_b_R_xy_crust_mantle, offset_nonpadded_att1);
       INIT_OFFSET(d_b_R_xz_crust_mantle, offset_nonpadded_att1);
       INIT_OFFSET(d_b_R_yz_crust_mantle, offset_nonpadded_att1);
+      INIT_OFFSET(d_b_R_xx_crust_mantle_lddrk, offset_nonpadded_att1);
+      INIT_OFFSET(d_b_R_yy_crust_mantle_lddrk, offset_nonpadded_att1);
+      INIT_OFFSET(d_b_R_xy_crust_mantle_lddrk, offset_nonpadded_att1);
+      INIT_OFFSET(d_b_R_xz_crust_mantle_lddrk, offset_nonpadded_att1);
+      INIT_OFFSET(d_b_R_yz_crust_mantle_lddrk, offset_nonpadded_att1);
 
       crust_mantle(nb_blocks_to_compute,mp,
                    *iphase,
@@ -568,6 +619,11 @@ void FC_FUNC_ (compute_forces_crust_mantle_gpu,
                    PASS_OFFSET(d_R_xy_crust_mantle, offset_nonpadded_att1),
                    PASS_OFFSET(d_R_xz_crust_mantle, offset_nonpadded_att1),
                    PASS_OFFSET(d_R_yz_crust_mantle, offset_nonpadded_att1),
+                   PASS_OFFSET(d_R_xx_crust_mantle_lddrk, offset_nonpadded_att1),
+                   PASS_OFFSET(d_R_yy_crust_mantle_lddrk, offset_nonpadded_att1),
+                   PASS_OFFSET(d_R_xy_crust_mantle_lddrk, offset_nonpadded_att1),
+                   PASS_OFFSET(d_R_xz_crust_mantle_lddrk, offset_nonpadded_att1),
+                   PASS_OFFSET(d_R_yz_crust_mantle_lddrk, offset_nonpadded_att1),
                    PASS_OFFSET(d_c11store_crust_mantle, offset),
                    PASS_OFFSET(d_c12store_crust_mantle, offset),
                    PASS_OFFSET(d_c13store_crust_mantle, offset),
@@ -600,6 +656,12 @@ void FC_FUNC_ (compute_forces_crust_mantle_gpu,
                    PASS_OFFSET(d_b_R_xy_crust_mantle, offset_nonpadded_att1),
                    PASS_OFFSET(d_b_R_xz_crust_mantle, offset_nonpadded_att1),
                    PASS_OFFSET(d_b_R_yz_crust_mantle, offset_nonpadded_att1),
+                   PASS_OFFSET(d_b_R_xx_crust_mantle_lddrk, offset_nonpadded_att1),
+                   PASS_OFFSET(d_b_R_yy_crust_mantle_lddrk, offset_nonpadded_att1),
+                   PASS_OFFSET(d_b_R_xy_crust_mantle_lddrk, offset_nonpadded_att1),
+                   PASS_OFFSET(d_b_R_xz_crust_mantle_lddrk, offset_nonpadded_att1),
+                   PASS_OFFSET(d_b_R_yz_crust_mantle_lddrk, offset_nonpadded_att1),
+                   alpha_lddrk,beta_lddrk,
                    FORWARD_OR_ADJOINT);
 
       RELEASE_OFFSET(d_ibool_crust_mantle, offset_nonpadded);
@@ -631,6 +693,11 @@ void FC_FUNC_ (compute_forces_crust_mantle_gpu,
       RELEASE_OFFSET(d_R_xy_crust_mantle, offset_nonpadded_att1);
       RELEASE_OFFSET(d_R_xz_crust_mantle, offset_nonpadded_att1);
       RELEASE_OFFSET(d_R_yz_crust_mantle, offset_nonpadded_att1);
+      RELEASE_OFFSET(d_R_xx_crust_mantle_lddrk, offset_nonpadded_att1);
+      RELEASE_OFFSET(d_R_yy_crust_mantle_lddrk, offset_nonpadded_att1);
+      RELEASE_OFFSET(d_R_xy_crust_mantle_lddrk, offset_nonpadded_att1);
+      RELEASE_OFFSET(d_R_xz_crust_mantle_lddrk, offset_nonpadded_att1);
+      RELEASE_OFFSET(d_R_yz_crust_mantle_lddrk, offset_nonpadded_att1);
       RELEASE_OFFSET(d_c11store_crust_mantle, offset);
       RELEASE_OFFSET(d_c12store_crust_mantle, offset);
       RELEASE_OFFSET(d_c13store_crust_mantle, offset);
@@ -663,6 +730,11 @@ void FC_FUNC_ (compute_forces_crust_mantle_gpu,
       RELEASE_OFFSET(d_b_R_xy_crust_mantle, offset_nonpadded_att1);
       RELEASE_OFFSET(d_b_R_xz_crust_mantle, offset_nonpadded_att1);
       RELEASE_OFFSET(d_b_R_yz_crust_mantle, offset_nonpadded_att1);
+      RELEASE_OFFSET(d_b_R_xx_crust_mantle_lddrk, offset_nonpadded_att1);
+      RELEASE_OFFSET(d_b_R_yy_crust_mantle_lddrk, offset_nonpadded_att1);
+      RELEASE_OFFSET(d_b_R_xy_crust_mantle_lddrk, offset_nonpadded_att1);
+      RELEASE_OFFSET(d_b_R_xz_crust_mantle_lddrk, offset_nonpadded_att1);
+      RELEASE_OFFSET(d_b_R_yz_crust_mantle_lddrk, offset_nonpadded_att1);
 
       // for padded and aligned arrays
       offset += nb_blocks_to_compute * NGLL3_PADDED;
@@ -722,6 +794,11 @@ void FC_FUNC_ (compute_forces_crust_mantle_gpu,
                  mp->d_R_xy_crust_mantle,
                  mp->d_R_xz_crust_mantle,
                  mp->d_R_yz_crust_mantle,
+                 mp->d_R_xx_crust_mantle_lddrk,
+                 mp->d_R_yy_crust_mantle_lddrk,
+                 mp->d_R_xy_crust_mantle_lddrk,
+                 mp->d_R_xz_crust_mantle_lddrk,
+                 mp->d_R_yz_crust_mantle_lddrk,
                  mp->d_c11store_crust_mantle,
                  mp->d_c12store_crust_mantle,
                  mp->d_c13store_crust_mantle,
@@ -754,6 +831,12 @@ void FC_FUNC_ (compute_forces_crust_mantle_gpu,
                  mp->d_b_R_xy_crust_mantle,
                  mp->d_b_R_xz_crust_mantle,
                  mp->d_b_R_yz_crust_mantle,
+                 mp->d_b_R_xx_crust_mantle_lddrk,
+                 mp->d_b_R_yy_crust_mantle_lddrk,
+                 mp->d_b_R_xy_crust_mantle_lddrk,
+                 mp->d_b_R_xz_crust_mantle_lddrk,
+                 mp->d_b_R_yz_crust_mantle_lddrk,
+                 alpha_lddrk,beta_lddrk,
                  FORWARD_OR_ADJOINT);
   }
 

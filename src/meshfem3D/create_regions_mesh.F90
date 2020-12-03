@@ -45,7 +45,7 @@
 !
 
   use constants, only: &
-    IMAIN,IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
+    IMAIN,IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE,CUSTOM_REAL, &
     SAVE_BOUNDARY_MESH,SAVE_MESHFILES_AVS_DX_FORMAT
 
   use shared_parameters, only: &
@@ -382,13 +382,18 @@
              rmassy(nglob_xy), &
              stat=ier)
     if (ier /= 0) stop 'Error in allocate 21'
+    rmassx(:) = 0.0_CUSTOM_REAL
+    rmassy(:) = 0.0_CUSTOM_REAL
 
     allocate(b_rmassx(nglob_xy), &
              b_rmassy(nglob_xy),stat=ier)
     if (ier /= 0) stop 'Error in allocate b_21'
+    b_rmassx(:) = 0.0_CUSTOM_REAL
+    b_rmassy(:) = 0.0_CUSTOM_REAL
 
     allocate(rmassz(nglob),stat=ier)
     if (ier /= 0) stop 'Error in allocate 22'
+    rmassz(:) = 0.0_CUSTOM_REAL
 
     ! allocates ocean load mass matrix as well if oceans
     if (OCEANS .and. iregion_code == IREGION_CRUST_MANTLE) then
@@ -918,6 +923,13 @@
   integer :: i,ier
   ! topology of the elements
   integer, dimension(NGNOD) :: iaddx,iaddy,iaddz
+
+  ! allocates array
+  if (.not. allocated(dershape3D)) then
+    allocate(dershape3D(NDIM,NGNOD,NGLLX,NGLLY,NGLLZ),stat=ier)
+    if (ier /= 0) stop 'Error allocating dershape3D array'
+    dershape3D(:,:,:,:,:) = 0.d0
+  endif
 
   ! do only once
   if (ipass == 1) then

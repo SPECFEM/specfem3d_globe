@@ -280,11 +280,11 @@
 !
 
 
-  subroutine save_forward_model_at_shifted_frequency()
+  subroutine save_forward_model_at_shifted_frequency(factor_scale_relaxed_crust_mantle,factor_scale_relaxed_inner_core)
 
 ! outputs model files in binary format
 
-  use constants
+  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,PI,GRAV,FOUR_THIRDS
   use shared_parameters, only: R_PLANET,RHOAV,LOCAL_PATH,TRANSVERSE_ISOTROPY
 
   use specfem_par_crustmantle
@@ -292,16 +292,21 @@
 
   implicit none
 
-  ! local parameters
-  integer :: ier
-  real(kind=CUSTOM_REAL) :: scaleval1,scaleval2 !,scaleval,scale_GPa
-  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: temp_store
+  real(kind=CUSTOM_REAL),dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT4_VAL) :: factor_scale_relaxed_crust_mantle
+  real(kind=CUSTOM_REAL),dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT5_VAL) :: factor_scale_relaxed_inner_core
 
+  ! local parameters
+  real(kind=CUSTOM_REAL) :: scaleval1,scale_factor_r
+  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: temp_store
+  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: muv_shifted,muh_shifted
+  integer :: i,j,k,ispec,ier
   character(len=MAX_STRING_LEN) :: filename, prname
 
-  ! scaling factors to re-dimensionalize units
-  scaleval1 = sngl( sqrt(PI*GRAV*RHOAV)*(R_PLANET/1000.0d0) )
-  scaleval2 = sngl( RHOAV/1000.0d0 )
+  ! debug
+  logical, parameter :: OUTPUT_RELAXED_MODEL = .false.
+
+  ! scaling factor to re-dimensionalize units
+  scaleval1 = real( sqrt(PI*GRAV*RHOAV)*(R_PLANET/1000.0d0), kind=CUSTOM_REAL)  ! velocities km/s
 
   ! note: since we only use shear attenuation, the shift occurs in muv values.
   !       thus, we output here only vpv, vsv or vp,vs for crust/mantle and inner core regions
@@ -311,7 +316,9 @@
   call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
 
   ! uses temporary array
-  allocate(temp_store(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),stat=ier)
+  allocate(temp_store(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE), &
+           muv_shifted(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE), &
+           muh_shifted(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE), stat=ier)
   if (ier /= 0) stop 'Error allocating temp_store array'
   temp_store(:,:,:,:) = 0._CUSTOM_REAL
 
@@ -324,54 +331,84 @@
     write(IMAIN,*) '  shifted model files in directory: ',trim(LOCAL_PATH)
   endif
 
+  ! user output
+  if (myrank == 0) write(IMAIN,*) '  crust/mantle:'
+
+  ! moduli (muv,muh) are at relaxed values (only Qmu implemented),
+  ! scales back to have values at center frequency
+  muv_shifted(:,:,:,:) = muvstore_crust_mantle(:,:,:,:)
+  muh_shifted(:,:,:,:) = muhstore_crust_mantle(:,:,:,:)
+  do ispec = 1,NSPEC_CRUST_MANTLE
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+          if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
+            scale_factor_r = factor_scale_relaxed_crust_mantle(i,j,k,ispec)
+          else
+            scale_factor_r = factor_scale_relaxed_crust_mantle(1,1,1,ispec)
+          endif
+          ! scaling back from relaxed to values at shifted frequency
+          ! (see in prepare_attenuation.f90 for how muv,muh are scaled to become relaxed moduli)
+          ! muv
+          muv_shifted(i,j,k,ispec) = muv_shifted(i,j,k,ispec) / scale_factor_r
+          ! muh
+          if (ispec_is_tiso_crust_mantle(ispec)) then
+            muh_shifted(i,j,k,ispec) = muh_shifted(i,j,k,ispec) / scale_factor_r
+          endif
+        enddo
+      enddo
+    enddo
+  enddo
+
   ! transverse isotropic model
   if (TRANSVERSE_ISOTROPY) then
-    ! vpv
-    filename = prname(1:len_trim(prname))//'vpv_shifted.bin'
-    open(unit=IOUT,file=trim(filename), &
-         status='unknown',form='unformatted',action='write',iostat=ier)
-    if (ier /= 0 ) call exit_mpi(myrank,'Error opening file '// trim(filename))
-
+    ! vpv (at relaxed values)
     temp_store(:,:,:,:) = sqrt((kappavstore_crust_mantle(:,:,:,:) &
-                          + 4.0_CUSTOM_REAL * muvstore_crust_mantle(:,:,:,:)/3.0_CUSTOM_REAL)/rhostore_crust_mantle(:,:,:,:)) &
+                          + FOUR_THIRDS * muv_shifted(:,:,:,:))/rhostore_crust_mantle(:,:,:,:)) &
                           * scaleval1
+
+    filename = prname(1:len_trim(prname))//'vpv_shifted.bin'
+    open(unit=IOUT,file=trim(filename),status='unknown',form='unformatted',action='write',iostat=ier)
+    if (ier /= 0 ) call exit_mpi(myrank,'Error opening file '// trim(filename))
     write(IOUT) temp_store
     close(IOUT)
+    call print_gll_min_max_all(NSPEC_CRUST_MANTLE,temp_store,"shifted vpv")
 
     ! vph
-    filename = prname(1:len_trim(prname))//'vph_shifted.bin'
-    open(unit=IOUT,file=trim(filename), &
-         status='unknown',form='unformatted',action='write',iostat=ier)
-    if (ier /= 0 ) call exit_mpi(myrank,'Error opening file '// trim(filename))
-
     temp_store(:,:,:,:) = sqrt((kappahstore_crust_mantle(:,:,:,:) &
-                          + 4.0_CUSTOM_REAL * muhstore_crust_mantle(:,:,:,:)/3.0_CUSTOM_REAL)/rhostore_crust_mantle(:,:,:,:)) &
+                          + FOUR_THIRDS * muh_shifted(:,:,:,:))/rhostore_crust_mantle(:,:,:,:)) &
                           * scaleval1
+
+    filename = prname(1:len_trim(prname))//'vph_shifted.bin'
+    open(unit=IOUT,file=trim(filename),status='unknown',form='unformatted',action='write',iostat=ier)
+    if (ier /= 0 ) call exit_mpi(myrank,'Error opening file '// trim(filename))
     write(IOUT) temp_store
     close(IOUT)
+    call print_gll_min_max_all(NSPEC_CRUST_MANTLE,temp_store,"shifted vph")
 
     ! vsv
-    filename = prname(1:len_trim(prname))//'vsv_shifted.bin'
-    open(unit=IOUT,file=trim(filename), &
-         status='unknown',form='unformatted',action='write',iostat=ier)
-    if (ier /= 0 ) call exit_mpi(myrank,'Error opening file '// trim(filename))
+    temp_store(:,:,:,:) = sqrt( muv_shifted(:,:,:,:)/rhostore_crust_mantle(:,:,:,:) )*scaleval1
 
-    temp_store(:,:,:,:) = sqrt( muvstore_crust_mantle(:,:,:,:)/rhostore_crust_mantle(:,:,:,:) )*scaleval1
+    filename = prname(1:len_trim(prname))//'vsv_shifted.bin'
+    open(unit=IOUT,file=trim(filename),status='unknown',form='unformatted',action='write',iostat=ier)
+    if (ier /= 0 ) call exit_mpi(myrank,'Error opening file '// trim(filename))
     write(IOUT) temp_store
     close(IOUT)
+    call print_gll_min_max_all(NSPEC_CRUST_MANTLE,temp_store,"shifted vsv")
 
     ! vsh
-    filename = prname(1:len_trim(prname))//'vsh_shifted.bin'
-    open(unit=IOUT,file=trim(filename), &
-         status='unknown',form='unformatted',action='write',iostat=ier)
-    if (ier /= 0 ) call exit_mpi(myrank,'Error opening file '// trim(filename))
+    temp_store(:,:,:,:) = sqrt( muh_shifted(:,:,:,:)/rhostore_crust_mantle(:,:,:,:) )*scaleval1
 
-    temp_store(:,:,:,:) = sqrt( muhstore_crust_mantle(:,:,:,:)/rhostore_crust_mantle(:,:,:,:) )*scaleval1
+    filename = prname(1:len_trim(prname))//'vsh_shifted.bin'
+    open(unit=IOUT,file=trim(filename),status='unknown',form='unformatted',action='write',iostat=ier)
+    if (ier /= 0 ) call exit_mpi(myrank,'Error opening file '// trim(filename))
     write(IOUT) temp_store
     close(IOUT)
+    call print_gll_min_max_all(NSPEC_CRUST_MANTLE,temp_store,"shifted vsh")
 
     ! user output
     if (myrank == 0) then
+      write(IMAIN,*) '  written:'
       write(IMAIN,*) '    proc*_reg1_vpv_shifted.bin'
       write(IMAIN,*) '    proc*_reg1_vph_shifted.bin'
       write(IMAIN,*) '    proc*_reg1_vsv_shifted.bin'
@@ -383,29 +420,30 @@
   else
     ! isotropic model
     ! vp
-    filename = prname(1:len_trim(prname))//'vp_shifted.bin'
-    open(unit=IOUT,file=trim(filename), &
-         status='unknown',form='unformatted',action='write',iostat=ier)
-    if (ier /= 0 ) call exit_mpi(myrank,'Error opening file '// trim(filename))
-
     temp_store(:,:,:,:) = sqrt((kappavstore_crust_mantle(:,:,:,:) &
-                          + 4.0_CUSTOM_REAL * muvstore_crust_mantle(:,:,:,:)/3.0_CUSTOM_REAL)/rhostore_crust_mantle(:,:,:,:)) &
+                          + FOUR_THIRDS * muv_shifted(:,:,:,:))/rhostore_crust_mantle(:,:,:,:)) &
                           * scaleval1
+
+    filename = prname(1:len_trim(prname))//'vp_shifted.bin'
+    open(unit=IOUT,file=trim(filename),status='unknown',form='unformatted',action='write',iostat=ier)
+    if (ier /= 0 ) call exit_mpi(myrank,'Error opening file '// trim(filename))
     write(IOUT) temp_store
     close(IOUT)
+    call print_gll_min_max_all(NSPEC_CRUST_MANTLE,temp_store,"shifted vp")
 
     ! vs
-    filename = prname(1:len_trim(prname))//'vs_shifted.bin'
-    open(unit=IOUT,file=trim(filename), &
-          status='unknown',form='unformatted',action='write',iostat=ier)
-    if (ier /= 0 ) call exit_mpi(myrank,'Error opening file '// trim(filename))
+    temp_store(:,:,:,:) = sqrt( muv_shifted(:,:,:,:)/rhostore_crust_mantle(:,:,:,:) )*scaleval1
 
-    temp_store(:,:,:,:) = sqrt( muvstore_crust_mantle(:,:,:,:)/rhostore_crust_mantle(:,:,:,:) )*scaleval1
+    filename = prname(1:len_trim(prname))//'vs_shifted.bin'
+    open(unit=IOUT,file=trim(filename),status='unknown',form='unformatted',action='write',iostat=ier)
+    if (ier /= 0 ) call exit_mpi(myrank,'Error opening file '// trim(filename))
     write(IOUT) temp_store
     close(IOUT)
+    call print_gll_min_max_all(NSPEC_CRUST_MANTLE,temp_store,"shifted vs")
 
     ! user output
     if (myrank == 0) then
+      write(IMAIN,*) '  written:'
       write(IMAIN,*) '    proc*_reg1_vp_shifted.bin'
       write(IMAIN,*) '    proc*_reg1_vs_shifted.bin'
       write(IMAIN,*)
@@ -415,44 +453,71 @@
   endif ! TRANSVERSE_ISOTROPY
 
   ! frees temporary array
-  deallocate(temp_store)
+  deallocate(temp_store,muv_shifted,muh_shifted)
 
   ! inner core region
   call create_name_database(prname,myrank,IREGION_INNER_CORE,LOCAL_PATH)
 
   ! uses temporary array
-  allocate(temp_store(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE),stat=ier)
+  allocate(temp_store(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE), &
+           muv_shifted(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE), stat=ier)
   if (ier /= 0) stop 'Error allocating temp_store array'
   temp_store(:,:,:,:) = 0._CUSTOM_REAL
+
+  ! user output
+  if (myrank == 0) write(IMAIN,*) '  inner core:'
+
+  ! moduli (muv,muh) are at relaxed values, scale back to have shifted values at center frequency
+  muv_shifted(:,:,:,:) = muvstore_inner_core(:,:,:,:)
+  do ispec = 1,NSPEC_INNER_CORE
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+          if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
+            scale_factor_r = factor_scale_relaxed_inner_core(i,j,k,ispec)
+          else
+            scale_factor_r = factor_scale_relaxed_inner_core(1,1,1,ispec)
+          endif
+
+          ! inverts to scale relaxed back to shifted factor
+          ! scaling back from relaxed to values at shifted frequency
+          ! (see in prepare_attenuation.f90 for how muv,muh are scaled to become relaxed moduli)
+          ! muv
+          muv_shifted(i,j,k,ispec) = muv_shifted(i,j,k,ispec) / scale_factor_r
+        enddo
+      enddo
+    enddo
+  enddo
 
   if (ANISOTROPIC_INNER_CORE_VAL) then
     call exit_mpi(myrank,'ANISOTROPIC_INNER_CORE not supported yet for shifted model file output')
   else
     ! isotropic model
     ! vp
-    filename = prname(1:len_trim(prname))//'vp_shifted.bin'
-    open(unit=IOUT,file=trim(filename), &
-         status='unknown',form='unformatted',action='write',iostat=ier)
-    if (ier /= 0 ) call exit_mpi(myrank,'Error opening file '// trim(filename))
-
     temp_store(:,:,:,:) = sqrt((kappavstore_inner_core(:,:,:,:) &
-                          + 4.0_CUSTOM_REAL * muvstore_inner_core(:,:,:,:)/3.0_CUSTOM_REAL)/rhostore_inner_core(:,:,:,:)) &
+                          + FOUR_THIRDS * muv_shifted(:,:,:,:))/rhostore_inner_core(:,:,:,:)) &
                           * scaleval1
+
+    filename = prname(1:len_trim(prname))//'vp_shifted.bin'
+    open(unit=IOUT,file=trim(filename),status='unknown',form='unformatted',action='write',iostat=ier)
+    if (ier /= 0 ) call exit_mpi(myrank,'Error opening file '// trim(filename))
     write(IOUT) temp_store
     close(IOUT)
+    call print_gll_min_max_all(NSPEC_INNER_CORE,temp_store,"shifted vp")
 
     ! vs
-    filename = prname(1:len_trim(prname))//'vs_shifted.bin'
-    open(unit=IOUT,file=trim(filename), &
-         status='unknown',form='unformatted',action='write',iostat=ier)
-    if (ier /= 0 ) call exit_mpi(myrank,'Error opening file '// trim(filename))
+    temp_store(:,:,:,:) = sqrt( muv_shifted(:,:,:,:)/rhostore_inner_core(:,:,:,:) )*scaleval1
 
-    temp_store(:,:,:,:) = sqrt( muvstore_inner_core(:,:,:,:)/rhostore_inner_core(:,:,:,:) )*scaleval1
+    filename = prname(1:len_trim(prname))//'vs_shifted.bin'
+    open(unit=IOUT,file=trim(filename),status='unknown',form='unformatted',action='write',iostat=ier)
+    if (ier /= 0 ) call exit_mpi(myrank,'Error opening file '// trim(filename))
     write(IOUT) temp_store
     close(IOUT)
+    call print_gll_min_max_all(NSPEC_INNER_CORE,temp_store,"shifted vs")
 
     ! user output
     if (myrank == 0) then
+      write(IMAIN,*) '  written:'
       write(IMAIN,*) '    proc*_reg3_vp_shifted.bin'
       write(IMAIN,*) '    proc*_reg3_vs_shifted.bin'
       write(IMAIN,*)
@@ -462,7 +527,61 @@
   endif ! TRANSVERSE_ISOTROPY
 
   ! frees temporary array
-  deallocate(temp_store)
+  deallocate(temp_store,muv_shifted)
+
+  ! outputs relaxed model values
+  if (OUTPUT_RELAXED_MODEL) then
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) '  outputting relaxed model:'
+      call flush_IMAIN()
+    endif
+    ! checks
+    if (.not. TRANSVERSE_ISOTROPY) stop 'Outputting relaxed model requires TRANSVERSE_ISOTROPY'
+
+    ! scaling factor to re-dimensionalize units
+    ! the scale of GPa--[g/cm^3][(km/s)^2]
+    scaleval1 = real( ((sqrt(PI*GRAV*RHOAV)*R_PLANET/1000.d0)**2)*(RHOAV/1000.d0), kind=CUSTOM_REAL) ! moduli GPa
+
+    ! crust/mantle region
+    call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
+    ! muv
+    filename = prname(1:len_trim(prname))//'muv_relaxed.bin'
+    open(unit=IOUT,file=trim(filename),status='unknown',form='unformatted',action='write',iostat=ier)
+    if (ier /= 0 ) call exit_mpi(myrank,'Error opening file '// trim(filename))
+    write(IOUT) muvstore_crust_mantle * scaleval1
+    close(IOUT)
+    call print_gll_min_max_all(NSPEC_CRUST_MANTLE,muvstore_crust_mantle * scaleval1,"relaxed muv")
+    ! muh
+    filename = prname(1:len_trim(prname))//'muh_relaxed.bin'
+    open(unit=IOUT,file=trim(filename),status='unknown',form='unformatted',action='write',iostat=ier)
+    if (ier /= 0 ) call exit_mpi(myrank,'Error opening file '// trim(filename))
+    write(IOUT) muhstore_crust_mantle * scaleval1
+    close(IOUT)
+    call print_gll_min_max_all(NSPEC_CRUST_MANTLE,muhstore_crust_mantle * scaleval1,"relaxed muh")
+    ! kappav
+    filename = prname(1:len_trim(prname))//'kappav_relaxed.bin'
+    open(unit=IOUT,file=trim(filename),status='unknown',form='unformatted',action='write',iostat=ier)
+    if (ier /= 0 ) call exit_mpi(myrank,'Error opening file '// trim(filename))
+    write(IOUT) kappavstore_crust_mantle * scaleval1
+    close(IOUT)
+    call print_gll_min_max_all(NSPEC_CRUST_MANTLE,kappavstore_crust_mantle * scaleval1,"relaxed kappav")
+    ! kappah
+    filename = prname(1:len_trim(prname))//'kappah_relaxed.bin'
+    open(unit=IOUT,file=trim(filename),status='unknown',form='unformatted',action='write',iostat=ier)
+    if (ier /= 0 ) call exit_mpi(myrank,'Error opening file '// trim(filename))
+    write(IOUT) kappahstore_crust_mantle * scaleval1
+    close(IOUT)
+    call print_gll_min_max_all(NSPEC_CRUST_MANTLE,kappahstore_crust_mantle * scaleval1,"relaxed kappah")
+
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) '  written:'
+      write(IMAIN,*) '    proc*_reg1_muv_relaxed.bin, ..'
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
+  endif
 
   end subroutine save_forward_model_at_shifted_frequency
 

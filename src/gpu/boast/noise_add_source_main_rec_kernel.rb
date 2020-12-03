@@ -1,21 +1,21 @@
 module BOAST
 
-  def BOAST::noise_add_source_master_rec_kernel(ref = true, n_gll3 = 125)
+  def BOAST::noise_add_source_main_rec_kernel(ref = true, n_gll3 = 125)
     push_env( :array_start => 0 )
     kernel = CKernel::new
 
-    function_name = "noise_add_source_master_rec_kernel"
+    function_name = "noise_add_source_main_rec_kernel"
 
-    ibool =              Int("ibool",               :dir => :in,   :dim => [Dim()] )
-    ispec_selected_rec = Int("ispec_selected_rec",  :dir => :in,   :dim => [Dim()] )
-    irec_master_noise  = Int("irec_master_noise",   :dir => :in )
-    accel =             Real("accel",               :dir => :inout,:dim => [Dim()] )
-    noise_sourcearray = Real("noise_sourcearray",   :dir => :in,   :dim => [Dim()] )
-    it =                 Int("it",                  :dir => :in )
+    ibool              = Int("ibool",             :dir => :in,   :dim => [Dim()] )
+    ispec_selected_rec = Int("ispec_selected_rec",:dir => :in,   :dim => [Dim()] )
+    irec_main_noise    = Int("irec_main_noise",   :dir => :in )
+    accel              = Real("accel",            :dir => :inout,:dim => [Dim()] )
+    noise_sourcearray  = Real("noise_sourcearray",:dir => :in,   :dim => [Dim()] )
+    it                 = Int("it",                :dir => :in )
 
     ngll3 = Int("NGLL3", :const => n_gll3)
 
-    p = Procedure(function_name, [ibool, ispec_selected_rec, irec_master_noise, accel, noise_sourcearray, it])
+    p = Procedure(function_name, [ibool, ispec_selected_rec, irec_main_noise, accel, noise_sourcearray, it])
     if (get_lang == CUDA and ref) then
       get_output.print File::read("references/#{function_name}.cu")
     elsif(get_lang == CL or get_lang == CUDA) then
@@ -27,7 +27,7 @@ module BOAST
         comment()
 
         print tx === get_local_id(0)
-        print ispec === ispec_selected_rec[irec_master_noise] - 1
+        print ispec === ispec_selected_rec[irec_main_noise] - 1
         print iglob === ibool[tx + ngll3*ispec] - 1
         comment()
 

@@ -440,7 +440,7 @@ typedef struct mesh_ {
   gpu_int_mem d_ispec_is_tiso_crust_mantle;
 
   // mesh locations
-  gpu_realw_mem d_rstore_crust_mantle;
+  gpu_realw_mem d_rstore_crust_mantle;  // needed for tiso
 
   // anisotropic 3D mantle
   gpu_realw_mem d_c11store_crust_mantle;
@@ -557,9 +557,6 @@ typedef struct mesh_ {
   // global indexing
   gpu_int_mem d_ibool_outer_core;
 
-  // mesh locations
-  gpu_realw_mem d_rstore_outer_core;
-
   // wavefields
   // displacement, velocity, acceleration
   gpu_realw_mem d_displ_outer_core;
@@ -631,9 +628,6 @@ typedef struct mesh_ {
   // global indexing
   gpu_int_mem d_ibool_inner_core;
   gpu_int_mem d_idoubling_inner_core;
-
-  // mesh locations
-  gpu_realw_mem d_rstore_inner_core;
 
   // anisotropic 3D mantle
   gpu_realw_mem d_c11store_inner_core;
@@ -777,11 +771,12 @@ typedef struct mesh_ {
   // ------------------------------------------------------------------   //
   // gravity
   // ------------------------------------------------------------------   //
-  gpu_realw_mem d_d_ln_density_dr_table;   // needed also for no gravity case
-  gpu_realw_mem d_minus_rho_g_over_kappa_fluid;
-  gpu_realw_mem d_minus_gravity_table;
-  gpu_realw_mem d_minus_deriv_gravity_table;
-  gpu_realw_mem d_density_table;
+  gpu_realw_mem d_gravity_pre_store_outer_core;
+  gpu_realw_mem d_gravity_pre_store_crust_mantle;
+  gpu_realw_mem d_gravity_pre_store_inner_core;
+
+  gpu_realw_mem d_gravity_H_crust_mantle;
+  gpu_realw_mem d_gravity_H_inner_core;
 
   realw minus_g_icb;
   realw minus_g_cmb;
@@ -837,8 +832,8 @@ typedef struct mesh_ {
   // adjoint receivers/sources
   int nadj_rec_local;
 
-  gpu_realw_mem d_source_adjoint;
-  realw *h_source_adjoint;
+  gpu_realw_mem d_stf_array_adjoint;
+  realw *h_stf_array_adjoint;
 
   gpu_int_mem d_number_adjsources_global;
 
@@ -998,7 +993,7 @@ typedef struct mesh_ {
 #ifdef USE_OPENCL
   // pinned memory allocated by ALLOC_PINNED_BUFFER_OCL
   cl_mem h_pinned_station_seismo_field;
-  cl_mem h_pinned_source_adjoint;
+  cl_mem h_pinned_stf_array_adjoint;
 
   // crust mantle
   cl_mem h_pinned_send_accel_buffer_cm;
@@ -1095,7 +1090,47 @@ typedef struct mesh_ {
   // LDDRK
   // ------------------------------------------------------------------ //
   int use_lddrk;
-  // daniel debug: todo - add lddrk arrays here and in gpu_buffer_list.c for initialization
+  gpu_realw_mem d_tau_sigmainvval;
+  // wavefields intermediate
+  gpu_realw_mem d_displ_crust_mantle_lddrk;
+  gpu_realw_mem d_veloc_crust_mantle_lddrk;
+  gpu_realw_mem d_displ_outer_core_lddrk;
+  gpu_realw_mem d_veloc_outer_core_lddrk;
+  gpu_realw_mem d_displ_inner_core_lddrk;
+  gpu_realw_mem d_veloc_inner_core_lddrk;
+  // backward/reconstructed elastic wavefield
+  gpu_realw_mem d_b_displ_crust_mantle_lddrk;
+  gpu_realw_mem d_b_veloc_crust_mantle_lddrk;
+  gpu_realw_mem d_b_displ_outer_core_lddrk;
+  gpu_realw_mem d_b_veloc_outer_core_lddrk;
+  gpu_realw_mem d_b_displ_inner_core_lddrk;
+  gpu_realw_mem d_b_veloc_inner_core_lddrk;
+  // rotation
+  gpu_realw_mem d_A_array_rotation_lddrk;
+  gpu_realw_mem d_B_array_rotation_lddrk;
+  gpu_realw_mem d_b_A_array_rotation_lddrk;
+  gpu_realw_mem d_b_B_array_rotation_lddrk;
+  // attenuation
+  gpu_realw_mem d_R_xx_crust_mantle_lddrk;
+  gpu_realw_mem d_R_yy_crust_mantle_lddrk;
+  gpu_realw_mem d_R_xy_crust_mantle_lddrk;
+  gpu_realw_mem d_R_xz_crust_mantle_lddrk;
+  gpu_realw_mem d_R_yz_crust_mantle_lddrk;
+  gpu_realw_mem d_b_R_xx_crust_mantle_lddrk;
+  gpu_realw_mem d_b_R_yy_crust_mantle_lddrk;
+  gpu_realw_mem d_b_R_xy_crust_mantle_lddrk;
+  gpu_realw_mem d_b_R_xz_crust_mantle_lddrk;
+  gpu_realw_mem d_b_R_yz_crust_mantle_lddrk;
+  gpu_realw_mem d_R_xx_inner_core_lddrk;
+  gpu_realw_mem d_R_yy_inner_core_lddrk;
+  gpu_realw_mem d_R_xy_inner_core_lddrk;
+  gpu_realw_mem d_R_xz_inner_core_lddrk;
+  gpu_realw_mem d_R_yz_inner_core_lddrk;
+  gpu_realw_mem d_b_R_xx_inner_core_lddrk;
+  gpu_realw_mem d_b_R_yy_inner_core_lddrk;
+  gpu_realw_mem d_b_R_xy_inner_core_lddrk;
+  gpu_realw_mem d_b_R_xz_inner_core_lddrk;
+  gpu_realw_mem d_b_R_yz_inner_core_lddrk;
 
 } Mesh;
 

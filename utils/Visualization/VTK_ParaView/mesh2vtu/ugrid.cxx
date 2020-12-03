@@ -141,7 +141,11 @@ int main(int argc, char** argv) {
   dataSet -> GetPointData() -> SetScalars(newScalars);
 
   vtkXMLUnstructuredGridWriter* writer = vtkXMLUnstructuredGridWriter::New();
+#if VTK_MAJOR_VERSION <= 5
   writer -> SetInput(dataSet);
+#else
+  writer -> SetInputData(dataSet);
+#endif
   writer -> SetFileName(output);
   writer -> Write();
 

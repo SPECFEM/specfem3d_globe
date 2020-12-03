@@ -177,21 +177,13 @@
   ! crust/mantle
   if ((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. &
       (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL)) then
-    if (USE_LDDRK) then
-      nullify(rmassx_crust_mantle,rmassy_crust_mantle)
-    else
-      deallocate(rmassx_crust_mantle,rmassy_crust_mantle)
-    endif
+    deallocate(rmassx_crust_mantle,rmassy_crust_mantle)
   else
     nullify(rmassx_crust_mantle,rmassy_crust_mantle)
   endif
   if (SIMULATION_TYPE == 3) then
     if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) then
-      if (USE_LDDRK) then
-        nullify(b_rmassx_crust_mantle,b_rmassy_crust_mantle)
-      else
-        deallocate(b_rmassx_crust_mantle,b_rmassy_crust_mantle)
-      endif
+      deallocate(b_rmassx_crust_mantle,b_rmassy_crust_mantle)
     else
       nullify(b_rmassx_crust_mantle,b_rmassy_crust_mantle)
     endif
@@ -294,7 +286,7 @@
   ! receivers
   deallocate(islice_selected_rec,ispec_selected_rec, &
              xi_receiver,eta_receiver,gamma_receiver)
-  if (myrank == 0 .and. WRITE_SEISMOGRAMS_BY_MASTER) deallocate(islice_num_rec_local)
+  if (myrank == 0 .and. WRITE_SEISMOGRAMS_BY_MAIN) deallocate(islice_num_rec_local)
   deallocate(station_name,network_name, &
              stlat,stlon,stele,stbur)
   deallocate(nu_rec,number_receiver_global)

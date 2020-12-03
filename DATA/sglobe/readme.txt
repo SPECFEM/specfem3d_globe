@@ -20,13 +20,12 @@ reference:
 implementation:
   The model parameterization uses spherical harmonics up to degree 35 (horizontally) and 21 vertical splines.
 
-  P-wave velocity perturbations (dvp) taken from P12 of S20RTS,
-  density perturbations (drho) scaled from Vsv perturbations (dvsv);
+  P-wave perturbations (dvp) scaled from Vs perturbations as in Chang et al., 2015.
+  Density perturbations (drho) scaled from Vs perturbations as in Chang et al., 2015.
 
   The mantle model is defined between Moho and CMB;
-  uses PREM as 1D reference (also for attenuation & eta-parameter)
-
-  The isotropic version takes the Voigt average for Vs from vsv & vsh.
+  uses PREM as 1D reference (also for attenuation & eta-parameter).
+  3D crustal model includes perturbations from Crust2.0 [Bassin et al., 2000] as discussed in Chang et al., 2015.
 
   Par_file options are:
 
@@ -40,4 +39,6 @@ implementation:
 
     isotropic version (Voigt) uses file
     - joint_ani_21spl_wogbadwm_1.3aniso_10000_l35_effnum_16995.6_misfit_0.2450_v.sph as dvs_iso.dat
+
+  (implementation by Elodie Kendall, Laura Parisi, Daniel Peter)
 

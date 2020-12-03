@@ -540,7 +540,7 @@ subroutine read_mesh_databases_addressing_adios()
     close(IIN)
   endif
 
-  ! broadcast the information read on the master to the nodes
+  ! broadcast the information read on the main to the nodes
   call bcast_all_i(addressing,NCHUNKS_VAL*NPROC_XI_VAL*NPROC_ETA_VAL)
   call bcast_all_i(ichunk_slice,NPROCTOT_VAL)
   call bcast_all_i(iproc_xi_slice,NPROCTOT_VAL)

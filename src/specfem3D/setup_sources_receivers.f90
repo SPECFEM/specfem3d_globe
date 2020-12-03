@@ -770,7 +770,7 @@
   integer :: isource
 
   ! makes smaller hdur for movies
-  logical,parameter :: USE_SMALLER_HDUR_MOVIE = .true.
+  logical,parameter :: USE_SMALLER_HDUR_MOVIE = .false.  ! by default off, to use same HDUR_MOVIE as specified in Par_file
 
   if (abs(minval(tshift_src)) > TINYVAL) &
     call exit_MPI(myrank,'one tshift_src must be zero, others must be positive')
@@ -788,8 +788,10 @@
     hdur = sqrt(hdur**2 + HDUR_MOVIE**2)
     if (myrank == 0) then
       write(IMAIN,*)
-      write(IMAIN,*) 'Each source is being convolved with HDUR_MOVIE = ',HDUR_MOVIE
+      write(IMAIN,*) 'Each source is being convolved with HDUR_MOVIE = ',sngl(HDUR_MOVIE)
+      write(IMAIN,*) 'Total source hdur = ',sngl(hdur),'(s)'
       write(IMAIN,*)
+      call flush_IMAIN()
     endif
   endif
 
@@ -826,8 +828,13 @@
     t0 = - t0
   else
     ! moment tensors
+    if (USE_MONOCHROMATIC_CMT_SOURCE) then
+    ! (based on monochromatic functions)
+      t0 = 0.d0
+    else
     ! (based on Heaviside functions)
-    t0 = - 1.5d0 * minval( tshift_src(:) - hdur(:) )
+      t0 = - 1.5d0 * minval( tshift_src(:) - hdur(:) )
+    endif
   endif
 
   ! uses an external file for source time function, which starts at time 0.0
@@ -917,7 +924,7 @@
     ! note: for zero length, nstep has minimal of 5 timesteps for testing
     !       we won't extend this
     !
-    ! careful: do not use RECORD_LENGTH_IN_MINUTES here, as it is only read by the master process
+    ! careful: do not use RECORD_LENGTH_IN_MINUTES here, as it is only read by the main process
     !          when reading the parameter file, but it is not broadcasted to all other processes
     !          NSTEP gets broadcasted, so we work with this values
     if (NSTEP /= 5) then
@@ -1133,8 +1140,8 @@
     endif
   endif
 
-  ! for master process seismogram output
-  if (myrank == 0 .and. WRITE_SEISMOGRAMS_BY_MASTER) then
+  ! for main process seismogram output
+  if (myrank == 0 .and. WRITE_SEISMOGRAMS_BY_MAIN) then
     ! counts number of local receivers for each slice
     allocate(islice_num_rec_local(0:NPROCTOT_VAL-1),stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating islice_num_rec_local')
@@ -1160,7 +1167,7 @@
   endif
 
   ! seismograms
-  ! gather from slaves on master
+  ! gather from secondary processes on main
   tmp_rec_local_all(:) = 0
   tmp_rec_local_all(0) = nrec_local
   if (NPROCTOT_VAL > 1) then
@@ -1182,8 +1189,8 @@
     endif
     ! outputs info
     write(IMAIN,*) 'seismograms:'
-    if (WRITE_SEISMOGRAMS_BY_MASTER) then
-      write(IMAIN,*) '  seismograms written by master process only'
+    if (WRITE_SEISMOGRAMS_BY_MAIN) then
+      write(IMAIN,*) '  seismograms written by main process only'
     else
       write(IMAIN,*) '  seismograms written by all processes'
     endif
@@ -1197,7 +1204,7 @@
 
   ! adjoint sources
   if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
-    ! gather from slaves on master
+    ! gather from secondary processes on main
     tmp_rec_local_all(:) = 0
     tmp_rec_local_all(0) = nadj_rec_local
     if (NPROCTOT_VAL > 1) then

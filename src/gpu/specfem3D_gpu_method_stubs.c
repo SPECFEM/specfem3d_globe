@@ -124,13 +124,13 @@ void FC_FUNC_ (compute_add_sources_adjoint_gpu,
 void FC_FUNC_(transfer_adj_to_device,
               TRANSFER_ADJ_TO_DEVICE)(long* Mesh_pointer_f,
                                       int* h_nrec,
-                                      realw* h_source_adjoint,
+                                      realw* h_stf_array_adjoint,
                                       int* h_islice_selected_rec) {}
 
 void FC_FUNC_(transfer_adj_to_device_async,
               TRANSFER_ADJ_TO_DEVICE_ASYNC)(long *Mesh_pointer_f,
                                             int *h_nrec,
-                                            realw *h_source_adjoint,
+                                            realw *h_stf_array_adjoint,
                                             int *h_islice_selected_rec) {}
 
 
@@ -166,6 +166,7 @@ void FC_FUNC_ (compute_coupling_ocean_gpu,
 void FC_FUNC_ (compute_forces_crust_mantle_gpu,
                COMPUTE_FORCES_CRUST_MANTLE_GPU) (long *Mesh_pointer_f,
                                                  int *iphase,
+                                                 realw *alpha_lddrk_f, realw *beta_lddrk_f,
                                                  int *FORWARD_OR_ADJOINT_f) {}
 
 
@@ -176,6 +177,7 @@ void FC_FUNC_ (compute_forces_crust_mantle_gpu,
 void FC_FUNC_ (compute_forces_inner_core_gpu,
                COMPUTE_FORCES_INNER_CORE_GPU) (long *Mesh_pointer_f,
                                                int *iphase,
+                                               realw *alpha_lddrk_f, realw *beta_lddrk_f,
                                                int *FORWARD_OR_ADJOINT_f) {}
 
 
@@ -187,6 +189,7 @@ void FC_FUNC_ (compute_forces_outer_core_gpu,
                COMPUTE_FORCES_OUTER_CORE_GPU) (long *Mesh_pointer_f,
                                                int *iphase,
                                                realw *timeval_f,
+                                               realw *alpha_lddrk_f,realw *beta_lddrk_f,
                                                int *FORWARD_OR_ADJOINT_f) {}
 
 
@@ -310,11 +313,11 @@ void FC_FUNC_ (noise_transfer_surface_to_host,
                NOISE_TRANSFER_SURFACE_TO_HOST) (long *Mesh_pointer_f,
                                                 realw *h_noise_surface_movie) {}
 
-void FC_FUNC_ (noise_add_source_master_rec_gpu,
-               NOISE_ADD_SOURCE_MASTER_REC_GPU) (long *Mesh_pointer_f,
-                                                 int *it_f,
-                                                 int *irec_master_noise_f,
-                                                 int *islice_selected_rec) {}
+void FC_FUNC_ (noise_add_source_main_rec_gpu,
+               NOISE_ADD_SOURCE_MAIN_REC_GPU) (long *Mesh_pointer_f,
+                                               int *it_f,
+                                               int *irec_main_noise_f,
+                                               int *h_islice_selected_rec) {}
 
 void FC_FUNC_ (noise_add_surface_movie_gpu,
                NOISE_ADD_SURFACE_MOVIE_GPU) (long *Mesh_pointer_f,
@@ -381,18 +384,16 @@ void FC_FUNC_ (prepare_fields_rotation_device,
 
 void FC_FUNC_ (prepare_fields_gravity_device,
                PREPARE_FIELDS_gravity_DEVICE) (long *Mesh_pointer_f,
-                                               realw *d_ln_density_dr_table,
-                                               realw *minus_rho_g_over_kappa_fluid,
-                                               realw *minus_gravity_table,
-                                               realw *minus_deriv_gravity_table,
-                                               realw *density_table,
+                                               realw *gravity_pre_store_outer_core,
+                                               realw *gravity_pre_store_crust_mantle,
+                                               realw *gravity_pre_store_inner_core,
+                                               realw *gravity_H_crust_mantle,
+                                               realw *gravity_H_inner_core,
                                                realw *h_wgll_cube,
-                                               int *NRAD_GRAVITY,
                                                realw *minus_g_icb,
                                                realw *minus_g_cmb,
                                                double *RHO_BOTTOM_OC,
-                                               double *RHO_TOP_OC,
-                                               double *R_EARTH_KM) {}
+                                               double *RHO_TOP_OC) {}
 
 void FC_FUNC_ (prepare_fields_attenuat_device,
                PREPARE_FIELDS_ATTENUAT_DEVICE) (long *Mesh_pointer_f,
@@ -421,7 +422,8 @@ void FC_FUNC_ (prepare_fields_attenuat_device,
                                                 realw *factor_common_inner_core,
                                                 realw *one_minus_sum_beta_inner_core,
                                                 realw *alphaval, realw *betaval, realw *gammaval,
-                                                realw *b_alphaval, realw *b_betaval, realw *b_gammaval) {}
+                                                realw *b_alphaval, realw *b_betaval, realw *b_gammaval,
+                                                int *N_SLS_f) {}
 
 void FC_FUNC_ (prepare_fields_strain_device,
                PREPARE_FIELDS_STRAIN_DEVICE) (long *Mesh_pointer_f,
@@ -514,7 +516,8 @@ void FC_FUNC_ (prepare_oceans_device,
                                        realw *h_normal_ocean_load) {}
 
 void FC_FUNC_ (prepare_lddrk_device,
-               PREPARE_LDDRK_DEVICE) (long *Mesh_pointer_f) {}
+               PREPARE_LDDRK_DEVICE) (long *Mesh_pointer_f,
+                                      realw *tau_sigmainvval) {}
 
 void FC_FUNC_ (prepare_crust_mantle_device,
                PREPARE_CRUST_MANTLE_DEVICE) (long *Mesh_pointer_f,
@@ -846,6 +849,25 @@ void FC_FUNC_(register_host_array,
 
 void FC_FUNC_(unregister_host_array,
               UNREGISTER_HOST_ARRAY)(realw *h_array) {}
+
+
+//
+// src/gpu/update_displacement_LDDRK_gpu.c
+//
+
+void FC_FUNC_ (update_displ_lddrk_gpu,
+               UPDATE_DISPL_LDDRK_GPU) (long *Mesh_pointer_f,
+                                        int *FORWARD_OR_ADJOINT) {}
+
+void FC_FUNC_ (update_elastic_lddrk_gpu,
+               UPDATE_ELASTIC_LDDRK_GPU) (long *Mesh_pointer_f,
+                                          realw *alpha_lddrk_f, realw *beta_lddrk_f,
+                                          int *FORWARD_OR_ADJOINT) {}
+
+void FC_FUNC_ (update_acoustic_lddrk_gpu,
+               UPDATE_ACOUSTIC_LDDRK_GPU) (long *Mesh_pointer_f,
+                                           realw *alpha_lddrk_f, realw *beta_lddrk_f,
+                                           int *FORWARD_OR_ADJOINT) {}
 
 
 //

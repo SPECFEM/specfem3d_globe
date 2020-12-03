@@ -101,7 +101,7 @@
       stop 'Error VTK points file'
     endif
 
-    write(IOUT_VTK,'(3e18.6)') xstore_dummy(iglob),ystore_dummy(iglob),zstore_dummy(iglob)
+    write(IOUT_VTK,'(3e18.6)') real(xstore_dummy(iglob),kind=4),real(ystore_dummy(iglob),kind=4),real(zstore_dummy(iglob),kind=4)
   enddo
   write(IOUT_VTK,*)
 
@@ -216,7 +216,7 @@
   write(IOUT_VTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
   write(IOUT_VTK, '(a,i12,a)') 'POINTS ', nglob, ' float'
   do i = 1,nglob
-    write(IOUT_VTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
+    write(IOUT_VTK,'(3e18.6)') real(xstore_dummy(i),kind=4),real(ystore_dummy(i),kind=4),real(zstore_dummy(i),kind=4)
   enddo
   write(IOUT_VTK,*)
 
@@ -295,7 +295,7 @@
   write(IOUT_VTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
   write(IOUT_VTK, '(a,i12,a)') 'POINTS ', nglob, ' float'
   do i = 1,nglob
-    write(IOUT_VTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
+    write(IOUT_VTK,'(3e18.6)') real(xstore_dummy(i),kind=4),real(ystore_dummy(i),kind=4),real(zstore_dummy(i),kind=4)
   enddo
   write(IOUT_VTK,*)
 
@@ -376,7 +376,7 @@
 
     call rthetaphi_2_xyz(xval,yval,zval,rval,thetaval,phival)
 
-    write(IOUT_VTK,'(3e18.6)') xval,yval,zval
+    write(IOUT_VTK,'(3e18.6)') real(xval,kind=4),real(yval,kind=4),real(zval,kind=4)
   enddo
   write(IOUT_VTK,*)
 
@@ -423,27 +423,27 @@
   write(IOUT_VTK,'(a)') "SCALARS x_comp float"
   write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
   do i = 1,nglob
-      write(IOUT_VTK,*) glob_data(1,i)
+      write(IOUT_VTK,*) real(glob_data(1,i),kind=4)
   enddo
   ! y components
   write(IOUT_VTK,'(a)') "SCALARS y_comp float"
   write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
   do i = 1,nglob
-      write(IOUT_VTK,*) glob_data(2,i)
+      write(IOUT_VTK,*) real(glob_data(2,i),kind=4)
   enddo
   ! z components
   write(IOUT_VTK,'(a)') "SCALARS z_comp float"
   write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
   do i = 1,nglob
-      write(IOUT_VTK,*) glob_data(3,i)
+      write(IOUT_VTK,*) real(glob_data(3,i),kind=4)
   enddo
   ! norm
   write(IOUT_VTK,'(a)') "SCALARS norm float"
   write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
   do i = 1,nglob
-      write(IOUT_VTK,*) sqrt( glob_data(1,i)*glob_data(1,i) &
-                        + glob_data(2,i)*glob_data(2,i) &
-                        + glob_data(3,i)*glob_data(3,i))
+      write(IOUT_VTK,*) sqrt( real(glob_data(1,i)*glob_data(1,i) &
+                                 + glob_data(2,i)*glob_data(2,i) &
+                                 + glob_data(3,i)*glob_data(3,i),kind=4))
   enddo
   write(IOUT_VTK,*)
 
@@ -498,7 +498,7 @@
 !  integer, dimension(:,:),allocatable :: idoubling_all
 !  real(kind=CUSTOM_REAL), dimension(nglob) :: tmp
 !
-!  ! master collect arrays
+!  ! main collect arrays
 !  if (myrank == 0) then
 !    allocate(store_val_x_all(nglob,0:NPROCTOT-1), &
 !            store_val_y_all(nglob,0:NPROCTOT-1), &
@@ -522,7 +522,7 @@
 !    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating dummy stores')
 !  endif
 !
-!  ! gather info on master proc
+!  ! gather info on main proc
 !  call gather_all_cr(xstore_dummy,nglob,store_val_x_all,nglob,NPROCTOT)
 !  call gather_all_cr(ystore_dummy,nglob,store_val_y_all,nglob,NPROCTOT)
 !  call gather_all_cr(zstore_dummy,nglob,store_val_z_all,nglob,NPROCTOT)
@@ -712,28 +712,28 @@
     write(IOUT_VTK, '(a,i12,a)') 'POINTS ', nspec*8, ' float'
     do ispec=1,nspec
       i = ibool(1,1,1,ispec)
-      write(IOUT_VTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
+      write(IOUT_VTK,'(3e18.6)') real(xstore_dummy(i),kind=4),real(ystore_dummy(i),kind=4),real(zstore_dummy(i),kind=4)
 
       i = ibool(NGLLX,1,1,ispec)
-      write(IOUT_VTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
+      write(IOUT_VTK,'(3e18.6)') real(xstore_dummy(i),kind=4),real(ystore_dummy(i),kind=4),real(zstore_dummy(i),kind=4)
 
       i = ibool(NGLLX,NGLLY,1,ispec)
-      write(IOUT_VTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
+      write(IOUT_VTK,'(3e18.6)') real(xstore_dummy(i),kind=4),real(ystore_dummy(i),kind=4),real(zstore_dummy(i),kind=4)
 
       i = ibool(1,NGLLY,1,ispec)
-      write(IOUT_VTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
+      write(IOUT_VTK,'(3e18.6)') real(xstore_dummy(i),kind=4),real(ystore_dummy(i),kind=4),real(zstore_dummy(i),kind=4)
 
       i = ibool(1,1,NGLLZ,ispec)
-      write(IOUT_VTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
+      write(IOUT_VTK,'(3e18.6)') real(xstore_dummy(i),kind=4),real(ystore_dummy(i),kind=4),real(zstore_dummy(i),kind=4)
 
       i = ibool(NGLLX,1,NGLLZ,ispec)
-      write(IOUT_VTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
+      write(IOUT_VTK,'(3e18.6)') real(xstore_dummy(i),kind=4),real(ystore_dummy(i),kind=4),real(zstore_dummy(i),kind=4)
 
       i = ibool(NGLLX,NGLLY,NGLLZ,ispec)
-      write(IOUT_VTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
+      write(IOUT_VTK,'(3e18.6)') real(xstore_dummy(i),kind=4),real(ystore_dummy(i),kind=4),real(zstore_dummy(i),kind=4)
 
       i = ibool(1,NGLLY,NGLLZ,ispec)
-      write(IOUT_VTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
+      write(IOUT_VTK,'(3e18.6)') real(xstore_dummy(i),kind=4),real(ystore_dummy(i),kind=4),real(zstore_dummy(i),kind=4)
     enddo
   else
     write(IOUT_VTK, '(a,i16,a)') 'POINTS ', NGLLX*NGLLY*NGLLZ*nspec, ' float'
@@ -742,7 +742,9 @@
         do j = 1,NGLLY
           do i = 1,NGLLX
             iglob = ibool(i,j,k,ispec)
-            write(IOUT_VTK,'(3e18.6)') xstore_dummy(iglob),ystore_dummy(iglob),zstore_dummy(iglob)
+            write(IOUT_VTK,'(3e18.6)') real(xstore_dummy(iglob),kind=4), &
+                                       real(ystore_dummy(iglob),kind=4), &
+                                       real(zstore_dummy(iglob),kind=4)
           enddo
         enddo
       enddo
@@ -801,35 +803,35 @@
   if (USE_CORNERS) then
     do ispec = 1,nspec
       !i = ibool(1,1,1,ispec)
-      write(IOUT_VTK,*) gll_data(1,1,1,ispec)
+      write(IOUT_VTK,*) real(gll_data(1,1,1,ispec),kind=4)
 
       !i = ibool(NGLLX,1,1,ispec)
-      write(IOUT_VTK,*) gll_data(NGLLX,1,1,ispec)
+      write(IOUT_VTK,*) real(gll_data(NGLLX,1,1,ispec),kind=4)
 
       !i = ibool(NGLLX,NGLLY,1,ispec)
-      write(IOUT_VTK,*) gll_data(NGLLX,NGLLY,1,ispec)
+      write(IOUT_VTK,*) real(gll_data(NGLLX,NGLLY,1,ispec),kind=4)
 
       !i = ibool(1,NGLLY,1,ispec)
-      write(IOUT_VTK,*) gll_data(1,NGLLY,1,ispec)
+      write(IOUT_VTK,*) real(gll_data(1,NGLLY,1,ispec),kind=4)
 
       !i = ibool(1,1,NGLLZ,ispec)
-      write(IOUT_VTK,*) gll_data(1,1,NGLLZ,ispec)
+      write(IOUT_VTK,*) real(gll_data(1,1,NGLLZ,ispec),kind=4)
 
       !i = ibool(NGLLX,1,NGLLZ,ispec)
-      write(IOUT_VTK,*) gll_data(NGLLX,1,NGLLZ,ispec)
+      write(IOUT_VTK,*) real(gll_data(NGLLX,1,NGLLZ,ispec),kind=4)
 
       !i = ibool(NGLLX,NGLLY,NGLLZ,ispec)
-      write(IOUT_VTK,*) gll_data(NGLLX,NGLLY,NGLLZ,ispec)
+      write(IOUT_VTK,*) real(gll_data(NGLLX,NGLLY,NGLLZ,ispec),kind=4)
 
       !i = ibool(1,NGLLY,NGLLZ,ispec)
-      write(IOUT_VTK,*) gll_data(1,NGLLY,NGLLZ,ispec)
+      write(IOUT_VTK,*) real(gll_data(1,NGLLY,NGLLZ,ispec),kind=4)
     enddo
   else
     do ispec = 1,nspec
       do k = 1,NGLLZ
         do j = 1,NGLLY
           do i = 1,NGLLX
-            write(IOUT_VTK,*) gll_data(i,j,k,ispec)
+            write(IOUT_VTK,*) real(gll_data(i,j,k,ispec),kind=4)
           enddo
         enddo
       enddo
@@ -880,7 +882,7 @@
   write(IOUT_VTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
   write(IOUT_VTK, '(a,i12,a)') 'POINTS ', nglob, ' float'
   do i=1,nglob
-    write(IOUT_VTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
+    write(IOUT_VTK,'(3e18.6)') real(xstore_dummy(i),kind=4),real(ystore_dummy(i),kind=4),real(zstore_dummy(i),kind=4)
   enddo
   write(IOUT_VTK,*) ''
 
@@ -902,7 +904,7 @@
   write(IOUT_VTK,'(a)') "SCALARS elem_val float"
   write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
   do ispec = 1,nspec
-    write(IOUT_VTK,*) elem_data(ispec)
+    write(IOUT_VTK,*) real(elem_data(ispec),kind=4)
   enddo
   write(IOUT_VTK,*) ''
   close(IOUT_VTK)
@@ -1111,7 +1113,7 @@
 
 ! saves vtk file for CUSTOM_REAL values
 
-  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,IOUT_VTK
+  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,IOUT_VTK,SIZE_DOUBLE
 
   implicit none
 
@@ -1128,6 +1130,7 @@
 
   ! local parameters
   integer :: i,it,ier
+  real :: val
 
   ! opens unstructured grid file
   open(IOUT_VTK,file=mesh_file(1:len_trim(mesh_file)),status='unknown',iostat=ier)
@@ -1143,7 +1146,7 @@
   ! points
   write(IOUT_VTK, '(a,i16,a)') 'POINTS ', np, ' float'
   do i = 1,np
-    write(IOUT_VTK,'(3e18.6)') total_dat_xyz(1,i),total_dat_xyz(2,i),total_dat_xyz(3,i)
+    write(IOUT_VTK,'(3e18.6)') real(total_dat_xyz(1,i),kind=4),real(total_dat_xyz(2,i),kind=4),real(total_dat_xyz(3,i),kind=4)
   enddo
   write(IOUT_VTK,*) ''
 
@@ -1165,13 +1168,122 @@
   write(IOUT_VTK,'(a,i12)') "POINT_DATA ",np
   write(IOUT_VTK,'(a)') "SCALARS "//trim(var_name)//" float"
   write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
-  do i = 1,np
-    write(IOUT_VTK,*) total_dat(i)
-  enddo
+  if (CUSTOM_REAL == SIZE_DOUBLE) then
+    ! double precision values
+    do i = 1,np
+      ! converts to float
+      val = real(total_dat(i),kind=4)
+      ! stay within boundaries of float values, otherwise paraview will complain
+      if (abs(val) < tiny(val)) val = sign(1.0,val) * tiny(val)
+      if (abs(val) > huge(val)) val = sign(1.0,val) * huge(val)
+      write(IOUT_VTK,*) val
+    enddo
+  else
+    ! single precision
+    do i = 1,np
+      write(IOUT_VTK,*) total_dat(i)
+    enddo
+  endif
   write(IOUT_VTK,*) ''
   close(IOUT_VTK)
 
   end subroutine write_VTK_movie_data
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine write_VTK_movie_data_elemental(ne,np,total_dat_xyz,total_dat_con,total_dat,mesh_file,var_name)
+
+! saves vtk file for CUSTOM_REAL values, writes out each element as unconnected finite elements
+! (no shared global points). this visualizes sharp jumps/discontinuities from one element to another.
+
+  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,IOUT_VTK,SIZE_DOUBLE
+
+  implicit none
+
+  integer,intent(in) :: ne,np
+
+  ! coordinates
+  real(kind=CUSTOM_REAL), dimension(3,np),intent(in) :: total_dat_xyz
+  ! connections
+  integer, dimension(8,ne),intent(in) :: total_dat_con
+  ! data values array
+  real(kind=CUSTOM_REAL), dimension(np),intent(in) :: total_dat
+  ! file name
+  character(len=MAX_STRING_LEN),intent(in) :: mesh_file,var_name
+
+  ! local parameters
+  integer :: i,j,ie,ier
+  real :: val
+
+  ! opens unstructured grid file
+  open(IOUT_VTK,file=mesh_file(1:len_trim(mesh_file)),status='unknown',iostat=ier)
+  if (ier /= 0 ) then
+    print *, 'Error opening VTK output file: ',trim(mesh_file)
+    stop 'Error opening VTK output file'
+  endif
+  write(IOUT_VTK,'(a)') '# vtk DataFile Version 3.1'
+  write(IOUT_VTK,'(a)') 'material model VTK file'
+  write(IOUT_VTK,'(a)') 'ASCII'
+  write(IOUT_VTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
+
+  ! points
+  ! writes out all points for each element, not just global ones
+  write(IOUT_VTK, '(a,i16,a)') 'POINTS ', ne*8, ' float'
+  do ie = 1,ne
+    do j = 1,8
+      i = total_dat_con(j,ie) + 1  ! needs to add +1 which has been removed before input
+      write(IOUT_VTK,'(3e18.6)') real(total_dat_xyz(1,i),kind=4),real(total_dat_xyz(2,i),kind=4),real(total_dat_xyz(3,i),kind=4)
+    enddo
+  enddo
+  write(IOUT_VTK,*) ''
+
+  ! cells
+  ! note: indices for VTK start at 0
+  write(IOUT_VTK,'(a,i12,i12)') "CELLS ",ne,ne*9
+  do ie = 1,ne
+    write(IOUT_VTK,'(9i12)') 8,(ie-1)*8,(ie-1)*8+1,(ie-1)*8+2,(ie-1)*8+3, &
+                               (ie-1)*8+4,(ie-1)*8+5,(ie-1)*8+6,(ie-1)*8+7
+  enddo
+  write(IOUT_VTK,*) ''
+
+  ! type: hexahedrons
+  write(IOUT_VTK,'(a,i12)') "CELL_TYPES ",ne
+  write(IOUT_VTK,'(6i12)') (12,ie = 1,ne)
+  write(IOUT_VTK,*) ''
+
+  ! data values
+  ! writes out gll-data for each element point
+  write(IOUT_VTK,'(a,i12)') "POINT_DATA ",ne*8
+  write(IOUT_VTK,'(a)') "SCALARS "//trim(var_name)//" float"
+  write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
+  if (CUSTOM_REAL == SIZE_DOUBLE) then
+    ! double precision values
+    do ie = 1,ne
+      do j = 1,8
+        ! converts to float
+        i = total_dat_con(j,ie) + 1 ! needs to add +1 which has been removed before input
+        val = real(total_dat(i),kind=4)
+        ! stay within boundaries of float values, otherwise paraview will complain
+        if (abs(val) < tiny(val)) val = sign(1.0,val) * tiny(val)
+        if (abs(val) > huge(val)) val = sign(1.0,val) * huge(val)
+        write(IOUT_VTK,*) val
+      enddo
+    enddo
+  else
+    ! single precision
+    do ie = 1,ne
+      do j = 1,8
+        i = total_dat_con(j,ie) + 1 ! needs to add +1 which has been removed before input
+        write(IOUT_VTK,*) total_dat(i)
+      enddo
+    enddo
+  endif
+  write(IOUT_VTK,*) ''
+  close(IOUT_VTK)
+
+  end subroutine write_VTK_movie_data_elemental
 
 
 !
@@ -1627,7 +1739,7 @@
   write(IOUT_VTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
   write(IOUT_VTK, '(a,i12,a)') 'POINTS ', nglob, ' float'
   do i = 1,nglob
-    write(IOUT_VTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
+    write(IOUT_VTK,'(3e18.6)') real(xstore_dummy(i),kind=4),real(ystore_dummy(i),kind=4),real(zstore_dummy(i),kind=4)
   enddo
   write(IOUT_VTK,*) ""
 
@@ -1648,7 +1760,7 @@
   write(IOUT_VTK,'(a)') "SCALARS dat float"
   write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
   do i = 1,nglob
-    write(IOUT_VTK,*) dat_value(i)
+    write(IOUT_VTK,*) real(dat_value(i),kind=4)
   enddo
   write(IOUT_VTK,*) ""
   close(IOUT_VTK)

@@ -166,20 +166,26 @@
 
         ! stores isotropic shear modulus from reference 1D model
         ! calculates isotropic value
-        vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
-                  + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0)
+        if (iregion_code == IREGION_OUTER_CORE) then
+          ! fluid with zero shear speed
+          vs = 0.d0
+        else
+          vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
+                    + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0)
+        endif
+
         ! stores 1D isotropic mu0 = (rho * Vs*Vs) values
         mu0 = rho * vs*vs
         mu0store(i,j,k,ispec) = real( mu0, kind=CUSTOM_REAL)
 
         ! gets the 3-D model parameters for the mantle
         call meshfem3D_models_get3Dmntl_val(iregion_code,r_prem,rho, &
-                              vpv,vph,vsv,vsh,eta_aniso, &
-                              RCMB,RMOHO, &
-                              xmesh,ymesh,zmesh,r, &
-                              c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
-                              c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
-                              ispec,i,j,k)
+                                            vpv,vph,vsv,vsh,eta_aniso, &
+                                            RCMB,RMOHO, &
+                                            xmesh,ymesh,zmesh,r, &
+                                            c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+                                            c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
+                                            ispec,i,j,k)
 
         ! gets the 3-D crustal model
         ! M.A. don't overwrite crust if using CEM.
@@ -218,8 +224,8 @@
 
         ! define elastic parameters in the model
         rhostore(i,j,k,ispec) = real(rho, kind=CUSTOM_REAL)
-        kappavstore(i,j,k,ispec) = real(rho*(vpv*vpv - 4.d0*vsv*vsv/3.d0), kind=CUSTOM_REAL)
-        kappahstore(i,j,k,ispec) = real(rho*(vph*vph - 4.d0*vsh*vsh/3.d0), kind=CUSTOM_REAL)
+        kappavstore(i,j,k,ispec) = real(rho*(vpv*vpv - 4.d0/3.d0*vsv*vsv), kind=CUSTOM_REAL)
+        kappahstore(i,j,k,ispec) = real(rho*(vph*vph - 4.d0/3.d0*vsh*vsh), kind=CUSTOM_REAL)
         muvstore(i,j,k,ispec) = real(rho*vsv*vsv, kind=CUSTOM_REAL)
         muhstore(i,j,k,ispec) = real(rho*vsh*vsh, kind=CUSTOM_REAL)
         eta_anisostore(i,j,k,ispec) = real(eta_aniso, kind=CUSTOM_REAL)

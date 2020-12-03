@@ -639,7 +639,7 @@
 !
 
 
-  subroutine save_forward_model_at_shifted_frequency_adios()
+  subroutine save_forward_model_at_shifted_frequency_adios(factor_scale_relaxed_crust_mantle,factor_scale_relaxed_inner_core)
 
 ! outputs model files in binary format
 
@@ -654,15 +654,18 @@
 
   implicit none
 
-  ! local parameters
-  integer :: ier
-  real(kind=CUSTOM_REAL) :: scaleval1,scaleval2 !,scaleval,scale_GPa
-  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: temp_store_vpv,temp_store_vph,temp_store_vsv,temp_store_vsh
-  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: temp_store_vp_ic,temp_store_vs_ic
+  real(kind=CUSTOM_REAL),dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT4_VAL) :: factor_scale_relaxed_crust_mantle
+  real(kind=CUSTOM_REAL),dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT5_VAL) :: factor_scale_relaxed_inner_core
 
   ! local parameters
+  integer :: ier
+  real(kind=CUSTOM_REAL) :: scaleval1,scaleval2,scale_factor_r
+  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: temp_store_vpv,temp_store_vph,temp_store_vsv,temp_store_vsh
+  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: temp_store_vp_ic,temp_store_vs_ic
+  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: temp_store_rho,temp_store_rho_ic
+  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: muv_shifted,muh_shifted
   real(kind=CUSTOM_REAL),dimension(1,1,1,1) :: dummy_ijke
-  integer :: iregion_code,nspec,nglob
+  integer :: iregion_code,nspec,nglob,i,j,k,ispec
   character(len=MAX_STRING_LEN) :: outputname, group_name
   integer(kind=8) :: local_dim
   integer(kind=8) :: group_size_inc
@@ -680,8 +683,8 @@
   endif
 
   ! scaling factors to re-dimensionalize units
-  scaleval1 = sngl( sqrt(PI*GRAV*RHOAV)*(R_PLANET/1000.0d0) )
-  scaleval2 = sngl( RHOAV/1000.0d0 )
+  scaleval1 = real( sqrt(PI*GRAV*RHOAV)*(R_PLANET/1000.0d0), kind=CUSTOM_REAL)  ! velocities
+  scaleval2 = real( RHOAV/1000.d0, kind=CUSTOM_REAL)                            ! densities
 
   ! note: since we only use shear attenuation, the shift occurs in muv values.
   !       thus, we output here only vpv, vsv or vp,vs for crust/mantle and inner core regions
@@ -696,6 +699,7 @@
   iregion_code = IREGION_CRUST_MANTLE
   nspec = NSPEC_CRUST_MANTLE
   nglob = NGLOB_CRUST_MANTLE
+
   ! region name
   write(region_name,"('reg',i1, '/')") iregion_code
   write(region_name_scalar,"('reg',i1)") iregion_code
@@ -737,11 +741,14 @@
     ! vs (will store it even for the outer core, although it should just be zero there)
     call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vs", dummy_ijke)
   endif
+  ! rho
+  call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "rho", dummy_ijke)
 
   ! inner core
   iregion_code = IREGION_INNER_CORE
   nspec = NSPEC_INNER_CORE
   nglob = NGLOB_INNER_CORE
+
   ! region name
   write(region_name,"('reg',i1, '/')") iregion_code
   write(region_name_scalar,"('reg',i1)") iregion_code
@@ -768,9 +775,11 @@
     ! isotropic model
     ! vp
     call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vp", dummy_ijke)
-    ! vs (will store it even for the outer core, although it should just be zero there)
+    ! vs
     call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vs", dummy_ijke)
   endif
+  ! rho
+  call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "rho", dummy_ijke)
 
   !--- Open an ADIOS handler to the restart file. ---------
   outputname = trim(LOCAL_PATH) // "/model_gll_shifted.bp"
@@ -787,6 +796,7 @@
   iregion_code = IREGION_CRUST_MANTLE
   nspec = NSPEC_CRUST_MANTLE
   nglob = NGLOB_CRUST_MANTLE
+
   ! region name
   write(region_name,"('reg',i1, '/')") iregion_code
   write(region_name_scalar,"('reg',i1)") iregion_code
@@ -803,27 +813,68 @@
   allocate(temp_store_vpv(NGLLX,NGLLY,NGLLZ,nspec), &
            temp_store_vph(NGLLX,NGLLY,NGLLZ,nspec), &
            temp_store_vsv(NGLLX,NGLLY,NGLLZ,nspec), &
-           temp_store_vsh(NGLLX,NGLLY,NGLLZ,nspec),stat=ier)
+           temp_store_vsh(NGLLX,NGLLY,NGLLZ,nspec), &
+           temp_store_rho(NGLLX,NGLLY,NGLLZ,nspec), &
+           muv_shifted(NGLLX,NGLLY,NGLLZ,nspec), &
+           muh_shifted(NGLLX,NGLLY,NGLLZ,nspec),stat=ier)
   if (ier /= 0) stop 'Error allocating temp vp,.. arrays'
   temp_store_vpv(:,:,:,:) = 0.0_CUSTOM_REAL
   temp_store_vph(:,:,:,:) = 0.0_CUSTOM_REAL
   temp_store_vsv(:,:,:,:) = 0.0_CUSTOM_REAL
   temp_store_vsh(:,:,:,:) = 0.0_CUSTOM_REAL
+  temp_store_rho(:,:,:,:) = 0.0_CUSTOM_REAL
+
+  ! moduli (muv,muh) are at relaxed values (only Qmu implemented),
+  ! scales back to have values at center frequency
+  muv_shifted(:,:,:,:) = muvstore_crust_mantle(:,:,:,:)
+  muh_shifted(:,:,:,:) = muhstore_crust_mantle(:,:,:,:)
+  do ispec = 1,nspec
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+          if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
+            scale_factor_r = factor_scale_relaxed_crust_mantle(i,j,k,ispec)
+          else
+            scale_factor_r = factor_scale_relaxed_crust_mantle(1,1,1,ispec)
+          endif
+          ! scaling back from relaxed to values at shifted frequency
+          ! (see in prepare_attenuation.f90 for how muv,muh are scaled to become relaxed moduli)
+          ! muv
+          muv_shifted(i,j,k,ispec) = muv_shifted(i,j,k,ispec) / scale_factor_r
+          ! muh
+          if (ispec_is_tiso_crust_mantle(ispec)) then
+            muh_shifted(i,j,k,ispec) = muh_shifted(i,j,k,ispec) / scale_factor_r
+          endif
+        enddo
+      enddo
+    enddo
+  enddo
 
   ! transverse isotropic model
   if (TRANSVERSE_ISOTROPY) then
     ! vpv
     temp_store_vpv(:,:,:,:) = sqrt((kappavstore_crust_mantle(:,:,:,:) &
-                          + 4.0_CUSTOM_REAL * muvstore_crust_mantle(:,:,:,:)/3.0_CUSTOM_REAL)/rhostore_crust_mantle(:,:,:,:)) &
+                          + FOUR_THIRDS * muv_shifted(:,:,:,:))/rhostore_crust_mantle(:,:,:,:)) &
                           * scaleval1
+
+    call print_gll_min_max_all(nspec,temp_store_vpv,"shifted vpv")
+
     ! vph
     temp_store_vph(:,:,:,:) = sqrt((kappahstore_crust_mantle(:,:,:,:) &
-                          + 4.0_CUSTOM_REAL * muhstore_crust_mantle(:,:,:,:)/3.0_CUSTOM_REAL)/rhostore_crust_mantle(:,:,:,:)) &
+                          + FOUR_THIRDS * muh_shifted(:,:,:,:))/rhostore_crust_mantle(:,:,:,:)) &
                           * scaleval1
+
+    call print_gll_min_max_all(nspec,temp_store_vph,"shifted vph")
+
     ! vsv
-    temp_store_vsv(:,:,:,:) = sqrt( muvstore_crust_mantle(:,:,:,:)/rhostore_crust_mantle(:,:,:,:) )*scaleval1
+    temp_store_vsv(:,:,:,:) = sqrt( muv_shifted(:,:,:,:)/rhostore_crust_mantle(:,:,:,:) )*scaleval1
+
+    call print_gll_min_max_all(nspec,temp_store_vsv,"shifted vsv")
+
     ! vsh
-    temp_store_vsh(:,:,:,:) = sqrt( muhstore_crust_mantle(:,:,:,:)/rhostore_crust_mantle(:,:,:,:) )*scaleval1
+    temp_store_vsh(:,:,:,:) = sqrt( muh_shifted(:,:,:,:)/rhostore_crust_mantle(:,:,:,:) )*scaleval1
+
+    call print_gll_min_max_all(nspec,temp_store_vsh,"shifted vsh")
 
     !--- Schedule writes for the previously defined ADIOS variables
     ! vpv
@@ -842,10 +893,15 @@
     ! isotropic model
     ! vp
     temp_store_vpv(:,:,:,:) = sqrt((kappavstore_crust_mantle(:,:,:,:) &
-                          + 4.0_CUSTOM_REAL * muvstore_crust_mantle(:,:,:,:)/3.0_CUSTOM_REAL)/rhostore_crust_mantle(:,:,:,:)) &
+                          + FOUR_THIRDS * muv_shifted(:,:,:,:))/rhostore_crust_mantle(:,:,:,:)) &
                           * scaleval1
+
+    call print_gll_min_max_all(nspec,temp_store_vpv,"shifted vp")
+
     ! vs
-    temp_store_vsv(:,:,:,:) = sqrt( muvstore_crust_mantle(:,:,:,:)/rhostore_crust_mantle(:,:,:,:) )*scaleval1
+    temp_store_vsv(:,:,:,:) = sqrt( muv_shifted(:,:,:,:)/rhostore_crust_mantle(:,:,:,:) )*scaleval1
+
+    call print_gll_min_max_all(nspec,temp_store_vsv,"shifted vs")
 
     !--- Schedule writes for the previously defined ADIOS variables
     ! vp
@@ -855,21 +911,53 @@
     call write_adios_global_1d_array(myadios_val_file, myadios_val_group, myrank, sizeprocs_adios, local_dim, &
                                      trim(region_name) // "vs", temp_store_vsv)
   endif ! TRANSVERSE_ISOTROPY
+  ! rho
+  temp_store_rho(:,:,:,:) = rhostore_crust_mantle(:,:,:,:) *scaleval2
+  call write_adios_global_1d_array(myadios_val_file, myadios_val_group, myrank, sizeprocs_adios, local_dim, &
+                                   trim(region_name) // "rho", temp_store_rho)
+
+  deallocate(muv_shifted,muh_shifted)
 
   ! inner core
   iregion_code = IREGION_INNER_CORE
   nspec = NSPEC_INNER_CORE
   nglob = NGLOB_INNER_CORE
+
   ! region name
   write(region_name,"('reg',i1, '/')") iregion_code
   write(region_name_scalar,"('reg',i1)") iregion_code
 
   ! uses temporary array
-  allocate(temp_store_vp_ic(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE), &
-           temp_store_vs_ic(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE),stat=ier)
+  allocate(temp_store_vp_ic(NGLLX,NGLLY,NGLLZ,nspec), &
+           temp_store_vs_ic(NGLLX,NGLLY,NGLLZ,nspec), &
+           temp_store_rho_ic(NGLLX,NGLLY,NGLLZ,nspec), &
+           muv_shifted(NGLLX,NGLLY,NGLLZ,nspec),stat=ier)
   if (ier /= 0) stop 'Error allocating temp_store array'
-  temp_store_vp_ic(:,:,:,:) = 0._CUSTOM_REAL
-  temp_store_vs_ic(:,:,:,:) = 0._CUSTOM_REAL
+  temp_store_vp_ic(:,:,:,:) = 0.0_CUSTOM_REAL
+  temp_store_vs_ic(:,:,:,:) = 0.0_CUSTOM_REAL
+  temp_store_rho_ic(:,:,:,:) = 0.0_CUSTOM_REAL
+
+  ! moduli (muv,muh) are at relaxed values, scale back to have shifted values at center frequency
+  muv_shifted(:,:,:,:) = muvstore_inner_core(:,:,:,:)
+  do ispec = 1,nspec
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+          if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
+            scale_factor_r = factor_scale_relaxed_inner_core(i,j,k,ispec)
+          else
+            scale_factor_r = factor_scale_relaxed_inner_core(1,1,1,ispec)
+          endif
+
+          ! inverts to scale relaxed back to shifted factor
+          ! scaling back from relaxed to values at shifted frequency
+          ! (see in prepare_attenuation.f90 for how muv,muh are scaled to become relaxed moduli)
+          ! muv
+          muv_shifted(i,j,k,ispec) = muv_shifted(i,j,k,ispec) / scale_factor_r
+        enddo
+      enddo
+    enddo
+  enddo
 
   ! isotropic model
   if (ANISOTROPIC_INNER_CORE_VAL) then
@@ -878,10 +966,15 @@
     ! isotropic model
     ! vp
     temp_store_vp_ic(:,:,:,:) = sqrt((kappavstore_inner_core(:,:,:,:) &
-                          + 4.0_CUSTOM_REAL * muvstore_inner_core(:,:,:,:)/3.0_CUSTOM_REAL)/rhostore_inner_core(:,:,:,:)) &
+                          + FOUR_THIRDS * muv_shifted(:,:,:,:))/rhostore_inner_core(:,:,:,:)) &
                           * scaleval1
+
+    call print_gll_min_max_all(nspec,temp_store_vp_ic,"shifted vp")
+
     ! vs
-    temp_store_vs_ic(:,:,:,:) = sqrt( muvstore_inner_core(:,:,:,:)/rhostore_inner_core(:,:,:,:) )*scaleval1
+    temp_store_vs_ic(:,:,:,:) = sqrt( muv_shifted(:,:,:,:)/rhostore_inner_core(:,:,:,:) )*scaleval1
+
+    call print_gll_min_max_all(nspec,temp_store_vs_ic,"shifted vs")
 
     !--- Schedule writes for the previously defined ADIOS variables
     ! vp
@@ -891,6 +984,10 @@
     call write_adios_global_1d_array(myadios_val_file, myadios_val_group, myrank, sizeprocs_adios, local_dim, &
                                      trim(region_name) // "vs", temp_store_vs_ic)
   endif ! TRANSVERSE_ISOTROPY
+  ! rho
+  temp_store_rho_ic(:,:,:,:) = rhostore_inner_core(:,:,:,:) *scaleval2
+  call write_adios_global_1d_array(myadios_val_file, myadios_val_group, myrank, sizeprocs_adios, local_dim, &
+                                 trim(region_name) // "rho", temp_store_rho_ic)
 
   !--- Reset the path to zero and perform the actual write to disk
   call write_adios_perform(myadios_val_file)
@@ -905,5 +1002,6 @@
   ! frees temporary array
   deallocate(temp_store_vpv,temp_store_vph,temp_store_vsv,temp_store_vsh)
   deallocate(temp_store_vp_ic,temp_store_vs_ic)
+  deallocate(muv_shifted)
 
   end subroutine save_forward_model_at_shifted_frequency_adios

@@ -76,8 +76,18 @@ ATTENUATION                     = .true.
 # absorbing boundary conditions for a regional simulation
 ABSORBING_CONDITIONS            = .true.
 
+# run global simulation for a circular region and apply high attenuation for the rest of the model
+# this creates an absorbing boundary with less reflection than stacey at a cost of 6x the computational cost
+# NCHUNKS must be set to 6 to enable this flag
+ABSORB_USING_GLOBAL_SPONGE      = .false.
+
+# location and size of the region with no sponge (the region to run simulation)
+SPONGE_LATITUDE_IN_DEGREES      = 40.d0
+SPONGE_LONGITUDE_IN_DEGREES     = 25.d0
+SPONGE_RADIUS_IN_DEGREES        = 25.d0
+
 # record length in minutes
-RECORD_LENGTH_IN_MINUTES        = 5.0d0
+RECORD_LENGTH_IN_MINUTES        = 4.0d0
 
 # to undo attenuation for sensitivity kernel calculations or forward runs with SAVE_FORWARD
 # use one (and only one) of the two flags below. UNDO_ATTENUATION is much better (it is exact)
@@ -207,6 +217,11 @@ NTSTEP_BETWEEN_READ_ADJSRC      = 1000000
 # its norm is ignored and the norm of the force used is the factor force source times the source time function.
 USE_FORCE_POINT_SOURCE          = .false.
 
+# use monochromatic source time function for CMTSOLUTION moment-tensor source.
+# half duration is interpreted as a PERIOD just to avoid changing CMTSOLUTION file format
+# default is .false. which uses Heaviside function
+USE_MONOCHROMATIC_CMT_SOURCE    = .false.
+
 # option to save strain seismograms
 # this option is useful for strain Green's tensor
 # this feature is currently under development
@@ -214,7 +229,7 @@ SAVE_SEISMOGRAMS_STRAIN         = .false.
 
 # save seismograms also when running the adjoint runs for an inverse problem
 # (usually they are unused and not very meaningful, leave this off in almost all cases)
-SAVE_SEISMOGRAMS_IN_ADJOINT_RUN = .false.
+SAVE_SEISMOGRAMS_IN_ADJOINT_RUN = .true.
 
 # output format for the seismograms (one can use either or all of the three formats)
 OUTPUT_SEISMOS_ASCII_TEXT       = .true.
@@ -225,8 +240,8 @@ OUTPUT_SEISMOS_ASDF             = .false.
 # rotate seismograms to Radial-Transverse-Z or use default North-East-Z reference frame
 ROTATE_SEISMOGRAMS_RT           = .false.
 
-# decide if master process writes all the seismograms or if all processes do it in parallel
-WRITE_SEISMOGRAMS_BY_MASTER     = .false.
+# decide if main process writes all the seismograms or if all processes do it in parallel
+WRITE_SEISMOGRAMS_BY_MAIN       = .false.
 
 # save all seismograms in one large combined file instead of one file per seismogram
 # to avoid overloading shared non-local file systems such as LUSTRE or GPFS for instance

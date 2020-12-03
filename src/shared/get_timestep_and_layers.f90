@@ -714,6 +714,9 @@
         ! reduces time step size for crustmaps crustal model
         if (REFERENCE_CRUSTAL_MODEL == ICRUST_CRUSTMAPS) &
           DT = DT*(1.d0 - 0.3d0)
+        ! reduces time step size for SGLOBE-rani crustal model
+        if (REFERENCE_CRUSTAL_MODEL == ICRUST_SGLOBECRUST) &
+          DT = DT*(1.d0 - 0.4d0)
       endif
     endif
 

@@ -101,7 +101,7 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #if __OPENCL_C_VERSION__ && __OPENCL_C_VERSION__ >= 120\n\
 static\n\
 #endif\n\
-void compute_element_oc_rotation(const int tx, const int working_element, const float time, const float two_omega_earth, const float deltat, __global float * d_A_array_rotation, __global float * d_B_array_rotation, const float dpotentialdxl, const float dpotentialdyl, float * dpotentialdx_with_rot, float * dpotentialdy_with_rot){\n\
+void compute_element_oc_rotation(const int tx, const int working_element, const float time, const float two_omega_earth, const float deltat, __global float * d_A_array_rotation, __global float * d_B_array_rotation, __global float * d_A_array_rotation_lddrk, __global float * d_B_array_rotation_lddrk, const float alpha_lddrk, const float beta_lddrk, const int use_lddrk, const float dpotentialdxl, const float dpotentialdyl, float * dpotentialdx_with_rot, float * dpotentialdy_with_rot){\n\
   float two_omega_deltat;\n\
   float cos_two_omega_t;\n\
   float sin_two_omega_t;\n\
@@ -123,8 +123,15 @@ void compute_element_oc_rotation(const int tx, const int working_element, const 
   dpotentialdy_with_rot[0] = dpotentialdyl + ( -(A_rotation)) * (sin_two_omega_t) + (B_rotation) * (cos_two_omega_t);\n\
 \n\
   // updates rotation term with Euler scheme (non-padded offset)\n\
-  d_A_array_rotation[tx + (working_element) * (NGLL3)] = d_A_array_rotation[tx + (working_element) * (NGLL3)] + source_euler_A;\n\
-  d_B_array_rotation[tx + (working_element) * (NGLL3)] = d_B_array_rotation[tx + (working_element) * (NGLL3)] + source_euler_B;\n\
+  if ( !(use_lddrk)) {\n\
+    d_A_array_rotation[tx + (working_element) * (NGLL3)] = d_A_array_rotation[tx + (working_element) * (NGLL3)] + source_euler_A;\n\
+    d_B_array_rotation[tx + (working_element) * (NGLL3)] = d_B_array_rotation[tx + (working_element) * (NGLL3)] + source_euler_B;\n\
+  } else {\n\
+    d_A_array_rotation_lddrk[tx + (working_element) * (NGLL3)] = (alpha_lddrk) * (d_A_array_rotation_lddrk[tx + (working_element) * (NGLL3)]) + source_euler_A;\n\
+    d_B_array_rotation_lddrk[tx + (working_element) * (NGLL3)] = (alpha_lddrk) * (d_B_array_rotation_lddrk[tx + (working_element) * (NGLL3)]) + source_euler_B;\n\
+    d_A_array_rotation[tx + (working_element) * (NGLL3)] = d_A_array_rotation[tx + (working_element) * (NGLL3)] + (beta_lddrk) * (d_A_array_rotation_lddrk[tx + (working_element) * (NGLL3)]);\n\
+    d_B_array_rotation[tx + (working_element) * (NGLL3)] = d_B_array_rotation[tx + (working_element) * (NGLL3)] + (beta_lddrk) * (d_B_array_rotation_lddrk[tx + (working_element) * (NGLL3)]);\n\
+  }\n\
 }\n\
 \n\
 // KERNEL 2\n\
@@ -133,15 +140,15 @@ void compute_element_oc_rotation(const int tx, const int working_element, const 
 \n\
 #ifdef USE_TEXTURES_FIELDS\n\
 #ifdef USE_TEXTURES_CONSTANTS\n\
-__kernel void outer_core_impl_kernel_forward(const int nb_blocks_to_compute, const __global int * d_ibool, const __global int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const int use_mesh_coloring_gpu, const __global float * restrict d_potential, __global float * d_potential_dot_dot, const __global float * restrict d_xix, const __global float * restrict d_xiy, const __global float * restrict d_xiz, const __global float * restrict d_etax, const __global float * restrict d_etay, const __global float * restrict d_etaz, const __global float * restrict d_gammax, const __global float * restrict d_gammay, const __global float * restrict d_gammaz, const __global float * restrict d_hprime_xx, const __global float * restrict d_hprimewgll_xx, const __global float * restrict wgllwgll_xy, const __global float * restrict wgllwgll_xz, const __global float * restrict wgllwgll_yz, const int GRAVITY, const __global float * restrict d_rstore, const __global float * restrict d_d_ln_density_dr_table, const __global float * restrict d_minus_rho_g_over_kappa_fluid, const float R_EARTH_KM, const __global float * restrict wgll_cube, const int ROTATION, const float time, const float two_omega_earth, const float deltat, __global float * d_A_array_rotation, __global float * d_B_array_rotation, const int NSPEC_OUTER_CORE, __read_only image2d_t d_displ_oc_tex, __read_only image2d_t d_accel_oc_tex, __read_only image2d_t d_hprime_xx_oc_tex, __read_only image2d_t d_hprimewgll_xx_oc_tex){\n\
+__kernel void outer_core_impl_kernel_forward(const int nb_blocks_to_compute, const __global int * d_ibool, const __global int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const int use_mesh_coloring_gpu, const __global float * restrict d_potential, __global float * d_potential_dot_dot, const __global float * restrict d_xix, const __global float * restrict d_xiy, const __global float * restrict d_xiz, const __global float * restrict d_etax, const __global float * restrict d_etay, const __global float * restrict d_etaz, const __global float * restrict d_gammax, const __global float * restrict d_gammay, const __global float * restrict d_gammaz, const __global float * restrict d_hprime_xx, const __global float * restrict d_hprimewgll_xx, const __global float * restrict wgllwgll_xy, const __global float * restrict wgllwgll_xz, const __global float * restrict wgllwgll_yz, const int GRAVITY, const __global float * restrict d_gravity_pre_store_outer_core, const __global float * restrict wgll_cube, const int ROTATION, const float time, const float two_omega_earth, const float deltat, __global float * d_A_array_rotation, __global float * d_B_array_rotation, __global float * d_A_array_rotation_lddrk, __global float * d_B_array_rotation_lddrk, const float alpha_lddrk, const float beta_lddrk, const int use_lddrk, const int NSPEC_OUTER_CORE, __read_only image2d_t d_displ_oc_tex, __read_only image2d_t d_accel_oc_tex, __read_only image2d_t d_hprime_xx_oc_tex, __read_only image2d_t d_hprimewgll_xx_oc_tex){\n\
 #else\n\
-__kernel void outer_core_impl_kernel_forward(const int nb_blocks_to_compute, const __global int * d_ibool, const __global int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const int use_mesh_coloring_gpu, const __global float * restrict d_potential, __global float * d_potential_dot_dot, const __global float * restrict d_xix, const __global float * restrict d_xiy, const __global float * restrict d_xiz, const __global float * restrict d_etax, const __global float * restrict d_etay, const __global float * restrict d_etaz, const __global float * restrict d_gammax, const __global float * restrict d_gammay, const __global float * restrict d_gammaz, const __global float * restrict d_hprime_xx, const __global float * restrict d_hprimewgll_xx, const __global float * restrict wgllwgll_xy, const __global float * restrict wgllwgll_xz, const __global float * restrict wgllwgll_yz, const int GRAVITY, const __global float * restrict d_rstore, const __global float * restrict d_d_ln_density_dr_table, const __global float * restrict d_minus_rho_g_over_kappa_fluid, const float R_EARTH_KM, const __global float * restrict wgll_cube, const int ROTATION, const float time, const float two_omega_earth, const float deltat, __global float * d_A_array_rotation, __global float * d_B_array_rotation, const int NSPEC_OUTER_CORE, __read_only image2d_t d_displ_oc_tex, __read_only image2d_t d_accel_oc_tex){\n\
+__kernel void outer_core_impl_kernel_forward(const int nb_blocks_to_compute, const __global int * d_ibool, const __global int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const int use_mesh_coloring_gpu, const __global float * restrict d_potential, __global float * d_potential_dot_dot, const __global float * restrict d_xix, const __global float * restrict d_xiy, const __global float * restrict d_xiz, const __global float * restrict d_etax, const __global float * restrict d_etay, const __global float * restrict d_etaz, const __global float * restrict d_gammax, const __global float * restrict d_gammay, const __global float * restrict d_gammaz, const __global float * restrict d_hprime_xx, const __global float * restrict d_hprimewgll_xx, const __global float * restrict wgllwgll_xy, const __global float * restrict wgllwgll_xz, const __global float * restrict wgllwgll_yz, const int GRAVITY, const __global float * restrict d_gravity_pre_store_outer_core, const __global float * restrict wgll_cube, const int ROTATION, const float time, const float two_omega_earth, const float deltat, __global float * d_A_array_rotation, __global float * d_B_array_rotation, __global float * d_A_array_rotation_lddrk, __global float * d_B_array_rotation_lddrk, const float alpha_lddrk, const float beta_lddrk, const int use_lddrk, const int NSPEC_OUTER_CORE, __read_only image2d_t d_displ_oc_tex, __read_only image2d_t d_accel_oc_tex){\n\
 #endif\n\
 #else\n\
 #ifdef USE_TEXTURES_CONSTANTS\n\
-__kernel void outer_core_impl_kernel_forward(const int nb_blocks_to_compute, const __global int * d_ibool, const __global int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const int use_mesh_coloring_gpu, const __global float * restrict d_potential, __global float * d_potential_dot_dot, const __global float * restrict d_xix, const __global float * restrict d_xiy, const __global float * restrict d_xiz, const __global float * restrict d_etax, const __global float * restrict d_etay, const __global float * restrict d_etaz, const __global float * restrict d_gammax, const __global float * restrict d_gammay, const __global float * restrict d_gammaz, const __global float * restrict d_hprime_xx, const __global float * restrict d_hprimewgll_xx, const __global float * restrict wgllwgll_xy, const __global float * restrict wgllwgll_xz, const __global float * restrict wgllwgll_yz, const int GRAVITY, const __global float * restrict d_rstore, const __global float * restrict d_d_ln_density_dr_table, const __global float * restrict d_minus_rho_g_over_kappa_fluid, const float R_EARTH_KM, const __global float * restrict wgll_cube, const int ROTATION, const float time, const float two_omega_earth, const float deltat, __global float * d_A_array_rotation, __global float * d_B_array_rotation, const int NSPEC_OUTER_CORE, __read_only image2d_t d_hprime_xx_oc_tex, __read_only image2d_t d_hprimewgll_xx_oc_tex){\n\
+__kernel void outer_core_impl_kernel_forward(const int nb_blocks_to_compute, const __global int * d_ibool, const __global int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const int use_mesh_coloring_gpu, const __global float * restrict d_potential, __global float * d_potential_dot_dot, const __global float * restrict d_xix, const __global float * restrict d_xiy, const __global float * restrict d_xiz, const __global float * restrict d_etax, const __global float * restrict d_etay, const __global float * restrict d_etaz, const __global float * restrict d_gammax, const __global float * restrict d_gammay, const __global float * restrict d_gammaz, const __global float * restrict d_hprime_xx, const __global float * restrict d_hprimewgll_xx, const __global float * restrict wgllwgll_xy, const __global float * restrict wgllwgll_xz, const __global float * restrict wgllwgll_yz, const int GRAVITY, const __global float * restrict d_gravity_pre_store_outer_core, const __global float * restrict wgll_cube, const int ROTATION, const float time, const float two_omega_earth, const float deltat, __global float * d_A_array_rotation, __global float * d_B_array_rotation, __global float * d_A_array_rotation_lddrk, __global float * d_B_array_rotation_lddrk, const float alpha_lddrk, const float beta_lddrk, const int use_lddrk, const int NSPEC_OUTER_CORE, __read_only image2d_t d_hprime_xx_oc_tex, __read_only image2d_t d_hprimewgll_xx_oc_tex){\n\
 #else\n\
-__kernel void outer_core_impl_kernel_forward(const int nb_blocks_to_compute, const __global int * d_ibool, const __global int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const int use_mesh_coloring_gpu, const __global float * restrict d_potential, __global float * d_potential_dot_dot, const __global float * restrict d_xix, const __global float * restrict d_xiy, const __global float * restrict d_xiz, const __global float * restrict d_etax, const __global float * restrict d_etay, const __global float * restrict d_etaz, const __global float * restrict d_gammax, const __global float * restrict d_gammay, const __global float * restrict d_gammaz, const __global float * restrict d_hprime_xx, const __global float * restrict d_hprimewgll_xx, const __global float * restrict wgllwgll_xy, const __global float * restrict wgllwgll_xz, const __global float * restrict wgllwgll_yz, const int GRAVITY, const __global float * restrict d_rstore, const __global float * restrict d_d_ln_density_dr_table, const __global float * restrict d_minus_rho_g_over_kappa_fluid, const float R_EARTH_KM, const __global float * restrict wgll_cube, const int ROTATION, const float time, const float two_omega_earth, const float deltat, __global float * d_A_array_rotation, __global float * d_B_array_rotation, const int NSPEC_OUTER_CORE){\n\
+__kernel void outer_core_impl_kernel_forward(const int nb_blocks_to_compute, const __global int * d_ibool, const __global int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const int use_mesh_coloring_gpu, const __global float * restrict d_potential, __global float * d_potential_dot_dot, const __global float * restrict d_xix, const __global float * restrict d_xiy, const __global float * restrict d_xiz, const __global float * restrict d_etax, const __global float * restrict d_etay, const __global float * restrict d_etaz, const __global float * restrict d_gammax, const __global float * restrict d_gammay, const __global float * restrict d_gammaz, const __global float * restrict d_hprime_xx, const __global float * restrict d_hprimewgll_xx, const __global float * restrict wgllwgll_xy, const __global float * restrict wgllwgll_xz, const __global float * restrict wgllwgll_yz, const int GRAVITY, const __global float * restrict d_gravity_pre_store_outer_core, const __global float * restrict wgll_cube, const int ROTATION, const float time, const float two_omega_earth, const float deltat, __global float * d_A_array_rotation, __global float * d_B_array_rotation, __global float * d_A_array_rotation_lddrk, __global float * d_B_array_rotation_lddrk, const float alpha_lddrk, const float beta_lddrk, const int use_lddrk, const int NSPEC_OUTER_CORE){\n\
 #endif\n\
 #endif\n\
 #ifdef USE_TEXTURES_FIELDS\n\
@@ -184,20 +191,9 @@ __kernel void outer_core_impl_kernel_forward(const int nb_blocks_to_compute, con
   float dpotentialdy_with_rot;\n\
   float sum_terms;\n\
   float gravity_term_1;\n\
-  float gxl;\n\
-  float gyl;\n\
-  float gzl;\n\
-  float radius;\n\
-  float theta;\n\
-  float phi;\n\
-  float cos_theta;\n\
-  float sin_theta;\n\
-  float cos_phi;\n\
-  float sin_phi;\n\
-  float grad_x_ln_rho;\n\
-  float grad_y_ln_rho;\n\
-  float grad_z_ln_rho;\n\
-  int int_radius;\n\
+  float vec_x;\n\
+  float vec_y;\n\
+  float vec_z;\n\
   __local float s_dummy_loc[(NGLL3)];\n\
   __local float s_temp1[(NGLL3)];\n\
   __local float s_temp2[(NGLL3)];\n\
@@ -291,31 +287,22 @@ __kernel void outer_core_impl_kernel_forward(const int nb_blocks_to_compute, con
     dpotentialdzl = (xizl) * (temp1l) + (etazl) * (temp2l) + (gammazl) * (temp3l);\n\
 \n\
     if (ROTATION) {\n\
-      compute_element_oc_rotation(tx, working_element, time, two_omega_earth, deltat, d_A_array_rotation, d_B_array_rotation, dpotentialdxl, dpotentialdyl,  &dpotentialdx_with_rot,  &dpotentialdy_with_rot);\n\
+      compute_element_oc_rotation(tx, working_element, time, two_omega_earth, deltat, d_A_array_rotation, d_B_array_rotation, d_A_array_rotation_lddrk, d_B_array_rotation_lddrk, alpha_lddrk, beta_lddrk, use_lddrk, dpotentialdxl, dpotentialdyl,  &dpotentialdx_with_rot,  &dpotentialdy_with_rot);\n\
     } else {\n\
       dpotentialdx_with_rot = dpotentialdxl;\n\
       dpotentialdy_with_rot = dpotentialdyl;\n\
     }\n\
 \n\
-    radius = d_rstore[0 + (3) * (iglob_1)];\n\
-    theta = d_rstore[1 + (3) * (iglob_1)];\n\
-    phi = d_rstore[2 + (3) * (iglob_1)];\n\
-    sin_theta = sincos(theta,  &cos_theta);\n\
-    sin_phi = sincos(phi,  &cos_phi);\n\
-    int_radius = rint(((radius) * (R_EARTH_KM)) * (10.0f)) - (1);\n\
+    vec_x = d_gravity_pre_store_outer_core[0 + (3) * (iglob_1)];\n\
+    vec_y = d_gravity_pre_store_outer_core[1 + (3) * (iglob_1)];\n\
+    vec_z = d_gravity_pre_store_outer_core[2 + (3) * (iglob_1)];\n\
 \n\
     if ( !(GRAVITY)) {\n\
-      grad_x_ln_rho = ((sin_theta) * (cos_phi)) * (d_d_ln_density_dr_table[int_radius]);\n\
-      grad_y_ln_rho = ((sin_theta) * (sin_phi)) * (d_d_ln_density_dr_table[int_radius]);\n\
-      grad_z_ln_rho = (cos_theta) * (d_d_ln_density_dr_table[int_radius]);\n\
-      dpotentialdx_with_rot = dpotentialdx_with_rot + (s_dummy_loc[tx]) * (grad_x_ln_rho);\n\
-      dpotentialdy_with_rot = dpotentialdy_with_rot + (s_dummy_loc[tx]) * (grad_y_ln_rho);\n\
-      dpotentialdzl = dpotentialdzl + (s_dummy_loc[tx]) * (grad_z_ln_rho);\n\
+      dpotentialdx_with_rot = dpotentialdx_with_rot + (s_dummy_loc[tx]) * (vec_x);\n\
+      dpotentialdy_with_rot = dpotentialdy_with_rot + (s_dummy_loc[tx]) * (vec_y);\n\
+      dpotentialdzl = dpotentialdzl + (s_dummy_loc[tx]) * (vec_z);\n\
     } else {\n\
-      gxl = (sin_theta) * (cos_phi);\n\
-      gyl = (sin_theta) * (sin_phi);\n\
-      gzl = cos_theta;\n\
-      gravity_term_1 = (((d_minus_rho_g_over_kappa_fluid[int_radius]) * (jacobianl)) * (wgll_cube[tx])) * ((dpotentialdx_with_rot) * (gxl) + (dpotentialdy_with_rot) * (gyl) + (dpotentialdzl) * (gzl));\n\
+      gravity_term_1 = ((jacobianl) * (wgll_cube[tx])) * ((dpotentialdx_with_rot) * (vec_x) + (dpotentialdy_with_rot) * (vec_y) + (dpotentialdzl) * (vec_z));\n\
     }\n\
 \n\
     s_temp1[tx] = (jacobianl) * ((xixl) * (dpotentialdx_with_rot) + (xiyl) * (dpotentialdy_with_rot) + (xizl) * (dpotentialdzl));\n\

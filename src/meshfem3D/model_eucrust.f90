@@ -81,7 +81,7 @@
   ! EUcrust07 Vp crustal structure
   if (myrank == 0 ) call read_EuCrust()
 
-  ! broadcasts arrays from master to all others
+  ! broadcasts arrays from main to all others
   call bcast_all_dp(eucrust_lat,num_eucrust)
   call bcast_all_dp(eucrust_lon,num_eucrust)
   call bcast_all_dp(eucrust_vp_uppercrust,num_eucrust)
