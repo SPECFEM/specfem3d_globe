@@ -80,9 +80,9 @@ __device__ void compute_gradient(
   dfzdyl = xiyl*tempz1l + etayl*tempz2l + gammayl*tempz3l;
   dfzdzl = xizl*tempz1l + etazl*tempz2l + gammazl*tempz3l;
 
-	f_grad[0] = dfxdxl; f_grad[1] = dfxdyl; f_grad[2] = dfxdzl;
-	f_grad[3] = dfydxl; f_grad[4] = dfydyl; f_grad[5] = dfydzl;
-	f_grad[6] = dfzdxl; f_grad[7] = dfzdyl; f_grad[8] = dfzdzl;
+  f_grad[0] = dfxdxl; f_grad[1] = dfxdyl; f_grad[2] = dfxdzl;
+  f_grad[3] = dfydxl; f_grad[4] = dfydyl; f_grad[5] = dfydzl;
+  f_grad[6] = dfzdxl; f_grad[7] = dfzdyl; f_grad[8] = dfzdzl;
 }
 
 

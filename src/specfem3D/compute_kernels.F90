@@ -860,7 +860,7 @@
 
   implicit none
 
-  logical, parameter :: USE_SOURCE_RECEIVER_HESSIAN = .False.
+  logical, parameter :: USE_SOURCE_RECEIVER_Hessian = .false.
   real(kind=CUSTOM_REAL), dimension(3, 3, NGLLX, NGLLY, NGLLZ) :: veloc_grad, b_veloc_grad
   real(kind=CUSTOM_REAL), dimension(3, 3) :: vgrad, b_vgrad
   real(kind=CUSTOM_REAL) :: hess_rho, hess_kappa, hess_mu
@@ -912,11 +912,11 @@
 
       call compute_gradient_crust_mantle(veloc_crust_mantle, veloc_grad, ispec)
 
-      if ( USE_SOURCE_RECEIVER_HESSIAN ) then
-        ! if using source-recevier hessian, calculate the velocity gradient of backward adjoint wavefield
+      if ( USE_SOURCE_RECEIVER_Hessian ) then
+        ! if using source-recevier Hessian, calculate the velocity gradient of backward adjoint wavefield
         call compute_gradient_crust_mantle(b_veloc_crust_mantle, b_veloc_grad, ispec)
       else
-        ! if using source-source hessian, set the b_veloc_grad same as the wavefield
+        ! if using source-source Hessian, set the b_veloc_grad same as the wavefield
         b_veloc_grad = veloc_grad
       endif
 
@@ -983,7 +983,7 @@
 
     use constants_solver
     use specfem_par, only: hprime_xx, hprime_yy, hprime_zz
-    use specfem_par_crustmantle, only : ibool_crust_mantle, &
+    use specfem_par_crustmantle, only: ibool_crust_mantle, &
       xix_crust_mantle, xiy_crust_mantle, xiz_crust_mantle, &
       etax_crust_mantle, etay_crust_mantle, etaz_crust_mantle, &
       gammax_crust_mantle, gammay_crust_mantle, gammaz_crust_mantle
