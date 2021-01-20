@@ -634,7 +634,7 @@
 ! outputs memory bandwidth performance to know more about the memory bandwidth. this should indicate how fast we can go,
 ! since our routines are memory-bound...
 !
-! motivated by: STEAM benchmarks
+! motivated by: STREAM benchmarks
 ! http://www.cs.virginia.edu/stream/ref.html
 
   use constants_solver, only: CUSTOM_REAL,NDIM,FORCE_VECTORIZATION_VAL,IMAIN,myrank

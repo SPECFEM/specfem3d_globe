@@ -138,13 +138,23 @@
       if (ier /= 0 ) call exit_MPI(myrank,'Error allocating b_epsilondev*** arrays for inner core')
     endif
   else
-    ! initializes pointers
-    nullify(b_epsilondev_xx_crust_mantle,b_epsilondev_yy_crust_mantle,b_epsilondev_xy_crust_mantle, &
-            b_epsilondev_xz_crust_mantle,b_epsilondev_yz_crust_mantle)
-    nullify(b_eps_trace_over_3_crust_mantle)
-    nullify(b_epsilondev_xx_inner_core,b_epsilondev_yy_inner_core,b_epsilondev_xy_inner_core, &
-            b_epsilondev_xz_inner_core,b_epsilondev_yz_inner_core)
-    nullify(b_eps_trace_over_3_inner_core)
+    ! initializes dummy arrays
+    ! note: nullify(pointers..) will not work on cray compilers and lead to an error
+    !       when passing to gpu routine prepare_fields_strain_device()
+    allocate(b_epsilondev_xx_crust_mantle(1,1,1,1), &
+             b_epsilondev_yy_crust_mantle(1,1,1,1), &
+             b_epsilondev_xy_crust_mantle(1,1,1,1), &
+             b_epsilondev_xz_crust_mantle(1,1,1,1), &
+             b_epsilondev_yz_crust_mantle(1,1,1,1), &
+             b_eps_trace_over_3_crust_mantle(1,1,1,1),stat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating b_epsilondev*** arrays for crust/mantle')
+    allocate(b_epsilondev_xx_inner_core(1,1,1,1), &
+             b_epsilondev_yy_inner_core(1,1,1,1), &
+             b_epsilondev_xy_inner_core(1,1,1,1), &
+             b_epsilondev_xz_inner_core(1,1,1,1), &
+             b_epsilondev_yz_inner_core(1,1,1,1), &
+             b_eps_trace_over_3_inner_core(1,1,1,1),stat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating b_epsilondev*** arrays for inner core')
   endif
 
   allocate(Iepsilondev_xx_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE), &
