@@ -89,7 +89,7 @@
 
   ! Append the actual file name.
   !outputname = trim(reg_name) // "stacey.bp"
-  outputname = trim(LOCAL_PATH) // "/stacey.bp"
+  outputname = get_adios_filename(trim(LOCAL_PATH) // "/stacey")
 
   ! save these temporary arrays for the solver for Stacey conditions
   write(group_name,"('SPECFEM3D_GLOBE_STACEY_reg',i1)") iregion
