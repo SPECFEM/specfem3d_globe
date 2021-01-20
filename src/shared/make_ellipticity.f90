@@ -57,6 +57,8 @@
                       R771,RTOPDDOUBLEPRIME,RCMB,RICB,RSURFACE
   double precision :: r_icb,r_cmb,r_topddoubleprime,r_771,r_670,r_600
   double precision :: r_400,r_220,r_80,r_moho,r_middle_crust,r_ocean,r_0
+  double precision :: SOHL_RMOHO,SOHL_R80,SOHL_R220,SOHL_R400,SOHL_R600,SOHL_R670, &
+                      SOHL_R771,SOHL_RTOPDDOUBLEPRIME,SOHL_RCMB
 
   double precision,dimension(NR_DENSITY) :: r,rho,epsilonval,eta
   double precision,dimension(NR_DENSITY) :: radau,k
@@ -105,7 +107,11 @@
 
   case (IPLANET_MARS)
     ! Mars
-    ! default Sohn & Spohn Model A
+    ! default Sohn & Spohn Model
+    ! gets corresponding Sohl & Spoon model radii
+    call get_model_Sohl_radii(SOHL_RMOHO,SOHL_R80,SOHL_R220,SOHL_R400,SOHL_R600,SOHL_R670, &
+                              SOHL_R771,SOHL_RTOPDDOUBLEPRIME,SOHL_RCMB)
+    ! sets radii for density integration
     ROCEAN = SOHL_ROCEAN
     RMIDDLE_CRUST = SOHL_RMIDDLE_CRUST
     RMOHO = SOHL_RMOHO
@@ -225,7 +231,7 @@
     do i = 627,NR_DENSITY ! NR_DENSITY = 640
       r(i) = r_middle_crust+(r_0-r_middle_crust)*dble(i-627)/dble(12)
     enddo
-    ! use Sohl & Spohn model A (1997) to get the density profile for ellipticity.
+    ! use Sohl & Spohn model (1997) to get the density profile for ellipticity.
     do i = 1,NR_DENSITY
       call Sohl_density(r(i),rho(i),ONE_CRUST)
       radau(i) = rho(i)*r(i)*r(i)

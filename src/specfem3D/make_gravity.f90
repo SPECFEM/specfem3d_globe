@@ -55,6 +55,8 @@
   double precision :: r(NR_DENSITY),rho(NR_DENSITY),grav(NR_DENSITY),i_rho
   double precision :: s1(NR_DENSITY),s2(NR_DENSITY),s3(NR_DENSITY)
   double precision :: yp1,ypn
+  double precision :: SOHL_RMOHO,SOHL_R80,SOHL_R220,SOHL_R400,SOHL_R600,SOHL_R670, &
+                      SOHL_R771,SOHL_RTOPDDOUBLEPRIME,SOHL_RCMB
 
   ! debugging
   logical, parameter :: DEBUG = .false.
@@ -82,7 +84,10 @@
 
   case (IPLANET_MARS)
     ! Mars
-    ! default Sohn & Spohn Model A
+    ! gets corresponding Sohl&Spoon model radii
+    call get_model_Sohl_radii(SOHL_RMOHO,SOHL_R80,SOHL_R220,SOHL_R400,SOHL_R600,SOHL_R670, &
+                              SOHL_R771,SOHL_RTOPDDOUBLEPRIME,SOHL_RCMB)
+    ! sets radii for density integration
     ROCEAN = SOHL_ROCEAN
     RMIDDLE_CRUST = SOHL_RMIDDLE_CRUST
     RMOHO = SOHL_RMOHO
@@ -206,19 +211,18 @@
     do i = 627,NR_DENSITY
       r(i) = r_middle_crust+(r_0-r_middle_crust)*dble(i-627)/dble(12)
     enddo
-    ! use Sohl & Spohn model A to get the density profile for gravity
+    ! use Sohl & Spohn model to get the density profile for gravity
     do i = 1,NR_DENSITY
       call sohl_density(r(i),rho(i),ONE_CRUST)
     enddo
 
   case (IPLANET_MOON)
-    ! Mars
-    ! Sohn & Spohn Model A
+    ! Moon
     ! No Ocean
     do i = 627,NR_DENSITY
       r(i) = r_middle_crust+(r_0-r_middle_crust)*dble(i-627)/dble(12)
     enddo
-    ! use Sohl & Spohn model A to get the density profile for gravity
+    ! use VPREMOON model to get the density profile for gravity
     do i = 1,NR_DENSITY
       call model_vpremoon_density(r(i),rho(i),ONE_CRUST)
     enddo
