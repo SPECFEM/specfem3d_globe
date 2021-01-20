@@ -180,11 +180,12 @@ achieved with 16 KB buffers: */
 //#define MAX_B 8192 // 8 KB
 
 // absorbing files: instead of passing file descriptor, we use the array index
-//                          first 0 - 3 indices for crust mantle files
-//                          last 4 - 8 indices for outer core files
-//                          index 9 - for NOISE_TOMOGRAPHY (SURFACE_MOVIE)
+//                          first 0  - 3 indices for crust mantle files
+//                          last 4   - 8 indices for outer core files
+//                          index 9  - for NOISE_TOMOGRAPHY (SURFACE_MOVIE)
 //                          index 10 - for topography file
-#define ABS_FILEID 11
+//                          index 11 - for model files
+#define ABS_FILEID 12
 
 // file points
 static FILE * fp_abs[ABS_FILEID];
@@ -288,6 +289,9 @@ void close_file_abs_fbin(int * fid) {
   fclose(fp_abs[*fid]);
 
   free(work_buffer[*fid]);
+
+  fp_abs[*fid] = NULL;
+  work_buffer[*fid] = NULL;
 }
 
 /* ----------------------------------------------------------------------------- */
@@ -618,6 +622,10 @@ void close_file_abs_map(int * fid) {
   /* Un-mmaping doesn't close the file, so we still need to do that.
    */
   close(map_fd_abs[*fid]);
+
+  map_abs[*fid] = NULL;
+  map_fd_abs[*fid] = 0;
+  filesize_abs[*fid] = 0;
 }
 
 /* ----------------------------------------------------------------------------- */

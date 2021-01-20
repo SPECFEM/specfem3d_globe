@@ -25,6 +25,9 @@
 !
 !=====================================================================
 
+! Collaborative Earth Model (CEM)
+
+
 module cem_par
 
   use constants, only: PI, GRAV, RHOAV, MAX_STRING_LEN

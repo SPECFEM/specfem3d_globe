@@ -424,7 +424,8 @@
 
 ! ADIOS2 engines
 !! note on native engine types:
-!!  - "MPI" is not supported yet by adios2 version (current 2.4.0), check out in future.
+!!  - "MPI" is not supported yet by adios2 version (current 2.6.0), check out in future.
+!!  - "HDF5" doesn't support file appending yet, which is needed at the moment.
 !!  - "BPfile" doesn't support file appending yet, which is needed at the moment.
 !!  - "BP3" would allow for backward compatibility to ADIOS 1.x, but doesn't support file appending yet.
 !!  - "BP4" is the new adios2 format with enhanced capabilities.
@@ -819,6 +820,7 @@
   integer, parameter :: ICRUST_CRUST_SH    = 5    ! Spherical-Harmonics Crust
   integer, parameter :: ICRUST_EUCRUST     = 6    ! EUcrust07
   integer, parameter :: ICRUST_SGLOBECRUST = 7    ! modified Crust2.0 for SGLOBE-rani
+  integer, parameter :: ICRUST_BKMNS_GLAD  = 8    ! Block Mantle Spherical-Harmonics model
 
 ! define flag for 3D Earth model
   integer, parameter :: THREE_D_MODEL_S20RTS        = 101
@@ -837,6 +839,7 @@
   integer, parameter :: THREE_D_MODEL_SGLOBE        = 114
   integer, parameter :: THREE_D_MODEL_SGLOBE_ISO    = 115
   integer, parameter :: THREE_D_MODEL_ANISO_MANTLE  = 116
+  integer, parameter :: THREE_D_MODEL_BKMNS_GLAD    = 117
   ! inner core model
   integer, parameter :: THREE_D_MODEL_INNER_CORE_ISHII = 201
 

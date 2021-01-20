@@ -41,6 +41,7 @@
     TOPOGRAPHY,ELLIPTICITY,CRUSTAL,CASE_3D, &
     THREE_D_MODEL,THREE_D_MODEL_MANTLE_SH,THREE_D_MODEL_S29EA, &
     THREE_D_MODEL_S362ANI,THREE_D_MODEL_S362WMANI,THREE_D_MODEL_S362ANI_PREM, &
+    THREE_D_MODEL_BKMNS_GLAD, &
     ibathy_topo,nspl,rspl,ellipicity_spline,ellipicity_spline2, &
     REGIONAL_MOHO_MESH
 
@@ -161,6 +162,26 @@
     if (myrank == 0) print *,'  locations done'
   endif
 
+  ! block-mantle-spherical-harmonics expansion of GLAD model
+  ! the top block model assumes point locations with actual topography
+  if (THREE_D_MODEL == THREE_D_MODEL_BKMNS_GLAD) then
+    ! adds surface topography
+    if (TOPOGRAPHY) then
+      if (idoubling(ispec) == IFLAG_CRUST .or. &
+          idoubling(ispec) == IFLAG_220_80 .or. &
+          idoubling(ispec) == IFLAG_80_MOHO) then
+        ! stretches mesh between surface and R220 accordingly
+        if (USE_GLL) then
+          ! stretches every GLL point accordingly
+          call add_topography_gll(xstore,ystore,zstore,ispec,nspec,ibathy_topo)
+        else
+          ! stretches anchor points only, interpolates GLL points later on
+          call add_topography(xelm,yelm,zelm,ibathy_topo)
+        endif
+      endif
+    endif
+  endif
+
   ! computes velocity/density/... values for the chosen Earth model
   ! (only needed for second meshing phase)
   if (ipass == 2) then
@@ -183,7 +204,9 @@
   !           problems with the Jacobian. using the anchors is therefore more robust.
 
   ! adds surface topography
-  if (TOPOGRAPHY) then
+  ! (by default we add topography after setting model values on the GLL points, assuming that the models provided are defined
+  !  for spherical locations and crustal structures give with depth, not absolute position or altitude above sea-level)
+  if (TOPOGRAPHY .and. .not. THREE_D_MODEL == THREE_D_MODEL_BKMNS_GLAD) then
     if (idoubling(ispec) == IFLAG_CRUST .or. &
         idoubling(ispec) == IFLAG_220_80 .or. &
         idoubling(ispec) == IFLAG_80_MOHO) then
@@ -207,8 +230,11 @@
   ! adds topography on 410 km and 650 km discontinuity in model S362ANI
   if (.not. SUPPRESS_INTERNAL_TOPOGRAPHY) then
     ! s362ani internal topography
-    if (THREE_D_MODEL == THREE_D_MODEL_S362ANI .or. THREE_D_MODEL == THREE_D_MODEL_S362WMANI &
-      .or. THREE_D_MODEL == THREE_D_MODEL_S362ANI_PREM .or. THREE_D_MODEL == THREE_D_MODEL_S29EA) then
+    if (THREE_D_MODEL == THREE_D_MODEL_S362ANI .or. &
+        THREE_D_MODEL == THREE_D_MODEL_S362WMANI .or. &
+        THREE_D_MODEL == THREE_D_MODEL_S362ANI_PREM .or. &
+        THREE_D_MODEL == THREE_D_MODEL_S29EA .or. &
+        THREE_D_MODEL == THREE_D_MODEL_BKMNS_GLAD) then
       ! stretching between 220 and 770
       if (idoubling(ispec) == IFLAG_670_220 .or. &
           idoubling(ispec) == IFLAG_MANTLE_NORMAL) then

@@ -83,6 +83,10 @@
             CRUST_SH_V_moho(NSH_40), &
             stat=ier)
   if (ier /= 0) call exit_MPI(myrank,'Error allocating crust arrays')
+  CRUST_SH_V_vph(:) = 0.d0; CRUST_SH_V_vpv(:) = 0.d0
+  CRUST_SH_V_vsh(:) = 0.d0; CRUST_SH_V_vsv(:) = 0.d0
+  CRUST_SH_V_rho(:) = 0.d0; CRUST_SH_V_eta(:) = 0.d0
+  CRUST_SH_V_moho(:) = 0.d0
 
   ! the variables read are declared and stored in structure CRUST_SH_V
   if (myrank == 0) call read_crust_sh_model()
@@ -273,7 +277,10 @@
 
   implicit none
 
+  ! lat/lon  - in degrees (range lat/lon = [-90,90] / [-180,180]
+  ! radius r - normalized by globe radius [0,1.x]
   double precision,intent(in) :: lat,lon,r
+
   double precision,intent(out) :: vpvc,vphc,vsvc,vshc,etac,rhoc,moho,sediment
   logical,intent(out) :: found_crust
   logical,intent(in) :: elem_in_crust,moho_only

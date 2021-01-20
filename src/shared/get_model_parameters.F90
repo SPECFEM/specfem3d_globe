@@ -743,9 +743,23 @@
     REFERENCE_CRUSTAL_MODEL = ICRUST_CRUSTMAPS
     TRANSVERSE_ISOTROPY = .false. ! enforces isotropic model
     MODEL_3D_MANTLE_PERTUBATIONS = .false. ! not based on a 3D mantle model, but 1D model VPREMOON
-    THREE_D_MODEL = 0
+    THREE_D_MODEL = 0                      ! not used
     MODEL_GLL = .true.
     MODEL_GLL_TYPE = 1 ! (1 == iso) input model files are iso (vp,vs,rho)
+
+  case ('glad_bkmns')
+    ! block-mantle-sphericalharmonics model expansions of GLAD models (based on s362ani)
+    ! 3d crust - mesh stretching
+    ONE_CRUST = .true.
+    CASE_3D = .true.
+    CRUSTAL = .true.
+    ! reference model (same as s362ani)
+    REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
+    REFERENCE_CRUSTAL_MODEL = ICRUST_BKMNS_GLAD
+    ! crust/mantle
+    MODEL_3D_MANTLE_PERTUBATIONS = .true.
+    TRANSVERSE_ISOTROPY = .true. ! same as reference model
+    THREE_D_MODEL = THREE_D_MODEL_BKMNS_GLAD
 
   case default
     print *
@@ -1052,16 +1066,18 @@
     ! default: Sohl & Spohn
     ROCEAN = SOHL_ROCEAN
     RMIDDLE_CRUST = SOHL_RMIDDLE_CRUST
-    RMOHO = SOHL_RMOHO
-    R80  = SOHL_R80
+    ! Model A
+    RMOHO = SOHL_A_RMOHO
+    R80  = SOHL_A_R80
     R120 = -1.d0 ! by default there is no d120 discontinuity
-    R220 = SOHL_R220
-    R400 = SOHL_R400
-    R600 = SOHL_R600
-    R670 = SOHL_R670
-    R771 = SOHL_R771
-    RTOPDDOUBLEPRIME = SOHL_RTOPDDOUBLEPRIME
-    RCMB = SOHL_RCMB
+    R220 = SOHL_A_R220
+    R400 = SOHL_A_R400
+    R600 = SOHL_A_R600
+    R670 = SOHL_A_R670
+    R771 = SOHL_A_R771
+    RTOPDDOUBLEPRIME = SOHL_A_RTOPDDOUBLEPRIME
+    RCMB = SOHL_A_RCMB
+    ! artifical ICB (to impose solid/elastic inner core)
     RICB = SOHL_RICB
 
     ! non-dimensionalizes densities

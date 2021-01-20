@@ -126,7 +126,7 @@ program combine_vol_data
   character(len=MAX_STRING_LEN) :: value_file_name, mesh_file_name
   integer,parameter :: MAX_NUM_NODES = 2000
 #else
-  integer :: iregion,njunk
+  integer :: iregion,proc_id
   character(len=MAX_STRING_LEN) :: prname_topo, prname_file, dimension_file
   character(len=MAX_STRING_LEN) :: in_file_dir, in_topo_dir
   character(len=MAX_STRING_LEN) :: sline,slice_list_name
@@ -269,7 +269,7 @@ program combine_vol_data
     do while (1 == 1)
       read(IIN,'(a)',iostat=ier) sline
       if (ier /= 0) exit
-      read(sline,*,iostat=ier) njunk
+      read(sline,*,iostat=ier) proc_id
       if (ier /= 0) exit
       num_node = num_node + 1
     enddo
@@ -286,10 +286,10 @@ program combine_vol_data
     do while (1 == 1)
       read(IIN,'(a)',iostat=ier) sline
       if (ier /= 0) exit
-      read(sline,*,iostat=ier) njunk
+      read(sline,*,iostat=ier) proc_id
       if (ier /= 0) exit
       num_node = num_node + 1
-      node_list(num_node) = njunk
+      node_list(num_node) = proc_id
     enddo
     close(IIN)
   endif

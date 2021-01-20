@@ -142,8 +142,7 @@
 
 ! preparing model parameter coefficients on all processes for mantle models
 
-  use constants, only: myrank
-
+  use constants, only: myrank,IMAIN
   use meshfem3D_models_par
 
   implicit none
@@ -209,6 +208,14 @@
         ! Montagner anisotropic model
         call model_aniso_mantle_broadcast()
 
+      case (THREE_D_MODEL_BKMNS_GLAD)
+        ! GLAD model expansion on block-mantle-spherical-harmonics
+        if (myrank == 0) write(IMAIN,*) 'setting up both s362ani and bkmns models...'
+        ! needs s362ani topo for 410/660
+        call model_s362ani_broadcast(THREE_D_MODEL_S362ANI)
+        ! block-mantle-spherical-harmonics model
+        call model_bkmns_mantle_broadcast()
+
       case default
         call exit_MPI(myrank,'3D model not defined')
 
@@ -244,8 +251,9 @@
 
 ! preparing model parameter coefficients on all processes for crustal models
 
-  use meshfem3D_models_par
+  use constants, only: myrank,IMAIN
   use shared_parameters, only: SAVE_MESH_FILES
+  use meshfem3D_models_par
 
   implicit none
 
@@ -293,6 +301,14 @@
       ! modified crust2.0 for SGLOBE-rani
       call model_sglobecrust_broadcast()
 
+    case (ICRUST_BKMNS_GLAD)
+      ! GLAD model expansion on block-mantle-spherical-harmonics
+      if (myrank == 0) write(IMAIN,*) 'setting up both crust 2.0 and bkmns crust models ...'
+      ! needs crust 2.0 for moho depths
+      call model_crust_2_0_broadcast()
+      ! crustal structure in blocks between topography and 80km depth
+      call model_bkmns_crust_broadcast()
+
     case default
       stop 'crustal model type not defined'
 
@@ -300,7 +316,6 @@
 
   ! plot moho as VTK file output
   if (SAVE_MESH_FILES) call meshfem3D_plot_VTK_crust_moho()
-
 
   end subroutine meshfem3D_crust_broadcast
 
@@ -800,6 +815,12 @@
                                   c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
                                   c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
 
+        case (THREE_D_MODEL_BKMNS_GLAD)
+          ! GLAD model expansion on block-mantle-spherical-harmonics
+          ! model takes actual position (includes topography between 80km depth and surface topo)
+          r_used = r
+          call model_bkmns_mantle(lat,lon,r_used,vpv,vph,vsv,vsh,eta_aniso,rho)
+
         case default
           print *,'Error: do not recognize value for THREE_D_MODEL ',THREE_D_MODEL
           stop 'unknown 3D Earth model in meshfem3D_models_get3Dmntl_val(), please check... '
@@ -1144,7 +1165,8 @@
 !
 
 
-  subroutine meshfem3D_model_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,sediment,found_crust,elem_in_crust,moho_only)
+  subroutine meshfem3D_model_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc, &
+                                   moho,sediment,found_crust,elem_in_crust,moho_only)
 
 ! returns velocity/density for default crust
 
@@ -1152,7 +1174,10 @@
 
   implicit none
 
+  ! lat/lon  - in degrees (range lat/lon = [-90,90] / [-180,180]
+  ! radius r - normalized by globe radius [0,1.x]
   double precision,intent(in) :: lat,lon,r
+
   double precision,intent(out) :: vpvc,vphc,vsvc,vshc,etac,rhoc
   double precision,intent(out) :: moho,sediment
   logical,intent(out) :: found_crust
@@ -1270,6 +1295,19 @@
       vphc = vpc
       vsvc = vsc
       vshc = vsc
+
+    case (ICRUST_BKMNS_GLAD)
+      ! GLAD model expansion on block-mantle-spherical-harmonics
+      ! gets moho/sediment depth from Crust2.0 model
+      call model_crust_2_0(lat,lon,r,vpc,vsc,rhoc,moho,sediment,found_crust,elem_in_crust,moho_only)
+      vpvc = vpc
+      vphc = vpc
+      vsvc = vsc
+      vshc = vsc
+      if (.not. moho_only) then
+        ! overimposes model values taken at actual position (with topography) between 80km depth and surface topo
+        call model_bkmns_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc)
+      endif
 
     case default
       stop 'crustal model type not defined'
@@ -1478,6 +1516,7 @@
 
   implicit none
 
+  ! local parameters
   double precision :: lat,lon,r,phi,theta
   double precision :: xmesh,ymesh,zmesh
 
@@ -1626,6 +1665,7 @@
 
   implicit none
 
+  ! local parameters
   double precision :: lat,lon,r,phi,theta,elevation
   double precision :: xmesh,ymesh,zmesh
 

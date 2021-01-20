@@ -162,7 +162,7 @@
                    NSPEC2D_BOTTOM,NSPEC2D_TOP,static_memory_size)
 
   call compute_optimized_dumping(static_memory_size,NT_DUMP_ATTENUATION_optimal,number_of_dumpings_to_do, &
-                   static_memory_size_GB,size_to_store_at_each_time_step,disk_size_of_each_dumping)
+                                 static_memory_size_GB,size_to_store_at_each_time_step,disk_size_of_each_dumping)
 
   ! restore the simulation type that we have temporarily erased
   SIMULATION_TYPE = saved_SIMULATION_TYPE

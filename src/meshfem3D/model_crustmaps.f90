@@ -101,6 +101,8 @@
            velocs(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP), &
            stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating crustmaps arrays')
+  thickness(:,:,:) = 0.d0; density(:,:,:) = 0.d0
+  velocp(:,:,:) = 0.d0; velocs(:,:,:) = 0.d0
 
   allocate(thicknessnp(NLAYERS_CRUSTMAP), &
            densitynp(NLAYERS_CRUSTMAP), &
@@ -112,6 +114,10 @@
            velocssp(NLAYERS_CRUSTMAP), &
            stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating crustmaps np/sp arrays')
+  thicknessnp(:) = 0.d0; densitynp(:) = 0.d0
+  velocpnp(:) = 0.d0; velocsnp(:) = 0.d0
+  thicknesssp(:) = 0.d0; densitysp(:) = 0.d0
+  velocpsp(:) = 0.d0; velocssp(:) = 0.d0
 
   ! main reads in crust maps
   if (myrank == 0) call read_general_crustmap()
