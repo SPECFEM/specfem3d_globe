@@ -55,7 +55,7 @@
   integer(kind=8) :: sel
 
   ! only crust and mantle
-  write(file_name,'(a)') trim(PATHNAME_GLL_modeldir) // 'model_gll.bp'
+  file_name = get_adios_filename(trim(PATHNAME_GLL_modeldir) // 'model_gll')
 
   ! user output
   if (myrank == 0) then

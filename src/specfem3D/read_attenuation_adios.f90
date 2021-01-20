@@ -64,7 +64,7 @@
 
   ! All of the following reads use the output parameters as their temporary arrays
   ! use the filename to determine the actual contents of the read
-  file_name = trim(LOCAL_PATH) // "/attenuation.bp"
+  file_name = get_adios_filename(trim(LOCAL_PATH) // "/attenuation")
 
   ! opens adios file
   call open_file_adios_read_and_init_method(myadios_file,myadios_group,file_name)

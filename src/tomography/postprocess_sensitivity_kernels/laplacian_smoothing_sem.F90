@@ -210,9 +210,9 @@ program smooth_laplacian_sem
   ! ADIOS arguments
   input_file = arg(4)
   tmp_dir     = arg(5)
-  write(solver_file, '(a,a)') trim(tmp_dir)//'solver_data.bp'
-  write(solver_file_mpi, '(a,a)') trim(tmp_dir)//'solver_data_mpi.bp'
   output_file = arg(6)
+  solver_file = get_adios_filename(trim(tmp_dir)//'solver_data')
+  solver_file_mpi = get_adios_filename(trim(tmp_dir)//'solver_data_mpi')
 #else
   input_dir = arg(4)
   output_dir = arg(5)
@@ -343,8 +343,8 @@ program smooth_laplacian_sem
   call open_file_adios_read_and_init_method(myadios_file, myadios_group, trim(solver_file))
   call read_adios_scalar(myadios_file, myadios_group, myrank, trim(reg_name)//"nspec", nspec)
   call read_adios_scalar(myadios_file, myadios_group, myrank, trim(reg_name)//"nglob", nglob)
-  if (nspec /= NSPEC_AB) call exit_mpi(myrank,'Error invalid nspec value in solver_data.bp')
-  if (nglob /= NGLOB_AB) call exit_mpi(myrank,'Error invalid nglob value in solver_data.bp')
+  if (nspec /= NSPEC_AB) call exit_mpi(myrank,'Error invalid nspec value in adios solver_data file')
+  if (nglob /= NGLOB_AB) call exit_mpi(myrank,'Error invalid nglob value in adios solver_data file')
   ! reads mesh arrays
   call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "ibool", ibool(:, :, :, :))
   call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "xixstore", dxsi_dx(:, :, :, :))

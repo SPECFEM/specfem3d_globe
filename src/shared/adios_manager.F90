@@ -135,6 +135,7 @@ module manager_adios
   ! check
   public :: check_adios_err
   public :: show_adios_file_variables
+  public :: get_adios_filename
 
 #endif  /* USE_ADIOS or USE_ADIOS2 */
 
@@ -422,6 +423,9 @@ contains
     call adios2_set_parameters(adios_group, ADIOS2_ENGINE_PARAMS_DEFAULT, ier)
     call check_adios_err(ier,"Error setting parameters for ADIOS2 IO group in open_file_adios_read_and_init_method()")
   endif
+
+  ! synchronizes all processes to make sure engine & parameters has been set for all procs
+  call synchronize_all_comm(comm_adios)
 
   ! Open the handle to file containing all the ADIOS variables for the current io group
   call adios2_open(adios_handle, adios_group, trim(filename), adios2_mode_read, comm_adios, ier)
@@ -1513,6 +1517,65 @@ contains
 #endif
 
   end subroutine show_adios_file_variables
+
+#endif
+
+
+#if defined(USE_ADIOS) || defined(USE_ADIOS2)
+! only available with ADIOS compilation support
+! to clearly separate adios version and non-adios version of same tools
+
+!> get the ADIOS filename
+!! \param name file name (without extension)
+
+  function get_adios_filename(name,ENGINE)
+
+  use constants, only: MAX_STRING_LEN,ADIOS2_ENGINE_DEFAULT
+
+  implicit none
+  character(len=*), intent(in) :: name
+  character(len=*), intent(in),optional :: ENGINE
+  character(len=MAX_STRING_LEN) :: get_adios_filename
+  ! local parameters
+  character(len=MAX_STRING_LEN) :: tmp_engine
+  character(len=4) :: ext
+  integer :: irange,i
+
+  ! selects engine type
+  if (present(ENGINE)) then
+    ! given by function call
+    tmp_engine = trim(ENGINE)
+  else
+    ! default
+    tmp_engine = trim(ADIOS2_ENGINE_DEFAULT)
+  endif
+
+  ! converts all string characters to lowercase (to make user input case-insensitive)
+  irange = iachar('a') - iachar('A')
+  do i = 1,len_trim(tmp_engine)
+    if (lge(tmp_engine(i:i),'A') .and. lle(tmp_engine(i:i),'Z')) then
+      tmp_engine(i:i) = achar(iachar(tmp_engine(i:i)) + irange)
+    endif
+  enddo
+
+  ! debug
+  !print *,'debug: get_adios_filename ',trim(name),' - engine: ',trim(tmp_engine)
+
+  ! sets ending according to engine
+  ! https://adios2.readthedocs.io/en/latest/engines/engines.html
+  select case(trim(tmp_engine))
+  case ("hdf5")
+    ext = ".h5"
+  case ("bp4")
+    ext = ".bp"
+  case default
+    ext = ".bp"
+  end select
+
+  ! engine chooses the filename extension (e.g., **.bp, **.h5, ..)
+  get_adios_filename = trim(name) // trim(ext)
+
+  end function get_adios_filename
 
 #endif
 

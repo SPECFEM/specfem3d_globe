@@ -319,7 +319,9 @@ end program sum_kernels_globe
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
     ! ADIOS
     ! reads existing event kernel file
-    write(file_name,'(a,a)') 'INPUT_KERNELS/'//trim(kernel_list(iker)),'/kernels.bp'
+    write(file_name,'(a,a)') 'INPUT_KERNELS/'//trim(kernel_list(iker)),'/kernels'
+    file_name = get_adios_filename(trim(file_name))
+
     ! debug
     !print *,'adios file: ',trim(file_name)
     !print *,'adios kernel: ',kernel_name
@@ -365,7 +367,7 @@ end program sum_kernels_globe
 
   ! user output
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
-  if (myrank == 0) write(*,*) 'writing out summed kernel for: ',trim(kernel_name),' into file kernels_sum.bp'
+  if (myrank == 0) write(*,*) 'writing out summed kernel for: ',trim(kernel_name),' into file adios kernels_sum file'
 #else
   if (myrank == 0) write(*,*) 'writing out summed kernel for: ',trim(kernel_name)
 #endif
@@ -517,7 +519,8 @@ end program sum_kernels_globe
   enddo
 
   ! opens new adios model file
-  write(file_name,'(a)') 'OUTPUT_SUM/' // 'kernels_sum.bp'
+  file_name = get_adios_filename('OUTPUT_SUM/' // 'kernels_sum')
+
   call open_file_adios_write(myadios_val_file,myadios_val_group,file_name,"KERNELS_GROUP")
 
   call set_adios_group_size(myadios_val_file,group_size_inc)

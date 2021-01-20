@@ -96,7 +96,7 @@
     call flush_IMAIN()
   endif
 
-  outputname = trim(OUTPUT_FILES)//"/kernels.bp"
+  outputname = get_adios_filename(trim(OUTPUT_FILES)//"/kernels")
 
   group_name = "SPECFEM3D_GLOBE_KERNELS"
 

@@ -372,11 +372,12 @@
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
     ! ADIOS
+    solver_file = get_adios_filename(trim(dir_topo1)//'/solver_data')
+
     ! user output
-    print *, 'reading in ADIOS solver file: ',trim(dir_topo1)//'/solver_data.bp'
+    print *, 'reading in ADIOS solver file: ',trim(solver_file)
 
     ! opens adios file
-    write(solver_file,'(a,a)') trim(dir_topo1)//'/solver_data.bp'
     call open_file_adios_read_only_rank(myadios_file,myadios_group,myrank,solver_file)
 
     ! reads in scalars
@@ -554,7 +555,7 @@
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
   ! adios only for model_gll.bp implemented which uses vpv,vph,..,rho
   if (nparams /= 6) &
-    stop 'ADIOS version only works for purely transversely isotropic model file model_gll.bp so far...'
+    stop 'ADIOS version only works for purely transversely isotropic model file model_gll so far...'
 #endif
 
   ! console output
@@ -800,7 +801,7 @@
   call init_adios_group(myadios_group,"InterpolatorNew")
 
   ! opens adios file
-  write(solver_file,'(a,a)') trim(dir_topo2)//'/solver_data.bp'
+  solver_file = get_adios_filename(trim(dir_topo2)//'/solver_data')
   call open_file_adios_read_and_init_method(myadios_file,myadios_group,solver_file)
 
   ! reads in scalars for rank
@@ -910,7 +911,7 @@
     ! re-initiate group
     call init_adios_group(myadios_group,"InterpolatorOld")
     ! opens adios file
-    write(solver_file,'(a,a)') trim(dir_topo1)//'/solver_data.bp'
+    solver_file = get_adios_filename(trim(dir_topo1)//'/solver_data')
     call open_file_adios_read_and_init_method(myadios_file,myadios_group,solver_file)
 #endif
 
@@ -1014,7 +1015,7 @@
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
     ! single adios file for all old model arrays
     ! opens adios file with old model values
-    write(solver_file,'(a,a)') trim(input_model_dir)//'/model_gll.bp'
+    solver_file = get_adios_filename(trim(input_model_dir)//'/model_gll')
     call open_file_adios_read_and_init_method(myadios_val_file,myadios_val_group,solver_file)
 #endif
 
@@ -1392,7 +1393,7 @@
   enddo
 
   ! opens new adios model file
-  write(solver_file,'(a,a)') trim(output_model_dir) //'/model_gll_interpolated.bp'
+  solver_file = get_adios_filename(trim(output_model_dir) //'/model_gll_interpolated')
   call open_file_adios_write(myadios_val_file,myadios_val_group,solver_file,group_name)
 
   call set_adios_group_size(myadios_val_file,group_size_inc)

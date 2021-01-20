@@ -43,7 +43,7 @@ program convert_model_file_adios
   !-------------------------------------------------------------------
   ! USER PARAMETERS
   ! ADIOS model file name
-  character(len=64) :: model_adios_file = 'model_gll.bp'
+  character(len=MAX_STRING_LEN) :: model_adios_file
 
   ! model type
   ! isotropic model parameters (vp,vs,rho) or
@@ -147,6 +147,8 @@ program convert_model_file_adios
   call synchronize_all()
 
   ! sets adios model file name
+  model_adios_file = get_adios_filename('model_gll')
+
   if ( convert_format == 1) then
     ! from adios to old binaries
     model_filename_adios = trim(input_model_dir) // '/' // trim(model_adios_file)
@@ -285,7 +287,7 @@ program convert_model_file_adios
     ! check if file written
     if (icount == 0) then
       if (myrank == 0) then
-        print *,'Error: no model parameters found in ADIOS file. please check file model_gll.bp in input directory...'
+        print *,'Error: no model parameters found in ADIOS file. please check adios model_gll file in input directory...'
         stop 'No parameters found'
       endif
     endif

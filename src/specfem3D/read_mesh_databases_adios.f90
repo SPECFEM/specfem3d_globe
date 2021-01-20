@@ -52,7 +52,7 @@ subroutine read_mesh_databases_coupling_adios()
 
   character(len=128) :: region_name
 
-  file_name = trim(LOCAL_PATH) // "/boundary.bp"
+  file_name = get_adios_filename(trim(LOCAL_PATH) // "/boundary")
 
   ! opens adios file
   call open_file_adios_read_and_init_method(myadios_file,myadios_group,file_name)
@@ -409,7 +409,7 @@ subroutine read_mesh_databases_coupling_adios()
   ! -- Boundary Mesh for crust and mantle ---
   if (SAVE_BOUNDARY_MESH .and. SIMULATION_TYPE == 3) then
 
-    file_name = trim(LOCAL_PATH) // "boundary_disc.bp"
+    file_name = get_adios_filename(trim(LOCAL_PATH) // "boundary_disc")
 
     ! opens adios file
     call open_file_adios_read_and_init_method(myadios_file,myadios_group,file_name)
@@ -422,7 +422,7 @@ subroutine read_mesh_databases_coupling_adios()
     ! checks dimensions
     if (njunk1 /= NSPEC2D_MOHO .and. njunk2 /= NSPEC2D_400 .and. &
         njunk3 /= NSPEC2D_670) &
-        call exit_mpi(myrank, 'Error reading boundary_disc.bp file')
+        call exit_mpi(myrank, 'Error reading adios boundary_disc file')
 
     ! boundary elements
 
@@ -652,7 +652,7 @@ subroutine read_mesh_databases_MPI_adios(iregion_code)
 
   write(region_name,"('reg',i1, '/')") iregion_code
 
-  file_name = trim(LOCAL_PATH) // "/solver_data_mpi.bp"
+  file_name = get_adios_filename(trim(LOCAL_PATH) // "/solver_data_mpi")
 
   ! opens adios file
   call open_file_adios_read_and_init_method(myadios_file,myadios_group,file_name)
@@ -662,7 +662,7 @@ subroutine read_mesh_databases_MPI_adios(iregion_code)
   if (rank /= myrank) then
     print *,'Error: reading scalar values from adios file ',trim(file_name)
     print *,'region ',trim(region_name),' got invalid rank number ',rank,' instead of local rank ',myrank
-    call exit_mpi(myrank,'Error reading adios file solver_data_mpi.bp')
+    call exit_mpi(myrank,'Error reading adios file solver_data_mpi')
   endif
 
   ! MPI interfaces
@@ -997,7 +997,7 @@ subroutine read_mesh_databases_stacey_adios()
 
   character(len=128) :: region_name
 
-  file_name = trim(LOCAL_PATH) // "/stacey.bp"
+  file_name = get_adios_filename(trim(LOCAL_PATH) // "/stacey")
 
   ! crust and mantle
   write(region_name,"('reg',i1, '/')") IREGION_CRUST_MANTLE

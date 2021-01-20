@@ -512,8 +512,8 @@ program smooth_sem_globe
   call read_adios_scalar(myadios_file, myadios_group, myrank, trim(reg_name)//"nspec", nspec)
   call read_adios_scalar(myadios_file, myadios_group, myrank, trim(reg_name)//"nglob", nglob)
 
-  if (nspec /= NSPEC_AB) call exit_mpi(myrank,'Error invalid nspec value in solver_data.bp')
-  if (nglob /= NGLOB_AB) call exit_mpi(myrank,'Error invalid nglob value in solver_data.bp')
+  if (nspec /= NSPEC_AB) call exit_mpi(myrank,'Error invalid nspec value in adios solver_data file')
+  if (nglob /= NGLOB_AB) call exit_mpi(myrank,'Error invalid nglob value in adios solver_data file')
 
   ! reads mesh arrays
   call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "ibool", ibool(:, :, :, :))

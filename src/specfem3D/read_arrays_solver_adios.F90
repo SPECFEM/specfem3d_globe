@@ -122,7 +122,7 @@ subroutine read_arrays_solver_adios(iregion_code, &
 
   sel_num = 0
 
-  file_name= trim(LOCAL_PATH) // "/solver_data.bp"
+  file_name= get_adios_filename(trim(LOCAL_PATH) // "/solver_data")
 
   ! Setup the ADIOS library to read the file
   call open_file_adios_read_and_init_method(myadios_file,myadios_group,file_name)
@@ -143,13 +143,13 @@ subroutine read_arrays_solver_adios(iregion_code, &
     print *,'Error: rank ',myrank,' region ',iregion_code,' invalid file dimension: nspec in file = ',lnspec, &
             ' but nspec desired:',nspec
     print *,'please check file ',trim(file_name)
-    call exit_mpi(myrank,'Error dimensions in solver_data.bp')
+    call exit_mpi(myrank,'Error nspec dimensions in adios solver_data file')
   endif
   if (lnglob /= nglob) then
     print *,'Error: rank ',myrank,' region ',iregion_code,' invalid file dimension: nglob in file = ',lnglob, &
             ' but nglob desired:',nglob
     print *,'please check file ',trim(file_name)
-    call exit_mpi(myrank,'Error dimensions in solver_data.bp')
+    call exit_mpi(myrank,'Error nglob dimensions in adios solver_data file')
   endif
   call synchronize_all()
 

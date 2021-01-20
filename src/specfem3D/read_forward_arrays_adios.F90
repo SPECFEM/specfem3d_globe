@@ -54,7 +54,7 @@
   integer(kind=8) :: sel
   integer(kind=8), dimension(1) :: start, count
 
-  file_name = trim(LOCAL_TMP_PATH) // "/dump_all_arrays_adios.bp"
+  file_name = get_adios_filename(trim(LOCAL_TMP_PATH) // "/dump_all_arrays_adios")
 
   group_name = "SPECFEM3D_GLOBE_FORWARD_ARRAYS_RESTART"
   call init_adios_group(myadios_group,group_name)
@@ -215,7 +215,7 @@
   integer(kind=8) :: sel
   integer(kind=8), dimension(1) :: start, count
 
-  file_name = trim(LOCAL_TMP_PATH) // "/save_forward_arrays.bp"
+  file_name = get_adios_filename(trim(LOCAL_TMP_PATH) // "/save_forward_arrays")
 
   group_name = "SPECFEM3D_GLOBE_FORWARD_ARRAYS"
   call init_adios_group(myadios_group,group_name)
@@ -395,7 +395,8 @@
     do_close_file = .false.
 
     ! single file
-    file_name = trim(LOCAL_TMP_PATH) // "/save_forward_arrays_undoatt.bp"
+    file_name = get_adios_filename(trim(LOCAL_TMP_PATH) // "/save_forward_arrays_undoatt",ADIOS2_ENGINE_UNDO_ATT)
+
     group_name = "SPECFEM3D_GLOBE_FORWARD_ARRAYS_UNDOATT"
 
     ! open file at first call of this routine
@@ -408,7 +409,9 @@
     do_close_file = .true.
 
     ! files for each iteration step
-    write(file_name,'(a,a,i6.6,a)') trim(LOCAL_TMP_PATH), '/save_frame_at',iteration_on_subset_tmp,'.bp'
+    write(file_name,'(a,a,i6.6)') trim(LOCAL_TMP_PATH), '/save_frame_at',iteration_on_subset_tmp
+    file_name = get_adios_filename(trim(file_name))
+
     write(group_name, '(a, i6)') "SPECFEM3D_GLOBE_FORWARD_ARRAYS_UNDOATT", iteration_on_subset_tmp
   endif
 

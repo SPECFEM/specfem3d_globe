@@ -106,7 +106,8 @@
 
 
   !--- Open an ADIOS handler to the AVS_DX file. ---------
-  outputname = trim(reg_name) // "AVS_DX.bp"
+  outputname = get_adios_filename(trim(reg_name) // "AVS_DX")
+
   ! user output
   if (myrank == 0) write(IMAIN,*) '    saving arrays in ADIOS file: ',trim(outputname)
 

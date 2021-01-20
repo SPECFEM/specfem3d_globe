@@ -122,9 +122,9 @@
   ! user output
   if (myrank == 0) then
 #if defined(USE_ADIOS)
-    write(IMAIN,*) '    solver   in ADIOS 1 file format'
+    write(IMAIN,*) '    solver   in ADIOS1 file format'
 #elif defined(USE_ADIOS2)
-    write(IMAIN,*) '    solver   in ADIOS 2 file format'
+    write(IMAIN,*) '    solver   in ADIOS2 file format'
 #endif
     call flush_IMAIN()
   endif
@@ -278,7 +278,7 @@
 
 
   !--- Open an ADIOS handler to the restart file. ---------
-  outputname = trim(LOCAL_PATH) // "/solver_data.bp"
+  outputname = get_adios_filename(trim(LOCAL_PATH) // "/solver_data")
   ! user output
   if (myrank == 0) write(IMAIN,*) '    saving arrays in ADIOS file: ',trim(outputname)
 
@@ -572,10 +572,10 @@
 
   ! debug daniel
   !call synchronize_all()
-  !print *,myrank,'nspec2d top      :',NSPEC2D_TOP,NSPEC2D_TOP_wmax
-  !print *,myrank,'nspec2d bottom   :',NSPEC2D_BOTTOM,NSPEC2D_BOTTOM_wmax
-  !print *,myrank,'nspec2d xmin_xmax:',NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_XMIN_XMAX_wmax
-  !print *,myrank,'nspec2d ymin_ymax:',NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_YMIN_YMAX_wmax
+  !print *,'debug: ',myrank,'nspec2d top      :',NSPEC2D_TOP,NSPEC2D_TOP_wmax
+  !print *,'debug: ',myrank,'nspec2d bottom   :',NSPEC2D_BOTTOM,NSPEC2D_BOTTOM_wmax
+  !print *,'debug: ',myrank,'nspec2d xmin_xmax:',NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_XMIN_XMAX_wmax
+  !print *,'debug: ',myrank,'nspec2d ymin_ymax:',NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_YMIN_YMAX_wmax
   !call synchronize_all()
 
   ! checks
@@ -648,7 +648,7 @@
   call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(jacobian2D_top))
 
   !--- Open an ADIOS handler to the restart file. ---------
-  outputname = trim(LOCAL_PATH) // "/boundary.bp"
+  outputname = get_adios_filename(trim(LOCAL_PATH) // "/boundary")
   ! user output
   if (myrank == 0) write(IMAIN,*) '    saving arrays in ADIOS file: ',trim(outputname)
 
@@ -764,7 +764,7 @@
     call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(Qmu_store))
 
     !--- Open an ADIOS handler to the restart file. ---------
-    outputname = trim(LOCAL_PATH) // "/attenuation.bp"
+    outputname = get_adios_filename(trim(LOCAL_PATH) // "/attenuation")
     ! user output
     if (myrank == 0) write(IMAIN,*) '    saving arrays in ADIOS file: ',trim(outputname)
 
@@ -961,7 +961,7 @@
   endif
 
   !--- Open an ADIOS handler to the restart file. ---------
-  outputname = trim(LOCAL_PATH) // "/solver_data_mpi.bp"
+  outputname = get_adios_filename(trim(LOCAL_PATH) // "/solver_data_mpi")
   ! user output
   if (myrank == 0) write(IMAIN,*) '    saving arrays in ADIOS file: ',trim(outputname)
 
@@ -1157,7 +1157,7 @@
   call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(normal_670))
 
   !--- Open an ADIOS handler to the restart file. ---------
-  outputname = trim(LOCAL_PATH) // "/boundary_disc.bp"
+  outputname = get_adios_filename(trim(LOCAL_PATH) // "/boundary_disc")
   ! user output
   if (myrank == 0) write(IMAIN,*) '    saving arrays in ADIOS file: ',trim(outputname)
 

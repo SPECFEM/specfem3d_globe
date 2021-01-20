@@ -191,7 +191,7 @@
   endif
 
   !--- Open an ADIOS handler to the restart file. ---------
-  outputname = trim(LOCAL_PATH) // "/model_gll.bp"
+  outputname = get_adios_filename(trim(LOCAL_PATH) // "/model_gll")
 
   ! user output
   if (myrank == 0) write(IMAIN,*) '    saving model meshfile arrays in ADIOS file: ',trim(outputname)

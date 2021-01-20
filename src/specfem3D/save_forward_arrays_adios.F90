@@ -56,7 +56,7 @@
   character(len=MAX_STRING_LEN) :: file_name,group_name
   integer(kind=8) :: group_size_inc
 
-  file_name = trim(LOCAL_TMP_PATH) // "/dump_all_arrays_adios.bp"
+  file_name = get_adios_filename(trim(LOCAL_TMP_PATH) // "/dump_all_arrays_adios")
 
   group_name = "SPECFEM3D_GLOBE_FORWARD_ARRAYS_RESTART"
   call init_adios_group(myadios_fwd_group,group_name)
@@ -111,7 +111,7 @@
   character(len=MAX_STRING_LEN) :: file_name,group_name
   integer(kind=8) :: group_size_inc
 
-  file_name = trim(LOCAL_TMP_PATH) // "/save_forward_arrays.bp"
+  file_name = get_adios_filename(trim(LOCAL_TMP_PATH) // "/save_forward_arrays")
 
   group_name = "SPECFEM3D_GLOBE_FORWARD_ARRAYS"
   call init_adios_group(myadios_fwd_group,group_name)
@@ -182,7 +182,8 @@
     do_init_group = .false.
 
     ! single file
-    file_name = trim(LOCAL_TMP_PATH) // "/save_forward_arrays_undoatt.bp"
+    file_name = get_adios_filename(trim(LOCAL_TMP_PATH) // "/save_forward_arrays_undoatt",ADIOS2_ENGINE_UNDO_ATT)
+
     group_name = "SPECFEM3D_GLOBE_FORWARD_ARRAYS_UNDOATT"
 
     ! open file at first call of this routine
@@ -205,7 +206,9 @@
     do_init_group = .true.
 
     ! files for each iteration step
-    write(file_name,'(a, a, i6.6, a)') trim(LOCAL_TMP_PATH), '/save_frame_at', iteration_on_subset_tmp,'.bp'
+    write(file_name,'(a, a, i6.6)') trim(LOCAL_TMP_PATH), '/save_frame_at', iteration_on_subset_tmp
+    file_name = get_adios_filename(trim(file_name))
+
     write(group_name, '(a, i6)') "SPECFEM3D_GLOBE_FORWARD_ARRAYS_UNDOATT", iteration_on_subset_tmp
   endif
 
@@ -782,7 +785,7 @@
   call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "rho", dummy_ijke)
 
   !--- Open an ADIOS handler to the restart file. ---------
-  outputname = trim(LOCAL_PATH) // "/model_gll_shifted.bp"
+  outputname = get_adios_filename(trim(LOCAL_PATH) // "/model_gll_shifted")
 
   ! user output
   if (myrank == 0) write(IMAIN,*) '    saving shifted model arrays in ADIOS file: ',trim(outputname)
