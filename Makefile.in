@@ -416,12 +416,14 @@ clean:
 	-rm -f $(foreach dir, $(CLEAN), $($(dir)_OBJECTS) $($(dir)_MODULES) $($(dir)_SHARED_OBJECTS) $($(dir)_TARGETS))
 	-rm -f ${E}/*__genmod.*
 	-rm -f ${O}/*__genmod.*
+	-rm -f ${O}/*.smod
 else
 clean:
 	@echo "cleaning all"
 	-rm -f $(foreach dir, $(SUBDIRS), $($(dir)_OBJECTS) $($(dir)_MODULES) $($(dir)_TARGETS))
 	-rm -f ${E}/*__genmod.*
 	-rm -f ${O}/*__genmod.*
+	-rm -f ${O}/*.smod
 endif
 
 realclean: clean
