@@ -93,7 +93,7 @@
                                 deltat, &
                                 GPU_ASYNC_COPY, &
                                 hxir_store,hetar_store,hgammar_store,nu_rec, &
-                                SAVE_SEISMOGRAMS_STRAIN)
+                                SAVE_SEISMOGRAMS_STRAIN,CUSTOM_REAL)
   call synchronize_all()
 
   if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then

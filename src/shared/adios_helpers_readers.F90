@@ -68,7 +68,7 @@ module adios_helpers_readers_mod
     module procedure read_adios_schedule_array_global_1d_integer_1d
     module procedure read_adios_schedule_array_global_1d_integer_2d
     module procedure read_adios_schedule_array_global_1d_integer_4d
-    module procedure read_adios_schedule_array_global_1d_customreal_1d
+    module procedure read_adios_schedule_array_global_1d_real_1d
     module procedure read_adios_schedule_array_global_1d_customreal_2d
     module procedure read_adios_schedule_array_global_1d_customreal_3d
     module procedure read_adios_schedule_array_global_1d_customreal_4d
@@ -1206,17 +1206,15 @@ contains
 !---------------------------------------------------------------------------------
 !
 
-  subroutine read_adios_schedule_array_global_1d_customreal_1d(adios_handle,adios_group,sel,start,count,array_name,array,step)
-
-  use constants, only: CUSTOM_REAL
+  subroutine read_adios_schedule_array_global_1d_real_1d(adios_handle,adios_group,sel,start,count,array_name,array,step)
 
   implicit none
 
-  real(kind=CUSTOM_REAL), dimension(:), intent(out) :: array
+  real, dimension(:), intent(out) :: array
 
 #include "adios_helpers_readers_1d_generic.inc"
 
-  end subroutine read_adios_schedule_array_global_1d_customreal_1d
+  end subroutine read_adios_schedule_array_global_1d_real_1d
 
 !
 !---------------------------------------------------------------------------------

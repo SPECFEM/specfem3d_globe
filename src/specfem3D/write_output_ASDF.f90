@@ -38,7 +38,7 @@
   integer,intent(in) :: nrec_local
 
   ! Variables
-  integer :: total_seismos_local, ier
+  integer :: total_seismos_local,ier
 
   total_seismos_local = nrec_local * 3 ! 3 components
 
@@ -60,6 +60,16 @@
   if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
   allocate (asdf_container%records(total_seismos_local), STAT=ier)
   if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
+
+  ! initializes
+  asdf_container%receiver_name_array(:) = ""
+  asdf_container%network_array(:) = ""
+  asdf_container%component_array(:) = ""
+
+  asdf_container%receiver_lat(:) = 0.0
+  asdf_container%receiver_lo(:) = 0.0
+  asdf_container%receiver_el(:) = 0.0
+  asdf_container%receiver_dpt(:) = 0.0
 
   end subroutine init_asdf_data
 
@@ -115,6 +125,7 @@
   asdf_container%receiver_name_array(irec_local) = station_name(irec)(1:length_station_name)
   asdf_container%network_array(irec_local) = network_name(irec)(1:length_network_name)
   asdf_container%component_array(i) = chn(1:3)
+
   asdf_container%receiver_lat(irec_local) = stlat(irec)
   asdf_container%receiver_lo(irec_local) = stlon(irec)
   asdf_container%receiver_el(irec_local) = stele(irec)
@@ -123,7 +134,11 @@
   allocate (asdf_container%records(i)%record(seismo_current), STAT=ier)
   if (ier /= 0) call exit_MPI (myrank, 'Allocating ASDF container failed.')
 
-  asdf_container%records(i)%record(1:seismo_current) = seismogram_tmp(iorientation, 1:seismo_current)
+  ! initializes
+  asdf_container%records(i)%record(:) = 0.0
+
+  ! seismogram as real data
+  asdf_container%records(i)%record(1:seismo_current) = real(seismogram_tmp(iorientation, 1:seismo_current),kind=4)
 
   end subroutine store_asdf_data
 
@@ -138,12 +153,13 @@
 
   implicit none
 
-  !Variables
+  ! local Variables
   integer :: i
 
   do i = 1, asdf_container%nrec_local*3 ! 3 components
     deallocate(asdf_container%records(i)%record)
   enddo
+
   deallocate (asdf_container%receiver_name_array)
   deallocate (asdf_container%network_array)
   deallocate (asdf_container%component_array)
@@ -207,7 +223,7 @@
   integer(kind=8) :: stationxml_grp
 
   integer :: current_proc, sender, receiver
-  real (kind=CUSTOM_REAL), dimension(:,:), allocatable :: one_seismogram
+  real, dimension(:,:), allocatable :: one_seismogram
 
   !--- MPI variables
   integer :: mysize, comm
@@ -220,15 +236,10 @@
   !    order to define ASDF groups and datasets or write them as attributes.
   integer, dimension(:), allocatable :: num_stations_gather
   integer :: max_num_stations_gather
-  character(len=MAX_LENGTH_STATION_NAME), dimension(:,:), allocatable :: &
-      station_names_gather
-  character(len=MAX_LENGTH_NETWORK_NAME), dimension(:,:), allocatable :: &
-      network_names_gather
-  character(len=3), dimension(:,:), allocatable :: &
-      component_names_gather
-  real, dimension(:,:), allocatable :: &
-      station_lats_gather, station_longs_gather, station_elevs_gather, &
-      station_depths_gather
+  character(len=MAX_LENGTH_STATION_NAME), dimension(:,:), allocatable :: station_names_gather
+  character(len=MAX_LENGTH_NETWORK_NAME), dimension(:,:), allocatable :: network_names_gather
+  character(len=3), dimension(:,:), allocatable :: component_names_gather
+  real, dimension(:,:), allocatable :: station_lats_gather, station_longs_gather, station_elevs_gather, station_depths_gather
   integer, dimension(:), allocatable :: displs, rcounts
 
   ! temporary name built from network, station and channel names.
@@ -276,6 +287,7 @@
     call ASDF_generate_sf_provenance_f(trim(start_time_string)//C_NULL_CHAR, &
                                        trim(end_time_string)//C_NULL_CHAR, cptr, len_prov)
     call c_f_pointer(cptr, fptr, [len_prov])
+
     allocate(provenance(len_prov+1))
     provenance(1:len_prov) = fptr(1:len_prov)
     provenance(len_prov+1) = C_NULL_CHAR
@@ -404,6 +416,7 @@
   deallocate(rcounts)
 
   allocate(one_seismogram(NDIM,seismo_current),stat=ier)
+  one_seismogram(:,:) = 0.0
 
   !--------------------------------------------------------
   ! write ASDF
@@ -562,8 +575,8 @@
         l = (j-1)*(NDIM) ! Index of current receiver in asdf_container%records
 
         ! First get the information to the main proc
-        if (current_proc == 0) then ! current_proc is main proc
-
+        if (current_proc == 0) then
+          ! current_proc is main proc
           !one_seismogram(:,:) = seismograms(:,j,:)
           if (myrank == 0) then
             do i = 1, NDIM
@@ -572,33 +585,32 @@
             enddo
           endif
 
-        else ! current_proc is not main proc
-
+        else
+          ! current_proc is not main proc
           if (myrank == current_proc) then
-
             !one_seismogram(:,:) = seismograms(:,j,:)
             do i = 1, NDIM
               one_seismogram(i,:) = asdf_container%records(l+i)%record(1:seismo_current)
             enddo
-
-            call send_cr(one_seismogram,NDIM*seismo_current,receiver,itag)
+            ! send (real) data
+            call send_r(one_seismogram,NDIM*seismo_current,receiver,itag)
 
           else if (myrank == 0) then
-
-            call recv_cr(one_seismogram,NDIM*seismo_current,sender,itag)
+            ! receive (real) data
+            call recv_r(one_seismogram,NDIM*seismo_current,sender,itag)
 
           endif
         endif
 
         ! Now do the actual writing
         if (myrank == 0) then
-
           call ASDF_open_stations_group_f(waveforms_grp, &
                                           trim(network_names_gather(j, k)) // "." //      &
                                           trim(station_names_gather(j, k)) // C_NULL_CHAR, &
                                           station_grp)
 
-          do i = 1,NDIM ! loop over each component
+          ! loop over each component
+          do i = 1,NDIM
             ! Generate unique waveform name
             ! example: HT.LIT.S3.MXN__2008-01-06T05:14:19__2008-01-06T05:14:53
             write(waveform_name, '(a)') trim(network_names_gather(j,k)) // "." // &
@@ -610,6 +622,7 @@
                                       trim(waveform_name) // C_NULL_CHAR, &
                                       data_ids(i))
 
+            ! writes (float) data
             call ASDF_write_partial_waveform_f(data_ids(i), &
                                                one_seismogram(i,1:seismo_current), seismo_offset, seismo_current, ier)
             if (ier /= 0) call exit_MPI(myrank,'Error ASDF write partial waveform failed')
@@ -668,10 +681,11 @@
                                         trim(station_names_gather(j, k)) // C_NULL_CHAR, &
                                         station_grp)
 
-        l = (j-1)*(NDIM) ! Index of current receiver in asdf_container%records
+        ! Index of current receiver in asdf_container%records
+        l = (j-1)*(NDIM)
 
-        do  i = 1, NDIM ! loop over each component
-
+        ! loop over each component
+        do  i = 1, NDIM
           ! Generate unique waveform name
           ! example: HT.LIT.S3.MXN__2008-01-06T05:14:19__2008-01-06T05:14:53
           write(waveform_name, '(a)') trim(network_names_gather(j,k)) // "." // &
@@ -684,9 +698,9 @@
                                     data_ids(i))
 
           if (k == myrank+1) then
-
             one_seismogram(i,:) = asdf_container%records(l+i)%record(1:seismo_current)
 
+            ! writes (float) data
             call ASDF_write_partial_waveform_f(data_ids(i), &
                                                one_seismogram(i,1:seismo_current), seismo_offset, seismo_current, ier)
             if (ier /= 0) call exit_MPI(myrank,'Error ASDF parallel write partial waveform failed')

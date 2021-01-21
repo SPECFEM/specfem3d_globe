@@ -1150,6 +1150,26 @@ end module my_mpi
 !-------------------------------------------------------------------------------------------------
 !
 
+  subroutine recv_r(recvbuf, recvcount, dest, recvtag)
+
+  use my_mpi
+
+  implicit none
+
+  integer :: dest,recvtag
+  integer :: recvcount
+  real,dimension(recvcount) :: recvbuf
+
+  integer :: ier
+
+  call MPI_RECV(recvbuf,recvcount,MPI_REAL,dest,recvtag,my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier)
+
+  end subroutine recv_r
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
   subroutine recv_cr(recvbuf, recvcount, dest, recvtag)
 
   use my_mpi
@@ -1325,6 +1345,25 @@ end module my_mpi
   call MPI_SEND(sendbuf,1,MPI_LOGICAL,dest,sendtag,my_local_mpi_comm_world,ier)
 
   end subroutine send_singlel
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine send_r(sendbuf, sendcount, dest, sendtag)
+
+  use my_mpi
+
+  implicit none
+
+  integer :: dest,sendtag
+  integer :: sendcount
+  real,dimension(sendcount):: sendbuf
+  integer :: ier
+
+  call MPI_SEND(sendbuf,sendcount,MPI_REAL,dest,sendtag,my_local_mpi_comm_world,ier)
+
+  end subroutine send_r
 
 !
 !-------------------------------------------------------------------------------------------------

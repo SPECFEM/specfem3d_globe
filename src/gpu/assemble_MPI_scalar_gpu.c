@@ -70,7 +70,7 @@ void FC_FUNC_(transfer_boun_pot_from_device,
 
   // sets gpu arrays
   gpu_realw_mem accel,buffer;
-  float *h_buffer;
+  realw *h_buffer;
 
   if (*FORWARD_OR_ADJOINT == 1) {
     accel = mp->d_accel_outer_core;

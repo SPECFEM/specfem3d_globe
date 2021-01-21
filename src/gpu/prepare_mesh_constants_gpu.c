@@ -107,7 +107,8 @@ void FC_FUNC_ (prepare_constants_device,
                                           realw *deltat_f,
                                           int *GPU_ASYNC_COPY_f,
                                           double * h_hxir_store,double * h_hetar_store,double * h_hgammar_store,double * h_nu,
-                                          int *SAVE_SEISMOGRAMS_STRAIN_f) {
+                                          int *SAVE_SEISMOGRAMS_STRAIN_f,
+                                          int *CUSTOM_REAL_f) {
 
   TRACE ("prepare_constants_device");
 
@@ -131,6 +132,7 @@ void FC_FUNC_ (prepare_constants_device,
 #ifdef USE_MESH_COLORING_GPU
   if (! *USE_MESH_COLORING_GPU_f) { exit_on_error("Error with USE_MESH_COLORING_GPU constant; please re-compile\n"); }
 #endif
+  if (*CUSTOM_REAL_f != CUSTOM_REAL){ exit_on_error ("CUSTOM_REAL must be the same in constants.h and mesh_constants_gpu.h; please re-compile"); }
 
   // initializes gpu array pointers
   gpuInitialize_buffers(mp);
@@ -241,7 +243,8 @@ void FC_FUNC_ (prepare_constants_device,
     // in the code with #USE_TEXTURES_FIELDS not-defined.
 #ifdef USE_TEXTURES_CONSTANTS
     // checks that realw is a float
-    if (sizeof(realw) != sizeof(float)) exit_on_error("TEXTURES only work with realw selected as float");
+    if (sizeof(realw) != sizeof(float) && sizeof(realw) != sizeof(double))
+      exit_on_error("TEXTURES only work with realw selected as float or double");
 
     // note: device memory returned by cudaMalloc guarantees that the offset is 0,
     //       however here we use the global memory array d_hprime_xx and need to provide an offset variable
@@ -387,13 +390,13 @@ void FC_FUNC_ (prepare_constants_device,
       gpuMalloc_realw (&mp->d_seismograms, NDIM * mp->nrec_local);
 
       // orientation
-      float* nu;
-      nu = (float*) malloc(9 * sizeof(float) * mp->nrec_local);
+      realw* nu;
+      nu = (realw*) malloc(9 * sizeof(realw) * mp->nrec_local);
       int irec_loc = 0;
       for (int i=0;i < (*nrec);i++) {
         if ( mp->myrank == h_islice_selected_rec[i]) {
          int j;
-         for (j=0;j < 9;j++) nu[j + 9*irec_loc] = (float)h_nu[j + 9*i];
+         for (j=0;j < 9;j++) nu[j + 9*irec_loc] = (realw)h_nu[j + 9*i];
          irec_loc = irec_loc + 1;
         }
       }
@@ -2167,9 +2170,11 @@ void FC_FUNC_ (prepare_crust_mantle_device,
   if (run_cuda) {
 #ifdef USE_TEXTURES_FIELDS
     {
-    // checks single precision
-    if (sizeof(realw) != sizeof(float)) exit_on_error("TEXTURES only work with realw selected as float");
-    // binds textures
+      // checks single precision
+      if (sizeof(realw) != sizeof(float) && sizeof(realw) != sizeof(double))
+        exit_on_error("TEXTURES only work with realw selected as float or double");
+
+      // binds textures
 #ifdef USE_OLDER_CUDA4_GPU
       cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<realw>();
       const textureReference* d_displ_cm_tex_ref_ptr;

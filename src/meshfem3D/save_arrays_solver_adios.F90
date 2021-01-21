@@ -265,8 +265,8 @@
   if (ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
     if (iregion_code == IREGION_CRUST_MANTLE .or. iregion_code == IREGION_INNER_CORE) then
       local_dim = nglob_xy
-      call define_adios_global_real_1d_array(myadios_group,group_size_inc, local_dim,region_name, STRINGIFY_VAR(b_rmassx))
-      call define_adios_global_real_1d_array(myadios_group,group_size_inc, local_dim,region_name, STRINGIFY_VAR(b_rmassy))
+      call define_adios_global_array1D(myadios_group,group_size_inc, local_dim,region_name, STRINGIFY_VAR(b_rmassx))
+      call define_adios_global_array1D(myadios_group,group_size_inc, local_dim,region_name, STRINGIFY_VAR(b_rmassy))
     endif
   endif
 

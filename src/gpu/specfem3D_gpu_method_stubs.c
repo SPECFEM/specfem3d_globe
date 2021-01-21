@@ -362,7 +362,8 @@ void FC_FUNC_ (prepare_constants_device,
                                           realw *deltat_f,
                                           int *GPU_ASYNC_COPY_f,
                                           double * h_hxir_store,double * h_hetar_store,double * h_hgammar_store,double * h_nu,
-                                          int *SAVE_SEISMOGRAMS_STRAIN_f) {}
+                                          int *SAVE_SEISMOGRAMS_STRAIN_f,
+                                          int *CUSTOM_REAL_f) {}
 
 void FC_FUNC_ (prepare_constants_adjoint_device,
                PREPARE_CONSTANTS_ADJOINT_DEVICE) (long *Mesh_pointer_f,

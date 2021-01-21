@@ -53,7 +53,7 @@ void FC_FUNC_(transfer_boun_from_device,
 
   // gpu arrays
   gpu_realw_mem accel,buffer;
-  float *h_buffer;
+  realw *h_buffer;
   int num_interfaces;
   int max_nibool_interfaces;
   gpu_int_mem d_nibool_interfaces;
@@ -391,7 +391,7 @@ void FC_FUNC_(transfer_buffer_to_device_async,
 
   // gpu arrays
   gpu_realw_mem buffer;
-  float *h_buffer;
+  realw *h_buffer;
 
   // get Mesh from Fortran integer wrapper
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
@@ -498,7 +498,7 @@ void FC_FUNC_(sync_copy_from_device,
   int size_mpi_buffer = 0;
 
   // gpu arrays
-  float *h_buffer;
+  realw *h_buffer;
 
   // get Mesh from Fortran integer wrapper
   Mesh *mp = (Mesh *) *Mesh_pointer_f;

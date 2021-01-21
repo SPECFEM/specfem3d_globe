@@ -96,6 +96,7 @@ kernels = small_kernels + big_kernels
 
 langs = $options[:langs]
 
+# default size for real (float)
 BOAST::set_default_real_size(4)
 BOAST::set_replace_constants(false)
 

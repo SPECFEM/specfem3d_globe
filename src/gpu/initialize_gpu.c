@@ -54,6 +54,12 @@
 
 #endif
 
+#if CUSTOM_REAL == 4
+#pragma message ("\n\nCompiling with: GPU CUSTOM_REAL == 4\n")
+#elif CUSTOM_REAL == 8
+#pragma message ("\n\nCompiling with: GPU CUSTOM_REAL == 8\n")
+#endif
+
 #ifdef USE_TEXTURES_FIELDS
 #pragma message ("\n\nCompiling with: USE_TEXTURES_FIELDS enabled\n")
 #endif
