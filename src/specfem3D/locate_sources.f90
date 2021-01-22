@@ -227,9 +227,6 @@
       ! mapping from source number in current subset to real source number in all the subsets
       isource = isource_in_this_subset + isources_already_done
 
-      ! Earth radius
-      r0 = R_UNIT_SPHERE
-
       ! source lat/lon in degrees
       lat = srclat(isource)
       lon = srclon(isource)
