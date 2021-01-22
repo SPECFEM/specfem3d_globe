@@ -439,14 +439,14 @@ module specfem_par
   ! asdf file handle
   !
   ! note: ASDF uses hdf5 file i/o routines. therefore, ASDF c routines define the file_id handle as hid_t.
-  !       the datatype hid_t is defined by the hdf5 library, and for fortran in file H5f90i_gen.h as:
+  !       the datatype hid_t is defined by the hdf5 library, and for Fortran in file H5f90i_gen.h as:
   !          #define c_int_8 long long
   !          typedef c_int_8 hid_t_f
-  !       in fortran codes, one could use the hdf5 module for this
+  !       in Fortran codes, one could use the hdf5 module for this
   !          use hdf5, only: HID_T
   !          integer(HID_T) :: file_id
   !       which will required the hdf5 library paths set for compilation and linking.
-  !       instead here, the c_int_8 corresponds to long long, which in fortran would be an 8-byte integer
+  !       instead here, the c_int_8 corresponds to long long, which in Fortran would be an 8-byte integer
   integer(kind=8) :: current_asdf_handle
 
   !-----------------------------------------------------------------

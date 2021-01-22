@@ -80,7 +80,7 @@
   integer,parameter :: NT_b           = 721         ! Number of points of the block model in the polar direction
   integer,parameter :: NP_b           = 1441        ! Number of points of the block model in the azimuthal direction
 
-  double precision,parameter :: ANGLE_TOLERANCE = 1d-10  ! Water level to convert from cartesian to spherical coordinates
+  double precision,parameter :: ANGLE_TOLERANCE = 1d-10  ! Water level to convert from Cartesian to spherical coordinates
   double precision,parameter :: WATER_LEVEL     = 1d-15  ! Water level to prevent divisions by zero
 
   ! Pi and factors to convert radians to degrees and vice-versa
@@ -622,7 +622,7 @@
       !       another way would be to use
       !          T_zone(0:) => T_zone2(:)
       !       to start the bounds indexing at 0 for the pointer.
-      !       this might however not be recognized & implemented by all fortran compilers.
+      !       this might however not be recognized & implemented by all Fortran compilers.
       !
       T_zone => T_zone2
 
@@ -667,7 +667,7 @@
     close(IIN)
 
     !debug
-    !print*,'debug: BKMNS zone ',izone,'spline node positions degree/nnodes = ',degree,nnodes,' T_zone: ',T_zone
+    !print *,'debug: BKMNS zone ',izone,'spline node positions degree/nnodes = ',degree,nnodes,' T_zone: ',T_zone
 
     ! coefficient file
     do ipar = 1,BKMNS_NPAR
@@ -696,7 +696,7 @@
       end select
 
       !debug
-      !print*,'debug: BKMNS ipar ',ipar
+      !print *,'debug: BKMNS ipar ',ipar
 
       ! opens model coefficient file
       open(unit=IIN,file=trim(filename),status='old',action='read',iostat=ier)
@@ -1118,7 +1118,7 @@
       else
         ! factorial (n+m)!/(n-m)!
         ! note: the factorial number can become very large for n > 30 and overflow double precision;
-        !       we use here real(kind=16), the maximum size for a floating point number by fortran standards
+        !       we use here real(kind=16), the maximum size for a floating point number by Fortran standards
         i0 = n - m + 1
         factorial_r = i0
         do i = i0 + 1, n + m
@@ -1269,7 +1269,7 @@
   t1 = t0 + dt
   r1 = r0 + dr
 
-  ! puts index to range [1,N] for fortran array
+  ! puts index to range [1,N] for Fortran array
   i0 = i0 + 1
   j0 = j0 + 1
   k0 = k0 + 1
