@@ -300,6 +300,7 @@
   integer :: indx,i,j,k
   real :: val,val_swap
   real,dimension(NR_b) :: val_array
+  real,dimension(1) :: val_single
   integer(kind=8) :: filesize
   logical :: file_exists
 
@@ -350,7 +351,8 @@
         do k = 1,NR_b
           ! reads single real value
           indx = indx + 1
-          call read_abs_shifted(11, val, 4, indx, 1)  ! 4-byte read into val, 1-byte shifted
+          call read_abs_shifted(11, val_single, 4, indx, 1)  ! 4-byte read into val_single, 1-byte shifted
+          val = val_single(1)
           ! stores swapped real value
           val_swap = float_swap(val)
           array(i,j,k) = val_swap
@@ -368,7 +370,7 @@
         ! stores one-by-one
         !do k = 1,NR_b
         !  indx = indx + 1
-        !  call read_abs_shifted(11, val, 4, indx, 1)  ! 4-byte read into val, 1-byte shifted
+        !  call read_abs_shifted(11, val_single, 4, indx, 1)  ! 4-byte read into val, 1-byte shifted
         !  array(i,j,k) = val
         !  ! stores last value greater than zero as the value at surface
         !  ! (for points above topo surface, values will be 0.0)
