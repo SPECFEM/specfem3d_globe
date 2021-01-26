@@ -1361,7 +1361,7 @@
   double precision :: r_used
 
   ! geographical values
-  double precision :: lat, lon, r, dist, theta_c, phi_c, dist_c, edge, sponge
+  double precision :: r, dist, theta_c, phi_c, dist_c, edge, sponge
 
   ! initializes
   tau_e(:)   = 0.0d0
