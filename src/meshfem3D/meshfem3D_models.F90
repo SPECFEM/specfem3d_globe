@@ -1330,8 +1330,7 @@
 !
 ! note:  only Qmu attenuation considered, Qkappa attenuation not used so far in solver...
 
-  use constants, only: N_SLS, &
-          SPONGE_MIN_Q,SPONGE_WIDTH_IN_DEGREES
+  use constants, only: N_SLS,SPONGE_MIN_Q,SPONGE_WIDTH_IN_DEGREES
 
   use meshfem3D_models_par
 
@@ -1440,6 +1439,7 @@
 
   endif
 
+  ! sponge layer
   if (ABSORB_USING_GLOBAL_SPONGE) then
     ! get distance to chunk center
     call xyz_2_rthetaphi_dble(xmesh, ymesh, zmesh, r, theta, phi)
