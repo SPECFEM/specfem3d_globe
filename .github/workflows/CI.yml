@@ -48,7 +48,8 @@ jobs:
 
     - name: Install dependencies
       run: |
-        brew install gcc openmpi
+        brew cleanup
+        brew install hwloc gcc openmpi
         echo "compiler versions:" ${FC} ${MPIFC} ${CC}
         gcc --version
         gfortran --version
