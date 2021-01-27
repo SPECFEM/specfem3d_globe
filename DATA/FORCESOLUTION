@@ -1,0 +1,11 @@
+FORCE 001                    ! 
+time shift:        0.0000    ! s
+half duration:     58.0       ! Half duration (s) for Gaussian/Step function, frequency (Hz) for Ricker
+latitude:          67.0       ! Degree  
+longitude:       208.0       ! Degree
+depth:             0.0       ! km
+source time function: 0      ! 0=Gaussian function, 1=Ricker wavelet, 2=Step function
+factor force source:              2361.d+19     ! Newton  (?)
+component dir vect source E:     0.9703      ! 45 degree impact directed N76E
+component dir vect source N:     0.2419       
+component dir vect source Z_UP:  -1.d0
