@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -47,7 +47,8 @@
                                  epsilon_trace_over_3, &
                                  tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                                  dummyx_loc,dummyy_loc,dummyz_loc, &
-                                 epsilondev_loc,rho_s_H)
+                                 epsilondev_loc,rho_s_H, &
+								 normsigma_loc)
 
 ! isotropic element in crust/mantle region
 
@@ -104,6 +105,9 @@
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ),intent(inout) :: rho_s_H
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(inout) :: epsilondev_loc
+  
+  ! Compute norm of stress (sigma) and strain (epsilon) per element
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(inout) :: normsigma_loc
 
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: jacobianl
@@ -117,6 +121,11 @@
 
   real(kind=CUSTOM_REAL) :: lambdal,mul,lambdalplus2mul
   real(kind=CUSTOM_REAL) :: kappal
+  
+  ! strain tensor components
+  ! real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: epsilon_xx,epsilon_yy,epsilon_zz
+  ! real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: epsilon_xy,epsilon_xz,epsilon_yx,epsilon_yz,epsilon_zx,epsilon_zy
+  
 
 #ifdef FORCE_VECTORIZATION
 ! in this vectorized version we have to assume that N_SLS == 3 in order to be able to unroll and thus suppress
@@ -197,6 +206,41 @@
                                                 sigma_xx,sigma_yy,sigma_zz, &
                                                 sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy, &
                                                 tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3)
+												
+  ! Compute components of strain tensor
+  ! DO_LOOP_IJK
+  !   epsilon_xx(INDEX_IJK)=duxdxl(INDEX_IJK)
+  !   epsilon_xy(INDEX_IJK)=0.5_CUSTOM_REAL*duxdyl_plus_duydxl(INDEX_IJK)
+  ! 	epsilon_xz(INDEX_IJK)=0.5_CUSTOM_REAL*duzdxl_plus_duxdzl(INDEX_IJK)
+  ! 	epsilon_yx(INDEX_IJK)=0.5_CUSTOM_REAL*duxdyl_plus_duydxl(INDEX_IJK)
+! 	epsilon_yy(INDEX_IJK)=duydyl(INDEX_IJK)
+! 	epsilon_yz(INDEX_IJK)=0.5_CUSTOM_REAL*duzdyl_plus_duydzl(INDEX_IJK)
+! 	epsilon_zx(INDEX_IJK)=0.5_CUSTOM_REAL*duzdxl_plus_duxdzl(INDEX_IJK)
+! 	epsilon_zy(INDEX_IJK)=0.5_CUSTOM_REAL*duzdyl_plus_duydzl(INDEX_IJK)
+ !    epsilon_zz(INDEX_IJK)=duzdzl(INDEX_IJK)
+ !  ENDDO_LOOP_IJK
+  
+  ! compute norm of stress, strain
+  DO_LOOP_IJK
+    normsigma_loc(INDEX_IJK)=sqrt(sigma_xx(INDEX_IJK)**2 & 
+ 								  + sigma_xy(INDEX_IJK)**2 &
+ 								  + sigma_xz(INDEX_IJK)**2 & 
+ 								  + sigma_yx(INDEX_IJK)**2 &
+ 								  + sigma_yy(INDEX_IJK)**2 &
+ 								  + sigma_yz(INDEX_IJK)**2 &
+ 								  + sigma_zx(INDEX_IJK)**2 &
+ 								  + sigma_zy(INDEX_IJK)**2 &
+ 								  + sigma_zz(INDEX_IJK)**2)
+! 	normepsilon_loc(INDEX_IJK)=sqrt(epsilon_xx(INDEX_IJK)**2 & 
+! 								  + epsilon_xy(INDEX_IJK)**2 &
+! 								  + epsilon_xz(INDEX_IJK)**2 & 
+! 								  + epsilon_yx(INDEX_IJK)**2 &
+! 								  + epsilon_yy(INDEX_IJK)**2 &
+! 								  + epsilon_yz(INDEX_IJK)**2 &
+! 								  + epsilon_zx(INDEX_IJK)**2 &
+! 								  + epsilon_zy(INDEX_IJK)**2 &
+! 								  + epsilon_zz(INDEX_IJK)**2)
+  ENDDO_LOOP_IJK
 
   end subroutine compute_element_iso
 
@@ -386,7 +430,8 @@
                                   epsilon_trace_over_3, &
                                   tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                                   dummyx_loc,dummyy_loc,dummyz_loc, &
-                                  epsilondev_loc,rho_s_H)
+                                  epsilondev_loc,rho_s_H, &
+								  normsigma_loc)
 
 ! tiso element in crust/mantle
 
@@ -447,6 +492,9 @@
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ),intent(inout) :: rho_s_H
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(inout) :: epsilondev_loc
+  
+  ! norm of stress and strain
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(inout) :: normsigma_loc
 
   ! local parameters
   ! the 21 coefficients for an anisotropic medium in reduced notation
@@ -461,6 +509,10 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: sigma_xx,sigma_yy,sigma_zz
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy
+  
+  ! strain tensor components
+  ! real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: epsilon_xx,epsilon_yy,epsilon_zz
+ !  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: epsilon_xy,epsilon_xz,epsilon_yx,epsilon_yz,epsilon_zx,epsilon_zy
 
 #ifdef FORCE_VECTORIZATION
 ! in this vectorized version we have to assume that N_SLS == 3 in order to be able to unroll and thus suppress
@@ -568,6 +620,41 @@
                                                 sigma_xx,sigma_yy,sigma_zz, &
                                                 sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy, &
                                                 tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3)
+												
+  ! Compute components of strain tensor
+ !  DO_LOOP_IJK
+ !    epsilon_xx(INDEX_IJK)=duxdxl(INDEX_IJK)
+  !   epsilon_xy(INDEX_IJK)=0.5_CUSTOM_REAL*duxdyl_plus_duydxl(INDEX_IJK)
+	! epsilon_xz(INDEX_IJK)=0.5_CUSTOM_REAL*duzdxl_plus_duxdzl(INDEX_IJK)
+	! epsilon_yx(INDEX_IJK)=0.5_CUSTOM_REAL*duxdyl_plus_duydxl(INDEX_IJK)
+! 	epsilon_yy(INDEX_IJK)=duydyl(INDEX_IJK)
+! 	epsilon_yz(INDEX_IJK)=0.5_CUSTOM_REAL*duzdyl_plus_duydzl(INDEX_IJK)
+	! epsilon_zx(INDEX_IJK)=0.5_CUSTOM_REAL*duzdxl_plus_duxdzl(INDEX_IJK)
+	! epsilon_zy(INDEX_IJK)=0.5_CUSTOM_REAL*duzdyl_plus_duydzl(INDEX_IJK)
+  !   epsilon_zz(INDEX_IJK)=duzdzl(INDEX_IJK)
+ !  ENDDO_LOOP_IJK
+  
+  ! Compute norm of stress, strain
+  DO_LOOP_IJK
+    normsigma_loc(INDEX_IJK)=sqrt(sigma_xx(INDEX_IJK)**2 & 
+ 								  + sigma_xy(INDEX_IJK)**2 &
+ 								  + sigma_xz(INDEX_IJK)**2 & 
+ 								  + sigma_yx(INDEX_IJK)**2 &
+ 								  + sigma_yy(INDEX_IJK)**2 &
+ 								  + sigma_yz(INDEX_IJK)**2 &
+ 								  + sigma_zx(INDEX_IJK)**2 &
+ 								  + sigma_zy(INDEX_IJK)**2 &
+	 							  + sigma_zz(INDEX_IJK)**2)
+	! normepsilon_loc(INDEX_IJK)=sqrt(epsilon_xx(INDEX_IJK)**2 & 
+	! 							  + epsilon_xy(INDEX_IJK)**2 &
+	! 							  + epsilon_xz(INDEX_IJK)**2 & 
+	! 							  + epsilon_yx(INDEX_IJK)**2 &
+	! 							  + epsilon_yy(INDEX_IJK)**2 &
+	! 							  + epsilon_yz(INDEX_IJK)**2 &
+	! 							  + epsilon_zx(INDEX_IJK)**2 &
+	! 							  + epsilon_zy(INDEX_IJK)**2 &
+	! 							  + epsilon_zz(INDEX_IJK)**2)
+  ENDDO_LOOP_IJK
 
   end subroutine compute_element_tiso
 
@@ -989,7 +1076,8 @@
                                    epsilon_trace_over_3, &
                                    tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                                    dummyx_loc,dummyy_loc,dummyz_loc, &
-                                   epsilondev_loc,rho_s_H)
+                                   epsilondev_loc,rho_s_H, &
+								   normsigma_loc)
 
 ! fully anisotropic element in crust/mantle region
 
@@ -1050,6 +1138,9 @@
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ),intent(inout) :: rho_s_H
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(inout) :: epsilondev_loc
+  
+  ! Compute norm of stress (sigma) and strain (epsilon) per element
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(inout) :: normsigma_loc
 
   ! local parameters
   ! the 21 coefficients for an anisotropic medium in reduced notation
@@ -1064,6 +1155,10 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: sigma_xx,sigma_yy,sigma_zz
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy
+  
+  ! strain tensor components
+ !  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: epsilon_xx,epsilon_yy,epsilon_zz
+ !  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: epsilon_xy,epsilon_xz,epsilon_yx,epsilon_yz,epsilon_zx,epsilon_zy
 
 #ifdef FORCE_VECTORIZATION
 ! in this vectorized version we have to assume that N_SLS == 3 in order to be able to unroll and thus suppress
@@ -1166,6 +1261,41 @@
                                                 sigma_xx,sigma_yy,sigma_zz, &
                                                 sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy, &
                                                 tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3)
+												
+  ! Compute components of strain tensor
+ !  DO_LOOP_IJK
+ !    epsilon_xx(INDEX_IJK)=duxdxl(INDEX_IJK)
+ !    epsilon_xy(INDEX_IJK)=0.5_CUSTOM_REAL*duxdyl_plus_duydxl(INDEX_IJK)
+! 	epsilon_xz(INDEX_IJK)=0.5_CUSTOM_REAL*duzdxl_plus_duxdzl(INDEX_IJK)
+! 	epsilon_yx(INDEX_IJK)=0.5_CUSTOM_REAL*duxdyl_plus_duydxl(INDEX_IJK)
+! 	epsilon_yy(INDEX_IJK)=duydyl(INDEX_IJK)
+! 	epsilon_yz(INDEX_IJK)=0.5_CUSTOM_REAL*duzdyl_plus_duydzl(INDEX_IJK)
+! 	epsilon_zx(INDEX_IJK)=0.5_CUSTOM_REAL*duzdxl_plus_duxdzl(INDEX_IJK)
+! 	epsilon_zy(INDEX_IJK)=0.5_CUSTOM_REAL*duzdyl_plus_duydzl(INDEX_IJK)
+  !   epsilon_zz(INDEX_IJK)=duzdzl(INDEX_IJK)
+ !  ENDDO_LOOP_IJK
+  
+  ! Compute norm of stress, strain
+  DO_LOOP_IJK
+	normsigma_loc(INDEX_IJK)=sqrt(sigma_xx(INDEX_IJK)**2 & 
+ 								  + sigma_xy(INDEX_IJK)**2 &
+ 								  + sigma_xz(INDEX_IJK)**2 & 
+ 								  + sigma_yx(INDEX_IJK)**2 &
+ 								  + sigma_yy(INDEX_IJK)**2 &
+	 							  + sigma_yz(INDEX_IJK)**2 &
+ 								  + sigma_zx(INDEX_IJK)**2 &
+	 							  + sigma_zy(INDEX_IJK)**2 &
+ 								  + sigma_zz(INDEX_IJK)**2)
+! 	normepsilon_loc(INDEX_IJK)=sqrt(epsilon_xx(INDEX_IJK)**2 & 
+! 								  + epsilon_xy(INDEX_IJK)**2 &
+! 								  + epsilon_xz(INDEX_IJK)**2 & 
+! 								  + epsilon_yx(INDEX_IJK)**2 &
+	! 							  + epsilon_yy(INDEX_IJK)**2 &
+! 								  + epsilon_yz(INDEX_IJK)**2 &
+! 								  + epsilon_zx(INDEX_IJK)**2 &
+! 								  + epsilon_zy(INDEX_IJK)**2 &
+! 								  + epsilon_zz(INDEX_IJK)**2)
+  ENDDO_LOOP_IJK											
 
   end subroutine compute_element_aniso
 

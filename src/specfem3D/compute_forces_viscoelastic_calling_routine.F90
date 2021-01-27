@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine compute_forces_viscoelastic()
+  subroutine compute_forces_viscoelastic(normsigma_max_cm)
 
 ! elastic domains for forward or adjoint simulations (SIMULATION_TYPE == 1 or 2 )
 
@@ -45,6 +45,10 @@
   ! iphase: iphase = 1 is for computing outer elements in the crust_mantle and inner_core regions,
   !              iphase = 2 is for computing inner elements (former icall parameter)
   integer :: iphase
+  
+  ! Norm of stress (sigma) and strain (epsilon) throughout the crust and mantle
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT), intent(inout) :: normsigma_max_cm
+  ! 
 
   ! ****************************************************
   !   big loop over all spectral elements in the solid
@@ -81,7 +85,7 @@
                                        epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
                                        epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
                                        eps_trace_over_3_crust_mantle, &
-                                       alphaval,betaval,gammaval)
+                                       alphaval,betaval,gammaval,normsigma_max_cm)
 
       ! inner core region
       call compute_forces_inner_core(NSPEC_INNER_CORE_STR_OR_ATT,NGLOB_INNER_CORE, &
@@ -354,7 +358,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine compute_forces_viscoelastic_backward()
+  subroutine compute_forces_viscoelastic_backward(normsigma_max_cm)
 
 ! backward/reconstructed wavefields only
 
@@ -370,6 +374,8 @@
   ! iphase: iphase = 1 is for computing outer elements in the crust_mantle and inner_core regions,
   !              iphase = 2 is for computing inner elements (former icall parameter)
   integer :: iphase
+  
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT), intent(inout) :: normsigma_max_cm
 
   ! checks
   if (SIMULATION_TYPE /= 3 ) return
@@ -445,7 +451,7 @@
                                        b_epsilondev_xy_crust_mantle, &
                                        b_epsilondev_xz_crust_mantle,b_epsilondev_yz_crust_mantle, &
                                        b_eps_trace_over_3_crust_mantle, &
-                                       b_alphaval,b_betaval,b_gammaval)
+                                       b_alphaval,b_betaval,b_gammaval,normsigma_max_cm)
       ! inner core region
       call compute_forces_inner_core(NSPEC_INNER_CORE_ADJOINT,NGLOB_INNER_CORE_ADJOINT, &
                                      NSPEC_INNER_CORE_STR_AND_ATT, &
@@ -729,7 +735,7 @@
                                           epsilondev_xx,epsilondev_yy,epsilondev_xy, &
                                           epsilondev_xz,epsilondev_yz, &
                                           epsilon_trace_over_3, &
-                                          alphaval,betaval,gammaval)
+                                          alphaval,betaval,gammaval,normsigmamax)
 
 ! wrapper function, decides about Deville optimization
 !
@@ -766,6 +772,9 @@
 
   ! [alpha,beta,gamma]val reduced to N_SLS and factor_common to N_SLS*NUM_NODES
   real(kind=CUSTOM_REAL), dimension(N_SLS),intent(in) :: alphaval,betaval,gammaval
+  
+  ! Norm of stress (sigma) and strain (epsilon)
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STR_OR_ATT),intent(inout) :: normsigmamax
 
   ! inner/outer element run flag
   integer,intent(in) :: iphase
@@ -782,7 +791,8 @@
                                          epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
                                          epsilon_trace_over_3, &
                                          alphaval,betaval,gammaval, &
-                                         factor_common_crust_mantle,ATT4_VAL,sum_terms_crust_mantle)
+                                         factor_common_crust_mantle,ATT4_VAL,sum_terms_crust_mantle, &
+										 normsigmamax)
   else
     ! no Deville optimization
     call compute_forces_crust_mantle_noDev(NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT, &
@@ -795,7 +805,8 @@
                                            epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
                                            epsilon_trace_over_3, &
                                            alphaval,betaval,gammaval, &
-                                           factor_common_crust_mantle,ATT4_VAL)
+                                           factor_common_crust_mantle,ATT4_VAL, &
+										   normsigmamax)
   endif
 
   end subroutine compute_forces_crust_mantle

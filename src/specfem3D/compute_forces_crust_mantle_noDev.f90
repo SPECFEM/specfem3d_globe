@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -36,7 +36,8 @@
                                                epsilondev_xz,epsilondev_yz, &
                                                epsilon_trace_over_3, &
                                                alphaval,betaval,gammaval, &
-                                               factor_common,vnspec)
+                                               factor_common,vnspec, &
+											   normsigmamax)
 
   use constants_solver
 
@@ -97,6 +98,10 @@
 
   ! inner/outer element run flag
   integer,intent(in) :: iphase
+  
+  ! Norm of stress (sigma) and strain (epsilon)
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STR_OR_ATT),intent(inout) :: normsigmamax
+  
 
   ! local parameters
 
@@ -138,6 +143,13 @@
   real(kind=CUSTOM_REAL) factor,sx_l,sy_l,sz_l,gxl,gyl,gzl
   real(kind=CUSTOM_REAL) Hxxl,Hyyl,Hzzl,Hxyl,Hxzl,Hyzl
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: rho_s_H
+  
+  ! strain tensor components
+  ! norm of stress and strain
+  ! real(kind=CUSTOM_REAL) :: epsilon_xx,epsilon_yy,epsilon_zz
+  ! real(kind=CUSTOM_REAL) :: epsilon_xy,epsilon_xz,epsilon_yx,epsilon_yz,epsilon_zx,epsilon_zy
+  real(kind=CUSTOM_REAL) :: normsigma_loc
+  
 
 !  integer :: computed_elements
   integer :: num_elements,ispec_p
@@ -479,6 +491,44 @@
           tempx3(i,j,k) = jacobianl * (sigma_xx*gammaxl + sigma_yx*gammayl + sigma_zx*gammazl)
           tempy3(i,j,k) = jacobianl * (sigma_xy*gammaxl + sigma_yy*gammayl + sigma_zy*gammazl)
           tempz3(i,j,k) = jacobianl * (sigma_xz*gammaxl + sigma_yz*gammayl + sigma_zz*gammazl)
+		  
+		  ! Components of strain tensor
+	  	  ! epsilon_xx=duxdxl
+		  ! epsilon_xy=0.5_CUSTOM_REAL*duxdyl_plus_duydxl
+		  ! epsilon_xz=0.5_CUSTOM_REAL*duzdxl_plus_duxdzl
+		  ! epsilon_yx=0.5_CUSTOM_REAL*duxdyl_plus_duydxl
+		  ! epsilon_yy=duydyl
+		  ! epsilon_yz=0.5_CUSTOM_REAL*duzdyl_plus_duydzl
+		  ! epsilon_zx=0.5_CUSTOM_REAL*duzdxl_plus_duxdzl
+		  ! epsilon_zy=0.5_CUSTOM_REAL*duzdyl_plus_duydzl
+		  ! epsilon_zz=duzdzl
+		  
+		  ! norm of stress, strain 
+		  normsigma_loc=sqrt(sigma_xx**2 & 
+			 				 + sigma_xy**2 &
+			 				 + sigma_xz**2 & 
+			 				 + sigma_yx**2 &
+							 + sigma_yy**2 &
+			 				 + sigma_yz**2 &
+			 				 + sigma_zx**2 &
+			 				 + sigma_zy**2 &
+			 				 + sigma_zz**2)
+	      ! normepsilon_loc=sqrt(epsilon_xx**2 & 
+			! 				 + epsilon_xy**2 &
+			! 			     + epsilon_xz**2 & 
+			! 				 + epsilon_yx**2 &
+			! 				 + epsilon_yy**2 &
+			! 				 + epsilon_yz**2 &
+			! 				 + epsilon_zx**2 &
+			! 				 + epsilon_zy**2 &
+			! 				 + epsilon_zz**2)
+		   if (normsigma_loc >= normsigmamax(i,j,k,ispec)) then
+		     normsigmamax(i,j,k,ispec) = normsigma_loc
+	       endif
+		  ! if (normepsilon_loc >= normepsilonmax(i,j,k,ispec)) then
+		  !   normepsilonmax(i,j,k,ispec) = normepsilon_loc
+	      ! endif
+		  
 
         enddo ! NGLLX
       enddo ! NGLLY

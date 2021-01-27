@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -39,6 +39,35 @@
 
   ! timing
   double precision, external :: wtime
+  
+  ! Track maximum norm of displacement, velocity in crust/mantle, 
+  ! outer core, and inner core
+  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: ndispl_max_cm,nveloc_max_cm
+  real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: ndispl_max_ic,nveloc_max_ic
+  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: ndispl_max_oc,nveloc_max_oc
+  real(kind=CUSTOM_REAL) :: ndispl_cm,nveloc_cm,ndispl_ic,nveloc_ic,ndispl_oc,nveloc_oc
+  ! initialize
+  ndispl_max_cm(:)=0
+  nveloc_max_cm(:)=0
+  ndispl_max_ic(:)=0
+  nveloc_max_ic(:)=0
+  ndispl_max_oc(:)=0
+  nveloc_max_oc(:)=0
+  
+  ! Track the maximum norm of stress, strain in crust/mantle
+  real(kind=CUSTOM_REAL) :: epsilon_xx,epsilon_yy,epsilon_zz,epsilon_xy,epsilon_xz,epsilon_yz 
+  real(kind=CUSTOM_REAL) :: nepsilon_cm
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: nepsilon_max_cm,nsigma_max_cm
+  character(len=MAX_STRING_LEN) :: nepsfile_cm,nsigmafile_cm
+  ! initialize
+  nsigma_max_cm(:,:,:,:)=0
+  nepsilon_max_cm(:,:,:,:)=0
+  ! stress, strain file names
+  write(nsigmafile_cm,'(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_1_stress'
+  write(nepsfile_cm,'(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_1_strain'
+  ! Make sure strain is stored -- how to make this flag always true?
+  COMPUTE_AND_STORE_STRAIN=.true.
+
 
   ! for EXACT_UNDOING_TO_DISK
   integer :: ispec,iglob,i,j,k
@@ -127,7 +156,7 @@
       call compute_forces_acoustic()
 
       ! elastic solver for crust/mantle and inner core
-      call compute_forces_viscoelastic()
+      call compute_forces_viscoelastic(nsigma_max_cm)
 
     enddo ! end of very big external loop on istage for all the stages of the LDDRK time scheme (only one stage if Newmark)
 
@@ -182,7 +211,7 @@
           call compute_forces_acoustic_backward()
 
           ! elastic solver for crust/mantle and inner core
-          call compute_forces_viscoelastic_backward()
+          call compute_forces_viscoelastic_backward(nsigma_max_cm)
 
         enddo
 
@@ -253,6 +282,113 @@
     if (VTK_MODE) then
       call it_update_vtkwindow()
     endif
+	
+	! compute the maximum norm of displacement and velocity
+	! crust/mantle
+	! What do the transfer_* functions do?
+	!if (GPU_MODE) then
+    !  call transfer_veloc_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,veloc_crust_mantle,Mesh_pointer)
+    !  call transfer_veloc_ic_from_device(NDIM*NGLOB_INNER_CORE,veloc_inner_core,Mesh_pointer)
+    !  call transfer_veloc_oc_from_device(NGLOB_OUTER_CORE,veloc_outer_core,Mesh_pointer)
+    !  call transfer_displ_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,displ_crust_mantle,Mesh_pointer)
+    !  call transfer_displ_ic_from_device(NDIM*NGLOB_INNER_CORE,displ_inner_core,Mesh_pointer)
+    !  call transfer_displ_oc_from_device(NGLOB_OUTER_CORE,displ_outer_core,Mesh_pointer)
+	!endif
+	
+	do iglob = 1, NGLOB_CRUST_MANTLE
+      ndispl_cm=sqrt(displ_crust_mantle(1,iglob)**2 &
+					+ displ_crust_mantle(2,iglob)**2 &
+					+ displ_crust_mantle(3,iglob)**2)
+	  if (ndispl_cm >= ndispl_max_cm(iglob)) then
+		ndispl_max_cm(iglob)=ndispl_cm
+		endif
+	  nveloc_cm=sqrt(veloc_crust_mantle(1,iglob)**2 &
+					+ veloc_crust_mantle(2,iglob)**2 &
+					+ veloc_crust_mantle(3,iglob)**2)
+	  if (nveloc_cm >= nveloc_max_cm(iglob)) then
+		nveloc_max_cm(iglob)=nveloc_cm
+	  endif 
+	enddo
+	  
+	! inner core
+	do iglob = 1, NGLOB_INNER_CORE
+      ndispl_ic=sqrt(displ_inner_core(1,iglob)**2 &
+					+ displ_inner_core(2,iglob)**2 &
+					+ displ_inner_core(3,iglob)**2)
+	  if (ndispl_ic >= ndispl_max_ic(iglob)) then
+		ndispl_max_ic(iglob)=ndispl_ic
+	  endif
+	  nveloc_ic=sqrt(veloc_inner_core(1,iglob)**2 &
+					+ veloc_inner_core(2,iglob)**2 &
+					+ veloc_inner_core(3,iglob)**2)
+	  if (nveloc_ic >= nveloc_max_ic(iglob)) then
+		nveloc_max_ic(iglob)=nveloc_ic
+	  endif 
+	enddo
+	  
+	! outer core
+	do iglob = 1, NGLOB_OUTER_CORE
+      ndispl_oc=sqrt(displ_outer_core(1,iglob)**2 &
+					+ displ_outer_core(2,iglob)**2 &
+					+ displ_outer_core(3,iglob)**2)
+	  if (ndispl_oc >= ndispl_max_oc(iglob)) then
+		ndispl_max_oc(iglob)=ndispl_oc
+	  endif
+	  nveloc_oc=sqrt(veloc_outer_core(1,iglob)**2 &
+					+ veloc_outer_core(2,iglob)**2 &
+					+ veloc_outer_core(3,iglob)**2)
+	  if (nveloc_oc >= nveloc_max_oc(iglob)) then
+		nveloc_max_oc(iglob)=nveloc_oc
+	  endif 
+    enddo	
+	
+	! Compute the maximum norm of strain in the crust/mantle
+	!if (GPU_MODE) then
+	!  call transfer_strain_cm_from_device(Mesh_pointer, &
+    !                                          eps_trace_over_3_crust_mantle, &
+    !                                          epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle, &
+    !                                          epsilondev_xy_crust_mantle,epsilondev_xz_crust_mantle, &
+    !                                          epsilondev_yz_crust_mantle)
+	!endif
+	
+	
+	
+	! compute maximum norm of stress and strain in the crust/mantle
+	if (COMPUTE_AND_STORE_STRAIN) then
+	  do ispec=1,NSPEC_CRUST_MANTLE
+	    do k=1, NGLLZ
+		  do j=1, NGLLY
+		    do i=1, NGLLX
+		      !if (nsigma_cm(i,j,k,ispec) >= nsigma_max_cm(i,j,k,ispec)) then
+			  !  nsigma_max_cm(i,j,k,ispec)=nsigma_cm(i,j,k,ispec)
+			  !endif 
+			  epsilon_xx=eps_trace_over_3_crust_mantle(i,j,k,ispec) + epsilondev_xx_crust_mantle(i,j,k,ispec)
+			  epsilon_yy=eps_trace_over_3_crust_mantle(i,j,k,ispec) + epsilondev_yy_crust_mantle(i,j,k,ispec)
+			  epsilon_zz=eps_trace_over_3_crust_mantle(i,j,k,ispec) &
+                           - epsilondev_xx_crust_mantle(i,j,k,ispec) &
+                           - epsilondev_yy_crust_mantle(i,j,k,ispec)
+			  epsilon_xy = epsilondev_xy_crust_mantle(i,j,k,ispec)
+			  epsilon_xz = epsilondev_xz_crust_mantle(i,j,k,ispec)
+			  epsilon_yz = epsilondev_yz_crust_mantle(i,j,k,ispec)
+			  nepsilon_cm=sqrt(epsilon_xx**2 & 
+							+ epsilon_yy**2 &
+							+ epsilon_zz**2 &
+							+ epsilon_xy**2 &
+							+ epsilon_xz**2 &
+							+ epsilon_yz**2 & 
+							+ epsilon_xy**2 &
+							+ epsilon_xz**2 &
+							+ epsilon_yz**2)
+			  if (nepsilon_cm >= nepsilon_max_cm(i,j,k,ispec)) then
+			    nepsilon_max_cm(i,j,k,ispec)=nepsilon_cm
+	          endif
+            enddo			
+	      enddo 
+	    enddo
+	  enddo
+    endif
+
+	
 
   !
   !---- end of time iteration loop
@@ -260,7 +396,21 @@
   enddo   ! end of main time loop
 
  100 continue
-
+ 
+  ! Write the peak values for norm stress, strain, displacement, velocity to VTK files
+  ! Only for CPU version
+  if (SIMULATION_TYPE == 1) then
+    call write_VTK_data_gll_cr(NSPEC_CRUST_MANTLE, NGLOB_CRUST_MANTLE, xstore_crust_mantle, &
+							 ystore_crust_mantle, zstore_crust_mantle, ibool_crust_mantle, &
+						     nsigma_max_cm, nsigmafile_cm)
+	if (COMPUTE_AND_STORE_STRAIN) then
+      call write_VTK_data_gll_cr(NSPEC_CRUST_MANTLE, NGLOB_CRUST_MANTLE, xstore_crust_mantle, &
+							   ystore_crust_mantle, zstore_crust_mantle, ibool_crust_mantle, &
+	   					       nepsilon_max_cm, nepsfile_cm)
+	endif
+    call write_VTK_ndispvel(ndispl_max_cm,nveloc_max_cm,ndispl_max_ic,nveloc_max_ic, &
+					        ndispl_max_oc,nveloc_max_oc)
+  endif
 
   if (SIMULATION_TYPE == 3 .and. GPU_MODE) then
     ! attention: cijkl_kl_crust_mantle is sorted differently on GPU and CPU
@@ -582,4 +732,66 @@
   close(IFILE_FOR_EXACT_UNDOING)
 
   end subroutine finish_exact_undoing_to_disk
+  
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine write_VTK_ndispvel(maxnormdisp_cm,maxnormvel_cm,maxnormdisp_ic, &
+								maxnormvel_ic,maxnormdisp_oc,maxnormvel_oc)
+								
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_innercore
+  use specfem_par_outercore
+  use specfem_par_movie
+
+  implicit none
+   
+  ! input arguments, with the maximum norms of displacement and velocity throughout the interior
+  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE), intent(in) :: maxnormdisp_cm,maxnormvel_cm
+  real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE), intent(in) :: maxnormdisp_ic,maxnormvel_ic
+  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE), intent(in) :: maxnormdisp_oc,maxnormvel_oc  
+  
+  ! The flags: use dummy flags for the crust and outer core
+  ! The flags are mainly useful for distinguishing what is vs. isn't the center cube
+  integer, dimension(NSPEC_CRUST_MANTLE) :: dummy_idoubling_cm
+  dummy_idoubling_cm(:) = IFLAG_CRUST
+  integer, dimension(NSPEC_OUTER_CORE) :: dummy_idoubling_oc  
+  dummy_idoubling_oc(:) = IFLAG_OUTER_CORE_NORMAL
+  
+  ! VTK file names
+  character(len=MAX_STRING_LEN) :: dispfile_cm,dispfile_ic,dispfile_oc,velfile_cm,velfile_ic,velfile_oc
+    
+  ! Crust, mantle
+  write(dispfile_cm, '(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_1_displ'
+  call write_VTK_data_norm(dummy_idoubling_cm,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
+						   rstore_crust_mantle,ibool_crust_mantle,maxnormdisp_cm, &
+						   dispfile_cm)
+  write(velfile_cm, '(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_1_veloc'						      
+  call write_VTK_data_norm(dummy_idoubling_cm,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
+						   rstore_crust_mantle,ibool_crust_mantle,maxnormvel_cm, &
+						   velfile_cm)		
+  
+  ! Outer core
+  write(dispfile_oc, '(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_2_displ'
+  call write_VTK_data_norm(dummy_idoubling_oc,NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
+						   rstore_outer_core,ibool_outer_core,maxnormdisp_oc, &
+						   dispfile_oc)
+  write(velfile_oc, '(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_2_veloc'						      
+  call write_VTK_data_norm(dummy_idoubling_oc,NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
+						   rstore_outer_core,ibool_outer_core,maxnormvel_oc, &
+						   velfile_oc)	
+						   
+  ! Inner core
+  write(dispfile_ic, '(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_3_displ'
+  call write_VTK_data_norm(idoubling_inner_core,NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
+						   rstore_inner_core,ibool_inner_core,maxnormdisp_ic, &
+						   dispfile_ic)
+  write(velfile_ic, '(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_3_veloc'						      
+  call write_VTK_data_norm(idoubling_inner_core,NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
+						   rstore_inner_core,ibool_inner_core,maxnormdisp_ic, &
+						   velfile_ic)	  
+								
+  end subroutine write_VTK_ndispvel							  
 
