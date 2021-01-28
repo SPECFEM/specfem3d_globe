@@ -67,9 +67,9 @@ MODEL                           = 1D_Sohl_3D_crust
 
 # parameters describing the Earth model
 OCEANS                          = .false.
-ELLIPTICITY                     = .true.
-TOPOGRAPHY                      = .true.
-GRAVITY                         = .true.
+ELLIPTICITY                     = .false.
+TOPOGRAPHY                      = .false.
+GRAVITY                         = .false.
 ROTATION                        = .false.
 ATTENUATION                     = .false.
 
