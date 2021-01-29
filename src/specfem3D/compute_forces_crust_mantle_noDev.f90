@@ -36,8 +36,7 @@
                                                epsilondev_xz,epsilondev_yz, &
                                                epsilon_trace_over_3, &
                                                alphaval,betaval,gammaval, &
-                                               factor_common,vnspec, &
-											   normsigmamax)
+                                               factor_common,vnspec,normsigmamax)
 
   use constants_solver
 
@@ -492,7 +491,7 @@
           tempy3(i,j,k) = jacobianl * (sigma_xy*gammaxl + sigma_yy*gammayl + sigma_zy*gammazl)
           tempz3(i,j,k) = jacobianl * (sigma_xz*gammaxl + sigma_yz*gammayl + sigma_zz*gammazl)
 		  
-		  ! Components of strain tensor
+	  ! Components of strain tensor
 	  	  ! epsilon_xx=duxdxl
 		  ! epsilon_xy=0.5_CUSTOM_REAL*duxdyl_plus_duydxl
 		  ! epsilon_xz=0.5_CUSTOM_REAL*duzdxl_plus_duxdzl
@@ -503,16 +502,16 @@
 		  ! epsilon_zy=0.5_CUSTOM_REAL*duzdyl_plus_duydzl
 		  ! epsilon_zz=duzdzl
 		  
-		  ! norm of stress, strain 
-		  normsigma_loc=sqrt(sigma_xx**2 & 
-			 				 + sigma_xy**2 &
-			 				 + sigma_xz**2 & 
-			 				 + sigma_yx**2 &
-							 + sigma_yy**2 &
-			 				 + sigma_yz**2 &
-			 				 + sigma_zx**2 &
-			 				 + sigma_zy**2 &
-			 				 + sigma_zz**2)
+	  ! norm of stress, strain 
+	  normsigma_loc=sqrt(sigma_xx**2 & 
+   			 + sigma_xy**2 &
+		 	 + sigma_xz**2 & 
+		 	 + sigma_yx**2 &
+			 + sigma_yy**2 &
+		 	 + sigma_yz**2 &
+		 	 + sigma_zx**2 &
+		 	 + sigma_zy**2 &
+		 	 + sigma_zz**2)
 	      ! normepsilon_loc=sqrt(epsilon_xx**2 & 
 			! 				 + epsilon_xy**2 &
 			! 			     + epsilon_xz**2 & 
@@ -522,9 +521,9 @@
 			! 				 + epsilon_zx**2 &
 			! 				 + epsilon_zy**2 &
 			! 				 + epsilon_zz**2)
-		   if (normsigma_loc >= normsigmamax(i,j,k,ispec)) then
-		     normsigmamax(i,j,k,ispec) = normsigma_loc
-	       endif
+	  if (normsigma_loc >= normsigmamax(i,j,k,ispec)) then
+	    normsigmamax(i,j,k,ispec) = normsigma_loc
+	  endif
 		  ! if (normepsilon_loc >= normepsilonmax(i,j,k,ispec)) then
 		  !   normepsilonmax(i,j,k,ispec) = normepsilon_loc
 	      ! endif

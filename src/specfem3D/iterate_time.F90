@@ -296,51 +296,51 @@
 	!endif
 	
 	do iglob = 1, NGLOB_CRUST_MANTLE
-      ndispl_cm=sqrt(displ_crust_mantle(1,iglob)**2 &
-					+ displ_crust_mantle(2,iglob)**2 &
-					+ displ_crust_mantle(3,iglob)**2)
+          ndispl_cm=sqrt(displ_crust_mantle(1,iglob)**2 &
+			+ displ_crust_mantle(2,iglob)**2 &
+			+ displ_crust_mantle(3,iglob)**2)
 	  if (ndispl_cm >= ndispl_max_cm(iglob)) then
-		ndispl_max_cm(iglob)=ndispl_cm
-		endif
+  	    ndispl_max_cm(iglob)=ndispl_cm
+	  endif
 	  nveloc_cm=sqrt(veloc_crust_mantle(1,iglob)**2 &
-					+ veloc_crust_mantle(2,iglob)**2 &
-					+ veloc_crust_mantle(3,iglob)**2)
+			+ veloc_crust_mantle(2,iglob)**2 &
+			+ veloc_crust_mantle(3,iglob)**2)
 	  if (nveloc_cm >= nveloc_max_cm(iglob)) then
-		nveloc_max_cm(iglob)=nveloc_cm
+	    nveloc_max_cm(iglob)=nveloc_cm
 	  endif 
 	enddo
 	  
 	! inner core
 	do iglob = 1, NGLOB_INNER_CORE
-      ndispl_ic=sqrt(displ_inner_core(1,iglob)**2 &
-					+ displ_inner_core(2,iglob)**2 &
-					+ displ_inner_core(3,iglob)**2)
+          ndispl_ic=sqrt(displ_inner_core(1,iglob)**2 &
+			+ displ_inner_core(2,iglob)**2 &
+			+ displ_inner_core(3,iglob)**2)
 	  if (ndispl_ic >= ndispl_max_ic(iglob)) then
-		ndispl_max_ic(iglob)=ndispl_ic
+	    ndispl_max_ic(iglob)=ndispl_ic
 	  endif
 	  nveloc_ic=sqrt(veloc_inner_core(1,iglob)**2 &
-					+ veloc_inner_core(2,iglob)**2 &
-					+ veloc_inner_core(3,iglob)**2)
+			+ veloc_inner_core(2,iglob)**2 &
+			+ veloc_inner_core(3,iglob)**2)
 	  if (nveloc_ic >= nveloc_max_ic(iglob)) then
-		nveloc_max_ic(iglob)=nveloc_ic
+	    nveloc_max_ic(iglob)=nveloc_ic
 	  endif 
 	enddo
 	  
 	! outer core
 	do iglob = 1, NGLOB_OUTER_CORE
-      ndispl_oc=sqrt(displ_outer_core(1,iglob)**2 &
-					+ displ_outer_core(2,iglob)**2 &
-					+ displ_outer_core(3,iglob)**2)
+          ndispl_oc=sqrt(displ_outer_core(1,iglob)**2 &
+			+ displ_outer_core(2,iglob)**2 &
+			+ displ_outer_core(3,iglob)**2)
 	  if (ndispl_oc >= ndispl_max_oc(iglob)) then
-		ndispl_max_oc(iglob)=ndispl_oc
+	    ndispl_max_oc(iglob)=ndispl_oc
 	  endif
 	  nveloc_oc=sqrt(veloc_outer_core(1,iglob)**2 &
-					+ veloc_outer_core(2,iglob)**2 &
-					+ veloc_outer_core(3,iglob)**2)
+			+ veloc_outer_core(2,iglob)**2 &
+			+ veloc_outer_core(3,iglob)**2)
 	  if (nveloc_oc >= nveloc_max_oc(iglob)) then
-		nveloc_max_oc(iglob)=nveloc_oc
+	    nveloc_max_oc(iglob)=nveloc_oc
 	  endif 
-    enddo	
+        enddo	
 	
 	! Compute the maximum norm of strain in the crust/mantle
 	!if (GPU_MODE) then
@@ -357,36 +357,36 @@
 	if (COMPUTE_AND_STORE_STRAIN) then
 	  do ispec=1,NSPEC_CRUST_MANTLE
 	    do k=1, NGLLZ
-		  do j=1, NGLLY
-		    do i=1, NGLLX
+	      do j=1, NGLLY
+	        do i=1, NGLLX
 		      !if (nsigma_cm(i,j,k,ispec) >= nsigma_max_cm(i,j,k,ispec)) then
 			  !  nsigma_max_cm(i,j,k,ispec)=nsigma_cm(i,j,k,ispec)
 			  !endif 
-			  epsilon_xx=eps_trace_over_3_crust_mantle(i,j,k,ispec) + epsilondev_xx_crust_mantle(i,j,k,ispec)
-			  epsilon_yy=eps_trace_over_3_crust_mantle(i,j,k,ispec) + epsilondev_yy_crust_mantle(i,j,k,ispec)
-			  epsilon_zz=eps_trace_over_3_crust_mantle(i,j,k,ispec) &
+		  epsilon_xx=eps_trace_over_3_crust_mantle(i,j,k,ispec) + epsilondev_xx_crust_mantle(i,j,k,ispec)
+		  epsilon_yy=eps_trace_over_3_crust_mantle(i,j,k,ispec) + epsilondev_yy_crust_mantle(i,j,k,ispec)
+		  epsilon_zz=eps_trace_over_3_crust_mantle(i,j,k,ispec) &
                            - epsilondev_xx_crust_mantle(i,j,k,ispec) &
                            - epsilondev_yy_crust_mantle(i,j,k,ispec)
-			  epsilon_xy = epsilondev_xy_crust_mantle(i,j,k,ispec)
-			  epsilon_xz = epsilondev_xz_crust_mantle(i,j,k,ispec)
-			  epsilon_yz = epsilondev_yz_crust_mantle(i,j,k,ispec)
-			  nepsilon_cm=sqrt(epsilon_xx**2 & 
-							+ epsilon_yy**2 &
-							+ epsilon_zz**2 &
-							+ epsilon_xy**2 &
-							+ epsilon_xz**2 &
-							+ epsilon_yz**2 & 
-							+ epsilon_xy**2 &
-							+ epsilon_xz**2 &
-							+ epsilon_yz**2)
-			  if (nepsilon_cm >= nepsilon_max_cm(i,j,k,ispec)) then
-			    nepsilon_max_cm(i,j,k,ispec)=nepsilon_cm
+		  epsilon_xy = epsilondev_xy_crust_mantle(i,j,k,ispec)
+		  epsilon_xz = epsilondev_xz_crust_mantle(i,j,k,ispec)
+		  epsilon_yz = epsilondev_yz_crust_mantle(i,j,k,ispec)
+		  nepsilon_cm=sqrt(epsilon_xx**2 & 
+				+ epsilon_yy**2 &
+				+ epsilon_zz**2 &
+				+ epsilon_xy**2 &
+				+ epsilon_xz**2 &
+				+ epsilon_yz**2 & 
+				+ epsilon_xy**2 &
+				+ epsilon_xz**2 &
+				+ epsilon_yz**2)
+		  if (nepsilon_cm >= nepsilon_max_cm(i,j,k,ispec)) then
+		    nepsilon_max_cm(i,j,k,ispec)=nepsilon_cm
 	          endif
-            enddo			
+                enddo			
 	      enddo 
 	    enddo
 	  enddo
-    endif
+        endif
 
 	
 
@@ -403,11 +403,11 @@
     call write_VTK_data_gll_cr(NSPEC_CRUST_MANTLE, NGLOB_CRUST_MANTLE, xstore_crust_mantle, &
 							 ystore_crust_mantle, zstore_crust_mantle, ibool_crust_mantle, &
 						     nsigma_max_cm, nsigmafile_cm)
-	if (COMPUTE_AND_STORE_STRAIN) then
+    if (COMPUTE_AND_STORE_STRAIN) then
       call write_VTK_data_gll_cr(NSPEC_CRUST_MANTLE, NGLOB_CRUST_MANTLE, xstore_crust_mantle, &
 							   ystore_crust_mantle, zstore_crust_mantle, ibool_crust_mantle, &
 	   					       nepsilon_max_cm, nepsfile_cm)
-	endif
+    endif
     call write_VTK_ndispvel(ndispl_max_cm,nveloc_max_cm,ndispl_max_ic,nveloc_max_ic, &
 					        ndispl_max_oc,nveloc_max_oc)
   endif
@@ -738,7 +738,7 @@
 !
 
   subroutine write_VTK_ndispvel(maxnormdisp_cm,maxnormvel_cm,maxnormdisp_ic, &
-								maxnormvel_ic,maxnormdisp_oc,maxnormvel_oc)
+				maxnormvel_ic,maxnormdisp_oc,maxnormvel_oc)
 								
   use specfem_par
   use specfem_par_crustmantle
@@ -766,32 +766,32 @@
   ! Crust, mantle
   write(dispfile_cm, '(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_1_displ'
   call write_VTK_data_norm(dummy_idoubling_cm,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
-						   rstore_crust_mantle,ibool_crust_mantle,maxnormdisp_cm, &
-						   dispfile_cm)
+			   rstore_crust_mantle,ibool_crust_mantle,maxnormdisp_cm, &
+			   dispfile_cm)
   write(velfile_cm, '(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_1_veloc'						      
   call write_VTK_data_norm(dummy_idoubling_cm,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
-						   rstore_crust_mantle,ibool_crust_mantle,maxnormvel_cm, &
-						   velfile_cm)		
+			   rstore_crust_mantle,ibool_crust_mantle,maxnormvel_cm, &
+			   velfile_cm)		
   
   ! Outer core
   write(dispfile_oc, '(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_2_displ'
   call write_VTK_data_norm(dummy_idoubling_oc,NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
-						   rstore_outer_core,ibool_outer_core,maxnormdisp_oc, &
-						   dispfile_oc)
+			   rstore_outer_core,ibool_outer_core,maxnormdisp_oc, &
+			   dispfile_oc)
   write(velfile_oc, '(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_2_veloc'						      
   call write_VTK_data_norm(dummy_idoubling_oc,NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
-						   rstore_outer_core,ibool_outer_core,maxnormvel_oc, &
-						   velfile_oc)	
+			   rstore_outer_core,ibool_outer_core,maxnormvel_oc, &
+			   velfile_oc)	
 						   
   ! Inner core
   write(dispfile_ic, '(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_3_displ'
   call write_VTK_data_norm(idoubling_inner_core,NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
-						   rstore_inner_core,ibool_inner_core,maxnormdisp_ic, &
-						   dispfile_ic)
+			   rstore_inner_core,ibool_inner_core,maxnormdisp_ic, &
+			   dispfile_ic)
   write(velfile_ic, '(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_3_veloc'						      
   call write_VTK_data_norm(idoubling_inner_core,NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
-						   rstore_inner_core,ibool_inner_core,maxnormdisp_ic, &
-						   velfile_ic)	  
+			   rstore_inner_core,ibool_inner_core,maxnormdisp_ic, &
+			   velfile_ic)	  
 								
   end subroutine write_VTK_ndispvel							  
 

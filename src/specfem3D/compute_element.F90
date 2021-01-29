@@ -47,8 +47,7 @@
                                  epsilon_trace_over_3, &
                                  tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                                  dummyx_loc,dummyy_loc,dummyz_loc, &
-                                 epsilondev_loc,rho_s_H, &
-								 normsigma_loc)
+                                 epsilondev_loc,rho_s_H,normsigma_loc)
 
 ! isotropic element in crust/mantle region
 
@@ -1076,8 +1075,7 @@
                                    epsilon_trace_over_3, &
                                    tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                                    dummyx_loc,dummyy_loc,dummyz_loc, &
-                                   epsilondev_loc,rho_s_H, &
-								   normsigma_loc)
+                                   epsilondev_loc,rho_s_H,normsigma_loc)
 
 ! fully anisotropic element in crust/mantle region
 
@@ -1277,15 +1275,15 @@
   
   ! Compute norm of stress, strain
   DO_LOOP_IJK
-	normsigma_loc(INDEX_IJK)=sqrt(sigma_xx(INDEX_IJK)**2 & 
- 								  + sigma_xy(INDEX_IJK)**2 &
- 								  + sigma_xz(INDEX_IJK)**2 & 
- 								  + sigma_yx(INDEX_IJK)**2 &
- 								  + sigma_yy(INDEX_IJK)**2 &
-	 							  + sigma_yz(INDEX_IJK)**2 &
- 								  + sigma_zx(INDEX_IJK)**2 &
-	 							  + sigma_zy(INDEX_IJK)**2 &
- 								  + sigma_zz(INDEX_IJK)**2)
+    normsigma_loc(INDEX_IJK)=sqrt(sigma_xx(INDEX_IJK)**2 & 
+ 				 + sigma_xy(INDEX_IJK)**2 &
+ 				 + sigma_xz(INDEX_IJK)**2 & 
+ 				 + sigma_yx(INDEX_IJK)**2 &
+ 				 + sigma_yy(INDEX_IJK)**2 &
+	 			 + sigma_yz(INDEX_IJK)**2 &
+ 				 + sigma_zx(INDEX_IJK)**2 &
+	 			 + sigma_zy(INDEX_IJK)**2 &
+ 				 + sigma_zz(INDEX_IJK)**2)
 ! 	normepsilon_loc(INDEX_IJK)=sqrt(epsilon_xx(INDEX_IJK)**2 & 
 ! 								  + epsilon_xy(INDEX_IJK)**2 &
 ! 								  + epsilon_xz(INDEX_IJK)**2 & 

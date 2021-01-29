@@ -40,8 +40,7 @@
                                               epsilondev_xz,epsilondev_yz, &
                                               epsilon_trace_over_3, &
                                               alphaval,betaval,gammaval, &
-                                              factor_common,vnspec,sum_terms, &
-											  normsigmamax )
+                                              factor_common,vnspec,sum_terms,normsigmamax )
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
@@ -286,8 +285,7 @@
                                  epsilon_trace_over_3, &
                                  tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                                  dummyx_loc,dummyy_loc,dummyz_loc, &
-                                 epsilondev_loc,rho_s_H, &
-								 normsigma_loc)
+                                 epsilondev_loc,rho_s_H,normsigma_loc)
     else
        if (.not. ispec_is_tiso(ispec)) then
           ! isotropic element
@@ -301,8 +299,7 @@
                                    epsilon_trace_over_3, &
                                    tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                                    dummyx_loc,dummyy_loc,dummyz_loc, &
-                                   epsilondev_loc,rho_s_H, &
-								   normsigma_loc)
+                                   epsilondev_loc,rho_s_H,normsigma_loc)
        else
           ! transverse isotropic element
           call compute_element_tiso(ispec, &
@@ -317,8 +314,7 @@
                                     epsilon_trace_over_3, &
                                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                                     dummyx_loc,dummyy_loc,dummyz_loc, &
-                                    epsilondev_loc,rho_s_H, &
-								    normsigma_loc)
+                                    epsilondev_loc,rho_s_H,normsigma_loc)
        endif ! .not. ispec_is_tiso
     endif
 
@@ -435,13 +431,13 @@
     do k = 1,NGLLZ
       do j = 1,NGLLY
         do i = 1,NGLLX
-		  if (normsigma_loc(i,j,k) >= normsigmamax(i,j,k,ispec)) then
-		    normsigmamax(i,j,k,ispec) = normsigma_loc(i,j,k)
-	      endif
+          if (normsigma_loc(i,j,k) >= normsigmamax(i,j,k,ispec)) then
+            normsigmamax(i,j,k,ispec) = normsigma_loc(i,j,k)
+	  endif
 	!	  if (normepsilon_loc(i,j,k) >= normepsilonmax(i,j,k,ispec)) then
 	! 	    normepsilonmax(i,j,k,ispec) = normepsilon_loc(i,j,k)
 	!       endif
-	 	enddo
+	enddo
       enddo
     enddo
 

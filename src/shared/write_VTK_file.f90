@@ -2037,7 +2037,6 @@
                             ibool(1,1,1,1)-1, &
                             ibool(1,1,1,1)-1
     endif
-
   enddo
   write(IOUT_VTK,*)
   
@@ -2051,7 +2050,7 @@
   write(IOUT_VTK,'(a)') "SCALARS norm float"
   write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
   do i = 1,nglob
-      write(IOUT_VTK,*) real(glob_data_norm(i),kind=4)
+    write(IOUT_VTK,*) real(glob_data_norm(i),kind=4)
   enddo
   write(IOUT_VTK,*)
 

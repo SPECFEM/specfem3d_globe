@@ -791,8 +791,7 @@
                                          epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
                                          epsilon_trace_over_3, &
                                          alphaval,betaval,gammaval, &
-                                         factor_common_crust_mantle,ATT4_VAL,sum_terms_crust_mantle, &
-										 normsigmamax)
+                                         factor_common_crust_mantle,ATT4_VAL,sum_terms_crust_mantle,normsigmamax)
   else
     ! no Deville optimization
     call compute_forces_crust_mantle_noDev(NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT, &
@@ -805,8 +804,7 @@
                                            epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
                                            epsilon_trace_over_3, &
                                            alphaval,betaval,gammaval, &
-                                           factor_common_crust_mantle,ATT4_VAL, &
-										   normsigmamax)
+                                           factor_common_crust_mantle,ATT4_VAL,normsigmamax)
   endif
 
   end subroutine compute_forces_crust_mantle
