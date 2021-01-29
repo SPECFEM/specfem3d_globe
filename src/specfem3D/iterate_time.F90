@@ -46,20 +46,26 @@
   real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: ndispl_max_ic,nveloc_max_ic
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: ndispl_max_oc,nveloc_max_oc
   real(kind=CUSTOM_REAL) :: ndispl_cm,nveloc_cm,ndispl_ic,nveloc_ic,ndispl_oc,nveloc_oc
-  ! initialize
-  ndispl_max_cm(:)=0
-  nveloc_max_cm(:)=0
-  ndispl_max_ic(:)=0
-  nveloc_max_ic(:)=0
-  ndispl_max_oc(:)=0
-  nveloc_max_oc(:)=0
+  ! Note: displ and veloc OC are the potential and time derivative of the potential, not the actual displacement and velocity of the outer core
   
   ! Track the maximum norm of stress, strain in crust/mantle
   real(kind=CUSTOM_REAL) :: epsilon_xx,epsilon_yy,epsilon_zz,epsilon_xy,epsilon_xz,epsilon_yz 
   real(kind=CUSTOM_REAL) :: nepsilon_cm
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: nepsilon_max_cm,nsigma_max_cm
   character(len=MAX_STRING_LEN) :: nepsfile_cm,nsigmafile_cm
-  ! initialize
+
+
+  ! for EXACT_UNDOING_TO_DISK
+  integer :: ispec,iglob,i,j,k
+  
+
+  ! Initialize variables
+  ndispl_max_cm(:)=0
+  nveloc_max_cm(:)=0
+  ndispl_max_ic(:)=0
+  nveloc_max_ic(:)=0
+  ndispl_max_oc(:)=0
+  nveloc_max_oc(:)=0
   nsigma_max_cm(:,:,:,:)=0
   nepsilon_max_cm(:,:,:,:)=0
   ! stress, strain file names
@@ -67,10 +73,7 @@
   write(nepsfile_cm,'(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_1_strain'
   ! Make sure strain is stored -- how to make this flag always true?
   COMPUTE_AND_STORE_STRAIN=.true.
-
-
-  ! for EXACT_UNDOING_TO_DISK
-  integer :: ispec,iglob,i,j,k
+  
 
   !----  create a Gnuplot script to display the energy curve in log scale
   if (OUTPUT_ENERGY .and. myrank == 0) then
@@ -328,15 +331,11 @@
 	  
 	! outer core
 	do iglob = 1, NGLOB_OUTER_CORE
-          ndispl_oc=sqrt(displ_outer_core(1,iglob)**2 &
-			+ displ_outer_core(2,iglob)**2 &
-			+ displ_outer_core(3,iglob)**2)
+          ndispl_oc=abs(displ_outer_core(iglob))
 	  if (ndispl_oc >= ndispl_max_oc(iglob)) then
 	    ndispl_max_oc(iglob)=ndispl_oc
 	  endif
-	  nveloc_oc=sqrt(veloc_outer_core(1,iglob)**2 &
-			+ veloc_outer_core(2,iglob)**2 &
-			+ veloc_outer_core(3,iglob)**2)
+	  nveloc_oc=abs(veloc_outer_core(iglob))
 	  if (nveloc_oc >= nveloc_max_oc(iglob)) then
 	    nveloc_max_oc(iglob)=nveloc_oc
 	  endif 
@@ -756,12 +755,15 @@
   ! The flags: use dummy flags for the crust and outer core
   ! The flags are mainly useful for distinguishing what is vs. isn't the center cube
   integer, dimension(NSPEC_CRUST_MANTLE) :: dummy_idoubling_cm
-  dummy_idoubling_cm(:) = IFLAG_CRUST
   integer, dimension(NSPEC_OUTER_CORE) :: dummy_idoubling_oc  
-  dummy_idoubling_oc(:) = IFLAG_OUTER_CORE_NORMAL
   
   ! VTK file names
   character(len=MAX_STRING_LEN) :: dispfile_cm,dispfile_ic,dispfile_oc,velfile_cm,velfile_ic,velfile_oc
+  
+  
+  ! Initialize
+  dummy_idoubling_cm(:) = IFLAG_CRUST
+  dummy_idoubling_oc(:) = IFLAG_OUTER_CORE_NORMAL
     
   ! Crust, mantle
   write(dispfile_cm, '(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_1_displ'
