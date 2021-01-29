@@ -340,7 +340,7 @@
 	  if (nveloc_oc >= nveloc_max_oc(iglob)) then
 	    nveloc_max_oc(iglob)=nveloc_oc
 	  endif 
-        enddo	
+        enddo
 	
 	! Compute the maximum norm of strain in the crust/mantle
 	!if (GPU_MODE) then
