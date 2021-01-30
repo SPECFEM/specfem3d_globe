@@ -51,7 +51,7 @@
   ! Track the maximum norm of stress, strain in crust/mantle
   real(kind=CUSTOM_REAL) :: epsilon_xx,epsilon_yy,epsilon_zz,epsilon_xy,epsilon_xz,epsilon_yz 
   real(kind=CUSTOM_REAL) :: nepsilon_cm
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: nepsilon_max_cm,nsigma_max_cm
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) :: nepsilon_max_cm,nsigma_max_cm
   character(len=MAX_STRING_LEN) :: nepsfile_cm,nsigmafile_cm
 
 
@@ -354,7 +354,7 @@
 	
 	! compute maximum norm of stress and strain in the crust/mantle
 	if (COMPUTE_AND_STORE_STRAIN) then
-	  do ispec=1,NSPEC_CRUST_MANTLE
+	  do ispec=1,NSPEC_CRUST_MANTLE_STR_OR_ATT
 	    do k=1, NGLLZ
 	      do j=1, NGLLY
 	        do i=1, NGLLX
@@ -399,11 +399,11 @@
   ! Write the peak values for norm stress, strain, displacement, velocity to VTK files
   ! Only for CPU version
   if (SIMULATION_TYPE == 1) then
-    call write_VTK_data_gll_cr(NSPEC_CRUST_MANTLE, NGLOB_CRUST_MANTLE, xstore_crust_mantle, &
+    call write_VTK_data_gll_cr(NSPEC_CRUST_MANTLE_STR_OR_ATT, NGLOB_CRUST_MANTLE, xstore_crust_mantle, &
 							 ystore_crust_mantle, zstore_crust_mantle, ibool_crust_mantle, &
 						     nsigma_max_cm, nsigmafile_cm)
     if (COMPUTE_AND_STORE_STRAIN) then
-      call write_VTK_data_gll_cr(NSPEC_CRUST_MANTLE, NGLOB_CRUST_MANTLE, xstore_crust_mantle, &
+      call write_VTK_data_gll_cr(NSPEC_CRUST_MANTLE_STR_OR_ATT, NGLOB_CRUST_MANTLE, xstore_crust_mantle, &
 							   ystore_crust_mantle, zstore_crust_mantle, ibool_crust_mantle, &
 	   					       nepsilon_max_cm, nepsfile_cm)
     endif
