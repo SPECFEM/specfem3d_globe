@@ -396,22 +396,6 @@
 
  100 continue
  
-  ! Write the peak values for norm stress, strain, displacement, velocity to VTK files
-  ! Only for CPU version
-  if (SIMULATION_TYPE == 1) then
-    call write_VTK_data_gll_cr(NSPEC_CRUST_MANTLE_STR_OR_ATT, NGLOB_CRUST_MANTLE, xstore_crust_mantle, &
-	  		      ystore_crust_mantle, zstore_crust_mantle, ibool_crust_mantle, &
-			      nsigma_max_cm, nsigmafile_cm)
-    if (COMPUTE_AND_STORE_STRAIN) then
-      call write_VTK_data_gll_cr(NSPEC_CRUST_MANTLE_STR_OR_ATT, NGLOB_CRUST_MANTLE, xstore_crust_mantle, &
-			      ystore_crust_mantle, zstore_crust_mantle, ibool_crust_mantle, &
-	   		      nepsilon_max_cm, nepsfile_cm)
-    endif
-    call write_VTK_ndispvel(ndispl_max_cm,nveloc_max_cm,ndispl_max_ic,nveloc_max_ic, &
-			   ndispl_max_oc,nveloc_max_oc)
-	
-	
-  endif
 
   if (SIMULATION_TYPE == 3 .and. GPU_MODE) then
     ! attention: cijkl_kl_crust_mantle is sorted differently on GPU and CPU
@@ -429,6 +413,24 @@
 
 !----  close energy file
   if (OUTPUT_ENERGY .and. myrank == 0) close(IOUT_ENERGY)
+  
+  
+  ! Write the peak values for norm stress, strain, displacement, velocity to VTK files
+  ! Only for CPU version
+  if (SIMULATION_TYPE == 1) then
+    call write_VTK_data_gll_cr(NSPEC_CRUST_MANTLE_STR_OR_ATT, NGLOB_CRUST_MANTLE, xstore_crust_mantle, &
+	  		      ystore_crust_mantle, zstore_crust_mantle, ibool_crust_mantle, &
+			      nsigma_max_cm, nsigmafile_cm)
+    if (COMPUTE_AND_STORE_STRAIN) then
+      call write_VTK_data_gll_cr(NSPEC_CRUST_MANTLE_STR_OR_ATT, NGLOB_CRUST_MANTLE, xstore_crust_mantle, &
+			      ystore_crust_mantle, zstore_crust_mantle, ibool_crust_mantle, &
+	   		      nepsilon_max_cm, nepsfile_cm)
+    endif
+    call write_VTK_ndispvel(ndispl_max_cm,nveloc_max_cm,ndispl_max_ic,nveloc_max_ic, &
+			   ndispl_max_oc,nveloc_max_oc)
+	
+	
+  endif
 
   end subroutine iterate_time
 
