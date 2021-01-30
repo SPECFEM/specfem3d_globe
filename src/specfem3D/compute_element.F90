@@ -136,6 +136,8 @@
 #endif
 ! note: profiling shows that this routine takes about 60% of the total time, another 30% is spend in the tiso routine below..
 
+  ! Make sure strain is stored -- how to make this flag always true?
+  ! COMPUTE_AND_STORE_STRAIN=.true.
 
   ! isotropic element
 
@@ -522,6 +524,9 @@
   integer :: i,j,k
 #endif
 ! note: profiling shows that this routine takes about 30% of the total time, another 60% is spend in the iso routine above..
+
+  ! Make sure strain is stored -- how to make this flag always true?
+  !COMPUTE_AND_STORE_STRAIN=.true.
 
   ! transverse isotropic element
 
@@ -1168,6 +1173,9 @@
 #endif
 
   !  anisotropic elements
+  
+  ! Make sure strain is stored -- how to make this flag always true?
+  !COMPUTE_AND_STORE_STRAIN=.true.
 
   ! precomputes factors
   call compute_element_precompute_factors(tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &

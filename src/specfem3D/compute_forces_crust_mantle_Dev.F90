@@ -155,6 +155,9 @@
   integer :: ijk_spec,ip,iglob_p,ijk
 #endif
 
+  ! Make sure strain is stored -- how to make this flag always true?
+  !COMPUTE_AND_STORE_STRAIN=.true.
+
   !integer,parameter :: NGLL2 = NGLLY * NGLLZ
   !integer,parameter :: NGLL3 = NGLLX * NGLLY * NGLLZ
 

@@ -152,6 +152,9 @@
 
 !  integer :: computed_elements
   integer :: num_elements,ispec_p
+  
+  ! Make sure strain is stored -- how to make this flag always true?
+  !COMPUTE_AND_STORE_STRAIN=.true.
 
 ! ****************************************************
 !   big loop over all spectral elements in the solid
