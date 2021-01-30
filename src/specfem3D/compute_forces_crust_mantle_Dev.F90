@@ -191,7 +191,7 @@
 !$OMP factor_common, &
 !$OMP alphaval,betaval,gammaval, &
 !$OMP R_xx,R_yy,R_xy,R_xz,R_yz, &
-!$OMP epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz,epsilon_trace_over_3, &
+!$OMP epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz,epsilon_trace_over_3,normsigmamax &
 !$OMP gravity_pre_store,gravity_H, &
 !$OMP USE_LDDRK, &
 !$OMP R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
@@ -209,7 +209,7 @@
 !$OMP tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
 !$OMP newtempx1,newtempx2,newtempx3,newtempy1,newtempy2,newtempy3,newtempz1,newtempz2,newtempz3, &
 !$OMP dummyx_loc,dummyy_loc,dummyz_loc, &
-!$OMP rho_s_H,epsilondev_loc )
+!$OMP rho_s_H,epsilondev_loc,normsigma_loc )
 
 !$OMP DO SCHEDULE(GUIDED)
   do ispec_p = 1,num_elements

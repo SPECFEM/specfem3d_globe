@@ -664,18 +664,20 @@
 
   subroutine write_VTK_data_gll_cr(nspec,nglob, &
                                     xstore_dummy,ystore_dummy,zstore_dummy,ibool, &
-                                    gll_data,prname_file)
+                                    gll_data,prname_file,nspectwo)
 
 ! external mesh routine for saving vtk files for CUSTOM_REAL values on all GLL points
 
   use constants, only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLY,NGLLZ,IOUT_VTK
+  !use specfem_par
+  !use specfem_par_crustmantle
 
   implicit none
 
-  integer,intent(in) :: nspec,nglob
+  integer,intent(in) :: nspec,nglob,nspectwo
 
   ! global coordinates
-  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
+  integer, dimension(NGLLX,NGLLY,NGLLZ,nspectwo),intent(in) :: ibool
   real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: xstore_dummy,ystore_dummy,zstore_dummy
 
   ! GLL data values array

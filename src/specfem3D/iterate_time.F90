@@ -420,11 +420,11 @@
   if (SIMULATION_TYPE == 1) then
     call write_VTK_data_gll_cr(NSPEC_CRUST_MANTLE_STR_OR_ATT, NGLOB_CRUST_MANTLE, xstore_crust_mantle, &
 	  		      ystore_crust_mantle, zstore_crust_mantle, ibool_crust_mantle, &
-			      nsigma_max_cm, nsigmafile_cm)
+			      nsigma_max_cm, nsigmafile_cm, NSPEC_CRUST_MANTLE)
     if (COMPUTE_AND_STORE_STRAIN) then
       call write_VTK_data_gll_cr(NSPEC_CRUST_MANTLE_STR_OR_ATT, NGLOB_CRUST_MANTLE, xstore_crust_mantle, &
 			      ystore_crust_mantle, zstore_crust_mantle, ibool_crust_mantle, &
-	   		      nepsilon_max_cm, nepsfile_cm)
+	   		      nepsilon_max_cm, nepsfile_cm, NSPEC_CRUST_MANTLE)
     endif
     call write_VTK_ndispvel(ndispl_max_cm,nveloc_max_cm,ndispl_max_ic,nveloc_max_ic, &
 			   ndispl_max_oc,nveloc_max_oc)
