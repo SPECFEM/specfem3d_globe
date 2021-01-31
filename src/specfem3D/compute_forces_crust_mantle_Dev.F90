@@ -422,13 +422,13 @@
     endif
 
     ! save deviatoric strain for Runge-Kutta scheme
-    if (COMPUTE_AND_STORE_STRAIN) then
+    !if (COMPUTE_AND_STORE_STRAIN) then
       epsilondev_xx(:,:,:,ispec) = epsilondev_loc(:,:,:,1)
       epsilondev_yy(:,:,:,ispec) = epsilondev_loc(:,:,:,2)
       epsilondev_xy(:,:,:,ispec) = epsilondev_loc(:,:,:,3)
       epsilondev_xz(:,:,:,ispec) = epsilondev_loc(:,:,:,4)
       epsilondev_yz(:,:,:,ispec) = epsilondev_loc(:,:,:,5)
-    endif
+    !endif
 	
 	! Add to norm of stress and strain
     do k = 1,NGLLZ
