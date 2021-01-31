@@ -780,6 +780,7 @@
   dummy_idoubling_oc(:) = IFLAG_OUTER_CORE_NORMAL
     
   ! Crust, mantle
+  write(dispfile_oc, '(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_1_displ'
   call write_VTK_data_norm(dummy_idoubling_cm,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
 			   rstore_crust_mantle,ibool_crust_mantle,maxnormdisp_cm, &
 			   dispfile_cm)
