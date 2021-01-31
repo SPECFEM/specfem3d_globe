@@ -419,6 +419,9 @@
   ! Write the peak values for norm stress, strain, displacement, velocity to VTK files
   ! Only for CPU version
   if (SIMULATION_TYPE == 1) then
+    call write_VTK_ndispvel(ndispl_max_cm,nveloc_max_cm,ndispl_max_ic,nveloc_max_ic, &
+			   ndispl_max_oc,nveloc_max_oc)
+			   
     call write_VTK_data_gll_cr(NSPEC_CRUST_MANTLE_STR_OR_ATT, NGLOB_CRUST_MANTLE, xstore_crust_mantle, &
 	  		      ystore_crust_mantle, zstore_crust_mantle, ibool_crust_mantle, &
 			      nsigma_max_cm, nsigmafile_cm, NSPEC_CRUST_MANTLE)
@@ -430,8 +433,7 @@
 	
 	!call write_VTK_data_gll_cr_crustmantle(nsigma_max_cm,nsigmafile_cm)
 	!call write_VTK_data_gll_cr_crustmantle(nepsilon_max_cm,nepsfile_cm)
-    call write_VTK_ndispvel(ndispl_max_cm,nveloc_max_cm,ndispl_max_ic,nveloc_max_ic, &
-			   ndispl_max_oc,nveloc_max_oc)
+
 	
 	
   endif
@@ -761,184 +763,48 @@
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE), intent(in) :: maxnormdisp_oc,maxnormvel_oc 
   real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE), intent(in) :: maxnormdisp_ic,maxnormvel_ic
   
-  !integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
-  !integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: ibool_outer_core
-  !integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool_inner_core
-  
   ! The flags: use dummy flags for the crust and outer core
   ! The flags are mainly useful for distinguishing what is vs. isn't the center cube
-  !integer, dimension(NSPEC_CRUST_MANTLE) :: dummy_idoubling_cm
-  !integer, dimension(NSPEC_OUTER_CORE) :: dummy_idoubling_oc  
+  integer, dimension(NSPEC_CRUST_MANTLE) :: dummy_idoubling_cm
+  integer, dimension(NSPEC_OUTER_CORE) :: dummy_idoubling_oc  
   
   ! VTK file names
   character(len=MAX_STRING_LEN) :: dispfile_cm,dispfile_ic,dispfile_oc,velfile_cm,velfile_ic,velfile_oc
   
   integer :: ispec,iglob,i,j,k,ier
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: tmp_data
+  !real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: tmp_data
   
   
   ! Initialize
-  !dummy_idoubling_cm(:) = IFLAG_CRUST
-  !dummy_idoubling_oc(:) = IFLAG_OUTER_CORE_NORMAL
+  dummy_idoubling_cm(:) = IFLAG_CRUST
+  dummy_idoubling_oc(:) = IFLAG_OUTER_CORE_NORMAL
     
   ! Crust, mantle
-  ! Displacement
-  allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),stat=ier)
-  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary array tmp_data')
-  do ispec = 1, NSPEC_CRUST_MANTLE
-    do k = 1, NGLLZ
-      do j = 1, NGLLY
-        do i = 1, NGLLX
-          iglob = ibool_crust_mantle(i,j,k,ispec)
-          ! norm
-          tmp_data(i,j,k,ispec) = maxnormdisp_cm(iglob) 
-        enddo
-      enddo
-    enddo
-  enddo
-  write(dispfile_cm, '(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_1_displ'
-  open(unit=IOUT,file=trim(dispfile_cm),status='unknown',form='unformatted',iostat=ier)
-  if (ier /= 0 ) call exit_MPI(myrank,'Error opening file '//trim(dispfile_cm))
-  write(IOUT) tmp_data
-  close(IOUT)
-  deallocate(tmp_data)
-  !
-  ! Velocity
-  allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),stat=ier)
-  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary array tmp_data')
-  do ispec = 1, NSPEC_CRUST_MANTLE
-    do k = 1, NGLLZ
-      do j = 1, NGLLY
-        do i = 1, NGLLX
-          iglob = ibool_crust_mantle(i,j,k,ispec)
-          ! norm
-          tmp_data(i,j,k,ispec) = maxnormvel_cm(iglob) 
-        enddo
-      enddo
-    enddo
-  enddo
-  write(velfile_cm, '(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_1_veloc'
-  open(unit=IOUT,file=trim(velfile_cm),status='unknown',form='unformatted',iostat=ier)
-  if (ier /= 0 ) call exit_MPI(myrank,'Error opening file '//trim(velfile_cm))
-  write(IOUT) tmp_data
-  close(IOUT)
-  deallocate(tmp_data)
-  
-  
-  ! Outer Core
-  ! Potential and first derivative of potential, not displacement or velocity
-  ! Displacement
-  allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE),stat=ier)
-  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary array tmp_data')
-  do ispec = 1, NSPEC_OUTER_CORE
-    do k = 1, NGLLZ
-      do j = 1, NGLLY
-        do i = 1, NGLLX
-          iglob = ibool_outer_core(i,j,k,ispec)
-          ! norm
-          tmp_data(i,j,k,ispec) = maxnormdisp_oc(iglob) 
-        enddo
-      enddo
-    enddo
-  enddo
-  write(dispfile_oc, '(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_2_displ'
-  open(unit=IOUT,file=trim(dispfile_oc),status='unknown',form='unformatted',iostat=ier)
-  if (ier /= 0 ) call exit_MPI(myrank,'Error opening file '//trim(dispfile_oc))
-  write(IOUT) tmp_data
-  close(IOUT)
-  deallocate(tmp_data)
-  !
-  ! Velocity
-  allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE),stat=ier)
-  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary array tmp_data')
-  do ispec = 1, NSPEC_OUTER_CORE
-    do k = 1, NGLLZ
-      do j = 1, NGLLY
-        do i = 1, NGLLX
-          iglob = ibool_outer_core(i,j,k,ispec)
-          ! norm
-          tmp_data(i,j,k,ispec) = maxnormvel_oc(iglob) 
-        enddo
-      enddo
-    enddo
-  enddo
-  write(velfile_oc, '(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_2_veloc'
-  open(unit=IOUT,file=trim(velfile_oc),status='unknown',form='unformatted',iostat=ier)
-  if (ier /= 0 ) call exit_MPI(myrank,'Error opening file '//trim(velfile_oc))
-  write(IOUT) tmp_data
-  close(IOUT)
-  deallocate(tmp_data)
-  
-  
-  ! Inner Core
-  ! Displacement
-  allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE),stat=ier)
-  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary array tmp_data')
-  do ispec = 1, NSPEC_INNER_CORE
-    do k = 1, NGLLZ
-      do j = 1, NGLLY
-        do i = 1, NGLLX
-          iglob = ibool_inner_core(i,j,k,ispec)
-          ! norm
-          tmp_data(i,j,k,ispec) = maxnormdisp_ic(iglob) 
-        enddo
-      enddo
-    enddo
-  enddo
-  write(dispfile_ic, '(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_3_displ'
-  open(unit=IOUT,file=trim(dispfile_ic),status='unknown',form='unformatted',iostat=ier)
-  if (ier /= 0 ) call exit_MPI(myrank,'Error opening file '//trim(dispfile_ic))
-  write(IOUT) tmp_data
-  close(IOUT)
-  deallocate(tmp_data)
-  !
-  ! Velocity
-  allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE),stat=ier)
-  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary array tmp_data')
-  do ispec = 1, NSPEC_INNER_CORE
-    do k = 1, NGLLZ
-      do j = 1, NGLLY
-        do i = 1, NGLLX
-          iglob = ibool_inner_core(i,j,k,ispec)
-          ! norm
-          tmp_data(i,j,k,ispec) = maxnormvel_ic(iglob) 
-        enddo
-      enddo
-    enddo
-  enddo
-  write(velfile_ic, '(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_3_veloc'
-  open(unit=IOUT,file=trim(velfile_ic),status='unknown',form='unformatted',iostat=ier)
-  if (ier /= 0 ) call exit_MPI(myrank,'Error opening file '//trim(velfile_ic))
-  write(IOUT) tmp_data
-  close(IOUT)
-  deallocate(tmp_data)
-  
-  
-  !call write_VTK_data_norm(dummy_idoubling_cm,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
-	!		   rstore_crust_mantle,ibool_crust_mantle,maxnormdisp_cm, &
-	!		   dispfile_cm)
-  !write(velfile_cm, '(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_1_veloc'						      
-  !call write_VTK_data_norm(dummy_idoubling_cm,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
-	!		   rstore_crust_mantle,ibool_crust_mantle,maxnormvel_cm, &
-	!		   velfile_cm)		
+  call write_VTK_data_norm(dummy_idoubling_cm,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
+			   rstore_crust_mantle,ibool_crust_mantle,maxnormdisp_cm, &
+			   dispfile_cm)
+  write(velfile_cm, '(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_1_veloc'						      
+  call write_VTK_data_norm(dummy_idoubling_cm,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
+			   rstore_crust_mantle,ibool_crust_mantle,maxnormvel_cm, &
+			   velfile_cm)		
   ! Outer core
-  !write(dispfile_oc, '(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_2_displ'
-  !call write_VTK_data_norm(dummy_idoubling_oc,NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
-	!		   rstore_outer_core,ibool_outer_core,maxnormdisp_oc, &
-	!		   dispfile_oc)
-  !write(velfile_oc, '(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_2_veloc'						      
-  !call write_VTK_data_norm(dummy_idoubling_oc,NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
-		!	   rstore_outer_core,ibool_outer_core,maxnormvel_oc, &
-		!	   velfile_oc)				   
+  write(dispfile_oc, '(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_2_displ'
+  call write_VTK_data_norm(dummy_idoubling_oc,NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
+			   rstore_outer_core,ibool_outer_core,maxnormdisp_oc, &
+			   dispfile_oc)
+  write(velfile_oc, '(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_2_veloc'						      
+  call write_VTK_data_norm(dummy_idoubling_oc,NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
+			   rstore_outer_core,ibool_outer_core,maxnormvel_oc, &
+			   velfile_oc)				   
   ! Inner core
-  !write(dispfile_ic, '(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_3_displ'
-  !call write_VTK_data_norm(idoubling_inner_core,NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
-		!	   rstore_inner_core,ibool_inner_core,maxnormdisp_ic, &
-		!	   dispfile_ic)
-  !write(velfile_ic, '(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_3_veloc'						      
-  !call write_VTK_data_norm(idoubling_inner_core,NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
-		!	   rstore_inner_core,ibool_inner_core,maxnormdisp_ic, &
-		!	   velfile_ic)	  
+  write(dispfile_ic, '(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_3_displ'
+  call write_VTK_data_norm(idoubling_inner_core,NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
+			   rstore_inner_core,ibool_inner_core,maxnormdisp_ic, &
+			   dispfile_ic)
+  write(velfile_ic, '(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_3_veloc'						      
+  call write_VTK_data_norm(idoubling_inner_core,NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
+			   rstore_inner_core,ibool_inner_core,maxnormdisp_ic, &
+			   velfile_ic)	  
 								
   end subroutine write_VTK_ndispvel							  
 
