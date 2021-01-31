@@ -29,6 +29,7 @@
 
   subroutine iterate_time()
 
+  use constants_solver
   use specfem_par
   use specfem_par_crustmantle
   use specfem_par_innercore
@@ -299,13 +300,13 @@
 	!endif
 	
     do iglob = 1, NGLOB_CRUST_MANTLE
-      ndispl_cm=sqrt(displ_crust_mantle(1,iglob)**2 &
+      ndispl_cm=scale_displ*sqrt(displ_crust_mantle(1,iglob)**2 &
 		+ displ_crust_mantle(2,iglob)**2 &
 		+ displ_crust_mantle(3,iglob)**2)
       if (ndispl_cm >= ndispl_max_cm(iglob)) then
         ndispl_max_cm(iglob)=ndispl_cm
       endif
-      nveloc_cm=sqrt(veloc_crust_mantle(1,iglob)**2 &
+      nveloc_cm=scale_veloc*sqrt(veloc_crust_mantle(1,iglob)**2 &
 		+ veloc_crust_mantle(2,iglob)**2 &
 		+ veloc_crust_mantle(3,iglob)**2)
       if (nveloc_cm >= nveloc_max_cm(iglob)) then
@@ -315,13 +316,13 @@
 	  
     ! inner core
     do iglob = 1, NGLOB_INNER_CORE
-      ndispl_ic=sqrt(displ_inner_core(1,iglob)**2 &
+      ndispl_ic=scale_displ*sqrt(displ_inner_core(1,iglob)**2 &
 		+ displ_inner_core(2,iglob)**2 &
 		+ displ_inner_core(3,iglob)**2)
       if (ndispl_ic >= ndispl_max_ic(iglob)) then
         ndispl_max_ic(iglob)=ndispl_ic
       endif
-      nveloc_ic=sqrt(veloc_inner_core(1,iglob)**2 &
+      nveloc_ic=scale_veloc*sqrt(veloc_inner_core(1,iglob)**2 &
 		+ veloc_inner_core(2,iglob)**2 &
 		+ veloc_inner_core(3,iglob)**2)
       if (nveloc_ic >= nveloc_max_ic(iglob)) then
@@ -422,10 +423,13 @@
 	  		      ystore_crust_mantle, zstore_crust_mantle, ibool_crust_mantle, &
 			      nsigma_max_cm, nsigmafile_cm, NSPEC_CRUST_MANTLE)
     !if (COMPUTE_AND_STORE_STRAIN) then
-      call write_VTK_data_gll_cr(NSPEC_CRUST_MANTLE_STR_OR_ATT, NGLOB_CRUST_MANTLE, xstore_crust_mantle, &
+    call write_VTK_data_gll_cr(NSPEC_CRUST_MANTLE_STR_OR_ATT, NGLOB_CRUST_MANTLE, xstore_crust_mantle, &
 			      ystore_crust_mantle, zstore_crust_mantle, ibool_crust_mantle, &
-	   		      nepsilon_max_cm, nepsfile_cm, NSPEC_CRUST_MANTLE)
+	  		      nepsilon_max_cm, nepsfile_cm, NSPEC_CRUST_MANTLE)
     !endif
+	
+	!call write_VTK_data_gll_cr_crustmantle(nsigma_max_cm,nsigmafile_cm)
+	!call write_VTK_data_gll_cr_crustmantle(nepsilon_max_cm,nepsfile_cm)
     call write_VTK_ndispvel(ndispl_max_cm,nveloc_max_cm,ndispl_max_ic,nveloc_max_ic, &
 			   ndispl_max_oc,nveloc_max_oc)
 	
