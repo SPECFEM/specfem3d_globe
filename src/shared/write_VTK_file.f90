@@ -664,7 +664,7 @@
 
   subroutine write_VTK_data_gll_cr(nspec,nglob, &
                                     xstore_dummy,ystore_dummy,zstore_dummy,ibool, &
-                                    gll_data,prname_file,nspectwo)
+                                    gll_data,prname_file)
 
 ! external mesh routine for saving vtk files for CUSTOM_REAL values on all GLL points
 
@@ -674,10 +674,10 @@
 
   implicit none
 
-  integer,intent(in) :: nspec,nglob,nspectwo
+  integer,intent(in) :: nspec,nglob
 
   ! global coordinates
-  integer, dimension(NGLLX,NGLLY,NGLLZ,nspectwo),intent(in) :: ibool
+  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
   real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: xstore_dummy,ystore_dummy,zstore_dummy
 
   ! GLL data values array
@@ -753,6 +753,7 @@
     enddo
   endif
   write(IOUT_VTK,*)
+  ! The dimensions are right... this should work... 
 
   ! note: indices for vtk start at 0
   if (USE_CORNERS) then
@@ -2065,5 +2066,3 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-
-  

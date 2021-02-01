@@ -423,24 +423,22 @@
     call write_VTK_ndispvel(ndispl_max_cm,nveloc_max_cm,ndispl_max_ic,nveloc_max_ic, &
 			   ndispl_max_oc,nveloc_max_oc)
 	! Write own subroutine at the end of iterate_time		   
-    !call write_VTK_data_gll_cr(NSPEC_CRUST_MANTLE_STR_OR_ATT, NGLOB_CRUST_MANTLE, xstore_crust_mantle, &
-	!  		      ystore_crust_mantle, zstore_crust_mantle, ibool_crust_mantle, &
-	!		      nsigma_max_cm, nsigmafile_cm, NSPEC_CRUST_MANTLE)
-    !if (COMPUTE_AND_STORE_STRAIN) then
-    !call write_VTK_data_gll_cr(NSPEC_CRUST_MANTLE_STR_OR_ATT, NGLOB_CRUST_MANTLE, xstore_crust_mantle, &
-	!		      ystore_crust_mantle, zstore_crust_mantle, ibool_crust_mantle, &
-	!  		      nepsilon_max_cm, nepsfile_cm, NSPEC_CRUST_MANTLE)
-    !endif
+    call write_VTK_data_gll_cr(NSPEC_CRUST_MANTLE, NGLOB_CRUST_MANTLE, xstore_crust_mantle, &
+	  		      ystore_crust_mantle, zstore_crust_mantle, ibool_crust_mantle, &
+			      nsigma_max_cm, nsigmafile_cm)
+    call write_VTK_data_gll_cr(NSPEC_CRUST_MANTLE, NGLOB_CRUST_MANTLE, xstore_crust_mantle, &
+			      ystore_crust_mantle, zstore_crust_mantle, ibool_crust_mantle, &
+	  		      nepsilon_max_cm, nepsfile_cm)
 	
 	!call write_VTK_data_gll_cr_crustmantle(nsigma_max_cm,nsigmafile_cm)
 	!call write_VTK_data_gll_cr_crustmantle(nepsilon_max_cm,nepsfile_cm)
 
-	call write_VTK_data_norm_gll(NSPEC_CRUST_MANTLE_STR_OR_ATT,NGLOB_CRUST_MANTLE, &
-                               rstore_crust_mantle,ibool_crust_mantle, &
-							   nsigma_max_cm,nsigmafile_cm)
-	call write_VTK_data_norm_gll(NSPEC_CRUST_MANTLE_STR_OR_ATT,NGLOB_CRUST_MANTLE, &
-                               rstore_crust_mantle,ibool_crust_mantle, &
-							   nepsilon_max_cm,nepsfile_cm)
+	!call write_VTK_data_norm_gll(NSPEC_CRUST_MANTLE_STR_OR_ATT,NGLOB_CRUST_MANTLE, &
+     !                          rstore_crust_mantle,ibool_crust_mantle, &
+	!						   nsigma_max_cm,nsigmafile_cm)
+	!call write_VTK_data_norm_gll(NSPEC_CRUST_MANTLE_STR_OR_ATT,NGLOB_CRUST_MANTLE, &
+     !                          rstore_crust_mantle,ibool_crust_mantle, &
+	!						   nepsilon_max_cm,nepsfile_cm)
   endif
 
   end subroutine iterate_time
@@ -831,7 +829,7 @@
   implicit none
 
   ! GLL data values array, inputted
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT),intent(in) :: gll_data
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),intent(in) :: gll_data
 
   ! file name
   character(len=MAX_STRING_LEN),intent(in) :: prname_file
