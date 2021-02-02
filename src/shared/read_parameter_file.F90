@@ -253,6 +253,12 @@
   if (ier /= 0) stop 'an error occurred while reading the parameter file: SAVE_SOURCE_MASK'
   call read_value_logical(SAVE_REGULAR_KL, 'SAVE_REGULAR_KL', ier)
   if (ier /= 0) stop 'an error occurred while reading the parameter file: SAVE_REGULAR_KL'
+  call read_value_logical(STEADY_STATE_KERNEL, 'STEADY_STATE_KERNEL', ier)
+  if (ier /= 0) stop 'an error occurred while reading the parameter file: STEADY_STATE_KERNEL'
+  if (STEADY_STATE_KERNEL) then
+    call read_value_double_precision(STEADY_STATE_LENGTH_IN_MINUTES, 'STEADY_STATE_LENGTH_IN_MINUTES', ier)
+    if (ier /= 0) stop 'an error occurred while reading the parameter file: STEADY_STATE_LENGTH_IN_MINUTES'
+  endif
 
   ! for simultaneous runs from the same batch job
   call read_value_integer(NUMBER_OF_SIMULTANEOUS_RUNS, 'NUMBER_OF_SIMULTANEOUS_RUNS', ier)

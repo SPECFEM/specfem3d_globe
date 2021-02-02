@@ -138,6 +138,9 @@
 
   logical :: USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK
 
+  logical :: STEADY_STATE_KERNEL
+  double precision :: STEADY_STATE_LENGTH_IN_MINUTES
+
   ! for simultaneous runs from the same batch job
   integer :: NUMBER_OF_SIMULTANEOUS_RUNS
   logical :: BROADCAST_SAME_MESH_AND_MODEL
@@ -191,6 +194,9 @@
   ! number of time steps
   integer :: NSTEP
   double precision :: DT
+
+  ! number of steady state time steps
+  integer :: NSTEP_STEADY_STATE
 
   ! shortest minimum period resolved by mesh (empirical formula)
   double precision :: T_min_period

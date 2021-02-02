@@ -93,7 +93,11 @@
   endif
 
   ! number of time subsets for time loop
-  NSUBSET_ITERATIONS = ceiling( dble(NSTEP)/dble(NT_DUMP_ATTENUATION) )
+  if (NSTEP_STEADY_STATE > 0) then
+    NSUBSET_ITERATIONS = ceiling( dble(NSTEP_STEADY_STATE)/dble(NT_DUMP_ATTENUATION) )
+  else
+    NSUBSET_ITERATIONS = ceiling( dble(NSTEP)/dble(NT_DUMP_ATTENUATION) )
+  endif
 
   ! checks
   if (NSUBSET_ITERATIONS <= 0) call exit_MPI(myrank,'Error invalid number of time subsets for undoing attenuation')
@@ -189,6 +193,63 @@
 
   if (EXACT_UNDOING_TO_DISK) call setup_exact_undoing_to_disk()
 
+
+  ! transient period simulation
+  if (NSTEP_STEADY_STATE > 0) then
+    do it = it_begin,NSTEP-NSTEP_STEADY_STATE
+
+      ! simulation status output and stability check
+      if (mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == it_begin + 4 .or. it == it_end) then
+        call check_stability()
+        if (I_am_running_on_a_slow_node) goto 200
+      endif
+
+      do istage = 1, NSTAGE_TIME_SCHEME ! is equal to 1 if Newmark because only one stage then
+
+        if (USE_LDDRK) then
+          ! update displacement using Runge-Kutta time scheme
+          call update_displ_lddrk()
+        else
+          ! update displacement using Newmark time scheme
+          call update_displ_Newmark()
+        endif
+
+        ! acoustic solver for outer core
+        ! (needs to be done first, before elastic one)
+        call compute_forces_acoustic()
+
+        ! elastic solver for crust/mantle and inner core
+        call compute_forces_viscoelastic()
+
+      enddo ! end of very big external loop on istage for all the stages of the LDDRK time scheme (only one stage if Newmark)
+
+      ! write the seismograms with time shift (GPU_MODE transfer included)
+      call write_seismograms()
+
+      ! outputs movie files
+      if (MOVIE_SURFACE .or. MOVIE_VOLUME) call write_movie_output()
+
+      ! first step of noise tomography, i.e., save a surface movie at every time step
+      ! modified from the subroutine 'write_movie_surface'
+      if (NOISE_TOMOGRAPHY == 1) then
+        call noise_save_surface_movie()
+      endif
+
+      ! updates VTK window
+      if (VTK_MODE) then
+        call it_update_vtkwindow()
+      endif
+
+    !
+    !---- end of time iteration loop
+    !
+    enddo   ! end of main time loop of transient state
+
+    200 continue
+
+    it = it - 1
+  endif
+
   ! loops over time subsets
   do iteration_on_subset = 1, NSUBSET_ITERATIONS
 
@@ -218,7 +279,11 @@
         it_subset_end = NT_DUMP_ATTENUATION
       else
         ! loops over remaining steps in last subset
-        it_subset_end = NSTEP - (iteration_on_subset-1)*NT_DUMP_ATTENUATION
+        if (NSTEP_STEADY_STATE > 0) then
+          it_subset_end = NSTEP_STEADY_STATE - (iteration_on_subset-1)*NT_DUMP_ATTENUATION
+        else
+          it_subset_end = NSTEP - (iteration_on_subset-1)*NT_DUMP_ATTENUATION
+        endif
       endif
       ! checks end index
       if (it_subset_end > NT_DUMP_ATTENUATION) &
@@ -283,7 +348,11 @@
       ! increment end of this subset
       if (iteration_on_subset == 1) then
         ! loops over remaining steps in last forward subset
-        it_subset_end = NSTEP - (NSUBSET_ITERATIONS-1)*NT_DUMP_ATTENUATION
+        if (NSTEP_STEADY_STATE > 0) then
+          it_subset_end = NSTEP_STEADY_STATE - (NSUBSET_ITERATIONS-1)*NT_DUMP_ATTENUATION
+        else
+          it_subset_end = NSTEP - (NSUBSET_ITERATIONS-1)*NT_DUMP_ATTENUATION
+        endif
       else
         ! takes full length of subset
         it_subset_end = NT_DUMP_ATTENUATION

@@ -134,6 +134,17 @@
     NSTEP = 100 * (int(RECORD_LENGTH_IN_MINUTES * 60.d0 / (100.d0*DT)) + 1)
   endif
 
+  ! steady state time step
+  if (STEADY_STATE_KERNEL) then
+    NSTEP_STEADY_STATE = nint(STEADY_STATE_LENGTH_IN_MINUTES * 60.d0 / DT)
+
+    if (NSTEP_STEADY_STATE == 0) then
+      print *, 'Warning: STEADY_STATE_KERNEL disabled because STEADY_STATE_LENGTH_IN_MINUTES is zero'
+    endif
+  else
+    NSTEP_STEADY_STATE = 0
+  endif
+
   ! noise simulations
   if (NOISE_TOMOGRAPHY /= 0) then
     ! time steps needs to be doubled, due to +/- branches (symmetric around zero)
@@ -385,6 +396,12 @@
   !! DK DK this should not be difficult to fix and test, but not done yet by lack of time
   if (UNDO_ATTENUATION .and. NUMBER_OF_THIS_RUN > 1) &
     stop 'we currently do not support NUMBER_OF_THIS_RUN > 1 in the case of UNDO_ATTENUATION'
+  
+  if (STEADY_STATE_KERNEL .and. .not. UNDO_ATTENUATION) &
+    stop 'STEADY_STATE_KERNEL currently works only when UNDO_ATTENUATION is enabled'
+  
+  if (STEADY_STATE_LENGTH_IN_MINUTES > RECORD_LENGTH_IN_MINUTES) &
+    stop 'STEADY_STATE_LENGTH_IN_MINUTES cannot be greater than RECORD_LENGTH_IN_MINUTES'
 
   if (USE_LDDRK .and. NUMBER_OF_RUNS > 1) &
     stop 'NUMBER_OF_RUNS should be == 1 for now when using USE_LDDRK'
