@@ -294,6 +294,10 @@ SAVE_SOURCE_MASK                = .false.
 # output kernels on a regular grid instead of on the GLL mesh points (a bit expensive)
 SAVE_REGULAR_KL                 = .false.
 
+# compute steady state kernels for source encoding
+STEADY_STATE_KERNEL             = .false.
+STEADY_STATE_LENGTH_IN_MINUTES  = 0.d0
+
 #-----------------------------------------------------------
 
 # Dimitri Komatitsch, July 2014, CNRS Marseille, France:
