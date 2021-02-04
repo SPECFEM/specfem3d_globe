@@ -70,11 +70,6 @@
   nveloc_max_oc(:)=0
   nsigma_max_cm(:,:,:,:)=0
   nepsilon_max_cm(:,:,:,:)=0
-  ! stress, strain file names
-  write(nsigmafile_cm,'(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_1_stress'
-  write(nepsfile_cm,'(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_1_strain'
-  ! Make sure strain is stored -- how to make this flag always true?
-  !COMPUTE_AND_STORE_STRAIN=.true.
   
 
   !----  create a Gnuplot script to display the energy curve in log scale
@@ -420,25 +415,11 @@
   ! Write the peak values for norm stress, strain, displacement, velocity to VTK files
   ! Only for CPU version
   if (SIMULATION_TYPE == 1) then
-    call write_VTK_ndispvel(ndispl_max_cm,nveloc_max_cm,ndispl_max_ic,nveloc_max_ic, &
+    call write_bin_ndispvel(ndispl_max_cm,nveloc_max_cm,ndispl_max_ic,nveloc_max_ic, &
 			   ndispl_max_oc,nveloc_max_oc)
-	! Write own subroutine at the end of iterate_time		   
-    call write_VTK_data_gll_cr(NSPEC_CRUST_MANTLE, NGLOB_CRUST_MANTLE, xstore_crust_mantle, &
-	  		      ystore_crust_mantle, zstore_crust_mantle, ibool_crust_mantle, &
-			      nsigma_max_cm, nsigmafile_cm)
-    call write_VTK_data_gll_cr(NSPEC_CRUST_MANTLE, NGLOB_CRUST_MANTLE, xstore_crust_mantle, &
-			      ystore_crust_mantle, zstore_crust_mantle, ibool_crust_mantle, &
-	  		      nepsilon_max_cm, nepsfile_cm)
-	
-	!call write_VTK_data_gll_cr_crustmantle(nsigma_max_cm,nsigmafile_cm)
-	!call write_VTK_data_gll_cr_crustmantle(nepsilon_max_cm,nepsfile_cm)
 
-	!call write_VTK_data_norm_gll(NSPEC_CRUST_MANTLE_STR_OR_ATT,NGLOB_CRUST_MANTLE, &
-     !                          rstore_crust_mantle,ibool_crust_mantle, &
-	!						   nsigma_max_cm,nsigmafile_cm)
-	!call write_VTK_data_norm_gll(NSPEC_CRUST_MANTLE_STR_OR_ATT,NGLOB_CRUST_MANTLE, &
-     !                          rstore_crust_mantle,ibool_crust_mantle, &
-	!						   nepsilon_max_cm,nepsfile_cm)
+	call write_bin_stressstrain_cm(nsigma_max_cm,nepsilon_max_cm)
+	
   endif
 
   end subroutine iterate_time
@@ -749,7 +730,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine write_VTK_ndispvel(maxnormdisp_cm,maxnormvel_cm,maxnormdisp_ic, &
+  subroutine write_bin_ndispvel(maxnormdisp_cm,maxnormvel_cm,maxnormdisp_ic, &
 				maxnormvel_ic,maxnormdisp_oc,maxnormvel_oc)
   
   use constants_solver							
@@ -771,297 +752,180 @@
   integer, dimension(NSPEC_CRUST_MANTLE) :: dummy_idoubling_cm
   integer, dimension(NSPEC_OUTER_CORE) :: dummy_idoubling_oc  
   
-  ! VTK file names
+  ! bin file names
   character(len=MAX_STRING_LEN) :: dispfile_cm,dispfile_ic,dispfile_oc,velfile_cm,velfile_ic,velfile_oc
   
   integer :: ispec,iglob,i,j,k,ier
-  !real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: tmp_data
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: tmp_data
+
+
+  ! Crust/mantle
+  ! Use xcombine_vol_data to convert the bin files to VTK
+  allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),stat=ier)
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary array tmp_data')
+  do ispec = 1, NSPEC_CRUST_MANTLE
+    do k = 1, NGLLZ
+      do j = 1, NGLLY
+        do i = 1, NGLLX
+          iglob = ibool_crust_mantle(i,j,k,ispec)
+          ! norm
+          tmp_data(i,j,k,ispec) = maxnormdisp_cm(iglob) 
+        enddo
+      enddo
+    enddo
+  enddo
+  write(dispfile_cm, '(a,i6.6,a)') 'DATABASES_MPI/proc',myrank,'_reg1_maxnormdispl.bin'
+  open(unit=IOUT,file=trim(dispfile_cm),status='unknown',form='unformatted',iostat=ier)
+  if (ier /= 0 ) call exit_MPI(myrank,'Error opening file '//trim(dispfile_cm))
+  write(IOUT) tmp_data
+  close(IOUT)
+  deallocate(tmp_data)
+  !
+  ! Velocity
+  allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),stat=ier)
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary array tmp_data')
+  do ispec = 1, NSPEC_CRUST_MANTLE
+    do k = 1, NGLLZ
+      do j = 1, NGLLY
+        do i = 1, NGLLX
+          iglob = ibool_crust_mantle(i,j,k,ispec)
+          ! norm
+          tmp_data(i,j,k,ispec) = maxnormvel_cm(iglob) 
+        enddo
+      enddo
+    enddo
+  enddo
+  write(velfile_cm, '(a,i6.6,a)') 'DATABASES_MPI/proc',myrank,'_reg1_maxnormveloc.bin'
+  open(unit=IOUT,file=trim(velfile_cm),status='unknown',form='unformatted',iostat=ier)
+  if (ier /= 0 ) call exit_MPI(myrank,'Error opening file '//trim(velfile_cm))
+  write(IOUT) tmp_data
+  close(IOUT)
+  deallocate(tmp_data)
   
   
-  ! Initialize
-  dummy_idoubling_cm(:) = IFLAG_CRUST
-  dummy_idoubling_oc(:) = IFLAG_OUTER_CORE_NORMAL
-    
-  ! Crust, mantle
-  write(dispfile_cm, '(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_1_displ'
-  call write_VTK_data_norm(dummy_idoubling_cm,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
-			   rstore_crust_mantle,ibool_crust_mantle,maxnormdisp_cm, &
-			   dispfile_cm)
-  write(velfile_cm, '(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_1_veloc'						      
-  call write_VTK_data_norm(dummy_idoubling_cm,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
-			   rstore_crust_mantle,ibool_crust_mantle,maxnormvel_cm, &
-			   velfile_cm)		
-  ! Outer core
-  write(dispfile_oc, '(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_2_displ'
-  call write_VTK_data_norm(dummy_idoubling_oc,NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
-			   rstore_outer_core,ibool_outer_core,maxnormdisp_oc, &
-			   dispfile_oc)
-  write(velfile_oc, '(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_2_veloc'						      
-  call write_VTK_data_norm(dummy_idoubling_oc,NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
-			   rstore_outer_core,ibool_outer_core,maxnormvel_oc, &
-			   velfile_oc)				   
-  ! Inner core
-  write(dispfile_ic, '(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_3_displ'
-  call write_VTK_data_norm(idoubling_inner_core,NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
-			   rstore_inner_core,ibool_inner_core,maxnormdisp_ic, &
-			   dispfile_ic)
-  write(velfile_ic, '(a,i6.6,a)') 'OUTPUT_FILES/maxnorm_proc',myrank,'_reg_3_veloc'						      
-  call write_VTK_data_norm(idoubling_inner_core,NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
-			   rstore_inner_core,ibool_inner_core,maxnormdisp_ic, &
-			   velfile_ic)	  
+  ! Outer Core
+  ! Potential and first derivative of potential, not displacement or velocity
+  ! Displacement
+  allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE),stat=ier)
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary array tmp_data')
+  do ispec = 1, NSPEC_OUTER_CORE
+    do k = 1, NGLLZ
+      do j = 1, NGLLY
+        do i = 1, NGLLX
+          iglob = ibool_outer_core(i,j,k,ispec)
+          ! norm
+          tmp_data(i,j,k,ispec) = maxnormdisp_oc(iglob) 
+        enddo
+      enddo
+    enddo
+  enddo
+  write(dispfile_oc, '(a,i6.6,a)') 'DATABASES_MPI/proc',myrank,'_reg2_maxnormdispl.bin'
+  open(unit=IOUT,file=trim(dispfile_oc),status='unknown',form='unformatted',iostat=ier)
+  if (ier /= 0 ) call exit_MPI(myrank,'Error opening file '//trim(dispfile_oc))
+  write(IOUT) tmp_data
+  close(IOUT)
+  deallocate(tmp_data)
+  !
+  ! Velocity
+  allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE),stat=ier)
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary array tmp_data')
+  do ispec = 1, NSPEC_OUTER_CORE
+    do k = 1, NGLLZ
+      do j = 1, NGLLY
+        do i = 1, NGLLX
+          iglob = ibool_outer_core(i,j,k,ispec)
+          ! norm
+          tmp_data(i,j,k,ispec) = maxnormvel_oc(iglob) 
+        enddo
+      enddo
+    enddo
+  enddo
+  write(velfile_oc, '(a,i6.6,a)') 'DATABASES_MPI/proc',myrank,'_reg2_maxnormveloc.bin'
+  open(unit=IOUT,file=trim(velfile_oc),status='unknown',form='unformatted',iostat=ier)
+  if (ier /= 0 ) call exit_MPI(myrank,'Error opening file '//trim(velfile_oc))
+  write(IOUT) tmp_data
+  close(IOUT)
+  deallocate(tmp_data)
+  
+  
+  ! Inner Core
+  ! Displacement
+  allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE),stat=ier)
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary array tmp_data')
+  do ispec = 1, NSPEC_INNER_CORE
+    do k = 1, NGLLZ
+      do j = 1, NGLLY
+        do i = 1, NGLLX
+          iglob = ibool_inner_core(i,j,k,ispec)
+          ! norm
+          tmp_data(i,j,k,ispec) = maxnormdisp_ic(iglob) 
+        enddo
+      enddo
+    enddo
+  enddo
+  write(dispfile_ic, '(a,i6.6,a)') 'DATABASES_MPI/proc',myrank,'_reg3_maxnormdispl.bin'
+  open(unit=IOUT,file=trim(dispfile_ic),status='unknown',form='unformatted',iostat=ier)
+  if (ier /= 0 ) call exit_MPI(myrank,'Error opening file '//trim(dispfile_ic))
+  write(IOUT) tmp_data
+  close(IOUT)
+  deallocate(tmp_data)
+  !
+  ! Velocity
+  allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE),stat=ier)
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary array tmp_data')
+  do ispec = 1, NSPEC_INNER_CORE
+    do k = 1, NGLLZ
+      do j = 1, NGLLY
+        do i = 1, NGLLX
+          iglob = ibool_inner_core(i,j,k,ispec)
+          ! norm
+          tmp_data(i,j,k,ispec) = maxnormvel_ic(iglob) 
+        enddo
+      enddo
+    enddo
+  enddo
+  write(velfile_ic, '(a,i6.6,a)') 'DATABASES_MPI/proc',myrank,'_reg3_maxnormveloc.bin'
+  open(unit=IOUT,file=trim(velfile_ic),status='unknown',form='unformatted',iostat=ier)
+  if (ier /= 0 ) call exit_MPI(myrank,'Error opening file '//trim(velfile_ic))
+  write(IOUT) tmp_data
+  close(IOUT)
+  deallocate(tmp_data)	
 								
-  end subroutine write_VTK_ndispvel							  
+  end subroutine write_bin_ndispvel		
 
-
+!
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine write_VTK_data_gll_cr_crustmantle(gll_data,prname_file)
-
-! external mesh routine for saving vtk files for CUSTOM_REAL values on all GLL points
-! modified routine write_VTK_data_gll_cr to ONLY use crust and mantle values
-! Use for arrays such as stress and strain, with dimension NSPEC_CRUST_MANTLE_STR_OR_ATT
-
-  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLY,NGLLZ,IOUT_VTK
+  subroutine write_bin_stressstrain_cm(maxnormsigma_cm,maxnormepsilon_cm)
+  
+  use constants_solver
   use specfem_par
   use specfem_par_crustmantle
-
+  
   implicit none
-
-  ! GLL data values array, inputted
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),intent(in) :: gll_data
-
-  ! file name
-  character(len=MAX_STRING_LEN),intent(in) :: prname_file
-
-  ! local parameters
-  integer :: ispec,i,j,k,ier,iglob
-
-  !--------------------------------------------------------------
-  ! USER PARAMETERS
-
-  ! flag enabling output on corners only
-  !logical,parameter :: USE_CORNERS = .false.
-
-  !--------------------------------------------------------------
-
-  !debug
-  !print *, '  vtk file: '
-  !print *, '    ',prname_file(1:len_trim(prname_file))//'.vtk'
-
-  open(IOUT_VTK,file=prname_file(1:len_trim(prname_file))//'.vtk',status='unknown',action='write',iostat=ier)
-  if (ier /= 0) stop 'Error opening VTK file'
-
-  write(IOUT_VTK,'(a)') '# vtk DataFile Version 3.1'
-  write(IOUT_VTK,'(a)') 'material model VTK file'
-  write(IOUT_VTK,'(a)') 'ASCII'
-  write(IOUT_VTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
-
-  ! writes out all points for each element, not just global ones
-  write(IOUT_VTK, '(a,i12,a)') 'POINTS ', NSPEC_CRUST_MANTLE*8, ' float'
-  do ispec=1,NSPEC_CRUST_MANTLE
-    i = ibool_crust_mantle(1,1,1,ispec)
-    write(IOUT_VTK,'(3e18.6)') xstore_crust_mantle(i),ystore_crust_mantle(i),zstore_crust_mantle(i)
-
-    i = ibool_crust_mantle(NGLLX,1,1,ispec)
-    write(IOUT_VTK,'(3e18.6)') xstore_crust_mantle(i),ystore_crust_mantle(i),zstore_crust_mantle(i)
-
-    i = ibool_crust_mantle(NGLLX,NGLLY,1,ispec)
-    write(IOUT_VTK,'(3e18.6)') xstore_crust_mantle(i),ystore_crust_mantle(i),zstore_crust_mantle(i)
-
-    i = ibool_crust_mantle(1,NGLLY,1,ispec)
-    write(IOUT_VTK,'(3e18.6)') xstore_crust_mantle(i),ystore_crust_mantle(i),zstore_crust_mantle(i)
-
-    i = ibool_crust_mantle(1,1,NGLLZ,ispec)
-    write(IOUT_VTK,'(3e18.6)') xstore_crust_mantle(i),ystore_crust_mantle(i),zstore_crust_mantle(i)
-
-    i = ibool_crust_mantle(NGLLX,1,NGLLZ,ispec)
-    write(IOUT_VTK,'(3e18.6)') xstore_crust_mantle(i),ystore_crust_mantle(i),zstore_crust_mantle(i)
-
-    i = ibool_crust_mantle(NGLLX,NGLLY,NGLLZ,ispec)
-    write(IOUT_VTK,'(3e18.6)') xstore_crust_mantle(i),ystore_crust_mantle(i),zstore_crust_mantle(i)
-
-    i = ibool_crust_mantle(1,NGLLY,NGLLZ,ispec)
-    write(IOUT_VTK,'(3e18.6)') xstore_crust_mantle(i),ystore_crust_mantle(i),zstore_crust_mantle(i)
-  enddo
-  write(IOUT_VTK,*) ''
-
-  ! note: indices for vtk start at 0
-  write(IOUT_VTK,'(a,i12,i12)') "CELLS ",NSPEC_CRUST_MANTLE,NSPEC_CRUST_MANTLE*9
-  do ispec=1,NSPEC_CRUST_MANTLE
-    write(IOUT_VTK,'(9i12)') 8,(ispec-1)*8,(ispec-1)*8+1,(ispec-1)*8+2,(ispec-1)*8+3, &
-          (ispec-1)*8+4,(ispec-1)*8+5,(ispec-1)*8+6,(ispec-1)*8+7
-  enddo
-  write(IOUT_VTK,*) ''
-
-  ! type: hexahedrons
-  write(IOUT_VTK,'(a,i12)') "CELL_TYPES ",NSPEC_CRUST_MANTLE
-  write(IOUT_VTK,'(6i12)') (12,ispec=1,NSPEC_CRUST_MANTLE)
-  write(IOUT_VTK,*) ''
-
-  ! writes out gll-data (velocity) for each element point
-  write(IOUT_VTK,'(a,i12)') "POINT_DATA ",NSPEC_CRUST_MANTLE*8
-  write(IOUT_VTK,'(a)') "SCALARS gll_data float"
-  write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
-  do ispec = 1,NSPEC_CRUST_MANTLE
-    i = ibool_crust_mantle(1,1,1,ispec)
-    write(IOUT_VTK,'(3e18.6)') gll_data(1,1,1,ispec)
-
-    i = ibool_crust_mantle(NGLLX,1,1,ispec)
-    write(IOUT_VTK,'(3e18.6)') gll_data(NGLLX,1,1,ispec)
-
-    i = ibool_crust_mantle(NGLLX,NGLLY,1,ispec)
-    write(IOUT_VTK,'(3e18.6)') gll_data(NGLLX,NGLLY,1,ispec)
-
-    i = ibool_crust_mantle(1,NGLLY,1,ispec)
-    write(IOUT_VTK,'(3e18.6)') gll_data(1,NGLLY,1,ispec)
-
-    i = ibool_crust_mantle(1,1,NGLLZ,ispec)
-    write(IOUT_VTK,'(3e18.6)') gll_data(1,1,NGLLZ,ispec)
-
-    i = ibool_crust_mantle(NGLLX,1,NGLLZ,ispec)
-    write(IOUT_VTK,'(3e18.6)') gll_data(NGLLX,1,NGLLZ,ispec)
-
-    i = ibool_crust_mantle(NGLLX,NGLLY,NGLLZ,ispec)
-    write(IOUT_VTK,'(3e18.6)') gll_data(NGLLX,NGLLY,NGLLZ,ispec)
-
-    i = ibool_crust_mantle(1,NGLLY,NGLLZ,ispec)-1
-    write(IOUT_VTK,'(3e18.6)') gll_data(1,NGLLY,NGLLZ,ispec)
-  enddo
-  write(IOUT_VTK,*) ''
-
-  close(IOUT_VTK)
-
-  end subroutine write_VTK_data_gll_cr_crustmantle
   
+  ! GLL data values array, of peak norms of stress and strain
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT),intent(in) :: maxnormsigma_cm, &
+  maxnormepsilon_cm
   
-!-------------------------------------------------------------------------------------------------
-!
-  ! Identical to write_VTK_data_cr but for plotting data with one dimension
-  ! For plotting maximum norm of displacement and velocity
+  ! variables
+  integer :: ier
+  character(len=MAX_STRING_LEN) :: outputsigma,outputepsilon
   
-  subroutine write_VTK_data_norm_gll(nspec,nglob, &
-                               rstore_dummy, &
-                               ibool,gll_data,prname_file)
-
-  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,NDIM,NGLLX,NGLLY,NGLLZ,IOUT_VTK,IFLAG_IN_FICTITIOUS_CUBE
-  use specfem_par
-  use specfem_par_crustmantle
-
-  implicit none
-
-  integer,intent(in) :: nspec,nglob
-
-  integer, dimension(NSPEC_CRUST_MANTLE) :: dummy_idoubling_cm
-
-  ! global coordinates
-  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
-  real(kind=CUSTOM_REAL), dimension(NDIM,nglob),intent(in) :: rstore_dummy
+  ! Use xcombine_vol_data? with region 1
+  write(outputsigma, '(a,i6.6,a)') 'DATABASES_MPI/proc',myrank,'_reg1_maxnormstress.bin'
+  open(unit=IOUT,file=trim(outputsigma),status='unknown',form='unformatted',iostat=ier)
+  if (ier /= 0 ) call exit_MPI(myrank,'Error opening file '//trim(outputsigma))
+  write(IOUT) maxnormsigma_cm
+  close(IOUT)
   
-  ! GLL data values array, inputted
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT),intent(in) :: gll_data
+  write(outputepsilon, '(a,i6.6,a)') 'DATABASES_MPI/proc',myrank,'_reg1_maxnormstrain.bin'
+  open(unit=IOUT,file=trim(outputepsilon),status='unknown',form='unformatted',iostat=ier)
+  if (ier /= 0 ) call exit_MPI(myrank,'Error opening file '//trim(outputepsilon))
+  write(IOUT) maxnormepsilon_cm
+  close(IOUT)
 
-  ! file name
-  character(len=MAX_STRING_LEN),intent(in) :: prname_file
-
-  ! local parameters
-  integer :: ispec,i,ier
-  real(kind=CUSTOM_REAL) :: rval,thetaval,phival,xval,yval,zval  
   
-  ! Initialize
-  dummy_idoubling_cm(:) = IFLAG_CRUST
+  end subroutine write_bin_stressstrain_cm
 
-  ! write source and receiver VTK files for Paraview
-  open(IOUT_VTK,file=prname_file(1:len_trim(prname_file))//'.vtk',status='unknown',action='write',iostat=ier)
-  if (ier /= 0) stop 'Error opening VTK file'
-
-  write(IOUT_VTK,'(a)') '# vtk DataFile Version 3.1'
-  write(IOUT_VTK,'(a)') 'material model VTK file'
-  write(IOUT_VTK,'(a)') 'ASCII'
-  write(IOUT_VTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
-  write(IOUT_VTK, '(a,i12,a)') 'POINTS ', nglob, ' float'
-  do i = 1,nglob
-
-    !x,y,z store have been converted to r theta phi already, need to revert back for xyz output
-    rval = rstore_dummy(1,i)
-    thetaval = rstore_dummy(2,i)
-    phival = rstore_dummy(3,i)
-
-    call rthetaphi_2_xyz(xval,yval,zval,rval,thetaval,phival)
-
-    write(IOUT_VTK,'(3e18.6)') real(xval,kind=4),real(yval,kind=4),real(zval,kind=4)
-  enddo
-  write(IOUT_VTK,*)
-
-  ! defines cell on coarse corner points
-  ! note: indices for VTK start at 0
-  write(IOUT_VTK,'(a,i12,i12)') "CELLS ",nspec,nspec*9
-  do ispec = 1,nspec
-
-    ! specific to inner core elements
-    ! exclude fictitious elements in central cube
-    if (dummy_idoubling_cm(ispec) /= IFLAG_IN_FICTITIOUS_CUBE) then
-      ! valid cell
-      write(IOUT_VTK,'(9i12)') 8,ibool(1,1,1,ispec)-1, &
-                          ibool(NGLLX,1,1,ispec)-1, &
-                          ibool(NGLLX,NGLLY,1,ispec)-1, &
-                          ibool(1,NGLLY,1,ispec)-1, &
-                          ibool(1,1,NGLLZ,ispec)-1, &
-                          ibool(NGLLX,1,NGLLZ,ispec)-1, &
-                          ibool(NGLLX,NGLLY,NGLLZ,ispec)-1, &
-                          ibool(1,NGLLY,NGLLZ,ispec)-1
-    else
-      ! fictitious elements in central cube
-      ! maps cell onto a randomly chosen point
-      write(IOUT_VTK,'(9i12)') 8,ibool(1,1,1,1)-1, &
-                            ibool(1,1,1,1)-1, &
-                            ibool(1,1,1,1)-1, &
-                            ibool(1,1,1,1)-1, &
-                            ibool(1,1,1,1)-1, &
-                            ibool(1,1,1,1)-1, &
-                            ibool(1,1,1,1)-1, &
-                            ibool(1,1,1,1)-1
-    endif
-  enddo
-  write(IOUT_VTK,*)
-  
-  ! type: hexahedrons
-  write(IOUT_VTK,'(a,i12)') "CELL_TYPES ",nspec
-  write(IOUT_VTK,'(6i12)') (12,ispec = 1,nspec)
-  write(IOUT_VTK,*)
-  
-  ! Input data
-  write(IOUT_VTK,'(a,i12)') "POINT_DATA ",NSPEC_CRUST_MANTLE*8
-  write(IOUT_VTK,'(a)') "SCALARS gll_data float"
-  write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
-  do ispec = 1,NSPEC_CRUST_MANTLE
-    i = ibool_crust_mantle(1,1,1,ispec)
-    write(IOUT_VTK,'(3e18.6)') gll_data(1,1,1,ispec)
-
-    i = ibool_crust_mantle(NGLLX,1,1,ispec)
-    write(IOUT_VTK,'(3e18.6)') gll_data(NGLLX,1,1,ispec)
-
-    i = ibool_crust_mantle(NGLLX,NGLLY,1,ispec)
-    write(IOUT_VTK,'(3e18.6)') gll_data(NGLLX,NGLLY,1,ispec)
-
-    i = ibool_crust_mantle(1,NGLLY,1,ispec)
-    write(IOUT_VTK,'(3e18.6)') gll_data(1,NGLLY,1,ispec)
-
-    i = ibool_crust_mantle(1,1,NGLLZ,ispec)
-    write(IOUT_VTK,'(3e18.6)') gll_data(1,1,NGLLZ,ispec)
-
-    i = ibool_crust_mantle(NGLLX,1,NGLLZ,ispec)
-    write(IOUT_VTK,'(3e18.6)') gll_data(NGLLX,1,NGLLZ,ispec)
-
-    i = ibool_crust_mantle(NGLLX,NGLLY,NGLLZ,ispec)
-    write(IOUT_VTK,'(3e18.6)') gll_data(NGLLX,NGLLY,NGLLZ,ispec)
-
-    i = ibool_crust_mantle(1,NGLLY,NGLLZ,ispec)-1
-    write(IOUT_VTK,'(3e18.6)') gll_data(1,NGLLY,NGLLZ,ispec)
-  enddo
-  write(IOUT_VTK,*) ''
-
-  close(IOUT_VTK)
-
-
-  end subroutine write_VTK_data_norm_gll

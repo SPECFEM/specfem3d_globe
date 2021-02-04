@@ -669,8 +669,6 @@
 ! external mesh routine for saving vtk files for CUSTOM_REAL values on all GLL points
 
   use constants, only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLY,NGLLZ,IOUT_VTK
-  !use specfem_par
-  !use specfem_par_crustmantle
 
   implicit none
 
@@ -753,7 +751,6 @@
     enddo
   endif
   write(IOUT_VTK,*)
-  ! The dimensions are right... this should work... 
 
   ! note: indices for vtk start at 0
   if (USE_CORNERS) then
@@ -1956,113 +1953,4 @@
   close(IOUT_VTK)
 
   end subroutine write_VTU_2Ddata_dp
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-  ! Identical to write_VTK_data_cr but for plotting data with one dimension
-  ! For plotting maximum norm of displacement and velocity
-  
-  subroutine write_VTK_data_norm(idoubling,nspec,nglob, &
-                               rstore_dummy, &
-                               ibool,glob_data_norm,prname_file)
-
-  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,NDIM,NGLLX,NGLLY,NGLLZ,IOUT_VTK,IFLAG_IN_FICTITIOUS_CUBE
-
-  implicit none
-
-  integer,intent(in) :: nspec,nglob
-
-  integer, dimension(nspec),intent(in) :: idoubling
-
-  ! global coordinates
-  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
-  real(kind=CUSTOM_REAL), dimension(NDIM,nglob),intent(in) :: rstore_dummy
-  
-  ! global data values array
-  real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: glob_data_norm
-
-  ! file name
-  character(len=MAX_STRING_LEN),intent(in) :: prname_file
-
-  ! local parameters
-  integer :: ispec,i,ier
-  real(kind=CUSTOM_REAL) :: rval,thetaval,phival,xval,yval,zval  
-
-  ! write source and receiver VTK files for Paraview
-  open(IOUT_VTK,file=prname_file(1:len_trim(prname_file))//'.vtk',status='unknown',action='write',iostat=ier)
-  if (ier /= 0) stop 'Error opening VTK file'
-
-  write(IOUT_VTK,'(a)') '# vtk DataFile Version 3.1'
-  write(IOUT_VTK,'(a)') 'material model VTK file'
-  write(IOUT_VTK,'(a)') 'ASCII'
-  write(IOUT_VTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
-  write(IOUT_VTK, '(a,i12,a)') 'POINTS ', nglob, ' float'
-  do i = 1,nglob
-
-    !x,y,z store have been converted to r theta phi already, need to revert back for xyz output
-    rval = rstore_dummy(1,i)
-    thetaval = rstore_dummy(2,i)
-    phival = rstore_dummy(3,i)
-
-    call rthetaphi_2_xyz(xval,yval,zval,rval,thetaval,phival)
-
-    write(IOUT_VTK,'(3e18.6)') real(xval,kind=4),real(yval,kind=4),real(zval,kind=4)
-  enddo
-  write(IOUT_VTK,*)
-
-  ! defines cell on coarse corner points
-  ! note: indices for VTK start at 0
-  write(IOUT_VTK,'(a,i12,i12)') "CELLS ",nspec,nspec*9
-  do ispec = 1,nspec
-
-    ! specific to inner core elements
-    ! exclude fictitious elements in central cube
-    if (idoubling(ispec) /= IFLAG_IN_FICTITIOUS_CUBE) then
-      ! valid cell
-      write(IOUT_VTK,'(9i12)') 8,ibool(1,1,1,ispec)-1, &
-                          ibool(NGLLX,1,1,ispec)-1, &
-                          ibool(NGLLX,NGLLY,1,ispec)-1, &
-                          ibool(1,NGLLY,1,ispec)-1, &
-                          ibool(1,1,NGLLZ,ispec)-1, &
-                          ibool(NGLLX,1,NGLLZ,ispec)-1, &
-                          ibool(NGLLX,NGLLY,NGLLZ,ispec)-1, &
-                          ibool(1,NGLLY,NGLLZ,ispec)-1
-    else
-      ! fictitious elements in central cube
-      ! maps cell onto a randomly chosen point
-      write(IOUT_VTK,'(9i12)') 8,ibool(1,1,1,1)-1, &
-                            ibool(1,1,1,1)-1, &
-                            ibool(1,1,1,1)-1, &
-                            ibool(1,1,1,1)-1, &
-                            ibool(1,1,1,1)-1, &
-                            ibool(1,1,1,1)-1, &
-                            ibool(1,1,1,1)-1, &
-                            ibool(1,1,1,1)-1
-    endif
-  enddo
-  write(IOUT_VTK,*)
-  
-  ! type: hexahedrons
-  write(IOUT_VTK,'(a,i12)') "CELL_TYPES ",nspec
-  write(IOUT_VTK,'(6i12)') (12,ispec = 1,nspec)
-  write(IOUT_VTK,*)
-  
-  ! Input norms
-  write(IOUT_VTK,'(a,i12)') "POINT_DATA ",nglob
-  write(IOUT_VTK,'(a)') "SCALARS norm float"
-  write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
-  do i = 1,nglob
-    write(IOUT_VTK,*) real(glob_data_norm(i),kind=4)
-  enddo
-  write(IOUT_VTK,*)
-
-  close(IOUT_VTK)
-
-
-  end subroutine write_VTK_data_norm
-  
-  
-!-------------------------------------------------------------------------------------------------
-!
 
