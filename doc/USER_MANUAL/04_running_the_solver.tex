@@ -30,6 +30,7 @@ and \texttt{NTSTEPS\_BETWEEN\_FRAMES}
 and \texttt{ROTATE\_SEISMOGRAMS\_RT}
 \item the \texttt{RECEIVERS\_CAN\_BE\_BURIED} and \texttt{PRINT\_SOURCE\_TIME\_FUNCTION}
 flags
+\item the \texttt{USE\_MONOCHROMATIC\_CMT\_SOURCE} flag
 \end{itemize}
 Any other change to the \texttt{Par\_file} implies rerunning both
 the mesher and the solver.
@@ -84,6 +85,9 @@ make convolve_source_timefunction
 \end{verbatim}
 to compile the code and then set the parameter \texttt{hdur} in \texttt{utils/convolve\_source\_timefunction.csh}
 to the desired half-duration.
+
+\item To use a monochromatic source time function instead, enable the flag \texttt{USE\_MONOCHROMATIC\_CMT\_SOURCE} in \texttt{Par\_file}. In this case, \texttt{half
+duration} will be interpreted as the preiod of the source time function. By default, the left side of source time function is applied with a Hanning taper at a length of $200.0s$. This can be configured through \texttt{TAPER\_MONOCHROMATIC\_SOURCE} in \texttt{constants.h} file.
 
 \item The zero time of the simulation corresponds to the center of the triangle/Gaussian,
 or the centroid time of the earthquake. The start time of the simulation

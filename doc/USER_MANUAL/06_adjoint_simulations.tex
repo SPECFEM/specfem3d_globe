@@ -257,6 +257,18 @@ can then be combined to obtain the kernels related to other descriptions
 of anisotropy. This can be done, for example, when combining the kernel
 files from slices into one mesh file (see Section~\ref{sec:Finite-Frequency-Kernels}).
 
+\item \textbf{Run the steady state kernel simulation}
+For source encoded adjoint tomography, you can compute the stationary kernels by enabling the flag \texttt{STEADY\_STATE\_KERNEL}. The kernels will then be computed through the stationary part of the wavefield, as is shown in Figure~\vref{fig:Steady-state-kernel}. The length of the stationary wavefield ($\Delta\tau$ in Figure~\ref{fig:Steady-state-kernel}) can be speified with \texttt{STEADY\_STATE\_LENGTH\_IN\_MINUTES}. Please refer to \citet{bachmann2020source} for details.
+
+\begin{figure}[H]
+    \begin{centering}
+    \includegraphics[scale=0.25]{figures/fig7.jpg}
+    \par\end{centering}
+    
+    \caption{An illustration of computing steady state kernel. Instead of integrating the forward and adjoint wavefields from the beginning, steady state kernel is computed by integrating the wavefields starting from the time when steady state is reached ($t_{ss}$).}
+    \label{fig:Steady-state-kernel}
+\end{figure}
+
 \end{enumerate}
 In general, the first three steps need to be run sequentially to ensure
 proper access to the necessary files at different stages. If the simulations
