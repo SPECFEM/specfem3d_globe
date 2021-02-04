@@ -94,6 +94,16 @@
 
   ! number of time subsets for time loop
   if (NSTEP_STEADY_STATE > 0) then
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) 'steady state simulation:'
+      write(IMAIN,*) '  total number of time steps                       = ',NSTEP
+      write(IMAIN,*) '  number of steady state time steps                = ',NSTEP_STEADY_STATE
+      write(IMAIN,*) '  number of transient time steps                   = ',NSTEP-NSTEP_STEADY_STATE
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
+    ! subsets for steady state only
     NSUBSET_ITERATIONS = ceiling( dble(NSTEP_STEADY_STATE)/dble(NT_DUMP_ATTENUATION) )
   else
     NSUBSET_ITERATIONS = ceiling( dble(NSTEP)/dble(NT_DUMP_ATTENUATION) )
@@ -192,7 +202,6 @@
   ! *********************************************************
 
   if (EXACT_UNDOING_TO_DISK) call setup_exact_undoing_to_disk()
-
 
   ! transient period simulation
   if (NSTEP_STEADY_STATE > 0) then
