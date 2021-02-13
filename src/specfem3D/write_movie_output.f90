@@ -126,7 +126,6 @@
       select case (MOVIE_VOLUME_TYPE)
       case (1)
         ! output strains
-
         ! gets resulting array values onto CPU
         if (GPU_MODE) then
           call transfer_strain_cm_from_device(Mesh_pointer, &
@@ -135,7 +134,6 @@
                                               epsilondev_xy_crust_mantle,epsilondev_xz_crust_mantle, &
                                               epsilondev_yz_crust_mantle)
         endif
-
         call  write_movie_volume_strains(NSPEC_CRUST_MANTLE_STRAIN_ONLY, &
                                          eps_trace_over_3_crust_mantle, &
                                          NSPEC_CRUST_MANTLE_STR_OR_ATT, &
@@ -152,7 +150,6 @@
 
       case (4)
         ! output divergence and curl in whole volume
-
         ! gets resulting array values onto CPU
         if (GPU_MODE) then
           ! strains
@@ -170,7 +167,6 @@
           call transfer_fields_oc_from_device(NGLOB_OUTER_CORE, &
                                               displ_outer_core,veloc_outer_core,accel_outer_core,Mesh_pointer)
         endif
-
         call write_movie_volume_divcurl(NSPEC_CRUST_MANTLE_STRAIN_ONLY,eps_trace_over_3_crust_mantle, &
                                         div_displ_outer_core, &
                                         accel_outer_core,kappavstore_outer_core,rhostore_outer_core,ibool_outer_core, &
@@ -183,11 +179,10 @@
                                         epsilondev_xz_inner_core,epsilondev_yz_inner_core)
 
       case (5)
-        !output displacement
+        ! output displacement
         if (GPU_MODE) then
           call transfer_displ_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,displ_crust_mantle,Mesh_pointer)
         endif
-
         scalingval = scale_displ
         call write_movie_volume_vector(npoints_3dmovie, &
                                        ibool_crust_mantle, &
@@ -195,11 +190,10 @@
                                        scalingval,mask_3dmovie,nu_3dmovie)
 
       case (6)
-        !output velocity
+        ! output velocity
         if (GPU_MODE) then
           call transfer_veloc_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,veloc_crust_mantle,Mesh_pointer)
         endif
-
         scalingval = scale_veloc
         call write_movie_volume_vector(npoints_3dmovie, &
                                        ibool_crust_mantle, &
@@ -208,7 +202,6 @@
 
       case (7)
         ! output norm of displacement
-
         ! gets resulting array values onto CPU
         if (GPU_MODE) then
           ! displacement wavefields
@@ -216,13 +209,11 @@
           call transfer_displ_ic_from_device(NDIM*NGLOB_INNER_CORE,displ_inner_core,Mesh_pointer)
           call transfer_displ_oc_from_device(NGLOB_OUTER_CORE,displ_outer_core,Mesh_pointer)
         endif
-
         call write_movie_volume_displnorm(displ_crust_mantle,displ_inner_core,displ_outer_core, &
                                           ibool_crust_mantle,ibool_inner_core,ibool_outer_core)
 
       case (8)
         ! output norm of velocity
-
         ! gets resulting array values onto CPU
         if (GPU_MODE) then
           ! velocity wavefields
@@ -230,13 +221,11 @@
           call transfer_veloc_ic_from_device(NDIM*NGLOB_INNER_CORE,veloc_inner_core,Mesh_pointer)
           call transfer_veloc_oc_from_device(NGLOB_OUTER_CORE,veloc_outer_core,Mesh_pointer)
         endif
-
         call write_movie_volume_velnorm(veloc_crust_mantle,veloc_inner_core,veloc_outer_core, &
                                         ibool_crust_mantle,ibool_inner_core,ibool_outer_core)
 
       case (9)
         ! output norm of acceleration
-
         ! gets resulting array values onto CPU
         if (GPU_MODE) then
           ! acceleration wavefields
@@ -244,7 +233,6 @@
           call transfer_accel_ic_from_device(NDIM*NGLOB_INNER_CORE,accel_inner_core,Mesh_pointer)
           call transfer_accel_oc_from_device(NGLOB_OUTER_CORE,accel_outer_core,Mesh_pointer)
         endif
-
         call write_movie_volume_accelnorm(accel_crust_mantle,accel_inner_core,accel_outer_core, &
                                           ibool_crust_mantle,ibool_inner_core,ibool_outer_core)
 
