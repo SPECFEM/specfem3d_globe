@@ -113,24 +113,23 @@ description of the paraxial boundary conditions used. Note that these
 conditions are never perfect, and in particular surface waves may
 partially reflect off the artificial boundaries. Note also that certain
 arrivals, e.g., PKIKPPKIKP, will be missing from the synthetics.
-\item [{\texttt{ABSORB\_USING\_GLOBAL\_SPONGE}}] An alternative to {\texttt{ABSORBING\_CONDITIONS}}. Set to \texttt{.true.} to run a global simulation with sponge applied. See Figure~\vref{fig:Sponge-illustration}
-for an illustration. Enabling this flag will result in a simulation that has less reflected waves from the boundaries compared with enabling {\texttt{ABSORBING\_CONDITIONS}}, but with a significant more computational cost.
+\item [{\texttt{ABSORB\_USING\_GLOBAL\_SPONGE}}] An alternative to {\texttt{ABSORBING\_CONDITIONS}}. Set to \texttt{.true.} to run a global simulation with sponge layers applied. See Figure~\vref{fig:Sponge-illustration}
+for an illustration. Enabling this flag will result in a simulation that has less reflected waves from the boundaries compared with enabling {\texttt{ABSORBING\_CONDITIONS}}, but with significant higher computational costs.
 \item [{\texttt{SPONGE\_LATITUDE\_IN\_DEGREES}}] Latitide of the sponge center.
 \item [{\texttt{SPONGE\_LONGITUDE\_IN\_DEGREES}}] Longitude of the sponge center.
 \item [{\texttt{SPONGE\_RADIUS\_IN\_DEGREES}}] Radius of the sponge region.
-
 %
 \begin{figure}[H]
 \begin{centering}
 \includegraphics[scale=0.2]{figures/fig6.jpg}
 \par\end{centering}
-
 \caption{An illustration of running simulation with sponge.
 This is a regional simulation that happens in the simulation region, the quality factor in the sponge region gradually transits to 30.}
 \label{fig:Sponge-illustration}
 \end{figure}
-
+%
 \end{description}
+
 When the width of the chunk is different from $90^{\circ}$ (or the
 number of elements is greater than 1248), the radial distribution
 of elements needs to be adjusted as well to maintain spectral elements

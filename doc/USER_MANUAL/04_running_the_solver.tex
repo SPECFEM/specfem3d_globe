@@ -33,8 +33,9 @@ flags
 \item the \texttt{USE\_MONOCHROMATIC\_CMT\_SOURCE} flag
 \end{itemize}
 Any other change to the \texttt{Par\_file} implies rerunning both
-the mesher and the solver.
+the mesher and the solver.\\
 
+\newpage
 For any particular earthquake, the \texttt{CMTSOLUTION} file that
 represents the point source may be obtained directly from the Harvard Centroid-Moment Tensor (CMT) web page \urlwithparentheses{http://www.globalcmt.org}.
 It looks like this:
@@ -87,7 +88,7 @@ to compile the code and then set the parameter \texttt{hdur} in \texttt{utils/co
 to the desired half-duration.
 
 \item To use a monochromatic source time function instead, enable the flag \texttt{USE\_MONOCHROMATIC\_CMT\_SOURCE} in \texttt{Par\_file}. In this case, \texttt{half
-duration} will be interpreted as the preiod of the source time function. By default, the left side of source time function is applied with a Hanning taper at a length of $200.0s$. This can be configured through \texttt{TAPER\_MONOCHROMATIC\_SOURCE} in \texttt{constants.h} file.
+duration} will be interpreted as the period of the source time function. By default, the left side of the source time function is applied with a Hanning taper at a length of 200.0~s. This can be configured through \texttt{TAPER\_MONOCHROMATIC\_SOURCE} in \texttt{constants.h} file.
 
 \item The zero time of the simulation corresponds to the center of the triangle/Gaussian,
 or the centroid time of the earthquake. The start time of the simulation
@@ -141,6 +142,20 @@ depth, and moment tensor (effectively, the local moment-density tensor).
 Note that the zero in the synthetics does NOT represent the hypocentral
 time or centroid time in general, but the timing of the \textit{center}
 of the source triangle with zero \texttt{time shift} (Fig~\ref{fig:source_timing}).
+%
+\begin{figure}[htp]
+\begin{centering}
+\includegraphics[width=5in]{figures/source_timing.pdf}
+\end{centering}
+%
+\caption{Example of timing for three sources. The center of the first source
+triangle is defined to be time zero. Note that this is NOT in general
+the hypocentral time, or the start time of the source (marked as tstart).
+The parameter \texttt{time shift} in the \texttt{CMTSOLUTION} file
+would be t1(=0), t2, t3 in this case, and the parameter \texttt{half duration}
+would be hdur1, hdur2, hdur3 for the sources 1, 2, 3 respectively.}
+\label{fig:source_timing}
+\end{figure}
 
 Although it is convenient to think of each source as a triangle, in
 the simulation they are actually Gaussians (as they have better frequency
@@ -183,24 +198,10 @@ entries, one for each subevent (i.e., concatenate $N_{\mathrm{sources}}$
 At least one entry (not necessarily the first) must have a zero \texttt{time
 shift}, and all the other entries must have non-negative \texttt{time shift}.
 Each subevent can have its own set of parameters \texttt{latitude}, \texttt{longitude}, \texttt{depth:},
-\texttt{half duration}, etc.
-
-%
-\begin{figure}[htp]
-\begin{centering}
-\includegraphics[width=5in]{figures/source_timing.pdf}
-\end{centering}
-%
-\caption{Example of timing for three sources. The center of the first source
-triangle is defined to be time zero. Note that this is NOT in general
-the hypocentral time, or the start time of the source (marked as tstart).
-The parameter \texttt{time shift} in the \texttt{CMTSOLUTION} file
-would be t1(=0), t2, t3 in this case, and the parameter \texttt{half duration}
-would be hdur1, hdur2, hdur3 for the sources 1, 2, 3 respectively.}
-\label{fig:source_timing}
-\end{figure}
+\texttt{half duration}, etc. \\
 
 
+\newpage
 The solver can calculate seismograms at any number of stations for
 basically the same numerical cost, so the user is encouraged to include
 as many stations as conceivably useful in the \texttt{STATIONS} file,

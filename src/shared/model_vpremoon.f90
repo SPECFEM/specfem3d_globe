@@ -30,6 +30,7 @@
 !
 !   Garcia et al. (2011),
 !   Very preliminary reference Moon model, PEPI, 188, 96 - 113.
+!   https://doi.org/10.1016/j.pepi.2011.06.015
 !
 ! modified seismic model, starting from table 6 (left side, not geodesic model)
 !
@@ -37,6 +38,7 @@
 !
 !   Weber et al. (2011),
 !   Seismic Detection of the Lunar Core, Science, 331.
+!   DOI: 10.1126/science.1199375
 !
 !--------------------------------------------------------------------------------------------------
 

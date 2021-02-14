@@ -162,6 +162,14 @@ i.e., we use AK135-F below and AK135 above.
 \item [{\texttt{1D\_ref}}] A recent 1D Earth model developed by \citet{KuDzEk06}.
 This model is the 1D background model for the 3D models s362ani, s362wmani,
 s362ani\_prem, and s29ea.
+%
+\item [{\texttt{1D\_Sohl}}] 1D Mars model developed by \citet{Sohl1997}.
+This model is model A, mostly constrained by geophysical moment of inertia.
+%
+\item [{\texttt{VPREMOON}}] 1D Moon model developed by \citet{Garcia2011}.
+Uses modified seismic model, starting from table 6 (left side, not geodesic model) with
+velocity values for outer core and solid inner core based on \citet{Weber2011}
+%
 \end{description}
 %%
 \end{description}
@@ -170,11 +178,11 @@ synthetics, the mesher accommodates versions of various 1D models
 with a single crustal layer with the properties of the original upper
 crust. These `one-crust' models are:
 \begin{verbatim}
-1D_isotropic_prem_onecrust
-1D_transversely_isotropic_prem_onecrust
-1D_iasp91_onecrust
-1D_1066a_onecrust
-1D_ak135f_no_mud_onecrust
+  1D_isotropic_prem_onecrust
+  1D_transversely_isotropic_prem_onecrust
+  1D_iasp91_onecrust
+  1D_1066a_onecrust
+  1D_ak135f_no_mud_onecrust
 \end{verbatim}
 
 \begin{description}
@@ -203,7 +211,7 @@ is incorporated.
 \item [{\texttt{s362ani}}] A global shear-wave speed
 model developed by \citet{KuDzEk06}. In this model, radial anisotropy
 is confined to the uppermost mantle. The model (and the corresponding
-mesh) incorporate tomography on the 650\textasciitilde{}km and 410\textasciitilde{}km
+mesh) incorporate tomography on the 650~km and 410~km
 discontinuities in the 1D reference model REF.
 %
 \item [{\texttt{s362wmani}}] A version of S362ANI with
@@ -301,17 +309,21 @@ use one (and only one) of the two flags below. \texttt{UNDO\_ATTENUATION} is muc
 but it requires a significant amount of disk space for temporary storage. It has the advantage of requiring only two simulations for adjoint tomography instead
 of three in the case of \texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY}, i.e. for adjoint tomography it is globally significantly less expensive (each run is slightly more
 expensive, but only two runs are needed instead of three).\\
-When using \texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY}, to make the approximation reasonably OK you need to take the following steps:\\
-1/ To calculate synthetic seismograms, do a forward simulation with full attenuation for the model of interest. The goal is to get synthetics that match the data as closely as possible.\\
-2a/ Make measurements and produce adjoint sources by comparing the resulting synthetics with the data. In the simplest case of a cross-correlation traveltime measurement, use the time-reversed synthetic in the window of interest as the adjoint source.\\
-2b/ Do a second forward calculation with \texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY = .true.} and save the last snapshot.\\
-3/ Do an adjoint calculation using the adjoint source calculated in 1/, the forward wavefield reconstructed based on 2b/, use \texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY = .true.} for the adjoint wavefield, and save the kernel.\\
+When using \texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY}, to make the approximation reasonably OK you need to take the following steps:
+\begin{enumerate}
+\item[1/] To calculate synthetic seismograms, do a forward simulation with full attenuation for the model of interest. The goal is to get synthetics that match the data as closely as possible.
+\item[2a/] Make measurements and produce adjoint sources by comparing the resulting synthetics with the data. In the simplest case of a cross-correlation traveltime measurement, use the time-reversed synthetic in the window of interest as the adjoint source.
+\item[2b/] Do a second forward calculation with \texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY = .true.} and save the last snapshot.
+\item[3/] Do an adjoint calculation using the adjoint source calculated in 1/, the forward wavefield reconstructed based on 2b/, use \texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY = .true.} for the adjoint wavefield, and save the kernel.
+\end{enumerate}
 Thus the kernel calculation uses \texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY = .true.} for both the forward and the adjoint wavefields. This is in the spirit of the banana-donut kernels. But the data that are assimilated are based on the full 3D synthetic with attenuation.\\
 %
-Another, equivalent way of explaining it is:\\
-1/ Calculate synthetics with full attenuation for the current model. Compare these to the data and measure frequency-dependent traveltime anomalies $\Delta \tau(\omega)$, e.g.. based upon multi-tapering.\\
-2/ Calculate synthetics with \texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY = .true.} and construct adjoint sources by combining the seismograms from this run with the measurements from 1/. So in the expressions for the multi-taper adjoint source you use the measurements from 1/, but synthetics calculated with \texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY = .true.}.\\
-3/ Construct a kernel by calculating an adjoint wavefield based on the sources constructed in 2/ and convolving it with a forward wavefield with \texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY = .true.}. Again, both the forward and adjoint calculations use \texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY = .true.}.\\
+Another, equivalent way of explaining it is:
+\begin{enumerate}
+\item[1/] Calculate synthetics with full attenuation for the current model. Compare these to the data and measure frequency-dependent traveltime anomalies $\Delta \tau(\omega)$, e.g.. based upon multi-tapering.
+\item[2/] Calculate synthetics with \texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY = .true.} and construct adjoint sources by combining the seismograms from this run with the measurements from 1/. So in the expressions for the multi-taper adjoint source you use the measurements from 1/, but synthetics calculated with \texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY = .true.}.
+\item[3/] Construct a kernel by calculating an adjoint wavefield based on the sources constructed in 2/ and convolving it with a forward wavefield with \texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY = .true.}. Again, both the forward and adjoint calculations use \texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY = .true.}.
+\end{enumerate}
 Note that if you replace multi-taper measurements with cross-correlation measurements you will measure a cross-correlation traveltime anomaly in 1/, i.e., some delay time $\Delta T$. Then you would calculate an adjoint wavefield with \texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY = .true.} and use the resulting time-reversed seismograms weighted by $\Delta T$ as the adjoint source. This wavefield interacts with a forward wavefield calculated with \texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY = .true.}.
 If $\Delta T=1$ one gets a banana-donut kernel, i.e., a kernel for the case in which there are no observed seismograms (no data), as explained for instance on page 5 of \cite{ZhLiTr11}.
 %
