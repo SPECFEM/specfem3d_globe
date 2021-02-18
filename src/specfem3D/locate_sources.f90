@@ -550,6 +550,10 @@
               write(IMAIN,*) '    using a source of period ',f0
               write(IMAIN,*)
               write(IMAIN,*) '    half duration in period: ',hdur(isource),' seconds'
+            case (4)
+              ! Gaussian by Meschede et al. (2011)
+              write(IMAIN,*) '    using Gaussian source time function by Meschede et al. (2011), eq.(2)'
+              write(IMAIN,*) '             tau: ',hdur(isource),' seconds'
             case default
               stop 'unsupported force_stf value!'
             end select

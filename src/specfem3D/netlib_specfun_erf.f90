@@ -114,11 +114,16 @@
 
   implicit none
 
-  integer I,jintval
-  double precision A,ARG,B,C,D,DEL,FOUR,HALF,P,ONE,Q,RESULT,SIXTEEN,SQRPI, &
+  double precision, intent(in) :: ARG
+  double precision, intent(out) :: RESULT
+  integer, intent(in) :: jintval
+
+  ! local parameters
+  integer :: I
+  double precision :: DEL,FOUR,HALF,ONE,SIXTEEN,SQRPI, &
        TWO,THRESHOLD,X,XBIG,XDEN,XHUGE,XINF,XMAX,XNEG,XNUM,XSMALL, &
        Y,YSQ,ZERO
-  dimension A(5),B(4),C(9),D(8),P(6),Q(5)
+  double precision :: A(5),B(4),C(9),D(8),P(6),Q(5)
 
 !------------------------------------------------------------------
 !  Mathematical constants
@@ -272,11 +277,16 @@
 
   implicit none
 
-  integer jintval
-  double precision X, RESULT
+  double precision,intent(in) :: X
 
-  jintval = 0
+  ! local parameters
+  integer, parameter :: jintval = 0
+  double precision :: RESULT
+
+  ! calerf: input arguments X - input value, RESULT - output, jintval == 0 for erf(X) function
   call calerf(X,RESULT,jintval)
+
+  ! return value
   netlib_specfun_erf = RESULT
 
   end function netlib_specfun_erf

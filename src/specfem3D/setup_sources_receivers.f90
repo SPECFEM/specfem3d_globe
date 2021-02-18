@@ -820,6 +820,9 @@
       case (3)
         ! Monochromatic
         t0 = 0.d0
+      case (4)
+        ! Gaussian source time function by Meschede et al. (2011)
+        t0 = min(t0,1.5d0 * (tshift_src(isource) - hdur(isource)))
       case default
         stop 'unsupported force_stf value!'
       end select
