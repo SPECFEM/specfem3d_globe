@@ -636,6 +636,7 @@ VTK_LIBS
 VTK_LDFLAGS
 VTK_INCLUDES
 VTK_MAJOR
+OMP_LIB
 OMP_FCFLAGS
 BLAS_LIBS
 LIBXSMM_LIBS
@@ -657,7 +658,6 @@ CUDA_FLAGS
 NVCC
 CONFIGURE_FLAGS
 ASDF_LIBS
-MPICC
 ADIOS2_CLIBS
 ADIOS2_CFLAGS
 ADIOS2_LIBS
@@ -676,6 +676,7 @@ FC_MODINC
 FC_MODEXT
 LOCAL_PATH_IS_ALSO_GLOBAL
 FLAGS_CHECK
+MPICC
 MPILIBS
 MPIFC
 FCFLAGS_F90
@@ -815,12 +816,12 @@ CFLAGS
 CPPFLAGS
 MPIFC
 MPILIBS
+MPICC
 FLAGS_CHECK
 LOCAL_PATH_IS_ALSO_GLOBAL
 CPP
 ADIOS_CONFIG
 ADIOS2_CONFIG
-MPICC
 ASDF_LIBS
 NVCC
 CUDA_FLAGS
@@ -834,6 +835,7 @@ LIBXSMM_INC
 LIBXSMM_LIBS
 BLAS_LIBS
 OMP_FCFLAGS
+OMP_LIB
 MPI_INC
 CXX
 CXXFLAGS
@@ -1491,6 +1493,7 @@ Some influential environment variables:
               you have headers in a nonstandard directory <include dir>
   MPIFC       MPI Fortran compiler command
   MPILIBS     extra libraries for linking MPI programs
+  MPICC       MPI C compiler command
   FLAGS_CHECK Fortran compiler flags
   LOCAL_PATH_IS_ALSO_GLOBAL
               files on a local path on each node are also seen as global with
@@ -1502,7 +1505,6 @@ Some influential environment variables:
   ADIOS2_CONFIG
               Path to adios_config program that indicates how to compile with
               it.
-  MPICC       MPI C compiler command
   ASDF_LIBS   ASDF libraries for linking programs
   NVCC        NVIDIA CUDA compiler command
   CUDA_FLAGS  CUDA compiler flags
@@ -1519,6 +1521,7 @@ Some influential environment variables:
               LIBXSMM library directory
   BLAS_LIBS   LAPACK/BLAS library directory
   OMP_FCFLAGS OpenMP Fortran compiler flags
+  OMP_LIB     Location of extra OpenMP libraries
   MPI_INC     Location of MPI include mpi.h, needed by CUDA/VTK (default:
               auto-detect)
   CXX         C++ compiler command
@@ -2893,7 +2896,7 @@ else
 fi
 
 
-# cuda linking for cuda 5x and 6x
+# cuda linking for cuda 5x and 6x and 7x and 8x and ..
  if test "$want_cuda" = cuda5 \
     -o "$want_cuda" = cuda6 \
     -o "$want_cuda" = cuda7 \
@@ -2918,7 +2921,7 @@ else
   want_opencl=no
 fi
 
- if test "$want_opencl" != no; then
+ if test x"$want_opencl" != xno; then
   COND_OCL_TRUE=
   COND_OCL_FALSE='#'
 else
@@ -2939,7 +2942,7 @@ else
   want_mic=no
 fi
 
- if test "$want_mic" != no; then
+ if test x"$want_mic" != xno; then
   COND_MIC_TRUE=
   COND_MIC_FALSE='#'
 else
@@ -2960,7 +2963,7 @@ else
   want_xsmm=no
 fi
 
- if test "$want_xsmm" != no; then
+ if test x"$want_xsmm" != xno; then
   COND_XSMM_TRUE=
   COND_XSMM_FALSE='#'
 else
@@ -2980,14 +2983,13 @@ else
   want_omp=no
 fi
 
- if test "$want_omp" != no; then
+ if test x"$want_omp" != xno; then
   COND_OMP_TRUE=
   COND_OMP_FALSE='#'
 else
   COND_OMP_TRUE='#'
   COND_OMP_FALSE=
 fi
-
 
 
 ###
@@ -5726,6 +5728,7 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
 
 
+
 # scratch disks
 
 
@@ -5738,6 +5741,12 @@ if test x"$MPIFC" = x; then :
 
 fi
 
+if test x"$MPICC" = x; then :
+
+    MPICC=mpicc
+
+fi
+
 if test x"$LOCAL_PATH_IS_ALSO_GLOBAL" = x; then :
 
     LOCAL_PATH_IS_ALSO_GLOBAL=true
@@ -5745,6 +5754,7 @@ if test x"$LOCAL_PATH_IS_ALSO_GLOBAL" = x; then :
 fi
 
 # Checks for typedefs, structures, and compiler characteristics.
+# check fortran modules flag
 $as_echo "## ----------------- ##
 ## module extensions ##
 ## ----------------- ##"
@@ -6375,6 +6385,15 @@ $as_echo "#define HAVE_XMMINTRIN 1" >>confdefs.h
 fi
 
 
+# AIX doesn't have err.h so we need to check
+ac_fn_c_check_header_mongrel "$LINENO" "err.h" "ac_cv_header_err_h" "$ac_includes_default"
+if test "x$ac_cv_header_err_h" = xyes; then :
+
+$as_echo "#define HAVE_ERR 1" >>confdefs.h
+
+fi
+
+
 ac_ext=${ac_fc_srcext-f}
 ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
 ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
@@ -6681,12 +6700,6 @@ fi
 
 
     # in case adios2 c file compilation needs mpi
-
-    if test x"$MPICC" = x; then :
-
-        MPICC=mpicc
-
-fi
 
 
 fi
@@ -7151,6 +7164,7 @@ if test x"$want_omp" != xno; then :
 ## ------ ##"
   { $as_echo "$as_me:${as_lineno-$LINENO}: OpenMP compilation is enabled" >&5
 $as_echo "$as_me: OpenMP compilation is enabled" >&6;}
+
 
 
 

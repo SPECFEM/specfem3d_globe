@@ -232,7 +232,7 @@ endif
 #######################################
 ####
 #### OpenMP
-#### with configure: ./configure --enable-openmp
+#### with configure: ./configure --enable-openmp OMP_FCFLAGS=".." OMP_LIB=..
 ####
 #######################################
 
@@ -240,6 +240,9 @@ endif
 @COND_OMP_FALSE@OPENMP = no
 
 @COND_OMP_TRUE@FCFLAGS += $(FC_DEFINE)USE_OPENMP @OMP_FCFLAGS@  #$(FC_DEFINE)USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+
+@COND_OMP_TRUE@OMP_LIBS = $(OMP_LIB)
+@COND_OMP_FALSE@OMP_LIBS =
 
 #######################################
 ####

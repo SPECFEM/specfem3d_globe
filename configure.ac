@@ -48,7 +48,7 @@ AC_SUBST([CUSTOM_MPI_TYPE])
 ###
 
 AC_ARG_ENABLE([debug],
-    [AC_HELP_STRING([--enable-debug],
+    [AS_HELP_STRING([--enable-debug],
         [build with debugging options enabled @<:@default=no@:>@])],
     [want_debug="$enableval"],
     [want_debug=no])
@@ -61,7 +61,7 @@ export COND_DEBUG_TRUE
 ###
 
 AC_ARG_ENABLE([vectorization],
-    [AC_HELP_STRING([--enable-vectorization],
+    [AS_HELP_STRING([--enable-vectorization],
         [build FORCE_VECTORIZATION enabled version @<:@default=auto@:>@])],
     [want_vec="$enableval"],
     [want_vec=no])
@@ -83,7 +83,7 @@ AM_CONDITIONAL([COND_VECTORIZATION], [test x"$want_vec" != xno])
 ###
 
 AC_ARG_WITH([cuda],
-    [AC_HELP_STRING([--with-cuda],
+    [AS_HELP_STRING([--with-cuda],
         [build CUDA GPU enabled version @<:@default=no@:>@])],
     [want_cuda="$withval"],
     [want_cuda=no])
@@ -96,7 +96,7 @@ AM_CONDITIONAL([COND_CUDA9], [test x"$want_cuda" = xcuda9])
 AM_CONDITIONAL([COND_CUDA10], [test x"$want_cuda" = xcuda10])
 AM_CONDITIONAL([COND_CUDA11], [test x"$want_cuda" = xcuda11])
 
-# cuda linking for cuda 5x and 6x
+# cuda linking for cuda 5x and 6x and 7x and 8x and ..
 AM_CONDITIONAL([COND_CUDA_PLUS],
  [test "$want_cuda" = cuda5 \
     -o "$want_cuda" = cuda6 \
@@ -108,51 +108,50 @@ AM_CONDITIONAL([COND_CUDA_PLUS],
 )
 
 AC_ARG_WITH([opencl],
- [AC_HELP_STRING([--with-opencl], [build OpenCL GPU enabled version @<:@default=no@:>@])],
+ [AS_HELP_STRING([--with-opencl], [build OpenCL GPU enabled version @<:@default=no@:>@])],
     [want_opencl="$withval"],
     [want_opencl=no])
-AM_CONDITIONAL([COND_OCL], [test "$want_opencl" != no])
+AM_CONDITIONAL([COND_OCL], [test x"$want_opencl" != xno])
 
 ###
 ### MIC (Xeon PHI)
 ###
 
 AC_ARG_WITH([mic],
-    [AC_HELP_STRING([--with-mic],
+    [AS_HELP_STRING([--with-mic],
         [build native Xeon PHI enabled version @<:@default=no@:>@])],
     [want_mic="$withval"],
     [want_mic=no])
-AM_CONDITIONAL([COND_MIC], [test "$want_mic" != no])
+AM_CONDITIONAL([COND_MIC], [test x"$want_mic" != xno])
 
 ###
 ### LIBXSMM (Library for small matrix-matrix multiplications targeting Intel Architecture (x86)
 ###          see:https://github.com/hfp/libxsmm )
 ###
 AC_ARG_WITH([xsmm],
-    [AC_HELP_STRING([--with-xsmm],
+    [AS_HELP_STRING([--with-xsmm],
         [build LIBXSMM (see:https://github.com/hfp/libxsmm) enabled version @<:@default=no@:>@])],
     [want_xsmm="$withval"],
     [want_xsmm=no])
-AM_CONDITIONAL([COND_XSMM], [test "$want_xsmm" != no])
+AM_CONDITIONAL([COND_XSMM], [test x"$want_xsmm" != xno])
 
 ###
 ### OpenMP
 ###
 
 AC_ARG_ENABLE([openmp],
-    [AC_HELP_STRING([--enable-openmp],
+    [AS_HELP_STRING([--enable-openmp],
         [build OpenMP enabled version @<:@default=no@:>@])],
     [want_omp="$enableval"],
     [want_omp=no])
-AM_CONDITIONAL([COND_OMP], [test "$want_omp" != no])
-
+AM_CONDITIONAL([COND_OMP], [test x"$want_omp" != xno])
 
 ###
 ### VTK
 ###
 
 AC_ARG_ENABLE([vtk],
-    [AC_HELP_STRING([--enable-vtk],
+    [AS_HELP_STRING([--enable-vtk],
         [build VTK enabled version @<:@default=no@:>@])],
     [want_vtk="$enableval"],
     [want_vtk=no])
@@ -163,7 +162,7 @@ AM_CONDITIONAL([COND_VTK], [test x"$want_vtk" != xno])
 ###
 
 AC_ARG_WITH([adios],
-    [AC_HELP_STRING([--with-adios],
+    [AS_HELP_STRING([--with-adios],
         [build ADIOS enabled version @<:@default=no@:>@])],
     [want_adios="$withval"],
     [want_adios=no])
@@ -174,7 +173,7 @@ AM_CONDITIONAL([COND_ADIOS], [test x"$want_adios" != xno])
 ###
 
 AC_ARG_WITH([adios2],
-    [AC_HELP_STRING([--with-adios2],
+    [AS_HELP_STRING([--with-adios2],
         [build ADIOS enabled version @<:@default=no@:>@])],
     [want_adios2="$withval"],
     [want_adios2=no])
@@ -185,7 +184,7 @@ AM_CONDITIONAL([COND_ADIOS2], [test x"$want_adios2" != xno])
 ###
 
 AC_ARG_WITH([asdf],
-    [AC_HELP_STRING([--with-asdf],
+    [AS_HELP_STRING([--with-asdf],
         [build ASDF enabled version @<:@default=no@:>@])],
     [want_asdf="$withval"],
     [want_asdf=no])
@@ -196,7 +195,7 @@ AM_CONDITIONAL([COND_ASDF], [test x$"$want_asdf" != xno])
 ###
 
 AC_ARG_WITH([cem],
-    [AC_HELP_STRING([--with-cem],
+    [AS_HELP_STRING([--with-cem],
         [build CEM enabled version @<:@default=no@:>@])],
     [want_cem="$withval"],
     [want_cem=no])
@@ -250,6 +249,7 @@ AC_PROG_CC
 
 AC_ARG_VAR(MPIFC, [MPI Fortran compiler command])
 AC_ARG_VAR(MPILIBS, [extra libraries for linking MPI programs])
+AC_ARG_VAR(MPICC, [MPI C compiler command])
 
 AC_ARG_VAR(FLAGS_CHECK, [Fortran compiler flags])
 
@@ -263,11 +263,16 @@ AS_IF([test x"$MPIFC" = x],[
     MPIFC=mpif90
 ])
 
+AS_IF([test x"$MPICC" = x],[
+    MPICC=mpicc
+])
+
 AS_IF([test x"$LOCAL_PATH_IS_ALSO_GLOBAL" = x],[
     LOCAL_PATH_IS_ALSO_GLOBAL=true
 ])
 
 # Checks for typedefs, structures, and compiler characteristics.
+# check fortran modules flag
 AS_BOX([module extensions])
 
 AC_FC_MODULE_EXTENSION
@@ -286,6 +291,8 @@ AC_SUBST([FC_MODDIR])
 AC_LANG_PUSH(C)
 AC_CHECK_HEADER(emmintrin.h,AC_DEFINE([HAVE_EMMINTRIN],[1],[Define if emmintrin.h]))
 AC_CHECK_HEADER(xmmintrin.h,AC_DEFINE([HAVE_XMMINTRIN],[1],[Define if xmmintrin.h]))
+# AIX doesn't have err.h so we need to check
+AC_CHECK_HEADER(err.h,      AC_DEFINE([HAVE_ERR],      [1],[Define if err.h]))
 AC_LANG_POP(C)
 
 # CIT_FC_MPI_MODULE([mpif.h], [$MPIFC], [$FLAGS_CHECK], [:], [
@@ -324,10 +331,6 @@ AS_IF([test x"$want_adios2" != xno], [
     AC_SUBST([ADIOS2_CLIBS])
 
     # in case adios2 c file compilation needs mpi
-    AC_ARG_VAR(MPICC, [MPI C compiler command])
-    AS_IF([test x"$MPICC" = x],[
-        MPICC=mpicc
-    ])
     AC_SUBST([MPICC])
 ])
 
@@ -399,6 +402,7 @@ AS_IF([test x"$want_omp" != xno], [
   AC_MSG_NOTICE([OpenMP compilation is enabled])
 
   AC_ARG_VAR(OMP_FCFLAGS, [OpenMP Fortran compiler flags])
+  AC_ARG_VAR(OMP_LIB, [Location of extra OpenMP libraries])
 
   # openmp checking
   AC_MSG_NOTICE([OpenMP flag $OMP_FCFLAGS])
