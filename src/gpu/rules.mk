@@ -67,7 +67,9 @@ gpu_specfem3D_STUBS = \
 
 ifeq ($(CUDA),yes)
   cuda_specfem3D_DEVICE_OBJ =  $O/cuda_device_obj.o
-  include $(BOAST_DIR)/kernel_cuda.mk # defines $(cuda_kernels_OBJS)
+
+  # defines $(cuda_kernels_OBJS)
+  include $(BOAST_DIR)/kernel_cuda.mk
 endif
 
 ifdef NO_GPU
