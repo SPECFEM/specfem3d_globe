@@ -215,10 +215,10 @@
   implicit none
 
   ! local parameters
-  integer :: ipar
+  integer :: ipar,ier
   character(len=MAX_STRING_LEN) :: filename
   character(len=MAX_STRING_LEN) :: rootdir
-  real,dimension(NP_b,NT_b) :: values_at_surface
+  real,dimension(:,:),allocatable :: values_at_surface
 
   ! user output
   write(IMAIN,*)
@@ -235,6 +235,11 @@
   write(IMAIN,*) '    zone 1: depth min/max = ',(1.d0 - NORM_MAX_H_R)*EARTH_R_KM,'/',(1.d0-NORM_MOHO_R)*EARTH_R_KM,'(km)'
   write(IMAIN,*)
   call flush_IMAIN()
+
+  ! temporary array
+  allocate(values_at_surface(NP_b,NT_b),stat=ier)
+  if (ier /= 0) stop 'Error allocating values_at_surface array'
+  values_at_surface(:,:) = 0.0
 
   ! root directory
   rootdir = 'DATA/gladm15/crust/'
@@ -273,6 +278,9 @@
     ! stores surface values
     BKMNS_crust_surface_value(:,:,ipar) = values_at_surface(:,:)
   enddo
+
+  ! free arrays
+  deallocate(values_at_surface)
 
   end subroutine read_crust_bkmns_model
 
