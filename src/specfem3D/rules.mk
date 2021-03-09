@@ -324,6 +324,14 @@ SPECFEM_LINK_FLAGS = $(LDFLAGS) $(MPILIBS) $(LIBS)
 ifeq ($(CUDA),yes)
 SPECFEM_LINK_FLAGS += $(CUDA_LINK)
 endif
+# opencl
+ifeq ($(OCL), yes)
+SPECFEM_LINK_FLAGS += $(OCL_LINK)
+endif
+# hip
+ifeq ($(HIP),yes)
+SPECFEM_LINK_FLAGS += $(HIP_LINK)
+endif
 
 # non-gpu or opencl
 ifeq ($(ASDF),yes)

@@ -65,6 +65,7 @@ MPI_INCLUDES = @MPI_INCLUDES@
 #### GPU
 #### with configure: ./configure --with-cuda=cuda5 CUDA_FLAGS=.. CUDA_LIB=.. CUDA_INC=.. MPI_INC=.. ..
 #### with configure: ./configure --with-opencl OCL_GPU_FLAGS=.. OCL_LIB=.. OCL_INC=.. MPI_INC=.. ..
+#### with configure: ./configure --with-hip HIP_FLAGS=.. HIP_LIB=.. HIP_INC=.. MPI_INC=.. ..
 ####
 #######################################
 
@@ -182,20 +183,43 @@ OCL_GPU_FLAGS = @OCL_GPU_FLAGS@
 OCL_INC = @OCL_CFLAGS@
 OCL_LINK = @OCL_LDFLAGS@ @OCL_LIBS@
 
+##
+## HIP
+##
+@COND_HIP_TRUE@HIP = yes
+@COND_HIP_FALSE@HIP = no
+
+HIP_FLAGS = @HIP_FLAGS@
+HIP_INC = @HIP_CPPFLAGS@ $(MPI_INCLUDES)
+
+@COND_HIP_TRUE@HIPCC = @HIPCC@
+@COND_HIP_FALSE@HIPCC = @CC@
+
+@COND_HIP_TRUE@HIP_CFLAGS = $(HIP_FLAGS) $(HIP_INC)
+@COND_HIP_TRUE@HIP_LINK = @HIP_LDFLAGS@ @HIP_LIBS@
+
+@COND_HIP_FALSE@HIP_CFLAGS =
+@COND_HIP_FALSE@HIP_LINK =
+
+
+# GPU flags
+# allows for compilation of CUDA and OpenCL kernels together
 ifeq ($(OCL), yes)
   ifeq ($(CUDA), yes)
     GPU_CUDA_AND_OCL = yes
   endif
 endif
 
+# checks if any GPU flag set
 ifeq ($(OCL), no)
   ifeq ($(CUDA), no)
-    NO_GPU = yes
+		ifeq ($(HIP), no)
+			NO_GPU = yes
+		endif
   endif
 endif
-
 ifneq ($(NO_GPU), yes)
-  HAS_GPU = yes
+  HAS_GPU = yes  # not used any further, but could to allow only specific subdirs included
 endif
 
 #######################################

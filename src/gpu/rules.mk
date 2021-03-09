@@ -65,6 +65,7 @@ gpu_specfem3D_STUBS = \
 	$O/specfem3D_gpu_method_stubs.gpu_cc.o \
 	$(EMPTY_MACRO)
 
+# cuda kernel files
 ifeq ($(CUDA),yes)
   cuda_specfem3D_DEVICE_OBJ =  $O/cuda_device_obj.o
 
@@ -81,16 +82,26 @@ endif
 
 #######################################
 
+# substitutes object endings to assign corresponding compilation rule
 ifeq ($(GPU_CUDA_AND_OCL),yes)
+	# combines both CUDA and OpenCL kernels compilation
   gpu_specfem3D_OBJECTS:=$(subst .o,.cuda-ocl.o,${gpu_specfem3D_OBJECTS})
 endif
 
 ifneq ($(GPU_CUDA_AND_OCL),yes)
+  # OpenCL kernels only
   ifeq ($(OCL), yes)
     gpu_specfem3D_OBJECTS:=$(subst .o,.ocl.o,${gpu_specfem3D_OBJECTS})
   endif
+
+  # CUDA kernels only
   ifeq ($(CUDA),yes)
     gpu_specfem3D_OBJECTS:=$(subst .o,.cuda.o,${gpu_specfem3D_OBJECTS})
+  endif
+
+  # HIP kernels only
+  ifeq ($(HIP), yes)
+    gpu_specfem3D_OBJECTS:=$(subst .o,.hip.o,${gpu_specfem3D_OBJECTS})
   endif
 endif
 
@@ -100,11 +111,11 @@ gpu_specfem3D_OBJECTS += $(cuda_specfem3D_DEVICE_OBJ) $(cuda_kernels_OBJS)
 ### variables
 ###
 
-NVCC_CFLAGS := ${NVCC_FLAGS} -x cu
-
 BUILD_VERSION_TXT := with
 SELECTOR_CFLAG :=
 
+## CUDA compilation
+NVCC_CFLAGS := ${NVCC_FLAGS} -x cu
 ifeq ($(CUDA),yes)
   BUILD_VERSION_TXT += Cuda
   SELECTOR_CFLAG += $(FC_DEFINE)USE_CUDA
@@ -137,9 +148,9 @@ ifeq ($(GPU_CUDA_AND_OCL),yes)
   BUILD_VERSION_TXT += and
 endif
 
+## OpenCL compilation
 ifeq ($(OCL), yes)
   BUILD_VERSION_TXT += OpenCL
-  LDFLAGS += $(OCL_LINK)
   OCL_CPU_FLAGS += $(OCL_INC)
   SELECTOR_CFLAG += $(FC_DEFINE)USE_OPENCL
   ifneq ($(strip $(OCL_GPU_FLAGS)),)
@@ -149,6 +160,21 @@ ifeq ($(OCL), yes)
     CUDA_LINK += $(OCL_LINK)
     NVCC_CFLAGS += $(OCL_CPU_FLAGS)
   endif
+endif
+
+## HIP compilation
+ifeq ($(HIP), yes)
+  BUILD_VERSION_TXT += HIP
+  SELECTOR_CFLAG += $(FC_DEFINE)USE_HIP
+  ifneq ($(strip $(HIP_GPU_FLAGS)),)
+    SELECTOR_CFLAG += -DHIP_GPU_CFLAGS="$(HIP_GPU_FLAGS)"
+  endif
+
+  # todo: compile hip with nvcc
+  #ifeq ($(CUDA),yes)
+  #  CUDA_LINK += $(HIP_LINK)
+  #  NVCC_CFLAGS += $(HIP_CPU_FLAGS)
+  #endif
 endif
 
 BUILD_VERSION_TXT += support
@@ -187,6 +213,7 @@ test_boast_kernels :
 ### compilation
 ###
 
+# cuda kernels
 ifeq ($(CUDA),yes)
 $O/%.cuda-kernel.o: $(BOAST_DIR)/%.cu $S/mesh_constants_gpu.h $S/mesh_constants_cuda.h
 	$(NVCC) -c $< -o $@ $(NVCC_CFLAGS) -I${SETUP} -I$(BOAST_DIR) $(SELECTOR_CFLAG) -include $(word 2,$^)
@@ -198,12 +225,17 @@ endif
 $O/%.cuda-ocl.o: $O/%.cuda.o
 	cd $O && cp $(shell basename $<) $(shell basename $@)
 
+# source files in src/gpu/
 $O/%.ocl.o: $S/%.c ${SETUP}/config.h $S/mesh_constants_gpu.h $S/mesh_constants_ocl.h
 	${CC} -c $< -o $@ $(OCL_CPU_FLAGS) -I${SETUP} -I$(BOAST_DIR) $(SELECTOR_CFLAG)
 
 $O/%.cuda.o: $S/%.c ${SETUP}/config.h $S/mesh_constants_gpu.h
 	$(NVCC) -c $< -o $@ $(NVCC_CFLAGS) -I${SETUP} -I$(BOAST_DIR) $(SELECTOR_CFLAG)
 
+$O/%.hip.o: $S/%.c ${SETUP}/config.h $S/mesh_constants_gpu.h  #$S/mesh_constants_hip.h
+	${HIPCC} -c $< -o $@ $(HIP_CFLAGS) -I${SETUP} -I$(BOAST_DIR) $(SELECTOR_CFLAG)
+
+# C version
 $O/%.gpu_cc.o: $S/%.c ${SETUP}/config.h
 	${CC} -c $(CPPFLAGS) $(CFLAGS) -o $@ $<
 
