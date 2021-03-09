@@ -412,10 +412,14 @@ AS_IF([test x"$want_hip" != xno], [
     GPU_PLATFORM=`$HIPCONFIG --platform`
     AS_IF([test x"$GPU_PLATFORM" = xnvcc], [
         AC_MSG_NOTICE([HIP PLATFORM NVCC detected.])
+        #FLAG_PLATFORM="${FC_DEFINE}__HIP_PLATFORM_NVCC__"
     ])
     AS_IF([test x"$GPU_PLATFORM" = xhcc], [
         AC_MSG_NOTICE([HIP PLATFORM HCC detected.])
+        #FLAG_PLATFORM="${FC_DEFINE}__HIP_PLATFORM_HCC__"
     ])
+    # compiler might require a platform selection flag
+    #HIP_FLAGS="${HIP_FLAGS} ${FLAG_PLATFORM}"
 
     # test lib & include
     AS_IF([test x"$HIP_LIB" != x],[
