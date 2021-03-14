@@ -43,7 +43,9 @@ void print_CUDA_error_if_any(cudaError_t err, int num);
 
 #if CUSTOM_REAL == 4
 // textures
+#if defined(USE_TEXTURES_FIELDS) || defined(USE_TEXTURES_CONSTANTS)
 typedef texture<float, cudaTextureType1D, cudaReadModeElementType> realw_texture;
+#endif
 // restricted pointers: improves performance on Kepler ~ 10%
 // see: http://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#restrict
 typedef const float* __restrict__ realw_const_p; // otherwise use: //typedef const float* realw_const_p;
@@ -51,7 +53,9 @@ typedef float* __restrict__ realw_p; // otherwise use: //typedef float* realw_p;
 
 #elif CUSTOM_REAL == 8
 // textures
+#if defined(USE_TEXTURES_FIELDS) || defined(USE_TEXTURES_CONSTANTS)
 typedef texture<double, cudaTextureType1D, cudaReadModeElementType> realw_texture;
+#endif
 // restricted pointers: improves performance on Kepler ~ 10%
 // see: http://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#restrict
 typedef const double* __restrict__ realw_const_p; // otherwise use: //typedef const double* realw_const_p;
