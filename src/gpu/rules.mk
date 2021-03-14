@@ -163,6 +163,7 @@ ifeq ($(OCL), yes)
 endif
 
 ## HIP compilation
+HIPCC_CFLAGS := ${HIP_CFLAGS} -x hip
 ifeq ($(HIP), yes)
   BUILD_VERSION_TXT += HIP
   SELECTOR_CFLAG += $(FC_DEFINE)USE_HIP
@@ -222,6 +223,12 @@ $(cuda_specfem3D_DEVICE_OBJ): $(subst $(cuda_specfem3D_DEVICE_OBJ), ,$(gpu_specf
 	${NVCCLINK} -o $@ $^
 endif
 
+ifeq ($(HIP),yes)
+$O/%.hip-kernel.o: $(BOAST_DIR)/%.cpp $S/mesh_constants_gpu.h #$S/mesh_constants_hip.h
+	$(HIPCC) -c $< -o $@ $(HIP_CFLAGS) -I${SETUP} -I$(BOAST_DIR) $(SELECTOR_CFLAG) -include $(word 2,$^)
+endif
+
+
 $O/%.cuda-ocl.o: $O/%.cuda.o
 	cd $O && cp $(shell basename $<) $(shell basename $@)
 
@@ -233,7 +240,7 @@ $O/%.cuda.o: $S/%.c ${SETUP}/config.h $S/mesh_constants_gpu.h
 	$(NVCC) -c $< -o $@ $(NVCC_CFLAGS) -I${SETUP} -I$(BOAST_DIR) $(SELECTOR_CFLAG)
 
 $O/%.hip.o: $S/%.c ${SETUP}/config.h $S/mesh_constants_gpu.h  #$S/mesh_constants_hip.h
-	${HIPCC} -c $< -o $@ $(HIP_CFLAGS) -I${SETUP} -I$(BOAST_DIR) $(SELECTOR_CFLAG)
+	${HIPCC} -c $< -o $@ $(HIPCC_CFLAGS) -I${SETUP} -I$(BOAST_DIR) $(SELECTOR_CFLAG)
 
 # C version
 $O/%.gpu_cc.o: $S/%.c ${SETUP}/config.h

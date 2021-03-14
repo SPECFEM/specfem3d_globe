@@ -7238,14 +7238,29 @@ fi
 
         { $as_echo "$as_me:${as_lineno-$LINENO}: HIP PLATFORM NVCC detected." >&5
 $as_echo "$as_me: HIP PLATFORM NVCC detected." >&6;}
+        FLAG_PLATFORM="${FC_DEFINE}__HIP_PLATFORM_NVCC__"
 
 fi
     if test x"$GPU_PLATFORM" = xhcc; then :
 
         { $as_echo "$as_me:${as_lineno-$LINENO}: HIP PLATFORM HCC detected." >&5
 $as_echo "$as_me: HIP PLATFORM HCC detected." >&6;}
+        FLAG_PLATFORM="${FC_DEFINE}__HIP_PLATFORM_HCC__"
 
 fi
+    # compiler might require a platform selection flag
+    if [ "$HIP_FLAGS" != *"HIP_PLATFORM"* ]; then
+      # adds PLATFORM flag
+      HIP_FLAGS="${HIP_FLAGS} ${FLAG_PLATFORM}"
+    fi
+
+    # for compilation errors like:
+    #   /usr/bin/ld: obj/assemble_MPI_scalar_gpu.hip.o: relocation R_X86_64_32 against `.rodata.str1.1' can not be used
+    #      when making a PIE object; recompile with -fPIC
+    # try to add
+    #   HIP_FLAGS="-fPIC"
+    # or
+    #   HIP_FLAGS="-fno-gpu-rdc"
 
     # test lib & include
     if test x"$HIP_LIB" != x; then :

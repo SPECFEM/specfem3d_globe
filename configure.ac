@@ -412,14 +412,25 @@ AS_IF([test x"$want_hip" != xno], [
     GPU_PLATFORM=`$HIPCONFIG --platform`
     AS_IF([test x"$GPU_PLATFORM" = xnvcc], [
         AC_MSG_NOTICE([HIP PLATFORM NVCC detected.])
-        #FLAG_PLATFORM="${FC_DEFINE}__HIP_PLATFORM_NVCC__"
+        FLAG_PLATFORM="${FC_DEFINE}__HIP_PLATFORM_NVCC__"
     ])
     AS_IF([test x"$GPU_PLATFORM" = xhcc], [
         AC_MSG_NOTICE([HIP PLATFORM HCC detected.])
-        #FLAG_PLATFORM="${FC_DEFINE}__HIP_PLATFORM_HCC__"
+        FLAG_PLATFORM="${FC_DEFINE}__HIP_PLATFORM_HCC__"
     ])
     # compiler might require a platform selection flag
-    #HIP_FLAGS="${HIP_FLAGS} ${FLAG_PLATFORM}"
+    if [[ "$HIP_FLAGS" != *"HIP_PLATFORM"* ]]; then
+      # adds PLATFORM flag
+      HIP_FLAGS="${HIP_FLAGS} ${FLAG_PLATFORM}"
+    fi
+
+    # for compilation errors like:
+    #   /usr/bin/ld: obj/assemble_MPI_scalar_gpu.hip.o: relocation R_X86_64_32 against `.rodata.str1.1' can not be used
+    #      when making a PIE object; recompile with -fPIC
+    # try to add
+    #   HIP_FLAGS="-fPIC"
+    # or
+    #   HIP_FLAGS="-fno-gpu-rdc"
 
     # test lib & include
     AS_IF([test x"$HIP_LIB" != x],[
