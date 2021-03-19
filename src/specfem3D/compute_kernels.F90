@@ -953,9 +953,9 @@
       hess_rho_kl_crust_mantle(i, j, k, ispec) = &
         hess_rho_kl_crust_mantle(i, j, k, ispec) + deltat * hess_rho
       hess_kappa_kl_crust_mantle(i, j, k, ispec) = &
-        hess_kappa_kl_crust_mantle(i, j, k, ispec) + deltat * hess_rho
+        hess_kappa_kl_crust_mantle(i, j, k, ispec) + deltat * hess_kappa
       hess_mu_kl_crust_mantle(i, j, k, ispec) = &
-        hess_mu_kl_crust_mantle(i, j, k, ispec) + deltat * hess_rho
+        hess_mu_kl_crust_mantle(i, j, k, ispec) + deltat * hess_mu
 
     enddo  ! end ispec
 
