@@ -854,7 +854,7 @@
   subroutine compute_kernels_Hessian()
 
   use constants_solver
-  use constants, only: USE_SOURCE_RECEIVER_HESSIAN
+  use constants, only: USE_SOURCE_RECEIVER_Hessian
   use specfem_par, only: deltat
   use specfem_par, only: GPU_MODE,Mesh_pointer
   use specfem_par_crustmantle
@@ -963,7 +963,7 @@
     ! updates kernel contribution on GPU
 
     ! computes contribution to density and bulk modulus kernel
-    call compute_kernels_hess_gpu(Mesh_pointer,deltat,USE_SOURCE_RECEIVER_HESSIAN)
+    call compute_kernels_hess_gpu(Mesh_pointer,deltat,USE_SOURCE_RECEIVER_Hessian)
 
   endif
 

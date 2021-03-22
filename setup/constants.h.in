@@ -501,7 +501,7 @@
   logical, parameter :: OUTPUT_ADJOINT_WAVEFIELD_SEISMOGRAMS = .false.
 
 ! flag to use source-receicer preconditioner instead of source-source preconditioner
-  logical, parameter :: USE_SOURCE_RECEIVER_HESSIAN = .true.
+  logical, parameter :: USE_SOURCE_RECEIVER_Hessian = .true.
 
 !!-----------------------------------------------------------
 !!
