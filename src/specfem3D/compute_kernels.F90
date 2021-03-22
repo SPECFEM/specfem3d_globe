@@ -854,13 +854,13 @@
   subroutine compute_kernels_Hessian()
 
   use constants_solver
+  use constants, only: USE_SOURCE_RECEIVER_HESSIAN
   use specfem_par, only: deltat
   use specfem_par, only: GPU_MODE,Mesh_pointer
   use specfem_par_crustmantle
 
   implicit none
 
-  logical, parameter :: USE_SOURCE_RECEIVER_Hessian = .false.
   real(kind=CUSTOM_REAL), dimension(3, 3, NGLLX, NGLLY, NGLLZ) :: veloc_grad, b_veloc_grad
   real(kind=CUSTOM_REAL), dimension(3, 3) :: vgrad, b_vgrad
   real(kind=CUSTOM_REAL) :: hess_rho, hess_kappa, hess_mu
@@ -963,7 +963,7 @@
     ! updates kernel contribution on GPU
 
     ! computes contribution to density and bulk modulus kernel
-    call compute_kernels_hess_gpu(Mesh_pointer,deltat)
+    call compute_kernels_hess_gpu(Mesh_pointer,deltat,USE_SOURCE_RECEIVER_HESSIAN)
 
   endif
 

@@ -213,7 +213,8 @@ void FC_FUNC_ (compute_kernels_strength_noise_gpu,
 
 void FC_FUNC_ (compute_kernels_hess_gpu,
                COMPUTE_KERNELS_HESS_GPU) (long *Mesh_pointer_f,
-                                          realw *deltat_f) {}
+                                          realw *deltat_f,
+                                          int *USE_SOURCE_RECEIVER_HESSIAN) {}
 
 void FC_FUNC_ (resort_array,
                RESORT_ARRAY) (long *Mesh_pointer_f) {}

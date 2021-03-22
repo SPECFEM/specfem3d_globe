@@ -650,7 +650,7 @@ void FC_FUNC_ (compute_kernels_strength_noise_gpu,
 extern EXTERN_LANG
 void FC_FUNC_ (compute_kernels_hess_gpu,
                COMPUTE_KERNELS_HESS_GPU) (long *Mesh_pointer_f,
-                                          realw *deltat_f) {
+                                          realw *deltat_f, int *USE_SOURCE_RECEIVER_HESSIAN_f) {
   TRACE ("compute_hess_kernel_gpu");
   // debug
   DEBUG_BACKWARD_KERNEL();
@@ -664,12 +664,11 @@ void FC_FUNC_ (compute_kernels_hess_gpu,
   }
 
   int blocksize = NGLL3;   // NGLLX*NGLLY*NGLLZ
+  int USE_SOURCE_RECEIVER_HESSIAN = *USE_SOURCE_RECEIVER_HESSIAN_f;
   realw deltat = *deltat_f;
 
   int num_blocks_x, num_blocks_y;
   get_blocks_xy (mp->NSPEC_CRUST_MANTLE, &num_blocks_x, &num_blocks_y);
-
-  const int USE_SOURCE_RECEIVER_HESSIAN = 1;
 
 #ifdef USE_OPENCL
   if (run_opencl) {
