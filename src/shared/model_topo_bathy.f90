@@ -427,25 +427,25 @@
   ratio_lon = (xlo-lon_corner)/samples_per_degree_topo
   ratio_lat = (xlat-lat_corner)/samples_per_degree_topo
 
-  if (ratio_lon < 0.0) ratio_lon = 0.0
-  if (ratio_lon > 1.0) ratio_lon = 1.0
-  if (ratio_lat < 0.0) ratio_lat = 0.0
-  if (ratio_lat > 1.0) ratio_lat = 1.0
+  if (ratio_lon < 0.d0) ratio_lon = 0.d0
+  if (ratio_lon > 1.d0) ratio_lon = 1.d0
+  if (ratio_lat < 0.d0) ratio_lat = 0.d0
+  if (ratio_lat > 1.d0) ratio_lat = 1.d0
 
   ! convert integer value to double precision
   if (iadd1 <= NY_BATHY-1 .and. iel1 <= NX_BATHY-1) then
     ! interpolates for points within boundaries
-    value = dble(ibathy_topo(iel1,iadd1))*(1-ratio_lon)*(1.-ratio_lat) &
-            + dble(ibathy_topo(iel1+1,iadd1))*ratio_lon*(1.-ratio_lat) &
-            + dble(ibathy_topo(iel1+1,iadd1+1))*ratio_lon*ratio_lat &
-            + dble(ibathy_topo(iel1,iadd1+1))*(1.-ratio_lon)*ratio_lat
+    value = dble(ibathy_topo(iel1,iadd1))     * (1.d0-ratio_lon) * (1.d0-ratio_lat) &
+          + dble(ibathy_topo(iel1+1,iadd1))   * ratio_lon * (1.d0-ratio_lat) &
+          + dble(ibathy_topo(iel1+1,iadd1+1)) * ratio_lon * ratio_lat &
+          + dble(ibathy_topo(iel1,iadd1+1))   * (1.d0-ratio_lon) * ratio_lat
 
   else if (iadd1 <= NY_BATHY-1 .and. iel1 == NX_BATHY) then
     ! interpolates for points on longitude border
-    value = dble(ibathy_topo(iel1,iadd1))*(1-ratio_lon)*(1.-ratio_lat) &
-            + dble(ibathy_topo(1,iadd1))*ratio_lon*(1.-ratio_lat) &
-            + dble(ibathy_topo(1,iadd1+1))*ratio_lon*ratio_lat &
-            + dble(ibathy_topo(iel1,iadd1+1))*(1.-ratio_lon)*ratio_lat
+    value = dble(ibathy_topo(iel1,iadd1))   * (1.d0-ratio_lon)*(1.d0-ratio_lat) &
+          + dble(ibathy_topo(1,iadd1))      * ratio_lon*(1.d0-ratio_lat) &
+          + dble(ibathy_topo(1,iadd1+1))    * ratio_lon*ratio_lat &
+          + dble(ibathy_topo(iel1,iadd1+1)) * (1.d0-ratio_lon)*ratio_lat
 
   else
     ! for points on latitude boundaries

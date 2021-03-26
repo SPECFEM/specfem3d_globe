@@ -337,13 +337,13 @@
   enddo
 
   call all_gather_all_ch(stations_names, &
-                        num_stations * MAX_LENGTH_STATION_NAME, &
-                        station_names_gather, &
-                        rcounts, &
-                        displs, &
-                        max_num_stations_gather, &
-                        MAX_LENGTH_STATION_NAME, &
-                        mysize)
+                         num_stations * MAX_LENGTH_STATION_NAME, &
+                         station_names_gather, &
+                         rcounts, &
+                         displs, &
+                         max_num_stations_gather, &
+                         MAX_LENGTH_STATION_NAME, &
+                         mysize)
 
   do i = 1, mysize
     displs(i) = (i-1) * max_num_stations_gather * MAX_LENGTH_NETWORK_NAME
@@ -914,7 +914,7 @@
     '  </mag>'//&
     '  <type>mb</type>'//&
     '</magnitude>'//&
-    '  <magnitude publicID="smi:local/'//trim(event_name_SAC)//'/magnitude#MS">'//&
+    '<magnitude publicID="smi:local/'//trim(event_name_SAC)//'/magnitude#MS">'//&
     '  <mag>'//&
     '    <value>'//trim(ms_str)//'</value>'//&
     '  </mag>'//&
@@ -987,7 +987,7 @@
   write(minute, "(I2.2)") iatime(2)
 
   real_sec = iatime(1) + fraction_sec
-  write(str_second, "(I2.2, F0.4)") int(real_sec), real_sec-int(real_sec)
+  write(str_second, "(I2.2,F0.4)") int(real_sec), real_sec-int(real_sec)
 
   ! format example: 2018-01-31T16:40:02.8900
   time_string = trim(yr)//"-"//trim(mo)//"-"//trim(da)//"T"//&

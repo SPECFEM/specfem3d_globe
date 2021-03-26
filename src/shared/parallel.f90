@@ -1658,7 +1658,7 @@ end module my_mpi
 
   integer :: sendcnt, dim1, NPROC
 
-  real, dimension(NPROC) :: sendbuf
+  real, dimension(sendcnt) :: sendbuf
   real, dimension(dim1, NPROC) :: recvbuf
 
   integer, dimension(NPROC) :: recvoffset, recvcnt
@@ -1666,8 +1666,8 @@ end module my_mpi
   integer :: ier
 
   call MPI_Allgatherv(sendbuf,sendcnt,MPI_REAL, &
-                  recvbuf,recvcnt,recvoffset,MPI_REAL, &
-                  my_local_mpi_comm_world,ier)
+                      recvbuf,recvcnt,recvoffset,MPI_REAL, &
+                      my_local_mpi_comm_world,ier)
 
   end subroutine all_gather_all_r
 
@@ -1684,7 +1684,7 @@ end module my_mpi
 
   integer :: sendcnt, dim1, dim2, NPROC
 
-  character(len=dim2), dimension(NPROC) :: sendbuf
+  character(len=dim2), dimension(sendcnt) :: sendbuf
   character(len=dim2), dimension(dim1, NPROC) :: recvbuf
 
   integer, dimension(NPROC) :: recvoffset, recvcnt
@@ -1692,8 +1692,8 @@ end module my_mpi
   integer :: ier
 
   call MPI_Allgatherv(sendbuf,sendcnt,MPI_CHARACTER, &
-                  recvbuf,recvcnt,recvoffset,MPI_CHARACTER, &
-                  my_local_mpi_comm_world,ier)
+                      recvbuf,recvcnt,recvoffset,MPI_CHARACTER, &
+                      my_local_mpi_comm_world,ier)
 
   end subroutine all_gather_all_ch
 
