@@ -62,7 +62,7 @@
     write(IMAIN,*) '*** Specfem3D MPI Mesher ***'
     write(IMAIN,*) '****************************'
     write(IMAIN,*)
-    write(IMAIN,*) 'Version: ', git_version
+    write(IMAIN,*) 'Version: ', git_package_version
     write(IMAIN,*)
     call flush_IMAIN()
   endif
