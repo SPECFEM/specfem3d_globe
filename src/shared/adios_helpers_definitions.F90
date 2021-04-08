@@ -41,7 +41,8 @@ module adios_helpers_definitions_mod
 
   !use manager_adios
 #if defined(USE_ADIOS)
-  use adios_write_mod, only: adios_define_var, adios_long, adios_integer
+  use adios_write_mod, only: adios_define_var, &
+                             adios_long, adios_integer, adios_double, adios_real, adios_byte, adios_string
 #elif defined(USE_ADIOS2)
   use adios2
 #endif
@@ -232,7 +233,7 @@ subroutine define_adios_scalar_double (adios_group, group_size_inc, path, name, 
 #if defined(USE_ADIOS)
   ! ADIOS 1
   ! adios: 6 == real(kind=8)
-  call adios_define_var (adios_group, trim(name), trim(path), 6,  '', '', '', varid)
+  call adios_define_var (adios_group, trim(name), trim(path), adios_double,  '', '', '', varid)
 
 #elif defined(USE_ADIOS2)
   ! ADIOS 2
@@ -317,7 +318,7 @@ subroutine define_adios_scalar_float(adios_group, group_size_inc, path, name, va
 #if defined(USE_ADIOS)
   ! ADIOS 1
   ! adios: 6 == real(kind=8), 5 == real(kind=4)
-  call adios_define_var (adios_group, trim(name), trim(path), 5,  '', '', '', varid)
+  call adios_define_var (adios_group, trim(name), trim(path), adios_real,  '', '', '', varid)
 
 #elif defined(USE_ADIOS2)
   ! ADIOS 2
@@ -588,7 +589,7 @@ subroutine define_adios_scalar_byte (adios_group, group_size_inc, name, path, va
 #if defined(USE_ADIOS)
   ! ADIOS 1
   ! adios: 0 == byte == any_data_type(kind=1)
-  call adios_define_var (adios_group, trim(name), trim(path), 0,  '', '', '', varid)
+  call adios_define_var (adios_group, trim(name), trim(path), adios_byte,  '', '', '', varid)
 
 #elif defined(USE_ADIOS2)
   ! ADIOS 2
@@ -701,7 +702,7 @@ end subroutine define_adios_global_dims_1d
 
 #if defined(USE_ADIOS)
   ! ADIOS 1
-  call adios_define_var(adios_group, "array", trim(array_name), 5, &
+  call adios_define_var(adios_group, "array", trim(array_name), adios_real, &
                         trim(array_name) // "/local_dim", &
                         trim(array_name) // "/global_dim", &
                         trim(array_name) // "/offset", var_id)
@@ -898,7 +899,7 @@ end subroutine define_adios_global_dims_1d
 
 #if defined(USE_ADIOS)
   ! ADIOS 1
-  call adios_define_var(adios_group, "array", trim(array_name), 6, &
+  call adios_define_var(adios_group, "array", trim(array_name), adios_double, &
                         trim(array_name) // "/local_dim", &
                         trim(array_name) // "/global_dim", &
                         trim(array_name) // "/offset", var_id)
@@ -1095,7 +1096,7 @@ end subroutine define_adios_global_1d_double_4d
 
 #if defined(USE_ADIOS)
   ! ADIOS 1
-  call adios_define_var(adios_group, "array", trim(array_name), 2, &
+  call adios_define_var(adios_group, "array", trim(array_name), adios_integer, &
                         trim(array_name) // "/local_dim", &
                         trim(array_name) // "/global_dim", &
                         trim(array_name) // "/offset", var_id)
@@ -1492,7 +1493,7 @@ subroutine define_adios_global_1d_generic_logical(adios_group, group_size_inc, a
   ! represented, beyond requiring that LOGICAL variables of default kind
   ! have the same storage size as default INTEGER and REAL variables.
   ! Hence the 'adios_integer' (2) data type to store logical values
-  call adios_define_var(adios_group, "array", trim(array_name), 2, &
+  call adios_define_var(adios_group, "array", trim(array_name), adios_integer, &
                         trim(array_name) // "/local_dim", &
                         trim(array_name) // "/global_dim", &
                         trim(array_name) // "/offset", var_id)
@@ -1686,7 +1687,7 @@ subroutine define_adios_global_1d_string_generic(adios_group, group_size_inc, ar
 
 #if defined(USE_ADIOS)
   ! ADIOS 1
-  call adios_define_var(adios_group, "array", trim(array_name), 9, &
+  call adios_define_var(adios_group, "array", trim(array_name), adios_string, &
                         trim(array_name) // "/local_dim", &
                         trim(array_name) // "/global_dim", &
                         trim(array_name) // "/offset", var_id)
@@ -1803,7 +1804,7 @@ subroutine  define_adios_local_1d_string_1d(adios_group, group_size_inc, local_d
 
 #if defined(USE_ADIOS)
   ! ADIOS 1
-  call adios_define_var(adios_group, trim(array_name), trim(path), 9, '', '', '', var_id )
+  call adios_define_var(adios_group, trim(array_name), trim(path), adios_string, '', '', '', var_id )
 
 #elif defined(USE_ADIOS2)
   ! ADIOS 2

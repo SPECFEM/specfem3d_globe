@@ -65,7 +65,7 @@ module manager_adios
 
 #if defined(USE_ADIOS)
   ! adios
-  character(len=*),parameter :: ADIOS_VERBOSITY = "verbose=1" ! lowest level: verbose=1
+  character(len=*),parameter :: ADIOS_VERBOSITY = "verbose=1" ! lowest level: verbose=1, .., debug=4
   ! default file handle for read/write
   integer(kind=8), public :: myadios_file
   ! IO group
