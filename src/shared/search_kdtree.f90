@@ -200,6 +200,7 @@ contains
   ! local ordering
   allocate(points_index(kdtree_num_nodes),stat=ier)
   if (ier /= 0) stop 'Error allocating array points_index'
+  points_index(:) = 0
 
   ! initial point ordering
   do i = 1,npoints
@@ -650,7 +651,18 @@ contains
   integer :: i,ier,idim
   integer :: iloc,ilower,iupper
   integer :: l,u
-  integer,dimension(:),allocatable :: workindex
+
+  ! note: compiling with intel ifort version 18.0.1/19.1.0 and optimizations like -xHost -O2 or -xHost -O3 flags
+  !       can lead to issues with the deallocate(workindex) statement below:
+  !         *** Error in `./bin/xspecfem3D': double free or corruption (!prev): 0x00000000024f1610 ***
+  !
+  !       this might be due to a more aggressive optimization which leads to a change of the instruction set
+  !       and the memory being free twice.
+  !       a way to avoid this is by removing -xHost from FLAGS_CHECK = .. in Makefile
+  !       or to use a pointer array instead of an allocatable array
+  !
+  ! integer,dimension(:),allocatable :: workindex
+  integer,dimension(:),pointer :: workindex
 
   ! checks if anything to sort
   if (ibound_lower > ibound_upper) then
@@ -742,7 +754,7 @@ contains
 
     ! default
     idim = 1
-    cut_value = 0.0
+    cut_value = 0.d0
   endif
   ! sets node values
   node%idim = idim
@@ -756,6 +768,7 @@ contains
   ! temporary index array for sorting
   allocate(workindex(ibound_upper - ibound_lower + 1),stat=ier)
   if (ier /= 0) stop 'Error allocating workindex array'
+  workindex(:) = 0
 
   ! sorts point indices
   ! to have all points with value < cut_value on left side, all others to the right
@@ -793,6 +806,15 @@ contains
 
   ! replaces index range with new sorting order
   points_index(ibound_lower:ibound_upper) = workindex(:)
+
+  ! note: compiling with intel ifort version 18.0.1/19.1.0 and optimizations like -xHost -O2 or -xHost -O3 flags
+  !       can lead to issues with the deallocate(workindex) statement below:
+  !         *** Error in `./bin/xspecfem3D': double free or corruption (!prev): 0x00000000024f1610 ***
+  !
+  !       this might be due to a more aggressive optimization which leads to a change of the instruction set
+  !       and the memory being free twice.
+  !       a way to avoid this is by removing -xHost from FLAGS_CHECK = .. in Makefile
+  !       or to use a pointer array instead of an allocatable array
 
   ! frees temporary array
   deallocate(workindex)
@@ -932,7 +954,7 @@ contains
   integer, intent(in) :: npoints
   double precision, dimension(3,npoints), intent(in) :: points_data
 
-  type (kdtree_node), pointer, intent(inout) :: node
+  type (kdtree_node), pointer :: node    ! pointers in standard Fortran90 cannot have intent(..) attribute
 
   double precision, dimension(3), intent(in) :: xyz_target
 
@@ -958,8 +980,14 @@ contains
     if (node%ipoint < 1 ) stop 'Error searched node has wrong point index'
 
     ! squared distance to associated data point
-    dist = get_distance_squared(xyz_target(:),points_data(:,node%ipoint))
-    if (dist < dist_min) then
+    dist = get_distance_squared(xyz_target,points_data(1,node%ipoint))
+
+    ! note: using <= instead of < for comparison. both would be fine, but the first leads to identical location result
+    !       as with a brute force search, if the target location is exactly on a shared GLL point.
+    !       the latter would choose a different element and lead to slightly different seismograms - not sure though why...
+    !       it obviously matters if the source point is shared between different elements and the source contribution added by
+    !       only a single element. for such cases, we might need to spread the source contribution to all shared elements.
+    if (dist <= dist_min) then
       ! debug
       !if (ipoint_min < 1) then
       !  print *,'new node distance',node%id,node%ipoint,dist
@@ -1001,7 +1029,7 @@ contains
     if (associated(node%right)) then
       ! checks right node as a final node
       if (node%right%idim == 0) then
-        dist = get_distance_squared(xyz_target(:),points_data(:,node%right%ipoint))
+        dist = get_distance_squared(xyz_target,points_data(1,node%right%ipoint))
         if (dist <= dist_min) then
           ! stores minimum point
           dist_min = dist
@@ -1018,7 +1046,7 @@ contains
     if (associated(node%left)) then
       ! checks left node as a final node
       if (node%left%idim == 0) then
-        dist = get_distance_squared(xyz_target(:),points_data(:,node%left%ipoint))
+        dist = get_distance_squared(xyz_target,points_data(1,node%left%ipoint))
         if (dist <= dist_min) then
           ! stores minimum point
           dist_min = dist
@@ -1072,7 +1100,7 @@ contains
     xyz(:) = points_data(:,node%ipoint)
 
     ! squared distance to associated data point
-    dist = get_distance_squared(xyz_target(:),xyz(:))
+    dist = get_distance_squared(xyz_target,xyz)
     if (dist <= r_squared) then
       ! debug
       !print *,'     new node: ',node%ipoint,'distance = ',dist,'radius = ',r_squared
@@ -1118,7 +1146,7 @@ contains
       ! checks right node as a final node
       if (node%right%idim == 0) then
         xyz(:) = points_data(:,node%right%ipoint)
-        dist = get_distance_squared(xyz_target(:),xyz(:))
+        dist = get_distance_squared(xyz_target,xyz)
         if (dist <= r_squared) then
           ! counts point
           num_nodes = num_nodes + 1
@@ -1142,7 +1170,7 @@ contains
       ! checks left node as a final node
       if (node%left%idim == 0) then
         xyz(:) = points_data(:,node%left%ipoint)
-        dist = get_distance_squared(xyz_target(:),xyz(:))
+        dist = get_distance_squared(xyz_target,xyz)
         if (dist <= r_squared) then
           ! counts point
           num_nodes = num_nodes + 1
@@ -1202,7 +1230,7 @@ contains
     xyz(:) = points_data(:,node%ipoint)
 
     ! squared distance to associated data point
-    call get_distance_ellip(xyz_target(:),xyz(:),dist_v,dist_h)
+    call get_distance_ellip(xyz_target,xyz,dist_v,dist_h)
     if (dist_v <= r_squared_v .and. dist_h <= r_squared_h) then
       ! debug
       !print *,'     new node: ',node%ipoint,'distance = ',dist,'radius = ',r_squared
@@ -1250,7 +1278,7 @@ contains
       ! checks right node as a final node
       if (node%right%idim == 0) then
         xyz(:) = points_data(:,node%right%ipoint)
-        call get_distance_ellip(xyz_target(:),xyz(:),dist_v,dist_h)
+        call get_distance_ellip(xyz_target,xyz,dist_v,dist_h)
         if (dist_v <= r_squared_v .and. dist_h <= r_squared_h) then
           ! counts point
           num_nodes = num_nodes + 1
@@ -1275,7 +1303,7 @@ contains
       ! checks left node as a final node
       if (node%left%idim == 0) then
         xyz(:) = points_data(:,node%left%ipoint)
-        call get_distance_ellip(xyz_target(:),xyz(:),dist_v,dist_h)
+        call get_distance_ellip(xyz_target,xyz,dist_v,dist_h)
         if (dist_v <= r_squared_v .and. dist_h <= r_squared_h) then
           ! counts point
           num_nodes = num_nodes + 1
