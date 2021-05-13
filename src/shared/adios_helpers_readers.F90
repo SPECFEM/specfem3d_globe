@@ -572,7 +572,7 @@ contains
   full_name = trim(array_name) // "/local_dim"
 
   ! note: might need to check in future if adding a .. // C_NULL_CHAR helps for avoiding problems with passing strings.
-  !       since we call the adio2_** fortran wrappers, this should deal with such issues.
+  !       since we call the adio2_** Fortran wrappers, this should deal with such issues.
 
   ! one could try to use the following:
   !
