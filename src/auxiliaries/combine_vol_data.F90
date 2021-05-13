@@ -298,15 +298,15 @@ program combine_vol_data
   var_name = arg(2)
 
   ! input and output dir
-  in_topo_dir= arg(3)
-  in_file_dir= arg(4)
+  in_topo_dir = arg(3)
+  in_file_dir = arg(4)
   outdir = arg(5)
 
   ! resolution
   read(arg(6),*) ires
 #endif
 
-  filename = var_name
+  filename = trim(var_name)
 
   ! output info
   print *, 'slice list: '
@@ -352,12 +352,17 @@ program combine_vol_data
            num_ibool(NGLOB_CRUST_MANTLE), &
            mask_ibool(NGLOB_CRUST_MANTLE), stat=ier)
   if (ier /= 0) stop 'Error allocating mesh arrays'
+  ibool(:,:,:,:) = -1
+  idoubling_inner_core(:) = 0
+  xstore(:) = 0.0_CUSTOM_REAL; ystore(:) = 0.0_CUSTOM_REAL; zstore(:) = 0.0_CUSTOM_REAL
 
   allocate(data(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),stat=ier)
   if (ier /= 0) stop 'Error allocating data array'
+  data(:,:,:,:) = 0.0_CUSTOM_REAL
 
   allocate(npoint(num_node),nelement(num_node),stat=ier)
   if (ier /= 0) stop 'Error allocating npoint,nelement arrays'
+  npoint(:) = 0; nelement(:) = 0
 
   ! sets up ellipticity splines in order to remove ellipticity from point coordinates
   if (CORRECT_ELLIPTICITY) call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
@@ -502,9 +507,9 @@ program combine_vol_data
         print *,'Error opening file: ',trim(dimension_file)
         stop 'Error opening topo file'
       endif
-      xstore(:) = 0.0
-      ystore(:) = 0.0
-      zstore(:) = 0.0
+      xstore(:) = 0.0_CUSTOM_REAL
+      ystore(:) = 0.0_CUSTOM_REAL
+      zstore(:) = 0.0_CUSTOM_REAL
       ibool(:,:,:,:) = -1
       read(IIN) nspec_list(it)
       read(IIN) nglob_list(it)

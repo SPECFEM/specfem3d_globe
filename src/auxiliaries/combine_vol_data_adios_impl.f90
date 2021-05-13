@@ -308,7 +308,7 @@ subroutine read_values_adios(var_name, iproc, ir, nspec, data)
   ! Parameters
   character(len=*), intent(in) :: var_name
   integer, intent(in) :: iproc, ir, nspec
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), intent(inout) :: data
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec), intent(inout) :: data
   ! Variables
   integer(kind=8), dimension(1) :: start, count
   integer(kind=8) :: sel
@@ -367,11 +367,13 @@ subroutine read_values_adios(var_name, iproc, ir, nspec, data)
       ! example: alpha_kl_crust_mantle
       data_name = trim(var_name)
     endif
+    print *,'  kernel data name: ',trim(data_name)
   else
     ! for wavespeed name: rho,vp,..
     ! adds region name: var_name = "rho" -> reg1/rho
     write(reg_name,"('reg',i1,'/')") ir
     data_name = trim(reg_name) // trim(var_name)
+    print *,'  data name: ',trim(data_name)
   endif
 
   ! gets data values

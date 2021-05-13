@@ -518,6 +518,7 @@ contains
 #elif defined(USE_ADIOS2)
   type(adios2_variable) :: v
 #endif
+  character(len=256) :: full_name
 
   TRACE_ADIOS_L2_ARG('read_adios_array_gll: ',trim(array_name))
 
@@ -531,11 +532,12 @@ contains
 #if defined(USE_ADIOS)
   ! ADIOS 1
   ! note: adios_get_scalar here retrieves the same local_dim for everyone (from writer rank 0)
-  call adios_get_scalar(adios_handle, trim(array_name)//"/local_dim",local_dim, ier)
+  full_name = trim(array_name) // "/local_dim"
+  call adios_get_scalar(adios_handle, trim(full_name),local_dim, ier)
   if (ier /= 0) then
-    print *,'Error: reading adios GLL array: ',trim(array_name)
-    print *,'Please check if ADIOS file contains this array: ',trim(array_name)//"/local_dim"
-    call check_adios_err(ier,"Error adios get scalar "//trim(array_name)//"/local_dim failed")
+    print *,'Error: reading adios GLL array: ',trim(full_name)
+    print *,'Please check if ADIOS file contains this array: ',trim(full_name)
+    call check_adios_err(ier,"Error adios get scalar "//trim(full_name)//" failed")
   endif
 
   ! allow any rank to read from another rank-segment
@@ -548,15 +550,16 @@ contains
   call adios_selection_boundingbox(sel, 1, start, count)
 
   ! reads selected array
-  call adios_schedule_read(adios_handle, sel, trim(array_name) // "/array", 0, 1, array_gll, ier)
+  full_name = trim(array_name) // "/array"
+  call adios_schedule_read(adios_handle, sel, trim(full_name), 0, 1, array_gll, ier)
   if (ier /= 0 ) then
-    print *,'Error adios: scheduling read of array ',trim(array_name) // "/array",' failed'
+    print *,'Error adios: scheduling read of array ',trim(full_name),' failed'
     stop 'Error adios helper schedule read array'
   endif
 
   call adios_perform_reads(adios_handle, ier)
   if (ier /= 0 ) then
-    print *,'Error adios: performing read of array ',trim(array_name) // "/array",' failed'
+    print *,'Error adios: performing read of array ',trim(full_name),' failed'
     stop 'Error adios helper perform read array'
   endif
 
@@ -566,18 +569,35 @@ contains
 #elif defined(USE_ADIOS2)
   ! ADIOS 2
   ! gets dimension associated to array
-  call adios2_inquire_variable(v, adios_group, trim(array_name)//"/local_dim", ier)
-  call check_adios_err(ier,"Error adios2 read_adios_array_gll(): inquire variable "//trim(array_name)//"/local_dim failed")
+  full_name = trim(array_name) // "/local_dim"
+
+  ! note: might need to check in future if adding a .. // C_NULL_CHAR helps for avoiding problems with passing strings.
+  !       since we call the adio2_** fortran wrappers, this should deal with such issues.
+
+  ! one could try to use the following:
+  !
+  ! reads in local dimension
+  ! call read_adios_scalar(adios_handle,adios_group,rank,trim(full_name),local_dim)
+  !
+  ! or more explicitely, to get the local dimension:
+  call adios2_inquire_variable(v, adios_group, trim(full_name), ier)
+  call check_adios_err(ier,"Error adios2 read_adios_array_gll(): inquire variable "//trim(full_name)//" failed")
 
   if (.not. v%valid) stop 'Error adios2 variable invalid'
 
-  ! selection
+  ! selection for scalar as 1-D array single entry
+  start(1) = 1 * int(rank,kind=8)
+  count(1) = 1
+  call adios2_set_selection(v, 1, start, count, ier)
+  call check_adios_err(ier,"Error adios2 set selection for "//trim(full_name)//" failed")
+
+  ! step selection
   call adios2_set_step_selection(v, int(0,kind=8), int(1,kind=8), ier)
-  call check_adios_err(ier, "Error adios2 set step variable for "//trim(array_name)//"/local_dim failed")
+  call check_adios_err(ier, "Error adios2 set step variable for "//trim(full_name)//" failed")
 
   ! note: adios2_get here retrieves the same local_dim for everyone (from writer rank 0)
   call adios2_get(adios_handle, v, local_dim, adios2_mode_sync, ier)
-  call check_adios_err(ier,"Error adios2 get for array "//trim(array_name)//"/local_dim failed")
+  call check_adios_err(ier,"Error adios2 get for array "//trim(full_name)//" failed")
 
   ! allow any rank to read from another rank-segment
   !! checks rank
@@ -586,8 +606,9 @@ contains
 
   ! array data
   ! gets associated variable for array
-  call adios2_inquire_variable(v, adios_group, trim(array_name) // "/array", ier)
-  call check_adios_err(ier,"Error adios2 read_adios_array_gll(): inquire variable "//trim(array_name) // "/array"//" failed")
+  full_name = trim(array_name) // "/array"
+  call adios2_inquire_variable(v, adios_group, trim(full_name), ier)
+  call check_adios_err(ier,"Error adios2 read_adios_array_gll(): inquire variable "//trim(full_name)//" failed")
 
   if (.not. v%valid) stop 'Error adios2 variable invalid'
 
@@ -595,14 +616,14 @@ contains
   start(1) = local_dim * int(rank,kind=8)
   count(1) = NGLLX * NGLLY * NGLLZ * nspec
   call adios2_set_selection(v, 1, start, count, ier)
-  call check_adios_err(ier,"Error adios2 set selection for "//trim(array_name) // "/array"//" failed")
+  call check_adios_err(ier,"Error adios2 set selection for "//trim(full_name)//" failed")
 
   call adios2_set_step_selection(v, int(0,kind=8), int(1,kind=8), ier)
-  call check_adios_err(ier, "Error adios2 set step variable for "//trim(array_name) // "/array"//" failed")
+  call check_adios_err(ier, "Error adios2 set step variable for "//trim(full_name)//" failed")
 
   ! reads array data
   call adios2_get(adios_handle, v, array_gll, adios2_mode_sync, ier)
-  call check_adios_err(ier,"Error adios2 get for array "//trim(array_name) // "/array"//" failed")
+  call check_adios_err(ier,"Error adios2 get for array "//trim(full_name)//" failed")
 
 #endif
 
@@ -649,6 +670,7 @@ contains
 #elif defined(USE_ADIOS2)
   type(adios2_variable) :: v
 #endif
+  character(len=256) :: full_name
 
   TRACE_ADIOS_L2_ARG('read_adios_array_gll_check: ',trim(array_name))
 
@@ -709,7 +731,8 @@ contains
 
   ! gets dimension
   ! note: adios_get_scalar here retrieves the same local_dim for everyone (from writer rank 0)
-  call adios_get_scalar(adios_handle, trim(array_name)//"/local_dim",local_dim, ier)
+  full_name = trim(array_name) // "/local_dim"
+  call adios_get_scalar(adios_handle, trim(full_name),local_dim, ier)
   if (ier == 0) then
     ! allow any rank to read from another rank-segment
     !! checks rank
@@ -721,15 +744,16 @@ contains
     call adios_selection_boundingbox(sel, 1, start, count)
 
     ! reads selected array
-    call adios_schedule_read(adios_handle, sel, trim(array_name) // "/array",0, 1, array_gll, ier)
+    full_name = trim(array_name) // "/array"
+    call adios_schedule_read(adios_handle, sel, trim(full_name),0, 1, array_gll, ier)
     if (ier /= 0 ) then
-      print *,'Error adios: scheduling read of array ',trim(array_name) // "/array",' failed'
+      print *,'Error adios: scheduling read of array ',trim(full_name),' failed'
       stop 'Error adios helper schedule read array'
     endif
 
     call adios_perform_reads(adios_handle, ier)
     if (ier /= 0 ) then
-      print *,'Error adios: performing read of array ',trim(array_name) // "/array",' failed'
+      print *,'Error adios: performing read of array ',trim(full_name),' failed'
       stop 'Error adios helper perform read array'
     endif
 
@@ -743,18 +767,25 @@ contains
 #elif defined(USE_ADIOS2)
   ! ADIOS 2
   ! gets dimension associated to array
-  call adios2_inquire_variable(v, adios_group, trim(array_name)//"/local_dim", ier)
+  full_name = trim(array_name) // "/local_dim"
+  call adios2_inquire_variable(v, adios_group, trim(full_name), ier)
   if (ier == 0) then
 
     if (.not. v%valid) stop 'Error adios2 variable invalid'
 
-    ! selection
+    ! selection for scalar as 1-D array single entry
+    start(1) = 1 * int(rank,kind=8)
+    count(1) = 1
+    call adios2_set_selection(v, 1, start, count, ier)
+    call check_adios_err(ier,"Error adios2 set selection for "//trim(full_name)//" failed")
+
+    ! step selection
     call adios2_set_step_selection(v, int(0,kind=8), int(1,kind=8), ier)
-    call check_adios_err(ier, "Error adios2 set step variable for "//trim(array_name)//"/local_dim failed")
+    call check_adios_err(ier, "Error adios2 set step variable for "//trim(full_name)//" failed")
 
     ! note: adios2_get here retrieves the same local_dim for everyone (from writer rank 0)
     call adios2_get(adios_handle, v, local_dim, adios2_mode_sync, ier)
-    call check_adios_err(ier,"Error adios2 get for array "//trim(array_name)//"/local_dim"//"/local_dim failed")
+    call check_adios_err(ier,"Error adios2 get for array "//trim(full_name)//" failed")
 
     ! allow any rank to read from another rank-segment
     !! checks rank
@@ -763,9 +794,9 @@ contains
 
     ! array data
     ! gets associated variable for array
-    call adios2_inquire_variable(v, adios_group, trim(array_name) // "/array", ier)
-    call check_adios_err(ier, &
-                         "Error adios2 read_adios_array_gll_check(): inquire variable "//trim(array_name) // "/array"//" failed")
+    full_name = trim(array_name) // "/array"
+    call adios2_inquire_variable(v, adios_group, trim(full_name), ier)
+    call check_adios_err(ier,"Error adios2 read_adios_array_gll_check(): inquire variable "//trim(full_name)//" failed")
 
     if (.not. v%valid) stop 'Error adios2 variable invalid'
 
@@ -773,14 +804,14 @@ contains
     start(1) = local_dim * int(rank,kind=8)
     count(1) = NGLLX * NGLLY * NGLLZ * nspec
     call adios2_set_selection(v, 1, start, count, ier)
-    call check_adios_err(ier,"Error adios2 set selection for "//trim(array_name) // "/array"//" failed")
+    call check_adios_err(ier,"Error adios2 set selection for "//trim(full_name)//" failed")
 
     call adios2_set_step_selection(v, int(0,kind=8), int(1,kind=8), ier)
-    call check_adios_err(ier, "Error adios2 set step variable for "//trim(array_name) // "/array"//" failed")
+    call check_adios_err(ier, "Error adios2 set step variable for "//trim(full_name)//" failed")
 
     ! reads array data
     call adios2_get(adios_handle, v, array_gll, adios2_mode_sync, ier)
-    call check_adios_err(ier,"Error adios2 get for array "//trim(array_name) // "/array"//" failed")
+    call check_adios_err(ier,"Error adios2 get for array "//trim(full_name)//" failed")
 
     ! found and read
     iexist = 1
@@ -822,6 +853,7 @@ contains
 #elif defined(USE_ADIOS2)
   type(adios2_variable) :: v
 #endif
+  character(len=256) :: full_name
 
   TRACE_ADIOS_L2_ARG('read_adios_array_gll_int: ',trim(array_name))
 
@@ -835,9 +867,10 @@ contains
 #if defined(USE_ADIOS)
   ! ADIOS 1
   ! note: adios_get_scalar here retrieves the same local_dim for everyone (from writer rank 0)
-  call adios_get_scalar(adios_handle, trim(array_name)//"/local_dim",local_dim, ier)
+  full_name = trim(array_name) // "/local_dim"
+  call adios_get_scalar(adios_handle, trim(full_name),local_dim, ier)
   if (ier /= 0 ) then
-    print *,'Error adios: reading array ',trim(array_name)//"/local_dim",' failed'
+    print *,'Error adios: reading array ',trim(full_name),' failed'
     stop 'Error adios helper read array'
   endif
 
@@ -852,15 +885,16 @@ contains
   call adios_selection_boundingbox(sel, 1, start, count)
 
   ! reads selected array
-  call adios_schedule_read(adios_handle, sel, trim(array_name) // "/array", 0, 1, array_gll, ier)
+  full_name = trim(array_name) // "/array"
+  call adios_schedule_read(adios_handle, sel, trim(full_name), 0, 1, array_gll, ier)
   if (ier /= 0 ) then
-    print *,'Error adios: scheduling read of array ',trim(array_name) // "/array",' failed'
+    print *,'Error adios: scheduling read of array ',trim(full_name),' failed'
     stop 'Error adios helper schedule read array'
   endif
 
   call adios_perform_reads(adios_handle, ier)
   if (ier /= 0 ) then
-    print *,'Error adios: performing read of array ',trim(array_name) // "/array",' failed'
+    print *,'Error adios: performing read of array ',trim(full_name),' failed'
     stop 'Error adios helper perform read array'
   endif
 
@@ -870,18 +904,25 @@ contains
 #elif defined(USE_ADIOS2)
   ! ADIOS 2
   ! gets dimension associated to array
-  call adios2_inquire_variable(v, adios_group, trim(array_name)//"/local_dim", ier)
-  call check_adios_err(ier,"Error adios2 read_adios_array_gll_int(): inquire variable "//trim(array_name)//"/local_dim failed")
+  full_name = trim(array_name) // "/local_dim"
+  call adios2_inquire_variable(v, adios_group, trim(full_name), ier)
+  call check_adios_err(ier,"Error adios2 read_adios_array_gll_int(): inquire variable "//trim(full_name)//" failed")
 
   if (.not. v%valid) stop 'Error adios2 variable invalid'
 
-  ! selection
+  ! selection for scalar as 1-D array single entry
+  start(1) = 1 * int(rank,kind=8)
+  count(1) = 1
+  call adios2_set_selection(v, 1, start, count, ier)
+  call check_adios_err(ier,"Error adios2 set selection for "//trim(full_name)//" failed")
+
+  ! step selection
   call adios2_set_step_selection(v, int(0,kind=8), int(1,kind=8), ier)
-  call check_adios_err(ier, "Error adios2 set step variable for "//trim(array_name)//"/local_dim failed")
+  call check_adios_err(ier, "Error adios2 set step variable for "//trim(full_name)//" failed")
 
   ! note: adios2_get here retrieves the same local_dim for everyone (from writer rank 0)
   call adios2_get(adios_handle, v, local_dim, adios2_mode_sync, ier)
-  call check_adios_err(ier,"Error adios2 get for array "//trim(array_name)//"/local_dim failed")
+  call check_adios_err(ier,"Error adios2 get for array "//trim(full_name)//" failed")
 
   ! allow any rank to read from another rank-segment
   !! checks rank
@@ -890,8 +931,9 @@ contains
 
   ! array data
   ! gets associated variable for array
-  call adios2_inquire_variable(v, adios_group, trim(array_name) // "/array", ier)
-  call check_adios_err(ier,"Error adios2 read_adios_array_gll_int(): inquire variable "//trim(array_name) // "/array"//" failed")
+  full_name = trim(array_name) // "/array"
+  call adios2_inquire_variable(v, adios_group, trim(full_name), ier)
+  call check_adios_err(ier,"Error adios2 read_adios_array_gll_int(): inquire variable "//trim(full_name)//" failed")
 
   if (.not. v%valid) stop 'Error adios2 variable invalid'
 
@@ -899,14 +941,14 @@ contains
   start(1) = local_dim * int(rank,kind=8)
   count(1) = NGLLX * NGLLY * NGLLZ * nspec
   call adios2_set_selection(v, 1, start, count, ier)
-  call check_adios_err(ier,"Error adios2 set selection for "//trim(array_name) // "/array"//" failed")
+  call check_adios_err(ier,"Error adios2 set selection for "//trim(full_name)//" failed")
 
   call adios2_set_step_selection(v, int(0,kind=8), int(1,kind=8), ier)
-  call check_adios_err(ier, "Error adios2 set step variable for "//trim(array_name) // "/array"//" failed")
+  call check_adios_err(ier, "Error adios2 set step variable for "//trim(full_name)//" failed")
 
   ! reads array data
   call adios2_get(adios_handle, v, array_gll, adios2_mode_sync, ier)
-  call check_adios_err(ier,"Error adios2 get for array "//trim(array_name) // "/array"//" failed")
+  call check_adios_err(ier,"Error adios2 get for array "//trim(full_name)//" failed")
 
 #endif
 
@@ -945,6 +987,7 @@ contains
 #elif defined(USE_ADIOS2)
   type(adios2_variable) :: v
 #endif
+  character(len=256) :: full_name
 
   TRACE_ADIOS_L2_ARG('read_adios_array_1d: ',trim(array_name))
 
@@ -963,9 +1006,10 @@ contains
 #if defined(USE_ADIOS)
   ! ADIOS 1
   ! gets local_dim metadata
-  call adios_get_scalar(adios_handle, trim(array_name)//"/local_dim",local_dim, ier)
+  full_name = trim(array_name) // "/local_dim"
+  call adios_get_scalar(adios_handle, trim(full_name),local_dim, ier)
   if (ier /= 0 ) then
-    print *,'Error adios: reading array ',trim(array_name)//"/local_dim",' failed'
+    print *,'Error adios: reading array ',trim(full_name),' failed'
     stop 'Error adios helper read array'
   endif
 
@@ -984,15 +1028,16 @@ contains
   call adios_selection_boundingbox(sel, 1, start, count)
 
   ! reads selected array
-  call adios_schedule_read(adios_handle, sel, trim(array_name) // "/array", 0, 1, array_1d, ier)
+  full_name = trim(array_name) // "/array"
+  call adios_schedule_read(adios_handle, sel, trim(full_name), 0, 1, array_1d, ier)
   if (ier /= 0 ) then
-    print *,'Error adios: scheduling read of array ',trim(array_name) // "/array",' failed'
+    print *,'Error adios: scheduling read of array ',trim(full_name),' failed'
     stop 'Error adios helper schedule read array'
   endif
 
   call adios_perform_reads(adios_handle, ier)
   if (ier /= 0 ) then
-    print *,'Error adios: performing read of array ',trim(array_name) // "/array",' failed'
+    print *,'Error adios: performing read of array ',trim(full_name),' failed'
     stop 'Error adios helper perform read array'
   endif
 
@@ -1002,18 +1047,25 @@ contains
 #elif defined(USE_ADIOS2)
   ! ADIOS 2
   ! gets dimension associated to array
-  call adios2_inquire_variable(v, adios_group, trim(array_name)//"/local_dim", ier)
-  call check_adios_err(ier,"Error adios2 read_adios_array_1d(): inquire variable "//trim(array_name)//"/local_dim failed")
+  full_name = trim(array_name) // "/local_dim"
+  call adios2_inquire_variable(v, adios_group, trim(full_name), ier)
+  call check_adios_err(ier,"Error adios2 read_adios_array_1d(): inquire variable "//trim(full_name)//" failed")
 
   if (.not. v%valid) stop 'Error adios2 variable invalid'
 
-  ! selection
+  ! selection for scalar as 1-D array single entry
+  start(1) = 1 * int(rank,kind=8)
+  count(1) = 1
+  call adios2_set_selection(v, 1, start, count, ier)
+  call check_adios_err(ier,"Error adios2 set selection for "//trim(full_name)//" failed")
+
+  ! step selection
   call adios2_set_step_selection(v, int(0,kind=8), int(1,kind=8), ier)
-  call check_adios_err(ier, "Error adios2 set step variable for "//trim(array_name)//"/local_dim failed")
+  call check_adios_err(ier, "Error adios2 set step variable for "//trim(full_name)//" failed")
 
   ! note: adios2_get here retrieves the same local_dim for everyone (from writer rank 0)
   call adios2_get(adios_handle, v, local_dim, adios2_mode_sync, ier)
-  call check_adios_err(ier,"Error adios2 get for array "//trim(array_name)//"/local_dim"//"/local_dim failed")
+  call check_adios_err(ier,"Error adios2 get for array "//trim(full_name)//" failed")
 
   ! allow any rank to read from another rank-segment
   !! checks rank
@@ -1022,8 +1074,9 @@ contains
 
   ! array data
   ! gets associated variable for array
-  call adios2_inquire_variable(v, adios_group, trim(array_name) // "/array", ier)
-  call check_adios_err(ier,"Error adios2 read_adios_array_1d(): inquire variable "//trim(array_name) // "/array"//" failed")
+  full_name = trim(array_name) // "/array"
+  call adios2_inquire_variable(v, adios_group, trim(full_name), ier)
+  call check_adios_err(ier,"Error adios2 read_adios_array_1d(): inquire variable "//trim(full_name)//" failed")
 
   if (.not. v%valid) stop 'Error adios2 variable invalid'
 
@@ -1031,14 +1084,14 @@ contains
   start(1) = local_dim * int(rank,kind=8)
   count(1) = int(nsize,kind=8)
   call adios2_set_selection(v, 1, start, count, ier)
-  call check_adios_err(ier,"Error adios2 set selection for "//trim(array_name) // "/array"//" failed")
+  call check_adios_err(ier,"Error adios2 set selection for "//trim(full_name)//" failed")
 
   call adios2_set_step_selection(v, int(0,kind=8), int(1,kind=8), ier)
-  call check_adios_err(ier, "Error adios2 set step variable for "//trim(array_name) // "/array"//" failed")
+  call check_adios_err(ier, "Error adios2 set step variable for "//trim(full_name)//" failed")
 
   ! reads array data
   call adios2_get(adios_handle, v, array_1d, adios2_mode_sync, ier)
-  call check_adios_err(ier,"Error adios2 get for array "//trim(array_name) // "/array"//" failed")
+  call check_adios_err(ier,"Error adios2 get for array "//trim(full_name)//" failed")
 
 #endif
 
@@ -1077,6 +1130,7 @@ contains
 #elif defined(USE_ADIOS2)
   type(adios2_variable) :: v
 #endif
+  character(len=256) :: full_name
 
   TRACE_ADIOS_L2_ARG('read_adios_array_1d_int: ',trim(array_name))
 
@@ -1089,9 +1143,10 @@ contains
 
 #if defined(USE_ADIOS)
   ! ADIOS 1
-  call adios_get_scalar(adios_handle, trim(array_name)//"/local_dim",local_dim, ier)
+  full_name = trim(array_name) // "/local_dim"
+  call adios_get_scalar(adios_handle, trim(full_name),local_dim, ier)
   if (ier /= 0 ) then
-    print *,'Error adios: reading array ',trim(array_name)//"/local_dim",' failed'
+    print *,'Error adios: reading array ',trim(full_name),' failed'
     stop 'Error adios helper read array'
   endif
 
@@ -1101,15 +1156,16 @@ contains
   call adios_selection_boundingbox(sel, 1, start, count)
 
   ! reads selected array
-  call adios_schedule_read(adios_handle, sel, trim(array_name) // "/array", 0, 1, array_1d, ier)
+  full_name = trim(array_name) // "/array"
+  call adios_schedule_read(adios_handle, sel, trim(full_name), 0, 1, array_1d, ier)
   if (ier /= 0 ) then
-    print *,'Error adios: scheduling read of array ',trim(array_name) // "/array",' failed'
+    print *,'Error adios: scheduling read of array ',trim(full_name),' failed'
     stop 'Error adios helper schedule read array'
   endif
 
   call adios_perform_reads(adios_handle, ier)
   if (ier /= 0 ) then
-    print *,'Error adios: performing read of array ',trim(array_name) // "/array",' failed'
+    print *,'Error adios: performing read of array ',trim(full_name),' failed'
     stop 'Error adios helper perform read array'
   endif
 
@@ -1119,23 +1175,31 @@ contains
 #elif defined(USE_ADIOS2)
   ! ADIOS 2
   ! gets dimension associated to array
-  call adios2_inquire_variable(v, adios_group, trim(array_name)//"/local_dim", ier)
-  call check_adios_err(ier,"Error adios2 read_adios_array_1d_int(): inquire variable "//trim(array_name)//"/local_dim failed")
+  full_name = trim(array_name) // "/local_dim"
+  call adios2_inquire_variable(v, adios_group, trim(full_name), ier)
+  call check_adios_err(ier,"Error adios2 read_adios_array_1d_int(): inquire variable "//trim(full_name)//" failed")
 
   if (.not. v%valid) stop 'Error adios2 variable invalid'
 
-  ! selection
+  ! selection for scalar as 1-D array single entry
+  start(1) = 1 * int(rank,kind=8)
+  count(1) = 1
+  call adios2_set_selection(v, 1, start, count, ier)
+  call check_adios_err(ier,"Error adios2 set selection for "//trim(full_name)//" failed")
+
+  ! step selection
   call adios2_set_step_selection(v, int(0,kind=8), int(1,kind=8), ier)
-  call check_adios_err(ier, "Error adios2 set step variable for "//trim(array_name)//"/local_dim failed")
+  call check_adios_err(ier, "Error adios2 set step variable for "//trim(full_name)//" failed")
 
   ! note: adios2_get here retrieves the same local_dim for everyone (from writer rank 0)
   call adios2_get(adios_handle, v, local_dim, adios2_mode_sync, ier)
-  call check_adios_err(ier,"Error adios2 get for array "//trim(array_name)//"/local_dim failed")
+  call check_adios_err(ier,"Error adios2 get for array "//trim(full_name)//" failed")
 
   ! array data
   ! gets associated variable for array
-  call adios2_inquire_variable(v, adios_group, trim(array_name) // "/array", ier)
-  call check_adios_err(ier,"Error adios2 read_adios_array_1d_int(): inquire variable "//trim(array_name) // "/array"//" failed")
+  full_name = trim(array_name) // "/array"
+  call adios2_inquire_variable(v, adios_group, trim(full_name), ier)
+  call check_adios_err(ier,"Error adios2 read_adios_array_1d_int(): inquire variable "//trim(full_name)//" failed")
 
   if (.not. v%valid) stop 'Error adios2 variable invalid'
 
@@ -1143,14 +1207,14 @@ contains
   start(1) = local_dim * int(rank,kind=8)
   count(1) = int(nsize,kind=8)
   call adios2_set_selection(v, 1, start, count, ier)
-  call check_adios_err(ier,"Error adios2 set selection for "//trim(array_name) // "/array"//" failed")
+  call check_adios_err(ier,"Error adios2 set selection for "//trim(full_name)//" failed")
 
   call adios2_set_step_selection(v, int(0,kind=8), int(1,kind=8), ier)
-  call check_adios_err(ier, "Error adios2 set step variable for "//trim(array_name) // "/array"//" failed")
+  call check_adios_err(ier, "Error adios2 set step variable for "//trim(full_name)//" failed")
 
   ! reads array data
   call adios2_get(adios_handle, v, array_1d, adios2_mode_sync, ier)
-  call check_adios_err(ier,"Error adios2 get for array "//trim(array_name) // "/array"//" failed")
+  call check_adios_err(ier,"Error adios2 get for array "//trim(full_name)//" failed")
 
 #endif
 
