@@ -4,7 +4,7 @@
 #       this is using C as a base and installs gfortran in the test environment
 
 language: c
-dist: trusty
+dist: xenial
 sudo: required
 
 os: linux
@@ -25,7 +25,6 @@ env:
     #   TESTFLAGS    - flags used for configuration
     #   TESTCOV      - determines whether or not (0/1) code coverage flags are used
     #   CUDA         - flag for compilation with CUDA
-    #   CUDA_VERSION - specifies CUDA toolkit version
 
     # code coverage: using coverage flags
     - TESTID=1 TESTDIR=1 TESTCOV=1 TESTFLAGS="" CUDA=false
@@ -70,10 +69,10 @@ env:
     #- TESTID=14 TESTDIR=6 TESTCOV=0 TESTFLAGS="--enable-vectorization" CUDA=false
 
     # regional s40rts compilation w/ CUDA
-    - TESTID=15 TESTDIR=7 TESTCOV=0 TESTFLAGS="--with-cuda=cuda5" CUDA=true CUDA_VERSION=6.5-14
+    - TESTID=15 TESTDIR=7 TESTCOV=0 TESTFLAGS="--with-cuda=cuda5" CUDA=true
 
     # regional s40rts compilation w/ OpenCL (provided from CUDA library)
-    - TESTID=16 TESTDIR=7 TESTCOV=0 TESTFLAGS="--with-opencl" CUDA=true CUDA_VERSION=6.5-14 OPENCL=true
+    - TESTID=16 TESTDIR=7 TESTCOV=0 TESTFLAGS="--with-opencl" CUDA=true OPENCL=true
 
     # regional_small_adjoint - pure adjoint example
     #- TESTID=17 TESTDIR=8 TESTCOV=0 TESTFLAGS="" CUDA=false

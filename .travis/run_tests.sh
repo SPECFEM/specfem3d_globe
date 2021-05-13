@@ -178,6 +178,9 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## testing point_force
   ##
+  echo "##################################################################"
+  echo "cd EXAMPLES/point_force/"
+  echo
   cd EXAMPLES/point_force/
   sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
   ./run_this_example.sh
@@ -191,6 +194,9 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## testing regular_kernel
   ##
+  echo "##################################################################"
+  echo "cd EXAMPLES/regular_kernel/"
+  echo
   cd EXAMPLES/regular_kernel/
   sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
   ./run_this_example.sh
@@ -204,6 +210,9 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "2" ]; then
   ##
   ## testing global_small
   ##
+  echo "##################################################################"
+  echo "cd EXAMPLES/global_small/"
+  echo
   cd EXAMPLES/global_small/
   sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
   ./run_this_example.sh
@@ -217,6 +226,9 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "2" ]; then
   ##
   ## testing regional_sgloberani
   ##
+  echo "##################################################################"
+  echo "cd EXAMPLES/regional_sgloberani/"
+  echo
   cd EXAMPLES/regional_sgloberani/
   sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
   ./run_this_example.sh
@@ -230,6 +242,9 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "2" ]; then
   ##
   ## testing regional s40rts
   ##
+  echo "##################################################################"
+  echo "EXAMPLES/regional_s40rts/"
+  echo
   cd EXAMPLES/regional_s40rts/
   sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
   ./run_this_example.sh
@@ -243,6 +258,9 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## testing mars regional
   ##
+  echo "##################################################################"
+  echo "EXAMPLES/mars_regional/"
+  echo
   cd EXAMPLES/mars_regional/
   sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
   ./run_this_example.sh
@@ -256,6 +274,9 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## testing moon global
   ##
+  echo "##################################################################"
+  echo "EXAMPLES/moon_global/"
+  echo
   cd EXAMPLES/moon_global/
   sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
   ./run_this_example.sh
@@ -269,6 +290,9 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## testing regional LDDRK
   ##
+  echo "##################################################################"
+  echo "EXAMPLES/regional_Greece_small_LDDRK/"
+  echo
   cd EXAMPLES/regional_Greece_small_LDDRK/
   sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
   ./run_this_example.sh
@@ -282,6 +306,9 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## testing regional noise
   ##
+  echo "##################################################################"
+  echo "EXAMPLES/regional_Greece_noise_small/"
+  echo
   cd EXAMPLES/regional_Greece_noise_small/
   sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.1:" DATA/Par_file
   sed -i "s:2999:199:g" run_this_example.kernel.sh
