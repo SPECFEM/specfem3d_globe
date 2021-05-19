@@ -917,14 +917,15 @@
         call compute_gradient_crust_mantle(b_veloc_crust_mantle, b_veloc_grad, ispec)
       else
         ! if using source-source Hessian, set the b_veloc_grad same as the wavefield
-        b_veloc_grad = veloc_grad
+        b_veloc_grad(:,:,:,:,:) = veloc_grad(:,:,:,:,:)
       endif
 
-      do k=1,NGLLZ
-        do j=1, NGLLY
-          do i=1, NGLLX
-            vgrad = veloc_grad(:, :, i, j, k)
-            b_vgrad = b_veloc_grad(:, :, i, j, k)
+      do k = 1,NGLLZ
+        do j = 1,NGLLY
+          do i = 1,NGLLX
+            vgrad(:,:) = veloc_grad(:, :, i, j, k)
+            b_vgrad(:,:) = b_veloc_grad(:, :, i, j, k)
+
             ! hess_rho = Vx,x * b_Vx,x + Vy,y * b_Vy,y + Vz,z * b_Vz,z
             hess_rho = vgrad(1, 1) * b_vgrad(1, 1) &
                      + vgrad(2, 2) * b_vgrad(2, 2) &
@@ -946,17 +947,14 @@
                        (-b_vgrad(1, 1)    + 2.0*b_vgrad(2, 2) - b_vgrad(3, 3)    )   &
                      + (-vgrad(1, 1)      - vgrad(2, 2)       + 2.0*vgrad(3, 3)  ) * &
                        (-b_vgrad(1, 1)    - b_vgrad(2, 2)     + 2.0*b_vgrad(3, 3))) * FOUR_NINTH
+
+            hess_rho_kl_crust_mantle(i, j, k, ispec) = hess_rho_kl_crust_mantle(i, j, k, ispec) + deltat * hess_rho
+            hess_kappa_kl_crust_mantle(i, j, k, ispec) = hess_kappa_kl_crust_mantle(i, j, k, ispec) + deltat * hess_kappa
+            hess_mu_kl_crust_mantle(i, j, k, ispec) = hess_mu_kl_crust_mantle(i, j, k, ispec) + deltat * hess_mu
+
           enddo
         enddo
       enddo
-
-      hess_rho_kl_crust_mantle(i, j, k, ispec) = &
-        hess_rho_kl_crust_mantle(i, j, k, ispec) + deltat * hess_rho
-      hess_kappa_kl_crust_mantle(i, j, k, ispec) = &
-        hess_kappa_kl_crust_mantle(i, j, k, ispec) + deltat * hess_kappa
-      hess_mu_kl_crust_mantle(i, j, k, ispec) = &
-        hess_mu_kl_crust_mantle(i, j, k, ispec) + deltat * hess_mu
-
     enddo  ! end ispec
 
   else
