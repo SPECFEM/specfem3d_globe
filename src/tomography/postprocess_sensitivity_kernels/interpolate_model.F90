@@ -87,8 +87,11 @@
   ! model type
   ! isotropic model parameters (vp,vs,rho) or
   ! transversely isotropic model parameters (vpv,vph,vsv,vsh,eta,rho)
+  ! transversely isotropic model parameters (vpv,vph,vsv,vsh,eta,rho)
+  ! azimuthally anisotropic model parameters (vpv,vph,vsv,vsh,eta,rho,mu0,Gc_prime,Gs_prime)
   ! defaults: TI models
   logical :: USE_TRANSVERSE_ISOTROPY = .true.
+  logical :: USE_AZIMUTHAL_ANISOTROPY = .false.
 
   ! shear attenuation
   logical :: USE_ATTENUATION_Q = .false.
@@ -176,7 +179,7 @@
 
   ! model
   integer :: nparams
-  character(len=16),dimension(7) :: fname
+  character(len=16),dimension(10) :: fname
   character(len=MAX_STRING_LEN) :: m_file
   character(len=MAX_STRING_LEN) :: solver_file
 
@@ -251,7 +254,9 @@
         print *,'                              = 1  - uses midpoints for search of closest element (default)'
         print *,'   (optional) nchunks - NCHUNKS (1,2,6) of old-model'
         print *,'   (optional) model_p - "iso" takes isotropic (vp,vs,rho) instead of transversely isotropic (vpv,vph,..) model,'
-        print *,'                        "att" adds Q model (qmu) parameter, "iso_att" takes isotropic + Q model'
+        print *,'                        "tiso_att" adds Q model (qmu) parameter, "iso_att" takes isotropic + Q model'
+        print *,'                        "azi" takes azimuthally anisotropic (vpv, vph, ..., mu0, Gc_prime, Gs_prime) model,'
+        print *,'                        "azi_att" adds Q model (qmu) parameter to azimuthally anisotropic model'
         print *,' '
         stop ' Reenter command line options'
       endif
@@ -314,10 +319,23 @@
     if (i == 7 .and. len_trim(arg) > 0) then
       if (trim(arg) == 'iso') then
         USE_TRANSVERSE_ISOTROPY = .false.
+        USE_AZIMUTHAL_ANISOTROPY = .false.
+        USE_ATTENUATION_Q = .false.
       else if (trim(arg) == 'iso_att') then
         USE_TRANSVERSE_ISOTROPY = .false.
+        USE_AZIMUTHAL_ANISOTROPY = .false.
         USE_ATTENUATION_Q = .true.
-      else if (trim(arg) == 'att') then
+      else if (trim(arg) == 'tiso_att') then
+        USE_TRANSVERSE_ISOTROPY = .true.
+        USE_AZIMUTHAL_ANISOTROPY = .false.
+        USE_ATTENUATION_Q = .true.
+      else if (trim(arg) == 'azi') then
+        USE_TRANSVERSE_ISOTROPY = .false.
+        USE_AZIMUTHAL_ANISOTROPY = .true.
+        USE_ATTENUATION_Q = .false.
+      else if (trim(arg) == 'azi_att') then
+        USE_TRANSVERSE_ISOTROPY = .false.
+        USE_AZIMUTHAL_ANISOTROPY = .true.
         USE_ATTENUATION_Q = .true.
       endif
     endif
@@ -538,6 +556,15 @@
     fname(1:6) = (/character(len=16) :: "vpv","vph","vsv","vsh","eta","rho"/)
 #endif
 
+  else if (USE_AZIMUTHAL_ANISOTROPY) then
+     nparams = 9
+
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
+     fname(1:9) = (/character(len=16) :: "reg1/vpv","reg1/vph","reg1/vsv","reg1/vsh","reg1/eta","reg1/rho","reg1/mu0","reg1/Gc_prime","reg1/Gs_prime"/)
+#else
+     fname(1:9) = (/character(len=16) :: "vpv","vph","vsv","vsh","eta","rho","mu0","Gc_prime","Gs_prime"/)
+#endif
+
   else
     ! isotropic model
     nparams = 3
@@ -554,8 +581,8 @@
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
   ! adios only for model_gll.bp implemented which uses vpv,vph,..,rho
-  if (nparams /= 6) &
-    stop 'ADIOS version only works for purely transversely isotropic model file model_gll so far...'
+  if (nparams /= 6 .and. nparams /= 9) &
+    stop 'ADIOS version only works for purely transversely isotropic and azimuthally anisotropic model file model_gll so far...'
 #endif
 
   ! console output
@@ -577,6 +604,8 @@
     print *
     if (USE_TRANSVERSE_ISOTROPY) then
       print *,'model parameters:',nparams,' - transversely isotropic model'
+    else if (USE_AZIMUTHAL_ANISOTROPY) then
+      print *,'model parameters:',nparams,' - azimuthally anisotropic model'
     else
       print *,'model parameters:',nparams,' - isotropic model'
     endif
