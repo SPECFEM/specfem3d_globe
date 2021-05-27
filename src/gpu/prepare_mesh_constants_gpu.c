@@ -2290,7 +2290,7 @@ void FC_FUNC_ (prepare_crust_mantle_device,
 
   GPU_ERROR_CHECKING ("prepare_crust_mantle_device");
   // debug
-  //printf("%d rank - prepare_crust_mantle done",mp->myrank);
+  //printf("debug: %d rank - prepare_crust_mantle done\n",mp->myrank);
 }
 
 
@@ -2332,6 +2332,18 @@ void FC_FUNC_ (prepare_outer_core_device,
 
   size_t size_padded = NGLL3_PADDED * (mp->NSPEC_OUTER_CORE);
   size_t size_glob = mp->NGLOB_OUTER_CORE;
+
+  // checks if anything to do
+  if (size_padded == 0) {
+    mp->num_phase_ispec_outer_core = 0;
+    mp->nspec_outer_outer_core = 0;
+    mp->nspec_inner_outer_core = 0;
+    mp->nspec2D_top_outer_core = 0;
+    mp->nspec2D_bottom_outer_core = 0;
+    mp->num_colors_outer_outer_core = 0;
+    mp->num_colors_inner_outer_core = 0;
+    return;
+  }
 
   // mesh
   gpuMalloc_realw (&mp->d_xix_outer_core, size_padded);
@@ -2633,6 +2645,8 @@ void FC_FUNC_ (prepare_outer_core_device,
   gpuSynchronize();
 
   GPU_ERROR_CHECKING ("prepare_outer_core_device");
+  // debug
+  //printf("debug: %d rank - prepare_outer_core_device done\n",mp->myrank);
 }
 
 /*----------------------------------------------------------------------------------------------- */
@@ -2670,6 +2684,16 @@ void FC_FUNC_ (prepare_inner_core_device,
   /* Assuming NGLLX=5. Padded is then 128 (5^3+3) */
   size_t size_padded = NGLL3_PADDED * (mp->NSPEC_INNER_CORE);
   size_t size_glob = mp->NGLOB_INNER_CORE;
+
+  // checks if anything to do
+  if (size_padded == 0) {
+    mp->num_phase_ispec_inner_core = 0;
+    mp->nspec_outer_inner_core = 0;
+    mp->nspec_inner_inner_core = 0;
+    mp->num_colors_outer_inner_core = 0;
+    mp->num_colors_inner_inner_core = 0;
+    return;
+  }
 
   // mesh
   gpuMalloc_realw (&mp->d_xix_inner_core, size_padded);
@@ -3094,6 +3118,8 @@ void FC_FUNC_ (prepare_inner_core_device,
   gpuSynchronize();
 
   GPU_ERROR_CHECKING ("prepare_inner_core_device");
+  // debug
+  //printf("debug: %d rank - prepare_inner_core_device done\n",mp->myrank);
 }
 
 /*----------------------------------------------------------------------------------------------- */

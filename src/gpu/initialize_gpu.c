@@ -72,6 +72,7 @@
 #ifdef USE_MESH_COLORING_GPU
 #pragma message ("\n\nCompiling with: USE_MESH_COLORING_GPU enabled\n")
 #endif
+
 #if ENABLE_VERY_SLOW_ERROR_CHECKING == 1
 #pragma message ("\n\nCompiling with: ENABLE_VERY_SLOW_ERROR_CHECKING enabled\n")
 #endif
@@ -83,6 +84,9 @@
 #endif
 #if DEBUG_BACKWARD_SIMULATIONS == 1
 #pragma message ("\n\nCompiling with: DEBUG_BACKWARD_SIMULATIONS enabled\n")
+#endif
+#ifdef WITH_MPI
+#pragma message ("\n\nCompiling with: WITH_MPI enabled\n")
 #endif
 
 // debugging
