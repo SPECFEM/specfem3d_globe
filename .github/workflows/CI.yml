@@ -21,10 +21,12 @@ jobs:
       run: |
         sudo apt update
         sudo apt install -yq --no-install-recommends gfortran g++ openmpi-bin libopenmpi-dev
-        echo "compiler versions:" ${FC} ${MPIFC} ${CC}
+        echo ""
+        echo "compiler versions:"
         gcc --version
         gfortran --version
         mpif90 --version
+        echo ""
         export TERM=xterm
         echo "exports:"
         export
@@ -51,10 +53,12 @@ jobs:
         brew cleanup
         brew reinstall gcc  # need gfortran (symlink to gfortran-10)
         brew install hwloc openmpi
-        echo "compiler versions:" ${FC} ${MPIFC} ${CC}
+        echo ""
+        echo "compiler versions:"
         gcc --version
         gfortran --version
         mpif90 --version
+        echo ""
         export TERM=xterm
         echo "exports:"
         export
@@ -67,6 +71,44 @@ jobs:
       run: make -j2 all
 
     # fails due to MPI issue on virtual nodes
+    #- name: make tests
+    #  run: make tests
+
+  linuxCheck-Intel:
+    name: Test Intel on ubuntu-20.04
+    runs-on: ubuntu-20.04
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install packages
+      run: |
+        wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+        sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+        sudo echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
+        sudo apt-get update
+        sudo apt-get install -y intel-oneapi-compiler-fortran intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
+        sudo apt-get install -y --no-install-recommends openmpi-bin libopenmpi-dev
+        echo ""
+        source /opt/intel/oneapi/setvars.sh
+        echo ""
+        echo "compiler versions:"
+        icc --version
+        ifort --version
+        mpifort --version
+        mpif90 --version
+        echo ""
+        export TERM=xterm
+        echo "exports:"
+        export
+        echo ""
+
+    - name: configure
+      run: ./configure FC=ifort CC=icc MPIF90=mpifort
+
+    - name: make
+      run: make -j2 all
+
     #- name: make tests
     #  run: make tests
 
