@@ -91,13 +91,18 @@ jobs:
       run: |
         wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
         sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+        echo ""
         sudo echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
         sudo apt-get update
-        sudo apt-get install -y intel-oneapi-compiler-fortran intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
-        sudo apt-get install -y --no-install-recommends openmpi-bin libopenmpi-dev
+        echo "packages intel oneapi:"
+        sudo apt-get install -y intel-oneapi-compiler-fortran intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic intel-oneapi-mpi
+        echo ""
+        sudo apt-get install -y intel-hpckit
         echo ""
         source /opt/intel/oneapi/setvars.sh
         echo ""
+        #echo "packages openmpi:"
+        #sudo apt-get install -y --no-install-recommends openmpi-bin libopenmpi-dev
         echo "compiler versions:"
         echo "icc --version"
         icc --version
