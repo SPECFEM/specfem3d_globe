@@ -114,7 +114,9 @@ jobs:
         echo ""
 
     - name: configure
-      run: ./configure FC=ifort CC=icc MPIF90=mpiifort
+      run: |
+        ./configure FC=ifort CC=icc MPIF90=mpiifort
+        cat config.log
 
     - name: make
       run: make -j2 all
