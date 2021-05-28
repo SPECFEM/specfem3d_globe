@@ -87,7 +87,15 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    - name: Cache Intel oneapi packages
+      id: cache-intel-oneapi
+      uses: actions/cache@v2
+      with:
+        path: /opt/intel/oneapi
+        key: install-${{ runner.os }}-all
+
     - name: Install packages
+      if: steps.cache-intel-oneapi.outputs.cache-hit != 'true'
       run: |
         wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
         sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
@@ -122,9 +130,12 @@ jobs:
 
     - name: configure
       run: |
-        #source /opt/intel/oneapi/setvars.sh
+        source /opt/intel/oneapi/setvars.sh
+        which ifort
+        which icc
+        which mpiifort
+        echo ""
         ./configure FC=ifort CC=icc MPIF90=mpiifort
-        cat config.log
 
     - name: make
       run: make -j2 all
