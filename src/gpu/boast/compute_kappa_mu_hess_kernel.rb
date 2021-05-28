@@ -24,7 +24,7 @@ module BOAST
                        d_gammay = Real("d_gammay", :dir => :in, :dim => [Dim()]),
                        d_gammaz = Real("d_gammaz", :dir => :in, :dim => [Dim()])]
     v.push sh_hprime_xx = Real("sh_hprime_xx", :dir => :in, :dim => [Dim(ngll2)], :local => true)
-		v.push fgrad_loc = Real("fgrad_loc", :dir => :out, :dim => [Dim(9)], :register => true)
+    v.push fgrad_loc = Real("fgrad_loc", :dir => :out, :dim => [Dim(9)], :register => true)
 
     sub = Procedure(function_name, v, :local => true) {
       decl tx = Int("tx")
@@ -55,7 +55,7 @@ module BOAST
       print k === tx/ngll2
       print j === (tx-k*ngll2)/ngllx
       print i === tx - k*ngll2 - j*ngllx
-			comment()
+      comment()
 
       tempanl.flatten.each { |t|
         print t === 0.0
@@ -93,20 +93,20 @@ module BOAST
       }
       comment()
 
-			print fgrad_loc[0] === dfdl[0][0];
-			print fgrad_loc[1] === dfdl[0][1];
-			print fgrad_loc[2] === dfdl[0][2];
-			print fgrad_loc[3] === dfdl[1][0];
-			print fgrad_loc[4] === dfdl[1][1];
-			print fgrad_loc[5] === dfdl[1][2];
-			print fgrad_loc[6] === dfdl[2][0];
+      print fgrad_loc[0] === dfdl[0][0];
+      print fgrad_loc[1] === dfdl[0][1];
+      print fgrad_loc[2] === dfdl[0][2];
+      print fgrad_loc[3] === dfdl[1][0];
+      print fgrad_loc[4] === dfdl[1][1];
+      print fgrad_loc[5] === dfdl[1][2];
+      print fgrad_loc[6] === dfdl[2][0];
       print fgrad_loc[7] === dfdl[2][1];
-			print fgrad_loc[8] === dfdl[2][2];
+      print fgrad_loc[8] === dfdl[2][2];
     }
     return sub
   end
 
-	def BOAST::compute_kappa_mu_hess_kernel(ref = true, n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128)
+  def BOAST::compute_kappa_mu_hess_kernel(ref = true, n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128)
     push_env( :array_start => 0 )
     kernel = CKernel::new
 
@@ -238,5 +238,5 @@ module BOAST
     pop_env( :array_start )
     kernel.procedure = p
     return kernel
-	end
+  end
 end
