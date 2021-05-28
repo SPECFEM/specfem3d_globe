@@ -94,15 +94,12 @@ jobs:
         echo ""
         sudo echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
         sudo apt-get update
-        echo "packages intel oneapi:"
-        sudo apt-get install -y intel-oneapi-compiler-fortran intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic intel-oneapi-mpi
         echo ""
-        sudo apt-get install -y intel-hpckit
+        echo "packages intel oneapi:"
+        sudo apt-get install -y intel-oneapi-compiler-fortran intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic intel-oneapi-mpi intel-oneapi-mpi-devel
         echo ""
         source /opt/intel/oneapi/setvars.sh
         echo ""
-        #echo "packages openmpi:"
-        #sudo apt-get install -y --no-install-recommends openmpi-bin libopenmpi-dev
         echo "compiler versions:"
         echo "icc --version"
         icc --version
