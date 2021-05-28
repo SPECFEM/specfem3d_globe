@@ -118,24 +118,22 @@ jobs:
         echo "mpif90 --version"
         mpif90 --version
         echo ""
+        export TERM=xterm
+        echo "exports:"
+        export
+        echo ""
+        which ifort
+        which icc
+        which mpiifort
+        echo ""
         printenv >> $GITHUB_ENV
         echo "CXX=icpc" >> $GITHUB_ENV
         echo "CC=icc" >> $GITHUB_ENV
         echo "FC=ifort" >> $GITHUB_ENV
         echo ""
-        export TERM=xterm
-        echo "exports:"
-        export
-        echo ""
 
     - name: configure
-      run: |
-        source /opt/intel/oneapi/setvars.sh
-        which ifort
-        which icc
-        which mpiifort
-        echo ""
-        ./configure FC=ifort CC=icc MPIF90=mpiifort
+      run: ./configure FC=ifort CC=icc MPIF90=mpiifort
 
     - name: make
       run: make -j2 all
