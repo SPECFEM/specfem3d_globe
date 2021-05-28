@@ -117,7 +117,7 @@ or use different CL flags:
 CLFLAGS=-cl-fast-relaxed-math ruby kernels.rb -c
 ```
 
-That should be the default in SPECFEM3D (even if for now if seems the default is no flags for OpenCL, which gives a certain advantage to CUDA).
+That should be the default in SPECFEM3D (even if for now it seems the default is no flags for OpenCL, which gives a certain advantage to CUDA).
 
 If you have a problem of platform selection or want to restrict the test to 1 kernel:
 ```

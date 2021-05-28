@@ -15,7 +15,7 @@ jobs:
         os: [ubuntu-latest,ubuntu-16.04]
 
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
 
     - name: Install packages
       run: |
@@ -23,8 +23,11 @@ jobs:
         sudo apt install -yq --no-install-recommends gfortran g++ openmpi-bin libopenmpi-dev
         echo ""
         echo "compiler versions:"
+        echo "gcc --version"
         gcc --version
+        echo "gfortran --version"
         gfortran --version
+        echo "mpif90 --version"
         mpif90 --version
         echo ""
         export TERM=xterm
@@ -46,7 +49,7 @@ jobs:
     runs-on: macos-latest
 
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
 
     - name: Install dependencies
       run: |
@@ -55,8 +58,11 @@ jobs:
         brew install hwloc openmpi
         echo ""
         echo "compiler versions:"
+        echo "gcc --version"
         gcc --version
+        echo "gfortran --version"
         gfortran --version
+        echo "mpif90  --version"
         mpif90 --version
         echo ""
         export TERM=xterm
@@ -93,9 +99,13 @@ jobs:
         source /opt/intel/oneapi/setvars.sh
         echo ""
         echo "compiler versions:"
+        echo "icc --version"
         icc --version
+        echo "ifort --version"
         ifort --version
-        mpifort --version
+        echo "mpiifort --version"
+        mpiifort --version
+        echo "mpif90 --version"
         mpif90 --version
         echo ""
         export TERM=xterm
@@ -104,7 +114,7 @@ jobs:
         echo ""
 
     - name: configure
-      run: ./configure FC=ifort CC=icc MPIF90=mpifort
+      run: ./configure FC=ifort CC=icc MPIF90=mpiifort
 
     - name: make
       run: make -j2 all
