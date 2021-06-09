@@ -560,9 +560,11 @@
      nparams = 9
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
-     fname(1:9) = (/character(len=16) :: "reg1/vpv","reg1/vph","reg1/vsv","reg1/vsh","reg1/eta","reg1/rho","reg1/mu0","reg1/Gc_prime","reg1/Gs_prime"/)
+     fname(1:9) = (/character(len=16) :: "reg1/vpv","reg1/vph","reg1/vsv","reg1/vsh","reg1/eta","reg1/rho", &
+                                         "reg1/mu0","reg1/Gc_prime","reg1/Gs_prime" /)
 #else
-     fname(1:9) = (/character(len=16) :: "vpv","vph","vsv","vsh","eta","rho","mu0","Gc_prime","Gs_prime"/)
+     fname(1:9) = (/character(len=16) :: "vpv","vph","vsv","vsh","eta","rho", &
+                                         "mu0","Gc_prime","Gs_prime" /)
 #endif
 
   else

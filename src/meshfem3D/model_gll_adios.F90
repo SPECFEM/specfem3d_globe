@@ -84,7 +84,7 @@
   case (1)
     ! isotropic model
     if (rank == 0) then
-      write(IMAIN,*)'  ADIOS reads isotropic model values: rho,vp,vs'
+      write(IMAIN,*)'  ADIOS reads isotropic model values: (rho,vp,vs)'
       call flush_IMAIN()
     endif
     ! vp mesh
@@ -96,7 +96,7 @@
   case (2)
     ! transverse isotropic model
     if (rank == 0) then
-      write(IMAIN,*)'  ADIOS reads transversely isotropic model values: rho,vpv,vph,vsv,vsh,eta'
+      write(IMAIN,*)'  ADIOS reads transversely isotropic model values: (rho,vpv,vph,vsv,vsh,eta)'
       call flush_IMAIN()
     endif
 
@@ -120,7 +120,7 @@
   case (3)
     ! azimuthal model
     if (rank == 0) then
-      write(IMAIN,*)'  reads azimuthal anisotropic model values: rho,vpv,vph,vsv,vsh,eta,Gc_prime,Gs_prime,mu0'
+      write(IMAIN,*)'  reads azimuthal anisotropic model values: (rho,vpv,vph,vsv,vsh,eta,Gc_prime,Gs_prime,mu0)'
       call flush_IMAIN()
     endif
 
@@ -164,10 +164,13 @@
   ! inner core
   ! checks with rho if data available
   nspec = NSPEC_REGIONS(IREGION_INNER_CORE)
+
   allocate(temp_rho_ic(NGLLX,NGLLY,NGLLZ,nspec), stat=ier)
   if (ier /= 0 ) call exit_MPI(rank,'Error allocating inner core temp array')
   temp_rho_ic(:,:,:,:) = 0.0_CUSTOM_REAL
-  model_name = "reg3/rho/array"
+
+  ! uses density array to check if inner core arrays are available
+  model_name = "reg3/rho"
 
   ! Setup the ADIOS library to read the file
   call open_file_adios_read_and_init_method(myadios_file,myadios_group,file_name)
@@ -187,7 +190,7 @@
 
   if (has_innercore_all) then
     if (myrank == 0) then
-      write(IMAIN,*)'  ADIOS reading inner core (vp,vs,rho)'
+      write(IMAIN,*)'  ADIOS reads inner core model values: (vp,vs,rho)'
       write(IMAIN,*)
       call flush_IMAIN()
     endif
@@ -204,7 +207,7 @@
 
     allocate( MGLL_V_IC%rho_new(NGLLX,NGLLY,NGLLZ,MGLL_V_IC%nspec), stat=ier)
     if (ier /= 0 ) call exit_MPI(rank,'Error allocating inner core rho_new,.. arrays')
-    MGLL_V_IC%rho_new(:,:,:,:) = temp_rho_ic(:,:,:,:)
+    MGLL_V_IC%rho_new(:,:,:,:) = temp_rho_ic(:,:,:,:)  ! already read in from gll check routine above
 
     ! for vp,vs
     local_dim = NGLLX * NGLLY * NGLLZ * MGLL_V_IC%nspec
@@ -220,9 +223,10 @@
 
     ! performs reads
     call read_adios_perform(myadios_file)
-    ! closes adios file
-    call close_file_adios_read_and_finalize_method(myadios_file)
   endif
+
+  ! closes adios file
+  call close_file_adios_read_and_finalize_method(myadios_file)
 
   call synchronize_all()
 
@@ -231,5 +235,8 @@
     write(IMAIN,*)
     call flush_IMAIN()
   endif
+
+  ! frees temporary array
+  deallocate(temp_rho_ic)
 
   end subroutine read_gll_model_adios

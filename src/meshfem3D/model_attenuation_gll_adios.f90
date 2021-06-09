@@ -75,7 +75,7 @@
 
   ! reads in model for each partition
   call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 "reg1/Qmu/array", MGLL_QMU_V%qmu_new(:,:,:,1:MGLL_QMU_V%nspec))
+                                 "reg1/qmu/array", MGLL_QMU_V%qmu_new(:,:,:,1:MGLL_QMU_V%nspec))
   call read_adios_perform(myadios_file)
 
   ! closes adios file
