@@ -207,7 +207,7 @@
 
     allocate( MGLL_V_IC%rho_new(NGLLX,NGLLY,NGLLZ,MGLL_V_IC%nspec), stat=ier)
     if (ier /= 0 ) call exit_MPI(rank,'Error allocating inner core rho_new,.. arrays')
-    MGLL_V_IC%rho_new(:,:,:,:) = temp_rho_ic(:,:,:,:)  ! already read in from gll check routine above
+    MGLL_V_IC%rho_new(:,:,:,:) = temp_rho_ic(:,:,:,:)  ! already read in from GLL check routine above
 
     ! for vp,vs
     local_dim = NGLLX * NGLLY * NGLLZ * MGLL_V_IC%nspec
