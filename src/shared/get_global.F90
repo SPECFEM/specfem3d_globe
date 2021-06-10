@@ -25,12 +25,16 @@
 !
 !=====================================================================
 
-  subroutine get_global(npointot,xp,yp,zp,iglob,locval,ifseg,nglob_new)
+  subroutine get_global(npointot,xp,yp,zp,iglob,nglob_new)
 
 ! this routine MUST be in double precision to avoid sensitivity
 ! to roundoff errors in the coordinates of the points
 
 ! non-structured global numbering software provided by Paul F. Fischer
+
+#ifdef USE_PARALLEL_STL_SORTING
+  use constants, only: SMALLVALTOL
+#endif
 
   implicit none
 
@@ -39,12 +43,20 @@
 
   double precision, dimension(npointot), intent(inout) :: xp,yp,zp
 
-  integer, dimension(npointot), intent(inout) :: iglob,locval
-  logical, dimension(npointot), intent(inout) :: ifseg
+  integer, dimension(npointot), intent(inout) :: iglob
   integer, intent(out) :: nglob_new
 
+#ifdef USE_PARALLEL_STL_SORTING
+  ! calls C++ routine w/ parallel STL routines
+  call sort_array_coordinates_c(npointot,xp,yp,zp,iglob,SMALLVALTOL,nglob_new)
+
+#else
+  ! default sorting/ibool
   ! local variables
   integer, dimension(:), allocatable :: ninseg,idummy
+  integer, dimension(:), allocatable :: locval
+  logical, dimension(:), allocatable :: ifseg
+
   integer :: ier
 
   ! dynamically allocate arrays
@@ -56,10 +68,18 @@
   if (ier /= 0) stop 'Error while allocating idummy'
   idummy(:) = 0
 
+  allocate(locval(npointot), &
+           ifseg(npointot),stat=ier)
+  if (ier /= 0) stop 'Error in allocate 20a'
+  locval(:) = 0
+  ifseg(:) = .false.
+
   call sort_array_coordinates(npointot,xp,yp,zp,idummy,iglob,locval,ifseg,nglob_new,ninseg)
 
   ! deallocate arrays
   deallocate(ninseg,idummy)
+  deallocate(locval,ifseg)
+#endif
 
   end subroutine get_global
 

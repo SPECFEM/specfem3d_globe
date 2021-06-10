@@ -388,8 +388,16 @@ xcreate_movie_AVS_DX_SHARED_OBJECTS = \
 	$O/sort_array_coordinates.shared.o \
 	$(EMPTY_MACRO)
 
+##
+## C++ Parallel STL sorting
+##
+ifeq ($(PARALLEL_STL),yes)
+xcreate_movie_AVS_DX_SHARED_OBJECTS += $O/sort_array_coordinates_c.shared.o
+endif
+
+
 ${E}/xcreate_movie_AVS_DX: $(xcreate_movie_AVS_DX_OBJECTS) $(xcreate_movie_AVS_DX_SHARED_OBJECTS)
-	${FCCOMPILE_CHECK} -o $@ $+
+	${FCCOMPILE_CHECK} -o $@ $+ $(PARALLEL_STL_LIBS)
 
 #######################################
 
@@ -554,6 +562,14 @@ endif
 ifeq ($(CEM),yes)
 xwrite_profile_OBJECTS += $O/model_cem.checknetcdf.o
 endif
+
+##
+## C++ Parallel STL sorting
+##
+ifeq ($(PARALLEL_STL),yes)
+xwrite_profile_SHARED_OBJECTS += $O/sort_array_coordinates_c.shared.o
+endif
+
 
 ${E}/xwrite_profile: $(xwrite_profile_OBJECTS) $(xwrite_profile_SHARED_OBJECTS)
 	${MPIFCCOMPILE_CHECK} -o $@ $+ $(LDFLAGS) $(MPILIBS) $(LIBS)
