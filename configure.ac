@@ -128,6 +128,17 @@ AC_ARG_WITH([hip],
     [want_hip="$withval"],
     [want_hip=no])
 AM_CONDITIONAL([COND_HIP], [test x"$want_hip" != xno])
+AM_CONDITIONAL([COND_HIP_MI8], [test x"$want_hip" = xMI8])
+AM_CONDITIONAL([COND_HIP_MI25], [test x"$want_hip" = xMI25])
+AM_CONDITIONAL([COND_HIP_MI50], [test x"$want_hip" = xMI50])
+AM_CONDITIONAL([COND_HIP_MI100], [test x"$want_hip" = xMI100])
+AM_CONDITIONAL([COND_HIP_CUDA5], [test x"$want_hip" = xcuda5])
+AM_CONDITIONAL([COND_HIP_CUDA6], [test x"$want_hip" = xcuda6])
+AM_CONDITIONAL([COND_HIP_CUDA7], [test x"$want_hip" = xcuda7])
+AM_CONDITIONAL([COND_HIP_CUDA8], [test x"$want_hip" = xcuda8])
+AM_CONDITIONAL([COND_HIP_CUDA9], [test x"$want_hip" = xcuda9])
+AM_CONDITIONAL([COND_HIP_CUDA10], [test x"$want_hip" = xcuda10])
+AM_CONDITIONAL([COND_HIP_CUDA11], [test x"$want_hip" = xcuda11])
 
 ###
 ### MIC (Xeon PHI)
@@ -151,16 +162,31 @@ AC_ARG_WITH([xsmm],
     [want_xsmm=no])
 AM_CONDITIONAL([COND_XSMM], [test x"$want_xsmm" != xno])
 
+##
+## support C++ Parallel STL routines (for vectorization & multithreading)
+##
+AC_ARG_WITH([parallel_stl],
+ [AS_HELP_STRING([--with-parallel-stl], [build mesh sorting with C++ Parallel STL routines @<:@default=no@:>@])],
+    [want_parallel_stl="$withval"],
+    [want_parallel_stl=no])
+AM_CONDITIONAL([COND_PARALLEL_STL], [test x"$want_parallel_stl" != xno])
+
+
 ###
 ### OpenMP
 ###
 
+AC_ARG_WITH([openmp],
+    [AS_HELP_STRING([--with-openmp],
+        [build OpenMP enabled version @<:@default=no@:>@])],
+    [want_with_omp="$withval"],
+    [want_with_omp=no])
 AC_ARG_ENABLE([openmp],
     [AS_HELP_STRING([--enable-openmp],
         [build OpenMP enabled version @<:@default=no@:>@])],
     [want_omp="$enableval"],
     [want_omp=no])
-AM_CONDITIONAL([COND_OMP], [test x"$want_omp" != xno])
+AM_CONDITIONAL([COND_OMP], [test x"$want_omp" != xno || test x"$want_with_omp" != xno])
 
 ###
 ### VTK
@@ -406,30 +432,52 @@ AS_IF([test x"$want_hip" != xno], [
     fi
 
     # sets default HIP path
-    #HIP_PATH=/opt/rocm
+    AC_PATH_PROG(HIPCONFIG_PROG, hipconfig)
+    AS_IF([test x"$HIPCONFIG_PROG" = x],[
+      AC_PATH_PROG(HIPCONFIG_PROG, hipconfig, path=/opt/rocm/bin)
+    ])
+    AS_IF([test x"$HIPCONFIG_PROG" != x],[
+        HIP_PATH=`$HIPCONFIG_PROG --path`
+    ])
+    AC_MSG_NOTICE([hipconfig program: $HIPCONFIG_PROG])
+    AC_MSG_NOTICE([HIP path: $HIP_PATH])
+
     #AS_IF([test x"$HIP_INC" = x],[
-    #    HIP_INC="$HIP_PATH/include"
-    #])
-    #AS_IF([test x"$HIP_LIB" = x],[
-    #    HIP_LIB="$HIP_PATH/lib"
+    #    HIP_INC="${HIP_PATH}/include"
     #])
 
+    # adds default HIP library
+    AS_IF([test x"$HIP_LIB" = x -a x"${HIP_PATH}" != x],[
+        HIP_LIB="${HIP_PATH}/lib"
+        AC_MSG_NOTICE([adding default HIP library path: ${HIP_LIB}])
+    ])
+
     # checks platform
-    HIPCONFIG="$HIP_PATH/bin/hipconfig"
-    GPU_PLATFORM=`$HIPCONFIG --platform`
-    AS_IF([test x"$GPU_PLATFORM" = xnvcc], [
-        AC_MSG_NOTICE([HIP PLATFORM NVCC detected.])
-        FLAG_PLATFORM="${FC_DEFINE}__HIP_PLATFORM_NVCC__"
-    ])
-    AS_IF([test x"$GPU_PLATFORM" = xhcc], [
-        AC_MSG_NOTICE([HIP PLATFORM HCC detected.])
-        FLAG_PLATFORM="${FC_DEFINE}__HIP_PLATFORM_HCC__"
-    ])
-    # compiler might require a platform selection flag
-    if [[ "$HIP_FLAGS" != *"HIP_PLATFORM"* ]]; then
-      # adds PLATFORM flag
-      HIP_FLAGS="${HIP_FLAGS} ${FLAG_PLATFORM}"
+    if test x"$HIPCONFIG_PROG" != x ; then
+      GPU_PLATFORM=`$HIPCONFIG_PROG --platform`
+      AS_IF([test x"$GPU_PLATFORM" = xnvidia], [
+          AC_MSG_NOTICE([HIP PLATFORM NVIDIA detected.])
+          HIP_PLATFORM=nvcc
+          FLAG_PLATFORM="${FC_DEFINE}__HIP_PLATFORM_NVCC__"
+      ])
+
+      AS_IF([test x"$GPU_PLATFORM" = xamd], [
+          AC_MSG_NOTICE([HIP PLATFORM AMD detected.])
+          HIP_PLATFORM=hcc
+          FLAG_PLATFORM="${FC_DEFINE}__HIP_PLATFORM_HCC__"
+      ])
+      # compiler might require a platform selection flag
+      case "${HIP_FLAGS}" in
+        *HIP_PLATFORM*) AC_MSG_NOTICE([hip flags contain platform specifier: ${HIP_FLAGS}]) ;;
+        *) AC_MSG_NOTICE([adding flag for platform specifier ${FLAG_PLATFORM}]);
+           HIP_FLAGS="${HIP_FLAGS} ${FLAG_PLATFORM}"
+           AC_MSG_NOTICE([HIP_FLAGS: ${HIP_FLAGS}]) ;;
+      esac
     fi
+    # sets default platform to AMD if not set
+    AS_IF([test x"$GPU_PLATFORM" = x],[
+      GPU_PLATFORM=amd
+    ])
 
     # for compilation errors like:
     #   /usr/bin/ld: obj/assemble_MPI_scalar_gpu.hip.o: relocation R_X86_64_32 against `.rodata.str1.1' can not be used
@@ -438,6 +486,11 @@ AS_IF([test x"$want_hip" != xno], [
     #   HIP_FLAGS="-fPIC"
     # or
     #   HIP_FLAGS="-fno-gpu-rdc"
+    # compiler might require a -fPIC flag
+    case "${HIP_FLAGS}" in
+      *fPIC*) AC_MSG_NOTICE([HIP flags contain position independent code flag -fPIC: ${HIP_FLAGS}]);;
+      *) AC_MSG_NOTICE([consider adding compilation flag for position independent code: HIP_FLAGS="-fPIC"]);;
+    esac
 
     # test lib & include
     AS_IF([test x"$HIP_LIB" != x],[
@@ -522,8 +575,8 @@ AS_IF([test x"$want_hip" != xno], [
     AC_SUBST([HIP_LDFLAGS])
     AC_SUBST([HIP_LIBS])
 ])
-
-
+AM_CONDITIONAL([COND_HIP_PLATFORM_AMD], [test x"$GPU_PLATFORM" = xamd])
+AM_CONDITIONAL([COND_HIP_PLATFORM_NVIDIA], [test x"$GPU_PLATFORM" = xnvidia])
 
 ###
 ### MIC
@@ -551,12 +604,21 @@ AS_IF([test x"$want_xsmm" != xno], [
   AC_ARG_VAR(BLAS_LIBS, [LAPACK/BLAS library directory])
 ])
 
+##
+## Parallel STL
+##
+AS_IF([test x"$want_parallel_stl" != xno], [
+  AS_BOX([Parallel STL])
+  AC_MSG_NOTICE([C++ Parallel STL compilation is enabled for mesh sorting])
+  AC_ARG_VAR(PSTL_LIB, [Parallel STL library directory])
+])
+
 
 ###
 ### OpenMP
 ###
 
-AS_IF([test x"$want_omp" != xno], [
+AS_IF([test x"$want_omp" != xno || test x"$want_with_omp" != xno], [
   AS_BOX([OpenMP])
   AC_MSG_NOTICE([OpenMP compilation is enabled])
 

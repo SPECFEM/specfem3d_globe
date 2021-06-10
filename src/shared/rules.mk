@@ -148,12 +148,24 @@ else
 shared_OBJECTS += $(adios_shared_STUBS)
 endif
 
+##
+## ASDF
+##
 
 ifeq ($(ASDF),yes)
 shared_OBJECTS += $(asdf_shared_OBJECTS)
 else
 shared_OBJECTS += $(asdf_shared_STUBS)
 endif
+
+##
+## C++ Parallel STL sorting
+##
+
+ifeq ($(PARALLEL_STL),yes)
+shared_OBJECTS += $O/sort_array_coordinates_c.shared.o
+endif
+
 
 #######################################
 
@@ -249,3 +261,8 @@ $O/%.shared_asdf.o: $S/%.f90
 
 $O/%.cc.o: $S/%.c ${SETUP}/config.h
 	${CC} -c $(CPPFLAGS) $(CFLAGS) -o $@ $<
+
+## c++ files
+$O/%.shared.o: $S/%.cpp ${SETUP}/config.h
+	${CXX} -c $(CXXFLAGS) $(PARALLEL_STL_DEF) -o $@ $<
+

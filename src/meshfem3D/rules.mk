@@ -282,6 +282,13 @@ meshfem3D_OBJECTS += $O/model_cem.checknetcdf.o
 meshfem3D_MODULES += $(FC_MODDIR)/cem_par.$(FC_MODEXT)
 endif
 
+##
+## C++ Parallel STL sorting
+##
+
+ifeq ($(PARALLEL_STL),yes)
+meshfem3D_SHARED_OBJECTS += $O/sort_array_coordinates_c.shared.o
+endif
 
 #######################################
 

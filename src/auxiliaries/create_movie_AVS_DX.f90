@@ -99,8 +99,8 @@
 ! for sorting routine
   integer :: npointot,ilocnum,nglob,ielm,ieoff,ispecloc
   integer :: NIT
-  integer, dimension(:), allocatable :: iglob,locval,ireorder
-  logical, dimension(:), allocatable :: ifseg,mask_point
+  integer, dimension(:), allocatable :: iglob,ireorder
+  logical, dimension(:), allocatable :: mask_point
   double precision, dimension(:), allocatable :: xp,yp,zp,xp_save,yp_save,zp_save,field_display
 
 ! for dynamic memory allocation
@@ -272,12 +272,6 @@
 ! allocate arrays for sorting routine
   allocate(iglob(npointot),stat=ierror)
   if (ierror /= 0) stop 'Error while allocating iglob'
-
-  allocate(locval(npointot),stat=ierror)
-  if (ierror /= 0) stop 'Error while allocating loc'
-
-  allocate(ifseg(npointot),stat=ierror)
-  if (ierror /= 0) stop 'Error while allocating ifseg'
 
   allocate(xp(npointot),stat=ierror)
   if (ierror /= 0) stop 'Error while allocating xp'
@@ -618,7 +612,7 @@
 
     !--- sort the list based upon coordinates to get rid of multiples
     print *,'sorting list of points'
-    call get_global(npointot,xp,yp,zp,iglob,locval,ifseg,nglob)
+    call get_global(npointot,xp,yp,zp,iglob,nglob)
 
     !--- print total number of points found
     print *

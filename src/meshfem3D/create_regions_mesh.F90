@@ -1036,8 +1036,6 @@
   ! local parameters
   ! variables for creating array ibool
   double precision, dimension(:), allocatable :: xp,yp,zp
-  integer, dimension(:), allocatable :: locval
-  logical, dimension(:), allocatable :: ifseg
 
   integer :: nglob_new
   integer :: ieoff,ilocnum,ier
@@ -1045,15 +1043,10 @@
   character(len=MAX_STRING_LEN) :: errmsg
 
   ! allocate memory for arrays
-  allocate(locval(npointot), &
-           ifseg(npointot), &
-           xp(npointot), &
+  allocate(xp(npointot), &
            yp(npointot), &
            zp(npointot),stat=ier)
-  if (ier /= 0) stop 'Error in allocate 20'
-
-  locval(:) = 0
-  ifseg(:) = .false.
+  if (ier /= 0) stop 'Error in allocate 20b'
   xp(:) = ZERO
   yp(:) = ZERO
   zp(:) = ZERO
@@ -1086,10 +1079,9 @@
 !!$OMP ENDDO
 !!$OMP END PARALLEL
 
-  call get_global(npointot,xp,yp,zp,ibool,locval,ifseg,nglob_new)
+  call get_global(npointot,xp,yp,zp,ibool,nglob_new)
 
   deallocate(xp,yp,zp)
-  deallocate(locval,ifseg)
 
   ! check that number of points found equals theoretical value
   if (nglob_new /= nglob) then

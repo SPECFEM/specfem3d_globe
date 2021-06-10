@@ -49,6 +49,9 @@ CC = @CC@
 CFLAGS = @CFLAGS@
 CPPFLAGS = -I${SETUP} @CPPFLAGS@
 
+CXX = @CXX@
+CXXFLAGS = -I${SETUP} @CXXFLAGS@
+
 FCLINK = $(MPIFCCOMPILE_CHECK)
 
 #######################################
@@ -257,6 +260,25 @@ endif
 
 @COND_XSMM_TRUE@FCFLAGS += $(FC_DEFINE)USE_XSMM -I@LIBXSMM_INC@
 @COND_XSMM_TRUE@MPILIBS += -L@LIBXSMM_LIBS@ -lxsmmf -lxsmm -L@BLAS_LIBS@ -lblas
+
+##
+## C++ Parallel STL support
+## for sorting and creating ibool addressing
+## with configure: ./configure --with-parallel-stl PSTL_LIB="-L/opt/local/lib" \
+##                                                 CXXFLAGS="-O2 -std=c++17 -I/opt/local/include"
+##
+@COND_PARALLEL_STL_TRUE@PARALLEL_STL = yes
+@COND_PARALLEL_STL_FALSE@PARALLEL_STL = no
+
+@COND_PARALLEL_STL_TRUE@PARALLEL_STL_DEF = $(FC_DEFINE)USE_PARALLEL_STL_SORTING
+@COND_PARALLEL_STL_FALSE@PARALLEL_STL_DEF =
+
+@COND_PARALLEL_STL_TRUE@PARALLEL_STL_LIBS += @PSTL_LIB@ -lstdc++ -ltbb
+@COND_PARALLEL_STL_FALSE@PARALLEL_STL_LIBS +=
+
+
+@COND_PARALLEL_STL_TRUE@FCFLAGS += $(PARALLEL_STL_DEF)
+@COND_PARALLEL_STL_TRUE@MPILIBS += $(PARALLEL_STL_LIBS)
 
 #######################################
 ####
