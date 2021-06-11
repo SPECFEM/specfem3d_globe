@@ -79,6 +79,19 @@ void FC_FUNC_ (noise_transfer_surface_to_host,
                                                             mp->d_noise_surface_movie.cuda);
   }
 #endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid(num_blocks_x,num_blocks_y,1);
+    dim3 threads(NGLL2,1,1);
+
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(noise_transfer_surface_to_host_kernel), grid, threads, 0, 0,
+                                                                               mp->d_ibelm_top_crust_mantle.hip,
+                                                                               mp->nspec2D_top_crust_mantle,
+                                                                               mp->d_ibool_crust_mantle.hip,
+                                                                               mp->d_displ_crust_mantle.hip,
+                                                                               mp->d_noise_surface_movie.hip);
+  }
+#endif
 
   // note: the data copy here is blocking and waits for the operation to finish
   //       to speed up noise simulations, one could try an asynchronuous/non-blocking copy to overlap computations
@@ -153,6 +166,20 @@ void FC_FUNC_ (noise_add_source_main_rec_gpu,
                                                        it);
   }
 #endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid(1,1,1);
+    dim3 threads(NGLL3,1,1);
+
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(noise_add_source_main_rec_kernel), grid, threads, 0, 0,
+                                                                          mp->d_ibool_crust_mantle.hip,
+                                                                          mp->d_ispec_selected_rec.hip,
+                                                                          irec_main_noise,
+                                                                          mp->d_accel_crust_mantle.hip,
+                                                                          mp->d_noise_sourcearray.hip,
+                                                                          it);
+  }
+#endif
 
   GPU_ERROR_CHECKING ("noise_add_source_main_rec_kernel");
 }
@@ -181,6 +208,11 @@ void FC_FUNC_ (noise_add_surface_movie_gpu,
   dim3 grid(num_blocks_x,num_blocks_y,1);
   dim3 threads(NGLL2,1,1);
 #endif
+#ifdef USE_HIP
+  dim3 grid(num_blocks_x,num_blocks_y,1);
+  dim3 threads(NGLL2,1,1);
+#endif
+
   // note: the data copy here is blocking and waits for the operation to finish
   //       to speed up noise simulations, one could try an asynchronuous/non-blocking copy to overlap computations
 
@@ -229,6 +261,23 @@ void FC_FUNC_ (noise_add_surface_movie_gpu,
                                                        mp->d_wgllwgll_xy.cuda);
     }
 #endif
+#ifdef USE_HIP
+    if (run_hip) {
+      hipLaunchKernelGGL(HIP_KERNEL_NAME(noise_add_surface_movie_kernel), grid, threads, 0, 0,
+                                                                          mp->d_accel_crust_mantle.hip,
+                                                                          mp->d_ibool_crust_mantle.hip,
+                                                                          mp->d_ibelm_top_crust_mantle.hip,
+                                                                          mp->nspec2D_top_crust_mantle,
+                                                                          mp->d_noise_surface_movie.hip,
+                                                                          mp->d_normal_x_noise.hip,
+                                                                          mp->d_normal_y_noise.hip,
+                                                                          mp->d_normal_z_noise.hip,
+                                                                          mp->d_mask_noise.hip,
+                                                                          mp->d_jacobian2D_top_crust_mantle.hip,
+                                                                          mp->d_wgllwgll_xy.hip);
+    }
+#endif
+
     break;
 
   case 3:
@@ -272,6 +321,23 @@ void FC_FUNC_ (noise_add_surface_movie_gpu,
                                                        mp->d_wgllwgll_xy.cuda);
     }
 #endif
+#ifdef USE_HIP
+    if (run_hip) {
+      hipLaunchKernelGGL(HIP_KERNEL_NAME(noise_add_surface_movie_kernel), grid, threads, 0, 0,
+                                                                          mp->d_b_accel_crust_mantle.hip,
+                                                                          mp->d_ibool_crust_mantle.hip,
+                                                                          mp->d_ibelm_top_crust_mantle.hip,
+                                                                          mp->nspec2D_top_crust_mantle,
+                                                                          mp->d_noise_surface_movie.hip,
+                                                                          mp->d_normal_x_noise.hip,
+                                                                          mp->d_normal_y_noise.hip,
+                                                                          mp->d_normal_z_noise.hip,
+                                                                          mp->d_mask_noise.hip,
+                                                                          mp->d_jacobian2D_top_crust_mantle.hip,
+                                                                          mp->d_wgllwgll_xy.hip);
+    }
+#endif
+
     break;
   }
 

@@ -231,6 +231,56 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
                                                                mp->NSPEC_OUTER_CORE);
   }
 #endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(blocksize / GPU_ELEM_PER_THREAD,1,1);
+
+    // defines function pointer to __global__ function (taken from definition in file kernel_proto.cu.h)
+    // since forward and adjoint function calls are identical and only the passed arrays change
+    outer_core_impl_kernel outer_core_kernel_p;
+
+    // selects function call
+    if (FORWARD_OR_ADJOINT == 1) {
+      // forward wavefields -> FORWARD_OR_ADJOINT == 1
+      outer_core_kernel_p = &outer_core_impl_kernel_forward;
+    } else {
+      // backward/reconstructed wavefields -> FORWARD_OR_ADJOINT == 3
+      DEBUG_BACKWARD_FORCES();
+      outer_core_kernel_p = &outer_core_impl_kernel_adjoint;
+    }
+
+    hipLaunchKernelGGL( outer_core_kernel_p, grid, threads, 0, mp->compute_stream,
+                                                               nb_blocks_to_compute,
+                                                               d_ibool.hip,
+                                                               mp->d_phase_ispec_inner_outer_core.hip,
+                                                               mp->num_phase_ispec_outer_core,
+                                                               iphase,
+                                                               mp->use_mesh_coloring_gpu,
+                                                               displ.hip,
+                                                               accel.hip,
+                                                               d_xix.hip,d_xiy.hip,d_xiz.hip,
+                                                               d_etax.hip,d_etay.hip,d_etaz.hip,
+                                                               d_gammax.hip,d_gammay.hip,d_gammaz.hip,
+                                                               mp->d_hprime_xx.hip,
+                                                               mp->d_hprimewgll_xx.hip,
+                                                               mp->d_wgllwgll_xy.hip,mp->d_wgllwgll_xz.hip,mp->d_wgllwgll_yz.hip,
+                                                               mp->gravity,
+                                                               mp->d_gravity_pre_store_outer_core.hip,
+                                                               mp->d_wgll_cube.hip,
+                                                               mp->rotation,
+                                                               timeval,
+                                                               two_omega_earth,
+                                                               deltat,
+                                                               A_array_rotation.hip,
+                                                               B_array_rotation.hip,
+                                                               A_array_rotation_lddrk.hip,
+                                                               B_array_rotation_lddrk.hip,
+                                                               alpha_lddrk,beta_lddrk,
+                                                               mp->use_lddrk,
+                                                               mp->NSPEC_OUTER_CORE);
+  }
+#endif
 
   GPU_ERROR_CHECKING ("kernel outer_core");
 }

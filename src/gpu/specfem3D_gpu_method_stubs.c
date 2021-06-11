@@ -213,8 +213,7 @@ void FC_FUNC_ (compute_kernels_strength_noise_gpu,
 
 void FC_FUNC_ (compute_kernels_hess_gpu,
                COMPUTE_KERNELS_HESS_GPU) (long *Mesh_pointer_f,
-                                          realw *deltat_f,
-                                          int *USE_SOURCE_RECEIVER_HESSIAN) {}
+                                          realw *deltat_f, int *USE_SOURCE_RECEIVER_HESSIAN_f) {}
 
 void FC_FUNC_ (resort_array,
                RESORT_ARRAY) (long *Mesh_pointer_f) {}
@@ -300,8 +299,8 @@ void FC_FUNC_ (pause_for_debug,
 
 void FC_FUNC_ (initialize_gpu_device,
                INITIALIZE_GPU_DEVICE) (int *runtime_f, char *platform_f, char *device_f, int *myrank_f, int *nb_devices) {
- fprintf(stderr,"ERROR: GPU_MODE enabled without GPU/CUDA/OpenCL Support. "
-                "To enable GPU support, reconfigure with --with-gpu and/or --with-opencl flag.\n");
+ fprintf(stderr,"ERROR: GPU_MODE enabled without GPU/CUDA/OpenCL/HIP Support. "
+                "To enable GPU support, reconfigure with --with-gpu and/or --with-opencl and/or --with-hip flag.\n");
  exit(1);
 }
 

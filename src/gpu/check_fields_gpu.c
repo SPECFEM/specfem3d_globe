@@ -58,6 +58,22 @@ void get_free_memory (double *free_db, double *used_db, double *total_db) {
     *used_db = *total_db - *free_db ;
   }
 #endif
+#ifdef USE_HIP
+  if (run_hip) {
+    // gets memory usage in byte
+    size_t free_byte ;
+    size_t total_byte ;
+    hipError_t hip_status = hipMemGetInfo( &free_byte, &total_byte ) ;
+    if (hipSuccess != hip_status) {
+      printf("Error: hipMemGetInfo fails, %s \n", hipGetErrorString(hip_status) );
+      exit(EXIT_FAILURE);
+    }
+
+    *free_db = (double)free_byte ;
+    *total_db = (double)total_byte ;
+    *used_db = *total_db - *free_db ;
+  }
+#endif
 }
 
 /*----------------------------------------------------------------------------------------------- */
@@ -298,6 +314,15 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
 #endif
   }
 #endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(blocksize,1,1);
+
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(get_maximum_scalar_kernel), grid, threads, 0, mp->compute_stream,
+                                                                   displ.hip,size_nonpadded,mp->d_norm_max.hip);
+ }
+#endif
 
   // crust_mantle
   size_nonpadded = mp->NGLOB_CRUST_MANTLE;
@@ -363,8 +388,17 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
 
   }
 #endif
-  RELEASE_OFFSET(d_norm_max, offset1);
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid = dim3(num_blocks_x,num_blocks_y);
+    dim3 threads = dim3(blocksize,1,1);
 
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(get_maximum_vector_kernel), grid, threads, 0, mp->compute_stream,
+                                                                   displ.hip,size_nonpadded,tmp.hip);
+ }
+#endif
+
+  RELEASE_OFFSET(d_norm_max, offset1);
 
   // inner_core
   size_nonpadded = mp->NGLOB_INNER_CORE;
@@ -424,6 +458,16 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
 #endif
   }
 #endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid = dim3(num_blocks_x,num_blocks_y);
+    dim3 threads = dim3(blocksize,1,1);
+
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(get_maximum_vector_kernel), grid, threads, 0, mp->compute_stream,
+                                                                   displ.hip,size_nonpadded,tmp.hip);
+ }
+#endif
+
   RELEASE_OFFSET(d_norm_max, offset2);
 
   // graph
@@ -626,7 +670,9 @@ void FC_FUNC_ (check_norm_strain_from_device,
       dim3 threads = dim3(blocksize,1,1);
 
       // reduction kernel
-      get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_eps_trace_over_3_crust_mantle.cuda,size_nonpadded,mp->d_norm_strain_max.cuda);
+      get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_eps_trace_over_3_crust_mantle.cuda,
+                                                                       size_nonpadded,
+                                                                       mp->d_norm_strain_max.cuda);
 
       // graph
 #ifdef USE_CUDA_GRAPHS
@@ -634,6 +680,19 @@ void FC_FUNC_ (check_norm_strain_from_device,
 #endif
     }
 #endif
+#ifdef USE_HIP
+    if (run_hip) {
+      dim3 grid = dim3(num_blocks_x,num_blocks_y);
+      dim3 threads = dim3(blocksize,1,1);
+
+      // reduction kernel
+      hipLaunchKernelGGL(HIP_KERNEL_NAME(get_maximum_scalar_kernel), grid, threads, 0, mp->compute_stream,
+                                                                     mp->d_eps_trace_over_3_crust_mantle.hip,
+                                                                     size_nonpadded,
+                                                                     mp->d_norm_strain_max.hip);
+    }
+#endif
+
   } // NSPEC_CRUST_MANTLE_STRAIN_ONLY
 
   // crust_mantle arrays
@@ -698,7 +757,9 @@ void FC_FUNC_ (check_norm_strain_from_device,
       dim3 threads = dim3(blocksize,1,1);
 
       // determines max for: epsilondev_xx_crust_mantle
-      get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream>>>(d_epsilondev_HH_crust_mantle[loop].cuda,size_nonpadded,tmp.cuda);
+      get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream>>>(d_epsilondev_HH_crust_mantle[loop].cuda,
+                                                                       size_nonpadded,
+                                                                       tmp.cuda);
 
       // graph
 #ifdef USE_CUDA_GRAPHS
@@ -706,6 +767,19 @@ void FC_FUNC_ (check_norm_strain_from_device,
 #endif
     }
 #endif
+#ifdef USE_HIP
+    if (run_hip) {
+      dim3 grid = dim3(num_blocks_x,num_blocks_y);
+      dim3 threads = dim3(blocksize,1,1);
+
+      // determines max for: epsilondev_xx_crust_mantle
+      hipLaunchKernelGGL(HIP_KERNEL_NAME(get_maximum_scalar_kernel), grid, threads, 0, mp->compute_stream,
+                                                                     d_epsilondev_HH_crust_mantle[loop].hip,
+                                                                     size_nonpadded,
+                                                                     tmp.hip);
+    }
+#endif
+
     RELEASE_OFFSET(d_norm_strain_max, offset);
   }
 

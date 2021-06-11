@@ -154,6 +154,32 @@ void FC_FUNC_(transfer_boun_pot_from_device,
     }
   }
 #endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid(num_blocks_x,num_blocks_y,1);
+    dim3 threads(blocksize,1,1);
+
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(prepare_boundary_potential_on_device), grid, threads, 0, mp->compute_stream,
+                                                                              accel.hip,
+                                                                              buffer.hip,
+                                                                              mp->num_interfaces_outer_core,
+                                                                              mp->max_nibool_interfaces_oc,
+                                                                              mp->d_nibool_interfaces_outer_core.hip,
+                                                                              mp->d_ibool_interfaces_outer_core.hip);
+
+    // copies buffer to CPU
+    if (GPU_ASYNC_COPY) {
+      // waits until kernel is finished before starting async memcpy
+      hipStreamSynchronize(mp->compute_stream);
+      // copies buffer to CPU
+      hipMemcpyAsync(h_buffer,buffer.hip,size_mpi_buffer*sizeof(realw),hipMemcpyDeviceToHost,mp->copy_stream);
+    } else {
+      // synchronous copy
+      print_HIP_error_if_any(hipMemcpy(send_buffer,buffer.hip,size_mpi_buffer*sizeof(realw),
+                                         hipMemcpyDeviceToHost),98000);
+    }
+  }
+#endif
 
   GPU_ERROR_CHECKING ("transfer_boun_pot_from_device");
 }
@@ -276,7 +302,31 @@ void FC_FUNC_ (transfer_asmbl_pot_to_device,
 
   }
 #endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(blocksize,1,1);
 
+    // asynchronous copy
+    if (GPU_ASYNC_COPY) {
+      // Wait until previous copy stream finishes. We assemble while other compute kernels execute.
+      hipStreamSynchronize(mp->copy_stream);
+    }else{
+      // copies scalar buffer onto GPU
+      print_HIP_error_if_any(hipMemcpy(buffer.hip, buffer_recv_scalar,size_mpi_buffer*sizeof(realw),
+                                       hipMemcpyHostToDevice),99000);
+    }
+
+    //assemble field
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(assemble_boundary_potential_on_device), grid, threads, 0, mp->compute_stream,
+                                                                               accel.hip,
+                                                                               buffer.hip,
+                                                                               mp->num_interfaces_outer_core,
+                                                                               mp->max_nibool_interfaces_oc,
+                                                                               mp->d_nibool_interfaces_outer_core.hip,
+                                                                               mp->d_ibool_interfaces_outer_core.hip);
+  }
+#endif
   //double end_time = get_time_val ();
   //printf ("Elapsed time: %e\n", end_time-start_time);
   GPU_ERROR_CHECKING ("transfer_asmbl_pot_to_device");

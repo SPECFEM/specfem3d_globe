@@ -125,6 +125,19 @@ void FC_FUNC_ (update_displacement_ic_gpu,
                                                                     size,deltat,deltatsqover2,deltatover2);
   }
 #endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(blocksize,1,1);
+
+    //launch kernel
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(update_disp_veloc_kernel), grid, threads, 0, mp->compute_stream,
+                                                                  displ.hip,
+                                                                  veloc.hip,
+                                                                  accel.hip,
+                                                                  size,deltat,deltatsqover2,deltatover2);
+  }
+#endif
 
   GPU_ERROR_CHECKING ("update_displacement_ic_gpu");
 }
@@ -230,6 +243,19 @@ void FC_FUNC_ (update_displacement_cm_gpu,
                                                                     size,deltat,deltatsqover2,deltatover2);
   }
 #endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(blocksize,1,1);
+
+    //launch kernel
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(update_disp_veloc_kernel), grid, threads, 0, mp->compute_stream,
+                                                                  displ.hip,
+                                                                  veloc.hip,
+                                                                  accel.hip,
+                                                                  size,deltat,deltatsqover2,deltatover2);
+  }
+#endif
 
   GPU_ERROR_CHECKING ("update_displacement_cm_gpu");
 }
@@ -332,6 +358,19 @@ void FC_FUNC_ (update_displacement_oc_gpu,
                                                                    size,deltat,deltatsqover2,deltatover2);
   }
 #endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(blocksize,1,1);
+
+    //launch kernel
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(update_potential_kernel), grid, threads, 0, mp->compute_stream,
+                                                                 displ.hip,
+                                                                 veloc.hip,
+                                                                 accel.hip,
+                                                                 size,deltat,deltatsqover2,deltatover2);
+  }
+#endif
 
   GPU_ERROR_CHECKING ("update_displacement_oc_gpu");
 }
@@ -426,7 +465,6 @@ void FC_FUNC_ (multiply_accel_elastic_gpu,
 #ifdef USE_CUDA_GRAPHS
     if (! mp->use_graph_call_elastic){
 #endif
-
     dim3 grid = dim3(num_blocks_x,num_blocks_y);
     dim3 threads = dim3(blocksize,1,1);
 
@@ -438,11 +476,25 @@ void FC_FUNC_ (multiply_accel_elastic_gpu,
                                                                          rmassx.cuda,
                                                                          rmassy.cuda,
                                                                          rmassz.cuda);
-
 #ifdef USE_CUDA_GRAPHS
     } // graph
 #endif
+  }
+#endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid = dim3(num_blocks_x,num_blocks_y);
+    dim3 threads = dim3(blocksize,1,1);
 
+    // launches kernel
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(update_accel_elastic_kernel), grid, threads, 0, mp->compute_stream,
+                                                                     accel.hip,
+                                                                     veloc.hip,
+                                                                     mp->NGLOB_CRUST_MANTLE,
+                                                                     two_omega_earth,
+                                                                     rmassx.hip,
+                                                                     rmassy.hip,
+                                                                     rmassz.hip);
   }
 #endif
 
@@ -497,7 +549,6 @@ void FC_FUNC_ (multiply_accel_elastic_gpu,
 #ifdef USE_CUDA_GRAPHS
     if (! mp->use_graph_call_elastic){
 #endif
-
     dim3 grid = dim3(num_blocks_x,num_blocks_y);
     dim3 threads = dim3(blocksize,1,1);
 
@@ -509,11 +560,25 @@ void FC_FUNC_ (multiply_accel_elastic_gpu,
                                                                          rmassx.cuda,
                                                                          rmassy.cuda,
                                                                          rmassz.cuda);
-
 #ifdef USE_CUDA_GRAPHS
     } // graph
 #endif
+  }
+#endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid = dim3(num_blocks_x,num_blocks_y);
+    dim3 threads = dim3(blocksize,1,1);
 
+    // launches kernel
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(update_accel_elastic_kernel), grid, threads, 0, mp->compute_stream,
+                                                                     accel.hip,
+                                                                     veloc.hip,
+                                                                     mp->NGLOB_INNER_CORE,
+                                                                     two_omega_earth,
+                                                                     rmassx.hip,
+                                                                     rmassy.hip,
+                                                                     rmassz.hip);
   }
 #endif
 
@@ -591,7 +656,6 @@ void FC_FUNC_ (update_veloc_elastic_gpu,
 #ifdef USE_CUDA_GRAPHS
     if (! mp->use_graph_call_elastic){
 #endif
-
     dim3 grid = dim3(num_blocks_x,num_blocks_y);
     dim3 threads = dim3(blocksize,1,1);
 
@@ -600,10 +664,22 @@ void FC_FUNC_ (update_veloc_elastic_gpu,
                                                                          accel.cuda,
                                                                          mp->NGLOB_CRUST_MANTLE,
                                                                          deltatover2);
-
 #ifdef USE_CUDA_GRAPHS
     } // graph
 #endif
+  }
+#endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid = dim3(num_blocks_x,num_blocks_y);
+    dim3 threads = dim3(blocksize,1,1);
+
+    // launches kernel
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(update_veloc_elastic_kernel), grid, threads, 0, mp->compute_stream,
+                                                                     veloc.hip,
+                                                                     accel.hip,
+                                                                     mp->NGLOB_CRUST_MANTLE,
+                                                                     deltatover2);
   }
 #endif
 
@@ -650,7 +726,6 @@ void FC_FUNC_ (update_veloc_elastic_gpu,
 #ifdef USE_CUDA_GRAPHS
     if (! mp->use_graph_call_elastic){
 #endif
-
     dim3 grid = dim3(num_blocks_x,num_blocks_y);
     dim3 threads = dim3(blocksize,1,1);
 
@@ -659,7 +734,6 @@ void FC_FUNC_ (update_veloc_elastic_gpu,
                                                                          accel.cuda,
                                                                          mp->NGLOB_INNER_CORE,
                                                                          deltatover2);
-
     // graph
 #ifdef USE_CUDA_GRAPHS
     } // graph
@@ -689,7 +763,19 @@ void FC_FUNC_ (update_veloc_elastic_gpu,
       //if (mp->myrank == 0) printf("\nGraph: elastic launch \n");
     }
 #endif
+  }
+#endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid = dim3(num_blocks_x,num_blocks_y);
+    dim3 threads = dim3(blocksize,1,1);
 
+    // launches kernel
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(update_veloc_elastic_kernel), grid, threads, 0, mp->compute_stream,
+                                                                     veloc.hip,
+                                                                     accel.hip,
+                                                                     mp->NGLOB_INNER_CORE,
+                                                                     deltatover2);
   }
 #endif
 
@@ -769,7 +855,6 @@ void FC_FUNC_ (multiply_accel_acoustic_gpu,
 #ifdef USE_CUDA_GRAPHS
     if (! mp->use_graph_call_acoustic){
 #endif
-
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize,1,1);
 
@@ -777,11 +862,21 @@ void FC_FUNC_ (multiply_accel_acoustic_gpu,
     update_accel_acoustic_kernel<<< grid, threads,0,mp->compute_stream>>>(accel.cuda,
                                                                           mp->NGLOB_OUTER_CORE,
                                                                           rmass.cuda);
-
 #ifdef USE_CUDA_GRAPHS
     } // graph
 #endif
+  }
+#endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(blocksize,1,1);
 
+    // multiplies accel with inverse of mass matrix
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(update_accel_acoustic_kernel), grid, threads, 0, mp->compute_stream,
+                                                                      accel.hip,
+                                                                      mp->NGLOB_OUTER_CORE,
+                                                                      rmass.hip);
   }
 #endif
 
@@ -857,7 +952,6 @@ void FC_FUNC_ (update_veloc_acoustic_gpu,
 #ifdef USE_CUDA_GRAPHS
     if (! mp->use_graph_call_acoustic){
 #endif
-
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize,1,1);
 
@@ -866,7 +960,6 @@ void FC_FUNC_ (update_veloc_acoustic_gpu,
                                                                           accel.cuda,
                                                                           mp->NGLOB_OUTER_CORE,
                                                                           deltatover2);
-
     // graph
 #ifdef USE_CUDA_GRAPHS
     } // graph
@@ -896,7 +989,19 @@ void FC_FUNC_ (update_veloc_acoustic_gpu,
       //if (mp->myrank == 0) printf("\nGraph: acoustic launch \n");
     }
 #endif
+  }
+#endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(blocksize,1,1);
 
+    // updates velocity
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(update_veloc_acoustic_kernel), grid, threads, 0, mp->compute_stream,
+                                                                      veloc.hip,
+                                                                      accel.hip,
+                                                                      mp->NGLOB_OUTER_CORE,
+                                                                      deltatover2);
   }
 #endif
 
