@@ -58,6 +58,14 @@
 #include <cuda_runtime.h>
 #endif
 
+#ifdef USE_HIP
+#include <hip/hip_runtime.h>
+#endif
+
+#ifdef WITH_MPI
+#include <mpi.h>
+#endif
+
 // type of "working" variables: see also CUSTOM_REAL in constants.h
 //
 // double precision temporary variables leads to 10% performance decrease
@@ -224,10 +232,6 @@ typedef double realw;
 #endif
 
 
-// (optional) unrolling loops
-// leads up to ~10% performance increase in OpenCL and ~1% in Cuda
-#define MANUALLY_UNROLLED_LOOPS
-
 // CUDA compiler specifications
 // (optional) use launch_bounds specification to increase compiler optimization
 #ifdef GPU_DEVICE_K20
@@ -371,12 +375,26 @@ typedef double realw;
 
 /*----------------------------------------------------------------------------------------------- */
 
+// OpenCL specifics
 #ifdef USE_OPENCL
 #include "mesh_constants_ocl.h"
 #endif
+
+// CUDA specifics
 #ifdef USE_CUDA
 #include "mesh_constants_cuda.h"
 #endif
+
+// HIP specifics
+#ifdef USE_HIP
+#include "mesh_constants_hip.h"
+#endif
+
+// runtime flags
+extern int run_opencl;
+extern int run_cuda;
+extern int run_hip;
+
 
 typedef union {
 #ifdef USE_OPENCL
@@ -384,6 +402,9 @@ typedef union {
 #endif
 #ifdef USE_CUDA
   int *cuda;
+#endif
+#ifdef USE_HIP
+  int *hip;
 #endif
 } gpu_int_mem;
 
@@ -394,6 +415,9 @@ typedef union {
 #ifdef USE_CUDA
   realw *cuda;
 #endif
+#ifdef USE_HIP
+  realw *hip;
+#endif
 } gpu_realw_mem;
 
 typedef union {
@@ -402,6 +426,9 @@ typedef union {
 #endif
 #ifdef USE_CUDA
   double *cuda;
+#endif
+#ifdef USE_HIP
+  double *hip;
 #endif
 } gpu_double_mem;
 
@@ -412,6 +439,9 @@ typedef union {
 #ifdef USE_CUDA
   void *cuda;
 #endif
+#ifdef USE_HIP
+  void *hip;
+#endif
 } gpu_mem;
 
 
@@ -420,9 +450,6 @@ typedef union {
 #else
 #define EXTERN_LANG
 #endif
-
-extern int run_cuda;
-extern int run_opencl;
 
 /*----------------------------------------------------------------------------------------------- */
 // mesh pointer wrapper structure
@@ -1050,14 +1077,14 @@ typedef struct mesh_ {
 #endif
 
   // streams
-#ifdef USE_CUDA
   // overlapped memcpy streams
-  cudaStream_t compute_stream;
-  cudaStream_t copy_stream;
+  gpu_stream compute_stream;
+  gpu_stream copy_stream;
 
   // event
-  cudaEvent_t kernel_event;
+  gpu_event kernel_event;
 
+#ifdef USE_CUDA
   // graphs
 #ifdef USE_CUDA_GRAPHS
   int use_graph_call_elastic;
@@ -1078,8 +1105,7 @@ typedef struct mesh_ {
   cudaGraphExec_t graphExec_norm;
   cudaGraphExec_t graphExec_norm_strain;
 #endif
-
-#endif
+#endif // USE_CUDA
 
 #ifdef USE_OPENCL
   cl_event last_copy_evt;
@@ -1203,6 +1229,9 @@ void gpuInitialize_buffers (Mesh *mp);
 void gpuSynchronize ();
 void gpuReset ();
 
+void gpuStreamCreate(gpu_stream* stream_ptr);
+void gpuStreamSynchronize(gpu_stream stream);
+
 void exit_on_gpu_error (const char *kernel_name);
 void exit_on_error (const char *info);
 
@@ -1223,10 +1252,14 @@ realw get_device_array_maximum_value (gpu_realw_mem d_array, int size);
 #ifndef TAKE_REF_CUDA
 #define TAKE_REF_CUDA(_buffer_)
 #endif
+#ifndef TAKE_REF_HIP
+#define TAKE_REF_HIP(_buffer_)
+#endif
 
 #define gpuTakeRef(_buffer_) _buffer_ ;         \
   TAKE_REF_OCL(_buffer_);                       \
-  TAKE_REF_CUDA(_buffer_);
+  TAKE_REF_CUDA(_buffer_);                      \
+  TAKE_REF_HIP(_buffer_);
 
 #ifndef INITIALIZE_OFFSET_OCL
 #define INITIALIZE_OFFSET_OCL()
@@ -1234,10 +1267,14 @@ realw get_device_array_maximum_value (gpu_realw_mem d_array, int size);
 #ifndef INITIALIZE_OFFSET_CUDA
 #define INITIALIZE_OFFSET_CUDA()
 #endif
+#ifndef INITIALIZE_OFFSET_HIP
+#define INITIALIZE_OFFSET_HIP()
+#endif
 
 #define INITIALIZE_OFFSET()                     \
   INITIALIZE_OFFSET_OCL();                      \
-  INITIALIZE_OFFSET_CUDA();
+  INITIALIZE_OFFSET_CUDA();                     \
+  INITIALIZE_OFFSET_HIP();
 
 #ifndef INIT_OFFSET_OCL
 #define INIT_OFFSET_OCL(_buffer_, _offset_)
@@ -1245,11 +1282,15 @@ realw get_device_array_maximum_value (gpu_realw_mem d_array, int size);
 #ifndef INIT_OFFSET_CUDA
 #define INIT_OFFSET_CUDA(_buffer_, _offset_)
 #endif
+#ifndef INIT_OFFSET_HIP
+#define INIT_OFFSET_HIP(_buffer_, _offset_)
+#endif
 
 #define INIT_OFFSET(_buffer_, _offset_)         \
   __typeof__(mp->_buffer_) _buffer_##_##_offset_;   \
   INIT_OFFSET_OCL(_buffer_, _offset_);           \
-  INIT_OFFSET_CUDA(_buffer_, _offset_);
+  INIT_OFFSET_CUDA(_buffer_, _offset_);          \
+  INIT_OFFSET_HIP(_buffer_, _offset_);
 
 #define PASS_OFFSET(_buffer_, _offset_) _buffer_##_##_offset_
 
@@ -1259,10 +1300,15 @@ realw get_device_array_maximum_value (gpu_realw_mem d_array, int size);
 #ifndef RELEASE_OFFSET_CUDA
 #define RELEASE_OFFSET_CUDA(_buffer_, _offset_) {}
 #endif
+#ifndef RELEASE_OFFSET_HIP
+#define RELEASE_OFFSET_HIP(_buffer_, _offset_) {}
+#endif
 
 #define RELEASE_OFFSET(_buffer_, _offset_)      \
   RELEASE_OFFSET_OCL(_buffer_, _offset_);        \
-  RELEASE_OFFSET_CUDA(_buffer_, _offset_);
+  RELEASE_OFFSET_CUDA(_buffer_, _offset_);       \
+  RELEASE_OFFSET_HIP(_buffer_, _offset_);
+
 
 /* ----------------------------------------------------------------------------------------------- */
 // kernel setup function

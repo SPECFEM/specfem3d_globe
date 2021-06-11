@@ -131,6 +131,9 @@ void FC_FUNC_ (update_displ_lddrk_gpu,
                                                                      size_cm,size_oc,size_ic);
   }
 #endif
+#ifdef USE_HIP
+  // todo..
+#endif
   */
 
   GPU_ERROR_CHECKING ("update_displ_lddrk_gpu");
@@ -224,7 +227,6 @@ void FC_FUNC_ (update_elastic_lddrk_gpu,
 #ifdef USE_CUDA_GRAPHS
     if (! mp->use_graph_call_elastic){
 #endif
-
     dim3 grid = dim3(num_blocks_x,num_blocks_y);
     dim3 threads = dim3(blocksize,1,1);
 
@@ -238,10 +240,27 @@ void FC_FUNC_ (update_elastic_lddrk_gpu,
                                                                          beta_lddrk,
                                                                          deltat,
                                                                          mp->NGLOB_CRUST_MANTLE);
-
 #ifdef USE_CUDA_GRAPHS
     } // graph
 #endif
+  }
+#endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid = dim3(num_blocks_x,num_blocks_y);
+    dim3 threads = dim3(blocksize,1,1);
+
+    // launches kernel
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(update_elastic_lddrk_kernel), grid, threads, 0, mp->compute_stream,
+                                                                     displ.hip,
+                                                                     veloc.hip,
+                                                                     accel.hip,
+                                                                     displ_lddrk.hip,
+                                                                     veloc_lddrk.hip,
+                                                                     alpha_lddrk,
+                                                                     beta_lddrk,
+                                                                     deltat,
+                                                                     mp->NGLOB_CRUST_MANTLE);
   }
 #endif
 
@@ -300,7 +319,6 @@ void FC_FUNC_ (update_elastic_lddrk_gpu,
 #ifdef USE_CUDA_GRAPHS
     if (! mp->use_graph_call_elastic){
 #endif
-
     dim3 grid = dim3(num_blocks_x,num_blocks_y);
     dim3 threads = dim3(blocksize,1,1);
 
@@ -314,7 +332,6 @@ void FC_FUNC_ (update_elastic_lddrk_gpu,
                                                                          beta_lddrk,
                                                                          deltat,
                                                                          mp->NGLOB_INNER_CORE);
-
     // graph
 #ifdef USE_CUDA_GRAPHS
     } // graph
@@ -344,6 +361,24 @@ void FC_FUNC_ (update_elastic_lddrk_gpu,
       //if (mp->myrank == 0) printf("\nGraph: elastic launch \n");
     }
 #endif
+  }
+#endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid = dim3(num_blocks_x,num_blocks_y);
+    dim3 threads = dim3(blocksize,1,1);
+
+    // launches kernel
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(update_elastic_lddrk_kernel), grid, threads, 0, mp->compute_stream,
+                                                                     displ.hip,
+                                                                     veloc.hip,
+                                                                     accel.hip,
+                                                                     displ_lddrk.hip,
+                                                                     veloc_lddrk.hip,
+                                                                     alpha_lddrk,
+                                                                     beta_lddrk,
+                                                                     deltat,
+                                                                     mp->NGLOB_INNER_CORE);
 
   }
 #endif
@@ -436,7 +471,6 @@ void FC_FUNC_ (update_acoustic_lddrk_gpu,
 #ifdef USE_CUDA_GRAPHS
     if (! mp->use_graph_call_acoustic){
 #endif
-
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize,1,1);
 
@@ -450,7 +484,6 @@ void FC_FUNC_ (update_acoustic_lddrk_gpu,
                                                                           beta_lddrk,
                                                                           deltat,
                                                                           mp->NGLOB_OUTER_CORE);
-
     // graph
 #ifdef USE_CUDA_GRAPHS
     } // graph
@@ -480,7 +513,24 @@ void FC_FUNC_ (update_acoustic_lddrk_gpu,
       //if (mp->myrank == 0) printf("\nGraph: acoustic launch \n");
     }
 #endif
+  }
+#endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(blocksize,1,1);
 
+    // updates velocity
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(update_acoustic_lddrk_kernel), grid, threads, 0, mp->compute_stream,
+                                                                      displ.hip,
+                                                                      veloc.hip,
+                                                                      accel.hip,
+                                                                      displ_lddrk.hip,
+                                                                      veloc_lddrk.hip,
+                                                                      alpha_lddrk,
+                                                                      beta_lddrk,
+                                                                      deltat,
+                                                                      mp->NGLOB_OUTER_CORE);
   }
 #endif
 

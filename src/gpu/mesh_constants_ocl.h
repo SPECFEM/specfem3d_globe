@@ -30,11 +30,25 @@
 #ifndef MESH_CONSTANTS_OCL_H
 #define MESH_CONSTANTS_OCL_H
 
+// OpenCL specifics
+
+#ifdef USE_OPENCL
+
 #ifdef __APPLE__
 #include <OpenCL/cl.h>
 #else
 #include <CL/cl.h>
 #endif
+
+// (optional) unrolling loops
+// leads up to ~10% performance increase in OpenCL and ~1% in Cuda
+#define MANUALLY_UNROLLED_LOOPS   // default unrolling
+
+// definitions
+typedef cl_event gpu_event;
+typedef void* gpu_stream; // dummy - instead of streams, we'll use cl_command_queue below in mocl structure
+
+#endif // USE_OPENCL
 
 const char* clewErrorString (cl_int error);
 

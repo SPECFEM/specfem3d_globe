@@ -91,7 +91,6 @@ void FC_FUNC_ (compute_strain_gpu,
   size_t global_work_size[2];
   size_t local_work_size[2];
   cl_uint idx;
-
   if (run_opencl) {
     idx = 0;
     // strain kernel
@@ -129,7 +128,6 @@ void FC_FUNC_ (compute_strain_gpu,
 #endif
 #ifdef USE_CUDA
   dim3 grid,threads;
-
   if (run_cuda) {
     grid = dim3(num_blocks_x,num_blocks_y);
     threads = dim3(blocksize,1,1);
@@ -156,6 +154,37 @@ void FC_FUNC_ (compute_strain_gpu,
                                                                  mp->d_gammay_crust_mantle.cuda,
                                                                  mp->d_gammaz_crust_mantle.cuda,
                                                                  mp->d_hprime_xx.cuda);
+  }
+#endif
+#ifdef USE_HIP
+  dim3 grid,threads;
+  if (run_hip) {
+    grid = dim3(num_blocks_x,num_blocks_y);
+    threads = dim3(blocksize,1,1);
+
+    // strain kernel
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_strain_kernel), grid, threads, 0, mp->compute_stream,
+                                                               displ.hip,
+                                                               veloc.hip,
+                                                               epsilondev_xx.hip,
+                                                               epsilondev_yy.hip,
+                                                               epsilondev_xy.hip,
+                                                               epsilondev_xz.hip,
+                                                               epsilondev_yz.hip,
+                                                               eps_trace_over_3.hip,
+                                                               size,size_strain_only,
+                                                               deltat,
+                                                               mp->d_ibool_crust_mantle.hip,
+                                                               mp->d_xix_crust_mantle.hip,
+                                                               mp->d_xiy_crust_mantle.hip,
+                                                               mp->d_xiz_crust_mantle.hip,
+                                                               mp->d_etax_crust_mantle.hip,
+                                                               mp->d_etay_crust_mantle.hip,
+                                                               mp->d_etaz_crust_mantle.hip,
+                                                               mp->d_gammax_crust_mantle.hip,
+                                                               mp->d_gammay_crust_mantle.hip,
+                                                               mp->d_gammaz_crust_mantle.hip,
+                                                               mp->d_hprime_xx.hip);
   }
 #endif
 
@@ -251,6 +280,36 @@ void FC_FUNC_ (compute_strain_gpu,
                                                                  mp->d_gammay_inner_core.cuda,
                                                                  mp->d_gammaz_inner_core.cuda,
                                                                  mp->d_hprime_xx.cuda);
+  }
+#endif
+#ifdef USE_HIP
+  if (run_hip) {
+    grid = dim3(num_blocks_x,num_blocks_y);
+    threads = dim3(blocksize,1,1);
+
+    // strain kernel
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_strain_kernel), grid, threads, 0, mp->compute_stream,
+                                                               displ.hip,
+                                                               veloc.hip,
+                                                               epsilondev_xx.hip,
+                                                               epsilondev_yy.hip,
+                                                               epsilondev_xy.hip,
+                                                               epsilondev_xz.hip,
+                                                               epsilondev_yz.hip,
+                                                               eps_trace_over_3.hip,
+                                                               size,size_strain_only,
+                                                               deltat,
+                                                               mp->d_ibool_inner_core.hip,
+                                                               mp->d_xix_inner_core.hip,
+                                                               mp->d_xiy_inner_core.hip,
+                                                               mp->d_xiz_inner_core.hip,
+                                                               mp->d_etax_inner_core.hip,
+                                                               mp->d_etay_inner_core.hip,
+                                                               mp->d_etaz_inner_core.hip,
+                                                               mp->d_gammax_inner_core.hip,
+                                                               mp->d_gammay_inner_core.hip,
+                                                               mp->d_gammaz_inner_core.hip,
+                                                               mp->d_hprime_xx.hip);
   }
 #endif
 
