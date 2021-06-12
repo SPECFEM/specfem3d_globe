@@ -671,7 +671,7 @@ module BOAST
       textures_constants.push(d_hprime_xx_tex, d_hprimewgll_xx_tex)
     end
 
-    if (get_lang == CUDA) then
+    if (get_lang == CUDA or get_lang == HIP) then
       qualifiers = "\n#ifdef #{use_launch_bounds}\n__launch_bounds__(#{ngll3_padded}, #{launch_min_blocks})\n#endif\n"
     elsif(get_lang == CL) then
       qualifiers = "" # "__attribute__((reqd_work_group_size(#{ngll3_padded},1,1))) " # (inefficient)
@@ -679,7 +679,7 @@ module BOAST
 
     if (get_lang == CUDA and ref) then
       get_output.print File::read("references/#{function_name}.cu".gsub("_forward","").gsub("_adjoint",""))
-    elsif(get_lang == CL or get_lang == CUDA) then
+    elsif(get_lang == CL or get_lang == CUDA or get_lang == HIP) then
       make_specfem3d_header(:ngllx => n_gllx, :ngll2 => n_gll2, :ngll3 => n_gll3, :ngll3_padded => n_gll3_padded, :n_sls => n_sls, :coloring_min_nspec_inner_core => coloring_min_nspec_inner_core, :iflag_in_fictitious_cube => i_flag_in_fictitious_cube)
       if type == :inner_core then
         #DEACTIVATE USE TEXTURES CONSTANTS

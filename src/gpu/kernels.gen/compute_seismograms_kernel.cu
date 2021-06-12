@@ -122,7 +122,7 @@ __global__ void compute_seismograms_kernel(const int nrec_local, const float * d
 
     l = 1;
     s = (l) * (2);
-    if (((tx < 0) ^ (s < 0) ? (tx % s) + s : tx % s) == 0) {
+    if (((tx < 0) ^ (s < 0) ? ((tx) % (s)) + s : (tx) % (s)) == 0) {
       sh_dxd[tx] = sh_dxd[tx] + sh_dxd[tx + l];
       sh_dyd[tx] = sh_dyd[tx] + sh_dyd[tx + l];
       sh_dzd[tx] = sh_dzd[tx] + sh_dzd[tx + l];
@@ -130,7 +130,7 @@ __global__ void compute_seismograms_kernel(const int nrec_local, const float * d
     __syncthreads();
     l = (l) * (2);
     s = (l) * (2);
-    if (((tx < 0) ^ (s < 0) ? (tx % s) + s : tx % s) == 0) {
+    if (((tx < 0) ^ (s < 0) ? ((tx) % (s)) + s : (tx) % (s)) == 0) {
       sh_dxd[tx] = sh_dxd[tx] + sh_dxd[tx + l];
       sh_dyd[tx] = sh_dyd[tx] + sh_dyd[tx + l];
       sh_dzd[tx] = sh_dzd[tx] + sh_dzd[tx + l];
@@ -138,7 +138,7 @@ __global__ void compute_seismograms_kernel(const int nrec_local, const float * d
     __syncthreads();
     l = (l) * (2);
     s = (l) * (2);
-    if (((tx < 0) ^ (s < 0) ? (tx % s) + s : tx % s) == 0) {
+    if (((tx < 0) ^ (s < 0) ? ((tx) % (s)) + s : (tx) % (s)) == 0) {
       sh_dxd[tx] = sh_dxd[tx] + sh_dxd[tx + l];
       sh_dyd[tx] = sh_dyd[tx] + sh_dyd[tx + l];
       sh_dzd[tx] = sh_dzd[tx] + sh_dzd[tx + l];
@@ -146,7 +146,7 @@ __global__ void compute_seismograms_kernel(const int nrec_local, const float * d
     __syncthreads();
     l = (l) * (2);
     s = (l) * (2);
-    if (((tx < 0) ^ (s < 0) ? (tx % s) + s : tx % s) == 0) {
+    if (((tx < 0) ^ (s < 0) ? ((tx) % (s)) + s : (tx) % (s)) == 0) {
       sh_dxd[tx] = sh_dxd[tx] + sh_dxd[tx + l];
       sh_dyd[tx] = sh_dyd[tx] + sh_dyd[tx + l];
       sh_dzd[tx] = sh_dzd[tx] + sh_dzd[tx + l];
@@ -154,7 +154,7 @@ __global__ void compute_seismograms_kernel(const int nrec_local, const float * d
     __syncthreads();
     l = (l) * (2);
     s = (l) * (2);
-    if (((tx < 0) ^ (s < 0) ? (tx % s) + s : tx % s) == 0) {
+    if (((tx < 0) ^ (s < 0) ? ((tx) % (s)) + s : (tx) % (s)) == 0) {
       sh_dxd[tx] = sh_dxd[tx] + sh_dxd[tx + l];
       sh_dyd[tx] = sh_dyd[tx] + sh_dyd[tx + l];
       sh_dzd[tx] = sh_dzd[tx] + sh_dzd[tx + l];
@@ -162,7 +162,7 @@ __global__ void compute_seismograms_kernel(const int nrec_local, const float * d
     __syncthreads();
     l = (l) * (2);
     s = (l) * (2);
-    if (((tx < 0) ^ (s < 0) ? (tx % s) + s : tx % s) == 0) {
+    if (((tx < 0) ^ (s < 0) ? ((tx) % (s)) + s : (tx) % (s)) == 0) {
       sh_dxd[tx] = sh_dxd[tx] + sh_dxd[tx + l];
       sh_dyd[tx] = sh_dyd[tx] + sh_dyd[tx + l];
       sh_dzd[tx] = sh_dzd[tx] + sh_dzd[tx + l];
@@ -170,7 +170,7 @@ __global__ void compute_seismograms_kernel(const int nrec_local, const float * d
     __syncthreads();
     l = (l) * (2);
     s = (l) * (2);
-    if (((tx < 0) ^ (s < 0) ? (tx % s) + s : tx % s) == 0) {
+    if (((tx < 0) ^ (s < 0) ? ((tx) % (s)) + s : (tx) % (s)) == 0) {
       sh_dxd[tx] = sh_dxd[tx] + sh_dxd[tx + l];
       sh_dyd[tx] = sh_dyd[tx] + sh_dyd[tx + l];
       sh_dzd[tx] = sh_dzd[tx] + sh_dzd[tx + l];

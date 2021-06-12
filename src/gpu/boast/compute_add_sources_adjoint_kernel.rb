@@ -19,7 +19,7 @@ module BOAST
     p = Procedure(function_name, [accel,source_adjoint,xir,etar,gammar,ibool,ispec_selected_rec,number_adjsources_global,nadj_rec_local])
     if (get_lang == CUDA and ref) then
       get_output.print File::read("references/#{function_name}.cu")
-    elsif(get_lang == CUDA or get_lang == CL) then
+    elsif(get_lang == CUDA or get_lang == CL or get_lang == HIP) then
       make_specfem3d_header( :ndim => n_dim, :ngllx => n_gllx )
       open p
       ispec =      Int("ispec")

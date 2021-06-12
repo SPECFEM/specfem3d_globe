@@ -133,7 +133,7 @@ __kernel void compute_seismograms_kernel(const int nrec_local, const __global fl
 \n\
     l = 1;\n\
     s = (l) * (2);\n\
-    if (((tx < 0) ^ (s < 0) ? (tx % s) + s : tx % s) == 0) {\n\
+    if (((tx < 0) ^ (s < 0) ? ((tx) % (s)) + s : (tx) % (s)) == 0) {\n\
       sh_dxd[tx] = sh_dxd[tx] + sh_dxd[tx + l];\n\
       sh_dyd[tx] = sh_dyd[tx] + sh_dyd[tx + l];\n\
       sh_dzd[tx] = sh_dzd[tx] + sh_dzd[tx + l];\n\
@@ -141,7 +141,7 @@ __kernel void compute_seismograms_kernel(const int nrec_local, const __global fl
     barrier(CLK_LOCAL_MEM_FENCE);\n\
     l = (l) * (2);\n\
     s = (l) * (2);\n\
-    if (((tx < 0) ^ (s < 0) ? (tx % s) + s : tx % s) == 0) {\n\
+    if (((tx < 0) ^ (s < 0) ? ((tx) % (s)) + s : (tx) % (s)) == 0) {\n\
       sh_dxd[tx] = sh_dxd[tx] + sh_dxd[tx + l];\n\
       sh_dyd[tx] = sh_dyd[tx] + sh_dyd[tx + l];\n\
       sh_dzd[tx] = sh_dzd[tx] + sh_dzd[tx + l];\n\
@@ -149,7 +149,7 @@ __kernel void compute_seismograms_kernel(const int nrec_local, const __global fl
     barrier(CLK_LOCAL_MEM_FENCE);\n\
     l = (l) * (2);\n\
     s = (l) * (2);\n\
-    if (((tx < 0) ^ (s < 0) ? (tx % s) + s : tx % s) == 0) {\n\
+    if (((tx < 0) ^ (s < 0) ? ((tx) % (s)) + s : (tx) % (s)) == 0) {\n\
       sh_dxd[tx] = sh_dxd[tx] + sh_dxd[tx + l];\n\
       sh_dyd[tx] = sh_dyd[tx] + sh_dyd[tx + l];\n\
       sh_dzd[tx] = sh_dzd[tx] + sh_dzd[tx + l];\n\
@@ -157,7 +157,7 @@ __kernel void compute_seismograms_kernel(const int nrec_local, const __global fl
     barrier(CLK_LOCAL_MEM_FENCE);\n\
     l = (l) * (2);\n\
     s = (l) * (2);\n\
-    if (((tx < 0) ^ (s < 0) ? (tx % s) + s : tx % s) == 0) {\n\
+    if (((tx < 0) ^ (s < 0) ? ((tx) % (s)) + s : (tx) % (s)) == 0) {\n\
       sh_dxd[tx] = sh_dxd[tx] + sh_dxd[tx + l];\n\
       sh_dyd[tx] = sh_dyd[tx] + sh_dyd[tx + l];\n\
       sh_dzd[tx] = sh_dzd[tx] + sh_dzd[tx + l];\n\
@@ -165,7 +165,7 @@ __kernel void compute_seismograms_kernel(const int nrec_local, const __global fl
     barrier(CLK_LOCAL_MEM_FENCE);\n\
     l = (l) * (2);\n\
     s = (l) * (2);\n\
-    if (((tx < 0) ^ (s < 0) ? (tx % s) + s : tx % s) == 0) {\n\
+    if (((tx < 0) ^ (s < 0) ? ((tx) % (s)) + s : (tx) % (s)) == 0) {\n\
       sh_dxd[tx] = sh_dxd[tx] + sh_dxd[tx + l];\n\
       sh_dyd[tx] = sh_dyd[tx] + sh_dyd[tx + l];\n\
       sh_dzd[tx] = sh_dzd[tx] + sh_dzd[tx + l];\n\
@@ -173,7 +173,7 @@ __kernel void compute_seismograms_kernel(const int nrec_local, const __global fl
     barrier(CLK_LOCAL_MEM_FENCE);\n\
     l = (l) * (2);\n\
     s = (l) * (2);\n\
-    if (((tx < 0) ^ (s < 0) ? (tx % s) + s : tx % s) == 0) {\n\
+    if (((tx < 0) ^ (s < 0) ? ((tx) % (s)) + s : (tx) % (s)) == 0) {\n\
       sh_dxd[tx] = sh_dxd[tx] + sh_dxd[tx + l];\n\
       sh_dyd[tx] = sh_dyd[tx] + sh_dyd[tx + l];\n\
       sh_dzd[tx] = sh_dzd[tx] + sh_dzd[tx + l];\n\
@@ -181,7 +181,7 @@ __kernel void compute_seismograms_kernel(const int nrec_local, const __global fl
     barrier(CLK_LOCAL_MEM_FENCE);\n\
     l = (l) * (2);\n\
     s = (l) * (2);\n\
-    if (((tx < 0) ^ (s < 0) ? (tx % s) + s : tx % s) == 0) {\n\
+    if (((tx < 0) ^ (s < 0) ? ((tx) % (s)) + s : (tx) % (s)) == 0) {\n\
       sh_dxd[tx] = sh_dxd[tx] + sh_dxd[tx + l];\n\
       sh_dyd[tx] = sh_dyd[tx] + sh_dyd[tx + l];\n\
       sh_dzd[tx] = sh_dzd[tx] + sh_dzd[tx + l];\n\

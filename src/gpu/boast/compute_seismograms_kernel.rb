@@ -22,7 +22,7 @@ module BOAST
     ngll3_padded = Int("NGLL3_PADDED", :const => n_gll3_padded)
 
     p = Procedure(function_name, v )
-    if(get_lang == CL or get_lang == CUDA) then
+    if(get_lang == CL or get_lang == CUDA or get_lang == HIP) then
       make_specfem3d_header( :ngllx => n_gllx, :ngll2 => n_gll2, :ngll3 => n_gll3, :ngll3_padded => n_gll3_padded )
       open p
       ispec =      Int("ispec")
