@@ -29,7 +29,7 @@ module BOAST
     p = Procedure(function_name, [number_receiver_global,ispec_selected_rec,ibool,station_field,d_field,nrec_local])
     if (get_lang == CUDA and ref) then
       get_output.print File::read("references/#{function_name}.cu")
-    elsif(get_lang == CL or get_lang == CUDA) then
+    elsif(get_lang == CL or get_lang == CUDA or get_lang == HIP) then
       make_specfem3d_header( :ngll3 => n_gll3 )
       open p
       blockID    = Int("blockID")

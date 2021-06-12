@@ -55,7 +55,7 @@ module BOAST
 !\n\
 !=====================================================================\n\
 */\n"
-    if BOAST::get_lang == CUDA then
+    if (BOAST::get_lang == CUDA or BOAST::get_lang == HIP) then
     var += "\n"
     end
     return var
