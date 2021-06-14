@@ -92,7 +92,7 @@ void FC_FUNC_(sort_array_coordinates_c,SORT_ARRAY_COORDINATES_C)
     // Find continuous
     std::iota(sequence.begin(), sequence.end(), 0);
     segments[0] = 0;
-    auto last_seg = std::copy_if(std::execution::par_unseq, 
+    auto last_seg = std::copy_if(std::execution::par_unseq,
         std::next(sequence.begin()), sequence.end(), std::next(segments.begin()),
         [epsilon, &points] (int id) {
             return std::fabs(points[id].x-points[id-1].x) > epsilon;
@@ -107,7 +107,7 @@ void FC_FUNC_(sort_array_coordinates_c,SORT_ARRAY_COORDINATES_C)
             std::sort(points.begin() + segments[i], points.begin() + segments[i+1], cmp_y);
 
     // Again find continuous
-    last_seg = std::copy_if(std::execution::par_unseq, 
+    last_seg = std::copy_if(std::execution::par_unseq,
         std::next(sequence.begin()), sequence.end(), std::next(segments.begin()),
         [epsilon, &points] (int id) {
             return std::fabs(points[id].x-points[id-1].x) > epsilon ||

@@ -243,7 +243,7 @@ $(cuda_specfem3D_DEVICE_OBJ): $(subst $(cuda_specfem3D_DEVICE_OBJ), ,$(gpu_specf
 endif
 
 ifeq ($(HIP),yes)
-$O/%.hip-kernel.o: $(BOAST_DIR)/%.cpp $S/mesh_constants_gpu.h $S/mesh_constants_hip.h $(BOAST_DIR)/kernel_proto.cu.h 
+$O/%.hip-kernel.o: $(BOAST_DIR)/%.cpp $S/mesh_constants_gpu.h $S/mesh_constants_hip.h $(BOAST_DIR)/kernel_proto.cu.h
 	$(HIPCC) -c $< -o $@ $(HIP_CFLAGS) -I${SETUP} -I$(BOAST_DIR) $(SELECTOR_CFLAG) -include $(word 2,$^)
 endif
 
