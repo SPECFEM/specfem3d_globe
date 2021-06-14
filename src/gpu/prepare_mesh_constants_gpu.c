@@ -3461,7 +3461,7 @@ void FC_FUNC_ (prepare_cleanup_device,
         if (run_cuda) cudaFreeHost(mp->h_station_seismo_field);
 #endif
 #ifdef USE_HIP
-        if (run_hip) hipFreeHost(mp->h_station_seismo_field);
+        if (run_hip) hipHostFree(mp->h_station_seismo_field);
 #endif
       } else {
         free (mp->h_station_seismo_field);
@@ -3479,7 +3479,7 @@ void FC_FUNC_ (prepare_cleanup_device,
       if (run_cuda) cudaFreeHost(mp->h_stf_array_adjoint);
 #endif
 #ifdef USE_HIP
-      if (run_hip) hipFreeHost(mp->h_stf_array_adjoint);
+      if (run_hip) hipHostFree(mp->h_stf_array_adjoint);
 #endif
     } else {
       free (mp->h_stf_array_adjoint);
@@ -3561,31 +3561,31 @@ void FC_FUNC_ (prepare_cleanup_device,
   if (run_hip) {
     if (mp->num_interfaces_crust_mantle > 0) {
       if (GPU_ASYNC_COPY) {
-        hipFreeHost(mp->h_send_accel_buffer_cm);
-        hipFreeHost(mp->h_recv_accel_buffer_cm);
+        hipHostFree(mp->h_send_accel_buffer_cm);
+        hipHostFree(mp->h_recv_accel_buffer_cm);
         if (mp->simulation_type == 3) {
-          hipFreeHost(mp->h_b_send_accel_buffer_cm);
-          hipFreeHost(mp->h_b_recv_accel_buffer_cm);
+          hipHostFree(mp->h_b_send_accel_buffer_cm);
+          hipHostFree(mp->h_b_recv_accel_buffer_cm);
         }
       }
     }
     if (mp->num_interfaces_inner_core > 0) {
       if (GPU_ASYNC_COPY) {
-        hipFreeHost(mp->h_send_accel_buffer_ic);
-        hipFreeHost(mp->h_recv_accel_buffer_ic);
+        hipHostFree(mp->h_send_accel_buffer_ic);
+        hipHostFree(mp->h_recv_accel_buffer_ic);
         if (mp->simulation_type == 3) {
-          hipFreeHost(mp->h_b_send_accel_buffer_ic);
-          hipFreeHost(mp->h_b_recv_accel_buffer_ic);
+          hipHostFree(mp->h_b_send_accel_buffer_ic);
+          hipHostFree(mp->h_b_recv_accel_buffer_ic);
         }
       }
     }
     if (mp->num_interfaces_outer_core > 0) {
       if (GPU_ASYNC_COPY) {
-        hipFreeHost(mp->h_send_accel_buffer_oc);
-        hipFreeHost(mp->h_recv_accel_buffer_oc);
+        hipHostFree(mp->h_send_accel_buffer_oc);
+        hipHostFree(mp->h_recv_accel_buffer_oc);
         if (mp->simulation_type == 3) {
-          hipFreeHost(mp->h_b_send_accel_buffer_oc);
-          hipFreeHost(mp->h_b_recv_accel_buffer_oc);
+          hipHostFree(mp->h_b_send_accel_buffer_oc);
+          hipHostFree(mp->h_b_recv_accel_buffer_oc);
         }
       }
     }
@@ -3662,8 +3662,8 @@ void FC_FUNC_ (prepare_cleanup_device,
 #endif
 #ifdef USE_HIP
     if (run_hip){
-      hipFreeHost(mp->h_norm_max);
-      hipFreeHost(mp->h_norm_strain_max);
+      hipHostFree(mp->h_norm_max);
+      hipHostFree(mp->h_norm_strain_max);
       hipEventDestroy(mp->kernel_event);
     }
 #endif
