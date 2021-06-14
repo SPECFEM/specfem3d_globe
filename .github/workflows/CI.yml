@@ -105,6 +105,9 @@ jobs:
         echo ""
         echo "packages intel oneapi:"
         sudo apt-get install -y intel-oneapi-compiler-fortran intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic intel-oneapi-mpi intel-oneapi-mpi-devel
+
+    - name: compiler infos
+      run: |
         echo ""
         source /opt/intel/oneapi/setvars.sh
         echo ""
