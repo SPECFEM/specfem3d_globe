@@ -417,7 +417,6 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
     crust_mantle_impl_kernel crust_mantle_kernel_p;
 
     //daniel todo: check if hip can launch kernel name pointer
-#if 0
     // selects function call
     if (FORWARD_OR_ADJOINT == 1) {
       // forward wavefields -> FORWARD_OR_ADJOINT == 1
@@ -427,9 +426,9 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
       DEBUG_BACKWARD_FORCES ();
       crust_mantle_kernel_p = &crust_mantle_impl_kernel_adjoint;
     }
-#endif
 
-    //daniel todo: check combine for gpu arrays
+/*
+    //daniel todo: check combine for gpu arrays..
     // combines single arrays into full array **_all
     realw** d_c_ALL_store; //size 21
     realw** R_ALL; //size 5
@@ -467,117 +466,67 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
     epsilondev_ALL[2] = epsilondev_xy.hip;
     epsilondev_ALL[3] = epsilondev_xz.hip;
     epsilondev_ALL[4] = epsilondev_yz.hip;
+*/
 
-    if (FORWARD_OR_ADJOINT == 1) {
-       hipLaunchKernelGGL(HIP_KERNEL_NAME(crust_mantle_impl_kernel_forward), grid, threads, 0, mp->compute_stream,
-                                                                 nb_blocks_to_compute,
-                                                                 d_ibool.hip,
-                                                                 d_ispec_is_tiso.hip,
-                                                                 mp->d_phase_ispec_inner_crust_mantle.hip,
-                                                                 mp->num_phase_ispec_crust_mantle,
-                                                                 iphase,
-                                                                 deltat,
-                                                                 mp->use_mesh_coloring_gpu,
-                                                                 displ.hip,
-                                                                 accel.hip,
-                                                                 d_xix.hip, d_xiy.hip, d_xiz.hip,
-                                                                 d_etax.hip, d_etay.hip, d_etaz.hip,
-                                                                 d_gammax.hip, d_gammay.hip, d_gammaz.hip,
-                                                                 mp->d_hprime_xx.hip,
-                                                                 mp->d_hprimewgll_xx.hip,
-                                                                 mp->d_wgllwgll_xy.hip, mp->d_wgllwgll_xz.hip, mp->d_wgllwgll_yz.hip,
-                                                                 d_kappavstore.hip, d_muvstore.hip,
-                                                                 d_kappahstore.hip, d_muhstore.hip,
-                                                                 d_eta_anisostore.hip,
-                                                                 mp->compute_and_store_strain,
-                                                                 epsilondev_ALL, /*epsilondev_xx.hip, epsilondev_yy.hip, epsilondev_xy.hip, epsilondev_xz.hip, epsilondev_yz.hip,*/
-                                                                 epsilon_trace_over_3.hip,
-                                                                 mp->attenuation,
-                                                                 mp->partial_phys_dispersion_only,
-                                                                 mp->use_3d_attenuation_arrays,
-                                                                 d_one_minus_sum_beta.hip,d_factor_common.hip,
-                                                                 R_ALL, /*R_xx.hip, R_yy.hip, R_xy.hip, R_xz.hip, R_yz.hip,*/
-                                                                 R_ALL_lddrk, /*R_xx_lddrk.hip, R_yy_lddrk.hip, R_xy_lddrk.hip, R_xz_lddrk.hip, R_yz_lddrk.hip,*/
-                                                                 alpha_lddrk,beta_lddrk,
-                                                                 mp->use_lddrk,
-                                                                 alphaval.hip,
-                                                                 betaval.hip,
-                                                                 gammaval.hip,
-                                                                 tau_sigmainvval.hip,
-                                                                 mp->anisotropic_3D_mantle,
-                                                                 d_c_ALL_store,
-                                                                 /*d_c11store.hip,d_c12store.hip,d_c13store.hip,
-                                                                 d_c14store.hip,d_c15store.hip,d_c16store.hip,
-                                                                 d_c22store.hip,d_c23store.hip,d_c24store.hip,
-                                                                 d_c25store.hip,d_c26store.hip,d_c33store.hip,
-                                                                 d_c34store.hip,d_c35store.hip,d_c36store.hip,
-                                                                 d_c44store.hip,d_c45store.hip,d_c46store.hip,
-                                                                 d_c55store.hip,d_c56store.hip,d_c66store.hip,*/
-                                                                 mp->d_rstore_crust_mantle.hip,
-                                                                 mp->gravity,
-                                                                 mp->d_gravity_pre_store_crust_mantle.hip,
-                                                                 mp->d_gravity_H_crust_mantle.hip,
-                                                                 mp->d_wgll_cube.hip,
-                                                                 mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY);
-   }
-  else{
-    DEBUG_BACKWARD_FORCES ();
-     hipLaunchKernelGGL(HIP_KERNEL_NAME(crust_mantle_impl_kernel_adjoint),grid,threads,0,mp->compute_stream,nb_blocks_to_compute,
-                                                                 d_ibool.hip,
-                                                                 d_ispec_is_tiso.hip,
-                                                                 mp->d_phase_ispec_inner_crust_mantle.hip,
-                                                                 mp->num_phase_ispec_crust_mantle,
-                                                                 iphase,
-                                                                 deltat,
-                                                                 mp->use_mesh_coloring_gpu,
-                                                                 displ.hip,
-                                                                 accel.hip,
-                                                                 d_xix.hip, d_xiy.hip, d_xiz.hip,
-                                                                 d_etax.hip, d_etay.hip, d_etaz.hip,
-                                                                 d_gammax.hip, d_gammay.hip, d_gammaz.hip,
-                                                                 mp->d_hprime_xx.hip,
-                                                                 mp->d_hprimewgll_xx.hip,
-                                                                 mp->d_wgllwgll_xy.hip, mp->d_wgllwgll_xz.hip, mp->d_wgllwgll_yz.hip,
-                                                                 d_kappavstore.hip, d_muvstore.hip,
-                                                                 d_kappahstore.hip, d_muhstore.hip,
-                                                                 d_eta_anisostore.hip,
-                                                                 mp->compute_and_store_strain,
-                                                                 epsilondev_ALL, /*epsilondev_xx.hip, epsilondev_yy.hip, epsilondev_xy.hip, epsilondev_xz.hip, epsilondev_yz.hip,*/
-                                                                 epsilon_trace_over_3.hip,
-                                                                 mp->attenuation,
-                                                                 mp->partial_phys_dispersion_only,
-                                                                 mp->use_3d_attenuation_arrays,
-                                                                 d_one_minus_sum_beta.hip,d_factor_common.hip,
-                                                                 R_ALL, /*R_xx.hip, R_yy.hip, R_xy.hip, R_xz.hip, R_yz.hip,*/
-                                                                 R_ALL_lddrk, /*R_xx_lddrk.hip, R_yy_lddrk.hip, R_xy_lddrk.hip, R_xz_lddrk.hip, R_yz_lddrk.hip,*/
-                                                                 alpha_lddrk,beta_lddrk,
-                                                                 mp->use_lddrk,
-                                                                 alphaval.hip,
-                                                                 betaval.hip,
-                                                                 gammaval.hip,
-                                                                 tau_sigmainvval.hip,
-                                                                 mp->anisotropic_3D_mantle,
-                                                                 d_c_ALL_store,
-                                                                 /*d_c11store.hip,d_c12store.hip,d_c13store.hip,
-                                                                 d_c14store.hip,d_c15store.hip,d_c16store.hip,
-                                                                 d_c22store.hip,d_c23store.hip,d_c24store.hip,
-                                                                 d_c25store.hip,d_c26store.hip,d_c33store.hip,
-                                                                 d_c34store.hip,d_c35store.hip,d_c36store.hip,
-                                                                 d_c44store.hip,d_c45store.hip,d_c46store.hip,
-                                                                 d_c55store.hip,d_c56store.hip,d_c66store.hip,*/
-                                                                 mp->d_rstore_crust_mantle.hip,
-                                                                 mp->gravity,
-                                                                 mp->d_gravity_pre_store_crust_mantle.hip,
-                                                                 mp->d_gravity_H_crust_mantle.hip,
-                                                                 mp->d_wgll_cube.hip,
-                                                                 mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY);
+   hipLaunchKernelGGL(HIP_KERNEL_NAME(crust_mantle_kernel_p), grid, threads, 0, mp->compute_stream,
+                                                             nb_blocks_to_compute,
+                                                             d_ibool.hip,
+                                                             d_ispec_is_tiso.hip,
+                                                             mp->d_phase_ispec_inner_crust_mantle.hip,
+                                                             mp->num_phase_ispec_crust_mantle,
+                                                             iphase,
+                                                             deltat,
+                                                             mp->use_mesh_coloring_gpu,
+                                                             displ.hip,
+                                                             accel.hip,
+                                                             d_xix.hip, d_xiy.hip, d_xiz.hip,
+                                                             d_etax.hip, d_etay.hip, d_etaz.hip,
+                                                             d_gammax.hip, d_gammay.hip, d_gammaz.hip,
+                                                             mp->d_hprime_xx.hip,
+                                                             mp->d_hprimewgll_xx.hip,
+                                                             mp->d_wgllwgll_xy.hip, mp->d_wgllwgll_xz.hip, mp->d_wgllwgll_yz.hip,
+                                                             d_kappavstore.hip, d_muvstore.hip,
+                                                             d_kappahstore.hip, d_muhstore.hip,
+                                                             d_eta_anisostore.hip,
+                                                             mp->compute_and_store_strain,
+                                                             epsilondev_xx.hip, epsilondev_yy.hip, epsilondev_xy.hip,
+                                                             epsilondev_xz.hip, epsilondev_yz.hip, // epsilondev_ALL
+                                                             epsilon_trace_over_3.hip,
+                                                             mp->attenuation,
+                                                             mp->partial_phys_dispersion_only,
+                                                             mp->use_3d_attenuation_arrays,
+                                                             d_one_minus_sum_beta.hip,d_factor_common.hip,
+                                                             R_xx.hip, R_yy.hip, R_xy.hip,
+                                                             R_xz.hip, R_yz.hip, // R_ALL
+                                                             R_xx_lddrk.hip, R_yy_lddrk.hip, R_xy_lddrk.hip,
+                                                             R_xz_lddrk.hip, R_yz_lddrk.hip, // R_ALL_lddrk
+                                                             alpha_lddrk,beta_lddrk,
+                                                             mp->use_lddrk,
+                                                             alphaval.hip,
+                                                             betaval.hip,
+                                                             gammaval.hip,
+                                                             tau_sigmainvval.hip,
+                                                             mp->anisotropic_3D_mantle,
+                                                             d_c11store.hip,d_c12store.hip,d_c13store.hip,
+                                                             d_c14store.hip,d_c15store.hip,d_c16store.hip,
+                                                             d_c22store.hip,d_c23store.hip,d_c24store.hip,
+                                                             d_c25store.hip,d_c26store.hip,d_c33store.hip,
+                                                             d_c34store.hip,d_c35store.hip,d_c36store.hip,
+                                                             d_c44store.hip,d_c45store.hip,d_c46store.hip,
+                                                             d_c55store.hip,d_c56store.hip,d_c66store.hip, // d_c_ALL_store
+                                                             mp->d_rstore_crust_mantle.hip,
+                                                             mp->gravity,
+                                                             mp->d_gravity_pre_store_crust_mantle.hip,
+                                                             mp->d_gravity_H_crust_mantle.hip,
+                                                             mp->d_wgll_cube.hip,
+                                                             mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY);
 
-    }
-
+    /* free combined array
     hipDeviceSynchronize();
     hipFree(d_c_ALL_store);
     //hipFree(R_ALL);
     //hipFree(R_ALL_lddrk);
+    */
   }
 #endif
 

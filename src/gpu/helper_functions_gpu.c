@@ -727,7 +727,7 @@ void gpuFreeHost (void *d_array_addr_ptr) {
   if (run_cuda) { cudaFreeHost(d_array_addr_ptr->cuda); }
 #endif
 #ifdef USE_HIP
- if (run_hip) { hipFreeHost(d_array_addr_ptr->hip); }
+ if (run_hip) { hipHostFree(d_array_addr_ptr->hip); }
 #endif
 }
 */
@@ -989,48 +989,49 @@ const char *clGetErrorString (cl_int error) {
 
 // Timing helper functions
 
-#ifdef USE_CUDA
-void start_timing_cuda(cudaEvent_t* start,cudaEvent_t* stop) {
+void start_timing_gpu(gpu_event* start,gpu_event* stop) {
   // creates & starts event
+#ifdef USE_OPENCL
+// not implemented yet, events object added to kernel lauch command
+#endif
+#ifdef USE_CUDA
   cudaEventCreate(start);
   cudaEventCreate(stop);
   cudaEventRecord( *start, 0 );
+#endif
+#ifdef USE_HIP
+  // creates & starts event
+  hipEventCreate(start);
+  hipEventCreate(stop);
+  hipEventRecord( *start, 0 );
+#endif
 }
 
-void stop_timing_cuda(cudaEvent_t* start,cudaEvent_t* stop, char* info_str) {
-  realw time;
+void stop_timing_gpu(gpu_event* start,gpu_event* stop, char* info_str) {
+  realw time = 0;
   // stops events
+#ifdef USE_OPENCL
+// not fully implemented yet...
+  clReleaseEvent(*start);
+  clReleaseEvent(*stop);
+#endif
+#ifdef USE_CUDA
   cudaEventRecord( *stop, 0 );
   cudaEventSynchronize( *stop );
   cudaEventElapsedTime( &time, *start, *stop );
   cudaEventDestroy( *start );
   cudaEventDestroy( *stop );
-  // user output
-  printf("%s: Execution Time = %f ms\n",info_str,time);
-}
-#endif // USE_CUDA
-
-
+#endif
 #ifdef USE_HIP
-void start_timing_hip(hipEvent_t* start,hipEvent_t* stop) {
-  // creates & starts event
-  hipEventCreate(start);
-  hipEventCreate(stop);
-  hipEventRecord( *start, 0 );
-}
-
-void stop_timing_hip(hipEvent_t* start, hipEvent_t* stop, char* info_str) {
-  realw time;
-  // stops events
   hipEventRecord( *stop, 0 );
   hipEventSynchronize( *stop );
   hipEventElapsedTime( &time, *start, *stop );
   hipEventDestroy( *start );
   hipEventDestroy( *stop );
+#endif
   // user output
   printf("%s: Execution Time = %f ms\n",info_str,time);
 }
-#endif // USE_HIP
 
 /* ----------------------------------------------------------------------------------------------- */
 // exit functions

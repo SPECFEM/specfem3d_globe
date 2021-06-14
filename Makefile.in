@@ -197,17 +197,60 @@ OCL_LINK = @OCL_LDFLAGS@ @OCL_LIBS@
 @COND_HIP_TRUE@HIP = yes
 @COND_HIP_FALSE@HIP = no
 
+# GPU architecture / code version
+# see: https://llvm.org/docs/AMDGPUUsage.html
+# Radeon Instinct MI8:   --amdgpu-target=gfx803
+# Radeon Instinct MI25:	 --amdgpu-target=gfx900
+# Radeon Instinct MI50:  --amdgpu-target=gfx906
+# Radeon Instinct MI100: --amdgpu-target=gfx908
+GENCODE_AMD_MI8 = --amdgpu-target=gfx803
+GENCODE_AMD_MI25 = --amdgpu-target=gfx900
+GENCODE_AMD_MI50 = --amdgpu-target=gfx906
+GENCODE_AMD_MI100 = --amdgpu-target=gfx908
+
+# default targets
+# AMD default MI50 & MI100
+@COND_HIP_TRUE@@COND_HIP_PLATFORM_AMD_TRUE@GENCODE_HIP = $(GENCODE_AMD_MI50) $(GENCODE_AMD_MI100)
+@COND_HIP_TRUE@@COND_HIP_PLATFORM_AMD_TRUE@HIP_CFLAG_ENDING = -x hip      # HIP compilation of src/gpu/*.c files
+# NVIDIA default Tesla
+@COND_HIP_TRUE@@COND_HIP_PLATFORM_NVIDIA_TRUE@GENCODE_HIP = $(GENCODE_30)
+@COND_HIP_TRUE@@COND_HIP_PLATFORM_NVIDIA_TRUE@HIP_CFLAG_ENDING = -x cu    # CUDA compilation or src/gpu/*.c files
+
+# specific targets
+@COND_HIP_TRUE@@COND_HIP_MI8_TRUE@GENCODE_HIP = $(GENCODE_AMD_MI8)      # --with-hip=MI8 ..
+@COND_HIP_TRUE@@COND_HIP_MI25_TRUE@GENCODE_HIP = $(GENCODE_AMD_MI25)    # --with-hip=MI25 ..
+@COND_HIP_TRUE@@COND_HIP_MI50_TRUE@GENCODE_HIP = $(GENCODE_AMD_MI50)    # --with-hip=MI50 ..
+@COND_HIP_TRUE@@COND_HIP_MI100_TRUE@GENCODE_HIP = $(GENCODE_AMD_MI100)  # --with-hip=MI100 ..
+@COND_HIP_TRUE@@COND_HIP_CUDA5_TRUE@GENCODE_HIP = $(GENCODE_35)         # --with-hip=cuda5 ..
+@COND_HIP_TRUE@@COND_HIP_CUDA6_TRUE@GENCODE_HIP = $(GENCODE_37)         # --with-hip=cuda6 ..
+@COND_HIP_TRUE@@COND_HIP_CUDA7_TRUE@GENCODE_HIP = $(GENCODE_50)         # --with-hip=cuda7 ..
+@COND_HIP_TRUE@@COND_HIP_CUDA8_TRUE@GENCODE_HIP = $(GENCODE_60)         # --with-hip=cuda8 ..
+@COND_HIP_TRUE@@COND_HIP_CUDA9_TRUE@GENCODE_HIP = $(GENCODE_70)         # --with-hip=cuda9 ..
+@COND_HIP_TRUE@@COND_HIP_CUDA10_TRUE@GENCODE_HIP = $(GENCODE_75)         # --with-hip=cuda10 ..
+@COND_HIP_TRUE@@COND_HIP_CUDA11_TRUE@GENCODE_HIP = $(GENCODE_80)         # --with-hip=cuda11 ..
+
 HIP_FLAGS = @HIP_FLAGS@
 HIP_INC = @HIP_CPPFLAGS@ $(MPI_INCLUDES)
 
 @COND_HIP_TRUE@HIPCC = @HIPCC@
 @COND_HIP_FALSE@HIPCC = @CC@
 
-@COND_HIP_TRUE@HIP_CFLAGS = $(HIP_FLAGS) $(HIP_INC)
+@COND_HIP_TRUE@HIP_CFLAGS = $(HIP_FLAGS) $(HIP_INC) $(GENCODE_HIP)
 @COND_HIP_TRUE@HIP_LINK = @HIP_LDFLAGS@ @HIP_LIBS@
 
 @COND_HIP_FALSE@HIP_CFLAGS =
 @COND_HIP_FALSE@HIP_LINK =
+
+## linking with hipcc instead of mpif90
+## openMPI
+#MPI_LIB_PATH = -L$(shell ${MPIFC} --showme:libdirs)
+#MPI_LIBS += $(shell ${MPIFC} --showme:libs)
+#MPI_LIBS += $(shell mpicxx --showme:libs)
+#SET_MPI_LIB = ${MPI_LIB_PATH} $(shell echo ${MPI_LIBS} | sed -e 's/\b\([a-z]\+\)[ ,\n]\1/\1/g'|sed 's/[^ ]* */-l&/g')
+#FCLINK = $(HIPCC) $(SET_MPI_LIB)
+## mpich
+# from: mpif90 -link_info
+#FCLINK = $(HIPCC) -L/usr/lib/x86_64-linux-gnu -lmpichfort -lmpich -lgfortran -lm -shared-libgcc
 
 
 # GPU flags
@@ -482,8 +525,6 @@ endif
 
 realclean: clean
 	-rm -rf $E/* $O/*
-
-mrproper: clean
 
 # unit testing
 # If the first argument is "test"...

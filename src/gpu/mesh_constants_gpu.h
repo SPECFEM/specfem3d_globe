@@ -395,6 +395,7 @@ extern int run_opencl;
 extern int run_cuda;
 extern int run_hip;
 
+/* ----------------------------------------------------------------------------------------------- */
 
 typedef union {
 #ifdef USE_OPENCL
