@@ -136,11 +136,14 @@ jobs:
         echo ""
 
     - name: configure
-      run: ./configure FC=ifort CC=icc MPIF90=mpiifort
+      run: ./configure FC=ifort CC=icc MPIFC=mpiifort
 
     - name: make
-      run: make -j2 all
+      run: |
+        make -j2 all
+        make -j2 all --always-make
 
+    # fails due to MPI issue on virtual nodes
     #- name: make tests
     #  run: make tests
 
