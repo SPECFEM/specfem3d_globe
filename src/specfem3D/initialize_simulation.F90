@@ -563,12 +563,15 @@
   subroutine initialize_GPU()
 
 ! initialization for GPU cards
+
   use iso_c_binding
   use specfem_par
+
   implicit none
   ! local parameters
   integer :: ngpu_devices,ngpu_devices_min,ngpu_devices_max
   integer :: iproc
+  logical :: USE_CUDA_AWARE_MPI_all
 
   !----------------------------------------------------------------
   ! user test parameters
@@ -614,6 +617,10 @@
   ! initializes number of local gpu devices
   ngpu_devices = 0
 
+  ! all processes will try to switch to CUDA-aware setup
+  call any_all_l(USE_CUDA_AWARE_MPI,USE_CUDA_AWARE_MPI_all)
+  USE_CUDA_AWARE_MPI = USE_CUDA_AWARE_MPI_all
+
   ! GPU_MODE now defined in Par_file
   if (GPU_MODE) then
     ! user output
@@ -637,7 +644,21 @@
     endif
 
     ! initializes GPU and outputs info to files for all processes
-    call initialize_gpu_device(GPU_RUNTIME,trim(GPU_PLATFORM)//C_NULL_CHAR,trim(GPU_DEVICE)//C_NULL_CHAR,myrank,ngpu_devices)
+    if (USE_CUDA_AWARE_MPI) then
+      ! devices have already been set before MPI_init()
+      if (myrank == 0) then
+        write(IMAIN,*)
+        write(IMAIN,*) "  using CUDA-aware MPI"
+        write(IMAIN,*)
+        call flush_IMAIN()
+      endif
+      ! just to get number of devices and device info output
+      GPU_PLATFORM = "cuda_aware_devices"
+      call initialize_gpu_device(GPU_RUNTIME,trim(GPU_PLATFORM)//C_NULL_CHAR,trim(GPU_DEVICE)//C_NULL_CHAR,myrank,ngpu_devices)
+    else
+      ! sets GPU devices
+      call initialize_gpu_device(GPU_RUNTIME,trim(GPU_PLATFORM)//C_NULL_CHAR,trim(GPU_DEVICE)//C_NULL_CHAR,myrank,ngpu_devices)
+    endif
   endif
 
   ! collects min/max of local devices found for statistics
@@ -655,3 +676,54 @@
   endif
 
   end subroutine initialize_GPU
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine initialize_cuda_aware_mpi()
+
+  use shared_parameters, only: GPU_MODE
+  use specfem_par, only: USE_CUDA_AWARE_MPI
+
+  implicit none
+
+#ifdef WITH_CUDA_AWARE_MPI
+  ! local parameters
+  integer :: ier
+  logical :: has_cuda_aware_mpi
+
+  ! initializes flags
+  USE_CUDA_AWARE_MPI = .false.
+
+  ! we check first if GPU_MODE is set in Par_file
+  ! opens the parameter file: DATA/Par_file
+  call open_parameter_file(ier)
+  if (ier /= 0) stop 'an error occurred while opening the parameter file'
+
+  call read_value_logical(GPU_MODE, 'GPU_MODE', ier)
+  if (ier /= 0) stop 'an error occurred while reading the parameter file: GPU_MODE'
+
+  ! closes parameter file
+  call close_parameter_file()
+
+  ! default
+  has_cuda_aware_mpi = .false.
+
+  if (GPU_MODE) then
+    ! CUDA-aware MPI check
+    call check_cuda_aware_mpi(has_cuda_aware_mpi)
+
+    ! check if CUDA-aware MPI is supported (and GPU devices set)
+    if (has_cuda_aware_mpi) then
+      USE_CUDA_AWARE_MPI = .true.
+    endif
+  endif
+#else
+  ! to avoid compiler warnings
+  ! initializes flags
+  GPU_MODE = .false.
+  USE_CUDA_AWARE_MPI = .false.
+#endif
+
+  end subroutine initialize_cuda_aware_mpi

@@ -75,14 +75,26 @@ void FC_FUNC_(transfer_boun_pot_from_device,
   if (*FORWARD_OR_ADJOINT == 1) {
     accel = mp->d_accel_outer_core;
     buffer = mp->d_send_accel_buffer_outer_core;
-    h_buffer = mp->h_send_accel_buffer_oc;
+    if (mp->use_cuda_aware_mpi){
+      // CUDA-aware MPI (buffer allocated on device)
+      h_buffer = send_buffer;
+    }else{
+      // pinned memory
+      h_buffer = mp->h_send_accel_buffer_oc;
+    }
   } else {
     // backward fields
     // debug
     DEBUG_BACKWARD_ASSEMBLY_OC ();
     accel = mp->d_b_accel_outer_core;
     buffer = mp->d_b_send_accel_buffer_outer_core;
-    h_buffer = mp->h_b_send_accel_buffer_oc;
+    if (mp->use_cuda_aware_mpi){
+      // CUDA-aware MPI (buffer allocated on device)
+      h_buffer = send_buffer;
+    }else{
+      // pinned memory
+      h_buffer = mp->h_b_send_accel_buffer_oc;
+    }
   }
 
 
@@ -117,13 +129,28 @@ void FC_FUNC_(transfer_boun_pot_from_device,
       if (mp->has_last_copy_evt) {
         clCheck (clReleaseEvent (mp->last_copy_evt));
       }
-      clCheck (clEnqueueReadBuffer (mocl.copy_queue, buffer.ocl, CL_FALSE, 0,
-                                    size_mpi_buffer * sizeof (realw), h_buffer, 1, &kernel_evt, &mp->last_copy_evt));
+
+      if (mp->use_cuda_aware_mpi){
+        // CUDA-aware MPI copies buffers on GPU
+        clCheck (clEnqueueCopyBuffer (mocl.copy_queue, buffer.ocl, (cl_mem) h_buffer, 0, 0, size_mpi_buffer * sizeof (realw),
+                                      1, &kernel_evt, &mp->last_copy_evt));
+      }else{
+        // copies buffer to CPU
+        clCheck (clEnqueueReadBuffer (mocl.copy_queue, buffer.ocl, CL_FALSE, 0,
+                                      size_mpi_buffer * sizeof (realw), h_buffer, 1, &kernel_evt, &mp->last_copy_evt));
+      }
       mp->has_last_copy_evt = 1;
     } else {
       // blocking copy
-      clCheck (clEnqueueReadBuffer (mocl.command_queue, buffer.ocl, CL_TRUE, 0,
-                                    size_mpi_buffer * sizeof (realw), send_buffer, 0, NULL, NULL));
+      if (mp->use_cuda_aware_mpi){
+        // CUDA-aware MPI copies buffers on GPU
+        clCheck (clEnqueueCopyBuffer (mocl.command_queue, buffer.ocl, (cl_mem) h_buffer, 0, 0, size_mpi_buffer * sizeof (realw),
+                                      0, NULL, NULL));
+      }else{
+        // copies buffer to CPU
+        clCheck (clEnqueueReadBuffer (mocl.command_queue, buffer.ocl, CL_TRUE, 0,
+                                      size_mpi_buffer * sizeof (realw), send_buffer, 0, NULL, NULL));
+      }
     }
 
     clReleaseEvent (kernel_evt);
@@ -145,12 +172,24 @@ void FC_FUNC_(transfer_boun_pot_from_device,
     if (GPU_ASYNC_COPY) {
       // waits until kernel is finished before starting async memcpy
       cudaStreamSynchronize(mp->compute_stream);
-      // copies buffer to CPU
-      cudaMemcpyAsync(h_buffer,buffer.cuda,size_mpi_buffer*sizeof(realw),cudaMemcpyDeviceToHost,mp->copy_stream);
+      if (mp->use_cuda_aware_mpi){
+        // CUDA-aware MPI copies buffers on GPU
+        cudaMemcpyAsync(h_buffer,buffer.cuda,size_mpi_buffer*sizeof(realw),cudaMemcpyDeviceToDevice,mp->copy_stream);
+      }else{
+        // copies buffer to CPU
+        cudaMemcpyAsync(h_buffer,buffer.cuda,size_mpi_buffer*sizeof(realw),cudaMemcpyDeviceToHost,mp->copy_stream);
+      }
     } else {
       // synchronous copy
-      print_CUDA_error_if_any(cudaMemcpy(send_buffer,buffer.cuda,size_mpi_buffer*sizeof(realw),
-                                         cudaMemcpyDeviceToHost),98000);
+      if (mp->use_cuda_aware_mpi){
+        // CUDA-aware MPI copies buffers on GPU
+        print_CUDA_error_if_any(cudaMemcpy(send_buffer,buffer.cuda,size_mpi_buffer*sizeof(realw),
+                                           cudaMemcpyDeviceToDevice),98000);
+      }else{
+        // copies buffer to CPU
+        print_CUDA_error_if_any(cudaMemcpy(send_buffer,buffer.cuda,size_mpi_buffer*sizeof(realw),
+                                           cudaMemcpyDeviceToHost),98000);
+      }
     }
   }
 #endif
@@ -172,11 +211,25 @@ void FC_FUNC_(transfer_boun_pot_from_device,
       // waits until kernel is finished before starting async memcpy
       hipStreamSynchronize(mp->compute_stream);
       // copies buffer to CPU
-      hipMemcpyAsync(h_buffer,buffer.hip,size_mpi_buffer*sizeof(realw),hipMemcpyDeviceToHost,mp->copy_stream);
+      if (mp->use_cuda_aware_mpi){
+        // CUDA-aware MPI copies buffers on GPU
+        hipMemcpyAsync(h_buffer,buffer.hip,size_mpi_buffer*sizeof(realw),hipMemcpyDeviceToDevice,mp->copy_stream);
+      }else{
+        // copies buffer to CPU
+        hipMemcpyAsync(h_buffer,buffer.hip,size_mpi_buffer*sizeof(realw),hipMemcpyDeviceToHost,mp->copy_stream);
+      }
     } else {
       // synchronous copy
-      print_HIP_error_if_any(hipMemcpy(send_buffer,buffer.hip,size_mpi_buffer*sizeof(realw),
-                                         hipMemcpyDeviceToHost),98000);
+      // synchronous copy
+      if (mp->use_cuda_aware_mpi){
+        // CUDA-aware MPI copies buffers on GPU
+        print_HIP_error_if_any(hipMemcpy(send_buffer,buffer.hip,size_mpi_buffer*sizeof(realw),
+                                           hipMemcpyDeviceToDevice),98000);
+      }else{
+        // copies buffer to CPU
+        print_HIP_error_if_any(hipMemcpy(send_buffer,buffer.hip,size_mpi_buffer*sizeof(realw),
+                                           hipMemcpyDeviceToHost),98000);
+      }
     }
   }
 #endif
@@ -249,8 +302,15 @@ void FC_FUNC_ (transfer_asmbl_pot_to_device,
       clCheck (clFinish (mocl.copy_queue));
     }else{
       // copies scalar buffer onto GPU
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, buffer.ocl, CL_TRUE, 0, size_mpi_buffer * sizeof (realw),
-                                     buffer_recv_scalar, 0, NULL, NULL));
+      if (mp->use_cuda_aware_mpi){
+        // CUDA-aware MPI copies buffers on GPU
+        clCheck (clEnqueueCopyBuffer (mocl.command_queue, (cl_mem) buffer_recv_scalar, buffer.ocl, 0, 0, size_mpi_buffer * sizeof (realw),
+                                      0, NULL, NULL));
+      }else{
+        // copies from host to device
+        clCheck (clEnqueueWriteBuffer (mocl.command_queue, buffer.ocl, CL_TRUE, 0, size_mpi_buffer * sizeof (realw),
+                                       buffer_recv_scalar, 0, NULL, NULL));
+      }
     }
 
     //assemble forward/backward field
@@ -288,8 +348,15 @@ void FC_FUNC_ (transfer_asmbl_pot_to_device,
       cudaStreamSynchronize(mp->copy_stream);
     }else{
       // copies scalar buffer onto GPU
-      print_CUDA_error_if_any(cudaMemcpy(buffer.cuda, buffer_recv_scalar,size_mpi_buffer*sizeof(realw),
-                                         cudaMemcpyHostToDevice),99000);
+      if (mp->use_cuda_aware_mpi){
+        // CUDA-aware MPI copies buffers on GPU
+        print_CUDA_error_if_any(cudaMemcpy(buffer.cuda, buffer_recv_scalar,size_mpi_buffer*sizeof(realw),
+                                           cudaMemcpyDeviceToDevice),99000);
+      }else{
+        // buffer copy from CPU
+        print_CUDA_error_if_any(cudaMemcpy(buffer.cuda, buffer_recv_scalar,size_mpi_buffer*sizeof(realw),
+                                           cudaMemcpyHostToDevice),99000);
+      }
     }
 
     //assemble field
@@ -313,8 +380,15 @@ void FC_FUNC_ (transfer_asmbl_pot_to_device,
       hipStreamSynchronize(mp->copy_stream);
     }else{
       // copies scalar buffer onto GPU
-      print_HIP_error_if_any(hipMemcpy(buffer.hip, buffer_recv_scalar,size_mpi_buffer*sizeof(realw),
-                                       hipMemcpyHostToDevice),99000);
+      if (mp->use_cuda_aware_mpi){
+        // CUDA-aware MPI copies buffers on GPU
+        print_HIP_error_if_any(hipMemcpy(buffer.hip, buffer_recv_scalar,size_mpi_buffer*sizeof(realw),
+                                         hipMemcpyDeviceToDevice),99000);
+      }else{
+        // copies buffer from CPU
+        print_HIP_error_if_any(hipMemcpy(buffer.hip, buffer_recv_scalar,size_mpi_buffer*sizeof(realw),
+                                         hipMemcpyHostToDevice),99000);
+      }
     }
 
     //assemble field

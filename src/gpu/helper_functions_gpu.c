@@ -169,6 +169,8 @@ void gpuCreateCopy_todevice_int (gpu_int_mem *d_array_addr_ptr, int *h_array, si
     print_HIP_error_if_any(hipMemcpy((int*) d_array_addr_ptr->hip,h_array,size*sizeof(int),hipMemcpyHostToDevice),12002);
   }
 #endif
+
+  GPU_ERROR_CHECKING ("gpuCreateCopy_todevice_int");
 }
 
 /*----------------------------------------------------------------------------------------------- */
@@ -207,6 +209,8 @@ void gpuCreateCopy_todevice_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_arr
     print_HIP_error_if_any(hipMemcpy((realw*) d_array_addr_ptr->hip,h_array,size*sizeof(realw),hipMemcpyHostToDevice),22002);
   }
 #endif
+
+  GPU_ERROR_CHECKING ("gpuCreateCopy_todevice_realw");
 }
 
 /*----------------------------------------------------------------------------------------------- */
@@ -237,6 +241,7 @@ void gpuCopy_todevice_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array, si
   }
 #endif
 
+  GPU_ERROR_CHECKING ("gpuCopy_todevice_realw");
 }
 
 void gpuCopy_todevice_realw_offset (gpu_realw_mem *d_array_addr_ptr, realw *h_array, size_t size, size_t offset) {
@@ -263,6 +268,8 @@ void gpuCopy_todevice_realw_offset (gpu_realw_mem *d_array_addr_ptr, realw *h_ar
     print_HIP_error_if_any(hipMemcpy((realw*) d_array_addr_ptr->hip,&h_array[size*(offset-1)],size*sizeof(realw),hipMemcpyHostToDevice),22004);
   }
 #endif
+
+  GPU_ERROR_CHECKING ("gpuCopy_todevice_realw");
 }
 
 /*----------------------------------------------------------------------------------------------- */
@@ -283,6 +290,8 @@ void gpuRegisterHost_realw ( realw *h_array, const size_t size) {
 #ifdef USE_HIP
   print_HIP_error_if_any(hipHostRegister(h_array, size*sizeof(realw), hipHostRegisterDefault ),55001);
 #endif
+
+  GPU_ERROR_CHECKING ("gpuRegisterHost_realw");
 }
 
 void gpuUnregisterHost_realw ( realw *h_array) {
@@ -300,6 +309,7 @@ void gpuUnregisterHost_realw ( realw *h_array) {
   print_HIP_error_if_any(hipHostUnregister(h_array),55002);
 #endif
 
+  GPU_ERROR_CHECKING ("gpuUnregisterHost_realw");
 }
 
 
@@ -330,6 +340,8 @@ void gpuCopy_todevice_double (gpu_double_mem *d_array_addr_ptr, double *h_array,
     print_HIP_error_if_any(hipMemcpy((void*) d_array_addr_ptr->hip,h_array,size*sizeof(double),hipMemcpyHostToDevice),22005);
   }
 #endif
+
+  GPU_ERROR_CHECKING ("gpuCopy_todevice_double");
 }
 
 /*----------------------------------------------------------------------------------------------- */
@@ -359,6 +371,8 @@ void gpuCopy_todevice_int (gpu_int_mem *d_array_addr_ptr, int *h_array, size_t s
     print_HIP_error_if_any(hipMemcpy((void*) d_array_addr_ptr->hip,h_array,size*sizeof(int),hipMemcpyHostToDevice),22006);
   }
 #endif
+
+  GPU_ERROR_CHECKING ("gpuCopy_todevice_int");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -386,6 +400,8 @@ void gpuCopy_from_device_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array,
     print_HIP_error_if_any(hipMemcpy(h_array,d_array_addr_ptr->hip, sizeof(realw)*size, hipMemcpyDeviceToHost),33001);
   }
 #endif
+
+  GPU_ERROR_CHECKING ("gpuCopy_from_device_realw");
 }
 
 // copy with offset
@@ -411,6 +427,8 @@ void gpuCopy_from_device_realw_offset (gpu_realw_mem *d_array_addr_ptr, realw *h
     print_HIP_error_if_any(hipMemcpy(&h_array[size*(offset-1)],d_array_addr_ptr->hip, sizeof(realw)*size, hipMemcpyDeviceToHost),33002);
   }
 #endif
+
+  GPU_ERROR_CHECKING ("gpuCopy_from_device_realw");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -495,6 +513,8 @@ void gpuCopy_from_device_realw_asyncEvent (Mesh *mp, gpu_realw_mem *d_array_addr
     }
   }
 #endif
+
+  GPU_ERROR_CHECKING ("gpuCopy_from_device_realw_asyncEvent");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -522,6 +542,8 @@ void gpuRecordEvent(Mesh *mp){
     }
   }
 #endif
+
+  GPU_ERROR_CHECKING ("gpuRecordEvent");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -553,6 +575,8 @@ void gpuWaitEvent (Mesh *mp) {
     }
 #endif
   }
+
+  GPU_ERROR_CHECKING ("gpuWaitEvent");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -583,6 +607,8 @@ void gpuMalloc_realw (gpu_realw_mem *buffer, size_t size) {
     print_HIP_error_if_any(hipMalloc((void**)&buffer->hip, size * sizeof(realw)), 44001);
   }
 #endif
+
+  GPU_ERROR_CHECKING ("gpuMalloc_realw");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -609,6 +635,8 @@ void gpuMalloc_double (gpu_double_mem *buffer, size_t size) {
     print_HIP_error_if_any(hipMalloc((void**)&buffer->hip, size * sizeof(double)), 44002);
   }
 #endif
+
+  GPU_ERROR_CHECKING ("gpuMalloc_double");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -635,6 +663,8 @@ void gpuMalloc_int (gpu_int_mem *buffer, size_t size) {
     print_HIP_error_if_any(hipMalloc((void**)&buffer->hip, size * sizeof(int)), 44003);
   }
 #endif
+
+  GPU_ERROR_CHECKING ("gpuMalloc_int");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -660,6 +690,8 @@ void gpuMemset_realw (gpu_realw_mem *buffer, size_t size, int value) {
     print_HIP_error_if_any(hipMemset(buffer->hip, value, size*sizeof(realw)),44004);
   }
 #endif
+
+  GPU_ERROR_CHECKING ("gpuMemset_realw");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -689,6 +721,8 @@ void gpuSetConst (gpu_realw_mem *buffer, size_t size, realw *array) {
     print_HIP_error_if_any(hipMemcpy(buffer->hip, array, size * sizeof(realw), hipMemcpyHostToDevice),1401);
   }
 #endif
+
+  GPU_ERROR_CHECKING ("gpuSetConst");
 }
 
 /*----------------------------------------------------------------------------------------------- */
@@ -710,6 +744,8 @@ void gpuFree (void *d_array_addr_ptr) {
 #ifdef USE_HIP
   if (run_hip) { hipFree(gpu_ptr->hip); }
 #endif
+
+  GPU_ERROR_CHECKING ("gpuFree");
 }
 
 /*----------------------------------------------------------------------------------------------- */
@@ -729,6 +765,8 @@ void gpuFreeHost (void *d_array_addr_ptr) {
 #ifdef USE_HIP
  if (run_hip) { hipHostFree(d_array_addr_ptr->hip); }
 #endif
+
+  GPU_ERROR_CHECKING ("gpuFreeHost");
 }
 */
 
@@ -850,6 +888,8 @@ void gpuStreamCreate(gpu_stream* stream_ptr) {
 #ifdef USE_HIP
   if (run_hip){ print_HIP_error_if_any(hipStreamCreate(stream_ptr), 101); }
 #endif
+
+  GPU_ERROR_CHECKING ("gpuStreamCreate");
 }
 
 
@@ -876,6 +916,8 @@ void gpuStreamSynchronize(gpu_stream stream) {
 #ifdef USE_HIP
   if (run_hip){ hipStreamSynchronize(stream); }
 #endif
+
+  GPU_ERROR_CHECKING ("gpuStreamSynchronize");
 }
 
 
@@ -1195,3 +1237,40 @@ void synchronize_mpi () {
 }
 
 
+/* ----------------------------------------------------------------------------------------------- */
+// CUDA-aware MPI helper function
+/* ----------------------------------------------------------------------------------------------- */
+
+// allocates buffers on GPU device
+
+extern EXTERN_LANG
+void FC_FUNC_ (allocate_gpu_buffer,
+               ALLOCATE_GPU_BUFFER) (realw** buffer_f, int* total_size) {
+  TRACE ("allocate_gpu_buffer");
+
+  gpu_realw_mem buffer;
+  size_t size = *total_size;
+
+  // initializes buffer pointer
+  *buffer_f = NULL;
+
+  // checks if anything to do
+  if (size == 0){ return; }
+
+  // allocates buffer on GPU
+  gpuMalloc_realw(&buffer, size);
+
+  // initializes
+  gpuMemset_realw(&buffer, size, 0);
+
+  // returns buffer pointer
+#ifdef USE_OPENCL
+  if (run_opencl) { *buffer_f = (realw *) buffer.ocl; }
+#endif
+#ifdef USE_CUDA
+  if (run_cuda) { *buffer_f = buffer.cuda; }
+#endif
+#ifdef USE_HIP
+  if (run_hip) { *buffer_f = buffer.hip; }
+#endif
+}

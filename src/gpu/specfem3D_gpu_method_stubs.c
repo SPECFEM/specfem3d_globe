@@ -292,6 +292,9 @@ void FC_FUNC_ (compute_strain_gpu,
 void FC_FUNC_ (pause_for_debug,
                PAUSE_FOR_DEBUG) () {}
 
+void FC_FUNC_ (allocate_gpu_buffer,
+               ALLOCATE_GPU_BUFFER) (realw** buffer_f, int* total_size) {}
+
 
 //
 // src/gpu/initialize_gpu.c
@@ -299,10 +302,13 @@ void FC_FUNC_ (pause_for_debug,
 
 void FC_FUNC_ (initialize_gpu_device,
                INITIALIZE_GPU_DEVICE) (int *runtime_f, char *platform_f, char *device_f, int *myrank_f, int *nb_devices) {
- fprintf(stderr,"ERROR: GPU_MODE enabled without GPU/CUDA/OpenCL/HIP Support. "
-                "To enable GPU support, reconfigure with --with-gpu and/or --with-opencl and/or --with-hip flag.\n");
+ fprintf(stderr,"ERROR: GPU_MODE enabled without CUDA/OpenCL/HIP Support. "
+                "To enable GPU support, reconfigure with --with-cuda and/or --with-opencl and/or --with-hip flag.\n");
  exit(1);
 }
+
+void FC_FUNC_ (check_cuda_aware_mpi,
+               CHECK_CUDA_AWARE_MPI) (int* has_cuda_aware_mpi_f) {}
 
 
 //
@@ -495,7 +501,8 @@ void FC_FUNC_ (prepare_mpi_buffers_device,
                                             int *num_interfaces_outer_core,
                                             int *max_nibool_interfaces_oc,
                                             int *nibool_interfaces_outer_core,
-                                            int *ibool_interfaces_outer_core) {}
+                                            int *ibool_interfaces_outer_core,
+                                            int *USE_CUDA_AWARE_MPI_f) {}
 
 void FC_FUNC_ (prepare_fields_noise_device,
                PREPARE_FIELDS_NOISE_DEVICE) (long *Mesh_pointer_f,

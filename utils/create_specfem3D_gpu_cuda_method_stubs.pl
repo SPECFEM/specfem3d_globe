@@ -56,8 +56,8 @@ END
 
 
 $warning = <<END;
- fprintf(stderr,"ERROR: GPU_MODE enabled without GPU/CUDA/OpenCL/HIP Support. "
-                "To enable GPU support, reconfigure with --with-gpu and/or --with-opencl and/or --with-hip flag.\\n");
+ fprintf(stderr,"ERROR: GPU_MODE enabled without CUDA/OpenCL/HIP Support. "
+                "To enable GPU support, reconfigure with --with-cuda and/or --with-opencl and/or --with-hip flag.\\n");
  exit(1);
 END
 

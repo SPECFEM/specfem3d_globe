@@ -242,7 +242,8 @@
                                   num_interfaces_inner_core,max_nibool_interfaces_ic, &
                                   nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
                                   num_interfaces_outer_core,max_nibool_interfaces_oc, &
-                                  nibool_interfaces_outer_core,ibool_interfaces_outer_core)
+                                  nibool_interfaces_outer_core,ibool_interfaces_outer_core, &
+                                  USE_CUDA_AWARE_MPI)
   call synchronize_all()
 
   ! prepares fields on GPU for noise simulations

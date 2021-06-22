@@ -675,6 +675,9 @@ void FC_FUNC_ (prepare_fields_rotation_device,
     gpuCreateCopy_todevice_realw (&mp->d_b_B_array_rotation, b_B_array_rotation, NGLL3 * mp->NSPEC_OUTER_CORE);
   }
 
+  // synchronizes gpu calls
+  gpuSynchronize();
+
   GPU_ERROR_CHECKING ("prepare_fields_rotation_device");
 }
 
@@ -724,6 +727,9 @@ void FC_FUNC_ (prepare_fields_gravity_device,
   // constants
   mp->RHO_BOTTOM_OC = (realw) *RHO_BOTTOM_OC;
   mp->RHO_TOP_OC = (realw) *RHO_TOP_OC;
+
+  // synchronizes gpu calls
+  gpuSynchronize();
 
   GPU_ERROR_CHECKING ("prepare_fields_gravity_device");
 }
@@ -855,6 +861,9 @@ void FC_FUNC_ (prepare_fields_attenuat_device,
     gpuCreateCopy_todevice_realw (&mp->d_b_gammaval, b_gammaval, N_SLS);
   }
 
+  // synchronizes gpu calls
+  gpuSynchronize();
+
   GPU_ERROR_CHECKING ("prepare_fields_attenuat_device");
 }
 
@@ -966,6 +975,9 @@ void FC_FUNC_ (prepare_fields_strain_device,
       gpuCreateCopy_todevice_realw (&mp->d_b_eps_trace_over_3_inner_core, b_eps_trace_over_3_inner_core, R_size);
     }
   }
+
+  // synchronizes gpu calls
+  gpuSynchronize();
 
   GPU_ERROR_CHECKING ("prepare_fields_strain_device");
 }
@@ -1149,6 +1161,9 @@ void FC_FUNC_ (prepare_fields_absorb_device,
     }
   }
 
+  // synchronizes gpu calls
+  gpuSynchronize();
+
   GPU_ERROR_CHECKING ("prepare_fields_absorb_device");
 }
 
@@ -1170,12 +1185,16 @@ void FC_FUNC_ (prepare_mpi_buffers_device,
                                             int *num_interfaces_outer_core,
                                             int *max_nibool_interfaces_oc,
                                             int *nibool_interfaces_outer_core,
-                                            int *ibool_interfaces_outer_core) {
+                                            int *ibool_interfaces_outer_core,
+                                            int *USE_CUDA_AWARE_MPI_f) {
 
   TRACE ("prepare_mpi_buffers_device");
 
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
   size_t size_mpi_buffer;
+
+  // CUDA-aware MPI flag
+  mp->use_cuda_aware_mpi = *USE_CUDA_AWARE_MPI_f;
 
   // prepares interprocess-edge exchange information
 
@@ -1379,6 +1398,9 @@ void FC_FUNC_ (prepare_mpi_buffers_device,
     }
   }
 
+  // synchronizes gpu calls
+  gpuSynchronize();
+
   GPU_ERROR_CHECKING ("prepare_mpi_buffers_device");
 }
 
@@ -1443,6 +1465,9 @@ void FC_FUNC_ (prepare_fields_noise_device,
     gpuMemset_realw (&mp->d_Sigma_kl, NGLL3 * mp->NSPEC_CRUST_MANTLE, 0);
   }
 
+  // synchronizes gpu calls
+  gpuSynchronize();
+
   GPU_ERROR_CHECKING ("prepare_fields_noise_device");
 }
 
@@ -1479,6 +1504,9 @@ void FC_FUNC_ (prepare_oceans_device,
 
   // normals
   gpuCreateCopy_todevice_realw (&mp->d_normal_ocean_load, h_normal_ocean_load, NDIM * mp->npoin_oceans);
+
+  // synchronizes gpu calls
+  gpuSynchronize();
 
   GPU_ERROR_CHECKING ("prepare_oceans_device");
 }
@@ -1618,6 +1646,9 @@ void FC_FUNC_ (prepare_lddrk_device,
     }
   }
 
+  // synchronizes gpu calls
+  gpuSynchronize();
+
   GPU_ERROR_CHECKING ("prepare_lddrk_device");
 }
 
@@ -1670,7 +1701,6 @@ void FC_FUNC_ (prepare_crust_mantle_device,
   size_t size_padded_iso = NGLL3_PADDED * (mp->NSPECMAX_ISO_MANTLE);
   size_t size_padded_tiso = NGLL3_PADDED * (mp->NSPECMAX_TISO_MANTLE);
   size_t size_glob = mp->NGLOB_CRUST_MANTLE;
-
 
   // checks integer overflow
   // integer size limit: size of size_padded must fit onto an 4-byte integer
@@ -1824,6 +1854,9 @@ void FC_FUNC_ (prepare_crust_mantle_device,
                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,hipMemcpyHostToDevice),1503);
   }
 #endif
+
+  // synchronizes gpu calls
+  gpuSynchronize();
 
   // global indexing
   TRACE ("prepare_crust_mantle global indexing");
@@ -2290,6 +2323,8 @@ void FC_FUNC_ (prepare_crust_mantle_device,
 
     }
   }
+  // synchronizes gpu calls
+  gpuSynchronize();
 
   // mesh locations
   TRACE ("prepare_crust_mantle mesh locations");
@@ -2307,6 +2342,9 @@ void FC_FUNC_ (prepare_crust_mantle_device,
   // CMB/fluid outer core coupling
   mp->nspec2D_bottom_crust_mantle = *NSPEC2D_BOTTOM_CM;
   gpuCreateCopy_todevice_int (&mp->d_ibelm_bottom_crust_mantle, h_ibelm_bottom_crust_mantle, mp->nspec2D_bottom_crust_mantle);
+
+  // synchronizes gpu calls
+  gpuSynchronize();
 
   // wavefield
   TRACE ("prepare_crust_mantle wavefields");
@@ -2398,6 +2436,9 @@ void FC_FUNC_ (prepare_crust_mantle_device,
   if (run_hip){ exit_on_error("Error: textures not supported yet with HIP\n"); }
 #endif
 
+  // synchronizes gpu calls
+  gpuSynchronize();
+
   // mass matrices
   TRACE ("prepare_crust_mantle mass matrices");
   gpuCreateCopy_todevice_realw (&mp->d_rmassz_crust_mantle, h_rmassz, size_glob);
@@ -2409,8 +2450,12 @@ void FC_FUNC_ (prepare_crust_mantle_device,
     mp->d_rmassy_crust_mantle = gpuTakeRef(mp->d_rmassz_crust_mantle);
   }
 
+  // synchronizes gpu calls
+  gpuSynchronize();
+
   // kernel simulations
   if (mp->simulation_type == 3) {
+    TRACE ("prepare_crust_mantle kernels");
     mp->d_b_rmassz_crust_mantle = gpuTakeRef(mp->d_rmassz_crust_mantle);
     if (mp->rotation && mp->exact_mass_matrix_for_rotation) {
       gpuCreateCopy_todevice_realw (&mp->d_b_rmassx_crust_mantle, h_b_rmassx, size_glob);
@@ -2680,6 +2725,9 @@ void FC_FUNC_ (prepare_outer_core_device,
   }
 #endif
 
+  // synchronizes gpu calls
+  gpuSynchronize();
+
   // needed for kernel calculations
   if (mp->simulation_type == 3) {
     gpuMalloc_realw (&mp->d_rhostore_outer_core, size_padded);
@@ -2747,6 +2795,9 @@ void FC_FUNC_ (prepare_outer_core_device,
   gpuCreateCopy_todevice_int (&mp->d_ibelm_bottom_outer_core, h_ibelm_bottom_outer_core, mp->nspec2D_bottom_outer_core);
   gpuCreateCopy_todevice_realw (&mp->d_jacobian2D_bottom_outer_core, h_jacobian2D_bottom_outer_core, size_boc);
   gpuCreateCopy_todevice_realw (&mp->d_normal_bottom_outer_core, h_normal_bottom_outer_core, NDIM*size_boc);
+
+  // synchronizes gpu calls
+  gpuSynchronize();
 
   // wavefield
   gpuMalloc_realw (&mp->d_displ_outer_core, size_glob);
@@ -3068,6 +3119,9 @@ void FC_FUNC_ (prepare_inner_core_device,
   }
 #endif
 
+  // synchronizes gpu calls
+  gpuSynchronize();
+
   // anisotropy
   if (! mp->anisotropic_inner_core) {
     // no anisotropy (uses kappav and muv in inner core)
@@ -3200,6 +3254,9 @@ void FC_FUNC_ (prepare_inner_core_device,
 
   }
 
+  // synchronizes gpu calls
+  gpuSynchronize();
+
   // needed for boundary kernel calculations
   if (mp->simulation_type == 3 && mp->save_kernels_boundary) {
     gpuMalloc_realw (&mp->d_rhostore_inner_core, size_padded);
@@ -3260,6 +3317,9 @@ void FC_FUNC_ (prepare_inner_core_device,
 
   mp->nspec2D_top_inner_core = *NSPEC2D_TOP_IC;
   gpuCreateCopy_todevice_int (&mp->d_ibelm_top_inner_core, h_ibelm_top_inner_core, mp->nspec2D_top_inner_core);
+
+  // synchronizes gpu calls
+  gpuSynchronize();
 
   // wavefield
   size_t size = NDIM * mp->NGLOB_INNER_CORE;
@@ -4245,7 +4305,10 @@ void FC_FUNC_ (prepare_cleanup_device,
 #endif
 
   // releases previous contexts
-  gpuReset();
+  // note: with CUDA-aware MPI, releasing the context before finishing MPI can lead to a PAMI error in MPI_Finalize():
+  //          Cuda failure .. /pami/components/devices/shmem/ShmemDevice.h:425: 'context is destroyed'
+  //       thus, we only explicitly release it if no CUDA-aware MPI was used, otherwise let the system handle it.
+  if (! mp->use_cuda_aware_mpi){ gpuReset(); }
 
   // mesh pointer - not needed anymore
   free (mp);

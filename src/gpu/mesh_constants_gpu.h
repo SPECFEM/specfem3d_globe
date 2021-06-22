@@ -66,6 +66,10 @@
 #include <mpi.h>
 #endif
 
+#ifdef WITH_CUDA_AWARE_MPI
+#include <mpi-ext.h>
+#endif
+
 // type of "working" variables: see also CUSTOM_REAL in constants.h
 //
 // double precision temporary variables leads to 10% performance decrease
@@ -919,6 +923,7 @@ typedef struct mesh_ {
   gpu_int_mem d_nibool_interfaces_crust_mantle;
   gpu_int_mem d_ibool_interfaces_crust_mantle;
 
+  // mpi buffers
   gpu_realw_mem d_send_accel_buffer_crust_mantle;
   gpu_realw_mem d_b_send_accel_buffer_crust_mantle;
 
@@ -927,6 +932,7 @@ typedef struct mesh_ {
   gpu_int_mem d_nibool_interfaces_inner_core;
   gpu_int_mem d_ibool_interfaces_inner_core;
 
+  // mpi buffers
   gpu_realw_mem d_send_accel_buffer_inner_core;
   gpu_realw_mem d_b_send_accel_buffer_inner_core;
 
@@ -935,6 +941,7 @@ typedef struct mesh_ {
   gpu_int_mem d_nibool_interfaces_outer_core;
   gpu_int_mem d_ibool_interfaces_outer_core;
 
+  // mpi buffers
   gpu_realw_mem d_send_accel_buffer_outer_core;
   gpu_realw_mem d_b_send_accel_buffer_outer_core;
 
@@ -1028,6 +1035,9 @@ typedef struct mesh_ {
   // ------------------------------------------------------------------ //
   // optimizations
   // ------------------------------------------------------------------ //
+
+  // CUDA-aware MPI flag
+  int use_cuda_aware_mpi;
 
   // A buffer for MPI send/recv, which is duplicated in Fortran but is
   // allocated with pinned memory to facilitate asynchronous device <->

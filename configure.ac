@@ -115,6 +115,21 @@ AM_CONDITIONAL([COND_CUDA_PLUS],
     -o "$want_cuda" = cuda11 \]
 )
 
+# CUDA-aware MPI setting
+AC_ARG_ENABLE([cuda-aware-mpi],
+    [AS_HELP_STRING([--enable-cuda-aware-mpi],
+        [build CUDA-aware MPI enabled version @<:@default=no@:>@])],
+    [enable_cuda_aware_mpi="$enableval"],
+    [enable_cuda_aware_mpi=no])
+AC_ARG_WITH([cuda-aware-mpi],
+    [AS_HELP_STRING([--with-cuda-aware-mpi],
+        [build CUDA-aware MPI enabled version @<:@default=no@:>@])],
+    [with_cuda_aware_mpi="$withval"],
+    [with_cuda_aware_mpi=no])
+AS_IF([test x"$enable_cuda_aware_mpi" != xno || test x"$with_cuda_aware_mpi" != xno],
+    [want_cuda_aware_mpi=yes],[want_cuda_aware_mpi=no])
+AM_CONDITIONAL([COND_CUDA_AWARE_MPI], [test x"$want_cuda_aware_mpi" != xno])
+
 ## OpenCL
 AC_ARG_WITH([opencl],
  [AS_HELP_STRING([--with-opencl], [build OpenCL GPU enabled version @<:@default=no@:>@])],
@@ -179,14 +194,16 @@ AM_CONDITIONAL([COND_PARALLEL_STL], [test x"$want_parallel_stl" != xno])
 AC_ARG_WITH([openmp],
     [AS_HELP_STRING([--with-openmp],
         [build OpenMP enabled version @<:@default=no@:>@])],
-    [want_with_omp="$withval"],
-    [want_with_omp=no])
+    [with_omp="$withval"],
+    [with_omp=no])
 AC_ARG_ENABLE([openmp],
     [AS_HELP_STRING([--enable-openmp],
         [build OpenMP enabled version @<:@default=no@:>@])],
-    [want_omp="$enableval"],
-    [want_omp=no])
-AM_CONDITIONAL([COND_OMP], [test x"$want_omp" != xno || test x"$want_with_omp" != xno])
+    [enable_omp="$enableval"],
+    [enable_omp=no])
+AS_IF([test x"$enable_omp" != xno || test x"$with_omp" != xno],
+    [want_omp=yes],[want_omp=no])
+AM_CONDITIONAL([COND_OMP], [test x"$want_omp" != xno])
 
 ###
 ### VTK
@@ -578,6 +595,11 @@ AS_IF([test x"$want_hip" != xno], [
 AM_CONDITIONAL([COND_HIP_PLATFORM_AMD], [test x"$GPU_PLATFORM" = xamd])
 AM_CONDITIONAL([COND_HIP_PLATFORM_NVIDIA], [test x"$GPU_PLATFORM" = xnvidia])
 
+# CUDA-aware MPI setting
+AS_IF([test x"$want_cuda_aware_mpi" != xno], [
+    AC_MSG_NOTICE([enabling CUDA-aware MPI support])
+])
+
 ###
 ### MIC
 ###
@@ -618,7 +640,7 @@ AS_IF([test x"$want_parallel_stl" != xno], [
 ### OpenMP
 ###
 
-AS_IF([test x"$want_omp" != xno || test x"$want_with_omp" != xno], [
+AS_IF([test x"$want_omp" != xno], [
   AS_BOX([OpenMP])
   AC_MSG_NOTICE([OpenMP compilation is enabled])
 
@@ -658,7 +680,7 @@ AS_IF([test x"$want_vtk" != xno], [
 ### MPI
 ###
 
-AS_IF([test x"$want_cuda" != xno -o x"$want_opencl" != xno -o x"$want_vtk" != xno], [
+AS_IF([test x"$want_cuda" != xno -o x"$want_opencl" != xno -o x"$want_hip" != xno -o x"$want_vtk" != xno], [
     AS_BOX([MPI])
     # checks MPI include directory
     CIT_MPI_INCDIR([$MPIFC])

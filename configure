@@ -754,6 +754,8 @@ COND_HIP_FALSE
 COND_HIP_TRUE
 COND_OCL_FALSE
 COND_OCL_TRUE
+COND_CUDA_AWARE_MPI_FALSE
+COND_CUDA_AWARE_MPI_TRUE
 COND_CUDA_PLUS_FALSE
 COND_CUDA_PLUS_TRUE
 COND_CUDA11_FALSE
@@ -833,6 +835,8 @@ enable_double_precision
 enable_debug
 enable_vectorization
 with_cuda
+enable_cuda_aware_mpi
+with_cuda_aware_mpi
 with_opencl
 with_hip
 with_mic
@@ -1511,6 +1515,7 @@ Optional Features:
   --enable-debug          build with debugging options enabled [default=no]
   --enable-vectorization  build FORCE_VECTORIZATION enabled version
                           [default=auto]
+  --enable-cuda-aware-mpi build CUDA-aware MPI enabled version [default=no]
   --enable-openmp         build OpenMP enabled version [default=no]
   --enable-vtk            build VTK enabled version [default=no]
 
@@ -1518,6 +1523,7 @@ Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-cuda             build CUDA GPU enabled version [default=no]
+  --with-cuda-aware-mpi   build CUDA-aware MPI enabled version [default=no]
   --with-opencl           build OpenCL GPU enabled version [default=no]
   --with-hip              build HIP GPU enabled version [default=no]
   --with-mic              build native Xeon PHI enabled version [default=no]
@@ -2987,6 +2993,36 @@ else
 fi
 
 
+# CUDA-aware MPI setting
+# Check whether --enable-cuda-aware-mpi was given.
+if test "${enable_cuda_aware_mpi+set}" = set; then :
+  enableval=$enable_cuda_aware_mpi; enable_cuda_aware_mpi="$enableval"
+else
+  enable_cuda_aware_mpi=no
+fi
+
+
+# Check whether --with-cuda-aware-mpi was given.
+if test "${with_cuda_aware_mpi+set}" = set; then :
+  withval=$with_cuda_aware_mpi; with_cuda_aware_mpi="$withval"
+else
+  with_cuda_aware_mpi=no
+fi
+
+if test x"$enable_cuda_aware_mpi" != xno || test x"$with_cuda_aware_mpi" != xno; then :
+  want_cuda_aware_mpi=yes
+else
+  want_cuda_aware_mpi=no
+fi
+ if test x"$want_cuda_aware_mpi" != xno; then
+  COND_CUDA_AWARE_MPI_TRUE=
+  COND_CUDA_AWARE_MPI_FALSE='#'
+else
+  COND_CUDA_AWARE_MPI_TRUE='#'
+  COND_CUDA_AWARE_MPI_FALSE=
+fi
+
+
 ## OpenCL
 
 # Check whether --with-opencl was given.
@@ -3181,19 +3217,24 @@ fi
 
 # Check whether --with-openmp was given.
 if test "${with_openmp+set}" = set; then :
-  withval=$with_openmp; want_with_omp="$withval"
+  withval=$with_openmp; with_omp="$withval"
 else
-  want_with_omp=no
+  with_omp=no
 fi
 
 # Check whether --enable-openmp was given.
 if test "${enable_openmp+set}" = set; then :
-  enableval=$enable_openmp; want_omp="$enableval"
+  enableval=$enable_openmp; enable_omp="$enableval"
+else
+  enable_omp=no
+fi
+
+if test x"$enable_omp" != xno || test x"$with_omp" != xno; then :
+  want_omp=yes
 else
   want_omp=no
 fi
-
- if test x"$want_omp" != xno || test x"$want_with_omp" != xno; then
+ if test x"$want_omp" != xno; then
   COND_OMP_TRUE=
   COND_OMP_FALSE='#'
 else
@@ -7750,6 +7791,14 @@ else
 fi
 
 
+# CUDA-aware MPI setting
+if test x"$want_cuda_aware_mpi" != xno; then :
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: enabling CUDA-aware MPI support" >&5
+$as_echo "$as_me: enabling CUDA-aware MPI support" >&6;}
+
+fi
+
 ###
 ### MIC
 ###
@@ -7806,7 +7855,7 @@ fi
 ### OpenMP
 ###
 
-if test x"$want_omp" != xno || test x"$want_with_omp" != xno; then :
+if test x"$want_omp" != xno; then :
 
   $as_echo "## ------ ##
 ## OpenMP ##
@@ -10071,7 +10120,7 @@ ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ex
 ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
 
-if test x"$want_cuda" != xno -o x"$want_opencl" != xno -o x"$want_vtk" != xno; then :
+if test x"$want_cuda" != xno -o x"$want_opencl" != xno -o x"$want_hip" != xno -o x"$want_vtk" != xno; then :
 
     $as_echo "## --- ##
 ## MPI ##
@@ -10423,6 +10472,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${COND_CUDA_PLUS_TRUE}" && test -z "${COND_CUDA_PLUS_FALSE}"; then
   as_fn_error $? "conditional \"COND_CUDA_PLUS\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COND_CUDA_AWARE_MPI_TRUE}" && test -z "${COND_CUDA_AWARE_MPI_FALSE}"; then
+  as_fn_error $? "conditional \"COND_CUDA_AWARE_MPI\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${COND_OCL_TRUE}" && test -z "${COND_OCL_FALSE}"; then

@@ -51,20 +51,20 @@
 
   implicit none
 
-  integer :: NPROC
-  integer :: num_interfaces,max_nibool_interfaces
+  integer,intent(in) :: NPROC
+  integer,intent(in) :: num_interfaces,max_nibool_interfaces
 
-  real(kind=CUSTOM_REAL), dimension(max_nibool_interfaces,num_interfaces) :: &
+  real(kind=CUSTOM_REAL), dimension(max_nibool_interfaces,num_interfaces),intent(inout) :: &
        buffer_send_scalar,buffer_recv_scalar
 
-  integer, dimension(num_interfaces) :: nibool_interfaces,my_neighbors
-  integer, dimension(num_interfaces) :: request_send_scalar,request_recv_scalar
+  integer, dimension(num_interfaces),intent(in) :: nibool_interfaces,my_neighbors
+  integer, dimension(num_interfaces),intent(inout) :: request_send_scalar,request_recv_scalar
 
   ! local parameters
-  integer iinterface
+  integer :: iinterface
 
   ! note: preparation of the contribution between partitions using MPI
-  !       transfers MPI buffers to CPU in already done in transfer_boun_pot_from_device() call
+  !       transfers MPI buffers to CPU is already done in transfer_boun_pot_from_device() call
 
   ! sends only if more than one partition
   if (NPROC > 1) then
@@ -73,12 +73,12 @@
     do iinterface = 1, num_interfaces
       ! non-blocking synchronous send request
       call isend_cr(buffer_send_scalar(1:nibool_interfaces(iinterface),iinterface), &
-                   nibool_interfaces(iinterface),my_neighbors(iinterface), &
-                   itag,request_send_scalar(iinterface))
+                    nibool_interfaces(iinterface),my_neighbors(iinterface), &
+                    itag,request_send_scalar(iinterface))
       ! receive request
       call irecv_cr(buffer_recv_scalar(1:nibool_interfaces(iinterface),iinterface), &
-                   nibool_interfaces(iinterface),my_neighbors(iinterface), &
-                   itag,request_recv_scalar(iinterface) )
+                    nibool_interfaces(iinterface),my_neighbors(iinterface), &
+                    itag,request_recv_scalar(iinterface) )
 
     enddo
 
@@ -91,10 +91,10 @@
 !
 
   subroutine assemble_MPI_scalar_write_gpu(Mesh_pointer,NPROC, &
-                                            buffer_recv_scalar, &
-                                            num_interfaces,max_nibool_interfaces, &
-                                            request_send_scalar,request_recv_scalar, &
-                                            FORWARD_OR_ADJOINT)
+                                           buffer_recv_scalar, &
+                                           num_interfaces,max_nibool_interfaces, &
+                                           request_send_scalar,request_recv_scalar, &
+                                           FORWARD_OR_ADJOINT)
 
 ! waits for send/receiver to be completed and assembles contributions
 
@@ -102,21 +102,21 @@
 
   implicit none
 
-  integer(kind=8) :: Mesh_pointer
+  integer(kind=8),intent(in) :: Mesh_pointer
 
-  integer :: NPROC
+  integer,intent(in) :: NPROC
 
-  integer :: num_interfaces,max_nibool_interfaces
+  integer,intent(in) :: num_interfaces,max_nibool_interfaces
 
-  real(kind=CUSTOM_REAL), dimension(max_nibool_interfaces,num_interfaces) :: buffer_recv_scalar
-  integer, dimension(num_interfaces) :: request_send_scalar,request_recv_scalar
+  real(kind=CUSTOM_REAL), dimension(max_nibool_interfaces,num_interfaces),intent(inout) :: buffer_recv_scalar
+  integer, dimension(num_interfaces),intent(in) :: request_send_scalar,request_recv_scalar
 
-  integer :: FORWARD_OR_ADJOINT
+  integer,intent(in) :: FORWARD_OR_ADJOINT
 
   ! local parameters
   integer :: iinterface
 
-! assemble only if more than one partition
+  ! assemble only if more than one partition
   if (NPROC > 1) then
 
     ! wait for communications completion (recv)
@@ -161,19 +161,19 @@
 
   implicit none
 
-  integer(kind=8) :: Mesh_pointer
+  integer(kind=8),intent(in) :: Mesh_pointer
 
-  integer :: NPROC
+  integer,intent(in) :: NPROC
 
   ! array to assemble
-  integer :: num_interfaces,max_nibool_interfaces
+  integer,intent(in) :: num_interfaces,max_nibool_interfaces
 
-  real(kind=CUSTOM_REAL), dimension(max_nibool_interfaces,num_interfaces) :: buffer_recv_scalar
+  real(kind=CUSTOM_REAL), dimension(max_nibool_interfaces,num_interfaces),intent(inout) :: buffer_recv_scalar
 
-  integer, dimension(num_interfaces) :: request_recv_scalar
+  integer, dimension(num_interfaces),intent(in) :: request_recv_scalar
 
-  integer :: IREGION
-  integer :: FORWARD_OR_ADJOINT
+  integer,intent(in) :: IREGION
+  integer,intent(in) :: FORWARD_OR_ADJOINT
 
   ! local parameters
   integer :: iinterface
@@ -234,11 +234,11 @@
   integer,intent(in) :: NPROC
   integer,intent(in) :: num_interfaces,max_nibool_interfaces
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,max_nibool_interfaces,num_interfaces) :: &
+  real(kind=CUSTOM_REAL), dimension(NDIM,max_nibool_interfaces,num_interfaces),intent(inout) :: &
        buffer_send_vector,buffer_recv_vector
 
   integer, dimension(num_interfaces),intent(in) :: nibool_interfaces,my_neighbors
-  integer, dimension(num_interfaces) :: request_send_vector,request_recv_vector
+  integer, dimension(num_interfaces),intent(inout) :: request_send_vector,request_recv_vector
 
   ! local parameters
   integer :: iinterface
@@ -290,8 +290,8 @@
 
   integer,intent(in) :: num_interfaces,max_nibool_interfaces
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,max_nibool_interfaces,num_interfaces) :: buffer_recv_vector
-  integer, dimension(num_interfaces) :: request_send_vector,request_recv_vector
+  real(kind=CUSTOM_REAL), dimension(NDIM,max_nibool_interfaces,num_interfaces),intent(inout) :: buffer_recv_vector
+  integer, dimension(num_interfaces),intent(in) :: request_send_vector,request_recv_vector
 
   integer,intent(in) :: IREGION
   integer,intent(in) :: FORWARD_OR_ADJOINT
@@ -339,10 +339,10 @@
 ! with gpu functions...
 
   subroutine transfer_boundary_to_device(Mesh_pointer, NPROC, &
-                                            buffer_recv_vector, &
-                                            num_interfaces,max_nibool_interfaces, &
-                                            request_recv_vector, &
-                                            IREGION,FORWARD_OR_ADJOINT)
+                                         buffer_recv_vector, &
+                                         num_interfaces,max_nibool_interfaces, &
+                                         request_recv_vector, &
+                                         IREGION,FORWARD_OR_ADJOINT)
 
   use constants, only: CUSTOM_REAL,NDIM
 
@@ -355,9 +355,9 @@
   ! array to assemble
   integer,intent(in) :: num_interfaces,max_nibool_interfaces
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,max_nibool_interfaces,num_interfaces) :: buffer_recv_vector
+  real(kind=CUSTOM_REAL), dimension(NDIM,max_nibool_interfaces,num_interfaces),intent(inout) :: buffer_recv_vector
 
-  integer, dimension(num_interfaces) :: request_recv_vector
+  integer, dimension(num_interfaces),intent(in) :: request_recv_vector
 
   integer,intent(in) :: IREGION
   integer,intent(in) :: FORWARD_OR_ADJOINT
