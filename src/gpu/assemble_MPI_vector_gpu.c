@@ -641,7 +641,7 @@ void FC_FUNC_(transfer_buffer_to_device_async,
     // copy pinned memory
     memcpy(h_buffer, buffer_f, size_mpi_buffer * sizeof(realw));
   }
-  
+
   // asynchronous copy to GPU using copy_stream
 #ifdef USE_OPENCL
   if (run_opencl) {
@@ -780,7 +780,7 @@ void FC_FUNC_(sync_copy_from_device,
   if (! mp->use_cuda_aware_mpi){
     memcpy(send_buffer, h_buffer, size_mpi_buffer * sizeof(realw));
   }
-  
+
   // memory copy is now finished, so non-blocking MPI send can proceed
 
   GPU_ERROR_CHECKING ("sync_copy_from_device");
