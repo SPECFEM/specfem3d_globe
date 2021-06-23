@@ -68,15 +68,15 @@
   else
     ! 1/2-chunk simulations
     call read_value_double_precision(ANGULAR_WIDTH_XI_IN_DEGREES, 'ANGULAR_WIDTH_XI_IN_DEGREES', ier)
-    if (ier /= 0) stop 'an error occurred while reading the parameter file: ANGULAR_WIDTH_XI...'
+    if (ier /= 0) stop 'an error occurred while reading the parameter file: ANGULAR_WIDTH_XI_IN_DEGREES...'
     call read_value_double_precision(ANGULAR_WIDTH_ETA_IN_DEGREES, 'ANGULAR_WIDTH_ETA_IN_DEGREES', ier)
-    if (ier /= 0) stop 'an error occurred while reading the parameter file: ANGULAR_WIDTH_ETA...'
+    if (ier /= 0) stop 'an error occurred while reading the parameter file: ANGULAR_WIDTH_ETA_IN_DEGREES...'
     call read_value_double_precision(CENTER_LATITUDE_IN_DEGREES, 'CENTER_LATITUDE_IN_DEGREES', ier)
-    if (ier /= 0) stop 'an error occurred while reading the parameter file: CENTER_LATITUDE...'
+    if (ier /= 0) stop 'an error occurred while reading the parameter file: CENTER_LATITUDE_IN_DEGREES...'
     call read_value_double_precision(CENTER_LONGITUDE_IN_DEGREES, 'CENTER_LONGITUDE_IN_DEGREES', ier)
-    if (ier /= 0) stop 'an error occurred while reading the parameter file: CENTER_LONGITUDE...'
+    if (ier /= 0) stop 'an error occurred while reading the parameter file: CENTER_LONGITUDE_IN_DEGREES...'
     call read_value_double_precision(GAMMA_ROTATION_AZIMUTH, 'GAMMA_ROTATION_AZIMUTH', ier)
-    if (ier /= 0) stop 'an error occurred while reading the parameter file: GAMMA_ROTATION...'
+    if (ier /= 0) stop 'an error occurred while reading the parameter file: GAMMA_ROTATION_AZIMUTH...'
   endif
 
   ! number of elements at the surface along the two sides of the first chunk
@@ -305,9 +305,10 @@
   ! and the code should use the automatically determined value as by default
   !
   ! DT specified to override automatic DT
-  call read_value_double_precision(USER_DT, 'DT', ier)
+  call read_value_double_precision(USER_DT, 'DT', ier); ier = 0
+
   ! NSTEP specified to override automatic NSTEP
-  call read_value_integer(USER_NSTEP, 'NSTEP', ier)
+  call read_value_integer(USER_NSTEP, 'NSTEP', ier); ier = 0
   ! no error checking, continue if not available
 
   ! closes parameter file
