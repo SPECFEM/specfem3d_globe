@@ -1490,10 +1490,7 @@ void FC_FUNC_ (check_cuda_aware_mpi,
   TRACE ("check_cuda_aware_mpi");
 
   // flags
-  int has_local_rank_info = 0;
   int has_cuda_aware_mpi = 0;
-
-  *has_cuda_aware_mpi_f = 0;
 
 #ifdef WITH_CUDA_AWARE_MPI
   // environment variable which allows the reading of the local rank of the current MPI
@@ -1524,13 +1521,14 @@ void FC_FUNC_ (check_cuda_aware_mpi,
 
 #endif
 
-  // setting GPU device before MPI initialization
-  // MPI will then recognize and take over the GPU device setting
+  // sets GPU device before MPI initialization
+  // MPI will then recognize the setting and take over the GPU device setup
 
   // determine local rank
   // note: local rank is the rank id per compute node
   //       for example, 4 MPI processes per node -> local rank id = 0,1,2,3 on all cmopute nodes
   //       not the same as the MPI rank which goes from 0 to MPI size-1
+  int has_local_rank_info = 0;
   int rank = 0;
   char * localRankStr = NULL;
 
@@ -1575,7 +1573,7 @@ This version has been compiled with flag WITH_CUDA_AWARE_MPI, but MPI library ca
 Please check MPI installation.\n\n");
     }
     has_cuda_aware_mpi = 0;
-#endif
+#endif  // MPIX_CUDA_AWARE_SUPPORT
 
     // debug
     //printf("debug: query cuda support: MPI library CUDA-aware support - rank %d has support %d\n\n",rank,has_cuda_aware_mpi);

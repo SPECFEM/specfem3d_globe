@@ -579,7 +579,7 @@
   real(kind=4) :: xcolat,xlon,xrad
   real(kind=4) :: xdvpv,xdvph,xdvsv,xdvsh
 
-  logical :: found_crust,suppress_mantle_extension,is_inside_region
+  logical :: found_crust,suppress_mantle_extension,is_inside_region,convert_tiso_to_cij
 
   ! initializes perturbation values
   dvs = ZERO
@@ -892,14 +892,25 @@
   !
   ! converts isotropic/tiso parameters to fully anisotropic parameters
   if (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
+    ! checks models if we need to convert tiso values to full cij
+    convert_tiso_to_cij = .true.
 
-    ! anisotropic model between the Moho and 670 km (change to CMB if desired)
+    ! special case for fully anisotropic models
+    ! anisotropic models defined between the Moho and 670 km (change to CMB if desired)
     if (THREE_D_MODEL == THREE_D_MODEL_ANISO_MANTLE) then
       ! special case for model_aniso_mantle()
-      ! c11,.. already set in model_aniso_mantle() routine
-      ! nothing to do left
-      continue
-    else
+      if (suppress_mantle_extension) then
+        ! point is in crust, and CRUSTAL == .false. (no 3D crustal model); model_aniso_mantle() hasn't been called.
+        ! we still need to convert the 1D reference crustal values (vpv,vph,..) to full cij coefficients
+        convert_tiso_to_cij = .true.
+      else
+        ! c11,.. already set in model_aniso_mantle() routine
+        ! nothing left to do
+        convert_tiso_to_cij = .false.
+      endif
+    endif
+
+    if (convert_tiso_to_cij) then
       ! convert isotropic/tiso parameters to full cij
       if (TRANSVERSE_ISOTROPY) then
         ! assume that transverse isotropy is given for a radial symmetry axis
@@ -919,6 +930,7 @@
                                           c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
 
       else
+        ! we need to convert tiso/iso values to full cij coefficients
         ! calculates isotropic values from given (transversely isotropic) reference values
         ! (are non-dimensionalized)
         !
@@ -955,6 +967,7 @@
         c66 = c44
       endif
     endif
+
   endif ! ANISOTROPIC_3D_MANTLE
 
   if (ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) then
