@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -26,7 +26,7 @@
 !=====================================================================
 
   subroutine create_serial_name_database(prname,iproc,iregion_code, &
-      LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
+                                         LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
 
 ! create name of the database for serial codes (AVS_DX and codes to check buffers)
 

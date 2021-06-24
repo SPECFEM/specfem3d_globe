@@ -49,15 +49,17 @@ module BOAST
     p = Procedure(function_name, v)
     if (get_lang == CUDA and ref) then
       get_output.print File::read("references/#{function_name}.cu")
-    elsif(get_lang == CL or get_lang == CUDA) then
+    elsif(get_lang == CL or get_lang == CUDA or get_lang == HIP) then
       make_specfem3d_header( :ngllx => n_gllx, :ngll2 => n_gll2, :ngll3 => n_gll3, :ngll3_padded => n_gll3_padded )
 
       sub_compute_element_strain_undoatt = compute_element_strain_undoatt(n_gllx, n_gll2, n_gll3, n_gll3_padded )
-
       print sub_compute_element_strain_undoatt
+      comment()
+
       if type == :ani then
         sub_compute_strain_product =  compute_strain_product()
         print sub_compute_strain_product
+        comment()
       end
 
       open p
@@ -82,6 +84,7 @@ module BOAST
         Real("s_dummy#{a}_loc", :local => true, :dim => [Dim(ngll3)] )
       }
       decl sh_hprime_xx = Real("sh_hprime_xx",     :local => true, :dim => [Dim(ngll2)] )
+      comment()
 
       print ispec === get_group_id(0) + get_group_id(1)*get_num_groups(0)
       print ijk_ispec === get_local_id(0) + ngll3*ispec
@@ -91,6 +94,7 @@ module BOAST
       print If(tx < ngll2) {
         print sh_hprime_xx[tx] === d_hprime_xx[tx]
       }
+      comment()
 
       # loads element displacements
       # all threads load their displacement into shared memory
@@ -103,6 +107,7 @@ module BOAST
 
       # synchronizes threads
       print barrier(:local)
+      comment()
 
       # handles case when there is 1 extra block (due to rectangular grid)
       print If(ispec < nspec) {
@@ -114,6 +119,7 @@ module BOAST
         }
 
         print eps_trace_over_3 === epsilon_trace_over_3[ijk_ispec]
+        comment()
 
         # strain from backward/reconstructed forward wavefield
         print sub_compute_element_strain_undoatt.call(ispec,ijk_ispec,
@@ -122,10 +128,12 @@ module BOAST
                                                        *d_xi, *d_eta, *d_gamma,
                                                        sh_hprime_xx,
                                                        b_epsdev,b_eps_trace_over_3.address)
+        comment()
 
         if type == :ani then
           # fully anisotropic kernel contributions
           print sub_compute_strain_product.call(prod, eps_trace_over_3, epsdev, b_eps_trace_over_3, b_epsdev)
+          comment()
 
           print offset === ispec*ngll3*21+tx
 

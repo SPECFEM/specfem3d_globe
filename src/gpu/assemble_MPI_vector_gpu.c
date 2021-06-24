@@ -1,7 +1,7 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -53,7 +53,7 @@ void FC_FUNC_(transfer_boun_from_device,
 
   // gpu arrays
   gpu_realw_mem accel,buffer;
-  float *h_buffer;
+  realw *h_buffer;
   int num_interfaces;
   int max_nibool_interfaces;
   gpu_int_mem d_nibool_interfaces;
@@ -195,6 +195,32 @@ void FC_FUNC_(transfer_boun_from_device,
       // synchronous copy
       print_CUDA_error_if_any(cudaMemcpy(send_accel_buffer,buffer.cuda,size_mpi_buffer*sizeof(realw),
                                          cudaMemcpyDeviceToHost),41000);
+    }
+  }
+#endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(blocksize,1,1);
+
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(prepare_boundary_accel_on_device), grid, threads, 0, mp->compute_stream,
+                                                                          accel.hip,
+                                                                          buffer.hip,
+                                                                          num_interfaces,
+                                                                          max_nibool_interfaces,
+                                                                          d_nibool_interfaces.hip,
+                                                                          d_ibool_interfaces.hip);
+
+    // copies buffer to CPU
+    if (GPU_ASYNC_COPY) {
+      // waits until kernel is finished before starting async memcpy
+      hipStreamSynchronize(mp->compute_stream);
+      // copies buffer to CPU
+      hipMemcpyAsync(h_buffer,buffer.hip,size_mpi_buffer*sizeof(realw),hipMemcpyDeviceToHost,mp->copy_stream);
+    }else{
+      // synchronous copy
+      print_HIP_error_if_any(hipMemcpy(send_accel_buffer,buffer.hip,size_mpi_buffer*sizeof(realw),
+                                       hipMemcpyDeviceToHost),41000);
     }
   }
 #endif
@@ -369,6 +395,32 @@ void FC_FUNC_ (transfer_asmbl_accel_to_device,
                                                                              d_ibool_interfaces.cuda);
   }
 #endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(blocksize,1,1);
+
+    // asynchronous copy
+    if (GPU_ASYNC_COPY) {
+      // Wait until previous copy stream finishes. We assemble while other compute kernels execute.
+      hipStreamSynchronize(mp->copy_stream);
+    }else{
+      // (hipMemcpy implicitly synchronizes all other hip operations)
+      // copies vector buffer values to GPU
+      print_HIP_error_if_any(hipMemcpy(buffer.hip,buffer_recv_vector,size_mpi_buffer*sizeof(realw),
+                                       hipMemcpyHostToDevice),41000);
+    }
+
+    //assemble forward/backward accel
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(assemble_boundary_accel_on_device), grid, threads, 0, mp->compute_stream,
+                                                                           accel.hip,
+                                                                           buffer.hip,
+                                                                           num_interfaces,
+                                                                           max_nibool_interfaces,
+                                                                           d_nibool_interfaces.hip,
+                                                                           d_ibool_interfaces.hip);
+ }
+#endif
 
   GPU_ERROR_CHECKING ("transfer_asmbl_accel_to_device");
 }
@@ -391,14 +443,14 @@ void FC_FUNC_(transfer_buffer_to_device_async,
 
   // gpu arrays
   gpu_realw_mem buffer;
-  float *h_buffer;
+  realw *h_buffer;
 
   // get Mesh from Fortran integer wrapper
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // checks async-memcpy
   if (! GPU_ASYNC_COPY ) {
-    exit_on_error("transfer_buffer_to_device_async must be called with GPU_ASYNC_COPY == 1, please check mesh_constants_cuda.h");
+    exit_on_error("transfer_buffer_to_device_async must be called with GPU_ASYNC_COPY == 1, please check mesh_constants_gpu.h");
   }
 
   // safety check
@@ -478,6 +530,11 @@ void FC_FUNC_(transfer_buffer_to_device_async,
     cudaMemcpyAsync(buffer.cuda, h_buffer,size_mpi_buffer*sizeof(realw),cudaMemcpyHostToDevice,mp->copy_stream);
   }
 #endif
+#ifdef USE_HIP
+  if (run_hip) {
+    hipMemcpyAsync(buffer.hip, h_buffer,size_mpi_buffer*sizeof(realw),hipMemcpyHostToDevice,mp->copy_stream);
+  }
+#endif
 
   GPU_ERROR_CHECKING ("transfer_buffer_to_device_async");
 }
@@ -498,7 +555,7 @@ void FC_FUNC_(sync_copy_from_device,
   int size_mpi_buffer = 0;
 
   // gpu arrays
-  float *h_buffer;
+  realw *h_buffer;
 
   // get Mesh from Fortran integer wrapper
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
@@ -564,6 +621,8 @@ void FC_FUNC_(sync_copy_from_device,
   if (size_mpi_buffer == 0) return;
 
   // waits for asynchronous copy to finish
+  gpuStreamSynchronize(mp->copy_stream);
+
 #ifdef USE_OPENCL
   if (run_opencl) {
     clCheck (clFinish (mocl.copy_queue));
@@ -571,11 +630,6 @@ void FC_FUNC_(sync_copy_from_device,
       clCheck (clReleaseEvent (mp->last_copy_evt));
       mp->has_last_copy_evt = 0;
     }
-  }
-#endif
-#ifdef USE_CUDA
-  if (run_cuda) {
-    cudaStreamSynchronize(mp->copy_stream);
   }
 #endif
 

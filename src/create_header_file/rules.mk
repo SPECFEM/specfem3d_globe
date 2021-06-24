@@ -1,6 +1,6 @@
 #=====================================================================
 #
-#          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+#          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 #          --------------------------------------------------
 #
 #     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -48,6 +48,9 @@ create_header_file_SHARED_OBJECTS = \
 	$O/get_model_parameters.shared.o \
 	$O/get_timestep_and_layers.shared.o \
 	$O/memory_eval.shared.o \
+	$O/model_prem.shared.o \
+	$O/model_Sohl.shared.o \
+	$O/model_vpremoon.shared.o \
 	$O/param_reader.cc.o \
 	$O/read_compute_parameters.shared.o \
 	$O/read_parameter_file.shared.o \

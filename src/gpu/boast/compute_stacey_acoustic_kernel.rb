@@ -50,7 +50,7 @@ module BOAST
     p = Procedure(function_name, variables)
     if (get_lang == CUDA and ref) then
       get_output.print File::read("references/#{function_name}.cu")
-    elsif(get_lang == CL or get_lang == CUDA) then
+    elsif(get_lang == CL or get_lang == CUDA or get_lang == HIP) then
       make_specfem3d_header( :ngllx => n_gllx, :ngll2 => n_gll2 )
       open p
       decl igll = Int("igll")
@@ -61,12 +61,15 @@ module BOAST
       decl sn = Real("sn") if type == :acoustic_forward
       decl jacobianw = Real("jacobianw") if type == :acoustic_forward
       decl fac1 = Real("fac1") if type == :acoustic_forward
+      comment()
 
       print igll === get_local_id(0)
       print iface === get_group_id(0)+get_group_id(1)*get_num_groups(0)
+      comment()
 
       print If(iface < num_abs_boundary_faces ) {
         print ispec === abs_boundary_ispec[iface]-1
+        comment()
 
         print Case( interface_type,
         4 => lambda {
@@ -113,6 +116,7 @@ module BOAST
           print If(Expression("||", i < 0, i > ngllx-1) )                                                { print Return(nil) }
           print fac1 === wgllwgll[j*ngllx+i] if type == :acoustic_forward
         })
+        comment()
 
         print iglob === ibool[INDEX4(ngllx,ngllx,ngllx,i,j,k,ispec)] - 1
         if type == :acoustic_forward then

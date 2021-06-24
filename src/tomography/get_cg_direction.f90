@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -57,6 +57,15 @@ subroutine get_gradient_cg_tiso()
   real(kind=CUSTOM_REAL) :: ratio_bulk,ratio_betav,ratio_betah,ratio_eta
   integer :: iglob
   integer :: i,j,k,ispec,ier
+
+  ! normalized radii
+  real(kind=CUSTOM_REAL) :: KERNEL_R_TOP,KERNEL_R_BOTTOM
+
+  ! normalized radii
+  ! top at 50km depth
+  KERNEL_R_TOP = (R_PLANET_KM - 50.0 ) / R_PLANET_KM ! shallow depth
+  ! bottom at 100km depth
+  KERNEL_R_BOTTOM = (R_PLANET_KM - 100.0 ) / R_PLANET_KM ! deep depth
 
   ! allocate arrays for storing gradient
   ! transversely isotropic arrays
@@ -263,7 +272,7 @@ subroutine get_gradient_cg_tiso()
 
                 ! stores maximum kernel betav/betah value in this depth slice,
                 ! since betav/betah are most likely dominating
-                if (r < R_top .and. r > R_bottom) then
+                if (r < KERNEL_R_top .and. r > KERNEL_R_bottom) then
                   ! kernel betav value
                   max_vsv = abs( model_dbetav(i,j,k,ispec) )
                   if (depthmax(1) < max_vsv) then
@@ -316,7 +325,7 @@ subroutine get_gradient_cg_tiso()
 
                 ! stores maximum kernel betav/betah value in this depth slice,
                 ! since betav/betah are most likely dominating
-                if (r < R_top .and. r > R_bottom) then
+                if (r < KERNEL_R_top .and. r > KERNEL_R_bottom) then
                   ! kernel betav value
                   max_vsv = abs( model_dbetav(i,j,k,ispec) )
                   if (depthmax(1) < max_vsv) then
@@ -387,10 +396,10 @@ subroutine get_gradient_cg_tiso()
       max = maxval(depthmax)
       maxindex = maxloc(depthmax)
       depthmax_depth = depthmax_radius(maxindex(1))
-      depthmax_depth = R_EARTH_KM *( 1.0 - depthmax_depth )
+      depthmax_depth = R_PLANET_KM *( 1.0 - depthmax_depth )
       ! maximum in given depth range
       print *,'  using depth maximum: '
-      print *,'  between depths (top/bottom)   : ',R_top,R_bottom
+      print *,'  between depths (top/bottom)   : ',KERNEL_R_top,KERNEL_R_bottom
       print *,'  maximum kernel value          : ',max
       print *,'  depth of maximum kernel value : ',depthmax_depth
       print *

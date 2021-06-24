@@ -31,10 +31,12 @@ module BOAST
     p = Procedure(function_name, v)
     if (get_lang == CUDA and ref) then
       get_output.print File::read("references/#{function_name}.cu")
-    elsif(get_lang == CL or get_lang == CUDA) then
+    elsif(get_lang == CL or get_lang == CUDA or get_lang == HIP) then
       make_specfem3d_header( :ngll3 => n_gll3 )
       sub_compute_strain_product =  compute_strain_product()
       print sub_compute_strain_product
+      comment()
+
       open p
         decl i = Int("i")
         decl ispec = Int("ispec")
@@ -45,8 +47,10 @@ module BOAST
         decl prod = Real("prod", :dim => [Dim(21)], :allocate => true)
         decl epsdev = Real("epsdev", :dim => [Dim(5)], :allocate => true)
         decl b_epsdev = Real("b_epsdev", :dim => [Dim(5)], :allocate => true)
+        comment()
 
         print ispec === get_group_id(0) + get_group_id(1)*get_num_groups(0)
+        comment()
 
         # handles case when there is 1 extra block (due to rectangular grid)
         print If(ispec < nspec ) {
@@ -59,12 +63,17 @@ module BOAST
           (0..4).each { |indx|
             print b_epsdev[indx] === b_epsilondev[indx][ijk_ispec]
           }
+          comment()
+
           print eps_trace_over_3 === epsilon_trace_over_3[ijk_ispec]
           print b_eps_trace_over_3 === b_epsilon_trace_over_3[ijk_ispec]
+          comment()
 
           print sub_compute_strain_product.call(prod,eps_trace_over_3,epsdev,b_eps_trace_over_3,b_epsdev)
+          comment()
 
           print offset === ispec*ngll3*21+get_local_id(0);
+          comment()
 
           # updates full anisotropic kernel
           BOAST::get_output.puts"    // attention: following array is sorted differently on GPU and CPU, -> use 'resort_array' before copying back to cpu"

@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -33,10 +33,12 @@
 
 ! reads in files: OUTPUT_FILES/moviedata******
 !
-! and creates new files: ascii_movie_*** (ASCII option) /or/ bin_movie_*** (binary option)
+! and creates new files: ascii_movie_*** (ASCII option)
+!                     or   bin_movie_*** (binary option)
 !
 ! these files can then be visualized using GMT, the Generic Mapping Tools
 ! ( http://www.soest.hawaii.edu/GMT/ )
+! or the shakemovie renderer (renderOnSphere)
 !
 ! example scripts can be found in: UTILS/Visualization/GMT/
 
@@ -45,25 +47,27 @@
 
   implicit none
 
-  include "OUTPUT_FILES/values_from_mesher.h"
-
 !---------------------
 ! USER PARAMETER
 
   ! to avoid flickering in movies, the displacement/velocity field will get normalized with an
   ! averaged maximum value over the past few, available snapshots
-  logical,parameter :: USE_AVERAGED_MAXIMUM = .true.
+  logical :: USE_AVERAGED_MAXIMUM = .true.
   ! minimum number of frames to average maxima
   integer,parameter :: AVERAGE_MINIMUM = 5
   ! normalizes output values
-  logical, parameter :: NORMALIZE_VALUES = .true.
+  logical, parameter :: AVERAGE_NORMALIZE_VALUES = .true.
+
+  ! uses an absolute value given from input to normalize wavefield
+  logical :: USE_ABSOLUTE_VALUE_NORMALIZATION = .false.
+  double precision :: ABSOLUTE_VALUE_NORM = 0.d0
 
   ! muting source region
-  logical, parameter :: MUTE_SOURCE = .true.
+  logical :: MUTE_SOURCE = .true.
   real(kind=CUSTOM_REAL) :: RADIUS_TO_MUTE = 0.5    ! start radius in degrees
   real(kind=CUSTOM_REAL) :: STARTTIME_TO_MUTE = 0.5 ! adds seconds to shift starttime
   real(kind=CUSTOM_REAL) :: MUTE_SOURCE_MINIMAL_DISTANCE = 2.0 ! minimum taper around the source (in case of displacement movies)
-
+  real(kind=CUSTOM_REAL) :: SURFACE_WAVE_VELOCITY = 3.5     ! speed of surface waves (km/s)
 !---------------------
 
   integer :: i,j,it
@@ -96,14 +100,14 @@
   double precision, dimension(:), allocatable :: xp,yp,zp,field_display
 
 ! for dynamic memory allocation
-  integer :: ierror
+  integer :: ier
 
 ! movie files stored by solver
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
          store_val_x,store_val_y,store_val_z, &
          store_val_ux,store_val_uy,store_val_uz
 
-  logical :: OUTPUT_BINARY
+  logical :: OUTPUT_BINARY,temp_l
 
   real(kind=CUSTOM_REAL) :: LAT_SOURCE,LON_SOURCE,DEP_SOURCE
   real(kind=CUSTOM_REAL) :: dist_lon,dist_lat,distance,mute_factor,val
@@ -148,6 +152,18 @@
   print *,'enter output ASCII (F) or binary (T)'
   read(5,*) OUTPUT_BINARY
 
+  print *,'(optional) mute source area (T) or not (F)'
+  read(5,*,iostat=ier) temp_l
+  if (ier == 0) MUTE_SOURCE = temp_l
+
+  print *,'(optional) use moving average for normalization (T) or not (F)'
+  read(5,*,iostat=ier) temp_l
+  if (ier == 0) USE_AVERAGED_MAXIMUM = temp_l
+
+  print *,'(optional) enter absolute value for normalization (e.g. 1.e-7)'
+  read(5,*,iostat=ier) ABSOLUTE_VALUE_NORM
+  if (ier == 0) USE_ABSOLUTE_VALUE_NORMALIZATION = .true.
+
   print *
   print *,'--------'
   print *
@@ -165,6 +181,17 @@
     print *, '  movie output    : velocity'
   endif
   print *, '  time steps every: ',NTSTEP_BETWEEN_FRAMES
+  print *
+  if (MUTE_SOURCE) &
+    print *, '  using mute source region'
+  if (USE_AVERAGED_MAXIMUM) then
+    print *, '  using averaged maximum of wavefields for scaling:'
+    print *, '    averaging history over ',AVERAGE_MINIMUM,' wavefields'
+    print *, '    normalizes values: ',AVERAGE_NORMALIZE_VALUES
+  endif
+  if (USE_ABSOLUTE_VALUE_NORMALIZATION) then
+    print *, '  using absolute value for normalization: norm = ',ABSOLUTE_VALUE_NORM
+  endif
   print *
   print *,'There are ',NPROCTOT,' slices numbered from 0 to ',NPROCTOT-1
   print *
@@ -187,35 +214,35 @@
   print *
 
   ! allocates movie arrays
-  allocate(store_val_x(ilocnum,0:NPROCTOT-1),stat=ierror)
-  if (ierror /= 0) stop 'Error while allocating store_val_x'
+  allocate(store_val_x(ilocnum,0:NPROCTOT-1),stat=ier)
+  if (ier /= 0) stop 'Error while allocating store_val_x'
 
-  allocate(store_val_y(ilocnum,0:NPROCTOT-1),stat=ierror)
-  if (ierror /= 0) stop 'Error while allocating store_val_y'
+  allocate(store_val_y(ilocnum,0:NPROCTOT-1),stat=ier)
+  if (ier /= 0) stop 'Error while allocating store_val_y'
 
-  allocate(store_val_z(ilocnum,0:NPROCTOT-1),stat=ierror)
-  if (ierror /= 0) stop 'Error while allocating store_val_z'
+  allocate(store_val_z(ilocnum,0:NPROCTOT-1),stat=ier)
+  if (ier /= 0) stop 'Error while allocating store_val_z'
 
-  allocate(store_val_ux(ilocnum,0:NPROCTOT-1),stat=ierror)
-  if (ierror /= 0) stop 'Error while allocating store_val_ux'
+  allocate(store_val_ux(ilocnum,0:NPROCTOT-1),stat=ier)
+  if (ier /= 0) stop 'Error while allocating store_val_ux'
 
-  allocate(store_val_uy(ilocnum,0:NPROCTOT-1),stat=ierror)
-  if (ierror /= 0) stop 'Error while allocating store_val_uy'
+  allocate(store_val_uy(ilocnum,0:NPROCTOT-1),stat=ier)
+  if (ier /= 0) stop 'Error while allocating store_val_uy'
 
-  allocate(store_val_uz(ilocnum,0:NPROCTOT-1),stat=ierror)
-  if (ierror /= 0) stop 'Error while allocating store_val_uz'
+  allocate(store_val_uz(ilocnum,0:NPROCTOT-1),stat=ier)
+  if (ier /= 0) stop 'Error while allocating store_val_uz'
 
-  allocate(x(NGLLX,NGLLY),stat=ierror)
-  if (ierror /= 0) stop 'Error while allocating x'
+  allocate(x(NGLLX,NGLLY),stat=ier)
+  if (ier /= 0) stop 'Error while allocating x'
 
-  allocate(y(NGLLX,NGLLY),stat=ierror)
-  if (ierror /= 0) stop 'Error while allocating y'
+  allocate(y(NGLLX,NGLLY),stat=ier)
+  if (ier /= 0) stop 'Error while allocating y'
 
-  allocate(z(NGLLX,NGLLY),stat=ierror)
-  if (ierror /= 0) stop 'Error while allocating z'
+  allocate(z(NGLLX,NGLLY),stat=ier)
+  if (ier /= 0) stop 'Error while allocating z'
 
-  allocate(displn(NGLLX,NGLLY),stat=ierror)
-  if (ierror /= 0) stop 'Error while allocating displn'
+  allocate(displn(NGLLX,NGLLY),stat=ier)
+  if (ier /= 0) stop 'Error while allocating displn'
 
 
   print *
@@ -247,17 +274,17 @@
                                       4*npointot*CUSTOM_REAL/1024.0/1024.0,' MB'
   print *
 
-  allocate(xp(npointot),stat=ierror)
-  if (ierror /= 0) stop 'Error while allocating xp'
+  allocate(xp(npointot),stat=ier)
+  if (ier /= 0) stop 'Error while allocating xp'
 
-  allocate(yp(npointot),stat=ierror)
-  if (ierror /= 0) stop 'Error while allocating yp'
+  allocate(yp(npointot),stat=ier)
+  if (ier /= 0) stop 'Error while allocating yp'
 
-  allocate(zp(npointot),stat=ierror)
-  if (ierror /= 0) stop 'Error while allocating zp'
+  allocate(zp(npointot),stat=ier)
+  if (ier /= 0) stop 'Error while allocating zp'
 
-  allocate(field_display(npointot),stat=ierror)
-  if (ierror /= 0) stop 'Error while allocating field_display'
+  allocate(field_display(npointot),stat=ier)
+  if (ier /= 0) stop 'Error while allocating field_display'
 
   ! initializes maxima history
   if (USE_AVERAGED_MAXIMUM) then
@@ -286,26 +313,48 @@
     cmt_hdur = 0.0
 
     ! reads in source lat/lon
-    open(IIN,file='DATA/CMTSOLUTION',status='old',action='read',iostat=ierror )
-    if (ierror == 0) then
-      ! skip first line, event name,timeshift,half duration
-      read(IIN,*,iostat=ierror ) line ! PDE line
-      read(IIN,*,iostat=ierror ) line ! event name
+    if (USE_FORCE_POINT_SOURCE) then
+      open(IIN,file='DATA/FORCESOLUTION',status='old',action='read',iostat=ier )
+      if (ier /= 0) stop 'DATA/FORCESOLUTION not found, necessary for muting source area'
+      ! skip first line
+      read(IIN,*,iostat=ier ) line ! FORCE 001 ..
       ! timeshift
-      read(IIN,'(a256)',iostat=ierror ) line
-      if (ierror == 0 ) read(line(12:len_trim(line)),*) cmt_t_shift
+      read(IIN,'(a256)',iostat=ier ) line
+      if (ier == 0 ) read(line(12:len_trim(line)),*) cmt_t_shift
       ! halfduration
-      read(IIN,'(a256)',iostat=ierror ) line
-      if (ierror == 0 ) read(line(15:len_trim(line)),*) cmt_hdur
+      read(IIN,'(a256)',iostat=ier ) line
+      if (ier == 0 ) read(line(15:len_trim(line)),*) cmt_hdur
       ! latitude
-      read(IIN,'(a256)',iostat=ierror ) line
-      if (ierror == 0 ) read(line(10:len_trim(line)),*) LAT_SOURCE
+      read(IIN,'(a256)',iostat=ier ) line
+      if (ier == 0 ) read(line(10:len_trim(line)),*) LAT_SOURCE
       ! longitude
-      read(IIN,'(a256)',iostat=ierror ) line
-      if (ierror == 0 ) read(line(11:len_trim(line)),*) LON_SOURCE
+      read(IIN,'(a256)',iostat=ier ) line
+      if (ier == 0 ) read(line(11:len_trim(line)),*) LON_SOURCE
       ! depth
-      read(IIN,'(a256)',iostat=ierror ) line
-      if (ierror == 0 ) read(line(7:len_trim(line)),*) DEP_SOURCE
+      read(IIN,'(a256)',iostat=ier ) line
+      if (ier == 0 ) read(line(7:len_trim(line)),*) DEP_SOURCE
+      close(IIN)
+    else
+      open(IIN,file='DATA/CMTSOLUTION',status='old',action='read',iostat=ier )
+      if (ier /= 0) stop 'DATA/CMTSOLUTION not found, necessary for muting source area'
+      ! skip first line, event name,timeshift,half duration
+      read(IIN,*,iostat=ier ) line ! PDE line
+      read(IIN,*,iostat=ier ) line ! event name
+      ! timeshift
+      read(IIN,'(a256)',iostat=ier ) line
+      if (ier == 0 ) read(line(12:len_trim(line)),*) cmt_t_shift
+      ! halfduration
+      read(IIN,'(a256)',iostat=ier ) line
+      if (ier == 0 ) read(line(15:len_trim(line)),*) cmt_hdur
+      ! latitude
+      read(IIN,'(a256)',iostat=ier ) line
+      if (ier == 0 ) read(line(10:len_trim(line)),*) LAT_SOURCE
+      ! longitude
+      read(IIN,'(a256)',iostat=ier ) line
+      if (ier == 0 ) read(line(11:len_trim(line)),*) LON_SOURCE
+      ! depth
+      read(IIN,'(a256)',iostat=ier ) line
+      if (ier == 0 ) read(line(7:len_trim(line)),*) DEP_SOURCE
       close(IIN)
     endif
     ! effective half duration in movie runs
@@ -352,8 +401,8 @@
   ! movie point locations
   outputname = "/moviedata_xyz.bin"
   open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(outputname), &
-       status='old',action='read',form='unformatted',iostat=ierror)
-  if (ierror /= 0) then
+       status='old',action='read',form='unformatted',iostat=ier)
+  if (ier /= 0) then
     print *,'Error opening file: ',trim(OUTPUT_FILES)//trim(outputname)
     stop 'Error opening moviedata file'
   endif
@@ -386,8 +435,8 @@
     ! read all the elements from the same file
     write(outputname,"('/moviedata',i6.6)") it
     open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(outputname), &
-        status='old',action='read',form='unformatted',iostat=ierror)
-    if (ierror /= 0) then
+        status='old',action='read',form='unformatted',iostat=ier)
+    if (ier /= 0) then
       print *,'Error opening file: ',trim(OUTPUT_FILES)//trim(outputname)
       stop 'Error opening moviedata file'
     endif
@@ -419,7 +468,7 @@
 
         ! approximate wavefront travel distance in degrees
         ! (~3.5 km/s wave speed for surface waves)
-        distance = 3.5 * ((it-1)*DT-t0) / R_EARTH_KM * RADIANS_TO_DEGREES
+        distance = SURFACE_WAVE_VELOCITY * ((it-1)*DT-t0) / (R_PLANET/1000.d0) * RADIANS_TO_DEGREES
 
         print *,'distance approximate: ',distance,'(degrees)'
 
@@ -671,7 +720,7 @@
                 endif ! MOVIE_COARSE
 
                 ! determines North / South pole index for stamping maximum values
-                if (USE_AVERAGED_MAXIMUM .and. NORMALIZE_VALUES) then
+                if (USE_AVERAGED_MAXIMUM .and. AVERAGE_NORMALIZE_VALUES) then
                   xmesh = xp(ieoff)
                   ymesh = yp(ieoff)
                   zmesh = zp(ieoff)
@@ -701,7 +750,27 @@
     print *
     print *,'minimum amplitude in current snapshot = ',min_field_current
     print *,'maximum amplitude in current snapshot = ',max_field_current
+    print *
 
+    ! normalizes with an absolute value
+    if (USE_ABSOLUTE_VALUE_NORMALIZATION) then
+      ! info
+      print *,'normalizes with maximum absolute value = ',ABSOLUTE_VALUE_NORM
+
+      ! thresholds positive & negative maximum values
+      where( field_display(:) > ABSOLUTE_VALUE_NORM ) field_display = ABSOLUTE_VALUE_NORM
+      where( field_display(:) < - ABSOLUTE_VALUE_NORM ) field_display = - ABSOLUTE_VALUE_NORM
+
+      ! normalizes wavefield
+      if (abs(ABSOLUTE_VALUE_NORM) > 0.d0) field_display = field_display / ABSOLUTE_VALUE_NORM
+
+      ! re-computes min and max of data value
+      min_field_current = minval(field_display(:))
+      max_field_current = maxval(field_display(:))
+      print *,'  new minimum amplitude in current snapshot = ',min_field_current
+      print *,'  new maximum amplitude in current snapshot = ',max_field_current
+      print *
+    endif
 
     ! takes average over last few snapshots available and uses it
     ! to normalize field values
@@ -727,6 +796,7 @@
 
       print *,'maximum amplitude averaged in current snapshot = ',max_absol
       print *,'maximum amplitude over averaged last snapshots = ',max_average
+      print *
 
       ! thresholds positive & negative maximum values
       where( field_display(:) > max_absol ) field_display = max_absol
@@ -734,7 +804,7 @@
 
       ! sets new maxima for decaying wavefield
       ! this should avoid flickering when normalizing wavefields
-      if (NORMALIZE_VALUES) then
+      if (AVERAGE_NORMALIZE_VALUES) then
         ! checks stamp indices for maximum values
         if (istamp1 == 0 ) istamp1 = ieoff
         if (istamp2 == 0 ) istamp2 = ieoff-1
@@ -742,7 +812,7 @@
 
         if (max_absol < max_average) then
           ! distance (in degree) of surface waves travelled
-          distance = 3.5 * ((it-1)*DT-t0) / R_EARTH_KM * RADIANS_TO_DEGREES
+          distance = SURFACE_WAVE_VELOCITY * ((it-1)*DT-t0) / (R_PLANET/1000.d0) * RADIANS_TO_DEGREES
           if (distance > 10.0 .and. distance <= 20.0) then
             ! smooth transition between 10 and 20 degrees
             ! sets positive and negative maximum
@@ -776,7 +846,7 @@
       where( field_display(:) < - max_average ) field_display = -max_average
 
       ! normalizes field values
-      if (NORMALIZE_VALUES) then
+      if (AVERAGE_NORMALIZE_VALUES) then
         if (MUTE_SOURCE) then
           ! checks if source wavefield kicked in
           if ((it-1)*DT - t0 > STARTTIME_TO_MUTE) then
@@ -817,9 +887,15 @@
           if (abs(max_average) > TINYVAL ) field_display = field_display / max_average
         endif
       endif
+
+      ! re-computes min and max of data value
+      min_field_current = minval(field_display(:))
+      max_field_current = maxval(field_display(:))
+      print *,'  new minimum amplitude in current snapshot = ',min_field_current
+      print *,'  new maximum amplitude in current snapshot = ',max_field_current
+      print *
     endif
 
-    print *
     print *,'initial number of points (with multiples) was ',npointot
     print *,'final number of points is                     ',ieoff
 
@@ -835,13 +911,13 @@
        write(outputname,"('/bin_movie_',i6.6,'.E')") it
       endif
       open(unit=11,file=trim(OUTPUT_FILES)//trim(outputname),status='unknown', &
-            form='unformatted',action='write',iostat=ierror)
-      if (ierror /= 0) stop 'Error opening bin_movie file'
+            form='unformatted',action='write',iostat=ier)
+      if (ier /= 0) stop 'Error opening bin_movie file'
 
       if (iframe == 1) then
         open(unit=12,file=trim(OUTPUT_FILES)//'/bin_movie.xy',status='unknown', &
-            form='unformatted',action='write',iostat=ierror)
-        if (ierror /= 0) stop 'Error opening bin_movie.xy file'
+            form='unformatted',action='write',iostat=ier)
+        if (ier /= 0) stop 'Error opening bin_movie.xy file'
       endif
     else
       if (USE_COMPONENT == 1) then
@@ -852,20 +928,23 @@
        write(outputname,"('/ascii_movie_',i6.6,'.E')") it
       endif
       open(unit=11,file=trim(OUTPUT_FILES)//trim(outputname),status='unknown', &
-            action='write',iostat=ierror)
-      if (ierror /= 0) stop 'Error opening ascii_movie file'
+            action='write',iostat=ier)
+      if (ier /= 0) stop 'Error opening ascii_movie file'
 
       if (iframe == 1) then
         open(unit=12,file=trim(OUTPUT_FILES)//'/ascii_movie.xy',status='unknown', &
-            action='write',iostat=ierror)
-        if (ierror /= 0) stop 'Error opening ascii_movie.xy file'
+            action='write',iostat=ier)
+        if (ier /= 0) stop 'Error opening ascii_movie.xy file'
       endif
     endif
+    print *
+    print *,'Writing output: ',trim(OUTPUT_FILES)//trim(outputname)
+    print *
+
     ! clear number of elements kept
     ispec = 0
 
     ! read points for all the slices
-    print *,'Writing output',outputname
     do iproc = 0,NPROCTOT-1
       do ispecloc = 1,NEX_PER_PROC_XI*NEX_PER_PROC_ETA
         ispec = ispec + 1
@@ -907,9 +986,11 @@
 
             ! writes displacement and longitude/latitude to corresponding files
             if (OUTPUT_BINARY) then
+              ! binary output
               write(11) disp
               if (iframe == 1) write(12) long,lat
             else
+              ! ascii output
               write(11,*) disp
               if (iframe == 1) write(12,'(2f18.6)') long,lat
             endif

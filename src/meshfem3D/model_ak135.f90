@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -106,6 +106,8 @@
   subroutine model_ak135(x,rho,vp,vs,Qkappa,Qmu,iregion_code)
 
   use constants
+  use shared_parameters, only: R_PLANET,RHOAV
+
   use model_ak135_par
 
   implicit none
@@ -126,7 +128,7 @@
   integer :: i
 
   ! compute real physical radius in meters
-  r = x * R_EARTH
+  r = x * R_PLANET
 
   i = 1
   do while(r >= Mak135_V_radius_ak135(i) .and. i /= NR_AK135F_NO_MUD)
@@ -151,8 +153,7 @@
     Qmu = Mak135_V_Qmu_ak135(i)
     Qkappa = Mak135_V_Qkappa_ak135(i)
   else
-
-! interpolate from radius_ak135(i-1) to r using the values at i-1 and i
+    ! interpolate from radius_ak135(i-1) to r using the values at i-1 and i
     frac = (r-Mak135_V_radius_ak135(i-1))/(Mak135_V_radius_ak135(i)-Mak135_V_radius_ak135(i-1))
 
     rho = Mak135_V_density_ak135(i-1) + frac * (Mak135_V_density_ak135(i)-Mak135_V_density_ak135(i-1))
@@ -160,7 +161,6 @@
     vs = Mak135_V_vs_ak135(i-1) + frac * (Mak135_V_vs_ak135(i)-Mak135_V_vs_ak135(i-1))
     Qmu = Mak135_V_Qmu_ak135(i-1) + frac * (Mak135_V_Qmu_ak135(i)-Mak135_V_Qmu_ak135(i-1))
     Qkappa = Mak135_V_Qkappa_ak135(i-1) + frac * (Mak135_V_Qkappa_ak135(i)-Mak135_V_Qkappa_ak135(i-1))
-
   endif
 
 ! make sure Vs is zero in the outer core even if roundoff errors on depth
@@ -175,8 +175,8 @@
 ! time scaling (s^{-1}) is done with scaleval
   scaleval = dsqrt(PI*GRAV*RHOAV)
   rho = rho*1000.0d0/RHOAV
-  vp = vp*1000.0d0/(R_EARTH*scaleval)
-  vs = vs*1000.0d0/(R_EARTH*scaleval)
+  vp = vp*1000.0d0/(R_PLANET*scaleval)
+  vs = vs*1000.0d0/(R_PLANET*scaleval)
 
   end subroutine model_ak135
 

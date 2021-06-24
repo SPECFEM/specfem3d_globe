@@ -1,7 +1,7 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -142,7 +142,7 @@ void wait_adj_io_thread() {
 
 // initializes adjoint thread
 void
-FC_FUNC_(prepare_adj_io_thread,CREATE_IO_ADJ_THREAD)(char *buffer, long* length, int* nadj_rec_local) {
+FC_FUNC_(prepare_adj_io_thread,PREPARE_ADJ_IO_THREAD)(char *buffer, long* length, int* nadj_rec_local) {
 
   TRACE("prepare_adj_io_thread");
 
@@ -163,7 +163,7 @@ FC_FUNC_(prepare_adj_io_thread,CREATE_IO_ADJ_THREAD)(char *buffer, long* length,
 
 // creates thread for reading adjoint sources
 void
-FC_FUNC_(read_adj_io_thread,CREATE_IO_ADJ_THREAD)(int* it_sub_adj) {
+FC_FUNC_(read_adj_io_thread,READ_ADJ_IO_THREAD)(int* it_sub_adj) {
 
   TRACE("read_adj_io_thread");
   // debug

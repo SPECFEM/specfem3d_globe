@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -83,7 +83,7 @@
            stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating EPcrust arrays')
 
-  ! read EPCRUST model on master
+  ! read EPCRUST model on main
   if (myrank == 0) call read_epcrust_model()
 
   ! broadcast EPCRUST model
@@ -158,16 +158,18 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_epcrust(lat,lon,dep,vpc,vsc,rhoc,mohoc,found_crust,elem_in_crust,point_in_area)
+  subroutine model_epcrust(lat,lon,dep,vpc,vsc,rhoc,mohoc,sedimentc,found_crust,elem_in_crust,point_in_area)
 
   use constants
+  use shared_parameters, only: R_PLANET,R_PLANET_KM,RHOAV
+
   use model_epcrust_par
 
   implicit none
 
   ! INPUT & OUTPUT
   double precision,intent(in) :: lat, lon, dep
-  double precision,intent(inout) :: vpc, vsc, rhoc, mohoc
+  double precision,intent(inout) :: vpc, vsc, rhoc, mohoc, sedimentc
   logical,intent(out) :: found_crust,point_in_area
   logical,intent(in) :: elem_in_crust
 
@@ -180,7 +182,7 @@
   double precision:: weightl
   !double precision:: min_sed
   ! moho threshold
-  double precision:: minimum_moho_depth = 7.d0 / R_EARTH_KM
+  double precision,parameter:: minimum_moho_depth = 7.d0 / EARTH_R_KM
 
   ! initializes
   found_crust = .false.
@@ -228,25 +230,31 @@
     enddo
   endif
 
-  !topo=(R_EARTH_KM+z0)/R_EARTH_KM
-  !basement=(R_EARTH_KM+z0-zsmooth(1))/R_EARTH_KM
-  !conrad=(R_EARTH_KM+z0-zsmooth(1)-zsmooth(2))/R_EARTH_KM
-  !moho_top=(R_EARTH_KM+z0-zsmooth(1)-zsmooth(2)-zsmooth(3))/R_EARTH_KM
+  !topo=(R_PLANET_KM+z0)/R_PLANET_KM
+  !basement=(R_PLANET_KM+z0-zsmooth(1))/R_PLANET_KM
+  !conrad=(R_PLANET_KM+z0-zsmooth(1)-zsmooth(2))/R_PLANET_KM
+  !moho_top=(R_PLANET_KM+z0-zsmooth(1)-zsmooth(2)-zsmooth(3))/R_PLANET_KM
 
-  topo     = (R_EARTH_KM + z0)/R_EARTH_KM
-  basement = (R_EARTH_KM - zsmooth(1))/R_EARTH_KM
-  conrad   = (R_EARTH_KM - (zsmooth(1)+zsmooth(2)))/R_EARTH_KM
-  moho_top = (R_EARTH_KM - (zsmooth(1)+zsmooth(2)+zsmooth(3)))/R_EARTH_KM
+  topo     = (R_PLANET_KM + z0)/R_PLANET_KM
+  basement = (R_PLANET_KM - zsmooth(1))/R_PLANET_KM
+  conrad   = (R_PLANET_KM - (zsmooth(1)+zsmooth(2)))/R_PLANET_KM
+  moho_top = (R_PLANET_KM - (zsmooth(1)+zsmooth(2)+zsmooth(3)))/R_PLANET_KM
 
-  !min_sed  = 1.0 - MINIMUM_SEDIMENT_THICKNESS/R_EARTH_KM
+  !min_sed  = 1.0 - MINIMUM_SEDIMENT_THICKNESS/R_PLANET_KM
 
   ! moho depth
-  moho = (zsmooth(1)+zsmooth(2)+zsmooth(3))/R_EARTH_KM
+  moho = (zsmooth(1)+zsmooth(2)+zsmooth(3))/R_PLANET_KM
   ! Hejun Zhu, delete moho thickness less than 7 km
   if (moho < minimum_moho_depth) then
     moho = minimum_moho_depth
   endif
   mohoc = moho
+
+  ! sediment thickness
+  if (INCLUDE_SEDIMENTS_IN_CRUST .and. zsmooth(1) >= MINIMUM_SEDIMENT_THICKNESS) then
+    sedimentc = zsmooth(1) / R_PLANET_KM
+  endif
+
 
   ! initializes
   vp = ZERO
@@ -273,8 +281,8 @@
 
   if (found_crust) then
     scaleval = dsqrt(PI*GRAV*RHOAV)
-    vpc = vp*1000.d0/(R_EARTH*scaleval)
-    vsc = vs*1000.d0/(R_EARTH*scaleval)
+    vpc = vp*1000.d0/(R_PLANET*scaleval)
+    vsc = vs*1000.d0/(R_PLANET*scaleval)
     rhoc = rho*1000.d0/RHOAV
     !debug
     !print *,'EPcrust: ',lat,lon,dep,vpc,vsc,rhoc,mohoc

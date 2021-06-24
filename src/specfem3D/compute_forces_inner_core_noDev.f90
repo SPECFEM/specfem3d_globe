@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine compute_forces_inner_core_noDev( NSPEC,NGLOB,NSPEC_ATT, &
+  subroutine compute_forces_inner_core_noDev( NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT, &
                                               deltat, &
                                               displ_inner_core, &
                                               accel_inner_core, &
@@ -62,7 +62,7 @@
 
   implicit none
 
-  integer :: NSPEC,NGLOB,NSPEC_ATT
+  integer :: NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT
 
   ! time step
   real(kind=CUSTOM_REAL) deltat
@@ -86,7 +86,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATT) :: &
     R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STR_OR_ATT) :: &
     epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STRAIN_ONLY) :: epsilon_trace_over_3
@@ -498,14 +498,14 @@
           call compute_element_att_memory_ic_lddrk(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
                                                    R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
                                                    ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec,factor_common, &
-                                                   c44store,muvstore, &
+                                                   muvstore, &
                                                    epsilondev_loc, &
                                                    deltat)
         else
           call compute_element_att_memory_ic(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
                                              ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec,factor_common, &
                                              alphaval,betaval,gammaval, &
-                                             c44store,muvstore, &
+                                             muvstore, &
                                              epsilondev_xx,epsilondev_yy,epsilondev_xy, &
                                              epsilondev_xz,epsilondev_yz, &
                                              epsilondev_loc)

@@ -5,7 +5,7 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -82,9 +82,6 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifndef IFLAG_IN_FICTITIOUS_CUBE\n\
 #define IFLAG_IN_FICTITIOUS_CUBE 11\n\
 #endif\n\
-#ifndef R_EARTH_KM\n\
-#define R_EARTH_KM 6371.0f\n\
-#endif\n\
 #ifndef COLORING_MIN_NSPEC_INNER_CORE\n\
 #define COLORING_MIN_NSPEC_INNER_CORE 1000\n\
 #endif\n\
@@ -103,10 +100,13 @@ __kernel void compute_stacey_elastic_backward_kernel(__global float * b_accel, c
   int k;\n\
   int iglob;\n\
   int ispec;\n\
+\n\
   igll = get_local_id(0);\n\
   iface = get_group_id(0) + (get_group_id(1)) * (get_num_groups(0));\n\
+\n\
   if (iface < num_abs_boundary_faces) {\n\
     ispec = abs_boundary_ispec[iface] - (1);\n\
+\n\
     switch (interface_type) {\n\
       case 0 :\n\
         if (nkmin_xi[INDEX2(2, 0, iface)] == 0 || njmin[INDEX2(2, 0, iface)] == 0) {\n\
@@ -165,6 +165,7 @@ __kernel void compute_stacey_elastic_backward_kernel(__global float * b_accel, c
         }\n\
         break;\n\
     }\n\
+\n\
     iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)] - (1);\n\
     atomicAdd(b_accel + (iglob) * (3) + 0,  -(b_absorb_field[INDEX3(NDIM, NGLL2, 0, igll, iface)]));\n\
     atomicAdd(b_accel + (iglob) * (3) + 1,  -(b_absorb_field[INDEX3(NDIM, NGLL2, 1, igll, iface)]));\n\

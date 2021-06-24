@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -25,9 +25,9 @@
 !
 !=====================================================================
 
-  subroutine get_ellipticity(xelm,yelm,zelm,nspl,rspl,espl,espl2)
+  subroutine get_ellipticity(xelm,yelm,zelm,nspl,rspl,ellipicity_spline,ellipicity_spline2)
 
-  use constants
+  use constants, only: NR_DENSITY,NGNOD,ONE,TWO
 
   implicit none
 
@@ -35,7 +35,7 @@
   double precision :: xelm(NGNOD)
   double precision :: yelm(NGNOD)
   double precision :: zelm(NGNOD)
-  double precision :: rspl(NR),espl(NR),espl2(NR)
+  double precision :: rspl(NR_DENSITY),ellipicity_spline(NR_DENSITY),ellipicity_spline2(NR_DENSITY)
 
   ! local parameters
   integer :: ia
@@ -58,7 +58,7 @@
     p20 = 0.5d0*(3.0d0*cost*cost-1.0d0)
 
     ! get ellipticity using spline evaluation
-    call spline_evaluation(rspl,espl,espl2,nspl,r,ell)
+    call spline_evaluation(rspl,ellipicity_spline,ellipicity_spline2,nspl,r,ell)
 
 ! this is eq (14.4) in Dahlen and Tromp (1998)
     factor = ONE-(TWO/3.0d0)*ell*p20
@@ -78,16 +78,16 @@
   !> Hejun
   ! ellipticity at the GLL points
   ! JAN08, 2010
-  subroutine get_ellipticity_gll(xstore,ystore,zstore,ispec,nspec,nspl,rspl,espl,espl2)
+  subroutine get_ellipticity_gll(xstore,ystore,zstore,ispec,nspec,nspl,rspl,ellipicity_spline,ellipicity_spline2)
 
-  use constants
+  use constants, only: NR_DENSITY,NGLLX,NGLLY,NGLLZ,ONE,TWO
 
   implicit none
 
   integer :: nspl
   integer :: ispec,nspec
   double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
-  double precision :: rspl(NR),espl(NR),espl2(NR)
+  double precision :: rspl(NR_DENSITY),ellipicity_spline(NR_DENSITY),ellipicity_spline2(NR_DENSITY)
 
   ! local parameters
   integer :: i,j,k
@@ -112,7 +112,7 @@
         p20 = 0.5d0*(3.0d0*cost*cost-1.0d0)
 
         ! get ellipticity using spline evaluation
-        call spline_evaluation(rspl,espl,espl2,nspl,r,ell)
+        call spline_evaluation(rspl,ellipicity_spline,ellipicity_spline2,nspl,r,ell)
 
 ! this is eq (14.4) in Dahlen and Tromp (1998)
         factor = ONE-(TWO/3.0d0)*ell*p20
@@ -132,15 +132,15 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine get_ellipticity_single_point(x,y,z,nspl,rspl,espl,espl2)
+  subroutine get_ellipticity_single_point(x,y,z,nspl,rspl,ellipicity_spline,ellipicity_spline2)
 
-  use constants
+  use constants, only: NR_DENSITY,ONE,TWO
 
   implicit none
 
   integer :: nspl
   double precision :: x,y,z
-  double precision :: rspl(NR),espl(NR),espl2(NR)
+  double precision :: rspl(NR_DENSITY),ellipicity_spline(NR_DENSITY),ellipicity_spline2(NR_DENSITY)
 
   ! local parameters
   double precision :: ell
@@ -154,7 +154,7 @@
   p20 = 0.5d0*(3.0d0*cost*cost-1.0d0)
 
   ! get ellipticity using spline evaluation
-  call spline_evaluation(rspl,espl,espl2,nspl,r,ell)
+  call spline_evaluation(rspl,ellipicity_spline,ellipicity_spline2,nspl,r,ell)
 
 ! this is eq (14.4) in Dahlen and Tromp (1998)
   factor = ONE-(TWO/3.0d0)*ell*p20

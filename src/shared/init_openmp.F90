@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -55,7 +55,7 @@
   ! gets total number of threads for this MPI process
   num_threads = OMP_GET_NUM_THREADS()
 
-  ! OpenMP master thread only
+  ! OpenMP main thread only
   if (thread_id == 0) then
     ! gets additional environment info
     num_procs = OMP_GET_NUM_PROCS()

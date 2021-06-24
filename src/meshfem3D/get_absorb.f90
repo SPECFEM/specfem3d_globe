@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -131,8 +131,10 @@
   enddo
 
   ! check theoretical value of elements at the bottom
-  if (ispecb5 /= NSPEC2D_BOTTOM) &
+  if (ispecb5 /= NSPEC2D_BOTTOM) then
+    print *,'Error: invalid ispecb5:',ispecb5,NSPEC2D_BOTTOM,'region',iregion,'nspec',nspec
     call exit_MPI(myrank,'ispecb5 should equal NSPEC2D_BOTTOM in absorbing boundary detection')
+  endif
 
   ! save these temporary arrays for the solver for Stacey conditions
   ! This files will be saved with the help of ADIOS if the

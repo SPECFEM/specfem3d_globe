@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -26,7 +26,7 @@
 !=====================================================================
 
 
-subroutine read_parameters_tomo()
+  subroutine read_parameters_tomo()
 
 ! reads in parameters needed (only step length for now...)
 
@@ -36,19 +36,20 @@ subroutine read_parameters_tomo()
   integer :: ier
   character(len=MAX_STRING_LEN) :: s_step_fac,arg
 
+  ! Usage: add_model step_factor [INPUT-KERNELS-DIR/] [OUTPUT-MODEL-DIR/]
+
   ! subjective step length to multiply to the gradient
   ! e.g. step_fac = 0.03
-
   call get_command_argument(1,s_step_fac)
 
   if (trim(s_step_fac) == '') then
-    call usage()
+    call tomo_usage()
   endif
 
   ! read in parameter information
   read(s_step_fac,*,iostat=ier) step_fac
   if (ier /= 0) then
-    call usage()
+    call tomo_usage()
   endif
 
   ! safety check
@@ -84,21 +85,29 @@ subroutine read_parameters_tomo()
   endif
 
   ! statistics
-  if (PRINT_STATISTICS_FILES .and. myrank == 0) then
-    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_step_fac',status='unknown',action='write',iostat=ier)
-    if (ier /= 0) then
-      print *,'Error opening file: ',trim(OUTPUT_STATISTICS_DIR)//'statistics_step_fac'
-      print *,'Please make sure that directory '//trim(OUTPUT_STATISTICS_DIR)//' exists...'
-      print *
-      stop 'Error opening statistics file'
+  if (PRINT_STATISTICS_FILES) then
+    if (myrank == 0) then
+      open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_step_fac',status='unknown',action='write',iostat=ier)
+      if (ier /= 0) then
+        print *,'Error opening file: ',trim(OUTPUT_STATISTICS_DIR)//'statistics_step_fac'
+        print *,'Please make sure that directory '//trim(OUTPUT_STATISTICS_DIR)//' exists...'
+        print *
+        stop 'Error opening statistics file'
+      endif
+      write(IOUT,'(1e24.12)') step_fac
+      close(IOUT)
     endif
-    write(IOUT,'(1e24.12)') step_fac
-    close(IOUT)
   endif
 
-contains
+  end subroutine read_parameters_tomo
 
-  subroutine usage()
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine tomo_usage()
+
+  use tomography_par
 
   implicit none
 
@@ -116,7 +125,7 @@ contains
   call synchronize_all()
   call exit_MPI(myrank,'Error usage: add_model step_factor')
 
-  end subroutine usage
+  end subroutine tomo_usage
 
-end subroutine read_parameters_tomo
+
 

@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -39,90 +39,57 @@
 !
 !---
 
-  use constants
+  use constants, only: NR_DENSITY,N_SLS, &
+    PI,PI_OVER_TWO,ZERO,ONE,DEGREES_TO_RADIANS,RADIANS_TO_DEGREES, &
+    IREGION_CRUST_MANTLE,IREGION_INNER_CORE,IREGION_OUTER_CORE, &
+    GLL_REFERENCE_MODEL,USE_1D_REFERENCE, &
+    ATTENUATION_1D_WITH_3D_STORAGE
+
+  ! 1D reference models
+  use constants, only: &
+    REFERENCE_MODEL_PREM,REFERENCE_MODEL_1066A,REFERENCE_MODEL_AK135F_NO_MUD, &
+    REFERENCE_MODEL_1DREF,REFERENCE_MODEL_SEA1D,REFERENCE_MODEL_IASP91,REFERENCE_MODEL_JP1D, &
+    REFERENCE_MODEL_SOHL,REFERENCE_MODEL_CASE65TAY, &
+    REFERENCE_MODEL_VPREMOON
+
+  ! crustal model
+  use constants, only: &
+    ICRUST_CRUST1,ICRUST_CRUST2, &
+    ICRUST_CRUSTMAPS,ICRUST_EPCRUST,ICRUST_CRUST_SH, &
+    ICRUST_EUCRUST,ICRUST_SGLOBECRUST,ICRUST_BKMNS_GLAD
+
+  ! 3D models
+  use constants, only: &
+    THREE_D_MODEL_S20RTS,THREE_D_MODEL_S40RTS,THREE_D_MODEL_MANTLE_SH,THREE_D_MODEL_SEA99_JP3D, &
+    THREE_D_MODEL_SEA99,THREE_D_MODEL_JP3D,THREE_D_MODEL_JP3D, &
+    THREE_D_MODEL_S362ANI,THREE_D_MODEL_S362WMANI,THREE_D_MODEL_S362ANI_PREM,THREE_D_MODEL_S29EA, &
+    THREE_D_MODEL_PPM,THREE_D_MODEL_GAPP2,THREE_D_MODEL_SGLOBE,THREE_D_MODEL_SGLOBE_ISO, &
+    THREE_D_MODEL_ANISO_MANTLE,THREE_D_MODEL_GLL, &
+    THREE_D_MODEL_BKMNS_GLAD, &
+    THREE_D_MODEL_INNER_CORE_ISHII
 
   use shared_input_parameters, only: &
     ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS, &
     ATTENUATION,USE_FULL_TISO_MANTLE
 
   use shared_compute_parameters, only: &
-    REFERENCE_1D_MODEL,REFERENCE_CRUSTAL_MODEL,THREE_D_MODEL, &
+    REFERENCE_1D_MODEL,REFERENCE_CRUSTAL_MODEL, &
+    THREE_D_MODEL,THREE_D_MODEL_IC, &
+    MODEL_GLL, &
     HONOR_1D_SPHERICAL_MOHO,CRUSTAL,ONE_CRUST,CASE_3D,TRANSVERSE_ISOTROPY, &
-    ISOTROPIC_3D_MANTLE,ANISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE, &
-    ATTENUATION_3D, &
-    ANISOTROPIC_INNER_CORE, &
-    CEM_REQUEST, CEM_ACCEPT
+    MODEL_3D_MANTLE_PERTUBATIONS,HETEROGEN_3D_MANTLE,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
+    ATTENUATION_3D, ATTENUATION_GLL, &
+    CEM_REQUEST, CEM_ACCEPT, &
+    NX_BATHY,NY_BATHY, &
+    R_PLANET,R_PLANET_KM,R_DEEPEST_CRUST,REGIONAL_MOHO_MESH
 
   implicit none
-
-  ! model_attenuation_variables
-  type model_attenuation_variables
-    sequence
-    double precision :: min_period, max_period
-    double precision :: QT_c_source        ! Source Frequency
-    double precision, dimension(:), allocatable   :: Qtau_s             ! tau_sigma
-    double precision, dimension(:), allocatable   :: QrDisc             ! Discontinuities Defined
-    double precision, dimension(:), allocatable   :: Qr                 ! Radius
-    double precision, dimension(:), allocatable   :: Qmu                ! Shear Attenuation
-    double precision, dimension(:,:), allocatable :: Qtau_e             ! tau_epsilon
-    double precision, dimension(:), allocatable   :: Qomsb, Qomsb2      ! one_minus_sum_beta
-    double precision, dimension(:,:), allocatable :: Qfc, Qfc2          ! factor_common
-    double precision, dimension(:), allocatable   :: Qsf, Qsf2          ! scale_factor
-    integer, dimension(:), allocatable            :: Qrmin              ! Max and Mins of idoubling
-    integer, dimension(:), allocatable            :: Qrmax              ! Max and Mins of idoubling
-    integer, dimension(:), allocatable            :: interval_Q                 ! Steps
-    integer :: Qn                 ! Number of points
-    integer :: dummy_pad ! padding 4 bytes to align the structure
-  end type model_attenuation_variables
-  type (model_attenuation_variables) :: AM_V
-  ! model_attenuation_variables
-
-  ! model_attenuation_storage_var
-  type model_attenuation_storage_var
-    sequence
-    double precision, dimension(:,:), allocatable :: tau_e_storage
-    double precision, dimension(:), allocatable   :: Qmu_storage
-    integer :: Q_resolution
-    integer :: Q_max
-  end type model_attenuation_storage_var
-  type (model_attenuation_storage_var) :: AM_S
-  ! model_attenuation_storage_var
-
-  ! attenuation_simplex_variables
-  type attenuation_simplex_variables
-    sequence
-    double precision :: Q  ! Q     = Desired Value of Attenuation or Q
-    double precision :: iQ ! iQ    = 1/Q
-    double precision, dimension(:), allocatable ::  f
-    ! f = Frequencies at which to evaluate the solution
-    double precision, dimension(:), allocatable :: tau_s
-    ! tau_s = Tau_sigma defined by the frequency range and
-    !             number of standard linear solids
-    integer :: nf          ! nf    = Number of Frequencies
-    integer :: nsls        ! nsls  = Number of Standard Linear Solids
-  end type attenuation_simplex_variables
-  ! attenuation_simplex_variables
-
-  ! GLL model_variables
-  type model_gll_variables
-    sequence
-    ! tomographic iteration model on GLL points
-    double precision :: scale_velocity,scale_density
-    ! isotropic model
-    real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: vs_new,vp_new,rho_new
-    ! transverse isotropic model
-    real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: vsv_new,vpv_new, &
-      vsh_new,vph_new,eta_new
-    logical :: MODEL_GLL
-    logical,dimension(3) :: dummy_pad ! padding 3 bytes to align the structure
-  end type model_gll_variables
-  type (model_gll_variables) :: MGLL_V
 
   ! bathymetry and topography: use integer array to store values
   integer, dimension(:,:),allocatable :: ibathy_topo
 
   ! for ellipticity
-  double precision,dimension(NR) :: rspl,espl,espl2
+  double precision,dimension(NR_DENSITY) :: rspl,ellipicity_spline,ellipicity_spline2
   integer :: nspl
 
   end module meshfem3D_models_par
@@ -256,8 +223,8 @@
 
   implicit none
 
-  ! topology of the elements
-  integer, dimension(NGNOD) :: iaddx,iaddy,iaddz
+  ! topology of the elements (for corners)
+  integer, dimension(NGNOD) :: iaddx_corner,iaddy_corner,iaddz_corner
 
   ! Gauss-Lobatto-Legendre points and weights of integration
   double precision, dimension(NGLLX) :: xigll,wxgll
@@ -266,7 +233,10 @@
 
   ! 3D shape functions and their derivatives
   double precision, dimension(NGNOD,NGLLX,NGLLY,NGLLZ) :: shape3D
-  double precision, dimension(NDIM,NGNOD,NGLLX,NGLLY,NGLLZ) :: dershape3D
+
+  ! note: having an array size > 64k, which is the stack default limit on MacOS, it would lead to compilation
+  !       warnings/issues with newer gcc version 10.x; using allocatable array instead
+  double precision, dimension(:,:,:,:,:),allocatable :: dershape3D
 
   ! 2D shape functions and their derivatives
   double precision, dimension(NGNOD2D,NGLLY,NGLLZ) :: shape2D_x
@@ -288,14 +258,14 @@
 
   implicit none
 
-  integer :: nspec_stacey,nspec_actually,nspec_att
+  integer :: nspec_actually,nspec_att
 
   integer :: ifirst_region,ilast_region
   integer, dimension(:), allocatable :: perm_layer
 
   ! for model density and anisotropy
   integer :: nspec_ani
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rhostore,dvpstore, &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rhostore, &
     kappavstore,kappahstore,muvstore,muhstore,eta_anisostore
 
   ! the 21 coefficients for an anisotropic medium in reduced notation
@@ -303,6 +273,10 @@
     c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
     c36store,c44store,c45store,c46store,c55store,c56store,c66store
+
+  ! azimuthal arrays
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: mu0store
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: Gc_prime_store,Gs_prime_store
 
   ! boundary locator
   logical, dimension(:,:), allocatable :: iboun
@@ -342,13 +316,13 @@
 
   ! Stacey, indices for Clayton-Engquist absorbing conditions
   integer, dimension(:,:), allocatable :: nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta
+  integer :: nspec_stacey
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rho_vp,rho_vs
 
   ! attenuation
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),   allocatable :: Qmu_store
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: tau_e_store
-  double precision, dimension(N_SLS) :: tau_s
-  double precision :: T_c_source
+  double precision, dimension(N_SLS) :: tau_s_store
 
   ! element layers
   integer :: NUMBER_OF_MESH_LAYERS,layer_shift, &
@@ -410,7 +384,7 @@
   ! communication pattern for faces between chunks
   integer, dimension(:),allocatable :: iprocfrom_faces,iprocto_faces,imsg_type
   ! communication pattern for corners between chunks
-  integer, dimension(:),allocatable :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
+  integer, dimension(:),allocatable :: iproc_main_corners,iproc_worker1_corners,iproc_worker2_corners
 
   ! indirect addressing for each corner of the chunks
   integer, dimension(:,:),allocatable :: iboolcorner
@@ -544,8 +518,10 @@
   ! for matching with central cube in inner core
   integer, dimension(:), allocatable :: sender_from_slices_to_cube
   integer, dimension(:,:), allocatable :: ibool_central_cube
+
   double precision, dimension(:,:), allocatable :: buffer_slices,buffer_slices2
   double precision, dimension(:,:,:), allocatable :: buffer_all_cube_from_slices
+
   integer :: nb_msgs_theor_in_cube,non_zero_nb_msgs_theor_in_cube, &
     npoin2D_cube_from_slices,receiver_cube_from_slices
 

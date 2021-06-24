@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -93,9 +93,23 @@
   ! number of points
   num_noise_surface_points = NGLLX * NGLLY * NSPEC_TOP
 
+  ! in case arrays become too big, the following can lead to segmentation faults and crash.
+  ! let's just be more verbose.
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) "  allocating noise arrays:"
+    call flush_IMAIN()
+  endif
+  call synchronize_all()
+
   ! allocates noise arrays
+  if (myrank == 0) then
+    write(IMAIN,*) "    source array"
+    call flush_IMAIN()
+  endif
   if (NOISE_TOMOGRAPHY == 1) then
-    ! master noise source (only needed for 1. step)
+    ! main noise source (only needed for 1. step)
     allocate(noise_sourcearray(NDIM,NGLLX,NGLLY,NGLLZ,NSTEP),stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating noise source array')
   else
@@ -107,6 +121,11 @@
   noise_sourcearray(:,:,:,:,:) = 0._CUSTOM_REAL
 
   ! ensemble surface noise
+  if (myrank == 0) then
+    write(IMAIN,*) "    ensemble surface arrays"
+    call flush_IMAIN()
+  endif
+  call synchronize_all()
   allocate(normal_x_noise(num_noise_surface_points), &
            normal_y_noise(num_noise_surface_points), &
            normal_z_noise(num_noise_surface_points), &
@@ -133,6 +152,11 @@
   endif
 
   ! allocates buffer memory
+  if (myrank == 0) then
+    write(IMAIN,*) "    noise buffer array"
+    call flush_IMAIN()
+  endif
+  call synchronize_all()
   allocate(noise_buffer(NDIM,NGLLX,NGLLY,NSPEC_TOP,NT_DUMP_NOISE_BUFFER),stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating noise buffer array')
 
@@ -147,11 +171,13 @@
   ! user output
   if (myrank == 0) then
     ! noise simulations ignore the CMTSOLUTIONS sources but employ a noise-spectrum source S_squared instead
+    write(IMAIN,*)
     write(IMAIN,*) "  ignoring CMT sources"
+    write(IMAIN,*)
     select case (NOISE_TOMOGRAPHY)
     case (1)
-      write(IMAIN,*) "  noise source uses master record id = ",irec_master_noise
-      write(IMAIN,*) "  noise master station: ",trim(network_name(irec_master_noise))//'.'//trim(station_name(irec_master_noise))
+      write(IMAIN,*) "  noise source uses main record id = ",irec_main_noise
+      write(IMAIN,*) "  noise main station: ",trim(network_name(irec_main_noise))//'.'//trim(station_name(irec_main_noise))
     case (2)
       write(IMAIN,*) "  noise source uses ensemble forward source"
     case (3)
@@ -162,8 +188,8 @@
     call flush_IMAIN()
   endif
 
-  ! user output of distances to master station
-  if (NOISE_TOMOGRAPHY == 1) call print_master_distances_noise()
+  ! user output of distances to main station
+  if (NOISE_TOMOGRAPHY == 1) call print_main_distances_noise()
 
   ! synchronizes processes
   call synchronize_all()

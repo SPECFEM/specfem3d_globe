@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -32,13 +32,9 @@
 
 program convert_model_file_adios
 
-  use constants, only: ADIOS_TRANSPORT_METHOD
-
   use postprocess_par, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,IIN,IOUT, &
     MAX_STRING_LEN,NPROCTOT_VAL,NSPEC_CRUST_MANTLE
 
-  use adios_read_mod
-  use adios_write_mod
   use adios_helpers_mod
   use manager_adios
 
@@ -47,36 +43,40 @@ program convert_model_file_adios
   !-------------------------------------------------------------------
   ! USER PARAMETERS
   ! ADIOS model file name
-  character(len=64) :: model_adios_file = 'model_gll.bp'
+  character(len=MAX_STRING_LEN) :: model_adios_file
 
   ! model type
   ! isotropic model parameters (vp,vs,rho) or
+  logical :: HAS_ISOTROPY
   ! transversely isotropic model parameters (vpv,vph,vsv,vsh,eta,rho)
-  ! defaults: TI models
-  logical,parameter :: USE_TRANSVERSE_ISOTROPY = .true.
-
-  ! shear attenuation
-  logical,parameter :: USE_ATTENUATION_Q = .false.
+  logical :: HAS_TRANSVERSE_ISOTROPY
+  ! azimuthal anisotropic (vpv,vph,vsv,vsh,eta,Gs,Gc,rho)
+  logical :: HAS_AZIMUTHAL_ANISO
+  ! shear attenuation (Qmu)
+  logical :: HAS_ATTENUATION_Q
 
   !-------------------------------------------------------------------
 
   ! model files
   integer, parameter :: NSPEC = NSPEC_CRUST_MANTLE
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: &
-    model_vpv,model_vph,model_vsv,model_vsh,model_eta,model_rho,model_qmu
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: &
+    model_par
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: model
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: model
 
   ! mpi
   integer :: myrank, sizeprocs
 
   ! model parameters
-  character(len=MAX_STRING_LEN) :: m_file
-  character(len=MAX_STRING_LEN) :: m_adios_file
-  character(len=16) :: model_name(7),fname(7)
-  integer :: nparams
-  integer :: i,iker
+  character(len=MAX_STRING_LEN) :: model_filename
+  character(len=MAX_STRING_LEN) :: model_filename_adios
+
+  integer, parameter :: nparams = 12
+  character(len=16) :: model_name(nparams),fname(nparams),found_fname(nparams),found_model_name(nparams)
+
+  integer :: i,iker,icount
+  logical :: exist,exist_all
 
   ! input arguments
   character(len=MAX_STRING_LEN) :: arg
@@ -85,12 +85,10 @@ program convert_model_file_adios
 
   ! adios
   character(len=MAX_STRING_LEN) :: group_name
-  integer(kind=8) :: group, model_handle
-  integer(kind=8) :: totalsize
   integer(kind=8) :: group_size_inc
-  integer :: local_dim
+  integer(kind=8) :: local_dim
   integer :: comm
-  integer :: ier
+  integer :: iexist,ier
 
   ! starts mpi
   call init_mpi()
@@ -109,6 +107,7 @@ program convert_model_file_adios
     endif
     call abort_mpi()
   endif
+  call synchronize_all()
 
   ! reads input arguments
   do i = 1, 3
@@ -145,37 +144,35 @@ program convert_model_file_adios
     print *,'Error: invalid format type',convert_format
     stop ' Reenter format type in command line options'
   endif
+  call synchronize_all()
 
   ! sets adios model file name
+  model_adios_file = get_adios_filename('model_gll')
+
   if ( convert_format == 1) then
     ! from adios to old binaries
-    m_adios_file = trim(input_model_dir) // '/' // trim(model_adios_file)
+    model_filename_adios = trim(input_model_dir) // '/' // trim(model_adios_file)
   else
     ! from old binaries to adios
-    m_adios_file = trim(output_model_dir) // '/' // trim(model_adios_file)
+    model_filename_adios = trim(output_model_dir) // '/' // trim(model_adios_file)
   endif
 
   ! defines model parameters
-  if (USE_TRANSVERSE_ISOTROPY) then
-    ! transversly isotropic (TI) model
-    nparams = 6
-    model_name(1:6) = (/character(len=16) :: "reg1/vpv","reg1/vph","reg1/vsv","reg1/vsh","reg1/eta","reg1/rho"/)
-    fname(1:6) = (/character(len=16) :: "vpv","vph","vsv","vsh","eta","rho"/)
-  else
-    ! isotropic model
-    nparams = 3
-    ! note: adds space at endings to equal number of characters
-    !       to avoid compiler error: "Different shape for array assignment.."
-    model_name(1:3) = (/character(len=16) :: "reg1/vp ","reg1/vs ","reg1/rho"/)
-    fname(1:3) = (/character(len=16) :: "vp ","vs ","rho"/)
-  endif
-
+  ! note: adds space at endings to equal number of characters
+  !       to avoid compiler error: "Different shape for array assignment.."
+  model_name(1:3) = (/character(len=16) :: "reg1/vp ","reg1/vs ","reg1/rho"/)
+  fname(1:3) = (/character(len=16) :: "vp ","vs ","rho"/)
+  ! tiso
+  model_name(4:8) = (/character(len=16) :: "reg1/vpv","reg1/vph","reg1/vsv","reg1/vsh","reg1/eta"/)
+  fname(4:8) = (/character(len=16) :: "vpv","vph","vsv","vsh","eta"/)
+  ! azi
+  model_name(9:10) = (/character(len=16) :: "reg1/Gc_prime","reg1/Gs_prime"/)
+  fname(9:10) = (/character(len=16) :: "Gc_prime","Gs_prime"/)
+  model_name(11) = "reg1/mu0"
+  fname(11) = "mu0"
   ! adds shear attenuation
-  if (USE_ATTENUATION_Q) then
-    nparams = nparams + 1
-    model_name(nparams) = "reg1/qmu"
-    fname(nparams) = "qmu"
-  endif
+  model_name(12) = "reg1/qmu"
+  fname(12) = "qmu"
 
   ! user output
   if (myrank == 0) then
@@ -188,15 +185,6 @@ program convert_model_file_adios
     endif
     print *, 'input  directory: ',trim(input_model_dir)
     print *, 'output directory: ',trim(output_model_dir)
-    print *, ' '
-    if (USE_TRANSVERSE_ISOTROPY) then
-      print *, 'model parameters:',nparams,' - transversely isotropic model'
-    else
-      print *, 'model parameters:',nparams,' - isotropic model'
-    endif
-    if (USE_ATTENUATION_Q) then
-      print *, '  includes qmu model parameter'
-    endif
     print *, ' '
     print *, 'crust/mantle region:'
     print *, '  number of spectral elements = ',NSPEC
@@ -211,14 +199,14 @@ program convert_model_file_adios
   call initialize_adios()
 
   ! initializes model values
+  allocate(model(NGLLX,NGLLY,NGLLZ,NSPEC),stat=ier)
+  if (ier /= 0) stop 'Error allocating model array'
   model(:,:,:,:) = 0.0_CUSTOM_REAL
-  model_vpv(:,:,:,:) = 0.0_CUSTOM_REAL
-  model_vph(:,:,:,:) = 0.0_CUSTOM_REAL
-  model_vsv(:,:,:,:) = 0.0_CUSTOM_REAL
-  model_vsh(:,:,:,:) = 0.0_CUSTOM_REAL
-  model_eta(:,:,:,:) = 0.0_CUSTOM_REAL
-  model_rho(:,:,:,:) = 0.0_CUSTOM_REAL
-  model_qmu(:,:,:,:) = 0.0_CUSTOM_REAL
+
+  HAS_ISOTROPY = .false.
+  HAS_TRANSVERSE_ISOTROPY = .false.
+  HAS_AZIMUTHAL_ANISO = .false.
+  HAS_ATTENUATION_Q = .false.
 
   ! gets MPI communicator for adios calls
   call world_duplicate(comm)
@@ -231,128 +219,102 @@ program convert_model_file_adios
 
     ! user output
     if (myrank == 0) then
-      print *, 'reading in ADIOS model file: ',trim(m_adios_file)
+      print *, 'reading in ADIOS model file: ',trim(model_filename_adios)
     endif
 
     ! opens adios file
-    call open_file_adios_read(m_adios_file)
+    call open_file_adios_read_and_init_method(myadios_file,myadios_group,model_filename_adios)
 
+    ! debug
+    !if (myrank == 0) call show_adios_file_variables(myadios_file,myadios_group,model_filename_adios)
+
+    icount = 0
     do iker = 1,nparams
       model(:,:,:,:) = 0.0_CUSTOM_REAL
 
       ! reads in associated model array
-      call read_adios_array_gll(myrank,NSPEC,model_name(iker),model(:,:,:,:))
-
-      if (USE_TRANSVERSE_ISOTROPY) then
-        ! TI model
-        select case (iker)
-        case (1)
-           model_vpv(:,:,:,:) = model(:,:,:,:)
-        case (2)
-           model_vph(:,:,:,:) = model(:,:,:,:)
-        case (3)
-           model_vsv(:,:,:,:) = model(:,:,:,:)
-        case (4)
-           model_vsh(:,:,:,:) = model(:,:,:,:)
-        case (5)
-           model_eta(:,:,:,:) = model(:,:,:,:)
-        case (6)
-           model_rho(:,:,:,:) = model(:,:,:,:)
-        end select
+      call read_adios_array_gll_check(myadios_file,myadios_group,myrank,NSPEC,model_name(iker),model,iexist)
+      ! checks if read was successful
+      if (iexist == 0) then
+        exist = .false.
       else
-        ! isotropic model
-        select case (iker)
-        case (1)
-           model_vpv(:,:,:,:) = model(:,:,:,:)
-        case (2)
-           model_vsv(:,:,:,:) = model(:,:,:,:)
-        case (3)
-           model_rho(:,:,:,:) = model(:,:,:,:)
-        end select
+        exist = .true.
       endif
-      ! adds shear attenuation
-      if (USE_ATTENUATION_Q) then
-        if (iker == nparams) then
-           model_qmu(:,:,:,:) = model(:,:,:,:)
+
+      ! makes sure all processes have same flag
+      call any_all_l(exist,exist_all)
+
+      if (exist_all) then
+        ! set name
+        icount = icount + 1
+        found_fname(icount) = fname(iker)
+
+        ! checks if vp,vs,rho found
+        if (iker == 3 .and. icount == 3) HAS_ISOTROPY = .true.
+        ! checks if rho,vpv,vph,vsv,vsh,eta found
+        if (iker == 8 .and. icount >= 6) HAS_TRANSVERSE_ISOTROPY = .true.
+        ! checks if rho,vpv,vph,vsv,vsh,eta,Gc_prime,Gs_prime,mu0 found
+        if (iker == 11 .and. icount >= 9) HAS_AZIMUTHAL_ANISO = .true.
+        ! checks if qmu
+        if (iker == nparams) HAS_ATTENUATION_Q = .true.
+
+        ! writes out binary file
+        write(model_filename,'(a,i6.6,a)') trim(output_model_dir)//'/proc',myrank,'_reg1_'//trim(fname(iker))//'.bin'
+        open(IOUT,file=trim(model_filename),form='unformatted',action='write',iostat=ier)
+        if (ier /= 0) then
+          print *, 'Error opening binary parameter file: ',trim(model_filename)
+          stop 'Error opening binary parameter file'
         endif
+        ! model values
+        write(IOUT) model
+        close(IOUT)
+
+        ! user output
+        if (myrank == 0) then
+          write(*,*) '  written output for parameter: ',trim(found_fname(icount))
+          ! min/max
+          write(*,*) '  slice rank 0 has min/max value = ',minval(model(:,:,:,:)),"/",maxval(model(:,:,:,:))
+          print *
+        endif
+
       endif
+
     enddo
 
     ! closes adios file
-    call close_file_adios_read()
+    call close_file_adios_read_and_finalize_method(myadios_file)
 
-
-    ! WRITE OUT THE MODEL IN OLD BINARIES
+    ! check if file written
+    if (icount == 0) then
+      if (myrank == 0) then
+        print *,'Error: no model parameters found in ADIOS file. please check adios model_gll file in input directory...'
+        stop 'No parameters found'
+      endif
+    endif
+    call synchronize_all()
 
     ! user output
     if (myrank == 0) then
       print *, ' '
-      print *, 'writing out binary files...'
+      print *, 'written out binary files...'
+      print *, ' '
+      print *, 'for model parameters:'
+      if (HAS_TRANSVERSE_ISOTROPY) &
+        print *, '  transversely isotropic model parameters (vpv,vph,vsv,vsh,eta,rho)'
+      if (HAS_ISOTROPY) &
+        print *, '  isotropic model parameters (vp,vs,rho)'
+      if (HAS_AZIMUTHAL_ANISO) &
+        print *, '  azimuthal anisotropic model parameters (Gc_prime,Gs_prime)'
+      if (HAS_ATTENUATION_Q) &
+        print *, '  attenuation model parameter (qmu)'
+      print *, ' '
+      do iker = 1,icount
+        print *, '  found parameter: ',trim(found_fname(iker))
+      enddo
+      print *, ' '
+      print *, 'output files: ',trim(output_model_dir)//'/proc***'
+      print *, 'done writing the model in binary format'
     endif
-
-    do iker = 1,nparams
-      ! user output
-      if (myrank == 0) then
-        print *, '  for parameter: ',trim(fname(iker))
-      endif
-
-      ! file name
-      write(m_file,'(a,i6.6,a)') trim(output_model_dir)//'/proc',myrank,'_reg1_'//trim(fname(iker))//'.bin'
-      open(IOUT,file=trim(m_file),form='unformatted',action='write',iostat=ier)
-      if (ier /= 0) then
-        print *, 'Error opening binary parameter file: ',trim(m_file)
-        stop 'Error opening binary parameter file'
-      endif
-
-      ! selects output
-      if (USE_TRANSVERSE_ISOTROPY) then
-        ! TI model
-        select case (iker)
-        case (1)
-          ! vpv model
-          write(IOUT) model_vpv
-        case (2)
-          ! vph model
-          write(IOUT) model_vph
-        case (3)
-          ! vsv model
-          write(IOUT) model_vsv
-        case (4)
-          ! vsh model
-          write(IOUT) model_vsh
-        case (5)
-          ! eta model
-          write(IOUT) model_eta
-        case (6)
-          ! rho model
-          write(IOUT) model_rho
-        end select
-      else
-        ! isotropic model
-        select case (iker)
-        case (1)
-          ! vp model
-          write(IOUT) model_vpv
-        case (2)
-          ! vs model
-          write(IOUT) model_vsv
-        case (3)
-          ! rho model
-          write(IOUT) model_rho
-        end select
-      endif
-      ! adds shear attenuation
-      if (USE_ATTENUATION_Q) then
-        if (iker == nparams) then
-          ! qmu model
-          write(IOUT) model_qmu
-        endif
-      endif
-
-      close(IOUT)
-    enddo
-
-    if (myrank == 0) print *, 'done writing the model in binary format'
 
 !--------------------------------------------
   else if (convert_format == 2) then ! from binaries to adios
@@ -365,66 +327,60 @@ program convert_model_file_adios
       print *, 'reading in binary model files'
     endif
 
+    icount = 0
     do iker = 1,nparams
-      ! user output
-      if (myrank == 0) then
-        print *, '  for parameter: ',trim(fname(iker))
-      endif
-
       ! file name
-      write(m_file,'(a,i6.6,a)') trim(input_model_dir)//'/proc',myrank,'_reg1_'//trim(fname(iker))//'.bin'
-      open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
-      if (ier /= 0) then
-        print *, 'Error opening binary parameter file: ',trim(m_file)
-        stop 'Error opening binary parameter file'
-      endif
+      write(model_filename,'(a,i6.6,a)') trim(input_model_dir)//'/proc',myrank,'_reg1_'//trim(fname(iker))//'.bin'
 
-      ! selects output
-      if (USE_TRANSVERSE_ISOTROPY) then
-        ! TI model
-        select case (iker)
-        case (1)
-          ! vpv model
-          read(IIN) model_vpv
-        case (2)
-          ! vph model
-          read(IIN) model_vph
-        case (3)
-          ! vsv model
-          read(IIN) model_vsv
-        case (4)
-          ! vsh model
-          read(IIN) model_vsh
-        case (5)
-          ! eta model
-          read(IIN) model_eta
-        case (6)
-          ! rho model
-          read(IIN) model_rho
-        end select
-      else
-        ! isotropic model
-        select case (iker)
-        case (1)
-          ! vp model
-          read(IIN) model_vpv
-        case (2)
-          ! vs model
-          read(IIN) model_vsv
-        case (3)
-          ! rho model
-          read(IIN) model_rho
-        end select
-      endif
-      ! adds shear attenuation
-      if (USE_ATTENUATION_Q) then
-        if (iker == nparams) then
-          ! qmu model
-          read(IIN) model_qmu
+      inquire(file=trim(model_filename),EXIST=exist)
+      ! makes sure all processes have same flag
+      call any_all_l(exist,exist_all)
+
+      if (exist_all) then
+        icount = icount + 1
+        found_fname(icount) = fname(iker)
+        ! stores adios name
+        found_model_name(icount) = model_name(iker)
+
+        ! user output
+        if (myrank == 0) then
+          print *, '  found parameter: ',trim(fname(iker))
         endif
-      endif
 
+        ! checks if vp,vs,rho found
+        if (iker == 3 .and. icount == 3) HAS_ISOTROPY = .true.
+        ! checks if rho,vpv,vph,vsv,vsh,eta found
+        if (iker == 8 .and. icount >= 6) HAS_TRANSVERSE_ISOTROPY = .true.
+        ! checks if rho,vpv,vph,vsv,vsh,eta,Gc_prime,Gs_prime,mu0 found
+        if (iker == 11 .and. icount >= 9) HAS_AZIMUTHAL_ANISO = .true.
+        ! checks if qmu
+        if (iker == nparams) HAS_ATTENUATION_Q = .true.
+      endif
+    enddo
+    ! checks if any found
+    if (icount == 0) then
+      print *,'Error: rank ',myrank,' found no binary parameter files. please check your input directory...'
+      stop 'No binary files found'
+    endif
+    call synchronize_all()
+
+    allocate(model_par(NGLLX,NGLLY,NGLLZ,NSPEC,icount),stat=ier)
+    if (ier /= 0) stop 'Error allocating model_par array'
+
+    ! reads in parameter values
+    do iker = 1,icount
+      ! file name
+      write(model_filename,'(a,i6.6,a)') trim(input_model_dir)//'/proc',myrank,'_reg1_'//trim(found_fname(iker))//'.bin'
+      open(IIN,file=trim(model_filename),status='old',form='unformatted',action='read',iostat=ier)
+      if (ier /= 0) then
+        print *, 'Error: rank ',myrank,' could not open binary parameter file: ',trim(model_filename)
+        stop 'Error opening parameter file'
+      endif
+      read(IIN) model
       close(IIN)
+
+      ! stores parameter
+      model_par(:,:,:,:,iker) = model(:,:,:,:)
     enddo
 
 ! WRITE OUT THE MODEL IN ADIOS FORMAT
@@ -432,83 +388,75 @@ program convert_model_file_adios
     ! user output
     if (myrank == 0) then
       print *, ' '
-      print *, 'writing out ADIOS model file: ',trim(m_adios_file)
+      print *, 'writing out ADIOS model file: ',trim(model_filename_adios)
+      print *, ' '
+      if (HAS_TRANSVERSE_ISOTROPY) &
+        print *, '  transversely isotropic model parameters (vpv,vph,vsv,vsh,eta,rho)'
+      if (HAS_ISOTROPY) &
+        print *, '  isotropic model parameters (vp,vs,rho)'
+      if (HAS_AZIMUTHAL_ANISO) &
+        print *, '  azimuthal anisotropic model parameters (Gc_prime,Gs_prime)'
+      if (HAS_ATTENUATION_Q) &
+        print *, '  attenuation model parameter (qmu)'
+      print *, ' '
     endif
 
-    group_size_inc = 0
     group_name = "MODELS_GROUP"
+    call init_adios_group(myadios_group,group_name)
 
-    call adios_declare_group(group, group_name, '', 1, ier)
-    call adios_select_method(group, ADIOS_TRANSPORT_METHOD, '', '', ier)
-    call define_adios_scalar(group, group_size_inc, '', "NSPEC", nspec)
+    group_size_inc = 0
+
+    ! for backward compatibility
+    call define_adios_scalar(myadios_group, group_size_inc, '', "NSPEC", nspec)
+    call define_adios_scalar(myadios_group, group_size_inc, '', "reg1/nspec", nspec)
 
     ! Setup ADIOS for the current group
     local_dim = NGLLX * NGLLY * NGLLZ * NSPEC
 
     ! Define ADIOS Variables
-    do iker=1,nparams
-      call define_adios_global_array1D(group, group_size_inc,local_dim,'',trim(model_name(iker)),model)
+    do iker = 1,icount
+      call define_adios_global_array1D(myadios_group, group_size_inc,local_dim,'',trim(found_model_name(iker)),model)
     enddo
 
     ! Open an handler to the ADIOS file and setup the group size
-    call adios_open(model_handle, group_name, trim(m_adios_file), "w", comm, ier);
-    if (ier /= 0) then
-      print *, 'Error opening adios model file: ',trim(m_adios_file)
-      stop 'Error opening adios model file'
-    endif
+    call open_file_adios_write(myadios_file,myadios_group,model_filename_adios,group_name)
+    call set_adios_group_size(myadios_file,group_size_inc)
 
-    call adios_group_size (model_handle, group_size_inc, totalsize, ier)
-    if (ier /= 0 ) stop 'Error calling adios_group_size() routine failed'
-
-    call adios_write(model_handle, "NSPEC", nspec, ier)
+    ! writes nspec (for checking and backward compatibility)
+    call write_adios_scalar(myadios_file,myadios_group,"NSPEC",nspec)
+    call write_adios_scalar(myadios_file,myadios_group,"reg1/nspec",nspec)
 
     local_dim = NGLLX * NGLLY * NGLLZ * NSPEC
-    do iker=1,nparams
-      if (USE_TRANSVERSE_ISOTROPY) then
-        ! TI model
-        select case (iker)
-        case (1)
-          model(:,:,:,:) = model_vpv(:,:,:,:)
-        case (2)
-          model(:,:,:,:) = model_vph(:,:,:,:)
-        case (3)
-          model(:,:,:,:) = model_vsv(:,:,:,:)
-        case (4)
-          model(:,:,:,:) = model_vsh(:,:,:,:)
-        case (5)
-          model(:,:,:,:) = model_eta(:,:,:,:)
-        case (6)
-          model(:,:,:,:) = model_rho(:,:,:,:)
-        end select
-      else
-        ! isotropic model
-        select case (iker)
-        case (1)
-          model(:,:,:,:) = model_vpv(:,:,:,:)
-        case (2)
-          model(:,:,:,:) = model_vsv(:,:,:,:)
-        case (3)
-          model(:,:,:,:) = model_rho(:,:,:,:)
-        end select
-      endif
-      ! adds shear attenuation
-      if (USE_ATTENUATION_Q) then
-        if (iker == nparams) then
-          ! qmu model
-          model(:,:,:,:) = model_qmu(:,:,:,:)
-        endif
-      endif
-
+    do iker = 1,icount
+      ! note: the write_adios_** call might be in deferred mode. thus, the memory pointer should not change
+      !       until a perform/close/end_step call is done.
+      !
+      ! instead of a temporary copy
+      ! > model(:,:,:,:) = model_par(:,:,:,:,iker)
+      ! we will pass the array pointer to model_par(:,:,:,:,ier) directly
+      !
       ! Write previously defined ADIOS variables
-      call write_adios_global_1d_array(model_handle, myrank, sizeprocs, local_dim, &
-                                       trim(model_name(iker)),model(:,:,:,:))
+      call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs, local_dim, &
+                                       trim(found_model_name(iker)),model_par(:,:,:,:,iker))
     enddo
     ! Perform the actual write to disk
-    call adios_set_path(model_handle, '', ier)
-    call adios_close(model_handle, ier)
+    call write_adios_perform(myadios_file)
 
-    if (myrank == 0) print *, 'done writing the model in adios format'
+    ! closes ADIOS handler
+    call close_file_adios(myadios_file)
+
+    ! free memory
+    deallocate(model_par)
+
+    if (myrank == 0) then
+      print *, 'output file: ',trim(model_filename_adios)
+      print *, 'done writing the model in adios format'
+    endif
   endif
+
+  ! free memory
+  deallocate(model)
+
   ! user output
   if (myrank == 0) then
     print *, ' '
@@ -516,7 +464,7 @@ program convert_model_file_adios
     print *, ' '
   endif
 
-  call adios_finalize (myrank, ier)
+  call finalize_adios()
   call finalize_mpi()
 
 end program convert_model_file_adios

@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -58,6 +58,9 @@
   double precision,dimension(:),allocatable :: QRFSI12_Q_spknt
   double precision,dimension(:),allocatable :: QRFSI12_Q_refdepth,QRFSI12_Q_refqmu
 
+  ! helper array
+  real(kind=4),dimension(:),allocatable :: xlmvec
+
   end module model_atten3D_QRFSI12_par
 
 !
@@ -84,7 +87,7 @@
            stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating QRFSI12_Q model arrays')
 
-  ! master process reads in file values
+  ! main process reads in file values
   if (myrank == 0) call read_atten_model_3D_QRFSI12()
 
   ! broadcasts to all processes
@@ -101,6 +104,11 @@
     write(IMAIN,*)
     call flush_IMAIN()
   endif
+
+  ! helper array
+  allocate(xlmvec(NSQ**2),stat=ier)
+  if (ier /= 0) stop 'Error allocating helper array'
+  xlmvec(:) = 0.0
 
   end subroutine
 
@@ -187,7 +195,11 @@
   subroutine model_atten3D_QRFSI12(radius,theta,phi,Qmu,idoubling)
 
   use constants
+  use shared_parameters, only: R_PLANET_KM
+
   use model_atten3D_QRFSI12_par
+
+  use model_prem_par, only: PREM_RMOHO
 
   implicit none
 
@@ -201,10 +213,7 @@
   real(kind=4) :: splpts(NKQ),splcon(NKQ),splcond(NKQ)
   real(kind=4) :: depth,ylat,xlon
   real(kind=4) :: shdep(NSQ)
-  real(kind=4) :: xlmvec(NSQ**2)
 
-  double precision, parameter :: rmoho_prem = R_EARTH_KM - 24.4d0
-  double precision, parameter :: rcmb = 3480.0d0
 
   ! in Colleen's original code theta refers to the latitude.  Here we have redefined theta to be colatitude
   ! to agree with the rest of specfem
@@ -218,8 +227,10 @@
   ! only checks radius for crust, idoubling is misleading for oceanic crust
   ! when we want to expand mantle up to surface...
 
+  ! radius given in km
+
 !  !if (idoubling == IFLAG_CRUST .or. radius >= rmoho) then
-  if (radius >= rmoho_prem) then
+  if (radius >= PREM_RMOHO/1000.d0) then
   !   print *,'QRFSI12: we are in the crust'
      Qmu = 600.0d0
   else if (idoubling == IFLAG_INNER_CORE_NORMAL .or. idoubling == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
@@ -245,7 +256,7 @@
 
     ! we are in the mantle
 
-    depth = R_EARTH_KM - radius
+    depth = R_PLANET_KM - radius
 
     !debug
     !   print *,'QRFSI12: we are in the mantle at depth',depth
@@ -271,13 +282,17 @@
       do n = 1,NKQ
         splpts(n) = QRFSI12_Q_spknt(n)
       enddo
+
       call vbspl(depth,NKQ,splpts,splcon,splcond)
+
       do n = 1,NKQ
         do j = 1,NSQ
           shdep(j) = shdep(j)+(splcon(n)*QRFSI12_Q_dqmu(n,j))
         enddo
       enddo
+
       call ylm(ylat,xlon,MAXL_Q,xlmvec)
+
       dqmu = 0.0
       do k = 1,NSQ
         dqmu = dqmu+xlmvec(k)*shdep(k)

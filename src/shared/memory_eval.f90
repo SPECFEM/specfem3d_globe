@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -27,9 +27,8 @@
 
 ! compute the approximate amount of static memory needed to run the solver
 
-  subroutine memory_eval(doubling_index,this_region_has_a_doubling, &
-                         ner,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-                         ratio_sampling_array,NPROCTOT, &
+  subroutine memory_eval(NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+                         NPROCTOT, &
                          NSPEC,NGLOB, &
                          NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
                          NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
@@ -55,7 +54,10 @@
     TRANSVERSE_ISOTROPY,ANISOTROPIC_INNER_CORE,ROTATION,TOPOGRAPHY,GRAVITY, &
     ONE_CRUST,NCHUNKS, &
     SIMULATION_TYPE,SAVE_FORWARD, &
-    MOVIE_VOLUME,MOVIE_VOLUME_TYPE
+    MOVIE_VOLUME,MOVIE_VOLUME_TYPE, &
+    NX_BATHY,NY_BATHY
+
+  use shared_parameters, only: ner_mesh_layers,ratio_sampling_array,doubling_index,this_region_has_a_doubling
 
   implicit none
 
@@ -64,10 +66,6 @@
             NSPEC2D_BOTTOM,NSPEC2D_TOP
 
   integer, intent(in) :: NEX_PER_PROC_XI,NEX_PER_PROC_ETA
-
-  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS), intent(in) :: doubling_index
-  logical, dimension(MAX_NUMBER_OF_MESH_LAYERS), intent(in) :: this_region_has_a_doubling
-  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS), intent(in) :: ner,ratio_sampling_array
   integer, intent(in) :: NPROCTOT
 
   ! output
@@ -105,7 +103,7 @@
   ! count anisotropic elements
   do ilayer = 1, NUMBER_OF_MESH_LAYERS
     if (doubling_index(ilayer) == IFLAG_220_80 .or. doubling_index(ilayer) == IFLAG_80_MOHO) then
-      ner_without_doubling = ner(ilayer)
+      ner_without_doubling = ner_mesh_layers(ilayer)
       if (this_region_has_a_doubling(ilayer)) then
         ner_without_doubling = ner_without_doubling - 2
         ispec_aniso = ispec_aniso + &
@@ -124,12 +122,11 @@
     NSPECMAX_ANISO_IC = 1
   endif
 
+  NSPECMAX_ISO_MANTLE = NSPEC(IREGION_CRUST_MANTLE)
   if (ANISOTROPIC_3D_MANTLE) then
-    NSPECMAX_ISO_MANTLE = 1
     NSPECMAX_TISO_MANTLE = 1
     NSPECMAX_ANISO_MANTLE = NSPEC(IREGION_CRUST_MANTLE)
   else
-    NSPECMAX_ISO_MANTLE = NSPEC(IREGION_CRUST_MANTLE)
     if (TRANSVERSE_ISOTROPY) then
       ! note: the number of transverse isotropic elements is ispec_aniso
       !          however for transverse isotropic kernels, the arrays muhstore,kappahstore,eta_anisostore,
@@ -139,7 +136,6 @@
     else
       NSPECMAX_TISO_MANTLE = 1
     endif
-
     NSPECMAX_ANISO_MANTLE = 1
   endif
 
@@ -274,6 +270,10 @@
   ! c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle
   static_memory_size = static_memory_size + &
     21.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPECMAX_ANISO_MANTLE*dble(CUSTOM_REAL)
+
+  ! mu0
+  static_memory_size = static_memory_size + &
+    1.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPECMAX_ANISO_MANTLE*dble(CUSTOM_REAL)
 
   ! ispec_is_tiso_crust_mantle
   static_memory_size = static_memory_size + NSPEC(IREGION_CRUST_MANTLE)*dble(SIZE_LOGICAL)
@@ -418,9 +418,9 @@
     3.d0*NGLOB(IREGION_OUTER_CORE)*dble(CUSTOM_REAL)
 
   ! ELLIPTICITY
-  ! rspl,espl,espl2
+  ! rspl,ellipicity_spline,ellipicity_spline2
   static_memory_size = static_memory_size + &
-    3.d0*NR*dble(SIZE_DOUBLE)
+    3.d0*NR_DENSITY*dble(SIZE_DOUBLE)
 
   ! OCEANS
   ! rmass_ocean_load
@@ -448,7 +448,7 @@
     static_memory_size = static_memory_size + &
       dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
 
-    ! mask_ibool
+    ! mask_ibool_3dmovie
     static_memory_size = static_memory_size + &
       NGLOB(IREGION_CRUST_MANTLE)*dble(SIZE_LOGICAL)
 

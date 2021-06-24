@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -50,7 +50,7 @@
   ! prepare fused array for computational kernel
   call prepare_fused_array()
 
-#ifdef XSMM
+#ifdef USE_XSMM
   ! prepares LIBXSMM small matrix multiplication functions
   call prepare_xsmm()
 #endif
@@ -78,6 +78,7 @@
   ! local parameters
   integer :: iphase,ier
   integer :: num_elements
+  integer,dimension(1) :: idummy
 
   ! inverse arrays use 1D indexing for better compiler vectorization
   ! only used for Deville routines and FORCE_VECTORIZATION)
@@ -124,40 +125,42 @@
     sum_terms_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
     sum_terms_inner_core(:,:,:,:,:) = 0._CUSTOM_REAL
     sum_terms_outer_core(:,:,:,:) = 0._CUSTOM_REAL
+  else
+    ! dummy
+    allocate(sum_terms_crust_mantle(1,1,1,1,1), &
+             sum_terms_inner_core(1,1,1,1,1), &
+             sum_terms_outer_core(1,1,1,1))
   endif
 
   ! inverse table
   ! this helps to speedup the assembly, especially with OpenMP (or on MIC) threading
   if (use_inversed_arrays) then
-    ! allocating arrays
-    allocate(ibool_inv_tbl_crust_mantle(NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE,2), &
-             ibool_inv_tbl_inner_core(NGLLX*NGLLY*NGLLZ*NSPEC_INNER_CORE,2), &
-             ibool_inv_tbl_outer_core(NGLLX*NGLLY*NGLLZ*NSPEC_OUTER_CORE,2),stat=ier)
-    if (ier /= 0) stop 'Error allocating ibool_inv_tbl arrays'
-
-    allocate(ibool_inv_st_crust_mantle(NGLOB_CRUST_MANTLE+1,2), &
-             ibool_inv_st_inner_core(NGLOB_INNER_CORE+1,2), &
-             ibool_inv_st_outer_core(NGLOB_OUTER_CORE+1,2),stat=ier)
-    if (ier /= 0) stop 'Error allocating ibool_inv_st arrays'
-
-    allocate(phase_iglob_crust_mantle(NGLOB_CRUST_MANTLE,2), &
-             phase_iglob_inner_core(NGLOB_INNER_CORE,2), &
-             phase_iglob_outer_core(NGLOB_OUTER_CORE,2),stat=ier)
-    if (ier /= 0) stop 'Error allocating phase_iglob arrays'
-
     ! initializing
     num_globs_crust_mantle(:) = 0
     num_globs_inner_core(:) = 0
     num_globs_outer_core(:) = 0
 
+    ! allocating arrays
+    allocate(ibool_inv_tbl_crust_mantle(NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE,2), &
+             ibool_inv_tbl_inner_core(NGLLX*NGLLY*NGLLZ*NSPEC_INNER_CORE,2), &
+             ibool_inv_tbl_outer_core(NGLLX*NGLLY*NGLLZ*NSPEC_OUTER_CORE,2),stat=ier)
+    if (ier /= 0) stop 'Error allocating ibool_inv_tbl arrays'
     ibool_inv_tbl_crust_mantle(:,:) = 0
     ibool_inv_tbl_inner_core(:,:) = 0
     ibool_inv_tbl_outer_core(:,:) = 0
 
+    allocate(ibool_inv_st_crust_mantle(NGLOB_CRUST_MANTLE+1,2), &
+             ibool_inv_st_inner_core(NGLOB_INNER_CORE+1,2), &
+             ibool_inv_st_outer_core(NGLOB_OUTER_CORE+1,2),stat=ier)
+    if (ier /= 0) stop 'Error allocating ibool_inv_st arrays'
     ibool_inv_st_crust_mantle(:,:) = 0
     ibool_inv_st_inner_core(:,:) = 0
     ibool_inv_st_outer_core(:,:) = 0
 
+    allocate(phase_iglob_crust_mantle(NGLOB_CRUST_MANTLE,2), &
+             phase_iglob_inner_core(NGLOB_INNER_CORE,2), &
+             phase_iglob_outer_core(NGLOB_OUTER_CORE,2),stat=ier)
+    if (ier /= 0) stop 'Error allocating phase_iglob arrays'
     phase_iglob_crust_mantle(:,:) = 0
     phase_iglob_inner_core(:,:) = 0
     phase_iglob_outer_core(:,:) = 0
@@ -174,11 +177,11 @@
         ! inner elements (iphase=2)
         num_elements = nspec_inner_crust_mantle
       endif
-      call make_inv_table(iphase,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE, &
-                          num_elements,phase_ispec_inner_crust_mantle, &
-                          ibool_crust_mantle,phase_iglob_crust_mantle, &
-                          ibool_inv_tbl_crust_mantle, ibool_inv_st_crust_mantle, &
-                          num_globs_crust_mantle)
+      call prepare_make_inv_table(iphase,IREGION_CRUST_MANTLE,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE, &
+                                  num_elements,phase_ispec_inner_crust_mantle,num_phase_ispec_crust_mantle, &
+                                  ibool_crust_mantle,phase_iglob_crust_mantle, &
+                                  ibool_inv_tbl_crust_mantle, ibool_inv_st_crust_mantle, &
+                                  num_globs_crust_mantle,idummy)
 
       ! inner core
       if (iphase == 1) then
@@ -188,11 +191,11 @@
         ! inner elements (iphase=2)
         num_elements = nspec_inner_inner_core
       endif
-      call make_inv_table(iphase,NGLOB_INNER_CORE,NSPEC_INNER_CORE, &
-                          num_elements,phase_ispec_inner_inner_core, &
-                          ibool_inner_core,phase_iglob_inner_core, &
-                          ibool_inv_tbl_inner_core, ibool_inv_st_inner_core, &
-                          num_globs_inner_core,idoubling_inner_core)
+      call prepare_make_inv_table(iphase,IREGION_INNER_CORE,NGLOB_INNER_CORE,NSPEC_INNER_CORE, &
+                                  num_elements,phase_ispec_inner_inner_core,num_phase_ispec_inner_core, &
+                                  ibool_inner_core,phase_iglob_inner_core, &
+                                  ibool_inv_tbl_inner_core, ibool_inv_st_inner_core, &
+                                  num_globs_inner_core,idoubling_inner_core)
 
       ! outer core
       if (iphase == 1) then
@@ -202,11 +205,11 @@
         ! inner elements (iphase=2)
         num_elements = nspec_inner_outer_core
       endif
-      call make_inv_table(iphase,NGLOB_OUTER_CORE,NSPEC_OUTER_CORE, &
-                          num_elements,phase_ispec_inner_outer_core, &
-                          ibool_outer_core,phase_iglob_outer_core, &
-                          ibool_inv_tbl_outer_core, ibool_inv_st_outer_core, &
-                          num_globs_outer_core)
+      call prepare_make_inv_table(iphase,iREGION_OUTER_CORE,NGLOB_OUTER_CORE,NSPEC_OUTER_CORE, &
+                                  num_elements,phase_ispec_inner_outer_core,num_phase_ispec_outer_core, &
+                                  ibool_outer_core,phase_iglob_outer_core, &
+                                  ibool_inv_tbl_outer_core, ibool_inv_st_outer_core, &
+                                  num_globs_outer_core,idummy)
     enddo
 
     ! user output
@@ -219,194 +222,207 @@
   ! synchronizes processes
   call synchronize_all()
 
-  contains
-
-    subroutine make_inv_table(iphase,nglob,nspec, &
-                              phase_nspec,phase_ispec,ibool,phase_iglob, &
-                              ibool_inv_tbl,ibool_inv_st,num_globs,idoubling)
-
-    implicit none
-
-    ! arguments
-    integer,intent(in) :: iphase
-    integer,intent(in) :: nglob
-    integer,intent(in) :: nspec
-    integer,intent(in) :: phase_nspec
-    integer, dimension(:,:),intent(in) :: phase_ispec
-    integer, dimension(:,:,:,:),intent(in) :: ibool
-
-    integer, dimension(:,:),intent(inout) :: phase_iglob
-    integer, dimension(:,:),intent(inout) :: ibool_inv_tbl
-    integer, dimension(:,:),intent(inout) :: ibool_inv_st
-    integer, dimension(:),intent(inout) :: num_globs
-
-    integer,dimension(:),optional :: idoubling
-
-    ! local parameters
-    integer, dimension(:),   allocatable :: ibool_inv_num
-    integer, dimension(:,:), allocatable :: ibool_inv_tbl_tmp
-    integer :: num_alloc_ibool_inv_tbl,num_alloc_ibool_inv_tbl_theor
-    integer :: num_used_ibool_inv_tbl
-    integer :: ip, iglob, ispec_p, ispec, iglob_p, ier
-    integer :: inum,nspec_used
-#ifdef FORCE_VECTORIZATION
-    integer :: ijk
-#else
-    integer :: i,j,k
-#endif
-    logical :: is_inner_core
-
-    ! tolerance number of shared degrees per node
-    integer, parameter :: N_TOL = 20
-
-    ! checks if anything to do (e.g., no outer elements for single process simulations)
-    if (phase_nspec == 0) return
-
-    ! checks if inner core region
-    if (present(idoubling)) then
-      is_inner_core = .true.
-    else
-      is_inner_core = .false.
-    endif
-
-    ! allocates temporary arrays
-    allocate(ibool_inv_num(nglob),stat=ier)
-    if (ier /= 0) stop 'Error allocating ibool_inv_num array'
-
-    ! gets valence of global degrees of freedom for current phase (inner/outer) elements
-    nspec_used = 0
-    ibool_inv_num(:) = 0
-    do ispec_p = 1,phase_nspec
-      ispec = phase_ispec(ispec_p,iphase)
-
-      ! exclude fictitious elements in central cube
-      if (is_inner_core) then
-        if (idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
-      endif
-
-      DO_LOOP_IJK
-        iglob = ibool(INDEX_IJK,ispec)
-        ! increases valence counter
-        ibool_inv_num(iglob) = ibool_inv_num(iglob) + 1
-      ENDDO_LOOP_IJK
-      ! counter
-      nspec_used = nspec_used + 1
-    enddo
-
-    ! gets maximum valence value
-    num_alloc_ibool_inv_tbl = maxval(ibool_inv_num(:))
-
-    ! theoretical number of maximum shared degrees per node
-    num_alloc_ibool_inv_tbl_theor = N_TOL*(NGLLX*NGLLY*NGLLZ*nspec/nglob+1)
-
-    ! checks valence
-    if (nspec_used > 0 .and. (num_alloc_ibool_inv_tbl < 1 .or. num_alloc_ibool_inv_tbl > num_alloc_ibool_inv_tbl_theor)) then
-      print *,'Error invalid maximum valence:'
-      if (is_inner_core) then
-        print *,'rank ',myrank,' invalid in inner core:'
-      else
-        print *,'rank ',myrank,' invalid in crust/mantle:'
-      endif
-      print *,'phase_nspec / nglob / nspec_used = ',phase_nspec,nglob,nspec_used
-      print *,'valence value = ',num_alloc_ibool_inv_tbl,' - theoretical maximum = ',num_alloc_ibool_inv_tbl_theor
-      stop 'Error invalid maximum valence value'
-    endif
-    ! debug
-    !print *,myrank,'maximum shared degrees theoretical = ',num_alloc_ibool_inv_tbl_theor ! regional_Greece_small example: 40
-    !print *,myrank,'maximum shared degrees from array  = ',maxval(ibool_inv_num(:))      ! regional_Greece_small example: 8 and 16
-
-    allocate(ibool_inv_tbl_tmp(num_alloc_ibool_inv_tbl,nglob),stat=ier)
-    if (ier /= 0) stop 'Error allocating ibool_inv_tbl_tmp array'
-
-    !---- make temporary array of inv. table : ibool_inv_tbl_tmp
-    ibool_inv_tbl_tmp(:,:) = 0
-    ibool_inv_num(:) = 0
-    do ispec_p = 1,phase_nspec
-      ispec = phase_ispec(ispec_p,iphase)
-
-      ! exclude fictitious elements in central cube
-      if (is_inner_core) then
-        if (idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
-      endif
-
-      DO_LOOP_IJK
-
-        iglob = ibool(INDEX_IJK,ispec)
-
-        ! increases counter
-        ibool_inv_num(iglob) = ibool_inv_num(iglob) + 1
-
-        ! inverse table
-        ! sets 1D index of local GLL point (between 1 and NGLLCUBE)
-#ifdef FORCE_VECTORIZATION
-        inum = ijk
-#else
-        inum = i + (j-1)*NGLLY + (k-1)*NGLLY*NGLLZ
-#endif
-        ! sets 1D index in local ibool array
-        ibool_inv_tbl_tmp(ibool_inv_num(iglob),iglob) = inum + NGLLX*NGLLY*NGLLZ*(ispec-1)
-
-      ENDDO_LOOP_IJK
-
-    enddo
-
-    !---- packing : ibool_inv_tbl_tmp -> ibool_inv_tbl
-    ip = 0
-    iglob_p = 0
-    num_used_ibool_inv_tbl = 0
-    do iglob = 1, nglob
-      if (ibool_inv_num(iglob) /= 0) then
-        iglob_p = iglob_p + 1
-
-        phase_iglob(iglob_p,iphase) = iglob
-
-        ! sets start index of table entry for this global node
-        ibool_inv_st(iglob_p,iphase) = ip + 1
-
-        ! sets maximum of used valence
-        if ( ibool_inv_num(iglob) > num_used_ibool_inv_tbl ) num_used_ibool_inv_tbl = ibool_inv_num(iglob)
-
-        ! loops over valence
-        do inum = 1, ibool_inv_num(iglob)
-          ! increases total counter
-          ip = ip + 1
-          ! maps local 1D index in ibool array
-          ibool_inv_tbl(ip,iphase) = ibool_inv_tbl_tmp(inum,iglob)
-        enddo
-      endif
-    enddo
-    ! sets last entry in start index table
-    ibool_inv_st(iglob_p+1,iphase) = ip + 1
-
-    ! total number global nodes in this phase (inner/outer)
-    num_globs(iphase) = iglob_p
-
-    ! checks
-    if ( num_used_ibool_inv_tbl > num_alloc_ibool_inv_tbl ) then
-      print *,"Error invalid inverse table setting:"
-      print *,"  num_alloc_ibool_inv_tbl = ",num_alloc_ibool_inv_tbl
-      print *,"  num_used_ibool_inv_tbl  = ",num_used_ibool_inv_tbl
-      print *,"invalid value encountered: num_used_ibool_inv_tbl > num_alloc_ibool_inv_tbl"
-      print *,"#### Program exits... ##########"
-      call exit_MPI(myrank,'Error making inverse table for optimized arrays')
-    endif
-
-    ! debug
-    !if (myrank == 0) then
-    !  print *,'ibool_inv_tbl: '
-    !  do iglob_p = 1,200
-    !    print *,'  ',iglob_p,'table = ',(ibool_inv_tbl(ip,iphase), &
-    !                                     ip = ibool_inv_st(iglob_p,iphase),ibool_inv_st(iglob_p+1,iphase)-1)
-    !  enddo
-    !endif
-
-    ! frees memory
-    deallocate(ibool_inv_num)
-    deallocate(ibool_inv_tbl_tmp)
-
-    end subroutine make_inv_table
-
   end subroutine prepare_timerun_ibool_inv_tbl
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine prepare_make_inv_table(iphase,iregion_code,nglob,nspec, &
+                                    phase_nspec,phase_ispec,num_phase_ispec, &
+                                    ibool,phase_iglob, &
+                                    ibool_inv_tbl,ibool_inv_st,num_globs,idoubling)
+
+  use constants, only: myrank,IFLAG_IN_FICTITIOUS_CUBE,IREGION_INNER_CORE,NGLLX,NGLLY,NGLLZ
+#ifdef FORCE_VECTORIZATION
+  use constants, only: NGLLCUBE
+#endif
+
+  implicit none
+
+  ! arguments
+  integer,intent(in) :: iphase,iregion_code
+  integer,intent(in) :: nglob
+  integer,intent(in) :: nspec
+  integer,intent(in) :: phase_nspec,num_phase_ispec
+  integer, dimension(num_phase_ispec,2),intent(in) :: phase_ispec
+  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
+
+  integer, dimension(nglob,2),intent(inout) :: phase_iglob
+  integer, dimension(NGLLX*NGLLY*NGLLZ*nspec,2),intent(inout) :: ibool_inv_tbl
+  integer, dimension(nglob+1,2),intent(inout) :: ibool_inv_st
+  integer, dimension(2),intent(inout) :: num_globs
+
+  integer,dimension(nspec) :: idoubling
+
+  ! local parameters
+  integer, dimension(:),   allocatable :: ibool_inv_num
+  integer, dimension(:,:), allocatable :: ibool_inv_tbl_tmp
+  integer :: num_alloc_ibool_inv_tbl,num_alloc_ibool_inv_tbl_theor
+  integer :: num_used_ibool_inv_tbl
+  integer :: ip, iglob, ispec_p, ispec, iglob_p, ier
+  integer :: inum,nspec_used
+#ifdef FORCE_VECTORIZATION
+  integer :: ijk
+#else
+  integer :: i,j,k
+#endif
+  logical :: is_inner_core
+
+  ! tolerance number of shared degrees per node
+  integer, parameter :: N_TOL = 20
+
+  ! checks if anything to do (e.g., no outer elements for single process simulations)
+  if (phase_nspec == 0) return
+
+  ! checks if inner core region
+  if (iregion_code == IREGION_INNER_CORE) then
+    is_inner_core = .true.
+  else
+    is_inner_core = .false.
+  endif
+
+  ! allocates temporary arrays
+  allocate(ibool_inv_num(nglob),stat=ier)
+  if (ier /= 0) stop 'Error allocating ibool_inv_num array'
+
+  ! gets valence of global degrees of freedom for current phase (inner/outer) elements
+  nspec_used = 0
+  ibool_inv_num(:) = 0
+  do ispec_p = 1,phase_nspec
+    ispec = phase_ispec(ispec_p,iphase)
+
+    ! exclude fictitious elements in central cube
+    if (is_inner_core) then
+      if (idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+    endif
+
+    DO_LOOP_IJK
+      iglob = ibool(INDEX_IJK,ispec)
+      ! checks index
+      if (iglob <= 0 .or. iglob > nglob) then
+        print *,'Error: invalid iglob ',iglob,'in prepare_make_inv_table(): phase ',iphase,'region',iregion_code,'nglob',nglob
+        call exit_MPI(myrank,'Error invalid iglob index in prepare_make_inv_table()')
+      endif
+      ! increases valence counter
+      ibool_inv_num(iglob) = ibool_inv_num(iglob) + 1
+    ENDDO_LOOP_IJK
+    ! counter
+    nspec_used = nspec_used + 1
+  enddo
+
+  ! gets maximum valence value
+  num_alloc_ibool_inv_tbl = maxval(ibool_inv_num(:))
+
+  ! theoretical number of maximum shared degrees per node
+  num_alloc_ibool_inv_tbl_theor = N_TOL*(NGLLX*NGLLY*NGLLZ*nspec/nglob+1)
+
+  ! checks valence
+  if (nspec_used > 0 .and. (num_alloc_ibool_inv_tbl < 1 .or. num_alloc_ibool_inv_tbl > num_alloc_ibool_inv_tbl_theor)) then
+    print *,'Error invalid maximum valence:'
+    if (is_inner_core) then
+      print *,'rank ',myrank,' invalid in inner core:'
+    else
+      print *,'rank ',myrank,' invalid in crust/mantle:'
+    endif
+    print *,'phase_nspec / nglob / nspec_used = ',phase_nspec,nglob,nspec_used
+    print *,'valence value = ',num_alloc_ibool_inv_tbl,' - theoretical maximum = ',num_alloc_ibool_inv_tbl_theor
+    stop 'Error invalid maximum valence value'
+  endif
+  ! debug
+  !print *,myrank,'maximum shared degrees theoretical = ',num_alloc_ibool_inv_tbl_theor ! regional_Greece_small example: 40
+  !print *,myrank,'maximum shared degrees from array  = ',maxval(ibool_inv_num(:))      ! regional_Greece_small example: 8 and 16
+
+  allocate(ibool_inv_tbl_tmp(num_alloc_ibool_inv_tbl,nglob),stat=ier)
+  if (ier /= 0) stop 'Error allocating ibool_inv_tbl_tmp array'
+
+  !---- make temporary array of inv. table : ibool_inv_tbl_tmp
+  ibool_inv_tbl_tmp(:,:) = 0
+  ibool_inv_num(:) = 0
+  do ispec_p = 1,phase_nspec
+    ispec = phase_ispec(ispec_p,iphase)
+
+    ! exclude fictitious elements in central cube
+    if (is_inner_core) then
+      if (idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+    endif
+
+    DO_LOOP_IJK
+
+      iglob = ibool(INDEX_IJK,ispec)
+
+      ! increases counter
+      ibool_inv_num(iglob) = ibool_inv_num(iglob) + 1
+
+      ! inverse table
+      ! sets 1D index of local GLL point (between 1 and NGLLCUBE)
+#ifdef FORCE_VECTORIZATION
+      inum = ijk
+#else
+      inum = i + (j-1)*NGLLY + (k-1)*NGLLY*NGLLZ
+#endif
+      ! sets 1D index in local ibool array
+      ibool_inv_tbl_tmp(ibool_inv_num(iglob),iglob) = inum + NGLLX*NGLLY*NGLLZ*(ispec-1)
+
+    ENDDO_LOOP_IJK
+
+  enddo
+
+  !---- packing : ibool_inv_tbl_tmp -> ibool_inv_tbl
+  ip = 0
+  iglob_p = 0
+  num_used_ibool_inv_tbl = 0
+  do iglob = 1, nglob
+    if (ibool_inv_num(iglob) /= 0) then
+      iglob_p = iglob_p + 1
+
+      phase_iglob(iglob_p,iphase) = iglob
+
+      ! sets start index of table entry for this global node
+      ibool_inv_st(iglob_p,iphase) = ip + 1
+
+      ! sets maximum of used valence
+      if ( ibool_inv_num(iglob) > num_used_ibool_inv_tbl ) num_used_ibool_inv_tbl = ibool_inv_num(iglob)
+
+      ! loops over valence
+      do inum = 1, ibool_inv_num(iglob)
+        ! increases total counter
+        ip = ip + 1
+        ! maps local 1D index in ibool array
+        ibool_inv_tbl(ip,iphase) = ibool_inv_tbl_tmp(inum,iglob)
+      enddo
+    endif
+  enddo
+  ! sets last entry in start index table
+  ibool_inv_st(iglob_p+1,iphase) = ip + 1
+
+  ! total number global nodes in this phase (inner/outer)
+  num_globs(iphase) = iglob_p
+
+  ! checks
+  if ( num_used_ibool_inv_tbl > num_alloc_ibool_inv_tbl ) then
+    print *,"Error invalid inverse table setting:"
+    print *,"  num_alloc_ibool_inv_tbl = ",num_alloc_ibool_inv_tbl
+    print *,"  num_used_ibool_inv_tbl  = ",num_used_ibool_inv_tbl
+    print *,"invalid value encountered: num_used_ibool_inv_tbl > num_alloc_ibool_inv_tbl"
+    print *,"#### Program exits... ##########"
+    call exit_MPI(myrank,'Error making inverse table for optimized arrays')
+  endif
+
+  ! debug
+  !if (myrank == 0) then
+  !  print *,'ibool_inv_tbl: '
+  !  do iglob_p = 1,200
+  !    print *,'  ',iglob_p,'table = ',(ibool_inv_tbl(ip,iphase), &
+  !                                     ip = ibool_inv_st(iglob_p,iphase),ibool_inv_st(iglob_p+1,iphase)-1)
+  !  enddo
+  !endif
+
+  ! frees memory
+  deallocate(ibool_inv_num)
+  deallocate(ibool_inv_tbl_tmp)
+
+  end subroutine prepare_make_inv_table
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -433,14 +449,30 @@
 #else
   integer :: i,j,k
 #endif
+  double precision :: sizeval
 
   ! fused array only needed for compute forces in crust/mantle (Deville routine)
   if (USE_DEVILLE_PRODUCTS_VAL) then
+    ! estimated memory size required in MB
+    sizeval = 9.d0 * dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*dble(NSPEC_CRUST_MANTLE)*dble(CUSTOM_REAL)
+    sizeval = sizeval + 9.d0 * dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*dble(NSPEC_INNER_CORE)*dble(CUSTOM_REAL)
+    sizeval = sizeval + 9.d0 * dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*dble(NSPEC_OUTER_CORE)*dble(CUSTOM_REAL)
+    ! in MB
+    sizeval = sizeval / 1024.d0 / 1024.d0
+
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*)"  fusing arrays: "
+      write(IMAIN,*) "    size of fused arrays = ",sngl(sizeval),"MB"
+      write(IMAIN,*) "                         = ",sngl(sizeval / 1024.d0),"GB"
+      call flush_IMAIN()
+    endif
 
     ! crust/mantle
     ! allocates fused array
     allocate(deriv_mapping_crust_mantle(9,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),stat=ier)
     if (ier /= 0) stop 'Error allocating array deriv_mapping_crust_mantle'
+    deriv_mapping_crust_mantle(:,:,:,:,:) = 0.0_CUSTOM_REAL
 
     !---- fused array of mapping matrix
     do ispec = 1,NSPEC_CRUST_MANTLE
@@ -465,6 +497,7 @@
     ! allocates fused array
     allocate(deriv_mapping_inner_core(9,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE),stat=ier)
     if (ier /= 0) stop 'Error allocating array deriv_mapping_inner_core'
+    deriv_mapping_inner_core(:,:,:,:,:) = 0.0_CUSTOM_REAL
 
     !---- fused array of mapping matrix
     do ispec = 1,NSPEC_INNER_CORE
@@ -489,6 +522,7 @@
     ! allocates fused array
     allocate(deriv_mapping_outer_core(9,NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE),stat=ier)
     if (ier /= 0) stop 'Error allocating array deriv_mapping_outer_core'
+    deriv_mapping_outer_core(:,:,:,:,:) = 0.0_CUSTOM_REAL
 
     !---- fused array of mapping matrix
     do ispec = 1,NSPEC_OUTER_CORE
@@ -511,12 +545,17 @@
 
     ! user output
     if (myrank == 0) then
-      write(IMAIN,*)"  fused array done"
+      write(IMAIN,*)"  fused arrays done"
       call flush_IMAIN()
     endif
 
     ! synchronizes processes
     call synchronize_all()
+  else
+    ! dummy
+    allocate(deriv_mapping_crust_mantle(1,1,1,1,1), &
+             deriv_mapping_inner_core(1,1,1,1,1), &
+             deriv_mapping_outer_core(1,1,1,1,1))
   endif
 
   end subroutine prepare_fused_array
@@ -525,7 +564,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-#ifdef XSMM
+#ifdef USE_XSMM
   subroutine prepare_xsmm()
 
   use constants, only: CUSTOM_REAL,SIZE_DOUBLE,m1,m2,IMAIN
@@ -595,7 +634,7 @@
 ! outputs memory bandwidth performance to know more about the memory bandwidth. this should indicate how fast we can go,
 ! since our routines are memory-bound...
 !
-! motivated by: STEAM benchmarks
+! motivated by: STREAM benchmarks
 ! http://www.cs.virginia.edu/stream/ref.html
 
   use constants_solver, only: CUSTOM_REAL,NDIM,FORCE_VECTORIZATION_VAL,IMAIN,myrank
@@ -727,6 +766,11 @@
     write(IMAIN,*)
     call flush_IMAIN()
   endif
+
+  ! re-initialize
+  displ(:,:) = 0.0_CUSTOM_REAL
+  veloc(:,:) = 0.0_CUSTOM_REAL
+  accel(:,:) = 0.0_CUSTOM_REAL
 
   ! re-store initial wavefield values
   displ(:,:) = displ0(:,:)

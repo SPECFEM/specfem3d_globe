@@ -1,7 +1,7 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -34,12 +34,18 @@
 
 // for ASDF reader setup
 
-void FC_FUNC_(asdf_setup,ASDF_SETUP)(void) {}
+void FC_FUNC_(asdf_setup,ASDF_SETUP)(void) {
+  fprintf(stderr,"ERROR: READ_ADJSRC_ASDF enabled without ASDF Support. To enable support, reconfigure with --with-asdf flag.\n");
+  exit(1);
+}
 void FC_FUNC_(asdf_cleanup,ASDF_CLEANUP)(void) {}
 
 // for ASDF writer
 
-void FC_FUNC_(init_asdf_data,INIT_ASDF_DATA)(void) {}
+void FC_FUNC_(init_asdf_data,INIT_ASDF_DATA)(void) {
+  fprintf(stderr,"ERROR: OUTPUT_SEISMOS_ASDF enabled without ASDF Support. To enable support, reconfigure with --with-asdf flag.\n");
+  exit(1);
+}
 void FC_FUNC_(store_asdf_data,STORE_ASDF_DATA)(void) {}
 void FC_FUNC_(close_asdf_data,CLOSE_ASDF_DATA)(void) {}
 void FC_FUNC_(write_asdf,WRITE_ASDF)(void) {}

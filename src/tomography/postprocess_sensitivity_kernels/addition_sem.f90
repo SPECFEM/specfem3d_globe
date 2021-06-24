@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -49,7 +49,7 @@ program addition_sem
   character(len=MAX_STRING_LEN) :: outputdir,kernel_name
   character(len=20) :: reg_name
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: sem_data,sem_data_2
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: sem_data,sem_data_2
 
   real(kind=CUSTOM_REAL) :: min_val,max_val
   real(kind=CUSTOM_REAL) :: min_val_all,max_val_all
@@ -137,7 +137,6 @@ program addition_sem
   min_rel_all = 0.0
   max_rel_all = 0.0
 
-
   ! user output
   if (myrank == 0) then
     write(*,*) 'adding files: ',sizeprocs,' slices'
@@ -146,9 +145,18 @@ program addition_sem
     write(*,*) 'input 1 directory: ',trim(input1dir)
     write(*,*) 'input 2 directory: ',trim(input2dir)
     write(*,*) 'output directory : ',trim(outputdir)
+    write(*,*)
     write(*,*) 'regions: start =', irs, ' to end =', ire
     write(*,*)
+    write(*,*) 'NGLLX/NGLLY/NGLLZ = ',NGLLX,'/',NGLLY,'/',NGLLZ
+    write(*,*) 'NSPEC             = ',NSPEC_CRUST_MANTLE
+    write(*,*)
   endif
+
+  ! allocates arrays
+  allocate(sem_data(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE), &
+           sem_data_2(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),stat=ier)
+  if (ier /= 0) stop 'Error allocating sem_data arrays'
 
   do ir = irs, ire
     if (myrank == 0) write(*,*) '----------- Region ', ir, '----------------'

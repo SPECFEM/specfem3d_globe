@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -27,7 +27,7 @@
 
 
 ! note: only called for Comprehensive Earth Model (CEM) routines
-!       check with: #ifdef CEM
+!       check with: #ifdef USE_CEM
 
 
   subroutine write_coordinates_netcdf(fName)

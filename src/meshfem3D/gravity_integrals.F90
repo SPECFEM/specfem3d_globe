@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -100,10 +100,12 @@
 
   use constants
 
+  use shared_parameters, only: R_PLANET
+
   use meshfem3D_par, only: x_observation,y_observation,z_observation, &
                            lon_observation,lat_observation,ELLIPTICITY,TOPOGRAPHY,OUTPUT_FILES
 
-  use meshfem3D_models_par, only: nspl,rspl,espl,espl2,ibathy_topo
+  use meshfem3D_models_par, only: nspl,rspl,ellipicity_spline,ellipicity_spline2,ibathy_topo
 
   implicit none
 
@@ -242,7 +244,7 @@
       end select
 
       ! add ellipticity
-      if (ELLIPTICITY) call get_ellipticity_single_point(x_top,y_top,z_top,nspl,rspl,espl,espl2)
+      if (ELLIPTICITY) call get_ellipticity_single_point(x_top,y_top,z_top,nspl,rspl,ellipicity_spline,ellipicity_spline2)
 
       ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
       call xyz_2_rlatlon_dble(x_top,y_top,z_top,r,lat,lon)
@@ -265,7 +267,7 @@
       ! add topography
       if (TOPOGRAPHY) then
         ! non-dimensionalize the elevation, which is in meters
-        elevation = elevation / R_EARTH
+        elevation = elevation / R_PLANET
 
         x_top = x_top*(ONE + elevation)
         y_top = y_top*(ONE + elevation)
@@ -524,16 +526,21 @@
   ! for gravity integrals
   ! take into account the fact that the density and the radius of the Earth have previously been non-dimensionalized
   ! for the gravity vector force, a distance is involved in the dimensions
-  double precision, parameter :: nondimensionalizing_factor_gi  = RHOAV * R_EARTH
+  double precision :: nondimensionalizing_factor_gi
   ! for the second-order gravity tensor, no distance is involved in the dimensions
-  double precision, parameter :: nondimensionalizing_factor_Gij = RHOAV
-
-  double precision, parameter :: scaling_factor_gi = GRAV * nondimensionalizing_factor_gi
-  double precision, parameter :: scaling_factor_Gij_Eotvos = GRAV * nondimensionalizing_factor_Gij * SI_UNITS_TO_EOTVOS
+  double precision :: nondimensionalizing_factor_Gij
+  double precision :: scaling_factor_gi
+  double precision :: scaling_factor_Gij_Eotvos
 
   double precision :: real_altitude_of_observ_point
 
   integer :: ixval,iyval,ichunkval
+
+  ! scaling factors
+  nondimensionalizing_factor_gi  = RHOAV * R_PLANET
+  nondimensionalizing_factor_Gij = RHOAV
+  scaling_factor_gi = GRAV * nondimensionalizing_factor_gi
+  scaling_factor_Gij_Eotvos = GRAV * nondimensionalizing_factor_Gij * SI_UNITS_TO_EOTVOS
 
   ! multiply by the gravitational constant in S.I. units i.e. in m3 kg-1 s-2
   ! and also take into account the fact that the density and the radius of the Earth have previously been non-dimensionalized
@@ -661,7 +668,7 @@
 
     ! gravity force vector norm decays approximately as (r / r_prime)^2 above the surface of the Earth
     write(IMAIN,*) '  (should be not too far from ', &
-                    sngl(STANDARD_GRAVITY_EARTH * (R_UNIT_SPHERE / real_altitude_of_observ_point)**2),' m.s-2)'
+                    sngl(STANDARD_GRAVITY * (R_UNIT_SPHERE / real_altitude_of_observ_point)**2),' m.s-2)'
 
     write(IMAIN,*)
     write(IMAIN,*) 'computed G_xx = ',G_xx(ixr,iyr,ichunkr),' Eotvos'

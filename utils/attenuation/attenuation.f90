@@ -27,18 +27,25 @@ program attenuation
 
   write_central_period = 0
 
+  ! input period range
 !  write(*,*)'longest period (seconds): '
-  read(5,*, end=13)t1
+  read(5,*, end=13) t1
 !  write(*,*)'shortest period (seconds): '
-  read(5,*, end=13)t2
+  read(5,*, end=13) t2
+
   write(*,*)
   write(*,'(A16F11.6A4F11.6A2)')'! period range: ', t2, ' -- ', t1, ' s'
   write(*,*)
+
+  ! input N_SLS
 !  write(*,*)'number of mechanisms: '
-  read(5,*, end=13)n
+  read(5,*, end=13) n
+
 42 continue
+
+  ! input Q
 !  write(*,*)'Q: '
-  read(5,*, end=13)Q
+  read(5,*, end=13) Q
 
   tau_e(:)  = 0.0d0
   tau_s(:)  = 0.0d0

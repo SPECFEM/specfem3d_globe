@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -125,7 +125,7 @@
     duzdxl_plus_duxdzl = duzdxl + duxdzl
     duzdyl_plus_duydzl = duzdyl + duydzl
 
-    ! strains
+    ! deviatoric strains
     templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
     eps_trace_over_3_loc(INDEX_IJK) = templ
     epsilondev_loc(1,INDEX_IJK) = duxdxl - templ

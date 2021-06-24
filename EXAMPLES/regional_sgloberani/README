@@ -1,0 +1,29 @@
+------------------------------------
+README
+------------------------------------
+
+Example of a regional simulation using model SGLOBE-rani (Chang et al., 2015):
+
+SGLOBE-rani: a global radially anisotropic shear wave speed model with radial anisotropy allowed in the whole mantle. 
+             It is based on a seismic data set of over 43M seismic surface wave (fundamental and overtones) and body wave measurements. 
+             It models simultaneously crustal thickness and mantle structure, and its reference model is PREM. 
+ 
+Simulation uses the smallest possible mesh resolution without topograpy, i.e. a mesh with NEX=32, for testing.
+The setup runs on 4 CPU cores (MPI processes), with a runtime of about 2 min.
+
+The source model is a finite fault CMTSOLUTION for the 2011 Tohoku earthquake provided by USGS:
+https://earthquake.usgs.gov/earthquakes/eventpage/official20110311054624120_30/finite-fault
+
+
+To run a forward simulation, type:
+./run_this_example.sh
+
+to setup this directory for the simulation and to run a corresponding
+script "run_mesher_solver.bash".
+
+The simulation is accurate down to a shortest period of ~ 136 s.
+(minimum period resolved ~ (256/NEX_XI) * (ANGULAR_WIDTH_XI_IN_DEGREES/90) * 17 = (256/32) * (90/90) * 17 ~ 136 s)
+
+Reference seismograms for comparisons are provided in the directory: REF_SEIS/
+Please modify the setup and scripts according to your specifics.
+

@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -40,13 +40,13 @@
 
   implicit none
 
-  integer :: nspec
+  integer,intent(in) :: nspec
 
-  logical,dimension(2,nspec) :: iMPIcut_eta
+  logical,dimension(2,nspec),intent(in) :: iMPIcut_eta
 
-  integer,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
+  integer,dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
 
-  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
+  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: xstore,ystore,zstore
 
   ! logical mask used to create arrays iboolleft_eta and iboolright_eta
   integer :: npointot
@@ -58,7 +58,7 @@
   integer :: npoin2D_eta
 
   integer :: NGLOB2DMAX_YMIN_YMAX
-  integer, dimension(NGLOB2DMAX_YMIN_YMAX) :: iboolleft_eta,iboolright_eta
+  integer, dimension(NGLOB2DMAX_YMIN_YMAX),intent(inout) :: iboolleft_eta,iboolright_eta
 
   integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_eta_all
 

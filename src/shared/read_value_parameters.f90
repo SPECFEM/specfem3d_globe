@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -104,7 +104,7 @@
 
 !--------------------
 
-  subroutine open_parameter_file_from_master_only(ier)
+  subroutine open_parameter_file_from_main_only(ier)
 
   implicit none
 
@@ -115,7 +115,7 @@
   filename_main = 'DATA/Par_file'
 
 ! also see if we are running several independent runs in parallel
-! to do so, add the right directory for that run for the master process only here
+! to do so, add the right directory for that run for the main process only here
   filename_run0001 = 'run0001/'//filename_main(1:len_trim(filename_main))
 
   call param_open(filename_main, len(filename_main), ier)
@@ -136,8 +136,8 @@
 
   if (exists_main_Par_file .and. exists_run0001_Par_file) then
     print *
-    print *,'cannot have both DATA/Par_file and run0001/DATA/Par_file present, please remove one of them'
-    stop 'error: two different copies of the Par_file'
+    print *,'Cannot have both DATA/Par_file and run0001/DATA/Par_file present, please remove one of them'
+    stop 'Error: two different copies of the Par_file'
   endif
 
   call param_open(filename_main, len(filename_main), ier)
@@ -145,12 +145,12 @@
     call param_open(filename_run0001, len(filename_run0001), ier)
     if (ier /= 0) then
       print *
-      print *,'opening file failed, please check your file path and run-directory.'
-      stop 'error opening Par_file'
+      print *,'Opening file failed, please check your file path and run-directory.'
+      stop 'Error opening Par_file'
     endif
   endif
 
-  end subroutine open_parameter_file_from_master_only
+  end subroutine open_parameter_file_from_main_only
 
 !--------------------
 

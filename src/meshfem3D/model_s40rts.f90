@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -38,6 +38,21 @@
 !     S40RTS: a degree-40 shear-velocity model for the mantle from new Rayleigh wave dispersion,
 !     teleseismic traveltime and normal-mode splitting function measurements.
 !     Geophys. J. Int., DOI: 10.1111/j.1365-246X.2010.04884.x
+!
+!
+! email notes from Jeroen Ritsema (2010) about the implementation:
+! "
+! Good idea to include more models!
+!
+! I have attached our s40rts model. It is parameterized up to spherical harmonic order 40
+! but the vertical parametrization is exactly the same as used in s20rts.
+! So, it should be easy to implement it.
+!
+! Like s20, s40 is referenced to the (anisotropic) prem model and contains only Vs perturbations.
+! We use a 0.5 dVs versus drho scaling factor but density is not inverted for.
+! For dVp I suggest you use the P12 or P20 model that Jeroen T already has.
+! "
+!
 !--------------------------------------------------------------------------------------------------
 
   module model_s40rts_par
@@ -75,6 +90,12 @@
   ! local parameters
   integer :: ier
 
+  ! user info
+  if (myrank == 0) then
+    write(IMAIN,*) 'broadcast model: S40RTS'
+    call flush_IMAIN()
+  endif
+
   allocate(S40RTS_V_dvs_a(0:NK_20,0:NS_40,0:NS_40), &
            S40RTS_V_dvs_b(0:NK_20,0:NS_40,0:NS_40), &
            S40RTS_V_dvp_a(0:NK_20,0:NS_40,0:NS_40), &
@@ -88,7 +109,7 @@
   ! the variables read are declared and stored in structure S40RTS_V
   if (myrank == 0) call read_model_s40rts()
 
-  ! broadcast the information read on the master to the nodes
+  ! broadcast the information read on the main node to all the nodes
   call bcast_all_dp(S40RTS_V_dvs_a,(NK_20+1)*(NS_40+1)*(NS_40+1))
   call bcast_all_dp(S40RTS_V_dvs_b,(NK_20+1)*(NS_40+1)*(NS_40+1))
   call bcast_all_dp(S40RTS_V_dvp_a,(NK_20+1)*(NS_40+1)*(NS_40+1))
@@ -159,19 +180,31 @@
 
   subroutine mantle_s40rts(radius,theta,phi,dvs,dvp,drho)
 
-  use constants
+  use constants, only: EARTH_R
+
+  use shared_parameters, only: MODEL_NAME
+
   use model_s40rts_par
 
   implicit none
 
-  double precision :: radius,theta,phi,dvs,dvp,drho
+  double precision, intent(in) :: radius,theta,phi
+  double precision, intent(inout) :: dvs,dvp,drho
 
   ! local parameters
   ! factor to convert perturbations in shear speed to perturbations in density
+  ! (see comments in s20rts model about this factor)
   double precision, parameter :: SCALE_RHO = 0.40d0
 
-  double precision, parameter :: R_EARTH_ = R_EARTH ! 6371000.d0
-  double precision, parameter :: RMOHO_ = R_EARTH - 24400.0 ! 6346600.d0
+  ! factor to convert perturbations as mentioned in S40RTS paper version (section 3.1, p.1226):
+  ! dvp
+  double precision, parameter :: SCALE_VP_MAX_PAPER = 1.d0/2.d0  ! at surface: dln(vs)/dln(vp) = 2 - > dln(vp) = 1/2 dln(vs)
+  double precision, parameter :: SCALE_VP_MIN_PAPER = 1.d0/3.d0  ! at CMB:     dln(vs)/dln(vp) = 3 - > dln(vp) = 1/3 dln(vs)
+  ! drho
+  double precision, parameter :: SCALE_RHO_PAPER = 0.50d0
+
+  double precision, parameter :: R_EARTH_ = EARTH_R          ! 6371000.d0
+  double precision, parameter :: RMOHO_ = EARTH_R - 24400.d0 ! 6346600.d0  using a PREM crustal thickness of 24.4 km
   double precision, parameter :: RCMB_ = 3480000.d0
   double precision, parameter :: ZERO_ = 0.d0
 
@@ -181,22 +214,28 @@
   double precision :: dvp_alm,dvp_blm
   double precision :: s40rts_rsple,radial_basis(0:NK_20)
   double precision :: sint,cost,x(2*NS_40+1),dx(2*NS_40+1)
+  double precision :: fac
 
   dvs = ZERO_
   dvp = ZERO_
   drho = ZERO_
 
-  r_moho = RMOHO_ / R_EARTH_
-  r_cmb = RCMB_ / R_EARTH_
+  ! normalized radii
+  r_moho = RMOHO_ / R_EARTH_     ! mantle model top
+  r_cmb = RCMB_ / R_EARTH_       ! mantle model bottom
   if (radius >= r_moho .or. radius <= r_cmb) return
 
+  ! scaled radius between [-1,1]
   xr = -1.0d0+2.0d0*(radius-r_cmb)/(r_moho-r_cmb)
   if (xr > 1.0) print *,'xr > 1.0'
   if (xr < -1.0) print *,'xr < -1.0'
+
+  ! contributions from vertical splines
   do k = 0,NK_20
     radial_basis(k) = s40rts_rsple(1,NK_20+1,S40RTS_V_spknt(1),S40RTS_V_qq0(1,NK_20+1-k),S40RTS_V_qq(1,1,NK_20+1-k),xr)
   enddo
 
+  ! spherical harmonics
   do l = 0,NS_40
     sint = dsin(theta)
     cost = dcos(theta)
@@ -228,7 +267,40 @@
 
   enddo
 
-  drho = SCALE_RHO*dvs
+  ! we have "MODEL  = s40rts" as the version suggested by Jeroen Ritsema,
+  !     and "MODEL  = s40rts_paper" as the version with the same scaling factors as mentioned in the paper.
+  !
+  if (trim(MODEL_NAME) == 's40rts_paper') then
+    ! original paper version of s40rts
+    ! (there is no need for the P12 model in this case, perturbations are added to PREM)
+
+    ! constant drho scaling
+    ! density perturbations
+    drho = SCALE_RHO_PAPER * dvs
+
+    ! scales dvp
+    ! linear scaling from top to bottom
+    ! scaled radius between [0,1]
+    xr = (radius-r_cmb)/(r_moho-r_cmb)
+    fac = SCALE_VP_MIN_PAPER + xr * (SCALE_VP_MAX_PAPER - SCALE_VP_MIN_PAPER)
+
+    ! makes sure to stay within min/max bounds
+    if (fac < SCALE_VP_MIN_PAPER) fac = SCALE_VP_MIN_PAPER
+    if (fac > SCALE_VP_MAX_PAPER) fac = SCALE_VP_MAX_PAPER
+
+    !debug
+    !print *,'debug: s40rts scaling fac ',fac,'radius',radius,xr,'depth',(1.0-radius)*R_EARTH_ / 1000.d0,'(km)'
+
+    ! scaled dvp, overrides the previous dvp value
+    dvp = fac * dvs
+
+  else
+    ! suggested version
+    ! dvp based on P12 model
+    ! density perturbations based on Karato/Masters/etc. (for a thermal, anelastic mantle)
+    drho = SCALE_RHO * dvs
+
+  endif
 
   end subroutine mantle_s40rts
 
@@ -236,7 +308,6 @@
 
   subroutine s40rts_splhsetup()
 
-  use constants
   use model_s40rts_par
 
   implicit none

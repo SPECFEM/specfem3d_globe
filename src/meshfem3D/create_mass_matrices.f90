@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -67,10 +67,10 @@
   integer,intent(in) :: iregion_code
 
   ! arrays with the mesh in double precision
-  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
+  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: xstore,ystore,zstore
 
   ! Stacey conditions put back
-  integer :: NSPEC2D_TOP,NSPEC2D_BOTTOM
+  integer,intent(in) :: NSPEC2D_TOP,NSPEC2D_BOTTOM
 
   ! local parameters
   double precision :: weight
@@ -143,6 +143,9 @@
 
           ! fluid in outer core
           case (IREGION_OUTER_CORE)
+
+            !checks division
+            if (kappavstore(i,j,k,ispec) <= 0.0_CUSTOM_REAL) stop 'Error invalid kappav in outer core mass matrix'
 
             ! no anisotropy in the fluid, use kappav
 
@@ -238,7 +241,7 @@
     gammaxstore,gammaystore,gammazstore, &
     rmassx,rmassy,b_rmassx,b_rmassy
 
-  use shared_parameters, only: UNDO_ATTENUATION
+  use shared_parameters, only: UNDO_ATTENUATION,HOURS_PER_DAY,SECONDS_PER_HOUR,RHOAV
 
   implicit none
 
@@ -355,8 +358,8 @@
   use constants
 
   use meshfem3D_par, only: &
-    myrank,DT,NCHUNKS,ichunk,nspec, &
-    ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION
+    myrank,DT,NCHUNKS,ichunk,nspec,nglob, &
+    ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION,ABSORBING_CONDITIONS
 
   use regions_mesh_par, only: &
     wxgll,wygll,wzgll
@@ -369,16 +372,19 @@
     jacobian2D_bottom, &
     rho_vp,rho_vs, &
     nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
-    nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta
+    nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta, &
+    nglob_xy
+
+  use shared_parameters, only: RHOAV,USE_LDDRK
 
   implicit none
 
-  integer,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
+  integer,dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
 
-  integer :: iregion_code
+  integer,intent(in) :: iregion_code
 
   ! Stacey conditions
-  integer :: NSPEC2D_BOTTOM
+  integer,intent(in) :: NSPEC2D_BOTTOM
 
   ! local parameters
   double precision :: weight
@@ -392,6 +398,21 @@
 
   integer :: ispec,i,j,k,iglob
   integer :: ispec2D
+
+!--- DK and Zhinan Xie: add C Delta_t / 2 contribution to the mass matrix
+!--- DK and Zhinan Xie: in the case of Clayton-Engquist absorbing boundaries;
+!--- DK and Zhinan Xie: see for instance the book of Hughes (1987) chapter 9.
+!--- DK and Zhinan Xie: IMPORTANT: note that this implies that we must have two different mass matrices,
+!--- DK and Zhinan Xie: one per component of the wave field i.e. one per spatial dimension.
+!--- DK and Zhinan Xie: This was also suggested by Jean-Paul Ampuero in 2003.
+
+  ! checks if anything to do
+  if (.not. ABSORBING_CONDITIONS) return
+  if (nglob_xy /= nglob) return
+
+  ! note: for LDDRK, the time scheme needs no mass matrix contribution due to the absorbing boundary term.
+  !       the additional contribution comes from the Newmark formulation and only needs to be added in those cases.
+  if (USE_LDDRK) return
 
   ! user output
   if (myrank == 0) then
@@ -426,17 +447,13 @@
   ! adds contributions to mass matrix to stabilize Stacey conditions
   select case (iregion_code)
   case (IREGION_CRUST_MANTLE)
-
-    rmassx(:) = rmassz(:)
-    rmassy(:) = rmassz(:)
-
     !   xmin
     ! if two chunks exclude this face for one of them
     if (NCHUNKS == 1 .or. ichunk == CHUNK_AC) then
 
        do ispec2D = 1,nspec2D_xmin
 
-          ispec=ibelm_xmin(ispec2D)
+          ispec = ibelm_xmin(ispec2D)
 
           ! exclude elements that are not on absorbing edges
           if (nkmin_xi(1,ispec2D) == 0 .or. njmin(1,ispec2D) == 0) cycle
@@ -444,7 +461,7 @@
           i = 1
           do k = nkmin_xi(1,ispec2D),NGLLZ
              do j = njmin(1,ispec2D),njmax(1,ispec2D)
-                iglob=ibool(i,j,k,ispec)
+                iglob = ibool(i,j,k,ispec)
 
                 nx = normal_xmin(1,j,k,ispec2D)
                 ny = normal_xmin(2,j,k,ispec2D)
@@ -477,15 +494,15 @@
 
        do ispec2D = 1,nspec2D_xmax
 
-          ispec=ibelm_xmax(ispec2D)
+          ispec = ibelm_xmax(ispec2D)
 
           ! exclude elements that are not on absorbing edges
           if (nkmin_xi(2,ispec2D) == 0 .or. njmin(2,ispec2D) == 0) cycle
 
-          i=NGLLX
-          do k=nkmin_xi(2,ispec2D),NGLLZ
-             do j=njmin(2,ispec2D),njmax(2,ispec2D)
-                iglob=ibool(i,j,k,ispec)
+          i = NGLLX
+          do k = nkmin_xi(2,ispec2D),NGLLZ
+             do j = njmin(2,ispec2D),njmax(2,ispec2D)
+                iglob = ibool(i,j,k,ispec)
 
                 nx = normal_xmax(1,j,k,ispec2D)
                 ny = normal_xmax(2,j,k,ispec2D)
@@ -515,7 +532,7 @@
     !   ymin
     do ispec2D = 1,nspec2D_ymin
 
-       ispec=ibelm_ymin(ispec2D)
+       ispec = ibelm_ymin(ispec2D)
 
        ! exclude elements that are not on absorbing edges
        if (nkmin_eta(1,ispec2D) == 0 .or. nimin(1,ispec2D) == 0) cycle
@@ -523,7 +540,7 @@
        j = 1
        do k = nkmin_eta(1,ispec2D),NGLLZ
           do i = nimin(1,ispec2D),nimax(1,ispec2D)
-            iglob=ibool(i,j,k,ispec)
+            iglob = ibool(i,j,k,ispec)
 
              nx = normal_ymin(1,i,k,ispec2D)
              ny = normal_ymin(2,i,k,ispec2D)
@@ -551,15 +568,15 @@
     !   ymax
     do ispec2D = 1,nspec2D_ymax
 
-       ispec=ibelm_ymax(ispec2D)
+       ispec = ibelm_ymax(ispec2D)
 
        ! exclude elements that are not on absorbing edges
        if (nkmin_eta(2,ispec2D) == 0 .or. nimin(2,ispec2D) == 0) cycle
 
-       j=NGLLY
-       do k=nkmin_eta(2,ispec2D),NGLLZ
-          do i=nimin(2,ispec2D),nimax(2,ispec2D)
-             iglob=ibool(i,j,k,ispec)
+       j = NGLLY
+       do k = nkmin_eta(2,ispec2D),NGLLZ
+          do i = nimin(2,ispec2D),nimax(2,ispec2D)
+             iglob = ibool(i,j,k,ispec)
 
              nx = normal_ymax(1,i,k,ispec2D)
              ny = normal_ymax(2,i,k,ispec2D)
@@ -596,7 +613,7 @@
 
        do ispec2D = 1,nspec2D_xmin
 
-          ispec=ibelm_xmin(ispec2D)
+          ispec = ibelm_xmin(ispec2D)
 
           ! exclude elements that are not on absorbing edges
           if (nkmin_xi(1,ispec2D) == 0 .or. njmin(1,ispec2D) == 0) cycle
@@ -604,7 +621,10 @@
           i = 1
           do k = nkmin_xi(1,ispec2D),NGLLZ
              do j = njmin(1,ispec2D),njmax(1,ispec2D)
-                iglob=ibool(i,j,k,ispec)
+                iglob = ibool(i,j,k,ispec)
+
+                !checks division
+                if (rho_vp(i,j,k,ispec) <= 0.0_CUSTOM_REAL) stop 'Error invalid rho_vp in outer core stacey xmin'
 
                 sn = deltatover2/rho_vp(i,j,k,ispec)
 
@@ -623,15 +643,18 @@
 
        do ispec2D = 1,nspec2D_xmax
 
-          ispec=ibelm_xmax(ispec2D)
+          ispec = ibelm_xmax(ispec2D)
 
           ! exclude elements that are not on absorbing edges
           if (nkmin_xi(2,ispec2D) == 0 .or. njmin(2,ispec2D) == 0) cycle
 
-          i=NGLLX
-          do k=nkmin_xi(2,ispec2D),NGLLZ
-             do j=njmin(2,ispec2D),njmax(2,ispec2D)
-                iglob=ibool(i,j,k,ispec)
+          i = NGLLX
+          do k = nkmin_xi(2,ispec2D),NGLLZ
+             do j = njmin(2,ispec2D),njmax(2,ispec2D)
+                iglob = ibool(i,j,k,ispec)
+
+                !checks division
+                if (rho_vp(i,j,k,ispec) <= 0.0_CUSTOM_REAL) stop 'Error invalid rho_vp in outer core stacey xmax'
 
                 sn = deltatover2/rho_vp(i,j,k,ispec)
 
@@ -647,7 +670,7 @@
     !   ymin
     do ispec2D = 1,nspec2D_ymin
 
-       ispec=ibelm_ymin(ispec2D)
+       ispec = ibelm_ymin(ispec2D)
 
        ! exclude elements that are not on absorbing edges
        if (nkmin_eta(1,ispec2D) == 0 .or. nimin(1,ispec2D) == 0) cycle
@@ -655,7 +678,10 @@
        j = 1
        do k = nkmin_eta(1,ispec2D),NGLLZ
           do i = nimin(1,ispec2D),nimax(1,ispec2D)
-             iglob=ibool(i,j,k,ispec)
+             iglob = ibool(i,j,k,ispec)
+
+             !checks division
+             if (rho_vp(i,j,k,ispec) <= 0.0_CUSTOM_REAL) stop 'Error invalid rho_vp in outer core stacey ymin'
 
              sn = deltatover2/rho_vp(i,j,k,ispec)
 
@@ -669,15 +695,18 @@
     !   ymax
     do ispec2D = 1,nspec2D_ymax
 
-       ispec=ibelm_ymax(ispec2D)
+       ispec = ibelm_ymax(ispec2D)
 
        ! exclude elements that are not on absorbing edges
        if (nkmin_eta(2,ispec2D) == 0 .or. nimin(2,ispec2D) == 0) cycle
 
-       j=NGLLY
-       do k=nkmin_eta(2,ispec2D),NGLLZ
-          do i=nimin(2,ispec2D),nimax(2,ispec2D)
-             iglob=ibool(i,j,k,ispec)
+       j = NGLLY
+       do k = nkmin_eta(2,ispec2D),NGLLZ
+          do i = nimin(2,ispec2D),nimax(2,ispec2D)
+             iglob = ibool(i,j,k,ispec)
+
+             !checks division
+             if (rho_vp(i,j,k,ispec) <= 0.0_CUSTOM_REAL) stop 'Error invalid rho_vp in outer core stacey ymax'
 
              sn = deltatover2/rho_vp(i,j,k,ispec)
 
@@ -691,12 +720,15 @@
     !   bottom (zmin)
     do ispec2D = 1,NSPEC2D_BOTTOM
 
-       ispec=ibelm_bottom(ispec2D)
+       ispec = ibelm_bottom(ispec2D)
 
        k = 1
        do j = 1,NGLLY
           do i = 1,NGLLX
-             iglob=ibool(i,j,k,ispec)
+             iglob = ibool(i,j,k,ispec)
+
+             !checks division
+             if (rho_vp(i,j,k,ispec) <= 0.0_CUSTOM_REAL) stop 'Error invalid rho_vp in outer core stacey bottom'
 
              sn = deltatover2/rho_vp(i,j,k,ispec)
 
@@ -738,14 +770,16 @@
     rmassz,rmass_ocean_load, &
     ibelm_top,jacobian2D_top
 
+  use shared_parameters, only: R_PLANET
+
   implicit none
 
-  integer,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
+  integer,dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
 
   ! arrays with the mesh in double precision
-  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
+  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: xstore,ystore,zstore
 
-  integer :: NSPEC2D_TOP
+  integer,intent(in) :: NSPEC2D_TOP
 
   ! local parameters
   double precision :: x,y,z,r,theta,phi,weight
@@ -851,7 +885,7 @@
           if (elevation >= - MINIMUM_THICKNESS_3D_OCEANS) then
             height_oceans = 0.d0
           else
-            height_oceans = dabs(elevation) / R_EARTH
+            height_oceans = dabs(elevation) / R_PLANET
           endif
 
         else

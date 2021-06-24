@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -75,9 +75,10 @@ program clip_sem_globe
 
   character(len=MAX_STRING_LEN) :: input_dir,output_dir,kernel_names_comma_delimited
   character(len=MAX_STRING_LEN) :: filename, kernel_name
-  character(len=MAX_STRING_LEN) :: kernel_names(MAX_KERNEL_NAMES)
+  character(len=MAX_STRING_LEN),dimension(:),allocatable :: kernel_names
   character(len=MAX_STRING_LEN) :: arg(NARGS)
   integer :: ier, iker,nker,i,j,k,ispec
+  integer :: sizeprocs
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: sem_array
 
@@ -120,6 +121,11 @@ program clip_sem_globe
     print *
   endif
   call synchronize_all()
+
+  ! allocates array
+  allocate(kernel_names(MAX_KERNEL_NAMES),stat=ier)
+  if (ier /= 0) stop 'Error allocating kernel_names array'
+  kernel_names(:) = ''
 
   ! parse command line arguments
   do i = 1, NARGS
@@ -190,8 +196,8 @@ program clip_sem_globe
             val = sem_array(i,j,k,ispec)
 
             ! clipping values
-            if (val < min_val) sem_array(i,j,k,ispec) = min_val
-            if (val > max_val) sem_array(i,j,k,ispec) = max_val
+            if (val < min_val) sem_array(i,j,k,ispec) = real(min_val,kind=CUSTOM_REAL)
+            if (val > max_val) sem_array(i,j,k,ispec) = real(max_val,kind=CUSTOM_REAL)
           enddo
         enddo
       enddo

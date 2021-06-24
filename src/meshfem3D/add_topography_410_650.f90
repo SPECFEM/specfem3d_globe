@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -28,6 +28,7 @@
   subroutine add_topography_410_650(xelm,yelm,zelm)
 
   use constants
+  use shared_parameters, only: R_PLANET
   use meshfem3D_par, only: R220,R400,R670,R771
 
   implicit none
@@ -87,7 +88,7 @@
     endif
 
     ! stretching occurs between 220 and 770
-    if (r > R220/R_EARTH .or. r < R771/R_EARTH) cycle
+    if (r > R220/R_PLANET .or. r < R771/R_PLANET) cycle
 
     ! compute topography on 410 and 650 at current point
     call model_s362ani_subtopo(xcolat,xlon,topo410out,topo650out)
@@ -104,25 +105,25 @@
 
     ! non-dimensionalize the topography, which is in km
     ! positive for a depression, so change the sign for a perturbation in radius
-    topo410 = -dble(topo410out) / R_EARTH_KM
-    topo650 = -dble(topo650out) / R_EARTH_KM
+    topo410 = -dble(topo410out) / (R_PLANET/1000.d0)
+    topo650 = -dble(topo650out) / (R_PLANET/1000.d0)
 
     gamma = 0.d0
-    if (r >= R400/R_EARTH .and. r <= R220/R_EARTH) then
+    if (r >= R400/R_PLANET .and. r <= R220/R_PLANET) then
       ! stretching between R220 and R400
-      gamma = (R220/R_EARTH - r) / (R220/R_EARTH - R400/R_EARTH)
+      gamma = (R220/R_PLANET - r) / (R220/R_PLANET - R400/R_PLANET)
       xelm(ia) = x*(ONE + gamma * topo410 / r)
       yelm(ia) = y*(ONE + gamma * topo410 / r)
       zelm(ia) = z*(ONE + gamma * topo410 / r)
-    else if (r >= R771/R_EARTH .and. r <= R670/R_EARTH) then
+    else if (r >= R771/R_PLANET .and. r <= R670/R_PLANET) then
       ! stretching between R771 and R670
-      gamma = (r - R771/R_EARTH) / (R670/R_EARTH - R771/R_EARTH)
+      gamma = (r - R771/R_PLANET) / (R670/R_PLANET - R771/R_PLANET)
       xelm(ia) = x*(ONE + gamma * topo650 / r)
       yelm(ia) = y*(ONE + gamma * topo650 / r)
       zelm(ia) = z*(ONE + gamma * topo650 / r)
-    else if (r > R670/R_EARTH .and. r < R400/R_EARTH) then
+    else if (r > R670/R_PLANET .and. r < R400/R_PLANET) then
       ! stretching between R670 and R400
-      gamma = (R400/R_EARTH - r) / (R400/R_EARTH - R670/R_EARTH)
+      gamma = (R400/R_PLANET - r) / (R400/R_PLANET - R670/R_PLANET)
       xelm(ia) = x*(ONE + (topo410 + gamma * (topo650 - topo410)) / r)
       yelm(ia) = y*(ONE + (topo410 + gamma * (topo650 - topo410)) / r)
       zelm(ia) = z*(ONE + (topo410 + gamma * (topo650 - topo410)) / r)
@@ -133,19 +134,20 @@
 
   ! debug
   if (DEBUG_STATISTICS) then
-    ! collects min/max on master
+    ! collects min/max on main
     call min_all_cr(min_410,min_410_all)
     call max_all_cr(max_410,max_410_all)
     call min_all_cr(min_650,min_650_all)
     call max_all_cr(max_650,max_650_all)
     if (myrank == 0) then
-      if (r <= R220/R_EARTH .and. r >= R771/R_EARTH) then
+      if (r <= R220/R_PLANET .and. r >= R771/R_PLANET) then
         print *,'add_topography_410_650: min/max_410 = ',min_410_all,max_410_all,'min/max_650 = ',min_650_all,max_650_all
       endif
     endif
-    !if (r <= R220/R_EARTH .and. r >= R771/R_EARTH) then
+    !if (r <= R220/R_PLANET .and. r >= R771/R_PLANET) then
     !  print *,myrank,'add_topography_410_650: min/max_410 = ',min_410,max_410,'min/max_650 = ',min_650,max_650
-    !  print *,myrank,'add_topography_410_650: depth = ',(1.d0 - r)*R_EARTH_KM,' 410-km = ',topo410out,' 650-km = ',topo650out
+    !  print *,myrank,'add_topography_410_650: depth = ',(1.d0 - r)*(R_PLANET/1000.d0), &
+    !          ' 410-km = ',topo410out,' 650-km = ',topo650out
     !endif
   endif
 
@@ -161,6 +163,7 @@
   subroutine add_topography_410_650_gll(xstore,ystore,zstore,ispec,nspec)
 
   use constants
+  use shared_parameters, only: R_PLANET
   use meshfem3D_par, only: R220,R400,R670,R771
 
   implicit none
@@ -207,32 +210,32 @@
         endif
 
         ! stretching occurs between 220 and 770
-        if (r > R220/R_EARTH .or. r < R771/R_EARTH) cycle
+        if (r > R220/R_PLANET .or. r < R771/R_PLANET) cycle
 
         ! compute topography on 410 and 650 at current point
         call model_s362ani_subtopo(xcolat,xlon,topo410out,topo650out)
 
         ! non-dimensionalize the topography, which is in km
         ! positive for a depression, so change the sign for a perturbation in radius
-        topo410 = -dble(topo410out) / R_EARTH_KM
-        topo650 = -dble(topo650out) / R_EARTH_KM
+        topo410 = -dble(topo410out) / (R_PLANET/1000.d0)
+        topo650 = -dble(topo650out) / (R_PLANET/1000.d0)
 
         gamma = 0.d0
-        if (r >= R400/R_EARTH .and. r <= R220/R_EARTH) then
+        if (r >= R400/R_PLANET .and. r <= R220/R_PLANET) then
         ! stretching between R220 and R400
-                gamma = (R220/R_EARTH - r) / (R220/R_EARTH - R400/R_EARTH)
+                gamma = (R220/R_PLANET - r) / (R220/R_PLANET - R400/R_PLANET)
                 xstore(i,j,k,ispec) = x*(ONE + gamma * topo410 / r)
                 ystore(i,j,k,ispec) = y*(ONE + gamma * topo410 / r)
                 zstore(i,j,k,ispec) = z*(ONE + gamma * topo410 / r)
-        else if (r >= R771/R_EARTH .and. r <= R670/R_EARTH) then
+        else if (r >= R771/R_PLANET .and. r <= R670/R_PLANET) then
         ! stretching between R771 and R670
-                gamma = (r - R771/R_EARTH) / (R670/R_EARTH - R771/R_EARTH)
+                gamma = (r - R771/R_PLANET) / (R670/R_PLANET - R771/R_PLANET)
                 xstore(i,j,k,ispec) = x*(ONE + gamma * topo650 / r)
                 ystore(i,j,k,ispec) = y*(ONE + gamma * topo650 / r)
                 zstore(i,j,k,ispec) = z*(ONE + gamma * topo650 / r)
-        else if (r > R670/R_EARTH .and. r < R400/R_EARTH) then
+        else if (r > R670/R_PLANET .and. r < R400/R_PLANET) then
         ! stretching between R670 and R400
-                gamma = (R400/R_EARTH - r) / (R400/R_EARTH - R670/R_EARTH)
+                gamma = (R400/R_PLANET - r) / (R400/R_PLANET - R670/R_PLANET)
                 xstore(i,j,k,ispec) = x*(ONE + (topo410 + gamma * (topo650 - topo410)) / r)
                 ystore(i,j,k,ispec) = y*(ONE + (topo410 + gamma * (topo650 - topo410)) / r)
                 zstore(i,j,k,ispec) = z*(ONE + (topo410 + gamma * (topo650 - topo410)) / r)

@@ -53,7 +53,7 @@ module BOAST
     p = Procedure(function_name, variables)
     if (get_lang == CUDA and ref) then
       get_output.print File::read("references/#{function_name}.cu")
-    elsif(get_lang == CL or get_lang == CUDA) then
+    elsif(get_lang == CL or get_lang == CUDA or get_lang == HIP) then
       make_specfem3d_header( :ndim => n_dim, :ngllx => n_gllx, :ngll2 => n_gll2 )
       open p
       decl igll = Int("igll")
@@ -71,12 +71,15 @@ module BOAST
         decl jacobianw = Real("jacobianw")
         decl fac1 = Real("fac1")
       end
+      comment()
 
       print igll === get_local_id(0)
       print iface === get_group_id(0)+get_group_id(1)*get_num_groups(0)
+      comment()
 
       print If(iface < num_abs_boundary_faces ) {
         print ispec === abs_boundary_ispec[iface]-1
+        comment()
 
         print Case( interface_type,
         0 => lambda {
@@ -115,6 +118,7 @@ module BOAST
           print If(Expression("||", i <     nimin[INDEX2(2,1,iface)]-1, i > nimax[INDEX2(2,1,iface)]-1) ){ print Return(nil) }
           print fac1 === wgllwgll[k*ngllx+i] if type == :forward
         })
+        comment()
 
         print iglob === ibool[INDEX4(ngllx,ngllx,ngllx,i,j,k,ispec)] - 1
         if type == :forward then

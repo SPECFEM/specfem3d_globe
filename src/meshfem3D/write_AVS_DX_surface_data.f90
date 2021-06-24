@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -28,60 +28,62 @@
 ! create AVS or DX 2D data for the surface of the model
 ! to be recombined in postprocessing
   subroutine write_AVS_DX_surface_data(prname,nspec,iboun, &
-     ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool,npointot, &
-     rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
-     ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
-     RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
-     RMIDDLE_CRUST,ROCEAN,iregion_code)
+                                       ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool,npointot, &
+                                       rhostore,kappavstore,muvstore, &
+                                       nspl,rspl,ellipicity_spline,ellipicity_spline2,ELLIPTICITY, &
+                                       MODEL_3D_MANTLE_PERTUBATIONS, &
+                                       RICB,RCMB,RTOPDDOUBLEPRIME,R670,R220,R771,R400,R120,R80,RMOHO, &
+                                       RMIDDLE_CRUST,iregion_code)
 
   use constants
+  use shared_parameters, only: R_PLANET
 
   implicit none
 
-  integer nspec
-  integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
+  integer :: nspec
+  integer :: ibool(NGLLX,NGLLY,NGLLZ,nspec)
 
-  integer idoubling(nspec)
+  integer :: idoubling(nspec)
 
-  logical iboun(6,nspec)
-  logical ELLIPTICITY,ISOTROPIC_3D_MANTLE
+  logical :: iboun(6,nspec)
+  logical :: ELLIPTICITY,MODEL_3D_MANTLE_PERTUBATIONS
 
-  double precision RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771, &
-       R400,R120,R80,RMOHO,RMIDDLE_CRUST,ROCEAN
+  double precision :: RICB,RCMB,RTOPDDOUBLEPRIME,R670,R220,R771, &
+       R400,R120,R80,RMOHO,RMIDDLE_CRUST
 
-  double precision r,rho,vp,vs,Qkappa,Qmu
-  double precision vpv,vph,vsv,vsh,eta_aniso
-  double precision x,y,z,theta,phi_dummy,cost,p20,ell,factor
-  real(kind=CUSTOM_REAL) dvp,dvs
+  double precision :: r,rho,vp,vs,Qkappa,Qmu
+  double precision :: vpv,vph,vsv,vsh,eta_aniso
+  double precision :: x,y,z,theta,phi_dummy,cost,p20,ell,factor
+  real(kind=CUSTOM_REAL) :: dvp,dvs
 
-  double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision ystore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision zstore(NGLLX,NGLLY,NGLLZ,nspec)
+  double precision :: xstore(NGLLX,NGLLY,NGLLZ,nspec)
+  double precision :: ystore(NGLLX,NGLLY,NGLLZ,nspec)
+  double precision :: zstore(NGLLX,NGLLY,NGLLZ,nspec)
 
-  real(kind=CUSTOM_REAL) kappavstore(NGLLX,NGLLY,NGLLZ,nspec)
-  real(kind=CUSTOM_REAL) muvstore(NGLLX,NGLLY,NGLLZ,nspec)
-  real(kind=CUSTOM_REAL) rhostore(NGLLX,NGLLY,NGLLZ,nspec)
+  real(kind=CUSTOM_REAL) :: kappavstore(NGLLX,NGLLY,NGLLZ,nspec)
+  real(kind=CUSTOM_REAL) :: muvstore(NGLLX,NGLLY,NGLLZ,nspec)
+  real(kind=CUSTOM_REAL) :: rhostore(NGLLX,NGLLY,NGLLZ,nspec)
 
 ! logical mask used to output global points only once
-  integer npointot
-  logical mask_ibool(npointot)
+  integer :: npointot
+  logical :: mask_ibool(npointot)
 
 ! numbering of global AVS or DX points
-  integer num_ibool_AVS_DX(npointot)
+  integer :: num_ibool_AVS_DX(npointot)
 
-  integer ispec
-  integer i,j,k,np
+  integer :: ispec
+  integer :: i,j,k,np
   integer, dimension(8) :: iglobval
-  integer npoin,numpoin,nspecface,ispecface
+  integer :: npoin,numpoin,nspecface,ispecface
 
 ! for ellipticity
-  integer nspl
-  double precision rspl(NR),espl(NR),espl2(NR)
+  integer :: nspl
+  double precision :: rspl(NR_DENSITY),ellipicity_spline(NR_DENSITY),ellipicity_spline2(NR_DENSITY)
 
 ! processor identification
-  character(len=MAX_STRING_LEN) prname
+  character(len=MAX_STRING_LEN) :: prname
 
-  integer iregion_code
+  integer :: iregion_code
 
 ! writing points
   open(unit=IOUT,file=prname(1:len_trim(prname))//'AVS_DXpointssurface.txt',status='unknown')
@@ -182,7 +184,7 @@
 
 ! writing elements
   open(unit=IOUT,file=prname(1:len_trim(prname))//'AVS_DXelementssurface.txt',status='unknown')
-  if (ISOTROPIC_3D_MANTLE) &
+  if (MODEL_3D_MANTLE_PERTUBATIONS) &
        open(unit=11,file=prname(1:len_trim(prname))//'AVS_DXelementssurface_dvp_dvs.txt',status='unknown')
 
 ! number of elements in AVS or DX file
@@ -198,11 +200,11 @@
         iglobval(7)=ibool(NGLLX,NGLLY,NGLLZ,ispec)
         iglobval(8)=ibool(1,NGLLY,NGLLZ,ispec)
 
-                if (ISOTROPIC_3D_MANTLE) then
+                if (MODEL_3D_MANTLE_PERTUBATIONS) then
            !   pick a point within the element and get its radius
            r=dsqrt(xstore(2,2,2,ispec)**2+ystore(2,2,2,ispec)**2+zstore(2,2,2,ispec)**2)
 
-           if (r > RCMB/R_EARTH .and. r < R_UNIT_SPHERE) then
+           if (r > RCMB/R_PLANET .and. r < R_UNIT_SPHERE) then
               !     average over the element
               dvp = 0.0
               dvs = 0.0
@@ -222,7 +224,7 @@
 ! this is the Legendre polynomial of degree two, P2(cos(theta)), see the discussion above eq (14.4) in Dahlen and Tromp (1998)
                           p20=0.5d0*(3.0d0*cost*cost-1.0d0)
 ! get ellipticity using spline evaluation
-                          call spline_evaluation(rspl,espl,espl2,nspl,r,ell)
+                          call spline_evaluation(rspl,ellipicity_spline,ellipicity_spline2,nspl,r,ell)
 ! this is eq (14.4) in Dahlen and Tromp (1998)
                           factor=ONE-(TWO/3.0d0)*ell*p20
                           r=r/factor
@@ -231,10 +233,10 @@
 
                        ! gets reference model values: rho,vpv,vph,vsv,vsh and eta_aniso
                        call meshfem3D_models_get1D_val(iregion_code,idoubling(ispec), &
-                            r,rho,vpv,vph,vsv,vsh,eta_aniso, &
-                            Qkappa,Qmu,RICB,RCMB, &
-                            RTOPDDOUBLEPRIME,R80,R120,R220,R400,R600,R670,R771, &
-                            RMOHO,RMIDDLE_CRUST,ROCEAN)
+                                                       r,rho,vpv,vph,vsv,vsh,eta_aniso, &
+                                                       Qkappa,Qmu,RICB,RCMB, &
+                                                       RTOPDDOUBLEPRIME,R80,R120,R220,R400,R670,R771, &
+                                                       RMOHO,RMIDDLE_CRUST)
 
                        ! calculates isotropic values
                        vp = sqrt(((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
@@ -274,7 +276,7 @@
         write(IOUT,*) ispecface,idoubling(ispec),num_ibool_AVS_DX(iglobval(5)), &
                       num_ibool_AVS_DX(iglobval(6)),num_ibool_AVS_DX(iglobval(7)), &
                       num_ibool_AVS_DX(iglobval(8))
-        if (ISOTROPIC_3D_MANTLE) write(11,*) ispecface,dvp,dvs
+        if (MODEL_3D_MANTLE_PERTUBATIONS) write(11,*) ispecface,dvp,dvs
 
      endif
   enddo
@@ -284,7 +286,7 @@
     call exit_MPI(myrank,'incorrect number of surface elements in AVS or DX file creation')
 
   close(IOUT)
-  if (ISOTROPIC_3D_MANTLE) close(11)
+  if (MODEL_3D_MANTLE_PERTUBATIONS) close(11)
 
   end subroutine write_AVS_DX_surface_data
 

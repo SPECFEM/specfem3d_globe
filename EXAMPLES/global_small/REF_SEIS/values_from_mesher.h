@@ -20,8 +20,8 @@
  ! total elements per slice =         9680
  ! total points per slice =       648123
  !
- ! the time step of the solver will be DT =   0.118749999      (s)
- ! the (approximate) minimum period resolved will be =    136.000000      (s)
+ ! the time step of the solver will be DT =   0.115000002      (s)
+ ! the (approximate) minimum period resolved will be =    138.993652      (s)
  !
  ! total for full 6-chunk mesh:
  ! ---------------------------
@@ -52,10 +52,10 @@
  !  by typing "size -d bin/xspecfem3D"
  !  after compiling the code with the DATA/Par_file you plan to use)
  !
- ! size of static arrays per slice =    575.88350000000003       MB
- !                                 =    549.20530319213867       MiB
- !                                 =   0.57588349999999999       GB
- !                                 =   0.53633330389857292       GiB
+ ! size of static arrays per slice =    340.38180799999998       MB
+ !                                 =    324.61338806152344       MiB
+ !                                 =   0.34038180800000001       GB
+ !                                 =   0.31700526177883148       GiB
  !
  ! (should be below to 80% or 90% of the memory installed per core)
  ! (if significantly more, the job will not run by lack of memory )
@@ -64,12 +64,12 @@
  ! (but that can be perfectly acceptable if you can afford it and
  !  want faster results by using more cores)
  !
- ! size of static arrays for all slices =    3455.3009999999999       MB
- !                                      =    3295.2318191528320       MiB
- !                                      =    3.4553010000000000       GB
- !                                      =    3.2179998233914375       GiB
- !                                      =    3.4553010000000000E-003  TB
- !                                      =    3.1425779525307007E-003  TiB
+ ! size of static arrays for all slices =    2042.2908480000001       MB
+ !                                      =    1947.6803283691406       MiB
+ !                                      =    2.0422908479999999       GB
+ !                                      =    1.9020315706729889       GiB
+ !                                      =    2.0422908480000001E-003  TB
+ !                                      =    1.8574527057353407E-003  TiB
  !
 
  integer, parameter :: NEX_XI_VAL =           32
@@ -95,19 +95,19 @@
  integer, parameter :: NSPEC_CRUST_MANTLE_STR_OR_ATT =         8896
  integer, parameter :: NSPEC_INNER_CORE_STR_OR_ATT =           96
 
- integer, parameter :: NSPEC_CRUST_MANTLE_STR_AND_ATT =         8896
- integer, parameter :: NSPEC_INNER_CORE_STR_AND_ATT =           96
+ integer, parameter :: NSPEC_CRUST_MANTLE_STR_AND_ATT =            1
+ integer, parameter :: NSPEC_INNER_CORE_STR_AND_ATT =            1
 
- integer, parameter :: NSPEC_CRUST_MANTLE_STRAIN_ONLY =         8896
- integer, parameter :: NSPEC_INNER_CORE_STRAIN_ONLY =           96
+ integer, parameter :: NSPEC_CRUST_MANTLE_STRAIN_ONLY =            1
+ integer, parameter :: NSPEC_INNER_CORE_STRAIN_ONLY =            1
 
- integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT =         8896
- integer, parameter :: NSPEC_OUTER_CORE_ADJOINT =          688
- integer, parameter :: NSPEC_INNER_CORE_ADJOINT =           96
- integer, parameter :: NGLOB_CRUST_MANTLE_ADJOINT =       592913
- integer, parameter :: NGLOB_OUTER_CORE_ADJOINT =        47985
- integer, parameter :: NGLOB_INNER_CORE_ADJOINT =         7225
- integer, parameter :: NSPEC_OUTER_CORE_ROT_ADJOINT =          688
+ integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT =            1
+ integer, parameter :: NSPEC_OUTER_CORE_ADJOINT =            1
+ integer, parameter :: NSPEC_INNER_CORE_ADJOINT =            1
+ integer, parameter :: NGLOB_CRUST_MANTLE_ADJOINT =            1
+ integer, parameter :: NGLOB_OUTER_CORE_ADJOINT =            1
+ integer, parameter :: NGLOB_INNER_CORE_ADJOINT =            1
+ integer, parameter :: NSPEC_OUTER_CORE_ROT_ADJOINT =            1
 
  integer, parameter :: NSPEC_CRUST_MANTLE_STACEY =            1
  integer, parameter :: NSPEC_OUTER_CORE_STACEY =            1

@@ -1,7 +1,7 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -30,17 +30,31 @@
 #ifndef MESH_CONSTANTS_OCL_H
 #define MESH_CONSTANTS_OCL_H
 
+// OpenCL specifics
+
+#ifdef USE_OPENCL
+
 #ifdef __APPLE__
 #include <OpenCL/cl.h>
 #else
 #include <CL/cl.h>
 #endif
 
+// (optional) unrolling loops
+// leads up to ~10% performance increase in OpenCL and ~1% in Cuda
+#define MANUALLY_UNROLLED_LOOPS   // default unrolling
+
+// definitions
+typedef cl_event gpu_event;
+typedef void* gpu_stream; // dummy - instead of streams, we'll use cl_command_queue below in mocl structure
+
+#endif // USE_OPENCL
+
 const char* clewErrorString (cl_int error);
 
-#define INITIALIZE_OFFSET_OCL()                     \
-  cl_mem_flags buffer_create_type;                       \
-  size_t size;                                      \
+#define INITIALIZE_OFFSET_OCL()                            \
+  cl_mem_flags buffer_create_type;                         \
+  size_t size_buffer;                                      \
   cl_buffer_region region_type;
 
 #define INIT_OFFSET_OCL(_buffer_, _offset_)                             \
@@ -48,10 +62,10 @@ do {                                                                    \
   if (run_opencl) {                                                     \
     if (mp->_buffer_.ocl != NULL){                                      \
       clCheck (clGetMemObjectInfo (mp->_buffer_.ocl, CL_MEM_FLAGS, sizeof(cl_mem_flags), &buffer_create_type, NULL)); \
-      clCheck (clGetMemObjectInfo (mp->_buffer_.ocl, CL_MEM_SIZE , sizeof(size_t), &size, NULL)); \
+      clCheck (clGetMemObjectInfo (mp->_buffer_.ocl, CL_MEM_SIZE , sizeof(size_t), &size_buffer, NULL)); \
                                                                         \
       region_type.origin = _offset_ * sizeof(CL_FLOAT);                 \
-      region_type.size = size - region_type.origin;                     \
+      region_type.size = size_buffer - region_type.origin;              \
                                                                         \
       _buffer_##_##_offset_.ocl = clCreateSubBuffer (mp->_buffer_.ocl, buffer_create_type, CL_BUFFER_CREATE_TYPE_REGION, \
                                                     (void *) &region_type, clck_(&mocl_errcode)); \

@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -32,8 +32,9 @@
 
   use constants
 
+  use shared_parameters, only: T_min_period
+
   use specfem_par, only: &
-          ANGULAR_WIDTH_XI_IN_DEGREES,NEX_XI, &
           station_name,network_name,stlat,stlon,stele,stbur, &
           DT,t0, &
           seismo_offset,seismo_current,it_end, &
@@ -72,7 +73,7 @@
   real :: DEPMAX
   real :: SCALE_F
   real :: ODELTA
-  real ::  B,E,O,A
+  real :: B,E,O,A
   real :: STLA,STLO,STEL,STDP
   real :: EVLA,EVLO,EVEL,EVDP
   real :: MAG,DIST,AZ,BAZ,GCARC
@@ -185,13 +186,15 @@
   EVEL   = undef  !not defined
   EVDP   = sngl(cmt_depth)
 
-
   ! SAC headers will have new format
   USER0  = sngl(cmt_hdur) !half duration from CMT file if not changed to t0 = 0.d0 (point source)
 
   ! USER1 and USER2 slots are used for the shortest and longest periods at which
   ! simulations are accurate, respectively.
-  shortest_period = (256/NEX_XI)*(ANGULAR_WIDTH_XI_IN_DEGREES/90)*17
+
+  ! minimum period estimation
+  shortest_period = T_min_period
+
   USER1  = sngl(shortest_period)
   USER2  = 500.0d0
   USER3  = undef
@@ -218,6 +221,10 @@
   value1 = elon
   value1 = depth
 
+  value2 = 0.d0
+  value3 = 0.d0
+  value4 = 0.d0
+  value5 = 0.d0
 
   ! it is not clear, which magnitude to write out:
   ! should it be
@@ -290,8 +297,8 @@
   NVHDR=6 ! SAC header version number. Current is 6
 
   ! CSS3.0 variables:
-  NORID =int(undef) !origin ID
-  NEVID =int(undef) !event  ID
+  NORID = int(undef) !origin ID
+  NEVID = int(undef) !event  ID
   !NWVID =undef !waveform ID
 
   ! NUMBER of POINTS:
@@ -305,10 +312,10 @@
   IQUAL  = int(undef) ! quality
   ISYNTH = int(undef) ! 1 real data, 2...n synth. flag
   ! permission flags:
-  LEVEN =1 ! evenly spaced data [REQUIRED]
-  LPSPOL=1 ! ? pos. polarity of components (has to be TRUE for LCALDA=1)
-  LOVROK=1 ! 1: OK to overwrite file on disk
-  LCALDA=1 ! 1: calculate DIST, AZ, BAZ, and GCARC, 0: do nothing
+  LEVEN  = 1 ! evenly spaced data [REQUIRED]
+  LPSPOL = 1 ! ? pos. polarity of components (has to be TRUE for LCALDA=1)
+  LOVROK = 1 ! 1: OK to overwrite file on disk
+  LCALDA = 1 ! 1: calculate DIST, AZ, BAZ, and GCARC, 0: do nothing
   ! ------------------end format 5I10---------
   !
   !----------------------------------
@@ -338,8 +345,8 @@
 
   ! indicates SEM synthetics
   KUSER0 = 'SY'          ! Network code assigned by IRIS for synthetic seismograms
-  KUSER1 = 'SEM7.0.0'
-  KUSER2 = 'Horse'       ! most was done in year of the horse: jan 31, 2014 - feb 18, 2015
+  KUSER1 = 'SEM8.0.0'    ! code version 8.0
+  KUSER2 = 'Rat'         ! year of the rat: Jan 25 2020-Feb 11 2021
                          ! (chinese zodiac http://en.wikipedia.org/wiki/Chinese_zodiac :)
 
   !KUSER0 = 'PDE_LAT_'          !  A8

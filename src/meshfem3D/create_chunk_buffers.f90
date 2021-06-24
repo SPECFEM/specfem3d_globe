@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -45,7 +45,7 @@
     xyz1D_leftxi_righteta,xyz1D_rightxi_righteta, &
     NUMMSGS_FACES,NCORNERSCHUNKS,NUM_MSG_TYPES, &
     iprocfrom_faces,iprocto_faces,imsg_type, &
-    iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+    iproc_main_corners,iproc_worker1_corners,iproc_worker2_corners, &
     npoin2D_faces,iboolfaces,iboolcorner
 
   use regions_mesh_par2, only: &
@@ -187,9 +187,9 @@
   if (ier /= 0 ) call exit_mpi(myrank,'Error allocating iproc faces arrays')
 
   ! communication pattern for corners between chunks
-  allocate(iproc_master_corners(NCORNERSCHUNKS), &
-          iproc_worker1_corners(NCORNERSCHUNKS), &
-          iproc_worker2_corners(NCORNERSCHUNKS),stat=ier)
+  allocate(iproc_main_corners(NCORNERSCHUNKS), &
+           iproc_worker1_corners(NCORNERSCHUNKS), &
+           iproc_worker2_corners(NCORNERSCHUNKS),stat=ier)
   if (ier /= 0 ) call exit_mpi(myrank,'Error allocating iproc corner arrays')
 
   ! clear arrays allocated
@@ -197,7 +197,7 @@
   iprocto_faces(:) = -1
   imsg_type(:) = 0
 
-  iproc_master_corners(:) = -1
+  iproc_main_corners(:) = -1
   iproc_worker1_corners(:) = -1
   iproc_worker2_corners(:) = -1
 
@@ -821,8 +821,8 @@
 
   ! allocate temporary array for corners
   allocate(iprocscorners(3,NCORNERSCHUNKS), &
-          itypecorner(3,NCORNERSCHUNKS), &
-          stat=ier)
+           itypecorner(3,NCORNERSCHUNKS), &
+           stat=ier)
   if (ier /= 0 ) call exit_mpi(myrank,'Error allocating iproccorner arrays')
 
   ! initializes corner arrays
@@ -934,7 +934,7 @@
     endif
 
     ! save triplet of processors in list of messages
-    iproc_master_corners(imsg) = iprocscorners(1,imsg)
+    iproc_main_corners(imsg) = iprocscorners(1,imsg)
     iproc_worker1_corners(imsg) = iprocscorners(2,imsg)
     iproc_worker2_corners(imsg) = iprocscorners(3,imsg)
 
@@ -945,10 +945,10 @@
     endif
 
     ! checks bounds
-    if (iproc_master_corners(imsg) < 0 &
+    if (iproc_main_corners(imsg) < 0 &
         .or. iproc_worker1_corners(imsg) < 0 &
         .or. iproc_worker2_corners(imsg) < 0 &
-        .or. iproc_master_corners(imsg) > NPROCTOT-1 &
+        .or. iproc_main_corners(imsg) > NPROCTOT-1 &
         .or. iproc_worker1_corners(imsg) > NPROCTOT-1 &
         .or. iproc_worker2_corners(imsg) > NPROCTOT-1) &
         call exit_MPI(myrank,'incorrect chunk corner numbering')
@@ -960,7 +960,7 @@
       ! debug file output
       if (DEBUG) then
         if (imember_corner == 1) then
-          write(filename_out,"('buffer_corners_chunks_master_msg',i6.6,'.txt')") imsg
+          write(filename_out,"('buffer_corners_chunks_main_msg',i6.6,'.txt')") imsg
         else if (imember_corner == 2) then
           write(filename_out,"('buffer_corners_chunks_worker1_msg',i6.6,'.txt')") imsg
         else

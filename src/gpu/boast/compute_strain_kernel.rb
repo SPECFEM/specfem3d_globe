@@ -34,7 +34,7 @@ module BOAST
     p = Procedure(function_name, v)
     if (get_lang == CUDA and ref) then
       get_output.print File::read("references/#{function_name}.cu")
-    elsif (get_lang == CL or get_lang == CUDA) then
+    elsif (get_lang == CL or get_lang == CUDA or get_lang == HIP) then
       make_specfem3d_header( :ngllx => n_gllx, :ngll2 => n_gll2, :ngll3 => n_gll3, :ngll3_padded => n_gll3_padded )
 
       sub_compute_element_strain_undoatt = compute_element_strain_undoatt(n_gllx, n_gll2, n_gll3, n_gll3_padded )
@@ -54,14 +54,17 @@ module BOAST
         Real("s_dummy#{a}_loc", :local => true, :dim => [Dim(ngll3)] )
       }
       decl sh_hprime_xx = Real("sh_hprime_xx",     :local => true, :dim => [Dim(ngll2)] )
+      comment()
 
       print ispec === get_group_id(0) + get_group_id(1)*get_num_groups(0)
       print ijk_ispec === get_local_id(0) + ngll3*ispec
       print tx === get_local_id(0)
+      comment()
 
       print If(tx < ngll2) {
         print sh_hprime_xx[tx] === d_hprime_xx[tx]
       }
+      comment()
 
       print If(ispec < nspec) {
         print iglob === d_ibool[ijk_ispec] - 1
@@ -70,6 +73,7 @@ module BOAST
         }
       }
       print barrier(:local)
+      comment()
 
       print If(ispec < nspec) {
 
@@ -79,6 +83,7 @@ module BOAST
                                                       *d_xi, *d_eta, *d_gamma,
                                                       sh_hprime_xx,
                                                       epsdev,eps_trace_over_3.address)
+        comment()
 
         print If(nspec_strain_only == 1 => lambda {
           print epsilon_trace_over_3[tx] === eps_trace_over_3
@@ -89,7 +94,6 @@ module BOAST
         (0..4).each { |indx|
           print epsilondev[indx][ijk_ispec] === epsdev[indx]
         }
-
       }
 
       close p

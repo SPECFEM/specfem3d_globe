@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -146,11 +146,11 @@
                                            NSTEP_BLOCK,iadjsrc,it_sub_adj,NSTEP_SUB_ADJ, &
                                            NTSTEP_BETWEEN_READ_ADJSRC,DT)
 
-  use constants, only: CUSTOM_REAL,SIZE_REAL,NDIM,NGLLX,NGLLY,NGLLZ,IIN_ADJ,R_EARTH,MAX_STRING_LEN
+  use constants, only: CUSTOM_REAL,NDIM,IIN_ADJ,MAX_STRING_LEN
 
   use specfem_par, only: scale_displ_inv, NUMBER_OF_SIMULTANEOUS_RUNS, READ_ADJSRC_ASDF, mygroup
 
-  use iso_c_binding, only: C_NULL_CHAR
+!  use iso_c_binding, only: C_NULL_CHAR
 
   implicit none
 
@@ -194,6 +194,12 @@
   comp(2) = bic(1:2)//'E'
   comp(3) = bic(1:2)//'Z'
 
+  ! safety check
+  if (NSTEP_BLOCK > NTSTEP_BETWEEN_READ_ADJSRC) then
+    print *,'Error invalid NSTEP_BLOCK ',NSTEP_BLOCK,' compared to NTSTEP_BETWEEN_READ_ADJSRC ',NTSTEP_BETWEEN_READ_ADJSRC
+    call exit_MPI(myrank,'Error invalid NSTEP_BLOCK size in compute_array_source_adjoint')
+  endif
+
   ! (sub)trace start and end
   ! reading starts in chunks of NSTEP_BLOCK from the end of the trace,
   ! i.e. as an example: total length NSTEP = 3000, chunk length NSTEP_BLOCK= 1000
@@ -220,7 +226,7 @@
   adj_src(:,:) = 0._CUSTOM_REAL
 
   if (READ_ADJSRC_ASDF) then
-
+    ! ASDF format
     do icomp = 1, NDIM ! 3 components
 
       ! print *, "READING ADJOINT SOURCES USING ASDF"
@@ -240,7 +246,7 @@
     enddo
 
   else
-
+    ! ASCII format
     do icomp = 1, NDIM
 
       ! opens adjoint component file
@@ -311,34 +317,36 @@
   enddo
 
   do icomp = 1, NDIM
-    source_adjoint(icomp,:) = adj_src_u(icomp,:)
+    source_adjoint(icomp,1:NSTEP_BLOCK) = adj_src_u(icomp,1:NSTEP_BLOCK)
   enddo
 
-  contains
-
-    subroutine multiply_arrays_adjoint(sourcearrayd,hxir,hetar,hgammar,adj_src_ud)
-
-    use constants
-
-    implicit none
-
-    double precision, dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearrayd
-    double precision, dimension(NGLLX) :: hxir
-    double precision, dimension(NGLLY) :: hetar
-    double precision, dimension(NGLLZ) :: hgammar
-    double precision, dimension(NDIM) :: adj_src_ud
-
-    integer :: i,j,k
-
-    ! adds interpolated source contribution to all GLL points within this element
-    do k = 1, NGLLZ
-      do j = 1, NGLLY
-        do i = 1, NGLLX
-          sourcearrayd(:,i,j,k) = hxir(i) * hetar(j) * hgammar(k) * adj_src_ud(:)
-        enddo
-      enddo
-    enddo
-
-    end subroutine multiply_arrays_adjoint
+! not used, but for reference in case lagrange interpolators will be added here again ...
+!
+!  contains
+!
+!    subroutine multiply_arrays_adjoint(sourcearrayd,hxir,hetar,hgammar,adj_src_ud)
+!
+!    use constants
+!
+!    implicit none
+!
+!    double precision, dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearrayd
+!    double precision, dimension(NGLLX) :: hxir
+!    double precision, dimension(NGLLY) :: hetar
+!    double precision, dimension(NGLLZ) :: hgammar
+!    double precision, dimension(NDIM) :: adj_src_ud
+!
+!    integer :: i,j,k
+!
+!    ! adds interpolated source contribution to all GLL points within this element
+!    do k = 1, NGLLZ
+!      do j = 1, NGLLY
+!        do i = 1, NGLLX
+!          sourcearrayd(:,i,j,k) = hxir(i) * hetar(j) * hgammar(k) * adj_src_ud(:)
+!        enddo
+!      enddo
+!    enddo
+!
+!    end subroutine multiply_arrays_adjoint
 
   end subroutine compute_arrays_source_adjoint

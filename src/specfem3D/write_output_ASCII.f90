@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -33,7 +33,7 @@
 ! here would result in a loss of accuracy when one later convolves
 ! the results with the source time function
 
-  use constants, only: CUSTOM_REAL,SIZE_REAL,IOUT,MAX_STRING_LEN
+  use constants, only: CUSTOM_REAL,IOUT,MAX_STRING_LEN
 
   use specfem_par, only: &
     DT,t0,NSTEP, &

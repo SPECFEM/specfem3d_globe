@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -37,6 +37,9 @@
   use MPI_crust_mantle_par
   use MPI_outer_core_par
   use MPI_inner_core_par
+
+!debug
+!  use shared_parameters, only: NPROCTOT
 
   implicit none
 
@@ -98,6 +101,15 @@
                                 xstore_glob,ystore_glob,zstore_glob, &
                                 ibool,is_on_a_slice_edge,filename)
     endif
+
+    !debug
+    !do ispec = 0,NPROCTOT-1
+    !  if (myrank == ispec) then
+    !    print *,myrank,'phase_ispec_inner 1: ',phase_ispec_inner_crust_mantle(1:5,1)
+    !    print *,myrank,'phase_ispec_inner 2: ',phase_ispec_inner_crust_mantle(1:5,2)
+    !  endif
+    !  call synchronize_all()
+    !enddo
 
   case (IREGION_OUTER_CORE)
     ! outer_core
@@ -184,4 +196,4 @@
 
   end select
 
-  end subroutine setup_Inner_Outer
+  end subroutine setup_inner_outer

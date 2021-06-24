@@ -1,6 +1,6 @@
 !========================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -41,13 +41,13 @@
 
   implicit none
 
-  integer n
-  double precision alpha,beta
+  integer, intent(in) :: n
+  double precision, intent(in) :: alpha,beta
 
   double precision, parameter :: zero=0.d0,one=1.d0,two=2.d0,three=3.d0,four=4.d0
-  double precision apb,f1,fint1,fint2,f2,di,abn,abnn,a1,a2,a3,f3
+  double precision :: apb,f1,fint1,fint2,f2,di,abn,abnn,a1,a2,a3,f3
   double precision, external :: gammaf
-  integer i
+  integer :: i
 
   f3 = zero
   apb = alpha+beta
@@ -93,13 +93,13 @@
 
   implicit none
 
-  integer n
-  double precision alpha,beta
+  integer, intent(in) :: n
+  double precision, intent(in) :: alpha,beta
 
   double precision, parameter :: zero=0.d0,one=1.d0,two=2.d0,three=3.d0,four=4.d0
-  double precision apb,f1,fint1,fint2,f2,di,abn,abnn,a1,a2,a3,f3
+  double precision :: apb,f1,fint1,fint2,f2,di,abn,abnn,a1,a2,a3,f3
   double precision, external :: gammaf
-  integer i
+  integer :: i
 
   apb = alpha+beta
   f3 = zero
@@ -147,7 +147,7 @@
 
   double precision, parameter :: pi = 3.141592653589793d0
 
-  double precision x
+  double precision, intent(in) :: x
 
   double precision, parameter :: half=0.5d0,one=1.d0,two=2.d0
 
@@ -185,14 +185,14 @@
 
   implicit none
 
-  integer np
-  double precision alpha,beta
-  double precision xjac(np)
+  integer, intent(in) :: np
+  double precision, intent(in) :: alpha,beta
+  double precision, intent(inout) :: xjac(np)
 
   ! local parameters
-  integer k,j,i,jmin,jm,n
-  double precision xlast,dth,x,x1,x2,recsum,delx,xmin,swap
-  double precision p,pd,pm1,pdm1,pm2,pdm2
+  integer :: k,j,i,jmin,jm,n
+  double precision :: xlast,dth,x,x1,x2,recsum,delx,xmin,swap
+  double precision :: p,pd,pm1,pdm1,pm2,pdm2
 
   integer, parameter :: K_MAX_ITER = 10
   double precision, parameter :: zero = 0.d0, eps = 1.0d-12
@@ -285,11 +285,12 @@
 
   implicit none
 
-  double precision poly,pder,polym1,pderm1,polym2,pderm2,alp,bet,x
-  integer n
+  double precision, intent(inout) :: poly,pder,polym1,pderm1,polym2,pderm2
+  double precision, intent(in) :: alp,bet,x
+  integer, intent(in) :: n
 
-  double precision apb,polyl,pderl,dk,a1,a2,b3,a3,a4,polyn,pdern,psave,pdsave
-  integer k
+  double precision :: apb,polyl,pderl,dk,a1,a2,b3,a3,a4,polyn,pdern,psave,pdsave
+  integer :: k
 
   apb  = alp+bet
   poly = 1.d0
@@ -343,11 +344,11 @@
 !------------------------------------------------------------------------
   implicit none
 
-  double precision z
-  integer n
+  double precision, intent(in) :: z
+  integer, intent(in) :: n
 
-  double precision P1,P2,P1D,P2D,P3D,DBLE_K,P3
-  integer k
+  double precision :: P1,P2,P1D,P2D,P3D,DBLE_K,P3
+  integer :: k
 
   P1   = 1.d0
   P2   = Z
@@ -383,11 +384,11 @@
 !------------------------------------------------------------------------
   implicit none
 
-  double precision z
-  integer n
+  double precision, intent(in) :: z
+  integer, intent(in) :: n
 
-  double precision P1,P2,P3,DBLE_K
-  integer k
+  double precision :: P1,P2,P3,DBLE_K
+  integer :: k
 
   P1   = 1.d0
   P2   = Z
@@ -412,12 +413,12 @@
 
   implicit none
 
-  double precision alpha,beta
-  integer n
+  double precision, intent(in) :: alpha,beta
+  integer, intent(in) :: n
 
-  double precision one,two,dn,const,prod,dindx,frac
+  double precision :: one,two,dn,const,prod,dindx,frac
   double precision, external :: gammaf
-  integer i
+  integer :: i
 
   one   = 1.d0
   two   = 2.d0
@@ -465,14 +466,14 @@
 
   double precision, parameter :: zero=0.d0,one=1.d0,two=2.d0
 
-  integer np
-  double precision z(np),w(np)
-  double precision alpha,beta
+  integer, intent(in) :: np
+  double precision, intent(inout) :: z(np),w(np)
+  double precision, intent(in) :: alpha,beta
 
   ! local parameters
-  integer n,np1,np2,i
-  double precision p,pd,pm1,pdm1,pm2,pdm2
-  double precision apb,dnp1,dnp2,fac1,fac2,fac3,fnorm,rcoef
+  integer :: n,np1,np2,i
+  double precision :: p,pd,pm1,pdm1,pm2,pdm2
+  double precision :: apb,dnp1,dnp2,fac1,fac2,fac3,fnorm,rcoef
   double precision, external :: gammaf,pnormj
 
   pd = zero
@@ -536,14 +537,14 @@
 
   double precision, parameter :: zero=0.d0,one=1.d0,two=2.d0,tol_zero=1.d-30
 
-  integer np
-  double precision alpha,beta
-  double precision z(np), w(np)
+  integer, intent(in) :: np
+  double precision, intent(in) :: alpha,beta
+  double precision, intent(inout) :: z(np), w(np)
 
   ! local parameters
-  integer n,nm1,i
-  double precision p,pd,pm1,pdm1,pm2,pdm2
-  double precision alpg,betg
+  integer :: n,nm1,i
+  double precision :: p,pd,pm1,pdm1,pm2,pdm2
+  double precision :: alpg,betg
   double precision, external :: endw1,endw2
 
   p = zero
@@ -597,56 +598,58 @@
 !------------------------------------------------------------------------
 !
 
-  double precision function pnglj(z,n)
+!! routines not used yet, but for reference...
 
-!------------------------------------------------------------------------
+!  double precision function pnglj(z,n)
 !
-!     Compute the value of the Nth order polynomial of the
-!     Gauss-Lobatto-Jacobi (0,1) at Z. from Legendre polynomials.
+!!------------------------------------------------------------------------
+!!
+!!     Compute the value of the Nth order polynomial of the
+!!     Gauss-Lobatto-Jacobi (0,1) at Z. from Legendre polynomials.
+!!
+!!------------------------------------------------------------------------
 !
-!------------------------------------------------------------------------
-
-  implicit none
-  include "constants.h"
-
-  double precision z
-  integer n
-  double precision, external :: pnleg
-
-  if (abs(z+1.d0) > TINYVAL) then  ! if (z /= -1.d0)
-    pnglj = (pnleg(z,n)+pnleg(z,n+1))/(ONE+z)
-  else
-    pnglj = (dble(n)+ONE)*(-1)**n
-  endif
-
-  end function pnglj
-
+!  implicit none
+!  include "constants.h"
 !
-!------------------------------------------------------------------------
+!  double precision z
+!  integer n
+!  double precision, external :: pnleg
 !
-
-  double precision function pndglj(z,n)
-
-!------------------------------------------------------------------------
+!  if (abs(z+1.d0) > TINYVAL) then  ! if (z /= -1.d0)
+!    pnglj = (pnleg(z,n)+pnleg(z,n+1))/(ONE+z)
+!  else
+!    pnglj = (dble(n)+ONE)*(-1)**n
+!  endif
 !
-!     Compute the value of the derivative of Nth order polynomial of the
-!     Gauss-Lobatto-Jacobi (0,1) at Z. from Legendre polynomials.
+!  end function pnglj
 !
-!------------------------------------------------------------------------
-
-  implicit none
-  include "constants.h"
-
-  double precision z
-  integer n
-  double precision, external :: pnleg, pndleg
-
-  if (abs(z+1.d0) > TINYVAL) then  ! if (z /= -1.d0)
-    pndglj = (pndleg(z,n)+pndleg(z,n+1))/(ONE+z) - (pnleg(z,n)+pnleg(z,n+1))/((ONE+z)**2)
-  else
-    pndglj = pnleg(-1.d0,n)+pnleg(-1.d0,n+1)
-  endif
-
-  end function pndglj
-
+!!
+!!------------------------------------------------------------------------
+!!
+!
+!  double precision function pndglj(z,n)
+!
+!!------------------------------------------------------------------------
+!!
+!!     Compute the value of the derivative of Nth order polynomial of the
+!!     Gauss-Lobatto-Jacobi (0,1) at Z. from Legendre polynomials.
+!!
+!!------------------------------------------------------------------------
+!
+!  implicit none
+!  include "constants.h"
+!
+!  double precision z
+!  integer n
+!  double precision, external :: pnleg, pndleg
+!
+!  if (abs(z+1.d0) > TINYVAL) then  ! if (z /= -1.d0)
+!    pndglj = (pndleg(z,n)+pndleg(z,n+1))/(ONE+z) - (pnleg(z,n)+pnleg(z,n+1))/((ONE+z)**2)
+!  else
+!    pndglj = pnleg(-1.d0,n)+pnleg(-1.d0,n+1)
+!  endif
+!
+!  end function pndglj
+!
 

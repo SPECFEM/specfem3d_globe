@@ -1,7 +1,7 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -59,6 +59,11 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
                  gpu_realw_mem d_B_array_rotation,
                  gpu_realw_mem d_b_A_array_rotation,
                  gpu_realw_mem d_b_B_array_rotation,
+                 gpu_realw_mem d_A_array_rotation_lddrk,
+                 gpu_realw_mem d_B_array_rotation_lddrk,
+                 gpu_realw_mem d_b_A_array_rotation_lddrk,
+                 gpu_realw_mem d_b_B_array_rotation_lddrk,
+                 realw alpha_lddrk,realw beta_lddrk,
                  int FORWARD_OR_ADJOINT) {
 
   GPU_ERROR_CHECKING ("before outer_core kernel Kernel_2");
@@ -80,6 +85,7 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
   realw deltat,two_omega_earth;
   gpu_realw_mem displ,accel;
   gpu_realw_mem A_array_rotation, B_array_rotation;
+  gpu_realw_mem A_array_rotation_lddrk, B_array_rotation_lddrk;
 
   // sets gpu arrays
   if (FORWARD_OR_ADJOINT == 1) {
@@ -89,6 +95,8 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
     two_omega_earth = mp->two_omega_earth;
     A_array_rotation = d_A_array_rotation;
     B_array_rotation = d_B_array_rotation;
+    A_array_rotation_lddrk = d_A_array_rotation_lddrk;
+    B_array_rotation_lddrk = d_B_array_rotation_lddrk;
   } else {
     // backward/reconstructed wavefields -> FORWARD_OR_ADJOINT == 3
     displ = mp->d_b_displ_outer_core;
@@ -97,6 +105,8 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
     two_omega_earth = mp->b_two_omega_earth;
     A_array_rotation = d_b_A_array_rotation;
     B_array_rotation = d_b_B_array_rotation;
+    A_array_rotation_lddrk = d_b_A_array_rotation_lddrk;
+    B_array_rotation_lddrk = d_b_B_array_rotation_lddrk;
   }
 
 #ifdef USE_OPENCL
@@ -140,9 +150,7 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_wgllwgll_xz.ocl));
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_wgllwgll_yz.ocl));
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (int), (void *) &mp->gravity));
-    clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_rstore_outer_core.ocl));
-    clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_d_ln_density_dr_table.ocl));
-    clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_minus_rho_g_over_kappa_fluid.ocl));
+    clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_gravity_pre_store_outer_core.ocl));
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_wgll_cube.ocl));
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (int), (void *) &mp->rotation));
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (realw), (void *) &timeval));
@@ -150,6 +158,11 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (realw), (void *) &deltat));
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &A_array_rotation.ocl));
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &B_array_rotation.ocl));
+    clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &A_array_rotation_lddrk.ocl));
+    clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &B_array_rotation_lddrk.ocl));
+    clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (realw), (void *) &alpha_lddrk));
+    clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (realw), (void *) &beta_lddrk));
+    clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (int), (void *) &mp->use_lddrk));
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (int), (void *) &mp->NSPEC_OUTER_CORE));
 #ifdef USE_TEXTURES_FIELDS
     if (FORWARD_OR_ADJOINT == 1) {
@@ -203,9 +216,7 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
                                                                mp->d_hprimewgll_xx.cuda,
                                                                mp->d_wgllwgll_xy.cuda,mp->d_wgllwgll_xz.cuda,mp->d_wgllwgll_yz.cuda,
                                                                mp->gravity,
-                                                               mp->d_rstore_outer_core.cuda,
-                                                               mp->d_d_ln_density_dr_table.cuda,
-                                                               mp->d_minus_rho_g_over_kappa_fluid.cuda,
+                                                               mp->d_gravity_pre_store_outer_core.cuda,
                                                                mp->d_wgll_cube.cuda,
                                                                mp->rotation,
                                                                timeval,
@@ -213,6 +224,60 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
                                                                deltat,
                                                                A_array_rotation.cuda,
                                                                B_array_rotation.cuda,
+                                                               A_array_rotation_lddrk.cuda,
+                                                               B_array_rotation_lddrk.cuda,
+                                                               alpha_lddrk,beta_lddrk,
+                                                               mp->use_lddrk,
+                                                               mp->NSPEC_OUTER_CORE);
+  }
+#endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(blocksize / GPU_ELEM_PER_THREAD,1,1);
+
+    // defines function pointer to __global__ function (taken from definition in file kernel_proto.cu.h)
+    // since forward and adjoint function calls are identical and only the passed arrays change
+    outer_core_impl_kernel outer_core_kernel_p;
+
+    // selects function call
+    if (FORWARD_OR_ADJOINT == 1) {
+      // forward wavefields -> FORWARD_OR_ADJOINT == 1
+      outer_core_kernel_p = &outer_core_impl_kernel_forward;
+    } else {
+      // backward/reconstructed wavefields -> FORWARD_OR_ADJOINT == 3
+      DEBUG_BACKWARD_FORCES();
+      outer_core_kernel_p = &outer_core_impl_kernel_adjoint;
+    }
+
+    hipLaunchKernelGGL( outer_core_kernel_p, grid, threads, 0, mp->compute_stream,
+                                                               nb_blocks_to_compute,
+                                                               d_ibool.hip,
+                                                               mp->d_phase_ispec_inner_outer_core.hip,
+                                                               mp->num_phase_ispec_outer_core,
+                                                               iphase,
+                                                               mp->use_mesh_coloring_gpu,
+                                                               displ.hip,
+                                                               accel.hip,
+                                                               d_xix.hip,d_xiy.hip,d_xiz.hip,
+                                                               d_etax.hip,d_etay.hip,d_etaz.hip,
+                                                               d_gammax.hip,d_gammay.hip,d_gammaz.hip,
+                                                               mp->d_hprime_xx.hip,
+                                                               mp->d_hprimewgll_xx.hip,
+                                                               mp->d_wgllwgll_xy.hip,mp->d_wgllwgll_xz.hip,mp->d_wgllwgll_yz.hip,
+                                                               mp->gravity,
+                                                               mp->d_gravity_pre_store_outer_core.hip,
+                                                               mp->d_wgll_cube.hip,
+                                                               mp->rotation,
+                                                               timeval,
+                                                               two_omega_earth,
+                                                               deltat,
+                                                               A_array_rotation.hip,
+                                                               B_array_rotation.hip,
+                                                               A_array_rotation_lddrk.hip,
+                                                               B_array_rotation_lddrk.hip,
+                                                               alpha_lddrk,beta_lddrk,
+                                                               mp->use_lddrk,
                                                                mp->NSPEC_OUTER_CORE);
   }
 #endif
@@ -231,6 +296,7 @@ void FC_FUNC_ (compute_forces_outer_core_gpu,
                COMPUTE_FORCES_OUTER_CORE_GPU) (long *Mesh_pointer_f,
                                                int *iphase,
                                                realw *timeval_f,
+                                               realw *alpha_lddrk_f,realw *beta_lddrk_f,
                                                int *FORWARD_OR_ADJOINT_f) {
 
   TRACE ("compute_forces_outer_core_gpu");
@@ -239,6 +305,8 @@ void FC_FUNC_ (compute_forces_outer_core_gpu,
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
   realw timeval = *timeval_f;
   int FORWARD_OR_ADJOINT = *FORWARD_OR_ADJOINT_f;
+  realw alpha_lddrk = *alpha_lddrk_f;
+  realw beta_lddrk = *beta_lddrk_f;
 
   // safety check
   if (FORWARD_OR_ADJOINT != 1 && FORWARD_OR_ADJOINT != 3) {
@@ -340,6 +408,10 @@ void FC_FUNC_ (compute_forces_outer_core_gpu,
       INIT_OFFSET(d_B_array_rotation, offset_nonpadded);
       INIT_OFFSET(d_b_A_array_rotation, offset_nonpadded);
       INIT_OFFSET(d_b_B_array_rotation, offset_nonpadded);
+      INIT_OFFSET(d_A_array_rotation_lddrk, offset_nonpadded);
+      INIT_OFFSET(d_B_array_rotation_lddrk, offset_nonpadded);
+      INIT_OFFSET(d_b_A_array_rotation_lddrk, offset_nonpadded);
+      INIT_OFFSET(d_b_B_array_rotation_lddrk, offset_nonpadded);
 
       // debug
       //gpu_int_mem my_buffer = mp->d_ibool_outer_core;
@@ -364,6 +436,11 @@ void FC_FUNC_ (compute_forces_outer_core_gpu,
                   PASS_OFFSET(d_B_array_rotation, offset_nonpadded),
                   PASS_OFFSET(d_b_A_array_rotation, offset_nonpadded),
                   PASS_OFFSET(d_b_B_array_rotation, offset_nonpadded),
+                  PASS_OFFSET(d_A_array_rotation_lddrk, offset_nonpadded),
+                  PASS_OFFSET(d_B_array_rotation_lddrk, offset_nonpadded),
+                  PASS_OFFSET(d_b_A_array_rotation_lddrk, offset_nonpadded),
+                  PASS_OFFSET(d_b_B_array_rotation_lddrk, offset_nonpadded),
+                  alpha_lddrk,beta_lddrk,
                   FORWARD_OR_ADJOINT);
 
       RELEASE_OFFSET(d_ibool_outer_core, offset_nonpadded);
@@ -380,6 +457,10 @@ void FC_FUNC_ (compute_forces_outer_core_gpu,
       RELEASE_OFFSET(d_B_array_rotation, offset_nonpadded);
       RELEASE_OFFSET(d_b_A_array_rotation, offset_nonpadded);
       RELEASE_OFFSET(d_b_B_array_rotation, offset_nonpadded);
+      RELEASE_OFFSET(d_A_array_rotation_lddrk, offset_nonpadded);
+      RELEASE_OFFSET(d_B_array_rotation_lddrk, offset_nonpadded);
+      RELEASE_OFFSET(d_b_A_array_rotation_lddrk, offset_nonpadded);
+      RELEASE_OFFSET(d_b_B_array_rotation_lddrk, offset_nonpadded);
 
       // for padded and aligned arrays
       offset += nb_blocks_to_compute * NGLL3_PADDED;
@@ -407,6 +488,11 @@ void FC_FUNC_ (compute_forces_outer_core_gpu,
                 mp->d_B_array_rotation,
                 mp->d_b_A_array_rotation,
                 mp->d_b_B_array_rotation,
+                mp->d_A_array_rotation_lddrk,
+                mp->d_B_array_rotation_lddrk,
+                mp->d_b_A_array_rotation_lddrk,
+                mp->d_b_B_array_rotation_lddrk,
+                alpha_lddrk,beta_lddrk,
                 FORWARD_OR_ADJOINT);
   }
 

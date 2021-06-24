@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -29,32 +29,33 @@
 ! compute the integrated derivatives of source parameters (M_jk and X_s)
 
   subroutine compute_adj_source_frechet(displ_s,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
-           eps_s,eps_m_s,eps_m_l_s, &
-           hxir,hetar,hgammar,hpxir,hpetar,hpgammar, hprime_xx,hprime_yy,hprime_zz, &
-           xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
+                                        eps_s,eps_m_s,eps_m_l_s, &
+                                        hxir,hetar,hgammar,hpxir,hpetar,hpgammar, &
+                                        hprime_xx,hprime_yy,hprime_zz, &
+                                        xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
 
   use constants
 
   implicit none
 
   ! input
-  real(kind=CUSTOM_REAL) :: displ_s(NDIM,NGLLX,NGLLY,NGLLZ)
-  double precision :: Mxx, Myy, Mzz, Mxy, Mxz, Myz
+  real(kind=CUSTOM_REAL),intent(in) :: displ_s(NDIM,NGLLX,NGLLY,NGLLZ)
+  double precision,intent(in) :: Mxx, Myy, Mzz, Mxy, Mxz, Myz
   ! output
-  real(kind=CUSTOM_REAL) :: eps_s(NDIM,NDIM), eps_m_s, eps_m_l_s(NDIM)
+  real(kind=CUSTOM_REAL),intent(out) :: eps_s(NDIM,NDIM), eps_m_s, eps_m_l_s(NDIM)
 
   ! auxiliary
-  double precision :: hxir(NGLLX), hetar(NGLLY), hgammar(NGLLZ), &
-                      hpxir(NGLLX),hpetar(NGLLY),hpgammar(NGLLZ)
+  double precision,intent(in) :: hxir(NGLLX), hetar(NGLLY), hgammar(NGLLZ), &
+                                 hpxir(NGLLX),hpetar(NGLLY),hpgammar(NGLLZ)
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
-  real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLY) :: hprime_yy
-  real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX),intent(in) :: hprime_xx
+  real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLY),intent(in) :: hprime_yy
+  real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ),intent(in) :: hprime_zz
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: &
         xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
 
-! local variables
+  ! local variables
   real(kind=CUSTOM_REAL) :: tempx1l,tempx2l,tempx3l, tempy1l,tempy2l,tempy3l, &
              tempz1l,tempz2l,tempz3l, hp1, hp2, hp3, &
              xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl, &
@@ -63,12 +64,11 @@
              hlagrange_xi, hlagrange_eta, hlagrange_gamma, hlagrange
 
   real(kind=CUSTOM_REAL) :: eps(NDIM,NDIM), eps_array(NDIM,NDIM,NGLLX,NGLLY,NGLLZ), &
-             eps_m_array(NGLLX,NGLLY,NGLLZ)
+                            eps_m_array(NGLLX,NGLLY,NGLLZ)
 
-  integer i,j,k,l
+  integer :: i,j,k,l
 
-
-! first compute the strain at all the GLL points of the source element
+  ! first compute the strain at all the GLL points of the source element
   do k = 1, NGLLZ
     do j = 1, NGLLY
       do i = 1, NGLLX
@@ -102,7 +102,7 @@
           tempz3l = tempz3l + displ_s(3,i,j,l)*hp3
         enddo
 
-! dudx
+        ! derivatives dudx,..
         xixl = xix(i,j,k)
         xiyl = xiy(i,j,k)
         xizl = xiz(i,j,k)
@@ -125,20 +125,24 @@
         duzdyl = xiyl*tempz1l + etayl*tempz2l + gammayl*tempz3l
         duzdzl = xizl*tempz1l + etazl*tempz2l + gammazl*tempz3l
 
-! strain eps_jk
-        eps(1,1) = duxdxl
-        eps(1,2) = (duxdyl + duydxl) / 2
-        eps(1,3) = (duxdzl + duzdxl) / 2
-        eps(2,2) = duydyl
-        eps(2,3) = (duydzl + duzdyl) / 2
-        eps(3,3) = duzdzl
-        eps(2,1) = eps(1,2)
-        eps(3,1) = eps(1,3)
-        eps(3,2) = eps(2,3)
+        ! strain eps_jk
+        ! symmetric strain definition: \epsilon = 1/2 ( grad(u) + grad(u)^T )
+        eps(1,1) = duxdxl                                 ! dx/dx
+        eps(1,2) = 0.5_CUSTOM_REAL * (duxdyl + duydxl)    ! dx/dy
+        eps(1,3) = 0.5_CUSTOM_REAL * (duxdzl + duzdxl)    ! dx/dz
+
+        eps(2,2) = duydyl                                 ! dy/dy
+        eps(2,3) = 0.5_CUSTOM_REAL * (duydzl + duzdyl)    ! dy/dz
+
+        eps(3,3) = duzdzl                                 ! dz/dz
+
+        eps(2,1) = eps(1,2)                               ! dy/dx = dx/dy
+        eps(3,1) = eps(1,3)                               ! dz/dx = dx/dz
+        eps(3,2) = eps(2,3)                               ! dz/dy = dy/dz
 
         eps_array(:,:,i,j,k) = eps(:,:)
 
-! Mjk eps_jk
+        ! Mjk eps_jk
         eps_m_array(i,j,k) = Mxx * eps(1,1) + Myy * eps(2,2) + Mzz * eps(3,3) + &
                    2 * (Mxy * eps(1,2) + Mxz * eps(1,3) + Myz * eps(2,3))
 
@@ -147,7 +151,9 @@
   enddo
 
   ! interpolate the strain eps_s(:,:) from eps_array(:,:,i,j,k)
-  eps_s = 0.; eps_m_s = 0.;
+  eps_s(:,:) = 0.0_CUSTOM_REAL
+  eps_m_s = 0.0_CUSTOM_REAL
+
   xix_s = 0.;  xiy_s = 0.;  xiz_s = 0.
   etax_s = 0.; etay_s = 0.; etaz_s = 0.
   gammax_s = 0.; gammay_s = 0.; gammaz_s = 0.
@@ -180,13 +186,12 @@
     enddo
   enddo
 
-! for completion purpose, not used in specfem3D.f90
+  ! for completion purpose, not used in specfem3D.f90
   eps_s(2,1) = eps_s(1,2)
   eps_s(3,1) = eps_s(1,3)
   eps_s(3,2) = eps_s(2,3)
 
-! compute the gradient of M_jk * eps_jk, and then interpolate it
-
+  ! compute the gradient of M_jk * eps_jk, and then interpolate it
   eps_m_l_s = 0.
   do k = 1,NGLLZ
     do j = 1,NGLLY

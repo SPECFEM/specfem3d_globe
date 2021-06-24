@@ -5,7 +5,7 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -82,9 +82,6 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifndef IFLAG_IN_FICTITIOUS_CUBE\n\
 #define IFLAG_IN_FICTITIOUS_CUBE 11\n\
 #endif\n\
-#ifndef R_EARTH_KM\n\
-#define R_EARTH_KM 6371.0f\n\
-#endif\n\
 #ifndef COLORING_MIN_NSPEC_INNER_CORE\n\
 #define COLORING_MIN_NSPEC_INNER_CORE 1000\n\
 #endif\n\
@@ -105,16 +102,22 @@ __kernel void compute_strength_noise_kernel(const __global float * displ, const 
   int k;\n\
   int iglob;\n\
   float eta;\n\
+\n\
   iface = get_group_id(0) + (get_group_id(1)) * (get_num_groups(0));\n\
+\n\
   if (iface < nspec_top) {\n\
     ispec = ibelm_top[iface] - (1);\n\
     igll = get_local_id(0);\n\
     ipoin = igll + (NGLL2) * (iface);\n\
+\n\
     k = NGLLX - (1);\n\
     j = (igll) / (NGLLX);\n\
     i = igll - ((j) * (NGLLX));\n\
+\n\
     iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)] - (1);\n\
+\n\
     eta = (noise_surface_movie[INDEX3(NDIM, NGLL2, 0, igll, iface)]) * (normal_x_noise[ipoin]) + (noise_surface_movie[INDEX3(NDIM, NGLL2, 1, igll, iface)]) * (normal_y_noise[ipoin]) + (noise_surface_movie[INDEX3(NDIM, NGLL2, 2, igll, iface)]) * (normal_z_noise[ipoin]);\n\
+\n\
     Sigma_kl[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)] = Sigma_kl[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)] + ((deltat) * (eta)) * ((normal_x_noise[ipoin]) * (displ[0 + (3) * (iglob)]) + (normal_y_noise[ipoin]) * (displ[1 + (3) * (iglob)]) + (normal_z_noise[ipoin]) * (displ[2 + (3) * (iglob)]));\n\
   }\n\
 }\n\

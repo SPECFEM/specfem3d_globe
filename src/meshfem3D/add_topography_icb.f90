@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -30,6 +30,7 @@
 ! this is only a placeholder routine, which is not used yet... user must supply the sutopo_icb() routine
 
   use constants
+  use shared_parameters, only: R_PLANET,R_PLANET_KM
   use meshfem3D_par, only: RICB,RCMB
 
   implicit none
@@ -65,15 +66,15 @@
 
     ! non-dimensionalize the topography, which is in km
     ! positive for a depression, so change the sign for a perturbation in radius
-    topoicb = -topoicb / R_EARTH_KM
+    topoicb = -topoicb / R_PLANET_KM
 
     gamma = 0.0d0
-    if (r > 0.0d0 .and. r <= RICB/R_EARTH) then
+    if (r > 0.0d0 .and. r <= RICB/R_PLANET) then
       ! stretching between center and RICB
-      gamma = r/(RICB/R_EARTH)
-    else if (r >= RICB/R_EARTH .and. r <= RCMB/R_EARTH) then
+      gamma = r/(RICB/R_PLANET)
+    else if (r >= RICB/R_PLANET .and. r <= RCMB/R_PLANET) then
       ! stretching between RICB and RCMB
-      gamma = (r - RCMB/R_EARTH) / (RICB/R_EARTH - RCMB/R_EARTH)
+      gamma = (r - RCMB/R_PLANET) / (RICB/R_PLANET - RCMB/R_PLANET)
     endif
     if (gamma < -0.0001 .or. gamma > 1.0001) call exit_MPI(myrank,'incorrect value of gamma for CMB topography')
 

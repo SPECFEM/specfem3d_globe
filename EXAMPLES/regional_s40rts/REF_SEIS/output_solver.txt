@@ -1,0 +1,542 @@
+
+ ******************************
+ **** Specfem3D MPI Solver ****
+ ******************************
+
+ Version: 7.0.3
+
+
+ Planet: Earth
+
+
+ There are            4  MPI processes
+ Processes are numbered from 0 to            3
+
+ There are           16  elements along xi in each chunk
+ There are           16  elements along eta in each chunk
+
+ There are            2  slices along xi in each chunk
+ There are            2  slices along eta in each chunk
+ There is a total of            4  slices in each chunk
+ There are            1  chunks
+ There is a total of            4  slices in all the chunks
+
+ NDIM =            3
+
+ NGLLX =            5
+ NGLLY =            5
+ NGLLZ =            5
+
+ using single precision for the calculations
+
+ smallest and largest possible floating-point numbers are:    1.17549435E-38   3.40282347E+38
+
+ model: s40rts_crust1.0
+   incorporating the oceans using equivalent load
+   incorporating ellipticity
+   incorporating surface topography
+   incorporating self-gravitation (Cowling approximation)
+   incorporating rotation
+   incorporating attenuation using            3  standard linear solids
+
+   incorporating 3-D lateral variations in the mantle
+   no heterogeneities in the mantle
+   incorporating crustal variations
+   using one layer only in crust
+   incorporating transverse isotropy
+   no inner-core anisotropy
+   no general mantle anisotropy
+
+
+ creating global slice addressing
+
+ mesh databases:
+   reading in crust/mantle databases...
+   reading in outer core databases...
+   reading in inner core databases...
+   reading in coupling surface databases...
+   reading in MPI databases...
+   for overlapping of communications with calculations:
+
+   percentage of edge elements in crust/mantle    38.3333321     %
+   percentage of volume elements in crust/mantle    61.6666679     %
+
+   percentage of edge elements in outer core    81.3953476     %
+   percentage of volume elements in outer core    18.6046524     %
+
+   percentage of edge elements in inner core    100.000000     %
+   percentage of volume elements in inner core    0.00000000     %
+
+   reading in Stacey databases...
+
+ Elapsed time for reading mesh in seconds =    2.14740001E-02
+
+ topography:
+   topography/bathymetry: min/max =        -7747        5507
+
+ Elapsed time for reading topo/bathy in seconds =   0.105773002
+
+ adjacency:
+   total number of elements in this slice =          540
+
+   using kd-tree search radius =    1250.9429247512858      (km)
+
+   maximum search elements                                      =          490
+   maximum of actual search elements (after distance criterion) =          489
+
+   estimated typical element size at surface =    208.49048745854762      (km)
+   maximum distance between neighbor centers =    820.91782514539113      (km)
+
+   maximum neighbors found per element =           37 (should be 37 for globe meshes)
+   total number of neighbors           =         9880
+
+   Elapsed time for detection of neighbors in seconds =    2.0534999999999998E-002
+
+ kd-tree:
+   total data points:        14580
+   theoretical   number of nodes:        29152
+                tree memory size:   0.889648438     MB
+   actual        number of nodes:        29159
+                tree memory size:   0.889862061     MB
+   maximum depth   :           20
+   creation timing :    6.00698590E-03 (s)
+
+
+ sources:           1
+
+ ********************
+  locating sources
+ ********************
+
+
+ source #            1
+
+   source located in slice            0
+                  in element          540
+
+   using moment tensor source:
+     xi coordinate of source in that element:  -0.40904079132597598
+     eta coordinate of source in that element:   0.82347381479882531
+     gamma coordinate of source in that element:  -0.61784948329517975
+
+   source time function:
+     using (quasi) Heaviside source time function
+
+     half duration:    3.3999999999999999       seconds
+     time shift:    0.0000000000000000       seconds
+
+   magnitude of the source:
+        scalar moment M0 =    3.4203166489794478E+025  dyne-cm
+     moment magnitude Mw =    6.3227108762671698
+
+
+   original (requested) position of the source:
+
+         latitude:    63.920000000000002
+        longitude:   -21.170000000000002
+            depth:    12.000000000000000       km
+
+   position of the source that will be used:
+
+         latitude:    63.920000000000016
+        longitude:   -21.170000000000005
+            depth:    11.999999999999526       km
+
+   Error in location of the source:    8.10340402E-13  km
+
+ maximum error in location of the sources:    8.10340402E-13  km
+
+
+ Elapsed time for detection of sources in seconds =    2.9480000000000062E-003
+
+ End of source detection - done
+
+
+ Each source is being convolved with HDUR_MOVIE =    50.0000000
+ Total source hdur =    50.1154671     (s)
+
+
+ receivers:
+
+ Total number of receivers =            4
+
+
+ ********************
+  locating receivers
+ ********************
+
+ reading receiver information...
+
+ Stations sorted by epicentral distance:
+ Station #     1:                  II.BORG    epicentral distance:      0.833651 degrees
+ Station #     2:                   II.ESK    epicentral distance:     12.483877 degrees
+ Station #     4:                  IU.SFJD    epicentral distance:     12.551944 degrees
+ Station #     3:                  IU.KONO    epicentral distance:     15.069834 degrees
+
+ Station #           1 : II.BORG
+        original latitude:    64.7473984
+       original longitude:   -21.3267994
+      epicentral distance:   0.833650768
+   closest estimate found:    1.80332713E-12  km away
+    in slice            2  in element          526
+    at xi,eta,gamma coordinates =   0.33191209265350413      -0.68479015955599454       0.98691799354990006
+    at lat/lon =    64.7473984       338.673187
+
+ Station #           2 : II.ESK
+        original latitude:    55.3167000
+       original longitude:   -3.20499992
+      epicentral distance:    12.4838772
+   closest estimate found:    1.00420572E-12  km away
+    in slice            0  in element          512
+    at xi,eta,gamma coordinates =    7.9803095697154769E-002 -0.42287580497591909       0.99482554753385166
+    at lat/lon =    55.3167000       356.795013
+
+ Station #           3 : IU.KONO
+        original latitude:    59.6491013
+       original longitude:    9.59819984
+      epicentral distance:    15.0698338
+   closest estimate found:    8.84153861E-14  km away
+    in slice            1  in element          446
+    at xi,eta,gamma coordinates =   0.92885989092003329       0.41962592378511965       0.94879461843397972
+    at lat/lon =    59.6491013       9.59819984
+
+ Station #           4 : IU.SFJD
+        original latitude:    66.9961014
+       original longitude:   -50.6208000
+      epicentral distance:    12.5519438
+   closest estimate found:    2.64656070E-12  km away
+    in slice            2  in element          538
+    at xi,eta,gamma coordinates =  -0.81465923874724122       0.21180832223310000        1.0052949386828436
+    at lat/lon =    66.9961014       309.379211
+
+ maximum error in location of all the receivers:    2.64656070E-12  km
+
+ Elapsed time for receiver detection in seconds =    1.0789999999999966E-003
+
+ End of receiver detection - done
+
+
+ found a total of            4  receivers in all slices
+ this total is okay
+
+ source arrays:
+   number of sources is            1
+   size of source array                 =    1.43051147E-03 MB
+                                        =    1.39698386E-06 GB
+
+ seismograms:
+   seismograms written by all processes
+   writing out seismograms at every NTSTEP_BETWEEN_OUTPUT_SEISMOS =         4900
+   maximum number of local receivers is            2  in slice            2
+   size of maximum seismogram array       =   0.112152100     MB
+                                          =    1.09523535E-04 GB
+
+
+ Total number of samples for seismograms =         4900
+
+
+ Reference radius of the globe used is    6371.0000000000000       km
+
+
+ incorporating the oceans using equivalent load
+
+ incorporating ellipticity
+
+ incorporating surface topography
+
+ incorporating self-gravitation (Cowling approximation)
+
+ incorporating rotation
+
+ incorporating attenuation using            3  standard linear solids
+
+
+
+ preparing mass matrices
+ preparing constants
+ preparing movie surface
+   Movie surface:
+   Writing to moviedata*** files in output directory
+   movie output: velocity
+   time steps every:          200
+ preparing gravity arrays
+ preparing attenuation
+   The code uses a constant Q quality factor, but approximated
+   based on a series of Zener standard linear solids (SLS).
+   Approximation is performed in the following frequency band:
+
+   number of SLS bodies:           3
+   Reference frequency of anelastic model (Hz):   1.00000000
+                                    period (s):   1.00000000
+   Attenuation frequency band min/max (Hz):   1.91909407E-04 /   1.07918596E-02
+               period band    min/max (s) :   92.6624374     /   5210.79199
+   Logarithmic center frequency (Hz):   1.43911759E-03
+                      period     (s):   694.870239
+
+   using shear attenuation Q_mu
+
+   ATTENUATION_1D_WITH_3D_STORAGE  :  T
+   ATTENUATION_3D                  :  F
+ preparing elastic element arrays
+   using attenuation: shifting to unrelaxed moduli
+   crust/mantle transverse isotropic and isotropic elements
+   tiso elements =          272
+   iso elements  =          268
+   inner core isotropic elements
+   iso elements  =            2
+ preparing wavefields
+   allocating wavefields
+   initializing wavefields
+ preparing number of runs
+   number of runs    :            1
+   number of this run:            1
+   time stepping     : begin/end =            1 /        4900
+ preparing absorbing boundaries
+ preparing oceans arrays
+   number of global points on oceans =         1089
+   maximum valence of global points on oceans =    4.00000000
+ preparing optimized arrays
+   using force vectorization
+   using Deville products
+   inverse table of ibool done
+   fusing arrays:
+     size of fused arrays =    2.51054764     MB
+                          =    2.45170668E-03 GB
+   fused arrays done
+   bandwidth test (STREAM TRIAD):
+      memory accesses =    1.33116531     MB
+      timing  min/max =    7.99999980E-05 s /    8.19999987E-05 s
+      timing      avg =    8.06000025E-05 s
+      bandwidth       =    16.1286125     GB/s
+
+
+ Elapsed time for preparing timerun in seconds =    6.84619993E-02
+
+
+ time loop:
+
+               scheme:         Newmark
+            time step:   0.115000002      s
+ number of time steps:         4900
+   current time steps:            1  to         4900
+ total simulated time:    8.13686371      minutes
+ start time          :  -75.1732025      seconds
+
+ All processes are synchronized before time loop
+
+ Starting time iteration loop...
+
+ Time step #            5
+ Time:   -1.24521995      minutes
+ Max norm displacement vector U in solid in all slices for forward prop. (m) =    1.07507873E-07
+ Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    0.00000000
+ Max of strain, eps_trace_over_3_crust_mantle =   0.00000000
+ Max of strain, epsilondev_crust_mantle  =   3.69356108E-11
+ Elapsed time in seconds =    2.8442000000000023E-002
+ Elapsed time in hh:mm:ss =      0 h 00 m 00 s
+ Mean elapsed time per time step in seconds =    5.6884000000000049E-003
+ Time steps done =            5  out of         4900
+ Time steps remaining =         4895
+ Estimated remaining time in seconds =    27.844718000000025
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 27 s
+ Estimated total run time in seconds =    27.873160000000023
+ Estimated total run time in hh:mm:ss =      0 h 00 m 27 s
+ We have done   0.102040820     % of that
+ The run will finish approximately on (in local time): Thu Jun 25, 2020 01:03
+ ************************************************************
+ **** BEWARE: the above time estimates are not very reliable
+ **** because fewer than 100 iterations have been performed
+ ************************************************************
+
+ Time step #          500
+ Time:  -0.296469986      minutes
+ Max norm displacement vector U in solid in all slices for forward prop. (m) =    1.50275917E-03
+ Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    0.00000000
+ Max of strain, eps_trace_over_3_crust_mantle =   3.39034356E-14
+ Max of strain, epsilondev_crust_mantle  =   9.41941849E-08
+ Elapsed time in seconds =    3.2802690000000001
+ Elapsed time in hh:mm:ss =      0 h 00 m 03 s
+ Mean elapsed time per time step in seconds =    6.5605380000000003E-003
+ Time steps done =          500  out of         4900
+ Time steps remaining =         4400
+ Estimated remaining time in seconds =    28.866367200000003
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 28 s
+ Estimated total run time in seconds =    32.146636200000003
+ Estimated total run time in hh:mm:ss =      0 h 00 m 32 s
+ We have done    10.2040815     % of that
+ The run will finish approximately on (in local time): Thu Jun 25, 2020 01:03
+
+ Time step #         1000
+ Time:   0.661863327      minutes
+ Max norm displacement vector U in solid in all slices for forward prop. (m) =    7.40870787E-03
+ Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    0.00000000
+ Max of strain, eps_trace_over_3_crust_mantle =   4.24602898E-13
+ Max of strain, epsilondev_crust_mantle  =   4.48628555E-07
+ Elapsed time in seconds =    6.6071320000000000
+ Elapsed time in hh:mm:ss =      0 h 00 m 06 s
+ Mean elapsed time per time step in seconds =    6.6071319999999999E-003
+ Time steps done =         1000  out of         4900
+ Time steps remaining =         3900
+ Estimated remaining time in seconds =    25.767814800000000
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 25 s
+ Estimated total run time in seconds =    32.374946800000004
+ Estimated total run time in hh:mm:ss =      0 h 00 m 32 s
+ We have done    20.4081631     % of that
+ The run will finish approximately on (in local time): Thu Jun 25, 2020 01:03
+
+ Time step #         1500
+ Time:    1.62019670      minutes
+ Max norm displacement vector U in solid in all slices for forward prop. (m) =    7.62949791E-03
+ Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    6.05888194E-30
+ Max of strain, eps_trace_over_3_crust_mantle =   1.08893138E-11
+ Max of strain, epsilondev_crust_mantle  =   4.64426535E-07
+ Elapsed time in seconds =    10.096456999999999
+ Elapsed time in hh:mm:ss =      0 h 00 m 10 s
+ Mean elapsed time per time step in seconds =    6.7309713333333328E-003
+ Time steps done =         1500  out of         4900
+ Time steps remaining =         3400
+ Estimated remaining time in seconds =    22.885302533333331
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 22 s
+ Estimated total run time in seconds =    32.981759533333332
+ Estimated total run time in hh:mm:ss =      0 h 00 m 32 s
+ We have done    30.6122456     % of that
+ The run will finish approximately on (in local time): Thu Jun 25, 2020 01:03
+
+ Time step #         2000
+ Time:    2.57853007      minutes
+ Max norm displacement vector U in solid in all slices for forward prop. (m) =    7.63290469E-03
+ Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    2.04028082E-22
+ Max of strain, eps_trace_over_3_crust_mantle =   7.89645346E-12
+ Max of strain, epsilondev_crust_mantle  =   4.64706233E-07
+ Elapsed time in seconds =    13.589442000000000
+ Elapsed time in hh:mm:ss =      0 h 00 m 13 s
+ Mean elapsed time per time step in seconds =    6.7947210000000001E-003
+ Time steps done =         2000  out of         4900
+ Time steps remaining =         2900
+ Estimated remaining time in seconds =    19.704690899999999
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 19 s
+ Estimated total run time in seconds =    33.294132900000001
+ Estimated total run time in hh:mm:ss =      0 h 00 m 33 s
+ We have done    40.8163261     % of that
+ The run will finish approximately on (in local time): Thu Jun 25, 2020 01:03
+
+ Time step #         2500
+ Time:    3.53686333      minutes
+ Max norm displacement vector U in solid in all slices for forward prop. (m) =    7.63678784E-03
+ Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    1.07682041E-17
+ Max of strain, eps_trace_over_3_crust_mantle =   1.99369514E-11
+ Max of strain, epsilondev_crust_mantle  =   4.64860705E-07
+ Elapsed time in seconds =    17.114933000000001
+ Elapsed time in hh:mm:ss =      0 h 00 m 17 s
+ Mean elapsed time per time step in seconds =    6.8459732000000001E-003
+ Time steps done =         2500  out of         4900
+ Time steps remaining =         2400
+ Estimated remaining time in seconds =    16.430335679999999
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 16 s
+ Estimated total run time in seconds =    33.545268680000000
+ Estimated total run time in hh:mm:ss =      0 h 00 m 33 s
+ We have done    51.0204086     % of that
+ The run will finish approximately on (in local time): Thu Jun 25, 2020 01:03
+
+ Time step #         3000
+ Time:    4.49519682      minutes
+ Max norm displacement vector U in solid in all slices for forward prop. (m) =    7.63796316E-03
+ Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    2.94178592E-16
+ Max of strain, eps_trace_over_3_crust_mantle =   1.20482955E-11
+ Max of strain, epsilondev_crust_mantle  =   4.64965325E-07
+ Elapsed time in seconds =    20.665889000000000
+ Elapsed time in hh:mm:ss =      0 h 00 m 20 s
+ Mean elapsed time per time step in seconds =    6.8886296666666666E-003
+ Time steps done =         3000  out of         4900
+ Time steps remaining =         1900
+ Estimated remaining time in seconds =    13.088396366666666
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 13 s
+ Estimated total run time in seconds =    33.754285366666664
+ Estimated total run time in hh:mm:ss =      0 h 00 m 33 s
+ We have done    61.2244911     % of that
+ The run will finish approximately on (in local time): Thu Jun 25, 2020 01:03
+
+ Time step #         3500
+ Time:    5.45352983      minutes
+ Max norm displacement vector U in solid in all slices for forward prop. (m) =    7.64007960E-03
+ Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    1.19718557E-15
+ Max of strain, eps_trace_over_3_crust_mantle =   1.98236844E-11
+ Max of strain, epsilondev_crust_mantle  =   4.65059969E-07
+ Elapsed time in seconds =    24.272918999999998
+ Elapsed time in hh:mm:ss =      0 h 00 m 24 s
+ Mean elapsed time per time step in seconds =    6.9351197142857139E-003
+ Time steps done =         3500  out of         4900
+ Time steps remaining =         1400
+ Estimated remaining time in seconds =    9.7091675999999989
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 09 s
+ Estimated total run time in seconds =    33.982086599999995
+ Estimated total run time in hh:mm:ss =      0 h 00 m 33 s
+ We have done    71.4285736     % of that
+ The run will finish approximately on (in local time): Thu Jun 25, 2020 01:03
+
+ Time step #         4000
+ Time:    6.41186333      minutes
+ Max norm displacement vector U in solid in all slices for forward prop. (m) =    7.64146587E-03
+ Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    3.12034889E-15
+ Max of strain, eps_trace_over_3_crust_mantle =   2.11261945E-11
+ Max of strain, epsilondev_crust_mantle  =   4.65140090E-07
+ Elapsed time in seconds =    28.532838000000002
+ Elapsed time in hh:mm:ss =      0 h 00 m 28 s
+ Mean elapsed time per time step in seconds =    7.1332095000000003E-003
+ Time steps done =         4000  out of         4900
+ Time steps remaining =          900
+ Estimated remaining time in seconds =    6.4198885500000005
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 06 s
+ Estimated total run time in seconds =    34.952726550000001
+ Estimated total run time in hh:mm:ss =      0 h 00 m 34 s
+ We have done    81.6326523     % of that
+ The run will finish approximately on (in local time): Thu Jun 25, 2020 01:03
+
+ Time step #         4500
+ Time:    7.37019682      minutes
+ Max norm displacement vector U in solid in all slices for forward prop. (m) =    7.64230639E-03
+ Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    5.80963254E-15
+ Max of strain, eps_trace_over_3_crust_mantle =   7.70010358E-12
+ Max of strain, epsilondev_crust_mantle  =   4.65196479E-07
+ Elapsed time in seconds =    32.179860000000005
+ Elapsed time in hh:mm:ss =      0 h 00 m 32 s
+ Mean elapsed time per time step in seconds =    7.1510800000000015E-003
+ Time steps done =         4500  out of         4900
+ Time steps remaining =          400
+ Estimated remaining time in seconds =    2.8604320000000008
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 02 s
+ Estimated total run time in seconds =    35.040292000000008
+ Estimated total run time in hh:mm:ss =      0 h 00 m 35 s
+ We have done    91.8367310     % of that
+ The run will finish approximately on (in local time): Thu Jun 25, 2020 01:03
+
+ Time step #         4900
+ Time:    8.13686371      minutes
+ Max norm displacement vector U in solid in all slices for forward prop. (m) =    7.64375832E-03
+ Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    8.06181903E-15
+ Max of strain, eps_trace_over_3_crust_mantle =   6.84234787E-12
+ Max of strain, epsilondev_crust_mantle  =   4.65248263E-07
+ Elapsed time in seconds =    35.227094000000001
+ Elapsed time in hh:mm:ss =      0 h 00 m 35 s
+ Mean elapsed time per time step in seconds =    7.1892028571428571E-003
+ Time steps done =         4900  out of         4900
+ Time steps remaining =            0
+ Estimated remaining time in seconds =    0.0000000000000000
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
+ Estimated total run time in seconds =    35.227094000000001
+ Estimated total run time in hh:mm:ss =      0 h 00 m 35 s
+ We have done    100.000000     % of that
+
+
+ Total number of time steps written:         4900
+
+ Writing the seismograms in parallel took    5.2981000000002609E-002  seconds
+
+ Time-Loop Complete. Timing info:
+ Total elapsed time in seconds =    35.290128000000003
+ Total elapsed time in hh:mm:ss =      0 h 00 m 35 s
+
+ finalizing simulation
+
+ End of the simulation
+

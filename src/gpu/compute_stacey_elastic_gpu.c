@@ -1,7 +1,7 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -174,6 +174,34 @@ void FC_FUNC_ (compute_stacey_elastic_gpu,
                                                                          d_b_absorb_field.cuda);
   }
 #endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(blocksize,1,1);
+
+    // absorbing boundary contributions
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_stacey_elastic_kernel), grid, threads, 0, mp->compute_stream,
+                                                                       mp->d_veloc_crust_mantle.hip,
+                                                                       mp->d_accel_crust_mantle.hip,
+                                                                       interface_type,
+                                                                       num_abs_boundary_faces,
+                                                                       d_abs_boundary_ispec.hip,
+                                                                       mp->d_nkmin_xi_crust_mantle.hip,
+                                                                       mp->d_nkmin_eta_crust_mantle.hip,
+                                                                       mp->d_njmin_crust_mantle.hip,
+                                                                       mp->d_njmax_crust_mantle.hip,
+                                                                       mp->d_nimin_crust_mantle.hip,
+                                                                       mp->d_nimax_crust_mantle.hip,
+                                                                       d_abs_boundary_normal.hip,
+                                                                       d_abs_boundary_jacobian2D.hip,
+                                                                       d_wgllwgll.hip,
+                                                                       mp->d_ibool_crust_mantle.hip,
+                                                                       mp->d_rho_vp_crust_mantle.hip,
+                                                                       mp->d_rho_vs_crust_mantle.hip,
+                                                                       mp->save_stacey,
+                                                                       d_b_absorb_field.hip);
+  }
+#endif
 
   // adjoint simulations: stores absorbed wavefield part
   if (mp->save_stacey) {
@@ -303,6 +331,24 @@ void FC_FUNC_ (compute_stacey_elastic_backward_gpu,
                                                                                   mp->d_ibool_crust_mantle.cuda);
   }
 #endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(blocksize,1,1);
+
+    // absorbing boundary contributions
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_stacey_elastic_backward_kernel), grid, threads, 0, mp->compute_stream,
+                                                                                mp->d_b_accel_crust_mantle.hip,
+                                                                                d_b_absorb_field.hip,
+                                                                                interface_type,
+                                                                                num_abs_boundary_faces,
+                                                                                d_abs_boundary_ispec.hip,
+                                                                                mp->d_nkmin_xi_crust_mantle.hip,mp->d_nkmin_eta_crust_mantle.hip,
+                                                                                mp->d_njmin_crust_mantle.hip,mp->d_njmax_crust_mantle.hip,
+                                                                                mp->d_nimin_crust_mantle.hip,mp->d_nimax_crust_mantle.hip,
+                                                                                mp->d_ibool_crust_mantle.hip);
+  }
+#endif
 
   GPU_ERROR_CHECKING ("compute_stacey_elastic_backward_gpu");
 }
@@ -330,7 +376,7 @@ void FC_FUNC_ (compute_stacey_elastic_undoatt_gpu,
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // checks if anything to do
-  if (mp->simulation_type /= 3 || mp->save_forward) return;
+  if (mp->simulation_type != 3 || mp->save_forward) return;
 
   // absorbing boundary type
   int interface_type = *itype;
@@ -450,6 +496,34 @@ void FC_FUNC_ (compute_stacey_elastic_undoatt_gpu,
                                                                          mp->d_rho_vs_crust_mantle.cuda,
                                                                          mp->save_stacey,
                                                                          NULL);
+  }
+#endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(blocksize,1,1);
+
+    // absorbing boundary contributions
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_stacey_elastic_kernel), grid, threads, 0, mp->compute_stream,
+                                                                       mp->d_b_veloc_crust_mantle.hip,
+                                                                       mp->d_b_accel_crust_mantle.hip,
+                                                                       interface_type,
+                                                                       num_abs_boundary_faces,
+                                                                       d_abs_boundary_ispec.hip,
+                                                                       mp->d_nkmin_xi_crust_mantle.hip,
+                                                                       mp->d_nkmin_eta_crust_mantle.hip,
+                                                                       mp->d_njmin_crust_mantle.hip,
+                                                                       mp->d_njmax_crust_mantle.hip,
+                                                                       mp->d_nimin_crust_mantle.hip,
+                                                                       mp->d_nimax_crust_mantle.hip,
+                                                                       d_abs_boundary_normal.hip,
+                                                                       d_abs_boundary_jacobian2D.hip,
+                                                                       d_wgllwgll.hip,
+                                                                       mp->d_ibool_crust_mantle.hip,
+                                                                       mp->d_rho_vp_crust_mantle.hip,
+                                                                       mp->d_rho_vs_crust_mantle.hip,
+                                                                       mp->save_stacey,
+                                                                       NULL);
   }
 #endif
 

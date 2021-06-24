@@ -28,14 +28,20 @@ module BOAST
     p = Procedure(function_name, v)
     if (get_lang == CUDA and ref) then
       get_output.print File::read("references/#{function_name}.cu")
-    elsif(get_lang == CL or get_lang == CUDA) then
+    elsif(get_lang == CL or get_lang == CUDA or get_lang == HIP) then
       make_specfem3d_header( :ngll3 => n_gll3 )
       open p
         decl ispec = Int("ispec")
         decl ijk_ispec = Int("ijk_ispec")
+        comment()
+
         print ispec === get_group_id(0) + get_group_id(1)*get_num_groups(0)
+        comment()
+
         print If(ispec < nspec ) {
           print ijk_ispec === get_local_id(0) + ngll3*ispec
+          comment()
+
           print mu_kl[ijk_ispec] === mu_kl[ijk_ispec] + deltat * ( epsilondev_xx[ijk_ispec]*b_epsilondev_xx[ijk_ispec]\
                                                                  + epsilondev_yy[ijk_ispec]*b_epsilondev_yy[ijk_ispec]\
                                                                  + (    epsilondev_xx[ijk_ispec] +   epsilondev_yy[ijk_ispec] )\
@@ -43,6 +49,8 @@ module BOAST
                                                                  + ( epsilondev_xy[ijk_ispec]*b_epsilondev_xy[ijk_ispec]\
                                                                    + epsilondev_xz[ijk_ispec]*b_epsilondev_xz[ijk_ispec]\
                                                                    + epsilondev_yz[ijk_ispec]*b_epsilondev_yz[ijk_ispec])*2 )
+          comment()
+
           print kappa_kl[ijk_ispec] === kappa_kl[ijk_ispec]  + deltat * ( epsilon_trace_over_3[ijk_ispec] * b_epsilon_trace_over_3[ijk_ispec] * 9 )
         }
       close p

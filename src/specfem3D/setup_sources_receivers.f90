@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -27,8 +27,17 @@
 
   subroutine setup_sources_receivers()
 
-  use specfem_par
+  use specfem_par, only: myrank,IMAIN,NSOURCES,NSTEP, &
+    theta_source,phi_source, &
+    TOPOGRAPHY,ibathy_topo, &
+    USE_DISTANCE_CRITERION,xyz_midpoints,xadj,adjncy
+
+  use kdtree_search, only: kdtree_delete,kdtree_nodes_location,kdtree_nodes_index
+
   implicit none
+
+  ! setup for point search
+  call setup_point_search_arrays()
 
   ! locates sources and determines simulation start time t0
   call setup_sources()
@@ -63,11 +72,570 @@
     if (allocated(ibathy_topo) ) deallocate(ibathy_topo)
   endif
 
+  ! frees memory
+  if (USE_DISTANCE_CRITERION) deallocate(xyz_midpoints)
+  deallocate(xadj,adjncy)
+  ! deletes tree arrays
+  deallocate(kdtree_nodes_location)
+  deallocate(kdtree_nodes_index)
+  ! deletes search tree nodes
+  call kdtree_delete()
+
   end subroutine setup_sources_receivers
 
 !
 !-------------------------------------------------------------------------------------------------
 !
+
+  subroutine setup_point_search_arrays()
+
+  use constants, only: &
+    NDIM,NGLLX,NGLLY,NGLLZ,MIDX,MIDY,MIDZ,IMAIN,TWO_PI,R_UNIT_SPHERE,DEGREES_TO_RADIANS, &
+    USE_DISTANCE_CRITERION
+
+  use specfem_par, only: &
+    NCHUNKS_VAL,NEX_XI_VAL,NEX_ETA_VAL,ANGULAR_WIDTH_XI_IN_DEGREES_VAL,ANGULAR_WIDTH_ETA_IN_DEGREES_VAL, &
+    LAT_LON_MARGIN,myrank
+
+  use specfem_par, only: &
+    nspec => NSPEC_CRUST_MANTLE,nglob => NGLOB_CRUST_MANTLE
+
+  use specfem_par_crustmantle, only: &
+    ibool => ibool_crust_mantle, &
+    xstore => xstore_crust_mantle,ystore => ystore_crust_mantle,zstore => zstore_crust_mantle
+
+  ! for point search
+  use specfem_par, only: &
+    element_size,typical_size_squared, &
+    anchor_iax,anchor_iay,anchor_iaz, &
+    lat_min,lat_max,lon_min,lon_max,xyz_midpoints
+
+  use kdtree_search, only: kdtree_setup,kdtree_set_verbose, &
+    kdtree_num_nodes,kdtree_nodes_location,kdtree_nodes_index
+
+  implicit none
+
+  ! local parameters
+  integer :: ispec,iglob,ier
+  integer :: i,j,k,inodes
+  double precision ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
+  ! determines tree points
+  logical :: use_midpoints_only
+
+  ! compute typical size of elements at the surface
+  ! (normalized)
+  if (NCHUNKS_VAL == 6) then
+    ! estimation for global meshes (assuming 90-degree chunks)
+    element_size = TWO_PI * R_UNIT_SPHERE / (4.d0 * NEX_XI_VAL)
+  else
+    ! estimation for 1-chunk meshes
+    ANGULAR_WIDTH_XI_RAD = ANGULAR_WIDTH_XI_IN_DEGREES_VAL * DEGREES_TO_RADIANS
+    ANGULAR_WIDTH_ETA_RAD = ANGULAR_WIDTH_ETA_IN_DEGREES_VAL * DEGREES_TO_RADIANS
+    element_size = max( ANGULAR_WIDTH_XI_RAD/NEX_XI_VAL,ANGULAR_WIDTH_ETA_RAD/NEX_ETA_VAL ) * R_UNIT_SPHERE
+  endif
+
+  ! use 10 times the distance as a criterion for source detection
+  typical_size_squared = (10.d0 * element_size)**2
+
+  ! limits receiver search
+  if (USE_DISTANCE_CRITERION) then
+    ! retrieves latitude/longitude range of this slice
+    call xyz_2_latlon_minmax(nspec,nglob,ibool,xstore,ystore,zstore,lat_min,lat_max,lon_min,lon_max)
+
+    ! adds search margin
+    lat_min = lat_min - LAT_LON_MARGIN
+    lat_max = lat_max + LAT_LON_MARGIN
+
+    lon_min = lon_min - LAT_LON_MARGIN
+    lon_max = lon_max + LAT_LON_MARGIN
+
+    ! limits latitude to [-90.0,90.0]
+    if (lat_min < -90.d0 ) lat_min = -90.d0
+    if (lat_max > 90.d0 ) lat_max = 90.d0
+
+    ! limits longitude to [0.0,360.0]
+    if (lon_min < 0.d0 ) lon_min = 0.d0
+    if (lon_min > 360.d0 ) lon_min = 360.d0
+    if (lon_max < 0.d0 ) lon_max = 0.d0
+    if (lon_max > 360.d0 ) lon_max = 360.d0
+
+    ! prepares midpoints coordinates
+    allocate(xyz_midpoints(NDIM,nspec),stat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating array xyz_midpoints')
+
+    ! store x/y/z coordinates of center point
+    do ispec = 1,nspec
+      iglob = ibool(MIDX,MIDY,MIDZ,ispec)
+      xyz_midpoints(1,ispec) =  dble(xstore(iglob))
+      xyz_midpoints(2,ispec) =  dble(ystore(iglob))
+      xyz_midpoints(3,ispec) =  dble(zstore(iglob))
+    enddo
+  endif
+
+  ! define (i,j,k) indices of the control/anchor points
+  call hex_nodes_anchor_ijk(anchor_iax,anchor_iay,anchor_iaz)
+
+  ! setups adjacency array to search neighbors
+  call setup_adjacency_neighbors()
+
+  ! kd-tree setup for point localization
+  !
+  ! determines tree size
+  if (NEX_ETA_VAL > 100 .and. NEX_XI_VAL > 100) then
+    ! high-resolution mesh
+    ! only midpoints for search, should be sufficient to get accurate location
+    use_midpoints_only = .true.
+  else
+    ! low-resolution mesh
+    ! uses element's inner points
+    use_midpoints_only = .false.
+  endif
+
+  ! sets total number of tree points
+  if (use_midpoints_only) then
+    ! small tree size
+    kdtree_num_nodes = nspec
+  else
+    ! uses all internal GLL points for search tree
+    ! internal GLL points ( 2 to NGLLX-1 )
+    kdtree_num_nodes = nspec * (NGLLX-2)*(NGLLY-2)*(NGLLZ-2)
+  endif
+
+  ! allocates tree arrays
+  allocate(kdtree_nodes_location(NDIM,kdtree_num_nodes),stat=ier)
+  if (ier /= 0) stop 'Error allocating kdtree_nodes_location arrays'
+  allocate(kdtree_nodes_index(kdtree_num_nodes),stat=ier)
+  if (ier /= 0) stop 'Error allocating kdtree_nodes_index arrays'
+
+  ! prepares search arrays, each element takes its internal GLL points for tree search
+  kdtree_nodes_index(:) = 0
+  kdtree_nodes_location(:,:) = 0.0
+  ! adds tree nodes
+  inodes = 0
+  if (use_midpoints_only) then
+    ! sets up tree nodes
+    do ispec = 1,nspec
+      iglob = ibool(MIDX,MIDY,MIDZ,ispec)
+
+      ! counts nodes
+      inodes = inodes + 1
+      if (inodes > kdtree_num_nodes) stop 'Error index inodes bigger than kdtree_num_nodes'
+
+      ! adds node index (index points to same ispec for all internal GLL points)
+      kdtree_nodes_index(inodes) = ispec
+
+      ! adds node location
+      kdtree_nodes_location(1,inodes) = xstore(iglob)
+      kdtree_nodes_location(2,inodes) = ystore(iglob)
+      kdtree_nodes_location(3,inodes) = zstore(iglob)
+    enddo
+  else
+    ! all internal GLL points
+    do ispec = 1,nspec
+      do k = 2,NGLLZ-1
+        do j = 2,NGLLY-1
+          do i = 2,NGLLX-1
+            iglob = ibool(i,j,k,ispec)
+
+            ! counts nodes
+            inodes = inodes + 1
+            if (inodes > kdtree_num_nodes) stop 'Error index inodes bigger than kdtree_num_nodes'
+
+            ! adds node index (index points to same ispec for all internal GLL points)
+            kdtree_nodes_index(inodes) = ispec
+
+            ! adds node location
+            kdtree_nodes_location(1,inodes) = xstore(iglob)
+            kdtree_nodes_location(2,inodes) = ystore(iglob)
+            kdtree_nodes_location(3,inodes) = zstore(iglob)
+          enddo
+        enddo
+      enddo
+    enddo
+  endif
+  if (inodes /= kdtree_num_nodes) stop 'Error index inodes does not match kdtree_num_nodes'
+
+  ! tree verbosity
+  if (myrank == 0) call kdtree_set_verbose(IMAIN)
+
+  ! creates kd-tree for searching point locations in locate_point() routine
+  call kdtree_setup()
+
+  end subroutine setup_point_search_arrays
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  subroutine setup_adjacency_neighbors()
+
+  use constants, only: &
+    NDIM,NGLLX,NGLLY,NGLLZ,MIDX,MIDY,MIDZ,IMAIN, &
+    USE_DISTANCE_CRITERION
+
+  use shared_parameters, only: R_PLANET_KM
+
+  use specfem_par, only: &
+    myrank, &
+    nspec => NSPEC_CRUST_MANTLE
+
+  use specfem_par_crustmantle, only: &
+    ibool => ibool_crust_mantle, &
+    xstore => xstore_crust_mantle,ystore => ystore_crust_mantle,zstore => zstore_crust_mantle
+
+  ! for point search
+  use specfem_par, only: element_size,typical_size_squared,xyz_midpoints, &
+    xadj,adjncy,num_neighbors_all
+
+  use kdtree_search, only: kdtree_setup,kdtree_delete, &
+    kdtree_nodes_location,kdtree_nodes_index,kdtree_num_nodes, &
+    kdtree_count_nearest_n_neighbors,kdtree_get_nearest_n_neighbors, &
+    kdtree_search_index,kdtree_search_num_nodes
+
+  implicit none
+  integer :: num_neighbors,num_neighbors_max
+
+  integer,dimension(8) :: iglob_corner,iglob_corner2
+  integer :: ispec_ref,ispec,iglob,icorner,ier !,jj
+
+  ! temporary
+  integer,parameter :: MAX_NEIGHBORS = 50   ! maximum number of neighbors (around 37 should be sufficient for crust/mantle)
+  integer,dimension(:),allocatable :: tmp_adjncy ! temporary adjacency
+  integer :: inum_neighbor
+
+  ! timer MPI
+  double precision :: time1,tCPU
+  double precision, external :: wtime
+
+  ! kd-tree search
+  integer :: ielem,inodes
+  integer :: nsearch_points
+  integer :: num_elements,num_elements_max
+  integer :: ielem_counter,num_elements_actual_max
+  !integer, parameter :: max_search_points = 2000
+
+  double precision :: r_search
+  double precision :: xyz_target(NDIM)
+  double precision :: dist_squared,dist_squared_max
+
+  logical :: is_neighbor
+  logical,parameter :: DO_BRUTE_FORCE_SEARCH = .false.
+
+  if (myrank == 0) then
+    write(IMAIN,*) 'adjacency:'
+    write(IMAIN,*) '  total number of elements in this slice = ',nspec
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  ! get MPI starting time
+  time1 = wtime()
+
+  ! adjacency arrays
+  !
+  ! how to use:
+  !  num_neighbors = xadj(ispec+1)-xadj(ispec)
+  !  do i = 1,num_neighbors
+  !    ! get neighbor
+  !    ispec_neighbor = adjncy(xadj(ispec) + i)
+  !    ..
+  !  enddo
+  allocate(xadj(nspec + 1),stat=ier)
+  if (ier /= 0) stop 'Error allocating xadj'
+  allocate(tmp_adjncy(MAX_NEIGHBORS*nspec),stat=ier)
+  if (ier /= 0) stop 'Error allocating tmp_adjncy'
+  xadj(:) = 0
+  tmp_adjncy(:) = 0
+
+  ! kd-tree search
+  if (.not. DO_BRUTE_FORCE_SEARCH) then
+    ! kd-tree search
+
+    ! search radius around element midpoints
+    !
+    ! note: typical search size is using 10 times the size of a surface element;
+    !       we take here 6 times the surface element size
+    !       - since at low resolutions NEX < 64 and large element sizes, this search radius needs to be large enough, and,
+    !       - due to doubling layers (elements at depth will become bigger, however radius shrinks)
+    !
+    !       the search radius r_search given as routine argument must be non-squared
+    r_search = 6.0 * element_size
+
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) '  using kd-tree search radius = ',r_search * R_PLANET_KM,'(km)'
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
+
+    ! kd-tree setup for adjacency search
+    !
+    ! uses only element midpoint location
+    kdtree_num_nodes = nspec
+
+    ! allocates tree arrays
+    allocate(kdtree_nodes_location(NDIM,kdtree_num_nodes),stat=ier)
+    if (ier /= 0) stop 'Error allocating kdtree_nodes_location arrays'
+    allocate(kdtree_nodes_index(kdtree_num_nodes),stat=ier)
+    if (ier /= 0) stop 'Error allocating kdtree_nodes_index arrays'
+
+    ! prepares search arrays, each element takes its internal GLL points for tree search
+    kdtree_nodes_index(:) = 0
+    kdtree_nodes_location(:,:) = 0.0
+    ! adds tree nodes
+    inodes = 0
+    do ispec = 1,nspec
+      ! sets up tree nodes
+      iglob = ibool(MIDX,MIDY,MIDZ,ispec)
+
+      ! counts nodes
+      inodes = inodes + 1
+      if (inodes > kdtree_num_nodes ) stop 'Error index inodes bigger than kdtree_num_nodes'
+
+      ! adds node index (index points to same ispec for all internal GLL points)
+      kdtree_nodes_index(inodes) = ispec
+
+      ! adds node location
+      kdtree_nodes_location(1,inodes) = xstore(iglob)
+      kdtree_nodes_location(2,inodes) = ystore(iglob)
+      kdtree_nodes_location(3,inodes) = zstore(iglob)
+    enddo
+    if (inodes /= kdtree_num_nodes ) stop 'Error index inodes does not match nnodes_local'
+
+    ! alternative: to avoid allocating/deallocating search index arrays, though there is hardly a speedup
+    !allocate(kdtree_search_index(max_search_points),stat=ier)
+    !if (ier /= 0) stop 'Error allocating array kdtree_search_index'
+
+    ! creates kd-tree for searching
+    call kdtree_setup()
+  endif
+
+  ! gets maximum number of neighbors
+  inum_neighbor = 0
+  num_neighbors_max = 0
+  num_neighbors_all = 0
+
+  num_elements_max = 0
+  num_elements_actual_max = 0
+  dist_squared_max = 0.d0
+
+  do ispec_ref = 1,nspec
+    ! the eight corners of the current element
+    iglob_corner(1) = ibool(1,1,1,ispec_ref)
+    iglob_corner(2) = ibool(NGLLX,1,1,ispec_ref)
+    iglob_corner(3) = ibool(NGLLX,NGLLY,1,ispec_ref)
+    iglob_corner(4) = ibool(1,NGLLY,1,ispec_ref)
+    iglob_corner(5) = ibool(1,1,NGLLZ,ispec_ref)
+    iglob_corner(6) = ibool(NGLLX,1,NGLLZ,ispec_ref)
+    iglob_corner(7) = ibool(NGLLX,NGLLY,NGLLZ,ispec_ref)
+    iglob_corner(8) = ibool(1,NGLLY,NGLLZ,ispec_ref)
+
+    ! midpoint for search radius
+    iglob = ibool(MIDX,MIDY,MIDZ,ispec_ref)
+    xyz_target(1) = xstore(iglob)
+    xyz_target(2) = ystore(iglob)
+    xyz_target(3) = zstore(iglob)
+
+    if (DO_BRUTE_FORCE_SEARCH) then
+      ! loops over all other elements to find closest neighbors
+      num_elements = nspec
+    else
+      ! looks only at elements in kd-tree search radius
+
+      ! gets number of tree points within search radius
+      ! (within search sphere)
+      call kdtree_count_nearest_n_neighbors(xyz_target,r_search,nsearch_points)
+
+      ! debug
+      !print *,'  total number of search elements: ',nsearch_points,'ispec',ispec_ref
+
+      ! alternative: limits search results
+      !if (nsearch_points > max_search_points) nsearch_points = max_search_points
+
+      ! sets number of search nodes to get
+      kdtree_search_num_nodes = nsearch_points
+
+      ! allocates search index
+      allocate(kdtree_search_index(kdtree_search_num_nodes),stat=ier)
+      if (ier /= 0) stop 'Error allocating array kdtree_search_index'
+
+      ! gets closest n points around target (within search sphere)
+      call kdtree_get_nearest_n_neighbors(xyz_target,r_search,nsearch_points)
+
+      ! loops over search radius
+      num_elements = nsearch_points
+    endif
+
+    ! statistics
+    if (num_elements > num_elements_max) num_elements_max = num_elements
+    ielem_counter = 0
+
+    ! counts number of neighbors
+    num_neighbors = 0
+
+    do ielem = 1,num_elements
+
+      ! gets element index
+      if (DO_BRUTE_FORCE_SEARCH) then
+        ispec = ielem
+      else
+        ! kd-tree search radius
+        ! gets search point/element index
+        ispec = kdtree_search_index(ielem)
+        ! checks index
+        if (ispec < 1 .or. ispec > nspec) stop 'Error element index is invalid'
+      endif
+
+      ! skip reference element
+      if (ispec == ispec_ref) cycle
+
+      ! distance to reference element
+      dist_squared = (xyz_target(1) - xyz_midpoints(1,ispec))*(xyz_target(1) - xyz_midpoints(1,ispec)) &
+                   + (xyz_target(2) - xyz_midpoints(2,ispec))*(xyz_target(2) - xyz_midpoints(2,ispec)) &
+                   + (xyz_target(3) - xyz_midpoints(3,ispec))*(xyz_target(3) - xyz_midpoints(3,ispec))
+
+      ! exclude elements that are too far from target
+      if (USE_DISTANCE_CRITERION) then
+        !  we compare squared distances instead of distances themselves to significantly speed up calculations
+        if (dist_squared > typical_size_squared) cycle
+      endif
+
+      ielem_counter = ielem_counter + 1
+
+      ! checks if element has a corner iglob from reference element
+      is_neighbor = .false.
+
+      iglob_corner2(1) = ibool(1,1,1,ispec)
+      iglob_corner2(2) = ibool(NGLLX,1,1,ispec)
+      iglob_corner2(3) = ibool(NGLLX,NGLLY,1,ispec)
+      iglob_corner2(4) = ibool(1,NGLLY,1,ispec)
+      iglob_corner2(5) = ibool(1,1,NGLLZ,ispec)
+      iglob_corner2(6) = ibool(NGLLX,1,NGLLZ,ispec)
+      iglob_corner2(7) = ibool(NGLLX,NGLLY,NGLLZ,ispec)
+      iglob_corner2(8) = ibool(1,NGLLY,NGLLZ,ispec)
+
+      do icorner = 1,8
+        ! checks if corner also has reference element
+        if (any(iglob_corner(:) == iglob_corner2(icorner))) then
+          is_neighbor = .true.
+          exit
+        endif
+        ! alternative: (slightly slower with 12.4s compared to 11.4s with any() intrinsic function)
+        !do jj = 1,8
+        !  if (iglob == iglob_corner(jj)) then
+        !    is_neighbor = .true.
+        !    exit
+        !  endif
+        !enddo
+        !if (is_neighbor) exit
+      enddo
+
+      ! counts neighbors to reference element
+      if (is_neighbor) then
+        ! adds to adjacency
+        inum_neighbor = inum_neighbor + 1
+        ! checks
+        if (inum_neighbor > MAX_NEIGHBORS*nspec) stop 'Error maximum neighbors exceeded'
+        ! adds element
+        tmp_adjncy(inum_neighbor) = ispec
+
+        ! for statistics
+        num_neighbors = num_neighbors + 1
+
+        ! maximum distance to reference element
+        if (dist_squared > dist_squared_max) dist_squared_max = dist_squared
+      endif
+    enddo ! ielem
+
+    ! checks if neighbors were found
+    if (num_neighbors == 0) then
+      print *,'Error: rank ',myrank,' - element ',ispec_ref,'has no neighbors!'
+      print *,'  element midpoint location: ',xyz_target(:)*R_PLANET_KM
+      print *,'  typical element size     : ',element_size*R_PLANET_KM,'(km)'
+      print *,'  brute force search       : ',DO_BRUTE_FORCE_SEARCH
+      print *,'  distance criteria        : ',USE_DISTANCE_CRITERION
+      print *,'  typical search distance  : ',typical_size_squared*R_PLANET_KM,'(km)'
+      print *,'  kd-tree r_search         : ',r_search*R_PLANET_KM,'(km)'
+      print *,'  search elements          : ',num_elements
+      call exit_MPI(myrank,'Error adjacency invalid')
+    endif
+
+    ! statistics
+    if (num_neighbors > num_neighbors_max) num_neighbors_max = num_neighbors
+    if (ielem_counter > num_elements_actual_max) num_elements_actual_max = ielem_counter
+
+    ! adjacency indexing
+    xadj(ispec_ref + 1) = inum_neighbor
+    ! how to use:
+    !num_neighbors = xadj(ispec+1)-xadj(ispec)
+    !do i = 1,num_neighbors
+    !  ! get neighbor
+    !  ispec_neighbor = adjncy(xadj(ispec) + i)
+    !enddo
+
+    ! frees kdtree search array
+    if (.not. DO_BRUTE_FORCE_SEARCH) then
+      deallocate(kdtree_search_index)
+    endif
+
+  enddo ! ispec_ref
+
+  ! total number of neighbors
+  num_neighbors_all = inum_neighbor
+
+  ! allocates compacted array
+  allocate(adjncy(num_neighbors_all),stat=ier)
+  if (ier /= 0) stop 'Error allocating tmp_adjncy'
+
+  adjncy(1:num_neighbors_all) = tmp_adjncy(1:num_neighbors_all)
+
+  ! checks
+  if (minval(adjncy(:)) < 1 .or. maxval(adjncy(:)) > nspec) stop 'Invalid adjncy array'
+
+  ! frees temporary array
+  deallocate(tmp_adjncy)
+
+  if (.not. DO_BRUTE_FORCE_SEARCH) then
+    ! frees current tree memory
+    ! deletes tree arrays
+    deallocate(kdtree_nodes_location)
+    deallocate(kdtree_nodes_index)
+    ! deletes search tree nodes
+    call kdtree_delete()
+  endif
+
+  if (myrank == 0) then
+    ! elapsed time since beginning of neighbor detection
+    tCPU = wtime() - time1
+    write(IMAIN,*) '  maximum search elements                                      = ',num_elements_max
+    write(IMAIN,*) '  maximum of actual search elements (after distance criterion) = ',num_elements_actual_max
+    write(IMAIN,*)
+    write(IMAIN,*) '  estimated typical element size at surface = ',element_size*R_PLANET_KM,'(km)'
+    write(IMAIN,*) '  maximum distance between neighbor centers = ',sqrt(dist_squared_max)*R_PLANET_KM,'(km)'
+    if (.not. DO_BRUTE_FORCE_SEARCH) then
+      if (sqrt(dist_squared_max) > r_search - 0.5*element_size) then
+          write(IMAIN,*) '***'
+          write(IMAIN,*) '*** Warning: consider increasing the kd-tree search radius to improve this neighbor setup ***'
+          write(IMAIN,*) '***'
+      endif
+    endif
+    write(IMAIN,*)
+    write(IMAIN,*) '  maximum neighbors found per element = ',num_neighbors_max,'(should be 37 for globe meshes)'
+    write(IMAIN,*) '  total number of neighbors           = ',num_neighbors_all
+    write(IMAIN,*)
+    write(IMAIN,*) '  Elapsed time for detection of neighbors in seconds = ',tCPU
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  end subroutine setup_adjacency_neighbors
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
 
   subroutine setup_sources()
 
@@ -77,7 +645,6 @@
   implicit none
 
   ! local parameters
-  double precision :: min_tshift_src_original
   integer :: isource,ier
   character(len=MAX_STRING_LEN) :: filename
 
@@ -143,12 +710,10 @@
   endif
 
   ! locate sources in the mesh
-  call locate_sources(NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,ibool_crust_mantle, &
-                     xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
-                     ELLIPTICITY_VAL,min_tshift_src_original)
+  call locate_sources()
 
   ! determines onset time
-  call setup_stf_constants(min_tshift_src_original)
+  call setup_stf_constants()
 
   ! count number of sources located in this slice
   nsources_local = 0
@@ -182,8 +747,12 @@
   if (NOISE_TOMOGRAPHY /= 0) then
     if (myrank == 0) then
       write(IMAIN,*) 'noise simulation will ignore CMT sources'
+      call flush_IMAIN()
     endif
   endif
+
+  ! syncs after source setup
+  call synchronize_all()
 
   end subroutine setup_sources
 
@@ -191,19 +760,17 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine setup_stf_constants(min_tshift_src_original)
+  subroutine setup_stf_constants()
 
   use specfem_par
   use specfem_par_movie
   implicit none
 
-  double precision,intent(in) :: min_tshift_src_original
-
   ! local parameters
   integer :: isource
 
   ! makes smaller hdur for movies
-  logical,parameter :: USE_SMALLER_HDUR_MOVIE = .true.
+  logical,parameter :: USE_SMALLER_HDUR_MOVIE = .false.  ! by default off, to use same HDUR_MOVIE as specified in Par_file
 
   if (abs(minval(tshift_src)) > TINYVAL) &
     call exit_MPI(myrank,'one tshift_src must be zero, others must be positive')
@@ -221,8 +788,10 @@
     hdur = sqrt(hdur**2 + HDUR_MOVIE**2)
     if (myrank == 0) then
       write(IMAIN,*)
-      write(IMAIN,*) 'Each source is being convolved with HDUR_MOVIE = ',HDUR_MOVIE
+      write(IMAIN,*) 'Each source is being convolved with HDUR_MOVIE = ',sngl(HDUR_MOVIE)
+      write(IMAIN,*) 'Total source hdur = ',sngl(hdur),'(s)'
       write(IMAIN,*)
+      call flush_IMAIN()
     endif
   endif
 
@@ -248,6 +817,12 @@
       case (2)
         ! Heaviside
         t0 = min(t0,1.5d0 * (tshift_src(isource) - hdur(isource)))
+      case (3)
+        ! Monochromatic
+        t0 = 0.d0
+      case (4)
+        ! Gaussian source time function by Meschede et al. (2011)
+        t0 = min(t0,1.5d0 * (tshift_src(isource) - hdur(isource)))
       case default
         stop 'unsupported force_stf value!'
       end select
@@ -256,8 +831,13 @@
     t0 = - t0
   else
     ! moment tensors
+    if (USE_MONOCHROMATIC_CMT_SOURCE) then
+    ! (based on monochromatic functions)
+      t0 = 0.d0
+    else
     ! (based on Heaviside functions)
-    t0 = - 1.5d0 * minval( tshift_src(:) - hdur(:) )
+      t0 = - 1.5d0 * minval( tshift_src(:) - hdur(:) )
+    endif
   endif
 
   ! uses an external file for source time function, which starts at time 0.0
@@ -347,7 +927,7 @@
     ! note: for zero length, nstep has minimal of 5 timesteps for testing
     !       we won't extend this
     !
-    ! careful: do not use RECORD_LENGTH_IN_MINUTES here, as it is only read by the master process
+    ! careful: do not use RECORD_LENGTH_IN_MINUTES here, as it is only read by the main process
     !          when reading the parameter file, but it is not broadcasted to all other processes
     !          NSTEP gets broadcasted, so we work with this values
     if (NSTEP /= 5) then
@@ -358,6 +938,12 @@
 
   ! if doing benchmark runs to measure scaling of the code for a limited number of time steps only
   if (DO_BENCHMARK_RUN_ONLY) NSTEP = NSTEP_FOR_BENCHMARK
+
+  ! overrides NSTEP in case specified in Par_file
+  if (USER_NSTEP > 0) then
+    ! overrides NSTEP
+    NSTEP = USER_NSTEP
+  endif
 
   ! checks length for symmetry in case of noise simulations
   if (NOISE_TOMOGRAPHY /= 0) then
@@ -410,10 +996,9 @@
   logical, parameter :: CHECK_FOR_IMBALANCE = .false.
 
   ! local parameters
-  integer :: irec,isource,nrec_tot_found,i
+  integer :: irec,isource,nrec_tot_found,i,iproc,ier
   integer :: nrec_simulation
   integer :: nadj_files_found,nadj_files_found_tot
-  integer :: ier
   integer,dimension(0:NPROCTOT_VAL-1) :: tmp_rec_local_all
   integer :: maxrec,maxproc(1)
   double precision :: sizeval
@@ -441,7 +1026,7 @@
            stbur(nrec),stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating receiver arrays')
 
-  allocate(nu(NDIM,NDIM,nrec),stat=ier)
+  allocate(nu_rec(NDIM,NDIM,nrec),stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating receiver arrays')
 
   !  receivers
@@ -457,9 +1042,7 @@
   endif
 
   ! locate receivers in the crust in the mesh
-  call locate_receivers(NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,ibool_crust_mantle, &
-                        xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
-                        yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC, &
+  call locate_receivers(yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC, &
                         theta_source(1),phi_source(1) )
 
   ! count number of receivers located in this slice
@@ -497,8 +1080,10 @@
 
         ! checks **net**.**sta**.**MX**.adj files for correct number of time steps
         if (READ_ADJSRC_ASDF) then
+          ! ASDF format
           call check_adjoint_sources_asdf(irec,nadj_files_found)
         else
+          ! ASCII format
           call check_adjoint_sources(irec,nadj_files_found)
         endif
       endif
@@ -514,7 +1099,7 @@
     endif
   endif
 
-  ! check that the sum of the number of receivers in each slice is nrec
+  ! check that the sum of the number of receivers in each slice is nrec (or nsources for adjoint simulations)
   call sum_all_i(nrec_local,nrec_tot_found)
   if (myrank == 0) then
     write(IMAIN,*)
@@ -535,6 +1120,8 @@
     if (myrank == 0 .and. nrec_tot_found /= nrec) &
       call exit_MPI(myrank,'total number of receivers is incorrect')
   endif
+
+  ! synchronizes before info output
   call synchronize_all()
 
   ! statistics about allocation memory for seismograms & adj_sourcearrays
@@ -556,8 +1143,34 @@
     endif
   endif
 
+  ! for main process seismogram output
+  if (myrank == 0 .and. WRITE_SEISMOGRAMS_BY_MAIN) then
+    ! counts number of local receivers for each slice
+    allocate(islice_num_rec_local(0:NPROCTOT_VAL-1),stat=ier)
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating islice_num_rec_local')
+
+    islice_num_rec_local(:) = 0
+    do i = 1,nrec_simulation
+      if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
+        iproc = islice_selected_rec(i)
+      else
+        ! adjoint simulations
+        iproc = islice_selected_source(i)
+      endif
+
+      ! checks iproc value
+      if (iproc < 0 .or. iproc >= NPROCTOT_VAL) then
+        print *,'Error :',myrank,'iproc = ',iproc,'NPROCTOT = ',NPROCTOT_VAL
+        call exit_mpi(myrank,'Error iproc in islice_num_rec_local')
+      endif
+
+      ! sums number of receivers for each slice
+      islice_num_rec_local(iproc) = islice_num_rec_local(iproc) + 1
+    enddo
+  endif
+
   ! seismograms
-  ! gather from slaves on master
+  ! gather from secondary processes on main
   tmp_rec_local_all(:) = 0
   tmp_rec_local_all(0) = nrec_local
   if (NPROCTOT_VAL > 1) then
@@ -579,8 +1192,8 @@
     endif
     ! outputs info
     write(IMAIN,*) 'seismograms:'
-    if (WRITE_SEISMOGRAMS_BY_MASTER) then
-      write(IMAIN,*) '  seismograms written by master process only'
+    if (WRITE_SEISMOGRAMS_BY_MAIN) then
+      write(IMAIN,*) '  seismograms written by main process only'
     else
       write(IMAIN,*) '  seismograms written by all processes'
     endif
@@ -594,7 +1207,7 @@
 
   ! adjoint sources
   if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
-    ! gather from slaves on master
+    ! gather from secondary processes on main
     tmp_rec_local_all(:) = 0
     tmp_rec_local_all(0) = nadj_rec_local
     if (NPROCTOT_VAL > 1) then
@@ -618,6 +1231,10 @@
       ! note: in case IO_ASYNC_COPY is set, and depending of NSTEP_SUB_ADJ,
       !       this memory requirement might double.
       !       at this point, NSTEP_SUB_ADJ is not set yet...
+      if (IO_ASYNC_COPY .and. ceiling( dble(NSTEP)/dble(NTSTEP_BETWEEN_READ_ADJSRC) ) > 1) then
+        !buffer_source_adjoint(NDIM,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC)
+        sizeval = sizeval + dble(maxrec) * dble(NDIM * NTSTEP_BETWEEN_READ_ADJSRC * CUSTOM_REAL / 1024. / 1024. )
+      endif
       ! outputs info
       write(IMAIN,*) 'adjoint source arrays:'
       write(IMAIN,*) '  reading adjoint sources at every NTSTEP_BETWEEN_READ_ADJSRC = ',NTSTEP_BETWEEN_READ_ADJSRC
@@ -757,6 +1374,9 @@
 
     ! stores source arrays
     call setup_sources_receivers_srcarr()
+  else
+    ! dummy array
+    allocate(sourcearrays(1,1,1,1,1))
   endif
 
   ! adjoint source arrays
@@ -774,19 +1394,17 @@
     NSTEP_SUB_ADJ = ceiling( dble(NSTEP)/dble(NTSTEP_BETWEEN_READ_ADJSRC) )
 
     if (nadj_rec_local > 0) then
-      allocate(source_adjoint(NDIM,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC), &
-               stat=ier)
+      allocate(source_adjoint(NDIM,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC),stat=ier)
       if (ier /= 0 ) then
         print *,'Error rank ',myrank,': allocating source_adjoint failed! Please check your memory usage...'
         print *,'  failed number of local adjoint sources = ',nadj_rec_local,' steps = ',NTSTEP_BETWEEN_READ_ADJSRC
-        call exit_MPI(myrank,'Error allocating adjoint sourcearrays')
+        call exit_MPI(myrank,'Error allocating adjoint source_adjoint')
       endif
 
       ! additional buffer for asynchronous file i/o
       if (IO_ASYNC_COPY .and. NSTEP_SUB_ADJ > 1) then
         ! allocates read buffer
-        allocate(buffer_source_adjoint(NDIM,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC), &
-                 stat=ier)
+        allocate(buffer_source_adjoint(NDIM,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC),stat=ier)
         if (ier /= 0 ) call exit_MPI(myrank,'Error allocating array buffer_source_adjoint')
 
         ! array size in bytes (note: the multiplication is split into two line to avoid integer-overflow)
@@ -1066,21 +1684,34 @@
   integer :: ier
   integer :: nadj_hprec_local
 
+  double precision, dimension(NGLLX) :: hxir,hpxir
+  double precision, dimension(NGLLY) :: hpetar,hetar
+  double precision, dimension(NGLLZ) :: hgammar,hpgammar
+
+  integer :: i,j,k,irec,irec_local
+  real(kind=CUSTOM_REAL) :: hxi,heta,hgamma
+
+  ! note: for adjoint simulations (SIMULATION_TYPE == 2),
+  !         nrec_local     - is set to the number of sources (CMTSOLUTIONs), which act as "receiver" locations
+  !                          for storing seismograms or strains
+  !
+  !         nadj_rec_local - determines the number of adjoint sources, i.e., number of station locations (STATIONS_ADJOINT), which
+  !                          act as sources to drive the adjoint wavefield
+
   ! define local to global receiver numbering mapping
   ! needs to be allocated for subroutine calls (even if nrec_local == 0)
   allocate(number_receiver_global(nrec_local),stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating global receiver numbering')
+  number_receiver_global(:) = 0
 
+  ! receivers
   ! allocates receiver interpolators
   if (nrec_local > 0) then
     ! allocates Lagrange interpolators for receivers
-    allocate(hxir_store(nrec_local,NGLLX), &
-             hetar_store(nrec_local,NGLLY), &
-             hgammar_store(nrec_local,NGLLZ),stat=ier)
+    allocate(hxir_store(NGLLX,nrec_local), &
+             hetar_store(NGLLY,nrec_local), &
+             hgammar_store(NGLLZ,nrec_local),stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating receiver interpolators')
-
-    allocate(hlagrange_store(NGLLX, NGLLY, NGLLZ, nrec_local), stat=ier)
-    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating array hlagrange_store')
 
     ! defines and stores Lagrange interpolators at all the receivers
     if (SIMULATION_TYPE == 2) then
@@ -1088,21 +1719,21 @@
     else
       nadj_hprec_local = 1
     endif
-    allocate(hpxir_store(nadj_hprec_local,NGLLX), &
-             hpetar_store(nadj_hprec_local,NGLLY), &
-             hpgammar_store(nadj_hprec_local,NGLLZ),stat=ier)
+    allocate(hpxir_store(NGLLX,nadj_hprec_local), &
+             hpetar_store(NGLLY,nadj_hprec_local), &
+             hpgammar_store(NGLLZ,nadj_hprec_local),stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating derivative interpolators')
 
     ! stores interpolators for receiver positions
     call setup_sources_receivers_intp(NSOURCES, &
-                      islice_selected_source, &
-                      xi_source,eta_source,gamma_source, &
-                      xigll,yigll,zigll, &
-                      SIMULATION_TYPE,nrec,nrec_local, &
-                      islice_selected_rec,number_receiver_global, &
-                      xi_receiver,eta_receiver,gamma_receiver, &
-                      hxir_store,hetar_store,hgammar_store, hlagrange_store, &
-                      nadj_hprec_local,hpxir_store,hpetar_store,hpgammar_store)
+                                      islice_selected_source, &
+                                      xi_source,eta_source,gamma_source, &
+                                      xigll,yigll,zigll, &
+                                      SIMULATION_TYPE,nrec,nrec_local, &
+                                      islice_selected_rec,number_receiver_global, &
+                                      xi_receiver,eta_receiver,gamma_receiver, &
+                                      hxir_store,hetar_store,hgammar_store, &
+                                      nadj_hprec_local,hpxir_store,hpetar_store,hpgammar_store)
 
     ! allocates seismogram array
     if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
@@ -1130,6 +1761,7 @@
     ! adjoint seismograms
     it_adj_written = 0
   else
+    ! dummy arrays
     ! allocates dummy array since we need it to pass as argument e.g. in write_seismograms() routine
     ! note: nrec_local is zero, Fortran 90/95 should allow zero-sized array allocation...
     allocate(seismograms(NDIM,0,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
@@ -1139,6 +1771,128 @@
              hetar_store(1,1), &
              hgammar_store(1,1),stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating dummy receiver interpolators')
+  endif
+
+  ! strain seismograms
+  if (SAVE_SEISMOGRAMS_STRAIN) then
+    if (nrec_local > 0) then
+      allocate(seismograms_eps(6,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
+      if (ier /= 0) stop 'Error while allocating strain seismograms'
+      seismograms_eps(:,:,:) = 0._CUSTOM_REAL
+    else
+      ! dummy
+      allocate(seismograms_eps(1,1,1))
+    endif
+  endif
+
+  ! adjoint sources
+  ! optimizing arrays for adjoint sources
+  if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
+    ! local adjoint sources arrays
+    if (nadj_rec_local > 0) then
+      ! determines adjoint sources arrays
+      if (SIMULATION_TYPE == 2) then
+        ! pure adjoint simulations
+        allocate(number_adjsources_global(nadj_rec_local),stat=ier)
+        if (ier /= 0) call exit_MPI_without_rank('error allocating number_adjsources_global array')
+        number_adjsources_global(:) = 0
+
+        ! addressing from local to global receiver index
+        irec_local = 0
+        do irec = 1,nrec
+          ! add the source (only if this proc carries the source)
+          if (myrank == islice_selected_rec(irec)) then
+            irec_local = irec_local + 1
+            number_adjsources_global(irec_local) = irec
+          endif
+        enddo
+        if (irec_local /= nadj_rec_local) stop 'Error invalid number of nadj_rec_local found'
+
+        ! allocate Lagrange interpolators for adjoint sources
+        !
+        ! note: adjoint sources for SIMULATION_TYPE == 2 and 3 are located at the receivers,
+        !       however, the interpolator arrays hxir_store are used for "receiver" locations which are different
+        !       for pure adjoint or kernel simulations
+        !
+        !       we will thus allocate interpolator arrays especially for adjoint source locations. for kernel simulations,
+        !       these would be the same as hxir_store, but not for pure adjoint simulations.
+        !
+        ! storing these arrays is cheaper than storing a full (i,j,k) array for each element
+        allocate(hxir_adjstore(NGLLX,nadj_rec_local),stat=ier)
+        if (ier /= 0) call exit_MPI_without_rank('error allocating hxir_adjstore array')
+        allocate(hetar_adjstore(NGLLY,nadj_rec_local),stat=ier)
+        if (ier /= 0) call exit_MPI_without_rank('error allocating hetar_adjstore array')
+        allocate(hgammar_adjstore(NGLLZ,nadj_rec_local),stat=ier)
+        if (ier /= 0) call exit_MPI_without_rank('error allocating hgammar_adjstore array')
+
+        ! define and store Lagrange interpolators at all the adjoint source locations
+        do irec_local = 1,nadj_rec_local
+          irec = number_adjsources_global(irec_local)
+
+          ! receiver positions (become adjoint source locations)
+          call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
+          call lagrange_any(eta_receiver(irec),NGLLY,yigll,hetar,hpetar)
+          call lagrange_any(gamma_receiver(irec),NGLLZ,zigll,hgammar,hpgammar)
+
+          ! stores interpolators
+          hxir_adjstore(:,irec_local) = hxir(:)
+          hetar_adjstore(:,irec_local) = hetar(:)
+          hgammar_adjstore(:,irec_local) = hgammar(:)
+        enddo
+      else
+        ! kernel simulations (SIMULATION_TYPE == 3)
+        ! adjoint source arrays and receiver arrays are the same, no need to allocate new arrays, just point to the existing ones
+        number_adjsources_global => number_receiver_global
+        hxir_adjstore => hxir_store
+        hetar_adjstore => hetar_store
+        hgammar_adjstore => hgammar_store
+      endif
+    else
+      ! dummy arrays
+      number_adjsources_global => number_receiver_global
+      hxir_adjstore => hxir_store
+      hetar_adjstore => hetar_store
+      hgammar_adjstore => hgammar_store
+    endif ! nadj_rec_local
+  endif
+
+  ! safety check
+  if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
+    ! adjoint source in this partitions
+    if (nadj_rec_local > 0) then
+      do irec_local = 1, nadj_rec_local
+        irec = number_adjsources_global(irec_local)
+        if (irec <= 0) stop 'Error invalid irec for local adjoint source'
+        ! adds source array
+        do k = 1,NGLLZ
+          do j = 1,NGLLY
+            do i = 1,NGLLX
+              hxi = hxir_adjstore(i,irec_local)
+              heta = hetar_adjstore(j,irec_local)
+              hgamma = hgammar_adjstore(k,irec_local)
+              ! checks if array values valid
+              ! Lagrange interpolators shoud be about in a range ~ [-0.2,1.2]
+              if (abs(hxi) > 2.0 .or. abs(heta) > 2.0 .or. abs(hgamma) > 2.0) then
+                print *,'hxi/heta/hgamma = ',hxi,heta,hgamma,irec_local,i,j,k
+                print *,'ERROR: trying to use arrays hxir_adjstore/hetar_adjstore/hgammar_adjstore with irec_local = ', &
+                        irec_local,' but these array values are invalid!'
+                call exit_MPI_without_rank('ERROR: trying to use arrays hxir_adjstore/hetar_adjstore/hgammar_adjstore &
+                                           &but these arrays are invalid!')
+              endif
+            enddo
+          enddo
+        enddo
+      enddo
+    endif
+  endif
+
+  ! ASDF seismograms
+  if (OUTPUT_SEISMOS_ASDF) then
+    if (.not. (SIMULATION_TYPE == 3 .and. (.not. SAVE_SEISMOGRAMS_IN_ADJOINT_RUN)) ) then
+      ! initializes the ASDF data structure by allocating arrays
+      call init_asdf_data(nrec_local)
+      call synchronize_all()
+    endif
   endif
 
   end subroutine setup_receivers_precompute_intp
@@ -1154,7 +1908,7 @@
                       SIMULATION_TYPE,nrec,nrec_local, &
                       islice_selected_rec,number_receiver_global, &
                       xi_receiver,eta_receiver,gamma_receiver, &
-                      hxir_store,hetar_store,hgammar_store, hlagrange_store, &
+                      hxir_store,hetar_store,hgammar_store, &
                       nadj_hprec_local,hpxir_store,hpetar_store,hpgammar_store)
 
   use constants
@@ -1178,29 +1932,28 @@
   integer, dimension(nrec_local) :: number_receiver_global
   double precision, dimension(nrec) :: xi_receiver,eta_receiver,gamma_receiver
 
-  double precision, dimension(nrec_local,NGLLX) :: hxir_store
-  double precision, dimension(nrec_local,NGLLY) :: hetar_store
-  double precision, dimension(nrec_local,NGLLZ) :: hgammar_store
-  double precision, dimension(NGLLX,NGLLY,NGLLZ,nrec_local) :: hlagrange_store
+  double precision, dimension(NGLLX,nrec_local) :: hxir_store
+  double precision, dimension(NGLLY,nrec_local) :: hetar_store
+  double precision, dimension(NGLLZ,nrec_local) :: hgammar_store
 
   integer :: nadj_hprec_local
-  double precision, dimension(nadj_hprec_local,NGLLX) :: hpxir_store
-  double precision, dimension(nadj_hprec_local,NGLLY) :: hpetar_store
-  double precision, dimension(nadj_hprec_local,NGLLZ) :: hpgammar_store
+  double precision, dimension(NGLLX,nadj_hprec_local) :: hpxir_store
+  double precision, dimension(NGLLY,nadj_hprec_local) :: hpetar_store
+  double precision, dimension(NGLLZ,nadj_hprec_local) :: hpgammar_store
 
 
   ! local parameters
-  integer :: isource,irec,irec_local, i, j, k
+  integer :: isource,irec,irec_local
   double precision, dimension(NGLLX) :: hxir,hpxir
   double precision, dimension(NGLLY) :: hpetar,hetar
   double precision, dimension(NGLLZ) :: hgammar,hpgammar
-
 
   ! select local receivers
 
   ! define local to global receiver numbering mapping
   irec_local = 0
   if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
+    ! forward/kernel simulations
     do irec = 1,nrec
       if (myrank == islice_selected_rec(irec)) then
         irec_local = irec_local + 1
@@ -1211,6 +1964,7 @@
       endif
     enddo
   else
+    ! adjoint simulations
     do isource = 1,NSOURCES
       if (myrank == islice_selected_source(isource)) then
         irec_local = irec_local + 1
@@ -1241,23 +1995,15 @@
     endif
 
     ! stores interpolators
-    hxir_store(irec_local,:) = hxir(:)
-    hetar_store(irec_local,:) = hetar(:)
-    hgammar_store(irec_local,:) = hgammar(:)
-
-    do k = 1,NGLLZ
-      do j = 1,NGLLY
-        do i = 1,NGLLX
-          hlagrange_store(i,j,k,irec_local) = hxir_store(irec_local,i)*hetar_store(irec_local,j)*hgammar_store(irec_local,k)
-        enddo
-      enddo
-    enddo
+    hxir_store(:,irec_local) = hxir(:)
+    hetar_store(:,irec_local) = hetar(:)
+    hgammar_store(:,irec_local) = hgammar(:)
 
     ! stores derivatives
     if (SIMULATION_TYPE == 2) then
-      hpxir_store(irec_local,:) = hpxir(:)
-      hpetar_store(irec_local,:) = hpetar(:)
-      hpgammar_store(irec_local,:) = hpgammar(:)
+      hpxir_store(:,irec_local) = hpxir(:)
+      hpetar_store(:,irec_local) = hpetar(:)
+      hpgammar_store(:,irec_local) = hpgammar(:)
     endif
   enddo
 

@@ -1,7 +1,7 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -33,11 +33,17 @@ extern EXTERN_LANG
 void FC_FUNC_ (compute_seismograms_gpu,
                COMPUTE_SEISMOGRAMS_GPU) (long *Mesh_pointer_f,
                                          realw* seismograms,
-                                         int* seismo_currentf,int* itf, double* scale_displf,int* NTSTEP_BETWEEN_OUTPUT_SEISMOSf,int* NSTEPf) {
+                                         int* seismo_currentf,
+                                         int* itf,
+                                         int* it_endf,
+                                         double* scale_displf,
+                                         int* NTSTEP_BETWEEN_OUTPUT_SEISMOSf,
+                                         int* NSTEPf) {
   TRACE ("compute_seismograms_gpu");
 
   //get Mesh from Fortran integer wrapper
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
+
   // checks if anything to do
   if (mp->nrec_local == 0) return;
 
@@ -45,13 +51,24 @@ void FC_FUNC_ (compute_seismograms_gpu,
   int NTSTEP_BETWEEN_OUTPUT_SEISMOS = *NTSTEP_BETWEEN_OUTPUT_SEISMOSf;
   int NSTEP = *NSTEPf;
   int it = *itf;
+  int it_end = *it_endf;
   realw scale_displ = (realw)(*scale_displf);
 
   int blocksize = NGLL3_PADDED;
   int num_blocks_x, num_blocks_y;
   get_blocks_xy (mp->nrec_local, &num_blocks_x, &num_blocks_y);
 
-  int size_buffer = 3*mp->nrec_local* sizeof (realw);
+  int size_buffer = 3 * mp->nrec_local * sizeof(realw);
+
+  // determines wavefield depending on simulation type
+  gpu_realw_mem displ;
+  if (mp->simulation_type == 3) {
+    // backward/reconstructed wavefield
+    displ = mp->d_b_displ_crust_mantle;
+  }else{
+    // forward/adjoint wavefield
+    displ = mp->d_displ_crust_mantle;
+  }
 
 #ifdef USE_OPENCL
   if (run_opencl) {
@@ -62,11 +79,11 @@ void FC_FUNC_ (compute_seismograms_gpu,
 
     //prepare field transfer array on device
     clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (int),    (void *) &mp->nrec_local));
-    clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_displ_crust_mantle.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (cl_mem), (void *) &displ.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ibool_crust_mantle.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_xir.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_etar.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_gammar.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_hxir.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_hetar.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_hgammar.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_seismograms.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_nu.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ispec_selected_rec.ocl));
@@ -82,7 +99,7 @@ void FC_FUNC_ (compute_seismograms_gpu,
                                      global_work_size, local_work_size, 0, NULL, &kernel_evt));
 
     // copies buffer to CPU
-    if (GPU_ASYNC_COPY &&  ((seismo_current+1) != NTSTEP_BETWEEN_OUTPUT_SEISMOS) && (it != NSTEP) ) {
+    if (GPU_ASYNC_COPY &&  ((seismo_current+1) != NTSTEP_BETWEEN_OUTPUT_SEISMOS) && (it != NSTEP) && (it != it_end) ) {
       // waits until kernel is finished before starting async memcpy
       clCheck (clFinish (mocl.command_queue));
 
@@ -108,16 +125,16 @@ void FC_FUNC_ (compute_seismograms_gpu,
 
     // prepare field transfer array on device
     compute_seismograms_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->nrec_local,
-                                                                      mp->d_displ_crust_mantle.cuda,
+                                                                      displ.cuda,
                                                                       mp->d_ibool_crust_mantle.cuda,
-                                                                      mp->d_xir.cuda,mp->d_etar.cuda,mp->d_gammar.cuda,
+                                                                      mp->d_hxir.cuda,mp->d_hetar.cuda,mp->d_hgammar.cuda,
                                                                       mp->d_seismograms.cuda,
                                                                       mp->d_nu.cuda,
                                                                       mp->d_ispec_selected_rec.cuda,
                                                                       mp->d_number_receiver_global.cuda,
                                                                       scale_displ);
     // copies buffer to CPU
-    if (GPU_ASYNC_COPY &&  ((seismo_current+1) != NTSTEP_BETWEEN_OUTPUT_SEISMOS) && (it != NSTEP) ) {
+    if (GPU_ASYNC_COPY &&  ((seismo_current+1) != NTSTEP_BETWEEN_OUTPUT_SEISMOS) && (it != NSTEP) && (it != it_end) ) {
       // waits until kernel is finished before starting async memcpy
       cudaStreamSynchronize(mp->compute_stream);
       // copies buffer to CPU
@@ -127,11 +144,37 @@ void FC_FUNC_ (compute_seismograms_gpu,
       print_CUDA_error_if_any(cudaMemcpy(seismograms + 3*mp->nrec_local*seismo_current,mp->d_seismograms.cuda,size_buffer,
                                          cudaMemcpyDeviceToHost),98000);
     }
-
   }
-
 #endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(blocksize,1,1);
 
+    // prepare field transfer array on device
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_seismograms_kernel), grid, threads, 0, mp->compute_stream,
+                                                                    mp->nrec_local,
+                                                                    displ.hip,
+                                                                    mp->d_ibool_crust_mantle.hip,
+                                                                    mp->d_hxir.hip,mp->d_hetar.hip,mp->d_hgammar.hip,
+                                                                    mp->d_seismograms.hip,
+                                                                    mp->d_nu.hip,
+                                                                    mp->d_ispec_selected_rec.hip,
+                                                                    mp->d_number_receiver_global.hip,
+                                                                    scale_displ);
+    // copies buffer to CPU
+    if (GPU_ASYNC_COPY &&  ((seismo_current+1) != NTSTEP_BETWEEN_OUTPUT_SEISMOS) && (it != NSTEP) && (it != it_end) ) {
+      // waits until kernel is finished before starting async memcpy
+      hipStreamSynchronize(mp->compute_stream);
+      // copies buffer to CPU
+      hipMemcpyAsync(seismograms + 3*mp->nrec_local*seismo_current,mp->d_seismograms.hip,size_buffer,hipMemcpyDeviceToHost,mp->copy_stream);
+    } else {
+      // synchronous copy
+      print_HIP_error_if_any(hipMemcpy(seismograms + 3*mp->nrec_local*seismo_current,mp->d_seismograms.hip,size_buffer,
+                                       hipMemcpyDeviceToHost),98000);
+    }
+  }
+#endif
 
   GPU_ERROR_CHECKING ("compute_seismograms_gpu");
 }

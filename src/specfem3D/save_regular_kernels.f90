@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -71,7 +71,7 @@
   scale_kl = scale_t * scale_displ_inv * 1.d9
   ! For anisotropic kernels
   ! final unit : [s km^(-3) GPa^(-1)]
-  scale_kl_ani = scale_t**3 / (RHOAV*R_EARTH**3) * 1.d18
+  scale_kl_ani = scale_t**3 / (RHOAV*R_PLANET**3) * 1.d18
   ! final unit : [s km^(-3) (kg/m^3)^(-1)]
   scale_kl_rho = scale_t * scale_displ_inv / RHOAV * 1.d9
 
@@ -137,18 +137,19 @@
       do j = 1, NGLLY
         do i = 1, NGLLX
 
-          hlagrange = hxir_reg(i,ipoint)*hetar_reg(j,ipoint)*hgammar_reg(k,ipoint)
+          hlagrange = hxir_reg(i,ipoint) * hetar_reg(j,ipoint) * hgammar_reg(k,ipoint)
 
           if (ANISOTROPIC_KL) then
 
             ! For anisotropic kernels
             iglob = ibool_crust_mantle(i,j,k,ispec)
 
-            ! The Cartesian global cijkl_kl are rotated into the spherical local cijkl_kl
+            ! The Cartesian global cijkl_kl are rotated into the local (radial) cijkl_kl
             ! ystore and zstore are thetaval and phival (line 2252) -- dangerous
             theta = rstore_crust_mantle(2,iglob)
             phi = rstore_crust_mantle(3,iglob)
-            call rotate_kernels_dble(cijkl_kl_crust_mantle(:,i,j,k,ispec),cijkl_kl_local(:),theta,phi)
+
+            call rotate_tensor_global_to_radial_vector(cijkl_kl_crust_mantle(:,i,j,k,ispec),cijkl_kl_local(:),theta,phi)
 
             cijkl_kl_crust_mantle_reg(:,ipoint) = cijkl_kl_crust_mantle_reg(:,ipoint) &
                                                 + cijkl_kl_local * scale_kl_ani * hlagrange

@@ -1,9 +1,5 @@
 \chapter{Introduction}
 
-\red{\Large ANNOUNCEMENT: SPECFEM3D\_GLOBE can now perform gravity field calculations in addition (or instead of) seismic wave propagation only.
-See flag \texttt{GRAVITY\_INTEGRALS} in file \texttt{setup/constants.h.in}. Please also refer to \url{http://komatitsch.free.fr/preprints/GJI_Martin_gravimetry_2017.pdf}.
-And yes, that is the reason why I added a gravity observation satellite on the cover of the manual :-)}\\
-
 The software package SPECFEM3D\_GLOBE simulates three-dimensional global and regional seismic wave propagation
 and performs full waveform imaging (FWI) or adjoint tomography based upon the spectral-element method (SEM).
 The SEM is a continuous Galerkin technique \citep{TrKoLi08,PeKoLuMaLeCaLeMaLiBlNiBaTr11},
@@ -44,13 +40,17 @@ include \cite{SePr94}, \cite{PrCaSe94} and \cite{SePrPr95}.
 In the Legendre version that we use in SPECFEM the mass matrix is purposely slightly inexact but diagonal (but can be made exact if needed, see \cite{Teu15}),
 while in the Chebyshev version it is exact but non diagonal.\\
 
-\red{Beware that, in a spectral-element method, some spurious modes (that have some similarities with classical so-called "Hourglass modes" in finite-element techniques,
+Beware that, in a spectral-element method, some spurious modes (that have some similarities with classical so-called "Hourglass modes" in finite-element techniques,
 although in the SEM they are not zero-energy modes) can appear in some (but not all) cases in the spectral element in which the source is located.
 Fortunately, they do not propagate away from the source element.
 However, this means that if you put a receiver in the same spectral element as a source, the recorded signals may in some cases be wrong, typically exhibiting some spurious
 oscillations, which are often even non causal.
 If that is the case, an easy option is to slightly change the mesh in the source region in order to get rid of these Hourglass-like spurious modes,
-as explained in \cite{DuLiScGa14}, in which this phenomenon is described in details, and in which practical solutions to avoid it are suggested.}\\
+as explained in \cite{DuLiScGa14}, in which this phenomenon is described in details, and in which practical solutions to avoid it are suggested.\\
+
+SPECFEM3D\_GLOBE can now perform gravity field calculations in addition (or instead of) seismic wave propagation only.
+See flag \texttt{GRAVITY\_INTEGRALS} in file \texttt{setup/constants.h.in}. Please also refer to \citet{Martin2017}.
+And yes, that is the reason why there is a gravity observation satellite on the cover of the manual :-)\\
 
 All SPECFEM3D\_GLOBE software is written in Fortran2003 with full portability
 in mind, and conforms strictly to the Fortran2003 standard. It uses

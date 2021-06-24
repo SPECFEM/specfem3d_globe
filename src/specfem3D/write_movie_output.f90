@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -28,8 +28,8 @@
   subroutine write_movie_output()
 
   use specfem_par, only: deltat,it,myrank,Mesh_pointer, &
-    GPU_MODE,NTSTEP_BETWEEN_FRAMES,LOCAL_TMP_PATH, &
-    MOVIE_COARSE,MOVIE_START,MOVIE_STOP,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_VOLUME_TYPE, &
+    GPU_MODE,NTSTEP_BETWEEN_FRAMES, &
+    MOVIE_START,MOVIE_STOP,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_VOLUME_TYPE, &
     scale_displ,scale_veloc
 
   use specfem_par_crustmantle, only: displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
@@ -46,6 +46,7 @@
     ibool_outer_core,kappavstore_outer_core,rhostore_outer_core
 
   use specfem_par_movie
+
   implicit none
 
   ! local parameters
@@ -101,21 +102,21 @@
       ! transfers strain arrays onto CPU
       if (GPU_MODE) then
         call transfer_strain_cm_from_device(Mesh_pointer,eps_trace_over_3_crust_mantle, &
-                                         epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle, &
-                                         epsilondev_xy_crust_mantle,epsilondev_xz_crust_mantle, &
-                                         epsilondev_yz_crust_mantle)
+                                            epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle, &
+                                            epsilondev_xy_crust_mantle,epsilondev_xz_crust_mantle, &
+                                            epsilondev_yz_crust_mantle)
       endif
 
       ! integrates strain
       call movie_volume_integrate_strain(deltat,NSPEC_CRUST_MANTLE_3DMOVIE, &
-                                        eps_trace_over_3_crust_mantle, &
-                                        epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle, &
-                                        epsilondev_xy_crust_mantle,epsilondev_xz_crust_mantle, &
-                                        epsilondev_yz_crust_mantle, &
-                                        Ieps_trace_over_3_crust_mantle, &
-                                        Iepsilondev_xx_crust_mantle,Iepsilondev_yy_crust_mantle, &
-                                        Iepsilondev_xy_crust_mantle,Iepsilondev_xz_crust_mantle, &
-                                        Iepsilondev_yz_crust_mantle)
+                                         eps_trace_over_3_crust_mantle, &
+                                         epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle, &
+                                         epsilondev_xy_crust_mantle,epsilondev_xz_crust_mantle, &
+                                         epsilondev_yz_crust_mantle, &
+                                         Ieps_trace_over_3_crust_mantle, &
+                                         Iepsilondev_xx_crust_mantle,Iepsilondev_yy_crust_mantle, &
+                                         Iepsilondev_xy_crust_mantle,Iepsilondev_xz_crust_mantle, &
+                                         Iepsilondev_yz_crust_mantle)
     endif
 
     ! file output
@@ -125,94 +126,82 @@
       select case (MOVIE_VOLUME_TYPE)
       case (1)
         ! output strains
-
         ! gets resulting array values onto CPU
         if (GPU_MODE) then
           call transfer_strain_cm_from_device(Mesh_pointer, &
-                                eps_trace_over_3_crust_mantle, &
-                                epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle, &
-                                epsilondev_xy_crust_mantle,epsilondev_xz_crust_mantle, &
-                                epsilondev_yz_crust_mantle)
+                                              eps_trace_over_3_crust_mantle, &
+                                              epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle, &
+                                              epsilondev_xy_crust_mantle,epsilondev_xz_crust_mantle, &
+                                              epsilondev_yz_crust_mantle)
         endif
-
-        call  write_movie_volume_strains(npoints_3dmovie, &
-                    LOCAL_TMP_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE, &
-                    it,NSPEC_CRUST_MANTLE_STRAIN_ONLY, &
-                    eps_trace_over_3_crust_mantle, &
-                    epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
-                    epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
-                    muvstore_crust_mantle_3dmovie, &
-                    mask_3dmovie,nu_3dmovie)
+        call  write_movie_volume_strains(NSPEC_CRUST_MANTLE_STRAIN_ONLY, &
+                                         eps_trace_over_3_crust_mantle, &
+                                         NSPEC_CRUST_MANTLE_STR_OR_ATT, &
+                                         epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
+                                         epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle)
 
       case (2, 3)
         ! output the Time Integral of Strain, or \mu*TIS
-        call  write_movie_volume_strains(npoints_3dmovie, &
-                    LOCAL_TMP_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE, &
-                    it,NSPEC_CRUST_MANTLE_3DMOVIE, &
-                    Ieps_trace_over_3_crust_mantle, &
-                    Iepsilondev_xx_crust_mantle,Iepsilondev_yy_crust_mantle,Iepsilondev_xy_crust_mantle, &
-                    Iepsilondev_xz_crust_mantle,Iepsilondev_yz_crust_mantle, &
-                    muvstore_crust_mantle_3dmovie, &
-                    mask_3dmovie,nu_3dmovie)
+        call  write_movie_volume_strains(NSPEC_CRUST_MANTLE_3DMOVIE, &
+                                         Ieps_trace_over_3_crust_mantle, &
+                                         NSPEC_CRUST_MANTLE_3DMOVIE, &
+                                         Iepsilondev_xx_crust_mantle,Iepsilondev_yy_crust_mantle,Iepsilondev_xy_crust_mantle, &
+                                         Iepsilondev_xz_crust_mantle,Iepsilondev_yz_crust_mantle)
 
       case (4)
         ! output divergence and curl in whole volume
-
         ! gets resulting array values onto CPU
         if (GPU_MODE) then
           ! strains
           call transfer_strain_cm_from_device(Mesh_pointer, &
-                                eps_trace_over_3_crust_mantle, &
-                                epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle, &
-                                epsilondev_xy_crust_mantle,epsilondev_xz_crust_mantle, &
-                                epsilondev_yz_crust_mantle)
+                                              eps_trace_over_3_crust_mantle, &
+                                              epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle, &
+                                              epsilondev_xy_crust_mantle,epsilondev_xz_crust_mantle, &
+                                              epsilondev_yz_crust_mantle)
           call transfer_strain_ic_from_device(Mesh_pointer, &
-                                eps_trace_over_3_inner_core, &
-                                epsilondev_xx_inner_core,epsilondev_yy_inner_core, &
-                                epsilondev_xy_inner_core,epsilondev_xz_inner_core, &
-                                epsilondev_yz_inner_core)
+                                              eps_trace_over_3_inner_core, &
+                                              epsilondev_xx_inner_core,epsilondev_yy_inner_core, &
+                                              epsilondev_xy_inner_core,epsilondev_xz_inner_core, &
+                                              epsilondev_yz_inner_core)
           ! wavefields
           call transfer_fields_oc_from_device(NGLOB_OUTER_CORE, &
-                                displ_outer_core,veloc_outer_core,accel_outer_core,Mesh_pointer)
+                                              displ_outer_core,veloc_outer_core,accel_outer_core,Mesh_pointer)
         endif
-
-        call write_movie_volume_divcurl(it,eps_trace_over_3_crust_mantle, &
-                        div_displ_outer_core, &
-                        accel_outer_core,kappavstore_outer_core,rhostore_outer_core,ibool_outer_core, &
-                        eps_trace_over_3_inner_core, &
-                        epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
-                        epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
-                        epsilondev_xx_inner_core,epsilondev_yy_inner_core,epsilondev_xy_inner_core, &
-                        epsilondev_xz_inner_core,epsilondev_yz_inner_core, &
-                        LOCAL_TMP_PATH)
+        call write_movie_volume_divcurl(NSPEC_CRUST_MANTLE_STRAIN_ONLY,eps_trace_over_3_crust_mantle, &
+                                        div_displ_outer_core, &
+                                        accel_outer_core,kappavstore_outer_core,rhostore_outer_core,ibool_outer_core, &
+                                        NSPEC_INNER_CORE_STRAIN_ONLY,eps_trace_over_3_inner_core, &
+                                        NSPEC_CRUST_MANTLE_STR_OR_ATT, &
+                                        epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
+                                        epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
+                                        NSPEC_INNER_CORE_STR_OR_ATT, &
+                                        epsilondev_xx_inner_core,epsilondev_yy_inner_core,epsilondev_xy_inner_core, &
+                                        epsilondev_xz_inner_core,epsilondev_yz_inner_core)
 
       case (5)
-        !output displacement
+        ! output displacement
         if (GPU_MODE) then
           call transfer_displ_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,displ_crust_mantle,Mesh_pointer)
         endif
-
         scalingval = scale_displ
-        call write_movie_volume_vector(it,npoints_3dmovie, &
-                                       LOCAL_TMP_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE,ibool_crust_mantle, &
+        call write_movie_volume_vector(npoints_3dmovie, &
+                                       ibool_crust_mantle, &
                                        displ_crust_mantle, &
                                        scalingval,mask_3dmovie,nu_3dmovie)
 
       case (6)
-        !output velocity
+        ! output velocity
         if (GPU_MODE) then
           call transfer_veloc_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,veloc_crust_mantle,Mesh_pointer)
         endif
-
         scalingval = scale_veloc
-        call write_movie_volume_vector(it,npoints_3dmovie, &
-                                       LOCAL_TMP_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE,ibool_crust_mantle, &
+        call write_movie_volume_vector(npoints_3dmovie, &
+                                       ibool_crust_mantle, &
                                        veloc_crust_mantle, &
                                        scalingval,mask_3dmovie,nu_3dmovie)
 
       case (7)
         ! output norm of displacement
-
         ! gets resulting array values onto CPU
         if (GPU_MODE) then
           ! displacement wavefields
@@ -220,14 +209,11 @@
           call transfer_displ_ic_from_device(NDIM*NGLOB_INNER_CORE,displ_inner_core,Mesh_pointer)
           call transfer_displ_oc_from_device(NGLOB_OUTER_CORE,displ_outer_core,Mesh_pointer)
         endif
-
-        call write_movie_volume_displnorm(it,LOCAL_TMP_PATH, &
-                        displ_crust_mantle,displ_inner_core,displ_outer_core, &
-                        ibool_crust_mantle,ibool_inner_core,ibool_outer_core)
+        call write_movie_volume_displnorm(displ_crust_mantle,displ_inner_core,displ_outer_core, &
+                                          ibool_crust_mantle,ibool_inner_core,ibool_outer_core)
 
       case (8)
         ! output norm of velocity
-
         ! gets resulting array values onto CPU
         if (GPU_MODE) then
           ! velocity wavefields
@@ -235,14 +221,11 @@
           call transfer_veloc_ic_from_device(NDIM*NGLOB_INNER_CORE,veloc_inner_core,Mesh_pointer)
           call transfer_veloc_oc_from_device(NGLOB_OUTER_CORE,veloc_outer_core,Mesh_pointer)
         endif
-
-        call write_movie_volume_velnorm(it,LOCAL_TMP_PATH, &
-                        veloc_crust_mantle,veloc_inner_core,veloc_outer_core, &
-                        ibool_crust_mantle,ibool_inner_core,ibool_outer_core)
+        call write_movie_volume_velnorm(veloc_crust_mantle,veloc_inner_core,veloc_outer_core, &
+                                        ibool_crust_mantle,ibool_inner_core,ibool_outer_core)
 
       case (9)
         ! output norm of acceleration
-
         ! gets resulting array values onto CPU
         if (GPU_MODE) then
           ! acceleration wavefields
@@ -250,10 +233,8 @@
           call transfer_accel_ic_from_device(NDIM*NGLOB_INNER_CORE,accel_inner_core,Mesh_pointer)
           call transfer_accel_oc_from_device(NGLOB_OUTER_CORE,accel_outer_core,Mesh_pointer)
         endif
-
-        call write_movie_volume_accelnorm(it,LOCAL_TMP_PATH, &
-                        accel_crust_mantle,accel_inner_core,accel_outer_core, &
-                        ibool_crust_mantle,ibool_inner_core,ibool_outer_core)
+        call write_movie_volume_accelnorm(accel_crust_mantle,accel_inner_core,accel_outer_core, &
+                                          ibool_crust_mantle,ibool_inner_core,ibool_outer_core)
 
       case default
         call exit_MPI(myrank, 'MOVIE_VOLUME_TYPE has to be in range from 1 to 9')

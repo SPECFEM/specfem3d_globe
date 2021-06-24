@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -48,22 +48,16 @@
   if (EXACT_UNDOING_TO_DISK) return
 
   ! outer core
-  call compute_kernels_outer_core(vector_displ_outer_core,vector_accel_outer_core,b_vector_displ_outer_core, &
-              displ_outer_core,accel_outer_core,b_displ_outer_core,b_accel_outer_core, &
-              rhostore_outer_core,kappavstore_outer_core, &
-              rho_kl_outer_core,alpha_kl_outer_core,beta_kl_outer_core, &
-              xix_outer_core, xiy_outer_core, xiz_outer_core, etax_outer_core, etay_outer_core, etaz_outer_core, &
-              gammax_outer_core, gammay_outer_core, gammaz_outer_core, ibool_outer_core, &
-              nspec_beta_kl_outer_core,deviatoric_outercore)
+  if (SAVE_KERNELS_OC) call compute_kernels_outer_core()
 
   ! inner core
-  call compute_kernels_inner_core()
+  if (SAVE_KERNELS_IC) call compute_kernels_inner_core()
 
   ! NOISE TOMOGRAPHY --- source strength kernel
   if (NOISE_TOMOGRAPHY == 3) call compute_kernels_strength_noise()
 
   ! boundary kernels
-  if (SAVE_BOUNDARY_MESH) call compute_boundary_kernels()
+  if (SAVE_KERNELS_BOUNDARY) call compute_boundary_kernels()
 
   ! approximate Hessian
   if (APPROXIMATE_HESS_KL) call compute_kernels_Hessian()
@@ -304,45 +298,23 @@
 
 !! DK DK put the list of parameters back here to avoid a warning / error from the gfortran compiler
 !! DK DK about undefined behavior when aggressive loop vectorization is used by the compiler
-  subroutine compute_kernels_outer_core(vector_displ_outer_core,vector_accel_outer_core,b_vector_displ_outer_core, &
-              displ_outer_core,accel_outer_core,b_displ_outer_core,b_accel_outer_core, &
-              rhostore_outer_core,kappavstore_outer_core, &
-              rho_kl_outer_core,alpha_kl_outer_core,beta_kl_outer_core, &
-              xix_outer_core, xiy_outer_core, xiz_outer_core, etax_outer_core, etay_outer_core, etaz_outer_core, &
-              gammax_outer_core, gammay_outer_core, gammaz_outer_core, ibool_outer_core, &
-              nspec_beta_kl_outer_core,deviatoric_outercore)
+!!
+!! daniel: the optimization error can occur for statements in do-loops like
+!!                vector_accel_outer_core(:,iglob) = gradxyz(:)
+!!         some compilers will have internal issues when aggressive optimization is used.
+!!         as a remedy, we use this now more explicit
+!!                vector_accel_outer_core(1,iglob) = gradxyz(1)
+!!                ..
+
+  subroutine compute_kernels_outer_core()
 
   use constants_solver
   use specfem_par, only: deltat,hprime_xx,hprime_yy,hprime_zz
   use specfem_par, only: GPU_MODE,Mesh_pointer
 
+  use specfem_par_outercore
+
   implicit none
-
-  integer :: nspec_beta_kl_outer_core
-
-  logical :: deviatoric_outercore
-
-  ! velocity potential
-  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: displ_outer_core,accel_outer_core
-
-  ! ADJOINT
-  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE_ADJOINT) :: b_displ_outer_core,b_accel_outer_core
-
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_OUTER_CORE_ADJOINT) :: &
-    vector_accel_outer_core,vector_displ_outer_core,b_vector_displ_outer_core
-
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: ibool_outer_core
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: &
-    xix_outer_core,xiy_outer_core,xiz_outer_core, &
-    etax_outer_core,etay_outer_core,etaz_outer_core, &
-    gammax_outer_core,gammay_outer_core,gammaz_outer_core
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: rhostore_outer_core,kappavstore_outer_core
-
-  ! adjoint kernels
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: rho_kl_outer_core,alpha_kl_outer_core
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_beta_kl_outer_core) :: beta_kl_outer_core
 
   ! local parameters
   real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,kappal
@@ -352,7 +324,7 @@
   real(kind=CUSTOM_REAL), dimension(5) :: b_epsilondev_loc
   real(kind=CUSTOM_REAL), dimension(5) :: epsilondev_loc
   real(kind=CUSTOM_REAL) :: div_displ,b_div_displ
-  real(kind=CUSTOM_REAL), dimension(3) :: gradxyz
+  real(kind=CUSTOM_REAL), dimension(NDIM) :: gradxyz
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: dummy_loc,b_dummy_loc
   integer :: ispec,iglob
   integer :: i,j,k,l
@@ -364,6 +336,9 @@
   integer :: ier
 
   ! outer_core -- compute the actual displacement and acceleration (NDIM,NGLOBMAX_OUTER_CORE)
+
+  ! safety check
+  if (.not. SAVE_KERNELS_OC) return
 
   if (.not. GPU_MODE) then
     ! on CPU
@@ -437,7 +412,9 @@
               gradxyz(3) = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
 
               ! assigns gradient field on global points
-              vector_accel_outer_core(:,iglob) = gradxyz(:)
+              vector_accel_outer_core(1,iglob) = gradxyz(1)
+              vector_accel_outer_core(2,iglob) = gradxyz(2)
+              vector_accel_outer_core(3,iglob) = gradxyz(3)
 
             endif ! mask_ibool
 
@@ -447,7 +424,7 @@
     enddo
 
     ! calculates gradient grad(displ) (also needed for boundary kernels)
-    if (SAVE_BOUNDARY_MESH .or. deviatoric_outercore) then
+    if (SAVE_KERNELS_BOUNDARY .or. deviatoric_outercore) then
       mask_ibool(:) = .false.
       do ispec = 1, NSPEC_OUTER_CORE
 
@@ -491,7 +468,9 @@
                 gradxyz(2) = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
                 gradxyz(3) = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
 
-                vector_displ_outer_core(:,iglob) = gradxyz(:)
+                vector_displ_outer_core(1,iglob) = gradxyz(1)
+                vector_displ_outer_core(2,iglob) = gradxyz(2)
+                vector_displ_outer_core(3,iglob) = gradxyz(3)
               endif ! mask_ibool
             enddo
           enddo
@@ -675,7 +654,7 @@
 
   else
     ! updates kernel contribution on GPU
-    if (deviatoric_outercore ) call exit_mpi(myrank,'deviatoric kernel on GPU not supported yet')
+    if (deviatoric_outercore) call exit_mpi(myrank,'deviatoric kernel on GPU not supported yet')
 
     ! computes contribution to density and bulk modulus kernel
     call compute_kernels_oc_gpu(Mesh_pointer,deltat)
@@ -712,6 +691,9 @@
 #else
   integer :: i,j,k
 #endif
+
+  ! safety check
+  if (.not. SAVE_KERNELS_IC) return
 
   if (.not. GPU_MODE) then
     ! on CPU
@@ -872,19 +854,25 @@
   subroutine compute_kernels_Hessian()
 
   use constants_solver
+  use constants, only: USE_SOURCE_RECEIVER_Hessian
   use specfem_par, only: deltat
   use specfem_par, only: GPU_MODE,Mesh_pointer
   use specfem_par_crustmantle
 
   implicit none
 
+  real(kind=CUSTOM_REAL), dimension(3, 3, NGLLX, NGLLY, NGLLZ) :: veloc_grad, b_veloc_grad
+  real(kind=CUSTOM_REAL), dimension(3, 3) :: vgrad, b_vgrad
+  real(kind=CUSTOM_REAL) :: hess_rho, hess_kappa, hess_mu
+
+  real(kind=CUSTOM_REAL), parameter :: FOUR_NINTH = (4.0/9.0)
+
   ! local parameters
   integer :: ispec,iglob
 #ifdef FORCE_VECTORIZATION
   integer :: ijk
-#else
-  integer :: i,j,k
 #endif
+  integer :: i,j,k
 
   if (.not. GPU_MODE) then
     ! on CPU
@@ -920,12 +908,163 @@
 !$OMP ENDDO
 !$OMP END PARALLEL
 
+    do ispec = 1, NSPEC_CRUST_MANTLE
+
+      call compute_gradient_crust_mantle(veloc_crust_mantle, veloc_grad, ispec)
+
+      if ( USE_SOURCE_RECEIVER_Hessian ) then
+        ! if using source-recevier Hessian, calculate the velocity gradient of backward adjoint wavefield
+        call compute_gradient_crust_mantle(b_veloc_crust_mantle, b_veloc_grad, ispec)
+      else
+        ! if using source-source Hessian, set the b_veloc_grad same as the wavefield
+        b_veloc_grad(:,:,:,:,:) = veloc_grad(:,:,:,:,:)
+      endif
+
+      do k = 1,NGLLZ
+        do j = 1,NGLLY
+          do i = 1,NGLLX
+            vgrad(:,:) = veloc_grad(:, :, i, j, k)
+            b_vgrad(:,:) = b_veloc_grad(:, :, i, j, k)
+
+            ! hess_rho = Vx,x * b_Vx,x + Vy,y * b_Vy,y + Vz,z * b_Vz,z
+            hess_rho = vgrad(1, 1) * b_vgrad(1, 1) &
+                     + vgrad(2, 2) * b_vgrad(2, 2) &
+                     + vgrad(3, 3) * b_vgrad(3, 3)
+
+            ! hess_kappa = (Vx,x + Vy,y + Vz,z) * (b_Vx,x + b_Vy,y + b_Vz,z)
+            hess_kappa = 3.0 * (vgrad(1, 1) + vgrad(2, 2) + vgrad(3, 3)) &
+                       * (b_vgrad(1, 1) + b_vgrad(2, 2) + b_vgrad(3, 3))
+
+            !hess_mu = (Vx,y + Vy,x) * (b_Vx,y + b_Vy,x)
+            !        + (Vy,z + Vz,y) * (b_Vy,z + b_Vz,y)
+            !        + (Vx,z + Vz,x) * (b_Vx,z + b_Vz,x)
+            hess_mu = (vgrad(1, 2) + vgrad(2, 1)) * (b_vgrad(1, 2) + b_vgrad(2, 1))  &
+                    + (vgrad(2, 3) + vgrad(3, 2)) * (b_vgrad(2, 3) + b_vgrad(3, 2))  &
+                    + (vgrad(1, 3) + vgrad(3, 1)) * (b_vgrad(1, 3) + b_vgrad(3, 1))  &
+                    + ((2.0*vgrad(1, 1)   - vgrad(2, 2)       - vgrad(3, 3)      ) * &
+                       (2.0*b_vgrad(1, 1) - b_vgrad(2, 2)     - b_vgrad(3, 3)    )   &
+                     + (-vgrad(1, 1)      + 2.0*vgrad(2, 2)   - vgrad(3, 3)      ) * &
+                       (-b_vgrad(1, 1)    + 2.0*b_vgrad(2, 2) - b_vgrad(3, 3)    )   &
+                     + (-vgrad(1, 1)      - vgrad(2, 2)       + 2.0*vgrad(3, 3)  ) * &
+                       (-b_vgrad(1, 1)    - b_vgrad(2, 2)     + 2.0*b_vgrad(3, 3))) * FOUR_NINTH
+
+            hess_rho_kl_crust_mantle(i, j, k, ispec) = hess_rho_kl_crust_mantle(i, j, k, ispec) + deltat * hess_rho
+            hess_kappa_kl_crust_mantle(i, j, k, ispec) = hess_kappa_kl_crust_mantle(i, j, k, ispec) + deltat * hess_kappa
+            hess_mu_kl_crust_mantle(i, j, k, ispec) = hess_mu_kl_crust_mantle(i, j, k, ispec) + deltat * hess_mu
+
+          enddo
+        enddo
+      enddo
+    enddo  ! end ispec
+
   else
     ! updates kernel contribution on GPU
 
     ! computes contribution to density and bulk modulus kernel
-    call compute_kernels_hess_gpu(Mesh_pointer,deltat)
+    call compute_kernels_hess_gpu(Mesh_pointer,deltat,USE_SOURCE_RECEIVER_Hessian)
 
   endif
 
   end subroutine compute_kernels_Hessian
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  ! Calculate the gradients (spatical derivatives) of the field f for 1 spectral-element.
+  ! The gradients for each GLL point are stored as:
+  ! | df_x/dx, df_y/dx, df_z/dx |
+  ! | df_x/dy, df_y/dy, df_z/dy |
+  ! | df_x/dz, df_y/dz, df_z/dz |
+
+  subroutine compute_gradient_crust_mantle(field, grad, ispec)
+
+    use constants_solver
+    use specfem_par, only: hprime_xx, hprime_yy, hprime_zz
+    use specfem_par_crustmantle, only: ibool_crust_mantle, &
+      xix_crust_mantle, xiy_crust_mantle, xiz_crust_mantle, &
+      etax_crust_mantle, etay_crust_mantle, etaz_crust_mantle, &
+      gammax_crust_mantle, gammay_crust_mantle, gammaz_crust_mantle
+
+    implicit none
+
+    ! global array of the filed
+    real(kind=CUSTOM_REAL), dimension(NDIM, NGLOB_CRUST_MANTLE), intent(in) :: field
+    real(kind=CUSTOM_REAL), dimension(3, 3, NGLLX, NGLLY, NGLLZ), intent(inout) :: grad
+    integer, intent(in) :: ispec
+
+    integer :: i, j, k, l
+
+    integer :: iglob
+    real(kind=CUSTOM_REAL) :: tempx1l, tempx2l, tempx3l, &
+      tempy1l, tempy2l, tempy3l, tempz1l, tempz2l, tempz3l
+    real(kind=CUSTOM_REAL) :: xixl, xiyl, xizl, &
+      etaxl, etayl, etazl, gammaxl, gammayl, gammazl
+
+    grad = 0._CUSTOM_REAL
+
+    do k=1, NGLLZ
+      do j=1, NGLLY
+        do i=1, NGLLX
+
+          tempx1l = 0._CUSTOM_REAL
+          tempx2l = 0._CUSTOM_REAL
+          tempx3l = 0._CUSTOM_REAL
+          tempy1l = 0._CUSTOM_REAL
+          tempy2l = 0._CUSTOM_REAL
+          tempy3l = 0._CUSTOM_REAL
+          tempz1l = 0._CUSTOM_REAL
+          tempz2l = 0._CUSTOM_REAL
+          tempz3l = 0._CUSTOM_REAL
+
+          do l = 1, NGLLX
+            iglob = ibool_crust_mantle(l, j, k, ispec)
+            tempx1l = tempx1l + field(1, iglob) * hprime_xx(i, l)
+            tempy1l = tempy1l + field(2, iglob) * hprime_xx(i, l)
+            tempz1l = tempz1l + field(3, iglob) * hprime_xx(i, l)
+          enddo
+
+          do l = 1, NGLLY
+            iglob = ibool_crust_mantle(i, l, k, ispec)
+            tempx2l = tempx2l + field(1, iglob) * hprime_yy(j, l)
+            tempy2l = tempy2l + field(2, iglob) * hprime_yy(j, l)
+            tempz2l = tempz2l + field(3, iglob) * hprime_yy(j, l)
+          enddo
+
+          do l = 1, NGLLY
+            iglob = ibool_crust_mantle(i, j, l, ispec)
+            tempx3l = tempx3l + field(1, iglob) * hprime_zz(k, l)
+            tempy3l = tempy3l + field(2, iglob) * hprime_zz(k, l)
+            tempz3l = tempz3l + field(3, iglob) * hprime_zz(k, l)
+          enddo
+
+          xixl = xix_crust_mantle(i, j, k, ispec)
+          xiyl = xiy_crust_mantle(i, j, k, ispec)
+          xizl = xiz_crust_mantle(i, j, k, ispec)
+          etaxl = etax_crust_mantle(i, j, k, ispec)
+          etayl = etay_crust_mantle(i, j, k, ispec)
+          etazl = etaz_crust_mantle(i, j, k, ispec)
+          gammaxl = gammax_crust_mantle(i, j, k, ispec)
+          gammayl = gammay_crust_mantle(i, j, k, ispec)
+          gammazl = gammaz_crust_mantle(i, j, k, ispec)
+
+          ! df_x/dx, df_x/dy, df_x/dz
+          grad(1, 1, i, j, k) = tempx1l * xixl + tempx2l * etaxl + tempx3l * gammaxl
+          grad(2, 1, i, j, k) = tempx1l * xiyl + tempx2l * etayl + tempx3l * gammayl
+          grad(3, 1, i, j, k) = tempx1l * xizl + tempx2l * etazl + tempx3l * gammazl
+
+          ! df_y/dx, df_y/dy, df_y/dz
+          grad(1, 2, i, j, k) = tempy1l * xixl + tempy2l * etaxl + tempy3l * gammaxl
+          grad(2, 2, i, j, k) = tempy1l * xiyl + tempy2l * etayl + tempy3l * gammayl
+          grad(3, 2, i, j, k) = tempy1l * xizl + tempy2l * etazl + tempy3l * gammazl
+
+          ! df_z/dx, df_z/dy, df_z/dz
+          grad(1, 3, i, j, k) = tempz1l * xixl + tempz2l * etaxl + tempz3l * gammaxl
+          grad(2, 3, i, j, k) = tempz1l * xiyl + tempz2l * etayl + tempz3l * gammayl
+          grad(3, 3, i, j, k) = tempz1l * xizl + tempz2l * etazl + tempz3l * gammazl
+
+        enddo  ! end i
+      enddo  ! end j
+    enddo  ! end k
+
+  end subroutine compute_gradient_crust_mantle

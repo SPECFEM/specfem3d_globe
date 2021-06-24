@@ -1,0 +1,5 @@
+# custom codecov setting
+ignore:
+  - src/gpu/boast/.*
+  - src/gpu/kernels.gen/.*
+  - src/gpu/kernels.test/.*

@@ -4,3 +4,6 @@
 *.adj binary
 S_squared binary
 *.ylm binary
+*.eps binary
+*.bz2 binary
+*.cmap binary

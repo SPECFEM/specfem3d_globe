@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -35,7 +35,7 @@
 
   use manager_adios
 
-#ifdef XSMM
+#ifdef USE_XSMM
   use my_libxsmm
 #endif
 
@@ -126,15 +126,17 @@
   endif
 
   ! asdf finalizes
-  if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3 &
-       .and. READ_ADJSRC_ASDF) then
+  if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3 .and. READ_ADJSRC_ASDF) then
     call asdf_cleanup()
   endif
 
-#ifdef XSMM
+#ifdef USE_XSMM
   ! finalizes LIBXSMM
   call libxsmm_finalize()
 #endif
+
+  ! synchronize all
+  call synchronize_all()
 
   ! frees dynamically allocated memory
   call finalize_simulation_cleanup()
@@ -166,6 +168,10 @@
   use specfem_par_noise
   use specfem_par_movie
   implicit none
+
+  ! from here on, no gpu data is needed anymore
+  ! frees allocated memory on GPU
+  if (GPU_MODE) call prepare_cleanup_device(Mesh_pointer,NCHUNKS_VAL)
 
   ! mass matrices
   ! crust/mantle
@@ -267,8 +273,7 @@
     deallocate(comp_dir_vect_source_N)
     deallocate(comp_dir_vect_source_Z_UP)
   endif
-
-  if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) deallocate(sourcearrays)
+  deallocate(sourcearrays)
   if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
     deallocate(iadj_vec)
     if (nadj_rec_local > 0) then
@@ -281,24 +286,28 @@
   ! receivers
   deallocate(islice_selected_rec,ispec_selected_rec, &
              xi_receiver,eta_receiver,gamma_receiver)
+  if (myrank == 0 .and. WRITE_SEISMOGRAMS_BY_MAIN) deallocate(islice_num_rec_local)
   deallocate(station_name,network_name, &
              stlat,stlon,stele,stbur)
-  deallocate(nu,number_receiver_global)
+  deallocate(nu_rec,number_receiver_global)
   if (nrec_local > 0) then
     deallocate(hxir_store, &
                hetar_store, &
                hgammar_store)
-    deallocate(hlagrange_store)
     if (SIMULATION_TYPE == 2) then
       deallocate(moment_der,stshift_der)
     endif
   endif
   deallocate(seismograms)
+  if (SAVE_SEISMOGRAMS_STRAIN) deallocate(seismograms_eps)
 
   ! kernels
   if (SIMULATION_TYPE == 3) then
     if (APPROXIMATE_HESS_KL) then
       deallocate(hess_kl_crust_mantle)
+      deallocate(hess_rho_kl_crust_mantle)
+      deallocate(hess_kappa_kl_crust_mantle)
+      deallocate(hess_mu_kl_crust_mantle)
     endif
     deallocate(beta_kl_outer_core)
   endif
@@ -310,6 +319,7 @@
   endif
   if (MOVIE_VOLUME) then
     deallocate(nu_3dmovie)
+    deallocate(mask_3dmovie,muvstore_crust_mantle_3dmovie)
   endif
 
   ! noise simulations

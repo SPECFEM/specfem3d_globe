@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -37,7 +37,7 @@
 
   implicit none
 
-  ! only master process writes out to main output file
+  ! only main process writes out to main output file
   ! file I/O in Fortran is buffered by default
   !
   ! note: Fortran2003 includes a FLUSH statement
@@ -74,3 +74,32 @@
 
   end subroutine system_command
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine flush_stdout()
+
+! flushes possible left-overs from print-statements
+
+  implicit none
+
+  logical :: is_connected
+
+  ! note: Cray systems don't flush print statements before ending with an MPI abort,
+  !       which often omits debugging statements with print before it.
+  !
+  !       to check which unit is used for standard output, one might also use a Fortran2003 module iso_Fortran_env:
+  !         use, intrinsic :: iso_Fortran_env, only: output_unit
+
+  ! checks default stdout unit 6
+  inquire(unit=6,opened=is_connected)
+  if (is_connected) &
+    flush(6)
+
+  ! checks Cray stdout unit 101
+  inquire(unit=101,opened=is_connected)
+  if (is_connected) &
+    flush(101)
+
+  end subroutine flush_stdout

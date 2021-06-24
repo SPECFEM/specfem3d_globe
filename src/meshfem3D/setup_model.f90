@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -27,18 +27,27 @@
 
   subroutine setup_model()
 
+  use constants, only: IMAIN
+
   use meshfem3D_par
 
   implicit none
+
+  ! local parameters
+  integer :: ier
 
   ! user output
   if (myrank == 0) call sm_output_info()
 
   ! dynamic allocation of mesh arrays
-  allocate(addressing(NCHUNKS,0:NPROC_XI-1,0:NPROC_ETA-1))
-  allocate(ichunk_slice(0:NPROCTOT-1))
-  allocate(iproc_xi_slice(0:NPROCTOT-1))
-  allocate(iproc_eta_slice(0:NPROCTOT-1))
+  allocate(addressing(NCHUNKS,0:NPROC_XI-1,0:NPROC_ETA-1),stat=ier)
+  if (ier /= 0) stop 'Error allocating array addressing'
+  addressing(:,:,:) = -1
+
+  allocate(ichunk_slice(0:NPROCTOT-1), &
+           iproc_xi_slice(0:NPROCTOT-1), &
+           iproc_eta_slice(0:NPROCTOT-1),stat=ier)
+  if (ier /= 0) stop 'Error allocating arrays ichunk_slice,...'
 
   ! creates global slice addressing for solver
   call create_addressing(NCHUNKS,NPROC,NPROC_ETA,NPROC_XI,NPROCTOT, &
@@ -54,9 +63,7 @@
                       NSPEC2D_ETA_FACE,NGLOB1D_RADIAL_CORNER)
 
   ! distributes 3D models
-  call meshfem3D_models_broadcast(NSPEC_REGIONS,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD, &
-                                  R80,R220,R670,RCMB,RICB, &
-                                  LOCAL_PATH)
+  call meshfem3D_models_broadcast()
 
   ! infos about additional mesh optimizations
   if (myrank == 0) then
@@ -79,7 +86,7 @@
           endif
         endif
       else
-        write(IMAIN,'(a,i1,a)') '   default ',NER_CRUST,'-layer crust'
+        write(IMAIN,'(a,i2,a)') '   default ',NER_CRUST,'-layer crust'
         if (SUPPRESS_MOHO_STRETCHING .or. (.not. TOPOGRAPHY)) then
           write(IMAIN,*) '  no element stretching for 3-D moho surface'
         else
@@ -108,6 +115,7 @@
   if (myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*)
+    call flush_IMAIN()
   endif
   call synchronize_all()
 
@@ -119,7 +127,11 @@
 
   subroutine sm_output_info()
 
+  use constants, only: IMAIN,NGLLX,NGLLY,NGLLZ,NGNOD,NGNOD2D,N_SLS
+  use shared_parameters, only: R_PLANET_KM
+
   use meshfem3D_models_par
+
   use meshfem3D_par, only: &
     MODEL,NEX_XI,NEX_ETA, &
     NPROC_XI,NPROC_ETA,NPROC,NCHUNKS,NPROCTOT, &
@@ -178,17 +190,21 @@
   endif
   if (ATTENUATION) then
     write(IMAIN,*) '  incorporating attenuation using ',N_SLS,' standard linear solids'
-    if (ATTENUATION_3D) write(IMAIN,*)'  using 3D attenuation model'
+    if (ATTENUATION_GLL ) then
+       write(IMAIN,*)'  using GLL attenuation model'
+    else if (ATTENUATION_3D) then
+       write(IMAIN,*)'  using 3D attenuation model'
+    endif
   else
     write(IMAIN,*) '  no attenuation'
   endif
   write(IMAIN,*)
 
   ! model mesh parameters
-  if (ISOTROPIC_3D_MANTLE) then
-    write(IMAIN,*) '  incorporating 3-D lateral variations'
+  if (MODEL_3D_MANTLE_PERTUBATIONS) then
+    write(IMAIN,*) '  incorporating 3-D lateral variations in the mantle'
   else
-    write(IMAIN,*) '  no 3-D lateral variations'
+    write(IMAIN,*) '  no 3-D lateral variations in the mantle'
   endif
   if (HETEROGEN_3D_MANTLE) then
     write(IMAIN,*) '  incorporating heterogeneities in the mantle'
@@ -206,9 +222,9 @@
     write(IMAIN,*) '  using unmodified 1D crustal model with two layers'
   endif
   if (TRANSVERSE_ISOTROPY) then
-    write(IMAIN,*) '  incorporating anisotropy'
+    write(IMAIN,*) '  incorporating transverse isotropy'
   else
-    write(IMAIN,*) '  no anisotropy'
+    write(IMAIN,*) '  no transverse isotropy'
   endif
   if (ANISOTROPIC_INNER_CORE) then
     write(IMAIN,*) '  incorporating anisotropic inner core'
@@ -222,7 +238,7 @@
   endif
   write(IMAIN,*)
 
-  write(IMAIN,*) 'Reference radius of the Earth used is ',R_EARTH_KM,' km'
+  write(IMAIN,*) 'Reference radius of the globe used is ',R_PLANET_KM,' km'
   write(IMAIN,*)
   write(IMAIN,*) 'Central cube is at a radius of ',R_CENTRAL_CUBE/1000.d0,' km'
 

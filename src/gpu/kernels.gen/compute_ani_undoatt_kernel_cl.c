@@ -5,7 +5,7 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -82,9 +82,6 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifndef IFLAG_IN_FICTITIOUS_CUBE\n\
 #define IFLAG_IN_FICTITIOUS_CUBE 11\n\
 #endif\n\
-#ifndef R_EARTH_KM\n\
-#define R_EARTH_KM 6371.0f\n\
-#endif\n\
 #ifndef COLORING_MIN_NSPEC_INNER_CORE\n\
 #define COLORING_MIN_NSPEC_INNER_CORE 1000\n\
 #endif\n\
@@ -136,10 +133,12 @@ void compute_element_strain_undoatt(const int ispec, const int ijk_ispec, const 
   float fac1;\n\
   float fac2;\n\
   float fac3;\n\
+\n\
   tx = get_local_id(0);\n\
   K = (tx) / (NGLL2);\n\
   J = (tx - ((K) * (NGLL2))) / (NGLLX);\n\
   I = tx - ((K) * (NGLL2)) - ((J) * (NGLLX));\n\
+\n\
   tempx1l = 0.0f;\n\
   tempx2l = 0.0f;\n\
   tempx3l = 0.0f;\n\
@@ -149,6 +148,7 @@ void compute_element_strain_undoatt(const int ispec, const int ijk_ispec, const 
   tempz1l = 0.0f;\n\
   tempz2l = 0.0f;\n\
   tempz3l = 0.0f;\n\
+\n\
   for (l = 0; l <= NGLLX - (1); l += 1) {\n\
     fac1 = sh_hprime_xx[(l) * (NGLLX) + I];\n\
     tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + l]) * (fac1);\n\
@@ -163,6 +163,7 @@ void compute_element_strain_undoatt(const int ispec, const int ijk_ispec, const 
     tempy3l = tempy3l + (s_dummyy_loc[(l) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
     tempz3l = tempz3l + (s_dummyz_loc[(l) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
   }\n\
+\n\
   offset = (ispec) * (NGLL3_PADDED) + tx;\n\
   xixl = d_xix[offset];\n\
   etaxl = d_etax[offset];\n\
@@ -182,6 +183,7 @@ void compute_element_strain_undoatt(const int ispec, const int ijk_ispec, const 
   duzdxl = (xixl) * (tempz1l) + (etaxl) * (tempz2l) + (gammaxl) * (tempz3l);\n\
   duzdyl = (xiyl) * (tempz1l) + (etayl) * (tempz2l) + (gammayl) * (tempz3l);\n\
   duzdzl = (xizl) * (tempz1l) + (etazl) * (tempz2l) + (gammazl) * (tempz3l);\n\
+\n\
   templ = (duxdxl + duydyl + duzdzl) * (0.3333333333333333f);\n\
   epsilondev_loc[0] = duxdxl - (templ);\n\
   epsilondev_loc[1] = duydyl - (templ);\n\
@@ -190,24 +192,28 @@ void compute_element_strain_undoatt(const int ispec, const int ijk_ispec, const 
   epsilondev_loc[4] = (duzdyl + duydzl) * (0.5f);\n\
   *(epsilon_trace_over_3) = templ;\n\
 }\n\
+\n\
 #if __OPENCL_C_VERSION__ && __OPENCL_C_VERSION__ >= 120\n\
 static\n\
 #endif\n\
 void compute_strain_product(float * prod, const float eps_trace_over_3, const float * epsdev, const float b_eps_trace_over_3, const float * b_epsdev){\n\
   float eps[(6)];\n\
   float b_eps[(6)];\n\
+\n\
   eps[0] = epsdev[0] + eps_trace_over_3;\n\
   eps[1] = epsdev[1] + eps_trace_over_3;\n\
   eps[2] =  -(eps[0] + eps[1]) + (eps_trace_over_3) * (3.0f);\n\
   eps[3] = epsdev[4];\n\
   eps[4] = epsdev[3];\n\
   eps[5] = epsdev[2];\n\
+\n\
   b_eps[0] = b_epsdev[0] + b_eps_trace_over_3;\n\
   b_eps[1] = b_epsdev[1] + b_eps_trace_over_3;\n\
   b_eps[2] =  -(b_eps[0] + b_eps[1]) + (b_eps_trace_over_3) * (3.0f);\n\
   b_eps[3] = b_epsdev[4];\n\
   b_eps[4] = b_epsdev[3];\n\
   b_eps[5] = b_epsdev[2];\n\
+\n\
   prod[0] = (eps[0]) * (b_eps[0]);\n\
   prod[1] = (eps[0]) * (b_eps[1]);\n\
   prod[1] = prod[1] + (eps[1]) * (b_eps[0]);\n\
@@ -260,6 +266,7 @@ void compute_strain_product(float * prod, const float eps_trace_over_3, const fl
   prod[20] = (eps[5]) * (b_eps[5]);\n\
   prod[20] = (prod[20]) * (4.0f);\n\
 }\n\
+\n\
 __kernel void compute_ani_undoatt_kernel(const __global float * epsilondev_xx, const __global float * epsilondev_yy, const __global float * epsilondev_xy, const __global float * epsilondev_xz, const __global float * epsilondev_yz, const __global float * epsilon_trace_over_3, __global float * cijkl_kl, const int NSPEC, const float deltat, const __global int * d_ibool, const __global float * d_b_displ, const __global float * d_xix, const __global float * d_xiy, const __global float * d_xiz, const __global float * d_etax, const __global float * d_etay, const __global float * d_etaz, const __global float * d_gammax, const __global float * d_gammay, const __global float * d_gammaz, const __global float * d_hprime_xx){\n\
   int ispec;\n\
   int ijk_ispec;\n\
@@ -276,12 +283,14 @@ __kernel void compute_ani_undoatt_kernel(const __global float * epsilondev_xx, c
   __local float s_dummyy_loc[(NGLL3)];\n\
   __local float s_dummyz_loc[(NGLL3)];\n\
   __local float sh_hprime_xx[(NGLL2)];\n\
+\n\
   ispec = get_group_id(0) + (get_group_id(1)) * (get_num_groups(0));\n\
   ijk_ispec = get_local_id(0) + (NGLL3) * (ispec);\n\
   tx = get_local_id(0);\n\
   if (tx < NGLL2) {\n\
     sh_hprime_xx[tx] = d_hprime_xx[tx];\n\
   }\n\
+\n\
   if (ispec < NSPEC) {\n\
     iglob = d_ibool[ijk_ispec] - (1);\n\
     s_dummyx_loc[tx] = d_b_displ[0 + (3) * (iglob)];\n\
@@ -289,6 +298,7 @@ __kernel void compute_ani_undoatt_kernel(const __global float * epsilondev_xx, c
     s_dummyz_loc[tx] = d_b_displ[2 + (3) * (iglob)];\n\
   }\n\
   barrier(CLK_LOCAL_MEM_FENCE);\n\
+\n\
   if (ispec < NSPEC) {\n\
     epsdev[0] = epsilondev_xx[ijk_ispec];\n\
     epsdev[1] = epsilondev_yy[ijk_ispec];\n\
@@ -296,8 +306,11 @@ __kernel void compute_ani_undoatt_kernel(const __global float * epsilondev_xx, c
     epsdev[3] = epsilondev_xz[ijk_ispec];\n\
     epsdev[4] = epsilondev_yz[ijk_ispec];\n\
     eps_trace_over_3 = epsilon_trace_over_3[ijk_ispec];\n\
+\n\
     compute_element_strain_undoatt(ispec, ijk_ispec, d_ibool, s_dummyx_loc, s_dummyy_loc, s_dummyz_loc, d_xix, d_xiy, d_xiz, d_etax, d_etay, d_etaz, d_gammax, d_gammay, d_gammaz, sh_hprime_xx, b_epsdev,  &b_eps_trace_over_3);\n\
+\n\
     compute_strain_product(prod, eps_trace_over_3, epsdev, b_eps_trace_over_3, b_epsdev);\n\
+\n\
     offset = ((ispec) * (NGLL3)) * (21) + tx;\n\
     // attention: following array is sorted differently on GPU and CPU, -> use 'resort_array' before copying back to cpu\n\
     for (i = 0; i <= 20; i += 1) {\n\

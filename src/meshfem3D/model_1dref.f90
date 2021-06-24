@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -106,6 +106,8 @@
   subroutine model_1dref(x,rho,vpv,vph,vsv,vsh,eta,Qkappa,Qmu,iregion_code,CRUSTAL)
 
   use constants
+  use shared_parameters, only: R_PLANET,RHOAV
+
   use model_1dref_par
 
   implicit none
@@ -134,7 +136,7 @@
   integer :: i
 
   ! compute real physical radius in meters
-  r = x * R_EARTH
+  r = x * R_PLANET
 
   i = 1
   do while(r >= Mref_V_radius_ref(i) .and. i /= NR_REF)
@@ -192,10 +194,10 @@
   ! time scaling (s^{-1}) is done with scaleval
   scaleval = dsqrt(PI*GRAV*RHOAV)
   rho = rho/RHOAV
-  vpv = vpv/(R_EARTH*scaleval)
-  vph = vph/(R_EARTH*scaleval)
-  vsv = vsv/(R_EARTH*scaleval)
-  vsh = vsh/(R_EARTH*scaleval)
+  vpv = vpv/(R_PLANET*scaleval)
+  vph = vph/(R_PLANET*scaleval)
+  vsv = vsv/(R_PLANET*scaleval)
+  vsh = vsh/(R_PLANET*scaleval)
 
   end subroutine model_1dref
 

@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -46,7 +46,11 @@
 
   end subroutine create_name_database
 
-subroutine create_name_database_adios(prname,iregion_code,LOCAL_PATH)
+!
+!-------------------------------------------------------------------------------
+!
+
+  subroutine create_name_database_adios(prname,iregion_code,LOCAL_PATH)
 
   ! create the name of the database for the mesher and the solver
 

@@ -58,7 +58,7 @@
     <var name="OUTPUT_SEISMOS_SAC_ALPHANUM"  path="/specfem3D_globe_parameter_file" type="byte"/>
     <var name="OUTPUT_SEISMOS_SAC_BINARY"    path="/specfem3D_globe_parameter_file" type="byte"/>
     <var name="ROTATE_SEISMOGRAMS_RT"        path="/specfem3D_globe_parameter_file" type="byte"/>
-    <var name="WRITE_SEISMOGRAMS_BY_MASTER"  path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="WRITE_SEISMOGRAMS_BY_MAIN"    path="/specfem3D_globe_parameter_file" type="byte"/>
     <var name="SAVE_ALL_SEISMOS_IN_ONE_FILE" path="/specfem3D_globe_parameter_file" type="byte"/>
     <var name="USE_BINARY_FOR_LARGE_FILE"    path="/specfem3D_globe_parameter_file" type="byte"/>
     <!--************************************************************-->

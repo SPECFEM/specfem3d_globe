@@ -4,7 +4,7 @@
 #       this is using C as a base and installs gfortran in the test environment
 
 language: c
-dist: trusty
+dist: xenial
 sudo: required
 
 os: linux
@@ -25,7 +25,6 @@ env:
     #   TESTFLAGS    - flags used for configuration
     #   TESTCOV      - determines whether or not (0/1) code coverage flags are used
     #   CUDA         - flag for compilation with CUDA
-    #   CUDA_VERSION - specifies CUDA toolkit version
 
     # code coverage: using coverage flags
     - TESTID=1 TESTDIR=1 TESTCOV=1 TESTFLAGS="" CUDA=false
@@ -63,6 +62,32 @@ env:
     # regular kernel example
     - TESTID=12 TESTDIR=4 TESTCOV=0 TESTFLAGS="--enable-vectorization" CUDA=false
 
+    # regional_sgloberani
+    - TESTID=13 TESTDIR=5 TESTCOV=0 TESTFLAGS="--enable-vectorization" CUDA=false
+
+    # global_full_sphericalharmonic_model
+    #- TESTID=14 TESTDIR=6 TESTCOV=0 TESTFLAGS="--enable-vectorization" CUDA=false
+
+    # regional s40rts compilation w/ CUDA
+    - TESTID=15 TESTDIR=7 TESTCOV=0 TESTFLAGS="--with-cuda=cuda5" CUDA=true
+
+    # regional s40rts compilation w/ OpenCL (provided from CUDA library)
+    - TESTID=16 TESTDIR=7 TESTCOV=0 TESTFLAGS="--with-opencl" CUDA=true OPENCL=true
+
+    # regional_small_adjoint - pure adjoint example
+    #- TESTID=17 TESTDIR=8 TESTCOV=0 TESTFLAGS="" CUDA=false
+
+    # regional mars
+    - TESTID=18 TESTDIR=9 TESTCOV=0 TESTFLAGS="" CUDA=false
+
+    # regional moon
+    - TESTID=19 TESTDIR=10 TESTCOV=0 TESTFLAGS="" CUDA=false
+
+    # regional LDDRK
+    - TESTID=20 TESTDIR=11 TESTCOV=0 TESTFLAGS="--enable-vectorization" CUDA=false
+
+    # regional noise example
+    - TESTID=21 TESTDIR=12 TESTCOV=0 TESTFLAGS="--enable-vectorization" CUDA=false
 
 before_install:
   # informations on git
@@ -80,7 +105,11 @@ before_install:
   #- test -n $CC && unset CC
 
   # updates repository
-  - sudo apt-get update
+  - |
+    travis_retry sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 6B05F25D762E3157
+    travis_retry sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 78BD65473CB3BD13
+    travis_retry sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 762E3157
+    travis_retry sudo apt-get update
 
 
 install:

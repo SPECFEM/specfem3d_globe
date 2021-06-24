@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -49,7 +49,7 @@
     NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
     NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
     NSPEC2D_BOTTOM,NSPEC2D_TOP,NSPEC_REGIONS,NGLOB_REGIONS, &
-    NGLOB1D_RADIAL,NUMCORNERS_SHARED,NGLLX,NGLLY,NGLLZ
+    NGLOB1D_RADIAL,NUMCORNERS_SHARED
 
   use MPI_interfaces_par
 
@@ -194,7 +194,7 @@
     NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
     NGLOB1D_RADIAL,NSPEC2D_BOTTOM, &
     NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
-    NPROC_XI,NPROC_ETA,NCHUNKS,OUTPUT_FILES,IIN,INCLUDE_CENTRAL_CUBE, &
+    NPROC_XI,NPROC_ETA,NCHUNKS,OUTPUT_FILES,INCLUDE_CENTRAL_CUBE, &
     iproc_xi,iproc_eta,ichunk,addressing, &
     xstore_glob,ystore_glob,zstore_glob
 
@@ -385,28 +385,28 @@
 
       ! allocate buffers for cube and slices
       allocate(sender_from_slices_to_cube(non_zero_nb_msgs_theor_in_cube), &
-              buffer_all_cube_from_slices(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices,NDIM), &
-              buffer_slices(npoin2D_cube_from_slices,NDIM), &
-              buffer_slices2(npoin2D_cube_from_slices,NDIM), &
-              ibool_central_cube(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices),stat=ier)
+               buffer_all_cube_from_slices(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices,NDIM), &
+               buffer_slices(npoin2D_cube_from_slices,NDIM), &
+               buffer_slices2(npoin2D_cube_from_slices,NDIM), &
+               ibool_central_cube(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices),stat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'Error allocating cube buffers')
 
       ! handles the communications with the central cube if it was included in the mesh
       ! create buffers to assemble with the central cube
       call create_central_cube_buffers(iproc_xi,iproc_eta,ichunk, &
-                 NPROC_XI,NPROC_ETA,NCHUNKS, &
-                 NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
-                 NSPEC2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NSPEC2DMAX_YMIN_YMAX(IREGION_INNER_CORE), &
-                 NSPEC2D_BOTTOM(IREGION_INNER_CORE), &
-                 addressing,ibool,idoubling, &
-                 xstore_glob,ystore_glob,zstore_glob, &
-                 nspec2D_xmin_inner_core,nspec2D_xmax_inner_core, &
-                 nspec2D_ymin_inner_core,nspec2D_ymax_inner_core, &
-                 ibelm_xmin_inner_core,ibelm_xmax_inner_core, &
-                 ibelm_ymin_inner_core,ibelm_ymax_inner_core,ibelm_bottom_inner_core, &
-                 nb_msgs_theor_in_cube,non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices, &
-                 receiver_cube_from_slices,sender_from_slices_to_cube,ibool_central_cube, &
-                 buffer_slices,buffer_slices2,buffer_all_cube_from_slices)
+                                       NPROC_XI,NPROC_ETA,NCHUNKS, &
+                                       NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
+                                       NSPEC2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NSPEC2DMAX_YMIN_YMAX(IREGION_INNER_CORE), &
+                                       NSPEC2D_BOTTOM(IREGION_INNER_CORE), &
+                                       addressing,ibool,idoubling, &
+                                       xstore_glob,ystore_glob,zstore_glob, &
+                                       nspec2D_xmin_inner_core,nspec2D_xmax_inner_core, &
+                                       nspec2D_ymin_inner_core,nspec2D_ymax_inner_core, &
+                                       ibelm_xmin_inner_core,ibelm_xmax_inner_core, &
+                                       ibelm_ymin_inner_core,ibelm_ymax_inner_core,ibelm_bottom_inner_core, &
+                                       nb_msgs_theor_in_cube,non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices, &
+                                       receiver_cube_from_slices,sender_from_slices_to_cube,ibool_central_cube, &
+                                       buffer_slices,buffer_slices2,buffer_all_cube_from_slices)
 
       if (myrank == 0) write(IMAIN,*)
 

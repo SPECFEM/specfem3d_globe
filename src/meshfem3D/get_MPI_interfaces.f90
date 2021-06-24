@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -26,13 +26,12 @@
 !=====================================================================
 
   subroutine get_MPI_interfaces(myrank,NGLOB,NSPEC, &
-                                    test_flag,my_neighbors,nibool_neighbors,ibool_neighbors, &
-                                    num_interfaces,max_nibool_interfaces, &
-                                    max_nibool,MAX_NEIGHBORS, &
-                                    ibool, &
-                                    is_on_a_slice_edge, &
-                                    IREGION,add_central_cube,idoubling,INCLUDE_CENTRAL_CUBE, &
-                                    xstore,ystore,zstore,NPROCTOT)
+                                test_flag,my_neighbors,nibool_neighbors,ibool_neighbors, &
+                                num_interfaces,max_nibool_interfaces, &
+                                max_nibool,MAX_NEIGHBORS, &
+                                ibool,is_on_a_slice_edge, &
+                                IREGION,add_central_cube,idoubling,INCLUDE_CENTRAL_CUBE, &
+                                xstore,ystore,zstore,NPROCTOT)
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,IREGION_INNER_CORE,IFLAG_IN_FICTITIOUS_CUBE
   implicit none
@@ -59,18 +58,43 @@
 
   real(kind=CUSTOM_REAL),dimension(NGLOB),intent(in) :: xstore,ystore,zstore
 
-  integer :: NPROCTOT
+  integer,intent(in) :: NPROCTOT
 
   ! local parameters
-  integer :: ispec,iglob,j,k
+  integer :: ispec,iglob,j,k,ier
   integer :: iface,iedge,icorner
   integer :: ii,iinterface,icurrent,rank
   integer :: npoin
   logical :: is_done,ispec_is_outer
-  integer,dimension(NGLOB) :: work_test_flag
-  logical,dimension(NSPEC) :: work_ispec_is_outer
+  ! allocatable work arrays (too avoid segmentation faults for large arrays)
+  integer,dimension(:),allocatable :: work_test_flag
+  logical,dimension(:),allocatable :: work_ispec_is_outer
+  logical,dimension(:,:),allocatable :: work_points_present
+  ! flag to use work_points_present(:,:) array to check for unique point entries on MPI interfaces
+  ! turning it on might help with performance; testing with gfortran compiler shows however slight slow-downs...
+  logical, parameter :: USE_WORK_POINTS_ARRAY = .false.
 
   integer,parameter :: MID = (NGLLX+1)/2
+
+  ! debug
+  !print *,'MPI interface: b',IREGION,add_central_cube,INCLUDE_CENTRAL_CUBE
+
+  ! allocates work arrays
+  allocate(work_test_flag(NGLOB), &
+           work_ispec_is_outer(NSPEC),stat=ier)
+  if (ier /= 0) stop 'Error allocating work arrays'
+  work_test_flag(:) = 0
+  work_ispec_is_outer(:) = .false.
+
+  ! allocates work array for flags on interface points
+  if (USE_WORK_POINTS_ARRAY) then
+    allocate(work_points_present(NGLOB,MAX_NEIGHBORS),stat=ier)
+    if (ier /= 0) stop 'Error allocating work_points_present array'
+  else
+    ! dummy array
+    allocate(work_points_present(1,1))
+  endif
+  work_points_present(:,:) = .false.
 
   ! initializes
   if (add_central_cube) then
@@ -202,7 +226,8 @@
             call add_interface_point(iglob,rank,icurrent, &
                                      nibool_neighbors,MAX_NEIGHBORS, &
                                      ibool_neighbors,max_nibool, &
-                                     work_test_flag,NGLOB,myrank, &
+                                     work_test_flag,work_points_present,USE_WORK_POINTS_ARRAY, &
+                                     NGLOB,myrank, &
                                      .true.,add_central_cube)
             ! debug
             if (work_test_flag(iglob) < 0) then
@@ -355,7 +380,8 @@
           call add_interface_point(iglob,rank,icurrent, &
                                    nibool_neighbors,MAX_NEIGHBORS, &
                                    ibool_neighbors,max_nibool, &
-                                   work_test_flag,NGLOB,myrank, &
+                                   work_test_flag,work_points_present,USE_WORK_POINTS_ARRAY, &
+                                   NGLOB,myrank, &
                                    .true.,add_central_cube)
 
           ! debug
@@ -467,7 +493,8 @@
         call add_interface_point(iglob,rank,icurrent, &
                                  nibool_neighbors,MAX_NEIGHBORS, &
                                  ibool_neighbors,max_nibool, &
-                                 work_test_flag,NGLOB,myrank, &
+                                 work_test_flag,work_points_present,USE_WORK_POINTS_ARRAY, &
+                                 NGLOB,myrank, &
                                  .false.,add_central_cube)
 
         ! debug
@@ -570,6 +597,10 @@
   ! re-sets flags for outer elements
   is_on_a_slice_edge(:) = work_ispec_is_outer(:)
 
+  ! frees arrays
+  deallocate(work_test_flag,work_ispec_is_outer)
+  deallocate(work_points_present)
+
   end subroutine get_MPI_interfaces
 
 !
@@ -577,9 +608,9 @@
 !
 
   subroutine sort_MPI_interface(myrank,npoin,ibool_n, &
-                                    NGLOB,xstore,ystore,zstore)
+                                NGLOB,xstore,ystore,zstore)
 
-  use constants, only: CUSTOM_REAL,SIZE_REAL
+  use constants, only: CUSTOM_REAL
 
   implicit none
 
@@ -599,13 +630,13 @@
 
   ! allocate arrays for buffers with maximum size
   allocate(ibool_selected(npoin), &
-          xstore_selected(npoin), &
-          ystore_selected(npoin), &
-          zstore_selected(npoin), &
-          ninseg(npoin), &
-          iglob(npoin), &
-          locval(npoin), &
-          ifseg(npoin),stat=ier)
+           xstore_selected(npoin), &
+           ystore_selected(npoin), &
+           zstore_selected(npoin), &
+           ninseg(npoin), &
+           iglob(npoin), &
+           locval(npoin), &
+           ifseg(npoin),stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error sort MPI interface: allocating temporary sorting arrays')
 
   ! sets up working arrays
@@ -644,7 +675,8 @@
   subroutine add_interface_point(iglob,rank,icurrent, &
                                  nibool_neighbors,MAX_NEIGHBORS, &
                                  ibool_neighbors,max_nibool, &
-                                 work_test_flag,NGLOB,myrank, &
+                                 work_test_flag,work_points_present,USE_WORK_POINTS_ARRAY, &
+                                 NGLOB,myrank, &
                                  is_face_edge,add_central_cube)
 
 
@@ -658,7 +690,9 @@
   integer, dimension(max_nibool,MAX_NEIGHBORS),intent(inout) :: ibool_neighbors
 
   integer,intent(in) :: NGLOB
-  integer,dimension(NGLOB) :: work_test_flag
+  integer,dimension(NGLOB),intent(inout) :: work_test_flag
+  logical,dimension(NGLOB,MAX_NEIGHBORS),intent(inout) :: work_points_present
+  logical,intent(in) :: USE_WORK_POINTS_ARRAY
 
   logical,intent(in) :: is_face_edge,add_central_cube
 
@@ -670,13 +704,20 @@
   !if (work_test_flag(iglob) <= 0 ) cycle ! continues to next point
 
   ! checks that we take each global point (on edges and corners) only once
-  is_done = .false.
-  do i = 1,nibool_neighbors(icurrent)
-    if (ibool_neighbors(i,icurrent) == iglob) then
-      is_done = .true.
-      exit
-    endif
-  enddo
+  if (USE_WORK_POINTS_ARRAY) then
+    ! way 1: checks flag if already added as point
+    is_done = work_points_present(iglob,icurrent)
+  else
+    ! way 2: explicit looping over interface to see if points has been added;
+    !        avoids the need for array work_points_present, but is slower for large MPI interfaces
+    is_done = .false.
+    do i = 1,nibool_neighbors(icurrent)
+      if (ibool_neighbors(i,icurrent) == iglob) then
+        is_done = .true.
+        exit
+      endif
+    enddo
+  endif
 
   ! checks if anything to do
   if (is_done) then
@@ -700,9 +741,10 @@
   if (work_test_flag(iglob) <= 0) then
     ! we might have missed an interface point on an edge, just re-set to missing value
     print *,'warning ',myrank,' flag: missed rank=',rank
-    print *,'  flag=',work_test_flag(iglob),'missed iglob=',iglob,'interface=',icurrent
+    print *,'  flag=',work_test_flag(iglob),'missed iglob=',iglob,'interface=',icurrent,'is_face_edge',is_face_edge
     print *
   endif
+
   ! we might have missed an interface point on an edge, just re-set to missing value
   if (is_face_edge) then
     if (work_test_flag(iglob) < (rank + 1)) then
@@ -714,11 +756,17 @@
   ! adds point
   ! increases number of total points on this interface
   nibool_neighbors(icurrent) = nibool_neighbors(icurrent) + 1
+
   if (nibool_neighbors(icurrent) > max_nibool) &
       call exit_mpi(myrank,'interface face exceeds max_nibool range')
 
   ! stores interface iglob index
   ibool_neighbors( nibool_neighbors(icurrent),icurrent ) = iglob
+
+  ! way 1: sets flag on point added
+  if (USE_WORK_POINTS_ARRAY) then
+    work_points_present(iglob,icurrent) = .true.
+  endif
 
   ! re-sets flag
   work_test_flag(iglob) = work_test_flag(iglob) - ( rank + 1 )

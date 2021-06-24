@@ -1,0 +1,440 @@
+  running script...
+
+
+Thu Jun 25 01:02:50 CEST 2020
+starting MPI mesher on 4 processors
+
+  mesher done: Thu Jun 25 01:02:59 CEST 2020
+
+
+Thu Jun 25 01:03:01 CEST 2020
+starting run in current directory /Users/Shared/SPECFEM3D_GLOBE/EXAMPLES/regional_s40rts
+
+finished successfully
+Thu Jun 25 01:03:37 CEST 2020
+
+  creating movie files...
+
+
+ reading parameter file
+
+ 1 = create files in OpenDX format
+ 2 = create files in AVS UCD format with individual files
+ 3 = create files in AVS UCD format with one time-dependent file
+ 4 = create files in GMT xyz Ascii long/lat/U format
+ any other value = exit
+
+ enter value:
+ movie frames have been saved every          200  time steps
+
+ enter first time step of movie (e.g. 1)
+ enter last time step of movie (e.g.         4200 or -1 for all)
+ enter component (e.g. 1=Z, 2=N, 3=E)
+
+ --------
+
+
+ Recombining all movie frames to create a movie
+
+
+ There are            4  slices numbered from 0 to            3
+
+
+ Allocating arrays for reading data of size         6400 =  0.146484375     MB
+
+
+ looping from            1  to         4200  every          200  time steps
+
+ total number of frames will be           21
+
+ there are a total of         4096  OpenDX "elements" at the surface
+
+
+ Allocating arrays of size        16384
+
+
+
+ reading snapshot time step          200  out of         4200
+
+   file ./OUTPUT_FILES//moviedata000200
+
+   data ux min/max:   -3.82579401E-06   1.31602837E-06
+   data uy min/max:   -2.82825658E-06   2.53267262E-06
+   data uz min/max:   -2.12205418E-06   1.26115481E-06
+
+
+ minimum amplitude in current snapshot =   -1.0090464002132649E-006
+ maximum amplitude in current snapshot =    2.9661185863005812E-007
+
+ sorting... 
+ sorting list of points
+
+ found a total of         4225  points
+ initial number of points (with multiples) was        16384
+
+ reading snapshot time step          400  out of         4200
+
+   file ./OUTPUT_FILES//moviedata000400
+
+   data ux min/max:   -3.45799199E-05   1.25647475E-05
+   data uy min/max:   -2.52968530E-05   2.08870842E-05
+   data uz min/max:   -1.73025710E-05   1.38245368E-05
+
+
+ minimum amplitude in current snapshot =   -7.0498772402061149E-006
+ maximum amplitude in current snapshot =    2.2430267563322559E-006
+
+ sorting... 
+ sorting list of points
+
+ found a total of         4225  points
+ initial number of points (with multiples) was        16384
+
+ reading snapshot time step          600  out of         4200
+
+   file ./OUTPUT_FILES//moviedata000600
+
+   data ux min/max:   -8.77085622E-05   3.83869301E-05
+   data uy min/max:   -6.94557020E-05   5.74437108E-05
+   data uz min/max:   -4.40133626E-05   3.81502832E-05
+
+
+ minimum amplitude in current snapshot =   -1.5717025235062465E-005
+ maximum amplitude in current snapshot =    7.4518447945592925E-006
+
+ sorting... 
+ sorting list of points
+
+ found a total of         4225  points
+ initial number of points (with multiples) was        16384
+
+ reading snapshot time step          800  out of         4200
+
+   file ./OUTPUT_FILES//moviedata000800
+
+   data ux min/max:   -6.81605961E-05   3.41088598E-05
+   data uy min/max:   -5.60522712E-05   4.66405399E-05
+   data uz min/max:   -3.34580836E-05   3.10948744E-05
+
+
+ minimum amplitude in current snapshot =   -1.0571029633865692E-005
+ maximum amplitude in current snapshot =    8.1014286479330622E-006
+
+ sorting... 
+ sorting list of points
+
+ found a total of         4225  points
+ initial number of points (with multiples) was        16384
+
+ reading snapshot time step         1000  out of         4200
+
+   file ./OUTPUT_FILES//moviedata001000
+
+   data ux min/max:   -1.51160839E-05   6.19841558E-06
+   data uy min/max:   -1.08901540E-05   9.02893680E-06
+   data uz min/max:   -6.63174387E-06   6.55920667E-06
+
+
+ minimum amplitude in current snapshot =   -2.8548356567625888E-006
+ maximum amplitude in current snapshot =    2.5316098799521569E-006
+
+ sorting... 
+ sorting list of points
+
+ found a total of         4225  points
+ initial number of points (with multiples) was        16384
+
+ reading snapshot time step         1200  out of         4200
+
+   file ./OUTPUT_FILES//moviedata001200
+
+   data ux min/max:   -3.23602899E-06   3.19201763E-06
+   data uy min/max:   -3.59101773E-06   3.40379165E-06
+   data uz min/max:   -2.97669453E-06   2.24611449E-06
+
+
+ minimum amplitude in current snapshot =   -2.5111560262303101E-006
+ maximum amplitude in current snapshot =    1.9196534140064614E-006
+
+ sorting... 
+ sorting list of points
+
+ found a total of         4225  points
+ initial number of points (with multiples) was        16384
+
+ reading snapshot time step         1400  out of         4200
+
+   file ./OUTPUT_FILES//moviedata001400
+
+   data ux min/max:   -2.55587952E-06   2.83560189E-06
+   data uy min/max:   -3.02662784E-06   2.73863020E-06
+   data uz min/max:   -2.04087428E-06   2.03727018E-06
+
+
+ minimum amplitude in current snapshot =   -1.8872333384933881E-006
+ maximum amplitude in current snapshot =    1.9599735878728097E-006
+
+ sorting... 
+ sorting list of points
+
+ found a total of         4225  points
+ initial number of points (with multiples) was        16384
+
+ reading snapshot time step         1600  out of         4200
+
+   file ./OUTPUT_FILES//moviedata001600
+
+   data ux min/max:   -2.26720294E-06   2.55989539E-06
+   data uy min/max:   -2.57931742E-06   2.36371557E-06
+   data uz min/max:   -1.69175939E-06   1.90798573E-06
+
+
+ minimum amplitude in current snapshot =   -1.4771288761039614E-006
+ maximum amplitude in current snapshot =    1.8205835203843890E-006
+
+ sorting... 
+ sorting list of points
+
+ found a total of         4225  points
+ initial number of points (with multiples) was        16384
+
+ reading snapshot time step         1800  out of         4200
+
+   file ./OUTPUT_FILES//moviedata001800
+
+   data ux min/max:   -1.87927310E-06   2.09684299E-06
+   data uy min/max:   -2.28405224E-06   2.11298288E-06
+   data uz min/max:   -1.51696588E-06   1.73223418E-06
+
+
+ minimum amplitude in current snapshot =   -1.2053405953338370E-006
+ maximum amplitude in current snapshot =    1.7257121953662136E-006
+
+ sorting... 
+ sorting list of points
+
+ found a total of         4225  points
+ initial number of points (with multiples) was        16384
+
+ reading snapshot time step         2000  out of         4200
+
+   file ./OUTPUT_FILES//moviedata002000
+
+   data ux min/max:   -1.64798007E-06   1.80351924E-06
+   data uy min/max:   -2.08029996E-06   1.85889348E-06
+   data uz min/max:   -1.33460708E-06   1.50278606E-06
+
+
+ minimum amplitude in current snapshot =   -1.0561332146608038E-006
+ maximum amplitude in current snapshot =    1.5547816474281717E-006
+
+ sorting... 
+ sorting list of points
+
+ found a total of         4225  points
+ initial number of points (with multiples) was        16384
+
+ reading snapshot time step         2200  out of         4200
+
+   file ./OUTPUT_FILES//moviedata002200
+
+   data ux min/max:   -1.48633956E-06   1.53676638E-06
+   data uy min/max:   -1.86075044E-06   1.66404050E-06
+   data uz min/max:   -1.15457340E-06   1.37526638E-06
+
+
+ minimum amplitude in current snapshot =   -1.0618168744258583E-006
+ maximum amplitude in current snapshot =    1.4224244750948856E-006
+
+ sorting... 
+ sorting list of points
+
+ found a total of         4225  points
+ initial number of points (with multiples) was        16384
+
+ reading snapshot time step         2400  out of         4200
+
+   file ./OUTPUT_FILES//moviedata002400
+
+   data ux min/max:   -1.38433370E-06   1.46181014E-06
+   data uy min/max:   -1.67643293E-06   1.49286473E-06
+   data uz min/max:   -9.93696517E-07   1.32676109E-06
+
+
+ minimum amplitude in current snapshot =   -9.5881171091605211E-007
+ maximum amplitude in current snapshot =    1.3581018265540479E-006
+
+ sorting... 
+ sorting list of points
+
+ found a total of         4225  points
+ initial number of points (with multiples) was        16384
+
+ reading snapshot time step         2600  out of         4200
+
+   file ./OUTPUT_FILES//moviedata002600
+
+   data ux min/max:   -1.27246210E-06   1.33432036E-06
+   data uy min/max:   -1.56886301E-06   1.37845905E-06
+   data uz min/max:   -9.25458266E-07   1.28804015E-06
+
+
+ minimum amplitude in current snapshot =   -9.0003254626935814E-007
+ maximum amplitude in current snapshot =    1.2692030395555776E-006
+
+ sorting... 
+ sorting list of points
+
+ found a total of         4225  points
+ initial number of points (with multiples) was        16384
+
+ reading snapshot time step         2800  out of         4200
+
+   file ./OUTPUT_FILES//moviedata002800
+
+   data ux min/max:   -1.22835957E-06   1.30729200E-06
+   data uy min/max:   -1.48005188E-06   1.27585747E-06
+   data uz min/max:   -8.42170152E-07   1.12434782E-06
+
+
+ minimum amplitude in current snapshot =   -8.6848945102246944E-007
+ maximum amplitude in current snapshot =    1.1962895314354682E-006
+
+ sorting... 
+ sorting list of points
+
+ found a total of         4225  points
+ initial number of points (with multiples) was        16384
+
+ reading snapshot time step         3000  out of         4200
+
+   file ./OUTPUT_FILES//moviedata003000
+
+   data ux min/max:   -1.17890966E-06   1.20696870E-06
+   data uy min/max:   -1.42220574E-06   1.19883350E-06
+   data uz min/max:   -7.96417226E-07   1.13240753E-06
+
+
+ minimum amplitude in current snapshot =   -7.7607944604096701E-007
+ maximum amplitude in current snapshot =    1.1393588010832900E-006
+
+ sorting... 
+ sorting list of points
+
+ found a total of         4225  points
+ initial number of points (with multiples) was        16384
+
+ reading snapshot time step         3200  out of         4200
+
+   file ./OUTPUT_FILES//moviedata003200
+
+   data ux min/max:   -1.12439488E-06   1.16223180E-06
+   data uy min/max:   -1.33074036E-06   1.12329610E-06
+   data uz min/max:   -8.00790531E-07   1.07031622E-06
+
+
+ minimum amplitude in current snapshot =   -7.6755179634346860E-007
+ maximum amplitude in current snapshot =    1.0811908168761875E-006
+
+ sorting... 
+ sorting list of points
+
+ found a total of         4225  points
+ initial number of points (with multiples) was        16384
+
+ reading snapshot time step         3400  out of         4200
+
+   file ./OUTPUT_FILES//moviedata003400
+
+   data ux min/max:   -1.06762388E-06   1.20191987E-06
+   data uy min/max:   -1.31146305E-06   1.04702690E-06
+   data uz min/max:   -7.32712465E-07   1.02432045E-06
+
+
+ minimum amplitude in current snapshot =   -7.4668173510872293E-007
+ maximum amplitude in current snapshot =    1.0397264986750088E-006
+
+ sorting... 
+ sorting list of points
+
+ found a total of         4225  points
+ initial number of points (with multiples) was        16384
+
+ reading snapshot time step         3600  out of         4200
+
+   file ./OUTPUT_FILES//moviedata003600
+
+   data ux min/max:   -9.91200068E-07   1.13240662E-06
+   data uy min/max:   -1.26890848E-06   1.02309673E-06
+   data uz min/max:   -7.01376962E-07   1.01107776E-06
+
+
+ minimum amplitude in current snapshot =   -7.1153266389956116E-007
+ maximum amplitude in current snapshot =    1.0642456800269429E-006
+
+ sorting... 
+ sorting list of points
+
+ found a total of         4225  points
+ initial number of points (with multiples) was        16384
+
+ reading snapshot time step         3800  out of         4200
+
+   file ./OUTPUT_FILES//moviedata003800
+
+   data ux min/max:   -9.44014346E-07   1.13762326E-06
+   data uy min/max:   -1.25730514E-06   9.79413471E-07
+   data uz min/max:   -6.77003129E-07   9.79559331E-07
+
+
+ minimum amplitude in current snapshot =   -6.6663187681115232E-007
+ maximum amplitude in current snapshot =    9.5193013294192497E-007
+
+ sorting... 
+ sorting list of points
+
+ found a total of         4225  points
+ initial number of points (with multiples) was        16384
+
+ reading snapshot time step         4000  out of         4200
+
+   file ./OUTPUT_FILES//moviedata004000
+
+   data ux min/max:   -9.40803034E-07   1.16135891E-06
+   data uy min/max:   -1.23403538E-06   9.41963435E-07
+   data uz min/max:   -6.56833720E-07   9.25326788E-07
+
+
+ minimum amplitude in current snapshot =   -6.7455761154633365E-007
+ maximum amplitude in current snapshot =    8.4858163518219953E-007
+
+ sorting... 
+ sorting list of points
+
+ found a total of         4225  points
+ initial number of points (with multiples) was        16384
+
+ reading snapshot time step         4200  out of         4200
+
+   file ./OUTPUT_FILES//moviedata004200
+
+   data ux min/max:   -9.78930984E-07   1.15017497E-06
+   data uy min/max:   -1.23481868E-06   1.01571936E-06
+   data uz min/max:   -6.59688453E-07   8.15899341E-07
+
+
+ minimum amplitude in current snapshot =   -6.5757330958149396E-007
+ maximum amplitude in current snapshot =    7.7603709769391571E-007
+
+ sorting... 
+ sorting list of points
+
+ found a total of         4225  points
+ initial number of points (with multiples) was        16384
+
+ done creating movie
+
+ AVS files are stored in ./OUTPUT_FILES//AVS_*.inp
+
+
+Thu Jun 25 01:03:38 CEST 2020

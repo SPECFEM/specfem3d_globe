@@ -1,7 +1,7 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -28,14 +28,77 @@
 */
 
 #include "mesh_constants_gpu.h"
-#include <string.h>
+
+/* ----------------------------------------------------------------------------------------------- */
+// compilation info
+/* ----------------------------------------------------------------------------------------------- */
+// putting these pragma messages into this source file to avoid having the "warning" appear
+// during compilation of each gpu/ source file
+
+// Pragmas
+#if CUSTOM_REAL == 4
+#pragma message ("\n\nCompiling with: GPU CUSTOM_REAL == 4\n")
+#elif CUSTOM_REAL == 8
+#pragma message ("\n\nCompiling with: GPU CUSTOM_REAL == 8\n")
+#endif
+
+#ifdef USE_TEXTURES_FIELDS
+#pragma message ("\n\nCompiling with: USE_TEXTURES_FIELDS enabled\n")
+#endif
+#ifdef USE_TEXTURES_CONSTANTS
+#pragma message ("\n\nCompiling with: USE_TEXTURES_CONSTANTS enabled\n")
+#endif
+#ifdef USE_LAUNCH_BOUNDS
+#pragma message ("\n\nCompiling with: USE_LAUNCH_BOUNDS enabled\n")
+#endif
+#ifdef USE_MESH_COLORING_GPU
+#pragma message ("\n\nCompiling with: USE_MESH_COLORING_GPU enabled\n")
+#endif
+
+#if ENABLE_VERY_SLOW_ERROR_CHECKING == 1
+#pragma message ("\n\nCompiling with: ENABLE_VERY_SLOW_ERROR_CHECKING enabled\n")
+#endif
+#if DEBUG == 1
+#pragma message ("\n\nCompiling with: DEBUG enabled\n")
+#endif
+#if MAXDEBUG == 1
+#pragma message ("\n\nCompiling with: MAXDEBUG enabled\n")
+#endif
+#if DEBUG_BACKWARD_SIMULATIONS == 1
+#pragma message ("\n\nCompiling with: DEBUG_BACKWARD_SIMULATIONS enabled\n")
+#endif
+#ifdef WITH_MPI
+#pragma message ("\n\nCompiling with: WITH_MPI enabled\n")
+#endif
 
 // debugging
 const int DEBUG_VERBOSE_OUTPUT = 0;
 
+/* ----------------------------------------------------------------------------------------------- */
 
-// GPU initialization
+// Macros
 
+// CUDA version output
+#ifdef USE_CUDA
+
+// macros for version output
+#define VALUE_TO_STRING(x) #x
+#define VALUE(x) VALUE_TO_STRING(x)
+#define VAR_NAME_VALUE(var) #var " = "  VALUE(var)
+
+#pragma message ("\n\nCompiling with: " VAR_NAME_VALUE(CUDA_VERSION) "\n")
+#if defined(__CUDA_ARCH__)
+#pragma message ("\n\nCompiling with: " VAR_NAME_VALUE(__CUDA_ARCH__) "\n")
+#endif
+// CUDA version >= 4.0 needed for cudaTextureType1D and cudaDeviceSynchronize()
+#if CUDA_VERSION < 4000 || (defined (__CUDACC_VER_MAJOR__) && (__CUDACC_VER_MAJOR__ < 4))
+#pragma message ("\n\nCompiling for CUDA version < 4.0\n")
+#endif
+
+#endif // USE_CUDA
+
+
+// OpenCL version
 #ifdef USE_OPENCL
 // macro definitions used in GPU kernels
 
@@ -53,7 +116,6 @@ static struct {
   PASS(IREGION_INNER_CORE),
   PASS(IFLAG_IN_FICTITIOUS_CUBE),
   PASS(COLORING_MIN_NSPEC_OUTER_CORE), PASS(COLORING_MIN_NSPEC_INNER_CORE),
-  PASS(R_EARTH_KM),
 
   // macro functions: not working yet, spaces not allowed in OCL compiler
 
@@ -72,13 +134,25 @@ static struct {
 
   {NULL, NULL}
 };
-#endif
+#endif  // USE_OPENCL
+
+
+// HIP version
+#ifdef USE_HIP
+
+// macros for version output
+#define VALUE_TO_STRING(x) #x
+#define VALUE(x) VALUE_TO_STRING(x)
+#define VAR_NAME_VALUE(var) #var " = "  VALUE(var)
+
+#endif  // USE_HIP
 
 /* ----------------------------------------------------------------------------------------------- */
 
 // gpu runtime flags
-int run_cuda = 0;
 int run_opencl = 0;
+int run_cuda = 0;
+int run_hip = 0;
 
 /* ----------------------------------------------------------------------------------------------- */
 // CUDA initialization
@@ -212,7 +286,7 @@ e.g., on titan enable environment CRAY_CUDA_MPS=1 to use a single GPU with multi
   FILE* fp;
   int do_output_info = 0;
 
-  // by default, only master process outputs device info to avoid file cluttering
+  // by default, only main process outputs device info to avoid file cluttering
   if (myrank == 0) {
     do_output_info = 1;
     sprintf(filename, "OUTPUT_FILES/gpu_device_info.txt");
@@ -363,7 +437,7 @@ static void initialize_ocl_device(const char *platform_filter, const char *devic
   FILE *fp;
   int do_output_info = 0;
 
-  // by default, only master process outputs device info to avoid file cluttering
+  // by default, only main process outputs device info to avoid file cluttering
   if (myrank == 0) {
     do_output_info = 1;
     sprintf(filename, "OUTPUT_FILES/gpu_device_info.txt");
@@ -882,7 +956,268 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
   }
 #endif
 }
+#endif // USE_OPENCL
+
+
+/* ----------------------------------------------------------------------------------------------- */
+// HIP initialization
+/* ----------------------------------------------------------------------------------------------- */
+
+#ifdef USE_HIP
+
+// initializes HIP devices
+
+static void initialize_hip_device(const char *platform_filter, const char *device_filter, int myrank, int *nb_devices) {
+  int device_count = 0;
+  hipError_t err;
+
+  // Gets number of GPU devices
+  hipGetDeviceCount(&device_count);
+
+  // being verbose and catches error from first call to HIP runtime function, without synchronize call
+  err = hipGetLastError();
+
+  // adds quick check on versions
+  int driverVersion = 0, runtimeVersion = 0;
+  hipDriverGetVersion(&driverVersion);
+  hipRuntimeGetVersion(&runtimeVersion);
+
+  // exit in case first HIP call failed
+  if (err != hipSuccess){
+    fprintf (stderr,"Error after hipGetDeviceCount: %s\n", hipGetErrorString(err));
+    fprintf (stderr,"HIP Device count: %d\n",device_count);
+    fprintf (stderr,"HIP Driver Version / Runtime Version: %d.%d / %d.%d\n",
+                    driverVersion / 1000, (driverVersion % 100) / 10,
+                    runtimeVersion / 1000, (runtimeVersion % 100) / 10);
+
+    exit_on_error("HIP runtime error: hipGetDeviceCount failed\n\nPlease check if any HIP devices are available\n\nexiting...\n");
+  }
+
+  // checks if HIP devices available
+  if (device_count == 0) exit_on_error("HIP runtime error: no HIP devices available\n");
+
+  // returns device count to fortran
+  *nb_devices = device_count;
+
+  // releases previous contexts
+  gpuReset();
+
+  // determines device id for this process
+  int *matchingDevices = (int *) malloc (sizeof(int) * device_count);
+  int nbMatchingDevices = 0;
+  struct hipDeviceProp_t deviceProp;
+  int i;
+  int id_device,myDevice;
+
+  for (i = 0; i < device_count; i++) {
+    // get device properties
+    hipGetDeviceProperties(&deviceProp, i);
+    if (!strcasestr(deviceProp.name, device_filter)) {
+      continue;
+    }
+    // debug
+    if (DEBUG_VERBOSE_OUTPUT){
+      printf("device match: %d match %d out of %d - filter platform = %s device = %s\n",
+              i,nbMatchingDevices,device_count,platform_filter, device_filter);
+    }
+
+    // adds match
+    matchingDevices[nbMatchingDevices] = i;
+    nbMatchingDevices++;
+  }
+
+  *nb_devices = nbMatchingDevices;
+
+  if (nbMatchingDevices == 0) {
+    printf("Error: no matching devices for criteria %s/%s\n", platform_filter, device_filter);
+    exit_on_error("Error HIP found no matching devices (for device filter set in Par_file)\n");
+  }
+
+#ifdef GPU_DEVICE_ID
+  // uses fixed device id when compile with e.g.: -DGPU_DEVICE_ID=0
+  id_device = GPU_DEVICE_ID;
+  if (myrank == 0) printf("setting HIP devices with id = %d for all processes by -DGPU_DEVICE_ID\n\n",id_device);
+#else
+  // spreads across all available devices
+  id_device = myrank % nbMatchingDevices;  //LG questionable strategy, maybe be better to use node-local rank ID and node-local devicecount
 #endif
+
+  myDevice = matchingDevices[id_device];
+
+  free(matchingDevices);
+
+  // user error info
+  const char* err_info = "\
+Please check GPU settings on your node \n\n";
+
+  // sets HIP device for this process
+  // note: setting/getting device ids seems to return success also for multiple processes setting the same GPU id
+  //       and even if the GPU mode is thread exclusive (only a single process would be allowed to use a single GPU).
+  //       we will have to catch the error later on...
+  err = hipSetDevice(myDevice);
+  if (err != hipSuccess) {
+    fprintf(stderr,"Error hipSetDevice: %s\n", hipGetErrorString(err));
+    /* LG:  CHECK AMD TO-DO if (err == hipErrorDevicesUnavailable)*/ { fprintf(stderr,"\n%s\n", err_info); }
+    exit_on_error("HIP runtime error: hipSetDevice failed\n\n");
+  }
+
+  // checks if setting device was successful
+  int device;
+  hipGetDevice(&device);
+
+  err = hipGetLastError();
+  // debug
+  //printf("device set/get: rank %d set %d get %d\n - return %s",myrank,myDevice,device,hipGetErrorString(err));
+  if (err != hipSuccess) {
+    fprintf(stderr,"Error hipGetDevice: %s\n", hipGetErrorString(err));
+    /* LG:  CHECK AMD TO-DO if (err == hipErrorDevicesUnavailable) */ { fprintf(stderr,"\n%s\n", err_info); }
+    exit_on_error("HIP runtime error: hipGetDevice failed\n\n");
+  }
+
+  // checks device id
+  if ( device != myDevice){
+    fprintf(stderr,"Error hipGetDevice: setting myDevice = %d is differnt to actual device = %d\n", myDevice,device);
+    exit_on_error("Error HIP setting device failed\n");
+  }
+
+  // checks device properties
+  hipGetDeviceProperties(&deviceProp, myDevice);
+  exit_on_gpu_error("hipGetDevicePropoerties failed");
+
+  // exit if the machine has no HIP-enabled device
+  if (deviceProp.major == 9999 && deviceProp.minor == 9999) {
+    fprintf(stderr,"No HIP-enabled device found, exiting...\n\n");
+    exit_on_error("HIP runtime error: there is no HIP-enabled device found\n");
+  }
+
+  // outputs device info to file
+  char filename[BUFSIZ];
+  FILE* fp;
+  int do_output_info = 0;
+
+  // by default, only main process outputs device info to avoid file cluttering
+  if (myrank == 0) {
+    do_output_info = 1;
+    sprintf(filename, "OUTPUT_FILES/gpu_device_info.txt");
+  }
+  // debugging
+  if (DEBUG_VERBOSE_OUTPUT) {
+    do_output_info = 1;
+    sprintf(filename,"OUTPUT_FILES/gpu_device_info_proc_%06d.txt",myrank);
+  }
+
+  // output to file
+  if (do_output_info) {
+    fp = fopen(filename,"w");
+    if (fp != NULL) {
+      // display device properties
+      fprintf(fp,"Device Name = %s\n",deviceProp.name);
+      fprintf(fp,"memory:\n");
+      fprintf(fp,"  totalGlobalMem (in MB): %f\n",(unsigned long) deviceProp.totalGlobalMem / (1024.f * 1024.f));
+      fprintf(fp,"  totalGlobalMem (in GB): %f\n",(unsigned long) deviceProp.totalGlobalMem / (1024.f * 1024.f * 1024.f));
+      fprintf(fp,"  totalConstMem (in bytes): %lu\n",(unsigned long) deviceProp.totalConstMem); //LG according to
+      //https://rocm-developer-tools.github.io/HIP/structhipDeviceProp__t.html#aec9e4173c2e34cc232300c415dbd5e4f  totalConstMem is the size of a shared memory
+//      fprintf(fp,"  Maximum 1D texture size (in bytes): %lu\n",(unsigned long) deviceProp.maxTexture1D);
+      fprintf(fp,"  sharedMemPerBlock (in bytes): %lu\n",(unsigned long) deviceProp.sharedMemPerBlock);
+      fprintf(fp,"  regsPerBlock %lu\n",(unsigned long) deviceProp.regsPerBlock);
+      fprintf(fp,"blocks:\n");
+      fprintf(fp,"  Maximum number of threads per block: %d\n",deviceProp.maxThreadsPerBlock);
+      fprintf(fp,"  Maximum size of each dimension of a block: %d x %d x %d\n",
+              deviceProp.maxThreadsDim[0],deviceProp.maxThreadsDim[1],deviceProp.maxThreadsDim[2]);
+      fprintf(fp,"  Maximum sizes of each dimension of a grid: %d x %d x %d\n",
+              deviceProp.maxGridSize[0],deviceProp.maxGridSize[1],deviceProp.maxGridSize[2]);
+      fprintf(fp,"features:\n");
+      fprintf(fp,"  Compute capability of the device = %d.%d\n", deviceProp.major, deviceProp.minor);
+      fprintf(fp,"  multiProcessorCount: %d\n",deviceProp.multiProcessorCount);
+      if (deviceProp.canMapHostMemory) {
+        fprintf(fp,"  canMapHostMemory: TRUE\n");
+      }else{
+        fprintf(fp,"  canMapHostMemory: FALSE\n");
+      }
+      //if (deviceProp.deviceOverlap) {
+      //  fprintf(fp,"  deviceOverlap: TRUE\n");
+      //}else{
+      //  fprintf(fp,"  deviceOverlap: FALSE\n");
+     // }
+      if (deviceProp.concurrentKernels) {
+        fprintf(fp,"  concurrentKernels: TRUE\n");
+      }else{
+        fprintf(fp,"  concurrentKernels: FALSE\n");
+      }
+
+      fprintf(fp,"HIP Device count: %d\n",device_count);
+      fprintf(fp,"HIP Driver Version / Runtime Version          %d.%d / %d.%d\n",
+              driverVersion / 1000, (driverVersion % 100) / 10,
+              runtimeVersion / 1000, (runtimeVersion % 100) / 10);
+
+      // outputs initial memory info via hipMemGetInfo()
+      double free_db,used_db,total_db;
+      get_free_memory(&free_db,&used_db,&total_db);
+      fprintf(fp,"memory usage:\n");
+      fprintf(fp,"  rank %d: GPU memory usage: used = %f MB, free = %f MB, total = %f MB\n",myrank,
+              used_db/1024.0/1024.0, free_db/1024.0/1024.0, total_db/1024.0/1024.0);
+
+      // closes output file
+      fclose(fp);
+    }
+  }
+
+  // we use pinned memory for asynchronous copy
+  if (GPU_ASYNC_COPY) {
+    if (! deviceProp.canMapHostMemory) {
+      fprintf(stderr,"Device capability should allow to map host memory, exiting...\n");
+      exit_on_error("HIP Device capability canMapHostMemory should be TRUE\n");
+    }
+  }
+
+  // checks kernel optimization setting
+#ifdef USE_LAUNCH_BOUNDS
+  // see: mesh_constants_hip.h
+  // performance statistics: main kernel Kernel_2_crust_mantle_impl():
+  //       shared memory per block = 6200    for Kepler: total = 49152 -> limits active blocks to 7
+  //       registers per thread    = 72                                   (limited by LAUNCH_MIN_BLOCKS 7)
+  //       registers per block     = 9216                total = 65536    (limited by LAUNCH_MIN_BLOCKS 7)
+
+  // shared memory
+  if (deviceProp.sharedMemPerBlock > 49152 && LAUNCH_MIN_BLOCKS <= 7) {
+    if (myrank == 0) {
+      printf("GPU non-optimal settings: your setting of using LAUNCH_MIN_BLOCK %i is too low and limits the register usage\n",
+             LAUNCH_MIN_BLOCKS);
+    }
+  }
+
+  // registers
+  if (deviceProp.regsPerBlock > 65536 && LAUNCH_MIN_BLOCKS <= 7) {
+    if (myrank == 0) {
+      printf("GPU non-optimal settings: your setting of using LAUNCH_MIN_BLOCK %i is too low and limits the register usage\n",
+             LAUNCH_MIN_BLOCKS);
+    }
+  }
+#endif
+
+  // tests the device with a small memory allocation
+  int size = 128;
+  int* d_array;
+  err = hipMalloc((void**)&d_array,size*sizeof(int));
+  if (err != hipSuccess) {
+    fprintf(stderr,"Error testing memory allocation on device failed\n");
+    fprintf(stderr,"Error rank %d: hipMalloc failed: %s\n", myrank,hipGetErrorString(err));
+    /* LG:  CHECK AMD TO-DO if (err == hipErrorDevicesUnavailable)*/ { fprintf(stderr,"\n%s\n", err_info); }
+    exit_on_error("HIP runtime error: hipMalloc failed\n\n");
+  }
+  err = hipFree(d_array);
+  if (err != hipSuccess) {
+    fprintf(stderr,"Error hipFree failed: %s\n", hipGetErrorString(err));
+    //if (err == hipErrorDevicesUnavailable){ fprintf(stderr,"\n%s\n", err_info); }
+    exit_on_error("HIP runtime error: hipFree failed\n\n");
+  }
+
+  // synchronizes
+  gpuSynchronize();
+
+}
+
+#endif  // USE_HIP
 
 /* ----------------------------------------------------------------------------------------------- */
 // GPU initialization
@@ -927,7 +1262,7 @@ static char *trim_and_default(char *s, int max_string_length)
 
 /* ----------------------------------------------------------------------------------------------- */
 
-enum gpu_runtime_e {COMPILE, CUDA, OPENCL};
+enum gpu_runtime_e {COMPILE, CUDA, OPENCL, HIP};
 
 extern EXTERN_LANG
 void FC_FUNC_ (initialize_gpu_device,
@@ -967,7 +1302,7 @@ Please set Par_file accordingly...\n\n", COMPILE, OPENCL, CUDA);
   if (runtime_type != COMPILE && runtime_type != OPENCL) {
     if (*myrank_f == 0) {
       printf("\
-Warning: GPU_RUNTIME parameter in Par_file set to (%d) is incompatible with OpenCL-only compilation (OPENCL=%d, COMPILE=%d).\n\
+Warning OpenCL: GPU_RUNTIME parameter in Par_file set to (%d) is incompatible with OpenCL-only compilation (OPENCL=%d, COMPILE=%d).\n\
 This simulation will continue using the OpenCL runtime...\n\n", runtime_type, OPENCL, COMPILE);
     }
   }
@@ -976,12 +1311,21 @@ This simulation will continue using the OpenCL runtime...\n\n", runtime_type, OP
   if (runtime_type != COMPILE && runtime_type != CUDA) {
     if (*myrank_f == 0) {
       printf("\
-Warning: GPU_RUNTIME parameter in Par_file set to (%d) is incompatible with Cuda-only compilation (CUDA=%d, COMPILE=%d).\n\
-This simulation will continue using the Cuda runtime...\n", runtime_type, CUDA, COMPILE);
+Warning CUDA: GPU_RUNTIME parameter in Par_file set to (%d) is incompatible with Cuda-only compilation (CUDA=%d, COMPILE=%d).\n\
+This simulation will continue using the CUDA runtime...\n", runtime_type, CUDA, COMPILE);
+    }
+  }
+#elif defined(USE_HIP)
+  run_hip = 1;
+  if (runtime_type != COMPILE && runtime_type != HIP) {
+    if (*myrank_f == 0) {
+      printf("\
+Warning HIP: GPU_RUNTIME parameter in Par_file set to (%d) is incompatible with HIP-only compilation (HIP=%d, COMPILE=%d).\n\
+This simulation will continue using the HIP runtime...\n", runtime_type, HIP, COMPILE);
     }
   }
 #else
-  #error "GPU code compiled but neither CUDA nor OpenCL are enabled"
+  #error "GPU code compiled but neither CUDA nor OpenCL nor HIP are enabled"
 #endif
 
   // initializes gpu cards
@@ -993,6 +1337,11 @@ This simulation will continue using the Cuda runtime...\n", runtime_type, CUDA, 
 #ifdef USE_CUDA
   if (run_cuda) {
     initialize_cuda_device(platform_filter, device_filter, *myrank_f, nb_devices);
+  }
+#endif
+#ifdef USE_HIP
+  if (run_hip) {
+    initialize_hip_device(platform_filter, device_filter, *myrank_f, nb_devices);
   }
 #endif
 

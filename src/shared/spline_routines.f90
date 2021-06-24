@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -31,18 +31,18 @@
 
   implicit none
 
-! tangent to the spline imposed at the first and last points
-  double precision, intent(in) :: tangent_first_point,tangent_last_point
-
 ! number of input points and coordinates of the input points
   integer, intent(in) :: npoint
   double precision, dimension(npoint), intent(in) :: xpoint,ypoint
 
+! tangent to the spline imposed at the first and last points
+  double precision, intent(in) :: tangent_first_point,tangent_last_point
+
 ! spline coefficients output by the routine
   double precision, dimension(npoint), intent(out) :: spline_coefficients
 
+  ! local parameters
   integer :: i
-
   double precision, dimension(:), allocatable :: temporary_array
 
   allocate(temporary_array(npoint))
@@ -81,6 +81,8 @@
 
   subroutine spline_evaluation(xpoint,ypoint,spline_coefficients,npoint,x_evaluate_spline,y_spline_obtained)
 
+  use shared_parameters, only: R_PLANET_KM
+
   implicit none
 
 ! number of input points and coordinates of the input points
@@ -96,8 +98,8 @@
 ! ordinate evaluated by the routine for the spline at this abscissa
   double precision, intent(out):: y_spline_obtained
 
+  ! local parameters
   integer :: index_loop,index_lower,index_higher
-
   double precision :: coef1,coef2
 
 ! initialize to the whole interval
@@ -119,7 +121,11 @@
 
 ! test that the interval obtained does not have a size of zero
 ! (this could happen for instance in the case of duplicates in the input list of points)
-  if (xpoint(index_higher) == xpoint(index_lower)) stop 'incorrect interval found in spline evaluation'
+  if (xpoint(index_higher) == xpoint(index_lower)) then
+    print *,'Error: invalid spline evalution index_higher/index_lower = ',index_higher,index_lower,'range = ',1,npoint
+    print *,'       point x = ',x_evaluate_spline,' x radius = ',x_evaluate_spline * R_PLANET_KM,'(km)'
+    stop 'incorrect interval found in spline evaluation'
+  endif
 
   coef1 = (xpoint(index_higher) - x_evaluate_spline) / (xpoint(index_higher) - xpoint(index_lower))
   coef2 = (x_evaluate_spline - xpoint(index_lower)) / (xpoint(index_higher) - xpoint(index_lower))

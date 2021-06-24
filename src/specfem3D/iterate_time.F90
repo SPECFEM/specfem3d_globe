@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -74,14 +74,14 @@
 
   ! synchronize all processes to make sure everybody is ready to start time loop
   call synchronize_all()
-  if (myrank == 0) write(IMAIN,*) 'All processes are synchronized before time loop'
-
   if (myrank == 0) then
+    write(IMAIN,*) 'All processes are synchronized before time loop'
     write(IMAIN,*)
     write(IMAIN,*) 'Starting time iteration loop...'
     write(IMAIN,*)
     call flush_IMAIN()
   endif
+  call synchronize_all()
 
   ! create an empty file to monitor the start of the simulation
   if (myrank == 0) then
@@ -105,7 +105,6 @@
 
   ! time loop
   do it = it_begin,it_end
-
 
     ! simulation status output and stability check
     if (mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == it_begin + 4 .or. it == it_end) then
@@ -299,29 +298,36 @@
   implicit none
 
   ! to store forward wave fields
-  if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
+  if (SIMULATION_TYPE == 1) then
+    if (SAVE_FORWARD .or. (NUMBER_OF_RUNS > 1 .and. NUMBER_OF_THIS_RUN < NUMBER_OF_RUNS)) then
+      ! wavefield
+      call transfer_fields_cm_from_device(NDIM*NGLOB_CRUST_MANTLE, &
+                                          displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle,Mesh_pointer)
+      call transfer_fields_ic_from_device(NDIM*NGLOB_INNER_CORE, &
+                                          displ_inner_core,veloc_inner_core,accel_inner_core,Mesh_pointer)
+      call transfer_fields_oc_from_device(NGLOB_OUTER_CORE, &
+                                          displ_outer_core,veloc_outer_core,accel_outer_core,Mesh_pointer)
+      ! strain
+      call transfer_strain_cm_from_device(Mesh_pointer,eps_trace_over_3_crust_mantle, &
+                                          epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle, &
+                                          epsilondev_xy_crust_mantle,epsilondev_xz_crust_mantle, &
+                                          epsilondev_yz_crust_mantle)
+      call transfer_strain_ic_from_device(Mesh_pointer,eps_trace_over_3_inner_core, &
+                                          epsilondev_xx_inner_core,epsilondev_yy_inner_core, &
+                                          epsilondev_xy_inner_core,epsilondev_xz_inner_core, &
+                                          epsilondev_yz_inner_core)
+      ! rotation
+      if (ROTATION_VAL) then
+        call transfer_rotation_from_device(Mesh_pointer,A_array_rotation,B_array_rotation)
+      endif
 
-    call transfer_fields_cm_from_device(NDIM*NGLOB_CRUST_MANTLE, &
-                                    displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
-                                    Mesh_pointer)
-    call transfer_fields_ic_from_device(NDIM*NGLOB_INNER_CORE, &
-                                    displ_inner_core,veloc_inner_core,accel_inner_core, &
-                                    Mesh_pointer)
-    call transfer_fields_oc_from_device(NGLOB_OUTER_CORE, &
-                                    displ_outer_core,veloc_outer_core,accel_outer_core, &
-                                    Mesh_pointer)
-
-    call transfer_strain_cm_from_device(Mesh_pointer,eps_trace_over_3_crust_mantle, &
-                                    epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle, &
-                                    epsilondev_xy_crust_mantle,epsilondev_xz_crust_mantle, &
-                                    epsilondev_yz_crust_mantle)
-    call transfer_strain_ic_from_device(Mesh_pointer,eps_trace_over_3_inner_core, &
-                                    epsilondev_xx_inner_core,epsilondev_yy_inner_core, &
-                                    epsilondev_xy_inner_core,epsilondev_xz_inner_core, &
-                                    epsilondev_yz_inner_core)
-
-    if (ROTATION_VAL) then
-      call transfer_rotation_from_device(Mesh_pointer,A_array_rotation,B_array_rotation)
+      ! attenuation memory variables
+      if (ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
+        call transfer_rmemory_cm_from_device(Mesh_pointer,R_xx_crust_mantle,R_yy_crust_mantle,R_xy_crust_mantle, &
+                                             R_xz_crust_mantle,R_yz_crust_mantle)
+        call transfer_rmemory_ic_from_device(Mesh_pointer,R_xx_inner_core,R_yy_inner_core,R_xy_inner_core, &
+                                             R_xz_inner_core,R_yz_inner_core)
+      endif
     endif
 
   else if (SIMULATION_TYPE == 3) then
@@ -336,19 +342,11 @@
     !endif
 
     ! to store kernels
-    ! inner core
-    call transfer_kernels_ic_to_host(Mesh_pointer, &
-                                     rho_kl_inner_core, &
-                                     alpha_kl_inner_core, &
-                                     beta_kl_inner_core,NSPEC_INNER_CORE)
-    ! outer core
-    call transfer_kernels_oc_to_host(Mesh_pointer, &
-                                     rho_kl_outer_core, &
-                                     alpha_kl_outer_core,NSPEC_OUTER_CORE)
     ! crust/mantle
     call transfer_kernels_cm_to_host(Mesh_pointer, &
                                      rho_kl_crust_mantle,alpha_kl_crust_mantle,beta_kl_crust_mantle, &
                                      NSPEC_CRUST_MANTLE)
+
     ! full anisotropic kernel
     if (ANISOTROPIC_KL) then
       call transfer_kernels_ani_cm_to_host(Mesh_pointer,cijkl_kl_crust_mantle,NSPEC_CRUST_MANTLE)
@@ -361,14 +359,29 @@
 
     ! approximative Hessian for preconditioning kernels
     if (APPROXIMATE_HESS_KL) then
-      call transfer_kernels_hess_cm_tohost(Mesh_pointer,hess_kl_crust_mantle,NSPEC_CRUST_MANTLE)
+      call transfer_kernels_hess_cm_tohost(Mesh_pointer, &
+                                           hess_kl_crust_mantle, &
+                                           hess_rho_kl_crust_mantle, &
+                                           hess_kappa_kl_crust_mantle, &
+                                           hess_mu_kl_crust_mantle, &
+                                           NSPEC_CRUST_MANTLE)
     endif
 
-  endif
+    ! outer core
+    if (SAVE_KERNELS_OC) then
+      call transfer_kernels_oc_to_host(Mesh_pointer, &
+                                       rho_kl_outer_core, &
+                                       alpha_kl_outer_core,NSPEC_OUTER_CORE)
+    endif
 
-  ! from here on, no gpu data is needed anymore
-  ! frees allocated memory on GPU
-  call prepare_cleanup_device(Mesh_pointer,NCHUNKS_VAL)
+    ! inner core
+    if (SAVE_KERNELS_IC) then
+      call transfer_kernels_ic_to_host(Mesh_pointer, &
+                                       rho_kl_inner_core, &
+                                       alpha_kl_inner_core, &
+                                       beta_kl_inner_core,NSPEC_INNER_CORE)
+    endif
+  endif
 
   end subroutine it_transfer_from_GPU
 

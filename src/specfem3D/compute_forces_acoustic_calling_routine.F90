@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -45,9 +45,14 @@
 
   ! current simulated time
   if (USE_LDDRK) then
-    timeval = real((dble(it-1)*DT+dble(C_LDDRK(istage))*DT-t0)*scale_t_inv, kind=CUSTOM_REAL)
+    ! LDDRK
+    ! note: the LDDRK scheme updates displacement after the stiffness computations and
+    !       after adding boundary/coupling/source terms.
+    !       thus, at each time loop step it, displ(:) is still at (n) and not (n+1) like for the Newmark scheme
+    !       when entering this routine. we therefore at an additional -DT to have the corresponding timing for the source.
+    timeval = real((dble(it-1-1)*DT + dble(C_LDDRK(istage))*DT - t0)*scale_t_inv, kind=CUSTOM_REAL)
   else
-    timeval = real((dble(it-1)*DT-t0)*scale_t_inv, kind=CUSTOM_REAL)
+    timeval = real((dble(it-1)*DT - t0)*scale_t_inv, kind=CUSTOM_REAL)
   endif
 
   ! ****************************************************
@@ -66,15 +71,15 @@
     if (.not. GPU_MODE) then
       ! on CPU
       call compute_forces_outer_core(timeval,deltat,two_omega_earth, &
-                                         NSPEC_OUTER_CORE_ROTATION,NGLOB_OUTER_CORE, &
-                                         A_array_rotation,B_array_rotation, &
-                                         A_array_rotation_lddrk,B_array_rotation_lddrk, &
-                                         displ_outer_core,accel_outer_core, &
-                                         div_displ_outer_core,iphase)
+                                     NSPEC_OUTER_CORE_ROTATION,NGLOB_OUTER_CORE, &
+                                     A_array_rotation,B_array_rotation, &
+                                     A_array_rotation_lddrk,B_array_rotation_lddrk, &
+                                     displ_outer_core,accel_outer_core, &
+                                     div_displ_outer_core,iphase)
     else
       ! on GPU
       ! includes FORWARD_OR_ADJOINT == 1
-      call compute_forces_outer_core_gpu(Mesh_pointer,iphase,timeval,1)
+      call compute_forces_outer_core_gpu(Mesh_pointer,iphase,timeval,ALPHA_LDDRK(istage),BETA_LDDRK(istage),1)
 
       ! initiates asynchronous MPI transfer
       if (NPROCTOT_VAL > 1) then
@@ -84,11 +89,11 @@
           call sync_copy_from_device(Mesh_pointer,iphase,buffer_send_scalar_outer_core,IREGION_OUTER_CORE,1)
           ! sends MPI buffers
           call assemble_MPI_scalar_send_gpu(NPROCTOT_VAL, &
-                                             buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core, &
-                                             num_interfaces_outer_core,max_nibool_interfaces_oc, &
-                                             nibool_interfaces_outer_core, &
-                                             my_neighbors_outer_core, &
-                                             request_send_scalar_oc,request_recv_scalar_oc)
+                                            buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core, &
+                                            num_interfaces_outer_core,max_nibool_interfaces_oc, &
+                                            nibool_interfaces_outer_core, &
+                                            my_neighbors_outer_core, &
+                                            request_send_scalar_oc,request_recv_scalar_oc)
         endif
       endif
     endif
@@ -135,11 +140,11 @@
             ! for synchronous transfers, sending over MPI can directly proceed
             ! outer core
             call assemble_MPI_scalar_send_gpu(NPROCTOT_VAL, &
-                                               buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core, &
-                                               num_interfaces_outer_core,max_nibool_interfaces_oc, &
-                                               nibool_interfaces_outer_core, &
-                                               my_neighbors_outer_core, &
-                                               request_send_scalar_oc,request_recv_scalar_oc)
+                                              buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core, &
+                                              num_interfaces_outer_core,max_nibool_interfaces_oc, &
+                                              nibool_interfaces_outer_core, &
+                                              my_neighbors_outer_core, &
+                                              request_send_scalar_oc,request_recv_scalar_oc)
           endif
         endif
       else
@@ -152,6 +157,7 @@
                                      buffer_recv_scalar_outer_core,num_interfaces_outer_core, &
                                      max_nibool_interfaces_oc, &
                                      nibool_interfaces_outer_core,ibool_interfaces_outer_core, &
+                                     my_neighbors_outer_core, &
                                      request_send_scalar_oc,request_recv_scalar_oc)
         else
           ! on GPU
@@ -168,10 +174,10 @@
 
           ! waits for MPI send/receive requests to be completed and assembles values
           call assemble_MPI_scalar_write_gpu(Mesh_pointer,NPROCTOT_VAL, &
-                                              buffer_recv_scalar_outer_core, &
-                                              num_interfaces_outer_core,max_nibool_interfaces_oc, &
-                                              request_send_scalar_oc,request_recv_scalar_oc, &
-                                              1) ! -- 1 == fwd accel
+                                             buffer_recv_scalar_outer_core, &
+                                             num_interfaces_outer_core,max_nibool_interfaces_oc, &
+                                             request_send_scalar_oc,request_recv_scalar_oc, &
+                                             1) ! -- 1 == fwd accel
         endif
       endif ! iphase == 1
     endif
@@ -179,7 +185,6 @@
   enddo ! iphase
 
   ! multiply by the inverse of the mass matrix
-
   if (.not. GPU_MODE) then
     ! on CPU
     call multiply_accel_acoustic(NGLOB_OUTER_CORE,accel_outer_core,rmass_outer_core)
@@ -188,7 +193,6 @@
     ! includes FORWARD_OR_ADJOINT == 1
     call multiply_accel_acoustic_gpu(Mesh_pointer,1)
   endif
-
 
   ! time schemes
   if (USE_LDDRK) then
@@ -250,14 +254,24 @@
 
   ! current simulated time
   if (USE_LDDRK) then
-    b_timeval = real((dble(NSTEP-it_tmp)*DT-dble(C_LDDRK(istage))*DT-t0)*scale_t_inv, kind=CUSTOM_REAL)
+    ! LDDRK
+    ! note: the LDDRK scheme updates displacement after the stiffness computations and
+    !       after adding boundary/coupling/source terms.
+    !       thus, at each time loop step it, displ(:) is still at (n) and not (n+1) like for the Newmark scheme
+    !       when entering this routine. we therefore at an additional -DT to have the corresponding timing for the source.
+    if (UNDO_ATTENUATION) then
+      ! stepping moves forward from snapshot position
+      b_timeval = real((dble(NSTEP-it_tmp-1)*DT + dble(C_LDDRK(istage))*DT - t0)*scale_t_inv, kind=CUSTOM_REAL)
+    else
+      ! stepping backwards
+      b_timeval = real((dble(NSTEP-it_tmp-1)*DT - dble(C_LDDRK(istage))*DT - t0)*scale_t_inv, kind=CUSTOM_REAL)
+    endif
   else
-    b_timeval = real((dble(NSTEP-it_tmp)*DT-t0)*scale_t_inv, kind=CUSTOM_REAL)
+    b_timeval = real((dble(NSTEP-it_tmp)*DT - t0)*scale_t_inv, kind=CUSTOM_REAL)
   endif
 
   !debug
   !if (myrank == 0 ) print *,'compute_forces_acoustic_backward: it = ',it_tmp
-
 
   ! ****************************************************
   !   big loop over all spectral elements in the fluid
@@ -284,7 +298,7 @@
     else
       ! on GPU
       ! includes FORWARD_OR_ADJOINT == 3
-      call compute_forces_outer_core_gpu(Mesh_pointer,iphase,b_timeval,3)
+      call compute_forces_outer_core_gpu(Mesh_pointer,iphase,b_timeval,ALPHA_LDDRK(istage),BETA_LDDRK(istage),3)
 
       ! initiates asynchronous MPI transfer
       if (GPU_ASYNC_COPY .and. iphase == 2) then
@@ -369,6 +383,7 @@
                                    b_buffer_recv_scalar_outer_core,num_interfaces_outer_core, &
                                    max_nibool_interfaces_oc, &
                                    nibool_interfaces_outer_core,ibool_interfaces_outer_core, &
+                                   my_neighbors_outer_core, &
                                    b_request_send_scalar_oc,b_request_recv_scalar_oc)
       else
         ! on GPU
@@ -420,7 +435,7 @@
 !
 
   subroutine compute_forces_outer_core(timeval,deltat,two_omega_earth, &
-                                       NSPEC,NGLOB, &
+                                       NSPEC_ROT,NGLOB, &
                                        A_array_rotation,B_array_rotation, &
                                        A_array_rotation_lddrk,B_array_rotation_lddrk, &
                                        displfluid,accelfluid, &
@@ -436,14 +451,14 @@
 
   implicit none
 
-  integer,intent(in) :: NSPEC,NGLOB
+  integer,intent(in) :: NSPEC_ROT,NGLOB
 
   ! for the Euler scheme for rotation
   real(kind=CUSTOM_REAL),intent(in) :: timeval,deltat,two_omega_earth
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(inout) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_ROT),intent(inout) :: &
     A_array_rotation,B_array_rotation
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(inout) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_ROT),intent(inout) :: &
     A_array_rotation_lddrk,B_array_rotation_lddrk
 
   ! displacement and acceleration
@@ -460,7 +475,7 @@
   if (USE_DEVILLE_PRODUCTS_VAL) then
     ! uses Deville et al. (2002) routine
     call compute_forces_outer_core_Dev(timeval,deltat,two_omega_earth, &
-                                       NSPEC,NGLOB, &
+                                       NSPEC_ROT,NGLOB, &
                                        A_array_rotation,B_array_rotation, &
                                        A_array_rotation_lddrk,B_array_rotation_lddrk, &
                                        displfluid,accelfluid, &
@@ -468,7 +483,7 @@
   else
     ! div_displ_outer_core is initialized to zero in the following subroutine.
     call compute_forces_outer_core_noDev(timeval,deltat,two_omega_earth, &
-                                         NSPEC,NGLOB, &
+                                         NSPEC_ROT,NGLOB, &
                                          A_array_rotation,B_array_rotation, &
                                          A_array_rotation_lddrk,B_array_rotation_lddrk, &
                                          displfluid,accelfluid, &

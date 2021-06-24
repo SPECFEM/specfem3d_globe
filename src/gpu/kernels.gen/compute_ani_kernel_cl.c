@@ -5,7 +5,7 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -82,9 +82,6 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifndef IFLAG_IN_FICTITIOUS_CUBE\n\
 #define IFLAG_IN_FICTITIOUS_CUBE 11\n\
 #endif\n\
-#ifndef R_EARTH_KM\n\
-#define R_EARTH_KM 6371.0f\n\
-#endif\n\
 #ifndef COLORING_MIN_NSPEC_INNER_CORE\n\
 #define COLORING_MIN_NSPEC_INNER_CORE 1000\n\
 #endif\n\
@@ -101,18 +98,21 @@ static\n\
 void compute_strain_product(float * prod, const float eps_trace_over_3, const float * epsdev, const float b_eps_trace_over_3, const float * b_epsdev){\n\
   float eps[(6)];\n\
   float b_eps[(6)];\n\
+\n\
   eps[0] = epsdev[0] + eps_trace_over_3;\n\
   eps[1] = epsdev[1] + eps_trace_over_3;\n\
   eps[2] =  -(eps[0] + eps[1]) + (eps_trace_over_3) * (3.0f);\n\
   eps[3] = epsdev[4];\n\
   eps[4] = epsdev[3];\n\
   eps[5] = epsdev[2];\n\
+\n\
   b_eps[0] = b_epsdev[0] + b_eps_trace_over_3;\n\
   b_eps[1] = b_epsdev[1] + b_eps_trace_over_3;\n\
   b_eps[2] =  -(b_eps[0] + b_eps[1]) + (b_eps_trace_over_3) * (3.0f);\n\
   b_eps[3] = b_epsdev[4];\n\
   b_eps[4] = b_epsdev[3];\n\
   b_eps[5] = b_epsdev[2];\n\
+\n\
   prod[0] = (eps[0]) * (b_eps[0]);\n\
   prod[1] = (eps[0]) * (b_eps[1]);\n\
   prod[1] = prod[1] + (eps[1]) * (b_eps[0]);\n\
@@ -165,6 +165,7 @@ void compute_strain_product(float * prod, const float eps_trace_over_3, const fl
   prod[20] = (eps[5]) * (b_eps[5]);\n\
   prod[20] = (prod[20]) * (4.0f);\n\
 }\n\
+\n\
 __kernel void compute_ani_kernel(const __global float * epsilondev_xx, const __global float * epsilondev_yy, const __global float * epsilondev_xy, const __global float * epsilondev_xz, const __global float * epsilondev_yz, const __global float * epsilon_trace_over_3, const __global float * b_epsilondev_xx, const __global float * b_epsilondev_yy, const __global float * b_epsilondev_xy, const __global float * b_epsilondev_xz, const __global float * b_epsilondev_yz, const __global float * b_epsilon_trace_over_3, __global float * cijkl_kl, const int NSPEC, const float deltat){\n\
   int i;\n\
   int ispec;\n\
@@ -175,7 +176,9 @@ __kernel void compute_ani_kernel(const __global float * epsilondev_xx, const __g
   float prod[(21)];\n\
   float epsdev[(5)];\n\
   float b_epsdev[(5)];\n\
+\n\
   ispec = get_group_id(0) + (get_group_id(1)) * (get_num_groups(0));\n\
+\n\
   if (ispec < NSPEC) {\n\
     ijk_ispec = get_local_id(0) + (NGLL3) * (ispec);\n\
     epsdev[0] = epsilondev_xx[ijk_ispec];\n\
@@ -188,10 +191,14 @@ __kernel void compute_ani_kernel(const __global float * epsilondev_xx, const __g
     b_epsdev[2] = b_epsilondev_xy[ijk_ispec];\n\
     b_epsdev[3] = b_epsilondev_xz[ijk_ispec];\n\
     b_epsdev[4] = b_epsilondev_yz[ijk_ispec];\n\
+\n\
     eps_trace_over_3 = epsilon_trace_over_3[ijk_ispec];\n\
     b_eps_trace_over_3 = b_epsilon_trace_over_3[ijk_ispec];\n\
+\n\
     compute_strain_product(prod, eps_trace_over_3, epsdev, b_eps_trace_over_3, b_epsdev);\n\
+\n\
     offset = ((ispec) * (NGLL3)) * (21) + get_local_id(0);\n\
+\n\
     // attention: following array is sorted differently on GPU and CPU, -> use 'resort_array' before copying back to cpu\n\
     for (i = 0; i <= 20; i += 1) {\n\
       cijkl_kl[(i) * (NGLL3) + offset] = cijkl_kl[(i) * (NGLL3) + offset] + (deltat) * (prod[i]);\n\

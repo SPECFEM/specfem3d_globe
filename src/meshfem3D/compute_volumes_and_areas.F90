@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -26,32 +26,37 @@
 !=====================================================================
 
   subroutine compute_volumes_and_areas(NCHUNKS,iregion_code,nspec,wxgll,wygll,wzgll, &
-                                  xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
-                                  NSPEC2D_BOTTOM,jacobian2D_bottom,NSPEC2D_TOP,jacobian2D_top,idoubling, &
-                                  volume_total,RCMB,RICB,R_CENTRAL_CUBE)
+                                       xixstore,xiystore,xizstore, &
+                                       etaxstore,etaystore,etazstore, &
+                                       gammaxstore,gammaystore,gammazstore, &
+                                       NSPEC2D_BOTTOM,jacobian2D_bottom,NSPEC2D_TOP,jacobian2D_top,idoubling, &
+                                       volume_total,RCMB,RICB,R_CENTRAL_CUBE)
 
-  use constants
+  use constants, only: NGLLX,NGLLY,NGLLZ,myrank, &
+    ZERO,CUSTOM_REAL,PI,R_UNIT_SPHERE,IFLAG_IN_FICTITIOUS_CUBE,IMAIN, &
+    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE
 
-  use meshfem3D_models_par
+  use shared_parameters, only: R_PLANET
+  use meshfem3D_models_par, only: TOPOGRAPHY
 
   implicit none
 
-  integer :: nspec
-  double precision :: wxgll(NGLLX),wygll(NGLLY),wzgll(NGLLZ)
+  integer,intent(in) :: nspec
+  double precision,intent(in) :: wxgll(NGLLX),wygll(NGLLY),wzgll(NGLLZ)
 
-  integer :: NCHUNKS,iregion_code
+  integer,intent(in) :: NCHUNKS,iregion_code
 
-  double precision :: volume_total
-  double precision :: RCMB,RICB,R_CENTRAL_CUBE
+  double precision,intent(inout) :: volume_total
+  double precision,intent(in) :: RCMB,RICB,R_CENTRAL_CUBE
 
-  integer,dimension(nspec) :: idoubling
+  integer,dimension(nspec),intent(in) :: idoubling
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: &
     xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore
 
-  integer :: NSPEC2D_BOTTOM,NSPEC2D_TOP
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_BOTTOM) :: jacobian2D_bottom
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_TOP) :: jacobian2D_top
+  integer,intent(in) :: NSPEC2D_BOTTOM,NSPEC2D_TOP
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_BOTTOM),intent(in) :: jacobian2D_bottom
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_TOP),intent(in) :: jacobian2D_top
 
   ! local parameters
   double precision :: volume_local,area_local_bottom,area_local_top
@@ -88,10 +93,20 @@
           gammayl = gammaystore(i,j,k,ispec)
           gammazl = gammazstore(i,j,k,ispec)
 
-          jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
-                        - xiyl*(etaxl*gammazl-etazl*gammaxl) &
-                        + xizl*(etaxl*gammayl-etayl*gammaxl))
+          jacobianl = (xixl*(etayl*gammazl-etazl*gammayl) &
+                     - xiyl*(etaxl*gammazl-etazl*gammaxl) &
+                     + xizl*(etaxl*gammayl-etayl*gammaxl))
 
+          if (jacobianl <= 0.0_CUSTOM_REAL) then
+            print *,'Error: rank ',myrank,' found negative Jacobian ',jacobianl,'element',ispec,'ijk',i,j,k,'id',idoubling(ispec)
+            print *,'Please check if mesh is okay, exiting...'
+            call exit_MPI(myrank,'Error: negative Jacobian found in compute_volumes_and_areas() routine')
+          endif
+
+          ! inverts jacobian mapping
+          jacobianl = 1._CUSTOM_REAL / jacobianl
+
+          ! sums
           volume_local = volume_local + dble(jacobianl)*weight
 
         enddo
@@ -103,7 +118,7 @@
   do ispec = 1,NSPEC2D_BOTTOM
     do i = 1,NGLLX
       do j = 1,NGLLY
-        weight=wxgll(i)*wygll(j)
+        weight = wxgll(i)*wygll(j)
         area_local_bottom = area_local_bottom + dble(jacobian2D_bottom(i,j,ispec))*weight
       enddo
     enddo
@@ -113,7 +128,7 @@
   do ispec = 1,NSPEC2D_TOP
     do i = 1,NGLLX
       do j = 1,NGLLY
-        weight=wxgll(i)*wygll(j)
+        weight = wxgll(i)*wygll(j)
         area_local_top = area_local_top + dble(jacobian2D_top(i,j,ispec))*weight
       enddo
     enddo
@@ -122,7 +137,7 @@
   ! use an MPI reduction to compute the total area and volume
   volume_total_region = ZERO
   area_total_bottom   = ZERO
-  area_total_top   = ZERO
+  area_total_top      = ZERO
 
   call sum_all_dp(area_local_bottom,area_total_bottom)
   call sum_all_dp(area_local_top,area_total_top)
@@ -134,7 +149,8 @@
 
     !   check volume of chunk, and bottom and top area
     write(IMAIN,*)
-    write(IMAIN,*) '   calculated top area: ',area_total_top
+    write(IMAIN,*) 'calculated region volume: ',sngl(volume_total_region)
+    write(IMAIN,*) '                top area: ',sngl(area_total_top)
 
     ! compare to exact theoretical value
     if (NCHUNKS == 6 .and. .not. TOPOGRAPHY) then
@@ -142,26 +158,26 @@
         case (IREGION_CRUST_MANTLE)
           write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*R_UNIT_SPHERE**2
         case (IREGION_OUTER_CORE)
-          write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RCMB/R_EARTH)**2
+          write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RCMB/R_PLANET)**2
         case (IREGION_INNER_CORE)
-          write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RICB/R_EARTH)**2
+          write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RICB/R_PLANET)**2
         case default
           call exit_MPI(myrank,'incorrect region code')
       end select
     endif
 
-    write(IMAIN,*) 'calculated bottom area: ',area_total_bottom
+    write(IMAIN,*) '             bottom area: ',sngl(area_total_bottom)
 
     ! compare to exact theoretical value
     if (NCHUNKS == 6 .and. .not. TOPOGRAPHY) then
       select case (iregion_code)
         case (IREGION_CRUST_MANTLE)
-          write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RCMB/R_EARTH)**2
+          write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RCMB/R_PLANET)**2
         case (IREGION_OUTER_CORE)
-          write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RICB/R_EARTH)**2
+          write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RICB/R_PLANET)**2
         case (IREGION_INNER_CORE)
           write(IMAIN,*) '            more or less similar area (central cube): ', &
-                                           dble(NCHUNKS)*(2.*(R_CENTRAL_CUBE / R_EARTH)/sqrt(3.))**2
+                                           dble(NCHUNKS)*(2.*(R_CENTRAL_CUBE / R_PLANET)/sqrt(3.))**2
         case default
           call exit_MPI(myrank,'incorrect region code')
       end select
@@ -177,11 +193,15 @@
   ! compute Earth mass of that part of the slice and then total Earth mass
 
   subroutine compute_Earth_mass(Earth_mass_total, &
-                            Earth_center_of_mass_x_total,Earth_center_of_mass_y_total,Earth_center_of_mass_z_total, &
-                            nspec,wxgll,wygll,wzgll,xstore,ystore,zstore,xixstore,xiystore,xizstore, &
-                            etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,rhostore,idoubling)
+                                Earth_center_of_mass_x_total,Earth_center_of_mass_y_total,Earth_center_of_mass_z_total, &
+                                nspec,wxgll,wygll,wzgll,xstore,ystore,zstore,xixstore,xiystore,xizstore, &
+                                etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,rhostore,idoubling)
 
-  use constants
+  use constants, only: NGLLX,NGLLY,NGLLZ,ZERO,CUSTOM_REAL,IFLAG_IN_FICTITIOUS_CUBE, &
+    SHIFT_TO_THIS_CENTER_OF_MASS,x_shift,y_shift,z_shift, &
+    myrank
+
+  use shared_parameters, only: R_PLANET,RHOAV
 
   implicit none
 
@@ -213,8 +233,8 @@
   double precision :: Earth_center_of_mass_x_tot_reg,Earth_center_of_mass_y_tot_reg,Earth_center_of_mass_z_tot_reg
 
   ! take into account the fact that the density and the radius of the Earth have previously been non-dimensionalized
-  double precision, parameter :: non_dimensionalizing_factor1 = RHOAV*R_EARTH**3
-  double precision, parameter :: non_dimensionalizing_factor2 = non_dimensionalizing_factor1 * R_EARTH
+  double precision :: non_dimensionalizing_factor1
+  double precision :: non_dimensionalizing_factor2
 
   ! initializes
   Earth_mass_local = ZERO
@@ -251,7 +271,7 @@
 
           rhol = rhostore(i,j,k,ispec)
 
-          Earth_mass_local = Earth_mass_local + dble(jacobianl)*rhol*weight
+          Earth_mass_local = Earth_mass_local + dble(jacobianl) * rhol * weight
 
           x_meshpoint = xstore(i,j,k,ispec)
           y_meshpoint = ystore(i,j,k,ispec)
@@ -274,6 +294,9 @@
   enddo
 
   ! take into account the fact that the density and the radius of the Earth have previously been non-dimensionalized
+  non_dimensionalizing_factor1 = RHOAV*R_PLANET**3
+  non_dimensionalizing_factor2 = non_dimensionalizing_factor1 * R_PLANET
+
   Earth_mass_local = Earth_mass_local * non_dimensionalizing_factor1
 
   Earth_center_of_mass_x_local = Earth_center_of_mass_x_local * non_dimensionalizing_factor2

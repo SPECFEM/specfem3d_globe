@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -40,13 +40,13 @@
 
   implicit none
 
-  integer :: nspec
+  integer,intent(in) :: nspec
 
   logical,dimension(2,nspec) :: iMPIcut_xi
 
-  integer,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
+  integer,dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
 
-  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
+  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: xstore,ystore,zstore
 
   ! logical mask used to create arrays iboolleft_xi and iboolright_xi
   integer :: npointot
@@ -58,7 +58,7 @@
   integer :: npoin2D_xi
 
   integer :: NGLOB2DMAX_XMIN_XMAX
-  integer, dimension(NGLOB2DMAX_XMIN_XMAX) :: iboolleft_xi,iboolright_xi
+  integer, dimension(NGLOB2DMAX_XMIN_XMAX),intent(inout) :: iboolleft_xi,iboolright_xi
 
   integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_all
 
@@ -155,7 +155,7 @@
   ! compare number of surface elements detected to analytical value
   if (ispecc1 /= nspec2Dtheor) then
     write(errmsg,*) 'Error MPI cut-planes detection in xi=left T=',nspec2Dtheor,' C=',ispecc1
-    call exit_MPI(myrank,errmsg)
+    call exit_MPI(myrank,trim(errmsg))
   endif
 
   ! subtract the line that contains the flag after the last point
@@ -224,7 +224,7 @@
   ! compare number of surface elements detected to analytical value
   if (ispecc2 /= nspec2Dtheor) then
     write(errmsg,*) 'Error MPI cut-planes detection in xi=right T=',nspec2Dtheor,' C=',ispecc2
-    call exit_MPI(myrank,errmsg)
+    call exit_MPI(myrank,trim(errmsg))
   endif
 
   ! subtract the line that contains the flag after the last point

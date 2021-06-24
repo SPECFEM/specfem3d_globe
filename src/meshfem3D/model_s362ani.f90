@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -73,6 +73,9 @@
   character(len=80) :: hsplfl(maxhpa)
   character(len=40) :: dskker(maxker)
 
+  ! helper array
+  real(kind=4),dimension(:,:),allocatable :: coef
+
   end module model_s362ani_par
 
 !
@@ -83,7 +86,7 @@
 
 ! standard routine to setup model
 
-  use constants, only: myrank
+  use constants, only: myrank,IMAIN
   use model_s362ani_par
 
   implicit none
@@ -92,6 +95,12 @@
 
   ! local parameters
   integer :: ier
+
+  ! user info
+  if (myrank == 0) then
+    write(IMAIN,*) 'broadcast model: S362ANI models'
+    call flush_IMAIN()
+  endif
 
   ! allocates model arrays
   allocate(xlaspl(maxcoe,maxhpa), &
@@ -120,15 +129,16 @@
   ivarkern(:) = 0
 
   ! allocates
-  allocate(lmxhpa(maxhpa),itypehpa(maxhpa),numcoe(maxhpa),stat=ier)
+  allocate(lmxhpa(maxhpa),itypehpa(maxhpa),numcoe(maxhpa), &
+           coef(maxcoe,maxker),stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating s362ani lmxhpa, .. arrays')
-
   ! initializes
   lmxhpa(:) = 0
   itypehpa(:) = 0
   numcoe(:) = 0
+  coef(:,:) = 0.0
 
-  ! master process
+  ! main process
   if (myrank == 0) call read_model_s362ani(THREE_D_MODEL)
 
   call bcast_all_singlei(numker)
@@ -191,12 +201,12 @@
   ! reads in model parameters
   inquire(file=modeldef,exist=exists)
   if (exists) then
-    call gt3dmodl(modeldef, &
-                  numhpa,numker,numcoe,lmxhpa, &
-                  ihpakern,itypehpa,coe, &
-                  itpspl,xlaspl,xlospl,radspl, &
-                  numvar,ivarkern,varstr, &
-                  refmdl,kerstr,hsplfl,dskker)
+    call get_3dmodl(modeldef, &
+                    numhpa,numker,numcoe,lmxhpa, &
+                    ihpakern,itypehpa,coe, &
+                    itpspl,xlaspl,xlospl,radspl, &
+                    numvar,ivarkern,varstr, &
+                    refmdl,kerstr,hsplfl,dskker)
   else
     write(*,"('model ',a,' does not exist')") modeldef(1:len_trim(modeldef))
     stop 'model does not exist in s362_ani'
@@ -222,9 +232,9 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine evradker(depth,string,nker,vercof,dvercof,ierror)
+  subroutine evradker(depth,kerstr,nker,vercof,dvercof,ierror)
 
-  use constants, only: R_EARTH_KM
+  use constants, only: EARTH_R_KM
 
   implicit none
 
@@ -236,12 +246,12 @@
   real(kind=4) :: dvercof(nker)
   real(kind=4) :: splpts(100)
 
-  character(len=80) string
+  character(len=80) :: kerstr
 
   logical :: upper,upper_650
   logical :: lower,lower_650
 
-  real(kind=4), parameter :: r0 = R_EARTH_KM ! 6371.0
+  real(kind=4), parameter :: r0 = EARTH_R_KM ! 6371.0
   real(kind=4), parameter :: rmoho = r0 - 24.4  ! subtracting the thickness here
   real(kind=4), parameter :: r670 = r0 - 670.0    ! subtracting the thickness here
   real(kind=4), parameter :: r650 = r0 - 650.0    ! subtracting the thickness here
@@ -250,9 +260,6 @@
   integer :: i,nspl,nskip,nlower,nupper,iker,lstr
 
   real(kind=4) :: u,u2,ddep,radius2,radius,depth
-
-  ierror = 0
-  lstr = len_trim(string)
 
   radius = r0 - depth
   ddep = 0.1
@@ -276,7 +283,11 @@
     dvercof(iker) = 0.0
   enddo
 
-  if (string(1:16) == 'WDC+SPC_U4L8CHEB') then
+  ierror = 0
+  lstr = len_trim(kerstr)
+  if (lstr < 1) stop 'Error invalid string in evradker() for model s362ani'
+
+  if (kerstr(1:16) == 'WDC+SPC_U4L8CHEB') then
     nupper = 5
     nlower = 9
     nskip = 2
@@ -305,7 +316,7 @@
         dvercof(i) = (chebyshev2(i-nskip-nupper) - chebyshev(i-nskip-nupper))/ddep
       enddo
     endif
-  else if (string(1:13) == 'WDC+SHSVWM20A') then
+  else if (kerstr(1:13) == 'WDC+SHSVWM20A') then
     nspl=20
     splpts(1)=0.0
     splpts(2)=50.0
@@ -333,7 +344,7 @@
       dvercof(i)=dvercof(i-20)
     enddo
     vercof(1)=1.0
-  else if (string(1:16) == 'WDC+XBS_362_U6L8') then
+  else if (kerstr(1:16) == 'WDC+XBS_362_U6L8') then
     if (upper) then
       nspl=6
       splpts(1)=24.4
@@ -358,7 +369,7 @@
     vercof(1)=1.0
 !        vercof(16)=1.
 !        vercof(17)=1.
-!      else if (string(1:21) == 'WDC+ANI_362_U6L8_TOPO') then
+!      else if (kerstr(1:21) == 'WDC+ANI_362_U6L8_TOPO') then
 !        if (upper) then
 !         nspl=6
 !         splpts(1)=24.4
@@ -389,8 +400,8 @@
 !        vercof(23)=1.
 !        vercof(24)=1.
 !        vercof(25)=1.
-  else if ((string(1:lstr) == 'WDC+ANI_362_U6L8' .and. lstr == 16) &
-      .or. (string(1:lstr) == 'WDC+ANI_362_U6L8_TOPO'.and.lstr == 21)) then
+  else if ((kerstr(1:lstr) == 'WDC+ANI_362_U6L8' .and. lstr == 16) &
+      .or. (kerstr(1:lstr) == 'WDC+ANI_362_U6L8_TOPO'.and.lstr == 21)) then
     if (upper) then
       nspl=6
       splpts(1)=24.4
@@ -419,7 +430,7 @@
     vercof(1)=1.0
     vercof(22)=1.0
     vercof(23)=1.0
-  else if (string(1:lstr) == 'WDC+WM_362_U6L8' .and. lstr == 15) then
+  else if (kerstr(1:lstr) == 'WDC+WM_362_U6L8' .and. lstr == 15) then
     if (upper) then
       nspl=6
       splpts(1)=24.4
@@ -453,8 +464,8 @@
     vercof(30)=1.0
     vercof(31)=1.0
     vercof(32)=1.0
-  else if ((string(1:lstr) == 'WDC+ANI_362_U6L8_650' .and. lstr == 20) &
-      .or. (string(1:lstr) == 'WDC+ANI_362_U6L8_TOPO_650'.and.lstr == 25)) then
+  else if ((kerstr(1:lstr) == 'WDC+ANI_362_U6L8_650' .and. lstr == 20) &
+      .or. (kerstr(1:lstr) == 'WDC+ANI_362_U6L8_TOPO_650'.and.lstr == 25)) then
     if (upper_650) then
       nspl=6
       splpts(1)=24.4
@@ -483,7 +494,7 @@
     vercof(1)=1.0
     vercof(22)=1.0
     vercof(23)=1.0
-  else if (string(1:lstr) == 'WDC+WM_362_U6L8_650' .and. lstr == 19) then
+  else if (kerstr(1:lstr) == 'WDC+WM_362_U6L8_650' .and. lstr == 19) then
     if (upper_650) then
       nspl=6
       splpts(1)=24.4
@@ -517,7 +528,7 @@
     vercof(30)=1.0
     vercof(31)=1.0
     vercof(32)=1.0
-  else if (string(1:lstr) == 'WDC+U8L8_650' .and. lstr == 12) then
+  else if (kerstr(1:lstr) == 'WDC+U8L8_650' .and. lstr == 12) then
     if (upper_650) then
       nspl=8
       splpts(1)=24.4
@@ -553,7 +564,7 @@
     vercof(34)=1.0
     vercof(35)=1.0
     vercof(36)=1.0
-  else if (string(1:lstr) == 'WDC+U8L8_670' .and. lstr == 12) then
+  else if (kerstr(1:lstr) == 'WDC+U8L8_670' .and. lstr == 12) then
     if (upper) then
       nspl=8
       splpts(1)=24.4
@@ -589,8 +600,8 @@
     vercof(34)=1.0
     vercof(35)=1.0
     vercof(36)=1.0
-  else if ((string(1:lstr) == 'WDC+U8L8_I1D_650' .and. lstr == 16) &
-      .or. (string(1:lstr) == 'WDC+U8L8_I3D_650'.and.lstr == 16)) then
+  else if ((kerstr(1:lstr) == 'WDC+U8L8_I1D_650' .and. lstr == 16) &
+      .or. (kerstr(1:lstr) == 'WDC+U8L8_I3D_650'.and.lstr == 16)) then
     if (upper_650) then
       nspl=8
       splpts(1)=24.4
@@ -642,8 +653,8 @@
     vercof(34)=1.0
     vercof(35)=1.0
     vercof(36)=1.0
-  else if ((string(1:lstr) == 'WDC+I1D_650' .and. lstr == 11) .or. &
-          (string(1:lstr) == 'WDC+I3D_650' .and. lstr == 11)) then
+  else if ((kerstr(1:lstr) == 'WDC+I1D_650' .and. lstr == 11) .or. &
+          (kerstr(1:lstr) == 'WDC+I3D_650' .and. lstr == 11)) then
     if (upper_650) then
       nspl=8
       splpts(1)=24.4
@@ -711,7 +722,7 @@
     vercof(34)=1.0
     vercof(35)=1.0
     vercof(36)=1.0
-  else if (string(1:lstr) == 'V16A4_V7A4' .and. lstr == 10) then
+  else if (kerstr(1:lstr) == 'V16A4_V7A4' .and. lstr == 10) then
     if (upper_650) then
       nspl=8
       splpts(1)=24.4
@@ -750,9 +761,9 @@
     vercof(21)=1.0
     vercof(22)=1.0
   else
-    write(*,"('problem 4')")
-    write(*,"(a)")string(1:len_trim(string))
-    stop
+    write(*,*) 'Error model s362ani: problem 4: lstr = ',lstr,'kerstr: ',kerstr(1:lstr)
+    write(*,"(a)") kerstr(1:len_trim(kerstr))
+    stop 'Error model s362ani'
   endif
 
   end subroutine evradker
@@ -799,14 +810,14 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine gt3dmodl(targetfile, &
-                      numhpa,numker,numcoe,lmxhpa, &
-                      ihpakern,itypehpa,coe, &
-                      itpspl,xlatspl,xlonspl,radispl, &
-                      numvar,ivarkern,varstr, &
-                      refmdl,kerstr,hsplfl,dskker)
+  subroutine get_3dmodl(targetfile, &
+                        numhpa,numker,numcoe,lmxhpa, &
+                        ihpakern,itypehpa,coe, &
+                        itpspl,xlatspl,xlonspl,radispl, &
+                        numvar,ivarkern,varstr, &
+                        refmdl,kerstr,hsplfl,dskker)
 
-  use model_s362ani_par, only: maxcoe,maxhpa,maxker
+  use model_s362ani_par, only: maxcoe,maxhpa,maxker,coef
 
   implicit none
 
@@ -848,7 +859,6 @@
   integer :: lmaxhor(maxhpa)
   integer :: ncoefhor(maxhpa)
 
-  real(kind=4) :: coef(maxcoe,maxker)
   real(kind=4) :: xlaspl(maxcoe,maxhpa)
   real(kind=4) :: xlospl(maxcoe,maxhpa)
   real(kind=4) :: xraspl(maxcoe,maxhpa)
@@ -860,11 +870,11 @@
 
   ierror = 0
 
-  call rd3dmodl(targetfile,ierror, &
-                nmodkern,nhorpar,ityphpar, &
-                ihorpar,lmaxhor,ncoefhor, &
-                xlaspl,xlospl,xraspl,ixlspl,coef, &
-                hsplfile,refmodel,kernstri,desckern)
+  call read_3dmodl(targetfile,ierror, &
+                   nmodkern,nhorpar,ityphpar, &
+                   ihorpar,lmaxhor,ncoefhor, &
+                   xlaspl,xlospl,xraspl,ixlspl, &
+                   hsplfile,refmodel,kernstri,desckern)
 
   if (nhorpar <= maxhpa) then
     numhpa = nhorpar
@@ -928,25 +938,25 @@
 
   ! checks error
   if (ierror /= 0) then
-    print *,'Error: reading model in get3dmodel() routine failed with error code ',ierror
-    stop 'Error in model s362ani in get3dmodl() routine'
+    print *,'Error: reading model in get_3dmodl() routine failed with error code ',ierror
+    stop 'Error in model s362ani in get_3dmodl() routine'
   endif
 
-  end subroutine gt3dmodl
+  end subroutine get_3dmodl
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine rd3dmodl(filename,ierror, &
-                      nmodkern,nhorpar,ityphpar, &
-                      ihorpar,lmaxhor,ncoefhor, &
-                      xlaspl,xlospl,xraspl,ixlspl,coef, &
-                      hsplfile,refmodel,kernstri,desckern)
+  subroutine read_3dmodl(filename,ierror, &
+                         nmodkern,nhorpar,ityphpar, &
+                         ihorpar,lmaxhor,ncoefhor, &
+                         xlaspl,xlospl,xraspl,ixlspl, &
+                         hsplfile,refmodel,kernstri,desckern)
 
   use constants, only: IMAIN,IIN
 
-  use model_s362ani_par, only: maxcoe,maxhpa,maxker
+  use model_s362ani_par, only: maxcoe,maxhpa,maxker,coef
 
   implicit none
 
@@ -966,8 +976,6 @@
   real(kind=4) :: xraspl(maxcoe,maxhpa)
   integer :: ixlspl(maxcoe,maxhpa)
 
-  real(kind=4) :: coef(maxcoe,maxker)
-
   character(len=80) :: hsplfile(maxhpa)
   character(len=80) :: refmodel
   character(len=80) :: kernstri
@@ -984,110 +992,130 @@
   if (ios /= 0) then
     write(IMAIN,*) 'Error opening "', trim(filename), '": ', ios
     call flush_IMAIN()
-    call exit_MPI(0, 'Error in model s362ani in rd3dmodl() routine')
+    call exit_MPI(0, 'Error in model s362ani in read_3dmodl() routine')
   endif
 
   do while (ios == 0)
-  read(IIN,"(a)",iostat=ios) string
-  lstr=len_trim(string)
-  if (ios == 0) then
-    if (string(1:16) == 'REFERENCE MODEL:') then
-      substr=string(17:lstr)
-      ifst = 1
-      ilst=len_trim(substr)
-      do while (substr(ifst:ifst) == ' ' .and. ifst < ilst)
-        ifst = ifst+1
-      enddo
-      if (ilst-ifst <= 0) then
-        stop 'Error reading model 1'
-      else
-        refmodel=substr(ifst:ilst)
+    ! reads file line
+    read(IIN,"(a)",iostat=ios) string
+
+    if (ios == 0) then
+      ! checks length
+      lstr = len_trim(string)
+      if (lstr < 4) then
+        print *,'Error model s362ani: invalid string read: ',trim(string)
+        stop 'Error reading model file for s362ani'
       endif
-    else if (string(1:11) == 'KERNEL SET:') then
-      substr=string(12:len_trim(string))
-      ifst = 1
-      ilst = len_trim(substr)
-      do while (substr(ifst:ifst) == ' ' .and. ifst < ilst)
-        ifst = ifst+1
-      enddo
-      if (ilst-ifst <= 0) then
-        stop 'Error reading model 2'
-      else
-        kernstri=substr(ifst:ilst)
-      endif
-    else if (string(1:25) == 'RADIAL STRUCTURE KERNELS:') then
-      substr=string(26:len_trim(string))
-      read(substr,*,iostat=ierror) nmodkern
-      if (ierror /= 0) then
-        stop 'Error reading model 3'
-      endif
-    else if (string(1:4) == 'DESC' .and. string(9:9) == ':') then
-      read(string(5:8),"(i4)") idummy
-      substr=string(10:len_trim(string))
-      ifst = 1
-      ilst = len_trim(substr)
-      do while (substr(ifst:ifst) == ' ' .and. ifst < ilst)
-        ifst = ifst+1
-      enddo
-      if (ilst-ifst <= 0) then
-        stop 'Error reading model 4'
-      else
-        desckern(idummy)=substr(ifst:ilst)
-      endif
-    else if (string(1:29) == 'HORIZONTAL PARAMETERIZATIONS:') then
-      substr=string(30:len_trim(string))
-      read(substr,*,iostat=ierror) nhorpar
-      if (ierror /= 0) then
-        stop 'Error reading model 5'
-      endif
-    else if (string(1:4) == 'HPAR' .and. string(9:9) == ':') then
-      read(string(5:8),"(i4)") idummy
-      ifst = 10
-      ilst = len_trim(string)
-      do while (string(ifst:ifst) == ' ' .and. ifst < ilst)
-        ifst = ifst+1
-      enddo
-      if (ilst-ifst <= 0) then
-        stop 'Error reading model 6'
-      else if (string(ifst:ifst+19) == 'SPHERICAL HARMONICS,') then
-        substr=string(20+ifst:len_trim(string))
-        read(substr,*) lmax
-        ityphpar(idummy) = 1
-        lmaxhor(idummy)=lmax
-        ncoefhor(idummy)=(lmax+1)**2
-      else if (string(ifst:ifst+17) == 'SPHERICAL SPLINES,') then
-        ifst1=ifst+18
-        ifst=len_trim(string)
-        ilst=len_trim(string)
-        do while(string(ifst:ifst) /= ',')
-          ifst=ifst-1
+
+      ! initializes substring
+      substr = ''
+
+      if (string(1:16) == 'REFERENCE MODEL:') then
+        lstr = len_trim(string) - 17 + 1
+        substr(1:lstr) = trim(string(17:len_trim(string)))
+        ifst = 1
+        ilst = len_trim(substr)
+        do while (substr(ifst:ifst) == ' ' .and. ifst < ilst)
+          ifst = ifst+1
         enddo
-        read(string(ifst+1:ilst),*) ncoef
-        substr=string(ifst1:ifst-1)
-        do while (string(ifst1:ifst1) == ' ' .and. ifst1 < ifst)
-          ifst1=ifst1+1
+        if (ilst-ifst <= 0) then
+          stop 'Error reading model 1'
+        else
+          refmodel = substr(ifst:ilst)
+        endif
+      else if (string(1:11) == 'KERNEL SET:') then
+        lstr = len_trim(string) - 12 + 1
+        substr(1:lstr) = trim(string(12:len_trim(string)))
+        ifst = 1
+        ilst = len_trim(substr)
+        do while (substr(ifst:ifst) == ' ' .and. ifst < ilst)
+          ifst = ifst+1
         enddo
-        hsplfile(idummy)=string(ifst1:ifst-1)
-        ityphpar(idummy)=2
-        lmaxhor(idummy) = 0
-        ncoefhor(idummy)=ncoef
-        do i = 1,ncoef
-          read(IIN,*) ixlspl(i,idummy),xlaspl(i,idummy),xlospl(i,idummy),xraspl(i,idummy)
+        if (ilst-ifst <= 0) then
+          stop 'Error reading model 2'
+        else
+          kernstri = substr(ifst:ilst)
+        endif
+      else if (string(1:25) == 'RADIAL STRUCTURE KERNELS:') then
+        lstr = len_trim(string) - 26 + 1
+        substr(1:lstr) = trim(string(26:len_trim(string)))
+        read(substr(1:lstr),*,iostat=ierror) nmodkern
+        if (ierror /= 0) then
+          stop 'Error reading model 3'
+        endif
+      else if (string(1:4) == 'DESC' .and. string(9:9) == ':') then
+        read(string(5:8),"(i4)") idummy
+        lstr = len_trim(string) - 10 + 1
+        substr(1:lstr) = trim(string(10:len_trim(string)))
+        ifst = 1
+        ilst = len_trim(substr)
+        do while (substr(ifst:ifst) == ' ' .and. ifst < ilst)
+          ifst = ifst+1
         enddo
+        if (ilst-ifst <= 0) then
+          stop 'Error reading model 4'
+        else
+          desckern(idummy) = substr(ifst:ilst)
+        endif
+      else if (string(1:29) == 'HORIZONTAL PARAMETERIZATIONS:') then
+        lstr = len_trim(string) - 30 + 1
+        substr(1:lstr) = trim(string(30:len_trim(string)))
+        read(substr(1:lstr),*,iostat=ierror) nhorpar
+        if (ierror /= 0) then
+          stop 'Error reading model 5'
+        endif
+      else if (string(1:4) == 'HPAR' .and. string(9:9) == ':') then
+        read(string(5:8),"(i4)") idummy
+        ifst = 10
+        ilst = len_trim(string)
+        do while (string(ifst:ifst) == ' ' .and. ifst < ilst)
+          ifst = ifst+1
+        enddo
+        if (ilst-ifst <= 0) then
+          stop 'Error reading model 6'
+        else if (string(ifst:ifst+19) == 'SPHERICAL HARMONICS,') then
+          lstr = len_trim(string) - (20+ifst) + 1
+          substr(1:lstr) = trim(string(20+ifst:len_trim(string)))
+          read(substr(1:lstr),*) lmax
+          ityphpar(idummy) = 1
+          lmaxhor(idummy) = lmax
+          ncoefhor(idummy) = (lmax+1)**2
+        else if (string(ifst:ifst+17) == 'SPHERICAL SPLINES,') then
+          ifst1 = ifst+18
+          ifst = len_trim(string)
+          ilst = len_trim(string)
+          do while(string(ifst:ifst) /= ',')
+            ifst = ifst-1
+          enddo
+          read(string(ifst+1:ilst),*) ncoef
+          lstr = (ifst-1) - ifst1 + 1
+          substr(1:lstr) = trim(string(ifst1:ifst-1))
+          do while (string(ifst1:ifst1) == ' ' .and. ifst1 < ifst)
+            ifst1 = ifst1+1
+          enddo
+          hsplfile(idummy) = string(ifst1:ifst-1)
+          ityphpar(idummy) = 2
+          lmaxhor(idummy) = 0
+          ncoefhor(idummy) = ncoef
+          do i = 1,ncoef
+            read(IIN,*) ixlspl(i,idummy),xlaspl(i,idummy),xlospl(i,idummy),xraspl(i,idummy)
+          enddo
+        endif
+      else if (string(1:4) == 'STRU' .and. string(9:9) == ':') then
+        read(string(5:8),"(i4)") idummy
+        lstr = len_trim(string) - 10 + 1
+        substr(1:lstr) = trim(string(10:len_trim(string)))
+        read(substr(1:lstr),*) ihor
+        ihorpar(idummy) = ihor
+        ncoef = ncoefhor(ihor)
+        read(IIN,"(6e12.4)") (coef(i,idummy),i = 1,ncoef)
       endif
-    else if (string(1:4) == 'STRU' .and. string(9:9) == ':') then
-      read(string(5:8),"(i4)") idummy
-      substr=string(10:len_trim(string))
-      read(substr,*) ihor
-      ihorpar(idummy)=ihor
-      ncoef=ncoefhor(ihor)
-      read(IIN,"(6e12.4)") (coef(i,idummy),i = 1,ncoef)
     endif
-  endif
   enddo
+
   close(IIN)
 
-  end subroutine rd3dmodl
+  end subroutine read_3dmodl
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -1149,9 +1177,9 @@
       rn = dd(iver)/verrad(iver)
       dr = rn - 1.d0
       if (rn <= 1.d0) then
-        con(ncon) = (0.75d0*rn-1.5d0)*(rn**2)+1.d0
+        con(ncon) = real( (0.75d0*rn-1.5d0)*(rn**2)+1.d0 ,kind=4)
       else if (rn > 1.d0) then
-        con(ncon) = ((-0.25d0*dr+0.75d0)*dr-0.75d0)*dr+0.25d0
+        con(ncon) = real( ((-0.25d0*dr+0.75d0)*dr-0.75d0)*dr+0.25d0 ,kind=4)
       else
         con(ncon) = 0.0
       endif
@@ -1169,7 +1197,7 @@
   subroutine model_s362ani_subshsv(xcolat,xlon,xrad,dvsh,dvsv,dvph,dvpv)
 
   use model_s362ani_par
-  use constants, only: R_EARTH_KM
+  use constants, only: EARTH_R_KM
 
   implicit none
 
@@ -1200,7 +1228,7 @@
   integer,dimension(maxhpa) :: nconpt
   integer,dimension(maxver,maxhpa) :: iconpt
 
-  real(kind=4), parameter :: r0 = R_EARTH_KM ! 6371.0
+  real(kind=4), parameter :: r0 = EARTH_R_KM ! 6371.0
 
   ! initializes
   vsv3drel = 0.0
@@ -1315,7 +1343,7 @@
 
   subroutine model_s362ani_subtopo(xcolat,xlon,topo410,topo650)
 
-  use model_s362ani_par, only: numhpa,itypehpa,lmxhpa,maxcoe,numcoe,coe, &
+  use model_s362ani_par, only: numhpa,itypehpa,lmxhpa,numcoe,coe, &
     xlaspl,xlospl,radspl, &
     numker,ihpakern,ivarkern,varstr, &
     maxl,maxhpa,maxver,maxhpa

@@ -5,7 +5,7 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -82,9 +82,6 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifndef IFLAG_IN_FICTITIOUS_CUBE\n\
 #define IFLAG_IN_FICTITIOUS_CUBE 11\n\
 #endif\n\
-#ifndef R_EARTH_KM\n\
-#define R_EARTH_KM 6371.0f\n\
-#endif\n\
 #ifndef COLORING_MIN_NSPEC_INNER_CORE\n\
 #define COLORING_MIN_NSPEC_INNER_CORE 1000\n\
 #endif\n\
@@ -96,16 +93,19 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #endif\n\
 \n\
 __kernel void write_seismograms_transfer_from_device_kernel(const __global int * number_receiver_global, const __global int * ispec_selected_rec, const __global int * ibool, __global float * station_seismo_field, const __global float * d_field, const int nrec_local){\n\
+  int iglob;\n\
   int tx;\n\
   int irec;\n\
   int ispec;\n\
-  int iglob;\n\
   int blockID;\n\
+\n\
   blockID = get_group_id(0) + (get_group_id(1)) * (get_num_groups(0));\n\
   tx = get_local_id(0);\n\
+\n\
   if (blockID < nrec_local) {\n\
     irec = number_receiver_global[blockID] - (1);\n\
     ispec = ispec_selected_rec[irec] - (1);\n\
+\n\
     iglob = ibool[tx + (NGLL3) * (ispec)] - (1);\n\
     station_seismo_field[((NGLL3) * (3)) * (blockID) + (tx) * (3) + 0] = d_field[(iglob) * (3) + 0];\n\
     station_seismo_field[((NGLL3) * (3)) * (blockID) + (tx) * (3) + 1] = d_field[(iglob) * (3) + 1];\n\

@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -112,7 +112,7 @@
 
   use specfem_par, only: myrank,NPROCTOT_VAL, &
     nrec,islice_selected_rec,station_name,network_name, &
-    nu, &
+    nu_rec, &
     iadjsrc_len,iadjsrc,NSTEP_SUB_ADJ, &
     DT,CUSTOM_REAL,NDIM,NGLLX,NGLLY,NGLLZ,NTSTEP_BETWEEN_READ_ADJSRC,MAX_STRING_LEN,READ_ADJSRC_ASDF
 
@@ -170,7 +170,7 @@
 
       ! reads in *.adj files
       call compute_arrays_source_adjoint(myrank,adj_source_file, &
-                                         nu(:,:,irec),tmp_source_adjoint, &
+                                         nu_rec(:,:,irec),tmp_source_adjoint, &
                                          iadjsrc_len(it_sub_adj),iadjsrc,it_sub_adj, &
                                          NSTEP_SUB_ADJ,NTSTEP_BETWEEN_READ_ADJSRC,DT)
 

@@ -5,7 +5,7 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -82,9 +82,6 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifndef IFLAG_IN_FICTITIOUS_CUBE\n\
 #define IFLAG_IN_FICTITIOUS_CUBE 11\n\
 #endif\n\
-#ifndef R_EARTH_KM\n\
-#define R_EARTH_KM 6371.0f\n\
-#endif\n\
 #ifndef COLORING_MIN_NSPEC_INNER_CORE\n\
 #define COLORING_MIN_NSPEC_INNER_CORE 1000\n\
 #endif\n\
@@ -95,7 +92,7 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #define BLOCKSIZE_TRANSFER 256\n\
 #endif\n\
 \n\
-__kernel void compute_add_sources_adjoint_kernel(__global float * accel, const int nrec, const __global float * source_adjoint, const __global float * xir, const __global float * etar, const __global float * gammar, const __global int * ibool, const __global int * ispec_selected_rec, const __global int * pre_computed_irec, const int nadj_rec_local){\n\
+__kernel void compute_add_sources_adjoint_kernel(__global float * accel, const __global float * source_adjoint, const __global float * xir, const __global float * etar, const __global float * gammar, const __global int * ibool, const __global int * ispec_selected_rec, const __global int * number_adjsources_global, const int nadj_rec_local){\n\
   int ispec;\n\
   int iglob;\n\
   int irec_local;\n\
@@ -105,15 +102,15 @@ __kernel void compute_add_sources_adjoint_kernel(__global float * accel, const i
   int k;\n\
   irec_local = get_group_id(0) + (get_num_groups(0)) * (get_group_id(1));\n\
   if (irec_local < nadj_rec_local) {\n\
-    irec = pre_computed_irec[irec_local];\n\
+    irec = number_adjsources_global[irec_local] - (1);\n\
     ispec = ispec_selected_rec[irec] - (1);\n\
     i = get_local_id(0);\n\
     j = get_local_id(1);\n\
     k = get_local_id(2);\n\
     iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)] - (1);\n\
-    atomicAdd(accel + (iglob) * (3) + 0, (((source_adjoint[INDEX2(NDIM, 0, irec_local)]) * (xir[INDEX2(nadj_rec_local, irec_local, i)])) * (etar[INDEX2(nadj_rec_local, irec_local, j)])) * (gammar[INDEX2(nadj_rec_local, irec_local, k)]));\n\
-    atomicAdd(accel + (iglob) * (3) + 1, (((source_adjoint[INDEX2(NDIM, 1, irec_local)]) * (xir[INDEX2(nadj_rec_local, irec_local, i)])) * (etar[INDEX2(nadj_rec_local, irec_local, j)])) * (gammar[INDEX2(nadj_rec_local, irec_local, k)]));\n\
-    atomicAdd(accel + (iglob) * (3) + 2, (((source_adjoint[INDEX2(NDIM, 2, irec_local)]) * (xir[INDEX2(nadj_rec_local, irec_local, i)])) * (etar[INDEX2(nadj_rec_local, irec_local, j)])) * (gammar[INDEX2(nadj_rec_local, irec_local, k)]));\n\
+    atomicAdd(accel + (iglob) * (3) + 0, (((source_adjoint[INDEX2(NDIM, 0, irec_local)]) * (xir[INDEX2(NGLLX, i, irec_local)])) * (etar[INDEX2(NGLLX, j, irec_local)])) * (gammar[INDEX2(NGLLX, k, irec_local)]));\n\
+    atomicAdd(accel + (iglob) * (3) + 1, (((source_adjoint[INDEX2(NDIM, 1, irec_local)]) * (xir[INDEX2(NGLLX, i, irec_local)])) * (etar[INDEX2(NGLLX, j, irec_local)])) * (gammar[INDEX2(NGLLX, k, irec_local)]));\n\
+    atomicAdd(accel + (iglob) * (3) + 2, (((source_adjoint[INDEX2(NDIM, 2, irec_local)]) * (xir[INDEX2(NGLLX, i, irec_local)])) * (etar[INDEX2(NGLLX, j, irec_local)])) * (gammar[INDEX2(NGLLX, k, irec_local)]));\n\
   }\n\
 }\n\
 ";

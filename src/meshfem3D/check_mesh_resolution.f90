@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -31,11 +31,12 @@
 
   use constants
 
+  use shared_parameters, only: T_min_period
+
   use meshfem3D_par, only: &
     nspec,nglob, &
-    DT,myrank,ibool, &
+    DT,myrank,ibool,idoubling, &
     xstore_glob,ystore_glob,zstore_glob,SAVE_MESH_FILES, &
-    ANGULAR_WIDTH_ETA_IN_DEGREES,ANGULAR_WIDTH_XI_IN_DEGREES,NEX_XI,NEX_ETA, &
     dt_max_glob,pmax_glob
 
   use regions_mesh_par2, only: prname
@@ -53,13 +54,13 @@
   real(kind=CUSTOM_REAL) :: dt_max,dt_max_reg
   real(kind=CUSTOM_REAL) :: pmax,pmax_reg
   real(kind=CUSTOM_REAL) :: pmax_empirical
-  real(kind=CUSTOM_REAL) :: elemsize_min,elemsize_max,elemsize_min_reg,elemsize_max_reg
+  real(kind=CUSTOM_REAL) :: elemsize_min,elemsize_max,elemsize_min_reg,elemsize_max_reg,dx
   real(kind=CUSTOM_REAL) :: cmax,cmax_reg
 
-  real(kind=CUSTOM_REAL) :: vpmax,vsmin
+  real(kind=CUSTOM_REAL) :: vpmax,vsmin,vpmax_reg,vsmin_reg
   real(kind=CUSTOM_REAL) :: avg_distance,distance_min
   double precision :: deltat
-  integer :: ispec
+  integer :: ispec,ier
 
   ! minimum distance between adjacent GLL points
   double precision, dimension(15), parameter :: percent_GLL = &
@@ -72,18 +73,27 @@
   real(kind=CUSTOM_REAL) :: eig_ratio_min_reg,eig_ratio_max_reg
 
   ! for file output
+  logical, parameter :: USE_VTU_FORMAT = .true.
+
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: val_ispec_pmax,val_ispec_dt
   character(len=MAX_STRING_LEN) :: filename
-
   character(len=32),parameter :: region(4) = (/character(len=32) :: 'crust/mantle', 'outer core', 'inner core', 'central cube'/)
 
+  !debug timing
+  !double precision, external :: wtime
+  !double precision :: tstart,tCPU
+
   ! note: the mesh and time step check is only approximative
+
+  !debug timing
+  !tstart = wtime()
 
   ! safety check
   if (NGLLX < 1 .or. NGLLX > 15) stop 'Invalid NGLLX value in routine check_mesh_resolution'
 
   ! temporary arrays for file output
-  allocate(val_ispec_pmax(nspec),val_ispec_dt(nspec))
+  allocate(val_ispec_pmax(nspec),val_ispec_dt(nspec),stat=ier)
+  if (ier /= 0) stop 'Error allocating val_ispec_pmax arrays'
   val_ispec_pmax(:) = 0._CUSTOM_REAL
   val_ispec_dt(:) = 0._CUSTOM_REAL
 
@@ -104,18 +114,26 @@
   dt_max_reg = HUGEVAL
   cmax_reg = - HUGEVAL
 
+  vsmin_reg = HUGEVAL
+  vpmax_reg = - HUGEVAL
+
 ! openmp mesher
-!$OMP PARALLEL DEFAULT(PRIVATE) &
-!$OMP SHARED(nspec,nglob,iregion_code, &
-!$OMP xstore,ystore,zstore, &
-!$OMP kappavstore,kappahstore,muvstore,muhstore,rhostore, &
-!$OMP elemsize_min_reg,elemsize_max_reg,eig_ratio_min_reg,eig_ratio_max_reg, &
-!$OMP pmax_reg,dt_max_reg,cmax_reg,val_ispec_pmax,val_ispec_dt,DT)
+!$OMP PARALLEL DEFAULT(SHARED) &
+!$OMP PRIVATE(ispec,vpmax,vsmin,elemsize_min,elemsize_max, &
+!$OMP eig_ratio_min,eig_ratio_max, &
+!$OMP avg_distance,pmax,distance_min,dx,deltat,dt_max,cmax)
 !$OMP DO
   do ispec = 1,nspec
 
+    ! suppress fictitious elements in central cube
+    if (idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+
     ! determines maximum velocities at corners of this element
     call get_vpvs_minmax(vpmax,vsmin,ispec,nspec,iregion_code,kappavstore,kappahstore,muvstore,muhstore,rhostore)
+
+    ! sets region min/max
+    vsmin_reg = min(vsmin,vsmin_reg)
+    vpmax_reg = max(vpmax,vpmax_reg)
 
     ! computes minimum size of this grid cell
     call get_elem_minmaxsize(elemsize_min,elemsize_max,ispec,nspec,xstore,ystore,zstore)
@@ -134,7 +152,7 @@
     !if (eig_ratio_min_reg > eig_min_ratio) then
     !  eig_ratio_min_reg = eig_min_ratio
     !  print *,'eigen: ',eig_ratio_min_reg, &
-    !          'at radius ',sngl(sqrt(xstore(3,3,3,ispec)**2 + ystore(3,3,3,ispec)**2 + zstore(3,3,3,ispec)**2)*R_EARTH_KM)
+    !          'at radius ',sngl(sqrt(xstore(3,3,3,ispec)**2 + ystore(3,3,3,ispec)**2 + zstore(3,3,3,ispec)**2)*R_PLANET_KM)
     !endif
 
     ! largest possible minimum period such that number of points per minimum wavelength
@@ -157,7 +175,7 @@
     !  print *,'minimum period = ',sngl(pmax_reg), &
     !          sngl(256.0/max(NEX_ETA,NEX_XI) * max(ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES)/90.0 * 17.0), &
     !          'vpmax = ',vpmax,'vsmin = ',vsmin, &
-    !          'at radius ',sngl(sqrt(xstore(3,3,3,ispec)**2 + ystore(3,3,3,ispec)**2 + zstore(3,3,3,ispec)**2)*R_EARTH_KM)
+    !          'at radius ',sngl(sqrt(xstore(3,3,3,ispec)**2 + ystore(3,3,3,ispec)**2 + zstore(3,3,3,ispec)**2)*R_PLANET_KM)
     !endif
 
     ! sets region minimum period
@@ -176,8 +194,8 @@
     !             B  o=====o C
     !
     ! note: this condition is usually not met for the case of our global meshes
-    ! call get_min_distance_from_second_GLL_points(dx,ispec,nspec,xstore,ystore,zstore)
-    !if (distance_min > dx) distance_min = dx
+    call get_min_distance_from_second_GLL_points(dx,ispec,nspec,xstore,ystore,zstore)
+    if (distance_min > dx) distance_min = dx
 
     ! suggested timestep
     deltat = COURANT_SUGGESTED * distance_min / vpmax
@@ -194,7 +212,7 @@
     !  dt_max_reg = dt_max
     !  print *,'dt_max = ',dt_max_reg,sngl(DT),sngl(fac_pow),dt_cut, &
     !          'vp = ',vpmax,'distance_min = ',distance_min,eig_ratio_min, &
-    !          'at radius ',sngl(sqrt(xstore(3,3,3,ispec)**2 + ystore(3,3,3,ispec)**2 + zstore(3,3,3,ispec)**2)*R_EARTH_KM)
+    !          'at radius ',sngl(sqrt(xstore(3,3,3,ispec)**2 + ystore(3,3,3,ispec)**2 + zstore(3,3,3,ispec)**2)*R_PLANET_KM)
     !endif
 
     ! sets region time step in this slice
@@ -217,6 +235,11 @@
 !$OMP END PARALLEL
 
   ! collects for all slices
+  vsmin = vsmin_reg
+  call min_all_all_cr(vsmin,vsmin_reg)
+  vpmax = vpmax_reg
+  call max_all_all_cr(vpmax,vpmax_reg)
+
   dt_max = dt_max_reg
   call min_all_all_cr(dt_max,dt_max_reg)
 
@@ -228,7 +251,7 @@
   pmax_glob = max(pmax_glob,pmax_reg)
 
   ! region info statistics
-  ! master collects info from all MPI slices
+  ! main collects info from all MPI slices
   cmax = cmax_reg
   call max_all_cr(cmax,cmax_reg)
 
@@ -245,8 +268,11 @@
   call max_all_cr(eig_ratio_max,eig_ratio_max_reg)
 
   ! empirical minimum period resolved by mesh
-  ! uses formula: width/90. * 256/NEX * 17s
-  pmax_empirical = max(ANGULAR_WIDTH_ETA_IN_DEGREES,ANGULAR_WIDTH_XI_IN_DEGREES)/90.0 * 256.0/min(NEX_ETA,NEX_XI) * 17.0
+  pmax_empirical = T_min_period
+
+  !debug timing
+  !tCPU = wtime() - tstart
+  !if (myrank == 0) print *,'debug: timing region ',iregion_code,' check mesh resolution = ',sngl(tCPU),'(s)'
 
   ! user output
   if (myrank == 0) then
@@ -255,6 +281,13 @@
     write(IMAIN,*) '  Verification of mesh parameters:'
     write(IMAIN,*) '----------------------------------'
     write(IMAIN,*) '  Region is ',trim(region(iregion_code))
+    write(IMAIN,*)
+    if (iregion_code == IREGION_OUTER_CORE) then
+      write(IMAIN,*) '  Min Vp = ',vsmin_reg,' (km/s)'
+    else
+      write(IMAIN,*) '  Min Vs = ',vsmin_reg,' (km/s)'
+    endif
+    write(IMAIN,*) '  Max Vp = ',vpmax_reg,' (km/s)'
     write(IMAIN,*)
     write(IMAIN,*) '  Max element edge size = ',elemsize_max_reg,' (km)'
     write(IMAIN,*) '  Min element edge size = ',elemsize_min_reg,' (km)'
@@ -290,15 +323,31 @@
 
     ! minimum period
     filename = prname(1:len_trim(prname))//'res_minimum_period'
-    call write_VTK_data_elem_cr(nspec,nglob, &
-                                xstore_glob,ystore_glob,zstore_glob, &
-                                ibool,val_ispec_pmax,filename)
+    if (USE_VTU_FORMAT) then
+      ! binary vtu-format
+      call write_VTU_data_elem_cr_binary(nspec,nglob, &
+                                         xstore_glob,ystore_glob,zstore_glob, &
+                                         ibool,val_ispec_pmax,filename)
+    else
+      ! vtk-format
+      call write_VTK_data_elem_cr(nspec,nglob, &
+                                  xstore_glob,ystore_glob,zstore_glob, &
+                                  ibool,val_ispec_pmax,filename)
+    endif
 
     ! dt_max
     filename = prname(1:len_trim(prname))//'res_maximum_dt'
-    call write_VTK_data_elem_cr(nspec,nglob, &
-                                xstore_glob,ystore_glob,zstore_glob, &
-                                ibool,val_ispec_dt,filename)
+    if (USE_VTU_FORMAT) then
+      ! binary vtu-format
+      call write_VTU_data_elem_cr_binary(nspec,nglob, &
+                                         xstore_glob,ystore_glob,zstore_glob, &
+                                         ibool,val_ispec_dt,filename)
+    else
+      ! vtk-format
+      call write_VTK_data_elem_cr(nspec,nglob, &
+                                  xstore_glob,ystore_glob,zstore_glob, &
+                                  ibool,val_ispec_dt,filename)
+    endif
   endif
 
   ! free memory
@@ -317,8 +366,8 @@
   subroutine get_vpvs_minmax(vpmax,vsmin,ispec,nspec,iregion_code,kappavstore,kappahstore,muvstore,muhstore,rhostore)
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,IREGION_CRUST_MANTLE,IREGION_INNER_CORE, &
-    PI,GRAV,RHOAV,R_EARTH,HUGEVAL,TINYVAL,FOUR_THIRDS
-
+    PI,GRAV,HUGEVAL,TINYVAL,FOUR_THIRDS
+  use shared_parameters, only: RHOAV,R_PLANET
   use meshfem3D_models_par, only: ANISOTROPIC_INNER_CORE,ANISOTROPIC_3D_MANTLE
 
   use regions_mesh_par2, only: &
@@ -337,10 +386,11 @@
   real(kind=CUSTOM_REAL) :: vpv,vph,vsv,vsh
   integer :: i,j,k
   ! scaling factors to re-dimensionalize units
-  real(kind=CUSTOM_REAL),parameter :: scaleval = real(sqrt(PI*GRAV*RHOAV)*(R_EARTH/1000.0d0),kind=CUSTOM_REAL)
+  real(kind=CUSTOM_REAL) :: scaleval
 
   vpmax = - HUGEVAL
   vsmin = HUGEVAL
+
   do k = 1, NGLLZ, NGLLZ-1
     do j = 1, NGLLY, NGLLY-1
       do i = 1, NGLLX, NGLLX-1
@@ -356,9 +406,21 @@
           vph = vpv
         else if (ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) then
           ! this likely needs to be improved, for now, it just takes the maximum entry of Cij (for given symmetry)
-          vpv = max(c11store(i,j,k,ispec),c33store(i,j,k,ispec),c12store(i,j,k,ispec),c13store(i,j,k,ispec), &
-                    c44store(i,j,k,ispec)) / rhostore(i,j,k,ispec)
-          vph = vpv
+          !vpv = max(c11store(i,j,k,ispec),c33store(i,j,k,ispec),c12store(i,j,k,ispec),c13store(i,j,k,ispec), &
+          !          c44store(i,j,k,ispec)) / rhostore(i,j,k,ispec)
+          !
+          ! transversly isotropic
+          ! C11 = A = rho * vph**2
+          ! C33 = C = rho * vpv**2
+          ! C44 = L = rho * vsv**2
+          ! C13 = F = eta * (A - 2*L)
+          ! C12 = C11 - 2 C66 = A - 2*N = rho * (vph**2 - 2 * vsh**2)
+          ! C22 = C11 = A
+          ! C23 = C13 = F
+          ! C55 = C44 = L
+          ! C66 = N = rho * vsh**2 = (C11-C12)/2
+          vpv = c33store(i,j,k,ispec)/rhostore(i,j,k,ispec)  ! vpv squared
+          vph = c11store(i,j,k,ispec)/rhostore(i,j,k,ispec)
         else
           vpv = (kappavstore(i,j,k,ispec) + FOUR_THIRDS*muvstore(i,j,k,ispec)) / rhostore(i,j,k,ispec)
           vph = (kappahstore(i,j,k,ispec) + FOUR_THIRDS*muhstore(i,j,k,ispec)) / rhostore(i,j,k,ispec)
@@ -376,8 +438,19 @@
           vsh = vsv
         else if (ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) then
           ! this likely needs to be improved: assumes that vs velocities are specified by c44 and c66
-          vsv = min(c44store(i,j,k,ispec),c66store(i,j,k,ispec)) / rhostore(i,j,k,ispec)
-          vsh = vsv
+          !vsv = min(c44store(i,j,k,ispec),c66store(i,j,k,ispec)) / rhostore(i,j,k,ispec)
+          ! transversly isotropic
+          ! C11 = A = rho * vph**2
+          ! C33 = C = rho * vpv**2
+          ! C44 = L = rho * vsv**2
+          ! C13 = F = eta * (A - 2*L)
+          ! C12 = C11 - 2 C66 = A - 2*N = rho * (vph**2 - 2 * vsh**2)
+          ! C22 = C11 = A
+          ! C23 = C13 = F
+          ! C55 = C44 = L
+          ! C66 = N = rho * vsh**2 = (C11-C12)/2
+          vsv = c44store(i,j,k,ispec)/rhostore(i,j,k,ispec)  ! vsv squared
+          vsh = 0.5d0*(c11store(i,j,k,ispec)-c12store(i,j,k,ispec))/rhostore(i,j,k,ispec)
         else
           vsv = muvstore(i,j,k,ispec) / rhostore(i,j,k,ispec)
           vsh = muhstore(i,j,k,ispec) / rhostore(i,j,k,ispec)
@@ -395,6 +468,7 @@
     enddo
   enddo
   ! maximum Vp (in km/s)
+  scaleval = real(sqrt(PI*GRAV*RHOAV)*(R_PLANET/1000.0d0),kind=CUSTOM_REAL)
   vpmax = sqrt(vpmax) * scaleval
   vsmin = sqrt(vsmin) * scaleval
 
@@ -406,7 +480,8 @@
 
   subroutine get_elem_minmaxsize(elemsize_min,elemsize_max,ispec,nspec,xstore,ystore,zstore)
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,R_EARTH_KM,HUGEVAL
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,HUGEVAL
+  use shared_parameters, only: R_PLANET_KM
 
   implicit none
 
@@ -478,8 +553,8 @@
     enddo
   enddo
   ! size (in km)
-  elemsize_min = sqrt(elemsize_min) * R_EARTH_KM
-  elemsize_max = sqrt(elemsize_max) * R_EARTH_KM
+  elemsize_min = sqrt(elemsize_min) * R_PLANET_KM
+  elemsize_max = sqrt(elemsize_max) * R_PLANET_KM
 
   end subroutine get_elem_minmaxsize
 
@@ -490,7 +565,8 @@
 
   subroutine get_min_distance_from_second_GLL_points(dx,ispec,nspec,xstore,ystore,zstore)
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,R_EARTH_KM,HUGEVAL
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,HUGEVAL
+  use shared_parameters, only: R_PLANET_KM
 
   implicit none
 
@@ -656,7 +732,7 @@
     if (dx > dist ) dx = dist
   enddo
   ! size (in km)
-  dx = sqrt(dx) * R_EARTH_KM
+  dx = sqrt(dx) * R_PLANET_KM
 
   end subroutine get_min_distance_from_second_GLL_points
 
@@ -683,7 +759,7 @@
   integer :: i,j,k
   double precision,dimension(3,3) :: jacobian,A
   double precision :: e1,e2,e3
-  double precision :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl !,jacobianl
+  double precision :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
 
   eig_ratio_min = HUGEVAL
   eig_ratio_max = - HUGEVAL
@@ -701,10 +777,15 @@
         gammayl = gammaystore(i,j,k,ispec)
         gammazl = gammazstore(i,j,k,ispec)
 
-        ! computes the Jacobian (determinant)
-        !jacobianl = 1.d0 / (xixl*(etayl*gammazl-etazl*gammayl) &
-        !              - xiyl*(etaxl*gammazl-etazl*gammaxl) &
-        !              + xizl*(etaxl*gammayl-etayl*gammaxl))
+        ! computes the Jacobian (determinant) (not inversed yet)
+        jacobianl = (xixl*(etayl*gammazl-etazl*gammayl) &
+                   - xiyl*(etaxl*gammazl-etazl*gammaxl) &
+                   + xizl*(etaxl*gammayl-etayl*gammaxl))
+        ! checks
+        if (jacobianl <= 0.d0 .or. jacobianl /= jacobianl) then
+          print *,"Error negative or invalid jacobian in element",ispec,'jacobianl',jacobianl
+          stop "Error invalid jacobian in get_eigenvalues_min_ratio()"
+        endif
 
         ! loads the jacobian matrix
         jacobian(1,1) = xixl
@@ -788,9 +869,10 @@
   double precision,dimension(3,3), parameter :: Id = reshape((/1,0,0, 0,1,0, 0,0,1/),(/3,3/))
   double precision,parameter :: ONE_THIRD = 1.d0 / 3.d0
   double precision,parameter :: PI = 3.141592653589793d0
+  double precision,parameter :: TOL_ZERO = 1.d-30, TOL_EIG = 1.d-5
 
   ! check symmetry
-  if (A(1,2) /= A(2,1) .or. A(1,3) /= A(3,1) .or. A(2,3) /= A(3,2)) then
+  if (abs(A(1,2) - A(2,1)) > TOL_ZERO .or. abs(A(1,3) - A(3,1)) > TOL_ZERO .or. abs(A(2,3) - A(3,2)) > TOL_ZERO) then
     print *,"Error non-symmetric input matrix A: ",A(:,:)
     stop 'invalid non-symmetric matrix A'
   endif
@@ -799,7 +881,12 @@
   detA = A(1,1)*(A(2,2)*A(3,3) - A(3,2)*A(2,3)) &
        + A(1,2)*(A(3,1)*A(2,3) - A(2,1)*A(3,3)) &
        + A(1,3)*(A(2,1)*A(3,2) - A(3,1)*A(2,2))
-  if (detA <= 0.d0) stop "invalid input matrix A has negative determinant"
+
+  ! checks
+  if (detA <= 0.d0) then
+    print *,"Error negative determinant matrix A: ",detA,'matrix',A(:,:)
+    stop "invalid input matrix A has negative determinant"
+  endif
 
   ! power in off-diagonal entries
   p1 = A(1,2)*A(1,2) + A(1,3)*A(1,3) + A(2,3)*A(2,3)
@@ -861,7 +948,7 @@
 
   ! checks
   if (eig3 == 0.d0) stop 'Invalid zero eigenvalue'
-  if (abs(detA - eig1 * eig2 * eig3)/detA > 1.e-5) then
+  if (abs(detA - eig1 * eig2 * eig3)/detA > TOL_EIG) then
     print *,'invalid inaccurate eigenvalues:',eig1*eig2*eig3,'instead of ',detA
     stop 'Invalid inaccurate eigenvalues'
   endif

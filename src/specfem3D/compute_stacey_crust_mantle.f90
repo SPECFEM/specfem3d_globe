@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -74,7 +74,7 @@
   !           simple approach is still fastest. (assuming that files are accessed on a local scratch disk)
 
   ! checks
-  if (SIMULATION_TYPE == 3 ) return
+  if (SIMULATION_TYPE == 3) return
 
   ! crust & mantle
   if (.not. GPU_MODE) then
@@ -93,7 +93,7 @@
 !$OMP DO
       do ispec2D = 1,nspec2D_xmin_crust_mantle
 
-        ispec=ibelm_xmin_crust_mantle(ispec2D)
+        ispec = ibelm_xmin_crust_mantle(ispec2D)
 
         ! exclude elements that are not on absorbing edges
         if (nkmin_xi_crust_mantle(1,ispec2D) == 0 .or. njmin_crust_mantle(1,ispec2D) == 0) cycle
@@ -101,30 +101,30 @@
         i = 1
         do k = nkmin_xi_crust_mantle(1,ispec2D),NGLLZ
           do j = njmin_crust_mantle(1,ispec2D),njmax_crust_mantle(1,ispec2D)
-            iglob=ibool_crust_mantle(i,j,k,ispec)
+            iglob = ibool_crust_mantle(i,j,k,ispec)
 
-            vx=veloc_crust_mantle(1,iglob)
-            vy=veloc_crust_mantle(2,iglob)
-            vz=veloc_crust_mantle(3,iglob)
+            vx = veloc_crust_mantle(1,iglob)
+            vy = veloc_crust_mantle(2,iglob)
+            vz = veloc_crust_mantle(3,iglob)
 
-            nx=normal_xmin_crust_mantle(1,j,k,ispec2D)
-            ny=normal_xmin_crust_mantle(2,j,k,ispec2D)
-            nz=normal_xmin_crust_mantle(3,j,k,ispec2D)
+            nx = normal_xmin_crust_mantle(1,j,k,ispec2D)
+            ny = normal_xmin_crust_mantle(2,j,k,ispec2D)
+            nz = normal_xmin_crust_mantle(3,j,k,ispec2D)
 
-            vn=vx*nx+vy*ny+vz*nz
+            vn = vx*nx+vy*ny+vz*nz
 
-            tx=rho_vp_crust_mantle(i,j,k,ispec)*vn*nx+rho_vs_crust_mantle(i,j,k,ispec)*(vx-vn*nx)
-            ty=rho_vp_crust_mantle(i,j,k,ispec)*vn*ny+rho_vs_crust_mantle(i,j,k,ispec)*(vy-vn*ny)
-            tz=rho_vp_crust_mantle(i,j,k,ispec)*vn*nz+rho_vs_crust_mantle(i,j,k,ispec)*(vz-vn*nz)
+            tx = rho_vp_crust_mantle(i,j,k,ispec)*vn*nx+rho_vs_crust_mantle(i,j,k,ispec)*(vx-vn*nx)
+            ty = rho_vp_crust_mantle(i,j,k,ispec)*vn*ny+rho_vs_crust_mantle(i,j,k,ispec)*(vy-vn*ny)
+            tz = rho_vp_crust_mantle(i,j,k,ispec)*vn*nz+rho_vs_crust_mantle(i,j,k,ispec)*(vz-vn*nz)
 
-            weight=jacobian2D_xmin_crust_mantle(j,k,ispec2D)*wgllwgll_yz(j,k)
+            weight = jacobian2D_xmin_crust_mantle(j,k,ispec2D)*wgllwgll_yz(j,k)
 
 !$OMP ATOMIC
-            accel_crust_mantle(1,iglob)=accel_crust_mantle(1,iglob) - tx*weight
+            accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) - tx*weight
 !$OMP ATOMIC
-            accel_crust_mantle(2,iglob)=accel_crust_mantle(2,iglob) - ty*weight
+            accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) - ty*weight
 !$OMP ATOMIC
-            accel_crust_mantle(3,iglob)=accel_crust_mantle(3,iglob) - tz*weight
+            accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) - tz*weight
 
             if (SAVE_STACEY) then
               absorb_xmin_crust_mantle(1,j,k,ispec2D) = tx*weight
@@ -144,38 +144,38 @@
 !$OMP DO
       do ispec2D = 1,nspec2D_xmax_crust_mantle
 
-        ispec=ibelm_xmax_crust_mantle(ispec2D)
+        ispec = ibelm_xmax_crust_mantle(ispec2D)
 
         ! exclude elements that are not on absorbing edges
         if (nkmin_xi_crust_mantle(2,ispec2D) == 0 .or. njmin_crust_mantle(2,ispec2D) == 0) cycle
 
-        i=NGLLX
-        do k=nkmin_xi_crust_mantle(2,ispec2D),NGLLZ
-          do j=njmin_crust_mantle(2,ispec2D),njmax_crust_mantle(2,ispec2D)
-            iglob=ibool_crust_mantle(i,j,k,ispec)
+        i = NGLLX
+        do k = nkmin_xi_crust_mantle(2,ispec2D),NGLLZ
+          do j = njmin_crust_mantle(2,ispec2D),njmax_crust_mantle(2,ispec2D)
+            iglob = ibool_crust_mantle(i,j,k,ispec)
 
-            vx=veloc_crust_mantle(1,iglob)
-            vy=veloc_crust_mantle(2,iglob)
-            vz=veloc_crust_mantle(3,iglob)
+            vx = veloc_crust_mantle(1,iglob)
+            vy = veloc_crust_mantle(2,iglob)
+            vz = veloc_crust_mantle(3,iglob)
 
-            nx=normal_xmax_crust_mantle(1,j,k,ispec2D)
-            ny=normal_xmax_crust_mantle(2,j,k,ispec2D)
-            nz=normal_xmax_crust_mantle(3,j,k,ispec2D)
+            nx = normal_xmax_crust_mantle(1,j,k,ispec2D)
+            ny = normal_xmax_crust_mantle(2,j,k,ispec2D)
+            nz = normal_xmax_crust_mantle(3,j,k,ispec2D)
 
-            vn=vx*nx+vy*ny+vz*nz
+            vn = vx*nx+vy*ny+vz*nz
 
-            tx=rho_vp_crust_mantle(i,j,k,ispec)*vn*nx+rho_vs_crust_mantle(i,j,k,ispec)*(vx-vn*nx)
-            ty=rho_vp_crust_mantle(i,j,k,ispec)*vn*ny+rho_vs_crust_mantle(i,j,k,ispec)*(vy-vn*ny)
-            tz=rho_vp_crust_mantle(i,j,k,ispec)*vn*nz+rho_vs_crust_mantle(i,j,k,ispec)*(vz-vn*nz)
+            tx = rho_vp_crust_mantle(i,j,k,ispec)*vn*nx+rho_vs_crust_mantle(i,j,k,ispec)*(vx-vn*nx)
+            ty = rho_vp_crust_mantle(i,j,k,ispec)*vn*ny+rho_vs_crust_mantle(i,j,k,ispec)*(vy-vn*ny)
+            tz = rho_vp_crust_mantle(i,j,k,ispec)*vn*nz+rho_vs_crust_mantle(i,j,k,ispec)*(vz-vn*nz)
 
-            weight=jacobian2D_xmax_crust_mantle(j,k,ispec2D)*wgllwgll_yz(j,k)
+            weight = jacobian2D_xmax_crust_mantle(j,k,ispec2D)*wgllwgll_yz(j,k)
 
 !$OMP ATOMIC
-            accel_crust_mantle(1,iglob)=accel_crust_mantle(1,iglob) - tx*weight
+            accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) - tx*weight
 !$OMP ATOMIC
-            accel_crust_mantle(2,iglob)=accel_crust_mantle(2,iglob) - ty*weight
+            accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) - ty*weight
 !$OMP ATOMIC
-            accel_crust_mantle(3,iglob)=accel_crust_mantle(3,iglob) - tz*weight
+            accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) - tz*weight
 
             if (SAVE_STACEY) then
               absorb_xmax_crust_mantle(1,j,k,ispec2D) = tx*weight
@@ -194,7 +194,7 @@
 !$OMP DO
     do ispec2D = 1,nspec2D_ymin_crust_mantle
 
-      ispec=ibelm_ymin_crust_mantle(ispec2D)
+      ispec = ibelm_ymin_crust_mantle(ispec2D)
 
       ! exclude elements that are not on absorbing edges
       if (nkmin_eta_crust_mantle(1,ispec2D) == 0 .or. nimin_crust_mantle(1,ispec2D) == 0) cycle
@@ -202,30 +202,30 @@
       j = 1
       do k = nkmin_eta_crust_mantle(1,ispec2D),NGLLZ
         do i = nimin_crust_mantle(1,ispec2D),nimax_crust_mantle(1,ispec2D)
-          iglob=ibool_crust_mantle(i,j,k,ispec)
+          iglob = ibool_crust_mantle(i,j,k,ispec)
 
-          vx=veloc_crust_mantle(1,iglob)
-          vy=veloc_crust_mantle(2,iglob)
-          vz=veloc_crust_mantle(3,iglob)
+          vx = veloc_crust_mantle(1,iglob)
+          vy = veloc_crust_mantle(2,iglob)
+          vz = veloc_crust_mantle(3,iglob)
 
-          nx=normal_ymin_crust_mantle(1,i,k,ispec2D)
-          ny=normal_ymin_crust_mantle(2,i,k,ispec2D)
-          nz=normal_ymin_crust_mantle(3,i,k,ispec2D)
+          nx = normal_ymin_crust_mantle(1,i,k,ispec2D)
+          ny = normal_ymin_crust_mantle(2,i,k,ispec2D)
+          nz = normal_ymin_crust_mantle(3,i,k,ispec2D)
 
-          vn=vx*nx+vy*ny+vz*nz
+          vn = vx*nx+vy*ny+vz*nz
 
-          tx=rho_vp_crust_mantle(i,j,k,ispec)*vn*nx+rho_vs_crust_mantle(i,j,k,ispec)*(vx-vn*nx)
-          ty=rho_vp_crust_mantle(i,j,k,ispec)*vn*ny+rho_vs_crust_mantle(i,j,k,ispec)*(vy-vn*ny)
-          tz=rho_vp_crust_mantle(i,j,k,ispec)*vn*nz+rho_vs_crust_mantle(i,j,k,ispec)*(vz-vn*nz)
+          tx = rho_vp_crust_mantle(i,j,k,ispec)*vn*nx+rho_vs_crust_mantle(i,j,k,ispec)*(vx-vn*nx)
+          ty = rho_vp_crust_mantle(i,j,k,ispec)*vn*ny+rho_vs_crust_mantle(i,j,k,ispec)*(vy-vn*ny)
+          tz = rho_vp_crust_mantle(i,j,k,ispec)*vn*nz+rho_vs_crust_mantle(i,j,k,ispec)*(vz-vn*nz)
 
-          weight=jacobian2D_ymin_crust_mantle(i,k,ispec2D)*wgllwgll_xz(i,k)
+          weight = jacobian2D_ymin_crust_mantle(i,k,ispec2D)*wgllwgll_xz(i,k)
 
 !$OMP ATOMIC
-          accel_crust_mantle(1,iglob)=accel_crust_mantle(1,iglob) - tx*weight
+          accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) - tx*weight
 !$OMP ATOMIC
-          accel_crust_mantle(2,iglob)=accel_crust_mantle(2,iglob) - ty*weight
+          accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) - ty*weight
 !$OMP ATOMIC
-          accel_crust_mantle(3,iglob)=accel_crust_mantle(3,iglob) - tz*weight
+          accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) - tz*weight
 
           if (SAVE_STACEY) then
             absorb_ymin_crust_mantle(1,i,k,ispec2D) = tx*weight
@@ -242,38 +242,38 @@
 !$OMP DO
     do ispec2D = 1,nspec2D_ymax_crust_mantle
 
-      ispec=ibelm_ymax_crust_mantle(ispec2D)
+      ispec = ibelm_ymax_crust_mantle(ispec2D)
 
       ! exclude elements that are not on absorbing edges
       if (nkmin_eta_crust_mantle(2,ispec2D) == 0 .or. nimin_crust_mantle(2,ispec2D) == 0) cycle
 
-      j=NGLLY
-      do k=nkmin_eta_crust_mantle(2,ispec2D),NGLLZ
-        do i=nimin_crust_mantle(2,ispec2D),nimax_crust_mantle(2,ispec2D)
-          iglob=ibool_crust_mantle(i,j,k,ispec)
+      j = NGLLY
+      do k = nkmin_eta_crust_mantle(2,ispec2D),NGLLZ
+        do i = nimin_crust_mantle(2,ispec2D),nimax_crust_mantle(2,ispec2D)
+          iglob = ibool_crust_mantle(i,j,k,ispec)
 
-          vx=veloc_crust_mantle(1,iglob)
-          vy=veloc_crust_mantle(2,iglob)
-          vz=veloc_crust_mantle(3,iglob)
+          vx = veloc_crust_mantle(1,iglob)
+          vy = veloc_crust_mantle(2,iglob)
+          vz = veloc_crust_mantle(3,iglob)
 
-          nx=normal_ymax_crust_mantle(1,i,k,ispec2D)
-          ny=normal_ymax_crust_mantle(2,i,k,ispec2D)
-          nz=normal_ymax_crust_mantle(3,i,k,ispec2D)
+          nx = normal_ymax_crust_mantle(1,i,k,ispec2D)
+          ny = normal_ymax_crust_mantle(2,i,k,ispec2D)
+          nz = normal_ymax_crust_mantle(3,i,k,ispec2D)
 
-          vn=vx*nx+vy*ny+vz*nz
+          vn = vx*nx+vy*ny+vz*nz
 
-          tx=rho_vp_crust_mantle(i,j,k,ispec)*vn*nx+rho_vs_crust_mantle(i,j,k,ispec)*(vx-vn*nx)
-          ty=rho_vp_crust_mantle(i,j,k,ispec)*vn*ny+rho_vs_crust_mantle(i,j,k,ispec)*(vy-vn*ny)
-          tz=rho_vp_crust_mantle(i,j,k,ispec)*vn*nz+rho_vs_crust_mantle(i,j,k,ispec)*(vz-vn*nz)
+          tx = rho_vp_crust_mantle(i,j,k,ispec)*vn*nx+rho_vs_crust_mantle(i,j,k,ispec)*(vx-vn*nx)
+          ty = rho_vp_crust_mantle(i,j,k,ispec)*vn*ny+rho_vs_crust_mantle(i,j,k,ispec)*(vy-vn*ny)
+          tz = rho_vp_crust_mantle(i,j,k,ispec)*vn*nz+rho_vs_crust_mantle(i,j,k,ispec)*(vz-vn*nz)
 
-          weight=jacobian2D_ymax_crust_mantle(i,k,ispec2D)*wgllwgll_xz(i,k)
+          weight = jacobian2D_ymax_crust_mantle(i,k,ispec2D)*wgllwgll_xz(i,k)
 
 !$OMP ATOMIC
-          accel_crust_mantle(1,iglob)=accel_crust_mantle(1,iglob) - tx*weight
+          accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) - tx*weight
 !$OMP ATOMIC
-          accel_crust_mantle(2,iglob)=accel_crust_mantle(2,iglob) - ty*weight
+          accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) - ty*weight
 !$OMP ATOMIC
-          accel_crust_mantle(3,iglob)=accel_crust_mantle(3,iglob) - tz*weight
+          accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) - tz*weight
 
           if (SAVE_STACEY) then
             absorb_ymax_crust_mantle(1,i,k,ispec2D) = tx*weight
@@ -364,7 +364,7 @@
   !           simple approach is still fastest. (assuming that files are accessed on a local scratch disk)
 
   ! checks
-  if (SIMULATION_TYPE /= 3 ) return
+  if (SIMULATION_TYPE /= 3) return
 
   ! crust & mantle
 
@@ -383,17 +383,24 @@
       ! on CPU
       do ispec2D = 1,nspec2D_xmin_crust_mantle
 
-        ispec = ibelm_xmin_crust_mantle(ispec2D)
-
         ! exclude elements that are not on absorbing edges
         if (nkmin_xi_crust_mantle(1,ispec2D) == 0 .or. njmin_crust_mantle(1,ispec2D) == 0) cycle
 
         i = 1
+        ispec = ibelm_xmin_crust_mantle(ispec2D)
+
         do k = nkmin_xi_crust_mantle(1,ispec2D),NGLLZ
           do j = njmin_crust_mantle(1,ispec2D),njmax_crust_mantle(1,ispec2D)
             iglob = ibool_crust_mantle(i,j,k,ispec)
 
-            b_accel_crust_mantle(:,iglob) = b_accel_crust_mantle(:,iglob) - absorb_xmin_crust_mantle(:,j,k,ispec2D)
+            ! note:
+            ! this leads to an internal cray compiler error (Cray Fortran Version 8.6.5):
+            !b_accel_crust_mantle(:,iglob) = b_accel_crust_mantle(:,iglob) - absorb_xmin_crust_mantle(:,j,k,ispec2D)
+            ! it helps to be more explicit:
+            b_accel_crust_mantle(1,iglob) = b_accel_crust_mantle(1,iglob) - absorb_xmin_crust_mantle(1,j,k,ispec2D)
+            b_accel_crust_mantle(2,iglob) = b_accel_crust_mantle(2,iglob) - absorb_xmin_crust_mantle(2,j,k,ispec2D)
+            b_accel_crust_mantle(3,iglob) = b_accel_crust_mantle(3,iglob) - absorb_xmin_crust_mantle(3,j,k,ispec2D)
+
           enddo
         enddo
       enddo
@@ -420,17 +427,19 @@
       ! on CPU
       do ispec2D = 1,nspec2D_xmax_crust_mantle
 
-        ispec = ibelm_xmax_crust_mantle(ispec2D)
-
         ! exclude elements that are not on absorbing edges
         if (nkmin_xi_crust_mantle(2,ispec2D) == 0 .or. njmin_crust_mantle(2,ispec2D) == 0) cycle
 
         i = NGLLX
+        ispec = ibelm_xmax_crust_mantle(ispec2D)
+
         do k = nkmin_xi_crust_mantle(2,ispec2D),NGLLZ
           do j = njmin_crust_mantle(2,ispec2D),njmax_crust_mantle(2,ispec2D)
             iglob = ibool_crust_mantle(i,j,k,ispec)
 
-            b_accel_crust_mantle(:,iglob) = b_accel_crust_mantle(:,iglob) - absorb_xmax_crust_mantle(:,j,k,ispec2D)
+            b_accel_crust_mantle(1,iglob) = b_accel_crust_mantle(1,iglob) - absorb_xmax_crust_mantle(1,j,k,ispec2D)
+            b_accel_crust_mantle(2,iglob) = b_accel_crust_mantle(2,iglob) - absorb_xmax_crust_mantle(2,j,k,ispec2D)
+            b_accel_crust_mantle(3,iglob) = b_accel_crust_mantle(3,iglob) - absorb_xmax_crust_mantle(3,j,k,ispec2D)
           enddo
         enddo
       enddo
@@ -455,17 +464,19 @@
     ! on CPU
     do ispec2D = 1,nspec2D_ymin_crust_mantle
 
-      ispec = ibelm_ymin_crust_mantle(ispec2D)
-
       ! exclude elements that are not on absorbing edges
       if (nkmin_eta_crust_mantle(1,ispec2D) == 0 .or. nimin_crust_mantle(1,ispec2D) == 0) cycle
 
       j = 1
+      ispec = ibelm_ymin_crust_mantle(ispec2D)
+
       do k = nkmin_eta_crust_mantle(1,ispec2D),NGLLZ
         do i = nimin_crust_mantle(1,ispec2D),nimax_crust_mantle(1,ispec2D)
           iglob = ibool_crust_mantle(i,j,k,ispec)
 
-          b_accel_crust_mantle(:,iglob)=b_accel_crust_mantle(:,iglob) - absorb_ymin_crust_mantle(:,i,k,ispec2D)
+          b_accel_crust_mantle(1,iglob)=b_accel_crust_mantle(1,iglob) - absorb_ymin_crust_mantle(1,i,k,ispec2D)
+          b_accel_crust_mantle(2,iglob)=b_accel_crust_mantle(2,iglob) - absorb_ymin_crust_mantle(2,i,k,ispec2D)
+          b_accel_crust_mantle(3,iglob)=b_accel_crust_mantle(3,iglob) - absorb_ymin_crust_mantle(3,i,k,ispec2D)
         enddo
       enddo
     enddo
@@ -488,17 +499,19 @@
     ! on CPU
     do ispec2D = 1,nspec2D_ymax_crust_mantle
 
-      ispec = ibelm_ymax_crust_mantle(ispec2D)
-
       ! exclude elements that are not on absorbing edges
       if (nkmin_eta_crust_mantle(2,ispec2D) == 0 .or. nimin_crust_mantle(2,ispec2D) == 0) cycle
 
       j = NGLLY
+      ispec = ibelm_ymax_crust_mantle(ispec2D)
+
       do k = nkmin_eta_crust_mantle(2,ispec2D),NGLLZ
         do i = nimin_crust_mantle(2,ispec2D),nimax_crust_mantle(2,ispec2D)
           iglob = ibool_crust_mantle(i,j,k,ispec)
 
-          b_accel_crust_mantle(:,iglob) = b_accel_crust_mantle(:,iglob) - absorb_ymax_crust_mantle(:,i,k,ispec2D)
+          b_accel_crust_mantle(1,iglob) = b_accel_crust_mantle(1,iglob) - absorb_ymax_crust_mantle(1,i,k,ispec2D)
+          b_accel_crust_mantle(2,iglob) = b_accel_crust_mantle(2,iglob) - absorb_ymax_crust_mantle(2,i,k,ispec2D)
+          b_accel_crust_mantle(3,iglob) = b_accel_crust_mantle(3,iglob) - absorb_ymax_crust_mantle(3,i,k,ispec2D)
         enddo
       enddo
     enddo
