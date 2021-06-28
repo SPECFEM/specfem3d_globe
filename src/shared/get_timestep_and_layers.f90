@@ -38,6 +38,7 @@
   integer :: multiplication_factor
   double precision :: min_chunk_width_in_degrees
   double precision :: dt_auto
+  double precision :: MIN_GLL_POINT_SPACING,MIN_GLL_POINT_SPACING_NGLL5
   integer :: nex_max_auto_ner_estimate
 
   ! initializes
@@ -652,6 +653,56 @@
       endif
     endif
 
+  else
+    ! adapts the empirical time step estimate to different NGLL settings.
+    ! the empirical sizes are estimated for NGLL == 5, here we modify them according to the change
+    ! of the minimum spacing between different NGLL settings.
+    if (NGLLX /= 5) then
+      ! relative minimum distance between two GLL points
+      ! the roots x_i are given by the first derivative of the Legendre Polynomial: P_n-1'(x_i) = 0
+      !
+      ! note: the x_i interval is between [-1,1], thus relative to the full length, we divide by 2
+      !
+      ! formulas:
+      ! see: https://en.wikipedia.org/wiki/Gaussian_quadrature  -> section Gauss-Lobatto rules
+      !      http://mathworld.wolfram.com/LobattoQuadrature.html
+      !
+      ! numerical values:
+      ! see: http://keisan.casio.com/exec/system/1280801905
+
+      ! spacing for NGLLX == 5
+      MIN_GLL_POINT_SPACING_NGLL5 = 0.5d0 * ( 1.d0 - sqrt(3.d0 / 7.d0) ) ! 0.1726
+
+      ! NGLL choosen
+      ! (see also in auto_ner.f90)
+      select case (NGLLX)
+      case (2)
+        MIN_GLL_POINT_SPACING = 0.5d0 * ( 1.d0 - 1.0 ) ! 1.0
+      case (3)
+        MIN_GLL_POINT_SPACING = 0.5d0 * ( 1.d0 - 0.0 ) ! 0.5
+      case (4)
+        MIN_GLL_POINT_SPACING = 0.5d0 * ( 1.d0 - sqrt(1.d0 / 5.d0) ) ! 0.2764
+      case (5)
+        MIN_GLL_POINT_SPACING = 0.5d0 * ( 1.d0 - sqrt(3.d0 / 7.d0) ) ! 0.1726
+      case (6)
+        MIN_GLL_POINT_SPACING = 0.5d0 * ( 1.d0 - sqrt(1.d0/21.d0*(7.d0 + 2.d0 * sqrt(7.d0))) ) !0.117472
+      case (7)
+        MIN_GLL_POINT_SPACING = 0.5d0 * ( 1.d0 - 0.830223896278566929872 ) ! 0.084888
+      case (8)
+        MIN_GLL_POINT_SPACING = 0.5d0 * ( 1.d0 - 0.8717401485096066153374 ) ! 0.0641299
+      case (9)
+        MIN_GLL_POINT_SPACING = 0.5d0 * ( 1.d0 - 0.8997579954114601573123 ) ! 0.050121
+      case (10)
+        MIN_GLL_POINT_SPACING = 0.5d0 * ( 1.d0 - 0.9195339081664588138289 ) ! 0.040233
+      case default
+        ! no formula yet, takes average
+        MIN_GLL_POINT_SPACING = 0.5d0 * ( 2.d0 / dble(NGLLX-1) )
+        !stop 'get_timestep_and_layers: NGLLX > 10 value not supported yet! please consider adding it...'
+      end select
+
+      ! adapts DT setting
+      DT = DT * MIN_GLL_POINT_SPACING / MIN_GLL_POINT_SPACING_NGLL5
+    endif
   endif
 
 !---
