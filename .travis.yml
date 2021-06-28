@@ -4,11 +4,18 @@
 #       this is using C as a base and installs gfortran in the test environment
 
 language: c
-dist: xenial
-sudo: required
-
+dist: bionic
 os: linux
+
+arch:
+  - ppc64le  # IBM Power
+#  - amd64    # travis default
+#  - arm64    # ARM
+
 compiler: gcc
+
+# deprecated
+#sudo: required
 
 env:
   global:
@@ -88,6 +95,16 @@ env:
 
     # regional noise example
     - TESTID=21 TESTDIR=12 TESTCOV=0 TESTFLAGS="--enable-vectorization" CUDA=false
+
+
+# additional ARM tests
+jobs:
+  include:
+  - arch: arm64
+    env: TESTID=4 TESTDIR=1 TESTCOV=0 TESTFLAGS="" CUDA=false
+  - arch: arm64
+    env: TESTID=7 TESTDIR=1 TESTCOV=0 TESTFLAGS="--enable-debug" CUDA=false
+
 
 before_install:
   # informations on git
