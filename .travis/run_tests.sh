@@ -120,6 +120,8 @@ if [ "$TESTID" == "3" ]; then
 else
   # limit number of time steps
   sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.5:" DATA/Par_file
+  # shortens output interval to avoid timeouts
+  sed -i "s:^NTSTEP_BETWEEN_OUTPUT_INFO .*:NTSTEP_BETWEEN_OUTPUT_INFO    = 50:" DATA/Par_file
 
   # regional w/ debug-checking
   if [ "$TESTID" == "7" ]; then
@@ -183,6 +185,7 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   echo
   cd EXAMPLES/point_force/
   sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
+  sed -i "s:^NTSTEP_BETWEEN_OUTPUT_INFO .*:NTSTEP_BETWEEN_OUTPUT_INFO    = 50:" DATA/Par_file
   ./run_this_example.sh
   if [[ $? -ne 0 ]]; then exit 1; fi
   cd $WORKDIR
@@ -199,6 +202,7 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   echo
   cd EXAMPLES/regular_kernel/
   sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
+  sed -i "s:^NTSTEP_BETWEEN_OUTPUT_INFO .*:NTSTEP_BETWEEN_OUTPUT_INFO    = 50:" DATA/Par_file
   ./run_this_example.sh
   if [[ $? -ne 0 ]]; then exit 1; fi
   cd $WORKDIR
@@ -215,6 +219,7 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "2" ]; then
   echo
   cd EXAMPLES/global_small/
   sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
+  sed -i "s:^NTSTEP_BETWEEN_OUTPUT_INFO .*:NTSTEP_BETWEEN_OUTPUT_INFO    = 50:" DATA/Par_file
   ./run_this_example.sh
   if [[ $? -ne 0 ]]; then exit 1; fi
   cd $WORKDIR
@@ -231,6 +236,7 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "2" ]; then
   echo
   cd EXAMPLES/regional_sgloberani/
   sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
+  sed -i "s:^NTSTEP_BETWEEN_OUTPUT_INFO .*:NTSTEP_BETWEEN_OUTPUT_INFO    = 50:" DATA/Par_file
   ./run_this_example.sh
   if [[ $? -ne 0 ]]; then exit 1; fi
   cd $WORKDIR
@@ -247,6 +253,7 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "2" ]; then
   echo
   cd EXAMPLES/regional_s40rts/
   sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
+  sed -i "s:^NTSTEP_BETWEEN_OUTPUT_INFO .*:NTSTEP_BETWEEN_OUTPUT_INFO    = 50:" DATA/Par_file
   ./run_this_example.sh
   if [[ $? -ne 0 ]]; then exit 1; fi
   cd $WORKDIR
@@ -263,6 +270,7 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   echo
   cd EXAMPLES/mars_regional/
   sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
+  sed -i "s:^NTSTEP_BETWEEN_OUTPUT_INFO .*:NTSTEP_BETWEEN_OUTPUT_INFO    = 50:" DATA/Par_file
   ./run_this_example.sh
   if [[ $? -ne 0 ]]; then exit 1; fi
   cd $WORKDIR
@@ -279,6 +287,7 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   echo
   cd EXAMPLES/moon_global/
   sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
+  sed -i "s:^NTSTEP_BETWEEN_OUTPUT_INFO .*:NTSTEP_BETWEEN_OUTPUT_INFO    = 50:" DATA/Par_file
   ./run_this_example.sh
   if [[ $? -ne 0 ]]; then exit 1; fi
   cd $WORKDIR
@@ -295,6 +304,7 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   echo
   cd EXAMPLES/regional_Greece_small_LDDRK/
   sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
+  sed -i "s:^NTSTEP_BETWEEN_OUTPUT_INFO .*:NTSTEP_BETWEEN_OUTPUT_INFO    = 50:" DATA/Par_file
   ./run_this_example.sh
   if [[ $? -ne 0 ]]; then exit 1; fi
   cd $WORKDIR
@@ -311,6 +321,7 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   echo
   cd EXAMPLES/regional_Greece_noise_small/
   sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.1:" DATA/Par_file
+  sed -i "s:^NTSTEP_BETWEEN_OUTPUT_INFO .*:NTSTEP_BETWEEN_OUTPUT_INFO    = 50:" DATA/Par_file
   sed -i "s:2999:199:g" run_this_example.kernel.sh
   ./run_this_example.kernel.sh
   if [[ $? -ne 0 ]]; then exit 1; fi
