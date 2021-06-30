@@ -1,0 +1,44 @@
+#
+# runs configuration
+#
+
+parameters:
+- name: TESTFLAGS
+  type: string
+  default: ''
+- name: CUDA
+  type: boolean
+  default: false
+- name: BUILD
+  type: boolean
+  default: false
+
+steps:
+- script: |
+    echo "configuration: default"
+    ./configure FC=gfortran MPIFC=mpif90 CC=gcc ${{ parameters.TESTFLAGS }}
+    if [[ $? -ne 0 ]]; then echo "configuration failed:"; cat config.log; echo ""; echo "exiting..."; exit 1; fi
+    # we output to console
+    sed -i "s:IMAIN .*:IMAIN = ISTANDARD_OUTPUT:" setup/constants.h
+    if [[ $? -ne 0 ]]; then exit 1; fi    
+  condition: eq(parameters.CUDA, false)
+  displayName: 'Run Configure Default'
+
+- script: |
+    echo "configuration: CUDA"
+    ./configure FC=gfortran MPIFC=mpif90 CC=gcc ${{ parameters.TESTFLAGS }} CUDA_LIB="${CUDA_HOME}/lib64" CUDA_INC="${CUDA_HOME}/include" CUDA_FLAGS="-Xcompiler -Wall,-Wno-unused-function,-Wno-unused-const-variable,-Wfatal-errors -g -G"
+    if [[ $? -ne 0 ]]; then echo "configuration failed:"; cat config.log; echo ""; echo "exiting..."; exit 1; fi
+    # we output to console
+    sed -i "s:IMAIN .*:IMAIN = ISTANDARD_OUTPUT:" setup/constants.h
+    if [[ $? -ne 0 ]]; then exit 1; fi
+  condition: eq(parameters.CUDA, true)
+  displayName: 'Run Configure CUDA'
+
+- script: |
+    echo "compilation:"
+    make clean
+    if [[ $? -ne 0 ]]; then exit 1; fi
+    echo
+    make -j2 all
+  condition: ${{ parameters.BUILD }}
+  displayName: 'Run Make'

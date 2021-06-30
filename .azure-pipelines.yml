@@ -1,0 +1,59 @@
+# Azure Pipelines configuration
+#
+# using C as a base template
+
+# specific branch build with batching
+trigger:
+  batch: true
+  branches:
+    include:
+    - devel
+    - master
+    #- none
+
+pool:
+  vmImage: 'ubuntu-latest'   # 'ubuntu-18.04'
+
+jobs:
+- job: compilation_default
+  displayName: 'compilation Default'
+  steps:
+  #- checkout: self
+  - template: .azure-pipelines/install-template.yml
+    parameters:
+      CUDA: false
+  - template: .azure-pipelines/configure-template.yml
+    parameters:
+      TESTFLAGS: '--enable-vectorization'
+      CUDA: false
+      BUILD: true
+
+- job: compilation_CUDA
+  displayName: 'compilation CUDA'
+  steps:
+  #- checkout: self
+  - template: .azure-pipelines/install-template.yml
+    parameters:
+      CUDA: true
+  - template: .azure-pipelines/configure-template.yml
+    parameters:
+      TESTFLAGS: '--enable-vectorization'
+      CUDA: true
+      BUILD: true
+
+- job: test_example_1
+  displayName: 'test example 1'
+  steps:
+  - template: .azure-pipelines/install-template.yml
+    parameters:
+      CUDA: false
+  - template: .azure-pipelines/configure-template.yml
+    parameters:
+      TESTFLAGS: '--enable-vectorization'
+      CUDA: false
+      BUILD: false
+  - template: .azure-pipelines/test-template.yml
+    parameters:
+      workingDirectory: EXAMPLES/regional_Greece_small/
+
+
