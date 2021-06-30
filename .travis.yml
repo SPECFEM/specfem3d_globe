@@ -57,11 +57,11 @@ env:
     # regional example with NGLL = 6
     - TESTID=8 TESTDIR=1 TESTCOV=0 TESTFLAGS="" CUDA=false
 
-    # globe_small example
-    - TESTID=9 TESTDIR=2 TESTCOV=0 TESTFLAGS="--enable-vectorization" CUDA=false
+    # globe_small example (offline, takes too long)
+    #- TESTID=9 TESTDIR=2 TESTCOV=0 TESTFLAGS="--enable-vectorization" CUDA=false
 
-    # globe_small example with openmp
-    - TESTID=10 TESTDIR=2 TESTCOV=0 TESTFLAGS="--enable-vectorization --enable-openmp" CUDA=false
+    # globe_small example with openmp (offline, takes too long)
+    #- TESTID=10 TESTDIR=2 TESTCOV=0 TESTFLAGS="--enable-vectorization --enable-openmp" CUDA=false
 
     # point force example
     - TESTID=11 TESTDIR=3 TESTCOV=0 TESTFLAGS="" CUDA=false
@@ -72,7 +72,7 @@ env:
     # regional_sgloberani
     - TESTID=13 TESTDIR=5 TESTCOV=0 TESTFLAGS="--enable-vectorization" CUDA=false
 
-    # global_full_sphericalharmonic_model
+    # global_full_sphericalharmonic_model (possible future case)
     #- TESTID=14 TESTDIR=6 TESTCOV=0 TESTFLAGS="--enable-vectorization" CUDA=false
 
     # regional s40rts compilation w/ CUDA
@@ -81,7 +81,7 @@ env:
     # regional s40rts compilation w/ OpenCL (provided from CUDA library)
     - TESTID=16 TESTDIR=7 TESTCOV=0 TESTFLAGS="--with-opencl" CUDA=true OPENCL=true
 
-    # regional_small_adjoint - pure adjoint example
+    # regional_small_adjoint - pure adjoint example (offline, would need full length simulation)
     #- TESTID=17 TESTDIR=8 TESTCOV=0 TESTFLAGS="" CUDA=false
 
     # regional mars

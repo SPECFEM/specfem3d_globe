@@ -184,11 +184,18 @@
 
   enddo ! of ilayer_loop
 
+  ! user output
+  if (myrank == 0 ) then
+    write(IMAIN,*) '  layers done'
+    write(IMAIN,*) '    total number of elements = ',ispec_count
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  ! frees temporary arrays
   deallocate(stretch_tab)
   deallocate(perm_layer)
   deallocate(jacobian2D_moho,jacobian2D_400,jacobian2D_670)
-
-  if (myrank == 0 ) write(IMAIN,*)
 
   ! define central cube in inner core
   if (INCLUDE_CENTRAL_CUBE .and. iregion_code == IREGION_INNER_CORE) then
@@ -205,6 +212,14 @@
                              idoubling,iregion_code, &
                              rmin,rmax,R_CENTRAL_CUBE, &
                              ispec_is_tiso)
+
+    ! user output
+    if (myrank == 0 ) then
+      write(IMAIN,*) '  central cube done'
+      write(IMAIN,*) '    total number of elements = ',ispec_count
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
   endif
 
   ! check total number of spectral elements created
