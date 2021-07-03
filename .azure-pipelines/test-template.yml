@@ -14,16 +14,31 @@ steps:
     testdir=${{ parameters.workingDirectory }}
     echo "work directory: $WORKDIR"
     echo "test directory: $testdir"
+    echo ""
     cd $dir
-    ./run_this_example.sh
-    # checks script return code
-    if [[ $? -ne 0 ]]; then
-      # cleanup
-      rm -rf OUTPUT_FILES* DATABASES_MPI*
-      exit 1
-    fi
+    echo "current dir: `pwd`"
+    echo ""
+    ls -al
+    echo ""
+    # fails to run..
+    #./run_this_example.sh
+    ## checks script return code
+    #if [[ $? -ne 0 ]]; then
+    #  # cleanup
+    #  rm -rf OUTPUT_FILES* DATABASES_MPI*
+    #  exit 1
+    #fi
+
+- bash: . './run_this_example.sh'
+    displayName: run this example
+    workingDirectory: ${{ parameters.workingDirectory }}
+
+- script: |
     # checks output
     echo "testing seismograms:"
+    echo "workdir: $WORKDIR"
+    echo "current dir: `pwd`"
+    echo
     ln -s $WORKDIR/utils/compare_seismogram_correlations.py
     ./compare_seismogram_correlations.py REF_SEIS/ OUTPUT_FILES/
     if [[ $? -ne 0 ]]; then exit 1; fi

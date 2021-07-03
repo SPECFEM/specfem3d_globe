@@ -15,23 +15,26 @@ parameters:
 
 steps:
 - script: |
-    echo "configuration: default"
+    echo "configuration: default - TESTFLAGS=${{ parameters.TESTFLAGS }}"
+    # configuration
     ./configure FC=gfortran MPIFC=mpif90 CC=gcc ${{ parameters.TESTFLAGS }}
     if [[ $? -ne 0 ]]; then echo "configuration failed:"; cat config.log; echo ""; echo "exiting..."; exit 1; fi
     # we output to console
     sed -i "s:IMAIN .*:IMAIN = ISTANDARD_OUTPUT:" setup/constants.h
     if [[ $? -ne 0 ]]; then exit 1; fi    
-  condition: eq(parameters.CUDA, false)
+  condition: eq('${{ parameters.CUDA }}', false)
   displayName: 'Run Configure Default'
 
 - script: |
-    echo "configuration: CUDA"
+    # getting updated environment (CUDA_HOME, PATH, ..)
+    if [ -f $HOME/.tmprc ]; then source $HOME/.tmprc; fi
+    echo "configuration: CUDA    - TESTFLAGS=${{ parameters.TESTFLAGS }} CUDA_HOME=${CUDA_HOME}"
     ./configure FC=gfortran MPIFC=mpif90 CC=gcc ${{ parameters.TESTFLAGS }} CUDA_LIB="${CUDA_HOME}/lib64" CUDA_INC="${CUDA_HOME}/include" CUDA_FLAGS="-Xcompiler -Wall,-Wno-unused-function,-Wno-unused-const-variable,-Wfatal-errors -g -G"
     if [[ $? -ne 0 ]]; then echo "configuration failed:"; cat config.log; echo ""; echo "exiting..."; exit 1; fi
     # we output to console
     sed -i "s:IMAIN .*:IMAIN = ISTANDARD_OUTPUT:" setup/constants.h
     if [[ $? -ne 0 ]]; then exit 1; fi
-  condition: eq(parameters.CUDA, true)
+  condition: eq('${{ parameters.CUDA }}', true)
   displayName: 'Run Configure CUDA'
 
 - script: |

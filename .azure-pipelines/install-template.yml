@@ -101,6 +101,7 @@ steps:
     echo "Installing ${CUDA_PACKAGES}"
     sudo apt-get install -y --no-install-recommends ${CUDA_PACKAGES}
     sudo apt-get clean
+    echo ""
     #export CUDA_HOME=/usr/local/cuda-${CUDA_VERSION:0:3}   # version 9.2
     export CUDA_HOME=/usr/local/cuda-${CUDA_VERSION:0:4}    # version 10.2
     export LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}
@@ -108,6 +109,10 @@ steps:
     echo ""
     nvcc --version
     echo ""
+    # storing updated environment parameters for following bash-script
+    echo "export PATH=${PATH}" > $HOME/.tmprc
+    echo "export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}" >> $HOME/.tmprc
+    echo "export CUDA_HOME=${CUDA_HOME}" >> $HOME/.tmprc
   condition: ${{ parameters.CUDA }}
   displayName: 'Install CUDA'
 

@@ -37,7 +37,7 @@ jobs:
       CUDA: true
   - template: .azure-pipelines/configure-template.yml
     parameters:
-      TESTFLAGS: '--enable-vectorization'
+      TESTFLAGS: '--enable-vectorization --with-cuda=cuda5'
       CUDA: true
       BUILD: true
 
