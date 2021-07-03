@@ -30,8 +30,8 @@ steps:
     #fi
 
 - bash: . './run_this_example.sh'
-    displayName: run this example
-    workingDirectory: ${{ parameters.workingDirectory }}
+  displayName: 'run this example'
+  workingDirectory: ${{ parameters.workingDirectory }}
 
 - script: |
     # checks output

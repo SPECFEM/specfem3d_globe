@@ -117,6 +117,10 @@
     if (ier /= 0) stop 'an error occurred while reading the parameter file: SPONGE_LONGITUDE_IN_DEGREES...'
     call read_value_double_precision(SPONGE_RADIUS_IN_DEGREES, 'SPONGE_RADIUS_IN_DEGREES', ier)
     if (ier /= 0) stop 'an error occurred while reading the parameter file: SPONGE_RADIUS_IN_DEGREES...'
+  else
+    SPONGE_LATITUDE_IN_DEGREES = 0.d0
+    SPONGE_LONGITUDE_IN_DEGREES = 0.d0
+    SPONGE_RADIUS_IN_DEGREES = 0.d0
   endif
 
   ! define the velocity model
@@ -253,11 +257,14 @@
   if (ier /= 0) stop 'an error occurred while reading the parameter file: SAVE_SOURCE_MASK'
   call read_value_logical(SAVE_REGULAR_KL, 'SAVE_REGULAR_KL', ier)
   if (ier /= 0) stop 'an error occurred while reading the parameter file: SAVE_REGULAR_KL'
+
   call read_value_logical(STEADY_STATE_KERNEL, 'STEADY_STATE_KERNEL', ier)
   if (ier /= 0) stop 'an error occurred while reading the parameter file: STEADY_STATE_KERNEL'
   if (STEADY_STATE_KERNEL) then
     call read_value_double_precision(STEADY_STATE_LENGTH_IN_MINUTES, 'STEADY_STATE_LENGTH_IN_MINUTES', ier)
     if (ier /= 0) stop 'an error occurred while reading the parameter file: STEADY_STATE_LENGTH_IN_MINUTES'
+  else
+    STEADY_STATE_LENGTH_IN_MINUTES = 0.d0
   endif
 
   ! for simultaneous runs from the same batch job
