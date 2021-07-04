@@ -12,7 +12,7 @@ if [ "$RUN_CHECKS" == "0" ]; then
   echo "  no run checks required, exiting..."
   exit 0
 else
-  echo "  run checks required, start testing..."
+  echo "  run checks required, start building..."
 fi
 echo
 
