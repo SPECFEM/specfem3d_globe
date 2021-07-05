@@ -28,7 +28,6 @@ my_test(){
   if [[ $? -ne 0 ]]; then exit 1; fi
   ./compare_seismogram_correlations.py REF_SEIS/ OUTPUT_FILES/ | grep min/max | cut -d \| -f 3 | awk '{print "correlation:",$1; if ($1 < 0.999 ){print $1,"failed"; exit 1;}else{ print $1,"good"; exit 0;}}'
   if [[ $? -ne 0 ]]; then exit 1; fi
-  rm -rf OUTPUT_FILES/
 }
 
 # test example
@@ -39,6 +38,12 @@ cd $dir
 sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.5:" DATA/Par_file
 # shortens output interval to avoid timeouts
 sed -i "s:^NTSTEP_BETWEEN_OUTPUT_INFO .*:NTSTEP_BETWEEN_OUTPUT_INFO    = 50:" DATA/Par_file
+
+# debug
+if [ "${DEBUG}" == "true" ]; then
+  # limit for debugging
+  sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
+fi
 
 # default script
 ./run_this_example.sh
@@ -53,7 +58,15 @@ echo `date`
 echo
 
 # seismogram comparison
-my_test
+if [ "${DEBUG}" == "true" ]; then
+  # no comparisons
+  continue
+else
+  my_test
+fi
+
+# cleanup
+rm -rf OUTPUT_FILES/ DATABASES_MPI/
 
 echo
 echo "all good"

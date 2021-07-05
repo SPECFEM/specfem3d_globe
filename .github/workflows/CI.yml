@@ -91,6 +91,16 @@ jobs:
         echo "mpif90  --version"
         mpif90 --version
         echo ""
+        ## avoids sed -i '' issue on MacOS, using gnu sed to have the same sed command lines as in linux
+        brew install gnu-sed
+        echo "PATH=/usr/local/opt/gnu-sed/libexec/gnubin:$PATH" >> $GITHUB_ENV
+        ## OpenMP
+        echo "OMP_NUM_THREADS=2" >> $GITHUB_ENV
+        ## avoids MPI issue with number of slots
+        echo "OMPI_MCA_rmaps_base_oversubscribe=1" >> $GITHUB_ENV
+        echo "OMPI_MCA_rmaps_base_inherit=1" >> $GITHUB_ENV
+        ## avoids MPI issue when running in MacOS
+        echo "OMPI_MCA_btl=self,tcp" >> $GITHUB_ENV
         # exports for xterm output (for make tests)
         echo "TERM=xterm" >> $GITHUB_ENV
         echo ""
@@ -227,7 +237,7 @@ jobs:
       run: make tests
 
   linuxTest_1:
-     name: Test run example 1 - regional_Greece_small
+     name: Test run example 1 - regional_Greece_small debug
      runs-on: ubuntu-latest
      needs: [linuxCheck]
 
@@ -240,7 +250,7 @@ jobs:
 
      - name: Run build
        env:
-         TESTFLAGS: --enable-vectorization
+         TESTFLAGS: --enable-debug
        run: ./.github/scripts/run_build.sh
        shell: bash
 
@@ -249,3 +259,28 @@ jobs:
          TESTDIR: EXAMPLES/regional_Greece_small/
        run: ./.github/scripts/run_tests.sh
        shell: bash
+
+  linuxTest_2:
+    name: Test run example 2 - regional_Greece_small
+    runs-on: ubuntu-latest
+    needs: [linuxCheck]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS: --enable-vectorization
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/regional_Greece_small/
+        DEBUG: true
+      run: ./.github/scripts/run_tests.sh
+      shell: bash

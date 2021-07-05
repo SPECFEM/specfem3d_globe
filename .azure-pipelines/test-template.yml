@@ -19,6 +19,12 @@ steps:
     echo ""
     cd $dir
 
+    # limit number of time steps
+    sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.5:" DATA/Par_file
+    # shortens output interval to avoid timeouts
+    sed -i "s:^NTSTEP_BETWEEN_OUTPUT_INFO .*:NTSTEP_BETWEEN_OUTPUT_INFO    = 50:" DATA/Par_file
+
+    # default script
     ./run_this_example.sh
 
     # checks script return code

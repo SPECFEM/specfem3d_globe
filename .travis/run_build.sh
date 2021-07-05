@@ -26,6 +26,18 @@ echo
 echo "**********************************************************"
 echo
 
+echo "compiler versions:"
+echo "gcc --version"
+gcc --version
+echo "gfortran --version"
+gfortran --version
+echo "mpif90 --version"
+mpif90 --version
+if [ "$CUDA" == "true" ]; then
+  echo "nvcc --version"
+  nvcc --version
+fi
+echo ""
 
 ###########################################################
 # configuration & compilation
