@@ -40,6 +40,7 @@ OMP_NUM_THREADS=2 mpirun -np 4 ./bin/$var >> $testdir/results.log 2>$testdir/err
 
 # checks exit code
 if [[ $? -ne 0 ]]; then
+  echo "test failed"; echo "error log:"; cat $testdir/error.log; echo ""
   exit 1
 fi
 
