@@ -104,6 +104,18 @@ So even if you have the new CUDA toolkit version 11, but you want to run on say 
 \end{verbatim}
 The compilation with the cuda5 setting chooses then the right architecture (\texttt{-gencode=arch=compute\_35,code=sm\_35} for K20 cards).\\
 
+SPECFEM3D\_GLOBE also supports CUDA-aware MPI. This code feature can be enabled by adding the \texttt{-{}-enable-cuda-aware-mpi} flag to
+the configuration, like:
+\begin{verbatim}
+  ./configure --with-cuda=cuda9 --enable-cuda-aware-mpi ..
+\end{verbatim}
+Please make sure beforehand that your MPI installation supports CUDA-aware MPI.
+For example, with OpenMPI installed, check the output of the command
+\begin{verbatim}
+ompi_info --parsable --all | grep mpi_built_with_cuda_support:value
+\end{verbatim}
+Without a CUDA-aware MPI installation, the code will fall back to its default handling, i.e., passing MPI buffers through the CPU.
+In case available, test if this feature will improve the overall performance of your simulation.\\
 
 The same applies to compilation for AMD cards with HIP:
 \begin{verbatim}
