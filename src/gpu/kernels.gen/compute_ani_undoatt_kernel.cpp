@@ -86,7 +86,6 @@ static __device__ void compute_element_strain_undoatt(const int ispec, const int
   int K;
   int J;
   int I;
-  int l;
   int offset;
   float tempx1l;
   float tempx2l;
@@ -135,7 +134,7 @@ static __device__ void compute_element_strain_undoatt(const int ispec, const int
   tempz2l = 0.0f;
   tempz3l = 0.0f;
 
-  for (l = 0; l <= NGLLX - (1); l += 1) {
+  for (int l = 0; l <= NGLLX - (1); l += 1) {
     fac1 = sh_hprime_xx[(l) * (NGLLX) + I];
     tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + l]) * (fac1);
     tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + l]) * (fac1);
@@ -259,7 +258,6 @@ __global__ void compute_ani_undoatt_kernel(const float * epsilondev_xx, const fl
   float eps_trace_over_3;
   float b_eps_trace_over_3;
   float prod[(21)];
-  int i;
   float epsdev[(5)];
   float b_epsdev[(5)];
   __shared__ float s_dummyx_loc[(NGLL3)];
@@ -296,7 +294,7 @@ __global__ void compute_ani_undoatt_kernel(const float * epsilondev_xx, const fl
 
     offset = ((ispec) * (NGLL3)) * (21) + tx;
     // attention: following array is sorted differently on GPU and CPU, -> use 'resort_array' before copying back to cpu
-    for (i = 0; i <= 20; i += 1) {
+    for (int i = 0; i <= 20; i += 1) {
       cijkl_kl[(i) * (NGLL3) + offset] = cijkl_kl[(i) * (NGLL3) + offset] + (deltat) * (prod[i]);
     }
   }

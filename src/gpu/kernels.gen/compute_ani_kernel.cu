@@ -153,7 +153,6 @@ static __device__ void compute_strain_product(float * prod, const float eps_trac
 }
 
 __global__ void compute_ani_kernel(const float * epsilondev_xx, const float * epsilondev_yy, const float * epsilondev_xy, const float * epsilondev_xz, const float * epsilondev_yz, const float * epsilon_trace_over_3, const float * b_epsilondev_xx, const float * b_epsilondev_yy, const float * b_epsilondev_xy, const float * b_epsilondev_xz, const float * b_epsilondev_yz, const float * b_epsilon_trace_over_3, float * cijkl_kl, const int NSPEC, const float deltat){
-  int i;
   int ispec;
   int ijk_ispec;
   int offset;
@@ -186,7 +185,7 @@ __global__ void compute_ani_kernel(const float * epsilondev_xx, const float * ep
     offset = ((ispec) * (NGLL3)) * (21) + threadIdx.x;
 
     // attention: following array is sorted differently on GPU and CPU, -> use 'resort_array' before copying back to cpu
-    for (i = 0; i <= 20; i += 1) {
+    for (int i = 0; i <= 20; i += 1) {
       cijkl_kl[(i) * (NGLL3) + offset] = cijkl_kl[(i) * (NGLL3) + offset] + (deltat) * (prod[i]);
     }
   }

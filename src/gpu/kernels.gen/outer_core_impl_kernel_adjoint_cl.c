@@ -164,9 +164,6 @@ __kernel void outer_core_impl_kernel_adjoint(const int nb_blocks_to_compute, con
   int K;\n\
   int J;\n\
   int I;\n\
-#ifndef MANUALLY_UNROLLED_LOOPS\n\
-  int l;\n\
-#endif\n\
   ushort active_1;\n\
   int offset;\n\
   int iglob_1;\n\
@@ -263,7 +260,7 @@ __kernel void outer_core_impl_kernel_adjoint(const int nb_blocks_to_compute, con
     temp2l = temp2l + (s_dummy_loc[(K) * (NGLL2) + (4) * (NGLLX) + I]) * (sh_hprime_xx[(4) * (NGLLX) + J]);\n\
     temp3l = temp3l + (s_dummy_loc[(4) * (NGLL2) + (J) * (NGLLX) + I]) * (sh_hprime_xx[(4) * (NGLLX) + K]);\n\
 #else\n\
-    for (l = 0; l <= NGLLX - (1); l += 1) {\n\
+    for (int l = 0; l <= NGLLX - (1); l += 1) {\n\
       temp1l = temp1l + (s_dummy_loc[(K) * (NGLL2) + (J) * (NGLLX) + l]) * (sh_hprime_xx[(l) * (NGLLX) + I]);\n\
       temp2l = temp2l + (s_dummy_loc[(K) * (NGLL2) + (l) * (NGLLX) + I]) * (sh_hprime_xx[(l) * (NGLLX) + J]);\n\
       temp3l = temp3l + (s_dummy_loc[(l) * (NGLL2) + (J) * (NGLLX) + I]) * (sh_hprime_xx[(l) * (NGLLX) + K]);\n\
@@ -333,7 +330,7 @@ __kernel void outer_core_impl_kernel_adjoint(const int nb_blocks_to_compute, con
     temp2l = temp2l + (s_temp2[(K) * (NGLL2) + (4) * (NGLLX) + I]) * (sh_hprimewgll_xx[(J) * (NGLLX) + 4]);\n\
     temp3l = temp3l + (s_temp3[(4) * (NGLL2) + (J) * (NGLLX) + I]) * (sh_hprimewgll_xx[(K) * (NGLLX) + 4]);\n\
 #else\n\
-    for (l = 0; l <= NGLLX - (1); l += 1) {\n\
+    for (int l = 0; l <= NGLLX - (1); l += 1) {\n\
       temp1l = temp1l + (s_temp1[(K) * (NGLL2) + (J) * (NGLLX) + l]) * (sh_hprimewgll_xx[(I) * (NGLLX) + l]);\n\
       temp2l = temp2l + (s_temp2[(K) * (NGLL2) + (l) * (NGLLX) + I]) * (sh_hprimewgll_xx[(J) * (NGLLX) + l]);\n\
       temp3l = temp3l + (s_temp3[(l) * (NGLL2) + (J) * (NGLLX) + I]) * (sh_hprimewgll_xx[(K) * (NGLLX) + l]);\n\

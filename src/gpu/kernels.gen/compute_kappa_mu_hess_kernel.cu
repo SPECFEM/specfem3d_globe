@@ -86,7 +86,6 @@ static __device__ void compute_vector_gradient_kernel(const int ispec, const flo
   int K;
   int J;
   int I;
-  int l;
   int offset;
   float tempx1l;
   float tempx2l;
@@ -134,7 +133,7 @@ static __device__ void compute_vector_gradient_kernel(const int ispec, const flo
   tempz2l = 0.0f;
   tempz3l = 0.0f;
 
-  for (l = 0; l <= NGLLX - (1); l += 1) {
+  for (int l = 0; l <= NGLLX - (1); l += 1) {
     fac1 = sh_hprime_xx[(l) * (NGLLX) + I];
     tempx1l = tempx1l + (fx[(K) * (NGLL2) + (J) * (NGLLX) + l]) * (fac1);
     tempy1l = tempy1l + (fy[(K) * (NGLL2) + (J) * (NGLLX) + l]) * (fac1);
@@ -197,7 +196,6 @@ __global__ void compute_kappa_mu_hess_kernel(const int * d_ibool, const float * 
   float hess_rhol;
   float hess_kappal;
   float hess_mul;
-  int l;
 
   ispec = blockIdx.x + (blockIdx.y) * (gridDim.x);
   ijk_ispec = threadIdx.x + (NGLL3) * (ispec);
@@ -224,7 +222,7 @@ __global__ void compute_kappa_mu_hess_kernel(const int * d_ibool, const float * 
     if (USE_SOURCE_RECEIVER_HESSIAN) {
       compute_vector_gradient_kernel(ispec, sh_b_velocx, sh_b_velocy, sh_b_velocz, d_xix, d_xiy, d_xiz, d_etax, d_etay, d_etaz, d_gammax, d_gammay, d_gammaz, sh_hprime_xx, b_vgrad);
     } else {
-      for (l = 0; l <= 8; l += 1) {
+      for (int l = 0; l <= 8; l += 1) {
         b_vgrad[l] = vgrad[l];
       }
     }
