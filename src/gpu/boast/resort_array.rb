@@ -20,13 +20,13 @@ module BOAST
 
       open p
       decl ispec =  Int("ispec")  # using default int (signed), otherwise we would compare ispec (unsigned) < NSPEC (signed)
-      decl i =      Int("i",        :signed => false)
       decl id =     Int("id",       :signed => false)
       decl idx =    Int("idx",      :signed => false)
       decl t_idx =  Int("t_idx",    :signed => false)
       decl tx =     Int("tx",       :signed => false)
       decl offset = Int("offset",   :signed => false)
       decl sh_tmp = Real("sh_tmp",  :local => true, :dim => [Dim(21*n_gll3)] )
+      i = Int("i")
       comment()
 
       print ispec === get_group_id(0) + get_group_id(1)*get_num_groups(0)
@@ -35,7 +35,7 @@ module BOAST
       print If(ispec < nspec) {
         print tx === get_local_id(0)
         print offset === ispec*ngll3*21+tx
-        print For(i, 0, 21-1) {
+        print For(i, 0, 21-1, :declit => true) {
             print sh_tmp[i*ngll3+tx] === old_array[i*ngll3+offset]
         }
       }
@@ -44,7 +44,7 @@ module BOAST
       comment()
 
       print If(ispec < nspec) {
-        print For(i, 0, 21-1) {
+        print For(i, 0, 21-1, :declit => true) {
           print id === (i*ngll3+tx)
           print idx === id / 21
           print t_idx === Modulo(id, 21)

@@ -1,5 +1,5 @@
 module BOAST
-  def BOAST::compute_element_gravity( type, n_gll3 = 125)
+  def BOAST::compute_element_gravity( type, n_gll3 = 125, use_cuda_shared_async = false )
     if type == :inner_core then
       function_name = "compute_element_ic_gravity"
     elsif type == :crust_mantle then
@@ -11,13 +11,18 @@ module BOAST
     v = []
     v.push tx                      = Int( "tx",                :dir => :in)
     v.push iglob                   = Int( "iglob",             :dir => :in)
-    v.push gravity_pre_store       = Real("d_gravity_pre_store",     :dir => :in, :restrict => true, :dim => [Dim(3), Dim()] )
-    v.push gravity_H               = Real("d_gravity_H",             :dir => :in, :restrict => true, :dim => [Dim(6), Dim()] )
-    v.push wgll_cube               = Real("wgll_cube",               :dir => :in, :restrict => true, :dim => [Dim()] )
+    v.push gravity_pre_store       = Real("gravity_pre_store",     :dir => :in, :restrict => true, :dim => [Dim(3), Dim()] )
+    v.push gravity_H               = Real("gravity_H",             :dir => :in, :restrict => true, :dim => [Dim(6), Dim()] )
+    v.push wgll_cube               = Real("wgll_cube",             :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push jacobianl               = Real("jacobianl", :dir => :in)
-    v.push *s_dummy_loc = ["x", "y", "z"].collect { |a|
+    if use_cuda_shared_async then
+      v.push s_dummy_loc             = Real("s_dummy_loc", :dir => :in, :dim => [Dim(3),Dim()], :local => true )
+    else
+      v.push *s_dummy_loc = ["x", "y", "z"].collect { |a|
                                      Real("s_dummy#{a}_loc", :dir => :in, :dim => [Dim(ngll3)], :local => true )
-    }
+      }
+    end
+
     sigma = ["x", "y", "z"].collect { |a1|
         ["x", "y", "z"].collect { |a2|
                                      Real("sigma_#{a1}#{a2}", :dir => :inout, :dim => [Dim()], :private => true )
@@ -40,22 +45,40 @@ module BOAST
       # gravity
       # new with pre-calculated arrays
       # Cartesian components of the gravitational acceleration
-      print gl[0] === gravity_pre_store[0,iglob] # minus_g*sin_theta*cos_phi * rho
-      print gl[1] === gravity_pre_store[1,iglob] # minus_g*sin_theta*sin_phi * rho
-      print gl[2] === gravity_pre_store[2,iglob] # minus_g*cos_theta * rho
+      if use_cuda_shared_async then
+        print gl[0] === gravity_pre_store[0,tx] # minus_g*sin_theta*cos_phi * rho
+        print gl[1] === gravity_pre_store[1,tx] # minus_g*sin_theta*sin_phi * rho
+        print gl[2] === gravity_pre_store[2,tx] # minus_g*cos_theta * rho
+        comment()
+        print hxxl === gravity_H[0,tx]
+        print hyyl === gravity_H[1,tx]
+        print hzzl === gravity_H[2,tx]
+        print hxyl === gravity_H[3,tx]
+        print hxzl === gravity_H[4,tx]
+        print hyzl === gravity_H[5,tx]
+      else
+        print gl[0] === gravity_pre_store[0,iglob] # minus_g*sin_theta*cos_phi * rho
+        print gl[1] === gravity_pre_store[1,iglob] # minus_g*sin_theta*sin_phi * rho
+        print gl[2] === gravity_pre_store[2,iglob] # minus_g*cos_theta * rho
+        comment()
+        print hxxl === gravity_H[0,iglob]
+        print hyyl === gravity_H[1,iglob]
+        print hzzl === gravity_H[2,iglob]
+        print hxyl === gravity_H[3,iglob]
+        print hxzl === gravity_H[4,iglob]
+        print hyzl === gravity_H[5,iglob]
+      end
       comment()
 
-      print hxxl === gravity_H[0,iglob]
-      print hyyl === gravity_H[1,iglob]
-      print hzzl === gravity_H[2,iglob]
-      print hxyl === gravity_H[3,iglob]
-      print hxzl === gravity_H[4,iglob]
-      print hyzl === gravity_H[5,iglob]
-      comment()
-
-      (0..2).each { |indx|
-        print s_l[indx] === s_dummy_loc[indx][tx]
-      }
+      if use_cuda_shared_async then
+        (0..2).each { |indx|
+          print s_l[indx] === s_dummy_loc[indx,tx]
+        }
+      else
+        (0..2).each { |indx|
+          print s_l[indx] === s_dummy_loc[indx][tx]
+        }
+      end
       comment()
 
       print sigma[0][0].dereference === sigma[0][0].dereference + s_l[1]*gl[1] + s_l[2]*gl[2];

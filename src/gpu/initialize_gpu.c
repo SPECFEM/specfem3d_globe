@@ -54,6 +54,9 @@
 #ifdef USE_MESH_COLORING_GPU
 #pragma message ("\n\nCompiling with: USE_MESH_COLORING_GPU enabled\n")
 #endif
+#ifdef CUDA_SHARED_ASYNC
+#pragma message ("\n\nCompiling with: CUDA_SHARED_ASYNC enabled\n")
+#endif
 
 #if ENABLE_VERY_SLOW_ERROR_CHECKING == 1
 #pragma message ("\n\nCompiling with: ENABLE_VERY_SLOW_ERROR_CHECKING enabled\n")

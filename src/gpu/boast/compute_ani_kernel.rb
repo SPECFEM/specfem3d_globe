@@ -38,7 +38,6 @@ module BOAST
       comment()
 
       open p
-        decl i = Int("i")
         decl ispec = Int("ispec")
         decl ijk_ispec = Int("ijk_ispec")
         decl offset = Int("offset")
@@ -77,7 +76,8 @@ module BOAST
 
           # updates full anisotropic kernel
           BOAST::get_output.puts"    // attention: following array is sorted differently on GPU and CPU, -> use 'resort_array' before copying back to cpu"
-          print For(i, 0, 21-1) {
+          i = Int("i")
+          print For(i, 0, 21-1, :declit => true) {
             print cijkl_kl[i*ngll3+offset] === cijkl_kl[i*ngll3+offset] + deltat * prod[i]
           }
         }

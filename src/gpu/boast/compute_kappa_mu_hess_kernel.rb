@@ -31,7 +31,6 @@ module BOAST
       decl k = Int("K")
       decl j = Int("J")
       decl i = Int("I")
-      decl l = Int("l")
       decl offset = Int("offset")
       tempanl = ["x", "y", "z"].collect { |a|
         [ 1, 2, 3 ].collect { |n|
@@ -62,7 +61,8 @@ module BOAST
       }
       comment()
 
-      print For(l, 0, ngllx - 1) {
+      l = Int("l")
+      print For(l, 0, ngllx - 1, :declit => true) {
         print fac[0] === sh_hprime_xx[l*ngllx + i]
         (0..2).each { |indx|
           print tempanl[indx][0] === tempanl[indx][0] + s_f[indx][k*ngll2 + j*ngllx + l]*fac[0]
@@ -172,7 +172,6 @@ module BOAST
       decl hess_rhol = Real("hess_rhol")
       decl hess_kappal = Real("hess_kappal")
       decl hess_mul = Real("hess_mul")
-      decl l = Int("l")
 
       comment()
 
@@ -208,7 +207,8 @@ module BOAST
         print If(use_source_receiver_hess => lambda {
           print sub_compute_vector_gradient_kernel.call(ispec, *sh_b_veloc, *d_xi, *d_eta, *d_gamma, sh_hprime_xx,  b_vgrad)
         }, :else => lambda {
-          print For(l, 0, 8) {
+          l = Int("l")
+          print For(l, 0, 8, :declit => true) {
             print b_vgrad[l] === vgrad[l]
           }
         })

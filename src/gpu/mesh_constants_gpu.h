@@ -292,6 +292,21 @@ typedef double realw;
 //             For Volta, the spilling slows down the kernels by ~5%
 #undef USE_LAUNCH_BOUNDS
 //#define LAUNCH_MIN_BLOCKS 6  // with 6 blocks, kernel uses 80 registers and would lead to ~1% speed up
+
+// using float3 instead of float numbers to make use of CUDA intrinsic float formats
+// compiler infos (--ptxas-options -v flag)
+// Cuda compilation tools, release 11.0, V11.0.194
+// - with float:
+//  ptxas info    : Function properties for _Z32crust_mantle_impl_kernel_forward
+//                   32 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+//  ptxas info    : Used 79 registers, 6200 bytes smem, 1004 bytes cmem[0]
+//  ptxas info    : Used 79 registers, 6200 bytes smem, 1004 bytes cmem[0], 8 bytes cmem[2]
+// - with float3:
+//  ptxas info    : Function properties for _Z32crust_mantle_impl_kernel_forward
+//                    32 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+//  ptxas info    : Used 80 registers, 6200 bytes smem, 1004 bytes cmem[0], 8 bytes cmem[2]
+// no performance gain so far...
+//#define USE_FLOAT3
 #endif
 
 #ifdef GPU_DEVICE_Turing
@@ -308,6 +323,44 @@ typedef double realw;
 // shared memory size 164KB per SM (maximum shared memory, 163KB per thread block)
 // maximum registers 255 per thread
 #undef USE_LAUNCH_BOUNDS
+//
+// - w/out launch_bounds:
+//  ptxas info    : Function properties for _Z32crust_mantle_impl_kernel_forward
+//                   32 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+//  ptxas info    : Used 80 registers, 6200 bytes smem, 1004 bytes cmem[0], 8 bytes cmem[2]
+// - with launch_bounds:
+//                   40 bytes stack frame, 8 bytes spill stores, 8 bytes spill loads
+//  ptxas info    : Used 72 registers, 6200 bytes smem, 1004 bytes cmem[0], 8 bytes cmem[2]
+// no performance gain so far...
+//#define USE_LAUNCH_BOUNDS
+//#define LAUNCH_MIN_BLOCKS 7
+
+// using float3 instead of float numbers to make use of CUDA intrinsic float formats
+// compiler infos (--ptxas-options -v flag)
+// Cuda compilation tools, release 11.0, V11.0.194
+// - with float:
+//  ptxas info    : Function properties for _Z32crust_mantle_impl_kernel_forward
+//                   32 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+//  ptxas info    : Used 79 registers, 6200 bytes smem, 1004 bytes cmem[0], 8 bytes cmem[2]
+// - with float3:
+//  ptxas info    : Function properties for _Z32crust_mantle_impl_kernel_forward
+//                    32 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+//  ptxas info    : Used 80 registers, 6200 bytes smem, 1004 bytes cmem[0], 8 bytes cmem[2]
+// no performance gain so far...
+//#define USE_FLOAT3
+
+// CUDA w/ asynchronuous shared memory copies for Ampere architectures
+// see: https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#async_data_operations
+// makes use of async copies, pipelines and cooperative groups, and float3 arrays
+// - w/out cuda_shared_async:
+//  ptxas info    : Function properties for _Z32crust_mantle_impl_kernel_forward
+//                    32 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+//  ptxas info    : Used 80 registers, 6200 bytes smem, 1004 bytes cmem[0], 8 bytes cmem[2]
+// - with cuda_shared_async:
+//  ptxas info    : Function properties for _Z32crust_mantle_impl_kernel_forward
+//                    32 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+//  ptxas info    : Used 82 registers, 26752 bytes smem, 1004 bytes cmem[0], 8 bytes cmem[2]
+//#define CUDA_SHARED_ASYNC
 #endif
 
 // CUDA Graphs
