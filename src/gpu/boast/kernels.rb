@@ -264,7 +264,13 @@ langs.each { |lang|
       BOAST::set_lang( BOAST::const_get(lang))
       k = BOAST::method(kern).call(false)
       BOAST::set_output( kern_proto_f )
-      k.procedure.decl
+      if k.procedure.respond_to?('each') then
+        k.procedure.each{ |procedure|
+          procedure.decl
+        }
+      else
+        k.procedure.decl
+      end
       kern_mk_f.puts "\t$O/#{kern.to_s}.cuda-kernel.o \\"
     elsif lang == :HIP then
       require "./#{kern.to_s}.rb"
@@ -272,7 +278,13 @@ langs.each { |lang|
       k = BOAST::method(kern).call(false)
       # future option for separate kernel_proto.cpp.h file
       #BOAST::set_output( kern_proto_f )
-      k.procedure.decl
+      if k.procedure.respond_to?('each') then
+        k.procedure.each{ |procedure|
+          procedure.decl
+        }
+      else
+        k.procedure.decl
+      end
       # future option for separate kernel_hip.mk file
       #kern_mk_f.puts "\t$O/#{kern.to_s}.hip-kernel.o \\"
     elsif lang == :CL
@@ -305,62 +317,74 @@ langs.each { |lang|
       BOAST::set_lang( BOAST::const_get(lang))
       k = BOAST::method(kern).call(false)
 
-      # get procedure declaration as string
-      my_typedef = ""
-      pointer_name = ""
-      proto = k.procedure.decl.to_s
-
-      # typedefs for big kernels
-      # kernel name string
-      kernel_name = "#{kern.to_s}"
-
-      # gets only function definition string, stripping leading __global__ .. declarations
-      istart = proto.index(kernel_name)
-      iend = proto.length
-      function = proto[istart..iend]
-
-      # gets arguments starting at "("
-      istart = function.index("(")
-      iend = function.length
-      arguments = function[istart..iend]
-
-      # makes pointer name string, e.g. outer_core_impl_kernel_forward -> (*outer_core_impl_kernel)
-      istart = kernel_name.index("_impl_kernel")
-      if istart then
-        pointer_name = "(*" + kernel_name[0..istart] + "impl_kernel" + ")"
+      # some kernels might have multiple procedures defined (kernel versions for _aniso_, .. etc)
+      # we thus loop over all procedure and make sure to have an array of procedures
+      if k.procedure.respond_to?('each') then
+        # kernel with multiple procedures defined
+        procedure_array = k.procedure
       else
-        puts "pointer name not recognized in kernel: ",kernel_name
-        abort "Error: kernel name invalid"
+        # kernel with only single procedure defined
+        procedure_array = [k.procedure]
       end
 
-      # declares typedef for function pointer, e.g. typedef void (*outer_core_impl_kernel) (...) ;
-      my_typedef = "typedef void " + pointer_name + " " + arguments + " ;"
+      # get procedure declaration as string
+      procedure_array.each{ |procedure|
+        my_typedef = ""
+        pointer_name = ""
+        proto = procedure.decl.to_s
 
-      # adds new typedef entries to list
-      if my_typedef.length > 1 then
-        #puts ""
-        #puts "typedef: ",my_typedef
-        #puts ""
-        #puts "listed: ",proto_defs_cuda.any? { |s| s.include?(pointer_name)}
-        #puts "index:",proto_defs.index(my_typedef)
-        # checks if pointer already listed
-        index = proto_defs_cuda.index { |s| s.include?(pointer_name) }
-        if index then
-          # already contained in list
-          #puts "  #{kern.to_s} already listed: " + index.to_s
-          # checks that arguments match
-          if proto_defs_cuda[index] != my_typedef then
-            puts "typedef-definition does not match for " + kernel_name
-            puts "Please make sure that **_impl_kernel_forward and **_impl_kernel_adjoint have the same arguments"
-            puts ""
-            abort "Error: invalid arguments for forward and adjoint kernel call of " + kernel_name
-          end
+        # typedefs for big kernels
+        # kernel name string
+        kernel_name = procedure.name  #"#{kern.to_s}"
+
+        # gets only function definition string, stripping leading __global__ .. declarations
+        istart = proto.index(kernel_name)
+        iend = proto.length
+        function = proto[istart..iend]
+
+        # gets arguments starting at "("
+        istart = function.index("(")
+        iend = function.length
+        arguments = function[istart..iend]
+
+        # makes pointer name string, e.g. outer_core_impl_kernel_forward -> (*outer_core_impl_kernel)
+        istart = kernel_name.index("_impl_kernel")
+        if istart then
+          pointer_name = "(*" + kernel_name[0..istart] + "impl_kernel" + ")"
         else
-          # adds new definition to list
-          puts "  created typedef-definition for function pointer: " + pointer_name
-          proto_defs_cuda.push(my_typedef)
+          puts "pointer name not recognized in kernel: ",kernel_name
+          abort "Error: kernel name invalid"
         end
-      end
+
+        # declares typedef for function pointer, e.g. typedef void (*outer_core_impl_kernel) (...) ;
+        my_typedef = "typedef void " + pointer_name + " " + arguments + " ;"
+
+        # adds new typedef entries to list
+        if my_typedef.length > 1 then
+          #puts ""
+          #puts "typedef: ",my_typedef
+          #puts ""
+          #puts "listed: ",proto_defs_cuda.any? { |s| s.include?(pointer_name)}
+          #puts "index:",proto_defs.index(my_typedef)
+          # checks if pointer already listed
+          index = proto_defs_cuda.index { |s| s.include?(pointer_name) }
+          if index then
+            # already contained in list
+            #puts "  #{kern.to_s} already listed: " + index.to_s
+            # checks that arguments match
+            if proto_defs_cuda[index] != my_typedef then
+              puts "typedef-definition does not match for " + kernel_name
+              puts "Please make sure that **_impl_kernel_forward and **_impl_kernel_adjoint have the same arguments"
+              puts ""
+              abort "Error: invalid arguments for forward and adjoint kernel call of " + kernel_name
+            end
+          else
+            # adds new definition to list
+            puts "  created typedef-definition for function pointer: " + pointer_name
+            proto_defs_cuda.push(my_typedef)
+          end
+        end
+      }
     }
 
     # adds typedef-definitions

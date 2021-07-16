@@ -625,25 +625,66 @@ module BOAST
 #----------------------------------------------------------------------
 
   def BOAST::inner_core_impl_kernel_forward(ref = true, elem_per_thread = 1, mesh_coloring = false, textures_fields = false, textures_constants = false, unroll_loops = true, n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128, n_sls = 3, coloring_min_nspec_inner_core = 1000, i_flag_in_fictitious_cube = 11)
-    return BOAST::impl_kernel(:inner_core, true, ref, elem_per_thread, mesh_coloring, textures_fields, textures_constants, unroll_loops, n_gllx, n_gll2, n_gll3, n_gll3_padded, n_sls, coloring_min_nspec_inner_core, i_flag_in_fictitious_cube)
+
+    # setting default values
+    launch_bounds = false
+    min_blocks = 7
+
+    # iso/tiso kernel (default)
+    kernel = BOAST::impl_kernel(:inner_core, true, ref, elem_per_thread, mesh_coloring, textures_fields, textures_constants, unroll_loops, n_gllx, n_gll2, n_gll3, n_gll3_padded, n_sls, coloring_min_nspec_inner_core, i_flag_in_fictitious_cube, launch_bounds, min_blocks, false)
+
+    # aniso kernel
+    kernel_aniso = BOAST::impl_kernel(:inner_core, true, ref, elem_per_thread, mesh_coloring, textures_fields, textures_constants, unroll_loops, n_gllx, n_gll2, n_gll3, n_gll3_padded, n_sls, coloring_min_nspec_inner_core, i_flag_in_fictitious_cube, launch_bounds, min_blocks, true)
+
+    # to create a single kernel with both procedure's codes
+    str = StringIO::new
+    s1 = "" + kernel.to_s + "\n"
+    s2 = "" + kernel_aniso.to_s + "\n"
+    str << s1 + s2
+
+    kernel_total = CKernel::new(code: str)
+    # will need to set a procedure for file outputs
+    kernel_total.procedure = [kernel.procedure,kernel_aniso.procedure]
+
+    return kernel_total
   end
 
-  def BOAST::impl_kernel(type, forward, ref = true, elem_per_thread = 1, mesh_coloring = false, textures_fields = false, textures_constants = false, unroll_loops = false, n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128, n_sls = 3, coloring_min_nspec_inner_core = 1000, i_flag_in_fictitious_cube = 11, launch_bounds = false, min_blocks = 7)
+  def BOAST::impl_kernel(type, forward, ref = true, elem_per_thread = 1, mesh_coloring = false, textures_fields = false, textures_constants = false, unroll_loops = false, n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128, n_sls = 3, coloring_min_nspec_inner_core = 1000, i_flag_in_fictitious_cube = 11, launch_bounds = false, min_blocks = 7, only_anisotropy = false)
     push_env( :array_start => 0 )
     kernel = CKernel::new
 
+    # creates function name
+    # example: crust_mantle_impl_kernel_forward
+    #          crust_mantle_aniso_impl_kernel_forward
+    #          crust_mantle_impl_kernel_adjoint
+    #          crust_mantle_aniso_impl_kernel_adjoint
+    #          inner_core_impl_kernel_forward
+    #          ..
     if type == :inner_core then
-      function_name = "inner_core_impl_kernel"
+      function_name = "inner_core_"
     elsif type == :crust_mantle then
-      function_name = "crust_mantle_impl_kernel"
+      function_name = "crust_mantle_"
     else
       raise "Unsupported_type : #{type}!"
     end
-    if forward then
-      function_name += "_forward"
-    else
-      function_name += "_adjoint"
+    if only_anisotropy then
+      function_name += "aniso_"
     end
+    function_name += "impl_kernel_"
+    # ending
+    if forward then
+      function_name += "forward"
+    else
+      function_name += "adjoint"
+    end
+
+    # flag for CUDA_SHARED_ASYNC modifications
+    use_cuda_shared_async = false
+    #if (type == :crust_mantle and get_lang == CUDA and forward) then
+    #  # due to an issue with linking and multiple definitions due to #include <cuda/pipeline>
+    #  # we limit this feature to the crust_mantle_**_forward.cu implementation
+    #  use_cuda_shared_async = true
+    #end
 
     v = []
     v.push nb_blocks_to_compute    = Int("nb_blocks_to_compute",     :dir => :in)
@@ -674,13 +715,21 @@ module BOAST
     v.push d_wgllwgll_xy           = Real("d_wgllwgll_xy",           :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push d_wgllwgll_xz           = Real("d_wgllwgll_xz",           :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push d_wgllwgll_yz           = Real("d_wgllwgll_yz",           :dir => :in, :restrict => true, :dim => [Dim()] )
-    v.push d_kappavstore           = Real("d_kappavstore",           :dir => :in, :restrict => true, :dim => [Dim()] )
-    v.push d_muvstore              = Real("d_muvstore",              :dir => :in, :restrict => true, :dim => [Dim()] )
-    if type == :crust_mantle then
-      v.push d_kappahstore           = Real("d_kappahstore",           :dir => :in, :restrict => true, :dim => [Dim()] )
-      v.push d_muhstore              = Real("d_muhstore",              :dir => :in, :restrict => true, :dim => [Dim()] )
-      v.push d_eta_anisostore        = Real("d_eta_anisostore",        :dir => :in, :restrict => true, :dim => [Dim()] )
+
+    if only_anisotropy then
+      # muv for attenuation case
+      v.push d_muvstore              = Real("d_muvstore",              :dir => :in, :restrict => true, :dim => [Dim()] )
+    else
+      # iso/tiso parameters
+      v.push d_kappavstore           = Real("d_kappavstore",           :dir => :in, :restrict => true, :dim => [Dim()] )
+      v.push d_muvstore              = Real("d_muvstore",              :dir => :in, :restrict => true, :dim => [Dim()] )
+      if type == :crust_mantle then
+        v.push d_kappahstore           = Real("d_kappahstore",           :dir => :in, :restrict => true, :dim => [Dim()] )
+        v.push d_muhstore              = Real("d_muhstore",              :dir => :in, :restrict => true, :dim => [Dim()] )
+        v.push d_eta_anisostore        = Real("d_eta_anisostore",        :dir => :in, :restrict => true, :dim => [Dim()] )
+      end
     end
+
     v.push compute_and_store_strain= Int( "COMPUTE_AND_STORE_STRAIN",:dir => :in)
     v.push epsilondev_xx           = Real("epsilondev_xx",           :dir => :inout, :dim => [Dim()] )
     v.push epsilondev_yy           = Real("epsilondev_yy",           :dir => :inout, :dim => [Dim()] )
@@ -688,6 +737,7 @@ module BOAST
     v.push epsilondev_xz           = Real("epsilondev_xz",           :dir => :inout, :dim => [Dim()] )
     v.push epsilondev_yz           = Real("epsilondev_yz",           :dir => :inout, :dim => [Dim()] )
     v.push epsilon_trace_over_3    = Real("epsilon_trace_over_3",    :dir => :out, :dim => [Dim()] )
+
     v.push attenuation             = Int( "ATTENUATION",             :dir => :in)
     v.push partial_phys_dispersion_only = Int( "PARTIAL_PHYS_DISPERSION_ONLY", :dir => :in)
     v.push use_3d_attenuation_arrays    = Int( "USE_3D_ATTENUATION_ARRAYS",    :dir => :in)
@@ -710,30 +760,41 @@ module BOAST
     v.push betaval                 = Real("betaval",                 :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push gammaval                = Real("gammaval",                :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push tau_sigmainvval         = Real("tau_sigmainvval",         :dir => :in, :restrict => true, :dim => [Dim()] )
-    v.push anisotropy              = Int( "ANISOTROPY",              :dir => :in)
-    if type == :inner_core then
-      v.push d_c11store              = Real("d_c11store",              :dir => :in, :restrict => true, :dim => [Dim()] )
-      v.push d_c12store              = Real("d_c12store",              :dir => :in, :restrict => true, :dim => [Dim()] )
-      v.push d_c13store              = Real("d_c13store",              :dir => :in, :restrict => true, :dim => [Dim()] )
-      v.push d_c33store              = Real("d_c33store",              :dir => :in, :restrict => true, :dim => [Dim()] )
-      v.push d_c44store              = Real("d_c44store",              :dir => :in, :restrict => true, :dim => [Dim()] )
-    elsif type == :crust_mantle then
-      d_cstore = (0..5).collect { |indx1|
-        (0..5).collect { |indx2|
-          if (indx2 < indx1) then
-            nil
-          else
-            Real( "d_c#{indx1+1}#{indx2+1}store", :dir => :in, :restrict => true, :dim => [Dim()] )
-          end
+
+    # anisotropy
+    if only_anisotropy then
+      # aniso kernel
+      #v.push anisotropy              = Int( "ANISOTROPY",              :dir => :in)
+      if type == :inner_core then
+        v.push d_c11store              = Real("d_c11store",              :dir => :in, :restrict => true, :dim => [Dim()] )
+        v.push d_c12store              = Real("d_c12store",              :dir => :in, :restrict => true, :dim => [Dim()] )
+        v.push d_c13store              = Real("d_c13store",              :dir => :in, :restrict => true, :dim => [Dim()] )
+        v.push d_c33store              = Real("d_c33store",              :dir => :in, :restrict => true, :dim => [Dim()] )
+        v.push d_c44store              = Real("d_c44store",              :dir => :in, :restrict => true, :dim => [Dim()] )
+      elsif type == :crust_mantle then
+        d_cstore = (0..5).collect { |indx1|
+          (0..5).collect { |indx2|
+            if (indx2 < indx1) then
+              nil
+            else
+              Real( "d_c#{indx1+1}#{indx2+1}store", :dir => :in, :restrict => true, :dim => [Dim()] )
+            end
+          }
         }
-      }
-      v.push *(d_cstore.flatten.reject { |e| e.nil? })
-      v.push d_rstore                = Real("d_rstore",                :dir => :in, :restrict => true, :dim => [Dim(3), Dim()] )
+        v.push *(d_cstore.flatten.reject { |e| e.nil? })
+      end
+    else
+      # rstore for iso/tiso kernel
+      if type == :crust_mantle then
+        v.push d_rstore                = Real("d_rstore",                :dir => :in, :restrict => true, :dim => [Dim(3), Dim()] )
+      end
     end
+
     v.push gravity                 = Int( "GRAVITY",                 :dir => :in)
     v.push d_gravity_pre_store     = Real("d_gravity_pre_store",     :dir => :in, :restrict => true, :dim => [Dim(3), Dim()] )
     v.push d_gravity_H             = Real("d_gravity_H",             :dir => :in, :restrict => true, :dim => [Dim(6), Dim()] )
     v.push wgll_cube               = Real("wgll_cube",               :dir => :in, :restrict => true, :dim => [Dim()] )
+
     if type == :inner_core then
       v.push nspec_strain_only = Int( "NSPEC_INNER_CORE_STRAIN_ONLY", :dir => :in)
       v.push nspec_inner_core        = Int( "NSPEC_INNER_CORE",        :dir => :in)
@@ -758,7 +819,6 @@ module BOAST
     launch_min_blocks       = Int("LAUNCH_MIN_BLOCKS",       :const => min_blocks)
 
     constants = []
-
     textures_fields = []
     textures_constants = []
 
@@ -792,80 +852,76 @@ module BOAST
     if (get_lang == CUDA and ref) then
       get_output.print File::read("references/#{function_name}.cu".gsub("_forward","").gsub("_adjoint",""))
     elsif(get_lang == CL or get_lang == CUDA or get_lang == HIP) then
-      # header
-      make_specfem3d_header(:ngllx => n_gllx, :ngll2 => n_gll2, :ngll3 => n_gll3, :ngll3_padded => n_gll3_padded, :n_sls => n_sls, :coloring_min_nspec_inner_core => coloring_min_nspec_inner_core, :iflag_in_fictitious_cube => i_flag_in_fictitious_cube)
+      # outputs header/define/.. statements into default kernel only,
+      # so we can append the aniso kernel afterwards into the same file by calling the same impl_kernel() routine twice
+      unless only_anisotropy then
+        # header
+        make_specfem3d_header(:ngllx => n_gllx, :ngll2 => n_gll2, :ngll3 => n_gll3, :ngll3_padded => n_gll3_padded, :n_sls => n_sls, :coloring_min_nspec_inner_core => coloring_min_nspec_inner_core, :iflag_in_fictitious_cube => i_flag_in_fictitious_cube)
 
-      # texture definitions
-      if type == :inner_core then
-        #DEACTIVATE USE TEXTURES CONSTANTS
-        get_output.puts "#ifdef #{use_textures_constants}"
-        get_output.puts "#undef #{use_textures_constants}"
-        get_output.puts "#endif"
-      end
-#      if get_lang == CUDA then
-#        get_output.puts "#ifdef #{use_textures_fields}"
-#          decl d_displ_tex
-#          decl d_accel_tex
-#        get_output.puts "#endif"
-#        get_output.puts "#ifdef #{use_textures_constants}"
-#          decl d_hprime_xx_tex
-#          decl d_hprimewgll_xx_tex
-#        get_output.puts "#endif"
-#      end
-      comment()
+        # texture definitions
+        if type == :inner_core then
+          #DEACTIVATE USE TEXTURES CONSTANTS
+          get_output.puts "#ifdef #{use_textures_constants}"
+          get_output.puts "#undef #{use_textures_constants}"
+          get_output.puts "#endif"
+        end
+        #if get_lang == CUDA then
+        #  get_output.puts "#ifdef #{use_textures_fields}"
+        #    decl d_displ_tex
+        #    decl d_accel_tex
+        #  get_output.puts "#endif"
+        #  get_output.puts "#ifdef #{use_textures_constants}"
+        #    decl d_hprime_xx_tex
+        #    decl d_hprimewgll_xx_tex
+        #  get_output.puts "#endif"
+        #end
+        comment()
 
-      # compilation pragma info
-      if (type == :crust_mantle and get_lang == CUDA and forward) then
-        get_output.puts "#ifdef #{manually_unrolled_loops}"
-        get_output.puts "#pragma message (\"\\n\\nCompiling with: #{manually_unrolled_loops} enabled\\n\")"
-        get_output.puts "#endif  // #{manually_unrolled_loops}"
-        comment()
-      end
+        # compilation pragma info
+        if (type == :crust_mantle and get_lang == CUDA and forward) then
+          get_output.puts "#ifdef #{manually_unrolled_loops}"
+          get_output.puts "#pragma message (\"\\n\\nCompiling with: #{manually_unrolled_loops} enabled\\n\")"
+          get_output.puts "#endif  // #{manually_unrolled_loops}"
+          comment()
+        end
 
-      # flag for CUDA_SHARED_ASYNC modifications
-      use_cuda_shared_async = false
-      #if (type == :crust_mantle and get_lang == CUDA and forward) then
-      #  # due to an issue with linking and multiple definitions due to #include <cuda/pipeline>
-      #  # we limit this feature to the crust_mantle_**_forward.cu implementation
-      #  use_cuda_shared_async = true
-      #end
+        if use_cuda_shared_async then
+          # definitions
+          cuda_shared_async = Int("CUDA_SHARED_ASYNC", :const => use_cuda_shared_async)
 
-      if use_cuda_shared_async then
-        # definitions
-        cuda_shared_async = Int("CUDA_SHARED_ASYNC", :const => use_cuda_shared_async)
-
-        # pragma messages
-        comment("// CUDA asynchronuous memory copies")
-        get_output.puts "#ifdef #{cuda_shared_async}"
-        get_output.puts "#pragma message (\"\\n\\nCompiling with: #{cuda_shared_async} enabled\\n\")"
-        get_output.puts "#endif  // #{cuda_shared_async}"
-        comment()
-        # float3 modifications
-        #get_output.puts "#ifdef #{cuda_shared_async}"
-        #comment("// async memory copies use float3 arrays")
-        #get_output.puts "#define USE_FLOAT3"
-        #get_output.puts "#endif"
-        #get_output.puts "#ifdef USE_FLOAT3"
-        #get_output.puts "#pragma message (\"\\n\\nCompiling with: USE_FLOAT3 enabled\\n\")"
-        #get_output.puts "#endif"
-        #comment()
-        # header include files
-        comment("// CUDA asynchronuous memory copies")
-        get_output.puts "#ifdef #{cuda_shared_async}"
-        get_output.puts "#include <cooperative_groups.h>"
-        get_output.puts "#include <cuda/barrier>"
-        get_output.puts "#include <cuda/pipeline>"
-        get_output.puts "#endif  // #{cuda_shared_async}"
-        comment()
-        # inline routines
-        sub_compute_offset = compute_offset(n_gll3, n_sls)
-        sub_compute_offset_sh = compute_offset_sh(n_gll3)
-        get_output.puts "#ifdef #{cuda_shared_async}"
-        print sub_compute_offset
-        comment()
-        print sub_compute_offset_sh
-        get_output.puts "#endif  // #{cuda_shared_async}"
-        comment()
+          # pragma messages
+          comment("// CUDA asynchronuous memory copies")
+          get_output.puts "#ifdef #{cuda_shared_async}"
+          get_output.puts "#pragma message (\"\\n\\nCompiling with: #{cuda_shared_async} enabled\\n\")"
+          get_output.puts "#endif  // #{cuda_shared_async}"
+          comment()
+          # float3 modifications
+          #get_output.puts "#ifdef #{cuda_shared_async}"
+          #comment("// async memory copies use float3 arrays")
+          #get_output.puts "#define USE_FLOAT3"
+          #get_output.puts "#endif"
+          #get_output.puts "#ifdef USE_FLOAT3"
+          #get_output.puts "#pragma message (\"\\n\\nCompiling with: USE_FLOAT3 enabled\\n\")"
+          #get_output.puts "#endif"
+          #comment()
+          # header include files
+          comment("// CUDA asynchronuous memory copies")
+          get_output.puts "#ifdef #{cuda_shared_async}"
+          get_output.puts "#include <cooperative_groups.h>"
+          get_output.puts "#include <cuda/barrier>"
+          get_output.puts "#include <cuda/pipeline>"
+          get_output.puts "#endif  // #{cuda_shared_async}"
+          comment()
+          # inline routines
+          sub_compute_offset = compute_offset(n_gll3, n_sls)
+          sub_compute_offset_sh = compute_offset_sh(n_gll3)
+          get_output.puts "#ifdef #{cuda_shared_async}"
+          print sub_compute_offset
+          comment()
+          print sub_compute_offset_sh
+          get_output.puts "#endif  // #{cuda_shared_async}"
+          comment()
+        end
       end
 
       # subroutines
@@ -880,124 +936,137 @@ module BOAST
         sub_compute_element_att_memory_lddrk =  compute_element_cm_att_memory_lddrk(n_gll3, n_gll3_padded, n_sls)
         sub_compute_element_gravity =  compute_element_cm_gravity(n_gll3)
       end
-
-      # function definitions
-      # element attenuation routines
-      comment()
-      print sub_compute_element_att_stress
-      comment()
       if use_cuda_shared_async then
-        # BOAST doesn't allow to modify the function argument list with #ifdef-statements
-        # we thus call the routine twice and put the #ifdef-statement around the whole function
-        get_output.puts "#ifdef #{cuda_shared_async}"
-        # routine w/ cuda shared async copies
-        comment("// CUDA asynchronuous memory copies")
         sub_compute_element_att_memory_async = compute_element_cm_att_memory(n_gll3, n_gll3_padded, n_sls, true)
-        print sub_compute_element_att_memory_async
-        get_output.puts "#else"
-        # routine w/out
-        comment("//default (w/out asynchronuous memory copies) routine")
-        print sub_compute_element_att_memory
-        get_output.puts "#endif  // #{cuda_shared_async}"
-      else
-        print sub_compute_element_att_memory
-      end
-      comment()
-      if use_cuda_shared_async then
-        # BOAST doesn't allow to modify the function argument list with #ifdef-statements
-        # we thus call the routine twice and put the #ifdef-statement around the whole function
-        get_output.puts "#ifdef #{cuda_shared_async}"
-        # routine w/ cuda shared async copies
-        comment("// CUDA asynchronuous memory copies")
         sub_compute_element_att_memory_lddrk_async = compute_element_cm_att_memory_lddrk(n_gll3, n_gll3_padded, n_sls, true)
-        print sub_compute_element_att_memory_lddrk_async
-        get_output.puts "#else"
-        # routine w/out
-        comment("//default (w/out asynchronuous memory copies) routine")
-        print sub_compute_element_att_memory_lddrk
-        get_output.puts "#endif  // #{cuda_shared_async}"
-      else
-        print sub_compute_element_att_memory_lddrk
-      end
-      comment()
-      # element gravity routine
-      if use_cuda_shared_async then
-        # BOAST doesn't allow to modify the function argument list with #ifdef-statements
-        # we thus call the routine twice and put the #ifdef-statement around the whole function
-        get_output.puts "#ifdef #{cuda_shared_async}"
-        # routine w/ cuda shared async copies
-        comment("// CUDA asynchronuous memory copies")
         sub_compute_element_gravity_async = compute_element_cm_gravity(n_gll3, true)
-        print sub_compute_element_gravity_async
-        get_output.puts "#else"
-        # routine w/out
-        comment("//default (w/out asynchronuous memory copies) routine")
-        print sub_compute_element_gravity
-        get_output.puts "#endif  // #{cuda_shared_async}"
-      else
-        print sub_compute_element_gravity
       end
-      comment()
       # element aniso/iso/tiso routines
       if type == :inner_core then
-        # aniso
         sub_compute_element_ic_aniso = compute_element_ic_aniso
-        print sub_compute_element_ic_aniso
-        comment()
-        # iso
         sub_compute_element_ic_iso = compute_element_ic_iso
-        print sub_compute_element_ic_iso
-        comment()
+
       elsif type == :crust_mantle then
-        # aniso
         sub_compute_element_cm_aniso = compute_element_cm_aniso
-        print sub_compute_element_cm_aniso
-        comment()
-        # iso
+        sub_compute_element_cm_tiso = compute_element_cm_tiso
         sub_compute_element_cm_iso = compute_element_cm_iso
         if use_cuda_shared_async then
-          # BOAST doesn't allow to modify the function argument list with #ifdef-statements
-          # we thus call the routine twice and put the #ifdef-statement around the whole function
-          get_output.puts "#ifdef #{cuda_shared_async}"
-          # routine w/ cuda shared async copies
-          comment("// CUDA asynchronuous memory copies")
+          sub_compute_element_cm_tiso_async = compute_element_cm_tiso(n_gll3, true)
           sub_compute_element_cm_iso_async = compute_element_cm_iso(n_gll3, true)
-          print sub_compute_element_cm_iso_async
-          get_output.puts "#else"
-          # routine w/out
-          comment("//default (w/out asynchronuous memory copies) routine")
-          print sub_compute_element_cm_iso
-          get_output.puts "#endif  // #{cuda_shared_async}"
-        else
-          print sub_compute_element_cm_iso
         end
+      end
+
+      # outputs subroutines into default kernel only,
+      # so we can append the aniso kernel afterwards into the same file by calling the same impl_kernel() routine twice
+      unless only_anisotropy then
+        # function definitions
+        # element attenuation routines
         comment()
-        # tiso
-        sub_compute_element_cm_tiso = compute_element_cm_tiso
+        print sub_compute_element_att_stress
+        comment()
         if use_cuda_shared_async then
           # BOAST doesn't allow to modify the function argument list with #ifdef-statements
           # we thus call the routine twice and put the #ifdef-statement around the whole function
           get_output.puts "#ifdef #{cuda_shared_async}"
           # routine w/ cuda shared async copies
           comment("// CUDA asynchronuous memory copies")
-          sub_compute_element_cm_tiso_async = compute_element_cm_tiso(n_gll3, true)
-          print sub_compute_element_cm_tiso_async
+          print sub_compute_element_att_memory_async
           get_output.puts "#else"
           # routine w/out
           comment("//default (w/out asynchronuous memory copies) routine")
-          print sub_compute_element_cm_tiso
+          print sub_compute_element_att_memory
           get_output.puts "#endif  // #{cuda_shared_async}"
         else
-          print sub_compute_element_cm_tiso
+          print sub_compute_element_att_memory
         end
         comment()
-      end
+        if use_cuda_shared_async then
+          # BOAST doesn't allow to modify the function argument list with #ifdef-statements
+          # we thus call the routine twice and put the #ifdef-statement around the whole function
+          get_output.puts "#ifdef #{cuda_shared_async}"
+          # routine w/ cuda shared async copies
+          comment("// CUDA asynchronuous memory copies")
+          print sub_compute_element_att_memory_lddrk_async
+          get_output.puts "#else"
+          # routine w/out
+          comment("//default (w/out asynchronuous memory copies) routine")
+          print sub_compute_element_att_memory_lddrk
+          get_output.puts "#endif  // #{cuda_shared_async}"
+        else
+          print sub_compute_element_att_memory_lddrk
+        end
+        comment()
+        # element gravity routine
+        if use_cuda_shared_async then
+          # BOAST doesn't allow to modify the function argument list with #ifdef-statements
+          # we thus call the routine twice and put the #ifdef-statement around the whole function
+          get_output.puts "#ifdef #{cuda_shared_async}"
+          # routine w/ cuda shared async copies
+          comment("// CUDA asynchronuous memory copies")
+          print sub_compute_element_gravity_async
+          get_output.puts "#else"
+          # routine w/out
+          comment("//default (w/out asynchronuous memory copies) routine")
+          print sub_compute_element_gravity
+          get_output.puts "#endif  // #{cuda_shared_async}"
+        else
+          print sub_compute_element_gravity
+        end
+        comment()
+        # element aniso/iso/tiso routines
+        if type == :inner_core then
+          # aniso
+          print sub_compute_element_ic_aniso
+          comment()
+          # iso
+          print sub_compute_element_ic_iso
+          comment()
+        elsif type == :crust_mantle then
+          # aniso
+          print sub_compute_element_cm_aniso
+          comment()
+          # iso
+          if use_cuda_shared_async then
+            # BOAST doesn't allow to modify the function argument list with #ifdef-statements
+            # we thus call the routine twice and put the #ifdef-statement around the whole function
+            get_output.puts "#ifdef #{cuda_shared_async}"
+            # routine w/ cuda shared async copies
+            comment("// CUDA asynchronuous memory copies")
+            print sub_compute_element_cm_iso_async
+            get_output.puts "#else"
+            # routine w/out
+            comment("//default (w/out asynchronuous memory copies) routine")
+            print sub_compute_element_cm_iso
+            get_output.puts "#endif  // #{cuda_shared_async}"
+          else
+            print sub_compute_element_cm_iso
+          end
+          comment()
+          # tiso
+          if use_cuda_shared_async then
+            # BOAST doesn't allow to modify the function argument list with #ifdef-statements
+            # we thus call the routine twice and put the #ifdef-statement around the whole function
+            get_output.puts "#ifdef #{cuda_shared_async}"
+            # routine w/ cuda shared async copies
+            comment("// CUDA asynchronuous memory copies")
+            print sub_compute_element_cm_tiso_async
+            get_output.puts "#else"
+            # routine w/out
+            comment("//default (w/out asynchronuous memory copies) routine")
+            print sub_compute_element_cm_tiso
+            get_output.puts "#endif  // #{cuda_shared_async}"
+          else
+            print sub_compute_element_cm_tiso
+          end
+          comment()
+        end
 
-      comment()
-      comment("/*----------------------------------------------*/")
-      comment("// main function")
-      comment("/*----------------------------------------------*/")
-      comment()
+        comment()
+        comment("/*----------------------------------------------*/")
+        comment("// main function")
+        comment("/*----------------------------------------------*/")
+        comment()
+      end  # only_anisotropy
 
       # function name
       if get_lang == CL then
@@ -1144,10 +1213,8 @@ module BOAST
       if use_cuda_shared_async then
         comment("// CUDA asynchronuous memory copies")
         get_output.puts "#ifdef #{cuda_shared_async}"
-        decl sh_alphaval     = Real("sh_alphaval",     :local => true, :dim => [Dim(nsls)] )
-        decl sh_betaval      = Real("sh_betaval",      :local => true, :dim => [Dim(nsls)] )
-        decl sh_gammaval     = Real("sh_gammaval",     :local => true, :dim => [Dim(nsls)] )
-        comment()
+        comment("  // attenuation")
+        decl sh_factor_common     = Real("sh_factor_common",     :local => true, :dim => [Dim(nsls*ngll3)] )
 
         decl sh_r_xx     = Real("sh_R_xx",     :local => true, :dim => [Dim(nsls*ngll3)] )
         decl sh_r_yy     = Real("sh_R_yy",     :local => true, :dim => [Dim(nsls*ngll3)] )
@@ -1163,10 +1230,19 @@ module BOAST
         decl sh_epsilondev_yz     = Real("sh_epsilondev_yz",     :local => true, :dim => [Dim(ngll3)] )
         comment()
 
-        comment("  // shmem order sh_muv, sh_muh, sh_kappav, sh_kappah, sh_eta_anisostore")
-        decl sh_mul               = Real("sh_mul",               :local => true, :dim => [Dim(5*ngll3)] )
-        decl sh_factor_common     = Real("sh_factor_common",     :local => true, :dim => [Dim(nsls*ngll3)] )
-        decl sh_rstore            = Real("sh_rstore",            :local => true, :dim => [Dim(3*ngll3)] )
+        decl sh_alphaval     = Real("sh_alphaval",     :local => true, :dim => [Dim(nsls)] )
+        decl sh_betaval      = Real("sh_betaval",      :local => true, :dim => [Dim(nsls)] )
+        decl sh_gammaval     = Real("sh_gammaval",     :local => true, :dim => [Dim(nsls)] )
+        comment()
+
+        if only_anisotropy then
+          comment("  // shmem muv for attenuation")
+          decl sh_mul               = Real("sh_mul",               :local => true, :dim => [Dim(5*ngll3)] )
+        else
+          comment("  // shmem order sh_muv, sh_muh, sh_kappav, sh_kappah, sh_eta_anisostore")
+          decl sh_mul               = Real("sh_mul",               :local => true, :dim => [Dim(5*ngll3)] )
+          decl sh_rstore            = Real("sh_rstore",            :local => true, :dim => [Dim(3*ngll3)] )
+        end
         comment()
 
         comment("  // gravity")
@@ -1406,9 +1482,19 @@ module BOAST
           end
 
           print If(active[elem_index]) {
-            print If( ! anisotropy) {
+            if only_anisotropy then
+              # aniso fields c11store/.. not tested yet to move to shared memory
+              # muv only needed for attenuation
+              print If(Expression("&&", attenuation, !partial_phys_dispersion_only)) {
+                get_output.puts "      offset = tx + (NGLL3_PADDED * working_element);"
+                cuda_text = "        // muv for attenuation" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_mul + tx, d_muvstore + offset, sizeof(float), pipe);" + endl
+                get_output.puts cuda_text
+              }
+            else
+              # iso/tiso fields
+            #print If( ! anisotropy) {
               get_output.puts "      offset = tx + (NGLL3_PADDED * working_element);"
-
               print If( ! d_ispec_is_tiso[working_element] => lambda {
                 cuda_text = "        // isotropic" + endl
                 cuda_text += "        cuda::memcpy_async(thread, sh_mul + tx, d_muvstore + offset, sizeof(float), pipe);" + endl
@@ -1425,7 +1511,8 @@ module BOAST
                 cuda_text += "        cuda::memcpy_async(thread, ((float3 *)sh_rstore) + tx, ((float3 *)d_rstore) + iglob_1, sizeof(float3), pipe);" + endl
                 get_output.puts cuda_text
               })
-            }
+            #}
+            end # only_anisotropy
 
             print If(gravity) {
               cuda_text = "      cuda::memcpy_async(thread, sh_wgll_cube + tx, wgll_cube + tx, sizeof(float), pipe);" + endl
@@ -1587,18 +1674,22 @@ module BOAST
           comment()
 
           # future check: avoiding these to reduce registers
-          decl duxdxl_plus_duydyl = Real("duxdxl_plus_duydyl")
-          decl duxdxl_plus_duzdzl = Real("duxdxl_plus_duzdzl")
-          decl duydyl_plus_duzdzl = Real("duydyl_plus_duzdzl")
+          unless only_anisotropy then
+            decl duxdxl_plus_duydyl = Real("duxdxl_plus_duydyl")
+            decl duxdxl_plus_duzdzl = Real("duxdxl_plus_duzdzl")
+            decl duydyl_plus_duzdzl = Real("duydyl_plus_duzdzl")
+          end
 
           decl duxdyl_plus_duydxl = Real("duxdyl_plus_duydxl")
           decl duzdxl_plus_duxdzl = Real("duzdxl_plus_duxdzl")
           decl duzdyl_plus_duydzl = Real("duzdyl_plus_duydzl")
 
           # future check: avoiding these to reduce registers, instead will recompute where needed
-          print duxdxl_plus_duydyl === dudl[0][0] + dudl[1][1]
-          print duxdxl_plus_duzdzl === dudl[0][0] + dudl[2][2]
-          print duydyl_plus_duzdzl === dudl[1][1] + dudl[2][2]
+          unless only_anisotropy then
+            print duxdxl_plus_duydyl === dudl[0][0] + dudl[1][1]
+            print duxdxl_plus_duzdzl === dudl[0][0] + dudl[2][2]
+            print duydyl_plus_duzdzl === dudl[1][1] + dudl[2][2]
+          end
 
           print duxdyl_plus_duydxl === dudl[0][1] + dudl[1][0]
           print duzdxl_plus_duxdzl === dudl[2][0] + dudl[0][2]
@@ -1632,7 +1723,7 @@ module BOAST
           if use_cuda_shared_async then
             comment("// CUDA asynchronuous memory copies")
             cuda_text = "#ifdef #{cuda_shared_async}" + endl
-            cuda_text += "    // makes sure we have sh_rstore/sh_mul/.." + endl
+            cuda_text += "    // makes sure we have sh_mul/sh_rstore/.." + endl
             cuda_text += "    barrier[1].wait(std::move(token1));" + endl
             cuda_text += "    pipe.consumer_release();" + endl
             cuda_text += "#endif  // #{cuda_shared_async}" + endl + endl
@@ -1641,15 +1732,20 @@ module BOAST
 
           if type == :inner_core then
             # inner core
-            print If(anisotropy => lambda {
+            #print If(anisotropy => lambda {
+            if only_anisotropy then
+              # anisotropic elements
+              comment("    // anisotropic elements")
               print sub_compute_element_ic_aniso.call( offset,
                                                        d_c11store,d_c12store,d_c13store,d_c33store,d_c44store,
                                                        dudl[0][0], dudl[1][1], dudl[2][2],
                                                        duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,
                                                        sigma[0][0].address, sigma[1][1].address, sigma[2][2].address,
                                                        sigma[0][1].address, sigma[0][2].address, sigma[1][2].address )
-            }, :else => lambda {
-              comment("        // isotropic")
+            #}, :else => lambda {
+            else
+              # isotropic elements
+              comment("    // isotropic elements")
               print sub_compute_element_ic_iso.call( offset,
                                                      d_kappavstore,d_muvstore,
                                                      dudl[0][0], dudl[1][1], dudl[2][2],
@@ -1657,21 +1753,27 @@ module BOAST
                                                      duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,
                                                      sigma[0][0].address, sigma[1][1].address, sigma[2][2].address,
                                                      sigma[0][1].address, sigma[0][2].address, sigma[1][2].address )
-            })
+            #})
+            end
           elsif type == :crust_mantle then
             # crust mantle
-            print If(anisotropy => lambda {
+            #print If(anisotropy => lambda {
+            if only_anisotropy then
+              # anisotropic elements
               # fully anisotropic element
+              comment("    // anisotropic elements")
               print sub_compute_element_cm_aniso.call( offset,
                                                       *(d_cstore.flatten.reject { |e| e.nil?}),
                                                       *(dudl.flatten),
                                                       duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,
                                                       sigma[0][0].address, sigma[1][1].address, sigma[2][2].address,
                                                       sigma[0][1].address, sigma[0][2].address, sigma[1][2].address )
-            }, :else => lambda {
+            #}, :else => lambda {
+            else
+              # iso/tiso elements
               print If( ! d_ispec_is_tiso[working_element] => lambda {
                 # isotropic element
-                comment("        // isotropic")
+                comment("      // isotropic elements")
                 if use_cuda_shared_async then
                   get_output.puts "#ifdef #{cuda_shared_async}"
                   print sub_compute_element_cm_iso_async.call( tx,
@@ -1696,7 +1798,7 @@ module BOAST
 
               }, :else => lambda {
                 # tiso element
-                comment("        // transversely isotropic")
+                comment("      // transversely isotropic")
                 if use_cuda_shared_async then
                   get_output.puts "#ifdef #{cuda_shared_async}"
                   print sub_compute_element_cm_tiso_async.call( tx,
@@ -1733,7 +1835,8 @@ module BOAST
                 #                                        sigma[0][0].address, sigma[1][1].address, sigma[2][2].address,
                 #                                        sigma[0][1].address, sigma[0][2].address, sigma[1][2].address )
               })
-            })
+            #})
+            end # only_anisotropy
           end
           comment()
 

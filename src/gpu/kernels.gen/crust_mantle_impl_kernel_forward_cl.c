@@ -481,15 +481,15 @@ void compute_element_cm_tiso(const int offset, const __global float * d_kappavst
 \n\
 #ifdef USE_TEXTURES_FIELDS\n\
 #ifdef USE_TEXTURES_CONSTANTS\n\
-__kernel  void crust_mantle_impl_kernel_forward(const int nb_blocks_to_compute, const __global int * d_ibool, const __global int * d_ispec_is_tiso, const __global int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const float deltat, const int use_mesh_coloring_gpu, const __global float * restrict d_displ, __global float * d_accel, const __global float * restrict d_xix, const __global float * restrict d_xiy, const __global float * restrict d_xiz, const __global float * restrict d_etax, const __global float * restrict d_etay, const __global float * restrict d_etaz, const __global float * restrict d_gammax, const __global float * restrict d_gammay, const __global float * restrict d_gammaz, const __global float * restrict d_hprime_xx, const __global float * restrict d_hprimewgll_xx, const __global float * restrict d_wgllwgll_xy, const __global float * restrict d_wgllwgll_xz, const __global float * restrict d_wgllwgll_yz, const __global float * restrict d_kappavstore, const __global float * restrict d_muvstore, const __global float * restrict d_kappahstore, const __global float * restrict d_muhstore, const __global float * restrict d_eta_anisostore, const int COMPUTE_AND_STORE_STRAIN, __global float * epsilondev_xx, __global float * epsilondev_yy, __global float * epsilondev_xy, __global float * epsilondev_xz, __global float * epsilondev_yz, __global float * epsilon_trace_over_3, const int ATTENUATION, const int PARTIAL_PHYS_DISPERSION_ONLY, const int USE_3D_ATTENUATION_ARRAYS, const __global float * restrict one_minus_sum_beta, const __global float * restrict factor_common, __global float * R_xx, __global float * R_yy, __global float * R_xy, __global float * R_xz, __global float * R_yz, __global float * R_xx_lddrk, __global float * R_yy_lddrk, __global float * R_xy_lddrk, __global float * R_xz_lddrk, __global float * R_yz_lddrk, const float alpha_lddrk, const float beta_lddrk, const int use_lddrk, const __global float * restrict alphaval, const __global float * restrict betaval, const __global float * restrict gammaval, const __global float * restrict tau_sigmainvval, const int ANISOTROPY, const __global float * restrict d_c11store, const __global float * restrict d_c12store, const __global float * restrict d_c13store, const __global float * restrict d_c14store, const __global float * restrict d_c15store, const __global float * restrict d_c16store, const __global float * restrict d_c22store, const __global float * restrict d_c23store, const __global float * restrict d_c24store, const __global float * restrict d_c25store, const __global float * restrict d_c26store, const __global float * restrict d_c33store, const __global float * restrict d_c34store, const __global float * restrict d_c35store, const __global float * restrict d_c36store, const __global float * restrict d_c44store, const __global float * restrict d_c45store, const __global float * restrict d_c46store, const __global float * restrict d_c55store, const __global float * restrict d_c56store, const __global float * restrict d_c66store, const __global float * restrict d_rstore, const int GRAVITY, const __global float * restrict d_gravity_pre_store, const __global float * restrict d_gravity_H, const __global float * restrict wgll_cube, const int NSPEC_CRUST_MANTLE_STRAIN_ONLY, __read_only image2d_t d_displ_cm_tex, __read_only image2d_t d_accel_cm_tex, __read_only image2d_t d_hprime_xx_tex, __read_only image2d_t d_hprimewgll_xx_tex){\n\
+__kernel  void crust_mantle_impl_kernel_forward(const int nb_blocks_to_compute, const __global int * d_ibool, const __global int * d_ispec_is_tiso, const __global int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const float deltat, const int use_mesh_coloring_gpu, const __global float * restrict d_displ, __global float * d_accel, const __global float * restrict d_xix, const __global float * restrict d_xiy, const __global float * restrict d_xiz, const __global float * restrict d_etax, const __global float * restrict d_etay, const __global float * restrict d_etaz, const __global float * restrict d_gammax, const __global float * restrict d_gammay, const __global float * restrict d_gammaz, const __global float * restrict d_hprime_xx, const __global float * restrict d_hprimewgll_xx, const __global float * restrict d_wgllwgll_xy, const __global float * restrict d_wgllwgll_xz, const __global float * restrict d_wgllwgll_yz, const __global float * restrict d_kappavstore, const __global float * restrict d_muvstore, const __global float * restrict d_kappahstore, const __global float * restrict d_muhstore, const __global float * restrict d_eta_anisostore, const int COMPUTE_AND_STORE_STRAIN, __global float * epsilondev_xx, __global float * epsilondev_yy, __global float * epsilondev_xy, __global float * epsilondev_xz, __global float * epsilondev_yz, __global float * epsilon_trace_over_3, const int ATTENUATION, const int PARTIAL_PHYS_DISPERSION_ONLY, const int USE_3D_ATTENUATION_ARRAYS, const __global float * restrict one_minus_sum_beta, const __global float * restrict factor_common, __global float * R_xx, __global float * R_yy, __global float * R_xy, __global float * R_xz, __global float * R_yz, __global float * R_xx_lddrk, __global float * R_yy_lddrk, __global float * R_xy_lddrk, __global float * R_xz_lddrk, __global float * R_yz_lddrk, const float alpha_lddrk, const float beta_lddrk, const int use_lddrk, const __global float * restrict alphaval, const __global float * restrict betaval, const __global float * restrict gammaval, const __global float * restrict tau_sigmainvval, const __global float * restrict d_rstore, const int GRAVITY, const __global float * restrict d_gravity_pre_store, const __global float * restrict d_gravity_H, const __global float * restrict wgll_cube, const int NSPEC_CRUST_MANTLE_STRAIN_ONLY, __read_only image2d_t d_displ_cm_tex, __read_only image2d_t d_accel_cm_tex, __read_only image2d_t d_hprime_xx_tex, __read_only image2d_t d_hprimewgll_xx_tex){\n\
 #else\n\
-__kernel  void crust_mantle_impl_kernel_forward(const int nb_blocks_to_compute, const __global int * d_ibool, const __global int * d_ispec_is_tiso, const __global int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const float deltat, const int use_mesh_coloring_gpu, const __global float * restrict d_displ, __global float * d_accel, const __global float * restrict d_xix, const __global float * restrict d_xiy, const __global float * restrict d_xiz, const __global float * restrict d_etax, const __global float * restrict d_etay, const __global float * restrict d_etaz, const __global float * restrict d_gammax, const __global float * restrict d_gammay, const __global float * restrict d_gammaz, const __global float * restrict d_hprime_xx, const __global float * restrict d_hprimewgll_xx, const __global float * restrict d_wgllwgll_xy, const __global float * restrict d_wgllwgll_xz, const __global float * restrict d_wgllwgll_yz, const __global float * restrict d_kappavstore, const __global float * restrict d_muvstore, const __global float * restrict d_kappahstore, const __global float * restrict d_muhstore, const __global float * restrict d_eta_anisostore, const int COMPUTE_AND_STORE_STRAIN, __global float * epsilondev_xx, __global float * epsilondev_yy, __global float * epsilondev_xy, __global float * epsilondev_xz, __global float * epsilondev_yz, __global float * epsilon_trace_over_3, const int ATTENUATION, const int PARTIAL_PHYS_DISPERSION_ONLY, const int USE_3D_ATTENUATION_ARRAYS, const __global float * restrict one_minus_sum_beta, const __global float * restrict factor_common, __global float * R_xx, __global float * R_yy, __global float * R_xy, __global float * R_xz, __global float * R_yz, __global float * R_xx_lddrk, __global float * R_yy_lddrk, __global float * R_xy_lddrk, __global float * R_xz_lddrk, __global float * R_yz_lddrk, const float alpha_lddrk, const float beta_lddrk, const int use_lddrk, const __global float * restrict alphaval, const __global float * restrict betaval, const __global float * restrict gammaval, const __global float * restrict tau_sigmainvval, const int ANISOTROPY, const __global float * restrict d_c11store, const __global float * restrict d_c12store, const __global float * restrict d_c13store, const __global float * restrict d_c14store, const __global float * restrict d_c15store, const __global float * restrict d_c16store, const __global float * restrict d_c22store, const __global float * restrict d_c23store, const __global float * restrict d_c24store, const __global float * restrict d_c25store, const __global float * restrict d_c26store, const __global float * restrict d_c33store, const __global float * restrict d_c34store, const __global float * restrict d_c35store, const __global float * restrict d_c36store, const __global float * restrict d_c44store, const __global float * restrict d_c45store, const __global float * restrict d_c46store, const __global float * restrict d_c55store, const __global float * restrict d_c56store, const __global float * restrict d_c66store, const __global float * restrict d_rstore, const int GRAVITY, const __global float * restrict d_gravity_pre_store, const __global float * restrict d_gravity_H, const __global float * restrict wgll_cube, const int NSPEC_CRUST_MANTLE_STRAIN_ONLY, __read_only image2d_t d_displ_cm_tex, __read_only image2d_t d_accel_cm_tex){\n\
+__kernel  void crust_mantle_impl_kernel_forward(const int nb_blocks_to_compute, const __global int * d_ibool, const __global int * d_ispec_is_tiso, const __global int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const float deltat, const int use_mesh_coloring_gpu, const __global float * restrict d_displ, __global float * d_accel, const __global float * restrict d_xix, const __global float * restrict d_xiy, const __global float * restrict d_xiz, const __global float * restrict d_etax, const __global float * restrict d_etay, const __global float * restrict d_etaz, const __global float * restrict d_gammax, const __global float * restrict d_gammay, const __global float * restrict d_gammaz, const __global float * restrict d_hprime_xx, const __global float * restrict d_hprimewgll_xx, const __global float * restrict d_wgllwgll_xy, const __global float * restrict d_wgllwgll_xz, const __global float * restrict d_wgllwgll_yz, const __global float * restrict d_kappavstore, const __global float * restrict d_muvstore, const __global float * restrict d_kappahstore, const __global float * restrict d_muhstore, const __global float * restrict d_eta_anisostore, const int COMPUTE_AND_STORE_STRAIN, __global float * epsilondev_xx, __global float * epsilondev_yy, __global float * epsilondev_xy, __global float * epsilondev_xz, __global float * epsilondev_yz, __global float * epsilon_trace_over_3, const int ATTENUATION, const int PARTIAL_PHYS_DISPERSION_ONLY, const int USE_3D_ATTENUATION_ARRAYS, const __global float * restrict one_minus_sum_beta, const __global float * restrict factor_common, __global float * R_xx, __global float * R_yy, __global float * R_xy, __global float * R_xz, __global float * R_yz, __global float * R_xx_lddrk, __global float * R_yy_lddrk, __global float * R_xy_lddrk, __global float * R_xz_lddrk, __global float * R_yz_lddrk, const float alpha_lddrk, const float beta_lddrk, const int use_lddrk, const __global float * restrict alphaval, const __global float * restrict betaval, const __global float * restrict gammaval, const __global float * restrict tau_sigmainvval, const __global float * restrict d_rstore, const int GRAVITY, const __global float * restrict d_gravity_pre_store, const __global float * restrict d_gravity_H, const __global float * restrict wgll_cube, const int NSPEC_CRUST_MANTLE_STRAIN_ONLY, __read_only image2d_t d_displ_cm_tex, __read_only image2d_t d_accel_cm_tex){\n\
 #endif\n\
 #else\n\
 #ifdef USE_TEXTURES_CONSTANTS\n\
-__kernel  void crust_mantle_impl_kernel_forward(const int nb_blocks_to_compute, const __global int * d_ibool, const __global int * d_ispec_is_tiso, const __global int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const float deltat, const int use_mesh_coloring_gpu, const __global float * restrict d_displ, __global float * d_accel, const __global float * restrict d_xix, const __global float * restrict d_xiy, const __global float * restrict d_xiz, const __global float * restrict d_etax, const __global float * restrict d_etay, const __global float * restrict d_etaz, const __global float * restrict d_gammax, const __global float * restrict d_gammay, const __global float * restrict d_gammaz, const __global float * restrict d_hprime_xx, const __global float * restrict d_hprimewgll_xx, const __global float * restrict d_wgllwgll_xy, const __global float * restrict d_wgllwgll_xz, const __global float * restrict d_wgllwgll_yz, const __global float * restrict d_kappavstore, const __global float * restrict d_muvstore, const __global float * restrict d_kappahstore, const __global float * restrict d_muhstore, const __global float * restrict d_eta_anisostore, const int COMPUTE_AND_STORE_STRAIN, __global float * epsilondev_xx, __global float * epsilondev_yy, __global float * epsilondev_xy, __global float * epsilondev_xz, __global float * epsilondev_yz, __global float * epsilon_trace_over_3, const int ATTENUATION, const int PARTIAL_PHYS_DISPERSION_ONLY, const int USE_3D_ATTENUATION_ARRAYS, const __global float * restrict one_minus_sum_beta, const __global float * restrict factor_common, __global float * R_xx, __global float * R_yy, __global float * R_xy, __global float * R_xz, __global float * R_yz, __global float * R_xx_lddrk, __global float * R_yy_lddrk, __global float * R_xy_lddrk, __global float * R_xz_lddrk, __global float * R_yz_lddrk, const float alpha_lddrk, const float beta_lddrk, const int use_lddrk, const __global float * restrict alphaval, const __global float * restrict betaval, const __global float * restrict gammaval, const __global float * restrict tau_sigmainvval, const int ANISOTROPY, const __global float * restrict d_c11store, const __global float * restrict d_c12store, const __global float * restrict d_c13store, const __global float * restrict d_c14store, const __global float * restrict d_c15store, const __global float * restrict d_c16store, const __global float * restrict d_c22store, const __global float * restrict d_c23store, const __global float * restrict d_c24store, const __global float * restrict d_c25store, const __global float * restrict d_c26store, const __global float * restrict d_c33store, const __global float * restrict d_c34store, const __global float * restrict d_c35store, const __global float * restrict d_c36store, const __global float * restrict d_c44store, const __global float * restrict d_c45store, const __global float * restrict d_c46store, const __global float * restrict d_c55store, const __global float * restrict d_c56store, const __global float * restrict d_c66store, const __global float * restrict d_rstore, const int GRAVITY, const __global float * restrict d_gravity_pre_store, const __global float * restrict d_gravity_H, const __global float * restrict wgll_cube, const int NSPEC_CRUST_MANTLE_STRAIN_ONLY, __read_only image2d_t d_hprime_xx_tex, __read_only image2d_t d_hprimewgll_xx_tex){\n\
+__kernel  void crust_mantle_impl_kernel_forward(const int nb_blocks_to_compute, const __global int * d_ibool, const __global int * d_ispec_is_tiso, const __global int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const float deltat, const int use_mesh_coloring_gpu, const __global float * restrict d_displ, __global float * d_accel, const __global float * restrict d_xix, const __global float * restrict d_xiy, const __global float * restrict d_xiz, const __global float * restrict d_etax, const __global float * restrict d_etay, const __global float * restrict d_etaz, const __global float * restrict d_gammax, const __global float * restrict d_gammay, const __global float * restrict d_gammaz, const __global float * restrict d_hprime_xx, const __global float * restrict d_hprimewgll_xx, const __global float * restrict d_wgllwgll_xy, const __global float * restrict d_wgllwgll_xz, const __global float * restrict d_wgllwgll_yz, const __global float * restrict d_kappavstore, const __global float * restrict d_muvstore, const __global float * restrict d_kappahstore, const __global float * restrict d_muhstore, const __global float * restrict d_eta_anisostore, const int COMPUTE_AND_STORE_STRAIN, __global float * epsilondev_xx, __global float * epsilondev_yy, __global float * epsilondev_xy, __global float * epsilondev_xz, __global float * epsilondev_yz, __global float * epsilon_trace_over_3, const int ATTENUATION, const int PARTIAL_PHYS_DISPERSION_ONLY, const int USE_3D_ATTENUATION_ARRAYS, const __global float * restrict one_minus_sum_beta, const __global float * restrict factor_common, __global float * R_xx, __global float * R_yy, __global float * R_xy, __global float * R_xz, __global float * R_yz, __global float * R_xx_lddrk, __global float * R_yy_lddrk, __global float * R_xy_lddrk, __global float * R_xz_lddrk, __global float * R_yz_lddrk, const float alpha_lddrk, const float beta_lddrk, const int use_lddrk, const __global float * restrict alphaval, const __global float * restrict betaval, const __global float * restrict gammaval, const __global float * restrict tau_sigmainvval, const __global float * restrict d_rstore, const int GRAVITY, const __global float * restrict d_gravity_pre_store, const __global float * restrict d_gravity_H, const __global float * restrict wgll_cube, const int NSPEC_CRUST_MANTLE_STRAIN_ONLY, __read_only image2d_t d_hprime_xx_tex, __read_only image2d_t d_hprimewgll_xx_tex){\n\
 #else\n\
-__kernel  void crust_mantle_impl_kernel_forward(const int nb_blocks_to_compute, const __global int * d_ibool, const __global int * d_ispec_is_tiso, const __global int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const float deltat, const int use_mesh_coloring_gpu, const __global float * restrict d_displ, __global float * d_accel, const __global float * restrict d_xix, const __global float * restrict d_xiy, const __global float * restrict d_xiz, const __global float * restrict d_etax, const __global float * restrict d_etay, const __global float * restrict d_etaz, const __global float * restrict d_gammax, const __global float * restrict d_gammay, const __global float * restrict d_gammaz, const __global float * restrict d_hprime_xx, const __global float * restrict d_hprimewgll_xx, const __global float * restrict d_wgllwgll_xy, const __global float * restrict d_wgllwgll_xz, const __global float * restrict d_wgllwgll_yz, const __global float * restrict d_kappavstore, const __global float * restrict d_muvstore, const __global float * restrict d_kappahstore, const __global float * restrict d_muhstore, const __global float * restrict d_eta_anisostore, const int COMPUTE_AND_STORE_STRAIN, __global float * epsilondev_xx, __global float * epsilondev_yy, __global float * epsilondev_xy, __global float * epsilondev_xz, __global float * epsilondev_yz, __global float * epsilon_trace_over_3, const int ATTENUATION, const int PARTIAL_PHYS_DISPERSION_ONLY, const int USE_3D_ATTENUATION_ARRAYS, const __global float * restrict one_minus_sum_beta, const __global float * restrict factor_common, __global float * R_xx, __global float * R_yy, __global float * R_xy, __global float * R_xz, __global float * R_yz, __global float * R_xx_lddrk, __global float * R_yy_lddrk, __global float * R_xy_lddrk, __global float * R_xz_lddrk, __global float * R_yz_lddrk, const float alpha_lddrk, const float beta_lddrk, const int use_lddrk, const __global float * restrict alphaval, const __global float * restrict betaval, const __global float * restrict gammaval, const __global float * restrict tau_sigmainvval, const int ANISOTROPY, const __global float * restrict d_c11store, const __global float * restrict d_c12store, const __global float * restrict d_c13store, const __global float * restrict d_c14store, const __global float * restrict d_c15store, const __global float * restrict d_c16store, const __global float * restrict d_c22store, const __global float * restrict d_c23store, const __global float * restrict d_c24store, const __global float * restrict d_c25store, const __global float * restrict d_c26store, const __global float * restrict d_c33store, const __global float * restrict d_c34store, const __global float * restrict d_c35store, const __global float * restrict d_c36store, const __global float * restrict d_c44store, const __global float * restrict d_c45store, const __global float * restrict d_c46store, const __global float * restrict d_c55store, const __global float * restrict d_c56store, const __global float * restrict d_c66store, const __global float * restrict d_rstore, const int GRAVITY, const __global float * restrict d_gravity_pre_store, const __global float * restrict d_gravity_H, const __global float * restrict wgll_cube, const int NSPEC_CRUST_MANTLE_STRAIN_ONLY){\n\
+__kernel  void crust_mantle_impl_kernel_forward(const int nb_blocks_to_compute, const __global int * d_ibool, const __global int * d_ispec_is_tiso, const __global int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const float deltat, const int use_mesh_coloring_gpu, const __global float * restrict d_displ, __global float * d_accel, const __global float * restrict d_xix, const __global float * restrict d_xiy, const __global float * restrict d_xiz, const __global float * restrict d_etax, const __global float * restrict d_etay, const __global float * restrict d_etaz, const __global float * restrict d_gammax, const __global float * restrict d_gammay, const __global float * restrict d_gammaz, const __global float * restrict d_hprime_xx, const __global float * restrict d_hprimewgll_xx, const __global float * restrict d_wgllwgll_xy, const __global float * restrict d_wgllwgll_xz, const __global float * restrict d_wgllwgll_yz, const __global float * restrict d_kappavstore, const __global float * restrict d_muvstore, const __global float * restrict d_kappahstore, const __global float * restrict d_muhstore, const __global float * restrict d_eta_anisostore, const int COMPUTE_AND_STORE_STRAIN, __global float * epsilondev_xx, __global float * epsilondev_yy, __global float * epsilondev_xy, __global float * epsilondev_xz, __global float * epsilondev_yz, __global float * epsilon_trace_over_3, const int ATTENUATION, const int PARTIAL_PHYS_DISPERSION_ONLY, const int USE_3D_ATTENUATION_ARRAYS, const __global float * restrict one_minus_sum_beta, const __global float * restrict factor_common, __global float * R_xx, __global float * R_yy, __global float * R_xy, __global float * R_xz, __global float * R_yz, __global float * R_xx_lddrk, __global float * R_yy_lddrk, __global float * R_xy_lddrk, __global float * R_xz_lddrk, __global float * R_yz_lddrk, const float alpha_lddrk, const float beta_lddrk, const int use_lddrk, const __global float * restrict alphaval, const __global float * restrict betaval, const __global float * restrict gammaval, const __global float * restrict tau_sigmainvval, const __global float * restrict d_rstore, const int GRAVITY, const __global float * restrict d_gravity_pre_store, const __global float * restrict d_gravity_H, const __global float * restrict wgll_cube, const int NSPEC_CRUST_MANTLE_STRAIN_ONLY){\n\
 #endif\n\
 #endif\n\
 #ifdef USE_TEXTURES_FIELDS\n\
@@ -759,16 +759,12 @@ __kernel  void crust_mantle_impl_kernel_forward(const int nb_blocks_to_compute, 
       }\n\
     }\n\
 \n\
-    if (ANISOTROPY) {\n\
-      compute_element_cm_aniso(offset, d_c11store, d_c12store, d_c13store, d_c14store, d_c15store, d_c16store, d_c22store, d_c23store, d_c24store, d_c25store, d_c26store, d_c33store, d_c34store, d_c35store, d_c36store, d_c44store, d_c45store, d_c46store, d_c55store, d_c56store, d_c66store, duxdxl, duxdyl, duxdzl, duydxl, duydyl, duydzl, duzdxl, duzdyl, duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);\n\
+    if ( !(d_ispec_is_tiso[working_element])) {\n\
+      // isotropic elements\n\
+      compute_element_cm_iso(offset, d_kappavstore, d_muvstore, duxdxl, duydyl, duzdzl, duxdxl_plus_duydyl, duxdxl_plus_duzdzl, duydyl_plus_duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);\n\
     } else {\n\
-      if ( !(d_ispec_is_tiso[working_element])) {\n\
-        // isotropic\n\
-        compute_element_cm_iso(offset, d_kappavstore, d_muvstore, duxdxl, duydyl, duzdzl, duxdxl_plus_duydyl, duxdxl_plus_duzdzl, duydyl_plus_duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);\n\
-      } else {\n\
-        // transversely isotropic\n\
-        compute_element_cm_tiso(offset, d_kappavstore, d_muvstore, d_kappahstore, d_muhstore, d_eta_anisostore, duxdxl, duxdyl, duxdzl, duydxl, duydyl, duydzl, duzdxl, duzdyl, duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl, iglob_1, d_rstore,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);\n\
-      }\n\
+      // transversely isotropic\n\
+      compute_element_cm_tiso(offset, d_kappavstore, d_muvstore, d_kappahstore, d_muhstore, d_eta_anisostore, duxdxl, duxdyl, duxdzl, duydxl, duydyl, duydzl, duzdxl, duzdyl, duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl, iglob_1, d_rstore,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);\n\
     }\n\
 \n\
     if (ATTENUATION &&  !(PARTIAL_PHYS_DISPERSION_ONLY)) {\n\
@@ -971,4 +967,483 @@ __kernel  void crust_mantle_impl_kernel_forward(const int nb_blocks_to_compute, 
     }\n\
   }\n\
 }\n\
+\n\
+#ifdef USE_TEXTURES_FIELDS\n\
+#ifdef USE_TEXTURES_CONSTANTS\n\
+__kernel  void crust_mantle_aniso_impl_kernel_forward(const int nb_blocks_to_compute, const __global int * d_ibool, const __global int * d_ispec_is_tiso, const __global int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const float deltat, const int use_mesh_coloring_gpu, const __global float * restrict d_displ, __global float * d_accel, const __global float * restrict d_xix, const __global float * restrict d_xiy, const __global float * restrict d_xiz, const __global float * restrict d_etax, const __global float * restrict d_etay, const __global float * restrict d_etaz, const __global float * restrict d_gammax, const __global float * restrict d_gammay, const __global float * restrict d_gammaz, const __global float * restrict d_hprime_xx, const __global float * restrict d_hprimewgll_xx, const __global float * restrict d_wgllwgll_xy, const __global float * restrict d_wgllwgll_xz, const __global float * restrict d_wgllwgll_yz, const __global float * restrict d_muvstore, const int COMPUTE_AND_STORE_STRAIN, __global float * epsilondev_xx, __global float * epsilondev_yy, __global float * epsilondev_xy, __global float * epsilondev_xz, __global float * epsilondev_yz, __global float * epsilon_trace_over_3, const int ATTENUATION, const int PARTIAL_PHYS_DISPERSION_ONLY, const int USE_3D_ATTENUATION_ARRAYS, const __global float * restrict one_minus_sum_beta, const __global float * restrict factor_common, __global float * R_xx, __global float * R_yy, __global float * R_xy, __global float * R_xz, __global float * R_yz, __global float * R_xx_lddrk, __global float * R_yy_lddrk, __global float * R_xy_lddrk, __global float * R_xz_lddrk, __global float * R_yz_lddrk, const float alpha_lddrk, const float beta_lddrk, const int use_lddrk, const __global float * restrict alphaval, const __global float * restrict betaval, const __global float * restrict gammaval, const __global float * restrict tau_sigmainvval, const __global float * restrict d_c11store, const __global float * restrict d_c12store, const __global float * restrict d_c13store, const __global float * restrict d_c14store, const __global float * restrict d_c15store, const __global float * restrict d_c16store, const __global float * restrict d_c22store, const __global float * restrict d_c23store, const __global float * restrict d_c24store, const __global float * restrict d_c25store, const __global float * restrict d_c26store, const __global float * restrict d_c33store, const __global float * restrict d_c34store, const __global float * restrict d_c35store, const __global float * restrict d_c36store, const __global float * restrict d_c44store, const __global float * restrict d_c45store, const __global float * restrict d_c46store, const __global float * restrict d_c55store, const __global float * restrict d_c56store, const __global float * restrict d_c66store, const int GRAVITY, const __global float * restrict d_gravity_pre_store, const __global float * restrict d_gravity_H, const __global float * restrict wgll_cube, const int NSPEC_CRUST_MANTLE_STRAIN_ONLY, __read_only image2d_t d_displ_cm_tex, __read_only image2d_t d_accel_cm_tex, __read_only image2d_t d_hprime_xx_tex, __read_only image2d_t d_hprimewgll_xx_tex){\n\
+#else\n\
+__kernel  void crust_mantle_aniso_impl_kernel_forward(const int nb_blocks_to_compute, const __global int * d_ibool, const __global int * d_ispec_is_tiso, const __global int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const float deltat, const int use_mesh_coloring_gpu, const __global float * restrict d_displ, __global float * d_accel, const __global float * restrict d_xix, const __global float * restrict d_xiy, const __global float * restrict d_xiz, const __global float * restrict d_etax, const __global float * restrict d_etay, const __global float * restrict d_etaz, const __global float * restrict d_gammax, const __global float * restrict d_gammay, const __global float * restrict d_gammaz, const __global float * restrict d_hprime_xx, const __global float * restrict d_hprimewgll_xx, const __global float * restrict d_wgllwgll_xy, const __global float * restrict d_wgllwgll_xz, const __global float * restrict d_wgllwgll_yz, const __global float * restrict d_muvstore, const int COMPUTE_AND_STORE_STRAIN, __global float * epsilondev_xx, __global float * epsilondev_yy, __global float * epsilondev_xy, __global float * epsilondev_xz, __global float * epsilondev_yz, __global float * epsilon_trace_over_3, const int ATTENUATION, const int PARTIAL_PHYS_DISPERSION_ONLY, const int USE_3D_ATTENUATION_ARRAYS, const __global float * restrict one_minus_sum_beta, const __global float * restrict factor_common, __global float * R_xx, __global float * R_yy, __global float * R_xy, __global float * R_xz, __global float * R_yz, __global float * R_xx_lddrk, __global float * R_yy_lddrk, __global float * R_xy_lddrk, __global float * R_xz_lddrk, __global float * R_yz_lddrk, const float alpha_lddrk, const float beta_lddrk, const int use_lddrk, const __global float * restrict alphaval, const __global float * restrict betaval, const __global float * restrict gammaval, const __global float * restrict tau_sigmainvval, const __global float * restrict d_c11store, const __global float * restrict d_c12store, const __global float * restrict d_c13store, const __global float * restrict d_c14store, const __global float * restrict d_c15store, const __global float * restrict d_c16store, const __global float * restrict d_c22store, const __global float * restrict d_c23store, const __global float * restrict d_c24store, const __global float * restrict d_c25store, const __global float * restrict d_c26store, const __global float * restrict d_c33store, const __global float * restrict d_c34store, const __global float * restrict d_c35store, const __global float * restrict d_c36store, const __global float * restrict d_c44store, const __global float * restrict d_c45store, const __global float * restrict d_c46store, const __global float * restrict d_c55store, const __global float * restrict d_c56store, const __global float * restrict d_c66store, const int GRAVITY, const __global float * restrict d_gravity_pre_store, const __global float * restrict d_gravity_H, const __global float * restrict wgll_cube, const int NSPEC_CRUST_MANTLE_STRAIN_ONLY, __read_only image2d_t d_displ_cm_tex, __read_only image2d_t d_accel_cm_tex){\n\
+#endif\n\
+#else\n\
+#ifdef USE_TEXTURES_CONSTANTS\n\
+__kernel  void crust_mantle_aniso_impl_kernel_forward(const int nb_blocks_to_compute, const __global int * d_ibool, const __global int * d_ispec_is_tiso, const __global int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const float deltat, const int use_mesh_coloring_gpu, const __global float * restrict d_displ, __global float * d_accel, const __global float * restrict d_xix, const __global float * restrict d_xiy, const __global float * restrict d_xiz, const __global float * restrict d_etax, const __global float * restrict d_etay, const __global float * restrict d_etaz, const __global float * restrict d_gammax, const __global float * restrict d_gammay, const __global float * restrict d_gammaz, const __global float * restrict d_hprime_xx, const __global float * restrict d_hprimewgll_xx, const __global float * restrict d_wgllwgll_xy, const __global float * restrict d_wgllwgll_xz, const __global float * restrict d_wgllwgll_yz, const __global float * restrict d_muvstore, const int COMPUTE_AND_STORE_STRAIN, __global float * epsilondev_xx, __global float * epsilondev_yy, __global float * epsilondev_xy, __global float * epsilondev_xz, __global float * epsilondev_yz, __global float * epsilon_trace_over_3, const int ATTENUATION, const int PARTIAL_PHYS_DISPERSION_ONLY, const int USE_3D_ATTENUATION_ARRAYS, const __global float * restrict one_minus_sum_beta, const __global float * restrict factor_common, __global float * R_xx, __global float * R_yy, __global float * R_xy, __global float * R_xz, __global float * R_yz, __global float * R_xx_lddrk, __global float * R_yy_lddrk, __global float * R_xy_lddrk, __global float * R_xz_lddrk, __global float * R_yz_lddrk, const float alpha_lddrk, const float beta_lddrk, const int use_lddrk, const __global float * restrict alphaval, const __global float * restrict betaval, const __global float * restrict gammaval, const __global float * restrict tau_sigmainvval, const __global float * restrict d_c11store, const __global float * restrict d_c12store, const __global float * restrict d_c13store, const __global float * restrict d_c14store, const __global float * restrict d_c15store, const __global float * restrict d_c16store, const __global float * restrict d_c22store, const __global float * restrict d_c23store, const __global float * restrict d_c24store, const __global float * restrict d_c25store, const __global float * restrict d_c26store, const __global float * restrict d_c33store, const __global float * restrict d_c34store, const __global float * restrict d_c35store, const __global float * restrict d_c36store, const __global float * restrict d_c44store, const __global float * restrict d_c45store, const __global float * restrict d_c46store, const __global float * restrict d_c55store, const __global float * restrict d_c56store, const __global float * restrict d_c66store, const int GRAVITY, const __global float * restrict d_gravity_pre_store, const __global float * restrict d_gravity_H, const __global float * restrict wgll_cube, const int NSPEC_CRUST_MANTLE_STRAIN_ONLY, __read_only image2d_t d_hprime_xx_tex, __read_only image2d_t d_hprimewgll_xx_tex){\n\
+#else\n\
+__kernel  void crust_mantle_aniso_impl_kernel_forward(const int nb_blocks_to_compute, const __global int * d_ibool, const __global int * d_ispec_is_tiso, const __global int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const float deltat, const int use_mesh_coloring_gpu, const __global float * restrict d_displ, __global float * d_accel, const __global float * restrict d_xix, const __global float * restrict d_xiy, const __global float * restrict d_xiz, const __global float * restrict d_etax, const __global float * restrict d_etay, const __global float * restrict d_etaz, const __global float * restrict d_gammax, const __global float * restrict d_gammay, const __global float * restrict d_gammaz, const __global float * restrict d_hprime_xx, const __global float * restrict d_hprimewgll_xx, const __global float * restrict d_wgllwgll_xy, const __global float * restrict d_wgllwgll_xz, const __global float * restrict d_wgllwgll_yz, const __global float * restrict d_muvstore, const int COMPUTE_AND_STORE_STRAIN, __global float * epsilondev_xx, __global float * epsilondev_yy, __global float * epsilondev_xy, __global float * epsilondev_xz, __global float * epsilondev_yz, __global float * epsilon_trace_over_3, const int ATTENUATION, const int PARTIAL_PHYS_DISPERSION_ONLY, const int USE_3D_ATTENUATION_ARRAYS, const __global float * restrict one_minus_sum_beta, const __global float * restrict factor_common, __global float * R_xx, __global float * R_yy, __global float * R_xy, __global float * R_xz, __global float * R_yz, __global float * R_xx_lddrk, __global float * R_yy_lddrk, __global float * R_xy_lddrk, __global float * R_xz_lddrk, __global float * R_yz_lddrk, const float alpha_lddrk, const float beta_lddrk, const int use_lddrk, const __global float * restrict alphaval, const __global float * restrict betaval, const __global float * restrict gammaval, const __global float * restrict tau_sigmainvval, const __global float * restrict d_c11store, const __global float * restrict d_c12store, const __global float * restrict d_c13store, const __global float * restrict d_c14store, const __global float * restrict d_c15store, const __global float * restrict d_c16store, const __global float * restrict d_c22store, const __global float * restrict d_c23store, const __global float * restrict d_c24store, const __global float * restrict d_c25store, const __global float * restrict d_c26store, const __global float * restrict d_c33store, const __global float * restrict d_c34store, const __global float * restrict d_c35store, const __global float * restrict d_c36store, const __global float * restrict d_c44store, const __global float * restrict d_c45store, const __global float * restrict d_c46store, const __global float * restrict d_c55store, const __global float * restrict d_c56store, const __global float * restrict d_c66store, const int GRAVITY, const __global float * restrict d_gravity_pre_store, const __global float * restrict d_gravity_H, const __global float * restrict wgll_cube, const int NSPEC_CRUST_MANTLE_STRAIN_ONLY){\n\
+#endif\n\
+#endif\n\
+#ifdef USE_TEXTURES_FIELDS\n\
+  const sampler_t sampler_d_displ_cm_tex = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST;\n\
+  const sampler_t sampler_d_accel_cm_tex = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST;\n\
+#endif\n\
+#ifdef USE_TEXTURES_CONSTANTS\n\
+  const sampler_t sampler_d_hprime_xx_tex = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST;\n\
+  const sampler_t sampler_d_hprimewgll_xx_tex = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST;\n\
+#endif\n\
+  int K;\n\
+  int J;\n\
+  int I;\n\
+  ushort active_1;\n\
+  int offset;\n\
+  int iglob_1;\n\
+  int working_element;\n\
+  float fac1;\n\
+  float fac2;\n\
+  float fac3;\n\
+  float sigma_xx;\n\
+  float sigma_xy;\n\
+  float sigma_xz;\n\
+  float sigma_yx;\n\
+  float sigma_yy;\n\
+  float sigma_yz;\n\
+  float sigma_zx;\n\
+  float sigma_zy;\n\
+  float sigma_zz;\n\
+  float epsilondev_xx_loc_1;\n\
+  float epsilondev_yy_loc_1;\n\
+  float epsilondev_xy_loc_1;\n\
+  float epsilondev_xz_loc_1;\n\
+  float epsilondev_yz_loc_1;\n\
+  float sum_terms1;\n\
+  float sum_terms2;\n\
+  float sum_terms3;\n\
+  float rho_s_H_1_1;\n\
+  float rho_s_H_1_2;\n\
+  float rho_s_H_1_3;\n\
+\n\
+  // shared arrays\n\
+  __local float s_dummyx_loc[(NGLL3)];\n\
+  __local float s_dummyy_loc[(NGLL3)];\n\
+  __local float s_dummyz_loc[(NGLL3)];\n\
+\n\
+  __local float s_tempx1[(NGLL3)];\n\
+  __local float s_tempx2[(NGLL3)];\n\
+  __local float s_tempx3[(NGLL3)];\n\
+  __local float s_tempy1[(NGLL3)];\n\
+  __local float s_tempy2[(NGLL3)];\n\
+  __local float s_tempy3[(NGLL3)];\n\
+  __local float s_tempz1[(NGLL3)];\n\
+  __local float s_tempz2[(NGLL3)];\n\
+  __local float s_tempz3[(NGLL3)];\n\
+  __local float sh_hprime_xx[(NGLL2)];\n\
+  __local float sh_hprimewgll_xx[(NGLL2)];\n\
+\n\
+  const int bx = (get_group_id(1)) * (get_num_groups(0)) + get_group_id(0);\n\
+  if (bx >= nb_blocks_to_compute) {\n\
+     return ;\n\
+  }\n\
+\n\
+  const int tx = get_local_id(0);\n\
+\n\
+  active_1 = (tx < NGLL3 ? 1 : 0);\n\
+\n\
+  if (active_1) {\n\
+#ifdef USE_MESH_COLORING_GPU\n\
+    working_element = bx;\n\
+#else\n\
+    if (use_mesh_coloring_gpu) {\n\
+      working_element = bx;\n\
+    } else {\n\
+      working_element = d_phase_ispec_inner[bx + (num_phase_ispec) * (d_iphase - (1))] - (1);\n\
+    }\n\
+#endif\n\
+    iglob_1 = d_ibool[(working_element) * (NGLL3) + tx] - (1);\n\
+#ifdef USE_TEXTURES_FIELDS\n\
+    s_dummyx_loc[tx] = as_float(read_imageui(d_displ_cm_tex, sampler_d_displ_cm_tex, int2((iglob_1) * (3) + 0,0)).x);\n\
+    s_dummyy_loc[tx] = as_float(read_imageui(d_displ_cm_tex, sampler_d_displ_cm_tex, int2((iglob_1) * (3) + 1,0)).x);\n\
+    s_dummyz_loc[tx] = as_float(read_imageui(d_displ_cm_tex, sampler_d_displ_cm_tex, int2((iglob_1) * (3) + 2,0)).x);\n\
+#else\n\
+    s_dummyx_loc[tx] = d_displ[0 + (3) * (iglob_1)];\n\
+    s_dummyy_loc[tx] = d_displ[1 + (3) * (iglob_1)];\n\
+    s_dummyz_loc[tx] = d_displ[2 + (3) * (iglob_1)];\n\
+#endif\n\
+  }\n\
+\n\
+  if (tx < NGLL2) {\n\
+#ifdef USE_TEXTURES_CONSTANTS\n\
+    sh_hprime_xx[tx] = as_float(read_imageui(d_hprime_xx_tex, sampler_d_hprime_xx_tex, int2(tx,0)).x);\n\
+    sh_hprimewgll_xx[tx] = as_float(read_imageui(d_hprimewgll_xx_tex, sampler_d_hprimewgll_xx_tex, int2(tx,0)).x);\n\
+#else\n\
+    sh_hprime_xx[tx] = d_hprime_xx[tx];\n\
+    sh_hprimewgll_xx[tx] = d_hprimewgll_xx[tx];\n\
+#endif\n\
+  }\n\
+\n\
+  barrier(CLK_LOCAL_MEM_FENCE);\n\
+\n\
+  K = (tx) / (NGLL2);\n\
+  J = (tx - ((K) * (NGLL2))) / (NGLLX);\n\
+  I = tx - ((K) * (NGLL2)) - ((J) * (NGLLX));\n\
+\n\
+  if (active_1) {\n\
+    float tempx1l;\n\
+    float tempx2l;\n\
+    float tempx3l;\n\
+    float tempy1l;\n\
+    float tempy2l;\n\
+    float tempy3l;\n\
+    float tempz1l;\n\
+    float tempz2l;\n\
+    float tempz3l;\n\
+    tempx1l = 0.0f;\n\
+    tempx2l = 0.0f;\n\
+    tempx3l = 0.0f;\n\
+    tempy1l = 0.0f;\n\
+    tempy2l = 0.0f;\n\
+    tempy3l = 0.0f;\n\
+    tempz1l = 0.0f;\n\
+    tempz2l = 0.0f;\n\
+    tempz3l = 0.0f;\n\
+#ifdef MANUALLY_UNROLLED_LOOPS\n\
+    fac1 = sh_hprime_xx[(0) * (NGLLX) + I];\n\
+    tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + 0]) * (fac1);\n\
+    tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 0]) * (fac1);\n\
+    tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + 0]) * (fac1);\n\
+    fac2 = sh_hprime_xx[(0) * (NGLLX) + J];\n\
+    tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (0) * (NGLLX) + I]) * (fac2);\n\
+    tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (0) * (NGLLX) + I]) * (fac2);\n\
+    tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (0) * (NGLLX) + I]) * (fac2);\n\
+    fac3 = sh_hprime_xx[(0) * (NGLLX) + K];\n\
+    tempx3l = tempx3l + (s_dummyx_loc[(0) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
+    tempy3l = tempy3l + (s_dummyy_loc[(0) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
+    tempz3l = tempz3l + (s_dummyz_loc[(0) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
+    fac1 = sh_hprime_xx[(1) * (NGLLX) + I];\n\
+    tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + 1]) * (fac1);\n\
+    tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 1]) * (fac1);\n\
+    tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + 1]) * (fac1);\n\
+    fac2 = sh_hprime_xx[(1) * (NGLLX) + J];\n\
+    tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (1) * (NGLLX) + I]) * (fac2);\n\
+    tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (1) * (NGLLX) + I]) * (fac2);\n\
+    tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (1) * (NGLLX) + I]) * (fac2);\n\
+    fac3 = sh_hprime_xx[(1) * (NGLLX) + K];\n\
+    tempx3l = tempx3l + (s_dummyx_loc[(1) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
+    tempy3l = tempy3l + (s_dummyy_loc[(1) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
+    tempz3l = tempz3l + (s_dummyz_loc[(1) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
+    fac1 = sh_hprime_xx[(2) * (NGLLX) + I];\n\
+    tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + 2]) * (fac1);\n\
+    tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 2]) * (fac1);\n\
+    tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + 2]) * (fac1);\n\
+    fac2 = sh_hprime_xx[(2) * (NGLLX) + J];\n\
+    tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (2) * (NGLLX) + I]) * (fac2);\n\
+    tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (2) * (NGLLX) + I]) * (fac2);\n\
+    tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (2) * (NGLLX) + I]) * (fac2);\n\
+    fac3 = sh_hprime_xx[(2) * (NGLLX) + K];\n\
+    tempx3l = tempx3l + (s_dummyx_loc[(2) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
+    tempy3l = tempy3l + (s_dummyy_loc[(2) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
+    tempz3l = tempz3l + (s_dummyz_loc[(2) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
+    fac1 = sh_hprime_xx[(3) * (NGLLX) + I];\n\
+    tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + 3]) * (fac1);\n\
+    tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 3]) * (fac1);\n\
+    tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + 3]) * (fac1);\n\
+    fac2 = sh_hprime_xx[(3) * (NGLLX) + J];\n\
+    tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (3) * (NGLLX) + I]) * (fac2);\n\
+    tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (3) * (NGLLX) + I]) * (fac2);\n\
+    tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (3) * (NGLLX) + I]) * (fac2);\n\
+    fac3 = sh_hprime_xx[(3) * (NGLLX) + K];\n\
+    tempx3l = tempx3l + (s_dummyx_loc[(3) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
+    tempy3l = tempy3l + (s_dummyy_loc[(3) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
+    tempz3l = tempz3l + (s_dummyz_loc[(3) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
+    fac1 = sh_hprime_xx[(4) * (NGLLX) + I];\n\
+    tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + 4]) * (fac1);\n\
+    tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 4]) * (fac1);\n\
+    tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + 4]) * (fac1);\n\
+    fac2 = sh_hprime_xx[(4) * (NGLLX) + J];\n\
+    tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (4) * (NGLLX) + I]) * (fac2);\n\
+    tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (4) * (NGLLX) + I]) * (fac2);\n\
+    tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (4) * (NGLLX) + I]) * (fac2);\n\
+    fac3 = sh_hprime_xx[(4) * (NGLLX) + K];\n\
+    tempx3l = tempx3l + (s_dummyx_loc[(4) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
+    tempy3l = tempy3l + (s_dummyy_loc[(4) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
+    tempz3l = tempz3l + (s_dummyz_loc[(4) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
+#else\n\
+    for (int l = 0; l <= NGLLX - (1); l += 1) {\n\
+      fac1 = sh_hprime_xx[(l) * (NGLLX) + I];\n\
+      tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + l]) * (fac1);\n\
+      tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + l]) * (fac1);\n\
+      tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + l]) * (fac1);\n\
+      fac2 = sh_hprime_xx[(l) * (NGLLX) + J];\n\
+      tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (l) * (NGLLX) + I]) * (fac2);\n\
+      tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (l) * (NGLLX) + I]) * (fac2);\n\
+      tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (l) * (NGLLX) + I]) * (fac2);\n\
+      fac3 = sh_hprime_xx[(l) * (NGLLX) + K];\n\
+      tempx3l = tempx3l + (s_dummyx_loc[(l) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
+      tempy3l = tempy3l + (s_dummyy_loc[(l) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
+      tempz3l = tempz3l + (s_dummyz_loc[(l) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
+    }\n\
+#endif\n\
+\n\
+    float xixl;\n\
+    float xiyl;\n\
+    float xizl;\n\
+    float etaxl;\n\
+    float etayl;\n\
+    float etazl;\n\
+    float gammaxl;\n\
+    float gammayl;\n\
+    float gammazl;\n\
+    offset = (working_element) * (NGLL3_PADDED) + tx;\n\
+    xixl = d_xix[offset];\n\
+    etaxl = d_etax[offset];\n\
+    gammaxl = d_gammax[offset];\n\
+    xiyl = d_xiy[offset];\n\
+    etayl = d_etay[offset];\n\
+    gammayl = d_gammay[offset];\n\
+    xizl = d_xiz[offset];\n\
+    etazl = d_etaz[offset];\n\
+    gammazl = d_gammaz[offset];\n\
+\n\
+    float duxdxl;\n\
+    float duxdyl;\n\
+    float duxdzl;\n\
+    float duydxl;\n\
+    float duydyl;\n\
+    float duydzl;\n\
+    float duzdxl;\n\
+    float duzdyl;\n\
+    float duzdzl;\n\
+    duxdxl = (xixl) * (tempx1l) + (etaxl) * (tempx2l) + (gammaxl) * (tempx3l);\n\
+    duxdyl = (xiyl) * (tempx1l) + (etayl) * (tempx2l) + (gammayl) * (tempx3l);\n\
+    duxdzl = (xizl) * (tempx1l) + (etazl) * (tempx2l) + (gammazl) * (tempx3l);\n\
+    duydxl = (xixl) * (tempy1l) + (etaxl) * (tempy2l) + (gammaxl) * (tempy3l);\n\
+    duydyl = (xiyl) * (tempy1l) + (etayl) * (tempy2l) + (gammayl) * (tempy3l);\n\
+    duydzl = (xizl) * (tempy1l) + (etazl) * (tempy2l) + (gammazl) * (tempy3l);\n\
+    duzdxl = (xixl) * (tempz1l) + (etaxl) * (tempz2l) + (gammaxl) * (tempz3l);\n\
+    duzdyl = (xiyl) * (tempz1l) + (etayl) * (tempz2l) + (gammayl) * (tempz3l);\n\
+    duzdzl = (xizl) * (tempz1l) + (etazl) * (tempz2l) + (gammazl) * (tempz3l);\n\
+\n\
+    float duxdyl_plus_duydxl;\n\
+    float duzdxl_plus_duxdzl;\n\
+    float duzdyl_plus_duydzl;\n\
+    duxdyl_plus_duydxl = duxdyl + duydxl;\n\
+    duzdxl_plus_duxdzl = duzdxl + duxdzl;\n\
+    duzdyl_plus_duydzl = duzdyl + duydzl;\n\
+\n\
+    if (COMPUTE_AND_STORE_STRAIN) {\n\
+      float templ;\n\
+      templ = (duxdxl + duydyl + duzdzl) * (0.3333333333333333f);\n\
+      epsilondev_xx_loc_1 = duxdxl - (templ);\n\
+      epsilondev_yy_loc_1 = duydyl - (templ);\n\
+      epsilondev_xy_loc_1 = (duxdyl_plus_duydxl) * (0.5f);\n\
+      epsilondev_xz_loc_1 = (duzdxl_plus_duxdzl) * (0.5f);\n\
+      epsilondev_yz_loc_1 = (duzdyl_plus_duydzl) * (0.5f);\n\
+      if (NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) {\n\
+        epsilon_trace_over_3[tx] = templ;\n\
+      } else {\n\
+        epsilon_trace_over_3[tx + (working_element) * (NGLL3)] = templ;\n\
+      }\n\
+    }\n\
+\n\
+    // anisotropic elements\n\
+    compute_element_cm_aniso(offset, d_c11store, d_c12store, d_c13store, d_c14store, d_c15store, d_c16store, d_c22store, d_c23store, d_c24store, d_c25store, d_c26store, d_c33store, d_c34store, d_c35store, d_c36store, d_c44store, d_c45store, d_c46store, d_c55store, d_c56store, d_c66store, duxdxl, duxdyl, duxdzl, duydxl, duydyl, duydzl, duzdxl, duzdyl, duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);\n\
+\n\
+    if (ATTENUATION &&  !(PARTIAL_PHYS_DISPERSION_ONLY)) {\n\
+      compute_element_cm_att_stress(tx, working_element, R_xx, R_yy, R_xy, R_xz, R_yz,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);\n\
+    }\n\
+\n\
+    sigma_yx = sigma_xy;\n\
+    sigma_zx = sigma_xz;\n\
+    sigma_zy = sigma_yz;\n\
+\n\
+    float jacobianl;\n\
+    jacobianl = (1.0f) / ((xixl) * ((etayl) * (gammazl) - ((etazl) * (gammayl))) - ((xiyl) * ((etaxl) * (gammazl) - ((etazl) * (gammaxl)))) + (xizl) * ((etaxl) * (gammayl) - ((etayl) * (gammaxl))));\n\
+\n\
+    if (GRAVITY) {\n\
+      compute_element_cm_gravity(tx, iglob_1, d_gravity_pre_store, d_gravity_H, wgll_cube, jacobianl, s_dummyx_loc, s_dummyy_loc, s_dummyz_loc,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_yx,  &sigma_xz,  &sigma_zx,  &sigma_yz,  &sigma_zy,  &rho_s_H_1_1,  &rho_s_H_1_2,  &rho_s_H_1_3);\n\
+    }\n\
+\n\
+    s_tempx1[tx] = (jacobianl) * ((sigma_xx) * (xixl) + (sigma_yx) * (xiyl) + (sigma_zx) * (xizl));\n\
+    s_tempy1[tx] = (jacobianl) * ((sigma_xy) * (xixl) + (sigma_yy) * (xiyl) + (sigma_zy) * (xizl));\n\
+    s_tempz1[tx] = (jacobianl) * ((sigma_xz) * (xixl) + (sigma_yz) * (xiyl) + (sigma_zz) * (xizl));\n\
+    s_tempx2[tx] = (jacobianl) * ((sigma_xx) * (etaxl) + (sigma_yx) * (etayl) + (sigma_zx) * (etazl));\n\
+    s_tempy2[tx] = (jacobianl) * ((sigma_xy) * (etaxl) + (sigma_yy) * (etayl) + (sigma_zy) * (etazl));\n\
+    s_tempz2[tx] = (jacobianl) * ((sigma_xz) * (etaxl) + (sigma_yz) * (etayl) + (sigma_zz) * (etazl));\n\
+    s_tempx3[tx] = (jacobianl) * ((sigma_xx) * (gammaxl) + (sigma_yx) * (gammayl) + (sigma_zx) * (gammazl));\n\
+    s_tempy3[tx] = (jacobianl) * ((sigma_xy) * (gammaxl) + (sigma_yy) * (gammayl) + (sigma_zy) * (gammazl));\n\
+    s_tempz3[tx] = (jacobianl) * ((sigma_xz) * (gammaxl) + (sigma_yz) * (gammayl) + (sigma_zz) * (gammazl));\n\
+  }\n\
+  barrier(CLK_LOCAL_MEM_FENCE);\n\
+\n\
+  if (active_1) {\n\
+    float tempx1l;\n\
+    float tempx2l;\n\
+    float tempx3l;\n\
+    float tempy1l;\n\
+    float tempy2l;\n\
+    float tempy3l;\n\
+    float tempz1l;\n\
+    float tempz2l;\n\
+    float tempz3l;\n\
+    tempx1l = 0.0f;\n\
+    tempx2l = 0.0f;\n\
+    tempx3l = 0.0f;\n\
+    tempy1l = 0.0f;\n\
+    tempy2l = 0.0f;\n\
+    tempy3l = 0.0f;\n\
+    tempz1l = 0.0f;\n\
+    tempz2l = 0.0f;\n\
+    tempz3l = 0.0f;\n\
+#ifdef MANUALLY_UNROLLED_LOOPS\n\
+    fac1 = sh_hprimewgll_xx[(I) * (NGLLX) + 0];\n\
+    offset = (K) * (NGLL2) + (J) * (NGLLX) + 0;\n\
+    tempx1l = tempx1l + (s_tempx1[offset]) * (fac1);\n\
+    tempy1l = tempy1l + (s_tempy1[offset]) * (fac1);\n\
+    tempz1l = tempz1l + (s_tempz1[offset]) * (fac1);\n\
+    fac2 = sh_hprimewgll_xx[(J) * (NGLLX) + 0];\n\
+    offset = (K) * (NGLL2) + (0) * (NGLLX) + I;\n\
+    tempx2l = tempx2l + (s_tempx2[offset]) * (fac2);\n\
+    tempy2l = tempy2l + (s_tempy2[offset]) * (fac2);\n\
+    tempz2l = tempz2l + (s_tempz2[offset]) * (fac2);\n\
+    fac3 = sh_hprimewgll_xx[(K) * (NGLLX) + 0];\n\
+    offset = (0) * (NGLL2) + (J) * (NGLLX) + I;\n\
+    tempx3l = tempx3l + (s_tempx3[offset]) * (fac3);\n\
+    tempy3l = tempy3l + (s_tempy3[offset]) * (fac3);\n\
+    tempz3l = tempz3l + (s_tempz3[offset]) * (fac3);\n\
+    fac1 = sh_hprimewgll_xx[(I) * (NGLLX) + 1];\n\
+    offset = (K) * (NGLL2) + (J) * (NGLLX) + 1;\n\
+    tempx1l = tempx1l + (s_tempx1[offset]) * (fac1);\n\
+    tempy1l = tempy1l + (s_tempy1[offset]) * (fac1);\n\
+    tempz1l = tempz1l + (s_tempz1[offset]) * (fac1);\n\
+    fac2 = sh_hprimewgll_xx[(J) * (NGLLX) + 1];\n\
+    offset = (K) * (NGLL2) + (1) * (NGLLX) + I;\n\
+    tempx2l = tempx2l + (s_tempx2[offset]) * (fac2);\n\
+    tempy2l = tempy2l + (s_tempy2[offset]) * (fac2);\n\
+    tempz2l = tempz2l + (s_tempz2[offset]) * (fac2);\n\
+    fac3 = sh_hprimewgll_xx[(K) * (NGLLX) + 1];\n\
+    offset = (1) * (NGLL2) + (J) * (NGLLX) + I;\n\
+    tempx3l = tempx3l + (s_tempx3[offset]) * (fac3);\n\
+    tempy3l = tempy3l + (s_tempy3[offset]) * (fac3);\n\
+    tempz3l = tempz3l + (s_tempz3[offset]) * (fac3);\n\
+    fac1 = sh_hprimewgll_xx[(I) * (NGLLX) + 2];\n\
+    offset = (K) * (NGLL2) + (J) * (NGLLX) + 2;\n\
+    tempx1l = tempx1l + (s_tempx1[offset]) * (fac1);\n\
+    tempy1l = tempy1l + (s_tempy1[offset]) * (fac1);\n\
+    tempz1l = tempz1l + (s_tempz1[offset]) * (fac1);\n\
+    fac2 = sh_hprimewgll_xx[(J) * (NGLLX) + 2];\n\
+    offset = (K) * (NGLL2) + (2) * (NGLLX) + I;\n\
+    tempx2l = tempx2l + (s_tempx2[offset]) * (fac2);\n\
+    tempy2l = tempy2l + (s_tempy2[offset]) * (fac2);\n\
+    tempz2l = tempz2l + (s_tempz2[offset]) * (fac2);\n\
+    fac3 = sh_hprimewgll_xx[(K) * (NGLLX) + 2];\n\
+    offset = (2) * (NGLL2) + (J) * (NGLLX) + I;\n\
+    tempx3l = tempx3l + (s_tempx3[offset]) * (fac3);\n\
+    tempy3l = tempy3l + (s_tempy3[offset]) * (fac3);\n\
+    tempz3l = tempz3l + (s_tempz3[offset]) * (fac3);\n\
+    fac1 = sh_hprimewgll_xx[(I) * (NGLLX) + 3];\n\
+    offset = (K) * (NGLL2) + (J) * (NGLLX) + 3;\n\
+    tempx1l = tempx1l + (s_tempx1[offset]) * (fac1);\n\
+    tempy1l = tempy1l + (s_tempy1[offset]) * (fac1);\n\
+    tempz1l = tempz1l + (s_tempz1[offset]) * (fac1);\n\
+    fac2 = sh_hprimewgll_xx[(J) * (NGLLX) + 3];\n\
+    offset = (K) * (NGLL2) + (3) * (NGLLX) + I;\n\
+    tempx2l = tempx2l + (s_tempx2[offset]) * (fac2);\n\
+    tempy2l = tempy2l + (s_tempy2[offset]) * (fac2);\n\
+    tempz2l = tempz2l + (s_tempz2[offset]) * (fac2);\n\
+    fac3 = sh_hprimewgll_xx[(K) * (NGLLX) + 3];\n\
+    offset = (3) * (NGLL2) + (J) * (NGLLX) + I;\n\
+    tempx3l = tempx3l + (s_tempx3[offset]) * (fac3);\n\
+    tempy3l = tempy3l + (s_tempy3[offset]) * (fac3);\n\
+    tempz3l = tempz3l + (s_tempz3[offset]) * (fac3);\n\
+    fac1 = sh_hprimewgll_xx[(I) * (NGLLX) + 4];\n\
+    offset = (K) * (NGLL2) + (J) * (NGLLX) + 4;\n\
+    tempx1l = tempx1l + (s_tempx1[offset]) * (fac1);\n\
+    tempy1l = tempy1l + (s_tempy1[offset]) * (fac1);\n\
+    tempz1l = tempz1l + (s_tempz1[offset]) * (fac1);\n\
+    fac2 = sh_hprimewgll_xx[(J) * (NGLLX) + 4];\n\
+    offset = (K) * (NGLL2) + (4) * (NGLLX) + I;\n\
+    tempx2l = tempx2l + (s_tempx2[offset]) * (fac2);\n\
+    tempy2l = tempy2l + (s_tempy2[offset]) * (fac2);\n\
+    tempz2l = tempz2l + (s_tempz2[offset]) * (fac2);\n\
+    fac3 = sh_hprimewgll_xx[(K) * (NGLLX) + 4];\n\
+    offset = (4) * (NGLL2) + (J) * (NGLLX) + I;\n\
+    tempx3l = tempx3l + (s_tempx3[offset]) * (fac3);\n\
+    tempy3l = tempy3l + (s_tempy3[offset]) * (fac3);\n\
+    tempz3l = tempz3l + (s_tempz3[offset]) * (fac3);\n\
+#else\n\
+    for (int l = 0; l <= NGLLX - (1); l += 1) {\n\
+      fac1 = sh_hprimewgll_xx[(I) * (NGLLX) + l];\n\
+      offset = (K) * (NGLL2) + (J) * (NGLLX) + l;\n\
+      tempx1l = tempx1l + (s_tempx1[offset]) * (fac1);\n\
+      tempy1l = tempy1l + (s_tempy1[offset]) * (fac1);\n\
+      tempz1l = tempz1l + (s_tempz1[offset]) * (fac1);\n\
+      fac2 = sh_hprimewgll_xx[(J) * (NGLLX) + l];\n\
+      offset = (K) * (NGLL2) + (l) * (NGLLX) + I;\n\
+      tempx2l = tempx2l + (s_tempx2[offset]) * (fac2);\n\
+      tempy2l = tempy2l + (s_tempy2[offset]) * (fac2);\n\
+      tempz2l = tempz2l + (s_tempz2[offset]) * (fac2);\n\
+      fac3 = sh_hprimewgll_xx[(K) * (NGLLX) + l];\n\
+      offset = (l) * (NGLL2) + (J) * (NGLLX) + I;\n\
+      tempx3l = tempx3l + (s_tempx3[offset]) * (fac3);\n\
+      tempy3l = tempy3l + (s_tempy3[offset]) * (fac3);\n\
+      tempz3l = tempz3l + (s_tempz3[offset]) * (fac3);\n\
+    }\n\
+#endif\n\
+\n\
+    fac1 = d_wgllwgll_yz[(K) * (NGLLX) + J];\n\
+    fac2 = d_wgllwgll_xz[(K) * (NGLLX) + I];\n\
+    fac3 = d_wgllwgll_xy[(J) * (NGLLX) + I];\n\
+    sum_terms1 =  -((fac1) * (tempx1l) + (fac2) * (tempx2l) + (fac3) * (tempx3l));\n\
+    sum_terms2 =  -((fac1) * (tempy1l) + (fac2) * (tempy2l) + (fac3) * (tempy3l));\n\
+    sum_terms3 =  -((fac1) * (tempz1l) + (fac2) * (tempz2l) + (fac3) * (tempz3l));\n\
+\n\
+    if (GRAVITY) {\n\
+      sum_terms1 = sum_terms1 + rho_s_H_1_1;\n\
+      sum_terms2 = sum_terms2 + rho_s_H_1_2;\n\
+      sum_terms3 = sum_terms3 + rho_s_H_1_3;\n\
+    }\n\
+\n\
+#ifdef USE_MESH_COLORING_GPU\n\
+#ifdef USE_TEXTURES_FIELDS\n\
+    d_accel[0 + (3) * (iglob_1)] = as_float(read_imageui(d_accel_cm_tex, sampler_d_accel_cm_tex, int2((iglob_1) * (3) + 0,0)).x) + sum_terms1;\n\
+    d_accel[1 + (3) * (iglob_1)] = as_float(read_imageui(d_accel_cm_tex, sampler_d_accel_cm_tex, int2((iglob_1) * (3) + 1,0)).x) + sum_terms2;\n\
+    d_accel[2 + (3) * (iglob_1)] = as_float(read_imageui(d_accel_cm_tex, sampler_d_accel_cm_tex, int2((iglob_1) * (3) + 2,0)).x) + sum_terms3;\n\
+#else\n\
+    d_accel[0 + (3) * (iglob_1)] = d_accel[0 + (3) * (iglob_1)] + sum_terms1;\n\
+    d_accel[1 + (3) * (iglob_1)] = d_accel[1 + (3) * (iglob_1)] + sum_terms2;\n\
+    d_accel[2 + (3) * (iglob_1)] = d_accel[2 + (3) * (iglob_1)] + sum_terms3;\n\
+#endif\n\
+#else\n\
+    if (use_mesh_coloring_gpu) {\n\
+#ifdef USE_TEXTURES_FIELDS\n\
+      d_accel[0 + (3) * (iglob_1)] = as_float(read_imageui(d_accel_cm_tex, sampler_d_accel_cm_tex, int2((iglob_1) * (3) + 0,0)).x) + sum_terms1;\n\
+      d_accel[1 + (3) * (iglob_1)] = as_float(read_imageui(d_accel_cm_tex, sampler_d_accel_cm_tex, int2((iglob_1) * (3) + 1,0)).x) + sum_terms2;\n\
+      d_accel[2 + (3) * (iglob_1)] = as_float(read_imageui(d_accel_cm_tex, sampler_d_accel_cm_tex, int2((iglob_1) * (3) + 2,0)).x) + sum_terms3;\n\
+#else\n\
+      d_accel[0 + (3) * (iglob_1)] = d_accel[0 + (3) * (iglob_1)] + sum_terms1;\n\
+      d_accel[1 + (3) * (iglob_1)] = d_accel[1 + (3) * (iglob_1)] + sum_terms2;\n\
+      d_accel[2 + (3) * (iglob_1)] = d_accel[2 + (3) * (iglob_1)] + sum_terms3;\n\
+#endif\n\
+    } else {\n\
+      atomicAdd(d_accel + (iglob_1) * (3) + 0, sum_terms1);\n\
+      atomicAdd(d_accel + (iglob_1) * (3) + 1, sum_terms2);\n\
+      atomicAdd(d_accel + (iglob_1) * (3) + 2, sum_terms3);\n\
+    }\n\
+#endif\n\
+\n\
+    if (ATTENUATION &&  !(PARTIAL_PHYS_DISPERSION_ONLY)) {\n\
+      if ( !(use_lddrk)) {\n\
+        compute_element_cm_att_memory(tx, working_element, d_muvstore, factor_common, alphaval, betaval, gammaval, R_xx, R_yy, R_xy, R_xz, R_yz, epsilondev_xx, epsilondev_yy, epsilondev_xy, epsilondev_xz, epsilondev_yz, epsilondev_xx_loc_1, epsilondev_yy_loc_1, epsilondev_xy_loc_1, epsilondev_xz_loc_1, epsilondev_yz_loc_1, USE_3D_ATTENUATION_ARRAYS);\n\
+      } else {\n\
+        compute_element_cm_att_memory_lddrk(tx, working_element, d_muvstore, factor_common, tau_sigmainvval, R_xx, R_yy, R_xy, R_xz, R_yz, R_xx_lddrk, R_yy_lddrk, R_xy_lddrk, R_xz_lddrk, R_yz_lddrk, alpha_lddrk, beta_lddrk, deltat, epsilondev_xx_loc_1, epsilondev_yy_loc_1, epsilondev_xy_loc_1, epsilondev_xz_loc_1, epsilondev_yz_loc_1, USE_3D_ATTENUATION_ARRAYS);\n\
+      }\n\
+    }\n\
+\n\
+    if (COMPUTE_AND_STORE_STRAIN) {\n\
+      epsilondev_xx[tx + (working_element) * (NGLL3)] = epsilondev_xx_loc_1;\n\
+      epsilondev_yy[tx + (working_element) * (NGLL3)] = epsilondev_yy_loc_1;\n\
+      epsilondev_xy[tx + (working_element) * (NGLL3)] = epsilondev_xy_loc_1;\n\
+      epsilondev_xz[tx + (working_element) * (NGLL3)] = epsilondev_xz_loc_1;\n\
+      epsilondev_yz[tx + (working_element) * (NGLL3)] = epsilondev_yz_loc_1;\n\
+    }\n\
+  }\n\
+}\n\
+\n\
 ";

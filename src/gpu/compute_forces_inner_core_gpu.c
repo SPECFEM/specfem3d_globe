@@ -183,97 +183,187 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
     cl_kernel *inner_core_kernel_p;
     cl_uint idx = 0;
 
-    if (FORWARD_OR_ADJOINT == 1) {
-      inner_core_kernel_p = &mocl.kernels.inner_core_impl_kernel_forward;
-    } else {
-      // adjoint/kernel simulations
-      DEBUG_BACKWARD_FORCES ();
-      inner_core_kernel_p = &mocl.kernels.inner_core_impl_kernel_adjoint;
-    }
+    if (! mp->anisotropic_inner_core){
+      // isotropic inner core
 
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &nb_blocks_to_compute));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_ibool.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_idoubling.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_phase_ispec_inner_inner_core.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->num_phase_ispec_inner_core));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &iphase));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (realw), (void *) &deltat));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->use_mesh_coloring_gpu));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &displ.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &accel.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_xix.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_xiy.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_xiz.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_etax.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_etay.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_etaz.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_gammax.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_gammay.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_gammaz.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_hprime_xx.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_hprimewgll_xx.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_wgllwgll_xy.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_wgllwgll_xz.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_wgllwgll_yz.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_kappav.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_muv.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->compute_and_store_strain));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &epsilondev_xx.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &epsilondev_yy.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &epsilondev_xy.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &epsilondev_xz.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &epsilondev_yz.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &epsilon_trace_over_3.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->attenuation));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->partial_phys_dispersion_only));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->use_3d_attenuation_arrays));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_one_minus_sum_beta.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_factor_common.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_xx.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_yy.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_xy.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_xz.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_yz.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_xx_lddrk.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_yy_lddrk.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_xy_lddrk.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_xz_lddrk.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_yz_lddrk.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (realw), (void *) &alpha_lddrk));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (realw), (void *) &beta_lddrk));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->use_lddrk));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &alphaval.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &betaval.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &gammaval.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &tau_sigmainvval.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->anisotropic_inner_core));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c11store.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c12store.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c13store.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c33store.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c44store.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->gravity));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_gravity_pre_store_inner_core.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_gravity_H_inner_core.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_wgll_cube.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->NSPEC_INNER_CORE_STRAIN_ONLY));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->NSPEC_INNER_CORE));
+      if (FORWARD_OR_ADJOINT == 1) {
+        inner_core_kernel_p = &mocl.kernels.inner_core_impl_kernel_forward;
+      } else {
+        // adjoint/kernel simulations
+        DEBUG_BACKWARD_FORCES ();
+        inner_core_kernel_p = &mocl.kernels.inner_core_impl_kernel_adjoint;
+      }
+
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &nb_blocks_to_compute));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_ibool.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_idoubling.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_phase_ispec_inner_inner_core.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->num_phase_ispec_inner_core));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &iphase));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (realw), (void *) &deltat));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->use_mesh_coloring_gpu));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &displ.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &accel.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_xix.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_xiy.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_xiz.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_etax.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_etay.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_etaz.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_gammax.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_gammay.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_gammaz.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_hprime_xx.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_hprimewgll_xx.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_wgllwgll_xy.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_wgllwgll_xz.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_wgllwgll_yz.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_kappav.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_muv.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->compute_and_store_strain));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &epsilondev_xx.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &epsilondev_yy.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &epsilondev_xy.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &epsilondev_xz.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &epsilondev_yz.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &epsilon_trace_over_3.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->attenuation));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->partial_phys_dispersion_only));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->use_3d_attenuation_arrays));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_one_minus_sum_beta.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_factor_common.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_xx.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_yy.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_xy.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_xz.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_yz.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_xx_lddrk.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_yy_lddrk.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_xy_lddrk.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_xz_lddrk.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_yz_lddrk.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (realw), (void *) &alpha_lddrk));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (realw), (void *) &beta_lddrk));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->use_lddrk));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &alphaval.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &betaval.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &gammaval.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &tau_sigmainvval.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->gravity));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_gravity_pre_store_inner_core.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_gravity_H_inner_core.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_wgll_cube.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->NSPEC_INNER_CORE_STRAIN_ONLY));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->NSPEC_INNER_CORE));
 #ifdef USE_TEXTURES_FIELDS
-    if (FORWARD_OR_ADJOINT == 1) {
-      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_displ_ic_tex));
-      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_accel_ic_tex));
-    } else {
-      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_b_displ_ic_tex));
-      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_b_accel_ic_tex));
-    }
+      if (FORWARD_OR_ADJOINT == 1) {
+        clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_displ_ic_tex));
+        clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_accel_ic_tex));
+      } else {
+        clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_b_displ_ic_tex));
+        clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_b_accel_ic_tex));
+      }
 #endif
-    local_work_size[0] = blocksize / GPU_ELEM_PER_THREAD;
-    local_work_size[1] = 1;
-    global_work_size[0] = num_blocks_x * blocksize / GPU_ELEM_PER_THREAD;
-    global_work_size[1] = num_blocks_y;
+      local_work_size[0] = blocksize / GPU_ELEM_PER_THREAD;
+      local_work_size[1] = 1;
+      global_work_size[0] = num_blocks_x * blocksize / GPU_ELEM_PER_THREAD;
+      global_work_size[1] = num_blocks_y;
 
-    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, *inner_core_kernel_p, 2, NULL,
-                                     global_work_size, local_work_size, 0, NULL, NULL));
+      clCheck (clEnqueueNDRangeKernel (mocl.command_queue, *inner_core_kernel_p, 2, NULL,
+                                       global_work_size, local_work_size, 0, NULL, NULL));
+    } else {
+      // fully anisotropic inner core
+
+      if (FORWARD_OR_ADJOINT == 1) {
+        inner_core_kernel_p = &mocl.kernels.inner_core_aniso_impl_kernel_forward;
+      } else {
+        // adjoint/kernel simulations
+        DEBUG_BACKWARD_FORCES ();
+        inner_core_kernel_p = &mocl.kernels.inner_core_aniso_impl_kernel_adjoint;
+      }
+
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &nb_blocks_to_compute));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_ibool.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_idoubling.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_phase_ispec_inner_inner_core.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->num_phase_ispec_inner_core));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &iphase));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (realw), (void *) &deltat));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->use_mesh_coloring_gpu));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &displ.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &accel.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_xix.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_xiy.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_xiz.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_etax.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_etay.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_etaz.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_gammax.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_gammay.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_gammaz.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_hprime_xx.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_hprimewgll_xx.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_wgllwgll_xy.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_wgllwgll_xz.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_wgllwgll_yz.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_muv.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->compute_and_store_strain));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &epsilondev_xx.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &epsilondev_yy.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &epsilondev_xy.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &epsilondev_xz.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &epsilondev_yz.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &epsilon_trace_over_3.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->attenuation));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->partial_phys_dispersion_only));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->use_3d_attenuation_arrays));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_one_minus_sum_beta.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_factor_common.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_xx.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_yy.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_xy.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_xz.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_yz.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_xx_lddrk.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_yy_lddrk.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_xy_lddrk.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_xz_lddrk.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &R_yz_lddrk.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (realw), (void *) &alpha_lddrk));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (realw), (void *) &beta_lddrk));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->use_lddrk));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &alphaval.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &betaval.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &gammaval.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &tau_sigmainvval.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c11store.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c12store.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c13store.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c33store.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c44store.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->gravity));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_gravity_pre_store_inner_core.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_gravity_H_inner_core.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_wgll_cube.ocl));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->NSPEC_INNER_CORE_STRAIN_ONLY));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->NSPEC_INNER_CORE));
+#ifdef USE_TEXTURES_FIELDS
+      if (FORWARD_OR_ADJOINT == 1) {
+        clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_displ_ic_tex));
+        clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_accel_ic_tex));
+      } else {
+        clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_b_displ_ic_tex));
+        clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_b_accel_ic_tex));
+      }
+#endif
+      local_work_size[0] = blocksize / GPU_ELEM_PER_THREAD;
+      local_work_size[1] = 1;
+      global_work_size[0] = num_blocks_x * blocksize / GPU_ELEM_PER_THREAD;
+      global_work_size[1] = num_blocks_y;
+
+      clCheck (clEnqueueNDRangeKernel (mocl.command_queue, *inner_core_kernel_p, 2, NULL,
+                                       global_work_size, local_work_size, 0, NULL, NULL));
+    }
   }
 #endif
 #ifdef USE_CUDA
@@ -281,68 +371,133 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize / GPU_ELEM_PER_THREAD,1,1);
 
-    // defines function pointer to __global__ function (taken from definition in file kernel_proto.cu.h)
-    // since forward and adjoint function calls are identical and only the passed arrays change
-    inner_core_impl_kernel inner_core_kernel_p;
+    if (! mp->anisotropic_inner_core){
+      // isotropic inner core
 
-    // selects function call
-    if (FORWARD_OR_ADJOINT == 1) {
-      // forward simulation
-      inner_core_kernel_p = &inner_core_impl_kernel_forward;
+      // defines function pointer to __global__ function (taken from definition in file kernel_proto.cu.h)
+      // since forward and adjoint function calls are identical and only the passed arrays change
+      inner_core_impl_kernel inner_core_kernel_p;
+
+      // selects function call
+      if (FORWARD_OR_ADJOINT == 1) {
+        // forward simulation
+        inner_core_kernel_p = &inner_core_impl_kernel_forward;
+      } else {
+        // adjoint/kernel simulations
+        DEBUG_BACKWARD_FORCES ();
+        inner_core_kernel_p = &inner_core_impl_kernel_adjoint;
+      }
+
+      inner_core_kernel_p<<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
+                                                                 d_ibool.cuda,
+                                                                 d_idoubling.cuda,
+                                                                 mp->d_phase_ispec_inner_inner_core.cuda,
+                                                                 mp->num_phase_ispec_inner_core,
+                                                                 iphase,
+                                                                 deltat,
+                                                                 mp->use_mesh_coloring_gpu,
+                                                                 displ.cuda,
+                                                                 accel.cuda,
+                                                                 d_xix.cuda, d_xiy.cuda, d_xiz.cuda,
+                                                                 d_etax.cuda, d_etay.cuda, d_etaz.cuda,
+                                                                 d_gammax.cuda, d_gammay.cuda, d_gammaz.cuda,
+                                                                 mp->d_hprime_xx.cuda,
+                                                                 mp->d_hprimewgll_xx.cuda,
+                                                                 mp->d_wgllwgll_xy.cuda, mp->d_wgllwgll_xz.cuda, mp->d_wgllwgll_yz.cuda,
+                                                                 d_kappav.cuda, d_muv.cuda,
+                                                                 mp->compute_and_store_strain,
+                                                                 epsilondev_xx.cuda,
+                                                                 epsilondev_yy.cuda,
+                                                                 epsilondev_xy.cuda,
+                                                                 epsilondev_xz.cuda,
+                                                                 epsilondev_yz.cuda,
+                                                                 epsilon_trace_over_3.cuda,
+                                                                 mp->attenuation,
+                                                                 mp->partial_phys_dispersion_only,
+                                                                 mp->use_3d_attenuation_arrays,
+                                                                 d_one_minus_sum_beta.cuda,
+                                                                 d_factor_common.cuda,
+                                                                 R_xx.cuda,R_yy.cuda,R_xy.cuda,R_xz.cuda,R_yz.cuda,
+                                                                 R_xx_lddrk.cuda,
+                                                                 R_yy_lddrk.cuda,
+                                                                 R_xy_lddrk.cuda,
+                                                                 R_xz_lddrk.cuda,
+                                                                 R_yz_lddrk.cuda,
+                                                                 alpha_lddrk,beta_lddrk,
+                                                                 mp->use_lddrk,
+                                                                 alphaval.cuda,betaval.cuda,gammaval.cuda,
+                                                                 tau_sigmainvval.cuda,
+                                                                 mp->gravity,
+                                                                 mp->d_gravity_pre_store_inner_core.cuda,
+                                                                 mp->d_gravity_H_inner_core.cuda,
+                                                                 mp->d_wgll_cube.cuda,
+                                                                 mp->NSPEC_INNER_CORE_STRAIN_ONLY,
+                                                                 mp->NSPEC_INNER_CORE);
     } else {
-      // adjoint/kernel simulations
-      DEBUG_BACKWARD_FORCES ();
-      inner_core_kernel_p = &inner_core_impl_kernel_adjoint;
-    }
+      // fully anisotropic inner core
 
-    inner_core_kernel_p<<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
-                                                               d_ibool.cuda,
-                                                               d_idoubling.cuda,
-                                                               mp->d_phase_ispec_inner_inner_core.cuda,
-                                                               mp->num_phase_ispec_inner_core,
-                                                               iphase,
-                                                               deltat,
-                                                               mp->use_mesh_coloring_gpu,
-                                                               displ.cuda,
-                                                               accel.cuda,
-                                                               d_xix.cuda, d_xiy.cuda, d_xiz.cuda,
-                                                               d_etax.cuda, d_etay.cuda, d_etaz.cuda,
-                                                               d_gammax.cuda, d_gammay.cuda, d_gammaz.cuda,
-                                                               mp->d_hprime_xx.cuda,
-                                                               mp->d_hprimewgll_xx.cuda,
-                                                               mp->d_wgllwgll_xy.cuda, mp->d_wgllwgll_xz.cuda, mp->d_wgllwgll_yz.cuda,
-                                                               d_kappav.cuda, d_muv.cuda,
-                                                               mp->compute_and_store_strain,
-                                                               epsilondev_xx.cuda,
-                                                               epsilondev_yy.cuda,
-                                                               epsilondev_xy.cuda,
-                                                               epsilondev_xz.cuda,
-                                                               epsilondev_yz.cuda,
-                                                               epsilon_trace_over_3.cuda,
-                                                               mp->attenuation,
-                                                               mp->partial_phys_dispersion_only,
-                                                               mp->use_3d_attenuation_arrays,
-                                                               d_one_minus_sum_beta.cuda,
-                                                               d_factor_common.cuda,
-                                                               R_xx.cuda,R_yy.cuda,R_xy.cuda,R_xz.cuda,R_yz.cuda,
-                                                               R_xx_lddrk.cuda,
-                                                               R_yy_lddrk.cuda,
-                                                               R_xy_lddrk.cuda,
-                                                               R_xz_lddrk.cuda,
-                                                               R_yz_lddrk.cuda,
-                                                               alpha_lddrk,beta_lddrk,
-                                                               mp->use_lddrk,
-                                                               alphaval.cuda,betaval.cuda,gammaval.cuda,
-                                                               tau_sigmainvval.cuda,
-                                                               mp->anisotropic_inner_core,
-                                                               d_c11store.cuda,d_c12store.cuda,d_c13store.cuda,
-                                                               d_c33store.cuda,d_c44store.cuda,
-                                                               mp->gravity,
-                                                               mp->d_gravity_pre_store_inner_core.cuda,
-                                                               mp->d_gravity_H_inner_core.cuda,
-                                                               mp->d_wgll_cube.cuda,
-                                                               mp->NSPEC_INNER_CORE_STRAIN_ONLY,
-                                                               mp->NSPEC_INNER_CORE);
+      // defines function pointer to __global__ function (taken from definition in file kernel_proto.cu.h)
+      // since forward and adjoint function calls are identical and only the passed arrays change
+      inner_core_aniso_impl_kernel inner_core_kernel_p;
+
+      // selects function call
+      if (FORWARD_OR_ADJOINT == 1) {
+        // forward simulation
+        inner_core_kernel_p = &inner_core_aniso_impl_kernel_forward;
+      } else {
+        // adjoint/kernel simulations
+        DEBUG_BACKWARD_FORCES ();
+        inner_core_kernel_p = &inner_core_aniso_impl_kernel_adjoint;
+      }
+
+      inner_core_kernel_p<<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
+                                                                 d_ibool.cuda,
+                                                                 d_idoubling.cuda,
+                                                                 mp->d_phase_ispec_inner_inner_core.cuda,
+                                                                 mp->num_phase_ispec_inner_core,
+                                                                 iphase,
+                                                                 deltat,
+                                                                 mp->use_mesh_coloring_gpu,
+                                                                 displ.cuda,
+                                                                 accel.cuda,
+                                                                 d_xix.cuda, d_xiy.cuda, d_xiz.cuda,
+                                                                 d_etax.cuda, d_etay.cuda, d_etaz.cuda,
+                                                                 d_gammax.cuda, d_gammay.cuda, d_gammaz.cuda,
+                                                                 mp->d_hprime_xx.cuda,
+                                                                 mp->d_hprimewgll_xx.cuda,
+                                                                 mp->d_wgllwgll_xy.cuda, mp->d_wgllwgll_xz.cuda, mp->d_wgllwgll_yz.cuda,
+                                                                 d_muv.cuda,
+                                                                 mp->compute_and_store_strain,
+                                                                 epsilondev_xx.cuda,
+                                                                 epsilondev_yy.cuda,
+                                                                 epsilondev_xy.cuda,
+                                                                 epsilondev_xz.cuda,
+                                                                 epsilondev_yz.cuda,
+                                                                 epsilon_trace_over_3.cuda,
+                                                                 mp->attenuation,
+                                                                 mp->partial_phys_dispersion_only,
+                                                                 mp->use_3d_attenuation_arrays,
+                                                                 d_one_minus_sum_beta.cuda,
+                                                                 d_factor_common.cuda,
+                                                                 R_xx.cuda,R_yy.cuda,R_xy.cuda,R_xz.cuda,R_yz.cuda,
+                                                                 R_xx_lddrk.cuda,
+                                                                 R_yy_lddrk.cuda,
+                                                                 R_xy_lddrk.cuda,
+                                                                 R_xz_lddrk.cuda,
+                                                                 R_yz_lddrk.cuda,
+                                                                 alpha_lddrk,beta_lddrk,
+                                                                 mp->use_lddrk,
+                                                                 alphaval.cuda,betaval.cuda,gammaval.cuda,
+                                                                 tau_sigmainvval.cuda,
+                                                                 d_c11store.cuda,d_c12store.cuda,d_c13store.cuda,
+                                                                 d_c33store.cuda,d_c44store.cuda,
+                                                                 mp->gravity,
+                                                                 mp->d_gravity_pre_store_inner_core.cuda,
+                                                                 mp->d_gravity_H_inner_core.cuda,
+                                                                 mp->d_wgll_cube.cuda,
+                                                                 mp->NSPEC_INNER_CORE_STRAIN_ONLY,
+                                                                 mp->NSPEC_INNER_CORE);
+    }
   }
 #endif
 #ifdef USE_HIP
@@ -350,69 +505,136 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize / GPU_ELEM_PER_THREAD,1,1);
 
-    // defines function pointer to __global__ function (taken from definition in file kernel_proto.cu.h)
-    // since forward and adjoint function calls are identical and only the passed arrays change
-    inner_core_impl_kernel inner_core_kernel_p;
+    if (! mp->anisotropic_inner_core){
+      // isotropic inner core
 
-    // selects function call
-    if (FORWARD_OR_ADJOINT == 1) {
-      // forward simulation
-      inner_core_kernel_p = &inner_core_impl_kernel_forward;
+      // defines function pointer to __global__ function (taken from definition in file kernel_proto.cu.h)
+      // since forward and adjoint function calls are identical and only the passed arrays change
+      inner_core_impl_kernel inner_core_kernel_p;
+
+      // selects function call
+      if (FORWARD_OR_ADJOINT == 1) {
+        // forward simulation
+        inner_core_kernel_p = &inner_core_impl_kernel_forward;
+      } else {
+        // adjoint/kernel simulations
+        DEBUG_BACKWARD_FORCES ();
+        inner_core_kernel_p = &inner_core_impl_kernel_adjoint;
+      }
+
+      hipLaunchKernelGGL(HIP_KERNEL_NAME(inner_core_kernel_p), grid, threads, 0, mp->compute_stream,
+                                                                 nb_blocks_to_compute,
+                                                                 d_ibool.hip,
+                                                                 d_idoubling.hip,
+                                                                 mp->d_phase_ispec_inner_inner_core.hip,
+                                                                 mp->num_phase_ispec_inner_core,
+                                                                 iphase,
+                                                                 deltat,
+                                                                 mp->use_mesh_coloring_gpu,
+                                                                 displ.hip,
+                                                                 accel.hip,
+                                                                 d_xix.hip, d_xiy.hip, d_xiz.hip,
+                                                                 d_etax.hip, d_etay.hip, d_etaz.hip,
+                                                                 d_gammax.hip, d_gammay.hip, d_gammaz.hip,
+                                                                 mp->d_hprime_xx.hip,
+                                                                 mp->d_hprimewgll_xx.hip,
+                                                                 mp->d_wgllwgll_xy.hip, mp->d_wgllwgll_xz.hip, mp->d_wgllwgll_yz.hip,
+                                                                 d_kappav.hip, d_muv.hip,
+                                                                 mp->compute_and_store_strain,
+                                                                 epsilondev_xx.hip,
+                                                                 epsilondev_yy.hip,
+                                                                 epsilondev_xy.hip,
+                                                                 epsilondev_xz.hip,
+                                                                 epsilondev_yz.hip,
+                                                                 epsilon_trace_over_3.hip,
+                                                                 mp->attenuation,
+                                                                 mp->partial_phys_dispersion_only,
+                                                                 mp->use_3d_attenuation_arrays,
+                                                                 d_one_minus_sum_beta.hip,
+                                                                 d_factor_common.hip,
+                                                                 R_xx.hip,R_yy.hip,R_xy.hip,R_xz.hip,R_yz.hip,
+                                                                 R_xx_lddrk.hip,
+                                                                 R_yy_lddrk.hip,
+                                                                 R_xy_lddrk.hip,
+                                                                 R_xz_lddrk.hip,
+                                                                 R_yz_lddrk.hip,
+                                                                 alpha_lddrk,beta_lddrk,
+                                                                 mp->use_lddrk,
+                                                                 alphaval.hip,betaval.hip,gammaval.hip,
+                                                                 tau_sigmainvval.hip,
+                                                                 mp->gravity,
+                                                                 mp->d_gravity_pre_store_inner_core.hip,
+                                                                 mp->d_gravity_H_inner_core.hip,
+                                                                 mp->d_wgll_cube.hip,
+                                                                 mp->NSPEC_INNER_CORE_STRAIN_ONLY,
+                                                                 mp->NSPEC_INNER_CORE);
     } else {
-      // adjoint/kernel simulations
-      DEBUG_BACKWARD_FORCES ();
-      inner_core_kernel_p = &inner_core_impl_kernel_adjoint;
-    }
+      // fully anisotropic inner core
 
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(inner_core_kernel_p), grid, threads, 0, mp->compute_stream,
-                                                               nb_blocks_to_compute,
-                                                               d_ibool.hip,
-                                                               d_idoubling.hip,
-                                                               mp->d_phase_ispec_inner_inner_core.hip,
-                                                               mp->num_phase_ispec_inner_core,
-                                                               iphase,
-                                                               deltat,
-                                                               mp->use_mesh_coloring_gpu,
-                                                               displ.hip,
-                                                               accel.hip,
-                                                               d_xix.hip, d_xiy.hip, d_xiz.hip,
-                                                               d_etax.hip, d_etay.hip, d_etaz.hip,
-                                                               d_gammax.hip, d_gammay.hip, d_gammaz.hip,
-                                                               mp->d_hprime_xx.hip,
-                                                               mp->d_hprimewgll_xx.hip,
-                                                               mp->d_wgllwgll_xy.hip, mp->d_wgllwgll_xz.hip, mp->d_wgllwgll_yz.hip,
-                                                               d_kappav.hip, d_muv.hip,
-                                                               mp->compute_and_store_strain,
-                                                               epsilondev_xx.hip,
-                                                               epsilondev_yy.hip,
-                                                               epsilondev_xy.hip,
-                                                               epsilondev_xz.hip,
-                                                               epsilondev_yz.hip,
-                                                               epsilon_trace_over_3.hip,
-                                                               mp->attenuation,
-                                                               mp->partial_phys_dispersion_only,
-                                                               mp->use_3d_attenuation_arrays,
-                                                               d_one_minus_sum_beta.hip,
-                                                               d_factor_common.hip,
-                                                               R_xx.hip,R_yy.hip,R_xy.hip,R_xz.hip,R_yz.hip,
-                                                               R_xx_lddrk.hip,
-                                                               R_yy_lddrk.hip,
-                                                               R_xy_lddrk.hip,
-                                                               R_xz_lddrk.hip,
-                                                               R_yz_lddrk.hip,
-                                                               alpha_lddrk,beta_lddrk,
-                                                               mp->use_lddrk,
-                                                               alphaval.hip,betaval.hip,gammaval.hip,
-                                                               tau_sigmainvval.hip,
-                                                               mp->anisotropic_inner_core,
-                                                               d_c11store.hip,d_c12store.hip,d_c13store.hip,
-                                                               d_c33store.hip,d_c44store.hip,
-                                                               mp->gravity,
-                                                               mp->d_gravity_pre_store_inner_core.hip,
-                                                               mp->d_gravity_H_inner_core.hip,
-                                                               mp->d_wgll_cube.hip,
-                                                               mp->NSPEC_INNER_CORE_STRAIN_ONLY,
-                                                               mp->NSPEC_INNER_CORE);
+      // defines function pointer to __global__ function (taken from definition in file kernel_proto.cu.h)
+      // since forward and adjoint function calls are identical and only the passed arrays change
+      inner_core_aniso_impl_kernel inner_core_kernel_p;
+
+      // selects function call
+      if (FORWARD_OR_ADJOINT == 1) {
+        // forward simulation
+        inner_core_kernel_p = &inner_core_aniso_impl_kernel_forward;
+      } else {
+        // adjoint/kernel simulations
+        DEBUG_BACKWARD_FORCES ();
+        inner_core_kernel_p = &inner_core_aniso_impl_kernel_adjoint;
+      }
+
+      hipLaunchKernelGGL(HIP_KERNEL_NAME(inner_core_kernel_p), grid, threads, 0, mp->compute_stream,
+                                                                 nb_blocks_to_compute,
+                                                                 d_ibool.hip,
+                                                                 d_idoubling.hip,
+                                                                 mp->d_phase_ispec_inner_inner_core.hip,
+                                                                 mp->num_phase_ispec_inner_core,
+                                                                 iphase,
+                                                                 deltat,
+                                                                 mp->use_mesh_coloring_gpu,
+                                                                 displ.hip,
+                                                                 accel.hip,
+                                                                 d_xix.hip, d_xiy.hip, d_xiz.hip,
+                                                                 d_etax.hip, d_etay.hip, d_etaz.hip,
+                                                                 d_gammax.hip, d_gammay.hip, d_gammaz.hip,
+                                                                 mp->d_hprime_xx.hip,
+                                                                 mp->d_hprimewgll_xx.hip,
+                                                                 mp->d_wgllwgll_xy.hip, mp->d_wgllwgll_xz.hip, mp->d_wgllwgll_yz.hip,
+                                                                 d_muv.hip,
+                                                                 mp->compute_and_store_strain,
+                                                                 epsilondev_xx.hip,
+                                                                 epsilondev_yy.hip,
+                                                                 epsilondev_xy.hip,
+                                                                 epsilondev_xz.hip,
+                                                                 epsilondev_yz.hip,
+                                                                 epsilon_trace_over_3.hip,
+                                                                 mp->attenuation,
+                                                                 mp->partial_phys_dispersion_only,
+                                                                 mp->use_3d_attenuation_arrays,
+                                                                 d_one_minus_sum_beta.hip,
+                                                                 d_factor_common.hip,
+                                                                 R_xx.hip,R_yy.hip,R_xy.hip,R_xz.hip,R_yz.hip,
+                                                                 R_xx_lddrk.hip,
+                                                                 R_yy_lddrk.hip,
+                                                                 R_xy_lddrk.hip,
+                                                                 R_xz_lddrk.hip,
+                                                                 R_yz_lddrk.hip,
+                                                                 alpha_lddrk,beta_lddrk,
+                                                                 mp->use_lddrk,
+                                                                 alphaval.hip,betaval.hip,gammaval.hip,
+                                                                 tau_sigmainvval.hip,
+                                                                 d_c11store.hip,d_c12store.hip,d_c13store.hip,
+                                                                 d_c33store.hip,d_c44store.hip,
+                                                                 mp->gravity,
+                                                                 mp->d_gravity_pre_store_inner_core.hip,
+                                                                 mp->d_gravity_H_inner_core.hip,
+                                                                 mp->d_wgll_cube.hip,
+                                                                 mp->NSPEC_INNER_CORE_STRAIN_ONLY,
+                                                                 mp->NSPEC_INNER_CORE);
+
+    }
   }
 #endif
 
