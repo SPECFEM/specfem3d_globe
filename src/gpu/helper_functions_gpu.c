@@ -246,7 +246,7 @@ void gpuCopy_todevice_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array, si
 
 void gpuCopy_todevice_realw_offset (gpu_realw_mem *d_array_addr_ptr, realw *h_array, size_t size, size_t offset) {
 
-  TRACE ("gpuCopy_todevice_realw");
+  TRACE ("gpuCopy_todevice_realw_offset");
 
   // copies memory on from CPU to GPU
   // uses blocking copies
@@ -269,8 +269,58 @@ void gpuCopy_todevice_realw_offset (gpu_realw_mem *d_array_addr_ptr, realw *h_ar
   }
 #endif
 
-  GPU_ERROR_CHECKING ("gpuCopy_todevice_realw");
+  GPU_ERROR_CHECKING ("gpuCopy_todevice_realw_offset");
 }
+
+
+void gpuCopy_todevice_realw_padded (gpu_realw_mem *d_array_addr_ptr, realw *h_array, size_t size) {
+
+  TRACE ("gpuCopy_todevice_realw_padded");
+
+  // copies memory on from CPU to GPU using padding (NGLL3 == 125 -> NGLL3_PADDED == 128)
+  // example: *d_array_addr_ptr == &mp->d_muvstore_crust_mantle
+  //          *h_array          == h_muv
+  //          size              == mp->NSPEC_CRUST_MANTLE
+  //
+  //          d_array_addr_ptr array should have been allocated with size_padded = size * NGLL3_PADDED,
+  //          for example: size_padded = mp->NSPEC_CRUST_MANTLE * NGLL3_PADDED
+
+  // uses blocking copies
+#ifdef USE_OPENCL
+  if (run_opencl) {
+#ifndef FAST_2D_MEMCPY
+    for (int i = 0; i < size; i++) {
+      int offset = i * NGLL3_PADDED * sizeof (realw);
+      clCheck (clEnqueueWriteBuffer (mocl.command_queue, d_array_addr_ptr->ocl, CL_FALSE, offset,
+                                     NGLL3 * sizeof(realw), &h_array[i*NGLL3], 0, NULL, NULL));
+    }
+#else
+    const size_t d_offsets[3] = {0,0,0};
+    const size_t h_offsets[3] = {0,0,0};
+    const size_t d_region[3] = {NGLL3 * sizeof(realw), size, 1};
+    clCheck (clEnqueueWriteBufferRect (mocl.command_queue, d_array_addr_ptr->ocl, CL_FALSE, d_offsets, h_offsets, d_region,
+                                       NGLL3_PADDED * sizeof(realw), 0, NGLL3 * sizeof(realw), 0, h_array, 0, NULL, NULL));
+#endif
+  }
+#endif
+#ifdef USE_CUDA
+  if (run_cuda) {
+    // faster (small memcpy above have low bandwidth...)
+    print_CUDA_error_if_any(cudaMemcpy2D((realw*) d_array_addr_ptr->cuda, NGLL3_PADDED * sizeof(realw), h_array,
+                                         NGLL3 * sizeof(realw), NGLL3 * sizeof(realw), size, cudaMemcpyHostToDevice),48100);
+  }
+#endif
+#ifdef USE_HIP
+  if (run_hip) {
+    // faster (small memcpy above have low bandwidth...)
+    print_HIP_error_if_any(hipMemcpy2D((realw*) d_array_addr_ptr->hip, NGLL3_PADDED * sizeof(realw), h_array,
+                                         NGLL3 * sizeof(realw), NGLL3 * sizeof(realw), size, hipMemcpyHostToDevice),48100);
+  }
+#endif
+
+  GPU_ERROR_CHECKING ("gpuCopy_todevice_realw_padded");
+}
+
 
 /*----------------------------------------------------------------------------------------------- */
 

@@ -1266,17 +1266,18 @@ void gpuCreateCopy_todevice_int (gpu_int_mem *d_array_addr_ptr, int *h_array, si
 void gpuCreateCopy_todevice_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array, size_t size);
 
 void gpuCopy_todevice_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array, size_t size);
+void gpuCopy_todevice_realw_offset (gpu_realw_mem *d_array_addr_ptr, realw *h_array, size_t size, size_t offset);
+void gpuCopy_todevice_realw_padded (gpu_realw_mem *d_array_addr_ptr, realw *h_array, size_t size);
+
 void gpuCopy_todevice_double (gpu_double_mem *d_array_addr_ptr, double *h_array, size_t size);
 void gpuCopy_todevice_int (gpu_int_mem *d_array_addr_ptr, int *h_array, size_t size);
 
 void gpuCopy_from_device_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array, size_t size);
+void gpuCopy_from_device_realw_offset (gpu_realw_mem *d_array_addr_ptr, realw *h_array, size_t size, size_t offset);
 
 void gpuCopy_from_device_realw_asyncEvent (Mesh *mp, gpu_realw_mem *d_array_addr_ptr, realw *h_array, size_t size);
 void gpuRecordEvent(Mesh *mp);
 void gpuWaitEvent (Mesh *mp);
-
-void gpuCopy_todevice_realw_offset (gpu_realw_mem *d_array_addr_ptr, realw *h_array, size_t size, size_t offset);
-void gpuCopy_from_device_realw_offset (gpu_realw_mem *d_array_addr_ptr, realw *h_array, size_t size, size_t offset);
 
 void gpuRegisterHost_realw ( realw *h_array, const size_t size);
 void gpuUnregisterHost_realw ( realw *h_array);

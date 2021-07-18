@@ -1728,132 +1728,17 @@ void FC_FUNC_ (prepare_crust_mantle_device,
   gpuMalloc_realw (&mp->d_gammaz_crust_mantle, size_padded);
 
   // transfer constant element data with padding
-#ifdef USE_OPENCL
-  if (run_opencl) {
-#ifndef FAST_2D_MEMCPY
-    int i;
-    for (i = 0; i < mp->NSPEC_CRUST_MANTLE; i++) {
-      int offset = i * NGLL3_PADDED * sizeof (realw);
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_xix_crust_mantle.ocl, CL_FALSE, offset,
-                                     NGLL3 * sizeof (realw), &h_xix[i*NGLL3], 0, NULL, NULL));
+  gpuCopy_todevice_realw_padded (&mp->d_xix_crust_mantle, h_xix, mp->NSPEC_CRUST_MANTLE);
+  gpuCopy_todevice_realw_padded (&mp->d_xiy_crust_mantle, h_xiy, mp->NSPEC_CRUST_MANTLE);
+  gpuCopy_todevice_realw_padded (&mp->d_xiz_crust_mantle, h_xiz, mp->NSPEC_CRUST_MANTLE);
 
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_xiy_crust_mantle.ocl, CL_FALSE, offset,
-                                     NGLL3 * sizeof (realw), &h_xiy[i*NGLL3], 0, NULL, NULL));
+  gpuCopy_todevice_realw_padded (&mp->d_etax_crust_mantle, h_etax, mp->NSPEC_CRUST_MANTLE);
+  gpuCopy_todevice_realw_padded (&mp->d_etay_crust_mantle, h_etay, mp->NSPEC_CRUST_MANTLE);
+  gpuCopy_todevice_realw_padded (&mp->d_etaz_crust_mantle, h_etaz, mp->NSPEC_CRUST_MANTLE);
 
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_xiz_crust_mantle.ocl, CL_FALSE, offset,
-                                     NGLL3*sizeof (realw), &h_xiz[i*NGLL3], 0, NULL, NULL));
-
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_etax_crust_mantle.ocl, CL_FALSE, offset,
-                                     NGLL3*sizeof (realw), &h_etax[i*NGLL3], 0, NULL, NULL));
-
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_etay_crust_mantle.ocl, CL_FALSE, offset,
-                                     NGLL3*sizeof (realw), &h_etay[i*NGLL3], 0, NULL, NULL));
-
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_etaz_crust_mantle.ocl, CL_FALSE, offset,
-                                     NGLL3*sizeof (realw), &h_etaz[i*NGLL3], 0, NULL, NULL));
-
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_gammax_crust_mantle.ocl, CL_FALSE, offset,
-                                     NGLL3*sizeof (realw), &h_gammax[i*NGLL3], 0, NULL, NULL));
-
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_gammay_crust_mantle.ocl, CL_FALSE, offset,
-                                     NGLL3*sizeof (realw), &h_gammay[i*NGLL3], 0, NULL, NULL));
-
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_gammaz_crust_mantle.ocl, CL_FALSE, offset,
-                                     NGLL3*sizeof (realw),&h_gammaz[i*NGLL3], 0, NULL, NULL));
-    }
-#else
-      const size_t d_offsets[3] = {0,0,0};
-      const size_t h_offsets[3] = {0,0,0};
-      const size_t d_region[3] = {NGLL3*sizeof(realw), mp->NSPEC_CRUST_MANTLE, 1};
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_xix_crust_mantle.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        h_xix, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_xiy_crust_mantle.ocl, CL_FALSE, d_offsets,
-             h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-             NGLL3*sizeof (realw), 0,
-             h_xiy, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_xiz_crust_mantle.ocl, CL_FALSE, d_offsets,
-             h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-             NGLL3*sizeof (realw), 0,
-             h_xiz, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_etax_crust_mantle.ocl, CL_FALSE, d_offsets,
-             h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-             NGLL3*sizeof (realw), 0,
-             h_etax, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_etay_crust_mantle.ocl, CL_FALSE, d_offsets,
-             h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-             NGLL3*sizeof (realw), 0,
-             h_etay, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_etaz_crust_mantle.ocl, CL_FALSE, d_offsets,
-             h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-             NGLL3*sizeof (realw), 0,
-             h_etaz, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_gammax_crust_mantle.ocl, CL_FALSE, d_offsets,
-             h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-             NGLL3*sizeof (realw), 0,
-             h_gammax, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_gammay_crust_mantle.ocl, CL_FALSE, d_offsets,
-             h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-             NGLL3*sizeof (realw), 0,
-             h_gammay, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_gammaz_crust_mantle.ocl, CL_FALSE, d_offsets,
-             h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-             NGLL3*sizeof (realw), 0,
-             h_gammaz, 0, NULL, NULL));
-#endif
-  }
-#endif
-#ifdef USE_CUDA
-  if (run_cuda) {
-    // faster (small memcpy have low bandwidth...)
-    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_xix_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), h_xix,
-                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),1501);
-    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_xiy_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), h_xiy,
-                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),1501);
-    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_xiz_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), h_xiz,
-                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),1501);
-
-    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_etax_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), h_etax,
-                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),1502);
-    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_etay_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), h_etay,
-                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),1502);
-    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_etaz_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), h_etaz,
-                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),1502);
-
-    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_gammax_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), h_gammax,
-                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),1503);
-    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_gammay_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), h_gammay,
-                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),1503);
-    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_gammaz_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), h_gammaz,
-                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),1503);
-  }
-#endif
-#ifdef USE_HIP
-  if (run_hip) {
-     // faster (small memcpy have low bandwidth...)
-     print_HIP_error_if_any(hipMemcpy2D(mp->d_xix_crust_mantle.hip, NGLL3_PADDED*sizeof(realw), h_xix,
-                                          NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,hipMemcpyHostToDevice),1501);
-     print_HIP_error_if_any(hipMemcpy2D(mp->d_xiy_crust_mantle.hip, NGLL3_PADDED*sizeof(realw), h_xiy,
-                                          NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,hipMemcpyHostToDevice),1501);
-     print_HIP_error_if_any(hipMemcpy2D(mp->d_xiz_crust_mantle.hip, NGLL3_PADDED*sizeof(realw), h_xiz,
-                                          NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,hipMemcpyHostToDevice),1501);
-
-     print_HIP_error_if_any(hipMemcpy2D(mp->d_etax_crust_mantle.hip, NGLL3_PADDED*sizeof(realw), h_etax,
-                                          NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,hipMemcpyHostToDevice),1502);
-     print_HIP_error_if_any(hipMemcpy2D(mp->d_etay_crust_mantle.hip, NGLL3_PADDED*sizeof(realw), h_etay,
-                                          NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,hipMemcpyHostToDevice),1502);
-     print_HIP_error_if_any(hipMemcpy2D(mp->d_etaz_crust_mantle.hip, NGLL3_PADDED*sizeof(realw), h_etaz,
-                                          NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,hipMemcpyHostToDevice),1502);
-
-     print_HIP_error_if_any(hipMemcpy2D(mp->d_gammax_crust_mantle.hip, NGLL3_PADDED*sizeof(realw), h_gammax,
-                                          NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,hipMemcpyHostToDevice),1503);
-     print_HIP_error_if_any(hipMemcpy2D(mp->d_gammay_crust_mantle.hip, NGLL3_PADDED*sizeof(realw), h_gammay,
-                                          NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,hipMemcpyHostToDevice),1503);
-     print_HIP_error_if_any(hipMemcpy2D(mp->d_gammaz_crust_mantle.hip, NGLL3_PADDED*sizeof(realw), h_gammaz,
-                                          NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,hipMemcpyHostToDevice),1503);
-  }
-#endif
+  gpuCopy_todevice_realw_padded (&mp->d_gammax_crust_mantle, h_gammax, mp->NSPEC_CRUST_MANTLE);
+  gpuCopy_todevice_realw_padded (&mp->d_gammay_crust_mantle, h_gammay, mp->NSPEC_CRUST_MANTLE);
+  gpuCopy_todevice_realw_padded (&mp->d_gammaz_crust_mantle, h_gammaz, mp->NSPEC_CRUST_MANTLE);
 
   // synchronizes gpu calls
   gpuSynchronize();
@@ -1872,106 +1757,75 @@ void FC_FUNC_ (prepare_crust_mantle_device,
     gpuCreateCopy_todevice_int (&mp->d_ispec_is_tiso_crust_mantle, h_ispec_is_tiso, mp->NSPEC_CRUST_MANTLE);
 
     // isotropic elements
-    // kappavstore
+    // kappavstore/muvstore
     gpuMalloc_realw (&mp->d_kappavstore_crust_mantle, size_padded_iso);
-    // muvstore
     gpuMalloc_realw (&mp->d_muvstore_crust_mantle, size_padded_iso);
+    // transfer with padding
+    gpuCopy_todevice_realw_padded (&mp->d_kappavstore_crust_mantle, h_kappav, mp->NSPECMAX_ISO_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_muvstore_crust_mantle, h_muv, mp->NSPECMAX_ISO_MANTLE);
 
     // transverse isotropic elements
-    // need additional kappah,muh and eta
+    //
+    // old way: computes c11,c12,.. based on tiso arrays
+    // only needed additional kappah,muh and eta
+    //
+    // will need to re-evalute if new way needs too much memory, since it needs 21 arrays insteads of 3...
+    //
     gpuMalloc_realw (&mp->d_kappahstore_crust_mantle, size_padded_tiso);
     gpuMalloc_realw (&mp->d_muhstore_crust_mantle, size_padded_tiso);
     // eta_anisostore
     gpuMalloc_realw (&mp->d_eta_anisostore_crust_mantle, size_padded_tiso);
-
     // transfer with padding
-#ifdef USE_OPENCL
-    if (run_opencl) {
-      // both iso/tiso elements
-#ifndef FAST_2D_MEMCPY
-      int i;
-      for (i = 0; i < mp->NSPECMAX_ISO_MANTLE; i++) {
-        int offset = i * NGLL3_PADDED * sizeof (realw);
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_kappavstore_crust_mantle.ocl, CL_FALSE, offset,
-                                       NGLL3*sizeof (realw), &h_kappav[i*NGLL3], 0, NULL, NULL));
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_muvstore_crust_mantle.ocl, CL_FALSE, offset,
-                                       NGLL3*sizeof (realw), &h_muv[i*NGLL3], 0, NULL, NULL));
-      }
-#else
-      const size_t d_offsets[3] = {0,0,0};
-      const size_t h_offsets[3] = {0,0,0};
-      const size_t d_region[3] = {NGLL3*sizeof(realw), mp->NSPECMAX_ISO_MANTLE, 1};
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_kappavstore_crust_mantle.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        h_kappav, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_muvstore_crust_mantle.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        h_muv, 0, NULL, NULL));
-#endif
-      // only tiso elements
-#ifndef FAST_2D_MEMCPY
-      for (i = 0; i < mp->NSPECMAX_TISO_MANTLE; i++) {
-        int offset = i * NGLL3_PADDED * sizeof (realw);
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_kappahstore_crust_mantle.ocl, CL_FALSE, offset,
-                                       NGLL3*sizeof (realw), &h_kappah[i*NGLL3], 0, NULL, NULL));
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_muhstore_crust_mantle.ocl, CL_FALSE, offset,
-                                       NGLL3*sizeof (realw), &h_muh[i*NGLL3], 0, NULL, NULL));
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_eta_anisostore_crust_mantle.ocl, CL_FALSE, offset,
-                                       NGLL3*sizeof (realw), &h_eta_aniso[i*NGLL3], 0, NULL, NULL));
-      }
-#else
-      const size_t d_region_2[3] = {NGLL3*sizeof(realw), mp->NSPECMAX_TISO_MANTLE, 1};
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_kappahstore_crust_mantle.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region_2, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        h_kappah, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_muhstore_crust_mantle.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region_2, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        h_muh, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_eta_anisostore_crust_mantle.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region_2, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        h_eta_aniso, 0, NULL, NULL));
-#endif
-    }
-#endif
-#ifdef USE_CUDA
-    if (run_cuda) {
-      // faster (small memcpy above have low bandwidth...)
-      // used for both isotropic/tiso elements
-      print_CUDA_error_if_any(cudaMemcpy2D(mp->d_kappavstore_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), h_kappav,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPECMAX_ISO_MANTLE,cudaMemcpyHostToDevice),1510);
-      print_CUDA_error_if_any(cudaMemcpy2D(mp->d_muvstore_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), h_muv,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPECMAX_ISO_MANTLE,cudaMemcpyHostToDevice),1511);
-      // tiso elements
-      print_CUDA_error_if_any(cudaMemcpy2D(mp->d_kappahstore_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), h_kappah,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPECMAX_TISO_MANTLE,cudaMemcpyHostToDevice),1510);
-      print_CUDA_error_if_any(cudaMemcpy2D(mp->d_muhstore_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), h_muh,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPECMAX_TISO_MANTLE,cudaMemcpyHostToDevice),1511);
-      print_CUDA_error_if_any(cudaMemcpy2D(mp->d_eta_anisostore_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), h_eta_aniso,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPECMAX_TISO_MANTLE,cudaMemcpyHostToDevice),1511);
-    }
-#endif
-#ifdef USE_HIP
-    if (run_hip) {
-      // faster (small memcpy above have low bandwidth...)
-      // used for both isotropic/tiso elements
-      print_HIP_error_if_any(hipMemcpy2D(mp->d_kappavstore_crust_mantle.hip, NGLL3_PADDED*sizeof(realw), h_kappav,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPECMAX_ISO_MANTLE,hipMemcpyHostToDevice),1510);
-      print_HIP_error_if_any(hipMemcpy2D(mp->d_muvstore_crust_mantle.hip, NGLL3_PADDED*sizeof(realw), h_muv,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPECMAX_ISO_MANTLE,hipMemcpyHostToDevice),1511);
-      // tiso elements
-      print_HIP_error_if_any(hipMemcpy2D(mp->d_kappahstore_crust_mantle.hip, NGLL3_PADDED*sizeof(realw), h_kappah,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPECMAX_TISO_MANTLE,hipMemcpyHostToDevice),1510);
-      print_HIP_error_if_any(hipMemcpy2D(mp->d_muhstore_crust_mantle.hip, NGLL3_PADDED*sizeof(realw), h_muh,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPECMAX_TISO_MANTLE,hipMemcpyHostToDevice),1511);
-      print_HIP_error_if_any(hipMemcpy2D(mp->d_eta_anisostore_crust_mantle.hip, NGLL3_PADDED*sizeof(realw), h_eta_aniso,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPECMAX_TISO_MANTLE,hipMemcpyHostToDevice),1511);
-    }
-#endif
+    gpuCopy_todevice_realw_padded (&mp->d_kappahstore_crust_mantle, h_kappah, mp->NSPECMAX_TISO_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_muhstore_crust_mantle, h_muh, mp->NSPECMAX_TISO_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_eta_anisostore_crust_mantle, h_eta_aniso, mp->NSPECMAX_TISO_MANTLE);
+
+    // new way: uses pre-computed c11,c12,.. in prepare_elastic_elements() routine
+    // allocates memory on GPU (note that c11store/.. arrays have size NSPECMAX_TISO_MANTLE in this case
+    gpuMalloc_realw (&mp->d_c11store_crust_mantle, size_padded_tiso);
+    gpuMalloc_realw (&mp->d_c12store_crust_mantle, size_padded_tiso);
+    gpuMalloc_realw (&mp->d_c13store_crust_mantle, size_padded_tiso);
+    gpuMalloc_realw (&mp->d_c14store_crust_mantle, size_padded_tiso);
+    gpuMalloc_realw (&mp->d_c15store_crust_mantle, size_padded_tiso);
+    gpuMalloc_realw (&mp->d_c16store_crust_mantle, size_padded_tiso);
+    gpuMalloc_realw (&mp->d_c22store_crust_mantle, size_padded_tiso);
+    gpuMalloc_realw (&mp->d_c23store_crust_mantle, size_padded_tiso);
+    gpuMalloc_realw (&mp->d_c24store_crust_mantle, size_padded_tiso);
+    gpuMalloc_realw (&mp->d_c25store_crust_mantle, size_padded_tiso);
+    gpuMalloc_realw (&mp->d_c26store_crust_mantle, size_padded_tiso);
+    gpuMalloc_realw (&mp->d_c33store_crust_mantle, size_padded_tiso);
+    gpuMalloc_realw (&mp->d_c34store_crust_mantle, size_padded_tiso);
+    gpuMalloc_realw (&mp->d_c35store_crust_mantle, size_padded_tiso);
+    gpuMalloc_realw (&mp->d_c36store_crust_mantle, size_padded_tiso);
+    gpuMalloc_realw (&mp->d_c44store_crust_mantle, size_padded_tiso);
+    gpuMalloc_realw (&mp->d_c45store_crust_mantle, size_padded_tiso);
+    gpuMalloc_realw (&mp->d_c46store_crust_mantle, size_padded_tiso);
+    gpuMalloc_realw (&mp->d_c55store_crust_mantle, size_padded_tiso);
+    gpuMalloc_realw (&mp->d_c56store_crust_mantle, size_padded_tiso);
+    gpuMalloc_realw (&mp->d_c66store_crust_mantle, size_padded_tiso);
+
+    // transfer constant element data with padding
+    gpuCopy_todevice_realw_padded (&mp->d_c11store_crust_mantle, c11store, mp->NSPECMAX_TISO_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c12store_crust_mantle, c12store, mp->NSPECMAX_TISO_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c13store_crust_mantle, c13store, mp->NSPECMAX_TISO_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c14store_crust_mantle, c14store, mp->NSPECMAX_TISO_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c15store_crust_mantle, c15store, mp->NSPECMAX_TISO_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c16store_crust_mantle, c16store, mp->NSPECMAX_TISO_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c22store_crust_mantle, c22store, mp->NSPECMAX_TISO_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c23store_crust_mantle, c23store, mp->NSPECMAX_TISO_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c24store_crust_mantle, c24store, mp->NSPECMAX_TISO_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c25store_crust_mantle, c25store, mp->NSPECMAX_TISO_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c26store_crust_mantle, c26store, mp->NSPECMAX_TISO_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c33store_crust_mantle, c33store, mp->NSPECMAX_TISO_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c34store_crust_mantle, c34store, mp->NSPECMAX_TISO_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c35store_crust_mantle, c35store, mp->NSPECMAX_TISO_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c36store_crust_mantle, c36store, mp->NSPECMAX_TISO_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c44store_crust_mantle, c44store, mp->NSPECMAX_TISO_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c45store_crust_mantle, c45store, mp->NSPECMAX_TISO_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c46store_crust_mantle, c46store, mp->NSPECMAX_TISO_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c55store_crust_mantle, c55store, mp->NSPECMAX_TISO_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c56store_crust_mantle, c56store, mp->NSPECMAX_TISO_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c66store_crust_mantle, c66store, mp->NSPECMAX_TISO_MANTLE);
 
   } else {
     // anisotropic 3D mantle
@@ -2000,329 +1854,40 @@ void FC_FUNC_ (prepare_crust_mantle_device,
     gpuMalloc_realw (&mp->d_c66store_crust_mantle, size_padded);
 
     // transfer constant element data with padding
-#ifdef USE_OPENCL
-    if (run_opencl) {
-#ifndef FAST_2D_MEMCPY
-      int i;
-      for (i = 0; i < mp->NSPEC_CRUST_MANTLE; i++) {
-        int offset = i * NGLL3_PADDED * sizeof (realw);
-
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c11store_crust_mantle.ocl, CL_FALSE, offset,
-                                       NGLL3*sizeof (realw),&c11store[i*NGLL3], 0, NULL, NULL));
-
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c12store_crust_mantle.ocl, CL_FALSE, offset,
-                                       NGLL3*sizeof (realw), &c12store[i*NGLL3], 0, NULL, NULL));
-
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c13store_crust_mantle.ocl, CL_FALSE, offset,
-                                       NGLL3*sizeof (realw), &c13store[i*NGLL3], 0, NULL, NULL));
-
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c14store_crust_mantle.ocl, CL_FALSE,  offset,
-                                       NGLL3*sizeof (realw), &c14store[i*NGLL3], 0, NULL, NULL));
-
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c15store_crust_mantle.ocl, CL_FALSE,  offset,
-                                       NGLL3*sizeof (realw), &c15store[i*NGLL3], 0, NULL, NULL));
-
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c16store_crust_mantle.ocl, CL_FALSE, offset,
-                                       NGLL3*sizeof (realw), &c16store[i*NGLL3], 0, NULL, NULL));
-
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c22store_crust_mantle.ocl, CL_FALSE, offset,
-                                       NGLL3*sizeof (realw), &c22store[i*NGLL3], 0, NULL, NULL));
-
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c23store_crust_mantle.ocl, CL_FALSE, offset,
-                                       NGLL3*sizeof (realw), &c23store[i*NGLL3], 0, NULL, NULL));
-
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c24store_crust_mantle.ocl, CL_FALSE, offset,
-                                       NGLL3*sizeof (realw), &c24store[i*NGLL3], 0, NULL, NULL));
-
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c25store_crust_mantle.ocl, CL_FALSE, offset,
-                                       NGLL3*sizeof (realw), &c25store[i*NGLL3], 0, NULL, NULL));
-
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c26store_crust_mantle.ocl, CL_FALSE, offset,
-                                       NGLL3*sizeof (realw), &c26store[i*NGLL3], 0, NULL, NULL));
-
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c33store_crust_mantle.ocl, CL_FALSE, offset,
-                                       NGLL3*sizeof (realw), &c33store[i*NGLL3], 0, NULL, NULL));
-
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c34store_crust_mantle.ocl, CL_FALSE, offset,
-                                       NGLL3*sizeof (realw), &c34store[i*NGLL3], 0, NULL, NULL));
-
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c35store_crust_mantle.ocl, CL_FALSE, offset,
-                                       NGLL3*sizeof (realw), &c35store[i*NGLL3], 0, NULL, NULL));
-
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c36store_crust_mantle.ocl, CL_FALSE, offset,
-                                       NGLL3*sizeof (realw), &c36store[i*NGLL3], 0, NULL, NULL));
-
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c44store_crust_mantle.ocl, CL_FALSE, offset,
-                                       NGLL3*sizeof (realw), &c44store[i*NGLL3], 0, NULL, NULL));
-
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c45store_crust_mantle.ocl, CL_FALSE, offset,
-                                       NGLL3*sizeof (realw), &c45store[i*NGLL3], 0, NULL, NULL));
-
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c46store_crust_mantle.ocl, CL_FALSE, offset,
-                                       NGLL3*sizeof (realw), &c46store[i*NGLL3], 0, NULL, NULL));
-
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c55store_crust_mantle.ocl, CL_FALSE, offset,
-                                       NGLL3*sizeof (realw), &c55store[i*NGLL3], 0, NULL, NULL));
-
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c56store_crust_mantle.ocl, CL_FALSE, offset,
-                                       NGLL3*sizeof (realw), &c56store[i*NGLL3], 0, NULL, NULL));
-
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c66store_crust_mantle.ocl, CL_FALSE, offset,
-                                       NGLL3*sizeof (realw), &c66store[i*NGLL3], 0, NULL, NULL));
-      }
-#else
-      const size_t d_offsets[3] = {0,0,0};
-      const size_t h_offsets[3] = {0,0,0};
-      const size_t d_region[3] = {NGLL3*sizeof(realw), mp->NSPEC_CRUST_MANTLE, 1};
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c11store_crust_mantle.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        c11store, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c12store_crust_mantle.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        c12store, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c13store_crust_mantle.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        c13store, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c14store_crust_mantle.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        c14store, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c15store_crust_mantle.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        c15store, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c16store_crust_mantle.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        c16store, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c22store_crust_mantle.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        c22store, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c23store_crust_mantle.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        c23store, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c24store_crust_mantle.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        c24store, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c25store_crust_mantle.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        c25store, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c26store_crust_mantle.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        c26store, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c33store_crust_mantle.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        c33store, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c34store_crust_mantle.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        c34store, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c35store_crust_mantle.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        c35store, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c36store_crust_mantle.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        c36store, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c44store_crust_mantle.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        c44store, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c45store_crust_mantle.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        c45store, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c46store_crust_mantle.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        c46store, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c55store_crust_mantle.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        c55store, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c56store_crust_mantle.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        c56store, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c66store_crust_mantle.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        c66store, 0, NULL, NULL));
-#endif
-    }
-#endif
-#ifdef USE_CUDA
-    if (run_cuda) {
-      // faster (small memcpy have low bandwidth...)
-      print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c11store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c11store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
-      print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c12store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c12store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
-      print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c13store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c13store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
-      print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c14store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c14store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
-      print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c15store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c15store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
-      print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c16store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c16store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
-      print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c22store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c22store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
-      print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c23store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c23store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
-      print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c24store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c24store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
-      print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c25store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c25store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
-      print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c26store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c26store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
-      print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c33store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c33store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
-      print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c34store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c34store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
-      print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c35store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c35store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
-      print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c36store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c36store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
-      print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c44store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c44store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
-      print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c45store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c45store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
-      print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c46store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c46store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
-      print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c55store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c55store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
-      print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c56store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c56store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
-      print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c66store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c66store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
-    }
-#endif
-#ifdef USE_HIP
-    if (run_hip) {
-      // faster (small memcpy have low bandwidth...)
-      print_HIP_error_if_any(hipMemcpy2D(mp->d_c11store_crust_mantle.hip, NGLL3_PADDED*sizeof(realw), c11store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,hipMemcpyHostToDevice),4800);
-      print_HIP_error_if_any(hipMemcpy2D(mp->d_c12store_crust_mantle.hip, NGLL3_PADDED*sizeof(realw), c12store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,hipMemcpyHostToDevice),4800);
-      print_HIP_error_if_any(hipMemcpy2D(mp->d_c13store_crust_mantle.hip, NGLL3_PADDED*sizeof(realw), c13store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,hipMemcpyHostToDevice),4800);
-      print_HIP_error_if_any(hipMemcpy2D(mp->d_c14store_crust_mantle.hip, NGLL3_PADDED*sizeof(realw), c14store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,hipMemcpyHostToDevice),4800);
-      print_HIP_error_if_any(hipMemcpy2D(mp->d_c15store_crust_mantle.hip, NGLL3_PADDED*sizeof(realw), c15store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,hipMemcpyHostToDevice),4800);
-      print_HIP_error_if_any(hipMemcpy2D(mp->d_c16store_crust_mantle.hip, NGLL3_PADDED*sizeof(realw), c16store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,hipMemcpyHostToDevice),4800);
-      print_HIP_error_if_any(hipMemcpy2D(mp->d_c22store_crust_mantle.hip, NGLL3_PADDED*sizeof(realw), c22store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,hipMemcpyHostToDevice),4800);
-      print_HIP_error_if_any(hipMemcpy2D(mp->d_c23store_crust_mantle.hip, NGLL3_PADDED*sizeof(realw), c23store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,hipMemcpyHostToDevice),4800);
-      print_HIP_error_if_any(hipMemcpy2D(mp->d_c24store_crust_mantle.hip, NGLL3_PADDED*sizeof(realw), c24store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,hipMemcpyHostToDevice),4800);
-      print_HIP_error_if_any(hipMemcpy2D(mp->d_c25store_crust_mantle.hip, NGLL3_PADDED*sizeof(realw), c25store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,hipMemcpyHostToDevice),4800);
-      print_HIP_error_if_any(hipMemcpy2D(mp->d_c26store_crust_mantle.hip, NGLL3_PADDED*sizeof(realw), c26store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,hipMemcpyHostToDevice),4800);
-      print_HIP_error_if_any(hipMemcpy2D(mp->d_c33store_crust_mantle.hip, NGLL3_PADDED*sizeof(realw), c33store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,hipMemcpyHostToDevice),4800);
-      print_HIP_error_if_any(hipMemcpy2D(mp->d_c34store_crust_mantle.hip, NGLL3_PADDED*sizeof(realw), c34store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,hipMemcpyHostToDevice),4800);
-      print_HIP_error_if_any(hipMemcpy2D(mp->d_c35store_crust_mantle.hip, NGLL3_PADDED*sizeof(realw), c35store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,hipMemcpyHostToDevice),4800);
-      print_HIP_error_if_any(hipMemcpy2D(mp->d_c36store_crust_mantle.hip, NGLL3_PADDED*sizeof(realw), c36store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,hipMemcpyHostToDevice),4800);
-      print_HIP_error_if_any(hipMemcpy2D(mp->d_c44store_crust_mantle.hip, NGLL3_PADDED*sizeof(realw), c44store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,hipMemcpyHostToDevice),4800);
-      print_HIP_error_if_any(hipMemcpy2D(mp->d_c45store_crust_mantle.hip, NGLL3_PADDED*sizeof(realw), c45store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,hipMemcpyHostToDevice),4800);
-      print_HIP_error_if_any(hipMemcpy2D(mp->d_c46store_crust_mantle.hip, NGLL3_PADDED*sizeof(realw), c46store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,hipMemcpyHostToDevice),4800);
-      print_HIP_error_if_any(hipMemcpy2D(mp->d_c55store_crust_mantle.hip, NGLL3_PADDED*sizeof(realw), c55store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,hipMemcpyHostToDevice),4800);
-      print_HIP_error_if_any(hipMemcpy2D(mp->d_c56store_crust_mantle.hip, NGLL3_PADDED*sizeof(realw), c56store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,hipMemcpyHostToDevice),4800);
-      print_HIP_error_if_any(hipMemcpy2D(mp->d_c66store_crust_mantle.hip, NGLL3_PADDED*sizeof(realw), c66store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,hipMemcpyHostToDevice),4800);
-    }
-#endif
+    gpuCopy_todevice_realw_padded (&mp->d_c11store_crust_mantle, c11store, mp->NSPEC_CRUST_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c12store_crust_mantle, c12store, mp->NSPEC_CRUST_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c13store_crust_mantle, c13store, mp->NSPEC_CRUST_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c14store_crust_mantle, c14store, mp->NSPEC_CRUST_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c15store_crust_mantle, c15store, mp->NSPEC_CRUST_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c16store_crust_mantle, c16store, mp->NSPEC_CRUST_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c22store_crust_mantle, c22store, mp->NSPEC_CRUST_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c23store_crust_mantle, c23store, mp->NSPEC_CRUST_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c24store_crust_mantle, c24store, mp->NSPEC_CRUST_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c25store_crust_mantle, c25store, mp->NSPEC_CRUST_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c26store_crust_mantle, c26store, mp->NSPEC_CRUST_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c33store_crust_mantle, c33store, mp->NSPEC_CRUST_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c34store_crust_mantle, c34store, mp->NSPEC_CRUST_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c35store_crust_mantle, c35store, mp->NSPEC_CRUST_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c36store_crust_mantle, c36store, mp->NSPEC_CRUST_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c44store_crust_mantle, c44store, mp->NSPEC_CRUST_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c45store_crust_mantle, c45store, mp->NSPEC_CRUST_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c46store_crust_mantle, c46store, mp->NSPEC_CRUST_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c55store_crust_mantle, c55store, mp->NSPEC_CRUST_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c56store_crust_mantle, c56store, mp->NSPEC_CRUST_MANTLE);
+    gpuCopy_todevice_realw_padded (&mp->d_c66store_crust_mantle, c66store, mp->NSPEC_CRUST_MANTLE);
 
     // muvstore (needed for attenuation)
     gpuMalloc_realw (&mp->d_muvstore_crust_mantle, size_padded);
     // transfer with padding
-#ifdef USE_OPENCL
-    if (run_opencl) {
-#ifndef FAST_2D_MEMCPY
-      for (int i = 0; i < mp->NSPEC_CRUST_MANTLE; i++) {
-        int offset = i * NGLL3_PADDED * sizeof (realw);
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_muvstore_crust_mantle.ocl, CL_FALSE, offset,
-                                       NGLL3*sizeof (realw), &h_muv[i*NGLL3], 0, NULL, NULL));
-      }
-#else
-      const size_t d_offsets[3] = {0,0,0};
-      const size_t h_offsets[3] = {0,0,0};
-      const size_t d_region[3] = {NGLL3*sizeof(realw), mp->NSPEC_CRUST_MANTLE, 1};
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_muvstore_crust_mantle.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        h_muv, 0, NULL, NULL));
-#endif
-    }
-#endif
-#ifdef USE_CUDA
-    if (run_cuda) {
-      // faster (small memcpy above have low bandwidth...)
-      print_CUDA_error_if_any(cudaMemcpy2D(mp->d_muvstore_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), h_muv,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),48100);
-    }
-#endif
-#ifdef USE_HIP
-    if (run_hip) {
-      // faster (small memcpy above have low bandwidth...)
-      print_HIP_error_if_any(hipMemcpy2D(mp->d_muvstore_crust_mantle.hip, NGLL3_PADDED*sizeof(realw), h_muv,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,hipMemcpyHostToDevice),48100);
-    }
-#endif
-
+    gpuCopy_todevice_realw_padded (&mp->d_muvstore_crust_mantle, h_muv, mp->NSPEC_CRUST_MANTLE);
   }
 
   // needed for boundary kernel calculations
   if (mp->simulation_type == 3 && mp->save_kernels_boundary) {
     gpuMalloc_realw (&mp->d_rhostore_crust_mantle, size_padded);
-
-    int i;
-    for (i = 0; i < mp->NSPEC_CRUST_MANTLE; i++) {
-#ifdef USE_OPENCL
-      if (run_opencl) {
-        int offset = i * NGLL3_PADDED * sizeof(realw);
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_rhostore_crust_mantle.ocl, CL_FALSE, offset,
-                                       NGLL3 * sizeof (realw), &h_rho[i * NGLL3], 0, NULL, NULL));
-      }
-#endif
-#ifdef USE_CUDA
-      if (run_cuda) {
-        print_CUDA_error_if_any(cudaMemcpy(mp->d_rhostore_crust_mantle.cuda+i*NGLL3_PADDED, &h_rho[i*NGLL3],
-                                           NGLL3*sizeof(realw),cudaMemcpyHostToDevice),2106);
-      }
-#endif
-#ifdef USE_HIP
-      if (run_hip) {
-        print_HIP_error_if_any(hipMemcpy(mp->d_rhostore_crust_mantle.hip+i*NGLL3_PADDED, &h_rho[i*NGLL3],
-                                           NGLL3*sizeof(realw),hipMemcpyHostToDevice),2106);
-      }
-#endif
-
-    }
+    gpuCopy_todevice_realw_padded (&mp->d_rhostore_crust_mantle, h_rho, mp->NSPEC_CRUST_MANTLE);
   }
+
   // synchronizes gpu calls
   gpuSynchronize();
 
@@ -2584,146 +2149,19 @@ void FC_FUNC_ (prepare_outer_core_device,
   gpuMalloc_realw (&mp->d_kappavstore_outer_core, size_padded);
 
   // transfer constant element data with padding
-#ifdef USE_OPENCL
-  if (run_opencl) {
-#ifndef FAST_2D_MEMCPY
-    int i;
-    for (i = 0; i < mp->NSPEC_OUTER_CORE; i++) {
-      int offset = i * NGLL3_PADDED * sizeof (realw);
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_xix_outer_core.ocl, CL_FALSE, offset,
-                                     NGLL3*sizeof (realw), &h_xix[i*NGLL3], 0, NULL, NULL));
+  gpuCopy_todevice_realw_padded (&mp->d_xix_outer_core, h_xix, mp->NSPEC_OUTER_CORE);
+  gpuCopy_todevice_realw_padded (&mp->d_xiy_outer_core, h_xiy, mp->NSPEC_OUTER_CORE);
+  gpuCopy_todevice_realw_padded (&mp->d_xiz_outer_core, h_xiz, mp->NSPEC_OUTER_CORE);
 
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_xiy_outer_core.ocl, CL_FALSE, offset,
-                                     NGLL3*sizeof (realw), &h_xiy[i*NGLL3], 0, NULL, NULL));
+  gpuCopy_todevice_realw_padded (&mp->d_etax_outer_core, h_etax, mp->NSPEC_OUTER_CORE);
+  gpuCopy_todevice_realw_padded (&mp->d_etay_outer_core, h_etay, mp->NSPEC_OUTER_CORE);
+  gpuCopy_todevice_realw_padded (&mp->d_etaz_outer_core, h_etaz, mp->NSPEC_OUTER_CORE);
 
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_xiz_outer_core.ocl, CL_FALSE, offset,
-                                     NGLL3*sizeof (realw), &h_xiz[i*NGLL3], 0, NULL, NULL));
+  gpuCopy_todevice_realw_padded (&mp->d_gammax_outer_core, h_gammax, mp->NSPEC_OUTER_CORE);
+  gpuCopy_todevice_realw_padded (&mp->d_gammay_outer_core, h_gammay, mp->NSPEC_OUTER_CORE);
+  gpuCopy_todevice_realw_padded (&mp->d_gammaz_outer_core, h_gammaz, mp->NSPEC_OUTER_CORE);
 
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_etax_outer_core.ocl, CL_FALSE, offset,
-                                     NGLL3 * sizeof (realw), &h_etax[i * NGLL3], 0, NULL, NULL));
-
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_etay_outer_core.ocl, CL_FALSE, offset,
-                                     NGLL3 * sizeof (realw), &h_etay[i * NGLL3], 0, NULL, NULL));
-
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_etaz_outer_core.ocl, CL_FALSE, offset,
-                                     NGLL3 * sizeof (realw), &h_etaz[i * NGLL3], 0, NULL, NULL));
-
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_gammax_outer_core.ocl, CL_FALSE, offset,
-                                     NGLL3*sizeof (realw), &h_gammax[i*NGLL3], 0, NULL, NULL));
-
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_gammay_outer_core.ocl, CL_FALSE, offset,
-                                     NGLL3*sizeof (realw), &h_gammay[i*NGLL3], 0, NULL, NULL));
-
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_gammaz_outer_core.ocl, CL_FALSE, offset,
-                                     NGLL3*sizeof (realw), &h_gammaz[i*NGLL3], 0, NULL, NULL));
-
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_kappavstore_outer_core.ocl, CL_FALSE, offset,
-                                     NGLL3*sizeof (realw), &h_kappav[i*NGLL3], 0, NULL, NULL));
-    }
-#else
-      const size_t d_offsets[3] = {0,0,0};
-      const size_t h_offsets[3] = {0,0,0};
-      const size_t d_region[3] = {NGLL3*sizeof(realw), mp->NSPEC_OUTER_CORE, 1};
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_xix_outer_core.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        h_xix, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_xiy_outer_core.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        h_xiy, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_xiz_outer_core.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        h_xiz, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_etax_outer_core.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        h_etax, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_etay_outer_core.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        h_etay, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_etaz_outer_core.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        h_etaz, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_gammax_outer_core.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        h_gammax, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_gammay_outer_core.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        h_gammay, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_gammaz_outer_core.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        h_gammaz, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_kappavstore_outer_core.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        h_kappav, 0, NULL, NULL));
-
-#endif
-  }
-#endif
-#ifdef USE_CUDA
-  if (run_cuda) {
-    // faster (small memcpy have low bandwidth...)
-    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_xix_outer_core.cuda, NGLL3_PADDED*sizeof(realw), h_xix,
-                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_OUTER_CORE,cudaMemcpyHostToDevice),1501);
-    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_xiy_outer_core.cuda, NGLL3_PADDED*sizeof(realw), h_xiy,
-                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_OUTER_CORE,cudaMemcpyHostToDevice),1501);
-    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_xiz_outer_core.cuda, NGLL3_PADDED*sizeof(realw), h_xiz,
-                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_OUTER_CORE,cudaMemcpyHostToDevice),1501);
-
-    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_etax_outer_core.cuda, NGLL3_PADDED*sizeof(realw), h_etax,
-                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_OUTER_CORE,cudaMemcpyHostToDevice),1502);
-    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_etay_outer_core.cuda, NGLL3_PADDED*sizeof(realw), h_etay,
-                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_OUTER_CORE,cudaMemcpyHostToDevice),1502);
-    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_etaz_outer_core.cuda, NGLL3_PADDED*sizeof(realw), h_etaz,
-                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_OUTER_CORE,cudaMemcpyHostToDevice),1502);
-
-    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_gammax_outer_core.cuda, NGLL3_PADDED*sizeof(realw), h_gammax,
-                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_OUTER_CORE,cudaMemcpyHostToDevice),1503);
-    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_gammay_outer_core.cuda, NGLL3_PADDED*sizeof(realw), h_gammay,
-                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_OUTER_CORE,cudaMemcpyHostToDevice),1503);
-    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_gammaz_outer_core.cuda, NGLL3_PADDED*sizeof(realw), h_gammaz,
-                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_OUTER_CORE,cudaMemcpyHostToDevice),1503);
-
-    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_kappavstore_outer_core.cuda, NGLL3_PADDED*sizeof(realw), h_kappav,
-                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_OUTER_CORE,cudaMemcpyHostToDevice),1504);
-  }
-#endif
-#ifdef USE_HIP
-  if (run_hip) {
-    // faster (small memcpy have low bandwidth...)
-    print_HIP_error_if_any(hipMemcpy2D(mp->d_xix_outer_core.hip, NGLL3_PADDED*sizeof(realw), h_xix,
-                                        NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_OUTER_CORE,hipMemcpyHostToDevice),1501);
-    print_HIP_error_if_any(hipMemcpy2D(mp->d_xiy_outer_core.hip, NGLL3_PADDED*sizeof(realw), h_xiy,
-                                        NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_OUTER_CORE,hipMemcpyHostToDevice),1501);
-    print_HIP_error_if_any(hipMemcpy2D(mp->d_xiz_outer_core.hip, NGLL3_PADDED*sizeof(realw), h_xiz,
-                                        NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_OUTER_CORE,hipMemcpyHostToDevice),1501);
-
-    print_HIP_error_if_any(hipMemcpy2D(mp->d_etax_outer_core.hip, NGLL3_PADDED*sizeof(realw), h_etax,
-                                        NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_OUTER_CORE,hipMemcpyHostToDevice),1502);
-    print_HIP_error_if_any(hipMemcpy2D(mp->d_etay_outer_core.hip, NGLL3_PADDED*sizeof(realw), h_etay,
-                                        NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_OUTER_CORE,hipMemcpyHostToDevice),1502);
-    print_HIP_error_if_any(hipMemcpy2D(mp->d_etaz_outer_core.hip, NGLL3_PADDED*sizeof(realw), h_etaz,
-                                        NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_OUTER_CORE,hipMemcpyHostToDevice),1502);
-
-    print_HIP_error_if_any(hipMemcpy2D(mp->d_gammax_outer_core.hip, NGLL3_PADDED*sizeof(realw), h_gammax,
-                                        NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_OUTER_CORE,hipMemcpyHostToDevice),1503);
-    print_HIP_error_if_any(hipMemcpy2D(mp->d_gammay_outer_core.hip, NGLL3_PADDED*sizeof(realw), h_gammay,
-                                        NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_OUTER_CORE,hipMemcpyHostToDevice),1503);
-    print_HIP_error_if_any(hipMemcpy2D(mp->d_gammaz_outer_core.hip, NGLL3_PADDED*sizeof(realw), h_gammaz,
-                                        NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_OUTER_CORE,hipMemcpyHostToDevice),1503);
-
-    print_HIP_error_if_any(hipMemcpy2D(mp->d_kappavstore_outer_core.hip, NGLL3_PADDED*sizeof(realw), h_kappav,
-                                        NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_OUTER_CORE,hipMemcpyHostToDevice),1504);
-  }
-#endif
+  gpuCopy_todevice_realw_padded (&mp->d_kappavstore_outer_core, h_kappav, mp->NSPEC_OUTER_CORE);
 
   // synchronizes gpu calls
   gpuSynchronize();
@@ -2731,43 +2169,7 @@ void FC_FUNC_ (prepare_outer_core_device,
   // needed for kernel calculations
   if (mp->simulation_type == 3) {
     gpuMalloc_realw (&mp->d_rhostore_outer_core, size_padded);
-
-#ifdef USE_OPENCL
-    if (run_opencl) {
-#ifndef FAST_2D_MEMCPY
-      int i;
-      for (i = 0; i < mp->NSPEC_OUTER_CORE; i++) {
-        int offset = i * NGLL3_PADDED * sizeof (realw);
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_rhostore_outer_core.ocl, CL_FALSE, offset,
-                                       NGLL3 * sizeof (realw), &h_rho[i*NGLL3], 0, NULL, NULL));
-      }
-#else
-      const size_t d_offsets[3] = {0,0,0};
-      const size_t h_offsets[3] = {0,0,0};
-      const size_t d_region[3] = {NGLL3*sizeof(realw), mp->NSPEC_OUTER_CORE, 1};
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_rhostore_outer_core.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        h_rho, 0, NULL, NULL));
-
-#endif
-    }
-#endif
-#ifdef USE_CUDA
-    if (run_cuda) {
-      // faster (small memcpy have low bandwidth...)
-      print_CUDA_error_if_any(cudaMemcpy2D(mp->d_rhostore_outer_core.cuda, NGLL3_PADDED*sizeof(realw), h_rho,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_OUTER_CORE,cudaMemcpyHostToDevice),2106);
-    }
-#endif
-#ifdef USE_HIP
-    if (run_hip) {
-      // faster (small memcpy have low bandwidth...)
-      print_HIP_error_if_any(hipMemcpy2D(mp->d_rhostore_outer_core.hip, NGLL3_PADDED*sizeof(realw), h_rho,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_OUTER_CORE,hipMemcpyHostToDevice),2106);
-    }
-#endif
-
+    gpuCopy_todevice_realw_padded (&mp->d_rhostore_outer_core, h_rho, mp->NSPEC_OUTER_CORE);
   }
 
   // global indexing
@@ -2977,147 +2379,19 @@ void FC_FUNC_ (prepare_inner_core_device,
   gpuMalloc_realw (&mp->d_muvstore_inner_core, size_padded);
 
   // transfer constant element data with padding
-#ifdef USE_OPENCL
-  if (run_opencl) {
-#ifndef FAST_2D_MEMCPY
-    int i;
-    for (i = 0;i < mp->NSPEC_INNER_CORE;i++) {
-      int offset = i * NGLL3_PADDED * sizeof (realw);
+  gpuCopy_todevice_realw_padded (&mp->d_xix_inner_core, h_xix, mp->NSPEC_INNER_CORE);
+  gpuCopy_todevice_realw_padded (&mp->d_xiy_inner_core, h_xiy, mp->NSPEC_INNER_CORE);
+  gpuCopy_todevice_realw_padded (&mp->d_xiz_inner_core, h_xiz, mp->NSPEC_INNER_CORE);
 
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_xix_inner_core.ocl, CL_FALSE, offset,
-                                     NGLL3*sizeof (realw), &h_xix[i*NGLL3], 0, NULL, NULL));
+  gpuCopy_todevice_realw_padded (&mp->d_etax_inner_core, h_etax, mp->NSPEC_INNER_CORE);
+  gpuCopy_todevice_realw_padded (&mp->d_etay_inner_core, h_etay, mp->NSPEC_INNER_CORE);
+  gpuCopy_todevice_realw_padded (&mp->d_etaz_inner_core, h_etaz, mp->NSPEC_INNER_CORE);
 
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_xiy_inner_core.ocl, CL_FALSE, offset,
-                                     NGLL3*sizeof (realw), &h_xiy[i*NGLL3], 0, NULL, NULL));
+  gpuCopy_todevice_realw_padded (&mp->d_gammax_inner_core, h_gammax, mp->NSPEC_INNER_CORE);
+  gpuCopy_todevice_realw_padded (&mp->d_gammay_inner_core, h_gammay, mp->NSPEC_INNER_CORE);
+  gpuCopy_todevice_realw_padded (&mp->d_gammaz_inner_core, h_gammaz, mp->NSPEC_INNER_CORE);
 
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_xiz_inner_core.ocl, CL_FALSE, offset,
-                                     NGLL3*sizeof (realw), &h_xiz[i*NGLL3], 0, NULL, NULL));
-
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_etax_inner_core.ocl, CL_FALSE, offset,
-                                     NGLL3*sizeof (realw), &h_etax[i*NGLL3], 0, NULL, NULL));
-
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_etay_inner_core.ocl, CL_FALSE, offset,
-                                     NGLL3*sizeof (realw), &h_etay[i*NGLL3], 0, NULL, NULL));
-
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_etaz_inner_core.ocl, CL_FALSE, offset,
-                                     NGLL3*sizeof (realw), &h_etaz[i*NGLL3], 0, NULL, NULL));
-
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_gammax_inner_core.ocl, CL_FALSE, offset,
-                                     NGLL3*sizeof (realw), &h_gammax[i*NGLL3], 0, NULL, NULL));
-
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_gammay_inner_core.ocl, CL_FALSE, offset,
-                                     NGLL3*sizeof (realw),&h_gammay[i*NGLL3], 0, NULL, NULL));
-
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_gammaz_inner_core.ocl, CL_FALSE, offset,
-                                     NGLL3*sizeof (realw), &h_gammaz[i*NGLL3], 0, NULL, NULL));
-
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_muvstore_inner_core.ocl, CL_FALSE, offset,
-                                     NGLL3*sizeof (realw), &h_muv[i*NGLL3], 0, NULL, NULL));
-    }
-#else
-      const size_t d_offsets[3] = {0,0,0};
-      const size_t h_offsets[3] = {0,0,0};
-      const size_t d_region[3] = {NGLL3*sizeof(realw), mp->NSPEC_INNER_CORE, 1};
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_xix_inner_core.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        h_xix, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_xiy_inner_core.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        h_xiy, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_xiz_inner_core.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        h_xiz, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_etax_inner_core.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        h_etax, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_etay_inner_core.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        h_etay, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_etaz_inner_core.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        h_etaz, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_gammax_inner_core.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        h_gammax, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_gammay_inner_core.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        h_gammay, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_gammaz_inner_core.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        h_gammaz, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_muvstore_inner_core.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        h_muv, 0, NULL, NULL));
-
-#endif
-  }
-#endif
-#ifdef USE_CUDA
-  if (run_cuda) {
-    // faster (small memcpy have low bandwidth...)
-    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_xix_inner_core.cuda, NGLL3_PADDED*sizeof(realw), h_xix,
-                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,cudaMemcpyHostToDevice),1501);
-    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_xiy_inner_core.cuda, NGLL3_PADDED*sizeof(realw), h_xiy,
-                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,cudaMemcpyHostToDevice),1501);
-    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_xiz_inner_core.cuda, NGLL3_PADDED*sizeof(realw), h_xiz,
-                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,cudaMemcpyHostToDevice),1501);
-
-    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_etax_inner_core.cuda, NGLL3_PADDED*sizeof(realw), h_etax,
-                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,cudaMemcpyHostToDevice),1502);
-    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_etay_inner_core.cuda, NGLL3_PADDED*sizeof(realw), h_etay,
-                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,cudaMemcpyHostToDevice),1502);
-    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_etaz_inner_core.cuda, NGLL3_PADDED*sizeof(realw), h_etaz,
-                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,cudaMemcpyHostToDevice),1502);
-
-    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_gammax_inner_core.cuda, NGLL3_PADDED*sizeof(realw), h_gammax,
-                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,cudaMemcpyHostToDevice),1503);
-    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_gammay_inner_core.cuda, NGLL3_PADDED*sizeof(realw), h_gammay,
-                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,cudaMemcpyHostToDevice),1503);
-    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_gammaz_inner_core.cuda, NGLL3_PADDED*sizeof(realw), h_gammaz,
-                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,cudaMemcpyHostToDevice),1503);
-
-    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_muvstore_inner_core.cuda, NGLL3_PADDED*sizeof(realw), h_muv,
-                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,cudaMemcpyHostToDevice),1504);
-  }
-#endif
-#ifdef USE_HIP
-  if (run_hip) {
-    // faster (small memcpy have low bandwidth...)
-    print_HIP_error_if_any(hipMemcpy2D(mp->d_xix_inner_core.hip, NGLL3_PADDED*sizeof(realw), h_xix,
-                                        NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,hipMemcpyHostToDevice),1501);
-    print_HIP_error_if_any(hipMemcpy2D(mp->d_xiy_inner_core.hip, NGLL3_PADDED*sizeof(realw), h_xiy,
-                                        NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,hipMemcpyHostToDevice),1501);
-    print_HIP_error_if_any(hipMemcpy2D(mp->d_xiz_inner_core.hip, NGLL3_PADDED*sizeof(realw), h_xiz,
-                                        NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,hipMemcpyHostToDevice),1501);
-
-    print_HIP_error_if_any(hipMemcpy2D(mp->d_etax_inner_core.hip, NGLL3_PADDED*sizeof(realw), h_etax,
-                                        NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,hipMemcpyHostToDevice),1502);
-    print_HIP_error_if_any(hipMemcpy2D(mp->d_etay_inner_core.hip, NGLL3_PADDED*sizeof(realw), h_etay,
-                                        NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,hipMemcpyHostToDevice),1502);
-    print_HIP_error_if_any(hipMemcpy2D(mp->d_etaz_inner_core.hip, NGLL3_PADDED*sizeof(realw), h_etaz,
-                                        NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,hipMemcpyHostToDevice),1502);
-
-    print_HIP_error_if_any(hipMemcpy2D(mp->d_gammax_inner_core.hip, NGLL3_PADDED*sizeof(realw), h_gammax,
-                                        NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,hipMemcpyHostToDevice),1503);
-    print_HIP_error_if_any(hipMemcpy2D(mp->d_gammay_inner_core.hip, NGLL3_PADDED*sizeof(realw), h_gammay,
-                                        NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,hipMemcpyHostToDevice),1503);
-    print_HIP_error_if_any(hipMemcpy2D(mp->d_gammaz_inner_core.hip, NGLL3_PADDED*sizeof(realw), h_gammaz,
-                                        NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,hipMemcpyHostToDevice),1503);
-
-    print_HIP_error_if_any(hipMemcpy2D(mp->d_muvstore_inner_core.hip, NGLL3_PADDED*sizeof(realw), h_muv,
-                                        NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,hipMemcpyHostToDevice),1504);
-  }
-#endif
+  gpuCopy_todevice_realw_padded (&mp->d_muvstore_inner_core, h_muv, mp->NSPEC_INNER_CORE);
 
   // synchronizes gpu calls
   gpuSynchronize();
@@ -3128,41 +2402,7 @@ void FC_FUNC_ (prepare_inner_core_device,
 
     // kappavstore needed
     gpuMalloc_realw (&mp->d_kappavstore_inner_core, size_padded);
-
-#ifdef USE_OPENCL
-    if (run_opencl) {
-#ifndef FAST_2D_MEMCPY
-      int i;
-      for (i = 0;i < mp->NSPEC_INNER_CORE;i++) {
-        int offset = i * NGLL3_PADDED * sizeof (realw);
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_kappavstore_inner_core.ocl, CL_FALSE, offset,
-                                       NGLL3*sizeof (realw), &h_kappav[i*NGLL3], 0, NULL, NULL));
-      }
-#else
-      const size_t d_offsets[3] = {0,0,0};
-      const size_t h_offsets[3] = {0,0,0};
-      const size_t d_region[3] = {NGLL3*sizeof(realw), mp->NSPEC_INNER_CORE, 1};
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_kappavstore_inner_core.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        h_kappav, 0, NULL, NULL));
-#endif
-    }
-#endif
-#ifdef USE_CUDA
-    if (run_cuda) {
-      // faster (small memcpy above have low bandwidth...)
-      print_CUDA_error_if_any(cudaMemcpy2D(mp->d_kappavstore_inner_core.cuda, NGLL3_PADDED*sizeof(realw), h_kappav,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,cudaMemcpyHostToDevice),1510);
-    }
-#endif
-#ifdef USE_HIP
-    if (run_hip) {
-      // faster (small memcpy above have low bandwidth...)
-      print_HIP_error_if_any(hipMemcpy2D(mp->d_kappavstore_inner_core.hip, NGLL3_PADDED*sizeof(realw), h_kappav,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,hipMemcpyHostToDevice),1510);
-    }
-#endif
+    gpuCopy_todevice_realw_padded (&mp->d_kappavstore_inner_core, h_kappav, mp->NSPEC_INNER_CORE);
 
   } else {
     // anisotropic inner core
@@ -3173,85 +2413,11 @@ void FC_FUNC_ (prepare_inner_core_device,
     gpuMalloc_realw (&mp->d_c44store_inner_core, size_padded);
 
     // transfer constant element data with padding
-#ifdef USE_OPENCL
-    if (run_opencl) {
-#ifndef FAST_2D_MEMCPY
-      int i;
-      for (i = 0;i < mp->NSPEC_INNER_CORE; i++) {
-        int offset = i * NGLL3_PADDED * sizeof (realw);
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c11store_inner_core.ocl, CL_FALSE, offset,
-                                       NGLL3*sizeof (realw), &c11store[i*NGLL3], 0, NULL, NULL));
-
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c12store_inner_core.ocl, CL_FALSE, offset,
-                                       NGLL3*sizeof (realw), &c12store[i*NGLL3], 0, NULL, NULL));
-
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c13store_inner_core.ocl, CL_FALSE, offset,
-                                       NGLL3*sizeof (realw), &c13store[i*NGLL3], 0, NULL, NULL));
-
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c33store_inner_core.ocl, CL_FALSE, offset,
-                                       NGLL3*sizeof (realw), &c33store[i*NGLL3], 0, NULL, NULL));
-
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c44store_inner_core.ocl, CL_FALSE, offset,
-                                       NGLL3*sizeof (realw), &c44store[i*NGLL3], 0, NULL, NULL));
-      }
-#else
-      const size_t d_offsets[3] = {0,0,0};
-      const size_t h_offsets[3] = {0,0,0};
-      const size_t d_region[3] = {NGLL3*sizeof(realw), mp->NSPEC_INNER_CORE, 1};
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c11store_inner_core.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        c11store, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c12store_inner_core.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        c12store, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c13store_inner_core.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        c13store, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c33store_inner_core.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        c33store, 0, NULL, NULL));
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_c44store_inner_core.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        c44store, 0, NULL, NULL));
-#endif
-    }
-#endif
-#ifdef USE_CUDA
-    if (run_cuda) {
-      // faster (small memcpy have low bandwidth...)
-      print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c11store_inner_core.cuda, NGLL3_PADDED*sizeof(realw), c11store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,cudaMemcpyHostToDevice),4800);
-      print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c12store_inner_core.cuda, NGLL3_PADDED*sizeof(realw), c12store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,cudaMemcpyHostToDevice),4800);
-      print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c13store_inner_core.cuda, NGLL3_PADDED*sizeof(realw), c13store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,cudaMemcpyHostToDevice),4800);
-      print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c33store_inner_core.cuda, NGLL3_PADDED*sizeof(realw), c33store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,cudaMemcpyHostToDevice),4800);
-      print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c44store_inner_core.cuda, NGLL3_PADDED*sizeof(realw), c44store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,cudaMemcpyHostToDevice),4800);
-    }
-#endif
-#ifdef USE_HIP
-    if (run_hip) {
-      // faster (small memcpy have low bandwidth...)
-      print_HIP_error_if_any(hipMemcpy2D(mp->d_c11store_inner_core.hip, NGLL3_PADDED*sizeof(realw), c11store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,hipMemcpyHostToDevice),4800);
-      print_HIP_error_if_any(hipMemcpy2D(mp->d_c12store_inner_core.hip, NGLL3_PADDED*sizeof(realw), c12store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,hipMemcpyHostToDevice),4800);
-      print_HIP_error_if_any(hipMemcpy2D(mp->d_c13store_inner_core.hip, NGLL3_PADDED*sizeof(realw), c13store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,hipMemcpyHostToDevice),4800);
-      print_HIP_error_if_any(hipMemcpy2D(mp->d_c33store_inner_core.hip, NGLL3_PADDED*sizeof(realw), c33store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,hipMemcpyHostToDevice),4800);
-      print_HIP_error_if_any(hipMemcpy2D(mp->d_c44store_inner_core.hip, NGLL3_PADDED*sizeof(realw), c44store,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,hipMemcpyHostToDevice),4800);
-    }
-#endif
-
+    gpuCopy_todevice_realw_padded (&mp->d_c11store_inner_core, c11store, mp->NSPEC_INNER_CORE);
+    gpuCopy_todevice_realw_padded (&mp->d_c12store_inner_core, c12store, mp->NSPEC_INNER_CORE);
+    gpuCopy_todevice_realw_padded (&mp->d_c13store_inner_core, c13store, mp->NSPEC_INNER_CORE);
+    gpuCopy_todevice_realw_padded (&mp->d_c33store_inner_core, c33store, mp->NSPEC_INNER_CORE);
+    gpuCopy_todevice_realw_padded (&mp->d_c44store_inner_core, c44store, mp->NSPEC_INNER_CORE);
   }
 
   // synchronizes gpu calls
@@ -3260,43 +2426,7 @@ void FC_FUNC_ (prepare_inner_core_device,
   // needed for boundary kernel calculations
   if (mp->simulation_type == 3 && mp->save_kernels_boundary) {
     gpuMalloc_realw (&mp->d_rhostore_inner_core, size_padded);
-
-#ifdef USE_OPENCL
-    if (run_opencl) {
-#ifndef FAST_2D_MEMCPY
-      int i;
-      for (i = 0; i < mp->NSPEC_INNER_CORE; i++) {
-        int offset = i * NGLL3_PADDED * sizeof (realw);
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_rhostore_inner_core.ocl, CL_FALSE, offset,
-                                       NGLL3*sizeof (realw), &h_rho[i*NGLL3], 0, NULL, NULL));
-      }
-
-#else
-      const size_t d_offsets[3] = {0,0,0};
-      const size_t h_offsets[3] = {0,0,0};
-      const size_t d_region[3] = {NGLL3*sizeof(realw), mp->NSPEC_INNER_CORE, 1};
-      clCheck (clEnqueueWriteBufferRect (mocl.command_queue, mp->d_rhostore_inner_core.ocl, CL_FALSE, d_offsets,
-        h_offsets, d_region, NGLL3_PADDED*sizeof(realw), 0,
-        NGLL3*sizeof (realw), 0,
-        h_rho, 0, NULL, NULL));
-#endif
-    }
-#endif
-#ifdef USE_CUDA
-    if (run_cuda) {
-      // faster (small memcpy have low bandwidth...)
-      print_CUDA_error_if_any(cudaMemcpy2D(mp->d_rhostore_inner_core.cuda, NGLL3_PADDED*sizeof(realw), h_rho,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,cudaMemcpyHostToDevice),2106);
-    }
-#endif
-#ifdef USE_HIP
-    if (run_hip) {
-      // faster (small memcpy have low bandwidth...)
-      print_HIP_error_if_any(hipMemcpy2D(mp->d_rhostore_inner_core.hip, NGLL3_PADDED*sizeof(realw), h_rho,
-                                           NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,hipMemcpyHostToDevice),2106);
-    }
-#endif
-
+    gpuCopy_todevice_realw_padded (&mp->d_rhostore_inner_core, h_rho, mp->NSPEC_INNER_CORE);
   }
 
   // global indexing
