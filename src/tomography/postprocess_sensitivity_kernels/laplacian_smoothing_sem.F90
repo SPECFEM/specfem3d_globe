@@ -27,6 +27,37 @@
 
 #include "config.fh"
 
+  subroutine xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
+
+! convert x y z to r theta phi, double precision call
+
+  use constants, only: SMALL_VAL_ANGLE,ZERO
+
+  implicit none
+
+  double precision, intent(in) :: x,y,z
+  double precision, intent(out) :: r,theta,phi
+
+  double precision :: xmesh,ymesh,zmesh
+
+  xmesh = x
+  ymesh = y
+  zmesh = z
+
+  if (zmesh > -SMALL_VAL_ANGLE .and. zmesh <= ZERO) zmesh = -SMALL_VAL_ANGLE
+  if (zmesh < SMALL_VAL_ANGLE .and. zmesh >= ZERO) zmesh = SMALL_VAL_ANGLE
+
+  theta = datan2(dsqrt(xmesh*xmesh+ymesh*ymesh),zmesh)
+
+  if (xmesh > -SMALL_VAL_ANGLE .and. xmesh <= ZERO) xmesh = -SMALL_VAL_ANGLE
+  if (xmesh < SMALL_VAL_ANGLE .and. xmesh >= ZERO) xmesh = SMALL_VAL_ANGLE
+
+  phi = datan2(ymesh,xmesh)
+
+  r = dsqrt(xmesh*xmesh + ymesh*ymesh + zmesh*zmesh)
+
+  end subroutine xyz_2_rthetaphi_dble
+
 
 program smooth_laplacian_sem
 
@@ -65,9 +96,10 @@ program smooth_laplacian_sem
 #endif
 
   integer :: nspec, nglob, nker, niter_cg_max
-  integer :: iker, i, j, k, iel, i1, i2, ier, sizeprocs
+  integer :: iker, i, j, k, idof, iel, i1, i2, ier, sizeprocs
 
-  double precision    :: Lx, Ly, Lz, conv_crit, ref_vs, delta_L, scale_velocity
+  double precision    :: Lx, Ly, Lz, Lh, Lv, conv_crit, ref_vs, delta_L, scale_velocity
+  double precision    :: x, y, z, r, theta, phi, e2
 
 
   real(kind=CUSTOM_REAL), dimension(:),       allocatable :: m, s
@@ -206,8 +238,8 @@ program smooth_laplacian_sem
         stop ' Please check command line arguments'
      endif
   enddo
-  read(arg(1),*) Lx
-  read(arg(2),*) Lz
+  read(arg(1),*) Lh
+  read(arg(2),*) Lv
   kernel_names_comma_delimited = arg(3)
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
@@ -258,7 +290,7 @@ program smooth_laplacian_sem
      print *,"  NPROC_XI , NPROC_ETA        : ",NPROC_XI,NPROC_ETA
      print *,"  NCHUNKS                     : ",NCHUNKS
      print *
-     print *,"  smoothing sigma_h , sigma_v (km)                : ",Lx,Lz
+     print *,"  smoothing sigma_h , sigma_v (km)                : ",Lh,Lv
      print *
      print *,"  data name      : ",trim(kernel_names_comma_delimited)
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
@@ -275,6 +307,13 @@ program smooth_laplacian_sem
      print *
   endif
 
+  Lh = Lh / real(R_PLANET_KM,kind=CUSTOM_REAL) ! scale
+  Lv = Lv / real(R_PLANET_KM,kind=CUSTOM_REAL) ! scale
+  e2 = 1 - (Lv / Lh) ** 2
+  if (myrank == 0) then
+   print *,"  eccentricity squared      : ", e2
+  endif
+
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
   ! ADIOS
   call synchronize_all()
@@ -288,9 +327,6 @@ program smooth_laplacian_sem
 
   ! synchronizes
   call synchronize_all()
-  Lx = Lx / real(R_PLANET_KM,kind=CUSTOM_REAL) ! scale
-  Lz = Lz / real(R_PLANET_KM,kind=CUSTOM_REAL) ! scale
-  Ly = Lx
 
 
   ! 1. Read inputs and prepare MPI / gpu
@@ -374,6 +410,9 @@ program smooth_laplacian_sem
   call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "etaxstore", deta_dx(:, :, :, :))
   call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "etaystore", deta_dy(:, :, :, :))
   call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "etazstore", deta_dz(:, :, :, :))
+  call read_adios_array(myadios_file, myadios_group, myrank, nglob, trim(reg_name) // "x_global", xglob)
+  call read_adios_array(myadios_file, myadios_group, myrank, nglob, trim(reg_name) // "y_global", yglob)
+  call read_adios_array(myadios_file, myadios_group, myrank, nglob, trim(reg_name) // "z_global", zglob)
   ! read mu and rho values
   if (ref_vs > 0.0) then
    call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "muvstore", mu(:, :, :, :))
@@ -492,7 +531,7 @@ program smooth_laplacian_sem
   endif
   close(IIN)
 
-  deallocate(xglob, yglob, zglob, idoubling, ispec_is_tiso)
+  deallocate(idoubling, ispec_is_tiso)
 #endif
   call synchronize_all()
 
@@ -526,6 +565,19 @@ program smooth_laplacian_sem
                    - dxsi_dyl * (deta_dxl * dgam_dzl - deta_dzl * dgam_dxl) &
                    + dxsi_dzl * (deta_dxl * dgam_dyl - deta_dyl * dgam_dxl)
               jacobianl = 1. / jacobianl
+              ! convert Lv, Lh to Lx, Ly, Lz
+              idof = ibool(i, j, k, iel)
+              x = xglob(idof)
+              y = yglob(idof)
+              z = zglob(idof)
+              call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
+              if (myrank == 0) then
+               print *, r
+              endif
+              Lz = Lh * (1 - e2 * cos(theta) ** 2)
+              Lx = Lh * (1 - e2 * (sin(theta) * cos(phi)) ** 2 )
+              Ly = Lh * (1 - e2 * (sin(theta) * sin(phi)) ** 2 )
+
               ! Apply scaling
               dxsi_dx(i,j,k,iel)  = dxsi_dxl * Lx * delta_L
               deta_dx(i,j,k,iel)  = deta_dxl * Lx * delta_L
