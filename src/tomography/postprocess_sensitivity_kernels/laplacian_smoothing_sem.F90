@@ -68,7 +68,7 @@ program smooth_laplacian_sem
   integer :: nspec, nglob, nker, niter_cg_max, rel_to_prem
   integer :: iker, i, j, k, idof, iel, i1, i2, ier, sizeprocs
 
-  double precision    :: Lx, Ly, Lz, Lh, Lv, conv_crit, taper_vertical, delta_L
+  double precision    :: Lx, Ly, Lz, Lh, Lv, conv_crit, taper_vertical, Lh2, Lv2
   double precision    :: x, y, z, r, theta, phi, e2
   double precision    :: rho,drhodr,vp,vs,Qkappa,Qmu
 
@@ -160,8 +160,8 @@ program smooth_laplacian_sem
                ' solver_data.bp solver_data_mpi.bp'
         print *,'     OUTPUT_FILE      - ADIOS file for smoothed output'
         print *,'     REL_TO_PREM      - (optional) increase smoothing radius based on PREM model P-wave velocity'
-        print *,'     TAPER_VERTICAL   - (optional) taper the increase of smoothing radius at vertical direction', &
-               ' within the specified depth (requires REL_TO_PREM to be 1)'
+        print *,'     TAPER_VERTICAL   - (optional) increase SIGMA_V with depth until it reaches SIGMA_H at', &
+               ' the give depth'
         print *
 #else
         print *,'Usage: mpirun -np NPROC bin/xsmooth_laplacian_sem SIGMA_H SIGMA_V KERNEL_NAME INPUT_DIR OUPUT_DIR'
@@ -171,8 +171,8 @@ program smooth_laplacian_sem
         print *,'     INPUT_DIR        - directory with kernel files (e.g., proc***_alpha_kernel.bin)'
         print *,'     OUTPUT_DIR       - directory for smoothed output files'
         print *,'     REL_TO_PREM      - (optional) increase smoothing radius based on PREM model P-wave velocity'
-        print *,'     TAPER_VERTICAL   - (optional) taper the increase of smoothing radius at vertical direction', &
-               ' within the specified depth (requires REL_TO_PREM to be 1)'
+        print *,'     TAPER_VERTICAL   - (optional) increase SIGMA_V with depth until it reaches SIGMA_H at', &
+               ' the give depth'
         print *
 #endif
         stop ' Please check command line arguments'
@@ -231,14 +231,14 @@ program smooth_laplacian_sem
       rel_to_prem = 0
   else
       read(arg(NARGS-1),*) rel_to_prem
-      if (myrank == 0) print *, 'Increase smoothing length based on PREM model:', rel_to_prem
+      if (myrank == 0) print *, 'Increase smoothing length based on PREM model     :', rel_to_prem
   endif
 
   if (trim(arg(NARGS)) == '') then
       taper_vertical = -1.0
   else
       read(arg(NARGS),*) taper_vertical
-      if (myrank == 0) print *, 'Taper vertical smoothing length:', taper_vertical,'km'
+      if (myrank == 0) print *, 'Vertical smoothing taper depth (km)               :', taper_vertical
   endif
 
   call synchronize_all()
@@ -288,10 +288,7 @@ program smooth_laplacian_sem
 
   Lh = Lh / real(R_PLANET_KM,kind=CUSTOM_REAL) ! scale
   Lv = Lv / real(R_PLANET_KM,kind=CUSTOM_REAL) ! scale
-  e2 = 1 - (Lv / Lh) ** 2
-  if (myrank == 0) then
-   print *,"  eccentricity squared      : ", e2
-  endif
+  taper_vertical = taper_vertical / real(R_PLANET_KM,kind=CUSTOM_REAL) ! scale
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
   ! ADIOS
@@ -526,33 +523,43 @@ program smooth_laplacian_sem
               y = yglob(idof)
               z = zglob(idof)
               call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
-              call model_prem_iso(r,rho,drhodr,vp,vs,Qkappa,Qmu,0,CRUSTAL, &
-                            ONE_CRUST,.false.)
-              Lz = Lh * (1 - e2 * cos(theta) ** 2)
-              Lx = Lh * (1 - e2 * (sin(theta) * cos(phi)) ** 2 )
-              Ly = Lh * (1 - e2 * (sin(theta) * sin(phi)) ** 2 )
-              
-              ! Change smoothing radius based on velocity
-              if (rel_to_prem > 0) then
-               delta_L = vp
-               if (delta_L < 1.0) then
-                  delta_L = 1.0
-               endif
+              ! determine smoothing radius
+              Lh2 = Lh
+              if (taper_vertical > 0) then
+                  if ((1 - r) < taper_vertical) then
+                     Lv2 = Lv + (Lh - Lv) * (1 - cos(PI * (1 - r) / taper_vertical)) / 2
+                  else
+                     Lv2 = Lh
+                  endif
               else
-               delta_L = 1.0
+                  Lv2 = Lv
               endif
+              ! increase radius based on PREM model velocity
+              if (rel_to_prem > 0) then
+               call model_prem_iso(r,rho,drhodr,vp,vs,Qkappa,Qmu,0,CRUSTAL, &
+                            ONE_CRUST,.false.)
+               if (vp > 1.0) then
+                  Lv2 = Lv2 * vp
+                  Lh2 = Lh2 * vp
+               endif
+              endif
+              ! convert Lv, Lh to Lx, Ly, Lz
+              e2 = 1 - (Lv2 / Lh2) ** 2
+              Lz = Lh2 * (1 - e2 * cos(theta) ** 2)
+              Lx = Lh2 * (1 - e2 * (sin(theta) * cos(phi)) ** 2 )
+              Ly = Lh2 * (1 - e2 * (sin(theta) * sin(phi)) ** 2 )
 
               ! Apply scaling
-              dxsi_dx(i,j,k,iel)  = dxsi_dxl * Lx * delta_L
-              deta_dx(i,j,k,iel)  = deta_dxl * Lx * delta_L
-              dgam_dx(i,j,k,iel)  = dgam_dxl * Lx * delta_L
-              dxsi_dy(i,j,k,iel)  = dxsi_dyl * Ly * delta_L
-              deta_dy(i,j,k,iel)  = deta_dyl * Ly * delta_L
-              dgam_dy(i,j,k,iel)  = dgam_dyl * Ly * delta_L
-              dxsi_dz(i,j,k,iel)  = dxsi_dzl * Lz * delta_L
-              deta_dz(i,j,k,iel)  = deta_dzl * Lz * delta_L
-              dgam_dz(i,j,k,iel)  = dgam_dzl * Lz * delta_L
-              jacobian(i,j,k,iel) = jacobianl / (Lx*Ly*Lz*(delta_L**3))
+              dxsi_dx(i,j,k,iel)  = dxsi_dxl * Lx
+              deta_dx(i,j,k,iel)  = deta_dxl * Lx
+              dgam_dx(i,j,k,iel)  = dgam_dxl * Lx
+              dxsi_dy(i,j,k,iel)  = dxsi_dyl * Ly
+              deta_dy(i,j,k,iel)  = deta_dyl * Ly
+              dgam_dy(i,j,k,iel)  = dgam_dyl * Ly
+              dxsi_dz(i,j,k,iel)  = dxsi_dzl * Lz
+              deta_dz(i,j,k,iel)  = deta_dzl * Lz
+              dgam_dz(i,j,k,iel)  = dgam_dzl * Lz
+              jacobian(i,j,k,iel) = jacobianl / (Lx*Ly*Lz)
            enddo
         enddo
      enddo
