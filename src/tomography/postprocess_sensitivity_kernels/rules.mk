@@ -367,6 +367,9 @@ xsmooth_laplacian_sem_SHARED_OBJECTS = \
 	$O/param_reader.cc.o \
 	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
+	$O/model_prem.shared.o \
+	$O/reduce.shared.o \
+	$O/rthetaphi_xyz.shared.o \
 	$(EMPTY_MACRO)
 
 ${E}/xsmooth_laplacian_sem: $(xsmooth_laplacian_sem_OBJECTS) $(xsmooth_laplacian_sem_SHARED_OBJECTS)

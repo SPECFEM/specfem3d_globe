@@ -27,44 +27,14 @@
 
 #include "config.fh"
 
-  subroutine xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
-
-! convert x y z to r theta phi, double precision call
-
-  use constants, only: SMALL_VAL_ANGLE,ZERO
-
-  implicit none
-
-  double precision, intent(in) :: x,y,z
-  double precision, intent(out) :: r,theta,phi
-
-  double precision :: xmesh,ymesh,zmesh
-
-  xmesh = x
-  ymesh = y
-  zmesh = z
-
-  if (zmesh > -SMALL_VAL_ANGLE .and. zmesh <= ZERO) zmesh = -SMALL_VAL_ANGLE
-  if (zmesh < SMALL_VAL_ANGLE .and. zmesh >= ZERO) zmesh = SMALL_VAL_ANGLE
-
-  theta = datan2(dsqrt(xmesh*xmesh+ymesh*ymesh),zmesh)
-
-  if (xmesh > -SMALL_VAL_ANGLE .and. xmesh <= ZERO) xmesh = -SMALL_VAL_ANGLE
-  if (xmesh < SMALL_VAL_ANGLE .and. xmesh >= ZERO) xmesh = SMALL_VAL_ANGLE
-
-  phi = datan2(ymesh,xmesh)
-
-  r = dsqrt(xmesh*xmesh + ymesh*ymesh + zmesh*zmesh)
-
-  end subroutine xyz_2_rthetaphi_dble
-
-
 program smooth_laplacian_sem
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,IIN,IOUT, &
        GAUSSALPHA,GAUSSBETA,MAX_STRING_LEN,GRAV,PI,myrank
 
-  use shared_parameters, only: R_PLANET_KM,R_PLANET,RHOAV
+  use shared_parameters, only: R_PLANET_KM
+
+  use meshfem3D_models_par, only: CRUSTAL,ONE_CRUST
 
   use postprocess_par, only: &
        NCHUNKS_VAL,NPROC_XI_VAL,NPROC_ETA_VAL,NPROCTOT_VAL,NEX_XI_VAL,NEX_ETA_VAL, &
@@ -88,22 +58,23 @@ program smooth_laplacian_sem
   integer, parameter :: NGLOB_AB = NGLOB_CRUST_MANTLE
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
-  integer, parameter :: NARGS = 7
+  integer, parameter :: NARGS = 8
   character(len=*), parameter :: reg_name = 'reg1/'
 #else
-  integer, parameter :: NARGS = 6
+  integer, parameter :: NARGS = 7
   character(len=*), parameter :: reg_name = '_reg1_'
 #endif
 
-  integer :: nspec, nglob, nker, niter_cg_max
+  integer :: nspec, nglob, nker, niter_cg_max, rel_to_prem
   integer :: iker, i, j, k, idof, iel, i1, i2, ier, sizeprocs
 
-  double precision    :: Lx, Ly, Lz, Lh, Lv, conv_crit, ref_vs, delta_L, scale_velocity
+  double precision    :: Lx, Ly, Lz, Lh, Lv, conv_crit, taper_vertical, delta_L
   double precision    :: x, y, z, r, theta, phi, e2
+  double precision    :: rho,drhodr,vp,vs,Qkappa,Qmu
 
 
   real(kind=CUSTOM_REAL), dimension(:),       allocatable :: m, s
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: mo, so, mu, rho
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: mo, so
 
   ! Mesh parameters
   real(kind=CUSTOM_REAL), dimension(:),       allocatable :: xglob, yglob, zglob, valglob
@@ -176,7 +147,7 @@ program smooth_laplacian_sem
   niter_cg_max = 1000    ! max number of iteration
 
  ! check command line arguments
-  if (command_argument_count() /= NARGS .and. command_argument_count() /= NARGS-1) then
+  if (command_argument_count() /= NARGS .and. command_argument_count() /= NARGS-1 .and. command_argument_count() /= NARGS-2) then
      if (myrank == 0) then
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
         print *,'Usage: mpirun -np NPROC bin/xsmooth_laplacian_sem_adios SIGMA_H SIGMA_V KERNEL_NAME', &
@@ -188,8 +159,9 @@ program smooth_laplacian_sem
         print *,'     SOLVER_FILE      - ADIOS file with mesh arrays (e.g., DATABASES_MPI/) containing', &
                ' solver_data.bp solver_data_mpi.bp'
         print *,'     OUTPUT_FILE      - ADIOS file for smoothed output'
-        print *,'     REFERENCE_VS     - (optional) reference S-wave velocity, if specified, smoothing', &
-               ' lengths will become sigma * max(1, vs / ref_vs)'
+        print *,'     REL_TO_PREM      - (optional) increase smoothing radius based on PREM model P-wave velocity'
+        print *,'     TAPER_VERTICAL   - (optional) taper the increase of smoothing radius at vertical direction', &
+               ' within the specified depth (requires REL_TO_PREM to be 1)'
         print *
 #else
         print *,'Usage: mpirun -np NPROC bin/xsmooth_laplacian_sem SIGMA_H SIGMA_V KERNEL_NAME INPUT_DIR OUPUT_DIR'
@@ -198,8 +170,9 @@ program smooth_laplacian_sem
         print *,'     KERNEL_NAME      - comma-separated kernel names (e.g., alpha_kernel,beta_kernel)'
         print *,'     INPUT_DIR        - directory with kernel files (e.g., proc***_alpha_kernel.bin)'
         print *,'     OUTPUT_DIR       - directory for smoothed output files'
-        print *,'     REFERENCE_VS     - (optional) reference S-wave velocity, if specified, smoothing', &
-               ' lengths will become sigma * max(1, vs / ref_vs)'
+        print *,'     REL_TO_PREM      - (optional) increase smoothing radius based on PREM model P-wave velocity'
+        print *,'     TAPER_VERTICAL   - (optional) taper the increase of smoothing radius at vertical direction', &
+               ' within the specified depth (requires REL_TO_PREM to be 1)'
         print *
 #endif
         stop ' Please check command line arguments'
@@ -254,12 +227,18 @@ program smooth_laplacian_sem
   output_dir = arg(5)
 #endif
 
-  if (trim(arg(NARGS)) == '') then
-      ref_vs = -1.0
+  if (trim(arg(NARGS-1)) == '') then
+      rel_to_prem = 0
   else
-      read(arg(NARGS),*) ref_vs
-      scale_velocity = 1000.0d0/(R_PLANET*dsqrt(PI*GRAV*RHOAV))
-      if (myrank == 0) print *, 'Reference Vs: ', ref_vs
+      read(arg(NARGS-1),*) rel_to_prem
+      if (myrank == 0) print *, 'Increase smoothing length based on PREM model:', rel_to_prem
+  endif
+
+  if (trim(arg(NARGS)) == '') then
+      taper_vertical = -1.0
+  else
+      read(arg(NARGS),*) taper_vertical
+      if (myrank == 0) print *, 'Taper vertical smoothing length:', taper_vertical,'km'
   endif
 
   call synchronize_all()
@@ -353,10 +332,6 @@ program smooth_laplacian_sem
   if (.not. allocated(mo)) allocate(mo(ngllx, nglly, ngllz, nspec_ab))
   if (.not. allocated(so)) allocate(so(ngllx, nglly, ngllz, nspec_ab))
 
-  if (ref_vs > 0.0) then
-   if (.not. allocated(mu)) allocate(mu(ngllx, nglly, ngllz, nspec_ab))
-   if (.not. allocated(rho)) allocate(rho(ngllx, nglly, ngllz, nspec_ab))
-  endif
   m(:) = 0
   s(:) = 0
 
@@ -413,11 +388,6 @@ program smooth_laplacian_sem
   call read_adios_array(myadios_file, myadios_group, myrank, nglob, trim(reg_name) // "x_global", xglob)
   call read_adios_array(myadios_file, myadios_group, myrank, nglob, trim(reg_name) // "y_global", yglob)
   call read_adios_array(myadios_file, myadios_group, myrank, nglob, trim(reg_name) // "z_global", zglob)
-  ! read mu and rho values
-  if (ref_vs > 0.0) then
-   call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "muvstore", mu(:, :, :, :))
-   call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "rhostore", rho(:, :, :, :))
-  endif
   call close_file_adios_read_and_finalize_method(myadios_file)
 
   ! opens file for mesh
@@ -495,12 +465,6 @@ program smooth_laplacian_sem
   read(IIN) dgam_dy
   read(IIN) dgam_dz
 
-  ! mu and rho
-  if (ref_vs > 0.0) then
-   read(IIN) rho
-   read(IIN) mu
-   read(IIN) mu
-  endif
   close(IIN)
 
   !! Read MPI
@@ -551,15 +515,6 @@ program smooth_laplacian_sem
               dxsi_dzl = dxsi_dz(i,j,k,iel)
               deta_dzl = deta_dz(i,j,k,iel)
               dgam_dzl = dgam_dz(i,j,k,iel)
-              ! Change smoothing radius based on velocity
-              if (ref_vs > 0.0) then
-               delta_L = sqrt(mu(i,j,k,iel)/rho(i,j,k,iel)) / ref_vs / scale_velocity
-               if (delta_L < 1.0) then
-                  delta_L = 1.0
-               endif
-              else
-               delta_L = 1.0
-              endif
               ! Compute jacobian
               jacobianl = dxsi_dxl * (deta_dyl * dgam_dzl - deta_dzl * dgam_dyl) &
                    - dxsi_dyl * (deta_dxl * dgam_dzl - deta_dzl * dgam_dxl) &
@@ -571,12 +526,21 @@ program smooth_laplacian_sem
               y = yglob(idof)
               z = zglob(idof)
               call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
-              if (myrank == 0) then
-               print *, r
-              endif
+              call model_prem_iso(r,rho,drhodr,vp,vs,Qkappa,Qmu,0,CRUSTAL, &
+                            ONE_CRUST,.false.)
               Lz = Lh * (1 - e2 * cos(theta) ** 2)
               Lx = Lh * (1 - e2 * (sin(theta) * cos(phi)) ** 2 )
               Ly = Lh * (1 - e2 * (sin(theta) * sin(phi)) ** 2 )
+              
+              ! Change smoothing radius based on velocity
+              if (rel_to_prem > 0) then
+               delta_L = vp
+               if (delta_L < 1.0) then
+                  delta_L = 1.0
+               endif
+              else
+               delta_L = 1.0
+              endif
 
               ! Apply scaling
               dxsi_dx(i,j,k,iel)  = dxsi_dxl * Lx * delta_L
