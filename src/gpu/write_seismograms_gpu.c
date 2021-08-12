@@ -106,6 +106,25 @@ void write_seismograms_transfer_from_device (Mesh *mp,
                                                                                          mp->nrec_local);
   }
 #endif
+#ifdef USE_HIP
+  if (run_hip) {
+    // waits for previous copy call to be finished
+    if (GPU_ASYNC_COPY) {
+      hipStreamSynchronize(mp->copy_stream);
+    }
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(blocksize,1,1);
+
+    // prepare field transfer array on device
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(write_seismograms_transfer_from_device_kernel), grid, threads, 0, mp->compute_stream,
+                                                                                       mp->d_number_receiver_global.hip,
+                                                                                       d_ispec_selected->hip,
+                                                                                       mp->d_ibool_crust_mantle.hip,
+                                                                                       mp->d_station_seismo_field.hip,
+                                                                                       d_field->hip,
+                                                                                       mp->nrec_local);
+  }
+#endif
 
   // copies array to CPU
   if (GPU_ASYNC_COPY) {
@@ -136,6 +155,19 @@ void write_seismograms_transfer_from_device (Mesh *mp,
                       cudaMemcpyDeviceToHost,mp->copy_stream);
     }
 #endif
+#ifdef USE_HIP
+    if (run_hip) {
+      // waits for previous compute call to be finished
+      hipStreamSynchronize(mp->compute_stream);
+
+      // asynchronous copy
+      // note: we need to update the host array in a subsequent call to transfer_seismo_from_device_async() routine
+      hipMemcpyAsync(mp->h_station_seismo_field,mp->d_station_seismo_field.hip,
+                      3*NGLL3*(mp->nrec_local)*sizeof(realw),
+                      hipMemcpyDeviceToHost,mp->copy_stream);
+    }
+#endif
+
   } else {
     // synchronous copy
     gpuCopy_from_device_realw (&mp->d_station_seismo_field, mp->h_station_seismo_field, NDIM * NGLL3 * mp->nrec_local);
@@ -226,6 +258,26 @@ void write_seismograms_transfer_strain_from_device (Mesh *mp,
                                                                                                 mp->d_station_strain_field.cuda,
                                                                                                 d_field->cuda,
                                                                                                 mp->nrec_local);
+  }
+#endif
+#ifdef USE_HIP
+  if (run_hip) {
+    // waits for previous copy call to be finished
+    if (GPU_ASYNC_COPY) {
+      hipStreamSynchronize(mp->copy_stream);
+    }
+
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(blocksize,1,1);
+
+    // prepare field transfer array on device
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(write_seismograms_transfer_strain_from_device_kernel), grid, threads, 0, mp->compute_stream,
+                                                                                              mp->d_number_receiver_global.hip,
+                                                                                              d_ispec_selected->hip,
+                                                                                              mp->d_ibool_crust_mantle.hip,
+                                                                                              mp->d_station_strain_field.hip,
+                                                                                              d_field->hip,
+                                                                                              mp->nrec_local);
   }
 #endif
 
@@ -351,10 +403,12 @@ void FC_FUNC_(transfer_seismo_from_device_async,
 
   // checks async-memcpy
   if (! GPU_ASYNC_COPY) {
-    exit_on_error("transfer_seismo_from_device_async must be called with GPU_ASYNC_COPY == 1, please check mesh_constants_cuda.h");
+    exit_on_error("transfer_seismo_from_device_async must be called with GPU_ASYNC_COPY == 1, please check mesh_constants_gpu.h");
   }
 
   // waits for previous copy call to be finished
+  gpuStreamSynchronize(mp->copy_stream);
+
 #ifdef USE_OPENCL
   if (run_opencl) {
     if (mp->has_last_copy_evt) {
@@ -362,11 +416,6 @@ void FC_FUNC_(transfer_seismo_from_device_async,
       mp->has_last_copy_evt = 0;
     }
     clCheck (clFinish (mocl.copy_queue));
-  }
-#endif
-#ifdef USE_CUDA
-  if (run_cuda) {
-    cudaStreamSynchronize(mp->copy_stream);
   }
 #endif
 

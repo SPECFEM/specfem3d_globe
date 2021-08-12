@@ -638,12 +638,18 @@ VTK_INCLUDES
 VTK_MAJOR
 OMP_LIB
 OMP_FCFLAGS
+PSTL_LIB
 BLAS_LIBS
 LIBXSMM_LIBS
 LIBXSMM_INC
+COND_HIP_PLATFORM_NVIDIA_FALSE
+COND_HIP_PLATFORM_NVIDIA_TRUE
+COND_HIP_PLATFORM_AMD_FALSE
+COND_HIP_PLATFORM_AMD_TRUE
 HIP_LIBS
 HIP_LDFLAGS
 HIP_CPPFLAGS
+HIPCONFIG_PROG
 HIPCC_PROG
 HIP_LIB
 HIP_INC
@@ -716,14 +722,40 @@ COND_VTK_FALSE
 COND_VTK_TRUE
 COND_OMP_FALSE
 COND_OMP_TRUE
+COND_PARALLEL_STL_FALSE
+COND_PARALLEL_STL_TRUE
 COND_XSMM_FALSE
 COND_XSMM_TRUE
 COND_MIC_FALSE
 COND_MIC_TRUE
+COND_HIP_CUDA11_FALSE
+COND_HIP_CUDA11_TRUE
+COND_HIP_CUDA10_FALSE
+COND_HIP_CUDA10_TRUE
+COND_HIP_CUDA9_FALSE
+COND_HIP_CUDA9_TRUE
+COND_HIP_CUDA8_FALSE
+COND_HIP_CUDA8_TRUE
+COND_HIP_CUDA7_FALSE
+COND_HIP_CUDA7_TRUE
+COND_HIP_CUDA6_FALSE
+COND_HIP_CUDA6_TRUE
+COND_HIP_CUDA5_FALSE
+COND_HIP_CUDA5_TRUE
+COND_HIP_MI100_FALSE
+COND_HIP_MI100_TRUE
+COND_HIP_MI50_FALSE
+COND_HIP_MI50_TRUE
+COND_HIP_MI25_FALSE
+COND_HIP_MI25_TRUE
+COND_HIP_MI8_FALSE
+COND_HIP_MI8_TRUE
 COND_HIP_FALSE
 COND_HIP_TRUE
 COND_OCL_FALSE
 COND_OCL_TRUE
+COND_CUDA_AWARE_MPI_FALSE
+COND_CUDA_AWARE_MPI_TRUE
 COND_CUDA_PLUS_FALSE
 COND_CUDA_PLUS_TRUE
 COND_CUDA11_FALSE
@@ -803,10 +835,14 @@ enable_double_precision
 enable_debug
 enable_vectorization
 with_cuda
+enable_cuda_aware_mpi
+with_cuda_aware_mpi
 with_opencl
 with_hip
 with_mic
 with_xsmm
+with_parallel_stl
+with_openmp
 enable_openmp
 enable_vtk
 with_adios
@@ -851,6 +887,7 @@ HIP_LIB
 LIBXSMM_INC
 LIBXSMM_LIBS
 BLAS_LIBS
+PSTL_LIB
 OMP_FCFLAGS
 OMP_LIB
 MPI_INC
@@ -1478,6 +1515,7 @@ Optional Features:
   --enable-debug          build with debugging options enabled [default=no]
   --enable-vectorization  build FORCE_VECTORIZATION enabled version
                           [default=auto]
+  --enable-cuda-aware-mpi build CUDA-aware MPI enabled version [default=no]
   --enable-openmp         build OpenMP enabled version [default=no]
   --enable-vtk            build VTK enabled version [default=no]
 
@@ -1485,11 +1523,15 @@ Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-cuda             build CUDA GPU enabled version [default=no]
+  --with-cuda-aware-mpi   build CUDA-aware MPI enabled version [default=no]
   --with-opencl           build OpenCL GPU enabled version [default=no]
   --with-hip              build HIP GPU enabled version [default=no]
   --with-mic              build native Xeon PHI enabled version [default=no]
   --with-xsmm             build LIBXSMM (see:https://github.com/hfp/libxsmm)
                           enabled version [default=no]
+  --with-parallel-stl     build mesh sorting with C++ Parallel STL routines
+                          [default=no]
+  --with-openmp           build OpenMP enabled version [default=no]
   --with-adios            build ADIOS enabled version [default=no]
   --with-adios2           build ADIOS enabled version [default=no]
   --with-asdf             build ASDF enabled version [default=no]
@@ -1542,6 +1584,7 @@ Some influential environment variables:
   LIBXSMM_LIBS
               LIBXSMM library directory
   BLAS_LIBS   LAPACK/BLAS library directory
+  PSTL_LIB    Parallel STL library directory
   OMP_FCFLAGS OpenMP Fortran compiler flags
   OMP_LIB     Location of extra OpenMP libraries
   MPI_INC     Location of MPI include mpi.h, needed by CUDA/VTK (default:
@@ -2950,6 +2993,36 @@ else
 fi
 
 
+# CUDA-aware MPI setting
+# Check whether --enable-cuda-aware-mpi was given.
+if test "${enable_cuda_aware_mpi+set}" = set; then :
+  enableval=$enable_cuda_aware_mpi; enable_cuda_aware_mpi="$enableval"
+else
+  enable_cuda_aware_mpi=no
+fi
+
+
+# Check whether --with-cuda-aware-mpi was given.
+if test "${with_cuda_aware_mpi+set}" = set; then :
+  withval=$with_cuda_aware_mpi; with_cuda_aware_mpi="$withval"
+else
+  with_cuda_aware_mpi=no
+fi
+
+if test x"$enable_cuda_aware_mpi" != xno || test x"$with_cuda_aware_mpi" != xno; then :
+  want_cuda_aware_mpi=yes
+else
+  want_cuda_aware_mpi=no
+fi
+ if test x"$want_cuda_aware_mpi" != xno; then
+  COND_CUDA_AWARE_MPI_TRUE=
+  COND_CUDA_AWARE_MPI_FALSE='#'
+else
+  COND_CUDA_AWARE_MPI_TRUE='#'
+  COND_CUDA_AWARE_MPI_FALSE=
+fi
+
+
 ## OpenCL
 
 # Check whether --with-opencl was given.
@@ -2983,6 +3056,94 @@ fi
 else
   COND_HIP_TRUE='#'
   COND_HIP_FALSE=
+fi
+
+ if test x"$want_hip" = xMI8; then
+  COND_HIP_MI8_TRUE=
+  COND_HIP_MI8_FALSE='#'
+else
+  COND_HIP_MI8_TRUE='#'
+  COND_HIP_MI8_FALSE=
+fi
+
+ if test x"$want_hip" = xMI25; then
+  COND_HIP_MI25_TRUE=
+  COND_HIP_MI25_FALSE='#'
+else
+  COND_HIP_MI25_TRUE='#'
+  COND_HIP_MI25_FALSE=
+fi
+
+ if test x"$want_hip" = xMI50; then
+  COND_HIP_MI50_TRUE=
+  COND_HIP_MI50_FALSE='#'
+else
+  COND_HIP_MI50_TRUE='#'
+  COND_HIP_MI50_FALSE=
+fi
+
+ if test x"$want_hip" = xMI100; then
+  COND_HIP_MI100_TRUE=
+  COND_HIP_MI100_FALSE='#'
+else
+  COND_HIP_MI100_TRUE='#'
+  COND_HIP_MI100_FALSE=
+fi
+
+ if test x"$want_hip" = xcuda5; then
+  COND_HIP_CUDA5_TRUE=
+  COND_HIP_CUDA5_FALSE='#'
+else
+  COND_HIP_CUDA5_TRUE='#'
+  COND_HIP_CUDA5_FALSE=
+fi
+
+ if test x"$want_hip" = xcuda6; then
+  COND_HIP_CUDA6_TRUE=
+  COND_HIP_CUDA6_FALSE='#'
+else
+  COND_HIP_CUDA6_TRUE='#'
+  COND_HIP_CUDA6_FALSE=
+fi
+
+ if test x"$want_hip" = xcuda7; then
+  COND_HIP_CUDA7_TRUE=
+  COND_HIP_CUDA7_FALSE='#'
+else
+  COND_HIP_CUDA7_TRUE='#'
+  COND_HIP_CUDA7_FALSE=
+fi
+
+ if test x"$want_hip" = xcuda8; then
+  COND_HIP_CUDA8_TRUE=
+  COND_HIP_CUDA8_FALSE='#'
+else
+  COND_HIP_CUDA8_TRUE='#'
+  COND_HIP_CUDA8_FALSE=
+fi
+
+ if test x"$want_hip" = xcuda9; then
+  COND_HIP_CUDA9_TRUE=
+  COND_HIP_CUDA9_FALSE='#'
+else
+  COND_HIP_CUDA9_TRUE='#'
+  COND_HIP_CUDA9_FALSE=
+fi
+
+ if test x"$want_hip" = xcuda10; then
+  COND_HIP_CUDA10_TRUE=
+  COND_HIP_CUDA10_FALSE='#'
+else
+  COND_HIP_CUDA10_TRUE='#'
+  COND_HIP_CUDA10_FALSE=
+fi
+
+ if test x"$want_hip" = xcuda11; then
+  COND_HIP_CUDA11_TRUE=
+  COND_HIP_CUDA11_FALSE='#'
+else
+  COND_HIP_CUDA11_TRUE='#'
+  COND_HIP_CUDA11_FALSE=
 fi
 
 
@@ -3028,17 +3189,51 @@ else
 fi
 
 
+##
+## support C++ Parallel STL routines (for vectorization & multithreading)
+##
+
+# Check whether --with-parallel_stl was given.
+if test "${with_parallel_stl+set}" = set; then :
+  withval=$with_parallel_stl; want_parallel_stl="$withval"
+else
+  want_parallel_stl=no
+fi
+
+ if test x"$want_parallel_stl" != xno; then
+  COND_PARALLEL_STL_TRUE=
+  COND_PARALLEL_STL_FALSE='#'
+else
+  COND_PARALLEL_STL_TRUE='#'
+  COND_PARALLEL_STL_FALSE=
+fi
+
+
+
 ###
 ### OpenMP
 ###
 
+
+# Check whether --with-openmp was given.
+if test "${with_openmp+set}" = set; then :
+  withval=$with_openmp; with_omp="$withval"
+else
+  with_omp=no
+fi
+
 # Check whether --enable-openmp was given.
 if test "${enable_openmp+set}" = set; then :
-  enableval=$enable_openmp; want_omp="$enableval"
+  enableval=$enable_openmp; enable_omp="$enableval"
+else
+  enable_omp=no
+fi
+
+if test x"$enable_omp" != xno || test x"$with_omp" != xno; then :
+  want_omp=yes
 else
   want_omp=no
 fi
-
  if test x"$want_omp" != xno; then
   COND_OMP_TRUE=
   COND_OMP_FALSE='#'
@@ -7239,36 +7434,151 @@ fi
     fi
 
     # sets default HIP path
-    #HIP_PATH=/opt/rocm
+    # Extract the first word of "hipconfig", so it can be a program name with args.
+set dummy hipconfig; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_HIPCONFIG_PROG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $HIPCONFIG_PROG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_HIPCONFIG_PROG="$HIPCONFIG_PROG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_HIPCONFIG_PROG="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+HIPCONFIG_PROG=$ac_cv_path_HIPCONFIG_PROG
+if test -n "$HIPCONFIG_PROG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $HIPCONFIG_PROG" >&5
+$as_echo "$HIPCONFIG_PROG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+    if test x"$HIPCONFIG_PROG" = x; then :
+
+      # Extract the first word of "hipconfig", so it can be a program name with args.
+set dummy hipconfig; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_HIPCONFIG_PROG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $HIPCONFIG_PROG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_HIPCONFIG_PROG="$HIPCONFIG_PROG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_HIPCONFIG_PROG="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_path_HIPCONFIG_PROG" && ac_cv_path_HIPCONFIG_PROG="path=/opt/rocm/bin"
+  ;;
+esac
+fi
+HIPCONFIG_PROG=$ac_cv_path_HIPCONFIG_PROG
+if test -n "$HIPCONFIG_PROG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $HIPCONFIG_PROG" >&5
+$as_echo "$HIPCONFIG_PROG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+
+fi
+    if test x"$HIPCONFIG_PROG" != x; then :
+
+        HIP_PATH=`$HIPCONFIG_PROG --path`
+
+fi
+    { $as_echo "$as_me:${as_lineno-$LINENO}: hipconfig program: $HIPCONFIG_PROG" >&5
+$as_echo "$as_me: hipconfig program: $HIPCONFIG_PROG" >&6;}
+    { $as_echo "$as_me:${as_lineno-$LINENO}: HIP path: $HIP_PATH" >&5
+$as_echo "$as_me: HIP path: $HIP_PATH" >&6;}
+
     #AS_IF([test x"$HIP_INC" = x],[
-    #    HIP_INC="$HIP_PATH/include"
+    #    HIP_INC="${HIP_PATH}/include"
     #])
-    #AS_IF([test x"$HIP_LIB" = x],[
-    #    HIP_LIB="$HIP_PATH/lib"
-    #])
+
+    # adds default HIP library
+    if test x"$HIP_LIB" = x -a x"${HIP_PATH}" != x; then :
+
+        HIP_LIB="${HIP_PATH}/lib"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: adding default HIP library path: ${HIP_LIB}" >&5
+$as_echo "$as_me: adding default HIP library path: ${HIP_LIB}" >&6;}
+
+fi
 
     # checks platform
-    HIPCONFIG="$HIP_PATH/bin/hipconfig"
-    GPU_PLATFORM=`$HIPCONFIG --platform`
-    if test x"$GPU_PLATFORM" = xnvcc; then :
+    if test x"$HIPCONFIG_PROG" != x ; then
+      GPU_PLATFORM=`$HIPCONFIG_PROG --platform`
+      if test x"$GPU_PLATFORM" = xnvidia; then :
 
-        { $as_echo "$as_me:${as_lineno-$LINENO}: HIP PLATFORM NVCC detected." >&5
-$as_echo "$as_me: HIP PLATFORM NVCC detected." >&6;}
-        FLAG_PLATFORM="${FC_DEFINE}__HIP_PLATFORM_NVCC__"
-
-fi
-    if test x"$GPU_PLATFORM" = xhcc; then :
-
-        { $as_echo "$as_me:${as_lineno-$LINENO}: HIP PLATFORM HCC detected." >&5
-$as_echo "$as_me: HIP PLATFORM HCC detected." >&6;}
-        FLAG_PLATFORM="${FC_DEFINE}__HIP_PLATFORM_HCC__"
+          { $as_echo "$as_me:${as_lineno-$LINENO}: HIP PLATFORM NVIDIA detected." >&5
+$as_echo "$as_me: HIP PLATFORM NVIDIA detected." >&6;}
+          HIP_PLATFORM=nvcc
+          FLAG_PLATFORM="${FC_DEFINE}__HIP_PLATFORM_NVCC__"
 
 fi
-    # compiler might require a platform selection flag
-    if [ "$HIP_FLAGS" != *"HIP_PLATFORM"* ]; then
-      # adds PLATFORM flag
-      HIP_FLAGS="${HIP_FLAGS} ${FLAG_PLATFORM}"
+
+      if test x"$GPU_PLATFORM" = xamd; then :
+
+          { $as_echo "$as_me:${as_lineno-$LINENO}: HIP PLATFORM AMD detected." >&5
+$as_echo "$as_me: HIP PLATFORM AMD detected." >&6;}
+          HIP_PLATFORM=hcc
+          FLAG_PLATFORM="${FC_DEFINE}__HIP_PLATFORM_HCC__"
+
+fi
+      # compiler might require a platform selection flag
+      case "${HIP_FLAGS}" in
+        *HIP_PLATFORM*) { $as_echo "$as_me:${as_lineno-$LINENO}: hip flags contain platform specifier: ${HIP_FLAGS}" >&5
+$as_echo "$as_me: hip flags contain platform specifier: ${HIP_FLAGS}" >&6;} ;;
+        *) { $as_echo "$as_me:${as_lineno-$LINENO}: adding flag for platform specifier ${FLAG_PLATFORM}" >&5
+$as_echo "$as_me: adding flag for platform specifier ${FLAG_PLATFORM}" >&6;};
+           HIP_FLAGS="${HIP_FLAGS} ${FLAG_PLATFORM}"
+           { $as_echo "$as_me:${as_lineno-$LINENO}: HIP_FLAGS: ${HIP_FLAGS}" >&5
+$as_echo "$as_me: HIP_FLAGS: ${HIP_FLAGS}" >&6;} ;;
+      esac
     fi
+    # sets default platform to AMD if not set
+    if test x"$GPU_PLATFORM" = x; then :
+
+      GPU_PLATFORM=amd
+
+fi
 
     # for compilation errors like:
     #   /usr/bin/ld: obj/assemble_MPI_scalar_gpu.hip.o: relocation R_X86_64_32 against `.rodata.str1.1' can not be used
@@ -7277,6 +7587,13 @@ fi
     #   HIP_FLAGS="-fPIC"
     # or
     #   HIP_FLAGS="-fno-gpu-rdc"
+    # compiler might require a -fPIC flag
+    case "${HIP_FLAGS}" in
+      *fPIC*) { $as_echo "$as_me:${as_lineno-$LINENO}: HIP flags contain position independent code flag -fPIC: ${HIP_FLAGS}" >&5
+$as_echo "$as_me: HIP flags contain position independent code flag -fPIC: ${HIP_FLAGS}" >&6;};;
+      *) { $as_echo "$as_me:${as_lineno-$LINENO}: consider adding compilation flag for position independent code: HIP_FLAGS=\"-fPIC\"" >&5
+$as_echo "$as_me: consider adding compilation flag for position independent code: HIP_FLAGS=\"-fPIC\"" >&6;};;
+    esac
 
     # test lib & include
     if test x"$HIP_LIB" != x; then :
@@ -7457,8 +7774,30 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
 
 fi
+ if test x"$GPU_PLATFORM" = xamd; then
+  COND_HIP_PLATFORM_AMD_TRUE=
+  COND_HIP_PLATFORM_AMD_FALSE='#'
+else
+  COND_HIP_PLATFORM_AMD_TRUE='#'
+  COND_HIP_PLATFORM_AMD_FALSE=
+fi
+
+ if test x"$GPU_PLATFORM" = xnvidia; then
+  COND_HIP_PLATFORM_NVIDIA_TRUE=
+  COND_HIP_PLATFORM_NVIDIA_FALSE='#'
+else
+  COND_HIP_PLATFORM_NVIDIA_TRUE='#'
+  COND_HIP_PLATFORM_NVIDIA_FALSE=
+fi
 
 
+# CUDA-aware MPI setting
+if test x"$want_cuda_aware_mpi" != xno; then :
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: enabling CUDA-aware MPI support" >&5
+$as_echo "$as_me: enabling CUDA-aware MPI support" >&6;}
+
+fi
 
 ###
 ### MIC
@@ -7493,6 +7832,20 @@ $as_echo "$as_me: LIBXSMM compilation is enabled" >&6;}
 
 
 
+
+
+fi
+
+##
+## Parallel STL
+##
+if test x"$want_parallel_stl" != xno; then :
+
+  $as_echo "## ------------ ##
+## Parallel STL ##
+## ------------ ##"
+  { $as_echo "$as_me:${as_lineno-$LINENO}: C++ Parallel STL compilation is enabled for mesh sorting" >&5
+$as_echo "$as_me: C++ Parallel STL compilation is enabled for mesh sorting" >&6;}
 
 
 fi
@@ -9767,7 +10120,7 @@ ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ex
 ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
 
-if test x"$want_cuda" != xno -o x"$want_opencl" != xno -o x"$want_vtk" != xno; then :
+if test x"$want_cuda" != xno -o x"$want_opencl" != xno -o x"$want_hip" != xno -o x"$want_vtk" != xno; then :
 
     $as_echo "## --- ##
 ## MPI ##
@@ -10121,6 +10474,10 @@ if test -z "${COND_CUDA_PLUS_TRUE}" && test -z "${COND_CUDA_PLUS_FALSE}"; then
   as_fn_error $? "conditional \"COND_CUDA_PLUS\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
+if test -z "${COND_CUDA_AWARE_MPI_TRUE}" && test -z "${COND_CUDA_AWARE_MPI_FALSE}"; then
+  as_fn_error $? "conditional \"COND_CUDA_AWARE_MPI\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${COND_OCL_TRUE}" && test -z "${COND_OCL_FALSE}"; then
   as_fn_error $? "conditional \"COND_OCL\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -10129,12 +10486,60 @@ if test -z "${COND_HIP_TRUE}" && test -z "${COND_HIP_FALSE}"; then
   as_fn_error $? "conditional \"COND_HIP\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
+if test -z "${COND_HIP_MI8_TRUE}" && test -z "${COND_HIP_MI8_FALSE}"; then
+  as_fn_error $? "conditional \"COND_HIP_MI8\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COND_HIP_MI25_TRUE}" && test -z "${COND_HIP_MI25_FALSE}"; then
+  as_fn_error $? "conditional \"COND_HIP_MI25\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COND_HIP_MI50_TRUE}" && test -z "${COND_HIP_MI50_FALSE}"; then
+  as_fn_error $? "conditional \"COND_HIP_MI50\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COND_HIP_MI100_TRUE}" && test -z "${COND_HIP_MI100_FALSE}"; then
+  as_fn_error $? "conditional \"COND_HIP_MI100\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COND_HIP_CUDA5_TRUE}" && test -z "${COND_HIP_CUDA5_FALSE}"; then
+  as_fn_error $? "conditional \"COND_HIP_CUDA5\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COND_HIP_CUDA6_TRUE}" && test -z "${COND_HIP_CUDA6_FALSE}"; then
+  as_fn_error $? "conditional \"COND_HIP_CUDA6\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COND_HIP_CUDA7_TRUE}" && test -z "${COND_HIP_CUDA7_FALSE}"; then
+  as_fn_error $? "conditional \"COND_HIP_CUDA7\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COND_HIP_CUDA8_TRUE}" && test -z "${COND_HIP_CUDA8_FALSE}"; then
+  as_fn_error $? "conditional \"COND_HIP_CUDA8\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COND_HIP_CUDA9_TRUE}" && test -z "${COND_HIP_CUDA9_FALSE}"; then
+  as_fn_error $? "conditional \"COND_HIP_CUDA9\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COND_HIP_CUDA10_TRUE}" && test -z "${COND_HIP_CUDA10_FALSE}"; then
+  as_fn_error $? "conditional \"COND_HIP_CUDA10\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COND_HIP_CUDA11_TRUE}" && test -z "${COND_HIP_CUDA11_FALSE}"; then
+  as_fn_error $? "conditional \"COND_HIP_CUDA11\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${COND_MIC_TRUE}" && test -z "${COND_MIC_FALSE}"; then
   as_fn_error $? "conditional \"COND_MIC\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${COND_XSMM_TRUE}" && test -z "${COND_XSMM_FALSE}"; then
   as_fn_error $? "conditional \"COND_XSMM\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COND_PARALLEL_STL_TRUE}" && test -z "${COND_PARALLEL_STL_FALSE}"; then
+  as_fn_error $? "conditional \"COND_PARALLEL_STL\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${COND_OMP_TRUE}" && test -z "${COND_OMP_FALSE}"; then
@@ -10167,6 +10572,14 @@ esac
 case $FC_MODOUT in #(
   *\ ) FC_MODOUT=$FC_MODOUT'${ac_empty}' ;;
 esac
+if test -z "${COND_HIP_PLATFORM_AMD_TRUE}" && test -z "${COND_HIP_PLATFORM_AMD_FALSE}"; then
+  as_fn_error $? "conditional \"COND_HIP_PLATFORM_AMD\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COND_HIP_PLATFORM_NVIDIA_TRUE}" && test -z "${COND_HIP_PLATFORM_NVIDIA_FALSE}"; then
+  as_fn_error $? "conditional \"COND_HIP_PLATFORM_NVIDIA\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 
 : "${CONFIG_STATUS=./config.status}"
 ac_write_fail=0

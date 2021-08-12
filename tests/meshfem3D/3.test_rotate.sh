@@ -40,6 +40,7 @@ echo "run: `date`" >> $testdir/results.log
 
 # checks exit code
 if [[ $? -ne 0 ]]; then
+  echo "test failed"; echo "error log:"; cat $testdir/error.log; echo ""
   exit 1
 fi
 

@@ -165,6 +165,7 @@ FC_FUNC_(param_read,PARAM_READ)(char * string_read, int * string_read_len, char 
     regfree(&compiled_pattern);
     return;
   }
+
   // Read every line in the file.
   while (fgets(line, LINE_MAX, fid) != NULL) {
     // Get rid of the ending newline.
@@ -197,6 +198,7 @@ FC_FUNC_(param_read,PARAM_READ)(char * string_read, int * string_read_len, char 
     }
     free(keyword);
     regfree(&compiled_pattern);
+
     // If it matches, extract the value from the line.
     value = strndup(line+parameter[2].rm_so, parameter[2].rm_eo-parameter[2].rm_so);
 
@@ -211,9 +213,11 @@ FC_FUNC_(param_read,PARAM_READ)(char * string_read, int * string_read_len, char 
 
     free(value);
     free(namecopy);
+
     *ierr = 0;
     return;
   }
+
   // If no keyword matches, print out error and die.
   //printf("No match in parameter file for keyword '%s'\n", namecopy);
   free(namecopy);

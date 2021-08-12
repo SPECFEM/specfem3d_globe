@@ -390,8 +390,10 @@ module specfem_par
   integer, dimension(:), allocatable :: my_neighbors_crust_mantle,nibool_interfaces_crust_mantle
   integer, dimension(:,:), allocatable :: ibool_interfaces_crust_mantle
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: buffer_send_vector_crust_mantle,buffer_recv_vector_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_buffer_send_vector_cm,b_buffer_recv_vector_cm
+  ! note: MPI buffers are declared as pointers instead of allocatable arrays.
+  !       this will allow for CUDA-aware MPI handling, where buffers have to be allocated on the GPU device.
+  real(kind=CUSTOM_REAL), dimension(:,:,:), pointer :: buffer_send_vector_crust_mantle,buffer_recv_vector_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:,:,:), pointer :: b_buffer_send_vector_cm,b_buffer_recv_vector_cm
 
   integer, dimension(:), allocatable :: request_send_vector_cm,request_recv_vector_cm
   integer, dimension(:), allocatable :: b_request_send_vector_cm,b_request_recv_vector_cm
@@ -402,8 +404,8 @@ module specfem_par
   integer, dimension(:), allocatable :: my_neighbors_inner_core,nibool_interfaces_inner_core
   integer, dimension(:,:), allocatable :: ibool_interfaces_inner_core
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: buffer_send_vector_inner_core,buffer_recv_vector_inner_core
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_buffer_send_vector_inner_core,b_buffer_recv_vector_inner_core
+  real(kind=CUSTOM_REAL), dimension(:,:,:), pointer :: buffer_send_vector_inner_core,buffer_recv_vector_inner_core
+  real(kind=CUSTOM_REAL), dimension(:,:,:), pointer :: b_buffer_send_vector_inner_core,b_buffer_recv_vector_inner_core
 
   integer, dimension(:), allocatable :: request_send_vector_ic,request_recv_vector_ic
   integer, dimension(:), allocatable :: b_request_send_vector_ic,b_request_recv_vector_ic
@@ -414,8 +416,8 @@ module specfem_par
   integer, dimension(:), allocatable :: my_neighbors_outer_core,nibool_interfaces_outer_core
   integer, dimension(:,:), allocatable :: ibool_interfaces_outer_core
 
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_buffer_send_scalar_outer_core,b_buffer_recv_scalar_outer_core
+  real(kind=CUSTOM_REAL), dimension(:,:), pointer :: buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core
+  real(kind=CUSTOM_REAL), dimension(:,:), pointer :: b_buffer_send_scalar_outer_core,b_buffer_recv_scalar_outer_core
 
   integer, dimension(:), allocatable :: request_send_scalar_oc,request_recv_scalar_oc
   integer, dimension(:), allocatable :: b_request_send_scalar_oc,b_request_recv_scalar_oc
@@ -426,6 +428,9 @@ module specfem_par
 
   ! CUDA mesh pointer to integer wrapper
   integer(kind=8) :: Mesh_pointer
+
+  ! flags for CUDA-aware MPI handling
+  logical :: USE_CUDA_AWARE_MPI = .false.
 
   !-----------------------------------------------------------------
   ! ADIOS

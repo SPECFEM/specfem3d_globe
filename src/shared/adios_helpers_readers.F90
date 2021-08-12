@@ -769,8 +769,12 @@ contains
   ! gets dimension associated to array
   full_name = trim(array_name) // "/local_dim"
   call adios2_inquire_variable(v, adios_group, trim(full_name), ier)
-  if (ier == 0) then
 
+  !debug
+  !print *,'debug: ADIOS2 check variable ',rank,trim(full_name),ier
+
+  if (ier == 0) then
+    ! checks variable flag
     if (.not. v%valid) stop 'Error adios2 variable invalid'
 
     ! selection for scalar as 1-D array single entry
@@ -798,6 +802,7 @@ contains
     call adios2_inquire_variable(v, adios_group, trim(full_name), ier)
     call check_adios_err(ier,"Error adios2 read_adios_array_gll_check(): inquire variable "//trim(full_name)//" failed")
 
+    ! checks variable flag
     if (.not. v%valid) stop 'Error adios2 variable invalid'
 
     ! selection

@@ -5,7 +5,7 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -100,7 +100,6 @@ void compute_vector_gradient_kernel(const int ispec, const __local float * fx, c
   int K;\n\
   int J;\n\
   int I;\n\
-  int l;\n\
   int offset;\n\
   float tempx1l;\n\
   float tempx2l;\n\
@@ -148,7 +147,7 @@ void compute_vector_gradient_kernel(const int ispec, const __local float * fx, c
   tempz2l = 0.0f;\n\
   tempz3l = 0.0f;\n\
 \n\
-  for (l = 0; l <= NGLLX - (1); l += 1) {\n\
+  for (int l = 0; l <= NGLLX - (1); l += 1) {\n\
     fac1 = sh_hprime_xx[(l) * (NGLLX) + I];\n\
     tempx1l = tempx1l + (fx[(K) * (NGLL2) + (J) * (NGLLX) + l]) * (fac1);\n\
     tempy1l = tempy1l + (fy[(K) * (NGLL2) + (J) * (NGLLX) + l]) * (fac1);\n\
@@ -211,7 +210,6 @@ __kernel void compute_kappa_mu_hess_kernel(const __global int * d_ibool, const _
   float hess_rhol;\n\
   float hess_kappal;\n\
   float hess_mul;\n\
-  int l;\n\
 \n\
   ispec = get_group_id(0) + (get_group_id(1)) * (get_num_groups(0));\n\
   ijk_ispec = get_local_id(0) + (NGLL3) * (ispec);\n\
@@ -238,7 +236,7 @@ __kernel void compute_kappa_mu_hess_kernel(const __global int * d_ibool, const _
     if (USE_SOURCE_RECEIVER_HESSIAN) {\n\
       compute_vector_gradient_kernel(ispec, sh_b_velocx, sh_b_velocy, sh_b_velocz, d_xix, d_xiy, d_xiz, d_etax, d_etay, d_etaz, d_gammax, d_gammay, d_gammaz, sh_hprime_xx, b_vgrad);\n\
     } else {\n\
-      for (l = 0; l <= 8; l += 1) {\n\
+      for (int l = 0; l <= 8; l += 1) {\n\
         b_vgrad[l] = vgrad[l];\n\
       }\n\
     }\n\

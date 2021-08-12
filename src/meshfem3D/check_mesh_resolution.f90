@@ -455,9 +455,11 @@
           vsv = muvstore(i,j,k,ispec) / rhostore(i,j,k,ispec)
           vsh = muhstore(i,j,k,ispec) / rhostore(i,j,k,ispec)
         endif
+
         ! ignore fluid regions with Vs = 0 (takes acoustic wave speeds vp)
         if (vsv < TINYVAL) vsv = vpv
         if (vsh < TINYVAL) vsh = vph
+
         ! min
         if (vsv < vsh) then
           if (vsmin > vsv) vsmin = vsv

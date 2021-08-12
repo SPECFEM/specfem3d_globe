@@ -1106,7 +1106,11 @@
   ! local parameters
   integer :: n,m,idx,i,i0
   double precision :: val,sgn,factor
-  real(kind=16) :: factorial_r
+  ! note: PGI compilers don't support quad precision (kind=16), due to a lack of hardware support.
+  !       quad precision will also be very slow as operations are not optimized. thus, going down to 8 byte representations...
+  !real(kind=16) :: factorial_r
+  ! integer w/ 8 byte representation has a maximum value of 2**63-1 = 9,223,372,036,854,775,807
+  integer(kind=8) :: factorial_r
 
   do n = 0,degree_N
     val = sqrt ((2.d0 * n + 1) / (4.d0 * PI))
@@ -1132,9 +1136,10 @@
         i0 = n - m + 1
         factorial_r = i0
         do i = i0 + 1, n + m
+          if (factorial_r > real(9223372036854775807.0/i,kind=8)) stop 'Error: get_nml_Factors() exceeds integer*8 limits'
           factorial_r = factorial_r * i
         enddo
-        factor = 2.d0 * real(LEGENDRE_K2 / factorial_r,kind=16)
+        factor = 2.d0 * real(LEGENDRE_K2 / factorial_r,kind=8)
         factor = sqrt(factor)
       endif
 

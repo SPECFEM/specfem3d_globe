@@ -200,12 +200,12 @@
 
     ! determines neighbor rank for shared faces
     call get_MPI_interfaces(myrank,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE, &
-                              test_flag,my_neighbors,nibool_neighbors,ibool_neighbors, &
-                              num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
-                              max_nibool,MAX_NEIGHBORS, &
-                              ibool,is_on_a_slice_edge, &
-                              IREGION_CRUST_MANTLE,add_central_cube,dummy_i,INCLUDE_CENTRAL_CUBE, &
-                              xstore_glob,ystore_glob,zstore_glob,NPROCTOT)
+                            test_flag,my_neighbors,nibool_neighbors,ibool_neighbors, &
+                            num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
+                            max_nibool,MAX_NEIGHBORS, &
+                            ibool,is_on_a_slice_edge, &
+                            IREGION_CRUST_MANTLE,add_central_cube,dummy_i,INCLUDE_CENTRAL_CUBE, &
+                            xstore_glob,ystore_glob,zstore_glob,NPROCTOT)
 
     deallocate(test_flag)
     deallocate(dummy_i)
@@ -539,24 +539,24 @@
     !    ! gets new interfaces for inner_core without central cube yet
     !    ! determines neighbor rank for shared faces
     !    call get_MPI_interfaces(myrank,NGLOB_INNER_CORE,NSPEC_INNER_CORE, &
-    !                          test_flag,my_neighbors,nibool_neighbors,ibool_neighbors, &
-    !                          num_interfaces_inner_core,max_nibool_interfaces_ic, &
-    !                          max_nibool,MAX_NEIGHBORS, &
-    !                          ibool,is_on_a_slice_edge, &
-    !                          IREGION_INNER_CORE,add_central_cube,idoubling,INCLUDE_CENTRAL_CUBE, &
-    !                          xstore_glob,ystore_glob,zstore_glob,NPROCTOT)
+    !                            test_flag,my_neighbors,nibool_neighbors,ibool_neighbors, &
+    !                            num_interfaces_inner_core,max_nibool_interfaces_ic, &
+    !                            max_nibool,MAX_NEIGHBORS, &
+    !                            ibool,is_on_a_slice_edge, &
+    !                            IREGION_INNER_CORE,add_central_cube,idoubling,INCLUDE_CENTRAL_CUBE, &
+    !                            xstore_glob,ystore_glob,zstore_glob,NPROCTOT)
     !  endif
     !  call synchronize_all()
     !enddo
 
     ! determines neighbor rank for shared faces
     call get_MPI_interfaces(myrank,NGLOB_INNER_CORE,NSPEC_INNER_CORE, &
-                          test_flag,my_neighbors,nibool_neighbors,ibool_neighbors, &
-                          num_interfaces_inner_core,max_nibool_interfaces_ic, &
-                          max_nibool,MAX_NEIGHBORS, &
-                          ibool,is_on_a_slice_edge, &
-                          IREGION_INNER_CORE,add_central_cube,idoubling,INCLUDE_CENTRAL_CUBE, &
-                          xstore_glob,ystore_glob,zstore_glob,NPROCTOT)
+                            test_flag,my_neighbors,nibool_neighbors,ibool_neighbors, &
+                            num_interfaces_inner_core,max_nibool_interfaces_ic, &
+                            max_nibool,MAX_NEIGHBORS, &
+                            ibool,is_on_a_slice_edge, &
+                            IREGION_INNER_CORE,add_central_cube,idoubling,INCLUDE_CENTRAL_CUBE, &
+                            xstore_glob,ystore_glob,zstore_glob,NPROCTOT)
 
     deallocate(test_flag)
   else

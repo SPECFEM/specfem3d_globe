@@ -58,6 +58,18 @@
 #include <cuda_runtime.h>
 #endif
 
+#ifdef USE_HIP
+#include <hip/hip_runtime.h>
+#endif
+
+#ifdef WITH_MPI
+#include <mpi.h>
+#endif
+
+#ifdef WITH_CUDA_AWARE_MPI
+#include <mpi-ext.h>
+#endif
+
 // type of "working" variables: see also CUSTOM_REAL in constants.h
 //
 // double precision temporary variables leads to 10% performance decrease
@@ -224,10 +236,6 @@ typedef double realw;
 #endif
 
 
-// (optional) unrolling loops
-// leads up to ~10% performance increase in OpenCL and ~1% in Cuda
-#define MANUALLY_UNROLLED_LOOPS
-
 // CUDA compiler specifications
 // (optional) use launch_bounds specification to increase compiler optimization
 #ifdef GPU_DEVICE_K20
@@ -284,6 +292,21 @@ typedef double realw;
 //             For Volta, the spilling slows down the kernels by ~5%
 #undef USE_LAUNCH_BOUNDS
 //#define LAUNCH_MIN_BLOCKS 6  // with 6 blocks, kernel uses 80 registers and would lead to ~1% speed up
+
+// using float3 instead of float numbers to make use of CUDA intrinsic float formats
+// compiler infos (--ptxas-options -v flag)
+// Cuda compilation tools, release 11.0, V11.0.194
+// - with float:
+//  ptxas info    : Function properties for _Z32crust_mantle_impl_kernel_forward
+//                   32 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+//  ptxas info    : Used 79 registers, 6200 bytes smem, 1004 bytes cmem[0]
+//  ptxas info    : Used 79 registers, 6200 bytes smem, 1004 bytes cmem[0], 8 bytes cmem[2]
+// - with float3:
+//  ptxas info    : Function properties for _Z32crust_mantle_impl_kernel_forward
+//                    32 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+//  ptxas info    : Used 80 registers, 6200 bytes smem, 1004 bytes cmem[0], 8 bytes cmem[2]
+// no performance gain so far...
+//#define USE_FLOAT3
 #endif
 
 #ifdef GPU_DEVICE_Turing
@@ -300,6 +323,44 @@ typedef double realw;
 // shared memory size 164KB per SM (maximum shared memory, 163KB per thread block)
 // maximum registers 255 per thread
 #undef USE_LAUNCH_BOUNDS
+//
+// - w/out launch_bounds:
+//  ptxas info    : Function properties for _Z32crust_mantle_impl_kernel_forward
+//                   32 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+//  ptxas info    : Used 80 registers, 6200 bytes smem, 1004 bytes cmem[0], 8 bytes cmem[2]
+// - with launch_bounds:
+//                   40 bytes stack frame, 8 bytes spill stores, 8 bytes spill loads
+//  ptxas info    : Used 72 registers, 6200 bytes smem, 1004 bytes cmem[0], 8 bytes cmem[2]
+// no performance gain so far...
+//#define USE_LAUNCH_BOUNDS
+//#define LAUNCH_MIN_BLOCKS 7
+
+// using float3 instead of float numbers to make use of CUDA intrinsic float formats
+// compiler infos (--ptxas-options -v flag)
+// Cuda compilation tools, release 11.0, V11.0.194
+// - with float:
+//  ptxas info    : Function properties for _Z32crust_mantle_impl_kernel_forward
+//                   32 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+//  ptxas info    : Used 79 registers, 6200 bytes smem, 1004 bytes cmem[0], 8 bytes cmem[2]
+// - with float3:
+//  ptxas info    : Function properties for _Z32crust_mantle_impl_kernel_forward
+//                    32 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+//  ptxas info    : Used 80 registers, 6200 bytes smem, 1004 bytes cmem[0], 8 bytes cmem[2]
+// no performance gain so far...
+//#define USE_FLOAT3
+
+// CUDA w/ asynchronuous shared memory copies for Ampere architectures
+// see: https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#async_data_operations
+// makes use of async copies, pipelines and cooperative groups, and float3 arrays
+// - w/out cuda_shared_async:
+//  ptxas info    : Function properties for _Z32crust_mantle_impl_kernel_forward
+//                    32 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+//  ptxas info    : Used 80 registers, 6200 bytes smem, 1004 bytes cmem[0], 8 bytes cmem[2]
+// - with cuda_shared_async:
+//  ptxas info    : Function properties for _Z32crust_mantle_impl_kernel_forward
+//                    32 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+//  ptxas info    : Used 82 registers, 26752 bytes smem, 1004 bytes cmem[0], 8 bytes cmem[2]
+//#define CUDA_SHARED_ASYNC
 #endif
 
 // CUDA Graphs
@@ -371,12 +432,27 @@ typedef double realw;
 
 /*----------------------------------------------------------------------------------------------- */
 
+// OpenCL specifics
 #ifdef USE_OPENCL
 #include "mesh_constants_ocl.h"
 #endif
+
+// CUDA specifics
 #ifdef USE_CUDA
 #include "mesh_constants_cuda.h"
 #endif
+
+// HIP specifics
+#ifdef USE_HIP
+#include "mesh_constants_hip.h"
+#endif
+
+// runtime flags
+extern int run_opencl;
+extern int run_cuda;
+extern int run_hip;
+
+/* ----------------------------------------------------------------------------------------------- */
 
 typedef union {
 #ifdef USE_OPENCL
@@ -384,6 +460,9 @@ typedef union {
 #endif
 #ifdef USE_CUDA
   int *cuda;
+#endif
+#ifdef USE_HIP
+  int *hip;
 #endif
 } gpu_int_mem;
 
@@ -394,6 +473,9 @@ typedef union {
 #ifdef USE_CUDA
   realw *cuda;
 #endif
+#ifdef USE_HIP
+  realw *hip;
+#endif
 } gpu_realw_mem;
 
 typedef union {
@@ -402,6 +484,9 @@ typedef union {
 #endif
 #ifdef USE_CUDA
   double *cuda;
+#endif
+#ifdef USE_HIP
+  double *hip;
 #endif
 } gpu_double_mem;
 
@@ -412,6 +497,9 @@ typedef union {
 #ifdef USE_CUDA
   void *cuda;
 #endif
+#ifdef USE_HIP
+  void *hip;
+#endif
 } gpu_mem;
 
 
@@ -420,9 +508,6 @@ typedef union {
 #else
 #define EXTERN_LANG
 #endif
-
-extern int run_cuda;
-extern int run_opencl;
 
 /*----------------------------------------------------------------------------------------------- */
 // mesh pointer wrapper structure
@@ -891,6 +976,7 @@ typedef struct mesh_ {
   gpu_int_mem d_nibool_interfaces_crust_mantle;
   gpu_int_mem d_ibool_interfaces_crust_mantle;
 
+  // mpi buffers
   gpu_realw_mem d_send_accel_buffer_crust_mantle;
   gpu_realw_mem d_b_send_accel_buffer_crust_mantle;
 
@@ -899,6 +985,7 @@ typedef struct mesh_ {
   gpu_int_mem d_nibool_interfaces_inner_core;
   gpu_int_mem d_ibool_interfaces_inner_core;
 
+  // mpi buffers
   gpu_realw_mem d_send_accel_buffer_inner_core;
   gpu_realw_mem d_b_send_accel_buffer_inner_core;
 
@@ -907,6 +994,7 @@ typedef struct mesh_ {
   gpu_int_mem d_nibool_interfaces_outer_core;
   gpu_int_mem d_ibool_interfaces_outer_core;
 
+  // mpi buffers
   gpu_realw_mem d_send_accel_buffer_outer_core;
   gpu_realw_mem d_b_send_accel_buffer_outer_core;
 
@@ -1001,6 +1089,9 @@ typedef struct mesh_ {
   // optimizations
   // ------------------------------------------------------------------ //
 
+  // CUDA-aware MPI flag
+  int use_cuda_aware_mpi;
+
   // A buffer for MPI send/recv, which is duplicated in Fortran but is
   // allocated with pinned memory to facilitate asynchronous device <->
   // host memory transfers
@@ -1050,14 +1141,14 @@ typedef struct mesh_ {
 #endif
 
   // streams
-#ifdef USE_CUDA
   // overlapped memcpy streams
-  cudaStream_t compute_stream;
-  cudaStream_t copy_stream;
+  gpu_stream compute_stream;
+  gpu_stream copy_stream;
 
   // event
-  cudaEvent_t kernel_event;
+  gpu_event kernel_event;
 
+#ifdef USE_CUDA
   // graphs
 #ifdef USE_CUDA_GRAPHS
   int use_graph_call_elastic;
@@ -1078,8 +1169,7 @@ typedef struct mesh_ {
   cudaGraphExec_t graphExec_norm;
   cudaGraphExec_t graphExec_norm_strain;
 #endif
-
-#endif
+#endif // USE_CUDA
 
 #ifdef USE_OPENCL
   cl_event last_copy_evt;
@@ -1203,6 +1293,9 @@ void gpuInitialize_buffers (Mesh *mp);
 void gpuSynchronize ();
 void gpuReset ();
 
+void gpuStreamCreate(gpu_stream* stream_ptr);
+void gpuStreamSynchronize(gpu_stream stream);
+
 void exit_on_gpu_error (const char *kernel_name);
 void exit_on_error (const char *info);
 
@@ -1223,10 +1316,14 @@ realw get_device_array_maximum_value (gpu_realw_mem d_array, int size);
 #ifndef TAKE_REF_CUDA
 #define TAKE_REF_CUDA(_buffer_)
 #endif
+#ifndef TAKE_REF_HIP
+#define TAKE_REF_HIP(_buffer_)
+#endif
 
 #define gpuTakeRef(_buffer_) _buffer_ ;         \
   TAKE_REF_OCL(_buffer_);                       \
-  TAKE_REF_CUDA(_buffer_);
+  TAKE_REF_CUDA(_buffer_);                      \
+  TAKE_REF_HIP(_buffer_);
 
 #ifndef INITIALIZE_OFFSET_OCL
 #define INITIALIZE_OFFSET_OCL()
@@ -1234,10 +1331,14 @@ realw get_device_array_maximum_value (gpu_realw_mem d_array, int size);
 #ifndef INITIALIZE_OFFSET_CUDA
 #define INITIALIZE_OFFSET_CUDA()
 #endif
+#ifndef INITIALIZE_OFFSET_HIP
+#define INITIALIZE_OFFSET_HIP()
+#endif
 
 #define INITIALIZE_OFFSET()                     \
   INITIALIZE_OFFSET_OCL();                      \
-  INITIALIZE_OFFSET_CUDA();
+  INITIALIZE_OFFSET_CUDA();                     \
+  INITIALIZE_OFFSET_HIP();
 
 #ifndef INIT_OFFSET_OCL
 #define INIT_OFFSET_OCL(_buffer_, _offset_)
@@ -1245,11 +1346,15 @@ realw get_device_array_maximum_value (gpu_realw_mem d_array, int size);
 #ifndef INIT_OFFSET_CUDA
 #define INIT_OFFSET_CUDA(_buffer_, _offset_)
 #endif
+#ifndef INIT_OFFSET_HIP
+#define INIT_OFFSET_HIP(_buffer_, _offset_)
+#endif
 
 #define INIT_OFFSET(_buffer_, _offset_)         \
   __typeof__(mp->_buffer_) _buffer_##_##_offset_;   \
   INIT_OFFSET_OCL(_buffer_, _offset_);           \
-  INIT_OFFSET_CUDA(_buffer_, _offset_);
+  INIT_OFFSET_CUDA(_buffer_, _offset_);          \
+  INIT_OFFSET_HIP(_buffer_, _offset_);
 
 #define PASS_OFFSET(_buffer_, _offset_) _buffer_##_##_offset_
 
@@ -1259,10 +1364,15 @@ realw get_device_array_maximum_value (gpu_realw_mem d_array, int size);
 #ifndef RELEASE_OFFSET_CUDA
 #define RELEASE_OFFSET_CUDA(_buffer_, _offset_) {}
 #endif
+#ifndef RELEASE_OFFSET_HIP
+#define RELEASE_OFFSET_HIP(_buffer_, _offset_) {}
+#endif
 
 #define RELEASE_OFFSET(_buffer_, _offset_)      \
   RELEASE_OFFSET_OCL(_buffer_, _offset_);        \
-  RELEASE_OFFSET_CUDA(_buffer_, _offset_);
+  RELEASE_OFFSET_CUDA(_buffer_, _offset_);       \
+  RELEASE_OFFSET_HIP(_buffer_, _offset_);
+
 
 /* ----------------------------------------------------------------------------------------------- */
 // kernel setup function

@@ -119,12 +119,25 @@
 
 ! standard routine to setup model
 
-  use constants, only: N_SLS,myrank
+  use constants, only: N_SLS,myrank,IMAIN
 
-  use shared_parameters, only: ATT_F_C_SOURCE
+  use shared_parameters, only: ATT_F_C_SOURCE,ATTENUATION_GLL,ATTENUATION_3D
   use regions_mesh_par2, only: tau_s_store
 
   implicit none
+
+  ! user info
+  if (myrank == 0) then
+    write(IMAIN,*) 'attenuation model:'
+    if (ATTENUATION_GLL) then
+      write(IMAIN,*) '  GLL model'
+    else if (ATTENUATION_3D) then
+      write(IMAIN,*) '  3D model'
+    else
+      write(IMAIN,*) '  1D reference model'
+    endif
+    call flush_IMAIN()
+  endif
 
   ! main process determines period ranges
   if (myrank == 0) call read_attenuation_model()
@@ -233,40 +246,48 @@
         REFERENCE_MODEL_IASP91, &
         REFERENCE_MODEL_JP1D)
     ! PREM Q layers
+    if (myrank == 0) write(IMAIN,*) '  model: PREM attenuation'
     Qn = 12
 
   case (REFERENCE_MODEL_AK135F_NO_MUD)
     ! redefines "pure" 1D model without crustal modification
+    if (myrank == 0) write(IMAIN,*) '  model: AK135 attenuation'
     call define_model_ak135(.false.)
     Qn = NR_AK135F_NO_MUD
 
   case (REFERENCE_MODEL_1066A)
     ! redefines "pure" 1D model without crustal modification
+    if (myrank == 0) write(IMAIN,*) '  model: 1066A attenuation'
     call define_model_1066a(.false.)
     Qn = NR_1066A
 
   case (REFERENCE_MODEL_1DREF)
     ! redefines "pure" 1D model without crustal modification
+    if (myrank == 0) write(IMAIN,*) '  model: 1D_REF attenuation'
     call define_model_1dref(.false.)
     Qn = NR_REF
 
   case (REFERENCE_MODEL_SEA1D)
     ! redefines "pure" 1D model without crustal modification
+    if (myrank == 0) write(IMAIN,*) '  model: SEA_1D attenuation'
     call define_model_sea1d(.false.)
     Qn = NR_SEA1D
 
   case (REFERENCE_MODEL_SOHL, &
         REFERENCE_MODEL_SOHL_B)
     ! Mars, Q from PREM
+    if (myrank == 0) write(IMAIN,*) '  model: Sohl attenuation'
     Qn = 12
 
   case (REFERENCE_MODEL_CASE65TAY)
     ! redefines "pure" 1D model without crustal modification
+    if (myrank == 0) write(IMAIN,*) '  model: Case65TAY attenuation'
     call define_model_case65TAY(.false.)
     Qn = NR_case65TAY
 
   case (REFERENCE_MODEL_VPREMOON)
     ! Moon
+    if (myrank == 0) write(IMAIN,*) '  model: VPREMOON attenuation'
     ! no need to redefine 1D model, Qmu_original array contains original values (without CRUSTAL modification)
     Qn = NR_VPREMOON_layers
 

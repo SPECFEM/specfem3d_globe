@@ -18,7 +18,7 @@ module BOAST
     p = Procedure(function_name, [accel_crust_mantle, rmassx_crust_mantle, rmassy_crust_mantle, rmassz_crust_mantle, rmass_ocean_load, npoin_ocean_load, ibool_ocean_load, normal_ocean_load])
     if (get_lang == CUDA and ref) then
       get_output.print File::read("references/#{function_name}.cu")
-    elsif(get_lang == CL or get_lang == CUDA) then
+    elsif(get_lang == CL or get_lang == CUDA or get_lang == HIP) then
       make_specfem3d_header( :ndim => n_dim )
       open p
       decl ipoin = Int("ipoin")

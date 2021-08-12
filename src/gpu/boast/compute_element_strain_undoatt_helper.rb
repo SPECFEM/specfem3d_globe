@@ -28,7 +28,6 @@ module BOAST
       decl k = Int("K")
       decl j = Int("J")
       decl i = Int("I")
-      decl l = Int("l")
       decl offset = Int("offset")
       tempanl = ["x", "y", "z"].collect { |a|
         [ 1, 2, 3 ].collect { |n|
@@ -60,7 +59,8 @@ module BOAST
       }
       comment()
 
-      print For(l, 0, ngllx - 1) {
+      l = Int("l")
+      print For(l, 0, ngllx - 1, :declit => true) {
         print fac[0] === sh_hprime_xx[l*ngllx + i]
         (0..2).each { |indx|
           print tempanl[indx][0] === tempanl[indx][0] + s_dummy_loc[indx][k*ngll2 + j*ngllx + l]*fac[0]

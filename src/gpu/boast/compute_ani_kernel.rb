@@ -31,14 +31,13 @@ module BOAST
     p = Procedure(function_name, v)
     if (get_lang == CUDA and ref) then
       get_output.print File::read("references/#{function_name}.cu")
-    elsif(get_lang == CL or get_lang == CUDA) then
+    elsif(get_lang == CL or get_lang == CUDA or get_lang == HIP) then
       make_specfem3d_header( :ngll3 => n_gll3 )
       sub_compute_strain_product =  compute_strain_product()
       print sub_compute_strain_product
       comment()
 
       open p
-        decl i = Int("i")
         decl ispec = Int("ispec")
         decl ijk_ispec = Int("ijk_ispec")
         decl offset = Int("offset")
@@ -77,7 +76,8 @@ module BOAST
 
           # updates full anisotropic kernel
           BOAST::get_output.puts"    // attention: following array is sorted differently on GPU and CPU, -> use 'resort_array' before copying back to cpu"
-          print For(i, 0, 21-1) {
+          i = Int("i")
+          print For(i, 0, 21-1, :declit => true) {
             print cijkl_kl[i*ngll3+offset] === cijkl_kl[i*ngll3+offset] + deltat * prod[i]
           }
         }

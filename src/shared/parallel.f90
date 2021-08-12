@@ -86,15 +86,18 @@ end module my_mpi
   ! local parameters
   integer :: myrank,ier
 
-! initialize the MPI communicator and start the NPROCTOT MPI processes.
+  ! initialize the MPI communicator and start the NPROCTOT MPI processes.
   call MPI_INIT(ier)
   if (ier /= 0 ) stop 'Error initializing MPI'
 
+  call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
+  if (ier /= 0 ) stop 'Error getting MPI rank'
+
   ! we need to make sure that NUMBER_OF_SIMULTANEOUS_RUNS and BROADCAST_SAME_MESH_AND_MODEL are read before calling world_split()
   ! thus read the parameter file
-  call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
   if (myrank == 0) then
     call open_parameter_file_from_main_only(ier)
+    if (ier /= 0) stop 'an error occurred while opening the parameter file'
     ! we need to make sure that NUMBER_OF_SIMULTANEOUS_RUNS and BROADCAST_SAME_MESH_AND_MODEL are read
     call read_value_integer(NUMBER_OF_SIMULTANEOUS_RUNS, 'NUMBER_OF_SIMULTANEOUS_RUNS', ier)
     if (ier /= 0) stop 'Error reading Par_file parameter NUMBER_OF_SIMULTANEOUS_RUNS'

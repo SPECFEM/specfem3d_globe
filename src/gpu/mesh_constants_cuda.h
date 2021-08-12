@@ -30,12 +30,54 @@
 #ifndef MESH_CONSTANTS_CUDA_H
 #define MESH_CONSTANTS_CUDA_H
 
+// CUDA specifics
+
+#ifdef USE_CUDA
+
+// (optional) unrolling loops
+// leads up to ~10% performance increase in OpenCL and ~1% in Cuda
+#define MANUALLY_UNROLLED_LOOPS   // uncomment to use loops
+
+// definitions
+typedef cudaEvent_t gpu_event;
+typedef cudaStream_t gpu_stream;
+
+// cuda header files
 #include "kernel_proto.cu.h"
 
+static inline void print_CUDA_error_if_any(cudaError_t err, int num) {
+  if (cudaSuccess != err)
+  {
+    printf("\nCUDA error !!!!! <%s> !!!!! \nat CUDA call error code: # %d\n",cudaGetErrorString(err),num);
+    fflush(stdout);
 
-void print_CUDA_error_if_any(cudaError_t err, int num);
+    // outputs error file
+    FILE* fp;
+    int myrank;
+    char filename[BUFSIZ];
+#ifdef WITH_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+#else
+    myrank = 0;
+#endif
+    sprintf(filename,"OUTPUT_FILES/error_message_%06d.txt",myrank);
+    fp = fopen(filename,"a+");
+    if (fp != NULL){
+      fprintf(fp,"\nCUDA error !!!!! <%s> !!!!! \nat CUDA call error code: # %d\n",cudaGetErrorString(err),num);
+      fclose(fp);
+    }
+
+    // stops program
+#ifdef WITH_MPI
+    MPI_Abort(MPI_COMM_WORLD,1);
+#endif
+    exit(EXIT_FAILURE);
+  }
+}
+
 
 /* ----------------------------------------------------------------------------------------------- */
+
 #ifndef CUSTOM_REAL
 #pragma message ("\nmesh_constants_cuda.h: CUSTOM_REAL not defined for textures, using CUSTOM_REAL == 4\n")
 #define CUSTOM_REAL 4
@@ -115,6 +157,8 @@ do {                                                                \
     extern __constant__ size_t d_hprimewgll_xx_tex_offset;
   #endif
 #endif
+
+#endif  // USE_CUDA
 
 #endif
 

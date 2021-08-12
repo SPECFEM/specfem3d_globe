@@ -157,7 +157,7 @@ module BOAST
 
     if (get_lang == CUDA and ref) then
       get_output.print File::read("references/#{function_name}.cu".gsub("_forward","").gsub("_adjoint",""))
-    elsif(get_lang == CL or get_lang == CUDA) then
+    elsif(get_lang == CL or get_lang == CUDA or get_lang == HIP) then
       # header
       make_specfem3d_header(:ngllx => n_gllx, :ngll2 => n_gll2, :ngll3 => n_gll3, :ngll3_padded => n_gll3_padded,
                             :coloring_min_nspec_outer_core => coloring_min_nspec_outer_core)
@@ -228,9 +228,9 @@ module BOAST
       decl tx = Int("tx")
       decl k  = Int("K"), j = Int("J"), i = Int("I")
 
-      get_output.puts "#ifndef #{manually_unrolled_loops}"
-        decl l = Int("l")
-      get_output.puts "#endif"
+      #get_output.puts "#ifndef #{manually_unrolled_loops}"
+      l = Int("l")
+      #get_output.puts "#endif"
 
       active = (1..elem_per_thread).collect { |e_i| Int("active_#{e_i}", :size => 2, :signed => false) }
       decl *active
@@ -328,7 +328,7 @@ module BOAST
 
         print If(active[elem_index]) {
           (0..2).each { |indx| print templ[indx] === 0.0 }
-          for_loop = For(l, 0, ngllx-1) {
+          for_loop = For(l, 0, ngllx-1, :declit => true) {
              print templ[0] === templ[0] + s_dummy_loc[k*ngll2+j*ngllx+l]*sh_hprime_xx[l*ngllx+i]
              print templ[1] === templ[1] + s_dummy_loc[k*ngll2+l*ngllx+i]*sh_hprime_xx[l*ngllx+j]
              print templ[2] === templ[2] + s_dummy_loc[l*ngll2+j*ngllx+i]*sh_hprime_xx[l*ngllx+k]
@@ -408,7 +408,7 @@ module BOAST
 
         print If(active[elem_index]) {
           (0..2).each { |indx| print templ[indx] === 0.0 }
-          for_loop = For(l, 0, ngllx-1) {
+          for_loop = For(l, 0, ngllx-1, :declit => true) {
              print templ[0] === templ[0] + s_temp[0][k*ngll2+j*ngllx+l]*sh_hprimewgll_xx[i*ngllx+l]
              print templ[1] === templ[1] + s_temp[1][k*ngll2+l*ngllx+i]*sh_hprimewgll_xx[j*ngllx+l]
              print templ[2] === templ[2] + s_temp[2][l*ngll2+j*ngllx+i]*sh_hprimewgll_xx[k*ngllx+l]

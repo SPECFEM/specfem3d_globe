@@ -184,6 +184,31 @@ void FC_FUNC_ (compute_stacey_acoustic_gpu,
                                                      d_b_absorb_potential.cuda);
   }
 #endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(blocksize,1,1);
+
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_stacey_acoustic_kernel), grid, threads, 0, mp->compute_stream,
+                                                                        mp->d_veloc_outer_core.hip,
+                                                                        mp->d_accel_outer_core.hip,
+                                                                        interface_type,
+                                                                        num_abs_boundary_faces,
+                                                                        d_abs_boundary_ispec.hip,
+                                                                        mp->d_nkmin_xi_outer_core.hip,
+                                                                        mp->d_nkmin_eta_outer_core.hip,
+                                                                        mp->d_njmin_outer_core.hip,
+                                                                        mp->d_njmax_outer_core.hip,
+                                                                        mp->d_nimin_outer_core.hip,
+                                                                        mp->d_nimax_outer_core.hip,
+                                                                        d_abs_boundary_jacobian2D.hip,
+                                                                        d_wgllwgll.hip,
+                                                                        mp->d_ibool_outer_core.hip,
+                                                                        mp->d_vp_outer_core.hip,
+                                                                        mp->save_stacey,
+                                                                        d_b_absorb_potential.hip);
+  }
+#endif
 
   //  adjoint simulations: stores absorbed wavefield part
   if (mp->save_stacey) {
@@ -315,6 +340,23 @@ void FC_FUNC_ (compute_stacey_acoustic_backward_gpu,
                                                                                    mp->d_njmin_outer_core.cuda,mp->d_njmax_outer_core.cuda,
                                                                                    mp->d_nimin_outer_core.cuda,mp->d_nimax_outer_core.cuda,
                                                                                    mp->d_ibool_outer_core.cuda);
+  }
+#endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(blocksize,1,1);
+
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_stacey_acoustic_backward_kernel), grid, threads, 0, mp->compute_stream,
+                                                                                 mp->d_b_accel_outer_core.hip,
+                                                                                 d_b_absorb_potential.hip,
+                                                                                 interface_type,
+                                                                                 num_abs_boundary_faces,
+                                                                                 d_abs_boundary_ispec.hip,
+                                                                                 mp->d_nkmin_xi_outer_core.hip,mp->d_nkmin_eta_outer_core.hip,
+                                                                                 mp->d_njmin_outer_core.hip,mp->d_njmax_outer_core.hip,
+                                                                                 mp->d_nimin_outer_core.hip,mp->d_nimax_outer_core.hip,
+                                                                                 mp->d_ibool_outer_core.hip);
   }
 #endif
 
@@ -461,6 +503,31 @@ void FC_FUNC_ (compute_stacey_acoustic_undoatt_gpu,
                                                                           mp->d_vp_outer_core.cuda,
                                                                           mp->save_stacey,
                                                                           NULL);
+  }
+#endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(blocksize,1,1);
+
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_stacey_acoustic_kernel), grid, threads, 0, mp->compute_stream,
+                                                                        mp->d_b_veloc_outer_core.hip,
+                                                                        mp->d_b_accel_outer_core.hip,
+                                                                        interface_type,
+                                                                        num_abs_boundary_faces,
+                                                                        d_abs_boundary_ispec.hip,
+                                                                        mp->d_nkmin_xi_outer_core.hip,
+                                                                        mp->d_nkmin_eta_outer_core.hip,
+                                                                        mp->d_njmin_outer_core.hip,
+                                                                        mp->d_njmax_outer_core.hip,
+                                                                        mp->d_nimin_outer_core.hip,
+                                                                        mp->d_nimax_outer_core.hip,
+                                                                        d_abs_boundary_jacobian2D.hip,
+                                                                        d_wgllwgll.hip,
+                                                                        mp->d_ibool_outer_core.hip,
+                                                                        mp->d_vp_outer_core.hip,
+                                                                        mp->save_stacey,
+                                                                        NULL);
   }
 #endif
 

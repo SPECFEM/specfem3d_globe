@@ -93,6 +93,22 @@ void FC_FUNC_ (compute_add_sources_gpu,
                                                                       NSOURCES);
   }
 #endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(NGLLX,NGLLX,NGLLX);
+    // adds source contributions
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_add_sources_kernel), grid, threads, 0, mp->compute_stream,
+                                                                    mp->d_accel_crust_mantle.hip,
+                                                                    mp->d_ibool_crust_mantle.hip,
+                                                                    mp->d_sourcearrays.hip,
+                                                                    mp->d_stf_pre_compute.hip,
+                                                                    mp->myrank,
+                                                                    mp->d_islice_selected_source.hip,
+                                                                    mp->d_ispec_selected_source.hip,
+                                                                    NSOURCES);
+  }
+#endif
 
   GPU_ERROR_CHECKING ("compute_add_sources_gpu");
 }
@@ -164,6 +180,22 @@ void FC_FUNC_ (compute_add_sources_backward_gpu,
                                                                       mp->d_islice_selected_source.cuda,
                                                                       mp->d_ispec_selected_source.cuda,
                                                                       NSOURCES);
+  }
+#endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(NGLLX,NGLLX,NGLLX);
+
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_add_sources_kernel), grid, threads, 0, mp->compute_stream,
+                                                                    mp->d_b_accel_crust_mantle.hip,
+                                                                    mp->d_ibool_crust_mantle.hip,
+                                                                    mp->d_sourcearrays.hip,
+                                                                    mp->d_stf_pre_compute.hip,
+                                                                    mp->myrank,
+                                                                    mp->d_islice_selected_source.hip,
+                                                                    mp->d_ispec_selected_source.hip,
+                                                                    NSOURCES);
   }
 #endif
 
@@ -264,6 +296,29 @@ void FC_FUNC_ (compute_add_sources_adjoint_gpu,
                                                                               mp->nadj_rec_local);
   }
 #endif
+#ifdef USE_HIP
+  if (run_hip) {
+    // waits for previous transfer_** calls to be finished
+    if (GPU_ASYNC_COPY) {
+      // waits for asynchronous copy to finish
+      hipStreamSynchronize(mp->copy_stream);
+    }
+
+    dim3 grid(num_blocks_x,num_blocks_y,1);
+    dim3 threads(NGLLX,NGLLX,NGLLX);
+
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_add_sources_adjoint_kernel), grid, threads, 0, mp->compute_stream,
+                                                                            mp->d_accel_crust_mantle.hip,
+                                                                            mp->d_stf_array_adjoint.hip,
+                                                                            mp->d_hxir_adj.hip,
+                                                                            mp->d_hetar_adj.hip,
+                                                                            mp->d_hgammar_adj.hip,
+                                                                            mp->d_ibool_crust_mantle.hip,
+                                                                            mp->d_ispec_selected_rec.hip,
+                                                                            mp->d_number_adjsources_global.hip,
+                                                                            mp->nadj_rec_local);
+  }
+#endif
 
   GPU_ERROR_CHECKING("compute_add_sources_adjoint_cuda");
 }
@@ -345,6 +400,9 @@ void FC_FUNC_(transfer_adj_to_device_async,
   // total number of receivers/adjoint sources
   int nrec = *h_nrec;
 
+  // waits for previous copy_stream call to be finished
+  gpuStreamSynchronize(mp->copy_stream);
+
 #ifdef USE_OPENCL
   if (run_opencl) {
     if (mp->has_last_copy_evt) {
@@ -352,12 +410,6 @@ void FC_FUNC_(transfer_adj_to_device_async,
       mp->has_last_copy_evt = 0;
     }
     clCheck (clFinish (mocl.copy_queue));
-  }
-#endif
-#ifdef USE_CUDA
-  if (run_cuda) {
-    // waits for previous copy_stream call to be finished
-    cudaStreamSynchronize(mp->copy_stream);
   }
 #endif
 
@@ -406,6 +458,17 @@ void FC_FUNC_(transfer_adj_to_device_async,
     // (asynchronous copy to GPU using copy_stream)
     cudaMemcpyAsync(mp->d_stf_array_adjoint.cuda, mp->h_stf_array_adjoint,(mp->nadj_rec_local)*NDIM*sizeof(realw),
                     cudaMemcpyHostToDevice,mp->copy_stream);
+  }
+#endif
+#ifdef USE_HIP
+  if (run_hip) {
+    // waits for previous compute_add_sources_adjoint_cuda_kernel() call to be finished
+    hipStreamSynchronize(mp->compute_stream);
+
+    // copies extracted array values onto GPU
+    // (asynchronous copy to GPU using copy_stream)
+    hipMemcpyAsync(mp->d_stf_array_adjoint.hip, mp->h_stf_array_adjoint,(mp->nadj_rec_local)*NDIM*sizeof(realw),
+                   hipMemcpyHostToDevice,mp->copy_stream);
   }
 #endif
 }

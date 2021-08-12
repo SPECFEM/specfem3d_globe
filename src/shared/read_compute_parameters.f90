@@ -397,11 +397,12 @@
   if (UNDO_ATTENUATION .and. NUMBER_OF_THIS_RUN > 1) &
     stop 'we currently do not support NUMBER_OF_THIS_RUN > 1 in the case of UNDO_ATTENUATION'
 
-  if (STEADY_STATE_KERNEL .and. .not. UNDO_ATTENUATION) &
-    stop 'STEADY_STATE_KERNEL currently works only when UNDO_ATTENUATION is enabled'
-
-  if (STEADY_STATE_LENGTH_IN_MINUTES > RECORD_LENGTH_IN_MINUTES) &
-    stop 'STEADY_STATE_LENGTH_IN_MINUTES cannot be greater than RECORD_LENGTH_IN_MINUTES'
+  if (STEADY_STATE_KERNEL) then
+    if (.not. UNDO_ATTENUATION) &
+      stop 'STEADY_STATE_KERNEL currently works only when UNDO_ATTENUATION is enabled'
+    if (STEADY_STATE_LENGTH_IN_MINUTES > RECORD_LENGTH_IN_MINUTES) &
+      stop 'STEADY_STATE_LENGTH_IN_MINUTES cannot be greater than RECORD_LENGTH_IN_MINUTES'
+  endif
 
   if (USE_LDDRK .and. NUMBER_OF_RUNS > 1) &
     stop 'NUMBER_OF_RUNS should be == 1 for now when using USE_LDDRK'

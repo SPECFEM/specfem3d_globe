@@ -8,7 +8,7 @@ def rndup( val, div)
   return (val%div) == 0 ? val : val + div - (val%div)
 end
 
-$options = {:output_dir => "./output", :elem_per_thread => 1, :langs => [:CUDA, :CL] }
+$options = {:output_dir => "./output", :elem_per_thread => 1, :langs => [:CUDA, :CL, :HIP] }
 
 $parser = OptionParser::new do |opts|
   opts.on("-c","--check","Check kernels by building them") {
@@ -32,7 +32,7 @@ $parser = OptionParser::new do |opts|
   opts.on("-e","--elem ELEM_PER_THREAD","Treat several elements in big kernels") { |elem_per_thread|
     $options[:elem_per_thread] = elem_per_thread.to_i
   }
-  opts.on("-l","--lang LANG","Select language to use (CUDA or CL)") { |lang|
+  opts.on("-l","--lang LANG","Select language to use (CUDA or CL or HIP)") { |lang|
      $options[:langs] = [ lang.to_sym ]
   }
   opts.parse!
@@ -135,7 +135,7 @@ kerns.each { |kern|
     puts "  " + lang.to_s
     BOAST::set_lang( BOAST::const_get(lang))
     # outputs reference cuda kernel
-    if $options[:display] && lang == :CUDA
+    if $options[:display] && (lang == :CUDA)
       puts "  REF"
       k = BOAST::method(kern).call
       k.print
@@ -146,6 +146,11 @@ kerns.each { |kern|
       puts "  Generated"
       k.print if $options[:display]
       filename = "#{kern}.cu"
+    elsif lang == :HIP then
+      k = BOAST::method(kern).call(false)
+      puts "  Generated"
+      k.print if $options[:display]
+      filename = "#{kern}.cpp"
     elsif lang == :CL
       if big_kernels.include?(kern) then
         k = BOAST::method(kern).call(false, $options[:elem_per_thread])
@@ -171,6 +176,13 @@ kerns.each { |kern|
         puts "  building kernel"
         puts "  !! for checking with `make test_boast_kernels`, it might need BOAST version 2.0.2 !!"
         k.build(:LDFLAGS => " -L/usr/local/cuda-5.5.22/lib64", :NVCCFLAGS => "-arch sm_20 -O2 --compiler-options -Wall", :verbose => $options[:verbose] )
+      end
+    elsif lang == :HIP then
+      k_s = "#{v}" + k.to_s
+      f.puts k_s
+      if $options[:check] then
+        puts "  building kernel for HIP is not available yet"
+        abort "Error: HIP kernel test not available yet"
       end
     elsif lang == :CL then
       s = k.to_s
@@ -200,6 +212,8 @@ kerns.each { |kern|
             inputs[key].last[:global_work_size][0] /= $options[:elem_per_thread]
           elsif lang == :CUDA then
             inputs[key].last[:block_size][0] /= $options[:elem_per_thread]
+          elsif lang == :HIP then
+            inputs[key].last[:block_size][0] /= $options[:elem_per_thread]
           end
         end
         puts k.run(*(inputs[key])).inspect
@@ -228,6 +242,13 @@ langs.each { |lang|
     kern_proto_f = File::new("#{$options[:output_dir]}/kernel_proto.cu.h", "w+")
     kern_mk_f = File::new("#{$options[:output_dir]}/kernel_cuda.mk", "w+")
     kern_mk_f.puts "cuda_kernels_OBJS := \\"
+  elsif lang == :HIP then
+    suffix = ".cpp"
+    # we will use the same kernel_proto.cu.h and kernel_cuda.mk files as they are identical for now.
+    # might be an option in future, in case CUDA and HIP versions deviate more from each other.
+    #kern_proto_f = File::new("#{$options[:output_dir]}/kernel_proto.cpp.h", "w+")
+    #kern_mk_f = File::new("#{$options[:output_dir]}/kernel_hip.mk", "w+")
+    #kern_mk_f.puts "hip_kernels_OBJS := \\"
   elsif lang == :CL
     suffix = "_cl.c"
     kern_inc_f = File::new("#{$options[:output_dir]}/kernel_inc"+suffix, "w+")
@@ -245,6 +266,15 @@ langs.each { |lang|
       BOAST::set_output( kern_proto_f )
       k.procedure.decl
       kern_mk_f.puts "\t$O/#{kern.to_s}.cuda-kernel.o \\"
+    elsif lang == :HIP then
+      require "./#{kern.to_s}.rb"
+      BOAST::set_lang( BOAST::const_get(lang))
+      k = BOAST::method(kern).call(false)
+      # future option for separate kernel_proto.cpp.h file
+      #BOAST::set_output( kern_proto_f )
+      k.procedure.decl
+      # future option for separate kernel_hip.mk file
+      #kern_mk_f.puts "\t$O/#{kern.to_s}.hip-kernel.o \\"
     elsif lang == :CL
       kern_inc_f.puts "#include \"#{kern.to_s}#{suffix}\""
     end
@@ -256,6 +286,9 @@ langs.each { |lang|
 
   if lang == :CUDA then
     kern_proto_f.puts elem_thread_check
+  elsif lang == :HIP then
+    # future option for separate kernel_proto.cpp.h file
+    #kern_proto_f.puts elem_thread_check
   elsif lang == :CL
     kern_inc_f.puts elem_thread_check
   end
@@ -343,6 +376,9 @@ langs.each { |lang|
         kern_proto_f.puts ""
       }
     end
+  elsif lang == :HIP then
+    # future option: for now we will use the same function defintions between CUDA and HIP.
+    # no need to create a separate kernel_proto.cpp.h file
   end
 
   # closing files
@@ -351,6 +387,11 @@ langs.each { |lang|
     kern_proto_f.close
     kern_mk_f.puts "\t$(EMPTY_MACRO)"
     kern_mk_f.close
+  elsif lang == :HIP then
+    # future options
+    #kern_proto_f.close
+    #kern_mk_f.puts "\t$(EMPTY_MACRO)"
+    #kern_mk_f.close
   elsif lang == :CL
     kern_inc_f.close
   end

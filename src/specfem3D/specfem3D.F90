@@ -455,6 +455,10 @@
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------
 !
+
+  ! initializes CUDA-aware MPI
+  call initialize_cuda_aware_mpi()
+
   ! initialize the MPI communicator and start the NPROCTOT MPI processes.
   call init_mpi()
 

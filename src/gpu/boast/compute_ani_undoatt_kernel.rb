@@ -49,7 +49,7 @@ module BOAST
     p = Procedure(function_name, v)
     if (get_lang == CUDA and ref) then
       get_output.print File::read("references/#{function_name}.cu")
-    elsif(get_lang == CL or get_lang == CUDA) then
+    elsif(get_lang == CL or get_lang == CUDA or get_lang == HIP) then
       make_specfem3d_header( :ngllx => n_gllx, :ngll2 => n_gll2, :ngll3 => n_gll3, :ngll3_padded => n_gll3_padded )
 
       sub_compute_element_strain_undoatt = compute_element_strain_undoatt(n_gllx, n_gll2, n_gll3, n_gll3_padded )
@@ -74,8 +74,7 @@ module BOAST
       decl eps_trace_over_3 = Real("eps_trace_over_3")
       decl b_eps_trace_over_3 = Real("b_eps_trace_over_3")
       if type == :ani then
-        decl prod = Real("prod", :dim => [Dim(21)], :allocate => true)
-        decl i = Int("i")
+        decl prod = Real("prod", :dim => [Dim(21)], :allocate => true)        
       end
       decl epsdev = Real("epsdev", :dim => [Dim(5)], :allocate => true)
       decl b_epsdev = Real("b_epsdev", :dim => [Dim(5)], :allocate => true)
@@ -139,7 +138,8 @@ module BOAST
 
           # updates full anisotropic kernel
           BOAST::get_output.puts"    // attention: following array is sorted differently on GPU and CPU, -> use 'resort_array' before copying back to cpu"
-          print For(i, 0, 21-1) {
+          i = Int("i")
+          print For(i, 0, 21-1, :declit => true) {
             print cijkl_kl[i*ngll3+offset] === cijkl_kl[i*ngll3+offset] + deltat * prod[i]
           }
         else
