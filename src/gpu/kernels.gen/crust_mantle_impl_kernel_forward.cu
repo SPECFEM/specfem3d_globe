@@ -262,6 +262,7 @@ static __device__ void compute_element_cm_aniso(const int offset, const float * 
   float c55;
   float c56;
   float c66;
+
   c11 = d_c11store[offset];
   c12 = d_c12store[offset];
   c13 = d_c13store[offset];
@@ -283,6 +284,7 @@ static __device__ void compute_element_cm_aniso(const int offset, const float * 
   c55 = d_c55store[offset];
   c56 = d_c56store[offset];
   c66 = d_c66store[offset];
+
   *(sigma_xx) = (c11) * (duxdxl) + (c16) * (duxdyl_plus_duydxl) + (c12) * (duydyl) + (c15) * (duzdxl_plus_duxdzl) + (c14) * (duzdyl_plus_duydzl) + (c13) * (duzdzl);
   *(sigma_yy) = (c12) * (duxdxl) + (c26) * (duxdyl_plus_duydxl) + (c22) * (duydyl) + (c25) * (duzdxl_plus_duxdzl) + (c24) * (duzdyl_plus_duydzl) + (c23) * (duzdzl);
   *(sigma_zz) = (c13) * (duxdxl) + (c36) * (duxdyl_plus_duydxl) + (c23) * (duydyl) + (c35) * (duzdxl_plus_duxdzl) + (c34) * (duzdyl_plus_duydzl) + (c33) * (duzdzl);
@@ -311,46 +313,7 @@ static __device__ void compute_element_cm_iso(const int offset, const float * d_
   *(sigma_yz) = (mul) * (duzdyl_plus_duydzl);
 }
 
-static __device__ void compute_element_cm_tiso(const int offset, const float * d_kappavstore, const float * d_muvstore, const float * d_kappahstore, const float * d_muhstore, const float * d_eta_anisostore, const float duxdxl, const float duxdyl, const float duxdzl, const float duydxl, const float duydyl, const float duydzl, const float duzdxl, const float duzdyl, const float duzdzl, const float duxdyl_plus_duydxl, const float duzdxl_plus_duxdzl, const float duzdyl_plus_duydzl, const int iglob, const float * d_rstore, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){
-  float kappavl;
-  float muvl;
-  float kappahl;
-  float muhl;
-  float rhovpvsq;
-  float rhovphsq;
-  float rhovsvsq;
-  float rhovshsq;
-  float eta_aniso;
-  float costheta;
-  float sintheta;
-  float cosphi;
-  float sinphi;
-  float costhetasq;
-  float sinthetasq;
-  float cosphisq;
-  float sinphisq;
-  float costhetafour;
-  float sinthetafour;
-  float cosphifour;
-  float sinphifour;
-  float costwotheta;
-  float sintwotheta;
-  float costwophi;
-  float sintwophi;
-  float cosfourtheta;
-  float cosfourphi;
-  float costwothetasq;
-  float costwophisq;
-  float sintwophisq;
-  float etaminone;
-  float twoetaminone;
-  float two_eta_aniso;
-  float four_eta_aniso;
-  float six_eta_aniso;
-  float two_rhovsvsq;
-  float two_rhovshsq;
-  float four_rhovsvsq;
-  float four_rhovshsq;
+static __device__ void compute_element_cm_tiso(const int offset, const float * d_c11store, const float * d_c12store, const float * d_c13store, const float * d_c14store, const float * d_c15store, const float * d_c16store, const float * d_c22store, const float * d_c23store, const float * d_c24store, const float * d_c25store, const float * d_c26store, const float * d_c33store, const float * d_c34store, const float * d_c35store, const float * d_c36store, const float * d_c44store, const float * d_c45store, const float * d_c46store, const float * d_c55store, const float * d_c56store, const float * d_c66store, const float duxdxl, const float duxdyl, const float duxdzl, const float duydxl, const float duydyl, const float duydzl, const float duzdxl, const float duzdyl, const float duzdzl, const float duxdyl_plus_duydxl, const float duzdxl_plus_duxdzl, const float duzdyl_plus_duydzl, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){
   float c11;
   float c12;
   float c13;
@@ -372,72 +335,29 @@ static __device__ void compute_element_cm_tiso(const int offset, const float * d
   float c55;
   float c56;
   float c66;
-  float theta;
-  float phi;
 
-  kappavl = d_kappavstore[offset];
-  muvl = d_muvstore[offset];
-  kappahl = d_kappahstore[offset];
-  muhl = d_muhstore[offset];
-  eta_aniso = d_eta_anisostore[offset];
+  c11 = d_c11store[offset];
+  c12 = d_c12store[offset];
+  c13 = d_c13store[offset];
+  c14 = d_c14store[offset];
+  c15 = d_c15store[offset];
+  c16 = d_c16store[offset];
+  c22 = d_c22store[offset];
+  c23 = d_c23store[offset];
+  c24 = d_c24store[offset];
+  c25 = d_c25store[offset];
+  c26 = d_c26store[offset];
+  c33 = d_c33store[offset];
+  c34 = d_c34store[offset];
+  c35 = d_c35store[offset];
+  c36 = d_c36store[offset];
+  c44 = d_c44store[offset];
+  c45 = d_c45store[offset];
+  c46 = d_c46store[offset];
+  c55 = d_c55store[offset];
+  c56 = d_c56store[offset];
+  c66 = d_c66store[offset];
 
-  rhovpvsq = kappavl + (muvl) * (1.3333333333333333f);
-  rhovphsq = kappahl + (muhl) * (1.3333333333333333f);
-  rhovsvsq = muvl;
-  rhovshsq = muhl;
-
-  theta = d_rstore[1 + (3) * (iglob)];
-  phi = d_rstore[2 + (3) * (iglob)];
-
-  sincosf(theta,  &sintheta,  &costheta);
-  sincosf(phi,  &sinphi,  &cosphi);
-  sincosf((theta) * (2.0f),  &sintwotheta,  &costwotheta);
-  sincosf((phi) * (2.0f),  &sintwophi,  &costwophi);
-  cosfourtheta = cosf((theta) * (4.0f));
-  cosfourphi = cosf((phi) * (4.0f));
-
-  costhetasq = (costheta) * (costheta);
-  sinthetasq = (sintheta) * (sintheta);
-  cosphisq = (cosphi) * (cosphi);
-  sinphisq = (sinphi) * (sinphi);
-  costhetafour = (costhetasq) * (costhetasq);
-  sinthetafour = (sinthetasq) * (sinthetasq);
-  cosphifour = (cosphisq) * (cosphisq);
-  sinphifour = (sinphisq) * (sinphisq);
-  costwothetasq = (costwotheta) * (costwotheta);
-  costwophisq = (costwophi) * (costwophi);
-  sintwophisq = (sintwophi) * (sintwophi);
-  etaminone = eta_aniso - (1.0f);
-  twoetaminone = (eta_aniso) * (2.0f) - (1.0f);
-  two_eta_aniso = (eta_aniso) * (2.0f);
-  four_eta_aniso = (eta_aniso) * (4.0f);
-  six_eta_aniso = (eta_aniso) * (6.0f);
-  two_rhovsvsq = (rhovsvsq) * (2.0f);
-  two_rhovshsq = (rhovshsq) * (2.0f);
-  four_rhovsvsq = (rhovsvsq) * (4.0f);
-  four_rhovshsq = (rhovshsq) * (4.0f);
-
-  c11 = (rhovphsq) * (sinphifour) + (((cosphisq) * (sinphisq)) * ((rhovphsq) * (costhetasq) + ((eta_aniso) * (rhovphsq) + two_rhovsvsq - ((two_eta_aniso) * (rhovsvsq))) * (sinthetasq))) * (2.0f) + (cosphifour) * ((rhovphsq) * (costhetafour) + ((((eta_aniso) * (rhovphsq) + two_rhovsvsq - ((two_eta_aniso) * (rhovsvsq))) * (costhetasq)) * (sinthetasq)) * (2.0f) + (rhovpvsq) * (sinthetafour));
-  c12 = (((rhovphsq - (two_rhovshsq)) * (cosfourphi + 3.0f)) * (costhetasq)) * (0.25f) - ((((four_rhovshsq) * (cosphisq)) * (costhetasq)) * (sinphisq)) + (((rhovphsq) * ((costwotheta) * (4.0f) + cosfourtheta + 11.0f)) * (sintwophisq)) * (0.03125f) + (((eta_aniso) * (rhovphsq - (two_rhovsvsq))) * (cosphifour + (((cosphisq) * (costhetasq)) * (sinphisq)) * (2.0f) + sinphifour)) * (sinthetasq) + (((rhovpvsq) * (cosphisq)) * (sinphisq)) * (sinthetafour) - (((rhovsvsq) * (sintwophisq)) * (sinthetafour));
-  c13 = ((cosphisq) * (rhovphsq + (six_eta_aniso) * (rhovphsq) + rhovpvsq - (four_rhovsvsq) - (((eta_aniso) * (rhovsvsq)) * (12.0f)) + ((twoetaminone) * (rhovphsq) - (rhovpvsq) + four_rhovsvsq - ((four_eta_aniso) * (rhovsvsq))) * (cosfourtheta))) * (0.125f) + (sinphisq) * (((eta_aniso) * (rhovphsq - (two_rhovsvsq))) * (costhetasq) + (rhovphsq - (two_rhovshsq)) * (sinthetasq));
-  c14 = (((costheta) * (sinphi)) * (((cosphisq) * ( -(rhovphsq) + rhovpvsq + four_rhovshsq - (four_rhovsvsq) + ( -(rhovphsq) + (two_eta_aniso) * (rhovphsq) - (rhovpvsq) + four_rhovsvsq - ((four_eta_aniso) * (rhovsvsq))) * (costwotheta))) * (0.5f) + ((etaminone) * (rhovphsq) + (rhovshsq - ((eta_aniso) * (rhovsvsq))) * (2.0f)) * (sinphisq))) * (sintheta);
-  c15 = (((cosphi) * (costheta)) * (((cosphisq) * ( -(rhovphsq) + rhovpvsq + ((twoetaminone) * (rhovphsq) - (rhovpvsq) + four_rhovsvsq - ((four_eta_aniso) * (rhovsvsq))) * (costwotheta))) * (0.5f) + ((etaminone) * (rhovphsq - (two_rhovsvsq))) * (sinphisq))) * (sintheta);
-  c16 = ((((cosphi) * (sinphi)) * ((cosphisq) * ( -(rhovphsq) + rhovpvsq + ( -(rhovphsq) + (two_eta_aniso) * (rhovphsq) - (rhovpvsq) + four_rhovsvsq - ((four_eta_aniso) * (rhovsvsq))) * (costwotheta)) + (((etaminone) * (rhovphsq - (two_rhovsvsq))) * (sinphisq)) * (2.0f))) * (sinthetasq)) * (0.5f);
-  c22 = (rhovphsq) * (cosphifour) + (((cosphisq) * (sinphisq)) * ((rhovphsq) * (costhetasq) + ((eta_aniso) * (rhovphsq) + two_rhovsvsq - ((two_eta_aniso) * (rhovsvsq))) * (sinthetasq))) * (2.0f) + (sinphifour) * ((rhovphsq) * (costhetafour) + ((((eta_aniso) * (rhovphsq) + two_rhovsvsq - ((two_eta_aniso) * (rhovsvsq))) * (costhetasq)) * (sinthetasq)) * (2.0f) + (rhovpvsq) * (sinthetafour));
-  c23 = ((rhovphsq + (six_eta_aniso) * (rhovphsq) + rhovpvsq - (four_rhovsvsq) - (((eta_aniso) * (rhovsvsq)) * (12.0f)) + ((twoetaminone) * (rhovphsq) - (rhovpvsq) + four_rhovsvsq - ((four_eta_aniso) * (rhovsvsq))) * (cosfourtheta)) * (sinphisq)) * (0.125f) + (cosphisq) * (((eta_aniso) * (rhovphsq - (two_rhovsvsq))) * (costhetasq) + (rhovphsq - (two_rhovshsq)) * (sinthetasq));
-  c24 = (((costheta) * (sinphi)) * (((etaminone) * (rhovphsq - (two_rhovsvsq))) * (cosphisq) + (( -(rhovphsq) + rhovpvsq + ((twoetaminone) * (rhovphsq) - (rhovpvsq) + four_rhovsvsq - ((four_eta_aniso) * (rhovsvsq))) * (costwotheta)) * (sinphisq)) * (0.5f))) * (sintheta);
-  c25 = (((cosphi) * (costheta)) * (((etaminone) * (rhovphsq) + (rhovshsq - ((eta_aniso) * (rhovsvsq))) * (2.0f)) * (cosphisq) + (( -(rhovphsq) + rhovpvsq + four_rhovshsq - (four_rhovsvsq) + ( -(rhovphsq) + (two_eta_aniso) * (rhovphsq) - (rhovpvsq) + four_rhovsvsq - ((four_eta_aniso) * (rhovsvsq))) * (costwotheta)) * (sinphisq)) * (0.5f))) * (sintheta);
-  c26 = ((((cosphi) * (sinphi)) * ((((etaminone) * (rhovphsq - (two_rhovsvsq))) * (cosphisq)) * (2.0f) + ( -(rhovphsq) + rhovpvsq + ( -(rhovphsq) + (two_eta_aniso) * (rhovphsq) - (rhovpvsq) + four_rhovsvsq - ((four_eta_aniso) * (rhovsvsq))) * (costwotheta)) * (sinphisq))) * (sinthetasq)) * (0.5f);
-  c33 = (rhovpvsq) * (costhetafour) + ((((eta_aniso) * (rhovphsq - (two_rhovsvsq)) + two_rhovsvsq) * (costhetasq)) * (sinthetasq)) * (2.0f) + (rhovphsq) * (sinthetafour);
-  c34 = ( -(((rhovphsq - (rhovpvsq) + ((twoetaminone) * (rhovphsq) - (rhovpvsq) + four_rhovsvsq - ((four_eta_aniso) * (rhovsvsq))) * (costwotheta)) * (sinphi)) * (sintwotheta))) * (0.25f);
-  c35 = ( -(((cosphi) * (rhovphsq - (rhovpvsq) + ((twoetaminone) * (rhovphsq) - (rhovpvsq) + four_rhovsvsq - ((four_eta_aniso) * (rhovsvsq))) * (costwotheta))) * (sintwotheta))) * (0.25f);
-  c36 = ( -(((rhovphsq - (rhovpvsq) - (four_rhovshsq) + four_rhovsvsq + ((twoetaminone) * (rhovphsq) - (rhovpvsq) + four_rhovsvsq - ((four_eta_aniso) * (rhovsvsq))) * (costwotheta)) * (sintwophi)) * (sinthetasq))) * (0.25f);
-  c44 = (cosphisq) * ((rhovsvsq) * (costhetasq) + (rhovshsq) * (sinthetasq)) + (sinphisq) * ((rhovsvsq) * (costwothetasq) + ((rhovphsq - ((two_eta_aniso) * (rhovphsq)) + rhovpvsq + (four_eta_aniso) * (rhovsvsq)) * (costhetasq)) * (sinthetasq));
-  c45 = (((rhovphsq - ((two_eta_aniso) * (rhovphsq)) + rhovpvsq - (two_rhovshsq) - (two_rhovsvsq) + (four_eta_aniso) * (rhovsvsq) + (rhovphsq - ((two_eta_aniso) * (rhovphsq)) + rhovpvsq + ((etaminone) * (rhovsvsq)) * (4.0f)) * (costwotheta)) * (sintwophi)) * (sinthetasq)) * (0.25f);
-  c46 =  -((((cosphi) * (costheta)) * ((rhovshsq - (rhovsvsq)) * (cosphisq) - (((rhovphsq - ((two_eta_aniso) * (rhovphsq)) + rhovpvsq - (two_rhovshsq) - (two_rhovsvsq) + (four_eta_aniso) * (rhovsvsq) + ( -(rhovphsq) + (two_eta_aniso) * (rhovphsq) - (rhovpvsq) + four_rhovsvsq - ((four_eta_aniso) * (rhovsvsq))) * (costwotheta)) * (sinphisq)) * (0.5f)))) * (sintheta));
-  c55 = (sinphisq) * ((rhovsvsq) * (costhetasq) + (rhovshsq) * (sinthetasq)) + (cosphisq) * ((rhovsvsq) * (costwothetasq) + ((rhovphsq - ((two_eta_aniso) * (rhovphsq)) + rhovpvsq + (four_eta_aniso) * (rhovsvsq)) * (costhetasq)) * (sinthetasq));
-  c56 = (((costheta) * (sinphi)) * (((cosphisq) * (rhovphsq - ((two_eta_aniso) * (rhovphsq)) + rhovpvsq - (two_rhovshsq) - (two_rhovsvsq) + (four_eta_aniso) * (rhovsvsq) + ( -(rhovphsq) + (two_eta_aniso) * (rhovphsq) - (rhovpvsq) + four_rhovsvsq - ((four_eta_aniso) * (rhovsvsq))) * (costwotheta))) * (0.5f) + ( -(rhovshsq) + rhovsvsq) * (sinphisq))) * (sintheta);
-  c66 = ((rhovshsq) * (costwophisq)) * (costhetasq) - (((((rhovphsq - (two_rhovshsq)) * (cosphisq)) * (costhetasq)) * (sinphisq)) * (2.0f)) + (((rhovphsq) * ((costwotheta) * (4.0f) + cosfourtheta + 11.0f)) * (sintwophisq)) * (0.03125f) - ((((rhovsvsq) * ((cosfourphi) * (-2.0f) + cos((phi) * (4.0f) - ((theta) * (2.0f))) - ((costwotheta) * (2.0f)) + cos(((phi) * (2.0f) + theta) * (2.0f)) - (6.0f))) * (sinthetasq)) * (0.125f)) + (((rhovpvsq) * (cosphisq)) * (sinphisq)) * (sinthetafour) - (((((eta_aniso) * (rhovphsq - (two_rhovsvsq))) * (sintwophisq)) * (sinthetafour)) * (0.5f));
   *(sigma_xx) = (c11) * (duxdxl) + (c16) * (duxdyl_plus_duydxl) + (c12) * (duydyl) + (c15) * (duzdxl_plus_duxdzl) + (c14) * (duzdyl_plus_duydzl) + (c13) * (duzdzl);
   *(sigma_yy) = (c12) * (duxdxl) + (c26) * (duxdyl_plus_duydxl) + (c22) * (duydyl) + (c25) * (duzdxl_plus_duxdzl) + (c24) * (duzdyl_plus_duydzl) + (c23) * (duzdzl);
   *(sigma_zz) = (c13) * (duxdxl) + (c36) * (duxdyl_plus_duydxl) + (c23) * (duydyl) + (c35) * (duzdxl_plus_duxdzl) + (c34) * (duzdyl_plus_duydzl) + (c33) * (duzdzl);
@@ -455,7 +375,7 @@ __global__
 #ifdef USE_LAUNCH_BOUNDS
 __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
 #endif
- void crust_mantle_impl_kernel_forward(const int nb_blocks_to_compute, const int * d_ibool, const int * d_ispec_is_tiso, const int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const float deltat, const int use_mesh_coloring_gpu, const float * __restrict__ d_displ, float * d_accel, const float * __restrict__ d_xix, const float * __restrict__ d_xiy, const float * __restrict__ d_xiz, const float * __restrict__ d_etax, const float * __restrict__ d_etay, const float * __restrict__ d_etaz, const float * __restrict__ d_gammax, const float * __restrict__ d_gammay, const float * __restrict__ d_gammaz, const float * __restrict__ d_hprime_xx, const float * __restrict__ d_hprimewgll_xx, const float * __restrict__ d_wgllwgll_xy, const float * __restrict__ d_wgllwgll_xz, const float * __restrict__ d_wgllwgll_yz, const float * __restrict__ d_kappavstore, const float * __restrict__ d_muvstore, const float * __restrict__ d_kappahstore, const float * __restrict__ d_muhstore, const float * __restrict__ d_eta_anisostore, const int COMPUTE_AND_STORE_STRAIN, float * epsilondev_xx, float * epsilondev_yy, float * epsilondev_xy, float * epsilondev_xz, float * epsilondev_yz, float * epsilon_trace_over_3, const int ATTENUATION, const int PARTIAL_PHYS_DISPERSION_ONLY, const int USE_3D_ATTENUATION_ARRAYS, const float * __restrict__ one_minus_sum_beta, const float * __restrict__ factor_common, float * R_xx, float * R_yy, float * R_xy, float * R_xz, float * R_yz, float * R_xx_lddrk, float * R_yy_lddrk, float * R_xy_lddrk, float * R_xz_lddrk, float * R_yz_lddrk, const float alpha_lddrk, const float beta_lddrk, const int use_lddrk, const float * __restrict__ alphaval, const float * __restrict__ betaval, const float * __restrict__ gammaval, const float * __restrict__ tau_sigmainvval, const float * __restrict__ d_rstore, const int GRAVITY, const float * __restrict__ d_gravity_pre_store, const float * __restrict__ d_gravity_H, const float * __restrict__ wgll_cube, const int NSPEC_CRUST_MANTLE_STRAIN_ONLY){
+ void crust_mantle_impl_kernel_forward(const int nb_blocks_to_compute, const int * d_ibool, const int * d_ispec_is_tiso, const int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const float deltat, const int use_mesh_coloring_gpu, const float * __restrict__ d_displ, float * d_accel, const float * __restrict__ d_xix, const float * __restrict__ d_xiy, const float * __restrict__ d_xiz, const float * __restrict__ d_etax, const float * __restrict__ d_etay, const float * __restrict__ d_etaz, const float * __restrict__ d_gammax, const float * __restrict__ d_gammay, const float * __restrict__ d_gammaz, const float * __restrict__ d_hprime_xx, const float * __restrict__ d_hprimewgll_xx, const float * __restrict__ d_wgllwgll_xy, const float * __restrict__ d_wgllwgll_xz, const float * __restrict__ d_wgllwgll_yz, const float * __restrict__ d_kappavstore, const float * __restrict__ d_muvstore, const float * __restrict__ d_kappahstore, const float * __restrict__ d_muhstore, const float * __restrict__ d_eta_anisostore, const int COMPUTE_AND_STORE_STRAIN, float * epsilondev_xx, float * epsilondev_yy, float * epsilondev_xy, float * epsilondev_xz, float * epsilondev_yz, float * epsilon_trace_over_3, const int ATTENUATION, const int PARTIAL_PHYS_DISPERSION_ONLY, const int USE_3D_ATTENUATION_ARRAYS, const float * __restrict__ one_minus_sum_beta, const float * __restrict__ factor_common, float * R_xx, float * R_yy, float * R_xy, float * R_xz, float * R_yz, float * R_xx_lddrk, float * R_yy_lddrk, float * R_xy_lddrk, float * R_xz_lddrk, float * R_yz_lddrk, const float alpha_lddrk, const float beta_lddrk, const int use_lddrk, const float * __restrict__ alphaval, const float * __restrict__ betaval, const float * __restrict__ gammaval, const float * __restrict__ tau_sigmainvval, const float * __restrict__ d_c11store, const float * __restrict__ d_c12store, const float * __restrict__ d_c13store, const float * __restrict__ d_c14store, const float * __restrict__ d_c15store, const float * __restrict__ d_c16store, const float * __restrict__ d_c22store, const float * __restrict__ d_c23store, const float * __restrict__ d_c24store, const float * __restrict__ d_c25store, const float * __restrict__ d_c26store, const float * __restrict__ d_c33store, const float * __restrict__ d_c34store, const float * __restrict__ d_c35store, const float * __restrict__ d_c36store, const float * __restrict__ d_c44store, const float * __restrict__ d_c45store, const float * __restrict__ d_c46store, const float * __restrict__ d_c55store, const float * __restrict__ d_c56store, const float * __restrict__ d_c66store, const float * __restrict__ d_rstore, const int GRAVITY, const float * __restrict__ d_gravity_pre_store, const float * __restrict__ d_gravity_H, const float * __restrict__ wgll_cube, const int NSPEC_CRUST_MANTLE_STRAIN_ONLY){
   int K;
   int J;
   int I;
@@ -720,7 +640,7 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
       compute_element_cm_iso(offset, d_kappavstore, d_muvstore, duxdxl, duydyl, duzdzl, duxdxl_plus_duydyl, duxdxl_plus_duzdzl, duydyl_plus_duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);
     } else {
       // transversely isotropic
-      compute_element_cm_tiso(offset, d_kappavstore, d_muvstore, d_kappahstore, d_muhstore, d_eta_anisostore, duxdxl, duxdyl, duxdzl, duydxl, duydyl, duydzl, duzdxl, duzdyl, duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl, iglob_1, d_rstore,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);
+      compute_element_cm_tiso(offset, d_c11store, d_c12store, d_c13store, d_c14store, d_c15store, d_c16store, d_c22store, d_c23store, d_c24store, d_c25store, d_c26store, d_c33store, d_c34store, d_c35store, d_c36store, d_c44store, d_c45store, d_c46store, d_c55store, d_c56store, d_c66store, duxdxl, duxdyl, duxdzl, duydxl, duydyl, duydzl, duzdxl, duzdyl, duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);
     }
 
     if (ATTENUATION &&  !(PARTIAL_PHYS_DISPERSION_ONLY)) {

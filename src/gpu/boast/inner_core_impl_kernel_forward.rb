@@ -81,20 +81,25 @@ module BOAST
   end
 
   # element routines
-  def BOAST::compute_element_cm_aniso
+  def BOAST::compute_element_cm_aniso(n_gll3 = 125, use_cuda_shared_async = false)
     function_name = "compute_element_cm_aniso"
     v = []
-    v.push offset = Int( "offset", :dir => :in)
-    d_cstore = (0..5).collect { |indx1|
-                (0..5).collect { |indx2|
-                  if (indx2 < indx1) then
-                    nil
-                  else
-                    Real( "d_c#{indx1+1}#{indx2+1}store", :dir => :in, :dim => [Dim()] )
-                  end
+    if use_cuda_shared_async then
+      v.push tx                     = Int( "tx",                 :dir => :in)
+      v.push sh_cstore              = Real("sh_cstore",          :dir => :in, :dim => [Dim(ngll3), Dim()])
+    else
+      v.push offset                 = Int( "offset", :dir => :in)
+      d_cstore = (0..5).collect { |indx1|
+                  (0..5).collect { |indx2|
+                    if (indx2 < indx1) then
+                      nil
+                    else
+                      Real( "d_c#{indx1+1}#{indx2+1}store", :dir => :in, :dim => [Dim()] )
+                    end
+                  }
                 }
-              }
-    v.push *(d_cstore.flatten.reject { |e| e.nil? })
+      v.push *(d_cstore.flatten.reject { |e| e.nil? })
+    end
     dudl = ["x", "y", "z"].collect { |a1|
       ["x", "y", "z"].collect { |a2|
         Real("du#{a1}d#{a2}l", :dir => :in)
@@ -123,12 +128,25 @@ module BOAST
             }
           }
       decl *(c.flatten.reject { |e| e.nil? })
+      comment()
 
-      (0..5).each { |indx1|
-        (0..5).each { |indx2|
-          print c[indx1][indx2] === d_cstore[indx1][indx2][offset] unless indx2 < indx1
+      if use_cuda_shared_async then
+        comment("// CUDA asynchronuous memory copies")
+        offset = 0
+        (0..5).each { |indx1|
+          (0..5).each { |indx2|
+            print c[indx1][indx2] === sh_cstore[tx,offset] unless indx2 < indx1
+            offset += 1
+          }
         }
-      }
+      else
+        (0..5).each { |indx1|
+          (0..5).each { |indx2|
+            print c[indx1][indx2] === d_cstore[indx1][indx2][offset] unless indx2 < indx1
+          }
+        }
+      end
+      comment()
 
       # not needed anymore, scaling will be done in prepare_elastic_elements.F90
       #print If(attenuation) {
@@ -145,6 +163,8 @@ module BOAST
       #  print c[4][4] === c[4][4] + mul
       #  print c[5][5] === c[5][5] + mul
       #}
+      #comment()
+
       print sigma_xx.dereference === c[0][0]*dudl[0][0] + c[0][5]*duxdyl_plus_duydxl + c[0][1]*dudl[1][1] \
                                    + c[0][4]*duzdxl_plus_duxdzl + c[0][3]*duzdyl_plus_duydzl + c[0][2]*dudl[2][2]
       print sigma_yy.dereference === c[0][1]*dudl[0][0] + c[1][5]*duxdyl_plus_duydxl + c[1][1]*dudl[1][1] \
@@ -199,7 +219,7 @@ module BOAST
 
       if use_cuda_shared_async then
         print mul === sh_mul[tx,0]
-        print kappal === sh_mul[tx,2]
+        print kappal === sh_mul[tx,1]
       else
         print mul === d_muvstore[offset]
         print kappal === d_kappavstore[offset]
@@ -232,8 +252,12 @@ module BOAST
     return p
   end
 
-  def BOAST::compute_element_cm_tiso(n_gll3 = 125, use_cuda_shared_async = false)
-    function_name = "compute_element_cm_tiso"
+  def BOAST::compute_element_cm_tiso_org(n_gll3 = 125, use_cuda_shared_async = false)
+    # not used anymore... left here for reference
+    # original routine; computes c11,c12,.. based on muv,kappav,muh,..
+
+    function_name = "compute_element_cm_tiso_org"
+
     v = []
     ngll3 = Int("NGLL3", :const => n_gll3)
 
@@ -515,6 +539,112 @@ module BOAST
   end
 
 
+  def BOAST::compute_element_cm_tiso(n_gll3 = 125, use_cuda_shared_async = false)
+    # using pre-computed c11,c12,..
+    # same computations as fully anisotropic element
+    # see: compute_element_cm_aniso() routine of CPU routines
+
+    function_name = "compute_element_cm_tiso"
+
+    v = []
+    if use_cuda_shared_async then
+      v.push tx                     = Int( "tx",                 :dir => :in)
+      v.push sh_cstore              = Real("sh_cstore",          :dir => :in, :dim => [Dim(ngll3), Dim()])
+    else
+      v.push offset                 = Int( "offset", :dir => :in)
+      d_cstore = (0..5).collect { |indx1|
+                  (0..5).collect { |indx2|
+                    if (indx2 < indx1) then
+                      nil
+                    else
+                      Real( "d_c#{indx1+1}#{indx2+1}store", :dir => :in, :dim => [Dim()] )
+                    end
+                  }
+                }
+      v.push *(d_cstore.flatten.reject { |e| e.nil? })
+    end
+    dudl = ["x", "y", "z"].collect { |a1|
+      ["x", "y", "z"].collect { |a2|
+        Real("du#{a1}d#{a2}l", :dir => :in)
+      }
+    }
+    # elements outside the diagonal are unused
+    v.push *(dudl.flatten)
+    v.push duxdyl_plus_duydxl = Real("duxdyl_plus_duydxl", :dir => :in)
+    v.push duzdxl_plus_duxdzl = Real("duzdxl_plus_duxdzl", :dir => :in)
+    v.push duzdyl_plus_duydzl = Real("duzdyl_plus_duydzl", :dir => :in)
+    v.push sigma_xx = Real("sigma_xx", :dir => :out, :dim => [Dim()], :private => true )
+    v.push sigma_yy = Real("sigma_yy", :dir => :out, :dim => [Dim()], :private => true )
+    v.push sigma_zz = Real("sigma_zz", :dir => :out, :dim => [Dim()], :private => true )
+    v.push sigma_xy = Real("sigma_xy", :dir => :out, :dim => [Dim()], :private => true )
+    v.push sigma_xz = Real("sigma_xz", :dir => :out, :dim => [Dim()], :private => true )
+    v.push sigma_yz = Real("sigma_yz", :dir => :out, :dim => [Dim()], :private => true )
+
+    p = Procedure( function_name, v, :local => true ) {
+      c = (0..5).collect { |indx1|
+            (0..5).collect { |indx2|
+              if (indx2 < indx1) then
+                nil
+              else
+                Real( "c#{indx1+1}#{indx2+1}" )
+              end
+            }
+          }
+      decl *(c.flatten.reject { |e| e.nil? })
+      comment()
+
+      if use_cuda_shared_async then
+        comment("// CUDA asynchronuous memory copies")
+        offset = 0
+        (0..5).each { |indx1|
+          (0..5).each { |indx2|
+            print c[indx1][indx2] === sh_cstore[tx,offset] unless indx2 < indx1
+            offset += 1
+          }
+        }
+      else
+        (0..5).each { |indx1|
+          (0..5).each { |indx2|
+            print c[indx1][indx2] === d_cstore[indx1][indx2][offset] unless indx2 < indx1
+          }
+        }
+      end
+      comment()
+
+      # not needed anymore, scaling will be done in prepare_elastic_elements.F90
+      #print If(attenuation) {
+      #  print minus_sum_beta === one_minus_sum_beta_use - 1.0
+      #  print mul === c[3][3] * minus_sum_beta
+      #
+      #  print c[0][0] === c[0][0] + mul * 1.33333333333333333333
+      #  print c[0][1] === c[0][1] - mul * 0.66666666666666666666
+      #  print c[0][2] === c[0][2] - mul * 0.66666666666666666666
+      #  print c[1][1] === c[1][1] + mul * 1.33333333333333333333
+      #  print c[1][2] === c[1][2] - mul * 0.66666666666666666666
+      #  print c[2][2] === c[2][2] + mul * 1.33333333333333333333
+      #  print c[3][3] === c[3][3] + mul
+      #  print c[4][4] === c[4][4] + mul
+      #  print c[5][5] === c[5][5] + mul
+      #}
+      #comment()
+
+      print sigma_xx.dereference === c[0][0]*dudl[0][0] + c[0][5]*duxdyl_plus_duydxl + c[0][1]*dudl[1][1] \
+                                   + c[0][4]*duzdxl_plus_duxdzl + c[0][3]*duzdyl_plus_duydzl + c[0][2]*dudl[2][2]
+      print sigma_yy.dereference === c[0][1]*dudl[0][0] + c[1][5]*duxdyl_plus_duydxl + c[1][1]*dudl[1][1] \
+                                   + c[1][4]*duzdxl_plus_duxdzl + c[1][3]*duzdyl_plus_duydzl + c[1][2]*dudl[2][2]
+      print sigma_zz.dereference === c[0][2]*dudl[0][0] + c[2][5]*duxdyl_plus_duydxl + c[1][2]*dudl[1][1] \
+                                   + c[2][4]*duzdxl_plus_duxdzl + c[2][3]*duzdyl_plus_duydzl + c[2][2]*dudl[2][2]
+      print sigma_xy.dereference === c[0][5]*dudl[0][0] + c[5][5]*duxdyl_plus_duydxl + c[1][5]*dudl[1][1] \
+                                   + c[4][5]*duzdxl_plus_duxdzl + c[3][5]*duzdyl_plus_duydzl + c[2][5]*dudl[2][2]
+      print sigma_xz.dereference === c[0][4]*dudl[0][0] + c[4][5]*duxdyl_plus_duydxl + c[1][4]*dudl[1][1] \
+                                   + c[4][4]*duzdxl_plus_duxdzl + c[3][4]*duzdyl_plus_duydzl + c[2][4]*dudl[2][2]
+      print sigma_yz.dereference === c[0][3]*dudl[0][0] + c[3][5]*duxdyl_plus_duydxl + c[1][3]*dudl[1][1] \
+                                   + c[3][4]*duzdxl_plus_duxdzl + c[3][3]*duzdyl_plus_duydzl + c[2][3]*dudl[2][2]
+    }
+    return p
+  end
+
+
 #----------------------------------------------------------------------
 
 ## inner core
@@ -784,8 +914,20 @@ module BOAST
         v.push *(d_cstore.flatten.reject { |e| e.nil? })
       end
     else
-      # rstore for iso/tiso kernel
+      # iso/tiso kernel
       if type == :crust_mantle then
+        # new tiso routine needs c11store/c12store/..
+        d_cstore = (0..5).collect { |indx1|
+          (0..5).collect { |indx2|
+            if (indx2 < indx1) then
+              nil
+            else
+              Real( "d_c#{indx1+1}#{indx2+1}store", :dir => :in, :restrict => true, :dim => [Dim()] )
+            end
+          }
+        }
+        v.push *(d_cstore.flatten.reject { |e| e.nil? })
+        # rstore for iso/tiso kernel
         v.push d_rstore                = Real("d_rstore",                :dir => :in, :restrict => true, :dim => [Dim(3), Dim()] )
       end
     end
@@ -948,9 +1090,13 @@ module BOAST
 
       elsif type == :crust_mantle then
         sub_compute_element_cm_aniso = compute_element_cm_aniso
+        # old way: computes c11,c12,..
+        #sub_compute_element_cm_tiso_org = compute_element_cm_tiso_org
+        # new way: uses pre-computed c11,c12,.. - same as in CPU version
         sub_compute_element_cm_tiso = compute_element_cm_tiso
         sub_compute_element_cm_iso = compute_element_cm_iso
         if use_cuda_shared_async then
+          sub_compute_element_cm_aniso_async = compute_element_cm_aniso(n_gll3, true)
           sub_compute_element_cm_tiso_async = compute_element_cm_tiso(n_gll3, true)
           sub_compute_element_cm_iso_async = compute_element_cm_iso(n_gll3, true)
         end
@@ -1023,7 +1169,21 @@ module BOAST
           comment()
         elsif type == :crust_mantle then
           # aniso
-          print sub_compute_element_cm_aniso
+          if use_cuda_shared_async then
+            # BOAST doesn't allow to modify the function argument list with #ifdef-statements
+            # we thus call the routine twice and put the #ifdef-statement around the whole function
+            get_output.puts "#ifdef #{cuda_shared_async}"
+            # routine w/ cuda shared async copies
+            comment("// CUDA asynchronuous memory copies")
+            print sub_compute_element_cm_aniso_async
+            get_output.puts "#else"
+            # routine w/out
+            comment("//default (w/out asynchronuous memory copies) routine")
+            print sub_compute_element_cm_aniso
+            get_output.puts "#endif  // #{cuda_shared_async}"
+          else
+            print sub_compute_element_cm_aniso
+          end
           comment()
           # iso
           if use_cuda_shared_async then
@@ -1056,6 +1216,9 @@ module BOAST
             print sub_compute_element_cm_tiso
             get_output.puts "#endif  // #{cuda_shared_async}"
           else
+            # old routine
+            #print sub_compute_element_cm_tiso_org
+            # new routine
             print sub_compute_element_cm_tiso
           end
           comment()
@@ -1237,11 +1400,19 @@ module BOAST
 
         if only_anisotropy then
           comment("  // shmem muv for attenuation")
-          decl sh_mul               = Real("sh_mul",               :local => true, :dim => [Dim(5*ngll3)] )
+          decl sh_mul               = Real("sh_mul",               :local => true, :dim => [Dim(2*ngll3)] )
+          comment("  // shmem order c11store,c12store,.. for aniso")
+          decl sh_cstore            = Real("sh_cstore",            :local => true, :dim => [Dim(21*ngll3)] )
         else
-          comment("  // shmem order sh_muv, sh_muh, sh_kappav, sh_kappah, sh_eta_anisostore")
-          decl sh_mul               = Real("sh_mul",               :local => true, :dim => [Dim(5*ngll3)] )
-          decl sh_rstore            = Real("sh_rstore",            :local => true, :dim => [Dim(3*ngll3)] )
+          # original tiso routine
+          #comment("  // shmem order sh_muv, sh_muh, sh_kappav, sh_kappah, sh_eta_anisostore")
+          #decl sh_mul               = Real("sh_mul",               :local => true, :dim => [Dim(5*ngll3)] )
+          #comment("  // shmem order rstore_x,rstore_y,rstore_z for original tiso routine")
+          #decl sh_rstore            = Real("sh_rstore",            :local => true, :dim => [Dim(3*ngll3)] )
+          comment("  // shmem order sh_muv, sh_kappav for iso and attenuation")
+          decl sh_mul               = Real("sh_mul",               :local => true, :dim => [Dim(2*ngll3)] )
+          comment("  // shmem order c11store,c12store,.. for tiso")
+          decl sh_cstore            = Real("sh_cstore",            :local => true, :dim => [Dim(21*ngll3)] )
         end
         comment()
 
@@ -1489,6 +1660,30 @@ module BOAST
                 get_output.puts "      offset = tx + (NGLL3_PADDED * working_element);"
                 cuda_text = "        // muv for attenuation" + endl
                 cuda_text += "        cuda::memcpy_async(thread, sh_mul + tx, d_muvstore + offset, sizeof(float), pipe);" + endl
+                cuda_text += "" + endl
+                cuda_text = "        // c11,c12,.. for aniso" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore              + tx, d_c11store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3      + tx, d_c12store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 2  + tx, d_c13store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 3  + tx, d_c14store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 4  + tx, d_c15store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 5  + tx, d_c16store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 6  + tx, d_c22store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 7  + tx, d_c23store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 8  + tx, d_c24store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 9  + tx, d_c25store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 10 + tx, d_c26store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 11 + tx, d_c33store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 12 + tx, d_c34store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 13 + tx, d_c35store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 14 + tx, d_c36store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 15 + tx, d_c44store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 16 + tx, d_c45store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 17 + tx, d_c46store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 18 + tx, d_c55store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 19 + tx, d_c56store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 20 + tx, d_c66store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "" + endl
                 get_output.puts cuda_text
               }
             else
@@ -1498,17 +1693,45 @@ module BOAST
               print If( ! d_ispec_is_tiso[working_element] => lambda {
                 cuda_text = "        // isotropic" + endl
                 cuda_text += "        cuda::memcpy_async(thread, sh_mul + tx, d_muvstore + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_mul + NGLL3 * 2 + tx, d_kappavstore + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_mul + NGLL3 + tx, d_kappavstore + offset, sizeof(float), pipe);" + endl
                 get_output.puts cuda_text
               }, :else => lambda {
                 cuda_text = "        // tiso" + endl
+                # muv for attenuation routine
+                cuda_text = "        // muv for attenuation" + endl
                 cuda_text += "        cuda::memcpy_async(thread, sh_mul + tx, d_muvstore + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_mul + NGLL3 + tx, d_muhstore + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_mul + NGLL3 * 2 + tx, d_kappavstore + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_mul + NGLL3 * 3 + tx, d_kappahstore + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_mul + NGLL3 * 4 + tx, d_eta_anisostore + offset, sizeof(float), pipe);" + endl
+                # original tiso routine only
+                #cuda_text += "        cuda::memcpy_async(thread, sh_mul + NGLL3 + tx, d_muhstore + offset, sizeof(float), pipe);" + endl
+                #cuda_text += "        cuda::memcpy_async(thread, sh_mul + NGLL3 * 2 + tx, d_kappavstore + offset, sizeof(float), pipe);" + endl
+                #cuda_text += "        cuda::memcpy_async(thread, sh_mul + NGLL3 * 3 + tx, d_kappahstore + offset, sizeof(float), pipe);" + endl
+                #cuda_text += "        cuda::memcpy_async(thread, sh_mul + NGLL3 * 4 + tx, d_eta_anisostore + offset, sizeof(float), pipe);" + endl
+                #cuda_text += "" + endl
+                # original tiso routine only
+                #cuda_text += "        cuda::memcpy_async(thread, ((float3 *)sh_rstore) + tx, ((float3 *)d_rstore) + iglob_1, sizeof(float3), pipe);" + endl
                 cuda_text += "" + endl
-                cuda_text += "        cuda::memcpy_async(thread, ((float3 *)sh_rstore) + tx, ((float3 *)d_rstore) + iglob_1, sizeof(float3), pipe);" + endl
+                cuda_text = "        // c11,c12,.. for tiso" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore              + tx, d_c11store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3      + tx, d_c12store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 2  + tx, d_c13store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 3  + tx, d_c14store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 4  + tx, d_c15store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 5  + tx, d_c16store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 6  + tx, d_c22store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 7  + tx, d_c23store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 8  + tx, d_c24store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 9  + tx, d_c25store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 10 + tx, d_c26store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 11 + tx, d_c33store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 12 + tx, d_c34store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 13 + tx, d_c35store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 14 + tx, d_c36store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 15 + tx, d_c44store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 16 + tx, d_c45store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 17 + tx, d_c46store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 18 + tx, d_c55store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 19 + tx, d_c56store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 20 + tx, d_c66store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "" + endl
                 get_output.puts cuda_text
               })
             #}
@@ -1723,7 +1946,7 @@ module BOAST
           if use_cuda_shared_async then
             comment("// CUDA asynchronuous memory copies")
             cuda_text = "#ifdef #{cuda_shared_async}" + endl
-            cuda_text += "    // makes sure we have sh_mul/sh_rstore/.." + endl
+            cuda_text += "    // makes sure we have sh_mul/sh_cstore/.." + endl
             cuda_text += "    barrier[1].wait(std::move(token1));" + endl
             cuda_text += "    pipe.consumer_release();" + endl
             cuda_text += "#endif  // #{cuda_shared_async}" + endl + endl
@@ -1762,12 +1985,25 @@ module BOAST
               # anisotropic elements
               # fully anisotropic element
               comment("    // anisotropic elements")
+              if use_cuda_shared_async then
+                get_output.puts "#ifdef #{cuda_shared_async}"
+                print sub_compute_element_cm_aniso_async.call( tx,
+                                                               sh_cstore,
+                                                               *(dudl.flatten),
+                                                               duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,
+                                                               sigma[0][0].address, sigma[1][1].address, sigma[2][2].address,
+                                                               sigma[0][1].address, sigma[0][2].address, sigma[1][2].address )
+                get_output.puts "#else"
+              end
               print sub_compute_element_cm_aniso.call( offset,
-                                                      *(d_cstore.flatten.reject { |e| e.nil?}),
-                                                      *(dudl.flatten),
-                                                      duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,
-                                                      sigma[0][0].address, sigma[1][1].address, sigma[2][2].address,
-                                                      sigma[0][1].address, sigma[0][2].address, sigma[1][2].address )
+                                                       *(d_cstore.flatten.reject { |e| e.nil?}),
+                                                       *(dudl.flatten),
+                                                       duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,
+                                                       sigma[0][0].address, sigma[1][1].address, sigma[2][2].address,
+                                                       sigma[0][1].address, sigma[0][2].address, sigma[1][2].address )
+              if use_cuda_shared_async then
+                get_output.puts "#endif  // #{cuda_shared_async}"
+              end
             #}, :else => lambda {
             else
               # iso/tiso elements
@@ -1799,41 +2035,55 @@ module BOAST
               }, :else => lambda {
                 # tiso element
                 comment("      // transversely isotropic")
+                # old way: uses kappav,muv,kappah,.. to compute c11,c12,..
+                #if use_cuda_shared_async then
+                #  get_output.puts "#ifdef #{cuda_shared_async}"
+                #  print sub_compute_element_cm_tiso_async.call( tx,
+                #                                                sh_mul,
+                #                                                *(dudl.flatten),
+                #                                                duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,
+                #                                                iglob[elem_index],
+                #                                                sh_rstore,
+                #                                                sigma[0][0].address, sigma[1][1].address, sigma[2][2].address,
+                #                                                sigma[0][1].address, sigma[0][2].address, sigma[1][2].address )
+                #  get_output.puts "#else"
+                #end
+                #print sub_compute_element_cm_tiso.call( offset,
+                #                                        d_kappavstore, d_muvstore,
+                #                                        d_kappahstore, d_muhstore, d_eta_anisostore,
+                #                                        *(dudl.flatten),
+                #                                        duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,
+                #                                        iglob[elem_index],
+                #                                        d_rstore,
+                #                                        sigma[0][0].address, sigma[1][1].address, sigma[2][2].address,
+                #                                        sigma[0][1].address, sigma[0][2].address, sigma[1][2].address )
+                #if use_cuda_shared_async then
+                #  get_output.puts "#endif  // #{cuda_shared_async}"
+                #end
+
+                # new way: uses pre-computed c11,c12,..
+                # note: CPU routine treats tiso element as fully anisotropic
+                #       this requires all cij store arrays and adds quite a bit of memory consumption.
+                #
                 if use_cuda_shared_async then
                   get_output.puts "#ifdef #{cuda_shared_async}"
                   print sub_compute_element_cm_tiso_async.call( tx,
-                                                                sh_mul,
+                                                                sh_cstore,
                                                                 *(dudl.flatten),
                                                                 duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,
-                                                                iglob[elem_index],
-                                                                sh_rstore,
                                                                 sigma[0][0].address, sigma[1][1].address, sigma[2][2].address,
                                                                 sigma[0][1].address, sigma[0][2].address, sigma[1][2].address )
                   get_output.puts "#else"
                 end
                 print sub_compute_element_cm_tiso.call( offset,
-                                                        d_kappavstore, d_muvstore,
-                                                        d_kappahstore, d_muhstore, d_eta_anisostore,
+                                                        *(d_cstore.flatten.reject { |e| e.nil?}),
                                                         *(dudl.flatten),
                                                         duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,
-                                                        iglob[elem_index],
-                                                        d_rstore,
                                                         sigma[0][0].address, sigma[1][1].address, sigma[2][2].address,
                                                         sigma[0][1].address, sigma[0][2].address, sigma[1][2].address )
                 if use_cuda_shared_async then
                   get_output.puts "#endif  // #{cuda_shared_async}"
                 end
-
-                # note: CPU routine treats tiso element as fully anisotropic
-                #       this requires all cij store arrays and adds quite a bit of memory consumption.
-                #       thus, for now we still use the tiso routine above instead... maybe for future use
-                #
-                # print sub_compute_element_cm_aniso.call( offset,
-                #                                        *(d_cstore.flatten.reject { |e| e.nil?}),
-                #                                        *(dudl.flatten),
-                #                                        duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,
-                #                                        sigma[0][0].address, sigma[1][1].address, sigma[2][2].address,
-                #                                        sigma[0][1].address, sigma[0][2].address, sigma[1][2].address )
               })
             #})
             end # only_anisotropy

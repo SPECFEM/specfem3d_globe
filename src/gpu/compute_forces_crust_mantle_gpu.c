@@ -281,6 +281,27 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
       clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &betaval.ocl));
       clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &gammaval.ocl));
       clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &tau_sigmainvval.ocl));
+      clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c11store.ocl));
+      clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c12store.ocl));
+      clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c13store.ocl));
+      clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c14store.ocl));
+      clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c15store.ocl));
+      clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c16store.ocl));
+      clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c22store.ocl));
+      clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c23store.ocl));
+      clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c24store.ocl));
+      clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c25store.ocl));
+      clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c26store.ocl));
+      clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c33store.ocl));
+      clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c34store.ocl));
+      clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c35store.ocl));
+      clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c36store.ocl));
+      clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c44store.ocl));
+      clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c45store.ocl));
+      clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c46store.ocl));
+      clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c55store.ocl));
+      clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c56store.ocl));
+      clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c66store.ocl));
       clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_rstore_crust_mantle.ocl));
       clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (int), (void *) &mp->gravity));
       clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_gravity_pre_store_crust_mantle.ocl));
@@ -489,6 +510,13 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
                                                                    betaval.cuda,
                                                                    gammaval.cuda,
                                                                    tau_sigmainvval.cuda,
+                                                                   d_c11store.cuda,d_c12store.cuda,d_c13store.cuda,
+                                                                   d_c14store.cuda,d_c15store.cuda,d_c16store.cuda,
+                                                                   d_c22store.cuda,d_c23store.cuda,d_c24store.cuda,
+                                                                   d_c25store.cuda,d_c26store.cuda,d_c33store.cuda,
+                                                                   d_c34store.cuda,d_c35store.cuda,d_c36store.cuda,
+                                                                   d_c44store.cuda,d_c45store.cuda,d_c46store.cuda,
+                                                                   d_c55store.cuda,d_c56store.cuda,d_c66store.cuda,
                                                                    mp->d_rstore_crust_mantle.cuda,
                                                                    mp->gravity,
                                                                    mp->d_gravity_pre_store_crust_mantle.cuda,
@@ -674,6 +702,13 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
                                                                betaval.hip,
                                                                gammaval.hip,
                                                                tau_sigmainvval.hip,
+                                                               d_c11store.hip,d_c12store.hip,d_c13store.hip,
+                                                               d_c14store.hip,d_c15store.hip,d_c16store.hip,
+                                                               d_c22store.hip,d_c23store.hip,d_c24store.hip,
+                                                               d_c25store.hip,d_c26store.hip,d_c33store.hip,
+                                                               d_c34store.hip,d_c35store.hip,d_c36store.hip,
+                                                               d_c44store.hip,d_c45store.hip,d_c46store.hip,
+                                                               d_c55store.hip,d_c56store.hip,d_c66store.hip, // d_c_ALL_store
                                                                mp->d_rstore_crust_mantle.hip,
                                                                mp->gravity,
                                                                mp->d_gravity_pre_store_crust_mantle.hip,
