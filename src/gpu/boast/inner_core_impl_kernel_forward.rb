@@ -84,6 +84,7 @@ module BOAST
   def BOAST::compute_element_cm_aniso(n_gll3 = 125, use_cuda_shared_async = false)
     function_name = "compute_element_cm_aniso"
     v = []
+    ngll3 = Int("NGLL3", :const => n_gll3)
     if use_cuda_shared_async then
       v.push tx                     = Int( "tx",                 :dir => :in)
       v.push sh_cstore              = Real("sh_cstore",          :dir => :in, :dim => [Dim(ngll3), Dim()])
@@ -136,7 +137,7 @@ module BOAST
         (0..5).each { |indx1|
           (0..5).each { |indx2|
             print c[indx1][indx2] === sh_cstore[tx,offset] unless indx2 < indx1
-            offset += 1
+            offset += 1 unless indx2 < indx1
           }
         }
       else
@@ -257,7 +258,6 @@ module BOAST
     # original routine; computes c11,c12,.. based on muv,kappav,muh,..
 
     function_name = "compute_element_cm_tiso_org"
-
     v = []
     ngll3 = Int("NGLL3", :const => n_gll3)
 
@@ -545,8 +545,9 @@ module BOAST
     # see: compute_element_cm_aniso() routine of CPU routines
 
     function_name = "compute_element_cm_tiso"
-
     v = []
+    ngll3 = Int("NGLL3", :const => n_gll3)
+
     if use_cuda_shared_async then
       v.push tx                     = Int( "tx",                 :dir => :in)
       v.push sh_cstore              = Real("sh_cstore",          :dir => :in, :dim => [Dim(ngll3), Dim()])
@@ -599,7 +600,7 @@ module BOAST
         (0..5).each { |indx1|
           (0..5).each { |indx2|
             print c[indx1][indx2] === sh_cstore[tx,offset] unless indx2 < indx1
-            offset += 1
+            offset += 1 unless indx2 < indx1
           }
         }
       else
@@ -810,11 +811,12 @@ module BOAST
 
     # flag for CUDA_SHARED_ASYNC modifications
     use_cuda_shared_async = false
-    #if (type == :crust_mantle and get_lang == CUDA and forward) then
-    #  # due to an issue with linking and multiple definitions due to #include <cuda/pipeline>
-    #  # we limit this feature to the crust_mantle_**_forward.cu implementation
-    #  use_cuda_shared_async = true
-    #end
+    if (type == :crust_mantle and get_lang == CUDA and forward) then
+      # due to an issue with linking and multiple definitions due to #include <cuda/pipeline>
+      # we limit this feature to the crust_mantle_**_forward.cu implementation
+      ## uncomment to enable:
+      #use_cuda_shared_async = true
+    end
 
     v = []
     v.push nb_blocks_to_compute    = Int("nb_blocks_to_compute",     :dir => :in)
@@ -944,6 +946,7 @@ module BOAST
       v.push nspec_strain_only = Int( "NSPEC_CRUST_MANTLE_STRAIN_ONLY", :dir => :in)
     end
 
+    # definitions
     ngllx        = Int("NGLLX", :const => n_gllx)
     ngll2        = Int("NGLL2", :const => n_gll2)
     ngll3        = Int("NGLL3", :const => n_gll3)
@@ -959,6 +962,7 @@ module BOAST
     manually_unrolled_loops = Int("MANUALLY_UNROLLED_LOOPS", :const => unroll_loops)
     use_launch_bounds       = Int("USE_LAUNCH_BOUNDS",       :const => launch_bounds)
     launch_min_blocks       = Int("LAUNCH_MIN_BLOCKS",       :const => min_blocks)
+    cuda_shared_async       = Int("CUDA_SHARED_ASYNC",       :const => use_cuda_shared_async)
 
     constants = []
     textures_fields = []
@@ -1028,9 +1032,6 @@ module BOAST
         end
 
         if use_cuda_shared_async then
-          # definitions
-          cuda_shared_async = Int("CUDA_SHARED_ASYNC", :const => use_cuda_shared_async)
-
           # pragma messages
           comment("// CUDA asynchronuous memory copies")
           get_output.puts "#ifdef #{cuda_shared_async}"
@@ -1655,84 +1656,91 @@ module BOAST
           print If(active[elem_index]) {
             if only_anisotropy then
               # aniso fields c11store/.. not tested yet to move to shared memory
+              get_output.puts "    offset = tx + (NGLL3_PADDED * working_element);"
+              cuda_text = "    // c11,c12,.. for aniso" + endl
+              cuda_text += "    cuda::memcpy_async(thread, sh_cstore              + tx, d_c11store + offset, sizeof(float), pipe);" + endl
+              cuda_text += "    cuda::memcpy_async(thread, sh_cstore + NGLL3      + tx, d_c12store + offset, sizeof(float), pipe);" + endl
+              cuda_text += "    cuda::memcpy_async(thread, sh_cstore + NGLL3 * 2  + tx, d_c13store + offset, sizeof(float), pipe);" + endl
+              cuda_text += "    cuda::memcpy_async(thread, sh_cstore + NGLL3 * 3  + tx, d_c14store + offset, sizeof(float), pipe);" + endl
+              cuda_text += "    cuda::memcpy_async(thread, sh_cstore + NGLL3 * 4  + tx, d_c15store + offset, sizeof(float), pipe);" + endl
+              cuda_text += "    cuda::memcpy_async(thread, sh_cstore + NGLL3 * 5  + tx, d_c16store + offset, sizeof(float), pipe);" + endl
+              cuda_text += "    cuda::memcpy_async(thread, sh_cstore + NGLL3 * 6  + tx, d_c22store + offset, sizeof(float), pipe);" + endl
+              cuda_text += "    cuda::memcpy_async(thread, sh_cstore + NGLL3 * 7  + tx, d_c23store + offset, sizeof(float), pipe);" + endl
+              cuda_text += "    cuda::memcpy_async(thread, sh_cstore + NGLL3 * 8  + tx, d_c24store + offset, sizeof(float), pipe);" + endl
+              cuda_text += "    cuda::memcpy_async(thread, sh_cstore + NGLL3 * 9  + tx, d_c25store + offset, sizeof(float), pipe);" + endl
+              cuda_text += "    cuda::memcpy_async(thread, sh_cstore + NGLL3 * 10 + tx, d_c26store + offset, sizeof(float), pipe);" + endl
+              cuda_text += "    cuda::memcpy_async(thread, sh_cstore + NGLL3 * 11 + tx, d_c33store + offset, sizeof(float), pipe);" + endl
+              cuda_text += "    cuda::memcpy_async(thread, sh_cstore + NGLL3 * 12 + tx, d_c34store + offset, sizeof(float), pipe);" + endl
+              cuda_text += "    cuda::memcpy_async(thread, sh_cstore + NGLL3 * 13 + tx, d_c35store + offset, sizeof(float), pipe);" + endl
+              cuda_text += "    cuda::memcpy_async(thread, sh_cstore + NGLL3 * 14 + tx, d_c36store + offset, sizeof(float), pipe);" + endl
+              cuda_text += "    cuda::memcpy_async(thread, sh_cstore + NGLL3 * 15 + tx, d_c44store + offset, sizeof(float), pipe);" + endl
+              cuda_text += "    cuda::memcpy_async(thread, sh_cstore + NGLL3 * 16 + tx, d_c45store + offset, sizeof(float), pipe);" + endl
+              cuda_text += "    cuda::memcpy_async(thread, sh_cstore + NGLL3 * 17 + tx, d_c46store + offset, sizeof(float), pipe);" + endl
+              cuda_text += "    cuda::memcpy_async(thread, sh_cstore + NGLL3 * 18 + tx, d_c55store + offset, sizeof(float), pipe);" + endl
+              cuda_text += "    cuda::memcpy_async(thread, sh_cstore + NGLL3 * 19 + tx, d_c56store + offset, sizeof(float), pipe);" + endl
+              cuda_text += "    cuda::memcpy_async(thread, sh_cstore + NGLL3 * 20 + tx, d_c66store + offset, sizeof(float), pipe);" + endl
+              cuda_text += "" + endl
+              get_output.puts cuda_text
+
               # muv only needed for attenuation
               print If(Expression("&&", attenuation, !partial_phys_dispersion_only)) {
-                get_output.puts "      offset = tx + (NGLL3_PADDED * working_element);"
-                cuda_text = "        // muv for attenuation" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_mul + tx, d_muvstore + offset, sizeof(float), pipe);" + endl
-                cuda_text += "" + endl
-                cuda_text = "        // c11,c12,.. for aniso" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore              + tx, d_c11store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3      + tx, d_c12store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 2  + tx, d_c13store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 3  + tx, d_c14store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 4  + tx, d_c15store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 5  + tx, d_c16store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 6  + tx, d_c22store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 7  + tx, d_c23store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 8  + tx, d_c24store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 9  + tx, d_c25store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 10 + tx, d_c26store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 11 + tx, d_c33store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 12 + tx, d_c34store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 13 + tx, d_c35store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 14 + tx, d_c36store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 15 + tx, d_c44store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 16 + tx, d_c45store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 17 + tx, d_c46store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 18 + tx, d_c55store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 19 + tx, d_c56store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 20 + tx, d_c66store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "" + endl
+                cuda_text = "      // muv for attenuation" + endl
+                cuda_text += "      cuda::memcpy_async(thread, sh_mul + tx, d_muvstore + offset, sizeof(float), pipe);" + endl
                 get_output.puts cuda_text
               }
             else
               # iso/tiso fields
             #print If( ! anisotropy) {
-              get_output.puts "      offset = tx + (NGLL3_PADDED * working_element);"
+              get_output.puts "    offset = tx + (NGLL3_PADDED * working_element);"
               print If( ! d_ispec_is_tiso[working_element] => lambda {
-                cuda_text = "        // isotropic" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_mul + tx, d_muvstore + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_mul + NGLL3 + tx, d_kappavstore + offset, sizeof(float), pipe);" + endl
+                cuda_text = "      // isotropic" + endl
+                cuda_text += "      cuda::memcpy_async(thread, sh_mul + tx, d_muvstore + offset, sizeof(float), pipe);" + endl
+                cuda_text += "      cuda::memcpy_async(thread, sh_mul + NGLL3 + tx, d_kappavstore + offset, sizeof(float), pipe);" + endl
                 get_output.puts cuda_text
               }, :else => lambda {
-                cuda_text = "        // tiso" + endl
-                # muv for attenuation routine
-                cuda_text = "        // muv for attenuation" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_mul + tx, d_muvstore + offset, sizeof(float), pipe);" + endl
+                cuda_text = "      // tiso" + endl
+
                 # original tiso routine only
+                #cuda_text += "        cuda::memcpy_async(thread, sh_mul + tx, d_muvstore + offset, sizeof(float), pipe);" + endl
                 #cuda_text += "        cuda::memcpy_async(thread, sh_mul + NGLL3 + tx, d_muhstore + offset, sizeof(float), pipe);" + endl
                 #cuda_text += "        cuda::memcpy_async(thread, sh_mul + NGLL3 * 2 + tx, d_kappavstore + offset, sizeof(float), pipe);" + endl
                 #cuda_text += "        cuda::memcpy_async(thread, sh_mul + NGLL3 * 3 + tx, d_kappahstore + offset, sizeof(float), pipe);" + endl
                 #cuda_text += "        cuda::memcpy_async(thread, sh_mul + NGLL3 * 4 + tx, d_eta_anisostore + offset, sizeof(float), pipe);" + endl
                 #cuda_text += "" + endl
-                # original tiso routine only
                 #cuda_text += "        cuda::memcpy_async(thread, ((float3 *)sh_rstore) + tx, ((float3 *)d_rstore) + iglob_1, sizeof(float3), pipe);" + endl
-                cuda_text += "" + endl
-                cuda_text = "        // c11,c12,.. for tiso" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore              + tx, d_c11store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3      + tx, d_c12store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 2  + tx, d_c13store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 3  + tx, d_c14store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 4  + tx, d_c15store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 5  + tx, d_c16store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 6  + tx, d_c22store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 7  + tx, d_c23store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 8  + tx, d_c24store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 9  + tx, d_c25store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 10 + tx, d_c26store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 11 + tx, d_c33store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 12 + tx, d_c34store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 13 + tx, d_c35store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 14 + tx, d_c36store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 15 + tx, d_c44store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 16 + tx, d_c45store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 17 + tx, d_c46store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 18 + tx, d_c55store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 19 + tx, d_c56store + offset, sizeof(float), pipe);" + endl
-                cuda_text += "        cuda::memcpy_async(thread, sh_cstore + NGLL3 * 20 + tx, d_c66store + offset, sizeof(float), pipe);" + endl
+                #cuda_text += "" + endl
+
+                cuda_text += "      // c11,c12,.. for tiso" + endl
+                cuda_text += "      cuda::memcpy_async(thread, sh_cstore              + tx, d_c11store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "      cuda::memcpy_async(thread, sh_cstore + NGLL3      + tx, d_c12store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "      cuda::memcpy_async(thread, sh_cstore + NGLL3 * 2  + tx, d_c13store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "      cuda::memcpy_async(thread, sh_cstore + NGLL3 * 3  + tx, d_c14store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "      cuda::memcpy_async(thread, sh_cstore + NGLL3 * 4  + tx, d_c15store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "      cuda::memcpy_async(thread, sh_cstore + NGLL3 * 5  + tx, d_c16store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "      cuda::memcpy_async(thread, sh_cstore + NGLL3 * 6  + tx, d_c22store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "      cuda::memcpy_async(thread, sh_cstore + NGLL3 * 7  + tx, d_c23store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "      cuda::memcpy_async(thread, sh_cstore + NGLL3 * 8  + tx, d_c24store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "      cuda::memcpy_async(thread, sh_cstore + NGLL3 * 9  + tx, d_c25store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "      cuda::memcpy_async(thread, sh_cstore + NGLL3 * 10 + tx, d_c26store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "      cuda::memcpy_async(thread, sh_cstore + NGLL3 * 11 + tx, d_c33store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "      cuda::memcpy_async(thread, sh_cstore + NGLL3 * 12 + tx, d_c34store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "      cuda::memcpy_async(thread, sh_cstore + NGLL3 * 13 + tx, d_c35store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "      cuda::memcpy_async(thread, sh_cstore + NGLL3 * 14 + tx, d_c36store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "      cuda::memcpy_async(thread, sh_cstore + NGLL3 * 15 + tx, d_c44store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "      cuda::memcpy_async(thread, sh_cstore + NGLL3 * 16 + tx, d_c45store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "      cuda::memcpy_async(thread, sh_cstore + NGLL3 * 17 + tx, d_c46store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "      cuda::memcpy_async(thread, sh_cstore + NGLL3 * 18 + tx, d_c55store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "      cuda::memcpy_async(thread, sh_cstore + NGLL3 * 19 + tx, d_c56store + offset, sizeof(float), pipe);" + endl
+                cuda_text += "      cuda::memcpy_async(thread, sh_cstore + NGLL3 * 20 + tx, d_c66store + offset, sizeof(float), pipe);" + endl
                 cuda_text += "" + endl
                 get_output.puts cuda_text
+
+                # muv only needed for attenuation
+                print If(Expression("&&", attenuation, !partial_phys_dispersion_only)) {
+                  cuda_text = "        // muv for attenuation" + endl
+                  cuda_text += "        cuda::memcpy_async(thread, sh_mul + tx, d_muvstore + offset, sizeof(float), pipe);" + endl
+                  get_output.puts cuda_text
+                }
               })
             #}
             end # only_anisotropy
