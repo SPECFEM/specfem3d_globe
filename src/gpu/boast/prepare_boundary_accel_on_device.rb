@@ -37,7 +37,7 @@ module BOAST
       iinterface = Int("iinterface")
       decl id
       decl iglob
-      decl iloc      
+      decl iloc
       comment()
 
       print id === get_global_id(0)+get_global_size(0)*get_global_id(1)

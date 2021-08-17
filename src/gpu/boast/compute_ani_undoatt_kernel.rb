@@ -74,7 +74,7 @@ module BOAST
       decl eps_trace_over_3 = Real("eps_trace_over_3")
       decl b_eps_trace_over_3 = Real("b_eps_trace_over_3")
       if type == :ani then
-        decl prod = Real("prod", :dim => [Dim(21)], :allocate => true)        
+        decl prod = Real("prod", :dim => [Dim(21)], :allocate => true)
       end
       decl epsdev = Real("epsdev", :dim => [Dim(5)], :allocate => true)
       decl b_epsdev = Real("b_epsdev", :dim => [Dim(5)], :allocate => true)
