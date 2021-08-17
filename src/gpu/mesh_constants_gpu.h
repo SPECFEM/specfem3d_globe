@@ -353,12 +353,6 @@ typedef double realw;
 // see: https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#async_data_operations
 // makes use of async copies, pipelines and cooperative groups, and float3 arrays
 // - w/out cuda_shared_async:
-//  original (combined iso/tiso/aniso) routine:
-//  ptxas info    : Function properties for _Z32crust_mantle_impl_kernel_forward
-//                    32 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
-//  ptxas info    : Used 80 registers, 6200 bytes smem, 1004 bytes cmem[0], 8 bytes cmem[2]
-//
-//  new, splitted aniso & iso/tiso routines:
 //  ptxas info    : Function properties for _Z32crust_mantle_impl_kernel_forward
 //                    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
 //  ptxas info    : Used 48 registers, 6200 bytes smem, 996 bytes cmem[0]
@@ -368,8 +362,12 @@ typedef double realw;
 //
 // - with cuda_shared_async:
 //  ptxas info    : Function properties for _Z32crust_mantle_impl_kernel_forward
-//                    32 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
-//  ptxas info    : Used 82 registers, 26752 bytes smem, 1004 bytes cmem[0], 8 bytes cmem[2]
+//                    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+//  ptxas info    : Used 90 registers, 34252 bytes smem, 996 bytes cmem[0]
+//  ptxas info    : Compiling entry function '_Z38crust_mantle_aniso_impl_kernel_forward
+//                    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+//  ptxas info    : Used 90 registers, 33752 bytes smem, 956 bytes cmem[0]
+// no performance gain so far...
 //#define CUDA_SHARED_ASYNC
 #endif
 

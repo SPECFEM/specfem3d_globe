@@ -814,8 +814,8 @@ module BOAST
     if (type == :crust_mantle and get_lang == CUDA and forward) then
       # due to an issue with linking and multiple definitions due to #include <cuda/pipeline>
       # we limit this feature to the crust_mantle_**_forward.cu implementation
-      ## uncomment to enable:
-      #use_cuda_shared_async = true
+      ## un/comment to enable/disable:
+      use_cuda_shared_async = true
     end
 
     v = []
@@ -1097,8 +1097,11 @@ module BOAST
         sub_compute_element_cm_tiso = compute_element_cm_tiso
         sub_compute_element_cm_iso = compute_element_cm_iso
         if use_cuda_shared_async then
+          # aniso
           sub_compute_element_cm_aniso_async = compute_element_cm_aniso(n_gll3, true)
+          # tiso
           sub_compute_element_cm_tiso_async = compute_element_cm_tiso(n_gll3, true)
+          # iso
           sub_compute_element_cm_iso_async = compute_element_cm_iso(n_gll3, true)
         end
       end
@@ -1401,7 +1404,7 @@ module BOAST
 
         if only_anisotropy then
           comment("  // shmem muv for attenuation")
-          decl sh_mul               = Real("sh_mul",               :local => true, :dim => [Dim(2*ngll3)] )
+          decl sh_mul               = Real("sh_mul",               :local => true, :dim => [Dim(ngll3)] )
           comment("  // shmem order c11store,c12store,.. for aniso")
           decl sh_cstore            = Real("sh_cstore",            :local => true, :dim => [Dim(21*ngll3)] )
         else
@@ -1954,7 +1957,7 @@ module BOAST
           if use_cuda_shared_async then
             comment("// CUDA asynchronuous memory copies")
             cuda_text = "#ifdef #{cuda_shared_async}" + endl
-            cuda_text += "    // makes sure we have sh_mul/sh_cstore/.." + endl
+            cuda_text += "    // makes sure we have sh_mul/.." + endl
             cuda_text += "    barrier[1].wait(std::move(token1));" + endl
             cuda_text += "    pipe.consumer_release();" + endl
             cuda_text += "#endif  // #{cuda_shared_async}" + endl + endl

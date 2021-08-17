@@ -86,6 +86,32 @@
 #pragma message ("\n\nCompiling with: MANUALLY_UNROLLED_LOOPS enabled\n")
 #endif  // MANUALLY_UNROLLED_LOOPS
 
+// CUDA asynchronuous memory copies
+#ifdef CUDA_SHARED_ASYNC
+#pragma message ("\n\nCompiling with: CUDA_SHARED_ASYNC enabled\n")
+#endif  // CUDA_SHARED_ASYNC
+
+// CUDA asynchronuous memory copies
+#ifdef CUDA_SHARED_ASYNC
+#include <cooperative_groups.h>
+#include <cuda/barrier>
+#include <cuda/pipeline>
+#endif  // CUDA_SHARED_ASYNC
+
+#ifdef CUDA_SHARED_ASYNC
+static __device__ __forceinline__ int compute_offset(const int tx, const int i_sls, const int working_element){
+  const int offset = tx + (NGLL3) * (i_sls + (N_SLS) * (working_element));
+  // global memory offset
+  return offset;
+}
+
+static __device__ __forceinline__ int compute_offset_sh(const int tx, const int i_sls){
+  const int offset = tx + (i_sls) * (NGLL3);
+  // shared memory offset
+  return offset;
+}
+#endif  // CUDA_SHARED_ASYNC
+
 
 static __device__ void compute_element_cm_att_stress(const int tx, const int working_element, const float * R_xx, const float * R_yy, const float * R_xy, const float * R_xz, const float * R_yz, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){
   int offset;
@@ -94,7 +120,11 @@ static __device__ void compute_element_cm_att_stress(const int tx, const int wor
 
   for (int i_sls = 0; i_sls <= N_SLS - (1); i_sls += 1) {
 
+#ifdef CUDA_SHARED_ASYNC
+    offset = compute_offset_sh(tx, i_sls);
+#else
     offset = tx + (NGLL3) * (i_sls + (N_SLS) * (working_element));
+#endif
 
     R_xx_val = R_xx[offset];
     R_yy_val = R_yy[offset];
@@ -108,6 +138,50 @@ static __device__ void compute_element_cm_att_stress(const int tx, const int wor
   }
 }
 
+#ifdef CUDA_SHARED_ASYNC
+// CUDA asynchronuous memory copies
+static __device__ void compute_element_cm_att_memory(const int tx, const int working_element, const float * sh_mul, const float * sh_factor_common, const float * alphaval, const float * betaval, const float * gammaval, float * R_xx, float * R_yy, float * R_xy, float * R_xz, float * R_yz, float * sh_R_xx, float * sh_R_yy, float * sh_R_xy, float * sh_R_xz, float * sh_R_yz, const float * epsilondev_xx, const float * epsilondev_yy, const float * epsilondev_xy, const float * epsilondev_xz, const float * epsilondev_yz, const float epsilondev_xx_loc, const float epsilondev_yy_loc, const float epsilondev_xy_loc, const float epsilondev_xz_loc, const float epsilondev_yz_loc, const int USE_3D_ATTENUATION_ARRAYS){
+  int offset;
+  float mul;
+  float factor_loc;
+  float sn;
+  float snp1;
+  float alphaval_loc;
+  float betaval_loc;
+  float gammaval_loc;
+
+  int offset_sh;
+
+  mul = sh_mul[tx];
+
+  for (int i_sls = 0; i_sls <= N_SLS - (1); i_sls += 1) {
+    offset_sh = compute_offset_sh(tx, i_sls);
+    factor_loc = (mul) * (sh_factor_common[offset_sh]);
+    offset = compute_offset(tx, i_sls, working_element);
+
+    alphaval_loc = alphaval[i_sls];
+    betaval_loc = betaval[i_sls];
+    gammaval_loc = gammaval[i_sls];
+
+    sn = (factor_loc) * (epsilondev_xx[tx]);
+    snp1 = (factor_loc) * (epsilondev_xx_loc);
+    R_xx[offset] = (alphaval_loc) * (sh_R_xx[offset_sh]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);
+    sn = (factor_loc) * (epsilondev_yy[tx]);
+    snp1 = (factor_loc) * (epsilondev_yy_loc);
+    R_yy[offset] = (alphaval_loc) * (sh_R_yy[offset_sh]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);
+    sn = (factor_loc) * (epsilondev_xy[tx]);
+    snp1 = (factor_loc) * (epsilondev_xy_loc);
+    R_xy[offset] = (alphaval_loc) * (sh_R_xy[offset_sh]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);
+    sn = (factor_loc) * (epsilondev_xz[tx]);
+    snp1 = (factor_loc) * (epsilondev_xz_loc);
+    R_xz[offset] = (alphaval_loc) * (sh_R_xz[offset_sh]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);
+    sn = (factor_loc) * (epsilondev_yz[tx]);
+    snp1 = (factor_loc) * (epsilondev_yz_loc);
+    R_yz[offset] = (alphaval_loc) * (sh_R_yz[offset_sh]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);
+  }
+}
+#else
+//default (w/out asynchronuous memory copies) routine
 static __device__ void compute_element_cm_att_memory(const int tx, const int working_element, const float * d_muvstore, const float * factor_common, const float * alphaval, const float * betaval, const float * gammaval, float * R_xx, float * R_yy, float * R_xy, float * R_xz, float * R_yz, const float * epsilondev_xx, const float * epsilondev_yy, const float * epsilondev_xy, const float * epsilondev_xz, const float * epsilondev_yz, const float epsilondev_xx_loc, const float epsilondev_yy_loc, const float epsilondev_xy_loc, const float epsilondev_xz_loc, const float epsilondev_yz_loc, const int USE_3D_ATTENUATION_ARRAYS){
   int offset;
   float mul;
@@ -150,7 +224,53 @@ static __device__ void compute_element_cm_att_memory(const int tx, const int wor
     R_yz[offset] = (alphaval_loc) * (R_yz[offset]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);
   }
 }
+#endif  // CUDA_SHARED_ASYNC
 
+#ifdef CUDA_SHARED_ASYNC
+// CUDA asynchronuous memory copies
+static __device__ void compute_element_cm_att_memory_lddrk(const int tx, const int working_element, const float * sh_mul, const float * sh_factor_common, const float * tau_sigmainvval, float * R_xx, float * R_yy, float * R_xy, float * R_xz, float * R_yz, float * sh_R_xx, float * sh_R_yy, float * sh_R_xy, float * sh_R_xz, float * sh_R_yz, float * R_xx_lddrk, float * R_yy_lddrk, float * R_xy_lddrk, float * R_xz_lddrk, float * R_yz_lddrk, const float alpha_lddrk, const float beta_lddrk, const float deltat, const float epsilondev_xx_loc, const float epsilondev_yy_loc, const float epsilondev_xy_loc, const float epsilondev_xz_loc, const float epsilondev_yz_loc, const int USE_3D_ATTENUATION_ARRAYS){
+  int offset;
+  float mul;
+  float factor_loc;
+  float sn;
+  float snp1;
+  float tau_sigmainv_loc;
+
+  int offset_sh;
+
+  mul = sh_mul[tx];
+
+  for (int i_sls = 0; i_sls <= N_SLS - (1); i_sls += 1) {
+    offset_sh = compute_offset_sh(tx, i_sls);
+    factor_loc = (mul) * (sh_factor_common[offset_sh]);
+    offset = compute_offset(tx, i_sls, working_element);
+
+    tau_sigmainv_loc = tau_sigmainvval[i_sls];
+
+    sn = (tau_sigmainv_loc) * (sh_R_xx[offset_sh]);
+    snp1 = (factor_loc) * (epsilondev_xx_loc);
+    R_xx_lddrk[offset] = (alpha_lddrk) * (R_xx_lddrk[offset]) + (deltat) * (snp1 - (sn));
+    R_xx[offset] = sh_R_xx[offset_sh] + (beta_lddrk) * (R_xx_lddrk[offset]);
+    sn = (tau_sigmainv_loc) * (sh_R_yy[offset_sh]);
+    snp1 = (factor_loc) * (epsilondev_yy_loc);
+    R_yy_lddrk[offset] = (alpha_lddrk) * (R_yy_lddrk[offset]) + (deltat) * (snp1 - (sn));
+    R_yy[offset] = sh_R_yy[offset_sh] + (beta_lddrk) * (R_yy_lddrk[offset]);
+    sn = (tau_sigmainv_loc) * (sh_R_xy[offset_sh]);
+    snp1 = (factor_loc) * (epsilondev_xy_loc);
+    R_xy_lddrk[offset] = (alpha_lddrk) * (R_xy_lddrk[offset]) + (deltat) * (snp1 - (sn));
+    R_xy[offset] = sh_R_xy[offset_sh] + (beta_lddrk) * (R_xy_lddrk[offset]);
+    sn = (tau_sigmainv_loc) * (sh_R_xz[offset_sh]);
+    snp1 = (factor_loc) * (epsilondev_xz_loc);
+    R_xz_lddrk[offset] = (alpha_lddrk) * (R_xz_lddrk[offset]) + (deltat) * (snp1 - (sn));
+    R_xz[offset] = sh_R_xz[offset_sh] + (beta_lddrk) * (R_xz_lddrk[offset]);
+    sn = (tau_sigmainv_loc) * (sh_R_yz[offset_sh]);
+    snp1 = (factor_loc) * (epsilondev_yz_loc);
+    R_yz_lddrk[offset] = (alpha_lddrk) * (R_yz_lddrk[offset]) + (deltat) * (snp1 - (sn));
+    R_yz[offset] = sh_R_yz[offset_sh] + (beta_lddrk) * (R_yz_lddrk[offset]);
+  }
+}
+#else
+//default (w/out asynchronuous memory copies) routine
 static __device__ void compute_element_cm_att_memory_lddrk(const int tx, const int working_element, const float * d_muvstore, const float * factor_common, const float * tau_sigmainvval, float * R_xx, float * R_yy, float * R_xy, float * R_xz, float * R_yz, float * R_xx_lddrk, float * R_yy_lddrk, float * R_xy_lddrk, float * R_xz_lddrk, float * R_yz_lddrk, const float alpha_lddrk, const float beta_lddrk, const float deltat, const float epsilondev_xx_loc, const float epsilondev_yy_loc, const float epsilondev_xy_loc, const float epsilondev_xz_loc, const float epsilondev_yz_loc, const int USE_3D_ATTENUATION_ARRAYS){
   int offset;
   float mul;
@@ -193,7 +313,57 @@ static __device__ void compute_element_cm_att_memory_lddrk(const int tx, const i
     R_yz[offset] = R_yz[offset] + (beta_lddrk) * (R_yz_lddrk[offset]);
   }
 }
+#endif  // CUDA_SHARED_ASYNC
 
+#ifdef CUDA_SHARED_ASYNC
+// CUDA asynchronuous memory copies
+static __device__ void compute_element_cm_gravity(const int tx, const int iglob, const float * __restrict__ gravity_pre_store, const float * __restrict__ gravity_H, const float * __restrict__ wgll_cube, const float jacobianl, const float * s_dummy_loc, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_yx, float * sigma_xz, float * sigma_zx, float * sigma_yz, float * sigma_zy, float * rho_s_H1, float * rho_s_H2, float * rho_s_H3){
+  float gxl;
+  float gyl;
+  float gzl;
+  float Hxxl;
+  float Hyyl;
+  float Hzzl;
+  float Hxyl;
+  float Hxzl;
+  float Hyzl;
+  float sx_l;
+  float sy_l;
+  float sz_l;
+  float factor;
+
+  gxl = gravity_pre_store[0 + (3) * (tx)];
+  gyl = gravity_pre_store[1 + (3) * (tx)];
+  gzl = gravity_pre_store[2 + (3) * (tx)];
+
+  Hxxl = gravity_H[0 + (6) * (tx)];
+  Hyyl = gravity_H[1 + (6) * (tx)];
+  Hzzl = gravity_H[2 + (6) * (tx)];
+  Hxyl = gravity_H[3 + (6) * (tx)];
+  Hxzl = gravity_H[4 + (6) * (tx)];
+  Hyzl = gravity_H[5 + (6) * (tx)];
+
+  sx_l = s_dummy_loc[0 + (3) * (tx)];
+  sy_l = s_dummy_loc[1 + (3) * (tx)];
+  sz_l = s_dummy_loc[2 + (3) * (tx)];
+
+  *(sigma_xx) = *(sigma_xx) + (sy_l) * (gyl) + (sz_l) * (gzl);
+  *(sigma_yy) = *(sigma_yy) + (sx_l) * (gxl) + (sz_l) * (gzl);
+  *(sigma_zz) = *(sigma_zz) + (sx_l) * (gxl) + (sy_l) * (gyl);
+  *(sigma_xy) = *(sigma_xy) - ((sx_l) * (gyl));
+  *(sigma_yx) = *(sigma_yx) - ((sy_l) * (gxl));
+  *(sigma_xz) = *(sigma_xz) - ((sx_l) * (gzl));
+  *(sigma_zx) = *(sigma_zx) - ((sz_l) * (gxl));
+  *(sigma_yz) = *(sigma_yz) - ((sy_l) * (gzl));
+  *(sigma_zy) = *(sigma_zy) - ((sz_l) * (gyl));
+
+  factor = (jacobianl) * (wgll_cube[tx]);
+  rho_s_H1[0] = (factor) * ((sx_l) * (Hxxl) + (sy_l) * (Hxyl) + (sz_l) * (Hxzl));
+  rho_s_H2[0] = (factor) * ((sx_l) * (Hxyl) + (sy_l) * (Hyyl) + (sz_l) * (Hyzl));
+  rho_s_H3[0] = (factor) * ((sx_l) * (Hxzl) + (sy_l) * (Hyzl) + (sz_l) * (Hzzl));
+}
+#else
+//default (w/out asynchronuous memory copies) routine
 static __device__ void compute_element_cm_gravity(const int tx, const int iglob, const float * __restrict__ gravity_pre_store, const float * __restrict__ gravity_H, const float * __restrict__ wgll_cube, const float jacobianl, const float * s_dummyx_loc, const float * s_dummyy_loc, const float * s_dummyz_loc, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_yx, float * sigma_xz, float * sigma_zx, float * sigma_yz, float * sigma_zy, float * rho_s_H1, float * rho_s_H2, float * rho_s_H3){
   float gxl;
   float gyl;
@@ -239,7 +409,65 @@ static __device__ void compute_element_cm_gravity(const int tx, const int iglob,
   rho_s_H2[0] = (factor) * ((sx_l) * (Hxyl) + (sy_l) * (Hyyl) + (sz_l) * (Hyzl));
   rho_s_H3[0] = (factor) * ((sx_l) * (Hxzl) + (sy_l) * (Hyzl) + (sz_l) * (Hzzl));
 }
+#endif  // CUDA_SHARED_ASYNC
 
+#ifdef CUDA_SHARED_ASYNC
+// CUDA asynchronuous memory copies
+static __device__ void compute_element_cm_aniso(const int tx, const float * sh_cstore, const float duxdxl, const float duxdyl, const float duxdzl, const float duydxl, const float duydyl, const float duydzl, const float duzdxl, const float duzdyl, const float duzdzl, const float duxdyl_plus_duydxl, const float duzdxl_plus_duxdzl, const float duzdyl_plus_duydzl, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){
+  float c11;
+  float c12;
+  float c13;
+  float c14;
+  float c15;
+  float c16;
+  float c22;
+  float c23;
+  float c24;
+  float c25;
+  float c26;
+  float c33;
+  float c34;
+  float c35;
+  float c36;
+  float c44;
+  float c45;
+  float c46;
+  float c55;
+  float c56;
+  float c66;
+
+// CUDA asynchronuous memory copies
+  c11 = sh_cstore[tx + (NGLL3) * (0)];
+  c12 = sh_cstore[tx + (NGLL3) * (1)];
+  c13 = sh_cstore[tx + (NGLL3) * (2)];
+  c14 = sh_cstore[tx + (NGLL3) * (3)];
+  c15 = sh_cstore[tx + (NGLL3) * (4)];
+  c16 = sh_cstore[tx + (NGLL3) * (5)];
+  c22 = sh_cstore[tx + (NGLL3) * (6)];
+  c23 = sh_cstore[tx + (NGLL3) * (7)];
+  c24 = sh_cstore[tx + (NGLL3) * (8)];
+  c25 = sh_cstore[tx + (NGLL3) * (9)];
+  c26 = sh_cstore[tx + (NGLL3) * (10)];
+  c33 = sh_cstore[tx + (NGLL3) * (11)];
+  c34 = sh_cstore[tx + (NGLL3) * (12)];
+  c35 = sh_cstore[tx + (NGLL3) * (13)];
+  c36 = sh_cstore[tx + (NGLL3) * (14)];
+  c44 = sh_cstore[tx + (NGLL3) * (15)];
+  c45 = sh_cstore[tx + (NGLL3) * (16)];
+  c46 = sh_cstore[tx + (NGLL3) * (17)];
+  c55 = sh_cstore[tx + (NGLL3) * (18)];
+  c56 = sh_cstore[tx + (NGLL3) * (19)];
+  c66 = sh_cstore[tx + (NGLL3) * (20)];
+
+  *(sigma_xx) = (c11) * (duxdxl) + (c16) * (duxdyl_plus_duydxl) + (c12) * (duydyl) + (c15) * (duzdxl_plus_duxdzl) + (c14) * (duzdyl_plus_duydzl) + (c13) * (duzdzl);
+  *(sigma_yy) = (c12) * (duxdxl) + (c26) * (duxdyl_plus_duydxl) + (c22) * (duydyl) + (c25) * (duzdxl_plus_duxdzl) + (c24) * (duzdyl_plus_duydzl) + (c23) * (duzdzl);
+  *(sigma_zz) = (c13) * (duxdxl) + (c36) * (duxdyl_plus_duydxl) + (c23) * (duydyl) + (c35) * (duzdxl_plus_duxdzl) + (c34) * (duzdyl_plus_duydzl) + (c33) * (duzdzl);
+  *(sigma_xy) = (c16) * (duxdxl) + (c66) * (duxdyl_plus_duydxl) + (c26) * (duydyl) + (c56) * (duzdxl_plus_duxdzl) + (c46) * (duzdyl_plus_duydzl) + (c36) * (duzdzl);
+  *(sigma_xz) = (c15) * (duxdxl) + (c56) * (duxdyl_plus_duydxl) + (c25) * (duydyl) + (c55) * (duzdxl_plus_duxdzl) + (c45) * (duzdyl_plus_duydzl) + (c35) * (duzdzl);
+  *(sigma_yz) = (c14) * (duxdxl) + (c46) * (duxdyl_plus_duydxl) + (c24) * (duydyl) + (c45) * (duzdxl_plus_duxdzl) + (c44) * (duzdyl_plus_duydzl) + (c34) * (duzdzl);
+}
+#else
+//default (w/out asynchronuous memory copies) routine
 static __device__ void compute_element_cm_aniso(const int offset, const float * d_c11store, const float * d_c12store, const float * d_c13store, const float * d_c14store, const float * d_c15store, const float * d_c16store, const float * d_c22store, const float * d_c23store, const float * d_c24store, const float * d_c25store, const float * d_c26store, const float * d_c33store, const float * d_c34store, const float * d_c35store, const float * d_c36store, const float * d_c44store, const float * d_c45store, const float * d_c46store, const float * d_c55store, const float * d_c56store, const float * d_c66store, const float duxdxl, const float duxdyl, const float duxdzl, const float duydxl, const float duydyl, const float duydzl, const float duzdxl, const float duzdyl, const float duzdzl, const float duxdyl_plus_duydxl, const float duzdxl_plus_duxdzl, const float duzdyl_plus_duydzl, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){
   float c11;
   float c12;
@@ -292,7 +520,31 @@ static __device__ void compute_element_cm_aniso(const int offset, const float * 
   *(sigma_xz) = (c15) * (duxdxl) + (c56) * (duxdyl_plus_duydxl) + (c25) * (duydyl) + (c55) * (duzdxl_plus_duxdzl) + (c45) * (duzdyl_plus_duydzl) + (c35) * (duzdzl);
   *(sigma_yz) = (c14) * (duxdxl) + (c46) * (duxdyl_plus_duydxl) + (c24) * (duydyl) + (c45) * (duzdxl_plus_duxdzl) + (c44) * (duzdyl_plus_duydzl) + (c34) * (duzdzl);
 }
+#endif  // CUDA_SHARED_ASYNC
 
+#ifdef CUDA_SHARED_ASYNC
+// CUDA asynchronuous memory copies
+static __device__ void compute_element_cm_iso(const int tx, const float * sh_mul, const float duxdxl, const float duydyl, const float duzdzl, const float duxdxl_plus_duydyl, const float duxdxl_plus_duzdzl, const float duydyl_plus_duzdzl, const float duxdyl_plus_duydxl, const float duzdxl_plus_duxdzl, const float duzdyl_plus_duydzl, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){
+  float lambdal;
+  float mul;
+  float lambdalplus2mul;
+  float kappal;
+
+  mul = sh_mul[tx + (NGLL3) * (0)];
+  kappal = sh_mul[tx + (NGLL3) * (1)];
+
+  lambdalplus2mul = kappal + (mul) * (1.3333333333333333f);
+  lambdal = lambdalplus2mul - ((mul) * (2.0f));
+
+  *(sigma_xx) = (lambdalplus2mul) * (duxdxl) + (lambdal) * (duydyl_plus_duzdzl);
+  *(sigma_yy) = (lambdalplus2mul) * (duydyl) + (lambdal) * (duxdxl_plus_duzdzl);
+  *(sigma_zz) = (lambdalplus2mul) * (duzdzl) + (lambdal) * (duxdxl_plus_duydyl);
+  *(sigma_xy) = (mul) * (duxdyl_plus_duydxl);
+  *(sigma_xz) = (mul) * (duzdxl_plus_duxdzl);
+  *(sigma_yz) = (mul) * (duzdyl_plus_duydzl);
+}
+#else
+//default (w/out asynchronuous memory copies) routine
 static __device__ void compute_element_cm_iso(const int offset, const float * d_kappavstore, const float * d_muvstore, const float duxdxl, const float duydyl, const float duzdzl, const float duxdxl_plus_duydyl, const float duxdxl_plus_duzdzl, const float duydyl_plus_duzdzl, const float duxdyl_plus_duydxl, const float duzdxl_plus_duxdzl, const float duzdyl_plus_duydzl, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){
   float lambdal;
   float mul;
@@ -312,7 +564,65 @@ static __device__ void compute_element_cm_iso(const int offset, const float * d_
   *(sigma_xz) = (mul) * (duzdxl_plus_duxdzl);
   *(sigma_yz) = (mul) * (duzdyl_plus_duydzl);
 }
+#endif  // CUDA_SHARED_ASYNC
 
+#ifdef CUDA_SHARED_ASYNC
+// CUDA asynchronuous memory copies
+static __device__ void compute_element_cm_tiso(const int tx, const float * sh_cstore, const float duxdxl, const float duxdyl, const float duxdzl, const float duydxl, const float duydyl, const float duydzl, const float duzdxl, const float duzdyl, const float duzdzl, const float duxdyl_plus_duydxl, const float duzdxl_plus_duxdzl, const float duzdyl_plus_duydzl, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){
+  float c11;
+  float c12;
+  float c13;
+  float c14;
+  float c15;
+  float c16;
+  float c22;
+  float c23;
+  float c24;
+  float c25;
+  float c26;
+  float c33;
+  float c34;
+  float c35;
+  float c36;
+  float c44;
+  float c45;
+  float c46;
+  float c55;
+  float c56;
+  float c66;
+
+// CUDA asynchronuous memory copies
+  c11 = sh_cstore[tx + (NGLL3) * (0)];
+  c12 = sh_cstore[tx + (NGLL3) * (1)];
+  c13 = sh_cstore[tx + (NGLL3) * (2)];
+  c14 = sh_cstore[tx + (NGLL3) * (3)];
+  c15 = sh_cstore[tx + (NGLL3) * (4)];
+  c16 = sh_cstore[tx + (NGLL3) * (5)];
+  c22 = sh_cstore[tx + (NGLL3) * (6)];
+  c23 = sh_cstore[tx + (NGLL3) * (7)];
+  c24 = sh_cstore[tx + (NGLL3) * (8)];
+  c25 = sh_cstore[tx + (NGLL3) * (9)];
+  c26 = sh_cstore[tx + (NGLL3) * (10)];
+  c33 = sh_cstore[tx + (NGLL3) * (11)];
+  c34 = sh_cstore[tx + (NGLL3) * (12)];
+  c35 = sh_cstore[tx + (NGLL3) * (13)];
+  c36 = sh_cstore[tx + (NGLL3) * (14)];
+  c44 = sh_cstore[tx + (NGLL3) * (15)];
+  c45 = sh_cstore[tx + (NGLL3) * (16)];
+  c46 = sh_cstore[tx + (NGLL3) * (17)];
+  c55 = sh_cstore[tx + (NGLL3) * (18)];
+  c56 = sh_cstore[tx + (NGLL3) * (19)];
+  c66 = sh_cstore[tx + (NGLL3) * (20)];
+
+  *(sigma_xx) = (c11) * (duxdxl) + (c16) * (duxdyl_plus_duydxl) + (c12) * (duydyl) + (c15) * (duzdxl_plus_duxdzl) + (c14) * (duzdyl_plus_duydzl) + (c13) * (duzdzl);
+  *(sigma_yy) = (c12) * (duxdxl) + (c26) * (duxdyl_plus_duydxl) + (c22) * (duydyl) + (c25) * (duzdxl_plus_duxdzl) + (c24) * (duzdyl_plus_duydzl) + (c23) * (duzdzl);
+  *(sigma_zz) = (c13) * (duxdxl) + (c36) * (duxdyl_plus_duydxl) + (c23) * (duydyl) + (c35) * (duzdxl_plus_duxdzl) + (c34) * (duzdyl_plus_duydzl) + (c33) * (duzdzl);
+  *(sigma_xy) = (c16) * (duxdxl) + (c66) * (duxdyl_plus_duydxl) + (c26) * (duydyl) + (c56) * (duzdxl_plus_duxdzl) + (c46) * (duzdyl_plus_duydzl) + (c36) * (duzdzl);
+  *(sigma_xz) = (c15) * (duxdxl) + (c56) * (duxdyl_plus_duydxl) + (c25) * (duydyl) + (c55) * (duzdxl_plus_duxdzl) + (c45) * (duzdyl_plus_duydzl) + (c35) * (duzdzl);
+  *(sigma_yz) = (c14) * (duxdxl) + (c46) * (duxdyl_plus_duydxl) + (c24) * (duydyl) + (c45) * (duzdxl_plus_duxdzl) + (c44) * (duzdyl_plus_duydzl) + (c34) * (duzdzl);
+}
+#else
+//default (w/out asynchronuous memory copies) routine
 static __device__ void compute_element_cm_tiso(const int offset, const float * d_c11store, const float * d_c12store, const float * d_c13store, const float * d_c14store, const float * d_c15store, const float * d_c16store, const float * d_c22store, const float * d_c23store, const float * d_c24store, const float * d_c25store, const float * d_c26store, const float * d_c33store, const float * d_c34store, const float * d_c35store, const float * d_c36store, const float * d_c44store, const float * d_c45store, const float * d_c46store, const float * d_c55store, const float * d_c56store, const float * d_c66store, const float duxdxl, const float duxdyl, const float duxdzl, const float duydxl, const float duydyl, const float duydzl, const float duzdxl, const float duzdyl, const float duzdzl, const float duxdyl_plus_duydxl, const float duzdxl_plus_duxdzl, const float duzdyl_plus_duydzl, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){
   float c11;
   float c12;
@@ -365,6 +675,7 @@ static __device__ void compute_element_cm_tiso(const int offset, const float * d
   *(sigma_xz) = (c15) * (duxdxl) + (c56) * (duxdyl_plus_duydxl) + (c25) * (duydyl) + (c55) * (duzdxl_plus_duxdzl) + (c45) * (duzdyl_plus_duydzl) + (c35) * (duzdzl);
   *(sigma_yz) = (c14) * (duxdxl) + (c46) * (duxdyl_plus_duydxl) + (c24) * (duydyl) + (c45) * (duzdxl_plus_duxdzl) + (c44) * (duzdyl_plus_duydzl) + (c34) * (duzdzl);
 }
+#endif  // CUDA_SHARED_ASYNC
 
 
 /*----------------------------------------------*/
@@ -408,9 +719,14 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
   float rho_s_H_1_3;
 
   // shared arrays
+// CUDA asynchronuous memory copies
+#ifdef CUDA_SHARED_ASYNC
+  __shared__ float s_dummy_loc[(NGLL3)*(3)];
+#else
   __shared__ float s_dummyx_loc[(NGLL3)];
   __shared__ float s_dummyy_loc[(NGLL3)];
   __shared__ float s_dummyz_loc[(NGLL3)];
+#endif  // CUDA_SHARED_ASYNC
 
   __shared__ float s_tempx1[(NGLL3)];
   __shared__ float s_tempx2[(NGLL3)];
@@ -424,12 +740,67 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
   __shared__ float sh_hprime_xx[(NGLL2)];
   __shared__ float sh_hprimewgll_xx[(NGLL2)];
 
+// CUDA asynchronuous memory copies
+#ifdef CUDA_SHARED_ASYNC
+  // attenuation
+  __shared__ float sh_factor_common[((N_SLS) * (NGLL3))];
+  __shared__ float sh_R_xx[((N_SLS) * (NGLL3))];
+  __shared__ float sh_R_yy[((N_SLS) * (NGLL3))];
+  __shared__ float sh_R_xy[((N_SLS) * (NGLL3))];
+  __shared__ float sh_R_xz[((N_SLS) * (NGLL3))];
+  __shared__ float sh_R_yz[((N_SLS) * (NGLL3))];
+
+  __shared__ float sh_epsilondev_xx[(NGLL3)];
+  __shared__ float sh_epsilondev_yy[(NGLL3)];
+  __shared__ float sh_epsilondev_xy[(NGLL3)];
+  __shared__ float sh_epsilondev_xz[(NGLL3)];
+  __shared__ float sh_epsilondev_yz[(NGLL3)];
+
+  __shared__ float sh_alphaval[(N_SLS)];
+  __shared__ float sh_betaval[(N_SLS)];
+  __shared__ float sh_gammaval[(N_SLS)];
+
+  // shmem order sh_muv, sh_kappav for iso and attenuation
+  __shared__ float sh_mul[((2) * (NGLL3))];
+  // shmem order c11store,c12store,.. for tiso
+  __shared__ float sh_cstore[((21) * (NGLL3))];
+
+  // gravity
+  // d_gravity_pre_store
+  __shared__ float sh_gravity_pre_store[((3) * (NGLL3))];
+  // d_gravity_H
+  __shared__ float sh_gravity_H[((6) * (NGLL3))];
+  __shared__ float sh_wgll_cube[(NGLL3)];
+
+#pragma diag_suppress static_var_with_dynamic_init
+  using block_barrier = cuda::barrier<cuda::thread_scope_block>;
+  __shared__ block_barrier barrier[2];
+#endif  // CUDA_SHARED_ASYNC
+
   const int bx = (blockIdx.y) * (gridDim.x) + blockIdx.x;
   if (bx >= nb_blocks_to_compute) {
      return ;
   }
 
   const int tx = threadIdx.x;
+
+// CUDA asynchronuous memory copies
+#ifdef CUDA_SHARED_ASYNC
+  auto block = cooperative_groups::this_thread_block();
+  // initializes barriers
+  if (tx == 0){
+    init(&barrier[0], block.size());
+    init(&barrier[1], block.size());
+  }
+  // creates pipeline
+  cuda::pipeline<cuda::thread_scope_thread> pipe = cuda::make_pipeline();
+  auto thread = cooperative_groups::this_thread();
+  // need this for init the barrier
+  block.sync();
+  // stage to get displ/hprime/..
+  pipe.producer_acquire();
+#endif  // CUDA_SHARED_ASYNC
+
 
   active_1 = (tx < NGLL3 ? 1 : 0);
 
@@ -445,13 +816,23 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
 #endif
     iglob_1 = d_ibool[(working_element) * (NGLL3) + tx] - (1);
 #ifdef USE_TEXTURES_FIELDS
+#ifdef CUDA_SHARED_ASYNC
+    s_dummy_loc[0 + (3) * (tx)] = tex1Dfetch(d_displ_cm_tex,(iglob_1) * (3) + 0);
+    s_dummy_loc[1 + (3) * (tx)] = tex1Dfetch(d_displ_cm_tex,(iglob_1) * (3) + 1);
+    s_dummy_loc[2 + (3) * (tx)] = tex1Dfetch(d_displ_cm_tex,(iglob_1) * (3) + 2);
+#else
     s_dummyx_loc[tx] = tex1Dfetch(d_displ_cm_tex,(iglob_1) * (3) + 0);
     s_dummyy_loc[tx] = tex1Dfetch(d_displ_cm_tex,(iglob_1) * (3) + 1);
     s_dummyz_loc[tx] = tex1Dfetch(d_displ_cm_tex,(iglob_1) * (3) + 2);
+#endif  // CUDA_SHARED_ASYNC
+#else
+#ifdef CUDA_SHARED_ASYNC
+    cuda::memcpy_async(thread, ((float3 *)s_dummy_loc) + tx, ((float3 *)(d_displ)) + iglob_1, sizeof(float3), pipe);
 #else
     s_dummyx_loc[tx] = d_displ[0 + (3) * (iglob_1)];
     s_dummyy_loc[tx] = d_displ[1 + (3) * (iglob_1)];
     s_dummyz_loc[tx] = d_displ[2 + (3) * (iglob_1)];
+#endif  // CUDA_SHARED_ASYNC
 #endif
   }
 
@@ -460,16 +841,132 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
     sh_hprime_xx[tx] = tex1Dfetch(d_hprime_xx_tex,tx);
     sh_hprimewgll_xx[tx] = tex1Dfetch(d_hprimewgll_xx_tex,tx);
 #else
+#ifdef CUDA_SHARED_ASYNC
+    cuda::memcpy_async(thread, sh_hprime_xx + tx, d_hprime_xx + tx, sizeof(float), pipe);
+    cuda::memcpy_async(thread, sh_hprimewgll_xx + tx, d_hprimewgll_xx + tx, sizeof(float), pipe);
+#else
     sh_hprime_xx[tx] = d_hprime_xx[tx];
     sh_hprimewgll_xx[tx] = d_hprimewgll_xx[tx];
+#endif  // CUDA_SHARED_ASYNC
 #endif
   }
 
+#ifdef CUDA_SHARED_ASYNC
+#if defined(USE_TEXTURES_FIELDS) || defined(USE_TEXTURES_CONSTANTS)
   __syncthreads();
+#endif
+#else
+  __syncthreads();
+#endif  // CUDA_SHARED_ASYNC
+
+// CUDA asynchronuous memory copies
+#ifdef CUDA_SHARED_ASYNC
+  // commits displ/hprime.. copies to pipeline stage
+  cuda::pipeline_producer_commit(pipe, barrier[0]);
+  auto token0 = barrier[0].arrive();
+#endif  // CUDA_SHARED_ASYNC
 
   K = (tx) / (NGLL2);
   J = (tx - ((K) * (NGLL2))) / (NGLLX);
   I = tx - ((K) * (NGLL2)) - ((J) * (NGLLX));
+
+// CUDA asynchronuous memory copies
+#ifdef CUDA_SHARED_ASYNC
+  // next stage to read muv/kappav/..
+  pipe.producer_acquire();
+
+  if (active_1) {
+    offset = tx + (NGLL3_PADDED * working_element);
+    if ( !(d_ispec_is_tiso[working_element])) {
+      // isotropic
+      cuda::memcpy_async(thread, sh_mul + tx, d_muvstore + offset, sizeof(float), pipe);
+      cuda::memcpy_async(thread, sh_mul + NGLL3 + tx, d_kappavstore + offset, sizeof(float), pipe);
+    } else {
+      // tiso
+      // c11,c12,.. for tiso
+      cuda::memcpy_async(thread, sh_cstore              + tx, d_c11store + offset, sizeof(float), pipe);
+      cuda::memcpy_async(thread, sh_cstore + NGLL3      + tx, d_c12store + offset, sizeof(float), pipe);
+      cuda::memcpy_async(thread, sh_cstore + NGLL3 * 2  + tx, d_c13store + offset, sizeof(float), pipe);
+      cuda::memcpy_async(thread, sh_cstore + NGLL3 * 3  + tx, d_c14store + offset, sizeof(float), pipe);
+      cuda::memcpy_async(thread, sh_cstore + NGLL3 * 4  + tx, d_c15store + offset, sizeof(float), pipe);
+      cuda::memcpy_async(thread, sh_cstore + NGLL3 * 5  + tx, d_c16store + offset, sizeof(float), pipe);
+      cuda::memcpy_async(thread, sh_cstore + NGLL3 * 6  + tx, d_c22store + offset, sizeof(float), pipe);
+      cuda::memcpy_async(thread, sh_cstore + NGLL3 * 7  + tx, d_c23store + offset, sizeof(float), pipe);
+      cuda::memcpy_async(thread, sh_cstore + NGLL3 * 8  + tx, d_c24store + offset, sizeof(float), pipe);
+      cuda::memcpy_async(thread, sh_cstore + NGLL3 * 9  + tx, d_c25store + offset, sizeof(float), pipe);
+      cuda::memcpy_async(thread, sh_cstore + NGLL3 * 10 + tx, d_c26store + offset, sizeof(float), pipe);
+      cuda::memcpy_async(thread, sh_cstore + NGLL3 * 11 + tx, d_c33store + offset, sizeof(float), pipe);
+      cuda::memcpy_async(thread, sh_cstore + NGLL3 * 12 + tx, d_c34store + offset, sizeof(float), pipe);
+      cuda::memcpy_async(thread, sh_cstore + NGLL3 * 13 + tx, d_c35store + offset, sizeof(float), pipe);
+      cuda::memcpy_async(thread, sh_cstore + NGLL3 * 14 + tx, d_c36store + offset, sizeof(float), pipe);
+      cuda::memcpy_async(thread, sh_cstore + NGLL3 * 15 + tx, d_c44store + offset, sizeof(float), pipe);
+      cuda::memcpy_async(thread, sh_cstore + NGLL3 * 16 + tx, d_c45store + offset, sizeof(float), pipe);
+      cuda::memcpy_async(thread, sh_cstore + NGLL3 * 17 + tx, d_c46store + offset, sizeof(float), pipe);
+      cuda::memcpy_async(thread, sh_cstore + NGLL3 * 18 + tx, d_c55store + offset, sizeof(float), pipe);
+      cuda::memcpy_async(thread, sh_cstore + NGLL3 * 19 + tx, d_c56store + offset, sizeof(float), pipe);
+      cuda::memcpy_async(thread, sh_cstore + NGLL3 * 20 + tx, d_c66store + offset, sizeof(float), pipe);
+
+      if (ATTENUATION &&  !(PARTIAL_PHYS_DISPERSION_ONLY)) {
+        // muv for attenuation
+        cuda::memcpy_async(thread, sh_mul + tx, d_muvstore + offset, sizeof(float), pipe);
+      }
+    }
+    if (GRAVITY) {
+      cuda::memcpy_async(thread, sh_wgll_cube + tx, wgll_cube + tx, sizeof(float), pipe);
+      cuda::memcpy_async(thread, sh_gravity_H + 6 * tx, d_gravity_H + 6 * iglob_1, 6 * sizeof(float), pipe);
+      cuda::memcpy_async(thread, ((float3 *)sh_gravity_pre_store) + tx, ((float3 *)d_gravity_pre_store) + iglob_1, sizeof(float3), pipe);
+    }
+    if (ATTENUATION &&  !(PARTIAL_PHYS_DISPERSION_ONLY)) {
+      if ( !(use_lddrk)) {
+        cuda::memcpy_async(thread, sh_epsilondev_xx + tx, epsilondev_xx + tx + (NGLL3 * working_element), sizeof(float), pipe);
+        cuda::memcpy_async(thread, sh_epsilondev_xy + tx, epsilondev_xy + tx + (NGLL3 * working_element), sizeof(float), pipe);
+        cuda::memcpy_async(thread, sh_epsilondev_xz + tx, epsilondev_xz + tx + (NGLL3 * working_element), sizeof(float), pipe);
+        cuda::memcpy_async(thread, sh_epsilondev_yy + tx, epsilondev_yy + tx + (NGLL3 * working_element), sizeof(float), pipe);
+        cuda::memcpy_async(thread, sh_epsilondev_yz + tx, epsilondev_yz + tx + (NGLL3 * working_element), sizeof(float), pipe);
+
+        if (tx < N_SLS) {
+          cuda::memcpy_async(thread, sh_alphaval + tx, alphaval + tx, sizeof(float), pipe);
+          cuda::memcpy_async(thread, sh_betaval + tx, betaval + tx, sizeof(float), pipe);
+          cuda::memcpy_async(thread, sh_gammaval + tx, gammaval + tx, sizeof(float), pipe);
+        }
+      }
+
+      for (int i_sls = 0; i_sls < N_SLS; i_sls += 1) {
+        int offset_sh = compute_offset_sh(tx, i_sls);
+        int offset_sls = compute_offset(tx, i_sls, working_element);
+        cuda::memcpy_async(thread, sh_R_xx + offset_sh, R_xx + offset_sls, sizeof(float), pipe);
+        cuda::memcpy_async(thread, sh_R_xy + offset_sh, R_xy + offset_sls, sizeof(float), pipe);
+        cuda::memcpy_async(thread, sh_R_xz + offset_sh, R_xz + offset_sls, sizeof(float), pipe);
+        cuda::memcpy_async(thread, sh_R_yz + offset_sh, R_yz + offset_sls, sizeof(float), pipe);
+        cuda::memcpy_async(thread, sh_R_yy + offset_sh, R_yy + offset_sls, sizeof(float), pipe);
+
+        if (USE_3D_ATTENUATION_ARRAYS) {
+          cuda::memcpy_async(thread, sh_factor_common + offset_sh, factor_common + offset_sls, sizeof(float), pipe);
+        } else {
+          cuda::memcpy_async(thread, sh_factor_common + offset_sh, factor_common + i_sls + (N_SLS * working_element), sizeof(float), pipe);
+        }
+      }
+    }
+  }
+  // commits muv/.. copies to pipeline stage
+  cuda::pipeline_producer_commit(pipe, barrier[1]);
+  decltype(barrier[1].arrive()) token1;
+
+  if (active_1) {
+    token1 = barrier[1].arrive();
+  } else {
+    barrier[1].arrive_and_drop();
+  }
+
+  // makes sure we have displ/hprime/...
+  barrier[0].wait(std::move(token0));
+  pipe.consumer_release();
+
+  // checks if anything to do
+  if ( !(active_1)) {
+     return ;
+  }
+#endif  // CUDA_SHARED_ASYNC
 
   if (active_1) {
     float tempx1l;
@@ -492,79 +989,187 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
     tempz3l = 0.0f;
 #ifdef MANUALLY_UNROLLED_LOOPS
     fac1 = sh_hprime_xx[(0) * (NGLLX) + I];
+#ifdef CUDA_SHARED_ASYNC
+    tempx1l = tempx1l + (s_dummy_loc[0 + (3) * ((K) * (NGLL2) + (J) * (NGLLX) + 0)]) * (fac1);
+    tempy1l = tempy1l + (s_dummy_loc[1 + (3) * ((K) * (NGLL2) + (J) * (NGLLX) + 0)]) * (fac1);
+    tempz1l = tempz1l + (s_dummy_loc[2 + (3) * ((K) * (NGLL2) + (J) * (NGLLX) + 0)]) * (fac1);
+#else
     tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + 0]) * (fac1);
     tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 0]) * (fac1);
     tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + 0]) * (fac1);
+#endif  // CUDA_SHARED_ASYNC
     fac2 = sh_hprime_xx[(0) * (NGLLX) + J];
+#ifdef CUDA_SHARED_ASYNC
+    tempx2l = tempx2l + (s_dummy_loc[0 + (3) * ((K) * (NGLL2) + (0) * (NGLLX) + I)]) * (fac2);
+    tempy2l = tempy2l + (s_dummy_loc[1 + (3) * ((K) * (NGLL2) + (0) * (NGLLX) + I)]) * (fac2);
+    tempz2l = tempz2l + (s_dummy_loc[2 + (3) * ((K) * (NGLL2) + (0) * (NGLLX) + I)]) * (fac2);
+#else
     tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (0) * (NGLLX) + I]) * (fac2);
     tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (0) * (NGLLX) + I]) * (fac2);
     tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (0) * (NGLLX) + I]) * (fac2);
+#endif  // CUDA_SHARED_ASYNC
     fac3 = sh_hprime_xx[(0) * (NGLLX) + K];
+#ifdef CUDA_SHARED_ASYNC
+    tempx3l = tempx3l + (s_dummy_loc[0 + (3) * ((0) * (NGLL2) + (J) * (NGLLX) + I)]) * (fac3);
+    tempy3l = tempy3l + (s_dummy_loc[1 + (3) * ((0) * (NGLL2) + (J) * (NGLLX) + I)]) * (fac3);
+    tempz3l = tempz3l + (s_dummy_loc[2 + (3) * ((0) * (NGLL2) + (J) * (NGLLX) + I)]) * (fac3);
+#else
     tempx3l = tempx3l + (s_dummyx_loc[(0) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
     tempy3l = tempy3l + (s_dummyy_loc[(0) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
     tempz3l = tempz3l + (s_dummyz_loc[(0) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
+#endif  // CUDA_SHARED_ASYNC
     fac1 = sh_hprime_xx[(1) * (NGLLX) + I];
+#ifdef CUDA_SHARED_ASYNC
+    tempx1l = tempx1l + (s_dummy_loc[0 + (3) * ((K) * (NGLL2) + (J) * (NGLLX) + 1)]) * (fac1);
+    tempy1l = tempy1l + (s_dummy_loc[1 + (3) * ((K) * (NGLL2) + (J) * (NGLLX) + 1)]) * (fac1);
+    tempz1l = tempz1l + (s_dummy_loc[2 + (3) * ((K) * (NGLL2) + (J) * (NGLLX) + 1)]) * (fac1);
+#else
     tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + 1]) * (fac1);
     tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 1]) * (fac1);
     tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + 1]) * (fac1);
+#endif  // CUDA_SHARED_ASYNC
     fac2 = sh_hprime_xx[(1) * (NGLLX) + J];
+#ifdef CUDA_SHARED_ASYNC
+    tempx2l = tempx2l + (s_dummy_loc[0 + (3) * ((K) * (NGLL2) + (1) * (NGLLX) + I)]) * (fac2);
+    tempy2l = tempy2l + (s_dummy_loc[1 + (3) * ((K) * (NGLL2) + (1) * (NGLLX) + I)]) * (fac2);
+    tempz2l = tempz2l + (s_dummy_loc[2 + (3) * ((K) * (NGLL2) + (1) * (NGLLX) + I)]) * (fac2);
+#else
     tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (1) * (NGLLX) + I]) * (fac2);
     tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (1) * (NGLLX) + I]) * (fac2);
     tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (1) * (NGLLX) + I]) * (fac2);
+#endif  // CUDA_SHARED_ASYNC
     fac3 = sh_hprime_xx[(1) * (NGLLX) + K];
+#ifdef CUDA_SHARED_ASYNC
+    tempx3l = tempx3l + (s_dummy_loc[0 + (3) * ((1) * (NGLL2) + (J) * (NGLLX) + I)]) * (fac3);
+    tempy3l = tempy3l + (s_dummy_loc[1 + (3) * ((1) * (NGLL2) + (J) * (NGLLX) + I)]) * (fac3);
+    tempz3l = tempz3l + (s_dummy_loc[2 + (3) * ((1) * (NGLL2) + (J) * (NGLLX) + I)]) * (fac3);
+#else
     tempx3l = tempx3l + (s_dummyx_loc[(1) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
     tempy3l = tempy3l + (s_dummyy_loc[(1) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
     tempz3l = tempz3l + (s_dummyz_loc[(1) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
+#endif  // CUDA_SHARED_ASYNC
     fac1 = sh_hprime_xx[(2) * (NGLLX) + I];
+#ifdef CUDA_SHARED_ASYNC
+    tempx1l = tempx1l + (s_dummy_loc[0 + (3) * ((K) * (NGLL2) + (J) * (NGLLX) + 2)]) * (fac1);
+    tempy1l = tempy1l + (s_dummy_loc[1 + (3) * ((K) * (NGLL2) + (J) * (NGLLX) + 2)]) * (fac1);
+    tempz1l = tempz1l + (s_dummy_loc[2 + (3) * ((K) * (NGLL2) + (J) * (NGLLX) + 2)]) * (fac1);
+#else
     tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + 2]) * (fac1);
     tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 2]) * (fac1);
     tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + 2]) * (fac1);
+#endif  // CUDA_SHARED_ASYNC
     fac2 = sh_hprime_xx[(2) * (NGLLX) + J];
+#ifdef CUDA_SHARED_ASYNC
+    tempx2l = tempx2l + (s_dummy_loc[0 + (3) * ((K) * (NGLL2) + (2) * (NGLLX) + I)]) * (fac2);
+    tempy2l = tempy2l + (s_dummy_loc[1 + (3) * ((K) * (NGLL2) + (2) * (NGLLX) + I)]) * (fac2);
+    tempz2l = tempz2l + (s_dummy_loc[2 + (3) * ((K) * (NGLL2) + (2) * (NGLLX) + I)]) * (fac2);
+#else
     tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (2) * (NGLLX) + I]) * (fac2);
     tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (2) * (NGLLX) + I]) * (fac2);
     tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (2) * (NGLLX) + I]) * (fac2);
+#endif  // CUDA_SHARED_ASYNC
     fac3 = sh_hprime_xx[(2) * (NGLLX) + K];
+#ifdef CUDA_SHARED_ASYNC
+    tempx3l = tempx3l + (s_dummy_loc[0 + (3) * ((2) * (NGLL2) + (J) * (NGLLX) + I)]) * (fac3);
+    tempy3l = tempy3l + (s_dummy_loc[1 + (3) * ((2) * (NGLL2) + (J) * (NGLLX) + I)]) * (fac3);
+    tempz3l = tempz3l + (s_dummy_loc[2 + (3) * ((2) * (NGLL2) + (J) * (NGLLX) + I)]) * (fac3);
+#else
     tempx3l = tempx3l + (s_dummyx_loc[(2) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
     tempy3l = tempy3l + (s_dummyy_loc[(2) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
     tempz3l = tempz3l + (s_dummyz_loc[(2) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
+#endif  // CUDA_SHARED_ASYNC
     fac1 = sh_hprime_xx[(3) * (NGLLX) + I];
+#ifdef CUDA_SHARED_ASYNC
+    tempx1l = tempx1l + (s_dummy_loc[0 + (3) * ((K) * (NGLL2) + (J) * (NGLLX) + 3)]) * (fac1);
+    tempy1l = tempy1l + (s_dummy_loc[1 + (3) * ((K) * (NGLL2) + (J) * (NGLLX) + 3)]) * (fac1);
+    tempz1l = tempz1l + (s_dummy_loc[2 + (3) * ((K) * (NGLL2) + (J) * (NGLLX) + 3)]) * (fac1);
+#else
     tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + 3]) * (fac1);
     tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 3]) * (fac1);
     tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + 3]) * (fac1);
+#endif  // CUDA_SHARED_ASYNC
     fac2 = sh_hprime_xx[(3) * (NGLLX) + J];
+#ifdef CUDA_SHARED_ASYNC
+    tempx2l = tempx2l + (s_dummy_loc[0 + (3) * ((K) * (NGLL2) + (3) * (NGLLX) + I)]) * (fac2);
+    tempy2l = tempy2l + (s_dummy_loc[1 + (3) * ((K) * (NGLL2) + (3) * (NGLLX) + I)]) * (fac2);
+    tempz2l = tempz2l + (s_dummy_loc[2 + (3) * ((K) * (NGLL2) + (3) * (NGLLX) + I)]) * (fac2);
+#else
     tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (3) * (NGLLX) + I]) * (fac2);
     tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (3) * (NGLLX) + I]) * (fac2);
     tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (3) * (NGLLX) + I]) * (fac2);
+#endif  // CUDA_SHARED_ASYNC
     fac3 = sh_hprime_xx[(3) * (NGLLX) + K];
+#ifdef CUDA_SHARED_ASYNC
+    tempx3l = tempx3l + (s_dummy_loc[0 + (3) * ((3) * (NGLL2) + (J) * (NGLLX) + I)]) * (fac3);
+    tempy3l = tempy3l + (s_dummy_loc[1 + (3) * ((3) * (NGLL2) + (J) * (NGLLX) + I)]) * (fac3);
+    tempz3l = tempz3l + (s_dummy_loc[2 + (3) * ((3) * (NGLL2) + (J) * (NGLLX) + I)]) * (fac3);
+#else
     tempx3l = tempx3l + (s_dummyx_loc[(3) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
     tempy3l = tempy3l + (s_dummyy_loc[(3) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
     tempz3l = tempz3l + (s_dummyz_loc[(3) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
+#endif  // CUDA_SHARED_ASYNC
     fac1 = sh_hprime_xx[(4) * (NGLLX) + I];
+#ifdef CUDA_SHARED_ASYNC
+    tempx1l = tempx1l + (s_dummy_loc[0 + (3) * ((K) * (NGLL2) + (J) * (NGLLX) + 4)]) * (fac1);
+    tempy1l = tempy1l + (s_dummy_loc[1 + (3) * ((K) * (NGLL2) + (J) * (NGLLX) + 4)]) * (fac1);
+    tempz1l = tempz1l + (s_dummy_loc[2 + (3) * ((K) * (NGLL2) + (J) * (NGLLX) + 4)]) * (fac1);
+#else
     tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + 4]) * (fac1);
     tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 4]) * (fac1);
     tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + 4]) * (fac1);
+#endif  // CUDA_SHARED_ASYNC
     fac2 = sh_hprime_xx[(4) * (NGLLX) + J];
+#ifdef CUDA_SHARED_ASYNC
+    tempx2l = tempx2l + (s_dummy_loc[0 + (3) * ((K) * (NGLL2) + (4) * (NGLLX) + I)]) * (fac2);
+    tempy2l = tempy2l + (s_dummy_loc[1 + (3) * ((K) * (NGLL2) + (4) * (NGLLX) + I)]) * (fac2);
+    tempz2l = tempz2l + (s_dummy_loc[2 + (3) * ((K) * (NGLL2) + (4) * (NGLLX) + I)]) * (fac2);
+#else
     tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (4) * (NGLLX) + I]) * (fac2);
     tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (4) * (NGLLX) + I]) * (fac2);
     tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (4) * (NGLLX) + I]) * (fac2);
+#endif  // CUDA_SHARED_ASYNC
     fac3 = sh_hprime_xx[(4) * (NGLLX) + K];
+#ifdef CUDA_SHARED_ASYNC
+    tempx3l = tempx3l + (s_dummy_loc[0 + (3) * ((4) * (NGLL2) + (J) * (NGLLX) + I)]) * (fac3);
+    tempy3l = tempy3l + (s_dummy_loc[1 + (3) * ((4) * (NGLL2) + (J) * (NGLLX) + I)]) * (fac3);
+    tempz3l = tempz3l + (s_dummy_loc[2 + (3) * ((4) * (NGLL2) + (J) * (NGLLX) + I)]) * (fac3);
+#else
     tempx3l = tempx3l + (s_dummyx_loc[(4) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
     tempy3l = tempy3l + (s_dummyy_loc[(4) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
     tempz3l = tempz3l + (s_dummyz_loc[(4) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
+#endif  // CUDA_SHARED_ASYNC
 #else
     for (int l = 0; l <= NGLLX - (1); l += 1) {
       fac1 = sh_hprime_xx[(l) * (NGLLX) + I];
+#ifdef CUDA_SHARED_ASYNC
+      tempx1l = tempx1l + (s_dummy_loc[0 + (3) * ((K) * (NGLL2) + (J) * (NGLLX) + l)]) * (fac1);
+      tempy1l = tempy1l + (s_dummy_loc[1 + (3) * ((K) * (NGLL2) + (J) * (NGLLX) + l)]) * (fac1);
+      tempz1l = tempz1l + (s_dummy_loc[2 + (3) * ((K) * (NGLL2) + (J) * (NGLLX) + l)]) * (fac1);
+#else
       tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + l]) * (fac1);
       tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + l]) * (fac1);
       tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + l]) * (fac1);
+#endif  // CUDA_SHARED_ASYNC
       fac2 = sh_hprime_xx[(l) * (NGLLX) + J];
+#ifdef CUDA_SHARED_ASYNC
+      tempx2l = tempx2l + (s_dummy_loc[0 + (3) * ((K) * (NGLL2) + (l) * (NGLLX) + I)]) * (fac2);
+      tempy2l = tempy2l + (s_dummy_loc[1 + (3) * ((K) * (NGLL2) + (l) * (NGLLX) + I)]) * (fac2);
+      tempz2l = tempz2l + (s_dummy_loc[2 + (3) * ((K) * (NGLL2) + (l) * (NGLLX) + I)]) * (fac2);
+#else
       tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (l) * (NGLLX) + I]) * (fac2);
       tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (l) * (NGLLX) + I]) * (fac2);
       tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (l) * (NGLLX) + I]) * (fac2);
+#endif  // CUDA_SHARED_ASYNC
       fac3 = sh_hprime_xx[(l) * (NGLLX) + K];
+#ifdef CUDA_SHARED_ASYNC
+      tempx3l = tempx3l + (s_dummy_loc[0 + (3) * ((l) * (NGLL2) + (J) * (NGLLX) + I)]) * (fac3);
+      tempy3l = tempy3l + (s_dummy_loc[1 + (3) * ((l) * (NGLL2) + (J) * (NGLLX) + I)]) * (fac3);
+      tempz3l = tempz3l + (s_dummy_loc[2 + (3) * ((l) * (NGLL2) + (J) * (NGLLX) + I)]) * (fac3);
+#else
       tempx3l = tempx3l + (s_dummyx_loc[(l) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
       tempy3l = tempy3l + (s_dummyy_loc[(l) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
       tempz3l = tempz3l + (s_dummyz_loc[(l) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
+#endif  // CUDA_SHARED_ASYNC
     }
 #endif
 
@@ -635,16 +1240,35 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
       }
     }
 
+// CUDA asynchronuous memory copies
+#ifdef CUDA_SHARED_ASYNC
+    // makes sure we have sh_mul/..
+    barrier[1].wait(std::move(token1));
+    pipe.consumer_release();
+#endif  // CUDA_SHARED_ASYNC
+
     if ( !(d_ispec_is_tiso[working_element])) {
       // isotropic elements
+#ifdef CUDA_SHARED_ASYNC
+      compute_element_cm_iso(tx, sh_mul, duxdxl, duydyl, duzdzl, duxdxl_plus_duydyl, duxdxl_plus_duzdzl, duydyl_plus_duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);
+#else
       compute_element_cm_iso(offset, d_kappavstore, d_muvstore, duxdxl, duydyl, duzdzl, duxdxl_plus_duydyl, duxdxl_plus_duzdzl, duydyl_plus_duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);
+#endif  // CUDA_SHARED_ASYNC
     } else {
       // transversely isotropic
+#ifdef CUDA_SHARED_ASYNC
+      compute_element_cm_tiso(tx, sh_cstore, duxdxl, duxdyl, duxdzl, duydxl, duydyl, duydzl, duzdxl, duzdyl, duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);
+#else
       compute_element_cm_tiso(offset, d_c11store, d_c12store, d_c13store, d_c14store, d_c15store, d_c16store, d_c22store, d_c23store, d_c24store, d_c25store, d_c26store, d_c33store, d_c34store, d_c35store, d_c36store, d_c44store, d_c45store, d_c46store, d_c55store, d_c56store, d_c66store, duxdxl, duxdyl, duxdzl, duydxl, duydyl, duydzl, duzdxl, duzdyl, duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);
+#endif  // CUDA_SHARED_ASYNC
     }
 
     if (ATTENUATION &&  !(PARTIAL_PHYS_DISPERSION_ONLY)) {
+#ifdef CUDA_SHARED_ASYNC
+      compute_element_cm_att_stress(tx, working_element, sh_R_xx, sh_R_yy, sh_R_xy, sh_R_xz, sh_R_yz,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);
+#else
       compute_element_cm_att_stress(tx, working_element, R_xx, R_yy, R_xy, R_xz, R_yz,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);
+#endif  // CUDA_SHARED_ASYNC
     }
 
     sigma_yx = sigma_xy;
@@ -655,7 +1279,11 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
     jacobianl = (1.0f) / ((xixl) * ((etayl) * (gammazl) - ((etazl) * (gammayl))) - ((xiyl) * ((etaxl) * (gammazl) - ((etazl) * (gammaxl)))) + (xizl) * ((etaxl) * (gammayl) - ((etayl) * (gammaxl))));
 
     if (GRAVITY) {
+#ifdef CUDA_SHARED_ASYNC
+      compute_element_cm_gravity(tx, iglob_1, sh_gravity_pre_store, sh_gravity_H, sh_wgll_cube, jacobianl, s_dummy_loc,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_yx,  &sigma_xz,  &sigma_zx,  &sigma_yz,  &sigma_zy,  &rho_s_H_1_1,  &rho_s_H_1_2,  &rho_s_H_1_3);
+#else
       compute_element_cm_gravity(tx, iglob_1, d_gravity_pre_store, d_gravity_H, wgll_cube, jacobianl, s_dummyx_loc, s_dummyy_loc, s_dummyz_loc,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_yx,  &sigma_xz,  &sigma_zx,  &sigma_yz,  &sigma_zy,  &rho_s_H_1_1,  &rho_s_H_1_2,  &rho_s_H_1_3);
+#endif  // CUDA_SHARED_ASYNC
     }
 
     s_tempx1[tx] = (jacobianl) * ((sigma_xx) * (xixl) + (sigma_yx) * (xiyl) + (sigma_zx) * (xizl));
@@ -828,9 +1456,17 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
 
     if (ATTENUATION &&  !(PARTIAL_PHYS_DISPERSION_ONLY)) {
       if ( !(use_lddrk)) {
+#ifdef CUDA_SHARED_ASYNC
+        compute_element_cm_att_memory(tx, working_element, sh_mul, sh_factor_common, sh_alphaval, sh_betaval, sh_gammaval, R_xx, R_yy, R_xy, R_xz, R_yz, sh_R_xx, sh_R_yy, sh_R_xy, sh_R_xz, sh_R_yz, sh_epsilondev_xx, sh_epsilondev_yy, sh_epsilondev_xy, sh_epsilondev_xz, sh_epsilondev_yz, epsilondev_xx_loc_1, epsilondev_yy_loc_1, epsilondev_xy_loc_1, epsilondev_xz_loc_1, epsilondev_yz_loc_1, USE_3D_ATTENUATION_ARRAYS);
+#else
         compute_element_cm_att_memory(tx, working_element, d_muvstore, factor_common, alphaval, betaval, gammaval, R_xx, R_yy, R_xy, R_xz, R_yz, epsilondev_xx, epsilondev_yy, epsilondev_xy, epsilondev_xz, epsilondev_yz, epsilondev_xx_loc_1, epsilondev_yy_loc_1, epsilondev_xy_loc_1, epsilondev_xz_loc_1, epsilondev_yz_loc_1, USE_3D_ATTENUATION_ARRAYS);
+#endif  // CUDA_SHARED_ASYNC
       } else {
+#ifdef CUDA_SHARED_ASYNC
+        compute_element_cm_att_memory_lddrk(tx, working_element, sh_mul, sh_factor_common, tau_sigmainvval, R_xx, R_yy, R_xy, R_xz, R_yz, sh_R_xx, sh_R_yy, sh_R_xy, sh_R_xz, sh_R_yz, R_xx_lddrk, R_yy_lddrk, R_xy_lddrk, R_xz_lddrk, R_yz_lddrk, alpha_lddrk, beta_lddrk, deltat, epsilondev_xx_loc_1, epsilondev_yy_loc_1, epsilondev_xy_loc_1, epsilondev_xz_loc_1, epsilondev_yz_loc_1, USE_3D_ATTENUATION_ARRAYS);
+#else
         compute_element_cm_att_memory_lddrk(tx, working_element, d_muvstore, factor_common, tau_sigmainvval, R_xx, R_yy, R_xy, R_xz, R_yz, R_xx_lddrk, R_yy_lddrk, R_xy_lddrk, R_xz_lddrk, R_yz_lddrk, alpha_lddrk, beta_lddrk, deltat, epsilondev_xx_loc_1, epsilondev_yy_loc_1, epsilondev_xy_loc_1, epsilondev_xz_loc_1, epsilondev_yz_loc_1, USE_3D_ATTENUATION_ARRAYS);
+#endif  // CUDA_SHARED_ASYNC
       }
     }
 
@@ -881,9 +1517,14 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
   float rho_s_H_1_3;
 
   // shared arrays
+// CUDA asynchronuous memory copies
+#ifdef CUDA_SHARED_ASYNC
+  __shared__ float s_dummy_loc[(NGLL3)*(3)];
+#else
   __shared__ float s_dummyx_loc[(NGLL3)];
   __shared__ float s_dummyy_loc[(NGLL3)];
   __shared__ float s_dummyz_loc[(NGLL3)];
+#endif  // CUDA_SHARED_ASYNC
 
   __shared__ float s_tempx1[(NGLL3)];
   __shared__ float s_tempx2[(NGLL3)];
@@ -897,12 +1538,67 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
   __shared__ float sh_hprime_xx[(NGLL2)];
   __shared__ float sh_hprimewgll_xx[(NGLL2)];
 
+// CUDA asynchronuous memory copies
+#ifdef CUDA_SHARED_ASYNC
+  // attenuation
+  __shared__ float sh_factor_common[((N_SLS) * (NGLL3))];
+  __shared__ float sh_R_xx[((N_SLS) * (NGLL3))];
+  __shared__ float sh_R_yy[((N_SLS) * (NGLL3))];
+  __shared__ float sh_R_xy[((N_SLS) * (NGLL3))];
+  __shared__ float sh_R_xz[((N_SLS) * (NGLL3))];
+  __shared__ float sh_R_yz[((N_SLS) * (NGLL3))];
+
+  __shared__ float sh_epsilondev_xx[(NGLL3)];
+  __shared__ float sh_epsilondev_yy[(NGLL3)];
+  __shared__ float sh_epsilondev_xy[(NGLL3)];
+  __shared__ float sh_epsilondev_xz[(NGLL3)];
+  __shared__ float sh_epsilondev_yz[(NGLL3)];
+
+  __shared__ float sh_alphaval[(N_SLS)];
+  __shared__ float sh_betaval[(N_SLS)];
+  __shared__ float sh_gammaval[(N_SLS)];
+
+  // shmem muv for attenuation
+  __shared__ float sh_mul[(NGLL3)];
+  // shmem order c11store,c12store,.. for aniso
+  __shared__ float sh_cstore[((21) * (NGLL3))];
+
+  // gravity
+  // d_gravity_pre_store
+  __shared__ float sh_gravity_pre_store[((3) * (NGLL3))];
+  // d_gravity_H
+  __shared__ float sh_gravity_H[((6) * (NGLL3))];
+  __shared__ float sh_wgll_cube[(NGLL3)];
+
+#pragma diag_suppress static_var_with_dynamic_init
+  using block_barrier = cuda::barrier<cuda::thread_scope_block>;
+  __shared__ block_barrier barrier[2];
+#endif  // CUDA_SHARED_ASYNC
+
   const int bx = (blockIdx.y) * (gridDim.x) + blockIdx.x;
   if (bx >= nb_blocks_to_compute) {
      return ;
   }
 
   const int tx = threadIdx.x;
+
+// CUDA asynchronuous memory copies
+#ifdef CUDA_SHARED_ASYNC
+  auto block = cooperative_groups::this_thread_block();
+  // initializes barriers
+  if (tx == 0){
+    init(&barrier[0], block.size());
+    init(&barrier[1], block.size());
+  }
+  // creates pipeline
+  cuda::pipeline<cuda::thread_scope_thread> pipe = cuda::make_pipeline();
+  auto thread = cooperative_groups::this_thread();
+  // need this for init the barrier
+  block.sync();
+  // stage to get displ/hprime/..
+  pipe.producer_acquire();
+#endif  // CUDA_SHARED_ASYNC
+
 
   active_1 = (tx < NGLL3 ? 1 : 0);
 
@@ -918,13 +1614,23 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
 #endif
     iglob_1 = d_ibool[(working_element) * (NGLL3) + tx] - (1);
 #ifdef USE_TEXTURES_FIELDS
+#ifdef CUDA_SHARED_ASYNC
+    s_dummy_loc[0 + (3) * (tx)] = tex1Dfetch(d_displ_cm_tex,(iglob_1) * (3) + 0);
+    s_dummy_loc[1 + (3) * (tx)] = tex1Dfetch(d_displ_cm_tex,(iglob_1) * (3) + 1);
+    s_dummy_loc[2 + (3) * (tx)] = tex1Dfetch(d_displ_cm_tex,(iglob_1) * (3) + 2);
+#else
     s_dummyx_loc[tx] = tex1Dfetch(d_displ_cm_tex,(iglob_1) * (3) + 0);
     s_dummyy_loc[tx] = tex1Dfetch(d_displ_cm_tex,(iglob_1) * (3) + 1);
     s_dummyz_loc[tx] = tex1Dfetch(d_displ_cm_tex,(iglob_1) * (3) + 2);
+#endif  // CUDA_SHARED_ASYNC
+#else
+#ifdef CUDA_SHARED_ASYNC
+    cuda::memcpy_async(thread, ((float3 *)s_dummy_loc) + tx, ((float3 *)(d_displ)) + iglob_1, sizeof(float3), pipe);
 #else
     s_dummyx_loc[tx] = d_displ[0 + (3) * (iglob_1)];
     s_dummyy_loc[tx] = d_displ[1 + (3) * (iglob_1)];
     s_dummyz_loc[tx] = d_displ[2 + (3) * (iglob_1)];
+#endif  // CUDA_SHARED_ASYNC
 #endif
   }
 
@@ -933,16 +1639,125 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
     sh_hprime_xx[tx] = tex1Dfetch(d_hprime_xx_tex,tx);
     sh_hprimewgll_xx[tx] = tex1Dfetch(d_hprimewgll_xx_tex,tx);
 #else
+#ifdef CUDA_SHARED_ASYNC
+    cuda::memcpy_async(thread, sh_hprime_xx + tx, d_hprime_xx + tx, sizeof(float), pipe);
+    cuda::memcpy_async(thread, sh_hprimewgll_xx + tx, d_hprimewgll_xx + tx, sizeof(float), pipe);
+#else
     sh_hprime_xx[tx] = d_hprime_xx[tx];
     sh_hprimewgll_xx[tx] = d_hprimewgll_xx[tx];
+#endif  // CUDA_SHARED_ASYNC
 #endif
   }
 
+#ifdef CUDA_SHARED_ASYNC
+#if defined(USE_TEXTURES_FIELDS) || defined(USE_TEXTURES_CONSTANTS)
   __syncthreads();
+#endif
+#else
+  __syncthreads();
+#endif  // CUDA_SHARED_ASYNC
+
+// CUDA asynchronuous memory copies
+#ifdef CUDA_SHARED_ASYNC
+  // commits displ/hprime.. copies to pipeline stage
+  cuda::pipeline_producer_commit(pipe, barrier[0]);
+  auto token0 = barrier[0].arrive();
+#endif  // CUDA_SHARED_ASYNC
 
   K = (tx) / (NGLL2);
   J = (tx - ((K) * (NGLL2))) / (NGLLX);
   I = tx - ((K) * (NGLL2)) - ((J) * (NGLLX));
+
+// CUDA asynchronuous memory copies
+#ifdef CUDA_SHARED_ASYNC
+  // next stage to read muv/kappav/..
+  pipe.producer_acquire();
+
+  if (active_1) {
+    offset = tx + (NGLL3_PADDED * working_element);
+    // c11,c12,.. for aniso
+    cuda::memcpy_async(thread, sh_cstore              + tx, d_c11store + offset, sizeof(float), pipe);
+    cuda::memcpy_async(thread, sh_cstore + NGLL3      + tx, d_c12store + offset, sizeof(float), pipe);
+    cuda::memcpy_async(thread, sh_cstore + NGLL3 * 2  + tx, d_c13store + offset, sizeof(float), pipe);
+    cuda::memcpy_async(thread, sh_cstore + NGLL3 * 3  + tx, d_c14store + offset, sizeof(float), pipe);
+    cuda::memcpy_async(thread, sh_cstore + NGLL3 * 4  + tx, d_c15store + offset, sizeof(float), pipe);
+    cuda::memcpy_async(thread, sh_cstore + NGLL3 * 5  + tx, d_c16store + offset, sizeof(float), pipe);
+    cuda::memcpy_async(thread, sh_cstore + NGLL3 * 6  + tx, d_c22store + offset, sizeof(float), pipe);
+    cuda::memcpy_async(thread, sh_cstore + NGLL3 * 7  + tx, d_c23store + offset, sizeof(float), pipe);
+    cuda::memcpy_async(thread, sh_cstore + NGLL3 * 8  + tx, d_c24store + offset, sizeof(float), pipe);
+    cuda::memcpy_async(thread, sh_cstore + NGLL3 * 9  + tx, d_c25store + offset, sizeof(float), pipe);
+    cuda::memcpy_async(thread, sh_cstore + NGLL3 * 10 + tx, d_c26store + offset, sizeof(float), pipe);
+    cuda::memcpy_async(thread, sh_cstore + NGLL3 * 11 + tx, d_c33store + offset, sizeof(float), pipe);
+    cuda::memcpy_async(thread, sh_cstore + NGLL3 * 12 + tx, d_c34store + offset, sizeof(float), pipe);
+    cuda::memcpy_async(thread, sh_cstore + NGLL3 * 13 + tx, d_c35store + offset, sizeof(float), pipe);
+    cuda::memcpy_async(thread, sh_cstore + NGLL3 * 14 + tx, d_c36store + offset, sizeof(float), pipe);
+    cuda::memcpy_async(thread, sh_cstore + NGLL3 * 15 + tx, d_c44store + offset, sizeof(float), pipe);
+    cuda::memcpy_async(thread, sh_cstore + NGLL3 * 16 + tx, d_c45store + offset, sizeof(float), pipe);
+    cuda::memcpy_async(thread, sh_cstore + NGLL3 * 17 + tx, d_c46store + offset, sizeof(float), pipe);
+    cuda::memcpy_async(thread, sh_cstore + NGLL3 * 18 + tx, d_c55store + offset, sizeof(float), pipe);
+    cuda::memcpy_async(thread, sh_cstore + NGLL3 * 19 + tx, d_c56store + offset, sizeof(float), pipe);
+    cuda::memcpy_async(thread, sh_cstore + NGLL3 * 20 + tx, d_c66store + offset, sizeof(float), pipe);
+
+    if (ATTENUATION &&  !(PARTIAL_PHYS_DISPERSION_ONLY)) {
+      // muv for attenuation
+      cuda::memcpy_async(thread, sh_mul + tx, d_muvstore + offset, sizeof(float), pipe);
+    }
+    if (GRAVITY) {
+      cuda::memcpy_async(thread, sh_wgll_cube + tx, wgll_cube + tx, sizeof(float), pipe);
+      cuda::memcpy_async(thread, sh_gravity_H + 6 * tx, d_gravity_H + 6 * iglob_1, 6 * sizeof(float), pipe);
+      cuda::memcpy_async(thread, ((float3 *)sh_gravity_pre_store) + tx, ((float3 *)d_gravity_pre_store) + iglob_1, sizeof(float3), pipe);
+    }
+    if (ATTENUATION &&  !(PARTIAL_PHYS_DISPERSION_ONLY)) {
+      if ( !(use_lddrk)) {
+        cuda::memcpy_async(thread, sh_epsilondev_xx + tx, epsilondev_xx + tx + (NGLL3 * working_element), sizeof(float), pipe);
+        cuda::memcpy_async(thread, sh_epsilondev_xy + tx, epsilondev_xy + tx + (NGLL3 * working_element), sizeof(float), pipe);
+        cuda::memcpy_async(thread, sh_epsilondev_xz + tx, epsilondev_xz + tx + (NGLL3 * working_element), sizeof(float), pipe);
+        cuda::memcpy_async(thread, sh_epsilondev_yy + tx, epsilondev_yy + tx + (NGLL3 * working_element), sizeof(float), pipe);
+        cuda::memcpy_async(thread, sh_epsilondev_yz + tx, epsilondev_yz + tx + (NGLL3 * working_element), sizeof(float), pipe);
+
+        if (tx < N_SLS) {
+          cuda::memcpy_async(thread, sh_alphaval + tx, alphaval + tx, sizeof(float), pipe);
+          cuda::memcpy_async(thread, sh_betaval + tx, betaval + tx, sizeof(float), pipe);
+          cuda::memcpy_async(thread, sh_gammaval + tx, gammaval + tx, sizeof(float), pipe);
+        }
+      }
+
+      for (int i_sls = 0; i_sls < N_SLS; i_sls += 1) {
+        int offset_sh = compute_offset_sh(tx, i_sls);
+        int offset_sls = compute_offset(tx, i_sls, working_element);
+        cuda::memcpy_async(thread, sh_R_xx + offset_sh, R_xx + offset_sls, sizeof(float), pipe);
+        cuda::memcpy_async(thread, sh_R_xy + offset_sh, R_xy + offset_sls, sizeof(float), pipe);
+        cuda::memcpy_async(thread, sh_R_xz + offset_sh, R_xz + offset_sls, sizeof(float), pipe);
+        cuda::memcpy_async(thread, sh_R_yz + offset_sh, R_yz + offset_sls, sizeof(float), pipe);
+        cuda::memcpy_async(thread, sh_R_yy + offset_sh, R_yy + offset_sls, sizeof(float), pipe);
+
+        if (USE_3D_ATTENUATION_ARRAYS) {
+          cuda::memcpy_async(thread, sh_factor_common + offset_sh, factor_common + offset_sls, sizeof(float), pipe);
+        } else {
+          cuda::memcpy_async(thread, sh_factor_common + offset_sh, factor_common + i_sls + (N_SLS * working_element), sizeof(float), pipe);
+        }
+      }
+    }
+  }
+  // commits muv/.. copies to pipeline stage
+  cuda::pipeline_producer_commit(pipe, barrier[1]);
+  decltype(barrier[1].arrive()) token1;
+
+  if (active_1) {
+    token1 = barrier[1].arrive();
+  } else {
+    barrier[1].arrive_and_drop();
+  }
+
+  // makes sure we have displ/hprime/...
+  barrier[0].wait(std::move(token0));
+  pipe.consumer_release();
+
+  // checks if anything to do
+  if ( !(active_1)) {
+     return ;
+  }
+#endif  // CUDA_SHARED_ASYNC
 
   if (active_1) {
     float tempx1l;
@@ -965,79 +1780,187 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
     tempz3l = 0.0f;
 #ifdef MANUALLY_UNROLLED_LOOPS
     fac1 = sh_hprime_xx[(0) * (NGLLX) + I];
+#ifdef CUDA_SHARED_ASYNC
+    tempx1l = tempx1l + (s_dummy_loc[0 + (3) * ((K) * (NGLL2) + (J) * (NGLLX) + 0)]) * (fac1);
+    tempy1l = tempy1l + (s_dummy_loc[1 + (3) * ((K) * (NGLL2) + (J) * (NGLLX) + 0)]) * (fac1);
+    tempz1l = tempz1l + (s_dummy_loc[2 + (3) * ((K) * (NGLL2) + (J) * (NGLLX) + 0)]) * (fac1);
+#else
     tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + 0]) * (fac1);
     tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 0]) * (fac1);
     tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + 0]) * (fac1);
+#endif  // CUDA_SHARED_ASYNC
     fac2 = sh_hprime_xx[(0) * (NGLLX) + J];
+#ifdef CUDA_SHARED_ASYNC
+    tempx2l = tempx2l + (s_dummy_loc[0 + (3) * ((K) * (NGLL2) + (0) * (NGLLX) + I)]) * (fac2);
+    tempy2l = tempy2l + (s_dummy_loc[1 + (3) * ((K) * (NGLL2) + (0) * (NGLLX) + I)]) * (fac2);
+    tempz2l = tempz2l + (s_dummy_loc[2 + (3) * ((K) * (NGLL2) + (0) * (NGLLX) + I)]) * (fac2);
+#else
     tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (0) * (NGLLX) + I]) * (fac2);
     tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (0) * (NGLLX) + I]) * (fac2);
     tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (0) * (NGLLX) + I]) * (fac2);
+#endif  // CUDA_SHARED_ASYNC
     fac3 = sh_hprime_xx[(0) * (NGLLX) + K];
+#ifdef CUDA_SHARED_ASYNC
+    tempx3l = tempx3l + (s_dummy_loc[0 + (3) * ((0) * (NGLL2) + (J) * (NGLLX) + I)]) * (fac3);
+    tempy3l = tempy3l + (s_dummy_loc[1 + (3) * ((0) * (NGLL2) + (J) * (NGLLX) + I)]) * (fac3);
+    tempz3l = tempz3l + (s_dummy_loc[2 + (3) * ((0) * (NGLL2) + (J) * (NGLLX) + I)]) * (fac3);
+#else
     tempx3l = tempx3l + (s_dummyx_loc[(0) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
     tempy3l = tempy3l + (s_dummyy_loc[(0) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
     tempz3l = tempz3l + (s_dummyz_loc[(0) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
+#endif  // CUDA_SHARED_ASYNC
     fac1 = sh_hprime_xx[(1) * (NGLLX) + I];
+#ifdef CUDA_SHARED_ASYNC
+    tempx1l = tempx1l + (s_dummy_loc[0 + (3) * ((K) * (NGLL2) + (J) * (NGLLX) + 1)]) * (fac1);
+    tempy1l = tempy1l + (s_dummy_loc[1 + (3) * ((K) * (NGLL2) + (J) * (NGLLX) + 1)]) * (fac1);
+    tempz1l = tempz1l + (s_dummy_loc[2 + (3) * ((K) * (NGLL2) + (J) * (NGLLX) + 1)]) * (fac1);
+#else
     tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + 1]) * (fac1);
     tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 1]) * (fac1);
     tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + 1]) * (fac1);
+#endif  // CUDA_SHARED_ASYNC
     fac2 = sh_hprime_xx[(1) * (NGLLX) + J];
+#ifdef CUDA_SHARED_ASYNC
+    tempx2l = tempx2l + (s_dummy_loc[0 + (3) * ((K) * (NGLL2) + (1) * (NGLLX) + I)]) * (fac2);
+    tempy2l = tempy2l + (s_dummy_loc[1 + (3) * ((K) * (NGLL2) + (1) * (NGLLX) + I)]) * (fac2);
+    tempz2l = tempz2l + (s_dummy_loc[2 + (3) * ((K) * (NGLL2) + (1) * (NGLLX) + I)]) * (fac2);
+#else
     tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (1) * (NGLLX) + I]) * (fac2);
     tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (1) * (NGLLX) + I]) * (fac2);
     tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (1) * (NGLLX) + I]) * (fac2);
+#endif  // CUDA_SHARED_ASYNC
     fac3 = sh_hprime_xx[(1) * (NGLLX) + K];
+#ifdef CUDA_SHARED_ASYNC
+    tempx3l = tempx3l + (s_dummy_loc[0 + (3) * ((1) * (NGLL2) + (J) * (NGLLX) + I)]) * (fac3);
+    tempy3l = tempy3l + (s_dummy_loc[1 + (3) * ((1) * (NGLL2) + (J) * (NGLLX) + I)]) * (fac3);
+    tempz3l = tempz3l + (s_dummy_loc[2 + (3) * ((1) * (NGLL2) + (J) * (NGLLX) + I)]) * (fac3);
+#else
     tempx3l = tempx3l + (s_dummyx_loc[(1) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
     tempy3l = tempy3l + (s_dummyy_loc[(1) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
     tempz3l = tempz3l + (s_dummyz_loc[(1) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
+#endif  // CUDA_SHARED_ASYNC
     fac1 = sh_hprime_xx[(2) * (NGLLX) + I];
+#ifdef CUDA_SHARED_ASYNC
+    tempx1l = tempx1l + (s_dummy_loc[0 + (3) * ((K) * (NGLL2) + (J) * (NGLLX) + 2)]) * (fac1);
+    tempy1l = tempy1l + (s_dummy_loc[1 + (3) * ((K) * (NGLL2) + (J) * (NGLLX) + 2)]) * (fac1);
+    tempz1l = tempz1l + (s_dummy_loc[2 + (3) * ((K) * (NGLL2) + (J) * (NGLLX) + 2)]) * (fac1);
+#else
     tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + 2]) * (fac1);
     tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 2]) * (fac1);
     tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + 2]) * (fac1);
+#endif  // CUDA_SHARED_ASYNC
     fac2 = sh_hprime_xx[(2) * (NGLLX) + J];
+#ifdef CUDA_SHARED_ASYNC
+    tempx2l = tempx2l + (s_dummy_loc[0 + (3) * ((K) * (NGLL2) + (2) * (NGLLX) + I)]) * (fac2);
+    tempy2l = tempy2l + (s_dummy_loc[1 + (3) * ((K) * (NGLL2) + (2) * (NGLLX) + I)]) * (fac2);
+    tempz2l = tempz2l + (s_dummy_loc[2 + (3) * ((K) * (NGLL2) + (2) * (NGLLX) + I)]) * (fac2);
+#else
     tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (2) * (NGLLX) + I]) * (fac2);
     tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (2) * (NGLLX) + I]) * (fac2);
     tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (2) * (NGLLX) + I]) * (fac2);
+#endif  // CUDA_SHARED_ASYNC
     fac3 = sh_hprime_xx[(2) * (NGLLX) + K];
+#ifdef CUDA_SHARED_ASYNC
+    tempx3l = tempx3l + (s_dummy_loc[0 + (3) * ((2) * (NGLL2) + (J) * (NGLLX) + I)]) * (fac3);
+    tempy3l = tempy3l + (s_dummy_loc[1 + (3) * ((2) * (NGLL2) + (J) * (NGLLX) + I)]) * (fac3);
+    tempz3l = tempz3l + (s_dummy_loc[2 + (3) * ((2) * (NGLL2) + (J) * (NGLLX) + I)]) * (fac3);
+#else
     tempx3l = tempx3l + (s_dummyx_loc[(2) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
     tempy3l = tempy3l + (s_dummyy_loc[(2) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
     tempz3l = tempz3l + (s_dummyz_loc[(2) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
+#endif  // CUDA_SHARED_ASYNC
     fac1 = sh_hprime_xx[(3) * (NGLLX) + I];
+#ifdef CUDA_SHARED_ASYNC
+    tempx1l = tempx1l + (s_dummy_loc[0 + (3) * ((K) * (NGLL2) + (J) * (NGLLX) + 3)]) * (fac1);
+    tempy1l = tempy1l + (s_dummy_loc[1 + (3) * ((K) * (NGLL2) + (J) * (NGLLX) + 3)]) * (fac1);
+    tempz1l = tempz1l + (s_dummy_loc[2 + (3) * ((K) * (NGLL2) + (J) * (NGLLX) + 3)]) * (fac1);
+#else
     tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + 3]) * (fac1);
     tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 3]) * (fac1);
     tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + 3]) * (fac1);
+#endif  // CUDA_SHARED_ASYNC
     fac2 = sh_hprime_xx[(3) * (NGLLX) + J];
+#ifdef CUDA_SHARED_ASYNC
+    tempx2l = tempx2l + (s_dummy_loc[0 + (3) * ((K) * (NGLL2) + (3) * (NGLLX) + I)]) * (fac2);
+    tempy2l = tempy2l + (s_dummy_loc[1 + (3) * ((K) * (NGLL2) + (3) * (NGLLX) + I)]) * (fac2);
+    tempz2l = tempz2l + (s_dummy_loc[2 + (3) * ((K) * (NGLL2) + (3) * (NGLLX) + I)]) * (fac2);
+#else
     tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (3) * (NGLLX) + I]) * (fac2);
     tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (3) * (NGLLX) + I]) * (fac2);
     tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (3) * (NGLLX) + I]) * (fac2);
+#endif  // CUDA_SHARED_ASYNC
     fac3 = sh_hprime_xx[(3) * (NGLLX) + K];
+#ifdef CUDA_SHARED_ASYNC
+    tempx3l = tempx3l + (s_dummy_loc[0 + (3) * ((3) * (NGLL2) + (J) * (NGLLX) + I)]) * (fac3);
+    tempy3l = tempy3l + (s_dummy_loc[1 + (3) * ((3) * (NGLL2) + (J) * (NGLLX) + I)]) * (fac3);
+    tempz3l = tempz3l + (s_dummy_loc[2 + (3) * ((3) * (NGLL2) + (J) * (NGLLX) + I)]) * (fac3);
+#else
     tempx3l = tempx3l + (s_dummyx_loc[(3) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
     tempy3l = tempy3l + (s_dummyy_loc[(3) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
     tempz3l = tempz3l + (s_dummyz_loc[(3) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
+#endif  // CUDA_SHARED_ASYNC
     fac1 = sh_hprime_xx[(4) * (NGLLX) + I];
+#ifdef CUDA_SHARED_ASYNC
+    tempx1l = tempx1l + (s_dummy_loc[0 + (3) * ((K) * (NGLL2) + (J) * (NGLLX) + 4)]) * (fac1);
+    tempy1l = tempy1l + (s_dummy_loc[1 + (3) * ((K) * (NGLL2) + (J) * (NGLLX) + 4)]) * (fac1);
+    tempz1l = tempz1l + (s_dummy_loc[2 + (3) * ((K) * (NGLL2) + (J) * (NGLLX) + 4)]) * (fac1);
+#else
     tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + 4]) * (fac1);
     tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 4]) * (fac1);
     tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + 4]) * (fac1);
+#endif  // CUDA_SHARED_ASYNC
     fac2 = sh_hprime_xx[(4) * (NGLLX) + J];
+#ifdef CUDA_SHARED_ASYNC
+    tempx2l = tempx2l + (s_dummy_loc[0 + (3) * ((K) * (NGLL2) + (4) * (NGLLX) + I)]) * (fac2);
+    tempy2l = tempy2l + (s_dummy_loc[1 + (3) * ((K) * (NGLL2) + (4) * (NGLLX) + I)]) * (fac2);
+    tempz2l = tempz2l + (s_dummy_loc[2 + (3) * ((K) * (NGLL2) + (4) * (NGLLX) + I)]) * (fac2);
+#else
     tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (4) * (NGLLX) + I]) * (fac2);
     tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (4) * (NGLLX) + I]) * (fac2);
     tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (4) * (NGLLX) + I]) * (fac2);
+#endif  // CUDA_SHARED_ASYNC
     fac3 = sh_hprime_xx[(4) * (NGLLX) + K];
+#ifdef CUDA_SHARED_ASYNC
+    tempx3l = tempx3l + (s_dummy_loc[0 + (3) * ((4) * (NGLL2) + (J) * (NGLLX) + I)]) * (fac3);
+    tempy3l = tempy3l + (s_dummy_loc[1 + (3) * ((4) * (NGLL2) + (J) * (NGLLX) + I)]) * (fac3);
+    tempz3l = tempz3l + (s_dummy_loc[2 + (3) * ((4) * (NGLL2) + (J) * (NGLLX) + I)]) * (fac3);
+#else
     tempx3l = tempx3l + (s_dummyx_loc[(4) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
     tempy3l = tempy3l + (s_dummyy_loc[(4) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
     tempz3l = tempz3l + (s_dummyz_loc[(4) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
+#endif  // CUDA_SHARED_ASYNC
 #else
     for (int l = 0; l <= NGLLX - (1); l += 1) {
       fac1 = sh_hprime_xx[(l) * (NGLLX) + I];
+#ifdef CUDA_SHARED_ASYNC
+      tempx1l = tempx1l + (s_dummy_loc[0 + (3) * ((K) * (NGLL2) + (J) * (NGLLX) + l)]) * (fac1);
+      tempy1l = tempy1l + (s_dummy_loc[1 + (3) * ((K) * (NGLL2) + (J) * (NGLLX) + l)]) * (fac1);
+      tempz1l = tempz1l + (s_dummy_loc[2 + (3) * ((K) * (NGLL2) + (J) * (NGLLX) + l)]) * (fac1);
+#else
       tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + l]) * (fac1);
       tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + l]) * (fac1);
       tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + l]) * (fac1);
+#endif  // CUDA_SHARED_ASYNC
       fac2 = sh_hprime_xx[(l) * (NGLLX) + J];
+#ifdef CUDA_SHARED_ASYNC
+      tempx2l = tempx2l + (s_dummy_loc[0 + (3) * ((K) * (NGLL2) + (l) * (NGLLX) + I)]) * (fac2);
+      tempy2l = tempy2l + (s_dummy_loc[1 + (3) * ((K) * (NGLL2) + (l) * (NGLLX) + I)]) * (fac2);
+      tempz2l = tempz2l + (s_dummy_loc[2 + (3) * ((K) * (NGLL2) + (l) * (NGLLX) + I)]) * (fac2);
+#else
       tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (l) * (NGLLX) + I]) * (fac2);
       tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (l) * (NGLLX) + I]) * (fac2);
       tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (l) * (NGLLX) + I]) * (fac2);
+#endif  // CUDA_SHARED_ASYNC
       fac3 = sh_hprime_xx[(l) * (NGLLX) + K];
+#ifdef CUDA_SHARED_ASYNC
+      tempx3l = tempx3l + (s_dummy_loc[0 + (3) * ((l) * (NGLL2) + (J) * (NGLLX) + I)]) * (fac3);
+      tempy3l = tempy3l + (s_dummy_loc[1 + (3) * ((l) * (NGLL2) + (J) * (NGLLX) + I)]) * (fac3);
+      tempz3l = tempz3l + (s_dummy_loc[2 + (3) * ((l) * (NGLL2) + (J) * (NGLLX) + I)]) * (fac3);
+#else
       tempx3l = tempx3l + (s_dummyx_loc[(l) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
       tempy3l = tempy3l + (s_dummyy_loc[(l) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
       tempz3l = tempz3l + (s_dummyz_loc[(l) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
+#endif  // CUDA_SHARED_ASYNC
     }
 #endif
 
@@ -1102,11 +2025,26 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
       }
     }
 
+// CUDA asynchronuous memory copies
+#ifdef CUDA_SHARED_ASYNC
+    // makes sure we have sh_mul/..
+    barrier[1].wait(std::move(token1));
+    pipe.consumer_release();
+#endif  // CUDA_SHARED_ASYNC
+
     // anisotropic elements
+#ifdef CUDA_SHARED_ASYNC
+    compute_element_cm_aniso(tx, sh_cstore, duxdxl, duxdyl, duxdzl, duydxl, duydyl, duydzl, duzdxl, duzdyl, duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);
+#else
     compute_element_cm_aniso(offset, d_c11store, d_c12store, d_c13store, d_c14store, d_c15store, d_c16store, d_c22store, d_c23store, d_c24store, d_c25store, d_c26store, d_c33store, d_c34store, d_c35store, d_c36store, d_c44store, d_c45store, d_c46store, d_c55store, d_c56store, d_c66store, duxdxl, duxdyl, duxdzl, duydxl, duydyl, duydzl, duzdxl, duzdyl, duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);
+#endif  // CUDA_SHARED_ASYNC
 
     if (ATTENUATION &&  !(PARTIAL_PHYS_DISPERSION_ONLY)) {
+#ifdef CUDA_SHARED_ASYNC
+      compute_element_cm_att_stress(tx, working_element, sh_R_xx, sh_R_yy, sh_R_xy, sh_R_xz, sh_R_yz,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);
+#else
       compute_element_cm_att_stress(tx, working_element, R_xx, R_yy, R_xy, R_xz, R_yz,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);
+#endif  // CUDA_SHARED_ASYNC
     }
 
     sigma_yx = sigma_xy;
@@ -1117,7 +2055,11 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
     jacobianl = (1.0f) / ((xixl) * ((etayl) * (gammazl) - ((etazl) * (gammayl))) - ((xiyl) * ((etaxl) * (gammazl) - ((etazl) * (gammaxl)))) + (xizl) * ((etaxl) * (gammayl) - ((etayl) * (gammaxl))));
 
     if (GRAVITY) {
+#ifdef CUDA_SHARED_ASYNC
+      compute_element_cm_gravity(tx, iglob_1, sh_gravity_pre_store, sh_gravity_H, sh_wgll_cube, jacobianl, s_dummy_loc,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_yx,  &sigma_xz,  &sigma_zx,  &sigma_yz,  &sigma_zy,  &rho_s_H_1_1,  &rho_s_H_1_2,  &rho_s_H_1_3);
+#else
       compute_element_cm_gravity(tx, iglob_1, d_gravity_pre_store, d_gravity_H, wgll_cube, jacobianl, s_dummyx_loc, s_dummyy_loc, s_dummyz_loc,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_yx,  &sigma_xz,  &sigma_zx,  &sigma_yz,  &sigma_zy,  &rho_s_H_1_1,  &rho_s_H_1_2,  &rho_s_H_1_3);
+#endif  // CUDA_SHARED_ASYNC
     }
 
     s_tempx1[tx] = (jacobianl) * ((sigma_xx) * (xixl) + (sigma_yx) * (xiyl) + (sigma_zx) * (xizl));
@@ -1290,9 +2232,17 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
 
     if (ATTENUATION &&  !(PARTIAL_PHYS_DISPERSION_ONLY)) {
       if ( !(use_lddrk)) {
+#ifdef CUDA_SHARED_ASYNC
+        compute_element_cm_att_memory(tx, working_element, sh_mul, sh_factor_common, sh_alphaval, sh_betaval, sh_gammaval, R_xx, R_yy, R_xy, R_xz, R_yz, sh_R_xx, sh_R_yy, sh_R_xy, sh_R_xz, sh_R_yz, sh_epsilondev_xx, sh_epsilondev_yy, sh_epsilondev_xy, sh_epsilondev_xz, sh_epsilondev_yz, epsilondev_xx_loc_1, epsilondev_yy_loc_1, epsilondev_xy_loc_1, epsilondev_xz_loc_1, epsilondev_yz_loc_1, USE_3D_ATTENUATION_ARRAYS);
+#else
         compute_element_cm_att_memory(tx, working_element, d_muvstore, factor_common, alphaval, betaval, gammaval, R_xx, R_yy, R_xy, R_xz, R_yz, epsilondev_xx, epsilondev_yy, epsilondev_xy, epsilondev_xz, epsilondev_yz, epsilondev_xx_loc_1, epsilondev_yy_loc_1, epsilondev_xy_loc_1, epsilondev_xz_loc_1, epsilondev_yz_loc_1, USE_3D_ATTENUATION_ARRAYS);
+#endif  // CUDA_SHARED_ASYNC
       } else {
+#ifdef CUDA_SHARED_ASYNC
+        compute_element_cm_att_memory_lddrk(tx, working_element, sh_mul, sh_factor_common, tau_sigmainvval, R_xx, R_yy, R_xy, R_xz, R_yz, sh_R_xx, sh_R_yy, sh_R_xy, sh_R_xz, sh_R_yz, R_xx_lddrk, R_yy_lddrk, R_xy_lddrk, R_xz_lddrk, R_yz_lddrk, alpha_lddrk, beta_lddrk, deltat, epsilondev_xx_loc_1, epsilondev_yy_loc_1, epsilondev_xy_loc_1, epsilondev_xz_loc_1, epsilondev_yz_loc_1, USE_3D_ATTENUATION_ARRAYS);
+#else
         compute_element_cm_att_memory_lddrk(tx, working_element, d_muvstore, factor_common, tau_sigmainvval, R_xx, R_yy, R_xy, R_xz, R_yz, R_xx_lddrk, R_yy_lddrk, R_xy_lddrk, R_xz_lddrk, R_yz_lddrk, alpha_lddrk, beta_lddrk, deltat, epsilondev_xx_loc_1, epsilondev_yy_loc_1, epsilondev_xy_loc_1, epsilondev_xz_loc_1, epsilondev_yz_loc_1, USE_3D_ATTENUATION_ARRAYS);
+#endif  // CUDA_SHARED_ASYNC
       }
     }
 
