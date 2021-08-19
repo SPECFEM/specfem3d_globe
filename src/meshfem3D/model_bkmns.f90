@@ -29,6 +29,17 @@
 !
 ! based on model format by Caio H. Ciardelli
 !
+! Ciardelli, C., Bozdag, E., Peter, D., and van der Lee, S., 2021.
+! SphGLLTools: A toolbox for visualization of large seismic model files based on 3D spectral-element simulations.
+! Computer & Geosciences, submitted.
+!
+! SphModel package - models in:
+!   https://github.com/caiociardelli/gladm15
+!   https://github.com/caiociardelli/gladm25
+!
+! to use these models, put these model folders into DATA/
+! by default, gladm25 path is used - just modify code below to change default path to gladm15 in case needed.
+!
 !-----------------------
 ! Model parametrization
 !-----------------------
@@ -70,42 +81,61 @@
 
   implicit none
 
+  !! model directory
+  ! GLAD-M25 (default)
+  character(len=32),parameter :: rootdir = 'DATA/gladm25'
+  ! GLAD-M15
+  !character(len=32),parameter :: rootdir = 'DATA/gladm15'
+
   !! constants
-  !integer,parameter :: MAX_STRING_LEN = 200         ! Buffer size for file names
-
-  integer,parameter :: NPT            = 100000      ! Number of interpolation points in the radial basis
-
-  ! total number of blocks: N = NP_b * NT_b * NR_b
-  integer,parameter :: NR_b           = 87          ! Number of points of the block model in the radial direction
-  integer,parameter :: NT_b           = 721         ! Number of points of the block model in the polar direction
-  integer,parameter :: NP_b           = 1441        ! Number of points of the block model in the azimuthal direction
+  !! see original file setup/constants.h in https://github.com/caiociardelli/gladm25
+  integer,parameter :: NPT = 100001      ! Number of interpolation points in the radial basis (must be odd!)
 
   double precision,parameter :: ANGLE_TOLERANCE = 1d-10  ! Water level to convert from Cartesian to spherical coordinates
   double precision,parameter :: WATER_LEVEL     = 1d-15  ! Water level to prevent divisions by zero
 
+  double precision,parameter :: NORM_CMB_R      = 0.54622508d0  ! Normalized core-mantle boundary radius
+  double precision,parameter :: NORM_MOHO_R     = 0.98744310d0  ! Normalized Moho radius
+  double precision,parameter :: NORM_TOP_R      = 1.00078481d0  ! Normalized radius corresponding to the maximum surface altitude
+
+  ! K1 and K2 are constants used to prevent underflow in the Associated Legendre funtions
+  double precision,parameter :: LEGENDRE_K1 = 1d300
+  double precision,parameter :: LEGENDRE_K2 = 1d-150
+
+  ! unused:
+  !integer,parameter :: MAX_STRING_LEN = 200         ! Buffer size for file names
   ! Pi and factors to convert radians to degrees and vice-versa
   !double precision,parameter :: PI              = 3.14159265358979323846d0
-  !double precision,parameter :: R2D             = 180.d0 / 3.14159265358979323846d0
-  !double precision,parameter :: D2R             = 3.14159265358979323846d0 / 180.d0
+  !double precision,parameter :: TO_DEGREE       = 180.d0 / 3.14159265358979323846d0
+  !double precision,parameter :: TO_RADIANS      = 3.14159265358979323846d0 / 180.d0
   !double precision,parameter :: EARTH_R         = 6371.d0     ! Earth radius for models
-
-  double precision,parameter :: NORM_CMB_R      = 0.54622508  ! Normalized core-mantle boundary radius
-  double precision,parameter :: NORM_MOHO_R     = 0.98744310  ! Normalized Moho radius
-  double precision,parameter :: NORM_MAX_H_R    = 1.00094177  ! Normalized maximum distance from the Earth's centre
-                                                              ! to the highest point on the surface of the mesh
-
+  !double precision,parameter :: NORM_MAX_H_R    = 1.00094177  ! Normalized maximum distance from the Earth's centre
+  !                                                            ! to the highest point on the surface of the mesh
+  ! old format legendre routine:
   ! K1, K2 and K3 are constantes used to avoid underflow on the Legendre associated funtions
-  double precision,parameter :: LEGENDRE_K1              = 1d140
-  double precision,parameter :: LEGENDRE_K2              = 1d280
-  double precision,parameter :: LEGENDRE_K3              = 1d-140
+  !double precision,parameter :: LEGENDRE_K1              = 1d140
+  !double precision,parameter :: LEGENDRE_K2              = 1d280
+  !double precision,parameter :: LEGENDRE_K3              = 1d-140
+
+  ! block sizes
+  ! total number of blocks: N = NP_b * NT_b * NR_b
+  ! new format will read in from crustal block files
+  integer :: NR_b = 0   ! Number of points of the block model in the radial direction
+  integer :: NT_b = 0   ! Number of points of the block model in the polar direction
+  integer :: NP_b = 0   ! Number of points of the block model in the azimuthal direction
+
+  ! old format used fixed blocks
+  !integer,parameter :: NR_b           = 87          ! Number of points of the block model in the radial direction
+  !integer,parameter :: NT_b           = 721         ! Number of points of the block model in the polar direction
+  !integer,parameter :: NP_b           = 1441        ! Number of points of the block model in the azimuthal direction
 
   ! number of parameters
-  integer :: BKMNS_NPAR = 6  ! tiso: vpv,vph,vsv,vsh,eta,rho
+  integer,parameter :: BKMNS_NPAR = 6  ! tiso: vpv,vph,vsv,vsh,eta,rho
 
   ! block model arrays (crust/upper mantle)
   real,dimension(:,:,:),allocatable, target :: BKMNS_crust_rho,BKMNS_crust_eta, &
-    BKMNS_crust_vsh,BKMNS_crust_vsv, &
-    BKMNS_crust_vph,BKMNS_crust_vpv
+                                               BKMNS_crust_vsh,BKMNS_crust_vsv, &
+                                               BKMNS_crust_vph,BKMNS_crust_vpv
 
   ! values at surface
   real,dimension(:,:,:), allocatable :: BKMNS_crust_surface_value
@@ -121,9 +151,10 @@
   double precision,dimension(:), allocatable, target :: T_zone2,T_zone3,T_zone4
 
   ! spherical harmonics degree
-  integer :: degree_N_zone2,degree_N_zone3,degree_N_zone4
+  integer,dimension(BKMNS_NPAR) :: degree_N_zone2,degree_N_zone3,degree_N_zone4
   ! spline degrees
-  integer :: num_spline_NS_zone2,num_spline_NS_zone3,num_spline_NS_zone4
+  integer,dimension(BKMNS_NPAR) :: num_spline_NS_zone2,num_spline_NS_zone3,num_spline_NS_zone4
+
   double precision, dimension(:,:), allocatable, target :: Rbasis_zone2,Rbasis_zone3,Rbasis_zone4
 
   ! factors for Legendre polynomials
@@ -131,9 +162,24 @@
   double precision, dimension(:), allocatable :: Legendre_degree_factor
 
   ! coefficients
-  integer :: num_sh_coeffs_zone2,num_sh_coeffs_zone3,num_sh_coeffs_zone4
+  integer,dimension(BKMNS_NPAR) :: num_sh_coeffs_zone2,num_sh_coeffs_zone3,num_sh_coeffs_zone4
+
   double precision,dimension(:,:,:),allocatable, target :: A_zone2, B_zone2, A_zone3, B_zone3, A_zone4, B_zone4
   double precision, dimension(:), allocatable, target :: nFactors_zone2,nFactors_zone3,nFactors_zone4
+
+  ! maximum limits
+  ! (taken from model gladm25 files)
+  integer,parameter :: degree_N_zone2_max = 155
+  integer,parameter :: degree_N_zone3_max = 144
+  integer,parameter :: degree_N_zone4_max = 95
+
+  integer,parameter :: num_spline_NS_zone2_max = 6
+  integer,parameter :: num_spline_NS_zone3_max = 5
+  integer,parameter :: num_spline_NS_zone4_max = 14
+
+  integer,parameter :: num_sh_coeffs_zone2_max = degree_N_zone2_max * (degree_N_zone2_max+1) / 2 + degree_N_zone2_max + 1
+  integer,parameter :: num_sh_coeffs_zone3_max = degree_N_zone3_max * (degree_N_zone3_max+1) / 2 + degree_N_zone3_max + 1
+  integer,parameter :: num_sh_coeffs_zone4_max = degree_N_zone4_max * (degree_N_zone4_max+1) / 2 + degree_N_zone4_max + 1
 
   end module model_bkmns_par
 
@@ -158,6 +204,7 @@
   ! local parameters
   integer :: ier
 
+  ! old format:
   ! number of blocks N = NP_b * NT_b * NR_b
   !                    = 1441 * 721  * 87
   !                    = 90,389,607
@@ -167,6 +214,18 @@
   !
   ! total size for vsh,..,rho around 6 * 344 MB ~ 2 GB
   ! which should fit memory per core around 4-8 GB
+  !
+  ! new format will read in block sizes defined in header of crustal files
+  ! for gladm25 they will have: NP/NT/NR =          721 /         361 /          86
+  !                             -> array size in MB: N * real / 1024. / 1024. = 85 MB
+  !
+  ! new format: reads in block sizes from header in crust/ files
+  if (myrank == 0) call read_crustheader_bkmns_model()
+
+  ! broadcasts sizes to all processes
+  call bcast_all_singlei(NP_b)
+  call bcast_all_singlei(NT_b)
+  call bcast_all_singlei(NR_b)
 
   ! allocate memory
   allocate (BKMNS_crust_vsh(NP_b,NT_b,NR_b), &
@@ -207,6 +266,95 @@
 !-----------------------------------------------------------------------------------------
 !
 
+  subroutine read_crustheader_bkmns_model()
+
+  use constants, only: myrank,IIN,IMAIN,MAX_STRING_LEN,HUGEVAL,EARTH_R_KM
+  use model_bkmns_par
+
+  implicit none
+
+  ! local parameters
+  integer :: ipar
+  character(len=MAX_STRING_LEN) :: filename
+  character(len=MAX_STRING_LEN) :: dir
+  integer :: NR_loc,NT_loc,NP_loc
+
+  ! user output
+  write(IMAIN,*)
+  write(IMAIN,*) 'incorporating 3D model: bkmns '
+  write(IMAIN,*) '  model root directory: ',trim(rootdir)
+  write(IMAIN,*)
+  call flush_IMAIN()
+
+  ! file directory
+  dir = trim(rootdir) // '/crust/'
+
+  ! user output
+  write(IMAIN,*) '  reading headers in crustal model files from folder: ',trim(dir)
+  call flush_IMAIN()
+
+  do ipar = 1,BKMNS_NPAR
+    ! reads in parameter in block format
+    select case(ipar)
+    case (1)
+      ! VPV
+      filename = trim(dir)//'vpv.bin'
+      call read_crust_bkmns_model_file_header_only(filename,NR_loc,NT_loc,NP_loc)
+    case (2)
+      ! VPH
+      filename = trim(dir)//'vph.bin'
+      call read_crust_bkmns_model_file_header_only(filename,NR_loc,NT_loc,NP_loc)
+    case (3)
+      ! VSV
+      filename = trim(dir)//'vsv.bin'
+      call read_crust_bkmns_model_file_header_only(filename,NR_loc,NT_loc,NP_loc)
+    case (4)
+      ! VSH
+      filename = trim(dir)//'vsh.bin'
+      call read_crust_bkmns_model_file_header_only(filename,NR_loc,NT_loc,NP_loc)
+    case (5)
+      ! ETA
+      filename = trim(dir)//'eta.bin'
+      call read_crust_bkmns_model_file_header_only(filename,NR_loc,NT_loc,NP_loc)
+    case (6)
+      ! RHO
+      filename = trim(dir)//'rho.bin'
+      call read_crust_bkmns_model_file_header_only(filename,NR_loc,NT_loc,NP_loc)
+    case default
+      call exit_MPI(myrank,'Invalid parameter for crust file in bkmns')
+    end select
+
+    ! stores block sizes
+    if (ipar == 1) then
+      ! sets as default block sizes
+      NR_b = NR_loc
+      NT_b = NT_loc
+      NP_b = NP_loc
+    else
+      ! checks with default block sizes
+      ! all crust block files must have same size for now
+      if (NR_b /= NR_loc .or. NT_b /= NT_loc .or. NP_b /= NP_loc) then
+        print *,'Error: bkmns crust file ',trim(filename),' has invalid NR/NT/NP values: ', &
+                 NR_loc,'/',NT_loc,'/',NP_loc,'should be ',NR_b,'/',NT_b,'/',NP_b
+        call exit_MPI(myrank,'Invalid header parameter for crust file in bkmns')
+      endif
+    endif
+  enddo
+
+  ! user output
+  write(IMAIN,*)
+  write(IMAIN,*) '  number of blocks: radial     NR_b = ',NR_b
+  write(IMAIN,*) '                    latitudes  NT_b = ',NT_b
+  write(IMAIN,*) '                    longitudes NP_b = ',NP_b
+  write(IMAIN,*)
+  call flush_IMAIN()
+
+  end subroutine read_crustheader_bkmns_model
+
+!
+!-----------------------------------------------------------------------------------------
+!
+
   subroutine read_crust_bkmns_model()
 
   use constants, only: myrank,IIN,IMAIN,MAX_STRING_LEN,HUGEVAL,EARTH_R_KM
@@ -217,22 +365,12 @@
   ! local parameters
   integer :: ipar,ier
   character(len=MAX_STRING_LEN) :: filename
-  character(len=MAX_STRING_LEN) :: rootdir
+  character(len=MAX_STRING_LEN) :: dir
   real,dimension(:,:),allocatable :: values_at_surface
 
   ! user output
   write(IMAIN,*)
   write(IMAIN,*) 'incorporating crustal model: bkmns '
-  write(IMAIN,*) '  number of blocks: radial     NR_b = ',NR_b
-  write(IMAIN,*) '                    latitudes  NT_b = ',NT_b
-  write(IMAIN,*) '                    longitudes NP_b = ',NP_b
-  write(IMAIN,*)
-  call flush_IMAIN()
-
-  ! user output
-  write(IMAIN,*) '  reading crustal model from DATA/gladm15/crust/ folder:'
-  ! min/max depths of the block model
-  write(IMAIN,*) '    zone 1: depth min/max = ',(1.d0 - NORM_MAX_H_R)*EARTH_R_KM,'/',(1.d0-NORM_MOHO_R)*EARTH_R_KM,'(km)'
   write(IMAIN,*)
   call flush_IMAIN()
 
@@ -241,35 +379,42 @@
   if (ier /= 0) stop 'Error allocating values_at_surface array'
   values_at_surface(:,:) = 0.0
 
-  ! root directory
-  rootdir = 'DATA/gladm15/crust/'
+  ! file directory
+  dir = trim(rootdir) // '/crust/'
+
+  ! user output
+  write(IMAIN,*) '  reading crustal model from folder: ',trim(dir)
+  ! min/max depths of the block model
+  write(IMAIN,*) '    zone 1: depth min/max = ',(1.d0 - NORM_TOP_R)*EARTH_R_KM,'/',(1.d0-NORM_MOHO_R)*EARTH_R_KM,'(km)'
+  write(IMAIN,*)
+  call flush_IMAIN()
 
   do ipar = 1,BKMNS_NPAR
     ! reads in parameter in block format
     select case(ipar)
     case (1)
       ! VPV
-      filename = trim(rootdir)//'vpv.bin'
+      filename = trim(dir)//'vpv.bin'
       call read_crust_bkmns_model_file(filename,BKMNS_crust_vpv,values_at_surface)
     case (2)
       ! VPH
-      filename = trim(rootdir)//'vph.bin'
+      filename = trim(dir)//'vph.bin'
       call read_crust_bkmns_model_file(filename,BKMNS_crust_vph,values_at_surface)
     case (3)
       ! VSV
-      filename = trim(rootdir)//'vsv.bin'
+      filename = trim(dir)//'vsv.bin'
       call read_crust_bkmns_model_file(filename,BKMNS_crust_vsv,values_at_surface)
     case (4)
       ! VSH
-      filename = trim(rootdir)//'vsh.bin'
+      filename = trim(dir)//'vsh.bin'
       call read_crust_bkmns_model_file(filename,BKMNS_crust_vsh,values_at_surface)
     case (5)
       ! ETA
-      filename = trim(rootdir)//'eta.bin'
+      filename = trim(dir)//'eta.bin'
       call read_crust_bkmns_model_file(filename,BKMNS_crust_eta,values_at_surface)
     case (6)
       ! RHO
-      filename = trim(rootdir)//'rho.bin'
+      filename = trim(dir)//'rho.bin'
       call read_crust_bkmns_model_file(filename,BKMNS_crust_rho,values_at_surface)
     case default
       call exit_MPI(myrank,'Invalid parameter for crust file in bkmns')
@@ -283,6 +428,110 @@
   deallocate(values_at_surface)
 
   end subroutine read_crust_bkmns_model
+
+!
+!-----------------------------------------------------------------------------------------
+!
+
+  subroutine read_crust_bkmns_model_file_header_only(filename,NR_loc,NT_loc,NP_loc)
+
+! reads crustal file (given in binary format, name ending in *.bin)
+!
+! This expects a file containing 32-bit floats values.
+! Byte swapping should be handled automatically if necessary.
+
+  use constants, only: IMAIN,MAX_STRING_LEN,myrank
+  use model_bkmns_par
+
+  implicit none
+
+  character(len=MAX_STRING_LEN),intent(in) :: filename
+  integer,intent(inout) :: NR_loc,NT_loc,NP_loc
+
+  ! local parameters
+  integer :: indx,i
+  integer :: val
+  integer,dimension(1) :: val_single
+  integer(kind=8) :: filesize
+  logical :: file_exists
+
+  ! byte-order endianess
+  logical :: byteswap
+  character(len=1),parameter :: HEADER_IS_BYTE_SWAPPED = '>'
+  character(len=1) :: c   ! 1-byte marker
+
+  integer,external :: int_swap
+
+  ! user output
+  write(IMAIN,*) '  crustal file: ',trim(filename)
+  call flush_IMAIN()
+
+  ! opens model file
+  inquire(file=trim(filename),exist=file_exists)
+  if (.not. file_exists) then
+    print *,'Error file: ',trim(filename),'does not exist'
+    call exit_MPI(myrank,'Error crustal file for bkmns model does not exist')
+  endif
+
+  ! reads in binary values from file
+  ! header size only: filesize = 1 char + 3 int (+ array size?  float)
+  filesize = 1 + 3 * 4
+  call open_file_abs_r(11, trim(filename), len_trim(filename), filesize)
+
+  ! checks byte ordering
+  !
+  ! first entry in file is a byte marker (char)
+  indx = 1
+  call read_abs(11, c, 1, indx)
+  byteswap = (c == HEADER_IS_BYTE_SWAPPED)
+
+  ! user output
+  write(IMAIN,*) '    byte swap: ',byteswap
+  call flush_IMAIN()
+
+  !debug
+  !print *,'debug: bkmns crust file ',trim(filename),' - byteswap ',byteswap,'***',c,'***',HEADER_IS_BYTE_SWAPPED,'***'
+
+  ! reads in block sizes
+  indx = 0
+
+  do i = 1,3
+    ! reads single int value
+    indx = indx + 1
+    call read_abs_shifted(11, val_single, 4, indx, 1)  ! 4-byte read into val_single, 1-byte shifted
+    val = val_single(1)
+
+    ! stores swapped real value
+    if (byteswap) then
+      val = int_swap(val)
+    endif
+
+    ! checks
+    if (val <= 0) then
+      print *,'Error: bkmns crust file ',trim(filename),' read invalid values: ',val,' / i = ',i
+      call exit_MPI(myrank,'Invalid header parameter value for crust file in bkmns')
+    endif
+
+    ! sets value
+    select case(i)
+    case (1)
+      NP_loc = val
+    case (2)
+      NT_loc = val
+    case (3)
+      NR_loc = val
+    end select
+  enddo
+
+  ! closes file
+  call close_file_abs(11)
+
+  ! user output
+  write(IMAIN,*) '    NP/NT/NR = ',NP_loc,'/',NT_loc,'/',NR_loc
+  call flush_IMAIN()
+
+  end subroutine read_crust_bkmns_model_file_header_only
+
 
 !
 !-----------------------------------------------------------------------------------------
@@ -317,6 +566,12 @@
   character(len=1),parameter :: HEADER_IS_BYTE_SWAPPED = '>'
   character(len=1) :: c   ! 1-byte marker
 
+  ! read offset in bytes
+  ! new format:
+  ! (1-byte + 3*4-byte) = 13-byte shifted
+  ! old format: had only 1-byte offset
+  integer,parameter :: BYTE_READ_OFFSET = 13
+
   real,external :: float_swap
 
   ! initializes
@@ -334,7 +589,8 @@
   endif
 
   ! reads in binary values from file
-  filesize = NP_b * NT_b * NR_b * 4 + 1 ! total filesize = array size (float) + 1 char
+  ! total filesize = 1 char + 3 int + array size (float)
+  filesize = 1 + 3 * 4 + NP_b * NT_b * NR_b * 4
   call open_file_abs_r(11, trim(filename), len_trim(filename), filesize)
 
   ! checks byte ordering
@@ -359,7 +615,7 @@
         do k = 1,NR_b
           ! reads single real value
           indx = indx + 1
-          call read_abs_shifted(11, val_single, 4, indx, 1)  ! 4-byte read into val_single, 1-byte shifted
+          call read_abs_shifted(11, val_single, 4, indx, BYTE_READ_OFFSET) ! 4-byte read into val_single, BYTE_READ_OFFSET shifted
           val = val_single(1)
           ! stores swapped real value
           val_swap = float_swap(val)
@@ -388,7 +644,7 @@
         ! fast way: reads all values in one direction (shifted by 1 byte due to first marker entry)
         ! reads line with length NR_b
         indx = indx + 1
-        call read_abs_shifted(11, val_array, 4*NR_b, indx, 1)  ! 4-byte read into val, 1-byte shifted
+        call read_abs_shifted(11, val_array, 4*NR_b, indx, BYTE_READ_OFFSET) ! 4-byte read into val, BYTE_READ_OFFSET shifted
         ! stores one-by-one
         do k = 1,NR_b
           val = val_array(k)
@@ -409,10 +665,37 @@
   write(IMAIN,*) '    min/max surface values = ',minval(values_at_surface),maxval(values_at_surface)
   call flush_IMAIN()
 
-  !debug
-  !print *,'debug: bkmns crust array: ',trim(filename),' min/max = ',minval(array),maxval(array)
-
   end subroutine read_crust_bkmns_model_file
+
+!
+!-----------------------------------------------------------------------------------------
+!
+
+  integer function int_swap(i_in)
+
+! swaps endianness of an integer
+! based on: http://www.cgd.ucar.edu/cas/software/endian.html
+
+  implicit none
+
+  integer,intent(in) :: i_in
+
+  ! local parameters
+  integer :: i_element,i_element_br
+
+  ! transfer 32 bits of i_in to generic 32 bit Integer space
+  i_element = transfer(i_in, 0)
+
+  ! reverses order of 4 bytes
+  call mvbits( i_element, 24, 8, i_element_br, 0  )
+  call mvbits( i_element, 16, 8, i_element_br, 8  )
+  call mvbits( i_element,  8, 8, i_element_br, 16 )
+  call mvbits( i_element,  0, 8, i_element_br, 24 )
+
+  ! transfers reversed order bytes to 32 bit Integer space
+  int_swap = transfer( i_element_br, 0 )
+
+  end function int_swap
 
 !
 !-----------------------------------------------------------------------------------------
@@ -430,7 +713,7 @@
   ! local parameters
   integer :: i_element,i_element_br
 
-  ! transfer 32 bits of generic 32 bit integer space
+  ! transfer 32 bits of r_in to generic 32 bit integer space
   i_element = transfer(r_in, 0)
 
   ! reverses order of 4 bytes
@@ -474,18 +757,18 @@
   call bcast_all_singlei(num_spline_positions_zone3)
   call bcast_all_singlei(num_spline_positions_zone4)
 
-  call bcast_all_singlei(num_sh_coeffs_zone2)
-  call bcast_all_singlei(num_sh_coeffs_zone3)
-  call bcast_all_singlei(num_sh_coeffs_zone4)
+  call bcast_all_i(num_sh_coeffs_zone2,BKMNS_NPAR)
+  call bcast_all_i(num_sh_coeffs_zone3,BKMNS_NPAR)
+  call bcast_all_i(num_sh_coeffs_zone4,BKMNS_NPAR)
 
-  call bcast_all_singlei(degree_N_zone2)
-  call bcast_all_singlei(degree_N_zone3)
-  call bcast_all_singlei(degree_N_zone4)
+  call bcast_all_i(degree_N_zone2,BKMNS_NPAR)
+  call bcast_all_i(degree_N_zone3,BKMNS_NPAR)
+  call bcast_all_i(degree_N_zone4,BKMNS_NPAR)
   call bcast_all_singlei(degree_NMAX)
 
-  call bcast_all_singlei(num_spline_NS_zone2)
-  call bcast_all_singlei(num_spline_NS_zone3)
-  call bcast_all_singlei(num_spline_NS_zone4)
+  call bcast_all_i(num_spline_NS_zone2,BKMNS_NPAR)
+  call bcast_all_i(num_spline_NS_zone3,BKMNS_NPAR)
+  call bcast_all_i(num_spline_NS_zone4,BKMNS_NPAR)
 
   ! allocate mantle arrays for all other processes
   if (myrank /= 0) then
@@ -495,31 +778,31 @@
     if (ier /= 0) call exit_MPI(myrank,'Error allocating bkmns mantle spline arrays')
     T_zone2(:) = 0.d0; T_zone3(:) = 0.d0; T_zone4(:) = 0.d0
 
-    allocate(A_zone2(num_spline_NS_zone2,num_sh_coeffs_zone2,BKMNS_NPAR), &
-             B_zone2(num_spline_NS_zone2,num_sh_coeffs_zone2,BKMNS_NPAR), &
-             A_zone3(num_spline_NS_zone3,num_sh_coeffs_zone3,BKMNS_NPAR), &
-             B_zone3(num_spline_NS_zone3,num_sh_coeffs_zone3,BKMNS_NPAR), &
-             A_zone4(num_spline_NS_zone4,num_sh_coeffs_zone4,BKMNS_NPAR), &
-             B_zone4(num_spline_NS_zone4,num_sh_coeffs_zone4,BKMNS_NPAR),stat=ier)
+    allocate(A_zone2(num_spline_NS_zone2_max,num_sh_coeffs_zone2_max,BKMNS_NPAR), &
+             B_zone2(num_spline_NS_zone2_max,num_sh_coeffs_zone2_max,BKMNS_NPAR), &
+             A_zone3(num_spline_NS_zone3_max,num_sh_coeffs_zone3_max,BKMNS_NPAR), &
+             B_zone3(num_spline_NS_zone3_max,num_sh_coeffs_zone3_max,BKMNS_NPAR), &
+             A_zone4(num_spline_NS_zone4_max,num_sh_coeffs_zone4_max,BKMNS_NPAR), &
+             B_zone4(num_spline_NS_zone4_max,num_sh_coeffs_zone4_max,BKMNS_NPAR),stat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error allocating bkmns mantle sh arrays')
     A_zone2(:,:,:) = 0.d0; B_zone2(:,:,:) = 0.d0
     A_zone3(:,:,:) = 0.d0; B_zone3(:,:,:) = 0.d0
     A_zone4(:,:,:) = 0.d0; B_zone4(:,:,:) = 0.d0
 
-    allocate(Rbasis_zone2(NPT,num_spline_NS_zone2), &
-             Rbasis_zone3(NPT,num_spline_NS_zone3), &
-             Rbasis_zone4(NPT,num_spline_NS_zone4),stat=ier)
+    allocate(Rbasis_zone2(NPT,num_spline_NS_zone2_max), &
+             Rbasis_zone3(NPT,num_spline_NS_zone3_max), &
+             Rbasis_zone4(NPT,num_spline_NS_zone4_max),stat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error allocating Rbasis array')
     Rbasis_zone2(:,:) = 0.d0; Rbasis_zone3(:,:) = 0.d0; Rbasis_zone4(:,:) = 0.d0
 
     !long double *nF = malloc (sizeof (long double[num_sh_coeffs]));
-    allocate(nFactors_zone2(0:num_sh_coeffs_zone2-1), &
-             nFactors_zone3(0:num_sh_coeffs_zone3-1), &
-             nFactors_zone4(0:num_sh_coeffs_zone4-1),stat=ier)
+    allocate(nFactors_zone2(0:num_sh_coeffs_zone2_max-1), &
+             nFactors_zone3(0:num_sh_coeffs_zone3_max-1), &
+             nFactors_zone4(0:num_sh_coeffs_zone4_max-1),stat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error allocating nFactors array')
     nFactors_zone2(:) = 0.d0; nFactors_zone3(:) = 0.d0; nFactors_zone4(:) = 0.d0
 
-    allocate(Legendre_degree_factor(0:degree_NMAX-1),stat=ier)
+    allocate(Legendre_degree_factor(0:degree_NMAX),stat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error allocating Legendre factor array')
     Legendre_degree_factor(:) = 0.d0
   endif
@@ -529,24 +812,24 @@
   call bcast_all_dp(T_zone3,num_spline_positions_zone3)
   call bcast_all_dp(T_zone4,num_spline_positions_zone4)
 
-  call bcast_all_dp(A_zone2,num_spline_NS_zone2 * num_sh_coeffs_zone2 * BKMNS_NPAR)
-  call bcast_all_dp(B_zone2,num_spline_NS_zone2 * num_sh_coeffs_zone2 * BKMNS_NPAR)
+  call bcast_all_dp(A_zone2,num_spline_NS_zone2_max * num_sh_coeffs_zone2_max * BKMNS_NPAR)
+  call bcast_all_dp(B_zone2,num_spline_NS_zone2_max * num_sh_coeffs_zone2_max * BKMNS_NPAR)
 
-  call bcast_all_dp(A_zone3,num_spline_NS_zone3 * num_sh_coeffs_zone3 * BKMNS_NPAR)
-  call bcast_all_dp(B_zone3,num_spline_NS_zone3 * num_sh_coeffs_zone3 * BKMNS_NPAR)
+  call bcast_all_dp(A_zone3,num_spline_NS_zone3_max * num_sh_coeffs_zone3_max * BKMNS_NPAR)
+  call bcast_all_dp(B_zone3,num_spline_NS_zone3_max * num_sh_coeffs_zone3_max * BKMNS_NPAR)
 
-  call bcast_all_dp(A_zone4,num_spline_NS_zone4 * num_sh_coeffs_zone4 * BKMNS_NPAR)
-  call bcast_all_dp(B_zone4,num_spline_NS_zone4 * num_sh_coeffs_zone4 * BKMNS_NPAR)
+  call bcast_all_dp(A_zone4,num_spline_NS_zone4_max * num_sh_coeffs_zone4_max * BKMNS_NPAR)
+  call bcast_all_dp(B_zone4,num_spline_NS_zone4_max * num_sh_coeffs_zone4_max * BKMNS_NPAR)
 
-  call bcast_all_dp(Rbasis_zone2,NPT * num_spline_NS_zone2)
-  call bcast_all_dp(Rbasis_zone3,NPT * num_spline_NS_zone3)
-  call bcast_all_dp(Rbasis_zone4,NPT * num_spline_NS_zone4)
+  call bcast_all_dp(Rbasis_zone2,NPT * num_spline_NS_zone2_max)
+  call bcast_all_dp(Rbasis_zone3,NPT * num_spline_NS_zone3_max)
+  call bcast_all_dp(Rbasis_zone4,NPT * num_spline_NS_zone4_max)
 
-  call bcast_all_dp(nFactors_zone2,num_sh_coeffs_zone2)
-  call bcast_all_dp(nFactors_zone3,num_sh_coeffs_zone3)
-  call bcast_all_dp(nFactors_zone4,num_sh_coeffs_zone4)
+  call bcast_all_dp(nFactors_zone2,num_sh_coeffs_zone2_max)
+  call bcast_all_dp(nFactors_zone3,num_sh_coeffs_zone3_max)
+  call bcast_all_dp(nFactors_zone4,num_sh_coeffs_zone4_max)
 
-  call bcast_all_dp(Legendre_degree_factor,degree_NMAX)
+  call bcast_all_dp(Legendre_degree_factor,degree_NMAX+1)
 
   ! user output
   if (myrank == 0) then
@@ -564,7 +847,7 @@
 
 ! reads mantle files with spline positions and spherical harmonic expansions
 
-  use constants, only: MAX_STRING_LEN,IIN,myrank
+  use constants, only: MAX_STRING_LEN,IIN,IMAIN,myrank
   use model_bkmns_par
 
   implicit none
@@ -573,19 +856,67 @@
   integer :: i,i1,i2,idx,ipar,s,n,m,ier,izone
   integer :: nnodes,degree,num_spline_NS,num_spline_positions
   integer :: degree_N,num_sh_coeffs
+  integer :: spline_degree_zone2,spline_degree_zone3,spline_degree_zone4
   double precision :: rmin,rmax
-  double precision :: sgn,double_factorial_r
+  double precision :: rmin_zone2,rmax_zone2,rmin_zone3,rmax_zone3,rmin_zone4,rmax_zone4
 
   double precision, dimension(:), pointer :: T_zone
   double precision, dimension(:,:), pointer :: Rbasis
   double precision, dimension(:), pointer :: nFactors
 
-  character(len=MAX_STRING_LEN) :: filename,rootdir
+  character(len=MAX_STRING_LEN) :: filename,dir
   character(len=MAX_STRING_LEN) :: line,substring
   character(len=1) :: str_zone
 
-  ! root directory
-  rootdir = 'DATA/gladm15/mantle/'
+  ! file directory
+  dir = trim(rootdir) // '/mantle/'
+
+  ! allocate spherical harmonics coefficient arrays
+  allocate(A_zone2(num_spline_NS_zone2_max,num_sh_coeffs_zone2_max,BKMNS_NPAR), &
+           B_zone2(num_spline_NS_zone2_max,num_sh_coeffs_zone2_max,BKMNS_NPAR),stat=ier)
+  if (ier /= 0) call exit_MPI(0,'Error allocating BKMNS spherical harmonics zone 2 arrays')
+  A_zone2(:,:,:) = 0.0
+  B_zone2(:,:,:) = 0.0
+
+  allocate(A_zone3(num_spline_NS_zone3_max,num_sh_coeffs_zone3_max,BKMNS_NPAR), &
+           B_zone3(num_spline_NS_zone3_max,num_sh_coeffs_zone3_max,BKMNS_NPAR),stat=ier)
+  if (ier /= 0) call exit_MPI(0,'Error allocating BKMNS spherical harmonics zone 3 arrays')
+  A_zone3(:,:,:) = 0.0
+  B_zone3(:,:,:) = 0.0
+
+  allocate(A_zone4(num_spline_NS_zone4_max,num_sh_coeffs_zone4_max,BKMNS_NPAR), &
+           B_zone4(num_spline_NS_zone4_max,num_sh_coeffs_zone4_max,BKMNS_NPAR),stat=ier)
+  if (ier /= 0) call exit_MPI(0,'Error allocating BKMNS spherical harmonics zone 4 arrays')
+  A_zone4(:,:,:) = 0.0
+  B_zone4(:,:,:) = 0.0
+
+  ! radial basis
+  !double (*Rb)[ns] = malloc (sizeof (double[NPT][ns]));
+  allocate(Rbasis_zone2(NPT,num_spline_NS_zone2_max),stat=ier)
+  if (ier /= 0) call exit_MPI(myrank,'Error allocating Rbasis zone2 array')
+  Rbasis_zone2(:,:) = 0.d0
+
+  allocate(Rbasis_zone3(NPT,num_spline_NS_zone3_max),stat=ier)
+  if (ier /= 0) call exit_MPI(myrank,'Error allocating Rbasis zone3 array')
+  Rbasis_zone3(:,:) = 0.d0
+
+  allocate(Rbasis_zone4(NPT,num_spline_NS_zone4_max),stat=ier)
+  if (ier /= 0) call exit_MPI(myrank,'Error allocating Rbasis zone4 array')
+  Rbasis_zone4(:,:) = 0.d0
+
+  ! Legendre polynomials normalization factors
+  !long double *nF = malloc (sizeof (long double[num_sh_coeffs]));
+  allocate(nFactors_zone2(0:num_sh_coeffs_zone2_max-1),stat=ier)
+  if (ier /= 0) call exit_MPI(myrank,'Error allocating nFactors zone2 array')
+  nFactors_zone2(:) = 0.d0
+
+  allocate(nFactors_zone3(0:num_sh_coeffs_zone3_max-1),stat=ier)
+  if (ier /= 0) call exit_MPI(myrank,'Error allocating nFactors zone3 array')
+  nFactors_zone3(:) = 0.d0
+
+  allocate(nFactors_zone4(0:num_sh_coeffs_zone4_max-1),stat=ier)
+  if (ier /= 0) call exit_MPI(myrank,'Error allocating nFactors zone4 array')
+  nFactors_zone4(:) = 0.d0
 
   ! zone range within [2,4]
   do izone = 2,4
@@ -593,7 +924,10 @@
     write(str_zone,'(i1)') izone
 
     ! reads spline file with node positions
-    filename = trim(rootdir) // 'nodes_Z' // str_zone // '.dat'
+    ! old format
+    !filename = trim(dir) // 'nodes_Z' // str_zone // '.dat'
+    ! new format
+    filename = trim(dir) // 'knots_Z' // str_zone // '.dat'
 
     ! opens model file
     open(unit=IIN,file=trim(filename),status='old',action='read',iostat=ier)
@@ -612,11 +946,19 @@
     ! total number of spline positions
     num_spline_positions = nnodes + 2 * degree
 
+    ! user output
+    write(IMAIN,*) '  zone ',izone,':'
+    write(IMAIN,*) '    number of vertical spline nodes = ',nnodes
+    call flush_IMAIN()
+
     ! allocates spline position array
     select case(izone)
     case (2)
       ! total number of positions
       num_spline_positions_zone2 = num_spline_positions
+      spline_degree_zone2 = degree
+      rmin_zone2 = rmin
+      rmax_zone2 = rmax
 
       allocate(T_zone2(0:num_spline_positions_zone2-1),stat=ier)
       if (ier /= 0) call exit_MPI(0,'Error allocating T_zone2 array')
@@ -639,6 +981,9 @@
     case (3)
       ! total number of positions
       num_spline_positions_zone3 = num_spline_positions
+      spline_degree_zone3 = degree
+      rmin_zone3 = rmin
+      rmax_zone3 = rmax
 
       allocate(T_zone3(0:num_spline_positions_zone3-1),stat=ier)
       if (ier /= 0) call exit_MPI(0,'Error allocating T3 array')
@@ -650,6 +995,9 @@
     case (4)
       ! total number of positions
       num_spline_positions_zone4 = num_spline_positions
+      spline_degree_zone4 = degree
+      rmin_zone4 = rmin
+      rmax_zone4 = rmax
 
       allocate(T_zone4(0:num_spline_positions_zone4-1),stat=ier)
       if (ier /= 0) call exit_MPI(0,'Error allocating T4 array')
@@ -676,37 +1024,35 @@
 
     close(IIN)
 
-    !debug
-    !print *,'debug: BKMNS zone ',izone,'spline node positions degree/nnodes = ',degree,nnodes,' T_zone: ',T_zone
-
     ! coefficient file
     do ipar = 1,BKMNS_NPAR
       ! parameter file name
       select case(ipar)
       case (1)
         ! vpv
-        filename = trim(rootdir) // 'mns_Z' // str_zone // '_vpv.dat'
+        filename = trim(dir) // 'mns_Z' // str_zone // '_vpv.dat'
       case (2)
         ! vph
-        filename = trim(rootdir) // 'mns_Z' // str_zone // '_vph.dat'
+        filename = trim(dir) // 'mns_Z' // str_zone // '_vph.dat'
       case (3)
         ! vsv
-        filename = trim(rootdir) // 'mns_Z' // str_zone // '_vsv.dat'
+        filename = trim(dir) // 'mns_Z' // str_zone // '_vsv.dat'
       case (4)
         ! vsh
-        filename = trim(rootdir) // 'mns_Z' // str_zone // '_vsh.dat'
+        filename = trim(dir) // 'mns_Z' // str_zone // '_vsh.dat'
       case (5)
         ! eta
-        filename = trim(rootdir) // 'mns_Z' // str_zone // '_eta.dat'
+        filename = trim(dir) // 'mns_Z' // str_zone // '_eta.dat'
       case (6)
         ! rho
-        filename = trim(rootdir) // 'mns_Z' // str_zone // '_rho.dat'
+        filename = trim(dir) // 'mns_Z' // str_zone // '_rho.dat'
       case default
         call exit_MPI(myrank,'Invalid parameter for mantle file in bkmns')
       end select
 
-      !debug
-      !print *,'debug: BKMNS ipar ',ipar
+      ! user output
+      write(IMAIN,*) '    reading mantle spherical coefficients file: ',trim(filename)
+      call flush_IMAIN()
 
       ! opens model coefficient file
       open(unit=IIN,file=trim(filename),status='old',action='read',iostat=ier)
@@ -716,7 +1062,7 @@
       endif
 
       ! file format:
-      ! #radial and spherical harmonics coefficients  (A^m_n)_s  (B^m_n)_s  (m <= n <= N)  (s < NS)  N = 100  NS = 6
+      ! #radial and spherical harmonics coefficients  (A^m_n)_s  (B^m_n)_s  (m <= n <= Nmax)  (s < NS)  Nmax = 110  NS = 6
       ! (A^0_0)_0       =  3.169672E+01
       ! (B^0_0)_0       =  0.000000E+00
       ! (A^0_1)_0       =  4.603058E-02
@@ -733,12 +1079,15 @@
       !print *,'debug: bkmns line: ****',trim(line),'****'
 
       ! format:
+      !#radial and spherical harmonics coefficients  (A^m_n)_s  (B^m_n)_s  (m <= n <= Nmax)  (s < NS)  Nmax = 110  NS = 6
+      i1 = index(line,'Nmax =')           ! new format: .. Nmax = 110 ..
       !#radial and spherical harmonics coefficients  (A^m_n)_s  (B^m_n)_s  (m <= n <= N)  (s < NS)  N = 100  NS = 6
-      i1 = index(line,'N =')
+      !i1 = index(line,'N =')             ! old format: .. N = 100 ..
+
       if (i1 == 0) then
-        print *,'Error reading file: ',trim(filename), ' - section "N =" index',i1
+        print *,'Error reading file: ',trim(filename), ' - section "Nmax =" index',i1
         print *,'  line: ',line
-        call exit_MPI(0,'Error: could not find degree N = info in file')
+        call exit_MPI(0,'Error: could not find degree Nmax = info in file')
       endif
       i2 = index(line,'NS =')
       if (i2 == 0) then
@@ -749,7 +1098,8 @@
 
       ! reads N
       substring = ''
-      substring = line(i1+3:i2-1)
+      substring = line(i1+6:i2-1)  ! new format: Nmax = 110
+      !substring = line(i1+3:i2-1)  ! old format: N = 100
       read(substring, *) degree_N                 ! spherical harmonic degree
 
       !debug
@@ -765,70 +1115,67 @@
 
       num_sh_coeffs = degree_N * (degree_N+1) / 2 + degree_N + 1
 
-      ! allocate spherical harmonics coefficient arrays
-      if (ipar == 1) then
-        ! we asssume that for a given zone, all the parameter expansions (vpv,vph,..) will have the same degrees
-        select case(izone)
-        case (2)
-          ! maximum number of coefficients (per degree NS)
-          num_sh_coeffs_zone2 = num_sh_coeffs
-          degree_N_zone2 = degree_N
-          num_spline_NS_zone2 = num_spline_NS
+      ! user output
+      write(IMAIN,*) '      number of spherical harmonic degrees: N  = ',degree_N
+      write(IMAIN,*) '      number of radial splines            : NS = ',num_spline_NS
+      call flush_IMAIN()
 
-          allocate(A_zone2(num_spline_NS_zone2,num_sh_coeffs_zone2,BKMNS_NPAR), &
-                   B_zone2(num_spline_NS_zone2,num_sh_coeffs_zone2,BKMNS_NPAR),stat=ier)
-          if (ier /= 0) call exit_MPI(0,'Error allocating BKMNS spherical harmonics zone 2 arrays')
-          A_zone2(:,:,:) = 0.0
-          B_zone2(:,:,:) = 0.0
-        case (3)
-          ! maximum number of coefficients (per degree NS)
-          num_sh_coeffs_zone3 = num_sh_coeffs
-          degree_N_zone3 = degree_N
-          num_spline_NS_zone3 = num_spline_NS
+      ! allows that for a given zone, the parameter expansions (vpv,vph,..) have different degrees
+      select case(izone)
+      case (2)
+        ! maximum number of coefficients (per degree NS)
+        degree_N_zone2(ipar) = degree_N
+        if (degree_N > degree_N_zone2_max) call exit_MPI(0,'Error degree_N exceeds maximum value for zone2')
+        num_spline_NS_zone2(ipar) = num_spline_NS
+        if (num_spline_NS > num_spline_NS_zone2_max) call exit_MPI(0,'Error num_spline_NS exceeds maximum value for zone2')
+        num_sh_coeffs_zone2(ipar) = num_sh_coeffs
+        if (num_sh_coeffs > num_sh_coeffs_zone2_max) call exit_MPI(0,'Error num_sh_coeffs exceeds maximum value for zone2')
+      case (3)
+        ! maximum number of coefficients (per degree NS)
+        degree_N_zone3(ipar) = degree_N
+        if (degree_N > degree_N_zone3_max) call exit_MPI(0,'Error degree_N exceeds maximum value for zone3')
+        num_spline_NS_zone3(ipar) = num_spline_NS
+        if (num_spline_NS > num_spline_NS_zone3_max) call exit_MPI(0,'Error num_spline_NS exceeds maximum value for zone3')
+        num_sh_coeffs_zone3(ipar) = num_sh_coeffs
+        if (num_sh_coeffs > num_sh_coeffs_zone3_max) call exit_MPI(0,'Error num_sh_coeffs exceeds maximum value for zone3')
+      case (4)
+        ! maximum number of coefficients (per degree NS)
+        degree_N_zone4(ipar) = degree_N
+        if (degree_N > degree_N_zone4_max) call exit_MPI(0,'Error degree_N exceeds maximum value for zone4')
+        num_spline_NS_zone4(ipar) = num_spline_NS
+        if (num_spline_NS > num_spline_NS_zone4_max) call exit_MPI(0,'Error num_spline_NS exceeds maximum value for zone4')
+        num_sh_coeffs_zone4(ipar) = num_sh_coeffs
+        if (num_sh_coeffs > num_sh_coeffs_zone4_max) call exit_MPI(0,'Error num_sh_coeffs exceeds maximum value for zone4')
+      end select
 
-          allocate(A_zone3(num_spline_NS_zone3,num_sh_coeffs_zone3,BKMNS_NPAR), &
-                   B_zone3(num_spline_NS_zone3,num_sh_coeffs_zone3,BKMNS_NPAR),stat=ier)
-          if (ier /= 0) call exit_MPI(0,'Error allocating BKMNS spherical harmonics zone 3 arrays')
-          A_zone3(:,:,:) = 0.0
-          B_zone3(:,:,:) = 0.0
-        case (4)
-          ! maximum number of coefficients (per degree NS)
-          num_sh_coeffs_zone4 = num_sh_coeffs
-          degree_N_zone4 = degree_N
-          num_spline_NS_zone4 = num_spline_NS
-
-          allocate(A_zone4(num_spline_NS_zone4,num_sh_coeffs_zone4,BKMNS_NPAR), &
-                   B_zone4(num_spline_NS_zone4,num_sh_coeffs_zone4,BKMNS_NPAR),stat=ier)
-          if (ier /= 0) call exit_MPI(0,'Error allocating BKMNS spherical harmonics zone 4 arrays')
-          A_zone4(:,:,:) = 0.0
-          B_zone4(:,:,:) = 0.0
-        end select
-      else
-        ! checks degree for ipar /= 1
-        select case(izone)
-        case(2)
-          if (degree_N /= degree_N_zone2 .or. num_spline_NS /= num_spline_NS_zone2) then
-            print *,'Error: BKNS mantle model parameter ',ipar,'has different expansion degrees N/NS = ', &
-                     degree_N,'/',num_spline_NS
-            print *,'  zone 2 should have: ',degree_N_zone2,'/',num_spline_NS_zone2
-            call exit_MPI(0,'Error reading BKMNS mantle model parameter zone 2')
-          endif
-        case(3)
-          if (degree_N /= degree_N_zone3 .or. num_spline_NS /= num_spline_NS_zone3) then
-            print *,'Error: BKNS mantle model parameter ',ipar,'has different expansion degrees N/NS = ', &
-                     degree_N,'/',num_spline_NS
-            print *,'  zone 3 should have: ',degree_N_zone3,'/',num_spline_NS_zone3
-            call exit_MPI(0,'Error reading BKMNS mantle model parameter zone 3')
-          endif
-        case(4)
-          if (degree_N /= degree_N_zone4 .or. num_spline_NS /= num_spline_NS_zone4) then
-            print *,'Error: BKNS mantle model parameter ',ipar,'has different expansion degrees N/NS = ', &
-                     degree_N,'/',num_spline_NS
-            print *,'  zone 4 should have: ',degree_N_zone4,'/',num_spline_NS_zone4
-            call exit_MPI(0,'Error reading BKMNS mantle model parameter zone 4')
-          endif
-        end select
-      endif
+      ! not used anymore, we allow for different expansions of each parameter...
+      ! imposes same degree expansion for all mantle files
+      !if (ipar /= 1) then
+      !  ! checks degree for ipar /= 1
+      !  select case(izone)
+      !  case(2)
+      !    if (degree_N /= degree_N_zone2(1) .or. num_spline_NS /= num_spline_NS_zone2(1)) then
+      !      print *,'Error: BKNS mantle model parameter ',ipar,'has different expansion degrees N/NS = ', &
+      !               degree_N,'/',num_spline_NS
+      !      print *,'  zone 2 should have: ',degree_N_zone2(1),'/',num_spline_NS_zone2(1)
+      !      call exit_MPI(0,'Error reading BKMNS mantle model parameter zone 2')
+      !    endif
+      !  case(3)
+      !    if (degree_N /= degree_N_zone3(1) .or. num_spline_NS /= num_spline_NS_zone3(1)) then
+      !      print *,'Error: BKNS mantle model parameter ',ipar,'has different expansion degrees N/NS = ', &
+      !               degree_N,'/',num_spline_NS
+      !      print *,'  zone 3 should have: ',degree_N_zone3,'/',num_spline_NS_zone3(1)
+      !      call exit_MPI(0,'Error reading BKMNS mantle model parameter zone 3')
+      !    endif
+      !  case(4)
+      !    if (degree_N /= degree_N_zone4(1) .or. num_spline_NS /= num_spline_NS_zone4(1)) then
+      !      print *,'Error: BKNS mantle model parameter ',ipar,'has different expansion degrees N/NS = ', &
+      !               degree_N,'/',num_spline_NS
+      !      print *,'  zone 4 should have: ',degree_N_zone4,'/',num_spline_NS_zone4(1)
+      !      call exit_MPI(0,'Error reading BKMNS mantle model parameter zone 4')
+      !    endif
+      !  end select
+      !endif
 
       ! reads spherical harmonic coefficients
       do s = 0,num_spline_NS-1   ! number of radial splines
@@ -889,54 +1236,77 @@
       close(IIN)
     enddo ! ipar
 
-    ! allocates radial spline values and spherical harmonics factors
+    ! user output
+    write(IMAIN,*) '    reading mantle coefficients done'
+    write(IMAIN,*)
+    call flush_IMAIN()
+
+  enddo ! izone
+
+  ! user output
+  write(IMAIN,*) '  setting up spline values and spherical harmonics factors'
+  write(IMAIN,*)
+  call flush_IMAIN()
+
+  ! allocates radial spline values and spherical harmonics factors
+  ! zone range within [2,4]
+  do izone = 2,4
     select case(izone)
     case (2)
-      !double (*Rb)[ns] = malloc (sizeof (double[NPT][ns]));
-      allocate(Rbasis_zone2(NPT,num_spline_NS),stat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error allocating Rbasis array')
-      Rbasis_zone2(:,:) = 0.d0
-
-      !long double *nF = malloc (sizeof (long double[num_sh_coeffs]));
-      allocate(nFactors_zone2(0:num_sh_coeffs-1),stat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error allocating nFactors array')
-      nFactors_zone2(:) = 0.d0
-
       ! sets current zone pointers
       Rbasis => Rbasis_zone2
       nFactors => nFactors_zone2
 
+      num_spline_NS = num_spline_NS_zone2_max
+      num_spline_positions = num_spline_positions_zone2
+
+      degree_N = degree_N_zone2_max
+      num_sh_coeffs = num_sh_coeffs_zone2_max
+
+      T_zone => T_zone2
+      degree = spline_degree_zone2
+      rmin = rmin_zone2
+      rmax = rmax_zone2
     case (3)
-      !double (*Rb)[ns] = malloc (sizeof (double[NPT][ns]));
-      allocate(Rbasis_zone3(NPT,num_spline_NS),stat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error allocating Rbasis array')
-      Rbasis_zone3(:,:) = 0.d0
-
-      !long double *nF = malloc (sizeof (long double[num_sh_coeffs]));
-      allocate(nFactors_zone3(0:num_sh_coeffs-1),stat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error allocating nFactors array')
-      nFactors_zone3(:) = 0.d0
-
       ! sets current zone pointers
       Rbasis => Rbasis_zone3
       nFactors => nFactors_zone3
 
+      num_spline_NS = num_spline_NS_zone3_max
+      num_spline_positions = num_spline_positions_zone3
+
+      degree_N = degree_N_zone3_max
+      num_sh_coeffs = num_sh_coeffs_zone3_max
+
+      T_zone => T_zone3
+      degree = spline_degree_zone3
+      rmin = rmin_zone3
+      rmax = rmax_zone3
     case (4)
-      !double (*Rb)[ns] = malloc (sizeof (double[NPT][ns]));
-      allocate(Rbasis_zone4(NPT,num_spline_NS),stat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error allocating Rbasis array')
-      Rbasis_zone4(:,:) = 0.d0
-
-      !long double *nF = malloc (sizeof (long double[num_sh_coeffs]));
-      allocate(nFactors_zone4(0:num_sh_coeffs-1),stat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error allocating nFactors array')
-      nFactors_zone4(:) = 0.d0
-
       ! sets current zone pointers
       Rbasis => Rbasis_zone4
       nFactors => nFactors_zone4
 
+      num_spline_NS = num_spline_NS_zone4_max
+      num_spline_positions = num_spline_positions_zone4
+
+      degree_N = degree_N_zone4_max
+      num_sh_coeffs = num_sh_coeffs_zone4_max
+
+      T_zone => T_zone4
+      degree = spline_degree_zone4
+      rmin = rmin_zone4
+      rmax = rmax_zone4
     end select
+
+    ! user output
+    write(IMAIN,*) '  zone ',izone,':'
+    write(IMAIN,*) '    radius min/max = ',rmin,'/',rmax
+    write(IMAIN,*) '    radial splines                       = ',num_spline_NS
+    write(IMAIN,*) '    spline degree                        = ',degree
+    write(IMAIN,*) '    spherical harmonics max degree       = ',degree_N
+    write(IMAIN,*) '    spherical harmonics max coefficients = ',num_sh_coeffs
+    call flush_IMAIN()
 
     !radialBasis (ns, dg, nnt, r1, r2, T, Rb);
     call get_radial_Basis(num_spline_NS, degree, num_spline_positions, rmin, rmax, T_zone, Rbasis)
@@ -947,44 +1317,148 @@
   enddo ! izone
 
   ! pre-computes Legendre polynomial factors
-  degree_NMAX = max(degree_N_zone2,degree_N_zone3,degree_N_zone4)
+  call get_Legendre_degree_Factors()
 
-  ! safety check
-  if (degree_NMAX > 150) then
-    print *,'Error: maximum degree NMAX ',degree_NMAX,' too big, Legendre factors will exceed double precision range'
-    call exit_MPI(myrank,'Error maximum degree N exceeds double precision range')
-  endif
+  end subroutine read_mantle_bkmns_model
+
+!
+!-----------------------------------------------------------------------------------------
+!
+
+  subroutine get_Legendre_degree_Factors()
+
+  use constants, only: IMAIN,myrank
+  use model_bkmns_par
+
+  implicit none
+
+  ! local parameters
+  integer :: n,i,ier
+  integer :: dg_max2,dg_max3,dg_max4
+  double precision :: sgn,double_factorial_r
+  !double precision :: double_factorial_r_sqrt
+
+  ! gets actual maximum degree from mantle expansion files
+  dg_max2 = maxval(degree_N_zone2(:))
+  dg_max3 = maxval(degree_N_zone3(:))
+  dg_max4 = maxval(degree_N_zone4(:))
+  degree_NMAX = max(dg_max2,dg_max3,dg_max4)
+
+  ! user output
+  write(IMAIN,*)
+  write(IMAIN,*) '  pre-computing Legendre polynomial factors: degree NMAX = ',degree_NMAX
+  write(IMAIN,*)
+  call flush_IMAIN()
 
   ! allocates array (main process only)
-  allocate(Legendre_degree_factor(0:degree_NMAX-1),stat=ier)
+  allocate(Legendre_degree_factor(0:degree_NMAX),stat=ier)
   if (ier /= 0) call exit_MPI(myrank,'Error allocating Legendre factor array')
   Legendre_degree_factor(:) = 0.d0
 
+  ! old format:
+  ! safety check
+  !if (degree_NMAX > 150) then
+  !  print *,'Error: maximum degree NMAX ',degree_NMAX,' too big, Legendre factors will exceed double precision range'
+  !  call exit_MPI(myrank,'Error maximum degree N exceeds double precision range')
+  !endif
+  !do n = 0,degree_NMAX
+  !  ! from P(i_n + 1,N+2) = sgn (n) * doubleFactorial (2 * n - 1) * pow (sint, n)
+  !  ! pre-computes factors sgn (n) * doubleFactorial (2 * n - 1)
+  !  ! sgn (n)
+  !  if (mod(n,2) == 1) then
+  !    sgn = -1.d0
+  !  else
+  !    sgn = 1.d0
+  !  endif
+  !  ! doubleFactorial(2 * n - 1)
+  !  double_factorial_r = 1.d0
+  !  do i = 2 * n - 1,0,-2
+  !    if (i == 0 .or. i == 1) then
+  !      exit
+  !    else
+  !      double_factorial_r = double_factorial_r * i
+  !      ! checks Nan
+  !      if (double_factorial_r /= double_factorial_r) then
+  !        print *,'Error: degree n,NMAX = ',n,degree_NMAX,' has double factorial number ',double_factorial_r, &
+  !                '; exceeds limit of double precision'
+  !        call exit_MPI(myrank,'Error maximum degree N exceeds double precision range')
+  !      endif
+  !    endif
+  !  enddo
+  !  ! debug
+  !  !if (n > 140) print *,'debug: n ',n,'double_factorial_r = ',double_factorial_r
+  !  ! stores factor
+  !  Legendre_degree_factor(n) = sgn * double_factorial_r
+  !enddo
+
+  ! way1: work-around: will pre-compute sqrt(factor) instead and later use factor = sqrt(factor) * sqrt(factor)
+  !do n = 0,degree_NMAX
+  !  ! from P(i_n + 1,N+2) = sgn (n) * doubleFactorial (2 * n - 1) * pow (sint, n)
+  !  ! this pre-computes factors sqrt( doubleFactorial (2 * n - 1) )
+  !  ! sqrt( doubleFactorial(2 * n - 1))
+  !  double_factorial_r_sqrt = 1.d0
+  !  do i = 2 * n - 1,0,-2
+  !    if (i == 0 .or. i == 1) then
+  !      exit
+  !    else
+  !      double_factorial_r_sqrt = double_factorial_r_sqrt * sqrt(1.d0*i)
+  !      ! checks Nan
+  !      if (double_factorial_r_sqrt /= double_factorial_r_sqrt) then
+  !        print *,'Error: degree n,NMAX = ',n,degree_NMAX,' has double factorial number ',double_factorial_r_sqrt, &
+  !                '; exceeds limit of double precision'
+  !        call exit_MPI(myrank,'Error maximum degree N exceeds double precision range')
+  !      endif
+  !    endif
+  !  enddo
+  !  ! debug
+  !  !if (n > 140) print *,'debug: n ',n,'double_factorial_r_sqrt = ',double_factorial_r_sqrt
+  !
+  !  ! stores factor
+  !  Legendre_degree_factor(n) = double_factorial_r_sqrt
+  !enddo
+
+  ! way 2: adds LEGENDRE_K2 factor to avoid overflow
   do n = 0,degree_NMAX
     ! from P(i_n + 1,N+2) = sgn (n) * doubleFactorial (2 * n - 1) * pow (sint, n)
-    ! pre-computes factors sgn (n) * doubleFactorial (2 * n - 1)
+    ! new: P[n + 1] = sgn (n) * factorial2 (2 * n - 1) * powl (sint, n);
+    !
+    ! this pre-computes factor: sgn (n) * factorial2 (2 * n - 1)
+    ! and adds                : LEGENDRE_K2 * sgn (n) * factorial2 (2 * n - 1)
+    !                           which is used for Legendre polynomials
+
     ! sgn (n)
     if (mod(n,2) == 1) then
       sgn = -1.d0
     else
       sgn = 1.d0
     endif
-    ! doubleFactorial(2 * n - 1)
-    double_factorial_r = 1.d0
+
+    ! factorial2 (2 * n - 1)
+    double_factorial_r = sgn * LEGENDRE_K2 * 1.d0
+
     do i = 2 * n - 1,0,-2
       if (i == 0 .or. i == 1) then
         exit
       else
-        double_factorial_r = double_factorial_r * i
+        double_factorial_r = double_factorial_r * dble(i)
+
+        ! checks Nan
+        if (double_factorial_r /= double_factorial_r) then
+          print *,'Error: degree n,NMAX = ',n,degree_NMAX,' has double factorial number ',double_factorial_r, &
+                  '; exceeds limit of double precision'
+          call exit_MPI(myrank,'Error maximum degree N exceeds double precision range')
+        endif
       endif
     enddo
-    ! stores factor
-    Legendre_degree_factor(n) = sgn * double_factorial_r
-  enddo
-  ! debug
-  !print *,'debug: Legendre degree ',degree_NMAX,' factors: ',Legendre_degree_factor(:)
 
-  end subroutine read_mantle_bkmns_model
+    ! debug
+    !if (n > 140) print *,'debug: n ',n,'double_factorial_r = ',double_factorial_r
+
+    ! stores factor
+    Legendre_degree_factor(n) = double_factorial_r
+  enddo
+
+  end subroutine get_Legendre_degree_Factors
 
 !
 !-----------------------------------------------------------------------------------------
@@ -1003,10 +1477,12 @@
   double precision, dimension(NPT,num_spline_NS),intent(inout) :: Rbasis
 
   ! local parameters
-  double precision :: dr,rval
+  double precision :: dr,rval,spline_val
   double precision, external :: get_bSplines
 
   integer :: i,j
+
+  ! from original routine: radialBasis(double r1, double r2, unsigned nr, unsigned dg, unsigned nnt, unsigned ns, ..)
 
   ! radius increment
   dr = (rmax - rmin) / (NPT - 1)
@@ -1016,10 +1492,18 @@
     rval = rmin
     do j = 1,NPT
       ! radial basis using cubic B-splines
-      Rbasis(j,i+1) = get_bSplines(rval, num_spline_positions, degree, T_zone, i)
+      ! R[i][s] = bSplines (r, nnt, dg, T, s);
+      spline_val = get_bSplines(rval, num_spline_positions, degree, T_zone, i)
       rval = rval + dr
+
+      ! stores values
+      if (spline_val > 0.d0) then
+        Rbasis(j,i+1) = spline_val
+      endif
     enddo
   enddo
+
+  ! R[nr - 1][ns - 1] = 1.0;
   Rbasis(NPT,num_spline_NS) = 1.d0
 
   !debug
@@ -1045,8 +1529,10 @@
   double precision :: bSpline
 
   ! local parameters
-  double precision :: d1,d2,k1,k2
+  double precision :: c1,c2,a,b
   double precision :: val,val1,val2
+
+  ! from original routine: bSplines (double x, unsigned nnt, unsigned dg, double T[nnt], unsigned i)
 
   ! initializes
   bSpline = 0.d0
@@ -1054,6 +1540,7 @@
   ! determines spline value
   if (degree == 0) then
     ! degree-0 spline
+    ! if (dg == 0) return (T[i] <= x && x < T[i + 1]) ? 1.0 : 0.0;
     if (T_zone(i) <= x .and. x < T_zone(i+1)) then
       val = 1.d0
     else
@@ -1062,25 +1549,23 @@
     bSpline = val
   else
     ! spline degrees > 0
-    d1 = T_zone(i + degree) - T_zone(i)
-    d2 = T_zone(i + degree + 1) - T_zone(i + 1)
+    a = T_zone(i + degree) - T_zone(i)
+    b = T_zone(i + degree + 1) - T_zone(i + 1)
 
-    if (d1 > 0.d0) then
-      k1 = (x - T_zone(i)) / d1
+    if (a > 0.d0) then
+      c1 = (x - T_zone(i)) / a
     else
-      k1 = 0.d0
+      c1 = 0.d0
     endif
-    if (d2 > 0.d0) then
-      k2 = (T_zone(i + degree + 1) - x) / d2
+    if (b > 0.d0) then
+      c2 = (T_zone(i + degree + 1) - x) / b
     else
-      k2 = 0.d0
+      c2 = 0.d0
     endif
     val1 = get_bSplines(x, num_spline_positions, degree - 1, T_zone, i)
     val2 = get_bSplines(x, num_spline_positions, degree - 1, T_zone, i + 1)
 
-    val = k1 * val1 + k2 * val2
-
-    bSpline = val
+    bSpline = c1 * val1 + c2 * val2
   endif
 
   ! debug
@@ -1105,49 +1590,142 @@
 
   ! local parameters
   integer :: n,m,idx,i,i0
-  double precision :: val,sgn,factor
+  double precision :: val,factor  ! sgn
   ! note: PGI compilers don't support quad precision (kind=16), due to a lack of hardware support.
   !       quad precision will also be very slow as operations are not optimized. thus, going down to 8 byte representations...
   !real(kind=16) :: factorial_r
   ! integer w/ 8 byte representation has a maximum value of 2**63-1 = 9,223,372,036,854,775,807
-  integer(kind=8) :: factorial_r
+  !integer(kind=8) :: factorial_r
+  ! using real w/ 8 byte which is double precision
+  double precision :: factorial_r_sqrt
 
+  double precision,parameter :: SQRT_K1 = sqrt(LEGENDRE_K1)
+  double precision,parameter :: SQRT_2 = sqrt(2.0)
+
+  ! from original routine: nmlFactors (unsigned nmax, unsigned nlg, long double nF[nlg])
+
+  ! Precomputes normalization factors
+  ! note: the factorial number can become very large for n > 30 and overflow double precision;
+  !       we could use here real(kind=16), the maximum size for a floating point number by some Fortran compilers.
+  !       unfortunately, PGI compilers don't support kind=16 values, so we use a real*8 or double precision number.
+  !
+  !       the final factor to compute is sqrt(k1 * k2 * k3 )
+  !       to avoid overflow, we apply the sqrt(..) to each factor sqrt(k1 * k2 * k3 ) = sqrt(k2) * sqrt(k1*k3)
+  !       since sqrt(a*b) = sqrt(a) * sqrt(b) for a,b positive,
+  !       and we can do this for the factorial number k3 as well.
+
+  ! new format
   do n = 0,degree_N
+    ! factor for sqrt(k2)
     val = sqrt ((2.d0 * n + 1) / (4.d0 * PI))
+
     do m = 0,n
       !mn2Index(m,n)
+      !from original routine: mN2I (unsigned m, unsigned n) = n * (n + 1) / 2 + m;
       idx = n * (n + 1) / 2 + m
 
-      ! sign
-      !sgn(m)
-      if (mod(m,2) == 1) then
-        sgn = -1.d0
-      else
-        sgn = 1.d0
-      endif
+      ! nF[mN2I (m, n)] = nml (m , n);
+      ! Normalization factor
+      !k1 = (m == 0) ? 1.L : 2.L;
+      !k2 = (2 * n + 1) / (4.d0 * PI)
+      !k3 = factor (m, n);
 
+      ! Auxiliary function to compute the normalization factor
       ! factor (m , n)
       if (m == 0) then
-        factor = LEGENDRE_K1
+        ! sqrt(k1*k3) = sqrt( 1.d0 * K1 )
+        factor = SQRT_K1
       else
-        ! factorial (n+m)!/(n-m)!
-        ! note: the factorial number can become very large for n > 30 and overflow double precision;
-        !       we use here real(kind=16), the maximum size for a floating point number by Fortran standards
+        ! computes factorial (n+m)!/(n-m)!
         i0 = n - m + 1
-        factorial_r = i0
+
+        ! work-around for large degrees N
+        ! for a,b positive: sqrt( a * b ) = sqrt(a) * sqrt(b)
+        !                   sqrt( a / b ) = sqrt(a) / sqrt(b)
+        ! here: factorial b = (n+m)!/(n-m)! = (n-m+1) * (n-m+2) * .. * (n+m) = i0 * i1 * i2 * ..
+        !       and sqrt(k3) = sqrt(i0 * i1 * ..) = sqrt(i0) * sqrt(i1) * ..
+        !
+        ! for the final normalization: factor = sqrt(k1) * sqrt(k3)
+        !                                     = sqrt(2.d0) * sqrt(LEGENDRE_K1) / factorial_r_sqrt
+        ! unfortunately, even factorial_r_sqrt = sqrt(k3) becomes too large for n,m > 150
+        ! thus we apply:  factor = sqrt(2.d0) * sqrt(LEGENDRE_K1) / factorial_r_sqrt
+        !                        = sqrt(2.d0) / ( factorial_r_sqrt / sqrt(LEGENDRE_K1) )
+        !
+        factorial_r_sqrt = dsqrt(1.d0*i0) / SQRT_K1
+
         do i = i0 + 1, n + m
-          if (factorial_r > real(9223372036854775807.0/i,kind=8)) stop 'Error: get_nml_Factors() exceeds integer*8 limits'
-          factorial_r = factorial_r * i
+          ! checks: 9223372036854775807 is the maximum value for a 64-bit signed integer
+          !         this limit is reached for degrees n > 30
+          !if (factorial_r > real(9223372036854775807.0/i,kind=8)) then
+          !  print *,'Error: nml factor becomes too big for degree_N = ',degree_N, &
+          !          'factorial_r = ',factorial_r,'n,m,i = ',n,m,i
+          !  stop 'Error: get_nml_Factors() exceeds real*8 limits'
+          !endif
+
+          ! sqrt(b) = sqrt(i0 * i1 * ..) = sqrt(i0) * sqrt(i1) * ..
+          factorial_r_sqrt = factorial_r_sqrt * dsqrt(1.d0*i)
+
+          ! checks if not-a-number
+          if (factorial_r_sqrt /= factorial_r_sqrt) then
+            print *,'Error: nml factor becomes too big for degree_N = ',degree_N, &
+                    'factorial_r_sqrt = ',factorial_r_sqrt,'n,m,i = ',n,m,i
+            stop 'Error: get_nml_Factors() exceeds real*8 limits'
+          endif
         enddo
-        factor = 2.d0 * real(LEGENDRE_K2 / factorial_r,kind=8)
-        factor = sqrt(factor)
+
+        ! factor for sqrt(k1 * k3) = sqrt(k1) * sqrt(k3)
+        !                          = sqrt(k1) * sqrt( LEGENDRE_K1 / factorial) = sqrt(k1) * sqrt(LEGENDRE_K1) / sqrt(factorial)
+        ! factor = sqrt(2.d0) * sqrt(LEGENDRE_K1) / factorial_r_sqrt
+        factor = SQRT_2 / factorial_r_sqrt
+
+        ! old
+        !factor = 2.d0 * real(LEGENDRE_K1 / factorial_r,kind=8)
+        !factor = sqrt(factor)
       endif
 
       ! stores factor
-      !nF(i) = sgn(m) * val * factor (m , n)
-      nFactors(idx) = sgn * val * factor
+      ! to avoid overflow: sqrt(k1 * k2 * k3 ) = sqrt(k2) * sqrt(k1*k3)
+      nFactors(idx) = val * factor
     enddo
   enddo
+
+  ! old format
+  !do n = 0,degree_N
+  !  val = sqrt ((2.d0 * n + 1) / (4.d0 * PI))
+  !  do m = 0,n
+  !    !mn2Index(m,n)
+  !    idx = n * (n + 1) / 2 + m
+  !
+  !    ! sign
+  !    !sgn(m)
+  !    if (mod(m,2) == 1) then
+  !      sgn = -1.d0
+  !    else
+  !      sgn = 1.d0
+  !    endif
+  !
+  !    ! factor (m , n)
+  !    if (m == 0) then
+  !      factor = LEGENDRE_K1
+  !    else
+  !      ! factorial (n+m)!/(n-m)!
+  !      ! note: the factorial number can become very large for n > 30 and overflow double precision;
+  !      !       we use here real(kind=16), the maximum size for a floating point number by Fortran standards
+  !      i0 = n - m + 1
+  !      factorial_r = i0
+  !      do i = i0 + 1, n + m
+  !        if (factorial_r > real(9223372036854775807.0/i,kind=8)) stop 'Error: get_nml_Factors() exceeds integer*8 limits'
+  !        factorial_r = factorial_r * i
+  !      enddo
+  !      factor = 2.d0 * real(LEGENDRE_K2 / factorial_r,kind=8)
+  !      factor = sqrt(factor)
+  !    endif
+  !
+  !    ! stores factor
+  !    !nF(i) = sgn(m) * val * factor (m , n)
+  !    nFactors(idx) = sgn * val * factor
+  !  enddo
+  !enddo
 
   end subroutine get_nml_Factors
 
@@ -1183,7 +1761,7 @@
   phi = lon * PI/180.d0               ! longitude between [-pi,pi]
 
   ! gets crustal values
-  if (radius >= NORM_MOHO_R .and. radius <= NORM_MAX_H_R) then
+  if (radius >= NORM_MOHO_R .and. radius <= NORM_TOP_R) then
     ! position within block model range [-80km,topo]
     call bkmns_block2crust(phi,theta,radius,Bk_vpv,Bk_vph,Bk_vsv,Bk_vsh,Bk_eta,Bk_rho)
 
@@ -1255,8 +1833,8 @@
   if (t < 0.d0) t = 0.d0
   if (t > PI) t = PI
   ! radius
-  if (r < NORM_MOHO_R)  r = NORM_MOHO_R
-  if (r > NORM_MAX_H_R) r = NORM_MAX_H_R
+  if (r < NORM_MOHO_R) r = NORM_MOHO_R
+  if (r > NORM_TOP_R)  r = NORM_TOP_R
 
   ! re-positions ranges
   p = p + PI                ! range [0,2PI]
@@ -1266,7 +1844,7 @@
   ! increments
   dp = 2.d0 * PI / (NP_b - 1)
   dt = PI / (NT_b - 1)
-  dr = (NORM_MAX_H_R - NORM_MOHO_R) / (NR_b - 1)
+  dr = (NORM_TOP_R - NORM_MOHO_R) / (NR_b - 1)
 
   ! block index
   ! note: index will start at 0
@@ -1456,46 +2034,36 @@
 !-----------------------------------------------------------------------------------------
 !
 
-  subroutine model_bkmns_mantle(lat,lon,radius,vpv,vph,vsv,vsh,eta,rho)
+  subroutine model_bkmns_mantle(radius,theta,phi,vpv,vph,vsv,vsh,eta,rho)
 
   use constants, only: PI
   use model_bkmns_par
 
   implicit none
 
-  ! lat/lon  - in degrees (range lat/lon = [-90,90] / [-180,180]
-  ! radius   - normalized by globe radius [0,1.x]
-  double precision,intent(in) :: lat,lon,radius
+  ! radius     - normalized by globe radius [0,1.x]
+  ! theta/phi  - colatitude/longitude in rad (range theta/phi = [0,pi] / [-pi,pi]
+  double precision,intent(in) :: radius,theta,phi
 
   ! absolute values, not perturbations
   double precision,intent(inout) :: vpv,vph,vsv,vsh,eta,rho
 
   ! local parameters
-  double precision :: r,theta,phi
   double precision :: M_vpv,M_vph,M_vsv,M_vsh,M_eta,M_rho
 
-  ! initializes
-  M_vpv = 0.d0
-  M_vph = 0.d0
-  M_vsv = 0.d0
-  M_vsh = 0.d0
-  M_eta = 0.d0
-  M_rho = 0.d0
-
-  ! point location
-  ! converts to colatitude theta/phi in radians
-  theta = (90.d0 - lat) * PI/180.d0   ! colatitude between [0,pi]
-  phi = lon * PI/180.d0               ! longitude between [-pi,pi]
-  r = radius                          ! radius (normalized)
-
   ! gets crustal values
-  if (r >= NORM_MOHO_R .and. r <= NORM_MAX_H_R) then
+  if (radius >= NORM_MOHO_R .and. radius <= NORM_TOP_R) then
     ! position within block model range [-80km,topo]
-    call bkmns_block2crust(phi,theta,r,M_vpv,M_vph,M_vsv,M_vsh,M_eta,M_rho)
+    call bkmns_block2crust(phi,theta,radius,M_vpv,M_vph,M_vsv,M_vsh,M_eta,M_rho)
   else
     ! position in mantle zones
-    call bkmns_get_mantle_value(phi,theta,r,M_vpv,M_vph,M_vsv,M_vsh,M_eta,M_rho)
+    call bkmns_get_mantle_value(phi,theta,radius,M_vpv,M_vph,M_vsv,M_vsh,M_eta,M_rho)
   endif
+
+  ! debug
+  !print *,'debug: bkmns mantle r/lat/lon',radius,(PI/2.0d0-theta)*180.0d0/PI,phi*180.0d0/PI, &
+  !        ' crustal limit ',NORM_MOHO_R,NORM_TOP_R, &
+  !        ' value M_vpv/vph/vsv/vsh/eta/rho = ',M_vpv,M_vph,M_vsv,M_vsh,M_eta,M_rho
 
   ! returns mantle values if non-zero
   if (M_vpv > WATER_LEVEL) then
@@ -1532,6 +2100,7 @@
   integer :: izone,ipar
   integer :: num_sh_coeffs,degree_N,num_spline_NS
 
+  double precision :: x
   double precision :: rmin,rmax
   double precision :: Cmn,Smn
   double precision, dimension(0:degree_NMAX) :: C_coeffs,S_coeffs
@@ -1541,12 +2110,21 @@
   double precision, dimension(:), pointer :: nFactors
   double precision, dimension(:,:,:), pointer  :: A_zone,B_zone
 
-  ! mantle parameters (1==vpv, 2==vph, ..)
+  ! mantle parameters (1==vpv, 2==vph, 3==vsv, 4==vsh, 5==eta, 6==rho)
   double precision, dimension(BKMNS_NPAR) :: M_par
   double precision :: scaleval_vel,scaleval_rho
 
   ! initializes mantle parameter values
+  vpv = 0.d0
+  vph = 0.d0
+  vsv = 0.d0
+  vsh = 0.d0
+  eta = 0.d0
+  rho = 0.d0
   M_par(:) = 0.d0
+
+  ! cos(theta) needed for polar basis
+  x = cos(theta)
 
   ! loops over mantle zones
   do izone = 2,4
@@ -1565,6 +2143,9 @@
 
     ! checks if in zone shell min/max radius
     if (radius >= rmin .and. radius <= rmax) then
+      ! radial index
+      ri = int( (radius - rmin)/(rmax - rmin) * (NPT - 1) + 0.5 ) + 1   ! + 1 due to array starting at 1
+
       ! selects corresponding zone arrays
       select case(izone)
       case (2)
@@ -1572,72 +2153,68 @@
         B_zone => B_zone2
         Rbasis => Rbasis_zone2
         nFactors => nFactors_zone2
-        degree_N = degree_N_zone2
-        num_spline_NS = num_spline_NS_zone2
-        num_sh_coeffs = num_sh_coeffs_zone2
       case (3)
         A_zone => A_zone3
         B_zone => B_zone3
         Rbasis => Rbasis_zone3
         nFactors => nFactors_zone3
-        degree_N = degree_N_zone3
-        num_spline_NS = num_spline_NS_zone3
-        num_sh_coeffs = num_sh_coeffs_zone3
       case (4)
         A_zone => A_zone4
         B_zone => B_zone4
         Rbasis => Rbasis_zone4
         nFactors => nFactors_zone4
-        degree_N = degree_N_zone4
-        num_spline_NS = num_spline_NS_zone4
-        num_sh_coeffs = num_sh_coeffs_zone4
       end select
 
-      ! radial index
-      ri = int( (radius - rmin)/(rmax - rmin) * (NPT - 1) + 0.5 ) + 1   ! + 1 due to array starting at 1
+      ! loops over parameters rho,vpv,vph,..
+      do ipar = 1,BKMNS_NPAR
+        ! selects corresponding zone & parameter file arrays
+        select case(izone)
+        case (2)
+          degree_N = degree_N_zone2(ipar)
+          num_sh_coeffs = num_sh_coeffs_zone2(ipar)
+          num_spline_NS = num_spline_NS_zone2(ipar)
+        case (3)
+          degree_N = degree_N_zone3(ipar)
+          num_sh_coeffs = num_sh_coeffs_zone3(ipar)
+          num_spline_NS = num_spline_NS_zone3(ipar)
+        case (4)
+          degree_N = degree_N_zone4(ipar)
+          num_sh_coeffs = num_sh_coeffs_zone4(ipar)
+          num_spline_NS = num_spline_NS_zone4(ipar)
+        end select
 
-      ! initialize Legendre polynomials and coefficients
-      P(:) = 0.d0
-      Pnormalized(:) = 0.d0
-      C_coeffs(:) = 0.d0
-      S_coeffs(:) = 0.d0
+        ! initialize Legendre polynomials and coefficients
+        P(:) = 0.d0
+        Pnormalized(:) = 0.d0
+        C_coeffs(:) = 0.d0
+        S_coeffs(:) = 0.d0
 
-      ! azimutal Basis
-      call get_azimuthal_Basis(phi,degree_N,C_coeffs,S_coeffs)
+        ! azimutal Basis
+        call get_azimuthal_Basis(phi,degree_N,C_coeffs,S_coeffs)
 
-      do n = 0,degree_N
-        ! polar Basis
-        call get_polar_Basis(theta,n,num_sh_coeffs,nFactors,P,Pnormalized)
+        do n = 0,degree_N
+          ! polar Basis
+          call get_polar_Basis(x,n,num_sh_coeffs,nFactors,P,Pnormalized)
 
-        do m = 0,n
-          Cmn = Pnormalized(m + 1) * C_coeffs(m)
-          Smn = Pnormalized(m + 1) * S_coeffs(m)
+          do m = 0,n
+            Cmn = Pnormalized(m + 1) * C_coeffs(m)
+            Smn = Pnormalized(m + 1) * S_coeffs(m)
 
-          !mn2Index(m,n)
-          idx = n * (n + 1) / 2 + m + 1   ! + 1 due to arrays starting at 1
+            !mn2Index(m,n)
+            idx = n * (n + 1) / 2 + m + 1   ! + 1 due to arrays starting at 1
 
-          !debug
-          !print *,'debug: position lon/lat/r ',phi*180.0/PI,90.0-theta*180.0/PI,radius*EARTH_R_KM, &
-          !        ' index ri ',ri,' Rbasis ',Rbasis(ri,1),' Cmn/Smn ',Cmn,Smn, &
-          !        ' idx ',idx,' A/B zone ',A_zone(1,idx,1),B_zone(1,idx,1)
-
-          ! spline contributions
-          do s = 1,num_spline_NS              ! starting at [1,NS] due to arrays starting at 1
-            if (Rbasis(ri,s) > 0.d0) then
-              do ipar = 1,BKMNS_NPAR
+            ! spline contributions
+            do s = 1,num_spline_NS              ! starting at [1,NS] due to arrays starting at 1
+              if (Rbasis(ri,s) > 0.d0) then
                 M_par(ipar) = M_par(ipar) + Rbasis(ri,s) * (Cmn * A_zone(s,idx,ipar) + Smn * B_zone(s,idx,ipar))
-              enddo
-            endif
+              endif
+            enddo
           enddo
         enddo
-      enddo
 
-      ! not used: calculates perturbations
-      !if (dvv) M[i] = log (M[i] / meanModel (r, nl, Mm));
-
-      !debug
-      !print *,'debug: position lon/lat/r ',phi*180.0/PI,90.0-theta*180.0/PI,radius*EARTH_R_KM, &
-      !        ' vpv ',M_par(1),' vph ',M_par(2),' vsv ',M_par(3),' vsh ',M_par(4),' eta ',M_par(5),' rho ',M_par(6)
+        ! not used: calculates perturbations
+        !if (dvv) M[i] = log (M[i] / meanModel (r, nl, Mm));
+      enddo  ! ipar
 
       ! non-dimensionalize (from km/s)
       scaleval_rho = 1000.0d0 / RHOAV
@@ -1689,13 +2266,13 @@
 !-----------------------------------------------------------------------------------------
 !
 
-  subroutine get_polar_Basis(theta,n,num_sh_coeffs,nFactors,P,Pnormalized)
+  subroutine get_polar_Basis(x,n,num_sh_coeffs,nFactors,P,Pnormalized)
 
-  use model_bkmns_par, only: LEGENDRE_K3,Legendre_degree_factor,degree_NMAX
+  use model_bkmns_par, only: LEGENDRE_K2,Legendre_degree_factor,degree_NMAX ! LEGENDRE_K3
 
   implicit none
 
-  double precision, intent(in) :: theta
+  double precision, intent(in) :: x
   integer, intent(in) :: n,num_sh_coeffs
   double precision,dimension(0:num_sh_coeffs-1),intent(in) :: nFactors
 
@@ -1703,43 +2280,136 @@
 
   ! local parameters
   integer :: m,idx
-  double precision :: z,sint,cott
-  double precision :: P0,factor
+  double precision :: sint,cott
+  double precision :: P0,factor !,factor_sqrt,sgn
+  double precision :: fac1,fac2
+
+  ! from original routine: polarBasis (unsigned nt, double Theta[nt], ..) {
+  !                          double t = Theta[i];
+  !                          lgPmn (cosl (t), n, nmax, P[i]);
+  !                          normalize (n, nlg, nmax, nF, P[i], nP[i]);
+  !                        }
 
   ! calculates normalized spherical harmonics based on associated Legendre Polynomials
   ! Dahlen & Tromp, 1998
 
   ! spherical harmonic P
-  ! Pmn (cos (t), n, N, P);
-  z = cos(theta)
 
-  if (abs(z) - 1.d0 < 1.d-9) then
+  ! new format: lgPmn (cosl (t), n, nmax, P[i]);
+  ! old format: Pmn (cos (t), n, N, P);
+
+  ! work-around to avoid overflows: Pmn can become very large for n > 100
+  !                                 will apply factor LEGENDRE_K2 to P instead at Pnormalize as in original routine
+  !                                    P_mn -> P'_mn = LEGENDRE_K2 * P_mn
+  !                                 and      Pnormalized(m+1) = LEGENDRE_K2 * nFactors(idx) * P(m+1)
+  !                                 becomes  Pnormalized(m+1) = nFactors(idx) * P'(m+1)
+  !                                                           = nFactors(idx) * ( LEGENDRE_K2 * P(m+1) )
+
+  ! sint = (fabsl (x) == 1.L) ? 0.L : sqrtl (1.L - square (x));
+  ! cott = (fabsl (x) == 1.L) ? 0.L : x / sint;
+  if (1.d0 - abs(x) < 1.d-20) then
     sint = 0.d0
     cott = 0.d0
   else
-    sint = sqrt (1.d0 - z*z)
-    cott = z / sint
+    sint = sqrt (1.d0 - x*x)
+    cott = x / sint
   endif
 
   ! associated Legrendre polynomials Pmn
   if (n == 0) then
-    P(1) = 1.d0
+    P(1) = LEGENDRE_K2 * 1.d0
   else if (n == 1) then
-    P(0) = P(1)
-    P(1) = z
-    P(2) = -sint
+    P(0) = LEGENDRE_K2 * 1.d0 ! from previous n==0: P(1) = 1.d0
+    P(1) = LEGENDRE_K2 * x
+    P(2) = - LEGENDRE_K2 * sint
   else
+    ! n > 1
+    ! takes values from previous n
     P0 = P(0)
     P(0) = P(1)
-    P(1) = ((2 * n - 1) * z * P(1) - (n - 1) * P0) / n
-    !P(i_n + 1,N+2) = sgn (n) * doubleFactorial (2 * n - 1) * pow (sint, n)
-    factor = Legendre_degree_factor(n)  ! sgn (n) * doubleFactorial (2 * n - 1)
-    P(n + 1) = factor * sint**n
 
-    P(n) = P(n) * z * (2 * (n - 1) + 1)
+    ! new P_1
+    !P(1) = ((2 * n - 1) * x * P(1) - (n - 1) * P0) / n
 
+    fac1 = dble(2 * n - 1) * x / dble(n)
+    fac2 = dble(n - 1) / dble(n)
+    P(1) = fac1 * P(1) - fac2 * P0
+
+    ! P_n
+    !P(n) = P(n) * x * (2 * (n - 1) + 1)
+    ! work-around to avoid overflow
+    ! P(n) = P(n) * x * (2 * (n - 1) + 1)
+    !      = P(n) * a
+    ! -> normalized Pnormalized(m+1) = LEGENDRE_K2 * nFactors(idx) * P(m+1)
+    !               mn2Index(m,n) = idx = n * (n + 1) / 2 + m
+    !                       (0,0): idx = 0 * (0 + 1) / 2 + 0 = 0
+    !                       (0,1): idx = 1 * (1 + 1) / 2 + 0 = 1
+    !                       (1,1): idx = 1 * (1 + 1) / 2 + 1 = 2
+    !                       (0,2): idx = 2 * (2 + 1) / 2 + 0 = 3
+    !                       (1,2): idx = 2 * (2 + 1) / 2 + 1 = 4
+    !                       (2,2): idx = 2 * (2 + 1) / 2 + 2 = 5
+    !                       (0,3): idx = 3 * (3 + 1) / 2 + 0 = 6
+    !                       ..
+    fac1 = x * dble(2 * (n - 1) + 1)
+    factor = fac1 * P(n)
+    ! checks if Nan
+    !if (factor /= factor) then
+    !  print *,'Error: possible overflow in get_polar_Basis(), polynomial factor P(n) becomes invalid ',factor,P(n), &
+    !          'for degree n = ',n
+    !  stop 'get_polar_Basis w/ P(n) invalid number'
+    !endif
+
+    P(n) = factor
+
+    ! P_n+1
+    ! new: P[n + 1] = sgn (n) * factorial2 (2 * n - 1) * powl (sint, n);
+
+    ! way 1: using sqrt of factorial
+    ! sgn (n)
+    !if (mod(n,2) == 1) then
+    !  sgn = -1.d0
+    !else
+    !  sgn = 1.d0
+    !endif
+    ! Legendre_degree_factor(:) has pre-computed sqrt( doubleFactorial(2*n-1) ) due to double precision range limit for large n
+    !factor_sqrt = Legendre_degree_factor(n)
+    !
+    ! multiplies first with sint**n which can be small to avoid overflow
+    ! P = sgn * fac * sint**n
+    !   = sng * sqrt(fac) * sqrt(fac) * sint**n
+    !   = ( sqrt(fac) * sint**n ) * ( sgn * sqrt(fac) )
+    !fac1 = factor_sqrt * sint**n
+    !fac2 = sgn * factor_sqrt
+    !factor = LEGENDRE_K2 * fac1 * fac2
+
+    ! way 2: Legendre_degree_factor(:) has pre-computed LEGENDRE_K2 * sgn (n) * factorial2 (2 * n - 1)
+    fac1 = Legendre_degree_factor(n)
+    factor = fac1 * sint**n
+    ! checks if Nan
+    !if (factor /= factor) then
+    !  print *,'Error: possible overflow in get_polar_Basis(), polynomial factor P(n+1) becomes invalid ',factor,fac1,fac2, &
+    !          'for degree n = ',n
+    !  stop 'get_polar_Basis w/ P(n+1) invalid number'
+    !endif
+
+    P(n + 1) = factor
+
+    ! old: P(i_n + 1,N+2) = sgn (n) * doubleFactorial (2 * n - 1) * pow (sint, n)
+    !factor = Legendre_degree_factor(n)  ! sgn (n) * doubleFactorial (2 * n - 1)
+    !P(n + 1) = factor * sint**n
+
+    ! P_m for 1 < m < n
     do m = n - 1, 1+1, -1
-      P(m) = (-2.d0 * m * cott * P(m + 1) - P(m + 2)) / ((n + m) * (n - m + 1))
+      ! computes:
+      ! P(m) = (-2.d0 * m * cott * P(m + 1) - P(m + 2)) / ((n + m) * (n - m + 1))
+      !
+      ! work-around to avoid overflow as P(m+1),P(m+2) can be very large numbers for n,m > 150
+      ! P(m) = (a * P(m+1) - P(m+2)) / b
+      !      = a/b * P(m+1) - P(m+2)/b
+      factor = 1.d0 / dble((n + m) * (n - m + 1))
+      fac1 = -2.d0 * m * cott * factor * P(m + 1)
+      fac2 = factor * P(m + 2)
+      P(m) = fac1 - fac2
     enddo
   endif
 
@@ -1748,7 +2418,16 @@
   do m = 0,n
     !mn2Index(m,n)
     idx = n * (n + 1) / 2 + m
-    Pnormalized(m + 1) = LEGENDRE_K3 * nFactors(idx) * P(m + 1)
+
+    ! w/ normalization factor
+    !factor = LEGENDRE_K2 * nFactors(idx)
+    ! work-around to avoid overflow applied LEGENDRE_K2 to P_mn already
+    factor = nFactors(idx)
+
+    !new: nP[m + 1] = K2 * nF[mN2I (m, n)] * P[m + 1];
+    Pnormalized(m + 1) = factor * P(m + 1)
+
+    !old: Pnormalized(m + 1) = LEGENDRE_K3 * nFactors(idx) * P(m + 1)
   enddo
 
   end subroutine get_polar_Basis

@@ -819,7 +819,7 @@
           ! GLAD model expansion on block-mantle-spherical-harmonics
           ! model takes actual position (includes topography between 80km depth and surface topo)
           r_used = r
-          call model_bkmns_mantle(lat,lon,r_used,vpv,vph,vsv,vsh,eta_aniso,rho)
+          call model_bkmns_mantle(r_used,theta,phi,vpv,vph,vsv,vsh,eta_aniso,rho)
 
         case default
           print *,'Error: do not recognize value for THREE_D_MODEL ',THREE_D_MODEL
