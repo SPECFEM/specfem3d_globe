@@ -1041,7 +1041,7 @@ def create_topo_bathy(topo):
 if __name__ == '__main__':
     # gets arguments
     if '--help' in sys.argv or '-h' in sys.argv or len(sys.argv) != 2:
-        print("usage: ./create_topo_bathy_file.py topo [== etopo1,etopo2,etopo4,etopo5,etopo15,mars,moon]")
+        print("usage: ./run_create_topo_bathy_file.py topo [== etopo1,etopo2,etopo4,etopo5,etopo15,mars,moon]")
         sys.exit(1)
     else:
         topo = sys.argv[1]
