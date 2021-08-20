@@ -250,6 +250,7 @@
   double precision, dimension(:,:),allocatable :: bnd
   double precision :: moho
   double precision :: h_moho_min,h_moho_max
+  double precision, dimension(:,:),allocatable :: single_par
 
   ! debug
   !double precision :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33, &
@@ -301,29 +302,39 @@
   read(lat1(:),*) bnd_lat1(:)
   read(lat2(:),*) bnd_lat2(:)
 
+  ! temporary array for reading single parameter
+  allocate(single_par(CRUST_NP,CRUST_NB),stat=ier)
+  if (ier /= 0) call exit_MPI(0,'Error allocating temporary array single_par')
+  single_par(:,:) = 0.d0
+
   NlatNlon = 0 
   ! read CIJ, density and depths from crust files
   do b = 1,Nbnd_read
    
-   call read_general_crust_model(crust_coef(1,:,:),'C11    ', &
+    call read_general_crust_model(single_par,'C11    ', &
+                     lat1(b),lat2(b),dlat(b),dlon(b),NlatNlon) 
+    crust_coef(1,:,:) = single_par(:,:)
+
+    call read_general_crust_model(single_par,'C13    ', &
+                     lat1(b),lat2(b),dlat(b),dlon(b),NlatNlon) 
+    crust_coef(2,:,:) = single_par(:,:)
+
+    call read_general_crust_model(single_par,'C33    ', &
+                     lat1(b),lat2(b),dlat(b),dlon(b),NlatNlon) 
+    crust_coef(3,:,:) = single_par(:,:)
+
+    call read_general_crust_model(single_par,'C44    ', &
+                     lat1(b),lat2(b),dlat(b),dlon(b),NlatNlon) 
+    crust_coef(4,:,:) = single_par(:,:)
+
+    call read_general_crust_model(single_par,'C66    ', &
+                     lat1(b),lat2(b),dlat(b),dlon(b),NlatNlon) 
+    crust_coef(5,:,:) = single_par(:,:)
+
+    call read_general_crust_model(bnd(:,:),'depths ', &
                      lat1(b),lat2(b),dlat(b),dlon(b),NlatNlon) 
 
-   call read_general_crust_model(crust_coef(2,:,:),'C13    ', &
-                     lat1(b),lat2(b),dlat(b),dlon(b),NlatNlon) 
-
-   call read_general_crust_model(crust_coef(3,:,:),'C33    ', &
-                     lat1(b),lat2(b),dlat(b),dlon(b),NlatNlon) 
-
-   call read_general_crust_model(crust_coef(4,:,:),'C44    ', &
-                     lat1(b),lat2(b),dlat(b),dlon(b),NlatNlon) 
-
-   call read_general_crust_model(crust_coef(5,:,:),'C66    ', &
-                     lat1(b),lat2(b),dlat(b),dlon(b),NlatNlon) 
-
-   call read_general_crust_model(bnd(:,:),'depths ', &
-                     lat1(b),lat2(b),dlat(b),dlon(b),NlatNlon) 
-
-   call read_general_crust_model(crust_rho(:,:),'density', &
+    call read_general_crust_model(crust_rho(:,:),'density', &
                      lat1(b),lat2(b),dlat(b),dlon(b),NlatNlon) 
 
    NlatNlon = NlatNlon + bnd_nlat(b)*bnd_nlon(b)
@@ -334,6 +345,7 @@
   deallocate(lat2)
   deallocate(dlat)
   deallocate(dlon)
+  deallocate(single_par)
 
   h_moho_min = HUGEVAL
   h_moho_max = -HUGEVAL
@@ -865,6 +877,10 @@
 
         ! (1) i_min, j_min
         rec_read = NlatNlon + (j_min-1)*bnd_nlon(l) + (i_min-1) + 1
+        ! index bounds
+        if (rec_read < 1) rec_read = 1
+        if (rec_read > CRUST_NB) rec_read = CRUST_NB
+
         do i = 1,CRUST_NP
           rho1(i) = crust_rho(i,rec_read)
           thick1(i) = crust_thickness(i,rec_read)
@@ -873,6 +889,10 @@
 
         ! (2) i_min, j_max
         rec_read = NlatNlon + (j_max-1)*bnd_nlon(l) + (i_min-1) + 1
+        ! index bounds
+        if (rec_read < 1) rec_read = 1
+        if (rec_read > CRUST_NB) rec_read = CRUST_NB
+
         do i = 1,CRUST_NP
           rho2(i) = crust_rho(i,rec_read)
           thick2(i) = crust_thickness(i,rec_read)
@@ -881,6 +901,10 @@
 
         ! (3) i_max, j_min
         rec_read = NlatNlon + (j_min-1)*bnd_nlon(l) + (i_max-1) + 1
+        ! index bounds
+        if (rec_read < 1) rec_read = 1
+        if (rec_read > CRUST_NB) rec_read = CRUST_NB
+
         do i = 1,CRUST_NP
           rho3(i) = crust_rho(i,rec_read)
           thick3(i) = crust_thickness(i,rec_read)
@@ -889,6 +913,10 @@
 
         ! (4) i_max, j_max
         rec_read = NlatNlon + (j_max-1)*bnd_nlon(l) + (i_max-1) + 1
+        ! index bounds
+        if (rec_read < 1) rec_read = 1
+        if (rec_read > CRUST_NB) rec_read = CRUST_NB
+
         do i = 1,CRUST_NP
           rho4(i) = crust_rho(i,rec_read)
           thick4(i) = crust_thickness(i,rec_read)
@@ -1134,6 +1162,7 @@
   double precision :: dummy
   double precision :: d410_min,d410_max
   double precision :: d660_min,d660_max
+  double precision, dimension(:),allocatable :: single_par
 
   !debug
   !double precision :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33, &
@@ -1212,26 +1241,36 @@
 
   mtle_bnd_ndep(:) = int( (mtle_bnd_dep2(:) - mtle_bnd_dep1(:))/dp_ddep(:) ) + 1
 
+  ! temporary array for reading single parameter
+  allocate(single_par(MANTLE_NB*MANTLE_NBZ),stat=ier)
+  if (ier /= 0) call exit_MPI(0,'Error allocating temporary array single_par')
+  single_par(:) = 0.d0
+
   NlatNlonNdep = 0
 
   ! read CIJ, density from mantle files
   do m = 1,Nbndz_read
     Ndep = mtle_bnd_ndep(m)
     do b = 1,Nbnd_read
-      call read_general_mantle_model(mantle_coef(1,:),'C11    ', &
+      call read_general_mantle_model(single_par,'C11    ', &
                        lat1(b),lat2(b),dlat(b),dlon(b),dep1(m),dep2(m),ddep(m),NlatNlonNdep)
+      mantle_coef(1,:) = single_par(:)
 
-      call read_general_mantle_model(mantle_coef(2,:),'C13    ', &
+      call read_general_mantle_model(single_par,'C13    ', &
                        lat1(b),lat2(b),dlat(b),dlon(b),dep1(m),dep2(m),ddep(m),NlatNlonNdep)
+      mantle_coef(2,:) = single_par(:)
 
-      call read_general_mantle_model(mantle_coef(3,:),'C33    ', &
+      call read_general_mantle_model(single_par,'C33    ', &
                        lat1(b),lat2(b),dlat(b),dlon(b),dep1(m),dep2(m),ddep(m),NlatNlonNdep)
+      mantle_coef(3,:) = single_par(:)
 
-      call read_general_mantle_model(mantle_coef(4,:),'C44    ', &
+      call read_general_mantle_model(single_par,'C44    ', &
                        lat1(b),lat2(b),dlat(b),dlon(b),dep1(m),dep2(m),ddep(m),NlatNlonNdep)
+      mantle_coef(4,:) = single_par(:)
 
-      call read_general_mantle_model(mantle_coef(5,:),'C66    ', &
+      call read_general_mantle_model(single_par,'C66    ', &
                        lat1(b),lat2(b),dlat(b),dlon(b),dep1(m),dep2(m),ddep(m),NlatNlonNdep)
+      mantle_coef(5,:) = single_par(:)
 
       call read_general_mantle_model(mantle_rho(:),'density', &
                        lat1(b),lat2(b),dlat(b),dlon(b),dep1(m),dep2(m),ddep(m),NlatNlonNdep)
@@ -1249,6 +1288,7 @@
   deallocate(dep2)
   deallocate(ddep)
   deallocate(dp_ddep)
+  deallocate(single_par)
 
   ! chris debug: file output for smoothed data
   !    open(77,file='tmp-mantle.dat',status='unknown')
@@ -1671,41 +1711,73 @@
 
           ! (1) i_min, j_min, k_min
           rec_read = NlatNlonNdep + (k_min-1)*mtle_bnd_nlat(l)*mtle_bnd_nlon(l) + (j_min-1)*mtle_bnd_nlon(l) + (i_min-1) + 1
+          ! index bounds
+          if (rec_read < 1) rec_read = 1
+          if (rec_read > MANTLE_NB*MANTLE_NBZ) rec_read = MANTLE_NB*MANTLE_NBZ
+
           rho1 = mantle_rho(rec_read)
           coef1(:) = mantle_coef(:,rec_read)
 
           ! (2) i_min, j_max, k_min
           rec_read = NlatNlonNdep + (k_min-1)*mtle_bnd_nlat(l)*mtle_bnd_nlon(l) + (j_max-1)*mtle_bnd_nlon(l) + (i_min-1) + 1
+          ! index bounds
+          if (rec_read < 1) rec_read = 1
+          if (rec_read > MANTLE_NB*MANTLE_NBZ) rec_read = MANTLE_NB*MANTLE_NBZ
+
           rho2 = mantle_rho(rec_read)
           coef2(:) = mantle_coef(:,rec_read)
 
           ! (3) i_max, j_min, k_min
           rec_read = NlatNlonNdep + (k_min-1)*mtle_bnd_nlat(l)*mtle_bnd_nlon(l) + (j_min-1)*mtle_bnd_nlon(l) + (i_max-1) + 1
+          ! index bounds
+          if (rec_read < 1) rec_read = 1
+          if (rec_read > MANTLE_NB*MANTLE_NBZ) rec_read = MANTLE_NB*MANTLE_NBZ
+
           rho3 = mantle_rho(rec_read)
           coef3(:) = mantle_coef(:,rec_read)
 
           ! (4) i_max, j_max, k_min
           rec_read = NlatNlonNdep + (k_min-1)*mtle_bnd_nlat(l)*mtle_bnd_nlon(l) + (j_max-1)*mtle_bnd_nlon(l) + (i_max-1) + 1
+          ! index bounds
+          if (rec_read < 1) rec_read = 1
+          if (rec_read > MANTLE_NB*MANTLE_NBZ) rec_read = MANTLE_NB*MANTLE_NBZ
+
           rho4 = mantle_rho(rec_read)
           coef4(:) = mantle_coef(:,rec_read)
 
           ! (5) i_min, j_min, k_max
           rec_read = NlatNlonNdep + (k_max-1)*mtle_bnd_nlat(l)*mtle_bnd_nlon(l) + (j_min-1)*mtle_bnd_nlon(l) + (i_min-1) + 1
+          ! index bounds
+          if (rec_read < 1) rec_read = 1
+          if (rec_read > MANTLE_NB*MANTLE_NBZ) rec_read = MANTLE_NB*MANTLE_NBZ
+
           rho5 = mantle_rho(rec_read)
           coef5(:) = mantle_coef(:,rec_read)
 
           ! (6) i_min, j_max, k_max
           rec_read = NlatNlonNdep + (k_max-1)*mtle_bnd_nlat(l)*mtle_bnd_nlon(l) + (j_max-1)*mtle_bnd_nlon(l) + (i_min-1) + 1
+          ! index bounds
+          if (rec_read < 1) rec_read = 1
+          if (rec_read > MANTLE_NB*MANTLE_NBZ) rec_read = MANTLE_NB*MANTLE_NBZ
+
           rho6 = mantle_rho(rec_read)
           coef6(:) = mantle_coef(:,rec_read)
 
           ! (7) i_max, j_min, k_max
           rec_read = NlatNlonNdep + (k_max-1)*mtle_bnd_nlat(l)*mtle_bnd_nlon(l) + (j_min-1)*mtle_bnd_nlon(l) + (i_max-1) + 1
+          ! index bounds
+          if (rec_read < 1) rec_read = 1
+          if (rec_read > MANTLE_NB*MANTLE_NBZ) rec_read = MANTLE_NB*MANTLE_NBZ
+
           rho7 = mantle_rho(rec_read)
           coef7(:) = mantle_coef(:,rec_read)
 
           ! (8) i_max, j_max, k_max
           rec_read = NlatNlonNdep + (k_max-1)*mtle_bnd_nlat(l)*mtle_bnd_nlon(l) + (j_max-1)*mtle_bnd_nlon(l) + (i_max-1) + 1
+          ! index bounds
+          if (rec_read < 1) rec_read = 1
+          if (rec_read > MANTLE_NB*MANTLE_NBZ) rec_read = MANTLE_NB*MANTLE_NBZ
+
           rho8 = mantle_rho(rec_read)
           coef8(:) = mantle_coef(:,rec_read)
 
@@ -1865,21 +1937,37 @@
 
     ! (1) i_min, j_min
     rec_read = (j_min-1)*TOPO_NLO + (i_min-1) + 1
+    ! index bounds
+    if (rec_read < 1) rec_read = 1
+    if (rec_read > TOPO_NLO*TOPO_NLA) rec_read = TOPO_NLO*TOPO_NLA
+
     t410_1 = mantle_d410(rec_read)
     t660_1 = mantle_d660(rec_read)
 
     ! (2) i_min, j_max
     rec_read = (j_max-1)*TOPO_NLO + (i_min-1) + 1
+    ! index bounds
+    if (rec_read < 1) rec_read = 1
+    if (rec_read > TOPO_NLO*TOPO_NLA) rec_read = TOPO_NLO*TOPO_NLA
+
     t410_2 = mantle_d410(rec_read)
     t660_2 = mantle_d660(rec_read)
 
     ! (3) i_max, j_min
     rec_read = (j_min-1)*TOPO_NLO + (i_max-1) + 1
+    ! index bounds
+    if (rec_read < 1) rec_read = 1
+    if (rec_read > TOPO_NLO*TOPO_NLA) rec_read = TOPO_NLO*TOPO_NLA
+
     t410_3 = mantle_d410(rec_read)
     t660_3 = mantle_d660(rec_read)
 
     ! (4) i_max, j_max
     rec_read = (j_max-1)*TOPO_NLO + (i_max-1) + 1
+    ! index bounds
+    if (rec_read < 1) rec_read = 1
+    if (rec_read > TOPO_NLO*TOPO_NLA) rec_read = TOPO_NLO*TOPO_NLA
+
     t410_4 = mantle_d410(rec_read)
     t660_4 = mantle_d660(rec_read)
 

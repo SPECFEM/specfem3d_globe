@@ -119,7 +119,9 @@ gpu_specfem3D_OBJECTS += $(cuda_specfem3D_DEVICE_OBJ) $(cuda_kernels_OBJS)
 ### variables
 ###
 
-BUILD_VERSION_TXT := with
+ifeq ($(HAS_GPU), yes)
+	BUILD_VERSION_TXT := with
+endif
 SELECTOR_CFLAG :=
 
 ## CUDA compilation
@@ -190,7 +192,9 @@ ifeq ($(HIP), yes)
   #endif
 endif
 
-BUILD_VERSION_TXT += support
+ifeq ($(HAS_GPU), yes)
+	BUILD_VERSION_TXT += support
+endif
 
 ###
 ### building rules
