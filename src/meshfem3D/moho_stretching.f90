@@ -60,6 +60,8 @@
   ! local parameters
   double precision :: r,theta,phi,lat,lon
   double precision :: vpvc,vphc,vsvc,vshc,etac,rhoc
+  double precision :: c11c,c12c,c13c,c14c,c15c,c16c,c22c,c23c,c24c,c25c,c26c, &
+                      c33c,c34c,c35c,c36c,c44c,c45c,c46c,c55c,c56c,c66c
   double precision :: moho,sediment
   double precision :: elevation,gamma
   double precision :: x,y,z
@@ -148,15 +150,17 @@
     endif
 
     ! sets longitude bounds [-180,180]
-    if (lon > 180.0d0 ) lon = lon - 360.0d0
+    if (lon > 180.d0 ) lon = lon - 360.0d0
 
     ! initializes
     moho = 0.d0
     sediment = 0.d0
-    moho_only = .true.
+    moho_only = .true.  ! only moho value needed
 
     ! gets smoothed moho depth
-    call meshfem3D_model_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,sediment,found_crust,elem_in_crust,moho_only)
+    call meshfem3D_model_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,sediment,found_crust,elem_in_crust,moho_only, &
+                               c11c,c12c,c13c,c14c,c15c,c16c,c22c,c23c,c24c,c25c,c26c, &
+                               c33c,c34c,c35c,c36c,c44c,c45c,c46c,c55c,c56c,c66c)
 
     !debug
     !if (lon > 140.0 .and. lon < 143. .and. lat <-42. .and. lat > -45. .and. ia == 27) then
@@ -319,6 +323,8 @@
   integer :: ia,count_crust,count_mantle
   double precision :: r,theta,phi,lat,lon
   double precision :: vpvc,vphc,vsvc,vshc,etac,rhoc
+  double precision :: c11c,c12c,c13c,c14c,c15c,c16c,c22c,c23c,c24c,c25c,c26c, &
+                      c33c,c34c,c35c,c36c,c44c,c45c,c46c,c55c,c56c,c66c
   double precision :: moho,sediment
   logical :: found_crust,moho_only
   double precision :: x,y,z
@@ -359,7 +365,9 @@
     moho_only = .true.  ! only moho value needed
 
     ! gets smoothed moho depth
-    call meshfem3D_model_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,sediment,found_crust,elem_in_crust,moho_only)
+    call meshfem3D_model_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,sediment,found_crust,elem_in_crust,moho_only, &
+                               c11c,c12c,c13c,c14c,c15c,c16c,c22c,c23c,c24c,c25c,c26c, &
+                               c33c,c34c,c35c,c36c,c44c,c45c,c46c,c55c,c56c,c66c)
 
     ! checks moho depth
     if (abs(moho) < TINYVAL ) call exit_mpi(myrank,'Error moho depth in crust_reg to honor')

@@ -41,7 +41,7 @@
     TOPOGRAPHY,ELLIPTICITY,CRUSTAL,CASE_3D, &
     THREE_D_MODEL,THREE_D_MODEL_MANTLE_SH,THREE_D_MODEL_S29EA, &
     THREE_D_MODEL_S362ANI,THREE_D_MODEL_S362WMANI,THREE_D_MODEL_S362ANI_PREM, &
-    THREE_D_MODEL_BKMNS_GLAD, &
+    THREE_D_MODEL_BKMNS_GLAD,THREE_D_MODEL_SPIRAL, &
     ibathy_topo,nspl,rspl,ellipicity_spline,ellipicity_spline2, &
     REGIONAL_MOHO_MESH
 
@@ -262,6 +262,16 @@
       if (idoubling(ispec) == IFLAG_MANTLE_NORMAL .or. &
           idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
         call add_topography_sh_cmb(xelm,yelm,zelm)
+      endif
+    endif
+
+    ! SPiral model
+    if (THREE_D_MODEL == THREE_D_MODEL_SPIRAL) then
+      ! 410/650 topography
+      ! stretching between 220 and 770
+      if (idoubling(ispec) == IFLAG_670_220 .or. &
+          idoubling(ispec) == IFLAG_MANTLE_NORMAL) then
+        call add_topography_mantle_spiral(xelm,yelm,zelm)
       endif
     endif
 

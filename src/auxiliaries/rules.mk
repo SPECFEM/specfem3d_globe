@@ -487,6 +487,7 @@ xwrite_profile_OBJECTS += \
 	$O/model_sea99_s.check.o \
 	$O/model_sglobe.check.o \
 	$O/model_sglobecrust.check.o \
+	$O/model_spiral.check.o \
 	$(EMPTY_MACRO)
 
 # from src/shared/

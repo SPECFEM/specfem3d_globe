@@ -224,6 +224,13 @@
     ! in case it has an ending for the crust, remove it from the name
     MODEL_ROOT = MODEL_ROOT(1: len_trim(MODEL_ROOT)-12)
   endif
+  ! checks with '_crustSPIRAL' option
+  if (len_trim(MODEL_ROOT) > 12 ) ending = MODEL_ROOT(len_trim(MODEL_ROOT)-11:len_trim(MODEL_ROOT))
+  if (trim(ending) == '_crustspiral') then
+    impose_crust = ICRUST_SPIRAL
+    ! in case it has an ending for the crust, remove it from the name
+    MODEL_ROOT = MODEL_ROOT(1: len_trim(MODEL_ROOT)-12)
+  endif
 
   ! save main model name (without appended options)
   MODEL_NAME = trim(MODEL_ROOT)
@@ -585,15 +592,36 @@
     THREE_D_MODEL = THREE_D_MODEL_ANISO_MANTLE
     ANISOTROPIC_3D_MANTLE = .true. ! treats mantle elements as fully anisotropic
 
+  case ('spiral')
+    ! uses spiral crustal model by default
+    REFERENCE_CRUSTAL_MODEL = ICRUST_SPIRAL
+    CASE_3D = .true.                      ! crustal moho stretching
+    CRUSTAL = .true.                      ! with 3D crust: depends on 3D mantle reference model
+    ONE_CRUST = .true.                    ! 1 element layer in top crust region
+    REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
+    TRANSVERSE_ISOTROPY = .true.          ! to use transverse isotropic PREM 1D ref model
+    MODEL_3D_MANTLE_PERTUBATIONS = .true.
+    THREE_D_MODEL = THREE_D_MODEL_SPIRAL
+    ANISOTROPIC_3D_MANTLE = .true.        ! treats mantle elements as fully anisotropic
+    ATTENUATION_3D = .true.
+
   case ('heterogen')
     ONE_CRUST = .true.
     CASE_3D = .true.
     CRUSTAL = .true.
-    HETEROGEN_3D_MANTLE = .true.  ! adds additional (dvp,dvs,drho) perturbations on top of reference 3D model
+    HETEROGEN_3D_MANTLE = .true.          ! adds additional (dvp,dvs,drho) perturbations on top of reference 3D model
     MODEL_3D_MANTLE_PERTUBATIONS = .true.
     REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
     THREE_D_MODEL = THREE_D_MODEL_S362ANI
     TRANSVERSE_ISOTROPY = .true.
+
+  case ('heterogen_prem')
+    !chris changed 2021
+    CRUSTAL = .true.                      ! with 3D crust: depends on 3D mantle reference model
+    HETEROGEN_3D_MANTLE = .true.          ! adds additional (dvp,dvs,drho) perturbations on top of reference 3D model
+    MODEL_3D_MANTLE_PERTUBATIONS = .true.
+    REFERENCE_1D_MODEL = REFERENCE_MODEL_PREM
+    THREE_D_MODEL = THREE_D_MODEL_HETEROGEN_PREM
 
 #ifdef USE_CEM
   case ('cem_request')

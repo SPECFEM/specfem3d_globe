@@ -216,6 +216,14 @@
         ! block-mantle-spherical-harmonics model
         call model_bkmns_mantle_broadcast()
 
+      case (THREE_D_MODEL_SPIRAL)
+        ! SPiRal model
+        call model_mantle_spiral_broadcast()
+
+      case (THREE_D_MODEL_HETEROGEN_PREM)
+        !chris modif checker 02/20/21
+        call model_heterogen_mntl_broadcast()
+
       case default
         call exit_MPI(myrank,'3D model not defined')
 
@@ -308,6 +316,10 @@
       call model_crust_2_0_broadcast()
       ! crustal structure in blocks between topography and 80km depth
       call model_bkmns_crust_broadcast()
+
+    case (ICRUST_SPIRAL)
+      ! anisotropic crust from SPiRaL
+      call model_crust_spiral_broadcast()
 
     case default
       stop 'crustal model type not defined'
@@ -821,6 +833,25 @@
           r_used = r
           call model_bkmns_mantle(r_used,theta,phi,vpv,vph,vsv,vsh,eta_aniso,rho)
 
+        case (THREE_D_MODEL_SPIRAL)
+          ! SPiRaL v1.4 anisotropic model
+          lat = (PI/2.0d0-theta)*180.0d0/PI
+          lon = phi*180.0d0/PI
+          if (lon > 180.0d0) lon = lon - 360.0d0
+          call model_mantle_spiral(r_used,lat,lon,vpv,vph,vsv,vsh,eta_aniso,rho, &
+                                   c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+                                   c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
+
+        case (THREE_D_MODEL_HETEROGEN_PREM)
+          ! chris modif checkers 02/20/21
+          call model_heterogen_mantle(ispec,i,j,k,r_prem,theta,phi,dvs,dvp,drho)
+          ! vpv = vpv*(1.0d0+dvp) ! correct format with initial heterogenous model
+          vpv = dvp
+          vph = dvp
+          vsv = dvs
+          vsh = dvs
+          rho = drho
+
         case default
           print *,'Error: do not recognize value for THREE_D_MODEL ',THREE_D_MODEL
           stop 'unknown 3D Earth model in meshfem3D_models_get3Dmntl_val(), please check... '
@@ -832,7 +863,9 @@
     ! heterogen model
     ! adds additional mantle perturbations
     ! (based on density variations) on top of reference 3D model
-    if (HETEROGEN_3D_MANTLE .and. .not. suppress_mantle_extension) then
+    if (HETEROGEN_3D_MANTLE &
+        .and. .not. suppress_mantle_extension &
+        .and. THREE_D_MODEL /= THREE_D_MODEL_HETEROGEN_PREM) then
       ! gets spherical coordinates of actual point location
       call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_used,theta,phi)
       call reduce(theta,phi)
@@ -905,6 +938,20 @@
         convert_tiso_to_cij = .true.
       else
         ! c11,.. already set in model_aniso_mantle() routine
+        ! nothing left to do
+        convert_tiso_to_cij = .false.
+      endif
+    endif
+
+    ! SPiRal model
+    if (THREE_D_MODEL == THREE_D_MODEL_SPIRAL) then
+      ! special case for appended _1Dcrust cases
+      if (suppress_mantle_extension) then
+        ! point is in crust, and CRUSTAL == .false. (no 3D crustal model); model_mantle_spiral() hasn't been called.
+        ! we still need to convert the 1D reference crustal values (vpv,vph,..) to full cij coefficients
+        convert_tiso_to_cij = .true.
+      else
+        ! sets c11,.. in model_mantle_spiral() routine
         ! nothing left to do
         convert_tiso_to_cij = .false.
       endif
@@ -1092,7 +1139,9 @@
   double precision :: lat,lon
   double precision :: vpvc,vphc,vsvc,vshc,etac
   double precision :: vpc,vsc,rhoc !vpc_eu
-
+  double precision :: c11c,c12c,c13c,c14c,c15c,c16c,c22c,c23c,c24c,c25c,c26c, &
+                      c33c,c34c,c35c,c36c,c44c,c45c,c46c,c55c,c56c,c66c
+  double precision :: A,C,L,N,F
   double precision :: dvs,dvp
   logical :: found_crust,is_inside_region,moho_only
 
@@ -1121,16 +1170,22 @@
   select case (THREE_D_MODEL)
 
     case (THREE_D_MODEL_SEA99_JP3D,THREE_D_MODEL_JP3D)
+      ! partial/regional crustal model only
       ! tries to use Zhao's model of the crust
       call model_jp3d_iso_zhao(r,theta,phi,vpc,vsc,dvp,dvs,rhoc,moho,sediment,found_crust,is_inside_region)
+
       if (.not. is_inside_region) then
         ! uses default crust outside of model region
-        call meshfem3D_model_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,sediment,found_crust,elem_in_crust,moho_only)
+        call meshfem3D_model_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,sediment,found_crust,elem_in_crust,moho_only, &
+                                   c11c,c12c,c13c,c14c,c15c,c16c,c22c,c23c,c24c,c25c,c26c, &
+                                   c33c,c34c,c35c,c36c,c44c,c45c,c46c,c55c,c56c,c66c)
       endif
 
     case default
       ! default crust
-      call meshfem3D_model_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,sediment,found_crust,elem_in_crust,moho_only)
+      call meshfem3D_model_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,sediment,found_crust,elem_in_crust,moho_only, &
+                                 c11c,c12c,c13c,c14c,c15c,c16c,c22c,c23c,c24c,c25c,c26c, &
+                                 c33c,c34c,c35c,c36c,c44c,c45c,c46c,c55c,c56c,c66c)
 
   end select
 
@@ -1145,29 +1200,70 @@
 
     ! sets anisotropy in crustal region as well
     if (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
-      ! equivalent with an isotropic elastic tensor (given vpv and vsv as isotropic wave speeds)
-      ! note: todo - this could be written as a transversely isotropic tensor (given vphc,vpvc,vshc,vsvc and etac from above)
-      c11 = rho * vpv*vpv
-      c12 = rho * (vpv*vpv - 2.d0*vsv*vsv)
-      c13 = c12
-      c14 = 0.d0
-      c15 = 0.d0
-      c16 = 0.d0
-      c22 = c11
-      c23 = c12
-      c24 = 0.d0
-      c25 = 0.d0
-      c26 = 0.d0
-      c33 = c11
-      c34 = 0.d0
-      c35 = 0.d0
-      c36 = 0.d0
-      c44 = rho * vsv*vsv
-      c45 = 0.d0
-      c46 = 0.d0
-      c55 = c44
-      c56 = 0.d0
-      c66 = c44
+
+      if (THREE_D_MODEL == THREE_D_MODEL_SPIRAL .and. REFERENCE_CRUSTAL_MODEL == ICRUST_SPIRAL) then
+        ! SPiRal has fully anisotropic crustal parameters
+        ! c11,.. already set in model_crust_spiral() routine
+        c11 = c11c
+        c12 = c12c
+        c13 = c13c
+        c14 = c14c
+        c15 = c15c
+        c16 = c16c
+        c22 = c22c
+        c23 = c23c
+        c24 = c24c
+        c25 = c25c
+        c26 = c26c
+        c33 = c33c
+        c34 = c34c
+        c35 = c35c
+        c36 = c36c
+        c44 = c44c
+        c45 = c45c
+        c46 = c46c
+        c55 = c55c
+        c56 = c56c
+        c66 = c66c
+      else
+        if (TRANSVERSE_ISOTROPY) then
+          ! converts from a tiso crust parameterization to a fully anisotropic one
+          ! Love parameterization
+          A = rho * vph**2
+          C = rho * vpv**2
+          L = rho * vsv**2
+          N = rho * vsh**2
+          F = eta_aniso * (A - 2.d0 * L)
+          ! local (radial) coordinate system to global SPECFEM reference
+          call rotate_tensor_Love_to_global(theta,phi, &
+                                            A,C,N,L,F, &
+                                            c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+                                            c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
+        else
+          ! equivalent with an isotropic elastic tensor (given vpv and vsv as isotropic wave speeds)
+          c11 = rho * vpv*vpv
+          c12 = rho * (vpv*vpv - 2.d0*vsv*vsv)
+          c13 = c12
+          c14 = 0.d0
+          c15 = 0.d0
+          c16 = 0.d0
+          c22 = c11
+          c23 = c12
+          c24 = 0.d0
+          c25 = 0.d0
+          c26 = 0.d0
+          c33 = c11
+          c34 = 0.d0
+          c35 = 0.d0
+          c36 = 0.d0
+          c44 = rho * vsv*vsv
+          c45 = 0.d0
+          c46 = 0.d0
+          c55 = c44
+          c56 = 0.d0
+          c66 = c44
+        endif
+      endif
     endif
   endif
 
@@ -1179,7 +1275,9 @@
 
 
   subroutine meshfem3D_model_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc, &
-                                   moho,sediment,found_crust,elem_in_crust,moho_only)
+                                   moho,sediment,found_crust,elem_in_crust,moho_only, &
+                                   c11c,c12c,c13c,c14c,c15c,c16c,c22c,c23c,c24c,c25c,c26c, &
+                                   c33c,c34c,c35c,c36c,c44c,c45c,c46c,c55c,c56c,c66c)
 
 ! returns velocity/density for default crust
 
@@ -1195,7 +1293,8 @@
   double precision,intent(out) :: moho,sediment
   logical,intent(out) :: found_crust
   logical,intent(in) :: elem_in_crust,moho_only
-
+  double precision,intent(out) :: c11c,c12c,c13c,c14c,c15c,c16c,c22c,c23c,c24c,c25c,c26c, &
+                                  c33c,c34c,c35c,c36c,c44c,c45c,c46c,c55c,c56c,c66c
   ! local parameters
   ! for isotropic crust
   double precision :: vpc,vsc
@@ -1214,6 +1313,15 @@
 
   ! isotropic by default
   etac = 1.d0
+
+  ! anisotropy
+  c11c = 0.d0; c12c = 0.d0; c13c = 0.d0
+  c14c = 0.d0; c15c = 0.d0; c16c = 0.d0
+  c22c = 0.d0; c23c = 0.d0; c24c = 0.d0
+  c25c = 0.d0; c26c = 0.d0; c33c = 0.d0
+  c34c = 0.d0; c35c = 0.d0; c36c = 0.d0
+  c44c = 0.d0; c45c = 0.d0; c46c = 0.d0
+  c55c = 0.d0; c56c = 0.d0; c66c = 0.d0
 
   ! moho depth
   moho = 0.d0
@@ -1322,6 +1430,14 @@
         call model_bkmns_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc)
       endif
 
+    case (ICRUST_SPIRAL)
+      ! anisotropic crust from SPiRaL
+      ! unless we use SPiRaL anisotropic mantle, provdies TI crust only
+      call model_crust_spiral(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,sediment, &
+                              c11c,c12c,c13c,c14c,c15c,c16c,c22c,c23c,c24c,c25c,c26c, &
+                              c33c,c34c,c35c,c36c,c44c,c45c,c46c,c55c,c56c,c66c, &
+                              found_crust,elem_in_crust,moho_only)
+
     case default
       stop 'crustal model type not defined'
 
@@ -1387,9 +1503,11 @@
   ! Get the value of Qmu (Attenuation) dependent on
   ! the radius (r_prem) and idoubling flag
   if (ATTENUATION_GLL) then
-     call model_attenuation_gll(ispec, i, j, k, Qmu)
+    ! GLL models with attenuation
+    call model_attenuation_gll(ispec, i, j, k, Qmu)
+
   else if (ATTENUATION_3D) then
-    ! used for models: s362ani_3DQ, s362iso_3DQ, 3D_attenuation
+    ! used for models: s362ani_3DQ, s362iso_3DQ, 3D_attenuation, SPiRal
 
     ! gets spherical coordinates
     call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_dummy,theta,phi)
@@ -1431,8 +1549,8 @@
           ! takes crustal Q value only if point is in actual crust
           if (r_prem > (ONE-moho) .or. elem_in_crust) then
             ! reference from 1D-REF aka STW105
-            Qmu=300.0d0
-            Qkappa=57822.5d0 !  not used so far...
+            Qmu = 300.0d0
+            Qkappa = 57822.5d0 !  not used so far...
           endif
         endif ! CRUSTAL
 

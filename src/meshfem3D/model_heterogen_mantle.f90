@@ -150,7 +150,7 @@
   subroutine model_heterogen_mantle(ispec,i,j,k,radius,theta,phi,dvs,dvp,drho)
 
   use constants
-  use shared_parameters, only: R_PLANET
+  use shared_parameters, only: R_PLANET,THREE_D_MODEL
 
   use model_heterogen_mantle_par
 
@@ -172,6 +172,23 @@
   integer :: rec_read                             ! nr of record to be read from heterogen.dat (direct access file)
   double precision :: a,b,c                       ! substitutions in interpolation algorithm (weights)
   double precision :: r_target
+  double precision :: lat,lon
+
+  ! modification for heterogeneous model with PREM background reference
+  if (THREE_D_MODEL == THREE_D_MODEL_HETEROGEN_PREM) then
+    ! chris modif checkers 02/20/21
+    lat = (PI/2.0d0-theta)*180.0d0/PI
+    lon = phi*180.0d0/PI
+    if (lon > 180.0d0) lon = lon - 360.0d0
+
+    ! not fully done yet...
+    stop 'MODEL heterogen_prem is not fully implemented yet'
+
+    !call model_heterogen_mantle_prem(ispec,i,j,k,radius,lat,lon,dvs,dvp,drho)
+
+    ! all done
+    !return
+  endif
 
   ! dimensions in m
   r_target = radius*R_PLANET
