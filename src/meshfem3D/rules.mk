@@ -170,7 +170,7 @@ meshfem3D_MODULES = \
 	$(FC_MODDIR)/model_sglobe_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_sglobecrust_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_spiral_crust_par.$(FC_MODEXT) \
-	$(FC_MODDIR)/model_sprial_mantle_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_spiral_mantle_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/avs_dx_global_chunks_mod.$(FC_MODEXT) \
 	$(FC_MODDIR)/avs_dx_global_mod.$(FC_MODEXT) \
 	$(FC_MODDIR)/avs_dx_global_faces_mod.$(FC_MODEXT) \
