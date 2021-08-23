@@ -185,13 +185,38 @@ kerns.each { |kern|
         abort "Error: HIP kernel test not available yet"
       end
     elsif lang == :CL then
-      s = k.to_s
-      res = "const char * #{kern}_program = \"\\\n"
-      s.each_line { |line|
-        res += line.sub("\n","\\n\\\n")
-      }
-      res += "\";\n"
-      res = "#{v}\n" + res
+      # for OpenCL: we will need to have a separate (const char*) kernel defined for each kernel procedure
+      #             for example, crust_mantle_impl_kernel_forward and crust_mantle_aniso_impl_kernel_forward
+      #             will need each its own *_program variable defined.
+      string_res = ""
+      if k.respond_to?('each') then
+        # multiple kernels per file
+        #puts "  kernel file: " + kern.to_s
+        k.each{ |k_single|
+          #puts "               has kernel " + k_single.procedure.name.to_s
+          kernel_name = k_single.procedure.name.to_s
+          # creates (const char*) variable for kernel procedure
+          string_res += "const char * #{kernel_name}_program = \"\\\n"
+          #debug
+          #if (kern.to_s == "inner_core_impl_kernel_forward") then
+          #  puts k_single.to_s
+          #end
+          s = k_single.to_s
+          s.each_line { |line|
+            string_res += line.sub("\n","\\n\\\n")
+          }
+          string_res += "\";\n\n"
+        }
+      else
+        # single kernel per file
+        string_res += "const char * #{kern}_program = \"\\\n"
+        s = k.to_s
+        s.each_line { |line|
+          string_res += line.sub("\n","\\n\\\n")
+        }
+        string_res += "\";\n"
+      end
+      res = "#{v}\n" + string_res
       f.print res
       if $options[:check] then
         puts "  building kernel"
@@ -252,13 +277,10 @@ langs.each { |lang|
   elsif lang == :CL
     suffix = "_cl.c"
     kern_inc_f = File::new("#{$options[:output_dir]}/kernel_inc"+suffix, "w+")
+    kern_list_f = File::new("#{$options[:output_dir]}/kernel_list.h", "w+")
   end
 
-  kern_list_f = File::new("#{$options[:output_dir]}/kernel_list.h", "w+")
-
   kernels.each { |kern|
-    kern_list_f.puts "BOAST_KERNEL(#{kern.to_s});"
-
     if lang == :CUDA then
       require "./#{kern.to_s}.rb"
       BOAST::set_lang( BOAST::const_get(lang))
@@ -273,21 +295,46 @@ langs.each { |lang|
       end
       kern_mk_f.puts "\t$O/#{kern.to_s}.cuda-kernel.o \\"
     elsif lang == :HIP then
-      require "./#{kern.to_s}.rb"
-      BOAST::set_lang( BOAST::const_get(lang))
-      k = BOAST::method(kern).call(false)
+      #require "./#{kern.to_s}.rb"
+      #BOAST::set_lang( BOAST::const_get(lang))
+      #k = BOAST::method(kern).call(false)
       # future option for separate kernel_proto.cpp.h file
       #BOAST::set_output( kern_proto_f )
-      if k.procedure.respond_to?('each') then
-        k.procedure.each{ |procedure|
-          procedure.decl
-        }
-      else
-        k.procedure.decl
-      end
+      #if k.procedure.respond_to?('each') then
+      #  k.procedure.each{ |procedure|
+      #    procedure.decl
+      #  }
+      #else
+      #  k.procedure.decl
+      #end
       # future option for separate kernel_hip.mk file
       #kern_mk_f.puts "\t$O/#{kern.to_s}.hip-kernel.o \\"
     elsif lang == :CL
+      # adds kernel names to kernel_list.h files needed for OpenCL kernels
+      # note: since we have in a single kernel file crust_mantle_impl_kernel_forward.rb
+      #       two kernels defined (crust_mantle_impl_kernel_forward and crust_mantle_aniso_impl_kernel_forward),
+      #       we need to check if there are multiple procedures defined per kernel file.
+      require "./#{kern.to_s}.rb"
+      BOAST::set_lang( BOAST::const_get(lang))
+      k = BOAST::method(kern).call(false)
+      if k.respond_to?('each') then
+        # multiple kernels per file
+        #puts "  kernel file: " + kern.to_s
+        k.each{ |k_single|
+          #puts "               has kernel " + procedure.name.to_s
+          kernel_name = k_single.procedure.name.to_s
+          # adds name to kernel list of all kernel names
+          kern_list_f.puts "BOAST_KERNEL(#{kernel_name});"
+        }
+      else
+        # single kernel per file
+        kernel_name = k.procedure.name.to_s
+        # adds name to kernel list of all kernel names
+        kern_list_f.puts "BOAST_KERNEL(#{kernel_name});"
+      end
+      # single kernel per file only: kernel list of all kernel names
+      #kern_list_f.puts "BOAST_KERNEL(#{kern.to_s});"
+      # adds generated OpenCL file to list of include files
       kern_inc_f.puts "#include \"#{kern.to_s}#{suffix}\""
     end
   }
@@ -406,7 +453,6 @@ langs.each { |lang|
   end
 
   # closing files
-  kern_list_f.close
   if lang == :CUDA then
     kern_proto_f.close
     kern_mk_f.puts "\t$(EMPTY_MACRO)"
@@ -417,6 +463,7 @@ langs.each { |lang|
     #kern_mk_f.puts "\t$(EMPTY_MACRO)"
     #kern_mk_f.close
   elsif lang == :CL
+    kern_list_f.close
     kern_inc_f.close
   end
   puts "  Generated"

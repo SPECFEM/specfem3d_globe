@@ -767,15 +767,23 @@ module BOAST
     # aniso kernel
     kernel_aniso = BOAST::impl_kernel(:inner_core, true, ref, elem_per_thread, mesh_coloring, textures_fields, textures_constants, unroll_loops, n_gllx, n_gll2, n_gll3, n_gll3_padded, n_sls, coloring_min_nspec_inner_core, i_flag_in_fictitious_cube, launch_bounds, min_blocks, true)
 
-    # to create a single kernel with both procedure's codes
-    str = StringIO::new
-    s1 = "" + kernel.to_s + "\n"
-    s2 = "" + kernel_aniso.to_s + "\n"
-    str << s1 + s2
+    # output both kernels
+    if (get_lang == CL) then
+      # OpenCL will need for each kernel a full output of subroutines to define a (const char*) variable for each kernel
+      kernel_total = [kernel,kernel_aniso]
+    else
+      # CUDA / HIP
+      # to create a single kernel with both procedure's codes
+      # (since CUDA async memcpy headers can only appear in a single file)
+      str = StringIO::new
+      s1 = "" + kernel.to_s + "\n"
+      s2 = "" + kernel_aniso.to_s + "\n"
+      str << s1 + s2
 
-    kernel_total = CKernel::new(code: str)
-    # will need to set a procedure for file outputs
-    kernel_total.procedure = [kernel.procedure,kernel_aniso.procedure]
+      kernel_total = CKernel::new(code: str)
+      # will need to set a procedure for file outputs
+      kernel_total.procedure = [kernel.procedure,kernel_aniso.procedure]
+    end
 
     return kernel_total
   end
@@ -1000,7 +1008,7 @@ module BOAST
     elsif(get_lang == CL or get_lang == CUDA or get_lang == HIP) then
       # outputs header/define/.. statements into default kernel only,
       # so we can append the aniso kernel afterwards into the same file by calling the same impl_kernel() routine twice
-      unless only_anisotropy then
+      if (get_lang == CL or ((get_lang == CUDA or get_lang == HIP) and not only_anisotropy)) then
         # header
         make_specfem3d_header(:ngllx => n_gllx, :ngll2 => n_gll2, :ngll3 => n_gll3, :ngll3_padded => n_gll3_padded, :n_sls => n_sls, :coloring_min_nspec_inner_core => coloring_min_nspec_inner_core, :iflag_in_fictitious_cube => i_flag_in_fictitious_cube)
 
@@ -1106,9 +1114,11 @@ module BOAST
         end
       end
 
-      # outputs subroutines into default kernel only,
-      # so we can append the aniso kernel afterwards into the same file by calling the same impl_kernel() routine twice
-      unless only_anisotropy then
+      # subroutine output
+      # - for OpenCL, always output full kernel output, including subroutines.
+      # - for CUDA/HIP, outputs subroutines into default kernel only,
+      #   so we can append the aniso kernel afterwards into the same file by calling the same impl_kernel() routine twice.
+      if (get_lang == CL or ((get_lang == CUDA or get_lang == HIP) and not only_anisotropy)) then
         # function definitions
         # element attenuation routines
         comment()

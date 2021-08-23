@@ -616,7 +616,7 @@ void build_kernels (void) {
   }
 
   // debug
-  //printf("building OpenCL kernels: parameters = %s \n",parameters);
+  printf("building OpenCL kernels: parameters = %s \n",parameters);
 
   // adds kernels as const char definitions
   #include "kernel_inc_cl.c"
