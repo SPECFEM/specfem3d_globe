@@ -498,7 +498,7 @@
   do i = 1,3
     ! reads single int value
     indx = indx + 1
-    call read_abs_shifted(11, val_single, 4, indx, 1)  ! 4-byte read into val_single, 1-byte shifted
+    call read_abs_shifted_int(11, val_single, 4, indx, 1)  ! 4-byte read into val_single, 1-byte shifted
     val = val_single(1)
 
     ! stores swapped real value
