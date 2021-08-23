@@ -2319,7 +2319,7 @@
   if (n == 0) then
     P(1) = LEGENDRE_K2 * 1.d0
   else if (n == 1) then
-    P(0) = LEGENDRE_K2 * 1.d0 ! from previous n==0: P(1) = 1.d0
+    P(0) = LEGENDRE_K2 * 1.d0 ! from previous n == 0: P(1) = 1.d0
     P(1) = LEGENDRE_K2 * x
     P(2) = - LEGENDRE_K2 * sint
   else

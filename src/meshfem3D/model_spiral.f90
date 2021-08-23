@@ -132,9 +132,9 @@
 ! ====================
 ! 1) water
 ! 2) ice
-! 3) upper sediments   
-! 4) middle sediments  
-! 5) lower sediments   
+! 3) upper sediments
+! 4) middle sediments
+! 5) lower sediments
 ! 6) upper crystalline crust
 ! 7) middle crystalline crust
 ! 8) lower crystalline crust
@@ -149,7 +149,7 @@
 
   ! crustal_model_constants
 
-  ! crustal model parameters 
+  ! crustal model parameters
   ! spiral1.3_orig
   !integer, parameter :: Nbnd     = 8      ! number of bands in crust_bands_info.txt
   !integer, parameter :: CRUST_NP = 9      ! number of crustal layers
@@ -161,8 +161,8 @@
   integer, parameter :: CRUST_NB = 248291 ! sum_bnd (Nlat_bnd*Nlon_bnd)
 
   ! model_crust_variables
-  ! CIJ: 1=c11, 2=c13, 3=c33, 4=c44, 5=c66 
-  double precision, dimension(:,:,:), allocatable :: crust_coef 
+  ! CIJ: 1=c11, 2=c13, 3=c33, 4=c44, 5=c66
+  double precision, dimension(:,:,:), allocatable :: crust_coef
 
   ! layer thickness and density
   double precision, dimension(:,:), allocatable :: crust_thickness, crust_rho
@@ -267,11 +267,11 @@
   call flush_IMAIN()
 
   ! allocates temporary array
-  allocate(dlat(Nbnd),&
-           dlon(Nbnd),&
-           lat1(Nbnd),&
-           lat2(Nbnd),&
-           bnd(CRUST_NP,CRUST_NB),&
+  allocate(dlat(Nbnd), &
+           dlon(Nbnd), &
+           lat1(Nbnd), &
+           lat2(Nbnd), &
+           bnd(CRUST_NP,CRUST_NB), &
            stat=ier)
   if (ier /= 0 ) call exit_MPI(0,'Error allocating dlat, dlon, depths crustal arrays in read routine')
 
@@ -286,7 +286,7 @@
   endif
 
   ! checking the number of bands
-  read(51,*) Nbnd_read 
+  read(51,*) Nbnd_read
   if (Nbnd_read /= Nbnd) then
     write(IMAIN,*) 'Error opening "DATA/spiral1.4/crust/crust_bands_info.txt", wrong number of bands: ', Nbnd_read
     call exit_MPI(0,'Error model spiral1.4: wrong number of bands in DATA/spiral1.4/crust/crust_bands_info.txt')
@@ -294,7 +294,7 @@
 
   ! read the variables for each band
   do b = 1,Nbnd_read
-      read(51,*) lat1(b),lat2(b),dlat(b),dlon(b),bnd_nlat(b),bnd_nlon(b) 
+      read(51,*) lat1(b),lat2(b),dlat(b),dlon(b),bnd_nlat(b),bnd_nlon(b)
   enddo
   ! closes files
   close(51)
@@ -307,35 +307,35 @@
   if (ier /= 0) call exit_MPI(0,'Error allocating temporary array single_par')
   single_par(:,:) = 0.d0
 
-  NlatNlon = 0 
+  NlatNlon = 0
   ! read CIJ, density and depths from crust files
   do b = 1,Nbnd_read
-   
+
     call read_general_crust_model(single_par,'C11    ', &
-                     lat1(b),lat2(b),dlat(b),dlon(b),NlatNlon) 
+                     lat1(b),lat2(b),dlat(b),dlon(b),NlatNlon)
     crust_coef(1,:,:) = single_par(:,:)
 
     call read_general_crust_model(single_par,'C13    ', &
-                     lat1(b),lat2(b),dlat(b),dlon(b),NlatNlon) 
+                     lat1(b),lat2(b),dlat(b),dlon(b),NlatNlon)
     crust_coef(2,:,:) = single_par(:,:)
 
     call read_general_crust_model(single_par,'C33    ', &
-                     lat1(b),lat2(b),dlat(b),dlon(b),NlatNlon) 
+                     lat1(b),lat2(b),dlat(b),dlon(b),NlatNlon)
     crust_coef(3,:,:) = single_par(:,:)
 
     call read_general_crust_model(single_par,'C44    ', &
-                     lat1(b),lat2(b),dlat(b),dlon(b),NlatNlon) 
+                     lat1(b),lat2(b),dlat(b),dlon(b),NlatNlon)
     crust_coef(4,:,:) = single_par(:,:)
 
     call read_general_crust_model(single_par,'C66    ', &
-                     lat1(b),lat2(b),dlat(b),dlon(b),NlatNlon) 
+                     lat1(b),lat2(b),dlat(b),dlon(b),NlatNlon)
     crust_coef(5,:,:) = single_par(:,:)
 
     call read_general_crust_model(bnd(:,:),'depths ', &
-                     lat1(b),lat2(b),dlat(b),dlon(b),NlatNlon) 
+                     lat1(b),lat2(b),dlat(b),dlon(b),NlatNlon)
 
     call read_general_crust_model(crust_rho(:,:),'density', &
-                     lat1(b),lat2(b),dlat(b),dlon(b),NlatNlon) 
+                     lat1(b),lat2(b),dlat(b),dlon(b),NlatNlon)
 
    NlatNlon = NlatNlon + bnd_nlat(b)*bnd_nlon(b)
   enddo ! reading files
@@ -436,7 +436,7 @@
   read(dlat,*) ddlat
   read(dlon,*) ddlon
 
-  Nlat = int((dlat2 - dlat1)/ddlat) + 1 
+  Nlat = int((dlat2 - dlat1)/ddlat) + 1
   Nlon = int((180 + 180)/ddlon) + 1
 
   !chris debug
@@ -836,7 +836,7 @@
     NlatNlon = 0
     do l = 1,Nbnd
       !write(IMAIN,*) 'checking', bnd_lat1(l),bnd_lat2(l),lat, NlatNlon
-      if (lat.ge.bnd_lat1(l) .and. lat.le.bnd_lat2(l)) then
+      if (lat >= bnd_lat1(l) .and. lat <= bnd_lat2(l)) then
         dlat = (bnd_lat2(l) - bnd_lat1(l))/(bnd_nlat(l)-1)
         dlon = 360.d0/(bnd_nlon(l)-1)
         !write(IMAIN,*) 'checking', bnd_lat1(l),bnd_lat2(l),bnd_nlat(l),bnd_nlon(l),dlat,dlon
@@ -861,11 +861,11 @@
       NlatNlon = NlatNlon + bnd_nlat(l)*bnd_nlon(l)
     enddo ! do l=1,Nbnd, with no interpolation
 
-  else 
+  else
     ! with interpolation
     NlatNlon = 0
     do l = 1,Nbnd
-      if (lat.ge.bnd_lat1(l) .and. lat.le.bnd_lat2(l)) then
+      if (lat >= bnd_lat1(l) .and. lat <= bnd_lat2(l)) then
         dlat = (bnd_lat2(l) - bnd_lat1(l))/(bnd_nlat(l)-1)
         dlon = 360.d0/(bnd_nlon(l)-1)
 
@@ -939,7 +939,7 @@
       NlatNlon = NlatNlon + bnd_nlat(l)*bnd_nlon(l)
    enddo ! do l=1,Nbnd, with interpolation
 
-  endif ! if(.not. interpolation)
+  endif ! if (.not. interpolation)
 
   end subroutine read_crust_spiral
 !
@@ -1056,7 +1056,7 @@
   module model_spiral_mantle_par
 
   ! mantle_model_constants
-  ! mantle model parameters 
+  ! mantle model parameters
   integer, parameter :: Nbnd       = 13     ! number of bands in mantle_bands_info.txt
   integer, parameter :: MANTLE_NB  = 248291 ! sum_bnd (Nlat_bnd*Nlon_bnd)
   integer, parameter :: Nbndz      = 3      ! number of bands in mantle_dzones_info.txt
@@ -1067,7 +1067,7 @@
   integer, parameter :: TOPO_RES   = 2      ! Spacing for topo d410 and d660 is 0.5 degress
 
   ! model_mantle_variables
-  ! CIJ: 1=c11, 2=c13, 3=c33, 4=c44, 5=c66 
+  ! CIJ: 1=c11, 2=c13, 3=c33, 4=c44, 5=c66
   double precision, dimension(:,:), allocatable :: mantle_coef
   double precision, dimension(:), allocatable :: mantle_rho
   double precision, dimension(:), allocatable :: mantle_d410, mantle_d660
@@ -1179,14 +1179,14 @@
   call flush_IMAIN()
 
   ! allocates temporary array
-  allocate(dlat(Nbnd),&
-           dlon(Nbnd),&
-           ddep(Nbndz),&
-           lat1(Nbnd),&
-           lat2(Nbnd),&
-           dep1(Nbndz),&
-           dep2(Nbndz),&
-           dp_ddep(Nbndz),&
+  allocate(dlat(Nbnd), &
+           dlon(Nbnd), &
+           ddep(Nbndz), &
+           lat1(Nbnd), &
+           lat2(Nbnd), &
+           dep1(Nbndz), &
+           dep2(Nbndz), &
+           dp_ddep(Nbndz), &
            stat=ier)
   if (ier /= 0 ) call exit_MPI(0,'Error allocating dlat, dlon, ddepth mantle arrays in read routine')
 
@@ -1329,7 +1329,7 @@
     write(IMAIN,*) 'Error opening "DATA/spiral1.4/mantle/transitionzone_topo.txt", wrong dimension: ', NLA, NLO
     call exit_MPI(0,'Error model spiral1.4: wrong dimension in DATA/spiral1.4/mantle/transitionzone_topo.txt')
   endif
-  
+
   k = 0
   do ila = 1,TOPO_NLA
     do ilo = 1,TOPO_NLO
@@ -1359,8 +1359,8 @@
   call flush_IMAIN()
 
   ! checks min/max
-  if (d410_min == HUGEVAL .or. d410_max == -HUGEVAL) stop 'incorrect d410 topography in read_mantle_spiral_model' 
-  if (d660_min == HUGEVAL .or. d660_max == -HUGEVAL) stop 'incorrect d660 topography in read_mantle_spiral_model' 
+  if (d410_min == HUGEVAL .or. d410_max == -HUGEVAL) stop 'incorrect d410 topography in read_mantle_spiral_model'
+  if (d660_min == HUGEVAL .or. d660_max == -HUGEVAL) stop 'incorrect d660 topography in read_mantle_spiral_model'
 
   end subroutine read_mantle_spiral_model
 
@@ -1385,8 +1385,8 @@
   integer :: ier, ila, ilo, ide, Nlat, Nlon, Ndep, k
   double precision :: dlat1,dlat2,ddlat,ddlon,ddep1,ddep2,ddep
 
-  write(filemantle,'(a39,a,a6,a,a6,a,a6,a,a4,a,a4,a,a4,a,a1,a)') 'DATA/spiral1.4/mantle/mantle_band_lat1_',&
-        trim(lat1),'_lat2_',trim(lat2),'_dlat_',trim(dlat),'_dlon_',trim(dlon),&
+  write(filemantle,'(a39,a,a6,a,a6,a,a6,a,a4,a,a4,a,a4,a,a1,a)') 'DATA/spiral1.4/mantle/mantle_band_lat1_', &
+        trim(lat1),'_lat2_',trim(lat2),'_dlat_',trim(dlat),'_dlon_',trim(dlon), &
         '_d1_',trim(dep1),'_d2_',trim(dep2),'_dZ_',trim(dep),'.',var_letter
 
   read(lat1,*) dlat1
@@ -1638,8 +1638,8 @@
   ! dimensionalize
   depth = R_PLANET_KM*(R_UNIT_SPHERE - r)
 
-  if (depth .gt. 2891.d0) depth = 2891  ! to prevent error due to numerical accuracy.
-  if (depth .lt. 27.d0) depth = 27      ! extend mantle up to surface from 27km up.
+  if (depth > 2891.d0) depth = 2891  ! to prevent error due to numerical accuracy.
+  if (depth < 27.d0) depth = 27      ! extend mantle up to surface from 27km up.
   if (depth > 2891.0d0 .or. depth < 27.0d0) then
     print *,'Error in depth:',depth
     stop 'Error in depth range in mantle spiral1.4'
@@ -1651,7 +1651,7 @@
 
   NlatNlonNdep = 0
 
-  if(.not. interpolation) then
+  if (.not. interpolation) then
     !chris debug
     !write(IMAIN,*) 'checking we are in the right loop', lon, lat, depth
     !debug
@@ -1660,8 +1660,8 @@
     do m = 1,Nbndz
       Ndep = mtle_bnd_ndep(m)
       do l = 1,Nbnd
-        if (lat.ge.mtle_bnd_lat1(l) .and. lat.le.mtle_bnd_lat2(l) .and. &
-            depth.ge.mtle_bnd_dep1(m) .and. depth.le.mtle_bnd_dep2(m)) then
+        if (lat >= mtle_bnd_lat1(l) .and. lat <= mtle_bnd_lat2(l) .and. &
+            depth >= mtle_bnd_dep1(m) .and. depth <= mtle_bnd_dep2(m)) then
 
           dlat = (mtle_bnd_lat2(l) - mtle_bnd_lat1(l))/(mtle_bnd_nlat(l)-1)
           dlon = 360.d0/(mtle_bnd_nlon(l)-1)
@@ -1683,19 +1683,19 @@
 
           ! all done
           return
-        endif !if (lat.ge.mtle_bnd_lat1(l) .and. lat.le.mtle_bnd_lat2(l)....
+        endif !if (lat >= mtle_bnd_lat1(l) .and. lat <= mtle_bnd_lat2(l)....
 
         NlatNlonNdep = NlatNlonNdep + mtle_bnd_nlat(l)*mtle_bnd_nlon(l)*Ndep
       enddo ! do l=1,Nbnd, with no interpolation
     enddo ! do m=1,Nbndz, with no interpolation
 
-  else 
+  else
     ! with interpolation
     do m = 1,Nbndz
       Ndep = mtle_bnd_ndep(m)
       do l = 1,Nbnd
-        if (lat.ge.mtle_bnd_lat1(l) .and. lat.le.mtle_bnd_lat2(l) .and. &
-            depth.ge.mtle_bnd_dep1(m) .and. depth.le.mtle_bnd_dep2(m)) then
+        if (lat >= mtle_bnd_lat1(l) .and. lat <= mtle_bnd_lat2(l) .and. &
+            depth >= mtle_bnd_dep1(m) .and. depth <= mtle_bnd_dep2(m)) then
 
           dlat = (mtle_bnd_lat2(l) - mtle_bnd_lat1(l))/(mtle_bnd_nlat(l)-1)
           dlon = 360.d0/(mtle_bnd_nlon(l)-1)
@@ -1798,7 +1798,7 @@
       enddo ! do l=1,Nbnd, with interpolation
     enddo ! do m=1,Nbndz, with interpolation
 
-  endif ! if(.not. interpolation)
+  endif ! if (.not. interpolation)
 
   end subroutine read_mantle_spiral
 
@@ -1881,7 +1881,7 @@
 !
 !-------------------------------------------------------------------------------------------------
 !
-! 
+!
 ! calculate depressions of the 410 and 660km discontinuities in km
 ! convert depth of 410/660 into preturbations
 !
@@ -1919,7 +1919,7 @@
   dlat = 1.d0/TOPO_RES
   dlon = 1.d0/TOPO_RES
 
-  if(.not. interpolation) then
+  if (.not. interpolation) then
     ! no interpolation
     index = int( (lat + 90.d0)/dlat ) * TOPO_NLO + &
             int( (lon + 180.d0)/dlon ) + 1
@@ -1978,7 +1978,7 @@
     topo410 = t410_1*(1.d0-a)*(1.d0-b) + t410_2*(1.d0-a)*b + t410_3*a*(1.d0-b) + t410_4*a*b
     topo660 = t660_1*(1.d0-a)*(1.d0-b) + t660_2*(1.d0-a)*b + t660_3*a*(1.d0-b) + t660_4*a*b
 
-  endif ! if(.not. interpolation)
+  endif ! if (.not. interpolation)
 
   topo410 = topo410 - (R_PLANET-R400)/1000.d0
   topo660 = topo660 - (R_PLANET-R670)/1000.d0
