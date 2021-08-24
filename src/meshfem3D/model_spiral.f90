@@ -33,7 +33,7 @@
 !   N. A. Simmons,  S. C. Myers,  C. Morency,  A. Chiang,  D. R. Knapp, 2021.
 !   SPiRaL: a multiresolution global tomography model of seismic wave speeds
 !   and radial anisotropy variations in the crust and mantle,
-!   Geophysical Journal International, Volume 227, Issue 2, November 2021, Pages 1366–1391
+!   Geophysical Journal International, Volume 227, Issue 2, November 2021, Pages 1366-1391
 !   https://doi.org/10.1093/gji/ggab277
 !
 !
