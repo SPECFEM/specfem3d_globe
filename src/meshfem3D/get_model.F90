@@ -61,9 +61,9 @@
 
   implicit none
 
-  integer :: iregion_code,ispec,nspec,idoubling
+  integer,intent(in) :: iregion_code,ispec,nspec,idoubling
 
-  double precision, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
+  double precision, dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: xstore,ystore,zstore
 
   double precision,intent(in) :: rmin,rmax
   logical,intent(in) :: elem_in_crust,elem_in_mantle

@@ -1761,7 +1761,7 @@
   phi = lon * PI/180.d0               ! longitude between [-pi,pi]
 
   ! gets crustal values
-  if (radius >= NORM_MOHO_R .and. radius <= NORM_TOP_R) then
+  if (radius >= NORM_MOHO_R) then
     ! position within block model range [-80km,topo]
     call bkmns_block2crust(phi,theta,radius,Bk_vpv,Bk_vph,Bk_vsv,Bk_vsh,Bk_eta,Bk_rho)
 
@@ -1784,14 +1784,16 @@
 
   subroutine bkmns_block2crust(phi,theta,radius,vpvc,vphc,vsvc,vshc,etac,rhoc)
 
-  use constants, only: PI,myrank,EARTH_R_KM,GRAV
+  use constants, only: PI,TWO_PI,myrank,EARTH_R_KM,GRAV
   use shared_parameters, only: R_PLANET,RHOAV
 
   use model_bkmns_par
 
   implicit none
 
-  ! longitude between [-pi,pi], colatitude between [0,pi], r normalized [0,1.x]
+  ! function input expects: longitude phi between [-ph,pi],
+  !                         colatitude theta between [0,pi],
+  !                         r normalized [0,1.x]
   double precision, intent(in) :: phi,theta,radius
   double precision, intent(inout) :: vpvc,vphc,vsvc,vshc,etac,rhoc
 
@@ -1825,7 +1827,7 @@
   t = theta
   r = radius
 
-  ! limits input position
+  ! limits value ranges
   ! phi in [-PI,PI]
   if (p < -PI) p = -PI
   if (p > PI) p = PI
@@ -1836,13 +1838,13 @@
   if (r < NORM_MOHO_R) r = NORM_MOHO_R
   if (r > NORM_TOP_R)  r = NORM_TOP_R
 
-  ! re-positions ranges
+  ! re-positions ranges for mesh block files
   p = p + PI                ! range [0,2PI]
   t = t                     ! range [0,PI]
   r = r - NORM_MOHO_R       ! range [0,1.x] with 0 being at the base depth of -80km
 
   ! increments
-  dp = 2.d0 * PI / (NP_b - 1)
+  dp = TWO_PI / (NP_b - 1)
   dt = PI / (NT_b - 1)
   dr = (NORM_TOP_R - NORM_MOHO_R) / (NR_b - 1)
 
@@ -2036,13 +2038,13 @@
 
   subroutine model_bkmns_mantle(radius,theta,phi,vpv,vph,vsv,vsh,eta,rho)
 
-  use constants, only: PI
+  use constants, only: PI,TWO_PI
   use model_bkmns_par
 
   implicit none
 
   ! radius     - normalized by globe radius [0,1.x]
-  ! theta/phi  - colatitude/longitude in rad (range theta/phi = [0,pi] / [-pi,pi]
+  ! theta/phi  - colatitude/longitude in rad (range theta/phi = [0,pi] / [0,2pi]
   double precision,intent(in) :: radius,theta,phi
 
   ! absolute values, not perturbations
@@ -2050,14 +2052,23 @@
 
   ! local parameters
   double precision :: M_vpv,M_vph,M_vsv,M_vsh,M_eta,M_rho
+  double precision :: phi_bkmns
 
-  ! gets crustal values
-  if (radius >= NORM_MOHO_R .and. radius <= NORM_TOP_R) then
+  ! note: theta,phi values here are outputs from reduce(theta,phi), which limits theta to [0,PI] and phi to [0,2PI].
+  !        however, the bkmns_*() routines expect phi in range [-PI,PI]
+  if (phi > PI) then
+    phi_bkmns = phi - TWO_PI
+  else
+    phi_bkmns = phi
+  endif
+
+  ! gets mantle values
+  if (radius >= NORM_MOHO_R) then
     ! position within block model range [-80km,topo]
-    call bkmns_block2crust(phi,theta,radius,M_vpv,M_vph,M_vsv,M_vsh,M_eta,M_rho)
+    call bkmns_block2crust(phi_bkmns,theta,radius,M_vpv,M_vph,M_vsv,M_vsh,M_eta,M_rho)
   else
     ! position in mantle zones
-    call bkmns_get_mantle_value(phi,theta,radius,M_vpv,M_vph,M_vsv,M_vsh,M_eta,M_rho)
+    call bkmns_get_mantle_value(phi_bkmns,theta,radius,M_vpv,M_vph,M_vsv,M_vsh,M_eta,M_rho)
   endif
 
   ! debug
