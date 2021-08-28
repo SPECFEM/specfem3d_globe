@@ -177,6 +177,10 @@
         else
           ! stretches anchor points only, interpolates GLL points later on
           call add_topography(xelm,yelm,zelm,ibathy_topo)
+          ! re-interpolates GLL point locations
+          ! needed for get_model(..) routine to consider stretched locations in xstore,.. arrays
+          call compute_element_GLL_locations(xelm,yelm,zelm,ispec,nspec, &
+                                             xstore,ystore,zstore,shape3D)
         endif
       endif
     endif
@@ -254,6 +258,7 @@
       ! stretching between 220 and 770
       if (idoubling(ispec) == IFLAG_670_220 .or. &
           idoubling(ispec) == IFLAG_MANTLE_NORMAL) then
+        ! stretches anchor points only, interpolates GLL points later on
         call add_topography_sh_mantle(xelm,yelm,zelm)
       endif
 
@@ -261,6 +266,7 @@
       ! stretching lower mantle/outer core
       if (idoubling(ispec) == IFLAG_MANTLE_NORMAL .or. &
           idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
+        ! stretches anchor points only, interpolates GLL points later on
         call add_topography_sh_cmb(xelm,yelm,zelm)
       endif
     endif
@@ -271,6 +277,7 @@
       ! stretching between 220 and 770
       if (idoubling(ispec) == IFLAG_670_220 .or. &
           idoubling(ispec) == IFLAG_MANTLE_NORMAL) then
+        ! stretches anchor points only, interpolates GLL points later on
         call add_topography_mantle_spiral(xelm,yelm,zelm)
       endif
     endif
