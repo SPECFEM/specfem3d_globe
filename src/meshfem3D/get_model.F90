@@ -143,8 +143,12 @@
         ymesh = ystore(i,j,k,ispec)
         zmesh = zstore(i,j,k,ispec)
 
+        ! gets point's position theta/phi, lat/lon, and
         ! exact point location radius
-        r = dsqrt(xmesh*xmesh + ymesh*ymesh + zmesh*zmesh)
+        call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r,theta,phi)
+
+        ! puts theta in range [0,PI] / phi in range [0,2PI]
+        call reduce(theta,phi)
 
         ! make sure we are within the right shell in PREM to honor discontinuities
         ! use small geometrical tolerance
@@ -153,7 +157,7 @@
         if (r >= rmax*0.999999d0) r_prem = rmax*0.999999d0
 
         ! checks r_prem,rmin/rmax and assigned idoubling
-        call get_model_check_idoubling(r_prem,xmesh,ymesh,zmesh,rmin,rmax,idoubling, &
+        call get_model_check_idoubling(r_prem,theta,phi,rmin,rmax,idoubling, &
                                        RICB,RCMB,RTOPDDOUBLEPRIME, &
                                        R220,R670)
 
@@ -182,7 +186,7 @@
         call meshfem3D_models_get3Dmntl_val(iregion_code,r_prem,rho, &
                                             vpv,vph,vsv,vsh,eta_aniso, &
                                             RCMB,RMOHO, &
-                                            xmesh,ymesh,zmesh,r, &
+                                            r,theta,phi, &
                                             c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
                                             c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
                                             ispec,i,j,k)
@@ -191,7 +195,7 @@
         ! M.A. don't overwrite crust if using CEM.
         if (CRUSTAL .and. .not. CEM_ACCEPT) then
           if (.not. elem_in_mantle) &
-            call meshfem3D_models_get3Dcrust_val(iregion_code,xmesh,ymesh,zmesh,r, &
+            call meshfem3D_models_get3Dcrust_val(iregion_code,r,theta,phi, &
                                                  vpv,vph,vsv,vsh,rho,eta_aniso, &
                                                  c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
                                                  c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
@@ -199,7 +203,7 @@
         endif
 
         ! overwrites with tomographic model values (from iteration step) here, given at all GLL points
-        call meshfem3D_models_impose_val(iregion_code,xmesh,ymesh,zmesh,ispec,i,j,k, &
+        call meshfem3D_models_impose_val(iregion_code,r,theta,phi,ispec,i,j,k, &
                                          vpv,vph,vsv,vsh,rho,eta_aniso, &
                                          c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
                                          c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
@@ -217,7 +221,7 @@
         !
         !note:  only Qmu attenuation considered, Qkappa attenuation not used so far...
         if (ATTENUATION) &
-          call meshfem3D_models_getatten_val(idoubling,xmesh,ymesh,zmesh,r_prem, &
+          call meshfem3D_models_getatten_val(idoubling,r_prem,r,theta,phi, &
                                              ispec, i, j, k, &
                                              tau_e,tau_s_store, &
                                              moho,Qmu,Qkappa,elem_in_crust)
@@ -273,9 +277,6 @@
           c66store(i,j,k,ispec) = real(c66, kind=CUSTOM_REAL)
 
           ! stores Gc_prime and Gs_prime
-          ! gets point's position theta/phi, lat/lon
-          call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r,theta,phi)
-          call reduce(theta,phi)
           ! rotates from global to local (radial) reference
           call rotate_tensor_global_to_azi(theta,phi, &
                                            A,C,N,L,F, &
@@ -331,9 +332,9 @@
 !
 
 
-  subroutine get_model_check_idoubling(r_prem,x,y,z,rmin,rmax,idoubling, &
-                            RICB,RCMB,RTOPDDOUBLEPRIME, &
-                            R220,R670)
+  subroutine get_model_check_idoubling(r_prem,theta,phi,rmin,rmax,idoubling, &
+                                       RICB,RCMB,RTOPDDOUBLEPRIME, &
+                                       R220,R670)
 
   use constants, only: &
     TINYVAL,DEGREES_TO_RADIANS, &
@@ -346,12 +347,14 @@
 
   implicit none
 
-  integer :: idoubling
+  integer,intent(in) :: idoubling
 
-  double precision :: r_prem,rmin,rmax,x,y,z
+  double precision,intent(in) :: r_prem,rmin,rmax,theta,phi
 
-  double precision :: RICB,RCMB,RTOPDDOUBLEPRIME,R670,R220
-  double precision :: r_m,r,theta,phi
+  double precision,intent(in) :: RICB,RCMB,RTOPDDOUBLEPRIME,R670,R220
+
+  ! local parameters
+  double precision :: r_m
 
   ! compute real physical radius in meters
   r_m = r_prem * R_PLANET
@@ -377,7 +380,6 @@
        idoubling /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
        idoubling /= IFLAG_TOP_CENTRAL_CUBE .and. &
        idoubling /= IFLAG_IN_FICTITIOUS_CUBE) then
-      call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
       print *,'Error point r/lat/lon:',r_m,90.0 - theta/DEGREES_TO_RADIANS,phi/DEGREES_TO_RADIANS
       print *,'  idoubling/IFLAG: ',idoubling,IFLAG_INNER_CORE_NORMAL,'-to-',IFLAG_IN_FICTITIOUS_CUBE
       call exit_MPI(myrank,'Error  in get_model_check_idoubling() wrong doubling flag for inner core point')
@@ -387,7 +389,6 @@
   !
   else if (r_m > RICB .and. r_m < RCMB) then
     if (idoubling /= IFLAG_OUTER_CORE_NORMAL) then
-      call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
       print *,'Error point r/lat/lon:',r_m,90.0 - theta/DEGREES_TO_RADIANS,phi/DEGREES_TO_RADIANS
       print *,'  idoubling/IFLAG: ',idoubling,IFLAG_OUTER_CORE_NORMAL
       call exit_MPI(myrank,'Error  in get_model_check_idoubling() wrong doubling flag for outer core point')
@@ -397,7 +398,6 @@
   !
   else if (r_m > RCMB .and. r_m < RTOPDDOUBLEPRIME) then
     if (idoubling /= IFLAG_MANTLE_NORMAL) then
-      call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
       print *,'Error point r/lat/lon:',r_m,90.0 - theta/DEGREES_TO_RADIANS,phi/DEGREES_TO_RADIANS
       print *,'  dprime radius/RCMB/RTOPDDOUBLEPRIME:',r_m, RCMB,RTOPDDOUBLEPRIME
       print *,'  idoubling/IFLAG: ',idoubling,IFLAG_MANTLE_NORMAL
@@ -408,7 +408,6 @@
   !
   else if (r_m > RTOPDDOUBLEPRIME .and. r_m < R670) then
     if (idoubling /= IFLAG_MANTLE_NORMAL) then
-      call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
       print *,'Error point r/lat/lon:',r_m,90.0 - theta/DEGREES_TO_RADIANS,phi/DEGREES_TO_RADIANS
       print *,'  idoubling/IFLAG: ',idoubling,IFLAG_MANTLE_NORMAL
       call exit_MPI(myrank,'Error  in get_model_check_idoubling() wrong doubling flag for top D" to d670 point')
@@ -419,7 +418,6 @@
   !
   else if (r_m > R670 .and. r_m < R220) then
     if (idoubling /= IFLAG_670_220) then
-      call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
       print *,'Error point r/lat/lon:',r_m,90.0 - theta/DEGREES_TO_RADIANS,phi/DEGREES_TO_RADIANS
       print *,'  idoubling/IFLAG: ',idoubling,IFLAG_670_220
       call exit_MPI(myrank,'Error  in get_model_check_idoubling() wrong doubling flag for d670 to d220 point')
@@ -430,7 +428,6 @@
   !
   else if (r_m > R220) then
     if (idoubling /= IFLAG_220_80 .and. idoubling /= IFLAG_80_MOHO .and. idoubling /= IFLAG_CRUST) then
-      call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
       print *,'Error point r/lat/lon:',r_m,90.0 - theta/DEGREES_TO_RADIANS,phi/DEGREES_TO_RADIANS
       print *,'  idoubling/IFLAG: ',idoubling,IFLAG_220_80,IFLAG_80_MOHO,IFLAG_CRUST
       call exit_MPI(myrank,'Error  in get_model_check_idoubling() wrong doubling flag for d220 to Moho to surface point')

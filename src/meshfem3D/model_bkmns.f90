@@ -95,7 +95,7 @@
   double precision,parameter :: WATER_LEVEL     = 1d-15  ! Water level to prevent divisions by zero
 
   double precision,parameter :: NORM_CMB_R      = 0.54622508d0  ! Normalized core-mantle boundary radius
-  double precision,parameter :: NORM_MOHO_R     = 0.98744310d0  ! Normalized Moho radius
+  double precision,parameter :: NORM_MOHO_R     = 0.98744310d0  ! Normalized Moho radius (80km depth)
   double precision,parameter :: NORM_TOP_R      = 1.00078481d0  ! Normalized radius corresponding to the maximum surface altitude
 
   ! K1 and K2 are constants used to prevent underflow in the Associated Legendre funtions
@@ -1753,17 +1753,18 @@
   double precision,intent(inout) :: vpvc,vphc,vsvc,vshc,etac,rhoc
 
   ! local parameters
-  double precision :: phi,theta
+  double precision :: phi_bkmns,theta
   double precision :: Bk_vpv,Bk_vph,Bk_vsv,Bk_vsh,Bk_eta,Bk_rho
+  double precision, parameter :: TO_RADIANS = PI/180.d0
 
   ! converts to colatitude theta/phi in radians
-  theta = (90.d0 - lat) * PI/180.d0   ! colatitude between [0,pi]
-  phi = lon * PI/180.d0               ! longitude between [-pi,pi]
+  theta = (90.d0 - lat) * TO_RADIANS         ! colatitude between [0,pi]
+  phi_bkmns = lon * TO_RADIANS               ! longitude between [-pi,pi]
 
   ! gets crustal values
   if (radius >= NORM_MOHO_R) then
     ! position within block model range [-80km,topo]
-    call bkmns_block2crust(phi,theta,radius,Bk_vpv,Bk_vph,Bk_vsv,Bk_vsh,Bk_eta,Bk_rho)
+    call bkmns_block2crust(phi_bkmns,theta,radius,Bk_vpv,Bk_vph,Bk_vsv,Bk_vsh,Bk_eta,Bk_rho)
 
     ! sets crustal value from block values if non-zero
     if (Bk_vpv > WATER_LEVEL) then

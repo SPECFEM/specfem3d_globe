@@ -557,7 +557,7 @@
   subroutine meshfem3D_models_get3Dmntl_val(iregion_code,r_prem,rho, &
                                             vpv,vph,vsv,vsh,eta_aniso, &
                                             RCMB,RMOHO, &
-                                            xmesh,ymesh,zmesh,r, &
+                                            r,theta,phi, &
                                             c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
                                             c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
                                             ispec,i,j,k)
@@ -572,7 +572,7 @@
   double precision, intent(inout) :: vpv,vph,vsv,vsh,eta_aniso
 
   double precision,intent(in) :: RCMB,RMOHO
-  double precision,intent(in) :: xmesh,ymesh,zmesh,r
+  double precision,intent(in) :: r,theta,phi
 
   ! the 21 coefficients for an anisotropic medium in reduced notation
   double precision,intent(inout) :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
@@ -582,7 +582,7 @@
   integer, intent(in) :: ispec, i, j, k
 
   ! local parameters
-  double precision :: r_used,r_dummy,theta,phi
+  double precision :: r_used
   double precision :: dvp,dvs,drho,vp,vs,moho,sediment
   double precision :: dvpv,dvph,dvsv,dvsh,deta
   double precision :: lat,lon
@@ -611,10 +611,6 @@
 
   r_used = ZERO
   suppress_mantle_extension = .false.
-
-  ! gets point's theta/phi
-  call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_dummy,theta,phi)
-  call reduce(theta,phi)
 
 !---
 !
@@ -867,8 +863,7 @@
         .and. .not. suppress_mantle_extension &
         .and. THREE_D_MODEL /= THREE_D_MODEL_HETEROGEN_PREM) then
       ! gets spherical coordinates of actual point location
-      call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_used,theta,phi)
-      call reduce(theta,phi)
+      r_used = r
       ! adds hetergeneous perturbations (isotropic)
       call model_heterogen_mantle(ispec,i,j,k,r_used,theta,phi,dvs,dvp,drho)
       vpv = vpv*(1.0d0+dvp)
@@ -1110,7 +1105,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine meshfem3D_models_get3Dcrust_val(iregion_code,xmesh,ymesh,zmesh,r, &
+  subroutine meshfem3D_models_get3Dcrust_val(iregion_code,r,theta,phi, &
                                              vpv,vph,vsv,vsh,rho,eta_aniso, &
                                              c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
                                              c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
@@ -1124,7 +1119,8 @@
 
   integer,intent(in) :: iregion_code
   ! note: r is the exact radius (and not r_prem with tolerance)
-  double precision,intent(in) :: xmesh,ymesh,zmesh,r
+  !       theta in [0,PI], phi in [0,2PI]
+  double precision,intent(in) :: r,theta,phi
   double precision,intent(inout) :: vpv,vph,vsv,vsh,rho,eta_aniso
 
   ! the 21 coefficients for an anisotropic medium in reduced notation
@@ -1135,7 +1131,6 @@
   double precision,intent(inout) :: moho,sediment
 
   ! local parameters
-  double precision :: r_dummy,theta,phi
   double precision :: lat,lon
   double precision :: vpvc,vphc,vsvc,vshc,etac
   double precision :: vpc,vsc,rhoc !vpc_eu
@@ -1147,11 +1142,7 @@
 
   ! checks if anything to do, that is, there is nothing to do
   ! for point radius smaller than deepest possible crust radius (~80 km depth)
-  if (r < R_DEEPEST_CRUST ) return
-
-  ! gets point's position theta/phi, lat/lon
-  call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_dummy,theta,phi)
-  call reduce(theta,phi)
+  if (r < R_DEEPEST_CRUST) return
 
   ! lat/lon in degrees (range lat/lon = [-90,90] / [-180,180]
   lat = (PI_OVER_TWO - theta) * RADIANS_TO_DEGREES
@@ -1302,32 +1293,40 @@
   logical :: found_crust_area,point_in_area
 
   ! initializes
-  vpvc = 0.d0
-  vphc = 0.d0
-  vsvc = 0.d0
-  vshc = 0.d0
+  if (moho_only) then
+    ! moho depth
+    moho = 0.d0
 
-  vpc = 0.d0
-  vsc = 0.d0
-  rhoc = 0.d0
+    ! sediment depth
+    sediment = 0.d0
+  else
+    vpvc = 0.d0
+    vphc = 0.d0
+    vsvc = 0.d0
+    vshc = 0.d0
 
-  ! isotropic by default
-  etac = 1.d0
+    vpc = 0.d0
+    vsc = 0.d0
+    rhoc = 0.d0
 
-  ! anisotropy
-  c11c = 0.d0; c12c = 0.d0; c13c = 0.d0
-  c14c = 0.d0; c15c = 0.d0; c16c = 0.d0
-  c22c = 0.d0; c23c = 0.d0; c24c = 0.d0
-  c25c = 0.d0; c26c = 0.d0; c33c = 0.d0
-  c34c = 0.d0; c35c = 0.d0; c36c = 0.d0
-  c44c = 0.d0; c45c = 0.d0; c46c = 0.d0
-  c55c = 0.d0; c56c = 0.d0; c66c = 0.d0
+    ! isotropic by default
+    etac = 1.d0
 
-  ! moho depth
-  moho = 0.d0
+    ! anisotropy
+    c11c = 0.d0; c12c = 0.d0; c13c = 0.d0
+    c14c = 0.d0; c15c = 0.d0; c16c = 0.d0
+    c22c = 0.d0; c23c = 0.d0; c24c = 0.d0
+    c25c = 0.d0; c26c = 0.d0; c33c = 0.d0
+    c34c = 0.d0; c35c = 0.d0; c36c = 0.d0
+    c44c = 0.d0; c45c = 0.d0; c46c = 0.d0
+    c55c = 0.d0; c56c = 0.d0; c66c = 0.d0
 
-  ! sediment depth
-  sediment = 0.d0
+    ! moho depth
+    moho = 0.d0
+
+    ! sediment depth
+    sediment = 0.d0
+  endif
 
   ! flag to indicate if position inside crust
   found_crust = .false.
@@ -1344,6 +1343,7 @@
     case (ICRUST_CRUST1)
       ! crust 1.0
       call model_crust_1_0(lat,lon,r,vpc,vsc,rhoc,moho,sediment,found_crust,elem_in_crust,moho_only)
+      if (moho_only) return
       vpvc = vpc
       vphc = vpc
       vsvc = vsc
@@ -1353,6 +1353,7 @@
       ! default
       ! crust 2.0
       call model_crust_2_0(lat,lon,r,vpc,vsc,rhoc,moho,sediment,found_crust,elem_in_crust,moho_only)
+      if (moho_only) return
       vpvc = vpc
       vphc = vpc
       vsvc = vsc
@@ -1361,6 +1362,7 @@
     case (ICRUST_CRUSTMAPS)
       ! general crustmaps
       call model_crustmaps(lat,lon,r,vpc,vsc,rhoc,moho,sediment,found_crust,elem_in_crust,moho_only)
+      if (moho_only) return
       vpvc = vpc
       vphc = vpc
       vsvc = vsc
@@ -1412,6 +1414,7 @@
     case (ICRUST_SGLOBECRUST)
       ! modified crust 2.0 for SGLOBE-rani
       call model_sglobecrust(lat,lon,r,vpc,vsc,rhoc,moho,sediment,found_crust,elem_in_crust,moho_only)
+      if (moho_only) return
       vpvc = vpc
       vphc = vpc
       vsvc = vsc
@@ -1421,14 +1424,13 @@
       ! GLAD model expansion on block-mantle-spherical-harmonics
       ! gets moho/sediment depth from Crust2.0 model
       call model_crust_2_0(lat,lon,r,vpc,vsc,rhoc,moho,sediment,found_crust,elem_in_crust,moho_only)
+      if (moho_only) return
       vpvc = vpc
       vphc = vpc
       vsvc = vsc
       vshc = vsc
-      if (.not. moho_only) then
-        ! overimposes model values taken at actual position (with topography) between 80km depth and surface topo
-        call model_bkmns_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc)
-      endif
+      ! overimposes model values taken at actual position (with topography) between 80km depth and surface topo
+      call model_bkmns_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc)
 
     case (ICRUST_SPIRAL)
       ! anisotropic crust from SPiRaL
@@ -1450,7 +1452,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine meshfem3D_models_getatten_val(idoubling,xmesh,ymesh,zmesh,r_prem, &
+  subroutine meshfem3D_models_getatten_val(idoubling,r_prem,r,theta,phi, &
                                            ispec, i, j, k, &
                                            tau_e,tau_s, &
                                            moho,Qmu,Qkappa,elem_in_crust)
@@ -1472,10 +1474,11 @@
 
   integer,intent(in) :: idoubling
 
-  double precision,intent(in) :: xmesh,ymesh,zmesh
+  double precision,intent(in) :: r_prem
+  double precision,intent(in) :: r,theta,phi
+
   integer,intent(in) :: ispec,i,j,k
 
-  double precision,intent(in) :: r_prem
   double precision,intent(in) :: moho
 
   ! attenuation values
@@ -1485,11 +1488,11 @@
   logical,intent(in) :: elem_in_crust
 
   ! local parameters
-  double precision :: r_dummy,theta,phi,theta_degrees,phi_degrees
+  double precision :: theta_degrees,phi_degrees
   double precision :: r_used
 
   ! geographical values
-  double precision :: r, dist, theta_c, phi_c, dist_c, edge, sponge
+  double precision :: dist, theta_c, phi_c, dist_c, edge, sponge
 
   ! initializes
   tau_e(:)   = 0.0d0
@@ -1509,9 +1512,7 @@
   else if (ATTENUATION_3D) then
     ! used for models: s362ani_3DQ, s362iso_3DQ, 3D_attenuation, SPiRal
 
-    ! gets spherical coordinates
-    call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_dummy,theta,phi)
-    call reduce(theta,phi)
+    ! gets spherical coordinates in degrees
     theta_degrees = theta / DEGREES_TO_RADIANS
     phi_degrees = phi / DEGREES_TO_RADIANS
 
@@ -1573,8 +1574,6 @@
   ! sponge layer
   if (ABSORB_USING_GLOBAL_SPONGE) then
     ! get distance to chunk center
-    call xyz_2_rthetaphi_dble(xmesh, ymesh, zmesh, r, theta, phi)
-
     call lat_2_geocentric_colat_dble(SPONGE_LATITUDE_IN_DEGREES, theta_c)
     phi_c = SPONGE_LONGITUDE_IN_DEGREES * DEGREES_TO_RADIANS
     call reduce(theta_c, phi_c)
@@ -1604,7 +1603,7 @@
 !
 
 
-  subroutine meshfem3D_models_impose_val(iregion_code,xmesh,ymesh,zmesh,ispec,i,j,k, &
+  subroutine meshfem3D_models_impose_val(iregion_code,r,theta,phi,ispec,i,j,k, &
                                          vpv,vph,vsv,vsh,rho,eta_aniso, &
                                          c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
                                          c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
@@ -1616,7 +1615,7 @@
   implicit none
 
   integer,intent(in) :: iregion_code,ispec,i,j,k
-  double precision,intent(in) :: xmesh,ymesh,zmesh
+  double precision,intent(in) :: r,theta,phi
 
   double precision,intent(inout) :: vpv,vph,vsv,vsh,rho,eta_aniso
   double precision,intent(inout) :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
@@ -1627,7 +1626,7 @@
   if (.not. MODEL_GLL) return
 
   ! over-impose values from model GLL values
-  call model_gll_impose_val(iregion_code,xmesh,ymesh,zmesh,ispec,i,j,k, &
+  call model_gll_impose_val(iregion_code,r,theta,phi,ispec,i,j,k, &
                             vpv,vph,vsv,vsh,rho,eta_aniso, &
                             c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
                             c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
@@ -1708,14 +1707,11 @@
       phi = lon * PI/180.d0               ! longitude between [-pi,pi]
       r = 1.0d0                           ! radius at surface (normalized)
 
-      ! gets point's position
-      call rthetaphi_2_xyz_dble(xmesh,ymesh,zmesh,r,theta,phi)
-
-      ! debug
-      !print *,'debug: lat/lon',lat,lon,theta,phi,'xyz',xmesh,ymesh,zmesh
+      ! theta to [0,PI] and phi to [0,2PI]
+      call reduce(theta,phi)
 
       ! gets moho
-      call meshfem3D_models_get3Dcrust_val(iregion_code,xmesh,ymesh,zmesh,r, &
+      call meshfem3D_models_get3Dcrust_val(iregion_code,r,theta,phi, &
                                            vpv,vph,vsv,vsh,rho,eta_aniso, &
                                            c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
                                            c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
@@ -1724,9 +1720,15 @@
       iglob = i + (j-1) * NLON
       moho_depth(iglob) = moho * R_PLANET_KM  ! dimensionalize moho depth to km
       sediment_depth(iglob) = sediment * R_PLANET_KM
+
+      ! gets point's position x/y/z
+      call rthetaphi_2_xyz_dble(xmesh,ymesh,zmesh,r,theta,phi)
       tmp_x(iglob) = xmesh
       tmp_y(iglob) = ymesh
       tmp_z(iglob) = zmesh
+
+      ! debug
+      !print *,'debug: lat/lon',lat,lon,theta,phi,'xyz',xmesh,ymesh,zmesh
     enddo
   enddo
 

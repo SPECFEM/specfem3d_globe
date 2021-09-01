@@ -294,6 +294,7 @@
       ! colat/lon in rad
       theta = theta_degrees * PI/180.0d0
       phi   = phi_degrees   * PI/180.0d0
+
       ! theta between 0 and PI, and phi between 0 and 2*PI
       call reduce(theta,phi)
 
@@ -713,21 +714,20 @@
   double precision,intent(inout) :: moho
 
   ! local parameters
-  double precision :: r,xmesh,ymesh,zmesh,sediment
+  double precision :: r,sediment
   double precision :: rho,vpv,vph,vsv,vsh,eta_aniso
   double precision :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66
 
   ! moho depth
   ! read crustal models and topo models as they are needed to modify the depths of the discontinuities
   if (CRUSTAL) then
-    ! convert from rthetaphi to xyz, with r=-7km
+    ! fixes depth to r=-7km
     r = 1.0d0 - 7.0d0/(R_PLANET/1000.d0)
-    call rthetaphi_2_xyz_dble(xmesh,ymesh,zmesh,r,theta,phi)
 
-    !if (myrank == 0) print *, '  xmesh,ymesh,zmesh,r,theta,phi = ',xmesh,ymesh,zmesh,r,90.0-theta*180./PI,phi*180./PI
+    !if (myrank == 0) print *, 'debug: r,theta,phi = ',r,90.0-theta*180./PI,phi*180./PI
 
     ! gets moho depth from crustal model
-    call meshfem3D_models_get3Dcrust_val(IREGION_CRUST_MANTLE,xmesh,ymesh,zmesh,r, &
+    call meshfem3D_models_get3Dcrust_val(IREGION_CRUST_MANTLE,r,theta,phi, &
                                          vpv,vph,vsv,vsh,rho,eta_aniso, &
                                          c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
                                          c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
@@ -816,7 +816,6 @@
   double precision,intent(out) :: rho,vpv,vph,vsv,vsh,eta_aniso,Qmu,Qkappa
 
   ! local parameters
-  double precision :: xmesh,ymesh,zmesh
   double precision :: moho,sediment
   double precision :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66
   ! Attenuation values
@@ -861,30 +860,27 @@
   ! do not force the element/point to be in the crust
   elem_in_crust = .false.
 
-  ! convert from rthetaphi to xyz to use in function calls.
-  call rthetaphi_2_xyz_dble(xmesh,ymesh,zmesh,r_prem,theta,phi)
-
 ! < start GET_MODEL
   ! checks r_prem,rmin/rmax and assigned idoubling
-  call get_model_check_idoubling(r_prem,xmesh,ymesh,zmesh,rmin,rmax,idoubling, &
-                      RICB,RCMB,RTOPDDOUBLEPRIME, &
-                      R220,R670)
+  call get_model_check_idoubling(r_prem,theta,phi,rmin,rmax,idoubling, &
+                                 RICB,RCMB,RTOPDDOUBLEPRIME, &
+                                 R220,R670)
 
   ! gets reference model values: rho,vpv,vph,vsv,vsh and eta_aniso
   call meshfem3D_models_get1D_val(iregion_code,idoubling, &
-                        r_prem,rho,vpv,vph,vsv,vsh,eta_aniso, &
-                        Qkappa,Qmu,RICB,RCMB, &
-                        RTOPDDOUBLEPRIME,R80,R120,R220,R400,R670,R771, &
-                        RMOHO,RMIDDLE_CRUST)
+                                  r_prem,rho,vpv,vph,vsv,vsh,eta_aniso, &
+                                  Qkappa,Qmu,RICB,RCMB, &
+                                  RTOPDDOUBLEPRIME,R80,R120,R220,R400,R670,R771, &
+                                  RMOHO,RMIDDLE_CRUST)
 
   ! gets the 3-D model parameters for the mantle
   call meshfem3D_models_get3Dmntl_val(iregion_code,r_prem,rho, &
-                        vpv,vph,vsv,vsh,eta_aniso, &
-                        RCMB,RMOHO, &
-                        xmesh,ymesh,zmesh,r, &
-                        c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
-                        c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
-                        ispec,i,j,k)
+                                      vpv,vph,vsv,vsh,eta_aniso, &
+                                      RCMB,RMOHO, &
+                                      r,theta,phi, &
+                                      c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+                                      c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
+                                      ispec,i,j,k)
 
   ! gets the 3-D crustal model
   if (CRUSTAL) then
@@ -896,7 +892,7 @@
       elem_in_mantle = .false.
     endif
     if (.not. elem_in_mantle) then
-      call meshfem3D_models_get3Dcrust_val(iregion_code,xmesh,ymesh,zmesh,r_prem, &
+      call meshfem3D_models_get3Dcrust_val(iregion_code,r_prem,theta,phi, &
                                            vpv,vph,vsv,vsh,rho,eta_aniso, &
                                            c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
                                            c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
@@ -908,12 +904,12 @@
 
   !!! VH  commented out following two lines from get_model
   !! overwrites with tomographic model values (from iteration step) here, given at all GLL points
-  !call meshfem3D_models_impose_val(iregion_code,xmesh,ymesh,zmesh,ispec,i,j,k, &
+  !call meshfem3D_models_impose_val(iregion_code,r,theta,phi,ispec,i,j,k, &
   !                                 vpv,vph,vsv,vsh,rho,eta_aniso, &
   !                                 c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
   !                                 c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
   !
-  ! note: for GLL models, we would need to have the GLL point index (ispec,i,j,k) instead of location (r_prem,xmesh,ymesh,zmesh).
+  ! note: for GLL models, we would need to have the GLL point index (ispec,i,j,k) instead of location (r_prem,theta,phi).
   !       the mesh indexing however is only available after running the full mesher.
   !
   !       todo: a workaround would be to run first mesher, then read in the database files and search for the closest GLL
@@ -936,7 +932,7 @@
   !
   !note:  only Qmu attenuation considered, Qkappa attenuation not used so far...
   if (ATTENUATION) then
-    call meshfem3D_models_getatten_val(idoubling,xmesh,ymesh,zmesh,r_prem, &
+    call meshfem3D_models_getatten_val(idoubling,r_prem,r,theta,phi, &
                                        ispec, i, j, k, &
                                        tau_e,tau_s, &
                                        moho,Qmu,Qkappa,elem_in_crust)

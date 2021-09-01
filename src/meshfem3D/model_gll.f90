@@ -673,7 +673,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_gll_impose_val(iregion_code,xmesh,ymesh,zmesh,ispec,i,j,k, &
+  subroutine model_gll_impose_val(iregion_code,r,theta,phi,ispec,i,j,k, &
                                   vpv,vph,vsv,vsh,rho,eta_aniso, &
                                   c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
                                   c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
@@ -689,7 +689,7 @@
   implicit none
 
   integer,intent(in) :: iregion_code
-  double precision,intent(in) :: xmesh,ymesh,zmesh
+  double precision,intent(in) :: r,theta,phi
   integer,intent(in) :: ispec,i,j,k
 
   double precision,intent(inout) :: vpv,vph,vsv,vsh,rho,eta_aniso
@@ -759,7 +759,7 @@
     ! converts to cij parameters
     if (ANISOTROPIC_3D_MANTLE) then
         ! parameters need to be converted to cijkl
-        call model_gll_build_cij(xmesh,ymesh,zmesh, &
+        call model_gll_build_cij(r,theta,phi, &
                                  vph,vpv,vsh,vsv,rho,eta_aniso,Gc_prime,Gs_prime,mu0, &
                                  c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
                                  c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
@@ -797,7 +797,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_gll_build_cij(xmesh,ymesh,zmesh, &
+  subroutine model_gll_build_cij(r,theta,phi, &
                                  vph,vpv,vsh,vsv,rho,eta_aniso,Gc_prime,Gs_prime,mu0, &
                                  c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
                                  c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
@@ -806,7 +806,7 @@
   use model_gll_par
 
   implicit none
-  double precision,intent(in) :: xmesh,ymesh,zmesh
+  double precision,intent(in) :: r,theta,phi
   double precision,intent(in) :: vpv,vph,vsv,vsh,rho,eta_aniso,Gc_prime,Gs_prime,mu0
 
   double precision,intent(inout) :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
@@ -815,7 +815,7 @@
   ! local parameters
   double precision :: A,C,L,N,F,Gc,Gs
   double precision :: Jc,Js,Kc,Ks,Mc,Ms,Bc,Bs,Hc,Hs,Dc,Ds,Ec,Es
-  double precision :: r,theta,phi
+  double precision :: r_dummy ! to avoid compilation warning
 
   ! initializes
   A = ZERO
@@ -841,10 +841,10 @@
   Ec = ZERO
   Es = ZERO
 
+  ! to avoid compilation warning
+  r_dummy = r
+
   ! local position (d_ij given in radial direction)
-  ! only in case needed for rotation
-  call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r,theta,phi)
-  call reduce(theta,phi)
 
 ! Ebru: No need to scale elastic tensor as wavespeeds are already scaled before
 !       the construction of the tensor.
