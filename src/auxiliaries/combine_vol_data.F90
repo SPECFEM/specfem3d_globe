@@ -106,8 +106,8 @@ program combine_vol_data
   character(len=MAX_STRING_LEN) :: filename, outdir
   character(len=MAX_STRING_LEN) :: data_file, var_name
 
-#ifdef USE_VTK_INSTEAD_OF_MESH
-  ! VTK
+#if defined(USE_VTK_INSTEAD_OF_MESH) || defined(USE_VTU_INSTEAD_OF_MESH)
+  ! VTK/VTU
   character(len=MAX_STRING_LEN) :: mesh_file
   ! global point data
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: total_dat
@@ -198,7 +198,7 @@ program combine_vol_data
 
     ! usage info
     if (i < 7 .and. len_trim(arg(i)) == 0) then
-      print *, ' '
+      print *
       print *, ' Usage: xcombine_vol_data slice_list filename input_topo_dir input_file_dir '
       print *, '        output_dir high/low-resolution [region]'
       print *, ' with'
@@ -209,7 +209,7 @@ program combine_vol_data
       print *, '   output_dir          - directory for output files (e.g. OUTPUT_FILES/)'
       print *, '   high/low-resolution - 0 == low, 1 == high-resolution'
       print *, '   region              - (optional) region number, only use 1 == crust/mantle, 2 == outer core, 3 == inner core'
-      print *, ' '
+      print *
       print *, ' ***** Notice: now allow different input dir for topo and kernel files ******** '
       print *, '   expect to have the topology and filename.bin(NGLLX,NGLLY,NGLLZ,nspec) '
       print *, '   already collected to input_topo_dir and input_file_dir'
@@ -309,10 +309,36 @@ program combine_vol_data
   filename = trim(var_name)
 
   ! output info
+  print *, 'combine volumetric data'
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
+  print *, '  using ADIOS'
+  print *, '  mesh topology file: ',trim(mesh_file_name)
+  print *, '  input         file: ',trim(value_file_name)
+#else
+  print *, '  mesh topology dir : ',trim(in_topo_dir)
+  print *, '  input file    dir : ',trim(in_file_dir)
+#endif
+  print *, '  variable name     : ',trim(var_name)
+  print *
+  print *, '  output directory  : ',trim(outdir)
+#if defined(USE_VTK_INSTEAD_OF_MESH) || defined(USE_VTU_INSTEAD_OF_MESH)
+  ! VTK/VTU
+#ifdef USE_VTK_INSTEAD_OF_MESH
+  print *, '  using VTK format for file output'
+#endif
+#ifdef USE_VTU_INSTEAD_OF_MESH
+  print *, '  using VTU format for file output'
+#endif
+#else
+  ! .mesh format
+  print *, '  using .mesh format for file output'
+#endif
+  print *
   print *, 'slice list: '
   print *, node_list(1:num_node)
-  print *, ' '
+  print *
   print *, 'regions: start =', irs, ' to end =', ire
+  print *
 
   ! checks
   if (num_node < 1) stop 'Error need at least one slice for combining data arrays, please check your input arguments...'
@@ -342,6 +368,7 @@ program combine_vol_data
   else
     stop 'resolution setting must be 0, 1, or 2'
   endif
+  print *
 
   ! allocates arrays
   allocate(ibool(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE), &
@@ -376,8 +403,8 @@ program combine_vol_data
   do ir = irs, ire
     print *, '----------- Region ', ir, '----------------'
 
-#ifdef USE_VTK_INSTEAD_OF_MESH
-    ! VTK
+#if defined(USE_VTK_INSTEAD_OF_MESH) || defined(USE_VTU_INSTEAD_OF_MESH)
+    ! VTK/VTU
     ! not special file names required
     !continue
 #else
@@ -457,8 +484,8 @@ program combine_vol_data
     !print *, 'nglob_list(it) = ', nglob_list(1:num_node)
     !print *, 'nelement(it)   = ', nelement(1:num_node)
 
-#ifdef USE_VTK_INSTEAD_OF_MESH
-    ! VTK
+#if defined(USE_VTK_INSTEAD_OF_MESH) || defined(USE_VTU_INSTEAD_OF_MESH)
+    ! VTK/VTU
     print *
     print *,'VTK initial total points: ',sum(npoint(1:num_node))
     print *,'VTK initial total elements: ',sum(nelement(1:num_node))
@@ -487,7 +514,7 @@ program combine_vol_data
       iproc = node_list(it)
 
       ! output info
-      print *, ' '
+      print *
       print *, 'Reading mesh slice ', iproc
 
       ! topology file
@@ -526,7 +553,7 @@ program combine_vol_data
       data(:,:,:,:) = -1.e10
 
       ! output info
-      print *, ' '
+      print *
       print *, 'Reading data values for slice ', iproc
 
       ! reads in kernel/data values
@@ -636,8 +663,8 @@ program combine_vol_data
                   dat = data(i,j,k,ispec)
                 endif
 
-#ifdef USE_VTK_INSTEAD_OF_MESH
-                ! VTK
+#if defined(USE_VTK_INSTEAD_OF_MESH) || defined(USE_VTU_INSTEAD_OF_MESH)
+                ! VTK/VTU
                 total_dat(np+numpoin) = dat
                 total_dat_xyz(1,np+numpoin) = x
                 total_dat_xyz(2,np+numpoin) = y
@@ -682,7 +709,7 @@ program combine_vol_data
             ! connectivity must be given, otherwise element count would be wrong
             ! maps "fictitious" connectivity, element is all with iglob = 1
 
-#ifdef USE_VTK_INSTEAD_OF_MESH
+#if defined(USE_VTK_INSTEAD_OF_MESH) || defined(USE_VTU_INSTEAD_OF_MESH)
             ! VTK, can avoid output of ficticious inner core elements
 #else
             ! .mesh
@@ -731,8 +758,8 @@ program combine_vol_data
               n7 = num_ibool(iglob7)+np-1
               n8 = num_ibool(iglob8)+np-1
 
-#ifdef USE_VTK_INSTEAD_OF_MESH
-              ! VTK
+#if defined(USE_VTK_INSTEAD_OF_MESH) || defined(USE_VTU_INSTEAD_OF_MESH)
+              ! VTK/VTU
               ! note: indices for VTK start at 0
               total_dat_con(1,numpoin + ne) = n1
               total_dat_con(2,numpoin + ne) = n2
@@ -771,25 +798,26 @@ program combine_vol_data
     print *, 'Total number of elements: ', ne
     print *
 
+#if defined(USE_VTK_INSTEAD_OF_MESH) || defined(USE_VTU_INSTEAD_OF_MESH)
+    ! VTK/VTU format
 #ifdef USE_VTK_INSTEAD_OF_MESH
-    ! VTK
-    ! default
+    ! default VTK
     ! outputs unstructured grid file
     write(mesh_file,'(a,i1,a)') trim(outdir)//'/' // 'reg_',ir,'_'//trim(filename)//'.vtk'
     call write_VTK_movie_data(ne,np,total_dat_xyz,total_dat_con,total_dat,mesh_file,var_name)
+#endif
+#ifdef USE_VTU_INSTEAD_OF_MESH
+    ! VTU binary format
+    write(mesh_file,'(a,i1,a)') trim(outdir)//'/' // 'reg_',ir,'_'//trim(filename)//'.vtu'
+    call write_VTU_movie_data_binary(ne,np,total_dat_xyz,total_dat_con,total_dat,mesh_file,var_name)
+#endif
     print *,'written: ',trim(mesh_file)
 
+    ! debug
     if (.false.) then
       ! output as unconnected single elements
       write(mesh_file,'(a,i1,a)') trim(outdir)//'/' // 'reg_',ir,'_'//trim(filename)//'_elemental.vtk'
       call write_VTK_movie_data_elemental(ne,np,total_dat_xyz,total_dat_con,total_dat,mesh_file,var_name)
-      print *,'written: ',trim(mesh_file)
-    endif
-
-    if (.false.) then
-      ! VTU binary format
-      write(mesh_file,'(a,i1,a)') trim(outdir)//'/' // 'reg_',ir,'_'//trim(filename)//'.vtu'
-      call write_VTU_movie_data_binary(ne,np,total_dat_xyz,total_dat_con,total_dat,mesh_file,var_name)
       print *,'written: ',trim(mesh_file)
     endif
 
@@ -808,7 +836,7 @@ program combine_vol_data
     call close_file_fd(pfd)
 
     command_name='cat '//trim(pt_mesh_file2)//' '//trim(pt_mesh_file1)//' '//trim(em_mesh_file)//'>'//trim(mesh_file)
-    print *, ' '
+    print *
     print *, 'cat mesh files: '
     print *, trim(command_name)
     call system_command(command_name)
@@ -823,7 +851,7 @@ program combine_vol_data
 #endif
 
   print *, 'Done writing mesh files'
-  print *, ' '
+  print *
 
   ! free arrays
   deallocate(node_list,nspec_list,nglob_list)

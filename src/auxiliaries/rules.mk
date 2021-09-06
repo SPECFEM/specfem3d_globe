@@ -34,6 +34,7 @@ auxiliaries_TARGETS = \
 	$E/xcombine_paraview_strain_data \
 	$E/xcombine_vol_data \
 	$E/xcombine_vol_data_vtk \
+	$E/xcombine_vol_data_vtu \
 	$E/xcombine_surf_data \
 	$E/xcreate_movie_AVS_DX \
 	$E/xcreate_movie_GMT_global \
@@ -45,6 +46,7 @@ auxiliaries_TARGETS = \
 adios_auxiliaries_TARGETS += \
 	$E/xcombine_vol_data_adios \
 	$E/xcombine_vol_data_vtk_adios \
+	$E/xcombine_vol_data_vtu_adios \
 	$(EMPTY_MACRO)
 
 adios_auxiliaries_MODULES = \
@@ -69,6 +71,8 @@ auxiliaries_OBJECTS = \
 	$(xcombine_vol_data_adios_OBJECTS) \
 	$(xcombine_vol_data_vtk_OBJECTS) \
 	$(xcombine_vol_data_vtk_adios_OBJECTS) \
+	$(xcombine_vol_data_vtu_OBJECTS) \
+	$(xcombine_vol_data_vtu_adios_OBJECTS) \
 	$(xcreate_movie_AVS_DX_OBJECTS) \
 	$(xcreate_movie_GMT_global_OBJECTS) \
 	$(xextract_database_OBJECTS) \
@@ -86,6 +90,8 @@ auxiliaries_SHARED_OBJECTS = \
 	$(xcombine_vol_data_adios_SHARED_OBJECTS) \
 	$(xcombine_vol_data_vtk_SHARED_OBJECTS) \
 	$(xcombine_vol_data_vtk_adios_SHARED_OBJECTS) \
+	$(xcombine_vol_data_vtu_SHARED_OBJECTS) \
+	$(xcombine_vol_data_vtu_adios_SHARED_OBJECTS) \
 	$(xcreate_movie_AVS_DX_SHARED_OBJECTS) \
 	$(xcreate_movie_GMT_global_SHARED_OBJECTS) \
 	$(xwrite_profile_SHARED_OBJECTS) \
@@ -352,13 +358,43 @@ xcombine_vol_data_vtk_adios_SHARED_OBJECTS = \
 	$O/write_VTK_file.shared.o \
 	$(EMPTY_MACRO)
 
-$O/combine_vol_data.auxadios_vtk.o: $O/combine_vol_data_adios_impl.auxadios.o
-
 ${E}/xcombine_vol_data_vtk_adios: $(xcombine_vol_data_vtk_adios_OBJECTS) $(xcombine_vol_data_vtk_adios_SHARED_OBJECTS)
 	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 ### additional dependencies
+$O/combine_vol_data.auxadios_vtk.o: $O/combine_vol_data_adios_impl.auxadios.o
 $O/combine_vol_data.auxadios_vtk.o: $O/specfem3D_par.solverstatic_module.o
+
+
+#######################################
+
+xcombine_vol_data_vtu_OBJECTS = \
+	$O/combine_vol_data.auxsolver_vtu.o \
+	$(EMPTY_MACRO)
+
+xcombine_vol_data_vtu_SHARED_OBJECTS = $(xcombine_vol_data_vtk_SHARED_OBJECTS)
+
+${E}/xcombine_vol_data_vtu: $(xcombine_vol_data_vtu_OBJECTS) $(xcombine_vol_data_vtu_SHARED_OBJECTS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
+
+### additional dependencies
+$O/combine_vol_data.auxsolver_vtu.o: $O/specfem3D_par.solverstatic_module.o
+
+#######################################
+
+xcombine_vol_data_vtu_adios_OBJECTS = \
+	$O/combine_vol_data.auxadios_vtu.o \
+	$O/combine_vol_data_adios_impl.auxadios.o \
+	$(EMPTY_MACRO)
+
+xcombine_vol_data_vtu_adios_SHARED_OBJECTS = $(xcombine_vol_data_vtk_adios_SHARED_OBJECTS)
+
+${E}/xcombine_vol_data_vtu_adios: $(xcombine_vol_data_vtu_adios_OBJECTS) $(xcombine_vol_data_vtu_adios_SHARED_OBJECTS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
+
+### additional dependencies
+$O/combine_vol_data.auxadios_vtu.o: $O/combine_vol_data_adios_impl.auxadios.o
+$O/combine_vol_data.auxadios_vtu.o: $O/specfem3D_par.solverstatic_module.o
 
 #######################################
 
@@ -605,6 +641,9 @@ $O/%.auxsolver.o: $S/%.F90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_m
 $O/%.auxsolver_vtk.o: $S/%.F90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(FC_DEFINE)USE_VTK_INSTEAD_OF_MESH
 
+$O/%.auxsolver_vtu.o: $S/%.F90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(FC_DEFINE)USE_VTU_INSTEAD_OF_MESH
+
 $O/%.auxadios.o: $S/%.f90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o $O/parallel.sharedmpi.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(FC_DEFINE)USE_ADIOS_INSTEAD_OF_MESH
 
@@ -613,3 +652,6 @@ $O/%.auxadios.o: $S/%.F90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_mo
 
 $O/%.auxadios_vtk.o: $S/%.F90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o $O/parallel.sharedmpi.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(FC_DEFINE)USE_ADIOS_INSTEAD_OF_MESH $(FC_DEFINE)USE_VTK_INSTEAD_OF_MESH
+
+$O/%.auxadios_vtu.o: $S/%.F90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o $O/parallel.sharedmpi.o
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(FC_DEFINE)USE_ADIOS_INSTEAD_OF_MESH $(FC_DEFINE)USE_VTU_INSTEAD_OF_MESH
