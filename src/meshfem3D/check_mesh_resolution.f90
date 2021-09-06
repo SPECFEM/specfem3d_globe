@@ -31,7 +31,7 @@
 
   use constants
 
-  use shared_parameters, only: T_min_period
+  use shared_parameters, only: T_min_period,ADIOS_ENABLED
 
   use meshfem3D_par, only: &
     nspec,nglob, &
@@ -73,8 +73,10 @@
   real(kind=CUSTOM_REAL) :: eig_ratio_min_reg,eig_ratio_max_reg
 
   ! for file output
-  logical, parameter :: USE_VTU_FORMAT = .true.
+  logical, parameter :: USE_VTU_FORMAT = .true.           ! using VTU binary file format as output
+  logical, parameter :: DEBUG_OUTPUT_FOR_ADIOS = .false.  ! outputs maximum/minimum DT/period files when ADIOS_ENABLED is .true.
 
+  logical :: do_output
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: val_ispec_pmax,val_ispec_dt
   character(len=MAX_STRING_LEN) :: filename
   character(len=32),parameter :: region(4) = (/character(len=32) :: 'crust/mantle', 'outer core', 'inner core', 'central cube'/)
@@ -313,8 +315,27 @@
   !  print *,'*** Maximum suggested time step = ',dt_max_glob
   !endif
 
-  ! debug: saves element flags
+  ! check if we want to output these files
   if (SAVE_MESH_FILES) then
+    ! by default, lets the SAVE_MESH_FILES flag determine about the file output
+    do_output = .true.
+    ! ADIOS case
+    if (ADIOS_ENABLED) then
+      if (DEBUG_OUTPUT_FOR_ADIOS) then
+        ! we will output vtk/vtu files nevertheless
+        do_output = .true.
+      else
+        ! omit the file output
+        do_output = .false.
+      endif
+    endif
+  else
+    ! no output requested
+    do_output = .false.
+  endif
+
+  ! debug: saves element flags
+  if (do_output) then
     ! user output
     if (myrank == 0) then
       write(IMAIN,*) '  saving vtk mesh files for resolution res_minimum_period...'
