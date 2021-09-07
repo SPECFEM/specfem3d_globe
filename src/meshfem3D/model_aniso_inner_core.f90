@@ -29,8 +29,18 @@
 !
 ! based on scaling factors by Ishii et al. (2002)
 !
-! one should add an MPI_BCAST in meshfem3D_models.f90 if one
-! adds a 3D model or a read_aniso_inner_core_model subroutine
+! constant model given by Table 6 in:
+!   Joint inversion of normal mode and body wave data for inner core anisotropy
+!   1. Laterally homogeneous anisotropy, 2002.
+!   Miaki Ishii, Jeroen Tromp, Adam M. Dziewonski, Goran Ekstrom
+!   JGR Solid Earth, 107, B12, 2379.
+!
+! and for completeness, the joint paper:
+!   Joint inversion of normal mode and body wave data for inner core anisotropy
+!   2. Possible complexities, 2002.
+!   Miaki Ishii, Adam M. Dziewonski, Jeroen Tromp, Goran Ekstrom
+!   JGR Solid Earth, 107, B12. 2380.
+!
 !--------------------------------------------------------------------------------------------------
 
   subroutine model_aniso_inner_core(r,c11,c12,c13,c33,c44,REFERENCE_1D_MODEL, &
@@ -180,7 +190,7 @@
 !       c44 = mu
 !       c66 = mu
 
-! Ishii et al. (2002):
+! Ishii et al. (2002): Table 6
 !
 ! alpha = 3.490 % = (C-A)/A0    = (c33-c11)/A0
 !  beta = 0.988 % = (L-N)/A0    = (c44-c66)/A0

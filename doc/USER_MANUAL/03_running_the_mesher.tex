@@ -159,12 +159,27 @@ As we do not want to use the 300~m-thick mud layer from that model nor the ocean
 above the d120 discontinuity we switch back to the classical AK135 model of \cite{KeEnBu95},
 i.e., we use AK135-F below and AK135 above.
 %
-\item [{\texttt{1D\_ref}}] A recent 1D Earth model developed by \citet{KuDzEk06}.
+\item [{\texttt{1D\_ref}}] A 1D Earth model developed by \citet{KuDzEk06}.
 This model is the 1D background model for the 3D models s362ani, s362wmani,
 s362ani\_prem, and s29ea.
 %
+\item [{\texttt{Ishii}}] Combines the 1D transversely isotropic PREM with the anisotropic inner core model defined by \citet{Ishii2002}.
+%
+\end{description}
+%%
+for Mars:
+\begin{description}
+%
 \item [{\texttt{1D\_Sohl}}] 1D Mars model developed by \citet{Sohl1997}.
 This model is model A, mostly constrained by geophysical moment of inertia.
+%
+\item [{\texttt{1D\_case65TAY}}] 1D Mars reference model developed by \citet{Plesa2021}.
+The model is the 1D reference model for case 65 with a compositional model by Taylor.
+%
+\end{description}
+%%
+for Moon:
+\begin{description}
 %
 \item [{\texttt{VPREMOON}}] 1D Moon model developed by \citet{Garcia2011}.
 Uses modified seismic model, starting from table 6 (left side, not geodesic model) with
@@ -242,11 +257,36 @@ All model files reside in directory \texttt{DATA/full\_sphericalharmonic\_model/
 %
 \item [{\texttt{sgloberani\_aniso}}] By default, the code uses 3D {\it anisotropic} mantle model SGLOBE-rani \citep{Chang2015} and the 3D crustal model includes perturbations from Crust2.0 \citep{BaLaMa00} as discussed in \citep{Chang2015}. Note that SGLOBE-rani uses transversely isotropic PREM as a background model, and that we use the PREM radial attenuation model when \texttt{ATTENUATION} is incorporated.
 %
+\item [{\texttt{SPiRaL}}] A multiresolution global tomography model of seismic wave speeds
+and radial anisotropy variations in the crust and mantle developed by \citet{Simmons2021}.
+Please see folder \texttt{DATA/spiral1.4} for further information on how to install the corresponding model files.
+%
+\item [{\texttt{GLAD\_bkmns}}] A Block Mantle \& Spherical Harmonics (BKMNS) expansion model developed by \citet{Ciardelli2021}
+for global crust/mantle 3D models GLAD-M25 and GLAD-M15.
+Please see folder \texttt{DATA/gladm25} for further information on how to install the corresponding model files.
+%
 \end{description}
 %%
-\item [{\textmd{NOTE:}}]~\\
-When a 3D mantle model is chosen in \texttt{Par\_file}, the simulations are performed together with the 3D crustal model Crust2.0. Alternatively, Crust2.0 can be combined with a higher resolution European crustal model EUCrust07 \citep{EUCrust07}. This can be done by setting the crustal type to \texttt{ICRUST\_CRUSTMAPS} in the \texttt{constant.h} file.
-It is also possible to run simulations using a 3D mantle model with a 1D crustal model on top. This can be done by setting the model in \texttt{Par\_file} to \texttt{<3D mantle>\_1Dcrust}, e.g., \texttt{s20rts\_1Dcrust, s362ani\_1Dcrust}, etc. In this case, the 1D crustal model will be the one that is used in the 3D mantle model as a reference model (e.g., transversely isotropic PREM for s20rts, REF for s362ani, etc.).
+for Mars:
+\begin{description}
+%
+\item [{\texttt{1D\_Sohl\_3d\_crust}}] This model adds a 3D crust on top of the 1D Mars model developed by \citet{Sohl1997}.
+The crustal model is defined by the files in folder \texttt{DATA/crustmaps/marscrust*.cmap}
+%
+\item [{\texttt{1D\_case65TAY\_3d\_crust}}] This model adds a 3D crust on top of the 1D Mars model developed by \citet{Plesa2021}.
+The crustal model is defined by the files in folder \texttt{DATA/crustmaps/marscrust*.cmap}
+%
+\end{description}
+
+%%
+\item [{\textmd{Note:}}]~\\
+When a 3D mantle model is chosen in \texttt{Par\_file}, the simulations are performed together with the associated 3D crustal model. For example, model \texttt{s362ani} would use by default crustal model Crust2.0.
+To select the higher-resolution Crust1.0 crustal model instead, one can append it as an ending to the model name, i.e., \texttt{***<3D mantle>***\_crust1.0}, as for example \texttt{s362ani\_crust1.0}. In a similar way, various 3D crustal models defined such as \texttt{***\_crust1.0}, \texttt{***\_crust2.0}, \texttt{***\_crustmaps}, \texttt{***\_epcrust}, \texttt{***\_eucrust}, \texttt{***\_crustSH}, \texttt{***\_sglobecrust} and \texttt{***\_crustSPiRaL} can be combined with different mantle models.
+Regional higher-resolution models, such as the European crustal models EPcrust \citep{Molinari2011} and EUCrust-07 \citep{EUCrust07} are embedded by default into the global crustal model Crust1.0.
+
+It is also possible to run simulations using a 3D mantle model with a 1D crustal model on top. This can be done by setting the model in \texttt{Par\_file} to \texttt{***<3D mantle>***\_1Dcrust}, e.g., \texttt{s20rts\_1Dcrust, s362ani\_1Dcrust}, etc. In this case, the 1D crustal model will be the one that is used in the 3D mantle model as a reference model (e.g., transversely isotropic PREM for s20rts, REF for s362ani, etc.).
+
+Currently, the only anisotropic inner core model implemented is the one defined by \citet{Ishii2002}. To use this anisotropic inner core model, one can append the ending \texttt{***<3D mantle>***\_AIC} to the mantle model name. With the above crustal ending, as an example one could use \texttt{s362ani\_crust1.0\_AIC}.
 %
 \item [{\texttt{OCEANS}}] Set to \texttt{.true.} if the effect of the oceans
 on seismic wave propagation should be incorporated based upon the
@@ -267,15 +307,18 @@ From \cite{DaTr98}: "Spherically-symmetric Earth models all have the same hydros
 From Paul Melchior, IUGG General Assembly, Vienna, Austria, August 1991 Union lecture, available at www.agu.org/books: "It turns out that the spheroidal models constructed on the basis of the spherically-symmetric models (PREM, 1066A) by using the Clairaut differential equation to calculate the flattening
 in function of the radius vector imply hydrostaticity. These have surface ellipticity 1/299.8 and
 a corresponding dynamical flattening of .0033 (PREM). The actual ellipticty of the Earth for a best-fitting ellipsoid is 1/298.3 with a corresponding dynamical flattening of .0034."
-%
-Thus, flattening f = 1/299.8 is what is used in SPECFEM3D\_GLOBE, as it should. And thus eccentricity squared $e^2 = 1 - (1-f)^2 = 1 - (1 - 1/299.8)^2 = 0.00665998813529$, and the correction factor used in the code to convert geographic latitudes to geocentric is $1 - e^2 = (1-f)^2 = (1 - 1/299.8)^2 = 0.9933400118647$.
+
+Thus, flattening f = 1/299.8 is what is used in SPECFEM3D\_GLOBE, as it should. And eccentricity squared $e^2 = 1 - (1-f)^2 = 1 - (1 - 1/299.8)^2 = 0.00665998813529$, and the correction factor used in the code to convert geographic latitudes to geocentric is $1 - e^2 = (1-f)^2 = (1 - 1/299.8)^2 = 0.9933400118647$.
 %
 As a comparison, the classical World Geodetic System reference ellipsoid WGS 84 (see e.g. \url{http://en.wikipedia.org/wiki/World_Geodetic_System}) has $f = 1/298.2572236$.
+
+For Mars, a flattening factor 1/169.8 is used (based on Smith et al. 1999, Science, 284). For Moon, a flattening factor 1/901.0 is currently taken. These values can be modified in file \texttt{setup/constants.h}.
+
 %
 \item [{\texttt{TOPOGRAPHY}}] Set to \texttt{.true.} if topography and
 bathymetry should be incorporated based upon model ETOPO4 \citep{Etopo5}.
 This feature adds no cost to the simulation.
-It you want to use other topographic models, use the script download\_the\_whole\_topography\_database\_if\_you\_want\_other\_topographic\_models.bash provided in the root directory of the code and change the name of the topographic model to use in file \texttt{setup/constants.h.in} before configuring the code with the \texttt{configure} script.
+If you want to use other topographic models, please see folder \texttt{DATA/topo\_bathy/} for further infos and change the name of the topographic model to use in file \texttt{setup/constants.h} before re-compiling the code.
 %
 \item [{\texttt{GRAVITY}}] Set to \texttt{.true.} if self-gravitation should
 be incorporated in the Cowling approximation \citep{KoTr02b,DaTr98}.

@@ -593,7 +593,7 @@
     ANISOTROPIC_3D_MANTLE = .true. ! treats mantle elements as fully anisotropic
 
   case ('spiral')
-    ! uses spiral crustal model by default
+    ! uses SPiRaL crustal model by default
     REFERENCE_CRUSTAL_MODEL = ICRUST_SPIRAL
     CASE_3D = .true.                      ! crustal moho stretching
     CRUSTAL = .true.                      ! with 3D crust: depends on 3D mantle reference model
