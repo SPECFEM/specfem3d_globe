@@ -136,27 +136,33 @@
 
     case (REFERENCE_MODEL_1066A)
       ! values at center
-      vp0 = 11.33830
-      vs0 = 3.62980
-      rho0 = 13.429030
+      vp0 = 11.33830d0
+      vs0 = 3.62980d0
+      rho0 = 13.429030d0
 
     case (REFERENCE_MODEL_AK135F_NO_MUD)
       ! values at center
-      vp0 = 11.26220
-      vs0 = 3.667800
-      rho0 = 13.01220
+      vp0 = 11.26220d0
+      vs0 = 3.667800d0
+      rho0 = 13.01220d0
 
     case (REFERENCE_MODEL_JP1D)
       ! values at center
-      vp0 = 11.24094
-      vs0 = 3.56454
+      vp0 = 11.24094d0
+      vs0 = 3.56454d0
       rho0 = 13.0885d0
 
     case (REFERENCE_MODEL_SEA1D)
       ! values at center
-      vp0 = 11.240940
-      vs0 = 3.564540
-      rho0 = 13.012190
+      vp0 = 11.240940d0
+      vs0 = 3.564540d0
+      rho0 = 13.012190d0
+
+    case (REFERENCE_MODEL_CCREM)
+      ! values at center
+      vp0 = 11.2636d0
+      vs0 = 3.6677d0
+      rho0 = 13.0351d0
 
     case default
       stop 'unknown 1D reference Earth model in anisotropic inner core'

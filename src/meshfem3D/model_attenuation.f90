@@ -214,6 +214,9 @@
   use model_sea1d_par, only: &
     NR_SEA1D,SEA1DM_V_Qmu_sea1d ! SEA1DM_V_radius_sea1d
 
+  use model_ccrem_par, only: &
+    NR_CCREM_layers,CCREM_Qmu_original
+
   use model_case65tay_par, only: &
     NR_case65TAY,Mcase65TAY_V_Qmu
 
@@ -273,6 +276,13 @@
     call define_model_sea1d(.false.)
     Qn = NR_SEA1D
 
+  case (REFERENCE_MODEL_CCREM)
+    ! redefines "pure" 1D model without crustal modification
+    if (myrank == 0) write(IMAIN,*) '  model: CCREM attenuation'
+    ! no need to redefine 1D model, Qmu_original array contains original values (without CRUSTAL modification)
+    Qn = NR_CCREM_layers
+
+  ! Mars models
   case (REFERENCE_MODEL_SOHL, &
         REFERENCE_MODEL_SOHL_B)
     ! Mars, Q from PREM
@@ -285,6 +295,7 @@
     call define_model_case65TAY(.false.)
     Qn = NR_case65TAY
 
+  ! Moon models
   case (REFERENCE_MODEL_VPREMOON)
     ! Moon
     if (myrank == 0) write(IMAIN,*) '  model: VPREMOON attenuation'
@@ -327,6 +338,11 @@
     ! radius = SEA1DM_V_radius_sea1d(:)
     Qmu(:) = SEA1DM_V_Qmu_sea1d(:)
 
+  case (REFERENCE_MODEL_CCREM)
+    ! Moon
+    Qmu(:) = CCREM_Qmu_original(:)
+
+  ! Mars models
   case (REFERENCE_MODEL_SOHL, &
         REFERENCE_MODEL_SOHL_B)
     ! Mars: todo - future use attenuation model by Nimmo & Faul, 2013?
@@ -338,6 +354,7 @@
     ! values as defined in model
     Qmu(:) = Mcase65TAY_V_Qmu(:)
 
+  ! Moon models
   case (REFERENCE_MODEL_VPREMOON)
     ! Moon
     Qmu(:) = VPREMOON_Qmu_original(:)
