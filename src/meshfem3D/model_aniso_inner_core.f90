@@ -66,6 +66,7 @@
   double precision :: c66
   double precision :: scaleval,scale_GPa
   double precision :: x
+  double precision :: PREM2_RIC_UPPER
 
   logical, save :: is_first_call = .true.
 
@@ -126,6 +127,30 @@
       ! checks
       if (abs(vpc-vp) > TINYVAL .or. abs(vsc-vs) > TINYVAL .or. abs(rhoc-rho_dim) > TINYVAL) then
         stop 'Error isotropic PREM values in model_aniso_inner_core() '
+      endif
+
+    case (REFERENCE_MODEL_PREM2)
+      ! values at center (same as PREM)
+      vp0 = 11.2622d0
+      vs0 = 3.6678d0
+      rho0 = 13.0885d0
+
+      ! checks with input isotropic values
+      PREM2_RIC_UPPER = 1010000.d0     ! upper inner core at 1010 km radius
+      if (x * R_PLANET <= PREM2_RIC_UPPER) then
+        ! lower inner core, same value as PREM
+        vpc = 11.2622d0 - 6.3640d0*x*x
+      else
+        ! upper inner core modification
+        vpc = 11.3041d0 - 1.2730d0*x
+      endif
+
+      vsc = vs0 - 4.4475d0*x*x
+      rhoc = rho0 - 8.8381d0*x*x
+
+      ! checks
+      if (abs(vpc-vp) > TINYVAL .or. abs(vsc-vs) > TINYVAL .or. abs(rhoc-rho_dim) > TINYVAL) then
+        stop 'Error isotropic PREM2 values in model_aniso_inner_core() '
       endif
 
     case (REFERENCE_MODEL_1DREF)

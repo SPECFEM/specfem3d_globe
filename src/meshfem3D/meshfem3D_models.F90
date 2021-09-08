@@ -378,7 +378,7 @@
   ! gets 1-D reference model parameters
   select case (REFERENCE_1D_MODEL)
 
-    case (REFERENCE_MODEL_PREM)
+    case (REFERENCE_MODEL_PREM,REFERENCE_MODEL_PREM2)
       ! PREM (by Dziewonski & Anderson) - used also as background for 3D models
       if (TRANSVERSE_ISOTROPY) then
         ! default PREM:
@@ -1548,7 +1548,7 @@
 
     select case (REFERENCE_1D_MODEL)
 
-      ! case (REFERENCE_MODEL_PREM)
+      ! case (REFERENCE_MODEL_PREM,REFERENCE_MODEL_PREM2)
       ! this case is probably not needed since Qmu is 600. between R80 and surface
       !   call model_attenuation_1D_PREM(r_prem, Qmu)
 

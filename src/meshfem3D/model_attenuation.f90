@@ -246,6 +246,7 @@
   ! (uses USE_EXTERNAL_CRUSTAL_MODEL set to false)
   select case(REFERENCE_1D_MODEL)
   case (REFERENCE_MODEL_PREM, &
+        REFERENCE_MODEL_PREM2, &
         REFERENCE_MODEL_IASP91, &
         REFERENCE_MODEL_JP1D)
     ! PREM Q layers
@@ -316,6 +317,7 @@
 
   select case(REFERENCE_1D_MODEL)
   case (REFERENCE_MODEL_PREM, &
+        REFERENCE_MODEL_PREM2, &
         REFERENCE_MODEL_IASP91, &
         REFERENCE_MODEL_JP1D)
     ! PREM Q values

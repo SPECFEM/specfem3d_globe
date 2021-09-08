@@ -803,13 +803,14 @@
 
 ! define flag for reference 1D Earth model
   integer, parameter :: REFERENCE_MODEL_PREM       = 1
-  integer, parameter :: REFERENCE_MODEL_IASP91     = 2
-  integer, parameter :: REFERENCE_MODEL_1066A      = 3
-  integer, parameter :: REFERENCE_MODEL_AK135F_NO_MUD = 4
-  integer, parameter :: REFERENCE_MODEL_1DREF      = 5
-  integer, parameter :: REFERENCE_MODEL_JP1D       = 6
-  integer, parameter :: REFERENCE_MODEL_SEA1D      = 7
-  integer, parameter :: REFERENCE_MODEL_CCREM      = 8
+  integer, parameter :: REFERENCE_MODEL_PREM2      = 2
+  integer, parameter :: REFERENCE_MODEL_IASP91     = 3
+  integer, parameter :: REFERENCE_MODEL_1066A      = 4
+  integer, parameter :: REFERENCE_MODEL_AK135F_NO_MUD = 5
+  integer, parameter :: REFERENCE_MODEL_1DREF      = 6
+  integer, parameter :: REFERENCE_MODEL_JP1D       = 7
+  integer, parameter :: REFERENCE_MODEL_SEA1D      = 8
+  integer, parameter :: REFERENCE_MODEL_CCREM      = 9
   ! Mars
   integer, parameter :: REFERENCE_MODEL_SOHL       = 101
   integer, parameter :: REFERENCE_MODEL_SOHL_B     = 102

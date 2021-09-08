@@ -293,6 +293,15 @@
     HONOR_1D_SPHERICAL_MOHO = .true.
     TRANSVERSE_ISOTROPY = .true.
 
+  case ('1d_isotropic_prem2')
+    REFERENCE_1D_MODEL = REFERENCE_MODEL_PREM2
+    HONOR_1D_SPHERICAL_MOHO = .true.
+
+  case ('1d_transversely_isotropic_prem2')
+    REFERENCE_1D_MODEL = REFERENCE_MODEL_PREM2
+    HONOR_1D_SPHERICAL_MOHO = .true.
+    TRANSVERSE_ISOTROPY = .true.
+
   case ('1d_iasp91','1d_1066a','1d_ak135f_no_mud','1d_jp3d','1d_sea99')
     HONOR_1D_SPHERICAL_MOHO = .true.
     if (trim(MODEL_NAME) == '1d_iasp91') then
@@ -397,6 +406,28 @@
     impose_crust = ICRUST_CRUST1
 
   case ('transversely_isotropic_prem_plus_3d')
+    CASE_3D = .true.
+    CRUSTAL = .true.
+    ONE_CRUST = .true.
+    TRANSVERSE_ISOTROPY = .true.
+
+  case ('transversely_isotropic_prem2_plus_3d_crust_2.0')
+    REFERENCE_1D_MODEL = REFERENCE_MODEL_PREM2
+    CASE_3D = .true.
+    CRUSTAL = .true.
+    ONE_CRUST = .true.
+    TRANSVERSE_ISOTROPY = .true.
+
+  case ('transversely_isotropic_prem2_plus_3d_crust_1.0')
+    REFERENCE_1D_MODEL = REFERENCE_MODEL_PREM2
+    CASE_3D = .true.
+    CRUSTAL = .true.
+    ONE_CRUST = .true.
+    TRANSVERSE_ISOTROPY = .true.
+    impose_crust = ICRUST_CRUST1
+
+  case ('transversely_isotropic_prem2_plus_3d')
+    REFERENCE_1D_MODEL = REFERENCE_MODEL_PREM2
     CASE_3D = .true.
     CRUSTAL = .true.
     ONE_CRUST = .true.
