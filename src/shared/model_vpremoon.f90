@@ -101,10 +101,10 @@
 !
 
   subroutine model_vpremoon(x,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &
-                            ONE_CRUST,check_doubling_flag,iregion_code)
+                            check_doubling_flag,iregion_code)
 
   use constants
-  use shared_parameters, only: R_PLANET,RHOAV
+  use shared_parameters, only: R_PLANET,RHOAV,ONE_CRUST
 
   use model_vpremoon_par
 
@@ -126,7 +126,7 @@
   double precision,intent(inout) :: vp,vs,Qmu,Qkappa
   integer,intent(in) :: idoubling
   integer,intent(in) :: iregion_code
-  logical,intent(in) :: CRUSTAL,ONE_CRUST,check_doubling_flag
+  logical,intent(in) :: CRUSTAL,check_doubling_flag
 
   ! local parameters
   double precision :: r,frac,scaleval,dr,drho
@@ -147,11 +147,11 @@
       Qkappa_tmp = VPREMOON_Qkappa(NR_VPREMOON_layers-3)
       Qmu_tmp = VPREMOON_Qmu(NR_VPREMOON_layers-3)
       ! assign all crust (1:6) values to upper crust
-      VPREMOON_density(NR_VPREMOON_layers-6:NR_VPREMOON_layers) = rho_tmp
-      VPREMOON_vp(NR_VPREMOON_layers-6:NR_VPREMOON_layers) = vp_tmp
-      VPREMOON_vs(NR_VPREMOON_layers-6:NR_VPREMOON_layers) = vs_tmp
-      VPREMOON_Qkappa(NR_VPREMOON_layers-6:NR_VPREMOON_layers) = Qkappa_tmp
-      VPREMOON_Qmu(NR_VPREMOON_layers-6:NR_VPREMOON_layers) = Qmu_tmp
+      VPREMOON_density(NR_VPREMOON_layers-5:NR_VPREMOON_layers) = rho_tmp
+      VPREMOON_vp(NR_VPREMOON_layers-5:NR_VPREMOON_layers) = vp_tmp
+      VPREMOON_vs(NR_VPREMOON_layers-5:NR_VPREMOON_layers) = vs_tmp
+      VPREMOON_Qkappa(NR_VPREMOON_layers-5:NR_VPREMOON_layers) = Qkappa_tmp
+      VPREMOON_Qmu(NR_VPREMOON_layers-5:NR_VPREMOON_layers) = Qmu_tmp
     endif
 
     ! in case an external crustal model will be superimposed on top, we extend mantle values to the surface
@@ -160,12 +160,12 @@
     ! note: assumes that the crust is given by 6 layers
     !       see in vpremoon.dat: regolith layer (1:2), upper crust (3:4), lower crust (5:6), the mantle
     if (SUPPRESS_CRUSTAL_MESH .or. CRUSTAL) then
-      do i = NR_VPREMOON_layers-6,NR_VPREMOON_layers
-        VPREMOON_density(i) = VPREMOON_density(NR_VPREMOON_layers-7)
-        VPREMOON_vp(i) = VPREMOON_vp(NR_VPREMOON_layers-7)
-        VPREMOON_vs(i) = VPREMOON_vs(NR_VPREMOON_layers-7)
-        VPREMOON_Qkappa(i) = VPREMOON_Qkappa(NR_VPREMOON_layers-7)
-        VPREMOON_Qmu(i) = VPREMOON_Qmu(NR_VPREMOON_layers-7)
+      do i = NR_VPREMOON_layers-5,NR_VPREMOON_layers
+        VPREMOON_density(i) = VPREMOON_density(NR_VPREMOON_layers-6)
+        VPREMOON_vp(i) = VPREMOON_vp(NR_VPREMOON_layers-6)
+        VPREMOON_vs(i) = VPREMOON_vs(NR_VPREMOON_layers-6)
+        VPREMOON_Qkappa(i) = VPREMOON_Qkappa(NR_VPREMOON_layers-6)
+        VPREMOON_Qmu(i) = VPREMOON_Qmu(NR_VPREMOON_layers-6)
       enddo
     endif
   endif
@@ -325,6 +325,7 @@
   character(len=256) :: datafile,line
 
   double precision, parameter :: TOL = 1.d-9
+  ! debugging
   logical, parameter :: DEBUG = .false.
 
   ! file name
@@ -369,6 +370,9 @@
            VPREMOON_Qmu_original(NR_VPREMOON_layers), &
            stat=ier)
   if (ier /= 0 ) stop 'Error allocating VPREMOON arrays'
+  VPREMOON_radius(:) = 0.d0; VPREMOON_density(:) = 0.d0
+  VPREMOON_vp(:) = 0.d0; VPREMOON_vs(:) = 0.d0
+  VPREMOON_Qkappa(:) = 0.d0; VPREMOON_Qmu(:) = 0.d0; VPREMOON_Qmu_original(:) = 0.d0
 
   ! read in layering
   ! note: table 6 starts from top surface to inner core
@@ -490,10 +494,10 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_vpremoon_density(x,rho,ONE_CRUST)
+  subroutine model_vpremoon_density(x,rho)
 
   use constants
-  use shared_parameters, only: R_PLANET,RHOAV
+  use shared_parameters, only: R_PLANET,RHOAV,ONE_CRUST
 
   use model_vpremoon_par
 
@@ -501,7 +505,6 @@
 
   double precision,intent(in) :: x
   double precision,intent(out) :: rho
-  logical,intent(in) :: ONE_CRUST
 
   ! local parameters
   integer :: i
@@ -522,11 +525,11 @@
       Qkappa_tmp = VPREMOON_Qkappa(NR_VPREMOON_layers-3)
       Qmu_tmp = VPREMOON_Qmu(NR_VPREMOON_layers-3)
       ! assign all crust (1:6) values to upper crust
-      VPREMOON_density(NR_VPREMOON_layers-6:NR_VPREMOON_layers) = rho_tmp
-      VPREMOON_vp(NR_VPREMOON_layers-6:NR_VPREMOON_layers) = vp_tmp
-      VPREMOON_vs(NR_VPREMOON_layers-6:NR_VPREMOON_layers) = vs_tmp
-      VPREMOON_Qkappa(NR_VPREMOON_layers-6:NR_VPREMOON_layers) = Qkappa_tmp
-      VPREMOON_Qmu(NR_VPREMOON_layers-6:NR_VPREMOON_layers) = Qmu_tmp
+      VPREMOON_density(NR_VPREMOON_layers-5:NR_VPREMOON_layers) = rho_tmp
+      VPREMOON_vp(NR_VPREMOON_layers-5:NR_VPREMOON_layers) = vp_tmp
+      VPREMOON_vs(NR_VPREMOON_layers-5:NR_VPREMOON_layers) = vs_tmp
+      VPREMOON_Qkappa(NR_VPREMOON_layers-5:NR_VPREMOON_layers) = Qkappa_tmp
+      VPREMOON_Qmu(NR_VPREMOON_layers-5:NR_VPREMOON_layers) = Qmu_tmp
     endif
   endif
 

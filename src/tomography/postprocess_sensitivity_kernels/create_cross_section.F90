@@ -775,7 +775,7 @@
 ! creates point locations of horizontal cross-section points
 
   use constants, only: CUSTOM_REAL,NR_DENSITY,R_UNIT_SPHERE
-  use shared_parameters, only: ONE_CRUST,R_PLANET,NX_BATHY,NY_BATHY
+  use shared_parameters, only: R_PLANET,NX_BATHY,NY_BATHY
 
   implicit none
 
@@ -829,7 +829,7 @@
   ! make ellipticity
   if (ELLIPTICITY) then
     ! splines used for locating exact positions
-    call make_ellipticity(nspl,rspl,ellipicity_spline,ellipicity_spline2,ONE_CRUST)
+    call make_ellipticity(nspl,rspl,ellipicity_spline,ellipicity_spline2)
   endif
 
   ! read topography and bathymetry file
@@ -959,7 +959,7 @@
     DEGREES_TO_RADIANS,RADIANS_TO_DEGREES, &
     PI_OVER_TWO,TWO_PI,SMALLVAL
 
-  use shared_parameters, only: ONE_CRUST,R_PLANET,NX_BATHY,NY_BATHY
+  use shared_parameters, only: R_PLANET,NX_BATHY,NY_BATHY
 
   implicit none
 
@@ -1030,7 +1030,7 @@
   ! make ellipticity
   if (ELLIPTICITY) then
     ! splines used for locating exact positions
-    call make_ellipticity(nspl,rspl,ellipicity_spline,ellipicity_spline2,ONE_CRUST)
+    call make_ellipticity(nspl,rspl,ellipicity_spline,ellipicity_spline2)
   endif
 
   ! read topography and bathymetry file

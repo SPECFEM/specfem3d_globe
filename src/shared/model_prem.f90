@@ -72,11 +72,10 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_prem_iso(x,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &
-                            ONE_CRUST,check_doubling_flag)
+  subroutine model_prem_iso(x,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL,check_doubling_flag)
 
   use constants
-  use shared_parameters, only: R_PLANET,RHOAV
+  use shared_parameters, only: R_PLANET,RHOAV,ONE_CRUST
 
   use model_prem_par
 
@@ -88,7 +87,7 @@
   double precision,intent(in) :: x
   double precision,intent(inout) :: rho,drhodr,vp,vs,Qkappa,Qmu
 
-  logical,intent(in) :: CRUSTAL,ONE_CRUST,check_doubling_flag
+  logical,intent(in) :: CRUSTAL,check_doubling_flag
   integer,intent(in) :: idoubling
 
   ! local parameters
@@ -309,11 +308,10 @@
 !=====================================================================
 !
 
-  subroutine model_prem_aniso(x,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu, &
-                              idoubling,CRUSTAL,ONE_CRUST)
+  subroutine model_prem_aniso(x,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu,idoubling,CRUSTAL)
 
   use constants
-  use shared_parameters, only: R_PLANET,RHOAV
+  use shared_parameters, only: R_PLANET,RHOAV,ONE_CRUST
 
   use model_prem_par
 
@@ -322,11 +320,12 @@
 ! given a normalized radius x, gives the non-dimensionalized density rho,
 ! speeds vp and vs, and the quality factors Qkappa and Qmu
 
-  logical :: CRUSTAL,ONE_CRUST
+  logical,intent(in) :: CRUSTAL
 
-  integer :: idoubling
+  integer,intent(in) :: idoubling
 
-  double precision :: x,rho,Qkappa,Qmu,vpv,vph,vsv,vsh,eta_aniso
+  double precision,intent(in) :: x
+  double precision,intent(inout) :: rho,Qkappa,Qmu,vpv,vph,vsv,vsh,eta_aniso
 
   ! local parameters
   double precision :: r
@@ -567,7 +566,7 @@
 !
 
   subroutine model_prem_aniso_extended_isotropic(x,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu, &
-                                                 idoubling,CRUSTAL,ONE_CRUST)
+                                                 idoubling,CRUSTAL)
 
 ! note: for 3D crustal models, we extend the mantle reference up to the surface and then superimpose the crustal values later.
 !       however, PREM mantle is anisotropic (eta < 1 and vsh > vsv) and the extension continues with strong TISO, thus
@@ -590,7 +589,7 @@
   double precision,intent(in) :: x
   double precision,intent(out) :: rho,Qkappa,Qmu,vpv,vph,vsv,vsh,eta_aniso
 
-  logical,intent(in) :: CRUSTAL,ONE_CRUST
+  logical,intent(in) :: CRUSTAL
   integer,intent(in) :: idoubling
 
   ! local parameters
@@ -598,8 +597,7 @@
   double precision :: scaleval
 
   ! gets default values
-  call model_prem_aniso(x,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu, &
-                        idoubling,CRUSTAL,ONE_CRUST)
+  call model_prem_aniso(x,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu,idoubling,CRUSTAL)
 
   if (CRUSTAL) then
     ! adds crustal model like CRUST2.0 later on top
@@ -719,10 +717,10 @@
 !=====================================================================
 !
 
-  subroutine prem_density(x,rho,ONE_CRUST)
+  subroutine prem_density(x,rho)
 
   use constants
-  use shared_parameters, only: R_PLANET,RHOAV
+  use shared_parameters, only: R_PLANET,RHOAV,ONE_CRUST
 
   use model_prem_par
 
@@ -730,7 +728,6 @@
 
   double precision,intent(in) :: x
   double precision,intent(out) :: rho
-  logical,intent(in) :: ONE_CRUST
 
   ! local parameters
   double precision :: r

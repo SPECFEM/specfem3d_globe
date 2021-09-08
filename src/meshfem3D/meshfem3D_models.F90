@@ -38,7 +38,7 @@
   integer :: ier
 
   ! sets up spline coefficients for ellipticity
-  if (ELLIPTICITY) call make_ellipticity(nspl,rspl,ellipicity_spline,ellipicity_spline2,ONE_CRUST)
+  if (ELLIPTICITY) call make_ellipticity(nspl,rspl,ellipicity_spline,ellipicity_spline2)
 
   ! read topography and bathymetry file
   if (TOPOGRAPHY) then
@@ -129,6 +129,10 @@
 
     case (REFERENCE_MODEL_CASE65TAY)
       call model_case65TAY_broadcast(CRUSTAL)
+
+    case (REFERENCE_MODEL_CCREM)
+      call model_ccrem_broadcast(CRUSTAL)
+
   end select
 
   end subroutine meshfem3D_reference_model_broadcast
@@ -379,8 +383,7 @@
       if (TRANSVERSE_ISOTROPY) then
         ! default PREM:
         !   gets anisotropic PREM parameters, with radial anisotropic extension (from moho to surface for crustal model)
-        call model_prem_aniso(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso, &
-                              Qkappa,Qmu,idoubling,CRUSTAL,ONE_CRUST)
+        call model_prem_aniso(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu,idoubling,CRUSTAL)
 
         ! calculates isotropic values
         vp = sqrt(((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
@@ -402,13 +405,13 @@
         !case (THREE_D_MODEL_SGLOBE,THREE_D_MODEL_SGLOBE_ISO)
         !  ! gets anisotropic PREM parameters, with isotropic extension (from moho to surface for crustal model)
         !  call model_prem_aniso_extended_isotropic(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu, &
-        !                                           idoubling,CRUSTAL,ONE_CRUST)
+        !                                           idoubling,CRUSTAL)
         !
         ! eventually also Ritsema models, check...
         !case (THREE_D_MODEL_S20RTS,THREE_D_MODEL_S40RTS)
         !  ! gets anisotropic PREM parameters, with isotropic extension (from moho to surface for crustal model)
         !  call model_prem_aniso_extended_isotropic(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu, &
-        !                                           idoubling,CRUSTAL,ONE_CRUST)
+        !                                           idoubling,CRUSTAL)
         !
         !case default
         !  continue
@@ -416,8 +419,7 @@
 
       else
         ! isotropic PREM model
-        call model_prem_iso(r_prem,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &
-                            ONE_CRUST,.true.)
+        call model_prem_iso(r_prem,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL,.true.)
         vpv = vp
         vph = vp
         vsv = vs
@@ -499,10 +501,19 @@
       vsh = vs
       eta_aniso = 1.d0
 
+    case (REFERENCE_MODEL_CCREM)
+      ! CCREM (by Ma & Tkalcic) - pure isotropic model
+      call model_ccrem(r_prem,rho,vp,vs,Qkappa,Qmu,idoubling,iregion_code)
+      vpv = vp
+      vph = vp
+      vsv = vs
+      vsh = vs
+      eta_aniso = 1.d0
+
+    ! Mars 1D models
     case (REFERENCE_MODEL_SOHL)
       ! Mars
-      call model_Sohl(r_prem,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &
-                      ONE_CRUST,.true.)
+      call model_Sohl(r_prem,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL,.true.)
       vpv = vp
       vph = vp
       vsv = vs
@@ -518,10 +529,10 @@
       vsh = vs
       eta_aniso = 1.d0
 
+    ! Moon 1D models
     case (REFERENCE_MODEL_VPREMOON)
       ! Moon
-      call model_vpremoon(r_prem,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &
-                          ONE_CRUST,.true.,iregion_code)
+      call model_vpremoon(r_prem,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL,.true.,iregion_code)
       vpv = vp
       vph = vp
       vsv = vs
@@ -1452,7 +1463,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine meshfem3D_models_getatten_val(idoubling,r_prem,r,theta,phi, &
+  subroutine meshfem3D_models_getatten_val(idoubling,r_prem,theta,phi, &
                                            ispec, i, j, k, &
                                            tau_e,tau_s, &
                                            moho,Qmu,Qkappa,elem_in_crust)
@@ -1475,7 +1486,7 @@
   integer,intent(in) :: idoubling
 
   double precision,intent(in) :: r_prem
-  double precision,intent(in) :: r,theta,phi
+  double precision,intent(in) :: theta,phi
 
   integer,intent(in) :: ispec,i,j,k
 

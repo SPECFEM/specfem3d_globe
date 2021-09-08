@@ -51,6 +51,8 @@ program combine_vol_data
   use constants_solver, only: &
     NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE,NSPEC_OUTER_CORE,NSPEC_INNER_CORE,NPROCTOT_VAL
 
+  use shared_parameters, only: ONE_CRUST
+
   ! combines the database files on several slices.
   ! the local database file needs to have been collected onto the frontend (copy_local_database.pl)
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
@@ -98,7 +100,6 @@ program combine_vol_data
 
   integer :: nspl
   double precision :: rspl(NR_DENSITY),espl(NR_DENSITY),espl2(NR_DENSITY)
-  logical,parameter :: ONE_CRUST = .false. ! if you want to correct a model with one layer only in PREM crust
 
   integer, dimension(:), allocatable :: idoubling_inner_core ! to get rid of fictitious elements in central cube
 
@@ -392,7 +393,8 @@ program combine_vol_data
   npoint(:) = 0; nelement(:) = 0
 
   ! sets up ellipticity splines in order to remove ellipticity from point coordinates
-  if (CORRECT_ELLIPTICITY) call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
+  ONE_CRUST = .false. ! if you want to correct a model with one layer only in PREM crust
+  if (CORRECT_ELLIPTICITY) call make_ellipticity(nspl,rspl,espl,espl2)
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
   ! ADIOS

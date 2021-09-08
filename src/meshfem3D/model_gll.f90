@@ -937,8 +937,7 @@
     !vp_p = ZERO
     !vs_p = ZERO
     !
-    !call model_prem_iso(myrank,r_prem,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &
-    !                    ONE_CRUST,.false.)
+    !call model_prem_iso(myrank,r_prem,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL,.false.)
     !
     !if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF) then
     !   call model_1dref_broadcast(CRUSTAL)

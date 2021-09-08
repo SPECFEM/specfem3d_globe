@@ -129,7 +129,7 @@
   ! this is probably a rather reasonable assumption
   if (GRAVITY_VAL) then
     ! gravity term
-    call make_gravity(nspl_gravity,rspl_gravity,gravity_spline,gravity_spline2,ONE_CRUST)
+    call make_gravity(nspl_gravity,rspl_gravity,gravity_spline,gravity_spline2)
 
     do int_radius = 1,NRAD_GRAVITY
       radius = r(int_radius)
@@ -141,19 +141,14 @@
       select case(PLANET_TYPE)
       case (IPLANET_EARTH)
         ! Earth
-        call model_prem_iso(radius,rho,drhodr,vp,vs,Qkappa,Qmu,idummy,.false., &
-                            ONE_CRUST,.false.)
-
+        call model_prem_iso(radius,rho,drhodr,vp,vs,Qkappa,Qmu,idummy,.false.,.false.)
       case (IPLANET_MARS)
         ! Mars
         ! Sohn & Spohn Model A
-        call model_Sohl(radius,rho,drhodr,vp,vs,Qkappa,Qmu,idummy,.false., &
-                        ONE_CRUST,.false.)
+        call model_Sohl(radius,rho,drhodr,vp,vs,Qkappa,Qmu,idummy,.false.,.false.)
       case (IPLANET_MOON)
         ! Moon
-        call model_vpremoon(radius,rho,drhodr,vp,vs,Qkappa,Qmu,idummy,.false., &
-                            ONE_CRUST,.false.,idummy)
-
+        call model_vpremoon(radius,rho,drhodr,vp,vs,Qkappa,Qmu,idummy,.false.,.false.,idummy)
       case default
         call exit_MPI(myrank,'Invalid planet, gravity preparation not implemented yet')
       end select
@@ -272,20 +267,17 @@
       radius = r(int_radius)
       idummy = 0
       ! density profile
-      select case (PLANET_TYPE)
+      select case(PLANET_TYPE)
       case (IPLANET_EARTH)
         ! Earth
-        call model_prem_iso(radius,rho,drhodr,vp,vs,Qkappa,Qmu,idummy,.false., &
-                            ONE_CRUST,.false.)
-
+        call model_prem_iso(radius,rho,drhodr,vp,vs,Qkappa,Qmu,idummy,.false.,.false.)
       case (IPLANET_MARS)
         ! Mars
-        call model_Sohl(radius,rho,drhodr,vp,vs,Qkappa,Qmu,idummy,.false., &
-                        ONE_CRUST,.false.)
+        ! Sohn & Spohn Model A
+        call model_Sohl(radius,rho,drhodr,vp,vs,Qkappa,Qmu,idummy,.false.,.false.)
       case (IPLANET_MOON)
         ! Moon
-        call model_vpremoon(radius,rho,drhodr,vp,vs,Qkappa,Qmu,idummy,.false., &
-                            ONE_CRUST,.false.,idummy)
+        call model_vpremoon(radius,rho,drhodr,vp,vs,Qkappa,Qmu,idummy,.false.,.false.,idummy)
       case default
         call exit_MPI(myrank,'Invalid planet, prepare gravity not implemented yet')
       end select

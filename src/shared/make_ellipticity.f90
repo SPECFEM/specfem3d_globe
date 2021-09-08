@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine make_ellipticity(nspl,rspl,ellipicity_spline,ellipicity_spline2,ONE_CRUST)
+  subroutine make_ellipticity(nspl,rspl,ellipicity_spline,ellipicity_spline2)
 
 ! creates a spline for the ellipticity profile in PREM
 ! radius and density are non-dimensional
@@ -48,7 +48,6 @@
 
   integer,intent(inout) :: nspl
   double precision,dimension(NR_DENSITY),intent(inout) :: rspl,ellipicity_spline,ellipicity_spline2
-  logical,intent(in) :: ONE_CRUST
 
   ! local parameters
   integer :: i
@@ -162,55 +161,55 @@
 
   ! sets sampling points in different layers
   ! inner core
-  do i=1,163
+  do i = 1,163
     r(i) = r_icb*dble(i-1)/dble(162)
   enddo
   ! outer core
-  do i=164,323
+  do i = 164,323
     r(i) = r_icb+(r_cmb-r_icb)*dble(i-164)/dble(159)
   enddo
   ! D''
-  do i=324,336
+  do i = 324,336
     r(i) = r_cmb+(r_topddoubleprime-r_cmb)*dble(i-324)/dble(12)
   enddo
   ! D'' to 771
-  do i=337,517
+  do i = 337,517
     r(i) = r_topddoubleprime+(r_771-r_topddoubleprime)*dble(i-337)/dble(180)
   enddo
   ! 771 to 670
-  do i=518,530
+  do i = 518,530
     r(i) = r_771+(r_670-r_771)*dble(i-518)/dble(12)
   enddo
   ! 670 to 600
-  do i=531,540
+  do i = 531,540
     r(i) = r_670+(r_600-r_670)*dble(i-531)/dble(9)
   enddo
   ! 600 to 400
-  do i=541,565
+  do i = 541,565
     r(i) = r_600+(r_400-r_600)*dble(i-541)/dble(24)
   enddo
   ! 400 to 220
-  do i=566,590
+  do i = 566,590
     r(i) = r_400+(r_220-r_400)*dble(i-566)/dble(24)
   enddo
   ! 220 to 80
-  do i=591,609
+  do i = 591,609
     r(i) = r_220+(r_80-r_220)*dble(i-591)/dble(18)
   enddo
   ! 80 to Moho
-  do i=610,619
+  do i = 610,619
     r(i) = r_80+(r_moho-r_80)*dble(i-610)/dble(9)
   enddo
   ! Moho to middle crust
-  do i=620,626
+  do i = 620,626
     r(i) = r_moho+(r_middle_crust-r_moho)*dble(i-620)/dble(6)
   enddo
   ! middle crust to ocean
-  do i=627,633
+  do i = 627,633
     r(i) = r_middle_crust+(r_ocean-r_middle_crust)*dble(i-627)/dble(6)
   enddo
   ! ocean
-  do i=634,NR_DENSITY   ! NR_DENSITY = 640
+  do i = 634,NR_DENSITY   ! NR_DENSITY = 640
     r(i) = r_ocean+(r_0-r_ocean)*dble(i-634)/dble(6)
   enddo
 
@@ -220,7 +219,7 @@
     ! Earth
     ! use PREM to get the density profile for ellipticity (fine for other 1D reference models)
     do i = 1,NR_DENSITY
-      call prem_density(r(i),rho(i),ONE_CRUST)
+      call prem_density(r(i),rho(i))
       radau(i) = rho(i)*r(i)*r(i)
     enddo
 
@@ -233,7 +232,7 @@
     enddo
     ! use Sohl & Spohn model (1997) to get the density profile for ellipticity.
     do i = 1,NR_DENSITY
-      call Sohl_density(r(i),rho(i),ONE_CRUST)
+      call Sohl_density(r(i),rho(i))
       radau(i) = rho(i)*r(i)*r(i)
     enddo
 
@@ -245,7 +244,7 @@
       r(i) = r_middle_crust+(r_0-r_middle_crust)*dble(i-627)/dble(12)
     enddo
     do i = 1,NR_DENSITY
-      call model_vpremoon_density(r(i),rho(i),ONE_CRUST)
+      call model_vpremoon_density(r(i),rho(i))
       radau(i) = rho(i)*r(i)*r(i)
     enddo
 

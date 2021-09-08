@@ -48,7 +48,7 @@
   if (ELLIPTICITY_VAL) then
     ! splines used for locating exact source/receivers positions
     ! in locate_sources() and locate_receivers() routines
-    call make_ellipticity(nspl,rspl,ellipicity_spline,ellipicity_spline2,ONE_CRUST)
+    call make_ellipticity(nspl,rspl,ellipicity_spline,ellipicity_spline2)
   endif
 
   ! read topography and bathymetry file

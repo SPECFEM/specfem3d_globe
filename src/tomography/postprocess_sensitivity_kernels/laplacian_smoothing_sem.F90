@@ -34,7 +34,7 @@ program smooth_laplacian_sem
 
   use shared_parameters, only: R_PLANET_KM
 
-  use meshfem3D_models_par, only: CRUSTAL,ONE_CRUST
+  use meshfem3D_models_par, only: CRUSTAL
 
   use postprocess_par, only: &
        NCHUNKS_VAL,NPROC_XI_VAL,NPROC_ETA_VAL,NPROCTOT_VAL,NEX_XI_VAL,NEX_ETA_VAL, &
@@ -304,7 +304,6 @@ program smooth_laplacian_sem
   ! synchronizes
   call synchronize_all()
 
-
   ! 1. Read inputs and prepare MPI / gpu
   if (.not. allocated(ibool))         allocate(ibool(ngllx, nglly, ngllz, nspec_ab))
   if (.not. allocated(valglob))       allocate(valglob(nglob_ab))
@@ -536,8 +535,7 @@ program smooth_laplacian_sem
               endif
               ! increase radius based on PREM model velocity
               if (rel_to_prem > 0) then
-               call model_prem_iso(r,rho,drhodr,vp,vs,Qkappa,Qmu,0,CRUSTAL, &
-                            ONE_CRUST,.false.)
+               call model_prem_iso(r,rho,drhodr,vp,vs,Qkappa,Qmu,0,CRUSTAL,.false.)
                if (vp > 1.0) then
                   Lv2 = Lv2 * vp
                   Lh2 = Lh2 * vp
