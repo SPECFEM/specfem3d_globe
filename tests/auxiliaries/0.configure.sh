@@ -2,7 +2,7 @@
 ###################################################
 
 # configuration parameters
-CONF_PARAM="--enable-vectorization"
+CONF_PARAM="--enable-debug"
 
 ###################################################
 testdir=`pwd`
