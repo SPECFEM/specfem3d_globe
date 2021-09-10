@@ -34,11 +34,10 @@ program smooth_laplacian_sem
 
   use shared_parameters, only: R_PLANET_KM
 
-  use meshfem3D_models_par, only: CRUSTAL,ONE_CRUST
+  use meshfem3D_models_par, only: CRUSTAL
 
   use postprocess_par, only: &
        NCHUNKS_VAL,NPROC_XI_VAL,NPROC_ETA_VAL,NPROCTOT_VAL,NEX_XI_VAL,NEX_ETA_VAL, &
-       ANGULAR_WIDTH_XI_IN_DEGREES_VAL,ANGULAR_WIDTH_ETA_IN_DEGREES_VAL, &
        NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,MAX_KERNEL_NAMES,LOCAL_PATH
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
@@ -256,7 +255,9 @@ program smooth_laplacian_sem
   endif
   call synchronize_all()
 
-  call read_parameter_file()
+  ! reads in Par_file and sets compute parameters
+  call read_compute_parameters()
+
   topo_dir = trim(LOCAL_PATH)//'/'
 
   ! checks if basin code or global code: global code uses nchunks /= 0
@@ -303,7 +304,6 @@ program smooth_laplacian_sem
 
   ! synchronizes
   call synchronize_all()
-
 
   ! 1. Read inputs and prepare MPI / gpu
   if (.not. allocated(ibool))         allocate(ibool(ngllx, nglly, ngllz, nspec_ab))
@@ -536,8 +536,7 @@ program smooth_laplacian_sem
               endif
               ! increase radius based on PREM model velocity
               if (rel_to_prem > 0) then
-               call model_prem_iso(r,rho,drhodr,vp,vs,Qkappa,Qmu,0,CRUSTAL, &
-                            ONE_CRUST,.false.)
+               call model_prem_iso(r,rho,drhodr,vp,vs,Qkappa,Qmu,0,CRUSTAL,.false.)
                if (vp > 1.0) then
                   Lv2 = Lv2 * vp
                   Lh2 = Lh2 * vp

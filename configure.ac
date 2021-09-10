@@ -752,6 +752,7 @@ AC_CONFIG_FILES([
 ])
 
 AC_CONFIG_LINKS([
+    DATA/CCREM:DATA/CCREM
     DATA/cemRequest:DATA/cemRequest
     DATA/crust1.0:DATA/crust1.0
     DATA/crust2.0:DATA/crust2.0
@@ -759,16 +760,19 @@ AC_CONFIG_LINKS([
     DATA/epcrust:DATA/epcrust
     DATA/eucrust-07:DATA/eucrust-07
     DATA/full_sphericalharmonic_model:DATA/full_sphericalharmonic_model
+    DATA/gladm25:DATA/gladm25
     DATA/heterogen:DATA/heterogen
     DATA/Lebedev_sea99:DATA/Lebedev_sea99
     DATA/Montagner_model:DATA/Montagner_model
+    DATA/moon:DATA/moon
     DATA/old:DATA/old
     DATA/PPM:DATA/PPM
     DATA/QRFSI12:DATA/QRFSI12
-    DATA/s20rts:DATA/s20rts
     DATA/s362ani:DATA/s362ani
+    DATA/s20rts:DATA/s20rts
     DATA/s40rts:DATA/s40rts
     DATA/sglobe:DATA/sglobe
+    DATA/spiral1.4:DATA/spiral1.4
     DATA/Simons_model:DATA/Simons_model
     DATA/topo_bathy:DATA/topo_bathy
     DATA/Zhao_JP_model:DATA/Zhao_JP_model

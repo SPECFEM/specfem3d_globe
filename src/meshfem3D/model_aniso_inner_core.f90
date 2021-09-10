@@ -29,8 +29,18 @@
 !
 ! based on scaling factors by Ishii et al. (2002)
 !
-! one should add an MPI_BCAST in meshfem3D_models.f90 if one
-! adds a 3D model or a read_aniso_inner_core_model subroutine
+! constant model given by Table 6 in:
+!   Joint inversion of normal mode and body wave data for inner core anisotropy
+!   1. Laterally homogeneous anisotropy, 2002.
+!   Miaki Ishii, Jeroen Tromp, Adam M. Dziewonski, Goran Ekstrom
+!   JGR Solid Earth, 107, B12, 2379.
+!
+! and for completeness, the joint paper:
+!   Joint inversion of normal mode and body wave data for inner core anisotropy
+!   2. Possible complexities, 2002.
+!   Miaki Ishii, Adam M. Dziewonski, Jeroen Tromp, Goran Ekstrom
+!   JGR Solid Earth, 107, B12. 2380.
+!
 !--------------------------------------------------------------------------------------------------
 
   subroutine model_aniso_inner_core(r,c11,c12,c13,c33,c44,REFERENCE_1D_MODEL, &
@@ -56,6 +66,7 @@
   double precision :: c66
   double precision :: scaleval,scale_GPa
   double precision :: x
+  double precision :: PREM2_RIC_UPPER
 
   logical, save :: is_first_call = .true.
 
@@ -118,6 +129,30 @@
         stop 'Error isotropic PREM values in model_aniso_inner_core() '
       endif
 
+    case (REFERENCE_MODEL_PREM2)
+      ! values at center (same as PREM)
+      vp0 = 11.2622d0
+      vs0 = 3.6678d0
+      rho0 = 13.0885d0
+
+      ! checks with input isotropic values
+      PREM2_RIC_UPPER = 1010000.d0     ! upper inner core at 1010 km radius
+      if (x * R_PLANET <= PREM2_RIC_UPPER) then
+        ! lower inner core, same value as PREM
+        vpc = 11.2622d0 - 6.3640d0*x*x
+      else
+        ! upper inner core modification
+        vpc = 11.3041d0 - 1.2730d0*x
+      endif
+
+      vsc = vs0 - 4.4475d0*x*x
+      rhoc = rho0 - 8.8381d0*x*x
+
+      ! checks
+      if (abs(vpc-vp) > TINYVAL .or. abs(vsc-vs) > TINYVAL .or. abs(rhoc-rho_dim) > TINYVAL) then
+        stop 'Error isotropic PREM2 values in model_aniso_inner_core() '
+      endif
+
     case (REFERENCE_MODEL_1DREF)
       ! values at center
       vp0 = 11262.20 / 1000.0d0
@@ -126,27 +161,33 @@
 
     case (REFERENCE_MODEL_1066A)
       ! values at center
-      vp0 = 11.33830
-      vs0 = 3.62980
-      rho0 = 13.429030
+      vp0 = 11.33830d0
+      vs0 = 3.62980d0
+      rho0 = 13.429030d0
 
     case (REFERENCE_MODEL_AK135F_NO_MUD)
       ! values at center
-      vp0 = 11.26220
-      vs0 = 3.667800
-      rho0 = 13.01220
+      vp0 = 11.26220d0
+      vs0 = 3.667800d0
+      rho0 = 13.01220d0
 
     case (REFERENCE_MODEL_JP1D)
       ! values at center
-      vp0 = 11.24094
-      vs0 = 3.56454
+      vp0 = 11.24094d0
+      vs0 = 3.56454d0
       rho0 = 13.0885d0
 
     case (REFERENCE_MODEL_SEA1D)
       ! values at center
-      vp0 = 11.240940
-      vs0 = 3.564540
-      rho0 = 13.012190
+      vp0 = 11.240940d0
+      vs0 = 3.564540d0
+      rho0 = 13.012190d0
+
+    case (REFERENCE_MODEL_CCREM)
+      ! values at center
+      vp0 = 11.2636d0
+      vs0 = 3.6677d0
+      rho0 = 13.0351d0
 
     case default
       stop 'unknown 1D reference Earth model in anisotropic inner core'
@@ -180,7 +221,7 @@
 !       c44 = mu
 !       c66 = mu
 
-! Ishii et al. (2002):
+! Ishii et al. (2002): Table 6
 !
 ! alpha = 3.490 % = (C-A)/A0    = (c33-c11)/A0
 !  beta = 0.988 % = (L-N)/A0    = (c44-c66)/A0

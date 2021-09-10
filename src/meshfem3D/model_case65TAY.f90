@@ -28,9 +28,18 @@
 !--------------------------------------------------------------------------------------------------
 ! case65TAY
 !
-! 1D mean model from thermal simulations for Mars by Plesa et al. (2020, GRL, InSight special issue)
+! 1D mean model from thermal simulations for Mars by Plesa et al. (2021):
 !
-! geothermal case 65, Taylor composition
+!   A.-C. Plesa, E. Bozdag, A. Rivoldini, M. Knapmeyer, S. M. McLennan, S. Padovan, N. Tosi, D. Breuer,
+!   D. Peter, S. Staehler, M. A. Wieczorek, M. van Driel, A. Khan, T. Spohn, 2021.
+!   Seismic Velocity Variations in a 3D Martian Mantle: Implications for the InSight Measurements,
+!   JGR Planets, 126, 6, e2020JE006755.
+!   https://doi.org/10.1029/2020JE006755
+!
+!   the 3D modeling approach is also explained in:
+!   Plesa et al. (2018), The Thermal State and Interior Structure of Mars, GRL
+!
+! this is the mean model for geothermal case 65, Taylor composition.
 !
 ! uses PREM attenuation
 !--------------------------------------------------------------------------------------------------

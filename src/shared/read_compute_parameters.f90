@@ -32,11 +32,9 @@
 !
 ! note: we split the read_compute_parameters() routine into two separate routine calls
 !       to make it easier for testing the reading of the parameter file, i.e., read_parameter_file(), and
-!       calling the compute_parameters routine, i.e., rcp_compute_parameters(), by unit testing:
+!       calling the compute_parameters routine, i.e., rcp_set_compute_parameters(), by unit testing:
 !       > make tests
 !       for example for test programs in tests/meshfem3D/
-
-  use shared_parameters
 
   implicit none
 
@@ -44,7 +42,10 @@
   call read_parameter_file()
 
   ! sets parameters for computation
-  call rcp_compute_parameters()
+  call rcp_set_compute_parameters()
+
+  ! sets mesh parameters
+  call rcp_set_mesh_parameters()
 
   end subroutine read_compute_parameters
 
@@ -52,39 +53,28 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine rcp_compute_parameters()
+  subroutine rcp_set_compute_parameters()
 
 ! sets parameters for computation based on Par_file settings
 
-  use constants, only: &
-    TINYVAL,DEGREES_TO_RADIANS, &
-    SUPPRESS_CRUSTAL_MESH,ADD_4TH_DOUBLING, &
-    DO_BENCHMARK_RUN_ONLY,NSTEP_FOR_BENCHMARK, &
-    IREGION_CRUST_MANTLE,IREGION_INNER_CORE, &
-    NGLLX,NGLLY,NGLLZ,ATTENUATION_1D_WITH_3D_STORAGE,myrank
-
+  use constants
   use shared_parameters
 
   implicit none
 
   ! local parameters
-  integer :: nblocks_xi,nblocks_eta
   double precision :: T_min_res
-  ! doubling layers
-  integer :: ielem,elem_doubling_mantle,elem_doubling_middle_outer_core,elem_doubling_bottom_outer_core
-  double precision :: DEPTH_SECOND_DOUBLING_REAL,DEPTH_THIRD_DOUBLING_REAL, &
-                          DEPTH_FOURTH_DOUBLING_REAL,distance,distance_min,zval
-  integer :: doubling, padding, tmp_sum, tmp_sum_xi, tmp_sum_eta
-  ! layers
-  integer ::  NUMBER_OF_MESH_LAYERS,layer_offset,nspec2D_xi_sb,nspec2D_eta_sb, &
-              nb_lay_sb, nspec_sb, nglob_vol, nglob_surf, nglob_edge
-  ! for the cut doublingbrick improvement
-  integer :: last_doubling_layer, cut_doubling, nglob_int_surf_xi, nglob_int_surf_eta,nglob_ext_surf, &
-              normal_doubling, nglob_center_edge, nglob_corner_edge, nglob_border_edge
-  integer :: tmp_sum_nglob2D_xi, tmp_sum_nglob2D_eta,divider,nglob_edges_h,nglob_edge_v,to_remove
+  character(len=MAX_STRING_LEN) :: path_to_add
 
-  ! count the total number of sources in the CMTSOLUTION file
-  call count_number_of_sources(NSOURCES)
+  ! chunk sizes
+  if (NCHUNKS == 6) then
+    ! global simulations
+    ANGULAR_WIDTH_XI_IN_DEGREES = 90.d0
+    ANGULAR_WIDTH_ETA_IN_DEGREES = 90.d0
+    CENTER_LATITUDE_IN_DEGREES = 0.d0
+    CENTER_LONGITUDE_IN_DEGREES = 0.d0
+    GAMMA_ROTATION_AZIMUTH = 0.d0
+  endif
 
   ! include central cube or not
   ! use regular cubed sphere instead of cube for large distances
@@ -110,12 +100,96 @@
   ! make sure single run simulation setting valid
   if (NUMBER_OF_RUNS == 1) NUMBER_OF_THIS_RUN = 1
 
+  ! sponge layer
+  if (.not. ABSORB_USING_GLOBAL_SPONGE) then
+    SPONGE_LATITUDE_IN_DEGREES = 0.d0
+    SPONGE_LONGITUDE_IN_DEGREES = 0.d0
+    SPONGE_RADIUS_IN_DEGREES = 0.d0
+  endif
+
+  ! steady state simulations
+  if (.not. STEADY_STATE_KERNEL) then
+    STEADY_STATE_LENGTH_IN_MINUTES = 0.d0
+  endif
+
+  ! ignore EXACT_MASS_MATRIX_FOR_ROTATION if rotation is not included in the simulations
+  if (.not. ROTATION) EXACT_MASS_MATRIX_FOR_ROTATION = .false.
+
+  ! re-sets attenuation flags
+  if (.not. ATTENUATION) then
+    ! turns off PARTIAL_PHYS_DISPERSION_ONLY when ATTENUATION is off in the Par_file
+    PARTIAL_PHYS_DISPERSION_ONLY = .false.
+  endif
+
+  ! re-sets ADIOS flags
+  if (.not. ADIOS_ENABLED) then
+    ADIOS_FOR_FORWARD_ARRAYS = .false.
+    ADIOS_FOR_MPI_ARRAYS = .false.
+    ADIOS_FOR_ARRAYS_SOLVER = .false.
+    ADIOS_FOR_SOLVER_MESHFILES = .false.
+    ADIOS_FOR_AVS_DX = .false.
+    ADIOS_FOR_KERNELS = .false.
+    ADIOS_FOR_MODELS = .false.
+    ADIOS_FOR_UNDO_ATTENUATION = .false.
+  endif
+
+  ! ADIOS is very useful for very large simulations (say using 2000 MPI tasks or more)
+  ! but slows down the code if used for simulations that are small or medium size, because of the overhead any library has.
+  if (ADIOS_ENABLED .and. NCHUNKS * NPROC_XI_read * NPROC_ETA_read < 2000 .and. myrank == 0) then
+    print *
+    print *,'**************'
+    print *,'**************'
+    print *,'ADIOS significantly slows down small or medium-size runs, which is the case here, please consider turning it off'
+    print *,'**************'
+    print *,'**************'
+    print *
+  endif
+
+  ! produces simulations compatible with old globe version 5.1.5
+  if (USE_OLD_VERSION_5_1_5_FORMAT) then
+    print *
+    print *,'**************'
+    print *,'using globe version 5.1.5 compatible simulation parameters'
+    if (.not. ATTENUATION_1D_WITH_3D_STORAGE ) &
+      stop 'ATTENUATION_1D_WITH_3D_STORAGE should be set to .true. for compatibility with globe version 5.1.5 '
+    if (UNDO_ATTENUATION) then
+      print *,'setting UNDO_ATTENUATION to .false. for compatibility with globe version 5.1.5 '
+      UNDO_ATTENUATION = .false.
+    endif
+    if (USE_LDDRK) then
+      print *,'setting USE_LDDRK to .false. for compatibility with globe version 5.1.5 '
+      USE_LDDRK = .false.
+    endif
+    if (EXACT_MASS_MATRIX_FOR_ROTATION) then
+      print *,'setting EXACT_MASS_MATRIX_FOR_ROTATION to .false. for compatibility with globe version 5.1.5 '
+      EXACT_MASS_MATRIX_FOR_ROTATION = .false.
+    endif
+    print *,'**************'
+    print *
+  endif
+
+  ! checks flags when perfect sphere is set
+  if (ASSUME_PERFECT_SPHERE) then
+    if (ELLIPTICITY) then
+      stop 'ELLIPTICITY not supported when ASSUME_PERFECT_SPHERE is set .true. in constants.h, please check...'
+    endif
+    if (TOPOGRAPHY) then
+      stop 'TOPOGRAPHY not supported when ASSUME_PERFECT_SPHERE is set .true. in constants.h, please check...'
+    endif
+  endif
+
+  ! see if we are running several independent runs in parallel
+  ! if so, add the right directory for that run (group numbers start at zero, but directory names start at run0001, thus we add one)
+  ! a negative value for "mygroup" is a convention that indicates that groups (i.e. sub-communicators, one per run) are off
+  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+    LOCAL_PATH = path_to_add(1:len_trim(path_to_add))//LOCAL_PATH(1:len_trim(LOCAL_PATH))
+    LOCAL_TMP_PATH = path_to_add(1:len_trim(path_to_add))//LOCAL_TMP_PATH(1:len_trim(LOCAL_TMP_PATH))
+  endif
+
   ! turns on/off corresponding 1-D/3-D model flags
   ! and sets radius for each discontinuity and ocean density values
   call get_model_parameters()
-
-  ! checks parameters
-  call rcp_check_parameters()
 
   ! sets time step size and number of layers
   ! right distribution is determined based upon maximum value of NEX
@@ -211,6 +285,37 @@
   ! however they don't need to convolve the source time function with any HDUR_MOVIE
   ! since they employ a separate noise-spectrum source S_squared
   if (NOISE_TOMOGRAPHY /= 0) HDUR_MOVIE = 0.d0
+
+  ! checks simulation setup parameters
+  call rcp_check_parameters()
+
+  end subroutine rcp_set_compute_parameters
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine rcp_set_mesh_parameters()
+
+  use constants
+  use shared_parameters
+
+  implicit none
+
+  ! local parameters
+  integer :: nblocks_xi,nblocks_eta
+  ! doubling layers
+  integer :: ielem,elem_doubling_mantle,elem_doubling_middle_outer_core,elem_doubling_bottom_outer_core
+  double precision :: DEPTH_SECOND_DOUBLING_REAL,DEPTH_THIRD_DOUBLING_REAL, &
+                          DEPTH_FOURTH_DOUBLING_REAL,distance,distance_min,zval
+  integer :: doubling, padding, tmp_sum, tmp_sum_xi, tmp_sum_eta
+  ! layers
+  integer ::  NUMBER_OF_MESH_LAYERS,layer_offset,nspec2D_xi_sb,nspec2D_eta_sb, &
+              nb_lay_sb, nspec_sb, nglob_vol, nglob_surf, nglob_edge
+  ! for the cut doublingbrick improvement
+  integer :: last_doubling_layer, cut_doubling, nglob_int_surf_xi, nglob_int_surf_eta,nglob_ext_surf, &
+              normal_doubling, nglob_center_edge, nglob_corner_edge, nglob_border_edge
+  integer :: tmp_sum_nglob2D_xi, tmp_sum_nglob2D_eta,divider,nglob_edges_h,nglob_edge_v,to_remove
 
   ! check that mesh can be coarsened in depth three or four times
   CUT_SUPERBRICK_XI=.false.
@@ -315,7 +420,7 @@
      ATT5 = 1
   endif
 
-  end subroutine rcp_compute_parameters
+  end subroutine rcp_set_mesh_parameters
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -323,13 +428,11 @@
 
   subroutine rcp_check_parameters()
 
-  use constants, only: &
-    CUSTOM_REAL,SIZE_REAL,SIZE_DOUBLE,NUMFACES_SHARED,NUMCORNERS_SHARED, &
-    N_SLS,NGNOD,NGNOD2D,NGLLX,NGLLY,GRAVITY_INTEGRALS
-
+  use constants
   use shared_parameters
 
   implicit none
+
   ! local parameter
   integer :: nex_minimum
 
@@ -498,6 +601,27 @@
   ! adjoint simulations: seismogram output only works if each process writes out its local seismos
   if (WRITE_SEISMOGRAMS_BY_MAIN .and. SIMULATION_TYPE == 2) &
     stop 'For SIMULATION_TYPE == 2, please set WRITE_SEISMOGRAMS_BY_MAIN to .false.'
+
+!----------------------------------------------
+!
+! status of implementation
+!
+!----------------------------------------------
+!
+! please remove these security checks only after validating new features
+
+!! DK DK July 2013: temporary, the time for Matthieu Lefebvre to merge his ADIOS implementation
+  if (ADIOS_ENABLED .and. SAVE_REGULAR_KL ) &
+    stop 'ADIOS_ENABLED support not implemented yet for SAVE_REGULAR_KL'
+
+  ! LDDRK
+  if (USE_LDDRK .and. (ABSORBING_CONDITIONS .and. .not. UNDO_ATTENUATION) ) &
+    stop 'USE_LDDRK support requires to use UNDO_ATTENUATION when absorbing boundaries are turned on'
+
+  if (UNDO_ATTENUATION .and. MOVIE_VOLUME .and. MOVIE_VOLUME_TYPE == 4 ) &
+    stop 'UNDO_ATTENUATION support not implemented yet for MOVIE_VOLUME_TYPE == 4 simulations'
+  if (UNDO_ATTENUATION .and. SIMULATION_TYPE == 3 .and. (MOVIE_VOLUME .or. MOVIE_SURFACE) ) &
+    stop 'UNDO_ATTENUATION support not implemented yet for SIMULATION_TYPE == 3 and movie simulations'
 
   end subroutine rcp_check_parameters
 

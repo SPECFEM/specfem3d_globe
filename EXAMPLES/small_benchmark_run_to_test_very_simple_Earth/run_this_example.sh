@@ -36,7 +36,10 @@ cd ../
 cp DATA/Par_file ../../DATA
 cd ../../
 make clean
-make all
+make -j4 all
+
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
 # backup of constants setup
 cp setup/* $currentdir/OUTPUT_FILES/
@@ -47,16 +50,17 @@ cd $currentdir
 
 # copy executables
 mkdir -p bin
-rm -rf bin/*
-cp ../../bin/xmeshfem3D ./bin/
-cp ../../bin/xspecfem3D ./bin/
-cp ../../bin/xcombine_vol_data ./bin/
+rm -rf bin/x*
+cp ../../bin/x* ./bin/
 
 # run mesher & solver
 echo
 echo "  running script..."
 echo
 ./run_mesher_solver.bash
+
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
 echo `date`
 

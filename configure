@@ -10307,7 +10307,7 @@ ac_config_files="$ac_config_files Makefile setup/constants.h setup/constants_tom
 ac_config_files="$ac_config_files DATA/Par_file:DATA/Par_file DATA/CMTSOLUTION:DATA/CMTSOLUTION DATA/STATIONS:DATA/STATIONS"
 
 
-ac_config_links="$ac_config_links DATA/cemRequest:DATA/cemRequest DATA/crust1.0:DATA/crust1.0 DATA/crust2.0:DATA/crust2.0 DATA/crustmap:DATA/crustmap DATA/epcrust:DATA/epcrust DATA/eucrust-07:DATA/eucrust-07 DATA/full_sphericalharmonic_model:DATA/full_sphericalharmonic_model DATA/heterogen:DATA/heterogen DATA/Lebedev_sea99:DATA/Lebedev_sea99 DATA/Montagner_model:DATA/Montagner_model DATA/old:DATA/old DATA/PPM:DATA/PPM DATA/QRFSI12:DATA/QRFSI12 DATA/s20rts:DATA/s20rts DATA/s362ani:DATA/s362ani DATA/s40rts:DATA/s40rts DATA/sglobe:DATA/sglobe DATA/Simons_model:DATA/Simons_model DATA/topo_bathy:DATA/topo_bathy DATA/Zhao_JP_model:DATA/Zhao_JP_model"
+ac_config_links="$ac_config_links DATA/CCREM:DATA/CCREM DATA/cemRequest:DATA/cemRequest DATA/crust1.0:DATA/crust1.0 DATA/crust2.0:DATA/crust2.0 DATA/crustmap:DATA/crustmap DATA/epcrust:DATA/epcrust DATA/eucrust-07:DATA/eucrust-07 DATA/full_sphericalharmonic_model:DATA/full_sphericalharmonic_model DATA/gladm25:DATA/gladm25 DATA/heterogen:DATA/heterogen DATA/Lebedev_sea99:DATA/Lebedev_sea99 DATA/Montagner_model:DATA/Montagner_model DATA/moon:DATA/moon DATA/old:DATA/old DATA/PPM:DATA/PPM DATA/QRFSI12:DATA/QRFSI12 DATA/s362ani:DATA/s362ani DATA/s20rts:DATA/s20rts DATA/s40rts:DATA/s40rts DATA/sglobe:DATA/sglobe DATA/spiral1.4:DATA/spiral1.4 DATA/Simons_model:DATA/Simons_model DATA/topo_bathy:DATA/topo_bathy DATA/Zhao_JP_model:DATA/Zhao_JP_model"
 
 
 ac_config_commands="$ac_config_commands bin"
@@ -11178,6 +11178,7 @@ do
     "DATA/Par_file") CONFIG_FILES="$CONFIG_FILES DATA/Par_file:DATA/Par_file" ;;
     "DATA/CMTSOLUTION") CONFIG_FILES="$CONFIG_FILES DATA/CMTSOLUTION:DATA/CMTSOLUTION" ;;
     "DATA/STATIONS") CONFIG_FILES="$CONFIG_FILES DATA/STATIONS:DATA/STATIONS" ;;
+    "DATA/CCREM") CONFIG_LINKS="$CONFIG_LINKS DATA/CCREM:DATA/CCREM" ;;
     "DATA/cemRequest") CONFIG_LINKS="$CONFIG_LINKS DATA/cemRequest:DATA/cemRequest" ;;
     "DATA/crust1.0") CONFIG_LINKS="$CONFIG_LINKS DATA/crust1.0:DATA/crust1.0" ;;
     "DATA/crust2.0") CONFIG_LINKS="$CONFIG_LINKS DATA/crust2.0:DATA/crust2.0" ;;
@@ -11185,16 +11186,19 @@ do
     "DATA/epcrust") CONFIG_LINKS="$CONFIG_LINKS DATA/epcrust:DATA/epcrust" ;;
     "DATA/eucrust-07") CONFIG_LINKS="$CONFIG_LINKS DATA/eucrust-07:DATA/eucrust-07" ;;
     "DATA/full_sphericalharmonic_model") CONFIG_LINKS="$CONFIG_LINKS DATA/full_sphericalharmonic_model:DATA/full_sphericalharmonic_model" ;;
+    "DATA/gladm25") CONFIG_LINKS="$CONFIG_LINKS DATA/gladm25:DATA/gladm25" ;;
     "DATA/heterogen") CONFIG_LINKS="$CONFIG_LINKS DATA/heterogen:DATA/heterogen" ;;
     "DATA/Lebedev_sea99") CONFIG_LINKS="$CONFIG_LINKS DATA/Lebedev_sea99:DATA/Lebedev_sea99" ;;
     "DATA/Montagner_model") CONFIG_LINKS="$CONFIG_LINKS DATA/Montagner_model:DATA/Montagner_model" ;;
+    "DATA/moon") CONFIG_LINKS="$CONFIG_LINKS DATA/moon:DATA/moon" ;;
     "DATA/old") CONFIG_LINKS="$CONFIG_LINKS DATA/old:DATA/old" ;;
     "DATA/PPM") CONFIG_LINKS="$CONFIG_LINKS DATA/PPM:DATA/PPM" ;;
     "DATA/QRFSI12") CONFIG_LINKS="$CONFIG_LINKS DATA/QRFSI12:DATA/QRFSI12" ;;
-    "DATA/s20rts") CONFIG_LINKS="$CONFIG_LINKS DATA/s20rts:DATA/s20rts" ;;
     "DATA/s362ani") CONFIG_LINKS="$CONFIG_LINKS DATA/s362ani:DATA/s362ani" ;;
+    "DATA/s20rts") CONFIG_LINKS="$CONFIG_LINKS DATA/s20rts:DATA/s20rts" ;;
     "DATA/s40rts") CONFIG_LINKS="$CONFIG_LINKS DATA/s40rts:DATA/s40rts" ;;
     "DATA/sglobe") CONFIG_LINKS="$CONFIG_LINKS DATA/sglobe:DATA/sglobe" ;;
+    "DATA/spiral1.4") CONFIG_LINKS="$CONFIG_LINKS DATA/spiral1.4:DATA/spiral1.4" ;;
     "DATA/Simons_model") CONFIG_LINKS="$CONFIG_LINKS DATA/Simons_model:DATA/Simons_model" ;;
     "DATA/topo_bathy") CONFIG_LINKS="$CONFIG_LINKS DATA/topo_bathy:DATA/topo_bathy" ;;
     "DATA/Zhao_JP_model") CONFIG_LINKS="$CONFIG_LINKS DATA/Zhao_JP_model:DATA/Zhao_JP_model" ;;

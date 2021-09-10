@@ -285,13 +285,15 @@ typedef double realw;
 // shared memory size 96KB per SM (maximum shared memory per thread block)
 // maximum registers 255 per thread
 //
-// Volta V100: Using --ptxas-options -v flags, by default
-//             crust_mantle_impl_kernel_forward kernel Used 81 registers, 6200 bytes smem, 948 bytes cmem[0]
-//             81 * 128 threads -> 10368 registers     for Volta: total of 65536 -> limits active blocks to 6
-//             using launch bounds to increase the number of blocks to 7 will lead to register spilling.
-//             For Volta, the spilling slows down the kernels by ~5%
+// Volta V100: check register usage by using CUDA_FLAGS --ptxas-options -v
+//             crust_mantle_impl_kernel_forward kernel:
+//               ptxas info    : Used 48 registers, 6200 bytes smem, 996 bytes cmem[0]
+//             48 * 128 threads -> 6144 registers     for Volta: total of 65536 -> limits active blocks to 10
+//             using launch bounds to increase the number of blocks to 12 will lead to register spilling.
+//             For Volta, the spilling slows down the kernels by ~5-10%
 #undef USE_LAUNCH_BOUNDS
-//#define LAUNCH_MIN_BLOCKS 6  // with 6 blocks, kernel uses 80 registers and would lead to ~1% speed up
+//#define USE_LAUNCH_BOUNDS
+//#define LAUNCH_MIN_BLOCKS 12  // with 12 blocks, kernel uses 40 registers and would lead to a slow down
 
 // using float3 instead of float numbers to make use of CUDA intrinsic float formats
 // compiler infos (--ptxas-options -v flag)

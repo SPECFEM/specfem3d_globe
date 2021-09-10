@@ -10,26 +10,27 @@
 %-----------------------------------------------------------------------------------------------------------------------------------%
 
 To get the SPECFEM3D\_GLOBE software package, type this:
+{\small
 \begin{verbatim}
-git clone --recursive --branch devel https://github.com/geodynamics/specfem3d_globe.git
+  git clone --recursive --branch devel https://github.com/geodynamics/specfem3d_globe.git
 \end{verbatim}
-
-
+}
+\noindent
 Then, to configure the software for your system, run the
 \texttt{configure} shell script. This script will attempt to guess
 the appropriate configuration values for your system. However, at
 a minimum, it is recommended that you explicitly specify the appropriate
 command names for your Fortran compiler (another option is to define FC, CC and MPIF90 in your .bash\_profile
 or your .cshrc file):
-%
+{\small
 \begin{verbatim}
-    ./configure FC=gfortran CC=gcc MPIFC=mpif90
+  ./configure FC=gfortran CC=gcc MPIFC=mpif90
 \end{verbatim}
-
-You can replace the GNU compilers above (gfortran and gcc) with other compilers if you want to; for instance for Intel ifort and icc use FC=ifort CC=icc instead.
+}
+\noindent
+You can replace the GNU compilers above (gfortran and gcc) with other compilers if you want to; for instance for Intel ifort and icc use FC=ifort CC=icc instead.\\
 
 Before running the \texttt{configure} script, you should probably edit file \texttt{flags.guess} to make sure that it contains the best compiler options for your system. Known issues or things to check are:
-
 \begin{description}
 \item [{\texttt{GCC gfortran compiler}}] The code makes use of Fortran 2008 features, e.g., the \texttt{contiguous} array attribute. We thus recommend using a gfortran version 4.6.0 or higher.
 \item [{\texttt{Intel ifort compiler}}] See if you need to add \texttt{-assume byterecl} for your machine. In the case of that compiler, we have noticed that initial release versions sometimes have bugs or issues that can lead to wrong results when running the code, thus we \emph{strongly} recommend using a version for which at least one service pack or update has been installed.
@@ -41,9 +42,11 @@ remove that option from file \texttt{flags.guess} or change it to \texttt{-assum
 
 When compiling on an IBM machine with the \texttt{xlf} and \texttt{xlc} compilers, we suggest running the \texttt{configure} script
 with the following options:
+{\small
 \begin{verbatim}
-./configure FC=xlf90_r MPIFC=mpif90 CC=xlc_r CFLAGS="-O3 -q64" FCFLAGS="-O3 -q64"
+  ./configure FC=xlf90_r MPIFC=mpif90 CC=xlc_r CFLAGS="-O3 -q64" FCFLAGS="-O3 -q64"
 \end{verbatim}
+}
 
 If you have problems configuring the code on a Cray machine, i.e. for instance if you get an error message from the \texttt{configure} script, try exporting these two variables:
 \texttt{MPI\_INC=\${CRAY\_MPICH2\_DIR}/include and FCLIBS=" "}, and for more details if needed you can refer to the \texttt{utils/Cray\_compiler\_information} directory.
@@ -76,75 +79,101 @@ SPECFEM3D\_GLOBE now supports CUDA, OpenCL and HIP GPU acceleration.
 CUDA configuration can be enabled with \texttt{-{}-with-cuda} flag and
 \texttt{CUDA\_FLAGS=}, \texttt{CUDA\_LIB=}, \texttt{CUDA\_INC=}
 and \texttt{ MPI\_INC=} variables like
+{\small
 \begin{verbatim}
-./configure --with-cuda CUDA_FLAGS= CUDA_LIB= CUDA_INC= MPI_INC= ..
+  ./configure --with-cuda CUDA_FLAGS= CUDA_LIB= CUDA_INC= MPI_INC= ..
 \end{verbatim}
+}
+\noindent
 When compiling for specific GPU cards, you can enable the corresponding Nvidia GPU card architecture version with:
+{\small
 \begin{verbatim}
   ./configure --with-cuda=cuda9 ..
 \end{verbatim}
+}
+\noindent
 where for example \texttt{cuda4,cuda5,cuda6,cuda7,..} specifies the target GPU architecture of your card,
 (e.g., with CUDA 9 this refers to Volta V100 cards), rather than the installed version of the CUDA toolkit.
 Before CUDA version 5, one version supported basically one new architecture and needed a different kind of compilation.
 Since version 5, the compilation has stayed the same, but newer versions supported newer architectures.
 However at the moment, we still have one version linked to one specific architecture:
+{\small
 \begin{verbatim}
-- CUDA 4 for Tesla,   cards like K10, Geforce GTX 650, ..
-- CUDA 5 for Kepler,  like K20
-- CUDA 6 for Kepler,  like K80
-- CUDA 7 for Maxwell, like Quadro K2200
-- CUDA 8 for Pascal,  like P100
-- CUDA 9 for Volta,   like V100
-- CUDA 10 for Turing, like GeForce RTX 2080
-- CUDA 11 for Ampere, like A100
+  - CUDA 4 for Tesla,   cards like K10, Geforce GTX 650, ..
+  - CUDA 5 for Kepler,  like K20
+  - CUDA 6 for Kepler,  like K80
+  - CUDA 7 for Maxwell, like Quadro K2200
+  - CUDA 8 for Pascal,  like P100
+  - CUDA 9 for Volta,   like V100
+  - CUDA 10 for Turing, like GeForce RTX 2080
+  - CUDA 11 for Ampere, like A100
 \end{verbatim}
+}
+\noindent
 So even if you have the new CUDA toolkit version 11, but you want to run on say a K20 GPU, then you would still configure with:
+{\small
 \begin{verbatim}
   ./configure --with-cuda=cuda5
 \end{verbatim}
+}
+\noindent
 The compilation with the cuda5 setting chooses then the right architecture (\texttt{-gencode=arch=compute\_35,code=sm\_35} for K20 cards).\\
 
-SPECFEM3D\_GLOBE also supports CUDA-aware MPI. This code feature can be enabled by adding the \texttt{-{}-enable-cuda-aware-mpi} flag to
+SPECFEM3D\_GLOBE also supports CUDA-aware MPI. This code feature can be enabled by adding the flag \texttt{-{}-enable-cuda-aware-mpi} to
 the configuration, like:
+{\small
 \begin{verbatim}
   ./configure --with-cuda=cuda9 --enable-cuda-aware-mpi ..
 \end{verbatim}
+}
+\noindent
 Please make sure beforehand that your MPI installation supports CUDA-aware MPI.
 For example, with OpenMPI installed, check the output of the command
+{\small
 \begin{verbatim}
-ompi_info --parsable --all | grep mpi_built_with_cuda_support:value
+  ompi_info --parsable --all | grep mpi_built_with_cuda_support:value
 \end{verbatim}
+}
+\noindent
 Without a CUDA-aware MPI installation, the code will fall back to its default handling, i.e., passing MPI buffers through the CPU.
 In case available, test if this feature will improve the overall performance of your simulation.\\
 
 The same applies to compilation for AMD cards with HIP:
+{\small
 \begin{verbatim}
   ./configure --with-hip ..
 \end{verbatim}
+}
 or
+{\small
 \begin{verbatim}
   ./configure --with-hip=MI8 ..
 \end{verbatim}
+}
+\noindent
 where for example \texttt{MI8,MI25,MI50,MI100,..} specifies the target GPU architecture of your card.\\
 
 
 OpenCL can be enabled with the \texttt{-{}-with-opencl} flag, and the
 compilation can be controlled through three variables: \texttt{OCL\_LIB=},
 \texttt{OCL\_INC=} and \texttt{OCL\_GPU\_FLAGS=}.
+{\small
 \begin{verbatim}
-./configure --with-opencl OCL_LIB= OCL_INC= OCL_GPU_FLAGS=..
+  ./configure --with-opencl OCL_LIB= OCL_INC= OCL_GPU_FLAGS=..
 \end{verbatim}
-
+}
 
 Both CUDA and OpenCL environments can be compiled simultaneously by merging these two lines.
 For the runtime configuration, the \texttt{GPU\_MODE} flag must be set
 to \texttt{.true.}. In addition, we use three parameters to select the
 environments and GPU:
+{\small
 \begin{verbatim}
-GPU_RUNTIME = 0|1|2|3
-GPU_PLATFORM = filter|*
-GPU_DEVICE = filter|*
+  GPU_RUNTIME = 0|1|2|3
+  GPU_PLATFORM = filter|*
+  GPU_DEVICE = filter|*
 \end{verbatim}
+}
 
 \begin{description}
 \item[\texttt{GPU\_RUNTIME}] sets the runtime environments: $1$ for CUDA, $2$ for OpenCL, $3$ for HIP
@@ -187,9 +216,12 @@ architectures.\\
 
 \noindent
 To enable OpenMP,  add the flag \texttt{-{}-enable-openmp} to the configuration:
+{\small
 \begin{verbatim}
-./configure --enable-openmp ..
+  ./configure --enable-openmp ..
 \end{verbatim}
+}
+\noindent
 This will add the corresponding OpenMP flag for the chosen Fortran compiler.\\
 
 
@@ -222,9 +254,11 @@ This must correspond to the same underlying compiler specified by
 when you attempt to build the code. If you are unsure about this,
 it is usually safe to set both \texttt{FC} and \texttt{MPIFC} to the
 MPI compiler command for your system:
+{\small
 \begin{verbatim}
-./configure FC=mpif90 MPIFC=mpif90
+  ./configure FC=mpif90 MPIFC=mpif90
 \end{verbatim}
+}
 \end{description}
 
 \begin{description}
@@ -323,10 +357,12 @@ Installation instructions for IBM BlueGene (from October 2012):\\
 
 \noindent
 Edit file \texttt{flags.guess} and put this for \texttt{FLAGS\_CHECK}:
+{\small
 \begin{verbatim}
 -g -qfullpath -O2 -qsave -qstrict -qtune=qp -qarch=qp -qcache=auto -qhalt=w \
   -qfree=f90 -qsuffix=f=f90 -qlanglvl=95pure -Q -Q+rank,swap_all -Wl,-relax
 \end{verbatim}
+}
 
 \noindent
 The most relevant are the -qarch and -qtune flags, otherwise if these flags are set to ``auto'' then they are wrongly assigned to
@@ -343,19 +379,23 @@ or \texttt{module load bgq-xl} (another, less efficient option is to load the GN
 
 \noindent
 Then, to configure the code, type this:
+{\small
 \begin{verbatim}
-./configure FC=bgxlf90_r MPIFC=mpixlf90_r CC=bgxlc_r LOCAL_PATH_IS_ALSO_GLOBAL=true
+  ./configure FC=bgxlf90_r MPIFC=mpixlf90_r CC=bgxlc_r LOCAL_PATH_IS_ALSO_GLOBAL=true
 \end{verbatim}
+}
 
 \noindent
 \underline{Older installation instruction for IBM BlueGene, from 2011:}\\
 
 \noindent
 To compile the code on an IBM BlueGene, Laurent L\'eger from IDRIS, France, suggests the following: compile the code with
+{\small
 \begin{verbatim}
 FLAGS\_CHECK="-O3 -qsave -qstrict -qtune=auto -qarch=450d -qcache=auto \
   -qfree=f90 -qsuffix=f=f90 -g -qlanglvl=95pure -qhalt=w -Q -Q+rank,swap_all -Wl,-relax"
 \end{verbatim}
+}
 
 \noindent
 Option "-Wl,-relax" must be added on many (but not all) BlueGene systems to be able to link the binaries \texttt{xmeshfem3D}
@@ -365,20 +405,24 @@ On the contrary, on some BlueGene systems that use the native AIX linker option 
 
 \noindent
 One then just needs to pass the right commands to the \texttt{configure} script:
+{\small
 \begin{verbatim}
-./configure --prefix=/path/to/SPECFEM3DG_SP --host=Babel --build=BGP \
+  ./configure --prefix=/path/to/SPECFEM3DG_SP --host=Babel --build=BGP \
       FC=bgxlf90_r MPIFC=mpixlf90_r CC=bgxlc_r  \
       LOCAL_PATH_IS_ALSO_GLOBAL=false
 \end{verbatim}
+}
 
 \noindent
 This trick can be useful for all hosts on which one needs to cross-compile.
 
 \noindent
 On BlueGene, one also needs to run the \texttt{xcreate\_header\_file} binary file manually rather than in the Makefile:
+{\small
 \begin{verbatim}
-bgrun -np 1 -mode VN -exe ./bin/xcreate_header_file
+  bgrun -np 1 -mode VN -exe ./bin/xcreate_header_file
 \end{verbatim}
+}
 
 
 %-----------------------------------------------------------------------------------------------------------------------------------%
@@ -392,14 +436,20 @@ All you could add is the flag \texttt{-xMIC-AVX512} to your Fortran flags in the
 Since there are different memory types available with a KNL, make sure to use fast memory allocations, i.e. MCDRAM, which has a higher memory bandwidth.
 Assuming you use a flat mode setup of the KNL chip, you could use the Linux tool \texttt{numactl} to specify which memory node to bind to.
 For example, check with
+{\small
 \begin{verbatim}
-numactl --hardware
+  numactl --hardware
 \end{verbatim}
+}
+\noindent
 which node contains CPU cores and which one only binds to MCDRAM ($\sim$16GB). In flat mode setup, most likely node~1 does.
 For a small example on a single KNL with 4~MPI processes and 16~OpenMP threads each, you would run the solver with a command like
+{\small
 \begin{verbatim}
 OMP_NUM_THREADS=16 mpirun -np 4 numactl --membind=1 ./bin/xspecfem3D
 \end{verbatim}
+}
+\noindent
 The ideal setup of MPI processes and OpenMP threads per KNL depends on your specific hardware and simulation setup. We see good results when using a combination of both, with a total number of threads slightly less than the total count of cores on the chip.
 
 As a side remark for developers, another possibility would be to add following compiler directives in the source code
@@ -412,6 +462,7 @@ As a side remark for developers, another possibility would be to add following c
 !DEC$ ATTRIBUTES FASTMEM :: displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle
 \end{verbatim}
 }
+\noindent
 These directives will work with Intel ifort compilers and will need the additional linker/compiler flag \texttt{-lmemkind} to work properly.
 We omitted these directives for now to avoid confusion with other possible simulation setups.
 
@@ -437,11 +488,11 @@ architecture. In such a case, typing \texttt{``make all''} on the frontend will 
 
 \noindent
 In \texttt{src/create\_header\_file/Makefile} put this instead of the current values:
-
+{\small
 \begin{verbatim}
 FLAGS_CHECK = -O0
 \end{verbatim}
-
+}
 \noindent
 and replace
 {\small

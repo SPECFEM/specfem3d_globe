@@ -13,7 +13,6 @@ OBJECTS = \
 	$O/auto_ner.shared.o \
 	$O/broadcast_computed_parameters.shared.o \
 	$O/count_elements.shared.o \
-	$O/count_number_of_sources.shared.o \
 	$O/count_points.shared.o \
 	$O/define_all_layers.shared.o \
 	$O/euler_angles.shared.o \

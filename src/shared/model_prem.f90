@@ -36,6 +36,19 @@
 ! Isotropic (iso) and transversely isotropic (aniso) version of the
 ! spherically symmetric Preliminary Reference Earth Model
 !
+!
+! PREM2 [Song and Helmberger, 1995]
+!
+! X. Song and D. V. Helmberger.
+! A P wave velocity model of Earth's core.
+! J. Geophys. Res., 100, B7, pp. 9817-9830, 1995
+!
+! major feature of PREM2 are:
+! (1) large velocity jump at the inner core boundary
+! (2) near zero gradient for bottom 150km of the fluid core
+! (3) nearly constant t*=0.35s for inner core attenuation
+! PREM2 has an average velocity lower than PREM in the lowermost mantle.
+!
 !--------------------------------------------------------------------------------------------------
 
   module model_prem_par
@@ -59,7 +72,16 @@
   double precision, parameter :: PREM_R771 = 5600000.d0
   double precision, parameter :: PREM_RTOPDDOUBLEPRIME = 3630000.d0
   double precision, parameter :: PREM_RCMB = 3480000.d0             !   2891 km depth
-  double precision, parameter :: PREM_RICB = 1221000.d0
+  ! note: SPECFEM versions up to 8.0 (Aug, 2021) used an inner core radius of 1221 km;
+  !       based on Table 1 in Dziewonski&Anderson's PREM paper, the inner core radius is at 1221.5 km
+  !double precision, parameter :: PREM_RICB = 1221000.d0            ! old versions
+  double precision, parameter :: PREM_RICB = 1221500.d0
+
+  ! PREM2 additional radii for modifications
+  double precision, parameter :: PREM2_RDDOUBLEPRIME_UPPER = 3840000.d0 ! upper D'' region at 3840km radius
+  double precision, parameter :: PREM2_ROC_LOWER = 1621500.d0     ! lower outer core at 1621.5km radius
+  double precision, parameter :: PREM2_RIC_UPPER = 1010000.d0     ! upper inner core at 1010 km radius
+
 
   ! densities
   double precision, parameter :: PREM_RHO_OCEANS = 1020.0         ! for ocean load
@@ -72,11 +94,10 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_prem_iso(x,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &
-                            ONE_CRUST,check_doubling_flag)
+  subroutine model_prem_iso(x,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL,check_doubling_flag)
 
   use constants
-  use shared_parameters, only: R_PLANET,RHOAV
+  use shared_parameters, only: R_PLANET,RHOAV,ONE_CRUST,REFERENCE_1D_MODEL
 
   use model_prem_par
 
@@ -88,7 +109,7 @@
   double precision,intent(in) :: x
   double precision,intent(inout) :: rho,drhodr,vp,vs,Qkappa,Qmu
 
-  logical,intent(in) :: CRUSTAL,ONE_CRUST,check_doubling_flag
+  logical,intent(in) :: CRUSTAL,check_doubling_flag
   integer,intent(in) :: idoubling
 
   ! local parameters
@@ -151,145 +172,187 @@
 !--- inner core
 !
   if (r >= 0.d0 .and. r <= PREM_RICB) then
-    drhodr=-2.0d0*8.8381d0*x
-    rho=13.0885d0-8.8381d0*x*x
-    vp=11.2622d0-6.3640d0*x*x
-    vs=3.6678d0-4.4475d0*x*x
-    Qmu=84.6d0
-    Qkappa=1327.7d0
+    drhodr = -2.0d0*8.8381d0*x
+    rho = 13.0885d0 - 8.8381d0*x*x
+    if (REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM2) then
+      ! PREM2
+      if (r <= PREM2_RIC_UPPER) then
+        ! lower inner core, same value as PREM
+        vp = 11.2622d0 - 6.3640d0*x*x
+      else
+        ! upper inner core modification
+        vp = 11.3041d0 - 1.2730d0*x
+      endif
+    else
+      ! PREM
+      vp = 11.2622d0 - 6.3640d0*x*x
+    endif
+    vs = 3.6678d0 - 4.4475d0*x*x
+    Qmu = 84.6d0
+    Qkappa = 1327.7d0
 !
 !--- outer core
 !
   else if (r > PREM_RICB .and. r <= PREM_RCMB) then
-    drhodr=-1.2638d0-2.0d0*3.6426d0*x-3.0d0*5.5281d0*x*x
-    rho=12.5815d0-1.2638d0*x-3.6426d0*x*x-5.5281d0*x*x*x
-    vp=11.0487d0-4.0362d0*x+4.8023d0*x*x-13.5732d0*x*x*x
-    vs=0.0d0
-    Qmu=0.0d0
-    Qkappa=57827.0d0
+    drhodr = -1.2638d0 - 2.0d0*3.6426d0*x - 3.0d0*5.5281d0*x*x
+    rho = 12.5815d0 - 1.2638d0*x - 3.6426d0*x*x - 5.5281d0*x*x*x
+    if (REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM2) then
+      ! PREM2
+      if (r <= PREM2_ROC_LOWER) then
+        ! lower outer core modification
+        vp = 4.0354d0 + 82.0080d0*x - 347.7690d0*x*x + 468.7860d0*x*x*x
+      else
+        ! upper outer core, same value as PREM
+        vp = 11.0487d0 - 4.0362d0*x + 4.8023d0*x*x - 13.5732d0*x*x*x
+      endif
+    else
+      ! PREM
+      vp = 11.0487d0 - 4.0362d0*x + 4.8023d0*x*x - 13.5732d0*x*x*x
+    endif
+    vs = 0.0d0
+    Qmu = 0.0d0
+    Qkappa = 57827.0d0
 !
 !--- D" at the base of the mantle
 !
   else if (r > PREM_RCMB .and. r <= PREM_RTOPDDOUBLEPRIME) then
-    drhodr=-6.4761d0+2.0d0*5.5283d0*x-3.0d0*3.0807d0*x*x
-    rho=7.9565d0-6.4761d0*x+5.5283d0*x*x-3.0807d0*x*x*x
-    vp=15.3891d0-5.3181d0*x+5.5242d0*x*x-2.5514d0*x*x*x
-    vs=6.9254d0+1.4672d0*x-2.0834d0*x*x+0.9783d0*x*x*x
-    Qmu=312.0d0
-    Qkappa=57827.0d0
+    drhodr = -6.4761d0 + 2.0d0*5.5283d0*x - 3.0d0*3.0807d0*x*x
+    rho = 7.9565d0 - 6.4761d0*x + 5.5283d0*x*x - 3.0807d0*x*x*x
+    if (REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM2) then
+      ! PREM2 modification between RCMB and D'' upper region
+      vp = 14.2743d0 - 1.3998d0*x
+    else
+      ! PREM
+      vp = 15.3891d0 - 5.3181d0*x + 5.5242d0*x*x - 2.5514d0*x*x*x
+    endif
+    vs = 6.9254d0 + 1.4672d0*x - 2.0834d0*x*x + 0.9783d0*x*x*x
+    Qmu = 312.0d0
+    Qkappa = 57827.0d0
 !
 !--- mantle: from top of D" to d670
 !
   else if (r > PREM_RTOPDDOUBLEPRIME .and. r <= PREM_R771) then
-    drhodr=-6.4761d0+2.0d0*5.5283d0*x-3.0d0*3.0807d0*x*x
-    rho=7.9565d0-6.4761d0*x+5.5283d0*x*x-3.0807d0*x*x*x
-    vp=24.9520d0-40.4673d0*x+51.4832d0*x*x-26.6419d0*x*x*x
-    vs=11.1671d0-13.7818d0*x+17.4575d0*x*x-9.2777d0*x*x*x
-    Qmu=312.0d0
-    Qkappa=57827.0d0
+    drhodr = -6.4761d0 + 2.0d0*5.5283d0*x - 3.0d0*3.0807d0*x*x
+    rho = 7.9565d0 - 6.4761d0*x + 5.5283d0*x*x - 3.0807d0*x*x*x
+    if (REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM2) then
+      ! PREM2
+      if (r <= PREM2_RDDOUBLEPRIME_UPPER) then
+        ! PREM2 modification between RCMB and D'' upper region
+        vp = 14.2743d0 - 1.3998d0*x
+      else
+        ! above D'' extended region, same value as PREM
+        vp = 24.9520d0 - 40.4673d0*x + 51.4832d0*x*x - 26.6419d0*x*x*x
+      endif
+    else
+      ! PREM
+      vp = 24.9520d0 - 40.4673d0*x + 51.4832d0*x*x - 26.6419d0*x*x*x
+    endif
+    vs = 11.1671d0 - 13.7818d0*x + 17.4575d0*x*x - 9.2777d0*x*x*x
+    Qmu = 312.0d0
+    Qkappa = 57827.0d0
   else if (r > PREM_R771 .and. r <= PREM_R670) then
-    drhodr=-6.4761d0+2.0d0*5.5283d0*x-3.0d0*3.0807d0*x*x
-    rho=7.9565d0-6.4761d0*x+5.5283d0*x*x-3.0807d0*x*x*x
-    vp=29.2766d0-23.6027d0*x+5.5242d0*x*x-2.5514d0*x*x*x
-    vs=22.3459d0-17.2473d0*x-2.0834d0*x*x+0.9783d0*x*x*x
-    Qmu=312.0d0
-    Qkappa=57827.0d0
+    drhodr = -6.4761d0 + 2.0d0*5.5283d0*x - 3.0d0*3.0807d0*x*x
+    rho = 7.9565d0 - 6.4761d0*x + 5.5283d0*x*x - 3.0807d0*x*x*x
+    vp = 29.2766d0 - 23.6027d0*x + 5.5242d0*x*x - 2.5514d0*x*x*x
+    vs = 22.3459d0 - 17.2473d0*x - 2.0834d0*x*x + 0.9783d0*x*x*x
+    Qmu = 312.0d0
+    Qkappa = 57827.0d0
 !
 !--- mantle: above d670
 !
   else if (r > PREM_R670 .and. r <= PREM_R600) then
-    drhodr=-1.4836d0
-    rho=5.3197d0-1.4836d0*x
-    vp=19.0957d0-9.8672d0*x
-    vs=9.9839d0-4.9324d0*x
-    Qmu=143.0d0
-    Qkappa=57827.0d0
+    drhodr = -1.4836d0
+    rho = 5.3197d0 - 1.4836d0*x
+    vp = 19.0957d0 - 9.8672d0*x
+    vs = 9.9839d0 - 4.9324d0*x
+    Qmu = 143.0d0
+    Qkappa = 57827.0d0
   else if (r > PREM_R600 .and. r <= PREM_R400) then
-    drhodr=-8.0298d0
-    rho=11.2494d0-8.0298d0*x
-    vp=39.7027d0-32.6166d0*x
-    vs=22.3512d0-18.5856d0*x
-    Qmu=143.0d0
-    Qkappa=57827.0d0
+    drhodr = -8.0298d0
+    rho = 11.2494d0 - 8.0298d0*x
+    vp = 39.7027d0 - 32.6166d0*x
+    vs = 22.3512d0 - 18.5856d0*x
+    Qmu = 143.0d0
+    Qkappa = 57827.0d0
   else if (r > PREM_R400 .and. r <= PREM_R220) then
-    drhodr=-3.8045d0
-    rho=7.1089d0-3.8045d0*x
-    vp=20.3926d0-12.2569d0*x
-    vs=8.9496d0-4.4597d0*x
-    Qmu=143.0d0
-    Qkappa=57827.0d0
+    drhodr = -3.8045d0
+    rho = 7.1089d0 - 3.8045d0*x
+    vp = 20.3926d0 - 12.2569d0*x
+    vs = 8.9496d0 - 4.4597d0*x
+    Qmu = 143.0d0
+    Qkappa = 57827.0d0
   else if (r > PREM_R220 .and. r <= PREM_R80) then
-    drhodr=0.6924d0
-    rho=2.6910d0+0.6924d0*x
-    vp=4.1875d0+3.9382d0*x
-    vs=2.1519d0+2.3481d0*x
-    Qmu=80.0d0
-    Qkappa=57827.0d0
+    drhodr = 0.6924d0
+    rho = 2.6910d0 + 0.6924d0*x
+    vp = 4.1875d0 + 3.9382d0*x
+    vs = 2.1519d0 + 2.3481d0*x
+    Qmu = 80.0d0
+    Qkappa = 57827.0d0
   else
     if (CRUSTAL .and. .not. SUPPRESS_CRUSTAL_MESH) then
 ! fill with PREM mantle and later add CRUST2.0
       if (r > PREM_R80) then
         ! density/velocity from mantle just below moho
-        drhodr=0.6924d0
-        rho=2.6910d0+0.6924d0*x
-        vp=4.1875d0+3.9382d0*x
-        vs=2.1519d0+2.3481d0*x
+        drhodr = 0.6924d0
+        rho = 2.6910d0 + 0.6924d0*x
+        vp = 4.1875d0 + 3.9382d0*x
+        vs = 2.1519d0 + 2.3481d0*x
         ! shear attenuation for R80 to surface
-        Qmu=600.0d0
-        Qkappa=57827.0d0
+        Qmu = 600.0d0
+        Qkappa = 57827.0d0
       endif
     else
 ! use PREM crust
       if (r > PREM_R80 .and. r <= PREM_RMOHO) then
-        drhodr=0.6924d0
-        rho=2.6910d0+0.6924d0*x
-        vp=4.1875d0+3.9382d0*x
-        vs=2.1519d0+2.3481d0*x
-        Qmu=600.0d0
-        Qkappa=57827.0d0
+        drhodr = 0.6924d0
+        rho = 2.6910d0 + 0.6924d0*x
+        vp = 4.1875d0 + 3.9382d0*x
+        vs = 2.1519d0 + 2.3481d0*x
+        Qmu = 600.0d0
+        Qkappa = 57827.0d0
 
       else if (SUPPRESS_CRUSTAL_MESH) then
 !! DK DK extend the Moho up to the surface instead of the crust
-        drhodr=0.6924d0
-        rho = 2.6910d0+0.6924d0*(PREM_RMOHO / R_PLANET)
-        vp = 4.1875d0+3.9382d0*(PREM_RMOHO / R_PLANET)
-        vs = 2.1519d0+2.3481d0*(PREM_RMOHO / R_PLANET)
-        Qmu=600.0d0
-        Qkappa=57827.0d0
+        drhodr = 0.6924d0
+        rho = 2.6910d0 + 0.6924d0*(PREM_RMOHO / R_PLANET)
+        vp = 4.1875d0 + 3.9382d0*(PREM_RMOHO / R_PLANET)
+        vs = 2.1519d0 + 2.3481d0*(PREM_RMOHO / R_PLANET)
+        Qmu = 600.0d0
+        Qkappa = 57827.0d0
 
       else if (r > PREM_RMOHO .and. r <= PREM_RMIDDLE_CRUST) then
-        drhodr=0.0d0
-        rho=2.9d0
-        vp=6.8d0
-        vs=3.9d0
-        Qmu=600.0d0
-        Qkappa=57827.0d0
+        drhodr = 0.0d0
+        rho = 2.9d0
+        vp = 6.8d0
+        vs = 3.9d0
+        Qmu = 600.0d0
+        Qkappa = 57827.0d0
 
 ! same properties everywhere in PREM crust if we decide to define only one layer in the crust
         if (ONE_CRUST) then
-          drhodr=0.0d0
-          rho=2.6d0
-          vp=5.8d0
-          vs=3.2d0
-          Qmu=600.0d0
-          Qkappa=57827.0d0
+          drhodr = 0.0d0
+          rho = 2.6d0
+          vp = 5.8d0
+          vs = 3.2d0
+          Qmu = 600.0d0
+          Qkappa = 57827.0d0
         endif
 
       else if (r > PREM_RMIDDLE_CRUST .and. r <= PREM_ROCEAN) then
-        drhodr=0.0d0
-        rho=2.6d0
-        vp=5.8d0
-        vs=3.2d0
-        Qmu=600.0d0
-        Qkappa=57827.0d0
+        drhodr = 0.0d0
+        rho = 2.6d0
+        vp = 5.8d0
+        vs = 3.2d0
+        Qmu = 600.0d0
+        Qkappa = 57827.0d0
 ! for density profile for gravity, we do not check that r <= R_PLANET
       else if (r > PREM_ROCEAN) then
-        drhodr=0.0d0
-        rho=2.6d0
-        vp=5.8d0
-        vs=3.2d0
-        Qmu=600.0d0
-        Qkappa=57827.0d0
+        drhodr = 0.0d0
+        rho = 2.6d0
+        vp = 5.8d0
+        vs = 3.2d0
+        Qmu = 600.0d0
+        Qkappa = 57827.0d0
 
       endif
     endif
@@ -309,11 +372,10 @@
 !=====================================================================
 !
 
-  subroutine model_prem_aniso(x,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu, &
-                              idoubling,CRUSTAL,ONE_CRUST)
+  subroutine model_prem_aniso(x,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu,idoubling,CRUSTAL)
 
   use constants
-  use shared_parameters, only: R_PLANET,RHOAV
+  use shared_parameters, only: R_PLANET,RHOAV,ONE_CRUST,REFERENCE_1D_MODEL
 
   use model_prem_par
 
@@ -322,11 +384,12 @@
 ! given a normalized radius x, gives the non-dimensionalized density rho,
 ! speeds vp and vs, and the quality factors Qkappa and Qmu
 
-  logical :: CRUSTAL,ONE_CRUST
+  logical,intent(in) :: CRUSTAL
 
-  integer :: idoubling
+  integer,intent(in) :: idoubling
 
-  double precision :: x,rho,Qkappa,Qmu,vpv,vph,vsv,vsh,eta_aniso
+  double precision,intent(in) :: x
+  double precision,intent(inout) :: rho,Qkappa,Qmu,vpv,vph,vsv,vsh,eta_aniso
 
   ! local parameters
   double precision :: r
@@ -392,106 +455,148 @@
 !--- inner core
 !
   if (r >= 0.d0 .and. r <= PREM_RICB) then
-    rho=13.0885d0-8.8381d0*x*x
-    vpv=11.2622d0-6.3640d0*x*x
-    vsv=3.6678d0-4.4475d0*x*x
-    vph=vpv
-    vsh=vsv
-    Qmu=84.6d0
-    Qkappa=1327.7d0
+    rho = 13.0885d0 - 8.8381d0*x*x
+    if (REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM2) then
+      ! PREM2
+      if (r <= PREM2_RIC_UPPER) then
+        ! lower inner core, same value as PREM
+        vpv = 11.2622d0 - 6.3640d0*x*x
+      else
+        ! upper inner core modification
+        vpv = 11.3041d0 - 1.2730d0*x
+      endif
+    else
+      ! PREM
+      vpv = 11.2622d0 - 6.3640d0*x*x
+    endif
+    vsv = 3.6678d0 - 4.4475d0*x*x
+    vph = vpv
+    vsh = vsv
+    Qmu = 84.6d0
+    Qkappa = 1327.7d0
 !
 !--- outer core
 !
   else if (r > PREM_RICB .and. r <= PREM_RCMB) then
-    rho=12.5815d0-1.2638d0*x-3.6426d0*x*x-5.5281d0*x*x*x
-    vpv=11.0487d0-4.0362d0*x+4.8023d0*x*x-13.5732d0*x*x*x
-    vsv=0.0d0
-    vph=vpv
-    vsh=vsv
-    Qmu=0.0d0
-    Qkappa=57827.0d0
+    rho = 12.5815d0 - 1.2638d0*x - 3.6426d0*x*x - 5.5281d0*x*x*x
+    if (REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM2) then
+      ! PREM2
+      if (r <= PREM2_ROC_LOWER) then
+        ! lower outer core modification
+        vpv = 4.0354d0 + 82.0080d0*x - 347.7690d0*x*x + 468.7860d0*x*x*x
+      else
+        ! upper outer core, same value as PREM
+        vpv = 11.0487d0 - 4.0362d0*x + 4.8023d0*x*x - 13.5732d0*x*x*x
+      endif
+    else
+      ! PREM
+      vpv = 11.0487d0 - 4.0362d0*x + 4.8023d0*x*x - 13.5732d0*x*x*x
+    endif
+    vsv = 0.0d0
+    vph = vpv
+    vsh = vsv
+    Qmu = 0.0d0
+    Qkappa = 57827.0d0
 !
 !--- D" at the base of the mantle
 !
   else if (r > PREM_RCMB .and. r <= PREM_RTOPDDOUBLEPRIME) then
-    rho=7.9565d0-6.4761d0*x+5.5283d0*x*x-3.0807d0*x*x*x
-    vpv=15.3891d0-5.3181d0*x+5.5242d0*x*x-2.5514d0*x*x*x
-    vsv=6.9254d0+1.4672d0*x-2.0834d0*x*x+0.9783d0*x*x*x
-    vph=vpv
-    vsh=vsv
-    Qmu=312.0d0
-    Qkappa=57827.0d0
+    rho = 7.9565d0 - 6.4761d0*x + 5.5283d0*x*x - 3.0807d0*x*x*x
+    if (REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM2) then
+      ! PREM2 modification between RCMB and D'' upper region
+      vpv = 14.2743d0 - 1.3998d0*x
+    else
+      ! PREM
+      vpv = 15.3891d0 - 5.3181d0*x + 5.5242d0*x*x - 2.5514d0*x*x*x
+    endif
+    vsv = 6.9254d0 + 1.4672d0*x - 2.0834d0*x*x + 0.9783d0*x*x*x
+    vph = vpv
+    vsh = vsv
+    Qmu = 312.0d0
+    Qkappa = 57827.0d0
 !
 !--- mantle: from top of D" to d670
 !
   else if (r > PREM_RTOPDDOUBLEPRIME .and. r <= PREM_R771) then
-    rho=7.9565d0-6.4761d0*x+5.5283d0*x*x-3.0807d0*x*x*x
-    vpv=24.9520d0-40.4673d0*x+51.4832d0*x*x-26.6419d0*x*x*x
-    vsv=11.1671d0-13.7818d0*x+17.4575d0*x*x-9.2777d0*x*x*x
-    vph=vpv
-    vsh=vsv
-    Qmu=312.0d0
-    Qkappa=57827.0d0
+    rho = 7.9565d0 - 6.4761d0*x + 5.5283d0*x*x - 3.0807d0*x*x*x
+    if (REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM2) then
+      ! PREM2
+      if (r <= PREM2_RDDOUBLEPRIME_UPPER) then
+        ! PREM2 modification between RCMB and D'' upper region
+        vpv = 14.2743d0 - 1.3998d0*x
+      else
+        ! above D'' extended region, same value as PREM
+        vpv = 24.9520d0 - 40.4673d0*x + 51.4832d0*x*x - 26.6419d0*x*x*x
+      endif
+    else
+      ! PREM
+      vpv = 24.9520d0 - 40.4673d0*x + 51.4832d0*x*x - 26.6419d0*x*x*x
+    endif
+    vsv = 11.1671d0 - 13.7818d0*x + 17.4575d0*x*x - 9.2777d0*x*x*x
+    vph = vpv
+    vsh = vsv
+    Qmu = 312.0d0
+    Qkappa = 57827.0d0
   else if (r > PREM_R771 .and. r <= PREM_R670) then
-    rho=7.9565d0-6.4761d0*x+5.5283d0*x*x-3.0807d0*x*x*x
-    vpv=29.2766d0-23.6027d0*x+5.5242d0*x*x-2.5514d0*x*x*x
-    vsv=22.3459d0-17.2473d0*x-2.0834d0*x*x+0.9783d0*x*x*x
-    vph=vpv
-    vsh=vsv
-    Qmu=312.0d0
-    Qkappa=57827.0d0
+    rho = 7.9565d0 - 6.4761d0*x + 5.5283d0*x*x - 3.0807d0*x*x*x
+    vpv = 29.2766d0 - 23.6027d0*x + 5.5242d0*x*x - 2.5514d0*x*x*x
+    vsv = 22.3459d0 - 17.2473d0*x - 2.0834d0*x*x + 0.9783d0*x*x*x
+    vph = vpv
+    vsh = vsv
+    Qmu = 312.0d0
+    Qkappa = 57827.0d0
 !
 !--- mantle: above d670
 !
   else if (r > PREM_R670 .and. r <= PREM_R600) then
-    rho=5.3197d0-1.4836d0*x
-    vpv=19.0957d0-9.8672d0*x
-    vsv=9.9839d0-4.9324d0*x
-    vph=vpv
-    vsh=vsv
-    Qmu=143.0d0
-    Qkappa=57827.0d0
+    rho = 5.3197d0 - 1.4836d0*x
+    vpv = 19.0957d0 - 9.8672d0*x
+    vsv = 9.9839d0 - 4.9324d0*x
+    vph = vpv
+    vsh = vsv
+    Qmu = 143.0d0
+    Qkappa = 57827.0d0
   else if (r > PREM_R600 .and. r <= PREM_R400) then
-    rho=11.2494d0-8.0298d0*x
-    vpv=39.7027d0-32.6166d0*x
-    vsv=22.3512d0-18.5856d0*x
-    vph=vpv
-    vsh=vsv
-    Qmu=143.0d0
-    Qkappa=57827.0d0
+    rho = 11.2494d0 - 8.0298d0*x
+    vpv = 39.7027d0 - 32.6166d0*x
+    vsv = 22.3512d0 - 18.5856d0*x
+    vph = vpv
+    vsh = vsv
+    Qmu = 143.0d0
+    Qkappa = 57827.0d0
   else if (r > PREM_R400 .and. r <= PREM_R220) then
-    rho=7.1089d0-3.8045d0*x
-    vpv=20.3926d0-12.2569d0*x
-    vsv=8.9496d0-4.4597d0*x
-    vph=vpv
-    vsh=vsv
-    Qmu=143.0d0
-    Qkappa=57827.0d0
+    rho = 7.1089d0 - 3.8045d0*x
+    vpv = 20.3926d0 - 12.2569d0*x
+    vsv = 8.9496d0 - 4.4597d0*x
+    vph = vpv
+    vsh = vsv
+    Qmu = 143.0d0
+    Qkappa = 57827.0d0
   else if (r > PREM_R220 .and. r <= PREM_R80) then
 
 ! anisotropy in PREM only above 220 km
 
-    rho=2.6910d0+0.6924d0*x
-    vpv=0.8317d0+7.2180d0*x
-    vph=3.5908d0+4.6172d0*x
-    vsv=5.8582d0-1.4678d0*x
-    vsh=-1.0839d0+5.7176d0*x
-    eta_aniso=3.3687d0-2.4778d0*x
-    Qmu=80.0d0
-    Qkappa=57827.0d0
+    rho = 2.6910d0 + 0.6924d0*x
+    vpv = 0.8317d0 + 7.2180d0*x
+    vph = 3.5908d0 + 4.6172d0*x
+    vsv = 5.8582d0 - 1.4678d0*x
+    vsh = -1.0839d0 + 5.7176d0*x
+    eta_aniso = 3.3687d0 - 2.4778d0*x
+    Qmu = 80.0d0
+    Qkappa = 57827.0d0
 
   else
     if (CRUSTAL) then
 ! fill with PREM mantle and later add CRUST2.0
       if (r > PREM_R80) then
-        rho=2.6910d0+0.6924d0*x
-        vpv=0.8317d0+7.2180d0*x
-        vph=3.5908d0+4.6172d0*x
-        vsv=5.8582d0-1.4678d0*x
-        vsh=-1.0839d0+5.7176d0*x
-        eta_aniso=3.3687d0-2.4778d0*x
-        Qmu=600.0d0
-        Qkappa=57827.0d0
+        rho = 2.6910d0 + 0.6924d0*x
+        vpv = 0.8317d0 + 7.2180d0*x
+        vph = 3.5908d0 + 4.6172d0*x
+        vsv = 5.8582d0 - 1.4678d0*x
+        vsh = -1.0839d0 + 5.7176d0*x
+        eta_aniso = 3.3687d0 - 2.4778d0*x
+        Qmu = 600.0d0
+        Qkappa = 57827.0d0
       endif
     else
 ! use PREM crust
@@ -499,53 +604,53 @@
 
 ! anisotropy in PREM only above 220 km
 
-        rho=2.6910d0+0.6924d0*x
-        vpv=0.8317d0+7.2180d0*x
-        vph=3.5908d0+4.6172d0*x
-        vsv=5.8582d0-1.4678d0*x
-        vsh=-1.0839d0+5.7176d0*x
-        eta_aniso=3.3687d0-2.4778d0*x
-        Qmu=600.0d0
-        Qkappa=57827.0d0
+        rho = 2.6910d0 + 0.6924d0*x
+        vpv = 0.8317d0 + 7.2180d0*x
+        vph = 3.5908d0 + 4.6172d0*x
+        vsv = 5.8582d0 - 1.4678d0*x
+        vsh = -1.0839d0 + 5.7176d0*x
+        eta_aniso = 3.3687d0 - 2.4778d0*x
+        Qmu = 600.0d0
+        Qkappa = 57827.0d0
 
 ! no anisotropy in the crust in PREM
 
       else if (r > PREM_RMOHO .and. r <= PREM_RMIDDLE_CRUST) then
-        rho=2.9d0
-        vpv=6.8d0
-        vsv=3.9d0
-        vph=vpv
-        vsh=vsv
-        Qmu=600.0d0
-        Qkappa=57827.0d0
+        rho = 2.9d0
+        vpv = 6.8d0
+        vsv = 3.9d0
+        vph = vpv
+        vsh = vsv
+        Qmu = 600.0d0
+        Qkappa = 57827.0d0
 
 ! same properties everywhere in PREM crust (only one layer in the crust)
         if (ONE_CRUST) then
-          rho=2.6d0
-          vpv=5.8d0
-          vsv=3.2d0
-          vph=vpv
-          vsh=vsv
-          Qmu=600.0d0
-          Qkappa=57827.0d0
+          rho = 2.6d0
+          vpv = 5.8d0
+          vsv = 3.2d0
+          vph = vpv
+          vsh = vsv
+          Qmu = 600.0d0
+          Qkappa = 57827.0d0
         endif
 
       else if (r > PREM_RMIDDLE_CRUST .and. r <= PREM_ROCEAN) then
-        rho=2.6d0
-        vpv=5.8d0
-        vsv=3.2d0
-        vph=vpv
-        vsh=vsv
-        Qmu=600.0d0
-        Qkappa=57827.0d0
+        rho = 2.6d0
+        vpv = 5.8d0
+        vsv = 3.2d0
+        vph = vpv
+        vsh = vsv
+        Qmu = 600.0d0
+        Qkappa = 57827.0d0
       else if (r > PREM_ROCEAN) then
-        rho=2.6d0
-        vpv=5.8d0
-        vsv=3.2d0
-        vph=vpv
-        vsh=vsv
-        Qmu=600.0d0
-        Qkappa=57827.0d0
+        rho = 2.6d0
+        vpv = 5.8d0
+        vsv = 3.2d0
+        vph = vpv
+        vsh = vsv
+        Qmu = 600.0d0
+        Qkappa = 57827.0d0
       endif
     endif
   endif
@@ -567,7 +672,7 @@
 !
 
   subroutine model_prem_aniso_extended_isotropic(x,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu, &
-                                                 idoubling,CRUSTAL,ONE_CRUST)
+                                                 idoubling,CRUSTAL)
 
 ! note: for 3D crustal models, we extend the mantle reference up to the surface and then superimpose the crustal values later.
 !       however, PREM mantle is anisotropic (eta < 1 and vsh > vsv) and the extension continues with strong TISO, thus
@@ -590,7 +695,7 @@
   double precision,intent(in) :: x
   double precision,intent(out) :: rho,Qkappa,Qmu,vpv,vph,vsv,vsh,eta_aniso
 
-  logical,intent(in) :: CRUSTAL,ONE_CRUST
+  logical,intent(in) :: CRUSTAL
   integer,intent(in) :: idoubling
 
   ! local parameters
@@ -598,8 +703,7 @@
   double precision :: scaleval
 
   ! gets default values
-  call model_prem_aniso(x,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu, &
-                        idoubling,CRUSTAL,ONE_CRUST)
+  call model_prem_aniso(x,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu,idoubling,CRUSTAL)
 
   if (CRUSTAL) then
     ! adds crustal model like CRUST2.0 later on top
@@ -682,17 +786,21 @@
 ! and number of points per wavelength only in the fluid outer core
 
   use constants
-  use shared_parameters, only: R_PLANET,RHOAV
+  use shared_parameters, only: R_PLANET,RHOAV,REFERENCE_1D_MODEL
+
+  use model_prem_par, only: PREM2_ROC_LOWER
 
   implicit none
 
 ! given a normalized radius x, gives the non-dimensionalized density rho,
 ! speeds vp and vs, and the quality factors Qkappa and Qmu
 
-  integer :: idoubling
-  double precision :: x,rho,vp,vs,Qkappa,Qmu
+  integer,intent(in) :: idoubling
+  double precision,intent(in) :: x
+  double precision,intent(inout) :: rho,vp,vs,Qkappa,Qmu
 
-  double precision :: scaleval
+  ! local parameters
+  double precision :: scaleval,r
 
   if (idoubling /= IFLAG_OUTER_CORE_NORMAL) &
     stop 'wrong doubling flag for outer core point in prem_display_outer_core()'
@@ -700,8 +808,21 @@
 !
 !--- outer core
 !
-  rho    = 12.5815d0-1.2638d0 * x - 3.6426d0 * x*x - 5.5281d0 * x*x*x
-  vp     = 11.0487d0-4.0362d0 * x + 4.8023d0 * x*x - 13.5732d0 * x*x*x
+  rho    = 12.5815d0 - 1.2638d0 * x - 3.6426d0 * x*x - 5.5281d0 * x*x*x
+  if (REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM2) then
+    ! PREM2
+    r = x * R_PLANET
+    if (r <= PREM2_ROC_LOWER) then
+      ! lower outer core modification
+      vp = 4.0354d0 + 82.0080d0*x - 347.7690d0*x*x + 468.7860d0*x*x*x
+    else
+      ! upper outer core, same value as PREM
+      vp = 11.0487d0 - 4.0362d0*x + 4.8023d0*x*x - 13.5732d0*x*x*x
+    endif
+  else
+    ! PREM
+    vp     = 11.0487d0 - 4.0362d0 * x + 4.8023d0 * x*x - 13.5732d0 * x*x*x
+  endif
   vs     = 0.0d0
   Qmu    = 0.0d0
   Qkappa = 57827.0d0
@@ -719,10 +840,10 @@
 !=====================================================================
 !
 
-  subroutine prem_density(x,rho,ONE_CRUST)
+  subroutine prem_density(x,rho)
 
   use constants
-  use shared_parameters, only: R_PLANET,RHOAV
+  use shared_parameters, only: R_PLANET,RHOAV,ONE_CRUST
 
   use model_prem_par
 
@@ -730,7 +851,6 @@
 
   double precision,intent(in) :: x
   double precision,intent(out) :: rho
-  logical,intent(in) :: ONE_CRUST
 
   ! local parameters
   double precision :: r
@@ -740,26 +860,26 @@
 
   ! calculates density according to radius
   if (r <= PREM_RICB) then
-    rho = 13.0885d0-8.8381d0*x*x
+    rho = 13.0885d0 - 8.8381d0*x*x
   else if (r > PREM_RICB .and. r <= PREM_RCMB) then
-    rho = 12.5815d0-1.2638d0*x-3.6426d0*x*x-5.5281d0*x*x*x
+    rho = 12.5815d0 - 1.2638d0*x - 3.6426d0*x*x - 5.5281d0*x*x*x
   else if (r > PREM_RCMB .and. r <= PREM_RTOPDDOUBLEPRIME) then
-    rho = 7.9565d0-6.4761d0*x+5.5283d0*x*x-3.0807d0*x*x*x
+    rho = 7.9565d0 - 6.4761d0*x + 5.5283d0*x*x - 3.0807d0*x*x*x
   else if (r > PREM_RTOPDDOUBLEPRIME .and. r <= PREM_R771) then
-    rho = 7.9565d0-6.4761d0*x+5.5283d0*x*x-3.0807d0*x*x*x
+    rho = 7.9565d0 - 6.4761d0*x + 5.5283d0*x*x - 3.0807d0*x*x*x
   else if (r > PREM_R771 .and. r <= PREM_R670) then
-    rho = 7.9565d0-6.4761d0*x+5.5283d0*x*x-3.0807d0*x*x*x
+    rho = 7.9565d0 - 6.4761d0*x + 5.5283d0*x*x - 3.0807d0*x*x*x
   else if (r > PREM_R670 .and. r <= PREM_R600) then
-    rho = 5.3197d0-1.4836d0*x
+    rho = 5.3197d0 - 1.4836d0*x
   else if (r > PREM_R600 .and. r <= PREM_R400) then
-    rho = 11.2494d0-8.0298d0*x
+    rho = 11.2494d0 - 8.0298d0*x
   else if (r > PREM_R400 .and. r <= PREM_R220) then
-    rho = 7.1089d0-3.8045d0*x
+    rho = 7.1089d0 - 3.8045d0*x
   else if (r > PREM_R220 .and. r <= PREM_R80) then
-    rho = 2.6910d0+0.6924d0*x
+    rho = 2.6910d0 + 0.6924d0*x
   else
     if (r > PREM_R80 .and. r <= PREM_RMOHO) then
-      rho = 2.6910d0+0.6924d0*x
+      rho = 2.6910d0 + 0.6924d0*x
     else if (r > PREM_RMOHO .and. r <= PREM_RMIDDLE_CRUST) then
       if (ONE_CRUST) then
         rho = 2.6d0  ! takes upper crust value

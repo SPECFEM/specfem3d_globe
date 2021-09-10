@@ -338,14 +338,22 @@
         else
           ! 1D crustal models
           if (TOPOGRAPHY) then
-            write(57,'(a)') '# oceans'
+            if (PLANET_TYPE == IPLANET_EARTH) then
+              write(57,'(a)') '# oceans'
+            else
+              write(57,'(a)') '# no oceans, only topography'
+            endif
           else
             write(57,'(a)') '# 1D reference oceans'
           endif
         endif
       else
         if (TOPOGRAPHY) then
-          write(57,'(a)') '# oceans'
+          if (PLANET_TYPE == IPLANET_EARTH) then
+            write(57,'(a)') '# oceans'
+          else
+            write(57,'(a)') '# no oceans, only topography'
+          endif
         else
           write(57,'(a)') '# no oceans'
         endif
@@ -400,7 +408,7 @@
           !print *,'rmin == moho at line ',iline
         endif
 
-        if (rmin == rmax_last) then  !!!! this means that we have just jumped between layers
+        if (abs(rmin - rmax_last) < 1.d-9) then !!!! rmin == rmax_last: this means that we have just jumped between layers
           ! depth increment
           ! write values every 10 km in the deep earth and every 1 km in the shallow earth
           if (rmin > ((R_PLANET/1000.d0)-DELTA_HIRES_DEPTH)/(R_PLANET/1000.d0)) then
@@ -422,7 +430,12 @@
           rmax_last = rmax
 
           ! number of iterations in increments of delta between rmin and rmax
-          nit = floor((rmax - rmin)/delta) + 1
+          ! note: instead of (rmax - rmin), we add a factor (rmax * 0.999999 - rmin) to avoid getting an extra step
+          !       in case the difference is an exact delta match, since we add +1 to nit to reach rmax
+          nit = floor((rmax*0.9999999 - rmin)/delta) + 1
+
+          ! debug
+          !print *,'debug: write profile ilayer/iregion ',ilayer,iregion_code,'rmin/rmax',rmin,rmax,'delta',delta,'nit',nit
 
           do idep = 1,nit+1
             ! line counters
@@ -443,6 +456,9 @@
 
             ! radius
             r = rmin + (idep-1)*delta
+
+            ! debug
+            !print *,'debug: write profile radius ',ilayer,iregion_code,'idep',idep,nit+1,'r',r,rmin,'delta',delta
 
             ! make sure we are within the right shell in PREM to honor discontinuities
             ! use small geometrical tolerance
@@ -480,7 +496,7 @@
             if (iline == iline_cmb) str_info = ' # CMB'
             if (iline == iline_moho) str_info = ' # moho'
 
-            write(57,'(F8.0,7F9.2,F9.5,a)') &
+            write(57,'(F10.0,7F12.2,F12.5,a)') &
               sngl(r_prem*R_PLANET),sngl(rho*1000.d0),sngl(vpv*1000.d0),sngl(vsv*1000.d0), &
               sngl(Qkappa),sngl(Qmu),sngl(vph*1000.d0),sngl(vsh*1000.d0),sngl(eta_aniso),trim(str_info)
 
@@ -488,7 +504,7 @@
             iline = iline + 1
 
             ! debug
-            !write(*,'(i3,11F10.4)') &
+            !write(*,'(i3,11F12.4)') &
             ! iline,sngl(rmin*(R_PLANET/1000.d0)),sngl(rmax*(R_PLANET/1000.d0)), &
             ! sngl(r_prem*(R_PLANET/1000.d0)),sngl(r*(R_PLANET/1000.d0)), &
             ! sngl(vpv),sngl(vph),sngl(vsv),sngl(vsh),sngl(rho),sngl(eta_aniso),sngl(Qmu)
@@ -668,18 +684,16 @@
       write(IMAIN,*) '  no general mantle anisotropy'
     endif
 
-    ! model
-    if (MODEL == 'gll') then
-      write(IMAIN,*)
-      write(IMAIN,*) 'mesh setup: '
-      write(IMAIN,*) '  NCHUNKS            : ',NCHUNKS
-      write(IMAIN,*) '  NSPEC crust/mantle : ',NSPEC_REGIONS(IREGION_CRUST_MANTLE)
-      write(IMAIN,*) '  NSPEC outer core   : ',NSPEC_REGIONS(IREGION_OUTER_CORE)
-      write(IMAIN,*) '  NSPEC inner core   : ',NSPEC_REGIONS(IREGION_INNER_CORE)
-      write(IMAIN,*) '  NGLLX/NGLLY/NGLLZ  : ',NGLLX,NGLLY,NGLLZ
-      write(IMAIN,*)
-      write(IMAIN,*)
-    endif
+    ! model mesh setup
+    write(IMAIN,*)
+    write(IMAIN,*) 'mesh setup: '
+    write(IMAIN,*) '  NCHUNKS            : ',NCHUNKS
+    write(IMAIN,*) '  NSPEC crust/mantle : ',NSPEC_REGIONS(IREGION_CRUST_MANTLE)
+    write(IMAIN,*) '  NSPEC outer core   : ',NSPEC_REGIONS(IREGION_OUTER_CORE)
+    write(IMAIN,*) '  NSPEC inner core   : ',NSPEC_REGIONS(IREGION_INNER_CORE)
+    write(IMAIN,*) '  NGLLX/NGLLY/NGLLZ  : ',NGLLX,NGLLY,NGLLZ
+    write(IMAIN,*)
+    write(IMAIN,*)
 
     call flush_IMAIN()
   endif
@@ -932,7 +946,7 @@
   !
   !note:  only Qmu attenuation considered, Qkappa attenuation not used so far...
   if (ATTENUATION) then
-    call meshfem3D_models_getatten_val(idoubling,r_prem,r,theta,phi, &
+    call meshfem3D_models_getatten_val(idoubling,r_prem,theta,phi, &
                                        ispec, i, j, k, &
                                        tau_e,tau_s, &
                                        moho,Qmu,Qkappa,elem_in_crust)
@@ -1068,6 +1082,9 @@
       endif
     endif
 
+    ! Mars and Moon models have no ocean layers
+    if (PLANET_TYPE /= IPLANET_EARTH) nlayers_ocean = 0
+
     ! adds ocean layer
     if (nlayers_ocean > 0) then
       ! ocean line
@@ -1081,9 +1098,9 @@
         ! ocean properties (salt water parameters from PREM)
         if (ilayers_ocean == 0) then
           ! line with section info
-          write(57,'(F8.0,7F9.2,F9.5,a)') sngl(r_ocean*R_PLANET),1020.0,1450.,0.0,57822.5,0.0,1450.0,0.0,1.0,' # ocean'
+          write(57,'(F10.0,7F12.2,F12.5,a)') sngl(r_ocean*R_PLANET),1020.0,1450.,0.0,57822.5,0.0,1450.0,0.0,1.0,' # ocean'
         else
-          write(57,'(F8.0,7F9.2,F9.5)') sngl(r_ocean*R_PLANET),1020.0,1450.,0.0,57822.5,0.0,1450.0,0.0,1.0
+          write(57,'(F10.0,7F12.2,F12.5)') sngl(r_ocean*R_PLANET),1020.0,1450.,0.0,57822.5,0.0,1450.0,0.0,1.0
         endif
         ! line counter
         iline = iline + 1
@@ -1091,7 +1108,7 @@
       ! at surface
       if (r_ocean < 1.d0) then
         ! last line exactly at earth surface
-        write(57,'(F8.0,7F9.2,F9.5)') sngl(1.0d0*R_PLANET),1020.0,1450.,0.0,57822.5,0.0,1450.,0.0,1.0
+        write(57,'(F10.0,7F12.2,F12.5)') sngl(1.0d0*R_PLANET),1020.0,1450.,0.0,57822.5,0.0,1450.,0.0,1.0
         ! line counter
         iline = iline + 1
       endif

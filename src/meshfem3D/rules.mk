@@ -94,6 +94,7 @@ meshfem3D_MESHER_OBJECTS = \
 	$O/model_attenuation.check.o \
 	$O/model_bkmns.check.o \
 	$O/model_case65TAY.check.o \
+	$O/model_ccrem.check.o \
 	$O/model_crust_1_0.check.o \
 	$O/model_crust_2_0.check.o \
 	$O/model_crustmaps.check.o \
@@ -150,6 +151,7 @@ meshfem3D_MODULES = \
 	$(FC_MODDIR)/model_attenuation_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_bkmns_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_case65tay_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_ccrem_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_crust_1_0_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_crust_2_0_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_crustmaps_par.$(FC_MODEXT) \
@@ -186,7 +188,6 @@ meshfem3D_SHARED_OBJECTS = \
 	$O/binary_c_io.cc.o \
 	$O/broadcast_computed_parameters.shared.o \
 	$O/count_elements.shared.o \
-	$O/count_number_of_sources.shared.o \
 	$O/count_points.shared.o \
 	$O/create_addressing.shared.o \
 	$O/create_name_database.shared.o \
@@ -333,6 +334,7 @@ $O/model_attenuation.check.o: \
 	$O/model_1066a.check.o \
 	$O/model_sea1d.check.o \
 	$O/model_case65TAY.check.o \
+	$O/model_ccrem.check.o \
 	$O/model_vpremoon.shared.o \
 	$(EMPTY_MACRO)
 

@@ -317,7 +317,9 @@ program smooth_sem_globe
   endif
   call synchronize_all()
 
-  call read_parameter_file()
+  ! reads in Par_file and sets compute parameters
+  call read_compute_parameters()
+
   topo_dir = trim(LOCAL_PATH)//'/'
 
   ! checks if basin code or global code: global code uses nchunks /= 0

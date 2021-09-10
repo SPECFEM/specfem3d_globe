@@ -78,7 +78,10 @@ program test_save
     print *
 
     ! sets compute parameters accordingly
-    call rcp_compute_parameters()
+    call rcp_set_compute_parameters()
+
+    ! sets mesh parameters
+    call rcp_set_mesh_parameters()
   endif
 
   ! broadcast parameters read from main process to all processes
@@ -110,8 +113,13 @@ program test_save
     !    gcc version 9.3: 0.69301991059962509 (MacOS)
     !    gcc version 5.4: 0.69301991059962254
     !    gcc version 7.5: 0.69301991064577684 (IBM Power)
+    !
+    ! new PREM model with inner core at 1221.5km instead of 1221.0km
+    !    calculated volume:   0.69301991575060418
+    !
     print *,'volume_total = ',volume_total
-    if (abs(volume_total - 0.69301991059962d0) > 1.d-10) then
+    if (abs(volume_total - 0.6930199157d0) > 1.d-10) then
+      print *,'volume expected: ',0.6930199157d0,' difference: ',abs(volume_total - 0.6930199157d0)
       print *,'ERROR: volume_total value invalid'
       stop 1
     else

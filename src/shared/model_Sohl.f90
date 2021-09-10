@@ -109,8 +109,7 @@
 !
 
 
-  subroutine model_Sohl(x,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &
-                        ONE_CRUST,check_doubling_flag)
+  subroutine model_Sohl(x,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL,check_doubling_flag)
 
   use constants, only: PI,GRAV, &
     IFLAG_CRUST,IFLAG_220_80,IFLAG_670_220,IFLAG_80_MOHO,IFLAG_MANTLE_NORMAL, &
@@ -118,7 +117,7 @@
     IFLAG_BOTTOM_CENTRAL_CUBE,IFLAG_IN_FICTITIOUS_CUBE,IFLAG_MIDDLE_CENTRAL_CUBE, &
     SUPPRESS_CRUSTAL_MESH,REFERENCE_MODEL_SOHL,REFERENCE_MODEL_SOHL_B
 
-  use shared_parameters, only: R_PLANET,RHOAV,REFERENCE_1D_MODEL
+  use shared_parameters, only: R_PLANET,RHOAV,REFERENCE_1D_MODEL,ONE_CRUST
 
   use model_sohl_par
 
@@ -127,7 +126,7 @@
 ! given a normalized radius x, gives the non-dimensionalized density rho,
 ! speeds vp and vs, and the quality factors Qkappa and Qmu
 
-  logical,intent(in) :: CRUSTAL,ONE_CRUST,check_doubling_flag
+  logical,intent(in) :: CRUSTAL,check_doubling_flag
 
   integer,intent(in) :: idoubling
 
@@ -442,11 +441,11 @@
 !=====================================================================
 !
 
-  subroutine Sohl_density(x,rho,ONE_CRUST)
+  subroutine Sohl_density(x,rho)
 
   use constants, only: R_MARS,REFERENCE_MODEL_SOHL,REFERENCE_MODEL_SOHL_B
 
-  use shared_parameters, only: RHOAV,REFERENCE_1D_MODEL
+  use shared_parameters, only: RHOAV,REFERENCE_1D_MODEL,ONE_CRUST
 
   use model_sohl_par
 
@@ -454,7 +453,6 @@
 
   double precision, intent(in) :: x
   double precision, intent(out) :: rho
-  logical, intent(in) :: ONE_CRUST
 
   ! local parameters
   double precision :: r

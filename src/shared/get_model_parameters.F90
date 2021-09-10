@@ -293,6 +293,15 @@
     HONOR_1D_SPHERICAL_MOHO = .true.
     TRANSVERSE_ISOTROPY = .true.
 
+  case ('1d_isotropic_prem2')
+    REFERENCE_1D_MODEL = REFERENCE_MODEL_PREM2
+    HONOR_1D_SPHERICAL_MOHO = .true.
+
+  case ('1d_transversely_isotropic_prem2')
+    REFERENCE_1D_MODEL = REFERENCE_MODEL_PREM2
+    HONOR_1D_SPHERICAL_MOHO = .true.
+    TRANSVERSE_ISOTROPY = .true.
+
   case ('1d_iasp91','1d_1066a','1d_ak135f_no_mud','1d_jp3d','1d_sea99')
     HONOR_1D_SPHERICAL_MOHO = .true.
     if (trim(MODEL_NAME) == '1d_iasp91') then
@@ -318,8 +327,13 @@
     HONOR_1D_SPHERICAL_MOHO = .true.
     REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
 
+  case ('1d_ccrem')
+    HONOR_1D_SPHERICAL_MOHO = .true.
+    REFERENCE_1D_MODEL = REFERENCE_MODEL_CCREM
+
+  ! Mars 1D models
   case ('1d_sohl')
-    ! Mars
+    ! Mars model A
     TRANSVERSE_ISOTROPY = .false. ! enforces isotropic model
     HONOR_1D_SPHERICAL_MOHO = .true.
     REFERENCE_1D_MODEL = REFERENCE_MODEL_SOHL
@@ -334,7 +348,7 @@
     REFERENCE_CRUSTAL_MODEL = ICRUST_CRUSTMAPS
 
   case ('1d_sohl_b')
-    ! Mars
+    ! Mars model B
     TRANSVERSE_ISOTROPY = .false. ! enforces isotropic model
     HONOR_1D_SPHERICAL_MOHO = .true.
     REFERENCE_1D_MODEL = REFERENCE_MODEL_SOHL_B
@@ -363,6 +377,7 @@
     REFERENCE_1D_MODEL = REFERENCE_MODEL_CASE65TAY
     REFERENCE_CRUSTAL_MODEL = ICRUST_CRUSTMAPS
 
+  ! Moon 1D models
   case('vpremoon')
     ! Moon
     TRANSVERSE_ISOTROPY = .false. ! enforces isotropic model
@@ -391,6 +406,28 @@
     impose_crust = ICRUST_CRUST1
 
   case ('transversely_isotropic_prem_plus_3d')
+    CASE_3D = .true.
+    CRUSTAL = .true.
+    ONE_CRUST = .true.
+    TRANSVERSE_ISOTROPY = .true.
+
+  case ('transversely_isotropic_prem2_plus_3d_crust_2.0')
+    REFERENCE_1D_MODEL = REFERENCE_MODEL_PREM2
+    CASE_3D = .true.
+    CRUSTAL = .true.
+    ONE_CRUST = .true.
+    TRANSVERSE_ISOTROPY = .true.
+
+  case ('transversely_isotropic_prem2_plus_3d_crust_1.0')
+    REFERENCE_1D_MODEL = REFERENCE_MODEL_PREM2
+    CASE_3D = .true.
+    CRUSTAL = .true.
+    ONE_CRUST = .true.
+    TRANSVERSE_ISOTROPY = .true.
+    impose_crust = ICRUST_CRUST1
+
+  case ('transversely_isotropic_prem2_plus_3d')
+    REFERENCE_1D_MODEL = REFERENCE_MODEL_PREM2
     CASE_3D = .true.
     CRUSTAL = .true.
     ONE_CRUST = .true.
@@ -593,7 +630,7 @@
     ANISOTROPIC_3D_MANTLE = .true. ! treats mantle elements as fully anisotropic
 
   case ('spiral')
-    ! uses spiral crustal model by default
+    ! uses SPiRaL crustal model by default
     REFERENCE_CRUSTAL_MODEL = ICRUST_SPIRAL
     CASE_3D = .true.                      ! crustal moho stretching
     CRUSTAL = .true.                      ! with 3D crust: depends on 3D mantle reference model
@@ -843,13 +880,14 @@
   if (HONOR_1D_SPHERICAL_MOHO .and. CASE_3D ) &
     stop 'honor 1D spherical moho excludes having 3D crustal mesh stretching'
 
-  ! checks that IASP91, AK135, 1066A, JP1D or SEA1D is isotropic
+  ! checks that IASP91, AK135, 1066A, JP1D, SEA1D or CCREM is isotropic
   if ((REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91 .or. &
        REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135F_NO_MUD .or. &
        REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A .or. &
        REFERENCE_1D_MODEL == REFERENCE_MODEL_JP1D .or. &
-       REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) .and. TRANSVERSE_ISOTROPY) &
-        stop 'models IASP91, AK135, 1066A, JP1D and SEA1D are currently isotropic'
+       REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D .or. &
+       REFERENCE_1D_MODEL == REFERENCE_MODEL_CCREM) .and. TRANSVERSE_ISOTROPY) &
+        stop 'models IASP91, AK135, 1066A, JP1D, SEA1D and CCREM are currently isotropic'
 
   ! Mars
   ! Mars 1D_Sohl is isotropic
@@ -1036,6 +1074,8 @@
 
   implicit none
 
+  ! local parameters
+  double precision :: CCREM_RSURFACE
 
 ! sets radii in PREM or IASP91 and normalized density at fluid-solid interface on fluid size for coupling
 !
@@ -1264,6 +1304,27 @@
     R600 = 5771000.d0
     R771 = 5611000.d0
 
+  case (REFERENCE_MODEL_CCREM)
+    ! CCREM
+    ! (same as values in model_ccrem.f90)
+    CCREM_RSURFACE = R_PLANET
+    ROCEAN = CCREM_RSURFACE   ! no ocean
+    RMIDDLE_CRUST = CCREM_RSURFACE - 20000.d0 ! depth = 20 km
+    RMOHO = CCREM_RSURFACE - 35000.d0         ! depth = 35 km
+    R80  = CCREM_RSURFACE - 80000.d00         ! depth = 80 km
+    R220 = CCREM_RSURFACE - 220000.d0          ! depth = 220 km
+    R400 = CCREM_RSURFACE - 410000.d0          ! depth = 410 km - CCREM depth 410km discontinuity
+    R600 = CCREM_RSURFACE - 600000.d0          ! depth = 600 km
+    R670 = CCREM_RSURFACE - 660000.d0          ! depth = 660 km - CCREM depth 660km discontinuity
+    R771 = CCREM_RSURFACE - 771000.d0          ! depth = 771 km (PREM)
+    RTOPDDOUBLEPRIME = CCREM_RSURFACE - 2741000.d0 ! depth = 2741 km (PREM)
+    RCMB = CCREM_RSURFACE - 2891000.d0         ! depth = 2891 km (PREM)
+    RICB = CCREM_RSURFACE - 5153500.d0         ! depth = 5153.5 km
+
+    RHO_TOP_OC = 9.9131d0 * 1000.d0 / RHOAV
+    RHO_BOTTOM_OC = 12.1478d0 * 1000.d0 / RHOAV
+
+  ! Mars models
   case (REFERENCE_MODEL_SOHL_B)
     ! Mars
     ! Sohl & Spohn, 1997: Model B
@@ -1300,6 +1361,7 @@
     RHO_TOP_OC = 6936.40 / MARS_RHOAV    ! densities fluid outer core (from modSOHL)
     RHO_BOTTOM_OC = 7268.20 / MARS_RHOAV
 
+  ! Moon models
   case (REFERENCE_MODEL_MOON_MEENA)
     ! Moon
     ! by Meena Yellapragada

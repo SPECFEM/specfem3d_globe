@@ -11,7 +11,6 @@ OBJECTS = \
 	$O/meshfem3D_par.check_module.o \
 	$O/auto_ner.shared.o \
 	$O/count_elements.shared.o \
-	$O/count_number_of_sources.shared.o \
 	$O/count_points.shared.o \
 	$O/define_all_layers.shared.o \
 	$O/get_model_parameters.shared.o \

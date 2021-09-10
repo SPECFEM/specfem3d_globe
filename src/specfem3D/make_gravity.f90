@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine make_gravity(nspl,rspl,gravity_spline,gravity_spline2,ONE_CRUST)
+  subroutine make_gravity(nspl,rspl,gravity_spline,gravity_spline2)
 
 ! creates a spline for the gravity profile in PREM
 ! radius and density are non-dimensional
@@ -43,8 +43,6 @@
   integer,intent(out) :: nspl
 
   double precision,intent(inout) :: rspl(NR_DENSITY),gravity_spline(NR_DENSITY),gravity_spline2(NR_DENSITY)
-
-  logical,intent(in) :: ONE_CRUST
 
   ! local parameters
   integer :: i
@@ -201,7 +199,7 @@
     ! Earth
     ! use PREM to get the density profile for ellipticity (fine for other 1D reference models)
     do i = 1,NR_DENSITY
-      call prem_density(r(i),rho(i),ONE_CRUST)
+      call prem_density(r(i),rho(i))
     enddo
 
   case (IPLANET_MARS)
@@ -213,7 +211,7 @@
     enddo
     ! use Sohl & Spohn model to get the density profile for gravity
     do i = 1,NR_DENSITY
-      call sohl_density(r(i),rho(i),ONE_CRUST)
+      call Sohl_density(r(i),rho(i))
     enddo
 
   case (IPLANET_MOON)
@@ -224,7 +222,7 @@
     enddo
     ! use VPREMOON model to get the density profile for gravity
     do i = 1,NR_DENSITY
-      call model_vpremoon_density(r(i),rho(i),ONE_CRUST)
+      call model_vpremoon_density(r(i),rho(i))
     enddo
 
   case default
