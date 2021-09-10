@@ -1,8 +1,10 @@
 # CCREM 
 #
 # based on:
-#   Garcia et al. (2011),
-#   Very preliminary reference Moon model, PEPI, 188, 96 - 113.
+#    Ma, X. and H. Tkalcic (2021),
+#    CCREM: New Reference Earth Model From the Global Coda-Correlation Wavefield,
+#    JGR Solid Earth, 126, e2021JB022515.
+#    https://doi.org/10.1029/2021JB022515
 #
 # taken from Table S3 in supporting material:
 #   2021jb022515-sup-002-supporting-information-si-s02.docx
