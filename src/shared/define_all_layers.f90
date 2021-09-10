@@ -136,7 +136,7 @@
     stop 'Invalid planet, defining all layers not implemented yet'
   end select
 
-! find element below top of which we should implement the second doubling in the mantle
+  ! find element below top of which we should implement the second doubling in the mantle
   DEPTH_SECOND_DOUBLING_REAL = 0.d0
   if (ADD_2ND_DOUBLING) then
     ! locate element closest to optimal value
@@ -145,19 +145,27 @@
     do ielem = 2,NER_TOPDDOUBLEPRIME_771
       zval = RTOPDDOUBLEPRIME + ielem * (R771 - RTOPDDOUBLEPRIME) / dble(NER_TOPDDOUBLEPRIME_771)
       distance = abs(zval - (R_PLANET - DEPTH_SECOND_DOUBLING_OPTIMAL))
+
+      ! debug
+      if (DEBUG .and. myrank == 0) &
+        print *,'debug: 2nd doubling',ielem,NER_TOPDDOUBLEPRIME_771,'dist/zval',distance,distance_min,zval
+
+      ! checks if closer and sets as new depth
       if (distance < distance_min) then
         elem_doubling_mantle = ielem
         distance_min = distance
         DEPTH_SECOND_DOUBLING_REAL = R_PLANET - zval
       endif
     enddo
+
+    !debug
     if (DEBUG .and. myrank == 0) &
       print *,'debug: 2nd doubling index = ',elem_doubling_mantle,DEPTH_SECOND_DOUBLING_REAL,'(in mantle D" - 771)'
     ! check
     if (elem_doubling_mantle == -1) stop 'Unable to determine second doubling element'
   endif
 
-! find element below top of which we should implement the third doubling in the middle of the outer core
+  ! find element below top of which we should implement the third doubling in the middle of the outer core
   DEPTH_THIRD_DOUBLING_REAL = 0.d0
   if (ADD_3RD_DOUBLING) then
     ! locate element closest to optimal value
@@ -175,12 +183,20 @@
     do ielem = ner_start,ner_end
       zval = RICB + ielem * (RCMB - RICB) / dble(NER_OUTER_CORE)
       distance = abs(zval - (R_PLANET - DEPTH_THIRD_DOUBLING_OPTIMAL))
+
+      ! debug
+      if (DEBUG .and. myrank == 0) &
+        print *,'debug: 3nd doubling',ielem,ner_end,'dist/zval',distance,distance_min,zval
+
+      ! checks if closer and sets as new depth
       if (distance < distance_min) then
         elem_doubling_middle_outer_core = ielem
         distance_min = distance
         DEPTH_THIRD_DOUBLING_REAL = R_PLANET - zval
       endif
     enddo
+
+    ! debug
     if (DEBUG .and. myrank == 0) &
       print *,'debug: 3rd doubling index = ',elem_doubling_middle_outer_core,DEPTH_THIRD_DOUBLING_REAL,'(in outer core)'
     ! check
@@ -188,22 +204,30 @@
   endif
 
   if (ADD_4TH_DOUBLING) then
-! find element below top of which we should implement the fourth doubling in the middle of the outer core
-! locate element closest to optimal value
+    ! find element below top of which we should implement the fourth doubling in the middle of the outer core
+    ! locate element closest to optimal value
     elem_doubling_bottom_outer_core = -1
     DEPTH_FOURTH_DOUBLING_REAL = 0.d0
     distance_min = HUGEVAL
-! end two elements before the top because we need at least two elements above for the third doubling
-! implemented in the middle of the outer core
+    ! end two elements before the top because we need at least two elements above for the third doubling
+    ! implemented in the middle of the outer core
     do ielem = 2,NER_OUTER_CORE-2
       zval = RICB + ielem * (RCMB - RICB) / dble(NER_OUTER_CORE)
       distance = abs(zval - (R_PLANET - DEPTH_FOURTH_DOUBLING_OPTIMAL))
+
+      ! debug
+      if (DEBUG .and. myrank == 0) &
+        print *,'debug: 2nd doubling',ielem,NER_OUTER_CORE-2,'dist/zval',distance,distance_min,zval
+
+      ! checks if closer and sets as new depth
       if (distance < distance_min) then
         elem_doubling_bottom_outer_core = ielem
         distance_min = distance
         DEPTH_FOURTH_DOUBLING_REAL = R_PLANET - zval
       endif
     enddo
+
+    !debug
     if (DEBUG .and. myrank == 0) &
       print *,'debug: 4th doubling index = ',elem_doubling_bottom_outer_core,DEPTH_FOURTH_DOUBLING_REAL,'(in outer core)'
     ! check
@@ -216,7 +240,7 @@
     endif
   endif
 
-! define all the layers of the mesh
+  ! define all the layers of the mesh
   if (.not. ADD_4TH_DOUBLING) then
 
     ! default case:

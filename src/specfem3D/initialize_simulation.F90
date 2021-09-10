@@ -94,6 +94,9 @@
   if (myrank == 0) then
     ! read the parameter file and compute additional parameters
     call read_compute_parameters()
+
+    ! count the total number of sources in the CMTSOLUTION file
+    call count_number_of_sources()
   endif
 
   ! broadcast parameters read from main to all processes

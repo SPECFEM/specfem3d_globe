@@ -38,7 +38,6 @@ program smooth_laplacian_sem
 
   use postprocess_par, only: &
        NCHUNKS_VAL,NPROC_XI_VAL,NPROC_ETA_VAL,NPROCTOT_VAL,NEX_XI_VAL,NEX_ETA_VAL, &
-       ANGULAR_WIDTH_XI_IN_DEGREES_VAL,ANGULAR_WIDTH_ETA_IN_DEGREES_VAL, &
        NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,MAX_KERNEL_NAMES,LOCAL_PATH
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
@@ -256,7 +255,9 @@ program smooth_laplacian_sem
   endif
   call synchronize_all()
 
-  call read_parameter_file()
+  ! reads in Par_file and sets compute parameters
+  call read_compute_parameters()
+
   topo_dir = trim(LOCAL_PATH)//'/'
 
   ! checks if basin code or global code: global code uses nchunks /= 0

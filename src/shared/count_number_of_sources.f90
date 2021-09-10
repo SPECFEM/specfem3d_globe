@@ -25,17 +25,15 @@
 !
 !=====================================================================
 
-  subroutine count_number_of_sources(NSOURCES)
+  subroutine count_number_of_sources()
 
 ! count the total number of sources in the CMTSOLUTION file
 ! there are NLINES_PER_CMTSOLUTION_SOURCE lines per source in that file
 
   use constants
-  use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS,USE_FORCE_POINT_SOURCE
+  use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS,USE_FORCE_POINT_SOURCE,NSOURCES
 
   implicit none
-
-  integer, intent(out) :: NSOURCES
 
   integer :: ios,icounter,nline
 

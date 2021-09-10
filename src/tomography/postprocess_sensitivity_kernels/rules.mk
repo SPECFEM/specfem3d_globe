@@ -129,7 +129,6 @@ xconvert_model_file_adios_SHARED_OBJECTS = \
 	$O/exit_mpi.shared.o \
 	$O/flush_system.shared.o \
 	$O/param_reader.cc.o \
-	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
 	$O/adios_helpers_addons.shared_adios_cc.o \
 	$O/adios_helpers_definitions.shared_adios.o \
@@ -156,7 +155,6 @@ xaddition_sem_SHARED_OBJECTS = \
 	$O/exit_mpi.shared.o \
 	$O/flush_system.shared.o \
 	$O/param_reader.cc.o \
-	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
 	$(EMPTY_MACRO)
 
@@ -176,7 +174,6 @@ xclip_sem_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/parallel.sharedmpi.o \
 	$O/param_reader.cc.o \
-	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
 	$(EMPTY_MACRO)
 
@@ -197,7 +194,6 @@ xcombine_sem_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/parallel.sharedmpi.o \
 	$O/param_reader.cc.o \
-	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
 	$(EMPTY_MACRO)
 
@@ -219,7 +215,6 @@ xdifference_sem_SHARED_OBJECTS = \
 	$O/exit_mpi.shared.o \
 	$O/flush_system.shared.o \
 	$O/param_reader.cc.o \
-	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
 	$(EMPTY_MACRO)
 
@@ -247,7 +242,6 @@ xinterpolate_model_SHARED_OBJECTS = \
 	$O/recompute_jacobian.shared.o \
 	$O/search_kdtree.shared.o \
 	$O/param_reader.cc.o \
-	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
 	$(EMPTY_MACRO)
 
@@ -297,9 +291,15 @@ xsmooth_sem_OBJECTS = \
 xsmooth_sem_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/parallel.sharedmpi.o \
+	$O/auto_ner.shared.o \
+	$O/count_elements.shared.o \
+	$O/count_points.shared.o \
+	$O/define_all_layers.shared.o \
 	$O/exit_mpi.shared.o \
 	$O/flush_system.shared.o \
 	$O/get_all_eight_slices.shared.o \
+	$O/get_model_parameters.shared.o \
+	$O/get_timestep_and_layers.shared.o \
 	$O/gll_library.shared.o \
 	$O/heap_sort.shared.o \
 	$O/reduce.shared.o \
@@ -308,6 +308,7 @@ xsmooth_sem_SHARED_OBJECTS = \
 	$O/smooth_weights_vec.shared.o \
 	$O/write_VTK_file.shared.o \
 	$O/param_reader.cc.o \
+	$O/read_compute_parameters.shared.o \
 	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
 	$(EMPTY_MACRO)
@@ -360,11 +361,18 @@ xsmooth_laplacian_sem_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/parallel.sharedmpi.o \
 	$O/assemble_MPI_scalar.shared.o \
+	$O/auto_ner.shared.o \
+	$O/count_elements.shared.o \
+	$O/count_points.shared.o \
+	$O/define_all_layers.shared.o \
 	$O/exit_mpi.shared.o \
 	$O/flush_system.shared.o \
+	$O/get_model_parameters.shared.o \
+	$O/get_timestep_and_layers.shared.o \
 	$O/gll_library.shared.o \
 	$O/lagrange_poly.shared.o \
 	$O/param_reader.cc.o \
+	$O/read_compute_parameters.shared.o \
 	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
 	$O/model_prem.shared.o \
@@ -438,7 +446,6 @@ xcreate_cross_section_SHARED_OBJECTS = \
 	$O/search_kdtree.shared.o \
 	$O/spline_routines.shared.o \
 	$O/param_reader.cc.o \
-	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
 	$(EMPTY_MACRO)
 

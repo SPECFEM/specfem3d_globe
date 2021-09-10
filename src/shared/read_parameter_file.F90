@@ -42,7 +42,6 @@
 
 ! local variables
   integer :: ier
-  character(len=MAX_STRING_LEN) :: path_to_add
 
   ! opens the parameter file: DATA/Par_file
   call open_parameter_file(ier)
@@ -58,15 +57,8 @@
   call read_value_integer(NCHUNKS, 'NCHUNKS', ier)
   if (ier /= 0) stop 'an error occurred while reading the parameter file: NCHUNKS'
 
-  if (NCHUNKS == 6) then
-    ! global simulations
-    ANGULAR_WIDTH_XI_IN_DEGREES = 90.d0
-    ANGULAR_WIDTH_ETA_IN_DEGREES = 90.d0
-    CENTER_LATITUDE_IN_DEGREES = 0.d0
-    CENTER_LONGITUDE_IN_DEGREES = 0.d0
-    GAMMA_ROTATION_AZIMUTH = 0.d0
-  else
-    ! 1/2-chunk simulations
+  if (NCHUNKS /= 6) then
+    ! 1-chunk or 2-chunk simulations
     call read_value_double_precision(ANGULAR_WIDTH_XI_IN_DEGREES, 'ANGULAR_WIDTH_XI_IN_DEGREES', ier)
     if (ier /= 0) stop 'an error occurred while reading the parameter file: ANGULAR_WIDTH_XI_IN_DEGREES...'
     call read_value_double_precision(ANGULAR_WIDTH_ETA_IN_DEGREES, 'ANGULAR_WIDTH_ETA_IN_DEGREES', ier)
@@ -117,10 +109,6 @@
     if (ier /= 0) stop 'an error occurred while reading the parameter file: SPONGE_LONGITUDE_IN_DEGREES...'
     call read_value_double_precision(SPONGE_RADIUS_IN_DEGREES, 'SPONGE_RADIUS_IN_DEGREES', ier)
     if (ier /= 0) stop 'an error occurred while reading the parameter file: SPONGE_RADIUS_IN_DEGREES...'
-  else
-    SPONGE_LATITUDE_IN_DEGREES = 0.d0
-    SPONGE_LONGITUDE_IN_DEGREES = 0.d0
-    SPONGE_RADIUS_IN_DEGREES = 0.d0
   endif
 
   ! define the velocity model
@@ -263,8 +251,6 @@
   if (STEADY_STATE_KERNEL) then
     call read_value_double_precision(STEADY_STATE_LENGTH_IN_MINUTES, 'STEADY_STATE_LENGTH_IN_MINUTES', ier)
     if (ier /= 0) stop 'an error occurred while reading the parameter file: STEADY_STATE_LENGTH_IN_MINUTES'
-  else
-    STEADY_STATE_LENGTH_IN_MINUTES = 0.d0
   endif
 
   ! for simultaneous runs from the same batch job
@@ -321,27 +307,6 @@
   ! closes parameter file
   call close_parameter_file()
 
-  ! ignore EXACT_MASS_MATRIX_FOR_ROTATION if rotation is not included in the simulations
-  if (.not. ROTATION) EXACT_MASS_MATRIX_FOR_ROTATION = .false.
-
-  ! re-sets attenuation flags
-  if (.not. ATTENUATION) then
-    ! turns off PARTIAL_PHYS_DISPERSION_ONLY when ATTENUATION is off in the Par_file
-    PARTIAL_PHYS_DISPERSION_ONLY = .false.
-  endif
-
-  ! re-sets ADIOS flags
-  if (.not. ADIOS_ENABLED) then
-    ADIOS_FOR_FORWARD_ARRAYS = .false.
-    ADIOS_FOR_MPI_ARRAYS = .false.
-    ADIOS_FOR_ARRAYS_SOLVER = .false.
-    ADIOS_FOR_SOLVER_MESHFILES = .false.
-    ADIOS_FOR_AVS_DX = .false.
-    ADIOS_FOR_KERNELS = .false.
-    ADIOS_FOR_MODELS = .false.
-    ADIOS_FOR_UNDO_ATTENUATION = .false.
-  endif
-
 #if !defined(USE_ADIOS) && !defined(USE_ADIOS2)
   if (ADIOS_ENABLED) then
     print *
@@ -355,81 +320,5 @@
     stop 'an error occurred while reading the parameter file: ADIOS is enabled but code not built with ADIOS'
   endif
 #endif
-
-  ! ADIOS is very useful for very large simulations (say using 2000 MPI tasks or more)
-  ! but slows down the code if used for simulations that are small or medium size, because of the overhead any library has.
-  if (ADIOS_ENABLED .and. NCHUNKS * NPROC_XI_read * NPROC_ETA_read < 2000 .and. myrank == 0) then
-    print *
-    print *,'**************'
-    print *,'**************'
-    print *,'ADIOS significantly slows down small or medium-size runs, which is the case here, please consider turning it off'
-    print *,'**************'
-    print *,'**************'
-    print *
-  endif
-
-  ! produces simulations compatible with old globe version 5.1.5
-  if (USE_OLD_VERSION_5_1_5_FORMAT) then
-    print *
-    print *,'**************'
-    print *,'using globe version 5.1.5 compatible simulation parameters'
-    if (.not. ATTENUATION_1D_WITH_3D_STORAGE ) &
-      stop 'ATTENUATION_1D_WITH_3D_STORAGE should be set to .true. for compatibility with globe version 5.1.5 '
-    if (UNDO_ATTENUATION) then
-      print *,'setting UNDO_ATTENUATION to .false. for compatibility with globe version 5.1.5 '
-      UNDO_ATTENUATION = .false.
-    endif
-    if (USE_LDDRK) then
-      print *,'setting USE_LDDRK to .false. for compatibility with globe version 5.1.5 '
-      USE_LDDRK = .false.
-    endif
-    if (EXACT_MASS_MATRIX_FOR_ROTATION) then
-      print *,'setting EXACT_MASS_MATRIX_FOR_ROTATION to .false. for compatibility with globe version 5.1.5 '
-      EXACT_MASS_MATRIX_FOR_ROTATION = .false.
-    endif
-    print *,'**************'
-    print *
-  endif
-
-  ! checks flags when perfect sphere is set
-  if (ASSUME_PERFECT_SPHERE) then
-    if (ELLIPTICITY) then
-      stop 'ELLIPTICITY not supported when ASSUME_PERFECT_SPHERE is set .true. in constants.h, please check...'
-    endif
-    if (TOPOGRAPHY) then
-      stop 'TOPOGRAPHY not supported when ASSUME_PERFECT_SPHERE is set .true. in constants.h, please check...'
-    endif
-  endif
-
-  ! see if we are running several independent runs in parallel
-  ! if so, add the right directory for that run (group numbers start at zero, but directory names start at run0001, thus we add one)
-  ! a negative value for "mygroup" is a convention that indicates that groups (i.e. sub-communicators, one per run) are off
-  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-    LOCAL_PATH = path_to_add(1:len_trim(path_to_add))//LOCAL_PATH(1:len_trim(LOCAL_PATH))
-    LOCAL_TMP_PATH = path_to_add(1:len_trim(path_to_add))//LOCAL_TMP_PATH(1:len_trim(LOCAL_TMP_PATH))
-  endif
-
-
-!----------------------------------------------
-!
-! status of implementation
-!
-!----------------------------------------------
-!
-! please remove these security checks only after validating new features
-
-!! DK DK July 2013: temporary, the time for Matthieu Lefebvre to merge his ADIOS implementation
-  if (ADIOS_ENABLED .and. SAVE_REGULAR_KL ) &
-    stop 'ADIOS_ENABLED support not implemented yet for SAVE_REGULAR_KL'
-
-  ! LDDRK
-  if (USE_LDDRK .and. (ABSORBING_CONDITIONS .and. .not. UNDO_ATTENUATION) ) &
-    stop 'USE_LDDRK support requires to use UNDO_ATTENUATION when absorbing boundaries are turned on'
-
-  if (UNDO_ATTENUATION .and. MOVIE_VOLUME .and. MOVIE_VOLUME_TYPE == 4 ) &
-    stop 'UNDO_ATTENUATION support not implemented yet for MOVIE_VOLUME_TYPE == 4 simulations'
-  if (UNDO_ATTENUATION .and. SIMULATION_TYPE == 3 .and. (MOVIE_VOLUME .or. MOVIE_SURFACE) ) &
-    stop 'UNDO_ATTENUATION support not implemented yet for SIMULATION_TYPE == 3 and movie simulations'
 
   end subroutine read_parameter_file

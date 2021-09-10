@@ -157,7 +157,6 @@ xcombine_AVS_DX_SHARED_OBJECTS = \
 	$O/auto_ner.shared.o \
 	$O/calendar.shared.o \
 	$O/count_elements.shared.o \
-	$O/count_number_of_sources.shared.o \
 	$O/count_points.shared.o \
 	$O/create_serial_name_database.shared.o \
 	$O/define_all_layers.shared.o \
@@ -406,7 +405,6 @@ xcreate_movie_AVS_DX_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/auto_ner.shared.o \
 	$O/count_elements.shared.o \
-	$O/count_number_of_sources.shared.o \
 	$O/count_points.shared.o \
 	$O/define_all_layers.shared.o \
 	$O/get_global.shared.o \
@@ -445,7 +443,6 @@ xcreate_movie_GMT_global_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/auto_ner.shared.o \
 	$O/count_elements.shared.o \
-	$O/count_number_of_sources.shared.o \
 	$O/count_points.shared.o \
 	$O/define_all_layers.shared.o \
 	$O/get_model_parameters.shared.o \
@@ -534,7 +531,6 @@ xwrite_profile_SHARED_OBJECTS = \
 	$O/auto_ner.shared.o \
 	$O/binary_c_io.cc.o \
 	$O/count_elements.shared.o \
-	$O/count_number_of_sources.shared.o \
 	$O/count_points.shared.o \
 	$O/create_name_database.shared.o \
 	$O/define_all_layers.shared.o \
