@@ -120,20 +120,30 @@ program smooth_sem_globe
     xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: kernel, kernel_smooth,tk
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: bk, jacobian
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: bk
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: xx0, yy0, zz0, xx, yy, zz
-
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: integ_factor
   real(kind=CUSTOM_REAL), dimension(:),allocatable :: cx0, cy0, cz0, cx, cy, cz
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: exp_val
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: factor
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: jacobian
 
   real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
   real(kind=CUSTOM_REAL) :: sigma_h, sigma_h2, sigma_h3, sigma_v, sigma_v2, sigma_v3
+  real(kind=CUSTOM_REAL) :: sigma_h3_sq,sigma_v3_sq
+  real(kind=CUSTOM_REAL) :: sigma_h2_inv,sigma_v2_inv
   real(kind=CUSTOM_REAL) :: norm, norm_h, norm_v, element_size_m
   real(kind=CUSTOM_REAL) :: x0, y0, z0
+  real(kind=CUSTOM_REAL) :: x1, y1, z1
+  real(kind=CUSTOM_REAL) :: val,val_gaussian
   real(kind=CUSTOM_REAL) :: center_x0, center_y0, center_z0
   real(kind=CUSTOM_REAL) :: center_x, center_y, center_z
+  real(kind=CUSTOM_REAL) :: contrib_weights,contrib_kernel
+  ! for distance calc
+  !real(kind=CUSTOM_REAL) :: r0,r1
+  real(kind=CUSTOM_REAL) :: r0_squared,r1_squared
+  real(kind=CUSTOM_REAL) :: theta,ratio,alpha
+  !real(kind=CUSTOM_REAL) :: vx,vy,vz
 
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: min_old,max_old
   real(kind=CUSTOM_REAL) :: max_new, min_new
@@ -174,7 +184,8 @@ program smooth_sem_globe
   real(kind=CUSTOM_REAL) :: ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
 
   ! search elements
-  integer :: ielem,num_elem_local
+  integer :: ielem,num_elem_local,num_elem_local_max
+  integer, dimension(:), allocatable :: nsearch_elements
 
   ! tree nodes search
   double precision,dimension(3) :: xyz_target
@@ -182,12 +193,17 @@ program smooth_sem_globe
 
   ! debugging
   integer, dimension(:),allocatable :: ispec_flag
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: tmp_bk
+  !real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: tmp_bk
 
   ! timing
-  double precision :: time_start
+  integer :: ihours,iminutes,iseconds,int_tCPU
+  double precision :: time_start,time_start_all
   double precision :: tCPU
   double precision, external :: wtime
+
+  integer :: NELEM_OUTPUT_INFO,NELEM_MAX_OUTPUT_INFO
+
+  real(kind=CUSTOM_REAL),parameter :: PI2 = PI * PI ! squared
 
   ! ADIOS
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
@@ -202,11 +218,24 @@ program smooth_sem_globe
   integer :: ijk
 #endif
 
+! switches do-loops between: do k=1,NGLLZ; do j=1,NGLLY; do i=1,NGLLX <-> do ijk=1,NGLLCUBE
+#ifdef FORCE_VECTORIZATION
+integer :: ijk2
+#  define INDEX_IJK2  ijk2,1,1
+#  define DO_LOOP_IJK2  do ijk2=1,NGLLCUBE
+#  define ENDDO_LOOP_IJK2  enddo                  ! NGLLCUBE
+#else
+integer :: ii,jj,kk
+#  define INDEX_IJK2  ii,jj,kk
+#  define DO_LOOP_IJK2  do kk=1,NGLLZ; do jj=1,NGLLY; do ii=1,NGLLX
+#  define ENDDO_LOOP_IJK2  enddo; enddo; enddo    ! NGLLZ,NGLLY,NGLLX
+#endif
+
   !------------------------------------------------------------------------------------------
   ! USER PARAMETERS
 
-  ! number of steps to reach 100 percent, i.e. 10 outputs info for every 10 percent
-  integer,parameter :: NSTEP_PERCENT_INFO = 10
+  ! number of steps to reach 100 percent, i.e. 20 outputs info for every 5 percent
+  integer,parameter :: NSTEP_PERCENT_INFO = 20     ! or 10,..
 
   ! brute-force search for neighboring elements, if set to .false. a kd-tree search will be used
   logical,parameter :: DO_BRUTE_FORCE_SEARCH = .false.
@@ -272,6 +301,9 @@ program smooth_sem_globe
     print *
   endif
   call synchronize_all()
+
+  ! timing
+  time_start_all = wtime()
 
   ! allocates array
   allocate(kernel_names(MAX_KERNEL_NAMES), &
@@ -342,9 +374,11 @@ program smooth_sem_globe
   ! user output
   if (myrank == 0) then
     print *,"defaults:"
-    print *,"  NPROC_XI , NPROC_ETA        : ",NPROC_XI,NPROC_ETA
-    print *,"  NCHUNKS                     : ",NCHUNKS
-    print *,"  element size on surface (km): ",element_size
+    print *,"  NPROC_XI / NPROC_ETA         : ",NPROC_XI,NPROC_ETA
+    print *,"  NEX_XI   / NEX_ETA           : ",NEX_XI_VAL,NEX_ETA_VAL
+    print *,"  NGLLX    / NGLLY     / NGLLZ : ",NGLLX,NGLLY,NGLLZ
+    print *,"  NCHUNKS                      : ",NCHUNKS
+    print *,"  element size on surface (km) : ",element_size
     print *
     print *,"  smoothing sigma_h , sigma_v (km)                : ",sigma_h,sigma_v
     ! scalelength: approximately S ~ sigma * sqrt(8.0) for a Gaussian smoothing
@@ -392,11 +426,19 @@ program smooth_sem_globe
   if (sigma_h2 < 1.e-18) stop 'Error sigma_h2 zero, must be non-zero'
   if (sigma_v2 < 1.e-18) stop 'Error sigma_v2 zero, must be non-zero'
 
+  ! helper variables
+  sigma_h2_inv = 1.0_CUSTOM_REAL / sigma_h2
+  sigma_v2_inv = 1.0_CUSTOM_REAL / sigma_v2
+
   ! search radius
   ! note: crust/mantle region has at least 2 doubling layers, we enlarge the search radius according to element size at CMB;
   !       we always smooth among several elements, thus jumps at discontinuities will get averaged
   sigma_h3 = 3.0  * sigma_h + 4.0 * element_size_m
   sigma_v3 = 3.0  * sigma_v + 4.0 * element_size_m
+
+  ! helper variables
+  sigma_h3_sq = sigma_h3 * sigma_h3  ! squared
+  sigma_v3_sq = sigma_v3 * sigma_v3
 
   if (.not. DO_BRUTE_FORCE_SEARCH) then
     ! kd-tree search uses a slightly larger constant search radius
@@ -477,11 +519,14 @@ program smooth_sem_globe
            gammaz(NGLLX,NGLLY,NGLLZ,NSPEC_AB), stat=ier)
   if (ier /= 0) stop 'Error allocating mesh arrays'
 
-  allocate(kernel(NGLLX,NGLLY,NGLLZ,NSPEC_AB,nker), &
-           kernel_smooth(NGLLX,NGLLY,NGLLZ,NSPEC_AB,nker), &
-           tk(NGLLX,NGLLY,NGLLZ,NSPEC_AB,nker), &
-           bk(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
-           jacobian(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
+  ibool(:,:,:,:) = 0; idoubling(:) = 0; ispec_is_tiso(:) = .false.
+  xstore(:) = 0.0_CUSTOM_REAL; ystore(:) = 0.0_CUSTOM_REAL; zstore(:) = 0.0_CUSTOM_REAL
+  xix(:,:,:,:) = 0.0_CUSTOM_REAL; xiy(:,:,:,:) = 0.0_CUSTOM_REAL; xiz(:,:,:,:) = 0.0_CUSTOM_REAL
+  etax(:,:,:,:) = 0.0_CUSTOM_REAL; etay(:,:,:,:) = 0.0_CUSTOM_REAL; etaz(:,:,:,:) = 0.0_CUSTOM_REAL
+  gammax(:,:,:,:) = 0.0_CUSTOM_REAL; gammay(:,:,:,:) = 0.0_CUSTOM_REAL; gammaz(:,:,:,:) = 0.0_CUSTOM_REAL
+
+  allocate(bk(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
+           integ_factor(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
            xx0(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
            yy0(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
            zz0(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
@@ -494,13 +539,24 @@ program smooth_sem_globe
            cx(NSPEC_AB), &
            cy(NSPEC_AB), &
            cz(NSPEC_AB), stat=ier)
-  if (ier /= 0) stop 'Error allocating kernel arrays'
+  if (ier /= 0) stop 'Error allocating position arrays'
 
   ! initializes
+  bk(:,:,:,:) = 0.0_CUSTOM_REAL
+  integ_factor(:,:,:,:) = 0.0_CUSTOM_REAL
+  xx0(:,:,:,:) = 0.0_CUSTOM_REAL; yy0(:,:,:,:) = 0.0_CUSTOM_REAL; zz0(:,:,:,:) = 0.0_CUSTOM_REAL
+  xx(:,:,:,:) = 0.0_CUSTOM_REAL; yy(:,:,:,:) = 0.0_CUSTOM_REAL; zz(:,:,:,:) = 0.0_CUSTOM_REAL
+  cx0(:) = 0.0_CUSTOM_REAL; cy0(:) = 0.0_CUSTOM_REAL; cz0(:) = 0.0_CUSTOM_REAL
+  cx(:) = 0.0_CUSTOM_REAL; cy(:) = 0.0_CUSTOM_REAL; cz(:) = 0.0_CUSTOM_REAL
+
+  ! gaussian kernels
+  allocate(kernel(NGLLX,NGLLY,NGLLZ,NSPEC_AB,nker), &
+           kernel_smooth(NGLLX,NGLLY,NGLLZ,NSPEC_AB,nker), &
+           tk(NGLLX,NGLLY,NGLLZ,NSPEC_AB,nker), stat=ier)
+  if (ier /= 0) stop 'Error allocating kernel arrays'
   kernel(:,:,:,:,:) = 0.0_CUSTOM_REAL
   kernel_smooth(:,:,:,:,:) = 0.0_CUSTOM_REAL
   tk(:,:,:,:,:) = 0.0_CUSTOM_REAL
-  bk(:,:,:,:) = 0.0_CUSTOM_REAL
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
   ! ADIOS
@@ -582,14 +638,20 @@ program smooth_sem_globe
   ! get the location of the center of the elements
   do ispec = 1, NSPEC_AB
 
+    ! gets point locations for this element
     DO_LOOP_IJK
-
       iglob = ibool(INDEX_IJK,ispec)
       xx0(INDEX_IJK,ispec) = xstore(iglob)
       yy0(INDEX_IJK,ispec) = ystore(iglob)
       zz0(INDEX_IJK,ispec) = zstore(iglob)
+    ENDDO_LOOP_IJK
 
-      ! build jacobian
+    cx0(ispec) = (xx0(1,1,1,ispec) + xx0(NGLLX,NGLLY,NGLLZ,ispec)) * 0.5_CUSTOM_REAL
+    cy0(ispec) = (yy0(1,1,1,ispec) + yy0(NGLLX,NGLLY,NGLLZ,ispec)) * 0.5_CUSTOM_REAL
+    cz0(ispec) = (zz0(1,1,1,ispec) + zz0(NGLLX,NGLLY,NGLLZ,ispec)) * 0.5_CUSTOM_REAL
+
+    ! build jacobian
+    DO_LOOP_IJK
       ! get derivatives of ux, uy and uz with respect to x, y and z
       xixl = xix(INDEX_IJK,ispec)
       xiyl = xiy(INDEX_IJK,ispec)
@@ -604,14 +666,14 @@ program smooth_sem_globe
       jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
                     - xiyl*(etaxl*gammazl-etazl*gammaxl) &
                     + xizl*(etaxl*gammayl-etayl*gammaxl))
-
-      jacobian(INDEX_IJK,ispec) = jacobianl
-
+      jacobian(INDEX_IJK) = jacobianl
     ENDDO_LOOP_IJK
 
-    cx0(ispec) = (xx0(1,1,1,ispec) + xx0(NGLLX,NGLLY,NGLLZ,ispec)) * 0.5_CUSTOM_REAL
-    cy0(ispec) = (yy0(1,1,1,ispec) + yy0(NGLLX,NGLLY,NGLLZ,ispec)) * 0.5_CUSTOM_REAL
-    cz0(ispec) = (zz0(1,1,1,ispec) + zz0(NGLLX,NGLLY,NGLLZ,ispec)) * 0.5_CUSTOM_REAL
+    ! integration factors:
+    ! uses volume assigned to GLL points
+    integ_factor(:,:,:,ispec) = jacobian(:,:,:) * wgll_cube(:,:,:)
+    ! no volume
+    !integ_factor(:,:,:,ispec) = 1.0_CUSTOM_REAL
   enddo
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
@@ -627,6 +689,10 @@ program smooth_sem_globe
 #endif
 
   ! element search
+  allocate(nsearch_elements(NSPEC_AB),stat=ier)
+  if (ier /= 0) stop 'Error allocating nsearch_elements array'
+  nsearch_elements(:) = 0
+
   if (.not. DO_BRUTE_FORCE_SEARCH) then
     ! search by kd-tree
     ! user output
@@ -674,6 +740,10 @@ program smooth_sem_globe
 
   if (myrank == 0) print *, 'start looping over elements and points for smoothing ...'
 
+  ! for time output
+  NELEM_OUTPUT_INFO = max(int(1.0*NSPEC_AB/NSTEP_PERCENT_INFO),1)
+  NELEM_MAX_OUTPUT_INFO = NSPEC_AB - int(0.5*NSPEC_AB/NSTEP_PERCENT_INFO)
+
   ! synchronizes
   call synchronize_all()
 
@@ -694,11 +764,13 @@ program smooth_sem_globe
     endif
 
     ! debugging
-    if (DEBUG .and. myrank == 0) then
-      allocate(tmp_bk(NGLLX,NGLLY,NGLLZ,NSPEC_AB),stat=ier)
-      if (ier /= 0) stop 'Error allocating array tmp_bk'
-      tmp_bk(:,:,:,:) = 0.0_CUSTOM_REAL
-    endif
+    !if (DEBUG) then
+    !  if (myrank == 0) then
+    !    allocate(tmp_bk(NGLLX,NGLLY,NGLLZ,NSPEC_AB),stat=ier)
+    !    if (ier /= 0) stop 'Error allocating array tmp_bk'
+    !    tmp_bk(:,:,:,:) = 0.0_CUSTOM_REAL
+    !  endif
+    !endif
 
     ! sets up mesh locations
     if (iproc == myrank) then
@@ -771,14 +843,21 @@ program smooth_sem_globe
       ! get the location of the center of the elements
       do ispec = 1, NSPEC_AB
 
+        ! gets point locations for this element
         DO_LOOP_IJK
-
           iglob = ibool(INDEX_IJK,ispec)
           xx(INDEX_IJK,ispec) = xstore(iglob)
           yy(INDEX_IJK,ispec) = ystore(iglob)
           zz(INDEX_IJK,ispec) = zstore(iglob)
+        ENDDO_LOOP_IJK
 
-          ! build jacobian
+        ! calculate element center location
+        cx(ispec) = (xx(1,1,1,ispec) + xx(NGLLX,NGLLY,NGLLZ,ispec)) * 0.5_CUSTOM_REAL
+        cy(ispec) = (yy(1,1,1,ispec) + yy(NGLLX,NGLLY,NGLLZ,ispec)) * 0.5_CUSTOM_REAL
+        cz(ispec) = (zz(1,1,1,ispec) + zz(NGLLX,NGLLY,NGLLZ,ispec)) * 0.5_CUSTOM_REAL
+
+        ! build jacobian
+        DO_LOOP_IJK
           ! get derivatives of ux, uy and uz with respect to x, y and z
           xixl = xix(INDEX_IJK,ispec)
           xiyl = xiy(INDEX_IJK,ispec)
@@ -793,14 +872,14 @@ program smooth_sem_globe
           jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
                         - xiyl*(etaxl*gammazl-etazl*gammaxl) &
                         + xizl*(etaxl*gammayl-etayl*gammaxl))
-          jacobian(INDEX_IJK,ispec) = jacobianl
-
+          jacobian(INDEX_IJK) = jacobianl
         ENDDO_LOOP_IJK
 
-        ! calculate element center location
-        cx(ispec) = (xx(1,1,1,ispec) + xx(NGLLX,NGLLY,NGLLZ,ispec)) * 0.5_CUSTOM_REAL
-        cy(ispec) = (yy(1,1,1,ispec) + yy(NGLLX,NGLLY,NGLLZ,ispec)) * 0.5_CUSTOM_REAL
-        cz(ispec) = (zz(1,1,1,ispec) + zz(NGLLX,NGLLY,NGLLZ,ispec)) * 0.5_CUSTOM_REAL
+        ! integration factors:
+        ! uses volume assigned to GLL points
+        integ_factor(:,:,:,ispec) = jacobian(:,:,:) * wgll_cube(:,:,:)
+        ! no volume
+        !integ_factor(:,:,:,ispec) = 1.0_CUSTOM_REAL
       enddo
     endif
 
@@ -883,32 +962,18 @@ program smooth_sem_globe
       call kdtree_setup()
     endif
 
-    ! loops over elements to be smoothed in the current slice
-    do ispec = 1, NSPEC_AB
+    ! pre-determines number of search elements
+    if (.not. DO_BRUTE_FORCE_SEARCH) then
+      ! gets search range
+      num_elem_local_max = 0
+      do ispec = 1, NSPEC_AB
+        ! element center position
+        center_x0 = cx0(ispec)
+        center_y0 = cy0(ispec)
+        center_z0 = cz0(ispec)
 
-      ! user info about progress
-      if (myrank == 0) then
-        tCPU = wtime() - time_start
-        if (mod(ispec-1,max(int(1.0*NSPEC_AB/NSTEP_PERCENT_INFO),1)) == 0 &
-            .and. ispec < (NSPEC_AB - 0.5*NSPEC_AB/NSTEP_PERCENT_INFO)) then
-          print *,'    ',int((ispec-1) / max(int(1.0*NSPEC_AB/NSTEP_PERCENT_INFO),1)) * (100.0 / NSTEP_PERCENT_INFO), &
-                 ' % elements done - Elapsed time in seconds = ',tCPU
-        endif
-        if (ispec == NSPEC_AB) then
-          print *,'    ',100.0,' % elements done - Elapsed time in seconds = ',tCPU
-        endif
-      endif
-
-      ! initializes
-      num_elem_local = 0
-
-      ! element center position
-      center_x0 = cx0(ispec)
-      center_y0 = cy0(ispec)
-      center_z0 = cz0(ispec)
-
-      ! sets number of elements to loop over
-      if (.not. DO_BRUTE_FORCE_SEARCH) then
+        ! initializes
+        num_elem_local = 0
         xyz_target(1) = center_x0
         xyz_target(2) = center_y0
         xyz_target(3) = center_z0
@@ -927,15 +992,114 @@ program smooth_sem_globe
           if (num_elem_local < 1) stop 'Error no local search element found'
         endif
 
-        ! sets n-search number of nodes
-        kdtree_search_num_nodes = num_elem_local
+        ! debug output
+        if (DEBUG) then
+          if (myrank == 0) then
+            ! user info
+            if (ispec < 10) then
+              print *,'  total number of search elements: ',num_elem_local,'ispec',ispec
+            endif
+          endif
+        endif
 
-        ! allocates search array
-        if (kdtree_search_num_nodes > 0) then
-          allocate(kdtree_search_index(kdtree_search_num_nodes),stat=ier)
-          if (ier /= 0) stop 'Error allocating array kdtree_search_index'
+        ! sets n-search number of nodes
+        nsearch_elements(ispec) = num_elem_local
+
+        ! maximum
+        if (num_elem_local_max < num_elem_local) num_elem_local_max = num_elem_local
+      enddo
+
+      ! user output
+      if (myrank == 0) then
+        print *,'  maximum number of local search elements: ',num_elem_local_max
+        print *
+      endif
+
+      ! allocates search array
+      allocate(kdtree_search_index(num_elem_local_max),stat=ier)
+      if (ier /= 0) stop 'Error allocating array kdtree_search_index'
+      kdtree_search_index(:) = 0
+
+      ! debug output
+      if (DEBUG) then
+        if (myrank == 0) then
+          ! file output
+          ! outputs search elements with integer flags
+          allocate(ispec_flag(NSPEC_AB))
+          ispec_flag(:) = 0
+
+          ! debug element (tmp_ispec_dbg)
+          num_elem_local = nsearch_elements(tmp_ispec_dbg)
+          xyz_target(1) = cx0(ispec)
+          xyz_target(2) = cy0(ispec)
+          xyz_target(3) = cz0(ispec)
 
           ! finds closest point in target chunk
+          kdtree_search_index(:) = 0
+          if (DO_SEARCH_ELLIP) then
+            ! (within ellipsoid)
+            call kdtree_get_nearest_n_neighbors_ellip(xyz_target,r_search_dist_v,r_search_dist_h,num_elem_local)
+          else
+            ! (within search sphere)
+            call kdtree_get_nearest_n_neighbors(xyz_target,r_search,num_elem_local)
+          endif
+
+          ! sets flags
+          do ielem = 1,num_elem_local
+            i = kdtree_search_index(ielem)
+            ispec_flag(i) = ielem
+          enddo
+
+          ! writes out vtk file for debugging
+          write(filename,'(a,i4.4,a,i6.6)') trim(LOCAL_PATH)//'/search_elem',tmp_ispec_dbg,'_proc',iproc
+          call write_VTK_data_elem_i(NSPEC_AB,NGLOB_AB,xstore,ystore,zstore, &
+                                     ibool,ispec_flag,filename)
+
+          print *,'file written: ',trim(filename)//'.vtk'
+          deallocate(ispec_flag)
+        endif
+      endif
+    else
+      ! brute-force search
+      ! always loop over whole mesh slice
+      nsearch_elements(:) = NSPEC_AB
+    endif
+
+    ! loops over elements to be smoothed in the current slice
+    do ispec = 1, NSPEC_AB
+
+      ! user info about progress
+      if (myrank == 0) then
+        if (ispec == NSPEC_AB) then
+          tCPU = wtime() - time_start
+          print *,'    ',100.0,' % elements done - Elapsed time in seconds = ',tCPU
+        else if (mod(ispec-1,NELEM_OUTPUT_INFO) == 0) then
+          if (ispec < NELEM_MAX_OUTPUT_INFO) then
+            tCPU = wtime() - time_start
+            print *,'    ',int((ispec-1) / NELEM_OUTPUT_INFO) * (100.0 / NSTEP_PERCENT_INFO), &
+                    ' % elements done - Elapsed time in seconds = ',tCPU
+          endif
+        endif
+      endif
+
+      ! search range
+      num_elem_local = nsearch_elements(ispec)
+
+      ! element center position
+      center_x0 = cx0(ispec)
+      center_y0 = cy0(ispec)
+      center_z0 = cz0(ispec)
+
+      ! sets number of elements to loop over
+      if (.not. DO_BRUTE_FORCE_SEARCH) then
+        ! sets search array
+        if (num_elem_local > 0) then
+          ! sets n-search number of nodes
+          kdtree_search_num_nodes = num_elem_local
+          ! finds closest point in target chunk
+          xyz_target(1) = center_x0
+          xyz_target(2) = center_y0
+          xyz_target(3) = center_z0
           if (DO_SEARCH_ELLIP) then
             ! (within ellipsoid)
             call kdtree_get_nearest_n_neighbors_ellip(xyz_target,r_search_dist_v,r_search_dist_h,num_elem_local)
@@ -944,34 +1108,6 @@ program smooth_sem_globe
             call kdtree_get_nearest_n_neighbors(xyz_target,r_search,num_elem_local)
           endif
         endif
-
-        ! debug output
-        if (DEBUG .and. myrank == 0) then
-          ! user info
-          if (ispec < 10) then
-            print *,'  total number of search elements: ',num_elem_local,'ispec',ispec
-          endif
-          ! file output
-          if (ispec == tmp_ispec_dbg) then
-            ! outputs search elements with integer flags
-            allocate(ispec_flag(NSPEC_AB))
-            ispec_flag(:) = 0
-            ! debug element (tmp_ispec_dbg)
-            do ielem = 1,num_elem_local
-              i = kdtree_search_index(ielem)
-              ispec_flag(i) = ielem
-            enddo
-            ! writes out vtk file for debugging
-            write(filename,'(a,i4.4,a,i6.6)') trim(LOCAL_PATH)//'/search_elem',tmp_ispec_dbg,'_proc',iproc
-            call write_VTK_data_elem_i(NSPEC_AB,NGLOB_AB,xstore,ystore,zstore, &
-                                       ibool,ispec_flag,filename)
-            print *,'file written: ',trim(filename)//'.vtk'
-            deallocate(ispec_flag)
-          endif
-        endif
-      else
-        ! brute-force search always loops over whole mesh slice
-        num_elem_local = NSPEC_AB
       endif
 
       ! --- only double loop over the elements in the search radius ---
@@ -992,17 +1128,96 @@ program smooth_sem_globe
 
         ! takes only elements in search radius
         ! calculates horizontal and vertical distance between two element centers
-        call get_distance_vec(dist_h,dist_v,center_x0,center_y0,center_z0,center_x,center_y,center_z)
 
-        ! checks distance between centers of elements
-        ! note: distances and sigmah, sigmav are normalized by R_PLANET_KM
-        if ( dist_h > sigma_h3 .or. dist_v > sigma_v3 ) cycle
+        ! same as calling routine get_distance_vec(),
+        ! but to help compiler inline and optimize the calculation...
+        !if (.false.) then
+        !  call get_distance_vec(dist_h,dist_v,center_x0,center_y0,center_z0,center_x,center_y,center_z)
+        !
+        !  ! checks distance between centers of elements
+        !  ! note: distances and sigmah, sigmav are normalized by R_PLANET_KM
+        !  if ( dist_h > sigma_h3 .or. dist_v > sigma_v3 ) cycle
+        !else
+          ! vertical distance
+          r0_squared = center_x0*center_x0 + center_y0*center_y0 + center_z0*center_z0
+          !r0 = sqrt( r0_squared ) ! length of first position vector
 
-        ! integration factors:
-        ! uses volume assigned to GLL points
-        factor(:,:,:) = jacobian(:,:,:,ispec2) * wgll_cube(:,:,:)
-        ! no volume
-        !factor(:,:,:) = 1.0_CUSTOM_REAL
+          r1_squared = center_x*center_x + center_y*center_y + center_z*center_z
+          !r1 = sqrt( r1_squared )
+
+          ! note: instead of distance we use distance squared to avoid too many sqrt() operations
+          !
+          ! vertical distance (squared)
+          ! dist_v = (r1 - r0)*(r1 - r0)
+          !        = r1**2 + r0**2 - 2 * alpha
+          !          with alpha = sqrt( r0**2 * r1**2 ) = r0 * r1
+          ! this avoids using sqrt() function too often which is costly
+          alpha = sqrt( r0_squared * r1_squared )
+          dist_v = r1_squared + r0_squared - 2.0_CUSTOM_REAL * alpha
+
+          ! only for flat earth with z in depth:
+          !dist_v = sqrt( (center_z-center_z0)** 2)
+          ! or squared:
+          !dist_v = (center_z - center_z0)** 2
+
+          ! checks distance between centers of elements (squared)
+          ! note: distances and sigmah, sigmav are normalized by R_PLANET_KM
+          if (dist_v > sigma_v3_sq) cycle
+
+          ! epicentral distance
+          ! (accounting for spherical curvature)
+          ! calculates distance of circular segment
+          ! angle between r0 and r1 in radian
+          ! given by dot-product of two vectors
+          !ratio = (center_x0*center_x + center_y0*center_y + center_z0*center_z)/(r0 * r1)
+          if (alpha > 0.0_CUSTOM_REAL) then
+            ratio = (center_x0*center_x + center_y0*center_y + center_z0*center_z) / alpha
+          else
+            ratio = 1.0_CUSTOM_REAL
+          endif
+
+          ! checks boundaries of ratio (due to numerical inaccuracies)
+          if (ratio >= 1.0_CUSTOM_REAL) then
+            ! ratio = 1.0_CUSTOM_REAL
+            ! -> acos(1) = 0
+            ! -> dist_h = 0
+            dist_h = 0.0_CUSTOM_REAL
+          else if (ratio <= -1.0_CUSTOM_REAL) then
+            ! ratio = -1.0_CUSTOM_REAL
+            ! -> acos(-1) = PI
+            ! -> dist_h = r1**2 * PI**2
+            dist_h = r1_squared * PI2
+          else
+            theta = acos( ratio )
+            ! segment length at heigth of r1 (squared)
+            dist_h = r1_squared * (theta*theta)
+          endif
+
+          ! vector approximation (fast computation): neglects curvature
+          ! horizontal distance
+          ! length of vector from point 0 to point 1
+          ! assuming small earth curvature  (since only for neighboring elements)
+          !
+          ! scales r0 to have same length as r1
+          !alpha = r1 / r0
+          !vx = alpha * x0
+          !vy = alpha * y0
+          !vz = alpha * z0
+          !
+          ! vector in horizontal between new r0 and r1
+          !vx = x1 - vx
+          !vy = y1 - vy
+          !vz = z1 - vz
+          !
+          ! distance is vector length
+          !dist_h = sqrt( vx*vx + vy*vy + vz*vz )
+          ! or squared:
+          !dist_h = vx*vx + vy*vy + vz*vz
+
+          ! checks distance between centers of elements
+          ! note: distances and sigmah, sigmav are normalized by R_PLANET_KM
+          if (dist_h > sigma_h3_sq) cycle
+        !endif
 
         ! loops over all GLL points of reference element in current slice (ispec) and search elements (ispec2)
         DO_LOOP_IJK
@@ -1014,8 +1229,87 @@ program smooth_sem_globe
           z0 = zz0(INDEX_IJK,ispec)
 
           ! calculate weights based on Gaussian smoothing
-          call smoothing_weights_vec(x0,y0,z0,sigma_h2,sigma_v2,exp_val, &
-                                     xx(:,:,:,ispec2),yy(:,:,:,ispec2),zz(:,:,:,ispec2))
+
+          ! same as calling routine smoothing_weights_vec(),
+          ! but inlined here to improve speed - a little..
+          !if (.false.) then
+          !  call smoothing_weights_vec(x0,y0,z0,sigma_h2,sigma_v2,exp_val, &
+          !                           xx(:,:,:,ispec2),yy(:,:,:,ispec2),zz(:,:,:,ispec2))
+          !else
+            ! length of first position vector
+            r0_squared = x0*x0 + y0*y0 + z0*z0
+            !r0 = sqrt( r0_squared )
+
+            DO_LOOP_IJK2
+              ! point in second slice
+              x1 = xx(INDEX_IJK2,ispec2)
+              y1 = yy(INDEX_IJK2,ispec2)
+              z1 = zz(INDEX_IJK2,ispec2)
+
+              ! without explicit function calls to help compiler optimize loops
+              ! length of position vector
+              r1_squared = x1*x1 + y1*y1 + z1*z1
+              !r1 = sqrt( r1_squared )
+
+              ! vertical distance (squared)
+              ! dist_v = (r1 - r0)*(r1 - r0)
+              !        = r1**2 + r0**2 - 2 * r0 * r1
+              !        = r1**2 + r0**2 - 2 * sqrt( r0**2 ) * sqrt( r1**2 )
+              !        = r1**2 + r0**2 - 2 * sqrt( r0**2 * r1**2 )
+              !        = r1**2 + r0**2 - 2 * alpha
+              !          with alpha = sqrt( r0**2 * r1**2 ) = r0 * r1
+              ! this avoids using sqrt() function too often which is costly
+              alpha = sqrt( r0_squared * r1_squared )
+              dist_v = r1_squared + r0_squared - 2.0_CUSTOM_REAL * alpha
+
+              ! only for flat earth with z in depth:
+              !  dist_v = sqrt( (cz(ispec2)-cz0(ispec))** 2)
+
+              ! epicentral distance
+              ! (accounting for spherical curvature)
+              ! calculates distance of circular segment
+              ! angle between r0 and r1 in radian
+              ! given by dot-product of two vectors
+              !ratio = (x0*x1 + y0*y1 + z0*z1) / (r0 * r1)
+              !      = (x0*x1 + y0*y1 + z0*z1) / sqrt(r0**2 * r1**2) -> alpha = r0 * r1
+              if (alpha > 0.0_CUSTOM_REAL) then
+                ratio = (x0*x1 + y0*y1 + z0*z1) / alpha
+              else
+                ratio = 1.0_CUSTOM_REAL
+              endif
+
+              ! checks boundaries of ratio (due to numerical inaccuracies)
+              if (ratio >= 1.0_CUSTOM_REAL) then
+                ! ratio = 1.0_CUSTOM_REAL
+                ! -> acos( 1 ) = 0
+                ! -> dist_h = 0
+                dist_h = 0.0_CUSTOM_REAL
+              else if (ratio <= -1.0_CUSTOM_REAL) then
+                ! ratio = -1.0_CUSTOM_REAL
+                ! -> acos ( -1 ) = PI
+                ! -> dist_h = (r1 * pi) * (r1 * pi ) = r1**2 * PI**2
+                dist_h = r1_squared * PI2
+              else
+                theta = acos( ratio )
+                ! segment length at heigth of r1 (squared)
+                ! dist_h = (r1 * theta)*(r1 * theta) = r1**2 * theta**2
+                dist_h = r1_squared * (theta*theta)
+              endif
+
+              ! Gaussian function
+              val = - dist_h*sigma_h2_inv - dist_v*sigma_v2_inv
+
+              ! limits to single precision
+              if (val < - 86.0_CUSTOM_REAL) then
+                ! smaller than numerical precision: exp(-86) < 1.e-37
+                val_gaussian = 0.0_CUSTOM_REAL
+              else
+                val_gaussian = exp(val)
+              endif
+              exp_val(INDEX_IJK2) = val_gaussian
+
+            ENDDO_LOOP_IJK2
+          !endif
 
           ! debug
           !if (DEBUG .and. myrank == 0) then
@@ -1034,14 +1328,30 @@ program smooth_sem_globe
           !endif
 
           ! adds GLL integration weights
-          exp_val(:,:,:) = exp_val(:,:,:) * factor(:,:,:)
+          !exp_val(:,:,:) = exp_val(:,:,:) * integ_factor(:,:,:,ispec2)
+          !contrib_weights = sum(exp_val(:,:,:))
+          ! explicit loop and merged with sum
+          contrib_weights = 0.0_CUSTOM_REAL
+          DO_LOOP_IJK2
+            exp_val(INDEX_IJK2) = exp_val(INDEX_IJK2) * integ_factor(INDEX_IJK2,ispec2)
+            contrib_weights = contrib_weights + exp_val(INDEX_IJK2)
+          ENDDO_LOOP_IJK2
 
           ! normalization, integrated values of Gaussian smoothing function
-          bk(INDEX_IJK,ispec) = bk(INDEX_IJK,ispec) + sum(exp_val(:,:,:))
+          bk(INDEX_IJK,ispec) = bk(INDEX_IJK,ispec) + contrib_weights
 
           ! adds contribution of element ispec2 to smoothed kernel values
           do iker = 1,nker
-            tk(INDEX_IJK,ispec,iker) = tk(INDEX_IJK,ispec,iker) + sum(exp_val(:,:,:) * kernel(:,:,:,ispec2,iker))
+            ! kernel contributions
+            !contrib_kernel = sum(exp_val(:,:,:) * kernel(:,:,:,ispec2,iker))
+            ! explicit loop
+            contrib_kernel = 0.0_CUSTOM_REAL
+            DO_LOOP_IJK2
+              contrib_kernel = contrib_kernel + exp_val(INDEX_IJK2) * kernel(INDEX_IJK2,ispec2,iker)
+            ENDDO_LOOP_IJK2
+
+            ! new kernel value
+            tk(INDEX_IJK,ispec,iker) = tk(INDEX_IJK,ispec,iker) + contrib_kernel
           enddo
 
           ! checks number
@@ -1050,7 +1360,7 @@ program smooth_sem_globe
           !  print *,'rank:',myrank
           !  print *,'INDEX_IJK,ispec:',INDEX_IJK,ispec
           !  print *,'tk: ',tk(INDEX_IJK,ispec,1),'bk:',bk(INDEX_IJK,ispec)
-          !  print *,'sum exp_val: ',sum(exp_val(:,:,:)),'sum factor:',sum(factor(:,:,:))
+          !  print *,'sum exp_val: ',sum(exp_val(:,:,:)),'sum factor:',sum(integ_factor(:,:,:,ispec2))
           !  print *,'sum kernel:',sum(kernel(:,:,:,ispec2))
           !  call exit_mpi(myrank, 'Error NaN')
           !endif
@@ -1060,36 +1370,41 @@ program smooth_sem_globe
       enddo ! (ielem)
 
       ! frees search results
-      if (.not. DO_BRUTE_FORCE_SEARCH) then
-        if (kdtree_search_num_nodes > 0) then
-          deallocate(kdtree_search_index)
-          kdtree_search_num_nodes = 0
-        endif
-      endif
+      !if (.not. DO_BRUTE_FORCE_SEARCH) then
+      !  if (kdtree_search_num_nodes > 0) then
+      !    deallocate(kdtree_search_index)
+      !    kdtree_search_num_nodes = 0
+      !  endif
+      !endif
 
       ! debug output
-      if (DEBUG .and. myrank == 0) then
-        ! debug element (tmp_ispec_dbg)
-        if (ispec == tmp_ispec_dbg) then
-          ! outputs Gaussian weighting function
-          ! writes out vtk file for debugging
-          write(filename,'(a,i4.4,a,i6.6)') trim(LOCAL_PATH)//'/search_elem',tmp_ispec_dbg,'_Gaussian_proc',iproc
-          call write_VTK_data_gll_cr(NSPEC_AB,NGLOB_AB,xstore,ystore,zstore,ibool,tmp_bk,filename)
-          print *,'file written: ',trim(filename)//'.vtk'
-        endif
-      endif
+      !if (DEBUG) then
+      !  if (myrank == 0) then
+      !    ! debug element (tmp_ispec_dbg)
+      !    if (ispec == tmp_ispec_dbg) then
+      !      ! outputs Gaussian weighting function
+      !      ! writes out vtk file for debugging
+      !      write(filename,'(a,i4.4,a,i6.6)') trim(LOCAL_PATH)//'/search_elem',tmp_ispec_dbg,'_Gaussian_proc',iproc
+      !      call write_VTK_data_gll_cr(NSPEC_AB,NGLOB_AB,xstore,ystore,zstore,ibool,tmp_bk,filename)
+      !      print *,'file written: ',trim(filename)//'.vtk'
+      !    endif
+      !  endif
+      !endif
 
     enddo   ! (ispec)
 
     ! debug output
-    if (DEBUG .and. myrank == 0) then
-      deallocate(tmp_bk)
-    endif
+    !if (DEBUG) then
+    !  if (myrank == 0) deallocate(tmp_bk)
+    !endif
 
     ! deletes search tree nodes
     if (.not. DO_BRUTE_FORCE_SEARCH) then
+      ! frees search index array
+      deallocate(kdtree_search_index)
       call kdtree_delete()
     endif
+
     if (myrank == 0) print *
 
   enddo     ! islice
@@ -1127,7 +1442,7 @@ program smooth_sem_globe
 
     ! avoids division by zero
     DO_LOOP_IJK
-      if (bk(INDEX_IJK,ispec) == 0.0_CUSTOM_REAL) bk(INDEX_IJK,ispec) = 1.0_CUSTOM_REAL
+      if (abs(bk(INDEX_IJK,ispec)) < 1.d-24) bk(INDEX_IJK,ispec) = 1.0_CUSTOM_REAL
     ENDDO_LOOP_IJK
 
     ! loops over kernels
@@ -1251,6 +1566,27 @@ program smooth_sem_globe
   ! finalizes adios
   call finalize_adios()
 #endif
+
+  ! frees arrays
+  deallocate(ibool,idoubling,ispec_is_tiso)
+  deallocate(xstore,ystore,zstore,xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
+  deallocate(bk,integ_factor)
+  deallocate(xx0,yy0,zz0,xx,yy,zz,cx0,cy0,cz0,cx,cy,cz)
+  deallocate(kernel,kernel_smooth,tk)
+
+  ! timing
+  if (myrank == 0) then
+    tCPU = wtime() - time_start_all
+    ! format time
+    int_tCPU = int(tCPU)
+    ihours = int_tCPU / 3600
+    iminutes = (int_tCPU - 3600*ihours) / 60
+    iseconds = int_tCPU - 3600*ihours - 60*iminutes
+    write(*,*)
+    write(*,*) 'Elapsed time in seconds  = ',tCPU
+    write(*,"(' Elapsed time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
+    write(*,*)
+  endif
 
   ! user output
   if (myrank == 0) print *, 'all done'
