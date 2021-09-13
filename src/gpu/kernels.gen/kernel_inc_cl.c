@@ -36,6 +36,8 @@
 #include "prepare_boundary_accel_on_device_cl.c"
 #include "prepare_boundary_potential_on_device_cl.c"
 #include "resort_array_cl.c"
+#include "smooth_normalize_data_kernel_cl.c"
+#include "smooth_process_kernel_cl.c"
 #include "update_accel_acoustic_kernel_cl.c"
 #include "update_accel_elastic_kernel_cl.c"
 #include "update_acoustic_lddrk_kernel_cl.c"

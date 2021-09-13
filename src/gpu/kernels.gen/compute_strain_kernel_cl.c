@@ -148,7 +148,7 @@ void compute_element_strain_undoatt(const int ispec, const int ijk_ispec, const 
   tempz2l = 0.0f;\n\
   tempz3l = 0.0f;\n\
 \n\
-  for (int l = 0; l <= NGLLX - (1); l += 1) {\n\
+  for (int l = 0; l < NGLLX; l += 1) {\n\
     fac1 = sh_hprime_xx[(l) * (NGLLX) + I];\n\
     tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + l]) * (fac1);\n\
     tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + l]) * (fac1);\n\

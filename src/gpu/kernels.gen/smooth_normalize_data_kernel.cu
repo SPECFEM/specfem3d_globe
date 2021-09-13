@@ -81,18 +81,24 @@
 #define BLOCKSIZE_TRANSFER 256
 #endif
 
-__global__ void prepare_boundary_potential_on_device(const float * d_potential_dot_dot_acoustic, float * d_send_potential_dot_dot_buffer, const int num_interfaces, const int max_nibool_interfaces, const int * d_nibool_interfaces, const int * d_ibool_interfaces){
-  int id;
-  int iglob;
-  int iloc;
+__global__ void smooth_normalize_data_kernel(float * data_smooth, const float * normalisation, const int nker, const int nspec_me){
+  int ispec;
+  int igll;
+  float norm;
+  float val;
+  const float TOL = 1.e-24;
 
-  id = threadIdx.x + (blockIdx.x) * (blockDim.x) + ((gridDim.x) * (blockDim.x)) * (threadIdx.y + (blockIdx.y) * (blockDim.y));
+  ispec = blockIdx.x + (blockIdx.y) * (gridDim.x);
+  igll = threadIdx.x;
 
-  for (int iinterface = 0; iinterface < num_interfaces; iinterface += 1) {
-    if (id < d_nibool_interfaces[iinterface]) {
-      iloc = id + (max_nibool_interfaces) * (iinterface);
-      iglob = d_ibool_interfaces[iloc] - (1);
-      d_send_potential_dot_dot_buffer[iloc] = d_potential_dot_dot_acoustic[iglob];
-    }
+  norm = (normalisation[(NGLL3) * (ispec) + igll]) / (nker);
+  if (norm < TOL) {
+    norm = 1.0f;
   }
+
+  for (int iker = 0; iker < nker; iker += 1) {
+    val = (data_smooth[((NGLL3) * (nspec_me)) * (iker) + (NGLL3) * (ispec) + igll]) / (norm);
+    data_smooth[((NGLL3) * (nspec_me)) * (iker) + (NGLL3) * (ispec) + igll] = val;
+  }
+
 }

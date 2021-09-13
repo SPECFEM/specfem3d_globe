@@ -147,7 +147,7 @@ void compute_vector_gradient_kernel(const int ispec, const __local float * fx, c
   tempz2l = 0.0f;\n\
   tempz3l = 0.0f;\n\
 \n\
-  for (int l = 0; l <= NGLLX - (1); l += 1) {\n\
+  for (int l = 0; l < NGLLX; l += 1) {\n\
     fac1 = sh_hprime_xx[(l) * (NGLLX) + I];\n\
     tempx1l = tempx1l + (fx[(K) * (NGLL2) + (J) * (NGLLX) + l]) * (fac1);\n\
     tempy1l = tempy1l + (fy[(K) * (NGLL2) + (J) * (NGLLX) + l]) * (fac1);\n\

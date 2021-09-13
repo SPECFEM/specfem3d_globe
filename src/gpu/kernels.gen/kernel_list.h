@@ -40,6 +40,8 @@ BOAST_KERNEL(outer_core_impl_kernel_forward);
 BOAST_KERNEL(prepare_boundary_accel_on_device);
 BOAST_KERNEL(prepare_boundary_potential_on_device);
 BOAST_KERNEL(resort_array);
+BOAST_KERNEL(smooth_normalize_data_kernel);
+BOAST_KERNEL(smooth_process_kernel);
 BOAST_KERNEL(update_accel_acoustic_kernel);
 BOAST_KERNEL(update_accel_elastic_kernel);
 BOAST_KERNEL(update_acoustic_lddrk_kernel);

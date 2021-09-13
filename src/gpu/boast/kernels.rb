@@ -80,6 +80,8 @@ small_kernels = [
 :compute_ani_undoatt_kernel,
 :compute_iso_undoatt_kernel,
 :compute_strain_kernel,
+:smooth_process_kernel,
+:smooth_normalize_data_kernel,
 :resort_array
 ]
 

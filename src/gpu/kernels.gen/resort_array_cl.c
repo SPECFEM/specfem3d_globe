@@ -106,14 +106,14 @@ __kernel void resort_array(__global float * old_array, const int NSPEC){\n\
   if (ispec < NSPEC) {\n\
     tx = get_local_id(0);\n\
     offset = ((ispec) * (NGLL3)) * (21) + tx;\n\
-    for (int i = 0; i <= 20; i += 1) {\n\
+    for (int i = 0; i < 21; i += 1) {\n\
       sh_tmp[(i) * (NGLL3) + tx] = old_array[(i) * (NGLL3) + offset];\n\
     }\n\
   }\n\
   barrier(CLK_LOCAL_MEM_FENCE);\n\
 \n\
   if (ispec < NSPEC) {\n\
-    for (int i = 0; i <= 20; i += 1) {\n\
+    for (int i = 0; i < 21; i += 1) {\n\
       id = (i) * (NGLL3) + tx;\n\
       idx = (id) / (21);\n\
       t_idx = ((id) % (21));\n\

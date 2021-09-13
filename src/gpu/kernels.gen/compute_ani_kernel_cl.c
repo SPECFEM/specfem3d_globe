@@ -199,7 +199,7 @@ __kernel void compute_ani_kernel(const __global float * epsilondev_xx, const __g
     offset = ((ispec) * (NGLL3)) * (21) + get_local_id(0);\n\
 \n\
     // attention: following array is sorted differently on GPU and CPU, -> use 'resort_array' before copying back to cpu\n\
-    for (int i = 0; i <= 20; i += 1) {\n\
+    for (int i = 0; i < 21; i += 1) {\n\
       cijkl_kl[(i) * (NGLL3) + offset] = cijkl_kl[(i) * (NGLL3) + offset] + (deltat) * (prod[i]);\n\
     }\n\
   }\n\

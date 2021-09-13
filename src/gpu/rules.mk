@@ -54,6 +54,7 @@ gpu_specfem3D_OBJECTS = \
 	$O/initialize_gpu.o \
 	$O/noise_tomography_gpu.o \
 	$O/prepare_mesh_constants_gpu.o \
+	$O/smooth_gpu.o \
 	$O/transfer_fields_gpu.o \
 	$O/update_displacement_gpu.o \
 	$O/update_displacement_LDDRK_gpu.o \

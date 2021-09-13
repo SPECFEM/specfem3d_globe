@@ -321,7 +321,7 @@ gpu_smooth_OBJECTS = \
 	$O/check_fields_gpu.o \
 	$O/helper_functions_gpu.o \
 	$O/initialize_gpu.o \
-	$O/smooth_cuda.o \
+	$O/smooth_gpu.o \
 	$O/transfer_fields_gpu.o \
 	$(EMPTY_MACRO)
 
@@ -329,19 +329,27 @@ gpu_smooth_STUBS = \
 	$O/specfem3D_gpu_method_stubs.gpu_cc.o \
 	$(EMPTY_MACRO)
 
-## cuda
+# kernel files
+gpu_smooth_kernels_OBJS := \
+	$O/get_maximum_scalar_kernel.o \
+	$O/get_maximum_vector_kernel.o \
+	$O/smooth_normalize_data_kernel.o \
+	$O/smooth_process_kernel.o \
+	$(EMPTY_MACRO)
+
+## CUDA
 ifeq ($(CUDA),yes)
 	# cuda
-	cuda_smooth_kernels_OBJS := \
-		$O/get_maximum_scalar_kernel.cuda-kernel.o \
-		$O/get_maximum_vector_kernel.cuda-kernel.o \
-		$O/process_smooth.cuda-kernel.o \
-		$(EMPTY_MACRO)
-
+  # renames endings
+	cuda_smooth_kernels_OBJS:=$(subst .o,.cuda-kernel.o,${gpu_smooth_kernels_OBJS})
 	cuda_smooth_DEVICE_OBJ =  $O/cuda_smooth_device_obj.o
+endif
 
-	gpu_smooth_OBJECTS:=$(subst .o,.cuda.o,${gpu_smooth_OBJECTS})
-	gpu_smooth_OBJECTS += $(cuda_smooth_DEVICE_OBJ) $(cuda_smooth_kernels_OBJS)
+## HIP
+ifeq ($(HIP),yes)
+  # defines $(cuda_smooth_kernels_OBJS)
+  # renames endings
+  cuda_smooth_kernels_OBJS:=$(subst .o,.hip-kernel.o,${gpu_smooth_kernels_OBJS})
 endif
 
 ifdef NO_GPU
@@ -349,8 +357,36 @@ ifdef NO_GPU
 else
 	gpu_xs_OBJECTS = $(gpu_smooth_OBJECTS)
 endif
-xsmooth_sem_SHARED_OBJECTS += $(gpu_xs_OBJECTS)
 
+# substitutes object endings to assign corresponding compilation rule
+ifeq ($(GPU_CUDA_AND_OCL),yes)
+	# combines both CUDA and OpenCL kernels compilation
+  gpu_smooth_OBJECTS:=$(subst .o,.cuda-ocl.o,${gpu_smooth_OBJECTS})
+endif
+
+ifneq ($(GPU_CUDA_AND_OCL),yes)
+  # OpenCL kernels only
+  ifeq ($(OCL), yes)
+    gpu_smooth_OBJECTS:=$(subst .o,.ocl.o,${gpu_smooth_OBJECTS})
+  endif
+
+  # CUDA kernels only
+  ifeq ($(CUDA),yes)
+    gpu_smooth_OBJECTS:=$(subst .o,.cuda.o,${gpu_smooth_OBJECTS})
+  endif
+
+  # HIP kernels only
+  ifeq ($(HIP), yes)
+    gpu_smooth_OBJECTS:=$(subst .o,.hip.o,${gpu_smooth_OBJECTS})
+  endif
+endif
+
+gpu_smooth_OBJECTS += $(cuda_smooth_DEVICE_OBJ) $(cuda_smooth_kernels_OBJS)
+
+##
+## compilation
+##
+xsmooth_sem_SHARED_OBJECTS += $(gpu_xs_OBJECTS)
 xsmooth_sem_LIBS = $(MPILIBS)  # $(LDFLAGS) $(MPILIBS) $(LIBS)
 xsmooth_sem_LIBS += $(GPU_LINK)
 

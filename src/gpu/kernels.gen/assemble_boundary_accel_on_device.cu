@@ -87,7 +87,7 @@ __global__ void assemble_boundary_accel_on_device(float * d_accel, const float *
   int iloc;
   int iinterface;
   id = threadIdx.x + (blockIdx.x) * (blockDim.x) + ((gridDim.x) * (blockDim.x)) * (threadIdx.y + (blockIdx.y) * (blockDim.y));
-  for (iinterface = 0; iinterface <= num_interfaces - (1); iinterface += 1) {
+  for (iinterface = 0; iinterface < num_interfaces; iinterface += 1) {
     if (id < d_nibool_interfaces[iinterface]) {
       iloc = id + (max_nibool_interfaces) * (iinterface);
       iglob = d_ibool_interfaces[iloc] - (1);

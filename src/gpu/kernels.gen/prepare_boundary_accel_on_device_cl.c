@@ -99,7 +99,7 @@ __kernel void prepare_boundary_accel_on_device(const __global float * d_accel, _
 \n\
   id = get_global_id(0) + (get_global_size(0)) * (get_global_id(1));\n\
 \n\
-  for (int iinterface = 0; iinterface <= num_interfaces - (1); iinterface += 1) {\n\
+  for (int iinterface = 0; iinterface < num_interfaces; iinterface += 1) {\n\
     if (id < d_nibool_interfaces[iinterface]) {\n\
       iloc = id + (max_nibool_interfaces) * (iinterface);\n\
       iglob = d_ibool_interfaces[iloc] - (1);\n\

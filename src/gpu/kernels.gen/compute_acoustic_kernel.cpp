@@ -111,7 +111,7 @@ static __device__ void compute_gradient_kernel(const int ijk, const int ispec, c
   temp1l = 0.0f;
   temp2l = 0.0f;
   temp3l = 0.0f;
-  for (l = 0; l <= NGLLX - (1); l += 1) {
+  for (l = 0; l < NGLLX; l += 1) {
     hp1 = hprime_xx[(l) * (NGLLX) + I];
     hp2 = hprime_xx[(l) * (NGLLX) + J];
     hp3 = hprime_xx[(l) * (NGLLX) + K];

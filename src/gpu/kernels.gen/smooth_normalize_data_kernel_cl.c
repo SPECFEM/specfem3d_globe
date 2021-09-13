@@ -31,7 +31,7 @@
 !=====================================================================
 */
 
-const char * assemble_boundary_potential_on_device_program = "\
+const char * smooth_normalize_data_kernel_program = "\
 inline void atomicAdd(volatile __global float *source, const float val) {\n\
   union {\n\
     unsigned int iVal;\n\
@@ -92,18 +92,25 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #define BLOCKSIZE_TRANSFER 256\n\
 #endif\n\
 \n\
-__kernel void assemble_boundary_potential_on_device(__global float * d_potential_dot_dot_acoustic, const __global float * d_send_potential_dot_dot_buffer, const int num_interfaces, const int max_nibool_interfaces, const __global int * d_nibool_interfaces, const __global int * d_ibool_interfaces){\n\
-  int id;\n\
-  int iglob;\n\
-  int iloc;\n\
-  int iinterface;\n\
-  id = get_global_id(0) + (get_global_size(0)) * (get_global_id(1));\n\
-  for (iinterface = 0; iinterface < num_interfaces; iinterface += 1) {\n\
-    if (id < d_nibool_interfaces[iinterface]) {\n\
-      iloc = id + (max_nibool_interfaces) * (iinterface);\n\
-      iglob = d_ibool_interfaces[iloc] - (1);\n\
-      atomicAdd(d_potential_dot_dot_acoustic + iglob, d_send_potential_dot_dot_buffer[iloc]);\n\
-    }\n\
+__kernel void smooth_normalize_data_kernel(__global float * data_smooth, const __global float * normalisation, const int nker, const int nspec_me){\n\
+  int ispec;\n\
+  int igll;\n\
+  float norm;\n\
+  float val;\n\
+  const float TOL = 1.e-24;\n\
+\n\
+  ispec = get_group_id(0) + (get_group_id(1)) * (get_num_groups(0));\n\
+  igll = get_local_id(0);\n\
+\n\
+  norm = (normalisation[(NGLL3) * (ispec) + igll]) / (nker);\n\
+  if (norm < TOL) {\n\
+    norm = 1.0f;\n\
   }\n\
+\n\
+  for (int iker = 0; iker < nker; iker += 1) {\n\
+    val = (data_smooth[((NGLL3) * (nspec_me)) * (iker) + (NGLL3) * (ispec) + igll]) / (norm);\n\
+    data_smooth[((NGLL3) * (nspec_me)) * (iker) + (NGLL3) * (ispec) + igll] = val;\n\
+  }\n\
+\n\
 }\n\
 ";

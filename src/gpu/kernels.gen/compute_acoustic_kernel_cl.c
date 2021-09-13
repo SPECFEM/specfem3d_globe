@@ -125,7 +125,7 @@ void compute_gradient_kernel(const int ijk, const int ispec, const __local float
   temp1l = 0.0f;\n\
   temp2l = 0.0f;\n\
   temp3l = 0.0f;\n\
-  for (l = 0; l <= NGLLX - (1); l += 1) {\n\
+  for (l = 0; l < NGLLX; l += 1) {\n\
     hp1 = hprime_xx[(l) * (NGLLX) + I];\n\
     hp2 = hprime_xx[(l) * (NGLLX) + J];\n\
     hp3 = hprime_xx[(l) * (NGLLX) + K];\n\

@@ -27,36 +27,10 @@
 !=====================================================================
 */
 
-#ifndef SMOOTH_CUDA_H
-#define SMOOTH_CUDA_H
+#ifndef SMOOTH_GPU_H
+#define SMOOTH_GPU_H
 
 #include "mesh_constants_gpu.h"
-
-// prototype definitions
-// from file process_smooth.cu
-__global__ void process_smooth( realw_const_p xstore_me,
-                                realw_const_p ystore_me,
-                                realw_const_p zstore_me,
-                                realw_const_p xstore_other,
-                                realw_const_p ystore_other,
-                                realw_const_p zstore_other,
-                                realw_const_p data_other,
-                                const realw sigma_h2_inv,
-                                const realw sigma_v2_inv,
-                                const int iker,
-                                const int nspec_me,
-                                const int nspec_other,
-                                const realw v_criterion,
-                                const realw h_criterion,
-                                realw_const_p integ_factor,
-                                realw_p data_smooth,
-                                realw_p normalisation);
-
-__global__ void normalize_data( realw_p data_smooth,
-                                realw_const_p normalisation,
-                                int nker,
-                                int nspec_me);
-
 
 
 // smoothing data structure
@@ -87,4 +61,4 @@ typedef struct Smooth_data_ {
 } Smooth_data;
 
 
-#endif  // SMOOTH_CUDA_H
+#endif  // SMOOTH_GPU_H

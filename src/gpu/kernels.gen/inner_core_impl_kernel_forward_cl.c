@@ -105,7 +105,7 @@ void compute_element_ic_att_stress(const int tx, const int working_element, cons
   float R_xx_val;\n\
   float R_yy_val;\n\
 \n\
-  for (int i_sls = 0; i_sls <= N_SLS - (1); i_sls += 1) {\n\
+  for (int i_sls = 0; i_sls < N_SLS; i_sls += 1) {\n\
 \n\
     offset = tx + (NGLL3) * (i_sls + (N_SLS) * (working_element));\n\
 \n\
@@ -137,7 +137,7 @@ void compute_element_ic_att_memory(const int tx, const int working_element, cons
   mul = d_muvstore[tx + (NGLL3_PADDED) * (working_element)];\n\
   const int offset_eps = tx + (NGLL3) * (working_element);\n\
 \n\
-  for (int i_sls = 0; i_sls <= N_SLS - (1); i_sls += 1) {\n\
+  for (int i_sls = 0; i_sls < N_SLS; i_sls += 1) {\n\
     offset = tx + (NGLL3) * (i_sls + (N_SLS) * (working_element));\n\
     if (USE_3D_ATTENUATION_ARRAYS) {\n\
       factor_loc = (mul) * (factor_common[offset]);\n\
@@ -180,7 +180,7 @@ void compute_element_ic_att_memory_lddrk(const int tx, const int working_element
 \n\
   mul = d_muvstore[tx + (NGLL3_PADDED) * (working_element)];\n\
 \n\
-  for (int i_sls = 0; i_sls <= N_SLS - (1); i_sls += 1) {\n\
+  for (int i_sls = 0; i_sls < N_SLS; i_sls += 1) {\n\
     offset = tx + (NGLL3) * (i_sls + (N_SLS) * (working_element));\n\
     if (USE_3D_ATTENUATION_ARRAYS) {\n\
       factor_loc = (mul) * (factor_common[offset]);\n\
@@ -880,7 +880,7 @@ void compute_element_ic_att_stress(const int tx, const int working_element, cons
   float R_xx_val;\n\
   float R_yy_val;\n\
 \n\
-  for (int i_sls = 0; i_sls <= N_SLS - (1); i_sls += 1) {\n\
+  for (int i_sls = 0; i_sls < N_SLS; i_sls += 1) {\n\
 \n\
     offset = tx + (NGLL3) * (i_sls + (N_SLS) * (working_element));\n\
 \n\
@@ -912,7 +912,7 @@ void compute_element_ic_att_memory(const int tx, const int working_element, cons
   mul = d_muvstore[tx + (NGLL3_PADDED) * (working_element)];\n\
   const int offset_eps = tx + (NGLL3) * (working_element);\n\
 \n\
-  for (int i_sls = 0; i_sls <= N_SLS - (1); i_sls += 1) {\n\
+  for (int i_sls = 0; i_sls < N_SLS; i_sls += 1) {\n\
     offset = tx + (NGLL3) * (i_sls + (N_SLS) * (working_element));\n\
     if (USE_3D_ATTENUATION_ARRAYS) {\n\
       factor_loc = (mul) * (factor_common[offset]);\n\
@@ -955,7 +955,7 @@ void compute_element_ic_att_memory_lddrk(const int tx, const int working_element
 \n\
   mul = d_muvstore[tx + (NGLL3_PADDED) * (working_element)];\n\
 \n\
-  for (int i_sls = 0; i_sls <= N_SLS - (1); i_sls += 1) {\n\
+  for (int i_sls = 0; i_sls < N_SLS; i_sls += 1) {\n\
     offset = tx + (NGLL3) * (i_sls + (N_SLS) * (working_element));\n\
     if (USE_3D_ATTENUATION_ARRAYS) {\n\
       factor_loc = (mul) * (factor_common[offset]);\n\

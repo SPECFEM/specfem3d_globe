@@ -28,7 +28,7 @@
 */
 
 #include "mesh_constants_gpu.h"
-#include "smooth_cuda.h"
+#include "smooth_gpu.h"
 
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -186,30 +186,30 @@ void FC_FUNC_(compute_smooth_gpu,
       size_t local_work_size[2];
       cl_uint idx = 0;
 
-      clCheck (clSetKernelArg (mocl.kernels.process_smooth, idx++, sizeof (cl_mem), (void *) &sp->x_me.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.process_smooth, idx++, sizeof (cl_mem), (void *) &sp->y_me.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.process_smooth, idx++, sizeof (cl_mem), (void *) &sp->z_me.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.process_smooth, idx++, sizeof (cl_mem), (void *) &sp->x_other.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.process_smooth, idx++, sizeof (cl_mem), (void *) &sp->y_other.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.process_smooth, idx++, sizeof (cl_mem), (void *) &sp->z_other.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.process_smooth, idx++, sizeof (cl_mem), (void *) &sp->kernel.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.process_smooth, idx++, sizeof (realw),  (void *) &sp->sigma_h2_inv));
-      clCheck (clSetKernelArg (mocl.kernels.process_smooth, idx++, sizeof (realw),  (void *) &sp->sigma_v2_inv));
-      clCheck (clSetKernelArg (mocl.kernels.process_smooth, idx++, sizeof (int),    (void *) &iker));
-      clCheck (clSetKernelArg (mocl.kernels.process_smooth, idx++, sizeof (int),    (void *) &sp->nspec_me));
-      clCheck (clSetKernelArg (mocl.kernels.process_smooth, idx++, sizeof (int),    (void *) &nspec_other));
-      clCheck (clSetKernelArg (mocl.kernels.process_smooth, idx++, sizeof (realw),  (void *) &sp->v_criterion));
-      clCheck (clSetKernelArg (mocl.kernels.process_smooth, idx++, sizeof (realw),  (void *) &sp->h_criterion));
-      clCheck (clSetKernelArg (mocl.kernels.process_smooth, idx++, sizeof (cl_mem), (void *) &sp->integ_factor.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.process_smooth, idx++, sizeof (cl_mem), (void *) &sp->data_smooth.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.process_smooth, idx++, sizeof (cl_mem), (void *) &sp->normalisation.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.smooth_process_kernel, idx++, sizeof (cl_mem), (void *) &sp->x_me.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.smooth_process_kernel, idx++, sizeof (cl_mem), (void *) &sp->y_me.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.smooth_process_kernel, idx++, sizeof (cl_mem), (void *) &sp->z_me.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.smooth_process_kernel, idx++, sizeof (cl_mem), (void *) &sp->x_other.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.smooth_process_kernel, idx++, sizeof (cl_mem), (void *) &sp->y_other.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.smooth_process_kernel, idx++, sizeof (cl_mem), (void *) &sp->z_other.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.smooth_process_kernel, idx++, sizeof (cl_mem), (void *) &sp->kernel.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.smooth_process_kernel, idx++, sizeof (realw),  (void *) &sp->sigma_h2_inv));
+      clCheck (clSetKernelArg (mocl.kernels.smooth_process_kernel, idx++, sizeof (realw),  (void *) &sp->sigma_v2_inv));
+      clCheck (clSetKernelArg (mocl.kernels.smooth_process_kernel, idx++, sizeof (int),    (void *) &iker));
+      clCheck (clSetKernelArg (mocl.kernels.smooth_process_kernel, idx++, sizeof (int),    (void *) &sp->nspec_me));
+      clCheck (clSetKernelArg (mocl.kernels.smooth_process_kernel, idx++, sizeof (int),    (void *) &nspec_other));
+      clCheck (clSetKernelArg (mocl.kernels.smooth_process_kernel, idx++, sizeof (realw),  (void *) &sp->v_criterion));
+      clCheck (clSetKernelArg (mocl.kernels.smooth_process_kernel, idx++, sizeof (realw),  (void *) &sp->h_criterion));
+      clCheck (clSetKernelArg (mocl.kernels.smooth_process_kernel, idx++, sizeof (cl_mem), (void *) &sp->integ_factor.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.smooth_process_kernel, idx++, sizeof (cl_mem), (void *) &sp->data_smooth.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.smooth_process_kernel, idx++, sizeof (cl_mem), (void *) &sp->normalisation.ocl));
 
       local_work_size[0] = NGLL3;
       local_work_size[1] = 1;
-      global_work_size[0] = num_blocks_x * blocksize;
+      global_work_size[0] = num_blocks_x * NGLL3;
       global_work_size[1] = num_blocks_y;
 
-      clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.process_smooth, 2, NULL,
+      clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.smooth_process_kernel, 2, NULL,
                                        global_work_size, local_work_size, 0, NULL, NULL));
     }
 #endif
@@ -218,23 +218,23 @@ void FC_FUNC_(compute_smooth_gpu,
       dim3 grid(num_blocks_x,num_blocks_y);
       dim3 threads(NGLL3,1,1);
 
-      process_smooth<<<grid,threads>>>(sp->x_me.cuda,
-                                       sp->y_me.cuda,
-                                       sp->z_me.cuda,
-                                       sp->x_other.cuda,
-                                       sp->y_other.cuda,
-                                       sp->z_other.cuda,
-                                       sp->kernel.cuda,
-                                       sp->sigma_h2_inv,
-                                       sp->sigma_v2_inv,
-                                       iker,
-                                       sp->nspec_me,
-                                       nspec_other,
-                                       sp->v_criterion,
-                                       sp->h_criterion,
-                                       sp->integ_factor.cuda,
-                                       sp->data_smooth.cuda,
-                                       sp->normalisation.cuda);
+      smooth_process_kernel<<<grid,threads>>>(sp->x_me.cuda,
+                                              sp->y_me.cuda,
+                                              sp->z_me.cuda,
+                                              sp->x_other.cuda,
+                                              sp->y_other.cuda,
+                                              sp->z_other.cuda,
+                                              sp->kernel.cuda,
+                                              sp->sigma_h2_inv,
+                                              sp->sigma_v2_inv,
+                                              iker,
+                                              sp->nspec_me,
+                                              nspec_other,
+                                              sp->v_criterion,
+                                              sp->h_criterion,
+                                              sp->integ_factor.cuda,
+                                              sp->data_smooth.cuda,
+                                              sp->normalisation.cuda);
     }
 #endif
 #ifdef USE_HIP
@@ -242,24 +242,24 @@ void FC_FUNC_(compute_smooth_gpu,
       dim3 grid(num_blocks_x,num_blocks_y);
       dim3 threads(NGLL3,1,1);
 
-      hipLaunchKernelGGL(process_smooth, dim3(grid), dim3(threads), 0, 0,
-                                         sp->x_me.hip,
-                                         sp->y_me.hip,
-                                         sp->z_me.hip,
-                                         sp->x_other.hip,
-                                         sp->y_other.hip,
-                                         sp->z_other.hip,
-                                         sp->kernel.hip,
-                                         sp->sigma_h2_inv,
-                                         sp->sigma_v2_inv,
-                                         iker,
-                                         sp->nspec_me,
-                                         nspec_other,
-                                         sp->v_criterion,
-                                         sp->h_criterion,
-                                         sp->integ_factor.hip,
-                                         sp->data_smooth.hip,
-                                         sp->normalisation.hip);
+      hipLaunchKernelGGL(smooth_process_kernel, dim3(grid), dim3(threads), 0, 0,
+                                                 sp->x_me.hip,
+                                                 sp->y_me.hip,
+                                                 sp->z_me.hip,
+                                                 sp->x_other.hip,
+                                                 sp->y_other.hip,
+                                                 sp->z_other.hip,
+                                                 sp->kernel.hip,
+                                                 sp->sigma_h2_inv,
+                                                 sp->sigma_v2_inv,
+                                                 iker,
+                                                 sp->nspec_me,
+                                                 nspec_other,
+                                                 sp->v_criterion,
+                                                 sp->h_criterion,
+                                                 sp->integ_factor.hip,
+                                                 sp->data_smooth.hip,
+                                                 sp->normalisation.hip);
     }
 #endif
   }
@@ -298,17 +298,17 @@ void FC_FUNC_(get_smooth_gpu,
     size_t local_work_size[2];
     cl_uint idx = 0;
 
-    clCheck (clSetKernelArg (mocl.kernels.normalize_data, idx++, sizeof (cl_mem), (void *) &sp->data_smooth.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.normalize_data, idx++, sizeof (cl_mem), (void *) &sp->normalisation.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.normalize_data, idx++, sizeof (int),    (void *) &sp->nker));
-    clCheck (clSetKernelArg (mocl.kernels.normalize_data, idx++, sizeof (int),    (void *) &sp->nspec_me));
+    clCheck (clSetKernelArg (mocl.kernels.smooth_normalize_data_kernel, idx++, sizeof (cl_mem), (void *) &sp->data_smooth.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.smooth_normalize_data_kernel, idx++, sizeof (cl_mem), (void *) &sp->normalisation.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.smooth_normalize_data_kernel, idx++, sizeof (int),    (void *) &sp->nker));
+    clCheck (clSetKernelArg (mocl.kernels.smooth_normalize_data_kernel, idx++, sizeof (int),    (void *) &sp->nspec_me));
 
     local_work_size[0] = NGLL3;
     local_work_size[1] = 1;
-    global_work_size[0] = num_blocks_x * blocksize;
+    global_work_size[0] = num_blocks_x * NGLL3;
     global_work_size[1] = num_blocks_y;
 
-    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.normalize_data, 2, NULL,
+    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.smooth_normalize_data_kernel, 2, NULL,
                                      global_work_size, local_work_size, 0, NULL, NULL));
 }
 #endif
@@ -317,10 +317,10 @@ void FC_FUNC_(get_smooth_gpu,
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(NGLL3,1,1);
 
-    normalize_data<<<grid,threads>>>(sp->data_smooth.cuda,
-                                     sp->normalisation.cuda,
-                                     sp->nker,
-                                     sp->nspec_me);
+    smooth_normalize_data_kernel<<<grid,threads>>>(sp->data_smooth.cuda,
+                                                   sp->normalisation.cuda,
+                                                   sp->nker,
+                                                   sp->nspec_me);
   }
 #endif
 #ifdef USE_HIP
@@ -328,10 +328,10 @@ void FC_FUNC_(get_smooth_gpu,
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(NGLL3,1,1);
 
-    hipLaunchKernelGGL(normalize_data, dim3(grid), dim3(threads), 0, 0,
-                                       sp->data_smooth.hip,
-                                       sp->normalisation.hip,
-                                       sp->nker,sp->nspec_me);
+    hipLaunchKernelGGL(smooth_normalize_data_kernel, dim3(grid), dim3(threads), 0, 0,
+                                                     sp->data_smooth.hip,
+                                                     sp->normalisation.hip,
+                                                     sp->nker,sp->nspec_me);
   }
 #endif
 

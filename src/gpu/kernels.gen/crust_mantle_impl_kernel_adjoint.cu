@@ -88,7 +88,7 @@ static __device__ void compute_element_cm_att_stress(const int tx, const int wor
   float R_xx_val;
   float R_yy_val;
 
-  for (int i_sls = 0; i_sls <= N_SLS - (1); i_sls += 1) {
+  for (int i_sls = 0; i_sls < N_SLS; i_sls += 1) {
 
     offset = tx + (NGLL3) * (i_sls + (N_SLS) * (working_element));
 
@@ -117,7 +117,7 @@ static __device__ void compute_element_cm_att_memory(const int tx, const int wor
   mul = d_muvstore[tx + (NGLL3_PADDED) * (working_element)];
   const int offset_eps = tx + (NGLL3) * (working_element);
 
-  for (int i_sls = 0; i_sls <= N_SLS - (1); i_sls += 1) {
+  for (int i_sls = 0; i_sls < N_SLS; i_sls += 1) {
     offset = tx + (NGLL3) * (i_sls + (N_SLS) * (working_element));
     if (USE_3D_ATTENUATION_ARRAYS) {
       factor_loc = (mul) * (factor_common[offset]);
@@ -157,7 +157,7 @@ static __device__ void compute_element_cm_att_memory_lddrk(const int tx, const i
 
   mul = d_muvstore[tx + (NGLL3_PADDED) * (working_element)];
 
-  for (int i_sls = 0; i_sls <= N_SLS - (1); i_sls += 1) {
+  for (int i_sls = 0; i_sls < N_SLS; i_sls += 1) {
     offset = tx + (NGLL3) * (i_sls + (N_SLS) * (working_element));
     if (USE_3D_ATTENUATION_ARRAYS) {
       factor_loc = (mul) * (factor_common[offset]);
@@ -367,7 +367,7 @@ static __device__ void compute_element_cm_tiso(const int offset, const float * d
 // main function
 /*----------------------------------------------*/
 
-__global__
+__global__ 
 #ifdef USE_LAUNCH_BOUNDS
 __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
 #endif
@@ -840,7 +840,7 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
   }
 }
 
-__global__
+__global__ 
 #ifdef USE_LAUNCH_BOUNDS
 __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
 #endif

@@ -134,7 +134,7 @@ static __device__ void compute_element_strain_undoatt(const int ispec, const int
   tempz2l = 0.0f;
   tempz3l = 0.0f;
 
-  for (int l = 0; l <= NGLLX - (1); l += 1) {
+  for (int l = 0; l < NGLLX; l += 1) {
     fac1 = sh_hprime_xx[(l) * (NGLLX) + I];
     tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + l]) * (fac1);
     tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + l]) * (fac1);
