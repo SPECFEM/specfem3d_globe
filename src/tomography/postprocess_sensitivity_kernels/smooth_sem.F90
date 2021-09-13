@@ -579,7 +579,7 @@ program smooth_sem_globe
   cx0(:) = 0.0_CUSTOM_REAL; cy0(:) = 0.0_CUSTOM_REAL; cz0(:) = 0.0_CUSTOM_REAL
   cx(:) = 0.0_CUSTOM_REAL; cy(:) = 0.0_CUSTOM_REAL; cz(:) = 0.0_CUSTOM_REAL
 
-  ! gaussian kernels
+  ! Gaussian kernels
   allocate(kernel(NGLLX,NGLLY,NGLLZ,NSPEC_AB,nker), &
            kernel_smooth(NGLLX,NGLLY,NGLLZ,NSPEC_AB,nker), &
            tk(NGLLX,NGLLY,NGLLZ,NSPEC_AB,nker), stat=ier)
@@ -1238,7 +1238,7 @@ program smooth_sem_globe
       enddo
     enddo
   endif
-  
+
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
   ! ADIOS
   ! user output
@@ -1409,7 +1409,7 @@ end program smooth_sem_globe
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: exp_val
 
-  real(kind=CUSTOM_REAL) :: val,val_gaussian
+  real(kind=CUSTOM_REAL) :: val,val_Gaussian
   real(kind=CUSTOM_REAL) :: center_x0, center_y0, center_z0
   real(kind=CUSTOM_REAL) :: center_x, center_y, center_z
   real(kind=CUSTOM_REAL) :: contrib_weights,contrib_kernel
@@ -1724,11 +1724,11 @@ end program smooth_sem_globe
             ! limits to single precision
             if (val < - 86.0_CUSTOM_REAL) then
               ! smaller than numerical precision: exp(-86) < 1.e-37
-              val_gaussian = 0.0_CUSTOM_REAL
+              val_Gaussian = 0.0_CUSTOM_REAL
             else
-              val_gaussian = exp(val)
+              val_Gaussian = exp(val)
             endif
-            exp_val(INDEX_IJK2) = val_gaussian
+            exp_val(INDEX_IJK2) = val_Gaussian
 
           ENDDO_LOOP_IJK2
         !endif
