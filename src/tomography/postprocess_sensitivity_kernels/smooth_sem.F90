@@ -604,25 +604,25 @@ program smooth_sem_globe
   if (nglob /= NGLOB_AB) call exit_mpi(myrank,'Error invalid nglob value in adios solver_data file')
 
   ! reads mesh arrays
-  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "ibool", ibool(:, :, :, :))
+  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "ibool", ibool(:,:,:,:))
 
-  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "xixstore", xixstore(:, :, :, :))
-  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "xiystore", xiystore(:, :, :, :))
-  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "xizstore", xizstore(:, :, :, :))
+  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "xixstore", xixstore(:,:,:,:))
+  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "xiystore", xiystore(:,:,:,:))
+  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "xizstore", xizstore(:,:,:,:))
 
-  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "etaxstore", etaxstore(:, :, :, :))
-  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "etaystore", etaystore(:, :, :, :))
-  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "etazstore", etazstore(:, :, :, :))
+  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "etaxstore", etaxstore(:,:,:,:))
+  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "etaystore", etaystore(:,:,:,:))
+  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "etazstore", etazstore(:,:,:,:))
 
-  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "gammaxstore", gammaxstore(:, :, :, :))
-  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "gammaystore", gammaystore(:, :, :, :))
-  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "gammazstore", gammazstore(:, :, :, :))
+  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "gammaxstore", gammaxstore(:,:,:,:))
+  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "gammaystore", gammaystore(:,:,:,:))
+  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "gammazstore", gammazstore(:,:,:,:))
 
   call read_adios_array(myadios_file, myadios_group, myrank, nglob, trim(reg_name) // "x_global", xstore(:))
   call read_adios_array(myadios_file, myadios_group, myrank, nglob, trim(reg_name) // "y_global", ystore(:))
   call read_adios_array(myadios_file, myadios_group, myrank, nglob, trim(reg_name) // "z_global", zstore(:))
-
-  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "idoubling", idoubling(:))
+  ! not needed so far
+  !call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "idoubling", idoubling(:))
 #else
   ! read in the topology files of the current and neighboring slices
   ! point locations
@@ -709,6 +709,18 @@ program smooth_sem_globe
       integ_factor(:,:,:,ispec) = 1.0_CUSTOM_REAL
     endif
   enddo
+
+  ! user info
+  if (myrank == 0) then
+    ! mesh stats
+    print *,'slice 0:'
+    print *,'  mesh dimensions x min/max = ',minval(xstore),'/',maxval(xstore)
+    print *,'  mesh dimensions y min/max = ',minval(ystore),'/',maxval(ystore)
+    print *,'  mesh dimensions z min/max = ',minval(zstore),'/',maxval(zstore)
+    print *,
+    print *,'  integration factor min/max =',minval(integ_factor),'/',maxval(integ_factor)
+    print *,
+  endif
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
   ! ADIOS single file opening
@@ -839,25 +851,25 @@ program smooth_sem_globe
       ! read in neighbor slice
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
       ! ADIOS
-      call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "ibool", ibool(:, :, :, :))
+      call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "ibool", ibool(:,:,:,:))
 
-      call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "xixstore", xixstore(:, :, :, :))
-      call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "xiystore", xiystore(:, :, :, :))
-      call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "xizstore", xizstore(:, :, :, :))
+      call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "xixstore", xixstore(:,:,:,:))
+      call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "xiystore", xiystore(:,:,:,:))
+      call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "xizstore", xizstore(:,:,:,:))
 
-      call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "etaxstore", etaxstore(:, :, :, :))
-      call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "etaystore", etaystore(:, :, :, :))
-      call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "etazstore", etazstore(:, :, :, :))
+      call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "etaxstore", etaxstore(:,:,:,:))
+      call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "etaystore", etaystore(:,:,:,:))
+      call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "etazstore", etazstore(:,:,:,:))
 
-      call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "gammaxstore", gammaxstore(:, :, :, :))
-      call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "gammaystore", gammaystore(:, :, :, :))
-      call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "gammazstore", gammazstore(:, :, :, :))
+      call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "gammaxstore", gammaxstore(:,:,:,:))
+      call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "gammaystore", gammaystore(:,:,:,:))
+      call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "gammazstore", gammazstore(:,:,:,:))
 
       call read_adios_array(myadios_file, myadios_group, iproc, nglob, trim(reg_name) // "x_global", xstore(:))
       call read_adios_array(myadios_file, myadios_group, iproc, nglob, trim(reg_name) // "y_global", ystore(:))
       call read_adios_array(myadios_file, myadios_group, iproc, nglob, trim(reg_name) // "z_global", zstore(:))
-
-      call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "idoubling", idoubling(:))
+      ! not needed so far
+      !call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "idoubling", idoubling(:))
 #else
       ! neighbor database file
       write(filename,'(a,i6.6,a)') trim(topo_dir)//'/proc',iproc,trim(reg_name)//'solver_data.bin'
@@ -938,6 +950,18 @@ program smooth_sem_globe
           integ_factor(:,:,:,ispec) = 1.0_CUSTOM_REAL
         endif
       enddo
+
+      ! user info
+      if (myrank == 0) then
+        ! mesh stats
+        print *,'slice ',iproc,':'
+        print *,'  mesh dimensions x min/max = ',minval(xstore),'/',maxval(xstore)
+        print *,'  mesh dimensions y min/max = ',minval(ystore),'/',maxval(ystore)
+        print *,'  mesh dimensions z min/max = ',minval(zstore),'/',maxval(zstore)
+        print *,
+        print *,'  integration factor min/max =',minval(integ_factor),'/',maxval(integ_factor)
+        print *,
+      endif
     endif
 
     ! loops over input kernels
@@ -971,7 +995,7 @@ program smooth_sem_globe
         print *
       endif
       ! reads kernel values
-      call read_adios_array(myadios_val_file, myadios_val_group, iproc, nspec, trim(varname), kernel(:, :, :, :, iker))
+      call read_adios_array(myadios_val_file, myadios_val_group, iproc, nspec, trim(varname), kernel(:,:,:,:,iker))
 #else
       ! data file
       write(local_data_file,'(a,i6.6,a)') &
@@ -1134,7 +1158,8 @@ program smooth_sem_globe
                           xx0,yy0,zz0,xx,yy,zz, &
                           sigma_v2,sigma_h2, &
                           sigma_v3,sigma_h3, &
-                          r_search,r_search_dist_v,r_search_dist_h,nsearch_elements,use_kdtree_search, &
+                          r_search,r_search_dist_v,r_search_dist_h, &
+                          nsearch_elements,use_kdtree_search, &
                           NSTEP_PERCENT_INFO)
     endif
 
@@ -1277,7 +1302,7 @@ program smooth_sem_globe
     ! smoothed kernel values
     local_dim = NGLLX * NGLLY * NGLLZ * nspec
     call write_adios_global_1d_array(myadios_val_file, myadios_val_group, myrank, sizeprocs_adios, local_dim, &
-                                     trim(reg_name) // trim(kernel_name), kernel_smooth(:, :, :, :, iker))
+                                     trim(reg_name) // trim(kernel_name), kernel_smooth(:,:,:,:,iker))
 #else
     ! smoothed kernel file name
     write(output_file,'(a,i6.6,a)') trim(output_dir)//'/proc', myrank, trim(reg_name)//trim(kernel_name)//'_smooth.bin'
