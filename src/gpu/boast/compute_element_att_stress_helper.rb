@@ -40,7 +40,7 @@ module BOAST
       comment()
 
       i_sls  = Int("i_sls")
-      print For( i_sls, 0, nsls - 1, :declit => true) {
+      print For( i_sls, 0, nsls, :operator => "<", :declit => true) {
         # index
         # note: index for R_xx,.. here is (i,j,k,i_sls,ispec) and not (i,j,k,ispec,i_sls) as in local version
         #       see local version: offset_sls = tx + NGLL3*(working_element + NSPEC*i_sls);

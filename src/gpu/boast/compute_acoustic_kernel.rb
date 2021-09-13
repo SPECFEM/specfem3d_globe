@@ -34,7 +34,7 @@ module BOAST
       (0..2).each { |indx|
         print templ[indx] === 0.0
       }
-      print For(l, 0, ngllx-1) {
+      print For(l, 0, ngllx, :operator => "<") {
         print hp[0] === hprime_xx[l*ngllx + i]
         print hp[1] === hprime_xx[l*ngllx + j]
         print hp[2] === hprime_xx[l*ngllx + k]

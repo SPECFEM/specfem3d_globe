@@ -60,7 +60,7 @@ module BOAST
       comment()
 
       l = Int("l")
-      print For(l, 0, ngllx - 1, :declit => true) {
+      print For(l, 0, ngllx, :operator => "<", :declit => true) {
         print fac[0] === sh_hprime_xx[l*ngllx + i]
         (0..2).each { |indx|
           print tempanl[indx][0] === tempanl[indx][0] + s_dummy_loc[indx][k*ngll2 + j*ngllx + l]*fac[0]

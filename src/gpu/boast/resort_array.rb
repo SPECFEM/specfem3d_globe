@@ -3,6 +3,7 @@ module BOAST
   def BOAST::resort_array(ref = true, n_gll3 = 125)
     push_env( :array_start => 0 )
     kernel = CKernel::new
+
     function_name = "resort_array"
 
     v = []
@@ -35,7 +36,7 @@ module BOAST
       print If(ispec < nspec) {
         print tx === get_local_id(0)
         print offset === ispec*ngll3*21+tx
-        print For(i, 0, 21-1, :declit => true) {
+        print For(i, 0, 21, :operator => "<", :declit => true) {
             print sh_tmp[i*ngll3+tx] === old_array[i*ngll3+offset]
         }
       }
@@ -44,7 +45,7 @@ module BOAST
       comment()
 
       print If(ispec < nspec) {
-        print For(i, 0, 21-1, :declit => true) {
+        print For(i, 0, 21, :operator => "<", :declit => true) {
           print id === (i*ngll3+tx)
           print idx === id / 21
           print t_idx === Modulo(id, 21)

@@ -139,7 +139,7 @@ module BOAST
           # updates full anisotropic kernel
           BOAST::get_output.puts"    // attention: following array is sorted differently on GPU and CPU, -> use 'resort_array' before copying back to cpu"
           i = Int("i")
-          print For(i, 0, 21-1, :declit => true) {
+          print For(i, 0, 21, :operator => "<", :declit => true) {
             print cijkl_kl[i*ngll3+offset] === cijkl_kl[i*ngll3+offset] + deltat * prod[i]
           }
         else

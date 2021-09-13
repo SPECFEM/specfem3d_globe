@@ -43,7 +43,7 @@ module BOAST
       print id === get_global_id(0)+get_global_size(0)*get_global_id(1)
       comment()
 
-      print For(iinterface, 0, num_interfaces-1, :declit => true) {
+      print For(iinterface, 0, num_interfaces, :operator => "<", :declit => true) {
         print If(id<d_nibool_interfaces[iinterface]) {
           print iloc === id + max_nibool_interfaces*iinterface
           print iglob === d_ibool_interfaces[iloc] - 1
