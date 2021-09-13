@@ -41,7 +41,7 @@ __global__ void compute_coupling_CMB_fluid_kernel(realw* displ_crust_mantle,
 
     // only for DOFs exactly on the CMB (bottom of these elements)
     k = 0;
-    // get velocity potential on the fluid side using pointwise matching
+    // get potential on the fluid side using pointwise matching
     k_corresp = NGLLX - 1;
 
     // get normal on the CMB

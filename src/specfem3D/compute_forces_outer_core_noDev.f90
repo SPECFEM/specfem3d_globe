@@ -130,7 +130,7 @@
             tempx3l = tempx3l + displfluid(ibool(i,j,l,ispec)) * hprime_zz(k,l)
           enddo
 
-          ! get derivatives of velocity potential with respect to x, y and z
+          ! get derivatives of potential with respect to x, y and z
           xixl = xix(i,j,k,ispec)
           xiyl = xiy(i,j,k,ispec)
           xizl = xiz(i,j,k,ispec)

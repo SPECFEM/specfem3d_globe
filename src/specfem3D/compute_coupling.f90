@@ -784,7 +784,7 @@
 
     ! only for DOFs exactly on the ICB (top of these elements)
     k = NGLLZ
-    ! get velocity potential on the fluid side using pointwise matching
+    ! get potential on the fluid side using pointwise matching
     k_corresp = 1
 
     do j = 1,NGLLY
@@ -985,7 +985,7 @@
 
     ! only for DOFs exactly on the ICB (top of these elements)
     k = NGLLZ
-    ! get velocity potential on the fluid side using pointwise matching
+    ! get potential on the fluid side using pointwise matching
     k_corresp = 1
 
     do j = 1,NGLLY

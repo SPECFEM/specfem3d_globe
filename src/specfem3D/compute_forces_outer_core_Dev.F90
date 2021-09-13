@@ -230,7 +230,7 @@
 
 
     DO_LOOP_IJK
-      ! get derivatives of velocity potential with respect to x, y and z
+      ! get derivatives of potential with respect to x, y and z
       xixl = deriv(1,INDEX_IJK,ispec)
       xiyl = deriv(2,INDEX_IJK,ispec)
       xizl = deriv(3,INDEX_IJK,ispec)

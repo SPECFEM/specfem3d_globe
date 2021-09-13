@@ -313,11 +313,63 @@ xsmooth_sem_SHARED_OBJECTS = \
 	$O/read_value_parameters.shared.o \
 	$(EMPTY_MACRO)
 
+###
+### GPU
+###
+
+gpu_smooth_OBJECTS = \
+	$O/check_fields_gpu.o \
+	$O/helper_functions_gpu.o \
+	$O/initialize_gpu.o \
+	$O/smooth_cuda.o \
+	$O/transfer_fields_gpu.o \
+	$(EMPTY_MACRO)
+
+gpu_smooth_STUBS = \
+	$O/specfem3D_gpu_method_stubs.gpu_cc.o \
+	$(EMPTY_MACRO)
+
+## cuda
+ifeq ($(CUDA),yes)
+	# cuda
+	cuda_smooth_kernels_OBJS := \
+		$O/get_maximum_scalar_kernel.cuda-kernel.o \
+		$O/get_maximum_vector_kernel.cuda-kernel.o \
+		$O/process_smooth.cuda-kernel.o \
+		$(EMPTY_MACRO)
+
+	cuda_smooth_DEVICE_OBJ =  $O/cuda_smooth_device_obj.o
+
+	gpu_smooth_OBJECTS:=$(subst .o,.cuda.o,${gpu_smooth_OBJECTS})
+	gpu_smooth_OBJECTS += $(cuda_smooth_DEVICE_OBJ) $(cuda_smooth_kernels_OBJS)
+endif
+
+ifdef NO_GPU
+	gpu_xs_OBJECTS = $(gpu_smooth_STUBS)
+else
+	gpu_xs_OBJECTS = $(gpu_smooth_OBJECTS)
+endif
+xsmooth_sem_SHARED_OBJECTS += $(gpu_xs_OBJECTS)
+
+xsmooth_sem_LIBS = $(MPILIBS)  # $(LDFLAGS) $(MPILIBS) $(LIBS)
+xsmooth_sem_LIBS += $(GPU_LINK)
+
+INFO_SMOOTH="building xsmooth_sem $(BUILD_VERSION_TXT)"
+
 # extra dependencies
 $O/smooth_sem.postprocess.o: $O/search_kdtree.shared.o
 
-${E}/xsmooth_sem: $(xsmooth_sem_OBJECTS) $(xsmooth_sem_SHARED_OBJECTS)
-	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
+${E}/xsmooth_sem: $(xsmooth_sem_OBJECTS) $(xsmooth_sem_SHARED_OBJECTS) # $(COND_MPI_OBJECTS)
+	@echo ""
+	@echo $(INFO_SMOOTH)
+	@echo ""
+#	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
+
+	${FCLINK} -o $@ $+ $(xsmooth_sem_LIBS)
+	@echo ""
+
+$(cuda_smooth_DEVICE_OBJ): $(subst $(cuda_smooth_DEVICE_OBJ), ,$(gpu_smooth_OBJECTS)) $(cuda_smooth_kernels_OBJS)
+	${NVCCLINK} -o $@ $^
 
 
 ##

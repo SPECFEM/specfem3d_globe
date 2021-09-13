@@ -552,6 +552,15 @@
   logical, parameter :: RUN_EXTERNAL_MOVIE_SCRIPT = .false.
   character(len=*),parameter :: MOVIE_SCRIPT_NAME = "./tar_movie_files.sh"
 
+!!-----------------------------------------------------------
+!!
+!! smoothing of the sensitivity kernels
+!!
+!!-----------------------------------------------------------
+
+! using this is more precise, but more costly
+  logical, parameter :: USE_QUADRATURE_RULE_FOR_SMOOTHING = .true.
+
 
 !!-----------------------------------------------------------
 !!

@@ -419,7 +419,7 @@
 
   integer :: NGLOB
 
-  ! velocity potential
+  ! potentials
   real(kind=CUSTOM_REAL), dimension(NGLOB) :: veloc_outer_core,accel_outer_core
 
   real(kind=CUSTOM_REAL) :: deltatover2

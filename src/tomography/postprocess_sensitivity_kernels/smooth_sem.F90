@@ -37,6 +37,7 @@
 !   KERNEL_NAME            - kernel name, e.g. alpha_kernel
 !   INPUT_DIR              - directory from which arrays are read
 !   OUTPUT_DIR             - directory to which smoothed array are written
+!   USE_GPU                - (optional) use GPUs for computation
 !
 ! DESCRIPTION
 !   Reads kernels from INPUT_DIR, smooths by convolution with a Gaussian, and
@@ -64,10 +65,15 @@
 
 program smooth_sem_globe
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,IIN,IOUT, &
-    GAUSSALPHA,GAUSSBETA,PI,TWO_PI,MAX_STRING_LEN,DEGREES_TO_RADIANS,NGLLCUBE,myrank
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGLLCUBE,NDIM,IIN,IOUT, &
+    GAUSSALPHA,GAUSSBETA,PI,TWO_PI,MAX_STRING_LEN,DEGREES_TO_RADIANS, &
+    USE_QUADRATURE_RULE_FOR_SMOOTHING, &
+    myrank
 
   use shared_parameters, only: R_PLANET_KM
+
+  ! GPU
+  use shared_parameters, only: GPU_RUNTIME,GPU_PLATFORM,GPU_DEVICE
 
   use postprocess_par, only: &
     NCHUNKS_VAL,NPROC_XI_VAL,NPROC_ETA_VAL,NPROCTOT_VAL,NEX_XI_VAL,NEX_ETA_VAL, &
@@ -80,6 +86,8 @@ program smooth_sem_globe
   use adios_helpers_mod
   use manager_adios
 #endif
+
+  use iso_c_binding, only: C_NULL_CHAR
 
   implicit none
 
@@ -95,14 +103,18 @@ program smooth_sem_globe
   integer, parameter :: NSPEC_AB = NSPEC_CRUST_MANTLE
   integer, parameter :: NGLOB_AB = NGLOB_CRUST_MANTLE
 
+  integer,parameter :: NGLL3 = NGLLX * NGLLY * NGLLZ
+
   ! only include the neighboring 3 x 3 slices
   integer, parameter :: NSLICES = 3
   integer ,parameter :: NSLICES2 = NSLICES * NSLICES
+
+  ! arguments
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
-  integer, parameter :: NARGS = 6
+  integer, parameter :: NARGS = 7
   character(len=*), parameter :: reg_name = 'reg1/'
 #else
-  integer, parameter :: NARGS = 5
+  integer, parameter :: NARGS = 6
   character(len=*), parameter :: reg_name = '_reg1_'
 #endif
 
@@ -117,7 +129,7 @@ program smooth_sem_globe
 
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: xstore, ystore, zstore
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
-    xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
+    xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: kernel, kernel_smooth,tk
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: bk
@@ -125,36 +137,29 @@ program smooth_sem_globe
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: integ_factor
   real(kind=CUSTOM_REAL), dimension(:),allocatable :: cx0, cy0, cz0, cx, cy, cz
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: exp_val
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: jacobian
 
   real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
   real(kind=CUSTOM_REAL) :: sigma_h, sigma_h2, sigma_h3, sigma_v, sigma_v2, sigma_v3
-  real(kind=CUSTOM_REAL) :: sigma_h3_sq,sigma_v3_sq
-  real(kind=CUSTOM_REAL) :: sigma_h2_inv,sigma_v2_inv
   real(kind=CUSTOM_REAL) :: norm, norm_h, norm_v, element_size_m
-  real(kind=CUSTOM_REAL) :: x0, y0, z0
-  real(kind=CUSTOM_REAL) :: x1, y1, z1
-  real(kind=CUSTOM_REAL) :: val,val_gaussian
   real(kind=CUSTOM_REAL) :: center_x0, center_y0, center_z0
-  real(kind=CUSTOM_REAL) :: center_x, center_y, center_z
-  real(kind=CUSTOM_REAL) :: contrib_weights,contrib_kernel
-  ! for distance calc
-  !real(kind=CUSTOM_REAL) :: r0,r1
-  real(kind=CUSTOM_REAL) :: r0_squared,r1_squared
-  real(kind=CUSTOM_REAL) :: theta,ratio,alpha
-  !real(kind=CUSTOM_REAL) :: vx,vy,vz
 
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: min_old,max_old
   real(kind=CUSTOM_REAL) :: max_new, min_new
   real(kind=CUSTOM_REAL) :: max_old_all, max_new_all, min_old_all, min_new_all
 
   integer :: nspec, nglob
-  integer :: ier,ichunk, ixi, ieta, iglob,nums
-  integer :: ispec,iproc,ispec2,inum
+  integer :: ier,ichunk, ixi, ieta, iglob, num_slices
+  integer :: ispec,iproc,inum
   integer :: i,j,k
   integer :: sizeprocs
 
+  ! GPU
+  integer :: ngpu_devices
+  ! smooth structure pointer
+  integer(kind=8) :: Container
+
+  ! arguments
   character(len=MAX_STRING_LEN),dimension(NARGS) :: arg
   character(len=MAX_STRING_LEN),dimension(:),allocatable :: kernel_names
   character(len=MAX_STRING_LEN) :: kernel_names_comma_delimited
@@ -168,6 +173,7 @@ program smooth_sem_globe
 #endif
   character(len=MAX_STRING_LEN) :: output_file
   character(len=MAX_STRING_LEN) :: filename
+  logical :: USE_GPU
 
   integer :: nker,iker
 
@@ -179,7 +185,6 @@ program smooth_sem_globe
   ! array with all the weights in the cube
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
 
-  real(kind=CUSTOM_REAL) :: dist_h,dist_v
   real(kind=CUSTOM_REAL) :: element_size
   real(kind=CUSTOM_REAL) :: ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
 
@@ -190,20 +195,18 @@ program smooth_sem_globe
   ! tree nodes search
   double precision,dimension(3) :: xyz_target
   double precision :: r_search,r_search_dist_v,r_search_dist_h
+  logical :: use_kdtree_search
 
   ! debugging
   integer, dimension(:),allocatable :: ispec_flag
   !real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: tmp_bk
+  double precision :: memory_size
 
   ! timing
   integer :: ihours,iminutes,iseconds,int_tCPU
-  double precision :: time_start,time_start_all
+  double precision :: time_start_all
   double precision :: tCPU
   double precision, external :: wtime
-
-  integer :: NELEM_OUTPUT_INFO,NELEM_MAX_OUTPUT_INFO
-
-  real(kind=CUSTOM_REAL),parameter :: PI2 = PI * PI ! squared
 
   ! ADIOS
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
@@ -216,19 +219,6 @@ program smooth_sem_globe
 ! an inner loop that would otherwise prevent vectorization; this is safe in practice in all cases because N_SLS == 3
 ! in all known applications, and in the main program we check that N_SLS == 3 if FORCE_VECTORIZATION is used and we stop
   integer :: ijk
-#endif
-
-! switches do-loops between: do k=1,NGLLZ; do j=1,NGLLY; do i=1,NGLLX <-> do ijk=1,NGLLCUBE
-#ifdef FORCE_VECTORIZATION
-integer :: ijk2
-#  define INDEX_IJK2  ijk2,1,1
-#  define DO_LOOP_IJK2  do ijk2=1,NGLLCUBE
-#  define ENDDO_LOOP_IJK2  enddo                  ! NGLLCUBE
-#else
-integer :: ii,jj,kk
-#  define INDEX_IJK2  ii,jj,kk
-#  define DO_LOOP_IJK2  do kk=1,NGLLZ; do jj=1,NGLLY; do ii=1,NGLLX
-#  define ENDDO_LOOP_IJK2  enddo; enddo; enddo    ! NGLLZ,NGLLY,NGLLX
 #endif
 
   !------------------------------------------------------------------------------------------
@@ -258,7 +248,7 @@ integer :: ii,jj,kk
   call world_rank(myrank)
 
   ! check command line arguments
-  if (command_argument_count() /= NARGS) then
+  if (command_argument_count() < NARGS-1) then
     if (myrank == 0) then
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
       print *,'Usage: mpirun -np NPROC bin/xsmooth_sem_adios SIGMA_H SIGMA_V KERNEL_NAME INPUT_FILE SOLVER_FILE OUTPUT_FILE'
@@ -268,7 +258,6 @@ integer :: ii,jj,kk
       print *,'     INPUT_FILE       - ADIOS file with kernel values (e.g., kernels.bp)'
       print *,'     SOLVER_FILE      - ADIOS file with mesh arrays (e.g., DATABASES_MPI/solver_data.bp)'
       print *,'     OUTPUT_FILE      - ADIOS file for smoothed output'
-      print *
 #else
       print *, 'Usage: mpirun -np NPROC bin/xsmooth_sem SIGMA_H SIGMA_V KERNEL_NAME INPUT_DIR OUPUT_DIR'
       print *,'   with'
@@ -276,8 +265,9 @@ integer :: ii,jj,kk
       print *,'     KERNEL_NAME      - comma-separated kernel names (e.g., alpha_kernel,beta_kernel)'
       print *,'     INPUT_DIR        - directory with kernel files (e.g., proc***_alpha_kernel.bin)'
       print *,'     OUTPUT_DIR       - directory for smoothed output files'
-      print *
 #endif
+      print *,'     GPU_MODE         - (optional) set to .true. to use GPU, otherwise set to .false. for CPU run (default off)'
+      print *
       stop ' Please check command line arguments'
     endif
   endif
@@ -316,11 +306,17 @@ integer :: ii,jj,kk
 
   ! parse command line arguments
   do i = 1, NARGS
-    call get_command_argument(i,arg(i))
+    if (command_argument_count() >= i) then
+      call get_command_argument(i,arg(i), status=ier)
+    else
+      ! optional argument
+      arg(i) = ''
+    endif
     if (i <= 5 .and. trim(arg(i)) == '') then
       stop ' Please check command line arguments'
     endif
   enddo
+
   read(arg(1),*) sigma_h
   read(arg(2),*) sigma_v
   kernel_names_comma_delimited = arg(3)
@@ -334,6 +330,16 @@ integer :: ii,jj,kk
   input_dir = arg(4)
   output_dir = arg(5)
 #endif
+
+  if (command_argument_count() == NARGS) then
+    read(arg(NARGS),*) USE_GPU
+  else
+    USE_GPU = .false.
+  endif
+
+  ! sets flag to use kdtree
+  use_kdtree_search = (.not. DO_BRUTE_FORCE_SEARCH) .and. (.not. USE_GPU)
+
   call synchronize_all()
 
   call parse_kernel_names(kernel_names_comma_delimited,kernel_names,nker)
@@ -373,29 +379,38 @@ integer :: ii,jj,kk
 
   ! user output
   if (myrank == 0) then
-    print *,"defaults:"
-    print *,"  NPROC_XI / NPROC_ETA         : ",NPROC_XI,NPROC_ETA
-    print *,"  NEX_XI   / NEX_ETA           : ",NEX_XI_VAL,NEX_ETA_VAL
-    print *,"  NGLLX    / NGLLY     / NGLLZ : ",NGLLX,NGLLY,NGLLZ
-    print *,"  NCHUNKS                      : ",NCHUNKS
-    print *,"  element size on surface (km) : ",element_size
+    print *,'defaults:'
+    print *,'  NPROC_XI / NPROC_ETA         : ',NPROC_XI,NPROC_ETA
+    print *,'  NEX_XI   / NEX_ETA           : ',NEX_XI_VAL,NEX_ETA_VAL
+    print *,'  NGLLX    / NGLLY     / NGLLZ : ',NGLLX,NGLLY,NGLLZ
+    print *,'  NCHUNKS                      : ',NCHUNKS
+    print *,'  element size on surface (km) : ',element_size
     print *
-    print *,"  smoothing sigma_h , sigma_v (km)                : ",sigma_h,sigma_v
+    print *,'  smoothing sigma_h , sigma_v (km)                : ',sigma_h,sigma_v
     ! scalelength: approximately S ~ sigma * sqrt(8.0) for a Gaussian smoothing
-    print *,"  smoothing scalelengths horizontal, vertical (km): ",sigma_h*sqrt(8.0),sigma_v*sqrt(8.0)
+    print *,'  smoothing scalelengths horizontal, vertical (km): ',sigma_h*sqrt(8.0),sigma_v*sqrt(8.0)
     print *
-    print *,"  data name      : ",trim(kernel_names_comma_delimited)
+    print *,'  data name      : ',trim(kernel_names_comma_delimited)
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
     ! ADIOS arguments
-    print *,"  input file     : ",trim(input_file)
-    print *,"  solver file    : ",trim(solver_file)
-    print *,"  output file    : ",trim(output_file)
+    print *,'  input file     : ',trim(input_file)
+    print *,'  solver file    : ',trim(solver_file)
+    print *,'  output file    : ',trim(output_file)
 #else
-    print *,"  input dir      : ",trim(input_dir)
-    print *,"  output dir     : ",trim(output_dir)
+    print *,'  input dir      : ',trim(input_dir)
+    print *,'  output dir     : ',trim(output_dir)
 #endif
     print *
-    print *,"number of elements per slice: ",NSPEC_AB
+    if (USE_GPU) then
+      print *,'  using GPU'
+    endif
+    if (USE_QUADRATURE_RULE_FOR_SMOOTHING) then
+      print *,'  using quadrature rule for smoothing integration'
+    else
+      print *,'  using distance weighted smoothing'
+    endif
+    print *
+    print *,'number of elements per slice: ',NSPEC_AB
     print *
   endif
 
@@ -409,6 +424,13 @@ integer :: ii,jj,kk
   endif
   call initialize_adios()
 #endif
+
+  ! sets GPU devices
+  if (USE_GPU) then
+    call initialize_gpu_device(GPU_RUNTIME,trim(GPU_PLATFORM)//C_NULL_CHAR,trim(GPU_DEVICE)//C_NULL_CHAR,myrank,ngpu_devices)
+    ! checks if found
+    if (ngpu_devices == 0) stop 'no GPU devices found, please switch to CPU smoothing'
+  endif
 
   ! synchronizes
   call synchronize_all()
@@ -426,21 +448,13 @@ integer :: ii,jj,kk
   if (sigma_h2 < 1.e-18) stop 'Error sigma_h2 zero, must be non-zero'
   if (sigma_v2 < 1.e-18) stop 'Error sigma_v2 zero, must be non-zero'
 
-  ! helper variables
-  sigma_h2_inv = 1.0_CUSTOM_REAL / sigma_h2
-  sigma_v2_inv = 1.0_CUSTOM_REAL / sigma_v2
-
   ! search radius
   ! note: crust/mantle region has at least 2 doubling layers, we enlarge the search radius according to element size at CMB;
   !       we always smooth among several elements, thus jumps at discontinuities will get averaged
   sigma_h3 = 3.0  * sigma_h + 4.0 * element_size_m
   sigma_v3 = 3.0  * sigma_v + 4.0 * element_size_m
 
-  ! helper variables
-  sigma_h3_sq = sigma_h3 * sigma_h3  ! squared
-  sigma_v3_sq = sigma_v3 * sigma_v3
-
-  if (.not. DO_BRUTE_FORCE_SEARCH) then
+  if (use_kdtree_search) then
     ! kd-tree search uses a slightly larger constant search radius
     r_search = max( 1.1d0 * sigma_h3, 1.1d0 * sigma_v3 )
     r_search_dist_v = sigma_v3
@@ -464,16 +478,18 @@ integer :: ii,jj,kk
   !norm = (sqrt(2.0*PI) * sigma) ** 3 ! for sigma_h = sigma_v = sigma
 
   ! GLL points weights
-  call zwgljd(xigll,wxgll,NGLLX,GAUSSALPHA,GAUSSBETA)
-  call zwgljd(yigll,wygll,NGLLY,GAUSSALPHA,GAUSSBETA)
-  call zwgljd(zigll,wzgll,NGLLZ,GAUSSALPHA,GAUSSBETA)
-  do k=1,NGLLZ
-    do j=1,NGLLY
-      do i=1,NGLLX
-        wgll_cube(i,j,k) = real(wxgll(i)*wygll(j)*wzgll(k),kind=CUSTOM_REAL)
+  if (USE_QUADRATURE_RULE_FOR_SMOOTHING) then
+    call zwgljd(xigll,wxgll,NGLLX,GAUSSALPHA,GAUSSBETA)
+    call zwgljd(yigll,wygll,NGLLY,GAUSSALPHA,GAUSSBETA)
+    call zwgljd(zigll,wzgll,NGLLZ,GAUSSALPHA,GAUSSBETA)
+    do k=1,NGLLZ
+      do j=1,NGLLY
+        do i=1,NGLLX
+          wgll_cube(i,j,k) = real(wxgll(i)*wygll(j)*wzgll(k),kind=CUSTOM_REAL)
+        enddo
       enddo
     enddo
-  enddo
+  endif
 
   ! ---- figure out the neighboring 8 or 7 slices: (ichunk,ixi,ieta) index start at 0------
   ichunk = myrank / (NPROC_XI * NPROC_ETA)
@@ -493,38 +509,52 @@ integer :: ii,jj,kk
       islice(j) = islice0(i)
     endif
   enddo
-  nums = j
+  num_slices = j
 
+  ! user output
   if (myrank == 0) then
-    print *,'slices:',nums
+    print *,'slices:',num_slices
     print *,'  rank:',myrank,'  smoothing slices'
-    print *,'  ',islice(1:nums)
+    print *,'  ',islice(1:num_slices)
     print *
   endif
 
+  ! debug
+  !do iproc = 0,NPROCTOT_VAL-1
+  !  if (iproc == myrank) then
+  !    print *,'debug: rank:',myrank,' has smoothing slices',islice(1:num_slices)
+  !    print *
+  !  endif
+  !enddo
+
+  ! note: for the globe version, all slices have the same number of elements NSPEC_AB
+  !       we can thus allocate all mesh arrays here already, valid for all slices to loop over
+
+  ! mesh
   allocate(ibool(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
            idoubling(NSPEC_AB), &
            ispec_is_tiso(NSPEC_AB), &
            xstore(NGLOB_AB), &
            ystore(NGLOB_AB), &
            zstore(NGLOB_AB), &
-           xix(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
-           xiy(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
-           xiz(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
-           etax(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
-           etay(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
-           etaz(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
-           gammax(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
-           gammay(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
-           gammaz(NGLLX,NGLLY,NGLLZ,NSPEC_AB), stat=ier)
+           xixstore(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
+           xiystore(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
+           xizstore(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
+           etaxstore(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
+           etaystore(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
+           etazstore(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
+           gammaxstore(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
+           gammaystore(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
+           gammazstore(NGLLX,NGLLY,NGLLZ,NSPEC_AB), stat=ier)
   if (ier /= 0) stop 'Error allocating mesh arrays'
 
   ibool(:,:,:,:) = 0; idoubling(:) = 0; ispec_is_tiso(:) = .false.
   xstore(:) = 0.0_CUSTOM_REAL; ystore(:) = 0.0_CUSTOM_REAL; zstore(:) = 0.0_CUSTOM_REAL
-  xix(:,:,:,:) = 0.0_CUSTOM_REAL; xiy(:,:,:,:) = 0.0_CUSTOM_REAL; xiz(:,:,:,:) = 0.0_CUSTOM_REAL
-  etax(:,:,:,:) = 0.0_CUSTOM_REAL; etay(:,:,:,:) = 0.0_CUSTOM_REAL; etaz(:,:,:,:) = 0.0_CUSTOM_REAL
-  gammax(:,:,:,:) = 0.0_CUSTOM_REAL; gammay(:,:,:,:) = 0.0_CUSTOM_REAL; gammaz(:,:,:,:) = 0.0_CUSTOM_REAL
+  xixstore(:,:,:,:) = 0.0_CUSTOM_REAL; xiystore(:,:,:,:) = 0.0_CUSTOM_REAL; xizstore(:,:,:,:) = 0.0_CUSTOM_REAL
+  etaxstore(:,:,:,:) = 0.0_CUSTOM_REAL; etaystore(:,:,:,:) = 0.0_CUSTOM_REAL; etazstore(:,:,:,:) = 0.0_CUSTOM_REAL
+  gammaxstore(:,:,:,:) = 0.0_CUSTOM_REAL; gammaystore(:,:,:,:) = 0.0_CUSTOM_REAL; gammazstore(:,:,:,:) = 0.0_CUSTOM_REAL
 
+  ! weights and positions
   allocate(bk(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
            integ_factor(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
            xx0(NGLLX,NGLLY,NGLLZ,NSPEC_AB), &
@@ -576,17 +606,17 @@ integer :: ii,jj,kk
   ! reads mesh arrays
   call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "ibool", ibool(:, :, :, :))
 
-  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "xixstore", xix(:, :, :, :))
-  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "xiystore", xiy(:, :, :, :))
-  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "xizstore", xiz(:, :, :, :))
+  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "xixstore", xixstore(:, :, :, :))
+  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "xiystore", xiystore(:, :, :, :))
+  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "xizstore", xizstore(:, :, :, :))
 
-  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "gammaxstore", gammax(:, :, :, :))
-  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "gammaystore", gammay(:, :, :, :))
-  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "gammazstore", gammaz(:, :, :, :))
+  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "etaxstore", etaxstore(:, :, :, :))
+  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "etaystore", etaystore(:, :, :, :))
+  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "etazstore", etazstore(:, :, :, :))
 
-  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "etaxstore", etax(:, :, :, :))
-  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "etaystore", etay(:, :, :, :))
-  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "etazstore", etaz(:, :, :, :))
+  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "gammaxstore", gammaxstore(:, :, :, :))
+  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "gammaystore", gammaystore(:, :, :, :))
+  call read_adios_array(myadios_file, myadios_group, myrank, nspec, trim(reg_name) // "gammazstore", gammazstore(:, :, :, :))
 
   call read_adios_array(myadios_file, myadios_group, myrank, nglob, trim(reg_name) // "x_global", xstore(:))
   call read_adios_array(myadios_file, myadios_group, myrank, nglob, trim(reg_name) // "y_global", ystore(:))
@@ -620,15 +650,15 @@ integer :: ii,jj,kk
   read(IIN) idoubling
   read(IIN) ispec_is_tiso
 
-  read(IIN) xix
-  read(IIN) xiy
-  read(IIN) xiz
-  read(IIN) etax
-  read(IIN) etay
-  read(IIN) etaz
-  read(IIN) gammax
-  read(IIN) gammay
-  read(IIN) gammaz
+  read(IIN) xixstore
+  read(IIN) xiystore
+  read(IIN) xizstore
+  read(IIN) etaxstore
+  read(IIN) etaystore
+  read(IIN) etazstore
+  read(IIN) gammaxstore
+  read(IIN) gammaystore
+  read(IIN) gammazstore
   close(IIN)
 #endif
 
@@ -653,15 +683,15 @@ integer :: ii,jj,kk
     ! build jacobian
     DO_LOOP_IJK
       ! get derivatives of ux, uy and uz with respect to x, y and z
-      xixl = xix(INDEX_IJK,ispec)
-      xiyl = xiy(INDEX_IJK,ispec)
-      xizl = xiz(INDEX_IJK,ispec)
-      etaxl = etax(INDEX_IJK,ispec)
-      etayl = etay(INDEX_IJK,ispec)
-      etazl = etaz(INDEX_IJK,ispec)
-      gammaxl = gammax(INDEX_IJK,ispec)
-      gammayl = gammay(INDEX_IJK,ispec)
-      gammazl = gammaz(INDEX_IJK,ispec)
+      xixl = xixstore(INDEX_IJK,ispec)
+      xiyl = xiystore(INDEX_IJK,ispec)
+      xizl = xizstore(INDEX_IJK,ispec)
+      etaxl = etaxstore(INDEX_IJK,ispec)
+      etayl = etaystore(INDEX_IJK,ispec)
+      etazl = etazstore(INDEX_IJK,ispec)
+      gammaxl = gammaxstore(INDEX_IJK,ispec)
+      gammayl = gammaystore(INDEX_IJK,ispec)
+      gammazl = gammazstore(INDEX_IJK,ispec)
       ! compute the jacobian
       jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
                     - xiyl*(etaxl*gammazl-etazl*gammaxl) &
@@ -669,11 +699,15 @@ integer :: ii,jj,kk
       jacobian(INDEX_IJK) = jacobianl
     ENDDO_LOOP_IJK
 
-    ! integration factors:
-    ! uses volume assigned to GLL points
-    integ_factor(:,:,:,ispec) = jacobian(:,:,:) * wgll_cube(:,:,:)
-    ! no volume
-    !integ_factor(:,:,:,ispec) = 1.0_CUSTOM_REAL
+    ! integration factors
+    if (USE_QUADRATURE_RULE_FOR_SMOOTHING) then
+      ! adds GLL integration weights
+      ! uses volume assigned to GLL points
+      integ_factor(:,:,:,ispec) = jacobian(:,:,:) * wgll_cube(:,:,:)
+    else
+      ! no volume, only distance weights
+      integ_factor(:,:,:,ispec) = 1.0_CUSTOM_REAL
+    endif
   enddo
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
@@ -693,7 +727,7 @@ integer :: ii,jj,kk
   if (ier /= 0) stop 'Error allocating nsearch_elements array'
   nsearch_elements(:) = 0
 
-  if (.not. DO_BRUTE_FORCE_SEARCH) then
+  if (use_kdtree_search) then
     ! search by kd-tree
     ! user output
     if (myrank == 0) then
@@ -735,30 +769,45 @@ integer :: ii,jj,kk
     endif
   endif
 
+  ! GPU setup
+  if (USE_GPU) then
+    ! user output
+    if (myrank == 0) then
+      print *
+      print *,'preparing GPU arrays:'
+      ! memory estimate
+      ! data_smooth
+      memory_size = NGLL3 * NSPEC_AB * nker * dble(CUSTOM_REAL)
+      ! x_me/y_me/z_me + x_other/y_other/z_other +
+      memory_size = memory_size + 6.d0 * NGLL3 * NSPEC_AB * dble(CUSTOM_REAL)
+      ! normalisation + integ_factor
+      memory_size = memory_size + 2.d0 * NGLL3 * NSPEC_AB * dble(CUSTOM_REAL)
+      ! kernel
+      memory_size = memory_size + NGLL3 * NSPEC_AB * dble(CUSTOM_REAL)
+      print *,'  minimum memory requested     : ',sngl(memory_size / 1024.d0 / 1024.d0),'MB per process'
+      print *
+    endif
+    ! copies arrays onto GPU
+    call prepare_smooth_gpu(Container,xx0,yy0,zz0,sigma_h2,sigma_v2,sigma_h3,sigma_v3,NSPEC_AB,nker)
+  endif
+
   ! synchronizes
   call synchronize_all()
 
   if (myrank == 0) print *, 'start looping over elements and points for smoothing ...'
 
-  ! for time output
-  NELEM_OUTPUT_INFO = max(int(1.0*NSPEC_AB/NSTEP_PERCENT_INFO),1)
-  NELEM_MAX_OUTPUT_INFO = NSPEC_AB - int(0.5*NSPEC_AB/NSTEP_PERCENT_INFO)
-
   ! synchronizes
   call synchronize_all()
 
   ! loop over all slices
-  do inum = 1, nums
-
-    ! timing
-    time_start = wtime()
+  do inum = 1, num_slices
 
     iproc = islice(inum)
 
     ! user output
     if (myrank == 0) then
       print *
-      print *,'slice ',inum,'out of ',nums
+      print *,'slice ',inum,'out of ',num_slices
       print *,'  reading slice proc:',iproc
       print *
     endif
@@ -774,6 +823,7 @@ integer :: ii,jj,kk
 
     ! sets up mesh locations
     if (iproc == myrank) then
+      ! positions already read in, just copy
       ! element centers
       cx(:) = cx0(:)
       cy(:) = cy0(:)
@@ -782,23 +832,26 @@ integer :: ii,jj,kk
       xx(:,:,:,:) = xx0(:,:,:,:)
       yy(:,:,:,:) = yy0(:,:,:,:)
       zz(:,:,:,:) = zz0(:,:,:,:)
+      ! integration factor
+      ! not needed as the first slice to loop over is set be always the myrank slice, and integ_factor has already been setup
+      !integ_factor(:,:,:,:) = integ_factor0(:,:,:,:)
     else
       ! read in neighbor slice
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
       ! ADIOS
       call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "ibool", ibool(:, :, :, :))
 
-      call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "xixstore", xix(:, :, :, :))
-      call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "xiystore", xiy(:, :, :, :))
-      call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "xizstore", xiz(:, :, :, :))
+      call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "xixstore", xixstore(:, :, :, :))
+      call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "xiystore", xiystore(:, :, :, :))
+      call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "xizstore", xizstore(:, :, :, :))
 
-      call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "etaxstore", etax(:, :, :, :))
-      call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "etaystore", etay(:, :, :, :))
-      call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "etazstore", etaz(:, :, :, :))
+      call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "etaxstore", etaxstore(:, :, :, :))
+      call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "etaystore", etaystore(:, :, :, :))
+      call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "etazstore", etazstore(:, :, :, :))
 
-      call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "gammaxstore", gammax(:, :, :, :))
-      call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "gammaystore", gammay(:, :, :, :))
-      call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "gammazstore", gammaz(:, :, :, :))
+      call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "gammaxstore", gammaxstore(:, :, :, :))
+      call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "gammaystore", gammaystore(:, :, :, :))
+      call read_adios_array(myadios_file, myadios_group, iproc, nspec, trim(reg_name) // "gammazstore", gammazstore(:, :, :, :))
 
       call read_adios_array(myadios_file, myadios_group, iproc, nglob, trim(reg_name) // "x_global", xstore(:))
       call read_adios_array(myadios_file, myadios_group, iproc, nglob, trim(reg_name) // "y_global", ystore(:))
@@ -828,15 +881,15 @@ integer :: ii,jj,kk
       read(IIN) idoubling
       read(IIN) ispec_is_tiso
 
-      read(IIN) xix
-      read(IIN) xiy
-      read(IIN) xiz
-      read(IIN) etax
-      read(IIN) etay
-      read(IIN) etaz
-      read(IIN) gammax
-      read(IIN) gammay
-      read(IIN) gammaz
+      read(IIN) xixstore
+      read(IIN) xiystore
+      read(IIN) xizstore
+      read(IIN) etaxstore
+      read(IIN) etaystore
+      read(IIN) etazstore
+      read(IIN) gammaxstore
+      read(IIN) gammaystore
+      read(IIN) gammazstore
       close(IIN)
 #endif
 
@@ -859,15 +912,15 @@ integer :: ii,jj,kk
         ! build jacobian
         DO_LOOP_IJK
           ! get derivatives of ux, uy and uz with respect to x, y and z
-          xixl = xix(INDEX_IJK,ispec)
-          xiyl = xiy(INDEX_IJK,ispec)
-          xizl = xiz(INDEX_IJK,ispec)
-          etaxl = etax(INDEX_IJK,ispec)
-          etayl = etay(INDEX_IJK,ispec)
-          etazl = etaz(INDEX_IJK,ispec)
-          gammaxl = gammax(INDEX_IJK,ispec)
-          gammayl = gammay(INDEX_IJK,ispec)
-          gammazl = gammaz(INDEX_IJK,ispec)
+          xixl = xixstore(INDEX_IJK,ispec)
+          xiyl = xiystore(INDEX_IJK,ispec)
+          xizl = xizstore(INDEX_IJK,ispec)
+          etaxl = etaxstore(INDEX_IJK,ispec)
+          etayl = etaystore(INDEX_IJK,ispec)
+          etazl = etazstore(INDEX_IJK,ispec)
+          gammaxl = gammaxstore(INDEX_IJK,ispec)
+          gammayl = gammaystore(INDEX_IJK,ispec)
+          gammazl = gammazstore(INDEX_IJK,ispec)
           ! compute the jacobian
           jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
                         - xiyl*(etaxl*gammazl-etazl*gammaxl) &
@@ -875,11 +928,15 @@ integer :: ii,jj,kk
           jacobian(INDEX_IJK) = jacobianl
         ENDDO_LOOP_IJK
 
-        ! integration factors:
-        ! uses volume assigned to GLL points
-        integ_factor(:,:,:,ispec) = jacobian(:,:,:) * wgll_cube(:,:,:)
-        ! no volume
-        !integ_factor(:,:,:,ispec) = 1.0_CUSTOM_REAL
+        ! integration factors
+        if (USE_QUADRATURE_RULE_FOR_SMOOTHING) then
+          ! adds GLL integration weights
+          ! uses volume assigned to GLL points
+          integ_factor(:,:,:,ispec) = jacobian(:,:,:) * wgll_cube(:,:,:)
+        else
+          ! no volume, only distance weights
+          integ_factor(:,:,:,ispec) = 1.0_CUSTOM_REAL
+        endif
       enddo
     endif
 
@@ -940,7 +997,7 @@ integer :: ii,jj,kk
     if (myrank == 0) print *
 
     ! search setup
-    if (.not. DO_BRUTE_FORCE_SEARCH) then
+    if (use_kdtree_search) then
       ! search by kd-tree
 
       ! prepares search arrays, each element takes its midpoint for tree search
@@ -963,7 +1020,7 @@ integer :: ii,jj,kk
     endif
 
     ! pre-determines number of search elements
-    if (.not. DO_BRUTE_FORCE_SEARCH) then
+    if (use_kdtree_search) then
       ! gets search range
       num_elem_local_max = 0
       do ispec = 1, NSPEC_AB
@@ -1065,333 +1122,21 @@ integer :: ii,jj,kk
       nsearch_elements(:) = NSPEC_AB
     endif
 
-    ! loops over elements to be smoothed in the current slice
-    do ispec = 1, NSPEC_AB
-
-      ! user info about progress
-      if (myrank == 0) then
-        if (ispec == NSPEC_AB) then
-          tCPU = wtime() - time_start
-          print *,'    ',100.0,' % elements done - Elapsed time in seconds = ',tCPU
-        else if (mod(ispec-1,NELEM_OUTPUT_INFO) == 0) then
-          if (ispec < NELEM_MAX_OUTPUT_INFO) then
-            tCPU = wtime() - time_start
-            print *,'    ',int((ispec-1) / NELEM_OUTPUT_INFO) * (100.0 / NSTEP_PERCENT_INFO), &
-                    ' % elements done - Elapsed time in seconds = ',tCPU
-          endif
-        endif
-      endif
-
-      ! search range
-      num_elem_local = nsearch_elements(ispec)
-
-      ! element center position
-      center_x0 = cx0(ispec)
-      center_y0 = cy0(ispec)
-      center_z0 = cz0(ispec)
-
-      ! sets number of elements to loop over
-      if (.not. DO_BRUTE_FORCE_SEARCH) then
-        ! sets search array
-        if (num_elem_local > 0) then
-          ! sets n-search number of nodes
-          kdtree_search_num_nodes = num_elem_local
-          ! finds closest point in target chunk
-          xyz_target(1) = center_x0
-          xyz_target(2) = center_y0
-          xyz_target(3) = center_z0
-          if (DO_SEARCH_ELLIP) then
-            ! (within ellipsoid)
-            call kdtree_get_nearest_n_neighbors_ellip(xyz_target,r_search_dist_v,r_search_dist_h,num_elem_local)
-          else
-            ! (within search sphere)
-            call kdtree_get_nearest_n_neighbors(xyz_target,r_search,num_elem_local)
-          endif
-        endif
-      endif
-
-      ! --- only double loop over the elements in the search radius ---
-      do ielem = 1, num_elem_local
-        ! search element
-        if (.not. DO_BRUTE_FORCE_SEARCH) then
-          ! kd-tree search elements
-          ispec2 = kdtree_search_index(ielem)
-        else
-          ! brute-force search
-          ispec2 = ielem
-        endif
-
-        ! search element center position
-        center_x = cx(ispec2)
-        center_y = cy(ispec2)
-        center_z = cz(ispec2)
-
-        ! takes only elements in search radius
-        ! calculates horizontal and vertical distance between two element centers
-
-        ! same as calling routine get_distance_vec(),
-        ! but to help compiler inline and optimize the calculation...
-        !if (.false.) then
-        !  call get_distance_vec(dist_h,dist_v,center_x0,center_y0,center_z0,center_x,center_y,center_z)
-        !
-        !  ! checks distance between centers of elements
-        !  ! note: distances and sigmah, sigmav are normalized by R_PLANET_KM
-        !  if ( dist_h > sigma_h3 .or. dist_v > sigma_v3 ) cycle
-        !else
-          ! vertical distance
-          r0_squared = center_x0*center_x0 + center_y0*center_y0 + center_z0*center_z0
-          !r0 = sqrt( r0_squared ) ! length of first position vector
-
-          r1_squared = center_x*center_x + center_y*center_y + center_z*center_z
-          !r1 = sqrt( r1_squared )
-
-          ! note: instead of distance we use distance squared to avoid too many sqrt() operations
-          !
-          ! vertical distance (squared)
-          ! dist_v = (r1 - r0)*(r1 - r0)
-          !        = r1**2 + r0**2 - 2 * alpha
-          !          with alpha = sqrt( r0**2 * r1**2 ) = r0 * r1
-          ! this avoids using sqrt() function too often which is costly
-          alpha = sqrt( r0_squared * r1_squared )
-          dist_v = r1_squared + r0_squared - 2.0_CUSTOM_REAL * alpha
-
-          ! only for flat earth with z in depth:
-          !dist_v = sqrt( (center_z-center_z0)** 2)
-          ! or squared:
-          !dist_v = (center_z - center_z0)** 2
-
-          ! checks distance between centers of elements (squared)
-          ! note: distances and sigmah, sigmav are normalized by R_PLANET_KM
-          if (dist_v > sigma_v3_sq) cycle
-
-          ! epicentral distance
-          ! (accounting for spherical curvature)
-          ! calculates distance of circular segment
-          ! angle between r0 and r1 in radian
-          ! given by dot-product of two vectors
-          !ratio = (center_x0*center_x + center_y0*center_y + center_z0*center_z)/(r0 * r1)
-          if (alpha > 0.0_CUSTOM_REAL) then
-            ratio = (center_x0*center_x + center_y0*center_y + center_z0*center_z) / alpha
-          else
-            ratio = 1.0_CUSTOM_REAL
-          endif
-
-          ! checks boundaries of ratio (due to numerical inaccuracies)
-          if (ratio >= 1.0_CUSTOM_REAL) then
-            ! ratio = 1.0_CUSTOM_REAL
-            ! -> acos(1) = 0
-            ! -> dist_h = 0
-            dist_h = 0.0_CUSTOM_REAL
-          else if (ratio <= -1.0_CUSTOM_REAL) then
-            ! ratio = -1.0_CUSTOM_REAL
-            ! -> acos(-1) = PI
-            ! -> dist_h = r1**2 * PI**2
-            dist_h = r1_squared * PI2
-          else
-            theta = acos( ratio )
-            ! segment length at heigth of r1 (squared)
-            dist_h = r1_squared * (theta*theta)
-          endif
-
-          ! vector approximation (fast computation): neglects curvature
-          ! horizontal distance
-          ! length of vector from point 0 to point 1
-          ! assuming small earth curvature  (since only for neighboring elements)
-          !
-          ! scales r0 to have same length as r1
-          !alpha = r1 / r0
-          !vx = alpha * x0
-          !vy = alpha * y0
-          !vz = alpha * z0
-          !
-          ! vector in horizontal between new r0 and r1
-          !vx = x1 - vx
-          !vy = y1 - vy
-          !vz = z1 - vz
-          !
-          ! distance is vector length
-          !dist_h = sqrt( vx*vx + vy*vy + vz*vz )
-          ! or squared:
-          !dist_h = vx*vx + vy*vy + vz*vz
-
-          ! checks distance between centers of elements
-          ! note: distances and sigmah, sigmav are normalized by R_PLANET_KM
-          if (dist_h > sigma_h3_sq) cycle
-        !endif
-
-        ! loops over all GLL points of reference element in current slice (ispec) and search elements (ispec2)
-        DO_LOOP_IJK
-
-          ! reference location
-          ! current point (i,j,k,ispec) location, Cartesian coordinates
-          x0 = xx0(INDEX_IJK,ispec)
-          y0 = yy0(INDEX_IJK,ispec)
-          z0 = zz0(INDEX_IJK,ispec)
-
-          ! calculate weights based on Gaussian smoothing
-
-          ! same as calling routine smoothing_weights_vec(),
-          ! but inlined here to improve speed - a little..
-          !if (.false.) then
-          !  call smoothing_weights_vec(x0,y0,z0,sigma_h2,sigma_v2,exp_val, &
-          !                           xx(:,:,:,ispec2),yy(:,:,:,ispec2),zz(:,:,:,ispec2))
-          !else
-            ! length of first position vector
-            r0_squared = x0*x0 + y0*y0 + z0*z0
-            !r0 = sqrt( r0_squared )
-
-            DO_LOOP_IJK2
-              ! point in second slice
-              x1 = xx(INDEX_IJK2,ispec2)
-              y1 = yy(INDEX_IJK2,ispec2)
-              z1 = zz(INDEX_IJK2,ispec2)
-
-              ! without explicit function calls to help compiler optimize loops
-              ! length of position vector
-              r1_squared = x1*x1 + y1*y1 + z1*z1
-              !r1 = sqrt( r1_squared )
-
-              ! vertical distance (squared)
-              ! dist_v = (r1 - r0)*(r1 - r0)
-              !        = r1**2 + r0**2 - 2 * r0 * r1
-              !        = r1**2 + r0**2 - 2 * sqrt( r0**2 ) * sqrt( r1**2 )
-              !        = r1**2 + r0**2 - 2 * sqrt( r0**2 * r1**2 )
-              !        = r1**2 + r0**2 - 2 * alpha
-              !          with alpha = sqrt( r0**2 * r1**2 ) = r0 * r1
-              ! this avoids using sqrt() function too often which is costly
-              alpha = sqrt( r0_squared * r1_squared )
-              dist_v = r1_squared + r0_squared - 2.0_CUSTOM_REAL * alpha
-
-              ! only for flat earth with z in depth:
-              !  dist_v = sqrt( (cz(ispec2)-cz0(ispec))** 2)
-
-              ! epicentral distance
-              ! (accounting for spherical curvature)
-              ! calculates distance of circular segment
-              ! angle between r0 and r1 in radian
-              ! given by dot-product of two vectors
-              !ratio = (x0*x1 + y0*y1 + z0*z1) / (r0 * r1)
-              !      = (x0*x1 + y0*y1 + z0*z1) / sqrt(r0**2 * r1**2) -> alpha = r0 * r1
-              if (alpha > 0.0_CUSTOM_REAL) then
-                ratio = (x0*x1 + y0*y1 + z0*z1) / alpha
-              else
-                ratio = 1.0_CUSTOM_REAL
-              endif
-
-              ! checks boundaries of ratio (due to numerical inaccuracies)
-              if (ratio >= 1.0_CUSTOM_REAL) then
-                ! ratio = 1.0_CUSTOM_REAL
-                ! -> acos( 1 ) = 0
-                ! -> dist_h = 0
-                dist_h = 0.0_CUSTOM_REAL
-              else if (ratio <= -1.0_CUSTOM_REAL) then
-                ! ratio = -1.0_CUSTOM_REAL
-                ! -> acos ( -1 ) = PI
-                ! -> dist_h = (r1 * pi) * (r1 * pi ) = r1**2 * PI**2
-                dist_h = r1_squared * PI2
-              else
-                theta = acos( ratio )
-                ! segment length at heigth of r1 (squared)
-                ! dist_h = (r1 * theta)*(r1 * theta) = r1**2 * theta**2
-                dist_h = r1_squared * (theta*theta)
-              endif
-
-              ! Gaussian function
-              val = - dist_h*sigma_h2_inv - dist_v*sigma_v2_inv
-
-              ! limits to single precision
-              if (val < - 86.0_CUSTOM_REAL) then
-                ! smaller than numerical precision: exp(-86) < 1.e-37
-                val_gaussian = 0.0_CUSTOM_REAL
-              else
-                val_gaussian = exp(val)
-              endif
-              exp_val(INDEX_IJK2) = val_gaussian
-
-            ENDDO_LOOP_IJK2
-          !endif
-
-          ! debug
-          !if (DEBUG .and. myrank == 0) then
-          !  if (ispec == tmp_ispec_dbg) then
-#ifdef FORCE_VECTORIZATION
-          !    if (ijk == (2 + 3*NGLLX + 4*NGLLY*NGLLX)) then
-#else
-          !    if (i == 2 .and. j == 3 .and. k == 4) then
-#endif
-          !      tmp_bk(:,:,:,ispec2) = exp_val(:,:,:)
-          !      print *,'debug',myrank,'ispec',ispec,'ispec2',ispec2,'dist:',dist_h,dist_v
-          !      print *,'debug exp',minval(exp_val),maxval(exp_val)
-          !      print *,'debug kernel',minval(kernel(:,:,:,ispec2,1)),maxval(kernel(:,:,:,ispec2,1))
-          !    endif
-          !  endif
-          !endif
-
-          ! adds GLL integration weights
-          !exp_val(:,:,:) = exp_val(:,:,:) * integ_factor(:,:,:,ispec2)
-          !contrib_weights = sum(exp_val(:,:,:))
-          ! explicit loop and merged with sum
-          contrib_weights = 0.0_CUSTOM_REAL
-          DO_LOOP_IJK2
-            exp_val(INDEX_IJK2) = exp_val(INDEX_IJK2) * integ_factor(INDEX_IJK2,ispec2)
-            contrib_weights = contrib_weights + exp_val(INDEX_IJK2)
-          ENDDO_LOOP_IJK2
-
-          ! normalization, integrated values of Gaussian smoothing function
-          bk(INDEX_IJK,ispec) = bk(INDEX_IJK,ispec) + contrib_weights
-
-          ! adds contribution of element ispec2 to smoothed kernel values
-          do iker = 1,nker
-            ! kernel contributions
-            !contrib_kernel = sum(exp_val(:,:,:) * kernel(:,:,:,ispec2,iker))
-            ! explicit loop
-            contrib_kernel = 0.0_CUSTOM_REAL
-            DO_LOOP_IJK2
-              contrib_kernel = contrib_kernel + exp_val(INDEX_IJK2) * kernel(INDEX_IJK2,ispec2,iker)
-            ENDDO_LOOP_IJK2
-
-            ! new kernel value
-            tk(INDEX_IJK,ispec,iker) = tk(INDEX_IJK,ispec,iker) + contrib_kernel
-          enddo
-
-          ! checks number
-          !if (isNaN(tk(INDEX_IJK,ispec,1))) then
-          !  print *,'Error tk NaN: ',tk(INDEX_IJK,ispec,1)
-          !  print *,'rank:',myrank
-          !  print *,'INDEX_IJK,ispec:',INDEX_IJK,ispec
-          !  print *,'tk: ',tk(INDEX_IJK,ispec,1),'bk:',bk(INDEX_IJK,ispec)
-          !  print *,'sum exp_val: ',sum(exp_val(:,:,:)),'sum factor:',sum(integ_factor(:,:,:,ispec2))
-          !  print *,'sum kernel:',sum(kernel(:,:,:,ispec2))
-          !  call exit_mpi(myrank, 'Error NaN')
-          !endif
-
-        ENDDO_LOOP_IJK
-
-      enddo ! (ielem)
-
-      ! frees search results
-      !if (.not. DO_BRUTE_FORCE_SEARCH) then
-      !  if (kdtree_search_num_nodes > 0) then
-      !    deallocate(kdtree_search_index)
-      !    kdtree_search_num_nodes = 0
-      !  endif
-      !endif
-
-      ! debug output
-      !if (DEBUG) then
-      !  if (myrank == 0) then
-      !    ! debug element (tmp_ispec_dbg)
-      !    if (ispec == tmp_ispec_dbg) then
-      !      ! outputs Gaussian weighting function
-      !      ! writes out vtk file for debugging
-      !      write(filename,'(a,i4.4,a,i6.6)') trim(LOCAL_PATH)//'/search_elem',tmp_ispec_dbg,'_Gaussian_proc',iproc
-      !      call write_VTK_data_gll_cr(NSPEC_AB,NGLOB_AB,xstore,ystore,zstore,ibool,tmp_bk,filename)
-      !      print *,'file written: ',trim(filename)//'.vtk'
-      !    endif
-      !  endif
-      !endif
-
-    enddo   ! (ispec)
+    ! smooth
+    if (USE_GPU) then
+      ! on GPU
+      call compute_smooth_gpu(Container,kernel,integ_factor,xx,yy,zz,NSPEC_AB)
+    else
+      ! on CPU
+      call compute_smooth(nker,bk,tk, &
+                          kernel,integ_factor, &
+                          cx0,cy0,cz0,cx,cy,cz, &
+                          xx0,yy0,zz0,xx,yy,zz, &
+                          sigma_v2,sigma_h2, &
+                          sigma_v3,sigma_h3, &
+                          r_search,r_search_dist_v,r_search_dist_h,nsearch_elements,use_kdtree_search, &
+                          NSTEP_PERCENT_INFO)
+    endif
 
     ! debug output
     !if (DEBUG) then
@@ -1399,7 +1144,7 @@ integer :: ii,jj,kk
     !endif
 
     ! deletes search tree nodes
-    if (.not. DO_BRUTE_FORCE_SEARCH) then
+    if (use_kdtree_search) then
       ! frees search index array
       deallocate(kdtree_search_index)
       call kdtree_delete()
@@ -1409,10 +1154,15 @@ integer :: ii,jj,kk
 
   enddo     ! islice
 
-  if (myrank == 0) print *
+  ! user output
+  if (myrank == 0) then
+    print *
+    print *,'normalizing smoothed kernel values...'
+    print *
+  endif
 
   ! frees memory
-  if (.not. DO_BRUTE_FORCE_SEARCH) then
+  if (use_kdtree_search) then
     deallocate(kdtree_nodes_location)
     deallocate(kdtree_nodes_index)
   endif
@@ -1426,60 +1176,69 @@ integer :: ii,jj,kk
   ! synchronizes
   call synchronize_all()
 
-  ! normalizes/scaling factor
+  ! outputs infos for normalizes/scaling factor
   if (myrank == 0) then
-    print *, 'Scaling values:'
-    print *, '  bk min/max = ',minval(bk),maxval(bk)
-    print *, '  theoretical norm = ',norm
-    do iker = 1,nker
-      print *, '  ',trim(kernel_names(iker)),' tk min/max = ',minval(tk(:,:,:,:,iker)),maxval(tk(:,:,:,:,iker))
-    enddo
-    print *
+    if (.not. USE_GPU) then
+      ! arrays bk,tk only available for CPU-only calculations
+      print *, 'Scaling values:'
+      print *, '  bk min/max = ',minval(bk),maxval(bk)
+      print *, '  theoretical norm = ',norm
+      do iker = 1,nker
+        print *, '  ',trim(kernel_names(iker)),' tk min/max = ',minval(tk(:,:,:,:,iker)),maxval(tk(:,:,:,:,iker))
+      enddo
+      print *
+    endif
   endif
 
   ! compute the smoothed kernel values
-  do ispec = 1, NSPEC_AB
+  if (USE_GPU) then
+    ! on GPU
+    call get_smooth_gpu(Container,kernel_smooth)
+  else
+    ! on CPU
+    do ispec = 1, NSPEC_AB
 
-    ! avoids division by zero
-    DO_LOOP_IJK
-      if (abs(bk(INDEX_IJK,ispec)) < 1.d-24) bk(INDEX_IJK,ispec) = 1.0_CUSTOM_REAL
-    ENDDO_LOOP_IJK
-
-    ! loops over kernels
-    do iker = 1,nker
-
+      ! avoids division by zero
       DO_LOOP_IJK
-        ! checks the normalization criterion
-        ! e.g. sigma_h 160km, sigma_v 40km:
-        !     norm (not squared sigma_h ) ~ 0.001
-        !     norm ( squared sigma_h) ~ 6.23 * e-5
-        !if (abs(bk(INDEX_IJK,ispec) - norm) > 1.e-4) then
-        !  print *, 'Problem norm here --- ', myrank, ispec, i, j, k, bk(INDEX_IJK,ispec), norm
-        !  !call exit_mpi(myrank, 'Error computing Gaussian function on the grid')
-        !endif
-
-        !debug
-        !if (tk(INDEX_IJK,ispec) == 0.0_CUSTOM_REAL .and. myrank == 0) then
-        !  print *,myrank,'zero tk: ',INDEX_IJK,ispec,'tk:',tk(INDEX_IJK,ispec),'bk:',bk(INDEX_IJK,ispec)
-        !endif
-
-        ! normalizes smoothed kernel values by integral value of Gaussian weighting
-        kernel_smooth(INDEX_IJK,ispec,iker) = tk(INDEX_IJK,ispec,iker) / bk(INDEX_IJK,ispec)
-
-        ! checks number (isNaN check)
-        if (kernel_smooth(INDEX_IJK,ispec,iker) /= kernel_smooth(INDEX_IJK,ispec,iker)) then
-          print *,'Error kernel_smooth value not a number: ',kernel_smooth(INDEX_IJK,ispec,iker),trim(kernel_names(iker))
-          print *,'rank:',myrank
-          print *,'INDEX_IJK,ispec,iker:',INDEX_IJK,ispec,iker
-          print *,'tk: ',tk(INDEX_IJK,ispec,iker),'bk:',bk(INDEX_IJK,ispec),'norm:',norm
-          call exit_mpi(myrank, 'Error kernel value is NaN')
-        endif
-
+        if (abs(bk(INDEX_IJK,ispec)) < 1.d-24) bk(INDEX_IJK,ispec) = 1.0_CUSTOM_REAL
       ENDDO_LOOP_IJK
 
-    enddo
-  enddo
+      ! loops over kernels
+      do iker = 1,nker
 
+        DO_LOOP_IJK
+          ! checks the normalization criterion
+          ! e.g. sigma_h 160km, sigma_v 40km:
+          !     norm (not squared sigma_h ) ~ 0.001
+          !     norm ( squared sigma_h) ~ 6.23 * e-5
+          !if (abs(bk(INDEX_IJK,ispec) - norm) > 1.e-4) then
+          !  print *, 'Problem norm here --- ', myrank, ispec, i, j, k, bk(INDEX_IJK,ispec), norm
+          !  !call exit_mpi(myrank, 'Error computing Gaussian function on the grid')
+          !endif
+
+          !debug
+          !if (tk(INDEX_IJK,ispec) == 0.0_CUSTOM_REAL .and. myrank == 0) then
+          !  print *,myrank,'zero tk: ',INDEX_IJK,ispec,'tk:',tk(INDEX_IJK,ispec),'bk:',bk(INDEX_IJK,ispec)
+          !endif
+
+          ! normalizes smoothed kernel values by integral value of Gaussian weighting
+          kernel_smooth(INDEX_IJK,ispec,iker) = tk(INDEX_IJK,ispec,iker) / bk(INDEX_IJK,ispec)
+
+          ! checks number (isNaN check)
+          if (kernel_smooth(INDEX_IJK,ispec,iker) /= kernel_smooth(INDEX_IJK,ispec,iker)) then
+            print *,'Error kernel_smooth value not a number: ',kernel_smooth(INDEX_IJK,ispec,iker),trim(kernel_names(iker))
+            print *,'rank:',myrank
+            print *,'INDEX_IJK,ispec,iker:',INDEX_IJK,ispec,iker
+            print *,'tk: ',tk(INDEX_IJK,ispec,iker),'bk:',bk(INDEX_IJK,ispec),'norm:',norm
+            call exit_mpi(myrank, 'Error kernel value is NaN')
+          endif
+
+        ENDDO_LOOP_IJK
+
+      enddo
+    enddo
+  endif
+  
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
   ! ADIOS
   ! user output
@@ -1569,7 +1328,8 @@ integer :: ii,jj,kk
 
   ! frees arrays
   deallocate(ibool,idoubling,ispec_is_tiso)
-  deallocate(xstore,ystore,zstore,xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
+  deallocate(xstore,ystore,zstore)
+  deallocate(xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore)
   deallocate(bk,integ_factor)
   deallocate(xx0,yy0,zz0,xx,yy,zz,cx0,cy0,cz0,cx,cy,cz)
   deallocate(kernel,kernel_smooth,tk)
@@ -1595,3 +1355,553 @@ integer :: ii,jj,kk
   call finalize_mpi()
 
 end program smooth_sem_globe
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine compute_smooth(nker,bk,tk, &
+                            kernel,integ_factor, &
+                            cx0,cy0,cz0,cx,cy,cz, &
+                            xx0,yy0,zz0,xx,yy,zz, &
+                            sigma_v2,sigma_h2, &
+                            sigma_v3,sigma_h3, &
+                            r_search,r_search_dist_v,r_search_dist_h, &
+                            nsearch_elements,use_kdtree_search, &
+                            NSTEP_PERCENT_INFO)
+
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGLLCUBE,PI,myrank
+
+  use postprocess_par, only: NSPEC_CRUST_MANTLE
+
+  use kdtree_search
+
+  implicit none
+
+  !takes region 1 kernels
+  integer, parameter :: NSPEC_AB = NSPEC_CRUST_MANTLE
+
+  integer, intent(in) :: nker
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_AB),intent(inout) :: bk        ! normalization factors
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_AB,nker),intent(inout) ::  tk  ! kernel values
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_AB,nker), intent(in) :: kernel
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_AB), intent(in) :: integ_factor
+
+  ! center positions
+  real(kind=CUSTOM_REAL), dimension(NSPEC_AB), intent(in) :: cx0,cy0,cz0,cx,cy,cz
+  ! GLL point positions
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_AB), intent(in) :: xx0,yy0,zz0,xx,yy,zz
+
+  ! smoothing radii
+  real(kind=CUSTOM_REAL), intent(in) :: sigma_v2,sigma_h2
+  real(kind=CUSTOM_REAL), intent(in) :: sigma_h3,sigma_v3
+  ! search radii
+  double precision,intent(in) :: r_search,r_search_dist_v,r_search_dist_h
+
+  ! number of search elements
+  integer,dimension(NSPEC_AB), intent(in) :: nsearch_elements
+  logical, intent(in) :: use_kdtree_search
+
+  ! user output infos
+  integer, intent(in) :: NSTEP_PERCENT_INFO
+
+  ! local parameters
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: exp_val
+
+  real(kind=CUSTOM_REAL) :: val,val_gaussian
+  real(kind=CUSTOM_REAL) :: center_x0, center_y0, center_z0
+  real(kind=CUSTOM_REAL) :: center_x, center_y, center_z
+  real(kind=CUSTOM_REAL) :: contrib_weights,contrib_kernel
+
+  ! for distance calc
+  real(kind=CUSTOM_REAL) :: sigma_h2_inv,sigma_v2_inv
+  real(kind=CUSTOM_REAL) :: sigma_h3_sq,sigma_v3_sq
+  real(kind=CUSTOM_REAL) :: dist_h,dist_v
+  real(kind=CUSTOM_REAL) :: x0, y0, z0
+  real(kind=CUSTOM_REAL) :: x1, y1, z1
+  !real(kind=CUSTOM_REAL) :: r0,r1
+  real(kind=CUSTOM_REAL) :: r0_squared,r1_squared
+  real(kind=CUSTOM_REAL) :: theta,ratio,alpha
+  !real(kind=CUSTOM_REAL) :: vx,vy,vz
+
+  double precision,dimension(3) :: xyz_target
+
+  integer :: ispec,ispec2,iker
+  ! search elements
+  integer :: ielem,num_elem_local
+
+  integer :: NELEM_OUTPUT_INFO,NELEM_MAX_OUTPUT_INFO
+
+  ! timing
+  double precision :: time_start
+  double precision :: tCPU
+  double precision, external :: wtime
+
+! switches do-loops between: do k=1,NGLLZ; do j=1,NGLLY; do i=1,NGLLX <-> do ijk=1,NGLLCUBE
+#ifdef FORCE_VECTORIZATION
+  integer :: ijk
+  integer :: ijk2
+#  define INDEX_IJK2  ijk2,1,1
+#  define DO_LOOP_IJK2  do ijk2=1,NGLLCUBE
+#  define ENDDO_LOOP_IJK2  enddo                  ! NGLLCUBE
+#else
+  integer :: i,j,k
+  integer :: ii,jj,kk
+#  define INDEX_IJK2  ii,jj,kk
+#  define DO_LOOP_IJK2  do kk=1,NGLLZ; do jj=1,NGLLY; do ii=1,NGLLX
+#  define ENDDO_LOOP_IJK2  enddo; enddo; enddo    ! NGLLZ,NGLLY,NGLLX
+#endif
+
+  !---------------------
+  ! Parameters
+
+  ! kd-tree search uses either a spherical or ellipsoid search
+  logical,parameter :: DO_SEARCH_ELLIP = .true.
+
+  real(kind=CUSTOM_REAL),parameter :: PI2 = PI * PI ! squared
+
+  ! debugging
+  !logical, parameter :: DEBUG = .false.
+  ! boundary point: 910, interior point: 2382, surface point: 5128
+  !integer ,parameter :: tmp_ispec_dbg = 5128
+  !---------------------
+
+  ! for time output
+  NELEM_OUTPUT_INFO = max(int(1.0*NSPEC_AB/NSTEP_PERCENT_INFO),1)
+  NELEM_MAX_OUTPUT_INFO = NSPEC_AB - int(0.5*NSPEC_AB/NSTEP_PERCENT_INFO)
+
+  ! helper variables
+  sigma_h2_inv = 1.0_CUSTOM_REAL / sigma_h2
+  sigma_v2_inv = 1.0_CUSTOM_REAL / sigma_v2
+
+  sigma_h3_sq = sigma_h3 * sigma_h3  ! squared
+  sigma_v3_sq = sigma_v3 * sigma_v3
+
+  ! timing
+  time_start = wtime()
+
+  ! loops over elements to be smoothed in the current slice
+  do ispec = 1, NSPEC_AB
+
+    ! user info about progress
+    if (myrank == 0) then
+      if (ispec == NSPEC_AB) then
+        tCPU = wtime() - time_start
+        print *,'    ',100.0,' % elements done - Elapsed time in seconds = ',tCPU
+      else if (mod(ispec-1,NELEM_OUTPUT_INFO) == 0) then
+        if (ispec < NELEM_MAX_OUTPUT_INFO) then
+          tCPU = wtime() - time_start
+          print *,'    ',int((ispec-1) / NELEM_OUTPUT_INFO) * (100.0 / NSTEP_PERCENT_INFO), &
+                  ' % elements done - Elapsed time in seconds = ',tCPU
+        endif
+      endif
+    endif
+
+    ! search range
+    num_elem_local = nsearch_elements(ispec)
+
+    ! element center position
+    center_x0 = cx0(ispec)
+    center_y0 = cy0(ispec)
+    center_z0 = cz0(ispec)
+
+    ! sets number of elements to loop over
+    if (use_kdtree_search) then
+      ! sets search array
+      if (num_elem_local > 0) then
+        ! sets n-search number of nodes
+        kdtree_search_num_nodes = num_elem_local
+        ! finds closest point in target chunk
+        xyz_target(1) = center_x0
+        xyz_target(2) = center_y0
+        xyz_target(3) = center_z0
+        if (DO_SEARCH_ELLIP) then
+          ! (within ellipsoid)
+          call kdtree_get_nearest_n_neighbors_ellip(xyz_target,r_search_dist_v,r_search_dist_h,num_elem_local)
+        else
+          ! (within search sphere)
+          call kdtree_get_nearest_n_neighbors(xyz_target,r_search,num_elem_local)
+        endif
+      endif
+    endif
+
+    ! --- only double loop over the elements in the search radius ---
+    do ielem = 1, num_elem_local
+      ! search element
+      if (use_kdtree_search) then
+        ! kd-tree search elements
+        ispec2 = kdtree_search_index(ielem)
+      else
+        ! brute-force search
+        ispec2 = ielem
+      endif
+
+      ! search element center position
+      center_x = cx(ispec2)
+      center_y = cy(ispec2)
+      center_z = cz(ispec2)
+
+      ! takes only elements in search radius
+      ! calculates horizontal and vertical distance between two element centers
+
+      ! same as calling routine get_distance_vec_squared(),
+      ! but to help compiler optimize the calculation...
+      !if (.false.) then
+      !  call get_distance_vec_squared(dist_h,dist_v,center_x0,center_y0,center_z0,center_x,center_y,center_z)
+      !
+      !  ! checks distance between centers of elements
+      !  ! note: distances and sigmah, sigmav are normalized by R_PLANET_KM
+      !  if (dist_h > sigma_h3_sq .or. dist_v > sigma_v3_sq) cycle
+      !else
+        ! vertical distance
+        r0_squared = center_x0*center_x0 + center_y0*center_y0 + center_z0*center_z0
+        !r0 = sqrt( r0_squared ) ! length of first position vector
+
+        r1_squared = center_x*center_x + center_y*center_y + center_z*center_z
+        !r1 = sqrt( r1_squared )
+
+        ! note: instead of distance we use distance squared to avoid too many sqrt() operations
+        !
+        ! vertical distance (squared)
+        ! dist_v = (r1 - r0)*(r1 - r0)
+        !        = r1**2 + r0**2 - 2 * alpha
+        !          with alpha = sqrt( r0**2 * r1**2 ) = r0 * r1
+        ! this avoids using sqrt() function too often which is costly
+        alpha = sqrt( r0_squared * r1_squared )
+        dist_v = r1_squared + r0_squared - 2.0_CUSTOM_REAL * alpha
+
+        ! only for flat earth with z in depth:
+        !dist_v = sqrt( (center_z-center_z0)** 2)
+        ! or squared:
+        !dist_v = (center_z - center_z0)** 2
+
+        ! checks distance between centers of elements (squared)
+        ! note: distances and sigmah, sigmav are normalized by R_PLANET_KM
+        if (dist_v > sigma_v3_sq) cycle
+
+        ! epicentral distance
+        ! (accounting for spherical curvature)
+        ! calculates distance of circular segment
+        ! angle between r0 and r1 in radian
+        ! given by dot-product of two vectors
+        !ratio = (center_x0*center_x + center_y0*center_y + center_z0*center_z)/(r0 * r1)
+        if (alpha > 0.0_CUSTOM_REAL) then
+          ratio = (center_x0*center_x + center_y0*center_y + center_z0*center_z) / alpha
+        else
+          ratio = 1.0_CUSTOM_REAL
+        endif
+
+        ! checks boundaries of ratio (due to numerical inaccuracies)
+        if (ratio >= 1.0_CUSTOM_REAL) then
+          ! ratio = 1.0_CUSTOM_REAL
+          ! -> acos(1) = 0
+          ! -> dist_h = 0
+          dist_h = 0.0_CUSTOM_REAL
+        else if (ratio <= -1.0_CUSTOM_REAL) then
+          ! ratio = -1.0_CUSTOM_REAL
+          ! -> acos(-1) = PI
+          ! -> dist_h = r1**2 * PI**2
+          dist_h = r1_squared * PI2
+        else
+          theta = acos( ratio )
+          ! segment length at heigth of r1 (squared)
+          dist_h = r1_squared * (theta*theta)
+        endif
+
+        ! vector approximation (fast computation): neglects curvature
+        ! horizontal distance
+        ! length of vector from point 0 to point 1
+        ! assuming small earth curvature  (since only for neighboring elements)
+        !
+        ! scales r0 to have same length as r1
+        !alpha = r1 / r0
+        !vx = alpha * x0
+        !vy = alpha * y0
+        !vz = alpha * z0
+        !
+        ! vector in horizontal between new r0 and r1
+        !vx = x1 - vx
+        !vy = y1 - vy
+        !vz = z1 - vz
+        !
+        ! distance is vector length
+        !dist_h = sqrt( vx*vx + vy*vy + vz*vz )
+        ! or squared:
+        !dist_h = vx*vx + vy*vy + vz*vz
+
+        ! checks distance between centers of elements
+        ! note: distances and sigmah, sigmav are normalized by R_PLANET_KM
+        if (dist_h > sigma_h3_sq) cycle
+      !endif
+
+      ! loops over all GLL points of reference element in current slice (ispec) and search elements (ispec2)
+      DO_LOOP_IJK
+
+        ! reference location
+        ! current point (i,j,k,ispec) location, Cartesian coordinates
+        x0 = xx0(INDEX_IJK,ispec)
+        y0 = yy0(INDEX_IJK,ispec)
+        z0 = zz0(INDEX_IJK,ispec)
+
+        ! calculate weights based on Gaussian smoothing
+
+        ! same as calling routine smoothing_weights_vec(),
+        ! but inlined here to improve speed - a little..
+        !if (.false.) then
+        !  call smoothing_weights_vec(x0,y0,z0,sigma_h2,sigma_v2,exp_val, &
+        !                           xx(:,:,:,ispec2),yy(:,:,:,ispec2),zz(:,:,:,ispec2))
+        !else
+          ! length of first position vector
+          r0_squared = x0*x0 + y0*y0 + z0*z0
+          !r0 = sqrt( r0_squared )
+
+          DO_LOOP_IJK2
+            ! point in second slice
+            x1 = xx(INDEX_IJK2,ispec2)
+            y1 = yy(INDEX_IJK2,ispec2)
+            z1 = zz(INDEX_IJK2,ispec2)
+
+            ! same as calling routine get_distance_vec_squared(),
+            ! but to help compiler optimize the loop calculation...
+            !if (.false.) then
+            !  call get_distance_vec_squared(dist_h,dist_v,x0,y0,z0,x1,y1,z1)
+            !else
+              ! without explicit function calls to help compiler optimize loops
+              ! length of position vector
+              r1_squared = x1*x1 + y1*y1 + z1*z1
+              !r1 = sqrt( r1_squared )
+
+              ! vertical distance (squared)
+              ! dist_v = (r1 - r0)*(r1 - r0)
+              !        = r1**2 + r0**2 - 2 * r0 * r1
+              !        = r1**2 + r0**2 - 2 * sqrt( r0**2 ) * sqrt( r1**2 )
+              !        = r1**2 + r0**2 - 2 * sqrt( r0**2 * r1**2 )
+              !        = r1**2 + r0**2 - 2 * alpha
+              !          with alpha = sqrt( r0**2 * r1**2 ) = r0 * r1
+              ! this avoids using sqrt() function too often which is costly
+              alpha = sqrt( r0_squared * r1_squared )
+              dist_v = r1_squared + r0_squared - 2.0_CUSTOM_REAL * alpha
+
+              ! only for flat earth with z in depth:
+              !  dist_v = sqrt( (cz(ispec2)-cz0(ispec))** 2)
+
+              ! epicentral distance
+              ! (accounting for spherical curvature)
+              ! calculates distance of circular segment
+              ! angle between r0 and r1 in radian
+              ! given by dot-product of two vectors
+              !ratio = (x0*x1 + y0*y1 + z0*z1) / (r0 * r1)
+              !      = (x0*x1 + y0*y1 + z0*z1) / sqrt(r0**2 * r1**2) -> alpha = r0 * r1
+              if (alpha > 0.0_CUSTOM_REAL) then
+                ratio = (x0*x1 + y0*y1 + z0*z1) / alpha
+              else
+                ratio = 1.0_CUSTOM_REAL
+              endif
+
+              ! checks boundaries of ratio (due to numerical inaccuracies)
+              if (ratio >= 1.0_CUSTOM_REAL) then
+                ! ratio = 1.0_CUSTOM_REAL
+                ! -> acos( 1 ) = 0
+                ! -> dist_h = 0
+                dist_h = 0.0_CUSTOM_REAL
+              else if (ratio <= -1.0_CUSTOM_REAL) then
+                ! ratio = -1.0_CUSTOM_REAL
+                ! -> acos ( -1 ) = PI
+                ! -> dist_h = (r1 * pi) * (r1 * pi ) = r1**2 * PI**2
+                dist_h = r1_squared * PI2
+              else
+                theta = acos( ratio )
+                ! segment length at heigth of r1 (squared)
+                ! dist_h = (r1 * theta)*(r1 * theta) = r1**2 * theta**2
+                dist_h = r1_squared * (theta*theta)
+              endif
+            !endif
+
+            ! Gaussian function
+            val = - dist_h * sigma_h2_inv - dist_v * sigma_v2_inv
+
+            ! limits to single precision
+            if (val < - 86.0_CUSTOM_REAL) then
+              ! smaller than numerical precision: exp(-86) < 1.e-37
+              val_gaussian = 0.0_CUSTOM_REAL
+            else
+              val_gaussian = exp(val)
+            endif
+            exp_val(INDEX_IJK2) = val_gaussian
+
+          ENDDO_LOOP_IJK2
+        !endif
+
+        ! debug
+        !if (DEBUG .and. myrank == 0) then
+        !  if (ispec == tmp_ispec_dbg) then
+#ifdef FORCE_VECTORIZATION
+        !    if (ijk == (2 + 3*NGLLX + 4*NGLLY*NGLLX)) then
+#else
+        !    if (i == 2 .and. j == 3 .and. k == 4) then
+#endif
+        !      tmp_bk(:,:,:,ispec2) = exp_val(:,:,:)
+        !      print *,'debug',myrank,'ispec',ispec,'ispec2',ispec2,'dist:',dist_h,dist_v
+        !      print *,'debug exp',minval(exp_val),maxval(exp_val)
+        !      print *,'debug kernel',minval(kernel(:,:,:,ispec2,1)),maxval(kernel(:,:,:,ispec2,1))
+        !    endif
+        !  endif
+        !endif
+
+        ! adds GLL integration weights
+        !exp_val(:,:,:) = exp_val(:,:,:) * integ_factor(:,:,:,ispec2)
+        !contrib_weights = sum(exp_val(:,:,:))
+        ! explicit loop and merged with sum
+        contrib_weights = 0.0_CUSTOM_REAL
+        DO_LOOP_IJK2
+          exp_val(INDEX_IJK2) = exp_val(INDEX_IJK2) * integ_factor(INDEX_IJK2,ispec2)
+          contrib_weights = contrib_weights + exp_val(INDEX_IJK2)
+        ENDDO_LOOP_IJK2
+
+        ! normalization, integrated values of Gaussian smoothing function
+        bk(INDEX_IJK,ispec) = bk(INDEX_IJK,ispec) + contrib_weights
+
+        ! adds contribution of element ispec2 to smoothed kernel values
+        do iker = 1,nker
+          ! kernel contributions
+          !contrib_kernel = sum(exp_val(:,:,:) * kernel(:,:,:,ispec2,iker))
+          ! explicit loop
+          contrib_kernel = 0.0_CUSTOM_REAL
+          DO_LOOP_IJK2
+            contrib_kernel = contrib_kernel + exp_val(INDEX_IJK2) * kernel(INDEX_IJK2,ispec2,iker)
+          ENDDO_LOOP_IJK2
+
+          ! new kernel value
+          tk(INDEX_IJK,ispec,iker) = tk(INDEX_IJK,ispec,iker) + contrib_kernel
+        enddo
+
+        ! checks number
+        !if (isNaN(tk(INDEX_IJK,ispec,1))) then
+        !  print *,'Error tk NaN: ',tk(INDEX_IJK,ispec,1)
+        !  print *,'rank:',myrank
+        !  print *,'INDEX_IJK,ispec:',INDEX_IJK,ispec
+        !  print *,'tk: ',tk(INDEX_IJK,ispec,1),'bk:',bk(INDEX_IJK,ispec)
+        !  print *,'sum exp_val: ',sum(exp_val(:,:,:)),'sum factor:',sum(integ_factor(:,:,:,ispec2))
+        !  print *,'sum kernel:',sum(kernel(:,:,:,ispec2))
+        !  call exit_mpi(myrank, 'Error NaN')
+        !endif
+
+      ENDDO_LOOP_IJK
+
+    enddo ! (ielem)
+
+    ! debug output
+    !if (DEBUG) then
+    !  if (myrank == 0) then
+    !    ! debug element (tmp_ispec_dbg)
+    !    if (ispec == tmp_ispec_dbg) then
+    !      ! outputs Gaussian weighting function
+    !      ! writes out vtk file for debugging
+    !      write(filename,'(a,i4.4,a,i6.6)') trim(LOCAL_PATH)//'/search_elem',tmp_ispec_dbg,'_Gaussian_proc',iproc
+    !      call write_VTK_data_gll_cr(NSPEC_AB,NGLOB_AB,xstore,ystore,zstore,ibool,tmp_bk,filename)
+    !      print *,'file written: ',trim(filename)//'.vtk'
+    !    endif
+    !  endif
+    !endif
+
+  enddo   ! (ispec)
+
+  end subroutine compute_smooth
+
+!
+! -----------------------------------------------------------------------------
+!
+
+! subroutine put in this file to help compiler inlining code...
+! not used, but here for comparison
+
+  subroutine get_distance_vec_squared(dist_h,dist_v,x0,y0,z0,x1,y1,z1)
+
+! returns distances in radial and horizontal direction (squared)
+
+  use constants, only: CUSTOM_REAL,PI
+
+  implicit none
+
+  real(kind=CUSTOM_REAL),intent(out) :: dist_h,dist_v
+  real(kind=CUSTOM_REAL),intent(in) :: x0,y0,z0,x1,y1,z1
+
+  ! local parameters
+  real(kind=CUSTOM_REAL) :: r0_squared,r1_squared
+  real(kind=CUSTOM_REAL) :: theta,ratio,alpha
+
+  real(kind=CUSTOM_REAL),parameter :: PI2 = PI * PI ! squared
+
+  ! vertical distance (squared)
+  r0_squared = x0*x0 + y0*y0 + z0*z0    ! length of first position vector (squared)
+  r1_squared = x1*x1 + y1*y1 + z1*z1
+
+  ! only for flat earth with z in depth: dist_v = sqrt( (z1-z0)** 2)
+
+  ! note: instead of distance we use distance squared to avoid too many sqrt() operations
+  !
+  ! vertical distance (squared)
+  ! dist_v = (r1 - r0)*(r1 - r0)
+  !        = r1**2 + r0**2 - 2 * alpha
+  !          with alpha = sqrt( r0**2 * r1**2 ) = r0 * r1
+  ! this avoids using sqrt() function too often which is costly
+  alpha = sqrt( r0_squared * r1_squared )
+  dist_v = r1_squared + r0_squared - 2.0_CUSTOM_REAL * alpha
+
+  ! only for flat earth with z in depth:
+  !dist_v = sqrt( (center_z-center_z0)** 2)
+  ! or squared:
+  !dist_v = (center_z - center_z0)** 2
+
+  ! epicentral distance
+  ! (accounting for spherical curvature)
+  ! calculates distance of circular segment
+  ! angle between r0 and r1 in radian
+  ! given by dot-product of two vectors
+  !ratio = (center_x0*center_x + center_y0*center_y + center_z0*center_z)/(r0 * r1)
+  if (alpha > 0.0_CUSTOM_REAL) then
+    ratio = (x0*x1 + y0*y1 + z0*z1) / alpha
+  else
+    ratio = 1.0_CUSTOM_REAL
+  endif
+
+  ! checks boundaries of ratio (due to numerical inaccuracies)
+  if (ratio >= 1.0_CUSTOM_REAL) then
+    ! ratio = 1.0_CUSTOM_REAL
+    ! -> acos(1) = 0
+    ! -> dist_h = 0
+    dist_h = 0.0_CUSTOM_REAL
+  else if (ratio <= -1.0_CUSTOM_REAL) then
+    ! ratio = -1.0_CUSTOM_REAL
+    ! -> acos(-1) = PI
+    ! -> dist_h = r1**2 * PI**2
+    dist_h = r1_squared * PI2
+  else
+    theta = acos( ratio )
+    ! segment length at heigth of r1 (squared)
+    dist_h = r1_squared * (theta*theta)
+  endif
+
+  ! vector approximation (fast computation): neglects curvature
+  ! horizontal distance
+  ! length of vector from point 0 to point 1
+  ! assuming small earth curvature  (since only for neighboring elements)
+
+  ! scales r0 to have same length as r1
+  !alpha = r1 / r0
+  !vx = alpha * x0
+  !vy = alpha * y0
+  !vz = alpha * z0
+
+  ! vector in horizontal between new r0 and r1
+  !vx = x1 - vx
+  !vy = y1 - vy
+  !vz = z1 - vz
+
+  ! distance is vector length
+  !dist_h = sqrt( vx*vx + vy*vy + vz*vz )
+  ! or squared:
+  !dist_h = vx*vx + vy*vy + vz*vz
+
+  end subroutine get_distance_vec_squared

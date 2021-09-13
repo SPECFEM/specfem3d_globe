@@ -618,6 +618,37 @@ void FC_FUNC_ (prepare_cleanup_device,
 
 
 //
+// src/gpu/smooth_cuda.c
+//
+
+void FC_FUNC_(prepare_smooth_gpu,
+              PREPARE_SMOOTH_GPU)(long * Container,
+                                  realw * xstore_me,
+                                  realw * ystore_me,
+                                  realw * zstore_me,
+                                  realw * sigma_h2_inv,
+                                  realw * sigma_v2_inv,
+                                  realw * h_criterion,
+                                  realw * v_criterion,
+                                  int * nspec_me,
+                                  int * nker,
+                                  realw * wgll_cube){}
+
+void FC_FUNC_(compute_smooth_gpu,
+              COMPUTE_SMOOTH_GPU)(long * smooth_pointer,
+                                  realw * kernel_other,
+                                  realw * integ_factor,
+                                  realw * xstore_other,
+                                  realw * ystore_other,
+                                  realw * zstore_other,
+                                  const int * nspec_other){}
+
+void FC_FUNC_(get_smooth_gpu,
+              GET_SMOOTH_GPU)(long * smooth_pointer,
+                              realw * data_smooth) {}
+
+
+//
 // src/gpu/transfer_fields_gpu.c
 //
 

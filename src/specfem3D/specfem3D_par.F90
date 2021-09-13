@@ -905,7 +905,7 @@ module specfem_par_outercore
   real(kind=CUSTOM_REAL), dimension(:), allocatable, target :: rmass_outer_core
   real(kind=CUSTOM_REAL), dimension(:), pointer :: b_rmass_outer_core
 
-  ! velocity potential
+  ! potentials
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
     displ_outer_core,veloc_outer_core,accel_outer_core
 

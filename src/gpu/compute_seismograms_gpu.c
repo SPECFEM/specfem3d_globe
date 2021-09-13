@@ -88,7 +88,7 @@ void FC_FUNC_ (compute_seismograms_gpu,
     clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_nu.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ispec_selected_rec.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_number_receiver_global.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (int),    (void *) &scale_displ));
+    clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (realw),  (void *) &scale_displ));
 
     local_work_size[0] = blocksize;
     local_work_size[1] = 1;

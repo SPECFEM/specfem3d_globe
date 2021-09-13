@@ -508,7 +508,7 @@
         rho_kl_outer_core(INDEX_IJK,ispec) = rho_kl_outer_core(INDEX_IJK,ispec) + deltat * (gradxyz(1) + gradxyz(2) + gradxyz(3))
 
         ! bulk modulus kernel
-        kappal = rhostore_outer_core(INDEX_IJK,ispec)/kappavstore_outer_core(INDEX_IJK,ispec)
+        kappal = rhostore_outer_core(INDEX_IJK,ispec)/kappavstore_outer_core(INDEX_IJK,ispec)   ! factor rho/kappa
         div_displ =  kappal * accel_outer_core(iglob)
         b_div_displ =  kappal * b_accel_outer_core(iglob)
 
