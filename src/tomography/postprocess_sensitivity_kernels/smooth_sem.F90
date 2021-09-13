@@ -717,9 +717,9 @@ program smooth_sem_globe
     print *,'  mesh dimensions x min/max = ',minval(xstore),'/',maxval(xstore)
     print *,'  mesh dimensions y min/max = ',minval(ystore),'/',maxval(ystore)
     print *,'  mesh dimensions z min/max = ',minval(zstore),'/',maxval(zstore)
-    print *,
+    print *
     print *,'  integration factor min/max =',minval(integ_factor),'/',maxval(integ_factor)
-    print *,
+    print *
   endif
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
@@ -958,9 +958,9 @@ program smooth_sem_globe
         print *,'  mesh dimensions x min/max = ',minval(xstore),'/',maxval(xstore)
         print *,'  mesh dimensions y min/max = ',minval(ystore),'/',maxval(ystore)
         print *,'  mesh dimensions z min/max = ',minval(zstore),'/',maxval(zstore)
-        print *,
+        print *
         print *,'  integration factor min/max =',minval(integ_factor),'/',maxval(integ_factor)
-        print *,
+        print *
       endif
     endif
 
