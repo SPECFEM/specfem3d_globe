@@ -399,8 +399,6 @@ ${E}/xsmooth_sem: $(xsmooth_sem_OBJECTS) $(xsmooth_sem_SHARED_OBJECTS) # $(COND_
 	@echo ""
 	@echo $(INFO_SMOOTH)
 	@echo ""
-#	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
-
 	${FCLINK} -o $@ $+ $(xsmooth_sem_LIBS)
 	@echo ""
 
@@ -429,11 +427,24 @@ xsmooth_sem_adios_SHARED_OBJECTS += \
 	$O/adios_manager.shared_adios_module.o \
 	$(EMPTY_MACRO)
 
+##
+## compilation
+##
+xsmooth_sem_adios_LIBS = $(MPILIBS)  # $(LDFLAGS) $(MPILIBS) $(LIBS)
+xsmooth_sem_adios_LIBS += $(GPU_LINK)
+
+INFO_SMOOTH_ADIOS="building xsmooth_sem_adios $(BUILD_VERSION_TXT)"
+
 # extra dependencies
 $O/smooth_sem.postprocess_adios.o: $O/search_kdtree.shared.o
 
 ${E}/xsmooth_sem_adios: $(xsmooth_sem_adios_OBJECTS) $(xsmooth_sem_adios_SHARED_OBJECTS)
-	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
+	@echo ""
+	@echo $(INFO_SMOOTH_ADIOS)
+	@echo ""
+	${FCLINK} -o $@ $+ $(xsmooth_sem_adios_LIBS)
+	@echo ""
+
 
 
 ##
