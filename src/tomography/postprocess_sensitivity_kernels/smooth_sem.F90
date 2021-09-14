@@ -346,12 +346,8 @@ program smooth_sem_globe
   if (nker > MAX_KERNEL_NAMES) stop 'number of kernel_names exceeds MAX_KERNEL_NAMES'
 
   if (myrank == 0) then
-    ! The machinery for reading multiple names from the command line is in
-    ! place,
-    ! but the smoothing routines themselves have not yet been modified to work
-    !  on multiple arrays.
-    if (myrank == 0) print *, 'Smoothing list: ', trim(kernel_names_comma_delimited),' - total: ',nker
-    if (myrank == 0) print *
+    print *, 'Smoothing list: ', trim(kernel_names_comma_delimited),' - total: ',nker
+    print *
   endif
   call synchronize_all()
 
@@ -1775,12 +1771,19 @@ end program smooth_sem_globe
         !endif
 
         ! adds GLL integration weights
-        !exp_val(:,:,:) = exp_val(:,:,:) * integ_factor(:,:,:,ispec2)
+        if (USE_QUADRATURE_RULE_FOR_SMOOTHING) then
+          !exp_val(:,:,:) = exp_val(:,:,:) * integ_factor(:,:,:,ispec2)
+          ! explicit loop
+          DO_LOOP_IJK2
+            exp_val(INDEX_IJK2) = exp_val(INDEX_IJK2) * integ_factor(INDEX_IJK2,ispec2)
+          ENDDO_LOOP_IJK2
+        endif
+
+        ! intrinsic sum
         !contrib_weights = sum(exp_val(:,:,:))
-        ! explicit loop and merged with sum
+        ! explicit loop
         contrib_weights = 0.0_CUSTOM_REAL
         DO_LOOP_IJK2
-          exp_val(INDEX_IJK2) = exp_val(INDEX_IJK2) * integ_factor(INDEX_IJK2,ispec2)
           contrib_weights = contrib_weights + exp_val(INDEX_IJK2)
         ENDDO_LOOP_IJK2
 
