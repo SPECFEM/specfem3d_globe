@@ -30,7 +30,7 @@
 program smooth_laplacian_sem
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,IIN,IOUT, &
-       GAUSSALPHA,GAUSSBETA,MAX_STRING_LEN,GRAV,PI,myrank
+       GAUSSALPHA,GAUSSBETA,MAX_STRING_LEN,GRAV,PI,TINYVAL,myrank
 
   use shared_parameters, only: R_PLANET_KM
 
@@ -64,11 +64,11 @@ program smooth_laplacian_sem
   character(len=*), parameter :: reg_name = '_reg1_'
 #endif
 
-  integer :: nspec, nglob, nker, niter_cg_max, rel_to_prem
+  integer :: nspec, nglob, nker, niter_cg_max
   integer :: iker, i, j, k, idof, iel, i1, i2, ier, sizeprocs
 
   double precision    :: Lx, Ly, Lz, Lh, Lv, conv_crit, taper_vertical, Lh2, Lv2
-  double precision    :: x, y, z, r, theta, phi, e2
+  double precision    :: x, y, z, r, theta, phi, e2, rel_to_prem
   double precision    :: rho,drhodr,vp,vs,Qkappa,Qmu
 
 
@@ -227,7 +227,7 @@ program smooth_laplacian_sem
 #endif
 
   if (trim(arg(NARGS-1)) == '') then
-      rel_to_prem = 0
+      rel_to_prem = 0.0
   else
       read(arg(NARGS-1),*) rel_to_prem
       if (myrank == 0) print *, 'Increase smoothing length based on PREM model     :', rel_to_prem
@@ -535,11 +535,11 @@ program smooth_laplacian_sem
                   Lv2 = Lv
               endif
               ! increase radius based on PREM model velocity
-              if (rel_to_prem > 0) then
+              if (rel_to_prem > TINYVAL) then
                call model_prem_iso(r,rho,drhodr,vp,vs,Qkappa,Qmu,0,CRUSTAL,.false.)
                if (vp > 1.0) then
-                  Lv2 = Lv2 * vp
-                  Lh2 = Lh2 * vp
+                  Lv2 = Lv2 * vp ** rel_to_prem
+                  Lh2 = Lh2 * vp ** rel_to_prem
                endif
               endif
               ! convert Lv, Lh to Lx, Ly, Lz
