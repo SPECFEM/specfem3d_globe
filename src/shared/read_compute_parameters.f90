@@ -602,10 +602,6 @@
   if (WRITE_SEISMOGRAMS_BY_MAIN .and. SIMULATION_TYPE == 2) &
     stop 'For SIMULATION_TYPE == 2, please set WRITE_SEISMOGRAMS_BY_MAIN to .false.'
 
-  ! write 3D array only works if each process writes out its local seismos
-  if (WRITE_SEISMOGRAMS_BY_MAIN .and. OUTPUT_SEISMOS_3D_ARRAY) &
-    stop 'For OUTPUT_SEISMOS_3D_ARRAY == .true., please set WRITE_SEISMOGRAMS_BY_MAIN to .false.'
-
 !----------------------------------------------
 !
 ! status of implementation
