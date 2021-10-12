@@ -203,13 +203,16 @@
           number_receiver_global,seismograms, &
           islice_num_rec_local, &
           seismo_offset,seismo_current, &
+          station_name,network_name, &
           OUTPUT_SEISMOS_ASCII_TEXT, &
           OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
           OUTPUT_SEISMOS_ASDF, &
+          OUTPUT_SEISMOS_3D_ARRAY, &
           NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
           SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE, &
           OUTPUT_FILES, &
-          WRITE_SEISMOGRAMS_BY_MAIN
+          WRITE_SEISMOGRAMS_BY_MAIN, &
+          DT
 
   implicit none
 
@@ -218,8 +221,8 @@
 
   integer :: iproc,sender,irec_local,irec,ier,receiver
   integer :: nrec_local_received
-  integer :: total_seismos
-  character(len=MAX_STRING_LEN) :: sisname
+  integer :: total_seismos,length_network_name,length_station_name
+  character(len=MAX_STRING_LEN) :: sisname,staname
 
   ! allocates single station seismogram
   allocate(one_seismogram(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
@@ -248,6 +251,43 @@
 
     ! deallocate the container
     call close_asdf_data()
+  endif
+
+  ! write 3D seismogram array
+  if (OUTPUT_SEISMOS_3D_ARRAY) then
+    write(sisname,'(A,I5.5)') '/array_seismograms_node_',myrank
+    write(staname,'(A,I5.5)') '/array_stations_node_',myrank
+    if (seismo_offset == 0) then
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='unknown',form='unformatted',action='write')
+    else
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='old', &
+            form='unformatted',position='append',action='write')
+    endif
+    write(IOUT) seismograms
+    close(IOUT)
+    ! save list of stations in current processor
+    if (seismo_offset == 0) then
+      if (myrank == 0) then
+        open(unit=IOUT,file=trim(OUTPUT_FILES)//'seismogram_stats.txt',status='unknown',form='formatted',action='write')
+        write(IOUT,*) 'NSTEP =', seismo_current
+        write(IOUT,*) 'DT    =', DT
+      endif
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(staname)//'.txt',status='unknown',form='formatted',action='write')
+    else
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(staname)//'.txt',status='old', &
+            form='formatted',position='append',action='write')
+    endif
+    do irec_local = 1,nrec_local
+      ! get global number of that receiver
+      irec = number_receiver_global(irec_local)
+      length_station_name = len_trim(station_name(irec))
+      length_network_name = len_trim(network_name(irec))
+
+      write(sisname,"('# ',a,'.',a)") network_name(irec)(1:length_network_name), &
+                   station_name(irec)(1:length_station_name)
+      write(IOUT,*) sisname(1:len_trim(sisname))
+    enddo
+    close(IOUT)
   endif
 
   ! ASCII / SAC format

@@ -37,7 +37,7 @@
   integer, parameter :: nparam_i = 48
   integer, dimension(nparam_i) :: bcast_integer
 
-  integer, parameter :: nparam_l = 69
+  integer, parameter :: nparam_l = 70
   logical, dimension(nparam_l) :: bcast_logical
 
   integer, parameter :: nparam_dp = 41
@@ -106,7 +106,8 @@
             ADIOS_FOR_SOLVER_MESHFILES,ADIOS_FOR_AVS_DX, &
             ADIOS_FOR_KERNELS,ADIOS_FOR_MODELS,ADIOS_FOR_UNDO_ATTENUATION, &
             CEM_REQUEST,CEM_ACCEPT,BROADCAST_SAME_MESH_AND_MODEL,MODEL_GLL, &
-            USE_MONOCHROMATIC_CMT_SOURCE, ABSORB_USING_GLOBAL_SPONGE /)
+            USE_MONOCHROMATIC_CMT_SOURCE, ABSORB_USING_GLOBAL_SPONGE, &
+            OUTPUT_SEISMOS_3D_ARRAY /)
 
     bcast_double_precision = (/ &
             DT, &
@@ -315,6 +316,7 @@
     MODEL_GLL = bcast_logical(67)
     USE_MONOCHROMATIC_CMT_SOURCE = bcast_logical(68)
     ABSORB_USING_GLOBAL_SPONGE = bcast_logical(69)
+    OUTPUT_SEISMOS_3D_ARRAY = bcast_logical(70)
 
     ! double precisions
     DT = bcast_double_precision(1)
