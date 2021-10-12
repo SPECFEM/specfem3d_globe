@@ -269,11 +269,16 @@
     if (seismo_offset == 0) then
       if (myrank == 0) then
         open(unit=IOUT,file=trim(OUTPUT_FILES)//'seismogram_stats.txt',status='unknown',form='formatted',action='write')
-        write(IOUT,*) 'NSTEP =', seismo_current
         write(IOUT,*) 'DT    =', DT
+        write(IOUT,*) 'NSTEP =', seismo_current
       endif
       open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(staname)//'.txt',status='unknown',form='formatted',action='write')
     else
+      if (myrank == 0) then
+        open(unit=IOUT,file=trim(OUTPUT_FILES)//'seismogram_stats.txt',status='old', &
+            form='formatted',position='append',action='write')
+        write(IOUT,*) 'NSTEP =', seismo_current
+      endif
       open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(staname)//'.txt',status='old', &
             form='formatted',position='append',action='write')
     endif
