@@ -203,6 +203,10 @@ NTSTEP_BETWEEN_OUTPUT_INFO      = 1000
 NTSTEP_BETWEEN_OUTPUT_SEISMOS   = 5000000
 NTSTEP_BETWEEN_READ_ADJSRC      = 10000
 
+# set to n to reduce the sampling rate of output seismograms by a factor of n
+# defaults to 1, which means no down-sampling
+NTSTEP_BETWEEN_OUTPUT_SAMPLE    = 1
+
 # use a (tilted) FORCESOLUTION force point source (or several) instead of a CMTSOLUTION moment-tensor source.
 # This can be useful e.g. for asteroid simulations
 # in which the source is a vertical force, normal force, tilted force, impact etc.
