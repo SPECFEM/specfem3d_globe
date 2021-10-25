@@ -304,6 +304,7 @@
       open(unit=IOUT,file=trim(OUTPUT_FILES)//'seismogram_stats.txt',status='unknown',form='formatted',action='write')
       write(IOUT,*) 'DT0     =', DT
       write(IOUT,*) 'NSTEP0  =', NSTEP
+      close(IOUT)
     endif
   endif
 
