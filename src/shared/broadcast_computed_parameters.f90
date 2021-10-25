@@ -34,7 +34,7 @@
 
   ! local parameters
   ! broadcast parameter arrays
-  integer, parameter :: nparam_i = 48
+  integer, parameter :: nparam_i = 49
   integer, dimension(nparam_i) :: bcast_integer
 
   integer, parameter :: nparam_l = 70
@@ -76,7 +76,7 @@
             ATT1,ATT2,ATT3,ATT4,ATT5, &
             GPU_RUNTIME,NUMBER_OF_SIMULTANEOUS_RUNS, &
             MODEL_GLL_TYPE,USER_NSTEP, &
-            NSTEP_STEADY_STATE /)
+            NSTEP_STEADY_STATE,NTSTEP_BETWEEN_OUTPUT_SAMPLE /)
 
     bcast_logical = (/ &
             TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
@@ -245,6 +245,7 @@
     MODEL_GLL_TYPE  = bcast_integer(46)
     USER_NSTEP = bcast_integer(47)
     NSTEP_STEADY_STATE = bcast_integer(48)
+    NTSTEP_BETWEEN_OUTPUT_SAMPLE = bcast_integer(49)
 
     ! logicals
     TRANSVERSE_ISOTROPY = bcast_logical(1)

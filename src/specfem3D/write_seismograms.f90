@@ -212,7 +212,7 @@
           SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE, &
           OUTPUT_FILES, &
           WRITE_SEISMOGRAMS_BY_MAIN, &
-          DT
+          DT,NSTEP,NTSTEP_BETWEEN_OUTPUT_SAMPLE
 
   implicit none
 
@@ -236,7 +236,7 @@
       ! get global number of that receiver
       irec = number_receiver_global(irec_local)
 
-      one_seismogram(:,:) = seismograms(:,irec_local,:)
+      one_seismogram(:,:) = seismograms(:,irec_local,::NTSTEP_BETWEEN_OUTPUT_SAMPLE)
 
       ! write this seismogram
       ! note: ASDF data structure is given in module
@@ -263,14 +263,16 @@
       open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='old', &
             form='unformatted',position='append',action='write')
     endif
-    write(IOUT) seismograms
+    write(IOUT) seismograms(:,:,1:seismo_current:NTSTEP_BETWEEN_OUTPUT_SAMPLE)
     close(IOUT)
     ! save list of stations in current processor
     if (seismo_offset == 0) then
       if (myrank == 0) then
         open(unit=IOUT,file=trim(OUTPUT_FILES)//'seismogram_stats.txt',status='unknown',form='formatted',action='write')
-        write(IOUT,*) 'DT    =', DT
-        write(IOUT,*) 'NSTEP =', seismo_current
+        write(IOUT,*) 'DT0    =', DT
+        write(IOUT,*) 'NSTEP0 =', NSTEP
+        write(IOUT,*) 'DT     =', DT * NTSTEP_BETWEEN_OUTPUT_SAMPLE
+        write(IOUT,*) 'NSTEP  =', ceiling(real(seismo_current) / NTSTEP_BETWEEN_OUTPUT_SAMPLE)
         close(IOUT)
       endif
       open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(staname)//'.txt',status='unknown',form='formatted',action='write')
@@ -278,7 +280,7 @@
       if (myrank == 0) then
         open(unit=IOUT,file=trim(OUTPUT_FILES)//'seismogram_stats.txt',status='old', &
             form='formatted',position='append',action='write')
-        write(IOUT,*) 'NSTEP =', seismo_current
+        write(IOUT,*) 'NSTEP =', ceiling(real(seismo_current) / NTSTEP_BETWEEN_OUTPUT_SAMPLE)
         close(IOUT)
       endif
       open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(staname)//'.txt',status='old', &
@@ -295,6 +297,14 @@
       write(IOUT,*) sisname(1:len_trim(sisname))
     enddo
     close(IOUT)
+  
+  else if (NTSTEP_BETWEEN_OUTPUT_SAMPLE > 1) then
+    ! save original DT and NSTEP for adjoint simulation
+    if (myrank == 0 .and. seismo_offset == 0) then
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//'seismogram_stats.txt',status='unknown',form='formatted',action='write')
+      write(IOUT,*) 'DT0     =', DT
+      write(IOUT,*) 'NSTEP0  =', NSTEP
+    endif
   endif
 
   ! ASCII / SAC format
@@ -330,7 +340,7 @@
         ! get global number of that receiver
         irec = number_receiver_global(irec_local)
 
-        one_seismogram(:,:) = seismograms(:,irec_local,:)
+        one_seismogram(:,:) = seismograms(:,irec_local,::NTSTEP_BETWEEN_OUTPUT_SAMPLE)
 
         ! write this seismogram
         ! note: ASDF data structure is given in module
@@ -398,7 +408,7 @@
              if (iproc == 0) then
                ! get global number of that receiver
                irec = number_receiver_global(irec_local)
-               one_seismogram(:,:) = seismograms(:,irec_local,:)
+               one_seismogram(:,:) = seismograms(:,irec_local,::NTSTEP_BETWEEN_OUTPUT_SAMPLE)
              else
                ! receives info from secondary processes
                call recv_singlei(irec,sender,itag)
@@ -426,7 +436,7 @@
             irec = number_receiver_global(irec_local)
             call send_singlei(irec,receiver,itag)
 
-            one_seismogram(:,:) = seismograms(:,irec_local,:)
+            one_seismogram(:,:) = seismograms(:,irec_local,::NTSTEP_BETWEEN_OUTPUT_SAMPLE)
             call send_cr(one_seismogram,NDIM*seismo_current,receiver,itag)
           enddo
         endif
@@ -468,7 +478,8 @@
           DT, &
           seismo_current, &
           OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_ASDF, &
-          OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT,NTSTEP_BETWEEN_OUTPUT_SEISMOS
+          OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
+          NTSTEP_BETWEEN_OUTPUT_SAMPLE
 
   use specfem_par, only: &
           cmt_lat => cmt_lat_SAC,cmt_lon => cmt_lon_SAC
@@ -494,9 +505,11 @@
   double precision :: phi
   real(kind=CUSTOM_REAL) :: cphi,sphi
   integer :: isample
+  integer :: seismo_current_used
 
   ! initializes
   seismogram_tmp(:,:) = 0.0_CUSTOM_REAL
+  seismo_current_used = ceiling(real(seismo_current) / NTSTEP_BETWEEN_OUTPUT_SAMPLE)
 
   ! get band code
   call band_instrument_code(DT,bic)
@@ -559,19 +572,19 @@
       ! BS BS do the rotation of the components and put result in
       ! new variable seismogram_tmp
       if (iorientation == 4) then ! radial component
-         do isample = 1,seismo_current
+         do isample = 1,seismo_current_used
             seismogram_tmp(iorientation,isample) = &
                cphi * one_seismogram(1,isample) + sphi * one_seismogram(2,isample)
          enddo
       else if (iorientation == 5) then ! transverse component
-         do isample = 1,seismo_current
+         do isample = 1,seismo_current_used
             seismogram_tmp(iorientation,isample) = &
             -1*sphi * one_seismogram(1,isample) + cphi * one_seismogram(2,isample)
          enddo
       endif
 
     else ! keep NEZ components
-      do isample = 1,seismo_current
+      do isample = 1,seismo_current_used
         seismogram_tmp(iorientation,isample) = one_seismogram(iorientation,isample)
       enddo
 
