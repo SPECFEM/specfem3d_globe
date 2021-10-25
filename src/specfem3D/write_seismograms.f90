@@ -297,7 +297,7 @@
       write(IOUT,*) sisname(1:len_trim(sisname))
     enddo
     close(IOUT)
-  
+
   else if (NTSTEP_BETWEEN_OUTPUT_SAMPLE > 1) then
     ! save original DT and NSTEP for adjoint simulation
     if (myrank == 0 .and. seismo_offset == 0) then
