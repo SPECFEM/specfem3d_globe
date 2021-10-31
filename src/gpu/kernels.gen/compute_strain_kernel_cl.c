@@ -222,9 +222,7 @@ __kernel void compute_strain_kernel(const __global float * d_displ, const __glob
   if (ispec < NSPEC) {\n\
     compute_element_strain_undoatt(ispec, ijk_ispec, d_ibool, s_dummyx_loc, s_dummyy_loc, s_dummyz_loc, d_xix, d_xiy, d_xiz, d_etax, d_etay, d_etaz, d_gammax, d_gammay, d_gammaz, sh_hprime_xx, epsdev,  &eps_trace_over_3);\n\
 \n\
-    if (NSPEC_STRAIN_ONLY == 1) {\n\
-      epsilon_trace_over_3[tx] = eps_trace_over_3;\n\
-    } else {\n\
+    if (NSPEC_STRAIN_ONLY > 1) {\n\
       epsilon_trace_over_3[ijk_ispec] = eps_trace_over_3;\n\
     }\n\
     epsilondev_xx[ijk_ispec] = epsdev[0];\n\

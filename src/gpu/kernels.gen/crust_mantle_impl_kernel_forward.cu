@@ -1233,9 +1233,7 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
       epsilondev_xy_loc_1 = (duxdyl_plus_duydxl) * (0.5f);
       epsilondev_xz_loc_1 = (duzdxl_plus_duxdzl) * (0.5f);
       epsilondev_yz_loc_1 = (duzdyl_plus_duydzl) * (0.5f);
-      if (NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) {
-        epsilon_trace_over_3[tx] = templ;
-      } else {
+      if (NSPEC_CRUST_MANTLE_STRAIN_ONLY > 1) {
         epsilon_trace_over_3[tx + (working_element) * (NGLL3)] = templ;
       }
     }
@@ -2018,9 +2016,7 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
       epsilondev_xy_loc_1 = (duxdyl_plus_duydxl) * (0.5f);
       epsilondev_xz_loc_1 = (duzdxl_plus_duxdzl) * (0.5f);
       epsilondev_yz_loc_1 = (duzdyl_plus_duydzl) * (0.5f);
-      if (NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) {
-        epsilon_trace_over_3[tx] = templ;
-      } else {
+      if (NSPEC_CRUST_MANTLE_STRAIN_ONLY > 1) {
         epsilon_trace_over_3[tx + (working_element) * (NGLL3)] = templ;
       }
     }

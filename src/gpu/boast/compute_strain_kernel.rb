@@ -19,10 +19,16 @@ module BOAST
     v.push nspec_strain_only      = Int( "NSPEC_STRAIN_ONLY",    :dir => :in)
     v.push deltat                 = Real("deltat",               :dir => :in)
     v.push d_ibool                = Int( "d_ibool",              :dir => :in, :dim => [Dim()] )
-    v.push *d_xi =    [d_xix      = Real("d_xix",    :dir => :in, :dim => [Dim()] ), d_xiy    = Real("d_xiy",   :dir => :in, :dim => [Dim()] ), d_xiz    = Real("d_xiz",   :dir => :in, :dim => [Dim()] ) ]
-    v.push *d_eta =   [d_etax     = Real("d_etax",                  :dir => :in, :dim => [Dim()] ), d_etay = Real("d_etay",:dir => :in, :dim => [Dim()] ), d_etaz = Real("d_etaz",:dir => :in, :dim => [Dim()] ) ]
-    v.push *d_gamma = [d_gammax   = Real("d_gammax",                :dir => :in, :dim => [Dim()] ), d_gammay = Real("d_gammay",:dir => :in, :dim => [Dim()] ), d_gammaz = Real("d_gammaz",:dir => :in, :dim => [Dim()] ) ]
-    v.push d_hprime_xx             = Real("d_hprime_xx",             :dir => :in, :dim => [Dim()] )
+    v.push *d_xi =    [d_xix      = Real("d_xix",    :dir => :in, :dim => [Dim()] ),
+                       d_xiy    = Real("d_xiy",   :dir => :in, :dim => [Dim()] ),
+                       d_xiz    = Real("d_xiz",   :dir => :in, :dim => [Dim()] ) ]
+    v.push *d_eta =   [d_etax     = Real("d_etax",                  :dir => :in, :dim => [Dim()] ),
+                       d_etay = Real("d_etay",:dir => :in, :dim => [Dim()] ),
+                       d_etaz = Real("d_etaz",:dir => :in, :dim => [Dim()] ) ]
+    v.push *d_gamma = [d_gammax   = Real("d_gammax",                :dir => :in, :dim => [Dim()] ),
+                       d_gammay = Real("d_gammay",:dir => :in, :dim => [Dim()] ),
+                       d_gammaz = Real("d_gammaz",:dir => :in, :dim => [Dim()] ) ]
+    v.push d_hprime_xx            = Real("d_hprime_xx",             :dir => :in, :dim => [Dim()] )
 
     epsilondev = [ epsilondev_xx, epsilondev_yy, epsilondev_xy, epsilondev_xz, epsilondev_yz ]
 
@@ -85,11 +91,9 @@ module BOAST
                                                       epsdev,eps_trace_over_3.address)
         comment()
 
-        print If(nspec_strain_only == 1 => lambda {
-          print epsilon_trace_over_3[tx] === eps_trace_over_3
-        }, :else => lambda {
+        print If(nspec_strain_only > 1) {
           print epsilon_trace_over_3[ijk_ispec] === eps_trace_over_3
-        })
+        }
 
         (0..4).each { |indx|
           print epsilondev[indx][ijk_ispec] === epsdev[indx]

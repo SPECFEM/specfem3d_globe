@@ -208,9 +208,7 @@ __global__ void compute_strain_kernel(const float * d_displ, const float * d_vel
   if (ispec < NSPEC) {
     compute_element_strain_undoatt(ispec, ijk_ispec, d_ibool, s_dummyx_loc, s_dummyy_loc, s_dummyz_loc, d_xix, d_xiy, d_xiz, d_etax, d_etay, d_etaz, d_gammax, d_gammay, d_gammaz, sh_hprime_xx, epsdev,  &eps_trace_over_3);
 
-    if (NSPEC_STRAIN_ONLY == 1) {
-      epsilon_trace_over_3[tx] = eps_trace_over_3;
-    } else {
+    if (NSPEC_STRAIN_ONLY > 1) {
       epsilon_trace_over_3[ijk_ispec] = eps_trace_over_3;
     }
     epsilondev_xx[ijk_ispec] = epsdev[0];

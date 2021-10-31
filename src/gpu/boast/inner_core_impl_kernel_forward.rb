@@ -948,8 +948,8 @@ module BOAST
     v.push wgll_cube               = Real("wgll_cube",               :dir => :in, :restrict => true, :dim => [Dim()] )
 
     if type == :inner_core then
-      v.push nspec_strain_only = Int( "NSPEC_INNER_CORE_STRAIN_ONLY", :dir => :in)
-      v.push nspec_inner_core        = Int( "NSPEC_INNER_CORE",        :dir => :in)
+      v.push nspec_strain_only = Int( "NSPEC_INNER_CORE_STRAIN_ONLY",   :dir => :in)
+      v.push nspec_inner_core  = Int( "NSPEC_INNER_CORE",               :dir => :in)
     elsif type == :crust_mantle then
       v.push nspec_strain_only = Int( "NSPEC_CRUST_MANTLE_STRAIN_ONLY", :dir => :in)
     end
@@ -1955,11 +1955,9 @@ module BOAST
             print epsilondev_yz_loc[elem_index] === duzdyl_plus_duydzl * 0.5
             #print epsilondev_yz_loc[elem_index] === (dudl[2][1] + dudl[1][2]) * 0.5
 
-            print If(nspec_strain_only == 1 => lambda {
-              print epsilon_trace_over_3[tx] === templ
-            }, :else => lambda {
+            print If(nspec_strain_only > 1) {
               print epsilon_trace_over_3[tx + working_element*ngll3] === templ
-            })
+            }
           }
           comment()
 

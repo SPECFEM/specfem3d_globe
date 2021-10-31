@@ -672,9 +672,7 @@ __kernel  void crust_mantle_impl_kernel_forward(const int nb_blocks_to_compute, 
       epsilondev_xy_loc_1 = (duxdyl_plus_duydxl) * (0.5f);\n\
       epsilondev_xz_loc_1 = (duzdxl_plus_duxdzl) * (0.5f);\n\
       epsilondev_yz_loc_1 = (duzdyl_plus_duydzl) * (0.5f);\n\
-      if (NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) {\n\
-        epsilon_trace_over_3[tx] = templ;\n\
-      } else {\n\
+      if (NSPEC_CRUST_MANTLE_STRAIN_ONLY > 1) {\n\
         epsilon_trace_over_3[tx + (working_element) * (NGLL3)] = templ;\n\
       }\n\
     }\n\
@@ -1524,9 +1522,7 @@ __kernel  void crust_mantle_aniso_impl_kernel_forward(const int nb_blocks_to_com
       epsilondev_xy_loc_1 = (duxdyl_plus_duydxl) * (0.5f);\n\
       epsilondev_xz_loc_1 = (duzdxl_plus_duxdzl) * (0.5f);\n\
       epsilondev_yz_loc_1 = (duzdyl_plus_duydzl) * (0.5f);\n\
-      if (NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) {\n\
-        epsilon_trace_over_3[tx] = templ;\n\
-      } else {\n\
+      if (NSPEC_CRUST_MANTLE_STRAIN_ONLY > 1) {\n\
         epsilon_trace_over_3[tx + (working_element) * (NGLL3)] = templ;\n\
       }\n\
     }\n\

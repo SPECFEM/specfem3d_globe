@@ -785,8 +785,10 @@ void FC_FUNC_(transfer_strain_cm_from_device,
   gpuCopy_from_device_realw (&mp->d_epsilondev_yz_crust_mantle, epsilondev_yz, size);
 
   // strain
-  int size_strain_only = NGLL3 * mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY;
-  gpuCopy_from_device_realw (&mp->d_eps_trace_over_3_crust_mantle, eps_trace_over_3, size_strain_only);
+  if (mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY > 1){
+    int size_strain_only = NGLL3 * mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY;
+    gpuCopy_from_device_realw (&mp->d_eps_trace_over_3_crust_mantle, eps_trace_over_3, size_strain_only);
+  }
 
   GPU_ERROR_CHECKING ("after transfer_strain_cm_from_device");
 }
@@ -851,8 +853,10 @@ void FC_FUNC_(transfer_strain_ic_from_device,
   gpuCopy_from_device_realw (&mp->d_epsilondev_yz_inner_core, epsilondev_yz, size);
 
   // strain
-  int size_strain_only = NGLL3 * mp->NSPEC_INNER_CORE_STRAIN_ONLY;
-  gpuCopy_from_device_realw (&mp->d_eps_trace_over_3_inner_core, eps_trace_over_3, size_strain_only);
+  if (mp->NSPEC_INNER_CORE_STRAIN_ONLY > 1){
+    int size_strain_only = NGLL3 * mp->NSPEC_INNER_CORE_STRAIN_ONLY;
+    gpuCopy_from_device_realw (&mp->d_eps_trace_over_3_inner_core, eps_trace_over_3, size_strain_only);
+  }
 
   GPU_ERROR_CHECKING ("after transfer_strain_ic_from_device");
 }

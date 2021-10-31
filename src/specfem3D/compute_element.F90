@@ -1657,12 +1657,13 @@
       epsilondev_loc(INDEX_IJK,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl(INDEX_IJK)
     ENDDO_LOOP_IJK
 
-    if (ispec == 1) then
-      DO_LOOP_IJK
-        templ = ONE_THIRD * (duxdxl(INDEX_IJK) + duydyl(INDEX_IJK) + duzdzl(INDEX_IJK))
-        epsilon_trace_over_3(INDEX_IJK,1) = templ
-      ENDDO_LOOP_IJK
-    endif
+    ! not needed for NSPEC_STRAIN_ONLY == 1 case, epsilon_trace_over_3() is a dummy array
+    !if (ispec == 1) then
+    !  DO_LOOP_IJK
+    !    templ = ONE_THIRD * (duxdxl(INDEX_IJK) + duydyl(INDEX_IJK) + duzdzl(INDEX_IJK))
+    !    epsilon_trace_over_3(INDEX_IJK,1) = templ
+    !  ENDDO_LOOP_IJK
+    !endif
 
   else
 

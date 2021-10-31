@@ -241,11 +241,7 @@
           ! compute deviatoric strain
           if (COMPUTE_AND_STORE_STRAIN) then
             templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-            if (NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
-              if (ispec == 1) then
-                epsilon_trace_over_3(i,j,k,1) = templ
-              endif
-            else
+            if (NSPEC_CRUST_MANTLE_STRAIN_ONLY > 1) then
               epsilon_trace_over_3(i,j,k,ispec) = templ
             endif
             epsilondev_loc(i,j,k,1) = duxdxl - templ
