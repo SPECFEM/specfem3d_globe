@@ -19,7 +19,7 @@ in the
 ## Development
 
 [![Actions Status](https://github.com/geodynamics/specfem3d_globe/workflows/CI/badge.svg)](https://github.com/geodynamics/specfem3d_globe/actions)
-[![Travis Status](https://travis-ci.com/geodynamics/specfem3d_globe.svg?branch=devel)](https://travis-ci.com/geodynamics/specfem3d_globe)
+[![Travis Status](https://app.travis-ci.com/geodynamics/specfem3d_globe.svg?branch=devel)](https://app.travis-ci.com/geodynamics/specfem3d_globe)
 [![Azure Status](https://dev.azure.com/danielpeter22/SPECFEM3D_GLOBE/_apis/build/status/geodynamics.specfem3d_globe?branchName=devel)](https://dev.azure.com/danielpeter22/SPECFEM3D_GLOBE/_build/latest?definitionId=2&branchName=devel)
 [![codecov](https://codecov.io/gh/geodynamics/specfem3d_globe/branch/devel/graph/badge.svg)](https://codecov.io/gh/geodynamics/specfem3d_globe)
 [![Documentation Status](https://readthedocs.org/projects/specfem3d-globe/badge/?version=latest)](https://specfem3d-globe.readthedocs.io/en/latest/?badge=latest)
