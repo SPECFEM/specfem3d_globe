@@ -91,12 +91,16 @@ struct threadInfo{
 
 // --------------------------------------------------------------------------------
 
+// globals
 struct threadInfo ptDataAdj;
-
 pthread_t adj_io_thread;
 
+// prototypes
 // fortran function
 extern void FC_FUNC_(read_adjoint_sources_local,READ_ADJOINT_SOURCES_LOCAL)(char*, const int* , const int*);
+
+
+// --------------------------------------------------------------------------------
 
 // Thread that does actual read in adjoint sources. dummy argument is needed to avoid compiler warning.
 void *fread_adj_thread(void* dummy) {
@@ -118,6 +122,8 @@ void *fread_adj_thread(void* dummy) {
   return NULL;  // Never used, but remove warnings.
 }
 
+// --------------------------------------------------------------------------------
+
 // Waits until thread is finished with I/O
 void wait_adj_io_thread() {
 
@@ -128,7 +134,7 @@ void wait_adj_io_thread() {
   if (ptDataAdj.started ) {
     void* status;
     rc = pthread_join(adj_io_thread, &status);
-    if (rc ) {
+    if (rc) {
       printf("Error; return code from pthread_join() is %d\n", rc);
       exit_error("Error in wait_adj_io_thread: thread_join failed");
     }
@@ -139,6 +145,8 @@ void wait_adj_io_thread() {
     ptDataAdj.started = false;
   }
 }
+
+// --------------------------------------------------------------------------------
 
 // initializes adjoint thread
 void
