@@ -25,20 +25,25 @@
 !
 !=====================================================================
 
-subroutine read_adjoint_sources_ASDF(adj_source_name, adj_source, index_start, index_end)
 
-  use specfem_par, only: NDIM,CUSTOM_REAL, myrank, current_asdf_handle
+  subroutine read_adjoint_sources_ASDF(adj_source_name, adj_source, index_start, index_end)
+
+  use constants, only: NDIM,CUSTOM_REAL,MAX_STRING_LEN
+  use specfem_par, only: myrank, current_asdf_handle
 
   use iso_c_binding, only: C_NULL_CHAR
 
   implicit none
 
-  integer :: offset, nsamples
-  integer :: index_start, index_end
+  character(len=MAX_STRING_LEN), intent(in) :: adj_source_name
+
   real(kind=CUSTOM_REAL), dimension(*),intent(out) :: adj_source ! NSTEP block size
-  character(len=*) :: adj_source_name
-  !--- Error variable
-  integer ier
+
+  integer,intent(in) :: index_start, index_end
+
+  ! local parameters
+  integer :: offset, nsamples
+  integer :: ier
 
   ! Fortran/C index convension. Meaning Fortran starts at 1 and C starts at 0 so
   ! we need to subtract 1 for the C subroutine read_partial_waveform_f
@@ -61,11 +66,15 @@ subroutine read_adjoint_sources_ASDF(adj_source_name, adj_source, index_start, i
                   ' has wrong length, please check with your simulation duration')
   endif
 
-end subroutine read_adjoint_sources_ASDF
+  end subroutine read_adjoint_sources_ASDF
 
+
+!
 !------------------------------------------------------------------------------------------
+!
 
-subroutine check_adjoint_sources_ASDF(irec, nadj_sources_found)
+
+  subroutine check_adjoint_sources_ASDF(irec, nadj_sources_found)
 
   use specfem_par
 
@@ -127,4 +136,4 @@ subroutine check_adjoint_sources_ASDF(irec, nadj_sources_found)
 
   enddo
 
-end subroutine check_adjoint_sources_ASDF
+  end subroutine check_adjoint_sources_ASDF

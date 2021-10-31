@@ -1400,12 +1400,14 @@
         print *,'  failed number of local adjoint sources = ',nadj_rec_local,' steps = ',NTSTEP_BETWEEN_READ_ADJSRC
         call exit_MPI(myrank,'Error allocating adjoint source_adjoint')
       endif
+      source_adjoint(:,:,:) = 0.0_CUSTOM_REAL
 
       ! additional buffer for asynchronous file i/o
       if (IO_ASYNC_COPY .and. NSTEP_SUB_ADJ > 1) then
         ! allocates read buffer
         allocate(buffer_source_adjoint(NDIM,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC),stat=ier)
         if (ier /= 0 ) call exit_MPI(myrank,'Error allocating array buffer_source_adjoint')
+        buffer_source_adjoint(:,:,:) = 0.0_CUSTOM_REAL
 
         ! array size in bytes (note: the multiplication is split into two line to avoid integer-overflow)
         arraysize = NDIM *  CUSTOM_REAL
@@ -1422,6 +1424,7 @@
       allocate(iadjsrc(NSTEP_SUB_ADJ,2), &
                iadjsrc_len(NSTEP_SUB_ADJ),stat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'Error allocating adjoint indexing arrays')
+      iadjsrc(:,:) = 0; iadjsrc_len(:) = 0
 
       ! initializes iadjsrc, iadjsrc_len and iadj_vec
       call setup_sources_receivers_adjindx(NSTEP,NSTEP_SUB_ADJ, &
