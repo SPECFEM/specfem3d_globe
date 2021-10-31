@@ -1391,7 +1391,7 @@ end program smooth_sem_globe
                             nsearch_elements,use_kdtree_search, &
                             NSTEP_PERCENT_INFO)
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGLLCUBE,PI,myrank
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGLLCUBE,PI,myrank,USE_QUADRATURE_RULE_FOR_SMOOTHING
 
   use postprocess_par, only: NSPEC_CRUST_MANTLE
 
