@@ -39,6 +39,11 @@ sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.5:" DATA/Par
 # shortens output interval to avoid timeouts
 sed -i "s:^NTSTEP_BETWEEN_OUTPUT_INFO .*:NTSTEP_BETWEEN_OUTPUT_INFO    = 50:" DATA/Par_file
 
+# specific example setups
+if [ "${TESTDIR}" == "EXAMPLES/global_small" ]; then
+  sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.1:" DATA/Par_file
+fi
+
 # debug
 if [ "${DEBUG}" == "true" ]; then
   # limit for debugging
@@ -60,13 +65,13 @@ echo
 # seismogram comparison
 if [ "${DEBUG}" == "true" ]; then
   # no comparisons
-  continue
+  :     # do nothing
 else
   my_test
 fi
 
 # cleanup
-rm -rf OUTPUT_FILES/ DATABASES_MPI/
+rm -rf OUTPUT_FILES* DATABASES_MPI*
 
 echo
 echo "all good"

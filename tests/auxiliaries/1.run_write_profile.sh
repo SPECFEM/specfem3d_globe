@@ -87,7 +87,13 @@ if [[ $? -ne 0 ]]; then
 fi
 
 # test models
-tests=( s362ani s29ea_crust1.0 s20rts s40rts_crust1.0  sgloberani_aniso ishii 1d_sohl vpremoon )
+tests=( 1d_1066a 1d_ak135f_no_mud 1d_ref 1d_jp3d 1d_sea99 1d_ccrem \
+        1d_isotropic_prem_onecrust transversely_isotropic_prem_plus_3D_crust_2.0 \
+        s362ani s362ani_3DQ \
+        s362iso_crustmaps s362wmani_EPcrust s29ea_EUcrust s29ea_crust1.0 \
+        s20rts s40rts_crust1.0 sgloberani_aniso full_sh \
+        ishii \
+        1d_sohl 1d_case65TAY_3D_crust vpremoon )
 
 # single profile tests
 for model in ${tests[@]};
@@ -100,8 +106,10 @@ do
   sed -i "s:^MODEL .*:MODEL   = $model:" DATA/Par_file
 
   # turns off OCEANS for Mars & Moon models
-  if [ "$model" == "1d_sohl" ] || [ "$model" == "vpremoon" ]; then
+  if [ "$model" == "1d_sohl" ] || [ "$model" == "1d_case65TAY_3D_crust" ] || [ "$model" == "vpremoon" ]; then
     sed -i "s:^OCEANS .*:OCEANS   = .false.:" DATA/Par_file
+  else
+    sed -i "s:^OCEANS .*:OCEANS   = .true.:" DATA/Par_file
   fi
 
   # cleans output

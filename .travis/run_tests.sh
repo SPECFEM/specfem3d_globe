@@ -159,23 +159,6 @@ echo
 # note: log becomes too long, trying to fold each test output
 cd $WORKDIR
 
-echo 'Coverage...' && echo -en 'travis_fold:start:coverage.point-force\\r'
-if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
-  ##
-  ## testing point_force
-  ##
-  echo "##################################################################"
-  echo "cd EXAMPLES/point_force/"
-  echo
-  cd EXAMPLES/point_force/
-  sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
-  sed -i "s:^NTSTEP_BETWEEN_OUTPUT_INFO .*:NTSTEP_BETWEEN_OUTPUT_INFO    = 50:" DATA/Par_file
-  ./run_this_example.sh
-  if [[ $? -ne 0 ]]; then exit 1; fi
-  cd $WORKDIR
-fi
-echo -en 'travis_fold:end:coverage.point-force\\r'
-
 echo 'Coverage...' && echo -en 'travis_fold:start:coverage.regular-kernel\\r'
 if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
@@ -192,91 +175,6 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   cd $WORKDIR
 fi
 echo -en 'travis_fold:end:coverage.regular-kernel\\r'
-
-echo 'Coverage...' && echo -en 'travis_fold:start:coverage.global-small\\r'
-if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "2" ]; then
-  ##
-  ## testing global_small
-  ##
-  echo "##################################################################"
-  echo "cd EXAMPLES/global_small/"
-  echo
-  cd EXAMPLES/global_small/
-  sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
-  sed -i "s:^NTSTEP_BETWEEN_OUTPUT_INFO .*:NTSTEP_BETWEEN_OUTPUT_INFO    = 50:" DATA/Par_file
-  ./run_this_example.sh
-  if [[ $? -ne 0 ]]; then exit 1; fi
-  cd $WORKDIR
-fi
-echo -en 'travis_fold:end:coverage.global-small\\r'
-
-echo 'Coverage...' && echo -en 'travis_fold:start:coverage.regional-sgloberani\\r'
-if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "2" ]; then
-  ##
-  ## testing regional_sgloberani
-  ##
-  echo "##################################################################"
-  echo "cd EXAMPLES/regional_sgloberani/"
-  echo
-  cd EXAMPLES/regional_sgloberani/
-  sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
-  sed -i "s:^NTSTEP_BETWEEN_OUTPUT_INFO .*:NTSTEP_BETWEEN_OUTPUT_INFO    = 50:" DATA/Par_file
-  ./run_this_example.sh
-  if [[ $? -ne 0 ]]; then exit 1; fi
-  cd $WORKDIR
-fi
-echo -en 'travis_fold:end:coverage.regional-sgloberani\\r'
-
-echo 'Coverage...' && echo -en 'travis_fold:start:coverage.regional-s40rts\\r'
-if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "2" ]; then
-  ##
-  ## testing regional s40rts
-  ##
-  echo "##################################################################"
-  echo "EXAMPLES/regional_s40rts/"
-  echo
-  cd EXAMPLES/regional_s40rts/
-  sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
-  sed -i "s:^NTSTEP_BETWEEN_OUTPUT_INFO .*:NTSTEP_BETWEEN_OUTPUT_INFO    = 50:" DATA/Par_file
-  ./run_this_example.sh
-  if [[ $? -ne 0 ]]; then exit 1; fi
-  cd $WORKDIR
-fi
-echo -en 'travis_fold:end:coverage.regional-s40rts\\r'
-
-echo 'Coverage...' && echo -en 'travis_fold:start:coverage.mars-regional\\r'
-if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
-  ##
-  ## testing mars regional
-  ##
-  echo "##################################################################"
-  echo "EXAMPLES/mars_regional/"
-  echo
-  cd EXAMPLES/mars_regional/
-  sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
-  sed -i "s:^NTSTEP_BETWEEN_OUTPUT_INFO .*:NTSTEP_BETWEEN_OUTPUT_INFO    = 50:" DATA/Par_file
-  ./run_this_example.sh
-  if [[ $? -ne 0 ]]; then exit 1; fi
-  cd $WORKDIR
-fi
-echo -en 'travis_fold:end:coverage.mars-regional\\r'
-
-echo 'Coverage...' && echo -en 'travis_fold:start:coverage.moon-global\\r'
-if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
-  ##
-  ## testing moon global
-  ##
-  echo "##################################################################"
-  echo "EXAMPLES/moon_global/"
-  echo
-  cd EXAMPLES/moon_global/
-  sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
-  sed -i "s:^NTSTEP_BETWEEN_OUTPUT_INFO .*:NTSTEP_BETWEEN_OUTPUT_INFO    = 50:" DATA/Par_file
-  ./run_this_example.sh
-  if [[ $? -ne 0 ]]; then exit 1; fi
-  cd $WORKDIR
-fi
-echo -en 'travis_fold:end:coverage.moon-global\\r'
 
 echo 'Coverage...' && echo -en 'travis_fold:start:coverage.regional-LDDRK\\r'
 if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
@@ -312,6 +210,116 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   cd $WORKDIR
 fi
 echo -en 'travis_fold:end:coverage.regional-noise\\r'
+
+## second testcov run built with vectorization
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.global-small\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "2" ]; then
+  ##
+  ## testing global_small
+  ##
+  echo "##################################################################"
+  echo "cd EXAMPLES/global_small/"
+  echo
+  cd EXAMPLES/global_small/
+  sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
+  sed -i "s:^NTSTEP_BETWEEN_OUTPUT_INFO .*:NTSTEP_BETWEEN_OUTPUT_INFO    = 50:" DATA/Par_file
+  ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
+  cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.global-small\\r'
+
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.regional-s40rts\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "2" ]; then
+  ##
+  ## testing regional s40rts
+  ##
+  echo "##################################################################"
+  echo "EXAMPLES/regional_s40rts/"
+  echo
+  cd EXAMPLES/regional_s40rts/
+  sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
+  sed -i "s:^NTSTEP_BETWEEN_OUTPUT_INFO .*:NTSTEP_BETWEEN_OUTPUT_INFO    = 50:" DATA/Par_file
+  ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
+  cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.regional-s40rts\\r'
+
+
+#################################################################
+##
+## tested by github actions
+##
+#################################################################
+
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.regional-sgloberani\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "0" ]; then
+  ##
+  ## testing regional_sgloberani
+  ##
+  echo "##################################################################"
+  echo "cd EXAMPLES/regional_sgloberani/"
+  echo
+  cd EXAMPLES/regional_sgloberani/
+  sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
+  sed -i "s:^NTSTEP_BETWEEN_OUTPUT_INFO .*:NTSTEP_BETWEEN_OUTPUT_INFO    = 50:" DATA/Par_file
+  ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
+  cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.regional-sgloberani\\r'
+
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.point-force\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "0" ]; then
+  ##
+  ## testing point_force
+  ##
+  echo "##################################################################"
+  echo "cd EXAMPLES/point_force/"
+  echo
+  cd EXAMPLES/point_force/
+  sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
+  sed -i "s:^NTSTEP_BETWEEN_OUTPUT_INFO .*:NTSTEP_BETWEEN_OUTPUT_INFO    = 50:" DATA/Par_file
+  ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
+  cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.point-force\\r'
+
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.moon-global\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "0" ]; then
+  ##
+  ## testing moon global
+  ##
+  echo "##################################################################"
+  echo "EXAMPLES/moon_global/"
+  echo
+  cd EXAMPLES/moon_global/
+  sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
+  sed -i "s:^NTSTEP_BETWEEN_OUTPUT_INFO .*:NTSTEP_BETWEEN_OUTPUT_INFO    = 50:" DATA/Par_file
+  ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
+  cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.moon-global\\r'
+
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.mars-regional\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "0" ]; then
+  ##
+  ## testing mars regional
+  ##
+  echo "##################################################################"
+  echo "EXAMPLES/mars_regional/"
+  echo
+  cd EXAMPLES/mars_regional/
+  sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
+  sed -i "s:^NTSTEP_BETWEEN_OUTPUT_INFO .*:NTSTEP_BETWEEN_OUTPUT_INFO    = 50:" DATA/Par_file
+  ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
+  cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.mars-regional\\r'
 
 
 # done
