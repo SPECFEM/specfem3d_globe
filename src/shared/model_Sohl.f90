@@ -443,7 +443,7 @@
 
   subroutine Sohl_density(x,rho)
 
-  use constants, only: R_MARS,REFERENCE_MODEL_SOHL,REFERENCE_MODEL_SOHL_B
+  use constants, only: R_MARS,REFERENCE_MODEL_SOHL,REFERENCE_MODEL_SOHL_B,REFERENCE_MODEL_CASE65TAY
 
   use shared_parameters, only: RHOAV,REFERENCE_1D_MODEL,ONE_CRUST
 
@@ -459,6 +459,9 @@
   double precision :: SOHL_RMOHO,SOHL_R80,SOHL_R220,SOHL_R400,SOHL_R600,SOHL_R670, &
                       SOHL_R771,SOHL_RTOPDDOUBLEPRIME,SOHL_RCMB
 
+  ! note: this routine will also be called in case ellipticity is set and the reference model is REFERENCE_MODEL_CASE65TAY.
+  !       to compute ellipicity, we take the density profile of the Sohl model A reference model in that case.
+
   ! compute real physical radius in meters
   r = x * R_MARS
 
@@ -468,7 +471,7 @@
 
   ! calculates density according to radius
   select case(REFERENCE_1D_MODEL)
-  case (REFERENCE_MODEL_SOHL)
+  case (REFERENCE_MODEL_SOHL,REFERENCE_MODEL_CASE65TAY)
     ! Model A
     if (r <= SOHL_RICB) then
       rho = 7.2942d0-13.4654d-3*x-1.6906d0*x*x-0.4225d0*x*x*x
@@ -509,7 +512,7 @@
     stop 'Error Sohl_density() routine: material properties for model B not implemented yet'
 
   case default
-    stop 'Invalid reference model Sohl in Sohl_density()'
+    stop 'Invalid 1D reference model in routine Sohl_density()'
   end select
 
   ! non-dimensionalize
@@ -526,7 +529,7 @@
 
 ! determines radii for Model A or Model B
 
-  use constants, only: REFERENCE_MODEL_SOHL,REFERENCE_MODEL_SOHL_B
+  use constants, only: REFERENCE_MODEL_SOHL,REFERENCE_MODEL_SOHL_B,REFERENCE_MODEL_CASE65TAY
 
   use shared_parameters, only: REFERENCE_1D_MODEL
 
@@ -537,8 +540,11 @@
   double precision,intent(out) :: SOHL_RMOHO,SOHL_R80,SOHL_R220,SOHL_R400,SOHL_R600,SOHL_R670, &
                                   SOHL_R771,SOHL_RTOPDDOUBLEPRIME,SOHL_RCMB
 
+  ! note: this routine will also be called in case ellipticity is set and the reference model is REFERENCE_MODEL_CASE65TAY.
+  !       to compute ellipicity, we take the density profile of the Sohl model A reference model in that case.
+
   select case(REFERENCE_1D_MODEL)
-  case (REFERENCE_MODEL_SOHL)
+  case (REFERENCE_MODEL_SOHL,REFERENCE_MODEL_CASE65TAY)
     ! Model A
     SOHL_RMOHO = SOHL_A_RMOHO
     SOHL_R80 = SOHL_A_R80
@@ -563,7 +569,7 @@
     SOHL_RCMB = SOHL_B_RCMB
 
   case default
-    stop 'Invalid 1D reference model for Sohl'
+    stop 'Invalid 1D reference model in routine get_model_Sohl_radii()'
   end select
 
   end subroutine get_model_Sohl_radii
