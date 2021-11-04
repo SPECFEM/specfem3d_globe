@@ -14,14 +14,23 @@ if [[ $? -ne 0 ]]; then exit 1; fi
 
 # fortran/openMPI compiler
 sudo apt-get install -yq --no-install-recommends gfortran g++ openmpi-bin libopenmpi-dev
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
+echo
 
+# python3 pip upgrade might complain: "ERROR: launchpadlib 1.10.13 requires testresources"
+sudo apt-get install -yq --no-install-recommends python3-testresources
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi
 echo
 
 # python script needs numpy
 #sudo apt-get install -qq python-numpy # not working, likely installed on older python version
+# if problems with setuptools, try version 58.3.0 which seems to work
 pip install --user --upgrade pip setuptools wheel
+#pip install --user --upgrade pip wheel
+#pip install --user --upgrade --force-reinstall setuptools==58.3.0
+# numpy
 pip install --user --only-binary=numpy numpy
 
 # checks exit code
@@ -37,6 +46,8 @@ pip --version
 echo
 echo "numpy version : "
 python -c "import numpy; print(numpy.__version__)"
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 echo
 
 # compiler infos

@@ -36,6 +36,8 @@ pip --version
 echo
 echo "numpy version : "
 python -c "import numpy; print(numpy.__version__)"
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 echo
 
 # CPU architecture
