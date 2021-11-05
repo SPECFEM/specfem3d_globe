@@ -107,7 +107,7 @@ else
   fi
 
   # regional noise
-  if [ "$TESTID" == "21" ]; then
+  if [ "$TESTDIR" == "12" ]; then
     sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.1:" DATA/Par_file
     sed -i "s:2999:199:g" run_this_example.kernel.sh
     # uses kernel script by default
@@ -117,6 +117,12 @@ else
   # coverage run
   if [ "$TESTCOV" == "1" ]; then
     sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
+    # noise example
+    if [ "$TESTDIR" == "12" ]; then
+      # will have a number of time steps = 9
+      # add a line after generating S_square file to delete lines > 9 (for running dummy simulation)
+      sed -i "/run_generate_S_squared/a sed -i '10,$ d' NOISE_TOMOGRAPHY/S_squared" run_this_example.sh
+    fi
   fi
 
   # default script
@@ -193,42 +199,7 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
 fi
 echo -en 'travis_fold:end:coverage.regional-LDDRK\\r'
 
-echo 'Coverage...' && echo -en 'travis_fold:start:coverage.regional-noise\\r'
-if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
-  ##
-  ## testing regional noise
-  ##
-  echo "##################################################################"
-  echo "EXAMPLES/regional_Greece_noise_small/"
-  echo
-  cd EXAMPLES/regional_Greece_noise_small/
-  sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.1:" DATA/Par_file
-  sed -i "s:^NTSTEP_BETWEEN_OUTPUT_INFO .*:NTSTEP_BETWEEN_OUTPUT_INFO    = 50:" DATA/Par_file
-  sed -i "s:2999:199:g" run_this_example.kernel.sh
-  ./run_this_example.kernel.sh
-  if [[ $? -ne 0 ]]; then exit 1; fi
-  cd $WORKDIR
-fi
-echo -en 'travis_fold:end:coverage.regional-noise\\r'
-
 ## second testcov run built with vectorization
-echo 'Coverage...' && echo -en 'travis_fold:start:coverage.global-small\\r'
-if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "2" ]; then
-  ##
-  ## testing global_small
-  ##
-  echo "##################################################################"
-  echo "cd EXAMPLES/global_small/"
-  echo
-  cd EXAMPLES/global_small/
-  sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
-  sed -i "s:^NTSTEP_BETWEEN_OUTPUT_INFO .*:NTSTEP_BETWEEN_OUTPUT_INFO    = 50:" DATA/Par_file
-  ./run_this_example.sh
-  if [[ $? -ne 0 ]]; then exit 1; fi
-  cd $WORKDIR
-fi
-echo -en 'travis_fold:end:coverage.global-small\\r'
-
 echo 'Coverage...' && echo -en 'travis_fold:start:coverage.regional-s40rts\\r'
 if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "2" ]; then
   ##
@@ -250,28 +221,16 @@ echo -en 'travis_fold:end:coverage.regional-s40rts\\r'
 #################################################################
 ##
 ## tested by github actions
+## - EXAMPLES/regional_Greece_small
+## - EXAMPLES/regional_sgloberani
+## - EXAMPLES/point_force
+## - EXAMPLES/moon_global
+## - EXAMPLES/mars_regional
 ##
 #################################################################
 
-echo 'Coverage...' && echo -en 'travis_fold:start:coverage.regional-sgloberani\\r'
-if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "0" ]; then
-  ##
-  ## testing regional_sgloberani
-  ##
-  echo "##################################################################"
-  echo "cd EXAMPLES/regional_sgloberani/"
-  echo
-  cd EXAMPLES/regional_sgloberani/
-  sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
-  sed -i "s:^NTSTEP_BETWEEN_OUTPUT_INFO .*:NTSTEP_BETWEEN_OUTPUT_INFO    = 50:" DATA/Par_file
-  ./run_this_example.sh
-  if [[ $? -ne 0 ]]; then exit 1; fi
-  cd $WORKDIR
-fi
-echo -en 'travis_fold:end:coverage.regional-sgloberani\\r'
-
 echo 'Coverage...' && echo -en 'travis_fold:start:coverage.point-force\\r'
-if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "0" ]; then
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## testing point_force
   ##
@@ -288,7 +247,7 @@ fi
 echo -en 'travis_fold:end:coverage.point-force\\r'
 
 echo 'Coverage...' && echo -en 'travis_fold:start:coverage.moon-global\\r'
-if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "0" ]; then
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "2" ]; then
   ##
   ## testing moon global
   ##
@@ -305,7 +264,7 @@ fi
 echo -en 'travis_fold:end:coverage.moon-global\\r'
 
 echo 'Coverage...' && echo -en 'travis_fold:start:coverage.mars-regional\\r'
-if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "0" ]; then
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "2" ]; then
   ##
   ## testing mars regional
   ##

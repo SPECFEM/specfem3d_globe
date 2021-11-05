@@ -33,11 +33,17 @@ env:
     #   TESTCOV      - determines whether or not (0/1) code coverage flags are used
     #   CUDA         - flag for compilation with CUDA
 
-    # code coverage: using coverage flags
-    - TESTID=0 TESTDIR=1 TESTCOV=1 TESTFLAGS="" CUDA=false
+    # code coverage: using coverage flags (single test for global model)
+    - TESTID=0 TESTDIR=2 TESTCOV=1 TESTFLAGS="" CUDA=false
+
+    # code coverage: using coverage flags (single test for regional model sgloberani)
+    - TESTID=0 TESTDIR=5 TESTCOV=1 TESTFLAGS="" CUDA=false
+
+    # code coverage: using coverage flags (single test for regional noise)
+    - TESTID=0 TESTDIR=12 TESTCOV=1 TESTFLAGS="" CUDA=false
 
     # code coverage: using coverage flags
-    - TESTID=1 TESTDIR=2 TESTCOV=1 TESTFLAGS="" CUDA=false
+    - TESTID=1 TESTDIR=1 TESTCOV=1 TESTFLAGS="" CUDA=false
 
     # code coverage: vectorization & openmp, using coverage flags
     - TESTID=2 TESTDIR=1 TESTCOV=1 TESTFLAGS="--enable-vectorization" CUDA=false
