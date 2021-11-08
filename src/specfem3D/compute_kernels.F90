@@ -86,6 +86,7 @@
 
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: b_epsilondev_loc_matrix
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: b_eps_trace_over_3_loc_matrix
+  real(kind=CUSTOM_REAL) :: deltat_kl
 
   integer :: ispec,iglob
 #ifdef FORCE_VECTORIZATION
@@ -93,6 +94,12 @@
 #else
   integer :: i,j,k
 #endif
+
+  if (UNDO_ATTENUATION) then
+    deltat_kl = deltat * NTSTEP_BETWEEN_COMPUTE_KERNELS
+  else
+    deltat_kl = deltat
+  endif
 
   if (.not. GPU_MODE) then
 
@@ -164,7 +171,7 @@
           !                         numerically, the time derivative by a finite-difference scheme should
           !                         behave better for smoother wavefields, thus containing less numerical artifacts.
           rho_kl_crust_mantle(INDEX_IJK,ispec) =  rho_kl_crust_mantle(INDEX_IJK,ispec) &
-             + deltat * (accel_crust_mantle(1,iglob) * b_displ_crust_mantle(1,iglob) &
+             + deltat_kl * (accel_crust_mantle(1,iglob) * b_displ_crust_mantle(1,iglob) &
                        + accel_crust_mantle(2,iglob) * b_displ_crust_mantle(2,iglob) &
                        + accel_crust_mantle(3,iglob) * b_displ_crust_mantle(3,iglob) )
 
@@ -181,7 +188,7 @@
           call compute_strain_product(prod,eps_trace_over_3_crust_mantle(INDEX_IJK,ispec),epsilondev_loc, &
                                       b_eps_trace_over_3_loc_matrix(INDEX_IJK),b_epsilondev_loc)
 
-          cijkl_kl_crust_mantle(:,INDEX_IJK,ispec) = cijkl_kl_crust_mantle(:,INDEX_IJK,ispec) + deltat * prod(:)
+          cijkl_kl_crust_mantle(:,INDEX_IJK,ispec) = cijkl_kl_crust_mantle(:,INDEX_IJK,ispec) + deltat_kl * prod(:)
 
         ENDDO_LOOP_IJK
       enddo
@@ -244,7 +251,7 @@
           !                         numerically, the time derivative by a finite-difference scheme should
           !                         behave better for smoother wavefields, thus containing less numerical artifacts.
           rho_kl_crust_mantle(INDEX_IJK,ispec) =  rho_kl_crust_mantle(INDEX_IJK,ispec) &
-             + deltat * (accel_crust_mantle(1,iglob) * b_displ_crust_mantle(1,iglob) &
+             + deltat_kl * (accel_crust_mantle(1,iglob) * b_displ_crust_mantle(1,iglob) &
                        + accel_crust_mantle(2,iglob) * b_displ_crust_mantle(2,iglob) &
                        + accel_crust_mantle(3,iglob) * b_displ_crust_mantle(3,iglob) )
 
@@ -261,7 +268,7 @@
           ! kernel for shear modulus, see e.g. Tromp et al. (2005), equation (17)
           ! note: multiplication with 2*mu(x) will be done after the time loop
           beta_kl_crust_mantle(INDEX_IJK,ispec) =  beta_kl_crust_mantle(INDEX_IJK,ispec) &
-             + deltat * &
+             + deltat_kl * &
              (epsilondev_loc(1)*b_epsilondev_loc(1) + epsilondev_loc(2)*b_epsilondev_loc(2) &
               + (epsilondev_loc(1)+epsilondev_loc(2)) * (b_epsilondev_loc(1)+b_epsilondev_loc(2)) &
               + 2 * (epsilondev_loc(3)*b_epsilondev_loc(3) + epsilondev_loc(4)*b_epsilondev_loc(4) + &
@@ -270,7 +277,7 @@
           ! kernel for bulk modulus, see e.g. Tromp et al. (2005), equation (18)
           ! note: multiplication with kappa(x) will be done after the time loop
           alpha_kl_crust_mantle(INDEX_IJK,ispec) = alpha_kl_crust_mantle(INDEX_IJK,ispec) &
-             + deltat * (9 * eps_trace_over_3_crust_mantle(INDEX_IJK,ispec) &
+             + deltat_kl * (9 * eps_trace_over_3_crust_mantle(INDEX_IJK,ispec) &
                            * b_eps_trace_over_3_loc_matrix(INDEX_IJK))
 
         ENDDO_LOOP_IJK
@@ -286,7 +293,7 @@
     ! updates kernel contribution on GPU
 
     ! computes contribution to density and isotropic/anisotropic kernels
-    call compute_kernels_cm_gpu(Mesh_pointer,deltat)
+    call compute_kernels_cm_gpu(Mesh_pointer,deltat_kl)
 
   endif
 
@@ -310,7 +317,7 @@
 
   use constants_solver
   use specfem_par, only: deltat,hprime_xx,hprime_yy,hprime_zz
-  use specfem_par, only: GPU_MODE,Mesh_pointer
+  use specfem_par, only: GPU_MODE,Mesh_pointer,UNDO_ATTENUATION
 
   use specfem_par_outercore
 
@@ -326,6 +333,8 @@
   real(kind=CUSTOM_REAL) :: div_displ,b_div_displ
   real(kind=CUSTOM_REAL), dimension(NDIM) :: gradxyz
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: dummy_loc,b_dummy_loc
+  real(kind=CUSTOM_REAL) :: deltat_kl
+
   integer :: ispec,iglob
   integer :: i,j,k,l
 #ifdef FORCE_VECTORIZATION
@@ -334,6 +343,12 @@
 
   logical,dimension(:),allocatable :: mask_ibool
   integer :: ier
+
+  if (UNDO_ATTENUATION) then
+    deltat_kl = deltat * NTSTEP_BETWEEN_COMPUTE_KERNELS
+  else
+    deltat_kl = deltat
+  endif
 
   ! outer_core -- compute the actual displacement and acceleration (NDIM,NGLOBMAX_OUTER_CORE)
 
@@ -505,14 +520,14 @@
         ! density kernel
         ! note: we replace dot_product() with an unrolled expression, otherwise most compilers
         !       will try to vectorize this rather than the outer loop, resulting in a much slower code
-        rho_kl_outer_core(INDEX_IJK,ispec) = rho_kl_outer_core(INDEX_IJK,ispec) + deltat * (gradxyz(1) + gradxyz(2) + gradxyz(3))
+        rho_kl_outer_core(INDEX_IJK,ispec) = rho_kl_outer_core(INDEX_IJK,ispec) + deltat_kl * (gradxyz(1) + gradxyz(2) + gradxyz(3))
 
         ! bulk modulus kernel
         kappal = rhostore_outer_core(INDEX_IJK,ispec)/kappavstore_outer_core(INDEX_IJK,ispec)   ! factor rho/kappa
         div_displ =  kappal * accel_outer_core(iglob)
         b_div_displ =  kappal * b_accel_outer_core(iglob)
 
-        alpha_kl_outer_core(INDEX_IJK,ispec) = alpha_kl_outer_core(INDEX_IJK,ispec) + deltat * div_displ * b_div_displ
+        alpha_kl_outer_core(INDEX_IJK,ispec) = alpha_kl_outer_core(INDEX_IJK,ispec) + deltat_kl * div_displ * b_div_displ
 
       ENDDO_LOOP_IJK
 
@@ -640,7 +655,7 @@
                                 + xizl*tempz1l + etazl*tempz2l + gammazl*tempz3l )
 
               beta_kl_outer_core(i,j,k,ispec) =  beta_kl_outer_core(i,j,k,ispec) &
-                 + deltat * (epsilondev_loc(1)*b_epsilondev_loc(1) + epsilondev_loc(2)*b_epsilondev_loc(2) &
+                 + deltat_kl * (epsilondev_loc(1)*b_epsilondev_loc(1) + epsilondev_loc(2)*b_epsilondev_loc(2) &
                  + (epsilondev_loc(1)+epsilondev_loc(2)) * (b_epsilondev_loc(1)+b_epsilondev_loc(2)) &
                  + 2 * (epsilondev_loc(3)*b_epsilondev_loc(3) + epsilondev_loc(4)*b_epsilondev_loc(4) + &
                   epsilondev_loc(5)*b_epsilondev_loc(5)) )
@@ -657,7 +672,7 @@
     if (deviatoric_outercore) call exit_mpi(myrank,'deviatoric kernel on GPU not supported yet')
 
     ! computes contribution to density and bulk modulus kernel
-    call compute_kernels_oc_gpu(Mesh_pointer,deltat)
+    call compute_kernels_oc_gpu(Mesh_pointer,deltat_kl)
 
   endif
 
@@ -684,6 +699,7 @@
 
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: b_epsilondev_loc_matrix
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: b_eps_trace_over_3_loc_matrix
+  real(kind=CUSTOM_REAL) :: deltat_kl
 
   integer :: ispec,iglob
 #ifdef FORCE_VECTORIZATION
@@ -691,6 +707,12 @@
 #else
   integer :: i,j,k
 #endif
+
+  if (UNDO_ATTENUATION) then
+    deltat_kl = deltat * NTSTEP_BETWEEN_COMPUTE_KERNELS
+  else
+    deltat_kl = deltat
+  endif
 
   ! safety check
   if (.not. SAVE_KERNELS_IC) return
@@ -746,9 +768,9 @@
         iglob = ibool_inner_core(INDEX_IJK,ispec)
 
         rho_kl_inner_core(INDEX_IJK,ispec) =  rho_kl_inner_core(INDEX_IJK,ispec) &
-           + deltat * (accel_inner_core(1,iglob) * b_displ_inner_core(1,iglob) + &
-                       accel_inner_core(2,iglob) * b_displ_inner_core(2,iglob) + &
-                       accel_inner_core(3,iglob) * b_displ_inner_core(3,iglob) )
+           + deltat_kl * (accel_inner_core(1,iglob) * b_displ_inner_core(1,iglob) + &
+                          accel_inner_core(2,iglob) * b_displ_inner_core(2,iglob) + &
+                          accel_inner_core(3,iglob) * b_displ_inner_core(3,iglob) )
 
         epsilondev_loc(1) = epsilondev_xx_inner_core(INDEX_IJK,ispec)
         epsilondev_loc(2) = epsilondev_yy_inner_core(INDEX_IJK,ispec)
@@ -759,14 +781,14 @@
         b_epsilondev_loc(:) = b_epsilondev_loc_matrix(:,INDEX_IJK)
 
         beta_kl_inner_core(INDEX_IJK,ispec) =  beta_kl_inner_core(INDEX_IJK,ispec) &
-           + deltat * (epsilondev_loc(1)*b_epsilondev_loc(1) + epsilondev_loc(2)*b_epsilondev_loc(2) &
-                    + (epsilondev_loc(1)+epsilondev_loc(2)) * (b_epsilondev_loc(1)+b_epsilondev_loc(2)) &
-                    + 2 * (epsilondev_loc(3)*b_epsilondev_loc(3) + &
-                           epsilondev_loc(4)*b_epsilondev_loc(4) + &
-                           epsilondev_loc(5)*b_epsilondev_loc(5)) )
+           + deltat_kl * (epsilondev_loc(1)*b_epsilondev_loc(1) + epsilondev_loc(2)*b_epsilondev_loc(2) &
+                       + (epsilondev_loc(1)+epsilondev_loc(2)) * (b_epsilondev_loc(1)+b_epsilondev_loc(2)) &
+                       + 2 * (epsilondev_loc(3)*b_epsilondev_loc(3) + &
+                              epsilondev_loc(4)*b_epsilondev_loc(4) + &
+                              epsilondev_loc(5)*b_epsilondev_loc(5)) )
 
         alpha_kl_inner_core(INDEX_IJK,ispec) = alpha_kl_inner_core(INDEX_IJK,ispec) &
-           + deltat * (9 * eps_trace_over_3_inner_core(INDEX_IJK,ispec) * &
+           + deltat_kl * (9 * eps_trace_over_3_inner_core(INDEX_IJK,ispec) * &
                            b_eps_trace_over_3_loc_matrix(INDEX_IJK))
 
       ENDDO_LOOP_IJK
@@ -779,7 +801,7 @@
     ! updates kernel contribution on GPU
 
     ! computes contribution to density and bulk and shear modulus kernel
-    call compute_kernels_ic_gpu(Mesh_pointer,deltat)
+    call compute_kernels_ic_gpu(Mesh_pointer,deltat_kl)
 
   endif
 
@@ -856,7 +878,7 @@
   use constants_solver
   use constants, only: USE_SOURCE_RECEIVER_Hessian
   use specfem_par, only: deltat
-  use specfem_par, only: GPU_MODE,Mesh_pointer
+  use specfem_par, only: GPU_MODE,Mesh_pointer,UNDO_ATTENUATION
   use specfem_par_crustmantle
 
   implicit none
@@ -866,6 +888,7 @@
   real(kind=CUSTOM_REAL) :: hess_rho, hess_kappa, hess_mu
 
   real(kind=CUSTOM_REAL), parameter :: FOUR_NINTH = (4.0/9.0)
+  real(kind=CUSTOM_REAL) :: deltat_kl
 
   ! local parameters
   integer :: ispec,iglob
@@ -873,6 +896,12 @@
   integer :: ijk
 #endif
   integer :: i,j,k
+
+  if (UNDO_ATTENUATION) then
+    deltat_kl = deltat * NTSTEP_BETWEEN_COMPUTE_KERNELS
+  else
+    deltat_kl = deltat
+  endif
 
   if (.not. GPU_MODE) then
     ! on CPU
@@ -898,7 +927,7 @@
         ! approximates Hessian
         ! term with adjoint acceleration and backward/reconstructed acceleration
         hess_kl_crust_mantle(INDEX_IJK,ispec) =  hess_kl_crust_mantle(INDEX_IJK,ispec) &
-           + deltat * (accel_crust_mantle(1,iglob) * b_accel_crust_mantle(1,iglob) &
+           + deltat_kl * (accel_crust_mantle(1,iglob) * b_accel_crust_mantle(1,iglob) &
            + accel_crust_mantle(2,iglob) * b_accel_crust_mantle(2,iglob) &
            + accel_crust_mantle(3,iglob) * b_accel_crust_mantle(3,iglob) )
 
@@ -948,9 +977,9 @@
                      + (-vgrad(1, 1)      - vgrad(2, 2)       + 2.0*vgrad(3, 3)  ) * &
                        (-b_vgrad(1, 1)    - b_vgrad(2, 2)     + 2.0*b_vgrad(3, 3))) * FOUR_NINTH
 
-            hess_rho_kl_crust_mantle(i, j, k, ispec) = hess_rho_kl_crust_mantle(i, j, k, ispec) + deltat * hess_rho
-            hess_kappa_kl_crust_mantle(i, j, k, ispec) = hess_kappa_kl_crust_mantle(i, j, k, ispec) + deltat * hess_kappa
-            hess_mu_kl_crust_mantle(i, j, k, ispec) = hess_mu_kl_crust_mantle(i, j, k, ispec) + deltat * hess_mu
+            hess_rho_kl_crust_mantle(i, j, k, ispec) = hess_rho_kl_crust_mantle(i, j, k, ispec) + deltat_kl * hess_rho
+            hess_kappa_kl_crust_mantle(i, j, k, ispec) = hess_kappa_kl_crust_mantle(i, j, k, ispec) + deltat_kl * hess_kappa
+            hess_mu_kl_crust_mantle(i, j, k, ispec) = hess_mu_kl_crust_mantle(i, j, k, ispec) + deltat_kl * hess_mu
 
           enddo
         enddo
@@ -961,7 +990,7 @@
     ! updates kernel contribution on GPU
 
     ! computes contribution to density and bulk modulus kernel
-    call compute_kernels_hess_gpu(Mesh_pointer,deltat,USE_SOURCE_RECEIVER_Hessian)
+    call compute_kernels_hess_gpu(Mesh_pointer,deltat_kl,USE_SOURCE_RECEIVER_Hessian)
 
   endif
 

@@ -384,7 +384,11 @@
     !              2. subset, it_temp goes from (900 - 301) = 599 down to 299
     !              3. subset, it_temp goes from (900 - 0)   = 900 down to 600
     !works always:
-    it_tmp = NSTEP - (NSUBSET_ITERATIONS - iteration_on_subset)*NT_DUMP_ATTENUATION - it_of_this_subset + 1
+    if (NSTEP_STEADY_STATE > 0) then
+      it_tmp = NSTEP_STEADY_STATE - (NSUBSET_ITERATIONS - iteration_on_subset)*NT_DUMP_ATTENUATION - it_of_this_subset + 1
+    else
+      it_tmp = NSTEP - (NSUBSET_ITERATIONS - iteration_on_subset)*NT_DUMP_ATTENUATION - it_of_this_subset + 1
+    endif
   else
     it_tmp = it
   endif

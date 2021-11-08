@@ -816,7 +816,7 @@
     NSPEC2D_TOP,UNDO_ATTENUATION
 
   use constants, only: NGLLX,NGLLY,NGLLZ,NDIM,N_SLS,CUSTOM_REAL, &
-    IREGION_CRUST_MANTLE,IREGION_INNER_CORE,IREGION_OUTER_CORE
+    IREGION_CRUST_MANTLE,IREGION_INNER_CORE,IREGION_OUTER_CORE, NTSTEP_BETWEEN_COMPUTE_KERNELS
 
   implicit none
 
@@ -906,7 +906,7 @@
   ! convert to GB
   size_to_store_at_each_time_step = size_to_store_at_each_time_step / 1.d9
 
-  NT_DUMP_ATTENUATION_optimal = int((what_we_can_use_in_GB - static_memory_size_GB) / size_to_store_at_each_time_step)
+  NT_DUMP_ATTENUATION_optimal = int((what_we_can_use_in_GB - static_memory_size_GB) / size_to_store_at_each_time_step) * NTSTEP_BETWEEN_COMPUTE_KERNELS
   ! check
   if (NT_DUMP_ATTENUATION_optimal <= 0) NT_DUMP_ATTENUATION_optimal = 1
 
