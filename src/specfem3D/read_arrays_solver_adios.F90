@@ -56,44 +56,42 @@ subroutine read_arrays_solver_adios(iregion_code, &
   integer,intent(in) :: nspec_iso,nspec_tiso,nspec_ani
 
   ! Stacey
-  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec):: rho_vp,rho_vs
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(inout):: rho_vp,rho_vs
 
-  real(kind=CUSTOM_REAL), dimension(nglob) :: xstore,ystore,zstore
+  real(kind=CUSTOM_REAL), dimension(nglob),intent(inout) :: xstore,ystore,zstore
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(inout) :: &
     xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
 
   ! material properties
-  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec_iso) :: &
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec_iso),intent(inout) :: &
     rhostore,kappavstore,muvstore
 
   ! additional arrays for anisotropy stored only where needed to save memory
-  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec_tiso) :: &
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec_tiso),intent(inout) :: &
     kappahstore,muhstore,eta_anisostore
 
   ! additional arrays for full anisotropy
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_ani) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_ani),intent(inout) :: &
     c11store,c12store,c13store,c14store,c15store,c16store, &
     c22store,c23store,c24store,c25store,c26store,c33store,c34store, &
     c35store,c36store,c44store,c45store,c46store,c55store,c56store,c66store
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: mu0store
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(inout) :: mu0store
 
   ! global addressing
-  integer,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
-  integer, dimension(nspec) :: idoubling
-  logical, dimension(nspec) :: ispec_is_tiso
+  integer,dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(inout) :: ibool
+  integer, dimension(nspec),intent(inout) :: idoubling
+  logical, dimension(nspec),intent(inout) :: ispec_is_tiso
 
   ! mass matrices and additional ocean load mass matrix
-  real(kind=CUSTOM_REAL), dimension(nglob_xy) :: rmassx,rmassy
-  real(kind=CUSTOM_REAL), dimension(nglob_xy) :: b_rmassx,b_rmassy
+  real(kind=CUSTOM_REAL), dimension(nglob_xy),intent(inout) :: rmassx,rmassy
+  real(kind=CUSTOM_REAL), dimension(nglob_xy),intent(inout) :: b_rmassx,b_rmassy
 
-  real(kind=CUSTOM_REAL), dimension(nglob)    :: rmassz
+  real(kind=CUSTOM_REAL), dimension(nglob),intent(inout)    :: rmassz
 
-  integer :: nglob_oceans
-  real(kind=CUSTOM_REAL), dimension(nglob_oceans) :: rmass_ocean_load
-
-  character(len=MAX_STRING_LEN) :: file_name
+  integer,intent(in) :: nglob_oceans
+  real(kind=CUSTOM_REAL), dimension(nglob_oceans),intent(inout) :: rmass_ocean_load
 
   ! local parameters
   integer :: lnspec, lnglob
@@ -106,6 +104,7 @@ subroutine read_arrays_solver_adios(iregion_code, &
   integer(kind=8), pointer :: sel => null()
 
   character(len=128) :: region_name, region_name_scalar
+  character(len=MAX_STRING_LEN) :: file_name
 
   ! user output
   if (myrank == 0) then
@@ -122,7 +121,7 @@ subroutine read_arrays_solver_adios(iregion_code, &
 
   sel_num = 0
 
-  file_name= get_adios_filename(trim(LOCAL_PATH) // "/solver_data")
+  file_name = get_adios_filename(trim(LOCAL_PATH) // "/solver_data")
 
   ! Setup the ADIOS library to read the file
   call open_file_adios_read_and_init_method(myadios_file,myadios_group,file_name)

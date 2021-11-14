@@ -1277,8 +1277,8 @@
 
             ! note: the C_ij and density kernels are not for relative perturbations (delta ln( m_i) = delta m_i / m_i),
             !          but absolute perturbations (delta m_i = m_i - m_0)
-            rho_kl_crust_mantle = - rho_kl_crust_mantle
-            cijkl_kl_crust_mantle = - cijkl_kl_crust_mantle
+            rho_kl_crust_mantle(i,j,k,ispec) = - rho_kl_crust_mantle(i,j,k,ispec)
+            cijkl_kl_crust_mantle(:,i,j,k,ispec) = - cijkl_kl_crust_mantle(:,i,j,k,ispec)
 
           endif ! SAVE_TRANSVERSE_KL_ONLY .or. SAVE_AZIMUTHAL_ANISO_KL_ONLY
 

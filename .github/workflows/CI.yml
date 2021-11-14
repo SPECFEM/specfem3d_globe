@@ -256,7 +256,8 @@ jobs:
 
      - name: Run test
        env:
-         TESTDIR: EXAMPLES/regional_Greece_small/
+         TESTDIR: EXAMPLES/regional_Greece_small
+         DEBUG: true
        run: ./.github/scripts/run_tests.sh
        shell: bash
 
@@ -280,7 +281,103 @@ jobs:
 
     - name: Run test
       env:
-        TESTDIR: EXAMPLES/regional_Greece_small/
-        DEBUG: true
+        TESTDIR: EXAMPLES/regional_Greece_small
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+  linuxTest_3:
+    name: Test run example 3 - regional_sgloberani
+    runs-on: ubuntu-latest
+    needs: [linuxCheck]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS:  # no extra flags
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/regional_sgloberani
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+  linuxTest_4:
+    name: Test run example 4 - point_force
+    runs-on: ubuntu-latest
+    needs: [linuxCheck]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS: "FLAGS_CHECK=-O3 -mcmodel=medium -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized"
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/point_force
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+
+  linuxTest_5:
+    name: Test run example 5 - moon_global
+    runs-on: ubuntu-latest
+    needs: [linuxCheck]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS: --enable-vectorization
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/moon_global
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+  linuxTest_6:
+    name: Test run example 6 - mars_regional
+    runs-on: ubuntu-latest
+    needs: [linuxCheck]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS: --enable-vectorization
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/mars_regional
       run: ./.github/scripts/run_tests.sh
       shell: bash

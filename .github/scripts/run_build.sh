@@ -35,7 +35,7 @@ echo
 echo "configuration: default"
 echo
 
-./configure FC=gfortran MPIFC=mpif90 CC=gcc ${TESTFLAGS}
+./configure FC=gfortran MPIFC=mpif90 CC=gcc "${TESTFLAGS}"
 
 # checks
 if [[ $? -ne 0 ]]; then echo "configuration failed:"; cat config.log; echo ""; echo "exiting..."; exit 1; fi

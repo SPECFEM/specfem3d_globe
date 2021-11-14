@@ -33,6 +33,15 @@ env:
     #   TESTCOV      - determines whether or not (0/1) code coverage flags are used
     #   CUDA         - flag for compilation with CUDA
 
+    # code coverage: using coverage flags (single test for global model)
+    - TESTID=0 TESTDIR=2 TESTCOV=1 TESTFLAGS="" CUDA=false
+
+    # code coverage: using coverage flags (single test for regional model sgloberani)
+    - TESTID=0 TESTDIR=5 TESTCOV=1 TESTFLAGS="" CUDA=false
+
+    # code coverage: using coverage flags (single test for regional noise)
+    - TESTID=0 TESTDIR=12 TESTCOV=1 TESTFLAGS="" CUDA=false
+
     # code coverage: using coverage flags
     - TESTID=1 TESTDIR=1 TESTCOV=1 TESTFLAGS="" CUDA=false
 
@@ -63,14 +72,14 @@ env:
     # globe_small example with openmp (offline, takes too long)
     #- TESTID=10 TESTDIR=2 TESTCOV=0 TESTFLAGS="--enable-vectorization --enable-openmp" CUDA=false
 
-    # point force example
-    - TESTID=11 TESTDIR=3 TESTCOV=0 TESTFLAGS="" CUDA=false
+    # point force example (tested on github actions)
+    #- TESTID=11 TESTDIR=3 TESTCOV=0 TESTFLAGS="" CUDA=false
 
     # regular kernel example
     - TESTID=12 TESTDIR=4 TESTCOV=0 TESTFLAGS="--enable-vectorization" CUDA=false
 
-    # regional_sgloberani
-    - TESTID=13 TESTDIR=5 TESTCOV=0 TESTFLAGS="--enable-vectorization" CUDA=false
+    # regional_sgloberani (tested on github actions)
+    #- TESTID=13 TESTDIR=5 TESTCOV=0 TESTFLAGS="--enable-vectorization" CUDA=false
 
     # global_full_sphericalharmonic_model (possible future case)
     #- TESTID=14 TESTDIR=6 TESTCOV=0 TESTFLAGS="--enable-vectorization" CUDA=false
@@ -84,11 +93,11 @@ env:
     # regional_small_adjoint - pure adjoint example (offline, would need full length simulation)
     #- TESTID=17 TESTDIR=8 TESTCOV=0 TESTFLAGS="" CUDA=false
 
-    # regional mars
-    - TESTID=18 TESTDIR=9 TESTCOV=0 TESTFLAGS="" CUDA=false
+    # regional mars (tested on github actions)
+    #- TESTID=18 TESTDIR=9 TESTCOV=0 TESTFLAGS="" CUDA=false
 
-    # regional moon
-    - TESTID=19 TESTDIR=10 TESTCOV=0 TESTFLAGS="" CUDA=false
+    # regional moon (tested on github actions)
+    #- TESTID=19 TESTDIR=10 TESTCOV=0 TESTFLAGS="" CUDA=false
 
     # regional LDDRK
     - TESTID=20 TESTDIR=11 TESTCOV=0 TESTFLAGS="--enable-vectorization" CUDA=false

@@ -404,6 +404,7 @@
     endif
     allocate(rmass_ocean_load(nglob_oceans),stat=ier)
     if (ier /= 0) stop 'Error in allocate 22'
+    rmass_ocean_load(:) = 0.0_CUSTOM_REAL
 
     ! creating mass matrices in this slice (will be fully assembled in the solver)
     ! note: for Stacey boundaries, needs indexing nimin,.. filled in the first pass
