@@ -41,7 +41,7 @@
   ! local parameters
   integer :: it_temp,seismo_current_temp
   integer :: ier
-  integer :: buffer_size, it_of_buffer
+  integer :: buffer_size, it_of_buffer, ntstep_kl
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_displ_cm_store_buffer
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_displ_ic_store_buffer
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_displ_oc_store_buffer,b_accel_oc_store_buffer
@@ -51,7 +51,8 @@
   double precision, external :: wtime
 
   ! number of buffered snapshot
-  buffer_size = ceiling(dble(NT_DUMP_ATTENUATION) / NTSTEP_BETWEEN_COMPUTE_KERNELS)
+  ntstep_kl = max(1, NTSTEP_BETWEEN_COMPUTE_KERNELS)
+  buffer_size = ceiling(dble(NT_DUMP_ATTENUATION) / ntstep_kl)
 
   !----  create a Gnuplot script to display the energy curve in log scale
   if (OUTPUT_ENERGY .and. myrank == 0) then
@@ -411,7 +412,7 @@
         enddo ! istage
 
         ! transfers wavefields from GPU to CPU for buffering
-        if (mod(it_temp+it_subset_end-it_of_this_subset+1, NTSTEP_BETWEEN_COMPUTE_KERNELS) == 0) then
+        if (mod(it_temp+it_subset_end-it_of_this_subset+1, ntstep_kl) == 0) then
 
           it_of_buffer = it_of_buffer + 1
 
@@ -443,13 +444,6 @@
             b_displ_ic_store_buffer(:,:,it_of_buffer) = b_displ_inner_core(:,:)
           endif
 
-          ! if (NTSTEP_BETWEEN_COMPUTE_KERNELS > 1) then
-          !   b_displ_cm_store_buffer(:,:,it_of_buffer) = b_displ_cm_store_buffer(:,:,it_of_buffer) * NTSTEP_BETWEEN_COMPUTE_KERNELS
-          !   b_displ_oc_store_buffer(:,it_of_buffer) = b_displ_oc_store_buffer(:,it_of_buffer) * NTSTEP_BETWEEN_COMPUTE_KERNELS
-          !   b_accel_oc_store_buffer(:,it_of_buffer) = b_accel_oc_store_buffer(:,it_of_buffer) * NTSTEP_BETWEEN_COMPUTE_KERNELS
-          !   b_displ_ic_store_buffer(:,:,it_of_buffer) = b_displ_ic_store_buffer(:,:,it_of_buffer) * NTSTEP_BETWEEN_COMPUTE_KERNELS
-          ! endif
-
           ! for noise kernel
           if (NOISE_TOMOGRAPHY == 3) then
             b_noise_surface_movie_buffer(:,:,:,:,it_of_buffer) = noise_surface_movie(:,:,:,:)
@@ -470,7 +464,7 @@
 
         it = it + 1
 
-        if (mod(it, NTSTEP_BETWEEN_COMPUTE_KERNELS) == 0) then
+        if (mod(it, ntstep_kl) == 0) then
 
           ! reads backward/reconstructed wavefield from buffers
           ! note: uses wavefield at corresponding time (NSTEP - it + 1 ), i.e. we have now time-reversed wavefields
@@ -538,7 +532,7 @@
         ! kernel computation
         ! adjoint simulations: kernels
         ! attention: for GPU_MODE and ANISOTROPIC_KL it is necessary to use resort_array (see lines 442-445)
-        if (mod(it, NTSTEP_BETWEEN_COMPUTE_KERNELS) == 0) then
+        if (mod(it, ntstep_kl) == 0) then
 #if defined(USE_CUDA) || defined(USE_OPENCL)
           if (GPU_MODE) then
             call unregister_host_array(b_displ_cm_store_buffer(:,:, it_of_buffer+1))

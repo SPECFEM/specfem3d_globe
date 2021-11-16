@@ -95,7 +95,7 @@
   integer :: i,j,k
 #endif
 
-  if (UNDO_ATTENUATION) then
+  if (UNDO_ATTENUATION .and. NTSTEP_BETWEEN_COMPUTE_KERNELS > 1) then
     deltat_kl = deltat * NTSTEP_BETWEEN_COMPUTE_KERNELS
   else
     deltat_kl = deltat
@@ -344,7 +344,7 @@
   logical,dimension(:),allocatable :: mask_ibool
   integer :: ier
 
-  if (UNDO_ATTENUATION) then
+  if (UNDO_ATTENUATION .and. NTSTEP_BETWEEN_COMPUTE_KERNELS > 1) then
     deltat_kl = deltat * NTSTEP_BETWEEN_COMPUTE_KERNELS
   else
     deltat_kl = deltat
@@ -708,7 +708,7 @@
   integer :: i,j,k
 #endif
 
-  if (UNDO_ATTENUATION) then
+  if (UNDO_ATTENUATION .and. NTSTEP_BETWEEN_COMPUTE_KERNELS > 1) then
     deltat_kl = deltat * NTSTEP_BETWEEN_COMPUTE_KERNELS
   else
     deltat_kl = deltat
@@ -897,7 +897,7 @@
 #endif
   integer :: i,j,k
 
-  if (UNDO_ATTENUATION) then
+  if (UNDO_ATTENUATION .and. NTSTEP_BETWEEN_COMPUTE_KERNELS > 1) then
     deltat_kl = deltat * NTSTEP_BETWEEN_COMPUTE_KERNELS
   else
     deltat_kl = deltat
