@@ -130,14 +130,6 @@ adios_shared_STUBS = \
 #	$(FC_MODDIR)/adios2_helpers_read_mod.$(FC_MODEXT) \
 #	$(EMPTY_MACRO)
 
-asdf_shared_OBJECTS = \
-	$O/asdf_manager.shared_asdf.o \
-	$(EMPTY_MACRO)
-
-asdf_shared_STUBS = \
-	$O/asdf_method_stubs.cc.o \
-	$(EMPTY_MACRO)
-
 ifeq ($(ADIOS),yes)
 shared_OBJECTS += $(adios_shared_OBJECTS)
 shared_MODULES += $(adios_shared_MODULES)
@@ -151,6 +143,14 @@ endif
 ##
 ## ASDF
 ##
+
+asdf_shared_OBJECTS = \
+	$O/asdf_manager.shared_asdf.o \
+	$(EMPTY_MACRO)
+
+asdf_shared_STUBS = \
+	$O/asdf_method_stubs.cc.o \
+	$(EMPTY_MACRO)
 
 ifeq ($(ASDF),yes)
 shared_OBJECTS += $(asdf_shared_OBJECTS)

@@ -29,10 +29,10 @@
 
   implicit none
 
-  integer :: yr,mo,da
+  integer, intent(in) :: yr,mo,da
 
   integer :: mon(12)
-  integer :: lpyr
+  integer, external :: lpyr
   data mon /0,31,59,90,120,151,181,212,243,273,304,334/
 
   julian_day = da + mon(mo)
@@ -46,7 +46,7 @@
 
   implicit none
 
-  integer yr
+  integer, intent(in) :: yr
 !
 !---- returns 1 if leap year
 !
