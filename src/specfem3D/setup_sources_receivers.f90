@@ -665,23 +665,32 @@
            Mxz(NSOURCES), &
            Myz(NSOURCES),stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating source arrays')
+  ! initializes arrays
+  islice_selected_source(:) = -1
+  ispec_selected_source(:) = 0
+  Mxx(:) = 0.d0; Myy(:) = 0.d0; Mzz(:) = 0.d0
+  Mxy(:) = 0.d0; Mxz(:) = 0.d0; Myz(:) = 0.d0
 
   allocate(xi_source(NSOURCES), &
            eta_source(NSOURCES), &
            gamma_source(NSOURCES),stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating source arrays')
+  xi_source(:) = 0.d0; eta_source(:) = 0.d0; gamma_source(:) = 0.d0
 
   allocate(tshift_src(NSOURCES), &
            hdur(NSOURCES), &
            hdur_Gaussian(NSOURCES),stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating source arrays')
+  tshift_src(:) = 0.d0; hdur(:) = 0.d0; hdur_Gaussian(:) = 0.d0
 
   allocate(theta_source(NSOURCES), &
            phi_source(NSOURCES),stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating source arrays')
+  theta_source(:) = 0.d0; phi_source(:) = 0.d0
 
   allocate(nu_source(NDIM,NDIM,NSOURCES),stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating source arrays')
+  nu_source(:,:,:) = 0.d0
 
   if (USE_FORCE_POINT_SOURCE) then
     allocate(force_stf(NSOURCES),factor_force_source(NSOURCES), &
@@ -689,6 +698,11 @@
              comp_dir_vect_source_N(NSOURCES), &
              comp_dir_vect_source_Z_UP(NSOURCES),stat=ier)
     if (ier /= 0) stop 'error allocating arrays for force point sources'
+    force_stf(:) = 0
+    factor_force_source(:) = 0.d0
+    comp_dir_vect_source_E(:) = 0.d0
+    comp_dir_vect_source_N(:) = 0.d0
+    comp_dir_vect_source_Z_UP(:) = 0.d0
   endif
 
   ! sources
@@ -963,7 +977,16 @@
   ! subsets used to save adjoint sources must not be larger than the whole time series,
   ! otherwise we waste memory
   if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
+    ! the default value of NTSTEP_BETWEEN_READ_ADJSRC (0) is to read the whole trace at the same time
+    if (NTSTEP_BETWEEN_READ_ADJSRC == 0) NTSTEP_BETWEEN_READ_ADJSRC = NSTEP
+    ! limits length
     if (NTSTEP_BETWEEN_READ_ADJSRC > NSTEP) NTSTEP_BETWEEN_READ_ADJSRC = NSTEP
+    ! total times steps must be dividable by adjoint source chunks/blocks
+    if (mod(NSTEP,NTSTEP_BETWEEN_READ_ADJSRC) /= 0) then
+      print *,'Error: NSTEP ',NSTEP,' not a multiple of NTSTEP_BETWEEN_READ_ADJSRC ',NTSTEP_BETWEEN_READ_ADJSRC
+      print *,'       Please change NTSTEP_BETWEEN_READ_ADJSRC in the Par_file!'
+      stop 'Error: mod(NSTEP,NTSTEP_BETWEEN_READ_ADJSRC) must be zero! Please modify Par_file and rerun solver'
+    endif
   endif
 
   ! buffering with undo_attenuation
@@ -1015,8 +1038,14 @@
            ispec_selected_rec(nrec), &
            xi_receiver(nrec), &
            eta_receiver(nrec), &
-           gamma_receiver(nrec),stat=ier)
+           gamma_receiver(nrec), &
+           nu_rec(NDIM,NDIM,nrec),stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating receiver arrays')
+  ! initializes arrays
+  islice_selected_rec(:) = -1
+  ispec_selected_rec(:) = 0
+  xi_receiver(:) = 0.d0; eta_receiver(:) = 0.d0; gamma_receiver(:) = 0.d0
+  nu_rec(:,:,:) = 0.0d0
 
   allocate(station_name(nrec), &
            network_name(nrec), &
@@ -1025,9 +1054,7 @@
            stele(nrec), &
            stbur(nrec),stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating receiver arrays')
-
-  allocate(nu_rec(NDIM,NDIM,nrec),stat=ier)
-  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating receiver arrays')
+  stlat(:) = 0.d0; stlon(:) = 0.d0; stele(:) = 0.d0; stbur(:) = 0.d0
 
   !  receivers
   if (myrank == 0) then
@@ -1068,6 +1095,7 @@
   if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
     ! temporary counter to check if any files are found at all
     nadj_files_found = 0
+
     do irec = 1,nrec
       ! checks if slice is valid
       if (islice_selected_rec(irec) < 0 .or. islice_selected_rec(irec) > NPROCTOT_VAL-1) &
@@ -1094,8 +1122,15 @@
     if (myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) '    ',nadj_files_found_tot,' adjoint component traces found in all slices'
-      if (nadj_files_found_tot == 0) &
+      call flush_IMAIN()
+
+      ! main process checks if any adjoint files found
+      if (nadj_files_found_tot == 0) then
+        print *,'Error no adjoint traces found: ',nadj_files_found_tot
+        print *,'in directory : ','SEM/'
+        print *
         call exit_MPI(myrank,'no adjoint traces found, please check adjoint sources in directory SEM/')
+      endif
     endif
   endif
 
@@ -1603,7 +1638,7 @@
 
   implicit none
 
-  integer NSTEP,NSTEP_SUB_ADJ,NTSTEP_BETWEEN_READ_ADJSRC
+  integer :: NSTEP,NSTEP_SUB_ADJ,NTSTEP_BETWEEN_READ_ADJSRC
 
   integer, dimension(NSTEP_SUB_ADJ,2) :: iadjsrc ! to read input in chunks
   integer, dimension(NSTEP_SUB_ADJ) :: iadjsrc_len
