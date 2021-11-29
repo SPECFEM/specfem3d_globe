@@ -792,7 +792,8 @@
     ! point forces
     if (myrank == 0) then
       ! only main process reads in FORCESOLUTION file
-      call get_force(tshift_src,hdur,srclat,srclon,srcdepth,DT,NSOURCES, &
+      call get_force(tshift_src,hdur, &
+                     srclat,srclon,srcdepth,DT,NSOURCES, &
                      min_tshift_src_original,force_stf,factor_force_source, &
                      comp_dir_vect_source_E,comp_dir_vect_source_N,comp_dir_vect_source_Z_UP)
     endif
@@ -806,7 +807,9 @@
     ! CMT moment tensors
     if (myrank == 0) then
       ! only main process reads in CMTSOLUTION file
-      call get_cmt(yr,jda,mo,da,ho,mi,sec,tshift_src,hdur,srclat,srclon,srcdepth,moment_tensor, &
+      call get_cmt(yr,jda,mo,da,ho,mi,sec, &
+                   tshift_src,hdur, &
+                   srclat,srclon,srcdepth,moment_tensor, &
                    DT,NSOURCES,min_tshift_src_original)
     endif
     ! broadcast ispecific moment tensor infos

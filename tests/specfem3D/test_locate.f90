@@ -51,9 +51,10 @@ program test_locate
         print *,'  result is correct'
       endif
 
-      ! total Mw = 7.7356437096222379
+      ! total Mw = 7.7356437096222379  ! old
+      !            7.7356439003571005  ! new
       print *,'  Mw = ',Mw
-      if (abs(Mw - 7.7356437096222379d0) > 1.e-10) then
+      if (abs(Mw - 7.7356439003571005d0) > 1.e-6) then
         print *,'ERROR: rank ',myrank,' - Mw value invalid'
         stop 1
       else

@@ -25,7 +25,8 @@
 !
 !=====================================================================
 
-  subroutine get_cmt(yr,jda,mo,da,ho,mi,sec,tshift_src,hdur,lat,long,depth,moment_tensor, &
+  subroutine get_cmt(yr,jda,mo,da,ho,mi,sec, &
+                     tshift_src,hdur,lat,long,depth,moment_tensor, &
                      DT,NSOURCES,min_tshift_src_original)
 
   use constants, only: IIN,IMAIN,EXTERNAL_SOURCE_TIME_FUNCTION, &
@@ -40,14 +41,17 @@
   integer, intent(in) :: NSOURCES
   double precision, intent(in) :: DT
 
+  ! PDE time info (from first header line)
   integer, intent(out) :: yr,jda,ho,mi,mo,da
-  double precision, intent(out) :: sec,min_tshift_src_original
+  double precision, intent(out) :: sec
+
   double precision, dimension(NSOURCES), intent(out) :: tshift_src,hdur,lat,long,depth
   double precision, dimension(6,NSOURCES), intent(out) :: moment_tensor
+  double precision, intent(out) :: min_tshift_src_original
 
   ! local variables below
   integer :: julian_day,isource
-  integer :: i,itype,istart,iend,ier, ios
+  integer :: i,itype,istart,iend,ier
   double precision :: scaleM
   double precision :: t_shift(NSOURCES)
   !character(len=5) :: datasource
@@ -64,11 +68,8 @@
   moment_tensor(:,:) = 0.d0
 
   ! origin time
-  yr = 0
-  da = 0
-  ho = -1
-  mi = -1
-  sec = -1.d0
+  yr = 0; da = 0
+  ho = -1; mi = -1; sec = -1.d0
 
 !
 !---- read hypocenter info
@@ -80,10 +81,10 @@
     CMTSOLUTION_FILE = path_to_add(1:len_trim(path_to_add))//CMTSOLUTION_FILE(1:len_trim(CMTSOLUTION_FILE))
   endif
 
-  open(unit=IIN,file=trim(CMTSOLUTION_FILE),status='old',action='read',iostat=ios)
-  if (ios /= 0) stop 'Error opening CMTSOLUTION file (get_cmt)'
+  open(unit=IIN,file=trim(CMTSOLUTION_FILE),status='old',action='read',iostat=ier)
+  if (ier /= 0) stop 'Error opening CMTSOLUTION file (get_cmt)'
 
-! read source number isource
+  ! read source number isource
   do isource = 1,NSOURCES
 
     ! gets header line
@@ -182,7 +183,6 @@
       istart = iend + 1
     enddo
 
-
     ! checks time information
     if (yr <= 0 .or. yr > 3000) then
       write(IMAIN,*) 'Error reading year: ',yr,' in source ',isource,'is invalid'
@@ -225,7 +225,6 @@
       write(IMAIN,*) 'Error reading time shift in source ',isource
       stop 'Error reading time shift in station in CMTSOLUTION file'
     endif
-    !read(string(12:len_trim(string)),*) tshift_src(isource)
     read(string(12:len_trim(string)),*) t_shift(isource)
 
     ! read half duration
@@ -327,6 +326,8 @@
 
   enddo
 
+  close(IIN)
+
   ! noise simulations don't use the CMTSOLUTION source but a noise-spectrum source defined in S_squared
   if (NOISE_TOMOGRAPHY /= 0) hdur(:) = 0.d0
 
@@ -335,15 +336,13 @@
     hdur(:) = 0.d0
   endif
 
-  close(IIN)
-
   ! Sets tshift_src to zero to initiate the simulation!
   if (NSOURCES == 1) then
-      tshift_src = 0.d0
-      min_tshift_src_original = t_shift(1)
+    min_tshift_src_original = t_shift(1)
+    tshift_src(1) = 0.d0
   else
-      tshift_src(1:NSOURCES) = t_shift(1:NSOURCES)-minval(t_shift)
-      min_tshift_src_original = minval(t_shift)
+    min_tshift_src_original = minval(t_shift)
+    tshift_src(1:NSOURCES) = t_shift(1:NSOURCES) - min_tshift_src_original
   endif
 
 !
@@ -415,7 +414,7 @@
 
   ! scalar moment:
   ! see equation (1.4) in P.G. Silver and T.H. Jordan, 1982,
-  ! "Optimal estiamtion of scalar seismic moment",
+  ! "Optimal estimation of scalar seismic moment",
   ! Geophys. J.R. astr. Soc., 70, 755 - 787
   !
   ! or see equation (5.91) in Dahlen & Tromp (1998)
@@ -432,7 +431,7 @@
   scalar_moment = Mxx**2 + Myy**2 + Mzz**2 + 2.d0 * ( Mxy**2 + Mxz**2 + Myz**2 )
 
   ! adds 1/2 to be coherent with double couple or point sources
-  scalar_moment = dsqrt(scalar_moment/2.0d0)
+  scalar_moment = dsqrt(0.5d0*scalar_moment)
 
   ! note: moment tensor is non-dimensionalized
   !
@@ -505,18 +504,25 @@
   ! conversion: dyne-cm = 10**-7 N-m
   !
   ! we follow here the USGS magnitude policy:
-  ! "All USGS statements of moment magnitude should use M = (log M0)/1.5-10.7
+  ! "Another source of confusion is the form of the formula for converting from scalar moment M0 to moment magnitude, M.
+  !  The preferred practice is to use M = (log Mo)/1.5-10.7, where Mo is in dyne-cm (dyne-cm=10-7 N-m),
+  !  the definition given by Hanks and Kanamori in 1979. An alternate form in Hanks and Kanamori's paper, M=(log M0-16.1)/1.5,
+  !  is sometimes used, with resulting confusion. These formulae look as if they should yield the same result, but the latter
+  !  is equivalent to M = (log Mo)/1.5-10.7333. The resulting round-off error occasionally leads to differences of 0.1
+  !  in the estimates of moment magnitude released by different groups.
+  !  All USGS statements of moment magnitude should use M = (log Mo)/1.5 - 10.7 = 2/3 (log M0) - 10.7 (Hanks & Kanamori, 1979)
   !  for converting from scalar moment M0 to moment magnitude. (..)"
   ! see: http://earthquake.usgs.gov/aboutus/docs/020204mag_policy.php
+  !      https://web.archive.org/web/20160428095841/http://earthquake.usgs.gov:80/aboutus/docs/020204mag_policy.php
 
-  if (M0 > 0.d0) then
-    Mw = 2.d0/3.d0 * log10( M0 ) - 10.7d0
+  if (M0 > 0.0d0) then
+    ! this is to ensure M0>0.0 inorder to avoid arithmetic error.
+    Mw = 2.d0/3.d0 * log10( max(M0,tiny(M0)) ) - 10.7
   else
-    Mw = 0.d0
+    Mw = 0.0d0
   endif
 
   ! return value
   get_cmt_moment_magnitude_from_M0 = Mw
 
   end function
-

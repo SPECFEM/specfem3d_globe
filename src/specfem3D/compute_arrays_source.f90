@@ -250,7 +250,7 @@
       call read_adjoint_sources_ASDF(adj_source_name, adj_source_asdf, index_start, index_end)
 
       ! store trace component to adjoint source
-      adj_src(icomp,:) = real(adj_source_asdf(1:NSTEP_BLOCK))
+      adj_src(icomp,:) = adj_source_asdf(1:NSTEP_BLOCK)
     enddo
 
     ! free temporary asdf array

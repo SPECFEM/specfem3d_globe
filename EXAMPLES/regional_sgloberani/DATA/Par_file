@@ -195,17 +195,9 @@ NTSTEP_BETWEEN_OUTPUT_INFO      = 200
 
 #-----------------------------------------------------------
 #
-# Sources & seismograms
+# Sources
 #
 #-----------------------------------------------------------
-
-# interval in time steps for temporary writing of seismograms
-NTSTEP_BETWEEN_OUTPUT_SEISMOS   = 5000000
-NTSTEP_BETWEEN_READ_ADJSRC      = 1000000
-
-# set to n to reduce the sampling rate of output seismograms by a factor of n
-# defaults to 1, which means no down-sampling
-NTSTEP_BETWEEN_OUTPUT_SAMPLE    = 1
 
 # use a (tilted) FORCESOLUTION force point source (or several) instead of a CMTSOLUTION moment-tensor source.
 # This can be useful e.g. for asteroid simulations
@@ -225,6 +217,22 @@ USE_FORCE_POINT_SOURCE          = .false.
 # half duration is interpreted as a PERIOD just to avoid changing CMTSOLUTION file format
 # default is .false. which uses Heaviside function
 USE_MONOCHROMATIC_CMT_SOURCE    = .false.
+
+# print source time function
+PRINT_SOURCE_TIME_FUNCTION      = .false.
+
+#-----------------------------------------------------------
+#
+# Seismograms
+#
+#-----------------------------------------------------------
+
+# interval in time steps for temporary writing of seismograms
+NTSTEP_BETWEEN_OUTPUT_SEISMOS   = 5000000
+
+# set to n to reduce the sampling rate of output seismograms by a factor of n
+# defaults to 1, which means no down-sampling
+NTSTEP_BETWEEN_OUTPUT_SAMPLE    = 1
 
 # option to save strain seismograms
 # this option is useful for strain Green's tensor
@@ -256,14 +264,15 @@ USE_BINARY_FOR_LARGE_FILE       = .false.
 # flag to impose receivers at the surface or allow them to be buried
 RECEIVERS_CAN_BE_BURIED         = .false.
 
-# print source time function
-PRINT_SOURCE_TIME_FUNCTION      = .false.
-
 #-----------------------------------------------------------
 #
 #  Adjoint kernel outputs
 #
 #-----------------------------------------------------------
+
+# interval in time steps for reading adjoint traces
+# 0 = read the whole adjoint sources at start time
+NTSTEP_BETWEEN_READ_ADJSRC      = 1000000
 
 # use ASDF format for reading the adjoint sources
 READ_ADJSRC_ASDF                = .false.

@@ -25,10 +25,10 @@
 !
 !=====================================================================
 
-  subroutine get_force(tshift_force,hdur,lat,long,depth,DT,NSOURCES, &
-                      min_tshift_force_original,force_stf,factor_force_source, &
-                      comp_dir_vect_source_E,comp_dir_vect_source_N, &
-                      comp_dir_vect_source_Z_UP)
+  subroutine get_force(tshift_src,hdur,lat,long,depth,DT,NSOURCES, &
+                       min_tshift_src_original,force_stf,factor_force_source, &
+                       comp_dir_vect_source_E,comp_dir_vect_source_N, &
+                       comp_dir_vect_source_Z_UP)
 
   use constants, only: IIN,MAX_STRING_LEN,TINYVAL,mygroup,PI,GRAV
   use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS,R_PLANET,RHOAV
@@ -41,8 +41,8 @@
   double precision, intent(in) :: DT
 
   integer, dimension(NSOURCES), intent(out) :: force_stf
-  double precision, intent(out) :: min_tshift_force_original
-  double precision, dimension(NSOURCES), intent(out) :: tshift_force,hdur,lat,long,depth,factor_force_source
+  double precision, intent(out) :: min_tshift_src_original
+  double precision, dimension(NSOURCES), intent(out) :: tshift_src,hdur,lat,long,depth,factor_force_source
   double precision, dimension(NSOURCES), intent(out) :: comp_dir_vect_source_E
   double precision, dimension(NSOURCES), intent(out) :: comp_dir_vect_source_N
   double precision, dimension(NSOURCES), intent(out) :: comp_dir_vect_source_Z_UP
@@ -63,7 +63,7 @@
   depth(:) = 0.d0
 
   t_shift(:) = 0.d0
-  tshift_force(:) = 0.d0
+  tshift_src(:) = 0.d0
   hdur(:) = 0.d0
 
   force_stf(:) = 0
@@ -192,11 +192,11 @@
 
   ! Sets tshift_force to zero to initiate the simulation!
   if (NSOURCES == 1) then
-    tshift_force = 0.d0
-    min_tshift_force_original = t_shift(1)
+    min_tshift_src_original = t_shift(1)
+    tshift_src(1) = 0.d0
   else
-    tshift_force(1:NSOURCES) = t_shift(1:NSOURCES)-minval(t_shift)
-    min_tshift_force_original = minval(t_shift)
+    min_tshift_src_original = minval(t_shift)
+    tshift_src(1:NSOURCES) = t_shift(1:NSOURCES) - min_tshift_src_original
   endif
 
   do isource = 1,NSOURCES
@@ -208,8 +208,9 @@
     if (hdur(isource) < TINYVAL) hdur(isource) = TINYVAL
 
     ! check (tilted) force source direction vector
-    length = sqrt( comp_dir_vect_source_E(isource)**2 + comp_dir_vect_source_N(isource)**2 + &
-                   comp_dir_vect_source_Z_UP(isource)**2)
+    length = sqrt( comp_dir_vect_source_E(isource)**2 &
+                 + comp_dir_vect_source_N(isource)**2 &
+                 + comp_dir_vect_source_Z_UP(isource)**2 )
     if (length < TINYVAL) then
       print *, 'normal length: ', length
       print *, 'isource: ',isource

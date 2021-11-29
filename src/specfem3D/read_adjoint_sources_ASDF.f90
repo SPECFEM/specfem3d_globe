@@ -36,9 +36,7 @@
   implicit none
 
   character(len=MAX_STRING_LEN), intent(in) :: adj_source_name
-
   real(kind=CUSTOM_REAL), dimension(*),intent(out) :: adj_source ! NSTEP block size
-
   integer,intent(in) :: index_start, index_end
 
   ! local parameters
@@ -55,8 +53,9 @@
   ! print *, " nsamples ", nsamples
   ! print *, adj_source_name, " reading"
 
-  call ASDF_read_partial_waveform_f(current_asdf_handle, "AuxiliaryData/AdjointSources/" // &
-                                    trim(adj_source_name) // C_NULL_CHAR, offset, nsamples, adj_source, ier)
+  call ASDF_read_partial_waveform_f(current_asdf_handle, &
+                                    "AuxiliaryData/AdjointSources/" // trim(adj_source_name) // C_NULL_CHAR, &
+                                    offset, nsamples, adj_source, ier)
 
   if (ier /= 0) then
     print *,'Error reading adjoint source: ',trim(adj_source_name)
@@ -83,13 +82,12 @@
   implicit none
 
   integer,intent(in) :: irec
-  integer :: nadj_sources_found
-  integer :: nsamples_infered
-  integer :: icomp
-  integer :: adjoint_source_exists
-  integer :: ier
+  integer,intent(inout) :: nadj_sources_found
 
   ! local parameters
+  integer :: nsamples_infered
+  integer :: icomp,ier
+  integer :: adjoint_source_exists
   character(len=MAX_STRING_LEN) :: adj_filename,adj_source_file
   character(len=3),dimension(NDIM) :: comp
   character(len=2) :: bic
@@ -120,15 +118,18 @@
 
     ! checks length of file
     call ASDF_get_num_elements_from_path_f(current_asdf_handle, &
-       "AuxiliaryData/AdjointSources/" // trim(adj_filename) // C_NULL_CHAR, nsamples_infered, ier)
+                                           "AuxiliaryData/AdjointSources/" // trim(adj_filename) // C_NULL_CHAR, &
+                                           nsamples_infered, ier)
 
     ! print *, trim(adj_filename), nsamples_infered
 
     ! checks length
     if (nsamples_infered /= NSTEP) then
-      print *,'adjoint source error: ',trim(adj_filename),' has length',nsamples_infered,' but should be',NSTEP
+      print *,'ASDF adjoint source error: ',"AuxiliaryData/AdjointSources/" // trim(adj_filename), &
+              ' has length',nsamples_infered,' but should be',NSTEP
       call exit_MPI(myrank, &
-        'file '//trim(adj_filename)//' length is wrong, please check your adjoint sources and your simulation duration')
+        'file ' // "AuxiliaryData/AdjointSources/" // trim(adj_filename) // &
+        ' length is wrong, please check your adjoint sources and your simulation duration')
     endif
 
     ! updates counter for found files
