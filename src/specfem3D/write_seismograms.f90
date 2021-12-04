@@ -227,6 +227,7 @@
   ! allocates single station seismogram
   allocate(one_seismogram(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
   if (ier /= 0) call exit_mpi(myrank,'Error while allocating one temporary seismogram')
+  one_seismogram(:,:) = 0.0_CUSTOM_REAL
 
   ! ASDF format
   if (OUTPUT_SEISMOS_ASDF) then

@@ -190,8 +190,6 @@
   if (ier /= 0) stop 'an error occurred while reading the parameter file: NTSTEP_BETWEEN_OUTPUT_SEISMOS'
   call read_value_integer(NTSTEP_BETWEEN_OUTPUT_SAMPLE, 'NTSTEP_BETWEEN_OUTPUT_SAMPLE', ier)
   if (ier /= 0) stop 'an error occurred while reading the parameter file: NTSTEP_BETWEEN_OUTPUT_SAMPLE'
-  call read_value_integer(NTSTEP_BETWEEN_READ_ADJSRC, 'NTSTEP_BETWEEN_READ_ADJSRC', ier)
-  if (ier /= 0) return
 
   ! point force sourse
   call read_value_logical(USE_FORCE_POINT_SOURCE, 'USE_FORCE_POINT_SOURCE', ier)
@@ -233,8 +231,10 @@
   if (ier /= 0) stop 'an error occurred while reading the parameter file: PRINT_SOURCE_TIME_FUNCTION'
 
   ! adjoint kernels
+  call read_value_integer(NTSTEP_BETWEEN_READ_ADJSRC, 'NTSTEP_BETWEEN_READ_ADJSRC', ier)
+  if (ier /= 0) stop 'an error occurred while reading the parameter file: NTSTEP_BETWEEN_READ_ADJSRC'
   call read_value_logical(READ_ADJSRC_ASDF, 'READ_ADJSRC_ASDF', ier)
-  if (ier /= 0) stop 'an error occured while reading the parameter file: READ_ADJSRC_ASDF'
+  if (ier /= 0) stop 'an error occurred while reading the parameter file: READ_ADJSRC_ASDF'
   call read_value_logical(ANISOTROPIC_KL, 'ANISOTROPIC_KL', ier)
   if (ier /= 0) stop 'an error occurred while reading the parameter file: ANISOTROPIC_KL'
   call read_value_logical(SAVE_TRANSVERSE_KL_ONLY, 'SAVE_TRANSVERSE_KL_ONLY', ier)
