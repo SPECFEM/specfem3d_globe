@@ -906,7 +906,8 @@
   ! convert to GB
   size_to_store_at_each_time_step = size_to_store_at_each_time_step / 1.d9
 
-  NT_DUMP_ATTENUATION_optimal = int((what_we_can_use_in_GB - static_memory_size_GB) / size_to_store_at_each_time_step) * max(1,NTSTEP_BETWEEN_COMPUTE_KERNELS)
+  NT_DUMP_ATTENUATION_optimal = int((what_we_can_use_in_GB - static_memory_size_GB) / size_to_store_at_each_time_step) * &
+                                                                                      max(1,NTSTEP_BETWEEN_COMPUTE_KERNELS)
   ! check
   if (NT_DUMP_ATTENUATION_optimal <= 0) NT_DUMP_ATTENUATION_optimal = 1
 
