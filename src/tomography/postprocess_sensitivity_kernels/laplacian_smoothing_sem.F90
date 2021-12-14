@@ -125,6 +125,9 @@ program smooth_laplacian_sem
   ! timing
   double precision, external :: wtime
 
+  ! hessian
+  logical :: is_hess
+
   ! ADIOS
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
   integer(kind=8) :: group_size_inc,local_dim
@@ -615,6 +618,11 @@ program smooth_laplacian_sem
           is_kernel = .true.
         endif
       endif
+      if (len_trim(kernel_name) > 5) then
+        if (kernel_name(1:5) == 'hess_') then
+          is_hess = .true.
+        endif
+      endif
       if (is_kernel) then
         ! NOTE: reg1 => crust_mantle, others are not implemented
         varname = trim(kernel_name) // "_crust_mantle"
@@ -623,7 +631,7 @@ program smooth_laplacian_sem
       endif
       ! user output
       if (myrank == 0) then
-        print *, '  data: ADIOS ',trim(kernel_name), " is_kernel = ", is_kernel
+        print *, '  data: ADIOS ',trim(kernel_name), " is_kernel = ", is_kernel, " is_hess = ", is_hess
         print *, '  data: ADIOS using array name = ',trim(varname)
         print *
       endif
@@ -651,6 +659,9 @@ program smooth_laplacian_sem
      close(IIN)
 #endif
      ! Get normalization factor
+     if (is_hess) then
+       mo = sqrt(abs(mo))
+     endif
      norm_ker = 0.
      norm_kerl = sum(mo**2)/nglob
      call sum_all_cr(norm_kerl, norm_ker)
@@ -670,6 +681,9 @@ program smooth_laplacian_sem
      !! SAve kernels
      call model_glob_to_gll(s, so)
      so = so * norm_ker
+     if (is_hess) then
+       so = so * so
+     endif
 
      ! smoothed kernel file name
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
