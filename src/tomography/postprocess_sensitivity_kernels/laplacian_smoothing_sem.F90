@@ -67,8 +67,8 @@ program smooth_laplacian_sem
   integer :: nspec, nglob, nker, niter_cg_max
   integer :: iker, i, j, k, idof, iel, i1, i2, ier, sizeprocs
 
-  double precision    :: Lx, Ly, Lz, Lh, Lv, conv_crit, taper_vertical, Lh2, Lv2
-  double precision    :: x, y, z, r, theta, phi, e2, rel_to_prem
+  double precision    :: Lx, Ly, Lz, Lh, Lv, conv_crit, Lh2, Lv2
+  double precision    :: x, y, z, r, theta, phi, rel_to_prem
   double precision    :: rho,drhodr,vp,vs,Qkappa,Qmu
 
 
