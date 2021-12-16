@@ -57,10 +57,10 @@ program smooth_laplacian_sem
   integer, parameter :: NGLOB_AB = NGLOB_CRUST_MANTLE
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
-  integer, parameter :: NARGS = 8
+  integer, parameter :: NARGS = 7
   character(len=*), parameter :: reg_name = 'reg1/'
 #else
-  integer, parameter :: NARGS = 7
+  integer, parameter :: NARGS = 6
   character(len=*), parameter :: reg_name = '_reg1_'
 #endif
 
@@ -155,26 +155,22 @@ program smooth_laplacian_sem
         print *,'Usage: mpirun -np NPROC bin/xsmooth_laplacian_sem_adios SIGMA_H SIGMA_V KERNEL_NAME', &
                ' INPUT_FILE SOLVER_FILE OUTPUT_FILE'
         print *,'   with'
-        print *,'     SIGMA_H, SIGMA_V - horizontal and vertical smoothing lenghts'
-        print *,'     KERNEL_NAME      - comma-separated kernel names (e.g., alpha_kernel,beta_kernel)'
-        print *,'     INPUT_FILE       - ADIOS file with kernel values (e.g., kernels.bp)'
-        print *,'     SOLVER_FILE      - ADIOS file with mesh arrays (e.g., DATABASES_MPI/) containing', &
+        print *,'     SIGMA_XY, SIGMA_Z - XY and Z smoothing lenghts'
+        print *,'     KERNEL_NAME       - comma-separated kernel names (e.g., alpha_kernel,beta_kernel)'
+        print *,'     INPUT_FILE        - ADIOS file with kernel values (e.g., kernels.bp)'
+        print *,'     SOLVER_FILE       - ADIOS file with mesh arrays (e.g., DATABASES_MPI/) containing', &
                ' solver_data.bp solver_data_mpi.bp'
-        print *,'     OUTPUT_FILE      - ADIOS file for smoothed output'
-        print *,'     REL_TO_PREM      - (optional) increase smoothing radius based on PREM model P-wave velocity'
-        print *,'     TAPER_VERTICAL   - (optional) increase SIGMA_V with depth until it reaches SIGMA_H at', &
-               ' the give depth'
+        print *,'     OUTPUT_FILE       - ADIOS file for smoothed output'
+        print *,'     REL_TO_PREM       - (optional) increase smoothing radius based on PREM model P-wave velocity'
         print *
 #else
         print *,'Usage: mpirun -np NPROC bin/xsmooth_laplacian_sem SIGMA_H SIGMA_V KERNEL_NAME INPUT_DIR OUPUT_DIR'
         print *,'   with'
-        print *,'     SIGMA_H, SIGMA_V - horizontal and vertical smoothing lenghts'
-        print *,'     KERNEL_NAME      - comma-separated kernel names (e.g., alpha_kernel,beta_kernel)'
-        print *,'     INPUT_DIR        - directory with kernel files (e.g., proc***_alpha_kernel.bin)'
-        print *,'     OUTPUT_DIR       - directory for smoothed output files'
-        print *,'     REL_TO_PREM      - (optional) increase smoothing radius based on PREM model P-wave velocity'
-        print *,'     TAPER_VERTICAL   - (optional) increase SIGMA_V with depth until it reaches SIGMA_H at', &
-               ' the give depth'
+        print *,'     SIGMA_XY, SIGMA_Z - XY and Z smoothing lenghts'
+        print *,'     KERNEL_NAME       - comma-separated kernel names (e.g., alpha_kernel,beta_kernel)'
+        print *,'     INPUT_DIR         - directory with kernel files (e.g., proc***_alpha_kernel.bin)'
+        print *,'     OUTPUT_DIR        - directory for smoothed output files'
+        print *,'     REL_TO_PREM       - (optional) increase smoothing radius based on PREM model P-wave velocity'
         print *
 #endif
         stop ' Please check command line arguments'
@@ -229,18 +225,11 @@ program smooth_laplacian_sem
   output_dir = arg(5)
 #endif
 
-  if (trim(arg(NARGS-1)) == '') then
+  if (trim(arg(NARGS)) == '') then
       rel_to_prem = 0.0
   else
-      read(arg(NARGS-1),*) rel_to_prem
+      read(arg(NARGS),*) rel_to_prem
       if (myrank == 0) print *, 'Increase smoothing length based on PREM model     :', rel_to_prem
-  endif
-
-  if (trim(arg(NARGS)) == '') then
-      taper_vertical = -1.0
-  else
-      read(arg(NARGS),*) taper_vertical
-      if (myrank == 0) print *, 'Vertical smoothing taper depth (km)               :', taper_vertical
   endif
 
   call synchronize_all()
@@ -273,7 +262,7 @@ program smooth_laplacian_sem
      print *,"  NPROC_XI , NPROC_ETA        : ",NPROC_XI,NPROC_ETA
      print *,"  NCHUNKS                     : ",NCHUNKS
      print *
-     print *,"  smoothing sigma_h , sigma_v (km)                : ",Lh,Lv
+     print *,"  smoothing sigma_xy , sigma_z (km)                : ",Lh,Lv
      print *
      print *,"  data name      : ",trim(kernel_names_comma_delimited)
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
@@ -292,7 +281,11 @@ program smooth_laplacian_sem
 
   Lh = Lh / real(R_PLANET_KM,kind=CUSTOM_REAL) ! scale
   Lv = Lv / real(R_PLANET_KM,kind=CUSTOM_REAL) ! scale
-  taper_vertical = taper_vertical / real(R_PLANET_KM,kind=CUSTOM_REAL) ! scale
+
+  if (myrank == 0 .and. abs(Lh - Lv) > TINYVAL) then
+    print *, 'WARNING: different smoothing length in XY and Z direction'
+  endif
+!   taper_vertical = taper_vertical / real(R_PLANET_KM,kind=CUSTOM_REAL) ! scale
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
   ! ADIOS
@@ -528,15 +521,16 @@ program smooth_laplacian_sem
               call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
               ! determine smoothing radius
               Lh2 = Lh
-              if (taper_vertical > 0) then
-                  if ((1 - r) < taper_vertical) then
-                     Lv2 = Lv + (Lh - Lv) * (1 - cos(PI * (1 - r) / taper_vertical)) / 2
-                  else
-                     Lv2 = Lh
-                  endif
-              else
-                  Lv2 = Lv
-              endif
+              Lv2 = Lv
+            !   if (taper_vertical > 0) then
+            !       if ((1 - r) < taper_vertical) then
+            !          Lv2 = Lv + (Lh - Lv) * (1 - cos(PI * (1 - r) / taper_vertical)) / 2
+            !       else
+            !          Lv2 = Lh
+            !       endif
+            !   else
+            !       Lv2 = Lv
+            !   endif
               ! increase radius based on PREM model velocity
               if (rel_to_prem > TINYVAL) then
                call model_prem_iso(r,rho,drhodr,vp,vs,Qkappa,Qmu,0,CRUSTAL,.false.)
@@ -545,11 +539,14 @@ program smooth_laplacian_sem
                   Lh2 = Lh2 * vp ** rel_to_prem
                endif
               endif
-              ! convert Lv, Lh to Lx, Ly, Lz
-              e2 = 1 - (Lv2 / Lh2) ** 2
-              Lz = Lh2 * (1 - e2 * cos(theta) ** 2)
-              Lx = Lh2 * (1 - e2 * (sin(theta) * cos(phi)) ** 2 )
-              Ly = Lh2 * (1 - e2 * (sin(theta) * sin(phi)) ** 2 )
+            !   ! convert Lv, Lh to Lx, Ly, Lz
+            !   e2 = 1 - (Lv2 / Lh2) ** 2
+            !   Lz = Lh2 * (1 - e2 * cos(theta) ** 2)
+            !   Lx = Lh2 * (1 - e2 * (sin(theta) * cos(phi)) ** 2 )
+            !   Ly = Lh2 * (1 - e2 * (sin(theta) * sin(phi)) ** 2 )
+               Lx = Lh2
+               Ly = Lh2
+               Lz = Lv2
 
               ! Apply scaling
               dxsi_dx(i,j,k,iel)  = dxsi_dxl * Lx
@@ -613,11 +610,13 @@ program smooth_laplacian_sem
      call open_file_adios_read(myadios_val_file, myadios_val_group, trim(input_file))
      ! ADIOS array name
      ! determines if parameter name is for a kernel
+      is_kernel = .false.
       if (len_trim(kernel_name) > 3) then
         if (kernel_name(len_trim(kernel_name)-2:len_trim(kernel_name)) == '_kl') then
           is_kernel = .true.
         endif
       endif
+      is_hess = .false.
       if (len_trim(kernel_name) > 5) then
         if (kernel_name(1:5) == 'hess_') then
           is_hess = .true.
