@@ -125,7 +125,7 @@ program smooth_laplacian_sem
   ! timing
   double precision, external :: wtime
 
-  ! hessian
+  ! Hessian
   logical :: is_hess
 
   ! ADIOS
