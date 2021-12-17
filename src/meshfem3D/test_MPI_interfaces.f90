@@ -315,8 +315,8 @@
 
     ! checks valence
     if (valence(iglob) /= nint(test_flag_vector(1,iglob)) .or. &
-       valence(iglob) /= nint(test_flag_vector(2,iglob)) .or. &
-       valence(iglob) /= nint(test_flag_vector(3,iglob))) then
+        valence(iglob) /= nint(test_flag_vector(2,iglob)) .or. &
+        valence(iglob) /= nint(test_flag_vector(3,iglob))) then
       print *,'Error test MPI: rank',myrank,'valence:',valence(iglob),'flag:',test_flag_vector(:,:)
       call exit_mpi(myrank,'Error test MPI crust mantle valence')
     endif

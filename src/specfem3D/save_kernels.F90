@@ -1590,11 +1590,16 @@
            kappa_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
            rhonotprime_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
   if (ier /= 0 ) stop 'Error allocating transverse kernels bulk_c_kl_crust_mantle,...'
+  mu_kl_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  kappa_kl_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  rhonotprime_kl_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
 
   ! bulk velocity kernels
   allocate(bulk_c_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
            bulk_beta_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
   if (ier /= 0 ) stop 'Error allocating transverse kernels bulk_c_kl_crust_mantle,...'
+  bulk_c_kl_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  bulk_beta_kl_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
 
   ! crust_mantle
   do ispec = 1, NSPEC_CRUST_MANTLE_ADJOINT
@@ -1620,7 +1625,7 @@
           ! kernels rho^prime, beta, alpha
           rho_kl_crust_mantle(i,j,k,ispec) = (rho_kl + alpha_kl + beta_kl) * scale_kl
           beta_kl_crust_mantle(i,j,k,ispec) = &
-            2._CUSTOM_REAL * (beta_kl - FOUR_THIRDS * mul * alpha_kl / kappal) * scale_kl
+            2._CUSTOM_REAL * (beta_kl - FOUR_THIRDS * mul / kappal * alpha_kl) * scale_kl
           alpha_kl_crust_mantle(i,j,k,ispec) = &
             2._CUSTOM_REAL * (1 +  FOUR_THIRDS * mul / kappal) * alpha_kl * scale_kl
 
