@@ -49,7 +49,12 @@ by Dennis McRitchie (Princeton University, USA)
  ..
 */
 
+// strndup is non-standard C function
+// to avoid warning when compiling with -std=c99 flag
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
+
 #include "config.h"
 #include <stdlib.h>
 #include <stdio.h>

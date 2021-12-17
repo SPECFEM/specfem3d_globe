@@ -309,7 +309,7 @@ module specfem_par
   double precision, allocatable, dimension(:) :: stlat,stlon,stele,stbur
   double precision :: receiver_final_distance_max
 
-  character(len=MAX_LENGTH_STATION_NAME), dimension(:), allocatable  :: station_name
+  character(len=MAX_LENGTH_STATION_NAME), dimension(:), allocatable :: station_name
   character(len=MAX_LENGTH_NETWORK_NAME), dimension(:), allocatable :: network_name
   character(len=MAX_STRING_LEN) :: STATIONS_FILE
 

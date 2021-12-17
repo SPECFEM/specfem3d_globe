@@ -27,6 +27,13 @@
 !=====================================================================
 */
 
+// strcasestr, strndup are non-standard C functions
+// to avoid warning when compiling with -std=c99 flag
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+#include <string.h>
+
 #include "mesh_constants_gpu.h"
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -616,7 +623,7 @@ void build_kernels (void) {
   }
 
   // debug
-  printf("building OpenCL kernels: parameters = %s \n",parameters);
+  //printf("debug: building OpenCL kernels: parameters = %s \n",parameters);
 
   // adds kernels as const char definitions
   #include "kernel_inc_cl.c"
@@ -1308,6 +1315,9 @@ static void output_hip_device_infos(int myrank){
 
 static char *trim_and_default(char *s, int max_string_length)
 {
+  // debug
+  //printf("debug: trim_and_default string: %s has length %li \n",s,strlen(s));
+
   // trim before
   while (*s != '\0' && isspace(*s)) { s++; }
 
@@ -1319,8 +1329,9 @@ static char *trim_and_default(char *s, int max_string_length)
   //       giving a string "NVIDIA   Geforce", instead of just "NVIDIA" and "Geforce"
   //       here we assume that maximum length of GPU_PLATFORM is 128 characters
   // todo - find better way to avoid this?
+
   // debug
-  //printf("string: %s has length %i \n",s,strlen(s));
+  //printf("debug: trim_and_default new string: %s has length %li \n",s,strlen(s));
 
   int len = strlen(s);
   if (len > max_string_length) len = max_string_length;
@@ -1336,7 +1347,7 @@ static char *trim_and_default(char *s, int max_string_length)
   }
 
   // debug
-  //printf("new string: %s has length %i \n",s,strlen(s));
+  //printf("debug: trim_and_default final string: %s has length %li \n",s,strlen(s));
 
   return s;
 }
@@ -1352,16 +1363,28 @@ void FC_FUNC_ (initialize_gpu_device,
 
   TRACE ("initialize_device");
 
-  const int STRING_LENGTH = 128; // GPU_PLATFORM and GPU_DEVICE string length (as defined in shared_par.f90 module)
+  // GPU_PLATFORM and GPU_DEVICE string length (as defined in shared_par.f90 module)
+  const int STRING_LENGTH = 128;
 
   char *platform_filter;
   char *device_filter;
 
+  // checks strings
+  if (platform_f == NULL) { printf("error invalid platform string in initialize_gpu_device()\nexiting..."); exit(1); }
+  if (device_f == NULL) { printf("error invalid device string in initialize_gpu_device()\nexiting..."); exit(1); }
+
+  // rank
+  int myrank = *myrank_f;
+
+  // debug
+  //printf("debug: initialize_gpu_device rank %i - platform ***%s*** %li device ***%s*** %li \n",myrank,platform_f,strlen(platform_f),device_f,strlen(device_f));
+
   // copy strings (avoids buffer overflow)
   platform_filter = strndup(platform_f, STRING_LENGTH);
-  device_filter = strndup(device_f, STRING_LENGTH);
+  if (platform_filter == NULL){ printf("error copying string %s\nexiting...",platform_f); exit(1); }
 
-  int myrank = *myrank_f;
+  device_filter = strndup(device_f, STRING_LENGTH);
+  if (device_filter == NULL){ printf("error copying string %s\n, exiting...",device_f); exit(1); }
 
   // flags to run initialization and output device infos
   int do_init = 1;

@@ -27,6 +27,7 @@
 !=====================================================================
 */
 
+// memcpy C function
 #include <string.h>
 
 #include "mesh_constants_gpu.h"
