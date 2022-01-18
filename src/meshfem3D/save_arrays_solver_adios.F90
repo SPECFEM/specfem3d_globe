@@ -290,6 +290,12 @@
     call open_file_adios_write_append(myadios_file,myadios_group,outputname,group_name)
   endif
 
+  ! note: adios2 increases step numbers on variables when appending to a file.
+  !       this can lead to issues when reading back values for the next regions, for example, reg2/nspec
+  !       to work-around this, we explicitly call begin_step() and end_step() for writing out region1/2/3 data
+  call write_adios_begin_step(myadios_file)
+
+  ! sets group size
   call set_adios_group_size(myadios_file,group_size_inc)
 
   ! mesh topology
@@ -539,6 +545,9 @@
     if (minval(rmass_ocean_load) <= 0._CUSTOM_REAL) &
         call exit_MPI(myrank,'negative mass matrix term for the oceans')
   endif
+
+  ! end step to indicate output is completed. ADIOS2 can do I/O
+  call write_adios_end_step(myadios_file)
 
   !--- perform the actual write to disk
   ! Reset the path to its original value to avoid bugs.

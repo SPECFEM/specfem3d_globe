@@ -61,6 +61,8 @@ module adios_helpers_mod
   public :: read_adios_array_gll_check
   public :: read_adios_scalar
   public :: read_adios_perform
+  public :: read_adios_begin_step
+  public :: read_adios_end_step
   public :: read_adios_schedule_array
 
   ! from adios_helpers_writers_mod

@@ -45,6 +45,8 @@ module adios_helpers_readers_mod
 
   ! reading
   public :: read_adios_perform
+  public :: read_adios_begin_step
+  public :: read_adios_end_step
 
   public :: read_adios_array
   interface read_adios_array
@@ -133,6 +135,81 @@ contains
   end subroutine read_adios_perform
 
 
+!
+!---------------------------------------------------------------------------------
+!
+
+  subroutine read_adios_begin_step(adios_handle)
+
+  implicit none
+
+#if defined(USE_ADIOS)
+  integer(kind=8), intent(in) :: adios_handle
+#elif defined(USE_ADIOS2)
+  type(adios2_engine), intent(in) :: adios_handle
+#endif
+  ! local parameters
+  integer :: ier
+
+  TRACE_ADIOS_L2('read_adios_begin_step')
+
+#if defined(USE_ADIOS)
+  ! ADIOS 1
+  ! version 1 has no begin_step routine
+
+  ! just check to avoid compiler warning
+  if (adios_handle == 0) stop 'Error invalid adios handle in read_adios_begin_step'
+
+  ! to avoid compiler warning
+  ier = 0
+
+#elif defined(USE_ADIOS2)
+  ! ADIOS 2
+  ! moves to next step, starts at 0
+  call adios2_begin_step(adios_handle, adios2_step_mode_read, ier)
+  call check_adios_err(ier,"Error adios2 in read_adios_begin_step() routine")
+
+#endif
+
+  end subroutine read_adios_begin_step
+
+!
+!---------------------------------------------------------------------------------
+!
+
+  subroutine read_adios_end_step(adios_handle)
+
+  implicit none
+
+#if defined(USE_ADIOS)
+  integer(kind=8), intent(in) :: adios_handle
+#elif defined(USE_ADIOS2)
+  type(adios2_engine), intent(in) :: adios_handle
+#endif
+  ! local parameters
+  integer :: ier
+
+  TRACE_ADIOS_L2('read_adios_end_step')
+
+#if defined(USE_ADIOS)
+  ! ADIOS 1
+  ! version 1 has no end_step routine
+
+  ! just check
+  if (adios_handle == 0) stop 'Invalid adios file handle in read_adios_end_step'
+
+  ! to avoid compiler warning
+  ier = 0
+
+#elif defined(USE_ADIOS2)
+  ! ADIOS 2
+  ! end step to indicate output is completed. ADIOS2 can do I/O
+  call adios2_end_step(adios_handle, ier)
+  call check_adios_err(ier,"Error adios2 in read_adios_end_step() routine")
+
+#endif
+
+  end subroutine read_adios_end_step
 
 !---------------------------------------------------------------------------------
 !

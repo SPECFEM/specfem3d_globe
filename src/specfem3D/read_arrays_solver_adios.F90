@@ -100,7 +100,7 @@ subroutine read_arrays_solver_adios(iregion_code, &
   integer(kind=8), dimension(1) :: start, count
 
   integer(kind=8), dimension(256),target :: selections
-  integer :: sel_num, i
+  integer :: sel_num, i, istep
   integer(kind=8), pointer :: sel => null()
 
   character(len=128) :: region_name, region_name_scalar
@@ -126,8 +126,26 @@ subroutine read_arrays_solver_adios(iregion_code, &
   ! Setup the ADIOS library to read the file
   call open_file_adios_read_and_init_method(myadios_file,myadios_group,file_name)
 
+  ! note: adios2 increases step numbers on variables when appending to a file.
+  !       this can lead to issues when reading back values for the next regions, for example, reg2/nspec
+  !       to work-around this, we explicitly call begin_step() and end_step() for writing out region1/2/3 data
+  !
+  !       here, we will need to skip these steps again from previous regions.
+  !       we thus call begin_step explicitly for reading in region1/2/3
+  ! skips steps from previous regions
+  do istep = 1,iregion_code-1
+    ! start step
+    call read_adios_begin_step(myadios_file)
+    ! ends step for this region
+    call read_adios_end_step(myadios_file)
+  enddo
+
+  ! starts step for this region
+  call read_adios_begin_step(myadios_file)
+
   ! debug
   !call show_adios_file_variables(myadios_file,myadios_group,file_name)
+  !call synchronize_all()
 
   ! read coordinates of the mesh
   call read_adios_scalar(myadios_file, myadios_group, myrank, trim(region_name) // "nspec",lnspec)
@@ -400,6 +418,9 @@ subroutine read_arrays_solver_adios(iregion_code, &
     call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
                                    trim(region_name) // "rmass_ocean_load/array", rmass_ocean_load)
   endif
+
+  ! ends step for this region
+  call read_adios_end_step(myadios_file)
 
   ! perform actual reading
   call read_adios_perform(myadios_file)

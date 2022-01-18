@@ -422,6 +422,9 @@ contains
     ! Set default parameters
     call adios2_set_parameters(adios_group, ADIOS2_ENGINE_PARAMS_DEFAULT, ier)
     call check_adios_err(ier,"Error setting parameters for ADIOS2 IO group in open_file_adios_read_and_init_method()")
+  else
+    ! debug
+    !print *,'debug adios: open_file_adios_read_and_init_method() has valid adios group'
   endif
 
   ! synchronizes all processes to make sure engine & parameters has been set for all procs
@@ -789,7 +792,7 @@ contains
   ! local parameters
   integer :: ier
 
-  TRACE_ADIOS('close_file_adios_read_and_finalize')
+  TRACE_ADIOS('close_file_adios_read_and_finalize_method')
 
 #if defined(USE_ADIOS)
   ! ADIOS 1
@@ -808,6 +811,28 @@ contains
   ! no special case, file just has been opened with adios2_mode_read flag
   call adios2_close(adios_handle, ier)
   call check_adios_err(ier,"Error closing adios file close_file_adios_read_and_finalize() routine")
+
+  ! note: closing the file will not delete the adios io yet.
+  !       thus, the adios group handlers could still be valid when opening a file with the init method next time.
+  !       this leads to issues when used together with begin/end steps, producing adios2 errors like:
+  !         ..
+  !         ERROR: variable reg2/rhostore/offset exists in IO object Reader, in call to DefineVariable
+  !         ..
+  !
+  !       here, we explicitly remove all ios when called with this finalize method, to recreate the groups
+  !       in a next new open-and-init call.
+  !
+  ! removes io handlers created with adios2_declare_io()
+  if (myadios_group%valid .or. myadios_fwd_group%valid .or. myadios_val_group%valid) then
+    ! removes ios
+    call adios2_remove_all_ios(myadios2_obj, ier)
+    call check_adios_err(ier,"Error removing all ios in close_file_adios_read_and_finalize() routine")
+
+    ! reset groups
+    myadios_group%valid = .false.
+    myadios_fwd_group%valid = .false.
+    myadios_val_group%valid = .false.
+  endif
 
 #endif
 
@@ -1343,6 +1368,13 @@ contains
   ! local parameters
   integer :: ier
   integer :: variable_count, attribute_count
+
+  ! user output
+  if (myrank_adios == 0) then
+    print *
+    print *,'show adios file variables: ',trim(filename)
+    print *
+  endif
 
   ! file inquiry
 #if defined(USE_ADIOS)
