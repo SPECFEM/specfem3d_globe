@@ -257,9 +257,9 @@ void compute_element_ic_gravity(const int tx, const int iglob, const __global fl
   *(sigma_zy) = *(sigma_zy) - ((sz_l) * (gyl));\n\
 \n\
   factor = (jacobianl) * (wgll_cube[tx]);\n\
-  rho_s_H1[0] = (factor) * ((sx_l) * (Hxxl) + (sy_l) * (Hxyl) + (sz_l) * (Hxzl));\n\
-  rho_s_H2[0] = (factor) * ((sx_l) * (Hxyl) + (sy_l) * (Hyyl) + (sz_l) * (Hyzl));\n\
-  rho_s_H3[0] = (factor) * ((sx_l) * (Hxzl) + (sy_l) * (Hyzl) + (sz_l) * (Hzzl));\n\
+  *(rho_s_H1) = (factor) * ((sx_l) * (Hxxl) + (sy_l) * (Hxyl) + (sz_l) * (Hxzl));\n\
+  *(rho_s_H2) = (factor) * ((sx_l) * (Hxyl) + (sy_l) * (Hyyl) + (sz_l) * (Hyzl));\n\
+  *(rho_s_H3) = (factor) * ((sx_l) * (Hxzl) + (sy_l) * (Hyzl) + (sz_l) * (Hzzl));\n\
 }\n\
 \n\
 #if __OPENCL_C_VERSION__ && __OPENCL_C_VERSION__ >= 120\n\
@@ -1030,9 +1030,9 @@ void compute_element_ic_gravity(const int tx, const int iglob, const __global fl
   *(sigma_zy) = *(sigma_zy) - ((sz_l) * (gyl));\n\
 \n\
   factor = (jacobianl) * (wgll_cube[tx]);\n\
-  rho_s_H1[0] = (factor) * ((sx_l) * (Hxxl) + (sy_l) * (Hxyl) + (sz_l) * (Hxzl));\n\
-  rho_s_H2[0] = (factor) * ((sx_l) * (Hxyl) + (sy_l) * (Hyyl) + (sz_l) * (Hyzl));\n\
-  rho_s_H3[0] = (factor) * ((sx_l) * (Hxzl) + (sy_l) * (Hyzl) + (sz_l) * (Hzzl));\n\
+  *(rho_s_H1) = (factor) * ((sx_l) * (Hxxl) + (sy_l) * (Hxyl) + (sz_l) * (Hxzl));\n\
+  *(rho_s_H2) = (factor) * ((sx_l) * (Hxyl) + (sy_l) * (Hyyl) + (sz_l) * (Hyzl));\n\
+  *(rho_s_H3) = (factor) * ((sx_l) * (Hxzl) + (sy_l) * (Hyzl) + (sz_l) * (Hzzl));\n\
 }\n\
 \n\
 #if __OPENCL_C_VERSION__ && __OPENCL_C_VERSION__ >= 120\n\

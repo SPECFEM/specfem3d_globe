@@ -97,9 +97,9 @@ module BOAST
 
       # precompute vector
       print factor === jacobianl * wgll_cube[tx]
-      print rho_s_H[0][0] === factor * (s_l[0]*hxxl + s_l[1]*hxyl + s_l[2]*hxzl)
-      print rho_s_H[1][0] === factor * (s_l[0]*hxyl + s_l[1]*hyyl + s_l[2]*hyzl)
-      print rho_s_H[2][0] === factor * (s_l[0]*hxzl + s_l[1]*hyzl + s_l[2]*hzzl)
+      print rho_s_H[0].dereference === factor * (s_l[0]*hxxl + s_l[1]*hxyl + s_l[2]*hxzl)
+      print rho_s_H[1].dereference === factor * (s_l[0]*hxyl + s_l[1]*hyyl + s_l[2]*hyzl)
+      print rho_s_H[2].dereference === factor * (s_l[0]*hxzl + s_l[1]*hyzl + s_l[2]*hzzl)
     }
     return p
   end
