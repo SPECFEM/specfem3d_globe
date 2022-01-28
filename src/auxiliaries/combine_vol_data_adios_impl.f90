@@ -39,18 +39,19 @@ contains
 subroutine print_usage_adios()
 
   implicit none
-  print *, 'Usage: '
+  print *, ' Usage: '
   print *, '   xcombine_data slice_list varname var_file mesh_file output_dir high/low-resolution region'
   print *
-  print *, '* possible varnames are '
-  print *, '   rho, vp, vs, kappastore, mustore, alpha_kl, beta_kl, etc'
-  print *
-  print *, '   that are stored in the local directory as real(kind=CUSTOM_REAL) varname(NGLLX,NGLLY,NGLLZ,NSPEC)  '
-  print *, '   in a datafile var_file.bp'
-  print *
-  print *, '* mesh_files: are used to link variable to the topology (e.g. DATABASES_MPI/solver_data.bp)'
-  print *, '* output_dir: indicates where var_name.vtk will be written'
-  print *, '* give 0 for low resolution and 1 for high resolution'
+  print *, ' with'
+  print *, '   slice_list   - text file containing slice numbers to combine (or use name "all" for all slices)'
+  print *, '   varname      - possible varnames are: '
+  print *, '                    rho, vp, vs, kappastore, mustore, alpha_kl, beta_kl, etc.'
+  print *, '   var_file     - datafile that holds array, as real(kind=CUSTOM_REAL):: varname(NGLLX,NGLLY,NGLLZ,NSPEC),'
+  print *, '                  (e.g. OUTPUT_FILES/kernels.bp)'
+  print *, '   mesh_file    - are used to link variable to the topology (e.g. DATABASES_MPI/solver_data.bp)'
+  print *, '   output_dir   - indicates where var_name.vtk will be written'
+  print *, '   high/low res - give 0 for low resolution and 1 for high resolution'
+  print *, '   region       - (optional) region number, only use 1 == crust/mantle, 2 == outer core, 3 == inner core'
   print *
 
   stop ' Reenter command line options'
@@ -107,7 +108,7 @@ subroutine read_args_adios(arg, MAX_NUM_NODES, node_list, num_node, &
   if (iregion > 3 .or. iregion < 0) stop 'Iregion must be = 0,1,2,3'
 
   ! gets slice list
-  if (trim(slice_list_name) == 'all') then
+  if (trim(slice_list_name) == 'all' .or. trim(slice_list_name) == '-1') then
     ! combines all slices
     do i = 0,NPROCTOT-1
       num_node = num_node + 1

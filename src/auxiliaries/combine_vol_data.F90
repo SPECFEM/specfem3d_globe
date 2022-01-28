@@ -239,7 +239,7 @@ program combine_vol_data
   ! get slices id
   num_node = 0
   slice_list_name = trim(arg(1))
-  if (trim(slice_list_name) == 'all') then
+  if (trim(slice_list_name) == 'all' .or. trim(slice_list_name) == '-1') then
     ! uses all slices to combine
     num_node = NPROCTOT_VAL
     allocate(node_list(num_node),nspec_list(num_node),nglob_list(num_node), stat=ier)
