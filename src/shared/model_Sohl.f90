@@ -115,7 +115,8 @@
     IFLAG_CRUST,IFLAG_220_80,IFLAG_670_220,IFLAG_80_MOHO,IFLAG_MANTLE_NORMAL, &
     IFLAG_TOP_CENTRAL_CUBE,IFLAG_INNER_CORE_NORMAL,IFLAG_OUTER_CORE_NORMAL, &
     IFLAG_BOTTOM_CENTRAL_CUBE,IFLAG_IN_FICTITIOUS_CUBE,IFLAG_MIDDLE_CENTRAL_CUBE, &
-    SUPPRESS_CRUSTAL_MESH,REFERENCE_MODEL_SOHL,REFERENCE_MODEL_SOHL_B
+    SUPPRESS_CRUSTAL_MESH, &
+    REFERENCE_MODEL_SOHL,REFERENCE_MODEL_SOHL_B,REFERENCE_MODEL_CASE65TAY
 
   use shared_parameters, only: R_PLANET,RHOAV,REFERENCE_1D_MODEL,ONE_CRUST
 
@@ -202,8 +203,11 @@
 
 ! determines material properties
 
+! note: this routine will be called for gravity/no-gravity to set density gradients and gravitational effects, also for
+!       moon models other than Sohl, like 1D_case65TAY. in that case, we'll take the Sohl A model as reference.
+!
   select case(REFERENCE_1D_MODEL)
-  case (REFERENCE_MODEL_SOHL)
+  case (REFERENCE_MODEL_SOHL,REFERENCE_MODEL_CASE65TAY)
     ! Model A
     !
     !--- inner core
