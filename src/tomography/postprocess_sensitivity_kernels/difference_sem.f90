@@ -49,12 +49,13 @@ program difference_sem
   character(len=MAX_STRING_LEN) :: outputdir,kernel_name
   character(len=20) :: reg_name
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: sem_data,sem_data_2
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: sem_data_1,sem_data_2
 
   real(kind=CUSTOM_REAL) :: min_val,max_val
   real(kind=CUSTOM_REAL) :: min_val_all,max_val_all
   real(kind=CUSTOM_REAL) :: min_rel,max_rel
   real(kind=CUSTOM_REAL) :: min_rel_all,max_rel_all
+  real(kind=CUSTOM_REAL) :: norm_m,norm_total
 
   integer :: i,iproc,ier
   integer :: iregion,ir,irs,ire
@@ -131,12 +132,24 @@ program difference_sem
   input2dir = trim(arg(3))
   outputdir = trim(arg(4))
 
+  ! in case kernel name is given as **_crust_mantle, e.g., "betav_kl_crust_mantle",
+  ! we use proc***_betav_kl_crust_mantle.bin instead of proc***_reg1_betav_kernel.bin
+  if (index(kernel_name,"_crust_mantle") > 0) then
+    irs = 1
+    ire = 1
+  else if (index(kernel_name,"_outer_core") > 0) then
+    irs = 2
+    ire = 2
+  else if (index(kernel_name,"_inner_core") > 0) then
+    irs = 3
+    ire = 3
+  endif
+
   ! loops over slices
   min_val_all = 0.0
   max_val_all = 0.0
   min_rel_all = 0.0
   max_rel_all = 0.0
-
 
   ! user output
   if (myrank == 0) then
@@ -155,7 +168,7 @@ program difference_sem
   endif
 
   ! allocates arrays
-  allocate(sem_data(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE), &
+  allocate(sem_data_1(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE), &
            sem_data_2(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),stat=ier)
   if (ier /= 0) stop 'Error allocating sem_data arrays'
 
@@ -163,7 +176,7 @@ program difference_sem
     if (myrank == 0) write(*,*) '----------- Region ', ir, '----------------'
 
     ! initializes
-    sem_data(:,:,:,:) = 0.0_CUSTOM_REAL
+    sem_data_1(:,:,:,:) = 0.0_CUSTOM_REAL
     sem_data_2(:,:,:,:) = 0.0_CUSTOM_REAL
 
     ! sets number of elements
@@ -186,8 +199,17 @@ program difference_sem
 
     ! process file name
     iproc = myrank
-    write(file1name,'(a,i6.6,a)') trim(input1dir)//'/proc',iproc,'_'//trim(reg_name)//trim(kernel_name)//'.bin'
-    write(file2name,'(a,i6.6,a)') trim(input2dir)//'/proc',iproc,'_'//trim(reg_name)//trim(kernel_name)//'.bin'
+
+    if ( (index(kernel_name,"_crust_mantle") > 0) .or. &
+         (index(kernel_name,"_outer_core") > 0) .or. &
+         (index(kernel_name,"_inner_core") > 0) ) then
+      ! file names like "proc***_betav_kl_crust_mantle.bin" instead of "proc***_reg1_betav_kernel.bin"
+      write(file1name,'(a,i6.6,a)') trim(input1dir)//'/proc',iproc,'_'//trim(kernel_name)//'.bin'
+      write(file2name,'(a,i6.6,a)') trim(input2dir)//'/proc',iproc,'_'//trim(kernel_name)//'.bin'
+    else
+      write(file1name,'(a,i6.6,a)') trim(input1dir)//'/proc',iproc,'_'//trim(reg_name)//trim(kernel_name)//'.bin'
+      write(file2name,'(a,i6.6,a)') trim(input2dir)//'/proc',iproc,'_'//trim(reg_name)//trim(kernel_name)//'.bin'
+    endif
 
     ! reads in file from first directory
     if (myrank == 0) write(*,*) '  data_1: ',trim(file1name)
@@ -196,7 +218,7 @@ program difference_sem
       print *,'Error opening file: ',trim(file1name)
       stop 'Error opening first data file'
     endif
-    read(IIN) sem_data(:,:,:,1:nspec)
+    read(IIN) sem_data_1(:,:,:,1:nspec)
     close(IIN)
 
     ! reads in file from second directory
@@ -211,7 +233,7 @@ program difference_sem
 
     ! user output
     if (myrank == 0) then
-      write(*,*) '  min/max data_1 value: ',minval(sem_data(:,:,:,1:nspec)),maxval(sem_data(:,:,:,1:nspec))
+      write(*,*) '  min/max data_1 value: ',minval(sem_data_1(:,:,:,1:nspec)),maxval(sem_data_1(:,:,:,1:nspec))
       write(*,*) '  min/max data_2 value: ',minval(sem_data_2(:,:,:,1:nspec)),maxval(sem_data_2(:,:,:,1:nspec))
       write(*,*)
     endif
@@ -228,17 +250,21 @@ program difference_sem
       stop 'Error opening output data file'
     endif
 
-    ! takes the difference
-    sem_data(:,:,:,1:nspec) = sem_data(:,:,:,1:nspec) - sem_data_2(:,:,:,1:nspec)
+    ! takes the difference delta = d_1 - d_2
+    sem_data_1(:,:,:,1:nspec) = sem_data_1(:,:,:,1:nspec) - sem_data_2(:,:,:,1:nspec)
 
-    write(IOUT) sem_data(:,:,:,1:nspec)
+    write(IOUT) sem_data_1(:,:,:,1:nspec)
     close(IOUT)
 
     ! min/max
-    min_val = minval(sem_data(:,:,:,1:nspec))
-    max_val = maxval(sem_data(:,:,:,1:nspec))
+    min_val = minval(sem_data_1(:,:,:,1:nspec))
+    max_val = maxval(sem_data_1(:,:,:,1:nspec))
     call min_all_cr(min_val,min_val_all)
     call max_all_cr(max_val,max_val_all)
+
+    ! norm (v^T * v)
+    norm_m = sum( sem_data_1(:,:,:,1:nspec) * sem_data_1(:,:,:,1:nspec) )
+    call sum_all_cr(norm_m,norm_total)
 
     ! stores relative difference (k1 - k2)/ k2 with respect to second input file
     write(file1name,'(a,i6.6,a)') trim(outputdir)//'/proc',iproc,'_'//trim(reg_name)//trim(kernel_name)//'_diff_relative.bin'
@@ -251,22 +277,23 @@ program difference_sem
 
     ! relative difference (k1 - k2)/ k2 with respect to second input file
     where( sem_data_2(:,:,:,1:nspec) /= 0.0_CUSTOM_REAL)
-      sem_data(:,:,:,1:nspec) = sem_data(:,:,:,1:nspec) / sem_data_2(:,:,:,1:nspec)
+      sem_data_1(:,:,:,1:nspec) = sem_data_1(:,:,:,1:nspec) / sem_data_2(:,:,:,1:nspec)
     elsewhere
-      sem_data(:,:,:,1:nspec) = 0.0_CUSTOM_REAL
+      sem_data_1(:,:,:,1:nspec) = 0.0_CUSTOM_REAL
     endwhere
 
-    write(IOUT) sem_data(:,:,:,1:nspec)
+    write(IOUT) sem_data_1(:,:,:,1:nspec)
     close(IOUT)
 
     ! min/max of relative values
-    min_rel = minval(sem_data(:,:,:,1:nspec))
-    max_rel = maxval(sem_data(:,:,:,1:nspec))
+    min_rel = minval(sem_data_1(:,:,:,1:nspec))
+    max_rel = maxval(sem_data_1(:,:,:,1:nspec))
     call min_all_cr(min_rel,min_rel_all)
     call max_all_cr(max_rel,max_rel_all)
 
     ! output
     if (myrank == 0) then
+      write(*,*) '  norm value            : ',norm_m
       write(*,*) '  min/max value         : ',min_val,max_val
       write(*,*) '  min/max relative value: ',min_rel,max_rel
       write(*,*)
@@ -280,6 +307,8 @@ program difference_sem
     write(*,*) 'statistics:'
     write(*,*) '  total min/max         : ',min_val_all,max_val_all
     write(*,*) '  total relative min/max: ',min_rel_all,max_rel_all
+    write(*,*)
+    write(*,*) '  total norm of difference : ',norm_total
     write(*,*)
     write(*,*) 'done writing all difference and relative difference files'
     write(*,*) 'see output directory: ',trim(outputdir)
