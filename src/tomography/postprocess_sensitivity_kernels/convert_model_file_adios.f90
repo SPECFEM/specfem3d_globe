@@ -40,10 +40,8 @@ program convert_model_file_adios
 
   implicit none
 
-  !-------------------------------------------------------------------
-  ! USER PARAMETERS
-  ! ADIOS model file name
-  character(len=MAX_STRING_LEN) :: model_adios_file
+  ! ADIOS (model) file name
+  character(len=MAX_STRING_LEN) :: adios_file
 
   ! model type
   ! isotropic model parameters (vp,vs,rho) or
@@ -55,14 +53,10 @@ program convert_model_file_adios
   ! shear attenuation (Qmu)
   logical :: HAS_ATTENUATION_Q
 
-  !-------------------------------------------------------------------
-
   ! model files
   integer, parameter :: NSPEC = NSPEC_CRUST_MANTLE
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: &
-    model_par
-
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: model_par
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: model
 
   ! mpi
@@ -77,10 +71,11 @@ program convert_model_file_adios
 
   integer :: i,iker,icount
   logical :: exist,exist_all
+  logical :: is_model_file_conversion
 
   ! input arguments
   character(len=MAX_STRING_LEN) :: arg
-  character(len=MAX_STRING_LEN) :: input_model_dir, output_model_dir
+  character(len=MAX_STRING_LEN) :: input_dir, output_dir, var_name
   integer :: convert_format
 
   ! adios
@@ -110,14 +105,16 @@ program convert_model_file_adios
   call synchronize_all()
 
   ! reads input arguments
-  do i = 1, 3
+  do i = 1, 4
     call get_command_argument(i,arg)
 
     ! usage info
-    if (len_trim(arg) == 0) then
+    if (i <= 3 .and. len_trim(arg) == 0) then
       if (myrank == 0) then
         print *, ' '
         print *, ' Usage: xconvert_model_file_adios type MODEL_INPUT_DIR/ MODEL_OUTPUT_DIR/ '
+        print *, '        or'
+        print *, '        xconvert_model_file_adios type varname var_file output_dir'
         print *, ' '
         print *, ' with'
         print *, '   type = 1 - convert from ADIOS to (old) binaries'
@@ -125,54 +122,90 @@ program convert_model_file_adios
         print *, '   MODEL_INPUT_DIR/  - directory which holds input model file(s)'
         print *, '   MODEL_OUTPUT_DIR/ - directory which will hold output model file(s)'
         print *, ' '
+        print *, 'or extracting a single array from an ADIOS input files and output as binary file'
+        print *, '   varname    - parameter array name (e.g., betav_kl_crust_mantle)'
+        print *, '   var_file   - input file (e.g., kernels.bp)'
+        print *, '   output_dir - output directory to create extracted binary file (e.g., proc***_betav_kl_crust_mantle.bin)'
+        print *, ' '
       endif
       stop ' Reenter command line options'
     endif
 
-    select case (i)
-    case (1)
-      read(arg(1:len_trim(arg)),*) convert_format
-    case (2)
-      input_model_dir = trim(arg)
-    case (3)
-      output_model_dir = trim(arg)
-    end select
+    if (command_argument_count() == 3) then
+      ! converts model file model_gll.bp
+      is_model_file_conversion = .true.
+      ! gets inputs
+      select case (i)
+      case (1)
+        read(arg(1:len_trim(arg)),*) convert_format
+      case (2)
+        input_dir = trim(arg)
+      case (3)
+        output_dir = trim(arg)
+      end select
+    else
+      ! extracts single array from adios file
+      is_model_file_conversion = .false.
+      ! gets inputs
+      select case (i)
+      case (1)
+        read(arg(1:len_trim(arg)),*) convert_format
+      case (2)
+        var_name = trim(arg)
+      case (3)
+        model_filename_adios = trim(arg)
+      case (4)
+        output_dir = trim(arg)
+      end select
+    endif
   enddo
 
   ! checks arguments
   if (convert_format /= 1 .and. convert_format /= 2) then
     print *,'Error: invalid format type',convert_format
-    stop ' Reenter format type in command line options'
+    stop 'Reenter format type in command line options'
+  endif
+  ! checks when extracting only single array
+  if (.not. is_model_file_conversion) then
+    ! only works to extract an array from adios file to binary
+    if (convert_format /= 1) then
+      print *,'Converting a single array only works from ADIOS to binary for now.'
+      print *,'Please change format type and try again...'
+      stop 'Reenter format type in command line options'
+    endif
   endif
   call synchronize_all()
 
   ! sets adios model file name
-  model_adios_file = get_adios_filename('model_gll')
+  if (is_model_file_conversion) then
+    ! sets file name, e.g. model_gll.bp
+    adios_file = get_adios_filename('model_gll')
 
-  if ( convert_format == 1) then
-    ! from adios to old binaries
-    model_filename_adios = trim(input_model_dir) // '/' // trim(model_adios_file)
-  else
-    ! from old binaries to adios
-    model_filename_adios = trim(output_model_dir) // '/' // trim(model_adios_file)
+    if ( convert_format == 1) then
+      ! from adios to old binaries
+      model_filename_adios = trim(input_dir) // '/' // trim(adios_file)
+    else
+      ! from old binaries to adios
+      model_filename_adios = trim(output_dir) // '/' // trim(adios_file)
+    endif
+
+    ! defines model parameters
+    ! note: adds space at endings to equal number of characters
+    !       to avoid compiler error: "Different shape for array assignment.."
+    model_name(1:3) = (/character(len=16) :: "reg1/vp ","reg1/vs ","reg1/rho"/)
+    fname(1:3) = (/character(len=16) :: "vp ","vs ","rho"/)
+    ! tiso
+    model_name(4:8) = (/character(len=16) :: "reg1/vpv","reg1/vph","reg1/vsv","reg1/vsh","reg1/eta"/)
+    fname(4:8) = (/character(len=16) :: "vpv","vph","vsv","vsh","eta"/)
+    ! azi
+    model_name(9:10) = (/character(len=16) :: "reg1/Gc_prime","reg1/Gs_prime"/)
+    fname(9:10) = (/character(len=16) :: "Gc_prime","Gs_prime"/)
+    model_name(11) = "reg1/mu0"
+    fname(11) = "mu0"
+    ! adds shear attenuation
+    model_name(12) = "reg1/qmu"
+    fname(12) = "qmu"
   endif
-
-  ! defines model parameters
-  ! note: adds space at endings to equal number of characters
-  !       to avoid compiler error: "Different shape for array assignment.."
-  model_name(1:3) = (/character(len=16) :: "reg1/vp ","reg1/vs ","reg1/rho"/)
-  fname(1:3) = (/character(len=16) :: "vp ","vs ","rho"/)
-  ! tiso
-  model_name(4:8) = (/character(len=16) :: "reg1/vpv","reg1/vph","reg1/vsv","reg1/vsh","reg1/eta"/)
-  fname(4:8) = (/character(len=16) :: "vpv","vph","vsv","vsh","eta"/)
-  ! azi
-  model_name(9:10) = (/character(len=16) :: "reg1/Gc_prime","reg1/Gs_prime"/)
-  fname(9:10) = (/character(len=16) :: "Gc_prime","Gs_prime"/)
-  model_name(11) = "reg1/mu0"
-  fname(11) = "mu0"
-  ! adds shear attenuation
-  model_name(12) = "reg1/qmu"
-  fname(12) = "qmu"
 
   ! user output
   if (myrank == 0) then
@@ -183,8 +216,14 @@ program convert_model_file_adios
     else
       print *, 'conversion type : ',convert_format,' - converts from binary files to adios'
     endif
-    print *, 'input  directory: ',trim(input_model_dir)
-    print *, 'output directory: ',trim(output_model_dir)
+    if (is_model_file_conversion) then
+      print *, 'input  directory: ',trim(input_dir)
+      print *, 'output directory: ',trim(output_dir)
+    else
+      print *, 'variable name   : ',trim(var_name)
+      print *, 'input file      : ',trim(model_filename_adios)
+      print *, 'output directory: ',trim(output_dir)
+    endif
     print *, ' '
     print *, 'crust/mantle region:'
     print *, '  number of spectral elements = ',NSPEC
@@ -220,6 +259,7 @@ program convert_model_file_adios
     ! user output
     if (myrank == 0) then
       print *, 'reading in ADIOS model file: ',trim(model_filename_adios)
+      print *, ' '
     endif
 
     ! opens adios file
@@ -230,10 +270,20 @@ program convert_model_file_adios
 
     icount = 0
     do iker = 1,nparams
+      ! checks if anything to do for single array extraction
+      if (.not. is_model_file_conversion .and. iker > 1) exit
+
+      ! initializes array values
       model(:,:,:,:) = 0.0_CUSTOM_REAL
 
+      ! sets array name
+      if (is_model_file_conversion) then
+        var_name = model_name(iker)
+      endif
+
       ! reads in associated model array
-      call read_adios_array_gll_check(myadios_file,myadios_group,myrank,NSPEC,model_name(iker),model,iexist)
+      call read_adios_array_gll_check(myadios_file,myadios_group,myrank,NSPEC,var_name,model,iexist)
+
       ! checks if read was successful
       if (iexist == 0) then
         exist = .false.
@@ -245,21 +295,29 @@ program convert_model_file_adios
       call any_all_l(exist,exist_all)
 
       if (exist_all) then
-        ! set name
         icount = icount + 1
-        found_fname(icount) = fname(iker)
 
-        ! checks if vp,vs,rho found
-        if (iker == 3 .and. icount == 3) HAS_ISOTROPY = .true.
-        ! checks if rho,vpv,vph,vsv,vsh,eta found
-        if (iker == 8 .and. icount >= 6) HAS_TRANSVERSE_ISOTROPY = .true.
-        ! checks if rho,vpv,vph,vsv,vsh,eta,Gc_prime,Gs_prime,mu0 found
-        if (iker == 11 .and. icount >= 9) HAS_AZIMUTHAL_ANISO = .true.
-        ! checks if qmu
-        if (iker == nparams) HAS_ATTENUATION_Q = .true.
+        ! set name
+        if (is_model_file_conversion) then
+          found_fname(icount) = fname(iker)
+
+          ! checks if vp,vs,rho found
+          if (iker == 3 .and. icount == 3) HAS_ISOTROPY = .true.
+          ! checks if rho,vpv,vph,vsv,vsh,eta found
+          if (iker == 8 .and. icount >= 6) HAS_TRANSVERSE_ISOTROPY = .true.
+          ! checks if rho,vpv,vph,vsv,vsh,eta,Gc_prime,Gs_prime,mu0 found
+          if (iker == 11 .and. icount >= 9) HAS_AZIMUTHAL_ANISO = .true.
+          ! checks if qmu
+          if (iker == nparams) HAS_ATTENUATION_Q = .true.
+
+          ! sets file name (proc***_reg1_***.bin)
+          write(model_filename,'(a,i6.6,a)') trim(output_dir)//'/proc',myrank,'_reg1_'//trim(fname(iker))//'.bin'
+        else
+          ! single array name
+          write(model_filename,'(a,i6.6,a)') trim(output_dir)//'/proc',myrank,'_'//trim(var_name)//'.bin'
+        endif
 
         ! writes out binary file
-        write(model_filename,'(a,i6.6,a)') trim(output_model_dir)//'/proc',myrank,'_reg1_'//trim(fname(iker))//'.bin'
         open(IOUT,file=trim(model_filename),form='unformatted',action='write',iostat=ier)
         if (ier /= 0) then
           print *, 'Error opening binary parameter file: ',trim(model_filename)
@@ -271,7 +329,7 @@ program convert_model_file_adios
 
         ! user output
         if (myrank == 0) then
-          write(*,*) '  written output for parameter: ',trim(found_fname(icount))
+          write(*,*) '  written output for parameter: ',trim(var_name)
           ! min/max
           write(*,*) '  slice rank 0 has min/max value = ',minval(model(:,:,:,:)),"/",maxval(model(:,:,:,:))
           print *
@@ -298,21 +356,23 @@ program convert_model_file_adios
       print *, ' '
       print *, 'written out binary files...'
       print *, ' '
-      print *, 'for model parameters:'
-      if (HAS_TRANSVERSE_ISOTROPY) &
-        print *, '  transversely isotropic model parameters (vpv,vph,vsv,vsh,eta,rho)'
-      if (HAS_ISOTROPY) &
-        print *, '  isotropic model parameters (vp,vs,rho)'
-      if (HAS_AZIMUTHAL_ANISO) &
-        print *, '  azimuthal anisotropic model parameters (Gc_prime,Gs_prime)'
-      if (HAS_ATTENUATION_Q) &
-        print *, '  attenuation model parameter (qmu)'
-      print *, ' '
-      do iker = 1,icount
-        print *, '  found parameter: ',trim(found_fname(iker))
-      enddo
-      print *, ' '
-      print *, 'output files: ',trim(output_model_dir)//'/proc***'
+      if (is_model_file_conversion) then
+        print *, 'for model parameters:'
+        if (HAS_TRANSVERSE_ISOTROPY) &
+          print *, '  transversely isotropic model parameters (vpv,vph,vsv,vsh,eta,rho)'
+        if (HAS_ISOTROPY) &
+          print *, '  isotropic model parameters (vp,vs,rho)'
+        if (HAS_AZIMUTHAL_ANISO) &
+          print *, '  azimuthal anisotropic model parameters (Gc_prime,Gs_prime)'
+        if (HAS_ATTENUATION_Q) &
+          print *, '  attenuation model parameter (qmu)'
+        print *, ' '
+        do iker = 1,icount
+          print *, '  found parameter: ',trim(found_fname(iker))
+        enddo
+        print *, ' '
+      endif
+      print *, 'output files: ',trim(output_dir)//'/proc***'
       print *, 'done writing the model in binary format'
     endif
 
@@ -330,7 +390,7 @@ program convert_model_file_adios
     icount = 0
     do iker = 1,nparams
       ! file name
-      write(model_filename,'(a,i6.6,a)') trim(input_model_dir)//'/proc',myrank,'_reg1_'//trim(fname(iker))//'.bin'
+      write(model_filename,'(a,i6.6,a)') trim(input_dir)//'/proc',myrank,'_reg1_'//trim(fname(iker))//'.bin'
 
       inquire(file=trim(model_filename),EXIST=exist)
       ! makes sure all processes have same flag
@@ -370,7 +430,7 @@ program convert_model_file_adios
     ! reads in parameter values
     do iker = 1,icount
       ! file name
-      write(model_filename,'(a,i6.6,a)') trim(input_model_dir)//'/proc',myrank,'_reg1_'//trim(found_fname(iker))//'.bin'
+      write(model_filename,'(a,i6.6,a)') trim(input_dir)//'/proc',myrank,'_reg1_'//trim(found_fname(iker))//'.bin'
       open(IIN,file=trim(model_filename),status='old',form='unformatted',action='read',iostat=ier)
       if (ier /= 0) then
         print *, 'Error: rank ',myrank,' could not open binary parameter file: ',trim(model_filename)
@@ -460,7 +520,7 @@ program convert_model_file_adios
   ! user output
   if (myrank == 0) then
     print *, ' '
-    print *, 'see output file(s) in directory: ',trim(output_model_dir)
+    print *, 'see output file(s) in directory: ',trim(output_dir)
     print *, ' '
   endif
 
