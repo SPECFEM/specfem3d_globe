@@ -847,7 +847,7 @@
   what_we_can_use_in_GB = MEMORY_INSTALLED_PER_CORE_IN_GB * PERCENT_OF_MEM_TO_USE_PER_CORE / 100.d0
 
   ! convert static memory size to GB
-  static_memory_size_GB = static_memory_size / 1.d9
+  static_memory_size_GB = static_memory_size / 1024.d0 / 1024.d0 / 1024.d0
 
 !! DK DK June 2014: TODO  this comment is true but the statement is commented out for now
 !! DK DK June 2014: TODO  because there is no GPU support for UNDO_ATTENUATION yet
@@ -904,7 +904,7 @@
   endif
 
   ! convert to GB
-  size_to_store_at_each_time_step = size_to_store_at_each_time_step / 1.d9
+  size_to_store_at_each_time_step = size_to_store_at_each_time_step / 1024.d0 / 1024.d0 / 1024.d0
 
   NT_DUMP_ATTENUATION_optimal = int((what_we_can_use_in_GB - static_memory_size_GB) / size_to_store_at_each_time_step) * &
                                                                                       max(1,NTSTEP_BETWEEN_COMPUTE_KERNELS)
@@ -912,7 +912,7 @@
   if (NT_DUMP_ATTENUATION_optimal <= 0) NT_DUMP_ATTENUATION_optimal = 1
 
   ! compute the size of files to dump to disk
-  disk_size_of_each_dumping = 0
+  disk_size_of_each_dumping = 0.d0
 
   ! displ_crust_mantle, veloc_crust_mantle, accel_crust_mantle
   disk_size_of_each_dumping = disk_size_of_each_dumping + 3.d0*dble(NDIM)*NGLOB_REGIONS(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
@@ -925,7 +925,7 @@
 
   ! A_array_rotation,B_array_rotation
   if (ROTATION) disk_size_of_each_dumping = disk_size_of_each_dumping + &
-      dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_REGIONS(IREGION_OUTER_CORE)*2.d0*dble(CUSTOM_REAL)
+      2.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_REGIONS(IREGION_OUTER_CORE)*dble(CUSTOM_REAL)
 
   if (ATTENUATION) then
     ! R_memory_crust_mantle
@@ -938,7 +938,7 @@
   endif
 
   ! convert to GB
-  disk_size_of_each_dumping = disk_size_of_each_dumping / 1.d9
+  disk_size_of_each_dumping = disk_size_of_each_dumping / 1024.d0 / 1024.d0 / 1024.d0
 
 !! DK DK this formula could be made more precise; currently in some cases it can probably be off by +1 or -1; does not matter much
   number_of_dumpings_to_do = ceiling( dble(NSTEP)/dble(NT_DUMP_ATTENUATION_optimal) )
