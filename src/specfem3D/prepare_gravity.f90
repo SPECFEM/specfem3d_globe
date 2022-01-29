@@ -42,7 +42,8 @@
   double precision,dimension(:),allocatable :: r
   double precision :: radius,radius_km,g,dg,range_max
   double precision :: g_cmb_dble,g_icb_dble
-  double precision :: rho,drhodr,vp,vs,Qkappa,Qmu
+  double precision :: rho,drhodr,vp
+  double precision :: dummy_vs,dummy_Qkappa,dummy_Qmu ! only needed as function arguments
   double precision :: theta,phi,fac
 
   double precision :: minus_g,minus_dg
@@ -141,14 +142,14 @@
       select case(PLANET_TYPE)
       case (IPLANET_EARTH)
         ! Earth
-        call model_prem_iso(radius,rho,drhodr,vp,vs,Qkappa,Qmu,idummy,.false.,.false.)
+        call model_prem_iso(radius,rho,drhodr,vp,dummy_vs,dummy_Qkappa,dummy_Qmu,idummy,.false.,.false.)
       case (IPLANET_MARS)
         ! Mars
         ! Sohn & Spohn Model A
-        call model_Sohl(radius,rho,drhodr,vp,vs,Qkappa,Qmu,idummy,.false.,.false.)
+        call model_Sohl(radius,rho,drhodr,vp,dummy_vs,dummy_Qkappa,dummy_Qmu,idummy,.false.,.false.)
       case (IPLANET_MOON)
         ! Moon
-        call model_vpremoon(radius,rho,drhodr,vp,vs,Qkappa,Qmu,idummy,.false.,.false.,idummy)
+        call model_vpremoon(radius,rho,drhodr,vp,dummy_vs,dummy_Qkappa,dummy_Qmu,idummy,.false.,.false.,idummy)
       case default
         call exit_MPI(myrank,'Invalid planet, gravity preparation not implemented yet')
       end select
@@ -270,14 +271,14 @@
       select case(PLANET_TYPE)
       case (IPLANET_EARTH)
         ! Earth
-        call model_prem_iso(radius,rho,drhodr,vp,vs,Qkappa,Qmu,idummy,.false.,.false.)
+        call model_prem_iso(radius,rho,drhodr,vp,dummy_vs,dummy_Qkappa,dummy_Qmu,idummy,.false.,.false.)
       case (IPLANET_MARS)
         ! Mars
         ! Sohn & Spohn Model A
-        call model_Sohl(radius,rho,drhodr,vp,vs,Qkappa,Qmu,idummy,.false.,.false.)
+        call model_Sohl(radius,rho,drhodr,vp,dummy_vs,dummy_Qkappa,dummy_Qmu,idummy,.false.,.false.)
       case (IPLANET_MOON)
         ! Moon
-        call model_vpremoon(radius,rho,drhodr,vp,vs,Qkappa,Qmu,idummy,.false.,.false.,idummy)
+        call model_vpremoon(radius,rho,drhodr,vp,dummy_vs,dummy_Qkappa,dummy_Qmu,idummy,.false.,.false.,idummy)
       case default
         call exit_MPI(myrank,'Invalid planet, prepare gravity not implemented yet')
       end select
