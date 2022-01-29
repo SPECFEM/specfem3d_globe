@@ -232,9 +232,17 @@
       group_size_inc = 0
       ! iteration number
       call define_adios_scalar(myadios_fwd_group, group_size_inc, '', "iteration", iteration_on_subset_tmp)
+      ! wavefields (displ/veloc/accel) for all regions
       call define_common_forward_arrays_adios(group_size_inc)
+      ! rotation arrays
       if (ROTATION_VAL) call define_rotation_forward_arrays_adios(group_size_inc)
+      ! attenuation memory variables
       if (ATTENUATION_VAL) call define_attenuation_forward_arrays_adios(group_size_inc)
+
+      ! adds wavefield compression
+      if (ADIOS2_COMPRESSION_ALGORITHM /= 0) then
+        call add_adios_compression(myadios_fwd_group,ROTATION_VAL,ATTENUATION_VAL)
+      endif
     endif
 
     ! Open an ADIOS handler to the restart file.
@@ -270,6 +278,7 @@
 
   ! iteration number
   call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, "iteration", iteration_on_subset_tmp)
+
   ! Issue the order to write the previously defined variable to the ADIOS file
   call write_common_forward_arrays_adios()
   if (ROTATION_VAL) call write_rotation_forward_arrays_adios()

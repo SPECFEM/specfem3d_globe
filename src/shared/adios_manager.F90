@@ -60,8 +60,13 @@ module manager_adios
   logical, public :: is_adios_version1
   logical, public :: is_adios_version2
 
-  ! for undo_att snapshots: single file per iteration step (or only one file for all steps)
+  ! for undo_att snapshots
+  ! use only one file for all steps or a single file per iteration step
   logical, parameter, public :: ADIOS_SAVE_ALL_SNAPSHOTS_IN_ONE_FILE = .true.
+
+  ! type selection to use compression operation before saving undo_att forward snapshot arrays
+  ! compression algorithm: 0 == none / 1 == ZFP compression / 2 == SZ compression (needs to be supported by ADIOS2 library)
+  integer, parameter, public :: ADIOS2_COMPRESSION_ALGORITHM = 0     ! (default none)
 
 #if defined(USE_ADIOS)
   ! adios
@@ -92,10 +97,52 @@ module manager_adios
   type(adios2_engine), public :: myadios_val_file
   type(adios2_io), public :: myadios_val_group
 
-  ! for undo att
+  ! for undo_att
   type(adios2_io), public :: myadios_fwd_group
   type(adios2_engine), public:: myadios_fwd_file
   logical, public :: is_initialized_fwd_group
+
+  ! for undo_att snapshots compression
+  ! compression operator (ZFP compression by default)
+  type(adios2_operator) :: myadios_comp_operator
+
+  ! ZFP compression
+  ! mode options: see https://zfp.readthedocs.io/en/release0.5.5/modes.html
+  ! parameters: 'rate'      w/ value '8'    - fixed-rate mode: choose values between ~8-20, higher for better accuracy
+  !             'accuracy'  w/ value '0.01' - fixed-accuracy mode: choose smaller value for better accuracy
+  !             'precision' w/ value '10'   - fixed-precision mode: choose between ~10-50, higher for better accuracy
+  !                                           (https://www.osti.gov/pages/servlets/purl/1572236)
+  !
+  ! test setup: global simulation (s362ani model), NEX=160, ADIOS 2.5.0
+  !             duration 30 min, 9 snapshot files (w/ estimated total size 117.6 GB)
+  ! - {'rate','8'} leads to a rather constant compression by using (8+1)-bit representation for 4 32-bit floats
+  !     compression rate factor: ~3.98x (123474736 Bytes / 30998320 Bytes ~ 118 GB / 30GB)
+  !                              betav_kl_crust_mantle total norm of difference :   2.6486799E-22
+  ! - {'rate','12'} has better accuracy (leading to small wavefield perturbations)
+  !     compression rate factor: ~2.65x (123474736 Bytes / 46423124 Bytes ~ 118 GB / 45GB)
+  !                              betav_kl_crust_mantle total norm of difference :   4.3890730E-24
+  ! - {'precision','10'} leads to a more variable compression for wavefields depending on their dynamic range
+  !     compression rate factor: ~4.05x (123474736 Bytes / 30460388 Bytes ~ 118 GB / 30 GB)
+  !                              betav_kl_crust_mantle total norm of difference :   5.3706092E-24
+  ! - {'precision','12'} has better accuracy (leading to small wavefield perturbations)
+  !     compression rate factor: ~3.43x (123474736 Bytes / 35972672 Bytes ~ 118 GB / 35GB)
+  !                              betav_kl_crust_mantle total norm of difference :   1.9846376E-25
+  ! - {'precision','20'} has good accuracy (almost identical reconstructed waveforms)
+  !     compression rate factor: ~2.12x (123474736 Bytes / 58020080 Bytes ~ 118 GB / 56 GB)
+  !                              betav_kl_crust_mantle total norm of difference :   2.5939579E-30
+  !
+  ! performance overhead for compressing/decompressing is negligible in all cases
+  ! (a few seconds, compared to minutes for the total simulaton)
+  !
+  ! a default setting of {'precision','12'} seems a good compromise between accuracy and compression rate
+  character(len=*),parameter :: ADIOS2_COMPRESSION_MODE = 'precision'     ! 'precision','rate'
+  character(len=*),parameter :: ADIOS2_COMPRESSION_MODE_VALUE = '12'      ! '8','12,'20'
+
+  ! SZ compression
+  ! parameters: 'accuracy', value '0.0000000001' = 1.e-10
+  !             leaving empty '','' chooses automatic setting? to check...
+  !character(len=*),parameter :: ADIOS2_COMPRESSION_MODE = ''
+  !character(len=*),parameter :: ADIOS2_COMPRESSION_MODE_VALUE = ''
 
   ! debugging mode
   ! note: adios2 still in development stage, let's keep debug mode on
@@ -136,6 +183,9 @@ module manager_adios
   public :: check_adios_err
   public :: show_adios_file_variables
   public :: get_adios_filename
+
+  ! compression
+  public :: add_adios_compression
 
 #endif  /* USE_ADIOS or USE_ADIOS2 */
 
@@ -1369,13 +1419,6 @@ contains
   integer :: ier
   integer :: variable_count, attribute_count
 
-  ! user output
-  if (myrank_adios == 0) then
-    print *
-    print *,'show adios file variables: ',trim(filename)
-    print *
-  endif
-
   ! file inquiry
 #if defined(USE_ADIOS)
   ! ADIOS 1
@@ -1385,6 +1428,13 @@ contains
   integer :: vtype, vnsteps, vndim
   integer(kind=8), dimension(3) :: dims
   integer :: group_count,i
+
+  ! user output
+  if (myrank_adios == 0) then
+    print *
+    print *,'show ADIOS file variables: ',trim(filename)
+    print *
+  endif
 
   ! file inquiry
   call adios_inq_file(adios_handle, variable_count, attribute_count, timestep_first, timestep_last, ier)
@@ -1498,6 +1548,13 @@ contains
   !       for Fortran bindings, unfortunately there is no adios2_inquire_all_*** functionality
   !       thus, we have no way to inquire and list all variables in a file using Fortran commands.
   !
+  ! user output
+  if (myrank_adios == 0) then
+    print *
+    print *,'show ADIOS2 file variables: ',trim(filename)
+    print *
+  endif
+
   ! only checks
   if (.not. myadios2_obj%valid) then
     call check_adios_err(ier,"Error inquiring adios2 file for reading: "//trim(filename))
@@ -1551,8 +1608,9 @@ contains
   end subroutine show_adios_file_variables
 
 #endif
-
-
+!
+!---------------------------------------------------------------------------------
+!
 #if defined(USE_ADIOS) || defined(USE_ADIOS2)
 ! only available with ADIOS compilation support
 ! to clearly separate adios version and non-adios version of same tools
@@ -1655,6 +1713,252 @@ contains
 #endif
 
   end subroutine check_adios_err
+
+#endif
+
+!-------------------------------------------------------------------------------
+!
+! compression
+!
+!-------------------------------------------------------------------------------
+
+#if defined(USE_ADIOS) || defined(USE_ADIOS2)
+! only available with ADIOS compilation support
+! to clearly separate adios version and non-adios version of same tools
+
+  subroutine add_adios_compression(adios_group,ROTATION,ATTENUATION)
+
+#if defined(USE_ADIOS2)
+  use constants, only: IMAIN
+#endif
+
+  implicit none
+
+  logical, intent(in) :: ROTATION,ATTENUATION
+
+#if defined(USE_ADIOS)
+  integer(kind=8), intent(in) :: adios_group
+#elif defined(USE_ADIOS2)
+  type(adios2_io), intent(in) :: adios_group
+#endif
+
+  ! local parameters
+  integer :: ier
+#if defined(USE_ADIOS)
+  logical :: dummy_l
+#elif defined(USE_ADIOS2)
+  integer :: operation_id,i
+  type(adios2_variable) :: v
+  character(len=128) :: array_name
+  logical :: use_adios_compression
+#endif
+
+! note: We add compression operations before saving the undo att forward arrays to file disk.
+!       this should help reducing file storage sizes and help mitigating I/O issues for larger runs.
+!
+!       SZ and ZFP are the two leading lossy compressors available to compress scientific data sets.
+!       Their performance can vary however across different data sets:
+!         https://www.osti.gov/servlets/purl/1657917
+!
+!       ZFP compression is lossy compression, and works well with high compression rates for floating-point arrays:
+!         https://computing.llnl.gov/projects/zfp
+!         https://github.com/LLNL/zfp
+!       Please cite this reference if using ZFP:
+!         Peter Lindstrom. Fixed-Rate Compressed Floating-Point Arrays.
+!         IEEE Transactions on Visualization and Computer Graphics, 20(12):2674-2683, December 2014. doi:10.1109/TVCG.2014.2346458
+!
+!       SZ compression would be another possibility for floating-point arrays:
+!         https://szcompressor.org
+!         https://github.com/szcompressor/SZ
+!
+!       ADIOS2 will assign the compression operation to arrays and use compression before writing/putting them to disk.
+!       Reading back these arrays will not need explicit assignment of the compression operator anymore.
+!       Thus, the only change is required in the saving routine.
+
+#if defined(USE_ADIOS)
+  ! ADIOS 1
+  ! no compression implemented yet - could be done by transform operations
+  ! user output
+  if (myrank_adios == 0) then
+    print *
+    print *,'WARNING: ADIOS compression is not implemented yet for ADIOS version 1.x...'
+    print *,'         Run will proceed without compression...'
+    print *
+  endif
+  ! or safety stop
+  !stop 'ADIOS 1.x compression not implemented yet. Please set ADIOS2_COMPRESSION_ALGORITHM == 0
+
+  ! to avoid compiler warning
+  ier = adios_group
+  dummy_l = (ROTATION .or. ATTENUATION)
+
+#elif defined(USE_ADIOS2)
+  ! ADIOS 2
+  ! initializes flag
+  use_adios_compression = .true.
+
+  ! defines compression operator
+  select case(ADIOS2_COMPRESSION_ALGORITHM)
+  case (0)
+    ! no compression
+    use_adios_compression = .false.; ier = 0
+  case (1)
+    ! ZFP compression
+    ! options: name = 'CompressorZfp', type = 'zfp'
+    call adios2_define_operator(myadios_comp_operator, myadios2_obj, 'CompressorZfp', 'zfp', ier)
+  case (2)
+    ! SZ compression
+    call adios2_define_operator(myadios_comp_operator, myadios2_obj, 'CompressorSZ', 'sz', ier)
+  case default
+    ! no compression
+    stop 'Invalid ADIOS2 compression algorithm selection, please choose 0 == none / 1 == ZFP / 2 == SZ compression'
+  end select
+
+  ! checks returned result
+  if (ier /= 0) then
+    ! no compression supported, resets flag
+    ! (might need to install ZFP/SZ library first and re-configure/compile ADIOS2)
+    use_adios_compression = .false.
+    myadios_comp_operator%valid = .false.
+    ! user output
+    if (myrank_adios == 0) then
+      print *
+      print *,'WARNING: Selected ADIOS2 compression is not supported by ADIOS2 library. Please check your installation.'
+      print *,'         Run will proceed without compression...'
+      print *
+      ! file output
+      write(IMAIN,*)
+      if (ADIOS2_COMPRESSION_ALGORITHM == 1) then
+        write(IMAIN,*) 'ADIOS2 compression algorithm ZFP is not supported by ADIOS2 library. Please check your installation.'
+      else if (ADIOS2_COMPRESSION_ALGORITHM == 2) then
+        write(IMAIN,*) 'ADIOS2 compression algorithm SZ  is not supported by ADIOS2 library. Please check your installation.'
+      endif
+      write(IMAIN,*) 'Run will proceed without compression...'
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
+    ! or safety stop
+    !stop 'ADIOS2 compression not supported. Please set ADIOS2_COMPRESSION_ALGORITHM == 0 in constants.h file'
+  endif
+
+  ! applies compression to undo_att defined array variables
+  if (use_adios_compression) then
+    ! checks if group valid
+    if (.not. adios_group%valid) stop 'Invalid ADIOS2 io group in add_adios_compression()'
+    ! check if operator valid
+    if (.not. myadios_comp_operator%valid) stop 'Invalid ADIOS2 compression operator handle returned in add_adios_compression()'
+
+    ! user output
+    if (myrank_adios == 0) then
+      write(IMAIN,*)
+      write(IMAIN,*) "undoing attenuation:"
+      write(IMAIN,*) "  adding ADIOS2 compression operation for snapshot wavefield storage"
+      if (ADIOS2_COMPRESSION_ALGORITHM == 1) then
+        write(IMAIN,*) "  ZFP compression mode: {'",trim(ADIOS2_COMPRESSION_MODE),"','",trim(ADIOS2_COMPRESSION_MODE_VALUE),"'}"
+      else if (ADIOS2_COMPRESSION_ALGORITHM == 2) then
+        write(IMAIN,*) "  SZ compression  mode: {'",trim(ADIOS2_COMPRESSION_MODE),"','",trim(ADIOS2_COMPRESSION_MODE_VALUE),"'}"
+      endif
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
+
+    ! note: crust_mantle arrays will dominate file sizes, where in particular attenuation arrays will be largest
+    !       as a small example NEX=48:  displ/veloc/accel crust_mantle   ~ 11.21 MB
+    !                                                     inner_core     ~  0.19 MB
+    !                                                     outer_core     ~  0.31 MB
+    !
+    !                                   rotation          outer_core     ~  0.36 MB
+    !
+    !                                   attenuation       crust_mantle   ~ 34.76 MB
+    !                                                     inner_core     ~  0.51 MB
+    !
+    !       to avoid spending too much time for the compression operation on small arrays,
+    !       one could apply it only to the dominant ones.
+    !       at the moment, we apply compression to all arrays to shrink the snapshot file size as much as possible.
+    !       -> todo in future, re-evaluate and optimize...
+
+    ! common forward arrays displ/veloc/accel
+    do i = 1,9
+      ! selects name
+      select case(i)
+      case (1); array_name = "displ_crust_mantle"
+      case (2); array_name = "veloc_crust_mantle"
+      case (3); array_name = "accel_crust_mantle"
+      case (4); array_name = "displ_inner_core"
+      case (5); array_name = "veloc_inner_core"
+      case (6); array_name = "accel_inner_core"
+      case (7); array_name = "displ_outer_core"
+      case (8); array_name = "veloc_outer_core"
+      case (9); array_name = "accel_outer_core"
+      end select
+
+      ! gets associated variable for array
+      call adios2_inquire_variable(v, adios_group, trim(array_name)// "/array", ier)
+      call check_adios_err(ier,"Error adios2 add_adios_compression(): inquire variable "//trim(array_name)//" array failed")
+      if (.not. v%valid) stop 'Error adios2 variable invalid'
+
+      ! adds compression operation to array variable
+      call adios2_add_operation(operation_id, v, myadios_comp_operator, &
+                                ADIOS2_COMPRESSION_MODE, ADIOS2_COMPRESSION_MODE_VALUE, ier)
+      call check_adios_err(ier,"Error adios2 add_adios_compression(): add operation for variable "//trim(array_name)//" failed")
+      if (operation_id /= 0) stop 'Error adios2 operation_id not added for array'
+    enddo
+
+    ! rotation arrays
+    if (ROTATION) then
+      do i = 1,2
+        ! selects name
+        select case(i)
+        case (1); array_name = "A_array_rotation"
+        case (2); array_name = "B_array_rotation"
+        end select
+
+        ! gets associated variable for array
+        call adios2_inquire_variable(v, adios_group, trim(array_name)// "/array", ier)
+        call check_adios_err(ier,"Error adios2 add_adios_compression(): inquire variable "//trim(array_name)//" array failed")
+        if (.not. v%valid) stop 'Error adios2 variable invalid'
+
+        ! adds compression operation to array variable
+        call adios2_add_operation(operation_id, v, myadios_comp_operator, &
+                                  ADIOS2_COMPRESSION_MODE, ADIOS2_COMPRESSION_MODE_VALUE, ier)
+        call check_adios_err(ier,"Error adios2 add_adios_compression(): add operation for variable "//trim(array_name)//" failed")
+        if (operation_id /= 0) stop 'Error adios2 operation_id not added for array'
+      enddo
+    endif
+
+    ! attenuation arrays
+    if (ATTENUATION) then
+      do i = 1,10
+        ! selects name
+        select case(i)
+        case (1); array_name = "R_xx_crust_mantle"
+        case (2); array_name = "R_yy_crust_mantle"
+        case (3); array_name = "R_xy_crust_mantle"
+        case (4); array_name = "R_xz_crust_mantle"
+        case (5); array_name = "R_yz_crust_mantle"
+        case (6); array_name = "R_xx_inner_core"
+        case (7); array_name = "R_yy_inner_core"
+        case (8); array_name = "R_xy_inner_core"
+        case (9); array_name = "R_xz_inner_core"
+        case (10); array_name = "R_yz_inner_core"
+        end select
+
+        ! gets associated variable for array
+        call adios2_inquire_variable(v, adios_group, trim(array_name)// "/array", ier)
+        call check_adios_err(ier,"Error adios2 add_adios_compression(): inquire variable "//trim(array_name)//" array failed")
+        if (.not. v%valid) stop 'Error adios2 variable invalid'
+
+        ! adds compression operation to array variable
+        call adios2_add_operation(operation_id, v, myadios_comp_operator, &
+                                  ADIOS2_COMPRESSION_MODE, ADIOS2_COMPRESSION_MODE_VALUE, ier)
+        call check_adios_err(ier,"Error adios2 add_adios_compression(): add operation for variable "//trim(array_name)//" failed")
+        if (operation_id /= 0) stop 'Error adios2 operation_id not added for array'
+      enddo
+    endif
+  endif
+#endif
+
+  end subroutine add_adios_compression
 
 #endif
 

@@ -126,6 +126,40 @@
       write(IMAIN,*) '  number of buffered snapshots at each subset      = ',buffer_size
       write(IMAIN,*)
       call flush_IMAIN()
+
+      ! file size per snapshot for save/read routines
+      write(IMAIN,*) '  estimated snapshot file storage:'
+      ! see fields stored in save_forward_arrays_undoatt() routine in file save_forward_arrays.f90
+      ! displ_crust_mantle + veloc_crust_mantle + accel_crust_mantle
+      sizeval = 3.d0 * dble(NDIM) * dble(NGLOB_CRUST_MANTLE) * dble(CUSTOM_REAL)
+      ! displ_inner_core + veloc_inner_core + accel_inner_core
+      sizeval = sizeval + 3.d0 * dble(NDIM) * dble(NGLOB_INNER_CORE) * dble(CUSTOM_REAL)
+      ! displ_outer_core + veloc_outer_core + accel_outer_core
+      sizeval = sizeval + 3.d0 * dble(NGLOB_OUTER_CORE) * dble(CUSTOM_REAL)
+      if (ROTATION_VAL) then
+        ! A_array_rotation + B_array_rotation
+        sizeval = sizeval + 2.d0 * dble(NGLLX*NGLLY*NGLLZ) * dble(NSPEC_OUTER_CORE_ROTATION) * dble(CUSTOM_REAL)
+      endif
+      if (ATTENUATION_VAL) then
+        ! R_xx_crust_mantle + R_yy_crust_mantle + R_xy_crust_mantle + R_xz_crust_mantle + R_yz_crust_mantle
+        sizeval = sizeval + 5.d0 * dble(NGLLX*NGLLY*NGLLZ*N_SLS) * dble(NSPEC_CRUST_MANTLE_ATTENUATION) * dble(CUSTOM_REAL)
+        ! R_xx_inner_core + R_yy_inner_core + R_xy_inner_core + R_xz_inner_core + R_yz_inner_core
+        sizeval = sizeval + 5.d0 * dble(NGLLX*NGLLY*NGLLZ*N_SLS) * dble(NSPEC_INNER_CORE_ATTENUATION) * dble(CUSTOM_REAL)
+      endif
+      ! in MB
+      sizeval = sizeval / 1024.d0 / 1024.d0
+      write(IMAIN,*) '  size of single time snapshot subset per slice         = ', sngl(sizeval),'MB'
+      ! for all processes
+      sizeval = sizeval * dble(NPROCTOT)
+      write(IMAIN,*) '  size of single time snapshot subset for all processes = ', sngl(sizeval),'MB'
+      write(IMAIN,*) '                                                        = ', sngl(sizeval/1024.d0),'GB'
+      write(IMAIN,*)
+      ! for all processes and all subsets
+      sizeval = sizeval * dble(NSUBSET_ITERATIONS)
+      write(IMAIN,*) '  total size of all time snapshots subsets              = ', sngl(sizeval),'MB'
+      write(IMAIN,*) '                                                        = ', sngl(sizeval/1024.d0),'GB'
+      write(IMAIN,*)
+      call flush_IMAIN()
     endif
   endif
 
@@ -133,18 +167,33 @@
   if (SIMULATION_TYPE == 3) then
     ! user output
     if (myrank == 0) then
+      write(IMAIN,*) '  wavefield buffers:'
       ! crust/mantle
       ! buffer(NDIM,NGLOB_CRUST_MANTLE_ADJOINT,NT_DUMP_ATTENUATION) in MB
       sizeval = dble(NDIM) * dble(NGLOB_CRUST_MANTLE_ADJOINT) * dble(buffer_size) * dble(CUSTOM_REAL) / 1024.d0 / 1024.d0
       write(IMAIN,*) '  size of crust/mantle wavefield buffer per slice = ', sngl(sizeval),'MB'
       ! outer core
       ! buffer(NGLOB_OUTER_CORE_ADJOINT,NT_DUMP_ATTENUATION) in MB
-      sizeval = dble(2) * dble(NGLOB_OUTER_CORE_ADJOINT) * dble(buffer_size) * dble(CUSTOM_REAL) / 1024.d0 / 1024.d0
+      sizeval = 2.d0 * dble(NGLOB_OUTER_CORE_ADJOINT) * dble(buffer_size) * dble(CUSTOM_REAL) / 1024.d0 / 1024.d0
       write(IMAIN,*) '  size of   outer core wavefield buffer per slice = ', sngl(sizeval),'MB'
       ! inner core
       ! buffer(NDIM,NGLOB_CRUST_MANTLE_ADJOINT,NT_DUMP_ATTENUATION) in MB
       sizeval = dble(NDIM) * dble(NGLOB_INNER_CORE_ADJOINT) * dble(buffer_size) * dble(CUSTOM_REAL) / 1024.d0 / 1024.d0
       write(IMAIN,*) '  size of   inner core wavefield buffer per slice = ', sngl(sizeval),'MB'
+      write(IMAIN,*)
+      call flush_IMAIN()
+
+      ! total size of buffers
+      ! b_displ_cm_store_buffer
+      sizeval = dble(NDIM) * dble(NGLOB_CRUST_MANTLE_ADJOINT) * dble(buffer_size) * dble(CUSTOM_REAL)
+      ! b_displ_oc_store_buffer + b_accel_oc_store_buffer
+      sizeval = sizeval + 2.d0 * dble(NGLOB_OUTER_CORE_ADJOINT) * dble(buffer_size) * dble(CUSTOM_REAL)
+      ! b_displ_ic_store_buffer
+      sizeval = sizeval + dble(NDIM) * dble(NGLOB_INNER_CORE_ADJOINT) * dble(buffer_size) * dble(CUSTOM_REAL)
+      ! in MB
+      sizeval = sizeval / 1024.d0 / 1024.d0
+      write(IMAIN,*) '  total size of wavefield buffers per slice       = ', sngl(sizeval),'MB'
+      write(IMAIN,*) '                                                  = ', sngl(sizeval/1024.d0),'GB'
       write(IMAIN,*)
       call flush_IMAIN()
     endif
@@ -160,18 +209,26 @@
     !! in the memory of the GPU
     allocate(b_displ_cm_store_buffer(NDIM,NGLOB_CRUST_MANTLE_ADJOINT,buffer_size),stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating b_displ_cm_store_buffer')
+    b_displ_cm_store_buffer(:,:,:) = 0.0_CUSTOM_REAL
+
     allocate(b_displ_oc_store_buffer(NGLOB_OUTER_CORE_ADJOINT,buffer_size),stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating b_displ_oc_store_buffer')
+    b_displ_oc_store_buffer(:,:) = 0.0_CUSTOM_REAL
+
     allocate(b_accel_oc_store_buffer(NGLOB_OUTER_CORE_ADJOINT,buffer_size),stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating b_accel_oc_store_buffer')
+    b_accel_oc_store_buffer(:,:) = 0.0_CUSTOM_REAL
+
     allocate(b_displ_ic_store_buffer(NDIM,NGLOB_INNER_CORE_ADJOINT,buffer_size),stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating b_displ_ic_store_buffer')
+    b_displ_ic_store_buffer(:,:,:) = 0.0_CUSTOM_REAL
 
     ! noise kernel for source strength (sigma_kernel) needs buffer for reconstructed noise_surface_movie array,
     ! otherwise we need file i/o which will considerably slow down performance
     if (NOISE_TOMOGRAPHY == 3) then
       allocate(b_noise_surface_movie_buffer(NDIM,NGLLX,NGLLY,NSPEC_TOP,buffer_size),stat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'Error allocating b_noise_surface_movie_buffer')
+      b_noise_surface_movie_buffer(:,:,:,:,:) = 0.0_CUSTOM_REAL
     endif
   endif
 
