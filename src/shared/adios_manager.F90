@@ -176,6 +176,7 @@ module manager_adios
   public :: set_adios_group_size
   public :: set_selection_boundingbox
   public :: delete_adios_selection
+  public :: delete_adios_group
   public :: get_adios_group
   public :: flush_adios_group_all
 
@@ -846,15 +847,16 @@ contains
 
 #if defined(USE_ADIOS)
   ! ADIOS 1
+  ! closes file
   call adios_read_close(adios_handle,ier)
-  if (ier /= 0 ) stop 'Error helper adios read close in close_file_adios_read_and_finalize() routine'
+  if (ier /= 0) stop 'Error helper adios read close in close_file_adios_read_and_finalize() routine'
 
   ! sets explicitly to zero
   adios_handle = 0
 
   ! finalizes file opened with adios_read_init_method()
   call adios_read_finalize_method(ADIOS_READ_METHOD_BP, ier)
-  if (ier /= 0 ) stop 'Error helper adios read finalize'
+  if (ier /= 0) stop 'Error helper adios read finalize failed'
 
 #elif defined(USE_ADIOS2)
   ! ADIOS 2
@@ -869,20 +871,7 @@ contains
   !         ERROR: variable reg2/rhostore/offset exists in IO object Reader, in call to DefineVariable
   !         ..
   !
-  !       here, we explicitly remove all ios when called with this finalize method, to recreate the groups
-  !       in a next new open-and-init call.
-  !
-  ! removes io handlers created with adios2_declare_io()
-  if (myadios_group%valid .or. myadios_fwd_group%valid .or. myadios_val_group%valid) then
-    ! removes ios
-    call adios2_remove_all_ios(myadios2_obj, ier)
-    call check_adios_err(ier,"Error removing all ios in close_file_adios_read_and_finalize() routine")
-
-    ! reset groups
-    myadios_group%valid = .false.
-    myadios_fwd_group%valid = .false.
-    myadios_val_group%valid = .false.
-  endif
+  !       we will use explicit calls to delete_adios_group() routine as a work-around.
 
 #endif
 
@@ -1386,6 +1375,92 @@ contains
   end subroutine delete_adios_selection
 
 #endif
+!
+!---------------------------------------------------------------------------------
+!
+#if defined(USE_ADIOS) || defined(USE_ADIOS2)
+! only available with ADIOS compilation support
+! to clearly separate adios version and non-adios version of same tools
+
+  subroutine delete_adios_group(adios_group,group_name)
+
+! removes all variables from group and deletes it
+
+  implicit none
+
+#if defined(USE_ADIOS)
+  integer(kind=8), intent(inout) :: adios_group
+#elif defined(USE_ADIOS2)
+  type(adios2_io), intent(inout) :: adios_group
+#endif
+  character(len=*), intent(in) :: group_name
+
+  ! local parameters
+  integer :: ier
+  logical :: result
+
+  TRACE_ADIOS_L2('delete_adios_group')
+
+#if defined(USE_ADIOS)
+  ! ADIOS 1
+  ! deletes all variable definitions from a group
+  ! we can define a new set of variables for the next output step
+  call adios_delete_vardefs(adios_group, ier)
+  if (ier /= 0) stop 'Error helper adios delete group variables failed in delete_adios_group() routine'
+
+  ! to avoid compiler warnings
+  result = .true.
+  ! nothing left to do, no explicit delete routine for the group in ADIOS1
+
+#elif defined(USE_ADIOS2)
+  ! ADIOS 2
+  ! note: closing a file will not delete the adios io yet.
+  !       thus, the adios group handlers could still be valid when opening a file with the init method next time.
+  !       this leads to issues when used together with begin/end steps, producing adios2 errors like:
+  !         ..
+  !         ERROR: variable reg2/rhostore/offset exists in IO object Reader, in call to DefineVariable
+  !         ..
+  !
+  ! cleans out the group
+  ! deletes all variable definitions from a group
+  call adios2_remove_all_variables(adios_group, ier)
+  call check_adios_err(ier,"Error removing group variables in delete_adios_group() routine")
+
+  ! removes io
+  ! (will recreate a new group in a next new open-and-init call)
+  call adios2_remove_io(result, myadios2_obj, group_name, ier)
+  ! checks result flag
+  if (result .neqv. .true.) stop 'Error failed removing io in delete_adios_group() routine'
+  call check_adios_err(ier,"Error removing io in delete_adios_group() routine")
+
+  ! explicitly resets group
+  if (adios_group%valid) adios_group%valid = .false.
+
+  ! this would fail, as io object is no more defined...
+  !call adios2_at_io(adios_group, myadios2_obj, group_name, ier)
+  !call check_adios_err(ier,"Error getting io in delete_adios_group() routine")
+
+  !! This below doesn't work as it will lead to issues with xsum_kernels_adios and possibly other tools...
+  !!
+  !! Avoid removing all ios: this will lead to problems when one io was opened for reading, while a second one
+  !!                         should stay valid for writing out (see e.g. sum_kernels.F90)
+  !!
+  !! removes io handlers created with adios2_declare_io()
+  !!if (myadios_group%valid .or. myadios_fwd_group%valid .or. myadios_val_group%valid) then
+  !!  ! removes ios
+  !!  call adios2_remove_all_ios(myadios2_obj, ier)
+  !!  call check_adios_err(ier,"Error removing all ios in delete_adios_group() routine")
+  !!  ! reset groups
+  !!  myadios_group%valid = .false.
+  !!  myadios_fwd_group%valid = .false.
+  !!  myadios_val_group%valid = .false.
+  !!endif
+
+#endif
+
+  end subroutine delete_adios_group
+
+#endif
 
 
 !-------------------------------------------------------------------------------
@@ -1624,7 +1699,7 @@ contains
 
   implicit none
   character(len=*), intent(in) :: name
-  character(len=*), intent(in),optional :: ENGINE
+  character(len=*), intent(in), optional :: ENGINE
   character(len=MAX_STRING_LEN) :: get_adios_filename
   ! local parameters
   character(len=MAX_STRING_LEN) :: tmp_engine

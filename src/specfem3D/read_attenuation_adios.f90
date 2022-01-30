@@ -67,6 +67,7 @@
   file_name = get_adios_filename(trim(LOCAL_PATH) // "/attenuation")
 
   ! opens adios file
+  call init_adios_group(myadios_group,"AttenuationReader")
   call open_file_adios_read_and_init_method(myadios_file,myadios_group,file_name)
 
   call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "f_c_source",f_c_source)
@@ -103,5 +104,6 @@
 
   ! closes ADIOS handler to the restart file.
   call close_file_adios_read_and_finalize_method(myadios_file)
+  call delete_adios_group(myadios_group,"AttenuationReader")
 
   end subroutine read_attenuation_adios

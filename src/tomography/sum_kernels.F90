@@ -130,15 +130,15 @@ program sum_kernels_globe
   nker = 0
   open(unit=IIN,file=trim(kernel_file_list),status='old',action='read',iostat=ier)
   if (ier /= 0) then
-     print *,'Error opening ',trim(kernel_file_list),myrank
-     stop 1
+    print *,'Error opening ',trim(kernel_file_list),myrank
+    stop 1
   endif
   do while (1 == 1)
-     read(IIN,'(a)',iostat=ier) sline
-     if (ier /= 0) exit
-     nker = nker+1
-     if (nker > MAX_KERNEL_PATHS) stop 'Error number of kernels exceeds MAX_KERNEL_PATHS'
-     kernel_list(nker) = sline
+    read(IIN,'(a)',iostat=ier) sline
+    if (ier /= 0) exit
+    nker = nker+1
+    if (nker > MAX_KERNEL_PATHS) stop 'Error number of kernels exceeds MAX_KERNEL_PATHS'
+    kernel_list(nker) = sline
   enddo
   close(IIN)
   if (myrank == 0) then
@@ -183,7 +183,7 @@ program sum_kernels_globe
   call initialize_adios()
 
   ! opens file for summed kernel result
-  call open_sum_file(adios_kl_names)
+  call open_sum_file_adios(adios_kl_names)
 #endif
 
   ! synchronizes
@@ -252,7 +252,7 @@ program sum_kernels_globe
   ! ADIOS
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
   ! closes summed kernel file
-  call close_sum_file()
+  call close_sum_file_adios()
   ! finalizes adios
   call finalize_adios()
 #endif
@@ -323,14 +323,14 @@ end program sum_kernels_globe
     file_name = get_adios_filename(trim(file_name))
 
     ! debug
-    !print *,'adios file: ',trim(file_name)
-    !print *,'adios kernel: ',kernel_name
+    !print *,'debug: ',myrank,'adios file  : ',trim(file_name)
+    !print *,'debug: ',myrank,'adios kernel: ',trim(kernel_name)
 
     ! reads adios file
     call open_file_adios_read_and_init_method(myadios_file,myadios_group,file_name)
 
     ! gets kernel value
-    call read_adios_array(myadios_file,myadios_group,myrank,NSPEC_CRUST_MANTLE,trim(kernel_name),kernel(:,:,:,:))
+    call read_adios_array(myadios_file,myadios_group,myrank,NSPEC_CRUST_MANTLE,trim(kernel_name),kernel)
 
     ! closes read file
     call close_file_adios_read_and_finalize_method(myadios_file)
@@ -349,6 +349,7 @@ end program sum_kernels_globe
       print *,'  norm kernel: ',sqrt(norm_sum)
       print *
     endif
+    call synchronize_all()
 
     ! source mask
     if (USE_SOURCE_MASK) then
@@ -371,6 +372,7 @@ end program sum_kernels_globe
 #else
   if (myrank == 0) write(*,*) 'writing out summed kernel for: ',trim(kernel_name)
 #endif
+  call synchronize_all()
 
   ! stores summed kernels
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
@@ -391,6 +393,7 @@ end program sum_kernels_globe
     write(*,*) '  slice rank 0 has min/max value = ',minval(total_kernel(:,:,:,:)),"/",maxval(total_kernel(:,:,:,:))
     write(*,*)
   endif
+  call synchronize_all()
 
   ! frees memory
   deallocate(kernel,total_kernel)
@@ -471,7 +474,7 @@ end program sum_kernels_globe
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
 ! ADIOS only
 
-  subroutine open_sum_file(adios_kl_names)
+  subroutine open_sum_file_adios(adios_kl_names)
 
   use tomography_par
 
@@ -487,6 +490,7 @@ end program sum_kernels_globe
   integer(kind=8) :: local_dim
   integer(kind=8) :: group_size_inc
   character(len=MAX_STRING_LEN) :: file_name
+  character(len=MAX_STRING_LEN) :: writer_group_name
   real(kind=CUSTOM_REAL), dimension(1,1,1,1) :: val_dummy
 
   ! ADIOS
@@ -495,7 +499,8 @@ end program sum_kernels_globe
   call init_adios_group(myadios_group,"KernelReader")
 
   ! i/o group to write out summed kernel values
-  call init_adios_group(myadios_val_group,"KERNELS_GROUP")
+  writer_group_name = "KERNELS_GROUP"
+  call init_adios_group(myadios_val_group,writer_group_name)
 
   ! defines variables and group size
   group_size_inc = 0
@@ -521,7 +526,7 @@ end program sum_kernels_globe
   ! opens new adios model file
   file_name = get_adios_filename('OUTPUT_SUM/' // 'kernels_sum')
 
-  call open_file_adios_write(myadios_val_file,myadios_val_group,file_name,"KERNELS_GROUP")
+  call open_file_adios_write(myadios_val_file,myadios_val_group,file_name,writer_group_name)
 
   call set_adios_group_size(myadios_val_file,group_size_inc)
 
@@ -529,11 +534,11 @@ end program sum_kernels_globe
   call write_adios_scalar(myadios_val_file,myadios_val_group,"NSPEC",NSPEC_CRUST_MANTLE)
   call write_adios_scalar(myadios_val_file,myadios_val_group,"reg1/nspec",NSPEC_CRUST_MANTLE)
 
-  end subroutine open_sum_file
+  end subroutine open_sum_file_adios
 
 !-------------------------------------------------------------------------------------------------
 
-  subroutine close_sum_file()
+  subroutine close_sum_file_adios()
 
   use manager_adios
 
@@ -542,7 +547,7 @@ end program sum_kernels_globe
   ! closes summed kernel file
   call close_file_adios(myadios_val_file)
 
-  end subroutine close_sum_file
+  end subroutine close_sum_file_adios
 
 !-------------------------------------------------------------------------------------------------
 

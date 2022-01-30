@@ -189,6 +189,7 @@
 
   ! closes ADIOS handler to the restart file.
   call close_file_adios_read_and_finalize_method(myadios_file)
+  call delete_adios_group(myadios_group,group_name)
 
   end subroutine read_intermediate_forward_arrays_adios
 
@@ -345,6 +346,7 @@
 
   ! closes ADIOS handler to the restart file.
   call close_file_adios_read_and_finalize_method(myadios_file)
+  call delete_adios_group(myadios_group,group_name)
 
   end subroutine read_forward_arrays_adios
 
@@ -561,6 +563,8 @@
   ! note: for single file, only close at the very end
   if (do_close_file) then
     call close_file_adios_read_and_finalize_method(myadios_fwd_file)
+    call delete_adios_group(myadios_fwd_group,group_name)
+
     is_initialized_fwd_group = .false.
 
     ! debug

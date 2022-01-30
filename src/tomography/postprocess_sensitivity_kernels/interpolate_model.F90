@@ -855,6 +855,7 @@
 
   ! closes file
   call close_file_adios_read_and_finalize_method(myadios_file)
+  call delete_adios_group(myadios_group,"InterpolatorNew")
 
 #else
   ! opens binary file
@@ -1021,6 +1022,7 @@
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
     ! closes file
     call close_file_adios_read_and_finalize_method(myadios_file)
+    call delete_adios_group(myadios_group,"InterpolatorOld")
 #endif
 
     ! user output

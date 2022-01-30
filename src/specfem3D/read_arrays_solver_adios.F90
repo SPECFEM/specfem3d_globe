@@ -124,6 +124,7 @@ subroutine read_arrays_solver_adios(iregion_code, &
   file_name = get_adios_filename(trim(LOCAL_PATH) // "/solver_data")
 
   ! Setup the ADIOS library to read the file
+  call init_adios_group(myadios_group,"SolverReader")
   call open_file_adios_read_and_init_method(myadios_file,myadios_group,file_name)
 
   ! note: adios2 increases step numbers on variables when appending to a file.
@@ -431,8 +432,9 @@ subroutine read_arrays_solver_adios(iregion_code, &
     call delete_adios_selection(sel)
   enddo
 
-  ! closes adios file
+  ! closes adios file & cleans/removes group object
   call close_file_adios_read_and_finalize_method(myadios_file)
+  call delete_adios_group(myadios_group,"SolverReader")
 
   ! synchronizes processes
   call synchronize_all()

@@ -55,6 +55,7 @@ subroutine read_mesh_databases_coupling_adios()
   file_name = get_adios_filename(trim(LOCAL_PATH) // "/boundary")
 
   ! opens adios file
+  call init_adios_group(myadios_group,"BoundaryReader")
   call open_file_adios_read_and_init_method(myadios_file,myadios_group,file_name)
 
   ! crust and mantle
@@ -405,6 +406,7 @@ subroutine read_mesh_databases_coupling_adios()
 
   ! closes adios file
   call close_file_adios_read_and_finalize_method(myadios_file)
+  call delete_adios_group(myadios_group,"BoundaryReader")
 
   ! -- Boundary Mesh for crust and mantle ---
   if (SAVE_BOUNDARY_MESH .and. SIMULATION_TYPE == 3) then
@@ -412,6 +414,7 @@ subroutine read_mesh_databases_coupling_adios()
     file_name = get_adios_filename(trim(LOCAL_PATH) // "boundary_disc")
 
     ! opens adios file
+    call init_adios_group(myadios_group,"BoundaryDiscReader")
     call open_file_adios_read_and_init_method(myadios_file,myadios_group,file_name)
 
     ! number of elements
@@ -502,6 +505,7 @@ subroutine read_mesh_databases_coupling_adios()
 
     ! closes adios file
     call close_file_adios_read_and_finalize_method(myadios_file)
+    call delete_adios_group(myadios_group,"BoundaryDiscReader")
 
   endif
 
@@ -655,6 +659,7 @@ subroutine read_mesh_databases_MPI_adios(iregion_code)
   file_name = get_adios_filename(trim(LOCAL_PATH) // "/solver_data_mpi")
 
   ! opens adios file
+  call init_adios_group(myadios_group,"SolverMPIReader")
   call open_file_adios_read_and_init_method(myadios_file,myadios_group,file_name)
 
   ! file read checking
@@ -818,6 +823,7 @@ subroutine read_mesh_databases_MPI_adios(iregion_code)
 
   ! closes adios file
   call close_file_adios_read_and_finalize_method(myadios_file)
+  call delete_adios_group(myadios_group,"SolverMPIReader")
 
   ! sets region MPI parameters
   select case(iregion_code)
@@ -1003,6 +1009,7 @@ subroutine read_mesh_databases_stacey_adios()
   write(region_name,"('reg',i1, '/')") IREGION_CRUST_MANTLE
 
   ! opens adios file
+  call init_adios_group(myadios_group,"StaceyReader")
   call open_file_adios_read_and_init_method(myadios_file,myadios_group,file_name)
 
   ! read arrays for Stacey conditions
@@ -1069,6 +1076,7 @@ subroutine read_mesh_databases_stacey_adios()
 
   ! closes adios file
   call close_file_adios_read_and_finalize_method(myadios_file)
+  call delete_adios_group(myadios_group,"StaceyReader")
 
 end subroutine read_mesh_databases_stacey_adios
 

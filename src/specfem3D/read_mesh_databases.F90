@@ -64,7 +64,7 @@
   ! read arrays created by the mesher
 
   ! reads "solver_data.bin" files for crust and mantle
-  if (SYNC_READING ) call synchronize_all()
+  if (SYNC_READING) call synchronize_all()
   if (myrank == 0) then
     write(IMAIN,*) '  reading in crust/mantle databases...'
     call flush_IMAIN()
@@ -72,7 +72,7 @@
   call read_mesh_databases_CM()
 
   ! reads "solver_data.bin" files for outer core
-  if (SYNC_READING ) call synchronize_all()
+  if (SYNC_READING) call synchronize_all()
   if (myrank == 0) then
     write(IMAIN,*) '  reading in outer core databases...'
     call flush_IMAIN()
@@ -80,7 +80,7 @@
   call read_mesh_databases_OC()
 
   ! reads "solver_data.bin" files for inner core
-  if (SYNC_READING ) call synchronize_all()
+  if (SYNC_READING) call synchronize_all()
   if (myrank == 0) then
     write(IMAIN,*) '  reading in inner core databases...'
     call flush_IMAIN()
@@ -88,7 +88,7 @@
   call read_mesh_databases_IC()
 
   ! reads "boundary.bin" files to couple mantle with outer core and inner core boundaries
-  if (SYNC_READING ) call synchronize_all()
+  if (SYNC_READING) call synchronize_all()
   if (myrank == 0) then
     write(IMAIN,*) '  reading in coupling surface databases...'
     call flush_IMAIN()
@@ -96,7 +96,7 @@
   call read_mesh_databases_coupling()
 
   ! sets up MPI interfaces, inner/outer elements and mesh coloring
-  if (SYNC_READING ) call synchronize_all()
+  if (SYNC_READING) call synchronize_all()
   if (myrank == 0) then
     write(IMAIN,*) '  reading in MPI databases...'
     call flush_IMAIN()
@@ -106,7 +106,7 @@
   ! absorbing boundaries
   if (ABSORBING_CONDITIONS) then
     ! reads "stacey.bin" files
-    if (SYNC_READING ) call synchronize_all()
+    if (SYNC_READING) call synchronize_all()
     if (myrank == 0) then
       write(IMAIN,*) '  reading in Stacey databases...'
       call flush_IMAIN()
@@ -116,7 +116,7 @@
 
   ! kernels on regular grids
   if (SAVE_REGULAR_KL .and. SIMULATION_TYPE == 3) then
-    if (SYNC_READING ) call synchronize_all()
+    if (SYNC_READING) call synchronize_all()
     if (myrank == 0) then
       write(IMAIN,*) '  reading in regular kernel databases...'
       call flush_IMAIN()
@@ -898,7 +898,6 @@
   jacobian2D_xmin_outer_core(:,:,:) = 0.0; jacobian2D_xmax_outer_core(:,:,:) = 0.0
   jacobian2D_ymin_outer_core(:,:,:) = 0.0; jacobian2D_ymax_outer_core(:,:,:) = 0.0
   jacobian2D_bottom_outer_core(:,:,:) = 0.0; jacobian2D_top_outer_core(:,:,:) = 0.0
-
 
   allocate(ibelm_xmin_inner_core(NSPEC2DMAX_XMIN_XMAX_IC),ibelm_xmax_inner_core(NSPEC2DMAX_XMIN_XMAX_IC), &
            ibelm_ymin_inner_core(NSPEC2DMAX_YMIN_YMAX_IC),ibelm_ymax_inner_core(NSPEC2DMAX_YMIN_YMAX_IC), &

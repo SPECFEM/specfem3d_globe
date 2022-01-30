@@ -153,12 +153,12 @@ program smooth_laplacian_sem
      if (myrank == 0) then
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
         print *,'Usage: mpirun -np NPROC bin/xsmooth_laplacian_sem_adios SIGMA_H SIGMA_V KERNEL_NAME', &
-               ' INPUT_FILE SOLVER_FILE OUTPUT_FILE'
+               ' INPUT_FILE SOLVER_DIR OUTPUT_FILE'
         print *,'   with'
         print *,'     SIGMA_XY, SIGMA_Z - XY and Z smoothing lenghts'
         print *,'     KERNEL_NAME       - comma-separated kernel names (e.g., alpha_kernel,beta_kernel)'
         print *,'     INPUT_FILE        - ADIOS file with kernel values (e.g., kernels.bp)'
-        print *,'     SOLVER_FILE       - ADIOS file with mesh arrays (e.g., DATABASES_MPI/) containing', &
+        print *,'     SOLVER_DIR        - directory w/ ADIOS file with mesh arrays (e.g., DATABASES_MPI/) containing', &
                ' solver_data.bp solver_data_mpi.bp'
         print *,'     OUTPUT_FILE       - ADIOS file for smoothed output'
         print *,'     REL_TO_PREM       - (optional) increase smoothing radius based on PREM model P-wave velocity'
@@ -363,6 +363,7 @@ program smooth_laplacian_sem
   ! opens file for reading
   call init_adios_group(myadios_group, "MeshReader")
   call open_file_adios_read_and_init_method(myadios_file, myadios_group, trim(solver_file))
+
   call read_adios_scalar(myadios_file, myadios_group, myrank, trim(reg_name)//"nspec", nspec)
   call read_adios_scalar(myadios_file, myadios_group, myrank, trim(reg_name)//"nglob", nglob)
   if (nspec /= NSPEC_AB) call exit_mpi(myrank,'Error invalid nspec value in adios solver_data file')
@@ -381,19 +382,22 @@ program smooth_laplacian_sem
   call read_adios_array(myadios_file, myadios_group, myrank, nglob, trim(reg_name) // "x_global", xglob)
   call read_adios_array(myadios_file, myadios_group, myrank, nglob, trim(reg_name) // "y_global", yglob)
   call read_adios_array(myadios_file, myadios_group, myrank, nglob, trim(reg_name) // "z_global", zglob)
+
   call close_file_adios_read_and_finalize_method(myadios_file)
+  call delete_adios_group(myadios_group,"MeshReader")
 
   ! opens file for mesh
   if (myrank == 0) print *, 'reading in ADIOS solver file: ',trim(solver_file_mpi)
+
   call init_adios_group(myadios_group, "MeshMPIReader")
   call open_file_adios_read_and_init_method(myadios_file,myadios_group,solver_file_mpi)
+
   ! MPI interfaces
   call read_adios_scalar(myadios_file,myadios_group,myrank,trim(reg_name) // "num_interfaces",num_interfaces)
   call read_adios_scalar(myadios_file,myadios_group,myrank,trim(reg_name) // "max_nibool_interfaces",max_nibool_interfaces)
 
   allocate(my_neighbors(num_interfaces), &
-       nibool_interfaces(num_interfaces), &
-       stat=ier)
+           nibool_interfaces(num_interfaces), stat=ier)
   if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array my_neighbors_crust_mantle etc.')
   if (num_interfaces > 0) then
      allocate(ibool_interfaces(max_nibool_interfaces,num_interfaces), stat=ier)
@@ -419,7 +423,9 @@ program smooth_laplacian_sem
      allocate(ibool_interfaces(0,0),stat=ier)
      if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array dummy ibool_interfaces_crust_mantle')
   endif
+
   call close_file_adios_read_and_finalize_method(myadios_file)
+  call delete_adios_group(myadios_group,"MeshMPIReader")
 
 #else
   ! read in the topology files of the current and neighboring slices
@@ -468,8 +474,7 @@ program smooth_laplacian_sem
   ! MPI interfaces
   read(IIN) num_interfaces
   allocate(my_neighbors(num_interfaces), &
-          nibool_interfaces(num_interfaces), &
-          stat=ier)
+           nibool_interfaces(num_interfaces), stat=ier)
   if (ier /= 0 ) &
     call exit_mpi(myrank,'Error allocating array my_neighbors_crust_mantle etc.')
   if (num_interfaces > 0) then
@@ -495,102 +500,106 @@ program smooth_laplacian_sem
   ! 2. Modify jacobian and inverse jacobian for non-dimensionalize smoothing
   !    note: correlation mengths Lx, Ly and Lz could be made depth or space dependent
   do iel = 1, nspec_ab
-     do k = 1, ngllz
-        do j = 1, nglly
-           do i = 1, ngllx
-              ! Get inverse jacobian
-              dxsi_dxl = dxsi_dx(i,j,k,iel)
-              deta_dxl = deta_dx(i,j,k,iel)
-              dgam_dxl = dgam_dx(i,j,k,iel)
-              dxsi_dyl = dxsi_dy(i,j,k,iel)
-              deta_dyl = deta_dy(i,j,k,iel)
-              dgam_dyl = dgam_dy(i,j,k,iel)
-              dxsi_dzl = dxsi_dz(i,j,k,iel)
-              deta_dzl = deta_dz(i,j,k,iel)
-              dgam_dzl = dgam_dz(i,j,k,iel)
-              ! Compute jacobian
-              jacobianl = dxsi_dxl * (deta_dyl * dgam_dzl - deta_dzl * dgam_dyl) &
-                   - dxsi_dyl * (deta_dxl * dgam_dzl - deta_dzl * dgam_dxl) &
-                   + dxsi_dzl * (deta_dxl * dgam_dyl - deta_dyl * dgam_dxl)
-              jacobianl = 1. / jacobianl
-              ! convert Lv, Lh to Lx, Ly, Lz
-              idof = ibool(i, j, k, iel)
-              x = xglob(idof)
-              y = yglob(idof)
-              z = zglob(idof)
-              call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
-              ! determine smoothing radius
-              Lh2 = Lh
-              Lv2 = Lv
-            !   if (taper_vertical > 0) then
-            !       if ((1 - r) < taper_vertical) then
-            !          Lv2 = Lv + (Lh - Lv) * (1 - cos(PI * (1 - r) / taper_vertical)) / 2
-            !       else
-            !          Lv2 = Lh
-            !       endif
-            !   else
-            !       Lv2 = Lv
-            !   endif
-              ! increase radius based on PREM model velocity
-              if (rel_to_prem > TINYVAL) then
-               call model_prem_iso(r,rho,drhodr,vp,vs,Qkappa,Qmu,0,CRUSTAL,.false.)
-               if (vp > 1.0) then
-                  Lv2 = Lv2 * vp ** rel_to_prem
-                  Lh2 = Lh2 * vp ** rel_to_prem
-               endif
-              endif
-            !   ! convert Lv, Lh to Lx, Ly, Lz
-            !   e2 = 1 - (Lv2 / Lh2) ** 2
-            !   Lz = Lh2 * (1 - e2 * cos(theta) ** 2)
-            !   Lx = Lh2 * (1 - e2 * (sin(theta) * cos(phi)) ** 2 )
-            !   Ly = Lh2 * (1 - e2 * (sin(theta) * sin(phi)) ** 2 )
-               Lx = Lh2
-               Ly = Lh2
-               Lz = Lv2
+    do k = 1, ngllz
+      do j = 1, nglly
+        do i = 1, ngllx
+          ! Get inverse jacobian
+          dxsi_dxl = dxsi_dx(i,j,k,iel)
+          deta_dxl = deta_dx(i,j,k,iel)
+          dgam_dxl = dgam_dx(i,j,k,iel)
+          dxsi_dyl = dxsi_dy(i,j,k,iel)
+          deta_dyl = deta_dy(i,j,k,iel)
+          dgam_dyl = dgam_dy(i,j,k,iel)
+          dxsi_dzl = dxsi_dz(i,j,k,iel)
+          deta_dzl = deta_dz(i,j,k,iel)
+          dgam_dzl = dgam_dz(i,j,k,iel)
+          ! Compute jacobian
+          jacobianl = dxsi_dxl * (deta_dyl * dgam_dzl - deta_dzl * dgam_dyl) &
+                    - dxsi_dyl * (deta_dxl * dgam_dzl - deta_dzl * dgam_dxl) &
+                    + dxsi_dzl * (deta_dxl * dgam_dyl - deta_dyl * dgam_dxl)
+          jacobianl = 1. / jacobianl
+          ! convert Lv, Lh to Lx, Ly, Lz
+          idof = ibool(i, j, k, iel)
+          x = xglob(idof)
+          y = yglob(idof)
+          z = zglob(idof)
+          call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
+          ! determine smoothing radius
+          Lh2 = Lh
+          Lv2 = Lv
+          !   if (taper_vertical > 0) then
+          !       if ((1 - r) < taper_vertical) then
+          !          Lv2 = Lv + (Lh - Lv) * (1 - cos(PI * (1 - r) / taper_vertical)) / 2
+          !       else
+          !          Lv2 = Lh
+          !       endif
+          !   else
+          !       Lv2 = Lv
+          !   endif
+          ! increase radius based on PREM model velocity
+          if (rel_to_prem > TINYVAL) then
+            call model_prem_iso(r,rho,drhodr,vp,vs,Qkappa,Qmu,0,CRUSTAL,.false.)
+            if (vp > 1.0) then
+              Lv2 = Lv2 * vp ** rel_to_prem
+              Lh2 = Lh2 * vp ** rel_to_prem
+            endif
+          endif
+          !   ! convert Lv, Lh to Lx, Ly, Lz
+          !   e2 = 1 - (Lv2 / Lh2) ** 2
+          !   Lz = Lh2 * (1 - e2 * cos(theta) ** 2)
+          !   Lx = Lh2 * (1 - e2 * (sin(theta) * cos(phi)) ** 2 )
+          !   Ly = Lh2 * (1 - e2 * (sin(theta) * sin(phi)) ** 2 )
+          Lx = Lh2
+          Ly = Lh2
+          Lz = Lv2
 
-              ! Apply scaling
-              dxsi_dx(i,j,k,iel)  = dxsi_dxl * Lx
-              deta_dx(i,j,k,iel)  = deta_dxl * Lx
-              dgam_dx(i,j,k,iel)  = dgam_dxl * Lx
-              dxsi_dy(i,j,k,iel)  = dxsi_dyl * Ly
-              deta_dy(i,j,k,iel)  = deta_dyl * Ly
-              dgam_dy(i,j,k,iel)  = dgam_dyl * Ly
-              dxsi_dz(i,j,k,iel)  = dxsi_dzl * Lz
-              deta_dz(i,j,k,iel)  = deta_dzl * Lz
-              dgam_dz(i,j,k,iel)  = dgam_dzl * Lz
-              jacobian(i,j,k,iel) = jacobianl / (Lx*Ly*Lz)
-           enddo
+          ! Apply scaling
+          dxsi_dx(i,j,k,iel)  = dxsi_dxl * Lx
+          deta_dx(i,j,k,iel)  = deta_dxl * Lx
+          dgam_dx(i,j,k,iel)  = dgam_dxl * Lx
+          dxsi_dy(i,j,k,iel)  = dxsi_dyl * Ly
+          deta_dy(i,j,k,iel)  = deta_dyl * Ly
+          dgam_dy(i,j,k,iel)  = dgam_dyl * Ly
+          dxsi_dz(i,j,k,iel)  = dxsi_dzl * Lz
+          deta_dz(i,j,k,iel)  = deta_dzl * Lz
+          dgam_dz(i,j,k,iel)  = dgam_dzl * Lz
+          jacobian(i,j,k,iel) = jacobianl / (Lx*Ly*Lz)
         enddo
-     enddo
+      enddo
+    enddo
   enddo
   call synchronize_all()
 
 
   !! PREPARE ADIOS OUTPUTS
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
-     ! ADIOS
-     ! user output
-     if (myrank == 0) print *, 'writing to ADIOS output file: ',trim(output_file)
-     ! determines group size
-     call init_adios_group(myadios_group, "ValWriter")
-     group_size_inc = 0
-     call define_adios_scalar(myadios_group, group_size_inc, '',trim(reg_name)//"nspec", nspec)
-     call define_adios_scalar(myadios_group, group_size_inc, '',trim(reg_name)//"nglob", nglob)
-     do iker = 1, nker
-        kernel_name = kernel_names(iker)
-        local_dim = NGLLX * NGLLY * NGLLZ * nspec
-        !!! warning different conventions
-        write(tmp_str,'(a,a)')trim(kernel_name),'_crust_mantle'
-        !write(tmp_str,'(a,a)')trim(reg_name),trim(kernel_name)
-        call define_adios_global_array1D(myadios_group, group_size_inc,local_dim, '', &
+  ! ADIOS
+  ! user output
+  if (myrank == 0) then
+    print *
+    print *, 'writing to ADIOS output file: ',trim(output_file)
+    print *
+  endif
+  ! determines group size
+  call init_adios_group(myadios_group, "ValWriter")
+  group_size_inc = 0
+  call define_adios_scalar(myadios_group, group_size_inc, '',trim(reg_name)//"nspec", nspec)
+  call define_adios_scalar(myadios_group, group_size_inc, '',trim(reg_name)//"nglob", nglob)
+  do iker = 1, nker
+    kernel_name = kernel_names(iker)
+    local_dim = NGLLX * NGLLY * NGLLZ * nspec
+    !!! warning different conventions
+    write(tmp_str,'(a,a)')trim(kernel_name),'_crust_mantle'
+    !write(tmp_str,'(a,a)')trim(reg_name),trim(kernel_name)
+    call define_adios_global_array1D(myadios_group, group_size_inc,local_dim, '', &
                                      trim(tmp_str), so(:, :, :, :))
-     enddo
-     ! opens output files
-     call open_file_adios_write(myadios_file, myadios_group,trim(output_file), "ValWriter")
-     call set_adios_group_size(myadios_file,group_size_inc)
-     ! writes to file
-     call write_adios_scalar(myadios_file, myadios_group, trim(reg_name)//"nspec", nspec)
-     call write_adios_scalar(myadios_file, myadios_group, trim(reg_name)//"nglob", nglob)
+  enddo
+  ! opens output files
+  call open_file_adios_write(myadios_file, myadios_group,trim(output_file), "ValWriter")
+  call set_adios_group_size(myadios_file,group_size_inc)
+  ! writes to file
+  call write_adios_scalar(myadios_file, myadios_group, trim(reg_name)//"nspec", nspec)
+  call write_adios_scalar(myadios_file, myadios_group, trim(reg_name)//"nglob", nglob)
 #endif
 
 
@@ -600,110 +609,117 @@ program smooth_laplacian_sem
   !         where A = (M + K)
   !    done with two conjugate gradients
   do iker = 1, nker
-     !! Read input kernels
-     kernel_name = kernel_names(iker)
+    !! Read input kernels
+    kernel_name = kernel_names(iker)
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
-     ! ADIOS single file opening
-     ! user output
-     if (myrank == 0) print *, 'reading in ADIOS input file : ',trim(input_file)
-     call init_adios_group(myadios_val_group, "ValReader")
-     call open_file_adios_read(myadios_val_file, myadios_val_group, trim(input_file))
-     ! ADIOS array name
-     ! determines if parameter name is for a kernel
-      is_kernel = .false.
-      if (len_trim(kernel_name) > 3) then
-        if (kernel_name(len_trim(kernel_name)-2:len_trim(kernel_name)) == '_kl') then
-          is_kernel = .true.
-        endif
+    ! ADIOS single file opening
+    ! user output
+    if (myrank == 0) then
+      print *, 'reading in ADIOS input file : ',trim(input_file)
+    endif
+    call init_adios_group(myadios_val_group, "ValReader")
+    call open_file_adios_read(myadios_val_file, myadios_val_group, trim(input_file))
+    ! ADIOS array name
+    ! determines if parameter name is for a kernel
+    is_kernel = .false.
+    if (len_trim(kernel_name) > 3) then
+      if (kernel_name(len_trim(kernel_name)-2:len_trim(kernel_name)) == '_kl') then
+        is_kernel = .true.
       endif
-      is_hess = .false.
-      if (len_trim(kernel_name) > 5) then
-        if (kernel_name(1:5) == 'hess_') then
-          is_hess = .true.
-        endif
+    endif
+    is_hess = .false.
+    if (len_trim(kernel_name) > 5) then
+      if (kernel_name(1:5) == 'hess_') then
+        is_hess = .true.
       endif
-      if (is_kernel) then
-        ! NOTE: reg1 => crust_mantle, others are not implemented
-        varname = trim(kernel_name) // "_crust_mantle"
-      else
-        varname = trim(reg_name) // trim(kernel_name)
-      endif
-      ! user output
-      if (myrank == 0) then
-        print *, '  data: ADIOS ',trim(kernel_name), " is_kernel = ", is_kernel, " is_hess = ", is_hess
-        print *, '  data: ADIOS using array name = ',trim(varname)
-        print *
-      endif
-      ! reads kernel values
-      call read_adios_array(myadios_val_file, myadios_val_group, myrank, nspec, trim(varname), mo(:, :, :, :))
-      call synchronize_all()
-      call close_file_adios_read(myadios_val_file)
+    endif
+    if (is_kernel) then
+      ! NOTE: reg1 => crust_mantle, others are not implemented
+      varname = trim(kernel_name) // "_crust_mantle"
+    else
+      varname = trim(reg_name) // trim(kernel_name)
+    endif
+    ! user output
+    if (myrank == 0) then
+      print *, '  data: ADIOS ',trim(kernel_name), " is_kernel = ", is_kernel, " is_hess = ", is_hess
+      print *, '  data: ADIOS using array name = ',trim(varname)
+      print *
+    endif
+    ! reads kernel values
+    call read_adios_array(myadios_val_file, myadios_val_group, myrank, nspec, trim(varname), mo(:, :, :, :))
+    call synchronize_all()
+    call close_file_adios_read(myadios_val_file)
+    call delete_adios_group(myadios_val_group, "ValReader")
 #else
-     ! user output
-     if (myrank == 0) then
-        print *,'  kernel ',iker,'out of ',nker
-        print *,'  reading data file: proc = ',myrank,' name = ',trim(kernel_name)
-        print *
-     endif
-     ! data file
-     write(local_data_file,'(a,i6.6,a)') &
+    ! user output
+    if (myrank == 0) then
+      print *,'  kernel ',iker,'out of ',nker
+      print *,'  reading data file: proc = ',myrank,' name = ',trim(kernel_name)
+      print *
+    endif
+    ! data file
+    write(local_data_file,'(a,i6.6,a)') &
           trim(input_dir)//'/proc',myrank,trim(reg_name)//trim(kernel_name)//'.bin'
 
-     open(IIN,file=trim(local_data_file),status='old',action='read',form='unformatted',iostat=ier)
-     if (ier /= 0) then
-        print *,'Error opening data file: ',trim(local_data_file)
-        call exit_mpi(myrank,'Error opening data file')
-     endif
-     read(IIN) mo(:,:,:,:)
-     close(IIN)
+    open(IIN,file=trim(local_data_file),status='old',action='read',form='unformatted',iostat=ier)
+    if (ier /= 0) then
+      print *,'Error opening data file: ',trim(local_data_file)
+      call exit_mpi(myrank,'Error opening data file')
+    endif
+    read(IIN) mo(:,:,:,:)
+    close(IIN)
 #endif
-     ! Get normalization factor
-     if (is_hess) then
-       mo = sqrt(abs(mo))
-     endif
-     norm_ker = 0.
-     norm_kerl = sum(mo**2)/nglob
-     call sum_all_cr(norm_kerl, norm_ker)
-     norm_ker = sqrt(norm_ker)
-     call bcast_all_singlecr(norm_ker)
-     mo = mo / norm_ker
-     call synchronize_all()
+    ! Get normalization factor
+    if (is_hess) then
+      mo = sqrt(abs(mo))
+    endif
+    norm_ker = 0.
+    norm_kerl = sum(mo**2)/nglob
+    call sum_all_cr(norm_kerl, norm_ker)
+    norm_ker = sqrt(norm_ker)
+    call bcast_all_singlecr(norm_ker)
+    mo = mo / norm_ker
+    call synchronize_all()
 
-     !! First pass
-     call apply_mass_matrix_gll(mo, m)
-     call solve_laplace_linear_system_cg(m, s) ! Solve A y = m
+    !! First pass
+    call apply_mass_matrix_gll(mo, m)
+    call solve_laplace_linear_system_cg(m, s) ! Solve A y = m
 
-     !! Second pass
-     call apply_mass_matrix_glob(s, m)
-     call solve_laplace_linear_system_cg(m, s) ! Solve A s = y
+    !! Second pass
+    call apply_mass_matrix_glob(s, m)
+    call solve_laplace_linear_system_cg(m, s) ! Solve A s = y
 
-     !! SAve kernels
-     call model_glob_to_gll(s, so)
-     so = so * norm_ker
-     if (is_hess) then
-       so = so * so
-     endif
+    !! Save kernels
+    call model_glob_to_gll(s, so)
+    so = so * norm_ker
+    if (is_hess) then
+      so = so * so
+    endif
 
-     ! smoothed kernel file name
+    ! smoothed kernel file name
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
-     ! ADIOS
-     write(tmp_str,'(a,a)')trim(kernel_name),'_crust_mantle'
-     !write(tmp_str,'(a,a)')trim(reg_name),trim(kernel_name)
-     local_dim = NGLLX * NGLLY * NGLLZ * nspec
-     call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs_adios, local_dim, &
-          trim(tmp_str), so(:, :, :, :))
+    ! ADIOS
+    write(tmp_str,'(a,a)')trim(kernel_name),'_crust_mantle'
+    !write(tmp_str,'(a,a)')trim(reg_name),trim(kernel_name)
+    local_dim = NGLLX * NGLLY * NGLLZ * nspec
+    call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs_adios, local_dim, &
+                                     trim(tmp_str), so(:, :, :, :))
 #else
-     write(output_file,'(a,i6.6,a)') trim(output_dir)//'/proc', myrank, trim(reg_name)//trim(kernel_name)//'_smooth.bin'
-     open(IOUT,file=trim(output_file),status='unknown',form='unformatted',action='write',iostat=ier)
-     if (ier /= 0) call exit_mpi(myrank,'Error opening smoothed kernel file')
-     ! Note: output the following instead of kernel_smooth(:,:,:,1:NSPEC_AB) to create files of the same sizes
-     write(IOUT) so(:,:,:,:)
-     close(IOUT)
-     if (myrank == 0) print *,'  written: ',trim(output_file)
+    write(output_file,'(a,i6.6,a)') trim(output_dir)//'/proc', myrank, trim(reg_name)//trim(kernel_name)//'_smooth.bin'
+    open(IOUT,file=trim(output_file),status='unknown',form='unformatted',action='write',iostat=ier)
+    if (ier /= 0) call exit_mpi(myrank,'Error opening smoothed kernel file')
+    ! Note: output the following instead of kernel_smooth(:,:,:,1:NSPEC_AB) to create files of the same sizes
+    write(IOUT) so(:,:,:,:)
+    close(IOUT)
 #endif
-     ! synchronizes
-     call synchronize_all()
-
+    ! user output
+    if (myrank == 0) then
+      print *
+      print *,'written: ',trim(output_file)
+      print *
+    endif
+    ! synchronizes
+    call synchronize_all()
   enddo
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
@@ -714,15 +730,14 @@ program smooth_laplacian_sem
   call write_adios_perform(myadios_file)
   ! closes adios files
   call close_file_adios(myadios_file)
-!  call close_file_adios_read_and_finalize_method(myadios_file)
   call finalize_adios()
 #endif
 
- ! user output
- if (myrank == 0) print *, 'all done'
+  ! user output
+  if (myrank == 0) print *, 'all done'
 
- ! stop all the processes, and exit
- call finalize_mpi()
+  ! stop all the processes, and exit
+  call finalize_mpi()
 
 
 contains

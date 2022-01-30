@@ -57,7 +57,7 @@ fi
 # combines & plots alpha_kl
 echo
 echo "*****************************************"
-echo "xcombine_vol_data and plot"
+echo "xcombine_vol_data_vtk_adios and plot"
 echo "*****************************************"
 echo
 #./bin/xcombine_vol_data_vtk_adios slices_all.txt alpha_kl OUTPUT_FILES/kernels.bp DATABASES_MPI/solver_data.bp OUTPUT_FILES/ 1 1
@@ -85,7 +85,7 @@ mv -v OUTPUT_FILES/reg_1_bulk_betav_kl.vtk OUTPUT_FILES/reg_1_bulk_betav_kl-1.vt
 # sums tiso kernels
 echo
 echo "*****************************************"
-echo "xsum kernels"
+echo "xsum_kernels_adios"
 echo "*****************************************"
 echo
 mpirun -np $NPROC ./bin/xsum_kernels_adios
@@ -95,7 +95,7 @@ if [[ $? -ne 0 ]]; then exit 1; fi
 # combines bulk_betav_kl from summed kernels
 echo
 echo "*****************************************"
-echo "xcombine_vol_data summed kernel"
+echo "xcombine_vol_data_vtk_adios w/ summed kernel"
 echo "*****************************************"
 echo
 ./bin/xcombine_vol_data_vtk_adios slices_all.txt bulk_betav_kl OUTPUT_SUM/kernels_sum.bp DATABASES_MPI/solver_data.bp OUTPUT_FILES/ 1 1
@@ -117,7 +117,7 @@ fi
 # interpolation (onto itself)
 echo
 echo "*****************************************"
-echo "xinterpolate model"
+echo "xinterpolate_model_adios"
 echo "*****************************************"
 echo
 mpirun -np $NPROC ./bin/xinterpolate_model_adios DATABASES_MPI/ DATABASES_MPI/ DATABASES_MPI/ OUTPUT_FILES/
@@ -143,7 +143,7 @@ if [[ $? -ne 0 ]]; then exit 1; fi
 # converts to binary files
 echo
 echo "*****************************************"
-echo "xconvert model"
+echo "xconvert_model_file_adios"
 echo "*****************************************"
 echo
 mpirun -np $NPROC ./bin/xconvert_model_file_adios 1 DATABASES_MPI/ OUTPUT_FILES/
@@ -154,7 +154,7 @@ if [[ $? -ne 0 ]]; then exit 1; fi
 # combines bulk_betav_kl from converted kernels
 echo
 echo "*****************************************"
-echo "xcombine_vol_data converted model"
+echo "xcombine_vol_data_vtk_adios w/ converted model"
 echo "*****************************************"
 echo
 cp -v DATA/Par_file DATA/Par_file.tmp
@@ -163,6 +163,8 @@ sed -i "s:^ADIOS_ENABLED .*:ADIOS_ENABLED = .false.:" DATA/Par_file
 mpirun -np $NPROC ./bin/xmeshfem3D
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi
+
+# restores original Par_file
 mv -v DATA/Par_file.tmp DATA/Par_file
 
 echo
@@ -193,8 +195,37 @@ echo
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi
 
+# checks if smoothing is working
+echo
+echo "*****************************************"
+echo "xsmooth_sem_adios"
+echo "*****************************************"
+echo
+
+GPU_MODE=`grep ^GPU_MODE DATA/Par_file | cut -d = -f 2 `
+if [[ "$GPU_MODE" =~ ".true." ]]; then
+mpirun -np $NPROC ./bin/xsmooth_sem_adios 1.0 1.0 bulk_betav_kl,bulk_betah_kl OUTPUT_FILES/kernels.bp DATABASES_MPI/solver_data.bp OUTPUT_FILES/kernels_smooth.bp .true.
+else
+mpirun -np $NPROC ./bin/xsmooth_sem_adios 1.0 1.0 bulk_betav_kl,bulk_betah_kl OUTPUT_FILES/kernels.bp DATABASES_MPI/solver_data.bp OUTPUT_FILES/kernels_smooth.bp
+fi
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
+
+
+# checks if laplace smoothing is working
+echo
+echo "*****************************************"
+echo "xsmooth_laplacian_sem_adios"
+echo "*****************************************"
+echo
+
+mpirun -np $NPROC ./bin/xsmooth_laplacian_sem_adios 1.0 1.0 bulk_betav_kl,bulk_betah_kl OUTPUT_FILES/kernels.bp DATABASES_MPI/ OUTPUT_FILES/kernels_smooth_laplace.bp
+
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
 echo
-echo "all done"
+echo "done"
+echo "test successful!"
 echo
 
