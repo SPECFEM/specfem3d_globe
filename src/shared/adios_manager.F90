@@ -256,7 +256,7 @@ contains
   ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
   !       e.g., version 1.5.0 returns 1 here
   !print *,'adios init return: ',ier
-  !if (ier /= 0) stop 'Error setting up ADIOS: calling adios_init_noxml() routine failed'
+  if (ier /= 0) stop 'Error setting up ADIOS: calling adios_init_noxml() routine failed. Please use an ADIOS version >= 1.6'
 
 ! ask/check at configuration step for adios version 1.10 or higher?
 #ifdef ADIOS_VERSION_OLD
@@ -1039,13 +1039,13 @@ contains
   ! ADIOS 1
   call adios_declare_group(adios_group, group_name, '', 0, ier)
   ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
-  !call check_adios_err(ier,"Error declare group")
+  call check_adios_err(ier,"Error declare group")
 
   ! We set the transport method to 'MPI'. This seems to be the correct choice
   ! for now. We might want to move this to the constant.h file later on.
   call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, '', '', ier)
   ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
-  !call check_adios_err(ier,"Error select method")
+  call check_adios_err(ier,"Error select method")
 
 #elif defined(USE_ADIOS2)
   ! Create the ADIOS IO group which will contain all variables and attributes
@@ -1101,12 +1101,12 @@ contains
   ! ADIOS 1
   call adios_declare_group(adios_group, group_name, "iter", 0, ier)
   ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
-  !call check_adios_err(ier,"Error declare group")
+  call check_adios_err(ier,"Error declare group")
 
   ! sets transport method
   call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD_UNDO_ATT, ADIOS_METHOD_PARAMS_UNDO_ATT, '', ier)
   ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
-  !call check_adios_err(ier,"Error select method")
+  call check_adios_err(ier,"Error select method")
 
 #elif defined(USE_ADIOS2)
   ! ADIOS 2
