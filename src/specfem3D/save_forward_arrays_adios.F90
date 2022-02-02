@@ -228,6 +228,12 @@
     if (do_init_group) then
       call init_adios_group_undo_att(myadios_fwd_group,group_name)
 
+      ! adds wavefield compression
+      if (ADIOS_COMPRESSION_ALGORITHM /= 0) then
+        ! sets adios flag to add compression operation for the following define_adios_** function calls
+        call define_adios_compression()
+      endif
+
       ! defines ADIOS variables
       group_size_inc = 0
       ! iteration number
@@ -239,10 +245,8 @@
       ! attenuation memory variables
       if (ATTENUATION_VAL) call define_attenuation_forward_arrays_adios(group_size_inc)
 
-      ! adds wavefield compression
-      if (ADIOS2_COMPRESSION_ALGORITHM /= 0) then
-        call add_adios_compression(myadios_fwd_group,ROTATION_VAL,ATTENUATION_VAL)
-      endif
+      ! re-sets compression flag (in case other routines will call the define_adios_** function calls)
+      if (ADIOS_COMPRESSION_ALGORITHM /= 0) use_adios_compression = .false.
     endif
 
     ! Open an ADIOS handler to the restart file.
@@ -328,6 +332,7 @@
   implicit none
 
   integer(kind=8), intent(inout) :: group_size_inc
+
   ! local parameters
   integer(kind=8) :: local_dim
 
@@ -421,6 +426,7 @@
   implicit none
 
   integer(kind=8), intent(inout) :: group_size_inc
+
   ! local parameters
   integer(kind=8) :: local_dim
 
@@ -448,6 +454,7 @@
   implicit none
 
   integer(kind=8), intent(inout) :: group_size_inc
+
   ! local parameters
   integer(kind=8) :: local_dim
 

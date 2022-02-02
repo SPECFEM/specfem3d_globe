@@ -55,6 +55,7 @@ module adios_helpers_mod
   public :: define_adios_global_string_1d_array
   public :: define_adios_local_string_1d_array
   public :: define_adios_global_array1D
+  public :: define_adios_compression
 
   ! from adios_helpers_readers_mod
   public :: read_adios_array

@@ -52,6 +52,15 @@ module adios_helpers_definitions_mod
   use manager_adios, only: sizeprocs_adios,myrank_adios
 #endif
 
+  ! compression
+  use manager_adios, only: ADIOS_COMPRESSION_ALGORITHM,ADIOS_COMPRESSION_MODE,ADIOS_COMPRESSION_MODE_VALUE, &
+                           use_adios_compression
+#if defined(USE_ADIOS)
+  use adios_write_mod, only: adios_set_transform
+#elif defined(USE_ADIOS2)
+  use manager_adios, only: myadios2_obj
+#endif
+
   implicit none
 
   private
@@ -65,6 +74,7 @@ module adios_helpers_definitions_mod
   public :: define_adios_global_string_1d_array
   public :: define_adios_local_string_1d_array
   public :: define_adios_global_array1D
+  public :: define_adios_compression
 
   ! Generic interface to define scalar variables in ADIOS
   interface define_adios_scalar
@@ -163,6 +173,15 @@ module adios_helpers_definitions_mod
     module procedure define_adios_global_1d_string_1d
 
   end interface define_adios_global_array1D
+
+  ! compression
+#if defined(USE_ADIOS)
+  ! for undo_att snapshots compression - compression transform string
+  character(len=128) :: myadios_comp_operator
+#elif defined(USE_ADIOS2)
+  ! for undo_att snapshots compression - compression operator
+  type(adios2_operator) :: myadios_comp_operator
+#endif
 
 contains
 
@@ -691,8 +710,10 @@ end subroutine define_adios_global_dims_1d
   integer(kind=8), dimension(1) :: offs  ! Starting offset in global array
   type(adios2_variable) :: v
   character(len=256) :: full_name
-  integer :: ier
+  ! compression
+  integer :: operation_id
 #endif
+  integer :: ier
 
   TRACE_ADIOS_L2_ARG('define_adios_global_1d_generic_real: ',trim(array_name))
 
@@ -706,6 +727,12 @@ end subroutine define_adios_global_dims_1d
                         trim(array_name) // "/local_dim", &
                         trim(array_name) // "/global_dim", &
                         trim(array_name) // "/offset", var_id)
+  ! compression
+  if (use_adios_compression) then
+    ! adds compression transform
+    call adios_set_transform(var_id,myadios_comp_operator,ier)
+    call check_adios_err(ier,"Error adios compression: set transform for variable "//trim(array_name)//" failed")
+  endif
 
 #elif defined(USE_ADIOS2)
   ! ADIOS 2
@@ -722,6 +749,15 @@ end subroutine define_adios_global_dims_1d
   call check_adios_err(ier,"Error adios2 define variable "//trim(full_name)//" failed")
 
   if (.not. v%valid) stop 'Error adios2 defined variable is invalid'
+
+  ! compression
+  if (use_adios_compression) then
+    ! adds compression operation to array variable
+    call adios2_add_operation(operation_id, v, myadios_comp_operator, &
+                              ADIOS_COMPRESSION_MODE, ADIOS_COMPRESSION_MODE_VALUE, ier)
+    call check_adios_err(ier,"Error adios2 compression: add operation for variable "//trim(full_name)//" failed")
+    if (operation_id /= 0) stop 'Error adios2 operation_id not added for array'
+  endif
 
 #endif
 
@@ -888,8 +924,10 @@ end subroutine define_adios_global_dims_1d
   integer(kind=8), dimension(1) :: offs  ! Starting offset in global array
   type(adios2_variable) :: v
   character(len=256) :: full_name
-  integer :: ier
+  ! compression
+  integer :: operation_id
 #endif
+  integer :: ier
 
   TRACE_ADIOS_L2_ARG('define_adios_global_1d_generic_double: ',trim(array_name))
 
@@ -903,6 +941,12 @@ end subroutine define_adios_global_dims_1d
                         trim(array_name) // "/local_dim", &
                         trim(array_name) // "/global_dim", &
                         trim(array_name) // "/offset", var_id)
+  ! compression
+  if (use_adios_compression) then
+    ! adds compression transform
+    call adios_set_transform(var_id,myadios_comp_operator,ier)
+    call check_adios_err(ier,"Error adios compression: set transform for variable "//trim(array_name)//" failed")
+  endif
 
 #elif defined(USE_ADIOS2)
   ! ADIOS 2
@@ -919,6 +963,15 @@ end subroutine define_adios_global_dims_1d
   call check_adios_err(ier,"Error adios2 define variable "//trim(full_name)//" failed")
 
   if (.not. v%valid) stop 'Error adios2 defined variable is invalid'
+
+  ! compression
+  if (use_adios_compression) then
+    ! adds compression operation to array variable
+    call adios2_add_operation(operation_id, v, myadios_comp_operator, &
+                              ADIOS_COMPRESSION_MODE, ADIOS_COMPRESSION_MODE_VALUE, ier)
+    call check_adios_err(ier,"Error adios2 compression: add operation for variable "//trim(full_name)//" failed")
+    if (operation_id /= 0) stop 'Error adios2 operation_id not added for array'
+  endif
 
 #endif
 
@@ -1822,5 +1875,199 @@ subroutine  define_adios_local_1d_string_1d(adios_group, group_size_inc, local_d
   idummy = len(var)
 
 end subroutine define_adios_local_1d_string_1d
+
+
+!-------------------------------------------------------------------------------
+!
+! compression
+!
+!-------------------------------------------------------------------------------
+
+  subroutine define_adios_compression()
+
+  use constants, only: IMAIN
+  use manager_adios, only: myrank_adios
+
+  implicit none
+
+  ! local parameters
+  integer :: ier
+#if defined(USE_ADIOS)
+  character(len=128) :: transform
+#endif
+
+! note: We add compression operations before saving the undo att forward arrays to file disk.
+!       this should help reducing file storage sizes and help mitigating I/O issues for larger runs.
+!
+!       SZ and ZFP are the two leading lossy compressors available to compress scientific data sets.
+!       Their performance can vary however across different data sets:
+!         https://www.osti.gov/servlets/purl/1657917
+!
+!       ZFP compression is lossy compression, and works well with high compression rates for floating-point arrays:
+!         https://computing.llnl.gov/projects/zfp
+!         https://github.com/LLNL/zfp
+!         Please cite this reference if using ZFP:
+!           Peter Lindstrom. Fixed-Rate Compressed Floating-Point Arrays.
+!           IEEE Transactions on Visualization and Computer Graphics, 20(12):2674-2683, December 2014.
+!           doi:10.1109/TVCG.2014.2346458
+!
+!       SZ compression would be another possibility for floating-point arrays:
+!         https://szcompressor.org
+!         https://github.com/szcompressor/SZ
+!
+!       LZ4 lossless compression (see ADIOS 1.13.1 manual)
+!
+!       ADIOS2 will assign the compression operation to arrays and use compression before writing/putting them to disk.
+!       Reading back these arrays will not need explicit assignment of the compression operator anymore.
+!       Thus, the only change is required in the saving routine.
+!
+! note: crust_mantle arrays will dominate file sizes, where in particular attenuation arrays will be largest
+!       as a small example NEX=48:  displ/veloc/accel crust_mantle   ~ 11.21 MB
+!                                                     inner_core     ~  0.19 MB
+!                                                     outer_core     ~  0.31 MB
+!
+!                                   rotation          outer_core     ~  0.36 MB
+!
+!                                   attenuation       crust_mantle   ~ 34.76 MB
+!                                                     inner_core     ~  0.51 MB
+!
+!       to avoid spending too much time for the compression operation on small arrays,
+!       one could apply it only to the dominant ones.
+!       at the moment, we apply compression to all arrays to shrink the snapshot file size as much as possible.
+!       -> todo in future, re-evaluate and optimize...
+
+  ! initializes flag
+  use_adios_compression = .true.
+  ier = 0
+
+  ! defines compression operator
+  select case(ADIOS_COMPRESSION_ALGORITHM)
+  case (0)
+    ! no compression
+    use_adios_compression = .false.
+
+  case (1)
+    ! ZFP compression
+    ! options: precision w/ value 12
+#if defined(USE_ADIOS)
+    ! ADIOS 1
+    !transform = "zfp:precision=12"
+    write(transform,'("zfp:",a,"=",a)') trim(ADIOS_COMPRESSION_MODE),trim(ADIOS_COMPRESSION_MODE_VALUE)
+#elif defined(USE_ADIOS2)
+    ! ADIOS 2
+    ! options: name = 'CompressorZfp', type = 'zfp'
+    call adios2_define_operator(myadios_comp_operator, myadios2_obj, 'CompressorZfp', 'zfp', ier)
+#endif
+
+  case (2)
+    ! SZ compression
+    ! options: relative error w/ value 1.e-4
+#if defined(USE_ADIOS)
+    ! ADIOS 1
+    !transform = "sz:relative=0.0001"
+    write(transform,'("sz:",a,"=",a)') trim(ADIOS_COMPRESSION_MODE),trim(ADIOS_COMPRESSION_MODE_VALUE)
+#elif defined(USE_ADIOS2)
+    ! ADIOS 2
+    call adios2_define_operator(myadios_comp_operator, myadios2_obj, 'CompressorSZ', 'sz', ier)
+#endif
+
+  case (3)
+    ! LZ4 compression (lossless)
+#if defined(USE_ADIOS)
+    ! ADIOS 1
+    !transform = "lz4:threshold=4096,lvl=9"     ! see ADIOS-UsersManual-1.13.1, page 75
+    write(transform,'("lz4:",a,"=",a)') trim(ADIOS_COMPRESSION_MODE),trim(ADIOS_COMPRESSION_MODE_VALUE)
+#elif defined(USE_ADIOS2)
+    ! ADIOS 2
+    call adios2_define_operator(myadios_comp_operator, myadios2_obj, 'CompressorLZ4', 'lz4', ier)
+#endif
+
+  case default
+    ! no compression
+    stop 'Invalid ADIOS compression algorithm selection, please choose 0 == none / 1 == ZFP / 2 == SZ / 3 == LZ4 compression'
+  end select
+
+#if defined(USE_ADIOS2)
+  ! checks returned result
+  if (ier /= 0) then
+    ! no compression supported, resets flag
+    ! (might need to install ZFP/SZ/LZ4 library first and re-configure/compile ADIOS2)
+    use_adios_compression = .false.
+    myadios_comp_operator%valid = .false.
+    ! user output
+    if (myrank_adios == 0) then
+      print *
+      print *,'WARNING: Selected ADIOS2 compression is not supported by ADIOS2 library. Please check your installation.'
+      print *,'         Run will proceed without compression...'
+      print *
+      ! file output
+      write(IMAIN,*)
+      if (ADIOS_COMPRESSION_ALGORITHM == 1) then
+        write(IMAIN,*) 'ADIOS2 compression algorithm ZFP is not supported by ADIOS2 library. Please check your installation.'
+      else if (ADIOS_COMPRESSION_ALGORITHM == 2) then
+        write(IMAIN,*) 'ADIOS2 compression algorithm SZ  is not supported by ADIOS2 library. Please check your installation.'
+      else if (ADIOS_COMPRESSION_ALGORITHM == 3) then
+        write(IMAIN,*) 'ADIOS2 compression algorithm LZ4 is not supported by ADIOS2 library. Please check your installation.'
+      endif
+      write(IMAIN,*) 'Run will proceed without compression...'
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
+    ! or safety stop
+    !stop 'ADIOS2 compression not supported. Please set ADIOS_COMPRESSION_ALGORITHM == 0 in constants.h file'
+  endif
+#endif
+
+  ! applies compression to undo_att defined array variables
+  if (use_adios_compression) then
+#if defined(USE_ADIOS)
+    ! checks if transform valid
+    if (len_trim(transform) == 0) &
+      stop 'Invalid ADIOS transform in define_adios_compression()'
+
+    ! sets compression string
+    myadios_comp_operator = trim(transform)
+
+#elif defined(USE_ADIOS2)
+    ! check if operator valid
+    if (.not. myadios_comp_operator%valid) &
+      stop 'Invalid ADIOS2 compression operator handle returned in define_adios_compression()'
+#endif
+
+    ! user output
+    if (myrank_adios == 0) then
+      write(IMAIN,*)
+      write(IMAIN,*) "undoing attenuation:"
+#if defined(USE_ADIOS)
+      write(IMAIN,*) "  adding ADIOS compression operation for snapshot wavefield storage"
+#elif defined(USE_ADIOS2)
+      write(IMAIN,*) "  adding ADIOS2 compression operation for snapshot wavefield storage"
+#endif
+      if (ADIOS_COMPRESSION_ALGORITHM == 1) then
+#if defined(USE_ADIOS)
+        write(IMAIN,*) "  ZFP compression mode: ",trim(myadios_comp_operator)
+#elif defined(USE_ADIOS2)
+        write(IMAIN,*) "  ZFP compression mode: {'",trim(ADIOS_COMPRESSION_MODE),"','",trim(ADIOS_COMPRESSION_MODE_VALUE),"'}"
+#endif
+      else if (ADIOS_COMPRESSION_ALGORITHM == 2) then
+#if defined(USE_ADIOS)
+        write(IMAIN,*) "  SZ compression  mode: ",trim(myadios_comp_operator)
+#elif defined(USE_ADIOS2)
+        write(IMAIN,*) "  SZ  compression mode: {'",trim(ADIOS_COMPRESSION_MODE),"','",trim(ADIOS_COMPRESSION_MODE_VALUE),"'}"
+#endif
+      else if (ADIOS_COMPRESSION_ALGORITHM == 3) then
+#if defined(USE_ADIOS)
+        write(IMAIN,*) "  LZ4 compression mode: ",trim(myadios_comp_operator)
+#elif defined(USE_ADIOS2)
+        write(IMAIN,*) "  LZ4 compression mode: {'",trim(ADIOS_COMPRESSION_MODE),"','",trim(ADIOS_COMPRESSION_MODE_VALUE),"'}"
+#endif
+      endif
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
+  endif
+
+  end subroutine define_adios_compression
+
 
 end module adios_helpers_definitions_mod
