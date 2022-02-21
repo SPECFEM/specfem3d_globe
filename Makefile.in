@@ -524,6 +524,7 @@ clean:
 	-rm -f ${E}/*__genmod.*
 	-rm -f ${O}/*__genmod.*
 	-rm -f ${O}/*.smod
+	-rm -f ${O}/*.lst
 else
 clean:
 	@echo "cleaning all"
@@ -531,6 +532,7 @@ clean:
 	-rm -f ${E}/*__genmod.*
 	-rm -f ${O}/*__genmod.*
 	-rm -f ${O}/*.smod
+	-rm -f ${O}/*.lst
 endif
 
 realclean: clean

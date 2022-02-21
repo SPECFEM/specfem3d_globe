@@ -302,15 +302,16 @@ xsmooth_sem_SHARED_OBJECTS = \
 	$O/get_timestep_and_layers.shared.o \
 	$O/gll_library.shared.o \
 	$O/heap_sort.shared.o \
+	$O/model_vpremoon.shared.o \
+	$O/param_reader.cc.o \
+	$O/read_compute_parameters.shared.o \
+	$O/read_parameter_file.shared.o \
+	$O/read_value_parameters.shared.o \
 	$O/reduce.shared.o \
 	$O/rthetaphi_xyz.shared.o \
 	$O/search_kdtree.shared.o \
 	$O/smooth_weights_vec.shared.o \
 	$O/write_VTK_file.shared.o \
-	$O/param_reader.cc.o \
-	$O/read_compute_parameters.shared.o \
-	$O/read_parameter_file.shared.o \
-	$O/read_value_parameters.shared.o \
 	$(EMPTY_MACRO)
 
 ###
@@ -457,6 +458,7 @@ xsmooth_laplacian_sem_OBJECTS = \
 	$(EMPTY_MACRO)
 
 xsmooth_laplacian_sem_SHARED_OBJECTS = \
+	$O/meshfem3D_par.check_module.o \
 	$O/shared_par.shared_module.o \
 	$O/parallel.sharedmpi.o \
 	$O/assemble_MPI_scalar.shared.o \
@@ -470,11 +472,12 @@ xsmooth_laplacian_sem_SHARED_OBJECTS = \
 	$O/get_timestep_and_layers.shared.o \
 	$O/gll_library.shared.o \
 	$O/lagrange_poly.shared.o \
+	$O/model_prem.shared.o \
+	$O/model_vpremoon.shared.o \
 	$O/param_reader.cc.o \
 	$O/read_compute_parameters.shared.o \
 	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
-	$O/model_prem.shared.o \
 	$O/reduce.shared.o \
 	$O/rthetaphi_xyz.shared.o \
 	$(EMPTY_MACRO)
@@ -539,13 +542,13 @@ xcreate_cross_section_SHARED_OBJECTS = \
 	$O/model_Sohl.shared.o \
 	$O/model_topo_bathy.shared.o \
 	$O/model_vpremoon.shared.o \
+	$O/param_reader.cc.o \
+	$O/read_value_parameters.shared.o \
 	$O/recompute_jacobian.shared.o \
 	$O/reduce.shared.o \
 	$O/rthetaphi_xyz.shared.o \
 	$O/search_kdtree.shared.o \
 	$O/spline_routines.shared.o \
-	$O/param_reader.cc.o \
-	$O/read_value_parameters.shared.o \
 	$(EMPTY_MACRO)
 
 # extra dependencies

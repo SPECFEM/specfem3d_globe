@@ -687,6 +687,7 @@
   i_element = transfer(i_in, 0)
 
   ! reverses order of 4 bytes
+  i_element_br = 0
   call mvbits( i_element, 24, 8, i_element_br, 0  )
   call mvbits( i_element, 16, 8, i_element_br, 8  )
   call mvbits( i_element,  8, 8, i_element_br, 16 )
@@ -717,6 +718,7 @@
   i_element = transfer(r_in, 0)
 
   ! reverses order of 4 bytes
+  i_element_br = 0
   call mvbits( i_element, 24, 8, i_element_br, 0  )
   call mvbits( i_element, 16, 8, i_element_br, 8  )
   call mvbits( i_element,  8, 8, i_element_br, 16 )
