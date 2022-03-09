@@ -74,8 +74,8 @@ subroutine define_AVS_DX_global_data_adios(nspec, ibool, &
   integer(kind=8) :: local_dim
 
   ! Dummy arrays for type inference inside adios helpers
-  real(kind=4), dimension(1) :: dummy_real1d
-  integer(kind=4), dimension(1) :: dummy_int1d
+  real(kind=4), dimension(:), allocatable :: dummy_real1d
+  integer(kind=4), dimension(:), allocatable :: dummy_int1d
 
   mask_ibool(:) = .false.
 
@@ -132,6 +132,14 @@ subroutine define_AVS_DX_global_data_adios(nspec, ibool, &
   allocate(avs_dx_adios%iglob8(nspec), stat=ierr)
   if (ierr /= 0) call exit_MPI(myrank, "Error allocating iglob8.")
 
+  allocate(dummy_real1d(npoin), stat=ierr)
+  if (ierr /= 0) call exit_MPI(myrank, "Error allocating dummy_real.")
+  dummy_real1d(:) = 0.0
+
+  allocate(dummy_int1d(nspec), stat=ierr)
+  if (ierr /= 0) call exit_MPI(myrank, "Error allocating dummy_real.")
+  dummy_int1d(:) = 0
+
   !--- Variables for '...AVS_DXpoints.txt'
   local_dim = npoin
   call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, &
@@ -162,6 +170,8 @@ subroutine define_AVS_DX_global_data_adios(nspec, ibool, &
                                    '', "elements/num_ibool_AVS_DX_iglob7", dummy_int1d)
   call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, &
                                    '', "elements/num_ibool_AVS_DX_iglob8", dummy_int1d)
+
+  deallocate(dummy_real1d,dummy_int1d)
 
 end subroutine define_AVS_DX_global_data_adios
 

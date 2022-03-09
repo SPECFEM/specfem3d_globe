@@ -71,7 +71,7 @@
     call flush_IMAIN()
   endif
 
-  ! Setup the ADIOS library to read the file
+  ! setup the ADIOS library to read the file
   call open_file_adios_read_and_init_method(myadios_file,myadios_group,file_name)
 
   local_dim = NGLLX * NGLLY * NGLLZ * MGLL_V%nspec
@@ -172,7 +172,7 @@
   ! uses density array to check if inner core arrays are available
   model_name = "reg3/rho"
 
-  ! Setup the ADIOS library to read the file
+  ! setup the ADIOS library to read the file
   call open_file_adios_read_and_init_method(myadios_file,myadios_group,file_name)
 
   ! checks read of associated model array

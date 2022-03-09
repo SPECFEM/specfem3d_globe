@@ -105,7 +105,6 @@
 
   integer :: i,j,k,ispec,iglob,ier
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: tmp_array_x, tmp_array_y, tmp_array_z
-  real(kind=CUSTOM_REAL),dimension(1) :: dummy_1d
   double precision :: f_c_source
 
   ! local parameters
@@ -128,6 +127,61 @@
 #endif
     call flush_IMAIN()
   endif
+
+  ! mesh topology
+
+  ! mesh arrays used in the solver to locate source and receivers
+  ! and for anisotropy and gravity, save in single precision
+  ! use tmp_array for temporary storage to perform conversion
+  allocate(tmp_array_x(nglob),stat=ier)
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary x array for mesh topology')
+  allocate(tmp_array_y(nglob),stat=ier)
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary y array for mesh topology')
+  allocate(tmp_array_z(nglob),stat=ier)
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary z array for mesh topology')
+
+  ! note: we keep these temporary arrays until after the perform/close/end_step call is done,
+  !       since the write_adios_** calls might be in deferred mode.
+
+  !--- x coordinate
+  tmp_array_x(:) = 0._CUSTOM_REAL
+  do ispec = 1,nspec
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+          iglob = ibool(i,j,k,ispec)
+          ! distinguish between single and double precision for reals
+          tmp_array_x(iglob) = real(xstore(i,j,k,ispec), kind=CUSTOM_REAL)
+        enddo
+      enddo
+    enddo
+  enddo
+  !--- y coordinate
+  tmp_array_y(:) = 0._CUSTOM_REAL
+  do ispec = 1,nspec
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+          iglob = ibool(i,j,k,ispec)
+          ! distinguish between single and double precision for reals
+          tmp_array_y(iglob) = real(ystore(i,j,k,ispec), kind=CUSTOM_REAL)
+        enddo
+      enddo
+    enddo
+  enddo
+  !--- z coordinate
+  tmp_array_z(:) = 0._CUSTOM_REAL
+  do ispec = 1,nspec
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+          iglob = ibool(i,j,k,ispec)
+          ! distinguish between single and double precision for reals
+          tmp_array_z(iglob) = real(zstore(i,j,k,ispec), kind=CUSTOM_REAL)
+        enddo
+      enddo
+    enddo
+  enddo
 
   ! create a prefix for the file name such as LOCAL_PATH/regX_
   !call create_name_database_adios(reg_name,iregion_code,LOCAL_PATH)
@@ -153,9 +207,9 @@
   call define_adios_scalar(myadios_group, group_size_inc, region_name_scalar, STRINGIFY_VAR(nglob))
 
   local_dim = nglob
-  call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, region_name, "x_global", dummy_1d)
-  call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, region_name, "y_global", dummy_1d)
-  call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, region_name, "z_global", dummy_1d)
+  call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, region_name, "x_global", tmp_array_x)
+  call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, region_name, "y_global", tmp_array_y)
+  call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, region_name, "z_global", tmp_array_z)
 
   local_dim = NGLLX * NGLLY * NGLLZ * nspec
   call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(xstore))
@@ -297,61 +351,6 @@
 
   ! sets group size
   call set_adios_group_size(myadios_file,group_size_inc)
-
-  ! mesh topology
-
-  ! mesh arrays used in the solver to locate source and receivers
-  ! and for anisotropy and gravity, save in single precision
-  ! use tmp_array for temporary storage to perform conversion
-  allocate(tmp_array_x(nglob),stat=ier)
-  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary x array for mesh topology')
-  allocate(tmp_array_y(nglob),stat=ier)
-  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary y array for mesh topology')
-  allocate(tmp_array_z(nglob),stat=ier)
-  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary z array for mesh topology')
-
-  ! note: we keep these temporary arrays until after the perform/close/end_step call is done,
-  !       since the write_adios_** calls might be in deferred mode.
-
-  !--- x coordinate
-  tmp_array_x(:) = 0._CUSTOM_REAL
-  do ispec = 1,nspec
-    do k = 1,NGLLZ
-      do j = 1,NGLLY
-        do i = 1,NGLLX
-          iglob = ibool(i,j,k,ispec)
-          ! distinguish between single and double precision for reals
-          tmp_array_x(iglob) = real(xstore(i,j,k,ispec), kind=CUSTOM_REAL)
-        enddo
-      enddo
-    enddo
-  enddo
-  !--- y coordinate
-  tmp_array_y(:) = 0._CUSTOM_REAL
-  do ispec = 1,nspec
-    do k = 1,NGLLZ
-      do j = 1,NGLLY
-        do i = 1,NGLLX
-          iglob = ibool(i,j,k,ispec)
-          ! distinguish between single and double precision for reals
-          tmp_array_y(iglob) = real(ystore(i,j,k,ispec), kind=CUSTOM_REAL)
-        enddo
-      enddo
-    enddo
-  enddo
-  !--- z coordinate
-  tmp_array_z(:) = 0._CUSTOM_REAL
-  do ispec = 1,nspec
-    do k = 1,NGLLZ
-      do j = 1,NGLLY
-        do i = 1,NGLLX
-          iglob = ibool(i,j,k,ispec)
-          ! distinguish between single and double precision for reals
-          tmp_array_z(iglob) = real(zstore(i,j,k,ispec), kind=CUSTOM_REAL)
-        enddo
-      enddo
-    enddo
-  enddo
 
   !--- Schedule writes for the previously defined ADIOS variables
   ! save nspec and nglob, to be used in combine_paraview_data

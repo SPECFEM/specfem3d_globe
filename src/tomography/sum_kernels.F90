@@ -486,12 +486,17 @@ end program sum_kernels_globe
   character(len=MAX_STRING_LEN),dimension(10), intent(in) :: adios_kl_names
 
   ! local parameters
-  integer :: is,ie,iker
+  integer :: is,ie,iker,ier
   integer(kind=8) :: local_dim
   integer(kind=8) :: group_size_inc
   character(len=MAX_STRING_LEN) :: file_name
   character(len=MAX_STRING_LEN) :: writer_group_name
-  real(kind=CUSTOM_REAL), dimension(1,1,1,1) :: val_dummy
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: dummy_real4d
+
+  ! dummy for definitions
+  allocate(dummy_real4d(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),stat=ier)
+  if (ier /= 0) stop 'Error allocating dummy array'
+  dummy_real4d(:,:,:,:) = 0.0
 
   ! ADIOS
   ! start setting up full file group size
@@ -520,8 +525,10 @@ end program sum_kernels_globe
   endif
   do iker = is,ie
     local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE
-    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, '', trim(adios_kl_names(iker)), val_dummy)
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, '', trim(adios_kl_names(iker)), dummy_real4d)
   enddo
+
+  deallocate(dummy_real4d)
 
   ! opens new adios model file
   file_name = get_adios_filename('OUTPUT_SUM/' // 'kernels_sum')

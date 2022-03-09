@@ -62,13 +62,17 @@ module adios_helpers_readers_mod
   interface read_adios_scalar
     module procedure read_adios_scalar_int
     module procedure read_adios_scalar_long
+    module procedure read_adios_scalar_real
     module procedure read_adios_scalar_double
   end interface read_adios_scalar
+
+  public :: read_adios_scalar_local_dim
 
   public :: read_adios_schedule_array
   interface read_adios_schedule_array
     module procedure read_adios_schedule_array_global_1d_integer_1d
     module procedure read_adios_schedule_array_global_1d_integer_2d
+    module procedure read_adios_schedule_array_global_1d_integer_3d
     module procedure read_adios_schedule_array_global_1d_integer_4d
     module procedure read_adios_schedule_array_global_1d_real_1d
     module procedure read_adios_schedule_array_global_1d_customreal_2d
@@ -76,7 +80,9 @@ module adios_helpers_readers_mod
     module procedure read_adios_schedule_array_global_1d_customreal_4d
     module procedure read_adios_schedule_array_global_1d_customreal_5d
     module procedure read_adios_schedule_array_global_1d_double_1d
+    module procedure read_adios_schedule_array_global_1d_double_2d
     module procedure read_adios_schedule_array_global_1d_logical_1d
+    module procedure read_adios_schedule_array_global_1d_string_1d
   end interface read_adios_schedule_array
 
   private
@@ -462,6 +468,108 @@ contains
 !---------------------------------------------------------------------------------
 !
 
+  subroutine read_adios_scalar_real(adios_handle,adios_group,rank,scalar_name,scalar,step)
+
+! reads in a single precision real value
+
+  implicit none
+
+  real, intent(out) :: scalar
+
+#if defined(USE_ADIOS)
+  integer(kind=8), intent(in) :: adios_handle
+  integer(kind=8), intent(in) :: adios_group
+#elif defined(USE_ADIOS2)
+  type(adios2_engine), intent(in) :: adios_handle
+  type(adios2_io), intent(in) :: adios_group
+#endif
+  integer, intent(in) :: rank
+  character(len=*), intent(in) :: scalar_name
+  integer(kind=8), intent(in), optional :: step
+
+  ! local parameters
+  integer :: ier
+#if defined(USE_ADIOS)
+  integer(kind=8) :: sel
+  integer :: istep
+#elif defined(USE_ADIOS2)
+  type(adios2_variable) :: v
+  integer(kind=8) :: step_start
+  integer(kind=8) :: start(1),count(1)
+#endif
+
+  TRACE_ADIOS_L2_ARG('read_adios_scalar_real: ',trim(scalar_name))
+
+#if defined(USE_ADIOS)
+  ! ADIOS 1
+  ! selects data block
+  call adios_selection_writeblock(sel, rank)
+
+  ! reads array
+  if (present(step)) then
+    istep = int(step)
+    call adios_schedule_read(adios_handle, sel, trim(scalar_name), istep, 1, scalar, ier)
+  else
+    call adios_schedule_read(adios_handle, sel, trim(scalar_name), 0, 1, scalar, ier)
+  endif
+  call check_adios_err(ier,"Error could not read parameter: "//trim(scalar_name))
+
+  call adios_perform_reads(adios_handle, ier)
+  call check_adios_err(ier,"Error could not perform read parameter: "//trim(scalar_name))
+
+  ! frees selection
+  call adios_selection_delete(sel)
+
+  ! to avoid compiler warning
+  ier = adios_group
+
+#elif defined(USE_ADIOS2)
+  ! ADIOS 2
+  ! gets associated variable for array
+  call adios2_inquire_variable(v, adios_group, trim(scalar_name), ier)
+  call check_adios_err(ier,"Error adios2 read_adios_scalar_real(): inquire variable "//trim(scalar_name)//" failed")
+
+  if (.not. v%valid) stop 'Error adios2 variable invalid'
+
+  if (v%type /= adios2_type_real4) then
+    print *,'Error: adios2 variable type mismatch: ',v%type,' instead of ',adios2_type_real4
+    call check_adios_err(1,"Error adios2 variable type mismatch for "//trim(scalar_name))
+  endif
+
+  ! selection for local scalar variables
+  ! this will fail for variables appended to the file (e.g., reg2/nspec and reg3/nspec variables in solver_data.bp etc.)
+  ! maybe in future, adios2 will work with this.
+  !
+  !call adios2_set_block_selection(v, int(rank,kind=8), ier)
+  !call check_adios_err(ier, "Error adios2 set block selection for "//trim(scalar_name)//" failed")
+  !
+  ! selection for scalar as 1-D array single entry
+  start(1) = 1 * int(rank,kind=8)
+  count(1) = 1
+  call adios2_set_selection(v, 1, start, count, ier)
+  call check_adios_err(ier,"Error adios2 set selection for "//trim(scalar_name)//" failed")
+
+  ! selection
+  if (present(step)) then
+    step_start = step
+  else
+    step_start = 0
+  endif
+  call adios2_set_step_selection(v, step_start, int(1,kind=8), ier)
+  call check_adios_err(ier, "Error adios2 set step variable for "//trim(scalar_name)//" failed")
+
+  ! reads array data
+  call adios2_get(adios_handle, v, scalar, adios2_mode_sync, ier)
+  call check_adios_err(ier,"Error adios2 get for array "//trim(scalar_name)//" failed")
+
+#endif
+
+  end subroutine read_adios_scalar_real
+
+!
+!---------------------------------------------------------------------------------
+!
+
   subroutine read_adios_scalar_double(adios_handle,adios_group,rank,scalar_name,scalar,step)
 
 ! reads in a single integer value
@@ -560,6 +668,92 @@ contains
 
   end subroutine read_adios_scalar_double
 
+!
+!---------------------------------------------------------------------------------
+!
+
+  subroutine read_adios_scalar_local_dim(adios_handle, adios_group, rank, array_name, local_dim)
+
+  implicit none
+
+#if defined(USE_ADIOS)
+  integer(kind=8), intent(in) :: adios_handle
+  integer(kind=8), intent(in) :: adios_group
+#elif defined(USE_ADIOS2)
+  type(adios2_engine), intent(in) :: adios_handle
+  type(adios2_io), intent(in) :: adios_group
+#endif
+  integer, intent(in) :: rank
+  character(len=*), intent(in) :: array_name
+  integer(kind=8), intent(out) :: local_dim
+
+  ! local parameters
+  integer :: ier
+#if defined(USE_ADIOS2)
+  integer(kind=8) :: start(1),count(1)
+  type(adios2_variable) :: v
+#endif
+  character(len=256) :: full_name
+
+  TRACE_ADIOS_L2_ARG('read_adios_scalar_local_dim: ',trim(array_name))
+
+  ! checks
+  if (len_trim(array_name) == 0) stop 'Error adios invalid array name in read_adios_scalar_local_dim()'
+
+  ! initializes
+  local_dim = 0
+
+#if defined(USE_ADIOS)
+  ! ADIOS 1
+  ! note: adios_get_scalar here retrieves the same local_dim for everyone (from writer rank 0)
+  full_name = trim(array_name) // "/local_dim"
+  call adios_get_scalar(adios_handle, trim(full_name),local_dim, ier)
+  if (ier /= 0) then
+    print *,'Error: reading adios local_dim for array: ',trim(full_name)
+    print *,'Please check if ADIOS file contains this array: ',trim(full_name)
+    call check_adios_err(ier,"Error adios get scalar "//trim(full_name)//" failed")
+  endif
+
+  ! to avoid compiler warning
+  ier = adios_group
+  ier = rank
+
+#elif defined(USE_ADIOS2)
+  ! ADIOS 2
+  ! gets dimension associated to array
+  full_name = trim(array_name) // "/local_dim"
+
+  ! note: might need to check in future if adding a .. // C_NULL_CHAR helps for avoiding problems with passing strings.
+  !       since we call the adio2_** Fortran wrappers, this should deal with such issues.
+
+  ! one could try to use the following:
+  !
+  ! reads in local dimension
+  ! call read_adios_scalar(adios_handle,adios_group,rank,trim(full_name),local_dim)
+  !
+  ! or more explicitely, to get the local dimension:
+  call adios2_inquire_variable(v, adios_group, trim(full_name), ier)
+  call check_adios_err(ier,"Error adios2 read_adios_scalar_local_dim(): inquire variable "//trim(full_name)//" failed")
+
+  if (.not. v%valid) stop 'Error adios2 variable invalid'
+
+  ! selection for scalar as 1-D array single entry
+  start(1) = 1 * int(rank,kind=8)
+  count(1) = 1
+  call adios2_set_selection(v, 1, start, count, ier)
+  call check_adios_err(ier,"Error adios2 set selection for "//trim(full_name)//" failed")
+
+  ! step selection
+  call adios2_set_step_selection(v, int(0,kind=8), int(1,kind=8), ier)
+  call check_adios_err(ier, "Error adios2 set step variable for "//trim(full_name)//" failed")
+
+  ! note: adios2_get here retrieves the same local_dim for everyone (from writer rank 0)
+  call adios2_get(adios_handle, v, local_dim, adios2_mode_sync, ier)
+  call check_adios_err(ier,"Error adios2 get for array "//trim(full_name)//" failed")
+
+#endif
+
+  end subroutine read_adios_scalar_local_dim
 
 !---------------------------------------------------------------------------------
 !
@@ -1185,8 +1379,6 @@ contains
 
   subroutine read_adios_array_1d_int(adios_handle,adios_group,rank,nsize,array_name,array_1d)
 
-  use constants, only: NGLLX,NGLLY,NGLLZ
-
   implicit none
 
 #if defined(USE_ADIOS)
@@ -1337,6 +1529,20 @@ contains
 !---------------------------------------------------------------------------------
 !
 
+  subroutine read_adios_schedule_array_global_1d_integer_3d(adios_handle,adios_group,sel,start,count,array_name,array,step)
+
+  implicit none
+
+  integer, dimension(:,:,:), intent(out) :: array
+
+#include "adios_helpers_readers_1d_generic.inc"
+
+  end subroutine read_adios_schedule_array_global_1d_integer_3d
+
+!
+!---------------------------------------------------------------------------------
+!
+
   subroutine read_adios_schedule_array_global_1d_integer_4d(adios_handle,adios_group,sel,start,count,array_name,array,step)
 
   implicit none
@@ -1444,6 +1650,20 @@ contains
 !---------------------------------------------------------------------------------
 !
 
+  subroutine read_adios_schedule_array_global_1d_double_2d(adios_handle,adios_group,sel,start,count,array_name,array,step)
+
+  implicit none
+
+  double precision, dimension(:,:), intent(out) :: array
+
+#include "adios_helpers_readers_1d_generic.inc"
+
+  end subroutine read_adios_schedule_array_global_1d_double_2d
+
+!
+!---------------------------------------------------------------------------------
+!
+
 ! note: adios1 seems to handle the schedule_read routine a bit different than adios2 which checks the array type.
 !       both don't support logical, but store it as integer*4 size.
 !
@@ -1481,6 +1701,20 @@ contains
   where(array(:) == 1) array_l(:) = .true.
 
   end subroutine read_adios_schedule_array_global_1d_logical_1d
+
+!
+!---------------------------------------------------------------------------------
+!
+
+  subroutine read_adios_schedule_array_global_1d_string_1d(adios_handle,adios_group,sel,start,count,array_name,array,step)
+
+  implicit none
+
+  character(len=*), intent(out) :: array
+
+#include "adios_helpers_readers_1d_generic.inc"
+
+  end subroutine read_adios_schedule_array_global_1d_string_1d
 
 !===============================================================================
 

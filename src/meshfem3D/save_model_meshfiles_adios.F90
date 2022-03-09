@@ -63,7 +63,6 @@
   real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: temp_store_vpv,temp_store_vph,temp_store_vsv,temp_store_vsh
   real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: temp_store_mu0
   real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: temp_store_Qmu
-  real(kind=CUSTOM_REAL),dimension(1,1,1,1) :: dummy_ijke
 
   ! local parameters
   character(len=MAX_STRING_LEN) :: outputname, group_name
@@ -88,6 +87,39 @@
   ! scaling factors to re-dimensionalize units
   scaleval1 = sngl( sqrt(PI*GRAV*RHOAV)*(R_PLANET/1000.0d0) )
   scaleval2 = sngl( RHOAV/1000.0d0 )
+
+! note: the following uses temporary arrays for array expressions like sqrt( (kappavstore+..)).
+!       since the write_adios_** calls might be in deferred mode, these temporary arrays should be valid
+!       until a perform/close/end_step call is done.
+!
+!       as a work-around, we will explicitly allocate temporary arrays and deallocate them after the file close.
+  allocate(temp_store_vp(NGLLX,NGLLY,NGLLZ,nspec), &
+           temp_store_vs(NGLLX,NGLLY,NGLLZ,nspec), &
+           temp_store_rho(NGLLX,NGLLY,NGLLZ,nspec),stat=ier)
+  if (ier /= 0) stop 'Error allocating temp vp,.. arrays'
+  temp_store_vp(:,:,:,:) = 0.0_CUSTOM_REAL
+  temp_store_vs(:,:,:,:) = 0.0_CUSTOM_REAL
+  temp_store_rho(:,:,:,:) = 0.0_CUSTOM_REAL
+
+  allocate(temp_store_rho_inv(NGLLX,NGLLY,NGLLZ,nspec),stat=ier)
+  if (ier /= 0) stop 'Error allocating temp rho_inv array'
+
+  ! this might have issues when rho is zero in ficticious inner core elements:
+  !temp_store_rho(:,:,:,:) = rhostore(:,:,:,:) * scaleval2
+  !temp_store_vp(:,:,:,:) = sqrt( (kappavstore + 4.0_CUSTOM_REAL * muvstore/3.00_CUSTOM_REAL)/rhostore ) * scaleval1
+  !temp_store_vs(:,:,:,:) = sqrt( muvstore/rhostore ) * scaleval1
+  !
+  ! takes inverse of rho, avoiding zero values in ficticious elements:
+  temp_store_rho_inv(:,:,:,:) = rhostore(:,:,:,:)
+  where(temp_store_rho_inv(:,:,:,:) <= 0.0_CUSTOM_REAL) temp_store_rho_inv = 1.0_CUSTOM_REAL
+  temp_store_rho_inv = 1.0_CUSTOM_REAL / temp_store_rho_inv
+
+  ! rho: for storing, we take the original rho and dimensionalize it
+  temp_store_rho(:,:,:,:) = rhostore(:,:,:,:) * scaleval2
+  ! vp
+  temp_store_vp(:,:,:,:) = sqrt( (kappavstore + 4.0_CUSTOM_REAL * muvstore/3.0_CUSTOM_REAL) * temp_store_rho_inv ) * scaleval1
+  ! vs
+  temp_store_vs(:,:,:,:) = sqrt( muvstore * temp_store_rho_inv ) * scaleval1
 
   ! isotropic model
   write(region_name,"('reg',i1, '/')") iregion_code
@@ -155,39 +187,40 @@
 
   !--- Define ADIOS variables -----------------------------
   ! rho
-  call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "rho", dummy_ijke)
+  call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "rho", temp_store_rho)
   ! vp
-  call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vp", dummy_ijke)
+  call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vp", temp_store_vp)
   ! vs (will store it even for the outer core, although it should just be zero there)
-  call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vs", dummy_ijke)
+  call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vs", temp_store_vs)
 
   ! transverse isotropic model
   if (TRANSVERSE_ISOTROPY) then
     ! vpv
-    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vpv", dummy_ijke)
+    ! (using temp_store_vp as dummy array here for definition, but with correct array size and type)
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vpv", temp_store_vp) !dummy
     ! vph
-    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vph", dummy_ijke)
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vph", temp_store_vp) !dummy
     ! vsv
-    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vsv", dummy_ijke)
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vsv", temp_store_vp) !dummy
     ! vsh
-    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vsh", dummy_ijke)
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vsh", temp_store_vp) !dummy
     ! eta
-    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "eta", dummy_ijke)
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "eta", temp_store_vp) !dummy
   endif
 
   ! anisotropic values
   if (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
     ! Gc_prime
-    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "Gc_prime", dummy_ijke)
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "Gc_prime", temp_store_vp) !dummy
     ! Gs_prime
-    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "Gs_prime", dummy_ijke)
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "Gs_prime", temp_store_vp) !dummy
     ! mu0
-    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "mu0", dummy_ijke)
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "mu0", temp_store_vp) !dummy
   endif
 
   if (ATTENUATION) then
     ! Qmu
-    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "qmu", dummy_ijke)
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "qmu", temp_store_vp) !dummy
   endif
 
   !--- Open an ADIOS handler to the restart file. ---------
@@ -209,39 +242,6 @@
   ! save nspec and nglob, to be used in combine_paraview_data
   call write_adios_scalar(myadios_val_file,myadios_val_group,trim(region_name) // "nspec",nspec)
   call write_adios_scalar(myadios_val_file,myadios_val_group,trim(region_name) // "nglob",nglob)
-
-! note: the following uses temporary arrays for array expressions like sqrt( (kappavstore+..)).
-!       since the write_adios_** calls might be in deferred mode, these temporary arrays should be valid
-!       until a perform/close/end_step call is done.
-!
-!       as a work-around, we will explicitly allocate temporary arrays and deallocate them after the file close.
-  allocate(temp_store_vp(NGLLX,NGLLY,NGLLZ,nspec), &
-           temp_store_vs(NGLLX,NGLLY,NGLLZ,nspec), &
-           temp_store_rho(NGLLX,NGLLY,NGLLZ,nspec),stat=ier)
-  if (ier /= 0) stop 'Error allocating temp vp,.. arrays'
-  temp_store_vp(:,:,:,:) = 0.0_CUSTOM_REAL
-  temp_store_vs(:,:,:,:) = 0.0_CUSTOM_REAL
-  temp_store_rho(:,:,:,:) = 0.0_CUSTOM_REAL
-
-  allocate(temp_store_rho_inv(NGLLX,NGLLY,NGLLZ,nspec),stat=ier)
-  if (ier /= 0) stop 'Error allocating temp rho_inv array'
-
-  ! this might have issues when rho is zero in ficticious inner core elements:
-  !temp_store_rho(:,:,:,:) = rhostore(:,:,:,:) * scaleval2
-  !temp_store_vp(:,:,:,:) = sqrt( (kappavstore + 4.0_CUSTOM_REAL * muvstore/3.00_CUSTOM_REAL)/rhostore ) * scaleval1
-  !temp_store_vs(:,:,:,:) = sqrt( muvstore/rhostore ) * scaleval1
-  !
-  ! takes inverse of rho, avoiding zero values in ficticious elements:
-  temp_store_rho_inv(:,:,:,:) = rhostore(:,:,:,:)
-  where(temp_store_rho_inv(:,:,:,:) <= 0.0_CUSTOM_REAL) temp_store_rho_inv = 1.0_CUSTOM_REAL
-  temp_store_rho_inv = 1.0_CUSTOM_REAL / temp_store_rho_inv
-
-  ! rho: for storing, we take the original rho and dimensionalize it
-  temp_store_rho(:,:,:,:) = rhostore(:,:,:,:) * scaleval2
-  ! vp
-  temp_store_vp(:,:,:,:) = sqrt( (kappavstore + 4.0_CUSTOM_REAL * muvstore/3.0_CUSTOM_REAL) * temp_store_rho_inv ) * scaleval1
-  ! vs
-  temp_store_vs(:,:,:,:) = sqrt( muvstore * temp_store_rho_inv ) * scaleval1
 
   !--- Schedule writes for the previously defined ADIOS variables
   ! rho

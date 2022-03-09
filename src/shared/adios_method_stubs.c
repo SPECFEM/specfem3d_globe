@@ -67,7 +67,7 @@ void FC_FUNC_(read_attenuation_adios,READ_ATTENUATION_ADIOS)(void) {}
 
 void FC_FUNC_(read_forward_arrays_adios,READ_FORWARD_ARRAYS_ADIOS)(void) {}
 
-void FC_FUNC_(read_forward_arrays_undoatt_adios,READ_FORWARD_ARRAYS_UNDOATT_ADIOS)(void) {}
+void FC_FUNC_(read_forward_arrays_undoatt_adios,READ_FORWARD_ARRAYS_UNDOATT_ADIOS)(int* iteration_on_subset_tmp) {}
 
 void FC_FUNC_(read_intermediate_forward_arrays_adios,READ_INTERMEDIATE_FORWARD_ARRAYS_ADIOS)(void) {}
 

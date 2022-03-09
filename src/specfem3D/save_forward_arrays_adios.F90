@@ -238,6 +238,7 @@
       group_size_inc = 0
       ! iteration number
       call define_adios_scalar(myadios_fwd_group, group_size_inc, '', "iteration", iteration_on_subset_tmp)
+
       ! wavefields (displ/veloc/accel) for all regions
       call define_common_forward_arrays_adios(group_size_inc)
       ! rotation arrays
@@ -683,7 +684,8 @@
   real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: temp_store_vp_ic,temp_store_vs_ic
   real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: temp_store_rho,temp_store_rho_ic
   real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: muv_shifted,muh_shifted
-  real(kind=CUSTOM_REAL),dimension(1,1,1,1) :: dummy_ijke
+  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: dummy_ijke_crust_mantle
+  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: dummy_ijke_inner_core
   integer :: iregion_code,nspec,nglob,i,j,k,ispec
   character(len=MAX_STRING_LEN) :: outputname, group_name
   integer(kind=8) :: local_dim
@@ -704,6 +706,13 @@
   ! scaling factors to re-dimensionalize units
   scaleval1 = real( sqrt(PI*GRAV*RHOAV)*(R_PLANET/1000.0d0), kind=CUSTOM_REAL)  ! velocities
   scaleval2 = real( RHOAV/1000.d0, kind=CUSTOM_REAL)                            ! densities
+
+  ! dummy for definitions
+  allocate(dummy_ijke_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE), &
+           dummy_ijke_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE),stat=ier)
+  if (ier /= 0) stop 'Error allocating dummy arrays'
+  dummy_ijke_crust_mantle(:,:,:,:) = 0.0
+  dummy_ijke_inner_core(:,:,:,:) = 0.0
 
   ! note: since we only use shear attenuation, the shift occurs in muv values.
   !       thus, we output here only vpv, vsv or vp,vs for crust/mantle and inner core regions
@@ -746,22 +755,22 @@
   if (TRANSVERSE_ISOTROPY) then
     ! transverse isotropic model
     ! vpv
-    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vpv", dummy_ijke)
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vpv", dummy_ijke_crust_mantle)
     ! vph
-    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vph", dummy_ijke)
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vph", dummy_ijke_crust_mantle)
     ! vsv
-    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vsv", dummy_ijke)
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vsv", dummy_ijke_crust_mantle)
     ! vsv
-    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vsh", dummy_ijke)
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vsh", dummy_ijke_crust_mantle)
   else
     ! isotropic model
     ! vp
-    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vp", dummy_ijke)
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vp", dummy_ijke_crust_mantle)
     ! vs (will store it even for the outer core, although it should just be zero there)
-    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vs", dummy_ijke)
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vs", dummy_ijke_crust_mantle)
   endif
   ! rho
-  call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "rho", dummy_ijke)
+  call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "rho", dummy_ijke_crust_mantle)
 
   ! inner core
   iregion_code = IREGION_INNER_CORE
@@ -793,12 +802,14 @@
   else
     ! isotropic model
     ! vp
-    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vp", dummy_ijke)
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vp", dummy_ijke_inner_core)
     ! vs
-    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vs", dummy_ijke)
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "vs", dummy_ijke_inner_core)
   endif
   ! rho
-  call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "rho", dummy_ijke)
+  call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, region_name, "rho", dummy_ijke_inner_core)
+
+  deallocate(dummy_ijke_crust_mantle,dummy_ijke_inner_core)
 
   !--- Open an ADIOS handler to the restart file. ---------
   outputname = get_adios_filename(trim(LOCAL_PATH) // "/model_gll_shifted")

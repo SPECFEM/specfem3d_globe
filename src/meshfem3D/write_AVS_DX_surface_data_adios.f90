@@ -76,8 +76,8 @@ subroutine define_AVS_DX_surfaces_data_adios(nspec,iboun, &
   integer(kind=8) :: local_dim
 
   ! Dummy arrays for type inference inside adios helpers
-  real(kind=4),    dimension(1) :: dummy_real1d
-  integer(kind=4), dimension(1) :: dummy_int1d
+  real(kind=4),    dimension(:), allocatable :: dummy_real1d
+  integer(kind=4), dimension(:), allocatable :: dummy_int1d
 
   ! erase the logical mask used to mark points already found
   mask_ibool(:) = .false.
@@ -128,6 +128,14 @@ subroutine define_AVS_DX_surfaces_data_adios(nspec,iboun, &
   allocate(avs_dx_adios%iglob4(nspecface), stat=ierr)
   if (ierr /= 0) call exit_MPI(myrank, "Error allocating iglob4.")
 
+  allocate(dummy_real1d(npoin), stat=ierr)
+  if (ierr /= 0) call exit_MPI(myrank, "Error allocating dummy_real.")
+  dummy_real1d(:) = 0.0
+
+  allocate(dummy_int1d(nspecface), stat=ierr)
+  if (ierr /= 0) call exit_MPI(myrank, "Error allocating dummy_real.")
+  dummy_int1d(:) = 0
+
   !--- Variables for '...AVS_DXpointschunk.txt'
   local_dim = npoin
   call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, &
@@ -157,11 +165,19 @@ subroutine define_AVS_DX_surfaces_data_adios(nspec,iboun, &
     if (ierr /= 0) call exit_MPI(myrank, "Error allocating dvp.")
     allocate(avs_dx_adios%dvs(nspecface), stat=ierr)
     if (ierr /= 0) call exit_MPI(myrank, "Error allocating dvs.")
+
+    ! re-allocates dummy with correct size
+    allocate(dummy_real1d(nspecface), stat=ierr)
+    if (ierr /= 0) call exit_MPI(myrank, "Error allocating dummy_real.")
+    dummy_real1d(:) = 0.0
+
     call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, &
                                      '', "elements_surfaces/dvp", dummy_real1d)
     call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, &
                                      '', "elements_surfaces/dvs", dummy_real1d)
   endif
+
+  deallocate(dummy_real1d,dummy_int1d)
 
 end subroutine define_AVS_DX_surfaces_data_adios
 

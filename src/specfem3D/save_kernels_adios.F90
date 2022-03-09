@@ -84,7 +84,8 @@
   integer(kind=8) :: local_dim
 
   ! Type inference for define_adios_global_array1D. Avoid additional args.
-  real(kind=CUSTOM_REAL), dimension(1,1,1,1) :: dummy_real4d
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: dummy_real4d
+  integer :: ier
 
   ! user output
   if (myrank == 0) then
@@ -109,6 +110,11 @@
   call define_adios_scalar(myadios_group, group_size_inc, '', "reg1/nspec", NSPEC_CRUST_MANTLE_ADJOINT)
 
   if (SIMULATION_TYPE == 3) then
+    ! dummy for definitions
+    allocate(dummy_real4d(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
+    if (ier /= 0) stop 'Error allocating dummy array'
+    dummy_real4d(:,:,:,:) = 0.0
+
     ! crust mantle
     if (ANISOTROPIC_KL) then
 
@@ -258,6 +264,9 @@
       call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, '', &
                                        STRINGIFY_VAR(hess_mu_kl_crust_mantle))
     endif
+
+    deallocate(dummy_real4d)
+
   endif
 
   ! save source derivatives for adjoint simulations

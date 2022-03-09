@@ -640,7 +640,7 @@
   ! Transfer fields from GPU card to host for further analysis
   if (GPU_MODE) call it_transfer_from_GPU()
 
-!----  close energy file
+  ! closes energy file
   if (OUTPUT_ENERGY .and. myrank == 0) close(IOUT_ENERGY)
 
   ! safety check of last time loop increment

@@ -130,7 +130,7 @@ specfem3D_SOLVER_OBJECTS += \
 specfem3D_MODULES = \
 	$(FC_MODDIR)/asdf_data.$(FC_MODEXT) \
 	$(FC_MODDIR)/constants_solver.$(FC_MODEXT) \
-	$(FC_MODDIR)/manager_adios_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/manager_adios.$(FC_MODEXT) \
 	$(FC_MODDIR)/specfem_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/specfem_par_crustmantle.$(FC_MODEXT) \
 	$(FC_MODDIR)/specfem_par_innercore.$(FC_MODEXT) \

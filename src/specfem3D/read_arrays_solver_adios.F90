@@ -27,20 +27,20 @@
 
 !===============================================================================
 !> \brief Read adios arrays created by the mesher (file: regX_solver_data.bp)
-subroutine read_arrays_solver_adios(iregion_code, &
-                                    nspec,nglob,nglob_xy, &
-                                    nspec_iso,nspec_tiso,nspec_ani, &
-                                    rho_vp,rho_vs,xstore,ystore,zstore, &
-                                    xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
-                                    rhostore, kappavstore,muvstore,kappahstore,muhstore,eta_anisostore, &
-                                    c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-                                    c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-                                    c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                                    mu0store, &
-                                    ibool,idoubling,ispec_is_tiso, &
-                                    rmassx,rmassy,rmassz, &
-                                    nglob_oceans,rmass_ocean_load, &
-                                    b_rmassx,b_rmassy)
+  subroutine read_arrays_solver_adios(iregion_code, &
+                                      nspec,nglob,nglob_xy, &
+                                      nspec_iso,nspec_tiso,nspec_ani, &
+                                      rho_vp,rho_vs,xstore,ystore,zstore, &
+                                      xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
+                                      rhostore, kappavstore,muvstore,kappahstore,muhstore,eta_anisostore, &
+                                      c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
+                                      c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+                                      c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
+                                      mu0store, &
+                                      ibool,idoubling,ispec_is_tiso, &
+                                      rmassx,rmassy,rmassz, &
+                                      nglob_oceans,rmass_ocean_load, &
+                                      b_rmassx,b_rmassy)
 
 
   use constants_solver
@@ -439,4 +439,4 @@ subroutine read_arrays_solver_adios(iregion_code, &
   ! synchronizes processes
   call synchronize_all()
 
-end subroutine read_arrays_solver_adios
+  end subroutine read_arrays_solver_adios

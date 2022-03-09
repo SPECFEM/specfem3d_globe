@@ -367,6 +367,7 @@
   implicit none
   ! Arguments
   integer, intent(in) :: iteration_on_subset_tmp
+
   ! Local parameters
   character(len=MAX_STRING_LEN) :: file_name,group_name
   ! ADIOS variables
@@ -387,11 +388,11 @@
   ! selections array
   sel_num = 0
 
-  ! iterations here go down from N to 1, but ADIOS files has steps 0..N-1
-  step = iteration_on_subset_tmp - 1
-
   ! file handling
   if (ADIOS_SAVE_ALL_SNAPSHOTS_IN_ONE_FILE) then
+    ! iterations here go down from N to 1, but ADIOS files has steps 0..N-1
+    step = iteration_on_subset_tmp - 1
+
     ! single file for all steps
     do_open_file = .false.
     do_close_file = .false.
@@ -405,7 +406,11 @@
     if (.not. is_initialized_fwd_group) do_open_file = .true.
     ! close at last step (step counting down from N-1 to 0)
     if (step == 0) do_close_file = .true.
+
   else
+    ! single ADIOS files for each subset with step 0 entry
+    step = 0
+
     ! for each step a single file
     do_open_file = .true.
     do_close_file = .true.
@@ -442,8 +447,8 @@
   !
   ! checks if correct snapshot number of wavefields
   call read_adios_scalar(myadios_fwd_file,myadios_fwd_group,myrank,"iteration",t_tmp,step)
-  if (t_tmp /= step + 1) then
-    print *,'Error: invalid iteration step found in reading undoatt arrays: found ',t_tmp,' instead of ',step+1
+  if (t_tmp /= iteration_on_subset_tmp) then
+    print *,'Error: invalid iteration step found in reading undoatt arrays: found ',t_tmp,' instead of ',iteration_on_subset_tmp
     call exit_mpi(myrank,'Invalid iteration step read in read_forward_arrays_undoatt_adios() routine')
   endif
 

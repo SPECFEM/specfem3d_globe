@@ -582,11 +582,11 @@
 
 !=====================================================================
 !
-! Mars 1D model - generic model from file in DATA/mars/mars_1D.dat
+! Mars 1D model - generic model
 !
 !=====================================================================
 
-! mars 1D model defined by table in file mars_1D.dat
+! Mars 1D model defined by table in file DATA/mars/mars_1D.dat
 !
 ! similar implementation and file format as VPREMOON model (in DATA/moon/vpremoon.dat)
 
@@ -595,35 +595,36 @@
   implicit none
 
   ! radius at physical surface
-  double precision, parameter :: MARS_1D_RSURFACE = 1737100.d0
+  double precision, parameter :: MARS_1D_RSURFACE = 3389500.d0
 
   ! radii
   ! no ocean, same as surface radius (Physical surface)
   double precision, parameter :: MARS_1D_ROCEAN = MARS_1D_RSURFACE ! no ocean
-  double precision, parameter :: MARS_1D_RMIDDLE_CRUST = 1725100.d0
-  ! Crust-mantle boundary: at 28km depth corresponds to seismic model, not geodesic model
-  double precision, parameter :: MARS_1D_RMOHO = 1709100.d0
+  ! Crust
+  double precision, parameter :: MARS_1D_RMIDDLE_CRUST = 3340000.d0  ! depth = 50 km
+  ! Crust-mantle boundary
+  double precision, parameter :: MARS_1D_RMOHO = 3280000.d0      ! depth = 110 km average crustal thickness
   ! Rheological lithosphere
-  double precision, parameter :: MARS_1D_R80  =  1607100.d0
+  double precision, parameter :: MARS_1D_R80  = 3055500.d0       ! depth = 334.5 km, if smaller will cause negative Jacobian err
   ! Thermal lithosphere
-  double precision, parameter :: MARS_1D_R220 = 1517100.d0
-  double precision, parameter :: MARS_1D_R400 = 1337100.d0
-  double precision, parameter :: MARS_1D_R600 = 1137100.d0
+  double precision, parameter :: MARS_1D_R220 = 2908000.d0       ! depth = 482 km
+  double precision, parameter :: MARS_1D_R400 = 2655000.d0       ! depth = 735 km (added for meshing)
+  double precision, parameter :: MARS_1D_R600 = 2455000.d0       ! depth = 935 km (added for meshing)
   ! alpha-olivine-beta-spinel transition
-  double precision, parameter :: MARS_1D_R670 = 1067100.d0
+  double precision, parameter :: MARS_1D_R670 = 2360000.d0       ! depth = 1030 km
   ! beta-spinel-gamma-spinel transition
-  double precision, parameter :: MARS_1D_R771 =  966100.d0
+  double precision, parameter :: MARS_1D_R771 = 2033000.d0       ! depth = 1357 km, below which the second doubling implemented
   ! lower thermal boundary layer
-  double precision, parameter :: MARS_1D_RTOPDDOUBLEPRIME = 480000.d0
+  double precision, parameter :: MARS_1D_RTOPDDOUBLEPRIME = 1888380.d0 ! ~33km layer thickness to CMB
   ! Core-mantle boundary
-  double precision, parameter :: MARS_1D_RCMB = 380000.d0
+  double precision, parameter :: MARS_1D_RCMB = 1855380.d0
   ! inner core radius
-  double precision, parameter :: MARS_1D_RICB = 240000.d0
+  double precision, parameter :: MARS_1D_RICB = 515000.d0          ! good for both stability and efficiency
 
   ! densities [g/cm^3]
   double precision, parameter :: MARS_1D_RHO_OCEANS    = 1020.d0  ! will not be used
-  double precision, parameter :: MARS_1D_RHO_TOP_OC    = 5171.d0  ! outer core density fluid outer core
-  double precision, parameter :: MARS_1D_RHO_BOTTOM_OC = 5171.d0  ! outer core density (constant value)
+  double precision, parameter :: MARS_1D_RHO_TOP_OC    = 5480.d0  ! density outer core (top)
+  double precision, parameter :: MARS_1D_RHO_BOTTOM_OC = 6020.d0  ! density outer core (bottom)
 
   ! number of layers
   integer, parameter :: NR_mars_1D_layers = 78  ! check with mars_1D.dat in DATA/mars/ folder

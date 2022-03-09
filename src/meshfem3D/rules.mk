@@ -137,7 +137,7 @@ meshfem3D_MODULES = \
 	$(FC_MODDIR)/regions_mesh_par2.$(FC_MODEXT) \
 	$(FC_MODDIR)/mpi_interfaces_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/gapp2_mantle_model_constants.$(FC_MODEXT) \
-	$(FC_MODDIR)/manager_adios_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/manager_adios.$(FC_MODEXT) \
 	$(FC_MODDIR)/meshfem3d_models_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/meshfem3d_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/mpi_crust_mantle_par.$(FC_MODEXT) \
@@ -256,13 +256,6 @@ adios_meshfem3D_SHARED_OBJECTS = \
 adios_meshfem3D_SHARED_STUBS = \
 	$O/adios_method_stubs.cc.o \
 	$(EMPTY_MACRO)
-
-#adios2_meshfem3D_OBJECTS = \
-#	$(EMPTY_MACRO)
-
-#adios2_meshfem3D_SHARED_OBJECTS = \
-#	$O/adios2_helpers_read.shared_adios2_module.o \
-#	$(EMPTY_MACRO)
 
 # conditional adios linking
 ifeq ($(ADIOS),yes)

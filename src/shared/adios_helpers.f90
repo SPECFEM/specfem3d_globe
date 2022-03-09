@@ -61,6 +61,7 @@ module adios_helpers_mod
   public :: read_adios_array
   public :: read_adios_array_gll_check
   public :: read_adios_scalar
+  public :: read_adios_scalar_local_dim
   public :: read_adios_perform
   public :: read_adios_begin_step
   public :: read_adios_end_step

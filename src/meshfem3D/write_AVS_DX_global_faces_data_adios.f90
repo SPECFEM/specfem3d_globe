@@ -83,8 +83,8 @@ subroutine define_AVS_DX_global_faces_data_adios (nspec, iMPIcut_xi,iMPIcut_eta,
   integer(kind=8) :: local_dim
 
   ! Dummy arrays for type inference inside adios helpers
-  real(kind=4), dimension(1) :: dummy_real1d
-  integer(kind=4), dimension(1) :: dummy_int1d
+  real(kind=4), dimension(:), allocatable :: dummy_real1d
+  integer(kind=4), dimension(:), allocatable :: dummy_int1d
 
   ! erase the logical mask used to mark points already found
   mask_ibool(:) = .false.
@@ -167,6 +167,14 @@ subroutine define_AVS_DX_global_faces_data_adios (nspec, iMPIcut_xi,iMPIcut_eta,
   allocate(avs_dx_adios%iglob4(nspecface), stat=ierr)
   if (ierr /= 0) call exit_MPI(myrank, "Error allocating iglob4.")
 
+  allocate(dummy_real1d(npoin), stat=ierr)
+  if (ierr /= 0) call exit_MPI(myrank, "Error allocating dummy_real.")
+  dummy_real1d(:) = 0.0
+
+  allocate(dummy_int1d(nspecface), stat=ierr)
+  if (ierr /= 0) call exit_MPI(myrank, "Error allocating dummy_real.")
+  dummy_int1d(:) = 0
+
   !--- Variables for '...AVS_DXpointsfaces.txt'
   local_dim = npoin
   call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, &
@@ -195,11 +203,20 @@ subroutine define_AVS_DX_global_faces_data_adios (nspec, iMPIcut_xi,iMPIcut_eta,
     if (ierr /= 0) call exit_MPI(myrank, "Error allocating dvp.")
     allocate(avs_dx_adios%dvs(nspecface), stat=ierr)
     if (ierr /= 0) call exit_MPI(myrank, "Error allocating dvs.")
+
+    ! re-allocate dummy with correct size
+    deallocate(dummy_real1d)
+    allocate(dummy_real1d(nspecface), stat=ierr)
+    if (ierr /= 0) call exit_MPI(myrank, "Error allocating dummy_real.")
+    dummy_real1d(:) = 0.0
+
     call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, &
                                      '', "elements_faces/dvp", dummy_real1d)
     call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, &
                                      '', "elements_faces/dvs", dummy_real1d)
   endif
+
+  deallocate(dummy_real1d,dummy_int1d)
 
 end subroutine define_AVS_DX_global_faces_data_adios
 

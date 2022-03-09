@@ -527,11 +527,13 @@ this can be useful when using a very large supercomputer to compute
 many earthquakes in a catalog, in which case it can be better from
 a batch job submission point of view to start fewer and much larger jobs,
 each of them computing several earthquakes in parallel.
+
 To turn that option on, set parameter NUMBER\_OF\_SIMULTANEOUS\_RUNS to a value greater than 1.
 To implement that, we create NUMBER\_OF\_SIMULTANEOUS\_RUNS MPI sub-communicators,
 each of them being labeled "my\_local\_mpi\_comm\_world", and we use them
 in all the routines in "src/shared/parallel.f90", except in MPI\_ABORT() because in that case
 we need to kill the entire run.
+
 When that option is on, of course the number of processor cores used to start
 the code in the batch system must be a multiple of NUMBER\_OF\_SIMULTANEOUS\_RUNS,
 all the individual runs must use the same number of processor cores,
