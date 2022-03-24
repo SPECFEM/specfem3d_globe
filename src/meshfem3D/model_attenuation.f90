@@ -223,6 +223,9 @@
   use model_vpremoon_par, only: &
     NR_VPREMOON_layers,VPREMOON_Qmu_original
 
+  use model_mars_1D_par, only: &
+    NR_mars_1D_layers,mars_1D_Qmu_original
+
   implicit none
 
   integer,intent(in) :: REFERENCE_1D_MODEL
@@ -296,6 +299,12 @@
     call define_model_case65TAY(.false.)
     Qn = NR_case65TAY
 
+  case (REFERENCE_MODEL_MARS_1D)
+    ! Mars
+    if (myrank == 0) write(IMAIN,*) '  model: mars_1D attenuation'
+    ! no need to redefine 1D model, Qmu_original array contains original values (without CRUSTAL modification)
+    Qn = NR_mars_1D_layers
+
   ! Moon models
   case (REFERENCE_MODEL_VPREMOON)
     ! Moon
@@ -355,6 +364,10 @@
   case (REFERENCE_MODEL_CASE65TAY)
     ! values as defined in model
     Qmu(:) = Mcase65TAY_V_Qmu(:)
+
+  case (REFERENCE_MODEL_MARS_1D)
+    ! Mars
+    Qmu(:) = mars_1D_Qmu_original(:)
 
   ! Moon models
   case (REFERENCE_MODEL_VPREMOON)
@@ -591,6 +604,10 @@
     call exit_MPI(myrank,'Error invalid maximum period in attenuation_tau_sigma(), cannot be zero or negative.')
   if (min_period < TOL_ZERO) &
     call exit_MPI(myrank,'Error invalid maximum period in attenuation_tau_sigma(), cannot be zero or negative.')
+
+  ! requires N_SLS > 1
+  if (n <= 1) &
+    call exit_MPI(myrank,'Error invalid number of SLS in attenuation_tau_sigma(), cannot be less or equal to one.')
 
   ! min and max frequencies
   f1 = 1.0d0 / max_period

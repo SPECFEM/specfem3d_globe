@@ -32,7 +32,7 @@
 
   use constants, only: &
     NGLLX,NGLLY,NGLLZ,MIDX,MIDY,MIDZ,N_SLS,CUSTOM_REAL, &
-    TINYVAL, &
+    TINYVAL,PI, &
     IREGION_CRUST_MANTLE,IREGION_INNER_CORE,IREGION_OUTER_CORE, &
     myrank
 
@@ -211,7 +211,7 @@
         ! checks vpv: if close to zero then there is probably an error
         if (vpv < TINYVAL) then
           print *,'Error vpv: ',vpv,' vph:',vph,' vsv: ',vsv,' vsh: ',vsh,' rho:',rho
-          print *,'radius:',r*R_PLANET_KM
+          print *,'radius:',r*R_PLANET_KM,' theta/phi: ',theta*180/PI,phi*180/PI
           call exit_mpi(myrank,'Error get_model values')
         endif
 

@@ -885,6 +885,8 @@
   integer, parameter :: REFERENCE_MODEL_SOHL       = 101
   integer, parameter :: REFERENCE_MODEL_SOHL_B     = 102
   integer, parameter :: REFERENCE_MODEL_CASE65TAY  = 103
+  integer, parameter :: REFERENCE_MODEL_MARS_1D    = 104  ! defined by file
+
   ! Moon
   integer, parameter :: REFERENCE_MODEL_VPREMOON   = 201
   integer, parameter :: REFERENCE_MODEL_MOON_MEENA = 202
@@ -1138,7 +1140,7 @@
 !!
 !!-----------------------------------------------------------
 ! Model MARS
-  double precision, parameter :: MARS_R = 3390000.d0
+  double precision, parameter :: MARS_R = 3390000.d0    ! default 3390.0 km radius based on Sohl models
   double precision, parameter :: R_MARS = MARS_R
 
 ! radius of the MARS in km

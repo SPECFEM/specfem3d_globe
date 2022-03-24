@@ -116,7 +116,8 @@
     IFLAG_TOP_CENTRAL_CUBE,IFLAG_INNER_CORE_NORMAL,IFLAG_OUTER_CORE_NORMAL, &
     IFLAG_BOTTOM_CENTRAL_CUBE,IFLAG_IN_FICTITIOUS_CUBE,IFLAG_MIDDLE_CENTRAL_CUBE, &
     SUPPRESS_CRUSTAL_MESH, &
-    REFERENCE_MODEL_SOHL,REFERENCE_MODEL_SOHL_B,REFERENCE_MODEL_CASE65TAY
+    REFERENCE_MODEL_SOHL,REFERENCE_MODEL_SOHL_B, &
+    REFERENCE_MODEL_CASE65TAY,REFERENCE_MODEL_MARS_1D
 
   use shared_parameters, only: R_PLANET,RHOAV,REFERENCE_1D_MODEL,ONE_CRUST
 
@@ -207,7 +208,9 @@
 !       moon models other than Sohl, like 1D_case65TAY. in that case, we'll take the Sohl A model as reference.
 !
   select case(REFERENCE_1D_MODEL)
-  case (REFERENCE_MODEL_SOHL,REFERENCE_MODEL_CASE65TAY)
+  case (REFERENCE_MODEL_SOHL, &
+        REFERENCE_MODEL_CASE65TAY, &
+        REFERENCE_MODEL_MARS_1D)
     ! Model A
     !
     !--- inner core
@@ -447,7 +450,8 @@
 
   subroutine Sohl_density(x,rho)
 
-  use constants, only: R_MARS,REFERENCE_MODEL_SOHL,REFERENCE_MODEL_SOHL_B,REFERENCE_MODEL_CASE65TAY
+  use constants, only: R_MARS,REFERENCE_MODEL_SOHL,REFERENCE_MODEL_SOHL_B, &
+    REFERENCE_MODEL_CASE65TAY,REFERENCE_MODEL_MARS_1D
 
   use shared_parameters, only: RHOAV,REFERENCE_1D_MODEL,ONE_CRUST
 
@@ -475,7 +479,9 @@
 
   ! calculates density according to radius
   select case(REFERENCE_1D_MODEL)
-  case (REFERENCE_MODEL_SOHL,REFERENCE_MODEL_CASE65TAY)
+  case (REFERENCE_MODEL_SOHL, &
+        REFERENCE_MODEL_CASE65TAY, &
+        REFERENCE_MODEL_MARS_1D)
     ! Model A
     if (r <= SOHL_RICB) then
       rho = 7.2942d0-13.4654d-3*x-1.6906d0*x*x-0.4225d0*x*x*x
@@ -533,7 +539,8 @@
 
 ! determines radii for Model A or Model B
 
-  use constants, only: REFERENCE_MODEL_SOHL,REFERENCE_MODEL_SOHL_B,REFERENCE_MODEL_CASE65TAY
+  use constants, only: REFERENCE_MODEL_SOHL,REFERENCE_MODEL_SOHL_B, &
+    REFERENCE_MODEL_CASE65TAY,REFERENCE_MODEL_MARS_1D
 
   use shared_parameters, only: REFERENCE_1D_MODEL
 
@@ -548,7 +555,9 @@
   !       to compute ellipicity, we take the density profile of the Sohl model A reference model in that case.
 
   select case(REFERENCE_1D_MODEL)
-  case (REFERENCE_MODEL_SOHL,REFERENCE_MODEL_CASE65TAY)
+  case (REFERENCE_MODEL_SOHL, &
+        REFERENCE_MODEL_CASE65TAY, &
+        REFERENCE_MODEL_MARS_1D)
     ! Model A
     SOHL_RMOHO = SOHL_A_RMOHO
     SOHL_R80 = SOHL_A_R80
@@ -601,21 +610,21 @@
   ! no ocean, same as surface radius (Physical surface)
   double precision, parameter :: MARS_1D_ROCEAN = MARS_1D_RSURFACE ! no ocean
   ! Crust
-  double precision, parameter :: MARS_1D_RMIDDLE_CRUST = 3340000.d0  ! depth = 50 km
+  double precision, parameter :: MARS_1D_RMIDDLE_CRUST = 3365500.d0  ! depth = 24 km
   ! Crust-mantle boundary
-  double precision, parameter :: MARS_1D_RMOHO = 3280000.d0      ! depth = 110 km average crustal thickness
+  double precision, parameter :: MARS_1D_RMOHO = 3341500.d0      ! depth = 48 km average crustal thickness
   ! Rheological lithosphere
-  double precision, parameter :: MARS_1D_R80  = 3055500.d0       ! depth = 334.5 km, if smaller will cause negative Jacobian err
+  double precision, parameter :: MARS_1D_R80  = 3239500.d0       ! depth = 150 km, if smaller will cause negative Jacobian err
   ! Thermal lithosphere
-  double precision, parameter :: MARS_1D_R220 = 2908000.d0       ! depth = 482 km
-  double precision, parameter :: MARS_1D_R400 = 2655000.d0       ! depth = 735 km (added for meshing)
-  double precision, parameter :: MARS_1D_R600 = 2455000.d0       ! depth = 935 km (added for meshing)
+  double precision, parameter :: MARS_1D_R220 = 3139000.d0       ! depth = ~250 km
+  double precision, parameter :: MARS_1D_R400 = 2885000.d0       ! depth = ~500 km (added for meshing)
+  double precision, parameter :: MARS_1D_R600 = 2635000.d0       ! depth = 750 km (added for meshing)
   ! alpha-olivine-beta-spinel transition
-  double precision, parameter :: MARS_1D_R670 = 2360000.d0       ! depth = 1030 km
+  double precision, parameter :: MARS_1D_R670 = 2485000.d0       ! depth = 900 km
   ! beta-spinel-gamma-spinel transition
-  double precision, parameter :: MARS_1D_R771 = 2033000.d0       ! depth = 1357 km, below which the second doubling implemented
+  double precision, parameter :: MARS_1D_R771 = 2133000.d0       ! depth = 1357 km, below which the second doubling implemented
   ! lower thermal boundary layer
-  double precision, parameter :: MARS_1D_RTOPDDOUBLEPRIME = 1888380.d0 ! ~33km layer thickness to CMB
+  double precision, parameter :: MARS_1D_RTOPDDOUBLEPRIME = 1915380.d0 ! ~60km layer thickness to CMB
   ! Core-mantle boundary
   double precision, parameter :: MARS_1D_RCMB = 1855380.d0
   ! inner core radius
@@ -627,7 +636,7 @@
   double precision, parameter :: MARS_1D_RHO_BOTTOM_OC = 6020.d0  ! density outer core (bottom)
 
   ! number of layers
-  integer, parameter :: NR_mars_1D_layers = 78  ! check with mars_1D.dat in DATA/mars/ folder
+  integer, parameter :: NR_mars_1D_layers = 69  ! check with mars_1D.dat in DATA/mars/ folder
 
   ! model arrays
   double precision, dimension(:),allocatable :: mars_1D_radius,mars_1D_density, &
@@ -646,7 +655,7 @@
                             check_doubling_flag,iregion_code)
 
   use constants
-  use shared_parameters, only: R_PLANET,RHOAV,ONE_CRUST
+  use shared_parameters, only: R_PLANET,RHOAV
 
   use model_mars_1D_par
 
@@ -672,44 +681,12 @@
 
   ! local parameters
   double precision :: r,frac,scaleval,dr,drho
-  double precision :: vp_tmp,vs_tmp,rho_tmp,Qmu_tmp,Qkappa_tmp
   integer :: i
 
   ! first allocates and defines model arrays (will be done only once)
   if (.not. allocated(MARS_1D_radius)) then
     ! all processes will define same parameters
-    call define_model_mars_1D()
-
-    ! ONE_CRUST uses a single layer value for the crust
-    if (ONE_CRUST) then
-      ! upper crust is in (3:4)
-      rho_tmp = mars_1D_density(NR_mars_1D_layers-3)
-      vp_tmp = mars_1D_vp(NR_mars_1D_layers-3)
-      vs_tmp = mars_1D_vs(NR_mars_1D_layers-3)
-      Qkappa_tmp = mars_1D_Qkappa(NR_mars_1D_layers-3)
-      Qmu_tmp = mars_1D_Qmu(NR_mars_1D_layers-3)
-      ! assign all crust (1:6) values to upper crust
-      mars_1D_density(NR_mars_1D_layers-5:NR_mars_1D_layers) = rho_tmp
-      mars_1D_vp(NR_mars_1D_layers-5:NR_mars_1D_layers) = vp_tmp
-      mars_1D_vs(NR_mars_1D_layers-5:NR_mars_1D_layers) = vs_tmp
-      mars_1D_Qkappa(NR_mars_1D_layers-5:NR_mars_1D_layers) = Qkappa_tmp
-      mars_1D_Qmu(NR_mars_1D_layers-5:NR_mars_1D_layers) = Qmu_tmp
-    endif
-
-    ! in case an external crustal model will be superimposed on top, we extend mantle values to the surface
-    !
-    ! strip the crust and replace it by mantle if we use an external crustal model
-    ! note: assumes that the crust is given by 6 layers
-    !       see in mars_1D.dat: regolith layer (1:2), upper crust (3:4), lower crust (5:6), the mantle
-    if (SUPPRESS_CRUSTAL_MESH .or. CRUSTAL) then
-      do i = NR_mars_1D_layers-5,NR_mars_1D_layers
-        mars_1D_density(i) = mars_1D_density(NR_mars_1D_layers-6)
-        mars_1D_vp(i) = mars_1D_vp(NR_mars_1D_layers-6)
-        mars_1D_vs(i) = mars_1D_vs(NR_mars_1D_layers-6)
-        mars_1D_Qkappa(i) = mars_1D_Qkappa(NR_mars_1D_layers-6)
-        mars_1D_Qmu(i) = mars_1D_Qmu(NR_mars_1D_layers-6)
-      enddo
-    endif
+    call define_model_mars_1D(CRUSTAL)
   endif
 
   ! compute real physical radius in meters
@@ -791,14 +768,14 @@
     ! inner core range [1:2]
     if (iregion_code == IREGION_INNER_CORE .and. i > 2) i = 2
 
-    ! outer core range [3:4]
+    ! outer core range [3:30]
     ! due to the interpolation below, we add +1 to the bottom
     if (iregion_code == IREGION_OUTER_CORE .and. i <= 3) i = 3 + 1
-    if (iregion_code == IREGION_OUTER_CORE .and. i > 4) i = 4
+    if (iregion_code == IREGION_OUTER_CORE .and. i > 30) i = 30
 
-    ! crust/mantle range [5:78] NR_mars_1D_layers == 78
+    ! crust/mantle range [31:78] NR_mars_1D_layers == 78
     ! due to the interpolation below, we add +1 to the bottom
-    if (iregion_code == IREGION_CRUST_MANTLE .and. i <= 5) i = 5 + 1
+    if (iregion_code == IREGION_CRUST_MANTLE .and. i <= 30) i = 30 + 1
     if (iregion_code == IREGION_CRUST_MANTLE .and. i > NR_mars_1D_layers) i = NR_mars_1D_layers
   endif
 
@@ -851,22 +828,46 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine define_model_mars_1D()
+  subroutine model_mars_1D_broadcast(CRUSTAL)
+
+! standard routine to setup model
+
+  implicit none
+
+  logical,intent(in) :: CRUSTAL
+
+  ! all processes will define same parameters
+  call define_model_mars_1D(CRUSTAL)
+
+  end subroutine model_mars_1D_broadcast
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine define_model_mars_1D(USE_EXTERNAL_CRUSTAL_MODEL)
 
   use constants, only: myrank,SUPPRESS_CRUSTAL_MESH,IIN
-  use shared_parameters, only: RICB,RCMB,ROCEAN
+  use shared_parameters, only: R_PLANET,RICB,RCMB,ROCEAN,ONE_CRUST
   use model_mars_1D_par
 
   implicit none
 
+  logical, intent(in) :: USE_EXTERNAL_CRUSTAL_MODEL
+
   ! local parameters
-  integer :: nlines,ir,ier
+  integer :: nlines,ir,i,ier
   double precision :: r,vp,vs,rho
   double precision :: Qp,Qs,Qkappa,Qmu
   double precision :: Qkappa_inv,Qp_inv,dr
+  double precision :: vp_tmp,vs_tmp,rho_tmp,Qmu_tmp,Qkappa_tmp
+  double precision :: r_top
+
   character(len=256) :: datafile,line
 
+  ! discontinuity layer - tolerance (discontinuities repeat same depth for upper/lower values)
   double precision, parameter :: TOL = 1.d-9
+
   ! debugging
   logical, parameter :: DEBUG = .false.
 
@@ -961,8 +962,19 @@
     ! Qkappa converted from (Qp,Qs)
     ! note: in case Qp == Qs then it follows that Qkappa = Qs
     Qkappa_inv = (1.d0/Qp - 4.d0/3.d0*(vs**2)/(vp**2)/Qs) / (1.d0 - 4.d0/3.d0*(vs**2)/(vp**2))
-    if (Qkappa_inv <= 0.d0) stop 'Error got negative or zero 1/Qkappa value'
 
+    !debug
+    !print *,'debug: ',nlines,'line ',trim(line),'leads to Qkappa = ',1.d0/Qkappa_inv
+    !print *,'debug: ',nlines,'line Qkappa=9999.9 for Qp ', &
+    !  1.d0/((1.d0 - 4.d0/3.d0*(vs**2)/(vp**2)) * 1.d0/9999.9 + 4.d0/3.d0*(vs**2)/(vp**2) * 1.d0/Qmu)
+
+    ! checks for positive value
+    if (Qkappa_inv <= 0.d0) then
+      print *,'Error: invalid Qp, Qs values ',Qp,Qs,' leads to negative or zero 1/Qkappa value ',Qkappa_inv
+      print *,'       please check model in mars_1D.dat, on line ',nlines
+      print *,'       data line: ',trim(line)
+      stop 'Error got negative or zero 1/Qkappa value'
+    endif
     Qkappa = 1.d0/Qkappa_inv
 
     ! check back with Qp
@@ -1022,13 +1034,57 @@
   ! ICB at radius(33)
   if (abs(RICB - mars_1D_radius(2)) > TOL) &
     stop 'Error: mars_1D radius RICB and model radius index not matching'
-  if (abs(RCMB - mars_1D_radius(4)) > TOL) &
+  if (abs(RCMB - mars_1D_radius(30)) > TOL) &
     stop 'Error: mars_1D radius RCMB and model radius index not matching'
   if (abs(ROCEAN - mars_1D_radius(NR_mars_1D_layers)) > TOL) &
     stop 'Error: mars_1D radius ROCEAN and model radius index not matching'
 
+  ! safety checks if surface is consistent with R_PLANET setting and mars 1D parameter from module
+  r_top = mars_1D_radius(nlines)      ! arrays starts from bottom to top
+  if (abs(MARS_1D_RSURFACE - r_top) > TOL) then
+    print *,'Model error: mars_1D.dat model has a different surface radius than defined in module mars_1D_par:'
+    print *,'             table: ',r_top/1000.d0,' versus module value: ',MARS_1D_RSURFACE/1000.d0
+    stop 'Error: mars_1D.dat has invalid module surface radius'
+  endif
+  if (abs(R_PLANET - r_top) > TOL) then
+    print *,'Model error: mars_1D.dat model has a different surface radius than used for mars planet:'
+    print *,'             table: ',r_top/1000.d0,' versus mars radius value: ',R_PLANET/1000.d0
+    stop 'Error: mars_1D.dat has invalid mars surface radius'
+  endif
+
   ! stores Qmu original values (without CRUSTAL modifications) for further use in attenuation routine
   mars_1D_Qmu_original(:) = mars_1D_Qmu(:)
+
+  ! ONE_CRUST uses a single layer value for the crust
+  if (ONE_CRUST) then
+    ! mid crust is in (2:3)
+    rho_tmp = mars_1D_density(NR_mars_1D_layers-3)
+    vp_tmp = mars_1D_vp(NR_mars_1D_layers-3)
+    vs_tmp = mars_1D_vs(NR_mars_1D_layers-3)
+    Qkappa_tmp = mars_1D_Qkappa(NR_mars_1D_layers-3)
+    Qmu_tmp = mars_1D_Qmu(NR_mars_1D_layers-3)
+    ! assign all crust (1:6) values to upper crust
+    mars_1D_density(NR_mars_1D_layers-5:NR_mars_1D_layers) = rho_tmp
+    mars_1D_vp(NR_mars_1D_layers-5:NR_mars_1D_layers) = vp_tmp
+    mars_1D_vs(NR_mars_1D_layers-5:NR_mars_1D_layers) = vs_tmp
+    mars_1D_Qkappa(NR_mars_1D_layers-5:NR_mars_1D_layers) = Qkappa_tmp
+    mars_1D_Qmu(NR_mars_1D_layers-5:NR_mars_1D_layers) = Qmu_tmp
+  endif
+
+  ! in case an external crustal model will be superimposed on top, we extend mantle values to the surface
+  !
+  ! strip the crust and replace it by mantle if we use an external crustal model
+  ! note: assumes that the crust is given by 6 layers
+  !       see in mars_1D.dat: regolith layer (1:2), upper crust (3:4), lower crust (5:6), the mantle
+  if (SUPPRESS_CRUSTAL_MESH .or. USE_EXTERNAL_CRUSTAL_MODEL) then
+    do i = NR_mars_1D_layers-5,NR_mars_1D_layers
+      mars_1D_density(i) = mars_1D_density(NR_mars_1D_layers-6)
+      mars_1D_vp(i) = mars_1D_vp(NR_mars_1D_layers-6)
+      mars_1D_vs(i) = mars_1D_vs(NR_mars_1D_layers-6)
+      mars_1D_Qkappa(i) = mars_1D_Qkappa(NR_mars_1D_layers-6)
+      mars_1D_Qmu(i) = mars_1D_Qmu(NR_mars_1D_layers-6)
+    enddo
+  endif
 
   end subroutine define_model_mars_1D
 
@@ -1039,7 +1095,7 @@
   subroutine model_mars_1D_density(x,rho)
 
   use constants
-  use shared_parameters, only: R_PLANET,RHOAV,ONE_CRUST
+  use shared_parameters, only: R_PLANET,RHOAV,CRUSTAL
 
   use model_mars_1D_par
 
@@ -1051,28 +1107,11 @@
   ! local parameters
   integer :: i
   double precision :: r,dr,frac
-  double precision :: vp_tmp,vs_tmp,rho_tmp,Qmu_tmp,Qkappa_tmp
 
   ! first allocates and defines model arrays (will be done only once)
   if (.not. allocated(mars_1D_radius)) then
     ! all processes will define same parameters
-    call define_model_mars_1D()
-
-    ! ONE_CRUST uses a single layer value for the crust
-    if (ONE_CRUST) then
-      ! upper crust is in (3:4)
-      rho_tmp = mars_1D_density(NR_mars_1D_layers-3)
-      vp_tmp = mars_1D_vp(NR_mars_1D_layers-3)
-      vs_tmp = mars_1D_vs(NR_mars_1D_layers-3)
-      Qkappa_tmp = mars_1D_Qkappa(NR_mars_1D_layers-3)
-      Qmu_tmp = mars_1D_Qmu(NR_mars_1D_layers-3)
-      ! assign all crust (1:6) values to upper crust
-      mars_1D_density(NR_mars_1D_layers-5:NR_mars_1D_layers) = rho_tmp
-      mars_1D_vp(NR_mars_1D_layers-5:NR_mars_1D_layers) = vp_tmp
-      mars_1D_vs(NR_mars_1D_layers-5:NR_mars_1D_layers) = vs_tmp
-      mars_1D_Qkappa(NR_mars_1D_layers-5:NR_mars_1D_layers) = Qkappa_tmp
-      mars_1D_Qmu(NR_mars_1D_layers-5:NR_mars_1D_layers) = Qmu_tmp
-    endif
+    call define_model_mars_1D(CRUSTAL)
   endif
 
   ! initializes

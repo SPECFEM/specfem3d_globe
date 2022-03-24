@@ -91,7 +91,7 @@
       NER_771_670              = 3
       NER_TOPDDOUBLEPRIME_771  = 3
       NER_CMB_TOPDDOUBLEPRIME  = 1
-      NER_OUTER_CORE           = 5
+      NER_OUTER_CORE           = 6
       NER_TOP_CENTRAL_CUBE_ICB = 1
     else if (NEX_MAX*multiplication_factor <= 96) then
       DT                       = 0.2d0
@@ -718,8 +718,19 @@
     ! Mars
     if (NCHUNKS == 6) then
       if (CRUSTAL .and. CASE_3D) then
-        if (REFERENCE_CRUSTAL_MODEL == ICRUST_CRUSTMAPS) &
-          DT = DT*(1.d0 - 0.1d0)
+        ! limits time step size for thinner crustal elements in mars_1D model
+        if (REFERENCE_1D_MODEL == REFERENCE_MODEL_MARS_1D) then
+          if (DT > 0.06) DT = 0.06
+        endif
+        ! crustmaps safety
+        if (REFERENCE_CRUSTAL_MODEL == ICRUST_CRUSTMAPS) then
+          DT = DT * (1.d0 - 0.1d0)
+        endif
+      else
+        ! Mars 1D model time step reduction
+        if (REFERENCE_1D_MODEL == REFERENCE_MODEL_MARS_1D) then
+          DT = DT * (1.d0 - 0.3d0)
+        endif
       endif
     endif
     if (MARS_REGIONAL_MOHO_MESH .and. MARS_HONOR_DEEP_MOHO) then

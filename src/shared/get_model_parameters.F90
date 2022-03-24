@@ -377,6 +377,21 @@
     REFERENCE_1D_MODEL = REFERENCE_MODEL_CASE65TAY
     REFERENCE_CRUSTAL_MODEL = ICRUST_CRUSTMAPS
 
+  case('1d_mars','mars_1d')
+    ! Mars
+    TRANSVERSE_ISOTROPY = .false. ! enforces isotropic model
+    HONOR_1D_SPHERICAL_MOHO = .true.
+    REFERENCE_1D_MODEL = REFERENCE_MODEL_MARS_1D
+
+  case('1d_mars_3d_crust','mars_1d_3d_crust')
+    ! Mars
+    TRANSVERSE_ISOTROPY = .false. ! enforces isotropic model
+    CASE_3D = .true.
+    CRUSTAL = .true.
+    ONE_CRUST = .true.
+    REFERENCE_1D_MODEL = REFERENCE_MODEL_MARS_1D
+    REFERENCE_CRUSTAL_MODEL = ICRUST_CRUSTMAPS
+
   ! Moon 1D models
   case('vpremoon')
     ! Moon
@@ -893,13 +908,15 @@
   ! Mars 1D_Sohl is isotropic
   if ((REFERENCE_1D_MODEL == REFERENCE_MODEL_SOHL .or. &
        REFERENCE_1D_MODEL == REFERENCE_MODEL_SOHL_B .or. &
-       REFERENCE_1D_MODEL == REFERENCE_MODEL_CASE65TAY) .and. TRANSVERSE_ISOTROPY) &
-      stop 'models 1D_Sohl, 1D_Sohl_B, 1D_case65TAY are currently isotropic'
+       REFERENCE_1D_MODEL == REFERENCE_MODEL_CASE65TAY .or. &
+       REFERENCE_1D_MODEL == REFERENCE_MODEL_MARS_1D) .and. TRANSVERSE_ISOTROPY) &
+      stop 'models 1D_Sohl, 1D_Sohl_B, 1D_case65TAY, 1D_mars are currently isotropic'
   ! Mars has no ocean
   if ((REFERENCE_1D_MODEL == REFERENCE_MODEL_SOHL .or. &
        REFERENCE_1D_MODEL == REFERENCE_MODEL_SOHL_B .or. &
-       REFERENCE_1D_MODEL == REFERENCE_MODEL_CASE65TAY) .and. OCEANS) &
-    stop 'models 1D_Sohl, 1D_Sohl_B, 1D_case65TAY cannot use an ocean approximation'
+       REFERENCE_1D_MODEL == REFERENCE_MODEL_CASE65TAY .or. &
+       REFERENCE_1D_MODEL == REFERENCE_MODEL_MARS_1D) .and. OCEANS) &
+    stop 'models 1D_Sohl, 1D_Sohl_B, 1D_case65TAY, 1D_mars cannot use an ocean approximation'
 
   ! Moon
   ! Moon is isotropic
@@ -928,6 +945,8 @@
     REGIONAL_MOHO_MESH,HONOR_DEEP_MOHO, &
     REFERENCE_1D_MODEL
 
+  use model_mars_1D_par, only: MARS_1D_RSURFACE
+
   implicit none
 
 ! note: Please make sure to broadcast the values below in broadcast_computed_parameters.f90
@@ -940,12 +959,21 @@
   select case(REFERENCE_1D_MODEL)
   case (REFERENCE_MODEL_SOHL, &
         REFERENCE_MODEL_SOHL_B, &
-        REFERENCE_MODEL_CASE65TAY)
+        REFERENCE_MODEL_CASE65TAY, &
+        REFERENCE_MODEL_MARS_1D)
     ! Mars
     ! sets planet
     PLANET_TYPE = IPLANET_MARS
     ! radius
     R_PLANET = MARS_R  ! physical surface radius (in m)
+
+    ! change radius for specific model
+    if (REFERENCE_1D_MODEL == REFERENCE_MODEL_MARS_1D) then
+      ! Mars 1D model
+      ! as defined by DATA/mars/mars_1D.dat, use a radius of 3389.50 km
+      ! this is different to the default Sohl models, which use a radius of 3390.0 km for Mars
+      R_PLANET = MARS_1D_RSURFACE
+    endif
     R_PLANET_KM = R_PLANET / 1000.d0
     R_EARTH = R_PLANET ! overwrites R_EARTH which is still widely used in the code (e.g., to non-dimensionalize)
     R_EARTH_KM = R_PLANET_KM
@@ -1071,6 +1099,7 @@
   use model_prem_par
   use model_sohl_par
   use model_vpremoon_par
+  use model_mars_1d_par
 
   implicit none
 
@@ -1360,6 +1389,25 @@
     RHO_OCEANS = 1020.0 / MARS_RHOAV     ! will not be used
     RHO_TOP_OC = 6936.40 / MARS_RHOAV    ! densities fluid outer core (from modSOHL)
     RHO_BOTTOM_OC = 7268.20 / MARS_RHOAV
+
+  case (REFERENCE_MODEL_MARS_1D)
+    ! Mars
+    ROCEAN = R_PLANET   ! no ocean
+    RMIDDLE_CRUST = MARS_1D_RMIDDLE_CRUST
+    RMOHO = MARS_1D_RMOHO
+    R80  = MARS_1D_R80
+    R220 = MARS_1D_R220
+    R400 = MARS_1D_R400
+    R600 = MARS_1D_R600
+    R670 = MARS_1D_R670
+    R771 = MARS_1D_R771
+    RTOPDDOUBLEPRIME = MARS_1D_RTOPDDOUBLEPRIME
+    RCMB = MARS_1D_RCMB
+    RICB = MARS_1D_RICB
+    ! densities
+    RHO_TOP_OC = MARS_1D_RHO_OCEANS / RHOAV
+    RHO_TOP_OC = MARS_1D_RHO_TOP_OC / MARS_RHOAV
+    RHO_BOTTOM_OC = MARS_1D_RHO_BOTTOM_OC / RHOAV
 
   ! Moon models
   case (REFERENCE_MODEL_MOON_MEENA)

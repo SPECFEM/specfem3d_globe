@@ -380,28 +380,33 @@
 
 ! if (x > x3 .and. INCLUDE_SEDIMENTS_IN_CRUST .and. h_sed > MINIMUM_SEDIMENT_THICKNESS) then
   if (x > x3 .and. INCLUDE_SEDIMENTS_IN_CRUST .and. thicks(1) > THICKNESS_TOL) then
-   vp = vps(1)
-   vs = vss(1)
-   rho = rhos(1)
+    ! soft sediment
+    vp = vps(1)
+    vs = vss(1)
+    rho = rhos(1)
 ! else if (x > x4 .and. INCLUDE_SEDIMENTS_IN_CRUST .and. h_sed > MINIMUM_SEDIMENT_THICKNESS) then
   else if (x > x4 .and. INCLUDE_SEDIMENTS_IN_CRUST .and. thicks(2) > THICKNESS_TOL) then
-   vp = vps(2)
-   vs = vss(2)
-   rho = rhos(2)
+    ! hard sediment
+    vp = vps(2)
+    vs = vss(2)
+    rho = rhos(2)
   else if (x > x5 .and. thicks(3) > THICKNESS_TOL) then
-   vp = vps(3)
-   vs = vss(3)
-   rho = rhos(3)
+    ! upper crust
+    vp = vps(3)
+    vs = vss(3)
+    rho = rhos(3)
   else if (x > x6 .and. thicks(4) > THICKNESS_TOL) then
-   vp = vps(4)
-   vs = vss(4)
-   rho = rhos(4)
+    ! middle crust
+    vp = vps(4)
+    vs = vss(4)
+    rho = rhos(4)
   else if ((x > x7 .and. thicks(5) > THICKNESS_TOL) .or. elem_in_crust) then
-   vp = vps(5)
-   vs = vss(5)
-   rho = rhos(5)
+    ! lower crust
+    vp = vps(5)
+    vs = vss(5)
+    rho = rhos(5)
   else
-   found_crust = .false.
+    found_crust = .false.
   endif
 
   !   non-dimensionalize
@@ -473,8 +478,8 @@
   integer :: num_points
   integer :: i,ipoin,iupcolat,ileftlng,irightlng
 
-! get integer colatitude and longitude of crustal cap
-! -90 < lat < 90 -180 < lon < 180
+  ! get integer colatitude and longitude of crustal cap
+  ! -90 < lat < 90 -180 < lon < 180
   if (lat > 90.0d0 .or. lat < -90.0d0 .or. lon > 180.0d0 .or. lon < -180.0d0) &
     write(*,*) lat,' ',lon, ' error in latitude/longitude range in crust'
 
@@ -499,9 +504,10 @@
   case (IPLANET_MARS,IPLANET_MOON)
     ! Mars, Moon
     ! for global scale
-    cap_degree = 2.d0
-    !cap_degree = 1.d0 / CRUSTMAP_RESOLUTION
-    !print *,"HELLO"
+    !cap_degree = 2.d0
+    ! by default uses CAP smoothing with crustmap resolution, e.g. 1/4 degree
+    cap_degree = 1.d0 / CRUSTMAP_RESOLUTION
+    ! gets smoothing points and weights
     call smooth_weights_CAP_vardegree(lon,lat,xlon,xlat,weight,cap_degree,NTHETA,NPHI)
     num_points = NTHETA*NPHI
 
@@ -676,27 +682,28 @@
   if (lat > 90.0d0 .or. lat < -90.0d0 .or. lng > 180.0d0 .or. lng < -180.0d0) &
     stop 'Error in latitude/longitude range in ibilinearmap'
 
-! map longitudes to [0,360]
+  ! map longitudes to [0,360]
   if (lng < 0) then
     xlng=lng+360.0
   else
     xlng=lng
   endif
 
-  buffer=0.5+((90.0-lat)*CRUSTMAP_RESOLUTION)
-  iupcolat=int(buffer)
-  weightup=1.0-(buffer-dble(iupcolat))
+  ! latitude index & weight
+  buffer = 0.5+((90.0-lat)*CRUSTMAP_RESOLUTION)
+  iupcolat = int(buffer)
+  weightup = 1.0-(buffer-dble(iupcolat))
 
   if (iupcolat < 0) iupcolat = 0
-  if (iupcolat > 180*CRUSTMAP_RESOLUTION)  iupcolat=180*CRUSTMAP_RESOLUTION
+  if (iupcolat > 180*CRUSTMAP_RESOLUTION)  iupcolat = 180*CRUSTMAP_RESOLUTION
 
+  ! longitude index & weight
+  buffer = 0.5+(xlng*CRUSTMAP_RESOLUTION)
+  ileftlng = int(buffer)
+  weightleft = 1.0-(buffer-dble(ileftlng))
 
-  buffer=0.5+(xlng*CRUSTMAP_RESOLUTION)
-  ileftlng=int(buffer)
-  weightleft=1.0-(buffer-dble(ileftlng))
-
-  if (ileftlng < 1) ileftlng=360*CRUSTMAP_RESOLUTION
-  if (ileftlng > 360*CRUSTMAP_RESOLUTION) ileftlng=1
+  if (ileftlng < 1) ileftlng = 360*CRUSTMAP_RESOLUTION
+  if (ileftlng > 360*CRUSTMAP_RESOLUTION) ileftlng = 1
 
   end subroutine ibilinearmap
 

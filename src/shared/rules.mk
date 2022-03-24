@@ -90,6 +90,7 @@ shared_MODULES = \
 	$(FC_MODDIR)/manager_adios.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_prem_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_sohl_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_mars_1d_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_vpremoon_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/my_mpi.$(FC_MODEXT) \
 	$(FC_MODDIR)/shared_input_parameters.$(FC_MODEXT) \

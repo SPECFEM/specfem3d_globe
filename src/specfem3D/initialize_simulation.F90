@@ -277,8 +277,10 @@
     do while(ier == 0)
       read(IIN,"(a)",iostat=ier) dummystring
       if (ier == 0) then
-        ! excludes empty lines
-        if (len_trim(dummystring) > 0 ) nrec = nrec + 1
+        ! excludes empty lines and skips comment lines
+        if (len_trim(dummystring) > 0 .and. dummystring(1:1) /= '#') then
+          nrec = nrec + 1
+        endif
       endif
     enddo
     close(IIN)

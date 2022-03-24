@@ -130,6 +130,9 @@
     case (REFERENCE_MODEL_CASE65TAY)
       call model_case65TAY_broadcast(CRUSTAL)
 
+    case (REFERENCE_MODEL_MARS_1D)
+      call model_mars_1D_broadcast(CRUSTAL)
+
     case (REFERENCE_MODEL_CCREM)
       call model_ccrem_broadcast(CRUSTAL)
 
@@ -523,6 +526,15 @@
     case (REFERENCE_MODEL_CASE65TAY)
       ! Mars
       call model_case65TAY(r_prem,rho,vp,vs,Qkappa,Qmu,iregion_code)
+      vpv = vp
+      vph = vp
+      vsv = vs
+      vsh = vs
+      eta_aniso = 1.d0
+
+    case (REFERENCE_MODEL_MARS_1D)
+      ! Mars
+      call model_mars_1D(r_prem,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL,.true.,iregion_code)
       vpv = vp
       vph = vp
       vsv = vs

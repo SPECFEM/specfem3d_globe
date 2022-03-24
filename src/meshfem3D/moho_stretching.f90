@@ -77,10 +77,10 @@
   double precision,parameter :: MOHO_MINIMUM_DEFAULT_EARTH = 5.0 / EARTH_R_KM
   double precision,parameter :: MOHO_MAXIMUM_DEFAULT_EARTH = 90.0 / EARTH_R_KM
   ! Mars
-  double precision,parameter :: MOHO_MINIMUM_DEFAULT_MARS = 5.0 / MARS_R_KM
+  double precision,parameter :: MOHO_MINIMUM_DEFAULT_MARS = 2.0 / MARS_R_KM
   double precision,parameter :: MOHO_MAXIMUM_DEFAULT_MARS = 150.0 / MARS_R_KM
   ! Moon - todo: needs better estimates
-  double precision,parameter :: MOHO_MINIMUM_DEFAULT_MOON = 5.0 / MOON_R_KM
+  double precision,parameter :: MOHO_MINIMUM_DEFAULT_MOON = 2.0 / MOON_R_KM
   double precision,parameter :: MOHO_MAXIMUM_DEFAULT_MOON = 100.0 / MOON_R_KM
 
   ! min/max defaults

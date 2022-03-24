@@ -52,7 +52,7 @@
     REFERENCE_MODEL_PREM2,REFERENCE_MODEL_IASP91,REFERENCE_MODEL_AK135F_NO_MUD, &
     REFERENCE_MODEL_1066A,REFERENCE_MODEL_1DREF,REFERENCE_MODEL_JP1D,REFERENCE_MODEL_SEA1D, &
     REFERENCE_MODEL_CCREM, &
-    REFERENCE_MODEL_SOHL,REFERENCE_MODEL_SOHL_B,REFERENCE_MODEL_CASE65TAY, &
+    REFERENCE_MODEL_SOHL,REFERENCE_MODEL_SOHL_B,REFERENCE_MODEL_CASE65TAY,REFERENCE_MODEL_MARS_1D, &
     REFERENCE_MODEL_VPREMOON,REFERENCE_MODEL_MOON_MEENA
 
   use shared_parameters, only: REFERENCE_1D_MODEL,R_PLANET,RICB
@@ -132,7 +132,8 @@
   ! Mars models
   case (REFERENCE_MODEL_SOHL, &
         REFERENCE_MODEL_SOHL_B, &
-        REFERENCE_MODEL_CASE65TAY)
+        REFERENCE_MODEL_CASE65TAY, &
+        REFERENCE_MODEL_MARS_1D)
     ! Mars
     ! note: for mars, the time stepping is mostly affected by crustal elements.
     !       we will use two estimates, one for inner core and another for the crust to determine a minimum time step.
@@ -142,6 +143,7 @@
     ! surface/crust
     check_crust_DT = .true.
     P_VELOCITY_MAX_CRUST = 7.73d0   ! according to crustmap marscrustp7.cmap (lower crust layer) files
+    if (REFERENCE_1D_MODEL == REFERENCE_MODEL_MARS_1D) P_VELOCITY_MAX_CRUST = 6.22d0 !(according to table mars_1D.dat)
     ! empirical factor to account for aspect ratio in crust
     if (NEX_MAX < 480) then
       ! allows for larger time steps
