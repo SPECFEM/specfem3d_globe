@@ -41,7 +41,17 @@
 
   integer :: NT_DUMP_ATTENUATION_optimal
   logical, parameter :: PRINT_INFO_TO_SCREEN = .false.
+  integer :: numelem_total_all
 
+  ! number of elements
+  numelem_crust_mantle = NSPEC_REGIONS(IREGION_CRUST_MANTLE)
+  numelem_outer_core = NSPEC_REGIONS(IREGION_OUTER_CORE)
+  numelem_inner_core = NSPEC_REGIONS(IREGION_INNER_CORE)
+
+  numelem_total = numelem_crust_mantle + numelem_outer_core + numelem_inner_core
+
+  ! stats
+  call sum_all_i(numelem_total,numelem_total_all)
 
   !--- print number of points and elements in the mesh for each region
   if (myrank == 0) then
@@ -50,12 +60,6 @@
     distance_to_center_in_km = (sqrt(Earth_center_of_mass_x_total**2 + &
                                      Earth_center_of_mass_y_total**2 + &
                                      Earth_center_of_mass_z_total**2) / Earth_mass_total) / 1000.d0
-
-    numelem_crust_mantle = NSPEC_REGIONS(IREGION_CRUST_MANTLE)
-    numelem_outer_core = NSPEC_REGIONS(IREGION_OUTER_CORE)
-    numelem_inner_core = NSPEC_REGIONS(IREGION_INNER_CORE)
-
-    numelem_total = numelem_crust_mantle + numelem_outer_core + numelem_inner_core
 
     ! check volume of chunk
     write(IMAIN,*)
@@ -111,7 +115,8 @@
     write(IMAIN,*) 'Repartition of elements in regions:'
     write(IMAIN,*) '----------------------------------'
     write(IMAIN,*)
-    write(IMAIN,*) 'total number of elements in each slice: ',numelem_total
+    write(IMAIN,*) 'number of elements in each slice      : ',numelem_total
+    write(IMAIN,*) 'total number of elements in all slices: ',numelem_total_all
     write(IMAIN,*)
     write(IMAIN,*) ' - crust and mantle: ',sngl(100.d0*dble(numelem_crust_mantle)/dble(numelem_total)),' %'
     write(IMAIN,*) ' - outer core: ',sngl(100.d0*dble(numelem_outer_core)/dble(numelem_total)),' %'

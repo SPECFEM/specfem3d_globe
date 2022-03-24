@@ -69,7 +69,7 @@
   integer,intent(in) :: offset_proc_xi,offset_proc_eta
 
   ! local parameters
-  integer :: ispec_count,nspec_tiso
+  integer :: ispec_count,ispec_count_all,nspec_tiso
 
   ! parameters needed to store the radii of the grid points in the spherically symmetric Earth
   double precision :: rmin,rmax
@@ -184,10 +184,15 @@
 
   enddo ! of ilayer_loop
 
+  ! stats
+  call sum_all_i(ispec_count,ispec_count_all)
+
   ! user output
   if (myrank == 0 ) then
     write(IMAIN,*) '  layers done'
-    write(IMAIN,*) '    total number of elements = ',ispec_count
+    write(IMAIN,*)
+    write(IMAIN,*) '  number of elements (per slice)        = ',ispec_count
+    write(IMAIN,*) '  total number of elements (all slices) = ',ispec_count_all
     write(IMAIN,*)
     call flush_IMAIN()
   endif

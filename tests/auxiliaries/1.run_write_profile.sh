@@ -12,7 +12,14 @@ EXAMPLES="../../EXAMPLES/global_s362ani_shakemovie"
 # bash function for checking profile
 my_test(){
   echo "testing profile:";
-  paste REF_DATA/CARDS_th0042_ph0338 OUTPUT_FILES/CARDS_th0042_ph0338 > tmp.dat;
+  # remove trailing comments like ... # moho
+  sed 's/ #.*$//g' REF_DATA/CARDS_th0042_ph0338 > tmp1.dat
+  sed 's/ #.*$//g' OUTPUT_FILES/CARDS_th0042_ph0338 > tmp2.dat
+  # remove comment lines starting with # ..
+  sed '/^[[:blank:]]*#.*$/d;s/#.//' tmp1.dat > tmpA.dat
+  sed '/^[[:blank:]]*#.*$/d;s/#.//' tmp2.dat > tmpB.dat
+  # joins file lines
+  paste tmpA.dat tmpB.dat > tmp.dat;
   # compare radius
   awk 'BEGIN{val=0;}{if(index($0,"#") == 0){val+=($1 - $10)**2;}}END{print "L2 radius = ",val;if(val>0.01){print "failed",val;exit 1;}else{print "good";exit 0;}}' tmp.dat;
   if [[ $? -ne 0 ]]; then echo "error model: $model "; echo "comparison failed, please check..."; exit 1; fi
@@ -146,11 +153,11 @@ do
   fi
 
   # clean card
-  rm -f REF_DATA/CARDS_th0042_ph0338
+  rm -f REF_DATA/CARDS_th0042_ph0338 ./tmp*.dat
 done
 
 # cleanup
-rm -rf ./OUTPUT_FILES ./DATABASES_MPI ./DATA ./tmp.dat
+rm -rf ./OUTPUT_FILES ./DATABASES_MPI ./DATA ./tmp*.dat
 
 echo "successful run" >> $testdir/results.log
 
