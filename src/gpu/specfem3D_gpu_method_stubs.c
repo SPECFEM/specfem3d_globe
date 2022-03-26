@@ -640,7 +640,8 @@ void FC_FUNC_(compute_smooth_gpu,
                                   realw * xstore_other,
                                   realw * ystore_other,
                                   realw * zstore_other,
-                                  const int * nspec_other_f){}
+                                  const int * nspec_other_f,
+                                  const int * use_vector_distance_f){}
 
 void FC_FUNC_(get_smooth_gpu,
               GET_SMOOTH_GPU)(long * smooth_pointer,

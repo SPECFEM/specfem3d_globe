@@ -148,13 +148,15 @@ void FC_FUNC_(compute_smooth_gpu,
                                   realw * xstore_other,
                                   realw * ystore_other,
                                   realw * zstore_other,
-                                  const int * nspec_other_f){
+                                  const int * nspec_other_f,
+                                  const int * use_vector_distance_f){
 
   TRACE("compute_smooth_gpu");
 
   Smooth_data *sp = (Smooth_data*) *smooth_pointer;
 
   int nspec_other = *nspec_other_f;
+  int use_vector_distance = *use_vector_distance_f;
 
   gpuCreateCopy_todevice_realw(&sp->x_other,xstore_other,NGLL3 * nspec_other);
   gpuCreateCopy_todevice_realw(&sp->y_other,ystore_other,NGLL3 * nspec_other);
@@ -203,6 +205,7 @@ void FC_FUNC_(compute_smooth_gpu,
       clCheck (clSetKernelArg (mocl.kernels.smooth_process_kernel, idx++, sizeof (cl_mem), (void *) &sp->integ_factor.ocl));
       clCheck (clSetKernelArg (mocl.kernels.smooth_process_kernel, idx++, sizeof (cl_mem), (void *) &sp->data_smooth.ocl));
       clCheck (clSetKernelArg (mocl.kernels.smooth_process_kernel, idx++, sizeof (cl_mem), (void *) &sp->normalisation.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.smooth_process_kernel, idx++, sizeof (int),    (void *) &use_vector_distance));
 
       local_work_size[0] = NGLL3;
       local_work_size[1] = 1;
@@ -234,7 +237,8 @@ void FC_FUNC_(compute_smooth_gpu,
                                               sp->h_criterion,
                                               sp->integ_factor.cuda,
                                               sp->data_smooth.cuda,
-                                              sp->normalisation.cuda);
+                                              sp->normalisation.cuda,
+                                              use_vector_distance);
     }
 #endif
 #ifdef USE_HIP
@@ -259,7 +263,8 @@ void FC_FUNC_(compute_smooth_gpu,
                                                  sp->h_criterion,
                                                  sp->integ_factor.hip,
                                                  sp->data_smooth.hip,
-                                                 sp->normalisation.hip);
+                                                 sp->normalisation.hip,
+                                                 use_vector_distance);
     }
 #endif
   }

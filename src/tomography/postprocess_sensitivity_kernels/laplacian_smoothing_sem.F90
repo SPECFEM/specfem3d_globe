@@ -123,6 +123,9 @@ program smooth_laplacian_sem
   real(kind=CUSTOM_REAL) :: norm_kerl, norm_ker
 
   ! timing
+  integer :: ihours,iminutes,iseconds,int_tCPU
+  double precision :: time_start_all
+  double precision :: tCPU
   double precision, external :: wtime
 
   ! Hessian
@@ -196,6 +199,9 @@ program smooth_laplacian_sem
      print *
   endif
   call synchronize_all()
+
+  ! timing
+  time_start_all = wtime()
 
   ! allocates arrays
   allocate(kernel_names(MAX_KERNEL_NAMES),stat=ier)
@@ -732,6 +738,20 @@ program smooth_laplacian_sem
   call close_file_adios(myadios_file)
   call finalize_adios()
 #endif
+
+  ! timing
+  if (myrank == 0) then
+    tCPU = wtime() - time_start_all
+    ! format time
+    int_tCPU = int(tCPU)
+    ihours = int_tCPU / 3600
+    iminutes = (int_tCPU - 3600*ihours) / 60
+    iseconds = int_tCPU - 3600*ihours - 60*iminutes
+    write(*,*)
+    write(*,*) 'Elapsed time in seconds  = ',tCPU
+    write(*,"(' Elapsed time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
+    write(*,*)
+  endif
 
   ! user output
   if (myrank == 0) print *, 'all done'

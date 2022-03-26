@@ -28,7 +28,7 @@
 ! XSMOOTH_SEM
 !
 ! USAGE
-!   mpirun -np NPROC bin/xsmooth_sem SIGMA_H SIGMA_V KERNEL_NAME INPUT_DIR OUPUT_DIR
+!   mpirun -np NPROC bin/xsmooth_sem SIGMA_H SIGMA_V KERNEL_NAME INPUT_DIR OUPUT_DIR USE_GPU
 !
 !
 ! COMMAND LINE ARGUMENTS
@@ -67,7 +67,7 @@ program smooth_sem_globe
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGLLCUBE,NDIM,IIN,IOUT, &
     GAUSSALPHA,GAUSSBETA,PI,TWO_PI,MAX_STRING_LEN,DEGREES_TO_RADIANS, &
-    USE_QUADRATURE_RULE_FOR_SMOOTHING, &
+    USE_QUADRATURE_RULE_FOR_SMOOTHING,USE_VECTOR_DISTANCE_FOR_SMOOTHING, &
     myrank
 
   use shared_parameters, only: R_PLANET_KM
@@ -383,7 +383,7 @@ program smooth_sem_globe
     print *,'  element size on surface (km) : ',element_size
     print *
     print *,'  smoothing sigma_h , sigma_v (km)                : ',sigma_h,sigma_v
-    ! scalelength: approximately S ~ sigma * sqrt(8.0) for a Gaussian smoothing
+    ! scalelength: approximately S ~ sigma * sqrt(8.0) ~ sigma * 2.8 for a Gaussian smoothing
     print *,'  smoothing scalelengths horizontal, vertical (km): ',sigma_h*sqrt(8.0),sigma_v*sqrt(8.0)
     print *
     print *,'  data name      : ',trim(kernel_names_comma_delimited)
@@ -397,13 +397,18 @@ program smooth_sem_globe
     print *,'  output dir     : ',trim(output_dir)
 #endif
     print *
-    if (USE_GPU) then
-      print *,'  using GPU'
-    endif
     if (USE_QUADRATURE_RULE_FOR_SMOOTHING) then
       print *,'  using quadrature rule for smoothing integration'
     else
       print *,'  using distance weighted smoothing'
+    endif
+    if (USE_VECTOR_DISTANCE_FOR_SMOOTHING) then
+      print *,'  using vector approximation for distance calculation'
+    else
+      print *,'  using epicentral distance for distance calculation'
+    endif
+    if (USE_GPU) then
+      print *,'  using GPU'
     endif
     print *
     print *,'number of elements per slice: ',NSPEC_AB
@@ -1145,7 +1150,7 @@ program smooth_sem_globe
     ! smooth
     if (USE_GPU) then
       ! on GPU
-      call compute_smooth_gpu(Container,kernel,integ_factor,xx,yy,zz,NSPEC_AB)
+      call compute_smooth_gpu(Container,kernel,integ_factor,xx,yy,zz,NSPEC_AB,USE_VECTOR_DISTANCE_FOR_SMOOTHING)
     else
       ! on CPU
       call compute_smooth(nker,bk,tk, &
@@ -1391,7 +1396,8 @@ end program smooth_sem_globe
                             nsearch_elements,use_kdtree_search, &
                             NSTEP_PERCENT_INFO)
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGLLCUBE,PI,myrank,USE_QUADRATURE_RULE_FOR_SMOOTHING
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGLLCUBE,PI,myrank, &
+    USE_QUADRATURE_RULE_FOR_SMOOTHING,USE_VECTOR_DISTANCE_FOR_SMOOTHING
 
   use postprocess_par, only: NSPEC_CRUST_MANTLE
 
@@ -1441,10 +1447,10 @@ end program smooth_sem_globe
   real(kind=CUSTOM_REAL) :: dist_h,dist_v
   real(kind=CUSTOM_REAL) :: x0, y0, z0
   real(kind=CUSTOM_REAL) :: x1, y1, z1
-  !real(kind=CUSTOM_REAL) :: r0,r1
+  real(kind=CUSTOM_REAL) :: r0,r1
   real(kind=CUSTOM_REAL) :: r0_squared,r1_squared
   real(kind=CUSTOM_REAL) :: theta,ratio,alpha
-  !real(kind=CUSTOM_REAL) :: vx,vy,vz
+  real(kind=CUSTOM_REAL) :: vx,vy,vz
 
   double precision,dimension(3) :: xyz_target
 
@@ -1563,98 +1569,12 @@ end program smooth_sem_globe
       center_y = cy(ispec2)
       center_z = cz(ispec2)
 
-      ! takes only elements in search radius
       ! calculates horizontal and vertical distance between two element centers
+      call get_distance_vec_squared(dist_h,dist_v,center_x0,center_y0,center_z0,center_x,center_y,center_z)
 
-      ! same as calling routine get_distance_vec_squared(),
-      ! but to help compiler optimize the calculation...
-      !if (.false.) then
-      !  call get_distance_vec_squared(dist_h,dist_v,center_x0,center_y0,center_z0,center_x,center_y,center_z)
-      !
-      !  ! checks distance between centers of elements
-      !  ! note: distances and sigmah, sigmav are normalized by R_PLANET_KM
-      !  if (dist_h > sigma_h3_sq .or. dist_v > sigma_v3_sq) cycle
-      !else
-        ! vertical distance
-        r0_squared = center_x0*center_x0 + center_y0*center_y0 + center_z0*center_z0
-        !r0 = sqrt( r0_squared ) ! length of first position vector
-
-        r1_squared = center_x*center_x + center_y*center_y + center_z*center_z
-        !r1 = sqrt( r1_squared )
-
-        ! note: instead of distance we use distance squared to avoid too many sqrt() operations
-        !
-        ! vertical distance (squared)
-        ! dist_v = (r1 - r0)*(r1 - r0)
-        !        = r1**2 + r0**2 - 2 * alpha
-        !          with alpha = sqrt( r0**2 * r1**2 ) = r0 * r1
-        ! this avoids using sqrt() function too often which is costly
-        alpha = sqrt( r0_squared * r1_squared )
-        dist_v = r1_squared + r0_squared - 2.0_CUSTOM_REAL * alpha
-
-        ! only for flat earth with z in depth:
-        !dist_v = sqrt( (center_z-center_z0)** 2)
-        ! or squared:
-        !dist_v = (center_z - center_z0)** 2
-
-        ! checks distance between centers of elements (squared)
-        ! note: distances and sigmah, sigmav are normalized by R_PLANET_KM
-        if (dist_v > sigma_v3_sq) cycle
-
-        ! epicentral distance
-        ! (accounting for spherical curvature)
-        ! calculates distance of circular segment
-        ! angle between r0 and r1 in radian
-        ! given by dot-product of two vectors
-        !ratio = (center_x0*center_x + center_y0*center_y + center_z0*center_z)/(r0 * r1)
-        if (alpha > 0.0_CUSTOM_REAL) then
-          ratio = (center_x0*center_x + center_y0*center_y + center_z0*center_z) / alpha
-        else
-          ratio = 1.0_CUSTOM_REAL
-        endif
-
-        ! checks boundaries of ratio (due to numerical inaccuracies)
-        if (ratio >= 1.0_CUSTOM_REAL) then
-          ! ratio = 1.0_CUSTOM_REAL
-          ! -> acos(1) = 0
-          ! -> dist_h = 0
-          dist_h = 0.0_CUSTOM_REAL
-        else if (ratio <= -1.0_CUSTOM_REAL) then
-          ! ratio = -1.0_CUSTOM_REAL
-          ! -> acos(-1) = PI
-          ! -> dist_h = r1**2 * PI**2
-          dist_h = r1_squared * PI2
-        else
-          theta = acos( ratio )
-          ! segment length at heigth of r1 (squared)
-          dist_h = r1_squared * (theta*theta)
-        endif
-
-        ! vector approximation (fast computation): neglects curvature
-        ! horizontal distance
-        ! length of vector from point 0 to point 1
-        ! assuming small earth curvature  (since only for neighboring elements)
-        !
-        ! scales r0 to have same length as r1
-        !alpha = r1 / r0
-        !vx = alpha * x0
-        !vy = alpha * y0
-        !vz = alpha * z0
-        !
-        ! vector in horizontal between new r0 and r1
-        !vx = x1 - vx
-        !vy = y1 - vy
-        !vz = z1 - vz
-        !
-        ! distance is vector length
-        !dist_h = sqrt( vx*vx + vy*vy + vz*vz )
-        ! or squared:
-        !dist_h = vx*vx + vy*vy + vz*vz
-
-        ! checks distance between centers of elements
-        ! note: distances and sigmah, sigmav are normalized by R_PLANET_KM
-        if (dist_h > sigma_h3_sq) cycle
-      !endif
+      ! takes only elements in search radius
+      ! note: distances and sigmah, sigmav are normalized by R_PLANET_KM
+      if (dist_h > sigma_h3_sq .or. dist_v > sigma_v3_sq) cycle
 
       ! loops over all GLL points of reference element in current slice (ispec) and search elements (ispec2)
       DO_LOOP_IJK
@@ -1667,15 +1587,21 @@ end program smooth_sem_globe
 
         ! calculate weights based on Gaussian smoothing
 
+        ! calculates horizontal and vertical distance between two element centers
+        !call smoothing_weights_vec(x0,y0,z0,sigma_h2,sigma_v2,exp_val, &
+        !                           xx(:,:,:,ispec2),yy(:,:,:,ispec2),zz(:,:,:,ispec2))
+
         ! same as calling routine smoothing_weights_vec(),
         ! but inlined here to improve speed - a little..
-        !if (.false.) then
-        !  call smoothing_weights_vec(x0,y0,z0,sigma_h2,sigma_v2,exp_val, &
-        !                           xx(:,:,:,ispec2),yy(:,:,:,ispec2),zz(:,:,:,ispec2))
-        !else
+
+        ! length of first position vector (squared)
+        r0_squared = x0*x0 + y0*y0 + z0*z0
+
+        if (USE_VECTOR_DISTANCE_FOR_SMOOTHING) then
+          ! vector approximation (fast computation): neglects curvature
+
           ! length of first position vector
-          r0_squared = x0*x0 + y0*y0 + z0*z0
-          !r0 = sqrt( r0_squared )
+          r0 = sqrt( r0_squared )
 
           DO_LOOP_IJK2
             ! point in second slice
@@ -1683,61 +1609,38 @@ end program smooth_sem_globe
             y1 = yy(INDEX_IJK2,ispec2)
             z1 = zz(INDEX_IJK2,ispec2)
 
+            ! calculates horizontal and vertical distance between two element centers
+            !call get_distance_vec_squared(dist_h,dist_v,x0,y0,z0,x1,y1,z1)
+
             ! same as calling routine get_distance_vec_squared(),
             ! but to help compiler optimize the loop calculation...
-            !if (.false.) then
-            !  call get_distance_vec_squared(dist_h,dist_v,x0,y0,z0,x1,y1,z1)
-            !else
-              ! without explicit function calls to help compiler optimize loops
-              ! length of position vector
-              r1_squared = x1*x1 + y1*y1 + z1*z1
-              !r1 = sqrt( r1_squared )
 
-              ! vertical distance (squared)
-              ! dist_v = (r1 - r0)*(r1 - r0)
-              !        = r1**2 + r0**2 - 2 * r0 * r1
-              !        = r1**2 + r0**2 - 2 * sqrt( r0**2 ) * sqrt( r1**2 )
-              !        = r1**2 + r0**2 - 2 * sqrt( r0**2 * r1**2 )
-              !        = r1**2 + r0**2 - 2 * alpha
-              !          with alpha = sqrt( r0**2 * r1**2 ) = r0 * r1
-              ! this avoids using sqrt() function too often which is costly
-              alpha = sqrt( r0_squared * r1_squared )
-              dist_v = r1_squared + r0_squared - 2.0_CUSTOM_REAL * alpha
+            ! without explicit function calls to help compiler optimize loops
+            ! length of position vector
+            r1_squared = x1*x1 + y1*y1 + z1*z1
+            r1 = sqrt( r1_squared )
 
-              ! only for flat earth with z in depth:
-              !  dist_v = sqrt( (cz(ispec2)-cz0(ispec))** 2)
+            ! vertical distance (squared)
+            dist_v = (r1 - r0)*(r1 - r0)
 
-              ! epicentral distance
-              ! (accounting for spherical curvature)
-              ! calculates distance of circular segment
-              ! angle between r0 and r1 in radian
-              ! given by dot-product of two vectors
-              !ratio = (x0*x1 + y0*y1 + z0*z1) / (r0 * r1)
-              !      = (x0*x1 + y0*y1 + z0*z1) / sqrt(r0**2 * r1**2) -> alpha = r0 * r1
-              if (alpha > 0.0_CUSTOM_REAL) then
-                ratio = (x0*x1 + y0*y1 + z0*z1) / alpha
-              else
-                ratio = 1.0_CUSTOM_REAL
-              endif
+            ! horizontal distance
+            ! length of vector from point 0 to point 1
+            ! assuming small earth curvature  (since only for neighboring elements)
+            ! scales r0 to have same length as r1
+            alpha = r1 / r0
+            vx = alpha * x0
+            vy = alpha * y0
+            vz = alpha * z0
 
-              ! checks boundaries of ratio (due to numerical inaccuracies)
-              if (ratio >= 1.0_CUSTOM_REAL) then
-                ! ratio = 1.0_CUSTOM_REAL
-                ! -> acos( 1 ) = 0
-                ! -> dist_h = 0
-                dist_h = 0.0_CUSTOM_REAL
-              else if (ratio <= -1.0_CUSTOM_REAL) then
-                ! ratio = -1.0_CUSTOM_REAL
-                ! -> acos ( -1 ) = PI
-                ! -> dist_h = (r1 * pi) * (r1 * pi ) = r1**2 * PI**2
-                dist_h = r1_squared * PI2
-              else
-                theta = acos( ratio )
-                ! segment length at heigth of r1 (squared)
-                ! dist_h = (r1 * theta)*(r1 * theta) = r1**2 * theta**2
-                dist_h = r1_squared * (theta*theta)
-              endif
-            !endif
+            ! vector in horizontal between new r0 and r1
+            vx = x1 - vx
+            vy = y1 - vy
+            vz = z1 - vz
+
+            ! distance is vector length
+            !dist_h = sqrt( vx*vx + vy*vy + vz*vz )
+            ! or squared:
+            dist_h = vx*vx + vy*vy + vz*vz
 
             ! Gaussian function
             val = - dist_h * sigma_h2_inv - dist_v * sigma_v2_inv
@@ -1749,10 +1652,89 @@ end program smooth_sem_globe
             else
               val_Gaussian = exp(val)
             endif
+
             exp_val(INDEX_IJK2) = val_Gaussian
 
           ENDDO_LOOP_IJK2
-        !endif
+
+        else
+          ! w/ exact epicentral distance calculation
+          DO_LOOP_IJK2
+            ! point in second slice
+            x1 = xx(INDEX_IJK2,ispec2)
+            y1 = yy(INDEX_IJK2,ispec2)
+            z1 = zz(INDEX_IJK2,ispec2)
+
+            ! calculates horizontal and vertical distance between two element centers
+            !call get_distance_vec_squared(dist_h,dist_v,x0,y0,z0,x1,y1,z1)
+
+            ! same as calling routine get_distance_vec_squared(),
+            ! but to help compiler optimize the loop calculation...
+
+            ! without explicit function calls to help compiler optimize loops
+            ! length of position vector
+            r1_squared = x1*x1 + y1*y1 + z1*z1
+
+            ! vertical distance (squared)
+            ! dist_v = (r1 - r0)*(r1 - r0)
+            !        = r1**2 + r0**2 - 2 * r0 * r1
+            !        = r1**2 + r0**2 - 2 * sqrt( r0**2 ) * sqrt( r1**2 )
+            !        = r1**2 + r0**2 - 2 * sqrt( r0**2 * r1**2 )
+            !        = r1**2 + r0**2 - 2 * alpha
+            !          with alpha = sqrt( r0**2 * r1**2 ) = r0 * r1
+            ! this avoids using sqrt() function too often which is costly
+            alpha = sqrt( r0_squared * r1_squared )
+            dist_v = r1_squared + r0_squared - 2.0_CUSTOM_REAL * alpha
+
+            ! only for flat earth with z in depth:
+            !  dist_v = sqrt( (cz(ispec2)-cz0(ispec))** 2)
+
+            ! epicentral distance
+            ! (accounting for spherical curvature)
+            ! calculates distance of circular segment
+            ! angle between r0 and r1 in radian
+            ! given by dot-product of two vectors
+            !ratio = (x0*x1 + y0*y1 + z0*z1) / (r0 * r1)
+            !      = (x0*x1 + y0*y1 + z0*z1) / sqrt(r0**2 * r1**2) -> alpha = r0 * r1
+            if (alpha > 0.0_CUSTOM_REAL) then
+              ratio = (x0*x1 + y0*y1 + z0*z1) / alpha
+            else
+              ratio = 1.0_CUSTOM_REAL
+            endif
+
+            ! checks boundaries of ratio (due to numerical inaccuracies)
+            if (ratio >= 1.0_CUSTOM_REAL) then
+              ! ratio = 1.0_CUSTOM_REAL
+              ! -> acos( 1 ) = 0
+              ! -> dist_h = 0
+              dist_h = 0.0_CUSTOM_REAL
+            else if (ratio <= -1.0_CUSTOM_REAL) then
+              ! ratio = -1.0_CUSTOM_REAL
+              ! -> acos ( -1 ) = PI
+              ! -> dist_h = (r1 * pi) * (r1 * pi ) = r1**2 * PI**2
+              dist_h = r1_squared * PI2
+            else
+              theta = acos( ratio )
+              ! segment length at heigth of r1 (squared)
+              ! dist_h = (r1 * theta)*(r1 * theta) = r1**2 * theta**2
+              dist_h = r1_squared * (theta*theta)
+            endif
+
+            ! Gaussian function
+            val = - dist_h * sigma_h2_inv - dist_v * sigma_v2_inv
+
+            ! limits to single precision
+            if (val < - 86.0_CUSTOM_REAL) then
+              ! smaller than numerical precision: exp(-86) < 1.e-37
+              val_Gaussian = 0.0_CUSTOM_REAL
+            else
+              val_Gaussian = exp(val)
+            endif
+
+            exp_val(INDEX_IJK2) = val_Gaussian
+
+          ENDDO_LOOP_IJK2
+        endif
 
         ! debug
         !if (DEBUG .and. myrank == 0) then
@@ -1848,7 +1830,7 @@ end program smooth_sem_globe
 
 ! returns distances in radial and horizontal direction (squared)
 
-  use constants, only: CUSTOM_REAL,PI
+  use constants, only: CUSTOM_REAL,PI,USE_VECTOR_DISTANCE_FOR_SMOOTHING
 
   implicit none
 
@@ -1858,78 +1840,90 @@ end program smooth_sem_globe
   ! local parameters
   real(kind=CUSTOM_REAL) :: r0_squared,r1_squared
   real(kind=CUSTOM_REAL) :: theta,ratio,alpha
+  real(kind=CUSTOM_REAL) :: vx,vy,vz,r0,r1
 
   real(kind=CUSTOM_REAL),parameter :: PI2 = PI * PI ! squared
 
-  ! vertical distance (squared)
+  ! note: instead of distance we use distance squared to avoid too many sqrt() operations
+
+  ! spherical Earth: distance in radial direction
+  ! radius (squared)
   r0_squared = x0*x0 + y0*y0 + z0*z0    ! length of first position vector (squared)
   r1_squared = x1*x1 + y1*y1 + z1*z1
 
-  ! only for flat earth with z in depth: dist_v = sqrt( (z1-z0)** 2)
+  if (USE_VECTOR_DISTANCE_FOR_SMOOTHING) then
+    ! vector approximation (fast computation): neglects curvature
 
-  ! note: instead of distance we use distance squared to avoid too many sqrt() operations
-  !
-  ! vertical distance (squared)
-  ! dist_v = (r1 - r0)*(r1 - r0)
-  !        = r1**2 + r0**2 - 2 * alpha
-  !          with alpha = sqrt( r0**2 * r1**2 ) = r0 * r1
-  ! this avoids using sqrt() function too often which is costly
-  alpha = sqrt( r0_squared * r1_squared )
-  dist_v = r1_squared + r0_squared - 2.0_CUSTOM_REAL * alpha
+    ! only for flat earth with z in depth: dist_v = sqrt( (z1-z0)** 2)
+    !dist_v = sqrt( (center_z-center_z0)** 2)
+    ! or squared:
+    !dist_v = (center_z - center_z0)** 2
 
-  ! only for flat earth with z in depth:
-  !dist_v = sqrt( (center_z-center_z0)** 2)
-  ! or squared:
-  !dist_v = (center_z - center_z0)** 2
+    ! spherical Earth: distance in radial direction
+    ! radius
+    r0 = sqrt( r0_squared )    ! length of first position vector
+    r1 = sqrt( r1_squared )
 
-  ! epicentral distance
-  ! (accounting for spherical curvature)
-  ! calculates distance of circular segment
-  ! angle between r0 and r1 in radian
-  ! given by dot-product of two vectors
-  !ratio = (center_x0*center_x + center_y0*center_y + center_z0*center_z)/(r0 * r1)
-  if (alpha > 0.0_CUSTOM_REAL) then
-    ratio = (x0*x1 + y0*y1 + z0*z1) / alpha
+    ! vertical distance (squared)
+    dist_v = (r1 - r0)*(r1 - r0)
+
+    ! horizontal distance
+    ! length of vector from point 0 to point 1
+    ! assuming small earth curvature  (since only for neighboring elements)
+    ! scales r0 to have same length as r1
+    alpha = r1 / r0
+    vx = alpha * x0
+    vy = alpha * y0
+    vz = alpha * z0
+
+    ! vector in horizontal between new r0 and r1
+    vx = x1 - vx
+    vy = y1 - vy
+    vz = z1 - vz
+
+    ! distance is vector length
+    !dist_h = sqrt( vx*vx + vy*vy + vz*vz )
+    ! or squared:
+    dist_h = vx*vx + vy*vy + vz*vz
   else
-    ratio = 1.0_CUSTOM_REAL
+    ! epicentral distance
+    ! (accounting for spherical curvature)
+
+    ! vertical distance (squared)
+    ! dist_v = (r1 - r0)*(r1 - r0)
+    !        = r1**2 + r0**2 - 2 * alpha
+    !          with alpha = sqrt( r0**2 * r1**2 ) = r0 * r1
+    ! this avoids using sqrt() function too often which is costly
+    alpha = sqrt( r0_squared * r1_squared )
+    dist_v = r1_squared + r0_squared - 2.0_CUSTOM_REAL * alpha
+
+    ! epicentral dsitance
+    ! calculates distance of circular segment
+    ! angle between r0 and r1 in radian
+    ! given by dot-product of two vectors
+    !ratio = (center_x0*center_x + center_y0*center_y + center_z0*center_z)/(r0 * r1)
+    if (alpha > 0.0_CUSTOM_REAL) then
+      ratio = (x0*x1 + y0*y1 + z0*z1) / alpha
+    else
+      ratio = 1.0_CUSTOM_REAL
+    endif
+
+    ! checks boundaries of ratio (due to numerical inaccuracies)
+    if (ratio >= 1.0_CUSTOM_REAL) then
+      ! ratio = 1.0_CUSTOM_REAL
+      ! -> acos(1) = 0
+      ! -> dist_h = 0
+      dist_h = 0.0_CUSTOM_REAL
+    else if (ratio <= -1.0_CUSTOM_REAL) then
+      ! ratio = -1.0_CUSTOM_REAL
+      ! -> acos(-1) = PI
+      ! -> dist_h = r1**2 * PI**2
+      dist_h = r1_squared * PI2
+    else
+      theta = acos( ratio )
+      ! segment length at heigth of r1 (squared)
+      dist_h = r1_squared * (theta*theta)
+    endif
   endif
-
-  ! checks boundaries of ratio (due to numerical inaccuracies)
-  if (ratio >= 1.0_CUSTOM_REAL) then
-    ! ratio = 1.0_CUSTOM_REAL
-    ! -> acos(1) = 0
-    ! -> dist_h = 0
-    dist_h = 0.0_CUSTOM_REAL
-  else if (ratio <= -1.0_CUSTOM_REAL) then
-    ! ratio = -1.0_CUSTOM_REAL
-    ! -> acos(-1) = PI
-    ! -> dist_h = r1**2 * PI**2
-    dist_h = r1_squared * PI2
-  else
-    theta = acos( ratio )
-    ! segment length at heigth of r1 (squared)
-    dist_h = r1_squared * (theta*theta)
-  endif
-
-  ! vector approximation (fast computation): neglects curvature
-  ! horizontal distance
-  ! length of vector from point 0 to point 1
-  ! assuming small earth curvature  (since only for neighboring elements)
-
-  ! scales r0 to have same length as r1
-  !alpha = r1 / r0
-  !vx = alpha * x0
-  !vy = alpha * y0
-  !vz = alpha * z0
-
-  ! vector in horizontal between new r0 and r1
-  !vx = x1 - vx
-  !vy = y1 - vy
-  !vz = z1 - vz
-
-  ! distance is vector length
-  !dist_h = sqrt( vx*vx + vy*vy + vz*vz )
-  ! or squared:
-  !dist_h = vx*vx + vy*vy + vz*vz
 
   end subroutine get_distance_vec_squared

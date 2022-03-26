@@ -92,7 +92,7 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #define BLOCKSIZE_TRANSFER 256\n\
 #endif\n\
 \n\
-__kernel void smooth_process_kernel(const __global float * xstore_me, const __global float * ystore_me, const __global float * zstore_me, const __global float * xstore_other, const __global float * ystore_other, const __global float * zstore_other, const __global float * data_other, const float sigma_h2_inv, const float sigma_v2_inv, const int iker, const int nspec_me, const int nspec_other, const float v_criterion, const float h_criterion, const __global float * integ_factor, __global float * data_smooth, __global float * normalisation){\n\
+__kernel void smooth_process_kernel(const __global float * xstore_me, const __global float * ystore_me, const __global float * zstore_me, const __global float * xstore_other, const __global float * ystore_other, const __global float * zstore_other, const __global float * data_other, const float sigma_h2_inv, const float sigma_v2_inv, const int iker, const int nspec_me, const int nspec_other, const float v_criterion, const float h_criterion, const __global float * integ_factor, __global float * data_smooth, __global float * normalisation, const int use_vector_distance){\n\
   int ispec;\n\
   int igll;\n\
   int gll_other;\n\
@@ -108,9 +108,14 @@ __kernel void smooth_process_kernel(const __global float * xstore_me, const __gl
   float center_x;\n\
   float center_y;\n\
   float center_z;\n\
+  float vx;\n\
+  float vy;\n\
+  float vz;\n\
   float alpha;\n\
   float ratio;\n\
   float theta;\n\
+  float r0;\n\
+  float r1;\n\
   float r0_squared;\n\
   float r1_squared;\n\
   float dist_h;\n\
@@ -153,21 +158,37 @@ __kernel void smooth_process_kernel(const __global float * xstore_me, const __gl
 \n\
       r0_squared = (x_me) * (x_me) + (y_me) * (y_me) + (z_me) * (z_me);\n\
       r1_squared = (center_x) * (center_x) + (center_y) * (center_y) + (center_z) * (center_z);\n\
-      alpha = sqrt((r0_squared) * (r1_squared));\n\
-      dist_v = r1_squared + r0_squared - ((2.0f) * (alpha));\n\
 \n\
-      if (alpha > 0.0f) {\n\
-        ratio = ((x_me) * (center_x) + (y_me) * (center_y) + (z_me) * (center_z)) / (alpha);\n\
+      if (use_vector_distance) {\n\
+        r0 = sqrt(r0_squared);\n\
+        r1 = sqrt(r1_squared);\n\
+        dist_v = (r1 - (r0)) * (r1 - (r0));\n\
+\n\
+        alpha = (r1) / (r0);\n\
+        vx = (alpha) * (x_me);\n\
+        vy = (alpha) * (y_me);\n\
+        vz = (alpha) * (z_me);\n\
+        vx = center_x - (vx);\n\
+        vy = center_y - (vy);\n\
+        vz = center_z - (vz);\n\
+        dist_h = (vx) * (vx) + (vy) * (vy) + (vz) * (vz);\n\
       } else {\n\
-        ratio = 1.0f;\n\
-      }\n\
-      if (ratio >= 1.0f) {\n\
-        dist_h = 0.0f;\n\
-      } else if (ratio <= -1.0f) {\n\
-        dist_h = (r1_squared) * (PI2);\n\
-      } else {\n\
-        theta = acos(ratio);\n\
-        dist_h = (r1_squared) * ((theta) * (theta));\n\
+        alpha = sqrt((r0_squared) * (r1_squared));\n\
+        dist_v = r1_squared + r0_squared - ((2.0f) * (alpha));\n\
+\n\
+        if (alpha > 0.0f) {\n\
+          ratio = ((x_me) * (center_x) + (y_me) * (center_y) + (z_me) * (center_z)) / (alpha);\n\
+        } else {\n\
+          ratio = 1.0f;\n\
+        }\n\
+        if (ratio >= 1.0f) {\n\
+          dist_h = 0.0f;\n\
+        } else if (ratio <= -1.0f) {\n\
+          dist_h = (r1_squared) * (PI2);\n\
+        } else {\n\
+          theta = acos(ratio);\n\
+          dist_h = (r1_squared) * ((theta) * (theta));\n\
+        }\n\
       }\n\
     }\n\
 \n\
@@ -202,21 +223,37 @@ __kernel void smooth_process_kernel(const __global float * xstore_me, const __gl
 \n\
         r0_squared = (x_me) * (x_me) + (y_me) * (y_me) + (z_me) * (z_me);\n\
         r1_squared = (x_other) * (x_other) + (y_other) * (y_other) + (z_other) * (z_other);\n\
-        alpha = sqrt((r0_squared) * (r1_squared));\n\
-        dist_v = r1_squared + r0_squared - ((2.0f) * (alpha));\n\
 \n\
-        if (alpha > 0.0f) {\n\
-          ratio = ((x_me) * (x_other) + (y_me) * (y_other) + (z_me) * (z_other)) / (alpha);\n\
+        if (use_vector_distance) {\n\
+          r0 = sqrt(r0_squared);\n\
+          r1 = sqrt(r1_squared);\n\
+          dist_v = (r1 - (r0)) * (r1 - (r0));\n\
+\n\
+          alpha = (r1) / (r0);\n\
+          vx = (alpha) * (x_me);\n\
+          vy = (alpha) * (y_me);\n\
+          vz = (alpha) * (z_me);\n\
+          vx = x_other - (vx);\n\
+          vy = y_other - (vy);\n\
+          vz = z_other - (vz);\n\
+          dist_h = (vx) * (vx) + (vy) * (vy) + (vz) * (vz);\n\
         } else {\n\
-          ratio = 1.0f;\n\
-        }\n\
-        if (ratio >= 1.0f) {\n\
-          dist_h = 0.0f;\n\
-        } else if (ratio <= -1.0f) {\n\
-          dist_h = (r1_squared) * (PI2);\n\
-        } else {\n\
-          theta = acos(ratio);\n\
-          dist_h = (r1_squared) * ((theta) * (theta));\n\
+          alpha = sqrt((r0_squared) * (r1_squared));\n\
+          dist_v = r1_squared + r0_squared - ((2.0f) * (alpha));\n\
+\n\
+          if (alpha > 0.0f) {\n\
+            ratio = ((x_me) * (x_other) + (y_me) * (y_other) + (z_me) * (z_other)) / (alpha);\n\
+          } else {\n\
+            ratio = 1.0f;\n\
+          }\n\
+          if (ratio >= 1.0f) {\n\
+            dist_h = 0.0f;\n\
+          } else if (ratio <= -1.0f) {\n\
+            dist_h = (r1_squared) * (PI2);\n\
+          } else {\n\
+            theta = acos(ratio);\n\
+            dist_h = (r1_squared) * ((theta) * (theta));\n\
+          }\n\
         }\n\
 \n\
         val = ( -(dist_h)) * (sigma_h2_inv) - ((dist_v) * (sigma_v2_inv));\n\

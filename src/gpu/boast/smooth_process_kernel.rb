@@ -24,6 +24,7 @@ module BOAST
 
     v.push data_smooth  = Real("data_smooth", :dir => :out, :dim => [ Dim()])
     v.push normalisation = Real("normalisation", :dir => :out, :dim => [ Dim()])
+    v.push use_vector_distance = Int("use_vector_distance", :dir => :in)
 
     ngll3 = Int("NGLL3", :const => n_gll3)
 
@@ -43,7 +44,9 @@ module BOAST
       decl x_me = Real("x_me"), y_me = Real("y_me"), z_me = Real("z_me")
       decl x_other = Real("x_other"), y_other = Real("y_other"), z_other = Real("z_other")
       decl center_x = Real("center_x"), center_y = Real("center_y"), center_z = Real("center_z")
+      decl vx = Real("vx"), vy = Real("vy"), vz = Real("vz")
       decl alpha = Real("alpha"), ratio = Real("ratio"), theta = Real("theta")
+      decl r0 = Real("r0"), r1 = Real("r1")
       decl r0_squared = Real("r0_squared"), r1_squared = Real("r1_squared")
       decl dist_h = Real("dist_h"), dist_v = Real("dist_v")
       decl val = Real("val"), val_gaussian = Real("val_gaussian")
@@ -100,30 +103,59 @@ module BOAST
           print center_z === (zstore_other[ispec_other * ngll3] + zstore_other[ispec_other * ngll3 + (ngll3 - 1)]) * 0.5
           comment()
 
-          # vertical distance
+          # radius (squared)
           print r0_squared === x_me*x_me + y_me*y_me + z_me*z_me
           print r1_squared === center_x*center_x + center_y*center_y + center_z*center_z
-
-          # vertical distance (squared)
-          print alpha === sqrt( r0_squared * r1_squared )
-          print dist_v === r1_squared + r0_squared - 2.0 * alpha
           comment()
 
-          # epicentral distance
-          print If(alpha > 0.0 => lambda {
-            print ratio === (x_me*center_x + y_me*center_y + z_me*center_z) / alpha
-          }, :else => lambda {
-            print ratio === 1.0
-          })
+          print If(use_vector_distance => lambda {
+            # vector approximation (fast computation): neglects curvature
+            # radius
+            print r0 === sqrt( r0_squared )
+            print r1 === sqrt( r1_squared )
 
-          # checks boundaries of ratio (due to numerical inaccuracies)
-          print If(ratio >= 1.0 => lambda {
-            print dist_h === 0.0
-          }, (ratio <= -1.0) => lambda {
-            print dist_h === r1_squared * pi2
+            # vertical distance (squared)
+            print dist_v === (r1 - r0)*(r1 - r0)
+            comment()
+
+            # horizontal distance
+            print alpha === r1 / r0
+            print vx === alpha * x_me
+            print vy === alpha * y_me
+            print vz === alpha * z_me
+
+            # vector in horizontal between new r0 and r1
+            print vx === center_x - vx
+            print vy === center_y - vy
+            print vz === center_z - vz
+
+            # distance is vector length
+            #dist_h = sqrt( vx*vx + vy*vy + vz*vz )
+            # or squared:
+            print dist_h === vx*vx + vy*vy + vz*vz
           }, :else => lambda {
-            print theta === acos( ratio )
-            print dist_h === r1_squared * (theta*theta)
+            # w/ exact epicentral distance calculation
+            # vertical distance (squared)
+            print alpha === sqrt( r0_squared * r1_squared )
+            print dist_v === r1_squared + r0_squared - 2.0 * alpha
+            comment()
+
+            # epicentral distance
+            print If(alpha > 0.0 => lambda {
+              print ratio === (x_me*center_x + y_me*center_y + z_me*center_z) / alpha
+            }, :else => lambda {
+              print ratio === 1.0
+            })
+
+            # checks boundaries of ratio (due to numerical inaccuracies)
+            print If(ratio >= 1.0 => lambda {
+              print dist_h === 0.0
+            }, (ratio <= -1.0) => lambda {
+              print dist_h === r1_squared * pi2
+            }, :else => lambda {
+              print theta === acos( ratio )
+              print dist_h === r1_squared * (theta*theta)
+            })
           })
         }
         comment()
@@ -179,30 +211,59 @@ module BOAST
             print z_other === sh_z_other[gll_other]
             comment()
 
-            # vertical distance
+            # radius (squared)
             print r0_squared === x_me*x_me + y_me*y_me + z_me*z_me
             print r1_squared === x_other*x_other + y_other*y_other + z_other*z_other
-
-            # vertical distance (squared)
-            print alpha === sqrt( r0_squared * r1_squared )
-            print dist_v === r1_squared + r0_squared - 2.0 * alpha
             comment()
 
-            # epicentral distance
-            print If(alpha > 0.0 => lambda {
-              print ratio === (x_me*x_other + y_me*y_other + z_me*z_other) / alpha
-            }, :else => lambda {
-              print ratio === 1.0
-            })
+            print If(use_vector_distance => lambda {
+              # vector approximation (fast computation): neglects curvature
+              # radius
+              print r0 === sqrt( r0_squared )
+              print r1 === sqrt( r1_squared )
 
-            # checks boundaries of ratio (due to numerical inaccuracies)
-            print If(ratio >= 1.0 => lambda {
-              print dist_h === 0.0
-            }, (ratio <= -1.0) => lambda {
-              print dist_h === r1_squared * pi2
+              # vertical distance (squared)
+              print dist_v === (r1 - r0)*(r1 - r0)
+              comment()
+
+              # horizontal distance
+              print alpha === r1 / r0
+              print vx === alpha * x_me
+              print vy === alpha * y_me
+              print vz === alpha * z_me
+
+              # vector in horizontal between new r0 and r1
+              print vx === x_other - vx
+              print vy === y_other - vy
+              print vz === z_other - vz
+
+              # distance is vector length
+              #dist_h = sqrt( vx*vx + vy*vy + vz*vz )
+              # or squared:
+              print dist_h === vx*vx + vy*vy + vz*vz
             }, :else => lambda {
-              print theta === acos(ratio)
-              print dist_h === r1_squared * (theta*theta)
+              # w/ exact epicentral distance calculation
+              # vertical distance (squared)
+              print alpha === sqrt( r0_squared * r1_squared )
+              print dist_v === r1_squared + r0_squared - 2.0 * alpha
+              comment()
+
+              # epicentral distance
+              print If(alpha > 0.0 => lambda {
+                print ratio === (x_me*x_other + y_me*y_other + z_me*z_other) / alpha
+              }, :else => lambda {
+                print ratio === 1.0
+              })
+
+              # checks boundaries of ratio (due to numerical inaccuracies)
+              print If(ratio >= 1.0 => lambda {
+                print dist_h === 0.0
+              }, (ratio <= -1.0) => lambda {
+                print dist_h === r1_squared * pi2
+              }, :else => lambda {
+                print theta === acos(ratio)
+                print dist_h === r1_squared * (theta*theta)
+              })
             })
             comment()
 

@@ -81,7 +81,7 @@
 #define BLOCKSIZE_TRANSFER 256
 #endif
 
-__global__ void smooth_process_kernel(const float * xstore_me, const float * ystore_me, const float * zstore_me, const float * xstore_other, const float * ystore_other, const float * zstore_other, const float * data_other, const float sigma_h2_inv, const float sigma_v2_inv, const int iker, const int nspec_me, const int nspec_other, const float v_criterion, const float h_criterion, const float * integ_factor, float * data_smooth, float * normalisation){
+__global__ void smooth_process_kernel(const float * xstore_me, const float * ystore_me, const float * zstore_me, const float * xstore_other, const float * ystore_other, const float * zstore_other, const float * data_other, const float sigma_h2_inv, const float sigma_v2_inv, const int iker, const int nspec_me, const int nspec_other, const float v_criterion, const float h_criterion, const float * integ_factor, float * data_smooth, float * normalisation, const int use_vector_distance){
   int ispec;
   int igll;
   int gll_other;
@@ -97,9 +97,14 @@ __global__ void smooth_process_kernel(const float * xstore_me, const float * yst
   float center_x;
   float center_y;
   float center_z;
+  float vx;
+  float vy;
+  float vz;
   float alpha;
   float ratio;
   float theta;
+  float r0;
+  float r1;
   float r0_squared;
   float r1_squared;
   float dist_h;
@@ -142,21 +147,37 @@ __global__ void smooth_process_kernel(const float * xstore_me, const float * yst
 
       r0_squared = (x_me) * (x_me) + (y_me) * (y_me) + (z_me) * (z_me);
       r1_squared = (center_x) * (center_x) + (center_y) * (center_y) + (center_z) * (center_z);
-      alpha = sqrt((r0_squared) * (r1_squared));
-      dist_v = r1_squared + r0_squared - ((2.0f) * (alpha));
 
-      if (alpha > 0.0f) {
-        ratio = ((x_me) * (center_x) + (y_me) * (center_y) + (z_me) * (center_z)) / (alpha);
+      if (use_vector_distance) {
+        r0 = sqrt(r0_squared);
+        r1 = sqrt(r1_squared);
+        dist_v = (r1 - (r0)) * (r1 - (r0));
+
+        alpha = (r1) / (r0);
+        vx = (alpha) * (x_me);
+        vy = (alpha) * (y_me);
+        vz = (alpha) * (z_me);
+        vx = center_x - (vx);
+        vy = center_y - (vy);
+        vz = center_z - (vz);
+        dist_h = (vx) * (vx) + (vy) * (vy) + (vz) * (vz);
       } else {
-        ratio = 1.0f;
-      }
-      if (ratio >= 1.0f) {
-        dist_h = 0.0f;
-      } else if (ratio <= -1.0f) {
-        dist_h = (r1_squared) * (PI2);
-      } else {
-        theta = acos(ratio);
-        dist_h = (r1_squared) * ((theta) * (theta));
+        alpha = sqrt((r0_squared) * (r1_squared));
+        dist_v = r1_squared + r0_squared - ((2.0f) * (alpha));
+
+        if (alpha > 0.0f) {
+          ratio = ((x_me) * (center_x) + (y_me) * (center_y) + (z_me) * (center_z)) / (alpha);
+        } else {
+          ratio = 1.0f;
+        }
+        if (ratio >= 1.0f) {
+          dist_h = 0.0f;
+        } else if (ratio <= -1.0f) {
+          dist_h = (r1_squared) * (PI2);
+        } else {
+          theta = acos(ratio);
+          dist_h = (r1_squared) * ((theta) * (theta));
+        }
       }
     }
 
@@ -191,21 +212,37 @@ __global__ void smooth_process_kernel(const float * xstore_me, const float * yst
 
         r0_squared = (x_me) * (x_me) + (y_me) * (y_me) + (z_me) * (z_me);
         r1_squared = (x_other) * (x_other) + (y_other) * (y_other) + (z_other) * (z_other);
-        alpha = sqrt((r0_squared) * (r1_squared));
-        dist_v = r1_squared + r0_squared - ((2.0f) * (alpha));
 
-        if (alpha > 0.0f) {
-          ratio = ((x_me) * (x_other) + (y_me) * (y_other) + (z_me) * (z_other)) / (alpha);
+        if (use_vector_distance) {
+          r0 = sqrt(r0_squared);
+          r1 = sqrt(r1_squared);
+          dist_v = (r1 - (r0)) * (r1 - (r0));
+
+          alpha = (r1) / (r0);
+          vx = (alpha) * (x_me);
+          vy = (alpha) * (y_me);
+          vz = (alpha) * (z_me);
+          vx = x_other - (vx);
+          vy = y_other - (vy);
+          vz = z_other - (vz);
+          dist_h = (vx) * (vx) + (vy) * (vy) + (vz) * (vz);
         } else {
-          ratio = 1.0f;
-        }
-        if (ratio >= 1.0f) {
-          dist_h = 0.0f;
-        } else if (ratio <= -1.0f) {
-          dist_h = (r1_squared) * (PI2);
-        } else {
-          theta = acos(ratio);
-          dist_h = (r1_squared) * ((theta) * (theta));
+          alpha = sqrt((r0_squared) * (r1_squared));
+          dist_v = r1_squared + r0_squared - ((2.0f) * (alpha));
+
+          if (alpha > 0.0f) {
+            ratio = ((x_me) * (x_other) + (y_me) * (y_other) + (z_me) * (z_other)) / (alpha);
+          } else {
+            ratio = 1.0f;
+          }
+          if (ratio >= 1.0f) {
+            dist_h = 0.0f;
+          } else if (ratio <= -1.0f) {
+            dist_h = (r1_squared) * (PI2);
+          } else {
+            theta = acos(ratio);
+            dist_h = (r1_squared) * ((theta) * (theta));
+          }
         }
 
         val = ( -(dist_h)) * (sigma_h2_inv) - ((dist_v) * (sigma_v2_inv));

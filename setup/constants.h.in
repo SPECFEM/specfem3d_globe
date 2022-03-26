@@ -622,6 +622,10 @@
 ! using this is more precise, but more costly
   logical, parameter :: USE_QUADRATURE_RULE_FOR_SMOOTHING = .true.
 
+! using Euclidian vector distance to calculate vertical and horizontal distances between two points,
+! which is faster than using the exact epicentral distance for the horizontal distance.
+  logical, parameter :: USE_VECTOR_DISTANCE_FOR_SMOOTHING = .true.
+
 
 !!-----------------------------------------------------------
 !!
