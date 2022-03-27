@@ -3,7 +3,7 @@
  *** Specfem3D MPI Mesher ***
  ****************************
 
- Version: 7.0.3
+ Version: 8.0.0
 
 
  Planet: Mars
@@ -56,7 +56,7 @@
 
    topography/bathymetry: min/max =        -7830       21092
 
-   Elapsed time for reading in seconds =   0.14644000000000001
+   Elapsed time for reading in seconds =    3.0598000000000014E-002
 
 
    VTK topo output: topo resolution in minutes =    4.00000000
@@ -85,11 +85,14 @@
                     NLON =          360
 
    moho depths written to file: ./DATABASES_MPI/mesh_moho_depth.vtk
-   min/max =    15.0697756     /   106.220375     (km)
+   min/max =    14.7028379     /   106.679718     (km)
 
    sediment depths written to file: ./DATABASES_MPI/mesh_sediment_depth.vtk
-   min/max =    2.00000644     /   2.00000644     (km)
+   min/max =    2.00000000     /   2.00000000     (km)
 
+ attenuation model:
+   1D reference model
+   model: Sohl attenuation
 
  additional mesh optimizations
 
@@ -147,25 +150,41 @@
 
    ...creating mesh elements
    creating layer            1 out of           10
-     10.0%    current clock (NOT elapsed) time is: 23h 17min 31sec
+     number of regular elements  =           64
+     number of doubling elements =          512
+     10.0%    current clock (NOT elapsed) time is: 18h 32min 36sec
    creating layer            2 out of           10
-     20.0%    current clock (NOT elapsed) time is: 23h 17min 31sec
+     number of regular elements  =          128
+     20.0%    current clock (NOT elapsed) time is: 18h 32min 36sec
    creating layer            3 out of           10
-     30.0%    current clock (NOT elapsed) time is: 23h 17min 31sec
+     number of regular elements  =           16
+     30.0%    current clock (NOT elapsed) time is: 18h 32min 36sec
    creating layer            4 out of           10
-     40.0%    current clock (NOT elapsed) time is: 23h 17min 31sec
+     number of regular elements  =           96
+     number of doubling elements =          128
+     40.0%    current clock (NOT elapsed) time is: 18h 32min 36sec
    creating layer            5 out of           10
-     50.0%    current clock (NOT elapsed) time is: 23h 17min 31sec
+     number of regular elements  =            0
+     50.0%    current clock (NOT elapsed) time is: 18h 32min 36sec
    creating layer            6 out of           10
-     60.0%    current clock (NOT elapsed) time is: 23h 17min 31sec
+     number of regular elements  =          384
+     60.0%    current clock (NOT elapsed) time is: 18h 32min 36sec
    creating layer            7 out of           10
-     70.0%    current clock (NOT elapsed) time is: 23h 17min 31sec
+     number of regular elements  =          128
+     70.0%    current clock (NOT elapsed) time is: 18h 32min 36sec
    creating layer            8 out of           10
-     80.0%    current clock (NOT elapsed) time is: 23h 17min 31sec
+     number of regular elements  =          192
+     80.0%    current clock (NOT elapsed) time is: 18h 32min 36sec
    creating layer            9 out of           10
-     90.0%    current clock (NOT elapsed) time is: 23h 17min 31sec
+     number of regular elements  =          256
+     90.0%    current clock (NOT elapsed) time is: 18h 32min 36sec
    creating layer           10 out of           10
-    100.0%    current clock (NOT elapsed) time is: 23h 17min 32sec
+     number of regular elements  =         1280
+    100.0%    current clock (NOT elapsed) time is: 18h 32min 37sec
+   layers done
+
+   number of elements (per slice)        =         3184
+   total number of elements (all slices) =        12736
 
 
    ...creating global addressing
@@ -180,25 +199,41 @@
 
    ...creating mesh elements
    creating layer            1 out of           10
-     10.0%    current clock (NOT elapsed) time is: 23h 17min 32sec
+     number of regular elements  =           64
+     number of doubling elements =          512
+     10.0%    current clock (NOT elapsed) time is: 18h 32min 37sec
    creating layer            2 out of           10
-     20.0%    current clock (NOT elapsed) time is: 23h 17min 32sec
+     number of regular elements  =          128
+     20.0%    current clock (NOT elapsed) time is: 18h 32min 37sec
    creating layer            3 out of           10
-     30.0%    current clock (NOT elapsed) time is: 23h 17min 32sec
+     number of regular elements  =           16
+     30.0%    current clock (NOT elapsed) time is: 18h 32min 37sec
    creating layer            4 out of           10
-     40.0%    current clock (NOT elapsed) time is: 23h 17min 32sec
+     number of regular elements  =           96
+     number of doubling elements =          128
+     40.0%    current clock (NOT elapsed) time is: 18h 32min 37sec
    creating layer            5 out of           10
-     50.0%    current clock (NOT elapsed) time is: 23h 17min 32sec
+     number of regular elements  =            0
+     50.0%    current clock (NOT elapsed) time is: 18h 32min 37sec
    creating layer            6 out of           10
-     60.0%    current clock (NOT elapsed) time is: 23h 17min 32sec
+     number of regular elements  =          384
+     60.0%    current clock (NOT elapsed) time is: 18h 32min 37sec
    creating layer            7 out of           10
-     70.0%    current clock (NOT elapsed) time is: 23h 17min 32sec
+     number of regular elements  =          128
+     70.0%    current clock (NOT elapsed) time is: 18h 32min 37sec
    creating layer            8 out of           10
-     80.0%    current clock (NOT elapsed) time is: 23h 17min 32sec
+     number of regular elements  =          192
+     80.0%    current clock (NOT elapsed) time is: 18h 32min 37sec
    creating layer            9 out of           10
-     90.0%    current clock (NOT elapsed) time is: 23h 17min 32sec
+     number of regular elements  =          256
+     90.0%    current clock (NOT elapsed) time is: 18h 32min 37sec
    creating layer           10 out of           10
-    100.0%    current clock (NOT elapsed) time is: 23h 17min 35sec
+     number of regular elements  =         1280
+    100.0%    current clock (NOT elapsed) time is: 18h 32min 39sec
+   layers done
+
+   number of elements (per slice)        =         3184
+   total number of elements (all slices) =        12736
 
 
    ...fills global mesh points
@@ -210,7 +245,7 @@
  ----------------------------------
    Region is crust/mantle
 
-   Min Vs =    4.06001282      (km/s)
+   Min Vs =    4.06000042      (km/s)
    Max Vp =    10.6069231      (km/s)
 
    Max element edge size =    112.881851      (km)
@@ -225,7 +260,7 @@
    Maximum suggested time step =   0.250000000      (s)
 
    for DT :   0.189999998      (s)
-   Max stability for wave velocities =   0.413525730
+   Max stability for wave velocities =   0.413524419
  ----------------------------------
 
    saving vtk mesh files for resolution res_minimum_period...
@@ -304,9 +339,16 @@
 
    ...creating mesh elements
    creating layer            1 out of            2
-     50.0%    current clock (NOT elapsed) time is: 23h 17min 35sec
+     number of regular elements  =           20
+     number of doubling elements =           32
+     50.0%    current clock (NOT elapsed) time is: 18h 32min 40sec
    creating layer            2 out of            2
-    100.0%    current clock (NOT elapsed) time is: 23h 17min 35sec
+     number of regular elements  =           32
+    100.0%    current clock (NOT elapsed) time is: 18h 32min 40sec
+   layers done
+
+   number of elements (per slice)        =           84
+   total number of elements (all slices) =          336
 
 
    ...creating global addressing
@@ -321,9 +363,16 @@
 
    ...creating mesh elements
    creating layer            1 out of            2
-     50.0%    current clock (NOT elapsed) time is: 23h 17min 35sec
+     number of regular elements  =           20
+     number of doubling elements =           32
+     50.0%    current clock (NOT elapsed) time is: 18h 32min 40sec
    creating layer            2 out of            2
-    100.0%    current clock (NOT elapsed) time is: 23h 17min 35sec
+     number of regular elements  =           32
+    100.0%    current clock (NOT elapsed) time is: 18h 32min 40sec
+   layers done
+
+   number of elements (per slice)        =           84
+   total number of elements (all slices) =          336
 
 
    ...fills global mesh points
@@ -402,7 +451,6 @@
    mesh coloring:  F
 
    ...creating mass matrix
-     updates mass matrix with Stacey boundary corrections
 
    ...saving binary files
 
@@ -426,7 +474,12 @@
 
    ...creating mesh elements
    creating layer            1 out of            1
-    100.0%    current clock (NOT elapsed) time is: 23h 17min 35sec
+     number of regular elements  =           12
+    100.0%    current clock (NOT elapsed) time is: 18h 32min 40sec
+   layers done
+
+   number of elements (per slice)        =           12
+   total number of elements (all slices) =           48
 
 
    ...creating global addressing
@@ -441,7 +494,12 @@
 
    ...creating mesh elements
    creating layer            1 out of            1
-    100.0%    current clock (NOT elapsed) time is: 23h 17min 35sec
+     number of regular elements  =           12
+    100.0%    current clock (NOT elapsed) time is: 18h 32min 40sec
+   layers done
+
+   number of elements (per slice)        =           12
+   total number of elements (all slices) =           48
 
 
    ...fills global mesh points
@@ -520,7 +578,6 @@
    mesh coloring:  F
 
    ...creating mass matrix
-     updates mass matrix with Stacey boundary corrections
 
    ...saving binary files
 
@@ -530,12 +587,13 @@
                  top area:    1.57684460E-03
               bottom area:    7.49256578E-04
 
- calculated volume:    2.2751774168444917E-002
+ calculated volume:    2.2751774168444920E-002
 
  Repartition of elements in regions:
  ----------------------------------
 
- total number of elements in each slice:         3280
+ number of elements in each slice      :         3280
+ total number of elements in all slices:        13120
 
   - crust and mantle:    97.0731735      %
   - outer core:    2.56097555      %
@@ -553,8 +611,8 @@
  smallest and largest possible floating-point numbers are:    1.17549435E-38   3.40282347E+38
 
 
- Elapsed time for mesh generation and buffer creation in seconds =    25.1602249
- Elapsed time for mesh generation and buffer creation in hh:mm:ss =    0 h 00 m 25 s
+ Elapsed time for mesh generation and buffer creation in seconds =    22.5202541
+ Elapsed time for mesh generation and buffer creation in hh:mm:ss =    0 h 00 m 22 s
 
  End of mesh generation
 
