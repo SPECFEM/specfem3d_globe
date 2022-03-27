@@ -162,6 +162,7 @@ xcombine_AVS_DX_SHARED_OBJECTS = \
 	$O/define_all_layers.shared.o \
 	$O/get_model_parameters.shared.o \
 	$O/get_timestep_and_layers.shared.o \
+	$O/model_mars_1D.shared.o \
 	$O/model_prem.shared.o \
 	$O/model_Sohl.shared.o \
 	$O/model_vpremoon.shared.o \
@@ -230,6 +231,7 @@ xcombine_vol_data_SHARED_OBJECTS = \
 	$O/flush_system.shared.o \
 	$O/intgrl.shared.o \
 	$O/make_ellipticity.shared.o \
+	$O/model_mars_1D.shared.o \
 	$O/model_prem.shared.o \
 	$O/model_Sohl.shared.o \
 	$O/model_vpremoon.shared.o \
@@ -269,6 +271,7 @@ xcombine_vol_data_adios_SHARED_OBJECTS = \
 	$O/flush_system.shared.o \
 	$O/intgrl.shared.o \
 	$O/make_ellipticity.shared.o \
+	$O/model_mars_1D.shared.o \
 	$O/model_prem.shared.o \
 	$O/model_Sohl.shared.o \
 	$O/model_vpremoon.shared.o \
@@ -304,6 +307,7 @@ xcombine_vol_data_vtk_SHARED_OBJECTS = \
 	$O/flush_system.shared.o \
 	$O/intgrl.shared.o \
 	$O/make_ellipticity.shared.o \
+	$O/model_mars_1D.shared.o \
 	$O/model_prem.shared.o \
 	$O/model_Sohl.shared.o \
 	$O/model_vpremoon.shared.o \
@@ -344,6 +348,7 @@ xcombine_vol_data_vtk_adios_SHARED_OBJECTS = \
 	$O/flush_system.shared.o \
 	$O/intgrl.shared.o \
 	$O/make_ellipticity.shared.o \
+	$O/model_mars_1D.shared.o \
 	$O/model_prem.shared.o \
 	$O/model_Sohl.shared.o \
 	$O/model_vpremoon.shared.o \
@@ -410,6 +415,7 @@ xcreate_movie_AVS_DX_SHARED_OBJECTS = \
 	$O/get_global.shared.o \
 	$O/get_model_parameters.shared.o \
 	$O/get_timestep_and_layers.shared.o \
+	$O/model_mars_1D.shared.o \
 	$O/model_prem.shared.o \
 	$O/model_Sohl.shared.o \
 	$O/model_vpremoon.shared.o \
@@ -447,6 +453,7 @@ xcreate_movie_GMT_global_SHARED_OBJECTS = \
 	$O/define_all_layers.shared.o \
 	$O/get_model_parameters.shared.o \
 	$O/get_timestep_and_layers.shared.o \
+	$O/model_mars_1D.shared.o \
 	$O/model_prem.shared.o \
 	$O/model_Sohl.shared.o \
 	$O/model_vpremoon.shared.o \
@@ -544,6 +551,7 @@ xwrite_profile_SHARED_OBJECTS = \
 	$O/heap_sort.shared.o \
 	$O/intgrl.shared.o \
 	$O/make_ellipticity.shared.o \
+	$O/model_mars_1D.shared.o \
 	$O/model_prem.shared.o \
 	$O/model_Sohl.shared.o \
 	$O/model_topo_bathy.shared.o \

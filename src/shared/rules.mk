@@ -64,6 +64,7 @@ shared_OBJECTS = \
 	$O/lagrange_poly.shared.o \
 	$O/make_ellipticity.shared.o \
 	$O/memory_eval.shared.o \
+	$O/model_mars_1D.shared.o \
 	$O/model_prem.shared.o \
 	$O/model_Sohl.shared.o \
 	$O/model_topo_bathy.shared.o \
@@ -186,8 +187,16 @@ else ifeq ($(ADIOS2),yes)
 $O/adios_helpers.shared_adios.o: $O/adios_helpers_readers.shared_adios.o $O/adios_helpers_writers.shared_adios.o $O/adios_helpers_definitions.shared_adios.o
 endif
 
-$O/get_model_parameters.shared.o: $O/model_prem.shared.o $O/model_Sohl.shared.o $O/model_vpremoon.shared.o
-$O/make_ellipticity.shared.o: $O/model_prem.shared.o $O/model_Sohl.shared.o $O/model_vpremoon.shared.o
+$O/get_model_parameters.shared.o: \
+	$O/model_prem.shared.o \
+	$O/model_Sohl.shared.o \
+	$O/model_vpremoon.shared.o \
+	$O/model_mars_1D.shared.o
+
+$O/make_ellipticity.shared.o: \
+	$O/model_prem.shared.o \
+	$O/model_Sohl.shared.o \
+	$O/model_vpremoon.shared.o
 
 ##
 ## shared

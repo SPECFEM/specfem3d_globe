@@ -33,7 +33,7 @@ The crustal Moho models here are calculated with Mark's ctplanet tool:
       reason: it has a slightly thicker minimum crust and larger dynamic range than others, but no real preference here.
 
               the minimum crustal thickness is around 2km, which makes mesh elements very thin when we honor the Moho depths.
-              these small elements will then determine the largest possible time step size for the simulations, 
+              these small elements will then determine the largest possible time step size for the simulations,
               making these simulations more costly than with thicker crustal elements.
               however, we could/should test all appropriate models.
 
@@ -68,9 +68,9 @@ In this folder, the following models are provided for testing:
 
 * Moon:
   - Moho-Moon-1-Constant-Density.sh : moon constant density model
-  - Moho-Moon-2-Variable-Density.sh : moon variable density model 
+  - Moho-Moon-2-Variable-Density.sh : moon variable density model
 
-  note: Moon output files were created by a modified script to limit the output to a spherical harmonic degree lmax = 90, 
+  note: Moon output files were created by a modified script to limit the output to a spherical harmonic degree lmax = 90,
         instead of lmax = 900 provided by Mark's original routine. The resolution is therefore similar to the Mars models above.
 
         Using the higher lmax resolution would be possible, but the creation of crustmaps becomes very slow. Furthermore, the crustmaps are
