@@ -207,6 +207,7 @@ meshfem3D_SHARED_OBJECTS = \
 	$O/lagrange_poly.shared.o \
 	$O/make_ellipticity.shared.o \
 	$O/memory_eval.shared.o \
+	$O/model_mars_1D.shared.o \
 	$O/model_prem.shared.o \
 	$O/model_Sohl.shared.o \
 	$O/model_topo_bathy.shared.o \
@@ -329,6 +330,7 @@ $O/model_attenuation.check.o: \
 	$O/model_case65TAY.check.o \
 	$O/model_ccrem.check.o \
 	$O/model_vpremoon.shared.o \
+	$O/model_mars_1D.shared.o \
 	$(EMPTY_MACRO)
 
 $O/meshfem3D_par.check_module.o: $O/adios_manager.shared_adios_module.o

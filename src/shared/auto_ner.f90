@@ -55,7 +55,7 @@
     REFERENCE_MODEL_SOHL,REFERENCE_MODEL_SOHL_B,REFERENCE_MODEL_CASE65TAY,REFERENCE_MODEL_MARS_1D, &
     REFERENCE_MODEL_VPREMOON,REFERENCE_MODEL_MOON_MEENA
 
-  use shared_parameters, only: REFERENCE_1D_MODEL,R_PLANET,RICB
+  use shared_parameters, only: REFERENCE_1D_MODEL,R_PLANET,RICB,CRUSTAL
 
   implicit none
 
@@ -138,12 +138,21 @@
     ! note: for mars, the time stepping is mostly affected by crustal elements.
     !       we will use two estimates, one for inner core and another for the crust to determine a minimum time step.
     ! inner core
-    P_VELOCITY_MAX = 7.3d0 * 1.1d0        ! vp: 11.26220 - 6.36400 * (1221.49/6371.)**2; daniel: increase by a factor 1.1x
+    P_VELOCITY_MAX = 7.3d0                ! vp: 11.26220 - 6.36400 * (1221.49/6371.)**2
     RADIAL_LEN_RATIO_CENTRAL_CUBE = 0.76  ! for an aspect ratio around 1.3
+
+    ! safety margin: increase by a factor 1.1x
+    P_VELOCITY_MAX = P_VELOCITY_MAX * 1.1d0
+
     ! surface/crust
     check_crust_DT = .true.
-    P_VELOCITY_MAX_CRUST = 7.73d0   ! according to crustmap marscrustp7.cmap (lower crust layer) files
-    if (REFERENCE_1D_MODEL == REFERENCE_MODEL_MARS_1D) P_VELOCITY_MAX_CRUST = 6.22d0 !(according to table mars_1D.dat)
+    if (CRUSTAL) then
+      ! uses 3D crustal map on top
+      P_VELOCITY_MAX_CRUST = 7.73d0   ! according to crustmap marscrustp7.cmap (lower crust layer) files
+    else
+      P_VELOCITY_MAX_CRUST = 7.747d0  ! same as for ONE_CRUST, value at 60 km depth (r = 3330 km) in modSOHL from IPGP
+      if (REFERENCE_1D_MODEL == REFERENCE_MODEL_MARS_1D) P_VELOCITY_MAX_CRUST = 6.22d0 ! according to table mars_1D.dat
+    endif
     ! empirical factor to account for aspect ratio in crust
     if (NEX_MAX < 480) then
       ! allows for larger time steps
@@ -152,6 +161,8 @@
       ! takes stretching effect into account which will lead to thinner elements closer to surface
       RADIAL_LEN_RATIO_CRUST = 0.46
     endif
+    ! smaller crustal elements for mars_1D model layering
+    if (REFERENCE_1D_MODEL == REFERENCE_MODEL_MARS_1D) RADIAL_LEN_RATIO_CRUST = 0.46
 
   ! Moon models
   case (REFERENCE_MODEL_VPREMOON, &
@@ -352,6 +363,7 @@
   double precision, dimension(NUM_REGIONS-1) :: ratio_top
   double precision, dimension(NUM_REGIONS-1) :: ratio_bottom
   integer,          dimension(NUM_REGIONS-1) :: NER
+  integer :: i
 
 ! uses model specific radii to determine number of elements in radial direction
 ! (set by earlier call to routine get_model_parameters_radii())
@@ -397,7 +409,11 @@
   case (IPLANET_MARS)
     ! Mars
     ! note: radii R_.. are set according to Mars model geometry
-    radius(9)  = 1900000.0d0          ! in between R771 (at 2033km) and RTOPDOUBLEPRIME (at 1503km)
+    ! default Sohl model
+    !radius(9)  = 1900000.0d0          ! in between R771 (at 2033km) and RTOPDOUBLEPRIME (at 1503km)
+    ! general mars models
+    radius(9)  = RTOPDDOUBLEPRIME + (R771-RTOPDDOUBLEPRIME) * 0.75d0 ! in between R771 and RTOPDOUBLEPRIME
+
     radius(10) = RTOPDDOUBLEPRIME     ! depth = 1887 km, radius 1503000.0 m
     radius(11) = RCMB                 ! depth = 1922 km
 
@@ -423,6 +439,16 @@
     print *,'Invalid planet, auto_ner() not implemented yet'
     stop 'Invalid planet, auto_ner() not implemented yet'
   end select
+
+  ! checks if assigned radius is decreasing from top to center
+  do i = 2,NUM_REGIONS
+    if (radius(i-1) - radius(i) < 0.0) then
+      print *,'Invalid radius assigned: for planet ',PLANET_TYPE,' region radius must decrease with increasing region number'
+      print *,'                         at region ',i,' radius ',radius(i),' should be smaller than ',radius(i-1)
+      print *,'Please check assignement in auto_ner() routine'
+      stop 'Invalid region radius assigned in auto_ner() routine'
+    endif
+  enddo
 
   ! radii in km
   radius(:) = radius(:) / 1000.0d0
@@ -547,7 +573,13 @@
   end select
 
   ! debug
-  if (DEBUG) print *,'planet: ',PLANET_TYPE,'(1 == earth,2 == mars, 3 == moon) - target ratio ',aspect_ratio
+  if (DEBUG) then
+    print *,'debug planet: ',PLANET_TYPE,'(1 == earth,2 == mars, 3 == moon) - target ratio ',aspect_ratio
+    print *,'debug initial NER:'
+    do i = 1,NUM_REGIONS-1
+      print *,'debug: region ',i,'NER ',NER(i)
+    enddo
+  endif
 
   ! Find optimal elements per region
   do i = 1,NUM_REGIONS-1

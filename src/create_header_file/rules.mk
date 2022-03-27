@@ -47,6 +47,7 @@ create_header_file_SHARED_OBJECTS = \
 	$O/get_model_parameters.shared.o \
 	$O/get_timestep_and_layers.shared.o \
 	$O/memory_eval.shared.o \
+	$O/model_mars_1D.shared.o \
 	$O/model_prem.shared.o \
 	$O/model_Sohl.shared.o \
 	$O/model_vpremoon.shared.o \
