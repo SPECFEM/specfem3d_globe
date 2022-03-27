@@ -209,7 +209,7 @@
  logical, parameter :: FORCE_VECTORIZATION_VAL = .true.
 
  logical, parameter :: UNDO_ATTENUATION_VAL = .false.
- integer, parameter :: NT_DUMP_ATTENUATION_VAL =         1202
+ integer, parameter :: NT_DUMP_ATTENUATION_VAL =         1297
 
  double precision, parameter :: ANGULAR_WIDTH_ETA_IN_DEGREES_VAL =    15.000000
  double precision, parameter :: ANGULAR_WIDTH_XI_IN_DEGREES_VAL =    15.000000
