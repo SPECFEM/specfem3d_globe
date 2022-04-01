@@ -4,8 +4,8 @@
     <!--************************************************************-->
     <!--*** Solver information ***-->
     <attribute name="code_name"       path="/solver_info" value="SPECFEM3D_GLOBE" type="string"/>
-    <attribute name="version_name"    path="/solver_info" value="SUNFLOWER"       type="string"/>
-    <attribute name="version_number"  path="/solver_info" value="6.0"             type="string"/>
+    <attribute name="version_name"    path="/solver_info" value="TIGER"           type="string"/>
+    <attribute name="version_number"  path="/solver_info" value="8.0"             type="string"/>
     <!--************************************************************-->
     <!--*** Values read from DATA/Par_file ***-->
     <!-- double precision variables -->
@@ -15,52 +15,98 @@
     <var name="CENTER_LATITUDE_IN_DEGREES"    path="/specfem3D_globe_parameter_file" type="double"/>
     <var name="GAMMA_ROTATION_AZIMUTH"        path="/specfem3D_globe_parameter_file" type="double"/>
     <var name="HDUR_MOVIE"                    path="/specfem3D_globe_parameter_file" type="double"/>
+    <var name="MEMORY_INSTALLED_PER_CORE_IN_GB" path="/specfem3D_globe_parameter_file" type="double"/>
     <var name="MOVIE_TOP_KM"                  path="/specfem3D_globe_parameter_file" type="double"/>
     <var name="MOVIE_BOTTOM_KM"               path="/specfem3D_globe_parameter_file" type="double"/>
     <var name="MOVIE_EAST_DEG"                path="/specfem3D_globe_parameter_file" type="double"/>
     <var name="MOVIE_WEST_DEG"                path="/specfem3D_globe_parameter_file" type="double"/>
     <var name="MOVIE_NORTH_DEG"               path="/specfem3D_globe_parameter_file" type="double"/>
     <var name="MOVIE_SOUTH_DEG"               path="/specfem3D_globe_parameter_file" type="double"/>
+    <var name="PERCENT_OF_MEM_TO_USE_PER_CORE"path="/specfem3D_globe_parameter_file" type="double"/>
+    <var name="RATIO_BY_WHICH_TO_INCREASE_IT" path="/specfem3D_globe_parameter_file" type="double"/>
     <var name="RECORD_LENGTH_IN_MINUTES"      path="/specfem3D_globe_parameter_file" type="double"/>
+    <var name="REGIONAL_MESH_ADD_2ND_DOUBLING"path="/specfem3D_globe_parameter_file" type="double"/>
+    <var name="REGIONAL_MESH_CUTOFF_DEPTH"    path="/specfem3D_globe_parameter_file" type="double"/>
+    <var name="SPONGE_LATITUDE_IN_DEGREES"    path="/specfem3D_globe_parameter_file" type="double"/>
+    <var name="SPONGE_LONGITUDE_IN_DEGREES"   path="/specfem3D_globe_parameter_file" type="double"/>
+    <var name="SPONGE_RADIUS_IN_DEGREES"      path="/specfem3D_globe_parameter_file" type="double"/>
+    <var name="STEADY_STATE_LENGTH_IN_MINUTES"path="/specfem3D_globe_parameter_file" type="double"/>
     <!-- integer variables -->
+    <var name="GPU_RUNTIME"                   path="/specfem3D_globe_parameter_file" type="integer"/>
+    <var name="MOVIE_VOLUME_TYPE"             path="/specfem3D_globe_parameter_file" type="integer"/>
+    <var name="MOVIE_START"                   path="/specfem3D_globe_parameter_file" type="integer"/>
+    <var name="MOVIE_STOP"                    path="/specfem3D_globe_parameter_file" type="integer"/>
+    <var name="NCHUNKS"                       path="/specfem3D_globe_parameter_file" type="integer"/>
+    <var name="NEX_XI"                        path="/specfem3D_globe_parameter_file" type="integer"/>
+    <var name="NEX_ETA"                       path="/specfem3D_globe_parameter_file" type="integer"/>
+    <var name="NOISE_TOMOGRAPHY"              path="/specfem3D_globe_parameter_file" type="integer"/>
+    <var name="NPROC_XI"                      path="/specfem3D_globe_parameter_file" type="integer"/>
+    <var name="NPROC_ETA"                     path="/specfem3D_globe_parameter_file" type="integer"/>
     <var name="NTSTEP_BETWEEN_OUTPUT_SEISMOS" path="/specfem3D_globe_parameter_file" type="integer"/>
     <var name="NTSTEP_BETWEEN_READ_ADJSRC"    path="/specfem3D_globe_parameter_file" type="integer"/>
     <var name="NTSTEP_BETWEEN_FRAMES"         path="/specfem3D_globe_parameter_file" type="integer"/>
     <var name="NTSTEP_BETWEEN_OUTPUT_INFO"    path="/specfem3D_globe_parameter_file" type="integer"/>
+    <var name="NTSTEP_BETWEEN_OUTPUT_SAMPLE"  path="/specfem3D_globe_parameter_file" type="integer"/>
     <var name="NUMBER_OF_RUNS"                path="/specfem3D_globe_parameter_file" type="integer"/>
     <var name="NUMBER_OF_THIS_RUN"            path="/specfem3D_globe_parameter_file" type="integer"/>
-    <var name="NCHUNKS"                       path="/specfem3D_globe_parameter_file" type="integer"/>
+    <var name="NUMBER_OF_SIMULTANEOUS_RUNS"   path="/specfem3D_globe_parameter_file" type="integer"/>
     <var name="SIMULATION_TYPE"               path="/specfem3D_globe_parameter_file" type="integer"/>
-    <var name="MOVIE_VOLUME_TYPE"             path="/specfem3D_globe_parameter_file" type="integer"/>
-    <var name="MOVIE_START"                   path="/specfem3D_globe_parameter_file" type="integer"/>
-    <var name="MOVIE_STOP"                    path="/specfem3D_globe_parameter_file" type="integer"/>
-    <var name="NEX_XI"                        path="/specfem3D_globe_parameter_file" type="integer"/>
-    <var name="NEX_ETA"                       path="/specfem3D_globe_parameter_file" type="integer"/>
-    <var name="NPROC_XI"                      path="/specfem3D_globe_parameter_file" type="integer"/>
-    <var name="NPROC_ETA"                     path="/specfem3D_globe_parameter_file" type="integer"/>
-    <var name="NOISE_TOMOGRAPHY"              path="/specfem3D_globe_parameter_file" type="integer"/>
     <!-- logical variables -->
+    <var name="ABSORBING_CONDITIONS"         path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="ABSORB_USING_GLOBAL_SPONGE"   path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="ADIOS_ENABLED"                path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="ADIOS_FOR_FORWARD_ARRAYS"     path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="ADIOS_FOR_MPI_ARRAYS"         path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="ADIOS_FOR_ARRAYS_SOLVER"      path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="ADIOS_FOR_SOLVER_MESHFILES"   path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="ADIOS_FOR_AVS_DX"             path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="ADIOS_FOR_KERNELS"            path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="ADIOS_FOR_MODELS"             path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="ADIOS_FOR_UNDO_ATTENUATION"   path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="ANISOTROPIC_KL"               path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="APPROXIMATE_HESS_KL"          path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="ATTENUATION"                  path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="BROADCAST_SAME_MESH_AND_MODEL"path="/specfem3D_globe_parameter_file" type="byte"/>
     <var name="ELLIPTICITY"                  path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="EXACT_MASS_MATRIX_FOR_ROTATION" path="/specfem3D_globe_parameter_file" type="byte"/>
     <var name="GRAVITY"                      path="/specfem3D_globe_parameter_file" type="byte"/>
-    <var name="ROTATION"                     path="/specfem3D_globe_parameter_file" type="byte"/>
-    <var name="TOPOGRAPHY"                   path="/specfem3D_globe_parameter_file" type="byte"/>
-    <var name="OCEANS"                       path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="GPU_MODE"                     path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="INCREASE_CFL_FOR_LDDRK"       path="/specfem3D_globe_parameter_file" type="byte"/>
     <var name="MOVIE_SURFACE"                path="/specfem3D_globe_parameter_file" type="byte"/>
     <var name="MOVIE_VOLUME"                 path="/specfem3D_globe_parameter_file" type="byte"/>
     <var name="MOVIE_COARSE"                 path="/specfem3D_globe_parameter_file" type="byte"/>
-    <var name="RECEIVERS_CAN_BE_BURIED"      path="/specfem3D_globe_parameter_file" type="byte"/>
-    <var name="PRINT_SOURCE_TIME_FUNCTION"   path="/specfem3D_globe_parameter_file" type="byte"/>
-    <var name="SAVE_MESH_FILES"              path="/specfem3D_globe_parameter_file" type="byte"/>
-    <var name="ATTENUATION"                  path="/specfem3D_globe_parameter_file" type="byte"/>
-    <var name="ABSORBING_CONDITIONS"         path="/specfem3D_globe_parameter_file" type="byte"/>
-    <var name="SAVE_FORWARD"                 path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="OCEANS"                       path="/specfem3D_globe_parameter_file" type="byte"/>
     <var name="OUTPUT_SEISMOS_ASCII_TEXT"    path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="OUTPUT_SEISMOS_ASDF"          path="/specfem3D_globe_parameter_file" type="byte"/>
     <var name="OUTPUT_SEISMOS_SAC_ALPHANUM"  path="/specfem3D_globe_parameter_file" type="byte"/>
     <var name="OUTPUT_SEISMOS_SAC_BINARY"    path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="OUTPUT_SEISMOS_3D_ARRAY"      path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="PARTIAL_PHYS_DISPERSION_ONLY" path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="PRINT_SOURCE_TIME_FUNCTION"   path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="READ_ADJSRC_ASDF"             path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="RECEIVERS_CAN_BE_BURIED"      path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="REGIONAL_MESH_CUTOFF"         path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="REGIONAL_MESH_ADD_2ND_DOUBLING" path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="ROTATION"                     path="/specfem3D_globe_parameter_file" type="byte"/>
     <var name="ROTATE_SEISMOGRAMS_RT"        path="/specfem3D_globe_parameter_file" type="byte"/>
-    <var name="WRITE_SEISMOGRAMS_BY_MAIN"    path="/specfem3D_globe_parameter_file" type="byte"/>
     <var name="SAVE_ALL_SEISMOS_IN_ONE_FILE" path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="SAVE_AZIMUTHAL_ANISO_KL_ONLY" path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="SAVE_FORWARD"                 path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="SAVE_MESH_FILES"              path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="SAVE_SOURCE_MASK"             path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="SAVE_REGULAR_KL"              path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="SAVE_SEISMOGRAMS_IN_ADJOINT_RUN" path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="SAVE_SEISMOGRAMS_STRAIN"      path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="SAVE_TRANSVERSE_KL_ONLY"      path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="STEADY_STATE_KERNEL"          path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="TOPOGRAPHY"                   path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="UNDO_ATTENUATION"             path="/specfem3D_globe_parameter_file" type="byte"/>
     <var name="USE_BINARY_FOR_LARGE_FILE"    path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="USE_FORCE_POINT_SOURCE"       path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="USE_FULL_TISO_MANTLE"         path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="USE_LDDRK"                    path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="USE_MONOCHROMATIC_CMT_SOURCE" path="/specfem3D_globe_parameter_file" type="byte"/>
+    <var name="WRITE_SEISMOGRAMS_BY_MAIN"    path="/specfem3D_globe_parameter_file" type="byte"/>
     <!--************************************************************-->
     <!--*** Values read from DATA/CMTSOLUTION ***-->
     <!-- Number of SOURCES inside the CMTSOLUTION file -->
@@ -107,7 +153,6 @@
     <var name="station_name" path="/STATIONS" type="string"/>
     <var name="network_name" path="/STATIONS" type="string"/>
   </adios-group>
-
   <method group="SPECFEM3D_GLOBE_HEADER" method="MPI"/>
   <buffer size-MB="200" allocate-time="now"/>
 </adios-config>
