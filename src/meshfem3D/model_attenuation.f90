@@ -223,7 +223,7 @@
   use model_vpremoon_par, only: &
     NR_VPREMOON_layers,VPREMOON_Qmu_original
 
-  use model_mars_1D_par, only: &
+  use model_mars_1d_par, only: &
     NR_mars_1D_layers,mars_1D_Qmu_original
 
   implicit none

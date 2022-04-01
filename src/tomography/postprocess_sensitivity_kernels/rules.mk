@@ -124,6 +124,7 @@ xconvert_model_file_adios_OBJECTS = \
 	$(EMPTY_MACRO)
 
 xconvert_model_file_adios_SHARED_OBJECTS = \
+	$O/specfem3D_par.solverstatic_module.o \
 	$O/shared_par.shared_module.o \
 	$O/parallel.sharedmpi.o \
 	$O/exit_mpi.shared.o \
@@ -150,6 +151,7 @@ xaddition_sem_OBJECTS = \
 	$(EMPTY_MACRO)
 
 xaddition_sem_SHARED_OBJECTS = \
+	$O/specfem3D_par.solverstatic_module.o \
 	$O/shared_par.shared_module.o \
 	$O/parallel.sharedmpi.o \
 	$O/exit_mpi.shared.o \
@@ -171,6 +173,7 @@ xclip_sem_OBJECTS = \
 	$(EMPTY_MACRO)
 
 xclip_sem_SHARED_OBJECTS = \
+	$O/specfem3D_par.solverstatic_module.o \
 	$O/shared_par.shared_module.o \
 	$O/parallel.sharedmpi.o \
 	$O/param_reader.cc.o \
@@ -191,6 +194,7 @@ xcombine_sem_OBJECTS = \
 	$(EMPTY_MACRO)
 
 xcombine_sem_SHARED_OBJECTS = \
+	$O/specfem3D_par.solverstatic_module.o \
 	$O/shared_par.shared_module.o \
 	$O/parallel.sharedmpi.o \
 	$O/param_reader.cc.o \
@@ -210,6 +214,7 @@ xdifference_sem_OBJECTS = \
 	$(EMPTY_MACRO)
 
 xdifference_sem_SHARED_OBJECTS = \
+	$O/specfem3D_par.solverstatic_module.o \
 	$O/shared_par.shared_module.o \
 	$O/parallel.sharedmpi.o \
 	$O/exit_mpi.shared.o \
@@ -230,6 +235,7 @@ xinterpolate_model_OBJECTS = \
 	$(EMPTY_MACRO)
 
 xinterpolate_model_SHARED_OBJECTS = \
+	$O/specfem3D_par.solverstatic_module.o \
 	$O/shared_par.shared_module.o \
 	$O/parallel.sharedmpi.o \
 	$O/exit_mpi.shared.o \
@@ -289,6 +295,7 @@ xsmooth_sem_OBJECTS = \
 	$(EMPTY_MACRO)
 
 xsmooth_sem_SHARED_OBJECTS = \
+	$O/specfem3D_par.solverstatic_module.o \
 	$O/shared_par.shared_module.o \
 	$O/parallel.sharedmpi.o \
 	$O/auto_ner.shared.o \
@@ -302,6 +309,7 @@ xsmooth_sem_SHARED_OBJECTS = \
 	$O/get_timestep_and_layers.shared.o \
 	$O/gll_library.shared.o \
 	$O/heap_sort.shared.o \
+	$O/model_mars_1D.shared.o \
 	$O/model_vpremoon.shared.o \
 	$O/param_reader.cc.o \
 	$O/read_compute_parameters.shared.o \
@@ -458,6 +466,7 @@ xsmooth_laplacian_sem_OBJECTS = \
 	$(EMPTY_MACRO)
 
 xsmooth_laplacian_sem_SHARED_OBJECTS = \
+	$O/specfem3D_par.solverstatic_module.o \
 	$O/meshfem3D_par.check_module.o \
 	$O/shared_par.shared_module.o \
 	$O/parallel.sharedmpi.o \
@@ -472,6 +481,7 @@ xsmooth_laplacian_sem_SHARED_OBJECTS = \
 	$O/get_timestep_and_layers.shared.o \
 	$O/gll_library.shared.o \
 	$O/lagrange_poly.shared.o \
+	$O/model_mars_1D.shared.o \
 	$O/model_prem.shared.o \
 	$O/model_vpremoon.shared.o \
 	$O/param_reader.cc.o \
@@ -525,6 +535,7 @@ xcreate_cross_section_OBJECTS = \
 	$(EMPTY_MACRO)
 
 xcreate_cross_section_SHARED_OBJECTS = \
+	$O/specfem3D_par.solverstatic_module.o \
 	$O/shared_par.shared_module.o \
 	$O/parallel.sharedmpi.o \
 	$O/binary_c_io.cc.o \
@@ -565,7 +576,7 @@ ${E}/xcreate_cross_section: $(xcreate_cross_section_OBJECTS) $(xcreate_cross_sec
 ### module dependencies
 ###
 $O/postprocess_par.postprocess_module.o: $O/shared_par.shared_module.o
-
+$O/postprocess_par.postprocess_module.o: $O/specfem3D_par.solverstatic_module.o
 
 ####
 #### rule for each .o file below

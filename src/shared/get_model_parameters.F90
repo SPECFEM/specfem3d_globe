@@ -945,7 +945,7 @@
     REGIONAL_MOHO_MESH,HONOR_DEEP_MOHO, &
     REFERENCE_1D_MODEL
 
-  use model_mars_1D_par, only: MARS_1D_RSURFACE
+  use model_mars_1d_par, only: MARS_1D_RSURFACE
 
   implicit none
 

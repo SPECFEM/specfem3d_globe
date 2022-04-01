@@ -35,7 +35,7 @@
 !
 ! similar implementation and file format as VPREMOON model (in DATA/moon/vpremoon.dat)
 
-  module model_mars_1D_par
+  module model_mars_1d_par
 
   implicit none
 
@@ -82,7 +82,7 @@
   ! storage of initial Qmu profile (used for attenuation setup)
   double precision, dimension(:),allocatable :: MARS_1D_Qmu_original
 
-  end module model_mars_1D_par
+  end module model_mars_1d_par
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -94,7 +94,7 @@
   use constants
   use shared_parameters, only: R_PLANET,RHOAV
 
-  use model_mars_1D_par
+  use model_mars_1d_par
 
   implicit none
 
@@ -286,7 +286,7 @@
 
   use constants, only: myrank,SUPPRESS_CRUSTAL_MESH,IIN
   use shared_parameters, only: R_PLANET,RICB,RCMB,ROCEAN,ONE_CRUST
-  use model_mars_1D_par
+  use model_mars_1d_par
 
   implicit none
 
@@ -532,7 +532,7 @@
   enddo
 
   ! checks data table
-  ! currently, interface depths in file mars_1D.dat must match with the parameters defined in the module model_mars_1D_par above
+  ! currently, interface depths in file mars_1D.dat must match with the parameters defined in the module model_mars_1d_par above
   ! as those values are used for the meshing and definition of layering in get_model_parameters.F90, e.g.,
   ! in routine get_model_parameters_radii()
   !
@@ -602,7 +602,7 @@
   use constants
   use shared_parameters, only: R_PLANET,RHOAV,CRUSTAL
 
-  use model_mars_1D_par
+  use model_mars_1d_par
 
   implicit none
 
