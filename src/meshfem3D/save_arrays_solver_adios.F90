@@ -860,7 +860,6 @@
 
   ! local parameters
   character(len=MAX_STRING_LEN) :: outputname, group_name ! prname,
-  integer :: i,ier
   integer(kind=8) :: local_dim
   integer(kind=8) :: group_size_inc
   ! ADIOS variables
@@ -875,9 +874,6 @@
   ! wmax = world_max variables to have constant strides in adios file
   integer :: num_interfaces_wmax, max_nibool_interfaces_wmax, &
              num_phase_ispec_wmax, num_colors_outer_wmax, num_colors_inner_wmax
-  integer, dimension(:),allocatable :: nibool_interfaces_wmax,my_neighbors_wmax
-  integer, dimension(:,:),allocatable :: ibool_interfaces_wmax,phase_ispec_inner_wmax
-  integer, dimension(:),allocatable :: num_elem_colors_wmax
 
   ! user output
   if (myrank == 0) then
@@ -992,33 +988,21 @@
   call write_adios_scalar(myadios_file,myadios_group,trim(region_name) // "num_interfaces", num_interfaces)
   call write_adios_scalar(myadios_file,myadios_group,trim(region_name) // "max_nibool_interfaces", max_nibool_interfaces)
 
-  ! allocates buffers with max sizes (same size for all processes for constant strides)
-  allocate(my_neighbors_wmax(num_interfaces_wmax), &
-           nibool_interfaces_wmax(num_interfaces_wmax), stat=ier)
-  if (ier /= 0) stop 'Error allocating wmax arrays'
-  ! initializes
-  my_neighbors_wmax(:) = -1
-  my_neighbors_wmax(1:num_interfaces) = my_neighbors(1:num_interfaces)  ! current process valid range
-  nibool_interfaces_wmax(:) = -1
-  nibool_interfaces_wmax(1:num_interfaces) = nibool_interfaces(1:num_interfaces)
-
-  allocate(ibool_interfaces_wmax(max_nibool_interfaces_wmax,num_interfaces_wmax),stat=ier)
-  if (ier /= 0) stop 'Error allocating ibool_interfaces_wmax array'
-  ibool_interfaces_wmax(:,:) = -1
-  do i = 1,num_interfaces
-    ibool_interfaces_wmax(1:max_nibool_interfaces,i) = ibool_interfaces(1:max_nibool_interfaces,i)
-  enddo
-
   if (num_interfaces_wmax > 0) then
+    ! note: using the *_wmax array sizes for local_dim is providing the same local_dim/global_dim/offset values
+    !       in the adios file for all rank processes. this mimicks the same chunk sizes for all processes in ADIOS files.
+    !       this helps when reading back arrays using offsets based on the local_dim value.
+    !
+    ! we thus use num_interfaces_wmax here rather than num_interfaces
     local_dim = num_interfaces_wmax
     call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs_adios, local_dim, &
-                                     trim(region_name) // "my_neighbors", my_neighbors_wmax)
+                                     trim(region_name) // "my_neighbors", my_neighbors)
     call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs_adios, local_dim, &
-                                     trim(region_name) // "nibool_interfaces", nibool_interfaces_wmax)
+                                     trim(region_name) // "nibool_interfaces", nibool_interfaces)
 
     local_dim = max_nibool_interfaces_wmax * num_interfaces_wmax
     call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs_adios, local_dim, &
-                                     trim(region_name) // "ibool_interfaces", ibool_interfaces_wmax)
+                                     trim(region_name) // "ibool_interfaces", ibool_interfaces)
   endif
 
   ! inner/outer elements
@@ -1026,34 +1010,20 @@
   call write_adios_scalar(myadios_file,myadios_group,trim(region_name) // "nspec_outer", nspec_outer)
   call write_adios_scalar(myadios_file,myadios_group,trim(region_name) // "num_phase_ispec", num_phase_ispec)
 
-  allocate(phase_ispec_inner_wmax(num_phase_ispec_wmax,2),stat=ier)
-  if (ier /= 0) stop 'Error allocating phase_ispec_inner_wmax array'
-  ! initializes
-  phase_ispec_inner_wmax(:,:) = -1
-  do i = 1,2
-    phase_ispec_inner_wmax(1:num_phase_ispec,i) = phase_ispec_inner(1:num_phase_ispec,i)
-  enddo
-
   if (num_phase_ispec_wmax > 0) then
     local_dim = num_phase_ispec_wmax * 2
     call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs_adios, local_dim, &
-                                     trim(region_name) // "phase_ispec_inner", phase_ispec_inner_wmax)
+                                     trim(region_name) // "phase_ispec_inner", phase_ispec_inner)
   endif
 
   ! mesh coloring
   call write_adios_scalar(myadios_file,myadios_group,trim(region_name) // "num_colors_outer", num_colors_outer)
   call write_adios_scalar(myadios_file,myadios_group,trim(region_name) // "num_colors_inner", num_colors_inner)
 
-  allocate(num_elem_colors_wmax(num_colors_outer_wmax + num_colors_inner_wmax),stat=ier)
-  if (ier /= 0) stop 'Error allocating num_elem_colors_wmax array'
-
   if (USE_MESH_COLORING_GPU) then
-    num_elem_colors_wmax(:) = -1
-    num_elem_colors_wmax(1:(num_colors_outer+num_colors_inner)) = num_elem_colors(1:(num_colors_outer+num_colors_inner))
-
     local_dim = num_colors_outer_wmax + num_colors_inner_wmax
     call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs_adios, local_dim, &
-                                     trim(region_name) // "num_elem_colors", num_elem_colors_wmax)
+                                     trim(region_name) // "num_elem_colors", num_elem_colors)
   endif
 
   !--- Reset the path to zero and perform the actual write to disk
@@ -1062,11 +1032,6 @@
   call close_file_adios(myadios_file)
 
   num_regions_written = num_regions_written + 1
-
-  ! frees temporary arrays
-  deallocate(my_neighbors_wmax,nibool_interfaces_wmax)
-  deallocate(ibool_interfaces_wmax)
-  deallocate(num_elem_colors_wmax)
 
   end subroutine save_mpi_arrays_adios
 

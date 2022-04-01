@@ -644,15 +644,10 @@ subroutine read_mesh_databases_MPI_adios(iregion_code)
                      offset_ibool_interfaces, offset_phase_ispec_inner, &
                      offset_num_elem_colors
 
-  ! wmax = world_max variables to have constant strides in adios file
-  integer :: num_interfaces_wmax, max_nibool_interfaces_wmax, &
-             num_phase_ispec_wmax, num_colors_outer_wmax, num_colors_inner_wmax
-  integer, dimension(:),allocatable :: nibool_interfaces_wmax,my_neighbors_wmax
-  integer, dimension(:,:),allocatable :: ibool_interfaces_wmax,phase_ispec_inner_wmax
-  integer, dimension(:),allocatable :: num_elem_colors_wmax
-
-  integer, parameter :: num_ints_to_reduce = 5
-  integer, dimension(num_ints_to_reduce) :: ints_to_reduce
+  ! temporary read arrays
+  integer, dimension(:),allocatable :: tmp_nibool_interfaces,tmp_my_neighbors
+  integer, dimension(:,:),allocatable :: tmp_ibool_interfaces,tmp_phase_ispec_inner
+  integer, dimension(:),allocatable :: tmp_num_elem_colors
 
   character(len=128)      :: region_name
   integer :: nglob_tmp,nspec_tmp
@@ -717,21 +712,6 @@ subroutine read_mesh_databases_MPI_adios(iregion_code)
   if (num_colors_inner < 0 .or. num_colors_inner > nspec_tmp) &
     call exit_mpi(myrank,'Error invalid value reading num_colors_inner')
 
-  ! world max
-  ints_to_reduce(1) = num_interfaces
-  ints_to_reduce(2) = max_nibool_interfaces
-  ints_to_reduce(3) = num_phase_ispec
-  ints_to_reduce(4) = num_colors_outer
-  ints_to_reduce(5) = num_colors_inner
-
-  call max_allreduce_i(ints_to_reduce,num_ints_to_reduce)
-
-  num_interfaces_wmax        = ints_to_reduce(1)
-  max_nibool_interfaces_wmax = ints_to_reduce(2)
-  num_phase_ispec_wmax       = ints_to_reduce(3)
-  num_colors_outer_wmax      = ints_to_reduce(4)
-  num_colors_inner_wmax      = ints_to_reduce(5)
-
   !--------------------------------------.
   ! Get offsets to avoid buffer overflow |
   !--------------------------------------'
@@ -754,36 +734,36 @@ subroutine read_mesh_databases_MPI_adios(iregion_code)
   endif
 
   ! temporary arrays
-  allocate(my_neighbors_wmax(num_interfaces_wmax), &
-           nibool_interfaces_wmax(num_interfaces_wmax),stat=ierr)
+  allocate(tmp_my_neighbors(num_interfaces), &
+           tmp_nibool_interfaces(num_interfaces),stat=ierr)
   if (ierr /= 0 ) call exit_mpi(myrank,'Error allocating array my_neighbors_crust_mantle etc.')
 
-  allocate(ibool_interfaces_wmax(max_nibool_interfaces_wmax,num_interfaces_wmax), stat=ierr)
+  allocate(tmp_ibool_interfaces(max_nibool_interfaces,num_interfaces), stat=ierr)
   if (ierr /= 0 ) call exit_mpi(myrank,'Error allocating array ibool_interfaces_crust_mantle')
 
   if (num_interfaces > 0) then
 ! note: we set offset values which usually are equal to local_dim * myrank.
 !       this is more flexible than setting it directly as local_dim * myrank in case local_dim varies for different processes.
     start(1) = offset_my_neighbors
-    count(1) = int(num_interfaces_wmax,kind=8)
+    count(1) = int(num_interfaces,kind=8)
     call set_selection_boundingbox(sel, start, count)
 
     call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                   trim(region_name) // "my_neighbors/array", my_neighbors_wmax)
+                                   trim(region_name) // "my_neighbors/array", tmp_my_neighbors)
     call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                   trim(region_name) // "nibool_interfaces/array", nibool_interfaces_wmax)
+                                   trim(region_name) // "nibool_interfaces/array", tmp_nibool_interfaces)
 
     call read_adios_perform(myadios_file)
     call delete_adios_selection(sel)
 
-    ibool_interfaces_wmax(:,:) = 0
+    tmp_ibool_interfaces(:,:) = 0
 
     start(1) = offset_ibool_interfaces
-    count(1) = int(max_nibool_interfaces_wmax,kind=8) * int(num_interfaces_wmax,kind=8)
+    count(1) = int(max_nibool_interfaces,kind=8) * int(num_interfaces,kind=8)
     call set_selection_boundingbox(sel, start, count)
 
     call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                   trim(region_name) // "ibool_interfaces/array", ibool_interfaces_wmax)
+                                   trim(region_name) // "ibool_interfaces/array", tmp_ibool_interfaces)
 
     call read_adios_perform(myadios_file)
     call delete_adios_selection(sel)
@@ -792,33 +772,35 @@ subroutine read_mesh_databases_MPI_adios(iregion_code)
   ! inner / outer elements
   if (num_phase_ispec < 0 ) call exit_mpi(myrank,'Error num_phase_ispec is < zero')
 
-  allocate(phase_ispec_inner_wmax(num_phase_ispec_wmax,2),stat=ierr)
-  if (ierr /= 0 ) call exit_mpi(myrank,'Error allocating array phase_ispec_inner_wmax')
+  allocate(tmp_phase_ispec_inner(num_phase_ispec,2),stat=ierr)
+  if (ierr /= 0 ) call exit_mpi(myrank,'Error allocating array phase_ispec_inner')
+
   if (num_phase_ispec > 0) then
-    phase_ispec_inner_wmax(:,:) = 0
+    tmp_phase_ispec_inner(:,:) = 0
 
     start(1) = offset_phase_ispec_inner
-    count(1) = int(num_phase_ispec_wmax,kind=8) * 2
+    count(1) = int(num_phase_ispec,kind=8) * 2
     call set_selection_boundingbox(sel, start, count)
 
     call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                   trim(region_name) // "phase_ispec_inner/array", phase_ispec_inner_wmax)
+                                   trim(region_name) // "phase_ispec_inner/array", tmp_phase_ispec_inner)
 
     call read_adios_perform(myadios_file)
     call delete_adios_selection(sel)
   endif
 
   ! mesh coloring for GPUs
-  allocate(num_elem_colors_wmax(num_colors_outer_wmax + num_colors_inner_wmax), stat=ierr)
-  if (ierr /= 0) call exit_mpi(myrank,'Error allocating num_elem_colors_wmax array')
+  allocate(tmp_num_elem_colors(num_colors_outer + num_colors_inner), stat=ierr)
+  if (ierr /= 0) call exit_mpi(myrank,'Error allocating num_elem_colors array')
+
   if (USE_MESH_COLORING_GPU) then
     ! colors
     start(1) = offset_num_elem_colors
-    count(1) = int(num_colors_outer_wmax,kind=8) + int(num_colors_inner_wmax,kind=8)
+    count(1) = int(num_colors_outer,kind=8) + int(num_colors_inner,kind=8)
     call set_selection_boundingbox(sel, start, count)
 
     call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                   trim(region_name) // "num_elem_colors/array", num_elem_colors_wmax)
+                                   trim(region_name) // "num_elem_colors/array", tmp_num_elem_colors)
 
     call read_adios_perform(myadios_file)
     call delete_adios_selection(sel)
@@ -845,8 +827,8 @@ subroutine read_mesh_databases_MPI_adios(iregion_code)
              nibool_interfaces_crust_mantle(num_interfaces),stat=ierr)
     if (ierr /= 0 ) call exit_mpi(myrank,'Error allocating array my_neighbors_crust_mantle etc.')
     if (num_interfaces > 0) then
-      my_neighbors_crust_mantle(1:num_interfaces) = my_neighbors_wmax(1:num_interfaces)
-      nibool_interfaces_crust_mantle(1:num_interfaces) = nibool_interfaces_wmax(1:num_interfaces)
+      my_neighbors_crust_mantle(1:num_interfaces) = tmp_my_neighbors(1:num_interfaces)
+      nibool_interfaces_crust_mantle(1:num_interfaces) = tmp_nibool_interfaces(1:num_interfaces)
     endif
 
     allocate(ibool_interfaces_crust_mantle(max_nibool_interfaces,num_interfaces), stat=ierr)
@@ -854,7 +836,7 @@ subroutine read_mesh_databases_MPI_adios(iregion_code)
     if (num_interfaces > 0) then
       ibool_interfaces_crust_mantle(:,:) = 0
       do i = 1,num_interfaces
-        ibool_interfaces_crust_mantle(1:max_nibool_interfaces,i) = ibool_interfaces_wmax(1:max_nibool_interfaces,i)
+        ibool_interfaces_crust_mantle(1:max_nibool_interfaces,i) = tmp_ibool_interfaces(1:max_nibool_interfaces,i)
       enddo
     endif
 
@@ -864,7 +846,7 @@ subroutine read_mesh_databases_MPI_adios(iregion_code)
       phase_ispec_inner_crust_mantle(:,:) = 0
       ! fills actual values
       do i = 1,2
-        phase_ispec_inner_crust_mantle(1:num_phase_ispec,i) = phase_ispec_inner_wmax(1:num_phase_ispec,i)
+        phase_ispec_inner_crust_mantle(1:num_phase_ispec,i) = tmp_phase_ispec_inner(1:num_phase_ispec,i)
       enddo
     endif
 
@@ -874,7 +856,7 @@ subroutine read_mesh_databases_MPI_adios(iregion_code)
     if (USE_MESH_COLORING_GPU) then
       ! colors
       num_elem_colors_crust_mantle(1:(num_colors_outer + num_colors_inner)) = &
-              num_elem_colors_wmax(1:(num_colors_outer + num_colors_inner))
+              tmp_num_elem_colors(1:(num_colors_outer + num_colors_inner))
     endif
 
   case (IREGION_OUTER_CORE)
@@ -892,8 +874,8 @@ subroutine read_mesh_databases_MPI_adios(iregion_code)
              nibool_interfaces_outer_core(num_interfaces),stat=ierr)
     if (ierr /= 0 ) call exit_mpi(myrank,'Error allocating array my_neighbors_outer_core etc.')
     if (num_interfaces > 0) then
-      my_neighbors_outer_core(1:num_interfaces) = my_neighbors_wmax(1:num_interfaces)
-      nibool_interfaces_outer_core(1:num_interfaces) = nibool_interfaces_wmax(1:num_interfaces)
+      my_neighbors_outer_core(1:num_interfaces) = tmp_my_neighbors(1:num_interfaces)
+      nibool_interfaces_outer_core(1:num_interfaces) = tmp_nibool_interfaces(1:num_interfaces)
     endif
 
     allocate(ibool_interfaces_outer_core(max_nibool_interfaces,num_interfaces), stat=ierr)
@@ -901,7 +883,7 @@ subroutine read_mesh_databases_MPI_adios(iregion_code)
     if (num_interfaces > 0) then
       ibool_interfaces_outer_core(:,:) = 0
       do i = 1,num_interfaces
-        ibool_interfaces_outer_core(1:max_nibool_interfaces,i) = ibool_interfaces_wmax(1:max_nibool_interfaces,i)
+        ibool_interfaces_outer_core(1:max_nibool_interfaces,i) = tmp_ibool_interfaces(1:max_nibool_interfaces,i)
       enddo
     endif
 
@@ -911,7 +893,7 @@ subroutine read_mesh_databases_MPI_adios(iregion_code)
       phase_ispec_inner_outer_core(:,:) = 0
       ! fills actual values
       do i = 1,2
-        phase_ispec_inner_outer_core(1:num_phase_ispec,i) = phase_ispec_inner_wmax(1:num_phase_ispec,i)
+        phase_ispec_inner_outer_core(1:num_phase_ispec,i) = tmp_phase_ispec_inner(1:num_phase_ispec,i)
       enddo
     endif
 
@@ -921,7 +903,7 @@ subroutine read_mesh_databases_MPI_adios(iregion_code)
     if (USE_MESH_COLORING_GPU) then
       ! colors
       num_elem_colors_outer_core(1:(num_colors_outer + num_colors_inner)) = &
-              num_elem_colors_wmax(1:(num_colors_outer + num_colors_inner))
+              tmp_num_elem_colors(1:(num_colors_outer + num_colors_inner))
     endif
 
   case (IREGION_INNER_CORE)
@@ -939,8 +921,8 @@ subroutine read_mesh_databases_MPI_adios(iregion_code)
              nibool_interfaces_inner_core(num_interfaces),stat=ierr)
     if (ierr /= 0 ) call exit_mpi(myrank,'Error allocating array my_neighbors_inner_core etc.')
     if (num_interfaces > 0) then
-      my_neighbors_inner_core(1:num_interfaces) = my_neighbors_wmax(1:num_interfaces)
-      nibool_interfaces_inner_core(1:num_interfaces) = nibool_interfaces_wmax(1:num_interfaces)
+      my_neighbors_inner_core(1:num_interfaces) = tmp_my_neighbors(1:num_interfaces)
+      nibool_interfaces_inner_core(1:num_interfaces) = tmp_nibool_interfaces(1:num_interfaces)
     endif
 
     allocate(ibool_interfaces_inner_core(max_nibool_interfaces,num_interfaces), stat=ierr)
@@ -948,7 +930,7 @@ subroutine read_mesh_databases_MPI_adios(iregion_code)
     if (num_interfaces > 0) then
       ibool_interfaces_inner_core(:,:) = 0
       do i = 1,num_interfaces
-        ibool_interfaces_inner_core(1:max_nibool_interfaces,i) = ibool_interfaces_wmax(1:max_nibool_interfaces,i)
+        ibool_interfaces_inner_core(1:max_nibool_interfaces,i) = tmp_ibool_interfaces(1:max_nibool_interfaces,i)
       enddo
     endif
 
@@ -958,7 +940,7 @@ subroutine read_mesh_databases_MPI_adios(iregion_code)
       phase_ispec_inner_inner_core(:,:) = 0
       ! fills actual values
       do i = 1,2
-        phase_ispec_inner_inner_core(1:num_phase_ispec,i) = phase_ispec_inner_wmax(1:num_phase_ispec,i)
+        phase_ispec_inner_inner_core(1:num_phase_ispec,i) = tmp_phase_ispec_inner(1:num_phase_ispec,i)
       enddo
     endif
 
@@ -968,7 +950,7 @@ subroutine read_mesh_databases_MPI_adios(iregion_code)
     if (USE_MESH_COLORING_GPU) then
       ! colors
       num_elem_colors_inner_core(1:(num_colors_outer + num_colors_inner)) = &
-              num_elem_colors_wmax(1:(num_colors_outer + num_colors_inner))
+              tmp_num_elem_colors(1:(num_colors_outer + num_colors_inner))
     endif
 
   case default
@@ -976,8 +958,8 @@ subroutine read_mesh_databases_MPI_adios(iregion_code)
   end select
 
   ! frees temporary arrays
-  deallocate(my_neighbors_wmax,nibool_interfaces_wmax)
-  deallocate(ibool_interfaces_wmax)
+  deallocate(tmp_my_neighbors,tmp_nibool_interfaces)
+  deallocate(tmp_ibool_interfaces)
 
 end subroutine read_mesh_databases_MPI_adios
 
