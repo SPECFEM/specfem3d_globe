@@ -151,9 +151,9 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine get_absorb_save_Stacey_boundary_adios(iregion, num_abs_boundary_faces, &
-                                                   abs_boundary_ispec,abs_boundary_npoin, &
-                                                   abs_boundary_ijk,abs_boundary_normal,abs_boundary_jacobian2Dw)
+  subroutine get_absorb_stacey_boundary_adios(iregion, num_abs_boundary_faces, &
+                                              abs_boundary_ispec,abs_boundary_npoin, &
+                                              abs_boundary_ijk,abs_boundary_normal,abs_boundary_jacobian2Dw)
 
 
   use constants, only: NDIM,NGLLX,NGLLY,CUSTOM_REAL,MAX_STRING_LEN,myrank
@@ -275,4 +275,4 @@
 
   num_regions_written = num_regions_written + 1
 
-  end subroutine get_absorb_save_Stacey_boundary_adios
+  end subroutine get_absorb_stacey_boundary_adios

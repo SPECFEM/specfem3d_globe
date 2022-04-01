@@ -42,13 +42,13 @@ void FC_FUNC_(get_absorb_adios,GET_ABSORB_ADIOS)(int* iregion,
                                                  int* nimin, int* nimax, int* njmin, int* njmax, int* nkmin_xi, int* nkmin_eta,
                                                  int* NSPEC2DMAX_XMIN_XMAX, int* NSPEC2DMAX_YMIN_YMAX) {}
 
-void FC_FUNC_(get_absorb_save_Stacey_boundary_adios,GET_ABSORB_SAVE_STACEY_BOUNDARY_ADIOS)(int* iregion,
-                                                                                           int* num_abs_boundary_faces,
-                                                                                           int* abs_boundary_ispec,
-                                                                                           int* abs_boundary_npoin,
-                                                                                           int* abs_boundary_ijk,
-                                                                                           realw* abs_boundary_normal,
-                                                                                           realw* abs_boundary_jacobian2Dw) {}
+void FC_FUNC_(get_absorb_stacey_boundary_adios,GET_ABSORB_STACEY_BOUNDARY_ADIOS)(int* iregion,
+                                                                                 int* num_abs_boundary_faces,
+                                                                                 int* abs_boundary_ispec,
+                                                                                 int* abs_boundary_npoin,
+                                                                                 int* abs_boundary_ijk,
+                                                                                 realw* abs_boundary_normal,
+                                                                                 realw* abs_boundary_jacobian2Dw) {}
 
 // model_gll_adios.F90
 void FC_FUNC_(read_gll_model_adios,READ_GLL_MODEL_ADIOS)(void) {}

@@ -512,9 +512,9 @@
   if (DEBUG) then
     ! saves arrays to file
     if (ADIOS_FOR_ARRAYS_SOLVER) then
-      call get_absorb_save_Stacey_boundary_adios(iregion, num_abs_boundary_faces, &
-                                                 abs_boundary_ispec,abs_boundary_npoin, &
-                                                 abs_boundary_ijk,abs_boundary_normal,abs_boundary_jacobian2Dw)
+      call get_absorb_stacey_boundary_adios(iregion, num_abs_boundary_faces, &
+                                            abs_boundary_ispec,abs_boundary_npoin, &
+                                            abs_boundary_ijk,abs_boundary_normal,abs_boundary_jacobian2Dw)
     else
       ! binary format
       open(unit=IOUT,file=prname(1:len_trim(prname))//'stacey_boundary_arrays.bin', &
