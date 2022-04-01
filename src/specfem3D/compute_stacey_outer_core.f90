@@ -51,7 +51,7 @@
     absorb_zmin_outer_core, &
     reclen_xmin_outer_core,reclen_xmax_outer_core, &
     reclen_ymin_outer_core,reclen_ymax_outer_core, &
-    reclen_zmin, &
+    reclen_zmin_outer_core, &
     ibelm_xmin_outer_core,ibelm_xmax_outer_core, &
     ibelm_ymin_outer_core,ibelm_ymax_outer_core, &
     ibelm_bottom_outer_core
@@ -73,6 +73,8 @@
   if (SIMULATION_TYPE == 3) return
 
   ! outer core
+  ! checks if anything to do
+  if (NSPEC_OUTER_CORE == 0) return
 
   if (.not. GPU_MODE) then
     ! on CPU
@@ -326,7 +328,7 @@
     ! zmin
     ! for surface elements exactly on the ICB
     if (nspec2D_zmin_outer_core > 0) then
-      call write_abs(8,absorb_zmin_outer_core,reclen_zmin,it)
+      call write_abs(8,absorb_zmin_outer_core,reclen_zmin_outer_core,it)
     endif
   endif ! SAVE_STACEY
 
@@ -359,7 +361,7 @@
     absorb_zmin_outer_core, &
     reclen_xmin_outer_core,reclen_xmax_outer_core, &
     reclen_ymin_outer_core,reclen_ymax_outer_core, &
-    reclen_zmin, &
+    reclen_zmin_outer_core, &
     ibelm_xmin_outer_core,ibelm_xmax_outer_core, &
     ibelm_ymin_outer_core,ibelm_ymax_outer_core, &
     ibelm_bottom_outer_core
@@ -380,6 +382,8 @@
   if (SIMULATION_TYPE /= 3 ) return
 
   ! outer core
+  ! checks if anything to do
+  if (NSPEC_OUTER_CORE == 0) return
 
   !   xmin
   ! if two chunks exclude this face for one of them
@@ -514,7 +518,7 @@
   ! for surface elements exactly on the ICB
   if (nspec2D_zmin_outer_core > 0) then
     ! reads in boundary contributions from file
-    call read_abs(8,absorb_zmin_outer_core,reclen_zmin,NSTEP-it+1)
+    call read_abs(8,absorb_zmin_outer_core,reclen_zmin_outer_core,NSTEP-it+1)
 
     ! adds boundary contributions
     if (.not. GPU_MODE) then
@@ -580,6 +584,8 @@
   if (.not. UNDO_ATTENUATION) stop 'Error invalid UNDO_ATTENUATION flag for compute_stacey_oc_backward_undoatt()'
 
   ! outer core
+  ! checks if anything to do
+  if (NSPEC_OUTER_CORE == 0) return
 
   !   xmin
   ! if two chunks exclude this face for one of them

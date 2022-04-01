@@ -127,7 +127,7 @@
 !   big loop over all spectral elements in the fluid
 ! ****************************************************
 
-  if (MOVIE_VOLUME .and. NSPEC_OUTER_CORE_3DMOVIE /= 1 .and. (iphase == 1)) then
+  if (MOVIE_VOLUME .and. NSPEC_OUTER_CORE_3DMOVIE > 1 .and. (iphase == 1)) then
     div_displfluid(:,:,:,:) = 0._CUSTOM_REAL
   endif
 
@@ -437,7 +437,7 @@
         ! note: these calculations are only considered for SIMULATION_TYPE == 1 .and. SAVE_FORWARD
         !          and one has set MOVIE_VOLUME_TYPE == 4 when MOVIE_VOLUME is .true.;
         !         in case of SIMULATION_TYPE == 3, it gets overwritten by compute_kernels_outer_core()
-        if (MOVIE_VOLUME .and. NSPEC_OUTER_CORE_3DMOVIE /= 1) then
+        if (MOVIE_VOLUME .and. NSPEC_OUTER_CORE_3DMOVIE > 1) then
           div_displfluid(INDEX_IJK,ispec) = dpotentialdxl(INDEX_IJK) * vec_x &
                                           + dpotentialdyl(INDEX_IJK) * vec_y &
                                           + dpotentialdzl(INDEX_IJK) * vec_z

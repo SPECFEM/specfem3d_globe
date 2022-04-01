@@ -235,6 +235,11 @@
 
     write(IMAIN,*)
     write(IMAIN,*)
+    if (REGIONAL_MESH_CUTOFF) then
+      write(IMAIN,*) 'Regional mesh cutoff:'
+      write(IMAIN,*) '  cut-off depth          = ',REGIONAL_MESH_CUTOFF_DEPTH,'(km)'
+      write(IMAIN,*)
+    endif
     call flush_IMAIN()
   endif
 

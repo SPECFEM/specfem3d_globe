@@ -439,16 +439,16 @@
 
 
   subroutine compute_element_strain_att_Dev(ispec,nglob,nspec, &
-                                           displ,veloc,deltat, &
-                                           ibool, &
-                                           hprime_xx,hprime_xxT, &
-                                           deriv, &
-                                           epsilondev_xx_loc_nplus1, &
-                                           epsilondev_yy_loc_nplus1, &
-                                           epsilondev_xy_loc_nplus1, &
-                                           epsilondev_xz_loc_nplus1, &
-                                           epsilondev_yz_loc_nplus1, &
-                                           nspec_strain_only,eps_trace_over_3_loc_nplus1)
+                                            displ,veloc,deltat, &
+                                            ibool, &
+                                            hprime_xx,hprime_xxT, &
+                                            deriv, &
+                                            epsilondev_xx_loc_nplus1, &
+                                            epsilondev_yy_loc_nplus1, &
+                                            epsilondev_xy_loc_nplus1, &
+                                            epsilondev_xz_loc_nplus1, &
+                                            epsilondev_yz_loc_nplus1, &
+                                            NSPEC_STRAIN_ONLY,eps_trace_over_3_loc_nplus1)
 
   use constants
 
@@ -469,8 +469,8 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(out) :: epsilondev_xz_loc_nplus1
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(out) :: epsilondev_yz_loc_nplus1
 
-  integer,intent(in) :: nspec_strain_only
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_strain_only),intent(out) :: eps_trace_over_3_loc_nplus1
+  integer,intent(in) :: NSPEC_STRAIN_ONLY
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STRAIN_ONLY),intent(out) :: eps_trace_over_3_loc_nplus1
 
   ! local variable
   integer :: iglob
@@ -543,13 +543,8 @@
     duzdyl_plus_duydzl = duzdyl + duydzl
 
     templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-    if (nspec_strain_only == 1) then
-      if (ispec == 1) then
-        eps_trace_over_3_loc_nplus1(INDEX_IJK,1) = templ
-      endif
-    else
-      eps_trace_over_3_loc_nplus1(INDEX_IJK,ispec) = templ
-    endif
+    if (NSPEC_STRAIN_ONLY > 1) eps_trace_over_3_loc_nplus1(INDEX_IJK,ispec) = templ
+
     epsilondev_xx_loc_nplus1(INDEX_IJK,ispec) = duxdxl - templ
     epsilondev_yy_loc_nplus1(INDEX_IJK,ispec) = duydyl - templ
     epsilondev_xy_loc_nplus1(INDEX_IJK,ispec) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
@@ -724,7 +719,7 @@
                                               epsilondev_xy_loc_nplus1, &
                                               epsilondev_xz_loc_nplus1, &
                                               epsilondev_yz_loc_nplus1, &
-                                              nspec_strain_only,eps_trace_over_3_loc_nplus1)
+                                              NSPEC_STRAIN_ONLY,eps_trace_over_3_loc_nplus1)
 
   use constants
 
@@ -751,8 +746,8 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: epsilondev_xz_loc_nplus1
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: epsilondev_yz_loc_nplus1
 
-  integer :: nspec_strain_only
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_strain_only) :: eps_trace_over_3_loc_nplus1
+  integer :: NSPEC_STRAIN_ONLY
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STRAIN_ONLY) :: eps_trace_over_3_loc_nplus1
 
   ! local variable
   integer :: i,j,k,l,iglob
@@ -850,13 +845,8 @@
         duzdyl_plus_duydzl = duzdyl + duydzl
 
         templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-        if (nspec_strain_only == 1) then
-          if (ispec == 1) then
-            eps_trace_over_3_loc_nplus1(i,j,k,1) = templ
-          endif
-        else
-          eps_trace_over_3_loc_nplus1(i,j,k,ispec) = templ
-        endif
+        if (NSPEC_STRAIN_ONLY > 1) eps_trace_over_3_loc_nplus1(i,j,k,ispec) = templ
+
         epsilondev_xx_loc_nplus1(i,j,k,ispec) = duxdxl - templ
         epsilondev_yy_loc_nplus1(i,j,k,ispec) = duydyl - templ
         epsilondev_xy_loc_nplus1(i,j,k,ispec) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl

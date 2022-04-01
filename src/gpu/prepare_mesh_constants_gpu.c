@@ -991,6 +991,7 @@ void FC_FUNC_ (prepare_fields_absorb_device,
                PREPARE_FIELDS_ABSORB_DEVICE) (long *Mesh_pointer_f,
                                               int *nspec2D_xmin_crust_mantle, int *nspec2D_xmax_crust_mantle,
                                               int *nspec2D_ymin_crust_mantle, int *nspec2D_ymax_crust_mantle,
+                                              int *nspec2D_zmin_crust_mantle,
                                               int *NSPEC2DMAX_XMIN_XMAX_CM, int *NSPEC2DMAX_YMIN_YMAX_CM,
                                               int *nimin_crust_mantle, int *nimax_crust_mantle,
                                               int *njmin_crust_mantle, int *njmax_crust_mantle,
@@ -999,8 +1000,10 @@ void FC_FUNC_ (prepare_fields_absorb_device,
                                               int *ibelm_ymin_crust_mantle, int *ibelm_ymax_crust_mantle,
                                               realw *normal_xmin_crust_mantle, realw *normal_xmax_crust_mantle,
                                               realw *normal_ymin_crust_mantle, realw *normal_ymax_crust_mantle,
+                                              realw *normal_bottom_crust_mantle,
                                               realw *jacobian2D_xmin_crust_mantle, realw *jacobian2D_xmax_crust_mantle,
                                               realw *jacobian2D_ymin_crust_mantle, realw *jacobian2D_ymax_crust_mantle,
+                                              realw *jacobian2D_bottom_crust_mantle,
                                               realw *rho_vp_crust_mantle,
                                               realw *rho_vs_crust_mantle,
                                               int *nspec2D_xmin_outer_core, int *nspec2D_xmax_outer_core,
@@ -1030,6 +1033,7 @@ void FC_FUNC_ (prepare_fields_absorb_device,
   mp->nspec2D_xmax_crust_mantle = *nspec2D_xmax_crust_mantle;
   mp->nspec2D_ymin_crust_mantle = *nspec2D_ymin_crust_mantle;
   mp->nspec2D_ymax_crust_mantle = *nspec2D_ymax_crust_mantle;
+  mp->nspec2D_zmin_crust_mantle = *nspec2D_zmin_crust_mantle;
 
   // vp & vs
   size = NGLL3 * (mp->NSPEC_CRUST_MANTLE);
@@ -1080,14 +1084,28 @@ void FC_FUNC_ (prepare_fields_absorb_device,
 
   // ymax
   if (mp->nspec2D_ymax_crust_mantle > 0) {
-    gpuCreateCopy_todevice_int (&mp->d_ibelm_ymax_crust_mantle,
-                       ibelm_ymax_crust_mantle, mp->nspec2D_ymax_crust_mantle);
+    gpuCreateCopy_todevice_int (&mp->d_ibelm_ymax_crust_mantle, ibelm_ymax_crust_mantle, mp->nspec2D_ymax_crust_mantle);
     gpuCreateCopy_todevice_realw (&mp->d_normal_ymax_crust_mantle, normal_ymax_crust_mantle, NDIM * NGLL2 * mp->nspec2D_ymax_crust_mantle);
     gpuCreateCopy_todevice_realw (&mp->d_jacobian2D_ymax_crust_mantle, jacobian2D_ymax_crust_mantle, NGLL2 * mp->nspec2D_ymax_crust_mantle);
 
     // boundary buffer
     if (mp->save_stacey) {
       gpuMalloc_realw (&mp->d_absorb_ymax_crust_mantle, NDIM * NGLL2 * mp->nspec2D_ymax_crust_mantle);
+    }
+  }
+
+  // zmin
+  // nspec2D_zmin_crust_mantle is used for absorbing bottom surface of crust/mantle
+  // it is non-zero when REGIONAL_MESH_CUTOFF is selected
+  if (mp->nspec2D_zmin_crust_mantle > 0) {
+    // ibelm_bottom also used by coupling, allocated when crust_mantle is prepared
+    //gpuCreateCopy_todevice_int (&mp->d_ibelm_bottom_crust_mantle, ibelm_bottom_crust_mantle, mp->nspec2D_zmin_crust_mantle);
+    gpuCreateCopy_todevice_realw (&mp->d_normal_bottom_crust_mantle, normal_bottom_crust_mantle, NDIM * NGLL2 * mp->nspec2D_zmin_crust_mantle);
+    gpuCreateCopy_todevice_realw (&mp->d_jacobian2D_bottom_crust_mantle, jacobian2D_bottom_crust_mantle, NGLL2 * mp->nspec2D_zmin_crust_mantle);
+
+    // boundary buffer
+    if (mp->save_stacey) {
+      gpuMalloc_realw (&mp->d_absorb_zmin_crust_mantle, NDIM * NGLL2 * mp->nspec2D_zmin_crust_mantle);
     }
   }
 
@@ -3062,6 +3080,14 @@ void FC_FUNC_ (prepare_cleanup_device,
       gpuFree (&mp->d_jacobian2D_ymax_crust_mantle);
       if (mp->save_stacey) {
         gpuFree (&mp->d_absorb_ymax_crust_mantle);
+      }
+    }
+    if (mp->nspec2D_zmin_crust_mantle > 0) {
+      //gpuFree (&mp->d_ibelm_bottom_crust_mantle); also used for coupling, free later
+      gpuFree (&mp->d_normal_bottom_crust_mantle);
+      gpuFree (&mp->d_jacobian2D_bottom_crust_mantle);
+      if (mp->save_stacey) {
+        gpuFree (&mp->d_absorb_zmin_crust_mantle);
       }
     }
     gpuFree (&mp->d_vp_outer_core);

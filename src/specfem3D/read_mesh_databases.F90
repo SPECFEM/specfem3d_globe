@@ -173,7 +173,7 @@
     if (TRANSVERSE_ISOTROPY_VAL) then
       nspec_tiso = NSPECMAX_TISO_MANTLE
     else
-      nspec_tiso = 1
+      nspec_tiso = 0
     endif
     nspec_ani = NSPECMAX_ANISO_MANTLE ! 1
   endif
@@ -342,7 +342,7 @@
   rho_vs_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
 
   ! reads databases file
-  if (I_should_read_the_database) then
+  if (I_should_read_the_database .and. NSPEC_CRUST_MANTLE > 0) then
     if (ADIOS_FOR_ARRAYS_SOLVER) then
       call read_arrays_solver_adios(IREGION_CRUST_MANTLE, &
                                     NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,NGLOB_XY_CM, &
@@ -394,16 +394,19 @@
   call bcast_mesh_databases_CM()
 
   ! check that the number of points in this slice is correct
-  if (minval(ibool_crust_mantle(:,:,:,:)) /= 1) then
-    print *,'Error: rank ',myrank,' has invalid crust_mantle ibool indexing min/max = ', &
-            minval(ibool_crust_mantle(:,:,:,:)),maxval(ibool_crust_mantle(:,:,:,:)),'max glob = ',NGLOB_CRUST_MANTLE
-    call exit_MPI(myrank,'incorrect global numbering: iboolmin is not equal to 1 in crust and mantle')
+  if (NSPEC_CRUST_MANTLE > 0) then
+    if (minval(ibool_crust_mantle(:,:,:,:)) /= 1) then
+      print *,'Error: rank ',myrank,' has invalid crust_mantle ibool indexing min/max = ', &
+              minval(ibool_crust_mantle(:,:,:,:)),maxval(ibool_crust_mantle(:,:,:,:)),'max glob = ',NGLOB_CRUST_MANTLE
+      call exit_MPI(myrank,'incorrect global numbering: iboolmin is not equal to 1 in crust and mantle')
+    endif
+    if (maxval(ibool_crust_mantle(:,:,:,:)) /= NGLOB_CRUST_MANTLE) then
+      print *,'Error: rank ',myrank,' has invalid ibool indexing min/max = ', &
+              minval(ibool_crust_mantle(:,:,:,:)),maxval(ibool_crust_mantle(:,:,:,:)), 'max glob =',NGLOB_CRUST_MANTLE
+      call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in crust and mantle')
+    endif
   endif
-  if (maxval(ibool_crust_mantle(:,:,:,:)) /= NGLOB_CRUST_MANTLE) then
-    print *,'Error: rank ',myrank,' has invalid ibool indexing min/max = ', &
-            minval(ibool_crust_mantle(:,:,:,:)),maxval(ibool_crust_mantle(:,:,:,:)), 'max glob =',NGLOB_CRUST_MANTLE
-    call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in crust and mantle')
-  endif
+
   deallocate(dummy_idoubling)
 
   ! mass matrix corrections
@@ -484,11 +487,11 @@
   ! outer core (no anisotropy nor S velocity)
   ! rmass_ocean_load is not used in this routine because it is meaningless in the outer core
   nspec_iso = NSPEC_OUTER_CORE
-  nspec_tiso = 1
-  nspec_ani = 1
+  nspec_tiso = 0
+  nspec_ani = 0
 
   ! dummy allocation
-  NGLOB_XY_dummy = 1
+  NGLOB_XY_dummy = 0
 
   allocate(dummy_rmass(NGLOB_XY_dummy), &
            dummy_ispec_is_tiso(NSPEC_OUTER_CORE), &
@@ -534,7 +537,7 @@
   vp_outer_core(:,:,:,:) = 0.0
 
   ! reads in mesh arrays
-  if (I_should_read_the_database) then
+  if (I_should_read_the_database .and. NSPEC_OUTER_CORE > 0) then
     if (ADIOS_FOR_ARRAYS_SOLVER) then
       call read_arrays_solver_adios(IREGION_OUTER_CORE, &
                                     NSPEC_OUTER_CORE,NGLOB_OUTER_CORE,NGLOB_XY_dummy, &
@@ -588,15 +591,17 @@
   deallocate(dummy_idoubling_outer_core,dummy_ispec_is_tiso,dummy_rmass)
 
   ! check that the number of points in this slice is correct
-  if (minval(ibool_outer_core(:,:,:,:)) /= 1) then
-    print *,'Error: rank ',myrank,' has invalid outer_core ibool indexing min/max = ', &
-            minval(ibool_outer_core(:,:,:,:)),maxval(ibool_outer_core(:,:,:,:)),'max glob = ',NGLOB_OUTER_CORE
-    call exit_MPI(myrank,'incorrect global numbering: iboolmin is not equal to 1 in outer core')
-  endif
-  if (maxval(ibool_outer_core(:,:,:,:)) /= NGLOB_OUTER_CORE) then
-    print *,'Error: rank ',myrank,' has invalid ibool indexing min/max = ', &
-            minval(ibool_outer_core(:,:,:,:)),maxval(ibool_outer_core(:,:,:,:)),'max glob = ',NGLOB_OUTER_CORE
-    call exit_MPI(myrank, 'incorrect global numbering: iboolmax does not equal nglob in outer core')
+  if (NSPEC_OUTER_CORE > 0) then
+    if (minval(ibool_outer_core(:,:,:,:)) /= 1) then
+      print *,'Error: rank ',myrank,' has invalid outer_core ibool indexing min/max = ', &
+              minval(ibool_outer_core(:,:,:,:)),maxval(ibool_outer_core(:,:,:,:)),'max glob = ',NGLOB_OUTER_CORE
+      call exit_MPI(myrank,'incorrect global numbering: iboolmin is not equal to 1 in outer core')
+    endif
+    if (maxval(ibool_outer_core(:,:,:,:)) /= NGLOB_OUTER_CORE) then
+      print *,'Error: rank ',myrank,' has invalid ibool indexing min/max = ', &
+              minval(ibool_outer_core(:,:,:,:)),maxval(ibool_outer_core(:,:,:,:)),'max glob = ',NGLOB_OUTER_CORE
+      call exit_MPI(myrank, 'incorrect global numbering: iboolmax does not equal nglob in outer core')
+    endif
   endif
 
   ! kernel simulations
@@ -632,15 +637,14 @@
   ! inner core (no anisotropy)
   ! rmass_ocean_load is not used in this routine because it is meaningless in the inner core
   nspec_iso = NSPEC_INNER_CORE
-  nspec_tiso = 1
+  nspec_tiso = 0
   if (ANISOTROPIC_INNER_CORE_VAL) then
     nspec_ani = NSPEC_INNER_CORE
   else
-    nspec_ani = 1
+    nspec_ani = 0
   endif
 
-  allocate(dummy_ispec_is_tiso(NSPEC_INNER_CORE), &
-           stat=ier)
+  allocate(dummy_ispec_is_tiso(NSPEC_INNER_CORE),stat=ier)
   if (ier /= 0) stop 'Error allocating dummy ispec in inner core'
   dummy_ispec_is_tiso(:) = .false.
 
@@ -710,7 +714,7 @@
   idoubling_inner_core(:) = 0
 
   ! reads in arrays
-  if (I_should_read_the_database) then
+  if (I_should_read_the_database .and. NSPEC_INNER_CORE > 0) then
     if (ADIOS_FOR_ARRAYS_SOLVER) then
       call read_arrays_solver_adios(IREGION_INNER_CORE, &
                                     NSPEC_INNER_CORE,NGLOB_INNER_CORE,NGLOB_XY_IC, &
@@ -764,10 +768,12 @@
   deallocate(dummy_ispec_is_tiso)
 
   ! check that the number of points in this slice is correct
-  if (minval(ibool_inner_core(:,:,:,:)) /= 1 .or. maxval(ibool_inner_core(:,:,:,:)) /= NGLOB_INNER_CORE) then
-    print *,'Error: rank ',myrank,' has invalid inner_core ibool indexing min/max = ', &
-            minval(ibool_inner_core(:,:,:,:)),maxval(ibool_inner_core(:,:,:,:)),'max glob = ',NGLOB_INNER_CORE
-    call exit_MPI(myrank,'incorrect global numbering: iboolmin/max does not equal 1/nglob in inner core')
+  if (NSPEC_INNER_CORE > 0) then
+    if (minval(ibool_inner_core(:,:,:,:)) /= 1 .or. maxval(ibool_inner_core(:,:,:,:)) /= NGLOB_INNER_CORE) then
+      print *,'Error: rank ',myrank,' has invalid inner_core ibool indexing min/max = ', &
+              minval(ibool_inner_core(:,:,:,:)),maxval(ibool_inner_core(:,:,:,:)),'max glob = ',NGLOB_INNER_CORE
+      call exit_MPI(myrank,'incorrect global numbering: iboolmin/max does not equal 1/nglob in inner core')
+    endif
   endif
 
   ! mass matrix corrections
@@ -907,144 +913,164 @@
   ibelm_ymin_inner_core(:) = 0; ibelm_ymax_inner_core(:) = 0
   ibelm_bottom_inner_core(:) = 0; ibelm_top_inner_core(:) = 0
 
+  nspec2D_xmin_crust_mantle = 0; nspec2D_xmax_crust_mantle = 0
+  nspec2D_ymin_crust_mantle = 0; nspec2D_ymax_crust_mantle = 0
+  nspec2D_zmin_crust_mantle = 0
+
+  nspec2D_xmin_outer_core = 0; nspec2D_xmax_outer_core = 0
+  nspec2D_ymin_outer_core = 0; nspec2D_ymax_outer_core = 0
+  nspec2D_zmin_outer_core = 0
+
+  nspec2D_xmin_inner_core = 0; nspec2D_xmax_inner_core = 0
+  nspec2D_ymin_inner_core = 0; nspec2D_ymax_inner_core = 0
+
   ! reads in arrays
   if (I_should_read_the_database) then
     if (ADIOS_FOR_ARRAYS_SOLVER) then
       call read_mesh_databases_coupling_adios()
     else
       ! crust and mantle
-      ! create name of database
-      call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
+      if (NSPEC_CRUST_MANTLE > 0) then
+        ! create name of database
+        call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
 
-      ! Stacey put back
-      open(unit=IIN,file=prname(1:len_trim(prname))//'boundary.bin', &
-            status='old',form='unformatted',action='read',iostat=ier)
-      if (ier /= 0 ) call exit_mpi(myrank,'Error opening crust_mantle boundary.bin file')
+        ! Stacey put back
+        open(unit=IIN,file=prname(1:len_trim(prname))//'boundary.bin', &
+              status='old',form='unformatted',action='read',iostat=ier)
+        if (ier /= 0 ) call exit_mpi(myrank,'Error opening crust_mantle boundary.bin file')
 
-      read(IIN) nspec2D_xmin_crust_mantle
-      read(IIN) nspec2D_xmax_crust_mantle
-      read(IIN) nspec2D_ymin_crust_mantle
-      read(IIN) nspec2D_ymax_crust_mantle
-      read(IIN) njunk1
-      read(IIN) njunk2
+        read(IIN) nspec2D_xmin_crust_mantle
+        read(IIN) nspec2D_xmax_crust_mantle
+        read(IIN) nspec2D_ymin_crust_mantle
+        read(IIN) nspec2D_ymax_crust_mantle
+        read(IIN) njunk1
+        read(IIN) njunk2
 
-      ! boundary parameters
-      read(IIN) ibelm_xmin_crust_mantle
-      read(IIN) ibelm_xmax_crust_mantle
-      read(IIN) ibelm_ymin_crust_mantle
-      read(IIN) ibelm_ymax_crust_mantle
-      read(IIN) ibelm_bottom_crust_mantle
-      read(IIN) ibelm_top_crust_mantle
+        if (REGIONAL_MESH_CUTOFF) &
+          nspec2D_zmin_crust_mantle = NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE)
 
-      read(IIN) normal_xmin_crust_mantle
-      read(IIN) normal_xmax_crust_mantle
-      read(IIN) normal_ymin_crust_mantle
-      read(IIN) normal_ymax_crust_mantle
-      read(IIN) normal_bottom_crust_mantle
-      read(IIN) normal_top_crust_mantle
+        ! boundary parameters
+        read(IIN) ibelm_xmin_crust_mantle
+        read(IIN) ibelm_xmax_crust_mantle
+        read(IIN) ibelm_ymin_crust_mantle
+        read(IIN) ibelm_ymax_crust_mantle
+        read(IIN) ibelm_bottom_crust_mantle
+        read(IIN) ibelm_top_crust_mantle
 
-      read(IIN) jacobian2D_xmin_crust_mantle
-      read(IIN) jacobian2D_xmax_crust_mantle
-      read(IIN) jacobian2D_ymin_crust_mantle
-      read(IIN) jacobian2D_ymax_crust_mantle
-      read(IIN) jacobian2D_bottom_crust_mantle
-      read(IIN) jacobian2D_top_crust_mantle
-      close(IIN)
+        read(IIN) normal_xmin_crust_mantle
+        read(IIN) normal_xmax_crust_mantle
+        read(IIN) normal_ymin_crust_mantle
+        read(IIN) normal_ymax_crust_mantle
+        read(IIN) normal_bottom_crust_mantle
+        read(IIN) normal_top_crust_mantle
+
+        read(IIN) jacobian2D_xmin_crust_mantle
+        read(IIN) jacobian2D_xmax_crust_mantle
+        read(IIN) jacobian2D_ymin_crust_mantle
+        read(IIN) jacobian2D_ymax_crust_mantle
+        read(IIN) jacobian2D_bottom_crust_mantle
+        read(IIN) jacobian2D_top_crust_mantle
+        close(IIN)
+      endif
 
       ! read parameters to couple fluid and solid regions
       !
       ! outer core
+      if (NSPEC_OUTER_CORE > 0) then
+        ! create name of database
+        call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_PATH)
 
-      ! create name of database
-      call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_PATH)
+        ! boundary parameters
 
-      ! boundary parameters
+        ! Stacey put back
+        open(unit=IIN,file=prname(1:len_trim(prname))//'boundary.bin', &
+              status='old',form='unformatted',action='read',iostat=ier)
+        if (ier /= 0 ) call exit_mpi(myrank,'Error opening outer_core boundary.bin file')
 
-      ! Stacey put back
-      open(unit=IIN,file=prname(1:len_trim(prname))//'boundary.bin', &
-            status='old',form='unformatted',action='read',iostat=ier)
-      if (ier /= 0 ) call exit_mpi(myrank,'Error opening outer_core boundary.bin file')
+        read(IIN) nspec2D_xmin_outer_core
+        read(IIN) nspec2D_xmax_outer_core
+        read(IIN) nspec2D_ymin_outer_core
+        read(IIN) nspec2D_ymax_outer_core
+        read(IIN) njunk1
+        read(IIN) njunk2
 
-      read(IIN) nspec2D_xmin_outer_core
-      read(IIN) nspec2D_xmax_outer_core
-      read(IIN) nspec2D_ymin_outer_core
-      read(IIN) nspec2D_ymax_outer_core
-      read(IIN) njunk1
-      read(IIN) njunk2
+        nspec2D_zmin_outer_core = NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
 
-      nspec2D_zmin_outer_core = NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
+        read(IIN) ibelm_xmin_outer_core
+        read(IIN) ibelm_xmax_outer_core
+        read(IIN) ibelm_ymin_outer_core
+        read(IIN) ibelm_ymax_outer_core
+        read(IIN) ibelm_bottom_outer_core
+        read(IIN) ibelm_top_outer_core
 
-      read(IIN) ibelm_xmin_outer_core
-      read(IIN) ibelm_xmax_outer_core
-      read(IIN) ibelm_ymin_outer_core
-      read(IIN) ibelm_ymax_outer_core
-      read(IIN) ibelm_bottom_outer_core
-      read(IIN) ibelm_top_outer_core
+        read(IIN) normal_xmin_outer_core
+        read(IIN) normal_xmax_outer_core
+        read(IIN) normal_ymin_outer_core
+        read(IIN) normal_ymax_outer_core
+        read(IIN) normal_bottom_outer_core
+        read(IIN) normal_top_outer_core
 
-      read(IIN) normal_xmin_outer_core
-      read(IIN) normal_xmax_outer_core
-      read(IIN) normal_ymin_outer_core
-      read(IIN) normal_ymax_outer_core
-      read(IIN) normal_bottom_outer_core
-      read(IIN) normal_top_outer_core
-
-      read(IIN) jacobian2D_xmin_outer_core
-      read(IIN) jacobian2D_xmax_outer_core
-      read(IIN) jacobian2D_ymin_outer_core
-      read(IIN) jacobian2D_ymax_outer_core
-      read(IIN) jacobian2D_bottom_outer_core
-      read(IIN) jacobian2D_top_outer_core
-      close(IIN)
+        read(IIN) jacobian2D_xmin_outer_core
+        read(IIN) jacobian2D_xmax_outer_core
+        read(IIN) jacobian2D_ymin_outer_core
+        read(IIN) jacobian2D_ymax_outer_core
+        read(IIN) jacobian2D_bottom_outer_core
+        read(IIN) jacobian2D_top_outer_core
+        close(IIN)
+      endif
 
       !
       ! inner core
       !
+      if (NSPEC_INNER_CORE > 0) then
+        ! create name of database
+        call create_name_database(prname,myrank,IREGION_INNER_CORE,LOCAL_PATH)
 
-      ! create name of database
-      call create_name_database(prname,myrank,IREGION_INNER_CORE,LOCAL_PATH)
+        ! read info for vertical edges for central cube matching in inner core
+        open(unit=IIN,file=prname(1:len_trim(prname))//'boundary.bin', &
+              status='old',form='unformatted',action='read',iostat=ier)
+        if (ier /= 0 ) call exit_mpi(myrank,'Error opening inner_core boundary.bin file')
 
-      ! read info for vertical edges for central cube matching in inner core
-      open(unit=IIN,file=prname(1:len_trim(prname))//'boundary.bin', &
-            status='old',form='unformatted',action='read',iostat=ier)
-      if (ier /= 0 ) call exit_mpi(myrank,'Error opening inner_core boundary.bin file')
+        read(IIN) nspec2D_xmin_inner_core
+        read(IIN) nspec2D_xmax_inner_core
+        read(IIN) nspec2D_ymin_inner_core
+        read(IIN) nspec2D_ymax_inner_core
+        read(IIN) njunk1
+        read(IIN) njunk2
 
-      read(IIN) nspec2D_xmin_inner_core
-      read(IIN) nspec2D_xmax_inner_core
-      read(IIN) nspec2D_ymin_inner_core
-      read(IIN) nspec2D_ymax_inner_core
-      read(IIN) njunk1
-      read(IIN) njunk2
-
-      ! boundary parameters
-      read(IIN) ibelm_xmin_inner_core
-      read(IIN) ibelm_xmax_inner_core
-      read(IIN) ibelm_ymin_inner_core
-      read(IIN) ibelm_ymax_inner_core
-      read(IIN) ibelm_bottom_inner_core
-      read(IIN) ibelm_top_inner_core
-      close(IIN)
+        ! boundary parameters
+        read(IIN) ibelm_xmin_inner_core
+        read(IIN) ibelm_xmax_inner_core
+        read(IIN) ibelm_ymin_inner_core
+        read(IIN) ibelm_ymax_inner_core
+        read(IIN) ibelm_bottom_inner_core
+        read(IIN) ibelm_top_inner_core
+        close(IIN)
+      endif
 
       ! -- Boundary Mesh for crust and mantle ---
       if (SAVE_BOUNDARY_MESH .and. SIMULATION_TYPE == 3) then
-        call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
+        if (NSPEC_CRUST_MANTLE > 0) then
+          call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
 
-        open(unit=IIN,file=prname(1:len_trim(prname))//'boundary_disc.bin', &
-              status='old',form='unformatted',action='read',iostat=ier)
-        if (ier /= 0 ) call exit_mpi(myrank,'Error opening boundary_disc.bin file')
+          open(unit=IIN,file=prname(1:len_trim(prname))//'boundary_disc.bin', &
+                status='old',form='unformatted',action='read',iostat=ier)
+          if (ier /= 0 ) call exit_mpi(myrank,'Error opening boundary_disc.bin file')
 
-        read(IIN) njunk1,njunk2,njunk3
-        if (njunk1 /= NSPEC2D_MOHO .and. njunk2 /= NSPEC2D_400 .and. njunk3 /= NSPEC2D_670) &
-                   call exit_mpi(myrank, 'Error reading ibelm_disc.bin file')
-        read(IIN) ibelm_moho_top
-        read(IIN) ibelm_moho_bot
-        read(IIN) ibelm_400_top
-        read(IIN) ibelm_400_bot
-        read(IIN) ibelm_670_top
-        read(IIN) ibelm_670_bot
-        read(IIN) normal_moho
-        read(IIN) normal_400
-        read(IIN) normal_670
-        close(IIN)
+          read(IIN) njunk1,njunk2,njunk3
+          if (njunk1 /= NSPEC2D_MOHO .and. njunk2 /= NSPEC2D_400 .and. njunk3 /= NSPEC2D_670) &
+                     call exit_mpi(myrank, 'Error reading ibelm_disc.bin file')
+          read(IIN) ibelm_moho_top
+          read(IIN) ibelm_moho_bot
+          read(IIN) ibelm_400_top
+          read(IIN) ibelm_400_bot
+          read(IIN) ibelm_670_top
+          read(IIN) ibelm_670_bot
+          read(IIN) normal_moho
+          read(IIN) normal_400
+          read(IIN) normal_670
+          close(IIN)
+        endif
       endif
 
     endif ! ADIOS
@@ -1073,6 +1099,9 @@
 
   ! initializes
   nspec2D_zmin_outer_core = NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
+
+  if (REGIONAL_MESH_CUTOFF) &
+    nspec2D_zmin_crust_mantle = NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE)
 
   ! Boundary Mesh for crust and mantle
   if (SAVE_BOUNDARY_MESH .and. SIMULATION_TYPE == 3) then
@@ -1232,7 +1261,7 @@
   ! read MPI interfaces from file
 
   ! crust mantle
-  if (I_should_read_the_database) then
+  if (I_should_read_the_database .and. NSPEC_CRUST_MANTLE > 0) then
     if (ADIOS_FOR_MPI_ARRAYS) then
       call read_mesh_databases_MPI_adios(IREGION_CRUST_MANTLE)
     else
@@ -1242,10 +1271,13 @@
   call bcast_mesh_databases_MPI_CM()
 
   ! checks interface values read
-  if (minval(my_neighbors_crust_mantle) < 0 .or. maxval(my_neighbors_crust_mantle) >= NPROCTOT) then
-    print *,'Error: invalid MPI neighbors min/max',minval(my_neighbors_crust_mantle),maxval(my_neighbors_crust_mantle),NPROCTOT
-    call exit_mpi(myrank,'Error invalid MPI neighbors crust_mantle')
+  if (NSPEC_CRUST_MANTLE > 0) then
+    if (minval(my_neighbors_crust_mantle) < 0 .or. maxval(my_neighbors_crust_mantle) >= NPROCTOT) then
+      print *,'Error: invalid MPI neighbors min/max',minval(my_neighbors_crust_mantle),maxval(my_neighbors_crust_mantle),NPROCTOT
+      call exit_mpi(myrank,'Error invalid MPI neighbors crust_mantle')
+    endif
   endif
+
   do i = 1,num_interfaces_crust_mantle
     ! number of points on interface
     num_poin = nibool_interfaces_crust_mantle(i)
@@ -1261,20 +1293,23 @@
       call exit_mpi(myrank,'Error invalid ibool_interfaces_crust_mantle')
     endif
   enddo
-  do i = 1,2
-    if (i == 1) then
-      num_elements = nspec_outer_crust_mantle
-    else
-      num_elements = nspec_inner_crust_mantle
-    endif
-    ispec_min = minval(phase_ispec_inner_crust_mantle(1:num_elements,i))
-    ispec_max = maxval(phase_ispec_inner_crust_mantle(1:num_elements,i))
-    if (ispec_min <= 0 .or. ispec_max > NSPEC_CRUST_MANTLE) then
-      print *,'Error: invalid phase_ispec_inner_crust_mantle min/max ',ispec_min,ispec_max,'phase',i, &
-              nspec_outer_crust_mantle,nspec_inner_crust_mantle,'nspec',NSPEC_CRUST_MANTLE
-      call exit_mpi(myrank,'Error invalid phase_ispec_inner_crust_mantle')
-    endif
-  enddo
+  ! checks min/max
+  if (num_phase_ispec_crust_mantle > 0) then
+    do i = 1,2
+      if (i == 1) then
+        num_elements = nspec_outer_crust_mantle
+      else
+        num_elements = nspec_inner_crust_mantle
+      endif
+      ispec_min = minval(phase_ispec_inner_crust_mantle(1:num_elements,i))
+      ispec_max = maxval(phase_ispec_inner_crust_mantle(1:num_elements,i))
+      if (ispec_min <= 0 .or. ispec_max > NSPEC_CRUST_MANTLE) then
+        print *,'Error: invalid phase_ispec_inner_crust_mantle min/max ',ispec_min,ispec_max,'phase',i, &
+                nspec_outer_crust_mantle,nspec_inner_crust_mantle,'nspec',NSPEC_CRUST_MANTLE
+        call exit_mpi(myrank,'Error invalid phase_ispec_inner_crust_mantle')
+      endif
+    enddo
+  endif
 
   ! MPI buffers
   if (USE_CUDA_AWARE_MPI) then
@@ -1321,7 +1356,7 @@
   endif
 
   ! outer core
-  if (I_should_read_the_database) then
+  if (I_should_read_the_database .and. NSPEC_OUTER_CORE > 0) then
     if (ADIOS_FOR_MPI_ARRAYS) then
       call read_mesh_databases_MPI_adios(IREGION_OUTER_CORE)
     else
@@ -1331,10 +1366,13 @@
   call bcast_mesh_databases_MPI_OC()
 
   ! checks interface values read
-  if (minval(my_neighbors_outer_core) < 0 .or. maxval(my_neighbors_outer_core) >= NPROCTOT) then
-    print *,'Error: invalid MPI neighbors min/max',minval(my_neighbors_outer_core),maxval(my_neighbors_outer_core),NPROCTOT
-    call exit_mpi(myrank,'Error invalid MPI neighbors outer_core')
+  if (NSPEC_OUTER_CORE > 0) then
+    if (minval(my_neighbors_outer_core) < 0 .or. maxval(my_neighbors_outer_core) >= NPROCTOT) then
+      print *,'Error: invalid MPI neighbors min/max',minval(my_neighbors_outer_core),maxval(my_neighbors_outer_core),NPROCTOT
+      call exit_mpi(myrank,'Error invalid MPI neighbors outer_core')
+    endif
   endif
+
   do i = 1,num_interfaces_outer_core
     ! number of points on interface
     num_poin = nibool_interfaces_outer_core(i)
@@ -1350,20 +1388,23 @@
       call exit_mpi(myrank,'Error invalid ibool_interfaces_outer_core')
     endif
   enddo
-  do i = 1,2
-    if (i == 1) then
-      num_elements = nspec_outer_outer_core
-    else
-      num_elements = nspec_inner_outer_core
-    endif
-    ispec_min = minval(phase_ispec_inner_outer_core(1:num_elements,i))
-    ispec_max = maxval(phase_ispec_inner_outer_core(1:num_elements,i))
-    if (ispec_min <= 0 .or. ispec_max > NSPEC_OUTER_CORE) then
-      print *,'Error: invalid phase_ispec_inner_outer_core min/max ',ispec_min,ispec_max,'phase',i, &
-              nspec_outer_outer_core,nspec_inner_outer_core,'nspec',NSPEC_OUTER_CORE
-      call exit_mpi(myrank,'Error invalid phase_ispec_inner_outer_core')
-    endif
-  enddo
+  ! checks min/max
+  if (num_phase_ispec_outer_core > 0) then
+    do i = 1,2
+      if (i == 1) then
+        num_elements = nspec_outer_outer_core
+      else
+        num_elements = nspec_inner_outer_core
+      endif
+      ispec_min = minval(phase_ispec_inner_outer_core(1:num_elements,i))
+      ispec_max = maxval(phase_ispec_inner_outer_core(1:num_elements,i))
+      if (ispec_min <= 0 .or. ispec_max > NSPEC_OUTER_CORE) then
+        print *,'Error: invalid phase_ispec_inner_outer_core min/max ',ispec_min,ispec_max,'phase',i, &
+                nspec_outer_outer_core,nspec_inner_outer_core,'nspec',NSPEC_OUTER_CORE
+        call exit_mpi(myrank,'Error invalid phase_ispec_inner_outer_core')
+      endif
+    enddo
+  endif
 
   ! MPI buffers
   if (USE_CUDA_AWARE_MPI) then
@@ -1407,7 +1448,7 @@
   endif
 
   ! inner core
-  if (I_should_read_the_database) then
+  if (I_should_read_the_database .and. NSPEC_INNER_CORE > 0) then
     if (ADIOS_FOR_MPI_ARRAYS) then
       call read_mesh_databases_MPI_adios(IREGION_INNER_CORE)
     else
@@ -1417,10 +1458,13 @@
   call bcast_mesh_databases_MPI_IC()
 
   ! checks interface values read
-  if (minval(my_neighbors_inner_core) < 0 .or. maxval(my_neighbors_inner_core) >= NPROCTOT) then
-    print *,'Error: invalid MPI neighbors min/max',minval(my_neighbors_inner_core),maxval(my_neighbors_inner_core),NPROCTOT
-    call exit_mpi(myrank,'Error invalid MPI neighbors inner_core')
+  if (NSPEC_INNER_CORE > 0) then
+    if (minval(my_neighbors_inner_core) < 0 .or. maxval(my_neighbors_inner_core) >= NPROCTOT) then
+      print *,'Error: invalid MPI neighbors min/max',minval(my_neighbors_inner_core),maxval(my_neighbors_inner_core),NPROCTOT
+      call exit_mpi(myrank,'Error invalid MPI neighbors inner_core')
+    endif
   endif
+
   do i = 1,num_interfaces_inner_core
     ! number of points on interface
     num_poin = nibool_interfaces_inner_core(i)
@@ -1436,20 +1480,23 @@
       call exit_mpi(myrank,'Error invalid ibool_interfaces_inner_core')
     endif
   enddo
-  do i = 1,2
-    if (i == 1) then
-      num_elements = nspec_outer_inner_core
-    else
-      num_elements = nspec_inner_inner_core
-    endif
-    ispec_min = minval(phase_ispec_inner_inner_core(1:num_elements,i))
-    ispec_max = maxval(phase_ispec_inner_inner_core(1:num_elements,i))
-    if (ispec_min <= 0 .or. ispec_max > NSPEC_INNER_CORE) then
-      print *,'Error: invalid phase_ispec_inner_inner_core min/max ',ispec_min,ispec_max,'phase',i, &
-              nspec_outer_inner_core,nspec_inner_inner_core,'nspec',NSPEC_INNER_CORE
-      call exit_mpi(myrank,'Error invalid phase_ispec_inner_inner_core')
-    endif
-  enddo
+  ! checks min/max
+  if (num_phase_ispec_inner_core > 0) then
+    do i = 1,2
+      if (i == 1) then
+        num_elements = nspec_outer_inner_core
+      else
+        num_elements = nspec_inner_inner_core
+      endif
+      ispec_min = minval(phase_ispec_inner_inner_core(1:num_elements,i))
+      ispec_max = maxval(phase_ispec_inner_inner_core(1:num_elements,i))
+      if (ispec_min <= 0 .or. ispec_max > NSPEC_INNER_CORE) then
+        print *,'Error: invalid phase_ispec_inner_inner_core min/max ',ispec_min,ispec_max,'phase',i, &
+                nspec_outer_inner_core,nspec_inner_inner_core,'nspec',NSPEC_INNER_CORE
+        call exit_mpi(myrank,'Error invalid phase_ispec_inner_inner_core')
+      endif
+    enddo
+  endif
 
   ! MPI buffers
   if (USE_CUDA_AWARE_MPI) then
@@ -1499,21 +1546,24 @@
   if (myrank == 0) then
     write(IMAIN,*) '  for overlapping of communications with calculations:'
     write(IMAIN,*)
-
-    percentage_edge = 100. * nspec_outer_crust_mantle / real(NSPEC_CRUST_MANTLE)
-    write(IMAIN,*) '  percentage of edge elements in crust/mantle ',percentage_edge,'%'
-    write(IMAIN,*) '  percentage of volume elements in crust/mantle ',100. - percentage_edge,'%'
-    write(IMAIN,*)
-
-    percentage_edge = 100.* nspec_outer_outer_core / real(NSPEC_OUTER_CORE)
-    write(IMAIN,*) '  percentage of edge elements in outer core ',percentage_edge,'%'
-    write(IMAIN,*) '  percentage of volume elements in outer core ',100. - percentage_edge,'%'
-    write(IMAIN,*)
-
-    percentage_edge = 100. * nspec_outer_inner_core / real(NSPEC_INNER_CORE)
-    write(IMAIN,*) '  percentage of edge elements in inner core ',percentage_edge,'%'
-    write(IMAIN,*) '  percentage of volume elements in inner core ',100. - percentage_edge,'%'
-    write(IMAIN,*)
+    if (NSPEC_CRUST_MANTLE > 0) then
+      percentage_edge = 100. * nspec_outer_crust_mantle / real(NSPEC_CRUST_MANTLE)
+      write(IMAIN,*) '  percentage of edge elements in crust/mantle ',percentage_edge,'%'
+      write(IMAIN,*) '  percentage of volume elements in crust/mantle ',100. - percentage_edge,'%'
+      write(IMAIN,*)
+    endif
+    if (NSPEC_OUTER_CORE > 0) then
+      percentage_edge = 100.* nspec_outer_outer_core / real(NSPEC_OUTER_CORE)
+      write(IMAIN,*) '  percentage of edge elements in outer core ',percentage_edge,'%'
+      write(IMAIN,*) '  percentage of volume elements in outer core ',100. - percentage_edge,'%'
+      write(IMAIN,*)
+    endif
+    if (NSPEC_INNER_CORE > 0) then
+      percentage_edge = 100. * nspec_outer_inner_core / real(NSPEC_INNER_CORE)
+      write(IMAIN,*) '  percentage of edge elements in inner core ',percentage_edge,'%'
+      write(IMAIN,*) '  percentage of volume elements in inner core ',100. - percentage_edge,'%'
+      write(IMAIN,*)
+    endif
     call flush_IMAIN()
   endif
   ! synchronizes MPI processes
@@ -1608,8 +1658,7 @@
   read(IIN) num_phase_ispec_crust_mantle
   if (num_phase_ispec_crust_mantle < 0 ) call exit_mpi(myrank,'Error num_phase_ispec_crust_mantle is < zero')
 
-  allocate(phase_ispec_inner_crust_mantle(num_phase_ispec_crust_mantle,2), &
-          stat=ier)
+  allocate(phase_ispec_inner_crust_mantle(num_phase_ispec_crust_mantle,2),stat=ier)
   if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array phase_ispec_inner_crust_mantle')
   phase_ispec_inner_crust_mantle(:,:) = 0
 
@@ -1694,8 +1743,7 @@
   read(IIN) num_phase_ispec_outer_core
   if (num_phase_ispec_outer_core < 0 ) call exit_mpi(myrank,'Error num_phase_ispec_outer_core is < zero')
 
-  allocate(phase_ispec_inner_outer_core(num_phase_ispec_outer_core,2), &
-          stat=ier)
+  allocate(phase_ispec_inner_outer_core(num_phase_ispec_outer_core,2),stat=ier)
   if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array phase_ispec_inner_outer_core')
   phase_ispec_inner_outer_core(:,:) = 0
 
@@ -1779,8 +1827,7 @@
   read(IIN) num_phase_ispec_inner_core
   if (num_phase_ispec_inner_core < 0 ) call exit_mpi(myrank,'Error num_phase_ispec_inner_core is < zero')
 
-  allocate(phase_ispec_inner_inner_core(num_phase_ispec_inner_core,2), &
-          stat=ier)
+  allocate(phase_ispec_inner_inner_core(num_phase_ispec_inner_core,2),stat=ier)
   if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array phase_ispec_inner_inner_core')
   phase_ispec_inner_inner_core(:,:) = 0
 
@@ -1829,24 +1876,46 @@
   integer :: ier
 
   ! allocates arrays
-  allocate(nimin_crust_mantle(2,NSPEC2DMAX_YMIN_YMAX_CM), &
-           nimax_crust_mantle(2,NSPEC2DMAX_YMIN_YMAX_CM), &
-           nkmin_eta_crust_mantle(2,NSPEC2DMAX_YMIN_YMAX_CM), &
-           njmin_crust_mantle(2,NSPEC2DMAX_XMIN_XMAX_CM), &
-           njmax_crust_mantle(2,NSPEC2DMAX_XMIN_XMAX_CM), &
-           nkmin_xi_crust_mantle(2,NSPEC2DMAX_XMIN_XMAX_CM),stat=ier)
-  if (ier /= 0) stop 'Error allocating arrays nimin_crust_mantle,..'
+  if (NSPEC_CRUST_MANTLE > 0) then
+    allocate(nimin_crust_mantle(2,NSPEC2DMAX_YMIN_YMAX_CM), &
+             nimax_crust_mantle(2,NSPEC2DMAX_YMIN_YMAX_CM), &
+             nkmin_eta_crust_mantle(2,NSPEC2DMAX_YMIN_YMAX_CM), &
+             njmin_crust_mantle(2,NSPEC2DMAX_XMIN_XMAX_CM), &
+             njmax_crust_mantle(2,NSPEC2DMAX_XMIN_XMAX_CM), &
+             nkmin_xi_crust_mantle(2,NSPEC2DMAX_XMIN_XMAX_CM),stat=ier)
+    if (ier /= 0) stop 'Error allocating arrays nimin_crust_mantle,..'
+  else
+    ! dummy
+    allocate(nimin_crust_mantle(1,1), &
+             nimax_crust_mantle(1,1), &
+             nkmin_eta_crust_mantle(1,1), &
+             njmin_crust_mantle(1,1), &
+             njmax_crust_mantle(1,1), &
+             nkmin_xi_crust_mantle(1,1),stat=ier)
+    if (ier /= 0) stop 'Error allocating arrays nimin_crust_mantle,..'
+  endif
   nimin_crust_mantle(:,:) = 0; nimax_crust_mantle(:,:) = 0
   njmin_crust_mantle(:,:) = 0; njmax_crust_mantle(:,:) = 0
   nkmin_eta_crust_mantle(:,:) = 0; nkmin_xi_crust_mantle(:,:) = 0
 
-  allocate(nimin_outer_core(2,NSPEC2DMAX_YMIN_YMAX_OC), &
-           nimax_outer_core(2,NSPEC2DMAX_YMIN_YMAX_OC), &
-           nkmin_eta_outer_core(2,NSPEC2DMAX_YMIN_YMAX_OC), &
-           njmin_outer_core(2,NSPEC2DMAX_XMIN_XMAX_OC), &
-           njmax_outer_core(2,NSPEC2DMAX_XMIN_XMAX_OC), &
-           nkmin_xi_outer_core(2,NSPEC2DMAX_XMIN_XMAX_OC),stat=ier)
-  if (ier /= 0) stop 'Error allocating arrays nimin_outer_core,..'
+  if (NSPEC_OUTER_CORE > 0) then
+    allocate(nimin_outer_core(2,NSPEC2DMAX_YMIN_YMAX_OC), &
+             nimax_outer_core(2,NSPEC2DMAX_YMIN_YMAX_OC), &
+             nkmin_eta_outer_core(2,NSPEC2DMAX_YMIN_YMAX_OC), &
+             njmin_outer_core(2,NSPEC2DMAX_XMIN_XMAX_OC), &
+             njmax_outer_core(2,NSPEC2DMAX_XMIN_XMAX_OC), &
+             nkmin_xi_outer_core(2,NSPEC2DMAX_XMIN_XMAX_OC),stat=ier)
+    if (ier /= 0) stop 'Error allocating arrays nimin_outer_core,..'
+  else
+    ! dummy
+    allocate(nimin_outer_core(1,1), &
+             nimax_outer_core(1,1), &
+             nkmin_eta_outer_core(1,1), &
+             njmin_outer_core(1,1), &
+             njmax_outer_core(1,1), &
+             nkmin_xi_outer_core(1,1),stat=ier)
+    if (ier /= 0) stop 'Error allocating arrays nimin_outer_core,..'
+  endif
   nimin_outer_core(:,:) = 0; nimax_outer_core(:,:) = 0
   njmin_outer_core(:,:) = 0; njmax_outer_core(:,:) = 0
   nkmin_eta_outer_core(:,:) = 0; nkmin_xi_outer_core(:,:) = 0
@@ -1857,38 +1926,42 @@
       call read_mesh_databases_stacey_adios()
     else
       ! crust and mantle
-      ! create name of database
-      call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
+      if (NSPEC_CRUST_MANTLE > 0) then
+        ! create name of database
+        call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
 
-      ! read arrays for Stacey conditions
-      open(unit=IIN,file=prname(1:len_trim(prname))//'stacey.bin', &
-            status='old',form='unformatted',action='read',iostat=ier)
-      if (ier /= 0 ) call exit_MPI(myrank,'Error opening stacey.bin file for crust mantle')
+        ! read arrays for Stacey conditions
+        open(unit=IIN,file=prname(1:len_trim(prname))//'stacey.bin', &
+              status='old',form='unformatted',action='read',iostat=ier)
+        if (ier /= 0 ) call exit_MPI(myrank,'Error opening stacey.bin file for crust mantle')
 
-      read(IIN) nimin_crust_mantle
-      read(IIN) nimax_crust_mantle
-      read(IIN) njmin_crust_mantle
-      read(IIN) njmax_crust_mantle
-      read(IIN) nkmin_xi_crust_mantle
-      read(IIN) nkmin_eta_crust_mantle
-      close(IIN)
+        read(IIN) nimin_crust_mantle
+        read(IIN) nimax_crust_mantle
+        read(IIN) njmin_crust_mantle
+        read(IIN) njmax_crust_mantle
+        read(IIN) nkmin_xi_crust_mantle
+        read(IIN) nkmin_eta_crust_mantle
+        close(IIN)
+      endif
 
       ! outer core
-      ! create name of database
-      call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_PATH)
+      if (NSPEC_OUTER_CORE > 0) then
+        ! create name of database
+        call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_PATH)
 
-      ! read arrays for Stacey conditions
-      open(unit=IIN,file=prname(1:len_trim(prname))//'stacey.bin', &
-            status='old',form='unformatted',action='read',iostat=ier)
-      if (ier /= 0 ) call exit_MPI(myrank,'Error opening stacey.bin file for outer core')
+        ! read arrays for Stacey conditions
+        open(unit=IIN,file=prname(1:len_trim(prname))//'stacey.bin', &
+              status='old',form='unformatted',action='read',iostat=ier)
+        if (ier /= 0 ) call exit_MPI(myrank,'Error opening stacey.bin file for outer core')
 
-      read(IIN) nimin_outer_core
-      read(IIN) nimax_outer_core
-      read(IIN) njmin_outer_core
-      read(IIN) njmax_outer_core
-      read(IIN) nkmin_xi_outer_core
-      read(IIN) nkmin_eta_outer_core
-      close(IIN)
+        read(IIN) nimin_outer_core
+        read(IIN) nimax_outer_core
+        read(IIN) njmin_outer_core
+        read(IIN) njmax_outer_core
+        read(IIN) nkmin_xi_outer_core
+        read(IIN) nkmin_eta_outer_core
+        close(IIN)
+      endif
     endif ! ADIOS
   endif ! I_should_read_the_database
   call bcast_mesh_databases_stacey()
@@ -2029,60 +2102,90 @@
   !call bcast_all_i_for_database(NSPEC_CRUST_MANTLE, 1)
   !call bcast_all_i_for_database(NGLOB_CRUST_MANTLE, 1)
   !call bcast_all_i_for_database(NGLOB_XY_CM, 1)
-  call bcast_all_cr_for_database(rho_vp_crust_mantle(1,1,1,1), size(rho_vp_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(rho_vs_crust_mantle(1,1,1,1), size(rho_vs_crust_mantle,kind=4))
 
-  call bcast_all_cr_for_database(xstore_crust_mantle(1), size(xstore_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(ystore_crust_mantle(1), size(ystore_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(zstore_crust_mantle(1), size(zstore_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(xix_crust_mantle(1,1,1,1), size(xix_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(xiy_crust_mantle(1,1,1,1), size(xiy_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(xiz_crust_mantle(1,1,1,1), size(xiz_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(etax_crust_mantle(1,1,1,1), size(etax_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(etay_crust_mantle(1,1,1,1), size(etay_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(etaz_crust_mantle(1,1,1,1), size(etaz_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(gammax_crust_mantle(1,1,1,1), size(gammax_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(gammay_crust_mantle(1,1,1,1), size(gammay_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(gammaz_crust_mantle(1,1,1,1), size(gammaz_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(rhostore_crust_mantle(1,1,1,1), size(rhostore_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(kappavstore_crust_mantle(1,1,1,1), size(kappavstore_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(muvstore_crust_mantle(1,1,1,1), size(muvstore_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(kappahstore_crust_mantle(1,1,1,1), size(kappahstore_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(muhstore_crust_mantle(1,1,1,1), size(muhstore_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(eta_anisostore_crust_mantle(1,1,1,1), size(eta_anisostore_crust_mantle,kind=4))
+  if (size(rho_vp_crust_mantle) > 0) then
+    call bcast_all_cr_for_database(rho_vp_crust_mantle(1,1,1,1), size(rho_vp_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(rho_vs_crust_mantle(1,1,1,1), size(rho_vs_crust_mantle,kind=4))
+  endif
 
-  call bcast_all_cr_for_database(c11store_crust_mantle(1,1,1,1), size(c11store_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(c12store_crust_mantle(1,1,1,1), size(c12store_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(c13store_crust_mantle(1,1,1,1), size(c13store_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(c14store_crust_mantle(1,1,1,1), size(c14store_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(c15store_crust_mantle(1,1,1,1), size(c15store_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(c16store_crust_mantle(1,1,1,1), size(c16store_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(c22store_crust_mantle(1,1,1,1), size(c22store_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(c23store_crust_mantle(1,1,1,1), size(c23store_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(c24store_crust_mantle(1,1,1,1), size(c24store_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(c25store_crust_mantle(1,1,1,1), size(c25store_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(c26store_crust_mantle(1,1,1,1), size(c26store_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(c33store_crust_mantle(1,1,1,1), size(c33store_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(c34store_crust_mantle(1,1,1,1), size(c34store_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(c35store_crust_mantle(1,1,1,1), size(c35store_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(c36store_crust_mantle(1,1,1,1), size(c36store_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(c44store_crust_mantle(1,1,1,1), size(c44store_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(c45store_crust_mantle(1,1,1,1), size(c45store_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(c46store_crust_mantle(1,1,1,1), size(c46store_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(c55store_crust_mantle(1,1,1,1), size(c55store_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(c56store_crust_mantle(1,1,1,1), size(c56store_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(c66store_crust_mantle(1,1,1,1), size(c66store_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(mu0store_crust_mantle(1,1,1,1), size(mu0store_crust_mantle,kind=4))
+  if (size(xstore_crust_mantle) > 0) then
+    call bcast_all_cr_for_database(xstore_crust_mantle(1), size(xstore_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(ystore_crust_mantle(1), size(ystore_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(zstore_crust_mantle(1), size(zstore_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(xix_crust_mantle(1,1,1,1), size(xix_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(xiy_crust_mantle(1,1,1,1), size(xiy_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(xiz_crust_mantle(1,1,1,1), size(xiz_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(etax_crust_mantle(1,1,1,1), size(etax_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(etay_crust_mantle(1,1,1,1), size(etay_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(etaz_crust_mantle(1,1,1,1), size(etaz_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(gammax_crust_mantle(1,1,1,1), size(gammax_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(gammay_crust_mantle(1,1,1,1), size(gammay_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(gammaz_crust_mantle(1,1,1,1), size(gammaz_crust_mantle,kind=4))
+  endif
 
-  call bcast_all_i_for_database(ibool_crust_mantle(1,1,1,1), size(ibool_crust_mantle,kind=4))
-  call bcast_all_l_for_database(ispec_is_tiso_crust_mantle(1), size(ispec_is_tiso_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(rmassx_crust_mantle(1), size(rmassx_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(rmassy_crust_mantle(1), size(rmassy_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(rmassz_crust_mantle(1), size(rmassz_crust_mantle,kind=4))
+  if (size(rhostore_crust_mantle) > 0) then
+    call bcast_all_cr_for_database(rhostore_crust_mantle(1,1,1,1), size(rhostore_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(kappavstore_crust_mantle(1,1,1,1), size(kappavstore_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(muvstore_crust_mantle(1,1,1,1), size(muvstore_crust_mantle,kind=4))
+  endif
+
+  if (size(kappahstore_crust_mantle) > 0) then
+    call bcast_all_cr_for_database(kappahstore_crust_mantle(1,1,1,1), size(kappahstore_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(muhstore_crust_mantle(1,1,1,1), size(muhstore_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(eta_anisostore_crust_mantle(1,1,1,1), size(eta_anisostore_crust_mantle,kind=4))
+  endif
+
+  if (size(c11store_crust_mantle) > 0) then
+    call bcast_all_cr_for_database(c11store_crust_mantle(1,1,1,1), size(c11store_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(c12store_crust_mantle(1,1,1,1), size(c12store_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(c13store_crust_mantle(1,1,1,1), size(c13store_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(c14store_crust_mantle(1,1,1,1), size(c14store_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(c15store_crust_mantle(1,1,1,1), size(c15store_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(c16store_crust_mantle(1,1,1,1), size(c16store_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(c22store_crust_mantle(1,1,1,1), size(c22store_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(c23store_crust_mantle(1,1,1,1), size(c23store_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(c24store_crust_mantle(1,1,1,1), size(c24store_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(c25store_crust_mantle(1,1,1,1), size(c25store_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(c26store_crust_mantle(1,1,1,1), size(c26store_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(c33store_crust_mantle(1,1,1,1), size(c33store_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(c34store_crust_mantle(1,1,1,1), size(c34store_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(c35store_crust_mantle(1,1,1,1), size(c35store_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(c36store_crust_mantle(1,1,1,1), size(c36store_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(c44store_crust_mantle(1,1,1,1), size(c44store_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(c45store_crust_mantle(1,1,1,1), size(c45store_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(c46store_crust_mantle(1,1,1,1), size(c46store_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(c55store_crust_mantle(1,1,1,1), size(c55store_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(c56store_crust_mantle(1,1,1,1), size(c56store_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(c66store_crust_mantle(1,1,1,1), size(c66store_crust_mantle,kind=4))
+  endif
+
+  if (size(mu0store_crust_mantle) > 0) then
+    call bcast_all_cr_for_database(mu0store_crust_mantle(1,1,1,1), size(mu0store_crust_mantle,kind=4))
+  endif
+
+  if (size(ibool_crust_mantle) > 0) then
+    call bcast_all_i_for_database(ibool_crust_mantle(1,1,1,1), size(ibool_crust_mantle,kind=4))
+    call bcast_all_l_for_database(ispec_is_tiso_crust_mantle(1), size(ispec_is_tiso_crust_mantle,kind=4))
+  endif
+
+  if (size(rmassx_crust_mantle) > 0) then
+    call bcast_all_cr_for_database(rmassx_crust_mantle(1), size(rmassx_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(rmassy_crust_mantle(1), size(rmassy_crust_mantle,kind=4))
+  endif
+
+  if (size(rmassz_crust_mantle) > 0) then
+    call bcast_all_cr_for_database(rmassz_crust_mantle(1), size(rmassz_crust_mantle,kind=4))
+  endif
+
   !call bcast_all_i_for_database(NGLOB_CRUST_MANTLE_OCEANS, 1)
-  call bcast_all_cr_for_database(rmass_ocean_load(1), size(rmass_ocean_load,kind=4))
-  call bcast_all_cr_for_database(b_rmassx_crust_mantle(1), size(b_rmassx_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(b_rmassy_crust_mantle(1), size(b_rmassy_crust_mantle,kind=4))
+  if (size(rmass_ocean_load) > 0) then
+    call bcast_all_cr_for_database(rmass_ocean_load(1), size(rmass_ocean_load,kind=4))
+  endif
+
+  if (size(b_rmassx_crust_mantle) > 0) then
+    call bcast_all_cr_for_database(b_rmassx_crust_mantle(1), size(b_rmassx_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(b_rmassy_crust_mantle(1), size(b_rmassy_crust_mantle,kind=4))
+  endif
 
   end subroutine bcast_mesh_databases_CM
 
@@ -2098,23 +2201,41 @@
 
   !call bcast_all_i_for_database(NSPEC_OUTER_CORE, 1)
   !call bcast_all_i_for_database(NGLOB_OUTER_CORE, 1)
-  call bcast_all_cr_for_database(vp_outer_core(1,1,1,1), size(vp_outer_core,kind=4))
-  call bcast_all_cr_for_database(xstore_outer_core(1), size(xstore_outer_core,kind=4))
-  call bcast_all_cr_for_database(ystore_outer_core(1), size(ystore_outer_core,kind=4))
-  call bcast_all_cr_for_database(zstore_outer_core(1), size(zstore_outer_core,kind=4))
-  call bcast_all_cr_for_database(xix_outer_core(1,1,1,1), size(xix_outer_core,kind=4))
-  call bcast_all_cr_for_database(xiy_outer_core(1,1,1,1), size(xiy_outer_core,kind=4))
-  call bcast_all_cr_for_database(xiz_outer_core(1,1,1,1), size(xiz_outer_core,kind=4))
-  call bcast_all_cr_for_database(etax_outer_core(1,1,1,1), size(etax_outer_core,kind=4))
-  call bcast_all_cr_for_database(etay_outer_core(1,1,1,1), size(etay_outer_core,kind=4))
-  call bcast_all_cr_for_database(etaz_outer_core(1,1,1,1), size(etaz_outer_core,kind=4))
-  call bcast_all_cr_for_database(gammax_outer_core(1,1,1,1), size(gammax_outer_core,kind=4))
-  call bcast_all_cr_for_database(gammay_outer_core(1,1,1,1), size(gammay_outer_core,kind=4))
-  call bcast_all_cr_for_database(gammaz_outer_core(1,1,1,1), size(gammaz_outer_core,kind=4))
-  call bcast_all_cr_for_database(rhostore_outer_core(1,1,1,1), size(rhostore_outer_core,kind=4))
-  call bcast_all_cr_for_database(kappavstore_outer_core(1,1,1,1), size(kappavstore_outer_core,kind=4))
-  call bcast_all_i_for_database(ibool_outer_core(1,1,1,1), size(ibool_outer_core,kind=4))
-  call bcast_all_cr_for_database(rmass_outer_core(1), size(rmass_outer_core,kind=4))
+
+  if (size(vp_outer_core) > 0) then
+    call bcast_all_cr_for_database(vp_outer_core(1,1,1,1), size(vp_outer_core,kind=4))
+  endif
+
+  if (size(xstore_outer_core) > 0) then
+    call bcast_all_cr_for_database(xstore_outer_core(1), size(xstore_outer_core,kind=4))
+    call bcast_all_cr_for_database(ystore_outer_core(1), size(ystore_outer_core,kind=4))
+    call bcast_all_cr_for_database(zstore_outer_core(1), size(zstore_outer_core,kind=4))
+  endif
+
+  if (size(xix_outer_core) > 0) then
+    call bcast_all_cr_for_database(xix_outer_core(1,1,1,1), size(xix_outer_core,kind=4))
+    call bcast_all_cr_for_database(xiy_outer_core(1,1,1,1), size(xiy_outer_core,kind=4))
+    call bcast_all_cr_for_database(xiz_outer_core(1,1,1,1), size(xiz_outer_core,kind=4))
+    call bcast_all_cr_for_database(etax_outer_core(1,1,1,1), size(etax_outer_core,kind=4))
+    call bcast_all_cr_for_database(etay_outer_core(1,1,1,1), size(etay_outer_core,kind=4))
+    call bcast_all_cr_for_database(etaz_outer_core(1,1,1,1), size(etaz_outer_core,kind=4))
+    call bcast_all_cr_for_database(gammax_outer_core(1,1,1,1), size(gammax_outer_core,kind=4))
+    call bcast_all_cr_for_database(gammay_outer_core(1,1,1,1), size(gammay_outer_core,kind=4))
+    call bcast_all_cr_for_database(gammaz_outer_core(1,1,1,1), size(gammaz_outer_core,kind=4))
+  endif
+
+  if (size(rhostore_outer_core) > 0) then
+    call bcast_all_cr_for_database(rhostore_outer_core(1,1,1,1), size(rhostore_outer_core,kind=4))
+    call bcast_all_cr_for_database(kappavstore_outer_core(1,1,1,1), size(kappavstore_outer_core,kind=4))
+  endif
+
+  if (size(ibool_outer_core) > 0) then
+    call bcast_all_i_for_database(ibool_outer_core(1,1,1,1), size(ibool_outer_core,kind=4))
+  endif
+
+  if (size(rmass_outer_core) > 0) then
+    call bcast_all_cr_for_database(rmass_outer_core(1), size(rmass_outer_core,kind=4))
+  endif
 
   end subroutine bcast_mesh_databases_OC
 
@@ -2131,33 +2252,57 @@
   !call bcast_all_i_for_database(NSPEC_INNER_CORE, 1)
   !call bcast_all_i_for_database(NGLOB_INNER_CORE, 1)
   !call bcast_all_i_for_database(NGLOB_XY_IC, 1)
-  call bcast_all_cr_for_database(xstore_inner_core(1), size(xstore_inner_core,kind=4))
-  call bcast_all_cr_for_database(ystore_inner_core(1), size(ystore_inner_core,kind=4))
-  call bcast_all_cr_for_database(zstore_inner_core(1), size(zstore_inner_core,kind=4))
-  call bcast_all_cr_for_database(xix_inner_core(1,1,1,1), size(xix_inner_core,kind=4))
-  call bcast_all_cr_for_database(xiy_inner_core(1,1,1,1), size(xiy_inner_core,kind=4))
-  call bcast_all_cr_for_database(xiz_inner_core(1,1,1,1), size(xiz_inner_core,kind=4))
-  call bcast_all_cr_for_database(etax_inner_core(1,1,1,1), size(etax_inner_core,kind=4))
-  call bcast_all_cr_for_database(etay_inner_core(1,1,1,1), size(etay_inner_core,kind=4))
-  call bcast_all_cr_for_database(etaz_inner_core(1,1,1,1), size(etaz_inner_core,kind=4))
-  call bcast_all_cr_for_database(gammax_inner_core(1,1,1,1), size(gammax_inner_core,kind=4))
-  call bcast_all_cr_for_database(gammay_inner_core(1,1,1,1), size(gammay_inner_core,kind=4))
-  call bcast_all_cr_for_database(gammaz_inner_core(1,1,1,1), size(gammaz_inner_core,kind=4))
-  call bcast_all_cr_for_database(rhostore_inner_core(1,1,1,1), size(rhostore_inner_core,kind=4))
-  call bcast_all_cr_for_database(kappavstore_inner_core(1,1,1,1), size(kappavstore_inner_core,kind=4))
-  call bcast_all_cr_for_database(muvstore_inner_core(1,1,1,1), size(muvstore_inner_core,kind=4))
-  call bcast_all_cr_for_database(c11store_inner_core(1,1,1,1), size(c11store_inner_core,kind=4))
-  call bcast_all_cr_for_database(c12store_inner_core(1,1,1,1), size(c12store_inner_core,kind=4))
-  call bcast_all_cr_for_database(c13store_inner_core(1,1,1,1), size(c13store_inner_core,kind=4))
-  call bcast_all_cr_for_database(c33store_inner_core(1,1,1,1), size(c33store_inner_core,kind=4))
-  call bcast_all_cr_for_database(c44store_inner_core(1,1,1,1), size(c44store_inner_core,kind=4))
-  call bcast_all_i_for_database(ibool_inner_core(1,1,1,1), size(ibool_inner_core,kind=4))
-  call bcast_all_i_for_database(idoubling_inner_core(1), size(idoubling_inner_core,kind=4))
-  call bcast_all_cr_for_database(rmassx_inner_core(1), size(rmassx_inner_core,kind=4))
-  call bcast_all_cr_for_database(rmassy_inner_core(1), size(rmassy_inner_core,kind=4))
-  call bcast_all_cr_for_database(rmassz_inner_core(1), size(rmassz_inner_core,kind=4))
-  call bcast_all_cr_for_database(b_rmassx_inner_core(1), size(b_rmassx_inner_core,kind=4))
-  call bcast_all_cr_for_database(b_rmassy_inner_core(1), size(b_rmassy_inner_core,kind=4))
+
+  if (size(xstore_inner_core) > 0) then
+    call bcast_all_cr_for_database(xstore_inner_core(1), size(xstore_inner_core,kind=4))
+    call bcast_all_cr_for_database(ystore_inner_core(1), size(ystore_inner_core,kind=4))
+    call bcast_all_cr_for_database(zstore_inner_core(1), size(zstore_inner_core,kind=4))
+  endif
+
+  if (size(xix_inner_core) > 0) then
+    call bcast_all_cr_for_database(xix_inner_core(1,1,1,1), size(xix_inner_core,kind=4))
+    call bcast_all_cr_for_database(xiy_inner_core(1,1,1,1), size(xiy_inner_core,kind=4))
+    call bcast_all_cr_for_database(xiz_inner_core(1,1,1,1), size(xiz_inner_core,kind=4))
+    call bcast_all_cr_for_database(etax_inner_core(1,1,1,1), size(etax_inner_core,kind=4))
+    call bcast_all_cr_for_database(etay_inner_core(1,1,1,1), size(etay_inner_core,kind=4))
+    call bcast_all_cr_for_database(etaz_inner_core(1,1,1,1), size(etaz_inner_core,kind=4))
+    call bcast_all_cr_for_database(gammax_inner_core(1,1,1,1), size(gammax_inner_core,kind=4))
+    call bcast_all_cr_for_database(gammay_inner_core(1,1,1,1), size(gammay_inner_core,kind=4))
+    call bcast_all_cr_for_database(gammaz_inner_core(1,1,1,1), size(gammaz_inner_core,kind=4))
+  endif
+
+  if (size(rhostore_inner_core) > 0) then
+    call bcast_all_cr_for_database(rhostore_inner_core(1,1,1,1), size(rhostore_inner_core,kind=4))
+    call bcast_all_cr_for_database(kappavstore_inner_core(1,1,1,1), size(kappavstore_inner_core,kind=4))
+    call bcast_all_cr_for_database(muvstore_inner_core(1,1,1,1), size(muvstore_inner_core,kind=4))
+  endif
+
+  if (size(c11store_inner_core) > 0) then
+    call bcast_all_cr_for_database(c11store_inner_core(1,1,1,1), size(c11store_inner_core,kind=4))
+    call bcast_all_cr_for_database(c12store_inner_core(1,1,1,1), size(c12store_inner_core,kind=4))
+    call bcast_all_cr_for_database(c13store_inner_core(1,1,1,1), size(c13store_inner_core,kind=4))
+    call bcast_all_cr_for_database(c33store_inner_core(1,1,1,1), size(c33store_inner_core,kind=4))
+    call bcast_all_cr_for_database(c44store_inner_core(1,1,1,1), size(c44store_inner_core,kind=4))
+  endif
+
+  if (size(ibool_inner_core) > 0) then
+    call bcast_all_i_for_database(ibool_inner_core(1,1,1,1), size(ibool_inner_core,kind=4))
+    call bcast_all_i_for_database(idoubling_inner_core(1), size(idoubling_inner_core,kind=4))
+  endif
+
+  if (size(rmassx_inner_core) > 0) then
+    call bcast_all_cr_for_database(rmassx_inner_core(1), size(rmassx_inner_core,kind=4))
+    call bcast_all_cr_for_database(rmassy_inner_core(1), size(rmassy_inner_core,kind=4))
+  endif
+
+  if (size(rmassz_inner_core) > 0) then
+    call bcast_all_cr_for_database(rmassz_inner_core(1), size(rmassz_inner_core,kind=4))
+  endif
+
+  if (size(b_rmassx_inner_core) > 0) then
+    call bcast_all_cr_for_database(b_rmassx_inner_core(1), size(b_rmassx_inner_core,kind=4))
+    call bcast_all_cr_for_database(b_rmassy_inner_core(1), size(b_rmassy_inner_core,kind=4))
+  endif
 
   end subroutine bcast_mesh_databases_IC
 
@@ -2178,27 +2323,32 @@
   call bcast_all_i_for_database(nspec2D_xmax_crust_mantle, 1)
   call bcast_all_i_for_database(nspec2D_ymin_crust_mantle, 1)
   call bcast_all_i_for_database(nspec2D_ymax_crust_mantle, 1)
+  call bcast_all_i_for_database(nspec2D_zmin_crust_mantle, 1)
 
-  call bcast_all_i_for_database(ibelm_xmin_crust_mantle(1), size(ibelm_xmin_crust_mantle,kind=4))
-  call bcast_all_i_for_database(ibelm_xmax_crust_mantle(1), size(ibelm_xmax_crust_mantle,kind=4))
-  call bcast_all_i_for_database(ibelm_ymin_crust_mantle(1), size(ibelm_ymin_crust_mantle,kind=4))
-  call bcast_all_i_for_database(ibelm_ymax_crust_mantle(1), size(ibelm_ymax_crust_mantle,kind=4))
-  call bcast_all_i_for_database(ibelm_bottom_crust_mantle(1), size(ibelm_bottom_crust_mantle,kind=4))
-  call bcast_all_i_for_database(ibelm_top_crust_mantle(1), size(ibelm_top_crust_mantle,kind=4))
+  if (size(ibelm_xmin_crust_mantle) > 0) then
+    call bcast_all_i_for_database(ibelm_xmin_crust_mantle(1), size(ibelm_xmin_crust_mantle,kind=4))
+    call bcast_all_i_for_database(ibelm_xmax_crust_mantle(1), size(ibelm_xmax_crust_mantle,kind=4))
+    call bcast_all_i_for_database(ibelm_ymin_crust_mantle(1), size(ibelm_ymin_crust_mantle,kind=4))
+    call bcast_all_i_for_database(ibelm_ymax_crust_mantle(1), size(ibelm_ymax_crust_mantle,kind=4))
+    call bcast_all_i_for_database(ibelm_bottom_crust_mantle(1), size(ibelm_bottom_crust_mantle,kind=4))
+    call bcast_all_i_for_database(ibelm_top_crust_mantle(1), size(ibelm_top_crust_mantle,kind=4))
+  endif
 
-  call bcast_all_cr_for_database(normal_xmin_crust_mantle(1,1,1,1), size(normal_xmin_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(normal_xmax_crust_mantle(1,1,1,1), size(normal_xmax_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(normal_ymin_crust_mantle(1,1,1,1), size(normal_ymin_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(normal_ymax_crust_mantle(1,1,1,1), size(normal_ymax_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(normal_bottom_crust_mantle(1,1,1,1), size(normal_bottom_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(normal_top_crust_mantle(1,1,1,1), size(normal_top_crust_mantle,kind=4))
+  if (size(normal_xmin_crust_mantle) > 0) then
+    call bcast_all_cr_for_database(normal_xmin_crust_mantle(1,1,1,1), size(normal_xmin_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(normal_xmax_crust_mantle(1,1,1,1), size(normal_xmax_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(normal_ymin_crust_mantle(1,1,1,1), size(normal_ymin_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(normal_ymax_crust_mantle(1,1,1,1), size(normal_ymax_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(normal_bottom_crust_mantle(1,1,1,1), size(normal_bottom_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(normal_top_crust_mantle(1,1,1,1), size(normal_top_crust_mantle,kind=4))
 
-  call bcast_all_cr_for_database(jacobian2D_xmin_crust_mantle(1,1,1), size(jacobian2D_xmin_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(jacobian2D_xmax_crust_mantle(1,1,1), size(jacobian2D_xmax_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(jacobian2D_ymin_crust_mantle(1,1,1), size(jacobian2D_ymin_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(jacobian2D_ymax_crust_mantle(1,1,1), size(jacobian2D_ymax_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(jacobian2D_bottom_crust_mantle(1,1,1), size(jacobian2D_bottom_crust_mantle,kind=4))
-  call bcast_all_cr_for_database(jacobian2D_top_crust_mantle(1,1,1), size(jacobian2D_top_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(jacobian2D_xmin_crust_mantle(1,1,1), size(jacobian2D_xmin_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(jacobian2D_xmax_crust_mantle(1,1,1), size(jacobian2D_xmax_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(jacobian2D_ymin_crust_mantle(1,1,1), size(jacobian2D_ymin_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(jacobian2D_ymax_crust_mantle(1,1,1), size(jacobian2D_ymax_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(jacobian2D_bottom_crust_mantle(1,1,1), size(jacobian2D_bottom_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(jacobian2D_top_crust_mantle(1,1,1), size(jacobian2D_top_crust_mantle,kind=4))
+  endif
 
   call bcast_all_i_for_database(nspec2D_xmin_outer_core, 1)
   call bcast_all_i_for_database(nspec2D_xmax_outer_core, 1)
@@ -2206,51 +2356,63 @@
   call bcast_all_i_for_database(nspec2D_ymax_outer_core, 1)
   call bcast_all_i_for_database(nspec2D_zmin_outer_core, 1)
 
-  call bcast_all_i_for_database(ibelm_xmin_outer_core(1), size(ibelm_xmin_outer_core,kind=4))
-  call bcast_all_i_for_database(ibelm_xmax_outer_core(1), size(ibelm_xmax_outer_core,kind=4))
-  call bcast_all_i_for_database(ibelm_ymin_outer_core(1), size(ibelm_ymin_outer_core,kind=4))
-  call bcast_all_i_for_database(ibelm_ymax_outer_core(1), size(ibelm_ymax_outer_core,kind=4))
-  call bcast_all_i_for_database(ibelm_bottom_outer_core(1), size(ibelm_bottom_outer_core,kind=4))
-  call bcast_all_i_for_database(ibelm_top_outer_core(1), size(ibelm_top_outer_core,kind=4))
+  if (size(ibelm_xmin_outer_core) > 0) then
+    call bcast_all_i_for_database(ibelm_xmin_outer_core(1), size(ibelm_xmin_outer_core,kind=4))
+    call bcast_all_i_for_database(ibelm_xmax_outer_core(1), size(ibelm_xmax_outer_core,kind=4))
+    call bcast_all_i_for_database(ibelm_ymin_outer_core(1), size(ibelm_ymin_outer_core,kind=4))
+    call bcast_all_i_for_database(ibelm_ymax_outer_core(1), size(ibelm_ymax_outer_core,kind=4))
+    call bcast_all_i_for_database(ibelm_bottom_outer_core(1), size(ibelm_bottom_outer_core,kind=4))
+    call bcast_all_i_for_database(ibelm_top_outer_core(1), size(ibelm_top_outer_core,kind=4))
+  endif
 
-  call bcast_all_cr_for_database(normal_xmin_outer_core(1,1,1,1), size(normal_xmin_outer_core,kind=4))
-  call bcast_all_cr_for_database(normal_xmax_outer_core(1,1,1,1), size(normal_xmax_outer_core,kind=4))
-  call bcast_all_cr_for_database(normal_ymin_outer_core(1,1,1,1), size(normal_ymin_outer_core,kind=4))
-  call bcast_all_cr_for_database(normal_ymax_outer_core(1,1,1,1), size(normal_ymax_outer_core,kind=4))
-  call bcast_all_cr_for_database(normal_bottom_outer_core(1,1,1,1), size(normal_bottom_outer_core,kind=4))
-  call bcast_all_cr_for_database(normal_top_outer_core(1,1,1,1), size(normal_top_outer_core,kind=4))
+  if (size(normal_xmin_outer_core) > 0) then
+    call bcast_all_cr_for_database(normal_xmin_outer_core(1,1,1,1), size(normal_xmin_outer_core,kind=4))
+    call bcast_all_cr_for_database(normal_xmax_outer_core(1,1,1,1), size(normal_xmax_outer_core,kind=4))
+    call bcast_all_cr_for_database(normal_ymin_outer_core(1,1,1,1), size(normal_ymin_outer_core,kind=4))
+    call bcast_all_cr_for_database(normal_ymax_outer_core(1,1,1,1), size(normal_ymax_outer_core,kind=4))
+    call bcast_all_cr_for_database(normal_bottom_outer_core(1,1,1,1), size(normal_bottom_outer_core,kind=4))
+    call bcast_all_cr_for_database(normal_top_outer_core(1,1,1,1), size(normal_top_outer_core,kind=4))
 
-  call bcast_all_cr_for_database(jacobian2D_xmin_outer_core(1,1,1), size(jacobian2D_xmin_outer_core,kind=4))
-  call bcast_all_cr_for_database(jacobian2D_xmax_outer_core(1,1,1), size(jacobian2D_xmax_outer_core,kind=4))
-  call bcast_all_cr_for_database(jacobian2D_ymin_outer_core(1,1,1), size(jacobian2D_ymin_outer_core,kind=4))
-  call bcast_all_cr_for_database(jacobian2D_ymax_outer_core(1,1,1), size(jacobian2D_ymax_outer_core,kind=4))
-  call bcast_all_cr_for_database(jacobian2D_bottom_outer_core(1,1,1), size(jacobian2D_bottom_outer_core,kind=4))
-  call bcast_all_cr_for_database(jacobian2D_top_outer_core(1,1,1), size(jacobian2D_top_outer_core,kind=4))
+    call bcast_all_cr_for_database(jacobian2D_xmin_outer_core(1,1,1), size(jacobian2D_xmin_outer_core,kind=4))
+    call bcast_all_cr_for_database(jacobian2D_xmax_outer_core(1,1,1), size(jacobian2D_xmax_outer_core,kind=4))
+    call bcast_all_cr_for_database(jacobian2D_ymin_outer_core(1,1,1), size(jacobian2D_ymin_outer_core,kind=4))
+    call bcast_all_cr_for_database(jacobian2D_ymax_outer_core(1,1,1), size(jacobian2D_ymax_outer_core,kind=4))
+    call bcast_all_cr_for_database(jacobian2D_bottom_outer_core(1,1,1), size(jacobian2D_bottom_outer_core,kind=4))
+    call bcast_all_cr_for_database(jacobian2D_top_outer_core(1,1,1), size(jacobian2D_top_outer_core,kind=4))
+  endif
 
   call bcast_all_i_for_database(nspec2D_xmin_inner_core, 1)
   call bcast_all_i_for_database(nspec2D_xmax_inner_core, 1)
   call bcast_all_i_for_database(nspec2D_ymin_inner_core, 1)
   call bcast_all_i_for_database(nspec2D_ymax_inner_core, 1)
 
-    ! boundary parameters
-  call bcast_all_i_for_database(ibelm_xmin_inner_core(1), size(ibelm_xmin_inner_core,kind=4))
-  call bcast_all_i_for_database(ibelm_xmax_inner_core(1), size(ibelm_xmax_inner_core,kind=4))
-  call bcast_all_i_for_database(ibelm_ymin_inner_core(1), size(ibelm_ymin_inner_core,kind=4))
-  call bcast_all_i_for_database(ibelm_ymax_inner_core(1), size(ibelm_ymax_inner_core,kind=4))
-  call bcast_all_i_for_database(ibelm_bottom_inner_core(1), size(ibelm_bottom_inner_core,kind=4))
-  call bcast_all_i_for_database(ibelm_top_inner_core(1), size(ibelm_top_inner_core,kind=4))
+  ! boundary parameters
+  if (size(ibelm_xmin_inner_core) > 0) then
+    call bcast_all_i_for_database(ibelm_xmin_inner_core(1), size(ibelm_xmin_inner_core,kind=4))
+    call bcast_all_i_for_database(ibelm_xmax_inner_core(1), size(ibelm_xmax_inner_core,kind=4))
+    call bcast_all_i_for_database(ibelm_ymin_inner_core(1), size(ibelm_ymin_inner_core,kind=4))
+    call bcast_all_i_for_database(ibelm_ymax_inner_core(1), size(ibelm_ymax_inner_core,kind=4))
+    call bcast_all_i_for_database(ibelm_bottom_inner_core(1), size(ibelm_bottom_inner_core,kind=4))
+    call bcast_all_i_for_database(ibelm_top_inner_core(1), size(ibelm_top_inner_core,kind=4))
+  endif
 
   ! -- Boundary Mesh for crust and mantle ---
   if (SAVE_BOUNDARY_MESH .and. SIMULATION_TYPE == 3) then
-    call bcast_all_i_for_database(ibelm_moho_top(1), size(ibelm_moho_top,kind=4))
-    call bcast_all_i_for_database(ibelm_moho_bot(1), size(ibelm_moho_bot,kind=4))
-    call bcast_all_i_for_database(ibelm_400_top(1), size(ibelm_400_top,kind=4))
-    call bcast_all_i_for_database(ibelm_400_bot(1), size(ibelm_400_bot,kind=4))
-    call bcast_all_i_for_database(ibelm_670_top(1), size(ibelm_670_top,kind=4))
-    call bcast_all_i_for_database(ibelm_670_bot(1), size(ibelm_670_bot,kind=4))
-    call bcast_all_cr_for_database(normal_moho(1,1,1,1), size(normal_moho,kind=4))
-    call bcast_all_cr_for_database(normal_400(1,1,1,1), size(normal_400,kind=4))
-    call bcast_all_cr_for_database(normal_670(1,1,1,1), size(normal_670,kind=4))
+    if (size(ibelm_moho_top) > 0) then
+      call bcast_all_i_for_database(ibelm_moho_top(1), size(ibelm_moho_top,kind=4))
+      call bcast_all_i_for_database(ibelm_moho_bot(1), size(ibelm_moho_bot,kind=4))
+      call bcast_all_cr_for_database(normal_moho(1,1,1,1), size(normal_moho,kind=4))
+    endif
+    if (size(ibelm_400_top) > 0) then
+      call bcast_all_i_for_database(ibelm_400_top(1), size(ibelm_400_top,kind=4))
+      call bcast_all_i_for_database(ibelm_400_bot(1), size(ibelm_400_bot,kind=4))
+      call bcast_all_cr_for_database(normal_400(1,1,1,1), size(normal_400,kind=4))
+    endif
+    if (size(ibelm_670_top) > 0) then
+      call bcast_all_i_for_database(ibelm_670_top(1), size(ibelm_670_top,kind=4))
+      call bcast_all_i_for_database(ibelm_670_bot(1), size(ibelm_670_bot,kind=4))
+      call bcast_all_cr_for_database(normal_670(1,1,1,1), size(normal_670,kind=4))
+    endif
   endif
 
   end subroutine bcast_mesh_databases_coupling
@@ -2310,8 +2472,7 @@
     call exit_mpi(myrank,'Error num_phase_ispec_crust_mantle is < zero')
 
   if (.not. I_should_read_the_database) then
-    allocate(phase_ispec_inner_crust_mantle(num_phase_ispec_crust_mantle,2), &
-            stat=ier)
+    allocate(phase_ispec_inner_crust_mantle(num_phase_ispec_crust_mantle,2),stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array phase_ispec_inner_crust_mantle')
     phase_ispec_inner_crust_mantle(:,:) = 0
   endif
@@ -2403,8 +2564,7 @@
     call exit_mpi(myrank,'Error num_phase_ispec_outer_core is < zero')
 
   if (.not. I_should_read_the_database) then
-    allocate(phase_ispec_inner_outer_core(num_phase_ispec_outer_core,2), &
-            stat=ier)
+    allocate(phase_ispec_inner_outer_core(num_phase_ispec_outer_core,2),stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array phase_ispec_inner_outer_core')
     phase_ispec_inner_outer_core(:,:) = 0
   endif
@@ -2546,19 +2706,23 @@
   implicit none
 
   ! crust and mantle
-  call bcast_all_i_for_database(nimin_crust_mantle(1,1), size(nimin_crust_mantle,kind=4))
-  call bcast_all_i_for_database(nimax_crust_mantle(1,1), size(nimax_crust_mantle,kind=4))
-  call bcast_all_i_for_database(njmin_crust_mantle(1,1), size(njmin_crust_mantle,kind=4))
-  call bcast_all_i_for_database(njmax_crust_mantle(1,1), size(njmax_crust_mantle,kind=4))
-  call bcast_all_i_for_database(nkmin_xi_crust_mantle(1,1), size(nkmin_xi_crust_mantle,kind=4))
-  call bcast_all_i_for_database(nkmin_eta_crust_mantle(1,1), size(nkmin_eta_crust_mantle,kind=4))
+  if (NSPEC_CRUST_MANTLE > 0) then
+    call bcast_all_i_for_database(nimin_crust_mantle(1,1), size(nimin_crust_mantle,kind=4))
+    call bcast_all_i_for_database(nimax_crust_mantle(1,1), size(nimax_crust_mantle,kind=4))
+    call bcast_all_i_for_database(njmin_crust_mantle(1,1), size(njmin_crust_mantle,kind=4))
+    call bcast_all_i_for_database(njmax_crust_mantle(1,1), size(njmax_crust_mantle,kind=4))
+    call bcast_all_i_for_database(nkmin_xi_crust_mantle(1,1), size(nkmin_xi_crust_mantle,kind=4))
+    call bcast_all_i_for_database(nkmin_eta_crust_mantle(1,1), size(nkmin_eta_crust_mantle,kind=4))
+  endif
 
   ! outer core
-  call bcast_all_i_for_database(nimin_outer_core(1,1), size(nimin_outer_core,kind=4))
-  call bcast_all_i_for_database(nimax_outer_core(1,1), size(nimax_outer_core,kind=4))
-  call bcast_all_i_for_database(njmin_outer_core(1,1), size(njmin_outer_core,kind=4))
-  call bcast_all_i_for_database(njmax_outer_core(1,1), size(njmax_outer_core,kind=4))
-  call bcast_all_i_for_database(nkmin_xi_outer_core(1,1), size(nkmin_xi_outer_core,kind=4))
-  call bcast_all_i_for_database(nkmin_eta_outer_core(1,1), size(nkmin_eta_outer_core,kind=4))
+  if (NSPEC_OUTER_CORE > 0) then
+    call bcast_all_i_for_database(nimin_outer_core(1,1), size(nimin_outer_core,kind=4))
+    call bcast_all_i_for_database(nimax_outer_core(1,1), size(nimax_outer_core,kind=4))
+    call bcast_all_i_for_database(njmin_outer_core(1,1), size(njmin_outer_core,kind=4))
+    call bcast_all_i_for_database(njmax_outer_core(1,1), size(njmax_outer_core,kind=4))
+    call bcast_all_i_for_database(nkmin_xi_outer_core(1,1), size(nkmin_xi_outer_core,kind=4))
+    call bcast_all_i_for_database(nkmin_eta_outer_core(1,1), size(nkmin_eta_outer_core,kind=4))
+  endif
 
   end subroutine bcast_mesh_databases_stacey

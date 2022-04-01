@@ -26,19 +26,19 @@
 !=====================================================================
 
   subroutine get_jacobian_discontinuities(ispec,ix_elem,iy_elem,rmin,rmax,r1,r2,r3,r4,r5,r6,r7,r8, &
-                                           xstore,ystore,zstore,dershape2D_bottom, &
-                                           ibelm_moho_top,ibelm_moho_bot, &
-                                           ibelm_400_top,ibelm_400_bot, &
-                                           ibelm_670_top,ibelm_670_bot, &
-                                           normal_moho,normal_400,normal_670, &
-                                           jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
-                                           ispec2D_moho_top,ispec2D_moho_bot, &
-                                           ispec2D_400_top,ispec2D_400_bot, &
-                                           ispec2D_670_top,ispec2D_670_bot, &
-                                           NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670, &
-                                           r_moho,r_400,r_670, &
-                                           is_superbrick,USE_ONE_LAYER_SB,ispec_superbrick, &
-                                           nex_eta_moho,HONOR_1D_SPHERICAL_MOHO)
+                                          xstore,ystore,zstore,dershape2D_bottom, &
+                                          ibelm_moho_top,ibelm_moho_bot, &
+                                          ibelm_400_top,ibelm_400_bot, &
+                                          ibelm_670_top,ibelm_670_bot, &
+                                          normal_moho,normal_400,normal_670, &
+                                          jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
+                                          ispec2D_moho_top,ispec2D_moho_bot, &
+                                          ispec2D_400_top,ispec2D_400_bot, &
+                                          ispec2D_670_top,ispec2D_670_bot, &
+                                          NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670, &
+                                          r_moho,r_400,r_670, &
+                                          is_superbrick,USE_ONE_LAYER_SB,ispec_superbrick, &
+                                          nex_eta_moho,HONOR_1D_SPHERICAL_MOHO)
 
   use constants
 
@@ -81,33 +81,33 @@
 
 
   ! find the coordinates of 9 nodes for the bottom surface element to compute the Jacobian if needed
-  xelm2(1)=xstore(1,1,1)
-  yelm2(1)=ystore(1,1,1)
-  zelm2(1)=zstore(1,1,1)
-  xelm2(2)=xstore(NGLLX,1,1)
-  yelm2(2)=ystore(NGLLX,1,1)
-  zelm2(2)=zstore(NGLLX,1,1)
-  xelm2(3)=xstore(NGLLX,NGLLY,1)
-  yelm2(3)=ystore(NGLLX,NGLLY,1)
-  zelm2(3)=zstore(NGLLX,NGLLY,1)
-  xelm2(4)=xstore(1,NGLLY,1)
-  yelm2(4)=ystore(1,NGLLY,1)
-  zelm2(4)=zstore(1,NGLLY,1)
-  xelm2(5)=xstore((NGLLX+1)/2,1,1)
-  yelm2(5)=ystore((NGLLX+1)/2,1,1)
-  zelm2(5)=zstore((NGLLX+1)/2,1,1)
-  xelm2(6)=xstore(NGLLX,(NGLLY+1)/2,1)
-  yelm2(6)=ystore(NGLLX,(NGLLY+1)/2,1)
-  zelm2(6)=zstore(NGLLX,(NGLLY+1)/2,1)
-  xelm2(7)=xstore((NGLLX+1)/2,NGLLY,1)
-  yelm2(7)=ystore((NGLLX+1)/2,NGLLY,1)
-  zelm2(7)=zstore((NGLLX+1)/2,NGLLY,1)
-  xelm2(8)=xstore(1,(NGLLY+1)/2,1)
-  yelm2(8)=ystore(1,(NGLLY+1)/2,1)
-  zelm2(8)=zstore(1,(NGLLY+1)/2,1)
-  xelm2(9)=xstore((NGLLX+1)/2,(NGLLY+1)/2,1)
-  yelm2(9)=ystore((NGLLX+1)/2,(NGLLY+1)/2,1)
-  zelm2(9)=zstore((NGLLX+1)/2,(NGLLY+1)/2,1)
+  xelm2(1) = xstore(1,1,1)
+  yelm2(1) = ystore(1,1,1)
+  zelm2(1) = zstore(1,1,1)
+  xelm2(2) = xstore(NGLLX,1,1)
+  yelm2(2) = ystore(NGLLX,1,1)
+  zelm2(2) = zstore(NGLLX,1,1)
+  xelm2(3) = xstore(NGLLX,NGLLY,1)
+  yelm2(3) = ystore(NGLLX,NGLLY,1)
+  zelm2(3) = zstore(NGLLX,NGLLY,1)
+  xelm2(4) = xstore(1,NGLLY,1)
+  yelm2(4) = ystore(1,NGLLY,1)
+  zelm2(4) = zstore(1,NGLLY,1)
+  xelm2(5) = xstore((NGLLX+1)/2,1,1)
+  yelm2(5) = ystore((NGLLX+1)/2,1,1)
+  zelm2(5) = zstore((NGLLX+1)/2,1,1)
+  xelm2(6) = xstore(NGLLX,(NGLLY+1)/2,1)
+  yelm2(6) = ystore(NGLLX,(NGLLY+1)/2,1)
+  zelm2(6) = zstore(NGLLX,(NGLLY+1)/2,1)
+  xelm2(7) = xstore((NGLLX+1)/2,NGLLY,1)
+  yelm2(7) = ystore((NGLLX+1)/2,NGLLY,1)
+  zelm2(7) = zstore((NGLLX+1)/2,NGLLY,1)
+  xelm2(8) = xstore(1,(NGLLY+1)/2,1)
+  yelm2(8) = ystore(1,(NGLLY+1)/2,1)
+  zelm2(8) = zstore(1,(NGLLY+1)/2,1)
+  xelm2(9) = xstore((NGLLX+1)/2,(NGLLY+1)/2,1)
+  yelm2(9) = ystore((NGLLX+1)/2,(NGLLY+1)/2,1)
+  zelm2(9) = zstore((NGLLX+1)/2,(NGLLY+1)/2,1)
 
 ! radii to determine if an element is on the discontinuity or not
   target_moho_high = r_moho * (ONE + SMALLVAL)
@@ -119,19 +119,19 @@
 
 ! setup the mapping array for superbrick case (only invoked for Moho bottom)
   if (is_superbrick) then
-    map_irem_ix_12=(/2,2,0,1,0,1,0,0/)
-    map_irem_ix_34=(/1,1,0,2,0,2,0,0/)
-    map_irem_iy_odd=(/1,2,0,1,0,2,0,0/)
-    map_irem_iy_even=(/2,1,0,2,0,1,0,0/)
+    map_irem_ix_12 = (/2,2,0,1,0,1,0,0/)
+    map_irem_ix_34 = (/1,1,0,2,0,2,0,0/)
+    map_irem_iy_odd = (/1,2,0,1,0,2,0,0/)
+    map_irem_iy_even = (/2,1,0,2,0,1,0,0/)
     if (USE_ONE_LAYER_SB) then
       nele_sub_block = 7
-      ispec_list=(/1,2,4,6,8,9,11,13,15,16,18,20,22,23,25,27/)
+      ispec_list = (/1,2,4,6,8,9,11,13,15,16,18,20,22,23,25,27/)
     else
       nele_sub_block = 8
-      ispec_list=(/1,2,4,6,9,10,12,14,17,18,20,22,25,26,28,30/)
+      ispec_list = (/1,2,4,6,9,10,12,14,17,18,20,22,25,26,28,30/)
     endif
-    map_isub_ix=(/2,2,1,1/)
-    map_isub_iy=(/2,1,2,1/)
+    map_isub_ix = (/2,2,1,1/)
+    map_isub_iy = (/2,1,2,1/)
 
     map_ix(1:NSPEC_DOUBLING_SUPERBRICK) = 0
     map_iy(1:NSPEC_DOUBLING_SUPERBRICK) = 0

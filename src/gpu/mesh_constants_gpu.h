@@ -649,6 +649,7 @@ typedef struct mesh_ {
 
   int nspec_outer_crust_mantle;
   int nspec_inner_crust_mantle;
+
   int nspec2D_bottom_crust_mantle;
 
   int num_colors_inner_crust_mantle;
@@ -704,6 +705,7 @@ typedef struct mesh_ {
 
   int nspec_outer_outer_core;
   int nspec_inner_outer_core;
+
   int nspec2D_top_outer_core;
   int nspec2D_bottom_outer_core;
 
@@ -1014,6 +1016,7 @@ typedef struct mesh_ {
 
   int nspec2D_xmin_crust_mantle, nspec2D_xmax_crust_mantle;
   int nspec2D_ymin_crust_mantle, nspec2D_ymax_crust_mantle;
+  int nspec2D_zmin_crust_mantle;
 
   gpu_int_mem d_nimin_crust_mantle;
   gpu_int_mem d_nimax_crust_mantle;
@@ -1031,16 +1034,19 @@ typedef struct mesh_ {
   gpu_realw_mem d_normal_xmax_crust_mantle;
   gpu_realw_mem d_normal_ymin_crust_mantle;
   gpu_realw_mem d_normal_ymax_crust_mantle;
+  gpu_realw_mem d_normal_bottom_crust_mantle;
 
   gpu_realw_mem d_jacobian2D_xmin_crust_mantle;
   gpu_realw_mem d_jacobian2D_xmax_crust_mantle;
   gpu_realw_mem d_jacobian2D_ymin_crust_mantle;
   gpu_realw_mem d_jacobian2D_ymax_crust_mantle;
+  gpu_realw_mem d_jacobian2D_bottom_crust_mantle;
 
   gpu_realw_mem d_absorb_xmin_crust_mantle;
   gpu_realw_mem d_absorb_xmax_crust_mantle;
   gpu_realw_mem d_absorb_ymin_crust_mantle;
   gpu_realw_mem d_absorb_ymax_crust_mantle;
+  gpu_realw_mem d_absorb_zmin_crust_mantle;
 
   gpu_realw_mem d_rho_vp_crust_mantle;
   gpu_realw_mem d_rho_vs_crust_mantle;

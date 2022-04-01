@@ -262,8 +262,6 @@
 
   implicit none
 
-  integer :: nspec_actually,nspec_att
-
   integer :: ifirst_region,ilast_region
   integer, dimension(:), allocatable :: perm_layer
 

@@ -31,6 +31,8 @@
 
   use constants_solver
 
+  use shared_parameters, only: REGIONAL_MESH_CUTOFF
+
   use specfem_par, only: &
     ichunk,SIMULATION_TYPE,SAVE_STACEY,it, &
     wgllwgll_xz,wgllwgll_yz
@@ -42,20 +44,26 @@
     ibool_crust_mantle, &
     jacobian2D_xmin_crust_mantle,jacobian2D_xmax_crust_mantle, &
     jacobian2D_ymin_crust_mantle,jacobian2D_ymax_crust_mantle, &
+    jacobian2D_bottom_crust_mantle, &
     normal_xmin_crust_mantle,normal_xmax_crust_mantle, &
     normal_ymin_crust_mantle,normal_ymax_crust_mantle, &
+    normal_bottom_crust_mantle, &
     rho_vp_crust_mantle,rho_vs_crust_mantle, &
     ibelm_xmin_crust_mantle,ibelm_xmax_crust_mantle, &
     ibelm_ymin_crust_mantle,ibelm_ymax_crust_mantle, &
+    ibelm_bottom_crust_mantle, &
     nimin_crust_mantle,nimax_crust_mantle, &
     njmin_crust_mantle,njmax_crust_mantle, &
     nkmin_xi_crust_mantle,nkmin_eta_crust_mantle, &
     nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle, &
     nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle, &
+    nspec2D_zmin_crust_mantle, &
     reclen_xmin_crust_mantle,reclen_xmax_crust_mantle, &
     reclen_ymin_crust_mantle,reclen_ymax_crust_mantle, &
+    reclen_zmin_crust_mantle, &
     absorb_xmin_crust_mantle,absorb_xmax_crust_mantle, &
-    absorb_ymin_crust_mantle,absorb_ymax_crust_mantle
+    absorb_ymin_crust_mantle,absorb_ymax_crust_mantle, &
+    absorb_zmin_crust_mantle
 
   implicit none
 
@@ -287,6 +295,48 @@
 !$OMP ENDDO
 !$OMP END PARALLEL
 
+    ! zmin
+    if (REGIONAL_MESH_CUTOFF) then
+      ! adds boundary contributions
+      do ispec2D = 1,nspec2D_zmin_crust_mantle
+
+        ispec = ibelm_bottom_crust_mantle(ispec2D)
+
+        k = 1
+        do j = 1,NGLLY
+          do i = 1,NGLLX
+            iglob = ibool_crust_mantle(i,j,k,ispec)
+
+            vx = veloc_crust_mantle(1,iglob)
+            vy = veloc_crust_mantle(2,iglob)
+            vz = veloc_crust_mantle(3,iglob)
+
+            nx = normal_bottom_crust_mantle(1,i,k,ispec2D)
+            ny = normal_bottom_crust_mantle(2,i,k,ispec2D)
+            nz = normal_bottom_crust_mantle(3,i,k,ispec2D)
+
+            vn = vx*nx+vy*ny+vz*nz
+
+            tx = rho_vp_crust_mantle(i,j,k,ispec)*vn*nx+rho_vs_crust_mantle(i,j,k,ispec)*(vx-vn*nx)
+            ty = rho_vp_crust_mantle(i,j,k,ispec)*vn*ny+rho_vs_crust_mantle(i,j,k,ispec)*(vy-vn*ny)
+            tz = rho_vp_crust_mantle(i,j,k,ispec)*vn*nz+rho_vs_crust_mantle(i,j,k,ispec)*(vz-vn*nz)
+
+            weight = jacobian2D_bottom_crust_mantle(i,k,ispec2D)*wgllwgll_xz(i,k)
+
+            accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) - tx*weight
+            accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) - ty*weight
+            accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) - tz*weight
+
+            if (SAVE_STACEY) then
+              absorb_zmin_crust_mantle(1,i,k,ispec2D) = tx*weight
+              absorb_zmin_crust_mantle(2,i,k,ispec2D) = ty*weight
+              absorb_zmin_crust_mantle(3,i,k,ispec2D) = tz*weight
+            endif
+          enddo
+        enddo
+      enddo
+    endif
+
   else
     ! on GPU
     !   xmin
@@ -303,6 +353,10 @@
     if (nspec2D_ymin_crust_mantle > 0 ) call compute_stacey_elastic_gpu(Mesh_pointer,absorb_ymin_crust_mantle,2) ! <= ymin
     !   ymax
     if (nspec2D_ymax_crust_mantle > 0 ) call compute_stacey_elastic_gpu(Mesh_pointer,absorb_ymax_crust_mantle,3) ! <= ymax
+    !   zmin
+    if (REGIONAL_MESH_CUTOFF) then
+      if (nspec2D_zmin_crust_mantle > 0 ) call compute_stacey_elastic_gpu(Mesh_pointer,absorb_zmin_crust_mantle,4) ! <= zmin
+    endif
   endif
 
   ! writes absorbing boundary values
@@ -315,6 +369,10 @@
     if (nspec2D_ymin_crust_mantle > 0) call write_abs(2,absorb_ymin_crust_mantle,reclen_ymin_crust_mantle,it)
     ! ymax
     if (nspec2D_ymax_crust_mantle > 0) call write_abs(3,absorb_ymax_crust_mantle,reclen_ymax_crust_mantle,it)
+    ! zmin
+    if (REGIONAL_MESH_CUTOFF) then
+      if (nspec2D_zmin_crust_mantle > 0) call write_abs(4,absorb_zmin_crust_mantle,reclen_zmin_crust_mantle,it)
+    endif
   endif
 
 
@@ -330,6 +388,8 @@
 
   use constants_solver
 
+  use shared_parameters, only: REGIONAL_MESH_CUTOFF
+
   use specfem_par, only: &
     ichunk,SIMULATION_TYPE,NSTEP,it
 
@@ -340,15 +400,19 @@
     ibool_crust_mantle, &
     ibelm_xmin_crust_mantle,ibelm_xmax_crust_mantle, &
     ibelm_ymin_crust_mantle,ibelm_ymax_crust_mantle, &
+    ibelm_bottom_crust_mantle, &
     nimin_crust_mantle,nimax_crust_mantle, &
     njmin_crust_mantle,njmax_crust_mantle, &
     nkmin_xi_crust_mantle,nkmin_eta_crust_mantle, &
     nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle, &
     nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle, &
+    nspec2D_zmin_crust_mantle, &
     reclen_xmin_crust_mantle,reclen_xmax_crust_mantle, &
     reclen_ymin_crust_mantle,reclen_ymax_crust_mantle, &
+    reclen_zmin_crust_mantle, &
     absorb_xmin_crust_mantle,absorb_xmax_crust_mantle, &
-    absorb_ymin_crust_mantle,absorb_ymax_crust_mantle
+    absorb_ymin_crust_mantle,absorb_ymax_crust_mantle, &
+    absorb_zmin_crust_mantle
 
   implicit none
 
@@ -523,6 +587,39 @@
                                                                                  3) ! <= ymax
   endif
 
+  !   zmin
+  if (REGIONAL_MESH_CUTOFF) then
+    ! reads absorbing boundary values
+    if (nspec2D_zmin_crust_mantle > 0) then
+      call read_abs(4,absorb_zmin_crust_mantle,reclen_zmin_crust_mantle,NSTEP-it+1)
+    endif
+
+    if (.not. GPU_MODE) then
+      ! on CPU
+      do ispec2D = 1,nspec2D_zmin_crust_mantle
+
+        ispec = ibelm_bottom_crust_mantle(ispec2D)
+
+        k = 1
+        do j = 1,NGLLY
+          do i = 1,NGLLX
+            iglob = ibool_crust_mantle(i,j,k,ispec)
+
+            b_accel_crust_mantle(1,iglob) = b_accel_crust_mantle(1,iglob) - absorb_zmin_crust_mantle(1,i,k,ispec2D)
+            b_accel_crust_mantle(2,iglob) = b_accel_crust_mantle(2,iglob) - absorb_zmin_crust_mantle(2,i,k,ispec2D)
+            b_accel_crust_mantle(3,iglob) = b_accel_crust_mantle(3,iglob) - absorb_zmin_crust_mantle(3,i,k,ispec2D)
+          enddo
+        enddo
+      enddo
+
+    else
+      ! on GPU
+      if (nspec2D_zmin_crust_mantle > 0 ) call compute_stacey_elastic_backward_gpu(Mesh_pointer, &
+                                                                                   absorb_zmin_crust_mantle, &
+                                                                                   4) ! <= zmin
+    endif
+  endif
+
   end subroutine compute_stacey_cm_backward
 
 !
@@ -535,6 +632,8 @@
 
   use constants_solver
 
+  use shared_parameters, only: REGIONAL_MESH_CUTOFF
+
   use specfem_par, only: &
     ichunk,SIMULATION_TYPE,SAVE_FORWARD,UNDO_ATTENUATION, &
     wgllwgll_xz,wgllwgll_yz
@@ -546,16 +645,20 @@
     ibool_crust_mantle, &
     jacobian2D_xmin_crust_mantle,jacobian2D_xmax_crust_mantle, &
     jacobian2D_ymin_crust_mantle,jacobian2D_ymax_crust_mantle, &
+    jacobian2D_bottom_crust_mantle, &
     normal_xmin_crust_mantle,normal_xmax_crust_mantle, &
     normal_ymin_crust_mantle,normal_ymax_crust_mantle, &
+    normal_bottom_crust_mantle, &
     rho_vp_crust_mantle,rho_vs_crust_mantle, &
     ibelm_xmin_crust_mantle,ibelm_xmax_crust_mantle, &
     ibelm_ymin_crust_mantle,ibelm_ymax_crust_mantle, &
+    ibelm_bottom_crust_mantle, &
     nimin_crust_mantle,nimax_crust_mantle, &
     njmin_crust_mantle,njmax_crust_mantle, &
     nkmin_xi_crust_mantle,nkmin_eta_crust_mantle, &
     nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle, &
-    nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle
+    nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle, &
+    nspec2D_zmin_crust_mantle
 
   implicit none
 
@@ -762,6 +865,49 @@
   else
     ! on GPU
     if (nspec2D_ymax_crust_mantle > 0 ) call compute_stacey_elastic_undoatt_gpu(Mesh_pointer,3) ! <= ymax
+  endif
+
+  ! zmin
+  if (REGIONAL_MESH_CUTOFF) then
+    if (.not. GPU_MODE) then
+      ! on CPU
+      do ispec2D = 1,nspec2D_zmin_crust_mantle
+
+        ispec = ibelm_bottom_crust_mantle(ispec2D)
+
+        k = 1
+        do j = 1,NGLLY
+          do i = 1,NGLLX
+            iglob = ibool_crust_mantle(i,j,k,ispec)
+
+            vx = b_veloc_crust_mantle(1,iglob)
+            vy = b_veloc_crust_mantle(2,iglob)
+            vz = b_veloc_crust_mantle(3,iglob)
+
+            nx = normal_bottom_crust_mantle(1,i,k,ispec2D)
+            ny = normal_bottom_crust_mantle(2,i,k,ispec2D)
+            nz = normal_bottom_crust_mantle(3,i,k,ispec2D)
+
+            vn = vx*nx+vy*ny+vz*nz
+
+            tx = rho_vp_crust_mantle(i,j,k,ispec)*vn*nx+rho_vs_crust_mantle(i,j,k,ispec)*(vx-vn*nx)
+            ty = rho_vp_crust_mantle(i,j,k,ispec)*vn*ny+rho_vs_crust_mantle(i,j,k,ispec)*(vy-vn*ny)
+            tz = rho_vp_crust_mantle(i,j,k,ispec)*vn*nz+rho_vs_crust_mantle(i,j,k,ispec)*(vz-vn*nz)
+
+            weight = jacobian2D_bottom_crust_mantle(i,k,ispec2D)*wgllwgll_xz(i,k)
+
+            b_accel_crust_mantle(1,iglob) = b_accel_crust_mantle(1,iglob) - tx*weight
+            b_accel_crust_mantle(2,iglob) = b_accel_crust_mantle(2,iglob) - ty*weight
+            b_accel_crust_mantle(3,iglob) = b_accel_crust_mantle(3,iglob) - tz*weight
+
+          enddo
+        enddo
+      enddo
+
+    else
+      ! on GPU
+      if (nspec2D_zmin_crust_mantle > 0 ) call compute_stacey_elastic_undoatt_gpu(Mesh_pointer,4) ! <= zmin
+    endif
   endif
 
   end subroutine compute_stacey_cm_backward_undoatt

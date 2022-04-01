@@ -59,7 +59,7 @@
   double precision,intent(in) :: f0_reference
 
   ! local parameters
-  integer :: i,j,k,ispec,ier,i_sls
+  integer :: i,j,k,ispec,ier,i_sls,nspec_region
   double precision, dimension(N_SLS) :: tau_e, fc
   double precision :: omsb, Q_mu, sf, sf_relaxed
   double precision :: f_c_source  ! frequency
@@ -78,6 +78,19 @@
   factor_scale(:,:,:,:) = 0._CUSTOM_REAL
   factor_scale_relaxed(:,:,:,:) = 0._CUSTOM_REAL
   f_c_source = 0.d0
+
+  ! gets nspec for this region
+  select case(iregion_code)
+  case (IREGION_CRUST_MANTLE)
+    nspec_region = NSPEC_CRUST_MANTLE
+  case (IREGION_OUTER_CORE)
+    nspec_region = NSPEC_OUTER_CORE
+  case (IREGION_INNER_CORE)
+    nspec_region = NSPEC_INNER_CORE
+  end select
+
+  ! checks if anything to do
+  if (nspec_region == 0) return
 
   ! All of the following reads use the output parameters as their temporary arrays
   ! use the filename to determine the actual contents of the read

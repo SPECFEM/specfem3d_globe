@@ -153,6 +153,17 @@ __global__ void compute_stacey_elastic_backward_kernel(float * b_accel, const fl
            return ;
         }
         break;
+      case 4 :
+        k = 0;
+        j = (igll) / (NGLLX);
+        i = igll - ((j) * (NGLLX));
+        if (j < 0 || j > NGLLX - (1)) {
+           return ;
+        }
+        if (i < 0 || i > NGLLX - (1)) {
+           return ;
+        }
+        break;
     }
 
     iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)] - (1);

@@ -689,8 +689,9 @@
   end select
 
   nex_xi = nex_xi_in / 16
-  ximin        = 1e7
+  if (nex_xi <= 0) nex_xi = 1
 
+  ximin        = 1e7
   rcube        = rcube_test
   rcubestep    = 1.0d0
 

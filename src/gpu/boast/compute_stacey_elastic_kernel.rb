@@ -117,6 +117,14 @@ module BOAST
           print If(Expression("||", k < nkmin_eta[INDEX2(2,1,iface)]-1, k > ngllx-1) )                   { print Return(nil) }
           print If(Expression("||", i <     nimin[INDEX2(2,1,iface)]-1, i > nimax[INDEX2(2,1,iface)]-1) ){ print Return(nil) }
           print fac1 === wgllwgll[k*ngllx+i] if type == :forward
+        },
+        4 => lambda {
+          print k === 0
+          print j === igll/ngllx
+          print i === igll-j*ngllx
+          print If(Expression("||", j < 0, j > ngllx-1) ){ print Return(nil) }
+          print If(Expression("||", i < 0, i > ngllx-1) ){ print Return(nil) }
+          print fac1 === wgllwgll[j*ngllx+i] if type == :forward
         })
         comment()
 

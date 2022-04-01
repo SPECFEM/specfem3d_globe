@@ -135,6 +135,9 @@
     call flush_IMAIN()
   endif
 
+  ! checks if anything to do
+  if (nelements <= 0) return
+
   ! fill mapping to be able to parallelize loops below
   allocate(map_ispec(nelements),stat=ier)
   if (ier /= 0) stop 'Error allocating map_ispec'
@@ -238,27 +241,27 @@
         ! xmin & xmax
         if (ix_elem == 1) then
           iMPIcut_xi(1,ispec_loc) = .true.
-          if (iproc_xi == 0) iboun(1,ispec_loc)= .true.
+          if (iproc_xi == 0) iboun(1,ispec_loc) = .true.
         endif
         if (ix_elem == (NEX_PER_PROC_XI-ratio_sampling_array(ilayer)+1)) then
           iMPIcut_xi(2,ispec_loc) = .true.
-          if (iproc_xi == NPROC_XI-1) iboun(2,ispec_loc)= .true.
+          if (iproc_xi == NPROC_XI-1) iboun(2,ispec_loc) = .true.
         endif
         ! ymin & ymax
         if (iy_elem == 1) then
           iMPIcut_eta(1,ispec_loc) = .true.
-          if (iproc_eta == 0) iboun(3,ispec_loc)= .true.
+          if (iproc_eta == 0) iboun(3,ispec_loc) = .true.
         endif
         if (iy_elem == (NEX_PER_PROC_ETA-ratio_sampling_array(ilayer)+1)) then
           iMPIcut_eta(2,ispec_loc) = .true.
-          if (iproc_eta == NPROC_ETA-1) iboun(4,ispec_loc)= .true.
+          if (iproc_eta == NPROC_ETA-1) iboun(4,ispec_loc) = .true.
         endif
         ! zmin & zmax
         if (iz_elem == ner_mesh_layers(ilayer) .and. ilayer == ifirst_region) then
-          iboun(6,ispec_loc)= .true.
+          iboun(6,ispec_loc) = .true.
         endif
         if (iz_elem == 1 .and. ilayer == ilast_region) then    ! defined if no doubling in this layer
-          iboun(5,ispec_loc)= .true.
+          iboun(5,ispec_loc) = .true.
         endif
 
         ! define the doubling flag of this element

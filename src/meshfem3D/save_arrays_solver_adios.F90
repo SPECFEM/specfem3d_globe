@@ -81,7 +81,7 @@
     nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
     ispec_is_tiso, &
     tau_s_store,tau_e_store,Qmu_store, &
-    nspec_actually, nspec_ani, nspec_stacey, nglob_xy, nglob_oceans ! prname,
+    nspec_ani, nspec_stacey, nglob_xy, nglob_oceans ! prname,
 
   use adios_helpers_mod
   use manager_adios
@@ -224,7 +224,7 @@
   call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(ispec_is_tiso))
 
   ! local GLL points
-  local_dim = NGLLX * NGLLY * NGLLZ * nspec_actually
+  local_dim = NGLLX * NGLLY * NGLLZ * nspec
   call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(xixstore))
   call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(xiystore))
   call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(xizstore))
@@ -383,7 +383,7 @@
   call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs_adios, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(ispec_is_tiso))
 
-  local_dim = NGLLX * NGLLY * NGLLZ * nspec_actually
+  local_dim = NGLLX * NGLLY * NGLLZ * nspec
   call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs_adios, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(xixstore))
   call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs_adios, local_dim, &

@@ -146,7 +146,8 @@
   ! because that is by far the most expensive setup for runs in terms of memory usage, thus that is
   ! the type of run for which we need to make sure that everything fits in memory
   call memory_eval(NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-                   NPROCTOT,NSPEC_REGIONS,NGLOB_REGIONS, &
+                   NPROCTOT, &
+                   NSPEC_REGIONS,NGLOB_REGIONS, &
                    NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
                    NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
                    NSPEC_INNER_CORE_ATTENUATION, &
@@ -385,19 +386,19 @@
 
       icorner = icorner + 1
 
-      xi= - ANGULAR_WIDTH_XI_RAD/2. + dble(ix)*ANGULAR_WIDTH_XI_RAD
-      eta= - ANGULAR_WIDTH_ETA_RAD/2. + dble(iy)*ANGULAR_WIDTH_ETA_RAD
+      xi  = - ANGULAR_WIDTH_XI_RAD/2.  + dble(ix)*ANGULAR_WIDTH_XI_RAD
+      eta = - ANGULAR_WIDTH_ETA_RAD/2. + dble(iy)*ANGULAR_WIDTH_ETA_RAD
 
-      x=dtan(xi)
-      y=dtan(eta)
+      x = dtan(xi)
+      y = dtan(eta)
 
-      gamma=ONE/dsqrt(ONE+x*x+y*y)
-      rgt=R_UNIT_SPHERE*gamma
+      gamma = ONE/dsqrt(ONE+x*x+y*y)
+      rgt = R_UNIT_SPHERE*gamma
 
       ! define the mesh points at the top surface
-      x_top=-y*rgt
-      y_top=x*rgt
-      z_top=rgt
+      x_top = -y*rgt
+      y_top = x*rgt
+      z_top = rgt
 
       ! rotate top
       vector_ori(1) = x_top
@@ -642,8 +643,8 @@
     write(IOUT,*) 'integer, parameter :: NX_BATHY_VAL = ',NX_BATHY
     write(IOUT,*) 'integer, parameter :: NY_BATHY_VAL = ',NY_BATHY
   else
-    write(IOUT,*) 'integer, parameter :: NX_BATHY_VAL = 1'
-    write(IOUT,*) 'integer, parameter :: NY_BATHY_VAL = 1'
+    write(IOUT,*) 'integer, parameter :: NX_BATHY_VAL = 0'
+    write(IOUT,*) 'integer, parameter :: NY_BATHY_VAL = 0'
   endif
   write(IOUT,*)
 
@@ -730,15 +731,15 @@
     write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_3DMOVIE = NSPEC_CRUST_MANTLE'
     write(IOUT,*) 'integer, parameter :: NGLOB_CRUST_MANTLE_3DMOVIE = NGLOB_CRUST_MANTLE'
   else
-    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_3DMOVIE = 1'
-    write(IOUT,*) 'integer, parameter :: NGLOB_CRUST_MANTLE_3DMOVIE = 1'
+    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_3DMOVIE = 0'
+    write(IOUT,*) 'integer, parameter :: NGLOB_CRUST_MANTLE_3DMOVIE = 0'
   endif
   write(IOUT,*)
 
   if (MOVIE_VOLUME .and. MOVIE_VOLUME_TYPE == 4) then
     write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_3DMOVIE = NSPEC_OUTER_CORE'
   else
-    write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_3DMOVIE = 1'
+    write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_3DMOVIE = 0'
   endif
 
   ! in the case of Stacey boundary conditions, add C*delta/2 contribution to the mass matrix
@@ -751,9 +752,9 @@
   if (NCHUNKS /= 6 .and. ABSORBING_CONDITIONS) then
      NGLOB_XY_CM = NGLOB_REGIONS(IREGION_CRUST_MANTLE)
   else
-     NGLOB_XY_CM = 1
+     NGLOB_XY_CM = 0
   endif
-  NGLOB_XY_IC = 1
+  NGLOB_XY_IC = 0
 
   if (ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
     NGLOB_XY_CM = NGLOB_REGIONS(IREGION_CRUST_MANTLE)

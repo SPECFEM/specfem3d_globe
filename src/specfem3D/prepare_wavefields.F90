@@ -519,6 +519,7 @@
       num_elements = nspec_inner_crust_mantle
     endif
 
+    if (num_elements > 0) then
 ! openmp solver
 !$OMP PARALLEL if (num_elements > 500) &
 !$OMP DEFAULT(NONE) &
@@ -532,28 +533,34 @@
 #endif
 !$OMP iglob)
 !$OMP DO SCHEDULE(GUIDED)
-    do ispec_p = 1,num_elements
-      ! only compute elements which belong to current phase (inner or outer elements)
-      ispec = phase_ispec_inner_crust_mantle(ispec_p,iphase)
-      DO_LOOP_IJK
-        iglob = ibool_crust_mantle(INDEX_IJK,ispec)
-        ! initialize arrays to zero
-        displ_crust_mantle(:,iglob) = init_value
-        veloc_crust_mantle(:,iglob) = 0._CUSTOM_REAL
-        accel_crust_mantle(:,iglob) = 0._CUSTOM_REAL
-      ENDDO_LOOP_IJK
-      ! if doing benchmark runs to measure scaling of the code,
-      ! set the initial field to 1 to make sure gradual underflow trapping does not slow down the code
-      if (DO_BENCHMARK_RUN_ONLY .and. SET_INITIAL_FIELD_TO_1_IN_BENCH) then
+      do ispec_p = 1,num_elements
+        ! only compute elements which belong to current phase (inner or outer elements)
+        ispec = phase_ispec_inner_crust_mantle(ispec_p,iphase)
         DO_LOOP_IJK
-          displ_crust_mantle(:,iglob) = 1._CUSTOM_REAL
-          veloc_crust_mantle(:,iglob) = 1._CUSTOM_REAL
-          accel_crust_mantle(:,iglob) = 1._CUSTOM_REAL
+          iglob = ibool_crust_mantle(INDEX_IJK,ispec)
+          ! initialize arrays to zero
+          displ_crust_mantle(:,iglob) = init_value
+          veloc_crust_mantle(:,iglob) = 0._CUSTOM_REAL
+          accel_crust_mantle(:,iglob) = 0._CUSTOM_REAL
         ENDDO_LOOP_IJK
-      endif
-    enddo
+        ! if doing benchmark runs to measure scaling of the code,
+        ! set the initial field to 1 to make sure gradual underflow trapping does not slow down the code
+        if (DO_BENCHMARK_RUN_ONLY .and. SET_INITIAL_FIELD_TO_1_IN_BENCH) then
+          DO_LOOP_IJK
+            displ_crust_mantle(:,iglob) = 1._CUSTOM_REAL
+            veloc_crust_mantle(:,iglob) = 1._CUSTOM_REAL
+            accel_crust_mantle(:,iglob) = 1._CUSTOM_REAL
+          ENDDO_LOOP_IJK
+        endif
+      enddo
 !$OMP ENDDO
 !$OMP END PARALLEL
+    else
+      ! no elements, dummy array
+      displ_crust_mantle(:,:) = 0._CUSTOM_REAL
+      veloc_crust_mantle(:,:) = 0._CUSTOM_REAL
+      accel_crust_mantle(:,:) = 0._CUSTOM_REAL
+    endif
   enddo !iphase
 
   ! outer core
@@ -565,6 +572,8 @@
       ! inner elements
       num_elements = nspec_inner_outer_core
     endif
+
+    if (num_elements > 0) then
 ! openmp solver
 !$OMP PARALLEL if (num_elements > 500) &
 !$OMP DEFAULT(NONE) &
@@ -578,28 +587,34 @@
 #endif
 !$OMP iglob)
 !$OMP DO SCHEDULE(GUIDED)
-    do ispec_p = 1,num_elements
-      ! only compute elements which belong to current phase (inner or outer elements)
-      ispec = phase_ispec_inner_outer_core(ispec_p,iphase)
-      DO_LOOP_IJK
-        iglob = ibool_outer_core(INDEX_IJK,ispec)
-        ! initialize arrays to zero
-        displ_outer_core(iglob) = init_value
-        veloc_outer_core(iglob) = 0._CUSTOM_REAL
-        accel_outer_core(iglob) = 0._CUSTOM_REAL
-      ENDDO_LOOP_IJK
-      ! if doing benchmark runs to measure scaling of the code,
-      ! set the initial field to 1 to make sure gradual underflow trapping does not slow down the code
-      if (DO_BENCHMARK_RUN_ONLY .and. SET_INITIAL_FIELD_TO_1_IN_BENCH) then
+      do ispec_p = 1,num_elements
+        ! only compute elements which belong to current phase (inner or outer elements)
+        ispec = phase_ispec_inner_outer_core(ispec_p,iphase)
         DO_LOOP_IJK
-          displ_outer_core(iglob) = 1._CUSTOM_REAL
-          veloc_outer_core(iglob) = 1._CUSTOM_REAL
-          accel_outer_core(iglob) = 1._CUSTOM_REAL
+          iglob = ibool_outer_core(INDEX_IJK,ispec)
+          ! initialize arrays to zero
+          displ_outer_core(iglob) = init_value
+          veloc_outer_core(iglob) = 0._CUSTOM_REAL
+          accel_outer_core(iglob) = 0._CUSTOM_REAL
         ENDDO_LOOP_IJK
-      endif
-    enddo
+        ! if doing benchmark runs to measure scaling of the code,
+        ! set the initial field to 1 to make sure gradual underflow trapping does not slow down the code
+        if (DO_BENCHMARK_RUN_ONLY .and. SET_INITIAL_FIELD_TO_1_IN_BENCH) then
+          DO_LOOP_IJK
+            displ_outer_core(iglob) = 1._CUSTOM_REAL
+            veloc_outer_core(iglob) = 1._CUSTOM_REAL
+            accel_outer_core(iglob) = 1._CUSTOM_REAL
+          ENDDO_LOOP_IJK
+        endif
+      enddo
 !$OMP ENDDO
 !$OMP END PARALLEL
+    else
+      ! no elements, dummy array
+      displ_outer_core(:) = 0._CUSTOM_REAL
+      veloc_outer_core(:) = 0._CUSTOM_REAL
+      accel_outer_core(:) = 0._CUSTOM_REAL
+    endif
   enddo !iphase
 
   ! inner core
@@ -612,6 +627,7 @@
       num_elements = nspec_inner_inner_core
     endif
 
+    if (num_elements > 0) then
 !$OMP PARALLEL if (num_elements > 500) &
 !$OMP DEFAULT(NONE) &
 !$OMP SHARED(init_value,num_elements,iphase,phase_ispec_inner_inner_core,ibool_inner_core, &
@@ -624,28 +640,34 @@
 #endif
 !$OMP iglob)
 !$OMP DO SCHEDULE(GUIDED)
-    do ispec_p = 1,num_elements
-      ! only compute elements which belong to current phase (inner or outer elements)
-      ispec = phase_ispec_inner_inner_core(ispec_p,iphase)
-      DO_LOOP_IJK
-        iglob = ibool_inner_core(INDEX_IJK,ispec)
-        ! initialize arrays to zero
-        displ_inner_core(:,iglob) = init_value
-        veloc_inner_core(:,iglob) = 0._CUSTOM_REAL
-        accel_inner_core(:,iglob) = 0._CUSTOM_REAL
-      ENDDO_LOOP_IJK
-      ! if doing benchmark runs to measure scaling of the code,
-      ! set the initial field to 1 to make sure gradual underflow trapping does not slow down the code
-      if (DO_BENCHMARK_RUN_ONLY .and. SET_INITIAL_FIELD_TO_1_IN_BENCH) then
+      do ispec_p = 1,num_elements
+        ! only compute elements which belong to current phase (inner or outer elements)
+        ispec = phase_ispec_inner_inner_core(ispec_p,iphase)
         DO_LOOP_IJK
-          displ_inner_core(:,iglob) = 1._CUSTOM_REAL
-          veloc_inner_core(:,iglob) = 1._CUSTOM_REAL
-          accel_inner_core(:,iglob) = 1._CUSTOM_REAL
+          iglob = ibool_inner_core(INDEX_IJK,ispec)
+          ! initialize arrays to zero
+          displ_inner_core(:,iglob) = init_value
+          veloc_inner_core(:,iglob) = 0._CUSTOM_REAL
+          accel_inner_core(:,iglob) = 0._CUSTOM_REAL
         ENDDO_LOOP_IJK
-      endif
-    enddo
+        ! if doing benchmark runs to measure scaling of the code,
+        ! set the initial field to 1 to make sure gradual underflow trapping does not slow down the code
+        if (DO_BENCHMARK_RUN_ONLY .and. SET_INITIAL_FIELD_TO_1_IN_BENCH) then
+          DO_LOOP_IJK
+            displ_inner_core(:,iglob) = 1._CUSTOM_REAL
+            veloc_inner_core(:,iglob) = 1._CUSTOM_REAL
+            accel_inner_core(:,iglob) = 1._CUSTOM_REAL
+          ENDDO_LOOP_IJK
+        endif
+      enddo
 !$OMP ENDDO
 !$OMP END PARALLEL
+    else
+      ! no elements, dummy array
+      displ_inner_core(:,:) = 0._CUSTOM_REAL
+      veloc_inner_core(:,:) = 0._CUSTOM_REAL
+      accel_inner_core(:,:) = 0._CUSTOM_REAL
+    endif
   enddo !iphase
 
 #elif WAVEFIELD_INIT_WITH_OMP
@@ -895,6 +917,10 @@
 
   ! movies
   div_displ_outer_core(:,:,:,:) = 0._CUSTOM_REAL
+
+  ! regional simulation w/ absorbing conditions
+  ! no need for inner chunk fields, set to zero to avoid problems w/ coupling to outer core
+  if (NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) displ_inner_core(:,:) = 0._CUSTOM_REAL
 
   end subroutine init_wavefields
 

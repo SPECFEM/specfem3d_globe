@@ -105,7 +105,7 @@ void FC_FUNC_ (compute_kernels_cm_gpu,
   // checks if strain is available
   if (mp->undo_attenuation) {
     // checks strain array size
-    if (mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) {
+    if (mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY == 0) {
       exit_on_error("compute_kernels_cm_gpu NSPEC_CRUST_MANTLE_STRAIN_ONLY invalid with undo_att");
     }
 
@@ -495,7 +495,7 @@ void FC_FUNC_ (compute_kernels_ic_gpu,
   // checks if strain is available
   if (mp->undo_attenuation) {
     // checks strain array size
-    if (mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) {
+    if (mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY == 0) {
       exit_on_error("compute_kernels_ic_gpu NSPEC_CRUST_MANTLE_STRAIN_ONLY invalid with undo_att");
     }
 

@@ -67,6 +67,8 @@
     R_CENTRAL_CUBE,RMOHO_FICTITIOUS_IN_MESHER,R80_FICTITIOUS_IN_MESHER, &
     ONE_CRUST
 
+  use shared_parameters, only: REGIONAL_MESH_CUTOFF,REGIONAL_MESH_CUTOFF_DEPTH,REGIONAL_MESH_ADD_2ND_DOUBLING
+
   implicit none
 
   ! layers
@@ -74,23 +76,22 @@
 
   ! doubling elements
   integer :: ielem,elem_doubling_mantle,elem_doubling_middle_outer_core,elem_doubling_bottom_outer_core
-  integer :: ner_start,ner_end
+  integer :: ner_start,ner_end,ner_layer
   double precision :: DEPTH_SECOND_DOUBLING_REAL,DEPTH_THIRD_DOUBLING_REAL, &
                       DEPTH_FOURTH_DOUBLING_REAL
   double precision :: distance,distance_min,zval
-
+  double precision :: r_layer_top,r_layer_bottom
   double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs
 
   double precision :: DEPTH_SECOND_DOUBLING_OPTIMAL,DEPTH_THIRD_DOUBLING_OPTIMAL,DEPTH_FOURTH_DOUBLING_OPTIMAL
 
+  ! doubling layer selection
+  logical :: ADD_1ST_DOUBLING
+  logical :: ADD_2ND_DOUBLING
+  logical :: ADD_3RD_DOUBLING
+
   ! debugging
   logical, parameter :: DEBUG = .false.
-
-  ! note: all these parameters must be set to .true. for now,
-  !       otherwise mesher will fail since it assumes to have at least 3 doubling layers
-  logical, parameter :: ADD_1ST_DOUBLING = .true.
-  logical, parameter :: ADD_2ND_DOUBLING = .true.
-  logical, parameter :: ADD_3RD_DOUBLING = .true.
 
   ! initializes
   NUMBER_OF_MESH_LAYERS = 0
@@ -108,7 +109,38 @@
   rmins(:) = 0.d0
   rmaxs(:) = 0.d0
 
-  ! doubling depths
+  elem_doubling_mantle = 0
+  elem_doubling_middle_outer_core = 0
+  elem_doubling_bottom_outer_core = 0
+
+  DEPTH_SECOND_DOUBLING_REAL = 0.d0
+  DEPTH_THIRD_DOUBLING_REAL = 0.d0
+  DEPTH_FOURTH_DOUBLING_REAL = 0.d0
+
+  if (REGIONAL_MESH_CUTOFF) then
+    ! regional mesh cut-off
+    ! skips doubling layers
+    ADD_1ST_DOUBLING = .false.
+    ADD_2ND_DOUBLING = .false.
+    ADD_3RD_DOUBLING = .false.
+    DEPTH_SECOND_DOUBLING_REAL = R_PLANET - R771  ! for placing radius of auxiliary layers to correct dpeths
+    DEPTH_THIRD_DOUBLING_REAL = R_PLANET - RICB
+    DEPTH_FOURTH_DOUBLING_REAL = R_PLANET - RICB
+
+    ! first-doubling below Moho in default cases (unless SUPPRESS_CRUSTAL_MESH was set in constant.h)
+    if (REGIONAL_MESH_CUTOFF_DEPTH > 80.d0) ADD_1ST_DOUBLING = .true.
+    ! second-doubling will be moved to 220km depth (default would be below 771km)
+    if (REGIONAL_MESH_CUTOFF_DEPTH > 220.d0 .and. REGIONAL_MESH_ADD_2ND_DOUBLING) ADD_2ND_DOUBLING = .true.
+  else
+    ! default mesh
+    ! note: all these parameters must be set to .true. for now,
+    !       otherwise mesher will fail since it assumes to have at least 3 doubling layers
+    ADD_1ST_DOUBLING = .true.
+    ADD_2ND_DOUBLING = .true.
+    ADD_3RD_DOUBLING = .true.
+  endif
+
+  ! desired doubling depths
   select case(PLANET_TYPE)
   case (IPLANET_EARTH)
     ! Earth
@@ -137,18 +169,32 @@
   end select
 
   ! find element below top of which we should implement the second doubling in the mantle
-  DEPTH_SECOND_DOUBLING_REAL = 0.d0
   if (ADD_2ND_DOUBLING) then
     ! locate element closest to optimal value
     elem_doubling_mantle = -1
     distance_min = HUGEVAL
-    do ielem = 2,NER_TOPDDOUBLEPRIME_771
-      zval = RTOPDDOUBLEPRIME + ielem * (R771 - RTOPDDOUBLEPRIME) / dble(NER_TOPDDOUBLEPRIME_771)
+    ! doubling between D'' and 771
+    ner_layer = NER_TOPDDOUBLEPRIME_771
+    r_layer_top = R771
+    r_layer_bottom = RTOPDDOUBLEPRIME
+
+    ! regional mesh cutoff
+    if (REGIONAL_MESH_CUTOFF) then
+      ! sets doubling layer around 220km
+      DEPTH_SECOND_DOUBLING_OPTIMAL = 220.d0
+      ner_layer = NER_400_220
+      r_layer_top = R220
+      r_layer_bottom = R400
+    endif
+
+    ! finds best layer
+    do ielem = 2,ner_layer
+      zval = r_layer_bottom + ielem * (r_layer_top - r_layer_bottom) / dble(ner_layer)
       distance = abs(zval - (R_PLANET - DEPTH_SECOND_DOUBLING_OPTIMAL))
 
       ! debug
       if (DEBUG .and. myrank == 0) &
-        print *,'debug: 2nd doubling',ielem,NER_TOPDDOUBLEPRIME_771,'dist/zval',distance,distance_min,zval
+        print *,'debug: 2nd doubling',ielem,ner_layer,'dist/zval',distance,distance_min,zval
 
       ! checks if closer and sets as new depth
       if (distance < distance_min) then
@@ -161,12 +207,21 @@
     !debug
     if (DEBUG .and. myrank == 0) &
       print *,'debug: 2nd doubling index = ',elem_doubling_mantle,DEPTH_SECOND_DOUBLING_REAL,'(in mantle D" - 771)'
-    ! check
-    if (elem_doubling_mantle == -1) stop 'Unable to determine second doubling element'
+
+    ! check if layer found
+    if (REGIONAL_MESH_CUTOFF) then
+      if (elem_doubling_mantle == -1) then
+        ! skip doubling layer
+        ADD_2ND_DOUBLING = .false.
+        elem_doubling_mantle = 0
+        DEPTH_SECOND_DOUBLING_REAL = (R_PLANET - R771)
+      endif
+    else
+      if (elem_doubling_mantle == -1) stop 'Unable to determine second doubling element'
+    endif
   endif
 
   ! find element below top of which we should implement the third doubling in the middle of the outer core
-  DEPTH_THIRD_DOUBLING_REAL = 0.d0
   if (ADD_3RD_DOUBLING) then
     ! locate element closest to optimal value
     elem_doubling_middle_outer_core = -1
@@ -207,7 +262,6 @@
     ! find element below top of which we should implement the fourth doubling in the middle of the outer core
     ! locate element closest to optimal value
     elem_doubling_bottom_outer_core = -1
-    DEPTH_FOURTH_DOUBLING_REAL = 0.d0
     distance_min = HUGEVAL
     ! end two elements before the top because we need at least two elements above for the third doubling
     ! implemented in the middle of the outer core
@@ -259,25 +313,47 @@
       ner_mesh_layers( 1) = NER_CRUST + NER_80_MOHO
       ner_mesh_layers( 2) = 0
       ner_mesh_layers( 3) = 0
-
       ner_mesh_layers( 4) = NER_220_80
-      ner_mesh_layers( 5) = NER_400_220
-      ner_mesh_layers( 6) = NER_600_400
-      ner_mesh_layers( 7) = NER_670_600
-      ner_mesh_layers( 8) = NER_771_670
-      ner_mesh_layers( 9) = NER_TOPDDOUBLEPRIME_771 - elem_doubling_mantle
-      ner_mesh_layers(10) = elem_doubling_mantle
+
+      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING) then
+        ! 2nd doubling after 220
+        ner_mesh_layers( 5) = NER_400_220 - elem_doubling_mantle
+        ner_mesh_layers( 6) = elem_doubling_mantle
+        ner_mesh_layers( 7) = NER_600_400
+        ner_mesh_layers( 8) = NER_670_600
+        ner_mesh_layers( 9) = NER_771_670
+        ner_mesh_layers(10) = NER_TOPDDOUBLEPRIME_771
+      else
+        ! 2nd doubling after 771
+        ner_mesh_layers( 5) = NER_400_220
+        ner_mesh_layers( 6) = NER_600_400
+        ner_mesh_layers( 7) = NER_670_600
+        ner_mesh_layers( 8) = NER_771_670
+        ner_mesh_layers( 9) = NER_TOPDDOUBLEPRIME_771 - elem_doubling_mantle
+        ner_mesh_layers(10) = elem_doubling_mantle
+      endif
       ner_mesh_layers(11) = NER_CMB_TOPDDOUBLEPRIME
       ner_mesh_layers(12) = NER_OUTER_CORE - elem_doubling_middle_outer_core
       ner_mesh_layers(13) = elem_doubling_middle_outer_core
       ner_mesh_layers(14) = NER_TOP_CENTRAL_CUBE_ICB
 
       ! value of the doubling ratio in each radial region of the mesh
-      ratio_sampling_array(1:9) = 1
-      if (ADD_1ST_DOUBLING) then
-        ratio_sampling_array(10:12) = 2
+      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING) then
+        ! 2nd doubling after 220
+        ratio_sampling_array(1:5) = 1
+        if (ADD_1ST_DOUBLING) then
+          ratio_sampling_array(6:12) = 2
+        else
+          ratio_sampling_array(6:12) = ratio_sampling_array(5)
+        endif
       else
-        ratio_sampling_array(10:12) = ratio_sampling_array(9)
+        ! 2nd doubling after 771
+        ratio_sampling_array(1:9) = 1
+        if (ADD_1ST_DOUBLING) then
+          ratio_sampling_array(10:12) = 2
+        else
+          ratio_sampling_array(10:12) = ratio_sampling_array(9)
+        endif
       endif
       if (ADD_2ND_DOUBLING) then
         ratio_sampling_array(13:14) = 4 ! 2 * ratio_sampling_array(12)
@@ -295,9 +371,18 @@
 
       ! define the three regions in which we implement a mesh doubling at the top of that region
       this_region_has_a_doubling(:)  = .false.
-      if (ADD_1ST_DOUBLING) then
-        this_region_has_a_doubling(10) = .true.
-        last_doubling_layer = 10
+      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING) then
+        ! 2nd doubling after 220
+        if (ADD_1ST_DOUBLING) then
+          this_region_has_a_doubling(6) = .true.
+          last_doubling_layer = 6
+        endif
+      else
+        ! 2nd doubling after 771
+        if (ADD_1ST_DOUBLING) then
+          this_region_has_a_doubling(10) = .true.
+          last_doubling_layer = 10
+        endif
       endif
       if (ADD_2ND_DOUBLING) then
         this_region_has_a_doubling(13) = .true.
@@ -319,23 +404,45 @@
       r_top(4) = R80_FICTITIOUS_IN_MESHER
       r_bottom(4) = R220
 
-      r_top(5) = R220
-      r_bottom(5) = R400
+      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING) then
+        ! 2nd doubling after 220
+        r_top(5) = R220
+        r_bottom(5) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
 
-      r_top(6) = R400
-      r_bottom(6) = R600
+        r_top(6) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
+        r_bottom(6) = R400
 
-      r_top(7) = R600
-      r_bottom(7) = R670
+        r_top(7) = R400
+        r_bottom(7) = R600
 
-      r_top(8) = R670
-      r_bottom(8) = R771
+        r_top(8) = R600
+        r_bottom(8) = R670
 
-      r_top(9) = R771
-      r_bottom(9) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
+        r_top(9) = R670
+        r_bottom(9) = R771
 
-      r_top(10) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
-      r_bottom(10) = RTOPDDOUBLEPRIME
+        r_top(10) = R771
+        r_bottom(10) = RTOPDDOUBLEPRIME
+      else
+        ! 2nd doubling after 771
+        r_top(5) = R220
+        r_bottom(5) = R400
+
+        r_top(6) = R400
+        r_bottom(6) = R600
+
+        r_top(7) = R600
+        r_bottom(7) = R670
+
+        r_top(8) = R670
+        r_bottom(8) = R771
+
+        r_top(9) = R771
+        r_bottom(9) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
+
+        r_top(10) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
+        r_bottom(10) = RTOPDDOUBLEPRIME
+      endif
 
       r_top(11) = RTOPDDOUBLEPRIME
       r_bottom(11) = RCMB
@@ -362,20 +469,39 @@
       rmaxs(4) = R80_FICTITIOUS_IN_MESHER / R_PLANET
       rmins(4) = R220 / R_PLANET
 
-      rmaxs(5) = R220 / R_PLANET
-      rmins(5) = R400 / R_PLANET
+      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING) then
+        ! 2nd doubling after 220
+        rmaxs(5:6) = R220 / R_PLANET
+        rmins(5:6) = R400 / R_PLANET
 
-      rmaxs(6) = R400 / R_PLANET
-      rmins(6) = R600 / R_PLANET
+        rmaxs(7) = R400 / R_PLANET
+        rmins(7) = R600 / R_PLANET
 
-      rmaxs(7) = R600 / R_PLANET
-      rmins(7) = R670 / R_PLANET
+        rmaxs(8) = R600 / R_PLANET
+        rmins(8) = R670 / R_PLANET
 
-      rmaxs(8) = R670 / R_PLANET
-      rmins(8) = R771 / R_PLANET
+        rmaxs(9) = R670 / R_PLANET
+        rmins(9) = R771 / R_PLANET
 
-      rmaxs(9:10) = R771 / R_PLANET
-      rmins(9:10) = RTOPDDOUBLEPRIME / R_PLANET
+        rmaxs(10) = R771 / R_PLANET
+        rmins(10) = RTOPDDOUBLEPRIME / R_PLANET
+      else
+        ! 2nd doubling after 771
+        rmaxs(5) = R220 / R_PLANET
+        rmins(5) = R400 / R_PLANET
+
+        rmaxs(6) = R400 / R_PLANET
+        rmins(6) = R600 / R_PLANET
+
+        rmaxs(7) = R600 / R_PLANET
+        rmins(7) = R670 / R_PLANET
+
+        rmaxs(8) = R670 / R_PLANET
+        rmins(8) = R771 / R_PLANET
+
+        rmaxs(9:10) = R771 / R_PLANET
+        rmins(9:10) = RTOPDDOUBLEPRIME / R_PLANET
+      endif
 
       rmaxs(11) = RTOPDDOUBLEPRIME / R_PLANET
       rmins(11) = RCMB / R_PLANET
@@ -402,12 +528,24 @@
       ner_mesh_layers( 1) = NER_CRUST
       ner_mesh_layers( 2) = NER_80_MOHO
       ner_mesh_layers( 3) = NER_220_80
-      ner_mesh_layers( 4) = NER_400_220
-      ner_mesh_layers( 5) = NER_600_400
-      ner_mesh_layers( 6) = NER_670_600
-      ner_mesh_layers( 7) = NER_771_670
-      ner_mesh_layers( 8) = NER_TOPDDOUBLEPRIME_771 - elem_doubling_mantle
-      ner_mesh_layers( 9) = elem_doubling_mantle
+
+      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING) then
+        ! 2nd doubling after 220
+        ner_mesh_layers( 4) = NER_400_220 - elem_doubling_mantle
+        ner_mesh_layers( 5) = elem_doubling_mantle
+        ner_mesh_layers( 6) = NER_600_400
+        ner_mesh_layers( 7) = NER_670_600
+        ner_mesh_layers( 8) = NER_771_670
+        ner_mesh_layers( 9) = NER_TOPDDOUBLEPRIME_771
+      else
+        ! 2nd doubling after 771
+        ner_mesh_layers( 4) = NER_400_220
+        ner_mesh_layers( 5) = NER_600_400
+        ner_mesh_layers( 6) = NER_670_600
+        ner_mesh_layers( 7) = NER_771_670
+        ner_mesh_layers( 8) = NER_TOPDDOUBLEPRIME_771 - elem_doubling_mantle
+        ner_mesh_layers( 9) = elem_doubling_mantle
+      endif
       ner_mesh_layers(10) = NER_CMB_TOPDDOUBLEPRIME
       ner_mesh_layers(11) = NER_OUTER_CORE - elem_doubling_middle_outer_core
       ner_mesh_layers(12) = elem_doubling_middle_outer_core
@@ -415,15 +553,30 @@
 
       ! value of the doubling ratio in each radial region of the mesh
       ratio_sampling_array(1) = 1
-      if (ADD_1ST_DOUBLING) then
-        ratio_sampling_array(2:8) = 2
+      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING) then
+        ! 2nd doubling after 220
+        if (ADD_1ST_DOUBLING) then
+          ratio_sampling_array(2:4) = 2
+        else
+          ratio_sampling_array(2:4) = ratio_sampling_array(1)
+        endif
+        if (ADD_2ND_DOUBLING) then
+          ratio_sampling_array(5:11) = 4 ! 2 * ratio_sampling_array(8)
+        else
+          ratio_sampling_array(5:11) = ratio_sampling_array(4)
+        endif
       else
-        ratio_sampling_array(2:8) = ratio_sampling_array(1)
-      endif
-      if (ADD_2ND_DOUBLING) then
-        ratio_sampling_array(9:11) = 4 ! 2 * ratio_sampling_array(8)
-      else
-        ratio_sampling_array(9:11) = ratio_sampling_array(8)
+        ! 2nd doubling after 771
+        if (ADD_1ST_DOUBLING) then
+          ratio_sampling_array(2:8) = 2
+        else
+          ratio_sampling_array(2:8) = ratio_sampling_array(1)
+        endif
+        if (ADD_2ND_DOUBLING) then
+          ratio_sampling_array(9:11) = 4 ! 2 * ratio_sampling_array(8)
+        else
+          ratio_sampling_array(9:11) = ratio_sampling_array(8)
+        endif
       endif
       if (ADD_3RD_DOUBLING) then
         ratio_sampling_array(12:13) = 8 ! 2 * ratio_sampling_array(11)
@@ -446,9 +599,18 @@
         this_region_has_a_doubling(2)  = .true.
         last_doubling_layer = 2
       endif
-      if (ADD_2ND_DOUBLING) then
-        this_region_has_a_doubling(9)  = .true.
-        last_doubling_layer = 9
+      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING) then
+        ! 2nd doubling after 220
+        if (ADD_2ND_DOUBLING) then
+          this_region_has_a_doubling(5)  = .true.
+          last_doubling_layer = 5
+        endif
+      else
+        ! 2nd doubling after 771
+        if (ADD_2ND_DOUBLING) then
+          this_region_has_a_doubling(9)  = .true.
+          last_doubling_layer = 9
+        endif
       endif
       if (ADD_3RD_DOUBLING) then
         this_region_has_a_doubling(12) = .true.
@@ -475,24 +637,45 @@
       r_top(3) = R80_FICTITIOUS_IN_MESHER
       r_bottom(3) = R220
 
-      r_top(4) = R220
-      r_bottom(4) = R400
+      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING) then
+        ! 2nd doubling after 220
+        r_top(4) = R220
+        r_bottom(4) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
 
-      r_top(5) = R400
-      r_bottom(5) = R600
+        r_top(5) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
+        r_bottom(5) = R400
 
-      r_top(6) = R600
-      r_bottom(6) = R670
+        r_top(6) = R400
+        r_bottom(6) = R600
 
-      r_top(7) = R670
-      r_bottom(7) = R771
+        r_top(7) = R600
+        r_bottom(7) = R670
 
-      r_top(8) = R771
-      r_bottom(8) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
+        r_top(8) = R670
+        r_bottom(8) = R771
 
-      r_top(9) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
-      r_bottom(9) = RTOPDDOUBLEPRIME
+        r_top(9) = R771
+        r_bottom(9) = RTOPDDOUBLEPRIME
+      else
+        ! 2nd doubling after 771
+        r_top(4) = R220
+        r_bottom(4) = R400
 
+        r_top(5) = R400
+        r_bottom(5) = R600
+
+        r_top(6) = R600
+        r_bottom(6) = R670
+
+        r_top(7) = R670
+        r_bottom(7) = R771
+
+        r_top(8) = R771
+        r_bottom(8) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
+
+        r_top(9) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
+        r_bottom(9) = RTOPDDOUBLEPRIME
+      endif
       r_top(10) = RTOPDDOUBLEPRIME
       r_bottom(10) = RCMB
 
@@ -515,21 +698,39 @@
       rmaxs(3) = R80_FICTITIOUS_IN_MESHER / R_PLANET
       rmins(3) = R220 / R_PLANET
 
-      rmaxs(4) = R220 / R_PLANET
-      rmins(4) = R400 / R_PLANET
+      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING) then
+        ! 2nd doubling after 220
+        rmaxs(4:5) = R220 / R_PLANET
+        rmins(4:5) = R400 / R_PLANET
 
-      rmaxs(5) = R400 / R_PLANET
-      rmins(5) = R600 / R_PLANET
+        rmaxs(6) = R400 / R_PLANET
+        rmins(6) = R600 / R_PLANET
 
-      rmaxs(6) = R600 / R_PLANET
-      rmins(6) = R670 / R_PLANET
+        rmaxs(7) = R600 / R_PLANET
+        rmins(7) = R670 / R_PLANET
 
-      rmaxs(7) = R670 / R_PLANET
-      rmins(7) = R771 / R_PLANET
+        rmaxs(8) = R670 / R_PLANET
+        rmins(8) = R771 / R_PLANET
 
-      rmaxs(8:9) = R771 / R_PLANET
-      rmins(8:9) = RTOPDDOUBLEPRIME / R_PLANET
+        rmaxs(9) = R771 / R_PLANET
+        rmins(9) = RTOPDDOUBLEPRIME / R_PLANET
+      else
+        ! 2nd doubling after 771
+        rmaxs(4) = R220 / R_PLANET
+        rmins(4) = R400 / R_PLANET
 
+        rmaxs(5) = R400 / R_PLANET
+        rmins(5) = R600 / R_PLANET
+
+        rmaxs(6) = R600 / R_PLANET
+        rmins(6) = R670 / R_PLANET
+
+        rmaxs(7) = R670 / R_PLANET
+        rmins(7) = R771 / R_PLANET
+
+        rmaxs(8:9) = R771 / R_PLANET
+        rmins(8:9) = RTOPDDOUBLEPRIME / R_PLANET
+      endif
       rmaxs(10) = RTOPDDOUBLEPRIME / R_PLANET
       rmins(10) = RCMB / R_PLANET
 
@@ -559,12 +760,24 @@
       endif
       ner_mesh_layers( 3) = NER_80_MOHO
       ner_mesh_layers( 4) = NER_220_80
-      ner_mesh_layers( 5) = NER_400_220
-      ner_mesh_layers( 6) = NER_600_400
-      ner_mesh_layers( 7) = NER_670_600
-      ner_mesh_layers( 8) = NER_771_670
-      ner_mesh_layers( 9) = NER_TOPDDOUBLEPRIME_771 - elem_doubling_mantle
-      ner_mesh_layers(10) = elem_doubling_mantle
+
+      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING) then
+        ! 2nd doubling after 220
+        ner_mesh_layers( 5) = NER_400_220 - elem_doubling_mantle
+        ner_mesh_layers( 6) = elem_doubling_mantle
+        ner_mesh_layers( 7) = NER_600_400
+        ner_mesh_layers( 8) = NER_670_600
+        ner_mesh_layers( 9) = NER_771_670
+        ner_mesh_layers(10) = NER_TOPDDOUBLEPRIME_771
+      else
+        ! 2nd doubling after 771
+        ner_mesh_layers( 5) = NER_400_220
+        ner_mesh_layers( 6) = NER_600_400
+        ner_mesh_layers( 7) = NER_670_600
+        ner_mesh_layers( 8) = NER_771_670
+        ner_mesh_layers( 9) = NER_TOPDDOUBLEPRIME_771 - elem_doubling_mantle
+        ner_mesh_layers(10) = elem_doubling_mantle
+      endif
       ner_mesh_layers(11) = NER_CMB_TOPDDOUBLEPRIME
       ner_mesh_layers(12) = NER_OUTER_CORE - elem_doubling_middle_outer_core
       ner_mesh_layers(13) = elem_doubling_middle_outer_core
@@ -572,15 +785,30 @@
 
       ! value of the doubling ratio in each radial region of the mesh
       ratio_sampling_array(1:2) = 1
-      if (ADD_1ST_DOUBLING) then
-        ratio_sampling_array(3:9) = 2
+      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING) then
+        ! 2nd doubling after 220
+        if (ADD_1ST_DOUBLING) then
+          ratio_sampling_array(3:5) = 2
+        else
+          ratio_sampling_array(3:5) = ratio_sampling_array(2)
+        endif
+        if (ADD_2ND_DOUBLING) then
+          ratio_sampling_array(6:12) = 4 ! 2 * ratio_sampling_array(9)
+        else
+          ratio_sampling_array(6:12) = ratio_sampling_array(9)
+        endif
       else
-        ratio_sampling_array(3:9) = ratio_sampling_array(2)
-      endif
-      if (ADD_2ND_DOUBLING) then
-        ratio_sampling_array(10:12) = 4 ! 2 * ratio_sampling_array(9)
-      else
-        ratio_sampling_array(10:12) = ratio_sampling_array(9)
+        ! 2nd doubling after 771
+        if (ADD_1ST_DOUBLING) then
+          ratio_sampling_array(3:9) = 2
+        else
+          ratio_sampling_array(3:9) = ratio_sampling_array(2)
+        endif
+        if (ADD_2ND_DOUBLING) then
+          ratio_sampling_array(10:12) = 4 ! 2 * ratio_sampling_array(9)
+        else
+          ratio_sampling_array(10:12) = ratio_sampling_array(9)
+        endif
       endif
       if (ADD_3RD_DOUBLING) then
         ratio_sampling_array(13:14) = 8 ! 2 * ratio_sampling_array(12)
@@ -603,9 +831,18 @@
         this_region_has_a_doubling(3)  = .true.
         last_doubling_layer = 3
       endif
-      if (ADD_2ND_DOUBLING) then
-        this_region_has_a_doubling(10) = .true.
-        last_doubling_layer = 10
+      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING) then
+        ! 2nd doubling after 220
+        if (ADD_2ND_DOUBLING) then
+          this_region_has_a_doubling(6) = .true.
+          last_doubling_layer = 6
+        endif
+      else
+        ! 2nd doubling after 771
+        if (ADD_2ND_DOUBLING) then
+          this_region_has_a_doubling(10) = .true.
+          last_doubling_layer = 10
+        endif
       endif
       if (ADD_3RD_DOUBLING) then
         this_region_has_a_doubling(13) = .true.
@@ -629,23 +866,45 @@
       r_top(4) = R80_FICTITIOUS_IN_MESHER
       r_bottom(4) = R220
 
-      r_top(5) = R220
-      r_bottom(5) = R400
+      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING) then
+        ! 2nd doubling after 220
+        r_top(5) = R220
+        r_bottom(5) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
 
-      r_top(6) = R400
-      r_bottom(6) = R600
+        r_top(6) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
+        r_bottom(6) = R400
 
-      r_top(7) = R600
-      r_bottom(7) = R670
+        r_top(7) = R400
+        r_bottom(7) = R600
 
-      r_top(8) = R670
-      r_bottom(8) = R771
+        r_top(8) = R600
+        r_bottom(8) = R670
 
-      r_top(9) = R771
-      r_bottom(9) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
+        r_top(9) = R670
+        r_bottom(9) = R771
 
-      r_top(10) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
-      r_bottom(10) = RTOPDDOUBLEPRIME
+        r_top(10) = R771
+        r_bottom(10) = RTOPDDOUBLEPRIME
+      else
+        ! 2nd doubling after 771
+        r_top(5) = R220
+        r_bottom(5) = R400
+
+        r_top(6) = R400
+        r_bottom(6) = R600
+
+        r_top(7) = R600
+        r_bottom(7) = R670
+
+        r_top(8) = R670
+        r_bottom(8) = R771
+
+        r_top(9) = R771
+        r_bottom(9) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
+
+        r_top(10) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
+        r_bottom(10) = RTOPDDOUBLEPRIME
+      endif
 
       r_top(11) = RTOPDDOUBLEPRIME
       r_bottom(11) = RCMB
@@ -672,20 +931,39 @@
       rmaxs(4) = R80_FICTITIOUS_IN_MESHER / R_PLANET
       rmins(4) = R220 / R_PLANET
 
-      rmaxs(5) = R220 / R_PLANET
-      rmins(5) = R400 / R_PLANET
+      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING) then
+        ! 2nd doubling after 220
+        rmaxs(5:6) = R220 / R_PLANET
+        rmins(5:6) = R400 / R_PLANET
 
-      rmaxs(6) = R400 / R_PLANET
-      rmins(6) = R600 / R_PLANET
+        rmaxs(7) = R400 / R_PLANET
+        rmins(7) = R600 / R_PLANET
 
-      rmaxs(7) = R600 / R_PLANET
-      rmins(7) = R670 / R_PLANET
+        rmaxs(8) = R600 / R_PLANET
+        rmins(8) = R670 / R_PLANET
 
-      rmaxs(8) = R670 / R_PLANET
-      rmins(8) = R771 / R_PLANET
+        rmaxs(9) = R670 / R_PLANET
+        rmins(9) = R771 / R_PLANET
 
-      rmaxs(9:10) = R771 / R_PLANET
-      rmins(9:10) = RTOPDDOUBLEPRIME / R_PLANET
+        rmaxs(10) = R771 / R_PLANET
+        rmins(10) = RTOPDDOUBLEPRIME / R_PLANET
+      else
+        ! 2nd doubling after 771
+        rmaxs(5) = R220 / R_PLANET
+        rmins(5) = R400 / R_PLANET
+
+        rmaxs(6) = R400 / R_PLANET
+        rmins(6) = R600 / R_PLANET
+
+        rmaxs(7) = R600 / R_PLANET
+        rmins(7) = R670 / R_PLANET
+
+        rmaxs(8) = R670 / R_PLANET
+        rmins(8) = R771 / R_PLANET
+
+        rmaxs(9:10) = R771 / R_PLANET
+        rmins(9:10) = RTOPDDOUBLEPRIME / R_PLANET
+      endif
 
       rmaxs(11) = RTOPDDOUBLEPRIME / R_PLANET
       rmins(11) = RCMB / R_PLANET
@@ -715,14 +993,25 @@
       ner_mesh_layers( 1) = NER_CRUST + NER_80_MOHO
       ner_mesh_layers( 2) = 0
       ner_mesh_layers( 3) = 0
-
       ner_mesh_layers( 4) = NER_220_80
-      ner_mesh_layers( 5) = NER_400_220
-      ner_mesh_layers( 6) = NER_600_400
-      ner_mesh_layers( 7) = NER_670_600
-      ner_mesh_layers( 8) = NER_771_670
-      ner_mesh_layers( 9) = NER_TOPDDOUBLEPRIME_771 - elem_doubling_mantle
-      ner_mesh_layers(10) = elem_doubling_mantle
+
+      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING) then
+        ! 2nd doubling after 220
+        ner_mesh_layers( 5) = NER_400_220 - elem_doubling_mantle
+        ner_mesh_layers( 6) = elem_doubling_mantle
+        ner_mesh_layers( 7) = NER_600_400
+        ner_mesh_layers( 8) = NER_670_600
+        ner_mesh_layers( 9) = NER_771_670
+        ner_mesh_layers(10) = NER_TOPDDOUBLEPRIME_771
+      else
+        ! 2nd doubling after 771
+        ner_mesh_layers( 5) = NER_400_220
+        ner_mesh_layers( 6) = NER_600_400
+        ner_mesh_layers( 7) = NER_670_600
+        ner_mesh_layers( 8) = NER_771_670
+        ner_mesh_layers( 9) = NER_TOPDDOUBLEPRIME_771 - elem_doubling_mantle
+        ner_mesh_layers(10) = elem_doubling_mantle
+      endif
       ner_mesh_layers(11) = NER_CMB_TOPDDOUBLEPRIME
       ner_mesh_layers(12) = NER_OUTER_CORE - elem_doubling_middle_outer_core
       ner_mesh_layers(13) = elem_doubling_middle_outer_core - elem_doubling_bottom_outer_core
@@ -730,11 +1019,22 @@
       ner_mesh_layers(15) = NER_TOP_CENTRAL_CUBE_ICB
 
       ! value of the doubling ratio in each radial region of the mesh
-      ratio_sampling_array(1:9) = 1
-      if (ADD_1ST_DOUBLING) then
-        ratio_sampling_array(10:12) = 2
+      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING) then
+        ! 2nd doubling after 220
+        ratio_sampling_array(1:5) = 1
+        if (ADD_1ST_DOUBLING) then
+          ratio_sampling_array(6:12) = 2
+        else
+          ratio_sampling_array(6:12) = ratio_sampling_array(9)
+        endif
       else
-        ratio_sampling_array(10:12) = ratio_sampling_array(9)
+        ! 2nd doubling after 771
+        ratio_sampling_array(1:9) = 1
+        if (ADD_1ST_DOUBLING) then
+          ratio_sampling_array(10:12) = 2
+        else
+          ratio_sampling_array(10:12) = ratio_sampling_array(9)
+        endif
       endif
       if (ADD_2ND_DOUBLING) then
         ratio_sampling_array(13) = 4 ! 2 * ratio_sampling_array(12)
@@ -757,9 +1057,18 @@
 
       ! define the three regions in which we implement a mesh doubling at the top of that region
       this_region_has_a_doubling(:)  = .false.
-      if (ADD_1ST_DOUBLING) then
-        this_region_has_a_doubling(10) = .true.
-        last_doubling_layer = 10
+      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING) then
+        ! 2nd doubling after 220
+        if (ADD_1ST_DOUBLING) then
+          this_region_has_a_doubling(6) = .true.
+          last_doubling_layer = 6
+        endif
+      else
+        ! 2nd doubling after 771
+        if (ADD_1ST_DOUBLING) then
+          this_region_has_a_doubling(10) = .true.
+          last_doubling_layer = 10
+        endif
       endif
       if (ADD_2ND_DOUBLING) then
         this_region_has_a_doubling(13) = .true.
@@ -786,23 +1095,45 @@
       r_top(4) = R80_FICTITIOUS_IN_MESHER
       r_bottom(4) = R220
 
-      r_top(5) = R220
-      r_bottom(5) = R400
+      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING) then
+        ! 2nd doubling after 220
+        r_top(5) = R220
+        r_bottom(5) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
 
-      r_top(6) = R400
-      r_bottom(6) = R600
+        r_top(6) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
+        r_bottom(6) = R400
 
-      r_top(7) = R600
-      r_bottom(7) = R670
+        r_top(7) = R400
+        r_bottom(7) = R600
 
-      r_top(8) = R670
-      r_bottom(8) = R771
+        r_top(8) = R600
+        r_bottom(8) = R670
 
-      r_top(9) = R771
-      r_bottom(9) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
+        r_top(9) = R670
+        r_bottom(9) = R771
 
-      r_top(10) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
-      r_bottom(10) = RTOPDDOUBLEPRIME
+        r_top(10) = R771
+        r_bottom(10) = RTOPDDOUBLEPRIME
+      else
+        ! 2nd doubling after 771
+        r_top(5) = R220
+        r_bottom(5) = R400
+
+        r_top(6) = R400
+        r_bottom(6) = R600
+
+        r_top(7) = R600
+        r_bottom(7) = R670
+
+        r_top(8) = R670
+        r_bottom(8) = R771
+
+        r_top(9) = R771
+        r_bottom(9) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
+
+        r_top(10) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
+        r_bottom(10) = RTOPDDOUBLEPRIME
+      endif
 
       r_top(11) = RTOPDDOUBLEPRIME
       r_bottom(11) = RCMB
@@ -832,20 +1163,39 @@
       rmaxs(4) = R80_FICTITIOUS_IN_MESHER / R_PLANET
       rmins(4) = R220 / R_PLANET
 
-      rmaxs(5) = R220 / R_PLANET
-      rmins(5) = R400 / R_PLANET
+      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING) then
+        ! 2nd doubling after 220
+        rmaxs(5:6) = R220 / R_PLANET
+        rmins(5:6) = R400 / R_PLANET
 
-      rmaxs(6) = R400 / R_PLANET
-      rmins(6) = R600 / R_PLANET
+        rmaxs(7) = R400 / R_PLANET
+        rmins(7) = R600 / R_PLANET
 
-      rmaxs(7) = R600 / R_PLANET
-      rmins(7) = R670 / R_PLANET
+        rmaxs(8) = R600 / R_PLANET
+        rmins(8) = R670 / R_PLANET
 
-      rmaxs(8) = R670 / R_PLANET
-      rmins(8) = R771 / R_PLANET
+        rmaxs(9) = R670 / R_PLANET
+        rmins(9) = R771 / R_PLANET
 
-      rmaxs(9:10) = R771 / R_PLANET
-      rmins(9:10) = RTOPDDOUBLEPRIME / R_PLANET
+        rmaxs(10) = R771 / R_PLANET
+        rmins(10) = RTOPDDOUBLEPRIME / R_PLANET
+      else
+        ! 2nd doubling after 771
+        rmaxs(5) = R220 / R_PLANET
+        rmins(5) = R400 / R_PLANET
+
+        rmaxs(6) = R400 / R_PLANET
+        rmins(6) = R600 / R_PLANET
+
+        rmaxs(7) = R600 / R_PLANET
+        rmins(7) = R670 / R_PLANET
+
+        rmaxs(8) = R670 / R_PLANET
+        rmins(8) = R771 / R_PLANET
+
+        rmaxs(9:10) = R771 / R_PLANET
+        rmins(9:10) = RTOPDDOUBLEPRIME / R_PLANET
+      endif
 
       rmaxs(11) = RTOPDDOUBLEPRIME / R_PLANET
       rmins(11) = RCMB / R_PLANET
@@ -869,12 +1219,24 @@
       ner_mesh_layers( 1) = NER_CRUST
       ner_mesh_layers( 2) = NER_80_MOHO
       ner_mesh_layers( 3) = NER_220_80
-      ner_mesh_layers( 4) = NER_400_220
-      ner_mesh_layers( 5) = NER_600_400
-      ner_mesh_layers( 6) = NER_670_600
-      ner_mesh_layers( 7) = NER_771_670
-      ner_mesh_layers( 8) = NER_TOPDDOUBLEPRIME_771 - elem_doubling_mantle
-      ner_mesh_layers( 9) = elem_doubling_mantle
+
+      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING) then
+        ! 2nd doubling after 220
+        ner_mesh_layers( 4) = NER_400_220 - elem_doubling_mantle
+        ner_mesh_layers( 5) = elem_doubling_mantle
+        ner_mesh_layers( 6) = NER_600_400
+        ner_mesh_layers( 7) = NER_670_600
+        ner_mesh_layers( 8) = NER_771_670
+        ner_mesh_layers( 9) = NER_TOPDDOUBLEPRIME_771
+      else
+        ! 2nd doubling after 771
+        ner_mesh_layers( 4) = NER_400_220
+        ner_mesh_layers( 5) = NER_600_400
+        ner_mesh_layers( 6) = NER_670_600
+        ner_mesh_layers( 7) = NER_771_670
+        ner_mesh_layers( 8) = NER_TOPDDOUBLEPRIME_771 - elem_doubling_mantle
+        ner_mesh_layers( 9) = elem_doubling_mantle
+      endif
       ner_mesh_layers(10) = NER_CMB_TOPDDOUBLEPRIME
       ner_mesh_layers(11) = NER_OUTER_CORE - elem_doubling_middle_outer_core
       ner_mesh_layers(12) = elem_doubling_middle_outer_core - elem_doubling_bottom_outer_core
@@ -883,15 +1245,30 @@
 
       ! value of the doubling ratio in each radial region of the mesh
       ratio_sampling_array(1) = 1
-      if (ADD_1ST_DOUBLING) then
-        ratio_sampling_array(2:8) = 2
+      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING) then
+        ! 2nd doubling after 220
+        if (ADD_1ST_DOUBLING) then
+          ratio_sampling_array(2:4) = 2
+        else
+          ratio_sampling_array(2:4) = ratio_sampling_array(1)
+        endif
+        if (ADD_2ND_DOUBLING) then
+          ratio_sampling_array(5:11) = 4 ! 2 * ratio_sampling_array(8)
+        else
+          ratio_sampling_array(5:11) = ratio_sampling_array(4)
+        endif
       else
-        ratio_sampling_array(2:8) = ratio_sampling_array(1)
-      endif
-      if (ADD_2ND_DOUBLING) then
-        ratio_sampling_array(9:11) = 4 ! 2 * ratio_sampling_array(8)
-      else
-        ratio_sampling_array(9:11) = ratio_sampling_array(8)
+        ! 2nd doubling after 771
+        if (ADD_1ST_DOUBLING) then
+          ratio_sampling_array(2:8) = 2
+        else
+          ratio_sampling_array(2:8) = ratio_sampling_array(1)
+        endif
+        if (ADD_2ND_DOUBLING) then
+          ratio_sampling_array(9:11) = 4 ! 2 * ratio_sampling_array(8)
+        else
+          ratio_sampling_array(9:11) = ratio_sampling_array(8)
+        endif
       endif
       if (ADD_3RD_DOUBLING) then
         ratio_sampling_array(12) = 8 ! 2 * ratio_sampling_array(11)
@@ -919,9 +1296,18 @@
         this_region_has_a_doubling(2)  = .true.
         last_doubling_layer = 2
       endif
-      if (ADD_2ND_DOUBLING) then
-        this_region_has_a_doubling(9)  = .true.
-        last_doubling_layer = 9
+      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING) then
+        ! 2nd doubling after 220
+        if (ADD_2ND_DOUBLING) then
+          this_region_has_a_doubling(5)  = .true.
+          last_doubling_layer = 5
+        endif
+      else
+        ! 2nd doubling after 771
+        if (ADD_2ND_DOUBLING) then
+          this_region_has_a_doubling(9)  = .true.
+          last_doubling_layer = 9
+        endif
       endif
       if (ADD_3RD_DOUBLING) then
         this_region_has_a_doubling(12) = .true.
@@ -952,23 +1338,45 @@
       r_top(3) = R80_FICTITIOUS_IN_MESHER
       r_bottom(3) = R220
 
-      r_top(4) = R220
-      r_bottom(4) = R400
+      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING) then
+        ! 2nd doubling after 220
+        r_top(4) = R220
+        r_bottom(4) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
 
-      r_top(5) = R400
-      r_bottom(5) = R600
+        r_top(5) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
+        r_bottom(5) = R400
 
-      r_top(6) = R600
-      r_bottom(6) = R670
+        r_top(6) = R400
+        r_bottom(6) = R600
 
-      r_top(7) = R670
-      r_bottom(7) = R771
+        r_top(7) = R600
+        r_bottom(7) = R670
 
-      r_top(8) = R771
-      r_bottom(8) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
+        r_top(8) = R670
+        r_bottom(8) = R771
 
-      r_top(9) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
-      r_bottom(9) = RTOPDDOUBLEPRIME
+        r_top(9) = R771
+        r_bottom(9) = RTOPDDOUBLEPRIME
+      else
+        ! 2nd doubling after 771
+        r_top(4) = R220
+        r_bottom(4) = R400
+
+        r_top(5) = R400
+        r_bottom(5) = R600
+
+        r_top(6) = R600
+        r_bottom(6) = R670
+
+        r_top(7) = R670
+        r_bottom(7) = R771
+
+        r_top(8) = R771
+        r_bottom(8) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
+
+        r_top(9) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
+        r_bottom(9) = RTOPDDOUBLEPRIME
+      endif
 
       r_top(10) = RTOPDDOUBLEPRIME
       r_bottom(10) = RCMB
@@ -995,20 +1403,39 @@
       rmaxs(3) = R80_FICTITIOUS_IN_MESHER / R_PLANET
       rmins(3) = R220 / R_PLANET
 
-      rmaxs(4) = R220 / R_PLANET
-      rmins(4) = R400 / R_PLANET
+      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING) then
+        ! 2nd doubling after 220
+        rmaxs(4:5) = R220 / R_PLANET
+        rmins(4:5) = R400 / R_PLANET
 
-      rmaxs(5) = R400 / R_PLANET
-      rmins(5) = R600 / R_PLANET
+        rmaxs(6) = R400 / R_PLANET
+        rmins(6) = R600 / R_PLANET
 
-      rmaxs(6) = R600 / R_PLANET
-      rmins(6) = R670 / R_PLANET
+        rmaxs(7) = R600 / R_PLANET
+        rmins(7) = R670 / R_PLANET
 
-      rmaxs(7) = R670 / R_PLANET
-      rmins(7) = R771 / R_PLANET
+        rmaxs(8) = R670 / R_PLANET
+        rmins(8) = R771 / R_PLANET
 
-      rmaxs(8:9) = R771 / R_PLANET
-      rmins(8:9) = RTOPDDOUBLEPRIME / R_PLANET
+        rmaxs(9) = R771 / R_PLANET
+        rmins(9) = RTOPDDOUBLEPRIME / R_PLANET
+      else
+        ! 2nd doubling after 771
+        rmaxs(4) = R220 / R_PLANET
+        rmins(4) = R400 / R_PLANET
+
+        rmaxs(5) = R400 / R_PLANET
+        rmins(5) = R600 / R_PLANET
+
+        rmaxs(6) = R600 / R_PLANET
+        rmins(6) = R670 / R_PLANET
+
+        rmaxs(7) = R670 / R_PLANET
+        rmins(7) = R771 / R_PLANET
+
+        rmaxs(8:9) = R771 / R_PLANET
+        rmins(8:9) = RTOPDDOUBLEPRIME / R_PLANET
+      endif
 
       rmaxs(10) = RTOPDDOUBLEPRIME / R_PLANET
       rmins(10) = RCMB / R_PLANET
@@ -1036,12 +1463,24 @@
       endif
       ner_mesh_layers( 3) = NER_80_MOHO
       ner_mesh_layers( 4) = NER_220_80
-      ner_mesh_layers( 5) = NER_400_220
-      ner_mesh_layers( 6) = NER_600_400
-      ner_mesh_layers( 7) = NER_670_600
-      ner_mesh_layers( 8) = NER_771_670
-      ner_mesh_layers( 9) = NER_TOPDDOUBLEPRIME_771 - elem_doubling_mantle
-      ner_mesh_layers(10) = elem_doubling_mantle
+
+      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING) then
+        ! 2nd doubling after 220
+        ner_mesh_layers( 5) = NER_400_220 - elem_doubling_mantle
+        ner_mesh_layers( 6) = elem_doubling_mantle
+        ner_mesh_layers( 7) = NER_600_400
+        ner_mesh_layers( 8) = NER_670_600
+        ner_mesh_layers( 9) = NER_771_670
+        ner_mesh_layers(10) = NER_TOPDDOUBLEPRIME_771
+      else
+        ! 2nd doubling after 771
+        ner_mesh_layers( 5) = NER_400_220
+        ner_mesh_layers( 6) = NER_600_400
+        ner_mesh_layers( 7) = NER_670_600
+        ner_mesh_layers( 8) = NER_771_670
+        ner_mesh_layers( 9) = NER_TOPDDOUBLEPRIME_771 - elem_doubling_mantle
+        ner_mesh_layers(10) = elem_doubling_mantle
+      endif
       ner_mesh_layers(11) = NER_CMB_TOPDDOUBLEPRIME
       ner_mesh_layers(12) = NER_OUTER_CORE - elem_doubling_middle_outer_core
       ner_mesh_layers(13) = elem_doubling_middle_outer_core - elem_doubling_bottom_outer_core
@@ -1050,15 +1489,30 @@
 
       ! value of the doubling ratio in each radial region of the mesh
       ratio_sampling_array(1:2) = 1
-      if (ADD_1ST_DOUBLING) then
-        ratio_sampling_array(3:9) = 2
+      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING) then
+        ! 2nd doubling after 220
+        if (ADD_1ST_DOUBLING) then
+          ratio_sampling_array(3:5) = 2
+        else
+          ratio_sampling_array(3:5) = ratio_sampling_array(2)
+        endif
+        if (ADD_2ND_DOUBLING) then
+          ratio_sampling_array(6:12) = 4 ! 2 * ratio_sampling_array(9)
+        else
+          ratio_sampling_array(6:12) = ratio_sampling_array(5)
+        endif
       else
-        ratio_sampling_array(3:9) = ratio_sampling_array(2)
-      endif
-      if (ADD_2ND_DOUBLING) then
-        ratio_sampling_array(10:12) = 4 ! 2 * ratio_sampling_array(9)
-      else
-        ratio_sampling_array(10:12) = ratio_sampling_array(9)
+        ! 2nd doubling after 771
+        if (ADD_1ST_DOUBLING) then
+          ratio_sampling_array(3:9) = 2
+        else
+          ratio_sampling_array(3:9) = ratio_sampling_array(2)
+        endif
+        if (ADD_2ND_DOUBLING) then
+          ratio_sampling_array(10:12) = 4 ! 2 * ratio_sampling_array(9)
+        else
+          ratio_sampling_array(10:12) = ratio_sampling_array(9)
+        endif
       endif
       if (ADD_3RD_DOUBLING) then
         ratio_sampling_array(13) = 8 ! 2 * ratio_sampling_array(12)
@@ -1086,9 +1540,18 @@
         this_region_has_a_doubling(3)  = .true.
         last_doubling_layer = 3
       endif
-      if (ADD_2ND_DOUBLING) then
-        this_region_has_a_doubling(10) = .true.
-        last_doubling_layer = 10
+      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING) then
+        ! 2nd doubling after 220
+        if (ADD_2ND_DOUBLING) then
+          this_region_has_a_doubling(6) = .true.
+          last_doubling_layer = 6
+        endif
+      else
+        ! 2nd doubling after 771
+        if (ADD_2ND_DOUBLING) then
+          this_region_has_a_doubling(10) = .true.
+          last_doubling_layer = 10
+        endif
       endif
       if (ADD_3RD_DOUBLING) then
         this_region_has_a_doubling(13) = .true.
@@ -1115,23 +1578,45 @@
       r_top(4) = R80_FICTITIOUS_IN_MESHER
       r_bottom(4) = R220
 
-      r_top(5) = R220
-      r_bottom(5) = R400
+      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING) then
+        ! 2nd doubling after 220
+        r_top(5) = R220
+        r_bottom(5) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
 
-      r_top(6) = R400
-      r_bottom(6) = R600
+        r_top(6) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
+        r_bottom(6) = R400
 
-      r_top(7) = R600
-      r_bottom(7) = R670
+        r_top(7) = R400
+        r_bottom(7) = R600
 
-      r_top(8) = R670
-      r_bottom(8) = R771
+        r_top(8) = R600
+        r_bottom(8) = R670
 
-      r_top(9) = R771
-      r_bottom(9) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
+        r_top(9) = R670
+        r_bottom(9) = R771
 
-      r_top(10) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
-      r_bottom(10) = RTOPDDOUBLEPRIME
+        r_top(10) = R771
+        r_bottom(10) = RTOPDDOUBLEPRIME
+      else
+        ! 2nd doubling after 771
+        r_top(5) = R220
+        r_bottom(5) = R400
+
+        r_top(6) = R400
+        r_bottom(6) = R600
+
+        r_top(7) = R600
+        r_bottom(7) = R670
+
+        r_top(8) = R670
+        r_bottom(8) = R771
+
+        r_top(9) = R771
+        r_bottom(9) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
+
+        r_top(10) = R_PLANET - DEPTH_SECOND_DOUBLING_REAL
+        r_bottom(10) = RTOPDDOUBLEPRIME
+      endif
 
       r_top(11) = RTOPDDOUBLEPRIME
       r_bottom(11) = RCMB
@@ -1161,20 +1646,39 @@
       rmaxs(4) = R80_FICTITIOUS_IN_MESHER / R_PLANET
       rmins(4) = R220 / R_PLANET
 
-      rmaxs(5) = R220 / R_PLANET
-      rmins(5) = R400 / R_PLANET
+      if (REGIONAL_MESH_CUTOFF .and. ADD_2ND_DOUBLING) then
+        ! 2nd doubling after 220
+        rmaxs(5:6) = R220 / R_PLANET
+        rmins(5:6) = R400 / R_PLANET
 
-      rmaxs(6) = R400 / R_PLANET
-      rmins(6) = R600 / R_PLANET
+        rmaxs(7) = R400 / R_PLANET
+        rmins(7) = R600 / R_PLANET
 
-      rmaxs(7) = R600 / R_PLANET
-      rmins(7) = R670 / R_PLANET
+        rmaxs(8) = R600 / R_PLANET
+        rmins(8) = R670 / R_PLANET
 
-      rmaxs(8) = R670 / R_PLANET
-      rmins(8) = R771 / R_PLANET
+        rmaxs(9) = R670 / R_PLANET
+        rmins(9) = R771 / R_PLANET
 
-      rmaxs(9:10) = R771 / R_PLANET
-      rmins(9:10) = RTOPDDOUBLEPRIME / R_PLANET
+        rmaxs(10) = R771 / R_PLANET
+        rmins(10) = RTOPDDOUBLEPRIME / R_PLANET
+      else
+        ! 2nd doubling after 771
+        rmaxs(5) = R220 / R_PLANET
+        rmins(5) = R400 / R_PLANET
+
+        rmaxs(6) = R400 / R_PLANET
+        rmins(6) = R600 / R_PLANET
+
+        rmaxs(7) = R600 / R_PLANET
+        rmins(7) = R670 / R_PLANET
+
+        rmaxs(8) = R670 / R_PLANET
+        rmins(8) = R771 / R_PLANET
+
+        rmaxs(9:10) = R771 / R_PLANET
+        rmins(9:10) = RTOPDDOUBLEPRIME / R_PLANET
+      endif
 
       rmaxs(11) = RTOPDDOUBLEPRIME / R_PLANET
       rmins(11) = RCMB / R_PLANET

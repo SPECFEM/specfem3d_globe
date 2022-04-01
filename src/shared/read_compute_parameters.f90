@@ -100,6 +100,13 @@
   ! make sure single run simulation setting valid
   if (NUMBER_OF_RUNS == 1) NUMBER_OF_THIS_RUN = 1
 
+  ! re-sets regional mesh cut-off
+  if (NCHUNKS == 6) then
+    REGIONAL_MESH_CUTOFF = .false.
+    REGIONAL_MESH_CUTOFF_DEPTH = 400.d0
+    REGIONAL_MESH_ADD_2ND_DOUBLING = .false.
+  endif
+
   ! sponge layer
   if (.not. ABSORB_USING_GLOBAL_SPONGE) then
     SPONGE_LATITUDE_IN_DEGREES = 0.d0

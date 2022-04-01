@@ -37,27 +37,43 @@ typedef float realw;
 
 // for xmeshfem3D compilation
 
+// get_absorb_adios.F90
 void FC_FUNC_(get_absorb_adios,GET_ABSORB_ADIOS)(int* iregion,
                                                  int* nimin, int* nimax, int* njmin, int* njmax, int* nkmin_xi, int* nkmin_eta,
                                                  int* NSPEC2DMAX_XMIN_XMAX, int* NSPEC2DMAX_YMIN_YMAX) {}
 
+void FC_FUNC_(get_absorb_save_Stacey_boundary_adios,GET_ABSORB_SAVE_STACEY_BOUNDARY_ADIOS)(int* iregion,
+                                                                                           int* num_abs_boundary_faces,
+                                                                                           int* abs_boundary_ispec,
+                                                                                           int* abs_boundary_npoin,
+                                                                                           int* abs_boundary_ijk,
+                                                                                           realw* abs_boundary_normal,
+                                                                                           realw* abs_boundary_jacobian2Dw) {}
+
+// model_gll_adios.F90
 void FC_FUNC_(read_gll_model_adios,READ_GLL_MODEL_ADIOS)(void) {}
 
+// model_attenuation_gll_adios.f90
+void FC_FUNC_(read_gll_qmu_model_adios,READ_GLL_QMU_MODEL_ADIOS)(void) {}
+
+// save_arrays_solver_adios.F90
 void FC_FUNC_(save_arrays_solver_adios,SAVE_ARRAYS_SOLVER_ADIOS)(int* idoubling, int* ibool,
                                                                  realw* xstore, realw* ystore, realw* zstore,
                                                                  int* NSPEC2DMAX_XMIN_XMAX, int* NSPEC2DMAX_YMIN_YMAX,
                                                                  int* NSPEC2D_TOP, int* NSPEC2D_BOTTOM) {}
 
+// save_model_meshfiles_adios.F90
 void FC_FUNC_(save_model_meshfiles_adios,SAVE_MODEL_MESHFILES_ADIOS)(void) {}
 
+// save_arrays_solver_adios.F90
 void FC_FUNC_(save_arrays_boundary_adios,SAVE_ARRAYS_BOUNDARY_ADIOS)(void) {}
 
 void FC_FUNC_(save_mpi_arrays_adios,SAVE_MPI_ARRAYS_ADIOS)(void) {}
 
+// write_AVS_DX_output_adios.f90
 void FC_FUNC_(write_avs_dx_output_adios,WRITE_AVS_DX_OUTPUT_ADIOS)(int* npointot, int* iregion_code,
                                                                    int* num_ibool_AVS_DX, int* mask_ibool) {}
 
-void FC_FUNC_(read_gll_qmu_model_adios,READ_GLL_QMU_MODEL_ADIOS)(void) {}
 
 // for xspecfem3D compilation
 

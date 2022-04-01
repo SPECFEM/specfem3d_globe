@@ -179,11 +179,10 @@ __global__ void compute_strain_kernel(realw* d_displ,
                                    epsdev,&eps_trace_over_3);
 
     // stores strain from wavefield
-    if (NSPEC_STRAIN_ONLY == 1 ) {
-      epsilon_trace_over_3[tx] = eps_trace_over_3;
-    } else {
+    if (NSPEC_STRAIN_ONLY > 1 ) {
       epsilon_trace_over_3[ijk_ispec] = eps_trace_over_3;
     }
+
     epsilondev_xx[ijk_ispec] = epsdev[0];
     epsilondev_yy[ijk_ispec] = epsdev[1];
     epsilondev_xy[ijk_ispec] = epsdev[2];

@@ -182,6 +182,18 @@ __kernel void compute_stacey_elastic_kernel(const __global float * veloc, __glob
         }\n\
         fac1 = wgllwgll[(k) * (NGLLX) + i];\n\
         break;\n\
+      case 4 :\n\
+        k = 0;\n\
+        j = (igll) / (NGLLX);\n\
+        i = igll - ((j) * (NGLLX));\n\
+        if (j < 0 || j > NGLLX - (1)) {\n\
+           return ;\n\
+        }\n\
+        if (i < 0 || i > NGLLX - (1)) {\n\
+           return ;\n\
+        }\n\
+        fac1 = wgllwgll[(j) * (NGLLX) + i];\n\
+        break;\n\
     }\n\
 \n\
     iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)] - (1);\n\

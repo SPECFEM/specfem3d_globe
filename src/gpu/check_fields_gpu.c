@@ -248,6 +248,7 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
 
   // launch simple reduction kernel
   int blocksize = BLOCKSIZE_TRANSFER;
+  gpu_realw_mem displ;
 
   // outer core
   size_nonpadded = mp->NGLOB_OUTER_CORE;
@@ -259,15 +260,7 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
   //realw *h_max_fluid = (realw *) calloc (size_block_fluid, sizeof (realw));
   //if (h_max_fluid == NULL) { exit_on_error("Error allocating h_max array in check_norm_elastic_acoustic_from_device() routine"); }
 
-  // sets gpu arrays
-  gpu_realw_mem displ;
-  if (*FORWARD_OR_ADJOINT == 1) {
-    displ = mp->d_displ_outer_core;
-  } else {
-    displ = mp->d_b_displ_outer_core;
-  }
-
-  // graph
+  // cuda graph
 #ifdef USE_CUDA_GRAPHS
   if (mp->init_graph_norm){
     // debug: synchronizes first
@@ -278,51 +271,60 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
 #endif
 
   // outer core maximum
+  if (mp->NGLOB_OUTER_CORE > 0) {
+    // sets gpu arrays
+    if (*FORWARD_OR_ADJOINT == 1) {
+      displ = mp->d_displ_outer_core;
+    } else {
+      displ = mp->d_b_displ_outer_core;
+    }
+
 #ifdef USE_OPENCL
-  if (run_opencl) {
-    size_t global_work_size[2];
-    size_t local_work_size[2];
-    cl_uint idx = 0;
+    if (run_opencl) {
+      size_t global_work_size[2];
+      size_t local_work_size[2];
+      cl_uint idx = 0;
 
-    local_work_size[0] = blocksize;
-    local_work_size[1] = 1;
-    global_work_size[0] = num_blocks_x * blocksize;
-    global_work_size[1] = num_blocks_y;
+      local_work_size[0] = blocksize;
+      local_work_size[1] = 1;
+      global_work_size[0] = num_blocks_x * blocksize;
+      global_work_size[1] = num_blocks_y;
 
-    clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (cl_mem), (void *) &displ.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (int), (void *) &size_nonpadded));
-    clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_norm_max.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (cl_mem), (void *) &displ.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (int), (void *) &size_nonpadded));
+      clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_norm_max.ocl));
 
-    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.get_maximum_scalar_kernel, 2, NULL,
-                                     global_work_size, local_work_size, 0, NULL, NULL));
-  }
+      clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.get_maximum_scalar_kernel, 2, NULL,
+                                       global_work_size, local_work_size, 0, NULL, NULL));
+    }
 #endif
 #ifdef USE_CUDA
-  if (run_cuda) {
-    // graph
+    if (run_cuda) {
+      // graph
 #ifdef USE_CUDA_GRAPHS
-    if (! mp->use_graph_call_norm){
+      if (! mp->use_graph_call_norm){
 #endif
 
-    dim3 grid(num_blocks_x,num_blocks_y);
-    dim3 threads(blocksize,1,1);
+      dim3 grid(num_blocks_x,num_blocks_y);
+      dim3 threads(blocksize,1,1);
 
-    get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream>>>(displ.cuda,size_nonpadded,mp->d_norm_max.cuda);
+      get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream>>>(displ.cuda,size_nonpadded,mp->d_norm_max.cuda);
 
 #ifdef USE_CUDA_GRAPHS
-    } // graph
+      } // graph
 #endif
-  }
+    }
 #endif
 #ifdef USE_HIP
-  if (run_hip) {
-    dim3 grid(num_blocks_x,num_blocks_y);
-    dim3 threads(blocksize,1,1);
+    if (run_hip) {
+      dim3 grid(num_blocks_x,num_blocks_y);
+      dim3 threads(blocksize,1,1);
 
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(get_maximum_scalar_kernel), grid, threads, 0, mp->compute_stream,
-                                                                   displ.hip,size_nonpadded,mp->d_norm_max.hip);
- }
+      hipLaunchKernelGGL(HIP_KERNEL_NAME(get_maximum_scalar_kernel), grid, threads, 0, mp->compute_stream,
+                                                                     displ.hip,size_nonpadded,mp->d_norm_max.hip);
+    }
 #endif
+  } //outer_core
 
   // crust_mantle
   size_nonpadded = mp->NGLOB_CRUST_MANTLE;
@@ -385,7 +387,6 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
 #ifdef USE_CUDA_GRAPHS
     } // graph
 #endif
-
   }
 #endif
 #ifdef USE_HIP
@@ -395,7 +396,7 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
 
     hipLaunchKernelGGL(HIP_KERNEL_NAME(get_maximum_vector_kernel), grid, threads, 0, mp->compute_stream,
                                                                    displ.hip,size_nonpadded,tmp.hip);
- }
+  }
 #endif
 
   RELEASE_OFFSET(d_norm_max, offset1);
@@ -410,65 +411,67 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
   //realw *h_max_ic = (realw *) calloc (size_block_ic, sizeof (realw));
   //if (h_max_ic == NULL) { exit_on_error("Error allocating h_max array for inner core in check_norm_elastic_acoustic_from_device() routine"); }
 
-  // sets gpu arrays
-  if (*FORWARD_OR_ADJOINT == 1) {
-    displ = mp->d_displ_inner_core;
-  } else {
-    displ = mp->d_b_displ_inner_core;
-  }
+  if (mp->NGLOB_INNER_CORE > 0) {
+    // sets gpu arrays
+    if (*FORWARD_OR_ADJOINT == 1) {
+      displ = mp->d_displ_inner_core;
+    } else {
+      displ = mp->d_b_displ_inner_core;
+    }
 
-  offset2 = size_block_fluid + size_block_cm;
-  INIT_OFFSET(d_norm_max, offset2);
+    offset2 = size_block_fluid + size_block_cm;
+    INIT_OFFSET(d_norm_max, offset2);
 
-  tmp = gpuTakeRef(PASS_OFFSET(d_norm_max, offset2));
+    tmp = gpuTakeRef(PASS_OFFSET(d_norm_max, offset2));
 
 #ifdef USE_OPENCL
-  if (run_opencl) {
-    size_t global_work_size[2];
-    size_t local_work_size[2];
-    cl_uint idx = 0;
+    if (run_opencl) {
+      size_t global_work_size[2];
+      size_t local_work_size[2];
+      cl_uint idx = 0;
 
-    local_work_size[0] = blocksize;
-    local_work_size[1] = 1;
-    global_work_size[0] = num_blocks_x * blocksize;
-    global_work_size[1] = num_blocks_y;
+      local_work_size[0] = blocksize;
+      local_work_size[1] = 1;
+      global_work_size[0] = num_blocks_x * blocksize;
+      global_work_size[1] = num_blocks_y;
 
-    clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &displ.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (int), (void *) &size_nonpadded));
-    clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &tmp.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &displ.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (int), (void *) &size_nonpadded));
+      clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &tmp.ocl));
 
-    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.get_maximum_vector_kernel, 2, NULL,
-                                     global_work_size, local_work_size, 0, NULL, NULL));
-  }
+      clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.get_maximum_vector_kernel, 2, NULL,
+                                       global_work_size, local_work_size, 0, NULL, NULL));
+    }
 #endif
 #ifdef USE_CUDA
-  if (run_cuda) {
-    // graph
+    if (run_cuda) {
+      // graph
 #ifdef USE_CUDA_GRAPHS
-    if (! mp->use_graph_call_norm){
+      if (! mp->use_graph_call_norm){
 #endif
 
-    dim3 grid = dim3(num_blocks_x,num_blocks_y);
-    dim3 threads = dim3(blocksize,1,1);
+      dim3 grid = dim3(num_blocks_x,num_blocks_y);
+      dim3 threads = dim3(blocksize,1,1);
 
-    get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(displ.cuda,size_nonpadded,tmp.cuda);
+      get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(displ.cuda,size_nonpadded,tmp.cuda);
 
 #ifdef USE_CUDA_GRAPHS
-    } // graph
+      } // graph
 #endif
-  }
+    }
 #endif
 #ifdef USE_HIP
-  if (run_hip) {
-    dim3 grid = dim3(num_blocks_x,num_blocks_y);
-    dim3 threads = dim3(blocksize,1,1);
+    if (run_hip) {
+      dim3 grid = dim3(num_blocks_x,num_blocks_y);
+      dim3 threads = dim3(blocksize,1,1);
 
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(get_maximum_vector_kernel), grid, threads, 0, mp->compute_stream,
-                                                                   displ.hip,size_nonpadded,tmp.hip);
- }
+      hipLaunchKernelGGL(HIP_KERNEL_NAME(get_maximum_vector_kernel), grid, threads, 0, mp->compute_stream,
+                                                                     displ.hip,size_nonpadded,tmp.hip);
+    }
 #endif
 
-  RELEASE_OFFSET(d_norm_max, offset2);
+    RELEASE_OFFSET(d_norm_max, offset2);
+  } //inner_core
 
   // graph
 #ifdef USE_CUDA_GRAPHS
@@ -527,9 +530,13 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
   realw *h_norm_max = mp->h_norm_max;
 
   // determines fluid max for all blocks
-  max = h_norm_max[0];
-  for (int i = 1; i < size_block_fluid; i++) {
-    if (max < h_norm_max[i]) max = h_norm_max[i];
+  if (mp->NGLOB_OUTER_CORE > 0) {
+    max = h_norm_max[0];
+    for (int i = 1; i < size_block_fluid; i++) {
+      if (max < h_norm_max[i]) max = h_norm_max[i];
+    }
+  }else{
+    max = 0.0f;
   }
   // return result
   *fluidnorm = max;
@@ -543,9 +550,13 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
   max_crust_mantle = max;
 
   // determines max for all blocks inner_core
-  max = h_norm_max[size_block_fluid + size_block_cm];
-  for (int i = size_block_fluid + size_block_cm + 1; i < size_block_fluid + size_block_cm + size_block_ic; i++) {
-    if (max < h_norm_max[i]) max = h_norm_max[i];
+  if (mp->NGLOB_INNER_CORE > 0) {
+    max = h_norm_max[size_block_fluid + size_block_cm];
+    for (int i = size_block_fluid + size_block_cm + 1; i < size_block_fluid + size_block_cm + size_block_ic; i++) {
+      if (max < h_norm_max[i]) max = h_norm_max[i];
+    }
+  }else{
+    max = 0.0f;
   }
   max_inner_core = max;
 

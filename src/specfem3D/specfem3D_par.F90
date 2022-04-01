@@ -657,18 +657,19 @@ module specfem_par_crustmantle
     normal_top_crust_mantle
 
   ! Stacey
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
-    rho_vp_crust_mantle,rho_vs_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rho_vp_crust_mantle,rho_vs_crust_mantle
   integer :: nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle, &
-             nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle
+             nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle, &
+             nspec2D_zmin_crust_mantle
   integer, dimension(:,:), allocatable :: nimin_crust_mantle,nimax_crust_mantle,nkmin_eta_crust_mantle
   integer, dimension(:,:), allocatable :: njmin_crust_mantle,njmax_crust_mantle,nkmin_xi_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: absorb_xmin_crust_mantle, &
-    absorb_xmax_crust_mantle, absorb_ymin_crust_mantle, absorb_ymax_crust_mantle
+    absorb_xmax_crust_mantle, absorb_ymin_crust_mantle, absorb_ymax_crust_mantle, absorb_zmin_crust_mantle
 
   integer :: reclen_xmin_crust_mantle, reclen_xmax_crust_mantle, &
-            reclen_ymin_crust_mantle,reclen_ymax_crust_mantle
+             reclen_ymin_crust_mantle,reclen_ymax_crust_mantle, &
+             reclen_zmin_crust_mantle
 
   ! kernels
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
@@ -929,12 +930,11 @@ module specfem_par_outercore
   integer, dimension(:,:), allocatable :: njmin_outer_core,njmax_outer_core,nkmin_xi_outer_core
 
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: absorb_xmin_outer_core, &
-     absorb_xmax_outer_core, absorb_ymin_outer_core, absorb_ymax_outer_core, &
-     absorb_zmin_outer_core
+    absorb_xmax_outer_core, absorb_ymin_outer_core, absorb_ymax_outer_core, absorb_zmin_outer_core
 
   integer :: reclen_xmin_outer_core, reclen_xmax_outer_core, &
-             reclen_ymin_outer_core, reclen_ymax_outer_core
-  integer :: reclen_zmin
+             reclen_ymin_outer_core, reclen_ymax_outer_core, &
+             reclen_zmin_outer_core
 
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
     vector_accel_outer_core,vector_displ_outer_core,b_vector_displ_outer_core

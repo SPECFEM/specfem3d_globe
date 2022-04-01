@@ -38,6 +38,9 @@
   ! checks if anything to do
   if (.not. ACTUALLY_COUPLE_FLUID_CMB .and. .not. ACTUALLY_COUPLE_FLUID_ICB) return
 
+  ! checks if anything to do
+  if (NSPEC_OUTER_CORE == 0) return
+
   ! only for elements in first matching layer in the fluid
   if (.not. GPU_MODE) then
     ! on CPU
@@ -109,6 +112,8 @@
   ! checks if anything to do
   if (.not. ACTUALLY_COUPLE_FLUID_CMB .and. .not. ACTUALLY_COUPLE_FLUID_ICB) return
 
+  ! checks if anything to do
+  if (NSPEC_OUTER_CORE == 0) return
 
   ! only for elements in first matching layer in the fluid
   if (.not. GPU_MODE) then
@@ -217,6 +222,9 @@
   integer :: i,j,k,k_corresp,ispec,ispec2D,iglob_cm,iglob_oc,iglob_ic,ispec_selected
 
   ! for surface elements exactly on the CMB
+
+  ! checks if anything to do
+  if (NSPEC_OUTER_CORE == 0) return
 
 ! openmp solver
 !$OMP PARALLEL if (nspec2D_top > 500) &
@@ -354,6 +362,9 @@
 
   ! for surface elements exactly on the CMB
 
+  ! checks if anything to do
+  if (NSPEC_OUTER_CORE == 0) return
+
 ! openmp solver
 !$OMP PARALLEL if (nspec2D_top > 500) &
 !$OMP DEFAULT(SHARED) &
@@ -446,6 +457,9 @@
 
   ! for surface elements exactly on the ICB
 
+  ! checks if anything to do
+  if (NSPEC_OUTER_CORE == 0) return
+
 ! openmp solver
 !$OMP PARALLEL if (nspec_bottom > 500) &
 !$OMP DEFAULT(SHARED) &
@@ -525,6 +539,9 @@
   ! checks if anything to do
   if (.not. ACTUALLY_COUPLE_FLUID_CMB .and. .not. ACTUALLY_COUPLE_FLUID_ICB) return
 
+  ! checks if anything to do
+  if (NSPEC_OUTER_CORE == 0) return
+
   ! only for elements in first matching layer in the solid
   if (.not. GPU_MODE) then
     ! on CPU
@@ -602,6 +619,9 @@
 
   ! checks if anything to do
   if (.not. ACTUALLY_COUPLE_FLUID_CMB .and. .not. ACTUALLY_COUPLE_FLUID_ICB) return
+
+  ! checks if anything to do
+  if (NSPEC_OUTER_CORE == 0) return
 
   ! only for elements in first matching layer in the solid
   if (.not. GPU_MODE) then
@@ -722,6 +742,9 @@
   integer :: i,j,k,k_corresp,ispec,ispec2D,iglob,iglob_mantle,iglob_inner_core,ispec_selected
 
   ! for surface elements exactly on the CMB
+
+  ! checks if anything to do
+  if (NSPEC_OUTER_CORE == 0) return
 
 ! openmp solver
 !$OMP PARALLEL if (nspec_bottom > 500) &
@@ -871,6 +894,9 @@
 
   ! for surface elements exactly on the CMB
 
+  ! checks if anything to do
+  if (NSPEC_OUTER_CORE == 0) return
+
 ! openmp solver
 !$OMP PARALLEL if (nspec_bottom > 500) &
 !$OMP DEFAULT(SHARED) &
@@ -971,6 +997,9 @@
 
   ! for surface elements exactly on the ICB
 
+  ! checks if anything to do
+  if (NSPEC_OUTER_CORE == 0) return
+
 ! openmp solver
 !$OMP PARALLEL if (nspec2D_top > 500) &
 !$OMP DEFAULT(SHARED) &
@@ -1067,6 +1096,9 @@
   integer :: ipoin,iglob
 
   ! for surface elements exactly at the top of the crust (ocean bottom)
+
+  ! checks if anything to do
+  if (npoin_oceans == 0) return
 
 ! openmp solver
 !$OMP PARALLEL if (npoin_oceans > 1000) &

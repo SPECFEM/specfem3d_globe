@@ -59,350 +59,353 @@ subroutine read_mesh_databases_coupling_adios()
   call open_file_adios_read_and_init_method(myadios_file,myadios_group,file_name)
 
   ! crust and mantle
-  write(region_name,"('reg',i1, '/')") IREGION_CRUST_MANTLE
+  if (NSPEC_CRUST_MANTLE > 0) then
+    write(region_name,"('reg',i1, '/')") IREGION_CRUST_MANTLE
 
-  call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "nspec2D_xmin",nspec2D_xmin_crust_mantle)
-  call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "nspec2D_xmax",nspec2D_xmax_crust_mantle)
-  call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "nspec2D_ymin",nspec2D_ymin_crust_mantle)
-  call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "nspec2D_ymax",nspec2D_ymax_crust_mantle)
-  call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "NSPEC2D_BOTTOM",njunk1)
-  call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "NSPEC2D_TOP",njunk2)
+    call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "nspec2D_xmin",nspec2D_xmin_crust_mantle)
+    call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "nspec2D_xmax",nspec2D_xmax_crust_mantle)
+    call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "nspec2D_ymin",nspec2D_ymin_crust_mantle)
+    call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "nspec2D_ymax",nspec2D_ymax_crust_mantle)
+    call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "NSPEC2D_BOTTOM",njunk1)
+    call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "NSPEC2D_TOP",njunk2)
 
-  ! boundary elements
-  local_dim = NSPEC2DMAX_XMIN_XMAX_CM
-  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-  call set_selection_boundingbox(sel, start, count)
+    ! boundary elements
+    local_dim = NSPEC2DMAX_XMIN_XMAX_CM
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
 
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "ibelm_xmin/array", ibelm_xmin_crust_mantle)
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "ibelm_xmax/array", ibelm_xmax_crust_mantle)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "ibelm_xmin/array", ibelm_xmin_crust_mantle)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "ibelm_xmax/array", ibelm_xmax_crust_mantle)
 
-  call read_adios_perform(myadios_file)
-  call delete_adios_selection(sel)
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
 
-  local_dim = NSPEC2DMAX_YMIN_YMAX_CM
-  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-  call set_selection_boundingbox(sel, start, count)
+    local_dim = NSPEC2DMAX_YMIN_YMAX_CM
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
 
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "ibelm_ymin/array", ibelm_ymin_crust_mantle)
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "ibelm_ymax/array", ibelm_ymax_crust_mantle)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "ibelm_ymin/array", ibelm_ymin_crust_mantle)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "ibelm_ymax/array", ibelm_ymax_crust_mantle)
 
-  call read_adios_perform(myadios_file)
-  call delete_adios_selection(sel)
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
 
-  local_dim = NSPEC2D_BOTTOM_CM
-  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-  call set_selection_boundingbox(sel, start, count)
+    local_dim = NSPEC2D_BOTTOM_CM
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
 
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "ibelm_bottom/array", ibelm_bottom_crust_mantle)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "ibelm_bottom/array", ibelm_bottom_crust_mantle)
 
-  call read_adios_perform(myadios_file)
-  call delete_adios_selection(sel)
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
 
-  local_dim = NSPEC2D_TOP_CM
-  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-  call set_selection_boundingbox(sel, start, count)
+    local_dim = NSPEC2D_TOP_CM
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
 
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "ibelm_top/array", ibelm_top_crust_mantle)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "ibelm_top/array", ibelm_top_crust_mantle)
 
-  call read_adios_perform(myadios_file)
-  call delete_adios_selection(sel)
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
 
-  local_dim = NDIM*NGLLY*NGLLZ*NSPEC2DMAX_XMIN_XMAX_CM
-  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-  call set_selection_boundingbox(sel, start, count)
+    local_dim = NDIM*NGLLY*NGLLZ*NSPEC2DMAX_XMIN_XMAX_CM
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
 
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "normal_xmin/array", normal_xmin_crust_mantle)
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "normal_xmax/array", normal_xmax_crust_mantle)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "normal_xmin/array", normal_xmin_crust_mantle)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "normal_xmax/array", normal_xmax_crust_mantle)
 
-  call read_adios_perform(myadios_file)
-  call delete_adios_selection(sel)
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
 
-  local_dim = NDIM*NGLLX*NGLLZ*NSPEC2DMAX_YMIN_YMAX_CM
-  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-  call set_selection_boundingbox(sel, start, count)
+    local_dim = NDIM*NGLLX*NGLLZ*NSPEC2DMAX_YMIN_YMAX_CM
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
 
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "normal_ymin/array", normal_ymin_crust_mantle)
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "normal_ymax/array", normal_ymax_crust_mantle)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "normal_ymin/array", normal_ymin_crust_mantle)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "normal_ymax/array", normal_ymax_crust_mantle)
 
-  call read_adios_perform(myadios_file)
-  call delete_adios_selection(sel)
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
 
-  local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_BOTTOM_CM
-  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-  call set_selection_boundingbox(sel, start, count)
+    local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_BOTTOM_CM
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
 
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "normal_bottom/array", normal_bottom_crust_mantle)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "normal_bottom/array", normal_bottom_crust_mantle)
 
-  call read_adios_perform(myadios_file)
-  call delete_adios_selection(sel)
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
 
-  local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_TOP_CM
-  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-  call set_selection_boundingbox(sel, start, count)
+    local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_TOP_CM
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
 
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "normal_top/array", normal_top_crust_mantle)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "normal_top/array", normal_top_crust_mantle)
 
-  call read_adios_perform(myadios_file)
-  call delete_adios_selection(sel)
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
 
-  local_dim = NGLLY*NGLLZ*NSPEC2DMAX_XMIN_XMAX_CM
-  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-  call set_selection_boundingbox(sel, start, count)
+    local_dim = NGLLY*NGLLZ*NSPEC2DMAX_XMIN_XMAX_CM
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
 
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "jacobian2D_xmin/array", jacobian2D_xmin_crust_mantle)
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "jacobian2D_xmax/array", jacobian2D_xmax_crust_mantle)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "jacobian2D_xmin/array", jacobian2D_xmin_crust_mantle)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "jacobian2D_xmax/array", jacobian2D_xmax_crust_mantle)
 
-  call read_adios_perform(myadios_file)
-  call delete_adios_selection(sel)
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
 
-  local_dim = NGLLX*NGLLZ*NSPEC2DMAX_YMIN_YMAX_CM
-  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-  call set_selection_boundingbox(sel, start, count)
+    local_dim = NGLLX*NGLLZ*NSPEC2DMAX_YMIN_YMAX_CM
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
 
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "jacobian2D_ymin/array", jacobian2D_ymin_crust_mantle)
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "jacobian2D_ymax/array", jacobian2D_ymax_crust_mantle)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "jacobian2D_ymin/array", jacobian2D_ymin_crust_mantle)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "jacobian2D_ymax/array", jacobian2D_ymax_crust_mantle)
 
-  call read_adios_perform(myadios_file)
-  call delete_adios_selection(sel)
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
 
-  local_dim = NGLLX*NGLLY*NSPEC2D_BOTTOM_CM
-  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-  call set_selection_boundingbox(sel, start, count)
+    local_dim = NGLLX*NGLLY*NSPEC2D_BOTTOM_CM
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
 
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "jacobian2D_bottom/array", jacobian2D_bottom_crust_mantle)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "jacobian2D_bottom/array", jacobian2D_bottom_crust_mantle)
 
-  call read_adios_perform(myadios_file)
-  call delete_adios_selection(sel)
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
 
-  local_dim = NGLLX*NGLLY*NSPEC2D_TOP_CM
-  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-  call set_selection_boundingbox(sel, start, count)
+    local_dim = NGLLX*NGLLY*NSPEC2D_TOP_CM
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
 
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "jacobian2D_top/array", jacobian2D_top_crust_mantle)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "jacobian2D_top/array", jacobian2D_top_crust_mantle)
 
-  call read_adios_perform(myadios_file)
-  call delete_adios_selection(sel)
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
+  endif
 
   ! read parameters to couple fluid and solid regions
   !
   ! outer core
+  if (NSPEC_OUTER_CORE > 0) then
+    write(region_name,"('reg',i1, '/')") IREGION_OUTER_CORE
 
-  write(region_name,"('reg',i1, '/')") IREGION_OUTER_CORE
+    call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "nspec2D_xmin",nspec2D_xmin_outer_core)
+    call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "nspec2D_xmax",nspec2D_xmax_outer_core)
+    call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "nspec2D_ymin",nspec2D_ymin_outer_core)
+    call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "nspec2D_ymax",nspec2D_ymax_outer_core)
 
-  call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "nspec2D_xmin",nspec2D_xmin_outer_core)
-  call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "nspec2D_xmax",nspec2D_xmax_outer_core)
-  call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "nspec2D_ymin",nspec2D_ymin_outer_core)
-  call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "nspec2D_ymax",nspec2D_ymax_outer_core)
+    ! boundary elements
+    local_dim = NSPEC2DMAX_XMIN_XMAX_OC
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
 
-  ! boundary elements
-  local_dim = NSPEC2DMAX_XMIN_XMAX_OC
-  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-  call set_selection_boundingbox(sel, start, count)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "ibelm_xmin/array", ibelm_xmin_outer_core)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "ibelm_xmax/array", ibelm_xmax_outer_core)
 
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "ibelm_xmin/array", ibelm_xmin_outer_core)
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "ibelm_xmax/array", ibelm_xmax_outer_core)
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
 
-  call read_adios_perform(myadios_file)
-  call delete_adios_selection(sel)
+    local_dim = NSPEC2DMAX_YMIN_YMAX_OC
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
 
-  local_dim = NSPEC2DMAX_YMIN_YMAX_OC
-  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-  call set_selection_boundingbox(sel, start, count)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "ibelm_ymin/array", ibelm_ymin_outer_core)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "ibelm_ymax/array", ibelm_ymax_outer_core)
 
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "ibelm_ymin/array", ibelm_ymin_outer_core)
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "ibelm_ymax/array", ibelm_ymax_outer_core)
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
 
-  call read_adios_perform(myadios_file)
-  call delete_adios_selection(sel)
+    local_dim = NSPEC2D_BOTTOM_OC
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
 
-  local_dim = NSPEC2D_BOTTOM_OC
-  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-  call set_selection_boundingbox(sel, start, count)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "ibelm_bottom/array", ibelm_bottom_outer_core)
 
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "ibelm_bottom/array", ibelm_bottom_outer_core)
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
 
-  call read_adios_perform(myadios_file)
-  call delete_adios_selection(sel)
+    local_dim = NSPEC2D_TOP_OC
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
 
-  local_dim = NSPEC2D_TOP_OC
-  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-  call set_selection_boundingbox(sel, start, count)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "ibelm_top/array", ibelm_top_outer_core)
 
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "ibelm_top/array", ibelm_top_outer_core)
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
 
-  call read_adios_perform(myadios_file)
-  call delete_adios_selection(sel)
+    ! normals
+    local_dim = NDIM*NGLLY*NGLLZ*NSPEC2DMAX_XMIN_XMAX_OC
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
 
-  ! normals
-  local_dim = NDIM*NGLLY*NGLLZ*NSPEC2DMAX_XMIN_XMAX_OC
-  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-  call set_selection_boundingbox(sel, start, count)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "normal_xmin/array", normal_xmin_outer_core)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "normal_xmax/array", normal_xmax_outer_core)
 
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "normal_xmin/array", normal_xmin_outer_core)
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "normal_xmax/array", normal_xmax_outer_core)
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
 
-  call read_adios_perform(myadios_file)
-  call delete_adios_selection(sel)
+    local_dim = NDIM*NGLLX*NGLLZ*NSPEC2DMAX_YMIN_YMAX_OC
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
 
-  local_dim = NDIM*NGLLX*NGLLZ*NSPEC2DMAX_YMIN_YMAX_OC
-  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-  call set_selection_boundingbox(sel, start, count)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "normal_ymin/array", normal_ymin_outer_core)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "normal_ymax/array", normal_ymax_outer_core)
 
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "normal_ymin/array", normal_ymin_outer_core)
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "normal_ymax/array", normal_ymax_outer_core)
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
 
-  call read_adios_perform(myadios_file)
-  call delete_adios_selection(sel)
+    local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_BOTTOM_OC
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
 
-  local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_BOTTOM_OC
-  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-  call set_selection_boundingbox(sel, start, count)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "normal_bottom/array", normal_bottom_outer_core)
 
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "normal_bottom/array", normal_bottom_outer_core)
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
 
-  call read_adios_perform(myadios_file)
-  call delete_adios_selection(sel)
+    local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_TOP_OC
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
 
-  local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_TOP_OC
-  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-  call set_selection_boundingbox(sel, start, count)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "normal_top/array", normal_top_outer_core)
 
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "normal_top/array", normal_top_outer_core)
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
 
-  call read_adios_perform(myadios_file)
-  call delete_adios_selection(sel)
+    ! Jacobians
+    local_dim = NGLLY*NGLLZ*NSPEC2DMAX_XMIN_XMAX_OC
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
 
-  ! Jacobians
-  local_dim = NGLLY*NGLLZ*NSPEC2DMAX_XMIN_XMAX_OC
-  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-  call set_selection_boundingbox(sel, start, count)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "jacobian2D_xmin/array",  jacobian2D_xmin_outer_core)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "jacobian2D_xmax/array", jacobian2D_xmax_outer_core)
 
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "jacobian2D_xmin/array",  jacobian2D_xmin_outer_core)
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "jacobian2D_xmax/array", jacobian2D_xmax_outer_core)
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
 
-  call read_adios_perform(myadios_file)
-  call delete_adios_selection(sel)
+    local_dim = NGLLX*NGLLZ*NSPEC2DMAX_YMIN_YMAX_OC
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
 
-  local_dim = NGLLX*NGLLZ*NSPEC2DMAX_YMIN_YMAX_OC
-  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-  call set_selection_boundingbox(sel, start, count)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "jacobian2D_ymin/array", jacobian2D_ymin_outer_core)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "jacobian2D_ymax/array", jacobian2D_ymax_outer_core)
 
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "jacobian2D_ymin/array", jacobian2D_ymin_outer_core)
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "jacobian2D_ymax/array", jacobian2D_ymax_outer_core)
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
 
-  call read_adios_perform(myadios_file)
-  call delete_adios_selection(sel)
+    local_dim = NGLLX*NGLLY*NSPEC2D_BOTTOM_OC
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
 
-  local_dim = NGLLX*NGLLY*NSPEC2D_BOTTOM_OC
-  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-  call set_selection_boundingbox(sel, start, count)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "jacobian2D_bottom/array", jacobian2D_bottom_outer_core)
 
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "jacobian2D_bottom/array", jacobian2D_bottom_outer_core)
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
 
-  call read_adios_perform(myadios_file)
-  call delete_adios_selection(sel)
+    local_dim = NGLLX*NGLLY*NSPEC2D_TOP_OC
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
 
-  local_dim = NGLLX*NGLLY*NSPEC2D_TOP_OC
-  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-  call set_selection_boundingbox(sel, start, count)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "jacobian2D_top/array", jacobian2D_top_outer_core)
 
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "jacobian2D_top/array", jacobian2D_top_outer_core)
-
-  call read_adios_perform(myadios_file)
-  call delete_adios_selection(sel)
-
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
+  endif
 
   ! inner core
+  if (NSPEC_INNER_CORE > 0) then
+    write(region_name,"('reg',i1, '/')") IREGION_INNER_CORE
 
-  write(region_name,"('reg',i1, '/')") IREGION_INNER_CORE
-
-  ! number of elements
-  call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "nspec2D_xmin",nspec2D_xmin_inner_core)
-  call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "nspec2D_xmax",nspec2D_xmax_inner_core)
-  call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "nspec2D_ymin",nspec2D_ymin_inner_core)
-  call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "nspec2D_ymax",nspec2D_ymax_inner_core)
+    ! number of elements
+    call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "nspec2D_xmin",nspec2D_xmin_inner_core)
+    call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "nspec2D_xmax",nspec2D_xmax_inner_core)
+    call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "nspec2D_ymin",nspec2D_ymin_inner_core)
+    call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "nspec2D_ymax",nspec2D_ymax_inner_core)
 
 
-  ! boundary elements
-  local_dim = NSPEC2DMAX_XMIN_XMAX_IC
-  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-  call set_selection_boundingbox(sel, start, count)
+    ! boundary elements
+    local_dim = NSPEC2DMAX_XMIN_XMAX_IC
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
 
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "ibelm_xmin/array", ibelm_xmin_inner_core)
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "ibelm_xmax/array", ibelm_xmax_inner_core)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "ibelm_xmin/array", ibelm_xmin_inner_core)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "ibelm_xmax/array", ibelm_xmax_inner_core)
 
-  call read_adios_perform(myadios_file)
-  call delete_adios_selection(sel)
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
 
-  local_dim = NSPEC2DMAX_YMIN_YMAX_IC
-  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-  call set_selection_boundingbox(sel, start, count)
+    local_dim = NSPEC2DMAX_YMIN_YMAX_IC
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
 
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "ibelm_ymin/array", ibelm_ymin_inner_core)
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "ibelm_ymax/array", ibelm_ymax_inner_core)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "ibelm_ymin/array", ibelm_ymin_inner_core)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "ibelm_ymax/array", ibelm_ymax_inner_core)
 
-  call read_adios_perform(myadios_file)
-  call delete_adios_selection(sel)
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
 
-  local_dim = NSPEC2D_BOTTOM_IC
-  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-  call set_selection_boundingbox(sel, start, count)
+    local_dim = NSPEC2D_BOTTOM_IC
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
 
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "ibelm_bottom/array", ibelm_bottom_inner_core)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "ibelm_bottom/array", ibelm_bottom_inner_core)
 
-  call read_adios_perform(myadios_file)
-  call delete_adios_selection(sel)
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
 
-  local_dim = NSPEC2D_TOP_IC
-  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-  call set_selection_boundingbox(sel, start, count)
+    local_dim = NSPEC2D_TOP_IC
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
 
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "ibelm_top/array", ibelm_top_inner_core)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "ibelm_top/array", ibelm_top_inner_core)
 
-  call read_adios_perform(myadios_file)
-  call delete_adios_selection(sel)
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
+  endif
 
   ! closes adios file
   call close_file_adios_read_and_finalize_method(myadios_file)
@@ -410,103 +413,103 @@ subroutine read_mesh_databases_coupling_adios()
 
   ! -- Boundary Mesh for crust and mantle ---
   if (SAVE_BOUNDARY_MESH .and. SIMULATION_TYPE == 3) then
+    if (NSPEC_CRUST_MANTLE > 0) then
+      file_name = get_adios_filename(trim(LOCAL_PATH) // "boundary_disc")
 
-    file_name = get_adios_filename(trim(LOCAL_PATH) // "boundary_disc")
+      ! opens adios file
+      call init_adios_group(myadios_group,"BoundaryDiscReader")
+      call open_file_adios_read_and_init_method(myadios_file,myadios_group,file_name)
 
-    ! opens adios file
-    call init_adios_group(myadios_group,"BoundaryDiscReader")
-    call open_file_adios_read_and_init_method(myadios_file,myadios_group,file_name)
+      ! number of elements
+      call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "NSPEC2D_MOHO",njunk1)
+      call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "NSPEC2D_400",njunk2)
+      call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "NSPEC2D_670",njunk3)
 
-    ! number of elements
-    call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "NSPEC2D_MOHO",njunk1)
-    call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "NSPEC2D_400",njunk2)
-    call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "NSPEC2D_670",njunk3)
+      ! checks dimensions
+      if (njunk1 /= NSPEC2D_MOHO .and. njunk2 /= NSPEC2D_400 .and. &
+          njunk3 /= NSPEC2D_670) &
+          call exit_mpi(myrank, 'Error reading adios boundary_disc file')
 
-    ! checks dimensions
-    if (njunk1 /= NSPEC2D_MOHO .and. njunk2 /= NSPEC2D_400 .and. &
-        njunk3 /= NSPEC2D_670) &
-        call exit_mpi(myrank, 'Error reading adios boundary_disc file')
+      ! boundary elements
 
-    ! boundary elements
+      ! moho
+      local_dim = NSPEC2D_MOHO
+      start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+      call set_selection_boundingbox(sel, start, count)
 
-    ! moho
-    local_dim = NSPEC2D_MOHO
-    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-    call set_selection_boundingbox(sel, start, count)
+      call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                     trim(region_name) // "ibelm_moho_top/array",ibelm_moho_bot)
+      call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                     trim(region_name) // "ibelm_moho_bot/array",ibelm_moho_top)
 
-    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                   trim(region_name) // "ibelm_moho_top/array",ibelm_moho_bot)
-    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                   trim(region_name) // "ibelm_moho_bot/array",ibelm_moho_top)
+      call read_adios_perform(myadios_file)
+      call delete_adios_selection(sel)
 
-    call read_adios_perform(myadios_file)
-    call delete_adios_selection(sel)
+      ! 400
+      local_dim = NSPEC2D_400
+      start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+      call set_selection_boundingbox(sel, start, count)
 
-    ! 400
-    local_dim = NSPEC2D_400
-    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-    call set_selection_boundingbox(sel, start, count)
+      call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                     trim(region_name) // "ibelm_400_top/array",ibelm_400_bot)
+      call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                     trim(region_name) // "ibelm_400_bot/array",ibelm_400_top)
 
-    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                   trim(region_name) // "ibelm_400_top/array",ibelm_400_bot)
-    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                   trim(region_name) // "ibelm_400_bot/array",ibelm_400_top)
+      call read_adios_perform(myadios_file)
+      call delete_adios_selection(sel)
 
-    call read_adios_perform(myadios_file)
-    call delete_adios_selection(sel)
+      ! 670
+      local_dim = NSPEC2D_670
+      start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+      call set_selection_boundingbox(sel, start, count)
 
-    ! 670
-    local_dim = NSPEC2D_670
-    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-    call set_selection_boundingbox(sel, start, count)
+      call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                     trim(region_name) // "ibelm_670_top/array",ibelm_670_bot)
+      call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                     trim(region_name) // "ibelm_670_bot/array",ibelm_670_top)
 
-    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                   trim(region_name) // "ibelm_670_top/array",ibelm_670_bot)
-    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                   trim(region_name) // "ibelm_670_bot/array",ibelm_670_top)
+      call read_adios_perform(myadios_file)
+      call delete_adios_selection(sel)
 
-    call read_adios_perform(myadios_file)
-    call delete_adios_selection(sel)
+      ! normals
 
-    ! normals
+      ! moho
+      local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_MOHO
+      start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+      call set_selection_boundingbox(sel, start, count)
 
-    ! moho
-    local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_MOHO
-    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-    call set_selection_boundingbox(sel, start, count)
+      call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                     trim(region_name) // "normal_moho/array",normal_moho)
 
-    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                   trim(region_name) // "normal_moho/array",normal_moho)
+      call read_adios_perform(myadios_file)
+      call delete_adios_selection(sel)
 
-    call read_adios_perform(myadios_file)
-    call delete_adios_selection(sel)
+      ! 400
+      local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_400
+      start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+      call set_selection_boundingbox(sel, start, count)
 
-    ! 400
-    local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_400
-    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-    call set_selection_boundingbox(sel, start, count)
+      call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                     trim(region_name) // "normal_400/array",normal_400)
 
-    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                   trim(region_name) // "normal_400/array",normal_400)
+      call read_adios_perform(myadios_file)
+      call delete_adios_selection(sel)
 
-    call read_adios_perform(myadios_file)
-    call delete_adios_selection(sel)
+      ! 670
+      local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_670
+      start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+      call set_selection_boundingbox(sel, start, count)
 
-    ! 670
-    local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_670
-    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-    call set_selection_boundingbox(sel, start, count)
+      call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                     trim(region_name) // "normal_670/array",normal_670)
 
-    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                   trim(region_name) // "normal_670/array",normal_670)
+      call read_adios_perform(myadios_file)
+      call delete_adios_selection(sel)
 
-    call read_adios_perform(myadios_file)
-    call delete_adios_selection(sel)
-
-    ! closes adios file
-    call close_file_adios_read_and_finalize_method(myadios_file)
-    call delete_adios_group(myadios_group,"BoundaryDiscReader")
-
+      ! closes adios file
+      call close_file_adios_read_and_finalize_method(myadios_file)
+      call delete_adios_group(myadios_group,"BoundaryDiscReader")
+    endif
   endif
 
 end subroutine read_mesh_databases_coupling_adios
@@ -654,13 +657,13 @@ subroutine read_mesh_databases_MPI_adios(iregion_code)
   character(len=128)      :: region_name
   integer :: nglob_tmp,nspec_tmp
 
-  write(region_name,"('reg',i1, '/')") iregion_code
-
   file_name = get_adios_filename(trim(LOCAL_PATH) // "/solver_data_mpi")
 
   ! opens adios file
   call init_adios_group(myadios_group,"SolverMPIReader")
   call open_file_adios_read_and_init_method(myadios_file,myadios_group,file_name)
+
+  write(region_name,"('reg',i1, '/')") iregion_code
 
   ! file read checking
   call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "myrank",rank)
@@ -1005,74 +1008,77 @@ subroutine read_mesh_databases_stacey_adios()
 
   file_name = get_adios_filename(trim(LOCAL_PATH) // "/stacey")
 
-  ! crust and mantle
-  write(region_name,"('reg',i1, '/')") IREGION_CRUST_MANTLE
-
   ! opens adios file
   call init_adios_group(myadios_group,"StaceyReader")
   call open_file_adios_read_and_init_method(myadios_file,myadios_group,file_name)
 
-  ! read arrays for Stacey conditions
-  local_dim = 2*NSPEC2DMAX_XMIN_XMAX_CM
-  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-  call set_selection_boundingbox(sel, start, count)
+  ! crust and mantle
+  if (NSPEC_CRUST_MANTLE > 0) then
+    write(region_name,"('reg',i1, '/')") IREGION_CRUST_MANTLE
 
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "njmin/array", njmin_crust_mantle)
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "njmax/array", njmax_crust_mantle)
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "nkmin_xi/array", nkmin_xi_crust_mantle)
+    ! read arrays for Stacey conditions
+    local_dim = 2*NSPEC2DMAX_XMIN_XMAX_CM
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
 
-  call read_adios_perform(myadios_file)
-  call delete_adios_selection(sel)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "njmin/array", njmin_crust_mantle)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "njmax/array", njmax_crust_mantle)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "nkmin_xi/array", nkmin_xi_crust_mantle)
 
-  local_dim = 2*NSPEC2DMAX_YMIN_YMAX_CM
-  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-  call set_selection_boundingbox(sel, start, count)
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
 
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "nimin/array", nimin_crust_mantle)
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "nimax/array", nimax_crust_mantle)
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "nkmin_eta/array", nkmin_eta_crust_mantle)
+    local_dim = 2*NSPEC2DMAX_YMIN_YMAX_CM
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
 
-  call read_adios_perform(myadios_file)
-  call delete_adios_selection(sel)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "nimin/array", nimin_crust_mantle)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "nimax/array", nimax_crust_mantle)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "nkmin_eta/array", nkmin_eta_crust_mantle)
+
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
+  endif
 
   ! outer core
-  write(region_name,"('reg',i1, '/')") IREGION_OUTER_CORE
+  if (NSPEC_OUTER_CORE > 0) then
+    write(region_name,"('reg',i1, '/')") IREGION_OUTER_CORE
 
-  ! read arrays for Stacey conditions
+    ! read arrays for Stacey conditions
+    local_dim = 2*NSPEC2DMAX_XMIN_XMAX_OC
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
 
-  local_dim = 2*NSPEC2DMAX_XMIN_XMAX_OC
-  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-  call set_selection_boundingbox(sel, start, count)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "njmin/array", njmin_outer_core)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "njmax/array", njmax_outer_core)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "nkmin_xi/array", nkmin_xi_outer_core)
 
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "njmin/array", njmin_outer_core)
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "njmax/array", njmax_outer_core)
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "nkmin_xi/array", nkmin_xi_outer_core)
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
 
-  call read_adios_perform(myadios_file)
-  call delete_adios_selection(sel)
+    local_dim = 2*NSPEC2DMAX_YMIN_YMAX_OC
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
 
-  local_dim = 2*NSPEC2DMAX_YMIN_YMAX_OC
-  start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-  call set_selection_boundingbox(sel, start, count)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "nimin/array", nimin_outer_core)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "nimax/array", nimax_outer_core)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "nkmin_eta/array", nkmin_eta_outer_core)
 
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "nimin/array", nimin_outer_core)
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "nimax/array", nimax_outer_core)
-  call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                 trim(region_name) // "nkmin_eta/array", nkmin_eta_outer_core)
-
-  call read_adios_perform(myadios_file)
-  call delete_adios_selection(sel)
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
+  endif
 
   ! closes adios file
   call close_file_adios_read_and_finalize_method(myadios_file)

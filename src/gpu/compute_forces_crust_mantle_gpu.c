@@ -882,7 +882,7 @@ void FC_FUNC_ (compute_forces_crust_mantle_gpu,
         offset_ispec = mp->nspec_outer_crust_mantle;
       }
       // for strain
-      if (mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY != 1) {
+      if (mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY > 1) {
         offset_nonpadded_strain = mp->nspec_outer_crust_mantle * NGLL3;
       }
     }
@@ -1140,7 +1140,7 @@ void FC_FUNC_ (compute_forces_crust_mantle_gpu,
         offset_ispec += nb_blocks_to_compute;
       }
       // for strain
-      if (mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY != 1) {
+      if (mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY > 1) {
         offset_nonpadded_strain += nb_blocks_to_compute * NGLL3;
       }
 

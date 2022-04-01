@@ -72,6 +72,7 @@
   endif
 
   ! setup the ADIOS library to read the file
+  call init_adios_group(myadios_group,"GLLReader")
   call open_file_adios_read_and_init_method(myadios_file,myadios_group,file_name)
 
   local_dim = NGLLX * NGLLY * NGLLZ * MGLL_V%nspec
@@ -160,6 +161,7 @@
   call read_adios_perform(myadios_file)
   ! closes adios file
   call close_file_adios_read_and_finalize_method(myadios_file)
+  call delete_adios_group(myadios_group,"GLLReader")
 
   ! inner core
   ! checks with rho if data available
@@ -173,6 +175,7 @@
   model_name = "reg3/rho"
 
   ! setup the ADIOS library to read the file
+  call init_adios_group(myadios_group,"GLLReaderInnerCore")
   call open_file_adios_read_and_init_method(myadios_file,myadios_group,file_name)
 
   ! checks read of associated model array
@@ -227,6 +230,7 @@
 
   ! closes adios file
   call close_file_adios_read_and_finalize_method(myadios_file)
+  call delete_adios_group(myadios_group,"GLLReaderInnerCore")
 
   call synchronize_all()
 

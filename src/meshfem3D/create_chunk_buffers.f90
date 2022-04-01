@@ -172,7 +172,7 @@
   NPROC_ONE_DIRECTION = NPROC_XI
 
   ! total number of messages corresponding to these common faces
-  NUMMSGS_FACES = NPROC_ONE_DIRECTION*NUM_FACES*NUM_MSG_TYPES
+  NUMMSGS_FACES = NPROC_ONE_DIRECTION * NUM_FACES * NUM_MSG_TYPES
 
   ! user output
   if (myrank == 0) then
@@ -182,8 +182,8 @@
 
   ! allocates arrays needed for assembly
   allocate(iprocfrom_faces(NUMMSGS_FACES), &
-          iprocto_faces(NUMMSGS_FACES), &
-          imsg_type(NUMMSGS_FACES),stat=ier)
+           iprocto_faces(NUMMSGS_FACES), &
+           imsg_type(NUMMSGS_FACES),stat=ier)
   if (ier /= 0 ) call exit_mpi(myrank,'Error allocating iproc faces arrays')
 
   ! communication pattern for corners between chunks
@@ -221,8 +221,8 @@
 
   ! allocates temporary arrays
   allocate(npoin2D_send(NUMMSGS_FACES), &
-          npoin2D_receive(NUMMSGS_FACES), &
-          stat=ier)
+           npoin2D_receive(NUMMSGS_FACES), &
+           stat=ier)
   if (ier /= 0 ) call exit_mpi(myrank,'Error allocating npoin2D arrays')
 
   ! define maximum size for message buffers
@@ -233,14 +233,14 @@
 
   ! allocate arrays for message buffers with maximum size
   allocate(ibool_selected(NGLOB2DMAX_XY), &
-          xstore_selected(NGLOB2DMAX_XY), &
-          ystore_selected(NGLOB2DMAX_XY), &
-          zstore_selected(NGLOB2DMAX_XY), &
-          ninseg(NGLOB2DMAX_XY), &
-          iglob(NGLOB2DMAX_XY), &
-          locval(NGLOB2DMAX_XY), &
-          ifseg(NGLOB2DMAX_XY), &
-          stat=ier)
+           xstore_selected(NGLOB2DMAX_XY), &
+           ystore_selected(NGLOB2DMAX_XY), &
+           zstore_selected(NGLOB2DMAX_XY), &
+           ninseg(NGLOB2DMAX_XY), &
+           iglob(NGLOB2DMAX_XY), &
+           locval(NGLOB2DMAX_XY), &
+           ifseg(NGLOB2DMAX_XY), &
+           stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary arrays in create_chunk_buffers')
 
   ! allocate mask for ibool

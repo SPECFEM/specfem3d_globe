@@ -100,6 +100,15 @@
   logical :: ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS, &
              ATTENUATION
 
+  ! regional mesh cut-off
+  logical :: REGIONAL_MESH_CUTOFF
+  ! regional mesh cut-off depth (in km)
+  ! possible selections: 24.4d0, 80.d0, 220.d0, 400.d0, 600.d0, 670.d0, 771.d0
+  double precision :: REGIONAL_MESH_CUTOFF_DEPTH = 400.d0
+  ! regional mesh cut-off w/ a second doubling layer below 220km interface
+  logical :: REGIONAL_MESH_ADD_2ND_DOUBLING = .false.
+
+  ! absorbing boundary conditions
   logical :: ABSORBING_CONDITIONS
 
   ! absorbing sponge layer

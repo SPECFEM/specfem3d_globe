@@ -167,7 +167,7 @@
 !$OMP ENDDO
 !$OMP END PARALLEL
 
-! copy the initial mass matrix if needed
+  ! copy the initial mass matrix if needed
   if (nglob_xy == nglob) then
     rmassx(:) = rmassz(:)
     rmassy(:) = rmassz(:)
@@ -368,6 +368,7 @@
     rmassx,rmassy,rmassz,b_rmassx,b_rmassy, &
     ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom, &
     normal_xmin,normal_xmax,normal_ymin,normal_ymax, &
+    normal_bottom, &
     jacobian2D_xmin,jacobian2D_xmax,jacobian2D_ymin,jacobian2D_ymax, &
     jacobian2D_bottom, &
     rho_vp,rho_vs, &
@@ -375,7 +376,7 @@
     nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta, &
     nglob_xy
 
-  use shared_parameters, only: RHOAV,USE_LDDRK
+  use shared_parameters, only: RHOAV,USE_LDDRK,REGIONAL_MESH_CUTOFF
 
   implicit none
 
@@ -408,7 +409,15 @@
 
   ! checks if anything to do
   if (.not. ABSORBING_CONDITIONS) return
-  if (nglob_xy /= nglob) return
+
+  ! no Stacey boundary on inner core, only crust/mantle and outer core
+  if (iregion_code == IREGION_INNER_CORE) return
+
+  ! saftey check
+  ! crust/mantle region must have nglob_xy set to have 3 different rmassx/rmassy/rmassz
+  if (iregion_code == IREGION_CRUST_MANTLE .and. (nglob_xy /= nglob)) &
+    stop 'Invalid nglob_xy for crust/mantle Stacey boundary'
+
 
   ! note: for LDDRK, the time scheme needs no mass matrix contribution due to the absorbing boundary term.
   !       the additional contribution comes from the Newmark formulation and only needs to be added in those cases.
@@ -600,6 +609,41 @@
           enddo
        enddo
     enddo
+
+    ! zmin
+    if (REGIONAL_MESH_CUTOFF) then
+      do ispec2D = 1,NSPEC2D_BOTTOM
+
+        ispec = ibelm_bottom(ispec2D)
+
+        k = 1
+        do j = 1,NGLLY
+          do i = 1,NGLLX
+            iglob = ibool(i,j,k,ispec)
+
+            nx = normal_bottom(1,i,k,ispec2D)
+            ny = normal_bottom(2,i,k,ispec2D)
+            nz = normal_bottom(3,i,k,ispec2D)
+
+            vn = deltatover2*(nx+ny+nz)
+
+            tx = rho_vp(i,j,k,ispec)*vn*nx + rho_vs(i,j,k,ispec)*(deltatover2-vn*nx)
+            ty = rho_vp(i,j,k,ispec)*vn*ny + rho_vs(i,j,k,ispec)*(deltatover2-vn*ny)
+            tz = rho_vp(i,j,k,ispec)*vn*nz + rho_vs(i,j,k,ispec)*(deltatover2-vn*nz)
+
+            weight = jacobian2D_bottom(i,k,ispec2D)*wgllwgll_xy(i,j)
+
+            rmassx(iglob) = rmassx(iglob) + real(tx*weight, kind=CUSTOM_REAL)
+            rmassy(iglob) = rmassy(iglob) + real(ty*weight, kind=CUSTOM_REAL)
+            rmassz(iglob) = rmassz(iglob) + real(tz*weight, kind=CUSTOM_REAL)
+            if (ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
+              b_rmassx(iglob) = b_rmassx(iglob) + real(tx*weight, kind=CUSTOM_REAL)
+              b_rmassy(iglob) = b_rmassy(iglob) + real(ty*weight, kind=CUSTOM_REAL)
+            endif
+          enddo
+        enddo
+      enddo
+    endif
 
     ! check that mass matrix is positive
     if (minval(rmassx(:)) <= 0.) call exit_MPI(myrank,'negative rmassx matrix term')

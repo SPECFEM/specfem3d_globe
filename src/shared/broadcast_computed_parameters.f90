@@ -37,10 +37,10 @@
   integer, parameter :: nparam_i = 49
   integer, dimension(nparam_i) :: bcast_integer
 
-  integer, parameter :: nparam_l = 70
+  integer, parameter :: nparam_l = 72
   logical, dimension(nparam_l) :: bcast_logical
 
-  integer, parameter :: nparam_dp = 41
+  integer, parameter :: nparam_dp = 42
   double precision, dimension(nparam_dp) :: bcast_double_precision
 
   ! initializes containers
@@ -107,7 +107,8 @@
             ADIOS_FOR_KERNELS,ADIOS_FOR_MODELS,ADIOS_FOR_UNDO_ATTENUATION, &
             CEM_REQUEST,CEM_ACCEPT,BROADCAST_SAME_MESH_AND_MODEL,MODEL_GLL, &
             USE_MONOCHROMATIC_CMT_SOURCE, ABSORB_USING_GLOBAL_SPONGE, &
-            OUTPUT_SEISMOS_3D_ARRAY /)
+            OUTPUT_SEISMOS_3D_ARRAY, &
+            REGIONAL_MESH_CUTOFF,REGIONAL_MESH_ADD_2ND_DOUBLING /)
 
     bcast_double_precision = (/ &
             DT, &
@@ -120,7 +121,8 @@
             RMOHO_FICTITIOUS_IN_MESHER,RATIO_BY_WHICH_TO_INCREASE_IT, &
             MEMORY_INSTALLED_PER_CORE_IN_GB,PERCENT_OF_MEM_TO_USE_PER_CORE, &
             RECORD_LENGTH_IN_MINUTES, USER_DT, &
-            SPONGE_LATITUDE_IN_DEGREES,SPONGE_LONGITUDE_IN_DEGREES,SPONGE_RADIUS_IN_DEGREES /)
+            SPONGE_LATITUDE_IN_DEGREES,SPONGE_LONGITUDE_IN_DEGREES,SPONGE_RADIUS_IN_DEGREES, &
+            REGIONAL_MESH_CUTOFF_DEPTH /)
   endif
 
   ! broadcasts the information read on the main to the nodes
@@ -318,6 +320,8 @@
     USE_MONOCHROMATIC_CMT_SOURCE = bcast_logical(68)
     ABSORB_USING_GLOBAL_SPONGE = bcast_logical(69)
     OUTPUT_SEISMOS_3D_ARRAY = bcast_logical(70)
+    REGIONAL_MESH_CUTOFF = bcast_logical(71)
+    REGIONAL_MESH_ADD_2ND_DOUBLING = bcast_logical(72)
 
     ! double precisions
     DT = bcast_double_precision(1)
@@ -361,7 +365,7 @@
     SPONGE_LATITUDE_IN_DEGREES = bcast_double_precision(39)
     SPONGE_LONGITUDE_IN_DEGREES = bcast_double_precision(40)
     SPONGE_RADIUS_IN_DEGREES = bcast_double_precision(41)
-
+    REGIONAL_MESH_CUTOFF_DEPTH = bcast_double_precision(42)
   endif
 
   end subroutine broadcast_computed_parameters

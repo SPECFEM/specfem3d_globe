@@ -111,36 +111,40 @@
 
   ! gets attenuation values
   ! CRUST_MANTLE ATTENUATION
-  call get_attenuation_model_3D(IREGION_CRUST_MANTLE, &
-                                one_minus_sum_beta_crust_mantle, &
-                                factor_common_crust_mantle, &
-                                factor_scale_crust_mantle, &
-                                factor_scale_relaxed_crust_mantle, &
-                                tau_sigma_dble, &
-                                NSPEC_CRUST_MANTLE,f0_reference)
-
-  call bcast_attenuation_model_3D(one_minus_sum_beta_crust_mantle, &
+  if (NSPEC_CRUST_MANTLE > 0) then
+    call get_attenuation_model_3D(IREGION_CRUST_MANTLE, &
+                                  one_minus_sum_beta_crust_mantle, &
                                   factor_common_crust_mantle, &
                                   factor_scale_crust_mantle, &
                                   factor_scale_relaxed_crust_mantle, &
                                   tau_sigma_dble, &
-                                  NSPEC_CRUST_MANTLE)
+                                  NSPEC_CRUST_MANTLE,f0_reference)
+
+    call bcast_attenuation_model_3D(one_minus_sum_beta_crust_mantle, &
+                                    factor_common_crust_mantle, &
+                                    factor_scale_crust_mantle, &
+                                    factor_scale_relaxed_crust_mantle, &
+                                    tau_sigma_dble, &
+                                    NSPEC_CRUST_MANTLE)
+  endif
 
   ! INNER_CORE ATTENUATION
-  call get_attenuation_model_3D(IREGION_INNER_CORE, &
-                                one_minus_sum_beta_inner_core, &
-                                factor_common_inner_core, &
-                                factor_scale_inner_core, &
-                                factor_scale_relaxed_inner_core, &
-                                tau_sigma_dble, &
-                                NSPEC_INNER_CORE,f0_reference)
-
-  call bcast_attenuation_model_3D(one_minus_sum_beta_inner_core, &
+  if (NSPEC_INNER_CORE > 0) then
+    call get_attenuation_model_3D(IREGION_INNER_CORE, &
+                                  one_minus_sum_beta_inner_core, &
                                   factor_common_inner_core, &
                                   factor_scale_inner_core, &
                                   factor_scale_relaxed_inner_core, &
                                   tau_sigma_dble, &
-                                  NSPEC_INNER_CORE)
+                                  NSPEC_INNER_CORE,f0_reference)
+
+    call bcast_attenuation_model_3D(one_minus_sum_beta_inner_core, &
+                                    factor_common_inner_core, &
+                                    factor_scale_inner_core, &
+                                    factor_scale_relaxed_inner_core, &
+                                    tau_sigma_dble, &
+                                    NSPEC_INNER_CORE)
+  endif
 
   ! debug
   !if (myrank == 0) print *,'debug: original moduli muv',muvstore_crust_mantle(1,1,1,1000),muvstore_crust_mantle(3,3,3,3000)

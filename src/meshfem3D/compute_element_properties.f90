@@ -56,22 +56,22 @@
   ! correct number of spectral elements in each block depending on chunk type
   integer,intent(in) :: ispec,nspec
 
-! arrays with the mesh in double precision
+  ! arrays with the mesh in double precision
   double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(inout) :: xstore,ystore,zstore
 
-! code for the four regions of the mesh
+  ! code for the four regions of the mesh
   integer,intent(in) :: iregion_code
 
-! meshing phase
+  ! meshing phase
   integer,intent(in) :: ipass
 
-! 3D shape functions and their derivatives
+  ! 3D shape functions and their derivatives
   double precision, dimension(NGNOD,NGLLX,NGLLY,NGLLZ),intent(in) :: shape3D
 
   double precision, dimension(NGNOD),intent(inout) :: xelm,yelm,zelm
 
-! parameters needed to store the radii of the grid points
-! in the spherically symmetric Earth
+  ! parameters needed to store the radii of the grid points
+  ! in the spherically symmetric Earth
   integer,dimension(nspec),intent(in) :: idoubling
   double precision,intent(in) :: rmin,rmax
 

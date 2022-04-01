@@ -239,9 +239,10 @@
                               deltat,alpha,beta)
 
     ! inner core
-    call update_elastic_lddrk(NGLOB_INNER_CORE,displ_inner_core,veloc_inner_core,accel_inner_core, &
-                              displ_inner_core_lddrk,veloc_inner_core_lddrk, &
-                              deltat,alpha,beta)
+    if (NGLOB_INNER_CORE > 0) &
+      call update_elastic_lddrk(NGLOB_INNER_CORE,displ_inner_core,veloc_inner_core,accel_inner_core, &
+                                displ_inner_core_lddrk,veloc_inner_core_lddrk, &
+                                deltat,alpha,beta)
   else
     ! on GPU
     call update_elastic_lddrk_gpu(Mesh_pointer,alpha,beta,1)  ! FORWARD_OR_ADJOINT == 1
@@ -278,9 +279,10 @@
                               b_deltat,alpha,beta)
 
     ! inner core
-    call update_elastic_lddrk(NGLOB_INNER_CORE_ADJOINT,b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core, &
-                              b_displ_inner_core_lddrk,b_veloc_inner_core_lddrk, &
-                              b_deltat,alpha,beta)
+    if (NGLOB_INNER_CORE_ADJOINT > 0) &
+      call update_elastic_lddrk(NGLOB_INNER_CORE_ADJOINT,b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core, &
+                                b_displ_inner_core_lddrk,b_veloc_inner_core_lddrk, &
+                                b_deltat,alpha,beta)
   else
     ! on GPU
     call update_elastic_lddrk_gpu(Mesh_pointer,alpha,beta,3)  ! FORWARD_OR_ADJOINT == 3

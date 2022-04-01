@@ -54,41 +54,19 @@
   ! closes Stacey absorbing boundary snapshots
   if (ABSORBING_CONDITIONS) then
     ! crust mantle
-    if (nspec2D_xmin_crust_mantle > 0 .and. SAVE_STACEY) then
-      call close_file_abs(0)
-    endif
-
-    if (nspec2D_xmax_crust_mantle > 0 .and. SAVE_STACEY) then
-      call close_file_abs(1)
-    endif
-
-    if (nspec2D_ymin_crust_mantle > 0 .and. SAVE_STACEY) then
-      call close_file_abs(2)
-    endif
-
-    if (nspec2D_ymax_crust_mantle > 0 .and. SAVE_STACEY) then
-      call close_file_abs(3)
-    endif
+    if (nspec2D_xmin_crust_mantle > 0 .and. SAVE_STACEY) call close_file_abs(0)
+    if (nspec2D_xmax_crust_mantle > 0 .and. SAVE_STACEY) call close_file_abs(1)
+    if (nspec2D_ymin_crust_mantle > 0 .and. SAVE_STACEY) call close_file_abs(2)
+    if (nspec2D_ymax_crust_mantle > 0 .and. SAVE_STACEY) call close_file_abs(3)
+    if (REGIONAL_MESH_CUTOFF .and. nspec2D_zmin_crust_mantle > 0 .and. SAVE_STACEY) call close_file_abs(4)
 
     ! outer core
-    if (nspec2D_xmin_outer_core > 0 .and. SAVE_STACEY) then
-      call close_file_abs(4)
-    endif
-
-    if (nspec2D_xmax_outer_core > 0 .and. SAVE_STACEY) then
-      call close_file_abs(5)
-    endif
-
-    if (nspec2D_ymin_outer_core > 0 .and. SAVE_STACEY) then
-      call close_file_abs(6)
-    endif
-
-    if (nspec2D_ymax_outer_core > 0 .and. SAVE_STACEY) then
-      call close_file_abs(7)
-    endif
-
-    if (nspec2D_zmin_outer_core > 0 .and. SAVE_STACEY) then
-      call close_file_abs(8)
+    if (NSPEC_OUTER_CORE > 0) then
+      if (nspec2D_xmin_outer_core > 0 .and. SAVE_STACEY) call close_file_abs(4)
+      if (nspec2D_xmax_outer_core > 0 .and. SAVE_STACEY) call close_file_abs(5)
+      if (nspec2D_ymin_outer_core > 0 .and. SAVE_STACEY) call close_file_abs(6)
+      if (nspec2D_ymax_outer_core > 0 .and. SAVE_STACEY) call close_file_abs(7)
+      if (nspec2D_zmin_outer_core > 0 .and. SAVE_STACEY) call close_file_abs(8)
     endif
 
     ! frees memory
@@ -96,11 +74,14 @@
                absorb_xmax_crust_mantle, &
                absorb_ymin_crust_mantle, &
                absorb_ymax_crust_mantle, &
-               absorb_xmin_outer_core, &
-               absorb_xmax_outer_core, &
-               absorb_ymin_outer_core, &
-               absorb_ymax_outer_core, &
-               absorb_zmin_outer_core)
+               absorb_zmin_crust_mantle)
+    if (NSPEC_OUTER_CORE > 0) then
+      deallocate(absorb_xmin_outer_core, &
+                 absorb_xmax_outer_core, &
+                 absorb_ymin_outer_core, &
+                 absorb_ymax_outer_core, &
+                 absorb_zmin_outer_core)
+    endif
   endif
 
   ! save/read the surface movie using the same c routine as we do for absorbing boundaries (file ID is 9)
@@ -245,22 +226,28 @@
     deallocate(b_request_send_vector_ic,b_request_recv_vector_ic)
   endif
 
-  deallocate(my_neighbors_crust_mantle,nibool_interfaces_crust_mantle)
-  deallocate(ibool_interfaces_crust_mantle)
-  deallocate(my_neighbors_outer_core,nibool_interfaces_outer_core)
-  deallocate(ibool_interfaces_outer_core)
-  deallocate(my_neighbors_inner_core,nibool_interfaces_inner_core)
-  deallocate(ibool_interfaces_inner_core)
+  if (allocated(my_neighbors_crust_mantle)) then
+    deallocate(my_neighbors_crust_mantle,nibool_interfaces_crust_mantle)
+    deallocate(ibool_interfaces_crust_mantle)
+  endif
+  if (allocated(my_neighbors_outer_core)) then
+    deallocate(my_neighbors_outer_core,nibool_interfaces_outer_core)
+    deallocate(ibool_interfaces_outer_core)
+  endif
+  if (allocated(my_neighbors_inner_core)) then
+    deallocate(my_neighbors_inner_core,nibool_interfaces_inner_core)
+    deallocate(ibool_interfaces_inner_core)
+  endif
 
   ! inner/outer elements
-  deallocate(phase_ispec_inner_crust_mantle)
-  deallocate(phase_ispec_inner_outer_core)
-  deallocate(phase_ispec_inner_inner_core)
+  if (allocated(phase_ispec_inner_crust_mantle)) deallocate(phase_ispec_inner_crust_mantle)
+  if (allocated(phase_ispec_inner_outer_core)) deallocate(phase_ispec_inner_outer_core)
+  if (allocated(phase_ispec_inner_inner_core)) deallocate(phase_ispec_inner_inner_core)
 
   ! coloring
-  deallocate(num_elem_colors_crust_mantle)
-  deallocate(num_elem_colors_outer_core)
-  deallocate(num_elem_colors_inner_core)
+  if (allocated(num_elem_colors_crust_mantle)) deallocate(num_elem_colors_crust_mantle)
+  if (allocated(num_elem_colors_outer_core)) deallocate(num_elem_colors_outer_core)
+  if (allocated(num_elem_colors_inner_core)) deallocate(num_elem_colors_inner_core)
 
   ! sources
   deallocate(islice_selected_source, &

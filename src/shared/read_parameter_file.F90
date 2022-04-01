@@ -40,7 +40,7 @@
 
   implicit none
 
-! local variables
+  ! local variables
   integer :: ier
 
   ! opens the parameter file: DATA/Par_file
@@ -81,6 +81,10 @@
   call read_value_integer(NPROC_ETA_read, 'NPROC_ETA', ier)
   if (ier /= 0) stop 'an error occurred while reading the parameter file: NPROC_ETA'
 
+  ! define the velocity model
+  call read_value_string(MODEL, 'MODEL', ier)
+  if (ier /= 0) stop 'an error occurred while reading the parameter file: MODEL'
+
   ! physical parameters
   call read_value_logical(OCEANS, 'OCEANS', ier)
   if (ier /= 0) stop 'an error occurred while reading the parameter file: OCEANS'
@@ -95,13 +99,26 @@
   call read_value_logical(ATTENUATION, 'ATTENUATION', ier)
   if (ier /= 0) stop 'an error occurred while reading the parameter file: ATTENUATION'
 
+  call read_value_double_precision(RECORD_LENGTH_IN_MINUTES, 'RECORD_LENGTH_IN_MINUTES', ier)
+  if (ier /= 0) stop 'an error occurred while reading the parameter file: RECORD_LENGTH_IN_MINUTES'
+
+  ! regional mesh cut-off
+  call read_value_logical(REGIONAL_MESH_CUTOFF, 'REGIONAL_MESH_CUTOFF', ier)
+  if (ier /= 0) stop 'an error occurred while reading the parameter file: REGIONAL_MESH_CUTOFF'
+  if (REGIONAL_MESH_CUTOFF) then
+    call read_value_double_precision(REGIONAL_MESH_CUTOFF_DEPTH, 'REGIONAL_MESH_CUTOFF_DEPTH', ier)
+    if (ier /= 0) stop 'an error occurred while reading the parameter file: REGIONAL_MESH_CUTOFF_DEPTH...'
+    call read_value_logical(REGIONAL_MESH_ADD_2ND_DOUBLING, 'REGIONAL_MESH_ADD_2ND_DOUBLING', ier)
+    if (ier /= 0) stop 'an error occurred while reading the parameter file: REGIONAL_MESH_ADD_2ND_DOUBLING'
+  endif
+
+  ! absorbing conditions
   call read_value_logical(ABSORBING_CONDITIONS, 'ABSORBING_CONDITIONS', ier)
   if (ier /= 0) stop 'an error occurred while reading the parameter file: ABSORBING_CONDITIONS'
 
+  ! sponge absorbing boundary properties
   call read_value_logical(ABSORB_USING_GLOBAL_SPONGE, 'ABSORB_USING_GLOBAL_SPONGE', ier)
   if (ier /= 0) stop 'an error occurred while reading the parameter file: ABSORB_USING_GLOBAL_SPONGE'
-
-  ! sponge abosbing boundary properties
   if (ABSORB_USING_GLOBAL_SPONGE) then
     call read_value_double_precision(SPONGE_LATITUDE_IN_DEGREES, 'SPONGE_LATITUDE_IN_DEGREES', ier)
     if (ier /= 0) stop 'an error occurred while reading the parameter file: SPONGE_LATITUDE_IN_DEGREES...'
@@ -110,12 +127,6 @@
     call read_value_double_precision(SPONGE_RADIUS_IN_DEGREES, 'SPONGE_RADIUS_IN_DEGREES', ier)
     if (ier /= 0) stop 'an error occurred while reading the parameter file: SPONGE_RADIUS_IN_DEGREES...'
   endif
-
-  ! define the velocity model
-  call read_value_string(MODEL, 'MODEL', ier)
-  if (ier /= 0) stop 'an error occurred while reading the parameter file: MODEL'
-  call read_value_double_precision(RECORD_LENGTH_IN_MINUTES, 'RECORD_LENGTH_IN_MINUTES', ier)
-  if (ier /= 0) stop 'an error occurred while reading the parameter file: RECORD_LENGTH_IN_MINUTES'
 
   ! attenuation parameters
   call read_value_logical(PARTIAL_PHYS_DISPERSION_ONLY, 'PARTIAL_PHYS_DISPERSION_ONLY', ier)

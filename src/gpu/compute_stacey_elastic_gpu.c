@@ -93,6 +93,16 @@ void FC_FUNC_ (compute_stacey_elastic_gpu,
     d_wgllwgll = mp->d_wgllwgll_xz;
     break;
 
+  case 4:
+    // zmin
+    num_abs_boundary_faces = mp->nspec2D_zmin_crust_mantle;
+    d_abs_boundary_ispec = mp->d_ibelm_bottom_crust_mantle;
+    d_abs_boundary_normal = mp->d_normal_bottom_crust_mantle;
+    d_abs_boundary_jacobian2D = mp->d_jacobian2D_bottom_crust_mantle;
+    d_b_absorb_field = mp->d_absorb_zmin_crust_mantle;
+    d_wgllwgll = mp->d_wgllwgll_xy;
+    break;
+
   default:
     exit_on_error ("compute_stacey_elastic_gpu: unknown interface type");
   }
@@ -263,6 +273,13 @@ void FC_FUNC_ (compute_stacey_elastic_backward_gpu,
     d_b_absorb_field = mp->d_absorb_ymax_crust_mantle;
     break;
 
+  case 4:
+    // zmin
+    num_abs_boundary_faces = mp->nspec2D_zmin_crust_mantle;
+    d_abs_boundary_ispec = mp->d_ibelm_bottom_crust_mantle;
+    d_b_absorb_field = mp->d_absorb_zmin_crust_mantle;
+    break;
+
   default:
     exit_on_error ("compute_stacey_elastic_backward_gpu: unknown interface type");
   }
@@ -415,6 +432,15 @@ void FC_FUNC_ (compute_stacey_elastic_undoatt_gpu,
     d_abs_boundary_normal = mp->d_normal_ymax_crust_mantle;
     d_abs_boundary_jacobian2D = mp->d_jacobian2D_ymax_crust_mantle;
     d_wgllwgll = mp->d_wgllwgll_xz;
+    break;
+
+  case 4:
+    // zmin
+    num_abs_boundary_faces = mp->nspec2D_zmin_crust_mantle;
+    d_abs_boundary_ispec = mp->d_ibelm_bottom_crust_mantle;
+    d_abs_boundary_normal = mp->d_normal_bottom_crust_mantle;
+    d_abs_boundary_jacobian2D = mp->d_jacobian2D_bottom_crust_mantle;
+    d_wgllwgll = mp->d_wgllwgll_xy;
     break;
 
   default:

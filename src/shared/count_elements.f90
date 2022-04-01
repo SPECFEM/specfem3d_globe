@@ -41,7 +41,8 @@
                             nglob_edge_v,to_remove)
 
   use constants
-  use shared_parameters, only: ner_mesh_layers,ratio_sampling_array,this_region_has_a_doubling
+  use shared_parameters, only: ner_mesh_layers,ratio_sampling_array,this_region_has_a_doubling, &
+    REGIONAL_MESH_CUTOFF
 
   implicit none
 
@@ -67,6 +68,7 @@
 
   ! local parameters
   integer :: ifirst_region, ilast_region, iter_region, iter_layer
+  integer :: itop_layer,ibottom_layer
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!
@@ -254,6 +256,7 @@
     NGLOB2DMAX_XMIN_XMAX(iter_region) = tmp_sum_nglob2D_eta
 
     if (iter_region == IREGION_INNER_CORE .and. INCLUDE_CENTRAL_CUBE) then
+      ! adds central cube surface elements
       NSPEC2D_XI(iter_region) = NSPEC2D_XI(iter_region) + &
           ((NEX_PER_PROC_XI / ratio_divide_central_cube)*(NEX_XI / ratio_divide_central_cube))
       NSPEC2D_ETA(iter_region) = NSPEC2D_ETA(iter_region) + &
@@ -297,9 +300,26 @@
 ! exact number of surface elements on the bottom and top boundaries
 
   ! in the crust and mantle
-  NSPEC2D_TOP(IREGION_CRUST_MANTLE) = (NEX_XI/ratio_sampling_array(1))*(NEX_ETA/ratio_sampling_array(1))/NPROC
-  NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE) = (NEX_XI/ratio_sampling_array(10+layer_offset))*&
-                                         (NEX_ETA/ratio_sampling_array(10+layer_offset))/NPROC
+  ! determines surface elements at top/bottom layer
+  itop_layer = 1
+  ibottom_layer = 10+layer_offset
+  ! regional mesh cutoff
+  if (REGIONAL_MESH_CUTOFF) then
+    ! puts bottom to last layer with elements
+    ifirst_region = 1
+    ilast_region = 10 + layer_offset
+    itop_layer = 1
+    ibottom_layer = 1
+    do iter_layer = ifirst_region, ilast_region
+      if (ner_mesh_layers(iter_layer) > 0) ibottom_layer = iter_layer
+    enddo
+  endif
+
+  NSPEC2D_TOP(IREGION_CRUST_MANTLE) = (NEX_XI/ratio_sampling_array(itop_layer))* &
+                                      (NEX_ETA/ratio_sampling_array(itop_layer))/NPROC
+  NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE) = (NEX_XI/ratio_sampling_array(ibottom_layer)) *&
+                                         (NEX_ETA/ratio_sampling_array(ibottom_layer))/NPROC
+
 
   ! in the outer core with mesh doubling
   if (ADD_4TH_DOUBLING) then
@@ -320,9 +340,23 @@
     NSPEC2D_BOTTOM(IREGION_OUTER_CORE) = (NEX_XI/ratio_divide_central_cube)*(NEX_ETA/ratio_divide_central_cube)/NPROC
   endif
 
+  ! regional mesh cutoff
+  if (REGIONAL_MESH_CUTOFF) then
+    ! no meshing for outer core
+    NSPEC2D_TOP(IREGION_OUTER_CORE) = 0
+    NSPEC2D_BOTTOM(IREGION_OUTER_CORE) = 0
+  endif
+
   ! in the top of the inner core
   NSPEC2D_TOP(IREGION_INNER_CORE) = (NEX_XI/ratio_divide_central_cube)*(NEX_ETA/ratio_divide_central_cube)/NPROC
   NSPEC2D_BOTTOM(IREGION_INNER_CORE) = NSPEC2D_TOP(IREGION_INNER_CORE)
+
+  ! regional mesh cutoff
+  if (REGIONAL_MESH_CUTOFF) then
+    ! no meshing for inner core
+    NSPEC2D_TOP(IREGION_INNER_CORE) = 0
+    NSPEC2D_BOTTOM(IREGION_INNER_CORE) = 0
+  endif
 
   ! maximum number of surface elements on vertical boundaries of the slices
   NSPEC2DMAX_XMIN_XMAX(:) = NSPEC2D_ETA(:)
@@ -341,16 +375,16 @@
 
   do iter_region = IREGION_CRUST_MANTLE,IREGION_INNER_CORE
     if (iter_region == IREGION_CRUST_MANTLE) then
-        ifirst_region = 1
-        ilast_region = 10 + layer_offset
+      ifirst_region = 1
+      ilast_region = 10 + layer_offset
     else if (iter_region == IREGION_OUTER_CORE) then
-        ifirst_region = 11 + layer_offset
-        ilast_region = NUMBER_OF_MESH_LAYERS - 1
+      ifirst_region = 11 + layer_offset
+      ilast_region = NUMBER_OF_MESH_LAYERS - 1
     else if (iter_region == IREGION_INNER_CORE) then
-        ifirst_region = NUMBER_OF_MESH_LAYERS
-        ilast_region = NUMBER_OF_MESH_LAYERS
+      ifirst_region = NUMBER_OF_MESH_LAYERS
+      ilast_region = NUMBER_OF_MESH_LAYERS
     else
-        stop 'incorrect region code detected'
+      stop 'incorrect region code detected'
     endif
 
     tmp_sum = 0
@@ -385,7 +419,7 @@
   endif
 
   ! check
-  if (minval(NSPEC_REGIONS(:)) <= 0) then
+  if (minval(NSPEC_REGIONS(:)) < 0) then
     print *,'Invalid NSPEC_REGIONS: ',NSPEC_REGIONS(:)
     stop 'negative NSPEC_REGIONS, there is a problem somewhere, try to recompile :) '
   endif

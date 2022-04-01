@@ -77,6 +77,9 @@
 ! write the MPI buffers for the left and right edges of the slice
 ! and the position of the points to check that the buffers are fine
 
+  ! checks if anything to do
+  if (nspec == 0) return
+
 ! *****************************************************************
 ! ****************** generate for eta = eta_min *******************
 ! *****************************************************************
@@ -101,13 +104,13 @@
   do ispec = 1,nspec
     ! remove central cube for chunk buffers
     if (idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
-      idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
-      idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
-      idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+        idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
+        idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
+        idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
 
     ! corner detection here
     if (iMPIcut_xi(1,ispec) .and. iMPIcut_eta(1,ispec)) then
-      ispeccount=ispeccount+1
+      ispeccount = ispeccount + 1
       ! loop on all the points
       ix = 1
       iy = 1
@@ -171,7 +174,7 @@
 
     ! corner detection here
     if (iMPIcut_xi(2,ispec) .and. iMPIcut_eta(1,ispec)) then
-      ispeccount=ispeccount+1
+      ispeccount = ispeccount + 1
       ! loop on all the points
       ix = NGLLX
       iy = 1
@@ -241,7 +244,7 @@
     ! corner detection here
     if (iMPIcut_xi(1,ispec) .and. iMPIcut_eta(2,ispec)) then
 
-      ispeccount=ispeccount+1
+      ispeccount = ispeccount + 1
 
       ! loop on all the points
       ix = 1
@@ -308,7 +311,7 @@
     ! corner detection here
     if (iMPIcut_xi(2,ispec) .and. iMPIcut_eta(2,ispec)) then
 
-      ispeccount=ispeccount+1
+      ispeccount = ispeccount + 1
 
       ! loop on all the points
       ix = NGLLX

@@ -257,9 +257,9 @@
 
   ! checks addressing
   call test_MPI_neighbors(IREGION_CRUST_MANTLE, &
-                           num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
-                           my_neighbors_crust_mantle,nibool_interfaces_crust_mantle, &
-                           ibool_interfaces_crust_mantle)
+                          num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
+                          my_neighbors_crust_mantle,nibool_interfaces_crust_mantle, &
+                          ibool_interfaces_crust_mantle)
 
   ! checks with assembly of test fields
   call test_MPI_cm()
@@ -311,7 +311,7 @@
     call flush_IMAIN()
   endif
 
-  if (NPROCTOT > 1) then
+  if (NPROCTOT > 1 .and. NSPEC_OUTER_CORE > 0) then
     allocate(test_flag(NGLOB_OUTER_CORE),stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating test_flag outer core')
 
@@ -400,9 +400,9 @@
 
   ! checks addressing
   call test_MPI_neighbors(IREGION_OUTER_CORE, &
-                              num_interfaces_outer_core,max_nibool_interfaces_oc, &
-                              my_neighbors_outer_core,nibool_interfaces_outer_core, &
-                              ibool_interfaces_outer_core)
+                          num_interfaces_outer_core,max_nibool_interfaces_oc, &
+                          my_neighbors_outer_core,nibool_interfaces_outer_core, &
+                          ibool_interfaces_outer_core)
 
   ! checks with assembly of test fields
   call test_MPI_oc()
@@ -454,7 +454,7 @@
     call flush_IMAIN()
   endif
 
-  if (NPROCTOT > 1) then
+  if (NPROCTOT > 1 .and. NSPEC_INNER_CORE > 0) then
     allocate(test_flag(NGLOB_INNER_CORE),stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating test_flag inner core')
 
@@ -606,9 +606,9 @@
 
   ! checks addressing
   call test_MPI_neighbors(IREGION_INNER_CORE, &
-                              num_interfaces_inner_core,max_nibool_interfaces_ic, &
-                              my_neighbors_inner_core,nibool_interfaces_inner_core, &
-                              ibool_interfaces_inner_core)
+                          num_interfaces_inner_core,max_nibool_interfaces_ic, &
+                          my_neighbors_inner_core,nibool_interfaces_inner_core, &
+                          ibool_interfaces_inner_core)
 
   ! checks with assembly of test fields
   call test_MPI_ic()

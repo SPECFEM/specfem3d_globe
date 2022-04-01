@@ -80,6 +80,9 @@
   !double precision :: time_start,tCPU
   integer,dimension(8) :: tval
 
+  ! tolerance value to zero layer thickness
+  double precision, parameter :: TOLERANCE_LAYER_THICKNESS = 1.d-9
+
   ! initializes flags for transverse isotropic elements
   ispec_is_tiso(:) = .false.
   nspec_tiso = 0
@@ -89,6 +92,9 @@
 
   ! counts all the elements in this region of the mesh
   ispec_count = 0
+
+  ! checks if anything to do
+  if (ifirst_region == 0 .and. ilast_region == 0) return
 
   ! loop on all the layers in this region of the mesh
   do ilayer_loop = ifirst_region,ilast_region
@@ -106,7 +112,13 @@
     rmin = rmins(ilayer)
     rmax = rmaxs(ilayer)
 
+    ! skips layers with zero thickness
+    if (abs(rmax - rmin) < TOLERANCE_LAYER_THICKNESS) cycle
+
     ner_without_doubling = ner_mesh_layers(ilayer)
+
+    ! checks if anything to do
+    if (ner_without_doubling == 0) cycle
 
     ! if there is a doubling at the top of this region, we implement it in the last two layers of elements
     ! and therefore we suppress two layers of regular elements here

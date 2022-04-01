@@ -39,7 +39,7 @@
   implicit none
 
   ! local parameters
-  !integer :: ier
+  integer :: nspec2D_zmin_crust_mantle_cutoff
   real :: free_mb,used_mb,total_mb
   logical :: USE_3D_ATTENUATION_ARRAYS
 
@@ -200,9 +200,18 @@
     endif
     call synchronize_all()
 
+    ! crust/mantle bottom surface absorption
+    if (REGIONAL_MESH_CUTOFF) then
+      nspec2D_zmin_crust_mantle_cutoff = nspec2D_zmin_crust_mantle
+    else
+      ! no bottom surface to absorb in crust/mantle
+      nspec2D_zmin_crust_mantle_cutoff = 0
+    endif
+
     call prepare_fields_absorb_device(Mesh_pointer, &
                                       nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle, &
                                       nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle, &
+                                      nspec2D_zmin_crust_mantle_cutoff, &
                                       NSPEC2DMAX_XMIN_XMAX_CM,NSPEC2DMAX_YMIN_YMAX_CM, &
                                       nimin_crust_mantle,nimax_crust_mantle, &
                                       njmin_crust_mantle,njmax_crust_mantle, &
@@ -211,8 +220,10 @@
                                       ibelm_ymin_crust_mantle,ibelm_ymax_crust_mantle, &
                                       normal_xmin_crust_mantle,normal_xmax_crust_mantle, &
                                       normal_ymin_crust_mantle,normal_ymax_crust_mantle, &
+                                      normal_bottom_crust_mantle, &
                                       jacobian2D_xmin_crust_mantle,jacobian2D_xmax_crust_mantle, &
                                       jacobian2D_ymin_crust_mantle,jacobian2D_ymax_crust_mantle, &
+                                      jacobian2D_bottom_crust_mantle, &
                                       rho_vp_crust_mantle,rho_vs_crust_mantle, &
                                       nspec2D_xmin_outer_core,nspec2D_xmax_outer_core, &
                                       nspec2D_ymin_outer_core,nspec2D_ymax_outer_core, &

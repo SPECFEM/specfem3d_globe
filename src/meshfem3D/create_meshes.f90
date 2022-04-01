@@ -73,6 +73,12 @@
       write(IMAIN,*) '  MAX_ATTENUATION_PERIOD = ',sngl(MAX_ATTENUATION_PERIOD)
       write(IMAIN,*)
     endif
+    if (REGIONAL_MESH_CUTOFF) then
+      write(IMAIN,*) 'Regional mesh cutoff:'
+      write(IMAIN,*) '  cut-off depth          = ',REGIONAL_MESH_CUTOFF_DEPTH,'(km)'
+      write(IMAIN,*)
+    endif
+    write(IMAIN,*)
     call flush_IMAIN()
   endif
   call synchronize_all()
@@ -103,25 +109,6 @@
   ! number of regions in full Earth
   do iregion_code = 1,MAX_NUM_REGIONS
 
-    if (myrank == 0) then
-      write(IMAIN,*)
-      write(IMAIN,*) '*******************************************'
-      write(IMAIN,*) 'creating mesh in region ',iregion_code
-      select case (iregion_code)
-        case (IREGION_CRUST_MANTLE)
-          write(IMAIN,*) 'this region is the crust and mantle'
-        case (IREGION_OUTER_CORE)
-          write(IMAIN,*) 'this region is the outer core'
-        case (IREGION_INNER_CORE)
-          write(IMAIN,*) 'this region is the inner core'
-        case default
-          call exit_MPI(myrank,'incorrect region code')
-      end select
-      write(IMAIN,*) '*******************************************'
-      write(IMAIN,*)
-      call flush_IMAIN()
-    endif
-
     ! number of spectral elements
     nspec = NSPEC_REGIONS(iregion_code)
 
@@ -131,49 +118,71 @@
     ! compute maximum number of points
     npointot = nspec * NGLLX * NGLLY * NGLLZ
 
-    ! use dynamic allocation to allocate memory for arrays
-    allocate(idoubling(nspec), &
-             ibool(NGLLX,NGLLY,NGLLZ,nspec), &
-             xstore(NGLLX,NGLLY,NGLLZ,nspec), &
-             ystore(NGLLX,NGLLY,NGLLZ,nspec), &
-             zstore(NGLLX,NGLLY,NGLLZ,nspec), &
-             stat=ier)
-    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating memory for arrays')
-    idoubling(:) = 0
-    ibool(:,:,:,:) = 0
-    xstore(:,:,:,:) = 0.d0
-    ystore(:,:,:,:) = 0.d0
-    zstore(:,:,:,:) = 0.d0
+    if (nspec > 0) then
+      ! user output
+      if (myrank == 0) then
+        write(IMAIN,*)
+        write(IMAIN,*) '*******************************************'
+        write(IMAIN,*) 'creating mesh in region ',iregion_code
+        select case (iregion_code)
+          case (IREGION_CRUST_MANTLE)
+            write(IMAIN,*) 'this region is the crust and mantle'
+          case (IREGION_OUTER_CORE)
+            write(IMAIN,*) 'this region is the outer core'
+          case (IREGION_INNER_CORE)
+            write(IMAIN,*) 'this region is the inner core'
+          case default
+            call exit_MPI(myrank,'incorrect region code')
+        end select
+        write(IMAIN,*) '*******************************************'
+        write(IMAIN,*)
+        call flush_IMAIN()
+      endif
 
-    ! this for non blocking MPI
-    allocate(is_on_a_slice_edge(nspec),stat=ier)
-    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating is_on_a_slice_edge array')
-    is_on_a_slice_edge(:) = .false.
+      ! use dynamic allocation to allocate memory for arrays
+      allocate(idoubling(nspec), &
+               ibool(NGLLX,NGLLY,NGLLZ,nspec), &
+               xstore(NGLLX,NGLLY,NGLLZ,nspec), &
+               ystore(NGLLX,NGLLY,NGLLZ,nspec), &
+               zstore(NGLLX,NGLLY,NGLLZ,nspec), &
+               stat=ier)
+      if (ier /= 0 ) call exit_mpi(myrank,'Error allocating memory for arrays')
+      idoubling(:) = 0
+      ibool(:,:,:,:) = 0
+      xstore(:,:,:,:) = 0.d0
+      ystore(:,:,:,:) = 0.d0
+      zstore(:,:,:,:) = 0.d0
 
-    ! create all the regions of the mesh
-    ! perform two passes in this part to be able to save memory
-    do ipass = 1,2
-      call create_regions_mesh(npointot, &
-                               NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-                               NSPEC2DMAX_XMIN_XMAX(iregion_code),NSPEC2DMAX_YMIN_YMAX(iregion_code), &
-                               NSPEC2D_BOTTOM(iregion_code),NSPEC2D_TOP(iregion_code), &
-                               offset_proc_xi,offset_proc_eta, &
-                               ipass)
+      ! this for non blocking MPI
+      allocate(is_on_a_slice_edge(nspec),stat=ier)
+      if (ier /= 0 ) call exit_mpi(myrank,'Error allocating is_on_a_slice_edge array')
+      is_on_a_slice_edge(:) = .false.
 
-      ! If we're in the request stage of CEM, exit.
-      if (CEM_REQUEST) exit
+      ! create all the regions of the mesh
+      ! perform two passes in this part to be able to save memory
+      do ipass = 1,2
+        call create_regions_mesh(npointot, &
+                                 NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+                                 NSPEC2DMAX_XMIN_XMAX(iregion_code),NSPEC2DMAX_YMIN_YMAX(iregion_code), &
+                                 NSPEC2D_BOTTOM(iregion_code),NSPEC2D_TOP(iregion_code), &
+                                 offset_proc_xi,offset_proc_eta, &
+                                 ipass)
 
-    enddo
+        ! If we're in the request stage of CEM, exit.
+        if (CEM_REQUEST) exit
 
-    ! deallocate arrays used for that region
-    deallocate(idoubling)
-    deallocate(ibool)
-    deallocate(xstore)
-    deallocate(ystore)
-    deallocate(zstore)
+      enddo
 
-    ! this for non blocking MPI
-    deallocate(is_on_a_slice_edge)
+      ! deallocate arrays used for that region
+      deallocate(idoubling)
+      deallocate(ibool)
+      deallocate(xstore)
+      deallocate(ystore)
+      deallocate(zstore)
+
+      ! this for non blocking MPI
+      deallocate(is_on_a_slice_edge)
+    endif
 
     ! make sure everybody is synchronized
     call synchronize_all()

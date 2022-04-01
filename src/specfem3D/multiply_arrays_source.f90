@@ -109,14 +109,16 @@
 !$OMP ENDDO NOWAIT
 
     ! inner core
+    if (NGLOB_IC > 0) then
 !$OMP DO
-    do i = 1,NGLOB_IC
-      accel_ic(1,i) = accel_ic(1,i)*rmassx_ic(i) + two_omega_earth * veloc_ic(2,i)
-      accel_ic(2,i) = accel_ic(2,i)*rmassy_ic(i) - two_omega_earth * veloc_ic(1,i)
-      accel_ic(3,i) = accel_ic(3,i)*rmassz_ic(i)
-    enddo
+      do i = 1,NGLOB_IC
+        accel_ic(1,i) = accel_ic(1,i)*rmassx_ic(i) + two_omega_earth * veloc_ic(2,i)
+        accel_ic(2,i) = accel_ic(2,i)*rmassy_ic(i) - two_omega_earth * veloc_ic(1,i)
+        accel_ic(3,i) = accel_ic(3,i)*rmassz_ic(i)
+      enddo
 !$OMP ENDDO
 !$OMP END PARALLEL
+    endif
 
   else
     ! no rotation
@@ -137,14 +139,16 @@
 !$OMP ENDDO NOWAIT
 
     ! inner core
+    if (NGLOB_IC > 0) then
 !$OMP DO
-    do i = 1,NGLOB_IC
-      accel_ic(1,i) = accel_ic(1,i)*rmassx_ic(i)
-      accel_ic(2,i) = accel_ic(2,i)*rmassy_ic(i)
-      accel_ic(3,i) = accel_ic(3,i)*rmassz_ic(i)
-    enddo
+      do i = 1,NGLOB_IC
+        accel_ic(1,i) = accel_ic(1,i)*rmassx_ic(i)
+        accel_ic(2,i) = accel_ic(2,i)*rmassy_ic(i)
+        accel_ic(3,i) = accel_ic(3,i)*rmassz_ic(i)
+      enddo
 !$OMP ENDDO
 !$OMP END PARALLEL
+    endif
 
   endif
 
@@ -182,17 +186,19 @@
   ! note: mass matrices for fluid region has no Stacey or rotation correction
   !       it is also the same for forward and backward/reconstructed wavefields
 
+  if (NGLOB > 0) then
 ! openmp solver
 !$OMP PARALLEL &
 !$OMP DEFAULT(NONE) &
 !$OMP SHARED(NGLOB, accel, rmass) &
 !$OMP PRIVATE(i)
 !$OMP DO
-  do i = 1,NGLOB
-    accel(i) = accel(i)*rmass(i)
-  enddo
+    do i = 1,NGLOB
+      accel(i) = accel(i)*rmass(i)
+    enddo
 !$OMP ENDDO
 !$OMP END PARALLEL
+  endif
 
   end subroutine multiply_accel_acoustic
 

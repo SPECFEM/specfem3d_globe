@@ -342,6 +342,17 @@
     !        nspec, &
     !        NEX_XI,NCHUNKS,ABSORBING_CONDITIONS )
 
+    ! creates absorbing boundary arrays
+    if (NCHUNKS /= 6 .and. ABSORBING_CONDITIONS) then
+      call synchronize_all()
+      if (myrank == 0) then
+        write(IMAIN,*)
+        write(IMAIN,*) '  ...creating absorbing boundary arrays'
+        call flush_IMAIN()
+      endif
+      call get_absorb_create_Stacey_boundary_arrays(iregion_code,NSPEC2D_BOTTOM)
+    endif
+
     ! creates mass matrix
     call synchronize_all()
     if (myrank == 0) then
@@ -581,6 +592,8 @@
 
   use constants
 
+  use shared_parameters, only: ratio_sampling_array
+
   use meshfem3D_par, only: &
     nspec,iregion_code, &
     NCHUNKS,NUMCORNERS_SHARED,NUMFACES_SHARED, &
@@ -603,7 +616,8 @@
   integer,intent(in) :: NSPEC2D_BOTTOM,NSPEC2D_TOP
 
   ! local parameters
-  integer :: ier
+  integer :: ier,isampling_ratio
+  integer :: nspec_actually,nspec_att
 
   ! adios needs properly initialized arrays, otherwise its intrinsic check procedures will cause undefined operations
 
@@ -863,7 +877,11 @@
   ! boundary mesh
   if (ipass == 2 .and. SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
     NSPEC2D_MOHO = NSPEC2D_TOP
-    NSPEC2D_400 = NSPEC2D_MOHO / 4
+    ! moho at layer below first doubling -> number of elements in eta and xi direction =  1/2 * 1/2 = 1/4
+    ! discontinuity at 400 is at around mesh layer 5
+    isampling_ratio = ratio_sampling_array(5)
+    if (isampling_ratio == 0) isampling_ratio = 1
+    NSPEC2D_400 = NSPEC2D_TOP / (isampling_ratio * isampling_ratio)
     NSPEC2D_670 = NSPEC2D_400
   else
     NSPEC2D_MOHO = 1
@@ -914,6 +932,8 @@
   use regions_mesh_par
   use regions_mesh_par2
 
+  use shared_parameters, only: REGIONAL_MESH_CUTOFF
+
   implicit none
 
   integer,intent(in) :: ipass
@@ -921,7 +941,7 @@
 
   ! local parameters
   integer :: cpt
-  integer :: i,ier
+  integer :: i,ier,ibottom_layer
   ! topology of the elements
   integer, dimension(NGNOD) :: iaddx,iaddy,iaddz
 
@@ -961,13 +981,34 @@
                          iregion_code,ifirst_region,ilast_region, &
                          first_layer_aniso,last_layer_aniso)
 
+  ! regional mesh cutoff
+  if (REGIONAL_MESH_CUTOFF) then
+    if (iregion_code == IREGION_CRUST_MANTLE) then
+      ! determines last bottom layer in mantle
+      ibottom_layer = ifirst_region
+      do i = ifirst_region,ilast_region
+        if (ner_mesh_layers(i) > 0) ibottom_layer = i
+      enddo
+      ilast_region = ibottom_layer
+    else
+      ! no inner/outer core mesh elements
+      ifirst_region = 0
+      ilast_region = 0
+    endif
+  endif
+
   ! to consider anisotropic elements first and to build the mesh from the bottom to the top of the region
   allocate (perm_layer(ifirst_region:ilast_region),stat=ier)
   if (ier /= 0) stop 'Error in allocate 18'
   perm_layer = (/ (i, i=ilast_region,ifirst_region,-1) /)
 
   if (iregion_code == IREGION_CRUST_MANTLE) then
-    cpt = 3
+    ! sets start of anisotropic layering after the first/last layer aniso
+    if ((ilast_region-ifirst_region) >= 3) then
+      cpt = 3
+    else
+      cpt = 1
+    endif
     perm_layer(1) = first_layer_aniso
     perm_layer(2) = last_layer_aniso
     do i = ilast_region,ifirst_region,-1
@@ -1019,7 +1060,7 @@
 
 ! creates global indexing array ibool
 
-  use constants, only: NGLLX,NGLLY,NGLLZ,ZERO,MAX_STRING_LEN
+  use constants, only: NGLLX,NGLLY,NGLLZ,ZERO,MAX_STRING_LEN,IREGION_CRUST_MANTLE
 
   use meshfem3d_par, only: &
     nspec,nglob,iregion_code, &
@@ -1043,46 +1084,51 @@
   integer :: i,j,k,ispec,iglob
   character(len=MAX_STRING_LEN) :: errmsg
 
-  ! allocate memory for arrays
-  allocate(xp(npointot), &
-           yp(npointot), &
-           zp(npointot),stat=ier)
-  if (ier /= 0) stop 'Error in allocate 20b'
-  xp(:) = ZERO
-  yp(:) = ZERO
-  zp(:) = ZERO
+  ! sets up global addressing
+  if (npointot > 0) then
+    ! allocate memory for arrays
+    allocate(xp(npointot), &
+             yp(npointot), &
+             zp(npointot),stat=ier)
+    if (ier /= 0) stop 'Error in allocate 20b'
+    xp(:) = ZERO
+    yp(:) = ZERO
+    zp(:) = ZERO
 
-  ! we need to create a copy of the x, y and z arrays because sorting in get_global will swap
-  ! these arrays and therefore destroy them
+    ! we need to create a copy of the x, y and z arrays because sorting in get_global will swap
+    ! these arrays and therefore destroy them
 
-! openmp mesher
-!!$OMP PARALLEL DEFAULT(SHARED) &
-!!$OMP PRIVATE(ispec,ieoff,ilocnum,i,j,k)
-!!$OMP DO
-  do ispec = 1,nspec
-    ieoff = NGLLX * NGLLY * NGLLZ * (ispec-1)
-    ilocnum = 0
-    do k = 1,NGLLZ
-      do j = 1,NGLLY
-        do i = 1,NGLLX
-          ! increases point counter
-          !ilocnum = ilocnum + 1
-          ! without dependency
-          ilocnum = i + ((j-1) + (k-1)*NGLLY) * NGLLX
-          ! fills 1D arrays
-          xp(ilocnum+ieoff) = xstore(i,j,k,ispec)
-          yp(ilocnum+ieoff) = ystore(i,j,k,ispec)
-          zp(ilocnum+ieoff) = zstore(i,j,k,ispec)
+  ! openmp mesher
+  !!$OMP PARALLEL DEFAULT(SHARED) &
+  !!$OMP PRIVATE(ispec,ieoff,ilocnum,i,j,k)
+  !!$OMP DO
+    do ispec = 1,nspec
+      ieoff = NGLLX * NGLLY * NGLLZ * (ispec-1)
+      ilocnum = 0
+      do k = 1,NGLLZ
+        do j = 1,NGLLY
+          do i = 1,NGLLX
+            ! increases point counter
+            !ilocnum = ilocnum + 1
+            ! without dependency
+            ilocnum = i + ((j-1) + (k-1)*NGLLY) * NGLLX
+            ! fills 1D arrays
+            xp(ilocnum+ieoff) = xstore(i,j,k,ispec)
+            yp(ilocnum+ieoff) = ystore(i,j,k,ispec)
+            zp(ilocnum+ieoff) = zstore(i,j,k,ispec)
+          enddo
         enddo
       enddo
     enddo
-  enddo
-!!$OMP ENDDO
-!!$OMP END PARALLEL
+  !!$OMP ENDDO
+  !!$OMP END PARALLEL
 
-  call get_global(npointot,xp,yp,zp,ibool,nglob_new)
+    call get_global(npointot,xp,yp,zp,ibool,nglob_new)
 
-  deallocate(xp,yp,zp)
+    deallocate(xp,yp,zp)
+  else
+    nglob_new = nglob
+  endif
 
   ! check that number of points found equals theoretical value
   if (nglob_new /= nglob) then
@@ -1090,8 +1136,12 @@
                     'region',iregion_code
     call exit_MPI(myrank,trim(errmsg))
   endif
-  if (minval(ibool) /= 1 .or. maxval(ibool) /= nglob) &
-    call exit_MPI(myrank,'incorrect global numbering')
+
+  ! crust/mantle mesh must contain nodes
+  if (iregion_code == IREGION_CRUST_MANTLE) then
+    if (minval(ibool) /= 1 .or. maxval(ibool) /= nglob) &
+      call exit_MPI(myrank,'incorrect global numbering')
+  endif
 
   ! debug
   !do i = 0,NPROCTOT-1
@@ -1120,8 +1170,11 @@
   !enddo
 
   ! checks again
-  if (minval(ibool) /= 1 .or. maxval(ibool) /= nglob) &
-    call exit_MPI(myrank,'incorrect global numbering after sorting')
+  ! crust/mantle mesh must contain nodes
+  if (iregion_code == IREGION_CRUST_MANTLE) then
+    if (minval(ibool) /= 1 .or. maxval(ibool) /= nglob) &
+      call exit_MPI(myrank,'incorrect global numbering after sorting')
+  endif
 
   ! checks ibool element by element
   do ispec = 1,nspec
@@ -1170,11 +1223,6 @@
   logical, dimension(:), allocatable :: mask_ibool
   integer :: ier
 
-  ! arrays mask_ibool(npointot) used to save memory
-  ! allocate memory for arrays
-  allocate(mask_ibool(npointot),stat=ier)
-  if (ier /= 0) stop 'Error in allocate 20b'
-
   ! initializes
   npoin2D_xi_all(:) = 0
   npoin2D_eta_all(:) = 0
@@ -1183,30 +1231,37 @@
   iboolright_xi(:) = 0
   iboolright_eta(:) = 0
 
-  ! gets MPI buffer indices
-  call get_MPI_cutplanes_xi(prname,nspec,iMPIcut_xi,ibool, &
+  if (nspec > 0) then
+    ! arrays mask_ibool(npointot) used to save memory
+    ! allocate memory for arrays
+    allocate(mask_ibool(npointot),stat=ier)
+    if (ier /= 0) stop 'Error in allocate 20b'
+
+    ! gets MPI buffer indices
+    call get_MPI_cutplanes_xi(prname,nspec,iMPIcut_xi,ibool, &
+                              xstore,ystore,zstore,mask_ibool,npointot, &
+                              NSPEC2D_ETA_FACE,iregion_code,npoin2D_xi, &
+                              iboolleft_xi,iboolright_xi, &
+                              npoin2D_xi_all,NGLOB2DMAX_XMIN_XMAX(iregion_code))
+
+    call get_MPI_cutplanes_eta(prname,nspec,iMPIcut_eta,ibool, &
+                               xstore,ystore,zstore,mask_ibool,npointot, &
+                               NSPEC2D_XI_FACE,iregion_code,npoin2D_eta, &
+                               iboolleft_eta,iboolright_eta, &
+                               npoin2D_eta_all,NGLOB2DMAX_YMIN_YMAX(iregion_code))
+
+    call get_MPI_1D_buffers(prname,nspec,iMPIcut_xi,iMPIcut_eta, &
+                            ibool,idoubling, &
                             xstore,ystore,zstore,mask_ibool,npointot, &
-                            NSPEC2D_ETA_FACE,iregion_code,npoin2D_xi, &
-                            iboolleft_xi,iboolright_xi, &
-                            npoin2D_xi_all,NGLOB2DMAX_XMIN_XMAX(iregion_code))
+                            NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER,iregion_code, &
+                            ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
+                            ibool1D_leftxi_righteta,ibool1D_rightxi_righteta, &
+                            xyz1D_leftxi_lefteta,xyz1D_rightxi_lefteta, &
+                            xyz1D_leftxi_righteta,xyz1D_rightxi_righteta, &
+                            NGLOB1D_RADIAL_MAX)
 
-  call get_MPI_cutplanes_eta(prname,nspec,iMPIcut_eta,ibool, &
-                             xstore,ystore,zstore,mask_ibool,npointot, &
-                             NSPEC2D_XI_FACE,iregion_code,npoin2D_eta, &
-                             iboolleft_eta,iboolright_eta, &
-                             npoin2D_eta_all,NGLOB2DMAX_YMIN_YMAX(iregion_code))
-
-  call get_MPI_1D_buffers(prname,nspec,iMPIcut_xi,iMPIcut_eta, &
-                          ibool,idoubling, &
-                          xstore,ystore,zstore,mask_ibool,npointot, &
-                          NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER,iregion_code, &
-                          ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
-                          ibool1D_leftxi_righteta,ibool1D_rightxi_righteta, &
-                          xyz1D_leftxi_lefteta,xyz1D_rightxi_lefteta, &
-                          xyz1D_leftxi_righteta,xyz1D_rightxi_righteta, &
-                          NGLOB1D_RADIAL_MAX)
-
-  deallocate(mask_ibool)
+    deallocate(mask_ibool)
+  endif
 
   end subroutine crm_setup_mpi_buffers
 

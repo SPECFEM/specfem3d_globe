@@ -577,9 +577,7 @@ inner_core_impl_kernel(int nb_blocks_to_compute,
       epsilondev_xz_loc = 0.5f * duzdxl_plus_duxdzl;
       epsilondev_yz_loc = 0.5f * duzdyl_plus_duydzl;
 
-      if(NSPEC_INNER_CORE_STRAIN_ONLY == 1) {
-        epsilon_trace_over_3[tx] = templ;
-      }else{
+      if(NSPEC_INNER_CORE_STRAIN_ONLY > 1) {
         epsilon_trace_over_3[tx + working_element*NGLL3] = templ;
       }
     }

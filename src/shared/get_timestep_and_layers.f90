@@ -705,6 +705,28 @@
     endif
   endif
 
+  ! cut-off mesh
+  if (REGIONAL_MESH_CUTOFF) then
+    ! sets number of element layers to zero below the cut-off depth
+    if (REGIONAL_MESH_CUTOFF_DEPTH <= 771.d0) then
+      NER_TOPDDOUBLEPRIME_771  = 0
+      NER_CMB_TOPDDOUBLEPRIME  = 0
+      NER_OUTER_CORE           = 0
+      NER_TOP_CENTRAL_CUBE_ICB = 0
+    endif
+    if (REGIONAL_MESH_CUTOFF_DEPTH <= 670.d0) NER_771_670  = 0
+    if (REGIONAL_MESH_CUTOFF_DEPTH <= 600.d0) NER_670_600  = 0
+    if (REGIONAL_MESH_CUTOFF_DEPTH <= 400.d0) NER_600_400  = 0
+    if (REGIONAL_MESH_CUTOFF_DEPTH <= 220.d0) NER_400_220  = 0
+    if (REGIONAL_MESH_CUTOFF_DEPTH <= 80.d0) NER_220_80   = 0
+    if (REGIONAL_MESH_CUTOFF_DEPTH <= 24.4d0) NER_80_MOHO = 0
+
+    if (REGIONAL_MESH_CUTOFF_DEPTH < 24.0d0) then
+      print *,'Regional mesh cutoff depth ',REGIONAL_MESH_CUTOFF_DEPTH,' is too shallow. Please select a depth >= 24.4 km.'
+      stop 'Invalid regional mesh cutoff depth'
+    endif
+  endif
+
 !---
 !
 ! ADD YOUR MODEL HERE

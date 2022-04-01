@@ -59,6 +59,12 @@
 
   integer :: ier
 
+  ! initializes
+  nglob_new = 0
+
+  ! checks if anything to do
+  if (npointot == 0) return
+
   ! dynamically allocate arrays
   allocate(ninseg(npointot),stat=ier)
   if (ier /= 0) stop 'Error while allocating ninseg'
@@ -106,6 +112,9 @@
   integer, dimension(:,:,:,:), allocatable :: copy_ibool_ori
   integer :: inumber
   integer:: i,j,k,ispec,ier,iglob
+
+  ! checks if anything to do
+  if (nspec == 0) return
 
   ! copies original array
   allocate(copy_ibool_ori(NGLLX,NGLLY,NGLLZ,nspec), &
@@ -174,6 +183,9 @@
   integer :: inumber
   integer :: i,j,k,ispec,ier,iglob
   integer :: ispec_p,iphase,counter_nspec,num_elements
+
+  ! checks if anything to do
+  if (nspec == 0) return
 
   ! copies original array
   allocate(copy_ibool_ori(NGLLX,NGLLY,NGLLZ,nspec), &

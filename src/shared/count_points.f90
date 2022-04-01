@@ -28,7 +28,8 @@
 
   subroutine count_points(NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube, &
                           NSPEC1D_RADIAL,NGLOB1D_RADIAL, &
-                          NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB, &
+                          NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
+                          NGLOB_REGIONS, &
                           nblocks_xi,nblocks_eta, &
                           doubling, padding, tmp_sum, &
                           INCLUDE_CENTRAL_CUBE,NER_TOP_CENTRAL_CUBE_ICB,NEX_XI, &
@@ -40,12 +41,13 @@
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!
-!!!!!!  calculation of number of points (NGLOB) below
+!!!!!!  calculation of number of points (NGLOB_REGIONS) below
 !!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   use constants
-  use shared_parameters, only: ner_mesh_layers,ratio_sampling_array,this_region_has_a_doubling
+  use shared_parameters, only: ner_mesh_layers,ratio_sampling_array,this_region_has_a_doubling, &
+    REGIONAL_MESH_CUTOFF
 
   implicit none
 
@@ -57,7 +59,7 @@
   integer, dimension(MAX_NUM_REGIONS) :: &
       NSPEC1D_RADIAL,NGLOB1D_RADIAL, &
       NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
-      NGLOB
+      NGLOB_REGIONS
 
   integer :: NER_TOP_CENTRAL_CUBE_ICB,NEX_XI
   integer :: nblocks_xi,nblocks_eta
@@ -81,7 +83,13 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! theoretical number of Gauss-Lobatto points in radial direction
-  NGLOB1D_RADIAL(:) = NSPEC1D_RADIAL(:)*(NGLLZ-1)+1
+  do iter_layer = 1,MAX_NUM_REGIONS
+    if (NSPEC1D_RADIAL(iter_layer) == 0) then
+      NGLOB1D_RADIAL(iter_layer) = 0
+    else
+      NGLOB1D_RADIAL(iter_layer) = NSPEC1D_RADIAL(iter_layer)*(NGLLZ-1)+1
+    endif
+  enddo
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!
@@ -100,23 +108,23 @@
 !!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-! exact number of global points in each region
+  ! exact number of global points in each region
 
-! initialize array
-  NGLOB(:) = 0
+  ! initialize array
+  NGLOB_REGIONS(:) = 0
 
-! in the inner core (no doubling region + eventually central cube)
+  ! in the inner core (no doubling region + eventually central cube)
   if (INCLUDE_CENTRAL_CUBE) then
-    NGLOB(IREGION_INNER_CORE) = ((NEX_PER_PROC_XI/ratio_divide_central_cube) &
+    NGLOB_REGIONS(IREGION_INNER_CORE) = ((NEX_PER_PROC_XI/ratio_divide_central_cube) &
       *(NGLLX-1)+1)*((NEX_PER_PROC_ETA/ratio_divide_central_cube) &
       *(NGLLY-1)+1)*((NER_TOP_CENTRAL_CUBE_ICB + NEX_XI / ratio_divide_central_cube)*(NGLLZ-1)+1)
   else
-    NGLOB(IREGION_INNER_CORE) = ((NEX_PER_PROC_XI/ratio_divide_central_cube) &
+    NGLOB_REGIONS(IREGION_INNER_CORE) = ((NEX_PER_PROC_XI/ratio_divide_central_cube) &
       *(NGLLX-1)+1)*((NEX_PER_PROC_ETA/ratio_divide_central_cube) &
       *(NGLLY-1)+1)*((NER_TOP_CENTRAL_CUBE_ICB)*(NGLLZ-1)+1)
   endif
 
-! in the crust-mantle and outercore
+  ! in the crust-mantle and outercore
   do iter_region = IREGION_CRUST_MANTLE,IREGION_OUTER_CORE
       ! layer first/last
       if (iter_region == IREGION_CRUST_MANTLE) then
@@ -138,47 +146,47 @@
         nglob_corner_edge = 0
         nglob_border_edge = 0
         if (this_region_has_a_doubling(iter_layer)) then
-            if (iter_region == IREGION_OUTER_CORE .and. iter_layer == last_doubling_layer .and. &
-               (CUT_SUPERBRICK_XI .or. CUT_SUPERBRICK_ETA)) then
-              doubling = 1
-              normal_doubling = 0
-              cut_doubling = 1
-              nb_lay_sb = 2
-              nglob_edge = 0
-              nglob_surf = 0
-              nglob_vol = 8*NGLLX**3 - 12*NGLLX**2 + 6*NGLLX - 1
-              nglob_int_surf_eta = 6*NGLLX**2 - 7*NGLLX + 2
-              nglob_int_surf_xi = 5*NGLLX**2 - 5*NGLLX + 1
-              nglob_ext_surf = 4*NGLLX**2-4*NGLLX+1
-              nglob_center_edge = 4*(NGLLX-1)+1
-              nglob_corner_edge = 2*(NGLLX-1)+1
-              nglob_border_edge = 3*(NGLLX-1)+1
-            else
-              if (ner_mesh_layers(iter_layer) == 1) then
-                nb_lay_sb = 1
-                nglob_vol = 28*NGLLX**3 - 62*NGLLX**2 + 47*NGLLX - 12
-                nglob_surf = 6*NGLLX**2-8*NGLLX+3
-                nglob_edge = NGLLX
-              else
-                nb_lay_sb = 2
-                nglob_vol = 32*NGLLX**3 - 70*NGLLX**2 + 52*NGLLX - 13
-                nglob_surf = 8*NGLLX**2-11*NGLLX+4
-                nglob_edge = 2*NGLLX-1
-              endif
-              doubling = 1
-              normal_doubling = 1
-              cut_doubling = 0
-            endif
-            padding = -1
-        else
-            doubling = 0
+          if (iter_region == IREGION_OUTER_CORE .and. iter_layer == last_doubling_layer .and. &
+             (CUT_SUPERBRICK_XI .or. CUT_SUPERBRICK_ETA)) then
+            doubling = 1
             normal_doubling = 0
-            cut_doubling = 0
-            padding = 0
-            nb_lay_sb = 0
-            nglob_vol = 0
-            nglob_surf = 0
+            cut_doubling = 1
+            nb_lay_sb = 2
             nglob_edge = 0
+            nglob_surf = 0
+            nglob_vol = 8*NGLLX**3 - 12*NGLLX**2 + 6*NGLLX - 1
+            nglob_int_surf_eta = 6*NGLLX**2 - 7*NGLLX + 2
+            nglob_int_surf_xi = 5*NGLLX**2 - 5*NGLLX + 1
+            nglob_ext_surf = 4*NGLLX**2-4*NGLLX+1
+            nglob_center_edge = 4*(NGLLX-1)+1
+            nglob_corner_edge = 2*(NGLLX-1)+1
+            nglob_border_edge = 3*(NGLLX-1)+1
+          else
+            if (ner_mesh_layers(iter_layer) == 1) then
+              nb_lay_sb = 1
+              nglob_vol = 28*NGLLX**3 - 62*NGLLX**2 + 47*NGLLX - 12
+              nglob_surf = 6*NGLLX**2-8*NGLLX+3
+              nglob_edge = NGLLX
+            else
+              nb_lay_sb = 2
+              nglob_vol = 32*NGLLX**3 - 70*NGLLX**2 + 52*NGLLX - 13
+              nglob_surf = 8*NGLLX**2-11*NGLLX+4
+              nglob_edge = 2*NGLLX-1
+            endif
+            doubling = 1
+            normal_doubling = 1
+            cut_doubling = 0
+          endif
+          padding = -1
+        else
+          doubling = 0
+          normal_doubling = 0
+          cut_doubling = 0
+          padding = 0
+          nb_lay_sb = 0
+          nglob_vol = 0
+          nglob_surf = 0
+          nglob_edge = 0
         endif
         if (iter_layer == ilast_region) padding = padding + 1
 
@@ -200,8 +208,21 @@
                   ((int(nblocks_eta/2)*int((nblocks_xi-1)/2))+(int((nblocks_eta-1)/2)*int(nblocks_xi/2)))*nglob_border_edge &
                 ))
       enddo
-      NGLOB(iter_region) = tmp_sum
+      NGLOB_REGIONS(iter_region) = tmp_sum
   enddo
+
+  ! regional mesh cutoff
+  if (REGIONAL_MESH_CUTOFF) then
+    ! no inner core points
+    NGLOB_REGIONS(IREGION_INNER_CORE) = 0
+    ! no outer core points
+    NGLOB_REGIONS(IREGION_OUTER_CORE) = 0
+  endif
+
+  ! debug
+  !print *,'debug: count_points NGLOB = ',NGLOB_REGIONS
+  !print *,'debug: count_points ner_mesh_layers = ',ner_mesh_layers
+
 
 !!! example :
 !!!                        nblocks_xi/2=5

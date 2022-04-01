@@ -76,6 +76,9 @@
   ! debug: file output
   logical,parameter :: DEBUG = .false.
 
+  ! checks if anything to do
+  if (nspec == 0) return
+
   ! theoretical number of surface elements in the buffers
   ! cut planes along eta=constant correspond to XI faces
   nspec2Dtheor = NSPEC2D_XI_FACE(iregion,1)
@@ -105,7 +108,7 @@
 
   do ispec = 1,nspec
     if (iMPIcut_eta(1,ispec)) then
-      ispecc1=ispecc1+1
+      ispecc1 = ispecc1 + 1
       ! loop on all the points in that 2-D element, including edges
       iy = 1
       do ix = 1,NGLLX
@@ -171,7 +174,7 @@
 
   do ispec = 1,nspec
     if (iMPIcut_eta(2,ispec)) then
-      ispecc2=ispecc2+1
+      ispecc2 = ispecc2 + 1
       ! loop on all the points in that 2-D element, including edges
       iy = NGLLY
       do ix = 1,NGLLX

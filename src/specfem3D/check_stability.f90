@@ -97,9 +97,18 @@
   if (.not. GPU_MODE) then
     ! on CPU
     norm_cm = maxval(sqrt(displ_crust_mantle(1,:)**2 + displ_crust_mantle(2,:)**2 + displ_crust_mantle(3,:)**2))
-    norm_ic = maxval(sqrt(displ_inner_core(1,:)**2 + displ_inner_core(2,:)**2 + displ_inner_core(3,:)**2))
+    if (NSPEC_INNER_CORE > 0) then
+      norm_ic = maxval(sqrt(displ_inner_core(1,:)**2 + displ_inner_core(2,:)**2 + displ_inner_core(3,:)**2))
+    else
+      norm_ic = 0._CUSTOM_REAL
+    endif
     Usolidnorm = max(norm_cm,norm_ic)
-    Ufluidnorm = maxval(abs(displ_outer_core))
+
+    if (NSPEC_OUTER_CORE > 0) then
+      Ufluidnorm = maxval(abs(displ_outer_core))
+    else
+      Ufluidnorm = 0._CUSTOM_REAL
+    endif
   else
     ! on GPU
     ! way 2: just get maximum of fields from GPU
@@ -165,14 +174,19 @@
   if (SIMULATION_TYPE == 3) then
     if (.not. GPU_MODE) then
       ! on CPU
-      b_Usolidnorm = max( maxval(sqrt(b_displ_crust_mantle(1,:)**2 + &
-                                      b_displ_crust_mantle(2,:)**2 + &
-                                      b_displ_crust_mantle(3,:)**2)), &
-                          maxval(sqrt(b_displ_inner_core(1,:)**2 + &
-                                      b_displ_inner_core(2,:)**2 + &
-                                      b_displ_inner_core(3,:)**2)))
+      norm_cm = maxval(sqrt(b_displ_crust_mantle(1,:)**2 + b_displ_crust_mantle(2,:)**2 + b_displ_crust_mantle(3,:)**2))
+      if (NSPEC_INNER_CORE > 0) then
+        norm_ic = maxval(sqrt(b_displ_inner_core(1,:)**2 + b_displ_inner_core(2,:)**2 + b_displ_inner_core(3,:)**2))
+      else
+        norm_ic = 0._CUSTOM_REAL
+      endif
+      b_Usolidnorm = max(norm_cm,norm_ic)
 
-      b_Ufluidnorm = maxval(abs(b_displ_outer_core))
+      if (NSPEC_OUTER_CORE > 0) then
+        b_Ufluidnorm = maxval(abs(b_displ_outer_core))
+      else
+        b_Ufluidnorm = 0._CUSTOM_REAL
+      endif
     else
       ! on GPU
       call check_norm_elastic_acoustic_from_device(b_Usolidnorm,b_Ufluidnorm,Mesh_pointer,3)
@@ -439,14 +453,15 @@
   !use specfem_par, only: time_start,DT,t0
 
   use specfem_par_crustmantle, only: b_displ_crust_mantle
-  use specfem_par_innercore, only: b_displ_inner_core
-  use specfem_par_outercore, only: b_displ_outer_core
+  use specfem_par_innercore, only: b_displ_inner_core,NSPEC_INNER_CORE
+  use specfem_par_outercore, only: b_displ_outer_core,NSPEC_OUTER_CORE
 
   implicit none
 
   ! local parameters
   ! maximum of the norm of the displacement and of the potential in the fluid
   real(kind=CUSTOM_REAL) b_Usolidnorm,b_Usolidnorm_all,b_Ufluidnorm,b_Ufluidnorm_all
+  real(kind=CUSTOM_REAL) :: norm_cm,norm_ic
   ! timer MPI
   !double precision :: tCPU
   !double precision, external :: wtime
@@ -462,14 +477,18 @@
   ! compute maximum of norm of displacement in each slice
   if (.not. GPU_MODE) then
     ! on CPU
-    b_Usolidnorm = max( &
-           maxval(sqrt(b_displ_crust_mantle(1,:)**2 + &
-                        b_displ_crust_mantle(2,:)**2 + b_displ_crust_mantle(3,:)**2)), &
-           maxval(sqrt(b_displ_inner_core(1,:)**2 &
-                      + b_displ_inner_core(2,:)**2 &
-                      + b_displ_inner_core(3,:)**2)))
-
-    b_Ufluidnorm = maxval(abs(b_displ_outer_core))
+    norm_cm = maxval(sqrt(b_displ_crust_mantle(1,:)**2 + b_displ_crust_mantle(2,:)**2 + b_displ_crust_mantle(3,:)**2))
+    if (NSPEC_INNER_CORE > 0) then
+      norm_ic = maxval(sqrt(b_displ_inner_core(1,:)**2 + b_displ_inner_core(2,:)**2 + b_displ_inner_core(3,:)**2))
+    else
+      norm_ic = 0._CUSTOM_REAL
+    endif
+    b_Usolidnorm = max(norm_cm,norm_ic)
+    if (NSPEC_OUTER_CORE > 0) then
+      b_Ufluidnorm = maxval(abs(b_displ_outer_core))
+    else
+      b_Ufluidnorm = 0._CUSTOM_REAL
+    endif
   else
     ! on GPU
     call check_norm_elastic_acoustic_from_device(b_Usolidnorm,b_Ufluidnorm,Mesh_pointer,3)

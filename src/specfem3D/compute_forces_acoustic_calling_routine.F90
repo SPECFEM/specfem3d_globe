@@ -41,6 +41,10 @@
   !              iphase = 2 is for computing inner elements in the outer core (former icall parameter)
   integer :: iphase
 
+  ! checks if anything to do
+  ! for regional mesh cut-offs, there are no outer core elements
+  if (NSPEC_OUTER_CORE == 0) return
+
   ! compute internal forces in the fluid region
 
   ! current simulated time
@@ -229,6 +233,9 @@
 
   ! checks
   if (SIMULATION_TYPE /= 3 ) return
+
+  ! checks if anything to do
+  if (NSPEC_OUTER_CORE == 0) return
 
   ! compute internal forces in the fluid region
 

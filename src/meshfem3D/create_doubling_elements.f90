@@ -170,6 +170,9 @@
     call flush_IMAIN()
   endif
 
+  ! checks if anything to do
+  if (nelements <= 0) return
+
   ! fill mapping to be able to parallelize loops below
   allocate(map_ispec(nelements),stat=ier)
   if (ier /= 0) stop 'Error allocating map_ispec'

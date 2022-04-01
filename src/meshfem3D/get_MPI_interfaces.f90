@@ -79,6 +79,9 @@
   ! debug
   !print *,'MPI interface: b',IREGION,add_central_cube,INCLUDE_CENTRAL_CUBE
 
+  ! checks if anything to do
+  if (nspec == 0) return
+
   ! allocates work arrays
   allocate(work_test_flag(NGLOB), &
            work_ispec_is_outer(NSPEC),stat=ier)
