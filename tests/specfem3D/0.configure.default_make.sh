@@ -27,7 +27,7 @@ echo >> $testdir/results.log
 
 #cleanup
 rm -rf config.log config.status
-rm -rf ./bin ./obj ./setup ./OUTPUT_FILES
+rm -rf ./bin ./obj ./setup ./OUTPUT_FILES ./DATA/Par_file
 
 # configuration
 # (out-of-source compilation)
