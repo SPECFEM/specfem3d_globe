@@ -49,7 +49,7 @@ NPROC_ETA                       = 10
 # crust1.0, crust2.0, EPcrust, EuCRUST, crustmaps, crustSH
 #
 # Mars models:
-# 1D_Sohl, 1D_Sohl_3D_crust, 1D_case65TAY, 1D_case65TAY_3D_crust
+# 1D_Sohl, 1D_Sohl_3D_crust, 1D_case65TAY, 1D_case65TAY_3D_crust, mars_1D, mars_1D_3D_crust
 #
 # Moon models:
 # vpremoon
@@ -73,6 +73,35 @@ GRAVITY                         = .false.
 ROTATION                        = .false.
 ATTENUATION                     = .true.
 
+# record length in minutes
+RECORD_LENGTH_IN_MINUTES        = 50.0d0
+
+#-----------------------------------------------------------
+#
+# Mesh
+#
+#-----------------------------------------------------------
+
+## regional mesh cut-off
+# using this flag will cut-off the mesh in the mantle at a layer matching to the given cut-off depth.
+# this flag only has an effect for regional simulations, i.e., for NCHUNKS values less than 6.
+REGIONAL_MESH_CUTOFF            = .false.
+
+# regional mesh cut-off depth (in km)
+# possible selections are: 24.4d0, 80.d0, 220.d0, 400.d0, 600.d0, 670.d0, 771.d0
+REGIONAL_MESH_CUTOFF_DEPTH      = 400.d0
+
+# regional mesh cut-off w/ a second doubling layer below 220km interface
+# (by default, a first doubling layer will be added below the Moho, and a second one below the 771km-depth layer.
+#  Setting this flag to .true., will move the second one below the 220km-depth layer for regional mesh cut-offs only.)
+REGIONAL_MESH_ADD_2ND_DOUBLING  = .false.
+
+#-----------------------------------------------------------
+#
+# Absorbing boundary conditions
+#
+#-----------------------------------------------------------
+
 # absorbing boundary conditions for a regional simulation
 ABSORBING_CONDITIONS            = .false.
 
@@ -86,18 +115,23 @@ SPONGE_LATITUDE_IN_DEGREES      = 40.d0
 SPONGE_LONGITUDE_IN_DEGREES     = 25.d0
 SPONGE_RADIUS_IN_DEGREES        = 25.d0
 
-# record length in minutes
-RECORD_LENGTH_IN_MINUTES        = 50.0d0
+#-----------------------------------------------------------
+#
+# undoing attenuation for sensitivity kernel calculations
+#
+#-----------------------------------------------------------
 
 # to undo attenuation for sensitivity kernel calculations or forward runs with SAVE_FORWARD
 # use one (and only one) of the two flags below. UNDO_ATTENUATION is much better (it is exact)
 # but requires a significant amount of disk space for temporary storage.
 PARTIAL_PHYS_DISPERSION_ONLY    = .true.
 UNDO_ATTENUATION                = .false.
-# How much memory (in GB) is installed on your machine per CPU core (only used for UNDO_ATTENUATION, can be ignored otherwise)
-#         (or per GPU card or per INTEL MIC Phi board)
-#   Beware, this value MUST be given per core, i.e. per MPI thread, i.e. per MPI rank, NOT per node.
-#   This value is for instance:
+
+## undo attenuation memory
+# How much memory (in GB) is installed on your machine per CPU core
+# (only used for UNDO_ATTENUATION, can be ignored otherwise)
+# Beware, this value MUST be given per core, i.e. per MPI thread, i.e. per MPI rank, NOT per node.
+# This value is for instance:
 #   -  4 GB on Tiger at Princeton
 #   -  4 GB on TGCC Curie in Paris
 #   -  4 GB on Titan at ORNL when using CPUs only (no GPUs); start your run with "aprun -n$NPROC -N8 -S4 -j1"
@@ -114,24 +148,31 @@ UNDO_ATTENUATION                = .false.
 MEMORY_INSTALLED_PER_CORE_IN_GB = 4.d0
 # What percentage of this total do you allow us to use for arrays to undo attenuation, keeping in mind that you
 # need to leave some memory available for the GNU/Linux system to run
-#   (a typical value is 85%; any value below is fine but the code will then save a lot of data to disk;
-#    values above, say 90% or 92%, can be OK on some systems but can make the adjoint code run out of memory
-#    on other systems, depending on how much memory per node the GNU/Linux system needs for itself; thus you can try
-#    a higher value and if the adjoint crashes then try again with a lower value)
+# (a typical value is 85%; any value below is fine but the code will then save a lot of data to disk;
+#  values above, say 90% or 92%, can be OK on some systems but can make the adjoint code run out of memory
+#  on other systems, depending on how much memory per node the GNU/Linux system needs for itself; thus you can try
+#  a higher value and if the adjoint crashes then try again with a lower value)
 PERCENT_OF_MEM_TO_USE_PER_CORE  = 85.d0
 
+## exact mass matrices for rotation
 # three mass matrices instead of one are needed to handle rotation very accurately;
 # otherwise rotation is handled slightly less accurately (but still reasonably well);
 # set to .true. if you are interested in precise effects related to rotation;
 # set to .false. if you are solving very large inverse problems at high frequency and also undoing attenuation exactly
+#
 # using the UNDO_ATTENUATION flag above, in which case saving as much memory as possible can be a good idea.
-# You can also safely set it to .false. if you are not in a period range in which rotation matters, e.g. if you are targetting very short-period body waves.
-# if in doubt, set to .true.
-# Set it to .true. if you have ABSORBING_CONDITIONS above, because in that case the code will use the three mass matrices anyway
-# and thus there is no additional cost.
+# You can also safely set it to .false. if you are not in a period range in which rotation matters,
+# e.g. if you are targetting very short-period body waves. if in doubt, set to .true.
+#
+# You can safeely set it to .true. if you have ABSORBING_CONDITIONS above, because in that case the code
+# will use three mass matrices anyway and thus there is no additional memory cost.
 # this flag is of course unused if ROTATION above is set to .false.
 EXACT_MASS_MATRIX_FOR_ROTATION  = .false.
 
+#-----------------------------------------------------------
+#
+# LDDRK time scheme
+#
 #-----------------------------------------------------------
 
 # this for LDDRK high-order time scheme instead of Newmark
