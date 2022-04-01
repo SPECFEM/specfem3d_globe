@@ -98,6 +98,9 @@ void moclEnqueueFillBuffer (cl_mem *buffer, int val, size_t size_byte) {
   int size;
   size = size_byte / sizeof(cl_int);
 
+  // checks if anything to do
+  if (size == 0){ return; }
+
   size_t global_work_size[2];
   size_t local_work_size[2];
   cl_uint idx = 0;
@@ -137,6 +140,9 @@ void moclEnqueueFillBuffer (cl_mem *buffer, int val, size_t size_byte) {
 void gpuCreateCopy_todevice_int (gpu_int_mem *d_array_addr_ptr, int *h_array, size_t size) {
 
   TRACE ("gpuCreateCopy_todevice_int");
+
+  // checks if anything to do
+  if (size == 0){ return; }
 
 #ifdef USE_OPENCL
   if (run_opencl) {
@@ -187,6 +193,9 @@ void gpuCreateCopy_todevice_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_arr
 
   TRACE ("gpuCreateCopy_todevice_realw");
 
+  // checks if anything to do
+  if (size == 0){ return; }
+
   // allocates memory on GPU
 #ifdef USE_OPENCL
   if (run_opencl) {
@@ -227,6 +236,9 @@ void gpuCopy_todevice_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array, si
 
   TRACE ("gpuCopy_todevice_realw");
 
+  // checks if anything to do
+  if (size == 0){ return; }
+
   // copies memory on from CPU to GPU
   // uses blocking copies
 #ifdef USE_OPENCL
@@ -254,6 +266,9 @@ void gpuCopy_todevice_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array, si
 void gpuCopy_todevice_realw_offset (gpu_realw_mem *d_array_addr_ptr, realw *h_array, size_t size, size_t offset) {
 
   TRACE ("gpuCopy_todevice_realw_offset");
+
+  // checks if anything to do
+  if (size == 0){ return; }
 
   // copies memory on from CPU to GPU
   // uses blocking copies
@@ -283,6 +298,9 @@ void gpuCopy_todevice_realw_offset (gpu_realw_mem *d_array_addr_ptr, realw *h_ar
 void gpuCopy_todevice_realw_padded (gpu_realw_mem *d_array_addr_ptr, realw *h_array, size_t size) {
 
   TRACE ("gpuCopy_todevice_realw_padded");
+
+  // checks if anything to do
+  if (size == 0){ return; }
 
   // copies memory on from CPU to GPU using padding (NGLL3 == 125 -> NGLL3_PADDED == 128)
   // example: *d_array_addr_ptr == &mp->d_muvstore_crust_mantle
@@ -377,6 +395,9 @@ void gpuCopy_todevice_double (gpu_double_mem *d_array_addr_ptr, double *h_array,
 
   TRACE ("gpuCopy_todevice_double");
 
+  // checks if anything to do
+  if (size == 0){ return; }
+
   // copies memory on from CPU to GPU
   // uses blocking copies
 #ifdef USE_OPENCL
@@ -407,6 +428,9 @@ void gpuCopy_todevice_double (gpu_double_mem *d_array_addr_ptr, double *h_array,
 void gpuCopy_todevice_int (gpu_int_mem *d_array_addr_ptr, int *h_array, size_t size) {
 
   TRACE ("gpuCopy_todevice_int");
+
+  // checks if anything to do
+  if (size == 0){ return; }
 
   // copies memory on from CPU to GPU
   // uses blocking copies
@@ -439,6 +463,9 @@ void gpuCopy_from_device_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array,
 
   TRACE ("gpuCopy_from_device_realw");
 
+  // checks if anything to do
+  if (size == 0){ return; }
+
   // copies memory from GPU back to CPU
 #ifdef USE_OPENCL
   if (run_opencl) {
@@ -465,6 +492,9 @@ void gpuCopy_from_device_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array,
 void gpuCopy_from_device_realw_offset (gpu_realw_mem *d_array_addr_ptr, realw *h_array, size_t size, size_t offset) {
 
   TRACE ("gpuCopy_from_device_realw");
+
+  // checks if anything to do
+  if (size == 0){ return; }
 
   // copies memory from GPU back to CPU
 #ifdef USE_OPENCL
@@ -497,6 +527,9 @@ void gpuCopy_from_device_realw_offset (gpu_realw_mem *d_array_addr_ptr, realw *h
 void gpuCopy_from_device_realw_asyncEvent (Mesh *mp, gpu_realw_mem *d_array_addr_ptr, realw *h_array, size_t size) {
 
   TRACE ("gpuCopy_from_device_realw_asyncEvent");
+
+  // checks if anything to do
+  if (size == 0){ return; }
 
 #ifdef USE_OPENCL
   if (run_opencl) {
@@ -647,6 +680,9 @@ void gpuMalloc_realw (gpu_realw_mem *buffer, size_t size) {
 
   TRACE ("gpuMalloc_realw");
 
+  // checks if anything to do
+  if (size == 0){ return; }
+
   // allocates array on GPU
 #ifdef USE_OPENCL
   if (run_opencl) {
@@ -674,6 +710,9 @@ void gpuMalloc_realw (gpu_realw_mem *buffer, size_t size) {
 void gpuMalloc_double (gpu_double_mem *buffer, size_t size) {
 
   TRACE ("gpuMalloc_double");
+
+  // checks if anything to do
+  if (size == 0){ return; }
 
   // allocates array on GPU
 #ifdef USE_OPENCL
@@ -703,6 +742,9 @@ void gpuMalloc_int (gpu_int_mem *buffer, size_t size) {
 
   TRACE ("gpuMalloc_int");
 
+  // checks if anything to do
+  if (size == 0){ return; }
+
   // allocates array on GPU
 #ifdef USE_OPENCL
   if (run_opencl) {
@@ -731,6 +773,9 @@ void gpuMemset_realw (gpu_realw_mem *buffer, size_t size, int value) {
 
   TRACE ("gpuMemset_realw");
 
+  // checks if anything to do
+  if (size == 0){ return; }
+
   // initializes values for array on GPU
 #ifdef USE_OPENCL
   if (run_opencl) {
@@ -757,6 +802,9 @@ void gpuMemset_realw (gpu_realw_mem *buffer, size_t size, int value) {
 void gpuSetConst (gpu_realw_mem *buffer, size_t size, realw *array) {
 
   TRACE ("gpuSetConst");
+
+  // checks if anything to do
+  if (size == 0){ return; }
 
   // allocates array on GPU
 #ifdef USE_OPENCL
