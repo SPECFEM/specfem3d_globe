@@ -117,8 +117,8 @@
         accel_ic(3,i) = accel_ic(3,i)*rmassz_ic(i)
       enddo
 !$OMP ENDDO
-!$OMP END PARALLEL
     endif
+!$OMP END PARALLEL
 
   else
     ! no rotation
@@ -147,8 +147,8 @@
         accel_ic(3,i) = accel_ic(3,i)*rmassz_ic(i)
       enddo
 !$OMP ENDDO
-!$OMP END PARALLEL
     endif
+!$OMP END PARALLEL
 
   endif
 
