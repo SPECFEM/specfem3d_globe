@@ -34,7 +34,7 @@ of $n^{2}$ mesh slices, where $n\ge1$ is a positive integer, for
 a total of $6\times n^{2}$ slices (Figure~\ref{figure:mpi_slices}).
 Thus the minimum number of processors required for a global simulation
 is 6 (although it is theoretically possible to run more than one slice
-per processor).
+per processor).\\
 %
 \begin{figure}
 %not supported by pandoc? \centerline{}
@@ -178,6 +178,8 @@ This model is model A, mostly constrained by geophysical moment of inertia.
 %
 \item [{\texttt{1D\_case65TAY}}] 1D Mars reference model developed by \citet{Plesa2021}.
 The model is the 1D reference model for case 65 with a compositional model by Taylor.
+%
+\item [{\texttt{mars\_1D}}] 1D Mars model as defined in file \texttt{mars\_1D.dat} in folder \texttt{DATA/mars}.
 %
 \end{description}
 %%

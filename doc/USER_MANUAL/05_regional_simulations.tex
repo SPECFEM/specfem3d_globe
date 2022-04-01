@@ -25,15 +25,20 @@ to be set in the \texttt{Par\_file}:
 
 \begin{description}
 \item [{\texttt{NCHUNKS}}] Must be set to 1.
+%
 \item [{\texttt{ANGULAR\_WIDTH\_XI\_IN\_DEGREES}}] Denotes the width of
 one side of the chunk ($90^{\circ}$ is a classical value, but you can make it more or less if you want).
+%
 \item [{\texttt{ANGULAR\_WIDTH\_ETA\_IN\_DEGREES}}] Denotes the width of
 the second side of the chunk ($90^{\circ}$ is a classical value, but you can make it more or less if you want). Note that this
 value may be different from \texttt{ANGULAR\_WIDTH\_XI\_IN\_DEGREES}.
+%
 \item [{\texttt{CENTER\_LATITUDE\_IN\_DEGREES}}] Defines the latitude of
 the center of the chunk (degrees).
+%
 \item [{\texttt{CENTER\_LONGITUDE\_IN\_DEGREES}}] Defines the longitude
 of the center of the chunk (degrees).
+%
 \item [{\texttt{GAMMA\_ROTATION\_AZIMUTH}}] Defines the rotation angle
 of the chunk about its center measured counter clockwise from due
 North (degrees). The corners of the mesh are output in \texttt{\small OUTPUT\_FILES/values\_from\_mesher.h}.
@@ -44,12 +49,14 @@ can be changed in the \texttt{Par\_file} and the corners output \texttt{(}\textt
 }\texttt{\small xcreate\_header\_file}. It is important to note that
 the mesher or the solver does not need to be run to determine the
 limits of a 1-chunk simulation.
+%
 \item [{\texttt{NEX\_XI}}] The number of spectral elements along the $\xi$ side
 of the chunk. This number \textit{must} be 8~$\times$~a multiple
 of $\nprocxi$ defined below. For a $90^{\circ}$ chunk, we do not
 recommend using $\nexxi$ less than~64 because the curvature of the
 Earth cannot be honored if one uses too few elements, which results
 in inaccurate and unstable simulations.
+%
 \item [{\texttt{NEX\_ETA}}] The number of spectral elements along the $\eta$
 side of the chunk. This number \textit{must} be 8~$\times$~a multiple
 of $\nproceta$ defined below. Note that in order to get elements
@@ -62,12 +69,13 @@ ANGULAR_WIDTH_ETA_IN_DEGREES / NEX_ETA
 Because of the geometry of the cubed sphere, the option of having
 different values for $\nexxi$ and $\nexeta$ is available only for
 regional simulations when $\nchunks=1$ (1/6th of the sphere).
-
+%
 \item [{\texttt{NPROC\_XI}}] The number of processors or mesh slices along the
 $\xi$ side of the chunk. To accommodate the mesh doubling layers,
 we must have $\nexxi=8\times c\times\nprocxi$, where $c\ge1$ is
 a positive integer. See Table~\ref{table:nex} for various suitable
 choices.
+%
 \item [{\texttt{NPROC\_ETA}}] The number of processors or slices along the $\eta$
 side of the chunk; we must have $\nexeta=8\times c\times\nproceta$,
 where $c\ge1$ is a positive integer. $\nprocxi$ and $\nproceta$
@@ -107,12 +115,21 @@ in each direction of the elements \citep{KoTr02a,KoTr02b}.}
 
 
 \begin{description}
+%
+\item [{\texttt{REGIONAL\_MESH\_CUTOFF}}] For regional simulations, choosing this flag will cut-off the mesh at a mesh layer
+below the given input depth, specified by \texttt{REGIONAL\_MESH\_CUTOFF\_DEPTH}.
+By default, the mesher will create a full chunk mesh, i.e., for all three regions, crust/mantle, outer core and inner core respectively.
+Furthermore, it will place a first doubling layer below the Moho and a second one below the 771-km depth layer.
+Setting the flag \texttt{REGIONAL\_MESH\_ADD\_2ND\_DOUBLING} to \texttt{.true.} will move the second doubling layer below the
+220-km depth layer, to also have a second mesh coarsening possibility for the cut-off mesh.
+%
 \item [{\texttt{ABSORBING\_CONDITIONS}}] Set to \texttt{.true.}{\small{}
 }for regional simulations. For instance, see \citet{KoTr99} for a
 description of the paraxial boundary conditions used. Note that these
 conditions are never perfect, and in particular surface waves may
 partially reflect off the artificial boundaries. Note also that certain
 arrivals, e.g., PKIKPPKIKP, will be missing from the synthetics.
+%
 \item [{\texttt{ABSORB\_USING\_GLOBAL\_SPONGE}}] An alternative to {\texttt{ABSORBING\_CONDITIONS}}. Set to \texttt{.true.} to run a global simulation with sponge layers applied. See Figure~\vref{fig:Sponge-illustration}
 for an illustration. Enabling this flag will result in a simulation that has less reflected waves from the boundaries compared with enabling {\texttt{ABSORBING\_CONDITIONS}}, but with significant higher computational costs.
 \item [{\texttt{SPONGE\_LATITUDE\_IN\_DEGREES}}] Latitide of the sponge center.
