@@ -54,34 +54,14 @@
   ! closes Stacey absorbing boundary snapshots
   if (ABSORBING_CONDITIONS) then
     ! crust mantle
-    if (nspec2D_xmin_crust_mantle > 0 .and. SAVE_STACEY) call close_file_abs(0)
-    if (nspec2D_xmax_crust_mantle > 0 .and. SAVE_STACEY) call close_file_abs(1)
-    if (nspec2D_ymin_crust_mantle > 0 .and. SAVE_STACEY) call close_file_abs(2)
-    if (nspec2D_ymax_crust_mantle > 0 .and. SAVE_STACEY) call close_file_abs(3)
-    if (REGIONAL_MESH_CUTOFF .and. nspec2D_zmin_crust_mantle > 0 .and. SAVE_STACEY) call close_file_abs(4)
+    if (num_abs_boundary_faces_crust_mantle > 0 .and. SAVE_STACEY) call close_file_abs(0)
 
     ! outer core
-    if (NSPEC_OUTER_CORE > 0) then
-      if (nspec2D_xmin_outer_core > 0 .and. SAVE_STACEY) call close_file_abs(4)
-      if (nspec2D_xmax_outer_core > 0 .and. SAVE_STACEY) call close_file_abs(5)
-      if (nspec2D_ymin_outer_core > 0 .and. SAVE_STACEY) call close_file_abs(6)
-      if (nspec2D_ymax_outer_core > 0 .and. SAVE_STACEY) call close_file_abs(7)
-      if (nspec2D_zmin_outer_core > 0 .and. SAVE_STACEY) call close_file_abs(8)
-    endif
+    if (num_abs_boundary_faces_outer_core > 0 .and. SAVE_STACEY) call close_file_abs(4)
 
     ! frees memory
-    deallocate(absorb_xmin_crust_mantle, &
-               absorb_xmax_crust_mantle, &
-               absorb_ymin_crust_mantle, &
-               absorb_ymax_crust_mantle, &
-               absorb_zmin_crust_mantle)
-    if (NSPEC_OUTER_CORE > 0) then
-      deallocate(absorb_xmin_outer_core, &
-                 absorb_xmax_outer_core, &
-                 absorb_ymin_outer_core, &
-                 absorb_ymax_outer_core, &
-                 absorb_zmin_outer_core)
-    endif
+    deallocate(absorb_buffer_crust_mantle)
+    if (NSPEC_OUTER_CORE > 0) deallocate(absorb_buffer_outer_core)
   endif
 
   ! save/read the surface movie using the same c routine as we do for absorbing boundaries (file ID is 9)

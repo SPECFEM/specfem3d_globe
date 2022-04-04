@@ -34,73 +34,30 @@
 extern EXTERN_LANG
 void FC_FUNC_ (compute_stacey_acoustic_gpu,
                COMPUTE_STACEY_ACOUSTIC_GPU) (long *Mesh_pointer_f,
-                                             realw *absorb_potential,
-                                             int *itype) {
+                                             realw *absorb_potential) {
   TRACE ("compute_stacey_acoustic_gpu");
   //get mesh pointer out of Fortran integer container
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
-  int num_abs_boundary_faces = 0;
-
-  gpu_int_mem d_abs_boundary_ispec;
-  gpu_realw_mem d_abs_boundary_jacobian2D;
-  gpu_realw_mem d_wgllwgll;
-  gpu_realw_mem d_b_absorb_potential;
-
-  // absorbing boundary type
-  int interface_type = *itype;
-  switch (interface_type) {
-  case 4:
-    // xmin
-    num_abs_boundary_faces = mp->nspec2D_xmin_outer_core;
-    d_abs_boundary_ispec = mp->d_ibelm_xmin_outer_core;
-    d_abs_boundary_jacobian2D = mp->d_jacobian2D_xmin_outer_core;
-    d_b_absorb_potential = mp->d_absorb_xmin_outer_core;
-    d_wgllwgll = mp->d_wgllwgll_yz;
-    break;
-
-  case 5:
-    // xmax
-    num_abs_boundary_faces = mp->nspec2D_xmax_outer_core;
-    d_abs_boundary_ispec = mp->d_ibelm_xmax_outer_core;
-    d_abs_boundary_jacobian2D = mp->d_jacobian2D_xmax_outer_core;
-    d_b_absorb_potential = mp->d_absorb_xmax_outer_core;
-    d_wgllwgll = mp->d_wgllwgll_yz;
-    break;
-
-  case 6:
-    // ymin
-    num_abs_boundary_faces = mp->nspec2D_ymin_outer_core;
-    d_abs_boundary_ispec = mp->d_ibelm_ymin_outer_core;
-    d_abs_boundary_jacobian2D = mp->d_jacobian2D_ymin_outer_core;
-    d_b_absorb_potential = mp->d_absorb_ymin_outer_core;
-    d_wgllwgll = mp->d_wgllwgll_xz;
-    break;
-
-  case 7:
-    // ymax
-    num_abs_boundary_faces = mp->nspec2D_ymax_outer_core;
-    d_abs_boundary_ispec = mp->d_ibelm_ymax_outer_core;
-    d_abs_boundary_jacobian2D = mp->d_jacobian2D_ymax_outer_core;
-    d_b_absorb_potential = mp->d_absorb_ymax_outer_core;
-    d_wgllwgll = mp->d_wgllwgll_xz;
-    break;
-
-  case 8:
-    // zmin
-    num_abs_boundary_faces = mp->nspec2D_zmin_outer_core;
-    d_abs_boundary_ispec = mp->d_ibelm_bottom_outer_core;
-    d_abs_boundary_jacobian2D = mp->d_jacobian2D_bottom_outer_core;
-    d_b_absorb_potential = mp->d_absorb_zmin_outer_core;
-    d_wgllwgll = mp->d_wgllwgll_xy;
-    break;
-
-  default:
-    exit_on_error ("compute_stacey_acoustic_gpu: unknown interface type");
-  }
+  // absorbing boundary
+  int num_abs_boundary_faces = mp->num_abs_boundary_faces_outer_core;
 
   // checks if anything to do
   if (num_abs_boundary_faces == 0) return;
+
+  // setup arrays
+  gpu_int_mem d_abs_boundary_ispec;
+  gpu_int_mem d_abs_boundary_npoin;
+  gpu_int_mem d_abs_boundary_ijk;
+  gpu_realw_mem d_abs_boundary_jacobian2Dw;
+  gpu_realw_mem d_absorb_potential;
+
+  d_abs_boundary_ispec = mp->d_abs_boundary_ispec_outer_core;
+  d_abs_boundary_npoin = mp->d_abs_boundary_npoin_outer_core;
+  d_abs_boundary_ijk = mp->d_abs_boundary_ijk_outer_core;
+  d_abs_boundary_jacobian2Dw = mp->d_abs_boundary_jacobian2Dw_outer_core;
+
+  d_absorb_potential = mp->d_absorb_buffer_outer_core;
 
   // way 1: Elapsed time: 4.385948e-03
   // > NGLLSQUARE==NGLL2==25, but we handle this inside kernel
@@ -129,21 +86,15 @@ void FC_FUNC_ (compute_stacey_acoustic_gpu,
 
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_veloc_outer_core.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_accel_outer_core.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (int), (void *) &interface_type));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (int), (void *) &num_abs_boundary_faces));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &d_abs_boundary_ispec.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_nkmin_xi_outer_core.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_nkmin_eta_outer_core.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_njmin_outer_core.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_njmax_outer_core.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_nimin_outer_core.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_nimax_outer_core.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &d_abs_boundary_jacobian2D.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &d_wgllwgll.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &d_abs_boundary_npoin.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &d_abs_boundary_ijk.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &d_abs_boundary_jacobian2Dw.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ibool_outer_core.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_vp_outer_core.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (int), (void *) &mp->save_stacey));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &d_b_absorb_potential.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &d_absorb_potential.ocl));
 
     local_work_size[0] = blocksize;
     local_work_size[1] = 1;
@@ -166,22 +117,16 @@ void FC_FUNC_ (compute_stacey_acoustic_gpu,
     dim3 threads(blocksize,1,1);
 
     compute_stacey_acoustic_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_veloc_outer_core.cuda,
-                                                     mp->d_accel_outer_core.cuda,
-                                                     interface_type,
-                                                     num_abs_boundary_faces,
-                                                     d_abs_boundary_ispec.cuda,
-                                                     mp->d_nkmin_xi_outer_core.cuda,
-                                                     mp->d_nkmin_eta_outer_core.cuda,
-                                                     mp->d_njmin_outer_core.cuda,
-                                                     mp->d_njmax_outer_core.cuda,
-                                                     mp->d_nimin_outer_core.cuda,
-                                                     mp->d_nimax_outer_core.cuda,
-                                                     d_abs_boundary_jacobian2D.cuda,
-                                                     d_wgllwgll.cuda,
-                                                     mp->d_ibool_outer_core.cuda,
-                                                     mp->d_vp_outer_core.cuda,
-                                                     mp->save_stacey,
-                                                     d_b_absorb_potential.cuda);
+                                                                          mp->d_accel_outer_core.cuda,
+                                                                          num_abs_boundary_faces,
+                                                                          d_abs_boundary_ispec.cuda,
+                                                                          d_abs_boundary_npoin.cuda,
+                                                                          d_abs_boundary_ijk.cuda,
+                                                                          d_abs_boundary_jacobian2Dw.cuda,
+                                                                          mp->d_ibool_outer_core.cuda,
+                                                                          mp->d_vp_outer_core.cuda,
+                                                                          mp->save_stacey,
+                                                                          d_absorb_potential.cuda);
   }
 #endif
 #ifdef USE_HIP
@@ -192,21 +137,15 @@ void FC_FUNC_ (compute_stacey_acoustic_gpu,
     hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_stacey_acoustic_kernel), grid, threads, 0, mp->compute_stream,
                                                                         mp->d_veloc_outer_core.hip,
                                                                         mp->d_accel_outer_core.hip,
-                                                                        interface_type,
                                                                         num_abs_boundary_faces,
                                                                         d_abs_boundary_ispec.hip,
-                                                                        mp->d_nkmin_xi_outer_core.hip,
-                                                                        mp->d_nkmin_eta_outer_core.hip,
-                                                                        mp->d_njmin_outer_core.hip,
-                                                                        mp->d_njmax_outer_core.hip,
-                                                                        mp->d_nimin_outer_core.hip,
-                                                                        mp->d_nimax_outer_core.hip,
-                                                                        d_abs_boundary_jacobian2D.hip,
-                                                                        d_wgllwgll.hip,
+                                                                        d_abs_boundary_npoin.hip,
+                                                                        d_abs_boundary_ijk.hip,
+                                                                        d_abs_boundary_jacobian2Dw.hip,
                                                                         mp->d_ibool_outer_core.hip,
                                                                         mp->d_vp_outer_core.hip,
                                                                         mp->save_stacey,
-                                                                        d_b_absorb_potential.hip);
+                                                                        d_absorb_potential.hip);
   }
 #endif
 
@@ -215,7 +154,7 @@ void FC_FUNC_ (compute_stacey_acoustic_gpu,
     // explicitly waits until kernel is finished
     gpuSynchronize();
     // copies array to CPU
-    gpuCopy_from_device_realw (&d_b_absorb_potential, absorb_potential, NGLL2 * num_abs_boundary_faces);
+    gpuCopy_from_device_realw (&d_absorb_potential, absorb_potential, NGLL2 * num_abs_boundary_faces);
   }
 
   GPU_ERROR_CHECKING ("compute_stacey_acoustic_kernel");
@@ -226,62 +165,28 @@ void FC_FUNC_ (compute_stacey_acoustic_gpu,
 extern EXTERN_LANG
 void FC_FUNC_ (compute_stacey_acoustic_backward_gpu,
                COMPUTE_STACEY_ACOUSTIC_BACKWARD_GPU) (long *Mesh_pointer_f,
-                                                      realw *absorb_potential,
-                                                      int *itype) {
+                                                      realw *absorb_potential) {
   TRACE ("compute_stacey_acoustic_backward_gpu");
-
-  int num_abs_boundary_faces = 0;
-
-  gpu_int_mem d_abs_boundary_ispec;
-  gpu_realw_mem d_b_absorb_potential;
 
   //get mesh pointer out of Fortran integer container
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
-  // absorbing boundary type
-  int interface_type = *itype;
-  switch (interface_type) {
-  case 4:
-    // xmin
-    num_abs_boundary_faces = mp->nspec2D_xmin_outer_core;
-    d_abs_boundary_ispec = mp->d_ibelm_xmin_outer_core;
-    d_b_absorb_potential = mp->d_absorb_xmin_outer_core;
-    break;
-
-  case 5:
-    // xmax
-    num_abs_boundary_faces = mp->nspec2D_xmax_outer_core;
-    d_abs_boundary_ispec = mp->d_ibelm_xmax_outer_core;
-    d_b_absorb_potential = mp->d_absorb_xmax_outer_core;
-    break;
-
-  case 6:
-    // ymin
-    num_abs_boundary_faces = mp->nspec2D_ymin_outer_core;
-    d_abs_boundary_ispec = mp->d_ibelm_ymin_outer_core;
-    d_b_absorb_potential = mp->d_absorb_ymin_outer_core;
-    break;
-
-  case 7:
-    // ymax
-    num_abs_boundary_faces = mp->nspec2D_ymax_outer_core;
-    d_abs_boundary_ispec = mp->d_ibelm_ymax_outer_core;
-    d_b_absorb_potential = mp->d_absorb_ymax_outer_core;
-    break;
-
-  case 8:
-    // zmin
-    num_abs_boundary_faces = mp->nspec2D_zmin_outer_core;
-    d_abs_boundary_ispec = mp->d_ibelm_bottom_outer_core;
-    d_b_absorb_potential = mp->d_absorb_zmin_outer_core;
-    break;
-
-  default:
-    exit_on_error ("compute_stacey_acoustic_backward_gpu: unknown interface type");
-  }
+  // absorbing boundary
+  int num_abs_boundary_faces = mp->num_abs_boundary_faces_outer_core;
 
   // checks if anything to do
   if (num_abs_boundary_faces == 0) return;
+
+  gpu_int_mem d_abs_boundary_ispec;
+  gpu_int_mem d_abs_boundary_npoin;
+  gpu_int_mem d_abs_boundary_ijk;
+  gpu_realw_mem d_absorb_potential;
+
+  d_abs_boundary_ispec = mp->d_abs_boundary_ispec_outer_core;
+  d_abs_boundary_npoin = mp->d_abs_boundary_npoin_outer_core;
+  d_abs_boundary_ijk = mp->d_abs_boundary_ijk_outer_core;
+
+  d_absorb_potential = mp->d_absorb_buffer_outer_core;
 
   // way 1: Elapsed time: 4.385948e-03
   // > NGLLSQUARE==NGLL2==25, but we handle this inside kernel
@@ -296,7 +201,7 @@ void FC_FUNC_ (compute_stacey_acoustic_backward_gpu,
 
   // adjoint simulations: needs absorbing boundary buffer
   // copies array to GPU
-  gpuCopy_todevice_realw (&d_b_absorb_potential, absorb_potential, NGLL2 * num_abs_boundary_faces);
+  gpuCopy_todevice_realw (&d_absorb_potential, absorb_potential, NGLL2 * num_abs_boundary_faces);
 
 #ifdef USE_OPENCL
   if (run_opencl) {
@@ -305,16 +210,11 @@ void FC_FUNC_ (compute_stacey_acoustic_backward_gpu,
     cl_uint idx = 0;
 
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_backward_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_accel_outer_core.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_backward_kernel, idx++, sizeof (cl_mem), (void *) &d_b_absorb_potential.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_backward_kernel, idx++, sizeof (int), (void *) &interface_type));
+    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_backward_kernel, idx++, sizeof (cl_mem), (void *) &d_absorb_potential.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_backward_kernel, idx++, sizeof (int), (void *) &num_abs_boundary_faces));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_backward_kernel, idx++, sizeof (cl_mem), (void *) &d_abs_boundary_ispec.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_backward_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_nkmin_xi_outer_core.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_backward_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_nkmin_eta_outer_core.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_backward_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_njmin_outer_core.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_backward_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_njmax_outer_core.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_backward_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_nimin_outer_core.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_backward_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_nimax_outer_core.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_backward_kernel, idx++, sizeof (cl_mem), (void *) &d_abs_boundary_npoin.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_backward_kernel, idx++, sizeof (cl_mem), (void *) &d_abs_boundary_ijk.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_backward_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ibool_outer_core.ocl));
 
     local_work_size[0] = blocksize;
@@ -332,13 +232,11 @@ void FC_FUNC_ (compute_stacey_acoustic_backward_gpu,
     dim3 threads(blocksize,1,1);
 
     compute_stacey_acoustic_backward_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_accel_outer_core.cuda,
-                                                                                   d_b_absorb_potential.cuda,
-                                                                                   interface_type,
+                                                                                   d_absorb_potential.cuda,
                                                                                    num_abs_boundary_faces,
                                                                                    d_abs_boundary_ispec.cuda,
-                                                                                   mp->d_nkmin_xi_outer_core.cuda,mp->d_nkmin_eta_outer_core.cuda,
-                                                                                   mp->d_njmin_outer_core.cuda,mp->d_njmax_outer_core.cuda,
-                                                                                   mp->d_nimin_outer_core.cuda,mp->d_nimax_outer_core.cuda,
+                                                                                   d_abs_boundary_npoin.cuda,
+                                                                                   d_abs_boundary_ijk.cuda,
                                                                                    mp->d_ibool_outer_core.cuda);
   }
 #endif
@@ -349,13 +247,11 @@ void FC_FUNC_ (compute_stacey_acoustic_backward_gpu,
 
     hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_stacey_acoustic_backward_kernel), grid, threads, 0, mp->compute_stream,
                                                                                  mp->d_b_accel_outer_core.hip,
-                                                                                 d_b_absorb_potential.hip,
-                                                                                 interface_type,
+                                                                                 d_absorb_potential.hip,
                                                                                  num_abs_boundary_faces,
                                                                                  d_abs_boundary_ispec.hip,
-                                                                                 mp->d_nkmin_xi_outer_core.hip,mp->d_nkmin_eta_outer_core.hip,
-                                                                                 mp->d_njmin_outer_core.hip,mp->d_njmax_outer_core.hip,
-                                                                                 mp->d_nimin_outer_core.hip,mp->d_nimax_outer_core.hip,
+                                                                                 d_abs_boundary_npoin.hip,
+                                                                                 d_abs_boundary_ijk.hip,
                                                                                  mp->d_ibool_outer_core.hip);
   }
 #endif
@@ -372,70 +268,30 @@ void FC_FUNC_ (compute_stacey_acoustic_backward_gpu,
 
 extern EXTERN_LANG
 void FC_FUNC_ (compute_stacey_acoustic_undoatt_gpu,
-               COMPUTE_STACEY_ACOUSTIC_UNDOATT_GPU) (long *Mesh_pointer_f,
-                                                     int *itype) {
+               COMPUTE_STACEY_ACOUSTIC_UNDOATT_GPU) (long *Mesh_pointer_f) {
+
   TRACE ("compute_stacey_acoustic_undoatt_gpu");
   //get mesh pointer out of Fortran integer container
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
-  int num_abs_boundary_faces = 0;
-
-  gpu_int_mem d_abs_boundary_ispec;
-  gpu_realw_mem d_abs_boundary_jacobian2D;
-  gpu_realw_mem d_wgllwgll;
-
   // checks if anything to do
   if (mp->simulation_type != 3 || mp->save_forward) return;
 
-  // absorbing boundary type
-  int interface_type = *itype;
-  switch (interface_type) {
-  case 4:
-    // xmin
-    num_abs_boundary_faces = mp->nspec2D_xmin_outer_core;
-    d_abs_boundary_ispec = mp->d_ibelm_xmin_outer_core;
-    d_abs_boundary_jacobian2D = mp->d_jacobian2D_xmin_outer_core;
-    d_wgllwgll = mp->d_wgllwgll_yz;
-    break;
-
-  case 5:
-    // xmax
-    num_abs_boundary_faces = mp->nspec2D_xmax_outer_core;
-    d_abs_boundary_ispec = mp->d_ibelm_xmax_outer_core;
-    d_abs_boundary_jacobian2D = mp->d_jacobian2D_xmax_outer_core;
-    d_wgllwgll = mp->d_wgllwgll_yz;
-    break;
-
-  case 6:
-    // ymin
-    num_abs_boundary_faces = mp->nspec2D_ymin_outer_core;
-    d_abs_boundary_ispec = mp->d_ibelm_ymin_outer_core;
-    d_abs_boundary_jacobian2D = mp->d_jacobian2D_ymin_outer_core;
-    d_wgllwgll = mp->d_wgllwgll_xz;
-    break;
-
-  case 7:
-    // ymax
-    num_abs_boundary_faces = mp->nspec2D_ymax_outer_core;
-    d_abs_boundary_ispec = mp->d_ibelm_ymax_outer_core;
-    d_abs_boundary_jacobian2D = mp->d_jacobian2D_ymax_outer_core;
-    d_wgllwgll = mp->d_wgllwgll_xz;
-    break;
-
-  case 8:
-    // zmin
-    num_abs_boundary_faces = mp->nspec2D_zmin_outer_core;
-    d_abs_boundary_ispec = mp->d_ibelm_bottom_outer_core;
-    d_abs_boundary_jacobian2D = mp->d_jacobian2D_bottom_outer_core;
-    d_wgllwgll = mp->d_wgllwgll_xy;
-    break;
-
-  default:
-    exit_on_error ("compute_stacey_acoustic_undoatt_gpu: unknown interface type");
-  }
+  // absorbing boundary
+  int num_abs_boundary_faces = mp->num_abs_boundary_faces_outer_core;
 
   // checks if anything to do
   if (num_abs_boundary_faces == 0) return;
+
+  gpu_int_mem d_abs_boundary_ispec;
+  gpu_int_mem d_abs_boundary_npoin;
+  gpu_int_mem d_abs_boundary_ijk;
+  gpu_realw_mem d_abs_boundary_jacobian2Dw;
+
+  d_abs_boundary_ispec = mp->d_abs_boundary_ispec_outer_core;
+  d_abs_boundary_npoin = mp->d_abs_boundary_npoin_outer_core;
+  d_abs_boundary_ijk = mp->d_abs_boundary_ijk_outer_core;
+  d_abs_boundary_jacobian2Dw = mp->d_abs_boundary_jacobian2Dw_outer_core;
 
   // way 1: Elapsed time: 4.385948e-03
   // > NGLLSQUARE==NGLL2==25, but we handle this inside kernel
@@ -456,17 +312,11 @@ void FC_FUNC_ (compute_stacey_acoustic_undoatt_gpu,
 
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_veloc_outer_core.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_accel_outer_core.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (int), (void *) &interface_type));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (int), (void *) &num_abs_boundary_faces));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &d_abs_boundary_ispec.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_nkmin_xi_outer_core.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_nkmin_eta_outer_core.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_njmin_outer_core.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_njmax_outer_core.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_nimin_outer_core.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_nimax_outer_core.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &d_abs_boundary_jacobian2D.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &d_wgllwgll.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &d_abs_boundary_npoin.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &d_abs_boundary_ijk.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &d_abs_boundary_jacobian2Dw.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ibool_outer_core.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_vp_outer_core.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (int), (void *) &mp->save_stacey));
@@ -488,17 +338,11 @@ void FC_FUNC_ (compute_stacey_acoustic_undoatt_gpu,
 
     compute_stacey_acoustic_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_veloc_outer_core.cuda,
                                                                           mp->d_b_accel_outer_core.cuda,
-                                                                          interface_type,
                                                                           num_abs_boundary_faces,
                                                                           d_abs_boundary_ispec.cuda,
-                                                                          mp->d_nkmin_xi_outer_core.cuda,
-                                                                          mp->d_nkmin_eta_outer_core.cuda,
-                                                                          mp->d_njmin_outer_core.cuda,
-                                                                          mp->d_njmax_outer_core.cuda,
-                                                                          mp->d_nimin_outer_core.cuda,
-                                                                          mp->d_nimax_outer_core.cuda,
-                                                                          d_abs_boundary_jacobian2D.cuda,
-                                                                          d_wgllwgll.cuda,
+                                                                          d_abs_boundary_npoin.cuda,
+                                                                          d_abs_boundary_ijk.cuda,
+                                                                          d_abs_boundary_jacobian2Dw.cuda,
                                                                           mp->d_ibool_outer_core.cuda,
                                                                           mp->d_vp_outer_core.cuda,
                                                                           mp->save_stacey,
@@ -513,17 +357,11 @@ void FC_FUNC_ (compute_stacey_acoustic_undoatt_gpu,
     hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_stacey_acoustic_kernel), grid, threads, 0, mp->compute_stream,
                                                                         mp->d_b_veloc_outer_core.hip,
                                                                         mp->d_b_accel_outer_core.hip,
-                                                                        interface_type,
                                                                         num_abs_boundary_faces,
                                                                         d_abs_boundary_ispec.hip,
-                                                                        mp->d_nkmin_xi_outer_core.hip,
-                                                                        mp->d_nkmin_eta_outer_core.hip,
-                                                                        mp->d_njmin_outer_core.hip,
-                                                                        mp->d_njmax_outer_core.hip,
-                                                                        mp->d_nimin_outer_core.hip,
-                                                                        mp->d_nimax_outer_core.hip,
-                                                                        d_abs_boundary_jacobian2D.hip,
-                                                                        d_wgllwgll.hip,
+                                                                        d_abs_boundary_npoin.hip,
+                                                                        d_abs_boundary_ijk.hip,
+                                                                        d_abs_boundary_jacobian2Dw.hip,
                                                                         mp->d_ibool_outer_core.hip,
                                                                         mp->d_vp_outer_core.hip,
                                                                         mp->save_stacey,

@@ -40,12 +40,12 @@
 
   integer,intent(in) :: NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM
 
-  integer,dimension(2,NSPEC2DMAX_YMIN_YMAX) :: nimin,nimax
-  integer,dimension(2,NSPEC2DMAX_XMIN_XMAX) :: njmin,njmax
-  integer,dimension(2,NSPEC2DMAX_XMIN_XMAX) :: nkmin_xi
-  integer,dimension(2,NSPEC2DMAX_YMIN_YMAX) :: nkmin_eta
+  integer,dimension(2,NSPEC2DMAX_YMIN_YMAX),intent(inout) :: nimin,nimax
+  integer,dimension(2,NSPEC2DMAX_XMIN_XMAX),intent(inout) :: njmin,njmax
+  integer,dimension(2,NSPEC2DMAX_XMIN_XMAX),intent(inout) :: nkmin_xi
+  integer,dimension(2,NSPEC2DMAX_YMIN_YMAX),intent(inout) :: nkmin_eta
 
-  logical :: iboun(6,nspec)
+  logical,intent(in) :: iboun(6,nspec)
 
   ! global element numbering
   integer :: ispec
@@ -137,24 +137,27 @@
   endif
 
   ! save these temporary arrays for the solver for Stacey conditions
-  if (NSPEC2DMAX_YMIN_YMAX > 0) then
-    ! This files will be saved with the help of ADIOS if the
-    ! ADIOS_FOR_ARRAYS_SOLVER flag is set to true in the Par_file
-    if (ADIOS_FOR_ARRAYS_SOLVER) then
-      call get_absorb_adios(iregion, &
-                            nimin, nimax, njmin, njmax, nkmin_xi, nkmin_eta, &
-                            NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX)
-    else
-      open(unit=IOUT,file=prname(1:len_trim(prname))//'stacey.bin', &
-            status='unknown',form='unformatted',action='write',iostat=ier)
-      if (ier /= 0 ) call exit_MPI(myrank,'Error opening stacey.bin file')
-      write(IOUT) nimin
-      write(IOUT) nimax
-      write(IOUT) njmin
-      write(IOUT) njmax
-      write(IOUT) nkmin_xi
-      write(IOUT) nkmin_eta
-      close(IOUT)
+  ! old version: left here for reference...
+  if (.false.) then
+    if (NSPEC2DMAX_YMIN_YMAX > 0) then
+      ! This files will be saved with the help of ADIOS if the
+      ! ADIOS_FOR_ARRAYS_SOLVER flag is set to true in the Par_file
+      if (ADIOS_FOR_ARRAYS_SOLVER) then
+        call get_absorb_adios(iregion, &
+                              nimin, nimax, njmin, njmax, nkmin_xi, nkmin_eta, &
+                              NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX)
+      else
+        open(unit=IOUT,file=prname(1:len_trim(prname))//'stacey.old_format.bin', &
+              status='unknown',form='unformatted',action='write',iostat=ier)
+        if (ier /= 0 ) call exit_MPI(myrank,'Error opening stacey.old_format.bin file')
+        write(IOUT) nimin
+        write(IOUT) nimax
+        write(IOUT) njmin
+        write(IOUT) njmax
+        write(IOUT) nkmin_xi
+        write(IOUT) nkmin_eta
+        close(IOUT)
+      endif
     endif
   endif
 
@@ -185,9 +188,14 @@
     jacobian2D_xmin,jacobian2D_xmax,jacobian2D_ymin,jacobian2D_ymax, &
     jacobian2D_bottom, &
     nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
-    nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta, &
     prname
 
+  ! absorb
+  use regions_mesh_par2, only: nimin, nimax, njmin, njmax, nkmin_xi,nkmin_eta, &
+    num_abs_boundary_faces,abs_boundary_ispec,abs_boundary_npoin, &
+    abs_boundary_ijk,abs_boundary_normal,abs_boundary_jacobian2Dw
+
+  ! input parameters
   use shared_parameters, only: REGIONAL_MESH_CUTOFF,ADIOS_FOR_ARRAYS_SOLVER
 
   ! debug
@@ -199,16 +207,7 @@
   integer,intent(in) :: NSPEC2D_BOTTOM
 
   ! local parameters
-  ! absorbing boundary arrays
-  integer :: num_abs_boundary_faces
-  integer, dimension(:), allocatable :: abs_boundary_ispec
-  integer, dimension(:), allocatable :: abs_boundary_npoin
-  integer, dimension(:,:,:), allocatable :: abs_boundary_ijk
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: abs_boundary_normal
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: abs_boundary_jacobian2Dw
-
   integer :: iface,igll,i,j,k,ispec,ispec2D,ier
-
   real(kind=CUSTOM_REAL) :: nx,ny,nz
   double precision :: weight
   double precision, dimension(NGLLX,NGLLY) :: wgllwgll_xy
@@ -216,15 +215,15 @@
   double precision, dimension(NGLLY,NGLLZ) :: wgllwgll_yz
   logical :: add_bottom_boundary
 
-  ! assumes NGLLX == NGLLY == NGLLZ
-  integer, parameter :: NGLLSQUARE = NGLLX * NGLLY
-
   ! debugging
   character(len=MAX_STRING_LEN) :: filename
   integer :: ipoints,iglob
   integer, dimension(:), allocatable :: tmp_array_points,tmp_array_elements
 
   logical, parameter :: DEBUG = .false.
+
+  ! initializes
+  num_abs_boundary_faces = 0
 
   ! checks if anything to do
   ! no Stacey boundary on inner core
@@ -251,13 +250,12 @@
   ! initializes bottom boundary flag
   add_bottom_boundary = .false.
 
-  ! only for outer core or in case of regional mesh cut-offs
+  ! adds bottom surface only for outer core or in case of regional mesh cut-offs for crust-mantle region
   if (iregion == IREGION_OUTER_CORE .or. &
       (REGIONAL_MESH_CUTOFF .and. iregion == IREGION_CRUST_MANTLE)) &
     add_bottom_boundary = .true.
 
   ! counts number of faces
-  num_abs_boundary_faces = 0
   ! xmin
   if (NCHUNKS == 1 .or. ichunk == CHUNK_AC) then
     do ispec2D = 1,nspec2D_xmin
@@ -303,9 +301,6 @@
     print *,'debug: REGIONAL_MESH_CUTOFF: ',REGIONAL_MESH_CUTOFF,' add_bottom_boundary: ',add_bottom_boundary
     print *,'debug: num_abs_boundary_faces = ',num_abs_boundary_faces
   endif
-
-  ! checks if anything to do for this slice
-  if (num_abs_boundary_faces == 0) return
 
   ! allocates absorbing boundary arrays
   allocate(abs_boundary_ispec(num_abs_boundary_faces),stat=ier)
@@ -508,32 +503,31 @@
     call exit_MPI(myrank,'Invalid number of absorbing boundary faces')
   endif
 
-  ! stores arrays
-  if (DEBUG) then
-    ! saves arrays to file
-    if (ADIOS_FOR_ARRAYS_SOLVER) then
-      call get_absorb_stacey_boundary_adios(iregion, num_abs_boundary_faces, &
-                                            abs_boundary_ispec,abs_boundary_npoin, &
-                                            abs_boundary_ijk,abs_boundary_normal,abs_boundary_jacobian2Dw)
-    else
-      ! binary format
-      open(unit=IOUT,file=prname(1:len_trim(prname))//'stacey_boundary_arrays.bin', &
-           status='unknown',form='unformatted',action='write',iostat=ier)
-      if (ier /= 0 ) call exit_MPI(myrank,'Error opening stacey_boundary_arrays.bin file')
+  ! saves arrays to file
+  if (ADIOS_FOR_ARRAYS_SOLVER) then
+    call get_absorb_stacey_boundary_adios(iregion, num_abs_boundary_faces, &
+                                          abs_boundary_ispec,abs_boundary_npoin, &
+                                          abs_boundary_ijk,abs_boundary_normal,abs_boundary_jacobian2Dw)
+  else
+    ! binary format
+    open(unit=IOUT,file=prname(1:len_trim(prname))//'stacey.bin', &
+         status='unknown',form='unformatted',action='write',iostat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error opening stacey_boundary_arrays.bin file')
 
-      write(IOUT) num_abs_boundary_faces
+    write(IOUT) num_abs_boundary_faces
 
-      if (num_abs_boundary_faces > 0) then
-        write(IOUT) abs_boundary_ispec
-        write(IOUT) abs_boundary_npoin
-        write(IOUT) abs_boundary_ijk
+    if (num_abs_boundary_faces > 0) then
+      write(IOUT) abs_boundary_ispec
+      write(IOUT) abs_boundary_npoin
+      write(IOUT) abs_boundary_ijk
+      write(IOUT) abs_boundary_jacobian2Dw
+      ! normals only needed for elastic boundary conditions
+      if (iregion == IREGION_CRUST_MANTLE) then
         write(IOUT) abs_boundary_normal
-        write(IOUT) abs_boundary_jacobian2Dw
       endif
-
-      close(IOUT)
     endif
 
+    close(IOUT)
   endif
 
   ! debug
@@ -587,13 +581,5 @@
 
     deallocate(tmp_array_elements)
   endif
-
-  ! free arrays for now...
-  ! will be used later to replace current stacey looping over different xmin/xmax/.. sides
-  deallocate(abs_boundary_ispec)
-  deallocate(abs_boundary_ijk)
-  deallocate(abs_boundary_jacobian2Dw)
-  deallocate(abs_boundary_normal)
-  deallocate(abs_boundary_npoin)
 
   end subroutine get_absorb_create_Stacey_boundary_arrays

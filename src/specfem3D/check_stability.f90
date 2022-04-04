@@ -206,7 +206,7 @@
   if (COMPUTE_AND_STORE_STRAIN) then
     if (.not. GPU_MODE) then
       ! on CPU
-      Strain_norm = maxval(abs(eps_trace_over_3_crust_mantle))
+      if (NSPEC_CRUST_MANTLE_STRAIN_ONLY > 0) Strain_norm = maxval(abs(eps_trace_over_3_crust_mantle))
       Strain2_norm= max( maxval(abs(epsilondev_xx_crust_mantle)), &
                          maxval(abs(epsilondev_yy_crust_mantle)), &
                          maxval(abs(epsilondev_xy_crust_mantle)), &
@@ -217,7 +217,7 @@
       call check_norm_strain_from_device(Strain_norm,Strain2_norm,Mesh_pointer)
     endif
 
-    call max_all_cr(Strain_norm,Strain_norm_all)
+    if (NSPEC_CRUST_MANTLE_STRAIN_ONLY > 0) call max_all_cr(Strain_norm,Strain_norm_all)
     call max_all_cr(Strain2_norm,Strain2_norm_all)
   endif
 
@@ -280,7 +280,9 @@
     endif
 
     if (COMPUTE_AND_STORE_STRAIN) then
-      write(IMAIN,*) 'Max of strain, eps_trace_over_3_crust_mantle =',Strain_norm_all
+      if (NSPEC_CRUST_MANTLE_STRAIN_ONLY > 0) &
+        write(IMAIN,*) 'Max of strain, eps_trace_over_3_crust_mantle =',Strain_norm_all
+
       write(IMAIN,*) 'Max of strain, epsilondev_crust_mantle  =',Strain2_norm_all
     endif
 

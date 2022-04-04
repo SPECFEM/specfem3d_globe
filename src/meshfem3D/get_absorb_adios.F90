@@ -55,6 +55,8 @@
                               nimin, nimax, njmin, njmax, nkmin_xi, nkmin_eta, &
                               NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX)
 
+! old version: not used anymore, but left for reference...
+
   use constants
 
   use meshfem3D_par, only: LOCAL_PATH
@@ -89,7 +91,7 @@
 
   ! Append the actual file name.
   !outputname = trim(reg_name) // "stacey.bp"
-  outputname = get_adios_filename(trim(LOCAL_PATH) // "/stacey")
+  outputname = get_adios_filename(trim(LOCAL_PATH) // "/stacey.old_format")
 
   ! save these temporary arrays for the solver for Stacey conditions
   write(group_name,"('SPECFEM3D_GLOBE_STACEY_reg',i1)") iregion
@@ -156,7 +158,7 @@
                                               abs_boundary_ijk,abs_boundary_normal,abs_boundary_jacobian2Dw)
 
 
-  use constants, only: NDIM,NGLLX,NGLLY,CUSTOM_REAL,MAX_STRING_LEN,myrank
+  use constants, only: NDIM,NGLLX,NGLLY,NGLLSQUARE,CUSTOM_REAL,MAX_STRING_LEN,myrank,IREGION_CRUST_MANTLE
 
   use meshfem3D_par, only: LOCAL_PATH
 
@@ -164,9 +166,6 @@
   use manager_adios
 
   implicit none
-
-  ! assumes NGLLX == NGLLY == NGLLZ
-  integer, parameter :: NGLLSQUARE = NGLLX * NGLLY
 
   integer,intent(in) :: iregion
 
@@ -201,10 +200,10 @@
 
   ! Append the actual file name.
   !outputname = trim(reg_name) // "stacey.bp"
-  outputname = get_adios_filename(trim(LOCAL_PATH) // "/stacey_boundary")
+  outputname = get_adios_filename(trim(LOCAL_PATH) // "/stacey")
 
   ! save these temporary arrays for the solver for Stacey conditions
-  write(group_name,"('SPECFEM3D_GLOBE_STACEY_BOUNDARY_reg',i1)") iregion
+  write(group_name,"('SPECFEM3D_GLOBE_STACEY_reg',i1)") iregion
 
   ! set the adios group size to 0 before incremented by calls to helpers functions.
   call init_adios_group(myadios_group,group_name)
@@ -223,13 +222,16 @@
   call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, region_name, &
                                    STRINGIFY_VAR(abs_boundary_ijk))
 
-  local_dim = NDIM * NGLLSQUARE * num_abs_boundary_faces_max
-  call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, region_name, &
-                                   STRINGIFY_VAR(abs_boundary_normal))
-
   local_dim = NGLLSQUARE * num_abs_boundary_faces_max
   call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, region_name, &
                                    STRINGIFY_VAR(abs_boundary_jacobian2Dw))
+
+  ! normals only needed for elastic boundary conditions
+  if (iregion == IREGION_CRUST_MANTLE) then
+    local_dim = NDIM * NGLLSQUARE * num_abs_boundary_faces_max
+    call define_adios_global_array1D(myadios_group, group_size_inc, local_dim, region_name, &
+                                     STRINGIFY_VAR(abs_boundary_normal))
+  endif
 
   !--- Open an ADIOS handler to the restart file. ---------
   if (num_regions_written == 0) then
@@ -260,13 +262,16 @@
   call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs_adios, &
                                    local_dim, trim(region_name) // STRINGIFY_VAR(abs_boundary_ijk))
 
-  local_dim = NDIM * NGLLSQUARE * num_abs_boundary_faces_max
-  call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs_adios, &
-                                   local_dim, trim(region_name) // STRINGIFY_VAR(abs_boundary_normal))
-
   local_dim = NGLLSQUARE * num_abs_boundary_faces_max
   call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs_adios, &
                                    local_dim, trim(region_name) // STRINGIFY_VAR(abs_boundary_jacobian2Dw))
+
+  ! normals only needed for elastic boundary conditions
+  if (iregion == IREGION_CRUST_MANTLE) then
+    local_dim = NDIM * NGLLSQUARE * num_abs_boundary_faces_max
+    call write_adios_global_1d_array(myadios_file, myadios_group, myrank, sizeprocs_adios, &
+                                     local_dim, trim(region_name) // STRINGIFY_VAR(abs_boundary_normal))
+  endif
 
   !--- Reset the path to zero and perform the actual write to disk
   call write_adios_perform(myadios_file)

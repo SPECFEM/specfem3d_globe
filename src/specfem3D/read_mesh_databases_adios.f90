@@ -979,12 +979,13 @@ subroutine read_mesh_databases_stacey_adios()
   implicit none
 
   ! local parameters
+  integer :: ier
   ! processor identification
   character(len=MAX_STRING_LEN) :: file_name
   ! ADIOS variables
-  integer(kind=8) :: local_dim
   integer(kind=8) :: sel
   integer(kind=8), dimension(1) :: start, count
+  integer(kind=8) :: offset_ispec,offset_ijk,offset_jacobian,offset_normal
 
   character(len=128) :: region_name
 
@@ -999,33 +1000,90 @@ subroutine read_mesh_databases_stacey_adios()
     write(region_name,"('reg',i1, '/')") IREGION_CRUST_MANTLE
 
     ! read arrays for Stacey conditions
-    local_dim = 2*NSPEC2DMAX_XMIN_XMAX_CM
-    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-    call set_selection_boundingbox(sel, start, count)
+    call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "num_abs_boundary_faces", &
+                           num_abs_boundary_faces_crust_mantle)
 
-    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                   trim(region_name) // "njmin/array", njmin_crust_mantle)
-    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                   trim(region_name) // "njmax/array", njmax_crust_mantle)
-    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                   trim(region_name) // "nkmin_xi/array", nkmin_xi_crust_mantle)
+    ! reads in arrays
+    if (num_abs_boundary_faces_crust_mantle > 0) then
+      ! allocates absorbing boundary arrays
+      allocate(abs_boundary_ispec_crust_mantle(num_abs_boundary_faces_crust_mantle),stat=ier)
+      if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_ispec')
+      allocate(abs_boundary_ijk_crust_mantle(3,NGLLSQUARE,num_abs_boundary_faces_crust_mantle),stat=ier)
+      if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_ijk')
+      allocate(abs_boundary_jacobian2Dw_crust_mantle(NGLLSQUARE,num_abs_boundary_faces_crust_mantle),stat=ier)
+      if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_jacobian2Dw')
+      allocate(abs_boundary_normal_crust_mantle(NDIM,NGLLSQUARE,num_abs_boundary_faces_crust_mantle),stat=ier)
+      if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_normal')
+      allocate(abs_boundary_npoin_crust_mantle(num_abs_boundary_faces_crust_mantle),stat=ier)
+      if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_npoin')
+      if (ier /= 0) stop 'Error allocating array abs_boundary_ispec etc.'
 
-    call read_adios_perform(myadios_file)
-    call delete_adios_selection(sel)
+      ! gets offsets
+      call read_adios_scalar(myadios_file,myadios_group,myrank, &
+                             trim(region_name) // "abs_boundary_ispec/offset",offset_ispec)
+      call read_adios_scalar(myadios_file,myadios_group,myrank, &
+                             trim(region_name) // "abs_boundary_ijk/offset",offset_ijk)
+      call read_adios_scalar(myadios_file,myadios_group,myrank, &
+                             trim(region_name) // "abs_boundary_jacobian2Dw/offset",offset_jacobian)
+      call read_adios_scalar(myadios_file,myadios_group,myrank, &
+                             trim(region_name) // "abs_boundary_normal/offset",offset_normal)
 
-    local_dim = 2*NSPEC2DMAX_YMIN_YMAX_CM
-    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-    call set_selection_boundingbox(sel, start, count)
+      ! we set offset values which usually are equal to local_dim * myrank.
+      ! this is more flexible than setting it directly as local_dim * myrank in case local_dim varies for different processes.
+      start(1) = offset_ispec
+      count(1) = int(num_abs_boundary_faces_crust_mantle,kind=8)
+      call set_selection_boundingbox(sel, start, count)
+      ! ispec and npoin arrays have same dimensions
+      call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                     trim(region_name) // "abs_boundary_ispec/array", abs_boundary_ispec_crust_mantle)
+      call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                     trim(region_name) // "abs_boundary_npoin/array", abs_boundary_npoin_crust_mantle)
+      call read_adios_perform(myadios_file)
+      call delete_adios_selection(sel)
 
-    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                   trim(region_name) // "nimin/array", nimin_crust_mantle)
-    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                   trim(region_name) // "nimax/array", nimax_crust_mantle)
-    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                   trim(region_name) // "nkmin_eta/array", nkmin_eta_crust_mantle)
+      ! ijk array
+      start(1) = offset_ijk
+      count(1) = int(3 * NGLLSQUARE,kind=8) * int(num_abs_boundary_faces_crust_mantle,kind=8)
+      call set_selection_boundingbox(sel, start, count)
+      call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                     trim(region_name) // "abs_boundary_ijk/array", abs_boundary_ijk_crust_mantle)
+      call read_adios_perform(myadios_file)
+      call delete_adios_selection(sel)
 
-    call read_adios_perform(myadios_file)
-    call delete_adios_selection(sel)
+      ! jacobian array
+      start(1) = offset_jacobian
+      count(1) = int(NGLLSQUARE,kind=8) * int(num_abs_boundary_faces_crust_mantle,kind=8)
+      call set_selection_boundingbox(sel, start, count)
+      call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                     trim(region_name) // "abs_boundary_jacobian2Dw/array", &
+                                     abs_boundary_jacobian2Dw_crust_mantle)
+      call read_adios_perform(myadios_file)
+      call delete_adios_selection(sel)
+
+      ! normal array
+      start(1) = offset_normal
+      count(1) = int(NDIM * NGLLSQUARE,kind=8) * int(num_abs_boundary_faces_crust_mantle,kind=8)
+      call set_selection_boundingbox(sel, start, count)
+      call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                     trim(region_name) // "abs_boundary_normal/array", abs_boundary_normal_crust_mantle)
+      call read_adios_perform(myadios_file)
+      call delete_adios_selection(sel)
+    else
+      ! dummy arrays
+      allocate(abs_boundary_ispec_crust_mantle(1),stat=ier)
+      if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_ispec')
+      allocate(abs_boundary_ijk_crust_mantle(1,1,1),stat=ier)
+      if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_ijk')
+      allocate(abs_boundary_jacobian2Dw_crust_mantle(1,1),stat=ier)
+      if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_jacobian2Dw')
+      allocate(abs_boundary_normal_crust_mantle(1,1,1),stat=ier)
+      if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_normal')
+      allocate(abs_boundary_npoin_crust_mantle(1),stat=ier)
+      if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_npoin')
+      abs_boundary_ispec_crust_mantle(:) = 0; abs_boundary_npoin_crust_mantle(:) = 0
+      abs_boundary_ijk_crust_mantle(:,:,:) = 0
+      abs_boundary_jacobian2Dw_crust_mantle(:,:) = 0.0; abs_boundary_normal_crust_mantle(:,:,:) = 0.0
+    endif
   endif
 
   ! outer core
@@ -1033,33 +1091,75 @@ subroutine read_mesh_databases_stacey_adios()
     write(region_name,"('reg',i1, '/')") IREGION_OUTER_CORE
 
     ! read arrays for Stacey conditions
-    local_dim = 2*NSPEC2DMAX_XMIN_XMAX_OC
-    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-    call set_selection_boundingbox(sel, start, count)
+    call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "num_abs_boundary_faces", &
+                           num_abs_boundary_faces_outer_core)
 
-    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                   trim(region_name) // "njmin/array", njmin_outer_core)
-    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                   trim(region_name) // "njmax/array", njmax_outer_core)
-    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                   trim(region_name) // "nkmin_xi/array", nkmin_xi_outer_core)
+    ! reads in arrays
+    if (num_abs_boundary_faces_outer_core > 0) then
+      ! allocates absorbing boundary arrays
+      allocate(abs_boundary_ispec_outer_core(num_abs_boundary_faces_outer_core),stat=ier)
+      if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_ispec')
+      allocate(abs_boundary_ijk_outer_core(3,NGLLSQUARE,num_abs_boundary_faces_outer_core),stat=ier)
+      if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_ijk')
+      allocate(abs_boundary_jacobian2Dw_outer_core(NGLLSQUARE,num_abs_boundary_faces_outer_core),stat=ier)
+      if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_jacobian2Dw')
+      allocate(abs_boundary_npoin_outer_core(num_abs_boundary_faces_outer_core),stat=ier)
+      if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_npoin')
+      if (ier /= 0) stop 'Error allocating array abs_boundary_ispec etc.'
 
-    call read_adios_perform(myadios_file)
-    call delete_adios_selection(sel)
+      ! gets offsets
+      call read_adios_scalar(myadios_file,myadios_group,myrank, &
+                             trim(region_name) // "abs_boundary_ispec/offset",offset_ispec)
+      call read_adios_scalar(myadios_file,myadios_group,myrank, &
+                             trim(region_name) // "abs_boundary_ijk/offset",offset_ijk)
+      call read_adios_scalar(myadios_file,myadios_group,myrank, &
+                             trim(region_name) // "abs_boundary_jacobian2Dw/offset",offset_jacobian)
 
-    local_dim = 2*NSPEC2DMAX_YMIN_YMAX_OC
-    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
-    call set_selection_boundingbox(sel, start, count)
+      ! we set offset values which usually are equal to local_dim * myrank.
+      ! this is more flexible than setting it directly as local_dim * myrank in case local_dim varies for different processes.
+      start(1) = offset_ispec
+      count(1) = int(num_abs_boundary_faces_outer_core,kind=8)
+      call set_selection_boundingbox(sel, start, count)
+      ! ispec and npoin arrays have same dimensions
+      call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                     trim(region_name) // "abs_boundary_ispec/array", abs_boundary_ispec_outer_core)
+      call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                     trim(region_name) // "abs_boundary_npoin/array", abs_boundary_npoin_outer_core)
+      call read_adios_perform(myadios_file)
+      call delete_adios_selection(sel)
 
-    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                   trim(region_name) // "nimin/array", nimin_outer_core)
-    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                   trim(region_name) // "nimax/array", nimax_outer_core)
-    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
-                                   trim(region_name) // "nkmin_eta/array", nkmin_eta_outer_core)
+      ! ijk array
+      start(1) = offset_ijk
+      count(1) = int(3 * NGLLSQUARE,kind=8) * int(num_abs_boundary_faces_outer_core,kind=8)
+      call set_selection_boundingbox(sel, start, count)
+      call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                     trim(region_name) // "abs_boundary_ijk/array", abs_boundary_ijk_outer_core)
+      call read_adios_perform(myadios_file)
+      call delete_adios_selection(sel)
 
-    call read_adios_perform(myadios_file)
-    call delete_adios_selection(sel)
+      ! jacobian array
+      start(1) = offset_jacobian
+      count(1) = int(NGLLSQUARE,kind=8) * int(num_abs_boundary_faces_outer_core,kind=8)
+      call set_selection_boundingbox(sel, start, count)
+      call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                     trim(region_name) // "abs_boundary_jacobian2Dw/array", &
+                                     abs_boundary_jacobian2Dw_outer_core)
+      call read_adios_perform(myadios_file)
+      call delete_adios_selection(sel)
+    else
+      ! dummy arrays
+      allocate(abs_boundary_ispec_outer_core(1),stat=ier)
+      if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_ispec')
+      allocate(abs_boundary_ijk_outer_core(1,1,1),stat=ier)
+      if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_ijk')
+      allocate(abs_boundary_jacobian2Dw_outer_core(1,1),stat=ier)
+      if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_jacobian2Dw')
+      allocate(abs_boundary_npoin_outer_core(1),stat=ier)
+      if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_npoin')
+      abs_boundary_ispec_outer_core(:) = 0; abs_boundary_npoin_outer_core(:) = 0
+      abs_boundary_ijk_outer_core(:,:,:) = 0
+      abs_boundary_jacobian2Dw_outer_core(:,:) = 0.0
+    endif
   endif
 
   ! closes adios file

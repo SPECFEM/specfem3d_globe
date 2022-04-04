@@ -321,6 +321,14 @@
   integer :: nspec_stacey
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rho_vp,rho_vs
 
+  ! absorbing boundary arrays
+  integer :: num_abs_boundary_faces
+  integer, dimension(:), allocatable :: abs_boundary_ispec
+  integer, dimension(:), allocatable :: abs_boundary_npoin
+  integer, dimension(:,:,:), allocatable :: abs_boundary_ijk
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: abs_boundary_normal
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: abs_boundary_jacobian2Dw
+
   ! attenuation
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),   allocatable :: Qmu_store
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: tau_e_store

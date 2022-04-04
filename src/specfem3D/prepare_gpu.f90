@@ -39,7 +39,6 @@
   implicit none
 
   ! local parameters
-  integer :: nspec2D_zmin_crust_mantle_cutoff
   real :: free_mb,used_mb,total_mb
   logical :: USE_3D_ATTENUATION_ARRAYS
 
@@ -200,42 +199,15 @@
     endif
     call synchronize_all()
 
-    ! crust/mantle bottom surface absorption
-    if (REGIONAL_MESH_CUTOFF) then
-      nspec2D_zmin_crust_mantle_cutoff = nspec2D_zmin_crust_mantle
-    else
-      ! no bottom surface to absorb in crust/mantle
-      nspec2D_zmin_crust_mantle_cutoff = 0
-    endif
-
     call prepare_fields_absorb_device(Mesh_pointer, &
-                                      nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle, &
-                                      nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle, &
-                                      nspec2D_zmin_crust_mantle_cutoff, &
-                                      NSPEC2DMAX_XMIN_XMAX_CM,NSPEC2DMAX_YMIN_YMAX_CM, &
-                                      nimin_crust_mantle,nimax_crust_mantle, &
-                                      njmin_crust_mantle,njmax_crust_mantle, &
-                                      nkmin_xi_crust_mantle,nkmin_eta_crust_mantle, &
-                                      ibelm_xmin_crust_mantle,ibelm_xmax_crust_mantle, &
-                                      ibelm_ymin_crust_mantle,ibelm_ymax_crust_mantle, &
-                                      normal_xmin_crust_mantle,normal_xmax_crust_mantle, &
-                                      normal_ymin_crust_mantle,normal_ymax_crust_mantle, &
-                                      normal_bottom_crust_mantle, &
-                                      jacobian2D_xmin_crust_mantle,jacobian2D_xmax_crust_mantle, &
-                                      jacobian2D_ymin_crust_mantle,jacobian2D_ymax_crust_mantle, &
-                                      jacobian2D_bottom_crust_mantle, &
+                                      num_abs_boundary_faces_crust_mantle, &
+                                      abs_boundary_ispec_crust_mantle,abs_boundary_npoin_crust_mantle, &
+                                      abs_boundary_ijk_crust_mantle,abs_boundary_jacobian2Dw_crust_mantle, &
+                                      abs_boundary_normal_crust_mantle, &
                                       rho_vp_crust_mantle,rho_vs_crust_mantle, &
-                                      nspec2D_xmin_outer_core,nspec2D_xmax_outer_core, &
-                                      nspec2D_ymin_outer_core,nspec2D_ymax_outer_core, &
-                                      nspec2D_zmin_outer_core, &
-                                      NSPEC2DMAX_XMIN_XMAX_OC,NSPEC2DMAX_YMIN_YMAX_OC, &
-                                      nimin_outer_core,nimax_outer_core, &
-                                      njmin_outer_core,njmax_outer_core, &
-                                      nkmin_xi_outer_core,nkmin_eta_outer_core, &
-                                      ibelm_xmin_outer_core,ibelm_xmax_outer_core, &
-                                      ibelm_ymin_outer_core,ibelm_ymax_outer_core, &
-                                      jacobian2D_xmin_outer_core,jacobian2D_xmax_outer_core, &
-                                      jacobian2D_ymin_outer_core,jacobian2D_ymax_outer_core, &
+                                      num_abs_boundary_faces_outer_core, &
+                                      abs_boundary_ispec_outer_core,abs_boundary_npoin_outer_core, &
+                                      abs_boundary_ijk_outer_core,abs_boundary_jacobian2Dw_outer_core, &
                                       vp_outer_core)
     call synchronize_all()
   endif
@@ -455,7 +427,7 @@
 
     ! local parameters
     double precision :: memory_size
-    integer,parameter :: NGLL2 = 25
+    integer,parameter :: NGLL2 = NGLLSQUARE
     integer,parameter :: NGLL3 = 125
     integer,parameter :: NGLL3_PADDED = 128
     integer :: NSPEC_AB,NGLOB_AB
@@ -547,28 +519,22 @@
     if (NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
       ! d_rho_vp_crust_mantle,..
       memory_size = memory_size + 2.d0 * NGLL3 * NSPEC_CRUST_MANTLE * dble(CUSTOM_REAL)
-      ! d_nkmin_xi_crust_mantle,..,d_nkmin_eta_crust_mantle,..
-      NSPEC_2 = NSPEC2DMAX_XMIN_XMAX_CM + NSPEC2DMAX_YMIN_YMAX_CM
-      memory_size = memory_size + 6.d0 * NSPEC_2 * dble(SIZE_INTEGER)
-      ! d_ibelm_xmin_crust_mantle,..
-      NSPEC_2 = nspec2D_xmin_crust_mantle + nspec2D_xmax_crust_mantle
-      memory_size = memory_size + NSPEC_2 * dble(SIZE_INTEGER)
-      ! d_normal_xmax_crust_mantle,..
-      memory_size = memory_size + NDIM * NGLL2 * NSPEC_2 * dble(CUSTOM_REAL)
-      ! d_jacobian2D_xmax_crust_mantle,..
-      memory_size = memory_size + NGLL2 * NSPEC_2 * dble(CUSTOM_REAL)
-      ! d_ibelm_ymin_crust_mantle
-      NSPEC_2 = nspec2D_ymin_crust_mantle + nspec2D_ymax_crust_mantle
-      memory_size = memory_size + NSPEC_2 * dble(SIZE_INTEGER)
-      ! d_normal_ymin_crust_mantle,..
-      memory_size = memory_size + NDIM * NGLL2 * NSPEC_2 * dble(CUSTOM_REAL)
-      ! d_jacobian2D_ymin_crust_mantle,..
-      memory_size = memory_size + NGLL2 * NSPEC_2 * dble(CUSTOM_REAL)
+      ! d_abs_boundary_ispec, **_npoin
+      memory_size = memory_size + 2.d0 * num_abs_boundary_faces_crust_mantle * dble(SIZE_INTEGER)
+      ! d_abs_boundary_ijk
+      memory_size = memory_size + 3.d0 * NGLLSQUARE * num_abs_boundary_faces_crust_mantle * dble(SIZE_INTEGER)
+      ! d_abs_boundary_normal
+      memory_size = memory_size + NDIM * NGLLSQUARE * num_abs_boundary_faces_crust_mantle * dble(CUSTOM_REAL)
+      ! d_abs_boundary_jacobian2Dw
+      memory_size = memory_size + NGLLSQUARE * num_abs_boundary_faces_crust_mantle * dble(CUSTOM_REAL)
       ! d_vp_outer_core
       memory_size = memory_size + NGLL3 * NSPEC_OUTER_CORE * dble(CUSTOM_REAL)
-      ! d_nkmin_xi_outer_core,..,d_nkmin_eta_outer_core,..
-      NSPEC_2 = NSPEC2DMAX_XMIN_XMAX_OC + NSPEC2DMAX_YMIN_YMAX_OC
-      memory_size = memory_size + 6.d0 * NSPEC_2 * dble(SIZE_INTEGER)
+      ! d_abs_boundary_ispec, **_npoin
+      memory_size = memory_size + 2.d0 * num_abs_boundary_faces_outer_core * dble(SIZE_INTEGER)
+      ! d_abs_boundary_ijk
+      memory_size = memory_size + 3.d0 * NGLLSQUARE * num_abs_boundary_faces_outer_core * dble(SIZE_INTEGER)
+      ! d_abs_boundary_jacobian2Dw
+      memory_size = memory_size + NGLLSQUARE * num_abs_boundary_faces_outer_core * dble(CUSTOM_REAL)
     endif
 
     ! MPI buffers

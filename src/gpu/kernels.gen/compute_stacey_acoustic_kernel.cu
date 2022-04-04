@@ -81,7 +81,8 @@
 #define BLOCKSIZE_TRANSFER 256
 #endif
 
-__global__ void compute_stacey_acoustic_kernel(const float * potential_dot_acoustic, float * potential_dot_dot_acoustic, const int interface_type, const int num_abs_boundary_faces, const int * abs_boundary_ispec, const int * nkmin_xi, const int * nkmin_eta, const int * njmin, const int * njmax, const int * nimin, const int * nimax, const float * abs_boundary_jacobian2D, const float * wgllwgll, const int * ibool, const float * vpstore, const int SAVE_STACEY, float * b_absorb_potential){
+__global__ void compute_stacey_acoustic_kernel(const float * potential_dot_acoustic, float * potential_dot_dot_acoustic, const int num_abs_boundary_faces, const int * abs_boundary_ispec, const int * abs_boundary_npoin, const int * abs_boundary_ijk, const float * abs_boundary_jacobian2Dw, const int * ibool, const float * vpstore, const int SAVE_STACEY, float * b_absorb_potential){
+  int npoin;
   int igll;
   int iface;
   int i;
@@ -90,96 +91,32 @@ __global__ void compute_stacey_acoustic_kernel(const float * potential_dot_acous
   int iglob;
   int ispec;
   float sn;
-  float jacobianw;
-  float fac1;
+  float weight;
 
   igll = threadIdx.x;
   iface = blockIdx.x + (blockIdx.y) * (gridDim.x);
 
   if (iface < num_abs_boundary_faces) {
-    ispec = abs_boundary_ispec[iface] - (1);
+    npoin = abs_boundary_npoin[iface];
 
-    switch (interface_type) {
-      case 4 :
-        if (nkmin_xi[INDEX2(2, 0, iface)] == 0 || njmin[INDEX2(2, 0, iface)] == 0) {
-           return ;
-        }
-        i = 0;
-        k = (igll) / (NGLLX);
-        j = igll - ((k) * (NGLLX));
-        if (k < nkmin_xi[INDEX2(2, 0, iface)] - (1) || k > NGLLX - (1)) {
-           return ;
-        }
-        if (j < njmin[INDEX2(2, 0, iface)] - (1) || j > njmax[INDEX2(2, 0, iface)] - (1)) {
-           return ;
-        }
-        fac1 = wgllwgll[(k) * (NGLLX) + j];
-        break;
-      case 5 :
-        if (nkmin_xi[INDEX2(2, 1, iface)] == 0 || njmin[INDEX2(2, 1, iface)] == 0) {
-           return ;
-        }
-        i = NGLLX - (1);
-        k = (igll) / (NGLLX);
-        j = igll - ((k) * (NGLLX));
-        if (k < nkmin_xi[INDEX2(2, 1, iface)] - (1) || k > NGLLX - (1)) {
-           return ;
-        }
-        if (j < njmin[INDEX2(2, 1, iface)] - (1) || j > njmax[INDEX2(2, 1, iface)] - (1)) {
-           return ;
-        }
-        fac1 = wgllwgll[(k) * (NGLLX) + j];
-        break;
-      case 6 :
-        if (nkmin_eta[INDEX2(2, 0, iface)] == 0 || nimin[INDEX2(2, 0, iface)] == 0) {
-           return ;
-        }
-        j = 0;
-        k = (igll) / (NGLLX);
-        i = igll - ((k) * (NGLLX));
-        if (k < nkmin_eta[INDEX2(2, 0, iface)] - (1) || k > NGLLX - (1)) {
-           return ;
-        }
-        if (i < nimin[INDEX2(2, 0, iface)] - (1) || i > nimax[INDEX2(2, 0, iface)] - (1)) {
-           return ;
-        }
-        fac1 = wgllwgll[(k) * (NGLLX) + i];
-        break;
-      case 7 :
-        if (nkmin_eta[INDEX2(2, 1, iface)] == 0 || nimin[INDEX2(2, 1, iface)] == 0) {
-           return ;
-        }
-        j = NGLLX - (1);
-        k = (igll) / (NGLLX);
-        i = igll - ((k) * (NGLLX));
-        if (k < nkmin_eta[INDEX2(2, 1, iface)] - (1) || k > NGLLX - (1)) {
-           return ;
-        }
-        if (i < nimin[INDEX2(2, 1, iface)] - (1) || i > nimax[INDEX2(2, 1, iface)] - (1)) {
-           return ;
-        }
-        fac1 = wgllwgll[(k) * (NGLLX) + i];
-        break;
-      case 8 :
-        k = 0;
-        j = (igll) / (NGLLX);
-        i = igll - ((j) * (NGLLX));
-        if (j < 0 || j > NGLLX - (1)) {
-           return ;
-        }
-        if (i < 0 || i > NGLLX - (1)) {
-           return ;
-        }
-        fac1 = wgllwgll[(j) * (NGLLX) + i];
-        break;
-    }
+    if (igll < npoin) {
+      ispec = abs_boundary_ispec[iface] - (1);
 
-    iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)] - (1);
-    sn = (potential_dot_acoustic[iglob]) / (vpstore[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)]);
-    jacobianw = (abs_boundary_jacobian2D[INDEX2(NGLL2, igll, iface)]) * (fac1);
-    atomicAdd(potential_dot_dot_acoustic + iglob, ( -(sn)) * (jacobianw));
-    if (SAVE_STACEY) {
-      b_absorb_potential[INDEX2(NGLL2, igll, iface)] = (sn) * (jacobianw);
+      i = abs_boundary_ijk[INDEX3(3, NGLL2, 0, igll, iface)] - (1);
+      j = abs_boundary_ijk[INDEX3(3, NGLL2, 1, igll, iface)] - (1);
+      k = abs_boundary_ijk[INDEX3(3, NGLL2, 2, igll, iface)] - (1);
+
+      iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)] - (1);
+
+      sn = (potential_dot_acoustic[iglob]) / (vpstore[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)]);
+
+      weight = abs_boundary_jacobian2Dw[INDEX2(NGLL2, igll, iface)];
+
+      atomicAdd(potential_dot_dot_acoustic + iglob, ( -(sn)) * (weight));
+
+      if (SAVE_STACEY) {
+        b_absorb_potential[INDEX2(NGLL2, igll, iface)] = (sn) * (weight);
+      }
     }
   }
 }

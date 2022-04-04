@@ -915,11 +915,9 @@
 
   nspec2D_xmin_crust_mantle = 0; nspec2D_xmax_crust_mantle = 0
   nspec2D_ymin_crust_mantle = 0; nspec2D_ymax_crust_mantle = 0
-  nspec2D_zmin_crust_mantle = 0
 
   nspec2D_xmin_outer_core = 0; nspec2D_xmax_outer_core = 0
   nspec2D_ymin_outer_core = 0; nspec2D_ymax_outer_core = 0
-  nspec2D_zmin_outer_core = 0
 
   nspec2D_xmin_inner_core = 0; nspec2D_xmax_inner_core = 0
   nspec2D_ymin_inner_core = 0; nspec2D_ymax_inner_core = 0
@@ -946,8 +944,8 @@
         read(IIN) njunk1
         read(IIN) njunk2
 
-        if (REGIONAL_MESH_CUTOFF) &
-          nspec2D_zmin_crust_mantle = NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE)
+        !if (REGIONAL_MESH_CUTOFF) &
+        !  nspec2D_zmin_crust_mantle = NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE)
 
         ! boundary parameters
         read(IIN) ibelm_xmin_crust_mantle
@@ -993,8 +991,6 @@
         read(IIN) nspec2D_ymax_outer_core
         read(IIN) njunk1
         read(IIN) njunk2
-
-        nspec2D_zmin_outer_core = NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
 
         read(IIN) ibelm_xmin_outer_core
         read(IIN) ibelm_xmax_outer_core
@@ -1096,12 +1092,6 @@
       nspec2D_ymin_inner_core < 0 .or. nspec2d_ymin_inner_core > NSPEC2DMAX_YMIN_YMAX_IC .or. &
       nspec2D_ymax_inner_core < 0 .or. nspec2d_ymax_inner_core > NSPEC2DMAX_YMIN_YMAX_IC ) &
     call exit_mpi(myrank, 'Error reading inner core boundary')
-
-  ! initializes
-  nspec2D_zmin_outer_core = NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
-
-  if (REGIONAL_MESH_CUTOFF) &
-    nspec2D_zmin_crust_mantle = NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE)
 
   ! Boundary Mesh for crust and mantle
   if (SAVE_BOUNDARY_MESH .and. SIMULATION_TYPE == 3) then
@@ -1875,50 +1865,9 @@
   ! local parameters
   integer :: ier
 
-  ! allocates arrays
-  if (NSPEC_CRUST_MANTLE > 0) then
-    allocate(nimin_crust_mantle(2,NSPEC2DMAX_YMIN_YMAX_CM), &
-             nimax_crust_mantle(2,NSPEC2DMAX_YMIN_YMAX_CM), &
-             nkmin_eta_crust_mantle(2,NSPEC2DMAX_YMIN_YMAX_CM), &
-             njmin_crust_mantle(2,NSPEC2DMAX_XMIN_XMAX_CM), &
-             njmax_crust_mantle(2,NSPEC2DMAX_XMIN_XMAX_CM), &
-             nkmin_xi_crust_mantle(2,NSPEC2DMAX_XMIN_XMAX_CM),stat=ier)
-    if (ier /= 0) stop 'Error allocating arrays nimin_crust_mantle,..'
-  else
-    ! dummy
-    allocate(nimin_crust_mantle(1,1), &
-             nimax_crust_mantle(1,1), &
-             nkmin_eta_crust_mantle(1,1), &
-             njmin_crust_mantle(1,1), &
-             njmax_crust_mantle(1,1), &
-             nkmin_xi_crust_mantle(1,1),stat=ier)
-    if (ier /= 0) stop 'Error allocating arrays nimin_crust_mantle,..'
-  endif
-  nimin_crust_mantle(:,:) = 0; nimax_crust_mantle(:,:) = 0
-  njmin_crust_mantle(:,:) = 0; njmax_crust_mantle(:,:) = 0
-  nkmin_eta_crust_mantle(:,:) = 0; nkmin_xi_crust_mantle(:,:) = 0
-
-  if (NSPEC_OUTER_CORE > 0) then
-    allocate(nimin_outer_core(2,NSPEC2DMAX_YMIN_YMAX_OC), &
-             nimax_outer_core(2,NSPEC2DMAX_YMIN_YMAX_OC), &
-             nkmin_eta_outer_core(2,NSPEC2DMAX_YMIN_YMAX_OC), &
-             njmin_outer_core(2,NSPEC2DMAX_XMIN_XMAX_OC), &
-             njmax_outer_core(2,NSPEC2DMAX_XMIN_XMAX_OC), &
-             nkmin_xi_outer_core(2,NSPEC2DMAX_XMIN_XMAX_OC),stat=ier)
-    if (ier /= 0) stop 'Error allocating arrays nimin_outer_core,..'
-  else
-    ! dummy
-    allocate(nimin_outer_core(1,1), &
-             nimax_outer_core(1,1), &
-             nkmin_eta_outer_core(1,1), &
-             njmin_outer_core(1,1), &
-             njmax_outer_core(1,1), &
-             nkmin_xi_outer_core(1,1),stat=ier)
-    if (ier /= 0) stop 'Error allocating arrays nimin_outer_core,..'
-  endif
-  nimin_outer_core(:,:) = 0; nimax_outer_core(:,:) = 0
-  njmin_outer_core(:,:) = 0; njmax_outer_core(:,:) = 0
-  nkmin_eta_outer_core(:,:) = 0; nkmin_xi_outer_core(:,:) = 0
+  ! initializes
+  num_abs_boundary_faces_crust_mantle = 0
+  num_abs_boundary_faces_outer_core = 0
 
   ! reads in arrays
   if (I_should_read_the_database) then
@@ -1935,12 +1884,45 @@
               status='old',form='unformatted',action='read',iostat=ier)
         if (ier /= 0 ) call exit_MPI(myrank,'Error opening stacey.bin file for crust mantle')
 
-        read(IIN) nimin_crust_mantle
-        read(IIN) nimax_crust_mantle
-        read(IIN) njmin_crust_mantle
-        read(IIN) njmax_crust_mantle
-        read(IIN) nkmin_xi_crust_mantle
-        read(IIN) nkmin_eta_crust_mantle
+        read(IIN) num_abs_boundary_faces_crust_mantle
+
+        ! allocates absorbing boundary arrays
+        if (num_abs_boundary_faces_crust_mantle > 0) then
+          allocate(abs_boundary_ispec_crust_mantle(num_abs_boundary_faces_crust_mantle),stat=ier)
+          if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_ispec')
+          allocate(abs_boundary_ijk_crust_mantle(3,NGLLSQUARE,num_abs_boundary_faces_crust_mantle),stat=ier)
+          if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_ijk')
+          allocate(abs_boundary_jacobian2Dw_crust_mantle(NGLLSQUARE,num_abs_boundary_faces_crust_mantle),stat=ier)
+          if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_jacobian2Dw')
+          allocate(abs_boundary_normal_crust_mantle(NDIM,NGLLSQUARE,num_abs_boundary_faces_crust_mantle),stat=ier)
+          if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_normal')
+          allocate(abs_boundary_npoin_crust_mantle(num_abs_boundary_faces_crust_mantle),stat=ier)
+          if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_npoin')
+          if (ier /= 0) stop 'Error allocating array abs_boundary_ispec etc.'
+
+          ! reads in arrays
+          read(IIN) abs_boundary_ispec_crust_mantle
+          read(IIN) abs_boundary_npoin_crust_mantle
+          read(IIN) abs_boundary_ijk_crust_mantle
+          read(IIN) abs_boundary_jacobian2Dw_crust_mantle
+          read(IIN) abs_boundary_normal_crust_mantle
+        else
+          ! dummy arrays
+          allocate(abs_boundary_ispec_crust_mantle(1),stat=ier)
+          if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_ispec')
+          allocate(abs_boundary_ijk_crust_mantle(1,1,1),stat=ier)
+          if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_ijk')
+          allocate(abs_boundary_jacobian2Dw_crust_mantle(1,1),stat=ier)
+          if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_jacobian2Dw')
+          allocate(abs_boundary_normal_crust_mantle(1,1,1),stat=ier)
+          if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_normal')
+          allocate(abs_boundary_npoin_crust_mantle(1),stat=ier)
+          if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_npoin')
+          abs_boundary_ispec_crust_mantle(:) = 0; abs_boundary_npoin_crust_mantle(:) = 0
+          abs_boundary_ijk_crust_mantle(:,:,:) = 0
+          abs_boundary_jacobian2Dw_crust_mantle(:,:) = 0.0; abs_boundary_normal_crust_mantle(:,:,:) = 0.0
+        endif
+
         close(IIN)
       endif
 
@@ -1954,12 +1936,39 @@
               status='old',form='unformatted',action='read',iostat=ier)
         if (ier /= 0 ) call exit_MPI(myrank,'Error opening stacey.bin file for outer core')
 
-        read(IIN) nimin_outer_core
-        read(IIN) nimax_outer_core
-        read(IIN) njmin_outer_core
-        read(IIN) njmax_outer_core
-        read(IIN) nkmin_xi_outer_core
-        read(IIN) nkmin_eta_outer_core
+        read(IIN) num_abs_boundary_faces_outer_core
+
+        ! allocates absorbing boundary arrays
+        if (num_abs_boundary_faces_outer_core > 0) then
+          allocate(abs_boundary_ispec_outer_core(num_abs_boundary_faces_outer_core),stat=ier)
+          if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_ispec')
+          allocate(abs_boundary_ijk_outer_core(3,NGLLSQUARE,num_abs_boundary_faces_outer_core),stat=ier)
+          if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_ijk')
+          allocate(abs_boundary_jacobian2Dw_outer_core(NGLLSQUARE,num_abs_boundary_faces_outer_core),stat=ier)
+          if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_jacobian2Dw')
+          allocate(abs_boundary_npoin_outer_core(num_abs_boundary_faces_outer_core),stat=ier)
+          if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_npoin')
+          if (ier /= 0) stop 'Error allocating array abs_boundary_ispec etc.'
+
+          ! reads in arrays
+          read(IIN) abs_boundary_ispec_outer_core
+          read(IIN) abs_boundary_npoin_outer_core
+          read(IIN) abs_boundary_ijk_outer_core
+          read(IIN) abs_boundary_jacobian2Dw_outer_core
+        else
+          ! dummy arrays
+          allocate(abs_boundary_ispec_outer_core(1),stat=ier)
+          if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_ispec')
+          allocate(abs_boundary_ijk_outer_core(1,1,1),stat=ier)
+          if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_ijk')
+          allocate(abs_boundary_jacobian2Dw_outer_core(1,1),stat=ier)
+          if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_jacobian2Dw')
+          allocate(abs_boundary_npoin_outer_core(1),stat=ier)
+          if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_npoin')
+          abs_boundary_ispec_outer_core(:) = 0; abs_boundary_npoin_outer_core(:) = 0
+          abs_boundary_ijk_outer_core(:,:,:) = 0
+          abs_boundary_jacobian2Dw_outer_core(:,:) = 0.0
+        endif
         close(IIN)
       endif
     endif ! ADIOS
@@ -2323,7 +2332,7 @@
   call bcast_all_i_for_database(nspec2D_xmax_crust_mantle, 1)
   call bcast_all_i_for_database(nspec2D_ymin_crust_mantle, 1)
   call bcast_all_i_for_database(nspec2D_ymax_crust_mantle, 1)
-  call bcast_all_i_for_database(nspec2D_zmin_crust_mantle, 1)
+  !call bcast_all_i_for_database(nspec2D_zmin_crust_mantle, 1)
 
   if (size(ibelm_xmin_crust_mantle) > 0) then
     call bcast_all_i_for_database(ibelm_xmin_crust_mantle(1), size(ibelm_xmin_crust_mantle,kind=4))
@@ -2354,7 +2363,6 @@
   call bcast_all_i_for_database(nspec2D_xmax_outer_core, 1)
   call bcast_all_i_for_database(nspec2D_ymin_outer_core, 1)
   call bcast_all_i_for_database(nspec2D_ymax_outer_core, 1)
-  call bcast_all_i_for_database(nspec2D_zmin_outer_core, 1)
 
   if (size(ibelm_xmin_outer_core) > 0) then
     call bcast_all_i_for_database(ibelm_xmin_outer_core(1), size(ibelm_xmin_outer_core,kind=4))
@@ -2705,24 +2713,86 @@
 
   implicit none
 
+  ! local parameters
+  integer :: ier
+
   ! crust and mantle
   if (NSPEC_CRUST_MANTLE > 0) then
-    call bcast_all_i_for_database(nimin_crust_mantle(1,1), size(nimin_crust_mantle,kind=4))
-    call bcast_all_i_for_database(nimax_crust_mantle(1,1), size(nimax_crust_mantle,kind=4))
-    call bcast_all_i_for_database(njmin_crust_mantle(1,1), size(njmin_crust_mantle,kind=4))
-    call bcast_all_i_for_database(njmax_crust_mantle(1,1), size(njmax_crust_mantle,kind=4))
-    call bcast_all_i_for_database(nkmin_xi_crust_mantle(1,1), size(nkmin_xi_crust_mantle,kind=4))
-    call bcast_all_i_for_database(nkmin_eta_crust_mantle(1,1), size(nkmin_eta_crust_mantle,kind=4))
+    call bcast_all_i_for_database(num_abs_boundary_faces_crust_mantle,1)
+
+    if (.not. I_should_read_the_database) then
+      ! allocates absorbing boundary arrays
+      if (num_abs_boundary_faces_crust_mantle > 0) then
+        allocate(abs_boundary_ispec_crust_mantle(num_abs_boundary_faces_crust_mantle),stat=ier)
+        if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_ispec')
+        allocate(abs_boundary_ijk_crust_mantle(3,NGLLSQUARE,num_abs_boundary_faces_crust_mantle),stat=ier)
+        if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_ijk')
+        allocate(abs_boundary_jacobian2Dw_crust_mantle(NGLLSQUARE,num_abs_boundary_faces_crust_mantle),stat=ier)
+        if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_jacobian2Dw')
+        allocate(abs_boundary_normal_crust_mantle(NDIM,NGLLSQUARE,num_abs_boundary_faces_crust_mantle),stat=ier)
+        if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_normal')
+        allocate(abs_boundary_npoin_crust_mantle(num_abs_boundary_faces_crust_mantle),stat=ier)
+        if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_npoin')
+        if (ier /= 0) stop 'Error allocating array abs_boundary_ispec etc.'
+      else
+        ! dummy arrays
+        allocate(abs_boundary_ispec_crust_mantle(1),stat=ier)
+        if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_ispec')
+        allocate(abs_boundary_ijk_crust_mantle(1,1,1),stat=ier)
+        if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_ijk')
+        allocate(abs_boundary_jacobian2Dw_crust_mantle(1,1),stat=ier)
+        if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_jacobian2Dw')
+        allocate(abs_boundary_normal_crust_mantle(1,1,1),stat=ier)
+        if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_normal')
+        allocate(abs_boundary_npoin_crust_mantle(1),stat=ier)
+        if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_npoin')
+      endif
+      abs_boundary_ispec_crust_mantle(:) = 0; abs_boundary_npoin_crust_mantle(:) = 0
+      abs_boundary_ijk_crust_mantle(:,:,:) = 0
+      abs_boundary_jacobian2Dw_crust_mantle(:,:) = 0.0; abs_boundary_normal_crust_mantle(:,:,:) = 0.0
+    endif
+    call bcast_all_i_for_database(abs_boundary_ispec_crust_mantle(1), size(abs_boundary_ispec_crust_mantle,kind=4))
+    call bcast_all_i_for_database(abs_boundary_npoin_crust_mantle(1), size(abs_boundary_npoin_crust_mantle,kind=4))
+    call bcast_all_i_for_database(abs_boundary_ijk_crust_mantle(1,1,1), size(abs_boundary_ijk_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(abs_boundary_jacobian2Dw_crust_mantle(1,1), size(abs_boundary_jacobian2Dw_crust_mantle,kind=4))
+    call bcast_all_cr_for_database(abs_boundary_normal_crust_mantle(1,1,1), size(abs_boundary_normal_crust_mantle,kind=4))
   endif
 
   ! outer core
   if (NSPEC_OUTER_CORE > 0) then
-    call bcast_all_i_for_database(nimin_outer_core(1,1), size(nimin_outer_core,kind=4))
-    call bcast_all_i_for_database(nimax_outer_core(1,1), size(nimax_outer_core,kind=4))
-    call bcast_all_i_for_database(njmin_outer_core(1,1), size(njmin_outer_core,kind=4))
-    call bcast_all_i_for_database(njmax_outer_core(1,1), size(njmax_outer_core,kind=4))
-    call bcast_all_i_for_database(nkmin_xi_outer_core(1,1), size(nkmin_xi_outer_core,kind=4))
-    call bcast_all_i_for_database(nkmin_eta_outer_core(1,1), size(nkmin_eta_outer_core,kind=4))
+    call bcast_all_i_for_database(num_abs_boundary_faces_outer_core,1)
+
+    if (.not. I_should_read_the_database) then
+      ! allocates absorbing boundary arrays
+      if (num_abs_boundary_faces_outer_core > 0) then
+        allocate(abs_boundary_ispec_outer_core(num_abs_boundary_faces_outer_core),stat=ier)
+        if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_ispec')
+        allocate(abs_boundary_ijk_outer_core(3,NGLLSQUARE,num_abs_boundary_faces_outer_core),stat=ier)
+        if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_ijk')
+        allocate(abs_boundary_jacobian2Dw_outer_core(NGLLSQUARE,num_abs_boundary_faces_outer_core),stat=ier)
+        if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_jacobian2Dw')
+        allocate(abs_boundary_npoin_outer_core(num_abs_boundary_faces_outer_core),stat=ier)
+        if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_npoin')
+        if (ier /= 0) stop 'Error allocating array abs_boundary_ispec etc.'
+      else
+        ! dummy arrays
+        allocate(abs_boundary_ispec_outer_core(1),stat=ier)
+        if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_ispec')
+        allocate(abs_boundary_ijk_outer_core(1,1,1),stat=ier)
+        if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_ijk')
+        allocate(abs_boundary_jacobian2Dw_outer_core(1,1),stat=ier)
+        if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_jacobian2Dw')
+        allocate(abs_boundary_npoin_outer_core(1),stat=ier)
+        if (ier /= 0) call exit_mpi(myrank,'Error allocating array abs_boundary_npoin')
+      endif
+      abs_boundary_ispec_outer_core(:) = 0; abs_boundary_npoin_outer_core(:) = 0
+      abs_boundary_ijk_outer_core(:,:,:) = 0
+      abs_boundary_jacobian2Dw_outer_core(:,:) = 0.0
+    endif
+    call bcast_all_i_for_database(abs_boundary_ispec_outer_core(1), size(abs_boundary_ispec_outer_core,kind=4))
+    call bcast_all_i_for_database(abs_boundary_npoin_outer_core(1), size(abs_boundary_npoin_outer_core,kind=4))
+    call bcast_all_i_for_database(abs_boundary_ijk_outer_core(1,1,1), size(abs_boundary_ijk_outer_core,kind=4))
+    call bcast_all_cr_for_database(abs_boundary_jacobian2Dw_outer_core(1,1), size(abs_boundary_jacobian2Dw_outer_core,kind=4))
   endif
 
   end subroutine bcast_mesh_databases_stacey

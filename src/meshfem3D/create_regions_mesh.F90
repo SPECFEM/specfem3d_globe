@@ -98,7 +98,9 @@
     ispec_is_tiso
 
   ! absorb
-  use regions_mesh_par2, only: iboun, nimin, nimax, njmin, njmax, nkmin_xi,nkmin_eta
+  use regions_mesh_par2, only: iboun, nimin, nimax, njmin, njmax, nkmin_xi,nkmin_eta, &
+    abs_boundary_ispec,abs_boundary_npoin,abs_boundary_ijk, &
+    abs_boundary_jacobian2Dw,abs_boundary_normal
 
   ! boundary mesh
   use regions_mesh_par2, only: &
@@ -202,10 +204,10 @@
 
 
     ! sets up Stacey absorbing boundary indices (nimin,nimax,..)
-    if (NCHUNKS /= 6) call get_absorb(prname,iregion_code, &
-                                      iboun,nimin,nimax, &
-                                      njmin,njmax, nkmin_xi,nkmin_eta, NSPEC2DMAX_XMIN_XMAX, &
-                                      NSPEC2DMAX_YMIN_YMAX, NSPEC2D_BOTTOM)
+    if (NCHUNKS /= 6 .and. ABSORBING_CONDITIONS) &
+      call get_absorb(prname,iregion_code,iboun, &
+                      nimin,nimax,njmin,njmax, nkmin_xi,nkmin_eta, &
+                      NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, NSPEC2D_BOTTOM)
 
     ! Only go into here if we're requesting xyz files for CEM
 #ifdef USE_CEM
@@ -421,10 +423,15 @@
     ! note: for Stacey boundaries, needs indexing nimin,.. filled in the first pass
     call create_mass_matrices(idoubling,ibool, &
                               iregion_code,xstore,ystore,zstore, &
-                              NSPEC2D_TOP,NSPEC2D_BOTTOM)
+                              NSPEC2D_TOP)
 
-    ! Stacey
+    ! free Stacey helper arrays (not needed anymore)
     deallocate(nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta)
+    if (allocated(abs_boundary_ispec)) then
+      deallocate(abs_boundary_ispec,abs_boundary_npoin,abs_boundary_ijk)
+      deallocate(abs_boundary_jacobian2Dw)
+      deallocate(abs_boundary_normal)
+    endif
 
     ! save the binary files
     call synchronize_all()

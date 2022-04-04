@@ -632,7 +632,11 @@ module specfem_par_crustmantle
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), pointer :: &
     b_eps_trace_over_3_crust_mantle
 
-  ! for crust/oceans coupling
+  ! coupling/boundary surfaces
+  ! for coupling fluid-solid interfaces (at CMB and ICB)
+  integer :: nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle, &
+             nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle
+  ! for crust/oceans and CMB coupling
   integer, dimension(:), allocatable :: ibelm_xmin_crust_mantle,ibelm_xmax_crust_mantle
   integer, dimension(:), allocatable :: ibelm_ymin_crust_mantle,ibelm_ymax_crust_mantle
   integer, dimension(:), allocatable :: ibelm_bottom_crust_mantle
@@ -658,18 +662,27 @@ module specfem_par_crustmantle
 
   ! Stacey
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rho_vp_crust_mantle,rho_vs_crust_mantle
-  integer :: nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle, &
-             nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle, &
-             nspec2D_zmin_crust_mantle
-  integer, dimension(:,:), allocatable :: nimin_crust_mantle,nimax_crust_mantle,nkmin_eta_crust_mantle
-  integer, dimension(:,:), allocatable :: njmin_crust_mantle,njmax_crust_mantle,nkmin_xi_crust_mantle
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: absorb_xmin_crust_mantle, &
-    absorb_xmax_crust_mantle, absorb_ymin_crust_mantle, absorb_ymax_crust_mantle, absorb_zmin_crust_mantle
+  ! old version
+  !integer, dimension(:,:), allocatable :: nimin_crust_mantle,nimax_crust_mantle,nkmin_eta_crust_mantle
+  !integer, dimension(:,:), allocatable :: njmin_crust_mantle,njmax_crust_mantle,nkmin_xi_crust_mantle
+  ! buffer arrays for file I/O
+  !real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: absorb_xmin_crust_mantle, &
+  !  absorb_xmax_crust_mantle, absorb_ymin_crust_mantle, absorb_ymax_crust_mantle, absorb_zmin_crust_mantle
+  !integer :: reclen_xmin_crust_mantle, reclen_xmax_crust_mantle, &
+  !           reclen_ymin_crust_mantle,reclen_ymax_crust_mantle, &
+  !           reclen_zmin_crust_mantle
 
-  integer :: reclen_xmin_crust_mantle, reclen_xmax_crust_mantle, &
-             reclen_ymin_crust_mantle,reclen_ymax_crust_mantle, &
-             reclen_zmin_crust_mantle
+  ! absorbing boundary arrays
+  integer :: num_abs_boundary_faces_crust_mantle
+  integer, dimension(:), allocatable :: abs_boundary_ispec_crust_mantle
+  integer, dimension(:), allocatable :: abs_boundary_npoin_crust_mantle
+  integer, dimension(:,:,:), allocatable :: abs_boundary_ijk_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: abs_boundary_normal_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: abs_boundary_jacobian2Dw_crust_mantle
+  ! buffer array for file I/O
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: absorb_buffer_crust_mantle
+  integer :: reclen_absorb_buffer_crust_mantle
 
   ! kernels
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
@@ -830,7 +843,7 @@ module specfem_par_innercore
 
   ! coupling/boundary surfaces
   integer :: nspec2D_xmin_inner_core,nspec2D_xmax_inner_core, &
-            nspec2D_ymin_inner_core,nspec2D_ymax_inner_core
+             nspec2D_ymin_inner_core,nspec2D_ymax_inner_core
   integer, dimension(:), allocatable :: ibelm_xmin_inner_core,ibelm_xmax_inner_core
   integer, dimension(:), allocatable :: ibelm_ymin_inner_core,ibelm_ymax_inner_core
   integer, dimension(:), allocatable :: ibelm_bottom_inner_core
@@ -923,22 +936,33 @@ module specfem_par_outercore
 
   ! Stacey
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: vp_outer_core
-  integer :: nspec2D_xmin_outer_core,nspec2D_xmax_outer_core, &
-             nspec2D_ymin_outer_core,nspec2D_ymax_outer_core, &
-             nspec2D_zmin_outer_core
-  integer, dimension(:,:), allocatable :: nimin_outer_core,nimax_outer_core,nkmin_eta_outer_core
-  integer, dimension(:,:), allocatable :: njmin_outer_core,njmax_outer_core,nkmin_xi_outer_core
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: absorb_xmin_outer_core, &
-    absorb_xmax_outer_core, absorb_ymin_outer_core, absorb_ymax_outer_core, absorb_zmin_outer_core
+  ! old version...
+  !integer, dimension(:,:), allocatable :: nimin_outer_core,nimax_outer_core,nkmin_eta_outer_core
+  !integer, dimension(:,:), allocatable :: njmin_outer_core,njmax_outer_core,nkmin_xi_outer_core
+  ! buffer arrays for file I/O
+  !real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: absorb_xmin_outer_core, &
+  !  absorb_xmax_outer_core, absorb_ymin_outer_core, absorb_ymax_outer_core, absorb_zmin_outer_core
+  !integer :: reclen_xmin_outer_core, reclen_xmax_outer_core, &
+  !           reclen_ymin_outer_core, reclen_ymax_outer_core, &
+  !           reclen_zmin_outer_core
 
-  integer :: reclen_xmin_outer_core, reclen_xmax_outer_core, &
-             reclen_ymin_outer_core, reclen_ymax_outer_core, &
-             reclen_zmin_outer_core
+  ! absorbing boundary arrays
+  integer :: num_abs_boundary_faces_outer_core
+  integer, dimension(:), allocatable :: abs_boundary_ispec_outer_core
+  integer, dimension(:), allocatable :: abs_boundary_npoin_outer_core
+  integer, dimension(:,:,:), allocatable :: abs_boundary_ijk_outer_core
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: abs_boundary_jacobian2Dw_outer_core
+  ! buffer array for file I/O
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: absorb_buffer_outer_core
+  integer :: reclen_absorb_buffer_outer_core
 
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
     vector_accel_outer_core,vector_displ_outer_core,b_vector_displ_outer_core
 
+  ! coupling/boundary surfaces
+  integer :: nspec2D_xmin_outer_core,nspec2D_xmax_outer_core, &
+             nspec2D_ymin_outer_core,nspec2D_ymax_outer_core
   ! arrays to couple with the fluid regions by pointwise matching
   integer, dimension(:), allocatable :: ibelm_xmin_outer_core,ibelm_xmax_outer_core
   integer, dimension(:), allocatable :: ibelm_ymin_outer_core,ibelm_ymax_outer_core

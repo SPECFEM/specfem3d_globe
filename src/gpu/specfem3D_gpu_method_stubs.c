@@ -240,17 +240,14 @@ void FC_FUNC_ (compute_seismograms_gpu,
 
 void FC_FUNC_ (compute_stacey_acoustic_gpu,
                COMPUTE_STACEY_ACOUSTIC_GPU) (long *Mesh_pointer_f,
-                                             realw *absorb_potential,
-                                             int *itype) {}
+                                             realw *absorb_potential) {}
 
 void FC_FUNC_ (compute_stacey_acoustic_backward_gpu,
                COMPUTE_STACEY_ACOUSTIC_BACKWARD_GPU) (long *Mesh_pointer_f,
-                                                      realw *absorb_potential,
-                                                      int *itype) {}
+                                                      realw *absorb_potential) {}
 
 void FC_FUNC_ (compute_stacey_acoustic_undoatt_gpu,
-               COMPUTE_STACEY_ACOUSTIC_UNDOATT_GPU) (long *Mesh_pointer_f,
-                                                     int *itype) {}
+               COMPUTE_STACEY_ACOUSTIC_UNDOATT_GPU) (long *Mesh_pointer_f) {}
 
 
 //
@@ -259,17 +256,14 @@ void FC_FUNC_ (compute_stacey_acoustic_undoatt_gpu,
 
 void FC_FUNC_ (compute_stacey_elastic_gpu,
                COMPUTE_STACEY_ELASTIC_GPU) (long *Mesh_pointer_f,
-                                            realw *absorb_field,
-                                            int *itype) {}
+                                            realw *absorb_field) {}
 
 void FC_FUNC_ (compute_stacey_elastic_backward_gpu,
                COMPUTE_STACEY_ELASTIC_BACKWARD_GPU) (long *Mesh_pointer_f,
-                                                     realw *absorb_field,
-                                                     int *itype) {}
+                                                     realw *absorb_field) {}
 
 void FC_FUNC_ (compute_stacey_elastic_undoatt_gpu,
-               COMPUTE_STACEY_ELASTIC_UNDOATT_GPU) (long *Mesh_pointer_f,
-                                                    int *itype) {}
+               COMPUTE_STACEY_ELASTIC_UNDOATT_GPU) (long *Mesh_pointer_f) {}
 
 
 //
@@ -461,34 +455,19 @@ void FC_FUNC_ (prepare_fields_strain_device,
 
 void FC_FUNC_ (prepare_fields_absorb_device,
                PREPARE_FIELDS_ABSORB_DEVICE) (long *Mesh_pointer_f,
-                                              int *nspec2D_xmin_crust_mantle, int *nspec2D_xmax_crust_mantle,
-                                              int *nspec2D_ymin_crust_mantle, int *nspec2D_ymax_crust_mantle,
-                                              int *nspec2D_zmin_crust_mantle,
-                                              int *NSPEC2DMAX_XMIN_XMAX_CM, int *NSPEC2DMAX_YMIN_YMAX_CM,
-                                              int *nimin_crust_mantle, int *nimax_crust_mantle,
-                                              int *njmin_crust_mantle, int *njmax_crust_mantle,
-                                              int *nkmin_xi_crust_mantle, int *nkmin_eta_crust_mantle,
-                                              int *ibelm_xmin_crust_mantle, int *ibelm_xmax_crust_mantle,
-                                              int *ibelm_ymin_crust_mantle, int *ibelm_ymax_crust_mantle,
-                                              realw *normal_xmin_crust_mantle, realw *normal_xmax_crust_mantle,
-                                              realw *normal_ymin_crust_mantle, realw *normal_ymax_crust_mantle,
-                                              realw *normal_bottom_crust_mantle,
-                                              realw *jacobian2D_xmin_crust_mantle, realw *jacobian2D_xmax_crust_mantle,
-                                              realw *jacobian2D_ymin_crust_mantle, realw *jacobian2D_ymax_crust_mantle,
-                                              realw *jacobian2D_bottom_crust_mantle,
-                                              realw *rho_vp_crust_mantle,
-                                              realw *rho_vs_crust_mantle,
-                                              int *nspec2D_xmin_outer_core, int *nspec2D_xmax_outer_core,
-                                              int *nspec2D_ymin_outer_core, int *nspec2D_ymax_outer_core,
-                                              int *nspec2D_zmin_outer_core,
-                                              int *NSPEC2DMAX_XMIN_XMAX_OC, int *NSPEC2DMAX_YMIN_YMAX_OC,
-                                              int *nimin_outer_core, int *nimax_outer_core,
-                                              int *njmin_outer_core, int *njmax_outer_core,
-                                              int *nkmin_xi_outer_core, int *nkmin_eta_outer_core,
-                                              int *ibelm_xmin_outer_core, int *ibelm_xmax_outer_core,
-                                              int *ibelm_ymin_outer_core, int *ibelm_ymax_outer_core,
-                                              realw *jacobian2D_xmin_outer_core, realw *jacobian2D_xmax_outer_core,
-                                              realw *jacobian2D_ymin_outer_core, realw *jacobian2D_ymax_outer_core,
+                                              int* num_abs_boundary_faces_crust_mantle,
+                                              int* abs_boundary_ispec_crust_mantle,
+                                              int* abs_boundary_npoin_crust_mantle,
+                                              int* abs_boundary_ijk_crust_mantle,
+                                              realw* abs_boundary_jacobian2Dw_crust_mantle,
+                                              realw* abs_boundary_normal_crust_mantle,
+                                              realw* rho_vp_crust_mantle,
+                                              realw* rho_vs_crust_mantle,
+                                              int* num_abs_boundary_faces_outer_core,
+                                              int* abs_boundary_ispec_outer_core,
+                                              int* abs_boundary_npoin_outer_core,
+                                              int* abs_boundary_ijk_outer_core,
+                                              realw* abs_boundary_jacobian2Dw_outer_core,
                                               realw *vp_outer_core) {}
 
 void FC_FUNC_ (prepare_mpi_buffers_device,

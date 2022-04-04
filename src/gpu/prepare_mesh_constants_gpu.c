@@ -989,38 +989,25 @@ void FC_FUNC_ (prepare_fields_strain_device,
 extern EXTERN_LANG
 void FC_FUNC_ (prepare_fields_absorb_device,
                PREPARE_FIELDS_ABSORB_DEVICE) (long *Mesh_pointer_f,
-                                              int *nspec2D_xmin_crust_mantle, int *nspec2D_xmax_crust_mantle,
-                                              int *nspec2D_ymin_crust_mantle, int *nspec2D_ymax_crust_mantle,
-                                              int *nspec2D_zmin_crust_mantle,
-                                              int *NSPEC2DMAX_XMIN_XMAX_CM, int *NSPEC2DMAX_YMIN_YMAX_CM,
-                                              int *nimin_crust_mantle, int *nimax_crust_mantle,
-                                              int *njmin_crust_mantle, int *njmax_crust_mantle,
-                                              int *nkmin_xi_crust_mantle, int *nkmin_eta_crust_mantle,
-                                              int *ibelm_xmin_crust_mantle, int *ibelm_xmax_crust_mantle,
-                                              int *ibelm_ymin_crust_mantle, int *ibelm_ymax_crust_mantle,
-                                              realw *normal_xmin_crust_mantle, realw *normal_xmax_crust_mantle,
-                                              realw *normal_ymin_crust_mantle, realw *normal_ymax_crust_mantle,
-                                              realw *normal_bottom_crust_mantle,
-                                              realw *jacobian2D_xmin_crust_mantle, realw *jacobian2D_xmax_crust_mantle,
-                                              realw *jacobian2D_ymin_crust_mantle, realw *jacobian2D_ymax_crust_mantle,
-                                              realw *jacobian2D_bottom_crust_mantle,
-                                              realw *rho_vp_crust_mantle,
-                                              realw *rho_vs_crust_mantle,
-                                              int *nspec2D_xmin_outer_core, int *nspec2D_xmax_outer_core,
-                                              int *nspec2D_ymin_outer_core, int *nspec2D_ymax_outer_core,
-                                              int *nspec2D_zmin_outer_core,
-                                              int *NSPEC2DMAX_XMIN_XMAX_OC, int *NSPEC2DMAX_YMIN_YMAX_OC,
-                                              int *nimin_outer_core, int *nimax_outer_core,
-                                              int *njmin_outer_core, int *njmax_outer_core,
-                                              int *nkmin_xi_outer_core, int *nkmin_eta_outer_core,
-                                              int *ibelm_xmin_outer_core, int *ibelm_xmax_outer_core,
-                                              int *ibelm_ymin_outer_core, int *ibelm_ymax_outer_core,
-                                              realw *jacobian2D_xmin_outer_core, realw *jacobian2D_xmax_outer_core,
-                                              realw *jacobian2D_ymin_outer_core, realw *jacobian2D_ymax_outer_core,
+                                              int* num_abs_boundary_faces_crust_mantle,
+                                              int* abs_boundary_ispec_crust_mantle,
+                                              int* abs_boundary_npoin_crust_mantle,
+                                              int* abs_boundary_ijk_crust_mantle,
+                                              realw* abs_boundary_jacobian2Dw_crust_mantle,
+                                              realw* abs_boundary_normal_crust_mantle,
+                                              realw* rho_vp_crust_mantle,
+                                              realw* rho_vs_crust_mantle,
+                                              int* num_abs_boundary_faces_outer_core,
+                                              int* abs_boundary_ispec_outer_core,
+                                              int* abs_boundary_npoin_outer_core,
+                                              int* abs_boundary_ijk_outer_core,
+                                              realw* abs_boundary_jacobian2Dw_outer_core,
                                               realw *vp_outer_core) {
 
   TRACE ("prepare_fields_absorb_device");
   size_t size;
+  int num_abs_boundary_faces;
+
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // checks flag
@@ -1029,153 +1016,58 @@ void FC_FUNC_ (prepare_fields_absorb_device,
   }
 
   // crust_mantle
-  mp->nspec2D_xmin_crust_mantle = *nspec2D_xmin_crust_mantle;
-  mp->nspec2D_xmax_crust_mantle = *nspec2D_xmax_crust_mantle;
-  mp->nspec2D_ymin_crust_mantle = *nspec2D_ymin_crust_mantle;
-  mp->nspec2D_ymax_crust_mantle = *nspec2D_ymax_crust_mantle;
-  mp->nspec2D_zmin_crust_mantle = *nspec2D_zmin_crust_mantle;
-
   // vp & vs
   size = NGLL3 * (mp->NSPEC_CRUST_MANTLE);
   gpuCreateCopy_todevice_realw (&mp->d_rho_vp_crust_mantle, rho_vp_crust_mantle, size);
   gpuCreateCopy_todevice_realw (&mp->d_rho_vs_crust_mantle, rho_vs_crust_mantle, size);
 
-  // ijk index arrays
-  gpuCreateCopy_todevice_int (&mp->d_nkmin_xi_crust_mantle, nkmin_xi_crust_mantle, 2 * (*NSPEC2DMAX_XMIN_XMAX_CM));
-  gpuCreateCopy_todevice_int (&mp->d_nkmin_eta_crust_mantle, nkmin_eta_crust_mantle, 2 * (*NSPEC2DMAX_YMIN_YMAX_CM));
-  gpuCreateCopy_todevice_int (&mp->d_njmin_crust_mantle, njmin_crust_mantle, 2 * (*NSPEC2DMAX_XMIN_XMAX_CM));
-  gpuCreateCopy_todevice_int (&mp->d_njmax_crust_mantle, njmax_crust_mantle, 2 * (*NSPEC2DMAX_XMIN_XMAX_CM));
-  gpuCreateCopy_todevice_int (&mp->d_nimin_crust_mantle, nimin_crust_mantle, 2 * (*NSPEC2DMAX_YMIN_YMAX_CM));
-  gpuCreateCopy_todevice_int (&mp->d_nimax_crust_mantle, nimax_crust_mantle, 2 * (*NSPEC2DMAX_YMIN_YMAX_CM));
+  // absorbing boundary
+  num_abs_boundary_faces = *num_abs_boundary_faces_crust_mantle;
+  mp->num_abs_boundary_faces_crust_mantle = num_abs_boundary_faces;
 
-  // xmin
-  if (mp->nspec2D_xmin_crust_mantle > 0) {
-    gpuCreateCopy_todevice_int (&mp->d_ibelm_xmin_crust_mantle, ibelm_xmin_crust_mantle, mp->nspec2D_xmin_crust_mantle);
-    gpuCreateCopy_todevice_realw (&mp->d_normal_xmin_crust_mantle, normal_xmin_crust_mantle, NDIM*NGLL2 * mp->nspec2D_xmin_crust_mantle);
-    gpuCreateCopy_todevice_realw (&mp->d_jacobian2D_xmin_crust_mantle, jacobian2D_xmin_crust_mantle, NGLL2 * mp->nspec2D_xmin_crust_mantle);
+  if (num_abs_boundary_faces > 0) {
+    // ijk index arrays
+    gpuCreateCopy_todevice_int (&mp->d_abs_boundary_ispec_crust_mantle, abs_boundary_ispec_crust_mantle, num_abs_boundary_faces);
+    gpuCreateCopy_todevice_int (&mp->d_abs_boundary_npoin_crust_mantle, abs_boundary_npoin_crust_mantle, num_abs_boundary_faces);
 
-    // boundary buffer
-    if (mp->save_stacey) {
-      gpuMalloc_realw (&mp->d_absorb_xmin_crust_mantle, NDIM * NGLL2 * mp->nspec2D_xmin_crust_mantle);
-    }
-  }
+    size = 3 * NGLLSQUARE * num_abs_boundary_faces;
+    gpuCreateCopy_todevice_int (&mp->d_abs_boundary_ijk_crust_mantle, abs_boundary_ijk_crust_mantle, size);
 
-  // xmax
-  if (mp->nspec2D_xmax_crust_mantle > 0) {
-    gpuCreateCopy_todevice_int (&mp->d_ibelm_xmax_crust_mantle, ibelm_xmax_crust_mantle, mp->nspec2D_xmax_crust_mantle);
-    gpuCreateCopy_todevice_realw (&mp->d_normal_xmax_crust_mantle, normal_xmax_crust_mantle, NDIM*NGLL2 * mp->nspec2D_xmax_crust_mantle);
-    gpuCreateCopy_todevice_realw (&mp->d_jacobian2D_xmax_crust_mantle, jacobian2D_xmax_crust_mantle, NGLL2 * mp->nspec2D_xmax_crust_mantle);
-    // boundary buffer
-    if (mp->save_stacey) {
-      gpuMalloc_realw (&mp->d_absorb_xmax_crust_mantle, NDIM * NGLL2 * mp->nspec2D_xmax_crust_mantle);
-    }
-  }
+    size = NGLLSQUARE * num_abs_boundary_faces;
+    gpuCreateCopy_todevice_realw (&mp->d_abs_boundary_jacobian2Dw_crust_mantle, abs_boundary_jacobian2Dw_crust_mantle, size);
 
-  // ymin
-  if (mp->nspec2D_ymin_crust_mantle > 0) {
-    gpuCreateCopy_todevice_int (&mp->d_ibelm_ymin_crust_mantle, ibelm_ymin_crust_mantle, mp->nspec2D_ymin_crust_mantle);
-    gpuCreateCopy_todevice_realw (&mp->d_normal_ymin_crust_mantle, normal_ymin_crust_mantle, NDIM*NGLL2 * mp->nspec2D_ymin_crust_mantle);
-    gpuCreateCopy_todevice_realw (&mp->d_jacobian2D_ymin_crust_mantle, jacobian2D_ymin_crust_mantle, NGLL2 * mp->nspec2D_ymin_crust_mantle);
-    // boundary buffer
-    if (mp->save_stacey) {
-      gpuMalloc_realw (&mp->d_absorb_ymin_crust_mantle, NDIM * NGLL2 * mp->nspec2D_ymin_crust_mantle);
-    }
-  }
-
-  // ymax
-  if (mp->nspec2D_ymax_crust_mantle > 0) {
-    gpuCreateCopy_todevice_int (&mp->d_ibelm_ymax_crust_mantle, ibelm_ymax_crust_mantle, mp->nspec2D_ymax_crust_mantle);
-    gpuCreateCopy_todevice_realw (&mp->d_normal_ymax_crust_mantle, normal_ymax_crust_mantle, NDIM * NGLL2 * mp->nspec2D_ymax_crust_mantle);
-    gpuCreateCopy_todevice_realw (&mp->d_jacobian2D_ymax_crust_mantle, jacobian2D_ymax_crust_mantle, NGLL2 * mp->nspec2D_ymax_crust_mantle);
+    size = NDIM * NGLLSQUARE * num_abs_boundary_faces;
+    gpuCreateCopy_todevice_realw (&mp->d_abs_boundary_normal_crust_mantle, abs_boundary_normal_crust_mantle, size);
 
     // boundary buffer
     if (mp->save_stacey) {
-      gpuMalloc_realw (&mp->d_absorb_ymax_crust_mantle, NDIM * NGLL2 * mp->nspec2D_ymax_crust_mantle);
-    }
-  }
-
-  // zmin
-  // nspec2D_zmin_crust_mantle is used for absorbing bottom surface of crust/mantle
-  // it is non-zero when REGIONAL_MESH_CUTOFF is selected
-  if (mp->nspec2D_zmin_crust_mantle > 0) {
-    // ibelm_bottom also used by coupling, allocated when crust_mantle is prepared
-    //gpuCreateCopy_todevice_int (&mp->d_ibelm_bottom_crust_mantle, ibelm_bottom_crust_mantle, mp->nspec2D_zmin_crust_mantle);
-    gpuCreateCopy_todevice_realw (&mp->d_normal_bottom_crust_mantle, normal_bottom_crust_mantle, NDIM * NGLL2 * mp->nspec2D_zmin_crust_mantle);
-    gpuCreateCopy_todevice_realw (&mp->d_jacobian2D_bottom_crust_mantle, jacobian2D_bottom_crust_mantle, NGLL2 * mp->nspec2D_zmin_crust_mantle);
-
-    // boundary buffer
-    if (mp->save_stacey) {
-      gpuMalloc_realw (&mp->d_absorb_zmin_crust_mantle, NDIM * NGLL2 * mp->nspec2D_zmin_crust_mantle);
+      gpuMalloc_realw (&mp->d_absorb_buffer_crust_mantle, NDIM * NGLLSQUARE * num_abs_boundary_faces);
     }
   }
 
   // outer_core
-  mp->nspec2D_xmin_outer_core = *nspec2D_xmin_outer_core;
-  mp->nspec2D_xmax_outer_core = *nspec2D_xmax_outer_core;
-  mp->nspec2D_ymin_outer_core = *nspec2D_ymin_outer_core;
-  mp->nspec2D_ymax_outer_core = *nspec2D_ymax_outer_core;
-  mp->nspec2D_zmin_outer_core = *nspec2D_zmin_outer_core;
-
   // vp
   size = NGLL3 * (mp->NSPEC_OUTER_CORE);
   gpuCreateCopy_todevice_realw (&mp->d_vp_outer_core, vp_outer_core, size);
 
-  // ijk index arrays
-  gpuCreateCopy_todevice_int (&mp->d_nkmin_xi_outer_core, nkmin_xi_outer_core, 2 * (*NSPEC2DMAX_XMIN_XMAX_OC));
-  gpuCreateCopy_todevice_int (&mp->d_nkmin_eta_outer_core, nkmin_eta_outer_core, 2 * (*NSPEC2DMAX_YMIN_YMAX_OC));
-  gpuCreateCopy_todevice_int (&mp->d_njmin_outer_core, njmin_outer_core, 2 * (*NSPEC2DMAX_XMIN_XMAX_OC));
-  gpuCreateCopy_todevice_int (&mp->d_njmax_outer_core, njmax_outer_core, 2 * (*NSPEC2DMAX_XMIN_XMAX_OC));
-  gpuCreateCopy_todevice_int (&mp->d_nimin_outer_core, nimin_outer_core, 2 * (*NSPEC2DMAX_YMIN_YMAX_OC));
-  gpuCreateCopy_todevice_int (&mp->d_nimax_outer_core, nimax_outer_core, 2 * (*NSPEC2DMAX_YMIN_YMAX_OC));
+  // absorbing boundary
+  num_abs_boundary_faces = *num_abs_boundary_faces_outer_core;
+  mp->num_abs_boundary_faces_outer_core = num_abs_boundary_faces;
 
-  // xmin
-  if (mp->nspec2D_xmin_outer_core > 0) {
-    gpuCreateCopy_todevice_int (&mp->d_ibelm_xmin_outer_core, ibelm_xmin_outer_core, mp->nspec2D_xmin_outer_core);
-    gpuCreateCopy_todevice_realw (&mp->d_jacobian2D_xmin_outer_core, jacobian2D_xmin_outer_core, NGLL2 * mp->nspec2D_xmin_outer_core);
-    // boundary buffer
-    if (mp->save_stacey) {
-      gpuMalloc_realw (&mp->d_absorb_xmin_outer_core, NGLL2 * mp->nspec2D_xmin_outer_core);
-    }
-  }
+  if (num_abs_boundary_faces > 0) {
+    // ijk index arrays
+    gpuCreateCopy_todevice_int (&mp->d_abs_boundary_ispec_outer_core, abs_boundary_ispec_outer_core, num_abs_boundary_faces);
+    gpuCreateCopy_todevice_int (&mp->d_abs_boundary_npoin_outer_core, abs_boundary_npoin_outer_core, num_abs_boundary_faces);
 
-  // xmax
-  if (mp->nspec2D_xmax_outer_core > 0) {
-    gpuCreateCopy_todevice_int (&mp->d_ibelm_xmax_outer_core, ibelm_xmax_outer_core, mp->nspec2D_xmax_outer_core);
-    gpuCreateCopy_todevice_realw (&mp->d_jacobian2D_xmax_outer_core, jacobian2D_xmax_outer_core, NGLL2 * mp->nspec2D_xmax_outer_core);
+    size = 3 * NGLLSQUARE * num_abs_boundary_faces;
+    gpuCreateCopy_todevice_int (&mp->d_abs_boundary_ijk_outer_core, abs_boundary_ijk_outer_core, size);
+
+    size = NGLLSQUARE * num_abs_boundary_faces;
+    gpuCreateCopy_todevice_realw (&mp->d_abs_boundary_jacobian2Dw_outer_core, abs_boundary_jacobian2Dw_outer_core, size);
 
     // boundary buffer
     if (mp->save_stacey) {
-      gpuMalloc_realw (&mp->d_absorb_xmax_outer_core, NGLL2 * mp->nspec2D_xmax_outer_core);
-    }
-  }
-
-  // ymin
-  if (mp->nspec2D_ymin_outer_core > 0) {
-    gpuCreateCopy_todevice_int (&mp->d_ibelm_ymin_outer_core, ibelm_ymin_outer_core, mp->nspec2D_ymin_outer_core);
-    gpuCreateCopy_todevice_realw (&mp->d_jacobian2D_ymin_outer_core, jacobian2D_ymin_outer_core, NGLL2 * mp->nspec2D_ymin_outer_core);
-    // boundary buffer
-    if (mp->save_stacey) {
-      gpuMalloc_realw (&mp->d_absorb_ymin_outer_core, NGLL2 * mp->nspec2D_ymin_outer_core);
-    }
-  }
-
-  // ymax
-  if (mp->nspec2D_ymax_outer_core > 0) {
-    gpuCreateCopy_todevice_int (&mp->d_ibelm_ymax_outer_core, ibelm_ymax_outer_core, mp->nspec2D_ymax_outer_core);
-    gpuCreateCopy_todevice_realw (&mp->d_jacobian2D_ymax_outer_core, jacobian2D_ymax_outer_core, NGLL2 * mp->nspec2D_ymax_outer_core);
-    // boundary buffer
-    if (mp->save_stacey) {
-      gpuMalloc_realw (&mp->d_absorb_ymax_outer_core, NGLL2 * mp->nspec2D_ymax_outer_core);
-    }
-  }
-
-  // zmin
-  if (mp->nspec2D_zmin_outer_core > 0) {
-    // note: ibelm_bottom_outer_core and jacobian2D_bottom_outer_core will be allocated
-    //          when preparing the outer core
-    // boundary buffer
-    if (mp->save_stacey) {
-      gpuMalloc_realw (&mp->d_absorb_zmin_outer_core, NGLL2 * mp->nspec2D_zmin_outer_core);
+      gpuMalloc_realw (&mp->d_absorb_buffer_outer_core, NGLLSQUARE * num_abs_boundary_faces);
     }
   }
 
@@ -3044,90 +2936,24 @@ void FC_FUNC_ (prepare_cleanup_device,
   if (mp->absorbing_conditions) {
     gpuFree (&mp->d_rho_vp_crust_mantle);
     gpuFree (&mp->d_rho_vs_crust_mantle);
-    gpuFree (&mp->d_nkmin_xi_crust_mantle);
-    gpuFree (&mp->d_nkmin_eta_crust_mantle);
-    gpuFree (&mp->d_njmin_crust_mantle);
-    gpuFree (&mp->d_njmax_crust_mantle);
-    gpuFree (&mp->d_nimin_crust_mantle);
-    gpuFree (&mp->d_nimax_crust_mantle);
-    if (mp->nspec2D_xmin_crust_mantle > 0) {
-      gpuFree (&mp->d_ibelm_xmin_crust_mantle);
-      gpuFree (&mp->d_normal_xmin_crust_mantle);
-      gpuFree (&mp->d_jacobian2D_xmin_crust_mantle);
+    if (mp->num_abs_boundary_faces_crust_mantle > 0) {
+      gpuFree (&mp->d_abs_boundary_ispec_crust_mantle);
+      gpuFree (&mp->d_abs_boundary_npoin_crust_mantle);
+      gpuFree (&mp->d_abs_boundary_ijk_crust_mantle);
+      gpuFree (&mp->d_abs_boundary_normal_crust_mantle);
+      gpuFree (&mp->d_abs_boundary_jacobian2Dw_crust_mantle);
       if (mp->save_stacey) {
-        gpuFree (&mp->d_absorb_xmin_crust_mantle);
-      }
-    }
-    if (mp->nspec2D_xmax_crust_mantle > 0) {
-      gpuFree (&mp->d_ibelm_xmax_crust_mantle);
-      gpuFree (&mp->d_normal_xmax_crust_mantle);
-      gpuFree (&mp->d_jacobian2D_xmax_crust_mantle);
-      if (mp->save_stacey) {
-        gpuFree (&mp->d_absorb_xmax_crust_mantle);
-      }
-    }
-    if (mp->nspec2D_ymin_crust_mantle > 0) {
-      gpuFree (&mp->d_ibelm_ymin_crust_mantle);
-      gpuFree (&mp->d_normal_ymin_crust_mantle);
-      gpuFree (&mp->d_jacobian2D_ymin_crust_mantle);
-      if (mp->save_stacey) {
-        gpuFree (&mp->d_absorb_ymin_crust_mantle);
-      }
-    }
-    if (mp->nspec2D_ymax_crust_mantle > 0) {
-      gpuFree (&mp->d_ibelm_ymax_crust_mantle);
-      gpuFree (&mp->d_normal_ymax_crust_mantle);
-      gpuFree (&mp->d_jacobian2D_ymax_crust_mantle);
-      if (mp->save_stacey) {
-        gpuFree (&mp->d_absorb_ymax_crust_mantle);
-      }
-    }
-    if (mp->nspec2D_zmin_crust_mantle > 0) {
-      //gpuFree (&mp->d_ibelm_bottom_crust_mantle); also used for coupling, free later
-      gpuFree (&mp->d_normal_bottom_crust_mantle);
-      gpuFree (&mp->d_jacobian2D_bottom_crust_mantle);
-      if (mp->save_stacey) {
-        gpuFree (&mp->d_absorb_zmin_crust_mantle);
+        gpuFree (&mp->d_absorb_buffer_crust_mantle);
       }
     }
     gpuFree (&mp->d_vp_outer_core);
-    gpuFree (&mp->d_nkmin_xi_outer_core);
-    gpuFree (&mp->d_nkmin_eta_outer_core);
-    gpuFree (&mp->d_njmin_outer_core);
-    gpuFree (&mp->d_njmax_outer_core);
-    gpuFree (&mp->d_nimin_outer_core);
-    gpuFree (&mp->d_nimax_outer_core);
-    if (mp->nspec2D_xmin_outer_core > 0) {
-      gpuFree (&mp->d_ibelm_xmin_outer_core);
-      gpuFree (&mp->d_jacobian2D_xmin_outer_core);
+    if (mp->num_abs_boundary_faces_outer_core > 0) {
+      gpuFree (&mp->d_abs_boundary_ispec_outer_core);
+      gpuFree (&mp->d_abs_boundary_npoin_outer_core);
+      gpuFree (&mp->d_abs_boundary_ijk_outer_core);
+      gpuFree (&mp->d_abs_boundary_jacobian2Dw_outer_core);
       if (mp->save_stacey) {
-        gpuFree (&mp->d_absorb_xmin_outer_core);
-      }
-    }
-    if (mp->nspec2D_xmax_outer_core > 0) {
-      gpuFree (&mp->d_ibelm_xmax_outer_core);
-      gpuFree (&mp->d_jacobian2D_xmax_outer_core);
-      if (mp->save_stacey) {
-        gpuFree (&mp->d_absorb_xmax_outer_core);
-      }
-    }
-    if (mp->nspec2D_ymin_outer_core > 0) {
-      gpuFree (&mp->d_ibelm_ymin_outer_core);
-      gpuFree (&mp->d_jacobian2D_ymin_outer_core);
-      if (mp->save_stacey) {
-        gpuFree (&mp->d_absorb_ymin_outer_core);
-      }
-    }
-    if (mp->nspec2D_ymax_outer_core > 0) {
-      gpuFree (&mp->d_ibelm_ymax_outer_core);
-      gpuFree (&mp->d_jacobian2D_ymax_outer_core);
-      if (mp->save_stacey) {
-        gpuFree (&mp->d_absorb_ymax_outer_core);
-      }
-    }
-    if (mp->nspec2D_zmin_outer_core > 0) {
-      if (mp->save_stacey) {
-        gpuFree (&mp->d_absorb_zmin_outer_core);
+        gpuFree (&mp->d_absorb_buffer_outer_core);
       }
     }
   }

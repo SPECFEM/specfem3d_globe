@@ -166,8 +166,9 @@ typedef double realw;
 
 // Gauss-Lobatto-Legendre
 #define NGLLX 5
-#define NGLL2 25
-#define NGLL3 125 // no padding: requires same size as in Fortran for NGLLX * NGLLY * NGLLZ
+#define NGLL2 25        // assumes NGLLX == NGLLY == NGLLZ
+#define NGLLSQUARE 25
+#define NGLL3 125       // no padding: requires same size as in Fortran for NGLLX * NGLLY * NGLLZ
 
 // padding: 128 == 2**7 might improve on older graphics cards w/ coalescent memory accesses:
 #define NGLL3_PADDED 128
@@ -180,7 +181,7 @@ typedef double realw;
 // region ids
 #define IREGION_CRUST_MANTLE  1
 #define IREGION_OUTER_CORE    2
-#define IREGION_INNER_CORE  3
+#define IREGION_INNER_CORE    3
 
 // inner core : fictitious elements id (from constants.h)
 #define IFLAG_IN_FICTITIOUS_CUBE  11
@@ -1013,70 +1014,27 @@ typedef struct mesh_ {
   // ------------------------------------------------------------------   //
   // absorbing boundaries
   // ------------------------------------------------------------------   //
+  // crust/mantle
+  int num_abs_boundary_faces_crust_mantle;
+  gpu_int_mem d_abs_boundary_ispec_crust_mantle;
+  gpu_int_mem d_abs_boundary_npoin_crust_mantle;
+  gpu_int_mem d_abs_boundary_ijk_crust_mantle;
+  gpu_realw_mem d_abs_boundary_jacobian2Dw_crust_mantle;
+  gpu_realw_mem d_abs_boundary_normal_crust_mantle;
 
-  int nspec2D_xmin_crust_mantle, nspec2D_xmax_crust_mantle;
-  int nspec2D_ymin_crust_mantle, nspec2D_ymax_crust_mantle;
-  int nspec2D_zmin_crust_mantle;
-
-  gpu_int_mem d_nimin_crust_mantle;
-  gpu_int_mem d_nimax_crust_mantle;
-  gpu_int_mem d_njmin_crust_mantle;
-  gpu_int_mem d_njmax_crust_mantle;
-  gpu_int_mem d_nkmin_xi_crust_mantle;
-  gpu_int_mem d_nkmin_eta_crust_mantle;
-
-  gpu_int_mem d_ibelm_xmin_crust_mantle;
-  gpu_int_mem d_ibelm_xmax_crust_mantle;
-  gpu_int_mem d_ibelm_ymin_crust_mantle;
-  gpu_int_mem d_ibelm_ymax_crust_mantle;
-
-  gpu_realw_mem d_normal_xmin_crust_mantle;
-  gpu_realw_mem d_normal_xmax_crust_mantle;
-  gpu_realw_mem d_normal_ymin_crust_mantle;
-  gpu_realw_mem d_normal_ymax_crust_mantle;
-  gpu_realw_mem d_normal_bottom_crust_mantle;
-
-  gpu_realw_mem d_jacobian2D_xmin_crust_mantle;
-  gpu_realw_mem d_jacobian2D_xmax_crust_mantle;
-  gpu_realw_mem d_jacobian2D_ymin_crust_mantle;
-  gpu_realw_mem d_jacobian2D_ymax_crust_mantle;
-  gpu_realw_mem d_jacobian2D_bottom_crust_mantle;
-
-  gpu_realw_mem d_absorb_xmin_crust_mantle;
-  gpu_realw_mem d_absorb_xmax_crust_mantle;
-  gpu_realw_mem d_absorb_ymin_crust_mantle;
-  gpu_realw_mem d_absorb_ymax_crust_mantle;
-  gpu_realw_mem d_absorb_zmin_crust_mantle;
+  gpu_realw_mem d_absorb_buffer_crust_mantle;
 
   gpu_realw_mem d_rho_vp_crust_mantle;
   gpu_realw_mem d_rho_vs_crust_mantle;
 
-  int nspec2D_xmin_outer_core, nspec2D_xmax_outer_core;
-  int nspec2D_ymin_outer_core, nspec2D_ymax_outer_core;
-  int nspec2D_zmin_outer_core;
+  // outer core
+  int num_abs_boundary_faces_outer_core;
+  gpu_int_mem d_abs_boundary_ispec_outer_core;
+  gpu_int_mem d_abs_boundary_npoin_outer_core;
+  gpu_int_mem d_abs_boundary_ijk_outer_core;
+  gpu_realw_mem d_abs_boundary_jacobian2Dw_outer_core;
 
-  gpu_int_mem d_nimin_outer_core;
-  gpu_int_mem d_nimax_outer_core;
-  gpu_int_mem d_njmin_outer_core;
-  gpu_int_mem d_njmax_outer_core;
-  gpu_int_mem d_nkmin_xi_outer_core;
-  gpu_int_mem d_nkmin_eta_outer_core;
-
-  gpu_int_mem d_ibelm_xmin_outer_core;
-  gpu_int_mem d_ibelm_xmax_outer_core;
-  gpu_int_mem d_ibelm_ymin_outer_core;
-  gpu_int_mem d_ibelm_ymax_outer_core;
-
-  gpu_realw_mem d_jacobian2D_xmin_outer_core;
-  gpu_realw_mem d_jacobian2D_xmax_outer_core;
-  gpu_realw_mem d_jacobian2D_ymin_outer_core;
-  gpu_realw_mem d_jacobian2D_ymax_outer_core;
-
-  gpu_realw_mem d_absorb_xmin_outer_core;
-  gpu_realw_mem d_absorb_xmax_outer_core;
-  gpu_realw_mem d_absorb_ymin_outer_core;
-  gpu_realw_mem d_absorb_ymax_outer_core;
-  gpu_realw_mem d_absorb_zmin_outer_core;
+  gpu_realw_mem d_absorb_buffer_outer_core;
 
   gpu_realw_mem d_vp_outer_core;
 

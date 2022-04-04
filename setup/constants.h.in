@@ -764,6 +764,9 @@
 ! number of nodes for 2D and 3D shape functions for hexahedra with 27 nodes
   integer, parameter :: NGNOD = 27, NGNOD2D = 9
 
+! assumes NGLLX == NGLLY == NGLLZ
+  integer, parameter :: NGLLSQUARE = NGLLX * NGLLY
+
 ! Deville routines optimized for NGLLX = NGLLY = NGLLZ = 5
   integer, parameter :: m1 = NGLLX, m2 = NGLLX * NGLLY
   integer, parameter :: NGLLCUBE = NGLLX * NGLLY * NGLLZ
