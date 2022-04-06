@@ -32,6 +32,9 @@ program combine_surf_data
   use constants, only: &
     CUSTOM_REAL,MAX_STRING_LEN,IIN,NGLLX,NGLLY,NGLLZ
 
+  use shared_parameters, only: &
+    LOCAL_PATH
+
   use constants_solver, only: &
     NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE,NSPEC_OUTER_CORE,NSPEC_INNER_CORE
 
@@ -85,8 +88,9 @@ program combine_surf_data
     endif
   enddo
 
-  if (NSPEC_CRUST_MANTLE < NSPEC_OUTER_CORE .or. NSPEC_CRUST_MANTLE < NSPEC_INNER_CORE) &
-             stop 'This program needs that NSPEC_CRUST_MANTLE > NSPEC_OUTER_CORE and NSPEC_INNER_CORE'
+  ! user output
+  print *,'xcombine_surf_data'
+  print *
 
   ! get slice list
   open(unit = IIN, file = trim(arg(1)), status = 'unknown',iostat = ier)
@@ -164,6 +168,30 @@ program combine_surf_data
   else
     FILE_ARRAY_IS_3D = .true.
   endif
+
+  ! user output
+  print *,'setup:'
+  print *,'  surface name       : ',trim(surfname)
+  print *,'  input directory    : ',trim(indir)
+  print *,'  output directory   : ',trim(outdir)
+  print *
+  print *,'  low/high resolution: ',ires
+  print *,'  array is 3D        : ',idimval
+  print *
+
+  ! reads mesh parameters
+  LOCAL_PATH = indir      ! mesh_parameters.bin file in indir/
+  call read_mesh_parameters()
+
+  ! user output
+  print *,'mesh parameters (from input directory):'
+  print *,'  NSPEC_CRUST_MANTLE = ',NSPEC_CRUST_MANTLE
+  print *,'  NSPEC_OUTER_CORE   = ',NSPEC_OUTER_CORE
+  print *,'  NSPEC_INNER_CORE   = ',NSPEC_INNER_CORE
+  print *
+
+  if (NSPEC_CRUST_MANTLE < NSPEC_OUTER_CORE .or. NSPEC_CRUST_MANTLE < NSPEC_INNER_CORE) &
+    stop 'This program needs that NSPEC_CRUST_MANTLE > NSPEC_OUTER_CORE and NSPEC_INNER_CORE'
 
   ! figure out the total number of points/elements and allocate arrays
   write(prname,'(a,i6.6,a)') trim(indir)//'/proc',node_list(1),'_'

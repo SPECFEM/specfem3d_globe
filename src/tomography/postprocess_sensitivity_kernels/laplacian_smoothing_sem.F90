@@ -37,7 +37,7 @@ program smooth_laplacian_sem
   use meshfem3D_models_par, only: CRUSTAL
 
   use postprocess_par, only: &
-       NCHUNKS_VAL,NPROC_XI_VAL,NPROC_ETA_VAL,NPROCTOT_VAL,NEX_XI_VAL,NEX_ETA_VAL, &
+       NCHUNKS_VAL,NPROC_XI_VAL,NPROC_ETA_VAL,NPROCTOT_VAL, &
        NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,MAX_KERNEL_NAMES,LOCAL_PATH
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
@@ -46,15 +46,6 @@ program smooth_laplacian_sem
 #endif
 
   implicit none
-
-  ! copy from static compilation (depends on Par_file values)
-  integer, parameter :: NPROC_XI  = NPROC_XI_VAL
-  integer, parameter :: NPROC_ETA = NPROC_ETA_VAL
-  integer, parameter :: NCHUNKS   = NCHUNKS_VAL
-
-  !takes region 1 kernels
-  integer, parameter :: NSPEC_AB = NSPEC_CRUST_MANTLE
-  integer, parameter :: NGLOB_AB = NGLOB_CRUST_MANTLE
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
   integer, parameter :: NARGS = 7
@@ -70,7 +61,6 @@ program smooth_laplacian_sem
   double precision    :: Lx, Ly, Lz, Lh, Lv, conv_crit, Lh2, Lv2
   double precision    :: x, y, z, r, theta, phi, rel_to_prem
   double precision    :: rho,drhodr,vp,vs,Qkappa,Qmu
-
 
   real(kind=CUSTOM_REAL), dimension(:),       allocatable :: m, s
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: mo, so
@@ -142,6 +132,12 @@ program smooth_laplacian_sem
 
   double precision, external :: lagrange_deriv_GLL
 
+  integer :: NPROC_XI
+  integer :: NPROC_ETA
+  integer :: NCHUNKS
+  integer :: NSPEC_AB
+  integer :: NGLOB_AB
+
   ! initialize the MPI communicator and start the NPROCTOT MPI processes
   call init_mpi()
   call world_size(sizeprocs)
@@ -178,19 +174,6 @@ program smooth_laplacian_sem
 #endif
         stop ' Please check command line arguments'
      endif
-  endif
-  call synchronize_all()
-
-  ! check number of MPI processes
-  if (sizeprocs /= NPROCTOT_VAL) then
-     if (myrank == 0) then
-        print *
-        print *,'Expected number of MPI processes: ', NPROCTOT_VAL
-        print *,'Actual number of MPI processes: ', sizeprocs
-        print *
-     endif
-     call synchronize_all()
-     stop 'Error wrong number of MPI processes'
   endif
   call synchronize_all()
 
@@ -260,7 +243,44 @@ program smooth_laplacian_sem
 
   ! checks if basin code or global code: global code uses nchunks /= 0
   if (NCHUNKS == 0) stop 'Error nchunks'
-  if (sizeprocs /= NPROCTOT_VAL) call exit_mpi(myrank,'Error total number of slices')
+
+  ! reads mesh parameters
+  if (myrank == 0) then
+    ! reads mesh_parameters.bin file from LOCAL_PATH
+    call read_mesh_parameters()
+  endif
+  ! broadcast parameters to all processes
+  call bcast_mesh_parameters()
+
+  ! user output
+  if (myrank == 0) then
+    write(*,*) 'mesh parameters (from local_path parameter):'
+    write(*,*) '  LOCAL_PATH         = ',trim(LOCAL_PATH)
+    write(*,*) '  NSPEC_CRUST_MANTLE = ',NSPEC_CRUST_MANTLE
+    write(*,*) '  NPROCTOT           = ',NPROCTOT_VAL
+    write(*,*)
+  endif
+
+  ! check number of MPI processes
+  if (sizeprocs /= NPROCTOT_VAL) then
+     if (myrank == 0) then
+        print *
+        print *,'Expected number of MPI processes: ', NPROCTOT_VAL
+        print *,'Actual number of MPI processes: ', sizeprocs
+        print *
+     endif
+     call synchronize_all()
+     stop 'Error wrong number of MPI processes'
+  endif
+  call synchronize_all()
+
+  ! copy from static compilation (depends on Par_file values)
+  NPROC_XI  = NPROC_XI_VAL
+  NPROC_ETA = NPROC_ETA_VAL
+  NCHUNKS   = NCHUNKS_VAL
+  !takes region 1 kernels
+  NSPEC_AB = NSPEC_CRUST_MANTLE
+  NGLOB_AB = NGLOB_CRUST_MANTLE
 
   ! user output
   if (myrank == 0) then

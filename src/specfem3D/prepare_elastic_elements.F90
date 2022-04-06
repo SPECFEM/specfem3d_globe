@@ -370,17 +370,17 @@
     icount_iso = 0
 
 ! openmp solver
-!$OMP PARALLEL if (NSPEC_CRUST_MANTLE > 10) &
-!$OMP DEFAULT(PRIVATE) &
-!$OMP SHARED(ispec_is_tiso_crust_mantle, kappavstore_crust_mantle,muvstore_crust_mantle, &
-!$OMP kappahstore_crust_mantle,muhstore_crust_mantle, &
-!$OMP one_minus_sum_beta_crust_mantle,eta_anisostore_crust_mantle,ibool_crust_mantle,rstore_crust_mantle, &
-!$OMP c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle,c14store_crust_mantle, &
-!$OMP c15store_crust_mantle,c16store_crust_mantle,c22store_crust_mantle,c23store_crust_mantle, &
-!$OMP c24store_crust_mantle,c25store_crust_mantle,c26store_crust_mantle,c33store_crust_mantle, &
-!$OMP c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle,c44store_crust_mantle, &
-!$OMP c45store_crust_mantle,c46store_crust_mantle,c55store_crust_mantle,c56store_crust_mantle, &
-!$OMP c66store_crust_mantle)
+!$OMP PARALLEL DEFAULT(SHARED) &
+!$OMP PRIVATE(ispec,iglob, &
+#ifdef FORCE_VECTORIZATION
+!$OMP ijk, &
+#else
+!$OMP i,j,k, &
+#endif
+!$OMP one_minus_sum_beta_use,mul,muvl,muhl,eta_aniso, &
+!$OMP kappavl,kappahl,rhovpvsq,rhovphsq,rhovsvsq,rhovshsq, &
+!$OMP c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
+!$OMP theta,phi)
 !$OMP DO
     do ispec = 1,NSPEC_CRUST_MANTLE
 

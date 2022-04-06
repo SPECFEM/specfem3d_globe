@@ -186,6 +186,23 @@ xcombine_paraview_strain_data_OBJECTS = \
 xcombine_paraview_strain_data_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/specfem3D_par.solverstatic_module.o \
+	$O/read_mesh_parameters.solverstatic.o \
+	$O/parallel.sharedmpi.o \
+	$O/auto_ner.shared.o \
+	$O/calendar.shared.o \
+	$O/count_elements.shared.o \
+	$O/count_points.shared.o \
+	$O/define_all_layers.shared.o \
+	$O/get_model_parameters.shared.o \
+	$O/get_timestep_and_layers.shared.o \
+	$O/model_mars_1D.shared.o \
+	$O/model_prem.shared.o \
+	$O/model_Sohl.shared.o \
+	$O/model_vpremoon.shared.o \
+	$O/read_compute_parameters.shared.o \
+	$O/read_parameter_file.shared.o \
+	$O/read_value_parameters.shared.o \
+	$O/param_reader.cc.o \
 	$O/binary_c_io.cc.o \
 	$O/reduce.shared.o \
 	$O/rthetaphi_xyz.shared.o \
@@ -193,7 +210,7 @@ xcombine_paraview_strain_data_SHARED_OBJECTS = \
 	$(EMPTY_MACRO)
 
 ${E}/xcombine_paraview_strain_data: $(xcombine_paraview_strain_data_OBJECTS) $(xcombine_paraview_strain_data_SHARED_OBJECTS)
-	${FCCOMPILE_CHECK} -o $@ $+
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 ### additional dependencies
 $O/combine_paraview_strain_data.auxsolver.o: $O/specfem3D_par.solverstatic_module.o
@@ -207,12 +224,17 @@ xcombine_surf_data_OBJECTS = \
 xcombine_surf_data_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/specfem3D_par.solverstatic_module.o \
+	$O/read_mesh_parameters.solverstatic.o \
+	$O/parallel.sharedmpi.o \
+	$O/read_parameter_file.shared.o \
+	$O/read_value_parameters.shared.o \
+	$O/param_reader.cc.o \
 	$O/binary_c_io.cc.o \
 	$O/flush_system.shared.o \
 	$(EMPTY_MACRO)
 
 ${E}/xcombine_surf_data: $(xcombine_surf_data_OBJECTS) $(xcombine_surf_data_SHARED_OBJECTS)
-	${FCCOMPILE_CHECK} -o $@ $+
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 ### additional dependencies
 $O/combine_surf_data.auxsolver.o: $O/specfem3D_par.solverstatic_module.o
@@ -226,6 +248,7 @@ xcombine_vol_data_OBJECTS = \
 xcombine_vol_data_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/specfem3D_par.solverstatic_module.o \
+	$O/read_mesh_parameters.solverstatic.o \
 	$O/binary_c_io.cc.o \
 	$O/exit_mpi.shared.o \
 	$O/flush_system.shared.o \
@@ -266,6 +289,7 @@ xcombine_vol_data_adios_SHARED_OBJECTS = \
 	$O/adios_manager.shared_adios_module.o \
 	$O/shared_par.shared_module.o \
 	$O/specfem3D_par.solverstatic_module.o \
+	$O/read_mesh_parameters.solverstatic.o \
 	$O/binary_c_io.cc.o \
 	$O/exit_mpi.shared.o \
 	$O/flush_system.shared.o \
@@ -302,6 +326,7 @@ xcombine_vol_data_vtk_OBJECTS = \
 xcombine_vol_data_vtk_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/specfem3D_par.solverstatic_module.o \
+	$O/read_mesh_parameters.solverstatic.o \
 	$O/binary_c_io.cc.o \
 	$O/exit_mpi.shared.o \
 	$O/flush_system.shared.o \
@@ -343,6 +368,7 @@ xcombine_vol_data_vtk_adios_SHARED_OBJECTS = \
 	$O/adios_manager.shared_adios_module.o \
 	$O/shared_par.shared_module.o \
 	$O/specfem3D_par.solverstatic_module.o \
+	$O/read_mesh_parameters.solverstatic.o \
 	$O/binary_c_io.cc.o \
 	$O/exit_mpi.shared.o \
 	$O/flush_system.shared.o \
@@ -477,10 +503,15 @@ xextract_database_OBJECTS = \
 
 xextract_database_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
+	$O/read_mesh_parameters.solverstatic.o \
+	$O/parallel.sharedmpi.o \
+	$O/read_parameter_file.shared.o \
+	$O/read_value_parameters.shared.o \
+	$O/param_reader.cc.o \
 	$(EMPTY_MACRO)
 
 ${E}/xextract_database: $(xextract_database_OBJECTS) $(xextract_database_SHARED_OBJECTS)
-	${FCCOMPILE_CHECK} -o $@ $+
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 ### additional dependencies
 $O/extract_database.aux.o: $O/specfem3D_par.solverstatic_module.o
@@ -634,29 +665,29 @@ $(auxiliaries_OBJECTS): S := ${S_TOP}/src/auxiliaries
 ##
 ## auxiliaries
 ##
-$O/%.aux.o: $S/%.f90 $O/shared_par.shared_module.o ${OUTPUT}/values_from_mesher.h
+$O/%.aux.o: $S/%.f90 $O/shared_par.shared_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/%.auxsolver.o: $S/%.f90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o
+$O/%.auxsolver.o: $S/%.f90 $O/shared_par.shared_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/%.auxsolver.o: $S/%.F90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o
+$O/%.auxsolver.o: $S/%.F90 $O/shared_par.shared_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/%.auxsolver_vtk.o: $S/%.F90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o
+$O/%.auxsolver_vtk.o: $S/%.F90 $O/shared_par.shared_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(FC_DEFINE)USE_VTK_INSTEAD_OF_MESH
 
-$O/%.auxsolver_vtu.o: $S/%.F90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o
+$O/%.auxsolver_vtu.o: $S/%.F90 $O/shared_par.shared_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(FC_DEFINE)USE_VTU_INSTEAD_OF_MESH
 
-$O/%.auxadios.o: $S/%.f90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o $O/parallel.sharedmpi.o
+$O/%.auxadios.o: $S/%.f90 $O/shared_par.shared_module.o $O/parallel.sharedmpi.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(FC_DEFINE)USE_ADIOS_INSTEAD_OF_MESH
 
-$O/%.auxadios.o: $S/%.F90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o $O/parallel.sharedmpi.o
+$O/%.auxadios.o: $S/%.F90 $O/shared_par.shared_module.o $O/parallel.sharedmpi.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(FC_DEFINE)USE_ADIOS_INSTEAD_OF_MESH
 
-$O/%.auxadios_vtk.o: $S/%.F90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o $O/parallel.sharedmpi.o
+$O/%.auxadios_vtk.o: $S/%.F90 $O/shared_par.shared_module.o $O/parallel.sharedmpi.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(FC_DEFINE)USE_ADIOS_INSTEAD_OF_MESH $(FC_DEFINE)USE_VTK_INSTEAD_OF_MESH
 
-$O/%.auxadios_vtu.o: $S/%.F90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o $O/parallel.sharedmpi.o
+$O/%.auxadios_vtu.o: $S/%.F90 $O/shared_par.shared_module.o $O/parallel.sharedmpi.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(FC_DEFINE)USE_ADIOS_INSTEAD_OF_MESH $(FC_DEFINE)USE_VTU_INSTEAD_OF_MESH

@@ -32,8 +32,9 @@
 
 program convert_model_file_adios
 
-  use postprocess_par, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,IIN,IOUT, &
-    MAX_STRING_LEN,NPROCTOT_VAL,NSPEC_CRUST_MANTLE
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,IIN,IOUT,MAX_STRING_LEN
+
+  use postprocess_par, only: NPROCTOT_VAL,NSPEC_CRUST_MANTLE,NSPEC,LOCAL_PATH
 
   use adios_helpers_mod
   use manager_adios
@@ -52,9 +53,6 @@ program convert_model_file_adios
   logical :: HAS_AZIMUTHAL_ANISO
   ! shear attenuation (Qmu)
   logical :: HAS_ATTENUATION_Q
-
-  ! model files
-  integer, parameter :: NSPEC = NSPEC_CRUST_MANTLE
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: model_par
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: model
@@ -89,20 +87,6 @@ program convert_model_file_adios
   call init_mpi()
   call world_size(sizeprocs)
   call world_rank(myrank)
-
-  ! checks number of processes
-  ! note: must run as with same number of process as file was created
-  if (sizeprocs /= NPROCTOT_VAL) then
-    ! usage info
-    if (myrank == 0) then
-      print *, "this program must be executed in parallel with NPROCTOT_VAL = ",NPROCTOT_VAL,"processes"
-      print *, "Invalid number of processes used: ", sizeprocs, " procs"
-      print *
-      print *, "Please run: mpirun -np ",NPROCTOT_VAL," ./bin/xconvert_model_file_adios .."
-    endif
-    call abort_mpi()
-  endif
-  call synchronize_all()
 
   ! reads input arguments
   do i = 1, 4
@@ -230,12 +214,51 @@ program convert_model_file_adios
     print *, ' '
   endif
 
+  ! reads mesh parameters
+  if (is_model_file_conversion) then
+    LOCAL_PATH = input_dir
+  else
+    LOCAL_PATH = output_dir
+  endif
+  if (myrank == 0) then
+    ! reads mesh_parameters.bin file from input1dir/
+    LOCAL_PATH = input_dir
+    call read_mesh_parameters()
+  endif
+  ! broadcast parameters to all processes
+  call bcast_mesh_parameters()
+
+  ! user output
+  if (myrank == 0) then
+    write(*,*) 'mesh parameters (from input directory):'
+    write(*,*) '  NSPEC_CRUST_MANTLE = ',NSPEC_CRUST_MANTLE
+    write(*,*) '  NPROCTOT           = ',NPROCTOT_VAL
+    write(*,*)
+  endif
+
+  ! checks number of processes
+  ! note: must run as with same number of process as file was created
+  if (sizeprocs /= NPROCTOT_VAL) then
+    ! usage info
+    if (myrank == 0) then
+      print *, "this program must be executed in parallel with NPROCTOT_VAL = ",NPROCTOT_VAL,"processes"
+      print *, "Invalid number of processes used: ", sizeprocs, " procs"
+      print *
+      print *, "Please run: mpirun -np ",NPROCTOT_VAL," ./bin/xconvert_model_file_adios .."
+    endif
+    call abort_mpi()
+  endif
+  call synchronize_all()
+
   ! initializes ADIOS
   if (myrank == 0) then
     print *, 'initializing ADIOS...'
     print *, ' '
   endif
   call initialize_adios()
+
+  ! sets array size
+  NSPEC = NSPEC_CRUST_MANTLE
 
   ! initializes model values
   allocate(model(NGLLX,NGLLY,NGLLZ,NSPEC),stat=ier)

@@ -180,6 +180,8 @@
              NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
              NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION
 
+  integer :: NT_DUMP_ATTENUATION_optimal
+
   ! this for the different corners of the slice (which are different if the superbrick is cut)
   ! 1 : xi_min, eta_min
   ! 2 : xi_max, eta_min

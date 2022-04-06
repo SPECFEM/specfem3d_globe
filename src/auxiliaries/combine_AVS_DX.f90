@@ -139,12 +139,13 @@
   print *,'reading parameter file'
   print *
 
-! read the parameter file and compute additional parameters
+  ! read the parameter file and compute additional parameters
   call read_compute_parameters()
-!
+
+  ! check
   if (.not. SAVE_MESH_FILES) stop 'AVS or DX files were not saved by the mesher'
 
-! get the base pathname for output files
+  ! get the base pathname for output files
   OUTPUT_FILES = OUTPUT_FILES_BASE
 
   print *,'1 = create files in OpenDX format'
@@ -170,7 +171,7 @@
   read(5,*) ivalue
   if (ivalue < 1 .or. ivalue > 3) stop 'exiting...'
 
-! warning if surface elevation
+  ! warning if surface elevation
   if (ivalue == 3) then
     print *,'******************************************'
     print *,'*** option 7 to color using topography ***'
@@ -461,7 +462,7 @@
 
 ! create the name for the database of the current slide
   call create_serial_name_database(prname,iproc,iregion_code, &
-      LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
+                                   LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
 
   if (ivalue == 1) then
     open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementsfaces.txt',status='old',action='read')

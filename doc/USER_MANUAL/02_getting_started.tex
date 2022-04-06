@@ -481,7 +481,7 @@ architecture. In such a case, typing \texttt{``make all''} on the frontend will 
 1/ create a script that runs \texttt{``make all''} on a node instead of on the frontend, if the compiler is also installed on the nodes \\
 
 \noindent
-2/ after running the \texttt{``configure''} script, create two copies of the Makefiles:
+2/ in case of static compilation, after running the \texttt{``configure''} script, create two copies of the Makefiles:
 \\
 \red{TODO: this has not been tested out yet, any feedback is welcome}
 \\
@@ -509,13 +509,12 @@ xcreate_header_file: $O/create_header_file.o $(XCREATE_HEADER_OBJECTS)
   ${MPIFCCOMPILE_CHECK} -o ${E}/xcreate_header_file $O/create_header_file.o $(XCREATE_HEADER_OBJECTS)
 \end{verbatim}
 }
-
 \noindent
-In \texttt{src/specfem3D/Makefile} comment out these last two lines:
+and comment out the line calling the executable:
 {\small
 \begin{verbatim}
-#${OUTPUT}/values_from_mesher.h: reqheader
-#       (mkdir -p ${OUTPUT}; cd ${S_TOP}/; ./bin/xcreate_header_file)
+${OUTPUT}/values_from_mesher.h: $E/xcreate_header_file $B/DATA/Par_file
+#       $E/xcreate_header_file
 \end{verbatim}
 }
 \noindent

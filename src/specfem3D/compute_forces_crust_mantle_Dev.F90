@@ -166,30 +166,26 @@
   endif
 
 ! openmp solver
-!$OMP PARALLEL DEFAULT(SHARED) &
+!$OMP PARALLEL DEFAULT(NONE) &
 !$OMP SHARED( deriv, &
 !$OMP num_elements,iphase,phase_ispec_inner, &
 !$OMP ibool,ispec_is_tiso, &
 !$OMP displ_crust_mantle,accel_crust_mantle, &
-!$OMP wgll_cube,hprime_xxt,hprime_xx,hprimewgll_xx,hprimewgll_xxT, &
-!$OMP wgllwgll_xy_3D, wgllwgll_xz_3D, wgllwgll_yz_3D, &
 !$OMP c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
 !$OMP c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
 !$OMP c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
 !$OMP kappavstore,muvstore, &
-!$OMP vnspec, &
 !$OMP factor_common, &
 !$OMP alphaval,betaval,gammaval, &
 !$OMP R_xx,R_yy,R_xy,R_xz,R_yz, &
 !$OMP epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz,epsilon_trace_over_3, &
 !$OMP gravity_pre_store,gravity_H, &
-!$OMP USE_LDDRK, &
 !$OMP R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
 !$OMP sum_terms, &
 #ifdef FORCE_VECTORIZATION
 !$OMP ibool_inv_tbl, ibool_inv_st, num_globs, phase_iglob, &
 #endif
-!$OMP deltat,COMPUTE_AND_STORE_STRAIN ) &
+!$OMP deltat ) &
 !$OMP PRIVATE( ispec,ispec_p,i,j,k,iglob, &
 #ifdef FORCE_VECTORIZATION
 !$OMP ijk_spec,ip,iglob_p, &
@@ -199,7 +195,13 @@
 !$OMP tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
 !$OMP newtempx1,newtempx2,newtempx3,newtempy1,newtempy2,newtempy3,newtempz1,newtempz2,newtempz3, &
 !$OMP dummyx_loc,dummyy_loc,dummyz_loc, &
-!$OMP rho_s_H,epsilondev_loc )
+!$OMP rho_s_H,epsilondev_loc ) &
+!$OMP FIRSTPRIVATE( hprime_xx, hprime_xxT, hprimewgll_xxT, hprimewgll_xx, &
+!$OMP wgllwgll_yz_3D, wgllwgll_xz_3D, wgllwgll_xy_3D, wgll_cube, &
+!$OMP att1_val, att2_val, att3_val, vnspec, &
+!$OMP ANISOTROPIC_3D_MANTLE_VAL,GRAVITY_VAL, &
+!$OMP ATTENUATION_VAL,PARTIAL_PHYS_DISPERSION_ONLY_VAL,COMPUTE_AND_STORE_STRAIN, &
+!$OMP USE_LDDRK )
 
 !$OMP DO SCHEDULE(GUIDED)
   do ispec_p = 1,num_elements

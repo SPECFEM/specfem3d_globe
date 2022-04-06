@@ -33,7 +33,7 @@ module tomography_par
     NGLLX,NGLLY,NGLLZ,IIN,IOUT, &
     FOUR_THIRDS,GAUSSALPHA,GAUSSBETA
 
-  use shared_parameters, only: R_PLANET_KM
+  use shared_parameters, only: R_PLANET_KM,LOCAL_PATH
 
   ! array dimensions for static compilation
   use constants_solver, only: &

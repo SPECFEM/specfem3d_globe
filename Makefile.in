@@ -436,6 +436,17 @@ endif
 @COND_CEM_TRUE@FCFLAGS += ${FC_DEFINE}USE_CEM @CEM_FCFLAGS@
 @COND_CEM_TRUE@MPILIBS += @CEM_LIBS@
 
+#######################################
+## static compilation
+#######################################
+# requires OUTPUT_FILES/values_from_mesher.h for compilation of the solver
+# needs to recompile executables for different simulation setups
+# turned off by default
+STATIC_COMPILATION = no
+
+ifeq ($(STATIC_COMPILATION), yes)
+	FCFLAGS += ${FC_DEFINE}USE_STATIC_COMPILATION
+endif
 
 #######################################
 ####

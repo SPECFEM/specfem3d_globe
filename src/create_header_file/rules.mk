@@ -29,7 +29,6 @@
 
 create_header_file_TARGETS = \
 	$E/xcreate_header_file \
-	${OUTPUT}/values_from_mesher.h \
 	$(EMPTY_MACRO)
 
 create_header_file_OBJECTS = \
@@ -59,6 +58,12 @@ create_header_file_SHARED_OBJECTS = \
 	$O/rthetaphi_xyz.shared.o \
 	$O/save_header_file.shared.o \
 	$(EMPTY_MACRO)
+
+# static compilation
+# requires building the OUTPUT_FILES/values_from_mesher.h file to compilation of the solver
+ifeq ($(STATIC_COMPILATION), yes)
+  create_header_file_TARGETS += ${OUTPUT}/values_from_mesher.h
+endif
 
 #######################################
 

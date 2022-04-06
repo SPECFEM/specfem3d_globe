@@ -32,10 +32,12 @@ fi
 
 #cleanup output
 rm -rf ./DATABASES_MPI ./OUTPUT_FILES ./DATA ./run_this_example.sh ./run_mesher_solver.bash ./REF_SEIS
-mkdir -p OUTPUT_FILES
+mkdir -p DATA OUTPUT_FILES
 
 # setup
-cp -rp $EXAMPLES/$var/DATA .
+cp -rp $EXAMPLES/$var/DATA/Par_file ./DATA/
+cp -rp $EXAMPLES/$var/DATA/CMTSOLUTION ./DATA/
+cp -rp $EXAMPLES/$var/DATA/STATIONS ./DATA/
 cp -p $EXAMPLES/$var/run_this_example.sh .
 cp -p $EXAMPLES/$var/run_mesher_solver.bash .
 ln -s $EXAMPLES/$var/REF_SEIS

@@ -108,6 +108,13 @@
     call exit_MPI(myrank,'wrong number of MPI processes in the initialization of SPECFEM')
   endif
 
+  ! read the mesh parameters for all array setup
+  if (myrank == 0) then
+    call read_mesh_parameters()
+  endif
+  ! broadcast parameters to all processes
+  call bcast_mesh_parameters()
+
   ! synchronizes processes
   call synchronize_all()
 

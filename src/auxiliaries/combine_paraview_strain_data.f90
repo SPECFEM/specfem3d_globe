@@ -35,6 +35,9 @@ program combine_paraview_movie_data
   use constants, only: &
     CUSTOM_REAL,MAX_STRING_LEN,IIN,OUTPUT_FILES_BASE
 
+  use shared_parameters, only: &
+    LOCAL_PATH
+
   use constants_solver, only: &
     NGLOB_CRUST_MANTLE
 
@@ -81,7 +84,7 @@ program combine_paraview_movie_data
       print *, '   dt_movie            - the time increment of movie snapshots'
       print *, '   itstart and itstop  - the time increments where to start and stop movie data files'
       print *, '   comp                - component can be SEE, SNE, SEZ, SNN, SNZ, SZZ, VEE, VEN, VEZ, V3, I1 or I2'
-      print *, '                         stored in the database directory DATABASES_MPI/'
+      print *, '                         stored in the database directory LOCAL_PATH (e.g., DATABASES_MPI/)'
       print *, '                         (as real(kind=CUSTOM_REAL) filename(NGLLX,NGLLY,NGLLZ,nspec))'
       print *, '   MOVIE_COARSE        - can be either .false. or .true.'
       print *, '   vtk or vtu          - (optional) to create VTK output files specify "vtk" or "vtu"'
@@ -122,6 +125,22 @@ program combine_paraview_movie_data
   endif
   print *, ' '
 
+  print *
+  print *,'reading parameter file'
+  print *
+
+  ! read the parameter file and compute additional parameters
+  call read_compute_parameters()
+
+  ! reads mesh parameters
+  call read_mesh_parameters()
+
+  ! user output
+  print *,'mesh parameters (from local_path directory):'
+  print *,'  NGLOB_CRUST_MANTLE = ',NGLOB_CRUST_MANTLE
+  print *
+
+  ! point/element arrays
   allocate(npoint(num_node),nelement(num_node),stat=ier)
   if (ier /= 0) stop 'Error allocating npoint,nelement arrays'
 
@@ -131,7 +150,7 @@ program combine_paraview_movie_data
     ! print *, 'Counting elements: slice ', iproc-1
     write(prname,'(a,i6.6,a)') 'proc',iproc-1,'_'
 
-    dimension_file = 'DATABASES_MPI/' // trim(prname) //'movie3D_info.txt'
+    dimension_file = trim(LOCAL_PATH) // '/' // trim(prname) //'movie3D_info.txt'
 
     !   print *, 'reading: ',trim(dimension_file)
     open(unit = IIN,file = trim(dimension_file),status='old',action='read', iostat = ier)
@@ -193,7 +212,7 @@ program combine_paraview_movie_data
       continue
     else
       ! MESH file format
-      write(mesh_file,'(a,a,a,i6.6,a)')  'DATABASES_MPI/' // 'movie3D_',trim(comp),'_it',it,'.mesh'
+      write(mesh_file,'(a,a,a,i6.6,a)')  trim(LOCAL_PATH) // '/' // 'movie3D_',trim(comp),'_it',it,'.mesh'
       call open_file_fd(trim(mesh_file)//char(0),fid)
     endif
 
@@ -219,7 +238,7 @@ program combine_paraview_movie_data
 
       !print *, ' '
       !print *, 'Writing points: slice ', iproc-1,'npoints',npoint(iproc)
-      write(prname,'(a,i6.6,a)') 'DATABASES_MPI/' // 'proc',iproc-1,'_'
+      write(prname,'(a,i6.6,a)') trim(LOCAL_PATH) // '/' // 'proc',iproc-1,'_'
 
       ! reads in grid point locations
       open(unit = IIN,file = trim(prname)//'movie3D_x.bin',status='old',action='read', iostat = ier,form ='unformatted')
@@ -461,7 +480,7 @@ program combine_paraview_movie_data
       if (npoint(iproc) == 0) cycle
 
       ! print *, 'Reading slice ', iproc-1
-      write(prname,'(a,i6.6,a)') 'DATABASES_MPI/' // 'proc',iproc-1,'_'
+      write(prname,'(a,i6.6,a)') trim(LOCAL_PATH) // '/' // 'proc',iproc-1,'_'
 
       local_element_file = trim(prname) // 'movie3D_elements.bin'
       open(unit = IIN, file = trim(local_element_file), status = 'old', action='read',iostat = ier,form='unformatted')

@@ -281,25 +281,23 @@
   implicit none
 
   ! use integer array to store values
-  integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
-  character(len=MAX_STRING_LEN) :: LOCAL_PATH
+  integer, dimension(NX_BATHY,NY_BATHY),intent(in) :: ibathy_topo
+  character(len=MAX_STRING_LEN),intent(in) :: LOCAL_PATH
 
   ! local parameters
-  character(len=MAX_STRING_LEN) :: prname
+  character(len=MAX_STRING_LEN) :: filename
   integer :: ier
 
-  ! create the name for the database of the current slide and region
-  ! only main needs to save this
-  call create_name_database(prname,0,IREGION_CRUST_MANTLE,LOCAL_PATH)
+  filename = trim(LOCAL_PATH) // '/' // 'mesh_topo_bathy.bin'
 
   ! saves topography and bathymetry file for solver
-  open(unit=IOUT,file=prname(1:len_trim(prname))//'topo.bin', &
+  open(unit=IOUT,file=trim(filename), &
         status='unknown',form='unformatted',action='write',iostat=ier)
 
   if (ier /= 0) then
     ! inform about missing database topo file
     print *,'TOPOGRAPHY problem:'
-    print *,'Error opening file: ',prname(1:len_trim(prname))//'topo.bin'
+    print *,'Error opening file: ',trim(filename)
     print *,'please check if path exists and rerun mesher'
     call exit_mpi(0,'Error opening file for database topo')
   endif
@@ -321,25 +319,23 @@
   implicit none
 
   ! use integer array to store values
-  integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
-  character(len=MAX_STRING_LEN) :: LOCAL_PATH
+  integer, dimension(NX_BATHY,NY_BATHY),intent(inout) :: ibathy_topo
+  character(len=MAX_STRING_LEN),intent(in) :: LOCAL_PATH
 
   ! local parameters
-  character(len=MAX_STRING_LEN) :: prname
+  character(len=MAX_STRING_LEN) :: filename
   integer :: ier
 
-  ! create the name for the database of the current slide and region
-  ! only main needs to save this
-  call create_name_database(prname,0,IREGION_CRUST_MANTLE,LOCAL_PATH)
+  filename = trim(LOCAL_PATH) // '/' // 'mesh_topo_bathy.bin'
 
   ! reads topography and bathymetry file from saved database file
-  open(unit=IIN,file=prname(1:len_trim(prname))//'topo.bin', &
+  open(unit=IIN,file=trim(filename), &
         status='unknown',form='unformatted',action='read',iostat=ier)
 
   if (ier /= 0) then
     ! inform user
     print *,'TOPOGRAPHY problem:'
-    print *,'Error opening file: ',prname(1:len_trim(prname))//'topo.bin'
+    print *,'Error opening file: ',trim(filename)
     !print *,'please check if file exists and rerun solver'
     !call exit_mpi(0,'Error opening file for database topo')
 

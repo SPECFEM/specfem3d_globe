@@ -33,6 +33,7 @@ subroutine read_kernels_cg_tiso_old()
   use tomography_kernels_tiso_cg
 
   implicit none
+  ! local parameters
   real(kind=CUSTOM_REAL) :: min_vsv,min_vsh,max_vsv,max_vsh,min_eta,max_eta,min_bulk,max_bulk
   logical:: exist,exist_all,use_old_gradient_all
   integer :: ier

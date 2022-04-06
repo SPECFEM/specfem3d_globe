@@ -56,8 +56,9 @@ specfem3D_SOLVER_OBJECTS = \
 	$O/netlib_specfun_erf.solver.o \
 	$(EMPTY_MACRO)
 
-# solver objects with statically allocated arrays; dependent upon
-# values_from_mesher.h
+# solver objects with either statically or dynamic allocated arrays;
+# in case of STATIC_COMPILATION, dependent upon OUTPUT_FILES/values_from_mesher.h file
+
 specfem3D_SOLVER_OBJECTS += \
 	$O/asdf_data.solverstatic_module.o \
 	$O/check_stability.solverstatic.o \
@@ -109,6 +110,7 @@ specfem3D_SOLVER_OBJECTS += \
 	$O/read_adjoint_sources.solverstatic.o \
 	$O/read_arrays_solver.solverstatic.o \
 	$O/read_forward_arrays.solverstatic.o \
+	$O/read_mesh_parameters.solverstatic.o \
 	$O/read_mesh_databases.solverstatic.o \
 	$O/read_topography_bathymetry.solverstatic.o \
 	$O/save_forward_arrays.solverstatic.o \
@@ -218,13 +220,13 @@ adios_specfem3D_SHARED_STUBS = \
 
 # conditional adios linking
 ifeq ($(ADIOS),yes)
-specfem3D_SOLVER_OBJECTS += $(adios_specfem3D_OBJECTS)
-specfem3D_SHARED_OBJECTS += $(adios_specfem3D_SHARED_OBJECTS)
+	specfem3D_SOLVER_OBJECTS += $(adios_specfem3D_OBJECTS)
+	specfem3D_SHARED_OBJECTS += $(adios_specfem3D_SHARED_OBJECTS)
 else ifeq ($(ADIOS2),yes)
-specfem3D_SOLVER_OBJECTS += $(adios_specfem3D_OBJECTS)
-specfem3D_SHARED_OBJECTS += $(adios_specfem3D_SHARED_OBJECTS)
+	specfem3D_SOLVER_OBJECTS += $(adios_specfem3D_OBJECTS)
+	specfem3D_SHARED_OBJECTS += $(adios_specfem3D_SHARED_OBJECTS)
 else
-specfem3D_SHARED_OBJECTS += $(adios_specfem3D_SHARED_STUBS)
+	specfem3D_SHARED_OBJECTS += $(adios_specfem3D_SHARED_STUBS)
 endif
 
 ###
@@ -269,16 +271,16 @@ asdf_specfem3D_SHARED_STUBS = $(asdf_shared_STUBS)
 
 # conditional asdf linking
 ifeq ($(ASDF),yes)
-specfem3D_SOLVER_OBJECTS += $(asdf_specfem3D_OBJECTS)
-specfem3D_SHARED_OBJECTS += $(asdf_specfem3D_SHARED_OBJECTS)
+	specfem3D_SOLVER_OBJECTS += $(asdf_specfem3D_OBJECTS)
+	specfem3D_SHARED_OBJECTS += $(asdf_specfem3D_SHARED_OBJECTS)
 else
-specfem3D_SHARED_OBJECTS += ${asdf_specfem3D_SHARED_STUBS}
+	specfem3D_SHARED_OBJECTS += ${asdf_specfem3D_SHARED_STUBS}
 endif
 
 #
 # conditional CEM model
 ifeq ($(CEM),yes)
-specfem3D_SOLVER_OBJECTS += $O/read_write_netcdf.checknetcdf.o
+	specfem3D_SOLVER_OBJECTS += $O/read_write_netcdf.checknetcdf.o
 endif
 
 ###
@@ -295,9 +297,9 @@ vtk_specfem3D_STUBS = \
 
 # conditional vtk linking
 ifeq ($(VTK),yes)
-specfem3D_SOLVER_OBJECTS += $(vtk_specfem3D_OBJECTS)
+	specfem3D_SOLVER_OBJECTS += $(vtk_specfem3D_OBJECTS)
 else
-specfem3D_SOLVER_OBJECTS += $(vtk_specfem3D_STUBS)
+	specfem3D_SOLVER_OBJECTS += $(vtk_specfem3D_STUBS)
 endif
 
 ###
@@ -305,7 +307,15 @@ endif
 ###
 # conditional module
 ifeq ($(XSMM),yes)
-specfem3D_MODULES += $(FC_MODDIR)/my_libxsmm.$(FC_MODEXT)
+	specfem3D_MODULES += $(FC_MODDIR)/my_libxsmm.$(FC_MODEXT)
+endif
+
+## static compilation
+# constants_solver module requires the file OUTPUT_FILES/values_from_mesher.h
+ifeq ($(STATIC_COMPILATION), yes)
+	reqstatic_header = ${OUTPUT}/values_from_mesher.h
+else
+	reqstatic_header =
 endif
 
 #######################################
@@ -369,27 +379,27 @@ $O/initialize_simulation.solverstatic.o: ${SETUP}/version.fh
 ###
 ### specfem3D - optimized flags and dependence on values from mesher here
 ###
-$O/%.solverstatic_module.o: $S/%.F90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o
+$O/%.solverstatic_module.o: $S/%.F90 $O/shared_par.shared_module.o $(reqstatic_header)
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/%.solverstatic_module.o: $S/%.f90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o
+$O/%.solverstatic_module.o: $S/%.f90 $O/shared_par.shared_module.o $(reqstatic_header)
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/%.solverstatic.o: $S/%.f90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o
+$O/%.solverstatic.o: $S/%.f90 $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/%.solverstatic.o: $S/%.F90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o
+$O/%.solverstatic.o: $S/%.F90 $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/%.solverstatic_openmp.o: $S/%.f90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o
+$O/%.solverstatic_openmp.o: $S/%.f90 $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o
 ## DK DK add OpenMP compiler flag here if needed
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -qsmp=omp -o $@ $<
 
 
-$O/%.solverstatic_adios.o: $S/%.f90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o $O/adios_helpers.shared_adios.o
+$O/%.solverstatic_adios.o: $S/%.f90 $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o $O/adios_helpers.shared_adios.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/%.solverstatic_adios.o: $S/%.F90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o $O/adios_helpers.shared_adios.o
+$O/%.solverstatic_adios.o: $S/%.F90 $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o $O/adios_helpers.shared_adios.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 

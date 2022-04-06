@@ -260,6 +260,23 @@ subroutine initialize()
   call world_size(sizeprocs)
   call world_rank(myrank)
 
+  ! reads mesh parameters
+  if (myrank == 0) then
+    ! reads mesh_parameters.bin file from topo/
+    LOCAL_PATH = INPUT_DATABASES_DIR        ! 'topo/' should hold mesh_parameters.bin file
+    call read_mesh_parameters()
+  endif
+  ! broadcast parameters to all processes
+  call bcast_mesh_parameters()
+
+  ! user output
+  if (myrank == 0) then
+    print *,'mesh parameters (from topo/ directory):'
+    print *,'  NSPEC_CRUST_MANTLE = ',NSPEC_CRUST_MANTLE
+    print *,'  NPROCTOT           = ',NPROCTOT_VAL
+    print *
+  endif
+
   if (sizeprocs /= NPROCTOT_VAL) then
     if (myrank == 0) then
       print *, 'Error number of processors supposed to run on : ',NPROCTOT_VAL

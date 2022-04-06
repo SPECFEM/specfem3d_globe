@@ -195,7 +195,7 @@
     NGLOB_INNER_CORE_ADJOINT = 0
 
     NSPEC_OUTER_CORE_ROT_ADJOINT = 0
-   endif
+  endif
 
   ! if absorbing conditions are off, set dummy size of arrays to one
   if (ABSORBING_CONDITIONS) then

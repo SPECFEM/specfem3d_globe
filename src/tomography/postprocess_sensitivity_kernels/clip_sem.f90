@@ -103,19 +103,6 @@ program clip_sem_globe
   endif
   call synchronize_all()
 
-  ! check number of MPI processes
-  if (sizeprocs /= NPROCTOT_VAL) then
-    if (myrank == 0) then
-      print *
-      print *,'Expected number of MPI processes: ', NPROCTOT_VAL
-      print *,'Actual number of MPI processes: ', sizeprocs
-      print *
-    endif
-    call synchronize_all()
-    stop 'Error wrong number of MPI processes'
-  endif
-  call synchronize_all()
-
   if (myrank == 0) then
     print *,'Running XCLIP_SEM'
     print *
@@ -147,12 +134,42 @@ program clip_sem_globe
     print *,'output directory    : ',trim(output_dir)
     print *,'clip values min/max : ',min_val,max_val
     print *
+  endif
+
+  ! reads mesh parameters
+  if (myrank == 0) then
+    ! reads mesh_parameters.bin file from input1dir/
+    LOCAL_PATH = input_dir
+    call read_mesh_parameters()
+  endif
+  ! broadcast parameters to all processes
+  call bcast_mesh_parameters()
+
+  ! user output
+  if (myrank == 0) then
+    print *,'mesh parameters (from input directory):'
+    print *,'  NSPEC_CRUST_MANTLE = ',NSPEC_CRUST_MANTLE
+    print *,'  NPROCTOT          = ',NPROCTOT_VAL
+    print *
     print *,'SEM array size = ',NGLLX,'x',NGLLY,'x',NGLLZ,'x',NSPEC_CRUST_MANTLE
     print *,'total number of points in SEM array = ',NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE
     print *
     print *,'region code uses format: ','proc'//'***'//reg//'*'//'.bin'
     print *
   endif
+
+  ! check number of MPI processes
+  if (sizeprocs /= NPROCTOT_VAL) then
+    if (myrank == 0) then
+      print *
+      print *,'Expected number of MPI processes: ', NPROCTOT_VAL
+      print *,'Actual number of MPI processes: ', sizeprocs
+      print *
+    endif
+    call synchronize_all()
+    stop 'Error wrong number of MPI processes'
+  endif
+  call synchronize_all()
 
   ! initialize array
   allocate(sem_array(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),stat=ier)

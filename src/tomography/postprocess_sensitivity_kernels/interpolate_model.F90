@@ -57,17 +57,16 @@
 
   program interpolate_model
 
-  use constants, only: SIZE_INTEGER, &
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ, &
+    GAUSSALPHA,GAUSSBETA, &
+    SIZE_INTEGER,IIN,IOUT,MAX_STRING_LEN, &
     TWO_PI,R_UNIT_SPHERE,HUGEVAL_SNGL, &
     NGNOD,MIDX,MIDY,MIDZ, &
     IFLAG_CRUST,IFLAG_80_MOHO,IFLAG_220_80,IFLAG_670_220,IFLAG_MANTLE_NORMAL
 
-  use shared_parameters, only: R_PLANET_KM
+  use shared_parameters, only: R_PLANET_KM,LOCAL_PATH
 
   use postprocess_par, only: &
-    CUSTOM_REAL,NGLLX,NGLLY,NGLLZ, &
-    GAUSSALPHA,GAUSSBETA, &
-    IIN,IOUT,MAX_STRING_LEN, &
     NCHUNKS_VAL,NPROC_XI_VAL,NPROC_ETA_VAL,NPROCTOT_VAL,NEX_XI_VAL,NEX_ETA_VAL, &
     NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE
 
@@ -216,18 +215,6 @@
   call world_size(sizeprocs)
   call world_rank(myrank)
 
-  ! checks number of processes
-  ! note: must run with same number of process as new mesh was created
-  if (sizeprocs /= NPROCTOT_VAL) then
-    ! usage info
-    if (myrank == 0) then
-      print *, "this program must be executed in parallel with NPROCTOT_VAL = ",NPROCTOT_VAL,"processes"
-      print *, "Invalid number of processes used: ", sizeprocs, " procs"
-      print *
-      print *, "Please run: mpirun -np ",NPROCTOT_VAL," ./bin/xinterpolate_model .."
-    endif
-    call abort_mpi()
-  endif
 
   ! checks program arguments
   if (myrank == 0) then
@@ -263,31 +250,6 @@
     enddo
   endif
   call synchronize_all()
-
-  ! initializes chunks
-  ! new (target) mesh
-  nchunks_new = NCHUNKS_VAL  ! from compilation
-  nproctot_new = NPROCTOT_VAL
-  nproc_xi_new = NPROC_XI_VAL
-  nproc_eta_new = NPROC_ETA_VAL
-  nex_xi_new = NEX_XI_VAL
-  nspec_new = NSPEC_CRUST_MANTLE
-  nglob_new = NGLOB_CRUST_MANTLE
-
-  ! safety check, assumes to have NEX_XI == NEX_ETA for now
-  if (NEX_XI_VAL /= NEX_ETA_VAL) then
-    print *,'Error: NEX_XI must be equal to NEX_ETA'
-    stop 'Invalid NEX_XI/NEX_ETA values'
-  endif
-
-  ! old (source) mesh
-  nchunks_old = nchunks_new  ! by default assumes same nchunks (e.g., global to global interpolation)
-  nproctot_old = 0
-  nproc_eta_old = 0
-  nproc_xi_old = 0
-  nex_xi_old = 0
-  nspec_old = 0
-  nglob_old = 0
 
   ! reads input arguments
   want_midpoint = 1
@@ -370,6 +332,61 @@
     print *,'  new topo NCHUNKS: ',nchunks_new
     print *
   endif
+
+  ! reads mesh parameters
+  if (myrank == 0) then
+    ! reads mesh_parameters.bin file from input1dir/
+    LOCAL_PATH = dir_topo2
+    call read_mesh_parameters()
+  endif
+  ! broadcast parameters to all processes
+  call bcast_mesh_parameters()
+
+  ! user output
+  if (myrank == 0) then
+    print *,'mesh parameters (from new topo directory):'
+    print *,'  NSPEC_CRUST_MANTLE = ',NSPEC_CRUST_MANTLE
+    print *,'  NPROCTOT           = ',NPROCTOT_VAL
+    print *
+  endif
+
+  ! checks number of processes
+  ! note: must run with same number of process as new mesh was created
+  if (sizeprocs /= NPROCTOT_VAL) then
+    ! usage info
+    if (myrank == 0) then
+      print *, "this program must be executed in parallel with NPROCTOT_VAL = ",NPROCTOT_VAL,"processes"
+      print *, "Invalid number of processes used: ", sizeprocs, " procs"
+      print *
+      print *, "Please run: mpirun -np ",NPROCTOT_VAL," ./bin/xinterpolate_model .."
+    endif
+    call abort_mpi()
+  endif
+
+  ! safety check, assumes to have NEX_XI == NEX_ETA for now
+  if (NEX_XI_VAL /= NEX_ETA_VAL) then
+    print *,'Error: NEX_XI must be equal to NEX_ETA'
+    stop 'Invalid NEX_XI/NEX_ETA values'
+  endif
+
+  ! initializes chunks
+  ! new (target) mesh
+  nchunks_new = NCHUNKS_VAL  ! from compilation
+  nproctot_new = NPROCTOT_VAL
+  nproc_xi_new = NPROC_XI_VAL
+  nproc_eta_new = NPROC_ETA_VAL
+  nex_xi_new = NEX_XI_VAL
+  nspec_new = NSPEC_CRUST_MANTLE
+  nglob_new = NGLOB_CRUST_MANTLE
+
+  ! old (source) mesh
+  nchunks_old = nchunks_new  ! by default assumes same nchunks (e.g., global to global interpolation)
+  nproctot_old = 0
+  nproc_eta_old = 0
+  nproc_xi_old = 0
+  nex_xi_old = 0
+  nspec_old = 0
+  nglob_old = 0
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
   ! ADIOS

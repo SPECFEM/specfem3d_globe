@@ -61,28 +61,19 @@ end subroutine print_usage_adios
 !=============================================================================
 !> Interpret command line arguments
 
-subroutine read_args_adios(arg, MAX_NUM_NODES, node_list, num_node, &
-                           var_name, value_file_name, mesh_file_name, &
-                           outdir, ires, irs, ire, NPROCTOT)
+subroutine read_args_adios(arg, var_name, value_file_name, mesh_file_name, slice_list_name, &
+                           outdir, ires, iregion)
 
   use constants, only: IIN,MAX_STRING_LEN
 
   implicit none
   ! Arguments
   character(len=*), intent(in) :: arg(:)
-  integer, intent(in) :: MAX_NUM_NODES
-  integer, intent(out) :: node_list(:)
-  integer, intent(out) :: num_node, ires, irs, ire
+  integer, intent(out) :: ires, iregion
   character(len=*), intent(out) :: var_name, value_file_name, mesh_file_name, &
-                                   outdir
-  integer, intent(in) :: NPROCTOT
-
-  ! Variables
-  character(len=MAX_STRING_LEN) :: sline,slice_list_name
-  integer :: i, ios, njunk, iregion
+                                   outdir, slice_list_name
 
   ! initializes
-  num_node = 0
   iregion = 0
 
   ! gets arguments
@@ -103,44 +94,6 @@ subroutine read_args_adios(arg, MAX_NUM_NODES, node_list, num_node, &
   !debug
   !print *,'debug: read adios: arguments: ',trim(slice_list_name),"|",trim(var_name),"|", &
   !        trim(value_file_name),"|",trim(mesh_file_name),"|",trim(outdir),"|",ires,"|",iregion
-
-  ! check
-  if (iregion > 3 .or. iregion < 0) stop 'Iregion must be = 0,1,2,3'
-
-  ! gets slice list
-  if (trim(slice_list_name) == 'all' .or. trim(slice_list_name) == '-1') then
-    ! combines all slices
-    do i = 0,NPROCTOT-1
-      num_node = num_node + 1
-      if (num_node > MAX_NUM_NODES ) stop 'Error number of slices exceeds MAX_NUM_NODES...'
-      node_list(num_node) = i
-    enddo
-  else
-    ! reads in slices file
-    open(unit = IIN, file = trim(slice_list_name), status = 'unknown',iostat = ios)
-    if (ios /= 0) then
-      print *,'Error opening slice file ',trim(slice_list_name)
-      stop
-    endif
-    do while ( 1 == 1)
-      read(IIN,'(a)',iostat=ios) sline
-      if (ios /= 0) exit
-      read(sline,*,iostat=ios) njunk
-      if (ios /= 0) exit
-      num_node = num_node + 1
-      if (num_node > MAX_NUM_NODES ) stop 'Error number of slices exceeds MAX_NUM_NODES...'
-      node_list(num_node) = njunk
-    enddo
-    close(IIN)
-  endif
-
-  if (iregion == 0) then
-    irs = 1
-    ire = 3
-  else
-    irs = iregion
-    ire = irs
-  endif
 
 end subroutine read_args_adios
 

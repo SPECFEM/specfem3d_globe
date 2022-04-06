@@ -10,6 +10,7 @@ O := ./obj
 OBJECTS = \
 	$O/specfem3D_par.solverstatic_module.o \
 	$O/initialize_simulation.solverstatic.o \
+	$O/read_mesh_parameters.solverstatic.o \
 	$(EMPTY_MACRO)
 
 OBJECTS += $(specfem3D_SHARED_OBJECTS)

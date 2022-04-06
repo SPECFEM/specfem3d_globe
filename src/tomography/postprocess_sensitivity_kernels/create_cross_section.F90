@@ -62,7 +62,7 @@
     IIN,IOUT,MAX_STRING_LEN, &
     RADIANS_TO_DEGREES,SMALLVAL
 
-  use shared_parameters, only: R_PLANET_KM
+  use shared_parameters, only: R_PLANET_KM,LOCAL_PATH
 
   use postprocess_par, only: MAX_KERNEL_NAMES, &
     NCHUNKS_VAL,NPROC_XI_VAL,NPROC_ETA_VAL,NPROCTOT_VAL,NEX_XI_VAL, &
@@ -172,19 +172,6 @@
   call init_mpi()
   call world_size(sizeprocs)
   call world_rank(myrank)
-
-  ! checks number of processes
-  ! note: must run with same number of process as new mesh was created
-  if (sizeprocs /= NPROCTOT_VAL) then
-    ! usage info
-    if (myrank == 0) then
-      print *, "this program must be executed in parallel with NPROCTOT_VAL = ",NPROCTOT_VAL,"processes"
-      print *, "Invalid number of processes used: ", sizeprocs, " procs"
-      print *
-      print *, "Please run: mpirun -np ",NPROCTOT_VAL," ./bin/xcreate_cross_section .."
-    endif
-    call abort_mpi()
-  endif
 
   ! checks program arguments
   if (myrank == 0) then
@@ -331,18 +318,52 @@
       stop 'Error cross-section type invalid'
     endif
     print *
+    print *,'model parameter: ',trim(fname)
+    print *
+    print *,'  mesh directory: ',trim(dir_topo)
+    print *,' model directory: ',trim(input_model_dir)
+    print *,'output directory: ',trim(output_dir)
+    print *
+  endif
+
+  ! reads mesh parameters
+  if (myrank == 0) then
+    ! reads mesh_parameters.bin file from input1dir/
+    LOCAL_PATH = dir_topo
+    call read_mesh_parameters()
+  endif
+  ! broadcast parameters to all processes
+  call bcast_mesh_parameters()
+
+  ! user output
+  if (myrank == 0) then
+    print *,'mesh parameters (from mesh directory):'
+    print *,'  NSPEC_CRUST_MANTLE = ',NSPEC_CRUST_MANTLE
+    print *,'  NPROCTOT           = ',NPROCTOT_VAL
+    print *
+  endif
+
+  ! checks number of processes
+  ! note: must run with same number of process as new mesh was created
+  if (sizeprocs /= NPROCTOT_VAL) then
+    ! usage info
+    if (myrank == 0) then
+      print *, "this program must be executed in parallel with NPROCTOT_VAL = ",NPROCTOT_VAL,"processes"
+      print *, "Invalid number of processes used: ", sizeprocs, " procs"
+      print *
+      print *, "Please run: mpirun -np ",NPROCTOT_VAL," ./bin/xcreate_cross_section .."
+    endif
+    call abort_mpi()
+  endif
+
+  ! console output
+  if (myrank == 0) then
     print *,'mesh:  '
     print *,'  processors = ',NPROCTOT_VAL
     print *,'  nproc_eta / nproc_xi = ',NPROC_ETA_VAL,NPROC_XI_VAL
     print *,'  nex        = ',NEX_XI_VAL
     print *,'  nspec      = ',NSPEC_CRUST_MANTLE
     print *,'  nglob      = ',NGLOB_CRUST_MANTLE
-    print *
-    print *,'model parameter: ',trim(fname)
-    print *
-    print *,'  mesh directory: ',trim(dir_topo)
-    print *,' model directory: ',trim(input_model_dir)
-    print *,'output directory: ',trim(output_dir)
     print *
     print *,'array size:'
     ! array size in bytes (note: the multiplication is split into two line to avoid integer arithmetic overflow)

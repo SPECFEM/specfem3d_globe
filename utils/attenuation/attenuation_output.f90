@@ -13,21 +13,34 @@
 !    This code was used for testing the implementation of 3D attenuation
 !    Brian Savage, 22/03/04
 
-    use constants_solver
+    !use constants_solver
 
     implicit none
 
-    integer i,j,k,ispec
-    integer myrank, vnspec, process, iregion
-    character(len=MAX_STRING_LEN) prname, LOCAL_PATH
+    !------------------------------------------------------------
+    ! user parameters
+
+    ! set to your NSPEC_CRUST_MANTLE array size
+    integer, parameter :: NSPEC_CRUST_MANTLE_AC = 2156
+
+    ! file directory
+    character(len=MAX_STRING_LEN),parameter :: LOCAL_PATH = "/scratch/DATABASES_MPI_BRIAN/att"
+
+    ! process/slice id
+    integer, parameter :: process = 42
+
+    ! region
+    integer, parameter :: iregion = IREGION_CRUST_MANTLE
+
+    !------------------------------------------------------------
+
+    integer :: i,j,k,ispec
+    integer :: myrank, vnspec
+    character(len=MAX_STRING_LEN) :: prname
     double precision, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_AC)       :: one_minus_sum_beta, scale_factor
     double precision, dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_AC) :: factor_common
     double precision, dimension(N_SLS)                                         :: tau_s
-    double precision T_c_source
-
-    LOCAL_PATH = "/scratch/DATABASES_MPI_BRIAN/att"
-    process    = 42
-    iregion    = IREGION_CRUST_MANTLE
+    double precision :: T_c_source
 
     call create_name_database(prname, process, iregion, LOCAL_PATH)
 
@@ -65,6 +78,7 @@
           enddo
        enddo
     enddo
+
   end program attenuation_output
 
 

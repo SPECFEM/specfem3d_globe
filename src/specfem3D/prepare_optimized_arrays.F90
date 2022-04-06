@@ -690,6 +690,7 @@
 !$OMP PARALLEL &
 !$OMP DEFAULT(NONE) &
 !$OMP SHARED(displ,veloc,accel,deltat) &
+!$OMP FIRSTPRIVATE(NGLOB) &
 !$OMP PRIVATE(i)
 !$OMP DO
       do i = 1,NGLOB * NDIM
@@ -712,6 +713,7 @@
 !$OMP PARALLEL &
 !$OMP DEFAULT(NONE) &
 !$OMP SHARED(displ,veloc,accel,deltat) &
+!$OMP FIRSTPRIVATE(NGLOB) &
 !$OMP PRIVATE(i)
 !$OMP DO
       do i = 1,NGLOB

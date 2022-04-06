@@ -34,8 +34,18 @@ module constants_solver
   implicit none
 
 ! daniel debug: todo
-#ifdef DANIEL_DEBUG_FUTURE_VERSION
-  ! for future compilation
+#ifdef USE_STATIC_COMPILATION
+  ! static compilation
+
+  ! include values created by the mesher
+  ! done for performance only using static allocation to allow for loop unrolling
+  include "OUTPUT_FILES/values_from_mesher.h"
+
+#else
+  ! "dynamic" compilation
+  !
+  ! we will read in mesh parameters stored in file DATABASES_MPI/mesh_parameters.bin at runtime
+  !
   ! no static compilation, will use dynamic arrays:
   ! all these parameters must be stored in mesh files and read in by solver before allocating arrays...
 
@@ -118,6 +128,7 @@ module constants_solver
   integer :: NSPEC2DMAX_YMIN_YMAX_OC
   integer :: NSPEC2D_BOTTOM_OC
   integer :: NSPEC2D_TOP_OC
+
   integer :: NSPEC2D_MOHO
   integer :: NSPEC2D_400
   integer :: NSPEC2D_670
@@ -149,7 +160,6 @@ module constants_solver
 
   logical :: USE_DEVILLE_PRODUCTS_VAL
   logical :: ATTENUATION_1D_WITH_3D_STORAGE_VAL
-  logical :: FORCE_VECTORIZATION_VAL
   logical :: UNDO_ATTENUATION_VAL
 
   ! 1-chunk
@@ -159,12 +169,12 @@ module constants_solver
   double precision :: CENTER_LONGITUDE_IN_DEGREES_VAL
   double precision :: GAMMA_ROTATION_AZIMUTH_VAL
 
+  ! we use this vectorization flag for solver routines in files **.f90
+#ifdef FORCE_VECTORIZATION
+  logical, parameter :: FORCE_VECTORIZATION_VAL = .true.
 #else
-  ! static compilation
-
-  ! include values created by the mesher
-  ! done for performance only using static allocation to allow for loop unrolling
-  include "OUTPUT_FILES/values_from_mesher.h"
+  logical, parameter :: FORCE_VECTORIZATION_VAL = .false.
+#endif
 
 #endif
 

@@ -37,9 +37,7 @@
 
 program addition_sem
 
-  use postprocess_par, only: &
-    CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,IIN,IOUT,MAX_STRING_LEN, &
-    NPROCTOT_VAL,NSPEC_CRUST_MANTLE,NSPEC_OUTER_CORE,NSPEC_INNER_CORE
+  use postprocess_par
 
   implicit none
 
@@ -58,26 +56,14 @@ program addition_sem
 
   integer :: i,iproc,ier
   integer :: iregion,ir,irs,ire
-  integer :: nspec
 
   ! mpi
-  integer :: sizeprocs,myrank
+  integer :: sizeprocs
 
   ! initialize the MPI communicator and start the NPROCTOT MPI processes
   call init_mpi()
   call world_size(sizeprocs)
   call world_rank(myrank)
-
-  ! checks compilation setup
-  if (sizeprocs /= NPROCTOT_VAL) then
-    if (myrank == 0) then
-      print *, 'Error number of processors supposed to run on : ',NPROCTOT_VAL
-      print *, 'Error number of MPI processors actually run on: ',sizeprocs
-      print *
-      print *, 'please rerun with: mpirun -np ',NPROCTOT_VAL,' bin/xaddition_sem .. '
-    endif
-    call exit_MPI(myrank,'Error wrong number of MPI processes')
-  endif
 
   ! checks arguments
   do i = 1, 5
@@ -149,8 +135,37 @@ program addition_sem
     write(*,*) 'regions: start =', irs, ' to end =', ire
     write(*,*)
     write(*,*) 'NGLLX/NGLLY/NGLLZ = ',NGLLX,'/',NGLLY,'/',NGLLZ
-    write(*,*) 'NSPEC             = ',NSPEC_CRUST_MANTLE
     write(*,*)
+  endif
+
+  ! reads mesh parameters
+  if (myrank == 0) then
+    ! reads mesh_parameters.bin file from input1dir/
+    LOCAL_PATH = input1dir
+    call read_mesh_parameters()
+  endif
+  ! broadcast parameters to all processes
+  call bcast_mesh_parameters()
+
+  ! user output
+  if (myrank == 0) then
+    write(*,*) 'mesh parameters (from input 1 directory):'
+    write(*,*) '  NSPEC_CRUST_MANTLE = ',NSPEC_CRUST_MANTLE
+    write(*,*) '  NSPEC_OUTER_CORE   = ',NSPEC_OUTER_CORE
+    write(*,*) '  NSPEC_INNER_CORE   = ',NSPEC_INNER_CORE
+    write(*,*) '  NPROCTOT           = ',NPROCTOT_VAL
+    write(*,*)
+  endif
+
+  ! checks compilation setup
+  if (sizeprocs /= NPROCTOT_VAL) then
+    if (myrank == 0) then
+      print *, 'Error number of processors supposed to run on : ',NPROCTOT_VAL
+      print *, 'Error number of MPI processors actually run on: ',sizeprocs
+      print *
+      print *, 'please rerun with: mpirun -np ',NPROCTOT_VAL,' bin/xaddition_sem .. '
+    endif
+    call exit_MPI(myrank,'Error wrong number of MPI processes')
   endif
 
   ! allocates arrays
@@ -169,13 +184,13 @@ program addition_sem
     select case (ir)
     case (1)
       ! crust/mantle
-      nspec = NSPEC_CRUST_MANTLE
+      NSPEC = NSPEC_CRUST_MANTLE
     case (2)
       ! outer core
-      nspec = NSPEC_OUTER_CORE
+      NSPEC = NSPEC_OUTER_CORE
     case (3)
       ! inner core
-      nspec = NSPEC_INNER_CORE
+      NSPEC = NSPEC_INNER_CORE
     case default
       stop 'Error region id not recognized'
     end select
@@ -195,7 +210,7 @@ program addition_sem
       print *,'Error opening file: ',trim(file1name)
       stop 'Error opening first data file'
     endif
-    read(IIN) sem_data(:,:,:,1:nspec)
+    read(IIN) sem_data(:,:,:,1:NSPEC)
     close(IIN)
 
     ! reads in file from second directory
@@ -205,13 +220,13 @@ program addition_sem
       print *,'Error opening file: ',trim(file2name)
       stop 'Error opening second data file'
     endif
-    read(IIN) sem_data_2(:,:,:,1:nspec)
+    read(IIN) sem_data_2(:,:,:,1:NSPEC)
     close(IIN)
 
     ! user output
     if (myrank == 0) then
-      write(*,*) '  min/max data_1 value: ',minval(sem_data(:,:,:,1:nspec)),maxval(sem_data(:,:,:,1:nspec))
-      write(*,*) '  min/max data_2 value: ',minval(sem_data_2(:,:,:,1:nspec)),maxval(sem_data_2(:,:,:,1:nspec))
+      write(*,*) '  min/max data_1 value: ',minval(sem_data(:,:,:,1:NSPEC)),maxval(sem_data(:,:,:,1:NSPEC))
+      write(*,*) '  min/max data_2 value: ',minval(sem_data_2(:,:,:,1:NSPEC)),maxval(sem_data_2(:,:,:,1:NSPEC))
       write(*,*)
     endif
 
@@ -228,14 +243,14 @@ program addition_sem
     endif
 
     ! takes the sums
-    sem_data(:,:,:,1:nspec) = sem_data(:,:,:,1:nspec) + sem_data_2(:,:,:,1:nspec)
+    sem_data(:,:,:,1:NSPEC) = sem_data(:,:,:,1:NSPEC) + sem_data_2(:,:,:,1:NSPEC)
 
-    write(IOUT) sem_data(:,:,:,1:nspec)
+    write(IOUT) sem_data(:,:,:,1:NSPEC)
     close(IOUT)
 
     ! min/max
-    min_val = minval(sem_data(:,:,:,1:nspec))
-    max_val = maxval(sem_data(:,:,:,1:nspec))
+    min_val = minval(sem_data(:,:,:,1:NSPEC))
+    max_val = maxval(sem_data(:,:,:,1:NSPEC))
     call min_all_cr(min_val,min_val_all)
     call max_all_cr(max_val,max_val_all)
 
@@ -249,18 +264,18 @@ program addition_sem
     endif
 
     ! relative addition (k1 + k2)/ k2 with respect to second input file
-    where( sem_data_2(:,:,:,1:nspec) /= 0.0_CUSTOM_REAL)
-      sem_data(:,:,:,1:nspec) = sem_data(:,:,:,1:nspec) / sem_data_2(:,:,:,1:nspec)
+    where( sem_data_2(:,:,:,1:NSPEC) /= 0.0_CUSTOM_REAL)
+      sem_data(:,:,:,1:NSPEC) = sem_data(:,:,:,1:NSPEC) / sem_data_2(:,:,:,1:NSPEC)
     elsewhere
-      sem_data(:,:,:,1:nspec) = 0.0_CUSTOM_REAL
+      sem_data(:,:,:,1:NSPEC) = 0.0_CUSTOM_REAL
     endwhere
 
-    write(IOUT) sem_data(:,:,:,1:nspec)
+    write(IOUT) sem_data(:,:,:,1:NSPEC)
     close(IOUT)
 
     ! min/max of relative values
-    min_rel = minval(sem_data(:,:,:,1:nspec))
-    max_rel = maxval(sem_data(:,:,:,1:nspec))
+    min_rel = minval(sem_data(:,:,:,1:NSPEC))
+    max_rel = maxval(sem_data(:,:,:,1:NSPEC))
     call min_all_cr(min_rel,min_rel_all)
     call max_all_cr(max_rel,max_rel_all)
 

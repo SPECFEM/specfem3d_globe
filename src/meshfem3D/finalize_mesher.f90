@@ -39,7 +39,6 @@
   double precision :: tCPU
   double precision, external :: wtime
 
-  integer :: NT_DUMP_ATTENUATION_optimal
   logical, parameter :: PRINT_INFO_TO_SCREEN = .false.
   integer :: numelem_total_all
 
@@ -162,6 +161,10 @@
                           NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
                           NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION,NT_DUMP_ATTENUATION_optimal, &
                           PRINT_INFO_TO_SCREEN)
+
+
+    ! save binary file for solver to read in
+    call save_arrays_mesh_parameters()
 
   endif   ! end of section executed by main process only
 

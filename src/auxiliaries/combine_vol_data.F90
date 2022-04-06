@@ -51,7 +51,7 @@ program combine_vol_data
   use constants_solver, only: &
     NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE,NSPEC_OUTER_CORE,NSPEC_INNER_CORE,NPROCTOT_VAL
 
-  use shared_parameters, only: ONE_CRUST
+  use shared_parameters, only: ONE_CRUST,LOCAL_PATH
 
   ! combines the database files on several slices.
   ! the local database file needs to have been collected onto the frontend (copy_local_database.pl)
@@ -123,20 +123,21 @@ program combine_vol_data
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
   ! ADIOS
-  integer :: sizeprocs, myrank
   character(len=MAX_STRING_LEN) :: value_file_name, mesh_file_name
-  integer,parameter :: MAX_NUM_NODES = 2000
 #else
-  integer :: iregion,proc_id
   character(len=MAX_STRING_LEN) :: prname_topo, prname_file, dimension_file
   character(len=MAX_STRING_LEN) :: in_file_dir, in_topo_dir
-  character(len=MAX_STRING_LEN) :: sline,slice_list_name
 #endif
 
+  integer :: myrank,sizeprocs
+  integer :: iregion
   integer :: ir, irs, ire, ires
-  integer :: iproc, i,j,k,ispec, it, di, dj, dk
+  integer :: iproc, i, j, k, ispec, it, di, dj, dk
   integer :: np, ne
   integer :: ier
+  integer :: proc_id
+
+  character(len=MAX_STRING_LEN) :: sline,slice_list_name
 
   ! starts here---------------------------------------------------------------
   ier = 0 ! avoids compiler warning in case of ADIOS and VTK output
@@ -146,10 +147,10 @@ program combine_vol_data
   ! starts mpi
   call init_mpi()
   call world_size(sizeprocs)
+  call world_rank(myrank)
   ! checks number of processes
   ! note: must run as a single process with: mpirun -np 1 ..
   if (sizeprocs /= 1) then
-    call world_rank(myrank)
     ! usage info
     if (myrank == 0) then
       print *, "ADIOS requires MPI functionality. However, this program executes as sequential program."
@@ -159,11 +160,10 @@ program combine_vol_data
     endif
     call abort_mpi()
   endif
+#else
+  myrank = 0
+  sizeprocs = 1
 #endif
-
-  ! checks array sizes
-  if (NSPEC_CRUST_MANTLE < NSPEC_OUTER_CORE .or. NSPEC_CRUST_MANTLE < NSPEC_INNER_CORE) &
-             stop 'This program needs that NSPEC_CRUST_MANTLE > NSPEC_OUTER_CORE and NSPEC_INNER_CORE'
 
   ! reads input arguments
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
@@ -172,26 +172,8 @@ program combine_vol_data
   do i = 1, 7
     call get_command_argument(i,arg(i))
   enddo
-
-  ! temporary
-  allocate(node_list(MAX_NUM_NODES),stat=ier)
-  if (ier /= 0) stop 'Error allocating list arrays'
-
-  call read_args_adios(arg, MAX_NUM_NODES, node_list, num_node, &
-                       var_name, value_file_name, mesh_file_name, &
-                       outdir, ires, irs, ire, NPROCTOT_VAL)
-
-  allocate(nspec_list(num_node),nglob_list(num_node), stat=ier)
-  if (ier /= 0) stop 'Error allocating list arrays'
-  ! temporary copy
-  nspec_list(1:num_node) = node_list(1:num_node)
-  ! re-allocate with only required size
-  deallocate(node_list)
-  allocate(node_list(num_node),stat=ier)
-  if (ier /= 0) stop 'Error allocating array node_list'
-  node_list(:) = nspec_list(:)
-  nspec_list(:) = 0
-  nglob_list(:) = 0
+  call read_args_adios(arg, var_name, value_file_name, mesh_file_name, slice_list_name, &
+                       outdir, ires, iregion)
 #else
   ! default
   do i = 1, 7
@@ -227,6 +209,22 @@ program combine_vol_data
   else
     read(arg(7),*) iregion
   endif
+
+  ! slices
+  slice_list_name = trim(arg(1))
+  ! file to collect
+  var_name = trim(arg(2))
+
+  ! input and output dir
+  in_topo_dir = trim(arg(3))
+  in_file_dir = trim(arg(4))
+  outdir = trim(arg(5))
+
+  ! resolution
+  read(arg(6),*) ires
+#endif
+
+  ! region selection
   if (iregion > 3 .or. iregion < 0) stop 'Iregion = 0,1,2,3'
   if (iregion == 0) then
     irs = 1
@@ -236,9 +234,61 @@ program combine_vol_data
     ire = irs
   endif
 
+  filename = trim(var_name)
+
+  ! output info
+  print *, 'combine volumetric data'
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
+  print *, '  using ADIOS'
+  print *, '  mesh topology file: ',trim(mesh_file_name)
+  print *, '  input         file: ',trim(value_file_name)
+#else
+  print *, '  mesh topology dir : ',trim(in_topo_dir)
+  print *, '  input file    dir : ',trim(in_file_dir)
+#endif
+  print *, '  variable name     : ',trim(var_name)
+  print *
+  print *, '  output directory  : ',trim(outdir)
+#if defined(USE_VTK_INSTEAD_OF_MESH) || defined(USE_VTU_INSTEAD_OF_MESH)
+  ! VTK/VTU
+#ifdef USE_VTK_INSTEAD_OF_MESH
+  print *, '  using VTK format for file output'
+#endif
+#ifdef USE_VTU_INSTEAD_OF_MESH
+  print *, '  using VTU format for file output'
+#endif
+#else
+  ! .mesh format
+  print *, '  using .mesh format for file output'
+#endif
+
+  ! reads mesh parameters
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
+  ! index of last occurrence of '/' to get directory from name (DATABASES_MPI/solver_data.bp)
+  i = index(mesh_file_name,'/',.true.)
+  if (i > 1) then
+    LOCAL_PATH = mesh_file_name(1:i-1)
+  else
+    LOCAL_PATH = 'DATABASES_MPI'        ! mesh_parameters.bin file in DATABASES_MPI/
+  endif
+#else
+  LOCAL_PATH = in_topo_dir      ! mesh_parameters.bin file in in_topo_dir/
+#endif
+  call read_mesh_parameters()
+
+  ! user output
+  print *,'mesh parameters (from input directory):'
+  print *,'  NSPEC_CRUST_MANTLE = ',NSPEC_CRUST_MANTLE
+  print *,'  NSPEC_OUTER_CORE   = ',NSPEC_OUTER_CORE
+  print *,'  NSPEC_INNER_CORE   = ',NSPEC_INNER_CORE
+  print *
+
+  ! checks array sizes
+  if (NSPEC_CRUST_MANTLE < NSPEC_OUTER_CORE .or. NSPEC_CRUST_MANTLE < NSPEC_INNER_CORE) &
+    stop 'This program needs that NSPEC_CRUST_MANTLE > NSPEC_OUTER_CORE and NSPEC_INNER_CORE'
+
   ! get slices id
   num_node = 0
-  slice_list_name = trim(arg(1))
   if (trim(slice_list_name) == 'all' .or. trim(slice_list_name) == '-1') then
     ! uses all slices to combine
     num_node = NPROCTOT_VAL
@@ -295,45 +345,6 @@ program combine_vol_data
     close(IIN)
   endif
 
-  ! file to collect
-  var_name = arg(2)
-
-  ! input and output dir
-  in_topo_dir = arg(3)
-  in_file_dir = arg(4)
-  outdir = arg(5)
-
-  ! resolution
-  read(arg(6),*) ires
-#endif
-
-  filename = trim(var_name)
-
-  ! output info
-  print *, 'combine volumetric data'
-#ifdef USE_ADIOS_INSTEAD_OF_MESH
-  print *, '  using ADIOS'
-  print *, '  mesh topology file: ',trim(mesh_file_name)
-  print *, '  input         file: ',trim(value_file_name)
-#else
-  print *, '  mesh topology dir : ',trim(in_topo_dir)
-  print *, '  input file    dir : ',trim(in_file_dir)
-#endif
-  print *, '  variable name     : ',trim(var_name)
-  print *
-  print *, '  output directory  : ',trim(outdir)
-#if defined(USE_VTK_INSTEAD_OF_MESH) || defined(USE_VTU_INSTEAD_OF_MESH)
-  ! VTK/VTU
-#ifdef USE_VTK_INSTEAD_OF_MESH
-  print *, '  using VTK format for file output'
-#endif
-#ifdef USE_VTU_INSTEAD_OF_MESH
-  print *, '  using VTU format for file output'
-#endif
-#else
-  ! .mesh format
-  print *, '  using .mesh format for file output'
-#endif
   print *
   print *, 'slice list: '
   print *, node_list(1:num_node)

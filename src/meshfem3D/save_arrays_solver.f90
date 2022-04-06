@@ -544,3 +544,163 @@
 
   end subroutine save_arrays_boundary
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine save_arrays_mesh_parameters()
+
+! stores same parameters as would have been saved in values_from_mesher.h,
+! for solver to read in at runtime to avoid static compilation
+
+  use meshfem3D_models_par
+  use meshfem3D_par
+  use regions_mesh_par2
+
+  implicit none
+
+  ! local parameters
+  integer :: ier
+  integer :: NGLOB_XY_CM,NGLOB_XY_IC
+  character(len=MAX_STRING_LEN) :: filename
+
+  ! create full name with path
+  filename = trim(LOCAL_PATH) // "/mesh_parameters.bin"
+
+  ! saves simulation parameters for solver
+  open(unit=IOUT,file=trim(filename),status='unknown',form='unformatted',action='write',iostat=ier)
+  if (ier /= 0 ) call exit_mpi(myrank,'Error opening solver_parameters.bin file')
+
+  ! values from mesher as saved by save_header_file.F90
+  write(IOUT) NEX_XI
+  write(IOUT) NEX_ETA
+
+  write(IOUT) NSPEC_REGIONS(IREGION_CRUST_MANTLE)
+  write(IOUT) NSPEC_REGIONS(IREGION_OUTER_CORE)
+  write(IOUT) NSPEC_REGIONS(IREGION_INNER_CORE)
+
+  write(IOUT) NGLOB_REGIONS(IREGION_CRUST_MANTLE)
+  write(IOUT) NGLOB_REGIONS(IREGION_OUTER_CORE)
+  write(IOUT) NGLOB_REGIONS(IREGION_INNER_CORE)
+
+  write(IOUT) NSPECMAX_ANISO_IC
+
+  write(IOUT) NSPECMAX_ISO_MANTLE
+  write(IOUT) NSPECMAX_TISO_MANTLE
+  write(IOUT) NSPECMAX_ANISO_MANTLE
+
+
+  ! this to allow for code elimination by the compiler in the solver for performance
+  write(IOUT) TRANSVERSE_ISOTROPY
+
+  write(IOUT) ANISOTROPIC_3D_MANTLE
+  write(IOUT) ANISOTROPIC_INNER_CORE
+
+  write(IOUT) ATTENUATION
+  write(IOUT) ATTENUATION_3D
+
+  write(IOUT) ELLIPTICITY
+  write(IOUT) GRAVITY
+  write(IOUT) OCEANS
+
+  if (TOPOGRAPHY .or. OCEANS) then
+    write(IOUT) NX_BATHY
+    write(IOUT) NY_BATHY
+  else
+    write(IOUT) 0
+    write(IOUT) 0
+  endif
+
+  write(IOUT) ROTATION
+  write(IOUT) EXACT_MASS_MATRIX_FOR_ROTATION
+
+  write(IOUT) PARTIAL_PHYS_DISPERSION_ONLY
+
+  write(IOUT) NPROC_XI
+  write(IOUT) NPROC_ETA
+  write(IOUT) NCHUNKS
+  write(IOUT) NPROCTOT
+
+  write(IOUT) ATT1
+  write(IOUT) ATT2
+  write(IOUT) ATT3
+  write(IOUT) ATT4
+  write(IOUT) ATT5
+
+  write(IOUT) NSPEC2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE)
+  write(IOUT) NSPEC2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE)
+  write(IOUT) NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE)
+  write(IOUT) NSPEC2D_TOP(IREGION_CRUST_MANTLE)
+
+  write(IOUT) NSPEC2DMAX_XMIN_XMAX(IREGION_INNER_CORE)
+  write(IOUT) NSPEC2DMAX_YMIN_YMAX(IREGION_INNER_CORE)
+  write(IOUT) NSPEC2D_BOTTOM(IREGION_INNER_CORE)
+  write(IOUT) NSPEC2D_TOP(IREGION_INNER_CORE)
+
+  write(IOUT) NSPEC2DMAX_XMIN_XMAX(IREGION_OUTER_CORE)
+  write(IOUT) NSPEC2DMAX_YMIN_YMAX(IREGION_OUTER_CORE)
+  write(IOUT) NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
+  write(IOUT) NSPEC2D_TOP(IREGION_OUTER_CORE)
+
+  ! for boundary kernels
+  if (SAVE_BOUNDARY_MESH) then
+    write(IOUT) NSPEC2D_TOP(IREGION_CRUST_MANTLE)
+    write(IOUT) NSPEC2D_MOHO / 4
+    write(IOUT) NSPEC2D_400
+    write(IOUT) NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE)
+    write(IOUT) NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
+  else
+    write(IOUT) 0
+    write(IOUT) 0
+    write(IOUT) 0
+    write(IOUT) 0
+    write(IOUT) 0
+  endif
+
+
+  ! in the case of Stacey boundary conditions, add C*delta/2 contribution to the mass matrix
+  ! on the Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
+  ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
+  !
+  ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
+  ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be fictitious / unused
+
+  if (NCHUNKS /= 6 .and. ABSORBING_CONDITIONS) then
+     NGLOB_XY_CM = NGLOB_REGIONS(IREGION_CRUST_MANTLE)
+  else
+     NGLOB_XY_CM = 0
+  endif
+  NGLOB_XY_IC = 0
+  if (ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
+    NGLOB_XY_CM = NGLOB_REGIONS(IREGION_CRUST_MANTLE)
+    NGLOB_XY_IC = NGLOB_REGIONS(IREGION_INNER_CORE)
+  endif
+
+  write(IOUT) NGLOB_XY_CM
+  write(IOUT) NGLOB_XY_IC
+
+  if (ATTENUATION_1D_WITH_3D_STORAGE) then
+    write(IOUT) .true.
+  else
+    write(IOUT) .false.
+  endif
+
+  ! for UNDO_ATTENUATION
+  if (UNDO_ATTENUATION) then
+    write(IOUT) .true.
+  else
+    write(IOUT) .false.
+  endif
+  write(IOUT) NT_DUMP_ATTENUATION_optimal
+
+  ! mesh geometry (with format specifier to avoid writing double values on a newline)
+  write(IOUT) ANGULAR_WIDTH_ETA_IN_DEGREES
+  write(IOUT) ANGULAR_WIDTH_XI_IN_DEGREES
+  write(IOUT) CENTER_LATITUDE_IN_DEGREES
+  write(IOUT) CENTER_LONGITUDE_IN_DEGREES
+  write(IOUT) GAMMA_ROTATION_AZIMUTH
+
+  close(IOUT)
+
+  end subroutine save_arrays_mesh_parameters
+

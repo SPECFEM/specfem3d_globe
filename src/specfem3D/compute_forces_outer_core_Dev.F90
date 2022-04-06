@@ -155,16 +155,17 @@
 ! openmp solver
 !$OMP PARALLEL DEFAULT(NONE) &
 !$OMP SHARED( deriv, &
-!$OMP num_elements, phase_ispec_inner, iphase, ibool, displfluid, &
+!$OMP num_elements, phase_ispec_inner, iphase, ibool, &
+!$OMP displfluid, accelfluid,  &
 !$OMP gravity_pre_store, &
-!$OMP deltat, two_omega_earth, timeval, A_array_rotation, B_array_rotation, &
-!$OMP MOVIE_VOLUME, &
-!$OMP accelfluid, USE_LDDRK, A_array_rotation_lddrk, &
+!$OMP deltat, two_omega_earth, timeval, &
+!$OMP A_array_rotation, B_array_rotation, &
+!$OMP A_array_rotation_lddrk, B_array_rotation_lddrk, &
 !$OMP sum_terms, &
 #ifdef FORCE_VECTORIZATION
 !$OMP ibool_inv_tbl, ibool_inv_st, num_globs, phase_iglob, &
 #endif
-!$OMP istage, B_array_rotation_lddrk, div_displfluid ) &
+!$OMP istage, div_displfluid ) &
 !$OMP PRIVATE( &
 !$OMP ispec_p, ispec, i, j, k, iglob, chi_elem, &
 !$OMP xixl, xiyl, xizl, etaxl, etayl, etazl, gammaxl, gammayl, gammazl, jacobianl, &
@@ -179,7 +180,9 @@
 !$OMP newtemp1, newtemp2, newtemp3 ) &
 !$OMP FIRSTPRIVATE( hprime_xx, hprime_xxT, hprimewgll_xxT, hprimewgll_xx, &
 !$OMP wgllwgll_yz_3D, wgllwgll_xz_3D, wgllwgll_xy_3D, wgll_cube, &
-!$OMP MYALPHA_LDDRK,MYBETA_LDDRK )
+!$OMP MYALPHA_LDDRK,MYBETA_LDDRK, &
+!$OMP USE_LDDRK,ROTATION_VAL,GRAVITY_VAL,MOVIE_VOLUME, &
+!$OMP NSPEC_OUTER_CORE_3DMOVIE )
 
 !$OMP DO SCHEDULE(GUIDED)
   do ispec_p = 1,num_elements

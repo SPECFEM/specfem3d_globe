@@ -93,16 +93,6 @@ program smooth_sem_globe
 
   !-------------------------------------------------------------
   ! Parameters
-
-  ! copy from static compilation (depends on Par_file values)
-  integer, parameter :: NPROC_XI  = NPROC_XI_VAL
-  integer, parameter :: NPROC_ETA = NPROC_ETA_VAL
-  integer, parameter :: NCHUNKS   = NCHUNKS_VAL
-
-  !takes region 1 kernels
-  integer, parameter :: NSPEC_AB = NSPEC_CRUST_MANTLE
-  integer, parameter :: NGLOB_AB = NGLOB_CRUST_MANTLE
-
   integer,parameter :: NGLL3 = NGLLX * NGLLY * NGLLZ
 
   ! only include the neighboring 3 x 3 slices
@@ -117,8 +107,6 @@ program smooth_sem_globe
   integer, parameter :: NARGS = 6
   character(len=*), parameter :: reg_name = '_reg1_'
 #endif
-
-
   !-------------------------------------------------------------
 
   integer :: islice(NSLICES2), islice0(NSLICES2)
@@ -147,6 +135,12 @@ program smooth_sem_globe
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: min_old,max_old
   real(kind=CUSTOM_REAL) :: max_new, min_new
   real(kind=CUSTOM_REAL) :: max_old_all, max_new_all, min_old_all, min_new_all
+
+  integer :: NPROC_XI
+  integer :: NPROC_ETA
+  integer :: NCHUNKS
+  integer :: NSPEC_AB
+  integer :: NGLOB_AB
 
   integer :: nspec, nglob
   integer :: ier,ichunk, ixi, ieta, iglob, num_slices
@@ -273,19 +267,6 @@ program smooth_sem_globe
   endif
   call synchronize_all()
 
-  ! check number of MPI processes
-  if (sizeprocs /= NPROCTOT_VAL) then
-    if (myrank == 0) then
-      print *
-      print *,'Expected number of MPI processes: ', NPROCTOT_VAL
-      print *,'Actual number of MPI processes: ', sizeprocs
-      print *
-    endif
-    call synchronize_all()
-    stop 'Error wrong number of MPI processes'
-  endif
-  call synchronize_all()
-
   if (myrank == 0) then
     print *, 'Running XSMOOTH_SEM'
     print *
@@ -358,7 +339,45 @@ program smooth_sem_globe
 
   ! checks if basin code or global code: global code uses nchunks /= 0
   if (NCHUNKS == 0) stop 'Error nchunks'
-  if (sizeprocs /= NPROCTOT_VAL) call exit_mpi(myrank,'Error total number of slices')
+
+  ! reads mesh parameters
+  if (myrank == 0) then
+    ! reads mesh_parameters.bin file from LOCAL_PATH
+    call read_mesh_parameters()
+  endif
+  ! broadcast parameters to all processes
+  call bcast_mesh_parameters()
+
+  ! user output
+  if (myrank == 0) then
+    print *,'mesh parameters (from local_path parameter):'
+    print *,'  LOCAL_PATH         = ',trim(LOCAL_PATH)
+    print *,'  NSPEC_CRUST_MANTLE = ',NSPEC_CRUST_MANTLE
+    print *,'  NPROCTOT           = ',NPROCTOT_VAL
+    print *
+  endif
+
+  ! check number of MPI processes
+  if (sizeprocs /= NPROCTOT_VAL) then
+    if (myrank == 0) then
+      print *
+      print *,'Expected number of MPI processes: ', NPROCTOT_VAL
+      print *,'Actual number of MPI processes: ', sizeprocs
+      print *
+    endif
+    call synchronize_all()
+    stop 'Error wrong number of MPI processes'
+  endif
+  call synchronize_all()
+
+  ! copy from static compilation (depends on Par_file values)
+  NPROC_XI  = NPROC_XI_VAL
+  NPROC_ETA = NPROC_ETA_VAL
+  NCHUNKS   = NCHUNKS_VAL
+
+  !takes region 1 kernels
+  NSPEC_AB = NSPEC_CRUST_MANTLE
+  NGLOB_AB = NGLOB_CRUST_MANTLE
 
   ! estimates mesh element size
   ! note: this estimation is for global meshes valid only
@@ -1405,20 +1424,17 @@ end program smooth_sem_globe
 
   implicit none
 
-  !takes region 1 kernels
-  integer, parameter :: NSPEC_AB = NSPEC_CRUST_MANTLE
-
   integer, intent(in) :: nker
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_AB),intent(inout) :: bk        ! normalization factors
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_AB,nker),intent(inout) ::  tk  ! kernel values
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),intent(inout) :: bk        ! normalization factors
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE,nker),intent(inout) ::  tk  ! kernel values
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_AB,nker), intent(in) :: kernel
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_AB), intent(in) :: integ_factor
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE,nker), intent(in) :: kernel
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE), intent(in) :: integ_factor
 
   ! center positions
-  real(kind=CUSTOM_REAL), dimension(NSPEC_AB), intent(in) :: cx0,cy0,cz0,cx,cy,cz
+  real(kind=CUSTOM_REAL), dimension(NSPEC_CRUST_MANTLE), intent(in) :: cx0,cy0,cz0,cx,cy,cz
   ! GLL point positions
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_AB), intent(in) :: xx0,yy0,zz0,xx,yy,zz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE), intent(in) :: xx0,yy0,zz0,xx,yy,zz
 
   ! smoothing radii
   real(kind=CUSTOM_REAL), intent(in) :: sigma_v2,sigma_h2
@@ -1427,7 +1443,7 @@ end program smooth_sem_globe
   double precision,intent(in) :: r_search,r_search_dist_v,r_search_dist_h
 
   ! number of search elements
-  integer,dimension(NSPEC_AB), intent(in) :: nsearch_elements
+  integer,dimension(NSPEC_CRUST_MANTLE), intent(in) :: nsearch_elements
   logical, intent(in) :: use_kdtree_search
 
   ! user output infos
@@ -1459,6 +1475,7 @@ end program smooth_sem_globe
   integer :: ielem,num_elem_local
 
   integer :: NELEM_OUTPUT_INFO,NELEM_MAX_OUTPUT_INFO
+  integer :: NSPEC_AB
 
   ! timing
   double precision :: time_start
@@ -1493,6 +1510,9 @@ end program smooth_sem_globe
   ! boundary point: 910, interior point: 2382, surface point: 5128
   !integer ,parameter :: tmp_ispec_dbg = 5128
   !---------------------
+
+  !takes region 1 kernels
+  NSPEC_AB = NSPEC_CRUST_MANTLE
 
   ! for time output
   NELEM_OUTPUT_INFO = max(int(1.0*NSPEC_AB/NSTEP_PERCENT_INFO),1)
