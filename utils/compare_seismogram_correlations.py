@@ -235,21 +235,22 @@ def plot_correlations(out_dir,ref_dir):
         sqrt = np.sqrt
 
         # normalized by power in reference solution
-        fac_norm = norm(ref)
+        fac_norm_ref = norm(ref)
+        fac_norm_syn = norm(syn)
         # or normalized by power in (ref*syn)
         #fac_norm = sqrt(norm(ref)*norm(syn))
 
-        if fac_norm > 0.0:
-            err = norm(ref-syn)/fac_norm
+        if fac_norm_ref > 0.0:
+            err = norm(ref-syn)/fac_norm_ref
         else:
             err = norm(ref-syn)
 
         #debug
-        #print('norm syn = %e norm ref = %e' % (norm(syn),fac_norm))
+        #print('norm syn = %e norm ref = %e' % (fac_norm_syn,fac_norm_ref))
 
         # correlation test
         # total length
-        if fac_norm > 0.0:
+        if fac_norm_ref > 0.0 and fac_norm_syn > 0.0:
             corr_mat = np.corrcoef(ref, syn)
         else:
             if norm(ref-syn) > 0.0:
@@ -258,10 +259,11 @@ def plot_correlations(out_dir,ref_dir):
                 # both zero traces
                 print("** warning: comparing zero traces")
                 corr_mat = 1.0
+
         corr = np.min(corr_mat)
 
         # time shift
-        if fac_norm > 0.0:
+        if fac_norm_ref > 0.0:
           # shift (in s) by cross correlation
           shift = get_cross_correlation_timeshift(ref,syn,dt)
         else:
