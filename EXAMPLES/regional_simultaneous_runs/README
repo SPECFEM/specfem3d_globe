@@ -1,0 +1,28 @@
+-------------------------------------------
+README
+-------------------------------------------
+
+This is a regional example for running simultaneous runs as one "big" simulation. 
+It uses the setting in Par_file:
+
+  NUMBER_OF_SIMULTANEOUS_RUNS =  4
+
+to run 4 different earthquakes on the same mesh as one "big" forward simulation.
+This example is similar to the regional_Greece_small/ example, but uses additional CMTSOLUTIONS.
+
+Seismogram files can be found in the run-directories run0001/ etc.
+
+
+1. forward simulation:
+----------------------
+
+type:
+./run_this_example.sh
+
+to setup this directory for the simulation and to run a corresponding
+script "run_mesher_solver.bash".
+
+Reference seismograms for comparisons are provided in the directory: REF_SEIS/
+Please modify the setup and scripts according to your specifics.
+
+
