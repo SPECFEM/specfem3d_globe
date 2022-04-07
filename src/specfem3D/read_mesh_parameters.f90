@@ -38,7 +38,6 @@
     OCEANS,ROTATION
 
   use constants_solver
-  !use specfem_par
 
   implicit none
 
@@ -46,6 +45,8 @@
   integer :: ier
   ! processor identification
   character(len=MAX_STRING_LEN) :: filename
+
+  if (.not. I_should_read_the_database) return
 
   ! create full name with path
   filename = trim(LOCAL_PATH) // "/mesh_parameters.bin"
@@ -283,60 +284,67 @@
   bcast_double_precision(:) = 0.d0
 
   ! main process prepares broadcasting arrays
-  if (myrank == 0) then
-    ! simple way to pass parameters in arrays from main to all other processes
-    ! rather than single values one by one to reduce MPI communication calls:
-    ! sets up broadcasting array
-    bcast_integer = (/ &
-      NEX_XI_VAL,NEX_ETA_VAL, &
-      NSPEC_CRUST_MANTLE,NSPEC_OUTER_CORE,NSPEC_INNER_CORE, &
-      NGLOB_CRUST_MANTLE,NGLOB_OUTER_CORE,NGLOB_INNER_CORE, &
-      NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE,NSPECMAX_ANISO_MANTLE, &
-      NSPEC_CRUST_MANTLE_ATTENUATION,NSPEC_INNER_CORE_ATTENUATION, &
-      NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
-      NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
-      NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
-      NSPEC_CRUST_MANTLE_ADJOINT,NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
-      NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT,NGLOB_INNER_CORE_ADJOINT, &
-      NSPEC_OUTER_CORE_ROT_ADJOINT, &
-      NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
-      NGLOB_CRUST_MANTLE_OCEANS, &
-      NX_BATHY_VAL,NY_BATHY_VAL, &
-      NSPEC_OUTER_CORE_ROTATION, &
-      NPROC_XI_VAL,NPROC_ETA_VAL,NCHUNKS_VAL,NPROCTOT_VAL, &
-      ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT4_VAL,ATT5_VAL, &
-      NSPEC2DMAX_XMIN_XMAX_CM,NSPEC2DMAX_YMIN_YMAX_CM,NSPEC2D_BOTTOM_CM,NSPEC2D_TOP_CM, &
-      NSPEC2DMAX_XMIN_XMAX_IC,NSPEC2DMAX_YMIN_YMAX_IC,NSPEC2D_BOTTOM_IC,NSPEC2D_TOP_IC, &
-      NSPEC2DMAX_XMIN_XMAX_OC,NSPEC2DMAX_YMIN_YMAX_OC,NSPEC2D_BOTTOM_OC,NSPEC2D_TOP_OC, &
-      NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,NSPEC2D_CMB,NSPEC2D_ICB, &
-      NSPEC_CRUST_MANTLE_3DMOVIE,NGLOB_CRUST_MANTLE_3DMOVIE,NSPEC_OUTER_CORE_3DMOVIE, &
-      NGLOB_XY_CM,NGLOB_XY_IC,NT_DUMP_ATTENUATION_VAL &
-      /)
+  if (I_should_read_the_database) then
+    if (myrank == 0) then
+      ! simple way to pass parameters in arrays from main to all other processes
+      ! rather than single values one by one to reduce MPI communication calls:
+      ! sets up broadcasting array
+      bcast_integer = (/ &
+        NEX_XI_VAL,NEX_ETA_VAL, &
+        NSPEC_CRUST_MANTLE,NSPEC_OUTER_CORE,NSPEC_INNER_CORE, &
+        NGLOB_CRUST_MANTLE,NGLOB_OUTER_CORE,NGLOB_INNER_CORE, &
+        NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE,NSPECMAX_ANISO_MANTLE, &
+        NSPEC_CRUST_MANTLE_ATTENUATION,NSPEC_INNER_CORE_ATTENUATION, &
+        NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
+        NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
+        NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
+        NSPEC_CRUST_MANTLE_ADJOINT,NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
+        NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT,NGLOB_INNER_CORE_ADJOINT, &
+        NSPEC_OUTER_CORE_ROT_ADJOINT, &
+        NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
+        NGLOB_CRUST_MANTLE_OCEANS, &
+        NX_BATHY_VAL,NY_BATHY_VAL, &
+        NSPEC_OUTER_CORE_ROTATION, &
+        NPROC_XI_VAL,NPROC_ETA_VAL,NCHUNKS_VAL,NPROCTOT_VAL, &
+        ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT4_VAL,ATT5_VAL, &
+        NSPEC2DMAX_XMIN_XMAX_CM,NSPEC2DMAX_YMIN_YMAX_CM,NSPEC2D_BOTTOM_CM,NSPEC2D_TOP_CM, &
+        NSPEC2DMAX_XMIN_XMAX_IC,NSPEC2DMAX_YMIN_YMAX_IC,NSPEC2D_BOTTOM_IC,NSPEC2D_TOP_IC, &
+        NSPEC2DMAX_XMIN_XMAX_OC,NSPEC2DMAX_YMIN_YMAX_OC,NSPEC2D_BOTTOM_OC,NSPEC2D_TOP_OC, &
+        NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,NSPEC2D_CMB,NSPEC2D_ICB, &
+        NSPEC_CRUST_MANTLE_3DMOVIE,NGLOB_CRUST_MANTLE_3DMOVIE,NSPEC_OUTER_CORE_3DMOVIE, &
+        NGLOB_XY_CM,NGLOB_XY_IC,NT_DUMP_ATTENUATION_VAL &
+        /)
 
-    bcast_logical = (/ &
-      TRANSVERSE_ISOTROPY_VAL,ANISOTROPIC_3D_MANTLE_VAL,ANISOTROPIC_INNER_CORE_VAL, &
-      ATTENUATION_VAL,ATTENUATION_3D_VAL, &
-      ELLIPTICITY_VAL,GRAVITY_VAL,OCEANS_VAL, &
-      ROTATION_VAL,EXACT_MASS_MATRIX_FOR_ROTATION_VAL, &
-      PARTIAL_PHYS_DISPERSION_ONLY_VAL, &
-      USE_DEVILLE_PRODUCTS_VAL, &
-      ATTENUATION_1D_WITH_3D_STORAGE_VAL,UNDO_ATTENUATION_VAL &
-      /)
+      bcast_logical = (/ &
+        TRANSVERSE_ISOTROPY_VAL,ANISOTROPIC_3D_MANTLE_VAL,ANISOTROPIC_INNER_CORE_VAL, &
+        ATTENUATION_VAL,ATTENUATION_3D_VAL, &
+        ELLIPTICITY_VAL,GRAVITY_VAL,OCEANS_VAL, &
+        ROTATION_VAL,EXACT_MASS_MATRIX_FOR_ROTATION_VAL, &
+        PARTIAL_PHYS_DISPERSION_ONLY_VAL, &
+        USE_DEVILLE_PRODUCTS_VAL, &
+        ATTENUATION_1D_WITH_3D_STORAGE_VAL,UNDO_ATTENUATION_VAL &
+        /)
 
-    bcast_double_precision = (/ &
-      ANGULAR_WIDTH_ETA_IN_DEGREES_VAL,ANGULAR_WIDTH_XI_IN_DEGREES_VAL, &
-      CENTER_LATITUDE_IN_DEGREES_VAL,CENTER_LONGITUDE_IN_DEGREES_VAL, &
-      GAMMA_ROTATION_AZIMUTH_VAL &
-      /)
+      bcast_double_precision = (/ &
+        ANGULAR_WIDTH_ETA_IN_DEGREES_VAL,ANGULAR_WIDTH_XI_IN_DEGREES_VAL, &
+        CENTER_LATITUDE_IN_DEGREES_VAL,CENTER_LONGITUDE_IN_DEGREES_VAL, &
+        GAMMA_ROTATION_AZIMUTH_VAL &
+        /)
+    endif
+
+    ! broadcasts the information read on main rank to the nodes (within same group)
+    call bcast_all_i(bcast_integer,nparam_i)
+    call bcast_all_l(bcast_logical,nparam_l)
+    call bcast_all_dp(bcast_double_precision,nparam_dp)
   endif
 
-  ! broadcasts the information read on the main to the nodes
-  call bcast_all_i(bcast_integer,nparam_i)
-  call bcast_all_l(bcast_logical,nparam_l)
-  call bcast_all_dp(bcast_double_precision,nparam_dp)
+  ! broadcasts the information read on the main to the other run groups
+  call bcast_all_i_for_database(bcast_integer,nparam_i)
+  call bcast_all_l_for_database(bcast_logical,nparam_l)
+  call bcast_all_dp_for_database(bcast_double_precision,nparam_dp)
 
   ! non-main processes set their parameters
-  if (myrank /= 0) then
+  if (myrank /= 0 .or. (.not. I_should_read_the_database)) then
     ! please, be careful with ordering and counting here
     ! integers
     NEX_XI_VAL = bcast_integer(1)

@@ -1973,50 +1973,50 @@ end module my_mpi
 
     my_local_mpi_comm_world = MPI_COMM_WORLD
 
-! no broadcast of the mesh and model databases to other runs in that case
+    ! no broadcast of the mesh and model databases to other runs in that case
     my_group_for_bcast = 0
     my_local_mpi_comm_for_bcast = MPI_COMM_NULL
 
   else
 
-!--- create a subcommunicator for each independent run
+    !--- create a subcommunicator for each independent run
 
     NPROC = sizeval / NUMBER_OF_SIMULTANEOUS_RUNS
 
-!   create the different groups of processes, one for each independent run
+    ! create the different groups of processes, one for each independent run
     mygroup = myrank / NPROC
     key = myrank
     if (mygroup < 0 .or. mygroup > NUMBER_OF_SIMULTANEOUS_RUNS-1) stop 'invalid value of mygroup'
 
-!   build the sub-communicators
+    ! build the sub-communicators
     call MPI_COMM_SPLIT(MPI_COMM_WORLD, mygroup, key, my_local_mpi_comm_world, ier)
     if (ier /= 0) stop 'error while trying to create the sub-communicators'
 
-!   add the right directory for that run
-!   (group numbers start at zero, but directory names start at run0001, thus we add one)
+    ! add the right directory for that run
+    !  (group numbers start at zero, but directory names start at run0001, thus we add one)
     write(path_to_add,"('run',i4.4,'/')") mygroup + 1
     OUTPUT_FILES = path_to_add(1:len_trim(path_to_add))//OUTPUT_FILES(1:len_trim(OUTPUT_FILES))
 
-!--- create a subcommunicator to broadcast the identical mesh and model databases if needed
+    !--- create a subcommunicator to broadcast the identical mesh and model databases if needed
     if (BROADCAST_SAME_MESH_AND_MODEL) then
 
       call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
-!     to broadcast the model, split along similar ranks per run instead
+      ! to broadcast the model, split along similar ranks per run instead
       my_group_for_bcast = mod(myrank,NPROC)
       key = myrank
       if (my_group_for_bcast < 0 .or. my_group_for_bcast > NPROC-1) stop 'invalid value of my_group_for_bcast'
 
-!     build the sub-communicators
+      ! build the sub-communicators
       call MPI_COMM_SPLIT(MPI_COMM_WORLD, my_group_for_bcast, key, my_local_mpi_comm_for_bcast, ier)
       if (ier /= 0) stop 'error while trying to create the sub-communicators'
 
-!     see if that process will need to read the mesh and model database and then broadcast it to others
+      ! see if that process will need to read the mesh and model database and then broadcast it to others
       call MPI_COMM_RANK(my_local_mpi_comm_for_bcast,my_local_rank_for_bcast,ier)
       if (my_local_rank_for_bcast > 0) I_should_read_the_database = .false.
 
     else
 
-! no broadcast of the mesh and model databases to other runs in that case
+      ! no broadcast of the mesh and model databases to other runs in that case
       my_group_for_bcast = 0
       my_local_mpi_comm_for_bcast = MPI_COMM_NULL
 
