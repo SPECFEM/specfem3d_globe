@@ -339,9 +339,9 @@
   endif
 
   ! broadcasts the information read on the main to the other run groups
-  call bcast_all_i_for_database(bcast_integer,nparam_i)
-  call bcast_all_l_for_database(bcast_logical,nparam_l)
-  call bcast_all_dp_for_database(bcast_double_precision,nparam_dp)
+  call bcast_all_i_for_database(bcast_integer(1),size(bcast_integer,kind=4))
+  call bcast_all_l_for_database(bcast_logical(1),size(bcast_logical,kind=4))
+  call bcast_all_dp_for_database(bcast_double_precision(1),size(bcast_double_precision,kind=4))
 
   ! non-main processes set their parameters
   if (myrank /= 0 .or. (.not. I_should_read_the_database)) then
