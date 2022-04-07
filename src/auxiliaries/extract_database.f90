@@ -36,7 +36,7 @@
 !  Qinya Liu, Caltech, May 2007
 
   use constants, only: &
-    CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
+    CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,MAX_STRING_LEN
 
   use shared_parameters, only: &
     LOCAL_PATH
@@ -46,7 +46,7 @@
 
   implicit none
 
-  character(len=150) :: infile, s_num, outfile, s_ireg
+  character(len=MAX_STRING_LEN) :: infile, s_num, outfile, s_ireg
   integer :: num, i, nspec, nglob, ireg
 
   ! uses nspec_crust_mantle for allocation as this is the maximum possible size
@@ -86,9 +86,10 @@
 
   ! reads mesh parameters
   ! index of last occurrence of '/' to get directory from name (DATABASES_MPI/proc****_reg1_solver_data.bin)
+  LOCAL_PATH = ''
   i = index(infile,'/',.true.)
   if (i > 1) then
-    LOCAL_PATH = infile(1:i-1)
+    LOCAL_PATH(1:i-1) = infile(1:i-1)
   else
     LOCAL_PATH = 'DATABASES_MPI'        ! mesh_parameters.bin file in DATABASES_MPI/
   endif
