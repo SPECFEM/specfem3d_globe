@@ -84,6 +84,7 @@ cd $dir
 echo
 echo "directory: `pwd`"
 echo
+currentdir=`pwd`
 
 rm -rf   SEM $name bin
 mkdir -p SEM $name/job_info bin OUTPUT_FILES
@@ -111,33 +112,64 @@ sed -i "s/^#PBS -l nodes=.*/#PBS -l nodes=$nodes:ppn=8,walltime=100:00:00/g" ./$
 echo; echo
 cp -v DATA/Par_file_NOISE_1_attenuation DATA/Par_file
 
-# compiles in root directory
-cd ../../../
-cp -v $dir/DATA/Par_file DATA/
-rm -rf OUTPUT_FILES/*
-make clean
-make all
-mv bin/xmeshfem3D           $dir/bin/xmeshfem3D_attenuation
-mv bin/xspecfem3D           $dir/bin/xspecfem3D_attenuation
-mv bin/xcreate_movie_AVS_DX $dir/bin/xcreate_movie_AVS_DX_attenuation
-cd $dir/
+# checks if executables were compiled and available
+if [ ! -e ../../../bin/xspecfem3D ]; then
+  echo "Compiling first all binaries in the root directory..."
+  echo
 
-# no attenuation simulations
-echo; echo
-cp -v DATA/Par_file_NOISE_1_noattenuation DATA/Par_file
+  # compiles executables in root directory
+  # using default configuration
+  cd ../../../
 
-# compiles in root directory
-cd ../../../
-cp -v $dir/DATA/Par_file DATA/
-rm -rf OUTPUT_FILES/*
-make clean
-make all
-mv bin/xmeshfem3D           $dir/bin/xmeshfem3D_noattenuation
-mv bin/xspecfem3D           $dir/bin/xspecfem3D_noattenuation
-mv bin/xcreate_movie_AVS_DX $dir/bin/xcreate_movie_AVS_DX_noattenuation
-mv bin/xcombine_vol_data    $dir/bin/xcombine_vol_data
+  # only in case static compilation would have been set to yes in Makefile:
+  cp $currentdir/DATA/Par_file DATA/Par_file
 
-cd $dir/
+  # compiles code
+  make clean
+  make -j4 all
+
+  # checks exit code
+  if [[ $? -ne 0 ]]; then exit 1; fi
+
+  # backup of constants setup
+  cp setup/* $currentdir/OUTPUT_FILES/
+  if [ -e OUTPUT_FILES/values_from_mesher ]; then
+    cp OUTPUT_FILES/values_from_mesher.h $currentdir/OUTPUT_FILES/values_from_mesher.h.compilation
+  fi
+  cp DATA/Par_file $currentdir/OUTPUT_FILES/
+
+  cp bin/xmeshfem3D           $currendir/bin/xmeshfem3D_attenuation
+  cp bin/xspecfem3D           $currentdir/bin/xspecfem3D_attenuation
+  cp bin/xcreate_movie_AVS_DX $currentdir/bin/xcreate_movie_AVS_DX_attenuation
+  cp bin/xcombine_vol_data $currentdir/bin/xcombine_vol_data
+  cd $currentdir/
+
+  # only in case of static compilation
+  if [ 1 == 0 ]; then
+    # no attenuation simulations
+    echo; echo
+    cp -v DATA/Par_file_NOISE_1_noattenuation DATA/Par_file
+
+    # compiles in root directory
+    cd ../../../
+    cp -v $dir/DATA/Par_file DATA/
+    rm -rf OUTPUT_FILES/*
+    make clean
+    make all
+    cp bin/xmeshfem3D           $dir/bin/xmeshfem3D_noattenuation
+    cp bin/xspecfem3D           $dir/bin/xspecfem3D_noattenuation
+    cp bin/xcreate_movie_AVS_DX $dir/bin/xcreate_movie_AVS_DX_noattenuation
+    cd $currentdir/
+  else
+    # no static compilation, can use same binaries
+    cd bin/
+    ln -s xmeshfem3D_attenuation xmeshfem3D_noattenuation
+    ln -s xspecfem3D_attenuation xspecfem3D_noattenuation
+    ln -s xcreate_movie_AVS_DX_attenuation xcreate_movie_AVS_DX_noattenuation
+    cd ../
+  fi
+fi
+
 echo
 echo "done directory: $dir"
 

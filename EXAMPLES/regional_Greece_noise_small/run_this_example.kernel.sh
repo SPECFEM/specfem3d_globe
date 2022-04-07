@@ -27,24 +27,35 @@ mkdir -p OUTPUT_FILES
 rm -rf DATABASES_MPI/*
 rm -rf OUTPUT_FILES/*
 
-# compiles executables in root directory
-# using default configuration
-cd ../../
-# compiles for an adjoint simulation
-cp $currentdir/DATA/Par_file DATA/Par_file
-sed -i "s:SAVE_FORWARD.*:SAVE_FORWARD                    = .true.:"  DATA/Par_file
-make clean
-make -j4 all
+# checks if executables were compiled and available
+if [ ! -e ../../bin/xspecfem3D ]; then
+  echo "Compiling first all binaries in the root directory..."
+  echo
 
-# checks exit code
-if [[ $? -ne 0 ]]; then exit 1; fi
+  # compiles executables in root directory
+  # using default configuration
+  cd ../../
 
-# backup of constants setup
-cp setup/* $currentdir/OUTPUT_FILES/
-cp OUTPUT_FILES/values_from_mesher.h $currentdir/OUTPUT_FILES/
-cp DATA/Par_file $currentdir/OUTPUT_FILES/
+  # only in case static compilation would have been set to yes in Makefile:
+  cp $currentdir/DATA/Par_file DATA/Par_file
+  sed -i "s:SAVE_FORWARD.*:SAVE_FORWARD                    = .true.:"  DATA/Par_file
 
-cd $currentdir
+  # compiles code
+  make clean
+  make -j4 all
+
+  # checks exit code
+  if [[ $? -ne 0 ]]; then exit 1; fi
+
+  # backup of constants setup
+  cp setup/* $currentdir/OUTPUT_FILES/
+  if [ -e OUTPUT_FILES/values_from_mesher ]; then
+    cp OUTPUT_FILES/values_from_mesher.h $currentdir/OUTPUT_FILES/values_from_mesher.h.compilation
+  fi
+  cp DATA/Par_file $currentdir/OUTPUT_FILES/
+
+  cd $currentdir
+fi
 
 # copy executables
 mkdir -p bin
