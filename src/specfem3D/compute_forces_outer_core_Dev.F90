@@ -156,7 +156,7 @@
 !$OMP PARALLEL DEFAULT(NONE) &
 !$OMP SHARED( deriv, &
 !$OMP num_elements, phase_ispec_inner, iphase, ibool, &
-!$OMP displfluid, accelfluid,  &
+!$OMP displfluid, accelfluid, &
 !$OMP gravity_pre_store, &
 !$OMP deltat, two_omega_earth, timeval, &
 !$OMP A_array_rotation, B_array_rotation, &
