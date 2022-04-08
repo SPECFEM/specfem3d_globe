@@ -79,6 +79,16 @@ fi
 AM_CONDITIONAL([COND_VECTORIZATION], [test x"$want_vec" != xno])
 
 ###
+### static compilation
+###
+AC_ARG_ENABLE([static-compilation],
+    [AS_HELP_STRING([--enable-static-compilation],
+        [build with static compilation option enabled @<:@default=no@:>@])],
+    [want_static="$enableval"],
+    [want_static=no])
+AM_CONDITIONAL([COND_STATIC_COMPILATION], [test x"$want_static" != xno])
+
+###
 ### GPU version
 ###
 
@@ -652,29 +662,6 @@ AS_IF([test x"$want_omp" != xno], [
   CIT_FC_OPENMP_MODULE([$FC], [$OMP_FCFLAGS])
 ])
 
-###
-### FORCE_VECTORIZATION
-###
-
-AS_IF([test x"$want_vec" != xno],[
-  AS_BOX([FORCE VECTORIZATION])
-  AC_MSG_NOTICE([FORCE_VECTORIZATION is enabled])
-
-  FLAGS_CHECK="${FLAGS_CHECK} ${FC_DEFINE}FORCE_VECTORIZATION"
-  CPPFLAGS="${CPPFLAGS} -DFORCE_VECTORIZATION"
-])
-
-###
-### VTK
-###
-
-AS_IF([test x"$want_vtk" != xno], [
-    AS_BOX([VTK])
-    CIT_OPTIONS_VTK
-    CIT_PATH_VTK
-    # Add optional libraries we need:
-    VTK_LIBS="-lvtkRendering -lvtkGraphics $VTK_LIBS"
-])
 
 ###
 ### MPI
@@ -715,13 +702,48 @@ AS_IF([test x"$want_cem" != xno], [
     #AC_LANG_POP([Fortran])
 ])
 
+###
+### FORCE_VECTORIZATION
+###
+
+AS_IF([test x"$want_vec" != xno],[
+  AS_BOX([FORCE VECTORIZATION])
+  AC_MSG_NOTICE([FORCE_VECTORIZATION is enabled])
+
+  FLAGS_CHECK="${FLAGS_CHECK} ${FC_DEFINE}FORCE_VECTORIZATION"
+  CPPFLAGS="${CPPFLAGS} -DFORCE_VECTORIZATION"
+])
+
+###
+### static compilation
+###
+
+AS_IF([test x"$want_static" != xno],[
+  AS_BOX([STATIC COMPILATION])
+  AC_MSG_NOTICE([static compilation is enabled])
+])
+
+###
+### VTK
+###
+
+AS_IF([test x"$want_vtk" != xno], [
+    AS_BOX([VTK])
+    CIT_OPTIONS_VTK
+    CIT_PATH_VTK
+    # Add optional libraries we need:
+    VTK_LIBS="-lvtkRendering -lvtkGraphics $VTK_LIBS"
+])
+
 ##
 ## Git version info
 ##
+
 AS_BOX([git version info])
 CIG_PKG_GIT(SPECFEM3D_GLOBE)
 AC_DEFINE_UNQUOTED([SPECFEM3D_GLOBE_VERSION], ["$PACKAGE_VERSION"], [Define SPECFEM3D_GLOBE version])
 #AC_DEFINE_UNQUOTED([SPECFEM3D_GLOBE_DOI], ["10.5281/zenodo.xxxxx"], [Define SPECFEM3D_GLOBE doi])
+
 AS_IF([test -d $srcdir/.git], [
     GIT_VERSION_DEPS="$srcdir/.git/logs/HEAD"
     AC_MSG_NOTICE([building from git repository])
@@ -764,6 +786,7 @@ AC_CONFIG_LINKS([
     DATA/heterogen:DATA/heterogen
     DATA/Lebedev_sea99:DATA/Lebedev_sea99
     DATA/Montagner_model:DATA/Montagner_model
+    DATA/mars:DATA/mars
     DATA/moon:DATA/moon
     DATA/old:DATA/old
     DATA/PPM:DATA/PPM

@@ -62,6 +62,8 @@
     call flush_IMAIN()
   endif
 
+  ! dynamic array allocations
+
   ! note: after allocation, arrays have not been mapped to memory yet. this will be done with the first initialization.
   !       it is thus unlikely, that any of the allocate() routines here will fail.
   !       todo: we could move these allocation statements closer to the initialization and allocate only after
@@ -82,6 +84,23 @@
            veloc_inner_core(NDIM,NGLOB_INNER_CORE), &
            accel_inner_core(NDIM,NGLOB_INNER_CORE),stat=ier)
   if (ier /= 0) stop 'Error allocating displ,veloc,accel in inner_core'
+
+  ! ADJOINT
+  ! allocates backward/reconstructed arrays (dummy in case of forward simulation)
+  allocate(b_displ_crust_mantle(NDIM,NGLOB_CRUST_MANTLE_ADJOINT), &
+           b_veloc_crust_mantle(NDIM,NGLOB_CRUST_MANTLE_ADJOINT), &
+           b_accel_crust_mantle(NDIM,NGLOB_CRUST_MANTLE_ADJOINT),stat=ier)
+  if (ier /= 0) stop 'Error allocating b_displ,b_veloc,b_accel in crust_mantle'
+
+  allocate(b_displ_outer_core(NGLOB_OUTER_CORE_ADJOINT), &
+           b_veloc_outer_core(NGLOB_OUTER_CORE_ADJOINT), &
+           b_accel_outer_core(NGLOB_OUTER_CORE_ADJOINT),stat=ier)
+  if (ier /= 0) stop 'Error allocating b_displ,b_veloc,b_accel in outer_core'
+
+  allocate(b_displ_inner_core(NDIM,NGLOB_INNER_CORE_ADJOINT), &
+           b_veloc_inner_core(NDIM,NGLOB_INNER_CORE_ADJOINT), &
+           b_accel_inner_core(NDIM,NGLOB_INNER_CORE_ADJOINT),stat=ier)
+  if (ier /= 0) stop 'Error allocating b_displ,b_veloc,b_accel in inner_core'
 
   ! for strain/attenuation
   allocate(epsilondev_xx_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT), &
@@ -165,6 +184,7 @@
            Ieps_trace_over_3_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays Iepsilondev_xx_crust_mantle,..'
 
+  ! attenuation
   allocate(R_xx_crust_mantle(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_ATTENUATION), &
            R_yy_crust_mantle(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_ATTENUATION), &
            R_xy_crust_mantle(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_ATTENUATION), &
@@ -179,27 +199,7 @@
            R_yz_inner_core(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_ATTENUATION),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays R_xx_inner_core,..'
 
-  ! needed for subroutine calls
-  allocate(A_array_rotation(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION), &
-           B_array_rotation(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION),stat=ier)
-  if (ier /= 0) stop 'Error allocating arrays A_array_rotation,..'
-
-  ! allocates backward/reconstructed arrays (dummy in case of forward simulation)
-  allocate(b_displ_crust_mantle(NDIM,NGLOB_CRUST_MANTLE_ADJOINT), &
-           b_veloc_crust_mantle(NDIM,NGLOB_CRUST_MANTLE_ADJOINT), &
-           b_accel_crust_mantle(NDIM,NGLOB_CRUST_MANTLE_ADJOINT),stat=ier)
-  if (ier /= 0) stop 'Error allocating b_displ,b_veloc,b_accel in crust_mantle'
-
-  allocate(b_displ_outer_core(NGLOB_OUTER_CORE_ADJOINT), &
-           b_veloc_outer_core(NGLOB_OUTER_CORE_ADJOINT), &
-           b_accel_outer_core(NGLOB_OUTER_CORE_ADJOINT),stat=ier)
-  if (ier /= 0) stop 'Error allocating b_displ,b_veloc,b_accel in outer_core'
-
-  allocate(b_displ_inner_core(NDIM,NGLOB_INNER_CORE_ADJOINT), &
-           b_veloc_inner_core(NDIM,NGLOB_INNER_CORE_ADJOINT), &
-           b_accel_inner_core(NDIM,NGLOB_INNER_CORE_ADJOINT),stat=ier)
-  if (ier /= 0) stop 'Error allocating b_displ,b_veloc,b_accel in inner_core'
-
+  ! ADJOINT
   allocate(b_R_xx_crust_mantle(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_STR_AND_ATT), &
            b_R_yy_crust_mantle(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_STR_AND_ATT), &
            b_R_xy_crust_mantle(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_STR_AND_ATT), &
@@ -213,6 +213,11 @@
            b_R_xz_inner_core(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_STR_AND_ATT), &
            b_R_yz_inner_core(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_STR_AND_ATT),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays b_R_xx_inner_core,..'
+
+  ! needed for subroutine calls
+  allocate(A_array_rotation(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION), &
+           B_array_rotation(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION),stat=ier)
+  if (ier /= 0) stop 'Error allocating arrays A_array_rotation,..'
 
   ! initializes backward/reconstructed arrays
   if (SIMULATION_TYPE == 3) then

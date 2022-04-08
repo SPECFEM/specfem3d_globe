@@ -939,11 +939,11 @@
 
     do ispec = 1, NSPEC_CRUST_MANTLE
 
-      call compute_gradient_crust_mantle(veloc_crust_mantle, veloc_grad, ispec)
+      call compute_gradient_crust_mantle(veloc_crust_mantle, NGLOB_CRUST_MANTLE, veloc_grad, ispec)
 
       if ( USE_SOURCE_RECEIVER_Hessian ) then
         ! if using source-recevier Hessian, calculate the velocity gradient of backward adjoint wavefield
-        call compute_gradient_crust_mantle(b_veloc_crust_mantle, b_veloc_grad, ispec)
+        call compute_gradient_crust_mantle(b_veloc_crust_mantle, NGLOB_CRUST_MANTLE_ADJOINT, b_veloc_grad, ispec)
       else
         ! if using source-source Hessian, set the b_veloc_grad same as the wavefield
         b_veloc_grad(:,:,:,:,:) = veloc_grad(:,:,:,:,:)
@@ -1006,7 +1006,7 @@
   ! | df_x/dy, df_y/dy, df_z/dy |
   ! | df_x/dz, df_y/dz, df_z/dz |
 
-  subroutine compute_gradient_crust_mantle(field, grad, ispec)
+  subroutine compute_gradient_crust_mantle(field, NGLOB, grad_elem, ispec)
 
     use constants_solver
     use specfem_par, only: hprime_xx, hprime_yy, hprime_zz
@@ -1018,23 +1018,22 @@
     implicit none
 
     ! global array of the filed
-    real(kind=CUSTOM_REAL), dimension(NDIM, NGLOB_CRUST_MANTLE), intent(in) :: field
-    real(kind=CUSTOM_REAL), dimension(3, 3, NGLLX, NGLLY, NGLLZ), intent(inout) :: grad
+    integer, intent(in) :: NGLOB
+    real(kind=CUSTOM_REAL), dimension(NDIM, NGLOB), intent(in) :: field
+    real(kind=CUSTOM_REAL), dimension(3, 3, NGLLX, NGLLY, NGLLZ), intent(inout) :: grad_elem
     integer, intent(in) :: ispec
 
-    integer :: i, j, k, l
-
-    integer :: iglob
+    integer :: i, j, k, l, iglob
     real(kind=CUSTOM_REAL) :: tempx1l, tempx2l, tempx3l, &
       tempy1l, tempy2l, tempy3l, tempz1l, tempz2l, tempz3l
     real(kind=CUSTOM_REAL) :: xixl, xiyl, xizl, &
       etaxl, etayl, etazl, gammaxl, gammayl, gammazl
 
-    grad = 0._CUSTOM_REAL
+    grad_elem(:,:,:,:,:) = 0._CUSTOM_REAL
 
-    do k=1, NGLLZ
-      do j=1, NGLLY
-        do i=1, NGLLX
+    do k = 1, NGLLZ
+      do j = 1, NGLLY
+        do i = 1, NGLLX
 
           tempx1l = 0._CUSTOM_REAL
           tempx2l = 0._CUSTOM_REAL
@@ -1078,19 +1077,19 @@
           gammazl = gammaz_crust_mantle(i, j, k, ispec)
 
           ! df_x/dx, df_x/dy, df_x/dz
-          grad(1, 1, i, j, k) = tempx1l * xixl + tempx2l * etaxl + tempx3l * gammaxl
-          grad(2, 1, i, j, k) = tempx1l * xiyl + tempx2l * etayl + tempx3l * gammayl
-          grad(3, 1, i, j, k) = tempx1l * xizl + tempx2l * etazl + tempx3l * gammazl
+          grad_elem(1, 1, i, j, k) = tempx1l * xixl + tempx2l * etaxl + tempx3l * gammaxl
+          grad_elem(2, 1, i, j, k) = tempx1l * xiyl + tempx2l * etayl + tempx3l * gammayl
+          grad_elem(3, 1, i, j, k) = tempx1l * xizl + tempx2l * etazl + tempx3l * gammazl
 
           ! df_y/dx, df_y/dy, df_y/dz
-          grad(1, 2, i, j, k) = tempy1l * xixl + tempy2l * etaxl + tempy3l * gammaxl
-          grad(2, 2, i, j, k) = tempy1l * xiyl + tempy2l * etayl + tempy3l * gammayl
-          grad(3, 2, i, j, k) = tempy1l * xizl + tempy2l * etazl + tempy3l * gammazl
+          grad_elem(1, 2, i, j, k) = tempy1l * xixl + tempy2l * etaxl + tempy3l * gammaxl
+          grad_elem(2, 2, i, j, k) = tempy1l * xiyl + tempy2l * etayl + tempy3l * gammayl
+          grad_elem(3, 2, i, j, k) = tempy1l * xizl + tempy2l * etazl + tempy3l * gammazl
 
           ! df_z/dx, df_z/dy, df_z/dz
-          grad(1, 3, i, j, k) = tempz1l * xixl + tempz2l * etaxl + tempz3l * gammaxl
-          grad(2, 3, i, j, k) = tempz1l * xiyl + tempz2l * etayl + tempz3l * gammayl
-          grad(3, 3, i, j, k) = tempz1l * xizl + tempz2l * etazl + tempz3l * gammazl
+          grad_elem(1, 3, i, j, k) = tempz1l * xixl + tempz2l * etaxl + tempz3l * gammaxl
+          grad_elem(2, 3, i, j, k) = tempz1l * xiyl + tempz2l * etayl + tempz3l * gammayl
+          grad_elem(3, 3, i, j, k) = tempz1l * xizl + tempz2l * etazl + tempz3l * gammazl
 
         enddo  ! end i
       enddo  ! end j

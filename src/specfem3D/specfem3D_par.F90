@@ -610,7 +610,6 @@ module specfem_par_crustmantle
   ! displacement, velocity, acceleration
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
      displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle
-
   ! ADJOINT
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
     b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle
@@ -623,6 +622,9 @@ module specfem_par_crustmantle
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: &
     R_xx_crust_mantle,R_yy_crust_mantle,R_xy_crust_mantle,R_xz_crust_mantle,R_yz_crust_mantle
+  ! ADJOINT
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: &
+    b_R_xx_crust_mantle,b_R_yy_crust_mantle,b_R_xy_crust_mantle,b_R_xz_crust_mantle,b_R_yz_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable, target :: &
     epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
@@ -630,10 +632,6 @@ module specfem_par_crustmantle
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable, target :: &
     eps_trace_over_3_crust_mantle
-
-  ! ADJOINT
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: &
-    b_R_xx_crust_mantle,b_R_yy_crust_mantle,b_R_xy_crust_mantle,b_R_xz_crust_mantle,b_R_yz_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), pointer :: &
     b_epsilondev_xx_crust_mantle,b_epsilondev_yy_crust_mantle,b_epsilondev_xy_crust_mantle, &
@@ -832,6 +830,9 @@ module specfem_par_innercore
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: &
     R_xx_inner_core,R_yy_inner_core,R_xy_inner_core,R_xz_inner_core,R_yz_inner_core
+  ! ADJOINT
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: &
+    b_R_xx_inner_core,b_R_yy_inner_core,b_R_xy_inner_core,b_R_xz_inner_core,b_R_yz_inner_core
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable, target :: &
     epsilondev_xx_inner_core,epsilondev_yy_inner_core,epsilondev_xy_inner_core, &
@@ -839,10 +840,6 @@ module specfem_par_innercore
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable, target :: &
     eps_trace_over_3_inner_core
-
-  ! ADJOINT
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: &
-    b_R_xx_inner_core,b_R_yy_inner_core,b_R_xy_inner_core,b_R_xz_inner_core,b_R_yz_inner_core
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), pointer :: &
     b_epsilondev_xx_inner_core,b_epsilondev_yy_inner_core,b_epsilondev_xy_inner_core, &
@@ -932,7 +929,6 @@ module specfem_par_outercore
   ! potentials
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
     displ_outer_core,veloc_outer_core,accel_outer_core
-
   ! ADJOINT
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
     b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core

@@ -442,10 +442,12 @@ endif
 # requires OUTPUT_FILES/values_from_mesher.h for compilation of the solver
 # needs to recompile executables for different simulation setups
 # turned off by default
-STATIC_COMPILATION = no
+
+@COND_STATIC_COMPILATION_TRUE@STATIC_COMPILATION = yes
+@COND_STATIC_COMPILATION_FALSE@STATIC_COMPILATION = no
 
 ifeq ($(STATIC_COMPILATION), yes)
-	FCFLAGS += ${FC_DEFINE}USE_STATIC_COMPILATION
+  FCFLAGS += ${FC_DEFINE}USE_STATIC_COMPILATION
 endif
 
 #######################################

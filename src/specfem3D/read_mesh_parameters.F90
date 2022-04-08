@@ -30,6 +30,14 @@
 
 ! reads in file with all mesh parameters
 
+#ifdef USE_STATIC_COMPILATION
+  ! static compilation
+  ! no need to read parameter file, array values are included in constants_solver through values_from_mesher.h
+  return
+
+#else
+  ! for dynamic compilation/allocation of arrays
+
   use constants, only: MAX_STRING_LEN,IIN
 
   use shared_parameters, only: LOCAL_PATH,SIMULATION_TYPE,SAVE_FORWARD, &
@@ -47,6 +55,7 @@
   character(len=MAX_STRING_LEN) :: filename
 
   if (.not. I_should_read_the_database) return
+
 
   ! create full name with path
   filename = trim(LOCAL_PATH) // "/mesh_parameters.bin"
@@ -254,6 +263,8 @@
 
   close(IIN)
 
+#endif
+
   end subroutine read_mesh_parameters
 
 !
@@ -261,6 +272,15 @@
 !
 
   subroutine bcast_mesh_parameters()
+
+#ifdef USE_STATIC_COMPILATION
+  ! static compilation
+  ! no need to broadcast, each process has array values included already during compilation
+  return
+
+#else
+  ! for dynamic compilation/allocation of arrays
+  ! (no need for values_from_mesher.h file to compile)
 
   use constants, only: myrank
   use constants_solver
@@ -436,5 +456,7 @@
     CENTER_LONGITUDE_IN_DEGREES_VAL = bcast_double_precision(4)
     GAMMA_ROTATION_AZIMUTH_VAL = bcast_double_precision(5)
   endif
+
+#endif
 
   end subroutine bcast_mesh_parameters
