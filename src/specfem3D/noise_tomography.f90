@@ -176,6 +176,88 @@
 !-------------------------------------------------------------------------------------------------
 !
 
+  subroutine read_noise_distribution_direction()
+
+! evcano: reads noise distribution and direction from binary files
+
+  use specfem_par
+  use specfem_par_noise
+
+  implicit none
+
+  ! local parameters
+  integer :: ier,use_external_noise_distribution
+  character(len=MAX_STRING_LEN) :: filename
+
+  ! check if external noise distribution should be used
+  filename = trim(OUTPUT_FILES)//'/..//NOISE_TOMOGRAPHY/use_external_noise_distribution'
+  open(unit=IIN_NOISE,file=trim(filename),status='old',action='read',iostat=ier)
+  if (ier /= 0) then
+    if (myrank == 0) then
+      write(IMAIN,*) 'file '//trim(filename)//' not found, using noise distribution defined in noise_tomography.f90'
+    endif
+    ! finish subroutine
+    return
+  else
+    read(IIN_NOISE,*) use_external_noise_distribution
+    close(IIN_NOISE)
+    if (use_external_noise_distribution == 0) then
+      if (myrank == 0) then
+        write(IMAIN,*) 'using noise distribution defined in noise_tomography.f90'
+      endif
+      ! finish subroutine
+      return
+    endif
+  endif
+
+  ! set file name prefix
+  call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_TMP_PATH)
+
+  ! read noise distribution
+  if (myrank == 0) then
+    write(IMAIN,*) "reading noise distribution"
+    call flush_IMAIN
+  endif
+
+  filename = prname(1:len_trim(prname))//'mask_noise.bin'
+  open(unit=IIN_NOISE,file=trim(filename),status='old',action='read',form='unformatted',iostat=ier)
+  if (ier /= 0) call exit_mpi(myrank,'error reading noise distribution')
+  read(IIN_NOISE) mask_noise
+  close(IIN_NOISE)
+
+  ! read noise directions
+  if (myrank == 0) then
+    write(IMAIN,*) "reading noise directions"
+    call flush_IMAIN
+  endif
+
+  ! x direction
+  filename = prname(1:len_trim(prname))//'normal_x_noise.bin'
+  open(unit=IIN_NOISE,file=trim(filename),status='old',action='read',form='unformatted',iostat=ier)
+  if (ier /= 0) call exit_mpi(myrank,'error reading noise direction x')
+  read(IIN_NOISE) normal_x_noise
+  close(IIN_NOISE)
+
+  ! y direction
+  filename = prname(1:len_trim(prname))//'normal_y_noise.bin'
+  open(unit=IIN_NOISE,file=trim(filename),status='old',action='read',form='unformatted',iostat=ier)
+  if (ier /= 0) call exit_mpi(myrank,'error reading noise direction y')
+  read(IIN_NOISE) normal_y_noise
+  close(IIN_NOISE)
+
+  ! z direction
+  filename = prname(1:len_trim(prname))//'normal_z_noise.bin'
+  open(unit=IIN_NOISE,file=trim(filename),status='old',action='read',form='unformatted',iostat=ier)
+  if (ier /= 0) call exit_mpi(myrank,'error reading noise direction z')
+  read(IIN_NOISE) normal_z_noise
+  close(IIN_NOISE)
+
+  end subroutine read_noise_distribution_direction
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
   subroutine read_parameters_noise()
 
 ! reads noise parameters

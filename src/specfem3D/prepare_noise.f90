@@ -168,6 +168,9 @@
   ! gets noise parameters and sets up arrays
   call read_parameters_noise()
 
+  ! read noise distribution and direction
+  call read_noise_distribution_direction()
+
   ! user output
   if (myrank == 0) then
     ! noise simulations ignore the CMTSOLUTIONS sources but employ a noise-spectrum source S_squared instead
