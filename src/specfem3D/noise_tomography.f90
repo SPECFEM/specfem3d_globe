@@ -186,28 +186,34 @@
   implicit none
 
   ! local parameters
-  integer :: ier,use_external_noise_distribution
+  integer :: ier,use_external_noise_distribution,finish_subroutine
   character(len=MAX_STRING_LEN) :: filename
 
   ! check if external noise distribution should be used
+  finish_subroutine = 0
+
   filename = trim(OUTPUT_FILES)//'/..//NOISE_TOMOGRAPHY/use_external_noise_distribution'
   open(unit=IIN_NOISE,file=trim(filename),status='old',action='read',iostat=ier)
+
   if (ier /= 0) then
+    finish_subroutine = 1
     if (myrank == 0) then
       write(IMAIN,*) 'file '//trim(filename)//' not found, using noise distribution defined in noise_tomography.f90'
     endif
-    ! finish subroutine
-    return
   else
     read(IIN_NOISE,*) use_external_noise_distribution
     close(IIN_NOISE)
     if (use_external_noise_distribution == 0) then
+      finish_subroutine = 1
       if (myrank == 0) then
         write(IMAIN,*) 'using noise distribution defined in noise_tomography.f90'
       endif
-      ! finish subroutine
-      return
     endif
+  endif
+
+  if (finish_subroutine == 1) then
+    call save_mask_noise()
+    return
   endif
 
   ! set file name prefix
@@ -251,6 +257,9 @@
   if (ier /= 0) call exit_mpi(myrank,'error reading noise direction z')
   read(IIN_NOISE) normal_z_noise
   close(IIN_NOISE)
+
+  ! saves mask_noise for check, a file called "mask_noise.bin" is saved in "./OUTPUT_FILES/"
+  call save_mask_noise()
 
   end subroutine read_noise_distribution_direction
 
@@ -365,9 +374,6 @@
   enddo
   ! checks
   if (ipoin /= num_noise_surface_points) call exit_MPI(myrank,'Error invalid number of surface points for noise distribution')
-
-  ! saves mask_noise for check, a file called "mask_noise.bin" is saved in "./OUTPUT_FILES/"
-  call save_mask_noise()
 
   ! opens noise surface movie files for file I/O
   !
