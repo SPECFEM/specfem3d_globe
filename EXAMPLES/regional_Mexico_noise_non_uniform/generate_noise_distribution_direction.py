@@ -10,7 +10,7 @@
 # points from "mask_noise.bin", which is stored in OUTPUT_FILES
 # when running a noise simulation. Therefore, to use this script,
 # you first need to generate "mask_noise.bin" by running a noise
-# simulation using the default noise distribution. 
+# simulation using the default noise distribution.
 #
 
 
