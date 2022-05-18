@@ -217,6 +217,15 @@
   read(IIN) NSPEC2D_CMB                  ! NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE)
   read(IIN) NSPEC2D_ICB                  ! NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
 
+  ! boundary kernels only needed for kernel simulations
+  if (.not. (SAVE_BOUNDARY_MESH .and. SIMULATION_TYPE == 3)) then
+    NSPEC2D_MOHO = 0
+    NSPEC2D_400 = 0
+    NSPEC2D_670 = 0
+    NSPEC2D_CMB = 0
+    NSPEC2D_ICB = 0
+  endif
+
   ! Deville routines only implemented for NGLLX = NGLLY = NGLLZ = 5
   if (NGLLX == 5 .and. NGLLY == 5 .and. NGLLZ == 5) then
     USE_DEVILLE_PRODUCTS_VAL = .true.

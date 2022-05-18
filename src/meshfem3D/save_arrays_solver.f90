@@ -643,20 +643,14 @@
   write(IOUT) NSPEC2D_TOP(IREGION_OUTER_CORE)
 
   ! for boundary kernels
-  if (SAVE_BOUNDARY_MESH) then
-    write(IOUT) NSPEC2D_TOP(IREGION_CRUST_MANTLE)
-    write(IOUT) NSPEC2D_MOHO / 4
-    write(IOUT) NSPEC2D_400
-    write(IOUT) NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE)
-    write(IOUT) NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
-  else
-    write(IOUT) 0
-    write(IOUT) 0
-    write(IOUT) 0
-    write(IOUT) 0
-    write(IOUT) 0
-  endif
+  NSPEC2D_CMB = NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE)
+  NSPEC2D_ICB = NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
 
+  write(IOUT) NSPEC2D_MOHO
+  write(IOUT) NSPEC2D_400
+  write(IOUT) NSPEC2D_670
+  write(IOUT) NSPEC2D_CMB
+  write(IOUT) NSPEC2D_ICB
 
   ! in the case of Stacey boundary conditions, add C*delta/2 contribution to the mass matrix
   ! on the Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region

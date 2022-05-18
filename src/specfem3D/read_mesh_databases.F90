@@ -1054,8 +1054,14 @@
           if (ier /= 0 ) call exit_mpi(myrank,'Error opening boundary_disc.bin file')
 
           read(IIN) njunk1,njunk2,njunk3
-          if (njunk1 /= NSPEC2D_MOHO .and. njunk2 /= NSPEC2D_400 .and. njunk3 /= NSPEC2D_670) &
-                     call exit_mpi(myrank, 'Error reading ibelm_disc.bin file')
+
+          ! checks setup
+          if (njunk1 /= NSPEC2D_MOHO .or. njunk2 /= NSPEC2D_400 .or. njunk3 /= NSPEC2D_670) then
+            print *,'Error: invalid NSPEC2D values read in for solver: ',njunk1,njunk2,njunk3,'(boundary_disc.bin)'
+            print *,'       should be MOHO/400/670 : ',NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,'(mesh_parameters.bin)'
+            call exit_mpi(myrank, 'Error reading boundary_disc.bin file')
+          endif
+
           read(IIN) ibelm_moho_top
           read(IIN) ibelm_moho_bot
           read(IIN) ibelm_400_top

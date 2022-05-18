@@ -502,6 +502,8 @@ DEFAULT = \
 	xspecfem3D \
 	xcombine_AVS_DX \
 	xcombine_surf_data \
+	xcombine_surf_data_vtk \
+	xcombine_surf_data_vtu \
 	xcombine_vol_data \
 	xcombine_vol_data_vtk \
 	xcombine_vol_data_vtu \
@@ -578,6 +580,7 @@ help:
 	@echo "    xspecfem3D"
 	@echo "    xcombine_AVS_DX"
 	@echo "    xcombine_surf_data"
+	@echo "    xcombine_surf_data_vtk"
 	@echo "    xcombine_vol_data"
 	@echo "    xcombine_vol_data_vtk"
 	@echo "    xconvolve_source_timefunction"
@@ -601,6 +604,8 @@ ifeq ($(ADIOS2), yes)
 	@echo "    xcombine_vol_data_vtu_adios2"
 endif
 	@echo "    xcombine_surf_data"
+	@echo "    xcombine_surf_data_vtk"
+	@echo "    xcombine_surf_data_vtu"
 	@echo "    xcombine_AVS_DX"
 	@echo "    xconvolve_source_timefunction"
 	@echo "    xwrite_profile"

@@ -36,6 +36,8 @@ auxiliaries_TARGETS = \
 	$E/xcombine_vol_data_vtk \
 	$E/xcombine_vol_data_vtu \
 	$E/xcombine_surf_data \
+	$E/xcombine_surf_data_vtk \
+	$E/xcombine_surf_data_vtu \
 	$E/xcreate_movie_AVS_DX \
 	$E/xcreate_movie_GMT_global \
 	$E/xextract_database \
@@ -67,6 +69,8 @@ auxiliaries_OBJECTS = \
 	$(xcombine_AVS_DX_OBJECTS) \
 	$(xcombine_paraview_strain_data_OBJECTS) \
 	$(xcombine_surf_data_OBJECTS) \
+	$(xcombine_surf_data_vtk_OBJECTS) \
+	$(xcombine_surf_data_vtu_OBJECTS) \
 	$(xcombine_vol_data_OBJECTS) \
 	$(xcombine_vol_data_adios_OBJECTS) \
 	$(xcombine_vol_data_vtk_OBJECTS) \
@@ -86,6 +90,8 @@ auxiliaries_SHARED_OBJECTS = \
 	$(xcombine_AVS_DX_SHARED_OBJECTS) \
 	$(xcombine_paraview_strain_data_SHARED_OBJECTS) \
 	$(xcombine_surf_data_SHARED_OBJECTS) \
+	$(xcombine_surf_data_vtk_SHARED_OBJECTS) \
+	$(xcombine_surf_data_vtu_SHARED_OBJECTS) \
 	$(xcombine_vol_data_SHARED_OBJECTS) \
 	$(xcombine_vol_data_adios_SHARED_OBJECTS) \
 	$(xcombine_vol_data_vtk_SHARED_OBJECTS) \
@@ -238,6 +244,49 @@ ${E}/xcombine_surf_data: $(xcombine_surf_data_OBJECTS) $(xcombine_surf_data_SHAR
 
 ### additional dependencies
 $O/combine_surf_data.auxsolver.o: $O/specfem3D_par.solverstatic_module.o
+
+#######################################
+
+xcombine_surf_data_vtk_OBJECTS = \
+	$O/combine_surf_data.auxsolver_vtk.o \
+	$(EMPTY_MACRO)
+
+xcombine_surf_data_vtk_SHARED_OBJECTS = \
+	$O/shared_par.shared_module.o \
+	$O/specfem3D_par.solverstatic_module.o \
+	$O/read_mesh_parameters.solverstatic.o \
+	$O/parallel.sharedmpi.o \
+	$O/read_parameter_file.shared.o \
+	$O/read_value_parameters.shared.o \
+	$O/reduce.shared.o \
+	$O/rthetaphi_xyz.shared.o \
+	$O/param_reader.cc.o \
+	$O/binary_c_io.cc.o \
+	$O/flush_system.shared.o \
+	$O/write_VTK_file.shared.o \
+	$(EMPTY_MACRO)
+
+${E}/xcombine_surf_data_vtk: $(xcombine_surf_data_vtk_OBJECTS) $(xcombine_surf_data_vtk_SHARED_OBJECTS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
+
+### additional dependencies
+$O/combine_surf_data.auxsolver_vtk.o: $O/specfem3D_par.solverstatic_module.o
+
+
+#######################################
+
+xcombine_surf_data_vtu_OBJECTS = \
+	$O/combine_surf_data.auxsolver_vtu.o \
+	$(EMPTY_MACRO)
+
+xcombine_surf_data_vtu_SHARED_OBJECTS = $(xcombine_surf_data_vtk_SHARED_OBJECTS)
+
+${E}/xcombine_surf_data_vtu: $(xcombine_surf_data_vtu_OBJECTS) $(xcombine_surf_data_vtu_SHARED_OBJECTS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
+
+### additional dependencies
+$O/combine_surf_data.auxsolver_vtu.o: $O/specfem3D_par.solverstatic_module.o
+
 
 #######################################
 

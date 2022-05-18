@@ -75,8 +75,11 @@
   integer :: NUMBER_OF_MESH_LAYERS,layer_offset,last_doubling_layer
 
   ! doubling elements
-  integer :: ielem,elem_doubling_mantle,elem_doubling_middle_outer_core,elem_doubling_bottom_outer_core
+  integer :: ielem
+  integer :: elem_doubling_mantle,elem_doubling_middle_outer_core,elem_doubling_bottom_outer_core
   integer :: ner_start,ner_end,ner_layer
+
+  ! doubling elements positions
   double precision :: DEPTH_SECOND_DOUBLING_REAL,DEPTH_THIRD_DOUBLING_REAL, &
                       DEPTH_FOURTH_DOUBLING_REAL
   double precision :: distance,distance_min,zval

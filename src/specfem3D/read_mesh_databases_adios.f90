@@ -426,9 +426,11 @@ subroutine read_mesh_databases_coupling_adios()
       call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "NSPEC2D_670",njunk3)
 
       ! checks dimensions
-      if (njunk1 /= NSPEC2D_MOHO .and. njunk2 /= NSPEC2D_400 .and. &
-          njunk3 /= NSPEC2D_670) &
-          call exit_mpi(myrank, 'Error reading adios boundary_disc file')
+      if (njunk1 /= NSPEC2D_MOHO .or. njunk2 /= NSPEC2D_400 .or. njunk3 /= NSPEC2D_670) then
+        print *,'Error: invalid NSPEC2D values read in for solver: ',njunk1,njunk2,njunk3,'(boundary_disc.bin)'
+        print *,'       should be MOHO/400/670 : ',NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,'(mesh_parameters.bin)'
+        call exit_mpi(myrank, 'Error reading adios boundary_disc file')
+      endif
 
       ! boundary elements
 

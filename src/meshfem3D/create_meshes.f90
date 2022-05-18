@@ -29,6 +29,7 @@
 
   use shared_parameters, only: T_min_period,ATTENUATION
   use meshfem3D_par
+  use regions_mesh_par2, only: NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,NSPEC2D_CMB,NSPEC2D_ICB
 
   implicit none
 
@@ -90,6 +91,11 @@
 
   offset_proc_xi = mod(iproc_xi_slice(myrank),2)
   offset_proc_eta = mod(iproc_eta_slice(myrank),2)
+
+  ! initializes
+  ! boundary surfaces
+  NSPEC2D_MOHO = 0; NSPEC2D_400 = 0; NSPEC2D_670 = 0
+  NSPEC2D_CMB = 0; NSPEC2D_ICB = 0
 
   ! volume of the final mesh, and Earth mass computed in the final mesh
   ! and gravity integrals

@@ -883,6 +883,7 @@
 
   ! boundary mesh
   if (ipass == 2 .and. SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
+    ! surface elements
     NSPEC2D_MOHO = NSPEC2D_TOP
     ! moho at layer below first doubling -> number of elements in eta and xi direction =  1/2 * 1/2 = 1/4
     ! discontinuity at 400 is at around mesh layer 5
@@ -890,22 +891,30 @@
     if (isampling_ratio == 0) isampling_ratio = 1
     NSPEC2D_400 = NSPEC2D_TOP / (isampling_ratio * isampling_ratio)
     NSPEC2D_670 = NSPEC2D_400
+    ! boundary arrays
+    allocate(ibelm_moho_top(NSPEC2D_MOHO),ibelm_moho_bot(NSPEC2D_MOHO), &
+             ibelm_400_top(NSPEC2D_400),ibelm_400_bot(NSPEC2D_400), &
+             ibelm_670_top(NSPEC2D_670),ibelm_670_bot(NSPEC2D_670), &
+             normal_moho(NDIM,NGLLX,NGLLY,NSPEC2D_MOHO), &
+             normal_400(NDIM,NGLLX,NGLLY,NSPEC2D_400), &
+             normal_670(NDIM,NGLLX,NGLLY,NSPEC2D_670), &
+             jacobian2D_moho(NGLLX,NGLLY,NSPEC2D_MOHO), &
+             jacobian2D_400(NGLLX,NGLLY,NSPEC2D_400), &
+             jacobian2D_670(NGLLX,NGLLY,NSPEC2D_670),stat=ier)
+    if (ier /= 0) stop 'Error in allocate 17'
   else
-    NSPEC2D_MOHO = 1
-    NSPEC2D_400 = 1
-    NSPEC2D_670 = 1
+    ! dummy
+    allocate(ibelm_moho_top(1),ibelm_moho_bot(1), &
+             ibelm_400_top(1),ibelm_400_bot(1), &
+             ibelm_670_top(1),ibelm_670_bot(1), &
+             normal_moho(1,1,1,1), &
+             normal_400(1,1,1,1), &
+             normal_670(1,1,1,1), &
+             jacobian2D_moho(1,1,1), &
+             jacobian2D_400(1,1,1), &
+             jacobian2D_670(1,1,1),stat=ier)
+    if (ier /= 0) stop 'Error in allocate 17'
   endif
-  allocate(ibelm_moho_top(NSPEC2D_MOHO),ibelm_moho_bot(NSPEC2D_MOHO), &
-           ibelm_400_top(NSPEC2D_400),ibelm_400_bot(NSPEC2D_400), &
-           ibelm_670_top(NSPEC2D_670),ibelm_670_bot(NSPEC2D_670), &
-           normal_moho(NDIM,NGLLX,NGLLY,NSPEC2D_MOHO), &
-           normal_400(NDIM,NGLLX,NGLLY,NSPEC2D_400), &
-           normal_670(NDIM,NGLLX,NGLLY,NSPEC2D_670), &
-           jacobian2D_moho(NGLLX,NGLLY,NSPEC2D_MOHO), &
-           jacobian2D_400(NGLLX,NGLLY,NSPEC2D_400), &
-           jacobian2D_670(NGLLX,NGLLY,NSPEC2D_670),stat=ier)
-  if (ier /= 0) stop 'Error in allocate 17'
-
   ibelm_moho_top(:) = 0; ibelm_moho_bot(:) = 0
   ibelm_400_top(:) = 0; ibelm_400_bot(:) = 0
   ibelm_670_top(:) = 0; ibelm_670_bot(:) = 0

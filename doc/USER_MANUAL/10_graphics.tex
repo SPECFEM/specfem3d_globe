@@ -27,11 +27,12 @@ half-duration of the source. The half-duration should be large enough
 so that the movie does not contain frequencies that are not resolved
 by the mesh, i.e., it should not contain numerical noise. This can
 be accomplished by selecting a CMT \texttt{HALF\_DURATION} > 1.1 $\times$
-smallest period (see figure \ref{fig:CMTSOLUTION-file}). When \texttt{\small MOVIE\_SURFACE}
+smallest period (see figure \ref{fig:CMTSOLUTION-file}).
+
+When \texttt{\small MOVIE\_SURFACE}
 = \texttt{\small .true.} or \texttt{\small MOVIE\_VOLUME}{\small{}
 }\texttt{\small =}{\small{} }\texttt{\small .true.}, the half duration
 of each source in the \texttt{CMTSOLUTION} file is replaced by
-
 \begin{quote}
 \[
 \sqrt{(}\mathrm{\mathtt{HALF\_DURATIO}\mathtt{N}^{2}}+\mathrm{\mathtt{HDUR\_MOVI}\mathtt{E}^{2}})\]
@@ -142,8 +143,9 @@ combine them into one mesh file, and visualize them with some auxilliary
 programs. Examples of kernel simulations may be found in the \texttt{EXAMPLES} directory.
 
 \begin{enumerate}
+%%
 \item \textbf{Create slice files}
-
+%%
 
 We will only discuss the case of one source-receiver pair, i.e., the
 so-called banana-doughnut kernels. Although it is possible to collect
@@ -180,18 +182,20 @@ A typical value for \texttt{belt\_width\_in\_degrees} can be 20.
 \item For a full 6-chunk simulation, this script will generate the \texttt{slice\_minor},
 \texttt{slice\_major}, \texttt{slice\_ic} files, but for a one-chunk simulation, this script only generates the \texttt{slice\_minor}
 file.
+
 \item For cases with multiple sources and multiple receivers, you need to
 provide a slice file before proceeding to the next step.
 \end{enumerate}
-\item \textbf{Collect the kernel files}
 
+%%
+\item \textbf{Collect the kernel files}
+%%
 
 After obtaining the slice files, you can collect the corresponding
 kernel files from the given slices.
 
 \begin{enumerate}
-\item To accomplish this, you can use or modify the scripts in \texttt{utils/collect\_database
-}directory:
+\item To accomplish this, you can use or modify the scripts in \texttt{utils/collect\_database} directory:
 {\small
 \begin{verbatim}
 copy_m(oc,ic)_globe_database.pl slice_file lsf_machine_file filename [jobid]
@@ -216,12 +220,14 @@ where the filename can be \texttt{\small Moho\_kernel}, \texttt{\small d400\_ker
 as well as the kernel array files are collected to the local directory
 on the front end.
 \end{enumerate}
+
+%%
 \item \textbf{Combine kernel files into one mesh file}
+%%
 
-
-We use an auxiliary program \texttt{combine\_vol\_data.f90} to combine
+We use an auxiliary program \texttt{combine\_vol\_data.F90} to combine
 the volumetric kernel files from all slices into one mesh file, and
-\texttt{combine\_surf\_data.f90 }to combine the surface kernel files.
+\texttt{combine\_surf\_data.F90} to combine the surface kernel files.
 
 \begin{enumerate}
 \item Compile it in the global code directory:
@@ -259,14 +265,18 @@ name, and can be chosen from \texttt{Moho}, \texttt{400}, \texttt{670},
 the mesh file, or use 0 for low resolution, outputting only the corner
 points of the elements to the mesh file. Use 0 for 2D surface kernel
 files and 1 for 3D volumetric kernel files.
-\item Use region = 1 for the mantle, region =2 for the outer core, region
-= 3 for the inner core, and region = 0 for all regions.
+
+\item Use region = 1 for the mantle, region = 2 for the outer core, region = 3 for the inner core, and region = 0 for all regions.
+
 \item The output mesh file will have the name \texttt{reg\_?\_rho(alpha,beta)\_kernel.mesh,}
 or\texttt{ }~\\
 \texttt{reg\_?\_Moho(d400,d670,CMB,ICB)\_kernel.surf.}
 \end{enumerate}
-\item \textbf{Convert mesh files into .vtu files}
 
+You can also use the binaries \texttt{xcombine\_vol\_data\_vtk} or \texttt{xcombine\_vol\_data\_vtu} with the same argument list
+to directly output \texttt{.vtk} or \texttt{.vtu} files, respectively. This will make the following conversion step for \texttt{.mesh} files unnecessary.
+
+\item \textbf{Convert mesh files into .vtu files}
 \begin{enumerate}
 \item We next convert the \texttt{.mesh} file into the VTU (Unstructured
 grid file) format which can be viewed in ParaView, for example:
@@ -279,17 +289,19 @@ mesh2vtu -i file.mesh -o file.vtu
 VTK \urlwithparentheses{http://www.vtk.org} run-time library for its execution. Therefore,
 make sure you have it properly installed.
 \end{enumerate}
-\item \textbf{Copy over the source and receiver .vtk file}
 
+%%
+\item \textbf{Copy over the source and receiver .vtk file}
+%%
 
 In the case of a single source and a single receiver, the simulation
 also generates the \texttt{OUTPUT\_FILES/sr.vtk} file to describe
 the source and receiver locations, which can be viewed in Paraview
 in the next step.
 
-
+%%
 \item \textbf{View the mesh in ParaView}
-
+%%
 
 Finally, we can view the mesh in ParaView \urlwithparentheses{http://www.paraview.org}.
 
@@ -302,21 +314,27 @@ select \texttt{file.vtu}, and click the \textsf{Accept} button.
 \item If the mesh file is of moderate size, it shows up on the screen; otherwise,
 only the outline is shown.
 \end{itemize}
+
 \item Click \textsf{Display Tab} $\rightarrow$ \textsf{Display Style} $\rightarrow$
 \textsf{Representation} and select \textsf{wireframe of surface} to
 display it.
+
 \item To create a cross-section of the volumetric mesh, choose \textsf{Filter}
 $\rightarrow$ \textsf{cut}, and under \textsf{Parameters Tab}, choose
 \textsf{Cut Function} $\rightarrow$ \textsf{plane}.
+
 \item Fill in center and normal information given by the standard output
 from \texttt{global\_slice\_number.pl} script.
+
 \item To change the color scale, go to \textsf{Display Tab} $\rightarrow$
 \textsf{Color} $\rightarrow$ \textsf{Edit Color Map} and reselect
 lower and upper limits, or change the color scheme.
+
 \item Now load in the source and receiver location file by \textsf{File}
 $\rightarrow$\textsf{ Open data}, select \texttt{sr.vt}k, and click
 the \textsf{Accept} button. Choose \textsf{Filter} $\rightarrow$\textsf{
 Glyph}, and represent the points by `\textsf{spheres}'.
+
 \item For more information about ParaView, see the ParaView Users Guide \urlwithparentheses{http://www.paraview.org/files/v1.6/ParaViewUsersGuide.PDF}.
 \end{enumerate}
 \end{enumerate}
