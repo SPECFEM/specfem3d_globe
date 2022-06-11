@@ -170,7 +170,7 @@
         ! fills mapping
         map_ispec(ielem) = ispec0 + ielem
         ! check
-        if (map_ispec(ielem) > nspec) call exit_MPI(myrank,'ispec greater than nspec in mesh creation')
+        if (map_ispec(ielem) > nspec) call exit_MPI(myrank,'ispec greater than nspec in mesh creation for regular element')
       enddo
     enddo
   enddo

@@ -29,6 +29,7 @@
 
   use constants, only: myrank,NGNOD,R_UNIT_SPHERE,ONE
   use meshfem3D_par, only: R220,NX_BATHY,NY_BATHY,R_PLANET
+  use shared_parameters, only: REGIONAL_MESH_CUTOFF,REGIONAL_MESH_CUTOFF_DEPTH,USE_LOCAL_MESH
 
   implicit none
 
@@ -38,7 +39,7 @@
   integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
 
   ! local parameters
-  double precision :: r,lat,lon,elevation
+  double precision :: r,lat,lon,elevation,rbottom
   double precision :: x,y,z
   double precision :: gamma
 
@@ -61,7 +62,12 @@
     elevation = elevation / R_PLANET
 
     ! stretching topography between d220 and the surface
-    gamma = (r - R220/R_PLANET) / (R_UNIT_SPHERE - R220/R_PLANET)
+    if (REGIONAL_MESH_CUTOFF .and. USE_LOCAL_MESH) then
+      rbottom = (R_PLANET - REGIONAL_MESH_CUTOFF_DEPTH*1000.d0) / R_PLANET
+    else
+      rbottom = R220 / R_PLANET
+    endif
+    gamma = (r - rbottom) / (R_UNIT_SPHERE - rbottom)
 
     ! add elevation to all the points of that element
     ! also make sure gamma makes sense
@@ -93,6 +99,7 @@
   use constants
   use shared_parameters, only: R_PLANET
   use meshfem3D_par, only: R220,NX_BATHY,NY_BATHY
+  use shared_parameters, only: REGIONAL_MESH_CUTOFF,REGIONAL_MESH_CUTOFF_DEPTH,USE_LOCAL_MESH
 
   implicit none
 
@@ -105,7 +112,7 @@
 
   ! local parameters used in this subroutine
   integer :: i,j,k
-  double precision :: r,lat,lon,elevation,gamma
+  double precision :: r,lat,lon,elevation,gamma,rbottom
   double precision :: x,y,z
 
   do k = 1,NGLLZ
@@ -126,7 +133,12 @@
         elevation = elevation / R_PLANET
 
         ! stretching topography between d220 and the surface
-        gamma = (r - R220/R_PLANET) / (R_UNIT_SPHERE - R220/R_PLANET)
+        if (REGIONAL_MESH_CUTOFF .and. USE_LOCAL_MESH) then
+          rbottom = (R_PLANET - REGIONAL_MESH_CUTOFF_DEPTH*1000.d0) / R_PLANET
+        else
+          rbottom = R220 / R_PLANET
+        endif
+        gamma = (r - rbottom) / (R_UNIT_SPHERE - rbottom)
 
         ! add elevation to all the points of that element
         ! also make sure factor makes sense

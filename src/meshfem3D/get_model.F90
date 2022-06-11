@@ -343,7 +343,7 @@
     IFLAG_MANTLE_NORMAL,IFLAG_670_220,IFLAG_220_80,IFLAG_80_MOHO,IFLAG_CRUST, &
     myrank
 
-  use shared_parameters, only: R_PLANET
+  use shared_parameters, only: R_PLANET,REGIONAL_MESH_CUTOFF
 
   implicit none
 
@@ -355,6 +355,9 @@
 
   ! local parameters
   double precision :: r_m
+
+  ! check not needed for regional cut-off meshes
+  if (REGIONAL_MESH_CUTOFF) return
 
   ! compute real physical radius in meters
   r_m = r_prem * R_PLANET

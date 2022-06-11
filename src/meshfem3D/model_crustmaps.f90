@@ -417,7 +417,7 @@
     vs = vs*1000.0d0/(R_PLANET*scaleval)
     rho = rho*1000.0d0/RHOAV
   else
-    ! takes ficticious values
+    ! takes fictitious values
     !vp = 20.0*1000.0d0/(R_PLANET*scaleval)
     !vs = 20.0*1000.0d0/(R_PLANET*scaleval)
     !rho = 20.0*1000.0d0/RHOAV

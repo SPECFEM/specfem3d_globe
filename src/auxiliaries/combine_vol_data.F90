@@ -723,7 +723,7 @@ program combine_vol_data
             ! maps "fictitious" connectivity, element is all with iglob = 1
 
 #if defined(USE_VTK_INSTEAD_OF_MESH) || defined(USE_VTU_INSTEAD_OF_MESH)
-            ! VTK, can avoid output of ficticious inner core elements
+            ! VTK, can avoid output of fictitious inner core elements
 #else
             ! .mesh
             do k = 1, NGLLZ-1, dk

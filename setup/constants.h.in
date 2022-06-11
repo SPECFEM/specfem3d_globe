@@ -1051,7 +1051,7 @@
 !!-----------------------------------------------------------
 
 ! for the stretching of crustal elements in the case of 3D models
-! (values are chosen for 3D models to have RMOHO_FICTICIOUS at 35 km
+! (values are chosen for 3D models to have RMOHO_FICTITIOUS at 35 km
 !  and RMIDDLE_CRUST to become 15 km with stretching function stretch_tab)
   double precision, parameter :: EARTH_MAX_RATIO_CRUST_STRETCHING = 0.75d0
   double precision, parameter :: EARTH_RMOHO_STRETCH_ADJUSTMENT = 5000.d0 ! moho up to 35km

@@ -337,8 +337,8 @@
   double precision, dimension(N_SLS) :: tau_s_store
 
   ! element layers
-  integer :: NUMBER_OF_MESH_LAYERS,layer_shift, &
-    first_layer_aniso,last_layer_aniso
+  integer :: NUMBER_OF_MESH_LAYERS
+  integer :: first_layer_aniso,last_layer_aniso
   logical :: USE_ONE_LAYER_SB
 
   ! layer stretching

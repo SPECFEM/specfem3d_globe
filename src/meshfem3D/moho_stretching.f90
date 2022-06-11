@@ -285,7 +285,7 @@
   ! small stretch check: stretching should affect only points above R220
   if (r*R_PLANET < R220) then
     print *,'Error moho stretching: ',r*R_PLANET,R220,moho*R_PLANET
-    call exit_mpi(myrank,'incorrect moho stretching')
+    call exit_mpi(myrank,'incorrect moho stretching in moho_stretching_honor_crust() routine')
   endif
 
   end subroutine moho_stretching_honor_crust
@@ -415,7 +415,7 @@
   ! small stretch check: stretching should affect only points above R220
   if (r*R_PLANET < R220) then
     print *,'Error moho stretching: ',r*R_PLANET,R220,moho*R_PLANET
-    call exit_mpi(myrank,'incorrect moho stretching')
+    call exit_mpi(myrank,'incorrect moho stretching in moho_stretching_honor_crust_reg() routine')
   endif
 
   end subroutine moho_stretching_honor_crust_reg

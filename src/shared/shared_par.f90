@@ -170,6 +170,29 @@
   double precision :: USER_DT = -1.0  ! negative values will be ignored by default
   integer :: USER_NSTEP = -1          ! negative to ignore by default
 
+  ! (optional) local mesh parameters
+  ! for regional cutoff meshes (REGIONAL_MESH_CUTOFF must be .true. in Par_file)
+  ! this will create a local mesh, i.e., doesn't honor Moho/R80/R220, but creates a crust & mantle mesh
+  ! separated at the fictitious moho depth (at 40 or 35 km), down to the REGIONAL_MESH_CUTOFF value.
+  ! Additionally, this local mesh can have up to 5 doubling layers, with the doubling layer index specified by the NZ_DOUBLING_* values.
+  !
+  ! flag to switch on local mesh
+  logical :: USE_LOCAL_MESH = .false.
+
+  ! total number of mesh layers for local mesh
+  ! (moho used will be the fictitious moho depth, i.e., at 40 or 35 km depth depending on EARTH_RMOHO_STRETCH_ADJUSTMENT)
+  integer :: LOCAL_MESH_NUMBER_OF_LAYERS_CRUST = 4
+  integer :: LOCAL_MESH_NUMBER_OF_LAYERS_MANTLE = 8
+
+  ! number of doubling layers
+  integer :: NDOUBLINGS = 2
+  ! position of doubling layer (counted from top down)
+  integer :: NZ_DOUBLING_1 = 2
+  integer :: NZ_DOUBLING_2 = 5
+  integer :: NZ_DOUBLING_3 = 0
+  integer :: NZ_DOUBLING_4 = 0
+  integer :: NZ_DOUBLING_5 = 0
+
   end module shared_input_parameters
 
 !

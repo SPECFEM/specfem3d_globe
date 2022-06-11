@@ -37,6 +37,8 @@
     IFLAG_OUTER_CORE_NORMAL,IFLAG_IN_FICTITIOUS_CUBE, &
     IREGION_CRUST_MANTLE,SUPPRESS_INTERNAL_TOPOGRAPHY,USE_GLL
 
+  use shared_parameters, only: REGIONAL_MESH_CUTOFF,USE_LOCAL_MESH
+
   use meshfem3D_models_par, only: &
     TOPOGRAPHY,ELLIPTICITY,CRUSTAL,CASE_3D, &
     THREE_D_MODEL,THREE_D_MODEL_MANTLE_SH,THREE_D_MODEL_S29EA, &
@@ -44,7 +46,6 @@
     THREE_D_MODEL_BKMNS_GLAD,THREE_D_MODEL_SPIRAL, &
     ibathy_topo,nspl,rspl,ellipicity_spline,ellipicity_spline2, &
     REGIONAL_MOHO_MESH
-
 
   use regions_mesh_par2, only: &
     xixstore,xiystore,xizstore, &
@@ -106,7 +107,7 @@
   ! add topography of the Moho *before* adding the 3D crustal velocity model so that the stretched
   ! mesh gets assigned the right model values
   if (iregion_code == IREGION_CRUST_MANTLE) then
-    if (CRUSTAL .and. CASE_3D) then
+    if (CRUSTAL .and. CASE_3D .and. .not. (REGIONAL_MESH_CUTOFF .and. USE_LOCAL_MESH)) then
       ! 3D crustal models
       if (idoubling(ispec) == IFLAG_CRUST &
         .or. idoubling(ispec) == IFLAG_220_80 &

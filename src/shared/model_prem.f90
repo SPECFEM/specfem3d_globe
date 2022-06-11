@@ -372,7 +372,7 @@
 !=====================================================================
 !
 
-  subroutine model_prem_aniso(x,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu,idoubling,CRUSTAL)
+  subroutine model_prem_aniso(x,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu,idoubling,CRUSTAL,check_doubling_flag)
 
   use constants
   use shared_parameters, only: R_PLANET,RHOAV,ONE_CRUST,REFERENCE_1D_MODEL
@@ -384,7 +384,7 @@
 ! given a normalized radius x, gives the non-dimensionalized density rho,
 ! speeds vp and vs, and the quality factors Qkappa and Qmu
 
-  logical,intent(in) :: CRUSTAL
+  logical,intent(in) :: CRUSTAL,check_doubling_flag
 
   integer,intent(in) :: idoubling
 
@@ -401,54 +401,53 @@
 ! check flags to make sure we correctly honor the discontinuities
 ! we use strict inequalities since r has been slightly changed in mesher
 
-!
-!--- inner core
-!
-  if (r >= 0.d0 .and. r < PREM_RICB) then
-    if (idoubling /= IFLAG_INNER_CORE_NORMAL .and. &
-       idoubling /= IFLAG_MIDDLE_CENTRAL_CUBE .and. &
-       idoubling /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
-       idoubling /= IFLAG_TOP_CENTRAL_CUBE .and. &
-       idoubling /= IFLAG_IN_FICTITIOUS_CUBE) &
-         stop 'wrong doubling flag for inner core point in model_prem_aniso()'
-!
-!--- outer core
-!
-  else if (r > PREM_RICB .and. r < PREM_RCMB) then
-    if (idoubling /= IFLAG_OUTER_CORE_NORMAL) &
-      stop 'wrong doubling flag for outer core point in model_prem_aniso()'
-!
-!--- D" at the base of the mantle
-!
-  else if (r > PREM_RCMB .and. r < PREM_RTOPDDOUBLEPRIME) then
-    if (idoubling /= IFLAG_MANTLE_NORMAL) then
-      print *,'Error dprime point:',r, PREM_RCMB,PREM_RTOPDDOUBLEPRIME,idoubling,IFLAG_MANTLE_NORMAL
-      stop 'wrong doubling flag for D" point in model_prem_aniso()'
+  if (check_doubling_flag) then
+    !
+    !--- inner core
+    !
+    if (r >= 0.d0 .and. r < PREM_RICB) then
+      if (idoubling /= IFLAG_INNER_CORE_NORMAL .and. &
+         idoubling /= IFLAG_MIDDLE_CENTRAL_CUBE .and. &
+         idoubling /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
+         idoubling /= IFLAG_TOP_CENTRAL_CUBE .and. &
+         idoubling /= IFLAG_IN_FICTITIOUS_CUBE) &
+           stop 'wrong doubling flag for inner core point in model_prem_aniso()'
+    !
+    !--- outer core
+    !
+    else if (r > PREM_RICB .and. r < PREM_RCMB) then
+      if (idoubling /= IFLAG_OUTER_CORE_NORMAL) &
+        stop 'wrong doubling flag for outer core point in model_prem_aniso()'
+    !
+    !--- D" at the base of the mantle
+    !
+    else if (r > PREM_RCMB .and. r < PREM_RTOPDDOUBLEPRIME) then
+      if (idoubling /= IFLAG_MANTLE_NORMAL) then
+        print *,'Error dprime point:',r, PREM_RCMB,PREM_RTOPDDOUBLEPRIME,idoubling,IFLAG_MANTLE_NORMAL
+        stop 'wrong doubling flag for D" point in model_prem_aniso()'
+      endif
+    !
+    !--- mantle: from top of D" to d670
+    !
+    else if (r > PREM_RTOPDDOUBLEPRIME .and. r < PREM_R670) then
+      if (idoubling /= IFLAG_MANTLE_NORMAL) &
+        stop 'wrong doubling flag for top D" to d670 point in model_prem_aniso()'
+    !
+    !--- mantle: from d670 to d220
+    !
+    else if (r > PREM_R670 .and. r < PREM_R220) then
+      if (idoubling /= IFLAG_670_220) &
+        stop 'wrong doubling flag for d670 to d220 point in model_prem_aniso()'
+    !
+    !--- mantle and crust: from d220 to MOHO and then to surface
+    !
+    else if (r > PREM_R220) then
+      if (idoubling /= IFLAG_220_80 .and. idoubling /= IFLAG_80_MOHO .and. idoubling /= IFLAG_CRUST) &
+        stop 'wrong doubling flag for d220 to Moho to surface point in model_prem_aniso()'
     endif
-!
-!--- mantle: from top of D" to d670
-!
-  else if (r > PREM_RTOPDDOUBLEPRIME .and. r < PREM_R670) then
-    if (idoubling /= IFLAG_MANTLE_NORMAL) &
-      stop 'wrong doubling flag for top D" to d670 point in model_prem_aniso()'
-
-!
-!--- mantle: from d670 to d220
-!
-  else if (r > PREM_R670 .and. r < PREM_R220) then
-    if (idoubling /= IFLAG_670_220) &
-      stop 'wrong doubling flag for d670 to d220 point in model_prem_aniso()'
-
-!
-!--- mantle and crust: from d220 to MOHO and then to surface
-!
-  else if (r > PREM_R220) then
-    if (idoubling /= IFLAG_220_80 .and. idoubling /= IFLAG_80_MOHO .and. idoubling /= IFLAG_CRUST) &
-      stop 'wrong doubling flag for d220 to Moho to surface point in model_prem_aniso()'
-
   endif
 
-! no anisotropy by default
+  ! no anisotropy by default
   eta_aniso = 1.d0
 
 !
@@ -672,7 +671,7 @@
 !
 
   subroutine model_prem_aniso_extended_isotropic(x,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu, &
-                                                 idoubling,CRUSTAL)
+                                                 idoubling,CRUSTAL,check_doubling_flag)
 
 ! note: for 3D crustal models, we extend the mantle reference up to the surface and then superimpose the crustal values later.
 !       however, PREM mantle is anisotropic (eta < 1 and vsh > vsv) and the extension continues with strong TISO, thus
@@ -695,7 +694,7 @@
   double precision,intent(in) :: x
   double precision,intent(out) :: rho,Qkappa,Qmu,vpv,vph,vsv,vsh,eta_aniso
 
-  logical,intent(in) :: CRUSTAL
+  logical,intent(in) :: CRUSTAL,check_doubling_flag
   integer,intent(in) :: idoubling
 
   ! local parameters
@@ -703,7 +702,7 @@
   double precision :: scaleval
 
   ! gets default values
-  call model_prem_aniso(x,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu,idoubling,CRUSTAL)
+  call model_prem_aniso(x,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu,idoubling,CRUSTAL,check_doubling_flag)
 
   if (CRUSTAL) then
     ! adds crustal model like CRUST2.0 later on top
