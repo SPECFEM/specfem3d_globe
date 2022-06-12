@@ -32,11 +32,11 @@
 
   use shared_parameters, only: ATT_F_C_SOURCE
 
-  use meshfem3D_models_par, only: &
+  use meshfem_models_par, only: &
     OCEANS,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
     ANISOTROPIC_INNER_CORE,ATTENUATION
 
-  use meshfem3D_par, only: &
+  use meshfem_par, only: &
     nspec,nglob,iregion_code, &
     NCHUNKS,ABSORBING_CONDITIONS, &
     ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION, &
@@ -326,7 +326,7 @@
 
   subroutine save_arrays_solver_MPI()
 
-  use meshfem3D_par, only: &
+  use meshfem_par, only: &
     iregion_code,LOCAL_PATH, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
     ADIOS_FOR_MPI_ARRAYS
@@ -493,7 +493,7 @@
 
   use constants, only: myrank,IOUT,SUPPRESS_CRUSTAL_MESH
 
-  use meshfem3D_models_par, only: &
+  use meshfem_models_par, only: &
     HONOR_1D_SPHERICAL_MOHO
 
 ! boundary kernels
@@ -553,8 +553,8 @@
 ! stores same parameters as would have been saved in values_from_mesher.h,
 ! for solver to read in at runtime to avoid static compilation
 
-  use meshfem3D_models_par
-  use meshfem3D_par
+  use meshfem_models_par
+  use meshfem_par
   use regions_mesh_par2
 
   implicit none

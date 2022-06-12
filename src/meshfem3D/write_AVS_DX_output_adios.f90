@@ -29,7 +29,7 @@
   subroutine write_AVS_DX_output_adios(npointot,iregion_code, &
                                        num_ibool_AVS_DX, mask_ibool)
 
-  use meshfem3d_par, only: &
+  use meshfem_par, only: &
     nspec,ibool,idoubling, &
     xstore,ystore,zstore, &
     myrank,NGLLX,NGLLY,NGLLZ, &
@@ -37,7 +37,7 @@
     RMIDDLE_CRUST, &
     LOCAL_PATH,IMAIN,ADIOS_TRANSPORT_METHOD
 
-  use meshfem3D_models_par, only: &
+  use meshfem_models_par, only: &
     ELLIPTICITY,MODEL_3D_MANTLE_PERTUBATIONS, &
     nspl,rspl,ellipicity_spline,ellipicity_spline2
 

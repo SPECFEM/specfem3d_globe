@@ -32,9 +32,7 @@ program smooth_laplacian_sem
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,IIN,IOUT, &
        GAUSSALPHA,GAUSSBETA,MAX_STRING_LEN,GRAV,PI,TINYVAL,myrank
 
-  use shared_parameters, only: R_PLANET_KM
-
-  use meshfem3D_models_par, only: CRUSTAL
+  use shared_parameters, only: R_PLANET_KM,CRUSTAL
 
   use postprocess_par, only: &
        NCHUNKS_VAL,NPROC_XI_VAL,NPROC_ETA_VAL,NPROCTOT_VAL, &

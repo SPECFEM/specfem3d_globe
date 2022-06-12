@@ -30,7 +30,7 @@
 ! preparing model parameter coefficients on all processes
 
   use shared_parameters, only: LOCAL_PATH,SAVE_MESH_FILES
-  use meshfem3D_models_par
+  use meshfem_models_par
 
   implicit none
 
@@ -101,7 +101,7 @@
 
 ! preparing model parameter coefficients on all processes for reference models
 
-  use meshfem3D_models_par
+  use meshfem_models_par
 
   implicit none
 
@@ -150,7 +150,7 @@
 ! preparing model parameter coefficients on all processes for mantle models
 
   use constants, only: myrank,IMAIN
-  use meshfem3D_models_par
+  use meshfem_models_par
 
   implicit none
 
@@ -268,7 +268,7 @@
 
   use constants, only: myrank,IMAIN
   use shared_parameters, only: SAVE_MESH_FILES
-  use meshfem3D_models_par
+  use meshfem_models_par
 
   implicit none
 
@@ -359,7 +359,7 @@
 ! routine returns: rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu
 
   use shared_parameters, only: REGIONAL_MESH_CUTOFF
-  use meshfem3D_models_par
+  use meshfem_models_par
 
   implicit none
 
@@ -596,7 +596,7 @@
                                             c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
                                             ispec,i,j,k)
 
-  use meshfem3D_models_par
+  use meshfem_models_par
 
   implicit none
 
@@ -1147,7 +1147,7 @@
 
 ! returns velocities and density for points in 3D crustal region
 
-  use meshfem3D_models_par
+  use meshfem_models_par
 
   implicit none
 
@@ -1306,7 +1306,7 @@
 
 ! returns velocity/density for default crust
 
-  use meshfem3D_models_par
+  use meshfem_models_par
 
   implicit none
 
@@ -1497,7 +1497,7 @@
 
   use constants, only: N_SLS,SPONGE_MIN_Q,SPONGE_WIDTH_IN_DEGREES
 
-  use meshfem3D_models_par
+  use meshfem_models_par
 
   use model_prem_par, only: PREM_RMOHO
 
@@ -1644,7 +1644,7 @@
 
 ! overwrites values with updated model values (from iteration step) here, given at all GLL points
 
-  use meshfem3D_models_par
+  use meshfem_models_par
 
   implicit none
 
@@ -1828,7 +1828,7 @@
 
   use constants, only: PI,MAX_STRING_LEN,IMAIN,myrank
   use shared_parameters, only: LOCAL_PATH,RESOLUTION_TOPO_FILE,R_PLANET_KM
-  use meshfem3D_models_par, only: ibathy_topo
+  use meshfem_models_par, only: ibathy_topo
 
   implicit none
 

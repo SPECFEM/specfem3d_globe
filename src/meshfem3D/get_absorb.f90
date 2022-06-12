@@ -32,7 +32,7 @@
 ! Stacey, define flags for absorbing boundaries
 
   use constants
-  use meshfem3D_par, only: ADIOS_FOR_ARRAYS_SOLVER,nspec
+  use meshfem_par, only: ADIOS_FOR_ARRAYS_SOLVER,nspec
 
   implicit none
 
@@ -175,7 +175,7 @@
 
   use constants
 
-  use meshfem3D_par, only: &
+  use meshfem_par, only: &
     myrank,NCHUNKS,ichunk
 
   use regions_mesh_par, only: &
@@ -199,7 +199,7 @@
   use shared_parameters, only: REGIONAL_MESH_CUTOFF,ADIOS_FOR_ARRAYS_SOLVER
 
   ! debug
-  use meshfem3D_par, only: nspec,nglob,ibool,xstore_glob,ystore_glob,zstore_glob
+  use meshfem_par, only: nspec,nglob,ibool,xstore_glob,ystore_glob,zstore_glob
 
   implicit none
 

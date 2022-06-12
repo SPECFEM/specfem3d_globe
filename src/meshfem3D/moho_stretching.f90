@@ -46,10 +46,10 @@
 
   use shared_parameters, only: PLANET_TYPE,IPLANET_EARTH,IPLANET_MARS,IPLANET_MOON,R_PLANET
 
-  use meshfem3D_par, only: &
+  use meshfem_par, only: &
     RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST,REFERENCE_CRUSTAL_MODEL
 
-  use meshfem3D_par, only: &
+  use meshfem_par, only: &
     TOPOGRAPHY
 
   implicit none
@@ -311,7 +311,7 @@
 
   use shared_parameters, only: R_PLANET,HONOR_DEEP_MOHO
 
-  use meshfem3D_par, only: R220
+  use meshfem_par, only: R220
 
   implicit none
 
@@ -435,7 +435,7 @@
   use shared_parameters, only: PLANET_TYPE,IPLANET_EARTH,IPLANET_MARS,IPLANET_MOON, &
     R_PLANET,RMOHO_STRETCH_ADJUSTMENT
 
-  use meshfem3D_par, only: RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST
+  use meshfem_par, only: RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST
 
   implicit none
 
@@ -621,7 +621,7 @@
   use shared_parameters, only: PLANET_TYPE,IPLANET_EARTH,IPLANET_MARS,IPLANET_MOON, &
     R_PLANET,RMOHO_STRETCH_ADJUSTMENT
 
-  use meshfem3D_par, only: RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST
+  use meshfem_par, only: RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST
 
   implicit none
 

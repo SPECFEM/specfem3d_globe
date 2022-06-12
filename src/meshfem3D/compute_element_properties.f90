@@ -39,7 +39,7 @@
 
   use shared_parameters, only: REGIONAL_MESH_CUTOFF,USE_LOCAL_MESH
 
-  use meshfem3D_models_par, only: &
+  use meshfem_models_par, only: &
     TOPOGRAPHY,ELLIPTICITY,CRUSTAL,CASE_3D, &
     THREE_D_MODEL,THREE_D_MODEL_MANTLE_SH,THREE_D_MODEL_S29EA, &
     THREE_D_MODEL_S362ANI,THREE_D_MODEL_S362WMANI,THREE_D_MODEL_S362ANI_PREM, &
@@ -419,7 +419,7 @@
     REFERENCE_MODEL_1DREF,REFERENCE_MODEL_1DREF, &
     THREE_D_MODEL_S362WMANI,THREE_D_MODEL_SGLOBE
 
-  use meshfem3D_models_par, only: &
+  use meshfem_models_par, only: &
     TRANSVERSE_ISOTROPY,USE_FULL_TISO_MANTLE,REFERENCE_1D_MODEL,THREE_D_MODEL
 
   implicit none

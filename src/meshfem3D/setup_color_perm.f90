@@ -29,11 +29,11 @@
 
   use constants, only: myrank
 
-  use meshfem3D_par, only: &
+  use meshfem_par, only: &
     IMAIN,USE_MESH_COLORING_GPU,SAVE_MESH_FILES, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE
 
-  use meshfem3D_par, only: ibool,is_on_a_slice_edge
+  use meshfem_par, only: ibool,is_on_a_slice_edge
 
   use MPI_crust_mantle_par
   use MPI_outer_core_par
@@ -232,11 +232,11 @@
 
   use constants, only: myrank
 
-  use meshfem3D_par, only: &
+  use meshfem_par, only: &
     LOCAL_PATH,MAX_NUMBER_OF_COLORS,IMAIN,NGLLX,NGLLY,NGLLZ,IFLAG_IN_FICTITIOUS_CUBE, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE,MAX_STRING_LEN,IOUT
 
-  use meshfem3D_par, only: &
+  use meshfem_par, only: &
     idoubling,xstore_glob,ystore_glob,zstore_glob
 
   use MPI_crust_mantle_par, only: &
@@ -596,12 +596,12 @@
 
   use constants
 
-  use meshfem3D_models_par, only: &
+  use meshfem_models_par, only: &
     TRANSVERSE_ISOTROPY,HETEROGEN_3D_MANTLE,ANISOTROPIC_3D_MANTLE, &
     ANISOTROPIC_INNER_CORE,ATTENUATION, &
     ATTENUATION_3D,ATTENUATION_1D_WITH_3D_STORAGE
 
-  use meshfem3D_par, only: &
+  use meshfem_par, only: &
     ABSORBING_CONDITIONS, &
     LOCAL_PATH, &
     NCHUNKS,NSPEC2D_TOP,NSPEC2D_BOTTOM, &
@@ -1007,7 +1007,7 @@
 !                              npoin2D_xi,npoin2D_eta)
 !
 !  use constants
-!  use meshfem3D_par, only: NSTEP,DT,NPROC_XI,NPROC_ETA
+!  use meshfem_par, only: NSTEP,DT,NPROC_XI,NPROC_ETA
 !  implicit none
 !
 !  integer :: iregion_code

@@ -43,10 +43,10 @@
 
   use constants
 
-  use meshfem3D_models_par, only: &
+  use meshfem_models_par, only: &
     OCEANS
 
-  use meshfem3D_par, only: &
+  use meshfem_par, only: &
     myrank,nspec,nglob,NCHUNKS,ABSORBING_CONDITIONS, &
     ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION,INCLUDE_CENTRAL_CUBE
 
@@ -230,7 +230,7 @@
 ! only called in case of (ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION)
   use constants
 
-  use meshfem3D_par, only: &
+  use meshfem_par, only: &
     myrank,DT,nspec
 
   use regions_mesh_par, only: &
@@ -357,7 +357,7 @@
 
   use constants
 
-  use meshfem3D_par, only: &
+  use meshfem_par, only: &
     myrank,DT,nspec,nglob, &
     ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION,ABSORBING_CONDITIONS
 
@@ -506,10 +506,10 @@
 
   use constants
 
-  use meshfem3D_models_par, only: &
+  use meshfem_models_par, only: &
     OCEANS,TOPOGRAPHY,ibathy_topo,CASE_3D
 
-  use meshfem3D_par, only: &
+  use meshfem_par, only: &
     myrank,RHO_OCEANS,nspec
 
   use regions_mesh_par, only: &

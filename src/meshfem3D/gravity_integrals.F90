@@ -37,7 +37,7 @@
 
   use constants
 
-  use meshfem3D_par, only: g_x,g_y,g_z,G_xx,G_yy,G_zz,G_xy,G_xz,G_yz
+  use meshfem_par, only: g_x,g_y,g_z,G_xx,G_yy,G_zz,G_xy,G_xz,G_yz
 
   implicit none
 
@@ -102,10 +102,10 @@
 
   use shared_parameters, only: R_PLANET
 
-  use meshfem3D_par, only: x_observation,y_observation,z_observation, &
+  use meshfem_par, only: x_observation,y_observation,z_observation, &
                            lon_observation,lat_observation,ELLIPTICITY,TOPOGRAPHY,OUTPUT_FILES
 
-  use meshfem3D_models_par, only: nspl,rspl,ellipicity_spline,ellipicity_spline2,ibathy_topo
+  use meshfem_models_par, only: nspl,rspl,ellipicity_spline,ellipicity_spline2,ibathy_topo
 
   implicit none
 
@@ -310,7 +310,7 @@
 
   use constants
 
-  use meshfem3D_par, only: OUTPUT_FILES,NCHUNKS, &
+  use meshfem_par, only: OUTPUT_FILES,NCHUNKS, &
     x_observation,y_observation,z_observation,g_x,g_y,g_z,G_xx,G_yy,G_zz,G_xy,G_xz,G_yz
 
   implicit none
@@ -518,8 +518,8 @@
 
   subroutine finalize_gravity_integrals()
 
-  use meshfem3D_par
-  use meshfem3D_models_par
+  use meshfem_par
+  use meshfem_models_par
 
   implicit none
 

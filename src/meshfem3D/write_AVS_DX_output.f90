@@ -30,14 +30,14 @@
 
   use constants, only: SAVE_MESHFILES_AVS_DX_FORMAT
 
-  use meshfem3d_par, only: &
+  use meshfem_par, only: &
     nspec,ibool,idoubling, &
     xstore,ystore,zstore, &
     RICB,RCMB,RTOPDDOUBLEPRIME,R670,R220,R771,R400,R120,R80,RMOHO, &
     RMIDDLE_CRUST, &
     ADIOS_FOR_AVS_DX
 
-  use meshfem3D_models_par, only: &
+  use meshfem_models_par, only: &
     ELLIPTICITY,MODEL_3D_MANTLE_PERTUBATIONS, &
     nspl,rspl,ellipicity_spline,ellipicity_spline2
 

@@ -28,7 +28,7 @@
   subroutine add_topography(xelm,yelm,zelm,ibathy_topo)
 
   use constants, only: myrank,NGNOD,R_UNIT_SPHERE,ONE
-  use meshfem3D_par, only: R220,NX_BATHY,NY_BATHY,R_PLANET
+  use meshfem_par, only: R220,NX_BATHY,NY_BATHY,R_PLANET
   use shared_parameters, only: REGIONAL_MESH_CUTOFF,REGIONAL_MESH_CUTOFF_DEPTH,USE_LOCAL_MESH
 
   implicit none
@@ -98,7 +98,7 @@
 
   use constants
   use shared_parameters, only: R_PLANET
-  use meshfem3D_par, only: R220,NX_BATHY,NY_BATHY
+  use meshfem_par, only: R220,NX_BATHY,NY_BATHY
   use shared_parameters, only: REGIONAL_MESH_CUTOFF,REGIONAL_MESH_CUTOFF_DEPTH,USE_LOCAL_MESH
 
   implicit none

@@ -329,7 +329,7 @@
 !             would lead to problems. passing arguments is a way to avoid such complications.
 !
 !             however, the mesher makes one exception here: it uses the
-!             module "meshfem3D_models_par" defined in the 'meshfem3D_models.f90' file.
+!             module "meshfem_models_par" defined in the 'meshfem3D_models.f90' file.
 !             the exception is based on the fact, that when one wants to incorporate
 !             a new 3D/1D velocity model, it became tedious to change so many routines hardly
 !             related to any model specific need.
@@ -339,7 +339,7 @@
 !             to have an idea where you will have to put some new code:
 !
 !                 - meshfem3D_models.f90: main file for models
-!                     put your model structure into the module "meshfem3D_models_par"
+!                     put your model structure into the module "meshfem_models_par"
 !                     and add your specific routine calls to get 1D/3D/attenuation values.
 !
 !                 - get_model_parameters.f90:

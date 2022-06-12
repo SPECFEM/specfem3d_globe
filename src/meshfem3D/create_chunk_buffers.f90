@@ -32,7 +32,7 @@
                                   NGLOB1D_RADIAL_CORNER,NGLOB1D_RADIAL_MAX, &
                                   NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX)
 
-  use meshfem3D_par, only: &
+  use meshfem_par, only: &
     nspec, nglob, &
     myrank,LOCAL_PATH,NCHUNKS,addressing, &
     ichunk_slice,iproc_xi_slice,iproc_eta_slice, &

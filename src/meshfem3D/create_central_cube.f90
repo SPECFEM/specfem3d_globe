@@ -43,7 +43,7 @@
 
   use shared_parameters, only: ratio_divide_central_cube,R_PLANET
 
-  use meshfem3D_par, only: &
+  use meshfem_par, only: &
     xstore,ystore,zstore
 
   use regions_mesh_par, only: &

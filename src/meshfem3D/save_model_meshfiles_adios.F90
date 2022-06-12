@@ -39,10 +39,10 @@
   use constants
   use shared_parameters, only: R_PLANET,RHOAV
 
-  use meshfem3D_par, only: &
+  use meshfem_par, only: &
     LOCAL_PATH,nspec,nglob,iregion_code
 
-  use meshfem3D_models_par, only: &
+  use meshfem_models_par, only: &
     TRANSVERSE_ISOTROPY,ATTENUATION, &
     ATTENUATION_3D,ATTENUATION_1D_WITH_3D_STORAGE, &
     ANISOTROPIC_3D_MANTLE

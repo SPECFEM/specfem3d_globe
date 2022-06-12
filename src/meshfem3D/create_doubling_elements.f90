@@ -53,9 +53,9 @@
 
   use shared_parameters, only: ner_mesh_layers,ratio_sampling_array,doubling_index,r_bottom,r_top
 
-  use meshfem3D_models_par, only: HONOR_1D_SPHERICAL_MOHO
+  use meshfem_models_par, only: HONOR_1D_SPHERICAL_MOHO
 
-  use meshfem3D_par, only: &
+  use meshfem_par, only: &
     xstore,ystore,zstore
 
   use regions_mesh_par, only: &

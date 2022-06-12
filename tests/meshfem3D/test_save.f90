@@ -1,6 +1,6 @@
 program test_save
 
-  use meshfem3D_par
+  use meshfem_par
   use manager_adios
 
   implicit none

@@ -28,11 +28,11 @@
 
   subroutine setup_inner_outer(iregion_code)
 
-  use meshfem3D_par, only: &
+  use meshfem_par, only: &
     myrank,OUTPUT_FILES,IMAIN, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE,MAX_STRING_LEN
 
-  use meshfem3D_par, only: ibool,is_on_a_slice_edge,xstore_glob,ystore_glob,zstore_glob
+  use meshfem_par, only: ibool,is_on_a_slice_edge,xstore_glob,ystore_glob,zstore_glob
 
   use MPI_crust_mantle_par
   use MPI_outer_core_par

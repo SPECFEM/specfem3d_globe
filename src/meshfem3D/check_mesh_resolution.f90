@@ -33,7 +33,7 @@
 
   use shared_parameters, only: T_min_period,ADIOS_ENABLED
 
-  use meshfem3D_par, only: &
+  use meshfem_par, only: &
     nspec,nglob, &
     DT,myrank,ibool,idoubling, &
     xstore_glob,ystore_glob,zstore_glob,SAVE_MESH_FILES, &
@@ -389,7 +389,7 @@
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,IREGION_CRUST_MANTLE,IREGION_INNER_CORE, &
     PI,GRAV,HUGEVAL,TINYVAL,FOUR_THIRDS
   use shared_parameters, only: RHOAV,R_PLANET
-  use meshfem3D_models_par, only: ANISOTROPIC_INNER_CORE,ANISOTROPIC_3D_MANTLE
+  use meshfem_models_par, only: ANISOTROPIC_INNER_CORE,ANISOTROPIC_3D_MANTLE
 
   use regions_mesh_par2, only: &
     c11store,c12store,c13store,c14store,c15store,c16store,c22store, &

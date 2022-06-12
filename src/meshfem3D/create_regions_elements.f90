@@ -31,7 +31,7 @@
 
 ! creates all elements belonging to different regions of the mesh
 
-  use meshfem3D_par, only: &
+  use meshfem_par, only: &
     nspec,iregion_code, &
     idoubling,is_on_a_slice_edge, &
     IMAIN,myrank, &
@@ -44,7 +44,7 @@
     CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, &
     ner_mesh_layers
 
-  use meshfem3D_models_par, only: &
+  use meshfem_models_par, only: &
     TRANSVERSE_ISOTROPY
 
   use regions_mesh_par2, only: &

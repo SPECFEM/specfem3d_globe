@@ -51,12 +51,12 @@
   use shared_parameters, only: &
     R_CENTRAL_CUBE,RICB,RCMB
 
-  use meshfem3D_par, only: &
+  use meshfem_par, only: &
     myrank,nspec,nglob,iregion_code, &
     ibool,idoubling,xstore,ystore,zstore, &
     xstore_glob,ystore_glob,zstore_glob
 
-  use meshfem3D_par, only: &
+  use meshfem_par, only: &
     NCHUNKS,SAVE_MESH_FILES,ABSORBING_CONDITIONS,LOCAL_PATH, &
     ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_SOLVER_MESHFILES, &
     ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION,GRAVITY_INTEGRALS, &
@@ -64,11 +64,11 @@
     NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
     volume_total,Earth_mass_total,Earth_center_of_mass_x_total,Earth_center_of_mass_y_total,Earth_center_of_mass_z_total
 
-  use meshfem3D_models_par, only: &
+  use meshfem_models_par, only: &
     OCEANS
 
 #ifdef USE_CEM
-  use meshfem3D_models_par, only: CEM_REQUEST
+  use meshfem_models_par, only: CEM_REQUEST
 #endif
 
   use MPI_interfaces_par, only: &
@@ -601,14 +601,14 @@
 
   use shared_parameters, only: ratio_sampling_array
 
-  use meshfem3D_par, only: &
+  use meshfem_par, only: &
     nspec,iregion_code, &
     NCHUNKS,NUMCORNERS_SHARED,NUMFACES_SHARED, &
     NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
     NGLOB1D_RADIAL,NGLOB1D_RADIAL_CORNER, &
     ATT1,ATT2,ATT3
 
-  use meshfem3D_models_par, only: &
+  use meshfem_models_par, only: &
     ATTENUATION,ANISOTROPIC_INNER_CORE,ANISOTROPIC_3D_MANTLE
 
   use regions_mesh_par2
@@ -936,13 +936,13 @@
   use constants, only: SUPPRESS_CRUSTAL_MESH, &
     GAUSSALPHA,GAUSSBETA,NGLLX,NGLLY,NGLLZ,NGNOD
 
-  use meshfem3D_par, only: &
+  use meshfem_par, only: &
     iregion_code,IREGION_CRUST_MANTLE, &
     R670,RMOHO,R400,RMIDDLE_CRUST, &
     ner_mesh_layers,r_top,r_bottom, &
     CASE_3D
 
-  use meshfem3D_models_par, only: REGIONAL_MOHO_MESH
+  use meshfem_models_par, only: REGIONAL_MOHO_MESH
 
   use regions_mesh_par
   use regions_mesh_par2
@@ -1099,7 +1099,7 @@
 
   use constants, only: NGLLX,NGLLY,NGLLZ,ZERO,MAX_STRING_LEN,IREGION_CRUST_MANTLE
 
-  use meshfem3d_par, only: &
+  use meshfem_par, only: &
     nspec,nglob,iregion_code, &
     ibool,xstore,ystore,zstore, &
     myrank
@@ -1239,7 +1239,7 @@
 
 ! sets up MPI cutplane arrays
 
-  use meshfem3d_par, only: &
+  use meshfem_par, only: &
     nspec,iregion_code, &
     ibool,idoubling, &
     xstore,ystore,zstore, &
@@ -1310,7 +1310,7 @@
 
   subroutine crm_free_MPI_arrays()
 
-  use meshfem3D_par, only: iregion_code
+  use meshfem_par, only: iregion_code
 
   use MPI_interfaces_par
 
@@ -1350,7 +1350,7 @@
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
 
-  use meshfem3D_par, only: &
+  use meshfem_par, only: &
     nspec,nglob, &
     myrank,ibool,xstore,ystore,zstore, &
     xstore_glob,ystore_glob,zstore_glob

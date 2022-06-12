@@ -1,7 +1,7 @@
 program test_read
 
-  use meshfem3D_par
-  use meshfem3D_models_par
+  use meshfem_par
+  use meshfem_models_par
 
 !  use manager_adios
 

@@ -1,6 +1,6 @@
 program test_models
 
-  use meshfem3D_par
+  use meshfem_par
   use manager_adios
 
   implicit none
@@ -147,8 +147,8 @@ end program test_models
 
   subroutine test_initialize_models()
 
-  use meshfem3D_par
-  use meshfem3D_models_par
+  use meshfem_par
+  use meshfem_models_par
 
   implicit none
 

@@ -45,7 +45,7 @@
 
   subroutine cmi_allocate_addressing(iregion_code)
 
-  use meshfem3D_par, only: myrank,ibool, &
+  use meshfem_par, only: myrank,ibool, &
     NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
     NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
     NSPEC2D_BOTTOM,NSPEC2D_TOP,NSPEC_REGIONS,NGLOB_REGIONS, &
@@ -196,7 +196,7 @@
 
   subroutine cmi_get_buffers(iregion_code)
 
-  use meshfem3D_par, only: myrank,MAX_STRING_LEN, &
+  use meshfem_par, only: myrank,MAX_STRING_LEN, &
     NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
     NGLOB1D_RADIAL,NSPEC2D_BOTTOM, &
     NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
@@ -204,7 +204,7 @@
     iproc_xi,iproc_eta,ichunk,addressing, &
     xstore_glob,ystore_glob,zstore_glob
 
-  use meshfem3D_par, only: &
+  use meshfem_par, only: &
     ibool,idoubling,is_on_a_slice_edge
 
   use regions_mesh_par2, only: &
@@ -497,7 +497,7 @@
                                   iboolfaces_s,npoin2D_faces_s, &
                                   iboolcorner_s)
 
-  use meshfem3D_par, only: &
+  use meshfem_par, only: &
     myrank,IMAIN,NDIM,NUMFACES_SHARED,NUMCORNERS_SHARED,NPROC_XI,NPROC_ETA
 
   use MPI_interfaces_par

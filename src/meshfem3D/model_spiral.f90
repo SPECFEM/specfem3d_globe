@@ -1811,7 +1811,7 @@
   use constants
   use shared_parameters, only: R_PLANET,R_PLANET_KM
 
-  use meshfem3D_par, only: R220,R400,R670,R771
+  use meshfem_par, only: R220,R400,R670,R771
 
   implicit none
 
@@ -1891,7 +1891,7 @@
   use constants
   use shared_parameters, only: R_PLANET
 
-  use meshfem3D_par, only: R400,R670
+  use meshfem_par, only: R400,R670
 
   use model_spiral_mantle_par
 

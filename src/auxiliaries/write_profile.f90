@@ -75,7 +75,7 @@
     IPLANET_EARTH, &
     myrank
 
-  use meshfem3D_models_par, only: &
+  use meshfem_models_par, only: &
     CRUSTAL,ONE_CRUST
 
   use shared_parameters, only: &
@@ -582,7 +582,7 @@
   subroutine write_profile_setup()
 
   use constants, only: IMAIN,myrank,N_SLS,NGLLX,NGLLY,NGLLZ,SUPPRESS_MOHO_STRETCHING
-  use meshfem3D_models_par
+  use meshfem_models_par
   use shared_parameters
 
   implicit none
@@ -726,7 +726,7 @@
   subroutine write_profile_moho_depth(theta,phi,moho)
 
   use constants, only: myrank
-  use meshfem3D_models_par
+  use meshfem_models_par
   use shared_parameters
 
   implicit none
@@ -773,7 +773,7 @@
   subroutine write_profile_elevation(theta,phi,elevation)
 
   use constants, only: THICKNESS_OCEANS_PREM,myrank
-  use meshfem3D_models_par
+  use meshfem_models_par
   use shared_parameters
 
   implicit none
@@ -826,7 +826,7 @@
                                         rho,vpv,vph,vsv,vsh,eta_aniso,Qmu,Qkappa)
 
   use constants, only: myrank,N_SLS,TINYVAL
-  use meshfem3D_models_par
+  use meshfem_models_par
   use shared_parameters
 
   implicit none
@@ -971,7 +971,7 @@
 
   use constants, only: IFLAG_CRUST,IFLAG_80_MOHO,IFLAG_220_80,R_UNIT_SPHERE
   use shared_parameters
-  use meshfem3D_models_par
+  use meshfem_models_par
 
   implicit none
 
@@ -1011,7 +1011,7 @@
   subroutine write_profile_ocean(r_prem,elevation,iline,iline_ocean)
 
   use constants, only: MINIMUM_THICKNESS_3D_OCEANS
-  use meshfem3D_models_par
+  use meshfem_models_par
   use shared_parameters
 
   implicit none

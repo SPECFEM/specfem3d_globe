@@ -479,7 +479,6 @@ xsmooth_laplacian_sem_OBJECTS = \
 xsmooth_laplacian_sem_SHARED_OBJECTS = \
 	$O/specfem3D_par.solverstatic_module.o \
 	$O/read_mesh_parameters.solverstatic.o \
-	$O/meshfem3D_par.check_module.o \
 	$O/shared_par.shared_module.o \
 	$O/parallel.sharedmpi.o \
 	$O/assemble_MPI_scalar.shared.o \
@@ -532,10 +531,6 @@ xsmooth_laplacian_sem_adios_SHARED_OBJECTS += \
 ${E}/xsmooth_laplacian_sem_adios: $(xsmooth_laplacian_sem_adios_OBJECTS) $(xsmooth_laplacian_sem_adios_SHARED_OBJECTS)
 	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
-
-# extra dependencies
-$O/laplacian_smoothing_sem.postprocess.o: $O/meshfem3D_par.check_module.o
-$O/laplacian_smoothing_sem.postprocess_adios.o: $O/meshfem3D_par.check_module.o
 
 ##
 ## xcreate_cross_section

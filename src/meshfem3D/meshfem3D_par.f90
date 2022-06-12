@@ -31,7 +31,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  module meshfem3D_models_par
+  module meshfem_models_par
 
 !---
 !
@@ -96,7 +96,7 @@
   double precision,dimension(NR_DENSITY) :: rspl,ellipicity_spline,ellipicity_spline2
   integer :: nspl
 
-  end module meshfem3D_models_par
+  end module meshfem_models_par
 
 
 !
@@ -104,7 +104,7 @@
 !
 
 
-  module meshfem3D_par
+  module meshfem_par
 
 ! main parameter module for specfem simulations
 
@@ -217,7 +217,7 @@
   ! number of global GLL points (in current region)
   integer :: nglob
 
-  end module meshfem3D_par
+  end module meshfem_par
 
 !
 !-------------------------------------------------------------------------------------------------

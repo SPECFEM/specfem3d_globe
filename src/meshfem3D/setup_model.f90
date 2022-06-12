@@ -29,7 +29,7 @@
 
   use constants, only: IMAIN
 
-  use meshfem3D_par
+  use meshfem_par
 
   implicit none
 
@@ -133,9 +133,9 @@
   use constants, only: IMAIN,NGLLX,NGLLY,NGLLZ,NGNOD,NGNOD2D,N_SLS
   use shared_parameters, only: R_PLANET_KM
 
-  use meshfem3D_models_par
+  use meshfem_models_par
 
-  use meshfem3D_par, only: &
+  use meshfem_par, only: &
     MODEL,NEX_XI,NEX_ETA, &
     NPROC_XI,NPROC_ETA,NPROC,NCHUNKS,NPROCTOT, &
     R_CENTRAL_CUBE

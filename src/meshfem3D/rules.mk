@@ -138,8 +138,8 @@ meshfem3D_MODULES = \
 	$(FC_MODDIR)/mpi_interfaces_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/gapp2_mantle_model_constants.$(FC_MODEXT) \
 	$(FC_MODDIR)/manager_adios.$(FC_MODEXT) \
-	$(FC_MODDIR)/meshfem3d_models_par.$(FC_MODEXT) \
-	$(FC_MODDIR)/meshfem3d_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/meshfem_models_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/meshfem_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/mpi_crust_mantle_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/mpi_inner_core_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/mpi_outer_core_par.$(FC_MODEXT) \

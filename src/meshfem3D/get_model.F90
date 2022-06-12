@@ -38,12 +38,12 @@
 
   use shared_parameters, only: R_PLANET_KM
 
-  use meshfem3D_par, only: &
+  use meshfem_par, only: &
     RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R220, &
     R771,R400,R120,R80,RMIDDLE_CRUST, &
     ABSORBING_CONDITIONS
 
-  use meshfem3D_models_par, only: &
+  use meshfem_models_par, only: &
     ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
     ATTENUATION,ATTENUATION_3D,ATTENUATION_1D_WITH_3D_STORAGE, &
     CEM_ACCEPT,CRUSTAL

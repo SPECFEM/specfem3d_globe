@@ -59,7 +59,7 @@
 
   use constants
 
-  use meshfem3D_par, only: LOCAL_PATH
+  use meshfem_par, only: LOCAL_PATH
 
   use adios_helpers_mod
   use manager_adios
@@ -160,7 +160,7 @@
 
   use constants, only: NDIM,NGLLX,NGLLY,NGLLSQUARE,CUSTOM_REAL,MAX_STRING_LEN,myrank,IREGION_CRUST_MANTLE
 
-  use meshfem3D_par, only: LOCAL_PATH
+  use meshfem_par, only: LOCAL_PATH
 
   use adios_helpers_mod
   use manager_adios

@@ -31,7 +31,7 @@
 
   use constants
   use shared_parameters, only: R_PLANET,R_PLANET_KM
-  use meshfem3D_par, only: RICB,RCMB
+  use meshfem_par, only: RICB,RCMB
 
   implicit none
 

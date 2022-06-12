@@ -40,7 +40,7 @@
 
   use constants
 
-  use meshfem3D_par, only: nspec
+  use meshfem_par, only: nspec
 
   implicit none
 

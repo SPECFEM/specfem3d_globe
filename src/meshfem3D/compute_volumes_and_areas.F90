@@ -37,7 +37,7 @@
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE
 
   use shared_parameters, only: R_PLANET
-  use meshfem3D_models_par, only: TOPOGRAPHY
+  use meshfem_models_par, only: TOPOGRAPHY
 
   implicit none
 

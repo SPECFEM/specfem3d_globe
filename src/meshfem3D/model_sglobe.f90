@@ -142,7 +142,7 @@
 
   use constants
   use model_sglobe_par
-  use meshfem3D_models_par, only: THREE_D_MODEL
+  use meshfem_models_par, only: THREE_D_MODEL
   implicit none
 
   ! local parameters
