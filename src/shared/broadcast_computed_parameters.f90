@@ -191,6 +191,17 @@
   call bcast_all_singlel(REGIONAL_MOHO_MESH)
   call bcast_all_singlel(HONOR_DEEP_MOHO)
 
+  ! (optional) local mesh parameters
+  call bcast_all_singlel(USE_LOCAL_MESH)
+  call bcast_all_singlei(LOCAL_MESH_NUMBER_OF_LAYERS_CRUST)
+  call bcast_all_singlei(LOCAL_MESH_NUMBER_OF_LAYERS_MANTLE)
+  call bcast_all_singlei(NDOUBLINGS)
+  call bcast_all_singlei(NZ_DOUBLING_1)
+  call bcast_all_singlei(NZ_DOUBLING_2)
+  call bcast_all_singlei(NZ_DOUBLING_3)
+  call bcast_all_singlei(NZ_DOUBLING_4)
+  call bcast_all_singlei(NZ_DOUBLING_5)
+
   ! empirical minimum period resolved estimation
   call bcast_all_singledp(T_min_period)
 

@@ -30,12 +30,14 @@
 ! Computes the integral of f[i]*r[i]*r[i] from i=nir to i=ner for
 ! radii values as in model PREM_an640
 
+  use constants, only: NR_DENSITY
   implicit none
 
 ! Argument variables
-  integer :: ner,nir
-  double precision :: f(640),r(640),s1(640),s2(640)
-  double precision :: s3(640),sumval
+  integer,intent(in) :: ner,nir
+  double precision,dimension(NR_DENSITY),intent(in) :: f,r
+  double precision,dimension(NR_DENSITY),intent(inout) :: s1,s2,s3
+  double precision,intent(out) :: sumval
 
 ! Local variables
   double precision, parameter :: third = 1.0d0/3.0d0
@@ -51,22 +53,23 @@
   data kdis/163,323,336,517,530,540,565,590,609,619,626,633,16*0/
 
   ndis = 12
-  n = 640
+  n = NR_DENSITY
 
   call deriv(f,yprime,n,r,ndis,kdis,s1,s2,s3)
 
   nir1 = nir + 1
   sumval = 0.0d0
+
   do i = nir1,ner
     j = i-1
     rji = r(i) - r(j)
     s1l = s1(j)
     s2l = s2(j)
     s3l = s3(j)
-    sumval = sumval + r(j)*r(j)*rji*(f(j) &
-              + rji*(0.5d0*s1l + rji*(third*s2l + rji*0.25d0*s3l))) &
-              + 2.0d0*r(j)*rji*rji*(0.5d0*f(j) + rji*(third*s1l + rji*(0.25d0*s2l + rji*fifth*s3l))) &
-              + rji*rji*rji*(third*f(j) + rji*(0.25d0*s1l + rji*(fifth*s2l + rji*sixth*s3l)))
+    sumval = sumval &
+              + r(j) * r(j) * rji * ( f(j) + rji*(0.5d0*s1l + rji*(third*s2l + rji*0.25d0*s3l)) ) &
+              + 2.0d0 * r(j) * rji * rji * ( 0.5d0*f(j) + rji*(third*s1l + rji*(0.25d0*s2l + rji*fifth*s3l)) ) &
+              + rji * rji * rji * ( third*f(j) + rji*(0.25d0*s1l + rji*(fifth*s2l + rji*sixth*s3l)) )
   enddo
 
   end subroutine intgrl
@@ -78,9 +81,11 @@
   implicit none
 
 ! Argument variables
-  integer :: kdis(28),n,ndis
-  double precision :: r(n),s1(n),s2(n),s3(n)
-  double precision :: y(n),yprime(n)
+  integer,intent(in) :: kdis(28),n,ndis
+  double precision,intent(in) :: r(n)
+  double precision,intent(inout) :: s1(n),s2(n),s3(n)
+  double precision,intent(in) :: y(n)
+  double precision,intent(inout) :: yprime(n)
 
 ! Local variables
   integer :: i,j,j1,j2
@@ -110,7 +115,11 @@
     if ((j2+1-j1) > 0) goto 11
 
     j2 = j2+2
-    yy(1) = (y(j2)-y(j1))/(r(j2)-r(j1))
+    if (abs(r(j2)-r(j1)) > 0.d0) then
+      yy(1) = (y(j2)-y(j1)) / (r(j2)-r(j1))
+    else
+      yy(1) = 0.d0
+    endif
     s1(j1) = yy(1)
     s1(j2) = yy(1)
     s2(j1) = yy(2)
@@ -129,7 +138,11 @@
       yy(1) = h*h2*(h2-h)
       h = h*h
       h2 = h2*h2
-      b0 = (y(j1)*(h-h2)+y(j1+1)*h2-y(j1+2)*h)/yy(1)
+      if (abs(yy(1)) > 0.d0) then
+        b0 = (y(j1)*(h-h2)+y(j1+1)*h2-y(j1+2)*h)/yy(1)
+      else
+        b0 = 0.d0
+      endif
     endif
     b1 = b0
 

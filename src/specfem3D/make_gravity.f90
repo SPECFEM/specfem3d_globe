@@ -50,24 +50,30 @@
                       R771,RTOPDDOUBLEPRIME,RCMB,RICB,RSURFACE
   double precision :: r_icb,r_cmb,r_topddoubleprime,r_771,r_670,r_600
   double precision :: r_400,r_220,r_80,r_moho,r_middle_crust,r_ocean,r_0
-  double precision :: r(NR_DENSITY),rho(NR_DENSITY),grav(NR_DENSITY),i_rho
+  double precision :: r(NR_DENSITY),rho(NR_DENSITY),grav(NR_DENSITY),integral_rho
   double precision :: s1(NR_DENSITY),s2(NR_DENSITY),s3(NR_DENSITY)
   double precision :: yp1,ypn
   double precision :: SOHL_RMOHO,SOHL_R80,SOHL_R220,SOHL_R400,SOHL_R600,SOHL_R670, &
                       SOHL_R771,SOHL_RTOPDDOUBLEPRIME,SOHL_RCMB
+
+  ! Earth
+  ! PREM radius of the Earth for gravity calculation
+  double precision, parameter :: R_EARTH_GRAVITY = 6371000.d0
+  ! PREM radius of the ocean floor for gravity calculation
+  double precision, parameter :: ROCEAN_GRAVITY = PREM_ROCEAN
 
   ! debugging
   logical, parameter :: DEBUG = .false.
   double precision :: gval,radius
 
   ! selects radii
-  ! radius of the planet for gravity calculation
-  RSURFACE = R_PLANET  ! physical surface (Earth: 6371000, ..)
   select case (PLANET_TYPE)
   case (IPLANET_EARTH)
     ! Earth
     ! default PREM
-    ROCEAN = PREM_ROCEAN
+    ! radius of the planet for gravity calculation
+    RSURFACE = R_EARTH_GRAVITY  ! physical surface (Earth: 6371000, ..)
+    ROCEAN = ROCEAN_GRAVITY
     RMIDDLE_CRUST = PREM_RMIDDLE_CRUST
     RMOHO = PREM_RMOHO
     R80  = PREM_R80
@@ -86,6 +92,7 @@
     call get_model_Sohl_radii(SOHL_RMOHO,SOHL_R80,SOHL_R220,SOHL_R400,SOHL_R600,SOHL_R670, &
                               SOHL_R771,SOHL_RTOPDDOUBLEPRIME,SOHL_RCMB)
     ! sets radii for density integration
+    RSURFACE = R_PLANET
     ROCEAN = SOHL_ROCEAN
     RMIDDLE_CRUST = SOHL_RMIDDLE_CRUST
     RMOHO = SOHL_RMOHO
@@ -102,6 +109,7 @@
   case (IPLANET_MOON)
     ! Moon
     ! default VPREMOON
+    RSURFACE = R_PLANET
     ROCEAN = VPREMOON_ROCEAN
     RMIDDLE_CRUST = VPREMOON_RMIDDLE_CRUST
     RMOHO = VPREMOON_RMOHO
@@ -120,18 +128,18 @@
   end select
 
   ! non-dimensionalize
-  r_icb = RICB/RSURFACE
-  r_cmb = RCMB/RSURFACE
-  r_topddoubleprime = RTOPDDOUBLEPRIME/RSURFACE
-  r_771 = R771/RSURFACE
-  r_670 = R670/RSURFACE
-  r_600 = R600/RSURFACE
-  r_400 = R400/RSURFACE
-  r_220 = R220/RSURFACE
-  r_80 = R80/RSURFACE
-  r_moho = RMOHO/RSURFACE
-  r_middle_crust = RMIDDLE_CRUST/RSURFACE
-  r_ocean = ROCEAN/RSURFACE
+  r_icb = RICB / RSURFACE
+  r_cmb = RCMB / RSURFACE
+  r_topddoubleprime = RTOPDDOUBLEPRIME / RSURFACE
+  r_771 = R771 / RSURFACE
+  r_670 = R670 / RSURFACE
+  r_600 = R600 / RSURFACE
+  r_400 = R400 / RSURFACE
+  r_220 = R220 / RSURFACE
+  r_80 = R80 / RSURFACE
+  r_moho = RMOHO / RSURFACE
+  r_middle_crust = RMIDDLE_CRUST / RSURFACE
+  r_ocean = ROCEAN / RSURFACE
   r_0 = 1.d0
 
 ! note: for Mars
@@ -231,8 +239,8 @@
 
   grav(1) = 0.0d0
   do i = 2,NR_DENSITY
-    call intgrl(i_rho,r,1,i,rho,s1,s2,s3)
-    grav(i) = 4.0d0*i_rho/(r(i)*r(i))
+    call intgrl(integral_rho,r,1,i,rho,s1,s2,s3)
+    grav(i) = 4.0d0 * integral_rho / (r(i)*r(i))
   enddo
 
 !
@@ -249,8 +257,8 @@
     endif
   enddo
 
-  yp1 = (4.0d0/3.0d0)*rho(1)
-  ypn = 4.0d0*rho(NR_DENSITY)-2.0d0*grav(NR_DENSITY)/r(NR_DENSITY)
+  yp1 = (4.0d0/3.0d0) * rho(1)
+  ypn = 4.0d0*rho(NR_DENSITY) - 2.0d0*grav(NR_DENSITY)/r(NR_DENSITY)
 
   call spline_construction(rspl,gravity_spline,nspl,yp1,ypn,gravity_spline2)
 

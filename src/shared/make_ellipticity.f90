@@ -63,7 +63,7 @@
   double precision,dimension(NR_DENSITY) :: radau,k
   double precision,dimension(NR_DENSITY) :: s1,s2,s3
 
-  double precision :: z,g_a,bom,exponentval,i_rho,i_radau
+  double precision :: z,g_a,bom,exponentval,integral_rho,integral_radau
   double precision :: yp1,ypn
 
   ! debugging
@@ -81,17 +81,18 @@
 !                      please check the effect.
 
   ! Earth
+  ! PREM radius of the Earth for gravity calculation
+  double precision, parameter :: R_EARTH_ELLIPTICITY = 6371000.d0
   ! PREM radius of the ocean floor for gravity calculation
-  double precision, parameter :: ROCEAN_ELLIPTICITY = 6368000.d0  ! assumes ocean depth of 3km
+  double precision, parameter :: ROCEAN_ELLIPTICITY = PREM_ROCEAN
 
-  ! selects radii
-  ! radius of the planet for gravity calculation
-  RSURFACE = R_PLANET  ! physical surface (Earth: 6371000, ..)
   select case (PLANET_TYPE)
   case (IPLANET_EARTH)
     ! Earth
     ! default PREM
-    ROCEAN = PREM_ROCEAN
+    ! radius of the planet for gravity calculation
+    RSURFACE = R_EARTH_ELLIPTICITY  ! physical surface (Earth: 6371000, ..)
+    ROCEAN = ROCEAN_ELLIPTICITY
     RMIDDLE_CRUST = PREM_RMIDDLE_CRUST
     RMOHO = PREM_RMOHO
     R80  = PREM_R80
@@ -111,6 +112,7 @@
     call get_model_Sohl_radii(SOHL_RMOHO,SOHL_R80,SOHL_R220,SOHL_R400,SOHL_R600,SOHL_R670, &
                               SOHL_R771,SOHL_RTOPDDOUBLEPRIME,SOHL_RCMB)
     ! sets radii for density integration
+    RSURFACE = R_PLANET
     ROCEAN = SOHL_ROCEAN
     RMIDDLE_CRUST = SOHL_RMIDDLE_CRUST
     RMOHO = SOHL_RMOHO
@@ -127,6 +129,7 @@
   case (IPLANET_MOON)
     ! Moon
     ! default VPREMOON
+    RSURFACE = R_PLANET
     ROCEAN = VPREMOON_ROCEAN
     RMIDDLE_CRUST = VPREMOON_RMIDDLE_CRUST
     RMOHO = VPREMOON_RMOHO
@@ -145,18 +148,18 @@
   end select
 
   ! non-dimensionalize
-  r_icb = RICB/RSURFACE
-  r_cmb = RCMB/RSURFACE
-  r_topddoubleprime = RTOPDDOUBLEPRIME/RSURFACE
-  r_771 = R771/RSURFACE
-  r_670 = R670/RSURFACE
-  r_600 = R600/RSURFACE
-  r_400 = R400/RSURFACE
-  r_220 = R220/RSURFACE
-  r_80 = R80/RSURFACE
-  r_moho = RMOHO/RSURFACE
-  r_middle_crust = RMIDDLE_CRUST/RSURFACE
-  r_ocean = ROCEAN/RSURFACE
+  r_icb = RICB / RSURFACE
+  r_cmb = RCMB / RSURFACE
+  r_topddoubleprime = RTOPDDOUBLEPRIME / RSURFACE
+  r_771 = R771 / RSURFACE
+  r_670 = R670 / RSURFACE
+  r_600 = R600 / RSURFACE
+  r_400 = R400 / RSURFACE
+  r_220 = R220 / RSURFACE
+  r_80 = R80 / RSURFACE
+  r_moho = RMOHO / RSURFACE
+  r_middle_crust = RMIDDLE_CRUST / RSURFACE
+  r_ocean = ROCEAN / RSURFACE
   r_0 = 1.d0
 
   ! sets sampling points in different layers
@@ -256,16 +259,16 @@
   k(1) = 0.0d0
 
   do i = 2,NR_DENSITY
-    call intgrl(i_rho,r,1,i,rho,s1,s2,s3)
+    call intgrl(integral_rho,r,1,i,rho,s1,s2,s3)
 
 ! Radau approximation of Clairaut's equation for first-order terms of ellipticity, see e.g. Jeffreys H.,
 ! The figures of rotating planets, Mon. Not. R. astr. Soc., vol. 113, p. 97-105 (1953).
 ! The Radau approximation is mentioned on page 97.
 ! For more details see Section 14.1.2 in Dahlen and Tromp (1998)
 ! (see also in file ellipticity_equations_from_Dahlen_Tromp_1998.pdf in the "doc" directory of the code).
-    call intgrl(i_radau,r,1,i,radau,s1,s2,s3)
+    call intgrl(integral_radau,r,1,i,radau,s1,s2,s3)
 
-    z = (2.0d0/3.0d0)*i_radau/(i_rho*r(i)*r(i))
+    z = (2.0d0/3.0d0) * integral_radau / (integral_rho*r(i)*r(i))
 
     ! this comes from equation (14.19) in Dahlen and Tromp (1998)
     eta(i) = (25.0d0/4.0d0)*((1.0d0-(3.0d0/2.0d0)*z)**2.0d0)-1.0d0
@@ -278,7 +281,7 @@
   ! non-dimensionalized value
   bom = bom/sqrt(PI*GRAV*RHOAV)
 
-  g_a = 4.0d0*i_rho
+  g_a = 4.0d0 * integral_rho
   ! this is the equation right above (14.21) in Dahlen and Tromp (1998)
   epsilonval(NR_DENSITY) = (5.0d0/2.d0)*(bom**2.0d0)*R_UNIT_SPHERE / (g_a * (eta(NR_DENSITY)+2.0d0))
 

@@ -104,12 +104,12 @@
   allocate(temp_store_rho_inv(NGLLX,NGLLY,NGLLZ,nspec),stat=ier)
   if (ier /= 0) stop 'Error allocating temp rho_inv array'
 
-  ! this might have issues when rho is zero in ficticious inner core elements:
+  ! this might have issues when rho is zero in fictitious inner core elements:
   !temp_store_rho(:,:,:,:) = rhostore(:,:,:,:) * scaleval2
   !temp_store_vp(:,:,:,:) = sqrt( (kappavstore + 4.0_CUSTOM_REAL * muvstore/3.00_CUSTOM_REAL)/rhostore ) * scaleval1
   !temp_store_vs(:,:,:,:) = sqrt( muvstore/rhostore ) * scaleval1
   !
-  ! takes inverse of rho, avoiding zero values in ficticious elements:
+  ! takes inverse of rho, avoiding zero values in fictitious elements:
   temp_store_rho_inv(:,:,:,:) = rhostore(:,:,:,:)
   where(temp_store_rho_inv(:,:,:,:) <= 0.0_CUSTOM_REAL) temp_store_rho_inv = 1.0_CUSTOM_REAL
   temp_store_rho_inv = 1.0_CUSTOM_REAL / temp_store_rho_inv

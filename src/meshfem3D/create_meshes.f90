@@ -78,6 +78,13 @@
       write(IMAIN,*) 'Regional mesh cutoff:'
       write(IMAIN,*) '  cut-off depth          = ',REGIONAL_MESH_CUTOFF_DEPTH,'(km)'
       write(IMAIN,*)
+      if (USE_LOCAL_MESH) then
+        write(IMAIN,*) '  using local mesh layout'
+        write(IMAIN,*) '  number of layers in crust  = ',LOCAL_MESH_NUMBER_OF_LAYERS_CRUST
+        write(IMAIN,*) '  number of layers in mantle = ',LOCAL_MESH_NUMBER_OF_LAYERS_MANTLE
+        write(IMAIN,*) '  number of doubling layers  = ',NDOUBLINGS
+        write(IMAIN,*)
+      endif
     endif
     write(IMAIN,*)
     call flush_IMAIN()

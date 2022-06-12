@@ -270,6 +270,7 @@
   call write_profile_setup()
 
 ! < this part is from create_regions_mesh -> initialize_layers()
+  ! see also: call define_all_layers_number_and_offset(NUMBER_OF_MESH_LAYERS,idummy)
   if (ONE_CRUST) then
     NUMBER_OF_MESH_LAYERS = MAX_NUMBER_OF_MESH_LAYERS - 1
   else

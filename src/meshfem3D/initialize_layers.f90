@@ -26,16 +26,15 @@
 !=====================================================================
 
   subroutine initialize_layers(NEX_PER_PROC_ETA,nex_eta_moho,RMOHO,R400,R670,r_moho,r_400,r_670, &
-                               ONE_CRUST,NUMBER_OF_MESH_LAYERS,layer_shift, &
+                               NUMBER_OF_MESH_LAYERS, &
                                iregion_code,ifirst_region,ilast_region, &
                                first_layer_aniso,last_layer_aniso)
 
 ! create the different regions of the mesh
 
-  use constants, only: myrank,ADD_4TH_DOUBLING, &
-    IREGION_CRUST_MANTLE,IREGION_INNER_CORE,IREGION_OUTER_CORE,MAX_NUMBER_OF_MESH_LAYERS
+  use constants, only: myrank,IREGION_CRUST_MANTLE,IREGION_INNER_CORE,IREGION_OUTER_CORE
 
-  use shared_parameters, only: R_PLANET
+  use shared_parameters, only: R_PLANET,ONE_CRUST
 
   implicit none
 
@@ -44,33 +43,26 @@
   double precision,intent(in) :: RMOHO,R400,R670
   double precision,intent(out) :: r_moho,r_400,r_670
 
-  logical,intent(in) :: ONE_CRUST
-  integer,intent(out) :: NUMBER_OF_MESH_LAYERS,layer_shift
+  integer,intent(out) :: NUMBER_OF_MESH_LAYERS
 
   ! code for the four regions of the mesh
   integer,intent(in) :: iregion_code
   integer,intent(out) :: ifirst_region,ilast_region
   integer,intent(out) :: first_layer_aniso,last_layer_aniso
 
+  ! local parameters
+  integer :: layer_offset
 
-! sets number of layers
-  if (ONE_CRUST) then
-    NUMBER_OF_MESH_LAYERS = MAX_NUMBER_OF_MESH_LAYERS - 1
-    layer_shift = 0
-  else
-    NUMBER_OF_MESH_LAYERS = MAX_NUMBER_OF_MESH_LAYERS
-    layer_shift = 1
-  endif
-
-  if (.not. ADD_4TH_DOUBLING) NUMBER_OF_MESH_LAYERS = NUMBER_OF_MESH_LAYERS - 1
+  ! sets number of layers
+  call define_all_layers_number_and_offset(NUMBER_OF_MESH_LAYERS,layer_offset)
 
   ! define the first and last layers that define this region
   if (iregion_code == IREGION_CRUST_MANTLE) then
     ifirst_region = 1
-    ilast_region = 10 + layer_shift
+    ilast_region = 10 + layer_offset
 
   else if (iregion_code == IREGION_OUTER_CORE) then
-    ifirst_region = 11 + layer_shift
+    ifirst_region = 11 + layer_offset
     ilast_region = NUMBER_OF_MESH_LAYERS - 1
 
   else if (iregion_code == IREGION_INNER_CORE) then

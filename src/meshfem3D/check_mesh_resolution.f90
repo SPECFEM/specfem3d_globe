@@ -843,7 +843,7 @@
         call get_eigenvalues_sym(A,e1,e2,e3)
 
         ! smallest/largest eigenvalue of J ( eig(A) = eig(J) * eig(J^t) = eig(J)**2 )
-        if (e3 <= 0.d0) stop "Invalid negative smallest eigenvalue"
+        if (e3 <= 0.d0) stop "Invalid negative smallest eigenvalue in check_mesh_resolution"
         e1 = sqrt(e1)
         e3 = sqrt(e3)
 
@@ -892,12 +892,13 @@
   double precision,dimension(3,3), parameter :: Id = reshape((/1,0,0, 0,1,0, 0,0,1/),(/3,3/))
   double precision,parameter :: ONE_THIRD = 1.d0 / 3.d0
   double precision,parameter :: PI = 3.141592653589793d0
-  double precision,parameter :: TOL_ZERO = 1.d-30, TOL_EIG = 1.d-5
+  double precision,parameter :: TOL_ZERO = 1.d-30
+  double precision,parameter :: TOL_EIG = 6.d-5  ! eigenvalue tolerance (for ocean prem with R_PLANET_KM = 6368, tolerance is ~ 5.3e-5)
 
   ! check symmetry
   if (abs(A(1,2) - A(2,1)) > TOL_ZERO .or. abs(A(1,3) - A(3,1)) > TOL_ZERO .or. abs(A(2,3) - A(3,2)) > TOL_ZERO) then
     print *,"Error non-symmetric input matrix A: ",A(:,:)
-    stop 'invalid non-symmetric matrix A'
+    stop 'invalid non-symmetric matrix A in check_mesh_resolution'
   endif
 
   ! det(A)
@@ -908,7 +909,7 @@
   ! checks
   if (detA <= 0.d0) then
     print *,"Error negative determinant matrix A: ",detA,'matrix',A(:,:)
-    stop "invalid input matrix A has negative determinant"
+    stop "invalid input matrix A has negative determinant in check_mesh_resolution"
   endif
 
   ! power in off-diagonal entries
@@ -973,7 +974,7 @@
   if (eig3 == 0.d0) stop 'Invalid zero eigenvalue'
   if (abs(detA - eig1 * eig2 * eig3)/detA > TOL_EIG) then
     print *,'invalid inaccurate eigenvalues:',eig1*eig2*eig3,'instead of ',detA
-    stop 'Invalid inaccurate eigenvalues'
+    stop 'Invalid inaccurate eigenvalues in check_mesh_resolution'
   endif
 
   end subroutine get_eigenvalues_sym

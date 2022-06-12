@@ -358,6 +358,7 @@
 !
 ! routine returns: rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu
 
+  use shared_parameters, only: REGIONAL_MESH_CUTOFF
   use meshfem3D_models_par
 
   implicit none
@@ -371,6 +372,16 @@
 
   ! local parameters
   double precision :: drhodr,vp,vs
+  logical :: check_doubling_flag
+
+  ! initializes
+  if (REGIONAL_MESH_CUTOFF) then
+    ! no need to check doubling flags
+    check_doubling_flag = .false.
+  else
+    ! check if mesh doubling flags and layering are consistent
+    check_doubling_flag = .true.
+  endif
 
 !---
 !
@@ -386,7 +397,7 @@
       if (TRANSVERSE_ISOTROPY) then
         ! default PREM:
         !   gets anisotropic PREM parameters, with radial anisotropic extension (from moho to surface for crustal model)
-        call model_prem_aniso(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu,idoubling,CRUSTAL)
+        call model_prem_aniso(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu,idoubling,CRUSTAL,check_doubling_flag)
 
         ! calculates isotropic values
         vp = sqrt(((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
@@ -408,13 +419,13 @@
         !case (THREE_D_MODEL_SGLOBE,THREE_D_MODEL_SGLOBE_ISO)
         !  ! gets anisotropic PREM parameters, with isotropic extension (from moho to surface for crustal model)
         !  call model_prem_aniso_extended_isotropic(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu, &
-        !                                           idoubling,CRUSTAL)
+        !                                           idoubling,CRUSTAL,check_doubling_flag)
         !
         ! eventually also Ritsema models, check...
         !case (THREE_D_MODEL_S20RTS,THREE_D_MODEL_S40RTS)
         !  ! gets anisotropic PREM parameters, with isotropic extension (from moho to surface for crustal model)
         !  call model_prem_aniso_extended_isotropic(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu, &
-        !                                           idoubling,CRUSTAL)
+        !                                           idoubling,CRUSTAL,check_doubling_flag)
         !
         !case default
         !  continue
@@ -422,7 +433,7 @@
 
       else
         ! isotropic PREM model
-        call model_prem_iso(r_prem,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL,.true.)
+        call model_prem_iso(r_prem,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL,check_doubling_flag)
         vpv = vp
         vph = vp
         vsv = vs
@@ -476,7 +487,7 @@
     case (REFERENCE_MODEL_IASP91)
       ! IASP91 (by Kennett & Engdahl) - pure isotropic model, used in 1D model mode only
       call model_iasp91(r_prem,rho,vp,vs,Qkappa,Qmu,idoubling, &
-                        ONE_CRUST,.true.,RICB,RCMB,RTOPDDOUBLEPRIME, &
+                        ONE_CRUST,check_doubling_flag,RICB,RCMB,RTOPDDOUBLEPRIME, &
                         R771,R670,R400,R220,R120,RMOHO,RMIDDLE_CRUST)
       vpv = vp
       vph = vp
@@ -487,7 +498,7 @@
     case (REFERENCE_MODEL_JP1D)
       !JP1D (by Zhao et al.) - pure isotropic model, used also as background for 3D models
       call model_jp1d(r_prem,rho,vp,vs,Qkappa,Qmu,idoubling, &
-                      .true.,RICB,RCMB,RTOPDDOUBLEPRIME, &
+                      check_doubling_flag,RICB,RCMB,RTOPDDOUBLEPRIME, &
                       R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST)
       vpv = vp
       vph = vp
@@ -516,7 +527,7 @@
     ! Mars 1D models
     case (REFERENCE_MODEL_SOHL)
       ! Mars
-      call model_Sohl(r_prem,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL,.true.)
+      call model_Sohl(r_prem,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL,check_doubling_flag)
       vpv = vp
       vph = vp
       vsv = vs

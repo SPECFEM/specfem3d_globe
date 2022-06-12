@@ -319,6 +319,28 @@
   call read_value_integer(USER_NSTEP, 'NSTEP', ier); ier = 0
   ! no error checking, continue if not available
 
+  ! regional local mesh parameters
+  if (REGIONAL_MESH_CUTOFF) then
+    ! flag to switch on local mesh
+    call read_value_logical(USE_LOCAL_MESH, 'USE_LOCAL_MESH', ier); ier = 0
+
+    ! total number of mesh layers for local mesh
+    ! (moho used will be the fictitious moho depth, i.e., at 40 or 35 km depth depending on EARTH_RMOHO_STRETCH_ADJUSTMENT)
+    call read_value_integer(LOCAL_MESH_NUMBER_OF_LAYERS_CRUST, 'NUMBER_OF_LAYERS_CRUST', ier); ier = 0
+    call read_value_integer(LOCAL_MESH_NUMBER_OF_LAYERS_MANTLE, 'NUMBER_OF_LAYERS_MANTLE', ier); ier = 0
+
+    ! number of doubling layers
+    call read_value_integer(NDOUBLINGS, 'NDOUBLINGS', ier); ier = 0
+    ! position of doubling layer (counted from top down)
+    call read_value_integer(NZ_DOUBLING_1, 'NZ_DOUBLING_1', ier); ier = 0
+    call read_value_integer(NZ_DOUBLING_2, 'NZ_DOUBLING_2', ier); ier = 0
+    call read_value_integer(NZ_DOUBLING_3, 'NZ_DOUBLING_3', ier); ier = 0
+    call read_value_integer(NZ_DOUBLING_4, 'NZ_DOUBLING_4', ier); ier = 0
+    call read_value_integer(NZ_DOUBLING_5, 'NZ_DOUBLING_5', ier); ier = 0
+
+    ! no error checking, continue if not available
+  endif
+
   ! closes parameter file
   call close_parameter_file()
 

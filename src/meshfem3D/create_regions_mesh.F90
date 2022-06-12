@@ -942,13 +942,12 @@
     ner_mesh_layers,r_top,r_bottom, &
     CASE_3D
 
-  use meshfem3D_models_par, only: &
-    ONE_CRUST,REGIONAL_MOHO_MESH
+  use meshfem3D_models_par, only: REGIONAL_MOHO_MESH
 
   use regions_mesh_par
   use regions_mesh_par2
 
-  use shared_parameters, only: REGIONAL_MESH_CUTOFF
+  use shared_parameters, only: REGIONAL_MESH_CUTOFF,USE_LOCAL_MESH
 
   implicit none
 
@@ -993,7 +992,7 @@
 
   ! initializes element layers
   call initialize_layers(NEX_PER_PROC_ETA,nex_eta_moho,RMOHO,R400,R670,r_moho,r_400,r_670, &
-                         ONE_CRUST,NUMBER_OF_MESH_LAYERS,layer_shift, &
+                         NUMBER_OF_MESH_LAYERS, &
                          iregion_code,ifirst_region,ilast_region, &
                          first_layer_aniso,last_layer_aniso)
 
@@ -1018,15 +1017,17 @@
   if (ier /= 0) stop 'Error in allocate 18'
   perm_layer = (/ (i, i=ilast_region,ifirst_region,-1) /)
 
-  if (iregion_code == IREGION_CRUST_MANTLE) then
+  if (iregion_code == IREGION_CRUST_MANTLE .and. (.not. REGIONAL_MESH_CUTOFF)) then
     ! sets start of anisotropic layering after the first/last layer aniso
     if ((ilast_region-ifirst_region) >= 3) then
       cpt = 3
     else
       cpt = 1
     endif
-    perm_layer(1) = first_layer_aniso
-    perm_layer(2) = last_layer_aniso
+    if ((ilast_region-ifirst_region) >= 2) then
+      perm_layer(1) = first_layer_aniso
+      perm_layer(2) = last_layer_aniso
+    endif
     do i = ilast_region,ifirst_region,-1
       if (i /= first_layer_aniso .and. i /= last_layer_aniso) then
         perm_layer(cpt) = i
@@ -1034,6 +1035,8 @@
       endif
     enddo
   endif
+  ! debug
+  !print *,'debug: create regions mesh: perm_layer ifirst/ilast',ifirst_region,ilast_region,'perm_layer',perm_layer(:)
 
   ! crustal layer stretching: element layer's top and bottom radii will get stretched when in crust
   ! (number of element layers in crust can vary for different resolutions and 1chunk simulations)
@@ -1041,29 +1044,47 @@
   if (ier /= 0) stop 'Error in allocate 19'
   stretch_tab(:,:) = 0.d0
 
-  if (CASE_3D .and. iregion_code == IREGION_CRUST_MANTLE .and. .not. SUPPRESS_CRUSTAL_MESH) then
-    ! stretching function determines top and bottom of each element layer in the
-    ! crust region (between r_top(1) and r_bottom(1)), where ner_mesh_layers(1) is the
-    ! number of element layers in this crust region
+  ! initializes stretch_tab - in case it would be used for USE_LOCAL_MESH
+  if (REGIONAL_MESH_CUTOFF .and. USE_LOCAL_MESH) then
+    ! stretch_tab array uses indices index_radius & index_layer :
+    !   stretch_tab( index_radius (1=top,2=bottom) , index_layer (1=first layer, 2=second layer,..) )
+    do i = 1,ner_mesh_layers(1)
+      ! top
+      if (i == 1) then
+        ! first layer
+        stretch_tab(1,i) = r_top(1)
+      else
+        ! top is bottom from layer above
+        stretch_tab(1,i) = stretch_tab(2,i-1)
+      endif
+      ! bottom
+      stretch_tab(2,i) = stretch_tab(1,i) - (r_top(1) - r_bottom(1))/ner_mesh_layers(1)
+    enddo
+  else
+    if (CASE_3D .and. iregion_code == IREGION_CRUST_MANTLE .and. .not. SUPPRESS_CRUSTAL_MESH) then
+      ! stretching function determines top and bottom of each element layer in the
+      ! crust region (between r_top(1) and r_bottom(1)), where ner_mesh_layers(1) is the
+      ! number of element layers in this crust region
 
-    ! differentiate between regional meshes or global meshes
-    if (REGIONAL_MOHO_MESH) then
-      call stretching_function_regional(r_top(1),r_bottom(1),ner_mesh_layers(1),stretch_tab)
-    else
-      call stretching_function(r_top(1),r_bottom(1),ner_mesh_layers(1),stretch_tab)
+      ! differentiate between regional meshes or global meshes
+      if (REGIONAL_MOHO_MESH) then
+        call stretching_function_regional(r_top(1),r_bottom(1),ner_mesh_layers(1),stretch_tab)
+      else
+        call stretching_function(r_top(1),r_bottom(1),ner_mesh_layers(1),stretch_tab)
+      endif
+
+      ! RMIDDLE_CRUST so far is only used for 1D - models with two layers in the crust
+      ! (i.e. ONE_CRUST is set to .false.), those models do not use CASE_3D
+
+      ! all 3D models use this stretching function to honor a 3D crustal model
+      ! for those models, we set RMIDDLE_CRUST to the bottom of the first element layer
+      ! this value will be used in moho_stretching.f90 to decide whether or not elements
+      ! have to be stretched under oceanic crust.
+      !
+      ! note: stretch_tab uses (dimensionalized) radii from r_top and r_bottom
+      !(with stretch_tab( index_radius(1=top,2=bottom), index_layer( 1=first layer, 2=second layer, 3= ...) )
+      RMIDDLE_CRUST = stretch_tab(2,1)
     endif
-
-    ! RMIDDLE_CRUST so far is only used for 1D - models with two layers in the crust
-    ! (i.e. ONE_CRUST is set to .false.), those models do not use CASE_3D
-
-    ! all 3D models use this stretching function to honor a 3D crustal model
-    ! for those models, we set RMIDDLE_CRUST to the bottom of the first element layer
-    ! this value will be used in moho_stretching.f90 to decide whether or not elements
-    ! have to be stretched under oceanic crust.
-    !
-    ! note: stretch_tab uses (dimensionalized) radii from r_top and r_bottom
-    !(with stretch_tab( index_radius(1=top,2=bottom), index_layer( 1=first layer, 2=second layer, 3= ...) )
-    RMIDDLE_CRUST = stretch_tab(2,1)
   endif
 
   end subroutine crm_setup_layers

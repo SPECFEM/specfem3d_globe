@@ -106,7 +106,7 @@
 ! stretch_tab array uses indices index_radius & index_layer :
 !   stretch_tab( index_radius (1=top,2=bottom) , index_layer (1=first layer, 2=second layer,..) )
 
-  use shared_parameters, only: PLANET_TYPE,IPLANET_MARS
+  use shared_parameters, only: PLANET_TYPE,IPLANET_MARS,IPLANET_MOON,R_PLANET
 
   implicit none
 
@@ -158,26 +158,39 @@
   if (ner /= 3 .and. ner /= 5) stop 'Error regional stretching function: ner value'
 
   ! radii for crustal layering
-  if (PLANET_TYPE == IPLANET_MARS) then
+  select case(PLANET_TYPE)
+  case (IPLANET_MARS)
     ! Mars
-    ! surface radius 3390000.0
+    ! surface radius R_PLANET == 3390000.0
     if (ner == 3) then
-      R15 = 3370000.d0  ! d = 20km ; 3353 second layer top  doesn't work well, give negative Jacobian
-      R35 = 3307000.d0  ! d = 83km
+      R15 = R_PLANET - 20.d0 * 1000.d0  ! d = 20km ; 3353 second layer top  doesn't work well, give negative Jacobian
+      R35 = R_PLANET - 83.d0 * 1000.d0  ! d = 83km
     else
-      R15 = 3375000.d0  ! d = 15km
-      R35 = 3355000.d0  ! d = 35km
+      R15 = R_PLANET - 15.d0 * 1000.d0  ! d = 15km
+      R35 = R_PLANET - 35.d0 * 1000.d0  ! d = 35km
     endif
-    R55 = 3335000.d0    ! d = 55km
-    R80 = 3310000.d0    ! d = 80km
-  else
+    R55 = R_PLANET - 55.d0 * 1000.d0    ! d = 55km
+    R80 = R_PLANET - 80.d0 * 1000.d0    ! d = 80km
+  case (IPLANET_MOON)
+    ! Moon
+    ! surface radius R_PLANET == 1737100.d0
+    if (ner == 3) then
+      R15 = R_PLANET - 20.d0 * 1000.d0  ! d = 20km
+      R35 = R_PLANET - 80.d0 * 1000.d0  ! d = 80km
+    else
+      R15 = R_PLANET - 15.d0 * 1000.d0  ! d = 15km
+      R35 = R_PLANET - 35.d0 * 1000.d0  ! d = 35km
+    endif
+    R55 = R_PLANET - 55.d0 * 1000.d0    ! d = 55km
+    R80 = R_PLANET - 80.d0 * 1000.d0    ! d = 80km
+  case default
     ! Earth
     ! surface radius 6371000.0
     R15 = 6356000.d0    ! d = 15km depth
     R35 = 6336000.d0    ! d = 35km
     R55 = 6326000.d0    ! d = 45km
     R80 = 6306000.d0    ! d = 65km
-  endif
+  end select
 
   if (ner == 3) then
     stretch_tab(1,1) = r_top

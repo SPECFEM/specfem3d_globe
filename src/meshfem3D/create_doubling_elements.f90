@@ -47,7 +47,6 @@
 
   use constants, only: myrank,CUSTOM_REAL,IMAIN, &
     NGLLX,NGLLY,NGLLZ,NGNOD,NDIM,NGNOD2D,NDIM2D,NGNOD_EIGHT_CORNERS, &
-    MAX_NUMBER_OF_MESH_LAYERS, &
     NGLOB_DOUBLING_SUPERBRICK,NSPEC_DOUBLING_SUPERBRICK,NSPEC_DOUBLING_BASICBRICK,NSPEC_SUPERBRICK_1L, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE, &
     SAVE_BOUNDARY_MESH
@@ -187,7 +186,7 @@
                                                 * NEX_PER_PROC_ETA/(step_mult*ratio_sampling_array(ilayer)))
         map_ispec(ielem) = ispec0 + ielem
         ! check
-        if (map_ispec(ielem) > nspec) call exit_MPI(myrank,'ispec greater than nspec in mesh creation')
+        if (map_ispec(ielem) > nspec) call exit_MPI(myrank,'ispec greater than nspec in mesh creation for doubling element')
       enddo
     enddo
   enddo

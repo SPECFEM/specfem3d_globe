@@ -44,14 +44,14 @@
   ! given a normalized radius x, gives the non-dimensionalized density rho,
   ! speeds vp and vs, and the quality factors Qkappa and Qmu
 
-  logical check_doubling_flag
-  integer idoubling
+  logical :: check_doubling_flag
+  integer :: idoubling
 
-  double precision x,rho,vp,vs,Qkappa,Qmu,RICB,RCMB,RTOPDDOUBLEPRIME, &
+  double precision :: x,rho,vp,vs,Qkappa,Qmu,RICB,RCMB,RTOPDDOUBLEPRIME, &
       R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST
 
-  double precision r
-  double precision scaleval
+  double precision :: r
+  double precision :: scaleval
 
   ! compute real physical radius in meters
   r = x * R_PLANET
