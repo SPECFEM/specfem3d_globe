@@ -449,7 +449,7 @@
       memory_size = memory_size + NGLL3 * NSOURCES * NDIM * dble(CUSTOM_REAL)
     endif
     ! d_islice_selected_source,d_ispec_selected_source
-    memory_size = memory_size + 2.0 * NSOURCES * dble(SIZE_INTEGER)
+    memory_size = memory_size + 2.d0 * NSOURCES * dble(SIZE_INTEGER)
 
     ! receivers
     !d_number_receiver_global
@@ -481,9 +481,9 @@
       ! d_gravity_pre_store_inner_core
       memory_size = memory_size + NDIM * NGLOB_INNER_CORE * dble(CUSTOM_REAL)
       ! d_gravity_H_crust_mantle
-      memory_size = memory_size + 6 * NGLOB_CRUST_MANTLE * dble(CUSTOM_REAL)
+      memory_size = memory_size + 6.d0 * NGLOB_CRUST_MANTLE * dble(CUSTOM_REAL)
       ! d_gravity_H_inner_core
-      memory_size = memory_size + 6 * NGLOB_INNER_CORE * dble(CUSTOM_REAL)
+      memory_size = memory_size + 6.d0 * NGLOB_INNER_CORE * dble(CUSTOM_REAL)
     endif
 
     ! attenuation
@@ -599,7 +599,7 @@
       memory_size = memory_size + 5.d0 * NGLL3_PADDED * NSPEC_INNER_CORE * dble(CUSTOM_REAL)
     endif
     ! d_phase_ispec_inner_crust_mantle
-    memory_size = memory_size + 2 * num_phase_ispec_crust_mantle * dble(SIZE_INTEGER)
+    memory_size = memory_size + 2.d0 * num_phase_ispec_crust_mantle * dble(SIZE_INTEGER)
     ! d_displ,..
     memory_size = memory_size + 3.d0 * NDIM * NGLOB_AB * dble(CUSTOM_REAL)
     ! crust/mantle
