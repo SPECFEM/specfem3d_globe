@@ -942,7 +942,7 @@
   integer :: ispec,i,it,ier
 
   ! local parameters
-  integer :: len_bytes,offset
+  integer(kind=8) :: len_bytes,offset
   character(len=MAX_STRING_LEN) :: var_name
   character(len=16) :: str1,str_endian
   character(len=12) :: str2,str3
@@ -1001,7 +1001,7 @@
   !write(IOUT_VTK) '<DataArray type="Float32" Name="Points" NumberOfComponents="3" format="binary" encoding="raw">' // LF
   !! number of bytes to follow
   !! see format description: https://www.vtk.org/Wiki/VTK_XML_Formats#Uncompressed_Data
-  !len_bytes = 3 * nglob * SIZE_REAL
+  !len_bytes = 3 * nglob * int(SIZE_REAL,kind=8)
   !write(IOUT_VTK) len_bytes
   !do i = 1,nglob
   !  write(IOUT_VTK) real(total_dat_xyz(1,i),kind=4),real(total_dat_xyz(2,i),kind=4),real(total_dat_xyz(3,i),kind=4)
@@ -1013,9 +1013,9 @@
                    // str3 // '"/>' // LF
   ! updates offset
   ! array length in bytes
-  len_bytes = 3 * nglob * SIZE_REAL
-  ! new offset: data array size (len_bytes) + 4 bytes for length specifier at the beginning
-  offset = offset + len_bytes + 4
+  len_bytes = 3 * nglob * int(SIZE_REAL,kind=8)
+  ! new offset: data array size (len_bytes) + 8 bytes for length specifier at the beginning
+  offset = offset + len_bytes + 8
   write(str3,'(i12)') offset
   write(IOUT_VTK) '</Points>'//LF
 
@@ -1024,22 +1024,22 @@
   ! connectivity
   write(IOUT_VTK) '<DataArray type="Int32" Name="connectivity" format="appended" offset="' // str3 // '"/>' // LF
   ! updates offset
-  len_bytes = 8 * nspec * SIZE_INTEGER
-  offset = offset + len_bytes + 4
+  len_bytes = 8 * nspec * int(SIZE_INTEGER,kind=8)
+  offset = offset + len_bytes + 8
   write(str3,'(i12)') offset
 
   ! offsets
   write(IOUT_VTK) '<DataArray type="Int32" Name="offsets" format="appended" offset="' // str3 // '"/>' // LF
   ! updates offset
-  len_bytes = nspec * SIZE_INTEGER
-  offset = offset + len_bytes + 4
+  len_bytes = nspec * int(SIZE_INTEGER,kind=8)
+  offset = offset + len_bytes + 8
   write(str3,'(i12)') offset
 
   ! type: hexahedrons
   write(IOUT_VTK) '<DataArray type="Int32" Name="types" format="appended" offset="' // str3 // '"/>' // LF
   ! updates offset
-  len_bytes = nspec * SIZE_INTEGER
-  offset = offset + len_bytes + 4
+  len_bytes = nspec * int(SIZE_INTEGER,kind=8)
+  offset = offset + len_bytes + 8
   write(str3,'(i12)') offset
   write(IOUT_VTK) '</Cells>' // LF
 
@@ -1061,7 +1061,7 @@
   write(IOUT_VTK) '<AppendedData encoding="raw">' // LF
   write(IOUT_VTK) '_'
   ! points
-  len_bytes = 3 * nglob * SIZE_REAL
+  len_bytes = 3 * nglob * int(SIZE_REAL,kind=8)
   write(IOUT_VTK) len_bytes
   do i = 1,nglob
     write(IOUT_VTK) real(xstore_dummy(i),kind=4),real(ystore_dummy(i),kind=4),real(zstore_dummy(i),kind=4)
@@ -1069,7 +1069,7 @@
   ! cells
   ! connectivity
   ! number of bytes to follow
-  len_bytes = 8 * nspec * SIZE_INTEGER
+  len_bytes = 8 * nspec * int(SIZE_INTEGER,kind=8)
   write(IOUT_VTK) len_bytes
   ! note: indices for VTK start at 0
   do ispec = 1,nspec
@@ -1078,20 +1078,20 @@
   enddo
   ! offsets
   ! number of bytes to follow
-  len_bytes = nspec * SIZE_INTEGER
+  len_bytes = nspec * int(SIZE_INTEGER,kind=8)
   write(IOUT_VTK) len_bytes
   ! offsets (8 points each)
   write(IOUT_VTK) ((it*8),it = 1,nspec)
   ! types
   ! number of bytes to follow
-  len_bytes = nspec * SIZE_INTEGER
+  len_bytes = nspec * int(SIZE_INTEGER,kind=8)
   write(IOUT_VTK) len_bytes
   ! type for hex elements is 12
   write(IOUT_VTK) (12,it = 1,nspec)
 
   ! cell data values
   ! number of bytes to follow
-  len_bytes = nspec * SIZE_REAL
+  len_bytes = nspec * int(SIZE_REAL,kind=8)
   write(IOUT_VTK) len_bytes
   ! data values
   do ispec = 1,nspec
@@ -1614,7 +1614,7 @@
 
   ! local parameters
   integer :: i,it,ier
-  integer :: len_bytes,offset
+  integer(kind=8) :: len_bytes,offset
   character(len=16) :: str1,str_endian
   character(len=12) :: str2,str3
   character(len=1),parameter :: LF = achar(10) ! line feed character
@@ -1669,7 +1669,7 @@
   !write(IOUT_VTK) '<DataArray type="Float32" Name="Points" NumberOfComponents="3" format="binary" encoding="raw">' // LF
   !! number of bytes to follow
   !! see format description: https://www.vtk.org/Wiki/VTK_XML_Formats#Uncompressed_Data
-  !len_bytes = 3 * np * SIZE_REAL
+  !len_bytes = 3 * np * int(SIZE_REAL,kind=8)
   !write(IOUT_VTK) len_bytes
   !do i = 1,np
   !  write(IOUT_VTK) real(total_dat_xyz(1,i),kind=4),real(total_dat_xyz(2,i),kind=4),real(total_dat_xyz(3,i),kind=4)
@@ -1681,9 +1681,9 @@
                    // str3 // '"/>' // LF
   ! updates offset
   ! array length in bytes
-  len_bytes = 3 * np * SIZE_REAL
-  ! new offset: data array size (len_bytes) + 4 bytes for length specifier at the beginning
-  offset = offset + len_bytes + 4
+  len_bytes = 3 * np * int(SIZE_REAL,kind=8)
+  ! new offset: data array size (len_bytes) + 8 bytes for length specifier at the beginning
+  offset = offset + len_bytes + 8
   write(str3,'(i12)') offset
   write(IOUT_VTK) '</Points>'//LF
 
@@ -1692,22 +1692,22 @@
   ! connectivity
   write(IOUT_VTK) '<DataArray type="Int32" Name="connectivity" format="appended" offset="' // str3 // '"/>' // LF
   ! updates offset
-  len_bytes = 8 * ne * SIZE_INTEGER
-  offset = offset + len_bytes + 4
+  len_bytes = 8 * ne * int(SIZE_INTEGER,kind=8)
+  offset = offset + len_bytes + 8
   write(str3,'(i12)') offset
 
   ! offsets
   write(IOUT_VTK) '<DataArray type="Int32" Name="offsets" format="appended" offset="' // str3 // '"/>' // LF
   ! updates offset
-  len_bytes = ne * SIZE_INTEGER
-  offset = offset + len_bytes + 4
+  len_bytes = ne * int(SIZE_INTEGER,kind=8)
+  offset = offset + len_bytes + 8
   write(str3,'(i12)') offset
 
   ! type: hexahedrons
   write(IOUT_VTK) '<DataArray type="Int32" Name="types" format="appended" offset="' // str3 // '"/>' // LF
   ! updates offset
-  len_bytes = ne * SIZE_INTEGER
-  offset = offset + len_bytes + 4
+  len_bytes = ne * int(SIZE_INTEGER,kind=8)
+  offset = offset + len_bytes + 8
   write(str3,'(i12)') offset
   write(IOUT_VTK) '</Cells>' // LF
 
@@ -1718,8 +1718,8 @@
   write(IOUT_VTK) '<DataArray type="Float32" Name="' // trim(var_name) // '" format="appended" offset="' &
                   // str3 // '"/>' // LF
   ! updates offset
-  !len_bytes = np * SIZE_REAL
-  !offset = offset + len_bytes + 4
+  !len_bytes = np * int(SIZE_REAL,kind=8)
+  !offset = offset + len_bytes + 8
   !write(str3,'(i12)') offset
 
   write(IOUT_VTK) '</PointData>' // LF
@@ -1733,7 +1733,7 @@
   write(IOUT_VTK) '<AppendedData encoding="raw">' // LF
   write(IOUT_VTK) '_'
   ! points
-  len_bytes = 3 * np * SIZE_REAL
+  len_bytes = 3 * np * int(SIZE_REAL,kind=8)
   write(IOUT_VTK) len_bytes
   do i = 1,np
     write(IOUT_VTK) real(total_dat_xyz(1,i),kind=4),real(total_dat_xyz(2,i),kind=4),real(total_dat_xyz(3,i),kind=4)
@@ -1741,7 +1741,7 @@
   ! cells
   ! connectivity
   ! number of bytes to follow
-  len_bytes = 8 * ne * SIZE_INTEGER
+  len_bytes = 8 * ne * int(SIZE_INTEGER,kind=8)
   write(IOUT_VTK) len_bytes
   ! note: indices for VTK start at 0
   do i = 1,ne
@@ -1750,20 +1750,20 @@
   enddo
   ! offsets
   ! number of bytes to follow
-  len_bytes = ne * SIZE_INTEGER
+  len_bytes = ne * int(SIZE_INTEGER,kind=8)
   write(IOUT_VTK) len_bytes
   ! offsets (8 points each)
   write(IOUT_VTK) ((it*8),it = 1,ne)
   ! types
   ! number of bytes to follow
-  len_bytes = ne * SIZE_INTEGER
+  len_bytes = ne * int(SIZE_INTEGER,kind=8)
   write(IOUT_VTK) len_bytes
   ! type for hex elements is 12
   write(IOUT_VTK) (12,it = 1,ne)
 
   ! point data values
   ! number of bytes to follow
-  len_bytes = np * SIZE_REAL
+  len_bytes = np * int(SIZE_REAL,kind=8)
   write(IOUT_VTK) len_bytes
   ! data values
   do i = 1,np
@@ -1802,7 +1802,7 @@
 
   ! local parameters
   integer :: i,it,ier,itype
-  integer :: len_bytes,offset
+  integer(kind=8) :: len_bytes,offset
   character(len=16) :: str1,str_endian
   character(len=12) :: str2,str3
   character(len=1),parameter :: LF = achar(10) ! line feed character
@@ -1857,7 +1857,7 @@
   !write(IOUT_VTK) '<DataArray type="Float32" Name="Points" NumberOfComponents="3" format="binary" encoding="raw">' // LF
   !! number of bytes to follow
   !! see format description: https://www.vtk.org/Wiki/VTK_XML_Formats#Uncompressed_Data
-  !len_bytes = 3 * np * SIZE_REAL
+  !len_bytes = 3 * np * int(SIZE_REAL,kind=8)
   !write(IOUT_VTK) len_bytes
   !do i = 1,np
   !  write(IOUT_VTK) real(total_dat_xyz(1,i),kind=4),real(total_dat_xyz(2,i),kind=4),real(total_dat_xyz(3,i),kind=4)
@@ -1869,9 +1869,9 @@
                    // str3 // '"/>' // LF
   ! updates offset
   ! array length in bytes
-  len_bytes = 3 * np * SIZE_REAL
-  ! new offset: data array size (len_bytes) + 4 bytes for length specifier at the beginning
-  offset = offset + len_bytes + 4
+  len_bytes = 3 * np * int(SIZE_REAL,kind=8)
+  ! new offset: data array size (len_bytes) + 8 bytes for length specifier at the beginning
+  offset = offset + len_bytes + 8
   write(str3,'(i12)') offset
   write(IOUT_VTK) '</Points>'//LF
 
@@ -1880,22 +1880,22 @@
   ! connectivity
   write(IOUT_VTK) '<DataArray type="Int32" Name="connectivity" format="appended" offset="' // str3 // '"/>' // LF
   ! updates offset
-  len_bytes = 4 * ne * SIZE_INTEGER
-  offset = offset + len_bytes + 4
+  len_bytes = 4 * ne * int(SIZE_INTEGER,kind=8)
+  offset = offset + len_bytes + 8
   write(str3,'(i12)') offset
 
   ! offsets
   write(IOUT_VTK) '<DataArray type="Int32" Name="offsets" format="appended" offset="' // str3 // '"/>' // LF
   ! updates offset
-  len_bytes = ne * SIZE_INTEGER
-  offset = offset + len_bytes + 4
+  len_bytes = ne * int(SIZE_INTEGER,kind=8)
+  offset = offset + len_bytes + 8
   write(str3,'(i12)') offset
 
   ! type: quads
   write(IOUT_VTK) '<DataArray type="Int32" Name="types" format="appended" offset="' // str3 // '"/>' // LF
   ! updates offset
-  len_bytes = ne * SIZE_INTEGER
-  offset = offset + len_bytes + 4
+  len_bytes = ne * int(SIZE_INTEGER,kind=8)
+  offset = offset + len_bytes + 8
   write(str3,'(i12)') offset
   write(IOUT_VTK) '</Cells>' // LF
 
@@ -1906,8 +1906,8 @@
   write(IOUT_VTK) '<DataArray type="Float32" Name="' // trim(var_name) // '" format="appended" offset="' &
                   // str3 // '"/>' // LF
   ! updates offset
-  !len_bytes = np * SIZE_REAL
-  !offset = offset + len_bytes + 4
+  !len_bytes = np * int(SIZE_REAL,kind=8)
+  !offset = offset + len_bytes + 8
   !write(str3,'(i12)') offset
 
   write(IOUT_VTK) '</PointData>' // LF
@@ -1921,7 +1921,7 @@
   write(IOUT_VTK) '<AppendedData encoding="raw">' // LF
   write(IOUT_VTK) '_'
   ! points
-  len_bytes = 3 * np * SIZE_REAL
+  len_bytes = 3 * np * int(SIZE_REAL,kind=8)
   write(IOUT_VTK) len_bytes
   do i = 1,np
     write(IOUT_VTK) real(total_dat_xyz(1,i),kind=4),real(total_dat_xyz(2,i),kind=4),real(total_dat_xyz(3,i),kind=4)
@@ -1929,7 +1929,7 @@
   ! cells
   ! connectivity
   ! number of bytes to follow
-  len_bytes = 4 * ne * SIZE_INTEGER
+  len_bytes = 4 * ne * int(SIZE_INTEGER,kind=8)
   write(IOUT_VTK) len_bytes
   ! note: indices for VTK start at 0
   do i = 1,ne
@@ -1937,13 +1937,13 @@
   enddo
   ! offsets
   ! number of bytes to follow
-  len_bytes = ne * SIZE_INTEGER
+  len_bytes = ne * int(SIZE_INTEGER,kind=8)
   write(IOUT_VTK) len_bytes
   ! offsets (4 points each)
   write(IOUT_VTK) ((it*4),it = 1,ne)
   ! types
   ! number of bytes to follow
-  len_bytes = ne * SIZE_INTEGER
+  len_bytes = ne * int(SIZE_INTEGER,kind=8)
   write(IOUT_VTK) len_bytes
   ! type for quads elements is
   ! VTK_QUAD == 8 type, NGNOD2D == 4 corners only
@@ -1952,7 +1952,7 @@
 
   ! point data values
   ! number of bytes to follow
-  len_bytes = np * SIZE_REAL
+  len_bytes = np * int(SIZE_REAL,kind=8)
   write(IOUT_VTK) len_bytes
   ! data values
   do i = 1,np
@@ -2080,7 +2080,7 @@
 
   ! local parameters
   integer :: ispec,i,itype,ier
-  integer :: len_bytes,offset
+  integer(kind=8) :: len_bytes,offset
   character(len=16) :: str1,str_endian,var_name
   character(len=16) :: str2,str3
   character(len=1),parameter :: LF = achar(10) ! line feed character
@@ -2143,9 +2143,9 @@
                    // trim(adjustl(str3)) // '"/>' // LF
   ! updates offset
   ! array length in bytes
-  len_bytes = 3 * nglob * SIZE_REAL
-  ! new offset: data array size (len_bytes) + 4 bytes for length specifier at the beginning
-  offset = offset + len_bytes + 4
+  len_bytes = 3 * nglob * int(SIZE_REAL,kind=8)
+  ! new offset: data array size (len_bytes) + 8 bytes for length specifier at the beginning
+  offset = offset + len_bytes + 8
   write(str3,'(i16)') offset
   write(IOUT_VTK) '</Points>'//LF
 
@@ -2154,22 +2154,22 @@
   ! connectivity
   write(IOUT_VTK) '<DataArray type="Int32" Name="connectivity" format="appended" offset="' // trim(adjustl(str3)) // '"/>' // LF
   ! updates offset
-  len_bytes = 4 * nspec * SIZE_INTEGER
-  offset = offset + len_bytes + 4
+  len_bytes = 4 * nspec * int(SIZE_INTEGER,kind=8)
+  offset = offset + len_bytes + 8
   write(str3,'(i16)') offset
 
   ! offsets
   write(IOUT_VTK) '<DataArray type="Int32" Name="offsets" format="appended" offset="' // trim(adjustl(str3)) // '"/>' // LF
   ! updates offset
-  len_bytes = nspec * SIZE_INTEGER
-  offset = offset + len_bytes + 4
+  len_bytes = nspec * int(SIZE_INTEGER,kind=8)
+  offset = offset + len_bytes + 8
   write(str3,'(i16)') offset
 
   ! type: hexahedrons
   write(IOUT_VTK) '<DataArray type="Int32" Name="types" format="appended" offset="' // trim(adjustl(str3)) // '"/>' // LF
   ! updates offset
-  len_bytes = nspec * SIZE_INTEGER
-  offset = offset + len_bytes + 4
+  len_bytes = nspec * int(SIZE_INTEGER,kind=8)
+  offset = offset + len_bytes + 8
   write(str3,'(i16)') offset
   write(IOUT_VTK) '</Cells>' // LF
 
@@ -2191,14 +2191,14 @@
   write(IOUT_VTK) '<AppendedData encoding="raw">' // LF
   write(IOUT_VTK) '_'
   ! points
-  len_bytes = 3 * nglob * SIZE_REAL
+  len_bytes = 3 * nglob * int(SIZE_REAL,kind=8)
   write(IOUT_VTK) len_bytes
   do i = 1,nglob
     write(IOUT_VTK) real(xstore_dummy(i),kind=4),real(ystore_dummy(i),kind=4),real(zstore_dummy(i),kind=4)
   enddo
   ! cells
   ! number of bytes to follow
-  len_bytes = 4 * nspec * SIZE_INTEGER
+  len_bytes = 4 * nspec * int(SIZE_INTEGER,kind=8)
   write(IOUT_VTK) len_bytes
   ! note: indices for VTK start at 0
   do ispec = 1,nspec
@@ -2206,19 +2206,19 @@
   enddo
   ! offsets
   ! number of bytes to follow
-  len_bytes = nspec * SIZE_INTEGER
+  len_bytes = nspec * int(SIZE_INTEGER,kind=8)
   write(IOUT_VTK) len_bytes
   ! offsets (4 points each)
   write(IOUT_VTK) (i*4,i = 1,nspec)
   ! types
   ! number of bytes to follow
-  len_bytes = nspec * SIZE_INTEGER
+  len_bytes = nspec * int(SIZE_INTEGER,kind=8)
   write(IOUT_VTK) len_bytes
   ! type for quads
   write(IOUT_VTK) (itype,i = 1,nspec)
   ! point data values
   ! number of bytes to follow
-  len_bytes = nglob * SIZE_REAL
+  len_bytes = nglob * int(SIZE_REAL,kind=8)
   write(IOUT_VTK) len_bytes
   ! data values
   do i = 1,nglob
