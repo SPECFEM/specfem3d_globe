@@ -254,6 +254,17 @@
       call it_update_vtkwindow()
     endif
 
+    ! Transfer back the arrays from the GPU every x-th timestep
+    if (SAVE_GREEN_FUNCTIONS) then
+      if (mod(it, ceiling(dble(it_end)/10)) == 0) then 
+        if (GPU_MODE) then 
+          call it_transfer_from_GPU()
+          print *,'transfered stuff back from the GPU at', it
+        endif
+      endif
+    endif
+
+
   !
   !---- end of time iteration loop
   !
@@ -329,6 +340,22 @@
                                              R_xz_inner_core,R_yz_inner_core)
       endif
     endif
+  
+  else if (SAVE_GREEN_FUNCTIONS) then
+
+      ! Get the fields from the GPU
+      call transfer_fields_cm_from_device(NDIM*NGLOB_CRUST_MANTLE, &
+                                          displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle,Mesh_pointer)
+
+      ! Get the strains from the GPU
+      call transfer_strain_cm_from_device(Mesh_pointer,eps_trace_over_3_crust_mantle, &
+                                          epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle, &
+                                          epsilondev_xy_crust_mantle,epsilondev_xz_crust_mantle, &
+                                          epsilondev_yz_crust_mantle)
+
+      if (ROTATION_VAL) then
+        call transfer_rotation_from_device(Mesh_pointer,A_array_rotation,B_array_rotation)
+      endif
 
   else if (SIMULATION_TYPE == 3) then
 

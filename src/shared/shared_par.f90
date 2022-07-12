@@ -69,6 +69,7 @@
              ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MAIN, &
              SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,READ_ADJSRC_ASDF
 
+  logical :: SAVE_GREEN_FUNCTIONS
   logical :: SAVE_SEISMOGRAMS_STRAIN ! option under development (see Hom Nath commit 2deb0fa89), no functionality implemented yet
   logical :: SAVE_SEISMOGRAMS_IN_ADJOINT_RUN
 

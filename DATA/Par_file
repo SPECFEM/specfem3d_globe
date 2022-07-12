@@ -103,7 +103,7 @@ REGIONAL_MESH_ADD_2ND_DOUBLING  = .false.
 #-----------------------------------------------------------
 
 # absorbing boundary conditions for a regional simulation
-ABSORBING_CONDITIONS            = .true.
+ABSORBING_CONDITIONS            = .false.
 
 # run global simulation for a circular region and apply high attenuation for the rest of the model
 # this creates an absorbing boundary with less reflection than stacey at a cost of 6x the computational cost
@@ -124,7 +124,7 @@ SPONGE_RADIUS_IN_DEGREES        = 25.d0
 # to undo attenuation for sensitivity kernel calculations or forward runs with SAVE_FORWARD
 # use one (and only one) of the two flags below. UNDO_ATTENUATION is much better (it is exact)
 # but requires a significant amount of disk space for temporary storage.
-PARTIAL_PHYS_DISPERSION_ONLY    = .true.
+PARTIAL_PHYS_DISPERSION_ONLY    = .false.
 UNDO_ATTENUATION                = .false.
 
 ## undo attenuation memory
@@ -164,7 +164,7 @@ PERCENT_OF_MEM_TO_USE_PER_CORE  = 85.d0
 # You can also safely set it to .false. if you are not in a period range in which rotation matters,
 # e.g. if you are targetting very short-period body waves. if in doubt, set to .true.
 #
-# You can safeely set it to .true. if you have ABSORBING_CONDITIONS above, because in that case the code
+# You can safely set it to .true. if you have ABSORBING_CONDITIONS above, because in that case the code
 # will use three mass matrices anyway and thus there is no additional memory cost.
 # this flag is of course unused if ROTATION above is set to .false.
 EXACT_MASS_MATRIX_FOR_ROTATION  = .false.
@@ -199,7 +199,7 @@ RATIO_BY_WHICH_TO_INCREASE_IT   = 1.5d0
 #MOVIE_COARSE does not work with create_movie_AVS_DX
 MOVIE_SURFACE                   = .false.
 MOVIE_VOLUME                    = .false.
-MOVIE_COARSE                    = .true.
+MOVIE_COARSE                    = .false.
 NTSTEP_BETWEEN_FRAMES           = 50
 HDUR_MOVIE                      = 0.d0
 
@@ -285,9 +285,9 @@ SAVE_SEISMOGRAMS_STRAIN         = .false.
 SAVE_SEISMOGRAMS_IN_ADJOINT_RUN = .false.
 
 # output format for the seismograms (one can use either or all of the three formats)
-OUTPUT_SEISMOS_ASCII_TEXT       = .true.
+OUTPUT_SEISMOS_ASCII_TEXT       = .false.
 OUTPUT_SEISMOS_SAC_ALPHANUM     = .false.
-OUTPUT_SEISMOS_SAC_BINARY       = .false.
+OUTPUT_SEISMOS_SAC_BINARY       = .true.
 OUTPUT_SEISMOS_ASDF             = .false.
 OUTPUT_SEISMOS_3D_ARRAY         = .false.
 
@@ -295,7 +295,7 @@ OUTPUT_SEISMOS_3D_ARRAY         = .false.
 ROTATE_SEISMOGRAMS_RT           = .false.
 
 # decide if main process writes all the seismograms or if all processes do it in parallel
-WRITE_SEISMOGRAMS_BY_MAIN       = .false.
+WRITE_SEISMOGRAMS_BY_MAIN       = .true.
 
 # save all seismograms in one large combined file instead of one file per seismogram
 # to avoid overloading shared non-local file systems such as LUSTRE or GPFS for instance
@@ -304,6 +304,15 @@ USE_BINARY_FOR_LARGE_FILE       = .false.
 
 # flag to impose receivers at the surface or allow them to be buried
 RECEIVERS_CAN_BE_BURIED         = .true.
+
+
+#-----------------------------------------------------------
+#
+# Green Functions
+#
+#-----------------------------------------------------------
+
+SAVE_GREEN_FUNCTIONS = .true.
 
 #-----------------------------------------------------------
 #
@@ -405,15 +414,15 @@ BROADCAST_SAME_MESH_AND_MODEL   = .false.
 #-----------------------------------------------------------
 
 # set to true to use GPUs
-GPU_MODE                        = .false.
+GPU_MODE                        = .true.
 # Only used if GPU_MODE = .true. :
 GPU_RUNTIME                     = 1
 # 2 (OpenCL), 1 (Cuda) ou 0 (Compile-time -- does not work if configured with --with-cuda *AND* --with-opencl)
 GPU_PLATFORM                    = NVIDIA
-GPU_DEVICE                      = Tesla
+GPU_DEVICE                      = *
 
 # set to true to use the ADIOS library for I/Os
-ADIOS_ENABLED                   = .false.
+ADIOS_ENABLED                   = .true.
 ADIOS_FOR_FORWARD_ARRAYS        = .true.
 ADIOS_FOR_MPI_ARRAYS            = .true.
 ADIOS_FOR_ARRAYS_SOLVER         = .true.
