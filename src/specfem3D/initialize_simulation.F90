@@ -272,6 +272,9 @@
     STATIONS_FILE = 'DATA/STATIONS_ADJOINT'
   endif
 
+  ! Counts number of locations to check for Green Function relevant elements
+  GF_LOCATIONS_FILE = 'DATA/GF_LOCATIONS'
+
   if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
     write(path_to_add,"('run',i4.4,'/')") mygroup + 1
     STATIONS_FILE = path_to_add(1:len_trim(path_to_add))//STATIONS_FILE(1:len_trim(STATIONS_FILE))
@@ -298,12 +301,40 @@
     close(IIN)
   endif
 
+  if (SAVE_GREEN_FUNCTIONS .and. (myrank == 0)) then
+    open(unit=IIN,file=trim(GF_LOCATIONS_FILE),status='old',action='read',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Green Function locations file '//trim(GF_LOCATIONS)//' could not be found, please check your setup')
+    ! counts records
+    ngf_loc = 0
+    do while(ier == 0)
+      read(IIN,"(a)",iostat=ier) dummystring
+      if (ier == 0) then
+        ! excludes empty lines and skips comment lines
+        if (len_trim(dummystring) > 0 .and. dummystring(1:1) /= '#') then
+          ngf_loc = ngf_loc + 1
+        endif
+      endif
+    enddo
+    close(IIN)
+  endif
+
+  endif
+
+  
   ! broadcast the information read on the main node to all the nodes
   call bcast_all_singlei(nrec)
+
+  ! broadcast the information read on the main node to all the nodes
+  call bcast_all_singlei(ngf)
 
   ! checks number of total receivers
   if (nrec < 1) call exit_MPI(myrank,trim(STATIONS_FILE)//': need at least one receiver')
 
+  ! checks number of total receivers
+  if (SAVE_GREEN_FUNCTIONS) then
+    if (ngf < 1) call exit_MPI(myrank,trim(GF_LOCATIONS_FILE)//': need at least one receiver')
+  endif
+  
   ! initializes GPU cards
   call initialize_GPU()
 

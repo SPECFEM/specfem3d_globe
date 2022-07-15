@@ -259,7 +259,7 @@
       if (mod(it, ceiling(dble(it_end)/10)) == 0) then 
         if (GPU_MODE) then 
           call it_transfer_from_GPU()
-          print *,'transfered stuff back from the GPU at', it
+          call save_forward_arrays_GF_adios()
         endif
       endif
     endif
@@ -341,21 +341,24 @@
       endif
     endif
   
-  else if (SAVE_GREEN_FUNCTIONS) then
+    if (SAVE_GREEN_FUNCTIONS) then
+        ! Printing the confirmation
+        print *,'transfered stuff back from the GPU at', it
 
-      ! Get the fields from the GPU
-      call transfer_fields_cm_from_device(NDIM*NGLOB_CRUST_MANTLE, &
-                                          displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle,Mesh_pointer)
+        ! Get the fields from the GPU
+        call transfer_fields_cm_from_device(NDIM*NGLOB_CRUST_MANTLE, &
+                                            displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle,Mesh_pointer)
 
-      ! Get the strains from the GPU
-      call transfer_strain_cm_from_device(Mesh_pointer,eps_trace_over_3_crust_mantle, &
-                                          epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle, &
-                                          epsilondev_xy_crust_mantle,epsilondev_xz_crust_mantle, &
-                                          epsilondev_yz_crust_mantle)
+        ! Get the strains from the GPU
+        call transfer_strain_cm_from_device(Mesh_pointer,eps_trace_over_3_crust_mantle, &
+                                            epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle, &
+                                            epsilondev_xy_crust_mantle,epsilondev_xz_crust_mantle, &
+                                            epsilondev_yz_crust_mantle)
 
-      if (ROTATION_VAL) then
-        call transfer_rotation_from_device(Mesh_pointer,A_array_rotation,B_array_rotation)
-      endif
+        if (ROTATION_VAL) then
+          call transfer_rotation_from_device(Mesh_pointer,A_array_rotation,B_array_rotation)
+        endif
+    endif
 
   else if (SIMULATION_TYPE == 3) then
 

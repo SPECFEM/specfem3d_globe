@@ -346,7 +346,30 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: stshift_der, shdur_der
   double precision, dimension(:,:), allocatable :: hpxir_store,hpetar_store,hpgammar_store
 
+  !-----------------------------------------------------------------
+  ! GREEN FUNCTION LOCATION paramaters
+  !-----------------------------------------------------------------
 
+  ! File containing the Green function locations to check  
+  character(len=MAX_STRING_LEN) :: GF_LOCATIONS_FILE
+
+  ! Green Function number of locations to check
+  integer :: ngf_loc,ngf_loc_local
+
+  ! Locations allocatable 
+  integer, dimension(:), allocatable :: islice_selected_gf_loc,ispec_selected_gf_loc
+  integer, dimension(:), allocatable :: islice_num_gf_loc_local
+
+  double precision, dimension(:), allocatable :: xi_gf_loc,eta_gf_loc,gamma_gf_loc
+  double precision, dimension(:,:,:), allocatable :: nu_gf_loc
+  double precision, allocatable, dimension(:) :: stlat,stlon,stele,stbur
+  double precision :: gf_loc_final_distance_max
+  
+  ! Final number of elements with Green Functions
+  integer :: nel_gf,nel_gf_local
+  
+
+  
   !-----------------------------------------------------------------
   ! seismograms
   !-----------------------------------------------------------------
@@ -447,6 +470,7 @@ module specfem_par
   !-----------------------------------------------------------------
   ! adios file handle
   integer(kind=8) :: current_adios_handle
+  logical :: GREEN_FUNCTION_ADIOS_FILE_NOT_INITIALIZED = .true.
 
   !-----------------------------------------------------------------
   ! ASDF

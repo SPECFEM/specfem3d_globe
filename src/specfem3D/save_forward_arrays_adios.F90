@@ -142,6 +142,7 @@
 
   end subroutine save_forward_arrays_adios
 
+
 !-------------------------------------------------------------------------------
 !> \brief Write selected forward arrays in an ADIOS file.
 !!
@@ -313,6 +314,177 @@
   endif
 
   end subroutine save_forward_arrays_undoatt_adios
+
+!-------------------------------------------------------------------------------
+!> \brief Write selected forward arrays in an ADIOS file.
+!!
+!! This subroutine is only used for forward simulations when
+!! SAVE_FORWARD is set to .true. It dumps the same arrays than
+!! save_intermediate_forward_arrays_adios() except than some arrays
+!! are only dumped if ROTATION and ATTENUATION are set to .true.
+
+  subroutine save_forward_arrays_GF_adios()
+
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_innercore
+  use specfem_par_outercore
+
+  use adios_helpers_mod
+  use manager_adios
+
+  implicit none
+
+  ! Local parameters
+  character(len=MAX_STRING_LEN) :: file_name
+  integer(kind=8),save :: group_size_inc
+  ! ADIOS variables
+  character(len=MAX_STRING_LEN) :: group_name
+  ! multiple/single file for storage of snapshots
+  logical :: do_open_file,do_close_file,do_init_group
+
+  ! file handling
+  if (ADIOS_SAVE_ALL_SNAPSHOTS_IN_ONE_FILE) then
+    ! single file for all steps
+    do_open_file = .false.
+    do_close_file = .false.
+    do_init_group = .false.
+
+    ! single file
+    file_name = get_adios_filename(trim(LOCAL_TMP_PATH) // "/save_forward_arrays_GF", ADIOS2_ENGINE_DEFAULT)
+
+    group_name = "SPECFEM3D_GLOBE_FORWARD_ARRAYS_GF"
+
+    ! open file at first call of this routine
+    if (is_adios_version1) then
+      ! adds steps by appending to file
+      do_open_file = .true.
+      do_close_file = .true.
+      if (GREEN_FUNCTION_ADIOS_FILE_NOT_INITIALIZED) do_init_group = .true. ! only needs to initialize group once
+    else
+      ! adds steps by commands
+      if (.not. is_initialized_fwd_group) then
+        do_open_file = .true.
+        do_init_group = .true.
+      endif
+    endif
+  else
+    ! for each step a single file
+    do_open_file = .true.
+    do_close_file = .true.
+    do_init_group = .true.
+
+    ! files for each iteration step
+    write(file_name,'(a, a, i6.6)') trim(LOCAL_TMP_PATH), '/save_frame_at', it
+    file_name = get_adios_filename(trim(file_name))
+
+    write(group_name, '(a, i6)') "SPECFEM3D_GLOBE_FORWARD_ARRAYS_GF", it
+  endif
+
+  ! debug
+  !if (myrank == 0) print *,'debug: undoatt adios: save forward step iteration_on_subset_tmp = ',iteration_on_subset_tmp, &
+  !                         'open/close file',do_open_file,do_close_file,do_init_group
+
+  ! opens file for writing
+  if (do_open_file) then
+    ! prepares group & metadata
+    !
+    ! note, see adios manual:
+    ! "These routines prepare ADIOS metadata construction,
+    ! for example, setting up groups, variables, attributes and IO transport method,
+    ! and hence must be called before any other ADIOS I/O operations,
+    ! i.e., adios_open, adios_group_size, adios_write, adios_close."
+    if (do_init_group) then
+      call init_adios_group_undo_att(myadios_fwd_group,group_name)
+
+      ! adds wavefield compression
+      if (ADIOS_COMPRESSION_ALGORITHM /= 0) then
+        ! sets adios flag to add compression operation for the following define_adios_** function calls
+        call define_adios_compression()
+      endif
+
+      ! defines ADIOS variables
+      group_size_inc = 0
+      ! iteration number
+      call define_adios_scalar(myadios_fwd_group, group_size_inc, '', "iteration", it)
+
+      ! wavefields (displ/veloc/accel) for all regions
+      call define_common_forward_arrays_adios(group_size_inc)
+      ! rotation arrays
+      if (ROTATION_VAL) call define_rotation_forward_arrays_adios(group_size_inc)
+      ! attenuation memory variables
+      if (ATTENUATION_VAL) call define_attenuation_forward_arrays_adios(group_size_inc)
+
+      ! re-sets compression flag (in case other routines will call the define_adios_** function calls)
+      if (ADIOS_COMPRESSION_ALGORITHM /= 0) use_adios_compression = .false.
+    endif
+
+    ! Open an ADIOS handler to the restart file.
+    if (is_adios_version1) then
+      ! checks if we open for first time or append
+      if (GREEN_FUNCTION_ADIOS_FILE_NOT_INITIALIZED) then
+        ! creates new file
+        call open_file_adios_write(myadios_fwd_file,myadios_fwd_group,file_name,group_name)
+      else
+        ! append to existing file
+        call open_file_adios_write_append(myadios_fwd_file,myadios_fwd_group,file_name,group_name)
+
+        ! debug: note, do not call as the inquiry on the appended file handle will seg-fault
+        ! call show_adios_file_variables(myadios_fwd_file,myadios_fwd_group,file_name)
+      endif
+
+      ! debug
+      !if (myrank == 0) print *,'debug: undoatt adios: save forward step = ',iteration_on_subset_tmp,' handle ',myadios_fwd_file
+
+    else
+      ! version 2, only opens once at beginning
+      call open_file_adios_write(myadios_fwd_file,myadios_fwd_group,file_name,group_name)
+    endif
+
+    call set_adios_group_size(myadios_fwd_file,group_size_inc)
+
+    ! sets flag
+    is_initialized_fwd_group = .true.
+  endif
+
+  ! indicate new step section
+  if (ADIOS_SAVE_ALL_SNAPSHOTS_IN_ONE_FILE) call write_adios_begin_step(myadios_fwd_file)
+
+  ! iteration number
+  call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, "iteration", it)
+
+  ! Issue the order to write the previously defined variable to the ADIOS file
+  call write_common_forward_arrays_adios()
+  if (ROTATION_VAL) call write_rotation_forward_arrays_adios()
+  if (ATTENUATION_VAL) call write_attenuation_forward_arrays_adios()
+
+  ! perform writing
+  if (ADIOS_SAVE_ALL_SNAPSHOTS_IN_ONE_FILE) then
+    ! end step to indicate output is completed. ADIOS2 can do I/O
+    call write_adios_end_step(myadios_fwd_file)
+  else
+    ! Reset the path to its original value to avoid bugs and write out arrays.
+    call write_adios_perform(myadios_fwd_file)
+  endif
+
+  ! Close ADIOS handler to the restart file.
+  if (do_close_file) then
+    ! flushes all engines (makes sure i/o is all written out)
+    call flush_adios_group_all(myadios_fwd_group)
+    ! closes file
+    call close_file_adios(myadios_fwd_file)
+    ! re-sets flag
+    is_initialized_fwd_group = .false.
+
+    ! debug
+    !if (myrank == 0) print *,'debug: undoatt adios: close file save forward step = ',iteration_on_subset_tmp, &
+    !                         ' handle ',myadios_fwd_file
+  endif
+
+  ! Set this flag to false since the first call of this function initializes this
+  GREEN_FUNCTION_ADIOS_FILE_NOT_INITIALIZED = .false.
+
+  end subroutine save_forward_arrays_GF_adios
 
 
 !-------------------------------------------------------------------------------

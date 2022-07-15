@@ -127,7 +127,7 @@
     endif
 
     if (ADIOS_FOR_FORWARD_ARRAYS) then
-      call save_forward_arrays_adios()
+      call save_forward_arrays_GF_adios()
     else
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_save_forward_arrays.bin'
       outputname = trim(LOCAL_TMP_PATH)//'/'//trim(outputname)
@@ -180,6 +180,70 @@
 
       close(IOUT)
     endif
+
+  else if (SIMULATION_TYPE == 1 .and. SAVE_GREEN_FUNCTIONS) then
+
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) '  saving green functions arrays'
+      call flush_IMAIN()
+    endif
+
+    if (ADIOS_FOR_FORWARD_ARRAYS) then
+      call save_forward_arrays_GF_adios()
+    else
+      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_save_gf_arrays.bin'
+      outputname = trim(LOCAL_TMP_PATH)//'/'//trim(outputname)
+
+      open(unit=IOUT,file=trim(outputname),status='unknown',form='unformatted',action='write',iostat=ier)
+      if (ier /= 0 ) call exit_MPI(myrank,'Error opening file proc***_save_forward_arrays** for writing')
+
+      write(IOUT) displ_crust_mantle
+      write(IOUT) veloc_crust_mantle
+      write(IOUT) accel_crust_mantle
+
+      write(IOUT) displ_inner_core
+      write(IOUT) veloc_inner_core
+      write(IOUT) accel_inner_core
+
+      write(IOUT) displ_outer_core
+      write(IOUT) veloc_outer_core
+      write(IOUT) accel_outer_core
+
+      write(IOUT) epsilondev_xx_crust_mantle
+      write(IOUT) epsilondev_yy_crust_mantle
+      write(IOUT) epsilondev_xy_crust_mantle
+      write(IOUT) epsilondev_xz_crust_mantle
+      write(IOUT) epsilondev_yz_crust_mantle
+
+      write(IOUT) epsilondev_xx_inner_core
+      write(IOUT) epsilondev_yy_inner_core
+      write(IOUT) epsilondev_xy_inner_core
+      write(IOUT) epsilondev_xz_inner_core
+      write(IOUT) epsilondev_yz_inner_core
+
+      if (ROTATION_VAL) then
+        write(IOUT) A_array_rotation
+        write(IOUT) B_array_rotation
+      endif
+
+      if (ATTENUATION_VAL) then
+         write(IOUT) R_xx_crust_mantle
+         write(IOUT) R_yy_crust_mantle
+         write(IOUT) R_xy_crust_mantle
+         write(IOUT) R_xz_crust_mantle
+         write(IOUT) R_yz_crust_mantle
+
+         write(IOUT) R_xx_inner_core
+         write(IOUT) R_yy_inner_core
+         write(IOUT) R_xy_inner_core
+         write(IOUT) R_xz_inner_core
+         write(IOUT) R_yz_inner_core
+      endif
+
+      close(IOUT)
+    endif
+
   endif
 
   end subroutine save_forward_arrays
