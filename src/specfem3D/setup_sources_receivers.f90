@@ -30,7 +30,8 @@
   use specfem_par, only: myrank,IMAIN,NSOURCES,NSTEP, &
     theta_source,phi_source, &
     TOPOGRAPHY,ibathy_topo, &
-    USE_DISTANCE_CRITERION,xyz_midpoints,xadj,adjncy
+    USE_DISTANCE_CRITERION,xyz_midpoints,xadj,adjncy, &
+    SAVE_GREEN_FUNCTIONS
 
   use kdtree_search, only: kdtree_delete,kdtree_nodes_location,kdtree_nodes_index
 
@@ -46,7 +47,9 @@
   call setup_receivers()
 
   ! setup green function location arrays
-  call 
+  if (SAVE_GREEN_FUNCTIONS) then
+    call setup_green_locations()
+  endif
 
   ! write source and receiver VTK files for Paraview
   call setup_sources_receivers_VTKfile()
@@ -1404,18 +1407,15 @@
   logical, parameter :: CHECK_FOR_IMBALANCE = .false.
 
   ! local parameters
-  integer :: igf, ngf_tot_found,i,iproc,ier
+  integer :: igf, ngf_tot_found,ier,ix
   integer :: ngf_simulation
   integer,dimension(0:NPROCTOT_VAL-1) :: tmp_gf_local_all
-  integer :: maxrec,maxproc(1)
   double precision :: sizeval
   
-  integer, dimension(:), allocatable :: islicespec_selected_gf_loc
+  integer, dimension(:,:), allocatable :: islicespec_selected_gf_loc
   logical, dimension(:), allocatable :: mask
-  integer, dimension(:), allocatable :: rmask
-  integer :: islice_num_gf_loc_local
-
-  
+  integer, dimension(:), allocatable :: rmask  
+  integer, dimension(:), allocatable :: index_vector
 
   ! user output
   if (myrank == 0) then
@@ -1497,10 +1497,10 @@
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating unique element array')
 
     ! Get total number of unique elements (IMPORTANT FOR ADIOS FILE ALLOCATION)
-    r(:) = 0
-    where(mask) r = 1
+    rmask(:) = 0
+    where(mask) rmask = 1
 
-    ngf_unique = sum(r)
+    ngf_unique = sum(rmask)
 
   endif  
   
@@ -1520,7 +1520,7 @@
   endif
 
   ! check that the sum of the number of receivers in each slice is ngf
-  if (myrank == 0 .and. ngf_tot_found /= ngf) &
+  if (myrank == 0 .and. ngf_tot_found /= ngf) then
     call exit_MPI(myrank,'total number of green function slices is incorrect')
   endif
   ! synchronizes before info output
@@ -1540,102 +1540,13 @@
     sizeval = dble(ngf) * dble(NGLLX * NGLLY * NGLLZ * CUSTOM_REAL / 1024. / 1024. )
     ! outputs info
     write(IMAIN,*) 'Green Function:'
-    ! NOTE: Needs to be edited in the future
+    ! NOTE: Needs to be edited in the future ACCOUNTING for total of SAVED steps
     write(IMAIN,*) '  writing out Green functions at every NTSTEP_BETWEEN_OUTPUT_SEISMOS = ',NTSTEP_BETWEEN_OUTPUT_SEISMOS
-    write(IMAIN,*) '  maximum number of local receivers is ',maxrec,' in slice ',maxproc(1)
-    write(IMAIN,*) '  size of maximum seismogram array       = ', sngl(sizeval),'MB'
-    write(IMAIN,*) '                                         = ', sngl(sizeval/1024.d0),'GB'
+    write(IMAIN,*) '  Number of unique elements                 = ', ngf_unique
+    write(IMAIN,*) '  Storage per element per step (no overlap) = ', sngl(sizeval),'MB'
+    write(IMAIN,*) '                                            = ', sngl(sizeval/1024.d0),'GB'
     write(IMAIN,*)
     call flush_IMAIN()
-  endif
-
-  ! adjoint sources
-  if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
-    ! gather from secondary processes on main
-    tmp_rec_local_all(:) = 0
-    tmp_rec_local_all(0) = nadj_rec_local
-    if (NPROCTOT_VAL > 1) then
-      call gather_all_singlei(nadj_rec_local,tmp_rec_local_all,NPROCTOT_VAL)
-    endif
-    ! user output
-    if (myrank == 0) then
-      ! determines maximum number of local receivers and corresponding rank
-      maxrec = maxval(tmp_rec_local_all(:))
-      ! note: MAXLOC will determine the lower bound index as '1'.
-      maxproc = maxloc(tmp_rec_local_all(:)) - 1
-      !do i = 1, NPROCTOT_VAL
-      !  if (tmp_rec_local_all(i) > maxrec) then
-      !    maxrec = tmp_rec_local_all(i)
-      !    maxproc = i-1
-      !  endif
-      !enddo
-      ! source_adjoint size in MB
-      ! source_adjoint(NDIM,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC)
-      sizeval = dble(maxrec) * dble(NDIM * NTSTEP_BETWEEN_READ_ADJSRC * CUSTOM_REAL / 1024. / 1024. )
-      ! note: in case IO_ASYNC_COPY is set, and depending of NSTEP_SUB_ADJ,
-      !       this memory requirement might double.
-      !       at this point, NSTEP_SUB_ADJ is not set yet...
-      if (IO_ASYNC_COPY .and. ceiling( dble(NSTEP)/dble(NTSTEP_BETWEEN_READ_ADJSRC) ) > 1) then
-        !buffer_source_adjoint(NDIM,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC)
-        sizeval = sizeval + dble(maxrec) * dble(NDIM * NTSTEP_BETWEEN_READ_ADJSRC * CUSTOM_REAL / 1024. / 1024. )
-      endif
-      ! outputs info
-      write(IMAIN,*) 'adjoint source arrays:'
-      write(IMAIN,*) '  reading adjoint sources at every NTSTEP_BETWEEN_READ_ADJSRC = ',NTSTEP_BETWEEN_READ_ADJSRC
-      if (IO_ASYNC_COPY) then
-        write(IMAIN,*) '  using asynchronous buffer for file I/O of adjoint sources'
-      endif
-      write(IMAIN,*) '  maximum number of local adjoint sources is ',maxrec,' in slice ',maxproc(1)
-      write(IMAIN,*) '  size of maximum adjoint source array = ', sngl(sizeval),'MB'
-      write(IMAIN,*) '                                       = ', sngl(sizeval/1024.d0),'GB'
-      write(IMAIN,*)
-      call flush_IMAIN()
-    endif
-  endif
-
-! check for imbalance of distribution of receivers or of adjoint sources
-  if (CHECK_FOR_IMBALANCE .and. NPROCTOT_VAL > 1) then
-    call gather_all_singlei(nrec_local,tmp_rec_local_all,NPROCTOT_VAL)
-    if (myrank == 0) then
-      open(unit=9977,file='imbalance_of_nrec_local.dat',status='unknown')
-      do i = 0,NPROCTOT_VAL-1
-        write(9977,*) i,tmp_rec_local_all(i)
-      enddo
-      close(9977)
-    endif
-
-    call gather_all_singlei(nadj_rec_local,tmp_rec_local_all,NPROCTOT_VAL)
-    if (myrank == 0) then
-      open(unit=9977,file='imbalance_of_nadj_rec_local.dat',status='unknown')
-      do i = 0,NPROCTOT_VAL-1
-        write(9977,*) i,tmp_rec_local_all(i)
-      enddo
-      close(9977)
-    endif
-
-    if (myrank == 0) then
-      open(unit=9977,file='plot_imbalance_histogram.gnu',status='unknown')
-      write(9977,*) '#set terminal x11'
-      write(9977,*) 'set terminal wxt'
-      write(9977,*) '#set terminal gif'
-      write(9977,*) '#set output "imbalance_histogram.gif"'
-      write(9977,*)
-      write(9977,*) 'set xrange [1:',NPROCTOT_VAL,']'
-      write(9977,*) '#set xtics 0,0.1,1'
-      write(9977,*) 'set boxwidth 1.'
-      write(9977,*) 'set xlabel "Mesh slice number"'
-      write(9977,*)
-      write(9977,*) 'set ylabel "Number of receivers in that mesh slice"'
-      write(9977,*) 'plot "imbalance_of_nrec_local.dat" with boxes'
-      write(9977,*) 'pause -1 "hit any key..."'
-      write(9977,*)
-      write(9977,*) 'set ylabel "Number of adjoint sources in that mesh slice"'
-      write(9977,*) 'plot "imbalance_of_nadj_rec_local.dat" with boxes'
-      write(9977,*) 'pause -1 "hit any key..."'
-      close(9977)
-    endif
-
-    call synchronize_all()
   endif
 
   end subroutine setup_green_locations

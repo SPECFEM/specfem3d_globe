@@ -313,7 +313,7 @@ RECEIVERS_CAN_BE_BURIED         = .true.
 #-----------------------------------------------------------
 
 SAVE_GREEN_FUNCTIONS = .true.
-NTSTEP_BETWEEN_OUTPUT_WAVEFIELD = 1
+# NTSTEP_BETWEEN_OUTPUT_WAVEFIELD = 1
 
 #-----------------------------------------------------------
 #

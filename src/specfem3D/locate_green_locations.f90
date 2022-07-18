@@ -51,9 +51,6 @@
 
   implicit none
 
-  integer,intent(in) :: yr,jda,ho,mi
-  double precision,intent(in) :: sec
-
   ! local parameters
   integer :: iprocloop
   integer :: igf,i
