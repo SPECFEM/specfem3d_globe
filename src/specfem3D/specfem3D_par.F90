@@ -359,6 +359,8 @@ module specfem_par
   ! Locations allocatable 
   integer, dimension(:), allocatable :: islice_selected_gf_loc,ispec_selected_gf_loc
   integer, dimension(:), allocatable :: islice_num_gf_loc_local
+  integer, dimension(:), allocatable :: islice_unique_gf_loc,ispec_unique_gf_loc
+  integer, dimension(:), allocatable :: ngf_unique
 
   double precision, dimension(:), allocatable :: xi_gf_loc,eta_gf_loc,gamma_gf_loc
   double precision, dimension(:,:,:), allocatable :: nu_gf_loc

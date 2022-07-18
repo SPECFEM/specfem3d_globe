@@ -1409,6 +1409,13 @@
   integer,dimension(0:NPROCTOT_VAL-1) :: tmp_gf_local_all
   integer :: maxrec,maxproc(1)
   double precision :: sizeval
+  
+  integer, dimension(:), allocatable :: islicespec_selected_gf_loc
+  logical, dimension(:), allocatable :: mask
+  integer, dimension(:), allocatable :: rmask
+  integer :: islice_num_gf_loc_local
+
+  
 
   ! user output
   if (myrank == 0) then
@@ -1417,9 +1424,12 @@
     call flush_IMAIN()
   endif
 
-  ! allocate memory for receiver arrays
+  ! allocate memory for green function arrays
   allocate(islice_selected_gf_loc(ngf), &
            ispec_selected_gf_loc(ngf), &
+           islicespec_selected_gf_loc(2,ngf), &
+           mask(ngf), &
+           rmask(ngf), &
            xi_receiver(ngf), &
            eta_receiver(ngf), &
            gamma_receiver(ngf), &
@@ -1429,6 +1439,7 @@
   ! initializes arrays
   islice_selected_gf_loc(:) = -1
   ispec_selected_gf_loc(:) = 0
+  islicespec_selected_gf_loc(:,:) = 0
   xi_gf_loc(:) = 0.d0; eta_gf_loc(:) = 0.d0; gamma_gf_loc(:) = 0.d0
   nu_gf_loc(:,:,:) = 0.0d0
 
@@ -1447,20 +1458,56 @@
   endif
 
   ! locate receivers in the crust in the mesh
-  call locate_receivers()
+  call locate_green_locations()
+
+! Create column array of slice and spectral element combinations
+  islicespec_selected_gf_loc(1,:) = islice_selected_gf_loc
+  islicespec_selected_gf_loc(2,:) = ispec_selected_gf_loc
 
   ! count number of receivers located in this slice
   ngf_local = 0
   ngf_simulation = nrec
+
   do igf = 1,ngf
     if (myrank == islice_selected_gf_loc(igf)) ngf_local = ngf_local + 1
   enddo
 
   ! check that the sum of the number of receivers in each slice is nrec (or nsources for adjoint simulations)
   call sum_all_i(ngf_local,ngf_tot_found)
+
+  ! Get unique number of elements and allocate new array of slices and sources
+  if (myrank == 0) then
+    mask(:) = .true.
+
+    do ix = ngf,2,-1
+      mask(ix) = .not.(any(&
+        islicespec_selected_gf_loc(1,:ix-1)==islicespec_selected_gf_loc(1,ix).and.& 
+        islicespec_selected_gf_loc(2,:ix-1)==islicespec_selected_gf_loc(2,ix)))
+    enddo
+
+    ! Make an index vector
+    allocate(index_vector, source=pack([(ix, ix=1,ngf) ],mask))
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating mask index array')
+
+    ! Now copy the unique elements of the slice and spec arrays into the unique arrays
+    allocate(islice_unique_gf_loc, source=islice_selected_gf_loc(index_vector),stat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating unique slice array')
+
+    allocate(ispec_unique_gf_loc, source=ispec_selected_gf_loc(index_vector),stat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating unique element array')
+
+    ! Get total number of unique elements (IMPORTANT FOR ADIOS FILE ALLOCATION)
+    r(:) = 0
+    where(mask) r = 1
+
+    ngf_unique = sum(r)
+
+  endif  
+  
   if (myrank == 0) then
     write(IMAIN,*)
-    write(IMAIN,*) 'found a total of ',ngf_tot_found,' receivers in all slices'
+    write(IMAIN,*) 'found a total of ',ngf_tot_found,' green function locations in all slices'
+    write(IMAIN,*) 'found a total of ',ngf_unique,' unique green function elements in all slices'
     ! checks for number of receivers
     ! note: for 1-chunk simulations, nrec_simulations is the number of receivers/sources found in this chunk
     if (ngf_tot_found /= ngf_simulation) then
@@ -1472,9 +1519,10 @@
     call flush_IMAIN()
   endif
 
-  ! check that the sum of the number of receivers in each slice is nrec
-  call exit_MPI(myrank,'total number of receivers is incorrect')
-
+  ! check that the sum of the number of receivers in each slice is ngf
+  if (myrank == 0 .and. ngf_tot_found /= ngf) &
+    call exit_MPI(myrank,'total number of green function slices is incorrect')
+  endif
   ! synchronizes before info output
   call synchronize_all()
 
@@ -1483,30 +1531,17 @@
   tmp_gf_local_all(:) = 0
   tmp_gf_local_all(0) = ngf_local
   if (NPROCTOT_VAL > 1) then
-    call gather_all_singlei(ngf_local,tmp_gf_loc_local_all,NPROCTOT_VAL)
+    call gather_all_singlei(ngf_local,tmp_gf_local_all,NPROCTOT_VAL)
   endif
+
   ! user output
   if (myrank == 0) then
-    ! determines maximum number of local receivers and corresponding rank
-    maxrec = maxval(tmp_gf_local_all(:))
-    ! note: MAXLOC will determine the lower bound index as '1'.
-    maxproc = maxloc(tmp_gf_local_all(:)) - 1
-    ! seismograms array size in MB
-    if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
-      ! seismograms need seismograms(NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS)
-      sizeval = dble(maxrec) * dble(NDIM * NTSTEP_BETWEEN_OUTPUT_SEISMOS * CUSTOM_REAL / 1024. / 1024. )
-    else
-      ! adjoint seismograms need seismograms(NDIM*NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS)
-      sizeval = dble(maxrec) * dble(NDIM * NDIM * NTSTEP_BETWEEN_OUTPUT_SEISMOS * CUSTOM_REAL / 1024. / 1024. )
-    endif
+    ! seismograms need seismograms(NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS)
+    sizeval = dble(ngf) * dble(NGLLX * NGLLY * NGLLZ * CUSTOM_REAL / 1024. / 1024. )
     ! outputs info
-    write(IMAIN,*) 'seismograms:'
-    if (WRITE_SEISMOGRAMS_BY_MAIN) then
-      write(IMAIN,*) '  seismograms written by main process only'
-    else
-      write(IMAIN,*) '  seismograms written by all processes'
-    endif
-    write(IMAIN,*) '  writing out seismograms at every NTSTEP_BETWEEN_OUTPUT_SEISMOS = ',NTSTEP_BETWEEN_OUTPUT_SEISMOS
+    write(IMAIN,*) 'Green Function:'
+    ! NOTE: Needs to be edited in the future
+    write(IMAIN,*) '  writing out Green functions at every NTSTEP_BETWEEN_OUTPUT_SEISMOS = ',NTSTEP_BETWEEN_OUTPUT_SEISMOS
     write(IMAIN,*) '  maximum number of local receivers is ',maxrec,' in slice ',maxproc(1)
     write(IMAIN,*) '  size of maximum seismogram array       = ', sngl(sizeval),'MB'
     write(IMAIN,*) '                                         = ', sngl(sizeval/1024.d0),'GB'
