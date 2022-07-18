@@ -354,7 +354,7 @@ module specfem_par
   character(len=MAX_STRING_LEN) :: GF_LOCATIONS_FILE
 
   ! Green Function number of locations to check
-  integer :: ngf_loc,ngf_loc_local
+  integer :: ngf, ngf_local
 
   ! Locations allocatable 
   integer, dimension(:), allocatable :: islice_selected_gf_loc,ispec_selected_gf_loc
@@ -362,8 +362,8 @@ module specfem_par
 
   double precision, dimension(:), allocatable :: xi_gf_loc,eta_gf_loc,gamma_gf_loc
   double precision, dimension(:,:,:), allocatable :: nu_gf_loc
-  double precision, allocatable, dimension(:) :: stlat,stlon,stele,stbur
-  double precision :: gf_loc_final_distance_max
+  double precision, allocatable, dimension(:) :: gf_loc_lat,gf_loc_lon,gf_loc_depth
+  double precision :: gf_final_distance_max
   
   ! Final number of elements with Green Functions
   integer :: nel_gf,nel_gf_local

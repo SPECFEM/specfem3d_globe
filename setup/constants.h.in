@@ -250,6 +250,7 @@
 
 ! flag to display detailed information about location of stations
   logical, parameter :: DISPLAY_DETAILS_STATIONS = .false.
+  logical, parameter :: DISPLAY_DETAILS_GREEN_FUNCTIONS = .true.
 
 ! maximum length of station and network name for receivers
   integer, parameter :: MAX_LENGTH_STATION_NAME = 32
@@ -264,6 +265,7 @@
 ! maximum number of sources and receivers to locate simultaneously
   integer, parameter :: NSOURCES_SUBSET_MAX = 100
   integer, parameter :: NREC_SUBSET_MAX = 200
+  integer, parameter :: NGF_SUBSET_MAX = 200
 
 ! use this t0 as earliest starting time rather than the automatically calculated one
 ! (must be positive and bigger than the automatically one to be effective;

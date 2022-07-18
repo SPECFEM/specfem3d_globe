@@ -45,6 +45,9 @@
   ! reads in stations file and locates receivers
   call setup_receivers()
 
+  ! setup green function location arrays
+  call 
+
   ! write source and receiver VTK files for Paraview
   call setup_sources_receivers_VTKfile()
 
@@ -1039,7 +1042,8 @@
            xi_receiver(nrec), &
            eta_receiver(nrec), &
            gamma_receiver(nrec), &
-           nu_rec(NDIM,NDIM,nrec),stat=ier)
+           nu_rec(NDIM,NDIM,nrec), &
+           nu_gf_loc(NDIM,NDIM,ngf),stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating receiver arrays')
   ! initializes arrays
   islice_selected_rec(:) = -1
@@ -1331,6 +1335,7 @@
 
   end subroutine setup_receivers
 
+
 !
 !-------------------------------------------------------------------------------------------------
 !
@@ -1381,6 +1386,225 @@
   endif
 
   end subroutine setup_sources_receivers_VTKfile
+
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine setup_green_locations()
+
+  use specfem_par
+  use specfem_par_crustmantle
+
+  implicit none
+
+! check for imbalance of distribution of receivers or of adjoint sources
+  logical, parameter :: CHECK_FOR_IMBALANCE = .false.
+
+  ! local parameters
+  integer :: igf, ngf_tot_found,i,iproc,ier
+  integer :: ngf_simulation
+  integer,dimension(0:NPROCTOT_VAL-1) :: tmp_gf_local_all
+  integer :: maxrec,maxproc(1)
+  double precision :: sizeval
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'green function locations:'
+    call flush_IMAIN()
+  endif
+
+  ! allocate memory for receiver arrays
+  allocate(islice_selected_gf_loc(ngf), &
+           ispec_selected_gf_loc(ngf), &
+           xi_receiver(ngf), &
+           eta_receiver(ngf), &
+           gamma_receiver(ngf), &
+           nu_rec(NDIM,NDIM,ngf), &
+           nu_gf_loc(NDIM,NDIM,ngf),stat=ier)
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating receiver arrays')
+  ! initializes arrays
+  islice_selected_gf_loc(:) = -1
+  ispec_selected_gf_loc(:) = 0
+  xi_gf_loc(:) = 0.d0; eta_gf_loc(:) = 0.d0; gamma_gf_loc(:) = 0.d0
+  nu_gf_loc(:,:,:) = 0.0d0
+
+  allocate(gf_loc_lat(ngf), &
+           gf_loc_lon(ngf), &
+           gf_loc_depth(ngf),stat=ier)
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating receiver arrays')
+  gf_loc_lat(:) = 0.d0; gf_loc_lon(:) = 0.d0; gf_loc_depth(:) = 0.d0
+
+  !  receivers
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'Total number of green function locations = ', ngf
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  ! locate receivers in the crust in the mesh
+  call locate_receivers()
+
+  ! count number of receivers located in this slice
+  ngf_local = 0
+  ngf_simulation = nrec
+  do igf = 1,ngf
+    if (myrank == islice_selected_gf_loc(igf)) ngf_local = ngf_local + 1
+  enddo
+
+  ! check that the sum of the number of receivers in each slice is nrec (or nsources for adjoint simulations)
+  call sum_all_i(ngf_local,ngf_tot_found)
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'found a total of ',ngf_tot_found,' receivers in all slices'
+    ! checks for number of receivers
+    ! note: for 1-chunk simulations, nrec_simulations is the number of receivers/sources found in this chunk
+    if (ngf_tot_found /= ngf_simulation) then
+      call exit_MPI(myrank,'problem when dispatching the receivers')
+    else
+      write(IMAIN,*) 'this total is okay'
+    endif
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  ! check that the sum of the number of receivers in each slice is nrec
+  call exit_MPI(myrank,'total number of receivers is incorrect')
+
+  ! synchronizes before info output
+  call synchronize_all()
+
+  ! seismograms
+  ! gather from secondary processes on main
+  tmp_gf_local_all(:) = 0
+  tmp_gf_local_all(0) = ngf_local
+  if (NPROCTOT_VAL > 1) then
+    call gather_all_singlei(ngf_local,tmp_gf_loc_local_all,NPROCTOT_VAL)
+  endif
+  ! user output
+  if (myrank == 0) then
+    ! determines maximum number of local receivers and corresponding rank
+    maxrec = maxval(tmp_gf_local_all(:))
+    ! note: MAXLOC will determine the lower bound index as '1'.
+    maxproc = maxloc(tmp_gf_local_all(:)) - 1
+    ! seismograms array size in MB
+    if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
+      ! seismograms need seismograms(NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS)
+      sizeval = dble(maxrec) * dble(NDIM * NTSTEP_BETWEEN_OUTPUT_SEISMOS * CUSTOM_REAL / 1024. / 1024. )
+    else
+      ! adjoint seismograms need seismograms(NDIM*NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS)
+      sizeval = dble(maxrec) * dble(NDIM * NDIM * NTSTEP_BETWEEN_OUTPUT_SEISMOS * CUSTOM_REAL / 1024. / 1024. )
+    endif
+    ! outputs info
+    write(IMAIN,*) 'seismograms:'
+    if (WRITE_SEISMOGRAMS_BY_MAIN) then
+      write(IMAIN,*) '  seismograms written by main process only'
+    else
+      write(IMAIN,*) '  seismograms written by all processes'
+    endif
+    write(IMAIN,*) '  writing out seismograms at every NTSTEP_BETWEEN_OUTPUT_SEISMOS = ',NTSTEP_BETWEEN_OUTPUT_SEISMOS
+    write(IMAIN,*) '  maximum number of local receivers is ',maxrec,' in slice ',maxproc(1)
+    write(IMAIN,*) '  size of maximum seismogram array       = ', sngl(sizeval),'MB'
+    write(IMAIN,*) '                                         = ', sngl(sizeval/1024.d0),'GB'
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  ! adjoint sources
+  if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
+    ! gather from secondary processes on main
+    tmp_rec_local_all(:) = 0
+    tmp_rec_local_all(0) = nadj_rec_local
+    if (NPROCTOT_VAL > 1) then
+      call gather_all_singlei(nadj_rec_local,tmp_rec_local_all,NPROCTOT_VAL)
+    endif
+    ! user output
+    if (myrank == 0) then
+      ! determines maximum number of local receivers and corresponding rank
+      maxrec = maxval(tmp_rec_local_all(:))
+      ! note: MAXLOC will determine the lower bound index as '1'.
+      maxproc = maxloc(tmp_rec_local_all(:)) - 1
+      !do i = 1, NPROCTOT_VAL
+      !  if (tmp_rec_local_all(i) > maxrec) then
+      !    maxrec = tmp_rec_local_all(i)
+      !    maxproc = i-1
+      !  endif
+      !enddo
+      ! source_adjoint size in MB
+      ! source_adjoint(NDIM,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC)
+      sizeval = dble(maxrec) * dble(NDIM * NTSTEP_BETWEEN_READ_ADJSRC * CUSTOM_REAL / 1024. / 1024. )
+      ! note: in case IO_ASYNC_COPY is set, and depending of NSTEP_SUB_ADJ,
+      !       this memory requirement might double.
+      !       at this point, NSTEP_SUB_ADJ is not set yet...
+      if (IO_ASYNC_COPY .and. ceiling( dble(NSTEP)/dble(NTSTEP_BETWEEN_READ_ADJSRC) ) > 1) then
+        !buffer_source_adjoint(NDIM,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC)
+        sizeval = sizeval + dble(maxrec) * dble(NDIM * NTSTEP_BETWEEN_READ_ADJSRC * CUSTOM_REAL / 1024. / 1024. )
+      endif
+      ! outputs info
+      write(IMAIN,*) 'adjoint source arrays:'
+      write(IMAIN,*) '  reading adjoint sources at every NTSTEP_BETWEEN_READ_ADJSRC = ',NTSTEP_BETWEEN_READ_ADJSRC
+      if (IO_ASYNC_COPY) then
+        write(IMAIN,*) '  using asynchronous buffer for file I/O of adjoint sources'
+      endif
+      write(IMAIN,*) '  maximum number of local adjoint sources is ',maxrec,' in slice ',maxproc(1)
+      write(IMAIN,*) '  size of maximum adjoint source array = ', sngl(sizeval),'MB'
+      write(IMAIN,*) '                                       = ', sngl(sizeval/1024.d0),'GB'
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
+  endif
+
+! check for imbalance of distribution of receivers or of adjoint sources
+  if (CHECK_FOR_IMBALANCE .and. NPROCTOT_VAL > 1) then
+    call gather_all_singlei(nrec_local,tmp_rec_local_all,NPROCTOT_VAL)
+    if (myrank == 0) then
+      open(unit=9977,file='imbalance_of_nrec_local.dat',status='unknown')
+      do i = 0,NPROCTOT_VAL-1
+        write(9977,*) i,tmp_rec_local_all(i)
+      enddo
+      close(9977)
+    endif
+
+    call gather_all_singlei(nadj_rec_local,tmp_rec_local_all,NPROCTOT_VAL)
+    if (myrank == 0) then
+      open(unit=9977,file='imbalance_of_nadj_rec_local.dat',status='unknown')
+      do i = 0,NPROCTOT_VAL-1
+        write(9977,*) i,tmp_rec_local_all(i)
+      enddo
+      close(9977)
+    endif
+
+    if (myrank == 0) then
+      open(unit=9977,file='plot_imbalance_histogram.gnu',status='unknown')
+      write(9977,*) '#set terminal x11'
+      write(9977,*) 'set terminal wxt'
+      write(9977,*) '#set terminal gif'
+      write(9977,*) '#set output "imbalance_histogram.gif"'
+      write(9977,*)
+      write(9977,*) 'set xrange [1:',NPROCTOT_VAL,']'
+      write(9977,*) '#set xtics 0,0.1,1'
+      write(9977,*) 'set boxwidth 1.'
+      write(9977,*) 'set xlabel "Mesh slice number"'
+      write(9977,*)
+      write(9977,*) 'set ylabel "Number of receivers in that mesh slice"'
+      write(9977,*) 'plot "imbalance_of_nrec_local.dat" with boxes'
+      write(9977,*) 'pause -1 "hit any key..."'
+      write(9977,*)
+      write(9977,*) 'set ylabel "Number of adjoint sources in that mesh slice"'
+      write(9977,*) 'plot "imbalance_of_nadj_rec_local.dat" with boxes'
+      write(9977,*) 'pause -1 "hit any key..."'
+      close(9977)
+    endif
+
+    call synchronize_all()
+  endif
+
+  end subroutine setup_green_locations
+
 
 !
 !-------------------------------------------------------------------------------------------------

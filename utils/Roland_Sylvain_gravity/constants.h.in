@@ -248,6 +248,7 @@
 ! maximum number of sources and receivers to locate simultaneously
   integer, parameter :: NSOURCES_SUBSET_MAX = 100
   integer, parameter :: NREC_SUBSET_MAX = 200
+  integer, parameter :: NGF_LOC_SUBSET_MAX = 200
 
 ! use a force source located exactly at a grid point instead of a CMTSOLUTION source
 ! this can be useful e.g. for asteroid impact simulations

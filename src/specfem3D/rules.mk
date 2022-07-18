@@ -90,6 +90,7 @@ specfem3D_SOLVER_OBJECTS += \
 	$O/iterate_time_undoatt.solverstatic.o \
 	$O/locate_point.solverstatic.o \
 	$O/locate_receivers.solverstatic.o \
+	$O/locate_green_locations.solverstatic.o \
 	$O/locate_regular_points.solverstatic.o \
 	$O/locate_sources.solverstatic.o \
 	$O/multiply_arrays_source.solverstatic.o \
