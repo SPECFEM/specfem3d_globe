@@ -486,6 +486,65 @@
 
   end subroutine save_forward_arrays_GF_adios
 
+!-------------------------------------------------------------------------------
+!> Define ADIOS forward arrays that are always dumped.
+!! \param group_size_inc The inout adios group size to increment
+!!                       with the size of the variable
+
+
+  ! subroutine define_GF_forward_arrays_adios(group_size_inc)
+
+  ! use specfem_par
+  ! use specfem_par_crustmantle
+
+  ! use adios_helpers_mod
+  ! use manager_adios
+
+  ! implicit none
+
+  ! integer(kind=8), intent(inout) :: group_size_inc
+
+  ! ! local parameters
+  ! integer(kind=8) :: local_dim
+  ! integer, dimension(:), allocatable :: mask_array
+  ! integer :: nindex_array = 0
+  ! double precision, dimension(:), allocatable :: &
+  !   displacemnt, velocity, acceleration
+
+  ! ! Velocity/Acceleration/Displacement
+  ! local_dim = NDIM * ngf_unique
+
+
+  ! where(islice_unique_gf_loc==myrank) mask = 1
+  ! nindex_array = sum(mask_array)
+
+  ! allocate( &
+  !     displacement(NDIM, ngf_unique), &
+  !     velocity(NDIM, ngf_unique), &
+  !     acceleration, &
+  !     stat=ier
+  ! )
+
+  ! call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(displ_crust_mantle))
+  ! call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(veloc_crust_mantle))
+  ! call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(accel_crust_mantle))
+
+  ! ! strains
+  ! local_dim = NGLLX * NGLLY * NGLLZ * ngf_unique
+  ! call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', &
+  !                                  STRINGIFY_VAR(epsilondev_xx_crust_mantle))
+  ! call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', &
+  !                                  STRINGIFY_VAR(epsilondev_yy_crust_mantle))
+  ! call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', &
+  !                                  STRINGIFY_VAR(epsilondev_xy_crust_mantle))
+  ! call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', &
+  !                                  STRINGIFY_VAR(epsilondev_xz_crust_mantle))
+  ! call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', &
+  !                                  STRINGIFY_VAR(epsilondev_yz_crust_mantle))
+
+
+  ! end subroutine define_GF_forward_arrays_adios
+
 
 !-------------------------------------------------------------------------------
 !> Define ADIOS forward arrays that are always dumped.

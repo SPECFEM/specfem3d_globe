@@ -13,10 +13,10 @@ SAVE_FORWARD                    = .false.   # save last frame of forward simulat
 NCHUNKS                         = 1
 
 # angular width of the first chunk (not used if full sphere with six chunks)
-ANGULAR_WIDTH_XI_IN_DEGREES     = 20.d0   # angular size of a chunk
-ANGULAR_WIDTH_ETA_IN_DEGREES    = 20.d0
-CENTER_LATITUDE_IN_DEGREES      = 40.d0
-CENTER_LONGITUDE_IN_DEGREES     = 25.d0
+ANGULAR_WIDTH_XI_IN_DEGREES     = 40.d0   # angular size of a chunk
+ANGULAR_WIDTH_ETA_IN_DEGREES    = 30.d0
+CENTER_LATITUDE_IN_DEGREES      = 45.d0
+CENTER_LONGITUDE_IN_DEGREES     = 15.d0
 GAMMA_ROTATION_AZIMUTH          = 0.d0
 
 # number of elements at the surface along the two sides of the first chunk

@@ -356,11 +356,19 @@ module specfem_par
   ! Green Function number of locations to check
   integer :: ngf, ngf_local
 
+  ! mesh parameters
+  integer, dimension(:,:,:,:), allocatable :: ibool_GF
+  integer, dimension(:), allocatable :: iglob_cm2GF
+  integer :: NGLOB_GF
+
   ! Locations allocatable 
   integer, dimension(:), allocatable :: islice_selected_gf_loc,ispec_selected_gf_loc
   integer, dimension(:), allocatable :: islice_num_gf_loc_local
   integer, dimension(:), allocatable :: islice_unique_gf_loc,ispec_unique_gf_loc
-  integer, dimension(:), allocatable :: ngf_unique
+  integer :: ngf_unique = 0
+  integer :: ngf_unique_local = 0
+  
+
 
   double precision, dimension(:), allocatable :: xi_gf_loc,eta_gf_loc,gamma_gf_loc
   double precision, dimension(:,:,:), allocatable :: nu_gf_loc

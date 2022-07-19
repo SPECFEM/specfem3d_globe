@@ -400,7 +400,7 @@
   if (myrank == 0) then
 
     ! appends receiver locations to sr.vtk file
-    open(IOUT_VTK,file=trim(OUTPUT_FILES)//'/gf_temp.vtk',position='append',status='old',iostat=ier)
+    open(IOUT_VTK,file=trim(OUTPUT_FILES)//'/gf_tmp.vtk',position='append',status='old',iostat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error opening and appending green function locations to file gf_tmp.vtk')
 
     ! chooses best receivers locations
@@ -415,14 +415,19 @@
         ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
         call xyz_2_rlatlon_dble(xyz_found(1,igf),xyz_found(2,igf),xyz_found(3,igf),radius,lat,lon)
 
-        write(IMAIN,*)
-        write(IMAIN,*) 
-        write(IMAIN,'(A6,A10,A10,A10,A10,A10,A10,A10,A10,A10,A10)') &
-          'GF #', 'orig. lat','orig. lon','clos. dist (km)', &
-          'slice', 'element', &
-          'xi','eta','gamma', &
-          'new lat','new lon'
-        write(IMAIN,'(I6,F10.4,F10.4,F10.4,F10.4,F10.4,F10.4,F10.4,F10.4,F10.4,F10.4)') &
+        ! Write table header 
+        if (igf == 1) then
+          write(IMAIN,*)
+          write(IMAIN,*) 
+          write(IMAIN,'(A6,A14,A14,A14,A14,A14,A14,A14,A14,A14,A14)') &
+            'GF #', 'orig. lat','orig. lon','dist (km)', &
+            'slice', 'element', &
+            'xi','eta','gamma', &
+            'new lat','new lon'
+        endif
+        
+        ! Write table entry
+        write(IMAIN,'(I6,F14.4,F14.4,F14.4,I14,I14,F14.4,F14.4,F14.4,F14.4,F14.4)') &
           igf, sngl(gf_loc_lat(igf)), sngl(gf_loc_lon(igf)), sngl(final_distance(igf)), &
           islice_selected_gf_loc(igf), ispec_selected_gf_loc(igf), &
           xi_gf_loc(igf),eta_gf_loc(igf),gamma_gf_loc(igf), &

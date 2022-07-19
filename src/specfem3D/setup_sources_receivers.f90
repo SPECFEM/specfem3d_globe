@@ -1046,7 +1046,7 @@
            eta_receiver(nrec), &
            gamma_receiver(nrec), &
            nu_rec(NDIM,NDIM,nrec), &
-           nu_gf_loc(NDIM,NDIM,ngf),stat=ier)
+           stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating receiver arrays')
   ! initializes arrays
   islice_selected_rec(:) = -1
@@ -1145,7 +1145,7 @@
   call sum_all_i(nrec_local,nrec_tot_found)
   if (myrank == 0) then
     write(IMAIN,*)
-    write(IMAIN,*) 'found a total of ',nrec_tot_found,' receivers in all slices'
+    write(IMAIN,*) 'found a total of ', nrec_tot_found,' receivers in all slices'
     ! checks for number of receivers
     ! note: for 1-chunk simulations, nrec_simulations is the number of receivers/sources found in this chunk
     if (nrec_tot_found /= nrec_simulation) then
@@ -1394,7 +1394,6 @@
 
 !
 !-------------------------------------------------------------------------------------------------
-!
 
   subroutine setup_green_locations()
 
@@ -1403,16 +1402,20 @@
 
   implicit none
 
-! check for imbalance of distribution of receivers or of adjoint sources
+  character(len=MAX_STRING_LEN) :: filename 
+  ! check for imbalance of distribution of receivers or of adjoint sources
   logical, parameter :: CHECK_FOR_IMBALANCE = .false.
 
   ! local parameters
   integer :: igf, ngf_tot_found,ier,ix
+  integer :: i,j,k,l
+  integer :: iglob, iglob_tmp_counter, iglob_counter
   integer :: ngf_simulation
   integer,dimension(0:NPROCTOT_VAL-1) :: tmp_gf_local_all
   double precision :: sizeval
   
   integer, dimension(:,:), allocatable :: islicespec_selected_gf_loc
+  integer, dimension(:), allocatable :: iglob_tmp
   logical, dimension(:), allocatable :: mask
   integer, dimension(:), allocatable :: rmask  
   integer, dimension(:), allocatable :: index_vector
@@ -1423,19 +1426,23 @@
     write(IMAIN,*) 'green function locations:'
     call flush_IMAIN()
   endif
+  write(*,*) 'myrank', myrank, 'nspec', NSPEC_CRUST_MANTLE
+
 
   ! allocate memory for green function arrays
+  allocate(xi_gf_loc(ngf), &
+           eta_gf_loc(ngf), &
+           gamma_gf_loc(ngf),stat=ier)
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating green function arrays 0.0')
+
+  allocate(nu_gf_loc(NDIM,NDIM,ngf),stat=ier)
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating green function arrays 0.1')
+
   allocate(islice_selected_gf_loc(ngf), &
            ispec_selected_gf_loc(ngf), &
            islicespec_selected_gf_loc(2,ngf), &
-           mask(ngf), &
-           rmask(ngf), &
-           xi_receiver(ngf), &
-           eta_receiver(ngf), &
-           gamma_receiver(ngf), &
-           nu_rec(NDIM,NDIM,ngf), &
-           nu_gf_loc(NDIM,NDIM,ngf),stat=ier)
-  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating receiver arrays')
+           stat=ier)
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating green function arrays 1')
   ! initializes arrays
   islice_selected_gf_loc(:) = -1
   ispec_selected_gf_loc(:) = 0
@@ -1446,15 +1453,32 @@
   allocate(gf_loc_lat(ngf), &
            gf_loc_lon(ngf), &
            gf_loc_depth(ngf),stat=ier)
-  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating receiver arrays')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating green function arrays 1 arrays')
   gf_loc_lat(:) = 0.d0; gf_loc_lon(:) = 0.d0; gf_loc_depth(:) = 0.d0
 
-  !  receivers
+
+
+  !  Green Function locations
   if (myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) 'Total number of green function locations = ', ngf
     write(IMAIN,*)
     call flush_IMAIN()
+  endif
+
+  if (myrank == 0) then
+  ! write source and receiver VTK files for Paraview
+    filename = trim(OUTPUT_FILES)//'/gf_tmp.vtk'
+    open(IOUT_VTK,file=trim(filename),status='unknown',iostat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error opening temporary file gf_tmp.vtk in setup_sources_reveivers.')
+    write(IOUT_VTK,'(a)') '# vtk DataFile Version 2.0'
+    write(IOUT_VTK,'(a)') 'Green Function Locations VTK file'
+    write(IOUT_VTK,'(a)') 'ASCII'
+    write(IOUT_VTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
+    !  LQY -- won't be able to know NSOURCES+nrec at this point...
+    write(IOUT_VTK, '(a,i6,a)') 'POINTS ', NSOURCES, ' float'
+    ! closing file, rest of information will be appended later on
+    close(IOUT_VTK)
   endif
 
   ! locate receivers in the crust in the mesh
@@ -1466,17 +1490,27 @@
 
   ! count number of receivers located in this slice
   ngf_local = 0
-  ngf_simulation = nrec
+  ngf_simulation = ngf
 
   do igf = 1,ngf
     if (myrank == islice_selected_gf_loc(igf)) ngf_local = ngf_local + 1
   enddo
+
+  write (*,*) islice_selected_gf_loc
+  write (*,*) ispec_selected_gf_loc  
 
   ! check that the sum of the number of receivers in each slice is nrec (or nsources for adjoint simulations)
   call sum_all_i(ngf_local,ngf_tot_found)
 
   ! Get unique number of elements and allocate new array of slices and sources
   if (myrank == 0) then
+
+    allocate( &
+      mask(ngf), &
+      rmask(ngf), stat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating mask and rmask')
+    
+    rmask(:) = 0
     mask(:) = .true.
 
     do ix = ngf,2,-1
@@ -1485,25 +1519,160 @@
         islicespec_selected_gf_loc(2,:ix-1)==islicespec_selected_gf_loc(2,ix)))
     enddo
 
-    ! Make an index vector
-    allocate(index_vector, source=pack([(ix, ix=1,ngf) ],mask))
-    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating mask index array')
-
-    ! Now copy the unique elements of the slice and spec arrays into the unique arrays
-    allocate(islice_unique_gf_loc, source=islice_selected_gf_loc(index_vector),stat=ier)
-    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating unique slice array')
-
-    allocate(ispec_unique_gf_loc, source=ispec_selected_gf_loc(index_vector),stat=ier)
-    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating unique element array')
-
     ! Get total number of unique elements (IMPORTANT FOR ADIOS FILE ALLOCATION)
     rmask(:) = 0
-    where(mask) rmask = 1
 
+    where(mask) rmask = 1
     ngf_unique = sum(rmask)
 
-  endif  
+  endif
+
+  ! Broadcast the total number of unique elements
+  call bcast_all_singlei(ngf_unique)
+
+  ! Make an index vector
+  allocate(index_vector(ngf_unique), stat=ier)
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating mask index array')
+  index_vector(:) = 0
+
+  ! Now copy the unique elements of the slice and spec arrays into the unique arrays
+  allocate(islice_unique_gf_loc(ngf_unique), stat=ier)
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating unique slice array')
+
+  allocate(ispec_unique_gf_loc(ngf_unique), stat=ier)
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating unique element array')
+
+  if (myrank==0) then
+    index_vector = pack([(ix, ix=1,ngf)],mask)
+    write(*,*) 'indexvector', index_vector, 'shape', shape(index_vector)
+    deallocate(mask, rmask)
+  endif
+    
+  call bcast_all_i(index_vector, ngf_unique)
+
+  do igf=1,ngf_unique
+    islice_unique_gf_loc(igf) = islice_selected_gf_loc(index_vector(igf))
+    ispec_unique_gf_loc(igf) = ispec_selected_gf_loc(index_vector(igf))
+  enddo
+
+  write(*,*) islice_unique_gf_loc
+  write(*,*) ispec_unique_gf_loc
+
+  ! ! Broadcast the total number of unique elements
+  ! call bcast_all_singlei(ngf_unique)
+
+  ! ! Allocate the unique array to 
+  ! if (myrank /= 0) then
+  !   ! Now copy the unique elements of the slice and spec arrays into the unique arrays
+  !   allocate(islice_unique_gf_loc(ngf_unique))
+  !   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating unique slice array')
+  !   islice_unique_gf_loc(:) = 0
+
+  !   allocate(ispec_unique_gf_loc(ngf_unique),stat=ier)
+  !   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating unique element array')
+  !   islice_unique_gf_loc(:) = 0
+
+  ! endif
+
+  ! main process broadcasts the results to all the slices
+  call bcast_all_singlei(ngf_unique)
+  call bcast_all_i(islice_unique_gf_loc, ngf_unique)
+  call bcast_all_i(ispec_unique_gf_loc, ngf_unique)
+
+  ! synchronizes to get right timing
+  call synchronize_all()
+
+  call sleep(myrank)
+  write(*,*) ' '
+  write(*,*) 'myrank', myrank, 'slices  ', islice_unique_gf_loc
+  write(*,*) 'myrank', myrank, 'elements', ispec_unique_gf_loc
+  write(*,*) ' '
+
+  if (myrank == 0) then
+   write(*,*) 'slice array', islice_unique_gf_loc
+    do igf=1,ngf_unique
+      write(*,*) 'rank', myrank, 'igf', igf, 'sl', islice_unique_gf_loc(igf), 'el', ispec_unique_gf_loc(igf)
+    enddo
+  endif
+
+  ! Get number of unique entries in a slice
+  ngf_unique_local = 0
+  do igf=1,ngf_unique
+    if (islice_unique_gf_loc(igf)==myrank) then 
+      ngf_unique_local = ngf_unique_local + 1
+      write(*,*) 'myrank', myrank, 'igf/ngf', igf,'/', ngf_unique, 'slice', islice_unique_gf_loc(igf), ngf_unique_local
+    endif
+  enddo
+
+  if (myrank == 0) write(*,*) 'myrank', 'ngf_unique_local'
+  write(*,*) 'myrank', myrank, 'ngf', ngf_unique_local
+
+  call synchronize_all()
+
+  ! ------------
+  ! This section is quite important since it sets up the 
+  ! Use global mapping of sources to 
+  if (ngf_unique_local .gt. 0) then
+    
+    ! Get ibool array for output Green function database
+    allocate(ibool_GF(NGLLX, NGLLY, NGLLZ, ngf_unique_local), &
+             iglob_tmp(NGLLX*NGLLY*NGLLZ*ngf_unique_local), &
+             stat=ier)
+
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating ibool_GF, or iglob_tmp array')
+    ibool_GF(:,:,:,:) = 0
+    iglob_tmp(:) = 0
+
+    iglob_counter = 0
+    do igf=1,ngf_unique
+      if (islice_unique_gf_loc(igf)==myrank) then 
+
+        iglob_tmp_counter = 0
+
+        do i=1,NGLLX
+          do j=1,NGLLY
+            do k=1,NGLLZ
+
+              ! Get index from global mesh
+              iglob = ibool_crust_mantle(i,j,k,ispec_selected_gf_loc(igf))
+              
+              if (any(iglob_tmp==iglob)) then
+                  ! if iglob already in the counted array iglob_tmp 
+                  ! just find where and use index for ibool_GF
+                  do l=1,iglob_counter
+                      if (iglob==iglob_tmp(l)) ibool_GF(i,j,k,igf) = l
+                  enddo
+              else
+                  ! If iglob not in the iglob temp array, then add new entry.
+                  iglob_counter = iglob_counter + 1
+                  iglob_tmp(iglob_counter) = iglob
+                  ibool_GF(i,j,k,igf) = iglob_counter
+
+              endif
+
+            enddo
+          enddo
+        enddo
+      endif
+    enddo
+
+    !
+    allocate(iglob_cm2GF(iglob_counter))
+
+    ! Total number of Green function coordinates in terms of elements
+    NGLOB_GF = iglob_counter
+    iglob_cm2GF(:) = iglob_tmp(1:iglob_counter)
+
+    deallocate(iglob_tmp)
+  endif
+
+  call synchronize_all()
+
+  if (myrank == 0) write(*,*) 'myrank', 'NGLOB_GF'
+  write(*,*) 'myrank', myrank, 'NGLOB_GF', NGLOB_GF
   
+  call synchronize_all()
+
   if (myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) 'found a total of ',ngf_tot_found,' green function locations in all slices'
