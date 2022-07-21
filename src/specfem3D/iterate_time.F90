@@ -255,15 +255,15 @@
     endif
 
     ! Transfer back the arrays from the GPU every x-th timestep
-    if (SAVE_GREEN_FUNCTIONS) then
-      if (mod(it, ceiling(dble(it_end)/10)) == 0) then 
-        if (GPU_MODE) then 
-          call it_transfer_from_GPU()
-          call save_forward_arrays_GF_adios()
-          write(*,*) 'done with saving Green call'
-        endif
-      endif
-    endif
+    ! if (SAVE_GREEN_FUNCTIONS) then
+    !   if (mod(it, ceiling(dble(it_end)/10)) == 0) then 
+    !     if (GPU_MODE) then 
+    !       call it_transfer_from_GPU()
+    !       call save_forward_arrays_GF_adios()
+    !       write(*,*) 'done with saving Green call'
+    !     endif
+    !   endif
+    ! endif
 
 
   !

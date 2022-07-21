@@ -621,13 +621,15 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_GF) :: acceleration
 
   ! Receiver location and rotation for testing
-  real(kind=CUSTOM_REAL), dimension(3,3,NGLOB_GF) :: rec_rotation
-  real(kind=CUSTOM_REAL), dimension(NGLOB_GF) :: rec_latitude
-  real(kind=CUSTOM_REAL), dimension(NGLOB_GF) :: rec_longitude
-  real(kind=CUSTOM_REAL), dimension(NGLOB_GF) :: rec_depth
-  real(kind=CUSTOM_REAL), dimension(NGLOB_GF) :: rec_xi
-  real(kind=CUSTOM_REAL), dimension(NGLOB_GF) :: rec_eta
-  real(kind=CUSTOM_REAL), dimension(NGLOB_GF) :: rec_gamma
+  real(kind=CUSTOM_REAL), dimension(ngf) :: rec_latitude
+  real(kind=CUSTOM_REAL), dimension(ngf) :: rec_longitude
+  real(kind=CUSTOM_REAL), dimension(ngf) :: rec_depth
+  real(kind=CUSTOM_REAL), dimension(ngf) :: rec_xi
+  real(kind=CUSTOM_REAL), dimension(ngf) :: rec_eta
+  real(kind=CUSTOM_REAL), dimension(ngf) :: rec_gamma
+  integer, dimension(ngf) :: rec_spec
+  integer, dimension(ngf) :: rec_slice
+  real(kind=CUSTOM_REAL), dimension(3,3,ngf) :: rec_rotation
   
 
   ! crust/mantle

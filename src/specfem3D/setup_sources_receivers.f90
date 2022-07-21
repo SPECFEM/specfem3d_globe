@@ -1610,6 +1610,7 @@
   ! ------------
   ! This section is quite important since it sets up the 
   ! Use global mapping of sources to 
+  ! call sleep(2)
   if (ngf_unique_local .gt. 0) then
     
     ! Get ibool array for output Green function database
@@ -1654,13 +1655,13 @@
             do k=1,NGLLZ
 
               ! Get index from global mesh
-              iglob = ibool_crust_mantle(i,j,k,ispec_selected_gf_loc(igf))
-              
+              iglob = ibool_crust_mantle(i,j,k,ispec_unique_gf_loc(igf))
+              ! if (myrank==2) write(*,*) i,j,k,iglob
               if (any(iglob_tmp==iglob)) then
                   ! if iglob already in the counted array iglob_tmp 
                   ! just find where and use index for ibool_GF
                   do l=1,iglob_counter
-                      if (iglob==iglob_tmp(l)) ibool_GF(i,j,k,igf) = l
+                      if (iglob==iglob_tmp(l)) ibool_GF(i,j,k,igf_counter) = l
                   enddo
               else
                   ! If iglob not in the iglob temp array, then add new entry.
@@ -1675,6 +1676,16 @@
         enddo
       endif
     enddo
+    
+    ! do igf=1,2
+    ! do i=1,NGLLX
+    !   do j=1,NGLLY
+    !     do k=1,NGLLZ
+    !       write (*,*) ibool_GF(i,j,k,igf)
+    !     enddo
+    !   enddo
+    ! enddo
+    ! enddo
 
     !
     allocate(iglob_cm2GF(iglob_counter))
@@ -1687,6 +1698,7 @@
 
     deallocate(iglob_tmp)
   endif
+  ! call sleep(2)
 
   ! Get ibool array for output Green function database
   allocate(islice_out_gf_loc(ngf), &
