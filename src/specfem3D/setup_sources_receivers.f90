@@ -1409,7 +1409,7 @@
   ! local parameters
   integer :: igf, ngf_tot_found,ier,ix
   integer :: i,j,k,l
-  integer :: iglob, iglob_tmp_counter, iglob_counter
+  integer :: iglob, iglob_tmp_counter, iglob_counter, igf_counter
   integer :: ngf_simulation
   integer,dimension(0:NPROCTOT_VAL-1) :: tmp_gf_local_all
   double precision :: sizeval
@@ -1581,8 +1581,6 @@
 
   ! synchronizes to get right timing
   call synchronize_all()
-
-  call sleep(myrank)
   write(*,*) ' '
   write(*,*) 'myrank', myrank, 'slices  ', islice_unique_gf_loc
   write(*,*) 'myrank', myrank, 'elements', ispec_unique_gf_loc
@@ -1603,7 +1601,7 @@
       write(*,*) 'myrank', myrank, 'igf/ngf', igf,'/', ngf_unique, 'slice', islice_unique_gf_loc(igf), ngf_unique_local
     endif
   enddo
-
+  
   if (myrank == 0) write(*,*) 'myrank', 'ngf_unique_local'
   write(*,*) 'myrank', myrank, 'ngf', ngf_unique_local
 
@@ -1617,17 +1615,39 @@
     ! Get ibool array for output Green function database
     allocate(ibool_GF(NGLLX, NGLLY, NGLLZ, ngf_unique_local), &
              iglob_tmp(NGLLX*NGLLY*NGLLZ*ngf_unique_local), &
+             ispec_cm2gf(ngf_unique_local), &
+             islice_cm2gf(ngf_unique_local), &
+             islice_out_gf_loc(ngf), &
+             ispec_out_gf_loc(ngf), &
              stat=ier)
-
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating ibool_GF, or iglob_tmp array')
+
+    write (*,*) myrank, 'shape ibool_GF', shape(ibool_GF)
+    
+    ! Conversion arrays from full crust_mantle element array to small
+    ! Green function array
     ibool_GF(:,:,:,:) = 0
     iglob_tmp(:) = 0
+    ispec_cm2gf(:) = 0
+    islice_cm2gf(:) = 0
+    islice_out_gf_loc(:) = 0
+    ispec_out_gf_loc(:) = 0
 
+    ! Initialize counters to count local elements and local coordinates
     iglob_counter = 0
+    igf_counter = 0
     do igf=1,ngf_unique
       if (islice_unique_gf_loc(igf)==myrank) then 
 
+        ! Count new elements
+        igf_counter = igf_counter + 1
+
+        ! Count new coordinates
         iglob_tmp_counter = 0
+
+        ! For each element in the new local array get the element of 
+        ! the original crust_mantle array
+        ispec_cm2gf(igf_counter) = ispec_unique_gf_loc(igf)
 
         do i=1,NGLLX
           do j=1,NGLLY
@@ -1646,7 +1666,7 @@
                   ! If iglob not in the iglob temp array, then add new entry.
                   iglob_counter = iglob_counter + 1
                   iglob_tmp(iglob_counter) = iglob
-                  ibool_GF(i,j,k,igf) = iglob_counter
+                  ibool_GF(i,j,k,igf_counter) = iglob_counter
 
               endif
 
@@ -1661,15 +1681,61 @@
 
     ! Total number of Green function coordinates in terms of elements
     NGLOB_GF = iglob_counter
+
+    ! Convert crust mantle to Green function coordinates
     iglob_cm2GF(:) = iglob_tmp(1:iglob_counter)
 
     deallocate(iglob_tmp)
   endif
 
-  call synchronize_all()
+  ! Get ibool array for output Green function database
+  allocate(islice_out_gf_loc(ngf), &
+           ispec_out_gf_loc(ngf), &
+           stat=ier)
+  ! Convert crust mantle ispec to green function database ispec
+  if (myrank==0) write(*,*) 'sendreceive'
+  do igf=1,ngf
+    if (islice_selected_gf_loc(igf)==myrank) then
 
+        islice_out_gf_loc(igf) = myrank
+        
+        do i=1,ngf_unique_local
+          if (ispec_cm2gf(i)==ispec_selected_gf_loc(igf)) then
+            ispec_out_gf_loc(igf) = i
+          endif
+        enddo
+    endif
+  enddo
+
+  ! Collect the results on rank one
+  do igf=1,ngf
+    if (islice_selected_gf_loc(igf) /= 0) then
+      if (islice_selected_gf_loc(igf) == myrank) then
+        call send_singlei(ispec_out_gf_loc(igf), 0, igf)
+        call send_singlei(islice_out_gf_loc(igf), 0, igf+ngf)
+        write(*,*) 'rank', myrank, 'send 1', ' igf', igf
+        ! if (ier /= 0 ) call exit_MPI(myrank,'Error 1')
+      endif
+      if (myrank==0) then 
+        call recv_singlei(ispec_out_gf_loc(igf), islice_selected_gf_loc(igf), igf)
+        call recv_singlei(islice_out_gf_loc(igf), islice_selected_gf_loc(igf), igf+ngf)
+        write(*,*) 'waiting to receive 1'
+      endif
+    endif
+  enddo
+
+ call synchronize_all()
+  call sleep(2)
+  if (myrank == 0) then
+    write(*,*) 'islice', islice_out_gf_loc
+    write(*,*) 'ispec', ispec_out_gf_loc
+  endif
+
+
+  call synchronize_all()
   if (myrank == 0) write(*,*) 'myrank', 'NGLOB_GF'
   write(*,*) 'myrank', myrank, 'NGLOB_GF', NGLOB_GF
+  write(*,*) 'myrank', myrank, 'ispec_cm2gf', ispec_cm2gf
   
   call synchronize_all()
 
@@ -1717,6 +1783,9 @@
     write(IMAIN,*)
     call flush_IMAIN()
   endif
+
+  ! synchronizes to get right timing
+  call synchronize_all()
 
   end subroutine setup_green_locations
 

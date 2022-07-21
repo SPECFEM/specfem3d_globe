@@ -260,6 +260,7 @@
         if (GPU_MODE) then 
           call it_transfer_from_GPU()
           call save_forward_arrays_GF_adios()
+          write(*,*) 'done with saving Green call'
         endif
       endif
     endif
@@ -343,7 +344,7 @@
   
     if (SAVE_GREEN_FUNCTIONS) then
         ! Printing the confirmation
-        print *,'transfered stuff back from the GPU at', it
+        print *,'transfered stuff back from the GPU', it
 
         ! Get the fields from the GPU
         call transfer_fields_cm_from_device(NDIM*NGLOB_CRUST_MANTLE, &

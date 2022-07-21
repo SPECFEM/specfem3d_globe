@@ -192,7 +192,7 @@
     enddo
 
     ! point depth (in m)
-    depth = gf_loc_depth(igf)
+    depth = gf_loc_depth(igf) * 1000.0
 
     ! normalized receiver radius
     r0 = R_UNIT_SPHERE

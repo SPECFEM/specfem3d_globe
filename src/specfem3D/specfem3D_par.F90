@@ -358,11 +358,12 @@ module specfem_par
 
   ! mesh parameters
   integer, dimension(:,:,:,:), allocatable :: ibool_GF
-  integer, dimension(:), allocatable :: iglob_cm2GF
+  integer, dimension(:), allocatable :: iglob_cm2GF, ispec_cm2gf, islice_cm2gf
   integer :: NGLOB_GF
 
   ! Locations allocatable 
   integer, dimension(:), allocatable :: islice_selected_gf_loc,ispec_selected_gf_loc
+  integer, dimension(:), allocatable :: islice_out_gf_loc,ispec_out_gf_loc
   integer, dimension(:), allocatable :: islice_num_gf_loc_local
   integer, dimension(:), allocatable :: islice_unique_gf_loc,ispec_unique_gf_loc
   integer :: ngf_unique = 0

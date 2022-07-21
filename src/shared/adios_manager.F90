@@ -1083,6 +1083,73 @@ contains
   end subroutine init_adios_group_undo_att
 
 #endif
+
+
+!
+! ------------------------------------------------------------------------------
+!
+
+#if defined(USE_ADIOS) || defined(USE_ADIOS2)
+! only available with ADIOS compilation support
+! to clearly separate adios version and non-adios version of same tools
+
+  subroutine init_adios_group_gf(adios_group,group_name)
+
+#if defined(USE_ADIOS)
+  use constants, only: ADIOS_TRANSPORT_METHOD_GF,ADIOS_METHOD_PARAMS_GF
+#elif defined(USE_ADIOS2)
+  use constants, only: ADIOS2_ENGINE_GF,ADIOS2_ENGINE_PARAMS_GF
+#endif
+
+  implicit none
+
+#if defined(USE_ADIOS)
+  integer(kind=8), intent(inout) :: adios_group
+#elif defined(USE_ADIOS2)
+  type(adios2_io), intent(inout) :: adios_group
+#endif
+  character(len=*), intent(in) :: group_name
+
+  ! local parameters
+  integer :: ier
+
+  TRACE_ADIOS_ARG('init_adios_group_gf: group '//trim(group_name)//' - rank ',myrank_adios)
+
+  ! initializes adios group
+#if defined(USE_ADIOS)
+  ! ADIOS 1
+  call adios_declare_group(adios_group, group_name, "iter", 0, ier)
+  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+  call check_adios_err(ier,"Error declare group")
+
+  ! sets transport method
+  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD_UNDO_ATT, ADIOS_METHOD_PARAMS_UNDO_ATT, '', ier)
+  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+  call check_adios_err(ier,"Error select method")
+
+#elif defined(USE_ADIOS2)
+  ! ADIOS 2
+  ! note: no special case, same engine & parameters as for "normal" io groups.
+  !       we could try out different transport methods & parameters for performance
+
+  ! Create the ADIOS IO group which will contain all variables and attributes
+  call adios2_declare_io(adios_group, myadios2_obj, group_name, ier)
+  call check_adios_err(ier,"Error declaring an ADIOS2 IO group in init_adios_group_gf()")
+
+  ! Set engine and parameters: ADIOS2_ENGINE_UNDO_ATT or ADIOS2_ENGINE_DEFAULT
+  call adios2_set_engine(adios_group, ADIOS2_ENGINE_GF, ier)
+  call check_adios_err(ier,"Error setting engine for ADIOS2 IO group in init_adios_group_gf()")
+
+  ! Set parameters: ADIOS2_ENGINE_PARAMS_UNDO_ATT or ADIOS2_ENGINE_PARAMS_DEFAULT
+  call adios2_set_parameters(adios_group, ADIOS2_ENGINE_PARAMS_GF, ier)
+  call check_adios_err(ier,"Error setting parameters for ADIOS2 IO group in init_adios_group_gf()")
+
+#endif
+
+  end subroutine init_adios_group_gf
+
+#endif
+
 !
 !---------------------------------------------------------------------------------
 !

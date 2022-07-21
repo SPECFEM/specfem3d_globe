@@ -1479,6 +1479,31 @@ end module my_mpi
 
   end subroutine sendrecv_dp
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine sendrecv_single_i(sendbuf, dest, sendtag, &
+                               recvbuf, source, recvtag)
+
+  use my_mpi
+
+  implicit none
+
+  integer :: sendcount = 1
+  integer :: recvcount = 1
+  integer :: dest, sendtag, source, recvtag
+  double precision, dimension(sendcount) :: sendbuf
+  double precision, dimension(recvcount) :: recvbuf
+
+  integer :: ier
+
+  call MPI_SENDRECV(sendbuf,sendcount,MPI_DOUBLE_PRECISION,dest,sendtag, &
+                    recvbuf,recvcount,MPI_DOUBLE_PRECISION,source,recvtag, &
+                    my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier)
+
+  end subroutine sendrecv_single_i
+
 !-------------------------------------------------------------------------------------------------
 !
 ! MPI gather helper

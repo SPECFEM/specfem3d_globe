@@ -473,6 +473,11 @@
 !  character(len=*), parameter :: ADIOS_TRANSPORT_METHOD_UNDO_ATT = "MPI_LUSTRE"
 !  character(len=*), parameter :: ADIOS_METHOD_PARAMS_UNDO_ATT =  "stripe_count=16,stripe_size=4194304,block_size=4194304"
 
+! ADIOS transport methods for Green function save_frame** data files
+!! MPI (default) -> Used values form the UNDO ATT definition
+  character(len=*), parameter :: ADIOS_TRANSPORT_METHOD_GF= "MPI"
+  character(len=*), parameter :: ADIOS_METHOD_PARAMS_GF =  ""
+
 !!-----------------------------------------------------------
 !!
 !! ADIOS2 Related values
@@ -501,6 +506,9 @@
 
   character(len=*), parameter :: ADIOS2_ENGINE_UNDO_ATT = "BP4"
   character(len=*), parameter :: ADIOS2_ENGINE_PARAMS_UNDO_ATT = "" ! add "SubStreams=64,MaxBufferSize=800Mb" for larger runs
+
+  character(len=*), parameter :: ADIOS2_ENGINE_GF = "BP4"
+  character(len=*), parameter :: ADIOS2_ENGINE_PARAMS_GF = "" ! add "SubStreams=64,MaxBufferSize=800Mb" for larger runs
 
 
 !!-----------------------------------------------------------
