@@ -205,7 +205,7 @@ program smooth_sem_globe
   ! ADIOS
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
   integer(kind=8) :: group_size_inc,local_dim
-  logical :: is_kernel
+  logical :: is_kernel = .false.
 #endif
 
 #ifdef FORCE_VECTORIZATION
