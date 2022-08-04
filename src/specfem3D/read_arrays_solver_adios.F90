@@ -243,6 +243,7 @@
       sel => selections(sel_num)
       call set_selection_boundingbox(sel, start, count)
 
+
       call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
                                      trim(region_name) // "c11store/array", c11store)
       call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &

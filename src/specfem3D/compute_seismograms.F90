@@ -69,11 +69,13 @@
         do i = 1,NGLLX
           iglob = ibool_crust_mantle(i,j,k,ispec)
 
+
           hlagrange = hxir_store(i,irec_local) * hetar_store(j,irec_local) * hgammar_store(k,irec_local)
 
-          uxd = uxd + dble(displ(1,iglob))*hlagrange
-          uyd = uyd + dble(displ(2,iglob))*hlagrange
-          uzd = uzd + dble(displ(3,iglob))*hlagrange
+            uxd = uxd + dble(displ(1,iglob))*hlagrange
+            uyd = uyd + dble(displ(2,iglob))*hlagrange
+            uzd = uzd + dble(displ(3,iglob))*hlagrange
+
 
         enddo
       enddo

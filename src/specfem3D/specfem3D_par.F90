@@ -350,7 +350,7 @@ module specfem_par
   ! GREEN FUNCTION LOCATION paramaters
   !-----------------------------------------------------------------
 
-  ! File containing the Green function locations to check  
+  ! File containing the Green function locations to check
   character(len=MAX_STRING_LEN) :: GF_LOCATIONS_FILE
 
   ! Green Function number of locations to check
@@ -358,29 +358,29 @@ module specfem_par
 
   ! mesh parameters
   integer, dimension(:,:,:,:), allocatable :: ibool_GF
-  integer, dimension(:), allocatable :: iglob_cm2GF, ispec_cm2gf, islice_cm2gf
+  integer, dimension(:), allocatable :: iglob_cm2gf, ispec_cm2gf, islice_cm2gf
   integer :: NGLOB_GF
 
-  ! Locations allocatable 
+  ! Locations allocatable
   integer, dimension(:), allocatable :: islice_selected_gf_loc,ispec_selected_gf_loc
   integer, dimension(:), allocatable :: islice_out_gf_loc,ispec_out_gf_loc
   integer, dimension(:), allocatable :: islice_num_gf_loc_local
   integer, dimension(:), allocatable :: islice_unique_gf_loc,ispec_unique_gf_loc
   integer :: ngf_unique = 0
   integer :: ngf_unique_local = 0
-  
+
 
 
   double precision, dimension(:), allocatable :: xi_gf_loc,eta_gf_loc,gamma_gf_loc
   double precision, dimension(:,:,:), allocatable :: nu_gf_loc
   double precision, allocatable, dimension(:) :: gf_loc_lat,gf_loc_lon,gf_loc_depth
   double precision :: gf_final_distance_max
-  
+
   ! Final number of elements with Green Functions
   integer :: nel_gf,nel_gf_local
-  
 
-  
+
+
   !-----------------------------------------------------------------
   ! seismograms
   !-----------------------------------------------------------------

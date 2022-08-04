@@ -31,7 +31,8 @@
     theta_source,phi_source, &
     TOPOGRAPHY,ibathy_topo, &
     USE_DISTANCE_CRITERION,xyz_midpoints,xadj,adjncy, &
-    SAVE_GREEN_FUNCTIONS
+    SAVE_GREEN_FUNCTIONS, &
+    ispec_selected_rec, ispec_cm2gf, hxir_store, hetar_store, hgammar_store
 
   use kdtree_search, only: kdtree_delete,kdtree_nodes_location,kdtree_nodes_index
 
@@ -1402,22 +1403,22 @@
 
   implicit none
 
-  character(len=MAX_STRING_LEN) :: filename 
+  character(len=MAX_STRING_LEN) :: filename
   ! check for imbalance of distribution of receivers or of adjoint sources
   logical, parameter :: CHECK_FOR_IMBALANCE = .false.
 
   ! local parameters
   integer :: igf, ngf_tot_found,ier,ix
-  integer :: i,j,k,l
+  integer :: i,j,k,l, ispec
   integer :: iglob, iglob_tmp_counter, iglob_counter, igf_counter
   integer :: ngf_simulation
   integer,dimension(0:NPROCTOT_VAL-1) :: tmp_gf_local_all
   double precision :: sizeval
-  
+
   integer, dimension(:,:), allocatable :: islicespec_selected_gf_loc
   integer, dimension(:), allocatable :: iglob_tmp
   logical, dimension(:), allocatable :: mask
-  integer, dimension(:), allocatable :: rmask  
+  integer, dimension(:), allocatable :: rmask
   integer, dimension(:), allocatable :: index_vector
 
   ! user output
@@ -1497,7 +1498,7 @@
   enddo
 
   write (*,*) islice_selected_gf_loc
-  write (*,*) ispec_selected_gf_loc  
+  write (*,*) ispec_selected_gf_loc
 
   ! check that the sum of the number of receivers in each slice is nrec (or nsources for adjoint simulations)
   call sum_all_i(ngf_local,ngf_tot_found)
@@ -1509,13 +1510,13 @@
       mask(ngf), &
       rmask(ngf), stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating mask and rmask')
-    
+
     rmask(:) = 0
     mask(:) = .true.
 
     do ix = ngf,2,-1
       mask(ix) = .not.(any(&
-        islicespec_selected_gf_loc(1,:ix-1)==islicespec_selected_gf_loc(1,ix).and.& 
+        islicespec_selected_gf_loc(1,:ix-1)==islicespec_selected_gf_loc(1,ix).and.&
         islicespec_selected_gf_loc(2,:ix-1)==islicespec_selected_gf_loc(2,ix)))
     enddo
 
@@ -1547,7 +1548,7 @@
     write(*,*) 'indexvector', index_vector, 'shape', shape(index_vector)
     deallocate(mask, rmask)
   endif
-    
+
   call bcast_all_i(index_vector, ngf_unique)
 
   do igf=1,ngf_unique
@@ -1561,7 +1562,7 @@
   ! ! Broadcast the total number of unique elements
   ! call bcast_all_singlei(ngf_unique)
 
-  ! ! Allocate the unique array to 
+  ! ! Allocate the unique array to
   ! if (myrank /= 0) then
   !   ! Now copy the unique elements of the slice and spec arrays into the unique arrays
   !   allocate(islice_unique_gf_loc(ngf_unique))
@@ -1596,23 +1597,23 @@
   ! Get number of unique entries in a slice
   ngf_unique_local = 0
   do igf=1,ngf_unique
-    if (islice_unique_gf_loc(igf)==myrank) then 
+    if (islice_unique_gf_loc(igf)==myrank) then
       ngf_unique_local = ngf_unique_local + 1
       write(*,*) 'myrank', myrank, 'igf/ngf', igf,'/', ngf_unique, 'slice', islice_unique_gf_loc(igf), ngf_unique_local
     endif
   enddo
-  
+
   if (myrank == 0) write(*,*) 'myrank', 'ngf_unique_local'
   write(*,*) 'myrank', myrank, 'ngf', ngf_unique_local
 
   call synchronize_all()
 
   ! ------------
-  ! This section is quite important since it sets up the 
-  ! Use global mapping of sources to 
+  ! This section is quite important since it sets up the
+  ! Use global mapping of sources to
   ! call sleep(2)
   if (ngf_unique_local .gt. 0) then
-    
+
     ! Get ibool array for output Green function database
     allocate(ibool_GF(NGLLX, NGLLY, NGLLZ, ngf_unique_local), &
              iglob_tmp(NGLLX*NGLLY*NGLLZ*ngf_unique_local), &
@@ -1624,7 +1625,7 @@
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating ibool_GF, or iglob_tmp array')
 
     write (*,*) myrank, 'shape ibool_GF', shape(ibool_GF)
-    
+
     ! Conversion arrays from full crust_mantle element array to small
     ! Green function array
     ibool_GF(:,:,:,:) = 0
@@ -1638,7 +1639,7 @@
     iglob_counter = 0
     igf_counter = 0
     do igf=1,ngf_unique
-      if (islice_unique_gf_loc(igf)==myrank) then 
+      if (islice_unique_gf_loc(igf)==myrank) then
 
         ! Count new elements
         igf_counter = igf_counter + 1
@@ -1646,10 +1647,10 @@
         ! Count new coordinates
         iglob_tmp_counter = 0
 
-        ! For each element in the new local array get the element of 
+        ! For each element in the new local array get the element of
         ! the original crust_mantle array
         ispec_cm2gf(igf_counter) = ispec_unique_gf_loc(igf)
-
+        write (*,*)
         do i=1,NGLLX
           do j=1,NGLLY
             do k=1,NGLLZ
@@ -1658,7 +1659,7 @@
               iglob = ibool_crust_mantle(i,j,k,ispec_unique_gf_loc(igf))
               ! if (myrank==2) write(*,*) i,j,k,iglob
               if (any(iglob_tmp==iglob)) then
-                  ! if iglob already in the counted array iglob_tmp 
+                  ! if iglob already in the counted array iglob_tmp
                   ! just find where and use index for ibool_GF
                   do l=1,iglob_counter
                       if (iglob==iglob_tmp(l)) ibool_GF(i,j,k,igf_counter) = l
@@ -1676,41 +1677,39 @@
         enddo
       endif
     enddo
-    
-    ! do igf=1,2
-    ! do i=1,NGLLX
-    !   do j=1,NGLLY
-    !     do k=1,NGLLZ
-    !       write (*,*) ibool_GF(i,j,k,igf)
-    !     enddo
-    !   enddo
-    ! enddo
-    ! enddo
 
-    !
-    allocate(iglob_cm2GF(iglob_counter))
+    allocate(iglob_cm2gf(iglob_counter))
 
     ! Total number of Green function coordinates in terms of elements
     NGLOB_GF = iglob_counter
 
     ! Convert crust mantle to Green function coordinates
-    iglob_cm2GF(:) = iglob_tmp(1:iglob_counter)
+    iglob_cm2gf(:) = iglob_tmp(1:iglob_counter)
 
     deallocate(iglob_tmp)
   endif
-  ! call sleep(2)
 
   ! Get ibool array for output Green function database
   allocate(islice_out_gf_loc(ngf), &
            ispec_out_gf_loc(ngf), &
            stat=ier)
+  call sleep(3)
+  if (myrank==0) then
+  do ispec=1,ngf_unique_local
+    do k=1,NGLLZ
+      do j=1,NGLLY
+        write(*,*) "jk:",j,k, "ibool", ibool_GF(:,j,k,ispec)
+    enddo
+  enddo
+  enddo
+  endif
+
   ! Convert crust mantle ispec to green function database ispec
-  if (myrank==0) write(*,*) 'sendreceive'
   do igf=1,ngf
     if (islice_selected_gf_loc(igf)==myrank) then
 
         islice_out_gf_loc(igf) = myrank
-        
+
         do i=1,ngf_unique_local
           if (ispec_cm2gf(i)==ispec_selected_gf_loc(igf)) then
             ispec_out_gf_loc(igf) = i
@@ -1728,7 +1727,7 @@
         write(*,*) 'rank', myrank, 'send 1', ' igf', igf
         ! if (ier /= 0 ) call exit_MPI(myrank,'Error 1')
       endif
-      if (myrank==0) then 
+      if (myrank==0) then
         call recv_singlei(ispec_out_gf_loc(igf), islice_selected_gf_loc(igf), igf)
         call recv_singlei(islice_out_gf_loc(igf), islice_selected_gf_loc(igf), igf+ngf)
         write(*,*) 'waiting to receive 1'
@@ -1737,7 +1736,6 @@
   enddo
 
  call synchronize_all()
-  call sleep(2)
   if (myrank == 0) then
     write(*,*) 'islice', islice_out_gf_loc
     write(*,*) 'ispec', ispec_out_gf_loc
@@ -1748,7 +1746,8 @@
   if (myrank == 0) write(*,*) 'myrank', 'NGLOB_GF'
   write(*,*) 'myrank', myrank, 'NGLOB_GF', NGLOB_GF
   write(*,*) 'myrank', myrank, 'ispec_cm2gf', ispec_cm2gf
-  
+
+
   call synchronize_all()
 
   if (myrank == 0) then

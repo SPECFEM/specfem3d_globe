@@ -10,7 +10,7 @@ NOISE_TOMOGRAPHY                = 0   # flag of noise tomography, three steps (1
 SAVE_FORWARD                    = .false.   # save last frame of forward simulation or not
 
 # number of chunks (1,2,3 or 6)
-NCHUNKS                         = 1
+NCHUNKS                         = 6
 
 # angular width of the first chunk (not used if full sphere with six chunks)
 ANGULAR_WIDTH_XI_IN_DEGREES     = 40.d0   # angular size of a chunk
@@ -25,8 +25,8 @@ NEX_XI                          = 64
 NEX_ETA                         = 64
 
 # number of MPI processors along the two sides of the first chunk
-NPROC_XI                        = 2
-NPROC_ETA                       = 2
+NPROC_XI                        = 1
+NPROC_ETA                       = 1
 
 #-----------------------------------------------------------
 #
@@ -74,7 +74,7 @@ ROTATION                        = .true.
 ATTENUATION                     = .true.
 
 # record length in minutes
-RECORD_LENGTH_IN_MINUTES        = 2.5d0
+RECORD_LENGTH_IN_MINUTES        = 20.0d0
 
 #-----------------------------------------------------------
 #
@@ -252,7 +252,7 @@ NTSTEP_BETWEEN_OUTPUT_INFO      = 500
 # - the components of a (non necessarily unitary) direction vector for the force source in the E/N/Z_UP basis.
 # The direction vector is made unitary internally in the code and thus only its direction matters here;
 # its norm is ignored and the norm of the force used is the factor force source times the source time function.
-USE_FORCE_POINT_SOURCE          = .false.
+USE_FORCE_POINT_SOURCE          = .true.
 
 # use monochromatic source time function for CMTSOLUTION moment-tensor source.
 # half duration is interpreted as a PERIOD just to avoid changing CMTSOLUTION file format

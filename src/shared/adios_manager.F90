@@ -133,6 +133,7 @@ module manager_adios
   ! groups
   public :: init_adios_group
   public :: init_adios_group_undo_att
+  public :: init_adios_group_gf
   public :: set_adios_group_size
   public :: set_selection_boundingbox
   public :: delete_adios_selection

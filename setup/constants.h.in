@@ -449,7 +449,7 @@
   !character(len=*), parameter :: ADIOS_COMPRESSION_MODE_VALUE = '9,threshold=4096'
 
 ! size of the ADIOS buffer to use
-  integer, parameter :: ADIOS_BUFFER_SIZE_IN_MB = 400
+  integer, parameter :: ADIOS_BUFFER_SIZE_IN_MB = 1500
 
 ! ADIOS transport methods (see ADIOS manual for details)
 !! MPI (default)
@@ -1023,7 +1023,7 @@
   integer, parameter :: NUM_ITER = 5
 
 ! number of hours per day for rotation rate of the Earth
-  double precision, parameter :: EARTH_HOURS_PER_DAY = 24.d0
+  double precision, parameter :: EARTH_HOURS_PER_DAY = -24.d0
   double precision, parameter :: EARTH_SECONDS_PER_HOUR = 3600.d0
 
 ! for lookup table for gravity every 100 m in radial direction of Earth model
