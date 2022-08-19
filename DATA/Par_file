@@ -70,11 +70,11 @@ OCEANS                          = .true.
 ELLIPTICITY                     = .true.
 TOPOGRAPHY                      = .true.
 GRAVITY                         = .true.
-ROTATION                        = .true.
+ROTATION                        = .false.
 ATTENUATION                     = .true.
 
 # record length in minutes
-RECORD_LENGTH_IN_MINUTES        = 20.0d0
+RECORD_LENGTH_IN_MINUTES        = 10.0d0
 
 #-----------------------------------------------------------
 #
@@ -252,7 +252,7 @@ NTSTEP_BETWEEN_OUTPUT_INFO      = 500
 # - the components of a (non necessarily unitary) direction vector for the force source in the E/N/Z_UP basis.
 # The direction vector is made unitary internally in the code and thus only its direction matters here;
 # its norm is ignored and the norm of the force used is the factor force source times the source time function.
-USE_FORCE_POINT_SOURCE          = .true.
+USE_FORCE_POINT_SOURCE          = .false.
 
 # use monochromatic source time function for CMTSOLUTION moment-tensor source.
 # half duration is interpreted as a PERIOD just to avoid changing CMTSOLUTION file format
@@ -260,7 +260,7 @@ USE_FORCE_POINT_SOURCE          = .true.
 USE_MONOCHROMATIC_CMT_SOURCE    = .false.
 
 # print source time function
-PRINT_SOURCE_TIME_FUNCTION      = .false.
+PRINT_SOURCE_TIME_FUNCTION      = .true.
 
 #-----------------------------------------------------------
 #
@@ -314,6 +314,14 @@ RECEIVERS_CAN_BE_BURIED         = .true.
 
 SAVE_GREEN_FUNCTIONS = .true.
 # NTSTEP_BETWEEN_OUTPUT_WAVEFIELD = 1
+
+# For the computation of the Green Function Database this is critical
+# Specfem computes the timesteps as follows:
+# NSTEP = 100 * (int(RECORD_LENGTH_IN_MINUTES * 60.d0 / (100.d0*DT)) + 1)
+# A negative value is ignored -> LENGTH_IN_MIN is used
+# NSTEP = -1
+# DT = -1
+# T0 = -1
 
 #-----------------------------------------------------------
 #

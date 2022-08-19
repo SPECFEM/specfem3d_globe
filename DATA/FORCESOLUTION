@@ -1,11 +1,11 @@
 FORCE  001
 time shift:         5.0000    ! s
-half duration:      3.1      ! Half duration (s) for Gaussian/Step function, frequency (Hz) for Ricker
-latitude:         48.3319    ! Degree (II.BFO)
-longitude:         8.3311    ! Degree
-depth:             0.589     ! km
-source time function: 0      ! 0=Gaussian function, 1=Ricker wavelet, 2=Step function
-factor force source:      1.d+14   ! Newton
+half duration:      3.1       ! Half duration (s) for Gaussian/Step function, frequency (Hz) for Ricker
+latitude:          48.3319    ! Degree (II.BFO)
+longitude:          8.3311    ! Degree
+depth:              0.0000    ! km
+source time function: 2       ! 0=Gaussian function, 1=Ricker wavelet, 2=Step function
+factor force source: 1.d+14   ! Newton
 component dir vect source E:     0.d0
 component dir vect source N:     0.d0
 component dir vect source Z_UP:  1.d0       ! Upward force

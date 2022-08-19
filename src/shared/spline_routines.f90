@@ -80,7 +80,6 @@
 ! evaluate a spline
 
   subroutine spline_evaluation(xpoint,ypoint,spline_coefficients,npoint,x_evaluate_spline,y_spline_obtained)
-
   use shared_parameters, only: R_PLANET_KM
 
   implicit none

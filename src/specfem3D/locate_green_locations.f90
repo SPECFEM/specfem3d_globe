@@ -415,17 +415,17 @@
         ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
         call xyz_2_rlatlon_dble(xyz_found(1,igf),xyz_found(2,igf),xyz_found(3,igf),radius,lat,lon)
 
-        ! Write table header 
+        ! Write table header
         if (igf == 1) then
           write(IMAIN,*)
-          write(IMAIN,*) 
+          write(IMAIN,*)
           write(IMAIN,'(A6,A14,A14,A14,A14,A14,A14,A14,A14,A14,A14)') &
             'GF #', 'orig. lat','orig. lon','dist (km)', &
             'slice', 'element', &
             'xi','eta','gamma', &
             'new lat','new lon'
         endif
-        
+
         ! Write table entry
         write(IMAIN,'(I6,F14.4,F14.4,F14.4,I14,I14,F14.4,F14.4,F14.4,F14.4,F14.4)') &
           igf, sngl(gf_loc_lat(igf)), sngl(gf_loc_lon(igf)), sngl(final_distance(igf)), &
@@ -477,7 +477,7 @@
 
     gf_loc_lat(1:ngf) = gf_loc_lat_found(1:ngf)
     gf_loc_lon(1:ngf) = gf_loc_lon_found(1:ngf)
-    gf_loc_depth(1:ngf) = gf_loc_depth_found(1:ngf)  
+    gf_loc_depth(1:ngf) = gf_loc_depth_found(1:ngf)
 
   endif    ! end of section executed by main process only
 
@@ -549,9 +549,6 @@
 
     ! loop on all the stations to read station information
     do igf = 1,ngf
-
-      ! old line:
-      !read(IIN,*,iostat=ier) station_name(igf),network_name(igf),stlat(igf),stlon(igf),stele(igf),stbur(igf)
 
       ! reads in line as string
       read(IIN,"(a256)",iostat=ier) line

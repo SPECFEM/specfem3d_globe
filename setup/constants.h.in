@@ -1023,7 +1023,7 @@
   integer, parameter :: NUM_ITER = 5
 
 ! number of hours per day for rotation rate of the Earth
-  double precision, parameter :: EARTH_HOURS_PER_DAY = -24.d0
+  double precision, parameter :: EARTH_HOURS_PER_DAY = 24.d0
   double precision, parameter :: EARTH_SECONDS_PER_HOUR = 3600.d0
 
 ! for lookup table for gravity every 100 m in radial direction of Earth model
