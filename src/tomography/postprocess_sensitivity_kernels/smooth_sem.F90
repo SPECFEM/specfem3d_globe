@@ -65,10 +65,11 @@
 
 program smooth_sem_globe
 
+  use constants, only: myrank
+
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGLLCUBE,NDIM,IIN,IOUT, &
     GAUSSALPHA,GAUSSBETA,PI,TWO_PI,MAX_STRING_LEN,DEGREES_TO_RADIANS, &
-    USE_QUADRATURE_RULE_FOR_SMOOTHING,USE_VECTOR_DISTANCE_FOR_SMOOTHING, &
-    myrank
+    USE_QUADRATURE_RULE_FOR_SMOOTHING,USE_VECTOR_DISTANCE_FOR_SMOOTHING
 
   use shared_parameters, only: R_PLANET_KM
 
@@ -136,6 +137,7 @@ program smooth_sem_globe
   real(kind=CUSTOM_REAL) :: max_new, min_new
   real(kind=CUSTOM_REAL) :: max_old_all, max_new_all, min_old_all, min_new_all
 
+  ! local copies of mesh parameters
   integer :: NPROC_XI
   integer :: NPROC_ETA
   integer :: NCHUNKS
@@ -335,11 +337,6 @@ program smooth_sem_globe
   ! reads in Par_file and sets compute parameters
   call read_compute_parameters()
 
-  topo_dir = trim(LOCAL_PATH)//'/'
-
-  ! checks if basin code or global code: global code uses nchunks /= 0
-  if (NCHUNKS == 0) stop 'Error nchunks'
-
   ! reads mesh parameters
   if (myrank == 0) then
     ! reads mesh_parameters.bin file from LOCAL_PATH
@@ -347,6 +344,8 @@ program smooth_sem_globe
   endif
   ! broadcast parameters to all processes
   call bcast_mesh_parameters()
+
+  topo_dir = trim(LOCAL_PATH)//'/'
 
   ! user output
   if (myrank == 0) then
@@ -378,6 +377,9 @@ program smooth_sem_globe
   !takes region 1 kernels
   NSPEC_AB = NSPEC_CRUST_MANTLE
   NGLOB_AB = NGLOB_CRUST_MANTLE
+
+  ! checks if basin code or global code: global code uses nchunks /= 0
+  if (NCHUNKS == 0) stop 'Error NCHUNKS'
 
   ! estimates mesh element size
   ! note: this estimation is for global meshes valid only

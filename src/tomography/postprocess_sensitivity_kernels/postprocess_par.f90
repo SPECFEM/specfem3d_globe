@@ -28,10 +28,11 @@
 
 module postprocess_par
 
+  use constants, only: myrank
+
   use constants, only: CUSTOM_REAL,MAX_STRING_LEN, &
     NGLLX,NGLLY,NGLLZ,IIN,IOUT, &
-    FOUR_THIRDS,GAUSSALPHA,GAUSSBETA, &
-    myrank
+    FOUR_THIRDS,GAUSSALPHA,GAUSSBETA
 
   use shared_parameters, only: LOCAL_PATH,R_PLANET_KM
 

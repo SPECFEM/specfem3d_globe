@@ -55,6 +55,8 @@
 
   program cross_section
 
+  use constants, only: myrank
+
   use constants, only: SIZE_INTEGER, &
     TWO_PI,R_UNIT_SPHERE, &
     NGNOD,CUSTOM_REAL,NGLLX,NGLLY,NGLLZ, &
@@ -124,8 +126,8 @@
   character(len=MAX_STRING_LEN) :: m_file,filename
   character(len=MAX_STRING_LEN) :: solver_file
 
-  ! MPI parameters
-  integer :: sizeprocs,myrank
+  ! MPI processes
+  integer :: sizeprocs
 
   ! nodes search
   integer :: inodes

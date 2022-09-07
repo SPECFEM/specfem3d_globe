@@ -32,6 +32,8 @@
 
 program convert_model_file_adios
 
+  use constants, only: myrank
+
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,IIN,IOUT,MAX_STRING_LEN
 
   use postprocess_par, only: NPROCTOT_VAL,NSPEC_CRUST_MANTLE,NSPEC,LOCAL_PATH
@@ -57,8 +59,8 @@ program convert_model_file_adios
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: model_par
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: model
 
-  ! mpi
-  integer :: myrank, sizeprocs
+  ! MPI processes
+  integer :: sizeprocs
 
   ! model parameters
   character(len=MAX_STRING_LEN) :: model_filename

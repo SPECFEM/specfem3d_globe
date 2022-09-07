@@ -29,8 +29,10 @@
 
 program smooth_laplacian_sem
 
+  use constants, only: myrank
+
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,IIN,IOUT, &
-       GAUSSALPHA,GAUSSBETA,MAX_STRING_LEN,GRAV,PI,TINYVAL,myrank
+       GAUSSALPHA,GAUSSBETA,MAX_STRING_LEN,GRAV,PI,TINYVAL
 
   use shared_parameters, only: R_PLANET_KM,CRUSTAL
 
