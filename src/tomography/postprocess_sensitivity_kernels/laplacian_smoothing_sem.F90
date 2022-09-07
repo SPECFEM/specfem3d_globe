@@ -132,6 +132,7 @@ program smooth_laplacian_sem
 
   double precision, external :: lagrange_deriv_GLL
 
+  ! local copies of mesh parameters
   integer :: NPROC_XI
   integer :: NPROC_ETA
   integer :: NCHUNKS
@@ -239,11 +240,6 @@ program smooth_laplacian_sem
   ! reads in Par_file and sets compute parameters
   call read_compute_parameters()
 
-  topo_dir = trim(LOCAL_PATH)//'/'
-
-  ! checks if basin code or global code: global code uses nchunks /= 0
-  if (NCHUNKS == 0) stop 'Error nchunks'
-
   ! reads mesh parameters
   if (myrank == 0) then
     ! reads mesh_parameters.bin file from LOCAL_PATH
@@ -251,6 +247,8 @@ program smooth_laplacian_sem
   endif
   ! broadcast parameters to all processes
   call bcast_mesh_parameters()
+
+  topo_dir = trim(LOCAL_PATH)//'/'
 
   ! user output
   if (myrank == 0) then
@@ -278,9 +276,13 @@ program smooth_laplacian_sem
   NPROC_XI  = NPROC_XI_VAL
   NPROC_ETA = NPROC_ETA_VAL
   NCHUNKS   = NCHUNKS_VAL
+
   !takes region 1 kernels
   NSPEC_AB = NSPEC_CRUST_MANTLE
   NGLOB_AB = NGLOB_CRUST_MANTLE
+
+  ! checks if basin code or global code: global code uses nchunks /= 0
+  if (NCHUNKS == 0) stop 'Error NCHUNKS'
 
   ! user output
   if (myrank == 0) then
