@@ -38,7 +38,13 @@ if [ "$vis" == "plot" ]; then
   cp -v ../../utils/Visualization/VTK_ParaView/paraviewpython-example.py ./
 fi
 
-# for kernel summation xsum_kernel
+## for kernel summation xsum_kernel
+# folder topo/ holds mesh topology (mesh_parameters.bin)
+if [ ! -e topo ]; then
+ln -s ./DATABASES_MPI/ topo
+fi
+
+# folder OUTPUT_SUM/ holds summation result
 mkdir -p OUTPUT_SUM
 rm -rf OUTPUT_SUM/kernels_sum.bp
 
