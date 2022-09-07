@@ -28,6 +28,8 @@
 
 module tomography_par
 
+  use constants, only: myrank
+
   use constants, only: &
     CUSTOM_REAL,MAX_STRING_LEN, &
     NGLLX,NGLLY,NGLLZ,IIN,IOUT, &
@@ -56,8 +58,8 @@ module tomography_par
   ! model update length
   real(kind=CUSTOM_REAL) :: step_fac,step_length
 
-  ! MPI process
-  integer :: myrank,sizeprocs
+  ! MPI processes
+  integer :: sizeprocs
 
 end module tomography_par
 
