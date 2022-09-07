@@ -107,7 +107,10 @@
 
   ! crust_mantle
   do ipoint = 1, npoints_slice_reg
+    ! associated element
     ispec = ispec_reg(ipoint)
+
+    ! initializes
     rho_kl_crust_mantle_reg(ipoint) = 0.0
     alpha_kl_crust_mantle_reg(ipoint) = 0.0
     beta_kl_crust_mantle_reg(ipoint) = 0.0
