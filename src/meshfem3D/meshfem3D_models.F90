@@ -29,7 +29,7 @@
 
 ! preparing model parameter coefficients on all processes
 
-  use shared_parameters, only: LOCAL_PATH,SAVE_MESH_FILES
+  use shared_parameters, only: LOCAL_PATH,SAVE_MESH_FILES,ADD_SCATTERING_PERTURBATIONS
   use meshfem_models_par
 
   implicit none
@@ -86,8 +86,10 @@
       ! (including their 1D-crustal profiles)
       call model_attenuation_setup(REFERENCE_1D_MODEL,CRUSTAL)
     endif
-
   endif
+
+  ! sets up scattering perturbations
+  if (ADD_SCATTERING_PERTURBATIONS) call model_scattering_broadcast()
 
   end subroutine meshfem3D_models_broadcast
 

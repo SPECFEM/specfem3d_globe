@@ -202,8 +202,15 @@
   call bcast_all_singlei(NZ_DOUBLING_4)
   call bcast_all_singlei(NZ_DOUBLING_5)
 
+  ! (optional) scattering perturbations
+  call bcast_all_singlel(ADD_SCATTERING_PERTURBATIONS)
+  call bcast_all_singledp(SCATTERING_STRENGTH)
+  call bcast_all_singledp(SCATTERING_CORRELATION)
+
   ! empirical minimum period resolved estimation
   call bcast_all_singledp(T_min_period)
+  ! empirical minimum wavelength resolved estimation
+  call bcast_all_singledp(estimated_min_wavelength)
 
   ! non-main processes set their parameters
   if (myrank /= 0) then

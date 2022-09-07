@@ -319,7 +319,7 @@
   call read_value_integer(USER_NSTEP, 'NSTEP', ier); ier = 0
   ! no error checking, continue if not available
 
-  ! regional local mesh parameters
+  ! (optional) regional local mesh parameters
   if (REGIONAL_MESH_CUTOFF) then
     ! flag to switch on local mesh
     call read_value_logical(USE_LOCAL_MESH, 'USE_LOCAL_MESH', ier); ier = 0
@@ -339,6 +339,15 @@
     call read_value_integer(NZ_DOUBLING_5, 'NZ_DOUBLING_5', ier); ier = 0
 
     ! no error checking, continue if not available
+  endif
+
+  ! (optional) scattering perturbations
+  call read_value_logical(ADD_SCATTERING_PERTURBATIONS, 'SCATTERING_PERTURBATIONS', ier); ier = 0
+  if (ADD_SCATTERING_PERTURBATIONS) then
+    ! perturbation strength (e.g., 0.1 for 10% perturbations)
+    call read_value_double_precision(SCATTERING_STRENGTH, 'SCATTERING_STRENGTH', ier); ier = 0
+    ! correlation factor (e.g., 1.0 for k * a ~ 1.0)
+    call read_value_double_precision(SCATTERING_CORRELATION, 'SCATTERING_CORRELATION', ier); ier = 0
   endif
 
   ! closes parameter file

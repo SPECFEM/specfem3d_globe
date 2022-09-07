@@ -605,6 +605,7 @@ xwrite_profile_OBJECTS += \
 	$O/model_s20rts.check.o \
 	$O/model_s40rts.check.o \
 	$O/model_s362ani.check.o \
+	$O/model_scattering.check.o \
 	$O/model_sea99_s.check.o \
 	$O/model_sglobe.check.o \
 	$O/model_sglobecrust.check.o \
@@ -622,6 +623,7 @@ xwrite_profile_SHARED_OBJECTS = \
 	$O/create_name_database.shared.o \
 	$O/define_all_layers.shared.o \
 	$O/exit_mpi.shared.o \
+	$O/fft.shared.o \
 	$O/flush_system.shared.o \
 	$O/get_all_eight_slices.shared.o \
 	$O/get_global.shared.o \

@@ -36,7 +36,7 @@
     IREGION_CRUST_MANTLE,IREGION_INNER_CORE,IREGION_OUTER_CORE, &
     myrank
 
-  use shared_parameters, only: R_PLANET_KM
+  use shared_parameters, only: R_PLANET_KM,MODEL_GLL,ADD_SCATTERING_PERTURBATIONS
 
   use meshfem_par, only: &
     RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R220, &
@@ -203,10 +203,20 @@
         endif
 
         ! overwrites with tomographic model values (from iteration step) here, given at all GLL points
-        call meshfem3D_models_impose_val(iregion_code,r,theta,phi,ispec,i,j,k, &
-                                         vpv,vph,vsv,vsh,rho,eta_aniso, &
-                                         c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
-                                         c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
+        if (MODEL_GLL) then
+          call meshfem3D_models_impose_val(iregion_code,r,theta,phi,ispec,i,j,k, &
+                                           vpv,vph,vsv,vsh,rho,eta_aniso, &
+                                           c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+                                           c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
+        endif
+
+        ! adds scattering perturbations
+        if (ADD_SCATTERING_PERTURBATIONS) then
+          call model_scattering_add_perturbations(iregion_code,xmesh,ymesh,zmesh, &
+                                                  vpv,vph,vsv,vsh,rho,eta_aniso, &
+                                                  c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+                                                  c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
+        endif
 
         ! checks vpv: if close to zero then there is probably an error
         if (vpv < TINYVAL) then
@@ -220,11 +230,12 @@
         ! and before TOPOGRAPHY / ELLIPTICITY
         !
         !note:  only Qmu attenuation considered, Qkappa attenuation not used so far...
-        if (ATTENUATION) &
+        if (ATTENUATION) then
           call meshfem3D_models_getatten_val(idoubling,r_prem,theta,phi, &
                                              ispec, i, j, k, &
                                              tau_e,tau_s_store, &
                                              moho,Qmu,Qkappa,elem_in_crust)
+        endif
 
         ! define elastic parameters in the model
         rhostore(i,j,k,ispec) = real(rho, kind=CUSTOM_REAL)

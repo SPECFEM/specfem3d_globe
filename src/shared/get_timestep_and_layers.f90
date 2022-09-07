@@ -942,7 +942,7 @@
 
   use constants, only: NGLLX,PI,NPTS_PER_WAVELENGTH,REFERENCE_MODEL_CASE65TAY
 
-  use shared_parameters, only: T_min_period, &
+  use shared_parameters, only: T_min_period,estimated_min_wavelength, &
     ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES, &
     NEX_XI,NEX_ETA, &
     PLANET_TYPE,IPLANET_EARTH,IPLANET_MARS,IPLANET_MOON,R_PLANET, &
@@ -1028,9 +1028,8 @@
   case default
     ! avoiding exit_MPI(), since we also call this routine in create_header_file
     ! which can be compiled without MPI - using stop instead
-    !call exit_MPI(myrank,'Invalid planet, auto_attenuation_periods() not implemented yet')
-    print *,'Invalid planet, auto_attenuation_periods() not implemented yet'
-    stop 'Invalid planet, auto_attenuation_periods() not implemented yet'
+    print *,'Invalid planet in get_minimum_period_estimate() not implemented yet'
+    stop 'Invalid planet in get_minimum_period_estimate() not implemented yet'
   end select
 
   ! number of elements along one side of a chunk
@@ -1070,5 +1069,8 @@
 
   ! estimated minimum period resolved
   T_min_period = tmp
+
+  ! estimated minimum wavelength
+  estimated_min_wavelength = T_min_period * S_VELOCITY_MIN
 
   end subroutine get_minimum_period_estimate

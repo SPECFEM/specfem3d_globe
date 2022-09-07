@@ -172,6 +172,7 @@
     ! inner core
     P_VELOCITY_MAX = 7.3d0 * 1.1d0
     RADIAL_LEN_RATIO_CENTRAL_CUBE = 0.76
+
     ! surface/crust
     check_crust_DT = .true.
     P_VELOCITY_MAX_CRUST = 5.5d0   ! according to VPREMOON (lower crust layer)
@@ -183,6 +184,8 @@
       ! takes stretching effect into account which will lead to thinner elements closer to surface
       RADIAL_LEN_RATIO_CRUST = 0.46
     endif
+    ! smaller crustal elements for moon_1D model layering
+    if (REFERENCE_1D_MODEL == REFERENCE_MODEL_VPREMOON) RADIAL_LEN_RATIO_CRUST = 0.46
 
   end select
 
@@ -258,7 +261,7 @@
     ! minimum suggested time step
     DT = min(dt_suggested,dt_suggested_crust)
     !debug
-    !print *,'debug: auto_time_stepping: mars crust elem size ',elem_size, &
+    !print *,'debug: auto_time_stepping: crust elem size ',elem_size, &
     !        'dt_suggested,dt_suggested_crust',dt_suggested,dt_suggested_crust
   endif
 

@@ -111,6 +111,7 @@ meshfem3D_MESHER_OBJECTS = \
 	$O/model_s20rts.check.o \
 	$O/model_s40rts.check.o \
 	$O/model_s362ani.check.o \
+	$O/model_scattering.check.o \
 	$O/model_sea99_s.check.o \
 	$O/model_sglobe.check.o \
 	$O/model_sglobecrust.check.o \
@@ -167,6 +168,7 @@ meshfem3D_MODULES = \
 	$(FC_MODDIR)/model_s20rts_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_s362ani_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_s40rts_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_scattering_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_sea1d_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_sea99_s_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_sglobe_par.$(FC_MODEXT) \
@@ -194,6 +196,7 @@ meshfem3D_SHARED_OBJECTS = \
 	$O/define_all_layers.shared.o \
 	$O/euler_angles.shared.o \
 	$O/exit_mpi.shared.o \
+	$O/fft.shared.o \
 	$O/flush_system.shared.o \
 	$O/get_all_eight_slices.shared.o \
 	$O/get_global.shared.o \

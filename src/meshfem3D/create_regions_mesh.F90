@@ -1097,7 +1097,8 @@
 
 ! creates global indexing array ibool
 
-  use constants, only: NGLLX,NGLLY,NGLLZ,ZERO,MAX_STRING_LEN,IREGION_CRUST_MANTLE
+  use constants, only: NGLLX,NGLLY,NGLLZ,ZERO,MAX_STRING_LEN,IREGION_CRUST_MANTLE, &
+    myrank,IMAIN
 
   use meshfem_par, only: &
     nspec,nglob,iregion_code, &
@@ -1123,6 +1124,12 @@
 
   ! sets up global addressing
   if (npointot > 0) then
+    if (myrank == 0) then
+      write(IMAIN,*) '    total number of points            : ',npointot
+      write(IMAIN,*) '    array memory required per process : ',dble(npointot) * dble(8) / 1024.d0 / 1024.d0,'MB'
+      call flush_IMAIN()
+    endif
+
     ! allocate memory for arrays
     allocate(xp(npointot), &
              yp(npointot), &
@@ -1135,10 +1142,10 @@
     ! we need to create a copy of the x, y and z arrays because sorting in get_global will swap
     ! these arrays and therefore destroy them
 
-  ! openmp mesher
-  !!$OMP PARALLEL DEFAULT(SHARED) &
-  !!$OMP PRIVATE(ispec,ieoff,ilocnum,i,j,k)
-  !!$OMP DO
+! openmp mesher
+!!$OMP PARALLEL DEFAULT(SHARED) &
+!!$OMP PRIVATE(ispec,ieoff,ilocnum,i,j,k)
+!!$OMP DO
     do ispec = 1,nspec
       ieoff = NGLLX * NGLLY * NGLLZ * (ispec-1)
       ilocnum = 0
@@ -1157,8 +1164,13 @@
         enddo
       enddo
     enddo
-  !!$OMP ENDDO
-  !!$OMP END PARALLEL
+!!$OMP ENDDO
+!!$OMP END PARALLEL
+
+    if (myrank == 0) then
+      write(IMAIN,*) '    getting global points             : npointot = ',npointot,' nspec = ',nspec
+      call flush_IMAIN()
+    endif
 
     call get_global(npointot,xp,yp,zp,ibool,nglob_new)
 
@@ -1190,6 +1202,11 @@
   !  endif
   !  call synchronize_all()
   !enddo
+
+  if (myrank == 0) then
+    write(IMAIN,*) '    creating indirect addressing'
+    call flush_IMAIN()
+  endif
 
   ! creates a new indirect addressing to reduce cache misses in memory access in the solver
   ! this is *critical* to improve performance in the solver
@@ -1228,6 +1245,11 @@
       enddo
     enddo
   enddo
+
+  if (myrank == 0) then
+    write(IMAIN,*) '    ibool ok'
+    call flush_IMAIN()
+  endif
 
   end subroutine crm_setup_indexing
 

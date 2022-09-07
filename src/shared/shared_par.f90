@@ -193,6 +193,11 @@
   integer :: NZ_DOUBLING_4 = 0
   integer :: NZ_DOUBLING_5 = 0
 
+  ! (optional) scattering perturbations
+  logical :: ADD_SCATTERING_PERTURBATIONS = .false.
+  double precision :: SCATTERING_STRENGTH = 0.d0
+  double precision :: SCATTERING_CORRELATION = 1.d0
+
   end module shared_input_parameters
 
 !
@@ -232,6 +237,8 @@
 
   ! shortest minimum period resolved by mesh (empirical formula)
   double precision :: T_min_period
+  ! shortest wavelength resolved by mesh (empirical; in km/s)
+  double precision :: estimated_min_wavelength
 
   ! number of sources given in CMTSOLUTION file
   integer :: NSOURCES
@@ -280,10 +287,11 @@
   logical :: ATTENUATION_GLL
   logical :: INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE
 
+  ! this is used in UTILS/estimate_best_values_runs.f90 only, to estimate memory use
   logical :: EMULATE_ONLY = .false.
 
-! honor PREM Moho or not
-! doing so drastically reduces the stability condition and therefore the time step
+  ! honor PREM Moho or not
+  ! doing so drastically reduces the stability condition and therefore the time step
   logical :: HONOR_1D_SPHERICAL_MOHO,CASE_3D
 
   ! this for all the regions
