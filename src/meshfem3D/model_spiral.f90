@@ -57,8 +57,7 @@
 !
 ! - Version SPiRaL.v1.1: Christina Morency, LLNL, 02/25/2020
 !   Debugged mantle loop.
-!   Added flag_smooth_spiral to smooth the crust if needed - by default set to
-!   false.
+!   Added flag_smooth_spiral to smooth the crust if needed - by default set to .false.
 !
 ! - Version SPiRaL.v1.0: Christina Morency, LLNL, 01/21/2020
 !   Using model SPiRaL.1.3.
@@ -279,14 +278,14 @@
   bnd(:,:) = ZERO
 
   ! opens crust info file
-  open(51,file='DATA/spiral1.4/crust/crust_bands_info.txt',action='read',status='old',iostat=ier)
+  open(IIN,file='DATA/spiral1.4/crust/crust_bands_info.txt',action='read',status='old',iostat=ier)
   if (ier /= 0) then
     write(IMAIN,*) 'Error opening "DATA/spiral1.4/crust/crust_bands_info.txt": ', ier
     call exit_MPI(0,'Error model spiral1.4: file not found DATA/spiral1.4/crust/crust_bands_info.txt')
   endif
 
   ! checking the number of bands
-  read(51,*) Nbnd_read
+  read(IIN,*) Nbnd_read
   if (Nbnd_read /= Nbnd) then
     write(IMAIN,*) 'Error opening "DATA/spiral1.4/crust/crust_bands_info.txt", wrong number of bands: ', Nbnd_read
     call exit_MPI(0,'Error model spiral1.4: wrong number of bands in DATA/spiral1.4/crust/crust_bands_info.txt')
@@ -294,10 +293,10 @@
 
   ! read the variables for each band
   do b = 1,Nbnd_read
-      read(51,*) lat1(b),lat2(b),dlat(b),dlon(b),bnd_nlat(b),bnd_nlon(b)
+      read(IIN,*) lat1(b),lat2(b),dlat(b),dlon(b),bnd_nlat(b),bnd_nlon(b)
   enddo
   ! closes files
-  close(51)
+  close(IIN)
 
   read(lat1(:),*) bnd_lat1(:)
   read(lat2(:),*) bnd_lat2(:)
@@ -428,8 +427,9 @@
   integer :: ier, ila, ilo, Nlat, Nlon,k
   double precision :: dlat1,dlat2,ddlat,ddlon
 
-  write(filecrust,'(a37,a,a6,a,a6,a,a6,a,a1,a)') 'DATA/spiral1.4/crust/crust_band_lat1_', &
-        trim(lat1),'_lat2_',trim(lat2),'_dlat_',trim(dlat),'_dlon_',trim(dlon),'.',var_letter
+  write(filecrust,'(a37,a,a6,a,a6,a,a6,a,a1,a)') &
+    'DATA/spiral1.4/crust/crust_band_lat1_', &
+    trim(lat1),'_lat2_',trim(lat2),'_dlat_',trim(dlat),'_dlon_',trim(dlon),'.',var_letter
 
   read(lat1,*) dlat1
   read(lat2,*) dlat2
@@ -501,6 +501,12 @@
   double precision,dimension(NTHETA_spiral*NPHI_spiral) :: x1,y1,weight
   double precision:: weightl
   integer :: k
+
+  ! (nathan) Should be [-90,90], [-180,180] convention
+  if (lat > 90.0d0 .or. lat < -90.0d0 .or. lon > 180.0d0 .or. lon < -180.0d0) then
+    print *,'Error in lat/lon:',lat,lon,'in routine model_crust_spiral()'
+    stop 'Error in latitude/longitude range in model_crust_spiral()'
+  endif
 
   ! initialization
   c11 = ZERO
@@ -1191,49 +1197,53 @@
   if (ier /= 0 ) call exit_MPI(0,'Error allocating dlat, dlon, ddepth mantle arrays in read routine')
 
   ! opens mantle info files
-  open(51,file='DATA/spiral1.4/mantle/mantle_bands_info.txt',action='read',status='old',iostat=ier)
+  open(IIN,file='DATA/spiral1.4/mantle/mantle_bands_info.txt',action='read',status='old',iostat=ier)
   if (ier /= 0) then
     write(IMAIN,*) 'Error opening "DATA/spiral1.4/mantle/mantle_bands_info.txt": ', ier
     call exit_MPI(0,'Error model spiral1.4: file not found DATA/spiral1.4/mantle/mantle_bands_info.txt')
   endif
-  open(52,file='DATA/spiral1.4/mantle/mantle_dzones_info.txt',action='read',status='old',iostat=ier)
+
+  ! checking the number of bands
+  read(IIN,*) Nbnd_read
+  if (Nbnd_read /= Nbnd) then
+    write(IMAIN,*) 'Error opening "DATA/spiral1.4/mantle/mantle_bands_info.txt", wrong number of bands: ', Nbnd_read
+    call exit_MPI(0,'Error model spiral1.4: wrong number of bands in DATA/spiral1.4/mantle/mantle_bands_info.txt')
+  endif
+
+  ! read the variables for each band
+  do b = 1,Nbnd_read
+    read(IIN,*) lat1(b),lat2(b),dlat(b),dlon(b),mtle_bnd_nlat(b),mtle_bnd_nlon(b)
+    ! chris debug
+    !write(IMAIN,*) lat1(b),lat2(b),dlat(b),dlon(b),mtle_bnd_nlat(b),mtle_bnd_nlon(b)
+  enddo
+  ! closes files
+  close(IIN)
+
+  read(lat1(:),*) mtle_bnd_lat1(:)
+  read(lat2(:),*) mtle_bnd_lat2(:)
+
+  ! opens mantle zone info files
+  open(IIN,file='DATA/spiral1.4/mantle/mantle_dzones_info.txt',action='read',status='old',iostat=ier)
   if (ier /= 0) then
     write(IMAIN,*) 'Error opening "DATA/spiral1.4/mantle/mantle_dzones_info.txt": ', ier
     call exit_MPI(0,'Error model spiral1.4: file not found DATA/spiral1.4/mantle/mantle_dzones_info.txt')
   endif
 
   ! checking the number of bands
-  read(51,*) Nbnd_read
-  if (Nbnd_read /= Nbnd) then
-    write(IMAIN,*) 'Error opening "DATA/spiral1.4/mantle/mantle_bands_info.txt", wrong number of bands: ', Nbnd_read
-    call exit_MPI(0,'Error model spiral1.4: wrong number of bands in DATA/spiral1.4/mantle/mantle_bands_info.txt')
-  endif
-  read(52,*) Nbndz_read
+  read(IIN,*) Nbndz_read
   if (Nbndz_read /= Nbndz) then
-    write(IMAIN,*) 'Error opening "DATA/spiral1.4/mantle/mantle_dzones_info.txt", wrong number of bands: ', Nbnd_read
+    write(IMAIN,*) 'Error opening "DATA/spiral1.4/mantle/mantle_dzones_info.txt", wrong number of bands: ', Nbndz_read
     call exit_MPI(0,'Error model spiral1.4: wrong number of bands in DATA/spiral1.4/mantle/mantle_dzones_info.txt')
   endif
 
   ! read the variables for each band
-  do b = 1,Nbnd_read
-    read(51,*) lat1(b),lat2(b),dlat(b),dlon(b),mtle_bnd_nlat(b),mtle_bnd_nlon(b)
-    ! chris debug
-    !write(IMAIN,*) lat1(b),lat2(b),dlat(b),dlon(b),mtle_bnd_nlat(b),mtle_bnd_nlon(b)
-  enddo
-  ! closes files
-  close(51)
-
-  read(lat1(:),*) mtle_bnd_lat1(:)
-  read(lat2(:),*) mtle_bnd_lat2(:)
-
-  ! read the variables for each band
   do b = 1,Nbndz_read
-    read(52,*) dep1(b),dep2(b),ddep(b)
+    read(IIN,*) dep1(b),dep2(b),ddep(b)
     ! chris debug
     !write(IMAIN,*) dep1(b),dep2(b),ddep(b),mtle_bnd_ndep(b)
   enddo
   ! closes files
-  close(52)
+  close(IIN)
 
   read(dep1(:),*) mtle_bnd_dep1(:)
   read(dep2(:),*) mtle_bnd_dep2(:)
@@ -1317,14 +1327,14 @@
   !    close(77)
 
   ! opens internal topography info file
-  open(53,file='DATA/spiral1.4/mantle/transitionzone_topo.txt',action='read',status='old',iostat=ier)
+  open(IIN,file='DATA/spiral1.4/mantle/transitionzone_topo.txt',action='read',status='old',iostat=ier)
   if (ier /= 0) then
     write(IMAIN,*) 'Error opening "DATA/spiral1.4/mantle/transitionzone_topo.txt": ', ier
     call exit_MPI(0,'Error model spiral1.4: file not found DATA/spiral1.4/mantle/transitionzone_topo.txt')
   endif
 
   ! checking dimension
-  read(53,*) NLA, NLO
+  read(IIN,*) NLA, NLO
   if (NLA /= TOPO_NLA .or. NLO /= TOPO_NLO) then
     write(IMAIN,*) 'Error opening "DATA/spiral1.4/mantle/transitionzone_topo.txt", wrong dimension: ', NLA, NLO
     call exit_MPI(0,'Error model spiral1.4: wrong dimension in DATA/spiral1.4/mantle/transitionzone_topo.txt')
@@ -1334,10 +1344,10 @@
   do ila = 1,TOPO_NLA
     do ilo = 1,TOPO_NLO
       k = k+1
-      read(53,*) dummy, dummy, mantle_d410(k),mantle_d660(k)
+      read(IIN,*) dummy, dummy, mantle_d410(k),mantle_d660(k)
     enddo
   enddo
-  close(53)
+  close(IIN)
 
   ! topography statistics
   ! gets min/max values
@@ -1385,9 +1395,10 @@
   integer :: ier, ila, ilo, ide, Nlat, Nlon, Ndep, k
   double precision :: dlat1,dlat2,ddlat,ddlon,ddep1,ddep2,ddep
 
-  write(filemantle,'(a39,a,a6,a,a6,a,a6,a,a4,a,a4,a,a4,a,a1,a)') 'DATA/spiral1.4/mantle/mantle_band_lat1_', &
-        trim(lat1),'_lat2_',trim(lat2),'_dlat_',trim(dlat),'_dlon_',trim(dlon), &
-        '_d1_',trim(dep1),'_d2_',trim(dep2),'_dZ_',trim(dep),'.',var_letter
+  write(filemantle,'(a39,a,a6,a,a6,a,a6,a,a4,a,a4,a,a4,a,a1,a)') &
+    'DATA/spiral1.4/mantle/mantle_band_lat1_', &
+    trim(lat1),'_lat2_',trim(lat2),'_dlat_',trim(dlat),'_dlon_',trim(dlon), &
+    '_d1_',trim(dep1),'_d2_',trim(dep2),'_dZ_',trim(dep),'.',var_letter
 
   read(lat1,*) dlat1
   read(lat2,*) dlat2
@@ -1455,6 +1466,12 @@
   double precision :: scale_GPa,scaleval,theta,phi
   double precision :: mtle_rho
   double precision,dimension(5):: mtle_coefs
+
+  ! (nathan) Should be [-90,90], [-180,180] convention
+  if (lat > 90.0d0 .or. lat < -90.0d0 .or. lon > 180.0d0 .or. lon < -180.0d0) then
+    print *,'Error: in lat/lon:',lat,lon,'in routine model_mantle_spiral()'
+    stop 'Error in latitude/longitude range in model_mantle_spiral()'
+  endif
 
   ! initializes
   c11 = ZERO
@@ -1835,6 +1852,16 @@
 
     ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
     call xyz_2_rlatlon_dble(x,y,z,r,lat,lon)
+
+    !(nathan) The above subroutine produces longitudes with [0,360] convention.
+    !Need to convert to [-180,180] convention expected by subtopo_spiral below
+    if (lon > 180.d0) lon = lon - 360.d0
+
+    ! (nathan) Should be [-90,90], [-180,180] convention
+    if (lat > 90.0d0 .or. lat < -90.0d0 .or. lon > 180.0d0 .or. lon < -180.0d0) then
+      print *,'Error: in lat/lon:',lat,lon,'in routine add_topography_mantle_spiral()'
+      stop 'Error in latitude/longitude range in add_topography_mantle_spiral())'
+    endif
 
     ! stretching occurs between 220 and 770
     if (r > R220/R_PLANET .or. r < R771/R_PLANET) cycle

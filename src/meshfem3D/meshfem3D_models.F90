@@ -869,6 +869,7 @@
           ! SPiRaL v1.4 anisotropic model
           lat = (PI/2.0d0-theta)*180.0d0/PI
           lon = phi*180.0d0/PI
+          ! input: lat in range [-90,90]; lon in range [-180,180]
           if (lon > 180.0d0) lon = lon - 360.0d0
           call model_mantle_spiral(r_used,lat,lon,vpv,vph,vsv,vsh,eta_aniso,rho, &
                                    c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
