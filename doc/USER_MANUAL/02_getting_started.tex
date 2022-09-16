@@ -40,6 +40,7 @@ remove that option from file \texttt{flags.guess} or change it to \texttt{-assum
 \item [{\texttt{Mac OS}}] You will probably need to install \texttt{XCODE}.
 \end{description}
 
+
 When compiling on an IBM machine with the \texttt{xlf} and \texttt{xlc} compilers, we suggest running the \texttt{configure} script
 with the following options:
 {\small
@@ -48,14 +49,17 @@ with the following options:
 \end{verbatim}
 }
 
+
 If you have problems configuring the code on a Cray machine, i.e. for instance if you get an error message from the \texttt{configure} script, try exporting these two variables:
 \texttt{MPI\_INC=\${CRAY\_MPICH2\_DIR}/include and FCLIBS=" "}, and for more details if needed you can refer to the \texttt{utils/Cray\_compiler\_information} directory.
 You can also have a look at the configure script called:\\
 \texttt{utils/Cray\_compiler\_information/configure\_SPECFEM\_for\_Piz\_Daint.bash}.
 
+
 On SGI systems, \texttt{flags.guess} automatically informs \texttt{configure}
 to insert ``\texttt{TRAP\_FPE=OFF}'' into the generated \texttt{Makefile}
 in order to turn underflow trapping off.\\
+
 
 If you run very large meshes on a relatively small number
 of processors, the static memory size needed on each processor might become
@@ -66,6 +70,7 @@ or \texttt{``-mcmodel=medium -shared-intel}'' (if you use the Intel ifort / icc 
 to the configure options of CFLAGS, FCFLAGS and LDFLAGS otherwise the compiler will display an error
 message (for instance \texttt{``relocation truncated to fit: R\_X86\_64\_PC32 against .bss''} or something similar);
 on an IBM machine with the \texttt{xlf} and \texttt{xlc} compilers, using \texttt{-q64} is usually sufficient.\\
+
 
 We recommend that you add {\texttt{ulimit -S -s unlimited}} to your {\texttt{.bash\_profile}} file and/or {\texttt{limit stacksize unlimited }} to your {\texttt{.cshrc}} file to suppress any potential limit to the size of the Unix stack.\\
 
@@ -119,6 +124,7 @@ So even if you have the new CUDA toolkit version 11, but you want to run on say 
 \noindent
 The compilation with the cuda5 setting chooses then the right architecture (\texttt{-gencode=arch=compute\_35,code=sm\_35} for K20 cards).\\
 
+
 SPECFEM3D\_GLOBE also supports CUDA-aware MPI. This code feature can be enabled by adding the flag \texttt{-{}-enable-cuda-aware-mpi} to
 the configuration, like:
 {\small
@@ -138,6 +144,8 @@ For example, with OpenMPI installed, check the output of the command
 Without a CUDA-aware MPI installation, the code will fall back to its default handling, i.e., passing MPI buffers through the CPU.
 In case available, test if this feature will improve the overall performance of your simulation.\\
 
+
+\noindent
 The same applies to compilation for AMD cards with HIP:
 {\small
 \begin{verbatim}
@@ -151,7 +159,16 @@ or
 \end{verbatim}
 }
 \noindent
-where for example \texttt{MI8,MI25,MI50,MI100,..} specifies the target GPU architecture of your card.\\
+where for example \texttt{MI8,MI25,MI50,MI100,MI250,..} specifies the target GPU architecture of your card.
+Additional compilation flags can be added by specifying \texttt{HIP\_FLAGS}, as for example:
+{\small
+\begin{verbatim}
+  ./configure --with-hip=MI250 \
+      HIP_FLAGS="-fPIC -ftemplate-depth-2048 -fno-gpu-rdc -std=c++17 \
+                 -O2 -fdenormal-fp-math=ieee -fcuda-flush-denormals-to-zero -munsafe-fp-atomics" \
+      ..
+\end{verbatim}
+}
 
 
 OpenCL can be enabled with the \texttt{-{}-with-opencl} flag, and the
@@ -162,6 +179,7 @@ compilation can be controlled through three variables: \texttt{OCL\_LIB=},
   ./configure --with-opencl OCL_LIB= OCL_INC= OCL_GPU_FLAGS=..
 \end{verbatim}
 }
+
 
 Both CUDA and OpenCL environments can be compiled simultaneously by merging these two lines.
 For the runtime configuration, the \texttt{GPU\_MODE} flag must be set
@@ -213,6 +231,7 @@ cases performance will not improve because our pure MPI implementation
 is already heavily optimized and thus the resulting code will in fact
 be slightly slower. A possible exception could be IBM BlueGene-type
 architectures.\\
+
 
 \noindent
 To enable OpenMP,  add the flag \texttt{-{}-enable-openmp} to the configuration:
@@ -328,6 +347,7 @@ from your system administrator. Selecting the right compiler and compiler
 flags can make a tremendous difference in terms of performance. We
 welcome feedback on your experience with various compilers and flags.\\
 
+
 When using a slow or not too powerful shared disk system or when running extremely large simulations
 (on tens of thousands of processor cores), one can add \texttt{-DUSE\_SERIAL\_CASCADE\_FOR\_IOs} to the compiler flags
 in file \texttt{flags.guess} before running \texttt{configure} to make the mesher output mesh data
@@ -335,11 +355,14 @@ to the disk for one MPI slice after the other, and to make the solver do the sam
 Do not use this option if you do not need it because it will slow down the mesher and the beginning of the solver if your
 shared file system is fast and reliable.
 
+
 If you run scaling benchmarks of the code, for instance to measure its performance on a new machine, and are not interested in the physical results
 (the seismograms) for these runs, you can set \texttt{DO\_BENCHMARK\_RUN\_ONLY} to \texttt{.true.} in file \texttt{setup/constants.h.in} before running the \texttt{configure} script.
 
+
 If your compiler has problems with the \texttt{use mpi} statements that are used in the code, use the script called
 \texttt{replace\_use\_mpi\_with\_include\_mpif\_dot\_h.pl} in the root directory to replace all of them with \texttt{include 'mpif.h'} automatically.
+
 
 We recommend that you ask for exclusive use of the compute nodes when running on a cluster or a supercomputer, i.e., make sure that no other users
 are running on the same nodes at the same time. Otherwise your run could run out of memory if the memory of some nodes is used by other users, in particular
@@ -451,6 +474,7 @@ OMP_NUM_THREADS=16 mpirun -np 4 numactl --membind=1 ./bin/xspecfem3D
 }
 \noindent
 The ideal setup of MPI processes and OpenMP threads per KNL depends on your specific hardware and simulation setup. We see good results when using a combination of both, with a total number of threads slightly less than the total count of cores on the chip.
+
 
 As a side remark for developers, another possibility would be to add following compiler directives in the source code
 (in file \texttt{src/specfem3D/specfem3D\_par.F90}):
