@@ -329,6 +329,7 @@
   use specfem_par_crustmantle
   use specfem_par_innercore
   use specfem_par_outercore
+  use shared_parameters, only: OUTPUT_FILES
 
   use adios_helpers_mod
   use manager_adios
@@ -346,7 +347,7 @@
   logical :: do_open_file,do_close_file,do_init_group
 
   ! current subset iteration
-  iteration_on_subset_tmp = iteration_on_subset
+  ! iteration_on_subset_tmp = iteration_on_subset
 
   ! file handling
   if (ADIOS_SAVE_ALL_SNAPSHOTS_IN_ONE_FILE) then
@@ -356,7 +357,7 @@
     do_init_group = .false.
 
     ! single file
-    file_name = get_adios_filename(trim(LOCAL_TMP_PATH) // "/save_forward_arrays_GF", ADIOS2_ENGINE_GF)
+    file_name = get_adios_filename(trim(OUTPUT_FILES) // "/save_forward_arrays_GF", ADIOS2_ENGINE_GF)
 
     group_name = "SPECFEM3D_GLOBE_FORWARD_ARRAYS_GF"
 
@@ -365,7 +366,7 @@
       ! adds steps by appending to file
       do_open_file = .true.
       do_close_file = .true.
-      if (iteration_on_subset_tmp == 1) do_init_group = .true. ! only needs to initialize group once
+      if (it == 1) do_init_group = .true. ! only needs to initialize group once
     else
       ! adds steps by commands
       if (.not. is_initialized_fwd_group) then
@@ -380,7 +381,7 @@
     do_init_group = .true.
 
     ! files for each iteration step
-    write(file_name,'(a, a, i6.6)') trim(LOCAL_TMP_PATH), '/save_frame_at', it
+    write(file_name,'(a, a, i6.6)') trim(OUTPUT_FILES), '/save_frame_at', it
     file_name = get_adios_filename(trim(file_name))
 
     write(group_name, '(a, i6)') "SPECFEM3D_GLOBE_FORWARD_ARRAYS_GF", it
@@ -427,7 +428,7 @@
     ! Open an ADIOS handler to the restart file.
     if (is_adios_version1) then
       ! checks if we open for first time or append
-      if (iteration_on_subset_tmp == 1) then
+      if (it == 1) then
         ! creates new file
         call open_file_adios_write(myadios_fwd_file,myadios_fwd_group,file_name,group_name)
       else
@@ -644,29 +645,29 @@
 
   ! The topography/bathymetry info does not have to be written by all all processors
   if (myrank == 0) then
-  ! Topography and bathymetry for source Location
-    if (TOPOGRAPHY) then
-      call define_adios_scalar(myadios_fwd_group, group_size_inc, '', 'TOPOGRAPHY', 1)
-      call define_adios_scalar(myadios_fwd_group, group_size_inc, '', STRINGIFY_VAR(NX_BATHY))
-      call define_adios_scalar(myadios_fwd_group, group_size_inc, '', STRINGIFY_VAR(NY_BATHY))
-      call define_adios_scalar(myadios_fwd_group, group_size_inc, '', STRINGIFY_VAR(RESOLUTION_TOPO_FILE))
-      local_dim = NX_BATHY * NY_BATHY
-      call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(ibathy_topo))
-    else
-      call define_adios_scalar(myadios_fwd_group, group_size_inc, '', 'TOPOGRAPHY', 0)
-    endif
+  ! ! Topography and bathymetry for source Location
+  !   if (TOPOGRAPHY) then
+  !     call define_adios_scalar(myadios_fwd_group, group_size_inc, '', 'TOPOGRAPHY', 1)
+  !     call define_adios_scalar(myadios_fwd_group, group_size_inc, '', STRINGIFY_VAR(NX_BATHY))
+  !     call define_adios_scalar(myadios_fwd_group, group_size_inc, '', STRINGIFY_VAR(NY_BATHY))
+  !     call define_adios_scalar(myadios_fwd_group, group_size_inc, '', STRINGIFY_VAR(RESOLUTION_TOPO_FILE))
+  !     local_dim = NX_BATHY * NY_BATHY
+  !     call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(ibathy_topo))
+  !   else
+  !     call define_adios_scalar(myadios_fwd_group, group_size_inc, '', 'TOPOGRAPHY', 0)
+  !   endif
 
-    ! Ellipticity for source location
-    if (ELLIPTICITY_VAL) then
-      call define_adios_scalar(myadios_fwd_group, group_size_inc, '', 'ELLIPTICITY', 1)
-      local_dim = nspl
-      call define_adios_scalar(myadios_fwd_group, group_size_inc, '', STRINGIFY_VAR(nspl))
-      call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(rspl))
-      call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(ellipicity_spline))
-      call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(ellipicity_spline2))
-    else
-      call define_adios_scalar(myadios_fwd_group, group_size_inc, '', 'ELLIPTICITY', 0)
-    endif
+  !   ! Ellipticity for source location
+  !   if (ELLIPTICITY_VAL) then
+  !     call define_adios_scalar(myadios_fwd_group, group_size_inc, '', 'ELLIPTICITY', 1)
+  !     local_dim = nspl
+  !     call define_adios_scalar(myadios_fwd_group, group_size_inc, '', STRINGIFY_VAR(nspl))
+  !     call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(rspl))
+  !     call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(ellipicity_spline))
+  !     call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(ellipicity_spline2))
+  !   else
+  !     call define_adios_scalar(myadios_fwd_group, group_size_inc, '', 'ELLIPTICITY', 0)
+  !   endif
 
   endif
 
@@ -717,16 +718,6 @@
   local_dim = NGLOB_GF
   r = rstore_crust_mantle(:, iglob_cm2gf)
   call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(r))
-
-  local_dim = NGLOB_GF
-  write (*,*) shape(xstore_crust_mantle)
-  write (*,*) shape(iglob_cm2gf)
-  x = xstore_crust_mantle(iglob_cm2gf)
-  y = ystore_crust_mantle(iglob_cm2gf)
-  z = zstore_crust_mantle(iglob_cm2gf)
-  call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(x))
-  call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(y))
-  call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(z))
 
   ! Parameters
   call define_adios_scalar(myadios_fwd_group, group_size_inc, '', STRINGIFY_VAR(scale_displ))
@@ -870,33 +861,33 @@ subroutine write_one_time_green_function_forward_arrays_adios()
 
   if (myrank == 0) then
     ! Topography and bathymetry for source Location
-    if (TOPOGRAPHY) then
-      call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, 'TOPOGRAPHY', 1)
-      call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, STRINGIFY_VAR(NX_BATHY))
-      call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, STRINGIFY_VAR(NY_BATHY))
-      call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, STRINGIFY_VAR(RESOLUTION_TOPO_FILE))
-      local_dim = NX_BATHY * NY_BATHY
-      call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
-    sizeprocs_adios, local_dim, STRINGIFY_VAR(ibathy_topo))
-    else
-      call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, 'TOPOGRAPHY', 0)
-    endif
+    ! if (TOPOGRAPHY) then
+    !   call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, 'TOPOGRAPHY', 1)
+    !   call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, STRINGIFY_VAR(NX_BATHY))
+    !   call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, STRINGIFY_VAR(NY_BATHY))
+    !   call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, STRINGIFY_VAR(RESOLUTION_TOPO_FILE))
+    !   local_dim = NX_BATHY * NY_BATHY
+    !   call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
+    ! sizeprocs_adios, local_dim, STRINGIFY_VAR(ibathy_topo))
+    ! else
+    !   call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, 'TOPOGRAPHY', 0)
+    ! endif
 
-    ! Ellipticity for source location
-    if (ELLIPTICITY_VAL) then
+    ! ! Ellipticity for source location
+    ! if (ELLIPTICITY_VAL) then
 
-      call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, 'ELLIPTICITY', 1)
-      call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, STRINGIFY_VAR(nspl))
-      local_dim = nspl
-      call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
-    sizeprocs_adios, local_dim, STRINGIFY_VAR(rspl))
-      call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
-    sizeprocs_adios, local_dim,STRINGIFY_VAR(ellipicity_spline))
-      call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
-              sizeprocs_adios, local_dim,STRINGIFY_VAR(ellipicity_spline2))
-    else
-      call write_adios_scalar(myadios_fwd_file, myadios_fwd_group,'ELLIPTICITY', 0)
-    endif
+    !   call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, 'ELLIPTICITY', 1)
+    !   call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, STRINGIFY_VAR(nspl))
+    !   local_dim = nspl
+    !   call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
+    ! sizeprocs_adios, local_dim, STRINGIFY_VAR(rspl))
+    !   call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
+    ! sizeprocs_adios, local_dim,STRINGIFY_VAR(ellipicity_spline))
+    !   call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
+    !           sizeprocs_adios, local_dim,STRINGIFY_VAR(ellipicity_spline2))
+    ! else
+    !   call write_adios_scalar(myadios_fwd_file, myadios_fwd_group,'ELLIPTICITY', 0)
+    ! endif
 
   endif
 
@@ -965,18 +956,6 @@ subroutine write_one_time_green_function_forward_arrays_adios()
   r = rstore_crust_mantle(:, iglob_cm2gf)
   call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
     sizeprocs_adios, local_dim, STRINGIFY_VAR(r))
-
-  local_dim = NGLOB_GF
-  x = xstore_crust_mantle(iglob_cm2gf)
-  y = ystore_crust_mantle(iglob_cm2gf)
-  z = zstore_crust_mantle(iglob_cm2gf)
-  call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
-    sizeprocs_adios, local_dim, STRINGIFY_VAR(x))
-  call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
-    sizeprocs_adios, local_dim, STRINGIFY_VAR(y))
-  call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
-    sizeprocs_adios, local_dim, STRINGIFY_VAR(z))
-
 
   ! Parameters
   call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, STRINGIFY_VAR(scale_displ))

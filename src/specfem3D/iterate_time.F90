@@ -256,12 +256,12 @@
 
     ! Transfer back the arrays from the GPU every x-th timestep
     if (SAVE_GREEN_FUNCTIONS) then
-      ! if (mod(it, 10) == 0) then
-      if (GPU_MODE) then
-        call it_transfer_from_GPU()
-        call save_forward_arrays_GF_adios()
+      if (mod(it, NTSTEP_BETWEEN_FRAMES) == 1) then
+        if (GPU_MODE) then
+          call it_transfer_from_GPU()
+          call save_forward_arrays_GF_adios()
+        endif
       endif
-      ! endif
     endif
 
 

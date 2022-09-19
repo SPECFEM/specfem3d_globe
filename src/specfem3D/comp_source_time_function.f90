@@ -223,8 +223,6 @@
   allocate( stfArray_external(NSTEP),stat=ier)
   if (ier /= 0 ) stop 'Error allocating external source time function array'
 
-  print *, NSTEP
-
   ! Read in source time function.
   open(unit=IIN, file='DATA/stf', status='old', form='formatted',iostat=ier)
   if (ier /= 0 ) stop 'Error opening file DATA/stf'
@@ -232,7 +230,6 @@
   read_loop: do iterator=1,NSTEP
 
     read(IIN, '(A)', iostat = ier) line
-
     if (ier /= 0) then
       print *, "Error in external source time function."
       stop 'Error reading external stf file'
