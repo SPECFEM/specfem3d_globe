@@ -256,7 +256,9 @@
 
     ! Transfer back the arrays from the GPU every x-th timestep
     if (SAVE_GREEN_FUNCTIONS) then
-      if (mod(it, NTSTEP_BETWEEN_FRAMES) == 1) then
+      ! The first timestep is 1 this assures that no matter the number
+      ! of NTSTEP_BETWEEN_FRAMES it will always save the zeroth timestep
+      if (mod(it-1, NTSTEP_BETWEEN_FRAMES) == 0) then
         if (GPU_MODE) then
           call it_transfer_from_GPU()
           call save_forward_arrays_GF_adios()

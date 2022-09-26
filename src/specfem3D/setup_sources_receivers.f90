@@ -76,7 +76,9 @@
 
   ! topography array no more needed
   if (TOPOGRAPHY) then
-    if (allocated(ibathy_topo) ) deallocate(ibathy_topo)
+    if (SAVE_GREEN_FUNCTIONS .eqv. .false.) then
+      if (allocated(ibathy_topo) ) deallocate(ibathy_topo)
+    endif
   endif
 
   ! frees memory
@@ -1427,7 +1429,7 @@
     write(IMAIN,*) 'green function locations:'
     call flush_IMAIN()
   endif
-  write(*,*) 'myrank', myrank, 'nspec', NSPEC_CRUST_MANTLE
+  ! write(*,*) 'myrank', myrank, 'nspec', NSPEC_CRUST_MANTLE
 
 
   ! allocate memory for green function arrays
@@ -1497,8 +1499,8 @@
     if (myrank == islice_selected_gf_loc(igf)) ngf_local = ngf_local + 1
   enddo
 
-  write (*,*) islice_selected_gf_loc
-  write (*,*) ispec_selected_gf_loc
+  ! write (*,*) islice_selected_gf_loc
+  ! write (*,*) ispec_selected_gf_loc
 
   ! check that the sum of the number of receivers in each slice is nrec (or nsources for adjoint simulations)
   call sum_all_i(ngf_local,ngf_tot_found)
@@ -1545,7 +1547,7 @@
 
   if (myrank==0) then
     index_vector = pack([(ix, ix=1,ngf)],mask)
-    write(*,*) 'indexvector', index_vector, 'shape', shape(index_vector)
+    ! write(*,*) 'indexvector', index_vector, 'shape', shape(index_vector)
     deallocate(mask, rmask)
   endif
 
@@ -1556,8 +1558,8 @@
     ispec_unique_gf_loc(igf) = ispec_selected_gf_loc(index_vector(igf))
   enddo
 
-  write(*,*) islice_unique_gf_loc
-  write(*,*) ispec_unique_gf_loc
+  ! write(*,*) islice_unique_gf_loc
+  ! write(*,*) ispec_unique_gf_loc
 
   ! ! Broadcast the total number of unique elements
   ! call bcast_all_singlei(ngf_unique)
@@ -1582,29 +1584,29 @@
 
   ! synchronizes to get right timing
   call synchronize_all()
-  write(*,*) ' '
-  write(*,*) 'myrank', myrank, 'slices  ', islice_unique_gf_loc
-  write(*,*) 'myrank', myrank, 'elements', ispec_unique_gf_loc
-  write(*,*) ' '
+  ! write(*,*) ' '
+  ! write(*,*) 'myrank', myrank, 'slices  ', islice_unique_gf_loc
+  ! write(*,*) 'myrank', myrank, 'elements', ispec_unique_gf_loc
+  ! write(*,*) ' '
 
-  if (myrank == 0) then
-   write(*,*) 'slice array', islice_unique_gf_loc
-    do igf=1,ngf_unique
-      write(*,*) 'rank', myrank, 'igf', igf, 'sl', islice_unique_gf_loc(igf), 'el', ispec_unique_gf_loc(igf)
-    enddo
-  endif
+  ! if (myrank == 0) then
+  !  write(*,*) 'slice array', islice_unique_gf_loc
+  !   do igf=1,ngf_unique
+  !     write(*,*) 'rank', myrank, 'igf', igf, 'sl', islice_unique_gf_loc(igf), 'el', ispec_unique_gf_loc(igf)
+  !   enddo
+  ! endif
 
   ! Get number of unique entries in a slice
   ngf_unique_local = 0
   do igf=1,ngf_unique
     if (islice_unique_gf_loc(igf)==myrank) then
       ngf_unique_local = ngf_unique_local + 1
-      write(*,*) 'myrank', myrank, 'igf/ngf', igf,'/', ngf_unique, 'slice', islice_unique_gf_loc(igf), ngf_unique_local
+      ! write(*,*) 'myrank', myrank, 'igf/ngf', igf,'/', ngf_unique, 'slice', islice_unique_gf_loc(igf), ngf_unique_local
     endif
   enddo
 
-  if (myrank == 0) write(*,*) 'myrank', 'ngf_unique_local'
-  write(*,*) 'myrank', myrank, 'ngf', ngf_unique_local
+  ! if (myrank == 0) write(*,*) 'myrank', 'ngf_unique_local'
+  ! write(*,*) 'myrank', myrank, 'ngf', ngf_unique_local
 
   call synchronize_all()
 
@@ -1624,7 +1626,7 @@
              stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating ibool_GF, or iglob_tmp array')
 
-    write (*,*) myrank, 'shape ibool_GF', shape(ibool_GF)
+    ! write (*,*) myrank, 'shape ibool_GF', shape(ibool_GF)
 
     ! Conversion arrays from full crust_mantle element array to small
     ! Green function array
@@ -1650,7 +1652,7 @@
         ! For each element in the new local array get the element of
         ! the original crust_mantle array
         ispec_cm2gf(igf_counter) = ispec_unique_gf_loc(igf)
-        write (*,*)
+        ! write (*,*)
         do i=1,NGLLX
           do j=1,NGLLY
             do k=1,NGLLZ
@@ -1698,7 +1700,7 @@
   do ispec=1,ngf_unique_local
     do k=1,NGLLZ
       do j=1,NGLLY
-        write(*,*) "jk:",j,k, "ibool", ibool_GF(:,j,k,ispec)
+        ! write(*,*) "jk:",j,k, "ibool", ibool_GF(:,j,k,ispec)
     enddo
   enddo
   enddo
@@ -1724,28 +1726,28 @@
       if (islice_selected_gf_loc(igf) == myrank) then
         call send_singlei(ispec_out_gf_loc(igf), 0, igf)
         call send_singlei(islice_out_gf_loc(igf), 0, igf+ngf)
-        write(*,*) 'rank', myrank, 'send 1', ' igf', igf
+        ! write(*,*) 'rank', myrank, 'send 1', ' igf', igf
         ! if (ier /= 0 ) call exit_MPI(myrank,'Error 1')
       endif
       if (myrank==0) then
         call recv_singlei(ispec_out_gf_loc(igf), islice_selected_gf_loc(igf), igf)
         call recv_singlei(islice_out_gf_loc(igf), islice_selected_gf_loc(igf), igf+ngf)
-        write(*,*) 'waiting to receive 1'
+        ! write(*,*) 'waiting to receive 1'
       endif
     endif
   enddo
 
  call synchronize_all()
   if (myrank == 0) then
-    write(*,*) 'islice', islice_out_gf_loc
-    write(*,*) 'ispec', ispec_out_gf_loc
+    ! write(*,*) 'islice', islice_out_gf_loc
+    ! write(*,*) 'ispec', ispec_out_gf_loc
   endif
 
 
   call synchronize_all()
-  if (myrank == 0) write(*,*) 'myrank', 'NGLOB_GF'
-  write(*,*) 'myrank', myrank, 'NGLOB_GF', NGLOB_GF
-  write(*,*) 'myrank', myrank, 'ispec_cm2gf', ispec_cm2gf
+  ! if (myrank == 0) write(*,*) 'myrank', 'NGLOB_GF'
+  ! write(*,*) 'myrank', myrank, 'NGLOB_GF', NGLOB_GF
+  ! write(*,*) 'myrank', myrank, 'ispec_cm2gf', ispec_cm2gf
 
 
   call synchronize_all()

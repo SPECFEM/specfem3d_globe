@@ -551,7 +551,9 @@
 #endif
 
   ! old x/y/z array not needed anymore
-  deallocate(xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle)
+  if (SAVE_GREEN_FUNCTIONS .eqv. .false.) then
+    deallocate(xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle)
+  endif
   deallocate(xstore_outer_core,ystore_outer_core,zstore_outer_core)
   deallocate(xstore_inner_core,ystore_inner_core,zstore_inner_core)
 

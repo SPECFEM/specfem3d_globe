@@ -549,6 +549,7 @@
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
 
   use specfem_par, only: ngf, ngf_unique, ngf_unique_local, &
+    deltat, &
     islice_selected_gf_loc,ispec_selected_gf_loc, &
     islice_out_gf_loc,ispec_out_gf_loc, &
     xi_gf_loc,eta_gf_loc,gamma_gf_loc, &
@@ -564,7 +565,6 @@
     ibathy_topo, scale_displ, &
     myrank, NPROCTOT_VAL
   use specfem_par_crustmantle, only: &
-    rstore_crust_mantle, &
     displ_crust_mantle, veloc_crust_mantle, accel_crust_mantle, &
     xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
     epsilondev_xx_crust_mantle, epsilondev_yy_crust_mantle, &
@@ -582,7 +582,10 @@
   integer(kind=8) :: local_dim
 
   ! X, Y, Z coordinates -> in form of r(3, NGLOB) (r, theta, phi)
-  real(kind=CUSTOM_REAL), dimension(NDIM, NGLOB_GF) :: r
+  real(kind=CUSTOM_REAL), dimension(NGLOB_GF) :: x
+  real(kind=CUSTOM_REAL), dimension(NGLOB_GF) :: y
+  real(kind=CUSTOM_REAL), dimension(NGLOB_GF) :: z
+  real(kind=CUSTOM_REAL), dimension(NGLOB_GF) :: z_fake
 
   ! Receiver location and rotation for testing
   real(kind=CUSTOM_REAL), dimension(ngf) :: rec_latitude
@@ -602,9 +605,6 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_GF) :: displacement
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_GF) :: velocity
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_GF) :: acceleration
-  real(kind=CUSTOM_REAL), dimension(NGLOB_GF) :: x
-  real(kind=CUSTOM_REAL), dimension(NGLOB_GF) :: y
-  real(kind=CUSTOM_REAL), dimension(NGLOB_GF) :: z
 
   ! Strain parameters
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,ngf_unique_local) :: epsilon_xx
@@ -614,6 +614,15 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,ngf_unique_local) :: epsilon_xz
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,ngf_unique_local) :: epsilon_yz
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,ngf_unique_local) :: epsilon_fake
+
+  ! -------
+  ! Variables to be written once
+  !--------
+  character(len=1024) :: rankname
+  character(len=1024) :: format_string
+
+  format_string = "(I0.5)"
+  write (rankname,format_string) myrank
 
 
 
@@ -632,11 +641,8 @@
   rec_spec = ispec_out_gf_loc
   rec_slice = ispec_out_gf_loc
 
-  ! -------
-  ! Variables to be written once
-  !--------
-
   ! parameters needed for reading.
+  call define_adios_scalar(myadios_fwd_group, group_size_inc, '', "PROC", myrank)
   call define_adios_scalar(myadios_fwd_group, group_size_inc, '', "NPROC", NPROCTOT_VAL)
   call define_adios_scalar(myadios_fwd_group, group_size_inc, '', "NGLOB", NGLOB_GF)
   call define_adios_scalar(myadios_fwd_group, group_size_inc, '', "NGF", ngf)
@@ -645,29 +651,36 @@
 
   ! The topography/bathymetry info does not have to be written by all all processors
   if (myrank == 0) then
-  ! ! Topography and bathymetry for source Location
-  !   if (TOPOGRAPHY) then
-  !     call define_adios_scalar(myadios_fwd_group, group_size_inc, '', 'TOPOGRAPHY', 1)
-  !     call define_adios_scalar(myadios_fwd_group, group_size_inc, '', STRINGIFY_VAR(NX_BATHY))
-  !     call define_adios_scalar(myadios_fwd_group, group_size_inc, '', STRINGIFY_VAR(NY_BATHY))
-  !     call define_adios_scalar(myadios_fwd_group, group_size_inc, '', STRINGIFY_VAR(RESOLUTION_TOPO_FILE))
-  !     local_dim = NX_BATHY * NY_BATHY
-  !     call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(ibathy_topo))
-  !   else
-  !     call define_adios_scalar(myadios_fwd_group, group_size_inc, '', 'TOPOGRAPHY', 0)
-  !   endif
 
-  !   ! Ellipticity for source location
-  !   if (ELLIPTICITY_VAL) then
-  !     call define_adios_scalar(myadios_fwd_group, group_size_inc, '', 'ELLIPTICITY', 1)
-  !     local_dim = nspl
-  !     call define_adios_scalar(myadios_fwd_group, group_size_inc, '', STRINGIFY_VAR(nspl))
-  !     call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(rspl))
-  !     call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(ellipicity_spline))
-  !     call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(ellipicity_spline2))
-  !   else
-  !     call define_adios_scalar(myadios_fwd_group, group_size_inc, '', 'ELLIPTICITY', 0)
-  !   endif
+    ! Variables that are only needed on a single core
+    call define_adios_scalar(myadios_fwd_group, group_size_inc, '', "NGLLX", NGLLX)
+    call define_adios_scalar(myadios_fwd_group, group_size_inc, '', "NGLLY", NGLLY)
+    call define_adios_scalar(myadios_fwd_group, group_size_inc, '', "NGLLZ", NGLLZ)
+    call define_adios_scalar(myadios_fwd_group, group_size_inc, '', "DT", deltat)
+
+  ! Topography and bathymetry for source Location
+    if (TOPOGRAPHY) then
+      call define_adios_scalar(myadios_fwd_group, group_size_inc, '', 'TOPOGRAPHY', 1)
+      call define_adios_scalar(myadios_fwd_group, group_size_inc, '', STRINGIFY_VAR(NX_BATHY))
+      call define_adios_scalar(myadios_fwd_group, group_size_inc, '', STRINGIFY_VAR(NY_BATHY))
+      call define_adios_scalar(myadios_fwd_group, group_size_inc, '', STRINGIFY_VAR(RESOLUTION_TOPO_FILE))
+      local_dim = NX_BATHY * NY_BATHY
+      call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(ibathy_topo))
+    else
+      call define_adios_scalar(myadios_fwd_group, group_size_inc, '', 'TOPOGRAPHY', 0)
+    endif
+
+    ! Ellipticity for source location
+    if (ELLIPTICITY_VAL) then
+      call define_adios_scalar(myadios_fwd_group, group_size_inc, '', 'ELLIPTICITY', 1)
+      local_dim = nspl
+      call define_adios_scalar(myadios_fwd_group, group_size_inc, '', STRINGIFY_VAR(nspl))
+      call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(rspl))
+      call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(ellipicity_spline))
+      call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(ellipicity_spline2))
+    else
+      call define_adios_scalar(myadios_fwd_group, group_size_inc, '', 'ELLIPTICITY', 0)
+    endif
 
   endif
 
@@ -691,17 +704,20 @@
   if (nsources_local /= 0) then
     local_dim = nsources_local
     ! Moment tensor in cartesian
-    call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(Mxx))
-    call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(Myy))
-    call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(Mzz))
-    call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(Mxy))
-    call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(Mxz))
-    call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(Myz))
+    call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', 'Mxx_'//trim(rankname), Mxx)
+    call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', 'Myy_'//trim(rankname), Myy)
+    call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', 'Mzz_'//trim(rankname), Mzz)
+    call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', 'Mxy_'//trim(rankname), Mxy)
+    call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', 'Mxz_'//trim(rankname), Mxz)
+    call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', 'Myz_'//trim(rankname), Myz)
 
     ! ! Source location
-    call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(xi_source))
-    call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(eta_source))
-    call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(gamma_source))
+    call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', &
+                          'xi_source_'//trim(rankname), xi_source  )
+    call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', &
+                          'eta_source_'//trim(rankname), eta_source  )
+    call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', &
+                          'gamma_source_'//trim(rankname), gamma_source)
 
   endif
 
@@ -711,13 +727,19 @@
 
   ! Addressing
   local_dim = NGLLX * NGLLY * NGLLZ * ngf_unique_local
-  call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(ibool_GF))
+  call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', 'ibool_GF_'//trim(rankname), ibool_GF)
 
   ! ! Coordinates
-  local_dim = NDIM * NGLOB_GF
+  x = real(xstore_crust_mantle(iglob_cm2gf), kind=CUSTOM_REAL)
+  y = real(ystore_crust_mantle(iglob_cm2gf), kind=CUSTOM_REAL)
+  z = real(zstore_crust_mantle(iglob_cm2gf), kind=CUSTOM_REAL)
+  z_fake = real(zstore_crust_mantle(iglob_cm2gf), kind=CUSTOM_REAL)
   local_dim = NGLOB_GF
-  r = rstore_crust_mantle(:, iglob_cm2gf)
-  call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(r))
+  call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', 'x_'//trim(rankname), x)
+  call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', 'y_'//trim(rankname), y)
+  call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', 'z_'//trim(rankname), z)
+  call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', 'z_fake_'//trim(rankname), z_fake)
+
 
   ! Parameters
   call define_adios_scalar(myadios_fwd_group, group_size_inc, '', STRINGIFY_VAR(scale_displ))
@@ -756,26 +778,26 @@
 
   ! crust/mantle displacement, velocity, and acceleration
   local_dim = NDIM * NGLOB_GF
-  call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(displacement))
-  call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(velocity))
-  call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', STRINGIFY_VAR(acceleration))
+  call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', 'displacement_'//trim(rankname), displacement)
+  call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', 'velocity_'//trim(rankname), velocity)
+  call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', 'acceleration_'//trim(rankname), acceleration)
 
-  ! crust/mantle
+  !rust/mantle
   local_dim = NGLLX * NGLLY * NGLLZ * ngf_unique_local
   call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', &
-                                   STRINGIFY_VAR(epsilon_xx))
+                                   'epsilon_xx_'//trim(rankname), epsilon_xx)
   call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', &
-                                   STRINGIFY_VAR(epsilon_yy))
+                                   'epsilon_yy_'//trim(rankname), epsilon_yy)
   call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', &
-                                   STRINGIFY_VAR(epsilon_zz))
+                                   'epsilon_zz_'//trim(rankname), epsilon_zz)
   call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', &
-                                   STRINGIFY_VAR(epsilon_xy))
+                                   'epsilon_xy_'//trim(rankname), epsilon_xy)
   call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', &
-                                   STRINGIFY_VAR(epsilon_yz))
+                                   'epsilon_yz_'//trim(rankname), epsilon_yz)
   call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', &
-                                   STRINGIFY_VAR(epsilon_xz))
+                                   'epsilon_xz_'//trim(rankname), epsilon_xz)
   call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', &
-                                   STRINGIFY_VAR(epsilon_fake))
+                                   'epsilon_fake_'//trim(rankname), epsilon_fake)
 
 
   end subroutine define_green_function_forward_arrays_adios
@@ -789,6 +811,7 @@ subroutine write_one_time_green_function_forward_arrays_adios()
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
 
   use specfem_par, only: ngf, ngf_unique, ngf_unique_local, &
+    deltat, &
     islice_selected_gf_loc,ispec_selected_gf_loc, &
     islice_out_gf_loc,ispec_out_gf_loc, &
     xi_gf_loc,eta_gf_loc,gamma_gf_loc, &
@@ -821,10 +844,10 @@ subroutine write_one_time_green_function_forward_arrays_adios()
   integer(kind=8) :: local_dim
 
   ! X, Y, Z coordinates
-  real(kind=CUSTOM_REAL), dimension(3,NGLOB_GF) :: r
   real(kind=CUSTOM_REAL), dimension(NGLOB_GF) :: x
   real(kind=CUSTOM_REAL), dimension(NGLOB_GF) :: y
   real(kind=CUSTOM_REAL), dimension(NGLOB_GF) :: z
+  real(kind=CUSTOM_REAL), dimension(NGLOB_GF) :: z_fake
 
   ! Receiver location and rotation for testing
   real(kind=CUSTOM_REAL), dimension(ngf) :: rec_latitude
@@ -836,9 +859,16 @@ subroutine write_one_time_green_function_forward_arrays_adios()
   integer, dimension(ngf) :: rec_spec
   integer, dimension(ngf) :: rec_slice
   real(kind=CUSTOM_REAL), dimension(3,3,ngf) :: rec_rotation
-
+  integer :: i
   ! Ellipticity parameters
   ! real(kind=CUSTOM_REAL) :: ellipticity
+
+  character(len=1024) :: rankname
+  character(len=1024) :: format_string
+
+  format_string = "(I0.5)"
+  write (rankname,format_string) myrank
+
 
   ! Green function elements
   rec_latitude = real(gf_loc_lat, kind=CUSTOM_REAL)
@@ -853,6 +883,7 @@ subroutine write_one_time_green_function_forward_arrays_adios()
 
   ! Scalars
   ! parameters needed for reading.
+  call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, "PROC", myrank)
   call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, "NPROC", NPROCTOT_VAL)
   call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, "NGLOB", NGLOB_GF)
   call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, "NGF", ngf)
@@ -860,60 +891,65 @@ subroutine write_one_time_green_function_forward_arrays_adios()
   call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, "NGF_UNIQUE_LOCAL", ngf_unique_local)
 
   if (myrank == 0) then
+
+    call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, "NGLLX", NGLLX)
+    call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, "NGLLY", NGLLY)
+    call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, "NGLLZ", NGLLZ)
+    call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, "DT", deltat)
     ! Topography and bathymetry for source Location
-    ! if (TOPOGRAPHY) then
-    !   call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, 'TOPOGRAPHY', 1)
-    !   call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, STRINGIFY_VAR(NX_BATHY))
-    !   call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, STRINGIFY_VAR(NY_BATHY))
-    !   call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, STRINGIFY_VAR(RESOLUTION_TOPO_FILE))
-    !   local_dim = NX_BATHY * NY_BATHY
-    !   call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
-    ! sizeprocs_adios, local_dim, STRINGIFY_VAR(ibathy_topo))
-    ! else
-    !   call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, 'TOPOGRAPHY', 0)
-    ! endif
+    if (TOPOGRAPHY) then
+      call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, 'TOPOGRAPHY', 1)
+      call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, STRINGIFY_VAR(NX_BATHY))
+      call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, STRINGIFY_VAR(NY_BATHY))
+      call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, STRINGIFY_VAR(RESOLUTION_TOPO_FILE))
+      local_dim = NX_BATHY * NY_BATHY
+      call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
+    sizeprocs_adios, local_dim, STRINGIFY_VAR(ibathy_topo))
+    else
+      call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, 'TOPOGRAPHY', 0)
+    endif
 
-    ! ! Ellipticity for source location
-    ! if (ELLIPTICITY_VAL) then
+    ! Ellipticity for source location
+    if (ELLIPTICITY_VAL) then
 
-    !   call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, 'ELLIPTICITY', 1)
-    !   call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, STRINGIFY_VAR(nspl))
-    !   local_dim = nspl
-    !   call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
-    ! sizeprocs_adios, local_dim, STRINGIFY_VAR(rspl))
-    !   call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
-    ! sizeprocs_adios, local_dim,STRINGIFY_VAR(ellipicity_spline))
-    !   call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
-    !           sizeprocs_adios, local_dim,STRINGIFY_VAR(ellipicity_spline2))
-    ! else
-    !   call write_adios_scalar(myadios_fwd_file, myadios_fwd_group,'ELLIPTICITY', 0)
-    ! endif
+      call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, 'ELLIPTICITY', 1)
+      call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, STRINGIFY_VAR(nspl))
+      local_dim = nspl
+      call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
+    sizeprocs_adios, local_dim, STRINGIFY_VAR(rspl))
+      call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
+    sizeprocs_adios, local_dim,STRINGIFY_VAR(ellipicity_spline))
+      call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
+              sizeprocs_adios, local_dim,STRINGIFY_VAR(ellipicity_spline2))
+    else
+      call write_adios_scalar(myadios_fwd_file, myadios_fwd_group,'ELLIPTICITY', 0)
+    endif
 
   endif
 
-    if (nsources_local /= 0) then
+  if (nsources_local /= 0) then
 
     local_dim = nsources_local
     ! Moment tensor in cartesian
     call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
-                                       sizeprocs_adios, local_dim, STRINGIFY_VAR(Mxx))
+                                       sizeprocs_adios, local_dim, 'Mxx_'//trim(rankname), Mxx)
     call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
-                                       sizeprocs_adios, local_dim, STRINGIFY_VAR(Myy))
+                                       sizeprocs_adios, local_dim, 'Myy_'//trim(rankname), Myy)
     call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
-                                       sizeprocs_adios, local_dim, STRINGIFY_VAR(Mzz))
+                                       sizeprocs_adios, local_dim, 'Mzz_'//trim(rankname), Mzz)
     call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
-                                       sizeprocs_adios, local_dim, STRINGIFY_VAR(Mxy))
+                                       sizeprocs_adios, local_dim, 'Mxy_'//trim(rankname), Mxy)
     call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
-                                       sizeprocs_adios, local_dim, STRINGIFY_VAR(Mxz))
+                                       sizeprocs_adios, local_dim, 'Mxz_'//trim(rankname), Mxz)
     call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
-                                       sizeprocs_adios, local_dim, STRINGIFY_VAR(Myz))
+                                       sizeprocs_adios, local_dim, 'Myz_'//trim(rankname), Myz)
     ! ! Source location
     call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
-                                       sizeprocs_adios, local_dim, STRINGIFY_VAR(xi_source))
+                                       sizeprocs_adios, local_dim, 'xi_source_'//trim(rankname), xi_source)
     call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
-                                       sizeprocs_adios, local_dim, STRINGIFY_VAR(eta_source))
+                                       sizeprocs_adios, local_dim, 'eta_source_'//trim(rankname), eta_source)
     call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
-                                       sizeprocs_adios, local_dim, STRINGIFY_VAR(gamma_source))
+                                       sizeprocs_adios, local_dim, 'gamma_source_'//trim(rankname), gamma_source)
 
   endif
 
@@ -949,13 +985,22 @@ subroutine write_one_time_green_function_forward_arrays_adios()
   ! Addressing
   local_dim = NGLLX * NGLLY * NGLLZ * ngf_unique_local
   call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
-    sizeprocs_adios, local_dim, STRINGIFY_VAR(ibool_GF))
+    sizeprocs_adios, local_dim, 'ibool_GF_'//trim(rankname), ibool_GF)
 
   ! Coordinates
-  local_dim = NDIM * NGLOB_GF
-  r = rstore_crust_mantle(:, iglob_cm2gf)
+  local_dim = NGLOB_GF
+  x = real(xstore_crust_mantle(iglob_cm2gf), kind=CUSTOM_REAL)
+  y = real(ystore_crust_mantle(iglob_cm2gf), kind=CUSTOM_REAL)
+  z = real(zstore_crust_mantle(iglob_cm2gf), kind=CUSTOM_REAL)
+  z_fake = real(zstore_crust_mantle(iglob_cm2gf), kind=CUSTOM_REAL)
   call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
-    sizeprocs_adios, local_dim, STRINGIFY_VAR(r))
+    sizeprocs_adios, local_dim, 'x_'//trim(rankname), x)
+  call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
+    sizeprocs_adios, local_dim, 'y_'//trim(rankname), y)
+  call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
+    sizeprocs_adios, local_dim, 'z_'//trim(rankname), z)
+  call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
+    sizeprocs_adios, local_dim, 'z_fake_'//trim(rankname), z_fake)
 
   ! Parameters
   call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, STRINGIFY_VAR(scale_displ))
@@ -994,7 +1039,7 @@ subroutine write_each_time_green_function_forward_arrays_adios()
 
   ! local parameters
   integer(kind=8) :: local_dim
-
+  integer :: i
   ! Wavefield parameters
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_GF) :: displacement
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_GF) :: velocity
@@ -1008,6 +1053,12 @@ subroutine write_each_time_green_function_forward_arrays_adios()
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,ngf_unique_local) :: epsilon_xz
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,ngf_unique_local) :: epsilon_yz
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,ngf_unique_local) :: epsilon_fake
+
+  character(len=1024) :: rankname
+  character(len=1024) :: format_string
+
+  format_string = "(I0.5)"
+  write (rankname,format_string) myrank
 
 
   ! Exit if there are no elements to be saved for this bit.
@@ -1026,12 +1077,15 @@ subroutine write_each_time_green_function_forward_arrays_adios()
 
   ! crust/mantle displacement, velocity, and acceleration
   local_dim = NDIM * NGLOB_GF
+
+  if (myrank==0) write(*,*) 'disp shape', shape(displacement), 'from locs', NGLOB_GF, NDIM
+
   call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
-    sizeprocs_adios, local_dim, STRINGIFY_VAR(displacement))
+    sizeprocs_adios, local_dim, 'displacement_'//trim(rankname), displacement)
   call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
-    sizeprocs_adios, local_dim, STRINGIFY_VAR(velocity))
+    sizeprocs_adios, local_dim, 'velocity_'//trim(rankname), velocity)
   call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
-    sizeprocs_adios, local_dim, STRINGIFY_VAR(acceleration))
+    sizeprocs_adios, local_dim, 'acceleration_'//trim(rankname), acceleration)
 
   ! Reconstructing the true strain
   epsilon_xx(:,:,:,:) = 0.d0
@@ -1060,19 +1114,19 @@ subroutine write_each_time_green_function_forward_arrays_adios()
   local_dim = NGLLX * NGLLY * NGLLZ * ngf_unique_local
 
   call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
-    sizeprocs_adios, local_dim, STRINGIFY_VAR(epsilon_xx))
+    sizeprocs_adios, local_dim, 'epsilon_xx_'//trim(rankname), epsilon_xx)
   call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
-    sizeprocs_adios, local_dim, STRINGIFY_VAR(epsilon_yy))
+    sizeprocs_adios, local_dim, 'epsilon_yy_'//trim(rankname), epsilon_yy)
   call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
-    sizeprocs_adios, local_dim, STRINGIFY_VAR(epsilon_zz))
+    sizeprocs_adios, local_dim, 'epsilon_zz_'//trim(rankname), epsilon_zz)
   call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
-    sizeprocs_adios, local_dim, STRINGIFY_VAR(epsilon_xy))
+    sizeprocs_adios, local_dim, 'epsilon_xy_'//trim(rankname), epsilon_xy)
   call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
-    sizeprocs_adios, local_dim, STRINGIFY_VAR(epsilon_yz))
+    sizeprocs_adios, local_dim, 'epsilon_yz_'//trim(rankname), epsilon_yz)
   call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
-    sizeprocs_adios, local_dim, STRINGIFY_VAR(epsilon_xz))
+    sizeprocs_adios, local_dim, 'epsilon_xz_'//trim(rankname), epsilon_xz)
   call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
-    sizeprocs_adios, local_dim, STRINGIFY_VAR(epsilon_fake))
+    sizeprocs_adios, local_dim, 'epsilon_fake_'//trim(rankname), epsilon_fake)
   ! write (*,*) minval(epsilon_yz(:,:,:,:)),maxval(epsilon_yz(:,:,:,:)), &
   !             minval(epsilon_xz(:,:,:,:)),maxval(epsilon_xz(:,:,:,:)), &
   !             minval(epsilon_fake(:,:,:,:)),maxval(epsilon_fake(:,:,:,:))
