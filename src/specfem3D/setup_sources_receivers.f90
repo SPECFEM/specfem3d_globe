@@ -1680,6 +1680,8 @@
       endif
     enddo
 
+    write (*,*) myrank, ispec_cm2gf
+
     allocate(iglob_cm2gf(iglob_counter))
 
     ! Total number of Green function coordinates in terms of elements
@@ -1719,6 +1721,8 @@
         enddo
     endif
   enddo
+
+
 
   ! Collect the results on rank one
   do igf=1,ngf
