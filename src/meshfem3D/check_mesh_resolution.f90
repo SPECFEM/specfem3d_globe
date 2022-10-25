@@ -893,7 +893,8 @@
   double precision,parameter :: ONE_THIRD = 1.d0 / 3.d0
   double precision,parameter :: PI = 3.141592653589793d0
   double precision,parameter :: TOL_ZERO = 1.d-30
-  double precision,parameter :: TOL_EIG = 6.d-5  ! eigenvalue tolerance (for ocean prem with R_PLANET_KM = 6368, tolerance is ~ 5.3e-5)
+  ! eigenvalue tolerance (for ocean prem with R_PLANET_KM = 6368, tolerance is ~ 5.3e-5)
+  double precision,parameter :: TOL_EIG = 6.d-5
 
   ! check symmetry
   if (abs(A(1,2) - A(2,1)) > TOL_ZERO .or. abs(A(1,3) - A(3,1)) > TOL_ZERO .or. abs(A(2,3) - A(3,2)) > TOL_ZERO) then

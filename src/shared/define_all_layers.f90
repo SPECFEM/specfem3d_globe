@@ -1906,7 +1906,8 @@
   !                         inner core: last entry, i.e., ner_mesh_layers(NUMBER_OF_MESH_LAYERS)
   !
   ! for REGIONAL_MESH_CUTOFF, we assigned ner values of 0 to layers ner_mesh_layers(i) below the cut-off, say 400.
-  ! here, we will re-assign ner_mesh_layers(i) and rmins/rmax values to create a new local mesh, with a cut-off below the desired depth.
+  ! here, we will re-assign ner_mesh_layers(i) and rmins/rmax values to create a new local mesh,
+  ! with a cut-off below the desired depth.
   !
   ! NDOUBLINGS determines how many different ner_mesh_layer(i) entries we will need.
   ! REGIONAL_MESH_CUTOFF_DEPTH tells where to set rmins/rmax

@@ -321,7 +321,9 @@
 
   ! setup wavenumber arrays
   if (myrank == 0) then
-    ! only main process creates pertubation grid, then distributes it to all other to have the same perturbation grid for all processes
+    ! only main process creates pertubation grid, then distributes it to all others
+    ! to have the same perturbation grid for all processes.
+
     ! 3D arrays
     !allocate(freqs(N), wavenumbers_kx(N,N,N), wavenumbers_ky(N,N,N), wavenumbers_kz(N,N,N),stat=ier)
     allocate(freqs(N),stat=ier)

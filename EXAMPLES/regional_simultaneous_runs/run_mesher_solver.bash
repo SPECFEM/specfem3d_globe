@@ -125,6 +125,23 @@ for ((i=1; i<=$NSIM; i++)); do
     for f in ${model_files}; do
       ln -s $f
     done
+    # adios files
+    if [ -e ../../${BASEMPIDIR_NAME}/attenuation.bp ]; then
+      ln -s ../../${BASEMPIDIR_NAME}/attenuation.bp
+    fi
+    if [ -e ../../${BASEMPIDIR_NAME}/boundary.bp ]; then
+      ln -s ../../${BASEMPIDIR_NAME}/boundary.bp
+    fi
+    if [ -e ../../${BASEMPIDIR_NAME}/solver_data.bp ]; then
+      ln -s ../../${BASEMPIDIR_NAME}/solver_data.bp
+    fi
+    if [ -e ../../${BASEMPIDIR_NAME}/solver_data_mpi.bp ]; then
+      ln -s ../../${BASEMPIDIR_NAME}/solver_data_mpi.bp
+    fi
+    if [ -e ../../${BASEMPIDIR_NAME}/stacey.bp ]; then
+      ln -s ../../${BASEMPIDIR_NAME}/stacey.bp
+    fi
+
     cd ../
     # checks exit code
     if [[ $? -ne 0 ]]; then exit 1; fi

@@ -332,9 +332,7 @@
   if (NOISE_TOMOGRAPHY /= 0) hdur(:) = 0.d0
 
   ! If we're using external stf, don't worry about hdur.
-  if (EXTERNAL_SOURCE_TIME_FUNCTION) then
-    hdur(:) = 0.d0
-  endif
+  if (EXTERNAL_SOURCE_TIME_FUNCTION) hdur(:) = 0.d0
 
   ! Sets tshift_src to zero to initiate the simulation!
   if (NSOURCES == 1) then
