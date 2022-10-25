@@ -689,3 +689,137 @@
 
   end subroutine prepare_timerun_restarting
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine prepare_simultaneous_event_execution_shift_undoatt()
+
+! for simultaneous events, the snapshot file I/O can lead to high peak bandwidth if done for all events at the same time.
+! here, we shift the execution of events by a small, estimated time shift.
+
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_innercore
+  use specfem_par_outercore
+
+  implicit none
+
+  integer :: millisec_shift
+  integer(kind=8) :: local_dim
+  double precision :: snapshot_size_in_GB,estimated_io_time_in_millisec
+  ! current time
+  integer,dimension(8) :: tval
+
+  ! overrides filesystem bandwidth (GB/s) for I/O
+  !FILESYSTEM_IO_BANDWIDTH = 0.1d0  ! 0.1 GB/s
+  ! (Frontera scratch file system: https://frontera-portal.tacc.utexas.edu/user-guide/files/)
+  !FILESYSTEM_IO_BANDWIDTH = 60.d0  ! 60 GB/s
+
+  ! only for multiple simultaneous events
+  if (NUMBER_OF_SIMULTANEOUS_RUNS < 2) return
+  ! only in case snapshot files are used
+  if (.not. ((SIMULATION_TYPE == 1 .and. SAVE_FORWARD) .or. (SIMULATION_TYPE == 3)) ) return
+
+  ! shifts execution of (MPI) event subgroups
+  if (SHIFT_SIMULTANEOUS_RUNS .and. FILESYSTEM_IO_BANDWIDTH > 0.d0) then
+    ! estimate array sizes to store for wavefield snapshots (in GB)
+    snapshot_size_in_GB = 0.d0
+
+    ! wavefield arrays
+    ! displ/veloc/accel crust-mantle
+    local_dim = NDIM * NGLOB_CRUST_MANTLE
+    snapshot_size_in_GB = snapshot_size_in_GB + 3.d0 * local_dim * dble(CUSTOM_REAL)
+
+    ! displ/veloc/accel inner core
+    local_dim = NDIM * NGLOB_INNER_CORE
+    snapshot_size_in_GB = snapshot_size_in_GB + 3.d0 * local_dim * dble(CUSTOM_REAL)
+
+    ! displ/veloc/accel outer core
+    local_dim = NGLOB_OUTER_CORE
+    snapshot_size_in_GB = snapshot_size_in_GB + 3.d0 * local_dim * dble(CUSTOM_REAL)
+
+    ! rotation
+    if (ROTATION_VAL) then
+      ! A_array_rotation,..
+      local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_OUTER_CORE_ROTATION
+      snapshot_size_in_GB = snapshot_size_in_GB + 2.d0 * local_dim * dble(CUSTOM_REAL)
+    endif
+
+    if (ATTENUATION_VAL) then
+      ! memory variables crust-mantle R_xx_crust_mantle,..
+      local_dim = N_SLS * NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE_ATTENUATION
+      snapshot_size_in_GB = snapshot_size_in_GB + 5.d0 * local_dim * dble(CUSTOM_REAL)
+
+      ! memory variables crust-mantle R_xx_inner_core,..
+      local_dim = N_SLS * NGLLX * NGLLY * NGLLZ * NSPEC_INNER_CORE_ATTENUATION
+      snapshot_size_in_GB = snapshot_size_in_GB + 5.d0 * local_dim * dble(CUSTOM_REAL)
+    endif
+
+    ! converts size to GB
+    snapshot_size_in_GB = snapshot_size_in_GB / 1024.d0 / 1024.d0 / 1024.d0
+
+    ! file compression
+    if (ADIOS_FOR_UNDO_ATTENUATION .and. ADIOS_COMPRESSION_ALGORITHM /= 0) then
+      ! assumes a compression factor of 3x
+      snapshot_size_in_GB = snapshot_size_in_GB / 3.d0
+    endif
+
+    ! total snapshot size for all processes in this event group
+    snapshot_size_in_GB = snapshot_size_in_GB * NPROCTOT_VAL
+
+    ! estimates file i/o speed (adding 10 percent for overheads)
+    estimated_io_time_in_millisec = snapshot_size_in_GB / FILESYSTEM_IO_BANDWIDTH * 1000.d0 * (1.d0 + 0.01d0)
+
+    ! determines time shift (in millisec) depending on group number
+    if (estimated_io_time_in_millisec > 5000) then
+      ! limits shifts to 5s
+      millisec_shift = 5000.d0 * mygroup
+    else
+      millisec_shift = estimated_io_time_in_millisec * mygroup
+    endif
+
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) "simultaneous events execution shift: "
+      if (ADIOS_FOR_UNDO_ATTENUATION .and. ADIOS_COMPRESSION_ALGORITHM /= 0) then
+        write(IMAIN,*) "  estimated snapshot size for event group (ADIOS compressed) = ",sngl(snapshot_size_in_GB * 1024.d0),"MB"
+        write(IMAIN,*) "                                                             = ",sngl(snapshot_size_in_GB),"GB"
+      else
+        write(IMAIN,*) "  estimated snapshot size for event group        = ",sngl(snapshot_size_in_GB * 1024.d0),"MB"
+        write(IMAIN,*) "                                                 = ",sngl(snapshot_size_in_GB),"GB"
+      endif
+      write(IMAIN,*)
+      write(IMAIN,*) "  selected filesystem I/O bandwidth              = ",sngl(FILESYSTEM_IO_BANDWIDTH),"GB/s"
+      write(IMAIN,*) "  estimated I/O time in millisec                 = ",sngl(estimated_io_time_in_millisec),"ms"
+      write(IMAIN,*)
+      write(IMAIN,*) "  (MPI) event group number                       = ",mygroup
+      write(IMAIN,*) "  execution shift in millisec for this event     = ",millisec_shift,"ms"
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
+
+    ! let this group sleep
+    call sleep_for_msec(millisec_shift)
+  endif
+
+  ! synchronize processes (for this MPI group)
+  call synchronize_all()
+
+  ! user output
+  if (myrank == 0) then
+    ! outputs current time on system
+    call date_and_time(VALUES=tval)
+
+    ! user output
+    write(IMAIN,'(a,i2.2,a,i2.2,a,i2.2,a,i3.3,a)') &
+      "   Event starts at current clock time: ",tval(5),"h ",tval(6),"min ",tval(7),"sec ", tval(8),"msec"
+    write(IMAIN,*)
+    call flush_IMAIN()
+
+    ! debug
+    !print *,'debug: event group',mygroup,' shifted by ',millisec_shift, &
+    !        'starts at:',tval(5),"h ",tval(6),"min ",tval(7),"sec ", tval(8),"msec"
+  endif
+
+  end subroutine prepare_simultaneous_event_execution_shift_undoatt

@@ -270,3 +270,46 @@ FC_FUNC_(get_utctime_params,GET_UTCTIME_PARAMS)(int* stime_in,
 
   return;
 }
+
+/* ----------------------------------------------------------------------------- */
+
+#include <errno.h>
+
+void
+FC_FUNC_(sleep_for_msec,SLEEP_FOR_MSEC)(int* millisec) {
+
+// note: nanosleep() function in C/C++ is standard. however, there is no nanosleep() in fortran.
+//       this is a wrapper function to sleep the process for a specified amount of milliseconds
+
+  // seconds
+  int sec = (int) (*millisec) / 1000;
+  // remaining milliseconds
+  int msec = (*millisec) - sec * 1000;
+
+  // check
+  if (sec < 0) sec = 0;
+  if (msec < 0) msec = 0;
+
+  //debug
+  //printf("debug: nanosleep w/ input: %d -> sec %d / millisec %d\n",*millisec,sec,msec);
+
+  // checks if anything to do
+  if (sec == 0 && msec == 0) return;
+
+  // requested time
+  // 1 millisecond = 1,000,000 Nanoseconds
+  struct timespec req = {sec, msec * 1000000};
+  // remaining time
+  struct timespec rem;
+
+  int rc = nanosleep(&req, &rem);
+  if (rc != 0){
+    if ((rc == -1) && (errno == EINTR)){
+      printf ("nanosleep execution failed : sleep was interrupted.\n");
+    }else{
+      printf ("nanosleep execution failed : returned %d.\n",rc);
+    }
+  }
+
+  return;
+}

@@ -232,6 +232,9 @@
     endif
   endif
 
+  ! shift execution of simultaneous events to avoid a high peak bandwidth for snapshots file I/O
+  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1) call prepare_simultaneous_event_execution_shift_undoatt()
+
   ! synchronize all processes to make sure everybody is ready to start time loop
   call synchronize_all()
   if (myrank == 0) then

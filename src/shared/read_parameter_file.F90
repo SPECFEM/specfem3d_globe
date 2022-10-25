@@ -350,6 +350,12 @@
     call read_value_double_precision(SCATTERING_CORRELATION, 'SCATTERING_CORRELATION', ier); ier = 0
   endif
 
+  ! (optional) simultaneous run execution shifts
+  call read_value_logical(SHIFT_SIMULTANEOUS_RUNS, 'SHIFT_SIMULTANEOUS_RUNS', ier); ier = 0
+  if (SHIFT_SIMULTANEOUS_RUNS) then
+    call read_value_double_precision(FILESYSTEM_IO_BANDWIDTH, 'FILESYSTEM_IO_BANDWIDTH', ier); ier = 0
+  endif
+
   ! closes parameter file
   call close_parameter_file()
 

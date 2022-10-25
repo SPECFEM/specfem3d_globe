@@ -207,6 +207,10 @@
   call bcast_all_singledp(SCATTERING_STRENGTH)
   call bcast_all_singledp(SCATTERING_CORRELATION)
 
+  ! (optional) simultaneous run execution shifts
+  call bcast_all_singlel(SHIFT_SIMULTANEOUS_RUNS)
+  call bcast_all_singledp(FILESYSTEM_IO_BANDWIDTH)
+
   ! empirical minimum period resolved estimation
   call bcast_all_singledp(T_min_period)
   ! empirical minimum wavelength resolved estimation

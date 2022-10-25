@@ -174,7 +174,9 @@
   ! for regional cutoff meshes (REGIONAL_MESH_CUTOFF must be .true. in Par_file)
   ! this will create a local mesh, i.e., doesn't honor Moho/R80/R220, but creates a crust & mantle mesh
   ! separated at the fictitious moho depth (at 40 or 35 km), down to the REGIONAL_MESH_CUTOFF value.
-  ! Additionally, this local mesh can have up to 5 doubling layers, with the doubling layer index specified by the NZ_DOUBLING_* values.
+  !
+  ! Additionally, this local mesh can have up to 5 doubling layers;
+  ! with the doubling layer index specified by the NZ_DOUBLING_* values.
   !
   ! flag to switch on local mesh
   logical :: USE_LOCAL_MESH = .false.
@@ -197,6 +199,10 @@
   logical :: ADD_SCATTERING_PERTURBATIONS = .false.
   double precision :: SCATTERING_STRENGTH = 0.d0
   double precision :: SCATTERING_CORRELATION = 1.d0
+
+  ! (optional) simultaneous run execution shifts
+  logical :: SHIFT_SIMULTANEOUS_RUNS = .false.
+  double precision :: FILESYSTEM_IO_BANDWIDTH = 0.d0
 
   end module shared_input_parameters
 
