@@ -368,9 +368,6 @@
 
     len_prov = len_trim(fptr)
 
- !debug
-  print *,'debug: asdf provenance: length = ',len_prov
-
     allocate(provenance(len_prov+1),stat=ier)
     if (ier /= 0) call exit_MPI_without_rank('error allocating provenance array')
     provenance(1:len_prov) = fptr(1:len_prov)
