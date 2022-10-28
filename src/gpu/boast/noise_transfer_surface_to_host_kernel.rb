@@ -19,25 +19,32 @@ module BOAST
     p = Procedure(function_name, [ibelm_top,nspec_top,ibool,displ,noise_surface_movie])
     if (get_lang == CUDA and ref) then
       get_output.print File::read("references/#{function_name}.cu")
-    elsif(get_lang == CL or get_lang == CUDA) then
+    elsif(get_lang == CL or get_lang == CUDA or get_lang == HIP) then
       make_specfem3d_header( :ndim => n_dim, :ngllx => n_gllx, :ngll2 => n_gll2)
       open p
         decl igll  = Int("igll")
         decl iface  = Int("iface")
+        comment()
 
         print igll === get_local_id(0)
         print iface === get_group_id(0) + get_group_id(1)*get_num_groups(0)
+        comment()
+
         print If(iface < nspec_top ) {
           decl i = Int("i")
           decl j = Int("j")
           decl k = Int("k")
           decl ispec = Int("ispec")
           decl iglob = Int("iglob")
+          comment()
+
           print ispec === ibelm_top[iface] - 1
           print k === ngllx - 1
           print j === igll/ngllx
           print i === igll-j*ngllx
           print iglob === ibool[INDEX4(ngllx,ngllx,ngllx,i,j,k,ispec)]-1
+          comment()
+
           (0..2).each { |indx|
              print noise_surface_movie[INDEX3(ndim,ngll2,indx,igll,iface)] === displ[iglob*3 + indx]
           }

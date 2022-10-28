@@ -1,7 +1,7 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -40,6 +40,8 @@
 
 static int fd;
 
+/* ----------------------------------------------------------------------------- */
+
 void
 FC_FUNC_(open_file_create,OPEN_FILE)(char *file) {
   fd = open(file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
@@ -62,6 +64,8 @@ void
 FC_FUNC_(close_file,CLOSE_FILE)() {
   close(fd);
 }
+
+/* ----------------------------------------------------------------------------- */
 
 void
 FC_FUNC_(write_integer,WRITE_INTEGER)(int *z) {
@@ -95,6 +99,8 @@ FC_FUNC_(write_character,WRITE_CHARACTER)(char *z, int *lchar) {
   }
 }
 
+/* ----------------------------------------------------------------------------- */
+
 void
 FC_FUNC_(open_file_fd,OPEN_FILE_FD)(char *file, int *pfd) {
   *pfd = open(file, O_WRONLY | O_CREAT, 0644);
@@ -108,6 +114,8 @@ void
 FC_FUNC_(close_file_fd,CLOSE_FILE_FD)(int *pfd) {
   close(*pfd);
 }
+
+/* ----------------------------------------------------------------------------- */
 
 void
 FC_FUNC_(write_integer_fd,WRITE_INTEGER_FD)(int *pfd, int *z) {
@@ -155,7 +163,7 @@ FC_FUNC_(write_character_fd,WRITE_CHARACTER_FD)(int *pfd, char *z, int *lchar) {
 
  --------------------------------------- */
 
-#define __USE_GNU
+//#define __USE_GNU  // has issues with gcc 5.5.x version? ".. error: unknown type name '__locale_t' .."
 #include <string.h>
 
 #define MIN(x,y) ((x) < (y) ? (x) : (y))
@@ -172,11 +180,12 @@ achieved with 16 KB buffers: */
 //#define MAX_B 8192 // 8 KB
 
 // absorbing files: instead of passing file descriptor, we use the array index
-//                          first 0 - 3 indices for crust mantle files
-//                          last 4 - 8 indices for outer core files
-//                          index 9 - for NOISE_TOMOGRAPHY (SURFACE_MOVIE)
+//                          first 0  - 3 indices for crust mantle files
+//                          last 4   - 8 indices for outer core files
+//                          index 9  - for NOISE_TOMOGRAPHY (SURFACE_MOVIE)
 //                          index 10 - for topography file
-#define ABS_FILEID 11
+//                          index 11 - for model files
+#define ABS_FILEID 12
 
 // file points
 static FILE * fp_abs[ABS_FILEID];
@@ -280,7 +289,12 @@ void close_file_abs_fbin(int * fid) {
   fclose(fp_abs[*fid]);
 
   free(work_buffer[*fid]);
+
+  fp_abs[*fid] = NULL;
+  work_buffer[*fid] = NULL;
 }
+
+/* ----------------------------------------------------------------------------- */
 
 void write_abs_fbin(int *fid, char *buffer, int *length, int *index) {
 // writes binary file data in chunks of MAX_B
@@ -342,8 +356,9 @@ void write_abs_buffer_fbin(int *fid, char *buffer, int *length, int *index, int 
   }
 }
 
+/* ----------------------------------------------------------------------------- */
 
-void read_abs_fbin(int *fid, char *buffer, int *length, int *index) {
+void read_abs_fbin(int *fid, char *buffer, int *length, int *index, int *shift) {
 // reads binary file data in chunks of MAX_B
 
   FILE *ft;
@@ -354,7 +369,7 @@ void read_abs_fbin(int *fid, char *buffer, int *length, int *index) {
   ft = fp_abs[*fid];
 
   // positions file pointer (for reverse time access)
-  pos = ((long long)*length) * (*index -1 );
+  pos = ((long long)*length) * (*index -1 ) + (*shift);
 
   ret = fseek(ft, pos , SEEK_SET);
   if (ret != 0 ) {
@@ -607,8 +622,13 @@ void close_file_abs_map(int * fid) {
   /* Un-mmaping doesn't close the file, so we still need to do that.
    */
   close(map_fd_abs[*fid]);
+
+  map_abs[*fid] = NULL;
+  map_fd_abs[*fid] = 0;
+  filesize_abs[*fid] = 0;
 }
 
+/* ----------------------------------------------------------------------------- */
 
 void write_abs_map(int *fid, char *buffer, int *length , int *index) {
   char *map;
@@ -637,15 +657,16 @@ void write_abs_buffer_map(int *fid, char *buffer, int *length , int *index, int*
   memcpy( &map[offset], buffer, *length );
 }
 
+/* ----------------------------------------------------------------------------- */
 
-void read_abs_map(int *fid, char *buffer, int *length , int *index) {
+void read_abs_map(int *fid, char *buffer, int *length , int *index, int *shift) {
   char *map;
   long long offset;
 
   map = map_abs[*fid];
 
   // offset in bytes
-  offset =  ((long long)*index -1 ) * (*length) ;
+  offset =  ((long long)*index -1 ) * (*length) + (*shift);
 
   // copies map to buffer
   memcpy( buffer, &map[offset], *length );
@@ -665,6 +686,7 @@ void read_abs_buffer_map(int *fid, char *buffer, int *length , int *index, int *
   memcpy( buffer, &map[offset], *length );
 }
 
+/* ----------------------------------------------------------------------------- */
 
 /*
 
@@ -713,6 +735,8 @@ FC_FUNC_(close_file_abs,CLOSE_FILES_ABS)(int *fid)
 #endif
 }
 
+/* ----------------------------------------------------------------------------- */
+
 // read/write wrappers
 void
 FC_FUNC_(write_abs,WRITE_ABS)(int *fid, char *buffer, int *length , int *index)
@@ -727,12 +751,42 @@ FC_FUNC_(write_abs,WRITE_ABS)(int *fid, char *buffer, int *length , int *index)
 void
 FC_FUNC_(read_abs,READ_ABS)(int *fid, char *buffer, int *length , int *index)
 {
+  int shift = 0;
+
 #ifdef USE_MAP_FUNCTION
-  read_abs_map(fid,buffer,length,index);
+  read_abs_map(fid,buffer,length,index, &shift);
 #else
-  read_abs_fbin(fid,buffer,length,index);
+  read_abs_fbin(fid,buffer,length,index, &shift);
 #endif
 }
+
+void
+FC_FUNC_(read_abs_shifted,READ_ABS_SHIFTED)(int *fid, char *buffer, int *length , int *index, int *shift)
+{
+#ifdef USE_MAP_FUNCTION
+  read_abs_map(fid,buffer,length,index,shift);
+#else
+  read_abs_fbin(fid,buffer,length,index,shift);
+#endif
+}
+
+// extra *_int function to read in real values
+// note: MacOS compilation will complain if call read_abs_shifted(..) with an integer and real argument in same file...
+//       thus, we add here this extra *_int function which can use the same function calls with a char* buffer argument as above.
+//
+//       by default, the call real_abs_shifted(..) in model_topo_bathy.f90 uses integer values to read in for topo/bathy values of integer*2
+void
+FC_FUNC_(read_abs_shifted_int,READ_ABS_SHIFTED_INT)(int *fid, char *buffer, int *length , int *index, int *shift)
+{
+#ifdef USE_MAP_FUNCTION
+  read_abs_map(fid,buffer,length,index,shift);
+#else
+  read_abs_fbin(fid,buffer,length,index,shift);
+#endif
+}
+
+
+/* ----------------------------------------------------------------------------- */
 
 // buffered read/write wrappers
 void

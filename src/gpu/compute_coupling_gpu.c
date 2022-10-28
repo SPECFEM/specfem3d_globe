@@ -1,7 +1,7 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -110,6 +110,25 @@ void FC_FUNC_ (compute_coupling_fluid_cmb_gpu,
                                                                              mp->nspec2D_top_outer_core);
   }
 #endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(NGLLX,NGLLX,1);
+
+    // launches GPU kernel
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_coupling_fluid_CMB_kernel), grid, threads, 0, mp->compute_stream,
+                                                                           displ.hip,
+                                                                           accel.hip,
+                                                                           mp->d_ibool_crust_mantle.hip,
+                                                                           mp->d_ibelm_bottom_crust_mantle.hip,
+                                                                           mp->d_normal_top_outer_core.hip,
+                                                                           mp->d_jacobian2D_top_outer_core.hip,
+                                                                           mp->d_wgllwgll_xy.hip,
+                                                                           mp->d_ibool_outer_core.hip,
+                                                                           mp->d_ibelm_top_outer_core.hip,
+                                                                           mp->nspec2D_top_outer_core);
+  }
+#endif
 
   GPU_ERROR_CHECKING ("compute_coupling_fluid_CMB_kernel");
 }
@@ -190,6 +209,25 @@ void FC_FUNC_ (compute_coupling_fluid_icb_gpu,
                                                                              mp->d_ibool_outer_core.cuda,
                                                                              mp->d_ibelm_bottom_outer_core.cuda,
                                                                              mp->nspec2D_bottom_outer_core);
+  }
+#endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(NGLLX,NGLLX,1);
+
+    // launches GPU kernel
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_coupling_fluid_ICB_kernel), grid, threads, 0, mp->compute_stream,
+                                                                           displ.hip,
+                                                                           accel.hip,
+                                                                           mp->d_ibool_inner_core.hip,
+                                                                           mp->d_ibelm_top_inner_core.hip,
+                                                                           mp->d_normal_bottom_outer_core.hip,
+                                                                           mp->d_jacobian2D_bottom_outer_core.hip,
+                                                                           mp->d_wgllwgll_xy.hip,
+                                                                           mp->d_ibool_outer_core.hip,
+                                                                           mp->d_ibelm_bottom_outer_core.hip,
+                                                                           mp->nspec2D_bottom_outer_core);
   }
 #endif
 
@@ -284,6 +322,29 @@ void FC_FUNC_ (compute_coupling_cmb_fluid_gpu,
                                                                              mp->nspec2D_bottom_crust_mantle);
   }
 #endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(5,5,1);
+
+    // launches GPU kernel
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_coupling_CMB_fluid_kernel), grid, threads, 0, mp->compute_stream,
+                                                                           displ.hip,
+                                                                           accel_cm.hip,
+                                                                           accel_oc.hip,
+                                                                           mp->d_ibool_crust_mantle.hip,
+                                                                           mp->d_ibelm_bottom_crust_mantle.hip,
+                                                                           mp->d_normal_top_outer_core.hip,
+                                                                           mp->d_jacobian2D_top_outer_core.hip,
+                                                                           mp->d_wgllwgll_xy.hip,
+                                                                           mp->d_ibool_outer_core.hip,
+                                                                           mp->d_ibelm_top_outer_core.hip,
+                                                                           mp->RHO_TOP_OC,
+                                                                           mp->minus_g_cmb,
+                                                                           mp->gravity,
+                                                                           mp->nspec2D_bottom_crust_mantle);
+  }
+#endif
 
   GPU_ERROR_CHECKING ("compute_coupling_CMB_fluid_gpu");
 }
@@ -376,6 +437,30 @@ void FC_FUNC_ (compute_coupling_icb_fluid_gpu,
   }
 #endif
 
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(NGLLX,NGLLX,1);
+
+    // launches GPU kernel
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_coupling_ICB_fluid_kernel), grid, threads, 0, mp->compute_stream,
+                                                                           displ.hip,
+                                                                           accel_ic.hip,
+                                                                           accel_oc.hip,
+                                                                           mp->d_ibool_inner_core.hip,
+                                                                           mp->d_ibelm_top_inner_core.hip,
+                                                                           mp->d_normal_bottom_outer_core.hip,
+                                                                           mp->d_jacobian2D_bottom_outer_core.hip,
+                                                                           mp->d_wgllwgll_xy.hip,
+                                                                           mp->d_ibool_outer_core.hip,
+                                                                           mp->d_ibelm_bottom_outer_core.hip,
+                                                                           mp->RHO_BOTTOM_OC,
+                                                                           mp->minus_g_icb,
+                                                                           mp->gravity,
+                                                                           mp->nspec2D_top_inner_core);
+  }
+#endif
+
   GPU_ERROR_CHECKING ("compute_coupling_ICB_fluid_gpu");
 }
 
@@ -448,6 +533,11 @@ void FC_FUNC_ (compute_coupling_ocean_gpu,
 #endif
 #ifdef USE_CUDA
   if (run_cuda) {
+    // graph
+#ifdef USE_CUDA_GRAPHS
+    if (! mp->use_graph_call_elastic){
+#endif
+
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize,1,1);
 
@@ -460,6 +550,27 @@ void FC_FUNC_ (compute_coupling_ocean_gpu,
                                                                          mp->npoin_oceans,
                                                                          mp->d_ibool_ocean_load.cuda,
                                                                          mp->d_normal_ocean_load.cuda);
+
+#ifdef USE_CUDA_GRAPHS
+    } // graph
+#endif
+  }
+#endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(blocksize,1,1);
+
+    // uses corrected mass matrices
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_coupling_ocean_kernel), grid, threads, 0, mp->compute_stream,
+                                                                       accel.hip,
+                                                                       rmassx.hip,
+                                                                       rmassy.hip,
+                                                                       rmassz.hip,
+                                                                       mp->d_rmass_ocean_load.hip,
+                                                                       mp->npoin_oceans,
+                                                                       mp->d_ibool_ocean_load.hip,
+                                                                       mp->d_normal_ocean_load.hip);
   }
 #endif
 

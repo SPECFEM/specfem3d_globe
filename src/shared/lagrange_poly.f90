@@ -1,6 +1,6 @@
 !========================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -46,45 +46,155 @@
   double precision :: prod2_inv
   double precision :: sum
   double precision :: x0,x
+  double precision :: x_1,x_2,x_3,x_4,x_5
 
 ! note: this routine is hit pretty hard by the mesher, optimizing the loops here will be beneficial
 
-  do dgr = 1,NGLL
+  select case(NGLL)
+  case (5)
+    ! NGLL == 5
 
-    prod1 = 1.0d0
-    prod2 = 1.0d0
+    ! loads positions
+    x_1 = xigll(1)
+    x_2 = xigll(2)
+    x_3 = xigll(3)
+    x_4 = xigll(4)
+    x_5 = xigll(5)
 
+    ! for dgr == 1
     ! lagrangian interpolants
-    x0 = xigll(dgr)
-    do i = 1,NGLL
-      if (i /= dgr) then
-        x = xigll(i)
-        prod1 = prod1*(xi-x)
-        prod2 = prod2*(x0-x)
-      endif
-    enddo
+    ! do i = 1,5 - skips i == 1
+    prod1 = (xi - x_2) * (xi - x_3) * (xi - x_4) * (xi - x_5)
+    prod2 = (x_1 - x_2) * (x_1 - x_3) * (x_1 - x_4) * (x_1 - x_5)
+    ! takes inverse to avoid additional divisions
+    ! (multiplications are cheaper than divisions)
+    prod2_inv = 1.d0 / prod2
+    h(1) = prod1 * prod2_inv
+    ! first derivatives
+    ! do i = 1,5 - skips i == 1
+    !   do j = 1,5 - skips j == 1 and j == 2
+    sum = (xi - x_3) * (xi - x_4) * (xi - x_5) &
+        + (xi - x_2) * (xi - x_4) * (xi - x_5) &
+        + (xi - x_2) * (xi - x_3) * (xi - x_5) &
+        + (xi - x_2) * (xi - x_3) * (xi - x_4)
+    ! hprime
+    hprime(1) = sum * prod2_inv
 
+    ! for dgr == 2:
+    ! lagrangian interpolants
+    ! do i = 1,5 - skips i == 2
+    prod1 = (xi - x_1) * (xi - x_3) * (xi - x_4) * (xi - x_5)
+    prod2 = (x_2 - x_1) * (x_2 - x_3) * (x_2 - x_4) * (x_2 - x_5)
+    ! takes inverse to avoid additional divisions
+    ! (multiplications are cheaper than divisions)
+    prod2_inv = 1.d0 / prod2
+    h(2) = prod1 * prod2_inv
+    ! first derivatives
+    ! do i = 1,5 - skips i == 2
+    !   do j = 1,5 - skips j == 2 and j == 1
+    sum = (xi - x_3) * (xi - x_4) * (xi - x_5) &
+        + (xi - x_1) * (xi - x_4) * (xi - x_5) &
+        + (xi - x_1) * (xi - x_3) * (xi - x_5) &
+        + (xi - x_1) * (xi - x_3) * (xi - x_4)
+    ! hprime
+    hprime(2) = sum * prod2_inv
+
+    ! for dgr == 3
+    ! lagrangian interpolants
+    ! do i = 1,5 - skips i == 3
+    prod1 = (xi - x_1) * (xi - x_2) * (xi - x_4) * (xi - x_5)
+    prod2 = (x_3 - x_1) * (x_3 - x_2) * (x_3 - x_4) * (x_3 - x_5)
     ! takes inverse to avoid additional divisions
     ! (multiplications are cheaper than divisions)
     prod2_inv = 1.d0/prod2
-
-    h(dgr) = prod1 * prod2_inv
-
+    h(3) = prod1 * prod2_inv
     ! first derivatives
-    sum = 0.0d0
-    do i = 1,NGLL
-      if (i /= dgr) then
-        prod3 = 1.0d0
-        do j = 1,NGLL
-          if (j /= dgr .and. j /= i) prod3 = prod3*(xi-xigll(j))
-        enddo
-        sum = sum + prod3
-      endif
+    ! do i = 1,5 - skips i == 3
+    !   do j = 1,5 - skips j == 3 and j == 1
+    sum = (xi - x_2) * (xi - x_4) * (xi - x_5) &
+        + (xi - x_1) * (xi - x_4) * (xi - x_5) &
+        + (xi - x_1) * (xi - x_2) * (xi - x_5) &
+        + (xi - x_1) * (xi - x_2) * (xi - x_4)
+    ! hprime
+    hprime(3) = sum * prod2_inv
+
+    ! for dgr == 4
+    ! lagrangian interpolants
+    ! do i = 1,5 - skips i == 4
+    prod1 = (xi - x_1) * (xi - x_2) * (xi - x_3) * (xi - x_5)
+    prod2 = (x_4 - x_1) * (x_4 - x_2) * (x_4 - x_3) * (x_4 - x_5)
+    ! takes inverse to avoid additional divisions
+    ! (multiplications are cheaper than divisions)
+    prod2_inv = 1.d0 / prod2
+    h(4) = prod1 * prod2_inv
+    ! first derivatives
+    ! do i = 1,5 - skips i == 4
+    !   do j = 1,5 - skips j == 4 and j == 1
+    sum = (xi - x_2) * (xi - x_3) * (xi - x_5) &
+        + (xi - x_1) * (xi - x_3) * (xi - x_5) &
+        + (xi - x_1) * (xi - x_2) * (xi - x_5) &
+        + (xi - x_1) * (xi - x_2) * (xi - x_3)
+    ! hprime
+    hprime(4) = sum * prod2_inv
+
+    ! for dgr == 5
+    ! lagrangian interpolants
+    ! do i = 1,5 - skips i == 5
+    prod1 = (xi - x_1) * (xi - x_2) * (xi - x_3) * (xi - x_4)
+    prod2 = (x_5 - x_1) * (x_5 - x_2) * (x_5 - x_3) * (x_5 - x_4)
+    ! takes inverse to avoid additional divisions
+    ! (multiplications are cheaper than divisions)
+    prod2_inv = 1.d0 / prod2
+    h(5) = prod1 * prod2_inv
+    ! first derivatives
+    ! do i = 1,5 - skips i == 5
+    !   do j = 1,5 - skips j == 5 and j == 1
+    sum = (xi - x_2) * (xi - x_3) * (xi - x_4) &
+        + (xi - x_1) * (xi - x_3) * (xi - x_4) &
+        + (xi - x_1) * (xi - x_2) * (xi - x_4) &
+        + (xi - x_1) * (xi - x_2) * (xi - x_3)
+    ! hprime
+    hprime(5) = sum * prod2_inv
+
+  case default
+    ! general NGLL
+    do dgr = 1,NGLL
+
+      prod1 = 1.0d0
+      prod2 = 1.0d0
+
+      ! lagrangian interpolants
+      x0 = xigll(dgr)
+      do i = 1,NGLL
+        if (i /= dgr) then
+          x = xigll(i)
+          prod1 = prod1*(xi-x)
+          prod2 = prod2*(x0-x)
+        endif
+      enddo
+
+      ! takes inverse to avoid additional divisions
+      ! (multiplications are cheaper than divisions)
+      prod2_inv = 1.d0/prod2
+
+      h(dgr) = prod1 * prod2_inv
+
+      ! first derivatives
+      sum = 0.0d0
+      do i = 1,NGLL
+        if (i /= dgr) then
+          prod3 = 1.0d0
+          do j = 1,NGLL
+            if (j /= dgr .and. j /= i) prod3 = prod3*(xi-xigll(j))
+          enddo
+          sum = sum + prod3
+        endif
+      enddo
+
+      hprime(dgr) = sum * prod2_inv
+
     enddo
-
-    hprime(dgr) = sum * prod2_inv
-
-  enddo
+  end select
 
   end subroutine lagrange_any
 
@@ -135,150 +245,155 @@
 !=======================================================================
 !
 
-  double precision function hgll(I,Z,ZGLL,NZ)
+!! routines not used yet, but for reference....
 
-!-------------------------------------------------------------
+!  double precision function hgll(I,Z,ZGLL,NZ)
 !
-!  Compute the value of the Lagrangian interpolant L through
-!  the NZ Gauss-Lobatto Legendre points ZGLL at point Z
-!  See Nissen-Meyer et al., 2007, A two-dimensional spectral-element method for computing
-!  spherical-earth seismograms - I. Moment-tensor source, Geophysical Journal International, p. 1087 eq. (A19)
-!  !! Warning !! There is a minus sign missing in that paper (-1.d0)**(N+1)*(1.d0-Z)*PNDLEG(Z,N) / ALFAN
+!!-------------------------------------------------------------
+!!
+!!  Compute the value of the Lagrangian interpolant L through
+!!  the NZ Gauss-Lobatto Legendre points ZGLL at point Z
+!!
+!!  See Nissen-Meyer et al., 2007, A two-dimensional spectral-element method for computing
+!!  spherical-earth seismograms - I. Moment-tensor source, Geophysical Journal International, p. 1087 eq. (A19)
+!!  !! Warning !! There is a minus sign missing in that paper (-1.d0)**(N+1)*(1.d0-Z)*PNDLEG(Z,N) / ALFAN
+!!
+!!-------------------------------------------------------------
 !
-!-------------------------------------------------------------
-
-  use constants, only: TINYVAL
-
-  implicit none
-
-  integer i,nz
-  double precision z
-  double precision ZGLL(0:nz-1)
-
-  integer n
-  double precision EPS,DZ,ALFAN
-  double precision, external :: PNLEG,PNDLEG
-
-  EPS = TINYVAL
-  DZ = Z - ZGLL(I)
-  if (abs(DZ) < EPS) then
-   HGLL = 1.d0
-   return
-  endif
-  N = NZ - 1
-  ALFAN = dble(N)*(dble(N)+1.d0)
-  if (I == 0) then
-    HGLL = (-1.d0)**(N+1)*(1.d0-Z)*PNDLEG(Z,N) / ALFAN
-  else if (I == N) then
-    HGLL = (1.d0+Z)*PNDLEG(Z,N) / ALFAN
-  else
-    HGLL = - (1.d0-Z*Z)*PNDLEG(Z,N)/ (ALFAN*PNLEG(ZGLL(I),N)*(Z-ZGLL(I)))
-  endif
-
-  end function hgll
-
+!  use constants, only: TINYVAL
 !
-!=====================================================================
+!  implicit none
 !
-
-  double precision function hglj(I,Z,ZGLJ,NZ)
-
-!-------------------------------------------------------------
+!  integer i,nz
+!  double precision z
+!  double precision ZGLL(0:nz-1)
 !
-!  Compute the value of the Lagrangian interpolant L through
-!  the NZ Gauss-Lobatto Jacobi points ZGLJ at point Z
-! See Nissen-Meyer et al., 2007, A two-dimensional spectral-element method for computing
-! spherical-earth seismograms - I. Moment-tensor source, Geophysical Journal International, p. 1088 eq. (A26)
+!  integer n
+!  double precision EPS,DZ,ALFAN
+!  double precision, external :: PNLEG,PNDLEG
 !
-!-------------------------------------------------------------
-
-  use constants, only: TINYVAL
-
-  implicit none
-
-  integer i,nz
-  double precision z
-  double precision ZGLJ(0:nz-1)
-
-  integer n
-  double precision EPS,DZ,ALFAN1,ALFAN2
-  double precision, external :: PNGLJ,PNDGLJ
-
-  EPS = TINYVAL
-  DZ = Z - ZGLJ(I)
-  if (abs(DZ) < EPS) then
-   HGLJ = 1.d0
-   return
-  endif
-  N = NZ - 1
-  ALFAN1 = dble(N)+1.d0
-  ALFAN2 = dble(N)*(dble(N)+2.d0)
-  if (I == 0) then
-    HGLJ = 2.d0*(-1.d0)**N*(Z-1.0d0)*PNDGLJ(Z,N) / (ALFAN1*ALFAN2)
-  else if (I == N) then
-    HGLJ = (1.d0+Z)*PNDGLJ(Z,N) / ALFAN2
-  else
-    HGLJ = - (1.d0-Z*Z)*PNDGLJ(Z,N) / (ALFAN2*PNGLJ(ZGLJ(I),N)*(Z-ZGLJ(I)))
-  endif
-
-  end function hglj
-
+!  EPS = TINYVAL
+!  DZ = Z - ZGLL(I)
+!  if (abs(DZ) < EPS) then
+!   HGLL = 1.d0
+!   return
+!  endif
+!  N = NZ - 1
+!  ALFAN = dble(N)*(dble(N)+1.d0)
+!  if (I == 0) then
+!    HGLL = (-1.d0)**(N+1)*(1.d0-Z)*PNDLEG(Z,N) / ALFAN
+!  else if (I == N) then
+!    HGLL = (1.d0+Z)*PNDLEG(Z,N) / ALFAN
+!  else
+!    HGLL = - (1.d0-Z*Z)*PNDLEG(Z,N)/ (ALFAN*PNLEG(ZGLL(I),N)*(Z-ZGLL(I)))
+!  endif
 !
-!=====================================================================
+!  end function hgll
 !
-
-
-! subroutine to compute the derivative of the interpolants of the GLJ
-! quadrature at the GLJ points at any given GLJ point
-
-  double precision function poly_deriv_GLJ(I,j,ZGLJ,NZ)
-
-!------------------------------------------------------------------------
+!!
+!!=====================================================================
+!!
 !
-!  Compute the value of the derivative of the I-th
-!  polynomial interpolant of the GLJ quadrature through the
-!  NZ Gauss-Lobatto-Jacobi (0,1) points ZGLJ at point ZGLJ(j)
-! See Nissen-Meyer et al., 2007, A two-dimensional spectral-element method for computing
-! spherical-earth seismograms - I. Moment-tensor source, Geophysical Journal International, p. 1088 eq. (A27)
-!  WARNING: there is an error at line 7 of their equation
-!  \partial_{\xi}\overline{l}_{i}(\overline{\xi}_{I})=\dfrac{1}{\overline{P}_{N}(\overline{\xi}_{i})(1-\overline{\xi}_{i})}
+!  double precision function hglj(I,Z,ZGLJ,NZ)
 !
-!------------------------------------------------------------------------
-
-  implicit none
-
-  integer i,j,nz
-  double precision zglj(0:nz-1)
-
-  integer degpoly
-
-  double precision, external :: pnglj
-
-  degpoly = nz - 1
-
-  if (i == 0 .and. j == 0) then ! Case 1
-    poly_deriv_GLJ = -dble(degpoly)*(dble(degpoly)+2.d0)/6.d0
-  else if (i == 0 .and. 0 < j .and. j < degpoly) then ! Case 2
-    poly_deriv_GLJ = 2.d0*(-1)**degpoly*pnglj(zglj(j),degpoly)/((1.d0+zglj(j))*(dble(degpoly)+1.d0))
-  else if (i == 0 .and. j == degpoly) then ! Case 3
-    poly_deriv_GLJ = (-1)**degpoly/(dble(degpoly)+1.d0)
-  else if (0 < i .and. i < degpoly .and. j == 0) then ! Case 4
-    poly_deriv_GLJ = (-1)**(degpoly+1)*(dble(degpoly)+1.d0)/(2.d0*pnglj(zglj(i),degpoly)*(1.d0+zglj(i)))
-  else if (0 < i .and. i < degpoly .and. 0 < j .and. j < degpoly .and. i /= j) then ! Case 5
-    poly_deriv_GLJ = 1.d0/(zglj(j)-zglj(i))*pnglj(zglj(j),degpoly)/pnglj(zglj(i),degpoly)
-  else if (0 < i .and. i < degpoly .and. i == j) then  ! Case 6
-    poly_deriv_GLJ = -1.d0/(2.d0*(1.d0+zglj(i)))
-  else if (0 < i .and. i < degpoly .and. j == degpoly) then ! Case 7
-    poly_deriv_GLJ = 1.d0/(pnglj(zglj(i),degpoly)*(1.d0-zglj(i)))
-  else if (i == degpoly .and. j == 0) then ! Case 8
-    poly_deriv_GLJ = (-1)**(degpoly+1)*(dble(degpoly)+1.d0)/4.d0
-  else if (i == degpoly .and. 0 < j .and. j < degpoly) then ! Case 9
-    poly_deriv_GLJ = -1.d0/(1.d0-zglj(j))*pnglj(zglj(j),degpoly)
-  else if (i == degpoly .and. j == degpoly) then ! Case 10
-    poly_deriv_GLJ = (dble(degpoly)*(dble(degpoly)+2.d0)-1.d0)/4.d0
-  else
-    stop 'Problem in poly_deriv_GLJ: in a perfect world this would NEVER appear'
-  endif
-
-  end function poly_deriv_GLJ
+!!-------------------------------------------------------------
+!!
+!!  Compute the value of the Lagrangian interpolant L through
+!!  the NZ Gauss-Lobatto Jacobi points ZGLJ at point Z
+!!
+!! See Nissen-Meyer et al., 2007, A two-dimensional spectral-element method for computing
+!! spherical-earth seismograms - I. Moment-tensor source, Geophysical Journal International, p. 1088 eq. (A26)
+!!
+!!-------------------------------------------------------------
+!
+!  use constants, only: TINYVAL
+!
+!  implicit none
+!
+!  integer i,nz
+!  double precision z
+!  double precision ZGLJ(0:nz-1)
+!
+!  integer n
+!  double precision EPS,DZ,ALFAN1,ALFAN2
+!  double precision, external :: PNGLJ,PNDGLJ
+!
+!  EPS = TINYVAL
+!  DZ = Z - ZGLJ(I)
+!  if (abs(DZ) < EPS) then
+!   HGLJ = 1.d0
+!   return
+!  endif
+!  N = NZ - 1
+!  ALFAN1 = dble(N)+1.d0
+!  ALFAN2 = dble(N)*(dble(N)+2.d0)
+!  if (I == 0) then
+!    HGLJ = 2.d0*(-1.d0)**N*(Z-1.0d0)*PNDGLJ(Z,N) / (ALFAN1*ALFAN2)
+!  else if (I == N) then
+!    HGLJ = (1.d0+Z)*PNDGLJ(Z,N) / ALFAN2
+!  else
+!    HGLJ = - (1.d0-Z*Z)*PNDGLJ(Z,N) / (ALFAN2*PNGLJ(ZGLJ(I),N)*(Z-ZGLJ(I)))
+!  endif
+!
+!  end function hglj
+!
+!!
+!!=====================================================================
+!!
+!
+!
+!! subroutine to compute the derivative of the interpolants of the GLJ
+!! quadrature at the GLJ points at any given GLJ point
+!
+!  double precision function poly_deriv_GLJ(I,j,ZGLJ,NZ)
+!
+!!------------------------------------------------------------------------
+!!
+!!  Compute the value of the derivative of the I-th
+!!  polynomial interpolant of the GLJ quadrature through the
+!!  NZ Gauss-Lobatto-Jacobi (0,1) points ZGLJ at point ZGLJ(j)
+!!
+!! See Nissen-Meyer et al., 2007, A two-dimensional spectral-element method for computing
+!! spherical-earth seismograms - I. Moment-tensor source, Geophysical Journal International, p. 1088 eq. (A27)
+!!  WARNING: there is an error at line 7 of their equation
+!!  \partial_{\xi}\overline{l}_{i}(\overline{\xi}_{I})=\dfrac{1}{\overline{P}_{N}(\overline{\xi}_{i})(1-\overline{\xi}_{i})}
+!!
+!!------------------------------------------------------------------------
+!
+!  implicit none
+!
+!  integer i,j,nz
+!  double precision zglj(0:nz-1)
+!
+!  integer degpoly
+!
+!  double precision, external :: pnglj
+!
+!  degpoly = nz - 1
+!
+!  if (i == 0 .and. j == 0) then ! Case 1
+!    poly_deriv_GLJ = -dble(degpoly)*(dble(degpoly)+2.d0)/6.d0
+!  else if (i == 0 .and. 0 < j .and. j < degpoly) then ! Case 2
+!    poly_deriv_GLJ = 2.d0*(-1)**degpoly*pnglj(zglj(j),degpoly)/((1.d0+zglj(j))*(dble(degpoly)+1.d0))
+!  else if (i == 0 .and. j == degpoly) then ! Case 3
+!    poly_deriv_GLJ = (-1)**degpoly/(dble(degpoly)+1.d0)
+!  else if (0 < i .and. i < degpoly .and. j == 0) then ! Case 4
+!    poly_deriv_GLJ = (-1)**(degpoly+1)*(dble(degpoly)+1.d0)/(2.d0*pnglj(zglj(i),degpoly)*(1.d0+zglj(i)))
+!  else if (0 < i .and. i < degpoly .and. 0 < j .and. j < degpoly .and. i /= j) then ! Case 5
+!    poly_deriv_GLJ = 1.d0/(zglj(j)-zglj(i))*pnglj(zglj(j),degpoly)/pnglj(zglj(i),degpoly)
+!  else if (0 < i .and. i < degpoly .and. i == j) then  ! Case 6
+!    poly_deriv_GLJ = -1.d0/(2.d0*(1.d0+zglj(i)))
+!  else if (0 < i .and. i < degpoly .and. j == degpoly) then ! Case 7
+!    poly_deriv_GLJ = 1.d0/(pnglj(zglj(i),degpoly)*(1.d0-zglj(i)))
+!  else if (i == degpoly .and. j == 0) then ! Case 8
+!    poly_deriv_GLJ = (-1)**(degpoly+1)*(dble(degpoly)+1.d0)/4.d0
+!  else if (i == degpoly .and. 0 < j .and. j < degpoly) then ! Case 9
+!    poly_deriv_GLJ = -1.d0/(1.d0-zglj(j))*pnglj(zglj(j),degpoly)
+!  else if (i == degpoly .and. j == degpoly) then ! Case 10
+!    poly_deriv_GLJ = (dble(degpoly)*(dble(degpoly)+2.d0)-1.d0)/4.d0
+!  else
+!    stop 'Problem in poly_deriv_GLJ: in a perfect world this would NEVER appear'
+!  endif
+!
+!  end function poly_deriv_GLJ
 

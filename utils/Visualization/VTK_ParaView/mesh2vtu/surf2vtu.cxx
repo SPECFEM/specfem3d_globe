@@ -45,9 +45,10 @@
 #include <vtkPointData.h>
 #include <vtkUnstructuredGrid.h>
 #include <vtkXMLUnstructuredGridWriter.h>
+#if VTK_MAJOR_VERSION <= 5
 #include <vtkUnstructuredGridToPolyDataFilter.h>
+#endif
 #include <vtkXMLPolyDataWriter.h>
-#include <vtkUnstructuredGridToPolyDataFilter.h>
 #include <vtkDelaunay3D.h>
 #include <vtkCellArray.h>
 #include <vtkPointSet.h>
@@ -176,7 +177,11 @@ int main(int argc, char** argv) {
   dataSet -> SetCells(cellTypes, cells);
 
   vtkXMLUnstructuredGridWriter* writer = vtkXMLUnstructuredGridWriter::New();
+#if VTK_MAJOR_VERSION <= 5
   writer -> SetInput(dataSet);
+#else
+  writer -> SetInputData(dataSet);
+#endif
   writer -> SetFileName(output);
   writer -> Write();
 

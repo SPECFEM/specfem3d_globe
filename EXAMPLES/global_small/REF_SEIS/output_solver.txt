@@ -3,9 +3,11 @@
  **** Specfem3D MPI Solver ****
  ******************************
 
- Version: 7.0.2
+ Version: 7.0.3
 
- Fixing slow underflow trapping problem using small initial field
+
+ Planet: Earth
+
 
  There are            6  MPI processes
  Processes are numbered from 0 to            5
@@ -37,7 +39,7 @@
    incorporating rotation
    incorporating attenuation using            3  standard linear solids
 
-   incorporating 3-D lateral variations
+   incorporating 3-D lateral variations in the mantle
    no heterogeneities in the mantle
    incorporating crustal variations
    using one layer only in crust
@@ -46,12 +48,8 @@
    no general mantle anisotropy
 
 
- mesh databases:
-   reading in crust/mantle databases...
-   reading in outer core databases...
-   reading in inner core databases...
-   reading in coupling surface databases...
-   reading in addressing...
+ creating global slice addressing
+
  Spatial distribution of the slices
                         0
 
@@ -61,6 +59,11 @@
 
                         3
 
+ mesh databases:
+   reading in crust/mantle databases...
+   reading in outer core databases...
+   reading in inner core databases...
+   reading in coupling surface databases...
    reading in MPI databases...
    for overlapping of communications with calculations:
 
@@ -74,7 +77,32 @@
    percentage of volume elements in inner core    45.8333321     %
 
 
- Elapsed time for reading mesh in seconds =   0.245004892
+ Elapsed time for reading mesh in seconds =   0.295421004
+
+ adjacency:
+   total number of elements in this slice =         8896
+
+   using kd-tree search radius =    1876.4143871269287      (km)
+
+   maximum search elements                                      =         1250
+   maximum of actual search elements (after distance criterion) =         1249
+
+   estimated typical element size at surface =    312.73573118782144      (km)
+   maximum distance between neighbor centers =    1418.9232330900620      (km)
+
+   maximum neighbors found per element =           37 (should be 37 for globe meshes)
+   total number of neighbors           =       211992
+
+   Elapsed time for detection of neighbors in seconds =    1.6074250000000001
+
+ kd-tree:
+   total data points:       240192
+   theoretical   number of nodes:       480377
+                tree memory size:    14.6599426     MB
+   actual        number of nodes:       480383
+                tree memory size:    14.6601257     MB
+   maximum depth   :           24
+   creation timing :   0.151561975     (s)
 
 
  sources:          24
@@ -90,9 +118,9 @@
                   in element         6930
 
    using moment tensor source:
-     xi coordinate of source in that element:   0.19463493693779774
-     eta coordinate of source in that element:    1.0029873153984925
-     gamma coordinate of source in that element:  -0.33367462819876031
+     xi coordinate of source in that element:   0.19463493693780132
+     eta coordinate of source in that element:    1.0029873153984969
+     gamma coordinate of source in that element:  -0.33367462819887056
 
    source time function:
      using (quasi) Heaviside source time function
@@ -102,7 +130,7 @@
 
    magnitude of the source:
         scalar moment M0 =    2.2605667430978454E+025  dyne-cm
-     moment magnitude Mw =    6.2028117467869990
+     moment magnitude Mw =    6.2028115560521364
 
 
    original (requested) position of the source:
@@ -113,11 +141,11 @@
 
    position of the source that will be used:
 
-         latitude:    39.000000000000007
+         latitude:    39.000000000000000
         longitude:    70.316699999999997
-            depth:    9.9999999999992504       km
+            depth:    10.000000000000666       km
 
-   Error in location of the source:    1.06098463E-12  km
+   Error in location of the source:    7.90811264E-13  km
 
  source #            2
 
@@ -137,7 +165,7 @@
 
    magnitude of the source:
         scalar moment M0 =    2.2605667430978454E+025  dyne-cm
-     moment magnitude Mw =    6.2028117467869990
+     moment magnitude Mw =    6.2028115560521364
 
 
    original (requested) position of the source:
@@ -160,9 +188,9 @@
                   in element         8662
 
    using moment tensor source:
-     xi coordinate of source in that element:   0.22637004111999537
-     eta coordinate of source in that element:   0.81196164599693987
-     gamma coordinate of source in that element:  -0.33367372472026563
+     xi coordinate of source in that element:   0.22637004111999198
+     eta coordinate of source in that element:   0.81196164599693732
+     gamma coordinate of source in that element:  -0.33367372472025209
 
    source time function:
      using (quasi) Heaviside source time function
@@ -172,7 +200,7 @@
 
    magnitude of the source:
         scalar moment M0 =    2.2605667430978454E+025  dyne-cm
-     moment magnitude Mw =    6.2028117467869990
+     moment magnitude Mw =    6.2028115560521364
 
 
    original (requested) position of the source:
@@ -184,10 +212,10 @@
    position of the source that will be used:
 
          latitude:    53.058100000000017
-        longitude:    70.282800000000009
-            depth:    9.9999999999992504       km
+        longitude:    70.282799999999995
+            depth:    9.9999999999985434       km
 
-   Error in location of the source:    1.01581547E-12  km
+   Error in location of the source:    1.13226941E-12  km
 
  source #            4
 
@@ -195,9 +223,9 @@
                   in element         2363
 
    using moment tensor source:
-     xi coordinate of source in that element:  -0.69396743890582402
+     xi coordinate of source in that element:  -0.69396743890582380
      eta coordinate of source in that element:   0.45302576975816533
-     gamma coordinate of source in that element:  -0.86751883631783933
+     gamma coordinate of source in that element:  -0.86751883631783266
 
    source time function:
      using (quasi) Heaviside source time function
@@ -207,7 +235,7 @@
 
    magnitude of the source:
         scalar moment M0 =    2.2605667430978454E+025  dyne-cm
-     moment magnitude Mw =    6.2028117467869990
+     moment magnitude Mw =    6.2028115560521364
 
 
    original (requested) position of the source:
@@ -220,9 +248,9 @@
 
          latitude:    53.058100000000017
         longitude:    70.282799999999995
-            depth:    2881.0000000000000       km
+            depth:    2880.9999999999991       km
 
-   Error in location of the source:    3.53661544E-13  km
+   Error in location of the source:    5.07907735E-13  km
 
  source #            5
 
@@ -230,9 +258,9 @@
                   in element         8744
 
    using moment tensor source:
-     xi coordinate of source in that element:  -0.18451411014855140
-     eta coordinate of source in that element:   0.55843091138207313
-     gamma coordinate of source in that element:  -0.33338555256835017
+     xi coordinate of source in that element:  -0.18451411014854993
+     eta coordinate of source in that element:   0.55843091138207435
+     gamma coordinate of source in that element:  -0.33338555256822938
 
    source time function:
      using (quasi) Heaviside source time function
@@ -242,7 +270,7 @@
 
    magnitude of the source:
         scalar moment M0 =    2.2605667430978454E+025  dyne-cm
-     moment magnitude Mw =    6.2028117467869990
+     moment magnitude Mw =    6.2028115560521364
 
 
    original (requested) position of the source:
@@ -257,7 +285,7 @@
         longitude:    103.64380000000000
             depth:    9.9999999999992504       km
 
-   Error in location of the source:    7.07323089E-13  km
+   Error in location of the source:    7.29091971E-13  km
 
  source #            6
 
@@ -277,7 +305,7 @@
 
    magnitude of the source:
         scalar moment M0 =    2.2605667430978454E+025  dyne-cm
-     moment magnitude Mw =    6.2028117467869990
+     moment magnitude Mw =    6.2028115560521364
 
 
    original (requested) position of the source:
@@ -300,9 +328,9 @@
                   in element         7106
 
    using moment tensor source:
-     xi coordinate of source in that element:   0.79674056205833121
-     eta coordinate of source in that element:  -0.64219684217131034
-     gamma coordinate of source in that element:  -0.33349032898034181
+     xi coordinate of source in that element:   0.79674056205832522
+     eta coordinate of source in that element:  -0.64219684217131079
+     gamma coordinate of source in that element:  -0.33349032898041242
 
    source time function:
      using (quasi) Heaviside source time function
@@ -312,7 +340,7 @@
 
    magnitude of the source:
         scalar moment M0 =    2.2605667430978454E+025  dyne-cm
-     moment magnitude Mw =    6.2028117467869990
+     moment magnitude Mw =    6.2028115560521364
 
 
    original (requested) position of the source:
@@ -323,11 +351,11 @@
 
    position of the source that will be used:
 
-         latitude:    23.522500000000012
-        longitude:    45.503199999999993
-            depth:    10.000000000000666       km
+         latitude:    23.522500000000026
+        longitude:    45.503200000000000
+            depth:    10.000000000002078       km
 
-   Error in location of the source:    7.90811264E-13  km
+   Error in location of the source:    2.00061192E-12  km
 
  source #            8
 
@@ -347,7 +375,7 @@
 
    magnitude of the source:
         scalar moment M0 =    2.2605667430978454E+025  dyne-cm
-     moment magnitude Mw =    6.2028117467869990
+     moment magnitude Mw =    6.2028115560521364
 
 
    original (requested) position of the source:
@@ -370,9 +398,9 @@
                   in element         8012
 
    using moment tensor source:
-     xi coordinate of source in that element:   -1.0082443207877452
-     eta coordinate of source in that element:  -0.45139671229255074
-     gamma coordinate of source in that element:  -0.33352568358395474
+     xi coordinate of source in that element:   -1.0082443207877438
+     eta coordinate of source in that element:  -0.45139671229255668
+     gamma coordinate of source in that element:  -0.33352568358390555
 
    source time function:
      using (quasi) Heaviside source time function
@@ -382,7 +410,7 @@
 
    magnitude of the source:
         scalar moment M0 =    2.2605667430978450E+025  dyne-cm
-     moment magnitude Mw =    6.2028117467869990
+     moment magnitude Mw =    6.2028115560521364
 
 
    original (requested) position of the source:
@@ -394,10 +422,10 @@
    position of the source that will be used:
 
          latitude:    59.649099999999983
-        longitude:    9.5981999999999985
-            depth:    9.9999999999985434       km
+        longitude:    9.5982000000000021
+            depth:    9.9999999999999574       km
 
-   Error in location of the source:    7.90811264E-13  km
+   Error in location of the source:    8.10340402E-13  km
 
  source #           10
 
@@ -417,7 +445,7 @@
 
    magnitude of the source:
         scalar moment M0 =    2.2605667430978450E+025  dyne-cm
-     moment magnitude Mw =    6.2028117467869990
+     moment magnitude Mw =    6.2028115560521364
 
 
    original (requested) position of the source:
@@ -440,9 +468,9 @@
                   in element         7944
 
    using moment tensor source:
-     xi coordinate of source in that element:    1.0029043720398927
-     eta coordinate of source in that element:   0.45191169174997614
-     gamma coordinate of source in that element:  -0.33360303562983046
+     xi coordinate of source in that element:    1.0029043720398909
+     eta coordinate of source in that element:   0.45191169174997220
+     gamma coordinate of source in that element:  -0.33360303562950461
 
    source time function:
      using (quasi) Heaviside source time function
@@ -452,7 +480,7 @@
 
    magnitude of the source:
         scalar moment M0 =    2.2605667430978454E+025  dyne-cm
-     moment magnitude Mw =    6.2028117467869990
+     moment magnitude Mw =    6.2028115560521364
 
 
    original (requested) position of the source:
@@ -464,10 +492,10 @@
    position of the source that will be used:
 
          latitude:   -4.6737000000000011
-        longitude:    55.479199999999999
-            depth:    10.000000000000666       km
+        longitude:    55.479199999999992
+            depth:    9.9999999999978346       km
 
-   Error in location of the source:    1.00420572E-12  km
+   Error in location of the source:    2.00061192E-12  km
 
  source #           12
 
@@ -487,7 +515,7 @@
 
    magnitude of the source:
         scalar moment M0 =    2.2605667430978454E+025  dyne-cm
-     moment magnitude Mw =    6.2028117467869990
+     moment magnitude Mw =    6.2028115560521364
 
 
    original (requested) position of the source:
@@ -522,7 +550,7 @@
 
    magnitude of the source:
         scalar moment M0 =    2.2605667430978450E+025  dyne-cm
-     moment magnitude Mw =    6.2028117467869990
+     moment magnitude Mw =    6.2028115560521364
 
 
    original (requested) position of the source:
@@ -557,7 +585,7 @@
 
    magnitude of the source:
         scalar moment M0 =    2.2605667430978450E+025  dyne-cm
-     moment magnitude Mw =    6.2028117467869990
+     moment magnitude Mw =    6.2028115560521364
 
 
    original (requested) position of the source:
@@ -580,9 +608,9 @@
                   in element         7832
 
    using moment tensor source:
-     xi coordinate of source in that element:  -0.20334453061063865
+     xi coordinate of source in that element:  -0.20334453061063859
      eta coordinate of source in that element:  -0.67939675650952747
-     gamma coordinate of source in that element:  -0.33353987177355016
+     gamma coordinate of source in that element:  -0.33353987177356714
 
    source time function:
      using (quasi) Heaviside source time function
@@ -592,7 +620,7 @@
 
    magnitude of the source:
         scalar moment M0 =    2.2605667430978450E+025  dyne-cm
-     moment magnitude Mw =    6.2028117467869990
+     moment magnitude Mw =    6.2028115560521364
 
 
    original (requested) position of the source:
@@ -604,10 +632,10 @@
    position of the source that will be used:
 
          latitude:   -1.6556999999999933
-        longitude:    13.611599999999996
-            depth:    9.9999999999985434       km
+        longitude:    13.611599999999994
+            depth:    9.9999999999992504       km
 
-   Error in location of the source:    1.42719658E-12  km
+   Error in location of the source:    7.91120099E-13  km
 
  source #           16
 
@@ -615,9 +643,9 @@
                   in element         2331
 
    using moment tensor source:
-     xi coordinate of source in that element:   0.69964749525901493
+     xi coordinate of source in that element:   0.69964749525901482
      eta coordinate of source in that element:   0.58077599952012393
-     gamma coordinate of source in that element:  -0.86598796526788624
+     gamma coordinate of source in that element:  -0.86598796526786681
 
    source time function:
      using (quasi) Heaviside source time function
@@ -627,7 +655,7 @@
 
    magnitude of the source:
         scalar moment M0 =    2.2605667430978450E+025  dyne-cm
-     moment magnitude Mw =    6.2028117467869990
+     moment magnitude Mw =    6.2028115560521364
 
 
    original (requested) position of the source:
@@ -639,10 +667,10 @@
    position of the source that will be used:
 
          latitude:   -1.6556999999999933
-        longitude:    13.611599999999999
-            depth:    2881.0000000000018       km
+        longitude:    13.611599999999997
+            depth:    2880.9999999999986       km
 
-   Error in location of the source:    2.15305529E-12  km
+   Error in location of the source:    1.45969088E-12  km
 
  source #           17
 
@@ -650,9 +678,9 @@
                   in element         7354
 
    using moment tensor source:
-     xi coordinate of source in that element:   0.21779579870742913
-     eta coordinate of source in that element:   -1.0031987219667236
-     gamma coordinate of source in that element:  -0.33379970349885102
+     xi coordinate of source in that element:   0.21779579870742810
+     eta coordinate of source in that element:   -1.0031987219667167
+     gamma coordinate of source in that element:  -0.33379970349883037
 
    source time function:
      using (quasi) Heaviside source time function
@@ -662,7 +690,7 @@
 
    magnitude of the source:
         scalar moment M0 =    2.2605667430978450E+025  dyne-cm
-     moment magnitude Mw =    6.2028117467869990
+     moment magnitude Mw =    6.2028115560521364
 
 
    original (requested) position of the source:
@@ -677,7 +705,7 @@
         longitude:    146.25450000000001
             depth:    10.000000000001371       km
 
-   Error in location of the source:    1.58162253E-12  km
+   Error in location of the source:    1.73258066E-12  km
 
  source #           18
 
@@ -685,9 +713,9 @@
                   in element         2320
 
    using moment tensor source:
-     xi coordinate of source in that element:   0.80458629499072598
-     eta coordinate of source in that element:   -1.0007977104019319
-     gamma coordinate of source in that element:  -0.86742285768019700
+     xi coordinate of source in that element:   0.80458629499072787
+     eta coordinate of source in that element:   -1.0007977104019299
+     gamma coordinate of source in that element:  -0.86742285768018379
 
    source time function:
      using (quasi) Heaviside source time function
@@ -697,7 +725,7 @@
 
    magnitude of the source:
         scalar moment M0 =    2.2605667430978450E+025  dyne-cm
-     moment magnitude Mw =    6.2028117467869990
+     moment magnitude Mw =    6.2028115560521364
 
 
    original (requested) position of the source:
@@ -709,10 +737,10 @@
    position of the source that will be used:
 
          latitude:   -20.088200000000004
-        longitude:    146.25450000000004
-            depth:    2881.0000000000000       km
+        longitude:    146.25450000000001
+            depth:    2881.0000000000005       km
 
-   Error in location of the source:    8.10340402E-13  km
+   Error in location of the source:    5.00152979E-13  km
 
  source #           19
 
@@ -720,9 +748,9 @@
                   in element         8272
 
    using moment tensor source:
-     xi coordinate of source in that element:   0.90501229005687245
-     eta coordinate of source in that element:    4.0003017003297538E-002
-     gamma coordinate of source in that element:  -0.33348596243684014
+     xi coordinate of source in that element:   0.90501229005687711
+     eta coordinate of source in that element:    4.0003017003260241E-002
+     gamma coordinate of source in that element:  -0.33348596243678919
 
    source time function:
      using (quasi) Heaviside source time function
@@ -731,8 +759,8 @@
      time shift:    0.0000000000000000       seconds
 
    magnitude of the source:
-        scalar moment M0 =    2.2605667430978450E+025  dyne-cm
-     moment magnitude Mw =    6.2028117467869990
+        scalar moment M0 =    2.2605667430978454E+025  dyne-cm
+     moment magnitude Mw =    6.2028115560521364
 
 
    original (requested) position of the source:
@@ -743,11 +771,11 @@
 
    position of the source that will be used:
 
-         latitude:    18.109100000000023
-        longitude:   -66.150000000000006
-            depth:    9.9999999999999574       km
+         latitude:    18.109099999999998
+        longitude:   -66.149999999999963
+            depth:    9.9999999999992504       km
 
-   Error in location of the source:    3.53661544E-13  km
+   Error in location of the source:    1.00030596E-12  km
 
  source #           20
 
@@ -755,9 +783,9 @@
                   in element         2346
 
    using moment tensor source:
-     xi coordinate of source in that element:   0.47658327600396660
-     eta coordinate of source in that element:   0.76041046941042745
-     gamma coordinate of source in that element:  -0.86594162758984561
+     xi coordinate of source in that element:   0.47658327600396505
+     eta coordinate of source in that element:   0.76041046941042056
+     gamma coordinate of source in that element:  -0.86594162758983484
 
    source time function:
      using (quasi) Heaviside source time function
@@ -766,8 +794,8 @@
      time shift:   0.20000000000000001       seconds
 
    magnitude of the source:
-        scalar moment M0 =    2.2605667430978450E+025  dyne-cm
-     moment magnitude Mw =    6.2028117467869990
+        scalar moment M0 =    2.2605667430978454E+025  dyne-cm
+     moment magnitude Mw =    6.2028115560521364
 
 
    original (requested) position of the source:
@@ -779,8 +807,8 @@
    position of the source that will be used:
 
          latitude:    18.109100000000023
-        longitude:   -66.150000000000006
-            depth:    2881.0000000000005       km
+        longitude:   -66.149999999999963
+            depth:    2881.0000000000014       km
 
    Error in location of the source:    1.13226941E-12  km
 
@@ -790,9 +818,9 @@
                   in element         7378
 
    using moment tensor source:
-     xi coordinate of source in that element:  -0.88389739579758864
-     eta coordinate of source in that element:   0.61659358533716735
-     gamma coordinate of source in that element:  -0.33367699522169481
+     xi coordinate of source in that element:  -0.88389739579758930
+     eta coordinate of source in that element:   0.61659358533716790
+     gamma coordinate of source in that element:  -0.33367699522156946
 
    source time function:
      using (quasi) Heaviside source time function
@@ -802,7 +830,7 @@
 
    magnitude of the source:
         scalar moment M0 =    2.2605667430978450E+025  dyne-cm
-     moment magnitude Mw =    6.2028117467869990
+     moment magnitude Mw =    6.2028115560521364
 
 
    original (requested) position of the source:
@@ -814,10 +842,10 @@
    position of the source that will be used:
 
          latitude:   -21.212499999999991
-        longitude:   -159.77330000000001
-            depth:    10.000000000000666       km
+        longitude:   -159.77330000000003
+            depth:    9.9999999999999574       km
 
-   Error in location of the source:    7.07323089E-13  km
+   Error in location of the source:    0.00000000      km
 
  source #           22
 
@@ -825,9 +853,9 @@
                   in element         2323
 
    using moment tensor source:
-     xi coordinate of source in that element:  -0.97103132988590202
-     eta coordinate of source in that element:  -0.59623711353721209
-     gamma coordinate of source in that element:  -0.86535107229385522
+     xi coordinate of source in that element:  -0.97103132988590235
+     eta coordinate of source in that element:  -0.59623711353721154
+     gamma coordinate of source in that element:  -0.86535107229386454
 
    source time function:
      using (quasi) Heaviside source time function
@@ -837,7 +865,7 @@
 
    magnitude of the source:
         scalar moment M0 =    2.2605667430978450E+025  dyne-cm
-     moment magnitude Mw =    6.2028117467869990
+     moment magnitude Mw =    6.2028115560521364
 
 
    original (requested) position of the source:
@@ -848,11 +876,11 @@
 
    position of the source that will be used:
 
-         latitude:   -21.212499999999991
+         latitude:   -21.212500000000016
         longitude:   -159.77330000000001
-            depth:    2880.9999999999991       km
+            depth:    2881.0000000000005       km
 
-   Error in location of the source:    9.52262900E-13  km
+   Error in location of the source:    3.95405632E-13  km
 
  source #           23
 
@@ -860,9 +888,9 @@
                   in element         7214
 
    using moment tensor source:
-     xi coordinate of source in that element:   0.84798528563719366
-     eta coordinate of source in that element:   0.74891969645126322
-     gamma coordinate of source in that element:  -0.33344116208850438
+     xi coordinate of source in that element:   0.84798528563719477
+     eta coordinate of source in that element:   0.74891969645126777
+     gamma coordinate of source in that element:  -0.33344116208864416
 
    source time function:
      using (quasi) Heaviside source time function
@@ -872,7 +900,7 @@
 
    magnitude of the source:
         scalar moment M0 =    2.2605667430978450E+025  dyne-cm
-     moment magnitude Mw =    6.2028117467869990
+     moment magnitude Mw =    6.2028115560521364
 
 
    original (requested) position of the source:
@@ -885,9 +913,9 @@
 
          latitude:   -27.126699999999996
         longitude:   -109.33440000000002
-            depth:    10.000000000000666       km
+            depth:    10.000000000001371       km
 
-   Error in location of the source:    0.00000000      km
+   Error in location of the source:    1.32328035E-12  km
 
  source #           24
 
@@ -907,7 +935,7 @@
 
    magnitude of the source:
         scalar moment M0 =    2.2605667430978450E+025  dyne-cm
-     moment magnitude Mw =    6.2028117467869990
+     moment magnitude Mw =    6.2028115560521364
 
 
    original (requested) position of the source:
@@ -924,10 +952,16 @@
 
    Error in location of the source:    6.12559753E-13  km
 
- maximum error in location of the sources:    2.15305529E-12  km
+ ********************
+ finite source combined over all           24  sources applied:
+      total scalar moment M0 =    5.4253601834348294E+026  dyne-cm
+   total moment magnitude Mw =    7.1229523838598716
+ ********************
+
+ maximum error in location of the sources:    2.00061192E-12  km
 
 
- Elapsed time for detection of sources in seconds =    2.0241975784301758E-002
+ Elapsed time for detection of sources in seconds =    1.1130000000000084E-002
 
  End of source detection - done
 
@@ -944,7 +978,7 @@
  reading receiver information...
 
  Stations sorted by epicentral distance:
- Station #     1:                   II.GAR    epicentral distance:      0.000000 degrees
+ Station #     1:                   II.GAR    epicentral distance:      0.000001 degrees
  Station #     2:                  II.BRVK    epicentral distance:     14.061158 degrees
  Station #     4:                  II.RAYN    epicentral distance:     26.113132 degrees
  Station #     3:                   II.TLY    epicentral distance:     26.385242 degrees
@@ -957,9 +991,117 @@
  Station #    11:                   IU.RAR    epicentral distance:    133.782700 degrees
  Station #    12:                   II.RPN    epicentral distance:    168.155151 degrees
 
- maximum error in location of all the receivers:    3.00091766E-12  km
+ Station #           1 : II.GAR
+        original latitude:    39.0000000
+       original longitude:    70.3167038
+      epicentral distance:    8.53773656E-07
+   closest estimate found:    1.62068080E-12  km away
+    in slice            3  in element         6930
+    at xi,eta,gamma coordinates =   0.19463338141048886        1.0029867758918125       0.99986302122879944
+    at lat/lon =    39.0000000       70.3167038
 
- Elapsed time for receiver detection in seconds =    1.4756917953491211E-002
+ Station #           2 : II.BRVK
+        original latitude:    53.0581017
+       original longitude:    70.2827988
+      epicentral distance:    14.0611582
+   closest estimate found:    1.06098463E-12  km away
+    in slice            0  in element         8662
+    at xi,eta,gamma coordinates =   0.22636965276674975       0.81196187538947517       0.99786139370849958
+    at lat/lon =    53.0581017       70.2827988
+
+ Station #           3 : II.TLY
+        original latitude:    51.6806984
+       original longitude:    103.643799
+      epicentral distance:    26.3852425
+   closest estimate found:    1.42565528E-12  km away
+    in slice            0  in element         8744
+    at xi,eta,gamma coordinates =  -0.18451407644092532       0.55843095098495565       0.99748622741207449
+    at lat/lon =    51.6806984       103.643799
+
+ Station #           4 : II.RAYN
+        original latitude:    23.5224991
+       original longitude:    45.5032005
+      epicentral distance:    26.1131325
+   closest estimate found:    7.90811264E-13  km away
+    in slice            3  in element         7106
+    at xi,eta,gamma coordinates =   0.79674007638948452      -0.64219696595332987       0.99980364526937004
+    at lat/lon =    23.5224991       45.5032005
+
+ Station #           5 : IU.KONO
+        original latitude:    59.6491013
+       original longitude:    9.59819984
+      epicentral distance:    42.8210526
+   closest estimate found:    1.58409191E-12  km away
+    in slice            0  in element         8012
+    at xi,eta,gamma coordinates =   -1.0082442383763754      -0.45139654276153729       0.95467070160324252
+    at lat/lon =    59.6491013       9.59819984
+
+ Station #           6 : II.MSEY
+        original latitude:   -4.67369986
+       original longitude:    55.4791985
+      epicentral distance:    45.5720825
+   closest estimate found:    1.76830772E-13  km away
+    in slice            3  in element         7944
+    at xi,eta,gamma coordinates =    1.0029042046881482       0.45191090303661324       0.98786484401458818
+    at lat/lon =   -4.67369986       55.4791985
+
+ Station #           7 : II.KAPI
+        original latitude:   -5.01420021
+       original longitude:    119.751701
+      epicentral distance:    63.2315331
+   closest estimate found:    1.46886669E-12  km away
+    in slice            3  in element         8054
+    at xi,eta,gamma coordinates =  -0.92354152861638883       0.15677999268623163       0.98661875317741599
+    at lat/lon =   -5.01420021       119.751701
+
+ Station #           8 : IU.MSKU
+        original latitude:   -1.65569997
+       original longitude:    13.6115999
+      epicentral distance:    65.8219528
+   closest estimate found:    2.12943920E-12  km away
+    in slice            4  in element         7832
+    at xi,eta,gamma coordinates =  -0.20334452632046576      -0.67939682147166502       0.99666368425509011
+    at lat/lon =   -1.65569997       13.6115999
+
+ Station #           9 : IU.CTAO
+        original latitude:   -20.0881996
+       original longitude:    146.254501
+      epicentral distance:    92.0667648
+   closest estimate found:    2.23675202E-12  km away
+    in slice            2  in element         7354
+    at xi,eta,gamma coordinates =   0.21779578265878827       -1.0031990537792017       0.99481638355128632
+    at lat/lon =   -20.0881996       146.254501
+
+ Station #          10 : IU.SJG
+        original latitude:    18.1091003
+       original longitude:   -66.1500015
+      epicentral distance:    110.097221
+   closest estimate found:    1.45818394E-12  km away
+    in slice            1  in element         8272
+    at xi,eta,gamma coordinates =   0.90501276571783262        4.0003714066616583E-002   1.0000818390833226
+    at lat/lon =    18.1091003       293.850006
+
+ Station #          11 : IU.RAR
+        original latitude:   -21.2124996
+       original longitude:   -159.773300
+      epicentral distance:    133.782700
+   closest estimate found:    1.06098463E-12  km away
+    in slice            2  in element         7378
+    at xi,eta,gamma coordinates =  -0.88389771437122844       0.61659377701963336       0.98654308930803847
+    at lat/lon =   -21.2124996       200.226700
+
+ Station #          12 : II.RPN
+        original latitude:   -27.1266994
+       original longitude:   -109.334396
+      epicentral distance:    168.155151
+   closest estimate found:    1.32328035E-12  km away
+    in slice            1  in element         7214
+    at xi,eta,gamma coordinates =   0.84798509227109009       0.74892020232920264        1.0000983876750005
+    at lat/lon =   -27.1266994       250.665604
+
+ maximum error in location of all the receivers:    2.23675202E-12  km
+
+ Elapsed time for receiver detection in seconds =    2.6869999999998839E-003
 
  End of receiver detection - done
 
@@ -984,7 +1126,7 @@
 
  Using           24  point sources
 
- Reference radius of the Earth used is    6371.0000000000000       km
+ Reference radius of the globe used is    6371.0000000000000       km
 
 
  no oceans
@@ -1006,10 +1148,24 @@
  preparing constants
  preparing gravity arrays
  preparing attenuation
-   attenuation period range min/max:          138 /        7802  (s)
+   The code uses a constant Q quality factor, but approximated
+   based on a series of Zener standard linear solids (SLS).
+   Approximation is performed in the following frequency band:
+
+   number of SLS bodies:           3
+   Reference frequency of anelastic model (Hz):   1.00000000
+                                    period (s):   1.00000000
+   Attenuation frequency band min/max (Hz):   1.27939609E-04 /   7.19457306E-03
+               period band    min/max (s) :   138.993652     /   7816.18799
+   Logarithmic center frequency (Hz):   9.59411729E-04
+                      period     (s):   1042.30542
+
+   using shear attenuation Q_mu
+
    ATTENUATION_1D_WITH_3D_STORAGE  :  T
    ATTENUATION_3D                  :  F
  preparing elastic element arrays
+   using attenuation: shifting to unrelaxed moduli
    crust/mantle transverse isotropic and isotropic elements
    tiso elements =         5632
    iso elements  =         3264
@@ -1018,124 +1174,132 @@
  preparing wavefields
    allocating wavefields
    initializing wavefields
+ preparing number of runs
+   number of runs    :            1
+   number of this run:            1
+   time stepping     : begin/end =            1 /         400
  preparing optimized arrays
    using force vectorization
    using Deville products
    inverse table of ibool done
-   fused array done
+   fusing arrays:
+     size of fused arrays =    41.5420532     MB
+                          =    4.05684114E-02 GB
+   fused arrays done
    bandwidth test (STREAM TRIAD):
       memory accesses =    20.3560524     MB
-      timing  min/max =    3.68785858E-03 s /    4.53805923E-03 s
-      timing      avg =    4.11500921E-03 s
-      bandwidth       =    4.83084154     GB/s
+      timing  min/max =    3.37899989E-03 s /    4.49999981E-03 s
+      timing      avg =    3.66070005E-03 s
+      bandwidth       =    5.43037033     GB/s
 
 
- Elapsed time for preparing timerun in seconds =    1.04727316
+ Elapsed time for preparing timerun in seconds =    1.12545800
 
 
  time loop:
 
                scheme:         Newmark
-            time step:   0.118749999      s
+            time step:   0.115000002      s
  number of time steps:          400
- total simulated time:   0.764687479      minutes
+   current time steps:            1  to          400
+ total simulated time:   0.739750028      minutes
  start time          :  -1.50000000      seconds
 
- All processes are synchronized before time loop
+ All processes are synchronized before time loop (undoatt)
 
  Starting time iteration loop (undoatt)...
 
  Time step #            5
- Time:   -1.70833338E-02  minutes
- Max norm displacement vector U in solid in all slices for forward prop. (m) =    7.98888436E-07
- Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    1.46007980E-21
- Max of strain, eps_trace_over_3_crust_mantle =   1.50440119E-10
- Max of strain, epsilondev_crust_mantle  =   4.00353722E-10
- Elapsed time in seconds =   0.98093891143798828
+ Time:   -1.73333324E-02  minutes
+ Max norm displacement vector U in solid in all slices for forward prop. (m) =    7.24611994E-07
+ Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    1.26739660E-21
+ Max of strain, eps_trace_over_3_crust_mantle =   3.03873393E-20
+ Max of strain, epsilondev_crust_mantle  =   3.63788305E-10
+ Elapsed time in seconds =   0.75198600000000004
  Elapsed time in hh:mm:ss =      0 h 00 m 00 s
- Mean elapsed time per time step in seconds =   0.19618778228759765
+ Mean elapsed time per time step in seconds =   0.15039720000000001
  Time steps done =            5  out of          400
  Time steps remaining =          395
- Estimated remaining time in seconds =    77.494174003601074
- Estimated remaining time in hh:mm:ss =      0 h 01 m 17 s
- Estimated total run time in seconds =    78.475112915039062
- Estimated total run time in hh:mm:ss =      0 h 01 m 18 s
+ Estimated remaining time in seconds =    59.406894000000001
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 59 s
+ Estimated total run time in seconds =    60.158880000000003
+ Estimated total run time in hh:mm:ss =      0 h 01 m 00 s
  We have done    1.25000000     % of that
- The run will finish approximately on (in local time): Thu Jul 26, 2018 22:55
+ The run will finish approximately on (in local time): Sat May 30, 2020 22:49
  ************************************************************
  **** BEWARE: the above time estimates are not very reliable
  **** because fewer than 100 iterations have been performed
  ************************************************************
 
  Time step #          100
- Time:   0.170937493      minutes
- Max norm displacement vector U in solid in all slices for forward prop. (m) =    1.68726351E-02
- Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    1.85817223E-13
- Max of strain, eps_trace_over_3_crust_mantle =   3.14564431E-07
- Max of strain, epsilondev_crust_mantle  =   1.75925391E-06
- Elapsed time in seconds =    23.506183862686157
- Elapsed time in hh:mm:ss =      0 h 00 m 23 s
- Mean elapsed time per time step in seconds =   0.23506183862686159
+ Time:   0.164749995      minutes
+ Max norm displacement vector U in solid in all slices for forward prop. (m) =    1.67777184E-02
+ Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    1.75679743E-13
+ Max of strain, eps_trace_over_3_crust_mantle =   1.49775450E-12
+ Max of strain, epsilondev_crust_mantle  =   1.89584307E-06
+ Elapsed time in seconds =    21.279682000000001
+ Elapsed time in hh:mm:ss =      0 h 00 m 21 s
+ Mean elapsed time per time step in seconds =   0.21279682000000000
  Time steps done =          100  out of          400
  Time steps remaining =          300
- Estimated remaining time in seconds =    70.518551588058472
- Estimated remaining time in hh:mm:ss =      0 h 01 m 10 s
- Estimated total run time in seconds =    94.024735450744629
- Estimated total run time in hh:mm:ss =      0 h 01 m 34 s
+ Estimated remaining time in seconds =    63.839045999999996
+ Estimated remaining time in hh:mm:ss =      0 h 01 m 03 s
+ Estimated total run time in seconds =    85.118728000000004
+ Estimated total run time in hh:mm:ss =      0 h 01 m 25 s
  We have done    25.0000000     % of that
- The run will finish approximately on (in local time): Thu Jul 26, 2018 22:55
+ The run will finish approximately on (in local time): Sat May 30, 2020 22:50
 
  Time step #          200
- Time:   0.368854165      minutes
- Max norm displacement vector U in solid in all slices for forward prop. (m) =    1.25870649E-02
- Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    4.45213826E-13
- Max of strain, eps_trace_over_3_crust_mantle =   2.13715310E-07
- Max of strain, epsilondev_crust_mantle  =   1.32068612E-06
- Elapsed time in seconds =    47.170732975006104
- Elapsed time in hh:mm:ss =      0 h 00 m 47 s
- Mean elapsed time per time step in seconds =   0.23585366487503051
+ Time:   0.356416672      minutes
+ Max norm displacement vector U in solid in all slices for forward prop. (m) =    1.21611953E-02
+ Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    4.32602007E-13
+ Max of strain, eps_trace_over_3_crust_mantle =   1.14304309E-10
+ Max of strain, epsilondev_crust_mantle  =   1.57998647E-06
+ Elapsed time in seconds =    43.255544999999998
+ Elapsed time in hh:mm:ss =      0 h 00 m 43 s
+ Mean elapsed time per time step in seconds =   0.21627772499999998
  Time steps done =          200  out of          400
  Time steps remaining =          200
- Estimated remaining time in seconds =    47.170732975006104
- Estimated remaining time in hh:mm:ss =      0 h 00 m 47 s
- Estimated total run time in seconds =    94.341465950012207
- Estimated total run time in hh:mm:ss =      0 h 01 m 34 s
+ Estimated remaining time in seconds =    43.255544999999998
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 43 s
+ Estimated total run time in seconds =    86.511089999999996
+ Estimated total run time in hh:mm:ss =      0 h 01 m 26 s
  We have done    50.0000000     % of that
- The run will finish approximately on (in local time): Thu Jul 26, 2018 22:56
+ The run will finish approximately on (in local time): Sat May 30, 2020 22:50
 
  Time step #          300
- Time:   0.566770852      minutes
- Max norm displacement vector U in solid in all slices for forward prop. (m) =    1.41421724E-02
- Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    3.20009915E-13
- Max of strain, eps_trace_over_3_crust_mantle =   2.13628525E-07
- Max of strain, epsilondev_crust_mantle  =   1.41563737E-06
- Elapsed time in seconds =    70.676089048385620
- Elapsed time in hh:mm:ss =      0 h 01 m 10 s
- Mean elapsed time per time step in seconds =   0.23558696349461875
+ Time:   0.548083305      minutes
+ Max norm displacement vector U in solid in all slices for forward prop. (m) =    1.29877636E-02
+ Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    3.46916479E-13
+ Max of strain, eps_trace_over_3_crust_mantle =   5.13428355E-10
+ Max of strain, epsilondev_crust_mantle  =   1.74490162E-06
+ Elapsed time in seconds =    65.015278000000009
+ Elapsed time in hh:mm:ss =      0 h 01 m 05 s
+ Mean elapsed time per time step in seconds =   0.21671759333333337
  Time steps done =          300  out of          400
  Time steps remaining =          100
- Estimated remaining time in seconds =    23.558696349461876
- Estimated remaining time in hh:mm:ss =      0 h 00 m 23 s
- Estimated total run time in seconds =    94.234785397847503
- Estimated total run time in hh:mm:ss =      0 h 01 m 34 s
+ Estimated remaining time in seconds =    21.671759333333338
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 21 s
+ Estimated total run time in seconds =    86.687037333333350
+ Estimated total run time in hh:mm:ss =      0 h 01 m 26 s
  We have done    75.0000000     % of that
- The run will finish approximately on (in local time): Thu Jul 26, 2018 22:55
+ The run will finish approximately on (in local time): Sat May 30, 2020 22:49
 
  Time step #          400
- Time:   0.764687479      minutes
- Max norm displacement vector U in solid in all slices for forward prop. (m) =    1.58973988E-02
- Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    1.52441604E-13
- Max of strain, eps_trace_over_3_crust_mantle =   2.56514056E-07
- Max of strain, epsilondev_crust_mantle  =   1.17812556E-06
- Elapsed time in seconds =    94.352330923080444
- Elapsed time in hh:mm:ss =      0 h 01 m 34 s
- Mean elapsed time per time step in seconds =   0.23588082730770110
+ Time:   0.739750028      minutes
+ Max norm displacement vector U in solid in all slices for forward prop. (m) =    1.62901580E-02
+ Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    1.66553999E-13
+ Max of strain, eps_trace_over_3_crust_mantle =   5.75990367E-10
+ Max of strain, epsilondev_crust_mantle  =   1.51507197E-06
+ Elapsed time in seconds =    87.130254000000008
+ Elapsed time in hh:mm:ss =      0 h 01 m 27 s
+ Mean elapsed time per time step in seconds =   0.21782563500000002
  Time steps done =          400  out of          400
  Time steps remaining =            0
  Estimated remaining time in seconds =    0.0000000000000000
  Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
- Estimated total run time in seconds =    94.352330923080444
- Estimated total run time in hh:mm:ss =      0 h 01 m 34 s
+ Estimated total run time in seconds =    87.130254000000008
+ Estimated total run time in hh:mm:ss =      0 h 01 m 27 s
  We have done    100.000000     % of that
 
 
@@ -1144,11 +1308,12 @@
 
  Total number of time steps written:          400
 
- Writing the seismograms by master proc alone took    6.4757108688354492E-002  seconds
+ Writing the seismograms by master proc alone took    9.7118999999992184E-002  seconds
 
  Time-Loop Complete. Timing info:
- Total elapsed time in seconds =    94.647161960601807
- Total elapsed time in hh:mm:ss =      0 h 01 m 34 s
+ Total elapsed time in seconds =    87.457175000000007
+ Total elapsed time in hh:mm:ss =      0 h 01 m 27 s
+
  finalizing simulation
 
  End of the simulation

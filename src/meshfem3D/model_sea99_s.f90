@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -70,16 +70,22 @@
 
   integer :: ier
 
+  ! user info
+  if (myrank == 0) then
+    write(IMAIN,*) 'broadcast model: SEA99'
+    call flush_IMAIN()
+  endif
+
   ! allocates model arrays
   allocate(sea99_vs(100,100,100), &
            sea99_depth(100), &
            stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating sea99 arrays')
 
-  ! master proc reads in values
+  ! main proc reads in values
   if (myrank == 0) call read_sea99_s_model()
 
-  ! broadcast the information read on the master to the nodes
+  ! broadcast the information read on the main node to all the nodes
   call bcast_all_singlei(sea99_ndep)
   call bcast_all_singlei(sea99_nlat)
   call bcast_all_singlei(sea99_nlon)
@@ -151,6 +157,7 @@
 ! returns Vs perturbation (dvs) for given position r/theta/phi
 
   use constants
+  use shared_parameters, only: R_PLANET_KM
   use model_sea99_s_par
 
   implicit none
@@ -166,7 +173,7 @@
   xd1 = 0
 
   !----------------------- depth in the model ------------------
-  dep=R_EARTH_KM*(R_UNIT_SPHERE - radius)
+  dep=R_PLANET_KM*(R_UNIT_SPHERE - radius)
   if (dep <= sea99_depth(1)) then
      id1 = 1
      xd1 = 0

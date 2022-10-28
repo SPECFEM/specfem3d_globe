@@ -1,7 +1,7 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -26,6 +26,13 @@
 !
 !=====================================================================
 */
+
+// gethostname() is non-standard C function
+// to avoid warning when compiling with -std=c99 flag
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+#include <unistd.h>
 
 #include "mesh_constants_gpu.h"
 
@@ -91,6 +98,9 @@ void moclEnqueueFillBuffer (cl_mem *buffer, int val, size_t size_byte) {
   int size;
   size = size_byte / sizeof(cl_int);
 
+  // checks if anything to do
+  if (size == 0){ return; }
+
   size_t global_work_size[2];
   size_t local_work_size[2];
   cl_uint idx = 0;
@@ -131,6 +141,9 @@ void gpuCreateCopy_todevice_int (gpu_int_mem *d_array_addr_ptr, int *h_array, si
 
   TRACE ("gpuCreateCopy_todevice_int");
 
+  // checks if anything to do
+  if (size == 0){ return; }
+
 #ifdef USE_OPENCL
   if (run_opencl) {
     cl_int errcode;
@@ -160,6 +173,17 @@ void gpuCreateCopy_todevice_int (gpu_int_mem *d_array_addr_ptr, int *h_array, si
     print_CUDA_error_if_any(cudaMemcpy((int*) d_array_addr_ptr->cuda,h_array,size*sizeof(int),cudaMemcpyHostToDevice),12002);
   }
 #endif
+#ifdef USE_HIP
+  if (run_hip) {
+    // allocates memory on GPU
+    print_HIP_error_if_any(hipMalloc((void**)&d_array_addr_ptr->hip,size*sizeof(int)),12001);
+
+    // copies values onto GPU
+    print_HIP_error_if_any(hipMemcpy((int*) d_array_addr_ptr->hip,h_array,size*sizeof(int),hipMemcpyHostToDevice),12002);
+  }
+#endif
+
+  GPU_ERROR_CHECKING ("gpuCreateCopy_todevice_int");
 }
 
 /*----------------------------------------------------------------------------------------------- */
@@ -168,6 +192,9 @@ void gpuCreateCopy_todevice_int (gpu_int_mem *d_array_addr_ptr, int *h_array, si
 void gpuCreateCopy_todevice_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array, size_t size) {
 
   TRACE ("gpuCreateCopy_todevice_realw");
+
+  // checks if anything to do
+  if (size == 0){ return; }
 
   // allocates memory on GPU
 #ifdef USE_OPENCL
@@ -190,6 +217,16 @@ void gpuCreateCopy_todevice_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_arr
     print_CUDA_error_if_any(cudaMemcpy((realw*) d_array_addr_ptr->cuda,h_array,size*sizeof(realw),cudaMemcpyHostToDevice),22002);
   }
 #endif
+#ifdef USE_HIP
+  if (run_hip) {
+    // allocates memory on GPU
+    print_HIP_error_if_any(hipMalloc((void**)&d_array_addr_ptr->hip,size*sizeof(realw)),22001);
+    // copies values onto GPU
+    print_HIP_error_if_any(hipMemcpy((realw*) d_array_addr_ptr->hip,h_array,size*sizeof(realw),hipMemcpyHostToDevice),22002);
+  }
+#endif
+
+  GPU_ERROR_CHECKING ("gpuCreateCopy_todevice_realw");
 }
 
 /*----------------------------------------------------------------------------------------------- */
@@ -198,6 +235,9 @@ void gpuCreateCopy_todevice_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_arr
 void gpuCopy_todevice_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array, size_t size) {
 
   TRACE ("gpuCopy_todevice_realw");
+
+  // checks if anything to do
+  if (size == 0){ return; }
 
   // copies memory on from CPU to GPU
   // uses blocking copies
@@ -213,11 +253,22 @@ void gpuCopy_todevice_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array, si
     print_CUDA_error_if_any(cudaMemcpy((realw*) d_array_addr_ptr->cuda,h_array,size*sizeof(realw),cudaMemcpyHostToDevice),22003);
   }
 #endif
+#ifdef USE_HIP
+  if (run_hip) {
+    // copies values onto GPU
+    print_HIP_error_if_any(hipMemcpy((realw*) d_array_addr_ptr->hip,h_array,size*sizeof(realw),hipMemcpyHostToDevice),22003);
+  }
+#endif
+
+  GPU_ERROR_CHECKING ("gpuCopy_todevice_realw");
 }
 
 void gpuCopy_todevice_realw_offset (gpu_realw_mem *d_array_addr_ptr, realw *h_array, size_t size, size_t offset) {
 
-  TRACE ("gpuCopy_todevice_realw");
+  TRACE ("gpuCopy_todevice_realw_offset");
+
+  // checks if anything to do
+  if (size == 0){ return; }
 
   // copies memory on from CPU to GPU
   // uses blocking copies
@@ -233,7 +284,68 @@ void gpuCopy_todevice_realw_offset (gpu_realw_mem *d_array_addr_ptr, realw *h_ar
     print_CUDA_error_if_any(cudaMemcpy((realw*) d_array_addr_ptr->cuda,&h_array[size*(offset-1)],size*sizeof(realw),cudaMemcpyHostToDevice),22004);
   }
 #endif
+#ifdef USE_HIP
+  if (run_hip) {
+    // copies values onto GPU
+    print_HIP_error_if_any(hipMemcpy((realw*) d_array_addr_ptr->hip,&h_array[size*(offset-1)],size*sizeof(realw),hipMemcpyHostToDevice),22004);
+  }
+#endif
+
+  GPU_ERROR_CHECKING ("gpuCopy_todevice_realw_offset");
 }
+
+
+void gpuCopy_todevice_realw_padded (gpu_realw_mem *d_array_addr_ptr, realw *h_array, size_t size) {
+
+  TRACE ("gpuCopy_todevice_realw_padded");
+
+  // checks if anything to do
+  if (size == 0){ return; }
+
+  // copies memory on from CPU to GPU using padding (NGLL3 == 125 -> NGLL3_PADDED == 128)
+  // example: *d_array_addr_ptr == &mp->d_muvstore_crust_mantle
+  //          *h_array          == h_muv
+  //          size              == mp->NSPEC_CRUST_MANTLE
+  //
+  //          d_array_addr_ptr array should have been allocated with size_padded = size * NGLL3_PADDED,
+  //          for example: size_padded = mp->NSPEC_CRUST_MANTLE * NGLL3_PADDED
+
+  // uses blocking copies
+#ifdef USE_OPENCL
+  if (run_opencl) {
+#ifndef FAST_2D_MEMCPY
+    for (int i = 0; i < size; i++) {
+      int offset = i * NGLL3_PADDED * sizeof (realw);
+      clCheck (clEnqueueWriteBuffer (mocl.command_queue, d_array_addr_ptr->ocl, CL_FALSE, offset,
+                                     NGLL3 * sizeof(realw), &h_array[i*NGLL3], 0, NULL, NULL));
+    }
+#else
+    const size_t d_offsets[3] = {0,0,0};
+    const size_t h_offsets[3] = {0,0,0};
+    const size_t d_region[3] = {NGLL3 * sizeof(realw), size, 1};
+    clCheck (clEnqueueWriteBufferRect (mocl.command_queue, d_array_addr_ptr->ocl, CL_FALSE, d_offsets, h_offsets, d_region,
+                                       NGLL3_PADDED * sizeof(realw), 0, NGLL3 * sizeof(realw), 0, h_array, 0, NULL, NULL));
+#endif
+  }
+#endif
+#ifdef USE_CUDA
+  if (run_cuda) {
+    // faster (small memcpy above have low bandwidth...)
+    print_CUDA_error_if_any(cudaMemcpy2D((realw*) d_array_addr_ptr->cuda, NGLL3_PADDED * sizeof(realw), h_array,
+                                         NGLL3 * sizeof(realw), NGLL3 * sizeof(realw), size, cudaMemcpyHostToDevice),48100);
+  }
+#endif
+#ifdef USE_HIP
+  if (run_hip) {
+    // faster (small memcpy above have low bandwidth...)
+    print_HIP_error_if_any(hipMemcpy2D((realw*) d_array_addr_ptr->hip, NGLL3_PADDED * sizeof(realw), h_array,
+                                         NGLL3 * sizeof(realw), NGLL3 * sizeof(realw), size, hipMemcpyHostToDevice),48100);
+  }
+#endif
+
+  GPU_ERROR_CHECKING ("gpuCopy_todevice_realw_padded");
+}
+
 
 /*----------------------------------------------------------------------------------------------- */
 
@@ -250,6 +362,11 @@ void gpuRegisterHost_realw ( realw *h_array, const size_t size) {
 #ifdef USE_CUDA
   print_CUDA_error_if_any(cudaHostRegister(h_array, size*sizeof(realw), 0),55001);
 #endif
+#ifdef USE_HIP
+  print_HIP_error_if_any(hipHostRegister(h_array, size*sizeof(realw), hipHostRegisterDefault ),55001);
+#endif
+
+  GPU_ERROR_CHECKING ("gpuRegisterHost_realw");
 }
 
 void gpuUnregisterHost_realw ( realw *h_array) {
@@ -263,6 +380,11 @@ void gpuUnregisterHost_realw ( realw *h_array) {
 #ifdef USE_CUDA
   print_CUDA_error_if_any(cudaHostUnregister(h_array),55002);
 #endif
+#ifdef USE_HIP
+  print_HIP_error_if_any(hipHostUnregister(h_array),55002);
+#endif
+
+  GPU_ERROR_CHECKING ("gpuUnregisterHost_realw");
 }
 
 
@@ -272,6 +394,9 @@ void gpuUnregisterHost_realw ( realw *h_array) {
 void gpuCopy_todevice_double (gpu_double_mem *d_array_addr_ptr, double *h_array, size_t size) {
 
   TRACE ("gpuCopy_todevice_double");
+
+  // checks if anything to do
+  if (size == 0){ return; }
 
   // copies memory on from CPU to GPU
   // uses blocking copies
@@ -287,6 +412,14 @@ void gpuCopy_todevice_double (gpu_double_mem *d_array_addr_ptr, double *h_array,
     print_CUDA_error_if_any(cudaMemcpy((double*) d_array_addr_ptr->cuda,h_array,size*sizeof(double),cudaMemcpyHostToDevice),22005);
   }
 #endif
+#ifdef USE_HIP
+  if (run_hip) {
+    // copies values onto GPU
+    print_HIP_error_if_any(hipMemcpy((void*) d_array_addr_ptr->hip,h_array,size*sizeof(double),hipMemcpyHostToDevice),22005);
+  }
+#endif
+
+  GPU_ERROR_CHECKING ("gpuCopy_todevice_double");
 }
 
 /*----------------------------------------------------------------------------------------------- */
@@ -295,6 +428,9 @@ void gpuCopy_todevice_double (gpu_double_mem *d_array_addr_ptr, double *h_array,
 void gpuCopy_todevice_int (gpu_int_mem *d_array_addr_ptr, int *h_array, size_t size) {
 
   TRACE ("gpuCopy_todevice_int");
+
+  // checks if anything to do
+  if (size == 0){ return; }
 
   // copies memory on from CPU to GPU
   // uses blocking copies
@@ -310,6 +446,14 @@ void gpuCopy_todevice_int (gpu_int_mem *d_array_addr_ptr, int *h_array, size_t s
     print_CUDA_error_if_any(cudaMemcpy((int*) d_array_addr_ptr->cuda,h_array,size*sizeof(int),cudaMemcpyHostToDevice),22006);
   }
 #endif
+#ifdef USE_HIP
+  if (run_hip) {
+    // copies values onto GPU
+    print_HIP_error_if_any(hipMemcpy((void*) d_array_addr_ptr->hip,h_array,size*sizeof(int),hipMemcpyHostToDevice),22006);
+  }
+#endif
+
+  GPU_ERROR_CHECKING ("gpuCopy_todevice_int");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -318,6 +462,9 @@ void gpuCopy_todevice_int (gpu_int_mem *d_array_addr_ptr, int *h_array, size_t s
 void gpuCopy_from_device_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array, size_t size) {
 
   TRACE ("gpuCopy_from_device_realw");
+
+  // checks if anything to do
+  if (size == 0){ return; }
 
   // copies memory from GPU back to CPU
 #ifdef USE_OPENCL
@@ -332,11 +479,22 @@ void gpuCopy_from_device_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array,
     print_CUDA_error_if_any(cudaMemcpy(h_array,d_array_addr_ptr->cuda, sizeof(realw)*size, cudaMemcpyDeviceToHost),33001);
   }
 #endif
+#ifdef USE_HIP
+  if (run_hip) {
+    print_HIP_error_if_any(hipMemcpy(h_array,d_array_addr_ptr->hip, sizeof(realw)*size, hipMemcpyDeviceToHost),33001);
+  }
+#endif
+
+  GPU_ERROR_CHECKING ("gpuCopy_from_device_realw");
 }
 
+// copy with offset
 void gpuCopy_from_device_realw_offset (gpu_realw_mem *d_array_addr_ptr, realw *h_array, size_t size, size_t offset) {
 
   TRACE ("gpuCopy_from_device_realw");
+
+  // checks if anything to do
+  if (size == 0){ return; }
 
   // copies memory from GPU back to CPU
 #ifdef USE_OPENCL
@@ -351,7 +509,169 @@ void gpuCopy_from_device_realw_offset (gpu_realw_mem *d_array_addr_ptr, realw *h
     print_CUDA_error_if_any(cudaMemcpy(&h_array[size*(offset-1)],d_array_addr_ptr->cuda, sizeof(realw)*size, cudaMemcpyDeviceToHost),33002);
   }
 #endif
+#ifdef USE_HIP
+  if (run_hip) {
+    print_HIP_error_if_any(hipMemcpy(&h_array[size*(offset-1)],d_array_addr_ptr->hip, sizeof(realw)*size, hipMemcpyDeviceToHost),33002);
+  }
+#endif
+
+  GPU_ERROR_CHECKING ("gpuCopy_from_device_realw");
 }
+
+/* ----------------------------------------------------------------------------------------------- */
+
+// asynchronuous with event synchronization
+
+/* ----------------------------------------------------------------------------------------------- */
+
+void gpuCopy_from_device_realw_asyncEvent (Mesh *mp, gpu_realw_mem *d_array_addr_ptr, realw *h_array, size_t size) {
+
+  TRACE ("gpuCopy_from_device_realw_asyncEvent");
+
+  // checks if anything to do
+  if (size == 0){ return; }
+
+#ifdef USE_OPENCL
+  if (run_opencl) {
+    // non-blocking copy
+    if (GPU_ASYNC_COPY) {
+      // asynchronuous copy
+      //
+      // note: if host array is not pinned, then call will become blocking
+
+      // waits until compute kernel is finished before starting async memcpy
+      clCheck (clFinish (mocl.command_queue));
+
+      if (mp->has_last_copy_evt) {
+        clCheck (clReleaseEvent (mp->last_copy_evt));
+      }
+      clCheck (clEnqueueReadBuffer (mocl.copy_queue, d_array_addr_ptr->ocl, CL_FALSE, 0, sizeof (realw) * size, h_array,
+               0, NULL, &mp->last_copy_evt));
+
+      mp->has_last_copy_evt = 1;
+    }else{
+      // blocking copy
+      // copies memory from GPU back to CPU
+      clCheck (clEnqueueReadBuffer (mocl.command_queue, d_array_addr_ptr->ocl, CL_TRUE, 0, sizeof (realw) * size, h_array,
+               0, NULL, NULL));
+    }
+  }
+#endif
+#ifdef USE_CUDA
+  if (run_cuda) {
+    if (GPU_ASYNC_COPY) {
+      // asynchronuous copy
+      //
+      // note: if host array is not pinned, then call will become blocking
+
+      // waits until compute kernel is finished before starting async memcpy
+      //
+      // do not use: cudaStreamSynchronize(mp->compute_stream);
+      //             this would break the graph capturing...
+      //
+      // uses event synchronization instead
+      print_CUDA_error_if_any(cudaStreamWaitEvent(mp->copy_stream, mp->kernel_event, 0),32000);
+
+      // copies buffer to CPU
+      print_CUDA_error_if_any(cudaMemcpyAsync(h_array,d_array_addr_ptr->cuda, sizeof(realw)*size, cudaMemcpyDeviceToHost,mp->copy_stream),33000);
+
+      // creates event record
+      print_CUDA_error_if_any(cudaEventRecord(mp->kernel_event, mp->copy_stream),32001);
+    }else{
+      // blocking
+      // note: cudaMemcpy implicitly synchronizes all other cuda operations
+      //       however, stream capturing for graphs don't like this.
+      //       it prefers explicit kernel dependencies, thus we use event synchronization above.
+      print_CUDA_error_if_any(cudaMemcpy(h_array,d_array_addr_ptr->cuda, sizeof(realw)*size, cudaMemcpyDeviceToHost),34001);
+    }
+  }
+#endif
+#ifdef USE_HIP
+  if (run_hip) {
+    if (GPU_ASYNC_COPY) {
+      // asynchronuous copy
+      print_HIP_error_if_any(hipStreamWaitEvent(mp->copy_stream, mp->kernel_event, 0),32000);
+
+      // copies buffer to CPU
+      print_HIP_error_if_any(hipMemcpyAsync(h_array,d_array_addr_ptr->hip, sizeof(realw)*size, hipMemcpyDeviceToHost,mp->copy_stream),33000);
+
+      // creates event record
+      print_HIP_error_if_any(hipEventRecord(mp->kernel_event, mp->copy_stream),32001);
+    }else{
+      // blocking
+      print_HIP_error_if_any(hipMemcpy(h_array,d_array_addr_ptr->hip, sizeof(realw)*size, hipMemcpyDeviceToHost),34001);
+    }
+  }
+#endif
+
+  GPU_ERROR_CHECKING ("gpuCopy_from_device_realw_asyncEvent");
+}
+
+/* ----------------------------------------------------------------------------------------------- */
+
+void gpuRecordEvent(Mesh *mp){
+
+  TRACE ("gpuRecordEvent");
+
+#ifdef USE_OPENCL
+// not available
+#endif
+#ifdef USE_CUDA
+  if (run_cuda) {
+    if (GPU_ASYNC_COPY) {
+      // record event on compute stream
+      print_CUDA_error_if_any(cudaEventRecord(mp->kernel_event, mp->compute_stream),31000);
+    }
+  }
+#endif
+#ifdef USE_HIP
+  if (run_hip) {
+    if (GPU_ASYNC_COPY) {
+      // record event on compute stream
+      print_HIP_error_if_any(hipEventRecord(mp->kernel_event, mp->compute_stream),31000);
+    }
+  }
+#endif
+
+  GPU_ERROR_CHECKING ("gpuRecordEvent");
+}
+
+/* ----------------------------------------------------------------------------------------------- */
+
+void gpuWaitEvent (Mesh *mp) {
+
+  TRACE ("gpuWaitEvent");
+
+  // waits for event in copy stream to finish
+  if (GPU_ASYNC_COPY) {
+#ifdef USE_OPENCL
+    if (run_opencl){
+      // waits until previous copy finished
+      clCheck (clFinish (mocl.copy_queue));
+      if (mp->has_last_copy_evt){
+        clCheck (clReleaseEvent (mp->last_copy_evt));
+        mp->has_last_copy_evt = 0;
+      }
+    }
+#endif
+#ifdef USE_CUDA
+    if (run_cuda) {
+      print_CUDA_error_if_any(cudaStreamWaitEvent(mp->compute_stream, mp->kernel_event, 0),34000);
+    }
+#endif
+#ifdef USE_HIP
+    if (run_hip) {
+      print_HIP_error_if_any(hipStreamWaitEvent(mp->compute_stream, mp->kernel_event, 0),34000);
+    }
+#endif
+  }
+
+  GPU_ERROR_CHECKING ("gpuWaitEvent");
+}
+
+/* ----------------------------------------------------------------------------------------------- */
+
+// allocations
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -359,6 +679,9 @@ void gpuCopy_from_device_realw_offset (gpu_realw_mem *d_array_addr_ptr, realw *h
 void gpuMalloc_realw (gpu_realw_mem *buffer, size_t size) {
 
   TRACE ("gpuMalloc_realw");
+
+  // checks if anything to do
+  if (size == 0){ return; }
 
   // allocates array on GPU
 #ifdef USE_OPENCL
@@ -372,6 +695,13 @@ void gpuMalloc_realw (gpu_realw_mem *buffer, size_t size) {
     print_CUDA_error_if_any(cudaMalloc((void**)&buffer->cuda, size * sizeof(realw)), 44001);
   }
 #endif
+#ifdef USE_HIP
+  if (run_hip) {
+    print_HIP_error_if_any(hipMalloc((void**)&buffer->hip, size * sizeof(realw)), 44001);
+  }
+#endif
+
+  GPU_ERROR_CHECKING ("gpuMalloc_realw");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -380,6 +710,9 @@ void gpuMalloc_realw (gpu_realw_mem *buffer, size_t size) {
 void gpuMalloc_double (gpu_double_mem *buffer, size_t size) {
 
   TRACE ("gpuMalloc_double");
+
+  // checks if anything to do
+  if (size == 0){ return; }
 
   // allocates array on GPU
 #ifdef USE_OPENCL
@@ -393,6 +726,13 @@ void gpuMalloc_double (gpu_double_mem *buffer, size_t size) {
     print_CUDA_error_if_any(cudaMalloc((void**)&buffer->cuda, size * sizeof(double)), 44002);
   }
 #endif
+#ifdef USE_HIP
+  if (run_hip) {
+    print_HIP_error_if_any(hipMalloc((void**)&buffer->hip, size * sizeof(double)), 44002);
+  }
+#endif
+
+  GPU_ERROR_CHECKING ("gpuMalloc_double");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -401,6 +741,9 @@ void gpuMalloc_double (gpu_double_mem *buffer, size_t size) {
 void gpuMalloc_int (gpu_int_mem *buffer, size_t size) {
 
   TRACE ("gpuMalloc_int");
+
+  // checks if anything to do
+  if (size == 0){ return; }
 
   // allocates array on GPU
 #ifdef USE_OPENCL
@@ -414,6 +757,13 @@ void gpuMalloc_int (gpu_int_mem *buffer, size_t size) {
     print_CUDA_error_if_any(cudaMalloc((void**)&buffer->cuda, size * sizeof(int)), 44003);
   }
 #endif
+#ifdef USE_HIP
+  if (run_hip) {
+    print_HIP_error_if_any(hipMalloc((void**)&buffer->hip, size * sizeof(int)), 44003);
+  }
+#endif
+
+  GPU_ERROR_CHECKING ("gpuMalloc_int");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -422,6 +772,9 @@ void gpuMalloc_int (gpu_int_mem *buffer, size_t size) {
 void gpuMemset_realw (gpu_realw_mem *buffer, size_t size, int value) {
 
   TRACE ("gpuMemset_realw");
+
+  // checks if anything to do
+  if (size == 0){ return; }
 
   // initializes values for array on GPU
 #ifdef USE_OPENCL
@@ -434,6 +787,13 @@ void gpuMemset_realw (gpu_realw_mem *buffer, size_t size, int value) {
     print_CUDA_error_if_any(cudaMemset(buffer->cuda, value, size*sizeof(realw)),44004);
   }
 #endif
+#ifdef USE_HIP
+  if (run_hip) {
+    print_HIP_error_if_any(hipMemset(buffer->hip, value, size*sizeof(realw)),44004);
+  }
+#endif
+
+  GPU_ERROR_CHECKING ("gpuMemset_realw");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -442,6 +802,9 @@ void gpuMemset_realw (gpu_realw_mem *buffer, size_t size, int value) {
 void gpuSetConst (gpu_realw_mem *buffer, size_t size, realw *array) {
 
   TRACE ("gpuSetConst");
+
+  // checks if anything to do
+  if (size == 0){ return; }
 
   // allocates array on GPU
 #ifdef USE_OPENCL
@@ -457,6 +820,14 @@ void gpuSetConst (gpu_realw_mem *buffer, size_t size, realw *array) {
     print_CUDA_error_if_any(cudaMemcpy(buffer->cuda, array, size * sizeof(realw), cudaMemcpyHostToDevice),1401);
   }
 #endif
+#ifdef USE_HIP
+  if (run_hip) {
+    print_HIP_error_if_any(hipMalloc(&buffer->hip, size * sizeof(realw)), 1400);
+    print_HIP_error_if_any(hipMemcpy(buffer->hip, array, size * sizeof(realw), hipMemcpyHostToDevice),1401);
+  }
+#endif
+
+  GPU_ERROR_CHECKING ("gpuSetConst");
 }
 
 /*----------------------------------------------------------------------------------------------- */
@@ -475,6 +846,11 @@ void gpuFree (void *d_array_addr_ptr) {
 #ifdef USE_CUDA
   if (run_cuda) { cudaFree(gpu_ptr->cuda); }
 #endif
+#ifdef USE_HIP
+  if (run_hip) { hipFree(gpu_ptr->hip); }
+#endif
+
+  GPU_ERROR_CHECKING ("gpuFree");
 }
 
 /*----------------------------------------------------------------------------------------------- */
@@ -482,7 +858,7 @@ void gpuFree (void *d_array_addr_ptr) {
 /*
 void gpuFreeHost (void *d_array_addr_ptr) {
 
-  TRACE ("gpuFree");
+  TRACE ("gpuFreeHost");
 
   // frees pinned memory on GPU
 #ifdef USE_OPENCL
@@ -491,12 +867,19 @@ void gpuFreeHost (void *d_array_addr_ptr) {
 #ifdef USE_CUDA
   if (run_cuda) { cudaFreeHost(d_array_addr_ptr->cuda); }
 #endif
+#ifdef USE_HIP
+ if (run_hip) { hipHostFree(d_array_addr_ptr->hip); }
+#endif
+
+  GPU_ERROR_CHECKING ("gpuFreeHost");
 }
 */
 
 /* ----------------------------------------------------------------------------------------------- */
 
 void gpuInitialize_buffers(Mesh *mp) {
+
+  TRACE ("gpuInitialize_buffers");
 
 #ifdef USE_OPENCL
   // sets OpenCL pointers to NULL
@@ -520,6 +903,17 @@ void gpuInitialize_buffers(Mesh *mp) {
   #include "gpu_buffer_list.c"
   #undef INIT_DUMMY_BUFFER
 #endif
+#ifdef USE_HIP
+  // sets HIP pointers to NULL
+  #define INIT_DUMMY_BUFFER(_field_) mp->_field_.hip = NULL
+
+  #define GPU_REALW_BUFFER INIT_DUMMY_BUFFER
+  #define GPU_INT_BUFFER INIT_DUMMY_BUFFER
+  #define GPU_DOUBLE_BUFFER INIT_DUMMY_BUFFER
+
+  #include "gpu_buffer_list.c"
+  #undef INIT_DUMMY_BUFFER
+#endif
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -527,22 +921,27 @@ void gpuInitialize_buffers(Mesh *mp) {
 /* ----------------------------------------------------------------------------------------------- */
 
 void gpuReset() {
-  // releases previous contexts
 
+  TRACE ("gpuReset");
+
+  // releases previous contexts
   // opencl version
 #ifdef USE_OPENCL
   if (run_opencl) clReleaseContext (mocl.context);
 #endif
-
   // cuda version
 #ifdef USE_CUDA
   if (run_cuda) {
-#if CUDA_VERSION < 4000
+#if CUDA_VERSION < 4000 || (defined (__CUDACC_VER_MAJOR__) && (__CUDACC_VER_MAJOR__ < 4))
     cudaThreadExit();
 #else
     cudaDeviceReset();
 #endif
   }
+#endif
+  // hip version
+#ifdef USE_HIP
+  if (run_hip) hipDeviceReset();
 #endif
 }
 
@@ -551,8 +950,10 @@ void gpuReset() {
 /* ----------------------------------------------------------------------------------------------- */
 
 void gpuSynchronize() {
-  // synchronizes device
 
+  TRACE ("gpuSynchronize");
+
+  // synchronizes device
   // opencl version
 #ifdef USE_OPENCL
   if (run_opencl) {
@@ -560,19 +961,70 @@ void gpuSynchronize() {
     if (GPU_ASYNC_COPY) clFinish (mocl.copy_queue);
   }
 #endif
-
   // cuda version
 #ifdef USE_CUDA
   if (run_cuda) {
-#if CUDA_VERSION < 4000
+#if CUDA_VERSION < 4000 || (defined (__CUDACC_VER_MAJOR__) && (__CUDACC_VER_MAJOR__ < 4))
     cudaThreadSynchronize();
 #else
     cudaDeviceSynchronize();
 #endif
   }
 #endif
-
+  // hip version
+#ifdef USE_HIP
+  if (run_hip) hipDeviceSynchronize();
+#endif
 }
+
+/* ----------------------------------------------------------------------------------------------- */
+
+void gpuStreamCreate(gpu_stream* stream_ptr) {
+
+  TRACE ("gpuStreamCreate");
+
+  // synchronizes stream
+#ifdef USE_OPENCL
+// daniel todo - not implemented streams for OpenCL, maybe use command_queue instead
+#endif
+#ifdef USE_CUDA
+  if (run_cuda){ print_CUDA_error_if_any(cudaStreamCreate(stream_ptr), 101); }
+#endif
+#ifdef USE_HIP
+  if (run_hip){ print_HIP_error_if_any(hipStreamCreate(stream_ptr), 101); }
+#endif
+
+  GPU_ERROR_CHECKING ("gpuStreamCreate");
+}
+
+
+void gpuStreamSynchronize(gpu_stream stream) {
+
+  TRACE ("gpuStreamSynchronize");
+
+  // synchronizes stream
+#ifdef USE_OPENCL
+//daniel todo - not implemented streams for OpenCL, maybe use command_queue instead
+/*
+  if (run_opencl) {
+    clCheck (clFinish (mocl.copy_queue));
+    if (mp->has_last_copy_evt) {
+      clCheck (clReleaseEvent (mp->last_copy_evt));
+      mp->has_last_copy_evt = 0;
+    }
+  }
+*/
+#endif
+#ifdef USE_CUDA
+  if (run_cuda){ cudaStreamSynchronize(stream); }
+#endif
+#ifdef USE_HIP
+  if (run_hip){ hipStreamSynchronize(stream); }
+#endif
+
+  GPU_ERROR_CHECKING ("gpuStreamSynchronize");
+}
+
 
 /*----------------------------------------------------------------------------------------------- */
 // OpenCL helper
@@ -682,65 +1134,51 @@ const char *clGetErrorString (cl_int error) {
 // CUDA helper
 /* ----------------------------------------------------------------------------------------------- */
 
-#ifdef USE_CUDA
-
-void print_CUDA_error_if_any(cudaError_t err, int num) {
-  if (cudaSuccess != err)
-  {
-    printf("\nCUDA error !!!!! <%s> !!!!! \nat CUDA call error code: # %d\n",cudaGetErrorString(err),num);
-    fflush(stdout);
-
-    // outputs error file
-    FILE* fp;
-    int myrank;
-    char filename[BUFSIZ];
-#ifdef WITH_MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-#else
-    myrank = 0;
-#endif
-    sprintf(filename,"OUTPUT_FILES/error_message_%06d.txt",myrank);
-    fp = fopen(filename,"a+");
-    if (fp != NULL) {
-      fprintf(fp,"\nCUDA error !!!!! <%s> !!!!! \nat CUDA call error code: # %d\n",cudaGetErrorString(err),num);
-      fclose(fp);
-    }
-
-    // stops program
-#ifdef WITH_MPI
-    MPI_Abort(MPI_COMM_WORLD,1);
-#endif
-    exit(EXIT_FAILURE);
-  }
-}
-
-/*----------------------------------------------------------------------------------------------- */
-
 // Timing helper functions
 
-void start_timing_cuda(cudaEvent_t* start,cudaEvent_t* stop) {
+void start_timing_gpu(gpu_event* start,gpu_event* stop) {
   // creates & starts event
+#ifdef USE_OPENCL
+// not implemented yet, events object added to kernel lauch command
+#endif
+#ifdef USE_CUDA
   cudaEventCreate(start);
   cudaEventCreate(stop);
   cudaEventRecord( *start, 0 );
+#endif
+#ifdef USE_HIP
+  // creates & starts event
+  hipEventCreate(start);
+  hipEventCreate(stop);
+  hipEventRecord( *start, 0 );
+#endif
 }
 
-/* ----------------------------------------------------------------------------------------------- */
-
-void stop_timing_cuda(cudaEvent_t* start,cudaEvent_t* stop, char* info_str) {
-  realw time;
+void stop_timing_gpu(gpu_event* start,gpu_event* stop, char* info_str) {
+  realw time = 0;
   // stops events
+#ifdef USE_OPENCL
+// not fully implemented yet...
+  clReleaseEvent(*start);
+  clReleaseEvent(*stop);
+#endif
+#ifdef USE_CUDA
   cudaEventRecord( *stop, 0 );
   cudaEventSynchronize( *stop );
   cudaEventElapsedTime( &time, *start, *stop );
   cudaEventDestroy( *start );
   cudaEventDestroy( *stop );
+#endif
+#ifdef USE_HIP
+  hipEventRecord( *stop, 0 );
+  hipEventSynchronize( *stop );
+  hipEventElapsedTime( &time, *start, *stop );
+  hipEventDestroy( *start );
+  hipEventDestroy( *stop );
+#endif
   // user output
   printf("%s: Execution Time = %f ms\n",info_str,time);
 }
-
-#endif // USE_CUDA
-
 
 /* ----------------------------------------------------------------------------------------------- */
 // exit functions
@@ -763,10 +1201,23 @@ void exit_on_gpu_error (const char *kernel_name) {
 #endif
 #ifdef USE_CUDA
   if (run_cuda) {
+    // synchronizes GPU
+#if CUDA_VERSION < 4000 || (defined (__CUDACC_VER_MAJOR__) && (__CUDACC_VER_MAJOR__ < 4))
     cudaThreadSynchronize();
+#else
+    cudaDeviceSynchronize();
+#endif
     cudaError_t err = cudaGetLastError();
     error = err != cudaSuccess;
     strerr = cudaGetErrorString(err);
+  }
+#endif
+#ifdef USE_HIP
+  if (run_hip) {
+    hipDeviceSynchronize();
+    hipError_t err = hipGetLastError();
+    error = err != hipSuccess;
+    strerr = hipGetErrorString(err);
   }
 #endif
 
@@ -788,6 +1239,9 @@ void exit_on_gpu_error (const char *kernel_name) {
       fprintf (fp, "GPU Error: after %s: %s\n", kernel_name, strerr);
       fclose (fp);
     }
+
+    // reset device
+    gpuReset();
 
     // stops program
 #ifdef WITH_MPI
@@ -818,6 +1272,9 @@ void exit_on_error (const char *info) {
     fprintf (fp, "Error: %s\n", info);
     fclose (fp);
   }
+
+  // reset device
+  gpuReset();
 
   // stops program
 #ifdef WITH_MPI
@@ -885,3 +1342,40 @@ void synchronize_mpi () {
 }
 
 
+/* ----------------------------------------------------------------------------------------------- */
+// CUDA-aware MPI helper function
+/* ----------------------------------------------------------------------------------------------- */
+
+// allocates buffers on GPU device
+
+extern EXTERN_LANG
+void FC_FUNC_ (allocate_gpu_buffer,
+               ALLOCATE_GPU_BUFFER) (realw** buffer_f, int* total_size) {
+  TRACE ("allocate_gpu_buffer");
+
+  gpu_realw_mem buffer;
+  size_t size = *total_size;
+
+  // initializes buffer pointer
+  *buffer_f = NULL;
+
+  // checks if anything to do
+  if (size == 0){ return; }
+
+  // allocates buffer on GPU
+  gpuMalloc_realw(&buffer, size);
+
+  // initializes
+  gpuMemset_realw(&buffer, size, 0);
+
+  // returns buffer pointer
+#ifdef USE_OPENCL
+  if (run_opencl) { *buffer_f = (realw *) buffer.ocl; }
+#endif
+#ifdef USE_CUDA
+  if (run_cuda) { *buffer_f = buffer.cuda; }
+#endif
+#ifdef USE_HIP
+  if (run_hip) { *buffer_f = buffer.hip; }
+#endif
+}

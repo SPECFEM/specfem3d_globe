@@ -1,16 +1,15 @@
 #!/bin/bash
 ###################################################
 
-# test name
-NAME="0.configure"
-
 # configuration parameters
-CONF_PARAM="--enable-vectorization"
+CONF_PARAM="--enable-debug"
 
 ###################################################
-
-
 testdir=`pwd`
+me=`basename "$0"`
+
+#checks if ROOT valid
+if [ -z "${ROOT}" ]; then export ROOT=../../ ; fi
 
 # sets source directory
 cd $ROOT/
@@ -20,7 +19,7 @@ cd $testdir/
 
 # title
 echo >> $testdir/results.log
-echo "$NAME in: $testdir" >> $testdir/results.log
+echo "$me in: $testdir" >> $testdir/results.log
 echo >> $testdir/results.log
 
 #cleanup

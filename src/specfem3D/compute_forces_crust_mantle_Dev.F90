@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -29,7 +29,7 @@
 ! and macros INDEX_IJK, DO_LOOP_IJK, ENDDO_LOOP_IJK defined in config.fh
 #include "config.fh"
 
-  subroutine compute_forces_crust_mantle_Dev( NSPEC,NGLOB,NSPEC_ATT, &
+  subroutine compute_forces_crust_mantle_Dev( NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT, &
                                               deltat, &
                                               displ_crust_mantle, &
                                               accel_crust_mantle, &
@@ -44,7 +44,12 @@
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
-  use constants_solver
+  use constants_solver, only: &
+    CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGLLCUBE,NDIM, &
+    N_SLS,NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_CRUST_MANTLE, &
+    ATT1_VAL,ATT2_VAL,ATT3_VAL, &
+    ANISOTROPIC_3D_MANTLE_VAL,ATTENUATION_VAL,PARTIAL_PHYS_DISPERSION_ONLY_VAL,GRAVITY_VAL, &
+    m1,m2
 
   use specfem_par, only: &
     hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
@@ -85,7 +90,7 @@
 
   implicit none
 
-  integer,intent(in) :: NSPEC,NGLOB,NSPEC_ATT
+  integer,intent(in) :: NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT
 
   ! time step
   real(kind=CUSTOM_REAL),intent(in) :: deltat
@@ -104,7 +109,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATT),intent(inout) :: &
     R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(inout) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STR_OR_ATT),intent(inout) :: &
     epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY),intent(inout) :: epsilon_trace_over_3
@@ -114,7 +119,7 @@
   real(kind=CUSTOM_REAL), dimension(N_SLS),intent(in) :: alphaval,betaval,gammaval
 
   ! work array with contributions
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ,NSPEC),intent(out) :: sum_terms
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),intent(out) :: sum_terms
 
   ! inner/outer element run flag
   integer,intent(in) :: iphase
@@ -132,22 +137,20 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: dummyx_loc,dummyy_loc,dummyz_loc
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5) :: epsilondev_loc
-  real(kind=CUSTOM_REAL) fac1,fac2,fac3
+  real(kind=CUSTOM_REAL) :: fac1,fac2,fac3
 
   ! for gravity
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: rho_s_H
 
   integer :: ispec,iglob
   integer :: num_elements,ispec_p
-
+  integer :: i,j,k
 #ifdef FORCE_VECTORIZATION
   integer :: ijk_spec,ip,iglob_p,ijk
-#else
-  integer :: i,j,k
 #endif
 
-  integer,parameter :: NGLL2 = NGLLY * NGLLZ
-  integer,parameter :: NGLL3 = NGLLX * NGLLY * NGLLZ
+  !integer,parameter :: NGLL2 = NGLLY * NGLLZ
+  !integer,parameter :: NGLL3 = NGLLX * NGLLY * NGLLZ
 
 ! ****************************************************
 !   big loop over all spectral elements in the solid
@@ -163,42 +166,42 @@
   endif
 
 ! openmp solver
-!$OMP PARALLEL DEFAULT(SHARED) &
+!$OMP PARALLEL DEFAULT(NONE) &
 !$OMP SHARED( deriv, &
 !$OMP num_elements,iphase,phase_ispec_inner, &
 !$OMP ibool,ispec_is_tiso, &
 !$OMP displ_crust_mantle,accel_crust_mantle, &
-!$OMP wgll_cube,hprime_xxt,hprime_xx,hprimewgll_xx,hprimewgll_xxT, &
-!$OMP wgllwgll_xy_3D, wgllwgll_xz_3D, wgllwgll_yz_3D, &
 !$OMP c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
 !$OMP c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
 !$OMP c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
 !$OMP kappavstore,muvstore, &
-!$OMP vnspec, &
 !$OMP factor_common, &
 !$OMP alphaval,betaval,gammaval, &
 !$OMP R_xx,R_yy,R_xy,R_xz,R_yz, &
 !$OMP epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz,epsilon_trace_over_3, &
 !$OMP gravity_pre_store,gravity_H, &
-!$OMP USE_LDDRK, &
 !$OMP R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
 !$OMP sum_terms, &
 #ifdef FORCE_VECTORIZATION
 !$OMP ibool_inv_tbl, ibool_inv_st, num_globs, phase_iglob, &
 #endif
-!$OMP deltat,COMPUTE_AND_STORE_STRAIN ) &
-!$OMP PRIVATE( ispec,ispec_p,iglob, &
+!$OMP deltat ) &
+!$OMP PRIVATE( ispec,ispec_p,i,j,k,iglob, &
 #ifdef FORCE_VECTORIZATION
 !$OMP ijk_spec,ip,iglob_p, &
 !$OMP ijk, &
-#else
-!$OMP i,j,k, &
 #endif
 !$OMP fac1,fac2,fac3, &
 !$OMP tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
 !$OMP newtempx1,newtempx2,newtempx3,newtempy1,newtempy2,newtempy3,newtempz1,newtempz2,newtempz3, &
 !$OMP dummyx_loc,dummyy_loc,dummyz_loc, &
-!$OMP rho_s_H,epsilondev_loc )
+!$OMP rho_s_H,epsilondev_loc ) &
+!$OMP FIRSTPRIVATE( hprime_xx, hprime_xxT, hprimewgll_xxT, hprimewgll_xx, &
+!$OMP wgllwgll_yz_3D, wgllwgll_xz_3D, wgllwgll_xy_3D, wgll_cube, &
+!$OMP att1_val, att2_val, att3_val, vnspec, &
+!$OMP ANISOTROPIC_3D_MANTLE_VAL,GRAVITY_VAL, &
+!$OMP ATTENUATION_VAL,PARTIAL_PHYS_DISPERSION_ONLY_VAL,COMPUTE_AND_STORE_STRAIN, &
+!$OMP USE_LDDRK )
 
 !$OMP DO SCHEDULE(GUIDED)
   do ispec_p = 1,num_elements
@@ -206,15 +209,20 @@
     ! only compute elements which belong to current phase (inner or outer elements)
     ispec = phase_ispec_inner(ispec_p,iphase)
 
-    DO_LOOP_IJK
+    ! note: this loop will not fully vectorize because it contains a dependency (through indirect addressing with array ibool())
+    !       thus, instead of DO_LOOP_IJK we use do k=..;do j=..;do i=..,
+    !       which helps the compiler to unroll the innermost loop
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+          iglob = ibool(i,j,k,ispec)
 
-      iglob = ibool(INDEX_IJK,ispec)
-
-      dummyx_loc(INDEX_IJK) = displ_crust_mantle(1,iglob)
-      dummyy_loc(INDEX_IJK) = displ_crust_mantle(2,iglob)
-      dummyz_loc(INDEX_IJK) = displ_crust_mantle(3,iglob)
-
-    ENDDO_LOOP_IJK
+          dummyx_loc(i,j,k) = displ_crust_mantle(1,iglob)
+          dummyy_loc(i,j,k) = displ_crust_mantle(2,iglob)
+          dummyz_loc(i,j,k) = displ_crust_mantle(3,iglob)
+        enddo
+      enddo
+    enddo
 
     ! subroutines adapted from Deville, Fischer and Mund, High-order methods
     ! for incompressible fluid flow, Cambridge University Press (2002),
@@ -251,7 +259,6 @@
     ! computes 3. matrix multiplication for tempx3,..
     call mxm5_3comp_singleB(dummyx_loc,dummyy_loc,dummyz_loc,m2,hprime_xxT,tempx3,tempy3,tempz3,m1)
 #endif
-
 
     !
     ! compute either isotropic, transverse isotropic or anisotropic elements
@@ -291,18 +298,18 @@
        else
           ! transverse isotropic element
           call compute_element_tiso(ispec, &
-                                     gravity_pre_store,gravity_H, &
-                                     deriv, &
-                                     wgll_cube, &
-                                     c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-                                     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-                                     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                                     ibool, &
-                                     R_xx,R_yy,R_xy,R_xz,R_yz, &
-                                     epsilon_trace_over_3, &
-                                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-                                     dummyx_loc,dummyy_loc,dummyz_loc, &
-                                     epsilondev_loc,rho_s_H)
+                                    gravity_pre_store,gravity_H, &
+                                    deriv, &
+                                    wgll_cube, &
+                                    c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
+                                    c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+                                    c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
+                                    ibool, &
+                                    R_xx,R_yy,R_xy,R_xz,R_yz, &
+                                    epsilon_trace_over_3, &
+                                    tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
+                                    dummyx_loc,dummyy_loc,dummyz_loc, &
+                                    epsilondev_loc,rho_s_H)
        endif ! .not. ispec_is_tiso
     endif
 
@@ -392,14 +399,14 @@
         call compute_element_att_memory_cm_lddrk(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
                                                  R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
                                                  ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec,factor_common, &
-                                                 c44store,muvstore, &
+                                                 muvstore, &
                                                  epsilondev_loc, &
                                                  deltat)
       else
         call compute_element_att_memory_cm(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
                                            ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec,factor_common, &
                                            alphaval,betaval,gammaval, &
-                                           c44store,muvstore, &
+                                           muvstore, &
                                            epsilondev_xx,epsilondev_yy,epsilondev_xy, &
                                            epsilondev_xz,epsilondev_yz, &
                                            epsilondev_loc)
@@ -553,15 +560,18 @@
   subroutine mxm5_3comp_singleA(A,n1,B1,B2,B3,C1,C2,C3,n3)
 
 ! we can force inlining (Intel compiler)
+#if defined __INTEL_COMPILER
 !DIR$ ATTRIBUTES FORCEINLINE :: mxm5_3comp_singleA
+#else
 ! cray
 !DIR$ INLINEALWAYS mxm5_3comp_singleA
+#endif
 
 ! 3 different arrays for x/y/z-components, 2-dimensional arrays (25,5)/(5,25), same B matrix for all 3 component arrays
 
   use constants_solver, only: CUSTOM_REAL
 
-#ifdef XSMM
+#ifdef USE_XSMM
   use my_libxsmm, only: libxsmm_smm_5_25_5
 #endif
 
@@ -575,7 +585,7 @@
   ! local parameters
   integer :: i,j
 
-#ifdef XSMM
+#ifdef USE_XSMM
   ! matrix-matrix multiplication C = alpha A * B + beta C
   ! with A(n1,n2) 5x5-matrix, B(n2,n3) 5x25-matrix and C(n1,n3) 5x25-matrix
   ! static version using MNK="5 25, 5" ALPHA=1 BETA=0
@@ -618,15 +628,18 @@
   subroutine mxm5_3comp_singleB(A1,A2,A3,n1,B,C1,C2,C3,n3)
 
 ! we can force inlining (Intel compiler)
+#if defined __INTEL_COMPILER
 !DIR$ ATTRIBUTES FORCEINLINE :: mxm5_3comp_singleB
+#else
 ! cray
 !DIR$ INLINEALWAYS mxm5_3comp_singleB
+#endif
 
 ! 3 different arrays for x/y/z-components, 2-dimensional arrays (25,5)/(5,25), same B matrix for all 3 component arrays
 
   use constants_solver, only: CUSTOM_REAL
 
-#ifdef XSMM
+#ifdef USE_XSMM
   use my_libxsmm, only: libxsmm_smm_25_5_5
 #endif
 
@@ -640,7 +653,7 @@
   ! local parameters
   integer :: i,j
 
-#ifdef XSMM
+#ifdef USE_XSMM
   ! matrix-matrix multiplication C = alpha A * B + beta C
   ! with A(n1,n2) 25x5-matrix, B(n2,n3) 5x5-matrix and C(n1,n3) 25x5-matrix
   ! static version
@@ -683,9 +696,12 @@
   subroutine mxm5_3comp_3dmat_singleB(A1,A2,A3,n1,B,n2,C1,C2,C3,n3)
 
 ! we can force inlining (Intel compiler)
+#if defined __INTEL_COMPILER
 !DIR$ ATTRIBUTES FORCEINLINE :: mxm5_3comp_3dmat_singleB
+#else
 ! cray
 !DIR$ INLINEALWAYS mxm5_3comp_3dmat_singleB
+#endif
 
 ! 3 different arrays for x/y/z-components, 3-dimensional arrays (5,5,5), same B matrix for all 3 component arrays
 
@@ -777,7 +793,7 @@
 
   subroutine mxm5_3comp_singleA_1(A,n1,B,C,n3)
   use constants_solver, only: CUSTOM_REAL
-#ifdef XSMM
+#ifdef USE_XSMM
   use my_libxsmm, only: libxsmm_smm_5_25_5
 #endif
   implicit none
@@ -787,7 +803,7 @@
   real(kind=CUSTOM_REAL),dimension(n1,n3),intent(out) :: C
   ! local parameters
   integer :: i,j
-#ifdef XSMM
+#ifdef USE_XSMM
   ! matrix-matrix multiplication C = alpha A * B + beta C
   ! with A(n1,n2) 5x5-matrix, B(n2,n3) 5x25-matrix and C(n1,n3) 5x25-matrix
   ! static version using MNK="5 25, 5" ALPHA=1 BETA=0
@@ -811,7 +827,7 @@
 
   subroutine mxm5_3comp_singleB_1(A,n1,B,C,n3)
   use constants_solver, only: CUSTOM_REAL
-#ifdef XSMM
+#ifdef USE_XSMM
   use my_libxsmm, only: libxsmm_smm_25_5_5
 #endif
   implicit none
@@ -821,7 +837,7 @@
   real(kind=CUSTOM_REAL),dimension(n1,n3),intent(out) :: C
   ! local parameters
   integer :: i,j
-#ifdef XSMM
+#ifdef USE_XSMM
   ! matrix-matrix multiplication C = alpha A * B + beta C
   ! with A(n1,n2) 25x5-matrix, B(n2,n3) 5x5-matrix and C(n1,n3) 25x5-matrix
   ! static version

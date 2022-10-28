@@ -8,9 +8,11 @@ function [ ] = NOISE_TOMOGRAPHY(NSTEP,dt,Tmin,Tmax,NOISE_MODEL)
 %***********************************************************************
 %
 % Usage:
-% NOISE_TOMOGRAPHY(NSTEP,dt,Tmin,Tmax,NOISE_MODEL)
+%   NOISE_TOMOGRAPHY(NSTEP,dt,Tmin,Tmax,NOISE_MODEL)
+%
 % Example:
-% NOISE_TOMOGRAPHY(66399,0.19,30,120,'NLNM')
+%   NOISE_TOMOGRAPHY(2999,0.05,10.,20.,'NLNM')
+%
 % /////////////////////////////////////////////////////////////////////////
 % Parameters:
 % NSTEP       --- number of time steps (always odd for NOISE TOMOGRAPHY)
@@ -20,6 +22,8 @@ function [ ] = NOISE_TOMOGRAPHY(NSTEP,dt,Tmin,Tmax,NOISE_MODEL)
 %                 either 'NLNM' or 'NHNM' (with the quote!)
 %                 'NLNM': New Low  Noise Model (in 1993, the model was New)
 %                 'NHNM': New High Noise Model
+%                 or 'FLAT': for a flat noise spectrum (uniform noise within period range)
+%
 % /////////////////////////////////////////////////////////////////////////
 %
 % ATTENTION:
@@ -28,9 +32,7 @@ function [ ] = NOISE_TOMOGRAPHY(NSTEP,dt,Tmin,Tmax,NOISE_MODEL)
 % with the correct DATA/Par_file
 % If DATA/Par_file is not specified for noise tomography simulations,
 % you won't get correct values either!
-% You can, however, compile the package use any DATA/Par_file,
-% but then you need to run ./bin/xcreate_header_file (costs just a few seconds)
-% after you have the proper DATA/Par_file
+% 
 % It is highly recommended that you compile the package with the correct 
 % DATA/Par_file you will be using
 %
@@ -46,10 +48,10 @@ function [ ] = NOISE_TOMOGRAPHY(NSTEP,dt,Tmin,Tmax,NOISE_MODEL)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% USER PARAMETERS
 %% figure plotting
-show_figures = false;
+show_figures = true;
 
 %% taper option
-taper_type = 1;      % cosine type (1=on/0==off
+taper_type = 1;                % cosine type (1=on/0==off)
 taper_length_percentage = 0.1; % taper length as a percentage of full length
 taper_length_min = 40;         % minimum number of steps for tapering ends
 
@@ -63,18 +65,31 @@ end
 
 %% derived parameters
 T=(NSTEP-1)*dt;    % total simulation time
-N_mid=(NSTEP+1)/2; % (NSTEP+1)/2 is the middle of the (NSTEP-1) points
+N_mid=floor((NSTEP+1)/2); % (NSTEP+1)/2 is the middle of the (NSTEP-1) points
 fmax=1/2/dt;       % Nyquist frequency, due to sampling theory
 df=1/T;            % frequency interval
 f=[0:df:fmax -fmax:df:-df]; % discrete frequencies
 
+%% checks length
+if T<Tmax
+    fprintf(['The simulation length T(' num2str(T) ...
+        ') is smaller than the required maximum period Tmax(' ...
+        num2str(Tmax) ')\n']);
+    return;
+end;
+
 %% checks noise model string
+use_flat_noise_spectrum = false;
 if NOISE_MODEL=='NLNM'
   model_info='Peterson New Low Noise Model';
 elseif NOISE_MODEL=='NHNM'
   model_info='Peterson New High Noise Model';
+elseif NOISE_MODEL=='FLAT'
+  % use a flat noise spectrum instead of Peterson model
+  use_flat_noise_spectrum = true;
+  model_info='uniform noise spectrum';
 else
-  fprintf('Error: noise model %s not recognized, use NLNM or NHNM for low or high noise model',NOISE_MODEL);
+  fprintf('Error: noise model %s not recognized, use NLNM, NHNM or FLAT for low, high or flat noise model',NOISE_MODEL);
   exit 1;
 end
 
@@ -100,7 +115,11 @@ fprintf('\n  calculating noise power spectrum: number of positive frequencies = 
 % only calculate for positive frequencies
 % the negative frequencies will be updated later using symmetry
 for l=1:N_mid
+  if use_flat_noise_spectrum
+     accel(l)=1; veloc(l)=1; displ(l)=1;
+  else
     [accel(l) veloc(l) displ(l)]=PetersonNoiseModel(1/f(l),NOISE_MODEL);
+  end
 end
 
 % plots figure
@@ -115,6 +134,7 @@ if show_figures
   xlabel('Frequency (Hz)','fontsize',fontsize);ylabel('Amplitude (dB)','fontsize',fontsize);
   title('Power Spectrum of Peterson''s Noise Model in dB','fontsize',fontsize);
   xlim([1e-4 1e1]);ylim([-250 -50]);
+  %xlim([0.9*df 1.1*fmax]); ylim([-250 -50]);
 end
 
 %% change power spectrum from dB to real physical unit
@@ -124,13 +144,33 @@ for l=1:N_mid
         displ(l)=10.^(displ(l)/10);
 end
 
+%debug
+%n = size(displ,2);tmp=zeros(n,2);
+%tmp(:,1)=[1:n];tmp(:,2)=displ(:);
+%save('tmp_displ.txt','tmp','-ASCII');
+
 %% constrain the power spectrum only within the range [Tmin Tmax]
 fprintf('\n  filtering power spectrum:\n    period     min/max = %f / %f\n    frequency  min/max = %f / %f \n',Tmin,Tmax,1/Tmax,1/Tmin);
 for l=1:N_mid
     if abs(f(l))>=1/Tmax && abs(f(l))<=1/Tmin
+      if use_flat_noise_spectrum
+        filter_array(l)=1;
+      else
         filter_array(l)=sin((f(l)-1/Tmax)/(1/Tmin-1/Tmax)*pi);
+      end
+    elseif abs(f(l))>=1/1.5/Tmax && abs(f(l))<1/Tmax
+        filter_array(l)=sin ((f(l)-1/1.5/Tmax)/(1/Tmax-1/1.5/Tmax)*pi/2);
+    elseif abs(f(l))<=1.5/Tmin && abs(f(l))>1/Tmin
+        filter_array(l)=sin (-(f(l)-1/Tmin)/(1.5/Tmin-1/Tmin)*pi/2)+1;
     end
 end
+
+%debug
+%n=size(filter_array,2); tmp=zeros(n,2);
+%tmp(:,1)=[1:n];tmp(:,2)=filter_array(:);
+%save('tmp_filter.txt','tmp','-ASCII');
+
+
 accel=accel.*filter_array;
 veloc=veloc.*filter_array;
 displ=displ.*filter_array;
@@ -148,6 +188,7 @@ if show_figures
          ['velocity, scaled by ', num2str(max(abs(veloc))), ' m^2/s^2/Hz'],     ...
          ['displacement, scaled by ', num2str(max(abs(displ))), ' m^2/Hz']);
   xlim([0.8/Tmax 1.2/Tmin]);ylim([-0.1 1.5]);
+  %xlim([0 min(1.5*Tmax,1.2/df)]);ylim([-0.1 1.5]);
 end
 
 % using only displacement from here on
@@ -162,15 +203,24 @@ for l=N_mid+1:NSTEP
     displ(l)=conj(displ(NSTEP-l+2));
 end
 
+%debug
+%n=size(displ,2); tmp=zeros(n,2);
+%tmp(:,1)=[1:n];tmp(:,2)=displ(:);
+%save('tmp_displ2.txt','tmp','-ASCII');
+
+
 %% prepare source time function for ensemble forward source -- S_squared
 fprintf('\n  preparing source time function S_squared:\n    NSTEP = %i / dt = %f \n',NSTEP,dt);
 
 % the file S_squared should be put into directory ./NOISE_TOMOGRAPHY/
-% together with other two files: irec_master_noise & nu_master
+% together with other two files: irec_main_noise & nu_main
 S_squared=zeros(NSTEP,2); % first column: time (not used in SPECFEM3D package)
                           % second column: source time function
 S_squared(:,1)=([1:NSTEP]-N_mid)*dt;
 S_squared(:,2)=real(ifft(displ));
+
+%debug
+%save('tmp_S.txt','S_squared','-ASCII');
 
 % change the order of the time series
 % instead of having t=[0 T], we need t=[-T/2 T/2];
@@ -178,6 +228,11 @@ temp=S_squared(:,2);
 temp(N_mid:NSTEP)=S_squared(1:N_mid,2);
 temp(1:N_mid-1)  =S_squared(N_mid+1:NSTEP,2);
 
+%debug
+%n=size(temp,1); tmp=zeros(n,2);
+%tmp(:,1)=[1:n];tmp(:,2)=temp(:);
+%save('tmp_temp1.txt','tmp','-ASCII');  
+  
 % tapers ends
 if taper_type==1
   fprintf('\n  tapering source time function S_squared\n');
@@ -212,6 +267,11 @@ if taper_type==1
   %  temp(l) = temp(l) * window(l);
   %end
 
+  %debug
+  %n=size(taper,2); tmp=zeros(n,2);
+  %tmp(:,1)=[1:n];tmp(:,2)=taper(:,1);
+  %save('tmp_taper.txt','tmp','-ASCII');
+
   % applies taper
   for l=1:taper_length
     % increasing branch
@@ -220,6 +280,11 @@ if taper_type==1
     k = NSTEP-taper_length+l;
     temp(k) = temp(k) * taper(taper_length+1+l);
   end
+
+  %debug
+  %n=size(temp,1); tmp=zeros(n,2);
+  %tmp(:,1)=[1:n];tmp(:,2)=temp(:);
+  %save('tmp_temp2.txt','tmp','-ASCII');  
 
   % plots figure
   if show_figures
@@ -260,13 +325,15 @@ if show_figures
   plot(S_squared(:,1)/60,S_squared(:,2),'r');
   xlabel('Time (min)','fontsize',fontsize); ylabel('Amplitude','fontsize',fontsize);
   xlim([-Tmax Tmax]*0.10/60);
+  %xlim([-1 1]/60*min(T/2,5*Tmax));
   title('Zoom-in of the Source Time Function','fontsize',fontsize);
   drawnow;
 end
 
 %% output the source time function
 fprintf('\n  saving S_squared as ASCII file\n');
-save S_squared S_squared -ASCII
+filename = 'S_squared';
+save(filename,'S_squared','-ASCII')
 
 %% user output
 DIR=pwd;

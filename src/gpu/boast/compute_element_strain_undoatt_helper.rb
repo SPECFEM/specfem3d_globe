@@ -15,20 +15,24 @@ module BOAST
     v.push *s_dummy_loc = ["x", "y", "z"].collect { |a|
       Real("s_dummy#{a}_loc", :dir => :in, :dim => [Dim(ngll3)], :local => true )
     }
-    v.push *d_xi =    [d_xix      = Real("d_xix",    :dir => :in, :dim => [Dim()] ), d_xiy    = Real("d_xiy",   :dir => :in, :dim => [Dim()] ), d_xiz    = Real("d_xiz",   :dir => :in, :dim => [Dim()] ) ]
-    v.push *d_eta =   [d_etax     = Real("d_etax",                  :dir => :in, :dim => [Dim()] ), d_etay = Real("d_etay",:dir => :in, :dim => [Dim()] ), d_etaz = Real("d_etaz",:dir => :in, :dim => [Dim()] ) ]
-    v.push *d_gamma = [d_gammax   = Real("d_gammax",                :dir => :in, :dim => [Dim()] ), d_gammay = Real("d_gammay",:dir => :in, :dim => [Dim()] ), d_gammaz = Real("d_gammaz",:dir => :in, :dim => [Dim()] ) ]
-    v.push sh_hprime_xx = Real("sh_hprime_xx", :dir => :in, :dim => [Dim(ngll2)], :local => true )
-    v.push epsilondev_loc     = Real("epsilondev_loc",          :dir => :out, :dim => [Dim(5)], :register => true )
-    v.push epsilon_trace_over_3  = Real("epsilon_trace_over_3",          :dir => :out, :dim => [Dim(1)], :register => true )
-
+    v.push *d_xi =    [d_xix      = Real("d_xix",    :dir => :in, :dim => [Dim()] ),
+                       d_xiy    = Real("d_xiy",   :dir => :in, :dim => [Dim()] ),
+                       d_xiz    = Real("d_xiz",   :dir => :in, :dim => [Dim()] ) ]
+    v.push *d_eta =   [d_etax     = Real("d_etax",                  :dir => :in, :dim => [Dim()] ),
+                       d_etay = Real("d_etay",:dir => :in, :dim => [Dim()] ),
+                       d_etaz = Real("d_etaz",:dir => :in, :dim => [Dim()] ) ]
+    v.push *d_gamma = [d_gammax   = Real("d_gammax",                :dir => :in, :dim => [Dim()] ),
+                       d_gammay = Real("d_gammay",:dir => :in, :dim => [Dim()] ),
+                       d_gammaz = Real("d_gammaz",:dir => :in, :dim => [Dim()] ) ]
+    v.push sh_hprime_xx          = Real("sh_hprime_xx",         :dir => :in, :dim => [Dim(ngll2)], :local => true )
+    v.push epsilondev_loc        = Real("epsilondev_loc",       :dir => :out, :dim => [Dim(5)], :register => true )
+    v.push epsilon_trace_over_3  = Real("epsilon_trace_over_3", :dir => :out, :dim => [Dim(1)], :register => true )
 
     sub = Procedure(function_name, v, :local => true) {
       decl tx = Int("tx")
       decl k = Int("K")
       decl j = Int("J")
       decl i = Int("I")
-      decl l = Int("l")
       decl offset = Int("offset")
       tempanl = ["x", "y", "z"].collect { |a|
         [ 1, 2, 3 ].collect { |n|
@@ -47,16 +51,21 @@ module BOAST
       decl *(dudl.flatten)
       decl templ= Real("templ")
       decl *fac = (1..3).collect { |n| Real("fac#{n}") }
+      comment()
 
       print tx === get_local_id(0)
       print k === tx/ngll2
       print j === (tx-k*ngll2)/ngllx
       print i === tx - k*ngll2 - j*ngllx
+      comment()
 
       tempanl.flatten.each { |t|
         print t === 0.0
       }
-      print For(l, 0, ngllx - 1) {
+      comment()
+
+      l = Int("l")
+      print For(l, 0, ngllx, :operator => "<", :declit => true) {
         print fac[0] === sh_hprime_xx[l*ngllx + i]
         (0..2).each { |indx|
           print tempanl[indx][0] === tempanl[indx][0] + s_dummy_loc[indx][k*ngll2 + j*ngllx + l]*fac[0]
@@ -70,6 +79,8 @@ module BOAST
           print tempanl[indx][2] === tempanl[indx][2] + s_dummy_loc[indx][l*ngll2 + j*ngllx + i]*fac[2]
         }
       }
+      comment()
+
       print offset === ispec*ngll3_padded + tx
       (0..2).each { |indx|
         print xil[indx] === d_xi[indx][offset]
@@ -81,6 +92,8 @@ module BOAST
           print dudl[indx1][indx2] === xil[indx2]*tempanl[indx1][0] + etal[indx2]*tempanl[indx1][1] + gammal[indx2]*tempanl[indx1][2]
         }
       }
+      comment()
+
       print templ === (dudl[0][0] + dudl[1][1] + dudl[2][2]) * 0.33333333333333333333
       print epsilondev_loc[0] === dudl[0][0] - templ;
       print epsilondev_loc[1] === dudl[1][1] - templ;

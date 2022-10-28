@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -32,7 +32,7 @@
                                  ibool_interfaces)
 
   use constants
-  use meshfem3D_par, only: NPROCTOT,myrank
+  use meshfem_par, only: NPROCTOT,myrank
   use MPI_crust_mantle_par, only: NGLOB_CRUST_MANTLE
   use MPI_outer_core_par, only: NGLOB_OUTER_CORE
   use MPI_inner_core_par, only: NGLOB_INNER_CORE
@@ -129,7 +129,7 @@
   ! gets maximum interfaces from all processes
   call max_all_i(num_interfaces,max_num)
 
-  ! master gathers info
+  ! main gathers info
   if (myrank == 0) then
     ! user output
     write(IMAIN,*) '  maximum interfaces:',max_num
@@ -148,7 +148,7 @@
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating dummy_i for test interfaces')
     dummy_i(:) = 0
 
-    ! sets info for master process
+    ! sets info for main process
     test_interfaces(1:num_interfaces,0) = my_neighbors(1:num_interfaces)
     test_interfaces_nibool(1:num_interfaces,0) = nibool_interfaces(1:num_interfaces)
     dummy_i(0) = num_interfaces
@@ -164,7 +164,7 @@
       endif
     enddo
   else
-    ! sends info to master process
+    ! sends info to main process
     call send_singlei(num_interfaces,0,itag)
     if (num_interfaces > 0) then
       call send_i(my_neighbors(1:num_interfaces),num_interfaces,0,itag)
@@ -241,7 +241,7 @@
 
   subroutine test_MPI_cm()
 
-  use meshfem3D_par, only: NPROCTOT,myrank
+  use meshfem_par, only: NPROCTOT,myrank
 
   use MPI_interfaces_par
   use MPI_crust_mantle_par
@@ -299,10 +299,10 @@
 
   ! adds contributions from different partitions to flag arrays
   call assemble_MPI_vector(NPROCTOT,NGLOB_CRUST_MANTLE, &
-                      test_flag_vector, &
-                      num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
-                      nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle, &
-                      my_neighbors_crust_mantle)
+                           test_flag_vector, &
+                           num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
+                           nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle, &
+                           my_neighbors_crust_mantle)
 
   ! removes initial flag
   test_flag_vector(:,:) = test_flag_vector(:,:) - 1.0_CUSTOM_REAL
@@ -315,8 +315,8 @@
 
     ! checks valence
     if (valence(iglob) /= nint(test_flag_vector(1,iglob)) .or. &
-       valence(iglob) /= nint(test_flag_vector(2,iglob)) .or. &
-       valence(iglob) /= nint(test_flag_vector(3,iglob))) then
+        valence(iglob) /= nint(test_flag_vector(2,iglob)) .or. &
+        valence(iglob) /= nint(test_flag_vector(3,iglob))) then
       print *,'Error test MPI: rank',myrank,'valence:',valence(iglob),'flag:',test_flag_vector(:,:)
       call exit_mpi(myrank,'Error test MPI crust mantle valence')
     endif
@@ -358,7 +358,7 @@
 
   subroutine test_MPI_oc()
 
-  use meshfem3D_par, only: NPROCTOT,myrank
+  use meshfem_par, only: NPROCTOT,myrank
 
   use MPI_interfaces_par
   use MPI_outer_core_par
@@ -411,10 +411,10 @@
 
   ! adds contributions from different partitions to flag arrays
   call assemble_MPI_scalar(NPROCTOT,NGLOB_OUTER_CORE, &
-                                test_flag, &
-                                num_interfaces_outer_core,max_nibool_interfaces_oc, &
-                                nibool_interfaces_outer_core,ibool_interfaces_outer_core, &
-                                my_neighbors_outer_core)
+                           test_flag, &
+                           num_interfaces_outer_core,max_nibool_interfaces_oc, &
+                           nibool_interfaces_outer_core,ibool_interfaces_outer_core, &
+                           my_neighbors_outer_core)
 
 
   ! removes initial flag
@@ -468,7 +468,7 @@
 
   subroutine test_MPI_ic()
 
-  use meshfem3D_par, only: NPROCTOT,myrank
+  use meshfem_par, only: NPROCTOT,myrank
 
   use MPI_interfaces_par
   use MPI_inner_core_par
@@ -522,10 +522,10 @@
 
   ! adds contributions from different partitions to flag arrays
   call assemble_MPI_vector(NPROCTOT,NGLOB_INNER_CORE, &
-                      test_flag_vector, &
-                      num_interfaces_inner_core,max_nibool_interfaces_ic, &
-                      nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
-                      my_neighbors_inner_core)
+                           test_flag_vector, &
+                           num_interfaces_inner_core,max_nibool_interfaces_ic, &
+                           nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
+                           my_neighbors_inner_core)
 
   ! removes initial flag
   test_flag_vector(:,:) = test_flag_vector(:,:) - 1.0_CUSTOM_REAL
@@ -538,8 +538,8 @@
 
     ! checks valence
     if (valence(iglob) /= nint(test_flag_vector(1,iglob)) .or. &
-       valence(iglob) /= nint(test_flag_vector(2,iglob)) .or. &
-       valence(iglob) /= nint(test_flag_vector(3,iglob))) then
+        valence(iglob) /= nint(test_flag_vector(2,iglob)) .or. &
+        valence(iglob) /= nint(test_flag_vector(3,iglob))) then
       print *,'Error test MPI: rank',myrank,'valence:',valence(iglob),'flag:',test_flag_vector(:,:)
       call exit_mpi(myrank,'Error test MPI inner core valence')
     endif

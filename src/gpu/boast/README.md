@@ -58,7 +58,7 @@ irb(main):003:0> <ctrl-D>
 ```
 
 
-## CUDA/OpenCL kernel generation:
+## CUDA/OpenCL/HIP kernel generation:
 Type:
 ```
 cd ~/SPECFEM3D_GLOBE
@@ -91,7 +91,7 @@ ruby kernels.rb -c
 This will use the non regression testing data to give you information about the behavior of the kernels (accuracy and performance).
 If tests are not installed, it will just compile the kernels and check for compilation errors.
 
-You might have to manually deactivate CUDA kernels test:
+You might have to manually deactivate CUDA and HIP kernels test:
 ```
 diff --git a/src/gpu/boast/kernels.rb b/src/gpu/boast/kernels.rb
 index 4d2b31d..e4a678f 100644
@@ -101,7 +101,7 @@ index 4d2b31d..e4a678f 100644
  :compute_iso_undoatt_kernel
  ]
 
--langs = [ :CUDA, :CL]
+-langs = [ :CUDA, :CL, :HIP]
 +langs = [:CL]
  BOAST::set_default_real_size(4)
  BOAST::set_replace_constants(false)
@@ -117,7 +117,7 @@ or use different CL flags:
 CLFLAGS=-cl-fast-relaxed-math ruby kernels.rb -c
 ```
 
-That should be the default in SPECFEM3D (even if for now if seems the default is no flags for OpenCL, which gives a certain advantage to CUDA).
+That should be the default in SPECFEM3D (even if for now it seems the default is no flags for OpenCL, which gives a certain advantage to CUDA).
 
 If you have a problem of platform selection or want to restrict the test to 1 kernel:
 ```

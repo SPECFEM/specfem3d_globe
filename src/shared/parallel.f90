@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -26,23 +26,29 @@
 !=====================================================================
 
 ! Dimitri Komatitsch, July 2014, CNRS Marseille, France:
+!
 ! added the ability to run several calculations (several earthquakes)
 ! in an embarrassingly-parallel fashion from within the same run;
+!
 ! this can be useful when using a very large supercomputer to compute
 ! many earthquakes in a catalog, in which case it can be better from
 ! a batch job submission point of view to start fewer and much larger jobs,
 ! each of them computing several earthquakes in parallel.
+!
 ! To turn that option on, set parameter NUMBER_OF_SIMULTANEOUS_RUNS to a value greater than 1 in the Par_file.
+!
 ! To implement that, we create NUMBER_OF_SIMULTANEOUS_RUNS MPI sub-communicators,
 ! each of them being labeled "my_local_mpi_comm_world", and we use them
 ! in all the routines in "src/shared/parallel.f90", except in MPI_ABORT() because in that case
 ! we need to kill the entire run.
+!
 ! When that option is on, of course the number of processor cores used to start
 ! the code in the batch system must be a multiple of NUMBER_OF_SIMULTANEOUS_RUNS,
 ! all the individual runs must use the same number of processor cores,
 ! which as usual is NPROC in the input file DATA/Par_file,
 ! and thus the total number of processor cores to request from the batch system
 ! should be NUMBER_OF_SIMULTANEOUS_RUNS * NPROC.
+!
 ! All the runs to perform must be placed in directories called run0001, run0002, run0003 and so on
 ! (with exactly four digits).
 
@@ -77,17 +83,21 @@ end module my_mpi
 
   implicit none
 
+  ! local parameters
   integer :: myrank,ier
 
-! initialize the MPI communicator and start the NPROCTOT MPI processes.
+  ! initialize the MPI communicator and start the NPROCTOT MPI processes.
   call MPI_INIT(ier)
   if (ier /= 0 ) stop 'Error initializing MPI'
 
+  call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
+  if (ier /= 0 ) stop 'Error getting MPI rank'
+
   ! we need to make sure that NUMBER_OF_SIMULTANEOUS_RUNS and BROADCAST_SAME_MESH_AND_MODEL are read before calling world_split()
   ! thus read the parameter file
-  call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
   if (myrank == 0) then
-    call open_parameter_file_from_master_only(ier)
+    call open_parameter_file_from_main_only(ier)
+    if (ier /= 0) stop 'an error occurred while opening the parameter file'
     ! we need to make sure that NUMBER_OF_SIMULTANEOUS_RUNS and BROADCAST_SAME_MESH_AND_MODEL are read
     call read_value_integer(NUMBER_OF_SIMULTANEOUS_RUNS, 'NUMBER_OF_SIMULTANEOUS_RUNS', ier)
     if (ier /= 0) stop 'Error reading Par_file parameter NUMBER_OF_SIMULTANEOUS_RUNS'
@@ -97,7 +107,7 @@ end module my_mpi
     call close_parameter_file()
   endif
 
-  ! broadcast parameters read from master to all processes
+  ! broadcast parameters read from main to all processes
   my_local_mpi_comm_world = MPI_COMM_WORLD
 
   call bcast_all_singlei(NUMBER_OF_SIMULTANEOUS_RUNS)
@@ -289,6 +299,28 @@ end module my_mpi
   call mpi_wait(req,MPI_STATUS_IGNORE,ier)
 
   end subroutine wait_req
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  logical function is_valid_comm(comm)
+
+  use my_mpi
+
+  implicit none
+
+  integer, intent(in) :: comm
+
+  ! tests if communicator is valid
+  if (comm == MPI_COMM_NULL) then
+    is_valid_comm = .false.
+  else
+    is_valid_comm = .true.
+  endif
+
+  end function is_valid_comm
 
 
 !-------------------------------------------------------------------------------------------------
@@ -576,13 +608,13 @@ end module my_mpi
 
   implicit none
 
-  integer countval
+  integer :: countval
   ! by not specifying any dimensions for the buffer here we can use this routine for arrays of any number
   ! of indices, provided we call the routine using the first memory cell of that multidimensional array,
   ! i.e. for instance buffer(1,1,1) if the array has three dimensions with indices that all start at 1.
   integer :: buffer
 
-  integer ier
+  integer :: ier
 
   if (.not. (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. BROADCAST_SAME_MESH_AND_MODEL)) return
 
@@ -601,13 +633,13 @@ end module my_mpi
 
   implicit none
 
-  integer countval
+  integer :: countval
   ! by not specifying any dimensions for the buffer here we can use this routine for arrays of any number
   ! of indices, provided we call the routine using the first memory cell of that multidimensional array,
   ! i.e. for instance buffer(1,1,1) if the array has three dimensions with indices that all start at 1.
   logical :: buffer
 
-  integer ier
+  integer :: ier
 
   if (.not. (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. BROADCAST_SAME_MESH_AND_MODEL)) return
 
@@ -629,13 +661,13 @@ end module my_mpi
 
   include "precision.h"
 
-  integer countval
+  integer :: countval
   ! by not specifying any dimensions for the buffer here we can use this routine for arrays of any number
   ! of indices, provided we call the routine using the first memory cell of that multidimensional array,
   ! i.e. for instance buffer(1,1,1) if the array has three dimensions with indices that all start at 1.
   real(kind=CUSTOM_REAL) :: buffer
 
-  integer ier
+  integer :: ier
 
   if (.not. (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. BROADCAST_SAME_MESH_AND_MODEL)) return
 
@@ -654,13 +686,13 @@ end module my_mpi
 
   implicit none
 
-  integer countval
+  integer :: countval
   ! by not specifying any dimensions for the buffer here we can use this routine for arrays of any number
   ! of indices, provided we call the routine using the first memory cell of that multidimensional array,
   ! i.e. for instance buffer(1,1,1) if the array has three dimensions with indices that all start at 1.
   double precision :: buffer
 
-  integer ier
+  integer :: ier
 
   if (.not. (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. BROADCAST_SAME_MESH_AND_MODEL)) return
 
@@ -679,13 +711,13 @@ end module my_mpi
 
   implicit none
 
-  integer countval
+  integer :: countval
   ! by not specifying any dimensions for the buffer here we can use this routine for arrays of any number
   ! of indices, provided we call the routine using the first memory cell of that multidimensional array,
   ! i.e. for instance buffer(1,1,1) if the array has three dimensions with indices that all start at 1.
   real :: buffer
 
-  integer ier
+  integer :: ier
 
   if (.not. (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. BROADCAST_SAME_MESH_AND_MODEL)) return
 
@@ -706,7 +738,7 @@ end module my_mpi
   implicit none
 
   integer:: sendbuf, recvbuf
-  integer ier
+  integer :: ier
 
   call MPI_REDUCE(sendbuf,recvbuf,1,MPI_INTEGER,MPI_MIN,0,my_local_mpi_comm_world,ier)
 
@@ -758,6 +790,27 @@ end module my_mpi
   if (ier /= 0 ) stop 'Allreduce to get max values failed.'
 
   end subroutine max_allreduce_i
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine max_allreduce_singlei(val,recvval)
+
+  use my_mpi
+
+  implicit none
+
+  integer,intent(in) :: val
+  integer,intent(out) :: recvval
+
+  ! local parameters
+  integer :: ier
+
+  call MPI_ALLREDUCE(val, recvval, 1, MPI_INTEGER, MPI_MAX, my_local_mpi_comm_world, ier)
+  if (ier /= 0) stop 'Allreduce to get single max value failed.'
+
+  end subroutine max_allreduce_singlei
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -1121,6 +1174,26 @@ end module my_mpi
 !-------------------------------------------------------------------------------------------------
 !
 
+  subroutine recv_r(recvbuf, recvcount, dest, recvtag)
+
+  use my_mpi
+
+  implicit none
+
+  integer :: dest,recvtag
+  integer :: recvcount
+  real,dimension(recvcount) :: recvbuf
+
+  integer :: ier
+
+  call MPI_RECV(recvbuf,recvcount,MPI_REAL,dest,recvtag,my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier)
+
+  end subroutine recv_r
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
   subroutine recv_cr(recvbuf, recvcount, dest, recvtag)
 
   use my_mpi
@@ -1296,6 +1369,25 @@ end module my_mpi
   call MPI_SEND(sendbuf,1,MPI_LOGICAL,dest,sendtag,my_local_mpi_comm_world,ier)
 
   end subroutine send_singlel
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine send_r(sendbuf, sendcount, dest, sendtag)
+
+  use my_mpi
+
+  implicit none
+
+  integer :: dest,sendtag
+  integer :: sendcount
+  real,dimension(sendcount):: sendbuf
+  integer :: ier
+
+  call MPI_SEND(sendbuf,sendcount,MPI_REAL,dest,sendtag,my_local_mpi_comm_world,ier)
+
+  end subroutine send_r
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -1590,7 +1682,7 @@ end module my_mpi
 
   integer :: sendcnt, dim1, NPROC
 
-  real, dimension(NPROC) :: sendbuf
+  real, dimension(sendcnt) :: sendbuf
   real, dimension(dim1, NPROC) :: recvbuf
 
   integer, dimension(NPROC) :: recvoffset, recvcnt
@@ -1598,8 +1690,8 @@ end module my_mpi
   integer :: ier
 
   call MPI_Allgatherv(sendbuf,sendcnt,MPI_REAL, &
-                  recvbuf,recvcnt,recvoffset,MPI_REAL, &
-                  my_local_mpi_comm_world,ier)
+                      recvbuf,recvcnt,recvoffset,MPI_REAL, &
+                      my_local_mpi_comm_world,ier)
 
   end subroutine all_gather_all_r
 
@@ -1616,7 +1708,7 @@ end module my_mpi
 
   integer :: sendcnt, dim1, dim2, NPROC
 
-  character(len=dim2), dimension(NPROC) :: sendbuf
+  character(len=dim2), dimension(sendcnt) :: sendbuf
   character(len=dim2), dimension(dim1, NPROC) :: recvbuf
 
   integer, dimension(NPROC) :: recvoffset, recvcnt
@@ -1624,8 +1716,8 @@ end module my_mpi
   integer :: ier
 
   call MPI_Allgatherv(sendbuf,sendcnt,MPI_CHARACTER, &
-                  recvbuf,recvcnt,recvoffset,MPI_CHARACTER, &
-                  my_local_mpi_comm_world,ier)
+                      recvbuf,recvcnt,recvoffset,MPI_CHARACTER, &
+                      my_local_mpi_comm_world,ier)
 
   end subroutine all_gather_all_ch
 
@@ -1672,6 +1764,27 @@ end module my_mpi
   if (ier /= 0 ) stop 'Error getting MPI world size'
 
   end subroutine world_size
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine world_size_comm(sizeval,comm)
+
+  use my_mpi
+
+  implicit none
+
+  integer,intent(out) :: sizeval
+  integer,intent(in) :: comm
+
+  ! local parameters
+  integer :: ier
+
+  call MPI_COMM_SIZE(comm,sizeval,ier)
+  if (ier /= 0 ) stop 'Error getting MPI world size'
+
+  end subroutine world_size_comm
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -1830,74 +1943,80 @@ end module my_mpi
 
   implicit none
 
+  ! local parameters
   integer :: sizeval,myrank,ier,key,my_group_for_bcast,my_local_rank_for_bcast,NPROC
-
   character(len=MAX_STRING_LEN) :: path_to_add
 
+  ! checks
   if (NUMBER_OF_SIMULTANEOUS_RUNS <= 0) stop 'NUMBER_OF_SIMULTANEOUS_RUNS <= 0 makes no sense'
 
+  ! world size and rank
   call MPI_COMM_SIZE(MPI_COMM_WORLD,sizeval,ier)
   call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
 
+  ! checks if multiple
   if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mod(sizeval,NUMBER_OF_SIMULTANEOUS_RUNS) /= 0) then
     if (myrank == 0) print *,'Error: the number of MPI processes ',sizeval, &
                             ' is not a multiple of NUMBER_OF_SIMULTANEOUS_RUNS = ',NUMBER_OF_SIMULTANEOUS_RUNS
     stop 'the number of MPI processes is not a multiple of NUMBER_OF_SIMULTANEOUS_RUNS'
   endif
 
+  ! checks output mode
   if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. IMAIN == ISTANDARD_OUTPUT) &
     stop 'must not have IMAIN == ISTANDARD_OUTPUT when NUMBER_OF_SIMULTANEOUS_RUNS > 1 otherwise output to screen is mingled'
 
+  ! sets output directory
   OUTPUT_FILES = OUTPUT_FILES_BASE(1:len_trim(OUTPUT_FILES_BASE))
 
+  ! splits MPI world
   if (NUMBER_OF_SIMULTANEOUS_RUNS == 1) then
 
     my_local_mpi_comm_world = MPI_COMM_WORLD
 
-! no broadcast of the mesh and model databases to other runs in that case
+    ! no broadcast of the mesh and model databases to other runs in that case
     my_group_for_bcast = 0
     my_local_mpi_comm_for_bcast = MPI_COMM_NULL
 
   else
 
-!--- create a subcommunicator for each independent run
+    !--- create a subcommunicator for each independent run
 
     NPROC = sizeval / NUMBER_OF_SIMULTANEOUS_RUNS
 
-!   create the different groups of processes, one for each independent run
+    ! create the different groups of processes, one for each independent run
     mygroup = myrank / NPROC
     key = myrank
     if (mygroup < 0 .or. mygroup > NUMBER_OF_SIMULTANEOUS_RUNS-1) stop 'invalid value of mygroup'
 
-!   build the sub-communicators
+    ! build the sub-communicators
     call MPI_COMM_SPLIT(MPI_COMM_WORLD, mygroup, key, my_local_mpi_comm_world, ier)
     if (ier /= 0) stop 'error while trying to create the sub-communicators'
 
-!   add the right directory for that run
-!   (group numbers start at zero, but directory names start at run0001, thus we add one)
+    ! add the right directory for that run
+    !  (group numbers start at zero, but directory names start at run0001, thus we add one)
     write(path_to_add,"('run',i4.4,'/')") mygroup + 1
     OUTPUT_FILES = path_to_add(1:len_trim(path_to_add))//OUTPUT_FILES(1:len_trim(OUTPUT_FILES))
 
-!--- create a subcommunicator to broadcast the identical mesh and model databases if needed
+    !--- create a subcommunicator to broadcast the identical mesh and model databases if needed
     if (BROADCAST_SAME_MESH_AND_MODEL) then
 
       call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
-!     to broadcast the model, split along similar ranks per run instead
+      ! to broadcast the model, split along similar ranks per run instead
       my_group_for_bcast = mod(myrank,NPROC)
       key = myrank
       if (my_group_for_bcast < 0 .or. my_group_for_bcast > NPROC-1) stop 'invalid value of my_group_for_bcast'
 
-!     build the sub-communicators
+      ! build the sub-communicators
       call MPI_COMM_SPLIT(MPI_COMM_WORLD, my_group_for_bcast, key, my_local_mpi_comm_for_bcast, ier)
       if (ier /= 0) stop 'error while trying to create the sub-communicators'
 
-!     see if that process will need to read the mesh and model database and then broadcast it to others
+      ! see if that process will need to read the mesh and model database and then broadcast it to others
       call MPI_COMM_RANK(my_local_mpi_comm_for_bcast,my_local_rank_for_bcast,ier)
       if (my_local_rank_for_bcast > 0) I_should_read_the_database = .false.
 
     else
 
-! no broadcast of the mesh and model databases to other runs in that case
+      ! no broadcast of the mesh and model databases to other runs in that case
       my_group_for_bcast = 0
       my_local_mpi_comm_for_bcast = MPI_COMM_NULL
 

@@ -9,6 +9,11 @@ module BOAST
     v.push deltat                = Real("deltat",                :dir => :in)
     v.push d_A_array_rotation    = Real("d_A_array_rotation",    :dir => :inout, :dim => [Dim()] )
     v.push d_B_array_rotation    = Real("d_B_array_rotation",    :dir => :inout, :dim => [Dim()] )
+    v.push d_A_array_rotation_lddrk = Real("d_A_array_rotation_lddrk",    :dir => :inout, :dim => [Dim()] )
+    v.push d_B_array_rotation_lddrk = Real("d_B_array_rotation_lddrk",    :dir => :inout, :dim => [Dim()] )
+    v.push alpha_lddrk           = Real("alpha_lddrk",           :dir => :in)
+    v.push beta_lddrk            = Real("beta_lddrk",            :dir => :in)
+    v.push use_lddrk             = Int( "use_lddrk",             :dir => :in)
     v.push dpotentialdxl         = Real("dpotentialdxl",         :dir => :in)
     v.push dpotentialdyl         = Real("dpotentialdyl",         :dir => :in)
     v.push dpotentialdx_with_rot = Real("dpotentialdx_with_rot", :dir => :out, :dim => [Dim(1)], :private => true)
@@ -24,8 +29,8 @@ module BOAST
       decl b_rotation = Real("B_rotation")
       decl source_euler_A = Real("source_euler_A")
       decl source_euler_B = Real("source_euler_B")
-
       comment()
+
       comment("  // store the source for the Euler scheme for A_rotation and B_rotation")
       if (get_lang == CL) then
         print sin_two_omega_t === sincos(two_omega_earth*time, cos_two_omega_t.address)
@@ -37,8 +42,8 @@ module BOAST
           print sin_two_omega_t === sin(two_omega_earth*time)
         end
       end
-
       comment()
+
       comment("  // time step deltat of Euler scheme is included in the source")
       print two_omega_deltat === deltat * two_omega_earth
 
@@ -50,20 +55,33 @@ module BOAST
 
       print dpotentialdx_with_rot[0] === dpotentialdxl + ( a_rotation*cos_two_omega_t + b_rotation*sin_two_omega_t)
       print dpotentialdy_with_rot[0] === dpotentialdyl + (-a_rotation*sin_two_omega_t + b_rotation*cos_two_omega_t)
-
       comment()
+
       comment("  // updates rotation term with Euler scheme (non-padded offset)")
-      print d_A_array_rotation[tx + working_element*ngll3] === d_A_array_rotation[tx + working_element*ngll3] + source_euler_A
-      print d_B_array_rotation[tx + working_element*ngll3] === d_B_array_rotation[tx + working_element*ngll3] + source_euler_B
+      print If(!use_lddrk => lambda {
+        # non-LDDRK update
+        print d_A_array_rotation[tx + working_element*ngll3] === d_A_array_rotation[tx + working_element*ngll3] + source_euler_A
+        print d_B_array_rotation[tx + working_element*ngll3] === d_B_array_rotation[tx + working_element*ngll3] + source_euler_B
+      }, :else => lambda {
+        # LDDRK update
+        print d_A_array_rotation_lddrk[tx + working_element*ngll3] === \
+                alpha_lddrk * d_A_array_rotation_lddrk[tx + working_element*ngll3] + source_euler_A
+        print d_B_array_rotation_lddrk[tx + working_element*ngll3] === \
+                alpha_lddrk * d_B_array_rotation_lddrk[tx + working_element*ngll3] + source_euler_B
+        print d_A_array_rotation[tx + working_element*ngll3] === \
+                d_A_array_rotation[tx + working_element*ngll3] + beta_lddrk * d_A_array_rotation_lddrk[tx + working_element*ngll3]
+        print d_B_array_rotation[tx + working_element*ngll3] === \
+                d_B_array_rotation[tx + working_element*ngll3] + beta_lddrk * d_B_array_rotation_lddrk[tx + working_element*ngll3]
+      })
     }
     return p
   end
 
-  def BOAST::outer_core_impl_kernel_forward(ref = true, elem_per_thread = 1, mesh_coloring = false, textures_fields = false, textures_constants = false, unroll_loops = false, n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128, r_earth_km = 6371.0, coloring_min_nspec_outer_core = 1000)
-    return BOAST::outer_core_impl_kernel(true, ref, elem_per_thread, mesh_coloring, textures_fields, textures_constants, unroll_loops, n_gllx, n_gll2, n_gll3, n_gll3_padded, r_earth_km, coloring_min_nspec_outer_core)
+  def BOAST::outer_core_impl_kernel_forward(ref = true, elem_per_thread = 1, mesh_coloring = false, textures_fields = false, textures_constants = false, unroll_loops = false, n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128, coloring_min_nspec_outer_core = 1000)
+    return BOAST::outer_core_impl_kernel(true, ref, elem_per_thread, mesh_coloring, textures_fields, textures_constants, unroll_loops, n_gllx, n_gll2, n_gll3, n_gll3_padded, coloring_min_nspec_outer_core)
   end
 
-  def BOAST::outer_core_impl_kernel(forward, ref = true, elem_per_thread = 1, mesh_coloring = false, textures_fields = false, textures_constants = false, unroll_loops = false, n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128, r_earth_km = 6371.0, coloring_min_nspec_outer_core = 1000)
+  def BOAST::outer_core_impl_kernel(forward, ref = true, elem_per_thread = 1, mesh_coloring = false, textures_fields = false, textures_constants = false, unroll_loops = false, n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128, coloring_min_nspec_outer_core = 1000)
     push_env( :array_start => 0 )
     kernel = CKernel::new
     v = []
@@ -96,9 +114,7 @@ module BOAST
     v.push wgllwgll_xz             = Real("wgllwgll_xz",             :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push wgllwgll_yz             = Real("wgllwgll_yz",             :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push gravity                 = Int( "GRAVITY",                 :dir => :in)
-    v.push d_rstore                = Real("d_rstore",                :dir => :in, :restrict => true, :dim => [Dim(3), Dim()] )
-    v.push d_d_ln_density_dr_table = Real("d_d_ln_density_dr_table", :dir => :in, :restrict => true, :dim => [Dim()] )
-    v.push d_minus_rho_g_over_kappa_fluid = Real("d_minus_rho_g_over_kappa_fluid", :dir => :in, :restrict => true, :dim => [Dim()] )
+    v.push gravity_pre_store_outer_core = Real("d_gravity_pre_store_outer_core",:dir => :in, :restrict => true, :dim => [Dim(3), Dim()] )
     v.push wgll_cube               = Real("wgll_cube",               :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push rotation                = Int( "ROTATION",                :dir => :in)
     v.push time                    = Real("time",                    :dir => :in)
@@ -106,13 +122,17 @@ module BOAST
     v.push deltat                  = Real("deltat",                  :dir => :in)
     v.push d_A_array_rotation      = Real("d_A_array_rotation",      :dir => :inout, :dim => [Dim()] )
     v.push d_B_array_rotation      = Real("d_B_array_rotation",      :dir => :inout, :dim => [Dim()] )
+    v.push d_A_array_rotation_lddrk = Real("d_A_array_rotation_lddrk",      :dir => :inout, :dim => [Dim()] )
+    v.push d_B_array_rotation_lddrk = Real("d_B_array_rotation_lddrk",      :dir => :inout, :dim => [Dim()] )
+    v.push alpha_lddrk             = Real("alpha_lddrk",             :dir => :in)
+    v.push beta_lddrk              = Real("beta_lddrk",              :dir => :in)
+    v.push use_lddrk               = Int( "use_lddrk",               :dir => :in)
     v.push nspec_outer_core        = Int( "NSPEC_OUTER_CORE",        :dir => :in)
 
     ngllx        = Int("NGLLX", :const => n_gllx)
     ngll2        = Int("NGLL2", :const => n_gll2)
     ngll3        = Int("NGLL3", :const => n_gll3)
     ngll3_padded = Int("NGLL3_PADDED", :const => n_gll3_padded)
-    rearth_km    = Int("R_EARTH_KM", :const => r_earth_km)
 
     use_mesh_coloring       = Int("USE_MESH_COLORING_GPU",   :const => mesh_coloring)
     use_textures_constants  = Int("USE_TEXTURES_CONSTANTS",  :const => textures_constants)
@@ -137,9 +157,9 @@ module BOAST
 
     if (get_lang == CUDA and ref) then
       get_output.print File::read("references/#{function_name}.cu".gsub("_forward","").gsub("_adjoint",""))
-    elsif(get_lang == CL or get_lang == CUDA) then
+    elsif(get_lang == CL or get_lang == CUDA or get_lang == HIP) then
       # header
-      make_specfem3d_header(:ngllx => n_gllx, :ngll2 => n_gll2, :ngll3 => n_gll3, :ngll3_padded => n_gll3_padded, :r_earth_km => r_earth_km,
+      make_specfem3d_header(:ngllx => n_gllx, :ngll2 => n_gll2, :ngll3 => n_gll3, :ngll3_padded => n_gll3_padded,
                             :coloring_min_nspec_outer_core => coloring_min_nspec_outer_core)
 
       #DEACTIVATE USE TEXTURES CONSTANTS
@@ -208,9 +228,9 @@ module BOAST
       decl tx = Int("tx")
       decl k  = Int("K"), j = Int("J"), i = Int("I")
 
-      get_output.puts "#ifndef #{manually_unrolled_loops}"
-        decl l = Int("l")
-      get_output.puts "#endif"
+      #get_output.puts "#ifndef #{manually_unrolled_loops}"
+      l = Int("l")
+      #get_output.puts "#endif"
 
       active = (1..elem_per_thread).collect { |e_i| Int("active_#{e_i}", :size => 2, :signed => false) }
       decl *active
@@ -232,14 +252,9 @@ module BOAST
       decl sum_terms = Real("sum_terms")
       gravity_term = (1..elem_per_thread).collect { |e_i| Real("gravity_term_#{e_i}") }
       decl *gravity_term
-      decl *gl   = [ Real("gxl"),   Real("gyl"),   Real("gzl")   ]
 
-      decl radius = Real("radius"), theta = Real("theta"), phi = Real("phi")
-      decl cos_theta = Real("cos_theta"), sin_theta = Real("sin_theta")
-      decl cos_phi   = Real("cos_phi"),   sin_phi   = Real("sin_phi")
-      decl *grad_ln_rho = [ Real("grad_x_ln_rho"), Real("grad_y_ln_rho"), Real("grad_z_ln_rho") ]
-
-      decl int_radius = Int("int_radius")
+      # gravity
+      decl vec_x = Real("vec_x"), vec_y = Real("vec_y"), vec_z = Real("vec_z")
 
       decl s_dummy_loc = Real("s_dummy_loc", :local => true, :dim => [Dim(ngll3)] )
 
@@ -249,6 +264,7 @@ module BOAST
 
       decl sh_hprime_xx     = Real("sh_hprime_xx",     :local => true, :dim => [Dim(ngll2)] )
       decl sh_hprimewgll_xx = Real("sh_hprimewgll_xx", :local => true, :dim => [Dim(ngll2)] )
+      comment()
 
       print bx === get_group_id(1)*get_num_groups(0)+get_group_id(0)
 
@@ -298,19 +314,21 @@ module BOAST
         }
       }
       print barrier(:local)
+      comment()
 
 
-elem_per_thread.times { |elem_index|
-  if elem_per_thread > 1 then
-        print tx === get_local_id(0) + ngll3_padded * elem_index / elem_per_thread
-  end
+      elem_per_thread.times { |elem_index|
+        if elem_per_thread > 1 then
+          print tx === get_local_id(0) + ngll3_padded * elem_index / elem_per_thread
+        end
         print k === tx/ngll2
         print j === (tx-k*ngll2)/ngllx
         print i === tx - k*ngll2 - j*ngllx
+        comment()
 
         print If(active[elem_index]) {
           (0..2).each { |indx| print templ[indx] === 0.0 }
-          for_loop = For(l, 0, ngllx-1) {
+          for_loop = For(l, 0, ngllx-1, :declit => true) {
              print templ[0] === templ[0] + s_dummy_loc[k*ngll2+j*ngllx+l]*sh_hprime_xx[l*ngllx+i]
              print templ[1] === templ[1] + s_dummy_loc[k*ngll2+l*ngllx+i]*sh_hprime_xx[l*ngllx+j]
              print templ[2] === templ[2] + s_dummy_loc[l*ngll2+j*ngllx+i]*sh_hprime_xx[l*ngllx+k]
@@ -320,23 +338,30 @@ elem_per_thread.times { |elem_index|
           get_output.puts "#else"
             print for_loop
           get_output.puts "#endif"
+          comment()
+
           print offset === working_element*ngll3_padded + tx
           (0..2).each { |indx|
             print xil[indx]    === d_xi[indx][offset]
             print etal[indx]   === d_eta[indx][offset]
             print gammal[indx] === d_gamma[indx][offset]
           }
+          comment()
 
           print jacobianl === Expression("/", 1.0, xil[0]*(etal[1]*gammal[2] - etal[2]*gammal[1]) - xil[1]*(etal[0]*gammal[2] - etal[2]*gammal[0]) + xil[2]*(etal[0]*gammal[1] - etal[1]*gammal[0]))
           (0..2).each { |indx|
             print dpotentialdl[indx] === xil[indx]*templ[0] + etal[indx]*templ[1] + gammal[indx]*templ[2]
           }
+          comment()
 
           print If(rotation => lambda {
             print sub_kernel.call(tx,working_element,\
                                   time,two_omega_earth,deltat,\
                                   d_A_array_rotation,\
                                   d_B_array_rotation,\
+                                  d_A_array_rotation_lddrk,\
+                                  d_B_array_rotation_lddrk,\
+                                  alpha_lddrk,beta_lddrk,use_lddrk, \
                                   dpotentialdl[0],\
                                   dpotentialdl[1],\
                                   dpotentialdx_with_rot.address,\
@@ -345,60 +370,45 @@ elem_per_thread.times { |elem_index|
             print dpotentialdx_with_rot === dpotentialdl[0]
             print dpotentialdy_with_rot === dpotentialdl[1]
           })
+          comment()
 
-          print radius === d_rstore[0,iglob[elem_index]]
-          print theta  === d_rstore[1,iglob[elem_index]]
-          print phi    === d_rstore[2,iglob[elem_index]]
+          # gravity way using pre-calculated arrays
+          print vec_x === gravity_pre_store_outer_core[0,iglob[elem_index]]
+          print vec_y === gravity_pre_store_outer_core[1,iglob[elem_index]]
+          print vec_z === gravity_pre_store_outer_core[2,iglob[elem_index]]
 
-          if (get_lang == CL) then
-            print sin_theta === sincos(theta, cos_theta.address)
-            print sin_phi   === sincos(phi,   cos_phi.address)
-          else
-            if (get_default_real_size == 4) then
-              print sincosf(theta, sin_theta.address, cos_theta.address)
-              print sincosf(phi,   sin_phi.address,   cos_phi.address)
-            else
-              print cos_theta === cos(theta)
-              print sin_theta === sin(theta)
-              print cos_phi   === cos(phi)
-              print sin_phi   === sin(phi)
-            end
-          end
-          print int_radius === rint(radius * rearth_km * 10.0) - 1
+          comment()
+
           print If(!gravity => lambda {
-            print grad_ln_rho[0] === sin_theta * cos_phi * d_d_ln_density_dr_table[int_radius]
-            print grad_ln_rho[1] === sin_theta * sin_phi * d_d_ln_density_dr_table[int_radius]
-            print grad_ln_rho[2] ===           cos_theta * d_d_ln_density_dr_table[int_radius]
-
-            print dpotentialdx_with_rot === dpotentialdx_with_rot + s_dummy_loc[tx] * grad_ln_rho[0]
-            print dpotentialdy_with_rot === dpotentialdy_with_rot + s_dummy_loc[tx] * grad_ln_rho[1]
-            print dpotentialdl[2]       === dpotentialdl[2] +       s_dummy_loc[tx] * grad_ln_rho[2]
+            print dpotentialdx_with_rot === dpotentialdx_with_rot + s_dummy_loc[tx] * vec_x
+            print dpotentialdy_with_rot === dpotentialdy_with_rot + s_dummy_loc[tx] * vec_y
+            print dpotentialdl[2]       === dpotentialdl[2] +       s_dummy_loc[tx] * vec_z
           }, :else => lambda {
-            print gl[0] === sin_theta*cos_phi
-            print gl[1] === sin_theta*sin_phi
-            print gl[2] === cos_theta
-
-            print gravity_term[elem_index] === d_minus_rho_g_over_kappa_fluid[int_radius] * jacobianl * wgll_cube[tx] * \
-                                   (dpotentialdx_with_rot*gl[0] + dpotentialdy_with_rot*gl[1] + dpotentialdl[2]*gl[2])
+            print gravity_term[elem_index] === jacobianl * wgll_cube[tx] * \
+                                   (dpotentialdx_with_rot * vec_x + dpotentialdy_with_rot * vec_y + dpotentialdl[2] * vec_z)
           })
+          comment()
 
           print s_temp[0][tx] === jacobianl*(   xil[0]*dpotentialdx_with_rot +    xil[1]*dpotentialdy_with_rot +    xil[2]*dpotentialdl[2])
           print s_temp[1][tx] === jacobianl*(  etal[0]*dpotentialdx_with_rot +   etal[1]*dpotentialdy_with_rot +   etal[2]*dpotentialdl[2])
           print s_temp[2][tx] === jacobianl*(gammal[0]*dpotentialdx_with_rot + gammal[1]*dpotentialdy_with_rot + gammal[2]*dpotentialdl[2])
         }
-}
-        print barrier(:local)
+      }
+      print barrier(:local)
+      comment()
 
-elem_per_thread.times { |elem_index|
-  if elem_per_thread > 1 then
-        print tx === get_local_id(0) + ngll3_padded * elem_index / elem_per_thread
-        print k === tx/ngll2
-        print j === (tx-k*ngll2)/ngllx
-        print i === tx - k*ngll2 - j*ngllx
-  end
+      elem_per_thread.times { |elem_index|
+        if elem_per_thread > 1 then
+          print tx === get_local_id(0) + ngll3_padded * elem_index / elem_per_thread
+          print k === tx/ngll2
+          print j === (tx-k*ngll2)/ngllx
+          print i === tx - k*ngll2 - j*ngllx
+        end
+        comment()
+
         print If(active[elem_index]) {
           (0..2).each { |indx| print templ[indx] === 0.0 }
-          for_loop = For(l, 0, ngllx-1) {
+          for_loop = For(l, 0, ngllx-1, :declit => true) {
              print templ[0] === templ[0] + s_temp[0][k*ngll2+j*ngllx+l]*sh_hprimewgll_xx[i*ngllx+l]
              print templ[1] === templ[1] + s_temp[1][k*ngll2+l*ngllx+i]*sh_hprimewgll_xx[j*ngllx+l]
              print templ[2] === templ[2] + s_temp[2][l*ngll2+j*ngllx+i]*sh_hprimewgll_xx[k*ngllx+l]
@@ -408,6 +418,8 @@ elem_per_thread.times { |elem_index|
           get_output.puts "#else"
             print for_loop
           get_output.puts "#endif"
+          comment()
+
           print sum_terms === -(wgllwgll_yz[k*ngllx+j]*templ[0] + wgllwgll_xz[k*ngllx+i]*templ[1] + wgllwgll_xy[j*ngllx+i]*templ[2])
 
           print If(gravity) {
@@ -435,7 +447,7 @@ elem_per_thread.times { |elem_index|
             })
           get_output.puts "#endif"
         }
-}
+      }
       close p
     else
       raise "Unsupported language!"

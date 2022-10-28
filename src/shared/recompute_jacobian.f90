@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -34,28 +34,29 @@
 
   implicit none
 
-  double precision x,y,z,xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
-  double precision xi,eta,gamma,jacobian
+  double precision,intent(inout) :: x,y,z,xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
+  double precision,intent(in) :: xi,eta,gamma
 
 ! coordinates of the control points of the surface element
-  double precision xelm(NGNOD),yelm(NGNOD),zelm(NGNOD)
+  double precision,intent(in) :: xelm(NGNOD),yelm(NGNOD),zelm(NGNOD)
 
 ! 3D shape functions and their derivatives at receiver
-  double precision shape3D(NGNOD)
-  double precision dershape3D(NDIM,NGNOD)
+  double precision :: shape3D(NGNOD)
+  double precision :: dershape3D(NDIM,NGNOD)
 
-  double precision l1xi,l2xi,l3xi
-  double precision l1eta,l2eta,l3eta
-  double precision l1gamma,l2gamma,l3gamma
-  double precision l1pxi,l2pxi,l3pxi
-  double precision l1peta,l2peta,l3peta
-  double precision l1pgamma,l2pgamma,l3pgamma
+  double precision :: l1xi,l2xi,l3xi
+  double precision :: l1eta,l2eta,l3eta
+  double precision :: l1gamma,l2gamma,l3gamma
+  double precision :: l1pxi,l2pxi,l3pxi
+  double precision :: l1peta,l2peta,l3peta
+  double precision :: l1pgamma,l2pgamma,l3pgamma
 
-  double precision xxi,yxi,zxi
-  double precision xeta,yeta,zeta
-  double precision xgamma,ygamma,zgamma
+  double precision :: xxi,yxi,zxi
+  double precision :: xeta,yeta,zeta
+  double precision :: xgamma,ygamma,zgamma
+  double precision :: jacobian
 
-  integer ia
+  integer :: ia
 
 ! recompute Jacobian for any given (xi,eta,gamma) point
 ! not necessarily a GLL point
@@ -211,16 +212,17 @@
 
 ! center node
 
-  shape3D(27)=l2xi*l2eta*l2gamma
+  shape3D(27) = l2xi*l2eta*l2gamma
 
-  dershape3D(1,27)=l2pxi*l2eta*l2gamma
-  dershape3D(2,27)=l2xi*l2peta*l2gamma
-  dershape3D(3,27)=l2xi*l2eta*l2pgamma
+  dershape3D(1,27) = l2pxi*l2eta*l2gamma
+  dershape3D(2,27) = l2xi*l2peta*l2gamma
+  dershape3D(3,27) = l2xi*l2eta*l2pgamma
 
 ! compute coordinates and Jacobian matrix
-  x=ZERO
-  y=ZERO
-  z=ZERO
+  x = ZERO
+  y = ZERO
+  z = ZERO
+
   xxi=ZERO
   xeta=ZERO
   xgamma=ZERO
@@ -232,19 +234,19 @@
   zgamma=ZERO
 
   do ia = 1,NGNOD
-    x=x+shape3D(ia)*xelm(ia)
-    y=y+shape3D(ia)*yelm(ia)
-    z=z+shape3D(ia)*zelm(ia)
+    x = x+shape3D(ia)*xelm(ia)
+    y = y+shape3D(ia)*yelm(ia)
+    z = z+shape3D(ia)*zelm(ia)
 
-    xxi=xxi+dershape3D(1,ia)*xelm(ia)
-    xeta=xeta+dershape3D(2,ia)*xelm(ia)
-    xgamma=xgamma+dershape3D(3,ia)*xelm(ia)
-    yxi=yxi+dershape3D(1,ia)*yelm(ia)
-    yeta=yeta+dershape3D(2,ia)*yelm(ia)
-    ygamma=ygamma+dershape3D(3,ia)*yelm(ia)
-    zxi=zxi+dershape3D(1,ia)*zelm(ia)
-    zeta=zeta+dershape3D(2,ia)*zelm(ia)
-    zgamma=zgamma+dershape3D(3,ia)*zelm(ia)
+    xxi = xxi+dershape3D(1,ia)*xelm(ia)
+    xeta = xeta+dershape3D(2,ia)*xelm(ia)
+    xgamma = xgamma+dershape3D(3,ia)*xelm(ia)
+    yxi = yxi+dershape3D(1,ia)*yelm(ia)
+    yeta = yeta+dershape3D(2,ia)*yelm(ia)
+    ygamma = ygamma+dershape3D(3,ia)*yelm(ia)
+    zxi = zxi+dershape3D(1,ia)*zelm(ia)
+    zeta = zeta+dershape3D(2,ia)*zelm(ia)
+    zgamma = zgamma+dershape3D(3,ia)*zelm(ia)
   enddo
 
   jacobian = xxi*(yeta*zgamma-ygamma*zeta) - xeta*(yxi*zgamma-ygamma*zxi) + &
@@ -253,15 +255,15 @@
   if (jacobian <= ZERO) stop '3D Jacobian undefined'
 
 ! invert the relation (Fletcher p. 50 vol. 2)
-  xix=(yeta*zgamma-ygamma*zeta)/jacobian
-  xiy=(xgamma*zeta-xeta*zgamma)/jacobian
-  xiz=(xeta*ygamma-xgamma*yeta)/jacobian
-  etax=(ygamma*zxi-yxi*zgamma)/jacobian
-  etay=(xxi*zgamma-xgamma*zxi)/jacobian
-  etaz=(xgamma*yxi-xxi*ygamma)/jacobian
-  gammax=(yxi*zeta-yeta*zxi)/jacobian
-  gammay=(xeta*zxi-xxi*zeta)/jacobian
-  gammaz=(xxi*yeta-xeta*yxi)/jacobian
+  xix = (yeta*zgamma-ygamma*zeta)/jacobian
+  xiy = (xgamma*zeta-xeta*zgamma)/jacobian
+  xiz = (xeta*ygamma-xgamma*yeta)/jacobian
+  etax = (ygamma*zxi-yxi*zgamma)/jacobian
+  etay = (xxi*zgamma-xgamma*zxi)/jacobian
+  etaz = (xgamma*yxi-xxi*ygamma)/jacobian
+  gammax = (yxi*zeta-yeta*zxi)/jacobian
+  gammay = (xeta*zxi-xxi*zeta)/jacobian
+  gammaz = (xxi*yeta-xeta*yxi)/jacobian
 
   end subroutine recompute_jacobian
 

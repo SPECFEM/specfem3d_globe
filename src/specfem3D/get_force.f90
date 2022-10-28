@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!               S p e c f e m 3 D  V e r s i o n  3 . 0
-!               ---------------------------------------
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
+!          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !                and CNRS / University of Marseille, France
 !                 (there are currently many more authors!)
-! (c) Princeton University and CNRS / University of Marseille, July 2012
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -25,13 +25,13 @@
 !
 !=====================================================================
 
-  subroutine get_force(tshift_force,hdur,lat,long,depth,DT,NSOURCES, &
-                      min_tshift_force_original,force_stf,factor_force_source, &
-                      comp_dir_vect_source_E,comp_dir_vect_source_N, &
-                      comp_dir_vect_source_Z_UP)
+  subroutine get_force(tshift_src,hdur,lat,long,depth,DT,NSOURCES, &
+                       min_tshift_src_original,force_stf,factor_force_source, &
+                       comp_dir_vect_source_E,comp_dir_vect_source_N, &
+                       comp_dir_vect_source_Z_UP)
 
-  use constants, only: IIN,MAX_STRING_LEN,TINYVAL,mygroup,RHOAV,R_EARTH,PI,GRAV
-  use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS
+  use constants, only: IIN,MAX_STRING_LEN,TINYVAL,mygroup,PI,GRAV
+  use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS,R_PLANET,RHOAV
 
   implicit none
 
@@ -41,21 +41,21 @@
   double precision, intent(in) :: DT
 
   integer, dimension(NSOURCES), intent(out) :: force_stf
-  double precision, intent(out) :: min_tshift_force_original
-  double precision, dimension(NSOURCES), intent(out) :: tshift_force,hdur,lat,long,depth,factor_force_source
+  double precision, intent(out) :: min_tshift_src_original
+  double precision, dimension(NSOURCES), intent(out) :: tshift_src,hdur,lat,long,depth,factor_force_source
   double precision, dimension(NSOURCES), intent(out) :: comp_dir_vect_source_E
   double precision, dimension(NSOURCES), intent(out) :: comp_dir_vect_source_N
   double precision, dimension(NSOURCES), intent(out) :: comp_dir_vect_source_Z_UP
 
   ! local variables below
-  integer :: isource,dummyval
+  integer :: isource,ier
   double precision :: scaleF
   double precision :: t_shift(NSOURCES)
   double precision :: length
-  character(len=7) :: dummy
   character(len=MAX_STRING_LEN) :: string
   character(len=MAX_STRING_LEN) :: FORCESOLUTION,path_to_add
-  integer :: ier
+  integer :: dummyval
+  character(len=7) :: dummy
 
   ! initializes
   lat(:) = 0.d0
@@ -63,7 +63,7 @@
   depth(:) = 0.d0
 
   t_shift(:) = 0.d0
-  tshift_force(:) = 0.d0
+  tshift_src(:) = 0.d0
   hdur(:) = 0.d0
 
   force_stf(:) = 0
@@ -94,6 +94,7 @@
 ! read source number isource
   do isource = 1,NSOURCES
 
+    ! header
     read(IIN,"(a)") string
     ! skips empty lines
     do while (len_trim(string) == 0)
@@ -101,7 +102,9 @@
     enddo
 
     ! read header with event information
-    read(string,"(a6,i4)") dummy,dummyval
+    ! format: FORCE  id
+    ! as example: FORCE 001
+    read(string,"(a6,i4)") dummy,dummyval  ! not used any further
 
     ! read time shift
     read(IIN,"(a)") string
@@ -167,6 +170,18 @@
       ! null half-duration indicates a Heaviside
       ! replace with very short error function
       if (hdur(isource) < 5. * DT ) hdur(isource) = 5. * DT
+    case (3)
+      ! Monochromatic source time function
+      ! half-duration is the period
+      ! (see constants.h: TINYVAL = 1.d-9 )
+      if (hdur(isource) < TINYVAL ) then
+        stop 'Error set force period, make sure all forces have a non-zero period'
+      endif
+    case (4)
+      ! Gaussian by Meschede et al. (2011)
+      ! null half-duration indicates a Dirac
+      ! replace with very short Gaussian function
+      if (hdur(isource) < 5. * DT ) hdur(isource) = 5. * DT
     case default
       stop 'unsupported force_stf value!'
     end select
@@ -177,11 +192,11 @@
 
   ! Sets tshift_force to zero to initiate the simulation!
   if (NSOURCES == 1) then
-    tshift_force = 0.d0
-    min_tshift_force_original = t_shift(1)
+    min_tshift_src_original = t_shift(1)
+    tshift_src(1) = 0.d0
   else
-    tshift_force(1:NSOURCES) = t_shift(1:NSOURCES)-minval(t_shift)
-    min_tshift_force_original = minval(t_shift)
+    min_tshift_src_original = minval(t_shift)
+    tshift_src(1:NSOURCES) = t_shift(1:NSOURCES) - min_tshift_src_original
   endif
 
   do isource = 1,NSOURCES
@@ -193,8 +208,9 @@
     if (hdur(isource) < TINYVAL) hdur(isource) = TINYVAL
 
     ! check (tilted) force source direction vector
-    length = sqrt( comp_dir_vect_source_E(isource)**2 + comp_dir_vect_source_N(isource)**2 + &
-                   comp_dir_vect_source_Z_UP(isource)**2)
+    length = sqrt( comp_dir_vect_source_E(isource)**2 &
+                 + comp_dir_vect_source_N(isource)**2 &
+                 + comp_dir_vect_source_Z_UP(isource)**2 )
     if (length < TINYVAL) then
       print *, 'normal length: ', length
       print *, 'isource: ',isource
@@ -206,7 +222,7 @@
   ! factor_force_source in FORCESOLUTION file is in Newton
   ! 1 Newton is 1 kg * 1 m / (1 second)^2
   !
-  scaleF = RHOAV * (R_EARTH**4) * PI*GRAV*RHOAV
+  scaleF = RHOAV * (R_PLANET**4) * PI*GRAV*RHOAV
   factor_force_source(:) = factor_force_source(:) / scaleF
 
   end subroutine get_force

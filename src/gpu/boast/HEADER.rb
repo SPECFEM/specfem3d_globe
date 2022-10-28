@@ -30,7 +30,7 @@ module BOAST
 /*\n\
 !=====================================================================\n\
 !\n\
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0\n\
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0\n\
 !          --------------------------------------------------\n\
 !\n\
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp\n\
@@ -55,7 +55,7 @@ module BOAST
 !\n\
 !=====================================================================\n\
 */\n"
-    if BOAST::get_lang == CUDA then
+    if (BOAST::get_lang == CUDA or BOAST::get_lang == HIP) then
     var += "\n"
     end
     return var
@@ -109,8 +109,6 @@ module BOAST
     iregion_inner_core = opts[:iregion_inner_core].nil? ? 3 : opts[:iregion_inner_core]
     iflag_in_fictitious_cube = opts[:iflag_in_fictitious_cube].nil? ? 11 : opts[:iflag_in_fictitious_cube]
 
-    r_earth_km = opts[:r_earth_km].nil? ? 6371.0 : opts[:r_earth_km]
-    r_earth_km = r_earth_km.to_var
     coloring_min_nspec_inner_core = opts[:coloring_min_nspec_inner_core].nil? ? 1000 : opts[:coloring_min_nspec_inner_core]
     coloring_min_nspec_outer_core = opts[:coloring_min_nspec_outer_core].nil? ? 1000 : opts[:coloring_min_nspec_outer_core]
 
@@ -126,7 +124,6 @@ module BOAST
     protect("IREGION_CRUST_MANTLE", iregion_crust_mantle)
     protect("IREGION_INNER_CORE", iregion_inner_core)
     protect("IFLAG_IN_FICTITIOUS_CUBE", iflag_in_fictitious_cube)
-    protect("R_EARTH_KM", r_earth_km)
     protect("COLORING_MIN_NSPEC_INNER_CORE", coloring_min_nspec_inner_core)
     protect("COLORING_MIN_NSPEC_OUTER_CORE", coloring_min_nspec_outer_core)
     protect("BLOCKSIZE_TRANSFER", blocksize_transfer)

@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -28,19 +28,24 @@
 
 module postprocess_par
 
-  use shared_input_parameters, only: LOCAL_PATH
+  use constants, only: myrank
 
   use constants, only: CUSTOM_REAL,MAX_STRING_LEN, &
     NGLLX,NGLLY,NGLLZ,IIN,IOUT, &
-    FOUR_THIRDS,R_EARTH_KM,GAUSSALPHA,GAUSSBETA
+    FOUR_THIRDS,GAUSSALPHA,GAUSSBETA
+
+  use shared_parameters, only: LOCAL_PATH,R_PLANET_KM
+
+  use constants_solver, only: NSPEC_CRUST_MANTLE,NSPEC_OUTER_CORE,NSPEC_INNER_CORE, &
+    NGLOB_CRUST_MANTLE, &
+    NPROCTOT_VAL,NPROC_XI_VAL,NPROC_ETA_VAL, &
+    NEX_XI_VAL,NEX_ETA_VAL,NCHUNKS_VAL, &
+    ANGULAR_WIDTH_XI_IN_DEGREES_VAL,ANGULAR_WIDTH_ETA_IN_DEGREES_VAL
 
   implicit none
 
-  ! array dimensions for static compilation
-  include "OUTPUT_FILES/values_from_mesher.h"
-
   ! maximum number of kernel names (comma-separated e.g. vsv,vsh,vpv,vph,eta,rho -> 6 kernel names)
-  integer,parameter :: MAX_KERNEL_NAMES = 255
+  integer,parameter :: MAX_KERNEL_NAMES = 24
 
   ! maximum number of kernel directory paths (e.g. for summing kernels from different events)
   integer,parameter :: MAX_KERNEL_PATHS = 65535
@@ -52,9 +57,6 @@ module postprocess_par
   real(kind=CUSTOM_REAL), dimension(:),allocatable :: x, y, z
   integer, dimension(:,:,:,:),allocatable :: ibool
   logical, dimension(:),allocatable :: ispec_is_tiso
-
-  ! MPI process
-  integer :: myrank,sizeprocs
 
 end module postprocess_par
 

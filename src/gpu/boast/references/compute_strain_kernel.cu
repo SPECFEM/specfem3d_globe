@@ -151,7 +151,7 @@ __global__ void compute_strain_kernel(realw* d_displ,
     s_dummyy_loc[tx] = d_displ[iglob*3 + 1] + deltat * d_veloc[iglob*3 + 1];
     s_dummyz_loc[tx] = d_displ[iglob*3 + 2] + deltat * d_veloc[iglob*3 + 2];
 
-    // master thread loads hprime
+    // main thread loads hprime
     if (threadIdx.x == 0){
       for(int m=0; m < NGLL2; m++){
         // hprime
@@ -179,11 +179,10 @@ __global__ void compute_strain_kernel(realw* d_displ,
                                    epsdev,&eps_trace_over_3);
 
     // stores strain from wavefield
-    if (NSPEC_STRAIN_ONLY == 1 ) {
-      epsilon_trace_over_3[tx] = eps_trace_over_3;
-    } else {
+    if (NSPEC_STRAIN_ONLY > 1 ) {
       epsilon_trace_over_3[ijk_ispec] = eps_trace_over_3;
     }
+
     epsilondev_xx[ijk_ispec] = epsdev[0];
     epsilondev_yy[ijk_ispec] = epsdev[1];
     epsilondev_xy[ijk_ispec] = epsdev[2];

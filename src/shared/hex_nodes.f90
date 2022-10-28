@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -27,12 +27,12 @@
 
   subroutine hex_nodes(iaddx,iaddy,iaddz)
 
-  use constants
+  use constants, only: NGNOD
 
   implicit none
 
 ! topology of the elements
-  integer, dimension(NGNOD) :: iaddx,iaddy,iaddz
+  integer, dimension(NGNOD), intent(out) :: iaddx,iaddy,iaddz
 
 ! define the topology of the hexahedral elements
 
@@ -157,4 +157,79 @@
   iaddz(27) = 1
 
   end subroutine hex_nodes
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  subroutine hex_nodes_anchor_ijk(anchor_iax,anchor_iay,anchor_iaz)
+
+! gets control point indices
+!
+! to get coordinates of control points (corners,midpoints) for an element ispec, they can be use as:
+!do ia = 1,NGNOD
+!  iglob = ibool(anchor_iax(ia),anchor_iay(ia),anchor_iaz(ia),ispec)
+!  xelm(ia) = dble(xstore(iglob))
+!  yelm(ia) = dble(ystore(iglob))
+!  zelm(ia) = dble(zstore(iglob))
+!enddo
+
+  use constants, only: NGNOD,MIDX,MIDY,MIDZ,NGLLX,NGLLY,NGLLZ
+
+  implicit none
+
+  integer, dimension(NGNOD), intent(out) :: anchor_iax,anchor_iay,anchor_iaz
+
+  ! local parameters
+  integer :: ia
+  integer :: iax,iay,iaz
+
+  ! topology of the control/anchor points of the surface element
+  integer :: iaddx(NGNOD),iaddy(NGNOD),iaddr(NGNOD)
+
+  ! define topology of the control element
+  call hex_nodes(iaddx,iaddy,iaddr)
+
+  ! define (i,j,k) indices of the control/anchor points of the elements
+  do ia = 1,NGNOD
+    ! control point index
+    iax = 0
+    if (iaddx(ia) == 0) then
+      iax = 1
+    else if (iaddx(ia) == 1) then
+      iax = MIDX
+    else if (iaddx(ia) == 2) then
+      iax = NGLLX
+    else
+      stop 'incorrect value of iaddx'
+    endif
+    anchor_iax(ia) = iax
+
+    iay = 0
+    if (iaddy(ia) == 0) then
+      iay = 1
+    else if (iaddy(ia) == 1) then
+      iay = MIDY
+    else if (iaddy(ia) == 2) then
+      iay = NGLLY
+    else
+      stop 'incorrect value of iaddy'
+    endif
+    anchor_iay(ia) = iay
+
+    iaz = 0
+    if (iaddr(ia) == 0) then
+      iaz = 1
+    else if (iaddr(ia) == 1) then
+      iaz = MIDZ
+    else if (iaddr(ia) == 2) then
+      iaz = NGLLZ
+    else
+      stop 'incorrect value of iaddr'
+    endif
+    anchor_iaz(ia) = iaz
+  enddo
+
+  end subroutine hex_nodes_anchor_ijk
 

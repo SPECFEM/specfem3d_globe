@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -33,24 +33,24 @@
 
 ! generic routine that accepts any polynomial degree in each direction
 
-  integer NGLLA,NGLLB
+  integer, intent(in) :: NGLLA,NGLLB
 
-  double precision xigll(NGLLA)
-  double precision yigll(NGLLB)
+  double precision, intent(in) :: xigll(NGLLA)
+  double precision, intent(in) :: yigll(NGLLB)
 
 ! 2D shape functions and their derivatives
-  double precision shape2D(NGNOD2D,NGLLA,NGLLB)
-  double precision dershape2D(NDIM2D,NGNOD2D,NGLLA,NGLLB)
+  double precision, intent(inout) :: shape2D(NGNOD2D,NGLLA,NGLLB)
+  double precision, intent(inout) :: dershape2D(NDIM2D,NGNOD2D,NGLLA,NGLLB)
 
-  integer i,j,ia
+  integer :: i,j,ia
 
 ! location of the nodes of the 2D quadrilateral elements
-  double precision xi,eta
-  double precision l1xi,l2xi,l3xi,l1eta,l2eta,l3eta
-  double precision l1pxi,l2pxi,l3pxi,l1peta,l2peta,l3peta
+  double precision :: xi,eta
+  double precision :: l1xi,l2xi,l3xi,l1eta,l2eta,l3eta
+  double precision :: l1pxi,l2pxi,l3pxi,l1peta,l2peta,l3peta
 
 ! for checking the 2D shape functions
-  double precision sumshape,sumdershapexi,sumdershapeeta
+  double precision :: sumshape,sumdershapexi,sumdershapeeta
 
 ! check that the parameter file is correct
   if (NGNOD /= 27) call exit_MPI(myrank,'elements should have 27 control nodes')

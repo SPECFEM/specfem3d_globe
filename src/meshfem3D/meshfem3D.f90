@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -209,6 +209,10 @@
 ! Evolution of the code:
 ! ---------------------
 !
+! v. 8.0, many developers, September 2020:
+!     support for new earth, moon & mars models, ADIOS2 file I/O support, GLL models for azimuthal anisotropy & Q,
+!     LDDRK on GPU support, Laplacian smoothing, monochromatic source time functions.
+!
 ! v. 7.0, many developers, January 2015:
 !     simultaneous MPI runs, ADIOS file I/O support, ASDF seismograms, new seismogram names, tomography tools,
 !     CUDA and OpenCL GPU support, CEM model support, updates AK135 model, binary topography files,
@@ -235,7 +239,7 @@
 !      more flexible routines for mesh design, new inflated central cube
 !      with optimized shape, far fewer mesh files saved by the mesher,
 !      global arrays sorted to speed up the simulation, seismos can be
-!      written by the master, one more doubling level at the bottom
+!      written by the main process, one more doubling level at the bottom
 !      of the outer core if needed (off by default)
 !
 ! v. 3.6 Many people, many affiliations, September 2006:
@@ -325,7 +329,7 @@
 !             would lead to problems. passing arguments is a way to avoid such complications.
 !
 !             however, the mesher makes one exception here: it uses the
-!             module "meshfem3D_models_par" defined in the 'meshfem3D_models.f90' file.
+!             module "meshfem_models_par" defined in the 'meshfem3D_models.f90' file.
 !             the exception is based on the fact, that when one wants to incorporate
 !             a new 3D/1D velocity model, it became tedious to change so many routines hardly
 !             related to any model specific need.
@@ -335,7 +339,7 @@
 !             to have an idea where you will have to put some new code:
 !
 !                 - meshfem3D_models.f90: main file for models
-!                     put your model structure into the module "meshfem3D_models_par"
+!                     put your model structure into the module "meshfem_models_par"
 !                     and add your specific routine calls to get 1D/3D/attenuation values.
 !
 !                 - get_model_parameters.f90:

@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -259,6 +259,23 @@ subroutine initialize()
   call init_mpi()
   call world_size(sizeprocs)
   call world_rank(myrank)
+
+  ! reads mesh parameters
+  if (myrank == 0) then
+    ! reads mesh_parameters.bin file from topo/
+    LOCAL_PATH = INPUT_DATABASES_DIR        ! 'topo/' should hold mesh_parameters.bin file
+    call read_mesh_parameters()
+  endif
+  ! broadcast parameters to all processes
+  call bcast_mesh_parameters()
+
+  ! user output
+  if (myrank == 0) then
+    print *,'mesh parameters (from topo/ directory):'
+    print *,'  NSPEC_CRUST_MANTLE = ',NSPEC_CRUST_MANTLE
+    print *,'  NPROCTOT           = ',NPROCTOT_VAL
+    print *
+  endif
 
   if (sizeprocs /= NPROCTOT_VAL) then
     if (myrank == 0) then

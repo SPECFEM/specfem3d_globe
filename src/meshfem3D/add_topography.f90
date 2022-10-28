@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -27,11 +27,9 @@
 
   subroutine add_topography(xelm,yelm,zelm,ibathy_topo)
 
-  use constants, only: myrank, &
-    NGNOD,NX_BATHY,NY_BATHY,R_EARTH,R_UNIT_SPHERE, &
-    PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,ONE
-
-  use meshfem3D_par, only: R220
+  use constants, only: myrank,NGNOD,R_UNIT_SPHERE,ONE
+  use meshfem_par, only: R220,NX_BATHY,NY_BATHY,R_PLANET
+  use shared_parameters, only: REGIONAL_MESH_CUTOFF,REGIONAL_MESH_CUTOFF_DEPTH,USE_LOCAL_MESH
 
   implicit none
 
@@ -41,7 +39,7 @@
   integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
 
   ! local parameters
-  double precision :: r,lat,lon,elevation
+  double precision :: r,lat,lon,elevation,rbottom
   double precision :: x,y,z
   double precision :: gamma
 
@@ -61,14 +59,22 @@
     call get_topo_bathy(lat,lon,elevation,ibathy_topo)
 
     ! non-dimensionalize the elevation, which is in meters
-    elevation = elevation / R_EARTH
+    elevation = elevation / R_PLANET
 
     ! stretching topography between d220 and the surface
-    gamma = (r - R220/R_EARTH) / (R_UNIT_SPHERE - R220/R_EARTH)
+    if (REGIONAL_MESH_CUTOFF .and. USE_LOCAL_MESH) then
+      rbottom = (R_PLANET - REGIONAL_MESH_CUTOFF_DEPTH*1000.d0) / R_PLANET
+    else
+      rbottom = R220 / R_PLANET
+    endif
+    gamma = (r - rbottom) / (R_UNIT_SPHERE - rbottom)
 
     ! add elevation to all the points of that element
     ! also make sure gamma makes sense
-    if (gamma < -0.02 .or. gamma > 1.02) call exit_MPI(myrank,'incorrect value of gamma for topography')
+    if (gamma < -0.02 .or. gamma > 1.02) then
+      print '(a, 2F9.2,2F9.4)','DEBUG lat/lon/r/gamma:',lat,lon,r,gamma
+      call exit_MPI(myrank,'incorrect value of gamma for topography')
+    endif
 
     xelm(ia) = x*(ONE + gamma * elevation / r)
     yelm(ia) = y*(ONE + gamma * elevation / r)
@@ -91,7 +97,9 @@
                                 ibathy_topo)
 
   use constants
-  use meshfem3D_par, only: R220
+  use shared_parameters, only: R_PLANET
+  use meshfem_par, only: R220,NX_BATHY,NY_BATHY
+  use shared_parameters, only: REGIONAL_MESH_CUTOFF,REGIONAL_MESH_CUTOFF_DEPTH,USE_LOCAL_MESH
 
   implicit none
 
@@ -104,7 +112,7 @@
 
   ! local parameters used in this subroutine
   integer :: i,j,k
-  double precision :: r,lat,lon,elevation,gamma
+  double precision :: r,lat,lon,elevation,gamma,rbottom
   double precision :: x,y,z
 
   do k = 1,NGLLZ
@@ -122,10 +130,15 @@
         call get_topo_bathy(lat,lon,elevation,ibathy_topo)
 
         ! non-dimensionalize the elevation, which is in meters
-        elevation = elevation / R_EARTH
+        elevation = elevation / R_PLANET
 
         ! stretching topography between d220 and the surface
-        gamma = (r - R220/R_EARTH) / (R_UNIT_SPHERE - R220/R_EARTH)
+        if (REGIONAL_MESH_CUTOFF .and. USE_LOCAL_MESH) then
+          rbottom = (R_PLANET - REGIONAL_MESH_CUTOFF_DEPTH*1000.d0) / R_PLANET
+        else
+          rbottom = R220 / R_PLANET
+        endif
+        gamma = (r - rbottom) / (R_UNIT_SPHERE - rbottom)
 
         ! add elevation to all the points of that element
         ! also make sure factor makes sense

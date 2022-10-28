@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -162,7 +162,7 @@
   reclen_noise = CUSTOM_REAL * NDIM * NGLLX * NGLLY * NSPEC_TOP
 
   ! check integer size limit: size of reclen_noise must fit onto an 4-byte integer
-  if (NSPEC_TOP > 2147483646 / (CUSTOM_REAL * NGLLX * NGLLY * NDIM)) then
+  if (NSPEC_TOP > int(2147483646.d0 / (CUSTOM_REAL * NGLLX * NGLLY * NDIM))) then
     print *,'size of noise surface movie array needed exceeds integer 4-byte limit: ', &
       dble(CUSTOM_REAL * NGLLX * NGLLY * NDIM) * dble(NSPEC_TOP),reclen_noise
     print *,'  ',CUSTOM_REAL, NDIM, NGLLX * NGLLY, NSPEC_TOP
@@ -171,6 +171,97 @@
   endif
 
   end subroutine check_parameters_noise
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine read_noise_distribution_direction()
+
+! evcano: reads noise distribution and direction from binary files
+
+  use specfem_par
+  use specfem_par_noise
+
+  implicit none
+
+  ! local parameters
+  integer :: ier,use_external_noise_distribution,finish_subroutine
+  character(len=MAX_STRING_LEN) :: filename
+
+  ! check if external noise distribution should be used
+  finish_subroutine = 0
+
+  filename = trim(OUTPUT_FILES)//'/..//NOISE_TOMOGRAPHY/use_external_noise_distribution'
+  open(unit=IIN_NOISE,file=trim(filename),status='old',action='read',iostat=ier)
+
+  if (ier /= 0) then
+    finish_subroutine = 1
+    if (myrank == 0) then
+      write(IMAIN,*) 'file '//trim(filename)//' not found, using noise distribution defined in noise_tomography.f90'
+    endif
+  else
+    read(IIN_NOISE,*) use_external_noise_distribution
+    close(IIN_NOISE)
+    if (use_external_noise_distribution == 0) then
+      finish_subroutine = 1
+      if (myrank == 0) then
+        write(IMAIN,*) 'using noise distribution defined in noise_tomography.f90'
+      endif
+    endif
+  endif
+
+  if (finish_subroutine == 1) then
+    call save_mask_noise()
+    return
+  endif
+
+  ! set file name prefix
+  call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_TMP_PATH)
+
+  ! read noise distribution
+  if (myrank == 0) then
+    write(IMAIN,*) "reading noise distribution"
+    call flush_IMAIN
+  endif
+
+  filename = prname(1:len_trim(prname))//'mask_noise.bin'
+  open(unit=IIN_NOISE,file=trim(filename),status='old',action='read',form='unformatted',iostat=ier)
+  if (ier /= 0) call exit_mpi(myrank,'error reading noise distribution')
+  read(IIN_NOISE) mask_noise
+  close(IIN_NOISE)
+
+  ! read noise directions
+  if (myrank == 0) then
+    write(IMAIN,*) "reading noise directions"
+    call flush_IMAIN
+  endif
+
+  ! x direction
+  filename = prname(1:len_trim(prname))//'normal_x_noise.bin'
+  open(unit=IIN_NOISE,file=trim(filename),status='old',action='read',form='unformatted',iostat=ier)
+  if (ier /= 0) call exit_mpi(myrank,'error reading noise direction x')
+  read(IIN_NOISE) normal_x_noise
+  close(IIN_NOISE)
+
+  ! y direction
+  filename = prname(1:len_trim(prname))//'normal_y_noise.bin'
+  open(unit=IIN_NOISE,file=trim(filename),status='old',action='read',form='unformatted',iostat=ier)
+  if (ier /= 0) call exit_mpi(myrank,'error reading noise direction y')
+  read(IIN_NOISE) normal_y_noise
+  close(IIN_NOISE)
+
+  ! z direction
+  filename = prname(1:len_trim(prname))//'normal_z_noise.bin'
+  open(unit=IIN_NOISE,file=trim(filename),status='old',action='read',form='unformatted',iostat=ier)
+  if (ier /= 0) call exit_mpi(myrank,'error reading noise direction z')
+  read(IIN_NOISE) normal_z_noise
+  close(IIN_NOISE)
+
+  ! saves mask_noise for check, a file called "mask_noise.bin" is saved in "./OUTPUT_FILES/"
+  call save_mask_noise()
+
+  end subroutine read_noise_distribution_direction
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -193,46 +284,54 @@
   real(kind=CUSTOM_REAL) :: r,theta,phi
   character(len=MAX_STRING_LEN) :: filename
 
-  ! read master receiver ID -- the ID in DATA/STATIONS
-  filename = trim(OUTPUT_FILES)//'/..//NOISE_TOMOGRAPHY/irec_master_noise'
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) "  reading noise parameter files from: ", trim(OUTPUT_FILES) // '/..//NOISE_TOMOGRAPHY/'
+    call flush_IMAIN()
+  endif
+  call synchronize_all()
+
+  ! read main receiver ID -- the ID in DATA/STATIONS
+  filename = trim(OUTPUT_FILES)//'/..//NOISE_TOMOGRAPHY/irec_main_noise'
   open(unit=IIN_NOISE,file=trim(filename),status='old',action='read',iostat=ier)
   if (ier /= 0) then
-    call exit_MPI(myrank, 'file '//trim(filename)//' does NOT exist! This file contains the ID of the master receiver')
+    call exit_MPI(myrank, 'file '//trim(filename)//' does NOT exist! This file contains the ID of the main receiver')
   endif
 
-  read(IIN_NOISE,*,iostat=ier) irec_master_noise
+  read(IIN_NOISE,*,iostat=ier) irec_main_noise
   if (ier /= 0) then
-    call exit_MPI(myrank, 'Unable to read the ID of the master receiver from '//trim(filename))
+    call exit_MPI(myrank, 'Unable to read the ID of the main receiver from '//trim(filename))
   endif
   close(IIN_NOISE)
 
   ! user output
   if (myrank == 0) then
-    filename = trim(OUTPUT_FILES)//'/irec_master_noise'
+    filename = trim(OUTPUT_FILES)//'/irec_main_noise.txt'
     open(unit=IOUT_NOISE,file=trim(filename),status='unknown',action='write',iostat=ier)
-    if (ier /= 0 ) call exit_MPI(myrank,'Error opening output file irec_master_noise')
-    write(IOUT_NOISE,*) 'The master receiver is: (RECEIVER ID)', irec_master_noise
+    if (ier /= 0 ) call exit_MPI(myrank,'Error opening output file irec_main_noise')
+    write(IOUT_NOISE,*) 'The main receiver is: (RECEIVER ID)', irec_main_noise
     close(IOUT_NOISE)
   endif
 
-  ! sets number of noise master sources located in this slice (only 1 slice possible to hold master station)
+  ! sets number of noise main sources located in this slice (only 1 slice possible to hold main station)
   ! (only used and needed for 1. step of noise simulations)
   nsources_local_noise = 0
   if (NOISE_TOMOGRAPHY == 1) then
-    ! checks master irec
-    if (irec_master_noise < 1 .or. irec_master_noise > nrec) then
-      call exit_MPI(myrank,'Error noise tomography: irec_master_noise is not in range of given number of receivers')
+    ! checks main irec
+    if (irec_main_noise < 1 .or. irec_main_noise > nrec) then
+      call exit_MPI(myrank,'Error noise tomography: irec_main_noise is not in range of given number of receivers')
     endif
 
-    ! increases to one for slice holding master stations
-    if (myrank == islice_selected_rec(irec_master_noise)) nsources_local_noise = nsources_local_noise + 1
+    ! increases to one for slice holding main stations
+    if (myrank == islice_selected_rec(irec_main_noise)) nsources_local_noise = nsources_local_noise + 1
 
     ! compute source arrays for "ensemble forward source", which is source of "ensemble forward wavefield"
     if (nsources_local_noise > 0 .or. myrank == 0) then ! myrank == 0 is used for output only
-      call compute_arrays_source_noise(xi_receiver(irec_master_noise), &
-                                       eta_receiver(irec_master_noise), &
-                                       gamma_receiver(irec_master_noise), &
-                                       nu(:,:,irec_master_noise),noise_sourcearray, xigll,yigll,zigll,NSTEP)
+      call compute_arrays_source_noise(xi_receiver(irec_main_noise), &
+                                       eta_receiver(irec_main_noise), &
+                                       gamma_receiver(irec_main_noise), &
+                                       nu_rec(:,:,irec_main_noise),noise_sourcearray, xigll,yigll,zigll,NSTEP)
     endif
   endif
 
@@ -276,14 +375,17 @@
   ! checks
   if (ipoin /= num_noise_surface_points) call exit_MPI(myrank,'Error invalid number of surface points for noise distribution')
 
-  ! saves mask_noise for check, a file called "mask_noise.bin" is saved in "./OUTPUT_FILES/"
-  call save_mask_noise()
-
   ! opens noise surface movie files for file I/O
   !
   ! total file size
   filesize = reclen_noise
   filesize = filesize * NSTEP
+
+  if (myrank == 0) then
+    write(IMAIN,*) "  noise surface wavefield files in directory: ", trim(LOCAL_TMP_PATH) // "/"
+    call flush_IMAIN()
+  endif
+  call synchronize_all()
 
   ! noise surface array stored by each process
   write(filename,"('/proc',i6.6,'_noise_surface_movie.bin')") myrank
@@ -314,10 +416,52 @@
   ! local parameters
   integer :: ipoin, ispec2D, ispec, i, j, k, iglob, ier
   character(len=MAX_STRING_LEN) :: filename
-  real(kind=CUSTOM_REAL), dimension(num_noise_surface_points) :: &
+
+  ! gathering points
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
       val_x,val_y,val_z,val_ux,val_uy,val_uz
-  real(kind=CUSTOM_REAL), dimension(num_noise_surface_points,0:NPROCTOT_VAL-1) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
       val_x_all,val_y_all,val_z_all,val_ux_all,val_uy_all,val_uz_all
+
+  ! a file called "mask_noise.bin" is saved in "./OUTPUT_FILES/"
+  filename = trim(OUTPUT_FILES)//'/mask_noise.bin'
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) "  saving noise mask to: ", trim(filename)
+    call flush_IMAIN()
+  endif
+  call synchronize_all()
+
+  ! temporary arrays
+  allocate(val_x(num_noise_surface_points), &
+           val_y(num_noise_surface_points), &
+           val_z(num_noise_surface_points), &
+           val_ux(num_noise_surface_points), &
+           val_uy(num_noise_surface_points), &
+           val_uz(num_noise_surface_points), stat=ier)
+  if (ier /= 0) stop 'Error allocating temporary arrays'
+
+  ! gather arrays
+  if (myrank == 0) then
+    ! only main gathers all data
+    allocate(val_x_all(num_noise_surface_points,0:NPROCTOT_VAL-1), &
+             val_y_all(num_noise_surface_points,0:NPROCTOT_VAL-1), &
+             val_z_all(num_noise_surface_points,0:NPROCTOT_VAL-1), &
+             val_ux_all(num_noise_surface_points,0:NPROCTOT_VAL-1), &
+             val_uy_all(num_noise_surface_points,0:NPROCTOT_VAL-1), &
+             val_uz_all(num_noise_surface_points,0:NPROCTOT_VAL-1), stat=ier)
+    if (ier /= 0) stop 'Error allocating temporary gather arrays'
+  else
+    ! dummy
+    allocate(val_x_all(1,1), &
+             val_y_all(1,1), &
+             val_z_all(1,1), &
+             val_ux_all(1,1), &
+             val_uy_all(1,1), &
+             val_uz_all(1,1), stat=ier)
+    if (ier /= 0) stop 'Error allocating temporary gather arrays'
+  endif
 
   ! sets up temporary arrays for this slice
   ipoin = 0
@@ -343,7 +487,7 @@
   ! checks
   if (ipoin /= num_noise_surface_points) call exit_MPI(myrank,'Error invalid number of surface points for noise mask')
 
-  ! gather info on master proc
+  ! gather info on main proc
   call gather_all_cr(val_x,num_noise_surface_points,val_x_all,num_noise_surface_points,NPROCTOT_VAL)
   call gather_all_cr(val_y,num_noise_surface_points,val_y_all,num_noise_surface_points,NPROCTOT_VAL)
   call gather_all_cr(val_z,num_noise_surface_points,val_z_all,num_noise_surface_points,NPROCTOT_VAL)
@@ -358,9 +502,6 @@
   ! create_movie_AVS_DX.f90 needs to be modified in order to do that,
   ! i.e., instead of showing the normal component, change it to either x, y or z component, or the norm.
   if (myrank == 0) then
-    ! a file called "mask_noise.bin" is saved in "./OUTPUT_FILES/"
-    filename = trim(OUTPUT_FILES)//'/mask_noise.bin'
-
     open(unit=IOUT_NOISE,file=trim(filename),status='unknown',form='unformatted',action='write',iostat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error opening output file mask_noise')
 
@@ -373,6 +514,10 @@
 
     close(IOUT_NOISE)
   endif
+
+  ! frees memory
+  deallocate(val_x,val_y,val_z,val_ux,val_uy,val_uz)
+  deallocate(val_x_all,val_y_all,val_z_all,val_ux_all,val_uy_all,val_uz_all)
 
   end subroutine save_mask_noise
 
@@ -396,20 +541,23 @@
   double precision, dimension(NGLLX) :: xigll
   double precision, dimension(NGLLY) :: yigll
   double precision, dimension(NGLLZ) :: zigll
-  double precision, dimension(NDIM,NDIM) :: nu_single  ! rotation matrix at the master receiver
+  double precision, dimension(NDIM,NDIM) :: nu_single  ! rotation matrix at the main receiver
   ! output parameters
   real(kind=CUSTOM_REAL),dimension(NDIM,NGLLX,NGLLY,NGLLZ,NSTEP) :: noise_sourcearray
   ! local parameters
-  integer itime, i, j, k, ier
+  integer itime, i, j, k, ier, nlines
   real(kind=CUSTOM_REAL) :: junk
   real(kind=CUSTOM_REAL), dimension(NSTEP) :: noise_src
   real(kind=CUSTOM_REAL), dimension(NDIM,NSTEP) :: noise_src_u
-  double precision, dimension(NDIM) :: nu_master       ! component direction chosen at the master receiver
-  double precision :: xi_noise, eta_noise, gamma_noise ! master receiver location
+  double precision, dimension(NDIM) :: nu_main       ! component direction chosen at the main receiver
+  double precision :: xi_noise, eta_noise, gamma_noise ! main receiver location
   double precision, dimension(NGLLX) :: hxir, hpxir
   double precision, dimension(NGLLY) :: hetar, hpetar
   double precision, dimension(NGLLZ) :: hgammar, hpgammar
   character(len=MAX_STRING_LEN) :: filename
+
+  ! initializes
+  noise_src(:) = 0._CUSTOM_REAL
 
   ! noise file (source time function)
   filename = trim(OUTPUT_FILES)//'/..//NOISE_TOMOGRAPHY/S_squared'
@@ -418,8 +566,23 @@
     call exit_MPI(myrank, 'file '//trim(filename)//' does NOT exist! This file should have been generated using Matlab scripts')
   endif
 
-  noise_src(:) = 0._CUSTOM_REAL
-  do itime  = 1,NSTEP
+  ! counts line reads noise source S(t)
+  nlines = 0
+  do while(ier == 0)
+    read(IIN_NOISE,*,iostat=ier) junk, junk
+    if (ier == 0)  nlines = nlines + 1
+  enddo
+  rewind(IIN_NOISE)
+
+  ! checks to be sure that file is matching simulation setup
+  if (nlines /= NSTEP) then
+    print *,'Error: invalid number of lines ',nlines,' in file NOISE_TOMOGRAPHY/S_squared'
+    print *,'       should be same as NSTEP = ',NSTEP
+    print *,'Please check file...'
+    call exit_MPI(myrank,'Error invalid number of lines in file S_squared')
+  endif
+
+  do itime = 1,NSTEP
     read(IIN_NOISE,*,iostat=ier) junk, noise_src(itime)
     if (ier /= 0) then
       print *,'Error noise source S_squared file length: NSTEP length required is ',NSTEP,' with time step size ',DT
@@ -428,35 +591,36 @@
   enddo
   close(IIN_NOISE)
 
-  ! master receiver component direction, \nu_master
-  filename = trim(OUTPUT_FILES)//'/..//NOISE_TOMOGRAPHY/nu_master'
+  ! main receiver component direction, \nu_main
+  filename = trim(OUTPUT_FILES)//'/..//NOISE_TOMOGRAPHY/nu_main'
   open(unit=IIN_NOISE,file=trim(filename),status='old',action='read',iostat=ier)
   if (ier /= 0) then
     call exit_MPI(myrank, &
-                  'file '//trim(filename)//' does NOT exist! nu_master is the component direction (NEZ) for master receiver')
+                  'file '//trim(filename)//' does NOT exist! nu_main is the component direction (NEZ) for main receiver')
   endif
 
   do itime = 1,3
-    read(IIN_NOISE,*,iostat=ier) nu_master(itime)
+    read(IIN_NOISE,*,iostat=ier) nu_main(itime)
     if (ier /= 0) then
-      print *,'Error noise nu_master file length: number of required components is 3'
+      print *,'Error noise nu_main file length: number of required components is 3'
       call exit_MPI(myrank, &
                     'file '//trim(filename)//' has wrong length, the vector should have three components (NEZ)')
     endif
   enddo
   close(IIN_NOISE)
 
+  ! file output
   if (myrank == 0) then
-     open(unit=IOUT_NOISE,file=trim(OUTPUT_FILES)//'/nu_master',status='unknown',action='write')
-     write(IOUT_NOISE,*) 'The direction (NEZ) of selected component of master receiver is', nu_master
+     open(unit=IOUT_NOISE,file=trim(OUTPUT_FILES)//'/nu_main.txt',status='unknown',action='write')
+     write(IOUT_NOISE,*) 'The direction (NEZ) of selected component of main receiver is', nu_main
      close(IOUT_NOISE)
   endif
 
   ! rotates to Cartesian
   do itime = 1, NSTEP
-    noise_src_u(:,itime) = nu_single(1,:) * noise_src(itime) * nu_master(1) &
-                         + nu_single(2,:) * noise_src(itime) * nu_master(2) &
-                         + nu_single(3,:) * noise_src(itime) * nu_master(3)
+    noise_src_u(:,itime) = nu_single(1,:) * noise_src(itime) * nu_main(1) &
+                         + nu_single(2,:) * noise_src(itime) * nu_main(2) &
+                         + nu_single(3,:) * noise_src(itime) * nu_main(3)
   enddo
 
   ! receiver interpolators
@@ -481,12 +645,12 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine print_master_distances_noise()
+  subroutine print_main_distances_noise()
 
-! lists distances to master stations
+! lists distances to main stations
 
   use specfem_par, only: nrec,stlat,stlon,station_name,network_name, &
-    HUGEVAL,DEGREES_TO_RADIANS,RADIANS_TO_DEGREES,myrank,IMAIN,NOISE_TOMOGRAPHY
+    DEGREES_TO_RADIANS,RADIANS_TO_DEGREES,myrank,IMAIN,NOISE_TOMOGRAPHY
   use specfem_par_noise
 
   implicit none
@@ -495,7 +659,7 @@
   integer :: irec,i
   double precision :: lat,lon
   double precision :: theta,phi
-  double precision :: theta_master,phi_master
+  double precision :: theta_main,phi_main
   double precision, dimension(nrec) :: epidist
   ! sorting order
   integer, dimension(nrec) :: irec_dist_ordered
@@ -503,20 +667,20 @@
   ! checks if anything to do
   if (NOISE_TOMOGRAPHY /= 1) return
 
-  ! lists distances to master station
-  ! master station location
-  lat = stlat(irec_master_noise)
-  lon = stlon(irec_master_noise)
+  ! lists distances to main station
+  ! main station location
+  lat = stlat(irec_main_noise)
+  lon = stlon(irec_main_noise)
 
   ! limits longitude to [0.0,360.0]
   if (lon < 0.d0 ) lon = lon + 360.d0
   if (lon > 360.d0 ) lon = lon - 360.d0
 
   ! converts geographic latitude stlat (degrees) to geocentric colatitude theta (radians)
-  call lat_2_geocentric_colat_dble(lat,theta_master)
+  call lat_2_geocentric_colat_dble(lat,theta_main)
 
-  phi_master = lon * DEGREES_TO_RADIANS
-  call reduce(theta_master,phi_master)
+  phi_main = lon * DEGREES_TO_RADIANS
+  call reduce(theta_main,phi_main)
 
   ! loop on all the stations to locate them in the mesh
   do irec = 1,nrec
@@ -535,8 +699,8 @@
     call reduce(theta,phi)
 
     ! computes epicentral distance
-    epidist(irec) = acos(cos(theta)*cos(theta_master) + &
-                           sin(theta)*sin(theta_master)*cos(phi-phi_master))*RADIANS_TO_DEGREES
+    epidist(irec) = acos(cos(theta)*cos(theta_main) + &
+                           sin(theta)*sin(theta_main)*cos(phi-phi_main))*RADIANS_TO_DEGREES
   enddo
 
   ! print some information about stations
@@ -546,8 +710,8 @@
     call heap_sort_distances(nrec,epidist,irec_dist_ordered)
 
     ! outputs info
-    write(IMAIN,*) 'Stations sorted by epicentral distance to noise master station: ', &
-                   trim(network_name(irec_master_noise))//'.'//trim(station_name(irec_master_noise))
+    write(IMAIN,*) 'Stations sorted by epicentral distance to noise main station: ', &
+                   trim(network_name(irec_main_noise))//'.'//trim(station_name(irec_main_noise))
     do i = 1,nrec
       irec = irec_dist_ordered(i)
       write(IMAIN,'(a,i6,a,a24,a,f12.6,a)') ' Station #',irec,': ', &
@@ -558,16 +722,16 @@
     call flush_IMAIN()
   endif
 
-  end subroutine print_master_distances_noise
+  end subroutine print_main_distances_noise
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine noise_add_source_master_rec()
+  subroutine noise_add_source_main_rec()
 
 ! step 1: calculate the "ensemble forward source"
-! add noise spectrum to the location of master receiver
+! add noise spectrum to the location of main receiver
 !
 ! the first step of noise tomography is to use |S(\omega)|^2 as a point force source at one of the receivers.
 ! hence, instead of a moment tensor 'sourcearrays', a 'noise_sourcearray' for a point force is needed.
@@ -585,7 +749,7 @@
   ! local parameters
   integer :: i,j,k,iglob
 
-  ! checks if anything to do (only 1 slice will contain master station)
+  ! checks if anything to do (only 1 slice will contain main station)
   if (nsources_local_noise < 1) return
 
   ! adds noise source (only if this proc carries the noise)
@@ -595,7 +759,7 @@
     do k = 1,NGLLZ
       do j = 1,NGLLY
         do i = 1,NGLLX
-          iglob = ibool_crust_mantle(i,j,k,ispec_selected_rec(irec_master_noise))
+          iglob = ibool_crust_mantle(i,j,k,ispec_selected_rec(irec_main_noise))
           accel_crust_mantle(:,iglob) = accel_crust_mantle(:,iglob) &
                                         + noise_sourcearray(:,i,j,k,it)
         enddo
@@ -603,10 +767,10 @@
     enddo
   else
     ! on GPU
-    call noise_add_source_master_rec_gpu(Mesh_pointer,it,irec_master_noise,islice_selected_rec)
+    call noise_add_source_main_rec_gpu(Mesh_pointer,it,irec_main_noise,islice_selected_rec)
   endif
 
-  end subroutine noise_add_source_master_rec
+  end subroutine noise_add_source_main_rec
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -842,6 +1006,7 @@
   endif
 
   ! index for buffer reading
+  it_buffer = 0
   if (NOISE_TOMOGRAPHY == 2 .or. UNDO_ATTENUATION) then
     ! negative direction (counting back)
     it_buffer = nstep_subset_noise_buffer - icounter_noise_buffer

@@ -5,7 +5,7 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -82,9 +82,6 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifndef IFLAG_IN_FICTITIOUS_CUBE\n\
 #define IFLAG_IN_FICTITIOUS_CUBE 11\n\
 #endif\n\
-#ifndef R_EARTH_KM\n\
-#define R_EARTH_KM 6371.0f\n\
-#endif\n\
 #ifndef COLORING_MIN_NSPEC_INNER_CORE\n\
 #define COLORING_MIN_NSPEC_INNER_CORE 1000\n\
 #endif\n\
@@ -98,10 +95,14 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 __kernel void compute_iso_kernel(const __global float * epsilondev_xx, const __global float * epsilondev_yy, const __global float * epsilondev_xy, const __global float * epsilondev_xz, const __global float * epsilondev_yz, const __global float * epsilon_trace_over_3, const __global float * b_epsilondev_xx, const __global float * b_epsilondev_yy, const __global float * b_epsilondev_xy, const __global float * b_epsilondev_xz, const __global float * b_epsilondev_yz, const __global float * b_epsilon_trace_over_3, __global float * mu_kl, __global float * kappa_kl, const int NSPEC, const float deltat){\n\
   int ispec;\n\
   int ijk_ispec;\n\
+\n\
   ispec = get_group_id(0) + (get_group_id(1)) * (get_num_groups(0));\n\
+\n\
   if (ispec < NSPEC) {\n\
     ijk_ispec = get_local_id(0) + (NGLL3) * (ispec);\n\
+\n\
     mu_kl[ijk_ispec] = mu_kl[ijk_ispec] + (deltat) * ((epsilondev_xx[ijk_ispec]) * (b_epsilondev_xx[ijk_ispec]) + (epsilondev_yy[ijk_ispec]) * (b_epsilondev_yy[ijk_ispec]) + (epsilondev_xx[ijk_ispec] + epsilondev_yy[ijk_ispec]) * (b_epsilondev_xx[ijk_ispec] + b_epsilondev_yy[ijk_ispec]) + ((epsilondev_xy[ijk_ispec]) * (b_epsilondev_xy[ijk_ispec]) + (epsilondev_xz[ijk_ispec]) * (b_epsilondev_xz[ijk_ispec]) + (epsilondev_yz[ijk_ispec]) * (b_epsilondev_yz[ijk_ispec])) * (2));\n\
+\n\
     kappa_kl[ijk_ispec] = kappa_kl[ijk_ispec] + (deltat) * (((epsilon_trace_over_3[ijk_ispec]) * (b_epsilon_trace_over_3[ijk_ispec])) * (9));\n\
   }\n\
 }\n\

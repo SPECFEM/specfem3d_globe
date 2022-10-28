@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -34,8 +34,18 @@ module constants_solver
   implicit none
 
 ! daniel debug: todo
-#ifdef DANIEL_DEBUG_FUTURE_VERSION
-  ! for future compilation
+#ifdef USE_STATIC_COMPILATION
+  ! static compilation
+
+  ! include values created by the mesher
+  ! done for performance only using static allocation to allow for loop unrolling
+  include "OUTPUT_FILES/values_from_mesher.h"
+
+#else
+  ! "dynamic" compilation
+  !
+  ! we will read in mesh parameters stored in file DATABASES_MPI/mesh_parameters.bin at runtime
+  !
   ! no static compilation, will use dynamic arrays:
   ! all these parameters must be stored in mesh files and read in by solver before allocating arrays...
 
@@ -118,6 +128,7 @@ module constants_solver
   integer :: NSPEC2DMAX_YMIN_YMAX_OC
   integer :: NSPEC2D_BOTTOM_OC
   integer :: NSPEC2D_TOP_OC
+
   integer :: NSPEC2D_MOHO
   integer :: NSPEC2D_400
   integer :: NSPEC2D_670
@@ -149,7 +160,6 @@ module constants_solver
 
   logical :: USE_DEVILLE_PRODUCTS_VAL
   logical :: ATTENUATION_1D_WITH_3D_STORAGE_VAL
-  logical :: FORCE_VECTORIZATION_VAL
   logical :: UNDO_ATTENUATION_VAL
 
   ! 1-chunk
@@ -159,12 +169,12 @@ module constants_solver
   double precision :: CENTER_LONGITUDE_IN_DEGREES_VAL
   double precision :: GAMMA_ROTATION_AZIMUTH_VAL
 
+  ! we use this vectorization flag for solver routines in files **.f90
+#ifdef FORCE_VECTORIZATION
+  logical, parameter :: FORCE_VECTORIZATION_VAL = .true.
 #else
-  ! static compilation
-
-  ! include values created by the mesher
-  ! done for performance only using static allocation to allow for loop unrolling
-  include "OUTPUT_FILES/values_from_mesher.h"
+  logical, parameter :: FORCE_VECTORIZATION_VAL = .false.
+#endif
 
 #endif
 
@@ -240,7 +250,7 @@ module specfem_par
 
   ! for ellipticity
   integer :: nspl
-  double precision,dimension(NR) :: rspl,espl,espl2
+  double precision,dimension(NR_DENSITY) :: rspl,ellipicity_spline,ellipicity_spline2
 
   !-----------------------------------------------------------------
   ! rotation
@@ -249,7 +259,7 @@ module specfem_par
   ! non-dimensionalized rotation rate of the Earth times two
   real(kind=CUSTOM_REAL) :: two_omega_earth
   !ADJOINT
-  real(kind=CUSTOM_REAL) b_two_omega_earth
+  real(kind=CUSTOM_REAL) :: b_two_omega_earth
 
   !-----------------------------------------------------------------
   ! gravity
@@ -257,15 +267,13 @@ module specfem_par
 
   ! lookup table every km for gravity
   real(kind=CUSTOM_REAL) :: minus_g_cmb,minus_g_icb
-  double precision, dimension(NRAD_GRAVITY) :: minus_gravity_table, &
+  double precision, dimension(:),allocatable :: minus_gravity_table, &
     minus_deriv_gravity_table,density_table,d_ln_density_dr_table,minus_rho_g_over_kappa_fluid
 
   ! pre-computed vectors
   real(kind=CUSTOM_REAL), dimension(:,:),allocatable :: gravity_pre_store_outer_core,gravity_pre_store_crust_mantle, &
     gravity_pre_store_inner_core
   real(kind=CUSTOM_REAL), dimension(:,:),allocatable :: gravity_H_crust_mantle,gravity_H_inner_core
-
-
 
   !-----------------------------------------------------------------
   ! sources
@@ -281,11 +289,21 @@ module specfem_par
   double precision, dimension(:), allocatable :: xi_source,eta_source,gamma_source
   double precision, dimension(:), allocatable :: tshift_src,hdur,hdur_Gaussian
   double precision, dimension(:), allocatable :: theta_source,phi_source
+
   double precision :: Mrr,Mtt,Mpp,Mrt,Mrp,Mtp,Mw,M0
   double precision :: t0
+  double precision :: min_tshift_src_original
+  double precision :: source_final_distance_max
 
   ! External source time function.
   double precision, dimension(:), allocatable :: stfArray_external
+
+  ! parameters for a force source located exactly at a grid point
+  integer, dimension(:), allocatable :: force_stf
+  double precision, dimension(:), allocatable :: factor_force_source
+  double precision, dimension(:), allocatable :: comp_dir_vect_source_E
+  double precision, dimension(:), allocatable :: comp_dir_vect_source_N
+  double precision, dimension(:), allocatable :: comp_dir_vect_source_Z_UP
 
   !-----------------------------------------------------------------
   ! receivers
@@ -294,25 +312,29 @@ module specfem_par
   ! receiver information
   integer :: nrec,nrec_local
   integer, dimension(:), allocatable :: islice_selected_rec,ispec_selected_rec
-  integer, dimension(:), allocatable :: number_receiver_global
+  integer, dimension(:), allocatable :: islice_num_rec_local
+
   double precision, dimension(:), allocatable :: xi_receiver,eta_receiver,gamma_receiver
-  double precision, dimension(:,:,:), allocatable :: nu
+  double precision, dimension(:,:,:), allocatable :: nu_rec
   double precision, allocatable, dimension(:) :: stlat,stlon,stele,stbur
-  character(len=MAX_LENGTH_STATION_NAME), dimension(:), allocatable  :: station_name
+  double precision :: receiver_final_distance_max
+
+  character(len=MAX_LENGTH_STATION_NAME), dimension(:), allocatable :: station_name
   character(len=MAX_LENGTH_NETWORK_NAME), dimension(:), allocatable :: network_name
   character(len=MAX_STRING_LEN) :: STATIONS_FILE
 
   ! Lagrange interpolators at receivers
-  double precision, dimension(:,:), allocatable :: hxir_store,hetar_store,hgammar_store
-  double precision, dimension(:,:,:,:), allocatable :: hlagrange_store
+  integer, dimension(:), allocatable, target :: number_receiver_global
+  double precision, dimension(:,:), allocatable, target :: hxir_store,hetar_store,hgammar_store
 
-  ! ADJOINT sources
+  ! adjoint sources
+  integer :: nadj_rec_local
+  integer, dimension(:), pointer :: number_adjsources_global
+  double precision, dimension(:,:), pointer :: hxir_adjstore,hetar_adjstore,hgammar_adjstore
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: source_adjoint
   ! asynchronous read buffer when IO_ASYNC_COPY is set
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: buffer_source_adjoint
 
-
-  integer :: nadj_rec_local
   integer :: NSTEP_SUB_ADJ  ! to read input in chunks
 
   integer, dimension(:,:), allocatable :: iadjsrc ! to read input in chunks
@@ -333,22 +355,23 @@ module specfem_par
   integer :: it_begin,it_end
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: seismograms
   integer :: seismo_offset, seismo_current
+
+  ! strain seismograms
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: seismograms_eps
+
   ! adjoint seismograms
   integer :: it_adj_written
 
   ! for SAC headers for seismograms
   integer :: yr_SAC,jda_SAC,mo_SAC,da_SAC,ho_SAC,mi_SAC
   double precision :: sec_SAC
+
   real :: mb_SAC ! body-wave magnitude
   real :: ms_SAC ! surface-wave magnitude (for ASDF QuakeML file)
   double precision :: t_cmt_SAC,t_shift_SAC
   double precision :: elat_SAC,elon_SAC,depth_SAC, &
     cmt_lat_SAC,cmt_lon_SAC,cmt_depth_SAC,cmt_hdur_SAC
   character(len=20) :: event_name_SAC
-
-  ! for ASDF start time
-  integer :: yr, jda, mo, da, ho, mi
-  double precision :: sec
 
   ! strain flag
   logical :: COMPUTE_AND_STORE_STRAIN
@@ -366,13 +389,6 @@ module specfem_par
   ! time loop timing
   double precision :: time_start
 
-  ! parameters for a force source located exactly at a grid point
-  integer, dimension(:), allocatable :: force_stf
-  double precision, dimension(:), allocatable :: factor_force_source
-  double precision, dimension(:), allocatable :: comp_dir_vect_source_E
-  double precision, dimension(:), allocatable :: comp_dir_vect_source_N
-  double precision, dimension(:), allocatable :: comp_dir_vect_source_Z_UP
-
   !-----------------------------------------------------------------
   ! assembly
   !-----------------------------------------------------------------
@@ -384,8 +400,10 @@ module specfem_par
   integer, dimension(:), allocatable :: my_neighbors_crust_mantle,nibool_interfaces_crust_mantle
   integer, dimension(:,:), allocatable :: ibool_interfaces_crust_mantle
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: buffer_send_vector_crust_mantle,buffer_recv_vector_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_buffer_send_vector_cm,b_buffer_recv_vector_cm
+  ! note: MPI buffers are declared as pointers instead of allocatable arrays.
+  !       this will allow for CUDA-aware MPI handling, where buffers have to be allocated on the GPU device.
+  real(kind=CUSTOM_REAL), dimension(:,:,:), pointer :: buffer_send_vector_crust_mantle,buffer_recv_vector_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:,:,:), pointer :: b_buffer_send_vector_cm,b_buffer_recv_vector_cm
 
   integer, dimension(:), allocatable :: request_send_vector_cm,request_recv_vector_cm
   integer, dimension(:), allocatable :: b_request_send_vector_cm,b_request_recv_vector_cm
@@ -396,8 +414,8 @@ module specfem_par
   integer, dimension(:), allocatable :: my_neighbors_inner_core,nibool_interfaces_inner_core
   integer, dimension(:,:), allocatable :: ibool_interfaces_inner_core
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: buffer_send_vector_inner_core,buffer_recv_vector_inner_core
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_buffer_send_vector_inner_core,b_buffer_recv_vector_inner_core
+  real(kind=CUSTOM_REAL), dimension(:,:,:), pointer :: buffer_send_vector_inner_core,buffer_recv_vector_inner_core
+  real(kind=CUSTOM_REAL), dimension(:,:,:), pointer :: b_buffer_send_vector_inner_core,b_buffer_recv_vector_inner_core
 
   integer, dimension(:), allocatable :: request_send_vector_ic,request_recv_vector_ic
   integer, dimension(:), allocatable :: b_request_send_vector_ic,b_request_recv_vector_ic
@@ -408,8 +426,8 @@ module specfem_par
   integer, dimension(:), allocatable :: my_neighbors_outer_core,nibool_interfaces_outer_core
   integer, dimension(:,:), allocatable :: ibool_interfaces_outer_core
 
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_buffer_send_scalar_outer_core,b_buffer_recv_scalar_outer_core
+  real(kind=CUSTOM_REAL), dimension(:,:), pointer :: buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core
+  real(kind=CUSTOM_REAL), dimension(:,:), pointer :: b_buffer_send_scalar_outer_core,b_buffer_recv_scalar_outer_core
 
   integer, dimension(:), allocatable :: request_send_scalar_oc,request_recv_scalar_oc
   integer, dimension(:), allocatable :: b_request_send_scalar_oc,b_request_recv_scalar_oc
@@ -421,6 +439,9 @@ module specfem_par
   ! CUDA mesh pointer to integer wrapper
   integer(kind=8) :: Mesh_pointer
 
+  ! flags for CUDA-aware MPI handling
+  logical :: USE_CUDA_AWARE_MPI = .false.
+
   !-----------------------------------------------------------------
   ! ADIOS
   !-----------------------------------------------------------------
@@ -431,7 +452,17 @@ module specfem_par
   ! ASDF
   !-----------------------------------------------------------------
   ! asdf file handle
-  integer :: current_asdf_handle
+  !
+  ! note: ASDF uses hdf5 file i/o routines. therefore, ASDF c routines define the file_id handle as hid_t.
+  !       the datatype hid_t is defined by the hdf5 library, and for Fortran in file H5f90i_gen.h as:
+  !          #define c_int_8 long long
+  !          typedef c_int_8 hid_t_f
+  !       in Fortran codes, one could use the hdf5 module for this
+  !          use hdf5, only: HID_T
+  !          integer(HID_T) :: file_id
+  !       which will required the hdf5 library paths set for compilation and linking.
+  !       instead here, the c_int_8 corresponds to long long, which in Fortran would be an 8-byte integer
+  integer(kind=8) :: current_asdf_handle
 
   !-----------------------------------------------------------------
   ! time scheme
@@ -449,7 +480,7 @@ module specfem_par
 
   ! LDDRK time scheme
   integer :: NSTAGE_TIME_SCHEME,istage
-  real(kind=CUSTOM_REAL),dimension(N_SLS) :: tau_sigma_CUSTOM_REAL
+  real(kind=CUSTOM_REAL),dimension(N_SLS) :: tau_sigmainv_CUSTOM_REAL
 
   ! UNDO_ATTENUATION
   integer :: NT_DUMP_ATTENUATION,NSUBSET_ITERATIONS
@@ -476,6 +507,32 @@ module specfem_par
 
   ! for saving/reading stacey boundary contributions
   logical :: SAVE_STACEY
+
+  !-----------------------------------------------------------------
+  ! point search
+  !-----------------------------------------------------------------
+  ! (i,j,k) indices of the control/anchor points of the element
+  integer :: anchor_iax(NGNOD),anchor_iay(NGNOD),anchor_iaz(NGNOD)
+
+  ! coordinates of element midpoints
+  double precision, allocatable, dimension(:,:) :: xyz_midpoints
+
+  ! search range: single slice dimensions
+  double precision :: lat_min,lat_max,lon_min,lon_max
+
+  ! search margin in degrees
+  double precision,parameter :: LAT_LON_MARGIN = 2.d0
+
+  ! estimated typical element size (at surface)
+  double precision :: element_size
+
+  ! typical element search distance squared
+  double precision :: typical_size_squared
+
+  ! adjacency arrays
+  integer,dimension(:),allocatable :: xadj   ! adjacency indexing
+  integer,dimension(:),allocatable :: adjncy ! adjacency
+  integer :: num_neighbors_all
 
 end module specfem_par
 
@@ -532,6 +589,8 @@ module specfem_par_crustmantle
     c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
     c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle
 
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: mu0store_crust_mantle
+
   ! flag for transversely isotropic elements
   logical, dimension(:),allocatable :: ispec_is_tiso_crust_mantle
 
@@ -551,7 +610,6 @@ module specfem_par_crustmantle
   ! displacement, velocity, acceleration
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
      displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle
-
   ! ADJOINT
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
     b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle
@@ -564,6 +622,9 @@ module specfem_par_crustmantle
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: &
     R_xx_crust_mantle,R_yy_crust_mantle,R_xy_crust_mantle,R_xz_crust_mantle,R_yz_crust_mantle
+  ! ADJOINT
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: &
+    b_R_xx_crust_mantle,b_R_yy_crust_mantle,b_R_xy_crust_mantle,b_R_xz_crust_mantle,b_R_yz_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable, target :: &
     epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
@@ -572,10 +633,6 @@ module specfem_par_crustmantle
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable, target :: &
     eps_trace_over_3_crust_mantle
 
-  ! ADJOINT
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: &
-    b_R_xx_crust_mantle,b_R_yy_crust_mantle,b_R_xy_crust_mantle,b_R_xz_crust_mantle,b_R_yz_crust_mantle
-
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), pointer :: &
     b_epsilondev_xx_crust_mantle,b_epsilondev_yy_crust_mantle,b_epsilondev_xy_crust_mantle, &
     b_epsilondev_xz_crust_mantle,b_epsilondev_yz_crust_mantle
@@ -583,7 +640,11 @@ module specfem_par_crustmantle
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), pointer :: &
     b_eps_trace_over_3_crust_mantle
 
-  ! for crust/oceans coupling
+  ! coupling/boundary surfaces
+  ! for coupling fluid-solid interfaces (at CMB and ICB)
+  integer :: nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle, &
+             nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle
+  ! for crust/oceans and CMB coupling
   integer, dimension(:), allocatable :: ibelm_xmin_crust_mantle,ibelm_xmax_crust_mantle
   integer, dimension(:), allocatable :: ibelm_ymin_crust_mantle,ibelm_ymax_crust_mantle
   integer, dimension(:), allocatable :: ibelm_bottom_crust_mantle
@@ -608,18 +669,28 @@ module specfem_par_crustmantle
     normal_top_crust_mantle
 
   ! Stacey
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
-    rho_vp_crust_mantle,rho_vs_crust_mantle
-  integer :: nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle, &
-             nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle
-  integer, dimension(:,:), allocatable :: nimin_crust_mantle,nimax_crust_mantle,nkmin_eta_crust_mantle
-  integer, dimension(:,:), allocatable :: njmin_crust_mantle,njmax_crust_mantle,nkmin_xi_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rho_vp_crust_mantle,rho_vs_crust_mantle
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: absorb_xmin_crust_mantle, &
-    absorb_xmax_crust_mantle, absorb_ymin_crust_mantle, absorb_ymax_crust_mantle
+  ! old version
+  !integer, dimension(:,:), allocatable :: nimin_crust_mantle,nimax_crust_mantle,nkmin_eta_crust_mantle
+  !integer, dimension(:,:), allocatable :: njmin_crust_mantle,njmax_crust_mantle,nkmin_xi_crust_mantle
+  ! buffer arrays for file I/O
+  !real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: absorb_xmin_crust_mantle, &
+  !  absorb_xmax_crust_mantle, absorb_ymin_crust_mantle, absorb_ymax_crust_mantle, absorb_zmin_crust_mantle
+  !integer :: reclen_xmin_crust_mantle, reclen_xmax_crust_mantle, &
+  !           reclen_ymin_crust_mantle,reclen_ymax_crust_mantle, &
+  !           reclen_zmin_crust_mantle
 
-  integer :: reclen_xmin_crust_mantle, reclen_xmax_crust_mantle, &
-            reclen_ymin_crust_mantle,reclen_ymax_crust_mantle
+  ! absorbing boundary arrays
+  integer :: num_abs_boundary_faces_crust_mantle
+  integer, dimension(:), allocatable :: abs_boundary_ispec_crust_mantle
+  integer, dimension(:), allocatable :: abs_boundary_npoin_crust_mantle
+  integer, dimension(:,:,:), allocatable :: abs_boundary_ijk_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: abs_boundary_normal_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: abs_boundary_jacobian2Dw_crust_mantle
+  ! buffer array for file I/O
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: absorb_buffer_crust_mantle
+  integer :: reclen_absorb_buffer_crust_mantle
 
   ! kernels
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
@@ -628,9 +699,12 @@ module specfem_par_crustmantle
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: cijkl_kl_crust_mantle
   ! approximate Hessian
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: hess_kl_crust_mantle
+  ! approximate Hessian using rho, kappa and mu parametrization (diagonal part only)
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: hess_rho_kl_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: hess_kappa_kl_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: hess_mu_kl_crust_mantle
 
   ! Boundary Mesh and Kernels
-  integer :: k_top,k_bot,iregion_code
   integer, dimension(:), allocatable :: ibelm_moho_top,ibelm_moho_bot
   integer, dimension(:), allocatable :: ibelm_400_top,ibelm_400_bot
   integer, dimension(:), allocatable :: ibelm_670_top,ibelm_670_bot
@@ -719,7 +793,6 @@ module specfem_par_innercore
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: sum_terms_inner_core
 
   ! material parameters
-  ! (note: muvstore also needed for attenuation in case of anisotropic inner core)
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
     rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core
 
@@ -757,6 +830,9 @@ module specfem_par_innercore
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: &
     R_xx_inner_core,R_yy_inner_core,R_xy_inner_core,R_xz_inner_core,R_yz_inner_core
+  ! ADJOINT
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: &
+    b_R_xx_inner_core,b_R_yy_inner_core,b_R_xy_inner_core,b_R_xz_inner_core,b_R_yz_inner_core
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable, target :: &
     epsilondev_xx_inner_core,epsilondev_yy_inner_core,epsilondev_xy_inner_core, &
@@ -764,10 +840,6 @@ module specfem_par_innercore
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable, target :: &
     eps_trace_over_3_inner_core
-
-  ! ADJOINT
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: &
-    b_R_xx_inner_core,b_R_yy_inner_core,b_R_xy_inner_core,b_R_xz_inner_core,b_R_yz_inner_core
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), pointer :: &
     b_epsilondev_xx_inner_core,b_epsilondev_yy_inner_core,b_epsilondev_xy_inner_core, &
@@ -778,7 +850,7 @@ module specfem_par_innercore
 
   ! coupling/boundary surfaces
   integer :: nspec2D_xmin_inner_core,nspec2D_xmax_inner_core, &
-            nspec2D_ymin_inner_core,nspec2D_ymax_inner_core
+             nspec2D_ymin_inner_core,nspec2D_ymax_inner_core
   integer, dimension(:), allocatable :: ibelm_xmin_inner_core,ibelm_xmax_inner_core
   integer, dimension(:), allocatable :: ibelm_ymin_inner_core,ibelm_ymax_inner_core
   integer, dimension(:), allocatable :: ibelm_bottom_inner_core
@@ -854,10 +926,9 @@ module specfem_par_outercore
   real(kind=CUSTOM_REAL), dimension(:), allocatable, target :: rmass_outer_core
   real(kind=CUSTOM_REAL), dimension(:), pointer :: b_rmass_outer_core
 
-  ! velocity potential
+  ! potentials
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
     displ_outer_core,veloc_outer_core,accel_outer_core
-
   ! ADJOINT
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
     b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core
@@ -871,23 +942,33 @@ module specfem_par_outercore
 
   ! Stacey
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: vp_outer_core
-  integer :: nspec2D_xmin_outer_core,nspec2D_xmax_outer_core, &
-             nspec2D_ymin_outer_core,nspec2D_ymax_outer_core, &
-             nspec2D_zmin_outer_core
-  integer, dimension(:,:), allocatable :: nimin_outer_core,nimax_outer_core,nkmin_eta_outer_core
-  integer, dimension(:,:), allocatable :: njmin_outer_core,njmax_outer_core,nkmin_xi_outer_core
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: absorb_xmin_outer_core, &
-     absorb_xmax_outer_core, absorb_ymin_outer_core, absorb_ymax_outer_core, &
-     absorb_zmin_outer_core
+  ! old version...
+  !integer, dimension(:,:), allocatable :: nimin_outer_core,nimax_outer_core,nkmin_eta_outer_core
+  !integer, dimension(:,:), allocatable :: njmin_outer_core,njmax_outer_core,nkmin_xi_outer_core
+  ! buffer arrays for file I/O
+  !real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: absorb_xmin_outer_core, &
+  !  absorb_xmax_outer_core, absorb_ymin_outer_core, absorb_ymax_outer_core, absorb_zmin_outer_core
+  !integer :: reclen_xmin_outer_core, reclen_xmax_outer_core, &
+  !           reclen_ymin_outer_core, reclen_ymax_outer_core, &
+  !           reclen_zmin_outer_core
 
-  integer :: reclen_xmin_outer_core, reclen_xmax_outer_core, &
-             reclen_ymin_outer_core, reclen_ymax_outer_core
-  integer :: reclen_zmin
+  ! absorbing boundary arrays
+  integer :: num_abs_boundary_faces_outer_core
+  integer, dimension(:), allocatable :: abs_boundary_ispec_outer_core
+  integer, dimension(:), allocatable :: abs_boundary_npoin_outer_core
+  integer, dimension(:,:,:), allocatable :: abs_boundary_ijk_outer_core
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: abs_boundary_jacobian2Dw_outer_core
+  ! buffer array for file I/O
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: absorb_buffer_outer_core
+  integer :: reclen_absorb_buffer_outer_core
 
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
     vector_accel_outer_core,vector_displ_outer_core,b_vector_displ_outer_core
 
+  ! coupling/boundary surfaces
+  integer :: nspec2D_xmin_outer_core,nspec2D_xmax_outer_core, &
+             nspec2D_ymin_outer_core,nspec2D_ymax_outer_core
   ! arrays to couple with the fluid regions by pointwise matching
   integer, dimension(:), allocatable :: ibelm_xmin_outer_core,ibelm_xmax_outer_core
   integer, dimension(:), allocatable :: ibelm_ymin_outer_core,ibelm_ymax_outer_core
@@ -949,7 +1030,7 @@ module specfem_par_noise
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: noise_surface_movie
 
   integer :: num_noise_surface_points
-  integer :: irec_master_noise
+  integer :: irec_main_noise
   integer :: nsources_local_noise
 
   ! noise buffer for file i/o
@@ -993,10 +1074,8 @@ module specfem_par_movie
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: nu_3dmovie
 
   integer :: npoints_3dmovie,nspecel_3dmovie
-  integer, dimension(:), allocatable :: num_ibool_3dmovie
 
   logical, dimension(:,:,:,:), allocatable :: mask_3dmovie
-  logical, dimension(:), allocatable :: mask_ibool
 
   ! outer core
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
@@ -1011,7 +1090,7 @@ module specfem_par_movie
 #endif
   real,dimension(:),allocatable :: vtkdata
   logical,dimension(:),allocatable :: vtkmask
-  ! multi-MPI processes, gather data arrays on master
+  ! multi-MPI processes, gather data arrays on main
   real,dimension(:),allocatable :: vtkdata_all
   integer,dimension(:),allocatable :: vtkdata_points_all
   integer,dimension(:),allocatable :: vtkdata_offset_all
@@ -1022,7 +1101,7 @@ end module specfem_par_movie
 
 !=====================================================================
 
-#ifdef XSMM
+#ifdef USE_XSMM
 
 module my_libxsmm
 

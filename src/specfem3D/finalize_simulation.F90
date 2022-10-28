@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -35,7 +35,7 @@
 
   use manager_adios
 
-#ifdef XSMM
+#ifdef USE_XSMM
   use my_libxsmm
 #endif
 
@@ -54,53 +54,14 @@
   ! closes Stacey absorbing boundary snapshots
   if (ABSORBING_CONDITIONS) then
     ! crust mantle
-    if (nspec2D_xmin_crust_mantle > 0 .and. SAVE_STACEY) then
-      call close_file_abs(0)
-    endif
-
-    if (nspec2D_xmax_crust_mantle > 0 .and. SAVE_STACEY) then
-      call close_file_abs(1)
-    endif
-
-    if (nspec2D_ymin_crust_mantle > 0 .and. SAVE_STACEY) then
-      call close_file_abs(2)
-    endif
-
-    if (nspec2D_ymax_crust_mantle > 0 .and. SAVE_STACEY) then
-      call close_file_abs(3)
-    endif
+    if (num_abs_boundary_faces_crust_mantle > 0 .and. SAVE_STACEY) call close_file_abs(0)
 
     ! outer core
-    if (nspec2D_xmin_outer_core > 0 .and. SAVE_STACEY) then
-      call close_file_abs(4)
-    endif
-
-    if (nspec2D_xmax_outer_core > 0 .and. SAVE_STACEY) then
-      call close_file_abs(5)
-    endif
-
-    if (nspec2D_ymin_outer_core > 0 .and. SAVE_STACEY) then
-      call close_file_abs(6)
-    endif
-
-    if (nspec2D_ymax_outer_core > 0 .and. SAVE_STACEY) then
-      call close_file_abs(7)
-    endif
-
-    if (nspec2D_zmin_outer_core > 0 .and. SAVE_STACEY) then
-      call close_file_abs(8)
-    endif
+    if (num_abs_boundary_faces_outer_core > 0 .and. SAVE_STACEY) call close_file_abs(4)
 
     ! frees memory
-    deallocate(absorb_xmin_crust_mantle, &
-               absorb_xmax_crust_mantle, &
-               absorb_ymin_crust_mantle, &
-               absorb_ymax_crust_mantle, &
-               absorb_xmin_outer_core, &
-               absorb_xmax_outer_core, &
-               absorb_ymin_outer_core, &
-               absorb_ymax_outer_core, &
-               absorb_zmin_outer_core)
+    deallocate(absorb_buffer_crust_mantle)
+    if (NSPEC_OUTER_CORE > 0) deallocate(absorb_buffer_outer_core)
   endif
 
   ! save/read the surface movie using the same c routine as we do for absorbing boundaries (file ID is 9)
@@ -126,15 +87,17 @@
   endif
 
   ! asdf finalizes
-  if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3 &
-       .and. READ_ADJSRC_ASDF) then
+  if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3 .and. READ_ADJSRC_ASDF) then
     call asdf_cleanup()
   endif
 
-#ifdef XSMM
+#ifdef USE_XSMM
   ! finalizes LIBXSMM
   call libxsmm_finalize()
 #endif
+
+  ! synchronize all
+  call synchronize_all()
 
   ! frees dynamically allocated memory
   call finalize_simulation_cleanup()
@@ -166,6 +129,10 @@
   use specfem_par_noise
   use specfem_par_movie
   implicit none
+
+  ! from here on, no gpu data is needed anymore
+  ! frees allocated memory on GPU
+  if (GPU_MODE) call prepare_cleanup_device(Mesh_pointer,NCHUNKS_VAL)
 
   ! mass matrices
   ! crust/mantle
@@ -219,38 +186,48 @@
   deallocate(rstore_inner_core)
 
   ! MPI buffers
-  deallocate(buffer_send_vector_crust_mantle,buffer_recv_vector_crust_mantle, &
-             request_send_vector_cm,request_recv_vector_cm)
-  deallocate(buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core, &
-             request_send_scalar_oc,request_recv_scalar_oc)
-  deallocate(buffer_send_vector_inner_core,buffer_recv_vector_inner_core, &
-             request_send_vector_ic,request_recv_vector_ic)
+  if (.not. USE_CUDA_AWARE_MPI) then
+    deallocate(buffer_send_vector_crust_mantle,buffer_recv_vector_crust_mantle)
+    deallocate(buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core)
+    deallocate(buffer_send_vector_inner_core,buffer_recv_vector_inner_core)
+  endif
+  deallocate(request_send_vector_cm,request_recv_vector_cm)
+  deallocate(request_send_scalar_oc,request_recv_scalar_oc)
+  deallocate(request_send_vector_ic,request_recv_vector_ic)
 
   if (SIMULATION_TYPE == 3) then
-    deallocate(b_buffer_send_vector_cm,b_buffer_recv_vector_cm, &
-               b_request_send_vector_cm,b_request_recv_vector_cm)
-    deallocate(b_buffer_send_scalar_outer_core,b_buffer_recv_scalar_outer_core, &
-               b_request_send_scalar_oc,b_request_recv_scalar_oc)
-    deallocate(b_buffer_send_vector_inner_core,b_buffer_recv_vector_inner_core, &
-               b_request_send_vector_ic,b_request_recv_vector_ic)
+    if (.not. USE_CUDA_AWARE_MPI) then
+      deallocate(b_buffer_send_vector_cm,b_buffer_recv_vector_cm)
+      deallocate(b_buffer_send_scalar_outer_core,b_buffer_recv_scalar_outer_core)
+      deallocate(b_buffer_send_vector_inner_core,b_buffer_recv_vector_inner_core)
+    endif
+    deallocate(b_request_send_vector_cm,b_request_recv_vector_cm)
+    deallocate(b_request_send_scalar_oc,b_request_recv_scalar_oc)
+    deallocate(b_request_send_vector_ic,b_request_recv_vector_ic)
   endif
 
-  deallocate(my_neighbors_crust_mantle,nibool_interfaces_crust_mantle)
-  deallocate(ibool_interfaces_crust_mantle)
-  deallocate(my_neighbors_outer_core,nibool_interfaces_outer_core)
-  deallocate(ibool_interfaces_outer_core)
-  deallocate(my_neighbors_inner_core,nibool_interfaces_inner_core)
-  deallocate(ibool_interfaces_inner_core)
+  if (allocated(my_neighbors_crust_mantle)) then
+    deallocate(my_neighbors_crust_mantle,nibool_interfaces_crust_mantle)
+    deallocate(ibool_interfaces_crust_mantle)
+  endif
+  if (allocated(my_neighbors_outer_core)) then
+    deallocate(my_neighbors_outer_core,nibool_interfaces_outer_core)
+    deallocate(ibool_interfaces_outer_core)
+  endif
+  if (allocated(my_neighbors_inner_core)) then
+    deallocate(my_neighbors_inner_core,nibool_interfaces_inner_core)
+    deallocate(ibool_interfaces_inner_core)
+  endif
 
   ! inner/outer elements
-  deallocate(phase_ispec_inner_crust_mantle)
-  deallocate(phase_ispec_inner_outer_core)
-  deallocate(phase_ispec_inner_inner_core)
+  if (allocated(phase_ispec_inner_crust_mantle)) deallocate(phase_ispec_inner_crust_mantle)
+  if (allocated(phase_ispec_inner_outer_core)) deallocate(phase_ispec_inner_outer_core)
+  if (allocated(phase_ispec_inner_inner_core)) deallocate(phase_ispec_inner_inner_core)
 
   ! coloring
-  deallocate(num_elem_colors_crust_mantle)
-  deallocate(num_elem_colors_outer_core)
-  deallocate(num_elem_colors_inner_core)
+  if (allocated(num_elem_colors_crust_mantle)) deallocate(num_elem_colors_crust_mantle)
+  if (allocated(num_elem_colors_outer_core)) deallocate(num_elem_colors_outer_core)
+  if (allocated(num_elem_colors_inner_core)) deallocate(num_elem_colors_inner_core)
 
   ! sources
   deallocate(islice_selected_source, &
@@ -267,8 +244,7 @@
     deallocate(comp_dir_vect_source_N)
     deallocate(comp_dir_vect_source_Z_UP)
   endif
-
-  if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) deallocate(sourcearrays)
+  deallocate(sourcearrays)
   if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
     deallocate(iadj_vec)
     if (nadj_rec_local > 0) then
@@ -281,24 +257,28 @@
   ! receivers
   deallocate(islice_selected_rec,ispec_selected_rec, &
              xi_receiver,eta_receiver,gamma_receiver)
+  if (myrank == 0 .and. WRITE_SEISMOGRAMS_BY_MAIN) deallocate(islice_num_rec_local)
   deallocate(station_name,network_name, &
              stlat,stlon,stele,stbur)
-  deallocate(nu,number_receiver_global)
+  deallocate(nu_rec,number_receiver_global)
   if (nrec_local > 0) then
     deallocate(hxir_store, &
                hetar_store, &
                hgammar_store)
-    deallocate(hlagrange_store)
     if (SIMULATION_TYPE == 2) then
       deallocate(moment_der,stshift_der)
     endif
   endif
   deallocate(seismograms)
+  if (SAVE_SEISMOGRAMS_STRAIN) deallocate(seismograms_eps)
 
   ! kernels
   if (SIMULATION_TYPE == 3) then
     if (APPROXIMATE_HESS_KL) then
       deallocate(hess_kl_crust_mantle)
+      deallocate(hess_rho_kl_crust_mantle)
+      deallocate(hess_kappa_kl_crust_mantle)
+      deallocate(hess_mu_kl_crust_mantle)
     endif
     deallocate(beta_kl_outer_core)
   endif
@@ -310,6 +290,7 @@
   endif
   if (MOVIE_VOLUME) then
     deallocate(nu_3dmovie)
+    deallocate(mask_3dmovie,muvstore_crust_mantle_3dmovie)
   endif
 
   ! noise simulations

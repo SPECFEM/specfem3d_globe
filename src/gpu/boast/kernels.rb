@@ -8,7 +8,7 @@ def rndup( val, div)
   return (val%div) == 0 ? val : val + div - (val%div)
 end
 
-$options = {:output_dir => "./output", :elem_per_thread => 1, :langs => [:CUDA, :CL] }
+$options = {:output_dir => "./output", :elem_per_thread => 1, :langs => [:CUDA, :CL, :HIP] }
 
 $parser = OptionParser::new do |opts|
   opts.on("-c","--check","Check kernels by building them") {
@@ -32,7 +32,7 @@ $parser = OptionParser::new do |opts|
   opts.on("-e","--elem ELEM_PER_THREAD","Treat several elements in big kernels") { |elem_per_thread|
     $options[:elem_per_thread] = elem_per_thread.to_i
   }
-  opts.on("-l","--lang LANG","Select language to use (CUDA or CL)") { |lang|
+  opts.on("-l","--lang LANG","Select language to use (CUDA or CL or HIP)") { |lang|
      $options[:langs] = [ lang.to_sym ]
   }
   opts.parse!
@@ -55,7 +55,7 @@ small_kernels = [
 :write_seismograms_transfer_from_device_kernel,
 :write_seismograms_transfer_strain_from_device_kernel,
 :noise_transfer_surface_to_host_kernel,
-:noise_add_source_master_rec_kernel,
+:noise_add_source_main_rec_kernel,
 :noise_add_surface_movie_kernel,
 :compute_seismograms_kernel,
 :compute_stacey_acoustic_kernel,
@@ -68,15 +68,20 @@ small_kernels = [
 :update_veloc_elastic_kernel,
 :update_accel_acoustic_kernel,
 :update_veloc_acoustic_kernel,
+:update_acoustic_lddrk_kernel,
+:update_elastic_lddrk_kernel,
 :compute_rho_kernel,
 :compute_iso_kernel,
 :compute_ani_kernel,
 :compute_hess_kernel,
+:compute_kappa_mu_hess_kernel,
 :compute_acoustic_kernel,
 :compute_strength_noise_kernel,
 :compute_ani_undoatt_kernel,
 :compute_iso_undoatt_kernel,
 :compute_strain_kernel,
+:smooth_process_kernel,
+:smooth_normalize_data_kernel,
 :resort_array
 ]
 
@@ -93,6 +98,7 @@ kernels = small_kernels + big_kernels
 
 langs = $options[:langs]
 
+# default size for real (float)
 BOAST::set_default_real_size(4)
 BOAST::set_replace_constants(false)
 
@@ -131,7 +137,7 @@ kerns.each { |kern|
     puts "  " + lang.to_s
     BOAST::set_lang( BOAST::const_get(lang))
     # outputs reference cuda kernel
-    if $options[:display] && lang == :CUDA
+    if $options[:display] && (lang == :CUDA)
       puts "  REF"
       k = BOAST::method(kern).call
       k.print
@@ -142,6 +148,11 @@ kerns.each { |kern|
       puts "  Generated"
       k.print if $options[:display]
       filename = "#{kern}.cu"
+    elsif lang == :HIP then
+      k = BOAST::method(kern).call(false)
+      puts "  Generated"
+      k.print if $options[:display]
+      filename = "#{kern}.cpp"
     elsif lang == :CL
       if big_kernels.include?(kern) then
         k = BOAST::method(kern).call(false, $options[:elem_per_thread])
@@ -165,16 +176,49 @@ kerns.each { |kern|
       f.puts k_s
       if $options[:check] then
         puts "  building kernel"
-        k.build( :LDFLAGS => " -L/usr/local/cuda-5.5.22/lib64", :NVCCFLAGS => "-arch sm_20 -O2 --compiler-options -Wall", :verbose => $options[:verbose] )
+        puts "  !! for checking with `make test_boast_kernels`, it might need BOAST version 2.0.2 !!"
+        k.build(:LDFLAGS => " -L/usr/local/cuda-5.5.22/lib64", :NVCCFLAGS => "-arch sm_20 -O2 --compiler-options -Wall", :verbose => $options[:verbose] )
+      end
+    elsif lang == :HIP then
+      k_s = "#{v}" + k.to_s
+      f.puts k_s
+      if $options[:check] then
+        puts "  building kernel for HIP is not available yet"
+        abort "Error: HIP kernel test not available yet"
       end
     elsif lang == :CL then
-      s = k.to_s
-      res = "const char * #{kern}_program = \"\\\n"
-      s.each_line { |line|
-        res += line.sub("\n","\\n\\\n")
-      }
-      res += "\";\n"
-      res = "#{v}\n" + res
+      # for OpenCL: we will need to have a separate (const char*) kernel defined for each kernel procedure
+      #             for example, crust_mantle_impl_kernel_forward and crust_mantle_aniso_impl_kernel_forward
+      #             will need each its own *_program variable defined.
+      string_res = ""
+      if k.respond_to?('each') then
+        # multiple kernels per file
+        #puts "  kernel file: " + kern.to_s
+        k.each{ |k_single|
+          #puts "               has kernel " + k_single.procedure.name.to_s
+          kernel_name = k_single.procedure.name.to_s
+          # creates (const char*) variable for kernel procedure
+          string_res += "const char * #{kernel_name}_program = \"\\\n"
+          #debug
+          #if (kern.to_s == "inner_core_impl_kernel_forward") then
+          #  puts k_single.to_s
+          #end
+          s = k_single.to_s
+          s.each_line { |line|
+            string_res += line.sub("\n","\\n\\\n")
+          }
+          string_res += "\";\n\n"
+        }
+      else
+        # single kernel per file
+        string_res += "const char * #{kern}_program = \"\\\n"
+        s = k.to_s
+        s.each_line { |line|
+          string_res += line.sub("\n","\\n\\\n")
+        }
+        string_res += "\";\n"
+      end
+      res = "#{v}\n" + string_res
       f.print res
       if $options[:check] then
         puts "  building kernel"
@@ -194,6 +238,8 @@ kerns.each { |kern|
             inputs[key].last[:local_work_size][0] /= $options[:elem_per_thread]
             inputs[key].last[:global_work_size][0] /= $options[:elem_per_thread]
           elsif lang == :CUDA then
+            inputs[key].last[:block_size][0] /= $options[:elem_per_thread]
+          elsif lang == :HIP then
             inputs[key].last[:block_size][0] /= $options[:elem_per_thread]
           end
         end
@@ -223,24 +269,74 @@ langs.each { |lang|
     kern_proto_f = File::new("#{$options[:output_dir]}/kernel_proto.cu.h", "w+")
     kern_mk_f = File::new("#{$options[:output_dir]}/kernel_cuda.mk", "w+")
     kern_mk_f.puts "cuda_kernels_OBJS := \\"
+  elsif lang == :HIP then
+    suffix = ".cpp"
+    # we will use the same kernel_proto.cu.h and kernel_cuda.mk files as they are identical for now.
+    # might be an option in future, in case CUDA and HIP versions deviate more from each other.
+    #kern_proto_f = File::new("#{$options[:output_dir]}/kernel_proto.cpp.h", "w+")
+    #kern_mk_f = File::new("#{$options[:output_dir]}/kernel_hip.mk", "w+")
+    #kern_mk_f.puts "hip_kernels_OBJS := \\"
   elsif lang == :CL
     suffix = "_cl.c"
     kern_inc_f = File::new("#{$options[:output_dir]}/kernel_inc"+suffix, "w+")
+    kern_list_f = File::new("#{$options[:output_dir]}/kernel_list.h", "w+")
   end
 
-  kern_list_f = File::new("#{$options[:output_dir]}/kernel_list.h", "w+")
-
   kernels.each { |kern|
-    kern_list_f.puts "BOAST_KERNEL(#{kern.to_s});"
-
     if lang == :CUDA then
       require "./#{kern.to_s}.rb"
       BOAST::set_lang( BOAST::const_get(lang))
       k = BOAST::method(kern).call(false)
       BOAST::set_output( kern_proto_f )
-      k.procedure.decl
+      if k.procedure.respond_to?('each') then
+        k.procedure.each{ |procedure|
+          procedure.decl
+        }
+      else
+        k.procedure.decl
+      end
       kern_mk_f.puts "\t$O/#{kern.to_s}.cuda-kernel.o \\"
+    elsif lang == :HIP then
+      #require "./#{kern.to_s}.rb"
+      #BOAST::set_lang( BOAST::const_get(lang))
+      #k = BOAST::method(kern).call(false)
+      # future option for separate kernel_proto.cpp.h file
+      #BOAST::set_output( kern_proto_f )
+      #if k.procedure.respond_to?('each') then
+      #  k.procedure.each{ |procedure|
+      #    procedure.decl
+      #  }
+      #else
+      #  k.procedure.decl
+      #end
+      # future option for separate kernel_hip.mk file
+      #kern_mk_f.puts "\t$O/#{kern.to_s}.hip-kernel.o \\"
     elsif lang == :CL
+      # adds kernel names to kernel_list.h files needed for OpenCL kernels
+      # note: since we have in a single kernel file crust_mantle_impl_kernel_forward.rb
+      #       two kernels defined (crust_mantle_impl_kernel_forward and crust_mantle_aniso_impl_kernel_forward),
+      #       we need to check if there are multiple procedures defined per kernel file.
+      require "./#{kern.to_s}.rb"
+      BOAST::set_lang( BOAST::const_get(lang))
+      k = BOAST::method(kern).call(false)
+      if k.respond_to?('each') then
+        # multiple kernels per file
+        #puts "  kernel file: " + kern.to_s
+        k.each{ |k_single|
+          #puts "               has kernel " + procedure.name.to_s
+          kernel_name = k_single.procedure.name.to_s
+          # adds name to kernel list of all kernel names
+          kern_list_f.puts "BOAST_KERNEL(#{kernel_name});"
+        }
+      else
+        # single kernel per file
+        kernel_name = k.procedure.name.to_s
+        # adds name to kernel list of all kernel names
+        kern_list_f.puts "BOAST_KERNEL(#{kernel_name});"
+      end
+      # single kernel per file only: kernel list of all kernel names
+      #kern_list_f.puts "BOAST_KERNEL(#{kern.to_s});"
+      # adds generated OpenCL file to list of include files
       kern_inc_f.puts "#include \"#{kern.to_s}#{suffix}\""
     end
   }
@@ -251,6 +347,9 @@ langs.each { |lang|
 
   if lang == :CUDA then
     kern_proto_f.puts elem_thread_check
+  elsif lang == :HIP then
+    # future option for separate kernel_proto.cpp.h file
+    #kern_proto_f.puts elem_thread_check
   elsif lang == :CL
     kern_inc_f.puts elem_thread_check
   end
@@ -267,62 +366,74 @@ langs.each { |lang|
       BOAST::set_lang( BOAST::const_get(lang))
       k = BOAST::method(kern).call(false)
 
-      # get procedure declaration as string
-      my_typedef = ""
-      pointer_name = ""
-      proto = k.procedure.decl.to_s
-
-      # typedefs for big kernels
-      # kernel name string
-      kernel_name = "#{kern.to_s}"
-
-      # gets only function definition string, stripping leading __global__ .. declarations
-      istart = proto.index(kernel_name)
-      iend = proto.length
-      function = proto[istart..iend]
-
-      # gets arguments starting at "("
-      istart = function.index("(")
-      iend = function.length
-      arguments = function[istart..iend]
-
-      # makes pointer name string, e.g. outer_core_impl_kernel_forward -> (*outer_core_impl_kernel)
-      istart = kernel_name.index("_impl_kernel")
-      if istart then
-        pointer_name = "(*" + kernel_name[0..istart] + "impl_kernel" + ")"
+      # some kernels might have multiple procedures defined (kernel versions for _aniso_, .. etc)
+      # we thus loop over all procedure and make sure to have an array of procedures
+      if k.procedure.respond_to?('each') then
+        # kernel with multiple procedures defined
+        procedure_array = k.procedure
       else
-        puts "pointer name not recognized in kernel: ",kernel_name
-        abort "Error: kernel name invalid"
+        # kernel with only single procedure defined
+        procedure_array = [k.procedure]
       end
 
-      # declares typedef for function pointer, e.g. typedef void (*outer_core_impl_kernel) (...) ;
-      my_typedef = "typedef void " + pointer_name + " " + arguments + " ;"
+      # get procedure declaration as string
+      procedure_array.each{ |procedure|
+        my_typedef = ""
+        pointer_name = ""
+        proto = procedure.decl.to_s
 
-      # adds new typedef entries to list
-      if my_typedef.length > 1 then
-        #puts ""
-        #puts "typedef: ",my_typedef
-        #puts ""
-        #puts "listed: ",proto_defs_cuda.any? { |s| s.include?(pointer_name)}
-        #puts "index:",proto_defs.index(my_typedef)
-        # checks if pointer already listed
-        index = proto_defs_cuda.index { |s| s.include?(pointer_name) }
-        if index then
-          # already contained in list
-          #puts "  #{kern.to_s} already listed: " + index.to_s
-          # checks that arguments match
-          if proto_defs_cuda[index] != my_typedef then
-            puts "typedef-definition does not match for " + kernel_name
-            puts "Please make sure that **_impl_kernel_forward and **_impl_kernel_adjoint have the same arguments"
-            puts ""
-            abort "Error: invalid arguments for forward and adjoint kernel call of " + kernel_name
-          end
+        # typedefs for big kernels
+        # kernel name string
+        kernel_name = procedure.name  #"#{kern.to_s}"
+
+        # gets only function definition string, stripping leading __global__ .. declarations
+        istart = proto.index(kernel_name)
+        iend = proto.length
+        function = proto[istart..iend]
+
+        # gets arguments starting at "("
+        istart = function.index("(")
+        iend = function.length
+        arguments = function[istart..iend]
+
+        # makes pointer name string, e.g. outer_core_impl_kernel_forward -> (*outer_core_impl_kernel)
+        istart = kernel_name.index("_impl_kernel")
+        if istart then
+          pointer_name = "(*" + kernel_name[0..istart] + "impl_kernel" + ")"
         else
-          # adds new definition to list
-          puts "  created typedef-definition for function pointer: " + pointer_name
-          proto_defs_cuda.push(my_typedef)
+          puts "pointer name not recognized in kernel: ",kernel_name
+          abort "Error: kernel name invalid"
         end
-      end
+
+        # declares typedef for function pointer, e.g. typedef void (*outer_core_impl_kernel) (...) ;
+        my_typedef = "typedef void " + pointer_name + " " + arguments + " ;"
+
+        # adds new typedef entries to list
+        if my_typedef.length > 1 then
+          #puts ""
+          #puts "typedef: ",my_typedef
+          #puts ""
+          #puts "listed: ",proto_defs_cuda.any? { |s| s.include?(pointer_name)}
+          #puts "index:",proto_defs.index(my_typedef)
+          # checks if pointer already listed
+          index = proto_defs_cuda.index { |s| s.include?(pointer_name) }
+          if index then
+            # already contained in list
+            #puts "  #{kern.to_s} already listed: " + index.to_s
+            # checks that arguments match
+            if proto_defs_cuda[index] != my_typedef then
+              puts "typedef-definition does not match for " + kernel_name
+              puts "Please make sure that **_impl_kernel_forward and **_impl_kernel_adjoint have the same arguments"
+              puts ""
+              abort "Error: invalid arguments for forward and adjoint kernel call of " + kernel_name
+            end
+          else
+            # adds new definition to list
+            puts "  created typedef-definition for function pointer: " + pointer_name
+            proto_defs_cuda.push(my_typedef)
+          end
+        end
+      }
     }
 
     # adds typedef-definitions
@@ -338,15 +449,23 @@ langs.each { |lang|
         kern_proto_f.puts ""
       }
     end
+  elsif lang == :HIP then
+    # future option: for now we will use the same function defintions between CUDA and HIP.
+    # no need to create a separate kernel_proto.cpp.h file
   end
 
   # closing files
-  kern_list_f.close
   if lang == :CUDA then
     kern_proto_f.close
     kern_mk_f.puts "\t$(EMPTY_MACRO)"
     kern_mk_f.close
+  elsif lang == :HIP then
+    # future options
+    #kern_proto_f.close
+    #kern_mk_f.puts "\t$(EMPTY_MACRO)"
+    #kern_mk_f.close
   elsif lang == :CL
+    kern_list_f.close
     kern_inc_f.close
   end
   puts "  Generated"

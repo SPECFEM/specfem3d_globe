@@ -14,6 +14,7 @@ cuda_kernels_OBJS := \
 	$O/compute_hess_kernel.cuda-kernel.o \
 	$O/compute_iso_kernel.cuda-kernel.o \
 	$O/compute_iso_undoatt_kernel.cuda-kernel.o \
+	$O/compute_kappa_mu_hess_kernel.cuda-kernel.o \
 	$O/compute_rho_kernel.cuda-kernel.o \
 	$O/compute_seismograms_kernel.cuda-kernel.o \
 	$O/compute_stacey_acoustic_backward_kernel.cuda-kernel.o \
@@ -28,7 +29,7 @@ cuda_kernels_OBJS := \
 	$O/get_maximum_vector_kernel.cuda-kernel.o \
 	$O/inner_core_impl_kernel_adjoint.cuda-kernel.o \
 	$O/inner_core_impl_kernel_forward.cuda-kernel.o \
-	$O/noise_add_source_master_rec_kernel.cuda-kernel.o \
+	$O/noise_add_source_main_rec_kernel.cuda-kernel.o \
 	$O/noise_add_surface_movie_kernel.cuda-kernel.o \
 	$O/noise_transfer_surface_to_host_kernel.cuda-kernel.o \
 	$O/outer_core_impl_kernel_adjoint.cuda-kernel.o \
@@ -36,9 +37,13 @@ cuda_kernels_OBJS := \
 	$O/prepare_boundary_accel_on_device.cuda-kernel.o \
 	$O/prepare_boundary_potential_on_device.cuda-kernel.o \
 	$O/resort_array.cuda-kernel.o \
+	$O/smooth_normalize_data_kernel.cuda-kernel.o \
+	$O/smooth_process_kernel.cuda-kernel.o \
 	$O/update_accel_acoustic_kernel.cuda-kernel.o \
 	$O/update_accel_elastic_kernel.cuda-kernel.o \
+	$O/update_acoustic_lddrk_kernel.cuda-kernel.o \
 	$O/update_disp_veloc_kernel.cuda-kernel.o \
+	$O/update_elastic_lddrk_kernel.cuda-kernel.o \
 	$O/update_potential_kernel.cuda-kernel.o \
 	$O/update_veloc_acoustic_kernel.cuda-kernel.o \
 	$O/update_veloc_elastic_kernel.cuda-kernel.o \

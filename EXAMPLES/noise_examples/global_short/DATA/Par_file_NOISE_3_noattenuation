@@ -48,6 +48,12 @@ NPROC_ETA                       = 10
 # 3D crustal models:
 # crust1.0, crust2.0, EPcrust, EuCRUST, crustmaps, crustSH
 #
+# Mars models:
+# 1D_Sohl, 1D_Sohl_3D_crust, 1D_case65TAY, 1D_case65TAY_3D_crust, mars_1D, mars_1D_3D_crust
+#
+# Moon models:
+# vpremoon
+#
 # 3D models with 3D crust: append "_**crustname**" to the mantle model name
 #                          to take a 3D crustal model (by default crust2.0 is taken for 3D mantle models)
 #                          e.g. s20rts_crust1.0, s362ani_crustmaps, full_sh_crustSH, sglobe_EPcrust, etc.
@@ -67,21 +73,65 @@ GRAVITY                         = .false.
 ROTATION                        = .false.
 ATTENUATION                     = .false.
 
+# record length in minutes
+RECORD_LENGTH_IN_MINUTES        = 50.0d0
+
+#-----------------------------------------------------------
+#
+# Mesh
+#
+#-----------------------------------------------------------
+
+## regional mesh cut-off
+# using this flag will cut-off the mesh in the mantle at a layer matching to the given cut-off depth.
+# this flag only has an effect for regional simulations, i.e., for NCHUNKS values less than 6.
+REGIONAL_MESH_CUTOFF            = .false.
+
+# regional mesh cut-off depth (in km)
+# possible selections are: 24.4d0, 80.d0, 220.d0, 400.d0, 600.d0, 670.d0, 771.d0
+REGIONAL_MESH_CUTOFF_DEPTH      = 400.d0
+
+# regional mesh cut-off w/ a second doubling layer below 220km interface
+# (by default, a first doubling layer will be added below the Moho, and a second one below the 771km-depth layer.
+#  Setting this flag to .true., will move the second one below the 220km-depth layer for regional mesh cut-offs only.)
+REGIONAL_MESH_ADD_2ND_DOUBLING  = .false.
+
+#-----------------------------------------------------------
+#
+# Absorbing boundary conditions
+#
+#-----------------------------------------------------------
+
 # absorbing boundary conditions for a regional simulation
 ABSORBING_CONDITIONS            = .false.
 
-# record length in minutes
-RECORD_LENGTH_IN_MINUTES        = 50.0d0
+# run global simulation for a circular region and apply high attenuation for the rest of the model
+# this creates an absorbing boundary with less reflection than stacey at a cost of 6x the computational cost
+# NCHUNKS must be set to 6 to enable this flag
+ABSORB_USING_GLOBAL_SPONGE      = .false.
+
+# location and size of the region with no sponge (the region to run simulation)
+SPONGE_LATITUDE_IN_DEGREES      = 40.d0
+SPONGE_LONGITUDE_IN_DEGREES     = 25.d0
+SPONGE_RADIUS_IN_DEGREES        = 25.d0
+
+#-----------------------------------------------------------
+#
+# undoing attenuation for sensitivity kernel calculations
+#
+#-----------------------------------------------------------
 
 # to undo attenuation for sensitivity kernel calculations or forward runs with SAVE_FORWARD
 # use one (and only one) of the two flags below. UNDO_ATTENUATION is much better (it is exact)
 # but requires a significant amount of disk space for temporary storage.
 PARTIAL_PHYS_DISPERSION_ONLY    = .false.
 UNDO_ATTENUATION                = .false.
-# How much memory (in GB) is installed on your machine per CPU core (only used for UNDO_ATTENUATION, can be ignored otherwise)
-#         (or per GPU card or per INTEL MIC Phi board)
-#   Beware, this value MUST be given per core, i.e. per MPI thread, i.e. per MPI rank, NOT per node.
-#   This value is for instance:
+
+## undo attenuation memory
+# How much memory (in GB) is installed on your machine per CPU core
+# (only used for UNDO_ATTENUATION, can be ignored otherwise)
+# Beware, this value MUST be given per core, i.e. per MPI thread, i.e. per MPI rank, NOT per node.
+# This value is for instance:
 #   -  4 GB on Tiger at Princeton
 #   -  4 GB on TGCC Curie in Paris
 #   -  4 GB on Titan at ORNL when using CPUs only (no GPUs); start your run with "aprun -n$NPROC -N8 -S4 -j1"
@@ -98,24 +148,31 @@ UNDO_ATTENUATION                = .false.
 MEMORY_INSTALLED_PER_CORE_IN_GB = 4.d0
 # What percentage of this total do you allow us to use for arrays to undo attenuation, keeping in mind that you
 # need to leave some memory available for the GNU/Linux system to run
-#   (a typical value is 85%; any value below is fine but the code will then save a lot of data to disk;
-#    values above, say 90% or 92%, can be OK on some systems but can make the adjoint code run out of memory
-#    on other systems, depending on how much memory per node the GNU/Linux system needs for itself; thus you can try
-#    a higher value and if the adjoint crashes then try again with a lower value)
+# (a typical value is 85%; any value below is fine but the code will then save a lot of data to disk;
+#  values above, say 90% or 92%, can be OK on some systems but can make the adjoint code run out of memory
+#  on other systems, depending on how much memory per node the GNU/Linux system needs for itself; thus you can try
+#  a higher value and if the adjoint crashes then try again with a lower value)
 PERCENT_OF_MEM_TO_USE_PER_CORE  = 85.d0
 
+## exact mass matrices for rotation
 # three mass matrices instead of one are needed to handle rotation very accurately;
 # otherwise rotation is handled slightly less accurately (but still reasonably well);
 # set to .true. if you are interested in precise effects related to rotation;
 # set to .false. if you are solving very large inverse problems at high frequency and also undoing attenuation exactly
+#
 # using the UNDO_ATTENUATION flag above, in which case saving as much memory as possible can be a good idea.
-# You can also safely set it to .false. if you are not in a period range in which rotation matters, e.g. if you are targetting very short-period body waves.
-# if in doubt, set to .true.
-# Set it to .true. if you have ABSORBING_CONDITIONS above, because in that case the code will use the three mass matrices anyway
-# and thus there is no additional cost.
+# You can also safely set it to .false. if you are not in a period range in which rotation matters,
+# e.g. if you are targetting very short-period body waves. if in doubt, set to .true.
+#
+# You can safeely set it to .true. if you have ABSORBING_CONDITIONS above, because in that case the code
+# will use three mass matrices anyway and thus there is no additional memory cost.
 # this flag is of course unused if ROTATION above is set to .false.
 EXACT_MASS_MATRIX_FOR_ROTATION  = .false.
 
+#-----------------------------------------------------------
+#
+# LDDRK time scheme
+#
 #-----------------------------------------------------------
 
 # this for LDDRK high-order time scheme instead of Newmark
@@ -179,13 +236,9 @@ NTSTEP_BETWEEN_OUTPUT_INFO      = 10000
 
 #-----------------------------------------------------------
 #
-# Sources & seismograms
+# Sources
 #
 #-----------------------------------------------------------
-
-# interval in time steps for temporary writing of seismograms
-NTSTEP_BETWEEN_OUTPUT_SEISMOS   = 5000000
-NTSTEP_BETWEEN_READ_ADJSRC      = 1000
 
 # use a (tilted) FORCESOLUTION force point source (or several) instead of a CMTSOLUTION moment-tensor source.
 # This can be useful e.g. for asteroid simulations
@@ -201,6 +254,27 @@ NTSTEP_BETWEEN_READ_ADJSRC      = 1000
 # its norm is ignored and the norm of the force used is the factor force source times the source time function.
 USE_FORCE_POINT_SOURCE          = .false.
 
+# use monochromatic source time function for CMTSOLUTION moment-tensor source.
+# half duration is interpreted as a PERIOD just to avoid changing CMTSOLUTION file format
+# default is .false. which uses Heaviside function
+USE_MONOCHROMATIC_CMT_SOURCE    = .false.
+
+# print source time function
+PRINT_SOURCE_TIME_FUNCTION      = .false.
+
+#-----------------------------------------------------------
+#
+# Seismograms
+#
+#-----------------------------------------------------------
+
+# interval in time steps for temporary writing of seismograms
+NTSTEP_BETWEEN_OUTPUT_SEISMOS   = 5000000
+
+# set to n to reduce the sampling rate of output seismograms by a factor of n
+# defaults to 1, which means no down-sampling
+NTSTEP_BETWEEN_OUTPUT_SAMPLE    = 1
+
 # option to save strain seismograms
 # this option is useful for strain Green's tensor
 # this feature is currently under development
@@ -215,12 +289,13 @@ OUTPUT_SEISMOS_ASCII_TEXT       = .true.
 OUTPUT_SEISMOS_SAC_ALPHANUM     = .false.
 OUTPUT_SEISMOS_SAC_BINARY       = .false.
 OUTPUT_SEISMOS_ASDF             = .false.
+OUTPUT_SEISMOS_3D_ARRAY         = .false.
 
 # rotate seismograms to Radial-Transverse-Z or use default North-East-Z reference frame
 ROTATE_SEISMOGRAMS_RT           = .false.
 
-# decide if master process writes all the seismograms or if all processes do it in parallel
-WRITE_SEISMOGRAMS_BY_MASTER     = .true.
+# decide if main process writes all the seismograms or if all processes do it in parallel
+WRITE_SEISMOGRAMS_BY_MAIN       = .true.
 
 # save all seismograms in one large combined file instead of one file per seismogram
 # to avoid overloading shared non-local file systems such as LUSTRE or GPFS for instance
@@ -230,14 +305,15 @@ USE_BINARY_FOR_LARGE_FILE       = .false.
 # flag to impose receivers at the surface or allow them to be buried
 RECEIVERS_CAN_BE_BURIED         = .true.
 
-# print source time function
-PRINT_SOURCE_TIME_FUNCTION      = .false.
-
 #-----------------------------------------------------------
 #
 #  Adjoint kernel outputs
 #
 #-----------------------------------------------------------
+
+# interval in time steps for reading adjoint traces
+# 0 = read the whole adjoint sources at start time
+NTSTEP_BETWEEN_READ_ADJSRC      = 1000
 
 # use ASDF format for reading the adjoint sources
 READ_ADJSRC_ASDF                = .false.
@@ -251,6 +327,11 @@ ANISOTROPIC_KL                  = .false.
 # rather than fully anisotropic kernels when ANISOTROPIC_KL above is set to .true.
 # means to save radial anisotropic kernels, i.e., sensitivity kernels for beta_v, beta_h, etc.
 SAVE_TRANSVERSE_KL_ONLY         = .false.
+
+# output only the kernels used for the current azimuthally anisotropic inversions of surface waves,
+# i.e., bulk_c, bulk_betav, bulk_betah, eta, Gc_prime, Gs_prime and rho
+# (Gc' & Gs' which are the normalized Gc & Gs kernels by isotropic \rho\beta of the 1D reference model)
+SAVE_AZIMUTHAL_ANISO_KL_ONLY    = .false.
 
 # output approximate Hessian in crust mantle region.
 # means to save the preconditioning for gradients, they are cross correlations between forward and adjoint accelerations.
@@ -267,6 +348,10 @@ SAVE_SOURCE_MASK                = .false.
 
 # output kernels on a regular grid instead of on the GLL mesh points (a bit expensive)
 SAVE_REGULAR_KL                 = .false.
+
+# compute steady state kernels for source encoding
+STEADY_STATE_KERNEL             = .false.
+STEADY_STATE_LENGTH_IN_MINUTES  = 0.d0
 
 #-----------------------------------------------------------
 

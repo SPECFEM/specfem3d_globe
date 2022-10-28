@@ -5,7 +5,7 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -82,9 +82,6 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifndef IFLAG_IN_FICTITIOUS_CUBE\n\
 #define IFLAG_IN_FICTITIOUS_CUBE 11\n\
 #endif\n\
-#ifndef R_EARTH_KM\n\
-#define R_EARTH_KM 6371.0f\n\
-#endif\n\
 #ifndef COLORING_MIN_NSPEC_INNER_CORE\n\
 #define COLORING_MIN_NSPEC_INNER_CORE 1000\n\
 #endif\n\
@@ -95,15 +92,22 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #define BLOCKSIZE_TRANSFER 256\n\
 #endif\n\
 \n\
-__kernel void compute_hess_kernel(const __global int * ibool, const __global float * accel, const __global float * b_accel, __global float * hess_kl, const float deltat, const int NSPEC_AB){\n\
+__kernel void compute_hess_kernel(const __global int * ibool, const __global float * accel, const __global float * b_accel, __global float * hess_kl, const float deltat, const int NSPEC_AB, const int USE_SOURCE_RECEIVER_HESSIAN){\n\
   int ispec;\n\
   int ijk_ispec;\n\
   int iglob;\n\
+\n\
   ispec = get_group_id(0) + (get_group_id(1)) * (get_num_groups(0));\n\
+\n\
   if (ispec < NSPEC_AB) {\n\
     ijk_ispec = get_local_id(0) + (NGLL3) * (ispec);\n\
     iglob = ibool[ijk_ispec] - (1);\n\
-    hess_kl[ijk_ispec] = hess_kl[ijk_ispec] + (deltat) * ((accel[0 + (3) * (iglob)]) * (b_accel[0 + (3) * (iglob)]) + (accel[1 + (3) * (iglob)]) * (b_accel[1 + (3) * (iglob)]) + (accel[2 + (3) * (iglob)]) * (b_accel[2 + (3) * (iglob)]));\n\
+\n\
+    if (USE_SOURCE_RECEIVER_HESSIAN) {\n\
+      hess_kl[ijk_ispec] = hess_kl[ijk_ispec] + (deltat) * ((accel[0 + (3) * (iglob)]) * (b_accel[0 + (3) * (iglob)]) + (accel[1 + (3) * (iglob)]) * (b_accel[1 + (3) * (iglob)]) + (accel[2 + (3) * (iglob)]) * (b_accel[2 + (3) * (iglob)]));\n\
+    } else {\n\
+      hess_kl[ijk_ispec] = hess_kl[ijk_ispec] + (deltat) * ((accel[0 + (3) * (iglob)]) * (accel[0 + (3) * (iglob)]) + (accel[1 + (3) * (iglob)]) * (accel[1 + (3) * (iglob)]) + (accel[2 + (3) * (iglob)]) * (accel[2 + (3) * (iglob)]));\n\
+    }\n\
   }\n\
 }\n\
 ";

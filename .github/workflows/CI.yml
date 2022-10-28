@@ -1,0 +1,383 @@
+# Github Actions workflow
+#
+# runs compilation tests on Linux Ubuntu and Mac platforms
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  changesCheck:
+    name: Check file changes
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Check for changes
+      id: diff
+      run: |
+        if [ $GITHUB_BASE_REF ]; then
+          # Pull Request
+          echo "Pull request:"
+          git fetch origin $GITHUB_BASE_REF --depth=1
+          export DIFF=$( git diff --name-only origin/$GITHUB_BASE_REF $GITHUB_SHA )
+          echo "  diff between origin/$GITHUB_BASE_REF and $GITHUB_SHA"
+        else
+          # Push
+          echo "Push request:"
+          git fetch origin ${{ github.event.before }} --depth=1
+          export DIFF=$( git diff --name-only ${{ github.event.before }} $GITHUB_SHA )
+          echo "  diff between ${{ github.event.before }} and $GITHUB_SHA"
+        fi
+        echo "$DIFF"
+        # Escape newlines (replace \n with %0A)
+        echo "::set-output name=diff::$( echo "$DIFF" | sed ':a;N;$!ba;s/\n/%0A/g' )"
+
+    - name: Output changes
+      run: echo "${{ steps.diff.outputs.diff }}"
+
+    - name: Check files
+      run: |
+        RUN_CHECKS=0
+        DIFF="${{ steps.diff.outputs.diff }}"
+        # Loop by lines
+        while read path; do
+          # Set $directory to substring before /
+          directory="$( echo $path | cut -d'/' -f1 -s )"
+          echo "file: $path  - directory: $directory"
+          if [ -z "$directory" ]; then
+            # root directory
+            RUN_CHECKS=1
+          elif [ "$directory" == src ]; then
+            # src/ directory
+            RUN_CHECKS=1
+          elif [ "$directory" == setup ]; then
+            # setup/ directory
+            RUN_CHECKS=1
+          elif [ "$directory" == EXAMPLES ]; then
+            # EXAMPLES/ directory
+            RUN_CHECKS=1
+          elif [ "$directory" == tests ]; then
+            # tests/ directory
+            RUN_CHECKS=1
+          elif [ "$directory" == .github ]; then
+            # .github/ directory
+            RUN_CHECKS=1
+          fi
+        done <<< "$DIFF"
+        echo
+        echo "run checks: ${RUN_CHECKS}"
+        if [[ ${RUN_CHECKS} -eq 0 ]]; then echo "nothing to check, exiting..."; exit 1; fi
+
+  macosCheck:
+    name: Test on Mac
+    runs-on: macos-latest
+    needs: changesCheck
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run: |
+        brew cleanup
+        brew reinstall gcc  # need gfortran (symlink to gfortran-10)
+        brew install hwloc openmpi
+        echo ""
+        echo "compiler versions:"
+        echo "gcc --version"
+        gcc --version
+        echo "gfortran --version"
+        gfortran --version
+        echo "mpif90  --version"
+        mpif90 --version
+        echo ""
+        ## avoids sed -i '' issue on MacOS, using gnu sed to have the same sed command lines as in linux
+        brew install gnu-sed
+        echo "PATH=/usr/local/opt/gnu-sed/libexec/gnubin:$PATH" >> $GITHUB_ENV
+        ## OpenMP
+        echo "OMP_NUM_THREADS=2" >> $GITHUB_ENV
+        ## avoids MPI issue with number of slots
+        echo "OMPI_MCA_rmaps_base_oversubscribe=1" >> $GITHUB_ENV
+        echo "OMPI_MCA_rmaps_base_inherit=1" >> $GITHUB_ENV
+        ## avoids MPI issue when running in MacOS
+        echo "OMPI_MCA_btl=self,tcp" >> $GITHUB_ENV
+        # exports for xterm output (for make tests)
+        echo "TERM=xterm" >> $GITHUB_ENV
+        echo ""
+        echo "exports:"
+        export
+        echo ""
+
+    - name: configure
+      run: ./configure
+
+    # skipping - compilation check done as well in make tests
+    #- name: make
+    #  run: make -j2 all
+
+    - name: make tests
+      run: make tests
+
+  linuxCheck:
+    name: Test on ${{ matrix.os }}    
+    runs-on: ${{ matrix.os }}
+    needs: changesCheck
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest,ubuntu-18.04]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: configure
+      run: ./configure
+      
+    - name: make
+      run: make -j2 all
+
+
+  linuxCheck-Intel:
+    name: Test Intel on ubuntu-20.04
+    runs-on: ubuntu-20.04
+    needs: changesCheck
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Cache Intel oneapi packages
+      id: cache-intel-oneapi
+      uses: actions/cache@v2
+      with:
+        path: /opt/intel/oneapi
+        key: install-${{ runner.os }}-all
+
+    - name: Install packages
+      if: steps.cache-intel-oneapi.outputs.cache-hit != 'true'
+      run: |
+        wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+        sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+        echo ""
+        sudo echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
+        sudo apt-get update
+        echo ""
+        echo "packages intel oneapi:"
+        sudo apt-get install -y intel-oneapi-compiler-fortran intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic intel-oneapi-mpi intel-oneapi-mpi-devel
+
+    - name: compiler infos
+      run: |
+        echo ""
+        source /opt/intel/oneapi/setvars.sh
+        echo ""
+        echo "compiler versions:"
+        echo "icc --version"
+        icc --version
+        echo "ifort --version"
+        ifort --version
+        echo "mpiifort --version"
+        mpiifort --version
+        echo "mpif90 --version"
+        mpif90 --version
+        echo ""
+        export TERM=xterm
+        echo "exports:"
+        export
+        echo ""
+        which ifort
+        which icc
+        which mpiifort
+        echo ""
+        printenv >> $GITHUB_ENV
+        echo "CXX=icpc" >> $GITHUB_ENV
+        echo "CC=icc" >> $GITHUB_ENV
+        echo "FC=ifort" >> $GITHUB_ENV
+        echo ""
+
+    - name: configure debug
+      run: ./configure --enable-debug FC=ifort CC=icc MPIFC=mpiifort
+
+    - name: make debug
+      run: |
+        make -j2 all
+        make -j2 all --always-make
+        make clean
+
+    - name: configure
+      run: ./configure FC=ifort CC=icc MPIFC=mpiifort
+
+    - name: make
+      run: |
+        make -j2 all
+        make clean
+
+    # fails due to MPI issue on virtual nodes
+    #- name: make tests
+    #  run: make tests
+
+  linuxTest_0:
+    name: Test run example 0 - make tests
+    runs-on: ubuntu-latest
+    needs: [linuxCheck]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: configure
+      run: ./configure
+
+    - name: make tests
+      run: make tests
+
+  linuxTest_1:
+     name: Test run example 1 - regional_Greece_small debug
+     runs-on: ubuntu-latest
+     needs: [linuxCheck]
+
+     steps:
+     - uses: actions/checkout@v2
+
+     - name: Install packages
+       run: ./.github/scripts/run_install.sh
+       shell: bash
+
+     - name: Run build
+       env:
+         TESTFLAGS: --enable-debug
+       run: ./.github/scripts/run_build.sh
+       shell: bash
+
+     - name: Run test
+       env:
+         TESTDIR: EXAMPLES/regional_Greece_small
+         DEBUG: true
+       run: ./.github/scripts/run_tests.sh
+       shell: bash
+
+  linuxTest_2:
+    name: Test run example 2 - regional_Greece_small
+    runs-on: ubuntu-latest
+    needs: [linuxCheck]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS: --enable-vectorization
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/regional_Greece_small
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+  linuxTest_3:
+    name: Test run example 3 - regional_sgloberani
+    runs-on: ubuntu-latest
+    needs: [linuxCheck]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS:  # no extra flags
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/regional_sgloberani
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+  linuxTest_4:
+    name: Test run example 4 - point_force
+    runs-on: ubuntu-latest
+    needs: [linuxCheck]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS: "FLAGS_CHECK=-O3 -mcmodel=medium -std=gnu -Wall -Wno-do-subscript -Wno-conversion -Wno-maybe-uninitialized"
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/point_force
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+
+  linuxTest_5:
+    name: Test run example 5 - moon_global
+    runs-on: ubuntu-latest
+    needs: [linuxCheck]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS: --enable-vectorization
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/moon_global
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+  linuxTest_6:
+    name: Test run example 6 - mars_regional
+    runs-on: ubuntu-latest
+    needs: [linuxCheck]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS: --enable-vectorization
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/mars_regional
+      run: ./.github/scripts/run_tests.sh
+      shell: bash

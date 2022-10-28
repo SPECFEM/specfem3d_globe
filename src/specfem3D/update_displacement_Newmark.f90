@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -252,22 +252,27 @@
 !$OMP ENDDO NOWAIT
 
 ! inner core
+    if (NGLOB_IC > 0) then
 !$OMP DO
-    do i = 1,NGLOB_IC * NDIM
-      displ_ic(i,1) = displ_ic(i,1) + deltat * veloc_ic(i,1) + deltatsqover2 * accel_ic(i,1)
-      veloc_ic(i,1) = veloc_ic(i,1) + deltatover2 * accel_ic(i,1)
-      accel_ic(i,1) = 0._CUSTOM_REAL
-    enddo
+      do i = 1,NGLOB_IC * NDIM
+        displ_ic(i,1) = displ_ic(i,1) + deltat * veloc_ic(i,1) + deltatsqover2 * accel_ic(i,1)
+        veloc_ic(i,1) = veloc_ic(i,1) + deltatover2 * accel_ic(i,1)
+        accel_ic(i,1) = 0._CUSTOM_REAL
+      enddo
 !$OMP ENDDO  NOWAIT
+    endif
 
 ! outer core
+    if (NGLOB_OC > 0) then
 !$OMP DO
-    do i = 1,NGLOB_OC
-      displ_oc(i) = displ_oc(i) + deltat * veloc_oc(i) + deltatsqover2 * accel_oc(i)
-      veloc_oc(i) = veloc_oc(i) + deltatover2 * accel_oc(i)
-      accel_oc(i) = 0._CUSTOM_REAL
-    enddo
+      do i = 1,NGLOB_OC
+        displ_oc(i) = displ_oc(i) + deltat * veloc_oc(i) + deltatsqover2 * accel_oc(i)
+        veloc_oc(i) = veloc_oc(i) + deltatover2 * accel_oc(i)
+        accel_oc(i) = 0._CUSTOM_REAL
+      enddo
 !$OMP ENDDO
+    endif
+
 !$OMP END PARALLEL
 
   else
@@ -290,22 +295,27 @@
 !$OMP ENDDO  NOWAIT
 
 ! inner core
+    if (NGLOB_IC > 0) then
 !$OMP DO
-    do i = 1,NGLOB_IC
-      displ_ic(:,i) = displ_ic(:,i) + deltat * veloc_ic(:,i) + deltatsqover2 * accel_ic(:,i)
-      veloc_ic(:,i) = veloc_ic(:,i) + deltatover2 * accel_ic(:,i)
-      accel_ic(:,i) = 0._CUSTOM_REAL
-    enddo
+      do i = 1,NGLOB_IC
+        displ_ic(:,i) = displ_ic(:,i) + deltat * veloc_ic(:,i) + deltatsqover2 * accel_ic(:,i)
+        veloc_ic(:,i) = veloc_ic(:,i) + deltatover2 * accel_ic(:,i)
+        accel_ic(:,i) = 0._CUSTOM_REAL
+      enddo
 !$OMP ENDDO  NOWAIT
+    endif
 
 ! outer core
+    if (NGLOB_OC > 0) then
 !$OMP DO
-    do i = 1,NGLOB_OC
-      displ_oc(i) = displ_oc(i) + deltat * veloc_oc(i) + deltatsqover2 * accel_oc(i)
-      veloc_oc(i) = veloc_oc(i) + deltatover2 * accel_oc(i)
-      accel_oc(i) = 0._CUSTOM_REAL
-    enddo
+      do i = 1,NGLOB_OC
+        displ_oc(i) = displ_oc(i) + deltat * veloc_oc(i) + deltatsqover2 * accel_oc(i)
+        veloc_oc(i) = veloc_oc(i) + deltatover2 * accel_oc(i)
+        accel_oc(i) = 0._CUSTOM_REAL
+      enddo
 !$OMP ENDDO
+    endif
+
 !$OMP END PARALLEL
 
   endif
@@ -419,7 +429,7 @@
 
   integer :: NGLOB
 
-  ! velocity potential
+  ! potentials
   real(kind=CUSTOM_REAL), dimension(NGLOB) :: veloc_outer_core,accel_outer_core
 
   real(kind=CUSTOM_REAL) :: deltatover2
@@ -430,6 +440,9 @@
   ! Newmark time scheme
 
   ! update velocity
+
+  ! checks if anything to do
+  if (NGLOB == 0) return
 
 ! openmp solver
 !$OMP PARALLEL DEFAULT(NONE) &
@@ -557,11 +570,14 @@
 !$OMP ENDDO NOWAIT
 
     ! inner core
+    if (NGLOB_IC > 0) then
 !$OMP DO
-    do i = 1,NGLOB_IC * NDIM
-      veloc_inner_core(i,1) = veloc_inner_core(i,1) + deltatover2*accel_inner_core(i,1)
-    enddo
+      do i = 1,NGLOB_IC * NDIM
+        veloc_inner_core(i,1) = veloc_inner_core(i,1) + deltatover2*accel_inner_core(i,1)
+      enddo
 !$OMP ENDDO
+    endif
+
 !$OMP END PARALLEL
 
   else
@@ -581,11 +597,14 @@
 !$OMP ENDDO NOWAIT
 
     ! inner core
+    if (NGLOB_IC > 0) then
 !$OMP DO
-    do i = 1,NGLOB_IC
-      veloc_inner_core(:,i) = veloc_inner_core(:,i) + deltatover2*accel_inner_core(:,i)
-    enddo
+      do i = 1,NGLOB_IC
+        veloc_inner_core(:,i) = veloc_inner_core(:,i) + deltatover2*accel_inner_core(:,i)
+      enddo
 !$OMP ENDDO
+    endif
+
 !$OMP END PARALLEL
 
   endif

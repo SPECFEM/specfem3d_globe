@@ -156,14 +156,14 @@ struct work_size_s {
 
 #if WITH_MPI == 1 && ONLY_MPI_ROOT_OUTPUT == 1
 extern int myrank;
-#define ONLY_MPI_MASTER()      \
+#define ONLY_MPI_MAIN()      \
   if (myrank != -1 && myrank != 0) { \
     return;                          \
   }
-#define IS_MPI_MASTER() (myrank == -1 || myrank == 0)
+#define IS_MPI_MAIN() (myrank == -1 || myrank == 0)
 #else
-#define ONLY_MPI_MASTER()
-#define IS_MPI_MASTER() 1
+#define ONLY_MPI_MAIN()
+#define IS_MPI_MAIN() 1
 #endif
 
 /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/

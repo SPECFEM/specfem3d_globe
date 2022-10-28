@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -141,58 +141,68 @@
 
 !================================================================
 
-  subroutine compute_arrays_source_adjoint(myrank, adj_source_file, &
-                                           nu,source_adjoint, &
-                                           NSTEP_BLOCK,iadjsrc,it_sub_adj,NSTEP_SUB_ADJ, &
-                                           NTSTEP_BETWEEN_READ_ADJSRC,DT)
+  subroutine compute_arrays_source_adjoint(adj_source_file,nu,source_adjoint, &
+                                           NSTEP_BLOCK,iadjsrc,it_sub_adj)
 
-  use constants, only: CUSTOM_REAL,SIZE_REAL,NDIM,NGLLX,NGLLY,NGLLZ,IIN_ADJ,R_EARTH,MAX_STRING_LEN
+  use constants, only: CUSTOM_REAL,NDIM,IIN_ADJ,MAX_STRING_LEN
 
-  use specfem_par, only: scale_displ_inv, NUMBER_OF_SIMULTANEOUS_RUNS, READ_ADJSRC_ASDF, mygroup
+  use specfem_par, only: scale_displ_inv, NUMBER_OF_SIMULTANEOUS_RUNS, mygroup
 
-  use iso_c_binding, only: C_NULL_CHAR
+  use specfem_par, only: myrank,DT, &
+    NSTEP_SUB_ADJ,NTSTEP_BETWEEN_READ_ADJSRC,READ_ADJSRC_ASDF
+
+!  use iso_c_binding, only: C_NULL_CHAR
 
   implicit none
 
 ! input -- notice here NSTEP_BLOCK is different from the NSTEP in the main program
 ! instead NSTEP_BLOCK = iadjsrc_len(it_sub_adj), the length of this specific block
 
-  integer,intent(in) :: myrank
-  character(len=*),intent(in) :: adj_source_file
-
+  character(len=MAX_STRING_LEN),intent(in) :: adj_source_file
   double precision, dimension(NDIM,NDIM),intent(in) :: nu
 
-
   ! output
-  integer,intent(in) :: NTSTEP_BETWEEN_READ_ADJSRC
   real(kind=CUSTOM_REAL),intent(out) :: source_adjoint(NDIM,NTSTEP_BETWEEN_READ_ADJSRC)
 
-  integer,intent(in) :: NSTEP_SUB_ADJ
-  integer, dimension(NSTEP_SUB_ADJ,2),intent(in) :: iadjsrc
-
   integer,intent(in) :: NSTEP_BLOCK
+  integer, dimension(NSTEP_SUB_ADJ,2),intent(in) :: iadjsrc
   integer,intent(in) :: it_sub_adj
 
-  double precision,intent(in) :: DT
-
   ! local parameters
-  double precision, dimension(NDIM,NSTEP_BLOCK) :: adj_src_u
-
-  real(kind=CUSTOM_REAL), dimension(NDIM,NSTEP_BLOCK) :: adj_src
-  real(kind=CUSTOM_REAL), dimension(NSTEP_BLOCK) :: adj_source_asdf
+  double precision, dimension(:,:), allocatable :: adj_src_u
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: adj_src
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: adj_source_asdf
   real(kind=CUSTOM_REAL) :: junk
 
-  integer :: icomp, itime, ios
+  integer :: icomp, itime, ier
   integer :: index_start,index_end,index_i
   character(len=3),dimension(NDIM) :: comp
   character(len=MAX_STRING_LEN) :: filename, path_to_add
-  character(len=80) :: adj_source_name
+  character(len=MAX_STRING_LEN) :: adj_source_name
   character(len=2) :: bic
 
   call band_instrument_code(DT,bic)
   comp(1) = bic(1:2)//'N'
   comp(2) = bic(1:2)//'E'
   comp(3) = bic(1:2)//'Z'
+
+  ! safety check
+  if (NSTEP_BLOCK > NTSTEP_BETWEEN_READ_ADJSRC) then
+    print *,'Error invalid NSTEP_BLOCK ',NSTEP_BLOCK,' compared to NTSTEP_BETWEEN_READ_ADJSRC ',NTSTEP_BETWEEN_READ_ADJSRC
+    call exit_MPI(myrank,'Error invalid NSTEP_BLOCK size in compute_array_source_adjoint')
+  endif
+
+  ! note: in some cases, simulations failed almost at the end due to a segmentation fault when reading in adj_src_u(..) values.
+  !       this might indicate an issues with stack memory running out on the nodes.
+  !       we thus explicitly allocate memory here, such that these arrays are allocated on heap memory instead,
+  !       trying to avoid the memory issue.
+
+  ! allocates temporary arrays
+  allocate(adj_src(NDIM,NSTEP_BLOCK), &
+           adj_src_u(NDIM,NSTEP_BLOCK),stat=ier)
+  if (ier /= 0) call exit_MPI(myrank,'Error allocating temporary adj_src arrays')
+  adj_src(:,:) = 0.0_CUSTOM_REAL
+  adj_src_u(:,:) = 0.d0
 
   ! (sub)trace start and end
   ! reading starts in chunks of NSTEP_BLOCK from the end of the trace,
@@ -215,12 +225,16 @@
   ! here now, index_start is now 2001 and index_end = 3000, then 1001 to 2000, then 1 to 1000.
   index_start = index_start
   index_end = index_end
-
   itime = 0
-  adj_src(:,:) = 0._CUSTOM_REAL
 
   if (READ_ADJSRC_ASDF) then
+    ! ASDF format
+    ! allocates temporary array to read in values
+    allocate(adj_source_asdf(NSTEP_BLOCK), stat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error allocating temporary adj_source_asdf array')
+    adj_source_asdf(:) = 0.0_CUSTOM_REAL
 
+    ! reads in components E/N/Z
     do icomp = 1, NDIM ! 3 components
 
       ! print *, "READING ADJOINT SOURCES USING ASDF"
@@ -235,38 +249,42 @@
 
       call read_adjoint_sources_ASDF(adj_source_name, adj_source_asdf, index_start, index_end)
 
-      adj_src(icomp,:) = real(adj_source_asdf(1:NSTEP_BLOCK))
-
+      ! store trace component to adjoint source
+      adj_src(icomp,:) = adj_source_asdf(1:NSTEP_BLOCK)
     enddo
 
-  else
+    ! free temporary asdf array
+    deallocate(adj_source_asdf)
 
+  else
+    ! ASCII format
     do icomp = 1, NDIM
 
       ! opens adjoint component file
       filename = 'SEM/'//trim(adj_source_file) // '.'// comp(icomp) // '.adj'
 
+      ! sets corresponding filename for simultaneous runs
       if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
         write(path_to_add,"('run',i4.4,'/')") mygroup + 1
         filename = path_to_add(1:len_trim(path_to_add))//filename(1:len_trim(filename))
       endif
 
-      open(unit=IIN_ADJ,file=trim(filename),status='old',action='read',iostat=ios)
+      open(unit=IIN_ADJ,file=trim(filename),status='old',action='read',iostat=ier)
 
       ! note: adjoint source files must be available for all three components E/N/Z, even
       !          if a component is just zeroed out
-      if (ios /= 0) then
+      if (ier /= 0) then
         ! adjoint source file not found
         ! stops simulation
         call exit_MPI(myrank, &
             'file '//trim(filename)//' not found, please check with your STATIONS_ADJOINT file')
       endif
-      !if (ios /= 0) cycle ! cycles to next file - this is too error prone and users might easily end up with wrong results
+      !if (ier /= 0) cycle ! cycles to next file - this is too error prone and users might easily end up with wrong results
 
       ! jumps over unused trace length
       do itime  = 1,index_start-1
-        read(IIN_ADJ,*,iostat=ios) junk,junk
-        if (ios /= 0) &
+        read(IIN_ADJ,*,iostat=ier) junk,junk
+        if (ier /= 0) &
           call exit_MPI(myrank, &
             'file '//trim(filename)//' has wrong length, please check with your simulation duration')
       enddo
@@ -284,10 +302,10 @@
         endif
 
         ! reads in adjoint source trace
-        !read(IIN_ADJ,*,iostat=ios) junk, adj_src(icomp,itime-index_start+1)
-        read(IIN_ADJ,*,iostat=ios) junk, adj_src(icomp,index_i)
+        !read(IIN_ADJ,*,iostat=ier) junk, adj_src(icomp,itime-index_start+1)
+        read(IIN_ADJ,*,iostat=ier) junk, adj_src(icomp,index_i)
 
-        if (ios /= 0) then
+        if (ier /= 0) then
           print *,'Error reading adjoint source: ',trim(filename)
           print *,'rank ',myrank,' - time step: ',itime,' index_start: ',index_start,' index_end: ',index_end
           print *,'  ',trim(filename)//'has wrong length, please check with your simulation duration'
@@ -305,40 +323,49 @@
 
   ! rotates to Cartesian
   do itime = 1, NSTEP_BLOCK
-    adj_src_u(:,itime) = nu(1,:) * adj_src(1,itime) &
-                       + nu(2,:) * adj_src(2,itime) &
-                       + nu(3,:) * adj_src(3,itime)
-  enddo
-
-  do icomp = 1, NDIM
-    source_adjoint(icomp,:) = adj_src_u(icomp,:)
-  enddo
-
-  contains
-
-    subroutine multiply_arrays_adjoint(sourcearrayd,hxir,hetar,hgammar,adj_src_ud)
-
-    use constants
-
-    implicit none
-
-    double precision, dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearrayd
-    double precision, dimension(NGLLX) :: hxir
-    double precision, dimension(NGLLY) :: hetar
-    double precision, dimension(NGLLZ) :: hgammar
-    double precision, dimension(NDIM) :: adj_src_ud
-
-    integer :: i,j,k
-
-    ! adds interpolated source contribution to all GLL points within this element
-    do k = 1, NGLLZ
-      do j = 1, NGLLY
-        do i = 1, NGLLX
-          sourcearrayd(:,i,j,k) = hxir(i) * hetar(j) * hgammar(k) * adj_src_ud(:)
-        enddo
-      enddo
+    ! uses double precision calculations and arrays (might not be necessary though...)
+    do icomp = 1, NDIM
+      adj_src_u(icomp,itime) = nu(1,icomp) * dble(adj_src(1,itime)) &
+                             + nu(2,icomp) * dble(adj_src(2,itime)) &
+                             + nu(3,icomp) * dble(adj_src(3,itime))
     enddo
+  enddo
 
-    end subroutine multiply_arrays_adjoint
+  ! stores rotated adjoint source
+  do icomp = 1, NDIM
+    source_adjoint(icomp,1:NSTEP_BLOCK) = adj_src_u(icomp,1:NSTEP_BLOCK)
+  enddo
+
+  ! free temporary arrays
+  deallocate(adj_src,adj_src_u)
+
+! not used, but for reference in case lagrange interpolators will be added here again ...
+!
+!  contains
+!
+!    subroutine multiply_arrays_adjoint(sourcearrayd,hxir,hetar,hgammar,adj_src_ud)
+!
+!    use constants
+!
+!    implicit none
+!
+!    double precision, dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearrayd
+!    double precision, dimension(NGLLX) :: hxir
+!    double precision, dimension(NGLLY) :: hetar
+!    double precision, dimension(NGLLZ) :: hgammar
+!    double precision, dimension(NDIM) :: adj_src_ud
+!
+!    integer :: i,j,k
+!
+!    ! adds interpolated source contribution to all GLL points within this element
+!    do k = 1, NGLLZ
+!      do j = 1, NGLLY
+!        do i = 1, NGLLX
+!          sourcearrayd(:,i,j,k) = hxir(i) * hetar(j) * hgammar(k) * adj_src_ud(:)
+!        enddo
+!      enddo
+!    enddo
+!
+!    end subroutine multiply_arrays_adjoint
 
   end subroutine compute_arrays_source_adjoint

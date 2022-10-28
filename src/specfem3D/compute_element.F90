@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -51,16 +51,14 @@
 
 ! isotropic element in crust/mantle region
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,N_SLS,NRAD_GRAVITY,FOUR_THIRDS
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,N_SLS,FOUR_THIRDS
 
   use constants_solver, only: &
     NSPEC => NSPEC_CRUST_MANTLE, &
     NGLOB => NGLOB_CRUST_MANTLE, &
-    NSPECMAX_ISO => NSPECMAX_ISO_MANTLE, &
     NSPEC_ATTENUATION => NSPEC_CRUST_MANTLE_ATTENUATION, &
     NSPEC_STRAIN_ONLY => NSPEC_CRUST_MANTLE_STRAIN_ONLY, &
-    ATT1_VAL,ATT2_VAL,ATT3_VAL, &
-    ATTENUATION_VAL,ATTENUATION_3D_VAL,ATTENUATION_1D_WITH_3D_STORAGE_VAL, &
+    ATTENUATION_VAL, &
     PARTIAL_PHYS_DISPERSION_ONLY_VAL,GRAVITY_VAL
 
   use specfem_par, only: COMPUTE_AND_STORE_STRAIN
@@ -83,7 +81,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: wgll_cube
 
   ! store anisotropic properties only where needed to save memory
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO),intent(in) :: kappavstore,muvstore
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: kappavstore,muvstore
 
   ! attenuation
   ! memory variables for attenuation
@@ -92,11 +90,11 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATTENUATION),intent(in) :: &
     R_xx,R_yy,R_xy,R_xz,R_yz
 
-  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STRAIN_ONLY),intent(out) :: epsilon_trace_over_3
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STRAIN_ONLY),intent(inout) :: epsilon_trace_over_3
 
   ! gravity
-  real(kind=CUSTOM_REAL),dimension(NDIM,NGLOB) :: gravity_pre_store
-  real(kind=CUSTOM_REAL),dimension(6,NGLOB) :: gravity_H
+  real(kind=CUSTOM_REAL),dimension(NDIM,NGLOB),intent(in) :: gravity_pre_store
+  real(kind=CUSTOM_REAL),dimension(6,NGLOB),intent(in) :: gravity_H
 
   ! element info
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(inout) :: &
@@ -104,8 +102,8 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: dummyx_loc,dummyy_loc,dummyz_loc
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ),intent(out) :: rho_s_H
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(out) :: epsilondev_loc
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ),intent(inout) :: rho_s_H
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(inout) :: epsilondev_loc
 
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: jacobianl
@@ -219,15 +217,14 @@
 
 ! isotropic element in inner core
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,N_SLS,NRAD_GRAVITY,FOUR_THIRDS
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,N_SLS,FOUR_THIRDS
 
   use constants_solver, only: &
     NSPEC => NSPEC_INNER_CORE, &
     NGLOB => NGLOB_INNER_CORE, &
     NSPEC_ATTENUATION => NSPEC_INNER_CORE_ATTENUATION, &
     NSPEC_STRAIN_ONLY => NSPEC_INNER_CORE_STRAIN_ONLY, &
-    ATT1_VAL,ATT2_VAL,ATT3_VAL, &
-    ATTENUATION_VAL,ATTENUATION_3D_VAL,ATTENUATION_1D_WITH_3D_STORAGE_VAL, &
+    ATTENUATION_VAL, &
     PARTIAL_PHYS_DISPERSION_ONLY_VAL,GRAVITY_VAL
 
   use specfem_par, only: COMPUTE_AND_STORE_STRAIN
@@ -259,11 +256,11 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATTENUATION),intent(in) :: &
     R_xx,R_yy,R_xy,R_xz,R_yz
 
-  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STRAIN_ONLY),intent(out) :: epsilon_trace_over_3
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STRAIN_ONLY),intent(inout) :: epsilon_trace_over_3
 
   ! gravity
-  real(kind=CUSTOM_REAL),dimension(NDIM,NGLOB) :: gravity_pre_store
-  real(kind=CUSTOM_REAL),dimension(6,NGLOB) :: gravity_H
+  real(kind=CUSTOM_REAL),dimension(NDIM,NGLOB),intent(in) :: gravity_pre_store
+  real(kind=CUSTOM_REAL),dimension(6,NGLOB),intent(in) :: gravity_H
 
   ! element info
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(inout) :: &
@@ -271,8 +268,8 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: dummyx_loc,dummyy_loc,dummyz_loc
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ),intent(out) :: rho_s_H
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(out) :: epsilondev_loc
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ),intent(inout) :: rho_s_H
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(inout) :: epsilondev_loc
 
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: jacobianl
@@ -393,17 +390,15 @@
 
 ! tiso element in crust/mantle
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,N_SLS,NRAD_GRAVITY,FOUR_THIRDS,TWO_THIRDS
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,N_SLS
 
   use constants_solver, only: &
     NSPEC => NSPEC_CRUST_MANTLE, &
     NGLOB => NGLOB_CRUST_MANTLE, &
-    NSPECMAX_ISO => NSPECMAX_ISO_MANTLE, &
     NSPECMAX_TISO => NSPECMAX_TISO_MANTLE, &
     NSPEC_ATTENUATION => NSPEC_CRUST_MANTLE_ATTENUATION, &
     NSPEC_STRAIN_ONLY => NSPEC_CRUST_MANTLE_STRAIN_ONLY, &
-    ATT1_VAL,ATT2_VAL,ATT3_VAL, &
-    ATTENUATION_VAL,ATTENUATION_3D_VAL,ATTENUATION_1D_WITH_3D_STORAGE_VAL, &
+    ATTENUATION_VAL, &
     PARTIAL_PHYS_DISPERSION_ONLY_VAL,GRAVITY_VAL
 
   use specfem_par, only: COMPUTE_AND_STORE_STRAIN
@@ -438,11 +433,11 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATTENUATION),intent(in) :: &
     R_xx,R_yy,R_xy,R_xz,R_yz
 
-  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STRAIN_ONLY),intent(out) :: epsilon_trace_over_3
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STRAIN_ONLY),intent(inout) :: epsilon_trace_over_3
 
   ! gravity
-  real(kind=CUSTOM_REAL),dimension(NDIM,NGLOB) :: gravity_pre_store
-  real(kind=CUSTOM_REAL),dimension(6,NGLOB) :: gravity_H
+  real(kind=CUSTOM_REAL),dimension(NDIM,NGLOB),intent(in) :: gravity_pre_store
+  real(kind=CUSTOM_REAL),dimension(6,NGLOB),intent(in) :: gravity_H
 
   ! element info
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(inout) :: &
@@ -450,8 +445,8 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: dummyx_loc,dummyy_loc,dummyz_loc
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ),intent(out) :: rho_s_H
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(out) :: epsilondev_loc
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ),intent(inout) :: rho_s_H
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(inout) :: epsilondev_loc
 
   ! local parameters
   ! the 21 coefficients for an anisotropic medium in reduced notation
@@ -599,7 +594,6 @@
 !  use constants_solver, only: &
 !    NSPEC => NSPEC_CRUST_MANTLE, &
 !    NGLOB => NGLOB_CRUST_MANTLE, &
-!    NSPECMAX_ISO => NSPECMAX_ISO_MANTLE, &
 !    NSPECMAX_TISO => NSPECMAX_TISO_MANTLE, &
 !    NSPEC_ATTENUATION => NSPEC_CRUST_MANTLE_ATTENUATION, &
 !    NSPEC_STRAIN_ONLY => NSPEC_CRUST_MANTLE_STRAIN_ONLY, &
@@ -633,7 +627,7 @@
 !  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO),intent(in) :: &
 !        kappahstore,muhstore,eta_anisostore
 !
-!  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO),intent(in) :: kappavstore,muvstore
+!  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: kappavstore,muvstore
 !
 !  ! attenuation
 !  ! memory variables for attenuation
@@ -999,7 +993,7 @@
 
 ! fully anisotropic element in crust/mantle region
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,N_SLS,NRAD_GRAVITY,FOUR_THIRDS,TWO_THIRDS
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,N_SLS
 
   use constants_solver, only: &
     NSPEC => NSPEC_CRUST_MANTLE, &
@@ -1007,8 +1001,7 @@
     NSPECMAX_ANISO => NSPECMAX_ANISO_MANTLE, &
     NSPEC_ATTENUATION => NSPEC_CRUST_MANTLE_ATTENUATION, &
     NSPEC_STRAIN_ONLY => NSPEC_CRUST_MANTLE_STRAIN_ONLY, &
-    ATT1_VAL,ATT2_VAL,ATT3_VAL, &
-    ATTENUATION_VAL,ATTENUATION_3D_VAL,ATTENUATION_1D_WITH_3D_STORAGE_VAL, &
+    ATTENUATION_VAL, &
     PARTIAL_PHYS_DISPERSION_ONLY_VAL,GRAVITY_VAL
 
   use specfem_par, only: COMPUTE_AND_STORE_STRAIN
@@ -1043,11 +1036,11 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATTENUATION),intent(in) :: &
     R_xx,R_yy,R_xy,R_xz,R_yz
 
-  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STRAIN_ONLY),intent(out) :: epsilon_trace_over_3
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STRAIN_ONLY),intent(inout) :: epsilon_trace_over_3
 
   ! gravity
-  real(kind=CUSTOM_REAL),dimension(NDIM,NGLOB) :: gravity_pre_store
-  real(kind=CUSTOM_REAL),dimension(6,NGLOB) :: gravity_H
+  real(kind=CUSTOM_REAL),dimension(NDIM,NGLOB),intent(in) :: gravity_pre_store
+  real(kind=CUSTOM_REAL),dimension(6,NGLOB),intent(in) :: gravity_H
 
   ! element info
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(inout) :: &
@@ -1055,8 +1048,8 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: dummyx_loc,dummyy_loc,dummyz_loc
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ),intent(out) :: rho_s_H
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(out) :: epsilondev_loc
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ),intent(inout) :: rho_s_H
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(inout) :: epsilondev_loc
 
   ! local parameters
   ! the 21 coefficients for an anisotropic medium in reduced notation
@@ -1195,7 +1188,7 @@
 
 ! anisotropic element in inner core with hexagonal symmetry (and vertical symmetry axis)
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,N_SLS,NRAD_GRAVITY,FOUR_THIRDS,TWO_THIRDS
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,N_SLS
 
   use constants_solver, only: &
     NSPEC => NSPEC_INNER_CORE, &
@@ -1203,8 +1196,7 @@
     NSPECMAX_ANISO => NSPECMAX_ANISO_IC, &
     NSPEC_ATTENUATION => NSPEC_INNER_CORE_ATTENUATION, &
     NSPEC_STRAIN_ONLY => NSPEC_INNER_CORE_STRAIN_ONLY, &
-    ATT1_VAL,ATT2_VAL,ATT3_VAL, &
-    ATTENUATION_VAL,ATTENUATION_3D_VAL,ATTENUATION_1D_WITH_3D_STORAGE_VAL, &
+    ATTENUATION_VAL, &
     PARTIAL_PHYS_DISPERSION_ONLY_VAL,GRAVITY_VAL
 
   use specfem_par, only: COMPUTE_AND_STORE_STRAIN
@@ -1239,11 +1231,11 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATTENUATION),intent(in) :: &
     R_xx,R_yy,R_xy,R_xz,R_yz
 
-  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STRAIN_ONLY),intent(out) :: epsilon_trace_over_3
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STRAIN_ONLY),intent(inout) :: epsilon_trace_over_3
 
   ! gravity
-  real(kind=CUSTOM_REAL),dimension(NDIM,NGLOB) :: gravity_pre_store
-  real(kind=CUSTOM_REAL),dimension(6,NGLOB) :: gravity_H
+  real(kind=CUSTOM_REAL),dimension(NDIM,NGLOB),intent(in) :: gravity_pre_store
+  real(kind=CUSTOM_REAL),dimension(6,NGLOB),intent(in) :: gravity_H
 
   ! element info
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(inout) :: &
@@ -1251,11 +1243,11 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: dummyx_loc,dummyy_loc,dummyz_loc
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ),intent(out) :: rho_s_H
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(out) :: epsilondev_loc
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ),intent(inout) :: rho_s_H
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(inout) :: epsilondev_loc
 
   ! local parameters
-  real(kind=CUSTOM_REAL) :: c11,c33,c44,c12,c13
+  real(kind=CUSTOM_REAL) :: c11,c12,c13,c22,c23,c33,c44,c55,c66
 
   ! local element arrays
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: jacobianl
@@ -1313,18 +1305,42 @@
     !       c13 = F
     !       c33 = C
     !       c44 = L
+    !
+    ! transversely isotropic
+    !       C11 = A = rho * vph**2
+    !       C33 = C = rho * vpv**2
+    !       C44 = L = rho * vsv**2
+    !       C13 = F = eta * (A - 2*L)
+    !       C12 = C11 - 2 C66 = A - 2*N = rho * (vph**2 - 2 * vsh**2)
+    !       C22 = C11 = A
+    !       C23 = C13 = F
+    !       C55 = C44 = L
+    !       C66 = N = rho * vsh**2 = (C11-C12)/2
+    !
+    ! isotropic
+    ! Lame parameters: mu = rho * vs**2
+    !                  lambda = rho * (vp**2 - 2 vs**2) = rho * vp**2 - 2 mu
+    !
+    !            then: C11 = C22 = C33 = lambda + 2mu
+    !                  C12 = C13 = C23 = lambda
+    !                  C44 = C55 = C66 = mu
     c11 = c11store(INDEX_IJK,ispec)
     c12 = c12store(INDEX_IJK,ispec)
     c13 = c13store(INDEX_IJK,ispec)
     c33 = c33store(INDEX_IJK,ispec)
     c44 = c44store(INDEX_IJK,ispec)
+    ! tiso symmetry
+    c22 = c11
+    c23 = c13
+    c55 = c44
+    c66 = 0.5_CUSTOM_REAL*(c11-c12)
 
     sigma_xx(INDEX_IJK) = c11*duxdxl(INDEX_IJK) + c12*duydyl(INDEX_IJK) + c13*duzdzl(INDEX_IJK)
-    sigma_yy(INDEX_IJK) = c12*duxdxl(INDEX_IJK) + c11*duydyl(INDEX_IJK) + c13*duzdzl(INDEX_IJK)
-    sigma_zz(INDEX_IJK) = c13*duxdxl(INDEX_IJK) + c13*duydyl(INDEX_IJK) + c33*duzdzl(INDEX_IJK)
+    sigma_yy(INDEX_IJK) = c12*duxdxl(INDEX_IJK) + c22*duydyl(INDEX_IJK) + c23*duzdzl(INDEX_IJK)
+    sigma_zz(INDEX_IJK) = c13*duxdxl(INDEX_IJK) + c23*duydyl(INDEX_IJK) + c33*duzdzl(INDEX_IJK)
 
-    sigma_xy(INDEX_IJK) = 0.5_CUSTOM_REAL*(c11-c12)*duxdyl_plus_duydxl(INDEX_IJK)
-    sigma_xz(INDEX_IJK) = c44*duzdxl_plus_duxdzl(INDEX_IJK)
+    sigma_xy(INDEX_IJK) = c66*duxdyl_plus_duydxl(INDEX_IJK)
+    sigma_xz(INDEX_IJK) = c55*duzdxl_plus_duxdzl(INDEX_IJK)
     sigma_yz(INDEX_IJK) = c44*duzdyl_plus_duydzl(INDEX_IJK)
   ENDDO_LOOP_IJK
 
@@ -1377,9 +1393,12 @@
                                                         sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
 
 ! we can force inlining (Intel compiler)
+#if defined __INTEL_COMPILER
 !DIR$ ATTRIBUTES INLINE :: compute_element_stress_attenuation_contrib
+#else
 ! cray
 !DIR$ INLINEALWAYS compute_element_stress_attenuation_contrib
+#endif
 
 ! updates stress with attenuation coontribution
 
@@ -1480,9 +1499,12 @@
                                                 duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl)
 
 ! we can force inlining (Intel compiler)
+#if defined __INTEL_COMPILER
 !DIR$ ATTRIBUTES INLINE :: compute_element_precompute_factors
+#else
 ! cray
 !DIR$ INLINEALWAYS compute_element_precompute_factors
+#endif
 
 ! precomputes factors
 
@@ -1506,7 +1528,7 @@
     duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
 
   ! local parameters
-  real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl
+  real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobian
   real(kind=CUSTOM_REAL) :: duxdyl,duxdzl,duydxl,duydzl,duzdxl,duzdyl
   real(kind=CUSTOM_REAL) :: x1,x2,x3,y1,y2,y3,z1,z2,z3
 
@@ -1530,9 +1552,12 @@
     gammazl = deriv_loc(9,INDEX_IJK)
 
     ! compute the Jacobian
-    jacobianl(INDEX_IJK) = 1.0_CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
-                                 - xiyl*(etaxl*gammazl-etazl*gammaxl) &
-                                 + xizl*(etaxl*gammayl-etayl*gammaxl))
+    jacobian = (xixl*(etayl*gammazl-etazl*gammayl) &
+              - xiyl*(etaxl*gammazl-etazl*gammaxl) &
+              + xizl*(etaxl*gammayl-etayl*gammaxl))
+    if (jacobian <= 0.0_CUSTOM_REAL) stop 'Error invalid jacobian in compute_element_precompute_factors()'
+
+    jacobianl(INDEX_IJK) = 1.0_CUSTOM_REAL / jacobian
 
     x1 = tempx1(INDEX_IJK)
     x2 = tempx2(INDEX_IJK)
@@ -1581,9 +1606,12 @@
                                                epsilon_trace_over_3,epsilondev_loc)
 
 ! we can force inlining (Intel compiler)
+#if defined __INTEL_COMPILER
 !DIR$ ATTRIBUTES INLINE :: compute_element_deviatoric_strain
+#else
 ! cray
 !DIR$ INLINEALWAYS compute_element_deviatoric_strain
+#endif
 
 ! computes deviatoric strain
 
@@ -1599,8 +1627,8 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
 
   integer, intent(in) :: ispec,NSPEC_STRAIN_ONLY
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STRAIN_ONLY),intent(out) :: epsilon_trace_over_3
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(out) :: epsilondev_loc
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STRAIN_ONLY),intent(inout) :: epsilon_trace_over_3
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(inout) :: epsilondev_loc
 
   ! local parameters
   real(kind=CUSTOM_REAL) :: templ
@@ -1618,42 +1646,37 @@
 !ZN from the expression in which we use the strain later in the code.
 
   ! compute deviatoric strain
-  if (NSPEC_STRAIN_ONLY == 1) then
-    if (ispec == 1) then
+  if (NSPEC_STRAIN_ONLY > 1) then
 
-      DO_LOOP_IJK
-        templ = ONE_THIRD * (duxdxl(INDEX_IJK) + duydyl(INDEX_IJK) + duzdzl(INDEX_IJK))
-        epsilon_trace_over_3(INDEX_IJK,1) = templ
-        epsilondev_loc(INDEX_IJK,1) = duxdxl(INDEX_IJK) - templ
-        epsilondev_loc(INDEX_IJK,2) = duydyl(INDEX_IJK) - templ
-        epsilondev_loc(INDEX_IJK,3) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl(INDEX_IJK)
-        epsilondev_loc(INDEX_IJK,4) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl(INDEX_IJK)
-        epsilondev_loc(INDEX_IJK,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl(INDEX_IJK)
-      ENDDO_LOOP_IJK
+    DO_LOOP_IJK
+      templ = ONE_THIRD * (duxdxl(INDEX_IJK) + duydyl(INDEX_IJK) + duzdzl(INDEX_IJK))
+      epsilon_trace_over_3(INDEX_IJK,ispec) = templ
 
-    else
+      epsilondev_loc(INDEX_IJK,1) = duxdxl(INDEX_IJK) - templ
+      epsilondev_loc(INDEX_IJK,2) = duydyl(INDEX_IJK) - templ
+      epsilondev_loc(INDEX_IJK,3) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl(INDEX_IJK)
+      epsilondev_loc(INDEX_IJK,4) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl(INDEX_IJK)
+      epsilondev_loc(INDEX_IJK,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl(INDEX_IJK)
+    ENDDO_LOOP_IJK
 
-      DO_LOOP_IJK
-        templ = ONE_THIRD * (duxdxl(INDEX_IJK) + duydyl(INDEX_IJK) + duzdzl(INDEX_IJK))
-        epsilondev_loc(INDEX_IJK,1) = duxdxl(INDEX_IJK) - templ
-        epsilondev_loc(INDEX_IJK,2) = duydyl(INDEX_IJK) - templ
-        epsilondev_loc(INDEX_IJK,3) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl(INDEX_IJK)
-        epsilondev_loc(INDEX_IJK,4) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl(INDEX_IJK)
-        epsilondev_loc(INDEX_IJK,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl(INDEX_IJK)
-      ENDDO_LOOP_IJK
-
-    endif
   else
+    ! not needed for NSPEC_STRAIN_ONLY == 1 case, epsilon_trace_over_3() is a dummy array
+    !if (ispec == 1) then
+    !  DO_LOOP_IJK
+    !    templ = ONE_THIRD * (duxdxl(INDEX_IJK) + duydyl(INDEX_IJK) + duzdzl(INDEX_IJK))
+    !    epsilon_trace_over_3(INDEX_IJK,1) = templ
+    !  ENDDO_LOOP_IJK
+    !endif
 
-      DO_LOOP_IJK
-        templ = ONE_THIRD * (duxdxl(INDEX_IJK) + duydyl(INDEX_IJK) + duzdzl(INDEX_IJK))
-        epsilon_trace_over_3(INDEX_IJK,ispec) = templ
-        epsilondev_loc(INDEX_IJK,1) = duxdxl(INDEX_IJK) - templ
-        epsilondev_loc(INDEX_IJK,2) = duydyl(INDEX_IJK) - templ
-        epsilondev_loc(INDEX_IJK,3) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl(INDEX_IJK)
-        epsilondev_loc(INDEX_IJK,4) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl(INDEX_IJK)
-        epsilondev_loc(INDEX_IJK,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl(INDEX_IJK)
-      ENDDO_LOOP_IJK
+    DO_LOOP_IJK
+      templ = ONE_THIRD * (duxdxl(INDEX_IJK) + duydyl(INDEX_IJK) + duzdzl(INDEX_IJK))
+
+      epsilondev_loc(INDEX_IJK,1) = duxdxl(INDEX_IJK) - templ
+      epsilondev_loc(INDEX_IJK,2) = duydyl(INDEX_IJK) - templ
+      epsilondev_loc(INDEX_IJK,3) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl(INDEX_IJK)
+      epsilondev_loc(INDEX_IJK,4) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl(INDEX_IJK)
+      epsilondev_loc(INDEX_IJK,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl(INDEX_IJK)
+    ENDDO_LOOP_IJK
 
   endif
 
@@ -1671,9 +1694,12 @@
                                                 tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3)
 
 ! we can force inlining (Intel compiler)
+#if defined __INTEL_COMPILER
 !DIR$ATTRIBUTES INLINE :: compute_element_dot_product_stress
+#else
 ! cray
 !DIR$ INLINEALWAYS compute_element_dot_product_stress
+#endif
 
 ! computes dot product of stress tensor with test vector, non-symmetric form
 
@@ -1773,13 +1799,16 @@
                                      rho_s_H)
 
 ! we can force inlining (Intel compiler)
+#if defined __INTEL_COMPILER
 !DIR$ ATTRIBUTES INLINE :: compute_element_gravity
+#else
 ! cray
 !DIR$ INLINEALWAYS compute_element_gravity
+#endif
 
 ! computes non-symmetric stress terms for gravity
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,NRAD_GRAVITY,R_EARTH,R_EARTH_KM
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM
 
 #ifdef FORCE_VECTORIZATION
   use constants, only: NGLLCUBE
@@ -1797,8 +1826,8 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: wgll_cube
 
   ! gravity
-  real(kind=CUSTOM_REAL),dimension(NDIM,NGLOB) :: gravity_pre_store
-  real(kind=CUSTOM_REAL),dimension(6,NGLOB) :: gravity_H
+  real(kind=CUSTOM_REAL),dimension(NDIM,NGLOB),intent(in) :: gravity_pre_store
+  real(kind=CUSTOM_REAL),dimension(6,NGLOB),intent(in) :: gravity_H
 
 !  double precision, dimension(NRAD_GRAVITY),intent(in) :: minus_gravity_table,density_table,minus_deriv_gravity_table
 
@@ -1807,7 +1836,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(inout) :: sigma_xx,sigma_yy,sigma_zz
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(inout) :: sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ),intent(out) :: rho_s_H
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ),intent(inout) :: rho_s_H
 
   ! local parameters
   ! for gravity
@@ -1829,7 +1858,7 @@
 #endif
 
   ! minimum radius in inner core (to avoid zero radius)
-  double precision, parameter :: MINIMUM_RADIUS_INNER_CORE = 100.d0 / R_EARTH
+  !double precision, parameter :: MINIMUM_RADIUS_INNER_CORE = 100.d0 / R_PLANET
 
   ! computes non-symmetric terms for gravity
   DO_LOOP_IJK
@@ -1890,7 +1919,7 @@
 !
 !! computes non-symmetric stress terms for gravity
 !
-!  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,NRAD_GRAVITY,R_EARTH,R_EARTH_KM
+!  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,NRAD_GRAVITY,R_PLANET,R_PLANET_KM
 !
 !#ifdef FORCE_VECTORIZATION
 !  use constants, only: NGLLCUBE
@@ -1938,7 +1967,7 @@
 !#endif
 !
 !  ! minimum radius in inner core (to avoid zero radius)
-!  double precision, parameter :: MINIMUM_RADIUS_INNER_CORE = 100.d0 / R_EARTH
+!  double precision, parameter :: MINIMUM_RADIUS_INNER_CORE = 100.d0 / R_PLANET
 !
 !  ! computes non-symmetric terms for gravity
 !  DO_LOOP_IJK
@@ -1969,10 +1998,10 @@
 !    ! spherical components of the gravitational acceleration
 !
 !    ! for efficiency replace with lookup table every 100 m in radial direction
-!    !int_radius = nint(10.d0 * radius * R_EARTH_KM )
+!    !int_radius = nint(10.d0 * radius * R_PLANET_KM )
 !
 !    ! make sure we never use zero for point exactly at the center of the Earth
-!    int_radius = max(1,nint(10.d0 * radius * R_EARTH_KM))
+!    int_radius = max(1,nint(10.d0 * radius * R_PLANET_KM))
 !
 !    minus_g = minus_gravity_table(int_radius)
 !    minus_dg = minus_deriv_gravity_table(int_radius)

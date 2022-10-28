@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -34,8 +34,6 @@ module asdf_data
 
   implicit none
 
-  private
-
   type asdf_record
     real, pointer :: record(:)
   end type asdf_record
@@ -51,6 +49,7 @@ module asdf_data
     !seismic record info
     real, pointer :: receiver_lat(:), receiver_lo(:)
     real, pointer :: receiver_el(:), receiver_dpt(:)
+
     character(len=32),pointer :: receiver_name_array(:)
     character(len=8),pointer :: network_array(:)
     character(len=3),pointer :: component_array(:)

@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -26,21 +26,21 @@
 !=====================================================================
 
   subroutine get_jacobian_boundaries(iboun,xstore,ystore,zstore, &
-              dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top, &
-              ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
-              nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
-              jacobian2D_xmin,jacobian2D_xmax, &
-              jacobian2D_ymin,jacobian2D_ymax, &
-              jacobian2D_bottom,jacobian2D_top, &
-              normal_xmin,normal_xmax, &
-              normal_ymin,normal_ymax, &
-              normal_bottom,normal_top, &
-              NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-              NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,xigll,yigll,zigll)
+                                     dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top, &
+                                     ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
+                                     nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
+                                     jacobian2D_xmin,jacobian2D_xmax, &
+                                     jacobian2D_ymin,jacobian2D_ymax, &
+                                     jacobian2D_bottom,jacobian2D_top, &
+                                     normal_xmin,normal_xmax, &
+                                     normal_ymin,normal_ymax, &
+                                     normal_bottom,normal_top, &
+                                     NSPEC2D_BOTTOM,NSPEC2D_TOP, &
+                                     NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,xigll,yigll,zigll)
 
   use constants
 
-  use meshfem3D_par, only: nspec
+  use meshfem_par, only: nspec
 
   implicit none
 
@@ -143,7 +143,7 @@
           zelm(9)=zstore(1,(NGLLY+1)/2,(NGLLZ+1)/2,ispec)
 
           call compute_jacobian_2D(ispecb1,xelm,yelm,zelm,dershape2D_x, &
-                    jacobian2D_xmin,normal_xmin,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
+                                   jacobian2D_xmin,normal_xmin,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
       else
           ! get 25 GLL points for xmin
           do k = 1,NGLLZ
@@ -155,8 +155,8 @@
           enddo
           ! recalculate Jacobian according to 2D GLL points
           call recalc_jacobian_gll2D(ispecb1,xelm2D,yelm2D,zelm2D, &
-                          yigll,zigll,jacobian2D_xmin,normal_xmin, &
-                          NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
+                                     yigll,zigll,jacobian2D_xmin,normal_xmin, &
+                                     NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
      endif
     endif
 
@@ -198,7 +198,7 @@
           zelm(9)=zstore(NGLLX,(NGLLY+1)/2,(NGLLZ+1)/2,ispec)
 
           call compute_jacobian_2D(ispecb2,xelm,yelm,zelm,dershape2D_x, &
-                    jacobian2D_xmax,normal_xmax,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
+                                   jacobian2D_xmax,normal_xmax,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
 
       else
           ! get 25 GLL points for xmax
@@ -211,8 +211,8 @@
           enddo
           ! recalculate Jacobian according to 2D GLL points
           call recalc_jacobian_gll2D(ispecb2,xelm2D,yelm2D,zelm2D, &
-                          yigll,zigll,jacobian2D_xmax,normal_xmax, &
-                          NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
+                                     yigll,zigll,jacobian2D_xmax,normal_xmax, &
+                                     NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
        endif
     endif
 
@@ -254,7 +254,7 @@
           zelm(9)=zstore((NGLLX+1)/2,1,(NGLLZ+1)/2,ispec)
 
           call compute_jacobian_2D(ispecb3,xelm,yelm,zelm,dershape2D_y, &
-                    jacobian2D_ymin,normal_ymin,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
+                                   jacobian2D_ymin,normal_ymin,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
 
      else
           ! get 25 GLL points for ymin
@@ -267,8 +267,8 @@
           enddo
           ! recalculate 2D Jacobian according to GLL points
           call recalc_jacobian_gll2D(ispecb3,xelm2D,yelm2D,zelm2D, &
-                          xigll,zigll,jacobian2D_ymin,normal_ymin, &
-                          NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
+                                     xigll,zigll,jacobian2D_ymin,normal_ymin, &
+                                     NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
      endif
     endif
 
@@ -310,7 +310,7 @@
           zelm(9)=zstore((NGLLX+1)/2,NGLLY,(NGLLZ+1)/2,ispec)
 
           call compute_jacobian_2D(ispecb4,xelm,yelm,zelm,dershape2D_y, &
-                    jacobian2D_ymax,normal_ymax,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
+                                   jacobian2D_ymax,normal_ymax,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
 
       else
           ! get 25 GLL points for ymax
@@ -323,8 +323,8 @@
           enddo
           ! recalculate Jacobian for 2D GLL points
           call recalc_jacobian_gll2D(ispecb4,xelm2D,yelm2D,zelm2D, &
-                          xigll,zigll,jacobian2D_ymax,normal_ymax, &
-                          NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
+                                     xigll,zigll,jacobian2D_ymax,normal_ymax, &
+                                     NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
       endif
     endif
 
@@ -365,7 +365,7 @@
           zelm(9)=zstore((NGLLX+1)/2,(NGLLY+1)/2,1,ispec)
 
           call compute_jacobian_2D(ispecb5,xelm,yelm,zelm,dershape2D_bottom, &
-                    jacobian2D_bottom,normal_bottom,NGLLX,NGLLY,NSPEC2D_BOTTOM)
+                                   jacobian2D_bottom,normal_bottom,NGLLX,NGLLY,NSPEC2D_BOTTOM)
 
       else
           ! get 25 GLL points for zmin
@@ -378,8 +378,8 @@
           enddo
           ! recalculate 2D Jacobian according to GLL points
           call recalc_jacobian_gll2D(ispecb5,xelm2D,yelm2D,zelm2D, &
-                          xigll,yigll,jacobian2D_bottom,normal_bottom, &
-                          NGLLX,NGLLY,NSPEC2D_BOTTOM)
+                                     xigll,yigll,jacobian2D_bottom,normal_bottom, &
+                                     NGLLX,NGLLY,NSPEC2D_BOTTOM)
      endif
 
     endif
@@ -421,7 +421,7 @@
           zelm(9)=zstore((NGLLX+1)/2,(NGLLY+1)/2,NGLLZ,ispec)
 
           call compute_jacobian_2D(ispecb6,xelm,yelm,zelm,dershape2D_top, &
-                                  jacobian2D_top,normal_top,NGLLX,NGLLY,NSPEC2D_TOP)
+                                   jacobian2D_top,normal_top,NGLLX,NGLLY,NSPEC2D_TOP)
       else
           ! get 25 GLL points for zmax
           do j = 1,NGLLY
@@ -433,8 +433,8 @@
           enddo
           ! recalculate Jacobian according to 2D GLL points
           call recalc_jacobian_gll2D(ispecb6,xelm2D,yelm2D,zelm2D, &
-                                  xigll,yigll,jacobian2D_top,normal_top, &
-                                  NGLLX,NGLLY,NSPEC2D_TOP)
+                                     xigll,yigll,jacobian2D_top,normal_top, &
+                                     NGLLX,NGLLY,NSPEC2D_TOP)
 
       endif
 
@@ -462,7 +462,7 @@
 ! -------------------------------------------------------
 
   subroutine compute_jacobian_2D(ispecb,xelm,yelm,zelm,dershape2D, &
-                                jacobian2D,normal,NGLLA,NGLLB,NSPEC2DMAX_AB)
+                                 jacobian2D,normal,NGLLA,NGLLB,NSPEC2DMAX_AB)
 
   use constants
 

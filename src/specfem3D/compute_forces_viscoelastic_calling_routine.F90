@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -81,8 +81,7 @@
                                        epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
                                        epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
                                        eps_trace_over_3_crust_mantle, &
-                                       alphaval,betaval,gammaval, &
-                                       factor_common_crust_mantle,ATT4_VAL)
+                                       alphaval,betaval,gammaval)
 
       ! inner core region
       call compute_forces_inner_core(NSPEC_INNER_CORE_STR_OR_ATT,NGLOB_INNER_CORE, &
@@ -98,13 +97,12 @@
                                      epsilondev_xx_inner_core,epsilondev_yy_inner_core,epsilondev_xy_inner_core, &
                                      epsilondev_xz_inner_core,epsilondev_yz_inner_core, &
                                      eps_trace_over_3_inner_core, &
-                                     alphaval,betaval,gammaval, &
-                                     factor_common_inner_core,ATT5_VAL)
+                                     alphaval,betaval,gammaval)
     else
       ! on GPU
       ! contains forward FORWARD_OR_ADJOINT == 1
       ! for crust/mantle
-      call compute_forces_crust_mantle_gpu(Mesh_pointer,iphase,1)
+      call compute_forces_crust_mantle_gpu(Mesh_pointer,iphase,ALPHA_LDDRK(istage),BETA_LDDRK(istage),1)
 
       ! initiates asynchronous MPI transfer
       if (NPROCTOT_VAL > 1) then
@@ -123,21 +121,23 @@
       endif
 
       ! for inner core
-      call compute_forces_inner_core_gpu(Mesh_pointer,iphase,1)
+      if (NSPEC_INNER_CORE > 0) then
+        call compute_forces_inner_core_gpu(Mesh_pointer,iphase,ALPHA_LDDRK(istage),BETA_LDDRK(istage),1)
 
-      ! initiates asynchronous MPI transfer
-      if (NPROCTOT_VAL > 1) then
-        if (GPU_ASYNC_COPY .and. iphase == 2) then
-          ! inner core region
-          ! wait for asynchronous copy to finish
-          call sync_copy_from_device(Mesh_pointer,iphase,buffer_send_vector_inner_core,IREGION_INNER_CORE,1)
-          ! sends MPI buffers
-          call assemble_MPI_vector_send_gpu(NPROCTOT_VAL, &
-                        buffer_send_vector_inner_core,buffer_recv_vector_inner_core, &
-                        num_interfaces_inner_core,max_nibool_interfaces_ic, &
-                        nibool_interfaces_inner_core, &
-                        my_neighbors_inner_core, &
-                        request_send_vector_ic,request_recv_vector_ic)
+        ! initiates asynchronous MPI transfer
+        if (NPROCTOT_VAL > 1) then
+          if (GPU_ASYNC_COPY .and. iphase == 2) then
+            ! inner core region
+            ! wait for asynchronous copy to finish
+            call sync_copy_from_device(Mesh_pointer,iphase,buffer_send_vector_inner_core,IREGION_INNER_CORE,1)
+            ! sends MPI buffers
+            call assemble_MPI_vector_send_gpu(NPROCTOT_VAL, &
+                          buffer_send_vector_inner_core,buffer_recv_vector_inner_core, &
+                          num_interfaces_inner_core,max_nibool_interfaces_ic, &
+                          nibool_interfaces_inner_core, &
+                          my_neighbors_inner_core, &
+                          request_send_vector_ic,request_recv_vector_ic)
+          endif
         endif
       endif
     endif ! GPU_MODE
@@ -156,7 +156,7 @@
        ! note: this must remain here even when SIMULATION_TYPE == 3 because it applies to array
        !       accel_crust_mantle rather than b_accel_crust_mantle
        if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
-          if (nadj_rec_local > 0 ) call compute_add_sources_adjoint()
+          if (nadj_rec_local > 0) call compute_add_sources_adjoint()
        endif
 
        ! add the sources
@@ -171,7 +171,7 @@
           ! the first step of noise tomography is to use |S(\omega)|^2 as a point force source at one of the receivers.
           ! hence, instead of a moment tensor 'sourcearrays', a 'noise_sourcearray' for a point force is needed.
           ! furthermore, the CMTSOLUTION needs to be zero, i.e., no earthquakes.
-          call noise_add_source_master_rec()
+          call noise_add_source_main_rec()
 
        case (2)
           ! second step of noise tomography, i.e., read the surface movie saved at every timestep
@@ -211,13 +211,14 @@
                         my_neighbors_crust_mantle, &
                         request_send_vector_cm,request_recv_vector_cm)
           ! inner core
-          call assemble_MPI_vector_s(NPROCTOT_VAL,NGLOB_INNER_CORE, &
-                        accel_inner_core, &
-                        buffer_send_vector_inner_core,buffer_recv_vector_inner_core, &
-                        num_interfaces_inner_core,max_nibool_interfaces_ic, &
-                        nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
-                        my_neighbors_inner_core, &
-                        request_send_vector_ic,request_recv_vector_ic)
+          if (NSPEC_INNER_CORE > 0) &
+            call assemble_MPI_vector_s(NPROCTOT_VAL,NGLOB_INNER_CORE, &
+                          accel_inner_core, &
+                          buffer_send_vector_inner_core,buffer_recv_vector_inner_core, &
+                          num_interfaces_inner_core,max_nibool_interfaces_ic, &
+                          nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
+                          my_neighbors_inner_core, &
+                          request_send_vector_ic,request_recv_vector_ic)
         else
           ! on GPU
           ! sends accel values to corresponding MPI interface neighbors
@@ -230,9 +231,10 @@
           call transfer_boun_from_device(Mesh_pointer, &
                                          buffer_send_vector_crust_mantle, &
                                          IREGION_CRUST_MANTLE,1)
-          call transfer_boun_from_device(Mesh_pointer, &
-                                         buffer_send_vector_inner_core, &
-                                         IREGION_INNER_CORE,1)
+          if (NSPEC_INNER_CORE > 0) &
+            call transfer_boun_from_device(Mesh_pointer, &
+                                           buffer_send_vector_inner_core, &
+                                           IREGION_INNER_CORE,1)
 
           if (.not. GPU_ASYNC_COPY) then
             ! for synchronous transfers, sending over MPI can directly proceed
@@ -244,12 +246,13 @@
                           my_neighbors_crust_mantle, &
                           request_send_vector_cm,request_recv_vector_cm)
             ! inner core
-            call assemble_MPI_vector_send_gpu(NPROCTOT_VAL, &
-                          buffer_send_vector_inner_core,buffer_recv_vector_inner_core, &
-                          num_interfaces_inner_core,max_nibool_interfaces_ic, &
-                          nibool_interfaces_inner_core, &
-                          my_neighbors_inner_core, &
-                          request_send_vector_ic,request_recv_vector_ic)
+            if (NSPEC_INNER_CORE > 0) &
+              call assemble_MPI_vector_send_gpu(NPROCTOT_VAL, &
+                            buffer_send_vector_inner_core,buffer_recv_vector_inner_core, &
+                            num_interfaces_inner_core,max_nibool_interfaces_ic, &
+                            nibool_interfaces_inner_core, &
+                            my_neighbors_inner_core, &
+                            request_send_vector_ic,request_recv_vector_ic)
           endif
         endif ! GPU_MODE
       endif
@@ -264,14 +267,17 @@
                                 buffer_recv_vector_crust_mantle,num_interfaces_crust_mantle, &
                                 max_nibool_interfaces_cm, &
                                 nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle, &
+                                my_neighbors_crust_mantle, &
                                 request_send_vector_cm,request_recv_vector_cm)
           ! inner core
-          call assemble_MPI_vector_w(NPROCTOT_VAL,NGLOB_INNER_CORE, &
-                                accel_inner_core, &
-                                buffer_recv_vector_inner_core,num_interfaces_inner_core, &
-                                max_nibool_interfaces_ic, &
-                                nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
-                                request_send_vector_ic,request_recv_vector_ic)
+          if (NSPEC_INNER_CORE > 0) &
+            call assemble_MPI_vector_w(NPROCTOT_VAL,NGLOB_INNER_CORE, &
+                                  accel_inner_core, &
+                                  buffer_recv_vector_inner_core,num_interfaces_inner_core, &
+                                  max_nibool_interfaces_ic, &
+                                  nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
+                                  my_neighbors_inner_core, &
+                                  request_send_vector_ic,request_recv_vector_ic)
         else
           ! on GPU
           if (GPU_ASYNC_COPY) then
@@ -285,10 +291,11 @@
                                              request_recv_vector_cm, &
                                              IREGION_CRUST_MANTLE,1)
             ! inner core region
-            call transfer_boundary_to_device(Mesh_pointer,NPROCTOT_VAL,buffer_recv_vector_inner_core, &
-                                             num_interfaces_inner_core,max_nibool_interfaces_ic, &
-                                             request_recv_vector_ic, &
-                                             IREGION_INNER_CORE,1)
+            if (NSPEC_INNER_CORE > 0) &
+              call transfer_boundary_to_device(Mesh_pointer,NPROCTOT_VAL,buffer_recv_vector_inner_core, &
+                                               num_interfaces_inner_core,max_nibool_interfaces_ic, &
+                                               request_recv_vector_ic, &
+                                               IREGION_INNER_CORE,1)
           endif
 
           ! waits for MPI send/receive requests to be completed and assembles values
@@ -299,11 +306,12 @@
                               request_send_vector_cm,request_recv_vector_cm, &
                               IREGION_CRUST_MANTLE,1) ! -- 1 == fwd accel
           ! inner core
-          call assemble_MPI_vector_write_gpu(Mesh_pointer,NPROCTOT_VAL, &
-                              buffer_recv_vector_inner_core, &
-                              num_interfaces_inner_core,max_nibool_interfaces_ic, &
-                              request_send_vector_ic,request_recv_vector_ic, &
-                              IREGION_INNER_CORE,1)
+          if (NSPEC_INNER_CORE > 0) &
+            call assemble_MPI_vector_write_gpu(Mesh_pointer,NPROCTOT_VAL, &
+                                buffer_recv_vector_inner_core, &
+                                num_interfaces_inner_core,max_nibool_interfaces_ic, &
+                                request_send_vector_ic,request_recv_vector_ic, &
+                                IREGION_INNER_CORE,1)
         endif
       endif
     endif ! iphase == 1
@@ -445,8 +453,7 @@
                                        b_epsilondev_xy_crust_mantle, &
                                        b_epsilondev_xz_crust_mantle,b_epsilondev_yz_crust_mantle, &
                                        b_eps_trace_over_3_crust_mantle, &
-                                       b_alphaval,b_betaval,b_gammaval, &
-                                       factor_common_crust_mantle,ATT4_VAL)
+                                       b_alphaval,b_betaval,b_gammaval)
       ! inner core region
       call compute_forces_inner_core(NSPEC_INNER_CORE_ADJOINT,NGLOB_INNER_CORE_ADJOINT, &
                                      NSPEC_INNER_CORE_STR_AND_ATT, &
@@ -461,13 +468,12 @@
                                      b_epsilondev_xx_inner_core,b_epsilondev_yy_inner_core,b_epsilondev_xy_inner_core, &
                                      b_epsilondev_xz_inner_core,b_epsilondev_yz_inner_core, &
                                      b_eps_trace_over_3_inner_core, &
-                                     b_alphaval,b_betaval,b_gammaval, &
-                                     factor_common_inner_core,ATT5_VAL)
+                                     b_alphaval,b_betaval,b_gammaval)
     else
       ! on GPU
       ! contains forward FORWARD_OR_ADJOINT == 3
       ! for crust/mantle
-      call compute_forces_crust_mantle_gpu(Mesh_pointer,iphase,3)
+      call compute_forces_crust_mantle_gpu(Mesh_pointer,iphase,ALPHA_LDDRK(istage),BETA_LDDRK(istage),3)
 
       ! initiates asynchronous MPI transfer
       if (GPU_ASYNC_COPY .and. iphase == 2) then
@@ -484,23 +490,24 @@
       endif
 
       ! for inner core
-      call compute_forces_inner_core_gpu(Mesh_pointer,iphase,3)
+      if (NSPEC_INNER_CORE > 0) then
+        call compute_forces_inner_core_gpu(Mesh_pointer,iphase,ALPHA_LDDRK(istage),BETA_LDDRK(istage),3)
 
-      ! initiates asynchronous MPI transfer
-      if (GPU_ASYNC_COPY .and. iphase == 2) then
-        ! inner core region
-        ! wait for asynchronous copy to finish
-        call sync_copy_from_device(Mesh_pointer,iphase,b_buffer_send_vector_inner_core,IREGION_INNER_CORE,3)
+        ! initiates asynchronous MPI transfer
+        if (GPU_ASYNC_COPY .and. iphase == 2) then
+          ! inner core region
+          ! wait for asynchronous copy to finish
+          call sync_copy_from_device(Mesh_pointer,iphase,b_buffer_send_vector_inner_core,IREGION_INNER_CORE,3)
 
-        ! sends MPI buffers
-        call assemble_MPI_vector_send_gpu(NPROCTOT_VAL, &
-                      b_buffer_send_vector_inner_core,b_buffer_recv_vector_inner_core, &
-                      num_interfaces_inner_core,max_nibool_interfaces_ic, &
-                      nibool_interfaces_inner_core, &
-                      my_neighbors_inner_core, &
-                      b_request_send_vector_ic,b_request_recv_vector_ic)
+          ! sends MPI buffers
+          call assemble_MPI_vector_send_gpu(NPROCTOT_VAL, &
+                        b_buffer_send_vector_inner_core,b_buffer_recv_vector_inner_core, &
+                        num_interfaces_inner_core,max_nibool_interfaces_ic, &
+                        nibool_interfaces_inner_core, &
+                        my_neighbors_inner_core, &
+                        b_request_send_vector_ic,b_request_recv_vector_ic)
+        endif
       endif
-
     endif ! GPU_MODE
 
     ! computes additional contributions to acceleration field
@@ -560,13 +567,14 @@
                       my_neighbors_crust_mantle, &
                       b_request_send_vector_cm,b_request_recv_vector_cm)
         ! inner core
-        call assemble_MPI_vector_s(NPROCTOT_VAL,NGLOB_INNER_CORE, &
-                      b_accel_inner_core, &
-                      b_buffer_send_vector_inner_core,b_buffer_recv_vector_inner_core, &
-                      num_interfaces_inner_core,max_nibool_interfaces_ic, &
-                      nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
-                      my_neighbors_inner_core, &
-                      b_request_send_vector_ic,b_request_recv_vector_ic)
+        if (NSPEC_INNER_CORE > 0) &
+          call assemble_MPI_vector_s(NPROCTOT_VAL,NGLOB_INNER_CORE, &
+                        b_accel_inner_core, &
+                        b_buffer_send_vector_inner_core,b_buffer_recv_vector_inner_core, &
+                        num_interfaces_inner_core,max_nibool_interfaces_ic, &
+                        nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
+                        my_neighbors_inner_core, &
+                        b_request_send_vector_ic,b_request_recv_vector_ic)
       else
         ! on GPU
         ! sends accel values to corresponding MPI interface neighbors
@@ -579,9 +587,10 @@
         call transfer_boun_from_device(Mesh_pointer, &
                                        b_buffer_send_vector_cm, &
                                        IREGION_CRUST_MANTLE,3)
-        call transfer_boun_from_device(Mesh_pointer, &
-                                       b_buffer_send_vector_inner_core, &
-                                       IREGION_INNER_CORE,3)
+        if (NSPEC_INNER_CORE > 0) &
+          call transfer_boun_from_device(Mesh_pointer, &
+                                         b_buffer_send_vector_inner_core, &
+                                         IREGION_INNER_CORE,3)
 
         if (.not. GPU_ASYNC_COPY) then
           ! for synchronous transfers, sending over MPI can directly proceed
@@ -593,12 +602,13 @@
                       my_neighbors_crust_mantle, &
                       b_request_send_vector_cm,b_request_recv_vector_cm)
           ! inner core
-          call assemble_MPI_vector_send_gpu(NPROCTOT_VAL, &
-                      b_buffer_send_vector_inner_core,b_buffer_recv_vector_inner_core, &
-                      num_interfaces_inner_core,max_nibool_interfaces_ic, &
-                      nibool_interfaces_inner_core, &
-                      my_neighbors_inner_core, &
-                      b_request_send_vector_ic,b_request_recv_vector_ic)
+          if (NSPEC_INNER_CORE > 0) &
+            call assemble_MPI_vector_send_gpu(NPROCTOT_VAL, &
+                        b_buffer_send_vector_inner_core,b_buffer_recv_vector_inner_core, &
+                        num_interfaces_inner_core,max_nibool_interfaces_ic, &
+                        nibool_interfaces_inner_core, &
+                        my_neighbors_inner_core, &
+                        b_request_send_vector_ic,b_request_recv_vector_ic)
         endif
       endif ! GPU
     else
@@ -612,14 +622,17 @@
                             b_buffer_recv_vector_cm,num_interfaces_crust_mantle, &
                             max_nibool_interfaces_cm, &
                             nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle, &
+                            my_neighbors_crust_mantle, &
                             b_request_send_vector_cm,b_request_recv_vector_cm)
         ! inner core
-        call assemble_MPI_vector_w(NPROCTOT_VAL,NGLOB_INNER_CORE, &
-                            b_accel_inner_core, &
-                            b_buffer_recv_vector_inner_core,num_interfaces_inner_core, &
-                            max_nibool_interfaces_ic, &
-                            nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
-                            b_request_send_vector_ic,b_request_recv_vector_ic)
+        if (NSPEC_INNER_CORE > 0) &
+          call assemble_MPI_vector_w(NPROCTOT_VAL,NGLOB_INNER_CORE, &
+                              b_accel_inner_core, &
+                              b_buffer_recv_vector_inner_core,num_interfaces_inner_core, &
+                              max_nibool_interfaces_ic, &
+                              nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
+                              my_neighbors_inner_core, &
+                              b_request_send_vector_ic,b_request_recv_vector_ic)
 
       else
         ! on GPU
@@ -635,10 +648,11 @@
                                            b_request_recv_vector_cm, &
                                            IREGION_CRUST_MANTLE,3)
           ! inner core region
-          call transfer_boundary_to_device(Mesh_pointer,NPROCTOT_VAL,b_buffer_recv_vector_inner_core, &
-                                           num_interfaces_inner_core,max_nibool_interfaces_ic, &
-                                           b_request_recv_vector_ic, &
-                                           IREGION_INNER_CORE,3)
+          if (NSPEC_INNER_CORE > 0) &
+            call transfer_boundary_to_device(Mesh_pointer,NPROCTOT_VAL,b_buffer_recv_vector_inner_core, &
+                                             num_interfaces_inner_core,max_nibool_interfaces_ic, &
+                                             b_request_recv_vector_ic, &
+                                             IREGION_INNER_CORE,3)
         endif
 
         ! waits for MPI send/receive requests to be completed and assembles values
@@ -649,11 +663,12 @@
                           b_request_send_vector_cm,b_request_recv_vector_cm, &
                           IREGION_CRUST_MANTLE,3) ! -- 3 == adjoint b_accel
         ! inner core
-        call assemble_MPI_vector_write_gpu(Mesh_pointer,NPROCTOT_VAL, &
-                          b_buffer_recv_vector_inner_core, &
-                          num_interfaces_inner_core,max_nibool_interfaces_ic, &
-                          b_request_send_vector_ic,b_request_recv_vector_ic, &
-                          IREGION_INNER_CORE,3)
+        if (NSPEC_INNER_CORE > 0) &
+          call assemble_MPI_vector_write_gpu(Mesh_pointer,NPROCTOT_VAL, &
+                            b_buffer_recv_vector_inner_core, &
+                            num_interfaces_inner_core,max_nibool_interfaces_ic, &
+                            b_request_send_vector_ic,b_request_recv_vector_ic, &
+                            IREGION_INNER_CORE,3)
       endif
     endif ! iphase == 1
 
@@ -698,7 +713,6 @@
     call update_veloc_elastic_newmark_backward()
   endif
 
-
 !daniel debug: att - debug
 !  if (DEBUG) then
 !    if (SIMULATION_TYPE == 1) then
@@ -720,7 +734,7 @@
 !
 
 
-  subroutine compute_forces_crust_mantle( NSPEC,NGLOB,NSPEC_ATT, &
+  subroutine compute_forces_crust_mantle( NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT, &
                                           deltat, &
                                           displ_crust_mantle, &
                                           accel_crust_mantle, &
@@ -730,22 +744,21 @@
                                           epsilondev_xx,epsilondev_yy,epsilondev_xy, &
                                           epsilondev_xz,epsilondev_yz, &
                                           epsilon_trace_over_3, &
-                                          alphaval,betaval,gammaval, &
-                                          factor_common,vnspec )
+                                          alphaval,betaval,gammaval)
 
 ! wrapper function, decides about Deville optimization
 !
 ! (left in this file to let compiler decide about inlining)
 
   use constants_solver, only: CUSTOM_REAL,NDIM,NGLLX,NGLLY,NGLLZ,USE_DEVILLE_PRODUCTS_VAL, &
-    ATT1_VAL,ATT2_VAL,ATT3_VAL,N_SLS,NSPEC_CRUST_MANTLE_STRAIN_ONLY
+    ATT4_VAL,N_SLS,NSPEC_CRUST_MANTLE_STRAIN_ONLY
 
   ! note: passes sum_terms array as subroutine argument which will help for performance (better than use-statement)
-  use specfem_par_crustmantle, only: sum_terms_crust_mantle
+  use specfem_par_crustmantle, only: sum_terms_crust_mantle,factor_common_crust_mantle
 
   implicit none
 
-  integer,intent(in) :: NSPEC,NGLOB,NSPEC_ATT
+  integer,intent(in) :: NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT
 
   ! time step
   real(kind=CUSTOM_REAL),intent(in) :: deltat
@@ -754,9 +767,6 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB),intent(in) :: displ_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB),intent(inout) :: accel_crust_mantle
 
-  ! variable sized array variables
-  integer,intent(in) :: vnspec
-
   ! memory variables for attenuation
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
@@ -764,13 +774,12 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATT),intent(inout) :: &
     R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(inout) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STR_OR_ATT),intent(inout) :: &
     epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY),intent(inout) :: epsilon_trace_over_3
 
   ! [alpha,beta,gamma]val reduced to N_SLS and factor_common to N_SLS*NUM_NODES
-  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,N_SLS,vnspec),intent(in) :: factor_common
   real(kind=CUSTOM_REAL), dimension(N_SLS),intent(in) :: alphaval,betaval,gammaval
 
   ! inner/outer element run flag
@@ -778,7 +787,7 @@
 
   if (USE_DEVILLE_PRODUCTS_VAL) then
     ! uses Deville (2002) optimizations
-    call compute_forces_crust_mantle_Dev(NSPEC,NGLOB,NSPEC_ATT, &
+    call compute_forces_crust_mantle_Dev(NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT, &
                                          deltat, &
                                          displ_crust_mantle, &
                                          accel_crust_mantle, &
@@ -788,10 +797,10 @@
                                          epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
                                          epsilon_trace_over_3, &
                                          alphaval,betaval,gammaval, &
-                                         factor_common,vnspec,sum_terms_crust_mantle)
+                                         factor_common_crust_mantle,ATT4_VAL,sum_terms_crust_mantle)
   else
     ! no Deville optimization
-    call compute_forces_crust_mantle_noDev(NSPEC,NGLOB,NSPEC_ATT, &
+    call compute_forces_crust_mantle_noDev(NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT, &
                                            deltat, &
                                            displ_crust_mantle, &
                                            accel_crust_mantle, &
@@ -801,7 +810,7 @@
                                            epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
                                            epsilon_trace_over_3, &
                                            alphaval,betaval,gammaval, &
-                                           factor_common,vnspec)
+                                           factor_common_crust_mantle,ATT4_VAL)
   endif
 
   end subroutine compute_forces_crust_mantle
@@ -811,7 +820,7 @@
 !
 
 
-  subroutine compute_forces_inner_core( NSPEC,NGLOB,NSPEC_ATT, &
+  subroutine compute_forces_inner_core( NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT, &
                                         deltat, &
                                         displ_inner_core, &
                                         accel_inner_core, &
@@ -821,22 +830,23 @@
                                         epsilondev_xx,epsilondev_yy,epsilondev_xy, &
                                         epsilondev_xz,epsilondev_yz, &
                                         epsilon_trace_over_3, &
-                                        alphaval,betaval,gammaval, &
-                                        factor_common,vnspec)
+                                        alphaval,betaval,gammaval)
 
 ! wrapper function, decides about Deville optimization
 !
 ! (left in this file to let compiler decide about inlining)
 
   use constants_solver, only: CUSTOM_REAL,NDIM,NGLLX,NGLLY,NGLLZ,USE_DEVILLE_PRODUCTS_VAL, &
-    ATT1_VAL,ATT2_VAL,ATT3_VAL,N_SLS,NSPEC_INNER_CORE_STRAIN_ONLY
+    ATT5_VAL,N_SLS,NSPEC_INNER_CORE_STRAIN_ONLY,NCHUNKS_VAL
+
+  use shared_parameters, only: ABSORBING_CONDITIONS
 
   ! note: passes sum_terms array as subroutine argument which will help for performance (better than use-statement)
-  use specfem_par_innercore, only: sum_terms_inner_core
+  use specfem_par_innercore, only: sum_terms_inner_core,factor_common_inner_core,NSPEC_INNER_CORE
 
   implicit none
 
-  integer,intent(in) :: NSPEC,NGLOB,NSPEC_ATT
+  integer,intent(in) :: NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT
 
   ! time step
   real(kind=CUSTOM_REAL),intent(in) :: deltat
@@ -849,8 +859,6 @@
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
   ! variable lengths for factor_common and one_minus_sum_beta
-  integer,intent(in) :: vnspec
-  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,N_SLS,vnspec),intent(in) :: factor_common
   real(kind=CUSTOM_REAL), dimension(N_SLS),intent(in) :: alphaval,betaval,gammaval
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATT),intent(inout) :: R_xx,R_yy,R_xy,R_xz,R_yz
@@ -858,7 +866,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATT),intent(inout) :: &
     R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(inout) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STR_OR_ATT),intent(inout) :: &
     epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STRAIN_ONLY),intent(inout) :: epsilon_trace_over_3
@@ -866,9 +874,15 @@
   ! inner/outer element run flag
   integer,intent(in) :: iphase
 
+  ! checks if anything to
+  ! no need for inner core, absorbing boundaries placed at outer core bottom surface
+  if (NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) return
+  ! for regional mesh cut-offs, there are no inner core elements
+  if (NSPEC_INNER_CORE == 0) return
+
   if (USE_DEVILLE_PRODUCTS_VAL) then
     ! uses Deville (2002) optimizations
-    call compute_forces_inner_core_Dev(NSPEC,NGLOB,NSPEC_ATT, &
+    call compute_forces_inner_core_Dev(NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT, &
                                        deltat, &
                                        displ_inner_core, &
                                        accel_inner_core, &
@@ -878,10 +892,10 @@
                                        epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
                                        epsilon_trace_over_3, &
                                        alphaval,betaval,gammaval, &
-                                       factor_common,vnspec,sum_terms_inner_core)
+                                       factor_common_inner_core,ATT5_VAL,sum_terms_inner_core)
   else
     ! no Deville optimization
-    call compute_forces_inner_core_noDev(NSPEC,NGLOB,NSPEC_ATT, &
+    call compute_forces_inner_core_noDev(NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT, &
                                          deltat, &
                                          displ_inner_core, &
                                          accel_inner_core, &
@@ -891,7 +905,7 @@
                                          epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
                                          epsilon_trace_over_3, &
                                          alphaval,betaval,gammaval, &
-                                         factor_common,vnspec)
+                                         factor_common_inner_core,ATT5_VAL)
   endif
 
   end subroutine compute_forces_inner_core

@@ -5,7 +5,7 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -82,9 +82,6 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #endif\n\
 #ifndef IFLAG_IN_FICTITIOUS_CUBE\n\
 #define IFLAG_IN_FICTITIOUS_CUBE 11\n\
-#endif\n\
-#ifndef R_EARTH_KM\n\
-#define R_EARTH_KM 6371.0f\n\
 #endif\n\
 #ifndef COLORING_MIN_NSPEC_INNER_CORE\n\
 #define COLORING_MIN_NSPEC_INNER_CORE 1000\n\

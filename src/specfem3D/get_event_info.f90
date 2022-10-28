@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -56,7 +56,7 @@
 
   character(len=20), intent(out) :: event_name
 
-  ! get event information for SAC header on the master
+  ! get event information for SAC header on the main proc
   if (myrank == 0) then
 
     ! note: mb as (body wave) moment magnitude is not used any further,
@@ -77,7 +77,7 @@
 
   endif
 
-  ! broadcast the information read on the master to the nodes
+  ! broadcast the information read on the main node to all the nodes
   call bcast_all_singlei(yr)
   call bcast_all_singlei(jda)
   call bcast_all_singlei(mo)
@@ -320,8 +320,11 @@
       !print *,'line ----',string(istart:iend),'----'
 
       ! read header with event information
-      read(string(1:istart-1),*) datasource
-      read(string(istart:iend),*) yr,mo,da,ho,mi,sec,elat_pde,elon_pde,depth_pde,mb,ms
+      if (isource == 1) then
+        ! origin time of first source listed will be taken as reference
+        read(string(1:istart-1),*) datasource
+        read(string(istart:iend),*) yr,mo,da,ho,mi,sec,elat_pde,elon_pde,depth_pde,mb,ms
+      endif
 
       jda = julian_day(yr,mo,da)
 

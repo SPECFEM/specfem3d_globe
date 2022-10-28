@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -29,10 +29,10 @@
 
   implicit none
 
-  integer :: yr,mo,da
+  integer, intent(in) :: yr,mo,da
 
   integer :: mon(12)
-  integer :: lpyr
+  integer, external :: lpyr
   data mon /0,31,59,90,120,151,181,212,243,273,304,334/
 
   julian_day = da + mon(mo)
@@ -46,7 +46,7 @@
 
   implicit none
 
-  integer yr
+  integer, intent(in) :: yr
 !
 !---- returns 1 if leap year
 !

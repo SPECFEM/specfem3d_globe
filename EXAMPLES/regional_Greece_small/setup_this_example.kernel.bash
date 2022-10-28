@@ -22,7 +22,7 @@ echo
 
 if [ ! -f SEM/STATIONS_ADJOINT  ]; then
   echo "must have adjoint source station files in directory: SEM/"
-  exit
+  exit 1
 fi
 cp SEM/STATIONS_ADJOINT DATA/
 
@@ -32,30 +32,44 @@ mkdir -p OUTPUT_FILES
 rm -rf DATABASES_MPI/*
 rm -rf OUTPUT_FILES/*
 
-# compiles executables in root directory
-# using default configuration
-cd ../../
+# checks if executables were compiled and available
+if [ ! -e ../../bin/xspecfem3D ]; then
+  echo "Compiling first all binaries in the root directory..."
+  echo
 
-# compiles for an adjoint simulation
-cp $currentdir/DATA/Par_file DATA/Par_file
-sed -i "s:SAVE_FORWARD.*:SAVE_FORWARD                    = .true.:g"  DATA/Par_file
-make clean
-make -j4 all
+  # compiles executables in root directory
+  # using default configuration
+  cd ../../
 
-# backup of constants setup
-cp setup/* $currentdir/OUTPUT_FILES/
-cp OUTPUT_FILES/values_from_mesher.h $currentdir/OUTPUT_FILES/values_from_mesher.h.compilation
-cp DATA/Par_file $currentdir/OUTPUT_FILES/
+  # only in case static compilation would have been set to yes in Makefile:
+  cp $currentdir/DATA/Par_file DATA/Par_file
+  sed -i "s:SAVE_FORWARD.*:SAVE_FORWARD                    = .true.:g"  DATA/Par_file
 
-cd $currentdir
+  # compiles code
+  make clean
+  make -j4 all
+
+  # checks exit code
+  if [[ $? -ne 0 ]]; then exit 1; fi
+
+  # backup of constants setup
+  cp setup/* $currentdir/OUTPUT_FILES/
+  if [ -e OUTPUT_FILES/values_from_mesher ]; then
+    cp OUTPUT_FILES/values_from_mesher.h $currentdir/OUTPUT_FILES/values_from_mesher.h.compilation
+  fi
+  cp DATA/Par_file $currentdir/OUTPUT_FILES/
+
+  cd $currentdir
+fi
 
 # copy executables
 mkdir -p bin
-rm -rf bin/*
-cp ../../bin/xmeshfem3D ./bin/
-cp ../../bin/xspecfem3D ./bin/xspecfem3D.kernel
-cp ../../bin/xcombine_vol_data ./bin/
-cp ../../bin/xcombine_vol_data_vtk ./bin/
+rm -rf bin/x*
+cp -v ../../bin/x* ./bin/
+cp -v ../../bin/xspecfem3D ./bin/xspecfem3D.kernel
+
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
 # links data directories needed to run example in this current directory with s362ani
 cd DATA/
@@ -66,8 +80,13 @@ ln -s ../../../DATA/topo_bathy
 cd ../
 
 # copy useful script
-cp ../../utils/change_simulation_type.pl ./
+if [ ! -f ./change_simulation_type.pl ]; then
+ln -s ../../utils/change_simulation_type.pl
+fi
 cp DATA/Par_file DATA/Par_file.org
+
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
 echo `date`
 

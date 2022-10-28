@@ -26,6 +26,8 @@ fi
 # default sub-directories
 tests=( compilations \
         auxiliaries \
+        meshfem3D \
+        specfem3D \
         examples
       )
 

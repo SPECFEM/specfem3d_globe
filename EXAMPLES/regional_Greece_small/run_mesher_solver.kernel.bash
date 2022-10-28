@@ -1,12 +1,6 @@
 #!/bin/bash
-###########################################################
-# USER PARAMETERS
 
-## 4 CPUs
-CPUs=4
-
-###########################################################
-
+# gets settings from Par_file
 
 BASEMPIDIR=`grep ^LOCAL_PATH DATA/Par_file | cut -d = -f 2 `
 
@@ -20,12 +14,6 @@ NCHUNKS=`grep ^NCHUNKS DATA/Par_file | cut -d = -f 2 `
 # total number of nodes is the product of the values read
 numnodes=$(( $NCHUNKS * $NPROC_XI * $NPROC_ETA ))
 
-if [ ! "$numnodes" == "$CPUs" ]; then
-  echo "error: Par_file for $numnodes CPUs"
-  exit 1
-fi
-
-
 mkdir -p OUTPUT_FILES
 
 # backup files used for this simulation
@@ -33,7 +21,9 @@ cp DATA/Par_file OUTPUT_FILES/
 cp DATA/STATIONS OUTPUT_FILES/
 cp DATA/CMTSOLUTION OUTPUT_FILES/
 
-
+if [ ! -f ./change_simulation_type.pl ]; then
+ln -s ../../utils/change_simulation_type.pl
+fi
 
 ##
 ## mesh generation
@@ -45,6 +35,8 @@ echo "starting MPI mesher on $numnodes processors"
 echo
 
 mpirun -np $numnodes $PWD/bin/xmeshfem3D
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
 echo "  mesher done: `date`"
 echo
@@ -58,6 +50,9 @@ cp OUTPUT_FILES/*.txt $BASEMPIDIR/
 ##
 cp DATA/Par_file DATA/Par_file.org
 ./change_simulation_type.pl -F
+
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 sleep 2
 # set up addressing
 #cp $BASEMPIDIR/addr*.txt OUTPUT_FILES/
@@ -69,6 +64,8 @@ echo "starting forward run in current directory $PWD"
 echo
 
 mpirun -np $numnodes $PWD/bin/xspecfem3D.kernel
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
 echo "  forward run done: `date`"
 echo
@@ -76,7 +73,10 @@ echo
 # renames output files of forward run
 cd OUTPUT_FILES/
 mv output_solver.txt output_solver.for.txt
-rename .sem. .sem.for. *.sem.*
+
+#rename .sem. .sem.for. *.sem.*
+rename 's/.sem./.sem.for./' *.sem.*
+
 cd ../
 
 
@@ -84,7 +84,13 @@ cd ../
 ## adjoint simulation
 ##
 ./change_simulation_type.pl -b
-cp SEM/STATIONS_ADJOINT DATA/
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
+
+cp -v SEM/STATIONS_ADJOINT DATA/
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
+
 cp DATA/STATIONS_ADJOINT OUTPUT_FILES/
 sleep 2
 
@@ -94,6 +100,8 @@ echo "starting adjoint run in current directory $PWD"
 echo
 
 mpirun -np $numnodes $PWD/bin/xspecfem3D.kernel
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
 echo "  adjoint run done: `date`"
 echo

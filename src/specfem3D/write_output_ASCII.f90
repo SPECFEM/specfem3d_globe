@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -33,11 +33,11 @@
 ! here would result in a loss of accuracy when one later convolves
 ! the results with the source time function
 
-  use constants, only: CUSTOM_REAL,SIZE_REAL,IOUT,MAX_STRING_LEN
+  use constants, only: CUSTOM_REAL,IOUT,MAX_STRING_LEN
 
   use specfem_par, only: &
     DT,t0,NSTEP, &
-    seismo_offset,seismo_current, &
+    seismo_offset,seismo_current, NTSTEP_BETWEEN_OUTPUT_SAMPLE, &
     NTSTEP_BETWEEN_OUTPUT_SEISMOS,OUTPUT_FILES,SIMULATION_TYPE, &
     SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE, &
     myrank
@@ -52,9 +52,13 @@
   ! local parameters
   integer :: it
   integer :: ier,isample
+  integer :: seismo_current_used
   double precision :: value
   double precision :: timeval
   character(len=MAX_STRING_LEN) :: sisname_2
+
+  ! actual seismogram length
+  seismo_current_used = ceiling(real(seismo_current) / NTSTEP_BETWEEN_OUTPUT_SAMPLE)
 
   ! add .ascii extension to seismogram file name for ASCII seismograms
   write(sisname_2,"('/',a,'.ascii')") trim(sisname)
@@ -81,7 +85,7 @@
   endif
 
   ! subtract half duration of the source to make sure travel time is correct
-  do isample = 1,seismo_current
+  do isample = 1,seismo_current_used
 
     ! seismogram value
     value = dble(seismogram_tmp(iorientation,isample))
@@ -91,9 +95,9 @@
 
     ! current time
     if (SIMULATION_TYPE == 3) then
-      timeval = dble(NSTEP-it)*DT - t0
+      timeval = dble((NSTEP-it)*NTSTEP_BETWEEN_OUTPUT_SAMPLE)*DT - t0
     else
-      timeval = dble(it-1)*DT - t0
+      timeval = dble((it-1)*NTSTEP_BETWEEN_OUTPUT_SAMPLE)*DT - t0
     endif
 
     ! writes out to file

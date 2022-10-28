@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -31,11 +31,9 @@
 ! prints source time function and spectrum
 
   use constants
-  use shared_input_parameters
+  use shared_parameters
 
-  use specfem_par, only: NSOURCES,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
-    factor_force_source, &
-    NSTEP,DT,t0,tshift_src,hdur
+  use specfem_par, only: Mxx,Myy,Mzz,Mxy,Mxz,Myz,factor_force_source,t0,tshift_src,hdur
 
   implicit none
 
@@ -54,13 +52,16 @@
   ! number of points to plot the source time function and spectrum
   integer, parameter :: NSAMP_PLOT_SOURCE = 1000
 
-  ! only master process outputs stf
+  ! only main process outputs stf
   if (myrank /= 0) return
 
   ! user output
   write(IMAIN,*)
   write(IMAIN,*) 'printing the source-time function'
   call flush_IMAIN()
+
+  ! initializes
+  strength = 0.d0
 
   ! source time function
   do isource = 1,NSOURCES
@@ -126,8 +127,8 @@
   enddo ! NSOURCES
 
   ! source spectra
-  write(IMAIN,*)
   write(IMAIN,*) 'printing the source spectrum'
+  write(IMAIN,*)
   call flush_IMAIN()
 
   do isource = 1,NSOURCES

@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -28,14 +28,21 @@
 
 module tomography_par
 
-  use constants, only: CUSTOM_REAL,MAX_STRING_LEN, &
-    NGLLX,NGLLY,NGLLZ,IIN,IOUT, &
-    FOUR_THIRDS,R_EARTH_KM,GAUSSALPHA,GAUSSBETA
+  use constants, only: myrank
 
-  implicit none
+  use constants, only: &
+    CUSTOM_REAL,MAX_STRING_LEN, &
+    NGLLX,NGLLY,NGLLZ,IIN,IOUT, &
+    FOUR_THIRDS,GAUSSALPHA,GAUSSBETA
+
+  use shared_parameters, only: R_PLANET_KM,LOCAL_PATH
 
   ! array dimensions for static compilation
-  include "OUTPUT_FILES/values_from_mesher.h"
+  use constants_solver, only: &
+    NCHUNKS_VAL,NPROCTOT_VAL,NPROC_XI_VAL,NPROC_ETA_VAL, &
+    NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE
+
+  implicit none
 
   ! tomography parameter settings
   include "constants_tomography.h"
@@ -51,8 +58,8 @@ module tomography_par
   ! model update length
   real(kind=CUSTOM_REAL) :: step_fac,step_length
 
-  ! MPI process
-  integer :: myrank,sizeprocs
+  ! MPI processes
+  integer :: sizeprocs
 
 end module tomography_par
 
@@ -151,5 +158,4 @@ module tomography_model_tiso
         model_vpv_new,model_vph_new,model_vsv_new,model_vsh_new,model_eta_new,model_rho_new
 
 end module tomography_model_tiso
-
 

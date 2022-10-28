@@ -1,7 +1,7 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -47,18 +47,24 @@ void FC_FUNC_ (update_displacement_ic_gpu,
     exit_on_error("Error invalid FORWARD_OR_ADJOINT in update_displacement_ic_gpu() routine");
   }
 
+  // checks if anything to do
+  if (mp->NGLOB_INNER_CORE == 0) return;
+
   // inner core
   int size = NDIM * mp->NGLOB_INNER_CORE;
 
-#if (DEBUG_BACKWARD_SIMULATIONS == 1 && DEBUG == 1 ) || DEBUG_FIELDS == 1
-  //debug
-  realw max_d, max_v, max_a;
-  max_d = get_device_array_maximum_value(mp->d_b_displ_inner_core, size);
-  max_v = get_device_array_maximum_value(mp->d_b_veloc_inner_core, size);
-  max_a = get_device_array_maximum_value(mp->d_b_accel_inner_core, size);
-  printf ("rank %d - forward/adjoint: %i, max inner_core displ: %f veloc: %f accel: %f\n", mp->myrank, *FORWARD_OR_ADJOINT, max_d, max_v, max_a);
-  fflush (stdout);
-  synchronize_mpi ();
+  // debug
+#if (DEBUG_BACKWARD_SIMULATIONS == 1 && DEBUG == 1 && DEBUG_FIELDS == 1)
+  {
+    realw max_d, max_v, max_a;
+    max_d = get_device_array_maximum_value(mp->d_b_displ_inner_core, size);
+    max_v = get_device_array_maximum_value(mp->d_b_veloc_inner_core, size);
+    max_a = get_device_array_maximum_value(mp->d_b_accel_inner_core, size);
+    printf ("rank %d - forward/adjoint: %i, max inner_core displ: %f veloc: %f accel: %f\n",
+            mp->myrank, *FORWARD_OR_ADJOINT, max_d, max_v, max_a);
+    fflush (stdout);
+    synchronize_mpi ();
+  }
 #endif
 
   int blocksize = BLOCKSIZE_KERNEL1;
@@ -122,6 +128,19 @@ void FC_FUNC_ (update_displacement_ic_gpu,
                                                                     size,deltat,deltatsqover2,deltatover2);
   }
 #endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(blocksize,1,1);
+
+    //launch kernel
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(update_disp_veloc_kernel), grid, threads, 0, mp->compute_stream,
+                                                                  displ.hip,
+                                                                  veloc.hip,
+                                                                  accel.hip,
+                                                                  size,deltat,deltatsqover2,deltatover2);
+  }
+#endif
 
   GPU_ERROR_CHECKING ("update_displacement_ic_gpu");
 }
@@ -153,14 +172,17 @@ void FC_FUNC_ (update_displacement_cm_gpu,
   int size = NDIM * mp->NGLOB_CRUST_MANTLE;
 
   //debug
-#if (DEBUG_BACKWARD_SIMULATIONS == 1 && DEBUG == 1) || DEBUG_FIELDS == 1
-  realw max_d, max_v, max_a;
-  max_d = get_device_array_maximum_value(mp->d_b_displ_crust_mantle, size);
-  max_v = get_device_array_maximum_value(mp->d_b_veloc_crust_mantle, size);
-  max_a = get_device_array_maximum_value(mp->d_b_accel_crust_mantle, size);
-  printf ("rank %d - forward/adjoint: %i, max crust_mantle displ: %f veloc: %f accel: %f\n", mp->myrank, *FORWARD_OR_ADJOINT, max_d, max_v, max_a);
-  fflush (stdout);
-  synchronize_mpi ();
+#if (DEBUG_BACKWARD_SIMULATIONS == 1 && DEBUG == 1 && DEBUG_FIELDS == 1)
+  {
+    realw max_d, max_v, max_a;
+    max_d = get_device_array_maximum_value(mp->d_b_displ_crust_mantle, size);
+    max_v = get_device_array_maximum_value(mp->d_b_veloc_crust_mantle, size);
+    max_a = get_device_array_maximum_value(mp->d_b_accel_crust_mantle, size);
+    printf ("rank %d - forward/adjoint: %i, max crust_mantle displ: %f veloc: %f accel: %f\n",
+            mp->myrank, *FORWARD_OR_ADJOINT, max_d, max_v, max_a);
+    fflush (stdout);
+    synchronize_mpi ();
+  }
 #endif
 
   int blocksize = BLOCKSIZE_KERNEL1;
@@ -224,6 +246,19 @@ void FC_FUNC_ (update_displacement_cm_gpu,
                                                                     size,deltat,deltatsqover2,deltatover2);
   }
 #endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(blocksize,1,1);
+
+    //launch kernel
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(update_disp_veloc_kernel), grid, threads, 0, mp->compute_stream,
+                                                                  displ.hip,
+                                                                  veloc.hip,
+                                                                  accel.hip,
+                                                                  size,deltat,deltatsqover2,deltatover2);
+  }
+#endif
 
   GPU_ERROR_CHECKING ("update_displacement_cm_gpu");
 }
@@ -248,18 +283,24 @@ void FC_FUNC_ (update_displacement_oc_gpu,
     exit_on_error("Error invalid FORWARD_OR_ADJOINT in update_displacement_oc_gpu() routine");
   }
 
+  // checks if anything to do
+  if (mp->NGLOB_OUTER_CORE == 0) return;
+
   // outer core
   int size = mp->NGLOB_OUTER_CORE;
 
   //debug
-#if (DEBUG_BACKWARD_SIMULATIONS == 1 && DEBUG == 1) || DEBUG_FIELDS == 1
-  realw max_d, max_v, max_a;
-  max_d = get_device_array_maximum_value(mp->d_b_displ_outer_core, size);
-  max_v = get_device_array_maximum_value(mp->d_b_veloc_outer_core, size);
-  max_a = get_device_array_maximum_value(mp->d_b_accel_outer_core, size);
-  printf ("rank %d - forward/adjoint: %i, max outer_core displ: %f veloc: %f accel: %f\n", mp->myrank, *FORWARD_OR_ADJOINT, max_d, max_v, max_a);
-  fflush (stdout);
-  synchronize_mpi ();
+#if (DEBUG_BACKWARD_SIMULATIONS == 1 && DEBUG == 1 && DEBUG_FIELDS == 1)
+  {
+    realw max_d, max_v, max_a;
+    max_d = get_device_array_maximum_value(mp->d_b_displ_outer_core, size);
+    max_v = get_device_array_maximum_value(mp->d_b_veloc_outer_core, size);
+    max_a = get_device_array_maximum_value(mp->d_b_accel_outer_core, size);
+    printf ("rank %d - forward/adjoint: %i, max outer_core displ: %f veloc: %f accel: %f\n",
+            mp->myrank, *FORWARD_OR_ADJOINT, max_d, max_v, max_a);
+    fflush (stdout);
+    synchronize_mpi ();
+  }
 #endif
 
   int blocksize = BLOCKSIZE_KERNEL1;
@@ -323,6 +364,19 @@ void FC_FUNC_ (update_displacement_oc_gpu,
                                                                    size,deltat,deltatsqover2,deltatover2);
   }
 #endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(blocksize,1,1);
+
+    //launch kernel
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(update_potential_kernel), grid, threads, 0, mp->compute_stream,
+                                                                 displ.hip,
+                                                                 veloc.hip,
+                                                                 accel.hip,
+                                                                 size,deltat,deltatsqover2,deltatover2);
+  }
+#endif
 
   GPU_ERROR_CHECKING ("update_displacement_oc_gpu");
 }
@@ -378,12 +432,23 @@ void FC_FUNC_ (multiply_accel_elastic_gpu,
     two_omega_earth = mp->b_two_omega_earth;
   }
 
-#ifdef USE_OPENCL
-  size_t global_work_size[2];
-  size_t local_work_size[2];
-  cl_uint idx = 0;
+  // graph
+#ifdef USE_CUDA_GRAPHS
+  if (mp->init_graph_elastic){
+    // debug: synchronizes first
+    //gpuSynchronize(); synchronize_mpi();
+    // start capturing
+    print_CUDA_error_if_any(cudaStreamBeginCapture(mp->compute_stream),910);
+  }
+#endif
 
+
+#ifdef USE_OPENCL
   if (run_opencl) {
+    size_t global_work_size[2];
+    size_t local_work_size[2];
+    cl_uint idx = 0;
+
     local_work_size[0] = blocksize;
     local_work_size[1] = 1;
     global_work_size[0] = num_blocks_x * blocksize;
@@ -401,11 +466,13 @@ void FC_FUNC_ (multiply_accel_elastic_gpu,
   }
 #endif
 #ifdef USE_CUDA
-  dim3 grid,threads;
-
   if (run_cuda) {
-    grid = dim3(num_blocks_x,num_blocks_y);
-    threads = dim3(blocksize,1,1);
+    // graph
+#ifdef USE_CUDA_GRAPHS
+    if (! mp->use_graph_call_elastic){
+#endif
+    dim3 grid = dim3(num_blocks_x,num_blocks_y);
+    dim3 threads = dim3(blocksize,1,1);
 
     // launches kernel
     update_accel_elastic_kernel<<< grid, threads,0,mp->compute_stream>>>(accel.cuda,
@@ -415,66 +482,113 @@ void FC_FUNC_ (multiply_accel_elastic_gpu,
                                                                          rmassx.cuda,
                                                                          rmassy.cuda,
                                                                          rmassz.cuda);
+#ifdef USE_CUDA_GRAPHS
+    } // graph
+#endif
+  }
+#endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid = dim3(num_blocks_x,num_blocks_y);
+    dim3 threads = dim3(blocksize,1,1);
+
+    // launches kernel
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(update_accel_elastic_kernel), grid, threads, 0, mp->compute_stream,
+                                                                     accel.hip,
+                                                                     veloc.hip,
+                                                                     mp->NGLOB_CRUST_MANTLE,
+                                                                     two_omega_earth,
+                                                                     rmassx.hip,
+                                                                     rmassy.hip,
+                                                                     rmassz.hip);
   }
 #endif
 
   //inner core region
-  size_padded = ((int)ceil ( ( (double)mp->NGLOB_INNER_CORE) / ( (double)blocksize)))*blocksize;
+  if (mp->NGLOB_INNER_CORE > 0){
+    size_padded = ((int)ceil ( ( (double)mp->NGLOB_INNER_CORE) / ( (double)blocksize)))*blocksize;
 
-  get_blocks_xy (size_padded/blocksize, &num_blocks_x, &num_blocks_y);
+    get_blocks_xy (size_padded/blocksize, &num_blocks_x, &num_blocks_y);
 
-  // sets gpu arrays
-  if (*FORWARD_OR_ADJOINT == 1) {
-    veloc = mp->d_veloc_inner_core;
-    accel = mp->d_accel_inner_core;
-    rmassx = mp->d_rmassx_inner_core;
-    rmassy = mp->d_rmassy_inner_core;
-    rmassz = mp->d_rmassz_inner_core;
-  } else {
-    //debug
-    DEBUG_BACKWARD_UPDATE ();
-    // for backward/reconstructed fields
-    veloc = mp->d_b_veloc_inner_core;
-    accel = mp->d_b_accel_inner_core;
-    rmassx = mp->d_b_rmassx_inner_core;
-    rmassy = mp->d_b_rmassy_inner_core;
-    rmassz = mp->d_b_rmassz_inner_core;
-  }
+    // sets gpu arrays
+    if (*FORWARD_OR_ADJOINT == 1) {
+      veloc = mp->d_veloc_inner_core;
+      accel = mp->d_accel_inner_core;
+      rmassx = mp->d_rmassx_inner_core;
+      rmassy = mp->d_rmassy_inner_core;
+      rmassz = mp->d_rmassz_inner_core;
+    } else {
+      //debug
+      DEBUG_BACKWARD_UPDATE ();
+      // for backward/reconstructed fields
+      veloc = mp->d_b_veloc_inner_core;
+      accel = mp->d_b_accel_inner_core;
+      rmassx = mp->d_b_rmassx_inner_core;
+      rmassy = mp->d_b_rmassy_inner_core;
+      rmassz = mp->d_b_rmassz_inner_core;
+    }
 
 #ifdef USE_OPENCL
-  if (run_opencl) {
-    local_work_size[0] = blocksize;
-    local_work_size[1] = 1;
-    global_work_size[0] = num_blocks_x * blocksize;
-    global_work_size[1] = num_blocks_y;
-    idx = 0;
+    if (run_opencl) {
+      size_t global_work_size[2];
+      size_t local_work_size[2];
+      cl_uint idx = 0;
 
-    clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &accel.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &veloc.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (int), (void *) &mp->NGLOB_INNER_CORE));
-    clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (realw), (void *) &two_omega_earth));
-    clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &rmassx.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &rmassy.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &rmassz.ocl));
-    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.update_accel_elastic_kernel, 2, NULL,
-                                     global_work_size, local_work_size, 0, NULL, NULL));
-  }
+      local_work_size[0] = blocksize;
+      local_work_size[1] = 1;
+      global_work_size[0] = num_blocks_x * blocksize;
+      global_work_size[1] = num_blocks_y;
+
+      clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &accel.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &veloc.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (int), (void *) &mp->NGLOB_INNER_CORE));
+      clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (realw), (void *) &two_omega_earth));
+      clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &rmassx.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &rmassy.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &rmassz.ocl));
+      clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.update_accel_elastic_kernel, 2, NULL,
+                                       global_work_size, local_work_size, 0, NULL, NULL));
+    }
 #endif
 #ifdef USE_CUDA
-  if (run_cuda) {
-    grid = dim3(num_blocks_x,num_blocks_y);
-    threads = dim3(blocksize,1,1);
-
-    // launches kernel
-    update_accel_elastic_kernel<<< grid, threads,0,mp->compute_stream>>>(accel.cuda,
-                                                                         veloc.cuda,
-                                                                         mp->NGLOB_INNER_CORE,
-                                                                         two_omega_earth,
-                                                                         rmassx.cuda,
-                                                                         rmassy.cuda,
-                                                                         rmassz.cuda);
-  }
+    if (run_cuda) {
+      // graph
+#ifdef USE_CUDA_GRAPHS
+      if (! mp->use_graph_call_elastic){
 #endif
+      dim3 grid = dim3(num_blocks_x,num_blocks_y);
+      dim3 threads = dim3(blocksize,1,1);
+
+      // launches kernel
+      update_accel_elastic_kernel<<< grid, threads,0,mp->compute_stream>>>(accel.cuda,
+                                                                           veloc.cuda,
+                                                                           mp->NGLOB_INNER_CORE,
+                                                                           two_omega_earth,
+                                                                           rmassx.cuda,
+                                                                           rmassy.cuda,
+                                                                           rmassz.cuda);
+#ifdef USE_CUDA_GRAPHS
+      } // graph
+#endif
+    }
+#endif
+#ifdef USE_HIP
+    if (run_hip) {
+      dim3 grid = dim3(num_blocks_x,num_blocks_y);
+      dim3 threads = dim3(blocksize,1,1);
+
+      // launches kernel
+      hipLaunchKernelGGL(HIP_KERNEL_NAME(update_accel_elastic_kernel), grid, threads, 0, mp->compute_stream,
+                                                                       accel.hip,
+                                                                       veloc.hip,
+                                                                       mp->NGLOB_INNER_CORE,
+                                                                       two_omega_earth,
+                                                                       rmassx.hip,
+                                                                       rmassy.hip,
+                                                                       rmassz.hip);
+    }
+#endif
+  }
 
   GPU_ERROR_CHECKING ("after multiply_accel_elastic_gpu");
 }
@@ -525,11 +639,11 @@ void FC_FUNC_ (update_veloc_elastic_gpu,
   }
 
 #ifdef USE_OPENCL
-  size_t global_work_size[2];
-  size_t local_work_size[2];
-  cl_uint idx = 0;
-
   if (run_opencl) {
+    size_t global_work_size[2];
+    size_t local_work_size[2];
+    cl_uint idx = 0;
+
     local_work_size[0] = blocksize;
     local_work_size[1] = 1;
     global_work_size[0] = num_blocks_x * blocksize;
@@ -545,65 +659,142 @@ void FC_FUNC_ (update_veloc_elastic_gpu,
   }
 #endif
 #ifdef USE_CUDA
-  dim3 grid,threads;
-
   if (run_cuda) {
-    grid = dim3(num_blocks_x,num_blocks_y);
-    threads = dim3(blocksize,1,1);
+    // graph
+#ifdef USE_CUDA_GRAPHS
+    if (! mp->use_graph_call_elastic){
+#endif
+    dim3 grid = dim3(num_blocks_x,num_blocks_y);
+    dim3 threads = dim3(blocksize,1,1);
 
     // launches kernel
     update_veloc_elastic_kernel<<< grid, threads,0,mp->compute_stream>>>(veloc.cuda,
                                                                          accel.cuda,
                                                                          mp->NGLOB_CRUST_MANTLE,
                                                                          deltatover2);
+#ifdef USE_CUDA_GRAPHS
+    } // graph
+#endif
+  }
+#endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid = dim3(num_blocks_x,num_blocks_y);
+    dim3 threads = dim3(blocksize,1,1);
+
+    // launches kernel
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(update_veloc_elastic_kernel), grid, threads, 0, mp->compute_stream,
+                                                                     veloc.hip,
+                                                                     accel.hip,
+                                                                     mp->NGLOB_CRUST_MANTLE,
+                                                                     deltatover2);
   }
 #endif
 
   //inner core region
-  size_padded = ((int)ceil ( ( (double)mp->NGLOB_INNER_CORE) / ((double)blocksize))) * blocksize;
+  if (mp->NGLOB_INNER_CORE > 0){
+    size_padded = ((int)ceil ( ( (double)mp->NGLOB_INNER_CORE) / ((double)blocksize))) * blocksize;
 
-  get_blocks_xy (size_padded/blocksize, &num_blocks_x, &num_blocks_y);
+    get_blocks_xy (size_padded/blocksize, &num_blocks_x, &num_blocks_y);
 
-  // sets gpu arrays
-  if (*FORWARD_OR_ADJOINT == 1) {
-    veloc = mp->d_veloc_inner_core;
-    accel = mp->d_accel_inner_core;
-  } else {
-    //debug
-    DEBUG_BACKWARD_UPDATE ();
-    // for backward/reconstructed fields
-    veloc = mp->d_b_veloc_inner_core;
-    accel = mp->d_b_accel_inner_core;
-  }
+    // sets gpu arrays
+    if (*FORWARD_OR_ADJOINT == 1) {
+      veloc = mp->d_veloc_inner_core;
+      accel = mp->d_accel_inner_core;
+    } else {
+      //debug
+      DEBUG_BACKWARD_UPDATE ();
+      // for backward/reconstructed fields
+      veloc = mp->d_b_veloc_inner_core;
+      accel = mp->d_b_accel_inner_core;
+    }
 
 #ifdef USE_OPENCL
-  if (run_opencl) {
-    local_work_size[0] = blocksize;
-    local_work_size[1] = 1;
-    global_work_size[0] = num_blocks_x * blocksize;
-    global_work_size[1] = num_blocks_y;
-    idx = 0;
+    if (run_opencl) {
+      size_t global_work_size[2];
+      size_t local_work_size[2];
+      cl_uint idx = 0;
 
-    clCheck (clSetKernelArg (mocl.kernels.update_veloc_elastic_kernel, idx++, sizeof (cl_mem), (void *) &veloc.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.update_veloc_elastic_kernel, idx++, sizeof (cl_mem), (void *) &accel.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.update_veloc_elastic_kernel, idx++, sizeof (int), (void *) &mp->NGLOB_INNER_CORE));
-    clCheck (clSetKernelArg (mocl.kernels.update_veloc_elastic_kernel, idx++, sizeof (realw), (void *) &deltatover2));
+      local_work_size[0] = blocksize;
+      local_work_size[1] = 1;
+      global_work_size[0] = num_blocks_x * blocksize;
+      global_work_size[1] = num_blocks_y;
 
-    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.update_veloc_elastic_kernel, 2, NULL,
-                                     global_work_size, local_work_size, 0, NULL, NULL));
-  }
+      clCheck (clSetKernelArg (mocl.kernels.update_veloc_elastic_kernel, idx++, sizeof (cl_mem), (void *) &veloc.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.update_veloc_elastic_kernel, idx++, sizeof (cl_mem), (void *) &accel.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.update_veloc_elastic_kernel, idx++, sizeof (int), (void *) &mp->NGLOB_INNER_CORE));
+      clCheck (clSetKernelArg (mocl.kernels.update_veloc_elastic_kernel, idx++, sizeof (realw), (void *) &deltatover2));
+
+      clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.update_veloc_elastic_kernel, 2, NULL,
+                                       global_work_size, local_work_size, 0, NULL, NULL));
+    }
 #endif
 #ifdef USE_CUDA
-  if (run_cuda) {
-    grid = dim3(num_blocks_x,num_blocks_y);
-    threads = dim3(blocksize,1,1);
+    if (run_cuda) {
+      // graph
+#ifdef USE_CUDA_GRAPHS
+      if (! mp->use_graph_call_elastic){
+#endif
+      dim3 grid = dim3(num_blocks_x,num_blocks_y);
+      dim3 threads = dim3(blocksize,1,1);
 
-    // launches kernel
-    update_veloc_elastic_kernel<<< grid, threads,0,mp->compute_stream>>>(veloc.cuda,
-                                                                         accel.cuda,
-                                                                         mp->NGLOB_INNER_CORE,
-                                                                         deltatover2);
+      // launches kernel
+      update_veloc_elastic_kernel<<< grid, threads,0,mp->compute_stream>>>(veloc.cuda,
+                                                                           accel.cuda,
+                                                                           mp->NGLOB_INNER_CORE,
+                                                                           deltatover2);
+      // graph
+#ifdef USE_CUDA_GRAPHS
+      } // graph
+#endif
+    }
+#endif
+#ifdef USE_HIP
+    if (run_hip) {
+      dim3 grid = dim3(num_blocks_x,num_blocks_y);
+      dim3 threads = dim3(blocksize,1,1);
+
+      // launches kernel
+      hipLaunchKernelGGL(HIP_KERNEL_NAME(update_veloc_elastic_kernel), grid, threads, 0, mp->compute_stream,
+                                                                       veloc.hip,
+                                                                       accel.hip,
+                                                                       mp->NGLOB_INNER_CORE,
+                                                                       deltatover2);
+    }
+#endif
   }
+
+  // cuda graphs
+#ifdef USE_CUDA
+#ifdef USE_CUDA_GRAPHS
+  if (run_cuda) {
+    // graph
+    // finish creating graph
+    if (mp->init_graph_elastic){
+      // stop capturing
+      print_CUDA_error_if_any(cudaStreamEndCapture(mp->compute_stream, &mp->graph_elastic),930);
+
+      // get graph info
+      size_t numNodes = 0;
+      print_CUDA_error_if_any(cudaGraphGetNodes(mp->graph_elastic, NULL, &numNodes),931);
+      //if (mp->myrank == 0) printf("\nGraph: elastic number of nodes = %zu\n",numNodes);
+
+      print_CUDA_error_if_any(cudaGraphInstantiate(&mp->graphExec_elastic, mp->graph_elastic, NULL, NULL, 0),932);
+      //if (mp->myrank == 0) printf("\nGraph: elastic instantiated\n");
+
+      // graph is initialized, ready to be called by graph from now on
+      mp->init_graph_elastic = 0;
+      mp->use_graph_call_elastic = 1;
+    }
+
+    // launches graph instead of separate kernels
+    if (mp->use_graph_call_elastic){
+      // graph
+      print_CUDA_error_if_any(cudaGraphLaunch(mp->graphExec_elastic, mp->compute_stream),935);
+      //if (mp->myrank == 0) printf("\nGraph: elastic launch \n");
+    }
+  }
+#endif
 #endif
 
   GPU_ERROR_CHECKING ("after update_veloc_3_b");
@@ -624,6 +815,9 @@ void FC_FUNC_ (multiply_accel_acoustic_gpu,
   if (*FORWARD_OR_ADJOINT != 1 && *FORWARD_OR_ADJOINT != 3) {
     exit_on_error("Error invalid FORWARD_OR_ADJOINT in multiply_accel_acoustic_gpu() routine");
   }
+
+  // checks if anything to do
+  if (mp->NGLOB_OUTER_CORE == 0) return;
 
   // update kernel
   int blocksize = BLOCKSIZE_KERNEL3;
@@ -647,6 +841,16 @@ void FC_FUNC_ (multiply_accel_acoustic_gpu,
     rmass = mp->d_b_rmass_outer_core;
   }
 
+  // graph
+#ifdef USE_CUDA_GRAPHS
+  if (mp->init_graph_acoustic){
+    // debug: synchronizes first
+    //gpuSynchronize(); synchronize_mpi();
+    // start capturing
+    print_CUDA_error_if_any(cudaStreamBeginCapture(mp->compute_stream),910);
+  }
+#endif
+
 #ifdef USE_OPENCL
   if (run_opencl) {
     size_t global_work_size[2];
@@ -668,6 +872,10 @@ void FC_FUNC_ (multiply_accel_acoustic_gpu,
 #endif
 #ifdef USE_CUDA
   if (run_cuda) {
+    // graph
+#ifdef USE_CUDA_GRAPHS
+    if (! mp->use_graph_call_acoustic){
+#endif
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize,1,1);
 
@@ -675,6 +883,21 @@ void FC_FUNC_ (multiply_accel_acoustic_gpu,
     update_accel_acoustic_kernel<<< grid, threads,0,mp->compute_stream>>>(accel.cuda,
                                                                           mp->NGLOB_OUTER_CORE,
                                                                           rmass.cuda);
+#ifdef USE_CUDA_GRAPHS
+    } // graph
+#endif
+  }
+#endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(blocksize,1,1);
+
+    // multiplies accel with inverse of mass matrix
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(update_accel_acoustic_kernel), grid, threads, 0, mp->compute_stream,
+                                                                      accel.hip,
+                                                                      mp->NGLOB_OUTER_CORE,
+                                                                      rmass.hip);
   }
 #endif
 
@@ -700,6 +923,9 @@ void FC_FUNC_ (update_veloc_acoustic_gpu,
   if (*FORWARD_OR_ADJOINT != 1 && *FORWARD_OR_ADJOINT != 3) {
     exit_on_error("Error invalid FORWARD_OR_ADJOINT in update_veloc_acoustic_gpu() routine");
   }
+
+  // checks if anything to do
+  if (mp->NGLOB_OUTER_CORE == 0) return;
 
   // update kernel
   int blocksize = BLOCKSIZE_KERNEL3;
@@ -746,6 +972,10 @@ void FC_FUNC_ (update_veloc_acoustic_gpu,
 #endif
 #ifdef USE_CUDA
   if (run_cuda) {
+    // graph
+#ifdef USE_CUDA_GRAPHS
+    if (! mp->use_graph_call_acoustic){
+#endif
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize,1,1);
 
@@ -754,7 +984,58 @@ void FC_FUNC_ (update_veloc_acoustic_gpu,
                                                                           accel.cuda,
                                                                           mp->NGLOB_OUTER_CORE,
                                                                           deltatover2);
+    // graph
+#ifdef USE_CUDA_GRAPHS
+    } // graph
+#endif
   }
+#endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(blocksize,1,1);
+
+    // updates velocity
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(update_veloc_acoustic_kernel), grid, threads, 0, mp->compute_stream,
+                                                                      veloc.hip,
+                                                                      accel.hip,
+                                                                      mp->NGLOB_OUTER_CORE,
+                                                                      deltatover2);
+  }
+#endif
+
+
+  // cuda graphs
+#ifdef USE_CUDA
+#ifdef USE_CUDA_GRAPHS
+  if (run_cuda) {
+    // graph
+
+    // finish creating graph
+    if (mp->init_graph_acoustic){
+      // stop capturing
+      print_CUDA_error_if_any(cudaStreamEndCapture(mp->compute_stream, &mp->graph_acoustic),920);
+
+      // get graph info
+      size_t numNodes = 0;
+      print_CUDA_error_if_any(cudaGraphGetNodes(mp->graph_acoustic, NULL, &numNodes),921);
+      //if (mp->myrank == 0) printf("\nGraph: acoustic number of nodes = %zu\n",numNodes);
+
+      print_CUDA_error_if_any(cudaGraphInstantiate(&mp->graphExec_acoustic, mp->graph_acoustic, NULL, NULL, 0),922);
+      //if (mp->myrank == 0) printf("\nGraph: acoustic instantiated\n");
+
+      // graph is initialized, ready to be called by graph from now on
+      mp->init_graph_acoustic = 0;
+      mp->use_graph_call_acoustic = 1;
+    }
+
+    // launches graph instead of separate kernels
+    if (mp->use_graph_call_acoustic){
+      // graph
+      print_CUDA_error_if_any(cudaGraphLaunch(mp->graphExec_acoustic, mp->compute_stream),925);
+      //if (mp->myrank == 0) printf("\nGraph: acoustic launch \n");
+    }
+#endif
 #endif
 
   GPU_ERROR_CHECKING ("after update_veloc_acoustic_gpu");

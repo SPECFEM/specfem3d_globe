@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -67,16 +67,14 @@
   call prepare_attenuation()
 
   ! precomputes iso/tiso/aniso elastic element factors
+  ! (careful with the order, prepare_attenuation() should be called before this one)
   call prepare_elastic_elements()
 
   ! allocates & initializes arrays
   call prepare_wavefields()
 
-  ! reads files back from local disk or MT tape system if restart file
-  ! note: for SIMULATION_TYPE 3 simulations, the stored wavefields
-  !          will be read in the time loop after the Newmark time scheme update.
-  !          this makes indexing and timing easier to match with adjoint wavefields indexing.
-  call read_forward_arrays_startrun()
+  ! sets up restarting/checkpointing
+  call prepare_timerun_restarting()
 
   ! prepares Stacey boundary arrays for re-construction of wavefields
   call prepare_stacey()
@@ -116,6 +114,7 @@
     endif
     write(IMAIN,*) '           time step: ',sngl(DT),' s'
     write(IMAIN,*) 'number of time steps: ',NSTEP
+    write(IMAIN,*) '  current time steps: ',it_begin,' to ',it_end
     write(IMAIN,*) 'total simulated time: ',sngl(((NSTEP-1)*DT-t0)/60.d0),' minutes'
     write(IMAIN,*) 'start time          :',sngl(-t0),' seconds'
     write(IMAIN,*)
@@ -156,7 +155,7 @@
   if (myrank == 0) then
 
     write(IMAIN,*)
-    write(IMAIN,*) 'Reference radius of the Earth used is ',R_EARTH_KM,' km'
+    write(IMAIN,*) 'Reference radius of the globe used is ',R_PLANET_KM,' km'
     write(IMAIN,*)
 
     write(IMAIN,*)
@@ -246,7 +245,6 @@
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
 
-
   ! mass matrices need to be assembled with MPI here once and for all
   call prepare_timerun_rmass_assembly()
 
@@ -321,6 +319,7 @@
     endif
   endif
   rmassz_crust_mantle = 1._CUSTOM_REAL / rmassz_crust_mantle
+
   ! inner core
   if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) then
      rmassx_inner_core = 1._CUSTOM_REAL / rmassx_inner_core
@@ -356,10 +355,10 @@
   ! ocean load
   if (OCEANS_VAL) then
     call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
-                        rmass_ocean_load, &
-                        num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
-                        nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle, &
-                        my_neighbors_crust_mantle)
+                             rmass_ocean_load, &
+                             num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
+                             nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle, &
+                             my_neighbors_crust_mantle)
   endif
 
   ! crust and mantle
@@ -399,8 +398,6 @@
                                my_neighbors_crust_mantle)
     endif
   endif
-
-
 
   ! outer core
   call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
@@ -581,7 +578,7 @@
   scale_t = ONE/dsqrt(PI*GRAV*RHOAV)
   scale_t_inv = dsqrt(PI*GRAV*RHOAV)
 
-  scale_displ = R_EARTH
+  scale_displ = R_PLANET
   scale_displ_inv = ONE / scale_displ
 
   scale_veloc = scale_displ * scale_t_inv
@@ -611,6 +608,9 @@
   endif
 
   ! non-dimensionalized rotation rate of the Earth times two
+  two_omega_earth = 0._CUSTOM_REAL
+  b_two_omega_earth = 0._CUSTOM_REAL
+
   if (ROTATION_VAL) then
     ! distinguish between single and double precision for reals
     if (SIMULATION_TYPE == 1) then
@@ -625,10 +625,6 @@
       ! reconstructed wavefield together with +/- b_deltat will spin backward/forward
       b_two_omega_earth = real(2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv), kind=CUSTOM_REAL)
     endif
-  else
-    ! will still be used (e.g. in GPU calculations), so initializes to zero
-    two_omega_earth = 0._CUSTOM_REAL
-    if (SIMULATION_TYPE == 3) b_two_omega_earth = 0._CUSTOM_REAL
   endif
 
   ! synchronizes processes
@@ -636,3 +632,194 @@
 
   end subroutine prepare_timerun_constants
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine prepare_timerun_restarting()
+
+! sets up restarting/checkpointing
+
+  use specfem_par
+  implicit none
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) "preparing number of runs"
+    write(IMAIN,*) "  number of runs    : ",NUMBER_OF_RUNS
+    write(IMAIN,*) "  number of this run: ",NUMBER_OF_THIS_RUN
+    call flush_IMAIN()
+  endif
+
+  ! safety checks for run/checkpoint number
+  if (NUMBER_OF_RUNS < 1 .or. NUMBER_OF_RUNS > NSTEP) &
+    stop 'number of restart runs can not be less than 1 or greater than NSTEP'
+
+  if (NUMBER_OF_THIS_RUN < 1 .or. NUMBER_OF_THIS_RUN > NUMBER_OF_RUNS) &
+    stop 'incorrect run number'
+
+  if (SIMULATION_TYPE /= 1 .and. NUMBER_OF_RUNS /= 1) &
+    stop 'Only 1 run for SIMULATION_TYPE = 2/3'
+
+  if (USE_LDDRK .and. NUMBER_OF_RUNS > 1) &
+     stop 'USE_LDDRK not supported yet for restarting simulations with NUMBER_OF_RUNS > 1'
+
+  ! define correct time steps if restart files
+  ! set start/end steps for time iteration loop
+  it_begin = (NUMBER_OF_THIS_RUN - 1) * (NSTEP / NUMBER_OF_RUNS) + 1
+  if (NUMBER_OF_THIS_RUN < NUMBER_OF_RUNS) then
+    it_end = NUMBER_OF_THIS_RUN * (NSTEP / NUMBER_OF_RUNS)
+  else
+    ! Last run may be a bit larger
+    it_end = NSTEP
+  endif
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) "  time stepping     : begin/end = ",it_begin,"/",it_end
+    call flush_IMAIN()
+  endif
+
+  ! reads files back from local disk or MT tape system if restart file
+  !
+  ! note: for SIMULATION_TYPE 3 simulations, the stored wavefields
+  !          will be read in the time loop after the Newmark time scheme update.
+  !          this makes indexing and timing easier to match with adjoint wavefields indexing.
+  call read_forward_arrays_startrun()
+
+  end subroutine prepare_timerun_restarting
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine prepare_simultaneous_event_execution_shift_undoatt()
+
+! for simultaneous events, the snapshot file I/O can lead to high peak bandwidth if done for all events at the same time.
+! here, we shift the execution of events by a small, estimated time shift.
+
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_innercore
+  use specfem_par_outercore
+
+  implicit none
+
+  integer :: millisec_shift
+  integer(kind=8) :: local_dim
+  double precision :: snapshot_size_in_GB,estimated_io_time_in_millisec
+  ! current time
+  integer,dimension(8) :: tval
+
+  ! overrides filesystem bandwidth (GB/s) for I/O
+  !FILESYSTEM_IO_BANDWIDTH = 0.1d0  ! 0.1 GB/s
+  ! (Frontera scratch file system: https://frontera-portal.tacc.utexas.edu/user-guide/files/)
+  !FILESYSTEM_IO_BANDWIDTH = 60.d0  ! 60 GB/s
+
+  ! only for multiple simultaneous events
+  if (NUMBER_OF_SIMULTANEOUS_RUNS < 2) return
+  ! only in case snapshot files are used
+  if (.not. ((SIMULATION_TYPE == 1 .and. SAVE_FORWARD) .or. (SIMULATION_TYPE == 3)) ) return
+
+  ! shifts execution of (MPI) event subgroups
+  if (SHIFT_SIMULTANEOUS_RUNS .and. FILESYSTEM_IO_BANDWIDTH > 0.d0) then
+    ! estimate array sizes to store for wavefield snapshots (in GB)
+    snapshot_size_in_GB = 0.d0
+
+    ! wavefield arrays
+    ! displ/veloc/accel crust-mantle
+    local_dim = NDIM * NGLOB_CRUST_MANTLE
+    snapshot_size_in_GB = snapshot_size_in_GB + 3.d0 * local_dim * dble(CUSTOM_REAL)
+
+    ! displ/veloc/accel inner core
+    local_dim = NDIM * NGLOB_INNER_CORE
+    snapshot_size_in_GB = snapshot_size_in_GB + 3.d0 * local_dim * dble(CUSTOM_REAL)
+
+    ! displ/veloc/accel outer core
+    local_dim = NGLOB_OUTER_CORE
+    snapshot_size_in_GB = snapshot_size_in_GB + 3.d0 * local_dim * dble(CUSTOM_REAL)
+
+    ! rotation
+    if (ROTATION_VAL) then
+      ! A_array_rotation,..
+      local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_OUTER_CORE_ROTATION
+      snapshot_size_in_GB = snapshot_size_in_GB + 2.d0 * local_dim * dble(CUSTOM_REAL)
+    endif
+
+    if (ATTENUATION_VAL) then
+      ! memory variables crust-mantle R_xx_crust_mantle,..
+      local_dim = N_SLS * NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE_ATTENUATION
+      snapshot_size_in_GB = snapshot_size_in_GB + 5.d0 * local_dim * dble(CUSTOM_REAL)
+
+      ! memory variables crust-mantle R_xx_inner_core,..
+      local_dim = N_SLS * NGLLX * NGLLY * NGLLZ * NSPEC_INNER_CORE_ATTENUATION
+      snapshot_size_in_GB = snapshot_size_in_GB + 5.d0 * local_dim * dble(CUSTOM_REAL)
+    endif
+
+    ! converts size to GB
+    snapshot_size_in_GB = snapshot_size_in_GB / 1024.d0 / 1024.d0 / 1024.d0
+
+    ! file compression
+    if (ADIOS_FOR_UNDO_ATTENUATION .and. ADIOS_COMPRESSION_ALGORITHM /= 0) then
+      ! assumes a compression factor of 3x
+      snapshot_size_in_GB = snapshot_size_in_GB / 3.d0
+    endif
+
+    ! total snapshot size for all processes in this event group
+    snapshot_size_in_GB = snapshot_size_in_GB * NPROCTOT_VAL
+
+    ! estimates file i/o speed (adding 10 percent for overheads)
+    estimated_io_time_in_millisec = snapshot_size_in_GB / FILESYSTEM_IO_BANDWIDTH * 1000.d0 * (1.d0 + 0.01d0)
+
+    ! determines time shift (in millisec) depending on group number
+    if (estimated_io_time_in_millisec > 5000) then
+      ! limits shifts to 5s
+      millisec_shift = 5000.d0 * mygroup
+    else
+      millisec_shift = estimated_io_time_in_millisec * mygroup
+    endif
+
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) "simultaneous events execution shift: "
+      if (ADIOS_FOR_UNDO_ATTENUATION .and. ADIOS_COMPRESSION_ALGORITHM /= 0) then
+        write(IMAIN,*) "  estimated snapshot size for event group (ADIOS compressed) = ",sngl(snapshot_size_in_GB * 1024.d0),"MB"
+        write(IMAIN,*) "                                                             = ",sngl(snapshot_size_in_GB),"GB"
+      else
+        write(IMAIN,*) "  estimated snapshot size for event group        = ",sngl(snapshot_size_in_GB * 1024.d0),"MB"
+        write(IMAIN,*) "                                                 = ",sngl(snapshot_size_in_GB),"GB"
+      endif
+      write(IMAIN,*)
+      write(IMAIN,*) "  selected filesystem I/O bandwidth              = ",sngl(FILESYSTEM_IO_BANDWIDTH),"GB/s"
+      write(IMAIN,*) "  estimated I/O time in millisec                 = ",sngl(estimated_io_time_in_millisec),"ms"
+      write(IMAIN,*)
+      write(IMAIN,*) "  (MPI) event group number                       = ",mygroup
+      write(IMAIN,*) "  execution shift in millisec for this event     = ",millisec_shift,"ms"
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
+
+    ! let this group sleep
+    call sleep_for_msec(millisec_shift)
+  endif
+
+  ! synchronize processes (for this MPI group)
+  call synchronize_all()
+
+  ! user output
+  if (myrank == 0) then
+    ! outputs current time on system
+    call date_and_time(VALUES=tval)
+
+    ! user output
+    write(IMAIN,'(a,i2.2,a,i2.2,a,i2.2,a,i3.3,a)') &
+      "   Event starts at current clock time: ",tval(5),"h ",tval(6),"min ",tval(7),"sec ", tval(8),"msec"
+    write(IMAIN,*)
+    call flush_IMAIN()
+
+    ! debug
+    !print *,'debug: event group',mygroup,' shifted by ',millisec_shift, &
+    !        'starts at:',tval(5),"h ",tval(6),"min ",tval(7),"sec ", tval(8),"msec"
+  endif
+
+  end subroutine prepare_simultaneous_event_execution_shift_undoatt

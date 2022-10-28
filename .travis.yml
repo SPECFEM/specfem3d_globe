@@ -4,11 +4,18 @@
 #       this is using C as a base and installs gfortran in the test environment
 
 language: c
-dist: trusty
-sudo: required
-
+dist: bionic
 os: linux
+
+arch:
+  - ppc64le  # IBM Power
+#  - amd64    # travis default
+#  - arm64    # ARM
+
 compiler: gcc
+
+# deprecated
+#sudo: required
 
 env:
   global:
@@ -25,7 +32,15 @@ env:
     #   TESTFLAGS    - flags used for configuration
     #   TESTCOV      - determines whether or not (0/1) code coverage flags are used
     #   CUDA         - flag for compilation with CUDA
-    #   CUDA_VERSION - specifies CUDA toolkit version
+
+    # code coverage: using coverage flags (single test for global model)
+    - TESTID=0 TESTDIR=2 TESTCOV=1 TESTFLAGS="" CUDA=false
+
+    # code coverage: using coverage flags (single test for regional model sgloberani)
+    - TESTID=0 TESTDIR=5 TESTCOV=1 TESTFLAGS="" CUDA=false
+
+    # code coverage: using coverage flags (single test for regional noise)
+    - TESTID=0 TESTDIR=12 TESTCOV=1 TESTFLAGS="" CUDA=false
 
     # code coverage: using coverage flags
     - TESTID=1 TESTDIR=1 TESTCOV=1 TESTFLAGS="" CUDA=false
@@ -51,17 +66,53 @@ env:
     # regional example with NGLL = 6
     - TESTID=8 TESTDIR=1 TESTCOV=0 TESTFLAGS="" CUDA=false
 
-    # globe_small example
-    - TESTID=9 TESTDIR=2 TESTCOV=0 TESTFLAGS="--enable-vectorization" CUDA=false
+    # globe_small example (offline, takes too long)
+    #- TESTID=9 TESTDIR=2 TESTCOV=0 TESTFLAGS="--enable-vectorization" CUDA=false
 
-    # globe_small example with openmp
-    - TESTID=10 TESTDIR=2 TESTCOV=0 TESTFLAGS="--enable-vectorization --enable-openmp" CUDA=false
+    # globe_small example with openmp (offline, takes too long)
+    #- TESTID=10 TESTDIR=2 TESTCOV=0 TESTFLAGS="--enable-vectorization --enable-openmp" CUDA=false
 
-    # point force example
-    - TESTID=11 TESTDIR=3 TESTCOV=0 TESTFLAGS="" CUDA=false
+    # point force example (tested on github actions)
+    #- TESTID=11 TESTDIR=3 TESTCOV=0 TESTFLAGS="" CUDA=false
 
     # regular kernel example
     - TESTID=12 TESTDIR=4 TESTCOV=0 TESTFLAGS="--enable-vectorization" CUDA=false
+
+    # regional_sgloberani (tested on github actions)
+    #- TESTID=13 TESTDIR=5 TESTCOV=0 TESTFLAGS="--enable-vectorization" CUDA=false
+
+    # global_full_sphericalharmonic_model (possible future case)
+    #- TESTID=14 TESTDIR=6 TESTCOV=0 TESTFLAGS="--enable-vectorization" CUDA=false
+
+    # regional s40rts compilation w/ CUDA
+    - TESTID=15 TESTDIR=7 TESTCOV=0 TESTFLAGS="--with-cuda=cuda5" CUDA=true
+
+    # regional s40rts compilation w/ OpenCL (provided from CUDA library)
+    - TESTID=16 TESTDIR=7 TESTCOV=0 TESTFLAGS="--with-opencl" CUDA=true OPENCL=true
+
+    # regional_small_adjoint - pure adjoint example (offline, would need full length simulation)
+    #- TESTID=17 TESTDIR=8 TESTCOV=0 TESTFLAGS="" CUDA=false
+
+    # regional mars (tested on github actions)
+    #- TESTID=18 TESTDIR=9 TESTCOV=0 TESTFLAGS="" CUDA=false
+
+    # regional moon (tested on github actions)
+    #- TESTID=19 TESTDIR=10 TESTCOV=0 TESTFLAGS="" CUDA=false
+
+    # regional LDDRK
+    - TESTID=20 TESTDIR=11 TESTCOV=0 TESTFLAGS="--enable-vectorization" CUDA=false
+
+    # regional noise example
+    - TESTID=21 TESTDIR=12 TESTCOV=0 TESTFLAGS="--enable-vectorization" CUDA=false
+
+
+# additional ARM tests
+jobs:
+  include:
+  - arch: arm64
+    env: TESTID=4 TESTDIR=1 TESTCOV=0 TESTFLAGS="" CUDA=false
+  - arch: arm64
+    env: TESTID=7 TESTDIR=1 TESTCOV=0 TESTFLAGS="--enable-debug" CUDA=false
 
 
 before_install:
@@ -76,18 +127,78 @@ before_install:
     echo "request: Branch($TRAVIS_BRANCH) Pull Request($TRAVIS_PULL_REQUEST) Tag($TRAVIS_TAG)"
     echo "commit : Commit($TRAVIS_COMMIT) Range($TRAVIS_COMMIT_RANGE)"
 
+  # checks file changes
+  - |
+    echo "check file changes"
+    if [ "${TRAVIS_PULL_REQUEST}" = "false" ]; then
+      # Push
+      echo "Push request:"
+      COMMIT_RANGE="$(echo ${TRAVIS_COMMIT_RANGE} | cut -d '.' -f 1,4 --output-delimiter '..')"
+      DIFF="$(git diff --name-only ${COMMIT_RANGE} --)"
+      #DIFF=$(git diff --name-only ${TRAVIS_COMMIT_RANGE})
+    else
+      # PR build
+      echo "Pull request:"
+      DIFF=$(git diff --name-only ${TRAVIS_BRANCH}..HEAD --)
+    fi
+    echo "$DIFF"
+    # Escape newlines (replace \n with %0A)
+    #NEWDIFF=($( echo "$DIFF" | sed ':a;N;$!ba;s/\n/%0A/g' ))
+    #echo "$NEWDIFF"
+    #DIFF=$NEWDIFF
+    RUN_CHECKS=0
+    # Loop by lines
+    while read path; do
+      # Set $directory to substring before /
+      directory="$( echo $path | cut -d'/' -f1 -s )"
+      echo "file: $path  - directory: $directory"
+      if [ -z "$directory" ]; then
+        # root directory
+        RUN_CHECKS=1
+      elif [ "$directory" == src ]; then
+        # src/ directory
+        RUN_CHECKS=1
+      elif [ "$directory" == setup ]; then
+        # setup/ directory
+        RUN_CHECKS=1
+      elif [ "$directory" == EXAMPLES ]; then
+        # EXAMPLES/ directory
+        RUN_CHECKS=1
+      elif [ "$directory" == tests ]; then
+        # tests/ directory
+        RUN_CHECKS=1
+      elif [ "$directory" == .travis ]; then
+        # .travis/ directory
+        RUN_CHECKS=1
+      fi
+    done <<< "$DIFF"
+    echo
+    echo "run checks: ${RUN_CHECKS}"
+    echo
+    export RUN_CHECKS=${RUN_CHECKS}
+    #abort: if [[ ${RUN_CHECKS} -eq 0 ]]; then echo "nothing to check, exiting..."; exit 1; fi
+
   # recommended for MPI projects to unset CC: see https://docs.travis-ci.com/user/languages/c
   #- test -n $CC && unset CC
 
   # updates repository
-  - sudo apt-get update
+  - |
+    travis_retry sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 6B05F25D762E3157
+    travis_retry sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 78BD65473CB3BD13
+    travis_retry sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 762E3157
+    travis_retry sudo apt-get update
 
 
 install:
+  # installs compilers
   - bash .travis/run_install.sh
 
 
 script:
+  # builds configurations
+  - bash .travis/run_build.sh
+
+  # runs test examples
   - bash .travis/run_tests.sh
 
 

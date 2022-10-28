@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -88,6 +88,7 @@ program add_model
   use tomography_kernels_tiso_cg
 
   implicit none
+  ! local parameters
   integer :: i,j,k,ispec,ier
   real(kind=CUSTOM_REAL) :: betav1,betah1,betav0,betah0,rho1,rho0, &
     betaiso1,betaiso0,eta1,eta0,alphav1,alphav0,alphah1,alphah0
@@ -276,6 +277,23 @@ subroutine initialize()
   call init_mpi()
   call world_size(sizeprocs)
   call world_rank(myrank)
+
+  ! reads mesh parameters
+  if (myrank == 0) then
+    ! reads mesh_parameters.bin file from topo/
+    LOCAL_PATH = INPUT_DATABASES_DIR        ! 'topo/' should hold mesh_parameters.bin file
+    call read_mesh_parameters()
+  endif
+  ! broadcast parameters to all processes
+  call bcast_mesh_parameters()
+
+  ! user output
+  if (myrank == 0) then
+    print *,'mesh parameters (from topo/ directory):'
+    print *,'  NSPEC_CRUST_MANTLE = ',NSPEC_CRUST_MANTLE
+    print *,'  NPROCTOT           = ',NPROCTOT_VAL
+    print *
+  endif
 
   if (sizeprocs /= NPROCTOT_VAL) then
     if (myrank == 0) then

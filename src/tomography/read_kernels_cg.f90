@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -33,6 +33,7 @@ subroutine read_kernels_cg_tiso_old()
   use tomography_kernels_tiso_cg
 
   implicit none
+  ! local parameters
   real(kind=CUSTOM_REAL) :: min_vsv,min_vsh,max_vsv,max_vsh,min_eta,max_eta,min_bulk,max_bulk
   logical:: exist,exist_all,use_old_gradient_all
   integer :: ier

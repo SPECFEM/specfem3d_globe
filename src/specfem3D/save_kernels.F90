@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -33,7 +33,7 @@
 
   subroutine save_kernels()
 
-  use constants_solver, only: SAVE_BOUNDARY_MESH
+  use constants_solver, only: SAVE_KERNELS_BOUNDARY,SAVE_KERNELS_OC,SAVE_KERNELS_IC
 
   use specfem_par, only: NOISE_TOMOGRAPHY,SIMULATION_TYPE,nrec_local, &
     APPROXIMATE_HESS_KL,ADIOS_FOR_KERNELS
@@ -49,15 +49,16 @@
 
   ! Open an handler to the ADIOS file in which kernel variables are written.
   if (ADIOS_FOR_KERNELS) then
-    if ((SIMULATION_TYPE == 3) .or. (SIMULATION_TYPE == 2 .and. nrec_local > 0)) &
+    if ((SIMULATION_TYPE == 3) .or. (SIMULATION_TYPE == 2 .and. nrec_local > 0)) then
       call define_kernel_adios_variables()
+    endif
   endif
 
   ! dump kernel arrays
   if (SIMULATION_TYPE == 3) then
 
-    ! restores relaxed elastic moduli after being shifted to unrelaxed values before time loop
-    call restore_relaxed_moduli()
+    ! restores original reference moduli (before shifting and unrelaxing)
+    call restore_original_moduli()
 
     ! crust mantle
     call save_kernels_crust_mantle()
@@ -68,14 +69,18 @@
     endif
 
     ! outer core
-    call save_kernels_outer_core(rhostore_outer_core,kappavstore_outer_core,rho_kl_outer_core,alpha_kl_outer_core)
+    if (SAVE_KERNELS_OC) then
+      call save_kernels_outer_core(rhostore_outer_core,kappavstore_outer_core,rho_kl_outer_core,alpha_kl_outer_core)
+    endif
 
     ! inner core
-    call save_kernels_inner_core(rhostore_inner_core,muvstore_inner_core,kappavstore_inner_core, &
-                                     rho_kl_inner_core,alpha_kl_inner_core,beta_kl_inner_core)
+    if (SAVE_KERNELS_IC) then
+      call save_kernels_inner_core(rhostore_inner_core,muvstore_inner_core,kappavstore_inner_core, &
+                                   rho_kl_inner_core,alpha_kl_inner_core,beta_kl_inner_core)
+    endif
 
     ! boundary kernel
-    if (SAVE_BOUNDARY_MESH) then
+    if (SAVE_KERNELS_BOUNDARY) then
       call save_kernels_boundary_kl()
     endif
 
@@ -92,11 +97,54 @@
 
   ! Write ADIOS defined variables to disk.
   if (ADIOS_FOR_KERNELS) then
-    if ((SIMULATION_TYPE == 3) .or. (SIMULATION_TYPE == 2 .and. nrec_local > 0)) &
-      call close_file_adios()
+    if ((SIMULATION_TYPE == 3) .or. (SIMULATION_TYPE == 2 .and. nrec_local > 0)) then
+      call close_kernel_adios_file()
+    endif
   endif
 
   end subroutine save_kernels
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine restore_original_moduli()
+
+  use specfem_par
+  use specfem_par_crustmantle
+
+  implicit none
+
+  ! checks if anything to do
+  ! only needs to restore original moduli when attenuation was used in prepare_attenuation.f90 to change moduli
+  if (.not. ATTENUATION_VAL) return
+
+  ! debug
+  !if (myrank == 0) print *,'debug: unrestored moduli muv',muvstore_crust_mantle(1,1,1,1000),muvstore_crust_mantle(3,3,3,3000)
+  !if (myrank == 0) print *,'debug: unrestored moduli c11',c11store_crust_mantle(1,1,1,1000),c11store_crust_mantle(3,3,3,3000)
+  !if (myrank == 0) print *,'debug: unrestored moduli c44',c44store_crust_mantle(1,1,1,1000),c44store_crust_mantle(3,3,3,3000)
+
+
+  ! note: we could save the original moduli in additional **store arrays.
+  !       however, this will almost double the memory requirements for the kernel simulations.
+  !       we thus tend to revert back the changes done to the elastic moduli,
+  !       reusing the same arrays.
+
+  ! beware the order here: in the preparation of the time loop, we first shift moduli, then unrelax them.
+  !                        let's do now the opposite...
+
+  ! restores relaxed elastic moduli after setting unrelaxed values before time loop
+  call restore_relaxed_moduli()
+
+  ! restore un-shifted elastic moduli (which correspond to the original moduli read in from mesher)
+  call restore_unshifted_reference_moduli()
+
+  ! debug
+  !if (myrank == 0) print *,'debug: restored moduli muv',muvstore_crust_mantle(1,1,1,1000),muvstore_crust_mantle(3,3,3,3000)
+  !if (myrank == 0) print *,'debug: restored moduli c11',c11store_crust_mantle(1,1,1,1000),c11store_crust_mantle(3,3,3,3000)
+  !if (myrank == 0) print *,'debug: restored moduli c44',c44store_crust_mantle(1,1,1,1000),c44store_crust_mantle(3,3,3,3000)
+
+  end subroutine restore_original_moduli
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -111,8 +159,17 @@
   implicit none
 
   ! local parameters
-  real(kind=CUSTOM_REAL) :: one_minus_sum_beta_use,mul
-  integer :: ispec
+  real(kind=CUSTOM_REAL) :: one_minus_sum_beta_use,minus_sum_beta,muvl,muhl
+
+  ! for rotations
+  double precision :: g11,g12,g13,g14,g15,g16,g22,g23,g24,g25,g26, &
+                      g33,g34,g35,g36,g44,g45,g46,g55,g56,g66
+  double precision :: d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26, &
+                      d33,d34,d35,d36,d44,d45,d46,d55,d56,d66
+  double precision :: phi_dble,theta_dble
+  double precision :: A_dble,F_dble,L_dble,N_dble,eta_aniso !,C_dble
+
+  integer :: ispec,iglob
 #ifdef FORCE_VECTORIZATION
 ! in this vectorized version we have to assume that N_SLS == 3 in order to be able to unroll and thus suppress
 ! an inner loop that would otherwise prevent vectorization; this is safe in practice in all cases because N_SLS == 3
@@ -124,7 +181,6 @@
 
   ! check if anything to do
   if (.not. ATTENUATION_VAL) return
-  if (GPU_MODE) return
 
   ! only muvstore is used further and needs to be restored
 
@@ -132,10 +188,6 @@
   do ispec = 1,NSPEC_CRUST_MANTLE
     ! isotropic and tiso elements
     DO_LOOP_IJK
-
-      ! layer with no transverse isotropy, use kappav and muv
-      mul = muvstore_crust_mantle(INDEX_IJK,ispec)
-
       ! precompute terms for attenuation if needed
       if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
         one_minus_sum_beta_use = one_minus_sum_beta_crust_mantle(INDEX_IJK,ispec)
@@ -143,40 +195,564 @@
         one_minus_sum_beta_use = one_minus_sum_beta_crust_mantle(1,1,1,ispec)
       endif
 
-      ! returns to the relaxed moduli Mu_r = Mu_u / [1 - sum(1 - tau_strain/tau_stress) ]
-      mul = mul / one_minus_sum_beta_use
+      ! zero-shift case
+      if (abs(one_minus_sum_beta_use) < TINYVAL) cycle
 
-      ! stores relaxed shear moduli for kernel computations
-      muvstore_crust_mantle(INDEX_IJK,ispec) = mul
+      if (ANISOTROPIC_3D_MANTLE_VAL) then
+        ! aniso
+        minus_sum_beta =  one_minus_sum_beta_use - 1.0_CUSTOM_REAL
+
+        ! zero-shift
+        if (abs(one_minus_sum_beta_use) < TINYVAL) cycle
+
+        ! original routine
+        !
+        ! shifting in prepare_elastic_elements:
+        ! c44 = c44store_crust_mantle(INDEX_IJK,ispec)
+        ! mul = c44 * minus_sum_beta
+        ! c44 = c44 + mul
+        ! restores:
+        !
+        ! mul = c44store_crust_mantle(INDEX_IJK,ispec) / one_minus_sum_beta_use
+        ! c44store_crust_mantle(INDEX_IJK,ispec) = mul
+
+        ! shifting in prepare_elastic_elements:
+        ! mul = mul * minus_sum_beta
+        ! c11 = c11 + FOUR_THIRDS * mul ! * minus_sum_beta * mul
+        ! c12 = c12 - TWO_THIRDS * mul
+        ! c13 = c13 - TWO_THIRDS * mul
+        ! c22 = c22 + FOUR_THIRDS * mul
+        ! c23 = c23 - TWO_THIRDS * mul
+        ! c33 = c33 + FOUR_THIRDS * mul
+        ! c55 = c55 + mul
+        ! c66 = c66 + mul
+        !
+        ! restores:
+        ! mul = mul * minus_sum_beta
+        ! c11store_crust_mantle(INDEX_IJK,ispec) = c11store_crust_mantle(INDEX_IJK,ispec) - FOUR_THIRDS * mul
+        ! c12store_crust_mantle(INDEX_IJK,ispec) = c12store_crust_mantle(INDEX_IJK,ispec) + TWO_THIRDS * mul
+        ! c13store_crust_mantle(INDEX_IJK,ispec) = c13store_crust_mantle(INDEX_IJK,ispec) + TWO_THIRDS * mul
+        ! c22store_crust_mantle(INDEX_IJK,ispec) = c22store_crust_mantle(INDEX_IJK,ispec) - FOUR_THIRDS * mul
+        ! c23store_crust_mantle(INDEX_IJK,ispec) = c23store_crust_mantle(INDEX_IJK,ispec) + TWO_THIRDS * mul
+        ! c33store_crust_mantle(INDEX_IJK,ispec) = c33store_crust_mantle(INDEX_IJK,ispec) - FOUR_THIRDS * mul
+        ! c55store_crust_mantle(INDEX_IJK,ispec) = c55store_crust_mantle(INDEX_IJK,ispec) - mul
+        ! c66store_crust_mantle(INDEX_IJK,ispec) = c66store_crust_mantle(INDEX_IJK,ispec) - mul
+
+        ! new shift version shifts moduli by separating muv and muh factors.
+        ! unrelaxed moduli shift: see prepare_elastic_elements to shift back accordingly.
+
+        ! local position (d_ij given in radial direction)
+        ! only in case needed for rotation
+        iglob = ibool_crust_mantle(INDEX_IJK,ispec)
+        theta_dble = rstore_crust_mantle(2,iglob)
+        phi_dble = rstore_crust_mantle(3,iglob)
+        call reduce(theta_dble,phi_dble)
+
+        g11 = c11store_crust_mantle(INDEX_IJK,ispec)
+        g12 = c12store_crust_mantle(INDEX_IJK,ispec)
+        g13 = c13store_crust_mantle(INDEX_IJK,ispec)
+        g14 = c14store_crust_mantle(INDEX_IJK,ispec)
+        g15 = c15store_crust_mantle(INDEX_IJK,ispec)
+        g16 = c16store_crust_mantle(INDEX_IJK,ispec)
+        g22 = c22store_crust_mantle(INDEX_IJK,ispec)
+        g23 = c23store_crust_mantle(INDEX_IJK,ispec)
+        g24 = c24store_crust_mantle(INDEX_IJK,ispec)
+        g25 = c25store_crust_mantle(INDEX_IJK,ispec)
+        g26 = c26store_crust_mantle(INDEX_IJK,ispec)
+        g33 = c33store_crust_mantle(INDEX_IJK,ispec)
+        g34 = c34store_crust_mantle(INDEX_IJK,ispec)
+        g35 = c35store_crust_mantle(INDEX_IJK,ispec)
+        g36 = c36store_crust_mantle(INDEX_IJK,ispec)
+        g44 = c44store_crust_mantle(INDEX_IJK,ispec)
+        g45 = c45store_crust_mantle(INDEX_IJK,ispec)
+        g46 = c46store_crust_mantle(INDEX_IJK,ispec)
+        g55 = c55store_crust_mantle(INDEX_IJK,ispec)
+        g56 = c56store_crust_mantle(INDEX_IJK,ispec)
+        g66 = c66store_crust_mantle(INDEX_IJK,ispec)
+
+        call rotate_tensor_global_to_radial(theta_dble,phi_dble, &
+                                            d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26, &
+                                            d33,d34,d35,d36,d44,d45,d46,d55,d56,d66, &
+                                            g11,g12,g13,g14,g15,g16,g22,g23,g24,g25,g26, &
+                                            g33,g34,g35,g36,g44,g45,g46,g55,g56,g66)
+
+        ! new: tries to shift moduli by separating muv and muh factors.
+        !      still needs rotations to rotate back and forth from SPECFEM global axis to a radial symmetry axis
+        !      since this shift assumes a radial symmetry
+
+        ! orig:
+        !         L = 1/2 (d44 + d55)
+        !         muvl' = L * minus_sum_beta
+        !
+        !         d44' = d44 + 1/2 (d44+d55)*minus_sum_beta = d44 + muvl'
+        !         d55' = d55 + 1/2 (d44+d55)*minus_sum_beta
+        !
+        !         1/2 (d44' + d55') = 1/2 (d44+d55 + (d44+d55)*minus_sum_beta )
+        !                           = 1/2 (d44+d55) * (1 + minus_sum_beta)
+        !         -> L = 1/2 (d44+d55) = 1/2 (d44'+d55')/(1 + minus_sum_beta)
+        !              = muv
+        L_dble = 0.5d0 * (d44 + d55) / one_minus_sum_beta_use
+
+        ! orig:
+        !        N = 0.125d0 * (d11 + d22 - 2.d0 * d12 + 4.d0 * d66)
+        !        muhl' = N * minus_sum_beta
+        !
+        !        d11' = d11 + 4/3 muhl'
+        !        d12' = d12 - 2/3 muhl'
+        !        d22' = d22 + 4/3 muhl'
+        !        d66' = d66 + muhl'
+        !
+        !        N' = muh' = N * (1 + minus_sum_beta)
+        !        -> N = N'/(1 + minus_sum_beta)
+        !             = muh
+        N_dble = 0.125d0 * (d11 + d22 - 2.d0 * d12 + 4.d0 * d66) / one_minus_sum_beta_use
+
+        ! shifting back
+        muvl = real( L_dble * minus_sum_beta ,kind=CUSTOM_REAL)
+        muhl = real( N_dble * minus_sum_beta ,kind=CUSTOM_REAL)
+
+        d11 = d11 - FOUR_THIRDS * muhl ! * minus_sum_beta * mul
+        d12 = d12 + TWO_THIRDS * muhl
+        d22 = d22 - FOUR_THIRDS * muhl
+        d33 = d33 - FOUR_THIRDS * muvl
+        d44 = d44 - muvl
+        d55 = d55 - muvl
+        d66 = d66 - muhl
+
+        ! orig:
+        !       A = 1/8 (3 d11 + 3 d22 + 2 d12 + 4 d66)
+        !
+        !       d11' = d11 - 4/3 muhl
+        !       d22' = d22 - 4/3 muhl
+        !       d12' = d12 + 2/3 muhl
+        !       d66' = d66 - muhl
+        !
+        A_dble = 0.125d0 * (3.d0 * d11 + 3.d0 * d22 + 2.d0 * d12 + 4.d0 * d66)
+
+        !unused: C_dble = d33
+
+        ! orig:
+        !       F = 1/2 (d13 + d23)
+        !       eta_aniso = F / (A - 2 L)
+        !
+        !       d13' = d13 + eta_aniso * (4/3 muhl' - 2 muvl')
+        !            = d13 + eta_aniso * (4/3 muhl*minus_sum_beta - 2 muvl *minus_sum_beta)
+        !
+        !       d23' = d23 + eta_aniso * (4/3 muhl' - 2 muvl')
+        !
+        !       F' = 1/2 (d13' + d23')
+        !          = 1/2 (d13 + eta_aniso * (4/3 muhl' - 2 muvl') + d23 + eta_aniso * (4/3 muhl' - 2 muvl')
+        !          = 1/2 (d13 + d23) + eta_aniso (4/3 muhl' - 2muvl')
+        !          = F + F/(A-2L) * (4/3muhl' - 2muvl')
+        !          = F (1 +(4/3muhl' - 2muvl')/(A-2L))
+        !       -> F = F' / (1 + (4/3muhl' - 2muvl') / (A-2L))
+        F_dble = 0.5d0 * (d13 + d23) / (1.d0 + (FOUR_THIRDS * muhl - 2.d0 * muvl) / (A_dble - 2.d0 * L_dble))
+        eta_aniso = F_dble / (A_dble - 2.d0*L_dble)   ! eta = F / (A-2L)
+
+        d13 = d13 - eta_aniso * (FOUR_THIRDS * muhl - 2.d0*muvl)
+        d23 = d23 - eta_aniso * (FOUR_THIRDS * muhl - 2.d0*muvl)
+
+        ! debug
+        !if (myrank == 0 .and. ispec == 1000 .and. ijk == 1) &
+        !  print *,'debug: original moduli unrelaxing A,N,L,F,eta',A_dble,N_dble,L_dble,F_dble,eta_aniso,'mu',muvl,muhl
+
+        ! rotates to global reference system
+        call rotate_tensor_radial_to_global(theta_dble,phi_dble, &
+                                            d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26, &
+                                            d33,d34,d35,d36,d44,d45,d46,d55,d56,d66, &
+                                            g11,g12,g13,g14,g15,g16,g22,g23,g24,g25,g26, &
+                                            g33,g34,g35,g36,g44,g45,g46,g55,g56,g66)
+
+        ! stores unrelaxed factors
+        c11store_crust_mantle(INDEX_IJK,ispec) = real(g11,kind=CUSTOM_REAL)
+        c12store_crust_mantle(INDEX_IJK,ispec) = real(g12,kind=CUSTOM_REAL)
+        c13store_crust_mantle(INDEX_IJK,ispec) = real(g13,kind=CUSTOM_REAL)
+        c14store_crust_mantle(INDEX_IJK,ispec) = real(g14,kind=CUSTOM_REAL)
+        c15store_crust_mantle(INDEX_IJK,ispec) = real(g15,kind=CUSTOM_REAL)
+        c16store_crust_mantle(INDEX_IJK,ispec) = real(g16,kind=CUSTOM_REAL)
+        c22store_crust_mantle(INDEX_IJK,ispec) = real(g22,kind=CUSTOM_REAL)
+        c23store_crust_mantle(INDEX_IJK,ispec) = real(g23,kind=CUSTOM_REAL)
+        c24store_crust_mantle(INDEX_IJK,ispec) = real(g24,kind=CUSTOM_REAL)
+        c25store_crust_mantle(INDEX_IJK,ispec) = real(g25,kind=CUSTOM_REAL)
+        c26store_crust_mantle(INDEX_IJK,ispec) = real(g26,kind=CUSTOM_REAL)
+        c33store_crust_mantle(INDEX_IJK,ispec) = real(g33,kind=CUSTOM_REAL)
+        c34store_crust_mantle(INDEX_IJK,ispec) = real(g34,kind=CUSTOM_REAL)
+        c35store_crust_mantle(INDEX_IJK,ispec) = real(g35,kind=CUSTOM_REAL)
+        c36store_crust_mantle(INDEX_IJK,ispec) = real(g36,kind=CUSTOM_REAL)
+        c44store_crust_mantle(INDEX_IJK,ispec) = real(g44,kind=CUSTOM_REAL)
+        c45store_crust_mantle(INDEX_IJK,ispec) = real(g45,kind=CUSTOM_REAL)
+        c46store_crust_mantle(INDEX_IJK,ispec) = real(g46,kind=CUSTOM_REAL)
+        c55store_crust_mantle(INDEX_IJK,ispec) = real(g55,kind=CUSTOM_REAL)
+        c56store_crust_mantle(INDEX_IJK,ispec) = real(g56,kind=CUSTOM_REAL)
+        c66store_crust_mantle(INDEX_IJK,ispec) = real(g66,kind=CUSTOM_REAL)
+
+        muvstore_crust_mantle(INDEX_IJK,ispec) = real(L_dble,kind=CUSTOM_REAL)
+
+      else
+        ! layer with both iso and transverse isotropy elements, use kappav and muv
+        muvl = muvstore_crust_mantle(INDEX_IJK,ispec)
+        ! returns to the relaxed moduli Mu_r = Mu_u / [1 - sum(1 - tau_strain/tau_stress) ]
+        muvl = muvl / one_minus_sum_beta_use
+        ! stores relaxed shear moduli for kernel computations
+        muvstore_crust_mantle(INDEX_IJK,ispec) = muvl
+
+        ! tiso elements also use muh
+        if (ispec_is_tiso_crust_mantle(ispec)) then
+          muhl = muhstore_crust_mantle(INDEX_IJK,ispec)
+          muhl = muhl / one_minus_sum_beta_use
+          muhstore_crust_mantle(INDEX_IJK,ispec) = muhl
+        endif
+      endif
+    ENDDO_LOOP_IJK
+  enddo
+  ! see prepare_elastic_elements:
+  ! since we scale muv and c11,.. stores we must divide with this factor to use the relaxed moduli for the modulus defect
+  ! calculation in updating the memory variables
+  !
+  ! note: we won't need to restores factor_common here.
+  !       it is only needed for time-stepping of the attenuation memory variables.
+
+  ! inner core
+  if (SAVE_KERNELS_IC) then
+    do ispec = 1,NSPEC_INNER_CORE
+      ! exclude fictitious elements in central cube
+      if (idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+      ! isotropic element
+      DO_LOOP_IJK
+        ! precompute terms for attenuation if needed
+        if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
+          one_minus_sum_beta_use = one_minus_sum_beta_inner_core(INDEX_IJK,ispec)
+        else
+          one_minus_sum_beta_use = one_minus_sum_beta_inner_core(1,1,1,ispec)
+        endif
+
+        ! layer with no transverse isotropy, use kappav and muv
+        muvl = muvstore_inner_core(INDEX_IJK,ispec)
+        ! returns to the relaxed moduli Mu_r = Mu_u / [1 - sum(1 - tau_strain/tau_stress) ]
+        muvl = muvl / one_minus_sum_beta_use
+        ! stores relaxed shear moduli for kernel computations
+        muvstore_inner_core(INDEX_IJK,ispec) = muvl
+      ENDDO_LOOP_IJK
+    enddo
+    ! note: we won't need to restores factor_common here.
+    !       it is only needed for time-stepping of the attenuation memory variables.
+  endif ! SAVE_KERNELS_IC
+
+  end subroutine restore_relaxed_moduli
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine restore_unshifted_reference_moduli()
+
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_innercore
+
+  implicit none
+
+  ! local parameters
+  real(kind=CUSTOM_REAL) :: scale_factor,scale_factor_minus_one,mul,muvl,muhl
+
+  ! for rotations
+  double precision :: g11,g12,g13,g14,g15,g16,g22,g23,g24,g25,g26, &
+                      g33,g34,g35,g36,g44,g45,g46,g55,g56,g66
+  double precision :: d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26, &
+                      d33,d34,d35,d36,d44,d45,d46,d55,d56,d66
+  double precision :: phi_dble,theta_dble
+  double precision :: A_dble,F_dble,L_dble,N_dble,eta_aniso !,C_dble
+
+  integer :: ispec,iglob
+#ifdef FORCE_VECTORIZATION
+! in this vectorized version we have to assume that N_SLS == 3 in order to be able to unroll and thus suppress
+! an inner loop that would otherwise prevent vectorization; this is safe in practice in all cases because N_SLS == 3
+! in all known applications, and in the main program we check that N_SLS == 3 if FORCE_VECTORIZATION is used and we stop
+  integer :: ijk
+#else
+  integer :: i,j,k
+#endif
+
+  ! check if anything to do
+  if (.not. ATTENUATION_VAL) return
+
+  ! crust/mantle
+  do ispec = 1,NSPEC_CRUST_MANTLE
+    ! isotropic and tiso elements
+    DO_LOOP_IJK
+      if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
+        scale_factor = factor_scale_crust_mantle(INDEX_IJK,ispec)
+      else
+        scale_factor = factor_scale_crust_mantle(1,1,1,ispec)
+      endif
+
+      ! zero-scale factor
+      if (abs(scale_factor) < TINYVAL) cycle
+
+      if (ANISOTROPIC_3D_MANTLE_VAL) then
+        ! anisotropic element
+        scale_factor_minus_one = scale_factor - 1.d0
+
+        ! shifting: (in prepare_attenuation.f90)
+
+        ! old routine:
+        ! mul = c44store_crust_mantle(i,j,k,ispec)
+        ! c44store_crust_mantle(i,j,k,ispec) = c44store_crust_mantle(i,j,k,ispec) + scale_factor_minus_one * mul
+        ! restores like:
+        ! mul = c44store_crust_mantle(INDEX_IJK,ispec)/scale_factor ! equals mu = c44store_crust_mantle/(1+scale_factor_minus_one)
+        ! c44store_crust_mantle(INDEX_IJK,ispec) = mul
+        !
+        ! see shifting in prepare_attenuation.f90:
+        ! c11store_crust_mantle(i,j,k,ispec) = c11store_crust_mantle(i,j,k,ispec) + FOUR_THIRDS * scale_factor_minus_one * mul
+        ! c12store_crust_mantle(i,j,k,ispec) = c12store_crust_mantle(i,j,k,ispec) - TWO_THIRDS * scale_factor_minus_one * mul
+        ! c13store_crust_mantle(i,j,k,ispec) = c13store_crust_mantle(i,j,k,ispec) - TWO_THIRDS * scale_factor_minus_one * mul
+        ! c22store_crust_mantle(i,j,k,ispec) = c22store_crust_mantle(i,j,k,ispec) + FOUR_THIRDS * scale_factor_minus_one * mul
+        ! c23store_crust_mantle(i,j,k,ispec) = c23store_crust_mantle(i,j,k,ispec) - TWO_THIRDS * scale_factor_minus_one * mul
+        ! c33store_crust_mantle(i,j,k,ispec) = c33store_crust_mantle(i,j,k,ispec) + FOUR_THIRDS * scale_factor_minus_one * mul
+        ! c44store_crust_mantle(i,j,k,ispec) = c44store_crust_mantle(i,j,k,ispec) + scale_factor_minus_one * mul
+        ! c55store_crust_mantle(i,j,k,ispec) = c55store_crust_mantle(i,j,k,ispec) + scale_factor_minus_one * mul
+        ! c66store_crust_mantle(i,j,k,ispec) = c66store_crust_mantle(i,j,k,ispec) + scale_factor_minus_one * mul
+        !
+        ! becomes (sign change of last term)
+        !c11store_crust_mantle(INDEX_IJK,ispec) = c11store_crust_mantle(INDEX_IJK,ispec) &
+        !                                         - FOUR_THIRDS * scale_factor_minus_one * mul
+        !c12store_crust_mantle(INDEX_IJK,ispec) = c12store_crust_mantle(INDEX_IJK,ispec) &
+        !                                         + TWO_THIRDS * scale_factor_minus_one * mul
+        !c13store_crust_mantle(INDEX_IJK,ispec) = c13store_crust_mantle(INDEX_IJK,ispec) &
+        !                                         + TWO_THIRDS * scale_factor_minus_one * mul
+        !c22store_crust_mantle(INDEX_IJK,ispec) = c22store_crust_mantle(INDEX_IJK,ispec) &
+        !                                         - FOUR_THIRDS * scale_factor_minus_one * mul
+        !c23store_crust_mantle(INDEX_IJK,ispec) = c23store_crust_mantle(INDEX_IJK,ispec) &
+        !                                         + TWO_THIRDS * scale_factor_minus_one * mul
+        !c33store_crust_mantle(INDEX_IJK,ispec) = c33store_crust_mantle(INDEX_IJK,ispec) &
+        !                                         - FOUR_THIRDS * scale_factor_minus_one * mul
+        !c55store_crust_mantle(INDEX_IJK,ispec) = c55store_crust_mantle(INDEX_IJK,ispec) &
+        !                                         - scale_factor_minus_one * mul
+        !c66store_crust_mantle(INDEX_IJK,ispec) = c66store_crust_mantle(INDEX_IJK,ispec) &
+        !                                         - scale_factor_minus_one * mul
+
+
+        ! new shift version shifts moduli by separating muv and muh factors.
+        ! local position (d_ij given in radial direction)
+        ! only in case needed for rotation
+        iglob = ibool_crust_mantle(INDEX_IJK,ispec)
+        theta_dble = rstore_crust_mantle(2,iglob)
+        phi_dble = rstore_crust_mantle(3,iglob)
+        call reduce(theta_dble,phi_dble)
+
+        g11 = c11store_crust_mantle(INDEX_IJK,ispec)
+        g12 = c12store_crust_mantle(INDEX_IJK,ispec)
+        g13 = c13store_crust_mantle(INDEX_IJK,ispec)
+        g14 = c14store_crust_mantle(INDEX_IJK,ispec)
+        g15 = c15store_crust_mantle(INDEX_IJK,ispec)
+        g16 = c16store_crust_mantle(INDEX_IJK,ispec)
+        g22 = c22store_crust_mantle(INDEX_IJK,ispec)
+        g23 = c23store_crust_mantle(INDEX_IJK,ispec)
+        g24 = c24store_crust_mantle(INDEX_IJK,ispec)
+        g25 = c25store_crust_mantle(INDEX_IJK,ispec)
+        g26 = c26store_crust_mantle(INDEX_IJK,ispec)
+        g33 = c33store_crust_mantle(INDEX_IJK,ispec)
+        g34 = c34store_crust_mantle(INDEX_IJK,ispec)
+        g35 = c35store_crust_mantle(INDEX_IJK,ispec)
+        g36 = c36store_crust_mantle(INDEX_IJK,ispec)
+        g44 = c44store_crust_mantle(INDEX_IJK,ispec)
+        g45 = c45store_crust_mantle(INDEX_IJK,ispec)
+        g46 = c46store_crust_mantle(INDEX_IJK,ispec)
+        g55 = c55store_crust_mantle(INDEX_IJK,ispec)
+        g56 = c56store_crust_mantle(INDEX_IJK,ispec)
+        g66 = c66store_crust_mantle(INDEX_IJK,ispec)
+
+        call rotate_tensor_global_to_radial(theta_dble,phi_dble, &
+                                            d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26, &
+                                            d33,d34,d35,d36,d44,d45,d46,d55,d56,d66, &
+                                            g11,g12,g13,g14,g15,g16,g22,g23,g24,g25,g26, &
+                                            g33,g34,g35,g36,g44,g45,g46,g55,g56,g66)
+
+        ! forward shifts like: (see prepare_attenuation)
+        !  A_dble = 0.125d0 * (3.d0 * d11 + 3.d0 * d22 + 2.d0 * d12 + 4.d0 * d66)
+        !  N_dble = 0.125d0 * (d11 + d22 - 2.d0 * d12 + 4.d0 * d66)
+        !  L_dble = 0.5d0 * (d44 + d55)
+        !  F_dble = 0.5d0 * (d13 + d23)
+        !  eta_aniso = F_dble / (A_dble - 2.d0*L_dble)   ! eta = F / (A-2L)
+        !  muvl = L_dble * scale_factor_minus_one     ! c44 -> L -> muv
+        !  muhl = N_dble * scale_factor_minus_one     ! c66 -> N -> muh
+        !  d11 = d11 + FOUR_THIRDS * muhl ! * minus_sum_beta * mul
+        !  d12 = d12 - TWO_THIRDS * muhl
+        !  d13 = d13 + eta_aniso * (FOUR_THIRDS * muhl - 2.d0*muvl)
+        !  d22 = d22 + FOUR_THIRDS * muhl
+        !  d23 = d23 + eta_aniso * (FOUR_THIRDS * muhl - 2.d0*muvl)
+        !  d33 = d33 + FOUR_THIRDS * muvl
+        !  d44 = d44 + muvl
+        !  d55 = d55 + muvl
+        !  d66 = d66 + muhl
+        !
+        ! scaling similar to unrelaxed one, but with different scaling factor
+        !
+        ! orig:
+        !         L = 1/2 (d44 + d55)
+        !         muvl' = L * scale_factor_minus_one
+        !
+        !         d44' = d44 + 1/2 (d44+d55)*scale_factor_minus_one = d44 + muvl'
+        !         d55' = d55 + 1/2 (d44+d55)*scale_factor_minus_one
+        !
+        !         1/2 (d44' + d55') = 1/2 (d44+d55 + (d44+d55)*scale_factor_minus_one )
+        !                           = 1/2 (d44+d55) * (1 + scale_factor_minus_one)
+        !         -> L = 1/2 (d44+d55) = 1/2 (d44'+d55')/(1 + scale_factor_minus_one)
+        !              = muv
+        L_dble = 0.5d0 * (d44 + d55) / scale_factor
+
+        ! orig:
+        !        N = 0.125d0 * (d11 + d22 - 2.d0 * d12 + 4.d0 * d66)
+        !        muhl' = N * scale_factor_minus_one
+        !
+        !        d11' = d11 + 4/3 muhl'
+        !        d12' = d12 - 2/3 muhl'
+        !        d22' = d22 + 4/3 muhl'
+        !        d66' = d66 + muhl'
+        !
+        !        N' = muh' = N * (1 + minus_sum_beta)
+        !        -> N = N'/(1 + minus_sum_beta)
+        !             = muh
+        N_dble = 0.125d0 * (d11 + d22 - 2.d0 * d12 + 4.d0 * d66) / scale_factor
+
+        ! shifting back
+        muvl = real( L_dble * scale_factor_minus_one ,kind=CUSTOM_REAL)
+        muhl = real( N_dble * scale_factor_minus_one ,kind=CUSTOM_REAL)
+
+        d11 = d11 - FOUR_THIRDS * muhl ! * minus_sum_beta * mul
+        d12 = d12 + TWO_THIRDS * muhl
+        d22 = d22 - FOUR_THIRDS * muhl
+        d33 = d33 - FOUR_THIRDS * muvl
+        d44 = d44 - muvl
+        d55 = d55 - muvl
+        d66 = d66 - muhl
+
+        ! orig:
+        !       A = 1/8 (3 d11 + 3 d22 + 2 d12 + 4 d66)
+        !
+        !       d11' = d11 - 4/3 muhl
+        !       d22' = d22 - 4/3 muhl
+        !       d12' = d12 + 2/3 muhl
+        !       d66' = d66 - muhl
+        !
+        A_dble = 0.125d0 * (3.d0 * d11 + 3.d0 * d22 + 2.d0 * d12 + 4.d0 * d66)
+
+        !unused: C_dble = d33
+
+        ! orig:
+        !       F = 1/2 (d13 + d23)
+        !       eta_aniso = F / (A - 2 L)
+        !
+        !       d13' = d13 + eta_aniso * (4/3 muhl' - 2 muvl')
+        !            = d13 + eta_aniso * (4/3 muhl*scale_factor_minus_one) - 2 muvl *scale_factor_minus_one)
+        !
+        !       d23' = d23 + eta_aniso * (4/3 muhl' - 2 muvl')
+        !
+        !       F' = 1/2 (d13' + d23')
+        !          = 1/2 (d13 + eta_aniso * (4/3 muhl' - 2 muvl') + d23 + eta_aniso * (4/3 muhl' - 2 muvl')
+        !          = 1/2 (d13 + d23) + eta_aniso (4/3 muhl' - 2muvl')
+        !          = F + F/(A-2L) (4/3muhl' - 2muvl')
+        !          = F (1 +(4/3muhl' - 2muvl')/(A-2L))
+        !       -> F = F' / (1 + (4/3muhl' - 2muvl') / (A-2L))
+        F_dble = 0.5d0 * (d13 + d23) / (1.d0 + (FOUR_THIRDS * muhl - 2.d0 * muvl) / (A_dble - 2.d0 * L_dble))
+        eta_aniso = F_dble / (A_dble - 2.d0*L_dble)   ! eta = F / (A-2L)
+
+        d13 = d13 - eta_aniso * (FOUR_THIRDS * muhl - 2.d0*muvl)
+        d23 = d23 - eta_aniso * (FOUR_THIRDS * muhl - 2.d0*muvl)
+
+        ! debug
+        !if (myrank == 0 .and. ispec == 1000 .and. ijk == 1) &
+        !  print *,'debug: original moduli unscaling A,N,L,F,eta',A_dble,N_dble,L_dble,F_dble,eta_aniso,'mu',muvl,muhl
+
+        ! rotates to global reference system
+        call rotate_tensor_radial_to_global(theta_dble,phi_dble, &
+                                            d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26, &
+                                            d33,d34,d35,d36,d44,d45,d46,d55,d56,d66, &
+                                            g11,g12,g13,g14,g15,g16,g22,g23,g24,g25,g26, &
+                                            g33,g34,g35,g36,g44,g45,g46,g55,g56,g66)
+
+        ! stores unrelaxed factors
+        c11store_crust_mantle(INDEX_IJK,ispec) = real(g11,kind=CUSTOM_REAL)
+        c12store_crust_mantle(INDEX_IJK,ispec) = real(g12,kind=CUSTOM_REAL)
+        c13store_crust_mantle(INDEX_IJK,ispec) = real(g13,kind=CUSTOM_REAL)
+        c14store_crust_mantle(INDEX_IJK,ispec) = real(g14,kind=CUSTOM_REAL)
+        c15store_crust_mantle(INDEX_IJK,ispec) = real(g15,kind=CUSTOM_REAL)
+        c16store_crust_mantle(INDEX_IJK,ispec) = real(g16,kind=CUSTOM_REAL)
+        c22store_crust_mantle(INDEX_IJK,ispec) = real(g22,kind=CUSTOM_REAL)
+        c23store_crust_mantle(INDEX_IJK,ispec) = real(g23,kind=CUSTOM_REAL)
+        c24store_crust_mantle(INDEX_IJK,ispec) = real(g24,kind=CUSTOM_REAL)
+        c25store_crust_mantle(INDEX_IJK,ispec) = real(g25,kind=CUSTOM_REAL)
+        c26store_crust_mantle(INDEX_IJK,ispec) = real(g26,kind=CUSTOM_REAL)
+        c33store_crust_mantle(INDEX_IJK,ispec) = real(g33,kind=CUSTOM_REAL)
+        c34store_crust_mantle(INDEX_IJK,ispec) = real(g34,kind=CUSTOM_REAL)
+        c35store_crust_mantle(INDEX_IJK,ispec) = real(g35,kind=CUSTOM_REAL)
+        c36store_crust_mantle(INDEX_IJK,ispec) = real(g36,kind=CUSTOM_REAL)
+        c44store_crust_mantle(INDEX_IJK,ispec) = real(g44,kind=CUSTOM_REAL)
+        c45store_crust_mantle(INDEX_IJK,ispec) = real(g45,kind=CUSTOM_REAL)
+        c46store_crust_mantle(INDEX_IJK,ispec) = real(g46,kind=CUSTOM_REAL)
+        c55store_crust_mantle(INDEX_IJK,ispec) = real(g55,kind=CUSTOM_REAL)
+        c56store_crust_mantle(INDEX_IJK,ispec) = real(g56,kind=CUSTOM_REAL)
+        c66store_crust_mantle(INDEX_IJK,ispec) = real(g66,kind=CUSTOM_REAL)
+
+        ! for solving memory-variables, modulus defect \delta \mu_l (Komatitsch, 2002, eq. (11) & (13))
+        ! note: for solving the memory variables, we will only use the modulus defect
+        !       associated with muv. this is consistent with the implementation for tiso below.
+        !
+        !       however, to properly account for shear attenuation, one might have to add also
+        !       memory-variables for a modulus defect associated with muh.
+        muvstore_crust_mantle(INDEX_IJK,ispec) = L_dble
+
+      else
+        ! isotropic or transverse isotropic element
+        muvstore_crust_mantle(INDEX_IJK,ispec) = muvstore_crust_mantle(INDEX_IJK,ispec) / scale_factor
+        ! scales transverse isotropic values for mu_h
+        if (ispec_is_tiso_crust_mantle(ispec)) then
+          muhstore_crust_mantle(INDEX_IJK,ispec) = muhstore_crust_mantle(INDEX_IJK,ispec) / scale_factor
+        endif
+      endif
     ENDDO_LOOP_IJK
   enddo
 
   ! inner core
-  do ispec = 1,NSPEC_INNER_CORE
-    ! exclude fictitious elements in central cube
-    if (idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
-    ! isotropic element
-    DO_LOOP_IJK
+  if (SAVE_KERNELS_IC) then
+    do ispec = 1,NSPEC_INNER_CORE
+      ! exclude fictitious elements in central cube
+      if (idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
 
-      ! layer with no transverse isotropy, use kappav and muv
-      mul = muvstore_inner_core(INDEX_IJK,ispec)
+      DO_LOOP_IJK
+        if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
+          scale_factor = factor_scale_inner_core(INDEX_IJK,ispec)
+        else
+          scale_factor = factor_scale_inner_core(1,1,1,ispec)
+        endif
 
-      ! precompute terms for attenuation if needed
-      if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
-        one_minus_sum_beta_use = one_minus_sum_beta_inner_core(INDEX_IJK,ispec)
-      else
-        one_minus_sum_beta_use = one_minus_sum_beta_inner_core(1,1,1,ispec)
-      endif
+        ! zero-scale factor
+        if (abs(scale_factor) < TINYVAL) cycle
 
-      ! returns to the relaxed moduli Mu_r = Mu_u / [1 - sum(1 - tau_strain/tau_stress) ]
-      mul = mul / one_minus_sum_beta_use
+        if (ANISOTROPIC_INNER_CORE_VAL) then
+          scale_factor_minus_one = scale_factor - 1.d0
 
-      ! stores relaxed shear moduli for kernel computations
-      muvstore_inner_core(INDEX_IJK,ispec) = mul
-    ENDDO_LOOP_IJK
-  enddo
+          mul = c44store_inner_core(INDEX_IJK,ispec) / scale_factor
+          c44store_inner_core(INDEX_IJK,ispec) = mul
 
-  end subroutine restore_relaxed_moduli
+          c11store_inner_core(INDEX_IJK,ispec) = c11store_inner_core(INDEX_IJK,ispec) &
+                                                 - FOUR_THIRDS * scale_factor_minus_one * mul
+          c12store_inner_core(INDEX_IJK,ispec) = c12store_inner_core(INDEX_IJK,ispec) &
+                                                 + TWO_THIRDS * scale_factor_minus_one * mul
+          c13store_inner_core(INDEX_IJK,ispec) = c13store_inner_core(INDEX_IJK,ispec) &
+                                                 + TWO_THIRDS * scale_factor_minus_one * mul
+          c33store_inner_core(INDEX_IJK,ispec) = c33store_inner_core(INDEX_IJK,ispec) &
+                                                 - FOUR_THIRDS * scale_factor_minus_one * mul
+        endif
+
+        muvstore_inner_core(INDEX_IJK,ispec) = muvstore_inner_core(INDEX_IJK,ispec) / scale_factor
+
+      ENDDO_LOOP_IJK
+    enddo
+  endif
+
+  end subroutine restore_unshifted_reference_moduli
+
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -217,7 +793,7 @@
 
   ! local parameters
   real(kind=CUSTOM_REAL),dimension(21) ::  cijkl_kl_local
-  real(kind=CUSTOM_REAL) :: scale_kl,scale_kl_ani,scale_kl_rho
+  real(kind=CUSTOM_REAL) :: scale_kl,scale_kl_ani,scale_kl_rho,scaleval,scale_GPa
   real(kind=CUSTOM_REAL) :: rhol,mul,kappal
   real(kind=CUSTOM_REAL) :: theta,phi
 
@@ -239,11 +815,22 @@
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: &
     bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle, &
     bulk_betav_kl_crust_mantle,bulk_betah_kl_crust_mantle
-  real(kind=CUSTOM_REAL) :: A,C,F,L,N,eta
+  real(kind=CUSTOM_REAL) :: A,C,F,L,N,eta,mu0
   real(kind=CUSTOM_REAL) :: muvl,kappavl,muhl,kappahl
   real(kind=CUSTOM_REAL) :: alphav_sq,alphah_sq,betav_sq,betah_sq,bulk_sq
 
-#ifdef CEM
+  ! azimuthal
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: &
+    Gc_kl_crust_mantle, Gs_kl_crust_mantle, &
+    Gc_prime_kl_crust_mantle, Gs_prime_kl_crust_mantle, &
+    A_kl_crust_mantle, C_kl_crust_mantle, F_kl_crust_mantle, &
+    N_kl_crust_mantle, L_kl_crust_mantle, &
+    Jc_kl_crust_mantle, Kc_kl_crust_mantle, Mc_kl_crust_mantle, &
+    Bc_kl_crust_mantle, Hc_kl_crust_mantle, Ec_kl_crust_mantle, &
+    Dc_kl_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(21) :: cij,cij_radial
+
+#ifdef USE_CEM
   character(len=MAX_STRING_LEN) :: filename
 #endif
 
@@ -257,9 +844,15 @@
   scale_kl = scale_t * scale_displ_inv * 1.d9
   ! For anisotropic kernels
   ! final unit : [s km^(-3) GPa^(-1)]
-  scale_kl_ani = scale_t**3 / (RHOAV*R_EARTH**3) * 1.d18
+  scale_kl_ani = scale_t**3 / (RHOAV*R_PLANET**3) * 1.d18
   ! final unit : [s km^(-3) (kg/m^3)^(-1)]
   scale_kl_rho = scale_t * scale_displ_inv / RHOAV * 1.d9
+  ! the scale of GPa--[g/cm^3][(km/s)^2]
+  scaleval = dsqrt(PI*GRAV*RHOAV)
+  scale_GPa = (RHOAV/1000.d0)*((R_PLANET*scaleval/1000.d0)**2)
+
+  ! debug
+  !if (myrank == 0) print *,'debug: save kernels: scaling factors',scale_kl,scale_kl_ani,scale_kl_rho
 
   ! allocates temporary arrays
   if (SAVE_TRANSVERSE_KL_ONLY) then
@@ -269,9 +862,50 @@
              betav_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
              betah_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
              eta_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
-    if (ier /= 0 ) stop 'Error allocating transverse kernels alphav_kl_crust_mantle,...'
+    if (ier /= 0) stop 'Error allocating transverse kernels alphav_kl_crust_mantle,...'
 
     ! isotropic kernel arrays for file output
+    allocate(bulk_betav_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             bulk_betah_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
+    if (ier /= 0) stop 'Error allocating transverse kernels bulk_betav_kl_crust_mantle,...'
+
+    ! bulk velocity kernels
+    allocate(bulk_c_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             bulk_beta_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
+    if (ier /= 0) stop 'Error allocating transverse kernels bulk_c_kl_crust_mantle,...'
+
+    ! only dummy
+    allocate(Gc_prime_kl_crust_mantle(1,1,1,1), &
+             Gs_prime_kl_crust_mantle(1,1,1,1))
+
+  else if (SAVE_AZIMUTHAL_ANISO_KL_ONLY) then
+    ! azimuthal anisotropic kernels
+    allocate(Gc_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             Gs_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             A_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             C_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             F_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             L_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             N_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             Jc_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             Kc_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             Mc_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             Bc_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             Hc_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             Ec_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             Dc_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
+    if (ier /= 0) stop 'Error allocating azimuthal kernels alphav_kl_crust_mantle,...'
+
+    ! azimuthally anisotropic kernel arrays for file output
+    allocate(alphav_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             alphah_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             betav_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             betah_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             eta_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             Gc_prime_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             Gs_prime_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
+    if (ier /= 0) stop 'Error allocating azimuthal kernels alphav_kl_crust_mantle,...'
+
     allocate(bulk_betav_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
              bulk_betah_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
     if (ier /= 0 ) stop 'Error allocating transverse kernels bulk_betav_kl_crust_mantle,...'
@@ -280,6 +914,7 @@
     allocate(bulk_c_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
              bulk_beta_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
     if (ier /= 0 ) stop 'Error allocating transverse kernels bulk_c_kl_crust_mantle,...'
+
   else
     ! dummy allocation
     allocate(alphav_kl_crust_mantle(1,1,1,1), &
@@ -293,13 +928,16 @@
     ! only dummy
     allocate(bulk_c_kl_crust_mantle(1,1,1,1), &
              bulk_beta_kl_crust_mantle(1,1,1,1))
+    ! only dummy
+    allocate(Gc_prime_kl_crust_mantle(1,1,1,1), &
+             Gs_prime_kl_crust_mantle(1,1,1,1))
   endif
 
   allocate(rhonotprime_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
   if (ier /= 0 ) stop 'Error allocating transverse kernels rhonotprime_kl_crust_mantle'
 
   ! crust_mantle
-  do ispec = 1, NSPEC_CRUST_MANTLE
+  do ispec = 1, NSPEC_CRUST_MANTLE_ADJOINT
     do k = 1, NGLLZ
       do j = 1, NGLLY
         do i = 1, NGLLX
@@ -307,18 +945,18 @@
           ! For anisotropic kernels
           iglob = ibool_crust_mantle(i,j,k,ispec)
 
-          ! The Cartesian global cijkl_kl are rotated into the spherical local cijkl_kl
+          ! The Cartesian global cijkl_kl are rotated into the local (radial) cijkl_kl
           ! ystore and zstore are thetaval and phival (line 2252) -- dangerous
           theta = rstore_crust_mantle(2,iglob)
           phi = rstore_crust_mantle(3,iglob)
 
-          call rotate_kernels_dble(cijkl_kl_crust_mantle(:,i,j,k,ispec),cijkl_kl_local(:),theta,phi)
+          call rotate_tensor_global_to_radial_vector(cijkl_kl_crust_mantle(:,i,j,k,ispec),cijkl_kl_local(:),theta,phi)
 
           cijkl_kl_crust_mantle(:,i,j,k,ispec) = cijkl_kl_local(:) * scale_kl_ani
           rho_kl_crust_mantle(i,j,k,ispec) = rho_kl_crust_mantle(i,j,k,ispec) * scale_kl_rho
 
           ! transverse isotropic kernel calculations
-          if (SAVE_TRANSVERSE_KL_ONLY) then
+          if (SAVE_TRANSVERSE_KL_ONLY .or. SAVE_AZIMUTHAL_ANISO_KL_ONLY) then
             ! note: transverse isotropic kernels are calculated for all elements
             !
             !          however, the factors A,C,L,N,F are based only on transverse elements
@@ -329,43 +967,101 @@
             ! transverse isotropic parameters from compute_force_crust_mantle.f90
             ! C=rhovpvsq A=rhovphsq L=rhovsvsq N=rhovshsq eta=F/(A - 2 L)
 
-            ! Get A,C,F,L,N,eta from kappa,mu
-            ! element can have transverse isotropy if between d220 and Moho
-            if (.not. ispec_is_tiso_crust_mantle(ispec)) then
+            if (.not. ANISOTROPIC_3D_MANTLE) then
+              ! Get A,C,F,L,N,eta from kappa,mu
+              ! element can have transverse isotropy if between d220 and Moho
+              if (.not. ispec_is_tiso_crust_mantle(ispec)) then
+                ! isotropic element
+                ! layer with no transverse isotropy
+                ! A,C,L,N,F from isotropic model
+                mul = muvstore_crust_mantle(i,j,k,ispec)
+                kappal = kappavstore_crust_mantle(i,j,k,ispec)
+                muvl = mul
+                muhl = mul
 
-              ! layer with no transverse isotropy
-              ! A,C,L,N,F from isotropic model
+                A = kappal + FOUR_THIRDS * mul
+                C = A
+                L = mul
+                N = mul
+                F = kappal - 2._CUSTOM_REAL/3._CUSTOM_REAL * mul
+                eta = 1._CUSTOM_REAL
+              else
+                ! tiso element
+                ! A,C,L,N,F from transverse isotropic model
+                kappavl = kappavstore_crust_mantle(i,j,k,ispec)
+                kappahl = kappahstore_crust_mantle(i,j,k,ispec)
+                muvl = muvstore_crust_mantle(i,j,k,ispec)
+                muhl = muhstore_crust_mantle(i,j,k,ispec)
+                kappal = kappavl
 
-              mul = muvstore_crust_mantle(i,j,k,ispec)
-              kappal = kappavstore_crust_mantle(i,j,k,ispec)
-              muvl = mul
-              muhl = mul
-
-              A = kappal + FOUR_THIRDS * mul
-              C = A
-              L = mul
-              N = mul
-              F = kappal - 2._CUSTOM_REAL/3._CUSTOM_REAL * mul
-              eta = 1._CUSTOM_REAL
-
+                A = kappahl + FOUR_THIRDS * muhl
+                C = kappavl + FOUR_THIRDS * muvl
+                L = muvl
+                N = muhl
+                eta = eta_anisostore_crust_mantle(i,j,k,ispec)  ! that is  F / (A - 2 L)
+                F = eta * ( A - 2._CUSTOM_REAL * L )
+              endif
             else
+              ! anisotropic mantle
+              !
+              ! Sieminski, 2007: assuming vertical(radial) symmetry axis
+              ! A = 1/8 (3 C11 + 3 C22 + 2 C12 + 4 C66)       -> kernel K_A = K_C11 + K_C12 + K_C22
+              ! C = C33                                       -> kernel K_C = K_C33
+              ! N = 1/8 (C11 + C22 - 2 C12 + 4 C66)           -> kernel K_N = K_C66 - 2 K_C12
+              ! L = 1/2 (C44 + C55)                           -> kernel K_L = K_C44 + K_C55
+              ! F = 1/2 (C13 + C23)                           -> kernel K_F = K_C13 + K_C23
+              ! eta = F / (A - 2 L)
+              !
+              ! and (also, Anderson & Dziewonski):
+              ! A = rho * vph**2
+              ! C = rho * vpv**2
+              ! N = rho * vsh**2 = muh
+              ! L = rho * vsv**2 = muv
+              ! F = eta * (A - 2*L)
 
-              ! A,C,L,N,F from transverse isotropic model
-              kappavl = kappavstore_crust_mantle(i,j,k,ispec)
-              kappahl = kappahstore_crust_mantle(i,j,k,ispec)
-              muvl = muvstore_crust_mantle(i,j,k,ispec)
-              muhl = muhstore_crust_mantle(i,j,k,ispec)
+              ! daniel todo:
+              ! Love parameters derived from elastic tensor cij
+              !
+              ! please check, this assumes a radial symmetry axis, thus we should again first rotate back
+              ! the c11store,.. coefficients from the SPECFEM reference coordinate system
+              cij(1) = c11store_crust_mantle(i,j,k,ispec); cij(2) = c12store_crust_mantle(i,j,k,ispec)
+              cij(3) = c13store_crust_mantle(i,j,k,ispec); cij(4) = c14store_crust_mantle(i,j,k,ispec)
+              cij(5) = c15store_crust_mantle(i,j,k,ispec); cij(6) = c16store_crust_mantle(i,j,k,ispec)
+              cij(7) = c22store_crust_mantle(i,j,k,ispec); cij(8) = c23store_crust_mantle(i,j,k,ispec)
+              cij(9) = c24store_crust_mantle(i,j,k,ispec); cij(10) = c25store_crust_mantle(i,j,k,ispec)
+              cij(11) = c26store_crust_mantle(i,j,k,ispec); cij(12) = c33store_crust_mantle(i,j,k,ispec)
+              cij(13) = c34store_crust_mantle(i,j,k,ispec); cij(14) = c35store_crust_mantle(i,j,k,ispec)
+              cij(15) = c36store_crust_mantle(i,j,k,ispec); cij(16) = c44store_crust_mantle(i,j,k,ispec)
+              cij(17) = c45store_crust_mantle(i,j,k,ispec); cij(18) = c46store_crust_mantle(i,j,k,ispec)
+              cij(19) = c55store_crust_mantle(i,j,k,ispec); cij(20) = c56store_crust_mantle(i,j,k,ispec)
+              cij(21) = c66store_crust_mantle(i,j,k,ispec)
+
+              call rotate_tensor_global_to_radial_vector(cij(:),cij_radial(:),theta,phi)
+
+              ! A = 1/8 ( 3 c11 + 3 c22 + 2 c12 + 4 c66)
+              A = 0.125_CUSTOM_REAL * ( 3.0 * cij_radial(1) + 3.0 * cij_radial(7) &
+                                       + 2.0 * cij_radial(2) + 4.0 * cij_radial(21) )
+              ! C = c33
+              C = cij_radial(12)
+              ! N = 1/8 ( c11 + c22 - 2 c12 + 4 c66)
+              N = 0.125_CUSTOM_REAL * ( cij_radial(1) + cij_radial(7) &
+                                       - 2.0 * cij_radial(2) + 4.0 * cij_radial(21))
+              ! L = 1/2 (c44 + c55)
+              L = 0.5_CUSTOM_REAL * ( cij_radial(16) + cij_radial(19) )
+              ! F = 1/2 (c13 + c23)
+              F = 0.5_CUSTOM_REAL * ( cij_radial(3) + cij_radial(8) )
+              ! eta = F / (A - 2 L)
+              eta = F / (A - 2.0_CUSTOM_REAL * L)
+
+              ! mu & kappa for bulk kernels
+              ! derived from: kappav = rho*(vpv*vpv - 4.d0/3.0*vsv*vsv) and muv = rho * vsv**2
+              !               kappah = rho*(vph*vph - 4.d0/3.0*vsh*vsh) and muh = rho * vsh**2
+              muvl = L
+              muhl = N
+              kappavl = C - 4.0/3.0 * L
+              kappahl = A - 4.0/3.0 * N
               kappal = kappavl
-
-              A = kappahl + FOUR_THIRDS * muhl
-              C = kappavl + FOUR_THIRDS * muvl
-              L = muvl
-              N = muhl
-              eta = eta_anisostore_crust_mantle(i,j,k,ispec)  ! that is  F / (A - 2 L)
-              F = eta * ( A - 2._CUSTOM_REAL * L )
-
             endif
-
             ! note: cijkl_kl_local() is fully anisotropic C_ij kernel components (non-dimensionalized)
             !          for GLL point at (i,j,k,ispec)
 
@@ -411,52 +1107,93 @@
             !
             ! additional primitive kernels for "asymptotic parameters" (Chen & Tromp 2007):
             !
-            !an_kl(6)  = 2*cijkl_kl_local(5)+2*cijkl_kl_local(10)+2*cijkl_kl_local(14)          !Jc
-            !an_kl(7)  = 2*cijkl_kl_local(4)+2*cijkl_kl_local(9)+2*cijkl_kl_local(13)           !Js
-            !an_kl(8)  = -2*cijkl_kl_local(14)                                                  !Kc
-            !an_kl(9)  = -2*cijkl_kl_local(13)                                                  !Ks
-            !an_kl(10) = -2*cijkl_kl_local(10)+cijkl_kl_local(18)                               !Mc
-            !an_kl(11) = 2*cijkl_kl_local(4)-cijkl_kl_local(20)                                 !Ms
-            !an_kl(12) = cijkl_kl_local(1)-cijkl_kl_local(7)                                    !Bc
-            !an_kl(13) = -1./2.*(cijkl_kl_local(6)+cijkl_kl_local(11))                          !Bs
-            !an_kl(14) = cijkl_kl_local(3)-cijkl_kl_local(8)                                    !Hc
-            !an_kl(15) = -cijkl_kl_local(15)                                                    !Hs
-            !an_kl(16) = -cijkl_kl_local(16)+cijkl_kl_local(19)                                 !Gc
-            !an_kl(17) = -cijkl_kl_local(17)                                                    !Gs
-            !an_kl(18) = cijkl_kl_local(5)-cijkl_kl_local(10)-cijkl_kl_local(18)                !Dc
-            !an_kl(19) = cijkl_kl_local(4)-cijkl_kl_local(9)+cijkl_kl_local(20)                 !Ds
-            !an_kl(20) = cijkl_kl_local(1)-cijkl_kl_local(2)+cijkl_kl_local(7)-cijkl_kl_local(21)      !Ec
-            !an_kl(21) = -cijkl_kl_local(6)+cijkl_kl_local(11)                                  !Es
+            if (SAVE_AZIMUTHAL_ANISO_KL_ONLY) then
+              an_kl(6)  = 2*cijkl_kl_local(5) + 2*cijkl_kl_local(10)+ 2*cijkl_kl_local(14)       !Jc
+              an_kl(7)  = 2*cijkl_kl_local(4) + 2*cijkl_kl_local(9) + 2*cijkl_kl_local(13)       !Js
+              an_kl(8)  = -2*cijkl_kl_local(14)                                                  !Kc
+              an_kl(9)  = -2*cijkl_kl_local(13)                                                  !Ks
+              an_kl(10) = -2*cijkl_kl_local(10) + cijkl_kl_local(18)                             !Mc
+              an_kl(11) = 2*cijkl_kl_local(4) - cijkl_kl_local(20)                               !Ms
+              an_kl(12) = cijkl_kl_local(1) - cijkl_kl_local(7)                                  !Bc
+              an_kl(13) = -1./2.*(cijkl_kl_local(6) + cijkl_kl_local(11))                        !Bs
+              an_kl(14) = cijkl_kl_local(3) - cijkl_kl_local(8)                                  !Hc
+              an_kl(15) = -cijkl_kl_local(15)                                                    !Hs
+              an_kl(16) = -cijkl_kl_local(16) + cijkl_kl_local(19)                               !Gc
+              an_kl(17) = -cijkl_kl_local(17)                                                    !Gs
+              an_kl(18) = cijkl_kl_local(5) - cijkl_kl_local(10) - cijkl_kl_local(18)            !Dc
+              an_kl(19) = cijkl_kl_local(4) - cijkl_kl_local(9) + cijkl_kl_local(20)             !Ds
+              an_kl(20) = cijkl_kl_local(1) - cijkl_kl_local(2) + cijkl_kl_local(7) - cijkl_kl_local(21)   !Ec
+              an_kl(21) = -cijkl_kl_local(6) + cijkl_kl_local(11)                                !Es
 
-            ! more parameterizations:
-            !
-            ! see Zhu (2015, GJI, appendix A2):
-            ! - kernels for model parameterization (L, N, Gc, Gs):
-            !
-            ! L  = 1/2 (C44 + C55)                          -> kernel K_L  = K_C44 + K_C55
-            ! N  = 1/8 (C11 + C22 - 2 C12 + 4 C66)          -> kernel K_N  = K_C66 - 2 K_C12
-            ! Gc = 1/2 (C55 - C44)                          -> kernel K_Gc = K_C55 - K_C44
-            ! Gs = - C45                                    -> kernel K_Gs = - K_C45
-            !
-            ! - kernels for model parameterization (dln(beta_v), dln(beta_h), Gc_prime, Gs_prime) (dimension-less):
-            !
-            ! beta_v = sqrt(L/rho)                          -> kernel K_beta_v = 2 L K_L - 4 L eta K_F
-            ! beta_h = sqrt(N/rho)                          -> kernel K_beta_h = 2 N K_N
-            ! Gc_prime = Gc / (rho beta_0**2)               -> kernel K_Gc_prime = rho beta_0**2 K_Gc
-            ! Gs_prime = Gs / (rho beta_0**2)               -> kernel K_Gs_prime = rho beta_0**2 K_Gs
-            !
-            ! with beta_0 being the isotropic shear wave speed in the 1-D reference model
-            !
-            ! note: for azimuthal anisotropy, Gs and Gc will provide the fast axis angle \zeta = 1/2 arctan( Gs / Gc )
-            !
-            !       Convention here is a Cartesian reference frame (x,y,z) where x points East, y points North and z points up.
-            !       And
-            !         Gs = - C54    (as compared to Gs = C54 used e.g. by Montagner, 2002, Seismic Anisotropy Tomography)
-            !       and
-            !         angle \zeta is measured counter-clockwise from South
-            !
+              ! more parameterizations:
+              !
+              ! see Zhu (2015, GJI, appendix A2):
+              ! - kernels for model parameterization (L, N, Gc, Gs):
+              !
+              ! L  = 1/2 (C44 + C55)                          -> kernel K_L  = K_C44 + K_C55
+              ! N  = 1/8 (C11 + C22 - 2 C12 + 4 C66)          -> kernel K_N  = K_C66 - 2 K_C12
+              ! Gc = 1/2 (C55 - C44)                          -> kernel K_Gc = K_C55 - K_C44
+              ! Gs = - C45                                    -> kernel K_Gs = - K_C45
+              !
+              ! - kernels for model parameterization (dln(beta_v), dln(beta_h), Gc_prime, Gs_prime) (dimension-less):
+              !
+              ! beta_v = sqrt(L/rho)                          -> kernel K_beta_v = 2 L K_L - 4 L eta K_F
+              ! beta_h = sqrt(N/rho)                          -> kernel K_beta_h = 2 N K_N
+              ! Gc_prime = Gc / (rho beta_0**2)               -> kernel K_Gc_prime = rho beta_0**2 K_Gc
+              ! Gs_prime = Gs / (rho beta_0**2)               -> kernel K_Gs_prime = rho beta_0**2 K_Gs
+              !
+              ! with beta_0 being the isotropic shear wave speed in the 1-D reference model
+              !
+              ! note: for azimuthal anisotropy, Gs and Gc will provide the fast axis angle \zeta = 1/2 arctan( Gs / Gc )
+              !
+              !       Convention here is a Cartesian reference frame (x,y,z) where x points East, y points North and z points up.
+              !       And
+              !         Gs = - C54    (as compared to Gs = C54 used e.g. by Montagner, 2002, Seismic Anisotropy Tomography)
+              !       and
+              !         angle \zeta is measured counter-clockwise from South
+              !
+              Gc_kl_crust_mantle(i,j,k,ispec) = -an_kl(16) * scale_kl_ani
+              Gs_kl_crust_mantle(i,j,k,ispec) = -an_kl(17) * scale_kl_ani
 
+              ! daniel todo:
+              ! scaling with actual values?
+              !beta_v = sqrt(L/rhol)
+              !beta_h = sqrt(N/rhol)
+              ! isotropic: Voigt' average vs = sqrt( (2.d0*vsv**2 + vsh**2)/3.d0 )
+              !beta_0 = sqrt( (2.0 * beta_v**2 + beta_h**2)/3.0 )
 
+              !see model_gll.f90:
+              ! test scaling with arbitrary shear moduli
+              ! test: choosing PREM crustal values: rho=2.6 g/cm3, vp=5.8 km/s, vs=3.2 km/s -> mu0 = 26.624 GPa
+              !Gc = Gc_prime * 26.6/scale_GPa
+              !Gs = Gs_prime * 26.6/scale_GPa
+
+              ! scaling with shear moduli from 1D background reference
+              !Gc_prime = Gc / (rho beta_0**2) = Gc / mu0
+              !Gs_prime = Gs / (rho beta_0**2) = Gs / mu0
+
+              mu0 = mu0store_crust_mantle(i,j,k,ispec) ! original values from 1D background reference model
+              if (abs(mu0) > TINYVAL) then
+                mu0 = mu0 * scale_GPa  ! scales to GPa
+                Gc_prime_kl_crust_mantle(i,j,k,ispec) = Gc_kl_crust_mantle(i,j,k,ispec) * mu0
+                Gs_prime_kl_crust_mantle(i,j,k,ispec) = Gs_kl_crust_mantle(i,j,k,ispec) * mu0
+              else
+                Gc_prime_kl_crust_mantle(i,j,k,ispec) = 0.0_CUSTOM_REAL
+                Gs_prime_kl_crust_mantle(i,j,k,ispec) = 0.0_CUSTOM_REAL
+              endif
+              A_kl_crust_mantle(i,j,k,ispec) = -an_kl(1)*scale_kl_ani
+              C_kl_crust_mantle(i,j,k,ispec) = -an_kl(2)*scale_kl_ani
+              N_kl_crust_mantle(i,j,k,ispec) = -an_kl(3)*scale_kl_ani
+              L_kl_crust_mantle(i,j,k,ispec) = -an_kl(4)*scale_kl_ani
+              F_kl_crust_mantle(i,j,k,ispec) = -an_kl(5)*scale_kl_ani
+              Jc_kl_crust_mantle(i,j,k,ispec) = -an_kl(6)*scale_kl_ani
+              Kc_kl_crust_mantle(i,j,k,ispec) = -an_kl(8)*scale_kl_ani
+              Mc_kl_crust_mantle(i,j,k,ispec) = -an_kl(10)*scale_kl_ani
+              Bc_kl_crust_mantle(i,j,k,ispec) = -an_kl(12)*scale_kl_ani
+              Hc_kl_crust_mantle(i,j,k,ispec) = -an_kl(14)*scale_kl_ani
+              Ec_kl_crust_mantle(i,j,k,ispec) = -an_kl(20)*scale_kl_ani
+              Dc_kl_crust_mantle(i,j,k,ispec) = -an_kl(18)*scale_kl_ani
+            endif
 
             ! K_rho (primary kernel, for a parameterization (A,C,L,N,F,rho) )
             rhonotprime_kl_crust_mantle(i,j,k,ispec) = rhol * rho_kl_crust_mantle(i,j,k,ispec) / scale_kl_rho
@@ -528,7 +1265,22 @@
             bulk_beta_kl_crust_mantle(i,j,k,ispec) = bulk_betah_kl_crust_mantle(i,j,k,ispec) &
                                                   + bulk_betav_kl_crust_mantle(i,j,k,ispec)
 
-          endif ! SAVE_TRANSVERSE_KL_ONLY
+            ! to check: Sieminski, 2007
+            !
+            ! isotropic kernels
+            ! K_alpha = 2 rho alpha**2 ( K_A + K_C + K_F)
+            ! K_beta = 2 rho beta**2 ( K_L + K_N - 2 K_F)
+
+          else
+
+            ! fully anisotropic kernels
+
+            ! note: the C_ij and density kernels are not for relative perturbations (delta ln( m_i) = delta m_i / m_i),
+            !          but absolute perturbations (delta m_i = m_i - m_0)
+            rho_kl_crust_mantle(i,j,k,ispec) = - rho_kl_crust_mantle(i,j,k,ispec)
+            cijkl_kl_crust_mantle(:,i,j,k,ispec) = - cijkl_kl_crust_mantle(:,i,j,k,ispec)
+
+          endif ! SAVE_TRANSVERSE_KL_ONLY .or. SAVE_AZIMUTHAL_ANISO_KL_ONLY
 
         enddo
       enddo
@@ -541,9 +1293,10 @@
                                     betav_kl_crust_mantle,betah_kl_crust_mantle, &
                                     eta_kl_crust_mantle, &
                                     bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle, &
-                                    bulk_betav_kl_crust_mantle,bulk_betah_kl_crust_mantle)
+                                    bulk_betav_kl_crust_mantle,bulk_betah_kl_crust_mantle, &
+                                    Gc_prime_kl_crust_mantle, Gs_prime_kl_crust_mantle)
   else
-
+    ! binary file output
     call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_TMP_PATH)
 
     ! For anisotropic kernels
@@ -598,16 +1351,115 @@
       write(IOUT) bulk_beta_kl_crust_mantle
       close(IOUT)
 
+    else if (SAVE_AZIMUTHAL_ANISO_KL_ONLY) then
+      ! kernels for inversions involving azimuthal anisotropy
+      ! (alpha_v, alpha_h, beta_v, beta_h, eta, rho ) parameterization
+      open(unit=IOUT,file=trim(prname)//'alphav_kernel.bin',status='unknown',form='unformatted',action='write')
+      write(IOUT) alphav_kl_crust_mantle
+      close(IOUT)
+      open(unit=IOUT,file=trim(prname)//'alphah_kernel.bin',status='unknown',form='unformatted',action='write')
+      write(IOUT) alphah_kl_crust_mantle
+      close(IOUT)
+      open(unit=IOUT,file=trim(prname)//'betav_kernel.bin',status='unknown',form='unformatted',action='write')
+      write(IOUT) betav_kl_crust_mantle
+      close(IOUT)
+      open(unit=IOUT,file=trim(prname)//'betah_kernel.bin',status='unknown',form='unformatted',action='write')
+      write(IOUT) betah_kl_crust_mantle
+      close(IOUT)
+
+      ! (bulk_c, beta_v, beta_h, eta, Gc', Gs', rho ) parameterization
+      open(unit=IOUT,file=trim(prname)//'bulk_c_kernel.bin',status='unknown',form='unformatted',action='write')
+      write(IOUT) bulk_c_kl_crust_mantle
+      close(IOUT)
+      open(unit=IOUT,file=trim(prname)//'bulk_betav_kernel.bin',status='unknown',form='unformatted',action='write')
+      write(IOUT) bulk_betav_kl_crust_mantle
+      close(IOUT)
+      open(unit=IOUT,file=trim(prname)//'bulk_betah_kernel.bin',status='unknown',form='unformatted',action='write')
+      write(IOUT) bulk_betah_kl_crust_mantle
+      close(IOUT)
+
+      open(unit=IOUT,file=trim(prname)//'eta_kernel.bin',status='unknown',form='unformatted',action='write')
+      write(IOUT) eta_kl_crust_mantle
+      close(IOUT)
+      open(unit=IOUT,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted',action='write')
+      write(IOUT) rho_kl_crust_mantle
+      close(IOUT)
+
+      ! note: Gc' & Gs' are the normalized Gc & Gs kernels
+      open(unit=IOUT,file=trim(prname)//'Gc_prime_kernel.bin',status='unknown',form='unformatted',action='write')
+      write(IOUT) Gc_prime_kl_crust_mantle
+      close(IOUT)
+      open(unit=IOUT,file=trim(prname)//'Gs_prime_kernel.bin',status='unknown',form='unformatted',action='write')
+      write(IOUT) Gs_prime_kl_crust_mantle
+      close(IOUT)
+
+      ! to check: isotropic kernels
+      if (.false.) then
+        open(unit=IOUT,file=trim(prname)//'alpha_kernel.bin',status='unknown',form='unformatted',action='write')
+        write(IOUT) alpha_kl_crust_mantle
+        close(IOUT)
+        open(unit=IOUT,file=trim(prname)//'beta_kernel.bin',status='unknown',form='unformatted',action='write')
+        write(IOUT) beta_kl_crust_mantle
+        close(IOUT)
+        open(unit=IOUT,file=trim(prname)//'bulk_beta_kernel.bin',status='unknown',form='unformatted',action='write')
+        write(IOUT) bulk_beta_kl_crust_mantle
+        close(IOUT)
+      endif
+
+      ! to check: all anisotropic kernels
+      if (.false.) then
+        open(unit=IOUT,file=trim(prname)//'A_kernel.bin',status='unknown',form='unformatted',action='write')
+        write(IOUT) A_kl_crust_mantle
+        close(IOUT)
+        open(unit=IOUT,file=trim(prname)//'C_kernel.bin',status='unknown',form='unformatted',action='write')
+        write(IOUT) C_kl_crust_mantle
+        close(IOUT)
+        open(unit=IOUT,file=trim(prname)//'L_kernel.bin',status='unknown',form='unformatted',action='write')
+        write(IOUT) L_kl_crust_mantle
+        close(IOUT)
+        open(unit=IOUT,file=trim(prname)//'N_kernel.bin',status='unknown',form='unformatted',action='write')
+        write(IOUT) N_kl_crust_mantle
+        close(IOUT)
+        open(unit=IOUT,file=trim(prname)//'F_kernel.bin',status='unknown',form='unformatted',action='write')
+        write(IOUT) F_kl_crust_mantle
+        close(IOUT)
+        open(unit=IOUT,file=trim(prname)//'Gc_kernel.bin',status='unknown',form='unformatted',action='write')
+        write(IOUT) Gc_kl_crust_mantle
+        close(IOUT)
+        open(unit=IOUT,file=trim(prname)//'Gs_kernel.bin',status='unknown',form='unformatted',action='write')
+        write(IOUT) Gs_kl_crust_mantle
+        close(IOUT)
+        open(unit=IOUT,file=trim(prname)//'Jc_kernel.bin',status='unknown',form='unformatted',action='write')
+        write(IOUT) Jc_kl_crust_mantle
+        close(IOUT)
+        open(unit=IOUT,file=trim(prname)//'Kc_kernel.bin',status='unknown',form='unformatted',action='write')
+        write(IOUT) Kc_kl_crust_mantle
+        close(IOUT)
+        open(unit=IOUT,file=trim(prname)//'Mc_kernel.bin',status='unknown',form='unformatted',action='write')
+        write(IOUT) Mc_kl_crust_mantle
+        close(IOUT)
+        open(unit=IOUT,file=trim(prname)//'Bc_kernel.bin',status='unknown',form='unformatted',action='write')
+        write(IOUT) Bc_kl_crust_mantle
+        close(IOUT)
+        open(unit=IOUT,file=trim(prname)//'Hc_kernel.bin',status='unknown',form='unformatted',action='write')
+        write(IOUT) Hc_kl_crust_mantle
+        close(IOUT)
+        open(unit=IOUT,file=trim(prname)//'Ec_kernel.bin',status='unknown',form='unformatted',action='write')
+        write(IOUT) Ec_kl_crust_mantle
+        close(IOUT)
+        open(unit=IOUT,file=trim(prname)//'Dc_kernel.bin',status='unknown',form='unformatted',action='write')
+        write(IOUT) Dc_kl_crust_mantle
+        close(IOUT)
+      endif
+
     else
 
       ! fully anisotropic kernels
-      ! note: the C_ij and density kernels are not for relative perturbations (delta ln( m_i) = delta m_i / m_i),
-      !          but absolute perturbations (delta m_i = m_i - m_0)
       open(unit=IOUT,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted',action='write')
-      write(IOUT) - rho_kl_crust_mantle
+      write(IOUT) rho_kl_crust_mantle
       close(IOUT)
       open(unit=IOUT,file=trim(prname)//'cijkl_kernel.bin',status='unknown',form='unformatted',action='write')
-      write(IOUT) - cijkl_kl_crust_mantle
+      write(IOUT) cijkl_kl_crust_mantle
       close(IOUT)
 
     endif
@@ -615,7 +1467,7 @@
   endif ! ADIOS_FOR_KERNELS
 
   ! Output these kernels as netcdf files -- one per processor.
-#ifdef CEM
+#ifdef USE_CEM
   if (SAVE_TRANSVERSE_KL_ONLY) then
     filename = trim(OUTPUT_FILES)//'/alphavKernelCrustMantle.nc'
     call write_kernel_netcdf(filename, alphav_kl_crust_mantle)
@@ -637,6 +1489,34 @@
 
     filename = trim(OUTPUT_FILES)//'/xyzCrustMantle.nc'
     call write_coordinates_netcdf(filename)
+
+  else if (SAVE_AZIMUTHAL_ANISO_KL_ONLY) then
+    filename = trim(OUTPUT_FILES)//'/alphavKernelCrustMantle.nc'
+    call write_kernel_netcdf(filename, alphav_kl_crust_mantle)
+
+    filename = trim(OUTPUT_FILES)//'/alphahKernelCrustMantle.nc'
+    call write_kernel_netcdf(filename, alphah_kl_crust_mantle)
+
+    filename = trim(OUTPUT_FILES)//'/betavKernelCrustMantle.nc'
+    call write_kernel_netcdf(filename,betav_kl_crust_mantle)
+
+    filename = trim(OUTPUT_FILES)//'/betahKernelCrustMantle.nc'
+    call write_kernel_netcdf(filename,betah_kl_crust_mantle)
+
+    filename = trim(OUTPUT_FILES)//'/etaKernelCrustMantle.nc'
+    call write_kernel_netcdf(filename,eta_kl_crust_mantle)
+
+    filename = trim(OUTPUT_FILES)//'/rhoKernelCrustMantle.nc'
+    call write_kernel_netcdf(filename,rho_kl_crust_mantle)
+
+    filename = trim(OUTPUT_FILES)//'/GcprimeKernelCrustMantle.nc'
+    call write_kernel_netcdf(filename,Gc_prime_kl_crust_mantle)
+
+    filename = trim(OUTPUT_FILES)//'/GsprimeKernelCrustMantle.nc'
+    call write_kernel_netcdf(filename,Gs_prime_kl_crust_mantle)
+
+    filename = trim(OUTPUT_FILES)//'/xyzCrustMantle.nc'
+    call write_coordinates_netcdf(filename)
   endif
 #endif
 
@@ -648,6 +1528,15 @@
              bulk_betav_kl_crust_mantle)
   deallocate(bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle)
   deallocate(rhonotprime_kl_crust_mantle)
+  deallocate(Gc_prime_kl_crust_mantle,Gs_prime_kl_crust_mantle)
+
+  if (SAVE_AZIMUTHAL_ANISO_KL_ONLY) then
+    deallocate(Gc_kl_crust_mantle,Gs_kl_crust_mantle)
+    deallocate(A_kl_crust_mantle,C_kl_crust_mantle,F_kl_crust_mantle, &
+               L_kl_crust_mantle,N_kl_crust_mantle,Jc_kl_crust_mantle, &
+               Kc_kl_crust_mantle,Mc_kl_crust_mantle,Bc_kl_crust_mantle, &
+               Hc_kl_crust_mantle,Ec_kl_crust_mantle,Dc_kl_crust_mantle)
+  endif
 
   end subroutine save_kernels_crust_mantle_ani
 
@@ -689,10 +1578,9 @@
   scale_kl = scale_t * scale_displ_inv * 1.d9
   ! For anisotropic kernels
   ! final unit : [s km^(-3) GPa^(-1)]
-  scale_kl_ani = scale_t**3 / (RHOAV*R_EARTH**3) * 1.d18
+  scale_kl_ani = scale_t**3 / (RHOAV*R_PLANET**3) * 1.d18
   ! final unit : [s km^(-3) (kg/m^3)^(-1)]
   scale_kl_rho = scale_t * scale_displ_inv / RHOAV * 1.d9
-
 
   ! isotropic kernels
   !
@@ -702,14 +1590,19 @@
            kappa_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
            rhonotprime_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
   if (ier /= 0 ) stop 'Error allocating transverse kernels bulk_c_kl_crust_mantle,...'
+  mu_kl_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  kappa_kl_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  rhonotprime_kl_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
 
   ! bulk velocity kernels
   allocate(bulk_c_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
            bulk_beta_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
   if (ier /= 0 ) stop 'Error allocating transverse kernels bulk_c_kl_crust_mantle,...'
+  bulk_c_kl_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
+  bulk_beta_kl_crust_mantle(:,:,:,:) = 0.0_CUSTOM_REAL
 
   ! crust_mantle
-  do ispec = 1, NSPEC_CRUST_MANTLE
+  do ispec = 1, NSPEC_CRUST_MANTLE_ADJOINT
     do k = 1, NGLLZ
       do j = 1, NGLLY
         do i = 1, NGLLX
@@ -732,7 +1625,7 @@
           ! kernels rho^prime, beta, alpha
           rho_kl_crust_mantle(i,j,k,ispec) = (rho_kl + alpha_kl + beta_kl) * scale_kl
           beta_kl_crust_mantle(i,j,k,ispec) = &
-            2._CUSTOM_REAL * (beta_kl - FOUR_THIRDS * mul * alpha_kl / kappal) * scale_kl
+            2._CUSTOM_REAL * (beta_kl - FOUR_THIRDS * mul / kappal * alpha_kl) * scale_kl
           alpha_kl_crust_mantle(i,j,k,ispec) = &
             2._CUSTOM_REAL * (1 +  FOUR_THIRDS * mul / kappal) * alpha_kl * scale_kl
 
@@ -819,15 +1712,19 @@
   real(kind=CUSTOM_REAL) :: rhol,kappal,rho_kl,alpha_kl
   integer :: ispec,i,j,k
 
+  ! saftey check
+  if (.not. SAVE_KERNELS_OC) return
+
   scale_kl = scale_t * scale_displ_inv * 1.d9
 
   ! outer_core
-  do ispec = 1, NSPEC_OUTER_CORE
+  do ispec = 1, NSPEC_OUTER_CORE_ADJOINT
     do k = 1, NGLLZ
       do j = 1, NGLLY
         do i = 1, NGLLX
           rhol = rhostore_outer_core(i,j,k,ispec)
           kappal = kappavstore_outer_core(i,j,k,ispec)
+
           rho_kl = - rhol * rho_kl_outer_core(i,j,k,ispec)
           alpha_kl = - kappal * alpha_kl_outer_core(i,j,k,ispec)
 
@@ -882,11 +1779,14 @@
   real(kind=CUSTOM_REAL) :: rhol,mul,kappal,rho_kl,alpha_kl,beta_kl
   integer :: ispec,i,j,k
 
+  ! safety check
+  if (.not. SAVE_KERNELS_IC) return
+
   ! scaling to units
   scale_kl = scale_t * scale_displ_inv * 1.d9
 
   ! inner_core
-  do ispec = 1, NSPEC_INNER_CORE
+  do ispec = 1, NSPEC_INNER_CORE_ADJOINT
     do k = 1, NGLLZ
       do j = 1, NGLLY
         do i = 1, NGLLX
@@ -939,6 +1839,9 @@
 
   ! local parameters
   real(kind=CUSTOM_REAL):: scale_kl
+
+  ! saftey check
+  if (.not. SAVE_KERNELS_BOUNDARY) return
 
   ! kernel unit [ s / km^3 ]
   scale_kl = scale_t * scale_displ_inv * 1.d9
@@ -995,11 +1898,12 @@
   implicit none
 
   ! local parameters
-  real(kind=CUSTOM_REAL),parameter :: scale_mass = RHOAV * (R_EARTH**3)
+  real(kind=CUSTOM_REAL) :: scale_mass
   integer :: irec_local
   character(len=MAX_STRING_LEN) :: outputname
 
-  !scale_mass = RHOAV * (R_EARTH**3)
+  ! scaling factor
+  scale_mass = RHOAV * (R_EARTH**3)
 
   ! computes derivatives
   do irec_local = 1, nrec_local
@@ -1099,382 +2003,21 @@
     open(unit=IOUT,file=trim(prname)//'hess_kernel.bin',status='unknown',form='unformatted',action='write')
     write(IOUT) hess_kl_crust_mantle
     close(IOUT)
+
+    open(unit=IOUT,file=trim(prname)//'hess_rho_kernel.bin',status='unknown',form='unformatted',action='write')
+    write(IOUT) hess_rho_kl_crust_mantle
+    close(IOUT)
+
+    open(unit=IOUT,file=trim(prname)//'hess_kappa_kernel.bin',status='unknown',form='unformatted',action='write')
+    write(IOUT) hess_kappa_kl_crust_mantle
+    close(IOUT)
+
+    open(unit=IOUT,file=trim(prname)//'hess_mu_kernel.bin',status='unknown',form='unformatted',action='write')
+    write(IOUT) hess_mu_kl_crust_mantle
+    close(IOUT)
+
   endif
 
   end subroutine save_kernels_Hessian
 
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine rotate_kernels_dble(cij_kl,cij_kl_spherical,theta_in,phi_in)
-
-! Purpose : compute the kernels in r,theta,phi (cij_kl_spherical)
-! from the kernels in x,y,z (cij_kl) (x,y,z to r,theta,phi)
-! At r,theta,phi fixed
-! theta and phi are in radians
-
-! Coeff from Min's routine rotate_anisotropic_tensor
-! with the help of Collect[Expand[cij],{dij}] in Mathematica
-
-! Definition of the output array cij_kl_spherical :
-! cij_kl_spherical(1) = C11 ; cij_kl_spherical(2) = C12 ; cij_kl_spherical(3) = C13
-! cij_kl_spherical(4) = C14 ; cij_kl_spherical(5) = C15 ; cij_kl_spherical(6) = C16
-! cij_kl_spherical(7) = C22 ; cij_kl_spherical(8) = C23 ; cij_kl_spherical(9) = C24
-! cij_kl_spherical(10) = C25 ; cij_kl_spherical(11) = C26 ; cij_kl_spherical(12) = C33
-! cij_kl_spherical(13) = C34 ; cij_kl_spherical(14) = C35 ; cij_kl_spherical(15) = C36
-! cij_kl_spherical(16) = C44 ; cij_kl_spherical(17) = C45 ; cij_kl_spherical(18) = C46
-! cij_kl_spherical(19) = C55 ; cij_kl_spherical(20) = C56 ; cij_kl_spherical(21) = C66
-! where the Cij (Voigt's notation) are defined as function of
-! the components of the elastic tensor in spherical coordinates
-! by eq. (A.1) of Chen & Tromp, GJI 168 (2007)
-
-  use constants
-
-  implicit none
-
-  real(kind=CUSTOM_REAL), dimension(21), intent(in) :: cij_kl
-  real(kind=CUSTOM_REAL), dimension(21), intent(out) :: cij_kl_spherical
-
-  real(kind=CUSTOM_REAL), intent(in) :: theta_in,phi_in
-
-  ! local parameters
-  double precision :: theta,phi
-  double precision :: costheta,sintheta,cosphi,sinphi
-  double precision :: costhetasq,sinthetasq,cosphisq,sinphisq
-  double precision :: costwotheta,sintwotheta,costwophi,sintwophi
-  double precision :: cosfourtheta,sinfourtheta,cosfourphi,sinfourphi
-  double precision :: costhetafour,sinthetafour,cosphifour,sinphifour
-  double precision :: sintwophisq,sintwothetasq
-  double precision :: costhreetheta,sinthreetheta,costhreephi,sinthreephi
-
-  theta = dble(theta_in)
-  phi = dble(phi_in)
-
-  costheta = dcos(theta)
-  sintheta = dsin(theta)
-  cosphi = dcos(phi)
-  sinphi = dsin(phi)
-
-  costhetasq = costheta * costheta
-  sinthetasq = sintheta * sintheta
-  cosphisq = cosphi * cosphi
-  sinphisq = sinphi * sinphi
-
-  costhetafour = costhetasq * costhetasq
-  sinthetafour = sinthetasq * sinthetasq
-  cosphifour = cosphisq * cosphisq
-  sinphifour = sinphisq * sinphisq
-
-  costwotheta = dcos(2.d0*theta)
-  sintwotheta = dsin(2.d0*theta)
-  costwophi = dcos(2.d0*phi)
-  sintwophi = dsin(2.d0*phi)
-
-  costhreetheta=dcos(3.d0*theta)
-  sinthreetheta=dsin(3.d0*theta)
-  costhreephi=dcos(3.d0*phi)
-  sinthreephi=dsin(3.d0*phi)
-
-  cosfourtheta = dcos(4.d0*theta)
-  sinfourtheta = dsin(4.d0*theta)
-  cosfourphi = dcos(4.d0*phi)
-  sinfourphi = dsin(4.d0*phi)
-  sintwothetasq = sintwotheta * sintwotheta
-  sintwophisq = sintwophi * sintwophi
-
- cij_kl_spherical(1) = ONE_SIXTEENTH * (cij_kl(16) - cij_kl(16)* costwophi + &
-     16.d0* cosphi*cosphisq* costhetafour* (cij_kl(1)* cosphi + cij_kl(6)* sinphi) + &
-     2.d0* (cij_kl(15) + cij_kl(17))* sintwophi* sintwothetasq - &
-     2.d0* (cij_kl(16)* cosfourtheta* sinphisq + &
-     2.d0* costhetafour* (-4* cij_kl(7)* sinphifour - &
-     (cij_kl(2) + cij_kl(21))* sintwophisq) + &
-     8.d0* cij_kl(5)* cosphi*cosphisq* costheta*costhetasq* sintheta - &
-     8.d0* cij_kl(8)* costhetasq* sinphisq* sinthetasq - &
-     8.d0* cij_kl(12)* sinthetafour + &
-     8.d0* cosphisq* costhetasq* sintheta* ((cij_kl(4) + &
-     cij_kl(20))* costheta* sinphi - &
-     (cij_kl(3) + cij_kl(19))*sintheta) + &
-     8.d0* cosphi* costheta* (-cij_kl(11)* costheta*costhetasq* &
-     sinphi*sinphisq + (cij_kl(10) + cij_kl(18))* costhetasq* sinphisq* sintheta + &
-     cij_kl(14)* sintheta*sinthetasq) + 2.d0* sinphi* (cij_kl(13) + &
-     cij_kl(9)* sinphisq)* sintwotheta + &
-     sinphi* (-cij_kl(13) + cij_kl(9)* sinphisq)* sinfourtheta))
-
- cij_kl_spherical(2) = ONE_FOURTH * (costhetasq* (cij_kl(1) + 3.d0* cij_kl(2) + cij_kl(7) - &
-      cij_kl(21) + (-cij_kl(1) + cij_kl(2) - cij_kl(7) + &
-      cij_kl(21))* cosfourphi + (-cij_kl(6) + cij_kl(11))* sinfourphi) + &
-      4.d0* (cij_kl(8)* cosphisq - cij_kl(15)* cosphi* sinphi + &
-      cij_kl(3)* sinphisq)* sinthetasq - &
-      2.d0* (cij_kl(10)* cosphisq*cosphi + &
-      (cij_kl(9) - cij_kl(20))* cosphisq* sinphi + &
-      (cij_kl(5) - cij_kl(18))* cosphi* sinphisq + &
-      cij_kl(4)* sinphisq*sinphi)* sintwotheta)
-
- cij_kl_spherical(3) = ONE_EIGHTH * (sintwophi* (3.d0* cij_kl(15) - cij_kl(17) + &
-     4.d0* (cij_kl(2) + cij_kl(21))* costhetasq* sintwophi* sinthetasq) + &
-     4.d0* cij_kl(12)* sintwothetasq + 4.d0* cij_kl(1)* cosphifour* sintwothetasq + &
-     2.d0* cosphi*cosphisq* (8.d0* cij_kl(6)* costhetasq* sinphi* sinthetasq + &
-     cij_kl(5)* sinfourtheta) + 2.d0* cosphisq* (3.d0* cij_kl(3) -  cij_kl(19) + &
-     (cij_kl(3) + cij_kl(19))* cosfourtheta + &
-     (cij_kl(4) + cij_kl(20))* sinphi* sinfourtheta) + &
-     2.d0* sinphi* (sinphi* (3.d0* cij_kl(8) - &
-     cij_kl(16) + (cij_kl(8) + cij_kl(16))* cosfourtheta + &
-     2.d0* cij_kl(7)* sinphisq* sintwothetasq)+ &
-     (-cij_kl(13) + cij_kl(9)* sinphisq)* sinfourtheta)+ &
-     2.d0* cosphi* ((cij_kl(15) + cij_kl(17))* cosfourtheta* sinphi + &
-     8.d0* cij_kl(11)* costhetasq* sinphi*sinphisq* sinthetasq + &
-     (-cij_kl(14) + (cij_kl(10) + cij_kl(18))* sinphisq)*sinfourtheta))
-
- cij_kl_spherical(4) = ONE_EIGHTH * (cosphi* costheta *(5.d0* cij_kl(4) - &
-     cij_kl(9) + 4.d0* cij_kl(13) - &
-     3.d0* cij_kl(20) + (cij_kl(4) + 3.d0* cij_kl(9) - &
-     4.d0* cij_kl(13) + cij_kl(20))* costwotheta) + &
-     ONE_HALF* (cij_kl(4) - cij_kl(9) + &
-     cij_kl(20))* costhreephi * (costheta + 3.d0* costhreetheta) - &
-     costheta* (-cij_kl(5) + 5.d0* cij_kl(10) + &
-     4.d0* cij_kl(14) - 3.d0* cij_kl(18) + &
-     (3.d0* cij_kl(5) + cij_kl(10) - &
-     4.d0* cij_kl(14) + cij_kl(18))* costwotheta)* sinphi - &
-     ONE_HALF* (cij_kl(5) - cij_kl(10) - cij_kl(18))* (costheta + &
-     3.d0* costhreetheta)* sinthreephi + &
-     4.d0* (cij_kl(6) - cij_kl(11))* cosfourphi* costhetasq* sintheta - &
-     4.d0* (cij_kl(1) + cij_kl(3) - cij_kl(7) - cij_kl(8) + cij_kl(16) - cij_kl(19) + &
-     (cij_kl(1) - cij_kl(3) - cij_kl(7) + cij_kl(8) + &
-     cij_kl(16) - cij_kl(19))* costwotheta)* sintwophi* sintheta - &
-     4.d0* (cij_kl(1) - cij_kl(2) + cij_kl(7) - &
-     cij_kl(21))* costhetasq* sinfourphi* sintheta + &
-     costwophi* ((cij_kl(6) + cij_kl(11) + 6.d0* cij_kl(15) - &
-     2.d0* cij_kl(17))* sintheta + &
-     (cij_kl(6) + cij_kl(11) - 2.d0* (cij_kl(15) + cij_kl(17)))* sinthreetheta))
-
- cij_kl_spherical(5) = ONE_FOURTH * (2.d0* (cij_kl(4) + &
-     cij_kl(20))* cosphisq* (costwotheta + cosfourtheta)* sinphi + &
-     2.d0* cij_kl(9)* (costwotheta + cosfourtheta)* sinphi*sinphisq + &
-     16.d0* cij_kl(1)* cosphifour* costheta*costhetasq* sintheta + &
-     4.d0* costheta*costhetasq* (-2.d0* cij_kl(8)* sinphisq + &
-     4.d0* cij_kl(7)* sinphifour + &
-     (cij_kl(2) + cij_kl(21))* sintwophisq)* sintheta + &
-     4.d0* cij_kl(13)* (1.d0 + 2.d0* costwotheta)* sinphi* sinthetasq + &
-     8.d0* costheta* (-2.d0* cij_kl(12) + cij_kl(8)* sinphisq)* sintheta*sinthetasq + &
-     2.d0* cosphi*cosphisq* (cij_kl(5)* (costwotheta + cosfourtheta) + &
-     8.d0* cij_kl(6)* costheta*costhetasq* sinphi* sintheta) + &
-     2.d0* cosphi* (cosfourtheta* (-cij_kl(14) + (cij_kl(10) + cij_kl(18))* sinphisq) + &
-     costwotheta* (cij_kl(14) + (cij_kl(10) + cij_kl(18))* sinphisq) + &
-     8.d0* cij_kl(11)* costheta*costhetasq* sinphi*sinphisq* sintheta) - &
-     (cij_kl(3) + cij_kl(16) + cij_kl(19) + &
-     (cij_kl(3) - cij_kl(16) + cij_kl(19))* costwophi + &
-     (cij_kl(15) + cij_kl(17))* sintwophi)* sinfourtheta)
-
- cij_kl_spherical(6) = ONE_HALF * costheta*costhetasq* ((cij_kl(6) + cij_kl(11))* costwophi + &
-      (cij_kl(6) - cij_kl(11))* cosfourphi + 2.d0* (-cij_kl(1) + cij_kl(7))* sintwophi + &
-      (-cij_kl(1) + cij_kl(2) - cij_kl(7) + cij_kl(21))* sinfourphi) + &
-      ONE_FOURTH* costhetasq* (-(cij_kl(4) + 3* cij_kl(9) + cij_kl(20))* cosphi - &
-      3.d0* (cij_kl(4) - cij_kl(9) + cij_kl(20))* costhreephi + &
-      (3.d0* cij_kl(5) + cij_kl(10) + cij_kl(18))* sinphi + &
-      3.d0* (cij_kl(5) - cij_kl(10) - cij_kl(18))* sinthreephi)* sintheta + &
-      costheta* ((cij_kl(15) + cij_kl(17))* costwophi + &
-      (-cij_kl(3) + cij_kl(8) + cij_kl(16) - cij_kl(19))* sintwophi)* sinthetasq + &
-      (-cij_kl(13)* cosphi + cij_kl(14)* sinphi)* sintheta*sinthetasq
-
- cij_kl_spherical(7) = cij_kl(7) * cosphifour - cij_kl(11)* cosphi*cosphisq* sinphi + &
-      (cij_kl(2) + cij_kl(21))* cosphisq* sinphisq - &
-      cij_kl(6)* cosphi* sinphi*sinphisq + &
-      cij_kl(1)* sinphifour
-
- cij_kl_spherical(8) = ONE_HALF * (2.d0* costhetasq* sinphi* (-cij_kl(15)* cosphi + &
-      cij_kl(3)* sinphi) + 2.d0* cij_kl(2)* cosphifour* sinthetasq + &
-      (2.d0* cij_kl(2)* sinphifour + &
-      (cij_kl(1) + cij_kl(7) - cij_kl(21))* sintwophisq)* sinthetasq + &
-      cij_kl(4)* sinphi*sinphisq* sintwotheta + &
-      cosphi*cosphisq* (2.d0* (-cij_kl(6) + cij_kl(11))* sinphi* sinthetasq + &
-      cij_kl(10)* sintwotheta) + cosphi* sinphisq* (2.d0* (cij_kl(6) - &
-      cij_kl(11))* sinphi* sinthetasq + &
-      (cij_kl(5) - cij_kl(18))* sintwotheta) + &
-      cosphisq* (2.d0* cij_kl(8)* costhetasq + &
-      (cij_kl(9) - cij_kl(20))* sinphi* sintwotheta))
-
- cij_kl_spherical(9) = cij_kl(11) * cosphifour* sintheta - sinphi*sinphisq* (cij_kl(5)* costheta + &
-      cij_kl(6)* sinphi* sintheta) +  cosphisq* sinphi* (-(cij_kl(10) + &
-      cij_kl(18))* costheta + &
-      3.d0* (cij_kl(6) - cij_kl(11))* sinphi* sintheta) + &
-      cosphi* sinphisq* ((cij_kl(4) + cij_kl(20))* costheta + &
-      2.d0* (-2.d0* cij_kl(1) + cij_kl(2) + cij_kl(21))* sinphi* sintheta) + &
-      cosphi*cosphisq* (cij_kl(9)* costheta - 2.d0* (cij_kl(2) - 2.d0* cij_kl(7) + &
-      cij_kl(21))* sinphi* sintheta)
-
- cij_kl_spherical(10) = ONE_FOURTH * (4.d0* costwotheta* (cij_kl(10)* cosphi*cosphisq + &
-      (cij_kl(9) - cij_kl(20))* cosphisq* sinphi + &
-      (cij_kl(5) - cij_kl(18))* cosphi* sinphisq + &
-      cij_kl(4)* sinphi*sinphisq) + (cij_kl(1) + 3.d0* cij_kl(2) - &
-      2.d0* cij_kl(3) + cij_kl(7) - &
-      2.d0* cij_kl(8) - cij_kl(21) + 2.d0* (cij_kl(3) - cij_kl(8))* costwophi + &
-      (-cij_kl(1) + cij_kl(2) - cij_kl(7) + cij_kl(21))* cosfourphi + &
-      2.d0* cij_kl(15)* sintwophi + &
-      (-cij_kl(6) + cij_kl(11))* sinfourphi)* sintwotheta)
-
- cij_kl_spherical(11) = ONE_FOURTH * (2.d0* costheta* ((cij_kl(6) + cij_kl(11))* costwophi + &
-      (-cij_kl(6) + cij_kl(11))* cosfourphi + &
-      2.d0* (-cij_kl(1) + cij_kl(7))* sintwophi + &
-      (cij_kl(1) - cij_kl(2) + cij_kl(7) - cij_kl(21))* sinfourphi) + &
-      (-(cij_kl(4) + 3.d0* cij_kl(9) + cij_kl(20))* cosphi + &
-      (cij_kl(4) - cij_kl(9) + cij_kl(20))* costhreephi + &
-      (3.d0* cij_kl(5) + cij_kl(10) + cij_kl(18))* sinphi + &
-      (-cij_kl(5) + cij_kl(10) + cij_kl(18))* sinthreephi)* sintheta)
-
- cij_kl_spherical(12) = ONE_SIXTEENTH * (cij_kl(16) - 2.d0* cij_kl(16)* cosfourtheta* sinphisq + &
-      costwophi* (-cij_kl(16) + 8.d0* costheta* sinthetasq* ((cij_kl(3) - &
-      cij_kl(8) + cij_kl(19))* costheta + &
-      (cij_kl(5) - cij_kl(10) - cij_kl(18))* cosphi* sintheta)) + &
-      2.d0* (cij_kl(15) + cij_kl(17))* sintwophi* sintwothetasq + &
-      2.d0* (8.d0* cij_kl(12)* costhetafour + &
-      8.d0* cij_kl(14)* cosphi* costheta*costhetasq* sintheta + &
-      4.d0* cosphi* costheta* (cij_kl(5) + cij_kl(10) + cij_kl(18) + &
-      (cij_kl(4) + cij_kl(20))* sintwophi)* &
-      sintheta*sinthetasq + 8.d0* cij_kl(1)* cosphifour* sinthetafour + &
-      8.d0* cij_kl(6)* cosphi*cosphisq* sinphi* sinthetafour + &
-      8.d0* cij_kl(11)* cosphi* sinphi*sinphisq* sinthetafour + &
-      8.d0* cij_kl(7)* sinphifour* sinthetafour + &
-      2.d0* cij_kl(2)* sintwophisq* sinthetafour + &
-      2.d0* cij_kl(21)* sintwophisq* sinthetafour + &
-      2.d0* cij_kl(13)* sinphi* sintwotheta + &
-      2.d0* cij_kl(9)* sinphi*sinphisq* sintwotheta + &
-      cij_kl(3)* sintwothetasq + cij_kl(8)* sintwothetasq + &
-      cij_kl(19)* sintwothetasq + cij_kl(13)* sinphi* sinfourtheta - &
-      cij_kl(9)* sinphi*sinphisq* sinfourtheta))
-
- cij_kl_spherical(13) = ONE_EIGHTH * (cosphi* costheta* (cij_kl(4) + 3.d0* cij_kl(9) + &
-      4.d0* cij_kl(13) + cij_kl(20) - (cij_kl(4) + 3.d0* cij_kl(9) - &
-      4.d0* cij_kl(13) + cij_kl(20))* costwotheta) + 4.d0* (-cij_kl(1) - &
-      cij_kl(3) + cij_kl(7) + cij_kl(8) + cij_kl(16) - cij_kl(19) + &
-      (cij_kl(1) - cij_kl(3) - cij_kl(7) + cij_kl(8) + cij_kl(16) - &
-      cij_kl(19))* costwotheta)* sintwophi* sintheta + &
-      4.d0* (cij_kl(6) - cij_kl(11))* cosfourphi* sinthetasq*sintheta - &
-      4.d0* (cij_kl(1) - cij_kl(2) + cij_kl(7) - &
-      cij_kl(21))* sinfourphi* sinthetasq*sintheta + &
-      costheta* ((-3.d0* cij_kl(5) - cij_kl(10) - 4.d0* cij_kl(14) - &
-      cij_kl(18) + (3.d0* cij_kl(5) + cij_kl(10) - 4.d0* cij_kl(14) + &
-      cij_kl(18))* costwotheta)* sinphi + 6.d0* ((cij_kl(4) - cij_kl(9) + &
-      cij_kl(20))* costhreephi + (-cij_kl(5) + cij_kl(10) + &
-      cij_kl(18))* sinthreephi)* sinthetasq) + costwophi* ((3* cij_kl(6) + &
-      3.d0* cij_kl(11) + 2.d0* (cij_kl(15) + cij_kl(17)))* sintheta - &
-      (cij_kl(6) + cij_kl(11) - 2.d0* (cij_kl(15) + &
-      cij_kl(17)))* sinthreetheta))
-
- cij_kl_spherical(14) = ONE_FOURTH * (2.d0* cij_kl(13)* (costwotheta + cosfourtheta)* sinphi + &
-      8.d0* costheta*costhetasq* (-2.d0* cij_kl(12) + cij_kl(8)* sinphisq)* sintheta + &
-      4.d0* (cij_kl(4) + cij_kl(20))* cosphisq* (1.d0 + &
-      2.d0* costwotheta)* sinphi* sinthetasq + &
-      4.d0* cij_kl(9)* (1.d0 + 2.d0* costwotheta)* sinphi*sinphisq* sinthetasq + &
-      16.d0* cij_kl(1)* cosphifour* costheta* sintheta*sinthetasq + &
-      4.d0* costheta* (-2.d0* cij_kl(8)* sinphisq + 4.d0* cij_kl(7)* sinphifour + &
-      (cij_kl(2) + cij_kl(21))* sintwophisq)* sintheta*sinthetasq + &
-      4.d0* cosphi*cosphisq* sinthetasq* (cij_kl(5) + 2.d0* cij_kl(5)* costwotheta + &
-      4.d0* cij_kl(6)* costheta* sinphi* sintheta) + &
-      2.d0* cosphi* (cosfourtheta* (cij_kl(14) - (cij_kl(10) + cij_kl(18))* sinphisq) + &
-      costwotheta* (cij_kl(14) + (cij_kl(10) + cij_kl(18))* sinphisq) + &
-      8.d0* cij_kl(11)* costheta* sinphi*sinphisq* sintheta*sinthetasq) + &
-      (cij_kl(3) + cij_kl(16) + cij_kl(19) + (cij_kl(3) - cij_kl(16) + &
-      cij_kl(19))* costwophi + (cij_kl(15) + cij_kl(17))* sintwophi)* sinfourtheta)
-
- cij_kl_spherical(15) = costwophi * costheta* (-cij_kl(17) + (cij_kl(15) + cij_kl(17))* costhetasq) + &
-       ONE_SIXTEENTH* (-((11.d0* cij_kl(4) + cij_kl(9) + 4.d0* cij_kl(13) - &
-       5.d0* cij_kl(20))* cosphi + (cij_kl(4) - cij_kl(9) + cij_kl(20))* costhreephi - &
-       (cij_kl(5) + 11.d0* cij_kl(10) + 4.d0* cij_kl(14) - &
-       5.d0* cij_kl(18))* sinphi + (-cij_kl(5) + cij_kl(10) + &
-       cij_kl(18))* sinthreephi)* sintheta + &
-       8.d0* costheta* ((-cij_kl(1) - cij_kl(3) + cij_kl(7) + cij_kl(8) - cij_kl(16) +&
-       cij_kl(19) + (cij_kl(1) - cij_kl(3) - &
-       cij_kl(7) + cij_kl(8) + cij_kl(16) - cij_kl(19))* costwotheta)* sintwophi +&
-       ((cij_kl(6) + cij_kl(11))* costwophi + &
-       (cij_kl(6) - cij_kl(11))* cosfourphi + (-cij_kl(1) + cij_kl(2) - cij_kl(7) +&
-       cij_kl(21))* sinfourphi)* sinthetasq) +&
-       ((cij_kl(4) + 3.d0* cij_kl(9) - 4.d0* cij_kl(13) + cij_kl(20))* cosphi + &
-       3.d0* (cij_kl(4) - cij_kl(9) + cij_kl(20))* costhreephi - &
-       (3.d0* cij_kl(5) + cij_kl(10) - 4.d0* cij_kl(14) + cij_kl(18))* sinphi + &
-       3.d0* (-cij_kl(5) + cij_kl(10) + cij_kl(18))* sinthreephi)* sinthreetheta)
-
- cij_kl_spherical(16) = ONE_FOURTH *(cij_kl(1) - cij_kl(2) + cij_kl(7) + cij_kl(16) + &
-       cij_kl(19) + cij_kl(21) + 2.d0*(cij_kl(16) - cij_kl(19))*costwophi* costhetasq + &
-       (-cij_kl(1) + cij_kl(2) - cij_kl(7) + cij_kl(16) + &
-       cij_kl(19) - cij_kl(21))*costwotheta - 2.d0* cij_kl(17)* costhetasq* sintwophi + &
-       2.d0* ((-cij_kl(1) + cij_kl(2) - cij_kl(7) + cij_kl(21))* cosfourphi + &
-       (-cij_kl(6) + cij_kl(11))* sinfourphi)* sinthetasq + ((cij_kl(5) - cij_kl(10) +&
-       cij_kl(18))* cosphi + (-cij_kl(5) + cij_kl(10) + cij_kl(18))* costhreephi +&
-       (-cij_kl(4) + cij_kl(9) + cij_kl(20))* sinphi - &
-       (cij_kl(4) - cij_kl(9) + cij_kl(20))* sinthreephi)* sintwotheta)
-
- cij_kl_spherical(17) = ONE_EIGHTH * (4.d0* costwophi* costheta* (cij_kl(6) + cij_kl(11) - &
-       2.d0* cij_kl(15) - (cij_kl(6) + cij_kl(11) - 2.d0* (cij_kl(15) + &
-       cij_kl(17)))* costwotheta) - (2.d0* cosphi* (-3.d0* cij_kl(4) +&
-       cij_kl(9) + 2.d0* cij_kl(13) + cij_kl(20) + (cij_kl(4) - cij_kl(9) + &
-       cij_kl(20))* costwophi) - (cij_kl(5) - 5.d0* cij_kl(10) + &
-       4.d0* cij_kl(14) + 3.d0* cij_kl(18))* sinphi + (-cij_kl(5) + cij_kl(10) + &
-       cij_kl(18))* sinthreephi)* sintheta + &
-       8.d0* costheta* ((-cij_kl(1) + cij_kl(3) + cij_kl(7) - cij_kl(8) + &
-       (cij_kl(1) - cij_kl(3) - cij_kl(7) + cij_kl(8) + cij_kl(16) - &
-       cij_kl(19))* costwotheta)* sintwophi + ((cij_kl(6) - cij_kl(11))* cosfourphi + &
-       (-cij_kl(1) + cij_kl(2) - cij_kl(7) + cij_kl(21))* sinfourphi)* sinthetasq) +&
-       ((cij_kl(4) + 3.d0* cij_kl(9) - 4.d0* cij_kl(13) + cij_kl(20))* cosphi + &
-       3.d0* (cij_kl(4) - cij_kl(9) + cij_kl(20))* costhreephi - &
-       (3.d0* cij_kl(5) + cij_kl(10) - 4.d0* cij_kl(14) + cij_kl(18))* sinphi + &
-       3.d0* (-cij_kl(5) + cij_kl(10) + cij_kl(18))* sinthreephi)* sinthreetheta)
-
- cij_kl_spherical(18) = ONE_HALF * ((cij_kl(5) - cij_kl(10) + cij_kl(18))* cosphi* costwotheta - &
-       (cij_kl(5) - cij_kl(10) - cij_kl(18))* costhreephi* costwotheta - &
-       2.d0* (cij_kl(4) - cij_kl(9) + &
-       (cij_kl(4) - cij_kl(9) + cij_kl(20))* costwophi)* costwotheta* sinphi + &
-       (cij_kl(1) - cij_kl(2) + cij_kl(7) - cij_kl(16) - cij_kl(19) + cij_kl(21) + &
-       (-cij_kl(16) + cij_kl(19))* costwophi + &
-       (-cij_kl(1) + cij_kl(2) - cij_kl(7) + cij_kl(21))* cosfourphi + &
-       cij_kl(17)* sintwophi + &
-       (-cij_kl(6) + cij_kl(11))* sinfourphi)* sintwotheta)
-
- cij_kl_spherical(19) = ONE_FOURTH * (cij_kl(16) - cij_kl(16)* costwophi + &
-      (-cij_kl(15) + cij_kl(17))* sintwophi + &
-      4.d0* cij_kl(12)* sintwothetasq + &
-      2.d0* (2.d0* cij_kl(1)* cosphifour* sintwothetasq + &
-      cosphi*cosphisq* (8.d0* cij_kl(6)* costhetasq* sinphi* sinthetasq + &
-      cij_kl(5)* sinfourtheta) + cosphisq* (-cij_kl(3) + cij_kl(19) + (cij_kl(3) +&
-      cij_kl(19))* cosfourtheta + (cij_kl(4) + cij_kl(20))* sinphi* sinfourtheta) + &
-      sinphi* (cosfourtheta* ((cij_kl(15) + cij_kl(17))* cosphi + &
-      cij_kl(16)* sinphi) + (cij_kl(2) + cij_kl(7) - 2.d0* cij_kl(8) + cij_kl(21) + &
-      (cij_kl(2) - cij_kl(7) + cij_kl(21))* costwophi)* sinphi* sintwothetasq + &
-      (-cij_kl(13) + cij_kl(9)* sinphisq)* sinfourtheta) + &
-      cosphi* (8.d0* cij_kl(11)* costhetasq* sinphi*sinphisq* sinthetasq + &
-      (-cij_kl(14) + (cij_kl(10) + cij_kl(18))* sinphisq)* sinfourtheta)))
-
- cij_kl_spherical(20) = ONE_EIGHTH * (2.d0* cosphi* costheta* (-3.d0* cij_kl(4) - cij_kl(9) + &
-      4.d0* cij_kl(13) + cij_kl(20) + (cij_kl(4) + 3.d0* cij_kl(9) - &
-      4.d0* cij_kl(13) + cij_kl(20))* costwotheta) + &
-      (cij_kl(4) - cij_kl(9) + cij_kl(20))* costhreephi* (costheta + &
-      3.d0* costhreetheta) - &
-      2.d0* costheta* (-cij_kl(5) - 3.d0* cij_kl(10) + 4.d0* cij_kl(14) + &
-      cij_kl(18) + (3.d0* cij_kl(5) + &
-      cij_kl(10) - 4.d0* cij_kl(14) + cij_kl(18))*costwotheta)* sinphi - &
-      (cij_kl(5) - cij_kl(10) - cij_kl(18))* &
-      (costheta + 3.d0* costhreetheta)* sinthreephi + 8.d0* (cij_kl(6) - &
-      cij_kl(11))* cosfourphi* costhetasq* sintheta - 8.d0* (cij_kl(1) - &
-      cij_kl(3) - cij_kl(7) + cij_kl(8) + &
-      (cij_kl(1) - cij_kl(3) - cij_kl(7) + cij_kl(8) + cij_kl(16) - &
-      cij_kl(19))* costwotheta)* sintwophi* sintheta - &
-      8.d0* (cij_kl(1) - cij_kl(2) + cij_kl(7) - &
-      cij_kl(21))* costhetasq* sinfourphi* sintheta + &
-      2.d0* costwophi* ((cij_kl(6) + cij_kl(11) - 2.d0* cij_kl(15) + &
-      2.d0* cij_kl(17))* sintheta + &
-      (cij_kl(6) + cij_kl(11) - 2.d0* (cij_kl(15) + cij_kl(17)))* sinthreetheta))
-
- cij_kl_spherical(21) = ONE_FOURTH * (cij_kl(1) - cij_kl(2) + cij_kl(7) + cij_kl(16) + &
-      cij_kl(19) + cij_kl(21) - 2.d0* (cij_kl(1) - cij_kl(2) + cij_kl(7) - &
-      cij_kl(21))* cosfourphi* costhetasq + &
-      (cij_kl(1) - cij_kl(2) + cij_kl(7) - cij_kl(16) - cij_kl(19) + &
-      cij_kl(21))* costwotheta + &
-      2.d0* (-cij_kl(6) + cij_kl(11))* costhetasq* sinfourphi - &
-      2.d0* ((-cij_kl(16) + cij_kl(19))* costwophi + cij_kl(17)* sintwophi)* sinthetasq - &
-      ((cij_kl(5) - cij_kl(10) + cij_kl(18))* cosphi + (-cij_kl(5) + cij_kl(10) +&
-      cij_kl(18))* costhreephi + &
-      (-cij_kl(4) + cij_kl(9) + cij_kl(20))* sinphi - (cij_kl(4) - cij_kl(9) + &
-      cij_kl(20))* sinthreephi)* sintwotheta)
-
-  end subroutine rotate_kernels_dble
 

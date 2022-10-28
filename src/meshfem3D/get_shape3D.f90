@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -32,23 +32,23 @@
   implicit none
 
 ! Gauss-Lobatto-Legendre points of integration
-  double precision xigll(NGLLX)
-  double precision yigll(NGLLY)
-  double precision zigll(NGLLZ)
+  double precision, intent(in) :: xigll(NGLLX)
+  double precision, intent(in) :: yigll(NGLLY)
+  double precision, intent(in) :: zigll(NGLLZ)
 
 ! 3D shape functions and their derivatives
-  double precision shape3D(NGNOD,NGLLX,NGLLY,NGLLZ)
-  double precision dershape3D(NDIM,NGNOD,NGLLX,NGLLY,NGLLZ)
+  double precision, intent(inout) :: shape3D(NGNOD,NGLLX,NGLLY,NGLLZ)
+  double precision, intent(inout) :: dershape3D(NDIM,NGNOD,NGLLX,NGLLY,NGLLZ)
 
-  integer i,j,k,ia
+  integer :: i,j,k,ia
 
 ! location of the nodes of the 3D quadrilateral elements
-  double precision xi,eta,gamma
-  double precision l1xi,l2xi,l3xi,l1eta,l2eta,l3eta,l1gamma,l2gamma,l3gamma
-  double precision l1pxi,l2pxi,l3pxi,l1peta,l2peta,l3peta,l1pgamma,l2pgamma,l3pgamma
+  double precision :: xi,eta,gamma
+  double precision :: l1xi,l2xi,l3xi,l1eta,l2eta,l3eta,l1gamma,l2gamma,l3gamma
+  double precision :: l1pxi,l2pxi,l3pxi,l1peta,l2peta,l3peta,l1pgamma,l2pgamma,l3pgamma
 
 ! for checking the 3D shape functions
-  double precision sumshape,sumdershapexi,sumdershapeeta,sumdershapegamma
+  double precision :: sumshape,sumdershapexi,sumdershapeeta,sumdershapegamma
 
 ! check that the parameter file is correct
   if (NGNOD /= 27) call exit_MPI(myrank,'elements should have 27 control nodes')

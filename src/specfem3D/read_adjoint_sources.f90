@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -110,11 +110,15 @@
 
 ! reads in local adjoint source files
 
+! note: this routine can be called both, from read_adjoint_sources() above and also by a new I/O thread,
+!       created when calling read_adj_io_thread() (see file_io_threads.c)
+
+  use constants, only: CUSTOM_REAL,NDIM,NGLLX,NGLLY,NGLLZ,MAX_STRING_LEN
+
   use specfem_par, only: myrank,NPROCTOT_VAL, &
-    nrec,islice_selected_rec,station_name,network_name, &
-    nu, &
-    iadjsrc_len,iadjsrc,NSTEP_SUB_ADJ, &
-    DT,CUSTOM_REAL,NDIM,NGLLX,NGLLY,NGLLZ,NTSTEP_BETWEEN_READ_ADJSRC,MAX_STRING_LEN,READ_ADJSRC_ASDF
+    nrec,nu_rec,islice_selected_rec,station_name,network_name, &
+    iadjsrc_len,iadjsrc, &
+    NSTEP_SUB_ADJ,NTSTEP_BETWEEN_READ_ADJSRC,READ_ADJSRC_ASDF
 
   implicit none
 
@@ -169,10 +173,8 @@
       endif
 
       ! reads in *.adj files
-      call compute_arrays_source_adjoint(myrank,adj_source_file, &
-                                         nu(:,:,irec),tmp_source_adjoint, &
-                                         iadjsrc_len(it_sub_adj),iadjsrc,it_sub_adj, &
-                                         NSTEP_SUB_ADJ,NTSTEP_BETWEEN_READ_ADJSRC,DT)
+      call compute_arrays_source_adjoint(adj_source_file,nu_rec(:,:,irec),tmp_source_adjoint, &
+                                         iadjsrc_len(it_sub_adj),iadjsrc,it_sub_adj)
 
       ! stores source array
       ! note: the source_adjoint has a time stepping from 1 to NTSTEP_BETWEEN_READ_ADJSRC

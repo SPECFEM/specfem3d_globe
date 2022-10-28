@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -48,7 +48,7 @@
   if (ELLIPTICITY_VAL) then
     ! splines used for locating exact source/receivers positions
     ! in locate_sources() and locate_receivers() routines
-    call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
+    call make_ellipticity(nspl,rspl,ellipicity_spline,ellipicity_spline2)
   endif
 
   ! read topography and bathymetry file
@@ -61,7 +61,7 @@
     ibathy_topo(:,:) = 0
 
     if (I_should_read_the_database) then
-      ! master reads file
+      ! main reads file
       if (myrank == 0) then
         ! user output
         write(IMAIN,*) 'topography:'
@@ -73,7 +73,7 @@
         call read_topo_bathy_database(ibathy_topo, topo_path)
       endif
 
-      ! broadcast the information read on the master to the nodes
+      ! broadcast the information read on the main to the nodes
       call bcast_all_i(ibathy_topo,NX_BATHY*NY_BATHY)
     endif
     call bcast_ibathy_topo()
@@ -106,4 +106,5 @@
   implicit none
 
   call bcast_all_i_for_database(ibathy_topo(1,1), size(ibathy_topo))
+
   end subroutine bcast_ibathy_topo

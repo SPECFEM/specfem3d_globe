@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -42,10 +42,17 @@
   module model_crustmaps_par
 
   ! General Crustmaps parameters
-  integer, parameter :: CRUSTMAP_RESOLUTION = 4 !means 1/4 degrees
   integer, parameter :: NLAYERS_CRUSTMAP = 5
 
+  ! EUcrust07 & Crust2.0
+  integer, parameter :: EU_CRUSTMAP_RESOLUTION = 4 !means 1/4 degrees
+  ! Mars
+  integer, parameter :: MARS_CRUSTMAP_RESOLUTION = 6 !means 1/6 degrees
+  ! Moon
+  integer, parameter :: MOON_CRUSTMAP_RESOLUTION = 6 !means 1/6 degrees
+
   ! model_crustmaps_variables combined crustal maps
+  integer :: CRUSTMAP_RESOLUTION
   double precision, dimension(:,:,:),allocatable :: thickness,density,velocp,velocs
 
   double precision,dimension(:),allocatable :: thicknessnp,densitynp, &
@@ -62,13 +69,30 @@
 
 ! standard routine to setup model
 
-  use constants
+  use constants, only: myrank
+  use shared_parameters, only: PLANET_TYPE,IPLANET_EARTH,IPLANET_MARS,IPLANET_MOON
+
   use model_crustmaps_par
 
   implicit none
 
   ! local parameters
   integer :: ier
+
+  ! resolution
+  select case(PLANET_TYPE)
+  case (IPLANET_EARTH)
+    ! Earth
+    CRUSTMAP_RESOLUTION = EU_CRUSTMAP_RESOLUTION
+  case (IPLANET_MARS)
+    ! Mars
+    CRUSTMAP_RESOLUTION = MARS_CRUSTMAP_RESOLUTION
+  case (IPLANET_MOON)
+    ! Moon
+    CRUSTMAP_RESOLUTION = MOON_CRUSTMAP_RESOLUTION
+  case default
+    call exit_MPI(myrank,'Invalid planet, crustmaps not implemented yet')
+  end select
 
   ! allocates model arrays
   allocate(thickness(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP), &
@@ -77,6 +101,8 @@
            velocs(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP), &
            stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating crustmaps arrays')
+  thickness(:,:,:) = 0.d0; density(:,:,:) = 0.d0
+  velocp(:,:,:) = 0.d0; velocs(:,:,:) = 0.d0
 
   allocate(thicknessnp(NLAYERS_CRUSTMAP), &
            densitynp(NLAYERS_CRUSTMAP), &
@@ -88,8 +114,12 @@
            velocssp(NLAYERS_CRUSTMAP), &
            stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating crustmaps np/sp arrays')
+  thicknessnp(:) = 0.d0; densitynp(:) = 0.d0
+  velocpnp(:) = 0.d0; velocsnp(:) = 0.d0
+  thicknesssp(:) = 0.d0; densitysp(:) = 0.d0
+  velocpsp(:) = 0.d0; velocssp(:) = 0.d0
 
-  ! master reads in crust maps
+  ! main reads in crust maps
   if (myrank == 0) call read_general_crustmap()
 
   ! broadcasts values to all processes
@@ -122,7 +152,9 @@
 
   subroutine read_general_crustmap()
 
-  use constants
+  use constants, only: IMAIN,ZERO,HUGEVAL,myrank
+  use shared_parameters, only: PLANET_TYPE,IPLANET_EARTH,IPLANET_MARS,IPLANET_MOON
+
   use model_crustmaps_par
 
   implicit none
@@ -134,13 +166,28 @@
   ! user output
   write(IMAIN,*)
   write(IMAIN,*) 'incorporating crustal model: crustMap'
+  select case(PLANET_TYPE)
+  case (IPLANET_EARTH)
+    ! Earth
+    write(IMAIN,*) '  using files              : DATA/crustmap/eucrust**.cmap'
+  case (IPLANET_MARS)
+    ! Mars
+    write(IMAIN,*) '  using files              : DATA/crustmap/marscrust**.cmap'
+  case (IPLANET_MOON)
+    ! Moon
+    write(IMAIN,*) '  using files              : DATA/crustmap/mooncrust**.cmap'
+  case default
+    call exit_MPI(myrank,'Invalid planet, crustmaps not implemented yet')
+  end select
+  write(IMAIN,*) '  crustmap resolution      : ',CRUSTMAP_RESOLUTION
+  write(IMAIN,*) '  number of crustmap layers: ',NLAYERS_CRUSTMAP
+  write(IMAIN,*) '  number of values per file: ',180*360*CRUSTMAP_RESOLUTION*CRUSTMAP_RESOLUTION
   write(IMAIN,*)
   call flush_IMAIN()
 
   do l = 1,NLAYERS_CRUSTMAP
     ! file index: from 3 to 7
     i = l + 2
-
     call read_general_crustmap_layer(thickness(:,:,l), 't', i)
     call read_general_crustmap_layer(density(:,:,l),   'r', i)
     call read_general_crustmap_layer(velocp(:,:,l),    'p', i)
@@ -206,7 +253,9 @@
 
   subroutine read_general_crustmap_layer(var,var_letter,ind)
 
-  use constants
+  use constants, only: IMAIN,IIN,MAX_STRING_LEN,myrank
+  use shared_parameters, only: PLANET_TYPE,IPLANET_EARTH,IPLANET_MARS,IPLANET_MOON
+
   use model_crustmaps_par, only: CRUSTMAP_RESOLUTION
 
   implicit none
@@ -216,21 +265,38 @@
   integer, intent(in) :: ind
 
   ! local variables
-  character(len=MAX_STRING_LEN) :: eucrust
+  character(len=MAX_STRING_LEN) :: str_crust
   integer :: ier, ila, iln
 
-  write(eucrust,'(a,a1,i1,a5)') 'DATA/crustmap/eucrust', var_letter, ind,'.cmap'
+  ! file names
+  select case(PLANET_TYPE)
+  case (IPLANET_EARTH)
+    ! Earth
+    write(str_crust,'(a,a1,i1,a5)') 'DATA/crustmap/eucrust', var_letter, ind,'.cmap'
+  case (IPLANET_MARS)
+    ! Mars
+    write(str_crust,'(a,a1,i1,a)') 'DATA/crustmap/marscrust', var_letter, ind,'.cmap'
+  case (IPLANET_MOON)
+    ! Moon
+    write(str_crust,'(a,a1,i1,a)') 'DATA/crustmap/mooncrust', var_letter, ind,'.cmap'
+  case default
+    call exit_MPI(myrank,'Invalid planet, crustmaps layers not implemented yet')
+  end select
 
-  open(unit = IIN,file=trim(eucrust),status='old',action='read',iostat=ier)
+  open(unit = IIN,file=trim(str_crust),status='old',action='read',iostat=ier)
   if (ier /= 0) then
-    write(IMAIN,*) 'Error opening "', trim(eucrust), '": ', ier
+    write(IMAIN,*) 'Error opening "', trim(str_crust), '": ', ier
     call flush_IMAIN()
     ! stop
     call exit_MPI(0, 'Error model crustmap')
   endif
 
   do ila=1,180*CRUSTMAP_RESOLUTION
-    read(IIN,*) (var(ila,iln),iln=1,360*CRUSTMAP_RESOLUTION)
+    read(IIN,*,iostat=ier) (var(ila,iln),iln=1,360*CRUSTMAP_RESOLUTION)
+    if (ier /= 0) then
+      print *,'Error: reading crustmap file entry failed: ',trim(str_crust),' res:',CRUSTMAP_RESOLUTION,'entry:',ila,iln
+      stop 'Error reading crustmap file, please make sure file has correct resolution'
+    endif
   enddo
   close(IIN)
 
@@ -241,78 +307,123 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_crustmaps(lat,lon,x,vp,vs,rho,moho,found_crust,elem_in_crust)
+  subroutine model_crustmaps(lat,lon,x,vp,vs,rho,moho,sediment,found_crust,elem_in_crust,moho_only)
 
 ! Matthias Meschede
 ! read smooth crust2.0 model (0.25 degree resolution) with eucrust
 ! based on software routines provided with the crust2.0 model by Bassin et al.
 
-  use constants
+  use constants, only: PI,GRAV,ZERO,INCLUDE_SEDIMENTS_IN_CRUST
+  use shared_parameters, only: R_PLANET,RHOAV
+
   use model_crustmaps_par
 
   implicit none
 
   double precision,intent(in) :: lat,lon,x
-  double precision,intent(out) :: vp,vs,rho,moho
+  double precision,intent(inout) :: vp,vs,rho
+  double precision,intent(inout) :: moho,sediment
   logical,intent(out) :: found_crust
-  logical,intent(in) :: elem_in_crust
+  logical,intent(in) :: elem_in_crust,moho_only
 
+  ! local parameters
   double precision :: h_sed,h_uc
   double precision :: x3,x4,x5,x6,x7,scaleval
   double precision,dimension(NLAYERS_CRUSTMAP) :: vps,vss,rhos,thicks
+  double precision,parameter :: THICKNESS_TOL = 1.d-9 ! to skip zero-thickness layers
 
+  ! initializes
+  vp = ZERO
+  vs = ZERO
+  rho = ZERO
+  moho = ZERO
+  sediment = ZERO
+  found_crust = .true.
+
+  ! gets crustal values
   call read_crustmaps(lat,lon,vps,vss,rhos,thicks)
 
-  x3 = (R_EARTH-thicks(1)*1000.0d0)/R_EARTH
-  h_sed = thicks(1) + thicks(2)
-  x4 = (R_EARTH-h_sed*1000.0d0)/R_EARTH
-  h_uc = h_sed + thicks(3)
-  x5 = (R_EARTH-h_uc*1000.0d0)/R_EARTH
-  x6 = (R_EARTH-(h_uc+thicks(4))*1000.0d0)/R_EARTH
-  x7 = (R_EARTH-(h_uc+thicks(4)+thicks(5))*1000.0d0)/R_EARTH
+  ! format:
+  ! thicks(1) - soft sediment layer thickness
+  ! thicks(2) - hard sediment layer
+  ! thicks(3) - upper crust layer
+  ! thicks(4) - middle crust layer
+  ! thicks(5) - lower crust layer
 
-  found_crust = .true.
+  ! soft sediments
+  x3 = (R_PLANET - thicks(1)*1000.0d0)/R_PLANET
+
+  ! all sediments
+  h_sed = thicks(1) + thicks(2)
+  x4 = (R_PLANET - h_sed*1000.0d0)/R_PLANET
+
+  ! upper crust
+  h_uc = h_sed + thicks(3)
+  x5 = (R_PLANET - h_uc*1000.0d0)/R_PLANET
+
+  ! middle crust
+  x6 = (R_PLANET - (h_uc+thicks(4))*1000.0d0)/R_PLANET
+
+  ! moho
+  x7 = (R_PLANET - (h_uc+thicks(4)+thicks(5))*1000.0d0)/R_PLANET
+
+  ! moho
+  moho = (h_uc+thicks(4)+thicks(5))*1000.0d0/R_PLANET ! non-dimensionalizes
+
+  ! checks if anything further to do
+  if (moho_only) return
+
+  ! sediment thickness
+  if (INCLUDE_SEDIMENTS_IN_CRUST) then
+    sediment = h_sed * 1000.d0/R_PLANET ! non-dimensionalizes
+  endif
+
 ! if (x > x3 .and. INCLUDE_SEDIMENTS_IN_CRUST .and. h_sed > MINIMUM_SEDIMENT_THICKNESS) then
-  if (x > x3 .and. INCLUDE_SEDIMENTS_IN_CRUST) then
-   vp = vps(1)
-   vs = vss(1)
-   rho = rhos(1)
+  if (x > x3 .and. INCLUDE_SEDIMENTS_IN_CRUST .and. thicks(1) > THICKNESS_TOL) then
+    ! soft sediment
+    vp = vps(1)
+    vs = vss(1)
+    rho = rhos(1)
 ! else if (x > x4 .and. INCLUDE_SEDIMENTS_IN_CRUST .and. h_sed > MINIMUM_SEDIMENT_THICKNESS) then
-  else if (x > x4 .and. INCLUDE_SEDIMENTS_IN_CRUST) then
-   vp = vps(2)
-   vs = vss(2)
-   rho = rhos(2)
-  else if (x > x5) then
-   vp = vps(3)
-   vs = vss(3)
-   rho = rhos(3)
-  else if (x > x6) then
-   vp = vps(4)
-   vs = vss(4)
-   rho = rhos(4)
-  else if (x > x7 .or. elem_in_crust) then
-   vp = vps(5)
-   vs = vss(5)
-   rho = rhos(5)
+  else if (x > x4 .and. INCLUDE_SEDIMENTS_IN_CRUST .and. thicks(2) > THICKNESS_TOL) then
+    ! hard sediment
+    vp = vps(2)
+    vs = vss(2)
+    rho = rhos(2)
+  else if (x > x5 .and. thicks(3) > THICKNESS_TOL) then
+    ! upper crust
+    vp = vps(3)
+    vs = vss(3)
+    rho = rhos(3)
+  else if (x > x6 .and. thicks(4) > THICKNESS_TOL) then
+    ! middle crust
+    vp = vps(4)
+    vs = vss(4)
+    rho = rhos(4)
+  else if ((x > x7 .and. thicks(5) > THICKNESS_TOL) .or. elem_in_crust) then
+    ! lower crust
+    vp = vps(5)
+    vs = vss(5)
+    rho = rhos(5)
   else
-   found_crust = .false.
+    found_crust = .false.
   endif
 
   !   non-dimensionalize
   scaleval = dsqrt(PI*GRAV*RHOAV)
 
   if (found_crust) then
-    vp = vp*1000.0d0/(R_EARTH*scaleval)
-    vs = vs*1000.0d0/(R_EARTH*scaleval)
+    vp = vp*1000.0d0/(R_PLANET*scaleval)
+    vs = vs*1000.0d0/(R_PLANET*scaleval)
     rho = rho*1000.0d0/RHOAV
   else
-    ! takes ficticious values
-    vp = 20.0*1000.0d0/(R_EARTH*scaleval)
-    vs = 20.0*1000.0d0/(R_EARTH*scaleval)
-    rho = 20.0*1000.0d0/RHOAV
+    ! takes fictitious values
+    !vp = 20.0*1000.0d0/(R_PLANET*scaleval)
+    !vs = 20.0*1000.0d0/(R_PLANET*scaleval)
+    !rho = 20.0*1000.0d0/RHOAV
+    ! uses default input values
+    continue
   endif
-
-  moho = (h_uc+thicks(4)+thicks(5))*1000.0d0/R_EARTH
 
   end subroutine model_crustmaps
 
@@ -324,7 +435,9 @@
 
 ! crustal vp and vs in km/s, layer thickness in km
 
-  use constants
+  use constants, only: MINIMUM_SEDIMENT_THICKNESS,SMOOTH_CRUST_EVEN_MORE,myrank
+  use shared_parameters, only: PLANET_TYPE,IPLANET_EARTH,IPLANET_MARS,IPLANET_MOON
+
   use model_crustmaps_par
 
   implicit none
@@ -365,8 +478,8 @@
   integer :: num_points
   integer :: i,ipoin,iupcolat,ileftlng,irightlng
 
-! get integer colatitude and longitude of crustal cap
-! -90 < lat < 90 -180 < lon < 180
+  ! get integer colatitude and longitude of crustal cap
+  ! -90 < lat < 90 -180 < lon < 180
   if (lat > 90.0d0 .or. lat < -90.0d0 .or. lon > 180.0d0 .or. lon < -180.0d0) &
     write(*,*) lat,' ',lon, ' error in latitude/longitude range in crust'
 
@@ -386,48 +499,66 @@
   xlon(:) = 0.d0
   weight(:) = 0.d0
 
-  ! checks if inside/outside of critical region for mesh stretching
-  if (SMOOTH_CRUST_EVEN_MORE) then
+  ! smoothing
+  select case(PLANET_TYPE)
+  case (IPLANET_MARS,IPLANET_MOON)
+    ! Mars, Moon
+    ! for global scale
+    !cap_degree = 2.d0
+    ! by default uses CAP smoothing with crustmap resolution, e.g. 1/4 degree
+    cap_degree = 1.d0 / CRUSTMAP_RESOLUTION
+    ! gets smoothing points and weights
+    call smooth_weights_CAP_vardegree(lon,lat,xlon,xlat,weight,cap_degree,NTHETA,NPHI)
+    num_points = NTHETA*NPHI
 
-    dist = dsqrt( (lon_used - LON_CRITICAL_EUROPE)**2 + (lat_used - LAT_CRITICAL_EUROPE )**2 )
-    if (dist < CRITICAL_RANGE_EUROPE) then
-      ! sets up smoothing points
-      ! by default uses CAP smoothing with crustmap resolution, e.g. 1/4 degree
-      cap_degree = 1.d0 / CRUSTMAP_RESOLUTION
+  case (IPLANET_EARTH)
+    ! Earth
 
-      ! increases cap smoothing degree
-      ! scales between -1 at center and 0 at border
-      dist = dist / CRITICAL_RANGE_EUROPE - 1.0d0
-      ! shifts value to 1 at center and 0 to the border with exponential decay
-      dist = 1.0d0 - exp( - dist*dist*10.0d0 )
-      ! increases smoothing degree inside of critical region
-      cap_degree = cap_degree + dist
+    ! checks if inside/outside of critical region for mesh stretching
+    if (SMOOTH_CRUST_EVEN_MORE) then
 
-      ! gets smoothing points and weights
-      call smooth_weights_CAP_vardegree(lon_used,lat_used,xlon,xlat,weight,cap_degree,NTHETA,NPHI)
-      num_points = NTHETA*NPHI
+      dist = dsqrt( (lon_used - LON_CRITICAL_EUROPE)**2 + (lat_used - LAT_CRITICAL_EUROPE )**2 )
+      if (dist < CRITICAL_RANGE_EUROPE) then
+        ! sets up smoothing points
+        ! by default uses CAP smoothing with crustmap resolution, e.g. 1/4 degree
+        cap_degree = 1.d0 / CRUSTMAP_RESOLUTION
+
+        ! increases cap smoothing degree
+        ! scales between -1 at center and 0 at border
+        dist = dist / CRITICAL_RANGE_EUROPE - 1.0d0
+        ! shifts value to 1 at center and 0 to the border with exponential decay
+        dist = 1.0d0 - exp( - dist*dist*10.0d0 )
+        ! increases smoothing degree inside of critical region
+        cap_degree = cap_degree + dist
+
+        ! gets smoothing points and weights
+        call smooth_weights_CAP_vardegree(lon_used,lat_used,xlon,xlat,weight,cap_degree,NTHETA,NPHI)
+        num_points = NTHETA*NPHI
+      endif
+
+      dist = dsqrt( (lon_used - LON_CRITICAL_ANDES)**2 + (lat_used - LAT_CRITICAL_ANDES )**2 )
+      if (dist < CRITICAL_RANGE_ANDES) then
+        ! sets up smoothing points
+        ! by default uses CAP smoothing with crustmap resolution, e.g. 1/4 degree
+        cap_degree = 1.d0 / CRUSTMAP_RESOLUTION
+
+        ! increases cap smoothing degree
+        ! scales between -1 at center and 0 at border
+        dist = dist / CRITICAL_RANGE_ANDES - 1.0d0
+        ! shifts value to 1 at center and 0 to the border with exponential decay
+        dist = 1.0d0 - exp( - dist*dist*10.0d0 )
+        ! increases smoothing degree inside of critical region
+        cap_degree = cap_degree + dist
+
+        ! gets smoothing points and weights
+        call smooth_weights_CAP_vardegree(lon_used,lat_used,xlon,xlat,weight,cap_degree,NTHETA,NPHI)
+        num_points = NTHETA*NPHI
+      endif
     endif
 
-    dist = dsqrt( (lon_used - LON_CRITICAL_ANDES)**2 + (lat_used - LAT_CRITICAL_ANDES )**2 )
-    if (dist < CRITICAL_RANGE_ANDES) then
-      ! sets up smoothing points
-      ! by default uses CAP smoothing with crustmap resolution, e.g. 1/4 degree
-      cap_degree = 1.d0 / CRUSTMAP_RESOLUTION
-
-      ! increases cap smoothing degree
-      ! scales between -1 at center and 0 at border
-      dist = dist / CRITICAL_RANGE_ANDES - 1.0d0
-      ! shifts value to 1 at center and 0 to the border with exponential decay
-      dist = 1.0d0 - exp( - dist*dist*10.0d0 )
-      ! increases smoothing degree inside of critical region
-      cap_degree = cap_degree + dist
-
-      ! gets smoothing points and weights
-      call smooth_weights_CAP_vardegree(lon_used,lat_used,xlon,xlat,weight,cap_degree,NTHETA,NPHI)
-      num_points = NTHETA*NPHI
-    endif
-
-  endif
+  case default
+    call exit_MPI(myrank,'Invalid planet, crustmaps smoothing not implemented yet')
+  end select
 
   ! initializes
   velp(:) = 0.0d0
@@ -551,27 +682,28 @@
   if (lat > 90.0d0 .or. lat < -90.0d0 .or. lng > 180.0d0 .or. lng < -180.0d0) &
     stop 'Error in latitude/longitude range in ibilinearmap'
 
-! map longitudes to [0,360]
+  ! map longitudes to [0,360]
   if (lng < 0) then
     xlng=lng+360.0
   else
     xlng=lng
   endif
 
-  buffer=0.5+((90.0-lat)*CRUSTMAP_RESOLUTION)
-  iupcolat=int(buffer)
-  weightup=1.0-(buffer-dble(iupcolat))
+  ! latitude index & weight
+  buffer = 0.5+((90.0-lat)*CRUSTMAP_RESOLUTION)
+  iupcolat = int(buffer)
+  weightup = 1.0-(buffer-dble(iupcolat))
 
   if (iupcolat < 0) iupcolat = 0
-  if (iupcolat > 180*CRUSTMAP_RESOLUTION)  iupcolat=180*CRUSTMAP_RESOLUTION
+  if (iupcolat > 180*CRUSTMAP_RESOLUTION)  iupcolat = 180*CRUSTMAP_RESOLUTION
 
+  ! longitude index & weight
+  buffer = 0.5+(xlng*CRUSTMAP_RESOLUTION)
+  ileftlng = int(buffer)
+  weightleft = 1.0-(buffer-dble(ileftlng))
 
-  buffer=0.5+(xlng*CRUSTMAP_RESOLUTION)
-  ileftlng=int(buffer)
-  weightleft=1.0-(buffer-dble(ileftlng))
-
-  if (ileftlng < 1) ileftlng=360*CRUSTMAP_RESOLUTION
-  if (ileftlng > 360*CRUSTMAP_RESOLUTION) ileftlng=1
+  if (ileftlng < 1) ileftlng = 360*CRUSTMAP_RESOLUTION
+  if (ileftlng > 360*CRUSTMAP_RESOLUTION) ileftlng = 1
 
   end subroutine ibilinearmap
 

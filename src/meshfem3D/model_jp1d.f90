@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -37,23 +37,24 @@
                         R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST)
 
   use constants
+  use shared_parameters, only: R_PLANET,RHOAV
 
   implicit none
 
   ! given a normalized radius x, gives the non-dimensionalized density rho,
   ! speeds vp and vs, and the quality factors Qkappa and Qmu
 
-  logical check_doubling_flag
-  integer idoubling
+  logical :: check_doubling_flag
+  integer :: idoubling
 
-  double precision x,rho,vp,vs,Qkappa,Qmu,RICB,RCMB,RTOPDDOUBLEPRIME, &
+  double precision :: x,rho,vp,vs,Qkappa,Qmu,RICB,RCMB,RTOPDDOUBLEPRIME, &
       R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST
 
-  double precision r
-  double precision scaleval
+  double precision :: r
+  double precision :: scaleval
 
   ! compute real physical radius in meters
-  r = x * R_EARTH
+  r = x * R_PLANET
 
   ! check flags to make sure we correctly honor the discontinuities
   ! we use strict inequalities since r has been slightly changed in mesher
@@ -202,7 +203,7 @@
 ! time scaling (s^{-1}) is done with scaleval
   scaleval=dsqrt(PI*GRAV*RHOAV)
   rho=rho*1000.0d0/RHOAV
-  vp=vp*1000.0d0/(R_EARTH*scaleval)
-  vs=vs*1000.0d0/(R_EARTH*scaleval)
+  vp=vp*1000.0d0/(R_PLANET*scaleval)
+  vs=vs*1000.0d0/(R_PLANET*scaleval)
 
   end subroutine model_jp1d

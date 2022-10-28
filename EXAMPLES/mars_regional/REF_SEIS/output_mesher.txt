@@ -1,0 +1,618 @@
+
+ ****************************
+ *** Specfem3D MPI Mesher ***
+ ****************************
+
+ Version: 8.0.0
+
+
+ Planet: Mars
+
+
+ There are            4  MPI processes
+ Processes are numbered from 0 to            3
+
+ There are           32  elements along xi in each chunk
+ There are           32  elements along eta in each chunk
+
+ There are            2  slices along xi in each chunk
+ There are            2  slices along eta in each chunk
+ There is a total of            4  slices in each chunk
+ There are            1  chunks in the global mesh
+ There is a total of            4  slices in the global mesh
+
+ NGLLX =            5
+ NGLLY =            5
+ NGLLZ =            5
+
+ Shape functions defined by NGNOD =           27  control nodes
+ Surface shape functions defined by NGNOD2D =            9  control nodes
+
+ model: 1D_Sohl_3D_crust
+   no oceans
+   incorporating ellipticity
+   incorporating surface topography
+   incorporating self-gravitation (Cowling approximation)
+   incorporating rotation
+   incorporating attenuation using            3  standard linear solids
+
+   no 3-D lateral variations in the mantle
+   no heterogeneities in the mantle
+   incorporating crustal variations
+   using one layer only in crust
+   no transverse isotropy
+   no inner-core anisotropy
+   no general mantle anisotropy
+
+ Reference radius of the globe used is    3390.0000000000000       km
+
+ Central cube is at a radius of    355.00000000000000       km
+ creating global slice addressing
+
+
+ incorporating topography
+   topo file            : DATA/topo_bathy/topo_bathy_marstopo4_smoothed_window_3.dat.bin
+   resolution in minutes:    4.00000000
+
+   topography/bathymetry: min/max =        -7830       21092
+
+   Elapsed time for reading in seconds =    3.0598000000000014E-002
+
+
+   VTK topo output: topo resolution in minutes =    4.00000000
+                    samples per degree         =    15.0000000
+                    resolution distance        =    3.94444418     (km)
+                    full globe NLAT =         2700
+                               NLON =         5400
+                               total number of points NLAT x NLON =     14580000
+                    limiting output to samples per degree         =            2
+
+   elevations written to file: ./DATABASES_MPI/mesh_topo_bathy.vtk
+   min/max =   -7.78950024     /   20.7898750     (km)
+
+
+ incorporating crustal model: crustMap
+   using files              : DATA/crustmap/marscrust**.cmap
+   crustmap resolution      :            6
+   number of crustmap layers:            5
+   number of values per file:      2332800
+
+   Moho crustal thickness (without ice) min/max =    14.6400003       106.690002      km
+
+
+   VTK moho output: resolution =            1 deg
+                    NLAT =          180
+                    NLON =          360
+
+   moho depths written to file: ./DATABASES_MPI/mesh_moho_depth.vtk
+   min/max =    14.7028379     /   106.679718     (km)
+
+   sediment depths written to file: ./DATABASES_MPI/mesh_sediment_depth.vtk
+   min/max =    2.00000000     /   2.00000000     (km)
+
+ attenuation model:
+   1D reference model
+   model: Sohl attenuation
+
+ additional mesh optimizations
+
+ moho:
+   default  5-layer crust
+   incorporating element stretching for 3-D moho surface
+
+ internal topography 410/660:
+   no element stretching for 3-D internal surfaces
+
+
+ Radial Meshing parameters:
+   NCHUNKS                =            1
+
+   CENTER LAT/LON:             4.50000000     /   136.000000
+   GAMMA_ROTATION_AZIMUTH:     0.00000000
+
+   CHUNK WIDTH XI/ETA:         15.0000000     /   15.0000000
+   NEX XI/ETA:                        32 /          32
+
+   NER_CRUST:                          5
+   NER_80_MOHO:                        3
+   NER_220_80:                         2
+   NER_400_220:                        4
+   NER_600_400:                        3
+   NER_670_600:                        2
+   NER_771_670:                        6
+   NER_TOPDDOUBLEPRIME_771:            8
+   NER_CMB_TOPDDOUBLEPRIME:            1
+   NER_OUTER_CORE:                     9
+   NER_TOP_CENTRAL_CUBE_ICB:           3
+   SUPPRESS_CRUSTAL_MESH:    F
+
+   R_CENTRAL_CUBE =    355.000000      km
+
+ Mesh resolution:
+   DT =   0.19000000000000000
+   Minimum period =    6.93359327      (s)
+
+   MIN_ATTENUATION_PERIOD =    6.93359327
+   MAX_ATTENUATION_PERIOD =    389.904602
+
+
+ *******************************************
+ creating mesh in region            1
+ this region is the crust and mantle
+ *******************************************
+
+
+ first pass
+
+   ...allocating arrays
+
+   ...setting up layers
+
+   ...creating mesh elements
+   creating layer            1 out of           10
+     number of regular elements  =           64
+     number of doubling elements =          512
+     10.0%    current clock (NOT elapsed) time is: 18h 32min 36sec
+   creating layer            2 out of           10
+     number of regular elements  =          128
+     20.0%    current clock (NOT elapsed) time is: 18h 32min 36sec
+   creating layer            3 out of           10
+     number of regular elements  =           16
+     30.0%    current clock (NOT elapsed) time is: 18h 32min 36sec
+   creating layer            4 out of           10
+     number of regular elements  =           96
+     number of doubling elements =          128
+     40.0%    current clock (NOT elapsed) time is: 18h 32min 36sec
+   creating layer            5 out of           10
+     number of regular elements  =            0
+     50.0%    current clock (NOT elapsed) time is: 18h 32min 36sec
+   creating layer            6 out of           10
+     number of regular elements  =          384
+     60.0%    current clock (NOT elapsed) time is: 18h 32min 36sec
+   creating layer            7 out of           10
+     number of regular elements  =          128
+     70.0%    current clock (NOT elapsed) time is: 18h 32min 36sec
+   creating layer            8 out of           10
+     number of regular elements  =          192
+     80.0%    current clock (NOT elapsed) time is: 18h 32min 36sec
+   creating layer            9 out of           10
+     number of regular elements  =          256
+     90.0%    current clock (NOT elapsed) time is: 18h 32min 36sec
+   creating layer           10 out of           10
+     number of regular elements  =         1280
+    100.0%    current clock (NOT elapsed) time is: 18h 32min 37sec
+   layers done
+
+   number of elements (per slice)        =         3184
+   total number of elements (all slices) =        12736
+
+
+   ...creating global addressing
+
+   ...creating MPI buffers
+
+ second pass
+
+   ...allocating arrays
+
+   ...setting up layers
+
+   ...creating mesh elements
+   creating layer            1 out of           10
+     number of regular elements  =           64
+     number of doubling elements =          512
+     10.0%    current clock (NOT elapsed) time is: 18h 32min 37sec
+   creating layer            2 out of           10
+     number of regular elements  =          128
+     20.0%    current clock (NOT elapsed) time is: 18h 32min 37sec
+   creating layer            3 out of           10
+     number of regular elements  =           16
+     30.0%    current clock (NOT elapsed) time is: 18h 32min 37sec
+   creating layer            4 out of           10
+     number of regular elements  =           96
+     number of doubling elements =          128
+     40.0%    current clock (NOT elapsed) time is: 18h 32min 37sec
+   creating layer            5 out of           10
+     number of regular elements  =            0
+     50.0%    current clock (NOT elapsed) time is: 18h 32min 37sec
+   creating layer            6 out of           10
+     number of regular elements  =          384
+     60.0%    current clock (NOT elapsed) time is: 18h 32min 37sec
+   creating layer            7 out of           10
+     number of regular elements  =          128
+     70.0%    current clock (NOT elapsed) time is: 18h 32min 37sec
+   creating layer            8 out of           10
+     number of regular elements  =          192
+     80.0%    current clock (NOT elapsed) time is: 18h 32min 37sec
+   creating layer            9 out of           10
+     number of regular elements  =          256
+     90.0%    current clock (NOT elapsed) time is: 18h 32min 37sec
+   creating layer           10 out of           10
+     number of regular elements  =         1280
+    100.0%    current clock (NOT elapsed) time is: 18h 32min 39sec
+   layers done
+
+   number of elements (per slice)        =         3184
+   total number of elements (all slices) =        12736
+
+
+   ...fills global mesh points
+
+   ...checking mesh resolution and time step
+
+ ----------------------------------
+   Verification of mesh parameters:
+ ----------------------------------
+   Region is crust/mantle
+
+   Min Vs =    4.06000042      (km/s)
+   Max Vp =    10.6069231      (km/s)
+
+   Max element edge size =    112.881851      (km)
+   Min element edge size =    20.5687122      (km)
+   Max/min ratio =    5.48803711
+
+   Max Jacobian eigenvalue ratio =   0.998958230
+   Min Jacobian eigenvalue ratio =   0.183511242
+
+   Minimum period resolved =    13.5016880      (s)
+   Minimum period resolved (empirical) =    6.93359327      (s)
+   Maximum suggested time step =   0.250000000      (s)
+
+   for DT :   0.189999998      (s)
+   Max stability for wave velocities =   0.413524419
+ ----------------------------------
+
+   saving vtk mesh files for resolution res_minimum_period...
+
+   ...precomputing Jacobian
+
+   ...creating chunk buffers
+
+ ----- creating chunk buffers -----
+
+ There are            2  slices along xi in each chunk
+ There are            2  slices along eta in each chunk
+ There is a total of            4  slices in each chunk
+ There are            1  chunks
+ There is a total of            4  slices in all the chunks
+
+ There is a total of            2  messages to assemble faces between chunks
+
+
+ only one chunk, no need to create chunk buffers
+
+
+   ...preparing MPI interfaces
+
+ crust/mantle region:
+   #max of points in MPI buffers along xi npoin2D_xi =         4977
+   #max of array elements transferred npoin2D_xi*NDIM =        14931
+
+   #max of points in MPI buffers along eta npoin2D_eta =         4977
+   #max of array elements transferred npoin2D_eta*NDIM =        14931
+
+ crust mantle MPI:
+   maximum interfaces:           3
+   MPI addressing maximum interfaces:           3
+   MPI addressing : all interfaces okay
+
+   total MPI interface points :        40364
+   unique MPI interface points:        39268
+   maximum valence            :            3
+   total unique MPI interface points:       39268
+
+
+   ...element inner/outer separation
+
+ for overlapping of communications with calculations:
+
+ percentage of edge elements in crust/mantle    18.7814064     %
+ percentage of volume elements in crust/mantle    81.2185974     %
+
+
+   ...element mesh coloring
+   mesh coloring:  F
+
+   ...creating mass matrix
+     updates mass matrix with Stacey boundary corrections
+
+   ...saving binary files
+
+   ...saving mesh files
+
+ calculated region volume:    2.09261551E-02
+                 top area:    6.82791024E-02
+              bottom area:    1.28125818E-02
+
+ *******************************************
+ creating mesh in region            2
+ this region is the outer core
+ *******************************************
+
+
+ first pass
+
+   ...allocating arrays
+
+   ...setting up layers
+
+   ...creating mesh elements
+   creating layer            1 out of            2
+     number of regular elements  =           20
+     number of doubling elements =           32
+     50.0%    current clock (NOT elapsed) time is: 18h 32min 40sec
+   creating layer            2 out of            2
+     number of regular elements  =           32
+    100.0%    current clock (NOT elapsed) time is: 18h 32min 40sec
+   layers done
+
+   number of elements (per slice)        =           84
+   total number of elements (all slices) =          336
+
+
+   ...creating global addressing
+
+   ...creating MPI buffers
+
+ second pass
+
+   ...allocating arrays
+
+   ...setting up layers
+
+   ...creating mesh elements
+   creating layer            1 out of            2
+     number of regular elements  =           20
+     number of doubling elements =           32
+     50.0%    current clock (NOT elapsed) time is: 18h 32min 40sec
+   creating layer            2 out of            2
+     number of regular elements  =           32
+    100.0%    current clock (NOT elapsed) time is: 18h 32min 40sec
+   layers done
+
+   number of elements (per slice)        =           84
+   total number of elements (all slices) =          336
+
+
+   ...fills global mesh points
+
+   ...checking mesh resolution and time step
+
+ ----------------------------------
+   Verification of mesh parameters:
+ ----------------------------------
+   Region is outer core
+
+   Min Vp =    6.02501249      (km/s)
+   Max Vp =    6.47867584      (km/s)
+
+   Max element edge size =    159.043594      (km)
+   Min element edge size =    33.4513626      (km)
+   Max/min ratio =    4.75447273
+
+   Max Jacobian eigenvalue ratio =   0.775694788
+   Min Jacobian eigenvalue ratio =   0.180479959
+
+   Minimum period resolved =    12.2035303      (s)
+   Minimum period resolved (empirical) =    6.93359327      (s)
+   Maximum suggested time step =   0.490000010      (s)
+
+   for DT :   0.189999998      (s)
+   Max stability for wave velocities =   0.213108703
+ ----------------------------------
+
+   saving vtk mesh files for resolution res_minimum_period...
+
+   ...precomputing Jacobian
+
+   ...creating chunk buffers
+
+ ----- creating chunk buffers -----
+
+ There are            2  slices along xi in each chunk
+ There are            2  slices along eta in each chunk
+ There is a total of            4  slices in each chunk
+ There are            1  chunks
+ There is a total of            4  slices in all the chunks
+
+ There is a total of            2  messages to assemble faces between chunks
+
+
+ only one chunk, no need to create chunk buffers
+
+
+   ...preparing MPI interfaces
+
+ outer core region:
+   #max of points in MPI buffers along xi npoin2D_xi =          465
+   #max of array elements transferred npoin2D_xi*NDIM =         1395
+
+   #max of points in MPI buffers along eta npoin2D_eta =          465
+   #max of array elements transferred npoin2D_eta*NDIM =         1395
+
+ outer core MPI:
+   maximum interfaces:           3
+   MPI addressing maximum interfaces:           3
+   MPI addressing : all interfaces okay
+
+   total MPI interface points :         3868
+   unique MPI interface points:         3572
+   maximum valence            :            3
+   total assembled MPI interface points:        3572
+
+
+   ...element inner/outer separation
+ percentage of edge elements in outer core    55.9523811     %
+ percentage of volume elements in outer core    44.0476189     %
+
+
+   ...element mesh coloring
+   mesh coloring:  F
+
+   ...creating mass matrix
+
+   ...saving binary files
+
+   ...saving mesh files
+
+ calculated region volume:    1.77185435E-03
+                 top area:    1.28125818E-02
+              bottom area:    1.57684460E-03
+
+ *******************************************
+ creating mesh in region            3
+ this region is the inner core
+ *******************************************
+
+
+ first pass
+
+   ...allocating arrays
+
+   ...setting up layers
+
+   ...creating mesh elements
+   creating layer            1 out of            1
+     number of regular elements  =           12
+    100.0%    current clock (NOT elapsed) time is: 18h 32min 40sec
+   layers done
+
+   number of elements (per slice)        =           12
+   total number of elements (all slices) =           48
+
+
+   ...creating global addressing
+
+   ...creating MPI buffers
+
+ second pass
+
+   ...allocating arrays
+
+   ...setting up layers
+
+   ...creating mesh elements
+   creating layer            1 out of            1
+     number of regular elements  =           12
+    100.0%    current clock (NOT elapsed) time is: 18h 32min 40sec
+   layers done
+
+   number of elements (per slice)        =           12
+   total number of elements (all slices) =           48
+
+
+   ...fills global mesh points
+
+   ...checking mesh resolution and time step
+
+ ----------------------------------
+   Verification of mesh parameters:
+ ----------------------------------
+   Region is inner core
+
+   Min Vs =    3.00000000      (km/s)
+   Max Vp =    7.30000019      (km/s)
+
+   Max element edge size =    53.4033127      (km)
+   Min element edge size =    23.0586834      (km)
+   Max/min ratio =    2.31597400
+
+   Max Jacobian eigenvalue ratio =   0.632223904
+   Min Jacobian eigenvalue ratio =   0.428498775
+
+   Minimum period resolved =    12.5771914      (s)
+   Minimum period resolved (empirical) =    6.93359327      (s)
+   Maximum suggested time step =   0.294999987      (s)
+
+   for DT :   0.189999998      (s)
+   Max stability for wave velocities =   0.348351061
+ ----------------------------------
+
+   saving vtk mesh files for resolution res_minimum_period...
+
+   ...precomputing Jacobian
+
+   ...creating chunk buffers
+
+ ----- creating chunk buffers -----
+
+ There are            2  slices along xi in each chunk
+ There are            2  slices along eta in each chunk
+ There is a total of            4  slices in each chunk
+ There are            1  chunks
+ There is a total of            4  slices in all the chunks
+
+ There is a total of            2  messages to assemble faces between chunks
+
+
+ only one chunk, no need to create chunk buffers
+
+
+   ...preparing MPI interfaces
+
+ inner core region:
+   #max of points in MPI buffers along xi npoin2D_xi =          117
+   #max of array elements transferred npoin2D_xi*NDIM =          351
+
+   #max of points in MPI buffers along eta npoin2D_eta =          117
+   #max of array elements transferred npoin2D_eta*NDIM =          351
+
+ inner core MPI:
+   maximum interfaces:           3
+   MPI addressing maximum interfaces:           3
+   MPI addressing : all interfaces okay
+
+   total MPI interface points :          988
+   unique MPI interface points:          884
+   maximum valence            :            3
+   total assembled MPI interface points:         884
+
+
+   ...element inner/outer separation
+ percentage of edge elements in inner core    75.0000000     %
+ percentage of volume elements in inner core    25.0000000     %
+
+
+   ...element mesh coloring
+   mesh coloring:  F
+
+   ...creating mass matrix
+
+   ...saving binary files
+
+   ...saving mesh files
+
+ calculated region volume:    5.37639353E-05
+                 top area:    1.57684460E-03
+              bottom area:    7.49256578E-04
+
+ calculated volume:    2.2751774168444920E-002
+
+ Repartition of elements in regions:
+ ----------------------------------
+
+ number of elements in each slice      :         3280
+ total number of elements in all slices:        13120
+
+  - crust and mantle:    97.0731735      %
+  - outer core:    2.56097555      %
+  - inner core:   0.365853667      %
+
+ for some mesh statistics, see comments in file OUTPUT_FILES/values_from_mesher.h
+
+ Load balancing = 100 % by definition
+
+
+ the time step of the solver will be DT =   0.189999998
+
+ using single precision for the calculations
+
+ smallest and largest possible floating-point numbers are:    1.17549435E-38   3.40282347E+38
+
+
+ Elapsed time for mesh generation and buffer creation in seconds =    22.5202541
+ Elapsed time for mesh generation and buffer creation in hh:mm:ss =    0 h 00 m 22 s
+
+ End of mesh generation
+

@@ -335,7 +335,7 @@ template<int FORWARD_OR_ADJOINT> __global__ void outer_core_impl_kernel(int nb_b
       // note: these calculations are only considered for SIMULATION_TYPE == 1 .and. SAVE_FORWARD
       //          and one has set MOVIE_VOLUME_TYPE == 4 when MOVIE_VOLUME is .true.;
       //         in case of SIMULATION_TYPE == 3, it gets overwritten by compute_kernels_outer_core()
-      //if (NSPEC_OUTER_CORE_ADJOINT /= 1 && MOVIE_VOLUME ){
+      //if (NSPEC_OUTER_CORE_ADJOINT > 1 && MOVIE_VOLUME ){
       //  div_displfluid(i,j,k,ispec) =  d_minus_rho_g_over_kappa_fluid[int_radius] *
       //        (dpotentialdx_with_rot * gxl + dpotentialdy_with_rot * gyl + dpotentialdzl * gzl);
       //}

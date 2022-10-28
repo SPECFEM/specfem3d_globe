@@ -1,0 +1,47 @@
+---
+# MESH INFORMATION
+# ================
+# int NPROCTOT_VAL: Total number of MPI processes (check OUTPUT_FILES/values_from_mesher.h)
+# int NSPEC2D_TOP_CM: Number of elements per process in the region 1 of the mesh (check OUTPUT_FILES/values_from_mesher.h)
+# str INDIR: Path to directory containing mask_noise.bin.
+# str OUTDIR: Path to write output files.
+# int NGLLX: Number of GLL points on the X direction. By default, keep this at 5.
+# int NGLLY: Number of GLL points on the Y direction. By default, keep this at 5.
+NPROCTOT_VAL: 4
+NSPEC2D_TOP_CM: 576
+INDIR: './NOISE_TOMOGRAPHY/'
+OUTDIR: './NOISE_TOMOGRAPHY/noise_mask'
+NGLLX: 5
+NGLLY: 5
+
+# NOISE DIRECTION
+# ===============
+# float <X,Y,Z>DIR: Components of a unit vector indicating the noise direction.
+XDIR: 0.0
+YDIR: 0.0
+ZDIR: 1.0
+
+# NOISE DISTRIBUTIONS
+# ===================
+# list DISTRIBUTIONS: List containing dictionaries that define noise distributions (uniform, ocean, gaussian).
+# Each distribution is added to form one final distribution. Modify at your convenience.
+#
+# Available distributions:
+# uniform: Uniform noise source.
+# ocean:  Noise source only at the ocean.
+# gaussian: 2D gaussian anomaly.
+DISTRIBUTIONS:
+  - type: 'uniform'
+    weight: 0.1
+  - type: 'ocean'
+    weight: 0.3
+  - type: 'gaussian'
+    weight: 0.6
+    center_lon: -107.0
+    center_lat: 17.5
+    sigma_m: 200000.0
+  
+# FLAGS
+# =====
+PLOT_MASK: true
+WRITE_FILES: true

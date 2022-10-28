@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 #
 # creates fictitious multiple source file
+from __future__ import print_function
 import sys
 
 # default values
@@ -42,19 +43,19 @@ def print_cmtlist(cmtlist):
         Mrp = cmtlist[i][11]
         Mtp = cmtlist[i][12]
 
-        print header
-        print "event name:     ",name
-        print "time shift:     ",str(tshift)
-        print "half duration:  ",str(hdur)
-        print "latitude:       ",str(lat)
-        print "longitude:      ",str(lon)
-        print "depth:          ",str(dep)
-        print "Mrr:       ",str(Mrr)
-        print "Mtt:       ",str(Mtt)
-        print "Mpp:       ",str(Mpp)
-        print "Mrt:       ",str(Mrt)
-        print "Mrp:       ",str(Mrp)
-        print "Mtp:       ",str(Mtp)
+        print(header)
+        print("event name:     ",name)
+        print("time shift:     ",str(tshift))
+        print("half duration:  ",str(hdur))
+        print("latitude:       ",str(lat))
+        print("longitude:      ",str(lon))
+        print("depth:          ",str(dep))
+        print("Mrr:       ",str(Mrr))
+        print("Mtt:       ",str(Mtt))
+        print("Mpp:       ",str(Mpp))
+        print("Mrt:       ",str(Mrt))
+        print("Mrp:       ",str(Mrp))
+        print("Mtp:       ",str(Mtp))
 
 
 def create_cmts(lat1,lon1,cmtlist):
@@ -104,7 +105,7 @@ def read_STATIONS(filename,cmtlist):
         a = lines[i].split()
         lat = float(a[2])
         lon = float(a[3])
-        #print "station: ",a[0],lat1,lon1
+        #print("station: ",a[0],lat1,lon1)
 
         # create CMT entries
         create_cmts(lat,lon,cmtlist)
@@ -123,9 +124,9 @@ def create_CMTSOLUTION(sta_file):
 
 
 def usage():
-    print "usage: ./create_CMTSOLUTION_file.py STATIONS"
-    print "   where"
-    print "       STATIONS - station location file, e.g. DATA/STATIONS"
+    print("usage: ./create_CMTSOLUTION_file.py STATIONS")
+    print("   where")
+    print("       STATIONS - station location file, e.g. DATA/STATIONS")
 
 
 if __name__ == '__main__':

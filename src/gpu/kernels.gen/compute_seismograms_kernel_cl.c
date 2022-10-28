@@ -5,7 +5,7 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -82,9 +82,6 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifndef IFLAG_IN_FICTITIOUS_CUBE\n\
 #define IFLAG_IN_FICTITIOUS_CUBE 11\n\
 #endif\n\
-#ifndef R_EARTH_KM\n\
-#define R_EARTH_KM 6371.0f\n\
-#endif\n\
 #ifndef COLORING_MIN_NSPEC_INNER_CORE\n\
 #define COLORING_MIN_NSPEC_INNER_CORE 1000\n\
 #endif\n\
@@ -95,7 +92,7 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #define BLOCKSIZE_TRANSFER 256\n\
 #endif\n\
 \n\
-__kernel void compute_seismograms_kernel(const int nrec_local, const __global float * displ, const __global int * d_ibool, const __global float * xir, const __global float * etar, const __global float * gammar, __global float * seismograms, const __global float * nu, const __global int * ispec_selected_rec, const __global int * number_receiver_global, const float scale_displ){\n\
+__kernel void compute_seismograms_kernel(const int nrec_local, const __global float * displ, const __global int * d_ibool, const __global float * hxir, const __global float * hetar, const __global float * hgammar, __global float * seismograms, const __global float * nu, const __global int * ispec_selected_rec, const __global int * number_receiver_global, const float scale_displ){\n\
   int ispec;\n\
   int iglob;\n\
   int irec_local;\n\
@@ -110,28 +107,33 @@ __kernel void compute_seismograms_kernel(const int nrec_local, const __global fl
   __local float sh_dxd[(NGLL3_PADDED)];\n\
   __local float sh_dyd[(NGLL3_PADDED)];\n\
   __local float sh_dzd[(NGLL3_PADDED)];\n\
+\n\
   tx = get_local_id(0);\n\
   irec_local = get_group_id(0) + (get_num_groups(0)) * (get_group_id(1));\n\
+\n\
   k = (tx) / (NGLL2);\n\
   j = (tx - ((k) * (NGLL2))) / (NGLLX);\n\
   i = tx - ((k) * (NGLL2)) - ((j) * (NGLLX));\n\
+\n\
   if (irec_local < nrec_local) {\n\
     irec = number_receiver_global[irec_local] - (1);\n\
     ispec = ispec_selected_rec[irec] - (1);\n\
+\n\
     sh_dxd[tx] = 0;\n\
     sh_dyd[tx] = 0;\n\
     sh_dzd[tx] = 0;\n\
     if (tx < NGLL3) {\n\
-      lagrange = ((xir[irec_local + (nrec_local) * (i)]) * (etar[irec_local + (nrec_local) * (j)])) * (gammar[irec_local + (nrec_local) * (k)]);\n\
+      lagrange = ((hxir[(irec_local) * (NGLLX) + i]) * (hetar[(irec_local) * (NGLLX) + j])) * (hgammar[(irec_local) * (NGLLX) + k]);\n\
       iglob = d_ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)] - (1);\n\
       sh_dxd[tx] = (lagrange) * (displ[(iglob) * (3) + 0]);\n\
       sh_dyd[tx] = (lagrange) * (displ[(iglob) * (3) + 1]);\n\
       sh_dzd[tx] = (lagrange) * (displ[(iglob) * (3) + 2]);\n\
     }\n\
     barrier(CLK_LOCAL_MEM_FENCE);\n\
+\n\
     l = 1;\n\
     s = (l) * (2);\n\
-    if (((tx < 0) ^ (s < 0) ? (tx % s) + s : tx % s) == 0) {\n\
+    if (((tx < 0) ^ (s < 0) ? ((tx) % (s)) + s : (tx) % (s)) == 0) {\n\
       sh_dxd[tx] = sh_dxd[tx] + sh_dxd[tx + l];\n\
       sh_dyd[tx] = sh_dyd[tx] + sh_dyd[tx + l];\n\
       sh_dzd[tx] = sh_dzd[tx] + sh_dzd[tx + l];\n\
@@ -139,7 +141,7 @@ __kernel void compute_seismograms_kernel(const int nrec_local, const __global fl
     barrier(CLK_LOCAL_MEM_FENCE);\n\
     l = (l) * (2);\n\
     s = (l) * (2);\n\
-    if (((tx < 0) ^ (s < 0) ? (tx % s) + s : tx % s) == 0) {\n\
+    if (((tx < 0) ^ (s < 0) ? ((tx) % (s)) + s : (tx) % (s)) == 0) {\n\
       sh_dxd[tx] = sh_dxd[tx] + sh_dxd[tx + l];\n\
       sh_dyd[tx] = sh_dyd[tx] + sh_dyd[tx + l];\n\
       sh_dzd[tx] = sh_dzd[tx] + sh_dzd[tx + l];\n\
@@ -147,7 +149,7 @@ __kernel void compute_seismograms_kernel(const int nrec_local, const __global fl
     barrier(CLK_LOCAL_MEM_FENCE);\n\
     l = (l) * (2);\n\
     s = (l) * (2);\n\
-    if (((tx < 0) ^ (s < 0) ? (tx % s) + s : tx % s) == 0) {\n\
+    if (((tx < 0) ^ (s < 0) ? ((tx) % (s)) + s : (tx) % (s)) == 0) {\n\
       sh_dxd[tx] = sh_dxd[tx] + sh_dxd[tx + l];\n\
       sh_dyd[tx] = sh_dyd[tx] + sh_dyd[tx + l];\n\
       sh_dzd[tx] = sh_dzd[tx] + sh_dzd[tx + l];\n\
@@ -155,7 +157,7 @@ __kernel void compute_seismograms_kernel(const int nrec_local, const __global fl
     barrier(CLK_LOCAL_MEM_FENCE);\n\
     l = (l) * (2);\n\
     s = (l) * (2);\n\
-    if (((tx < 0) ^ (s < 0) ? (tx % s) + s : tx % s) == 0) {\n\
+    if (((tx < 0) ^ (s < 0) ? ((tx) % (s)) + s : (tx) % (s)) == 0) {\n\
       sh_dxd[tx] = sh_dxd[tx] + sh_dxd[tx + l];\n\
       sh_dyd[tx] = sh_dyd[tx] + sh_dyd[tx + l];\n\
       sh_dzd[tx] = sh_dzd[tx] + sh_dzd[tx + l];\n\
@@ -163,7 +165,7 @@ __kernel void compute_seismograms_kernel(const int nrec_local, const __global fl
     barrier(CLK_LOCAL_MEM_FENCE);\n\
     l = (l) * (2);\n\
     s = (l) * (2);\n\
-    if (((tx < 0) ^ (s < 0) ? (tx % s) + s : tx % s) == 0) {\n\
+    if (((tx < 0) ^ (s < 0) ? ((tx) % (s)) + s : (tx) % (s)) == 0) {\n\
       sh_dxd[tx] = sh_dxd[tx] + sh_dxd[tx + l];\n\
       sh_dyd[tx] = sh_dyd[tx] + sh_dyd[tx + l];\n\
       sh_dzd[tx] = sh_dzd[tx] + sh_dzd[tx + l];\n\
@@ -171,7 +173,7 @@ __kernel void compute_seismograms_kernel(const int nrec_local, const __global fl
     barrier(CLK_LOCAL_MEM_FENCE);\n\
     l = (l) * (2);\n\
     s = (l) * (2);\n\
-    if (((tx < 0) ^ (s < 0) ? (tx % s) + s : tx % s) == 0) {\n\
+    if (((tx < 0) ^ (s < 0) ? ((tx) % (s)) + s : (tx) % (s)) == 0) {\n\
       sh_dxd[tx] = sh_dxd[tx] + sh_dxd[tx + l];\n\
       sh_dyd[tx] = sh_dyd[tx] + sh_dyd[tx + l];\n\
       sh_dzd[tx] = sh_dzd[tx] + sh_dzd[tx + l];\n\
@@ -179,13 +181,14 @@ __kernel void compute_seismograms_kernel(const int nrec_local, const __global fl
     barrier(CLK_LOCAL_MEM_FENCE);\n\
     l = (l) * (2);\n\
     s = (l) * (2);\n\
-    if (((tx < 0) ^ (s < 0) ? (tx % s) + s : tx % s) == 0) {\n\
+    if (((tx < 0) ^ (s < 0) ? ((tx) % (s)) + s : (tx) % (s)) == 0) {\n\
       sh_dxd[tx] = sh_dxd[tx] + sh_dxd[tx + l];\n\
       sh_dyd[tx] = sh_dyd[tx] + sh_dyd[tx + l];\n\
       sh_dzd[tx] = sh_dzd[tx] + sh_dzd[tx + l];\n\
     }\n\
     barrier(CLK_LOCAL_MEM_FENCE);\n\
     l = (l) * (2);\n\
+\n\
     if (tx == 0) {\n\
       seismograms[(irec_local) * (3) + 0] = (scale_displ) * ((nu[((irec_local) * (3)) * (3) + 0]) * (sh_dxd[0]) + (nu[((irec_local) * (3) + 1) * (3) + 0]) * (sh_dyd[0]) + (nu[((irec_local) * (3) + 2) * (3) + 0]) * (sh_dzd[0]));\n\
     }\n\

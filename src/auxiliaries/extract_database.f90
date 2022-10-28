@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -35,33 +35,39 @@
 !
 !  Qinya Liu, Caltech, May 2007
 
+  use constants, only: &
+    CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,MAX_STRING_LEN
+
+  use shared_parameters, only: &
+    LOCAL_PATH
+
+  use constants_solver, only: &
+    NGLOB_CRUST_MANTLE,NGLOB_INNER_CORE,NGLOB_OUTER_CORE,NSPEC_CRUST_MANTLE,NSPEC_INNER_CORE,NSPEC_OUTER_CORE
+
   implicit none
 
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
-
-  character(len=150) :: infile, s_num, outfile, s_ireg
+  character(len=MAX_STRING_LEN) :: infile, s_num, outfile, s_ireg
   integer :: num, i, nspec, nglob, ireg
+
+  ! uses nspec_crust_mantle for allocation as this is the maximum possible size
+  integer,dimension(:,:,:,:),allocatable :: idummy_sem ! ibool
+  integer,dimension(:),allocatable :: idummy_arr  !idoubling
+  logical,dimension(:),allocatable :: ldummy_arr  ! ispec_is_tiso
+
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: junk
+  real(kind=CUSTOM_REAL), dimension(:),allocatable :: junk1
+  !real(kind=CUSTOM_REAL) :: junk2
 
   integer :: ier
   integer :: idummy
 
-  ! uses nspec_crust_mantle for allocation as this is the maximum possible size
-  integer,dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: idummy_sem ! ibool
-  integer,dimension(NSPEC_CRUST_MANTLE) :: idummy_arr  !idoubling
-  logical,dimension(NSPEC_CRUST_MANTLE) :: ldummy_arr  ! ispec_is_tiso
-
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: junk
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: junk1
-  !real(kind=CUSTOM_REAL) :: junk2
-
+  ! gets arguments
   call get_command_argument(1,infile)
   call get_command_argument(2,s_ireg)
   call get_command_argument(3,s_num)
   call get_command_argument(4,outfile)
-  if (len_trim(infile) == 0 .or. len_trim(s_ireg) == 0 .or. len_trim(s_num) == 0 &
-   .or. len_trim(outfile) == 0) then
+
+  if (len_trim(infile) == 0 .or. len_trim(s_ireg) == 0 .or. len_trim(s_num) == 0 .or. len_trim(outfile) == 0) then
      print *, 'Usage: extract_databases infile ireg num outfile'
      print *, '  ireg = 1, 2, 3'
      print *, '  num = 10 for rho,  11 for kappav, 12 for muv '
@@ -69,6 +75,34 @@
   endif
 
   read(s_ireg,*) ireg
+  read(s_num,*) num
+
+  ! user output
+  print *,"Extracting database values:"
+  print *,"  database file : ",trim(infile)
+  print *,"  region code   : ",ireg
+  print *,"  array number  : ",num
+  print *
+
+  ! reads mesh parameters
+  ! index of last occurrence of '/' to get directory from name (DATABASES_MPI/proc****_reg1_solver_data.bin)
+  LOCAL_PATH = ''
+  i = index(infile,'/',.true.)
+  if (i > 1) then
+    LOCAL_PATH(1:i-1) = infile(1:i-1)
+  else
+    LOCAL_PATH = 'DATABASES_MPI'        ! mesh_parameters.bin file in DATABASES_MPI/
+  endif
+  call read_mesh_parameters()
+
+  ! user output
+  print *,'mesh parameters (from input directory):'
+  print *,'  input directory    = ',trim(LOCAL_PATH)
+  print *,'  NSPEC_CRUST_MANTLE = ',NSPEC_CRUST_MANTLE
+  print *,'  NSPEC_OUTER_CORE   = ',NSPEC_OUTER_CORE
+  print *,'  NSPEC_INNER_CORE   = ',NSPEC_INNER_CORE
+  print *
+
   if (ireg == 1) then
     nspec = NSPEC_CRUST_MANTLE
     nglob = NGLOB_CRUST_MANTLE
@@ -82,17 +116,10 @@
     stop 'Error: ireg has to be 1, 2 or 3'
   endif
 
-  read(s_num,*) num
   if (num < 10 .or. num > 12) then
     stop 'Error: num has to be 10, 11 or 12'
   endif
 
-  ! user output
-  print *,"Extracting database values:"
-  print *,"  database file : ",trim(infile)
-  print *,"  region code   : ",ireg
-
-  print *,"  array number  : ",num
   if (num == 10) then
     print *,"  extracting for: ","rhostore"
   else if (num == 11) then
@@ -105,6 +132,14 @@
   print *
   print *,"  output to file: ",trim(outfile)
   print *
+
+  allocate(idummy_sem(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE)) ! ibool
+  allocate(idummy_arr(NSPEC_CRUST_MANTLE))  !idoubling
+  allocate(ldummy_arr(NSPEC_CRUST_MANTLE))  ! ispec_is_tiso
+
+  allocate(junk(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE), &
+           junk1(NGLOB_CRUST_MANTLE),stat=ier)
+  if (ier /= 0) stop 'Error allocating dummy arrays'
 
   ! opens solver_data file
   open(11,file=trim(infile),status='old',form='unformatted',iostat=ier)
@@ -186,6 +221,10 @@
   print *
   print *,"done extracting, see file: ",trim(outfile)
   print *
+
+  ! frees arrays
+  deallocate(idummy_sem,idummy_arr,ldummy_arr)
+  deallocate(junk,junk1)
 
   end program extract_databases
 

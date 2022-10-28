@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -62,6 +62,13 @@
     call flush_IMAIN()
   endif
 
+  ! dynamic array allocations
+
+  ! note: after allocation, arrays have not been mapped to memory yet. this will be done with the first initialization.
+  !       it is thus unlikely, that any of the allocate() routines here will fail.
+  !       todo: we could move these allocation statements closer to the initialization and allocate only after
+  !             the previous arrays have been initialized/mapped to memory.
+
   ! allocates arrays
   allocate(displ_crust_mantle(NDIM,NGLOB_CRUST_MANTLE), &
            veloc_crust_mantle(NDIM,NGLOB_CRUST_MANTLE), &
@@ -77,6 +84,23 @@
            veloc_inner_core(NDIM,NGLOB_INNER_CORE), &
            accel_inner_core(NDIM,NGLOB_INNER_CORE),stat=ier)
   if (ier /= 0) stop 'Error allocating displ,veloc,accel in inner_core'
+
+  ! ADJOINT
+  ! allocates backward/reconstructed arrays (dummy in case of forward simulation)
+  allocate(b_displ_crust_mantle(NDIM,NGLOB_CRUST_MANTLE_ADJOINT), &
+           b_veloc_crust_mantle(NDIM,NGLOB_CRUST_MANTLE_ADJOINT), &
+           b_accel_crust_mantle(NDIM,NGLOB_CRUST_MANTLE_ADJOINT),stat=ier)
+  if (ier /= 0) stop 'Error allocating b_displ,b_veloc,b_accel in crust_mantle'
+
+  allocate(b_displ_outer_core(NGLOB_OUTER_CORE_ADJOINT), &
+           b_veloc_outer_core(NGLOB_OUTER_CORE_ADJOINT), &
+           b_accel_outer_core(NGLOB_OUTER_CORE_ADJOINT),stat=ier)
+  if (ier /= 0) stop 'Error allocating b_displ,b_veloc,b_accel in outer_core'
+
+  allocate(b_displ_inner_core(NDIM,NGLOB_INNER_CORE_ADJOINT), &
+           b_veloc_inner_core(NDIM,NGLOB_INNER_CORE_ADJOINT), &
+           b_accel_inner_core(NDIM,NGLOB_INNER_CORE_ADJOINT),stat=ier)
+  if (ier /= 0) stop 'Error allocating b_displ,b_veloc,b_accel in inner_core'
 
   ! for strain/attenuation
   allocate(epsilondev_xx_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT), &
@@ -133,13 +157,23 @@
       if (ier /= 0 ) call exit_MPI(myrank,'Error allocating b_epsilondev*** arrays for inner core')
     endif
   else
-    ! initializes pointers
-    nullify(b_epsilondev_xx_crust_mantle,b_epsilondev_yy_crust_mantle,b_epsilondev_xy_crust_mantle, &
-            b_epsilondev_xz_crust_mantle,b_epsilondev_yz_crust_mantle)
-    nullify(b_eps_trace_over_3_crust_mantle)
-    nullify(b_epsilondev_xx_inner_core,b_epsilondev_yy_inner_core,b_epsilondev_xy_inner_core, &
-            b_epsilondev_xz_inner_core,b_epsilondev_yz_inner_core)
-    nullify(b_eps_trace_over_3_inner_core)
+    ! initializes dummy arrays
+    ! note: nullify(pointers..) will not work on cray compilers and lead to an error
+    !       when passing to gpu routine prepare_fields_strain_device()
+    allocate(b_epsilondev_xx_crust_mantle(1,1,1,1), &
+             b_epsilondev_yy_crust_mantle(1,1,1,1), &
+             b_epsilondev_xy_crust_mantle(1,1,1,1), &
+             b_epsilondev_xz_crust_mantle(1,1,1,1), &
+             b_epsilondev_yz_crust_mantle(1,1,1,1), &
+             b_eps_trace_over_3_crust_mantle(1,1,1,1),stat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating b_epsilondev*** arrays for crust/mantle')
+    allocate(b_epsilondev_xx_inner_core(1,1,1,1), &
+             b_epsilondev_yy_inner_core(1,1,1,1), &
+             b_epsilondev_xy_inner_core(1,1,1,1), &
+             b_epsilondev_xz_inner_core(1,1,1,1), &
+             b_epsilondev_yz_inner_core(1,1,1,1), &
+             b_eps_trace_over_3_inner_core(1,1,1,1),stat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating b_epsilondev*** arrays for inner core')
   endif
 
   allocate(Iepsilondev_xx_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE), &
@@ -150,6 +184,7 @@
            Ieps_trace_over_3_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays Iepsilondev_xx_crust_mantle,..'
 
+  ! attenuation
   allocate(R_xx_crust_mantle(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_ATTENUATION), &
            R_yy_crust_mantle(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_ATTENUATION), &
            R_xy_crust_mantle(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_ATTENUATION), &
@@ -164,28 +199,7 @@
            R_yz_inner_core(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_ATTENUATION),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays R_xx_inner_core,..'
 
-  if (ROTATION_VAL) then
-    allocate(A_array_rotation(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION), &
-             B_array_rotation(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION),stat=ier)
-    if (ier /= 0) stop 'Error allocating arrays A_array_rotation,..'
-  endif
-
-  ! allocates backward/reconstructed arrays (dummy in case of forward simulation)
-  allocate(b_displ_crust_mantle(NDIM,NGLOB_CRUST_MANTLE_ADJOINT), &
-           b_veloc_crust_mantle(NDIM,NGLOB_CRUST_MANTLE_ADJOINT), &
-           b_accel_crust_mantle(NDIM,NGLOB_CRUST_MANTLE_ADJOINT),stat=ier)
-  if (ier /= 0) stop 'Error allocating b_displ,b_veloc,b_accel in crust_mantle'
-
-  allocate(b_displ_outer_core(NGLOB_OUTER_CORE_ADJOINT), &
-           b_veloc_outer_core(NGLOB_OUTER_CORE_ADJOINT), &
-           b_accel_outer_core(NGLOB_OUTER_CORE_ADJOINT),stat=ier)
-  if (ier /= 0) stop 'Error allocating b_displ,b_veloc,b_accel in outer_core'
-
-  allocate(b_displ_inner_core(NDIM,NGLOB_INNER_CORE_ADJOINT), &
-           b_veloc_inner_core(NDIM,NGLOB_INNER_CORE_ADJOINT), &
-           b_accel_inner_core(NDIM,NGLOB_INNER_CORE_ADJOINT),stat=ier)
-  if (ier /= 0) stop 'Error allocating b_displ,b_veloc,b_accel in inner_core'
-
+  ! ADJOINT
   allocate(b_R_xx_crust_mantle(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_STR_AND_ATT), &
            b_R_yy_crust_mantle(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_STR_AND_ATT), &
            b_R_xy_crust_mantle(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_STR_AND_ATT), &
@@ -200,21 +214,26 @@
            b_R_yz_inner_core(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_STR_AND_ATT),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays b_R_xx_inner_core,..'
 
+  ! needed for subroutine calls
+  allocate(A_array_rotation(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION), &
+           B_array_rotation(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION),stat=ier)
+  if (ier /= 0) stop 'Error allocating arrays A_array_rotation,..'
+
   ! initializes backward/reconstructed arrays
   if (SIMULATION_TYPE == 3) then
-    if (ROTATION_VAL) then
-      allocate(b_A_array_rotation(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROT_ADJOINT), &
-               b_B_array_rotation(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROT_ADJOINT),stat=ier)
-      if (ier /= 0) stop 'Error allocating arrays b_A_array_rotation,..'
-    endif
-
+    ! needed for subroutine calls
+    allocate(b_A_array_rotation(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROT_ADJOINT), &
+             b_B_array_rotation(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROT_ADJOINT),stat=ier)
+  else
+    ! dummy allocation (needed for subroutine calls)
+    allocate(b_A_array_rotation(1,1,1,1), &
+             b_B_array_rotation(1,1,1,1),stat=ier)
   endif
+  if (ier /= 0) stop 'Error allocating arrays b_A_array_rotation,..'
 
   ! Runge-Kutta time scheme
   if (USE_LDDRK) then
-    ! checks
-    if (SIMULATION_TYPE /= 1 .or. SAVE_FORWARD .or. NOISE_TOMOGRAPHY /= 0) &
-        stop 'Error: LDDRK is not implemented for adjoint or noise tomography'
+    ! LDDRK time scheme
 
     ! number of stages for scheme
     NSTAGE_TIME_SCHEME = NSTAGE   ! 6 stages
@@ -367,40 +386,21 @@
            alpha_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays rho_kl,.. in crust_mantle'
 
-  allocate(rho_kl_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT), &
-           beta_kl_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT), &
-           alpha_kl_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT),stat=ier)
+  if (SAVE_KERNELS_IC) then
+    allocate(rho_kl_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT), &
+             beta_kl_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT), &
+             alpha_kl_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT),stat=ier)
+  else
+    ! dummy (for function call arguments)
+    allocate(rho_kl_inner_core(1,1,1,1), &
+             beta_kl_inner_core(1,1,1,1), &
+             alpha_kl_inner_core(1,1,1,1),stat=ier)
+  endif
   if (ier /= 0) stop 'Error allocating arrays rho_kl,.. in inner_core'
 
-  allocate(rho_kl_outer_core(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT), &
-           alpha_kl_outer_core(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT),stat=ier)
-  if (ier /= 0) stop 'Error allocating arrays rho_kl,.. in outer_core'
-
-  allocate(vector_accel_outer_core(NDIM,NGLOB_OUTER_CORE_ADJOINT), &
-           vector_displ_outer_core(NDIM,NGLOB_OUTER_CORE_ADJOINT), &
-           b_vector_displ_outer_core(NDIM,NGLOB_OUTER_CORE_ADJOINT),stat=ier)
-  if (ier /= 0) stop 'Error allocating arrays vector_accel_outer_core,..'
-
-
-  if (SIMULATION_TYPE == 3) then
-    ! noise strength kernel
-    if (NOISE_TOMOGRAPHY == 3) then
-      allocate( sigma_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
-      if (ier /= 0 ) call exit_MPI(myrank,'Error allocating noise sigma kernel')
-    endif
-
-    ! approximate Hessian
-    if (APPROXIMATE_HESS_KL) then
-      allocate( hess_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
-      if (ier /= 0 ) call exit_MPI(myrank,'Error allocating Hessian')
-    endif
-
-    ! For anisotropic kernels (in crust_mantle only)
-    if (ANISOTROPIC_KL) then
-      allocate( cijkl_kl_crust_mantle(21,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
-      if (ier /= 0 ) call exit_MPI(myrank,'Error allocating full cijkl kernel in crust_mantle')
-    endif
-
+  if (SAVE_KERNELS_OC) then
+    allocate(rho_kl_outer_core(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT), &
+             alpha_kl_outer_core(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT),stat=ier)
     ! deviatoric kernel check
     if (deviatoric_outercore) then
       nspec_beta_kl_outer_core = NSPEC_OUTER_CORE_ADJOINT
@@ -409,6 +409,47 @@
     endif
     allocate(beta_kl_outer_core(NGLLX,NGLLY,NGLLZ,nspec_beta_kl_outer_core),stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating beta outercore')
+  else
+    ! dummy
+    allocate(rho_kl_outer_core(1,1,1,1), &
+             alpha_kl_outer_core(1,1,1,1),stat=ier)
+    allocate(beta_kl_outer_core(1,1,1,1),stat=ier)
+  endif
+  if (ier /= 0) stop 'Error allocating arrays rho_kl,.. in outer_core'
+
+  if (SAVE_KERNELS_OC .or. SAVE_KERNELS_BOUNDARY) then
+    allocate(vector_accel_outer_core(NDIM,NGLOB_OUTER_CORE_ADJOINT), &
+             vector_displ_outer_core(NDIM,NGLOB_OUTER_CORE_ADJOINT), &
+             b_vector_displ_outer_core(NDIM,NGLOB_OUTER_CORE_ADJOINT),stat=ier)
+  else
+    ! dummy
+    allocate(vector_accel_outer_core(1,1), &
+             vector_displ_outer_core(1,1), &
+             b_vector_displ_outer_core(1,1),stat=ier)
+  endif
+  if (ier /= 0) stop 'Error allocating arrays vector_accel_outer_core,..'
+
+  if (SIMULATION_TYPE == 3) then
+    ! noise strength kernel
+    if (NOISE_TOMOGRAPHY == 3) then
+      allocate(sigma_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
+      if (ier /= 0 ) call exit_MPI(myrank,'Error allocating noise sigma kernel')
+    endif
+
+    ! approximate Hessian
+    if (APPROXIMATE_HESS_KL) then
+      allocate(hess_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
+      allocate(hess_rho_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
+      allocate(hess_kappa_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
+      allocate(hess_mu_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
+      if (ier /= 0 ) call exit_MPI(myrank,'Error allocating Hessian')
+    endif
+
+    ! For anisotropic kernels (in crust_mantle only)
+    if (ANISOTROPIC_KL) then
+      allocate(cijkl_kl_crust_mantle(21,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
+      if (ier /= 0 ) call exit_MPI(myrank,'Error allocating full cijkl kernel in crust_mantle')
+    endif
   endif
 
   ! initializes kernel values
@@ -459,6 +500,8 @@
   integer :: i
 #endif
 
+! note: after allocation, arrays have not been mapped to memory yet. this will be done with the first initialization here.
+
   ! put negligible initial value to avoid very slow underflow trapping
   if (FIX_UNDERFLOW_PROBLEM) then
     init_value = VERYSMALLVAL
@@ -467,8 +510,7 @@
   endif
 
 #ifdef WAVEFIELD_INIT_WITH_OMP_PER_REGION
-! note: after allocation, arrays have not been mapped to memory yet. this will be done with the first initialization here.
-!       we initialize arrays the same way as we access them with OpenMP threads in compute_forces***() routines.
+! note: we initialize arrays the same way as we access them with OpenMP threads in compute_forces***() routines.
 !       this ensures that memory blocks close to the thread location (on the corresponding CPU-core) will be mapped,
 !       which should speedup (at least the OpenMP-) code.
 
@@ -482,6 +524,7 @@
       num_elements = nspec_inner_crust_mantle
     endif
 
+    if (num_elements > 0) then
 ! openmp solver
 !$OMP PARALLEL if (num_elements > 500) &
 !$OMP DEFAULT(NONE) &
@@ -495,28 +538,34 @@
 #endif
 !$OMP iglob)
 !$OMP DO SCHEDULE(GUIDED)
-    do ispec_p = 1,num_elements
-      ! only compute elements which belong to current phase (inner or outer elements)
-      ispec = phase_ispec_inner_crust_mantle(ispec_p,iphase)
-      DO_LOOP_IJK
-        iglob = ibool_crust_mantle(INDEX_IJK,ispec)
-        ! initialize arrays to zero
-        displ_crust_mantle(:,iglob) = init_value
-        veloc_crust_mantle(:,iglob) = 0._CUSTOM_REAL
-        accel_crust_mantle(:,iglob) = 0._CUSTOM_REAL
-      ENDDO_LOOP_IJK
-      ! if doing benchmark runs to measure scaling of the code,
-      ! set the initial field to 1 to make sure gradual underflow trapping does not slow down the code
-      if (DO_BENCHMARK_RUN_ONLY .and. SET_INITIAL_FIELD_TO_1_IN_BENCH) then
+      do ispec_p = 1,num_elements
+        ! only compute elements which belong to current phase (inner or outer elements)
+        ispec = phase_ispec_inner_crust_mantle(ispec_p,iphase)
         DO_LOOP_IJK
-          displ_crust_mantle(:,iglob) = 1._CUSTOM_REAL
-          veloc_crust_mantle(:,iglob) = 1._CUSTOM_REAL
-          accel_crust_mantle(:,iglob) = 1._CUSTOM_REAL
+          iglob = ibool_crust_mantle(INDEX_IJK,ispec)
+          ! initialize arrays to zero
+          displ_crust_mantle(:,iglob) = init_value
+          veloc_crust_mantle(:,iglob) = 0._CUSTOM_REAL
+          accel_crust_mantle(:,iglob) = 0._CUSTOM_REAL
         ENDDO_LOOP_IJK
-      endif
-    enddo
+        ! if doing benchmark runs to measure scaling of the code,
+        ! set the initial field to 1 to make sure gradual underflow trapping does not slow down the code
+        if (DO_BENCHMARK_RUN_ONLY .and. SET_INITIAL_FIELD_TO_1_IN_BENCH) then
+          DO_LOOP_IJK
+            displ_crust_mantle(:,iglob) = 1._CUSTOM_REAL
+            veloc_crust_mantle(:,iglob) = 1._CUSTOM_REAL
+            accel_crust_mantle(:,iglob) = 1._CUSTOM_REAL
+          ENDDO_LOOP_IJK
+        endif
+      enddo
 !$OMP ENDDO
 !$OMP END PARALLEL
+    else
+      ! no elements, dummy array
+      displ_crust_mantle(:,:) = 0._CUSTOM_REAL
+      veloc_crust_mantle(:,:) = 0._CUSTOM_REAL
+      accel_crust_mantle(:,:) = 0._CUSTOM_REAL
+    endif
   enddo !iphase
 
   ! outer core
@@ -528,6 +577,8 @@
       ! inner elements
       num_elements = nspec_inner_outer_core
     endif
+
+    if (num_elements > 0) then
 ! openmp solver
 !$OMP PARALLEL if (num_elements > 500) &
 !$OMP DEFAULT(NONE) &
@@ -541,28 +592,34 @@
 #endif
 !$OMP iglob)
 !$OMP DO SCHEDULE(GUIDED)
-    do ispec_p = 1,num_elements
-      ! only compute elements which belong to current phase (inner or outer elements)
-      ispec = phase_ispec_inner_outer_core(ispec_p,iphase)
-      DO_LOOP_IJK
-        iglob = ibool_outer_core(INDEX_IJK,ispec)
-        ! initialize arrays to zero
-        displ_outer_core(iglob) = init_value
-        veloc_outer_core(iglob) = 0._CUSTOM_REAL
-        accel_outer_core(iglob) = 0._CUSTOM_REAL
-      ENDDO_LOOP_IJK
-      ! if doing benchmark runs to measure scaling of the code,
-      ! set the initial field to 1 to make sure gradual underflow trapping does not slow down the code
-      if (DO_BENCHMARK_RUN_ONLY .and. SET_INITIAL_FIELD_TO_1_IN_BENCH) then
+      do ispec_p = 1,num_elements
+        ! only compute elements which belong to current phase (inner or outer elements)
+        ispec = phase_ispec_inner_outer_core(ispec_p,iphase)
         DO_LOOP_IJK
-          displ_outer_core(iglob) = 1._CUSTOM_REAL
-          veloc_outer_core(iglob) = 1._CUSTOM_REAL
-          accel_outer_core(iglob) = 1._CUSTOM_REAL
+          iglob = ibool_outer_core(INDEX_IJK,ispec)
+          ! initialize arrays to zero
+          displ_outer_core(iglob) = init_value
+          veloc_outer_core(iglob) = 0._CUSTOM_REAL
+          accel_outer_core(iglob) = 0._CUSTOM_REAL
         ENDDO_LOOP_IJK
-      endif
-    enddo
+        ! if doing benchmark runs to measure scaling of the code,
+        ! set the initial field to 1 to make sure gradual underflow trapping does not slow down the code
+        if (DO_BENCHMARK_RUN_ONLY .and. SET_INITIAL_FIELD_TO_1_IN_BENCH) then
+          DO_LOOP_IJK
+            displ_outer_core(iglob) = 1._CUSTOM_REAL
+            veloc_outer_core(iglob) = 1._CUSTOM_REAL
+            accel_outer_core(iglob) = 1._CUSTOM_REAL
+          ENDDO_LOOP_IJK
+        endif
+      enddo
 !$OMP ENDDO
 !$OMP END PARALLEL
+    else
+      ! no elements, dummy array
+      displ_outer_core(:) = 0._CUSTOM_REAL
+      veloc_outer_core(:) = 0._CUSTOM_REAL
+      accel_outer_core(:) = 0._CUSTOM_REAL
+    endif
   enddo !iphase
 
   ! inner core
@@ -575,6 +632,7 @@
       num_elements = nspec_inner_inner_core
     endif
 
+    if (num_elements > 0) then
 !$OMP PARALLEL if (num_elements > 500) &
 !$OMP DEFAULT(NONE) &
 !$OMP SHARED(init_value,num_elements,iphase,phase_ispec_inner_inner_core,ibool_inner_core, &
@@ -587,28 +645,34 @@
 #endif
 !$OMP iglob)
 !$OMP DO SCHEDULE(GUIDED)
-    do ispec_p = 1,num_elements
-      ! only compute elements which belong to current phase (inner or outer elements)
-      ispec = phase_ispec_inner_inner_core(ispec_p,iphase)
-      DO_LOOP_IJK
-        iglob = ibool_inner_core(INDEX_IJK,ispec)
-        ! initialize arrays to zero
-        displ_inner_core(:,iglob) = init_value
-        veloc_inner_core(:,iglob) = 0._CUSTOM_REAL
-        accel_inner_core(:,iglob) = 0._CUSTOM_REAL
-      ENDDO_LOOP_IJK
-      ! if doing benchmark runs to measure scaling of the code,
-      ! set the initial field to 1 to make sure gradual underflow trapping does not slow down the code
-      if (DO_BENCHMARK_RUN_ONLY .and. SET_INITIAL_FIELD_TO_1_IN_BENCH) then
+      do ispec_p = 1,num_elements
+        ! only compute elements which belong to current phase (inner or outer elements)
+        ispec = phase_ispec_inner_inner_core(ispec_p,iphase)
         DO_LOOP_IJK
-          displ_inner_core(:,iglob) = 1._CUSTOM_REAL
-          veloc_inner_core(:,iglob) = 1._CUSTOM_REAL
-          accel_inner_core(:,iglob) = 1._CUSTOM_REAL
+          iglob = ibool_inner_core(INDEX_IJK,ispec)
+          ! initialize arrays to zero
+          displ_inner_core(:,iglob) = init_value
+          veloc_inner_core(:,iglob) = 0._CUSTOM_REAL
+          accel_inner_core(:,iglob) = 0._CUSTOM_REAL
         ENDDO_LOOP_IJK
-      endif
-    enddo
+        ! if doing benchmark runs to measure scaling of the code,
+        ! set the initial field to 1 to make sure gradual underflow trapping does not slow down the code
+        if (DO_BENCHMARK_RUN_ONLY .and. SET_INITIAL_FIELD_TO_1_IN_BENCH) then
+          DO_LOOP_IJK
+            displ_inner_core(:,iglob) = 1._CUSTOM_REAL
+            veloc_inner_core(:,iglob) = 1._CUSTOM_REAL
+            accel_inner_core(:,iglob) = 1._CUSTOM_REAL
+          ENDDO_LOOP_IJK
+        endif
+      enddo
 !$OMP ENDDO
 !$OMP END PARALLEL
+    else
+      ! no elements, dummy array
+      displ_inner_core(:,:) = 0._CUSTOM_REAL
+      veloc_inner_core(:,:) = 0._CUSTOM_REAL
+      accel_inner_core(:,:) = 0._CUSTOM_REAL
+    endif
   enddo !iphase
 
 #elif WAVEFIELD_INIT_WITH_OMP
@@ -666,8 +730,8 @@
 #else
   ! initialization without OpenMP, most direct way
   !
-  ! note: when using OpenMP for simulations, this initialization will be executed by the master thread (for each MPI) process
-  !       and thus memory might be mapped closer to master thread than later on the additional OpenMP threads
+  ! note: when using OpenMP for simulations, this initialization will be executed by the main thread (for each MPI) process
+  !       and thus memory might be mapped closer to main thread than later on the additional OpenMP threads
 
   ! initialize arrays to zero
   displ_crust_mantle(:,:) = init_value
@@ -859,6 +923,10 @@
   ! movies
   div_displ_outer_core(:,:,:,:) = 0._CUSTOM_REAL
 
+  ! regional simulation w/ absorbing conditions
+  ! no need for inner chunk fields, set to zero to avoid problems w/ coupling to outer core
+  if (NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) displ_inner_core(:,:) = 0._CUSTOM_REAL
+
   end subroutine init_wavefields
 
 
@@ -893,6 +961,9 @@
   ! approximate Hessian
   if (APPROXIMATE_HESS_KL) then
     hess_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
+    hess_rho_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
+    hess_kappa_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
+    hess_mu_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
   endif
 
   ! For anisotropic kernels (in crust_mantle only)
@@ -900,15 +971,18 @@
     cijkl_kl_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
   endif
 
-  rho_kl_outer_core(:,:,:,:) = 0._CUSTOM_REAL
-  alpha_kl_outer_core(:,:,:,:) = 0._CUSTOM_REAL
+  if (SAVE_KERNELS_OC) then
+    rho_kl_outer_core(:,:,:,:) = 0._CUSTOM_REAL
+    alpha_kl_outer_core(:,:,:,:) = 0._CUSTOM_REAL
+    ! deviatoric kernel check
+    beta_kl_outer_core(:,:,:,:) = 0._CUSTOM_REAL
+  endif
 
-  rho_kl_inner_core(:,:,:,:) = 0._CUSTOM_REAL
-  beta_kl_inner_core(:,:,:,:) = 0._CUSTOM_REAL
-  alpha_kl_inner_core(:,:,:,:) = 0._CUSTOM_REAL
-
-  ! deviatoric kernel check
-  beta_kl_outer_core(:,:,:,:) = 0._CUSTOM_REAL
+  if (SAVE_KERNELS_IC) then
+    rho_kl_inner_core(:,:,:,:) = 0._CUSTOM_REAL
+    beta_kl_inner_core(:,:,:,:) = 0._CUSTOM_REAL
+    alpha_kl_inner_core(:,:,:,:) = 0._CUSTOM_REAL
+  endif
 
   end subroutine init_kernels
 

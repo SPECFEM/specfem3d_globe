@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -27,7 +27,9 @@
 
   subroutine create_meshes()
 
-  use meshfem3D_par
+  use shared_parameters, only: T_min_period,ATTENUATION
+  use meshfem_par
+  use regions_mesh_par2, only: NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,NSPEC2D_CMB,NSPEC2D_ICB
 
   implicit none
 
@@ -39,8 +41,13 @@
   ! user output
   if (myrank == 0) then
     write(IMAIN,*) 'Radial Meshing parameters:'
-    write(IMAIN,*) '  CHUNK WIDTH XI/ETA =', ANGULAR_WIDTH_XI_IN_DEGREES,'/',ANGULAR_WIDTH_ETA_IN_DEGREES
-    write(IMAIN,*) '  NEX XI/ETA =', NEX_XI,'/',NEX_ETA
+    write(IMAIN,*) '  NCHUNKS                = ',NCHUNKS
+    write(IMAIN,*)
+    write(IMAIN,*) '  CENTER LAT/LON:          ',sngl(CENTER_LATITUDE_IN_DEGREES),'/',sngl(CENTER_LONGITUDE_IN_DEGREES)
+    write(IMAIN,*) '  GAMMA_ROTATION_AZIMUTH:  ',sngl(GAMMA_ROTATION_AZIMUTH)
+    write(IMAIN,*)
+    write(IMAIN,*) '  CHUNK WIDTH XI/ETA:      ',sngl(ANGULAR_WIDTH_XI_IN_DEGREES),'/',sngl(ANGULAR_WIDTH_ETA_IN_DEGREES)
+    write(IMAIN,*) '  NEX XI/ETA:              ', NEX_XI,'/',NEX_ETA
     write(IMAIN,*)
     write(IMAIN,*) '  NER_CRUST:               ', NER_CRUST
     write(IMAIN,*) '  NER_80_MOHO:             ', NER_80_MOHO
@@ -59,14 +66,30 @@
     write(IMAIN,*)
     write(IMAIN,*) 'Mesh resolution:'
     write(IMAIN,*) '  DT = ',DT
-    write(IMAIN,*) '  Minimum period = ', &
-                   max(ANGULAR_WIDTH_ETA_IN_DEGREES,ANGULAR_WIDTH_XI_IN_DEGREES)/90.0 * 256.0/min(NEX_ETA,NEX_XI) * 17.0,' (s)'
+    write(IMAIN,*) '  Minimum period = ',sngl(T_min_period),' (s)'
     write(IMAIN,*)
-    write(IMAIN,*) '  MIN_ATTENUATION_PERIOD = ',MIN_ATTENUATION_PERIOD
-    write(IMAIN,*) '  MAX_ATTENUATION_PERIOD = ',MAX_ATTENUATION_PERIOD
+    ! attenuation range
+    if (ATTENUATION) then
+      write(IMAIN,*) '  MIN_ATTENUATION_PERIOD = ',sngl(MIN_ATTENUATION_PERIOD)
+      write(IMAIN,*) '  MAX_ATTENUATION_PERIOD = ',sngl(MAX_ATTENUATION_PERIOD)
+      write(IMAIN,*)
+    endif
+    if (REGIONAL_MESH_CUTOFF) then
+      write(IMAIN,*) 'Regional mesh cutoff:'
+      write(IMAIN,*) '  cut-off depth          = ',REGIONAL_MESH_CUTOFF_DEPTH,'(km)'
+      write(IMAIN,*)
+      if (USE_LOCAL_MESH) then
+        write(IMAIN,*) '  using local mesh layout'
+        write(IMAIN,*) '  number of layers in crust  = ',LOCAL_MESH_NUMBER_OF_LAYERS_CRUST
+        write(IMAIN,*) '  number of layers in mantle = ',LOCAL_MESH_NUMBER_OF_LAYERS_MANTLE
+        write(IMAIN,*) '  number of doubling layers  = ',NDOUBLINGS
+        write(IMAIN,*)
+      endif
+    endif
     write(IMAIN,*)
     call flush_IMAIN()
   endif
+  call synchronize_all()
 
   ! get addressing for this process
   ichunk = ichunk_slice(myrank)
@@ -75,6 +98,11 @@
 
   offset_proc_xi = mod(iproc_xi_slice(myrank),2)
   offset_proc_eta = mod(iproc_eta_slice(myrank),2)
+
+  ! initializes
+  ! boundary surfaces
+  NSPEC2D_MOHO = 0; NSPEC2D_400 = 0; NSPEC2D_670 = 0
+  NSPEC2D_CMB = 0; NSPEC2D_ICB = 0
 
   ! volume of the final mesh, and Earth mass computed in the final mesh
   ! and gravity integrals
@@ -94,25 +122,6 @@
   ! number of regions in full Earth
   do iregion_code = 1,MAX_NUM_REGIONS
 
-    if (myrank == 0) then
-      write(IMAIN,*)
-      write(IMAIN,*) '*******************************************'
-      write(IMAIN,*) 'creating mesh in region ',iregion_code
-      select case (iregion_code)
-        case (IREGION_CRUST_MANTLE)
-          write(IMAIN,*) 'this region is the crust and mantle'
-        case (IREGION_OUTER_CORE)
-          write(IMAIN,*) 'this region is the outer core'
-        case (IREGION_INNER_CORE)
-          write(IMAIN,*) 'this region is the inner core'
-        case default
-          call exit_MPI(myrank,'incorrect region code')
-      end select
-      write(IMAIN,*) '*******************************************'
-      write(IMAIN,*)
-      call flush_IMAIN()
-    endif
-
     ! number of spectral elements
     nspec = NSPEC_REGIONS(iregion_code)
 
@@ -122,49 +131,71 @@
     ! compute maximum number of points
     npointot = nspec * NGLLX * NGLLY * NGLLZ
 
-    ! use dynamic allocation to allocate memory for arrays
-    allocate(idoubling(nspec), &
-             ibool(NGLLX,NGLLY,NGLLZ,nspec), &
-             xstore(NGLLX,NGLLY,NGLLZ,nspec), &
-             ystore(NGLLX,NGLLY,NGLLZ,nspec), &
-             zstore(NGLLX,NGLLY,NGLLZ,nspec), &
-             stat=ier)
-    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating memory for arrays')
-    idoubling(:) = 0
-    ibool(:,:,:,:) = 0
-    xstore(:,:,:,:) = 0.d0
-    ystore(:,:,:,:) = 0.d0
-    zstore(:,:,:,:) = 0.d0
+    if (nspec > 0) then
+      ! user output
+      if (myrank == 0) then
+        write(IMAIN,*)
+        write(IMAIN,*) '*******************************************'
+        write(IMAIN,*) 'creating mesh in region ',iregion_code
+        select case (iregion_code)
+          case (IREGION_CRUST_MANTLE)
+            write(IMAIN,*) 'this region is the crust and mantle'
+          case (IREGION_OUTER_CORE)
+            write(IMAIN,*) 'this region is the outer core'
+          case (IREGION_INNER_CORE)
+            write(IMAIN,*) 'this region is the inner core'
+          case default
+            call exit_MPI(myrank,'incorrect region code')
+        end select
+        write(IMAIN,*) '*******************************************'
+        write(IMAIN,*)
+        call flush_IMAIN()
+      endif
 
-    ! this for non blocking MPI
-    allocate(is_on_a_slice_edge(nspec),stat=ier)
-    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating is_on_a_slice_edge array')
-    is_on_a_slice_edge(:) = .false.
+      ! use dynamic allocation to allocate memory for arrays
+      allocate(idoubling(nspec), &
+               ibool(NGLLX,NGLLY,NGLLZ,nspec), &
+               xstore(NGLLX,NGLLY,NGLLZ,nspec), &
+               ystore(NGLLX,NGLLY,NGLLZ,nspec), &
+               zstore(NGLLX,NGLLY,NGLLZ,nspec), &
+               stat=ier)
+      if (ier /= 0 ) call exit_mpi(myrank,'Error allocating memory for arrays')
+      idoubling(:) = 0
+      ibool(:,:,:,:) = 0
+      xstore(:,:,:,:) = 0.d0
+      ystore(:,:,:,:) = 0.d0
+      zstore(:,:,:,:) = 0.d0
 
-    ! create all the regions of the mesh
-    ! perform two passes in this part to be able to save memory
-    do ipass = 1,2
-      call create_regions_mesh(npointot, &
-                               NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-                               NSPEC2DMAX_XMIN_XMAX(iregion_code),NSPEC2DMAX_YMIN_YMAX(iregion_code), &
-                               NSPEC2D_BOTTOM(iregion_code),NSPEC2D_TOP(iregion_code), &
-                               offset_proc_xi,offset_proc_eta, &
-                               ipass)
+      ! this for non blocking MPI
+      allocate(is_on_a_slice_edge(nspec),stat=ier)
+      if (ier /= 0 ) call exit_mpi(myrank,'Error allocating is_on_a_slice_edge array')
+      is_on_a_slice_edge(:) = .false.
 
-      ! If we're in the request stage of CEM, exit.
-      if (CEM_REQUEST) exit
+      ! create all the regions of the mesh
+      ! perform two passes in this part to be able to save memory
+      do ipass = 1,2
+        call create_regions_mesh(npointot, &
+                                 NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+                                 NSPEC2DMAX_XMIN_XMAX(iregion_code),NSPEC2DMAX_YMIN_YMAX(iregion_code), &
+                                 NSPEC2D_BOTTOM(iregion_code),NSPEC2D_TOP(iregion_code), &
+                                 offset_proc_xi,offset_proc_eta, &
+                                 ipass)
 
-    enddo
+        ! If we're in the request stage of CEM, exit.
+        if (CEM_REQUEST) exit
 
-    ! deallocate arrays used for that region
-    deallocate(idoubling)
-    deallocate(ibool)
-    deallocate(xstore)
-    deallocate(ystore)
-    deallocate(zstore)
+      enddo
 
-    ! this for non blocking MPI
-    deallocate(is_on_a_slice_edge)
+      ! deallocate arrays used for that region
+      deallocate(idoubling)
+      deallocate(ibool)
+      deallocate(xstore)
+      deallocate(ystore)
+      deallocate(zstore)
+
+      ! this for non blocking MPI
+      deallocate(is_on_a_slice_edge)
+    endif
 
     ! make sure everybody is synchronized
     call synchronize_all()

@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -25,56 +25,103 @@
 !
 !=====================================================================
 
-  subroutine moho_stretching_honor_crust(myrank,xelm,yelm,zelm, &
+  subroutine moho_stretching_honor_crust(xelm,yelm,zelm, &
                                          elem_in_crust,elem_in_mantle)
 
 ! stretching the moho according to the crust 2.0
 ! input:  myrank, xelm, yelm, zelm
 ! Dec, 30, 2009
 
-  use constants, only: &
-    NGNOD,R_EARTH_KM,R_EARTH,R_UNIT_SPHERE, &
+  use constants, only: myrank, &
+    NGNOD,R_UNIT_SPHERE, &
     PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,SMALLVAL,ONE,USE_OLD_VERSION_5_1_5_FORMAT, &
-    SUPPRESS_MOHO_STRETCHING,ICRUST_CRUST_SH
+    SUPPRESS_MOHO_STRETCHING,ICRUST_CRUST_SH,ICRUST_SGLOBECRUST
 
-  use meshfem3D_par, only: &
+  ! Earth
+  use constants, only: EARTH_R,EARTH_R_KM
+  ! Mars
+  use constants, only: MARS_R,MARS_R_KM
+  ! Moon
+  use constants, only: MOON_R,MOON_R_KM
+
+  use shared_parameters, only: PLANET_TYPE,IPLANET_EARTH,IPLANET_MARS,IPLANET_MOON,R_PLANET
+
+  use meshfem_par, only: &
     RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST,REFERENCE_CRUSTAL_MODEL
 
-  use meshfem3D_par, only: &
+  use meshfem_par, only: &
     TOPOGRAPHY
 
   implicit none
 
-  integer :: myrank
-  double precision,dimension(NGNOD) :: xelm,yelm,zelm
+  double precision,dimension(NGNOD),intent(inout) :: xelm,yelm,zelm
   logical,intent(inout) :: elem_in_crust,elem_in_mantle
 
   ! local parameters
   double precision :: r,theta,phi,lat,lon
   double precision :: vpvc,vphc,vsvc,vshc,etac,rhoc
-  double precision :: moho,elevation,gamma
+  double precision :: c11c,c12c,c13c,c14c,c15c,c16c,c22c,c23c,c24c,c25c,c26c, &
+                      c33c,c34c,c35c,c36c,c44c,c45c,c46c,c55c,c56c,c66c
+  double precision :: moho,sediment
+  double precision :: elevation,gamma
   double precision :: x,y,z
   double precision :: R_moho,R_middlecrust
   integer :: ia,count_crust,count_mantle
-  logical :: found_crust
+  logical :: found_crust,moho_only
 
-  ! minimum/maximum allowed moho depths (5km/90km non-dimensionalized)
-  double precision,parameter :: MOHO_MINIMUM_DEFAULT = 5.0 / R_EARTH_KM
-  double precision,parameter :: MOHO_MAXIMUM_DEFAULT = 90.0 / R_EARTH_KM
+  double precision :: MOHO_MAXIMUM_DEFAULT,MOHO_MINIMUM_DEFAULT
+  double precision :: MOHO_MAXIMUM,MOHO_MINIMUM
 
-  double precision :: MOHO_MINIMUM,MOHO_MAXIMUM
+  ! default minimum/maximum allowed moho depths
+  ! Earth  (5km/90km non-dimensionalized)
+  double precision,parameter :: MOHO_MINIMUM_DEFAULT_EARTH = 5.0 / EARTH_R_KM
+  double precision,parameter :: MOHO_MAXIMUM_DEFAULT_EARTH = 90.0 / EARTH_R_KM
+  ! Mars
+  double precision,parameter :: MOHO_MINIMUM_DEFAULT_MARS = 2.0 / MARS_R_KM
+  double precision,parameter :: MOHO_MAXIMUM_DEFAULT_MARS = 150.0 / MARS_R_KM
+  ! Moon - todo: needs better estimates
+  double precision,parameter :: MOHO_MINIMUM_DEFAULT_MOON = 2.0 / MOON_R_KM
+  double precision,parameter :: MOHO_MAXIMUM_DEFAULT_MOON = 100.0 / MOON_R_KM
+
+  ! min/max defaults
+  select case(PLANET_TYPE)
+  case (IPLANET_MARS)
+    ! Mars
+    MOHO_MINIMUM_DEFAULT = MOHO_MINIMUM_DEFAULT_MARS
+    MOHO_MAXIMUM_DEFAULT = MOHO_MAXIMUM_DEFAULT_MARS
+  case (IPLANET_EARTH)
+    ! Earth
+    MOHO_MINIMUM_DEFAULT = MOHO_MINIMUM_DEFAULT_EARTH
+    MOHO_MAXIMUM_DEFAULT = MOHO_MAXIMUM_DEFAULT_EARTH
+  case (IPLANET_MOON)
+    ! Moon
+    MOHO_MINIMUM_DEFAULT = MOHO_MINIMUM_DEFAULT_MOON
+    MOHO_MAXIMUM_DEFAULT = MOHO_MAXIMUM_DEFAULT_MOON
+  case default
+    call exit_MPI(myrank,'Invalid planet, moho stretching not implemented yet')
+  end select
 
   ! sets min/max allowed moho depth
   MOHO_MINIMUM = MOHO_MINIMUM_DEFAULT
   MOHO_MAXIMUM = MOHO_MAXIMUM_DEFAULT
+
+  ! modification for different crustal models
+  ! full_sphericalharmonics crustal model
   if (REFERENCE_CRUSTAL_MODEL == ICRUST_CRUST_SH) then
     ! minimum moho < 3.9km
-    MOHO_MINIMUM = 3.5d0 / R_EARTH_KM
+    MOHO_MINIMUM = 3.5d0 / (R_PLANET/1000.d0)
+  endif
+  ! SGLOBE-rani crustal model
+  if (REFERENCE_CRUSTAL_MODEL == ICRUST_SGLOBECRUST) then
+    ! minimum moho
+    MOHO_MINIMUM = 2.d0 / (R_PLANET/1000.d0)
+    ! maximum moho
+    MOHO_MAXIMUM = 115.d0 / (R_PLANET/1000.d0)
   endif
 
   ! radii for stretching criteria
-  R_moho = RMOHO_FICTITIOUS_IN_MESHER/R_EARTH
-  R_middlecrust = RMIDDLE_CRUST/R_EARTH
+  R_moho = RMOHO_FICTITIOUS_IN_MESHER/R_PLANET
+  R_middlecrust = RMIDDLE_CRUST/R_PLANET
 
   ! loops over element's anchor points
   count_crust = 0
@@ -103,13 +150,26 @@
     endif
 
     ! sets longitude bounds [-180,180]
-    if (lon > 180.0d0 ) lon = lon - 360.0d0
+    if (lon > 180.d0 ) lon = lon - 360.0d0
 
     ! initializes
     moho = 0.d0
+    sediment = 0.d0
+    moho_only = .true.  ! only moho value needed
 
     ! gets smoothed moho depth
-    call meshfem3D_model_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,found_crust,elem_in_crust)
+    call meshfem3D_model_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,sediment,found_crust,elem_in_crust,moho_only, &
+                               c11c,c12c,c13c,c14c,c15c,c16c,c22c,c23c,c24c,c25c,c26c, &
+                               c33c,c34c,c35c,c36c,c44c,c45c,c46c,c55c,c56c,c66c)
+
+    !debug
+    !if (lon > 140.0 .and. lon < 143. .and. lat <-42. .and. lat > -45. .and. ia == 27) then
+    !  print '(a, I4, 4F12.4)', 'crust map:', ia, lat, lon, (ONE-r)*R_PLANET_KM,moho*R_PLANET_KM
+    !endif
+    !if (r > 1.02d0) then
+    !  print '(a,4F12.4)', 'DEBUG moho_stretching_honor_crust_reg(): lat, lon, r, moho =', lat, lon, r, moho
+    !  stop 'stop for detecting large r in moho_stretching'
+    !endif
 
     ! checks non-dimensionalized moho depth
     !
@@ -120,11 +180,11 @@
     if (.not. USE_OLD_VERSION_5_1_5_FORMAT) then
       ! limits moho depth to a threshold value to avoid stretching problems
       if (moho < MOHO_MINIMUM) then
-        print *,'moho value exceeds minimum (in km): ',moho*R_EARTH_KM,MOHO_MINIMUM*R_EARTH_KM,'lat/lon:',lat,lon
+        print *,'moho value exceeds minimum (in km): ',moho*R_PLANET/1000.d0,MOHO_MINIMUM*R_PLANET/1000.d0,'lat/lon:',lat,lon
         moho = MOHO_MINIMUM
       endif
       if (moho > MOHO_MAXIMUM) then
-        print *,'moho value exceeds maximum (in km): ',moho*R_EARTH_KM,MOHO_MAXIMUM*R_EARTH_KM,'lat/lon:',lat,lon
+        print *,'moho value exceeds maximum (in km): ',moho*R_PLANET/1000.d0,MOHO_MAXIMUM*R_PLANET/1000.d0,'lat/lon:',lat,lon
         moho = MOHO_MAXIMUM
       endif
     endif
@@ -155,7 +215,7 @@
           else
             ! point below fictitious moho
             ! gamma ranges from 0 (point at R220) to 1 (point at fictitious moho depth)
-            gamma = (( r - R220/R_EARTH)/( R_moho - R220/R_EARTH))
+            gamma = (( r - R220/R_PLANET)/( R_moho - R220/R_PLANET))
 
             ! since not all GLL points are exactly at R220, use a small
             ! tolerance for R220 detection, fix R220
@@ -182,7 +242,7 @@
           else
             ! point below middle crust
             ! gamma ranges from 0 (point at R220) to 1 (point at middle crust depth)
-            gamma = (r - R220/R_EARTH)/( R_middlecrust - R220/R_EARTH )
+            gamma = (r - R220/R_PLANET)/( R_middlecrust - R220/R_PLANET )
 
             ! since not all GLL points are exactly at R220, use a small
             ! tolerance for R220 detection, fix R220
@@ -223,9 +283,9 @@
   endif
 
   ! small stretch check: stretching should affect only points above R220
-  if (r*R_EARTH < R220) then
-    print *,'Error moho stretching: ',r*R_EARTH,R220,moho*R_EARTH
-    call exit_mpi(myrank,'incorrect moho stretching')
+  if (r*R_PLANET < R220) then
+    print *,'Error moho stretching: ',r*R_PLANET,R220,moho*R_PLANET
+    call exit_mpi(myrank,'incorrect moho stretching in moho_stretching_honor_crust() routine')
   endif
 
   end subroutine moho_stretching_honor_crust
@@ -234,7 +294,7 @@
 !------------------------------------------------------------------------------------------------
 !
 
-  subroutine moho_stretching_honor_crust_reg(myrank,xelm,yelm,zelm, &
+  subroutine moho_stretching_honor_crust_reg(xelm,yelm,zelm, &
                                              elem_in_crust,elem_in_mantle)
 
 ! regional routine: for REGIONAL_MOHO_MESH adaptations
@@ -245,28 +305,28 @@
 ! input:  myrank, xelm, yelm, zelm
 ! Dec, 30, 2009
 
-  use constants, only: &
-    NGNOD,R_EARTH_KM,R_EARTH,R_UNIT_SPHERE, &
-    PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,SMALLVAL,ONE,HONOR_DEEP_MOHO,USE_OLD_VERSION_5_1_5_FORMAT, &
+  use constants, only: myrank, &
+    NGNOD,PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,ONE,USE_OLD_VERSION_5_1_5_FORMAT, &
     SUPPRESS_MOHO_STRETCHING
 
-  use meshfem3D_par, only: &
-    R220
+  use shared_parameters, only: R_PLANET,HONOR_DEEP_MOHO
+
+  use meshfem_par, only: R220
 
   implicit none
 
-  integer :: myrank
+  double precision,dimension(NGNOD),intent(inout) :: xelm,yelm,zelm
 
-  double precision,dimension(NGNOD) :: xelm,yelm,zelm
-
-  logical :: elem_in_crust,elem_in_mantle
+  logical,intent(inout) :: elem_in_crust,elem_in_mantle
 
   ! local parameters
   integer :: ia,count_crust,count_mantle
   double precision :: r,theta,phi,lat,lon
   double precision :: vpvc,vphc,vsvc,vshc,etac,rhoc
-  double precision :: moho
-  logical :: found_crust
+  double precision :: c11c,c12c,c13c,c14c,c15c,c16c,c22c,c23c,c24c,c25c,c26c, &
+                      c33c,c34c,c35c,c36c,c44c,c45c,c46c,c55c,c56c,c66c
+  double precision :: moho,sediment
+  logical :: found_crust,moho_only
   double precision :: x,y,z
 
   ! loops over element's anchor points
@@ -301,9 +361,13 @@
 
     ! initializes
     moho = 0.d0
+    sediment = 0.d0
+    moho_only = .true.  ! only moho value needed
 
     ! gets smoothed moho depth
-    call meshfem3D_model_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,found_crust,elem_in_crust)
+    call meshfem3D_model_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,sediment,found_crust,elem_in_crust,moho_only, &
+                               c11c,c12c,c13c,c14c,c15c,c16c,c22c,c23c,c24c,c25c,c26c, &
+                               c33c,c34c,c35c,c36c,c44c,c45c,c46c,c55c,c56c,c66c)
 
     ! checks moho depth
     if (abs(moho) < TINYVAL ) call exit_mpi(myrank,'Error moho depth in crust_reg to honor')
@@ -349,9 +413,9 @@
   endif
 
   ! small stretch check: stretching should affect only points above R220
-  if (r*R_EARTH < R220) then
-    print *,'Error moho stretching: ',r*R_EARTH,R220,moho*R_EARTH
-    call exit_mpi(myrank,'incorrect moho stretching')
+  if (r*R_PLANET < R220) then
+    print *,'Error moho stretching: ',r*R_PLANET,R220,moho*R_PLANET
+    call exit_mpi(myrank,'incorrect moho stretching in moho_stretching_honor_crust_reg() routine')
   endif
 
   end subroutine moho_stretching_honor_crust_reg
@@ -364,8 +428,14 @@
 
 ! honors deep moho (below 60 km), otherwise keeps the mesh boundary at r60 fixed
 
-  use constants
-  use meshfem3D_par, only: RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST
+  use constants, only: NGNOD,EARTH_R,R_UNIT_SPHERE,SMALLVAL
+  ! Earth
+  use constants, only: EARTH_R
+
+  use shared_parameters, only: PLANET_TYPE,IPLANET_EARTH,IPLANET_MARS,IPLANET_MOON, &
+    R_PLANET,RMOHO_STRETCH_ADJUSTMENT
+
+  use meshfem_par, only: RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST
 
   implicit none
 
@@ -381,25 +451,55 @@
 
   ! local parameters
   double precision :: elevation,gamma
-  ! radii for stretching criteria
-  double precision,parameter ::  R15=6356000.d0/R_EARTH
-  double precision,parameter ::  R25=6346000.d0/R_EARTH
-  double precision,parameter ::  R30=6341000.d0/R_EARTH
-  double precision,parameter ::  R35=6336000.d0/R_EARTH
-  double precision,parameter ::  R40=6331000.d0/R_EARTH
-  double precision,parameter ::  R45=6326000.d0/R_EARTH
-  double precision,parameter ::  R50=6321000.d0/R_EARTH
-  double precision,parameter ::  R55=6316000.d0/R_EARTH
-  double precision,parameter ::  R60=6311000.d0/R_EARTH
+  double precision :: R15,R25,R35,R45,R60,RSURFACE
 
-  ! checks moho position: supposed to be at 60 km
-  if (RMOHO_STRETCH_ADJUSTMENT /= -20000.d0 ) &
-    stop 'wrong moho stretch adjustment for stretch_deep_moho'
-  if (RMOHO_FICTITIOUS_IN_MESHER/R_EARTH /= R60 ) &
-    stop 'wrong moho depth '
-  ! checks middle crust position: supposed to be bottom of first layer at 15 km
-  if (RMIDDLE_CRUST/R_EARTH /= R15 ) &
-    stop 'wrong middle crust depth'
+  ! radii for stretching criteria
+  double precision,parameter ::  EARTH_R15 = 6356000.d0/EARTH_R
+  double precision,parameter ::  EARTH_R25 = 6346000.d0/EARTH_R
+  !double precision,parameter ::  EARTH_R30 = 6341000.d0/EARTH_R
+  double precision,parameter ::  EARTH_R35 = 6336000.d0/EARTH_R
+  !double precision,parameter ::  EARTH_R40 = 6331000.d0/EARTH_R
+  double precision,parameter ::  EARTH_R45 = 6326000.d0/EARTH_R
+  !double precision,parameter ::  EARTH_R50 = 6321000.d0/EARTH_R
+  !double precision,parameter ::  EARTH_R55 = 6316000.d0/EARTH_R
+  double precision,parameter ::  EARTH_R60 = 6311000.d0/EARTH_R
+
+  ! radii
+  RSURFACE = R_PLANET
+  select case(PLANET_TYPE)
+  case (IPLANET_EARTH)
+    ! Earth
+    R15 = EARTH_R15
+    R25 = EARTH_R25
+    R35 = EARTH_R35
+    R45 = EARTH_R45
+    R60 = EARTH_R60
+    ! checks moho position: supposed to be at 60 km
+    if (RMOHO_STRETCH_ADJUSTMENT /= -20000.d0 ) &
+      stop 'wrong moho stretch adjustment for stretch_deep_moho'
+    if (RMOHO_FICTITIOUS_IN_MESHER/R_PLANET /= R60 ) &
+      stop 'wrong moho depth '
+    ! checks middle crust position: supposed to be bottom of first layer at 15 km
+    if (RMIDDLE_CRUST/R_PLANET /= R15 ) &
+      stop 'wrong middle crust depth'
+  case (IPLANET_MARS)
+    ! Mars
+    R15 = (R_PLANET-15000.d0)/R_PLANET ! 15 km
+    R25 = (R_PLANET-25000.d0)/R_PLANET ! 25 km
+    R35 = (R_PLANET-45000.d0)/R_PLANET ! 45 km
+    R45 = (R_PLANET-65000.d0)/R_PLANET ! 65 km
+    R60 = (R_PLANET-120000.d0)/R_PLANET ! 120 km
+  case (IPLANET_MOON)
+    ! Moon
+    R15 = (R_PLANET-12000.d0)/R_PLANET ! 12 km
+    R25 = (R_PLANET-28000.d0)/R_PLANET ! 28 km
+    R35 = (R_PLANET-38000.d0)/R_PLANET ! 38 km
+    R45 = (R_PLANET-48000.d0)/R_PLANET ! 48 km
+    R60 = (R_PLANET-60000.d0)/R_PLANET ! 60 km
+  case default
+    print *,'Invalid planet, stretch deep moho not implemented yet'
+    stop 'Invalid planet, stretch deep moho not implemented yet'
+  end select
 
   ! stretches mesh by moving point coordinates
   if (moho < R25 .and. moho > R45) then
@@ -451,7 +551,7 @@
       if (r < R45 .and. r >= R60) then
         gamma=(R45-r)/(R45-R60)
       else if (r < R60) then
-        gamma=(r-R220/R_EARTH)/(R60-R220/R_EARTH)
+        gamma=(r-R220/RSURFACE)/(R60-R220/RSURFACE)
         if (abs(gamma) < SMALLVAL) then
           gamma=0.0d0
         endif
@@ -514,8 +614,14 @@
 ! honors shallow and middle depth moho, deep moho will be interpolated within elements
 ! mesh will get stretched down to r220
 
-  use constants
-  use meshfem3D_par, only: RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST
+  use constants, only: NGNOD,EARTH_R,R_UNIT_SPHERE,SMALLVAL
+  ! Earth
+  use constants, only: EARTH_R
+
+  use shared_parameters, only: PLANET_TYPE,IPLANET_EARTH,IPLANET_MARS,IPLANET_MOON, &
+    R_PLANET,RMOHO_STRETCH_ADJUSTMENT
+
+  use meshfem_par, only: RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST
 
   implicit none
 
@@ -530,25 +636,55 @@
 
   ! local parameters
   double precision :: elevation,gamma
-  ! radii for stretching criteria
-  double precision,parameter ::  R15=6356000.d0/R_EARTH
-  double precision,parameter ::  R25=6346000.d0/R_EARTH
-  double precision,parameter ::  R30=6341000.d0/R_EARTH
-  double precision,parameter ::  R35=6336000.d0/R_EARTH
-  double precision,parameter ::  R40=6331000.d0/R_EARTH
-  double precision,parameter ::  R45=6326000.d0/R_EARTH
-  double precision,parameter ::  R50=6321000.d0/R_EARTH
-  double precision,parameter ::  R55=6316000.d0/R_EARTH
-  double precision,parameter ::  R60=6311000.d0/R_EARTH
+  double precision :: R15,R25,R35,R45,R55,RSURFACE
 
-  ! checks moho position: supposed to be at 55 km
-  if (RMOHO_STRETCH_ADJUSTMENT /= -15000.d0 ) &
-    stop 'wrong moho stretch adjustment for stretch_moho'
-  if (RMOHO_FICTITIOUS_IN_MESHER/R_EARTH /= R55 ) &
-    stop 'wrong moho depth '
-  ! checks middle crust position: supposed to be bottom of first layer at 15 km
-  if (RMIDDLE_CRUST/R_EARTH /= R15 ) &
-    stop 'wrong middle crust depth'
+  ! radii for stretching criteria
+  double precision,parameter ::  EARTH_R15 = 6356000.d0/EARTH_R
+  double precision,parameter ::  EARTH_R25 = 6346000.d0/EARTH_R
+  !double precision,parameter ::  EARTH_R30 = 6341000.d0/EARTH_R
+  double precision,parameter ::  EARTH_R35 = 6336000.d0/EARTH_R
+  !double precision,parameter ::  EARTH_R40 = 6331000.d0/EARTH_R
+  double precision,parameter ::  EARTH_R45 = 6326000.d0/EARTH_R
+  !double precision,parameter ::  EARTH_R50 = 6321000.d0/EARTH_R
+  double precision,parameter ::  EARTH_R55 = 6316000.d0/EARTH_R
+  !double precision,parameter ::  EARTH_R60 = 6311000.d0/EARTH_R
+
+  ! radii
+  RSURFACE = R_PLANET
+  select case(PLANET_TYPE)
+  case (IPLANET_EARTH)
+    ! Earth
+    R15 = EARTH_R15
+    R25 = EARTH_R25
+    R35 = EARTH_R35
+    R45 = EARTH_R45
+    R55 = EARTH_R55
+    ! checks moho position: supposed to be at 55 km
+    if (RMOHO_STRETCH_ADJUSTMENT /= -15000.d0 ) &
+      stop 'wrong moho stretch adjustment for stretch_moho'
+    if (RMOHO_FICTITIOUS_IN_MESHER/R_PLANET /= R55 ) &
+      stop 'wrong moho depth '
+    ! checks middle crust position: supposed to be bottom of first layer at 15 km
+    if (RMIDDLE_CRUST/R_PLANET /= R15 ) &
+      stop 'wrong middle crust depth'
+  case (IPLANET_MARS)
+    ! Mars
+    R15 = (R_PLANET-15000.d0)/R_PLANET ! 15 km
+    R25 = (R_PLANET-25000.d0)/R_PLANET ! 25 km
+    R35 = (R_PLANET-45000.d0)/R_PLANET ! 45 km
+    R45 = (R_PLANET-65000.d0)/R_PLANET ! 65 km
+    R55 = (R_PLANET-95000.d0)/R_PLANET ! 95 km
+  case (IPLANET_MOON)
+    ! Moon
+    R15 = (R_PLANET-12000.d0)/R_PLANET ! 12 km
+    R25 = (R_PLANET-28000.d0)/R_PLANET ! 28 km
+    R35 = (R_PLANET-38000.d0)/R_PLANET ! 38 km
+    R45 = (R_PLANET-48000.d0)/R_PLANET ! 48 km
+    R55 = (R_PLANET-55000.d0)/R_PLANET ! 55 km
+  case default
+    print *,'Invalid planet, stretch moho not implemented yet'
+    stop 'Invalid planet, stretch moho not implemented yet'
+  end select
 
   ! moho between 25km and 45 km
   if (moho < R25 .and. moho > R45) then
@@ -556,8 +692,8 @@
     elevation = moho - R35
     if (r >= R35 .and. r < R15) then
       gamma=((R15-r)/(R15-R35))
-    else if (r < R35 .and. r > R220/R_EARTH) then
-      gamma = ((r-R220/R_EARTH)/(R35-R220/R_EARTH))
+    else if (r < R35 .and. r > R220/RSURFACE) then
+      gamma = ((r-R220/RSURFACE)/(R35-R220/RSURFACE))
       if (abs(gamma) < SMALLVAL) then
         gamma=0.0d0
       endif
@@ -576,8 +712,8 @@
     elevation = R45 - R35
     if (r >= R35 .and. r < R15) then
       gamma=((R15-r)/(R15-R35))
-    else if (r < R35 .and. r > R220/R_EARTH) then
-      gamma=((r-R220/R_EARTH)/(R35-R220/R_EARTH))
+    else if (r < R35 .and. r > R220/RSURFACE) then
+      gamma=((r-R220/RSURFACE)/(R35-R220/RSURFACE))
       if (abs(gamma) < SMALLVAL) then
         gamma=0.0d0
       endif
@@ -596,8 +732,8 @@
     elevation = R25-R35
     if (r >= R35 .and. r < R15) then
       gamma=((R15-r)/(R15-R35))
-    else if (r < R35 .and. r > R220/R_EARTH) then
-      gamma=(r-R220/R_EARTH)/(R35-R220/R_EARTH)
+    else if (r < R35 .and. r > R220/RSURFACE) then
+      gamma=(r-R220/RSURFACE)/(R35-R220/RSURFACE)
       if (abs(gamma) < SMALLVAL) then
         gamma=0.0d0
       endif
@@ -641,15 +777,16 @@
 
   implicit none
 
-  integer :: ia
+  integer,intent(in) :: ia
 
-  double precision :: xelm(NGNOD)
-  double precision :: yelm(NGNOD)
-  double precision :: zelm(NGNOD)
+  double precision,intent(out) :: xelm(NGNOD)
+  double precision,intent(out) :: yelm(NGNOD)
+  double precision,intent(out) :: zelm(NGNOD)
 
-  double precision :: x,y,z
+  double precision,intent(inout) :: x,y,z
 
-  double precision :: r,elevation,gamma
+  double precision,intent(in) :: elevation,gamma
+  double precision,intent(inout) :: r
 
   ! local parameters
   double precision :: stretch_factor

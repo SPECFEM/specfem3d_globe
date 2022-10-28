@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -36,12 +36,28 @@
 
   implicit none
 
-  ! mantle
-  accel_crust_mantle(:,:) = 0._CUSTOM_REAL
-  ! outer core
-  accel_outer_core(:) = 0._CUSTOM_REAL
-  ! inner core
-  accel_inner_core(:,:) = 0._CUSTOM_REAL
+  ! timing
+  !double precision :: tCPU
+  !double precision, external :: wtime
+
+  ! debug timing
+  !tCPU = wtime()
+
+  if (.not. GPU_MODE) then
+    ! on CPU
+    ! mantle
+    accel_crust_mantle(:,:) = 0._CUSTOM_REAL
+    ! outer core
+    accel_outer_core(:) = 0._CUSTOM_REAL
+    ! inner core
+    accel_inner_core(:,:) = 0._CUSTOM_REAL
+  else
+    ! on GPU
+    call update_displ_lddrk_gpu(Mesh_pointer,1) ! FORWARD_OR_ADJOINT == 1
+  endif
+
+  ! debug timing
+  !if (myrank == 0) print *,'debug: update_displ_lddrk timing = ',sngl(wtime() - tCPU),'(s)'
 
   end subroutine update_displ_lddrk
 
@@ -63,12 +79,18 @@
   ! checks
   if (SIMULATION_TYPE /= 3 ) return
 
-  ! mantle
-  b_accel_crust_mantle(:,:) = 0._CUSTOM_REAL
-  ! outer core
-  b_accel_outer_core(:) = 0._CUSTOM_REAL
-  ! inner core
-  b_accel_inner_core(:,:) = 0._CUSTOM_REAL
+  if (.not. GPU_MODE) then
+    ! on CPU
+    ! mantle
+    b_accel_crust_mantle(:,:) = 0._CUSTOM_REAL
+    ! outer core
+    b_accel_outer_core(:) = 0._CUSTOM_REAL
+    ! inner core
+    b_accel_inner_core(:,:) = 0._CUSTOM_REAL
+  else
+    ! on GPU
+    call update_displ_lddrk_gpu(Mesh_pointer,3) ! FORWARD_OR_ADJOINT == 3
+  endif
 
   end subroutine update_displ_lddrk_backward
 
@@ -97,9 +119,15 @@
   beta = BETA_LDDRK(istage)
 
   ! forward wavefields
-  call update_acoustic_lddrk(NGLOB_OUTER_CORE,displ_outer_core,veloc_outer_core,accel_outer_core, &
-                             displ_outer_core_lddrk,veloc_outer_core_lddrk, &
-                             deltat,alpha,beta)
+  if (.not. GPU_MODE) then
+    ! on CPU
+    call update_acoustic_lddrk(NGLOB_OUTER_CORE,displ_outer_core,veloc_outer_core,accel_outer_core, &
+                               displ_outer_core_lddrk,veloc_outer_core_lddrk, &
+                               deltat,alpha,beta)
+  else
+    ! on GPU
+    call update_acoustic_lddrk_gpu(Mesh_pointer,alpha,beta,1)  ! FORWARD_OR_ADJOINT == 1
+  endif
 
   end subroutine update_veloc_acoustic_lddrk
 
@@ -123,9 +151,15 @@
   beta = BETA_LDDRK(istage)
 
   ! backward/reconstructed wavefields
-  call update_acoustic_lddrk(NGLOB_OUTER_CORE_ADJOINT,b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core, &
-                             b_displ_outer_core_lddrk,b_veloc_outer_core_lddrk, &
-                             b_deltat,alpha,beta)
+  if (.not. GPU_MODE) then
+    ! on CPU
+    call update_acoustic_lddrk(NGLOB_OUTER_CORE_ADJOINT,b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core, &
+                               b_displ_outer_core_lddrk,b_veloc_outer_core_lddrk, &
+                               b_deltat,alpha,beta)
+  else
+    ! on GPU
+    call update_acoustic_lddrk_gpu(Mesh_pointer,alpha,beta,3)  ! FORWARD_OR_ADJOINT == 3
+  endif
 
   end subroutine update_veloc_acoustic_lddrk_backward
 
@@ -197,16 +231,22 @@
   beta = BETA_LDDRK(istage)
 
   ! forward wavefields
-  ! crust/mantle
-  call update_elastic_lddrk(NGLOB_CRUST_MANTLE,displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
-                            displ_crust_mantle_lddrk,veloc_crust_mantle_lddrk, &
-                            deltat,alpha,beta)
+  if (.not. GPU_MODE) then
+    ! on CPU
+    ! crust/mantle
+    call update_elastic_lddrk(NGLOB_CRUST_MANTLE,displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
+                              displ_crust_mantle_lddrk,veloc_crust_mantle_lddrk, &
+                              deltat,alpha,beta)
 
-  ! inner core
-  call update_elastic_lddrk(NGLOB_INNER_CORE,displ_inner_core,veloc_inner_core,accel_inner_core, &
-                            displ_inner_core_lddrk,veloc_inner_core_lddrk, &
-                            deltat,alpha,beta)
-
+    ! inner core
+    if (NGLOB_INNER_CORE > 0) &
+      call update_elastic_lddrk(NGLOB_INNER_CORE,displ_inner_core,veloc_inner_core,accel_inner_core, &
+                                displ_inner_core_lddrk,veloc_inner_core_lddrk, &
+                                deltat,alpha,beta)
+  else
+    ! on GPU
+    call update_elastic_lddrk_gpu(Mesh_pointer,alpha,beta,1)  ! FORWARD_OR_ADJOINT == 1
+  endif
 
   end subroutine update_veloc_elastic_lddrk
 
@@ -231,15 +271,22 @@
   beta = BETA_LDDRK(istage)
 
   ! backward/reconstructed wavefields
-  ! crust/mantle
-  call update_elastic_lddrk(NGLOB_CRUST_MANTLE_ADJOINT,b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle, &
-                            b_displ_crust_mantle_lddrk,b_veloc_crust_mantle_lddrk, &
-                            b_deltat,alpha,beta)
+  if (.not. GPU_MODE) then
+    ! on CPU
+    ! crust/mantle
+    call update_elastic_lddrk(NGLOB_CRUST_MANTLE_ADJOINT,b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle, &
+                              b_displ_crust_mantle_lddrk,b_veloc_crust_mantle_lddrk, &
+                              b_deltat,alpha,beta)
 
-  ! inner core
-  call update_elastic_lddrk(NGLOB_INNER_CORE_ADJOINT,b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core, &
-                            b_displ_inner_core_lddrk,b_veloc_inner_core_lddrk, &
-                            b_deltat,alpha,beta)
+    ! inner core
+    if (NGLOB_INNER_CORE_ADJOINT > 0) &
+      call update_elastic_lddrk(NGLOB_INNER_CORE_ADJOINT,b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core, &
+                                b_displ_inner_core_lddrk,b_veloc_inner_core_lddrk, &
+                                b_deltat,alpha,beta)
+  else
+    ! on GPU
+    call update_elastic_lddrk_gpu(Mesh_pointer,alpha,beta,3)  ! FORWARD_OR_ADJOINT == 3
+  endif
 
   end subroutine update_veloc_elastic_lddrk_backward
 

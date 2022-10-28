@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -48,7 +48,7 @@
     call flush_IMAIN()
   endif
 
-  ! improvements to make: read-in by master and broadcast to all slaves
+  ! improvements to make: read-in by main and broadcast to all secondary processes
   open(IIN,file=trim(PATHNAME_KL_REG),status='old',action='read',iostat=ios)
   if (ios /= 0 ) call exit_MPI(myrank,'Error opening file '//trim(PATHNAME_KL_REG)//' in read_kl_regular_grid() routine')
 
@@ -119,7 +119,7 @@
   subroutine find_regular_grid_slice_number(slice_number, GRID)
 
   use constants, only: CUSTOM_REAL,PI,DEGREES_TO_RADIANS, &
-    NM_KL_REG_LAYER,KL_REG_MIN_LAT,KL_REG_MIN_LON
+    KL_REG_MIN_LAT,KL_REG_MIN_LON
 
   use specfem_par, only: myrank, addressing, &
     NCHUNKS_VAL, NPROC_XI_VAL, NPROC_ETA_VAL
@@ -183,8 +183,10 @@
                                    hxir_reg,hetar_reg,hgammar_reg)
 
   use constants_solver, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,NUM_ITER, &
-    DEGREES_TO_RADIANS,HUGEVAL,TWO_PI,R_UNIT_SPHERE,R_EARTH, &
-    NM_KL_REG_PTS,NM_KL_REG_LAYER,KL_REG_MIN_LAT,KL_REG_MIN_LON
+    DEGREES_TO_RADIANS,HUGEVAL,TWO_PI,R_UNIT_SPHERE, &
+    NM_KL_REG_PTS,KL_REG_MIN_LAT,KL_REG_MIN_LON
+
+  use shared_parameters, only: R_PLANET
 
   use specfem_par, only: myrank, NEX_XI
 
@@ -214,7 +216,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLZ,NM_KL_REG_PTS), intent(out) :: hgammar_reg
 
   ! GLL number of anchors
-  integer, dimension(NGNOD) :: iaddx, iaddy, iaddr
+  integer, dimension(NGNOD) :: anchor_iax,anchor_iay,anchor_iaz
 
   integer :: i, j, k, isp, ilayer, ilat, ilon, iglob, ix_in, iy_in, iz_in
   integer :: ispec_in, ispec, iter_loop, ia, ipoint
@@ -235,7 +237,7 @@
 
   !---------------------------
 
-  call hex_nodes2(iaddx,iaddy,iaddr)
+  call hex_nodes_anchor_ijk(anchor_iax,anchor_iay,anchor_iaz)
 
   ! compute typical size of elements at the surface
   typical_size_squared = TWO_PI * R_UNIT_SPHERE / (4.0 * NEX_XI)
@@ -255,8 +257,10 @@
     ! (lat,lon,radius) for isp point
     lat = KL_REG_MIN_LAT + ilat * GRID%dlat * GRID%ndoubling(ilayer)
     lon = KL_REG_MIN_LON + (ilon - 1) * GRID%dlon * GRID%ndoubling(ilayer)
+
     ! convert radius to meters and then scale
-    radius = GRID%rlayer(ilayer) * 1000.0 / R_EARTH
+    radius = GRID%rlayer(ilayer) * 1000.0 / R_PLANET
+
     ! (x,y,z) for isp point
     th = (90.0 - lat) * DEGREES_TO_RADIANS; ph = lon * DEGREES_TO_RADIANS
     x_target = radius * sin(th) * cos(ph)
@@ -266,12 +270,17 @@
     ! first exclude elements too far away
     locate_target = .false.
     distmin_squared = HUGEVAL
+    ix_in = 1
+    iy_in = 1
+    iz_in = 1
+    ispec_in = 1
 
     do ispec = 1,nspec
       iglob = ibool(1,1,1,ispec)
       dist_squared = (x_target - xstore(iglob))**2 &
                    + (y_target - ystore(iglob))**2 &
                    + (z_target - zstore(iglob))**2
+
       !  we compare squared distances instead of distances themselves to significantly speed up calculations
       if (dist_squared > typical_size_squared) cycle
 
@@ -314,7 +323,7 @@
 
     ! anchors
     do ia = 1, NGNOD
-      iglob = ibool(iaddx(ia), iaddy(ia), iaddr(ia), ispec_in)
+      iglob = ibool(anchor_iax(ia),anchor_iay(ia),anchor_iaz(ia),ispec_in)
       xelm(ia) = dble(xstore(iglob))
       yelm(ia) = dble(ystore(iglob))
       zelm(ia) = dble(zstore(iglob))
@@ -357,9 +366,10 @@
     call lagrange_any2(xi, NGLLX, xigll, hxir)
     call lagrange_any2(eta, NGLLY, yigll, hetar)
     call lagrange_any2(gamma, NGLLZ, zigll, hgammar)
-    hxir_reg(:,ipoint) = hxir
-    hetar_reg(:,ipoint) = hetar
-    hgammar_reg(:,ipoint) = hgammar
+
+    hxir_reg(:,ipoint) = hxir(:)
+    hetar_reg(:,ipoint) = hetar(:)
+    hgammar_reg(:,ipoint) = hgammar(:)
 
   enddo ! ipoint
 
@@ -367,56 +377,6 @@
 
 !==============================================================
 
-  subroutine hex_nodes2(iaddx,iaddy,iaddz)
-
-  use constants
-
-  implicit none
-
-  integer, dimension(NGNOD), intent(out) :: iaddx,iaddy,iaddz
-  integer :: ia
-
-  ! define topology of the control element
-  call hex_nodes(iaddx,iaddy,iaddz)
-
-  ! define coordinates of the control points of the element
-  do ia = 1,NGNOD
-
-     if (iaddx(ia) == 0) then
-        iaddx(ia) = 1
-     else if (iaddx(ia) == 1) then
-        iaddx(ia) = (NGLLX+1)/2
-     else if (iaddx(ia) == 2) then
-        iaddx(ia) = NGLLX
-     else
-        stop 'incorrect value of iaddx'
-     endif
-
-     if (iaddy(ia) == 0) then
-        iaddy(ia) = 1
-     else if (iaddy(ia) == 1) then
-        iaddy(ia) = (NGLLY+1)/2
-     else if (iaddy(ia) == 2) then
-        iaddy(ia) = NGLLY
-     else
-        stop 'incorrect value of iaddy'
-     endif
-
-     if (iaddz(ia) == 0) then
-        iaddz(ia) = 1
-     else if (iaddz(ia) == 1) then
-        iaddz(ia) = (NGLLZ+1)/2
-     else if (iaddz(ia) == 2) then
-        iaddz(ia) = NGLLZ
-     else
-        stop 'incorrect value of iaddz'
-     endif
-
-  enddo
-
-  end subroutine hex_nodes2
-
-!==============================================================
 
   subroutine lagrange_any2(xi,NGLL,xigll,h)
 
@@ -500,5 +460,6 @@
 
   xi = EPS * nint(xi / EPS)
   eta = EPS * nint(eta / EPS)
+
   end subroutine chunk_map
 

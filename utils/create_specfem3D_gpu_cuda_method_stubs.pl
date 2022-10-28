@@ -8,7 +8,7 @@
 #             run in directory root SPECFEM3D/
 #
 
-$outfile = "src/specfem3D/specfem3D_gpu_method_stubs.c";
+$outfile = "src/gpu/specfem3D_gpu_method_stubs.c";
 
 
 open(IOUT,"> _____temp_tutu_____");
@@ -17,7 +17,7 @@ $header = <<END;
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -56,8 +56,8 @@ END
 
 
 $warning = <<END;
- fprintf(stderr,"ERROR: GPU_MODE enabled without GPU/CUDA/OpenCL Support. "
-                "To enable GPU support, reconfigure with --with-gpu and/or --with-opencl flag.\\n");
+ fprintf(stderr,"ERROR: GPU_MODE enabled without CUDA/OpenCL/HIP Support. "
+                "To enable GPU support, reconfigure with --with-cuda and/or --with-opencl and/or --with-hip flag.\\n");
  exit(1);
 END
 
@@ -69,6 +69,10 @@ $success = 0;
 
 foreach $name (@objects) {
   chop $name;
+
+  # skip own output file
+  if($name =~ /specfem3D_gpu_method_stubs.c/){ next; }
+
   print "extracting word in file $name ...\n";
 
   print IOUT "\n//\n// $name\n//\n\n";

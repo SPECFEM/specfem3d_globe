@@ -1,7 +1,7 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -86,13 +86,27 @@ void FC_FUNC_ (compute_kernels_cm_gpu,
                                                               deltat);
   }
 #endif
+#ifdef USE_HIP
+  dim3 grid(num_blocks_x,num_blocks_y);
+  dim3 threads(blocksize,1,1);
+  if (run_hip) {
+    // rho kernel
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_rho_kernel), grid, threads, 0, mp->compute_stream,
+                                                            mp->d_ibool_crust_mantle.hip,
+                                                            mp->d_accel_crust_mantle.hip,
+                                                            mp->d_b_displ_crust_mantle.hip,
+                                                            mp->d_rho_kl_crust_mantle.hip,
+                                                            mp->NSPEC_CRUST_MANTLE,
+                                                            deltat);
+  }
+#endif
 
   // wavespeed kernels
   // checks if strain is available
   if (mp->undo_attenuation) {
     // checks strain array size
-    if (mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) {
-      exit_on_error("compute_kernels_cm_cuda NSPEC_CRUST_MANTLE_STRAIN_ONLY invalid with undo_att");
+    if (mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY == 0) {
+      exit_on_error("compute_kernels_cm_gpu NSPEC_CRUST_MANTLE_STRAIN_ONLY invalid with undo_att");
     }
 
 #ifdef USE_OPENCL
@@ -171,9 +185,15 @@ void FC_FUNC_ (compute_kernels_cm_gpu,
                                                                           deltat,
                                                                           mp->d_ibool_crust_mantle.cuda,
                                                                           mp->d_b_displ_crust_mantle.cuda,
-                                                                          mp->d_xix_crust_mantle.cuda,mp->d_xiy_crust_mantle.cuda,mp->d_xiz_crust_mantle.cuda,
-                                                                          mp->d_etax_crust_mantle.cuda,mp->d_etay_crust_mantle.cuda,mp->d_etaz_crust_mantle.cuda,
-                                                                          mp->d_gammax_crust_mantle.cuda,mp->d_gammay_crust_mantle.cuda,mp->d_gammaz_crust_mantle.cuda,
+                                                                          mp->d_xix_crust_mantle.cuda,
+                                                                          mp->d_xiy_crust_mantle.cuda,
+                                                                          mp->d_xiz_crust_mantle.cuda,
+                                                                          mp->d_etax_crust_mantle.cuda,
+                                                                          mp->d_etay_crust_mantle.cuda,
+                                                                          mp->d_etaz_crust_mantle.cuda,
+                                                                          mp->d_gammax_crust_mantle.cuda,
+                                                                          mp->d_gammay_crust_mantle.cuda,
+                                                                          mp->d_gammaz_crust_mantle.cuda,
                                                                           mp->d_hprime_xx.cuda);
       } else {
         // anisotropic kernels
@@ -188,13 +208,75 @@ void FC_FUNC_ (compute_kernels_cm_gpu,
                                                                           deltat,
                                                                           mp->d_ibool_crust_mantle.cuda,
                                                                           mp->d_b_displ_crust_mantle.cuda,
-                                                                          mp->d_xix_crust_mantle.cuda,mp->d_xiy_crust_mantle.cuda,mp->d_xiz_crust_mantle.cuda,
-                                                                          mp->d_etax_crust_mantle.cuda,mp->d_etay_crust_mantle.cuda,mp->d_etaz_crust_mantle.cuda,
-                                                                          mp->d_gammax_crust_mantle.cuda,mp->d_gammay_crust_mantle.cuda,mp->d_gammaz_crust_mantle.cuda,
+                                                                          mp->d_xix_crust_mantle.cuda,
+                                                                          mp->d_xiy_crust_mantle.cuda,
+                                                                          mp->d_xiz_crust_mantle.cuda,
+                                                                          mp->d_etax_crust_mantle.cuda,
+                                                                          mp->d_etay_crust_mantle.cuda,
+                                                                          mp->d_etaz_crust_mantle.cuda,
+                                                                          mp->d_gammax_crust_mantle.cuda,
+                                                                          mp->d_gammay_crust_mantle.cuda,
+                                                                          mp->d_gammaz_crust_mantle.cuda,
                                                                           mp->d_hprime_xx.cuda);
       }
     }
 #endif
+#ifdef USE_HIP
+    if (run_hip) {
+      // computes strain locally based on current backward/reconstructed (b_displ) wavefield
+      if (! mp->anisotropic_kl) {
+        // isotropic kernels
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_iso_undoatt_kernel), grid, threads, 0, mp->compute_stream,
+                                                                        mp->d_epsilondev_xx_crust_mantle.hip,
+                                                                        mp->d_epsilondev_yy_crust_mantle.hip,
+                                                                        mp->d_epsilondev_xy_crust_mantle.hip,
+                                                                        mp->d_epsilondev_xz_crust_mantle.hip,
+                                                                        mp->d_epsilondev_yz_crust_mantle.hip,
+                                                                        mp->d_eps_trace_over_3_crust_mantle.hip,
+                                                                        mp->d_beta_kl_crust_mantle.hip,
+                                                                        mp->d_alpha_kl_crust_mantle.hip,
+                                                                        mp->NSPEC_CRUST_MANTLE,
+                                                                        deltat,
+                                                                        mp->d_ibool_crust_mantle.hip,
+                                                                        mp->d_b_displ_crust_mantle.hip,
+                                                                        mp->d_xix_crust_mantle.hip,
+                                                                        mp->d_xiy_crust_mantle.hip,
+                                                                        mp->d_xiz_crust_mantle.hip,
+                                                                        mp->d_etax_crust_mantle.hip,
+                                                                        mp->d_etay_crust_mantle.hip,
+                                                                        mp->d_etaz_crust_mantle.hip,
+                                                                        mp->d_gammax_crust_mantle.hip,
+                                                                        mp->d_gammay_crust_mantle.hip,
+                                                                        mp->d_gammaz_crust_mantle.hip,
+                                                                        mp->d_hprime_xx.hip);
+      } else {
+        // anisotropic kernels
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_ani_undoatt_kernel), grid, threads, 0, mp->compute_stream,
+                                                                        mp->d_epsilondev_xx_crust_mantle.hip,
+                                                                        mp->d_epsilondev_yy_crust_mantle.hip,
+                                                                        mp->d_epsilondev_xy_crust_mantle.hip,
+                                                                        mp->d_epsilondev_xz_crust_mantle.hip,
+                                                                        mp->d_epsilondev_yz_crust_mantle.hip,
+                                                                        mp->d_eps_trace_over_3_crust_mantle.hip,
+                                                                        mp->d_cijkl_kl_crust_mantle.hip,
+                                                                        mp->NSPEC_CRUST_MANTLE,
+                                                                        deltat,
+                                                                        mp->d_ibool_crust_mantle.hip,
+                                                                        mp->d_b_displ_crust_mantle.hip,
+                                                                        mp->d_xix_crust_mantle.hip,
+                                                                        mp->d_xiy_crust_mantle.hip,
+                                                                        mp->d_xiz_crust_mantle.hip,
+                                                                        mp->d_etax_crust_mantle.hip,
+                                                                        mp->d_etay_crust_mantle.hip,
+                                                                        mp->d_etaz_crust_mantle.hip,
+                                                                        mp->d_gammax_crust_mantle.hip,
+                                                                        mp->d_gammay_crust_mantle.hip,
+                                                                        mp->d_gammaz_crust_mantle.hip,
+                                                                        mp->d_hprime_xx.hip);
+      }
+    }
+#endif
+
   } else {
     // strain available by compute_forces routine
 #ifdef USE_OPENCL
@@ -285,6 +367,50 @@ void FC_FUNC_ (compute_kernels_cm_gpu,
       }
     }
 #endif
+#ifdef USE_HIP
+    if (run_hip) {
+      // takes strain arrays computed from previous compute_forces call
+      if (! mp->anisotropic_kl) {
+        // isotropic kernels
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_iso_kernel), grid, threads, 0, mp->compute_stream,
+                                                                mp->d_epsilondev_xx_crust_mantle.hip,
+                                                                mp->d_epsilondev_yy_crust_mantle.hip,
+                                                                mp->d_epsilondev_xy_crust_mantle.hip,
+                                                                mp->d_epsilondev_xz_crust_mantle.hip,
+                                                                mp->d_epsilondev_yz_crust_mantle.hip,
+                                                                mp->d_eps_trace_over_3_crust_mantle.hip,
+                                                                mp->d_b_epsilondev_xx_crust_mantle.hip,
+                                                                mp->d_b_epsilondev_yy_crust_mantle.hip,
+                                                                mp->d_b_epsilondev_xy_crust_mantle.hip,
+                                                                mp->d_b_epsilondev_xz_crust_mantle.hip,
+                                                                mp->d_b_epsilondev_yz_crust_mantle.hip,
+                                                                mp->d_b_eps_trace_over_3_crust_mantle.hip,
+                                                                mp->d_beta_kl_crust_mantle.hip,
+                                                                mp->d_alpha_kl_crust_mantle.hip,
+                                                                mp->NSPEC_CRUST_MANTLE,
+                                                                deltat);
+      } else {
+        // anisotropic kernels
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_ani_kernel), grid, threads, 0, mp->compute_stream,
+                                                                mp->d_epsilondev_xx_crust_mantle.hip,
+                                                                mp->d_epsilondev_yy_crust_mantle.hip,
+                                                                mp->d_epsilondev_xy_crust_mantle.hip,
+                                                                mp->d_epsilondev_xz_crust_mantle.hip,
+                                                                mp->d_epsilondev_yz_crust_mantle.hip,
+                                                                mp->d_eps_trace_over_3_crust_mantle.hip,
+                                                                mp->d_b_epsilondev_xx_crust_mantle.hip,
+                                                                mp->d_b_epsilondev_yy_crust_mantle.hip,
+                                                                mp->d_b_epsilondev_xy_crust_mantle.hip,
+                                                                mp->d_b_epsilondev_xz_crust_mantle.hip,
+                                                                mp->d_b_epsilondev_yz_crust_mantle.hip,
+                                                                mp->d_b_eps_trace_over_3_crust_mantle.hip,
+                                                                mp->d_cijkl_kl_crust_mantle.hip,
+                                                                mp->NSPEC_CRUST_MANTLE,
+                                                                deltat);
+      }
+    }
+#endif
+
   }
 
   GPU_ERROR_CHECKING ("compute_cm_gpu");
@@ -350,12 +476,26 @@ void FC_FUNC_ (compute_kernels_ic_gpu,
                                                               deltat);
   }
 #endif
+#ifdef USE_HIP
+  dim3 grid(num_blocks_x,num_blocks_y);
+  dim3 threads(blocksize,1,1);
+  if (run_hip) {
+    // rho kernels
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_rho_kernel), grid, threads, 0, mp->compute_stream,
+                                                            mp->d_ibool_inner_core.hip,
+                                                            mp->d_accel_inner_core.hip,
+                                                            mp->d_b_displ_inner_core.hip,
+                                                            mp->d_rho_kl_inner_core.hip,
+                                                            mp->NSPEC_INNER_CORE,
+                                                            deltat);
+  }
+#endif
 
   // wavespeed kernels
   // checks if strain is available
   if (mp->undo_attenuation) {
     // checks strain array size
-    if (mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) {
+    if (mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY == 0) {
       exit_on_error("compute_kernels_ic_gpu NSPEC_CRUST_MANTLE_STRAIN_ONLY invalid with undo_att");
     }
 
@@ -417,6 +557,33 @@ void FC_FUNC_ (compute_kernels_ic_gpu,
                                                                         mp->d_hprime_xx.cuda);
     }
 #endif
+#ifdef USE_HIP
+    if (run_hip) {
+      hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_iso_undoatt_kernel), grid, threads, 0, mp->compute_stream,
+                                                                      mp->d_epsilondev_xx_inner_core.hip,
+                                                                      mp->d_epsilondev_yy_inner_core.hip,
+                                                                      mp->d_epsilondev_xy_inner_core.hip,
+                                                                      mp->d_epsilondev_xz_inner_core.hip,
+                                                                      mp->d_epsilondev_yz_inner_core.hip,
+                                                                      mp->d_eps_trace_over_3_inner_core.hip,
+                                                                      mp->d_beta_kl_inner_core.hip,
+                                                                      mp->d_alpha_kl_inner_core.hip,
+                                                                      mp->NSPEC_INNER_CORE,
+                                                                      deltat,
+                                                                      mp->d_ibool_inner_core.hip,
+                                                                      mp->d_b_displ_inner_core.hip,
+                                                                      mp->d_xix_inner_core.hip,
+                                                                      mp->d_xiy_inner_core.hip,
+                                                                      mp->d_xiz_inner_core.hip,
+                                                                      mp->d_etax_inner_core.hip,
+                                                                      mp->d_etay_inner_core.hip,
+                                                                      mp->d_etaz_inner_core.hip,
+                                                                      mp->d_gammax_inner_core.hip,
+                                                                      mp->d_gammay_inner_core.hip,
+                                                                      mp->d_gammaz_inner_core.hip,
+                                                                      mp->d_hprime_xx.hip);
+    }
+#endif
 
   }else{
     // takes strain arrays computed from previous compute_forces call
@@ -466,6 +633,28 @@ void FC_FUNC_ (compute_kernels_ic_gpu,
                                                                 deltat);
     }
 #endif
+#ifdef USE_HIP
+    if (run_hip) {
+      hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_iso_kernel), grid, threads, 0, mp->compute_stream,
+                                                              mp->d_epsilondev_xx_inner_core.hip,
+                                                              mp->d_epsilondev_yy_inner_core.hip,
+                                                              mp->d_epsilondev_xy_inner_core.hip,
+                                                              mp->d_epsilondev_xz_inner_core.hip,
+                                                              mp->d_epsilondev_yz_inner_core.hip,
+                                                              mp->d_eps_trace_over_3_inner_core.hip,
+                                                              mp->d_b_epsilondev_xx_inner_core.hip,
+                                                              mp->d_b_epsilondev_yy_inner_core.hip,
+                                                              mp->d_b_epsilondev_xy_inner_core.hip,
+                                                              mp->d_b_epsilondev_xz_inner_core.hip,
+                                                              mp->d_b_epsilondev_yz_inner_core.hip,
+                                                              mp->d_b_eps_trace_over_3_inner_core.hip,
+                                                              mp->d_beta_kl_inner_core.hip,
+                                                              mp->d_alpha_kl_inner_core.hip,
+                                                              mp->NSPEC_INNER_CORE,
+                                                              deltat);
+    }
+#endif
+
   }
 
   GPU_ERROR_CHECKING ("compute_ic_gpu");
@@ -489,7 +678,6 @@ void FC_FUNC_ (compute_kernels_oc_gpu,
 
   int num_blocks_x, num_blocks_y;
   get_blocks_xy (mp->NSPEC_OUTER_CORE, &num_blocks_x, &num_blocks_y);
-
 
 #ifdef USE_OPENCL
   if (run_opencl) {
@@ -554,6 +742,34 @@ void FC_FUNC_ (compute_kernels_oc_gpu,
                                                                    mp->d_alpha_kl_outer_core.cuda,
                                                                    deltat,
                                                                    mp->NSPEC_OUTER_CORE);
+  }
+#endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(blocksize,1,1);
+
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_acoustic_kernel), grid, threads, 0, mp->compute_stream,
+                                                                 mp->d_ibool_outer_core.hip,
+                                                                 mp->d_rhostore_outer_core.hip,
+                                                                 mp->d_kappavstore_outer_core.hip,
+                                                                 mp->d_hprime_xx.hip,
+                                                                 mp->d_xix_outer_core.hip,
+                                                                 mp->d_xiy_outer_core.hip,
+                                                                 mp->d_xiz_outer_core.hip,
+                                                                 mp->d_etax_outer_core.hip,
+                                                                 mp->d_etay_outer_core.hip,
+                                                                 mp->d_etaz_outer_core.hip,
+                                                                 mp->d_gammax_outer_core.hip,
+                                                                 mp->d_gammay_outer_core.hip,
+                                                                 mp->d_gammaz_outer_core.hip,
+                                                                 mp->d_accel_outer_core.hip,
+                                                                 mp->d_b_displ_outer_core.hip,
+                                                                 mp->d_b_accel_outer_core.hip,
+                                                                 mp->d_rho_kl_outer_core.hip,
+                                                                 mp->d_alpha_kl_outer_core.hip,
+                                                                 deltat,
+                                                                 mp->NSPEC_OUTER_CORE);
   }
 #endif
 
@@ -629,6 +845,25 @@ void FC_FUNC_ (compute_kernels_strength_noise_gpu,
                                                                          mp->nspec2D_top_crust_mantle);
   }
 #endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(NGLL2,1,1);
+
+    // calculates noise strength kernel
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_strength_noise_kernel), grid, threads, 0, mp->compute_stream,
+                                                                       mp->d_displ_crust_mantle.hip,
+                                                                       mp->d_ibelm_top_crust_mantle.hip,
+                                                                       mp->d_ibool_crust_mantle.hip,
+                                                                       mp->d_noise_surface_movie.hip,
+                                                                       mp->d_normal_x_noise.hip,
+                                                                       mp->d_normal_y_noise.hip,
+                                                                       mp->d_normal_z_noise.hip,
+                                                                       mp->d_Sigma_kl.hip,
+                                                                       deltat,
+                                                                       mp->nspec2D_top_crust_mantle);
+  }
+#endif
 
   GPU_ERROR_CHECKING ("compute_strength_noise_kernel_kernel");
 }
@@ -638,7 +873,7 @@ void FC_FUNC_ (compute_kernels_strength_noise_gpu,
 extern EXTERN_LANG
 void FC_FUNC_ (compute_kernels_hess_gpu,
                COMPUTE_KERNELS_HESS_GPU) (long *Mesh_pointer_f,
-                                          realw *deltat_f) {
+                                          realw *deltat_f, int *USE_SOURCE_RECEIVER_HESSIAN_f) {
   TRACE ("compute_hess_kernel_gpu");
   // debug
   DEBUG_BACKWARD_KERNEL();
@@ -652,6 +887,7 @@ void FC_FUNC_ (compute_kernels_hess_gpu,
   }
 
   int blocksize = NGLL3;   // NGLLX*NGLLY*NGLLZ
+  int USE_SOURCE_RECEIVER_HESSIAN = *USE_SOURCE_RECEIVER_HESSIAN_f;
   realw deltat = *deltat_f;
 
   int num_blocks_x, num_blocks_y;
@@ -679,6 +915,30 @@ void FC_FUNC_ (compute_kernels_hess_gpu,
 
     clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_hess_kernel, 2, NULL,
                                      global_work_size, local_work_size, 0, NULL, NULL));
+
+    // approximate hessian for rho, kappa, mu
+    clCheck (clSetKernelArg (mocl.kernels.compute_kappa_mu_hess_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ibool_crust_mantle.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_kappa_mu_hess_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_veloc_crust_mantle.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_kappa_mu_hess_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_veloc_crust_mantle.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_kappa_mu_hess_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_xix_crust_mantle.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_kappa_mu_hess_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_xiy_crust_mantle.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_kappa_mu_hess_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_xiz_crust_mantle.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_kappa_mu_hess_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_etax_crust_mantle.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_kappa_mu_hess_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_etay_crust_mantle.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_kappa_mu_hess_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_etaz_crust_mantle.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_kappa_mu_hess_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_gammax_crust_mantle.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_kappa_mu_hess_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_gammay_crust_mantle.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_kappa_mu_hess_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_gammaz_crust_mantle.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_kappa_mu_hess_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_hprime_xx.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_kappa_mu_hess_kernel, idx++, sizeof (realw), (void *) &deltat));
+    clCheck (clSetKernelArg (mocl.kernels.compute_kappa_mu_hess_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_hess_rho_kl_crust_mantle.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_kappa_mu_hess_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_hess_kappa_kl_crust_mantle.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_kappa_mu_hess_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_hess_mu_kl_crust_mantle.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_kappa_mu_hess_kernel, idx++, sizeof (int), (void *) &mp->NSPEC_CRUST_MANTLE));
+    clCheck (clSetKernelArg (mocl.kernels.compute_kappa_mu_hess_kernel, idx++, sizeof (int), (void *) &USE_SOURCE_RECEIVER_HESSIAN));
+
+    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_kappa_mu_hess_kernel, 2, NULL,
+                                     global_work_size, local_work_size, 0, NULL, NULL));
   }
 #endif
 #ifdef USE_CUDA
@@ -691,7 +951,64 @@ void FC_FUNC_ (compute_kernels_hess_gpu,
                                                                mp->d_b_accel_crust_mantle.cuda,
                                                                mp->d_hess_kl_crust_mantle.cuda,
                                                                deltat,
-                                                               mp->NSPEC_CRUST_MANTLE);
+                                                               mp->NSPEC_CRUST_MANTLE,
+                                                               USE_SOURCE_RECEIVER_HESSIAN);
+
+    compute_kappa_mu_hess_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_ibool_crust_mantle.cuda,
+                                                                        mp->d_veloc_crust_mantle.cuda,
+                                                                        mp->d_b_veloc_crust_mantle.cuda,
+                                                                        mp->d_xix_crust_mantle.cuda,
+                                                                        mp->d_xiy_crust_mantle.cuda,
+                                                                        mp->d_xiz_crust_mantle.cuda,
+                                                                        mp->d_etax_crust_mantle.cuda,
+                                                                        mp->d_etay_crust_mantle.cuda,
+                                                                        mp->d_etaz_crust_mantle.cuda,
+                                                                        mp->d_gammax_crust_mantle.cuda,
+                                                                        mp->d_gammay_crust_mantle.cuda,
+                                                                        mp->d_gammaz_crust_mantle.cuda,
+                                                                        mp->d_hprime_xx.cuda,
+                                                                        deltat,
+                                                                        mp->d_hess_rho_kl_crust_mantle.cuda,
+                                                                        mp->d_hess_kappa_kl_crust_mantle.cuda,
+                                                                        mp->d_hess_mu_kl_crust_mantle.cuda,
+                                                                        mp->NSPEC_CRUST_MANTLE,
+                                                                        USE_SOURCE_RECEIVER_HESSIAN);
+  }
+#endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(blocksize,1,1);
+
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hess_kernel), grid, threads, 0, mp->compute_stream,
+                                                             mp->d_ibool_crust_mantle.hip,
+                                                             mp->d_accel_crust_mantle.hip,
+                                                             mp->d_b_accel_crust_mantle.hip,
+                                                             mp->d_hess_kl_crust_mantle.hip,
+                                                             deltat,
+                                                             mp->NSPEC_CRUST_MANTLE,
+                                                             USE_SOURCE_RECEIVER_HESSIAN);
+
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_kappa_mu_hess_kernel), grid, threads, 0, mp->compute_stream,
+                                                                      mp->d_ibool_crust_mantle.hip,
+                                                                      mp->d_veloc_crust_mantle.hip,
+                                                                      mp->d_b_veloc_crust_mantle.hip,
+                                                                      mp->d_xix_crust_mantle.hip,
+                                                                      mp->d_xiy_crust_mantle.hip,
+                                                                      mp->d_xiz_crust_mantle.hip,
+                                                                      mp->d_etax_crust_mantle.hip,
+                                                                      mp->d_etay_crust_mantle.hip,
+                                                                      mp->d_etaz_crust_mantle.hip,
+                                                                      mp->d_gammax_crust_mantle.hip,
+                                                                      mp->d_gammay_crust_mantle.hip,
+                                                                      mp->d_gammaz_crust_mantle.hip,
+                                                                      mp->d_hprime_xx.hip,
+                                                                      deltat,
+                                                                      mp->d_hess_rho_kl_crust_mantle.hip,
+                                                                      mp->d_hess_kappa_kl_crust_mantle.hip,
+                                                                      mp->d_hess_mu_kl_crust_mantle.hip,
+                                                                      mp->NSPEC_CRUST_MANTLE,
+                                                                      USE_SOURCE_RECEIVER_HESSIAN);
   }
 #endif
 
@@ -739,9 +1056,19 @@ void FC_FUNC_ (resort_array,
 #endif
 #ifdef USE_CUDA
   if (run_cuda) {
-      dim3 grid(num_blocks_x,num_blocks_y);
-      dim3 threads(blocksize,1,1);
-      resort_array<<<grid,threads,0,mp->compute_stream>>>(mp->d_cijkl_kl_crust_mantle.cuda, mp->NSPEC_CRUST_MANTLE);
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(blocksize,1,1);
+
+    resort_array<<<grid,threads,0,mp->compute_stream>>>(mp->d_cijkl_kl_crust_mantle.cuda, mp->NSPEC_CRUST_MANTLE);
+  }
+#endif
+#ifdef USE_HIP
+  if (run_hip) {
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(blocksize,1,1);
+
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(resort_array), grid, threads, 0, mp->compute_stream,
+                                                      mp->d_cijkl_kl_crust_mantle.hip, mp->NSPEC_CRUST_MANTLE);
   }
 #endif
 

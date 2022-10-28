@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -130,12 +130,6 @@
 
   ! by default, sets maximum update in this depth range
   logical,parameter :: USE_DEPTH_RANGE_MAXIMUM = .true.
-
-  ! normalized radii
-  ! top at 50km depth
-  real(kind=CUSTOM_REAL),parameter :: R_TOP = (6371.0 - 50.0 ) / R_EARTH_KM ! shallow depth
-  ! bottom at 100km depth
-  real(kind=CUSTOM_REAL),parameter :: R_BOTTOM = (6371.0 - 100.0 ) / R_EARTH_KM ! deep depth
 
 !!-----------------------------------------------------------
 !!

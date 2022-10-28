@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -32,25 +32,25 @@ program combine_paraview_movie_data
 !
 ! used to visualize movie files created by MOVIE_VOLUME option in the Par_file
 
-  use constants
+  use constants, only: &
+    CUSTOM_REAL,MAX_STRING_LEN,IIN,OUTPUT_FILES_BASE
+
+  use shared_parameters, only: &
+    LOCAL_PATH
+
+  use constants_solver, only: &
+    NGLOB_CRUST_MANTLE
 
   implicit none
 
-  include "OUTPUT_FILES/values_from_mesher.h"
-
-  integer :: fid,i,ipoint,ier,it,itstart,itstop,dit_movie
-  integer :: iproc,num_node,npoint_all,nelement_all,nelement_total
-  integer :: np, ne
-  integer :: n1, n2, n3, n4, n5, n6, n7, n8
-
-  integer,parameter :: MAX_NUM_NODES = 2000
-  integer,dimension(MAX_NUM_NODES) :: npoint, nelement
+  integer :: num_node
+  integer, dimension(:),allocatable :: npoint, nelement
 
   ! data arrays
   integer :: numpoin,nelement_local
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: xstore, ystore, zstore
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: datastore
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: SEEstore,SNNstore,SZZstore,SNEstore,SNZstore,SEZstore
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: xstore, ystore, zstore
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: datastore
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: SEEstore,SNNstore,SZZstore,SNEstore,SNZstore,SEZstore
   real(kind=CUSTOM_REAL) :: x, y, z, dat
 
   character(len=MAX_STRING_LEN) :: prname, dimension_file
@@ -60,12 +60,17 @@ program combine_paraview_movie_data
 
   logical :: MOVIE_COARSE
 
+  integer :: fid,i,ipoint,ier,it,itstart,itstop,dit_movie
+  integer :: iproc,npoint_all,nelement_all,nelement_total
+  integer :: np, ne
+  integer :: n1, n2, n3, n4, n5, n6, n7, n8
+
   ! VTK
   logical :: USE_VTK
   character(len=3) :: vtk_format
   ! global point data
-  real,dimension(:),allocatable :: total_dat
-  real,dimension(:,:),allocatable :: total_dat_xyz
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: total_dat
+  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: total_dat_xyz
   integer,dimension(:,:),allocatable :: total_dat_con
 
   ! command-line arguments
@@ -78,8 +83,8 @@ program combine_paraview_movie_data
       print *, '   nnodes              - is the number of slices'
       print *, '   dt_movie            - the time increment of movie snapshots'
       print *, '   itstart and itstop  - the time increments where to start and stop movie data files'
-      print *, '   comp                - component can be SEE, SNE, SEZ, SNN, SNZ, SZZ, VEE, VEN, VEZ, I1 or I2'
-      print *, '                         stored in the database directory DATABASES_MPI/'
+      print *, '   comp                - component can be SEE, SNE, SEZ, SNN, SNZ, SZZ, VEE, VEN, VEZ, V3, I1 or I2'
+      print *, '                         stored in the database directory LOCAL_PATH (e.g., DATABASES_MPI/)'
       print *, '                         (as real(kind=CUSTOM_REAL) filename(NGLLX,NGLLY,NGLLZ,nspec))'
       print *, '   MOVIE_COARSE        - can be either .false. or .true.'
       print *, '   vtk or vtu          - (optional) to create VTK output files specify "vtk" or "vtu"'
@@ -106,8 +111,6 @@ program combine_paraview_movie_data
   ! variable name
   var_name = comp
 
-  if (num_node > MAX_NUM_NODES) stop 'change array sizes for num_node > 1000 and recompile xcombine_paraview_movie_data'
-
   ! user output
   print *, 'Number of nodes: ',num_node
   print *, ' '
@@ -122,13 +125,32 @@ program combine_paraview_movie_data
   endif
   print *, ' '
 
+  print *
+  print *,'reading parameter file'
+  print *
+
+  ! read the parameter file and compute additional parameters
+  call read_compute_parameters()
+
+  ! reads mesh parameters
+  call read_mesh_parameters()
+
+  ! user output
+  print *,'mesh parameters (from local_path directory):'
+  print *,'  NGLOB_CRUST_MANTLE = ',NGLOB_CRUST_MANTLE
+  print *
+
+  ! point/element arrays
+  allocate(npoint(num_node),nelement(num_node),stat=ier)
+  if (ier /= 0) stop 'Error allocating npoint,nelement arrays'
+
   ! figure out total number of points
   print *, 'Counting points'
   do iproc = 1, num_node
     ! print *, 'Counting elements: slice ', iproc-1
     write(prname,'(a,i6.6,a)') 'proc',iproc-1,'_'
 
-    dimension_file = 'DATABASES_MPI/' // trim(prname) //'movie3D_info.txt'
+    dimension_file = trim(LOCAL_PATH) // '/' // trim(prname) //'movie3D_info.txt'
 
     !   print *, 'reading: ',trim(dimension_file)
     open(unit = IIN,file = trim(dimension_file),status='old',action='read', iostat = ier)
@@ -153,15 +175,27 @@ program combine_paraview_movie_data
     nelement_total = nelement_all * 64
   endif
 
+  allocate(xstore(NGLOB_CRUST_MANTLE), &
+           ystore(NGLOB_CRUST_MANTLE), &
+           zstore(NGLOB_CRUST_MANTLE), &
+           datastore(NGLOB_CRUST_MANTLE), &
+           SEEstore(NGLOB_CRUST_MANTLE), &
+           SNNstore(NGLOB_CRUST_MANTLE), &
+           SZZstore(NGLOB_CRUST_MANTLE), &
+           SNEstore(NGLOB_CRUST_MANTLE), &
+           SNZstore(NGLOB_CRUST_MANTLE), &
+           SEZstore(NGLOB_CRUST_MANTLE), stat=ier)
+  if (ier /= 0) stop 'Error allocating mesh arrays'
+
   ! VTK
   if (USE_VTK) then
     ! creates array to hold point data
     allocate(total_dat(npoint_all),stat=ier)
     if (ier /= 0 ) stop 'Error allocating total_dat array'
-    total_dat(:) = 0.0
+    total_dat(:) = 0.0_CUSTOM_REAL
     allocate(total_dat_xyz(3,npoint_all),stat=ier)
     if (ier /= 0 ) stop 'Error allocating total_dat_xyz array'
-    total_dat_xyz(:,:) = 0.0
+    total_dat_xyz(:,:) = 0.0_CUSTOM_REAL
     allocate(total_dat_con(8,nelement_total),stat=ier)
     if (ier /= 0 ) stop 'Error allocating total_dat_con array'
     total_dat_con(:,:) = 0
@@ -178,7 +212,7 @@ program combine_paraview_movie_data
       continue
     else
       ! MESH file format
-      write(mesh_file,'(a,a,a,i6.6,a)')  'DATABASES_MPI/' // 'movie3D_',trim(comp),'_it',it,'.mesh'
+      write(mesh_file,'(a,a,a,i6.6,a)')  trim(LOCAL_PATH) // '/' // 'movie3D_',trim(comp),'_it',it,'.mesh'
       call open_file_fd(trim(mesh_file)//char(0),fid)
     endif
 
@@ -188,10 +222,7 @@ program combine_paraview_movie_data
     print *,'writing point information'
     do iproc = 1, num_node
 
-      !print *, ' '
-      !print *, 'Writing points: slice ', iproc-1,'npoints',npoint(iproc)
-      write(prname,'(a,i6.6,a)') 'DATABASES_MPI/' // 'proc',iproc-1,'_'
-
+      ! output total points
       if (USE_VTK) then
         ! VTK nothing to write yet
         continue
@@ -202,26 +233,27 @@ program combine_paraview_movie_data
         endif
       endif
 
+      ! skip empty slices
+      if (npoint(iproc) == 0) cycle
+
+      !print *, ' '
+      !print *, 'Writing points: slice ', iproc-1,'npoints',npoint(iproc)
+      write(prname,'(a,i6.6,a)') trim(LOCAL_PATH) // '/' // 'proc',iproc-1,'_'
+
       ! reads in grid point locations
       open(unit = IIN,file = trim(prname)//'movie3D_x.bin',status='old',action='read', iostat = ier,form ='unformatted')
       if (ier /= 0) stop 'Error opening file x.bin'
-      if (npoint(iproc) > 0) then
-        read(IIN) xstore(1:npoint(iproc))
-      endif
+      read(IIN) xstore(1:npoint(iproc))
       close(IIN)
 
       open(unit = IIN,file = trim(prname)//'movie3D_y.bin',status='old',action='read', iostat = ier,form ='unformatted')
       if (ier /= 0) stop 'Error opening file y.bin'
-      if (npoint(iproc) > 0) then
-        read(IIN) ystore(1:npoint(iproc))
-      endif
+      read(IIN) ystore(1:npoint(iproc))
       close(IIN)
 
       open(unit = IIN,file = trim(prname)//'movie3D_z.bin',status='old',action='read', iostat = ier,form ='unformatted')
       if (ier /= 0) stop 'Error opening file z.bin'
-      if (npoint(iproc) > 0) then
-        read(IIN) zstore(1:npoint(iproc))
-      endif
+      read(IIN) zstore(1:npoint(iproc))
       close(IIN)
 
       datastore(:) = 0._CUSTOM_REAL
@@ -239,9 +271,7 @@ program combine_paraview_movie_data
           print *,'Error opening file: ',trim(prname)//trim(local_data_file)
           stop 'Error opening file it.bin'
         endif
-        if (npoint(iproc) > 0) then
-          read(IIN) SEEstore(1:npoint(iproc))
-        endif
+        read(IIN) SEEstore(1:npoint(iproc))
         close(IIN)
 
         write(local_data_file,'(a,i6.6,a)') 'movie3D_SNE',it,'.bin'
@@ -251,9 +281,7 @@ program combine_paraview_movie_data
           print *,'Error opening file: ',trim(prname)//trim(local_data_file)
           stop 'Error opening file it.bin'
         endif
-        if (npoint(iproc) > 0) then
-         read(IIN) SNEstore(1:npoint(iproc))
-        endif
+        read(IIN) SNEstore(1:npoint(iproc))
         close(IIN)
 
         write(local_data_file,'(a,i6.6,a)') 'movie3D_SEZ',it,'.bin'
@@ -263,9 +291,7 @@ program combine_paraview_movie_data
           print *,'Error opening file: ',trim(prname)//trim(local_data_file)
           stop 'Error opening file it.bin'
         endif
-        if (npoint(iproc) > 0) then
-          read(IIN) SEZstore(1:npoint(iproc))
-        endif
+        read(IIN) SEZstore(1:npoint(iproc))
         close(IIN)
 
         write(local_data_file,'(a,i6.6,a)') 'movie3D_SNN',it,'.bin'
@@ -275,9 +301,7 @@ program combine_paraview_movie_data
           print *,'Error opening file: ',trim(prname)//trim(local_data_file)
           stop 'Error opening file it.bin'
         endif
-        if (npoint(iproc) > 0) then
-          read(IIN) SNNstore(1:npoint(iproc))
-        endif
+        read(IIN) SNNstore(1:npoint(iproc))
         close(IIN)
 
         write(local_data_file,'(a,i6.6,a)') 'movie3D_SNZ',it,'.bin'
@@ -287,9 +311,7 @@ program combine_paraview_movie_data
           print *,'Error opening file: ',trim(prname)//trim(local_data_file)
           stop 'Error opening file it.bin'
         endif
-        if (npoint(iproc) > 0) then
-          read(IIN) SNZstore(1:npoint(iproc))
-        endif
+        read(IIN) SNZstore(1:npoint(iproc))
         close(IIN)
 
         write(local_data_file,'(a,i6.6,a)') 'movie3D_SZZ',it,'.bin'
@@ -299,9 +321,7 @@ program combine_paraview_movie_data
           print *,'Error opening file: ',trim(prname)//trim(local_data_file)
           stop 'Error opening file it.bin'
         endif
-        if (npoint(iproc) > 0) then
-          read(IIN) SZZstore(1:npoint(iproc))
-        endif
+        read(IIN) SZZstore(1:npoint(iproc))
         close(IIN)
 
         ! strain tensor invariants
@@ -360,10 +380,44 @@ program combine_paraview_movie_data
           print *,'Error opening file: ',trim(prname)//trim(local_data_file)
           stop 'Error opening file it.bin'
         endif
-        if (npoint(iproc) > 0) then
-          read(IIN) datastore(1:npoint(iproc))
-        endif
+        read(IIN) datastore(1:npoint(iproc))
         close(IIN)
+
+      case('V3')
+        ! velocity norm
+        ! East-component
+        write(local_data_file,'(a,a,i6.6,a)') 'movie3D_','VEE',it,'.bin'
+        open(unit = IIN,file = trim(prname)//trim(local_data_file),status='old',action='read', iostat = ier,form ='unformatted')
+        if (ier /= 0) then
+          print *,'Error opening file: ',trim(prname)//trim(local_data_file)
+          stop 'Error opening file it.bin'
+        endif
+        read(IIN) SEEstore(1:npoint(iproc))
+        close(IIN)
+        ! North-component
+        write(local_data_file,'(a,a,i6.6,a)') 'movie3D_','VEN',it,'.bin'
+        open(unit = IIN,file = trim(prname)//trim(local_data_file),status='old',action='read', iostat = ier,form ='unformatted')
+        if (ier /= 0) then
+          print *,'Error opening file: ',trim(prname)//trim(local_data_file)
+          stop 'Error opening file it.bin'
+        endif
+        read(IIN) SNNstore(1:npoint(iproc))
+        close(IIN)
+        ! Vertical-component
+        write(local_data_file,'(a,a,i6.6,a)') 'movie3D_','VEZ',it,'.bin'
+        open(unit = IIN,file = trim(prname)//trim(local_data_file),status='old',action='read', iostat = ier,form ='unformatted')
+        if (ier /= 0) then
+          print *,'Error opening file: ',trim(prname)//trim(local_data_file)
+          stop 'Error opening file it.bin'
+        endif
+        read(IIN) SZZstore(1:npoint(iproc))
+        close(IIN)
+        ! norm
+        do ipoint = 1,npoint(iproc)
+          ! norm = sqrt(V_x**2 + V_y**2 + V_z**2)
+          dat = sqrt(SEEstore(ipoint)**2 + SNNstore(ipoint)**2 + SZZstore(ipoint)**2)
+          datastore(ipoint) = dat
+        enddo
 
       case default
         print *,'Error invalid component: ',trim(comp)
@@ -411,8 +465,22 @@ program combine_paraview_movie_data
     print *, 'Writing element information'
     do iproc = 1, num_node
 
+      ! total number of elements
+      if (USE_VTK) then
+        ! for VTK, no need to output total
+        continue
+      else
+        ! MESH format
+        if (iproc == 1) then
+          call write_integer_fd(fid,nelement_total)
+        endif
+      endif
+
+      ! skip empty slices
+      if (npoint(iproc) == 0) cycle
+
       ! print *, 'Reading slice ', iproc-1
-      write(prname,'(a,i6.6,a)') 'DATABASES_MPI/' // 'proc',iproc-1,'_'
+      write(prname,'(a,i6.6,a)') trim(LOCAL_PATH) // '/' // 'proc',iproc-1,'_'
 
       local_element_file = trim(prname) // 'movie3D_elements.bin'
       open(unit = IIN, file = trim(local_element_file), status = 'old', action='read',iostat = ier,form='unformatted')
@@ -425,17 +493,6 @@ program combine_paraview_movie_data
         np = 0
       else
         np = sum(npoint(1:iproc-1))
-      endif
-
-      ! total number of elements
-      if (USE_VTK) then
-        ! for VTK, no need to output total
-        continue
-      else
-        ! MESH format
-        if (iproc == 1) then
-          call write_integer_fd(fid,nelement_total)
-        endif
       endif
 
       if (MOVIE_COARSE) then
@@ -459,6 +516,7 @@ program combine_paraview_movie_data
         n6 = n6+np
         n7 = n7+np
         n8 = n8+np
+
         if (USE_VTK) then
           ! VTK
           ! note: indices for VTK start at 0
@@ -492,6 +550,10 @@ program combine_paraview_movie_data
     print *, 'Total number of elements: ', ne,' nelement_total',nelement_total
     if (ne /= nelement_total) stop 'Number of total elements are not consistent'
 
+    if (USE_VTK) then
+      print *, 'Data min/max            : ',minval(total_dat(:)),maxval(total_dat(:))
+    endif
+
     ! finishes output file
     if (USE_VTK) then
       select case (vtk_format)
@@ -523,6 +585,11 @@ program combine_paraview_movie_data
   enddo ! timesteps
 
   print *, ' '
+
+  ! frees arrays
+  deallocate(npoint,nelement)
+  deallocate(xstore,ystore,zstore,datastore)
+  deallocate(SEEstore,SNNstore,SZZstore,SNEstore,SNZstore,SEZstore)
 
 end program combine_paraview_movie_data
 

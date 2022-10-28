@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -36,10 +36,10 @@
                                 c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                                 c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                                 c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
+                                mu0store, &
                                 ibool,idoubling,ispec_is_tiso, &
                                 rmassx,rmassy,rmassz, &
                                 nglob_oceans,rmass_ocean_load, &
-                                READ_KAPPA_MU,READ_TISO, &
                                 b_rmassx,b_rmassy)
 
   use constants_solver
@@ -49,49 +49,47 @@
 
   implicit none
 
-  integer :: iregion_code
-  integer :: nspec,nglob,nglob_xy
-  integer :: nspec_iso,nspec_tiso,nspec_ani
+  integer,intent(in) :: iregion_code
+  integer,intent(in) :: nspec,nglob,nglob_xy
+  integer,intent(in) :: nspec_iso,nspec_tiso,nspec_ani
 
   ! Stacey
-  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec):: rho_vp,rho_vs
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(inout) :: rho_vp,rho_vs
 
-  real(kind=CUSTOM_REAL), dimension(nglob) :: xstore,ystore,zstore
+  real(kind=CUSTOM_REAL), dimension(nglob),intent(inout) :: xstore,ystore,zstore
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(inout) :: &
     xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
 
   ! material properties
-  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec_iso) :: &
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec_iso),intent(inout) :: &
     rhostore,kappavstore,muvstore
 
   ! additional arrays for anisotropy stored only where needed to save memory
-  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec_tiso) :: &
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec_tiso),intent(inout) :: &
     kappahstore,muhstore,eta_anisostore
 
   ! additional arrays for full anisotropy
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_ani) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_ani),intent(inout) :: &
     c11store,c12store,c13store,c14store,c15store,c16store, &
     c22store,c23store,c24store,c25store,c26store,c33store,c34store, &
     c35store,c36store,c44store,c45store,c46store,c55store,c56store,c66store
 
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(inout) :: mu0store
+
   ! global addressing
-  integer,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
-  integer, dimension(nspec) :: idoubling
-  logical, dimension(nspec) :: ispec_is_tiso
+  integer,dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(inout) :: ibool
+  integer, dimension(nspec),intent(inout) :: idoubling
+  logical, dimension(nspec),intent(inout) :: ispec_is_tiso
 
   ! mass matrices and additional ocean load mass matrix
-  real(kind=CUSTOM_REAL), dimension(nglob_xy) :: rmassx,rmassy
-  real(kind=CUSTOM_REAL), dimension(nglob_xy) :: b_rmassx,b_rmassy
+  real(kind=CUSTOM_REAL), dimension(nglob_xy),intent(inout) :: rmassx,rmassy
+  real(kind=CUSTOM_REAL), dimension(nglob_xy),intent(inout) :: b_rmassx,b_rmassy
 
-  real(kind=CUSTOM_REAL), dimension(nglob)    :: rmassz
+  real(kind=CUSTOM_REAL), dimension(nglob),intent(inout)    :: rmassz
 
-  integer :: nglob_oceans
-  real(kind=CUSTOM_REAL), dimension(nglob_oceans) :: rmass_ocean_load
-
-  ! flags to know if we should read Vs and anisotropy arrays
-  logical :: READ_KAPPA_MU,READ_TISO
-
+  integer,intent(in) :: nglob_oceans
+  real(kind=CUSTOM_REAL), dimension(nglob_oceans),intent(inout) :: rmass_ocean_load
 
   ! local parameters
   integer :: ier,lnspec,lnglob
@@ -147,47 +145,57 @@
   ! model arrays
   read(IIN) rhostore
   read(IIN) kappavstore
-
-  if (READ_KAPPA_MU) read(IIN) muvstore
-
-  ! for anisotropy, gravity and rotation
-  if (TRANSVERSE_ISOTROPY_VAL .and. READ_TISO) then
-    read(IIN) kappahstore
-    read(IIN) muhstore
-    read(IIN) eta_anisostore
+  if (iregion_code /= IREGION_OUTER_CORE) then
+    read(IIN) muvstore
   endif
 
-  if (ANISOTROPIC_INNER_CORE_VAL .and. iregion_code == IREGION_INNER_CORE) then
-    read(IIN) c11store
-    read(IIN) c12store
-    read(IIN) c13store
-    read(IIN) c33store
-    read(IIN) c44store
-  endif
+  ! solid regions
+  select case(iregion_code)
+  case (IREGION_CRUST_MANTLE)
+    ! crust/mantle
+    if (ANISOTROPIC_3D_MANTLE_VAL) then
+      read(IIN) c11store
+      read(IIN) c12store
+      read(IIN) c13store
+      read(IIN) c14store
+      read(IIN) c15store
+      read(IIN) c16store
+      read(IIN) c22store
+      read(IIN) c23store
+      read(IIN) c24store
+      read(IIN) c25store
+      read(IIN) c26store
+      read(IIN) c33store
+      read(IIN) c34store
+      read(IIN) c35store
+      read(IIN) c36store
+      read(IIN) c44store
+      read(IIN) c45store
+      read(IIN) c46store
+      read(IIN) c55store
+      read(IIN) c56store
+      read(IIN) c66store
+    else
+      ! for anisotropy, gravity and rotation
+      if (TRANSVERSE_ISOTROPY_VAL) then
+        read(IIN) kappahstore
+        read(IIN) muhstore
+        read(IIN) eta_anisostore
+      endif
+    endif
+    ! for azi kernels
+    read(IIN) mu0store
 
-  if (ANISOTROPIC_3D_MANTLE_VAL .and. iregion_code == IREGION_CRUST_MANTLE) then
-    read(IIN) c11store
-    read(IIN) c12store
-    read(IIN) c13store
-    read(IIN) c14store
-    read(IIN) c15store
-    read(IIN) c16store
-    read(IIN) c22store
-    read(IIN) c23store
-    read(IIN) c24store
-    read(IIN) c25store
-    read(IIN) c26store
-    read(IIN) c33store
-    read(IIN) c34store
-    read(IIN) c35store
-    read(IIN) c36store
-    read(IIN) c44store
-    read(IIN) c45store
-    read(IIN) c46store
-    read(IIN) c55store
-    read(IIN) c56store
-    read(IIN) c66store
-  endif
+  case (IREGION_INNER_CORE)
+    ! inner core
+    if (ANISOTROPIC_INNER_CORE_VAL) then
+      read(IIN) c11store
+      read(IIN) c12store
+      read(IIN) c13store
+      read(IIN) c33store
+      read(IIN) c44store
+    endif
+  end select
 
   ! Stacey
   if (ABSORBING_CONDITIONS) then
@@ -226,7 +234,6 @@
   if (OCEANS_VAL .and. iregion_code == IREGION_CRUST_MANTLE) read(IIN) rmass_ocean_load
 
   close(IIN) ! solver_data.bin
-
 
   end subroutine read_arrays_solver
 

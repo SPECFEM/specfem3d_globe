@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -55,13 +55,16 @@
 
   program cross_section
 
+  use constants, only: myrank
+
   use constants, only: SIZE_INTEGER, &
     TWO_PI,R_UNIT_SPHERE, &
     NGNOD,CUSTOM_REAL,NGLLX,NGLLY,NGLLZ, &
     GAUSSALPHA,GAUSSBETA, &
     IIN,IOUT,MAX_STRING_LEN, &
-    NX_BATHY,NY_BATHY,NR,DEGREES_TO_RADIANS,RADIANS_TO_DEGREES,R_EARTH,R_EARTH_KM, &
-    HUGEVAL,TINYVAL,SMALLVAL,PI,PI_OVER_TWO
+    RADIANS_TO_DEGREES,SMALLVAL
+
+  use shared_parameters, only: R_PLANET_KM,LOCAL_PATH
 
   use postprocess_par, only: MAX_KERNEL_NAMES, &
     NCHUNKS_VAL,NPROC_XI_VAL,NPROC_ETA_VAL,NPROCTOT_VAL,NEX_XI_VAL, &
@@ -91,7 +94,7 @@
   double precision, dimension(NGLLZ) :: wzgll
 
   ! topology of the control points of the surface element
-  integer :: iaddx(NGNOD),iaddy(NGNOD),iaddr(NGNOD)
+  integer :: anchor_iax(NGNOD),anchor_iay(NGNOD),anchor_iaz(NGNOD)
 
   ! typical element size in old mesh used as search radius
   double precision :: typical_size
@@ -116,14 +119,15 @@
 
   integer :: i,j,k,iglob,ispec,ier,iflag
   integer :: nspec, nglob
+  integer(kind=8) :: arraysize
 
   ! model
   character(len=16) :: fname
   character(len=MAX_STRING_LEN) :: m_file,filename
   character(len=MAX_STRING_LEN) :: solver_file
 
-  ! MPI parameters
-  integer :: sizeprocs,myrank
+  ! MPI processes
+  integer :: sizeprocs
 
   ! nodes search
   integer :: inodes
@@ -151,7 +155,7 @@
   ! cross-section infos
   integer :: section_type
   integer :: nsection_params
-  character(len=MAX_STRING_LEN) :: param_args(MAX_KERNEL_NAMES)
+  character(len=MAX_STRING_LEN),dimension(:),allocatable :: param_args
 
   ! depth with respect to with topography
   logical :: TOPOGRAPHY
@@ -171,19 +175,6 @@
   call world_size(sizeprocs)
   call world_rank(myrank)
 
-  ! checks number of processes
-  ! note: must run with same number of process as new mesh was created
-  if (sizeprocs /= NPROCTOT_VAL) then
-    ! usage info
-    if (myrank == 0) then
-      print *, "this program must be executed in parallel with NPROCTOT_VAL = ",NPROCTOT_VAL,"processes"
-      print *, "Invalid number of processes used: ", sizeprocs, " procs"
-      print *
-      print *, "Please run: mpirun -np ",NPROCTOT_VAL," ./bin/xcreate_cross_section .."
-    endif
-    call abort_mpi()
-  endif
-
   ! checks program arguments
   if (myrank == 0) then
     do i = 1,8
@@ -193,7 +184,7 @@
         if (myrank == 0) then
           print *
           print *,' Usage: xcreate_cross_section param section-param mesh-dir/ model-dir/ output-dir/ ' // &
-                  'topoography-flag ellipticity-flag'
+                  'topography-flag ellipticity-flag'
           print *
           print *,' with'
           print *,'   param         - model parameter name (e.g. vpv)'
@@ -214,8 +205,8 @@
           print *,'   model-dir/    - directoy which holds model files (e.g. proc***_vpv.bin)'
           print *,'   output-dir/   - output directory with topology files (e.g. proc***_solver_data.bin)'
           print *
-          print *,'   topoography-flag - depth will be taken with respect to surface topography (0 == off / 1 == on);'
-          print *,'                      if no topography is used, then depth is with respect to sea-level (at radius R_EARTH_KM)'
+          print *,'   topography-flag  - depth will be taken with respect to surface topography (0 == off / 1 == on);'
+          print *,'                      if no topography is used, then depth is with respect to sea-level'
           print *,'   ellipticity-flag - depth will consider Earth ellipticity (0 == off / 1 == on);'
           print *,'                      if no ellipticity is used, Earth shape is assumed to be perfectly spherical'
           print *
@@ -225,6 +216,11 @@
     enddo
   endif
   call synchronize_all()
+
+  ! allocates arrays
+  allocate(param_args(MAX_KERNEL_NAMES),stat=ier)
+  if (ier /= 0) stop 'Error allocating param_args array'
+  param_args(:) = ''
 
   ! initializes cross section type
   section_type = 0
@@ -236,7 +232,7 @@
   v_lat2 = 0.d0
   v_lon2 = 0.d0
   depth_min = 0.d0
-  depth_max = R_EARTH_KM - RCMB_LIMIT_KM
+  depth_max = R_PLANET_KM - RCMB_LIMIT_KM
 
   ! reads input arguments
   do i = 1, 8
@@ -266,7 +262,7 @@
         read(param_args(1),*) depth0
         read(param_args(2),*) dincr
         ! check
-        if (depth0 > R_EARTH_KM) stop 'Error cross-section depth (given in km) must be smaller than Earth radius'
+        if (depth0 > R_PLANET_KM) stop 'Error cross-section depth (given in km) must be smaller than Earth radius'
         if (dincr > 360.0) stop 'Error lat/lon increment (given in degrees) must be smaller than 360'
       else
         ! vertical cross-section
@@ -324,6 +320,46 @@
       stop 'Error cross-section type invalid'
     endif
     print *
+    print *,'model parameter: ',trim(fname)
+    print *
+    print *,'  mesh directory: ',trim(dir_topo)
+    print *,' model directory: ',trim(input_model_dir)
+    print *,'output directory: ',trim(output_dir)
+    print *
+  endif
+
+  ! reads mesh parameters
+  if (myrank == 0) then
+    ! reads mesh_parameters.bin file from input1dir/
+    LOCAL_PATH = dir_topo
+    call read_mesh_parameters()
+  endif
+  ! broadcast parameters to all processes
+  call bcast_mesh_parameters()
+
+  ! user output
+  if (myrank == 0) then
+    print *,'mesh parameters (from mesh directory):'
+    print *,'  NSPEC_CRUST_MANTLE = ',NSPEC_CRUST_MANTLE
+    print *,'  NPROCTOT           = ',NPROCTOT_VAL
+    print *
+  endif
+
+  ! checks number of processes
+  ! note: must run with same number of process as new mesh was created
+  if (sizeprocs /= NPROCTOT_VAL) then
+    ! usage info
+    if (myrank == 0) then
+      print *, "this program must be executed in parallel with NPROCTOT_VAL = ",NPROCTOT_VAL,"processes"
+      print *, "Invalid number of processes used: ", sizeprocs, " procs"
+      print *
+      print *, "Please run: mpirun -np ",NPROCTOT_VAL," ./bin/xcreate_cross_section .."
+    endif
+    call abort_mpi()
+  endif
+
+  ! console output
+  if (myrank == 0) then
     print *,'mesh:  '
     print *,'  processors = ',NPROCTOT_VAL
     print *,'  nproc_eta / nproc_xi = ',NPROC_ETA_VAL,NPROC_XI_VAL
@@ -331,17 +367,18 @@
     print *,'  nspec      = ',NSPEC_CRUST_MANTLE
     print *,'  nglob      = ',NGLOB_CRUST_MANTLE
     print *
-    print *,'model parameter: ',trim(fname)
-    print *
-    print *,'  mesh directory: ',trim(dir_topo)
-    print *,' model directory: ',trim(input_model_dir)
-    print *,'output directory: ',trim(output_dir)
-    print *
     print *,'array size:'
-    print *,'  ibool   = ',NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE*NPROC_ETA_VAL*NPROC_XI_VAL*dble(SIZE_INTEGER)/1024./1024.,'MB'
-    print *,'  x,y,z   = ',NGLOB_CRUST_MANTLE*NPROC_ETA_VAL*NPROC_XI_VAL*dble(CUSTOM_REAL)/1024./1024.,'MB'
+    ! array size in bytes (note: the multiplication is split into two line to avoid integer arithmetic overflow)
+    arraysize = NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE
+    arraysize = arraysize * NPROC_ETA_VAL * NPROC_XI_VAL * SIZE_INTEGER
+    print *,'  ibool   = ',dble(arraysize)/1024./1024.,'MB'
+    arraysize = NGLOB_CRUST_MANTLE
+    arraysize = arraysize * NPROC_ETA_VAL * NPROC_XI_VAL * CUSTOM_REAL
+    print *,'  x,y,z   = ',dble(arraysize)/1024./1024.,'MB'
     print *
-    print *,'  model   = ',NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE*NPROC_ETA_VAL*NPROC_XI_VAL*dble(CUSTOM_REAL)/1024./1024.,'MB'
+    arraysize = NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE
+    arraysize = arraysize * NPROC_ETA_VAL * NPROC_XI_VAL * CUSTOM_REAL
+    print *,'  model   = ',dble(arraysize)/1024./1024.,'MB'
     print *
     print *,'total MPI processes: ',sizeprocs
     print *
@@ -388,7 +425,7 @@
   call zwgljd(zigll,wzgll,NGLLZ,GAUSSALPHA,GAUSSBETA)
 
   ! define topology of the control element
-  call hex_nodes(iaddx,iaddy,iaddr)
+  call hex_nodes_anchor_ijk(anchor_iax,anchor_iay,anchor_iaz)
 
   ! source mesh
   ! compute typical size of elements at the surface
@@ -448,8 +485,8 @@
     endif
 
     ! number of depths between min/max radius (by default, surface down to CMB)
-    r_top = R_EARTH_KM - depth_min
-    r_bottom = R_EARTH_KM - depth_max
+    r_top = R_PLANET_KM - depth_min
+    r_bottom = R_PLANET_KM - depth_max
     ndepth = int((r_top - r_bottom)/ddepth) + 1
 
     ! starting depth
@@ -656,7 +693,7 @@
   ! kdtree search
   call get_model_values_cross_section(nglob_target,x2,y2,z2,model2,model_distance2, &
                                       NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,ibool,xstore,ystore,zstore,model, &
-                                      iaddx,iaddy,iaddr,xigll,yigll,zigll, &
+                                      anchor_iax,anchor_iay,anchor_iaz,xigll,yigll,zigll, &
                                       typical_size,myrank,model_maxdiff)
 
   ! frees tree memory
@@ -680,7 +717,7 @@
     print *
   endif
 
-  ! collects best points on master
+  ! collects best points on main proc
   call collect_closest_point_values(myrank,NPROCTOT_VAL,nglob_target,model2,model_distance2)
 
   ! statistics
@@ -693,13 +730,13 @@
     print *,'search statistics:','  parameter ',trim(fname)
     print *,'  min/max values = ',min_val,max_val
     print *
-    print *,'  maximum distance to target point = ',maxval(model_distance2(:)) * R_EARTH_KM,'(km)'
+    print *,'  maximum distance to target point = ',maxval(model_distance2(:)) * R_PLANET_KM,'(km)'
     print *,'  maximum model value difference between closest GLL point = ',val
     print *
   endif
   call synchronize_all()
 
-  ! master process only
+  ! main process only
   if (myrank == 0) then
     ! allocates arrays for statistics
     allocate(model_diff(nglob_target), &
@@ -760,12 +797,8 @@
 
 ! creates point locations of horizontal cross-section points
 
-  use constants, only: R_UNIT_SPHERE,R_EARTH_KM,CUSTOM_REAL, &
-    NX_BATHY,NY_BATHY,NR, &
-    DEGREES_TO_RADIANS,RADIANS_TO_DEGREES,R_EARTH, &
-    PI_OVER_TWO
-
-  use shared_parameters, only: ONE_CRUST
+  use constants, only: CUSTOM_REAL,NR_DENSITY,R_UNIT_SPHERE
+  use shared_parameters, only: R_PLANET,NX_BATHY,NY_BATHY
 
   implicit none
 
@@ -788,7 +821,7 @@
 
   ! for ellipticity
   integer :: nspl
-  double precision,dimension(NR) :: rspl,espl,espl2
+  double precision,dimension(NR_DENSITY) :: rspl,ellipicity_spline,ellipicity_spline2
 
   double precision :: r0,p20
   double precision :: cost
@@ -819,7 +852,7 @@
   ! make ellipticity
   if (ELLIPTICITY) then
     ! splines used for locating exact positions
-    call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
+    call make_ellipticity(nspl,rspl,ellipicity_spline,ellipicity_spline2)
   endif
 
   ! read topography and bathymetry file
@@ -831,7 +864,7 @@
     ! initializes
     ibathy_topo(:,:) = 0
 
-    ! master reads file
+    ! main reads file
     if (myrank == 0) then
       ! user output
       print *,'topography:'
@@ -842,7 +875,7 @@
       print *,"  topography/bathymetry: min/max = ",minval(ibathy_topo),maxval(ibathy_topo)
     endif
 
-    ! broadcast the information read on the master to the nodes
+    ! broadcast the information read on the main node to all the nodes
     call bcast_all_i(ibathy_topo,NX_BATHY*NY_BATHY)
   endif
   call synchronize_all()
@@ -889,7 +922,7 @@
           ! gets elevation in meters
           call get_topo_bathy(lat,lon,elevation,ibathy_topo)
           ! adds to spherical radius
-          r0 = r0 + elevation/R_EARTH
+          r0 = r0 + elevation/R_PLANET
         endif
 
         ! ellipticity
@@ -899,15 +932,15 @@
           ! see the discussion above eq (14.4) in Dahlen and Tromp (1998)
           p20 = 0.5d0*(3.0d0*cost*cost-1.0d0)
           ! get ellipticity using spline evaluation
-          call spline_evaluation(rspl,espl,espl2,nspl,r0,ell)
+          call spline_evaluation(rspl,ellipicity_spline,ellipicity_spline2,nspl,r0,ell)
           ! this is eq (14.4) in Dahlen and Tromp (1998)
           r0 = r0*(1.0d0-(2.0d0/3.0d0)*ell*p20)
         endif
 
         ! subtracts desired depth (in meters)
-        r0 = r0 - depth/R_EARTH
+        r0 = r0 - depth/R_PLANET
 
-        !if (myrank == 0) print *,'  elevation = ',elevation,'ellip = ',ell,'radius = ',r0 * R_EARTH_KM
+        !if (myrank == 0) print *,'  elevation = ',elevation,'ellip = ',ell,'radius = ',r0 * R_PLANET_KM
 
         ! compute the Cartesian position of the receiver
         x_target = r0 * sin(theta) * cos(phi)
@@ -945,12 +978,11 @@
 
 ! creates point locations of horizontal cross-section points
 
-  use constants, only: R_UNIT_SPHERE,R_EARTH_KM,CUSTOM_REAL, &
-    NX_BATHY,NY_BATHY,NR, &
-    DEGREES_TO_RADIANS,RADIANS_TO_DEGREES,R_EARTH, &
+  use constants, only: R_UNIT_SPHERE,CUSTOM_REAL,NR_DENSITY, &
+    DEGREES_TO_RADIANS,RADIANS_TO_DEGREES, &
     PI_OVER_TWO,TWO_PI,SMALLVAL
 
-  use shared_parameters, only: ONE_CRUST
+  use shared_parameters, only: R_PLANET,NX_BATHY,NY_BATHY
 
   implicit none
 
@@ -975,7 +1007,7 @@
 
   ! for ellipticity
   integer :: nspl
-  double precision,dimension(NR) :: rspl,espl,espl2
+  double precision,dimension(NR_DENSITY) :: rspl,ellipicity_spline,ellipicity_spline2
 
   double precision :: r0,p20
   double precision :: cost
@@ -1021,7 +1053,7 @@
   ! make ellipticity
   if (ELLIPTICITY) then
     ! splines used for locating exact positions
-    call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
+    call make_ellipticity(nspl,rspl,ellipicity_spline,ellipicity_spline2)
   endif
 
   ! read topography and bathymetry file
@@ -1033,7 +1065,7 @@
     ! initializes
     ibathy_topo(:,:) = 0
 
-    ! master reads file
+    ! main reads file
     if (myrank == 0) then
       ! user output
       print *,'topography:'
@@ -1044,7 +1076,7 @@
       print *,"  topography/bathymetry: min/max = ",minval(ibathy_topo),maxval(ibathy_topo)
     endif
 
-    ! broadcast the information read on the master to the nodes
+    ! broadcast the information read on the main node to all the nodes
     call bcast_all_i(ibathy_topo,NX_BATHY*NY_BATHY)
   endif
   call synchronize_all()
@@ -1148,7 +1180,7 @@
         ! gets elevation in meters
         call get_topo_bathy(lat,lon,elevation,ibathy_topo)
         ! adds to spherical radius
-        r0 = r0 + elevation/R_EARTH
+        r0 = r0 + elevation/R_PLANET
       endif
 
       ! ellipticity
@@ -1158,15 +1190,15 @@
         ! see the discussion above eq (14.4) in Dahlen and Tromp (1998)
         p20 = 0.5d0*(3.0d0*cost*cost-1.0d0)
         ! get ellipticity using spline evaluation
-        call spline_evaluation(rspl,espl,espl2,nspl,r0,ell)
+        call spline_evaluation(rspl,ellipicity_spline,ellipicity_spline2,nspl,r0,ell)
         ! this is eq (14.4) in Dahlen and Tromp (1998)
         r0 = r0*(1.0d0-(2.0d0/3.0d0)*ell*p20)
       endif
 
       ! subtracts desired depth (in meters)
-      r0 = r0 - depth/R_EARTH
+      r0 = r0 - depth/R_PLANET
 
-      !if (myrank == 0) print *,'  elevation = ',elevation,'ellip = ',ell,'radius = ',r0 * R_EARTH_KM
+      !if (myrank == 0) print *,'  elevation = ',elevation,'ellip = ',ell,'radius = ',r0 * R_PLANET_KM
 
       ! compute the Cartesian position of the receiver
       x_target = r0 * sin(theta) * cos(phi)
@@ -1213,11 +1245,11 @@
 
   integer, parameter :: itag = 11
 
-  ! master gets point distances
+  ! main gets point distances
   if (myrank == 0) then
-    ! master process collects info
+    ! main process collects info
     do iproc = 1,nproc - 1
-      ! gets buffer arrays from slave
+      ! gets buffer arrays from secondary procs
       call recv_cr(buffer, 2 * nglob_target, iproc, itag)
 
       ! checks if closer point found
@@ -1243,7 +1275,7 @@
       buffer(2,iglob) = model2(iglob)
     enddo
 
-    ! slave process sends its (distance,value) buffer to master
+    ! secondary process sends its (distance,value) buffer to main proc
     call send_cr(buffer, 2 * nglob_target, 0, itag)
   endif
 
@@ -1259,11 +1291,12 @@
 
   subroutine get_model_values_cross_section(nglob_target,x2,y2,z2,model2,model_distance2, &
                                             nspec,nglob,ibool,xstore,ystore,zstore,model, &
-                                            iaddx,iaddy,iaddr,xigll,yigll,zigll, &
+                                            anchor_iax,anchor_iay,anchor_iaz,xigll,yigll,zigll, &
                                             typical_size,myrank,model_maxdiff)
 
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,MIDX,MIDY,MIDZ,R_EARTH_KM,R_EARTH,HUGEVAL,SMALLVAL
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,HUGEVAL,SMALLVAL
+  use shared_parameters, only: R_PLANET_KM
 
   use kdtree_search, only: kdtree_find_nearest_neighbor,kdtree_nodes_location, &
     kdtree_count_nearest_n_neighbors,kdtree_get_nearest_n_neighbors, &
@@ -1283,8 +1316,8 @@
   real(kind=CUSTOM_REAL),dimension(nglob),intent(in) :: xstore,ystore,zstore
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: model
 
-  ! topology of the control points of the surface element
-  integer,intent(in) :: iaddx(NGNOD),iaddy(NGNOD),iaddr(NGNOD)
+  ! indices of the control points of the surface element
+  integer,intent(in) :: anchor_iax(NGNOD),anchor_iay(NGNOD),anchor_iaz(NGNOD)
 
   ! Gauss-Lobatto-Legendre points of integration and weights
   double precision, dimension(NGLLX),intent(in) :: xigll
@@ -1322,7 +1355,6 @@
 
   ! locations
   real(kind=CUSTOM_REAL) :: x_found,y_found,z_found
-  real(kind=CUSTOM_REAL) :: val,val_initial
   real(kind=CUSTOM_REAL) :: xmin,xmax,ymin,ymax,zmin,zmax
 
   integer :: ipoin,nslice_points
@@ -1330,9 +1362,6 @@
 
   ! debug warning about large model value differences
   logical,parameter :: DO_WARNING = .false.
-
-  ! searches elements within a given radius
-  logical,parameter :: USE_SEARCH_RADIUS = .true.
 
   ! user output
   if (myrank == 0) print *,'looping over target points ...'
@@ -1373,9 +1402,9 @@
 
   ! user output
   if (myrank == 0) then
-    print *,'  using search radius: ',sngl(r_search * R_EARTH_KM),'(km)'
+    print *,'  using search radius: ',sngl(r_search * R_PLANET_KM),'(km)'
     print *
-    print *,'  points contained in master slice: ',nslice_points,' out of ',nglob_target
+    print *,'  points contained in main slice: ',nslice_points,' out of ',nglob_target
     print *
   endif
 
@@ -1406,7 +1435,7 @@
     call kdtree_count_nearest_n_neighbors(xyz_target,r_search,nsearch_points)
 
     ! debug
-    !if (myrank == 0) print *,'search radius: ',r_search*R_EARTH_KM,'has number of neighbors = ',nsearch_points
+    !if (myrank == 0) print *,'search radius: ',r_search*R_PLANET_KM,'has number of neighbors = ',nsearch_points
 
     ! checks if points near target locations have been found, if not then it is outside of mesh
     if (nsearch_points == 0) cycle
@@ -1424,7 +1453,7 @@
 
     ! debug
     !if (myrank == 0 .and. iglob < 100) &
-    !  print *,'dist_min kdtree: ',dist_min * R_EARTH_KM,'(km)',typical_size * R_EARTH_KM
+    !  print *,'dist_min kdtree: ',dist_min * R_PLANET_KM,'(km)',typical_size * R_PLANET_KM
 
     ! restores original target point location for locating/interpolating
     ! (re-assignment might help for compiler optimizations with better locality)
@@ -1437,7 +1466,7 @@
                              xi,eta,gamma, &
                              ispec_selected,nspec,nglob, &
                              ibool,xstore,ystore,zstore, &
-                             iaddx,iaddy,iaddr,xigll,yigll,zigll,typical_size, &
+                             anchor_iax,anchor_iay,anchor_iaz,xigll,yigll,zigll,typical_size, &
                              i_selected,j_selected,k_selected,dist_min, &
                              is_inside_element,element_size)
 
@@ -1450,10 +1479,13 @@
     ! checks if point is inside element
     if (is_inside_element .and. dist_min < SMALLVAL) then
       ! sets new interpolated model value
-      call set_interpolated_value()
+      call set_interpolated_value(dist_min,nglob_target,model2,model_distance2, &
+                                  xi,eta,gamma,ispec_selected,i_selected,j_selected,k_selected,iglob, &
+                                  nspec,model,xigll,yigll,zigll, &
+                                  model_maxdiff,DO_WARNING,xyz_target,x_found,y_found,z_found,myrank)
 
       ! debug
-      !if (myrank == 0) print *,'search first guess = ',dist_min*R_EARTH_KM,'point',ipoin
+      !if (myrank == 0) print *,'search first guess = ',dist_min*R_PLANET_KM,'point',ipoin
 
       ! no more searching needed, switch to next point
       cycle
@@ -1520,7 +1552,7 @@
                                xi,eta,gamma, &
                                ispec_selected,nspec,nglob, &
                                ibool,xstore,ystore,zstore, &
-                               iaddx,iaddy,iaddr,xigll,yigll,zigll,typical_size, &
+                               anchor_iax,anchor_iay,anchor_iaz,xigll,yigll,zigll,typical_size, &
                                i_selected,j_selected,k_selected,dist_min, &
                                is_inside_element,element_size)
 
@@ -1530,10 +1562,13 @@
         call check_location()
 
         ! debug
-        !if (myrank == 0) print *,'search element: ',ispec_selected,'dist:',dist_min*R_EARTH_KM,'inside:',is_inside_element
+        !if (myrank == 0) print *,'search element: ',ispec_selected,'dist:',dist_min*R_PLANET_KM,'inside:',is_inside_element
 
         ! sets new interpolated model value
-        call set_interpolated_value()
+        call set_interpolated_value(dist_min,nglob_target,model2,model_distance2, &
+                                    xi,eta,gamma,ispec_selected,i_selected,j_selected,k_selected,iglob, &
+                                    nspec,model,xigll,yigll,zigll, &
+                                    model_maxdiff,DO_WARNING,xyz_target,x_found,y_found,z_found,myrank)
 
         ! counter adds element to new search list
         nsearch_points = nsearch_points + 1
@@ -1542,7 +1577,7 @@
     enddo
 
     ! debug
-    !if (myrank == 0) print *,'search elements = ',num_search_elem,' contained = ',nsearch_points,'radius:',r_search*R_EARTH_KM
+    !if (myrank == 0) print *,'search elements = ',num_search_elem,' contained = ',nsearch_points,'radius:',r_search*R_PLANET_KM
 
     ! frees search arrays
     deallocate(kdtree_search_index)
@@ -1574,23 +1609,23 @@
       print *,'Error rank:',myrank,'invalid selected ispec ',ispec_selected
       print *,'iglob_min:',iglob_min,'nspec:',nspec
       print *,'target location:',xyz_target(:)
-      print *,'dist_min: ',dist_min * R_EARTH_KM,'(km)'
+      print *,'dist_min: ',dist_min * R_PLANET_KM,'(km)'
       stop 'Error specifying closest ispec element'
     endif
 
     ! checks minimum distance within a typical element size
     if (DO_WARNING) then
       if (dist_min > 2 * typical_size) then
-        print *,'Warning: rank ',myrank,' - large dist_min: ',dist_min * R_EARTH_KM,'(km)', &
-               'element size:',typical_size * R_EARTH_KM
+        print *,'Warning: rank ',myrank,' - large dist_min: ',dist_min * R_PLANET_KM,'(km)', &
+               'element size:',typical_size * R_PLANET_KM
         print *,'element selected ispec:',ispec_selected,'iglob_min:',iglob_min
-        print *,'typical element size:',typical_size * 0.5 * R_EARTH_KM
+        print *,'typical element size:',typical_size * 0.5 * R_PLANET_KM
         print *,'target location:',xyz_target(:)
-        print *,'target radius  :',sqrt(xyz_target(1)**2 + xyz_target(2)**2 + xyz_target(3)**2) * R_EARTH_KM,'(km)'
+        print *,'target radius  :',sqrt(xyz_target(1)**2 + xyz_target(2)**2 + xyz_target(3)**2) * R_PLANET_KM,'(km)'
         print *,'found location :',kdtree_nodes_location(:,iglob_min)
         print *,'found radius   :',sqrt(kdtree_nodes_location(1,iglob_min)**2 &
                                      + kdtree_nodes_location(2,iglob_min)**2 &
-                                     + kdtree_nodes_location(3,iglob_min)**2 ) * R_EARTH_KM,'(km)'
+                                     + kdtree_nodes_location(3,iglob_min)**2 ) * R_PLANET_KM,'(km)'
         !debug
         !stop 'Error dist_min too large in check_point_result() routine'
       endif
@@ -1615,75 +1650,115 @@
       ! distance to closest GLL (still normalized)
       dist = sqrt((x_found-x_target)**2 + (y_found-y_target)**2 + (z_found-z_target)**2)
       if (dist > 2 * typical_size) then
-        print *,'Warning: rank ',myrank,' - large GLL distance: ',dist * R_EARTH_KM,'(km)', &
-               'element size:',element_size*R_EARTH_KM,'typical size:',typical_size * R_EARTH_KM
+        print *,'Warning: rank ',myrank,' - large GLL distance: ',dist * R_PLANET_KM,'(km)', &
+               'element size:',element_size*R_PLANET_KM,'typical size:',typical_size * R_PLANET_KM
         print *,'target location:',xyz_target(:)
-        print *,'target radius  :',sqrt(xyz_target(1)**2 + xyz_target(2)**2 + xyz_target(3)**2) * R_EARTH_KM,'(km)'
+        print *,'target radius  :',sqrt(xyz_target(1)**2 + xyz_target(2)**2 + xyz_target(3)**2) * R_PLANET_KM,'(km)'
         print *,'gll location   :',x_found,y_found,z_found
-        print *,'gll radius     :',sqrt(x_found**2 + y_found**2 + z_found**2) * R_EARTH_KM,'(km)'
+        print *,'gll radius     :',sqrt(x_found**2 + y_found**2 + z_found**2) * R_PLANET_KM,'(km)'
         print *,'minimum distance gll:',dist_min,'(km)'
         ! debug
         !stop 'Error GLL model value invalid'
       endif
       ! debug
       !if (myrank == 0 .and. iglob_min < 100) &
-      !  print *,'dist_min GLL point: ',dist_min * R_EARTH_KM,'(km)',typical_size * R_EARTH_KM
+      !  print *,'dist_min GLL point: ',dist_min * R_PLANET_KM,'(km)',typical_size * R_PLANET_KM
     endif
 
     end subroutine check_location
 
-    !-------------------------------------------
+  end subroutine get_model_values_cross_section
 
-    subroutine set_interpolated_value()
 
-    implicit none
+!
+!------------------------------------------------------------------------------
+!
 
-    ! checks if new point distance is better than stored one
-    if (dist_min < model_distance2(iglob)) then
+  subroutine set_interpolated_value(dist_min,nglob_target,model2,model_distance2, &
+                                    xi,eta,gamma,ispec_selected,i_selected,j_selected,k_selected,iglob, &
+                                    nspec,model,xigll,yigll,zigll, &
+                                    model_maxdiff,DO_WARNING,xyz_target,x_found,y_found,z_found,myrank)
 
-      ! sets new minimum distance
-      model_distance2(iglob) = dist_min
+  use constants, only: NGLLX,NGLLY,NGLLZ,CUSTOM_REAL
+  use shared_parameters, only: R_PLANET_KM
 
-      ! interpolate model values
-      call interpolate(xi,eta,gamma,ispec_selected, &
-                       nspec,model(:,:,:,:), &
-                       val,xigll,yigll,zigll)
+  implicit none
 
-      ! sets new model value
-      model2(iglob) = val
+  double precision,intent(in) :: dist_min
+  ! new mesh
+  integer,intent(in) :: nglob_target
+  real(kind=CUSTOM_REAL),dimension(nglob_target),intent(inout) :: model2
+  real(kind=CUSTOM_REAL),dimension(nglob_target),intent(inout) :: model_distance2
 
-      ! checks difference of interpolated value with model value of closest GLL point
-      val_initial = model(i_selected,j_selected,k_selected,ispec_selected)
-      if (abs(val - val_initial ) > abs(model_maxdiff)) model_maxdiff = val - val_initial
+  ! point location
+  double precision,intent(in) :: xi,eta,gamma
+  integer,intent(in) :: ispec_selected
+  integer,intent(in) :: i_selected,j_selected,k_selected
+  integer,intent(in) :: iglob
 
-      ! checks model difference
-      if (DO_WARNING) then
-        ! note: warns for top elements, probably due to crustal structure
-        if (abs(val - val_initial ) > abs( 0.2 * val_initial )) then
-          print *,'Warning: model ',' value:',val,'is very different from initial value ',val_initial
-          print *,'  rank ',myrank,' - dist_min: ',dist_min * R_EARTH_KM,'(km)'
-          print *,'  selected ispec:',ispec_selected,'iglob_min:',iglob_min
-          print *,'  typical element size:',typical_size * 0.5 * R_EARTH_KM
-          print *,'  interpolation i,j,k :',i_selected,j_selected,k_selected
-          print *,'  interpolation       :',xi,eta,gamma
-          print *,'  target location:',xyz_target(:)
-          print *,'  target radius  :',sqrt(xyz_target(1)**2 + xyz_target(2)**2 + xyz_target(3)**2) * R_EARTH_KM,'(km)'
-          print *,'  GLL location   :',x_found,y_found,z_found
-          print *,'  GLL radius     :',sqrt(x_found**2 + y_found**2 + z_found**2) * R_EARTH_KM,'(km)'
-          print *,'  distance gll:',dist_min * R_EARTH_KM,'(km)'
-          !stop 'Error model value invalid'
-        endif
+  ! for old, first mesh we interpolate on
+  integer,intent(in) :: nspec
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: model
+
+  ! Gauss-Lobatto-Legendre points of integration and weights
+  double precision, dimension(NGLLX),intent(in) :: xigll
+  double precision, dimension(NGLLY),intent(in) :: yigll
+  double precision, dimension(NGLLZ),intent(in) :: zigll
+
+  real(kind=CUSTOM_REAL),intent(inout) :: model_maxdiff
+  logical, intent(in) :: DO_WARNING
+
+  ! nodes search
+  double precision,dimension(3),intent(in) :: xyz_target
+  real(kind=CUSTOM_REAL),intent(in) :: x_found,y_found,z_found
+  integer, intent(in) :: myrank
+
+  ! local parameters
+  real(kind=CUSTOM_REAL) :: val,val_initial
+
+  ! checks if new point distance is better than stored one
+  if (dist_min < model_distance2(iglob)) then
+
+    ! sets new minimum distance
+    model_distance2(iglob) = dist_min
+
+    ! interpolate model values
+    call interpolate_element_value(xi,eta,gamma,ispec_selected, &
+                                   nspec,model(:,:,:,ispec_selected), &
+                                   val,xigll,yigll,zigll)
+
+    ! sets new model value
+    model2(iglob) = val
+
+    ! checks difference of interpolated value with model value of closest GLL point
+    val_initial = model(i_selected,j_selected,k_selected,ispec_selected)
+    if (abs(val - val_initial ) > abs(model_maxdiff)) model_maxdiff = val - val_initial
+
+    ! checks model difference
+    if (DO_WARNING) then
+      ! note: warns for top elements, probably due to crustal structure
+      if (abs(val - val_initial ) > abs( 0.2 * val_initial )) then
+        print *,'Warning: model ',' value:',val,'is very different from initial value ',val_initial
+        print *,'  rank ',myrank,' - dist_min: ',dist_min * R_PLANET_KM,'(km)'
+        print *,'  selected ispec:',ispec_selected
+        print *,'  interpolation i,j,k :',i_selected,j_selected,k_selected
+        print *,'  interpolation       :',xi,eta,gamma
+        print *,'  target location:',xyz_target(:)
+        print *,'  target radius  :',sqrt(xyz_target(1)**2 + xyz_target(2)**2 + xyz_target(3)**2) * R_PLANET_KM,'(km)'
+        print *,'  GLL location   :',x_found,y_found,z_found
+        print *,'  GLL radius     :',sqrt(x_found**2 + y_found**2 + z_found**2) * R_PLANET_KM,'(km)'
+        print *,'  distance gll:',dist_min * R_PLANET_KM,'(km)'
+        !stop 'Error model value invalid'
       endif
-
-      ! debug
-      !if (myrank == 0 .and. iglob < 100) &
-      !  print *,'new model ',': value ',val,'initial ',val_initial,'diff ',(val - val_initial)/val_initial*100.0,'(%)'
-
     endif
 
-    end subroutine set_interpolated_value
+    ! debug
+    !if (myrank == 0 .and. iglob < 100) &
+    !  print *,'new model ',': value ',val,'initial ',val_initial,'diff ',(val - val_initial)/val_initial*100.0,'(%)'
 
-  end subroutine get_model_values_cross_section
+  endif
+
+  end subroutine set_interpolated_value
 
 !
 !------------------------------------------------------------------------------
@@ -1694,12 +1769,13 @@
                                  xi_target,eta_target,gamma_target, &
                                  ispec_selected,nspec,nglob, &
                                  ibool,xstore,ystore,zstore, &
-                                 iaddx,iaddy,iaddr, &
+                                 anchor_iax,anchor_iay,anchor_iaz, &
                                  xigll,yigll,zigll,typical_size, &
                                  i_selected,j_selected,k_selected,dist_min, &
                                  is_inside_element,element_size)
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,HUGEVAL,NUM_ITER,R_EARTH_KM
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,HUGEVAL,NUM_ITER
+  use shared_parameters, only: R_PLANET_KM
 
   implicit none
 
@@ -1718,8 +1794,8 @@
   integer,dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
   real(kind=CUSTOM_REAL),dimension(nglob),intent(in) :: xstore,ystore,zstore
 
-  ! topology of the control points of the surface element
-  integer,intent(in) :: iaddx(NGNOD),iaddy(NGNOD),iaddr(NGNOD)
+  ! indices of the control points of the surface element
+  integer,intent(in) :: anchor_iax(NGNOD),anchor_iay(NGNOD),anchor_iaz(NGNOD)
 
   ! Gauss-Lobatto-Legendre points of integration and weights
   double precision, dimension(NGLLX),intent(in) :: xigll
@@ -1744,7 +1820,6 @@
   integer :: i,j,k,iglob !,ispec,rank
   double precision :: dist
   double precision :: xi,eta,gamma,dx,dy,dz,dxi,deta,dgamma
-  integer :: iax,iay,iaz
   ! coordinates of the control points of the surface element
   double precision :: xelm(NGNOD),yelm(NGNOD),zelm(NGNOD)
   integer :: iter_loop
@@ -1803,7 +1878,7 @@
   dist_min = sqrt(dist_min)
 
   ! debug
-  !print *,'dist min = ',sngl(dist_min * R_EARTH_KM),'(km)'
+  !print *,'dist min = ',sngl(dist_min * R_PLANET_KM),'(km)'
 
   ! find the best (xi,eta)
   ! use initial guess in xi, eta and gamma from closest point found
@@ -1817,37 +1892,8 @@
   final_distance = HUGEVAL
 
   ! define coordinates of the control points of the element
-  do ia=1,NGNOD
-    if (iaddx(ia) == 0) then
-      iax = 1
-    else if (iaddx(ia) == 1) then
-      iax = (NGLLX+1)/2
-    else if (iaddx(ia) == 2) then
-      iax = NGLLX
-    else
-      stop 'incorrect value of iaddx'
-    endif
-    if (iaddy(ia) == 0) then
-      iay = 1
-    else if (iaddy(ia) == 1) then
-      iay = (NGLLY+1)/2
-    else if (iaddy(ia) == 2) then
-      iay = NGLLY
-    else
-      stop 'incorrect value of iaddy'
-    endif
-    if (iaddr(ia) == 0) then
-      iaz = 1
-    else if (iaddr(ia) == 1) then
-      iaz = (NGLLZ+1)/2
-    else if (iaddr(ia) == 2) then
-      iaz = NGLLZ
-    else
-      stop 'incorrect value of iaddr'
-    endif
-
-    iglob = ibool(iax,iay,iaz,ispec_selected)
-
+  do ia = 1,NGNOD
+    iglob = ibool(anchor_iax(ia),anchor_iay(ia),anchor_iaz(ia),ispec_selected)
     xelm(ia) = dble(xstore(iglob))
     yelm(ia) = dble(ystore(iglob))
     zelm(ia) = dble(zstore(iglob))
@@ -1910,7 +1956,7 @@
 
   ! debug
   !if (final_distance > 5.0 ) &
-  !  print *,'final distance = ',sngl(final_distance * R_EARTH_KM),'(km)',dist_min * R_EARTH_KM,'xi/eta/gamma = ',xi,eta,gamma
+  !  print *,'final distance = ',sngl(final_distance * R_PLANET_KM),'(km)',dist_min * R_PLANET_KM,'xi/eta/gamma = ',xi,eta,gamma
 
   ! checks if location improved
   if (final_distance < dist_min ) then
@@ -1960,7 +2006,7 @@
     if (dist_min < 0.1 * element_size) then
       is_inside_element = .true.
       ! debug
-      !print *,'xi/eta/gamma:',xi_target,eta_target,gamma_target,'dist',dist_min * R_EARTH_KM,'elemsize',element_size*R_EARTH_KM
+      !print *,'xi/eta/gamma:',xi_target,eta_target,gamma_target,'dist',dist_min * R_PLANET_KM,'elemsize',element_size*R_PLANET_KM
     endif
   endif
 
@@ -1971,14 +2017,14 @@
       print *, '*****************************************************************'
       print *, '***** WARNING: location estimate is poor                    *****'
       print *, '*****************************************************************'
-      print *, 'closest estimate found: ',sngl(dist_min * R_EARTH_KM),'km away, not within:',typical_size * R_EARTH_KM
+      print *, 'closest estimate found: ',sngl(dist_min * R_PLANET_KM),'km away, not within:',typical_size * R_PLANET_KM
       print *, ' in element ',ispec_selected,ix_initial_guess,iy_initial_guess,iz_initial_guess
       print *, ' at xi,eta,gamma coordinates = ',xi,eta,gamma
-      print *, ' at radius ',sqrt(x**2 + y**2 + z**2) * R_EARTH_KM,'(km)'
-      print *, ' initial distance :',dist_min * R_EARTH_KM,'(km)'
+      print *, ' at radius ',sqrt(x**2 + y**2 + z**2) * R_PLANET_KM,'(km)'
+      print *, ' initial distance :',dist_min * R_PLANET_KM,'(km)'
     else
       print *,'point inside: ',is_inside_element, &
-              'distances = ',dist_min * R_EARTH_KM,element_size * R_EARTH_KM,typical_size*R_EARTH_KM
+              'distances = ',dist_min * R_PLANET_KM,element_size * R_PLANET_KM,typical_size*R_PLANET_KM
       print *, ' at xi,eta,gamma coordinates = ',xi,eta,gamma
     endif
 
@@ -1996,7 +2042,8 @@
                                  model_diff,model_pert,m_avg_total,point_avg_total, &
                                  typical_size,depth0,section_type,filename)
 
-  use constants, only: CUSTOM_REAL,IOUT,MAX_STRING_LEN,R_EARTH_KM
+  use constants, only: CUSTOM_REAL,IOUT,MAX_STRING_LEN
+  use shared_parameters, only: R_PLANET_KM
 
   implicit none
 
@@ -2072,11 +2119,11 @@
       diff = model_diff(iglob)
 
       ! outputs cross-section points to file
-      write(IOUT,*) sngl(lon),sngl(lat),sngl(r*R_EARTH_KM),sngl(val), &
-                    sngl(pert),sngl(diff),sngl(dist_min*R_EARTH_KM)
+      write(IOUT,*) sngl(lon),sngl(lat),sngl(r*R_PLANET_KM),sngl(val), &
+                    sngl(pert),sngl(diff),sngl(dist_min*R_PLANET_KM)
     endif
     !debug
-    !print *,'lat/lon/r/param = ',sngl(lat),sngl(lon),sngl(r*R_EARTH_KM),model2(iglob),model_distance2(iglob)*R_EARTH_KM
+    !print *,'lat/lon/r/param = ',sngl(lat),sngl(lon),sngl(r*R_PLANET_KM),model2(iglob),model_distance2(iglob)*R_PLANET_KM
   enddo
 
   ! closes file
@@ -2098,8 +2145,9 @@
                                    typical_size,dlat,dlon,nlat,lat0,dincr,ddepth,section_type,ELLIPTICITY, &
                                    model_diff,model_pert,m_avg_total,point_avg_total)
 
-  use constants, only: CUSTOM_REAL,RADIANS_TO_DEGREES,R_EARTH_KM, &
-    TINYVAL,HUGEVAL,PI,PI_OVER_TWO,ONE_MINUS_F_SQUARED
+  use constants, only: CUSTOM_REAL,RADIANS_TO_DEGREES, &
+    TINYVAL,HUGEVAL,PI,PI_OVER_TWO
+  use shared_parameters, only: ONE_MINUS_F_SQUARED,R_PLANET_KM
 
   implicit none
 
@@ -2130,13 +2178,12 @@
   double precision :: val,pert,diff
   double precision :: pert_min,pert_max
   integer :: ipoints_integral
+  double precision :: FACTOR_TAN
 
-  double precision, parameter :: FACTOR_TAN = 1.d0 / ONE_MINUS_F_SQUARED
+  ! factor
+  FACTOR_TAN = 1.d0 / ONE_MINUS_F_SQUARED
 
-  ! flag to chose to plot either all targets points (even if location is outside of mesh), or only close ones
-  logical, parameter :: PLOT_ALL_POINTS = .false.
-
-  ! note: only master rank is computing this on collected array values
+  ! note: only main rank is computing this on collected array values
   !
   ! user output
   print *,'cross-section statistics:'
@@ -2275,11 +2322,11 @@
   enddo
 
   ! user output
-  print *,'  distance limit of close points       = ',sngl(distance_limit * R_EARTH_KM),'(km)'
+  print *,'  distance limit of close points       = ',sngl(distance_limit * R_PLANET_KM),'(km)'
   print *,'  number of close cross-section points = ',ipoints_integral
   print *
-  print *,'  full Earth surface area    = ',sngl(4.0 * PI * R_EARTH_KM**2),'(km^2)'
-  print *,'  cross-section surface area = ',sngl(total_spherical_area * R_EARTH_KM**2),'(km^2)'
+  print *,'  full Earth surface area    = ',sngl(4.0 * PI * R_PLANET_KM**2),'(km^2)'
+  print *,'  cross-section surface area = ',sngl(total_spherical_area * R_PLANET_KM**2),'(km^2)'
   print *,'                             = ',sngl(total_spherical_area / (4.0 * PI) * 100.d0) ,'%'
   print *
   print *,'  cross-section average value = ',sngl(m_avg_total)
@@ -2301,7 +2348,7 @@
 !
 ! grid will have a single point at north/south pole
 
-  use constants, only: PI, DEGREES_TO_RADIANS
+  use constants, only: DEGREES_TO_RADIANS
 
   implicit none
 
@@ -2465,7 +2512,8 @@
 
 ! returns latitude/longitude in radians for geocentric location
 
-  use constants, only: DEGREES_TO_RADIANS,PI,TWO_PI,PI_OVER_TWO,ONE_MINUS_F_SQUARED
+  use constants, only: DEGREES_TO_RADIANS,PI_OVER_TWO
+  use shared_parameters, only: ONE_MINUS_F_SQUARED
 
   implicit none
 
@@ -2497,7 +2545,8 @@
 ! determines area around lat/lon location for a regular, vertical latitude-longitude grid
 ! with dincr/ddepth increments
 
-  use constants, only: R_EARTH_KM,R_UNIT_SPHERE,PI,DEGREES_TO_RADIANS,SMALLVAL
+  use constants, only: R_UNIT_SPHERE,DEGREES_TO_RADIANS
+  use shared_parameters, only: R_PLANET_KM
 
   implicit none
 
@@ -2530,7 +2579,7 @@
   dincr_rad = dincr * DEGREES_TO_RADIANS
 
   ! normalized half vertical increment
-  ddepth_half = 0.5d0 * ddepth / R_EARTH_KM
+  ddepth_half = 0.5d0 * ddepth / R_PLANET_KM
 
   ! radius bottom/top
   if (r + ddepth_half >= R_UNIT_SPHERE) then
@@ -2551,7 +2600,7 @@
 
   !debug
   if (DEBUG) then
-    print *,'  r/theta/phi = ',r*R_EARTH_KM,theta/DEGREES_TO_RADIANS,phi/DEGREES_TO_RADIANS,'area = ',area * R_EARTH_KM**2
+    print *,'  r/theta/phi = ',r*R_PLANET_KM,theta/DEGREES_TO_RADIANS,phi/DEGREES_TO_RADIANS,'area = ',area * R_PLANET_KM**2
   endif
 
   end subroutine get_vertical_lat_lon_section_area

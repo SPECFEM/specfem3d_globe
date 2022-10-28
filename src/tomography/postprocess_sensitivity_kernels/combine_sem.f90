@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -65,11 +65,11 @@ program combine_sem_globe
 
   integer, parameter :: NARGS = 3
 
-  character(len=MAX_STRING_LEN) :: kernel_paths(MAX_KERNEL_PATHS),kernel_names(MAX_KERNEL_NAMES)
-  character(len=MAX_STRING_LEN) :: sline,output_dir,input_file,kernel_names_comma_delimited, kernel_name
   character(len=MAX_STRING_LEN) :: arg(NARGS)
+  character(len=MAX_STRING_LEN),dimension(:),allocatable :: kernel_paths,kernel_names
+  character(len=MAX_STRING_LEN) :: sline,output_dir,input_file,kernel_names_comma_delimited, kernel_name
   integer :: i,ier,iker,npath,nker
-
+  integer :: sizeprocs
 
   call init_mpi()
   call world_size(sizeprocs)
@@ -84,23 +84,17 @@ program combine_sem_globe
   endif
   call synchronize_all()
 
-  ! check number of MPI processes
-  if (sizeprocs /= NPROCTOT_VAL) then
-    if (myrank == 0) then
-      print *
-      print *,'Expected number of MPI processes: ', NPROCTOT_VAL
-      print *,'Actual number of MPI processes: ', sizeprocs
-      print *
-    endif
-    call synchronize_all()
-    stop 'Error wrong number of MPI processes'
-  endif
-  call synchronize_all()
-
   if (myrank == 0) then
     write(*,*) 'Running XCOMBINE_SEM'
     write(*,*)
   endif
+
+  ! allocates arrays
+  allocate(kernel_paths(MAX_KERNEL_PATHS), &
+           kernel_names(MAX_KERNEL_NAMES),stat=ier)
+  if (ier /= 0) stop 'Error allocating kernel_paths array'
+  kernel_paths(:) = ''
+  kernel_names(:) = ''
 
   ! parse command line arguments
   do i = 1, NARGS
@@ -144,11 +138,41 @@ program combine_sem_globe
     print *,(trim(kernel_paths(i))//' ',i=1,npath)
     print *
   endif
-
   call synchronize_all()
 
+  ! reads mesh parameters
+  if (myrank == 0) then
+    ! reads mesh_parameters.bin file from first kernel_path directory
+    LOCAL_PATH = kernel_paths(1)
+    call read_mesh_parameters()
+  endif
+  ! broadcast parameters to all processes
+  call bcast_mesh_parameters()
+
+  ! user output
+  if (myrank == 0) then
+    print *,'mesh parameters (from first kernel path directory):'
+    print *,'  NSPEC_CRUST_MANTLE = ',NSPEC_CRUST_MANTLE
+    print *,'  NPROCTOT           = ',NPROCTOT_VAL
+    print *
+  endif
+
+  ! check number of MPI processes
+  if (sizeprocs /= NPROCTOT_VAL) then
+    if (myrank == 0) then
+      print *
+      print *,'Expected number of MPI processes: ', NPROCTOT_VAL
+      print *,'Actual number of MPI processes: ', sizeprocs
+      print *
+    endif
+    call synchronize_all()
+    stop 'Error wrong number of MPI processes'
+  endif
+  call synchronize_all()
+
+
   ! call kernel summation subroutine
-  do iker=1,nker
+  do iker = 1,nker
       kernel_name = kernel_names(iker) ! e.g. alpha_kernel, beta_kernel, rho_kernel
       call sum_kernel(kernel_names(iker),kernel_paths,output_dir,npath)
   enddo

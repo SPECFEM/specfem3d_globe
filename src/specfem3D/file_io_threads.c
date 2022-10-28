@@ -1,7 +1,7 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -91,12 +91,16 @@ struct threadInfo{
 
 // --------------------------------------------------------------------------------
 
+// globals
 struct threadInfo ptDataAdj;
-
 pthread_t adj_io_thread;
 
+// prototypes
 // fortran function
 extern void FC_FUNC_(read_adjoint_sources_local,READ_ADJOINT_SOURCES_LOCAL)(char*, const int* , const int*);
+
+
+// --------------------------------------------------------------------------------
 
 // Thread that does actual read in adjoint sources. dummy argument is needed to avoid compiler warning.
 void *fread_adj_thread(void* dummy) {
@@ -118,6 +122,8 @@ void *fread_adj_thread(void* dummy) {
   return NULL;  // Never used, but remove warnings.
 }
 
+// --------------------------------------------------------------------------------
+
 // Waits until thread is finished with I/O
 void wait_adj_io_thread() {
 
@@ -128,7 +134,7 @@ void wait_adj_io_thread() {
   if (ptDataAdj.started ) {
     void* status;
     rc = pthread_join(adj_io_thread, &status);
-    if (rc ) {
+    if (rc) {
       printf("Error; return code from pthread_join() is %d\n", rc);
       exit_error("Error in wait_adj_io_thread: thread_join failed");
     }
@@ -140,9 +146,11 @@ void wait_adj_io_thread() {
   }
 }
 
+// --------------------------------------------------------------------------------
+
 // initializes adjoint thread
 void
-FC_FUNC_(prepare_adj_io_thread,CREATE_IO_ADJ_THREAD)(char *buffer, long* length, int* nadj_rec_local) {
+FC_FUNC_(prepare_adj_io_thread,PREPARE_ADJ_IO_THREAD)(char *buffer, long* length, int* nadj_rec_local) {
 
   TRACE("prepare_adj_io_thread");
 
@@ -163,7 +171,7 @@ FC_FUNC_(prepare_adj_io_thread,CREATE_IO_ADJ_THREAD)(char *buffer, long* length,
 
 // creates thread for reading adjoint sources
 void
-FC_FUNC_(read_adj_io_thread,CREATE_IO_ADJ_THREAD)(int* it_sub_adj) {
+FC_FUNC_(read_adj_io_thread,READ_ADJ_IO_THREAD)(int* it_sub_adj) {
 
   TRACE("read_adj_io_thread");
   // debug

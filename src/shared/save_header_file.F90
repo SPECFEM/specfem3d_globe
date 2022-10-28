@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -78,8 +78,8 @@
     ATT1,ATT2,ATT3,ATT4,ATT5, &
     MOVIE_VOLUME,MOVIE_VOLUME_TYPE,NTSTEP_BETWEEN_FRAMES,SIMULATION_TYPE,MOVIE_SURFACE, &
     UNDO_ATTENUATION,MEMORY_INSTALLED_PER_CORE_IN_GB,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-    this_region_has_a_doubling,doubling_index,ner,ratio_sampling_array, &
-    RECORD_LENGTH_IN_MINUTES,NSTEP
+    RECORD_LENGTH_IN_MINUTES,NSTEP, &
+    NX_BATHY,NY_BATHY,R_PLANET_KM,T_min_period
 
   implicit none
 
@@ -112,14 +112,14 @@
   ! local parameters
   double precision :: subtract_central_cube_elems,subtract_central_cube_points
   ! for regional code
-  double precision x,y,gamma,rgt,xi,eta
-  double precision x_top,y_top,z_top
-  double precision ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
+  double precision :: x,y,gamma,rgt,xi,eta
+  double precision :: x_top,y_top,z_top
+  double precision :: ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
   ! rotation matrix from Euler angles
-  integer i,j,ix,iy,icorner
-  double precision rotation_matrix(3,3)
-  double precision vector_ori(3),vector_rotated(3)
-  double precision r_corner,theta_corner,phi_corner,lat,long,colat_corner
+  integer :: i,j,ix,iy,icorner
+  double precision :: rotation_matrix(3,3)
+  double precision :: vector_ori(3),vector_rotated(3)
+  double precision :: r_corner,theta_corner,phi_corner,lat,long,colat_corner
   integer :: ier
 
   integer :: num_elem_gc,num_gll_gc
@@ -145,9 +145,9 @@
   ! evaluate the amount of static memory needed by the solver, but imposing that SIMULATION_TYPE = 3
   ! because that is by far the most expensive setup for runs in terms of memory usage, thus that is
   ! the type of run for which we need to make sure that everything fits in memory
-  call memory_eval(doubling_index,this_region_has_a_doubling, &
-                   ner,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-                   ratio_sampling_array,NPROCTOT,NSPEC_REGIONS,NGLOB_REGIONS, &
+  call memory_eval(NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+                   NPROCTOT, &
+                   NSPEC_REGIONS,NGLOB_REGIONS, &
                    NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
                    NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
                    NSPEC_INNER_CORE_ATTENUATION, &
@@ -163,7 +163,7 @@
                    NSPEC2D_BOTTOM,NSPEC2D_TOP,static_memory_size)
 
   call compute_optimized_dumping(static_memory_size,NT_DUMP_ATTENUATION_optimal,number_of_dumpings_to_do, &
-                   static_memory_size_GB,size_to_store_at_each_time_step,disk_size_of_each_dumping)
+                                 static_memory_size_GB,size_to_store_at_each_time_step,disk_size_of_each_dumping)
 
   ! restore the simulation type that we have temporarily erased
   SIMULATION_TYPE = saved_SIMULATION_TYPE
@@ -172,9 +172,8 @@
   ! based on the original simulation type chosen in Par_file
   !
   ! evaluate the amount of static memory needed by the solver
-  call memory_eval(doubling_index,this_region_has_a_doubling, &
-                   ner,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-                   ratio_sampling_array,NPROCTOT,NSPEC_REGIONS,NGLOB_REGIONS, &
+  call memory_eval(NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+                   NPROCTOT,NSPEC_REGIONS,NGLOB_REGIONS, &
                    NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
                    NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
                    NSPEC_INNER_CORE_ATTENUATION, &
@@ -204,8 +203,7 @@
     print *,'total points per slice = ',sum(NGLOB_REGIONS)
     print *
     print *,'the time step of the solver will be DT = ',sngl(DT),' (s)'
-    print *,'the (approximate) minimum period resolved will be = ', &
-            sngl(max(ANGULAR_WIDTH_ETA_IN_DEGREES,ANGULAR_WIDTH_XI_IN_DEGREES)/90.0 * 256.0/min(NEX_ETA,NEX_XI) * 17.0),' (s)'
+    print *,'the (approximate) minimum period resolved will be = ',sngl(T_min_period),' (s)'
     print *
     print *,'current record length is = ',sngl(RECORD_LENGTH_IN_MINUTES),'min'
     print *,'current minimum number of time steps will be = ',NSTEP
@@ -343,8 +341,7 @@
   write(IOUT,*) '! total points per slice = ',sum(NGLOB_REGIONS)
   write(IOUT,*) '!'
   write(IOUT,*) '! the time step of the solver will be DT = ',sngl(DT),' (s)'
-  write(IOUT,*) '! the (approximate) minimum period resolved will be = ', &
-            sngl(max(ANGULAR_WIDTH_ETA_IN_DEGREES,ANGULAR_WIDTH_XI_IN_DEGREES)/90.0 * 256.0/min(NEX_ETA,NEX_XI) * 17.0),' (s)'
+  write(IOUT,*) '! the (approximate) minimum period resolved will be = ',sngl(T_min_period),' (s)'
   write(IOUT,*) '!'
 
   write(IOUT,'(1x,a,i1,a)') '! total for full ',NCHUNKS,'-chunk mesh:'
@@ -389,19 +386,19 @@
 
       icorner = icorner + 1
 
-      xi= - ANGULAR_WIDTH_XI_RAD/2. + dble(ix)*ANGULAR_WIDTH_XI_RAD
-      eta= - ANGULAR_WIDTH_ETA_RAD/2. + dble(iy)*ANGULAR_WIDTH_ETA_RAD
+      xi  = - ANGULAR_WIDTH_XI_RAD/2.  + dble(ix)*ANGULAR_WIDTH_XI_RAD
+      eta = - ANGULAR_WIDTH_ETA_RAD/2. + dble(iy)*ANGULAR_WIDTH_ETA_RAD
 
-      x=dtan(xi)
-      y=dtan(eta)
+      x = dtan(xi)
+      y = dtan(eta)
 
-      gamma=ONE/dsqrt(ONE+x*x+y*y)
-      rgt=R_UNIT_SPHERE*gamma
+      gamma = ONE/dsqrt(ONE+x*x+y*y)
+      rgt = R_UNIT_SPHERE*gamma
 
       ! define the mesh points at the top surface
-      x_top=-y*rgt
-      y_top=x*rgt
-      z_top=rgt
+      x_top = -y*rgt
+      y_top = x*rgt
+      z_top = rgt
 
       ! rotate top
       vector_ori(1) = x_top
@@ -448,15 +445,15 @@
     num_elem_gc = int( 90.d0 / ANGULAR_WIDTH_XI_IN_DEGREES * 4 * NEX_XI )
     num_gll_gc = int( 90.d0 / ANGULAR_WIDTH_XI_IN_DEGREES * 4 * NEX_XI *(NGLLX-1) )
     avg_dist_deg = max( ANGULAR_WIDTH_XI_IN_DEGREES/NEX_XI,ANGULAR_WIDTH_ETA_IN_DEGREES/NEX_ETA ) / dble(NGLLX-1)
-    avg_dist_km = max( ANGULAR_WIDTH_XI_RAD/NEX_XI,ANGULAR_WIDTH_ETA_RAD/NEX_ETA ) * R_EARTH_KM / dble(NGLLX-1)
-    avg_element_size = max( ANGULAR_WIDTH_XI_RAD/NEX_XI,ANGULAR_WIDTH_ETA_RAD/NEX_ETA ) * R_EARTH_KM
+    avg_dist_km = max( ANGULAR_WIDTH_XI_RAD/NEX_XI,ANGULAR_WIDTH_ETA_RAD/NEX_ETA ) * R_PLANET_KM / dble(NGLLX-1)
+    avg_element_size = max( ANGULAR_WIDTH_XI_RAD/NEX_XI,ANGULAR_WIDTH_ETA_RAD/NEX_ETA ) * R_PLANET_KM
   else
     ! global mesh, chunks of 90 degrees
     num_elem_gc = 4 * NEX_XI
-    num_gll_gc = 4*NEX_XI*(NGLLX-1)
+    num_gll_gc = 4 * NEX_XI*(NGLLX-1)
     avg_dist_deg = 360.d0 / dble(4) / dble(NEX_XI*(NGLLX-1))
-    avg_dist_km = TWO_PI / dble(4) * R_EARTH_KM / dble(NEX_XI*(NGLLX-1))
-    avg_element_size = TWO_PI / dble(4) * R_EARTH_KM / dble(NEX_XI)
+    avg_dist_km = TWO_PI / dble(4) * R_PLANET_KM / dble(NEX_XI*(NGLLX-1))
+    avg_element_size = TWO_PI / dble(4) * R_PLANET_KM / dble(NEX_XI)
   endif
 
   write(IOUT,*) '! resolution of the mesh at the surface:'
@@ -646,8 +643,8 @@
     write(IOUT,*) 'integer, parameter :: NX_BATHY_VAL = ',NX_BATHY
     write(IOUT,*) 'integer, parameter :: NY_BATHY_VAL = ',NY_BATHY
   else
-    write(IOUT,*) 'integer, parameter :: NX_BATHY_VAL = 1'
-    write(IOUT,*) 'integer, parameter :: NY_BATHY_VAL = 1'
+    write(IOUT,*) 'integer, parameter :: NX_BATHY_VAL = 0'
+    write(IOUT,*) 'integer, parameter :: NY_BATHY_VAL = 0'
   endif
   write(IOUT,*)
 
@@ -734,15 +731,15 @@
     write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_3DMOVIE = NSPEC_CRUST_MANTLE'
     write(IOUT,*) 'integer, parameter :: NGLOB_CRUST_MANTLE_3DMOVIE = NGLOB_CRUST_MANTLE'
   else
-    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_3DMOVIE = 1'
-    write(IOUT,*) 'integer, parameter :: NGLOB_CRUST_MANTLE_3DMOVIE = 1'
+    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_3DMOVIE = 0'
+    write(IOUT,*) 'integer, parameter :: NGLOB_CRUST_MANTLE_3DMOVIE = 0'
   endif
   write(IOUT,*)
 
   if (MOVIE_VOLUME .and. MOVIE_VOLUME_TYPE == 4) then
     write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_3DMOVIE = NSPEC_OUTER_CORE'
   else
-    write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_3DMOVIE = 1'
+    write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_3DMOVIE = 0'
   endif
 
   ! in the case of Stacey boundary conditions, add C*delta/2 contribution to the mass matrix
@@ -755,9 +752,9 @@
   if (NCHUNKS /= 6 .and. ABSORBING_CONDITIONS) then
      NGLOB_XY_CM = NGLOB_REGIONS(IREGION_CRUST_MANTLE)
   else
-     NGLOB_XY_CM = 1
+     NGLOB_XY_CM = 0
   endif
-  NGLOB_XY_IC = 1
+  NGLOB_XY_IC = 0
 
   if (ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
     NGLOB_XY_CM = NGLOB_REGIONS(IREGION_CRUST_MANTLE)
@@ -820,7 +817,7 @@
     NSPEC2D_TOP,UNDO_ATTENUATION
 
   use constants, only: NGLLX,NGLLY,NGLLZ,NDIM,N_SLS,CUSTOM_REAL, &
-    IREGION_CRUST_MANTLE,IREGION_INNER_CORE,IREGION_OUTER_CORE
+    IREGION_CRUST_MANTLE,IREGION_INNER_CORE,IREGION_OUTER_CORE, NTSTEP_BETWEEN_COMPUTE_KERNELS
 
   implicit none
 
@@ -850,8 +847,8 @@
 
   what_we_can_use_in_GB = MEMORY_INSTALLED_PER_CORE_IN_GB * PERCENT_OF_MEM_TO_USE_PER_CORE / 100.d0
 
-! convert static memory size to GB
-  static_memory_size_GB = static_memory_size / 1.d9
+  ! convert static memory size to GB
+  static_memory_size_GB = static_memory_size / 1024.d0 / 1024.d0 / 1024.d0
 
 !! DK DK June 2014: TODO  this comment is true but the statement is commented out for now
 !! DK DK June 2014: TODO  because there is no GPU support for UNDO_ATTENUATION yet
@@ -886,60 +883,63 @@
     endif
   endif
 
-! compute the size to store in memory at each time step
+  ! compute the size to store in memory at each time step
   size_to_store_at_each_time_step = 0
 
-! displ_crust_mantle
+  ! displ_crust_mantle
   size_to_store_at_each_time_step = size_to_store_at_each_time_step &
     + dble(NDIM)*NGLOB_REGIONS(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
 
-! displ_inner_core
+  ! displ_inner_core
   size_to_store_at_each_time_step = size_to_store_at_each_time_step &
     + dble(NDIM)*NGLOB_REGIONS(IREGION_INNER_CORE)*dble(CUSTOM_REAL)
 
-! displ_outer_core and accel_outer_core (both being scalar arrays)
+  ! displ_outer_core and accel_outer_core (both being scalar arrays)
   size_to_store_at_each_time_step = size_to_store_at_each_time_step &
     + 2.d0*NGLOB_REGIONS(IREGION_OUTER_CORE)*dble(CUSTOM_REAL)
 
-! noise_surface_movie
+  ! noise_surface_movie
   if (NOISE_TOMOGRAPHY == 3) then
     size_to_store_at_each_time_step = size_to_store_at_each_time_step &
       + dble(NDIM)*dble(NGLLX*NGLLY)*dble(NSPEC2D_TOP(IREGION_CRUST_MANTLE))*dble(CUSTOM_REAL)
   endif
 
-! convert to GB
-  size_to_store_at_each_time_step = size_to_store_at_each_time_step / 1.d9
+  ! convert to GB
+  size_to_store_at_each_time_step = size_to_store_at_each_time_step / 1024.d0 / 1024.d0 / 1024.d0
 
-  NT_DUMP_ATTENUATION_optimal = int((what_we_can_use_in_GB - static_memory_size_GB) / size_to_store_at_each_time_step)
+  NT_DUMP_ATTENUATION_optimal = int((what_we_can_use_in_GB - static_memory_size_GB) / size_to_store_at_each_time_step) * &
+                                                                                      max(1,NTSTEP_BETWEEN_COMPUTE_KERNELS)
+  ! check
+  if (NT_DUMP_ATTENUATION_optimal <= 0) NT_DUMP_ATTENUATION_optimal = 1
 
-! compute the size of files to dump to disk
-  disk_size_of_each_dumping = 0
+  ! compute the size of files to dump to disk
+  disk_size_of_each_dumping = 0.d0
 
-! displ_crust_mantle, veloc_crust_mantle, accel_crust_mantle
+  ! displ_crust_mantle, veloc_crust_mantle, accel_crust_mantle
   disk_size_of_each_dumping = disk_size_of_each_dumping + 3.d0*dble(NDIM)*NGLOB_REGIONS(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
 
-! displ_inner_core, veloc_inner_core, accel_inner_core
+  ! displ_inner_core, veloc_inner_core, accel_inner_core
   disk_size_of_each_dumping = disk_size_of_each_dumping + 3.d0*dble(NDIM)*NGLOB_REGIONS(IREGION_INNER_CORE)*dble(CUSTOM_REAL)
 
-! displ_outer_core, veloc_outer_core, accel_outer_core (all scalar arrays)
+  ! displ_outer_core, veloc_outer_core, accel_outer_core (all scalar arrays)
   disk_size_of_each_dumping = disk_size_of_each_dumping + 3.d0*NGLOB_REGIONS(IREGION_OUTER_CORE)*dble(CUSTOM_REAL)
 
-! A_array_rotation,B_array_rotation
+  ! A_array_rotation,B_array_rotation
   if (ROTATION) disk_size_of_each_dumping = disk_size_of_each_dumping + &
-      dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_REGIONS(IREGION_OUTER_CORE)*2.d0*dble(CUSTOM_REAL)
+      2.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_REGIONS(IREGION_OUTER_CORE)*dble(CUSTOM_REAL)
 
   if (ATTENUATION) then
-! R_memory_crust_mantle
+    ! R_memory_crust_mantle
     disk_size_of_each_dumping = disk_size_of_each_dumping + 5.d0*dble(N_SLS)*dble(NGLLX)* &
       dble(NGLLY)*dble(NGLLZ)*NSPEC_REGIONS(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
 
-! R_memory_inner_core
+    ! R_memory_inner_core
     disk_size_of_each_dumping = disk_size_of_each_dumping + 5.d0*dble(N_SLS)*dble(NGLLX)* &
       dble(NGLLY)*dble(NGLLZ)*NSPEC_REGIONS(IREGION_INNER_CORE)*dble(CUSTOM_REAL)
   endif
 
-! convert to GB
-  disk_size_of_each_dumping = disk_size_of_each_dumping / 1.d9
+  ! convert to GB
+  disk_size_of_each_dumping = disk_size_of_each_dumping / 1024.d0 / 1024.d0 / 1024.d0
 
 !! DK DK this formula could be made more precise; currently in some cases it can probably be off by +1 or -1; does not matter much
   number_of_dumpings_to_do = ceiling( dble(NSTEP)/dble(NT_DUMP_ATTENUATION_optimal) )

@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -38,10 +38,12 @@
   implicit none
 
   ! local parameters
-  double precision :: rspl_gravity(NR),gspl(NR),gspl2(NR)
-  double precision :: radius,radius_km,g,dg
+  double precision,dimension(:),allocatable :: rspl_gravity,gravity_spline,gravity_spline2
+  double precision,dimension(:),allocatable :: r
+  double precision :: radius,radius_km,g,dg,range_max
   double precision :: g_cmb_dble,g_icb_dble
-  double precision :: rho,drhodr,vp,vs,Qkappa,Qmu
+  double precision :: rho,drhodr,vp
+  double precision :: dummy_vs,dummy_Qkappa,dummy_Qmu ! only needed as function arguments
   double precision :: theta,phi,fac
 
   double precision :: minus_g,minus_dg
@@ -50,21 +52,76 @@
   double precision :: cos_theta_sq,sin_theta_sq,cos_phi_sq,sin_phi_sq
   double precision :: gxl,gyl,gzl
   double precision :: Hxxl,Hyyl,Hzzl,Hxyl,Hxzl,Hyzl
-  integer :: int_radius,idoubling,nspl_gravity,iglob,ier
+  double precision :: r_table
+  integer :: int_radius,idummy,nspl_gravity,iglob,ier
+  integer :: index_fluid
+
+  ! debugging
+  logical, parameter :: DEBUG = .false.
 
   ! minimum radius in inner core (to avoid zero radius)
-  double precision, parameter :: MINIMUM_RADIUS_INNER_CORE = 100.d0 / R_EARTH
+  double precision, parameter :: MINIMUM_RADIUS_INNER_CORE = 100.d0 ! in m
 
   if (myrank == 0) then
     write(IMAIN,*) "preparing gravity arrays"
     call flush_IMAIN()
   endif
 
+  ! allocates gravity arrays
+  allocate(minus_gravity_table(NRAD_GRAVITY), &
+           minus_deriv_gravity_table(NRAD_GRAVITY), &
+           density_table(NRAD_GRAVITY), &
+           d_ln_density_dr_table(NRAD_GRAVITY), &
+           minus_rho_g_over_kappa_fluid(NRAD_GRAVITY),stat=ier)
+  if (ier /= 0) stop 'Error allocating gravity arrays'
+  minus_gravity_table(:) = 0.d0
+  minus_deriv_gravity_table(:) = 0.d0
+  density_table(:) = 0.d0
+  d_ln_density_dr_table(:) = 0.d0
+  minus_rho_g_over_kappa_fluid(:) = 0.d0
+
   ! outer core
   ! to hold pre-computed vectors (different between gravity or no gravity case)
   allocate(gravity_pre_store_outer_core(NDIM,NGLOB_OUTER_CORE),stat=ier)
   if (ier /= 0) stop 'Error allocating gravity_grad_ln_density_dr array'
   gravity_pre_store_outer_core(:,:) = 0._CUSTOM_REAL
+
+  ! helper arrays
+  allocate(r(NRAD_GRAVITY), &
+           rspl_gravity(NR_DENSITY), &
+           gravity_spline(NR_DENSITY), &
+           gravity_spline2(NR_DENSITY),stat=ier)
+  if (ier /= 0) stop 'Error allocating gravity helper arrays'
+  ! initializes spline coefficients
+  r(:) = 0.d0
+  rspl_gravity(:) = 0.d0
+  gravity_spline(:) = 0.d0
+  gravity_spline2(:) = 0.d0
+
+  ! sampling points (along vertical profile) with NRAD_GRAVITY = 70000
+  ! note: since we might have topography, the GLL points can be located in a range beyond [0,1] for non-dimensionalized radius.
+  !       here we set sampling points in a range going beyond [0,1] by adding the maximum topo to the planet range [0,range_max]
+  range_max = (R_PLANET + dble(TOPO_MAXIMUM))/R_PLANET
+
+  ! non-dimensionalizes sampling point locations
+  do int_radius = 1,NRAD_GRAVITY
+    ! old: assuming R_PLANET_KM = R_EARTH_KM = 6371.d0, ranges from 1/10 * 1/R_PLANET_KM ~ 1.e-5 to 70000/10 * 1/R_PLANET ~ 1.09
+    !      r(int_radius) = dble(int_radius) / (R_PLANET_KM * 10.d0)
+    !
+    ! setting sampling points up to range_max
+    r(int_radius) = dble(int_radius) / dble(NRAD_GRAVITY) * range_max
+
+    ! r in range [1.4e-5,1.001]
+    !
+    ! opposite direction: finding index for given radius? (see below for minus_rho_g_over_kappa_fluid)
+    !  old: r(int_radius) = dble(int_radius) / (R_PLANET_KM * 10.d0)
+    !       -> int_radius = r * R_PLANET_KM * 10.d0 = r * R_PLANET/1000 * 10.d0
+    !       for example: r = RCMB/R_PLANET  -> int_radius = RCMB/R_PLANET * R_PLANET/1000 * 10.d0 = RCMB/1000 * 10.d0
+    !
+    !  new: r(int_radius) = dble(int_radius) / dble(NRAD_GRAVITY) * range_max
+    !       -> int_radius = r * NRAD_GRAVITY / range_max
+    !       for example: r = RCMB/R_PLANET  -> int_radius = RCMB/R_PLANET * NRAD_GRAVITY / range_max
+  enddo
 
   ! store g, rho and dg/dr=dg using normalized radius in lookup table every 100 m
   ! get density and velocity from PREM model using dummy doubling flag
@@ -73,42 +130,76 @@
   ! this is probably a rather reasonable assumption
   if (GRAVITY_VAL) then
     ! gravity term
-    call make_gravity(nspl_gravity,rspl_gravity,gspl,gspl2,ONE_CRUST)
+    call make_gravity(nspl_gravity,rspl_gravity,gravity_spline,gravity_spline2)
 
     do int_radius = 1,NRAD_GRAVITY
-      radius = dble(int_radius) / (R_EARTH_KM * 10.d0)
-      call spline_evaluation(rspl_gravity,gspl,gspl2,nspl_gravity,radius,g)
+      radius = r(int_radius)
+      call spline_evaluation(rspl_gravity,gravity_spline,gravity_spline2,nspl_gravity,radius,g)
 
       ! use PREM density profile to calculate gravity (fine for other 1D models)
-      idoubling = 0
-      call model_prem_iso(radius,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,.false., &
-                          ONE_CRUST,.false.,RICB,RCMB,RTOPDDOUBLEPRIME, &
-                          R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+      idummy = 0
+      ! density profile
+      select case(PLANET_TYPE)
+      case (IPLANET_EARTH)
+        ! Earth
+        call model_prem_iso(radius,rho,drhodr,vp,dummy_vs,dummy_Qkappa,dummy_Qmu,idummy,.false.,.false.)
+      case (IPLANET_MARS)
+        ! Mars
+        ! Sohn & Spohn Model A
+        call model_Sohl(radius,rho,drhodr,vp,dummy_vs,dummy_Qkappa,dummy_Qmu,idummy,.false.,.false.)
+      case (IPLANET_MOON)
+        ! Moon
+        call model_vpremoon(radius,rho,drhodr,vp,dummy_vs,dummy_Qkappa,dummy_Qmu,idummy,.false.,.false.,idummy)
+      case default
+        call exit_MPI(myrank,'Invalid planet, gravity preparation not implemented yet')
+      end select
 
       dg = 4.0d0 * rho - 2.0d0 * g / radius
 
       minus_gravity_table(int_radius) = - g
       minus_deriv_gravity_table(int_radius) = - dg
       density_table(int_radius) = rho
-      minus_rho_g_over_kappa_fluid(int_radius) = - g / vp**2
+      minus_rho_g_over_kappa_fluid(int_radius) = - g / vp**2     ! for fluid: vp**2 = kappa/rho
     enddo
 
     ! make sure fluid array is only assigned in outer core between 1222 and 3478 km
     ! lookup table is defined every 100 m
     do int_radius = 1,NRAD_GRAVITY
-      radius_km = dble(int_radius) / 10.d0
-      if (radius_km > RCMB/1000.d0 - 3.d0) &
-        minus_rho_g_over_kappa_fluid(int_radius) = minus_rho_g_over_kappa_fluid(nint((RCMB/1000.d0 - 3.d0)*10.d0))
-      if (radius_km < RICB/1000.d0 + 3.d0) &
-        minus_rho_g_over_kappa_fluid(int_radius) = minus_rho_g_over_kappa_fluid(nint((RICB/1000.d0 + 3.d0)*10.d0))
+      radius_km = r(int_radius) * R_PLANET_KM
+      ! upper limit for fluid core
+      if (radius_km > RCMB/1000.d0 - 3.d0) then
+        ! gets index for fluid
+        !
+        ! old: based on int_radius = r * R_PLANET/1000 * 10.d0 = (RCMB/1000 - 3)/R_PLANET_KM * R_PLANET/1000 * 10.d0
+        !                                                      = (RCMB/1000 - 3) * 10.d0
+        !index_fluid = nint((RCMB/1000.d0 - 3.d0)*10.d0)
+        !
+        ! new: based on int_radius = r * NRAD_GRAVITY / range_max   (with r being non-dimensionalized between [0,1.001])
+        index_fluid = nint( (RCMB/1000.d0 - 3.d0)/R_PLANET_KM * NRAD_GRAVITY / range_max)
+        ! stays with fluid properties
+        minus_rho_g_over_kappa_fluid(int_radius) = minus_rho_g_over_kappa_fluid(index_fluid)
+      endif
+      ! lower limit for fluid core
+      if (radius_km < RICB/1000.d0 + 3.d0) then
+        ! gets index for fluid
+        !
+        ! old: based on int_radius = r * R_PLANET/1000 * 10.d0 = (RICB/1000 + 3)/R_PLANET_KM * R_PLANET/1000 * 10.d0
+        !                                                      = (RICB/1000 + 3) * 10.d0
+        !index_fluid = nint((RICB/1000.d0 + 3.d0)*10.d0)
+        !
+        ! new: based on int_radius = r * NRAD_GRAVITY / range_max   (with r being non-dimensionalized between [0,1.001])
+        index_fluid = nint( (RICB/1000.d0 + 3.d0)/R_PLANET_KM * NRAD_GRAVITY / range_max)
+        ! stays with fluid properties
+        minus_rho_g_over_kappa_fluid(int_radius) = minus_rho_g_over_kappa_fluid(index_fluid)
+      endif
     enddo
 
     ! compute gravity value at CMB and ICB once and for all
-    radius = RCMB / R_EARTH
-    call spline_evaluation(rspl_gravity,gspl,gspl2,nspl_gravity,radius,g_cmb_dble)
+    radius = RCMB / R_PLANET
+    call spline_evaluation(rspl_gravity,gravity_spline,gravity_spline2,nspl_gravity,radius,g_cmb_dble)
 
-    radius = RICB / R_EARTH
-    call spline_evaluation(rspl_gravity,gspl,gspl2,nspl_gravity,radius,g_icb_dble)
+    radius = RICB / R_PLANET
+    call spline_evaluation(rspl_gravity,gravity_spline,gravity_spline2,nspl_gravity,radius,g_icb_dble)
 
     ! distinguish between single and double precision for reals
     minus_g_cmb = real(- g_cmb_dble, kind=CUSTOM_REAL)
@@ -123,8 +214,25 @@
       theta = dble(rstore_outer_core(2,iglob))
       phi = dble(rstore_outer_core(3,iglob))
 
+      ! puts point locations back into a perfectly spherical shape by removing the ellipticity factor
+      ! note: the gravity spline evaluation is done for a perfectly spherical model, thus we remove the ellipicity in case.
+      !       however, due to topograpy the radius r might still be > 1.0
+      r_table = radius
+      if (ELLIPTICITY) call revert_ellipticity_rtheta(r_table,theta,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+
       ! integrated and multiply by rho / Kappa
-      int_radius = nint(10.d0 * radius * R_EARTH_KM)
+      ! old: int_radius = nint(10.d0 * radius * R_PLANET_KM)
+      !      based on radius = dble(int_radius) / (R_PLANET_KM * 10.d0)
+      ! new: radius = dble(int_radius) / dble(NRAD_GRAVITY) * range_max
+      int_radius = nint( r_table / range_max * dble(NRAD_GRAVITY) )
+      ! limits range
+      if (int_radius < 1) int_radius = 1
+      if (int_radius > NRAD_GRAVITY) int_radius = NRAD_GRAVITY
+      ! debug
+      if (DEBUG) then
+        if (myrank == 0) print *,'debug: prepare gravity radius = ',radius,r_table,'r = ',r(int_radius),int_radius
+      endif
+
       fac = minus_rho_g_over_kappa_fluid(int_radius)
 
       ! gravitational acceleration (integrated and multiply by rho / Kappa) in Cartesian coordinates
@@ -136,17 +244,46 @@
       gravity_pre_store_outer_core(3,iglob) = real(gzl,kind=CUSTOM_REAL)
     enddo
 
+    ! debug
+    if (DEBUG) then
+      if (myrank == 0) then
+        print *,'debug: gravity g'
+        print *,'debug: number of splines = ',nspl_gravity
+        print *,'#r(km) #g #-g (tabulated) #rho #r(non-dim) #int_radius'
+        do int_radius = 1,NRAD_GRAVITY
+          if (mod(int_radius,100) == 0) then
+            radius = r(int_radius)
+            call spline_evaluation(rspl_gravity,gravity_spline,gravity_spline2,nspl_gravity,radius,g)
+            print *,radius*R_PLANET_KM,g,minus_gravity_table(int_radius),density_table(int_radius),radius,int_radius
+          endif
+        enddo
+        print *
+      endif
+    endif
+
   else
     ! no gravity
     ! tabulate d ln(rho)/dr needed for the no gravity fluid potential
     do int_radius = 1,NRAD_GRAVITY
-       radius = dble(int_radius) / (R_EARTH_KM * 10.d0)
-       idoubling = 0
-       call model_prem_iso(radius,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,.false., &
-                           ONE_CRUST,.false.,RICB,RCMB,RTOPDDOUBLEPRIME, &
-                           R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+      radius = r(int_radius)
+      idummy = 0
+      ! density profile
+      select case(PLANET_TYPE)
+      case (IPLANET_EARTH)
+        ! Earth
+        call model_prem_iso(radius,rho,drhodr,vp,dummy_vs,dummy_Qkappa,dummy_Qmu,idummy,.false.,.false.)
+      case (IPLANET_MARS)
+        ! Mars
+        ! Sohn & Spohn Model A
+        call model_Sohl(radius,rho,drhodr,vp,dummy_vs,dummy_Qkappa,dummy_Qmu,idummy,.false.,.false.)
+      case (IPLANET_MOON)
+        ! Moon
+        call model_vpremoon(radius,rho,drhodr,vp,dummy_vs,dummy_Qkappa,dummy_Qmu,idummy,.false.,.false.,idummy)
+      case default
+        call exit_MPI(myrank,'Invalid planet, prepare gravity not implemented yet')
+      end select
 
-       d_ln_density_dr_table(int_radius) = drhodr/rho
+      d_ln_density_dr_table(int_radius) = drhodr/rho
     enddo
 
     ! pre-computes gradient
@@ -158,8 +295,26 @@
       theta = rstore_outer_core(2,iglob)
       phi = rstore_outer_core(3,iglob)
 
+      ! puts point locations back into a perfectly spherical shape by removing the ellipticity factor
+      ! note: the gravity spline evaluation is done for a perfectly spherical model, thus we remove the ellipicity in case.
+      !       however, due to topograpy the radius r might still be > 1.0
+      r_table = radius
+      if (ELLIPTICITY) call revert_ellipticity_rtheta(r_table,theta,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+
+      ! radius index
+      ! old: int_radius = nint(10.d0 * radius * R_PLANET_KM)
+      !      based on radius = dble(int_radius) / (R_PLANET_KM * 10.d0)
+      ! new: radius = dble(int_radius) / dble(NRAD_GRAVITY) * range_max
+      int_radius = nint( r_table / range_max * dble(NRAD_GRAVITY) )
+      ! limits range
+      if (int_radius < 1) int_radius = 1
+      if (int_radius > NRAD_GRAVITY) int_radius = NRAD_GRAVITY
+      ! debug
+      if (DEBUG) then
+        if (myrank == 0) print *,'debug: prepare no gravity radius = ',radius,r_table,'r = ',r(int_radius),int_radius
+      endif
+
       ! d ln(rho) / dr
-      int_radius = nint(10.d0 * radius * R_EARTH_KM)
       fac = d_ln_density_dr_table(int_radius)
 
       ! gradient of d ln(rho)/dr in Cartesian coordinates
@@ -170,6 +325,21 @@
       gravity_pre_store_outer_core(2,iglob) = real(gyl,kind=CUSTOM_REAL)
       gravity_pre_store_outer_core(3,iglob) = real(gzl,kind=CUSTOM_REAL)
     enddo
+
+    ! debug
+    if (DEBUG) then
+      if (myrank == 0) then
+        print *,'debug: no gravity d ln(rho) / dr'
+        print *,'#r(km)  #dln(rho)/dr  #r(non-dim)  #int_radius'
+        do int_radius = 1,NRAD_GRAVITY
+          if (mod(int_radius,100) == 0) then
+            radius = r(int_radius)
+            print *,radius * R_PLANET_KM,d_ln_density_dr_table(int_radius),radius,int_radius
+          endif
+        enddo
+        print *
+      endif
+    endif
   endif
 
   ! crust/mantle
@@ -201,8 +371,20 @@
       ! get g, rho and dg/dr=dg
       ! spherical components of the gravitational acceleration
 
+      ! puts point locations back into a perfectly spherical shape by removing the ellipticity factor
+      ! note: the gravity spline evaluation is done for a perfectly spherical model, thus we remove the ellipicity in case.
+      !       however, due to topograpy the radius r might still be > 1.0
+      r_table = radius
+      if (ELLIPTICITY) call revert_ellipticity_rtheta(r_table,theta,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+
       ! for efficiency replace with lookup table every 100 m in radial direction
-      int_radius = nint(10.d0 * radius * R_EARTH_KM )
+      ! old: int_radius = nint(10.d0 * radius * R_PLANET_KM)
+      !      based on radius = dble(int_radius) / (R_PLANET_KM * 10.d0)
+      ! new: radius = dble(int_radius) / dble(NRAD_GRAVITY) * range_max
+      int_radius = nint( r_table / range_max * dble(NRAD_GRAVITY) )
+      ! limits range
+      if (int_radius < 1) int_radius = 1
+      if (int_radius > NRAD_GRAVITY) int_radius = NRAD_GRAVITY
 
       rho = density_table(int_radius)
       minus_g = minus_gravity_table(int_radius)
@@ -264,7 +446,7 @@
 
       ! make sure radius is never zero even for points at center of cube
       ! because we later divide by radius
-      if (radius < MINIMUM_RADIUS_INNER_CORE) radius = MINIMUM_RADIUS_INNER_CORE
+      if (radius < MINIMUM_RADIUS_INNER_CORE / R_PLANET) radius = MINIMUM_RADIUS_INNER_CORE / R_PLANET
 
       cos_theta = dcos(theta)
       sin_theta = dsin(theta)
@@ -279,9 +461,21 @@
       ! get g, rho and dg/dr=dg
       ! spherical components of the gravitational acceleration
 
+      ! puts point locations back into a perfectly spherical shape by removing the ellipticity factor
+      ! note: the gravity spline evaluation is done for a perfectly spherical model, thus we remove the ellipicity in case.
+      !       however, due to topograpy the radius r might still be > 1.0
+      r_table = radius
+      if (ELLIPTICITY) call revert_ellipticity_rtheta(r_table,theta,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+
       ! for efficiency replace with lookup table every 100 m in radial direction
       ! make sure we never use zero for point exactly at the center of the Earth
-      int_radius = max(1,nint(10.d0 * radius * R_EARTH_KM))
+      ! old: int_radius = max(1,nint(10.d0 * radius * R_EARTH_KM))
+      !      based on radius = dble(int_radius) / (R_PLANET_KM * 10.d0)
+      ! new: radius = dble(int_radius) / dble(NRAD_GRAVITY) * range_max
+      int_radius = nint( r_table / range_max * dble(NRAD_GRAVITY) )
+      ! limits range
+      if (int_radius < 1) int_radius = 1
+      if (int_radius > NRAD_GRAVITY) int_radius = NRAD_GRAVITY
 
       rho = density_table(int_radius)
       minus_g = minus_gravity_table(int_radius)

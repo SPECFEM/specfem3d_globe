@@ -31,32 +31,49 @@ ln -s ../../../DATA/QRFSI12
 ln -s ../../../DATA/topo_bathy
 cd ../
 
-# compiles executables in root directory
-# using default configuration
-cp DATA/Par_file ../../DATA
-cd ../../
-make clean
-make all
+# checks if executables were compiled and available
+if [ ! -e ../../bin/xspecfem3D ]; then
+  echo "Compiling first all binaries in the root directory..."
+  echo
 
-# backup of constants setup
-cp setup/* $currentdir/OUTPUT_FILES/
-cp OUTPUT_FILES/values_from_mesher.h $currentdir/OUTPUT_FILES/values_from_mesher.h.compilation
-cp DATA/Par_file $currentdir/OUTPUT_FILES/
+  # compiles executables in root directory
+  # using default configuration
+  cd ../../
 
-cd $currentdir
+  # only in case static compilation would have been set to yes in Makefile:
+  cp $currentdir/DATA/Par_file DATA/Par_file
+  sed -i "s:SAVE_FORWARD.*:SAVE_FORWARD                    = .true.:"  DATA/Par_file
+
+  # compiles code
+  make clean
+  make -j4 all
+
+  # checks exit code
+  if [[ $? -ne 0 ]]; then exit 1; fi
+
+  # backup of constants setup
+  cp setup/* $currentdir/OUTPUT_FILES/
+  if [ -e OUTPUT_FILES/values_from_mesher ]; then
+    cp OUTPUT_FILES/values_from_mesher.h $currentdir/OUTPUT_FILES/values_from_mesher.h.compilation
+  fi
+  cp DATA/Par_file $currentdir/OUTPUT_FILES/
+
+  cd $currentdir
+fi
 
 # copy executables
 mkdir -p bin
-rm -rf bin/*
-cp ../../bin/xmeshfem3D ./bin/
-cp ../../bin/xspecfem3D ./bin/
-cp ../../bin/xcombine_vol_data ./bin/
+rm -rf bin/x*
+cp ../../bin/x* ./bin/
 
 # run mesher & solver
 echo
 echo "  running script..."
 echo
 ./run_mesher_solver.bash
+
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
 echo `date`
 

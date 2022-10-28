@@ -1,0 +1,28 @@
+------------------------------------
+README
+------------------------------------
+
+Example of a regional simulation using model S40RTS (Ritsema et al., 2010):
+
+S40RTS: a degree-40 shear-velocity model for the mantle from new Rayleigh wave dispersion,
+        teleseismic traveltime and normal-mode splitting function measurements.
+
+Simulation uses the smallest possible regional mesh, i.e. a mesh with NEX=16, for testing.
+The setup runs on 4 CPU cores (MPI processes), with a runtime of about 1 min.
+
+
+1. forward simulation:
+----------------------
+
+type:
+> ./run_this_example.sh
+
+to setup this directory for the simulation and to run a corresponding
+script "run_mesher_solver.bash".
+
+The simulation is accurate down to a shortest period of ~ 90 s.
+(minimum period resolved ~ (ANGULAR_WIDTH_XI_IN_DEGREES/90.0) * (256/NEX_XI) * 17 = (30.0/90.0) * (256/16) * 17 ~ 90.6 s)
+ 
+Reference seismograms for comparisons are provided in the directory: REF_SEIS/
+Please modify the setup and scripts according to your specifics.
+

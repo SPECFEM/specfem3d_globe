@@ -42,7 +42,7 @@ __global__ void compute_coupling_ICB_fluid_kernel(realw* displ_inner_core,
 
     // only for DOFs exactly on the ICB (top of these elements)
     k = NGLLX - 1;
-    // get velocity potential on the fluid side using pointwise matching
+    // get potential on the fluid side using pointwise matching
     k_corresp = 0;
 
     // get normal on the ICB

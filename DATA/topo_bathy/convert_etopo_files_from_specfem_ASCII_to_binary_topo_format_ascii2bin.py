@@ -6,6 +6,7 @@
 
 from __future__ import print_function
 import sys
+import os
 from io import BytesIO
 
 try:
@@ -14,48 +15,66 @@ except ImportError:
     print('This script requires NumPy.')
     sys.exit()
 
-if '--help' in sys.argv or '-h' in sys.argv or len(sys.argv) != 3:
-    print('Usage: %s <input> <output>' % (sys.argv[0],))
-    sys.exit()
 
-# Output config
-print('Reading input file %s ...' % (sys.argv[1],))
-print('Writing output to file %s ...' % (sys.argv[2],))
+def convert_etopo_ascii2bin(filename_in,filename_out):
+    # Output config
+    print('Reading input file %s ...' % (filename_in,))
+    print('Writing output to file %s ...' % (filename_out,))
 
-# Input file
-inf = open(sys.argv[1], 'rb')
+    # Input file - ascii format
+    inf = open(filename_in, 'rb')
 
-# Output file
-outf = open(sys.argv[2], 'wb')
+    size_b = os.path.getsize(filename_in)
+    size_mb = size_b / 1024.0 / 1024.0
+    print('input file size: %6.1f MB' % (size_mb))
 
-# Add a byte-order mark
-byteorder = np.array([0x1234], dtype=np.int16)
-byteorder.tofile(outf)
+    # Output file - binary format
+    outf = open(filename_out, 'wb')
 
-i = 0
-while True:
-    # Read input file
-    text = inf.readlines(1024*1024)  # 1M at a time
-    if not len(text):
-        break
-    ioin = BytesIO(''.join(text))
-    data = np.genfromtxt(ioin)
-    if not len(data):
-        break
+    # Add a byte-order mark
+    byteorder = np.array([0x1234], dtype=np.int16)
+    byteorder.tofile(outf)
 
-    # Convert to 16-bit integers
-    data2 = data.astype(np.int16)
-    if any(data != data2):
-        print('Warning: Data set does not fit in signed 16-bit integers!')
+    i = 0
+    while True:
+        # Read input file
+        text = inf.readlines(1024*1024)  # 1M at a time
+        if not len(text):
+            break
+        ioin = BytesIO(''.join(text))
+        data = np.genfromtxt(ioin)
+        if not len(data):
+            break
 
-    # Save output file
-    data2.tofile(outf)
+        # Convert to 16-bit integers
+        data2 = data.astype(np.int16)
+        if any(data != data2):
+            print('Warning: Data set does not fit in signed 16-bit integers!')
 
-    i = i + 1
-    if i % 10 == 0:
-        print('%d MB ...' % (i,))
+        # Save output file
+        data2.tofile(outf)
 
-inf.close()
-outf.close()
-print('Done!')
+        i = i + 1
+        if i % 10 == 0:
+            print('%6d MB ...' % (i))
+
+    inf.close()
+    outf.close()
+
+    print('Done!')
+
+
+if __name__ == '__main__':
+    # gets arguments
+    if '--help' in sys.argv or '-h' in sys.argv or len(sys.argv) != 3:
+        print('Usage: %s <input> <output>' % (sys.argv[0],))
+        sys.exit()
+
+    # Input file
+    filename_in = sys.argv[1]
+
+    # Output file
+    filename_out = sys.argv[2]
+
+    convert_etopo_ascii2bin(filename_in,filename_out)
 

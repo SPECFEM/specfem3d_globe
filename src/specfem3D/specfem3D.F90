@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -290,6 +290,10 @@
 ! Evolution of the code:
 ! ---------------------
 !
+! v. 8.0, many developers, September 2020:
+!     support for new earth, moon & mars models, ADIOS2 file I/O support, GLL models for azimuthal anisotropy & Q,
+!     LDDRK on GPU support, Laplacian smoothing, monochromatic source time functions.
+!
 ! v. 7.0, many developers, January 2015:
 !     simultaneous MPI runs, ADIOS file I/O support, ASDF seismograms, new seismogram names, tomography tools,
 !     CUDA and OpenCL GPU support, CEM model support, updates AK135 model, binary topography files,
@@ -316,7 +320,7 @@
 !      more flexible routines for mesh design, new inflated central cube
 !      with optimized shape, far fewer mesh files saved by the mesher,
 !      global arrays sorted to speed up the simulation, seismos can be
-!      written by the master, one more doubling level at the bottom
+!      written by the main process, one more doubling level at the bottom
 !      of the outer core if needed (off by default)
 !
 ! v. 3.6 Many people, many affiliations, September 2006:
@@ -451,6 +455,10 @@
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------
 !
+
+  ! initializes CUDA-aware MPI
+  call initialize_cuda_aware_mpi()
+
   ! initialize the MPI communicator and start the NPROCTOT MPI processes.
   call init_mpi()
 

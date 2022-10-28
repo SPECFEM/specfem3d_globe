@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -130,15 +130,16 @@
 
   if (L > 1 .and. ABS(THETA) > 1.E-5) goto 3
 
-  X(1) = FCT
+  X(1) = real( FCT ,kind=4)
   if (L == 0) return
 
-  X(1) = CT * FCT
-  X(2) = -ST * FCT/DSFL3
-  XP(1) = -ST * FCT
-  XP(2) = -0.5d0 * CT * FCT * DSFL3
+  X(1) = real( CT * FCT ,kind=4)
+  X(2) = real( -ST * FCT/DSFL3 ,kind=4)
+  XP(1) = real( -ST * FCT ,kind=4)
+  XP(2) = real( -0.5d0 * CT * FCT * DSFL3 ,kind=4)
+
   if (ABS(THETA) < 1.E-5) XCOSEC(2) = XP(2)
-  if (ABS(THETA) >= 1.E-5) XCOSEC(2) = X(2)/ST
+  if (ABS(THETA) >= 1.E-5) XCOSEC(2) = real( dble(X(2))/ST ,kind=4)
 
   return
 
@@ -154,15 +155,15 @@
   enddo
 
   COT = CT/ST
-  COSEC = 1.0/ST
+  COSEC = real( 1.d0/ST ,kind=4)
   X3 = X2*FCT
   X2 = dble(L)*(X1-CT*X2)*FCT/ST
-  X(1) = X3
-  X(2) = X2
+  X(1) = real( X3 ,kind=4)
+  X(2) = real( X2 ,kind=4)
   sumval = X3*X3
 
-  XP(1) = -X2
-  XP(2) = dble(L*(L+1))*X3-COT*X2
+  XP(1) = real( -X2 ,kind=4)
+  XP(2) = real( dble(L*(L+1))*X3-COT*X2 ,kind=4)
   X(2) = -X(2)/SFL3
   XCOSEC(2) = X(2)*COSEC
   XP(2) = -XP(2)/SFL3
@@ -183,10 +184,10 @@
     sumval = sumval + 2.d0*X3*X3
     if (sumval - COMPAR > SMALL .and. i /= LP1) return
 
-    X(i) = X3
+    X(i) = real( X3 ,kind=4)
     XCOSEC(i) = X(i)*COSEC
     X1 = X2
-    XP(i) = -(F1*X2+XM*COT*X3)
+    XP(i) = real( -(F1*X2+XM*COT*X3) ,kind=4)
     X2 = X3
   enddo
 

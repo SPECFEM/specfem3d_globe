@@ -1,7 +1,7 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -37,25 +37,43 @@ typedef float realw;
 
 // for xmeshfem3D compilation
 
+// get_absorb_adios.F90
 void FC_FUNC_(get_absorb_adios,GET_ABSORB_ADIOS)(int* iregion,
                                                  int* nimin, int* nimax, int* njmin, int* njmax, int* nkmin_xi, int* nkmin_eta,
                                                  int* NSPEC2DMAX_XMIN_XMAX, int* NSPEC2DMAX_YMIN_YMAX) {}
 
+void FC_FUNC_(get_absorb_stacey_boundary_adios,GET_ABSORB_STACEY_BOUNDARY_ADIOS)(int* iregion,
+                                                                                 int* num_abs_boundary_faces,
+                                                                                 int* abs_boundary_ispec,
+                                                                                 int* abs_boundary_npoin,
+                                                                                 int* abs_boundary_ijk,
+                                                                                 realw* abs_boundary_normal,
+                                                                                 realw* abs_boundary_jacobian2Dw) {}
+
+// model_gll_adios.F90
 void FC_FUNC_(read_gll_model_adios,READ_GLL_MODEL_ADIOS)(void) {}
 
+// model_attenuation_gll_adios.f90
+void FC_FUNC_(read_gll_qmu_model_adios,READ_GLL_QMU_MODEL_ADIOS)(void) {}
+
+// save_arrays_solver_adios.F90
 void FC_FUNC_(save_arrays_solver_adios,SAVE_ARRAYS_SOLVER_ADIOS)(int* idoubling, int* ibool,
                                                                  realw* xstore, realw* ystore, realw* zstore,
                                                                  int* NSPEC2DMAX_XMIN_XMAX, int* NSPEC2DMAX_YMIN_YMAX,
                                                                  int* NSPEC2D_TOP, int* NSPEC2D_BOTTOM) {}
 
-void FC_FUNC_(save_arrays_solver_meshfiles_adios,SAVE_ARRAYS_SOLVER_MESHFILES_ADIOS)(void) {}
+// save_model_meshfiles_adios.F90
+void FC_FUNC_(save_model_meshfiles_adios,SAVE_MODEL_MESHFILES_ADIOS)(void) {}
 
+// save_arrays_solver_adios.F90
 void FC_FUNC_(save_arrays_boundary_adios,SAVE_ARRAYS_BOUNDARY_ADIOS)(void) {}
 
 void FC_FUNC_(save_mpi_arrays_adios,SAVE_MPI_ARRAYS_ADIOS)(void) {}
 
+// write_AVS_DX_output_adios.f90
 void FC_FUNC_(write_avs_dx_output_adios,WRITE_AVS_DX_OUTPUT_ADIOS)(int* npointot, int* iregion_code,
                                                                    int* num_ibool_AVS_DX, int* mask_ibool) {}
+
 
 // for xspecfem3D compilation
 
@@ -65,17 +83,13 @@ void FC_FUNC_(read_attenuation_adios,READ_ATTENUATION_ADIOS)(void) {}
 
 void FC_FUNC_(read_forward_arrays_adios,READ_FORWARD_ARRAYS_ADIOS)(void) {}
 
-void FC_FUNC_(read_forward_arrays_undoatt_adios,READ_FORWARD_ARRAYS_UNDOATT_ADIOS)(void) {}
+void FC_FUNC_(read_forward_arrays_undoatt_adios,READ_FORWARD_ARRAYS_UNDOATT_ADIOS)(int* iteration_on_subset_tmp) {}
 
 void FC_FUNC_(read_intermediate_forward_arrays_adios,READ_INTERMEDIATE_FORWARD_ARRAYS_ADIOS)(void) {}
 
 void FC_FUNC_(read_mesh_databases_coupling_adios,READ_MESH_DATABASES_COUPLING_ADIOS)(void) {}
 
-void FC_FUNC_(read_mesh_databases_mpi_cm_adios,READ_MESH_DATABASES_MPI_CM_ADIOS)(void) {}
-
-void FC_FUNC_(read_mesh_databases_mpi_ic_adios,READ_MESH_DATABASES_MPI_IC_ADIOS)(void) {}
-
-void FC_FUNC_(read_mesh_databases_mpi_oc_adios,READ_MESH_DATABASES_MPI_OC_ADIOS)(void) {}
+void FC_FUNC_(read_mesh_databases_mpi_adios,READ_MESH_DATABASES_MPI_ADIOS)(int* iregion_code) {}
 
 void FC_FUNC_(read_mesh_databases_stacey_adios,READ_MESH_DATABASES_STACEY_ADIOS)(void) {}
 
@@ -85,7 +99,11 @@ void FC_FUNC_(save_forward_arrays_undoatt_adios,SAVE_FORWARD_ARRAYS_UNDOATT_ADIO
 
 void FC_FUNC_(save_intermediate_forward_arrays_adios,SAVE_INTERMEDIATE_FORWARD_ARRAYS_ADIOS)(void) {}
 
+void FC_FUNC_(save_forward_model_at_shifted_frequency_adios,SAVE_FORWARD_MODEL_AT_SHIFTED_FREQUENCY_ADIOS)(void){}
+
 void FC_FUNC_(define_kernel_adios_variables,DEFINE_KERNEL_ADIOS_VARIABLES)(void) {}
+
+void FC_FUNC_(close_kernel_adios_file,CLOSE_KERNEL_ADIOS_FILE)(void) {}
 
 void FC_FUNC_(write_kernels_cm_ani_adios,WRITE_KERNELS_CM_ADIOS)(void) {}
 

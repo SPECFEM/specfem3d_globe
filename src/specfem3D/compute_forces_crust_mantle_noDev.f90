@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine compute_forces_crust_mantle_noDev(NSPEC,NGLOB,NSPEC_ATT, &
+  subroutine compute_forces_crust_mantle_noDev(NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT, &
                                                deltat, &
                                                displ_crust_mantle, &
                                                accel_crust_mantle, &
@@ -67,7 +67,7 @@
 
   implicit none
 
-  integer,intent(in) :: NSPEC,NGLOB,NSPEC_ATT
+  integer,intent(in) :: NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT
 
   ! time step
   real(kind=CUSTOM_REAL),intent(in) :: deltat
@@ -86,7 +86,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATT),intent(inout) :: &
     R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(inout) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STR_OR_ATT),intent(inout) :: &
     epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY),intent(inout) :: epsilon_trace_over_3
@@ -241,11 +241,7 @@
           ! compute deviatoric strain
           if (COMPUTE_AND_STORE_STRAIN) then
             templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-            if (NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
-              if (ispec == 1) then
-                epsilon_trace_over_3(i,j,k,1) = templ
-              endif
-            else
+            if (NSPEC_CRUST_MANTLE_STRAIN_ONLY > 1) then
               epsilon_trace_over_3(i,j,k,ispec) = templ
             endif
             epsilondev_loc(i,j,k,1) = duxdxl - templ
@@ -572,14 +568,14 @@
         call compute_element_att_memory_cm_lddrk(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
                                                  R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
                                                  ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec,factor_common, &
-                                                 c44store,muvstore, &
+                                                 muvstore, &
                                                  epsilondev_loc, &
                                                  deltat)
       else
         call compute_element_att_memory_cm(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
                                            ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec,factor_common, &
                                            alphaval,betaval,gammaval, &
-                                           c44store,muvstore, &
+                                           muvstore, &
                                            epsilondev_xx,epsilondev_yy,epsilondev_xy, &
                                            epsilondev_xz,epsilondev_yz, &
                                            epsilondev_loc)

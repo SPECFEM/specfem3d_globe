@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -29,11 +29,11 @@
 
   use constants, only: myrank
 
-  use meshfem3D_par, only: &
+  use meshfem_par, only: &
     IMAIN,USE_MESH_COLORING_GPU,SAVE_MESH_FILES, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE
 
-  use meshfem3D_par, only: ibool,is_on_a_slice_edge
+  use meshfem_par, only: ibool,is_on_a_slice_edge
 
   use MPI_crust_mantle_par
   use MPI_outer_core_par
@@ -232,11 +232,11 @@
 
   use constants, only: myrank
 
-  use meshfem3D_par, only: &
+  use meshfem_par, only: &
     LOCAL_PATH,MAX_NUMBER_OF_COLORS,IMAIN,NGLLX,NGLLY,NGLLZ,IFLAG_IN_FICTITIOUS_CUBE, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE,MAX_STRING_LEN,IOUT
 
-  use meshfem3D_par, only: &
+  use meshfem_par, only: &
     idoubling,xstore_glob,ystore_glob,zstore_glob
 
   use MPI_crust_mantle_par, only: &
@@ -596,12 +596,12 @@
 
   use constants
 
-  use meshfem3D_models_par, only: &
+  use meshfem_models_par, only: &
     TRANSVERSE_ISOTROPY,HETEROGEN_3D_MANTLE,ANISOTROPIC_3D_MANTLE, &
-    ANISOTROPIC_INNER_CORE,ATTENUATION,SAVE_BOUNDARY_MESH, &
+    ANISOTROPIC_INNER_CORE,ATTENUATION, &
     ATTENUATION_3D,ATTENUATION_1D_WITH_3D_STORAGE
 
-  use meshfem3D_par, only: &
+  use meshfem_par, only: &
     ABSORBING_CONDITIONS, &
     LOCAL_PATH, &
     NCHUNKS,NSPEC2D_TOP,NSPEC2D_BOTTOM, &
@@ -610,7 +610,7 @@
   use regions_mesh_par2, only: &
     xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
     gammaxstore,gammaystore,gammazstore, &
-    rhostore,dvpstore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
+    rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
     c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
@@ -875,6 +875,8 @@
 
     allocate(temp_array_real(NGLLX,NGLLY,NGLLZ,nspec))
 
+    ! note: muvstore needed for attenuation also for anisotropic 3d mantle
+    call permute_elements_real(muvstore,temp_array_real,perm,nspec)
     if (ANISOTROPIC_3D_MANTLE) then
       call permute_elements_real(c11store,temp_array_real,perm,nspec)
       call permute_elements_real(c11store,temp_array_real,perm,nspec)
@@ -899,8 +901,6 @@
       call permute_elements_real(c56store,temp_array_real,perm,nspec)
       call permute_elements_real(c66store,temp_array_real,perm,nspec)
     else
-      call permute_elements_real(muvstore,temp_array_real,perm,nspec)
-
       if (TRANSVERSE_ISOTROPY) then
         call permute_elements_real(kappahstore,temp_array_real,perm,nspec)
         call permute_elements_real(muhstore,temp_array_real,perm,nspec)
@@ -908,8 +908,9 @@
       endif
     endif
 
+    ! just to be nice and align dvpstore to the permuted mesh
     if (HETEROGEN_3D_MANTLE) then
-      call permute_elements_real(dvpstore,temp_array_real,perm,nspec)
+      call model_heterogen_mantle_permute_dvp(temp_array_real,perm,nspec)
     endif
 
     if (ABSORBING_CONDITIONS .and. NCHUNKS /= 6) then
@@ -978,7 +979,6 @@
 
     ! note: muvstore needed for attenuation also for anisotropic inner core
     call permute_elements_real(muvstore,temp_array_real,perm,nspec)
-
     !  anisotropy in the inner core only
     if (ANISOTROPIC_INNER_CORE) then
       call permute_elements_real(c11store,temp_array_real,perm,nspec)
@@ -1007,7 +1007,7 @@
 !                              npoin2D_xi,npoin2D_eta)
 !
 !  use constants
-!  use meshfem3D_par, only: NSTEP,DT,NPROC_XI,NPROC_ETA
+!  use meshfem_par, only: NSTEP,DT,NPROC_XI,NPROC_ETA
 !  implicit none
 !
 !  integer :: iregion_code

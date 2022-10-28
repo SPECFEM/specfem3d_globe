@@ -5,7 +5,7 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -82,9 +82,6 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifndef IFLAG_IN_FICTITIOUS_CUBE\n\
 #define IFLAG_IN_FICTITIOUS_CUBE 11\n\
 #endif\n\
-#ifndef R_EARTH_KM\n\
-#define R_EARTH_KM 6371.0f\n\
-#endif\n\
 #ifndef COLORING_MIN_NSPEC_INNER_CORE\n\
 #define COLORING_MIN_NSPEC_INNER_CORE 1000\n\
 #endif\n\
@@ -97,27 +94,29 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 \n\
 __kernel void resort_array(__global float * old_array, const int NSPEC){\n\
   int ispec;\n\
-  uint i;\n\
   uint id;\n\
   uint idx;\n\
   uint t_idx;\n\
   uint tx;\n\
   uint offset;\n\
   __local float sh_tmp[(2625)];\n\
+\n\
   ispec = get_group_id(0) + (get_group_id(1)) * (get_num_groups(0));\n\
+\n\
   if (ispec < NSPEC) {\n\
     tx = get_local_id(0);\n\
     offset = ((ispec) * (NGLL3)) * (21) + tx;\n\
-    for (i = 0; i <= 20; i += 1) {\n\
+    for (int i = 0; i < 21; i += 1) {\n\
       sh_tmp[(i) * (NGLL3) + tx] = old_array[(i) * (NGLL3) + offset];\n\
     }\n\
   }\n\
   barrier(CLK_LOCAL_MEM_FENCE);\n\
+\n\
   if (ispec < NSPEC) {\n\
-    for (i = 0; i <= 20; i += 1) {\n\
+    for (int i = 0; i < 21; i += 1) {\n\
       id = (i) * (NGLL3) + tx;\n\
       idx = (id) / (21);\n\
-      t_idx = (id % 21);\n\
+      t_idx = ((id) % (21));\n\
       old_array[(i) * (NGLL3) + offset] = sh_tmp[idx + (t_idx) * (NGLL3)];\n\
     }\n\
   }\n\

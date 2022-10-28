@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -80,6 +80,7 @@ module kdtree_search
 
   ! info output
   logical :: be_verbose = .false.
+  integer :: IOUT_TREE = 6          ! default set to standard output
 
   !---------------------------------------------------------------
   ! public routines
@@ -171,11 +172,15 @@ contains
   points_data => kdtree_nodes_location(:,:)
 
   if (be_verbose) then
-    print *,'kd-tree:'
-    print *,'  total data points: ',npoints
-    !print *,'  box boundaries   : x min/max = ',minval(points_data(1,:)),maxval(points_data(1,:))
-    !print *,'                     y min/max = ',minval(points_data(2,:)),maxval(points_data(2,:))
-    !print *,'                     z min/max = ',minval(points_data(3,:)),maxval(points_data(3,:))
+    write(IOUT_TREE,*) 'kd-tree:'
+    write(IOUT_TREE,*) '  total data points: ',npoints
+  endif
+
+  ! debug
+  if (DEBUG) then
+    print *,'  box boundaries   : x min/max = ',minval(points_data(1,:)),maxval(points_data(1,:))
+    print *,'                     y min/max = ',minval(points_data(2,:)),maxval(points_data(2,:))
+    print *,'                     z min/max = ',minval(points_data(3,:)),maxval(points_data(3,:))
   endif
 
   ! theoretical number of node for totally balanced tree
@@ -188,13 +193,14 @@ contains
     if (numnodes > 2147483646 - i ) stop 'Error number of nodes might exceed integer limit'
   enddo
   if (be_verbose) then
-    print *,'  theoretical   number of nodes: ',numnodes
-    print *,'               tree memory size: ',( numnodes * 32 )/1024./1024.,'MB'
+    write(IOUT_TREE,*) '  theoretical   number of nodes: ',numnodes
+    write(IOUT_TREE,*) '               tree memory size: ',( numnodes * 32 )/1024./1024.,'MB'
   endif
 
   ! local ordering
   allocate(points_index(kdtree_num_nodes),stat=ier)
   if (ier /= 0) stop 'Error allocating array points_index'
+  points_index(:) = 0
 
   ! initial point ordering
   do i = 1,npoints
@@ -214,15 +220,15 @@ contains
   if (.not. associated(kdtree) ) stop 'Error creation of kd-tree failed'
 
   if (be_verbose) then
-    print *,'  actual        number of nodes: ',numnodes
+    write(IOUT_TREE,*) '  actual        number of nodes: ',numnodes
     ! tree node size: 4 (idim) + 8 (cut_value) + 4 (ipoint) + 2*4 (ibound_**) + 2*4 (left,right) = 32 bytes
-    print *,'               tree memory size: ',( numnodes * 32 )/1024./1024.,'MB'
-    print *,'  maximum depth   : ',maxdepth
+    write(IOUT_TREE,*) '               tree memory size: ',( numnodes * 32 )/1024./1024.,'MB'
+    write(IOUT_TREE,*) '  maximum depth   : ',maxdepth
 
     ! timing
     call cpu_time(ct_end)
-    print *,'  creation timing : ',ct_end - ct_start, '(s)'
-    print *
+    write(IOUT_TREE,*) '  creation timing : ',ct_end - ct_start, '(s)'
+    write(IOUT_TREE,*)
   endif
 
 
@@ -308,8 +314,8 @@ contains
 
   ! debug
   !if (be_verbose) then
-  !  print *,'target  : ',xyz_target(:)
-  !  print *,'nearest : ',kdtree_nodes_location(:,ipoint_min),'distance:',dist_min*6371.,'(km)',ipoint_min,iglob_min
+  !  write(IOUT_TREE,*) 'target  : ',xyz_target(:)
+  !  write(IOUT_TREE,*) 'nearest : ',kdtree_nodes_location(:,ipoint_min),'distance:',dist_min*6371.,'(km)',ipoint_min,iglob_min
   !endif
 
   end subroutine kdtree_find_nearest_neighbor
@@ -464,7 +470,7 @@ contains
 
   ! checks if num_nodes_get limited by search array size
   if (kdtree_search_num_nodes < num_nodes_get) then
-    print *,'Warning: Requested number of n-nodes bigger than actual number of search result kdtree_search_num_nodes'
+    write(IOUT_TREE,*) 'Warning: Requested number of n-nodes bigger than actual number of search result kdtree_search_num_nodes'
   endif
 
   ! initializes search results
@@ -583,7 +589,7 @@ contains
 
   ! checks if num_nodes_get limited by search array size
   if (kdtree_search_num_nodes < num_nodes_get) then
-    print *,'Warning: Requested number of n-nodes bigger than actual number of search result kdtree_search_num_nodes'
+    write(IOUT_TREE,*) 'Warning: Requested number of n-nodes bigger than actual number of search result kdtree_search_num_nodes'
   endif
 
   ! initializes search results
@@ -632,7 +638,7 @@ contains
   double precision, dimension(3,npoints), intent(in) :: points_data
   integer,dimension(npoints), intent(inout) :: points_index
 
-  type (kdtree_node), pointer, intent(inout) :: node
+  type (kdtree_node), pointer :: node ! pointers in standard Fortran90 cannot have intent(..) attribute
 
   integer,intent(in) :: depth
   integer,intent(in) :: ibound_lower,ibound_upper
@@ -645,7 +651,18 @@ contains
   integer :: i,ier,idim
   integer :: iloc,ilower,iupper
   integer :: l,u
-  integer,dimension(:),allocatable :: workindex
+
+  ! note: compiling with intel ifort version 18.0.1/19.1.0 and optimizations like -xHost -O2 or -xHost -O3 flags
+  !       can lead to issues with the deallocate(workindex) statement below:
+  !         *** Error in `./bin/xspecfem3D': double free or corruption (!prev): 0x00000000024f1610 ***
+  !
+  !       this might be due to a more aggressive optimization which leads to a change of the instruction set
+  !       and the memory being free twice.
+  !       a way to avoid this is by removing -xHost from FLAGS_CHECK = .. in Makefile
+  !       or to use a pointer array instead of an allocatable array
+  !
+  ! integer,dimension(:),allocatable :: workindex
+  integer,dimension(:),pointer :: workindex
 
   ! checks if anything to sort
   if (ibound_lower > ibound_upper) then
@@ -720,6 +737,26 @@ contains
       !node%cut_max = max
     endif
   enddo
+  ! default dimension
+  if (idim < 1) then
+    ! in case we have two identical points:
+    !   ibound_lower < ibound_upper but min == max value,
+    ! thus zero range and idim,cut_value not set yet
+
+    ! debug
+    !print *,'create_kdtree: ',ibound_lower,ibound_upper
+    !print *,'create_kdtree: data 1 min/max ', &
+    !minval(points_data(1,points_index(ibound_lower:ibound_upper))),maxval(points_data(1,points_index(ibound_lower:ibound_upper)))
+    !print *,'create_kdtree: data 2 min/max ', &
+    !minval(points_data(2,points_index(ibound_lower:ibound_upper))),maxval(points_data(2,points_index(ibound_lower:ibound_upper)))
+    !print *,'create_kdtree: data 3 min/max ', &
+    !minval(points_data(3,points_index(ibound_lower:ibound_upper))),maxval(points_data(3,points_index(ibound_lower:ibound_upper)))
+
+    ! default
+    idim = 1
+    cut_value = 0.d0
+  endif
+  ! sets node values
   node%idim = idim
   node%cut_value = cut_value
 
@@ -731,6 +768,7 @@ contains
   ! temporary index array for sorting
   allocate(workindex(ibound_upper - ibound_lower + 1),stat=ier)
   if (ier /= 0) stop 'Error allocating workindex array'
+  workindex(:) = 0
 
   ! sorts point indices
   ! to have all points with value < cut_value on left side, all others to the right
@@ -738,6 +776,9 @@ contains
   iupper = 0
   do i = ibound_lower,ibound_upper
     iloc = points_index(i)
+    ! checks index
+    if (iloc < 1) stop 'Error invalid iloc index in create_kdtree() routine'
+    ! sorts tree
     if (points_data(idim,iloc) < cut_value) then
       ilower = ilower + 1
       workindex(ilower) = iloc
@@ -746,6 +787,16 @@ contains
       workindex(ibound_upper - ibound_lower + 2 - iupper) = iloc
     endif
   enddo
+
+  ! identical points: split first left, second right to balance tree
+  if (ilower == 0) then
+    ilower = 1
+    iupper = (ibound_upper - ibound_lower)
+  else if (iupper == 0) then
+    ilower = (ibound_upper - ibound_lower)
+    iupper = 1
+  endif
+
   !debug
   !print *,'  ilower/iupper:',ilower,iupper
 
@@ -755,6 +806,15 @@ contains
 
   ! replaces index range with new sorting order
   points_index(ibound_lower:ibound_upper) = workindex(:)
+
+  ! note: compiling with intel ifort version 18.0.1/19.1.0 and optimizations like -xHost -O2 or -xHost -O3 flags
+  !       can lead to issues with the deallocate(workindex) statement below:
+  !         *** Error in `./bin/xspecfem3D': double free or corruption (!prev): 0x00000000024f1610 ***
+  !
+  !       this might be due to a more aggressive optimization which leads to a change of the instruction set
+  !       and the memory being free twice.
+  !       a way to avoid this is by removing -xHost from FLAGS_CHECK = .. in Makefile
+  !       or to use a pointer array instead of an allocatable array
 
   ! frees temporary array
   deallocate(workindex)
@@ -795,7 +855,7 @@ contains
   double precision, dimension(3,npoints),intent(in) :: points_data
   integer,dimension(npoints), intent(in) :: points_index
 
-  type (kdtree_node), pointer,intent(inout) :: node
+  type (kdtree_node), pointer :: node  ! pointers in standard Fortran90 cannot have intent(..) attribute
 
   integer, intent(inout) :: numnodes
 
@@ -808,8 +868,8 @@ contains
   ! statistics
   numnodes = numnodes + 1
   if (numnodes == 1) then
-    print *,'printing kd-tree: total number of points      = ',npoints
-    !print *,'         index array = ',points_index(:)
+    write(IOUT_TREE,*) 'printing kd-tree: total number of points      = ',npoints
+    !write(IOUT_TREE,*) '         index array = ',points_index(:)
   endif
 
   ! outputs infos for a final node
@@ -823,11 +883,11 @@ contains
 
     ! outputs infos
     if (numnodes < OUTPUT_LENGTH) &
-      print *,'node:',numnodes,'index:',node%ipoint,' x/y/z = ',points_data(:,node%ipoint)
+      write(IOUT_TREE,*) 'node:',numnodes,'index:',node%ipoint,' x/y/z = ',points_data(:,node%ipoint)
   else
     ! outputs infos
     if (numnodes < OUTPUT_LENGTH) &
-      print *,'node:',numnodes,'dim:',node%idim,'cut = ',node%cut_value
+      write(IOUT_TREE,*) 'node:',numnodes,'dim:',node%idim,'cut = ',node%cut_value
   endif
 
   ! checks child nodes
@@ -894,7 +954,7 @@ contains
   integer, intent(in) :: npoints
   double precision, dimension(3,npoints), intent(in) :: points_data
 
-  type (kdtree_node), pointer, intent(inout) :: node
+  type (kdtree_node), pointer :: node    ! pointers in standard Fortran90 cannot have intent(..) attribute
 
   double precision, dimension(3), intent(in) :: xyz_target
 
@@ -920,8 +980,14 @@ contains
     if (node%ipoint < 1 ) stop 'Error searched node has wrong point index'
 
     ! squared distance to associated data point
-    dist = get_distance_squared(xyz_target(:),points_data(:,node%ipoint))
-    if (dist < dist_min) then
+    dist = get_distance_squared(xyz_target,points_data(1,node%ipoint))
+
+    ! note: using <= instead of < for comparison. both would be fine, but the first leads to identical location result
+    !       as with a brute force search, if the target location is exactly on a shared GLL point.
+    !       the latter would choose a different element and lead to slightly different seismograms - not sure though why...
+    !       it obviously matters if the source point is shared between different elements and the source contribution added by
+    !       only a single element. for such cases, we might need to spread the source contribution to all shared elements.
+    if (dist <= dist_min) then
       ! debug
       !if (ipoint_min < 1) then
       !  print *,'new node distance',node%id,node%ipoint,dist
@@ -963,7 +1029,7 @@ contains
     if (associated(node%right)) then
       ! checks right node as a final node
       if (node%right%idim == 0) then
-        dist = get_distance_squared(xyz_target(:),points_data(:,node%right%ipoint))
+        dist = get_distance_squared(xyz_target,points_data(1,node%right%ipoint))
         if (dist <= dist_min) then
           ! stores minimum point
           dist_min = dist
@@ -980,7 +1046,7 @@ contains
     if (associated(node%left)) then
       ! checks left node as a final node
       if (node%left%idim == 0) then
-        dist = get_distance_squared(xyz_target(:),points_data(:,node%left%ipoint))
+        dist = get_distance_squared(xyz_target,points_data(1,node%left%ipoint))
         if (dist <= dist_min) then
           ! stores minimum point
           dist_min = dist
@@ -1011,7 +1077,7 @@ contains
   integer, intent(in) :: npoints
   double precision, dimension(3,npoints), intent(in) :: points_data
 
-  type (kdtree_node), pointer, intent(inout) :: node
+  type (kdtree_node), pointer :: node ! pointers in standard Fortran90 cannot have intent(..) attribute
 
   double precision,dimension(3), intent(in) :: xyz_target
 
@@ -1034,7 +1100,7 @@ contains
     xyz(:) = points_data(:,node%ipoint)
 
     ! squared distance to associated data point
-    dist = get_distance_squared(xyz_target(:),xyz(:))
+    dist = get_distance_squared(xyz_target,xyz)
     if (dist <= r_squared) then
       ! debug
       !print *,'     new node: ',node%ipoint,'distance = ',dist,'radius = ',r_squared
@@ -1080,7 +1146,7 @@ contains
       ! checks right node as a final node
       if (node%right%idim == 0) then
         xyz(:) = points_data(:,node%right%ipoint)
-        dist = get_distance_squared(xyz_target(:),xyz(:))
+        dist = get_distance_squared(xyz_target,xyz)
         if (dist <= r_squared) then
           ! counts point
           num_nodes = num_nodes + 1
@@ -1104,7 +1170,7 @@ contains
       ! checks left node as a final node
       if (node%left%idim == 0) then
         xyz(:) = points_data(:,node%left%ipoint)
-        dist = get_distance_squared(xyz_target(:),xyz(:))
+        dist = get_distance_squared(xyz_target,xyz)
         if (dist <= r_squared) then
           ! counts point
           num_nodes = num_nodes + 1
@@ -1141,7 +1207,7 @@ contains
   integer, intent(in) :: npoints
   double precision, dimension(3,npoints), intent(in) :: points_data
 
-  type (kdtree_node), pointer, intent(inout) :: node
+  type (kdtree_node), pointer :: node     ! pointers in standard Fortran90 cannot have intent(..) attribute
 
   double precision, dimension(3), intent(in) :: xyz_target
 
@@ -1164,7 +1230,7 @@ contains
     xyz(:) = points_data(:,node%ipoint)
 
     ! squared distance to associated data point
-    call get_distance_ellip(xyz_target(:),xyz(:),dist_v,dist_h)
+    call get_distance_ellip(xyz_target,xyz,dist_v,dist_h)
     if (dist_v <= r_squared_v .and. dist_h <= r_squared_h) then
       ! debug
       !print *,'     new node: ',node%ipoint,'distance = ',dist,'radius = ',r_squared
@@ -1212,7 +1278,7 @@ contains
       ! checks right node as a final node
       if (node%right%idim == 0) then
         xyz(:) = points_data(:,node%right%ipoint)
-        call get_distance_ellip(xyz_target(:),xyz(:),dist_v,dist_h)
+        call get_distance_ellip(xyz_target,xyz,dist_v,dist_h)
         if (dist_v <= r_squared_v .and. dist_h <= r_squared_h) then
           ! counts point
           num_nodes = num_nodes + 1
@@ -1237,7 +1303,7 @@ contains
       ! checks left node as a final node
       if (node%left%idim == 0) then
         xyz(:) = points_data(:,node%left%ipoint)
-        call get_distance_ellip(xyz_target(:),xyz(:),dist_v,dist_h)
+        call get_distance_ellip(xyz_target,xyz,dist_v,dist_h)
         if (dist_v <= r_squared_v .and. dist_h <= r_squared_h) then
           ! counts point
           num_nodes = num_nodes + 1
@@ -1266,9 +1332,15 @@ contains
 !
 
 
-  subroutine kdtree_set_verbose()
+  subroutine kdtree_set_verbose(iout)
 
   implicit none
+
+  integer,intent(in),optional :: iout
+
+  if (present(iout)) then
+    IOUT_TREE = iout
+  endif
 
   ! sets verbosity on
   be_verbose = .true.

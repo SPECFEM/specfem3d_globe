@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -25,20 +25,23 @@
 !
 !=====================================================================
 
-subroutine read_adjoint_sources_ASDF(adj_source_name, adj_source, index_start, index_end)
 
-  use specfem_par, only: NDIM,CUSTOM_REAL, myrank, current_asdf_handle
+  subroutine read_adjoint_sources_ASDF(adj_source_name, adj_source, index_start, index_end)
+
+  use constants, only: NDIM,CUSTOM_REAL,MAX_STRING_LEN
+  use specfem_par, only: myrank, current_asdf_handle
 
   use iso_c_binding, only: C_NULL_CHAR
 
   implicit none
 
-  integer :: itime, offset, nsamples
-  integer :: index_start, index_end
+  character(len=MAX_STRING_LEN), intent(in) :: adj_source_name
   real(kind=CUSTOM_REAL), dimension(*),intent(out) :: adj_source ! NSTEP block size
-  character(len=*) :: adj_source_name
-  !--- Error variable
-  integer ier
+  integer,intent(in) :: index_start, index_end
+
+  ! local parameters
+  integer :: offset, nsamples
+  integer :: ier
 
   ! Fortran/C index convension. Meaning Fortran starts at 1 and C starts at 0 so
   ! we need to subtract 1 for the C subroutine read_partial_waveform_f
@@ -50,21 +53,27 @@ subroutine read_adjoint_sources_ASDF(adj_source_name, adj_source, index_start, i
   ! print *, " nsamples ", nsamples
   ! print *, adj_source_name, " reading"
 
-  call ASDF_read_partial_waveform_f(current_asdf_handle, "AuxiliaryData/AdjointSources/"//&
-      trim(adj_source_name) // C_NULL_CHAR, offset, nsamples, adj_source, ier)
+  call ASDF_read_partial_waveform_f(current_asdf_handle, &
+                                    "AuxiliaryData/AdjointSources/" // trim(adj_source_name) // C_NULL_CHAR, &
+                                    offset, nsamples, adj_source, ier)
 
   if (ier /= 0) then
     print *,'Error reading adjoint source: ',trim(adj_source_name)
-    print *,'rank ',myrank,' - time step: ',itime,' index_start:',index_start,' index_end: ',index_end
+    print *,'rank ',myrank,' - index_start:',index_start,' index_end: ',index_end
     print *,'  ',trim(adj_source_name)//'has wrong length, please check with your simulation duration'
-    call exit_MPI(myrank,'Adjoint source '//trim(adj_source_name)//' has wrong length, please check with your simulation duration')
+    call exit_MPI(myrank,'Adjoint source '//trim(adj_source_name)// &
+                  ' has wrong length, please check with your simulation duration')
   endif
 
-end subroutine read_adjoint_sources_ASDF
+  end subroutine read_adjoint_sources_ASDF
 
+
+!
 !------------------------------------------------------------------------------------------
+!
 
-subroutine check_adjoint_sources_ASDF(irec, nadj_sources_found)
+
+  subroutine check_adjoint_sources_ASDF(irec, nadj_sources_found)
 
   use specfem_par
 
@@ -73,13 +82,12 @@ subroutine check_adjoint_sources_ASDF(irec, nadj_sources_found)
   implicit none
 
   integer,intent(in) :: irec
-  integer :: nadj_sources_found
-  integer :: nsamples_infered
-  integer :: icomp
-  integer :: adjoint_source_exists
-  integer :: ier
+  integer,intent(inout) :: nadj_sources_found
 
   ! local parameters
+  integer :: nsamples_infered
+  integer :: icomp,ier
+  integer :: adjoint_source_exists
   character(len=MAX_STRING_LEN) :: adj_filename,adj_source_file
   character(len=3),dimension(NDIM) :: comp
   character(len=2) :: bic
@@ -110,15 +118,18 @@ subroutine check_adjoint_sources_ASDF(irec, nadj_sources_found)
 
     ! checks length of file
     call ASDF_get_num_elements_from_path_f(current_asdf_handle, &
-       "AuxiliaryData/AdjointSources/" // trim(adj_filename) // C_NULL_CHAR, nsamples_infered, ier)
+                                           "AuxiliaryData/AdjointSources/" // trim(adj_filename) // C_NULL_CHAR, &
+                                           nsamples_infered, ier)
 
     ! print *, trim(adj_filename), nsamples_infered
 
     ! checks length
     if (nsamples_infered /= NSTEP) then
-      print *,'adjoint source error: ',trim(adj_filename),' has length',nsamples_infered,' but should be',NSTEP
+      print *,'ASDF adjoint source error: ',"AuxiliaryData/AdjointSources/" // trim(adj_filename), &
+              ' has length',nsamples_infered,' but should be',NSTEP
       call exit_MPI(myrank, &
-        'file '//trim(adj_filename)//' length is wrong, please check your adjoint sources and your simulation duration')
+        'file ' // "AuxiliaryData/AdjointSources/" // trim(adj_filename) // &
+        ' length is wrong, please check your adjoint sources and your simulation duration')
     endif
 
     ! updates counter for found files
@@ -126,4 +137,4 @@ subroutine check_adjoint_sources_ASDF(irec, nadj_sources_found)
 
   enddo
 
-end subroutine check_adjoint_sources_ASDF
+  end subroutine check_adjoint_sources_ASDF

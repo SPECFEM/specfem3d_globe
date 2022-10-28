@@ -5,7 +5,7 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -82,9 +82,6 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifndef IFLAG_IN_FICTITIOUS_CUBE\n\
 #define IFLAG_IN_FICTITIOUS_CUBE 11\n\
 #endif\n\
-#ifndef R_EARTH_KM\n\
-#define R_EARTH_KM 6371.0f\n\
-#endif\n\
 #ifndef COLORING_MIN_NSPEC_INNER_CORE\n\
 #define COLORING_MIN_NSPEC_INNER_CORE 1000\n\
 #endif\n\
@@ -103,7 +100,6 @@ void compute_element_strain_undoatt(const int ispec, const int ijk_ispec, const 
   int K;\n\
   int J;\n\
   int I;\n\
-  int l;\n\
   int offset;\n\
   float tempx1l;\n\
   float tempx2l;\n\
@@ -136,10 +132,12 @@ void compute_element_strain_undoatt(const int ispec, const int ijk_ispec, const 
   float fac1;\n\
   float fac2;\n\
   float fac3;\n\
+\n\
   tx = get_local_id(0);\n\
   K = (tx) / (NGLL2);\n\
   J = (tx - ((K) * (NGLL2))) / (NGLLX);\n\
   I = tx - ((K) * (NGLL2)) - ((J) * (NGLLX));\n\
+\n\
   tempx1l = 0.0f;\n\
   tempx2l = 0.0f;\n\
   tempx3l = 0.0f;\n\
@@ -149,7 +147,8 @@ void compute_element_strain_undoatt(const int ispec, const int ijk_ispec, const 
   tempz1l = 0.0f;\n\
   tempz2l = 0.0f;\n\
   tempz3l = 0.0f;\n\
-  for (l = 0; l <= NGLLX - (1); l += 1) {\n\
+\n\
+  for (int l = 0; l < NGLLX; l += 1) {\n\
     fac1 = sh_hprime_xx[(l) * (NGLLX) + I];\n\
     tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + l]) * (fac1);\n\
     tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + l]) * (fac1);\n\
@@ -163,6 +162,7 @@ void compute_element_strain_undoatt(const int ispec, const int ijk_ispec, const 
     tempy3l = tempy3l + (s_dummyy_loc[(l) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
     tempz3l = tempz3l + (s_dummyz_loc[(l) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
   }\n\
+\n\
   offset = (ispec) * (NGLL3_PADDED) + tx;\n\
   xixl = d_xix[offset];\n\
   etaxl = d_etax[offset];\n\
@@ -182,6 +182,7 @@ void compute_element_strain_undoatt(const int ispec, const int ijk_ispec, const 
   duzdxl = (xixl) * (tempz1l) + (etaxl) * (tempz2l) + (gammaxl) * (tempz3l);\n\
   duzdyl = (xiyl) * (tempz1l) + (etayl) * (tempz2l) + (gammayl) * (tempz3l);\n\
   duzdzl = (xizl) * (tempz1l) + (etazl) * (tempz2l) + (gammazl) * (tempz3l);\n\
+\n\
   templ = (duxdxl + duydyl + duzdzl) * (0.3333333333333333f);\n\
   epsilondev_loc[0] = duxdxl - (templ);\n\
   epsilondev_loc[1] = duydyl - (templ);\n\
@@ -201,12 +202,15 @@ __kernel void compute_strain_kernel(const __global float * d_displ, const __glob
   __local float s_dummyy_loc[(NGLL3)];\n\
   __local float s_dummyz_loc[(NGLL3)];\n\
   __local float sh_hprime_xx[(NGLL2)];\n\
+\n\
   ispec = get_group_id(0) + (get_group_id(1)) * (get_num_groups(0));\n\
   ijk_ispec = get_local_id(0) + (NGLL3) * (ispec);\n\
   tx = get_local_id(0);\n\
+\n\
   if (tx < NGLL2) {\n\
     sh_hprime_xx[tx] = d_hprime_xx[tx];\n\
   }\n\
+\n\
   if (ispec < NSPEC) {\n\
     iglob = d_ibool[ijk_ispec] - (1);\n\
     s_dummyx_loc[tx] = d_displ[0 + (3) * (iglob)] + (deltat) * (d_veloc[0 + (3) * (iglob)]);\n\
@@ -214,11 +218,11 @@ __kernel void compute_strain_kernel(const __global float * d_displ, const __glob
     s_dummyz_loc[tx] = d_displ[2 + (3) * (iglob)] + (deltat) * (d_veloc[2 + (3) * (iglob)]);\n\
   }\n\
   barrier(CLK_LOCAL_MEM_FENCE);\n\
+\n\
   if (ispec < NSPEC) {\n\
     compute_element_strain_undoatt(ispec, ijk_ispec, d_ibool, s_dummyx_loc, s_dummyy_loc, s_dummyz_loc, d_xix, d_xiy, d_xiz, d_etax, d_etay, d_etaz, d_gammax, d_gammay, d_gammaz, sh_hprime_xx, epsdev,  &eps_trace_over_3);\n\
-    if (NSPEC_STRAIN_ONLY == 1) {\n\
-      epsilon_trace_over_3[tx] = eps_trace_over_3;\n\
-    } else {\n\
+\n\
+    if (NSPEC_STRAIN_ONLY > 1) {\n\
       epsilon_trace_over_3[ijk_ispec] = eps_trace_over_3;\n\
     }\n\
     epsilondev_xx[ijk_ispec] = epsdev[0];\n\

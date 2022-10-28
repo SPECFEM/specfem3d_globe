@@ -23,7 +23,7 @@ module BOAST
     p = Procedure(function_name, [array, size, d_max])
     if (get_lang == CUDA and ref) then
       get_output.print File::read("references/#{function_name}.cu")
-    elsif(get_lang == CUDA or get_lang == CL) then
+    elsif(get_lang == CL or get_lang == CUDA or get_lang == HIP) then
       make_specfem3d_header( :blocksize_transfer => block_size_transfer )
       open p
       sdata = Real("sdata",  :local => true, :dim => [Dim(blocksize_transfer)] )
@@ -36,15 +36,21 @@ module BOAST
       decl bx
       decl i
       decl s
+      comment()
+
       print tid === get_local_id(0)
       print bx === get_group_id(1)*get_num_groups(0) + get_group_id(0)
       print i === tid + bx*get_local_size(0)
+      comment()
+
       if type == :scalar then
         print sdata[tid] === Ternary( i < size, fabs(array[i]), 0.0)
       else
         print sdata[tid] === Ternary( i < size, sqrt(array[i*3+0]*array[i*3+0]+array[i*3+1]*array[i*3+1]+array[i*3+2]*array[i*3+2]), 0.0)
       end
       print barrier(:local)
+      comment()
+
       print s === get_local_size(0)/2
       print While(s > 0) {
         print If(tid < s) {
@@ -55,6 +61,8 @@ module BOAST
         print s === Expression(">>",s,1)
         print barrier(:local)
       }
+      comment()
+
       print If(tid == 0) {
         print d_max[bx] === sdata[0]
       }

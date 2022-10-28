@@ -5,7 +5,7 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -82,9 +82,6 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifndef IFLAG_IN_FICTITIOUS_CUBE\n\
 #define IFLAG_IN_FICTITIOUS_CUBE 11\n\
 #endif\n\
-#ifndef R_EARTH_KM\n\
-#define R_EARTH_KM 6371.0f\n\
-#endif\n\
 #ifndef COLORING_MIN_NSPEC_INNER_CORE\n\
 #define COLORING_MIN_NSPEC_INNER_CORE 1000\n\
 #endif\n\
@@ -101,7 +98,7 @@ __kernel void assemble_boundary_potential_on_device(__global float * d_potential
   int iloc;\n\
   int iinterface;\n\
   id = get_global_id(0) + (get_global_size(0)) * (get_global_id(1));\n\
-  for (iinterface = 0; iinterface <= num_interfaces - (1); iinterface += 1) {\n\
+  for (iinterface = 0; iinterface < num_interfaces; iinterface += 1) {\n\
     if (id < d_nibool_interfaces[iinterface]) {\n\
       iloc = id + (max_nibool_interfaces) * (iinterface);\n\
       iglob = d_ibool_interfaces[iloc] - (1);\n\

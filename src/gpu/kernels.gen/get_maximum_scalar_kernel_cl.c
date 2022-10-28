@@ -5,7 +5,7 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -82,9 +82,6 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifndef IFLAG_IN_FICTITIOUS_CUBE\n\
 #define IFLAG_IN_FICTITIOUS_CUBE 11\n\
 #endif\n\
-#ifndef R_EARTH_KM\n\
-#define R_EARTH_KM 6371.0f\n\
-#endif\n\
 #ifndef COLORING_MIN_NSPEC_INNER_CORE\n\
 #define COLORING_MIN_NSPEC_INNER_CORE 1000\n\
 #endif\n\
@@ -101,11 +98,14 @@ __kernel void get_maximum_scalar_kernel(const __global float * array, const int 
   int bx;\n\
   int i;\n\
   int s;\n\
+\n\
   tid = get_local_id(0);\n\
   bx = (get_group_id(1)) * (get_num_groups(0)) + get_group_id(0);\n\
   i = tid + (bx) * (get_local_size(0));\n\
+\n\
   sdata[tid] = (i < size ? fabs(array[i]) : 0.0f);\n\
   barrier(CLK_LOCAL_MEM_FENCE);\n\
+\n\
   s = (get_local_size(0)) / (2);\n\
   while (s > 0) {\n\
     if (tid < s) {\n\
@@ -116,6 +116,7 @@ __kernel void get_maximum_scalar_kernel(const __global float * array, const int 
     s = s >> 1;\n\
     barrier(CLK_LOCAL_MEM_FENCE);\n\
   }\n\
+\n\
   if (tid == 0) {\n\
     d_max[bx] = sdata[0];\n\
   }\n\

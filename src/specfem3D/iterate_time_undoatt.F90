@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -41,6 +41,7 @@
   ! local parameters
   integer :: it_temp,seismo_current_temp
   integer :: ier
+  integer :: buffer_size, it_of_buffer, ntstep_kl
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_displ_cm_store_buffer
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_displ_ic_store_buffer
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_displ_oc_store_buffer,b_accel_oc_store_buffer
@@ -48,6 +49,10 @@
   double precision :: sizeval
   ! timing
   double precision, external :: wtime
+
+  ! number of buffered snapshot
+  ntstep_kl = max(1, NTSTEP_BETWEEN_COMPUTE_KERNELS)
+  buffer_size = ceiling(dble(NT_DUMP_ATTENUATION) / ntstep_kl)
 
   !----  create a Gnuplot script to display the energy curve in log scale
   if (OUTPUT_ENERGY .and. myrank == 0) then
@@ -93,7 +98,21 @@
   endif
 
   ! number of time subsets for time loop
-  NSUBSET_ITERATIONS = ceiling( dble(NSTEP)/dble(NT_DUMP_ATTENUATION) )
+  if (NSTEP_STEADY_STATE > 0) then
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) 'steady state simulation:'
+      write(IMAIN,*) '  total number of time steps                       = ',NSTEP
+      write(IMAIN,*) '  number of steady state time steps                = ',NSTEP_STEADY_STATE
+      write(IMAIN,*) '  number of transient time steps                   = ',NSTEP-NSTEP_STEADY_STATE
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
+    ! subsets for steady state only
+    NSUBSET_ITERATIONS = ceiling( dble(NSTEP_STEADY_STATE)/dble(NT_DUMP_ATTENUATION) )
+  else
+    NSUBSET_ITERATIONS = ceiling( dble(NSTEP)/dble(NT_DUMP_ATTENUATION) )
+  endif
 
   ! checks
   if (NSUBSET_ITERATIONS <= 0) call exit_MPI(myrank,'Error invalid number of time subsets for undoing attenuation')
@@ -104,6 +123,41 @@
       write(IMAIN,*) 'undoing attenuation:'
       write(IMAIN,*) '  total number of time subsets                     = ',NSUBSET_ITERATIONS
       write(IMAIN,*) '  wavefield snapshots at every NT_DUMP_ATTENUATION = ',NT_DUMP_ATTENUATION
+      write(IMAIN,*) '  number of buffered snapshots at each subset      = ',buffer_size
+      write(IMAIN,*)
+      call flush_IMAIN()
+
+      ! file size per snapshot for save/read routines
+      write(IMAIN,*) '  estimated snapshot file storage:'
+      ! see fields stored in save_forward_arrays_undoatt() routine in file save_forward_arrays.f90
+      ! displ_crust_mantle + veloc_crust_mantle + accel_crust_mantle
+      sizeval = 3.d0 * dble(NDIM) * dble(NGLOB_CRUST_MANTLE) * dble(CUSTOM_REAL)
+      ! displ_inner_core + veloc_inner_core + accel_inner_core
+      sizeval = sizeval + 3.d0 * dble(NDIM) * dble(NGLOB_INNER_CORE) * dble(CUSTOM_REAL)
+      ! displ_outer_core + veloc_outer_core + accel_outer_core
+      sizeval = sizeval + 3.d0 * dble(NGLOB_OUTER_CORE) * dble(CUSTOM_REAL)
+      if (ROTATION_VAL) then
+        ! A_array_rotation + B_array_rotation
+        sizeval = sizeval + 2.d0 * dble(NGLLX*NGLLY*NGLLZ) * dble(NSPEC_OUTER_CORE_ROTATION) * dble(CUSTOM_REAL)
+      endif
+      if (ATTENUATION_VAL) then
+        ! R_xx_crust_mantle + R_yy_crust_mantle + R_xy_crust_mantle + R_xz_crust_mantle + R_yz_crust_mantle
+        sizeval = sizeval + 5.d0 * dble(NGLLX*NGLLY*NGLLZ*N_SLS) * dble(NSPEC_CRUST_MANTLE_ATTENUATION) * dble(CUSTOM_REAL)
+        ! R_xx_inner_core + R_yy_inner_core + R_xy_inner_core + R_xz_inner_core + R_yz_inner_core
+        sizeval = sizeval + 5.d0 * dble(NGLLX*NGLLY*NGLLZ*N_SLS) * dble(NSPEC_INNER_CORE_ATTENUATION) * dble(CUSTOM_REAL)
+      endif
+      ! in MB
+      sizeval = sizeval / 1024.d0 / 1024.d0
+      write(IMAIN,*) '  size of single time snapshot subset per slice         = ', sngl(sizeval),'MB'
+      ! for all processes
+      sizeval = sizeval * dble(NPROCTOT)
+      write(IMAIN,*) '  size of single time snapshot subset for all processes = ', sngl(sizeval),'MB'
+      write(IMAIN,*) '                                                        = ', sngl(sizeval/1024.d0),'GB'
+      write(IMAIN,*)
+      ! for all processes and all subsets
+      sizeval = sizeval * dble(NSUBSET_ITERATIONS)
+      write(IMAIN,*) '  total size of all time snapshots subsets              = ', sngl(sizeval),'MB'
+      write(IMAIN,*) '                                                        = ', sngl(sizeval/1024.d0),'GB'
       write(IMAIN,*)
       call flush_IMAIN()
     endif
@@ -113,18 +167,33 @@
   if (SIMULATION_TYPE == 3) then
     ! user output
     if (myrank == 0) then
+      write(IMAIN,*) '  wavefield buffers:'
       ! crust/mantle
       ! buffer(NDIM,NGLOB_CRUST_MANTLE_ADJOINT,NT_DUMP_ATTENUATION) in MB
-      sizeval = dble(NDIM) * dble(NGLOB_CRUST_MANTLE_ADJOINT) * dble(NT_DUMP_ATTENUATION) * dble(CUSTOM_REAL) / 1024.d0 / 1024.d0
+      sizeval = dble(NDIM) * dble(NGLOB_CRUST_MANTLE_ADJOINT) * dble(buffer_size) * dble(CUSTOM_REAL) / 1024.d0 / 1024.d0
       write(IMAIN,*) '  size of crust/mantle wavefield buffer per slice = ', sngl(sizeval),'MB'
       ! outer core
       ! buffer(NGLOB_OUTER_CORE_ADJOINT,NT_DUMP_ATTENUATION) in MB
-      sizeval = dble(2) * dble(NGLOB_OUTER_CORE_ADJOINT) * dble(NT_DUMP_ATTENUATION) * dble(CUSTOM_REAL) / 1024.d0 / 1024.d0
+      sizeval = 2.d0 * dble(NGLOB_OUTER_CORE_ADJOINT) * dble(buffer_size) * dble(CUSTOM_REAL) / 1024.d0 / 1024.d0
       write(IMAIN,*) '  size of   outer core wavefield buffer per slice = ', sngl(sizeval),'MB'
       ! inner core
       ! buffer(NDIM,NGLOB_CRUST_MANTLE_ADJOINT,NT_DUMP_ATTENUATION) in MB
-      sizeval = dble(NDIM) * dble(NGLOB_INNER_CORE_ADJOINT) * dble(NT_DUMP_ATTENUATION) * dble(CUSTOM_REAL) / 1024.d0 / 1024.d0
+      sizeval = dble(NDIM) * dble(NGLOB_INNER_CORE_ADJOINT) * dble(buffer_size) * dble(CUSTOM_REAL) / 1024.d0 / 1024.d0
       write(IMAIN,*) '  size of   inner core wavefield buffer per slice = ', sngl(sizeval),'MB'
+      write(IMAIN,*)
+      call flush_IMAIN()
+
+      ! total size of buffers
+      ! b_displ_cm_store_buffer
+      sizeval = dble(NDIM) * dble(NGLOB_CRUST_MANTLE_ADJOINT) * dble(buffer_size) * dble(CUSTOM_REAL)
+      ! b_displ_oc_store_buffer + b_accel_oc_store_buffer
+      sizeval = sizeval + 2.d0 * dble(NGLOB_OUTER_CORE_ADJOINT) * dble(buffer_size) * dble(CUSTOM_REAL)
+      ! b_displ_ic_store_buffer
+      sizeval = sizeval + dble(NDIM) * dble(NGLOB_INNER_CORE_ADJOINT) * dble(buffer_size) * dble(CUSTOM_REAL)
+      ! in MB
+      sizeval = sizeval / 1024.d0 / 1024.d0
+      write(IMAIN,*) '  total size of wavefield buffers per slice       = ', sngl(sizeval),'MB'
+      write(IMAIN,*) '                                                  = ', sngl(sizeval/1024.d0),'GB'
       write(IMAIN,*)
       call flush_IMAIN()
     endif
@@ -138,38 +207,49 @@
     !! because we then use the values read immediately (one value at a time, but to reduce the total number of reads
     !! across the PCI-Express bus we could / should consider reading them 10 by 10 for instance (?) if that fits
     !! in the memory of the GPU
-    allocate(b_displ_cm_store_buffer(NDIM,NGLOB_CRUST_MANTLE_ADJOINT,NT_DUMP_ATTENUATION),stat=ier)
+    allocate(b_displ_cm_store_buffer(NDIM,NGLOB_CRUST_MANTLE_ADJOINT,buffer_size),stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating b_displ_cm_store_buffer')
-    allocate(b_displ_oc_store_buffer(NGLOB_OUTER_CORE_ADJOINT,NT_DUMP_ATTENUATION),stat=ier)
+    b_displ_cm_store_buffer(:,:,:) = 0.0_CUSTOM_REAL
+
+    allocate(b_displ_oc_store_buffer(NGLOB_OUTER_CORE_ADJOINT,buffer_size),stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating b_displ_oc_store_buffer')
-    allocate(b_accel_oc_store_buffer(NGLOB_OUTER_CORE_ADJOINT,NT_DUMP_ATTENUATION),stat=ier)
+    b_displ_oc_store_buffer(:,:) = 0.0_CUSTOM_REAL
+
+    allocate(b_accel_oc_store_buffer(NGLOB_OUTER_CORE_ADJOINT,buffer_size),stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating b_accel_oc_store_buffer')
-    allocate(b_displ_ic_store_buffer(NDIM,NGLOB_INNER_CORE_ADJOINT,NT_DUMP_ATTENUATION),stat=ier)
+    b_accel_oc_store_buffer(:,:) = 0.0_CUSTOM_REAL
+
+    allocate(b_displ_ic_store_buffer(NDIM,NGLOB_INNER_CORE_ADJOINT,buffer_size),stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating b_displ_ic_store_buffer')
+    b_displ_ic_store_buffer(:,:,:) = 0.0_CUSTOM_REAL
 
     ! noise kernel for source strength (sigma_kernel) needs buffer for reconstructed noise_surface_movie array,
     ! otherwise we need file i/o which will considerably slow down performance
     if (NOISE_TOMOGRAPHY == 3) then
-      allocate(b_noise_surface_movie_buffer(NDIM,NGLLX,NGLLY,NSPEC_TOP,NT_DUMP_ATTENUATION),stat=ier)
+      allocate(b_noise_surface_movie_buffer(NDIM,NGLLX,NGLLY,NSPEC_TOP,buffer_size),stat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'Error allocating b_noise_surface_movie_buffer')
+      b_noise_surface_movie_buffer(:,:,:,:,:) = 0.0_CUSTOM_REAL
     endif
   endif
 
+  ! shift execution of simultaneous events to avoid a high peak bandwidth for snapshots file I/O
+  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1) call prepare_simultaneous_event_execution_shift_undoatt()
+
   ! synchronize all processes to make sure everybody is ready to start time loop
   call synchronize_all()
-  if (myrank == 0) write(IMAIN,*) 'All processes are synchronized before time loop'
-
   if (myrank == 0) then
+    write(IMAIN,*) 'All processes are synchronized before time loop (undoatt)'
     write(IMAIN,*)
     write(IMAIN,*) 'Starting time iteration loop (undoatt)...'
     write(IMAIN,*)
     call flush_IMAIN()
   endif
+  call synchronize_all()
 
   ! create an empty file to monitor the start of the simulation
   if (myrank == 0) then
     open(unit=IOUT,file=trim(OUTPUT_FILES)//'/starttimeloop.txt',status='unknown',action='write')
-    write(IOUT,*) 'hello, starting time loop'
+    write(IOUT,*) 'hello, starting time loop in iterate_time_undoatt() routine'
     close(IOUT)
   endif
 
@@ -189,6 +269,62 @@
 
   if (EXACT_UNDOING_TO_DISK) call setup_exact_undoing_to_disk()
 
+  ! transient period simulation
+  if (NSTEP_STEADY_STATE > 0) then
+    do it = it_begin,NSTEP-NSTEP_STEADY_STATE
+
+      ! simulation status output and stability check
+      if (mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == it_begin + 4 .or. it == it_end) then
+        call check_stability()
+        if (I_am_running_on_a_slow_node) goto 200
+      endif
+
+      do istage = 1, NSTAGE_TIME_SCHEME ! is equal to 1 if Newmark because only one stage then
+
+        if (USE_LDDRK) then
+          ! update displacement using Runge-Kutta time scheme
+          call update_displ_lddrk()
+        else
+          ! update displacement using Newmark time scheme
+          call update_displ_Newmark()
+        endif
+
+        ! acoustic solver for outer core
+        ! (needs to be done first, before elastic one)
+        call compute_forces_acoustic()
+
+        ! elastic solver for crust/mantle and inner core
+        call compute_forces_viscoelastic()
+
+      enddo ! end of very big external loop on istage for all the stages of the LDDRK time scheme (only one stage if Newmark)
+
+      ! write the seismograms with time shift (GPU_MODE transfer included)
+      call write_seismograms()
+
+      ! outputs movie files
+      if (MOVIE_SURFACE .or. MOVIE_VOLUME) call write_movie_output()
+
+      ! first step of noise tomography, i.e., save a surface movie at every time step
+      ! modified from the subroutine 'write_movie_surface'
+      if (NOISE_TOMOGRAPHY == 1) then
+        call noise_save_surface_movie()
+      endif
+
+      ! updates VTK window
+      if (VTK_MODE) then
+        call it_update_vtkwindow()
+      endif
+
+    !
+    !---- end of time iteration loop
+    !
+    enddo   ! end of main time loop of transient state
+
+    200 continue
+
+    it = it - 1
+  endif
+
   ! loops over time subsets
   do iteration_on_subset = 1, NSUBSET_ITERATIONS
 
@@ -204,7 +340,7 @@
       ! note: after reading the restart files of displacement back from disk, recompute the strain from displacement;
       !       this is better than storing the strain to disk as well, which would drastically increase I/O volume
       ! computes strain based on current backward/reconstructed wavefield
-      if (COMPUTE_AND_STORE_STRAIN) call it_compute_strain_att_backward()
+      if (COMPUTE_AND_STORE_STRAIN) call compute_strain_att_backward()
     endif
 
     ! time loop within this iteration subset
@@ -218,7 +354,11 @@
         it_subset_end = NT_DUMP_ATTENUATION
       else
         ! loops over remaining steps in last subset
-        it_subset_end = NSTEP - (iteration_on_subset-1)*NT_DUMP_ATTENUATION
+        if (NSTEP_STEADY_STATE > 0) then
+          it_subset_end = NSTEP_STEADY_STATE - (iteration_on_subset-1)*NT_DUMP_ATTENUATION
+        else
+          it_subset_end = NSTEP - (iteration_on_subset-1)*NT_DUMP_ATTENUATION
+        endif
       endif
       ! checks end index
       if (it_subset_end > NT_DUMP_ATTENUATION) &
@@ -278,12 +418,17 @@
 
       ! intermediate storage of it and seismo_current positions
       it_temp = it
+      it_of_buffer = 0
       seismo_current_temp = seismo_current
 
       ! increment end of this subset
       if (iteration_on_subset == 1) then
         ! loops over remaining steps in last forward subset
-        it_subset_end = NSTEP - (NSUBSET_ITERATIONS-1)*NT_DUMP_ATTENUATION
+        if (NSTEP_STEADY_STATE > 0) then
+          it_subset_end = NSTEP_STEADY_STATE - (NSUBSET_ITERATIONS-1)*NT_DUMP_ATTENUATION
+        else
+          it_subset_end = NSTEP - (NSUBSET_ITERATIONS-1)*NT_DUMP_ATTENUATION
+        endif
       else
         ! takes full length of subset
         it_subset_end = NT_DUMP_ATTENUATION
@@ -327,37 +472,43 @@
         enddo ! istage
 
         ! transfers wavefields from GPU to CPU for buffering
-        if (GPU_MODE) then
-#if defined(USE_CUDA) || defined(USE_OPENCL)
-          if (it_of_this_subset >= 2) then
-            call unregister_host_array(b_displ_cm_store_buffer(:,:, it_of_this_subset-1))
-          endif
-          call register_host_array(NDIM*NGLOB_CRUST_MANTLE_ADJOINT, b_displ_cm_store_buffer(:,:, it_of_this_subset))
-#endif
-          ! daniel debug: check if these transfers could be made async to overlap
-          call transfer_ofs_b_displ_cm_from_device(NDIM*NGLOB_CRUST_MANTLE_ADJOINT,it_of_this_subset, &
-                                                   b_displ_cm_store_buffer,Mesh_pointer)
-          call transfer_ofs_b_displ_ic_from_device(NDIM*NGLOB_INNER_CORE_ADJOINT,it_of_this_subset, &
-                                                   b_displ_ic_store_buffer,Mesh_pointer)
-          call transfer_ofs_b_displ_oc_from_device(NGLOB_OUTER_CORE_ADJOINT,it_of_this_subset, &
-                                                   b_displ_oc_store_buffer,Mesh_pointer)
-          call transfer_ofs_b_accel_oc_from_device(NGLOB_OUTER_CORE_ADJOINT,it_of_this_subset, &
-                                                   b_accel_oc_store_buffer,Mesh_pointer)
-        else
-          ! stores wavefield in buffers
-! only the displacement needs to be stored in memory buffers in order to compute the sensitivity kernels,
-! not the memory variables R_ij, because the sensitivity kernel calculations only involve the displacement
-! and the strain, not the stress, and the strain can be recomputed on the fly by computing the gradient
-! of the displacement read back from the memory buffers (see also https://github.com/geodynamics/specfem3d_globe/issues/194)
-          b_displ_cm_store_buffer(:,:,it_of_this_subset) = b_displ_crust_mantle(:,:)
-          b_displ_oc_store_buffer(:,it_of_this_subset) = b_displ_outer_core(:)
-          b_accel_oc_store_buffer(:,it_of_this_subset) = b_accel_outer_core(:)
-          b_displ_ic_store_buffer(:,:,it_of_this_subset) = b_displ_inner_core(:,:)
-        endif
+        if (mod(it_temp+it_subset_end-it_of_this_subset+1, ntstep_kl) == 0) then
 
-        ! for noise kernel
-        if (NOISE_TOMOGRAPHY == 3) then
-          b_noise_surface_movie_buffer(:,:,:,:,it_of_this_subset) = noise_surface_movie(:,:,:,:)
+          it_of_buffer = it_of_buffer + 1
+
+          if (GPU_MODE) then
+#if defined(USE_CUDA) || defined(USE_OPENCL)
+            if (it_of_buffer >= 2) then
+              call unregister_host_array(b_displ_cm_store_buffer(:,:, it_of_buffer-1))
+            endif
+            call register_host_array(NDIM*NGLOB_CRUST_MANTLE_ADJOINT, b_displ_cm_store_buffer(:,:, it_of_buffer))
+#endif
+            ! daniel debug: check if these transfers could be made async to overlap
+            call transfer_ofs_b_displ_cm_from_device(NDIM*NGLOB_CRUST_MANTLE_ADJOINT,it_of_buffer, &
+                                                    b_displ_cm_store_buffer,Mesh_pointer)
+            call transfer_ofs_b_displ_ic_from_device(NDIM*NGLOB_INNER_CORE_ADJOINT,it_of_buffer, &
+                                                    b_displ_ic_store_buffer,Mesh_pointer)
+            call transfer_ofs_b_displ_oc_from_device(NGLOB_OUTER_CORE_ADJOINT,it_of_buffer, &
+                                                    b_displ_oc_store_buffer,Mesh_pointer)
+            call transfer_ofs_b_accel_oc_from_device(NGLOB_OUTER_CORE_ADJOINT,it_of_buffer, &
+                                                    b_accel_oc_store_buffer,Mesh_pointer)
+          else
+            ! stores wavefield in buffers
+  ! only the displacement needs to be stored in memory buffers in order to compute the sensitivity kernels,
+  ! not the memory variables R_ij, because the sensitivity kernel calculations only involve the displacement
+  ! and the strain, not the stress, and the strain can be recomputed on the fly by computing the gradient
+  ! of the displacement read back from the memory buffers (see also https://github.com/geodynamics/specfem3d_globe/issues/194)
+            b_displ_cm_store_buffer(:,:,it_of_buffer) = b_displ_crust_mantle(:,:)
+            b_displ_oc_store_buffer(:,it_of_buffer) = b_displ_outer_core(:)
+            b_accel_oc_store_buffer(:,it_of_buffer) = b_accel_outer_core(:)
+            b_displ_ic_store_buffer(:,:,it_of_buffer) = b_displ_inner_core(:,:)
+          endif
+
+          ! for noise kernel
+          if (NOISE_TOMOGRAPHY == 3) then
+            b_noise_surface_movie_buffer(:,:,:,:,it_of_buffer) = noise_surface_movie(:,:,:,:)
+          endif
+
         endif
       enddo ! subset loop
 
@@ -366,42 +517,48 @@
       seismo_current = seismo_current_temp
 
       ! computes strain based on current adjoint wavefield
-      if (COMPUTE_AND_STORE_STRAIN) call it_compute_strain_att()
+      if (COMPUTE_AND_STORE_STRAIN) call compute_strain_att()
 
       ! adjoint wavefield simulation
       do it_of_this_subset = 1, it_subset_end
 
-        ! reads backward/reconstructed wavefield from buffers
-        ! note: uses wavefield at corresponding time (NSTEP - it + 1 ), i.e. we have now time-reversed wavefields
-        ! crust/mantle
-        ! transfers wavefields from CPU to GPU
-        if (GPU_MODE) then
-          ! daniel debug: check if these transfers could be made async to overlap
-           call transfer_ofs_b_displ_cm_to_device(NDIM*NGLOB_CRUST_MANTLE_ADJOINT,it_subset_end-it_of_this_subset+1, &
-                                                  b_displ_cm_store_buffer,Mesh_pointer)
-           call transfer_ofs_b_displ_ic_to_device(NDIM*NGLOB_INNER_CORE_ADJOINT,it_subset_end-it_of_this_subset+1, &
-                                                  b_displ_ic_store_buffer,Mesh_pointer)
-          call transfer_ofs_b_displ_oc_to_device(NGLOB_OUTER_CORE_ADJOINT,it_subset_end-it_of_this_subset+1, &
-                                                 b_displ_oc_store_buffer,Mesh_pointer)
-          call transfer_ofs_b_accel_oc_to_device(NGLOB_OUTER_CORE_ADJOINT,it_subset_end-it_of_this_subset+1, &
-                                                 b_accel_oc_store_buffer,Mesh_pointer)
-        else
-! only the displacement needs to be stored in memory buffers in order to compute the sensitivity kernels,
-! not the memory variables R_ij, because the sensitivity kernel calculations only involve the displacement
-! and the strain, not the stress, and the strain can be recomputed on the fly by computing the gradient
-! of the displacement read back from the memory buffers (see also https://github.com/geodynamics/specfem3d_globe/issues/194)
-          b_displ_crust_mantle(:,:) = b_displ_cm_store_buffer(:,:,it_subset_end-it_of_this_subset+1)
-          b_displ_outer_core(:) = b_displ_oc_store_buffer(:,it_subset_end-it_of_this_subset+1)
-          b_accel_outer_core(:) = b_accel_oc_store_buffer(:,it_subset_end-it_of_this_subset+1)
-          b_displ_inner_core(:,:) = b_displ_ic_store_buffer(:,:,it_subset_end-it_of_this_subset+1)
-        endif
-
-        ! for noise kernel
-        if (NOISE_TOMOGRAPHY == 3) then
-          noise_surface_movie(:,:,:,:) = b_noise_surface_movie_buffer(:,:,:,:,it_subset_end-it_of_this_subset+1)
-        endif
-
         it = it + 1
+
+        if (mod(it, ntstep_kl) == 0) then
+
+          ! reads backward/reconstructed wavefield from buffers
+          ! note: uses wavefield at corresponding time (NSTEP - it + 1 ), i.e. we have now time-reversed wavefields
+          ! crust/mantle
+          ! transfers wavefields from CPU to GPU
+          if (GPU_MODE) then
+            ! daniel debug: check if these transfers could be made async to overlap
+            call transfer_ofs_b_displ_cm_to_device(NDIM*NGLOB_CRUST_MANTLE_ADJOINT,it_of_buffer, &
+                                                  b_displ_cm_store_buffer,Mesh_pointer)
+            call transfer_ofs_b_displ_ic_to_device(NDIM*NGLOB_INNER_CORE_ADJOINT,it_of_buffer, &
+                                                  b_displ_ic_store_buffer,Mesh_pointer)
+            call transfer_ofs_b_displ_oc_to_device(NGLOB_OUTER_CORE_ADJOINT,it_of_buffer, &
+                                                  b_displ_oc_store_buffer,Mesh_pointer)
+            call transfer_ofs_b_accel_oc_to_device(NGLOB_OUTER_CORE_ADJOINT,it_of_buffer, &
+                                                  b_accel_oc_store_buffer,Mesh_pointer)
+          else
+  ! only the displacement needs to be stored in memory buffers in order to compute the sensitivity kernels,
+  ! not the memory variables R_ij, because the sensitivity kernel calculations only involve the displacement
+  ! and the strain, not the stress, and the strain can be recomputed on the fly by computing the gradient
+  ! of the displacement read back from the memory buffers (see also https://github.com/geodynamics/specfem3d_globe/issues/194)
+            b_displ_crust_mantle(:,:) = b_displ_cm_store_buffer(:,:,it_of_buffer)
+            b_displ_outer_core(:) = b_displ_oc_store_buffer(:,it_of_buffer)
+            b_accel_outer_core(:) = b_accel_oc_store_buffer(:,it_of_buffer)
+            b_displ_inner_core(:,:) = b_displ_ic_store_buffer(:,:,it_of_buffer)
+          endif
+
+          ! for noise kernel
+          if (NOISE_TOMOGRAPHY == 3) then
+            noise_surface_movie(:,:,:,:) = b_noise_surface_movie_buffer(:,:,:,:,it_of_buffer)
+          endif
+
+          it_of_buffer = it_of_buffer - 1
+
+        endif
 
         ! simulation status output and stability check
         if (mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == it_begin + 4 .or. it == it_end) then
@@ -428,22 +585,25 @@
           call compute_forces_viscoelastic()
 
         enddo ! istage
-#if defined(USE_CUDA) || defined(USE_OPENCL)
-        if (GPU_MODE) then
-          call unregister_host_array(b_displ_cm_store_buffer(:,:, it_subset_end-it_of_this_subset+1))
-          if (it_of_this_subset /= it_subset_end) then
-            call register_host_array(NDIM*NGLOB_CRUST_MANTLE_ADJOINT, &
-                                     b_displ_cm_store_buffer(:,:, it_subset_end-it_of_this_subset))
-          endif
-        endif
-#endif
+
         ! write the seismograms with time shift
         call write_seismograms()
 
         ! kernel computation
         ! adjoint simulations: kernels
         ! attention: for GPU_MODE and ANISOTROPIC_KL it is necessary to use resort_array (see lines 442-445)
-        call compute_kernels()
+        if (mod(it, ntstep_kl) == 0) then
+#if defined(USE_CUDA) || defined(USE_OPENCL)
+          if (GPU_MODE) then
+            call unregister_host_array(b_displ_cm_store_buffer(:,:, it_of_buffer+1))
+            if (it_of_buffer > 0) then
+              call register_host_array(NDIM*NGLOB_CRUST_MANTLE_ADJOINT, &
+                                      b_displ_cm_store_buffer(:,:, it_of_buffer))
+            endif
+          endif
+#endif
+          call compute_kernels()
+        endif
 
       enddo ! subset loop
 
@@ -483,7 +643,7 @@
   ! Transfer fields from GPU card to host for further analysis
   if (GPU_MODE) call it_transfer_from_GPU()
 
-!----  close energy file
+  ! closes energy file
   if (OUTPUT_ENERGY .and. myrank == 0) close(IOUT_ENERGY)
 
   ! safety check of last time loop increment
@@ -493,201 +653,3 @@
   endif
 
   end subroutine iterate_time_undoatt
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-! compute the strain in the whole crust/mantle and inner core domains
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine it_compute_strain_att()
-
-  use specfem_par
-  use specfem_par_crustmantle
-  use specfem_par_innercore
-
-  implicit none
-  ! local parameters
-  integer :: ispec
-
-  ! computes strain based on forward wavefield displ
-  if (.not. GPU_MODE) then
-
-    ! checks
-    if (USE_DEVILLE_PRODUCTS_VAL) then
-
-      ! inner core
-      do ispec = 1, NSPEC_INNER_CORE
-        call compute_element_strain_att_Dev(ispec,NGLOB_INNER_CORE,NSPEC_INNER_CORE, &
-                                            displ_inner_core,veloc_inner_core,0._CUSTOM_REAL, &
-                                            ibool_inner_core, &
-                                            hprime_xx,hprime_xxT, &
-                                            deriv_mapping_inner_core, &
-                                            epsilondev_xx_inner_core, &
-                                            epsilondev_yy_inner_core, &
-                                            epsilondev_xy_inner_core, &
-                                            epsilondev_xz_inner_core, &
-                                            epsilondev_yz_inner_core, &
-                                            NSPEC_INNER_CORE_STRAIN_ONLY,eps_trace_over_3_inner_core)
-      enddo
-      ! crust mantle
-      do ispec = 1, NSPEC_crust_mantle
-        call compute_element_strain_att_Dev(ispec,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE, &
-                                            displ_crust_mantle,veloc_crust_mantle,0._CUSTOM_REAL, &
-                                            ibool_crust_mantle, &
-                                            hprime_xx,hprime_xxT, &
-                                            deriv_mapping_crust_mantle, &
-                                            epsilondev_xx_crust_mantle, &
-                                            epsilondev_yy_crust_mantle, &
-                                            epsilondev_xy_crust_mantle, &
-                                            epsilondev_xz_crust_mantle, &
-                                            epsilondev_yz_crust_mantle, &
-                                            NSPEC_CRUST_MANTLE_STRAIN_ONLY,eps_trace_over_3_crust_mantle)
-      enddo
-
-    else
-
-      ! inner core
-      do ispec = 1, NSPEC_INNER_CORE
-        call compute_element_strain_att_noDev(ispec,NGLOB_INNER_CORE,NSPEC_INNER_CORE, &
-                                              displ_inner_core,veloc_inner_core,0._CUSTOM_REAL, &
-                                              ibool_inner_core, &
-                                              hprime_xx,hprime_yy,hprime_zz, &
-                                              xix_inner_core,xiy_inner_core,xiz_inner_core, &
-                                              etax_inner_core,etay_inner_core,etaz_inner_core, &
-                                              gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
-                                              epsilondev_xx_inner_core, &
-                                              epsilondev_yy_inner_core, &
-                                              epsilondev_xy_inner_core, &
-                                              epsilondev_xz_inner_core, &
-                                              epsilondev_yz_inner_core, &
-                                              NSPEC_INNER_CORE_STRAIN_ONLY,eps_trace_over_3_inner_core)
-      enddo
-      ! crust mantle
-      do ispec = 1, NSPEC_CRUST_MANTLE
-        call compute_element_strain_att_noDev(ispec,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE, &
-                                              displ_crust_mantle,veloc_crust_mantle,0._CUSTOM_REAL, &
-                                              ibool_crust_mantle, &
-                                              hprime_xx,hprime_yy,hprime_zz, &
-                                              xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-                                              etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
-                                              gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-                                              epsilondev_xx_crust_mantle, &
-                                              epsilondev_yy_crust_mantle, &
-                                              epsilondev_xy_crust_mantle, &
-                                              epsilondev_xz_crust_mantle, &
-                                              epsilondev_yz_crust_mantle, &
-                                              NSPEC_CRUST_MANTLE_STRAIN_ONLY,eps_trace_over_3_crust_mantle)
-      enddo
-    endif
-
-  else
-
-    ! calculates strains on GPU
-    ! note: deltat is zero, thus strain is computed based on < displ(:,:) > rather than < displ(:,:) + deltat * veloc(:,:) >
-    !       nevertheless, we implement < displ(:,:) + deltat * veloc(:,:) > in order to have a more general calculation
-    !       as done in the CPU routine as well
-    call compute_strain_gpu(Mesh_pointer,0._CUSTOM_REAL,1)
-
-  endif ! GPU_MODE
-
-  end subroutine it_compute_strain_att
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine it_compute_strain_att_backward()
-
-  use specfem_par
-  use specfem_par_crustmantle
-  use specfem_par_innercore
-
-  implicit none
-
-  ! local parameters
-  integer :: ispec
-
-  ! computes strain based on backward/reconstructed wavefield b_displ
-  if (.not. GPU_MODE) then
-
-    ! checks
-    if (USE_DEVILLE_PRODUCTS_VAL) then
-
-      ! inner core
-      do ispec = 1, NSPEC_INNER_CORE
-        call compute_element_strain_att_Dev(ispec,NGLOB_INNER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
-                                            b_displ_inner_core,b_veloc_inner_core,0._CUSTOM_REAL, &
-                                            ibool_inner_core, &
-                                            hprime_xx,hprime_xxT, &
-                                            deriv_mapping_inner_core, &
-                                            b_epsilondev_xx_inner_core, &
-                                            b_epsilondev_yy_inner_core, &
-                                            b_epsilondev_xy_inner_core, &
-                                            b_epsilondev_xz_inner_core, &
-                                            b_epsilondev_yz_inner_core, &
-                                            NSPEC_INNER_CORE_STRAIN_ONLY,b_eps_trace_over_3_inner_core)
-      enddo
-
-      ! crust mantle
-      do ispec = 1, NSPEC_CRUST_MANTLE
-        call compute_element_strain_att_Dev(ispec,NGLOB_CRUST_MANTLE_ADJOINT,NSPEC_CRUST_MANTLE_ADJOINT, &
-                                            b_displ_crust_mantle,b_veloc_crust_mantle,0._CUSTOM_REAL, &
-                                            ibool_crust_mantle, &
-                                            hprime_xx,hprime_xxT, &
-                                            deriv_mapping_crust_mantle, &
-                                            b_epsilondev_xx_crust_mantle, &
-                                            b_epsilondev_yy_crust_mantle, &
-                                            b_epsilondev_xy_crust_mantle, &
-                                            b_epsilondev_xz_crust_mantle, &
-                                            b_epsilondev_yz_crust_mantle, &
-                                            NSPEC_CRUST_MANTLE_STRAIN_ONLY,b_eps_trace_over_3_crust_mantle)
-      enddo
-
-    else
-
-      ! inner core
-      do ispec = 1, NSPEC_INNER_CORE
-        call compute_element_strain_att_noDev(ispec,NGLOB_INNER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
-                                              b_displ_inner_core,b_veloc_inner_core,0._CUSTOM_REAL, &
-                                              ibool_inner_core, &
-                                              hprime_xx,hprime_yy,hprime_zz, &
-                                              xix_inner_core,xiy_inner_core,xiz_inner_core, &
-                                              etax_inner_core,etay_inner_core,etaz_inner_core, &
-                                              gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
-                                              b_epsilondev_xx_inner_core, &
-                                              b_epsilondev_yy_inner_core, &
-                                              b_epsilondev_xy_inner_core, &
-                                              b_epsilondev_xz_inner_core, &
-                                              b_epsilondev_yz_inner_core, &
-                                              NSPEC_INNER_CORE_STRAIN_ONLY,b_eps_trace_over_3_inner_core)
-      enddo
-      ! crust mantle
-      do ispec = 1, NSPEC_crust_mantle
-        call compute_element_strain_att_noDev(ispec,NGLOB_CRUST_MANTLE_ADJOINT,NSPEC_CRUST_MANTLE_ADJOINT, &
-                                              b_displ_crust_mantle,b_veloc_crust_mantle,0._CUSTOM_REAL, &
-                                              ibool_crust_mantle, &
-                                              hprime_xx,hprime_yy,hprime_zz, &
-                                              xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-                                              etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
-                                              gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-                                              b_epsilondev_xx_crust_mantle, &
-                                              b_epsilondev_yy_crust_mantle, &
-                                              b_epsilondev_xy_crust_mantle, &
-                                              b_epsilondev_xz_crust_mantle, &
-                                              b_epsilondev_yz_crust_mantle, &
-                                              NSPEC_CRUST_MANTLE_STRAIN_ONLY,b_eps_trace_over_3_crust_mantle)
-      enddo
-    endif
-
-  else
-
-    ! calculates strains on GPU
-    call compute_strain_gpu(Mesh_pointer,0._CUSTOM_REAL,3)
-
-  endif ! GPU_MODE
-
-  end subroutine it_compute_strain_att_backward
-

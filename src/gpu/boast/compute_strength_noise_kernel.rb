@@ -24,7 +24,7 @@ module BOAST
     p = Procedure(function_name, v)
     if (get_lang == CUDA and ref) then
       get_output.print File::read("references/#{function_name}.cu")
-    elsif(get_lang == CL or get_lang == CUDA) then
+    elsif(get_lang == CL or get_lang == CUDA or get_lang == HIP) then
       make_specfem3d_header( :ndim => n_dim, :ngllx => n_gllx, :ngll2 => n_gll2 )
       open p
         decl iface = Int("iface")
@@ -34,22 +34,29 @@ module BOAST
         decl i     = Int("i"), j = Int("j"), k = Int("k")
         decl iglob = Int("iglob")
         decl eta   = Real("eta")
+        comment()
 
         print iface === get_group_id(0) + get_group_id(1)*get_num_groups(0)
+        comment()
+
         print If(iface < nspec_top ) {
           print ispec === ibelm_top[iface] - 1
           print igll  === get_local_id(0)
           print ipoin === igll + ngll2*iface
+          comment()
 
           print k === ngllx - 1
           print j === igll/ngllx
           print i === igll - j*ngllx
+          comment()
 
           print iglob === ibool[INDEX4(ngllx,ngllx,ngllx,i,j,k,ispec)] - 1
+          comment()
 
           print eta   === noise_surface_movie[INDEX3(ndim,ngll2,0,igll,iface)]*normal_noise[0][ipoin]\
                         + noise_surface_movie[INDEX3(ndim,ngll2,1,igll,iface)]*normal_noise[1][ipoin]\
                         + noise_surface_movie[INDEX3(ndim,ngll2,2,igll,iface)]*normal_noise[2][ipoin]
+          comment()
 
           print sigma_kl[INDEX4(ngllx,ngllx,ngllx,i,j,k,ispec)] === sigma_kl[INDEX4(ngllx,ngllx,ngllx,i,j,k,ispec)]\
                                                                   + deltat*eta*( normal_noise[0][ipoin]*displ[0,iglob]\

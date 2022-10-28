@@ -8,7 +8,8 @@ __global__ void compute_hess_kernel(int* ibool,
                                     realw* b_accel,
                                     realw* hess_kl,
                                     realw deltat,
-                                    int NSPEC_AB) {
+                                    int NSPEC_AB,
+                                    int USE_SOURCE_RECEIVER_HESSIAN) {
 
   int ispec = blockIdx.x + blockIdx.y*gridDim.x;
 
@@ -20,8 +21,14 @@ __global__ void compute_hess_kernel(int* ibool,
     int iglob = ibool[ijk_ispec] - 1 ;
 
     // approximate hessian
-    hess_kl[ijk_ispec] += deltat * (accel[3*iglob]*b_accel[3*iglob] +
-                                    accel[3*iglob+1]*b_accel[3*iglob+1] +
-                                    accel[3*iglob+2]*b_accel[3*iglob+2]);
+    if (USE_SOURCE_RECEIVER_HESSIAN) {
+      hess_kl[ijk_ispec] += deltat * (accel[3*iglob]*b_accel[3*iglob] +
+                                      accel[3*iglob+1]*b_accel[3*iglob+1] +
+                                      accel[3*iglob+2]*b_accel[3*iglob+2]);
+    } else {
+      hess_kl[ijk_ispec] += deltat * (accel[3*iglob]*accel[3*iglob] +
+                                      accel[3*iglob+1]*accel[3*iglob+1] +
+                                      accel[3*iglob+2]*accel[3*iglob+2]);
+    }
   }
 }
