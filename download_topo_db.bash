@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# If you want other topographic models, you may download the whole topography database
+
 # this is optional, the default topography file topo_bathy_etopo4_smoothed_window_7.dat used by SPECFEM3D_GLOBE
 # is already included in the source code
 
