@@ -1,7 +1,7 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
-!          --------------------------------------------------
+!                       S p e c f e m 3 D  G l o b e
+!                       ----------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
@@ -285,7 +285,7 @@
 !  - Z axis is up
 !
 ! To report bugs or suggest improvements to the code, please use our online
-! bug tracking system at http://www.geodynamics.org/roundup .
+! Issues tracking system at https://github.com/SPECFEM/specfem3d_globe/ .
 !
 ! Evolution of the code:
 ! ---------------------

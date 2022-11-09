@@ -1,7 +1,7 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
-!          --------------------------------------------------
+!                       S p e c f e m 3 D  G l o b e
+!                       ----------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
@@ -322,8 +322,8 @@
       '<prov:softwareAgent prov:id="seis_prov:sp000_sa_' // '0123456' // '">'// &
       '  <prov:label>SPECFEM3D_GLOBE</prov:label>'// &
       '  <seis_prov:software_name>SPECFEM3D_GLOBE</seis_prov:software_name>'// &
-      '  <seis_prov:software_version>7.0.0</seis_prov:software_version>'// &
-      '  <seis_prov:website>https://github.com/geodynamics/specfem3d_globe</seis_prov:website>'// &
+      '  <seis_prov:software_version>8.0.0</seis_prov:software_version>'// &
+      '  <seis_prov:website>https://github.com/SPECFEM/specfem3d_globe</seis_prov:website>'// &
       '</prov:softwareAgent>'
 
     ! constants (constants_id = abcdefg)

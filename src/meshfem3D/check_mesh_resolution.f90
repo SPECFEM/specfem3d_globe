@@ -1,7 +1,7 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
-!          --------------------------------------------------
+!                       S p e c f e m 3 D  G l o b e
+!                       ----------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
@@ -59,7 +59,7 @@
 
   real(kind=CUSTOM_REAL) :: vpmax,vsmin,vpmax_reg,vsmin_reg
   real(kind=CUSTOM_REAL) :: avg_distance,distance_min
-  double precision :: deltat
+  double precision :: deltat_suggested
   integer :: ispec,ier
 
   ! minimum distance between adjacent GLL points
@@ -123,7 +123,7 @@
 !$OMP PARALLEL DEFAULT(SHARED) &
 !$OMP PRIVATE(ispec,vpmax,vsmin,elemsize_min,elemsize_max, &
 !$OMP eig_ratio_min,eig_ratio_max, &
-!$OMP avg_distance,pmax,distance_min,dx,deltat,dt_max,cmax)
+!$OMP avg_distance,pmax,distance_min,dx,deltat_suggested,dt_max,cmax)
 !$OMP DO
   do ispec = 1,nspec
 
@@ -200,14 +200,14 @@
     if (distance_min > dx) distance_min = dx
 
     ! suggested timestep
-    deltat = COURANT_SUGGESTED * distance_min / vpmax
+    deltat_suggested = COURANT_SUGGESTED * distance_min / vpmax
 
     ! cut at a significant number of digits (2 digits)
     ! example: 0.0734815 -> lpow = (2 - (-1) = 3 -> 0.0730
-    call get_timestep_limit_significant_digit(deltat)
+    call get_timestep_limit_significant_digit(deltat_suggested)
 
     ! maximum time step size
-    dt_max = deltat
+    dt_max = deltat_suggested
 
     ! debug
     !if (dt_max_reg > dt_max) then
@@ -386,15 +386,17 @@
 
   subroutine get_vpvs_minmax(vpmax,vsmin,ispec,nspec,iregion_code,kappavstore,kappahstore,muvstore,muhstore,rhostore)
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,IREGION_CRUST_MANTLE,IREGION_INNER_CORE, &
-    PI,GRAV,HUGEVAL,TINYVAL,FOUR_THIRDS
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ, &
+                       PI,GRAV,HUGEVAL,TINYVAL,FOUR_THIRDS
   use shared_parameters, only: RHOAV,R_PLANET
-  use meshfem_models_par, only: ANISOTROPIC_INNER_CORE,ANISOTROPIC_3D_MANTLE
 
-  use regions_mesh_par2, only: &
-    c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-    c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-    c36store,c44store,c45store,c46store,c55store,c56store,c66store
+  !for fully anisotropic models
+  !use constants, only: IREGION_CRUST_MANTLE,IREGION_INNER_CORE
+  !use meshfem_models_par, only: ANISOTROPIC_INNER_CORE,ANISOTROPIC_3D_MANTLE
+  !use regions_mesh_par2, only: &
+  !  c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
+  !  c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+  !  c36store,c44store,c45store,c46store,c55store,c56store,c66store
 
   implicit none
 
@@ -405,7 +407,7 @@
 
   ! local parameters
   real(kind=CUSTOM_REAL) :: vpv,vph,vsv,vsh
-  integer :: i,j,k
+  integer :: i,j,k,idummy
   ! scaling factors to re-dimensionalize units
   real(kind=CUSTOM_REAL) :: scaleval
 
@@ -416,16 +418,25 @@
     do j = 1, NGLLY, NGLLY-1
       do i = 1, NGLLX, NGLLX-1
         ! vp squared
-        if (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
+        ! special cases not required if the crust/mantle routines provide vpv,vph,vsv,vsh already...
+        !if (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
           ! this likely needs to be improved, for now, it just takes the maximum entry of Cij
-          vpv = max(c11store(i,j,k,ispec),c12store(i,j,k,ispec),c13store(i,j,k,ispec),c14store(i,j,k,ispec), &
-                    c15store(i,j,k,ispec),c16store(i,j,k,ispec),c22store(i,j,k,ispec),c23store(i,j,k,ispec), &
-                    c24store(i,j,k,ispec),c25store(i,j,k,ispec),c26store(i,j,k,ispec),c33store(i,j,k,ispec), &
-                    c34store(i,j,k,ispec),c35store(i,j,k,ispec),c36store(i,j,k,ispec),c44store(i,j,k,ispec), &
-                    c45store(i,j,k,ispec),c46store(i,j,k,ispec),c55store(i,j,k,ispec),c56store(i,j,k,ispec), &
-                    c66store(i,j,k,ispec)) / rhostore(i,j,k,ispec)
-          vph = vpv
-        else if (ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) then
+          !vpv = max(c11store(i,j,k,ispec),c12store(i,j,k,ispec),c13store(i,j,k,ispec),c14store(i,j,k,ispec), &
+          !          c15store(i,j,k,ispec),c16store(i,j,k,ispec),c22store(i,j,k,ispec),c23store(i,j,k,ispec), &
+          !          c24store(i,j,k,ispec),c25store(i,j,k,ispec),c26store(i,j,k,ispec),c33store(i,j,k,ispec), &
+          !          c34store(i,j,k,ispec),c35store(i,j,k,ispec),c36store(i,j,k,ispec),c44store(i,j,k,ispec), &
+          !          c45store(i,j,k,ispec),c46store(i,j,k,ispec),c55store(i,j,k,ispec),c56store(i,j,k,ispec), &
+          !          c66store(i,j,k,ispec)) / rhostore(i,j,k,ispec)
+          ! vph = vpv
+          !
+          ! we would need to rotate the global cij to local dij by routine rotate_tensor_radial_to_global()
+          ! and then use the formula for TI velocities
+          ! vph = sqrt(d11/rho)
+          ! vpv = sqrt(d33/rho)
+          ! vsh = sqrt(d66/rho)
+          ! vsv = sqrt(d44/rho)
+          ! eta = d13/(d11 - 2.d0*d44)
+        !else if (ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) then
           ! this likely needs to be improved, for now, it just takes the maximum entry of Cij (for given symmetry)
           !vpv = max(c11store(i,j,k,ispec),c33store(i,j,k,ispec),c12store(i,j,k,ispec),c13store(i,j,k,ispec), &
           !          c44store(i,j,k,ispec)) / rhostore(i,j,k,ispec)
@@ -440,24 +451,38 @@
           ! C23 = C13 = F
           ! C55 = C44 = L
           ! C66 = N = rho * vsh**2 = (C11-C12)/2
-          vpv = c33store(i,j,k,ispec)/rhostore(i,j,k,ispec)  ! vpv squared
-          vph = c11store(i,j,k,ispec)/rhostore(i,j,k,ispec)
-        else
-          vpv = (kappavstore(i,j,k,ispec) + FOUR_THIRDS*muvstore(i,j,k,ispec)) / rhostore(i,j,k,ispec)
-          vph = (kappahstore(i,j,k,ispec) + FOUR_THIRDS*muhstore(i,j,k,ispec)) / rhostore(i,j,k,ispec)
-        endif
+          !vpv = c33store(i,j,k,ispec)/rhostore(i,j,k,ispec)  ! vpv squared
+          !vph = c11store(i,j,k,ispec)/rhostore(i,j,k,ispec)
+        !else
+          !vpv = (kappavstore(i,j,k,ispec) + FOUR_THIRDS*muvstore(i,j,k,ispec)) / rhostore(i,j,k,ispec)
+          !vph = (kappahstore(i,j,k,ispec) + FOUR_THIRDS*muhstore(i,j,k,ispec)) / rhostore(i,j,k,ispec)
+        !endif
+        ! here, we assume that the above will be provided by the anisotropic crust/mantle routines and that we have kappav,.. filled
+        vpv = (kappavstore(i,j,k,ispec) + FOUR_THIRDS*muvstore(i,j,k,ispec)) / rhostore(i,j,k,ispec)
+        vph = (kappahstore(i,j,k,ispec) + FOUR_THIRDS*muhstore(i,j,k,ispec)) / rhostore(i,j,k,ispec)
+
         ! max
         if (vpv < vph) then
           if (vpmax < vph) vpmax = vph
         else
           if (vpmax < vpv) vpmax = vpv
         endif
+
         ! vs squared
-        if (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
+        ! special cases not required if the crust/mantle routines provide vpv,vph,vsv,vsh already...
+        !if (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
           ! this likely needs to be improved: assumes that vs velocities are specified either by c44,c55 and c66
-          vsv = min(c44store(i,j,k,ispec),c55store(i,j,k,ispec),c66store(i,j,k,ispec)) / rhostore(i,j,k,ispec)
-          vsh = vsv
-        else if (ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) then
+          !vsv = min(c44store(i,j,k,ispec),c55store(i,j,k,ispec),c66store(i,j,k,ispec)) / rhostore(i,j,k,ispec)
+          !vsh = vsv
+          !
+          ! we would need to rotate the global cij to local dij by routine rotate_tensor_radial_to_global()
+          ! and then use the formula for TI velocities
+          ! vph = sqrt(d11/rho)
+          ! vpv = sqrt(d33/rho)
+          ! vsh = sqrt(d66/rho)
+          ! vsv = sqrt(d44/rho)
+          ! eta = d13/(d11 - 2.d0*d44)
+        !else if (ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) then
           ! this likely needs to be improved: assumes that vs velocities are specified by c44 and c66
           !vsv = min(c44store(i,j,k,ispec),c66store(i,j,k,ispec)) / rhostore(i,j,k,ispec)
           ! transversly isotropic
@@ -470,12 +495,15 @@
           ! C23 = C13 = F
           ! C55 = C44 = L
           ! C66 = N = rho * vsh**2 = (C11-C12)/2
-          vsv = c44store(i,j,k,ispec)/rhostore(i,j,k,ispec)  ! vsv squared
-          vsh = 0.5d0*(c11store(i,j,k,ispec)-c12store(i,j,k,ispec))/rhostore(i,j,k,ispec)
-        else
-          vsv = muvstore(i,j,k,ispec) / rhostore(i,j,k,ispec)
-          vsh = muhstore(i,j,k,ispec) / rhostore(i,j,k,ispec)
-        endif
+          !vsv = c44store(i,j,k,ispec)/rhostore(i,j,k,ispec)  ! vsv squared
+          !vsh = 0.5d0*(c11store(i,j,k,ispec)-c12store(i,j,k,ispec))/rhostore(i,j,k,ispec)
+        !else
+          !vsv = muvstore(i,j,k,ispec) / rhostore(i,j,k,ispec)
+          !vsh = muhstore(i,j,k,ispec) / rhostore(i,j,k,ispec)
+        !endif
+        ! here, we assume that the above will be provided by the anisotropic crust/mantle routines and that we have muv,.. filled
+        vsv = muvstore(i,j,k,ispec) / rhostore(i,j,k,ispec)
+        vsh = muhstore(i,j,k,ispec) / rhostore(i,j,k,ispec)
 
         ! ignore fluid regions with Vs = 0 (takes acoustic wave speeds vp)
         if (vsv < TINYVAL) vsv = vpv
@@ -494,6 +522,9 @@
   scaleval = real(sqrt(PI*GRAV*RHOAV)*(R_PLANET/1000.0d0),kind=CUSTOM_REAL)
   vpmax = sqrt(vpmax) * scaleval
   vsmin = sqrt(vsmin) * scaleval
+
+  ! to avoid compiler warning
+  idummy = iregion_code
 
   end subroutine get_vpvs_minmax
 

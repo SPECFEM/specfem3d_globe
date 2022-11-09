@@ -40,7 +40,7 @@ foreach $name (@objects) {
 #      $line =~ s/\t/ /g;
 
 # change the version number
-#    $line =~ s#!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1#!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0#og;
+#    $line =~ s#!                       S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1#!                       S p e c f e m 3 D  G l o b e#og;
 
 # change the copyright information
 

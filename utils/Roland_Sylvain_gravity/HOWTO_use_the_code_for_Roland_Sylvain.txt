@@ -10,7 +10,7 @@ voici le code complet, pour que tu puisses maintenant faire des modifications et
 
 - pour le telecharger :
 git clone --recursive --branch devel
-https://github.com/geodynamics/specfem3d_globe.git
+https://github.com/SPECFEM/specfem3d_globe.git
 
 - dans le repertoire "utils/Roland_Sylvain_gravity" tu trouveras tous
 les fichiers d'entree, les scripts pour lancer le code sur la machine

@@ -1,7 +1,7 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
-!          --------------------------------------------------
+!                       S p e c f e m 3 D  G l o b e
+!                       ----------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
@@ -800,6 +800,9 @@
           DT = DT*(1.d0 - 0.3d0)
         ! reduces time step size for SGLOBE-rani crustal model
         if (REFERENCE_CRUSTAL_MODEL == ICRUST_SGLOBECRUST) &
+          DT = DT*(1.d0 - 0.4d0)
+        ! reduces time step size for SPiRaL crustal model
+        if (REFERENCE_CRUSTAL_MODEL == ICRUST_SPIRAL) &
           DT = DT*(1.d0 - 0.4d0)
       endif
     endif

@@ -1,7 +1,7 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  8 . 0
-!          --------------------------------------------------
+!                       S p e c f e m 3 D  G l o b e
+!                       ----------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
@@ -392,10 +392,10 @@
   endif
 
   ! makes sure lat/lon are within crust2.0 range
-  if (lat == 90.0d0) lat=89.9999d0
-  if (lat == -90.0d0) lat=-89.9999d0
-  if (lon == 180.0d0) lon=179.9999d0
-  if (lon == -180.0d0) lon=-179.9999d0
+  if (lat == 90.0d0) lat = 89.9999d0
+  if (lat == -90.0d0) lat = -89.9999d0
+  if (lon == 180.0d0) lon = 179.9999d0
+  if (lon == -180.0d0) lon = -179.9999d0
 
   ! sets up smoothing points based on cap smoothing
   cap_degree = CAP_SMOOTHING_DEGREE_DEFAULT
