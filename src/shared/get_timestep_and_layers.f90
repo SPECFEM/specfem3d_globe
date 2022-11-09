@@ -801,6 +801,9 @@
         ! reduces time step size for SGLOBE-rani crustal model
         if (REFERENCE_CRUSTAL_MODEL == ICRUST_SGLOBECRUST) &
           DT = DT*(1.d0 - 0.4d0)
+        ! reduces time step size for SPiRaL crustal model
+        if (REFERENCE_CRUSTAL_MODEL == ICRUST_SPIRAL) &
+          DT = DT*(1.d0 - 0.4d0)
       endif
     endif
 

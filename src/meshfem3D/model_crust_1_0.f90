@@ -494,10 +494,10 @@
   endif
 
   ! makes sure lat/lon are within crust1.0 range
-  if (lat == 90.0d0) lat=89.9999d0
-  if (lat == -90.0d0) lat=-89.9999d0
-  if (lon == 180.0d0) lon=179.9999d0
-  if (lon == -180.0d0) lon=-179.9999d0
+  if (lat == 90.0d0) lat = 89.9999d0
+  if (lat == -90.0d0) lat = -89.9999d0
+  if (lon == 180.0d0) lon = 179.9999d0
+  if (lon == -180.0d0) lon = -179.9999d0
 
   ! sets up smoothing points based on cap smoothing
   cap_degree = CAP_SMOOTHING_DEGREE_DEFAULT

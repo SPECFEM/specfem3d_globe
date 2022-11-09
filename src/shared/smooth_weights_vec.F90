@@ -258,7 +258,7 @@
 
   cap_area = TWO_PI * ( ONE - dcos(CAP) )
   dweight = CAP / dble(NTHETA) * dphi / cap_area
-  pi_over_nphi = PI/dble(NPHI)
+  pi_over_nphi = PI / dble(NPHI)
 
   ! colatitude/longitude in radian
   theta = (90.0d0 - lat ) * DEGREES_TO_RADIANS
@@ -323,8 +323,8 @@
       if (xlon(i) > 180.0d0) xlon(i) = xlon(i) - 360.0d0
 
     enddo
-
   enddo
+
   if (abs(total - ONE) > 0.001d0) then
     print *,'Error cap:',total,CAP_DEGREE
     stop 'Error in cap integration for variable degree'
