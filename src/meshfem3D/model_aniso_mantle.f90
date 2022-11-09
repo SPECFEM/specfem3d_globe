@@ -102,7 +102,7 @@
   implicit none
 
   double precision,intent(in) :: r,theta,phi
-  double precision,intent(in) :: vpv,vph,vsv,vsh,eta_aniso
+  double precision,intent(inout) :: vpv,vph,vsv,vsh,eta_aniso
   double precision,intent(inout) :: rho
   double precision,intent(out) :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
                                   c33,c34,c35,c36,c44,c45,c46,c55,c56,c66
@@ -170,6 +170,21 @@
                    d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26,d33,d34,d35,d36, &
                    d44,d45,d46,d55,d56,d66)
 
+    ! in local reference:
+    ! d11 = A = rho * vph**2
+    ! d13 = F = eta * (A - 2*L)
+    ! d33 = C = rho * vpv**2
+    ! d44 = L = rho * vsv**2
+    ! d66 = N = rho * vsh**2 = (C11-C12)/2
+    ! note: d11,.. and rho are already non-dimensionalized after build_cij()
+    ! TI velocities (are non-dimensionalized)
+    vph = sqrt(d11/rho)
+    vpv = sqrt(d33/rho)
+    vsh = sqrt(d66/rho)
+    vsv = sqrt(d44/rho)
+    eta_aniso = d13/(d11 - 2.d0*d44)
+
+    ! converts dij to global reference frame cij
     call rotate_tensor_radial_to_global(theta,phi,d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26, &
                                         d33,d34,d35,d36,d44,d45,d46,d55,d56,d66, &
                                         c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
@@ -220,13 +235,13 @@
   tet = colat
   ph = lon
 
-! avoid edge effects
+  ! avoid edge effects
   if (tet == 0.0d0) tet = 0.000001d0
   if (tet == 180.d0) tet = 0.999999d0*tet
   if (ph == 0.0d0) ph = 0.000001d0
   if (ph == 360.d0) ph = 0.999999d0*ph
 
-! dimensionalize
+  ! dimensionalize
   depth = R_PLANET*(R_UNIT_SPHERE - r)/1000.d0
   if (depth <= pro(nz0) .or. depth >= pro(1)) call exit_MPI_without_rank('r out of range in build_cij')
 
@@ -251,7 +266,7 @@
   icp1 = icp0 + 1
   icz1 = icz0 + 1
 
-! check that parameters make sense
+  ! check that parameters make sense
   if (ict0 < 1 .or. ict0 > nx0) call exit_MPI_without_rank('ict0 out of range')
   if (ict1 < 1 .or. ict1 > nx0) call exit_MPI_without_rank('ict1 out of range')
   if (icp0 < 1 .or. icp0 > ny0) call exit_MPI_without_rank('icp0 out of range')
@@ -386,8 +401,8 @@
   d56 = S3 - S1sh
   d66 = AN - EC
 
-! non-dimensionalize the elastic coefficients using
-! the scale of GPa--[g/cm^3][(km/s)^2]
+  ! non-dimensionalize the elastic coefficients using
+  ! the scale of GPa--[g/cm^3][(km/s)^2]
   scaleval = dsqrt(PI*GRAV*RHOAV)
   scale_GPa =(RHOAV/1000.d0)*((R_PLANET*scaleval/1000.d0)**2)
 
@@ -413,7 +428,7 @@
   d56 = d56/scale_GPa
   d66 = d66/scale_GPa
 
-! non-dimensionalize
+  ! non-dimensionalize
   rho = rho*1000.d0/RHOAV
 
   end subroutine build_cij
