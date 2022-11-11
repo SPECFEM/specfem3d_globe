@@ -1402,6 +1402,9 @@
     ! integer array. The function is not performance optimized. So it may be
     ! slow for large arrays. I use it below in setup_green_locations, to compute
     ! a new, subset ibool array, to get only the tagged elements.
+    ! Note that you have to grab the unqiue values likeso:
+    ! >> uniq     = unique(1:Nout)
+    ! >> uniq_idx = unique_idx(1:Nout)
 
     implicit none
 
@@ -1411,41 +1414,40 @@
 
     ! out
     integer, intent(out) :: Nout
-    integer, dimension(:), intent(out), allocatable :: unique, unique_idx
+    ! integer, dimension(:), intent(out), allocatable :: unique, unique_idx
 
     ! Local
     integer :: i
     integer, dimension(:), allocatable :: idx
-    integer, dimension(Nin) :: big_unique
-    integer, dimension(Nin) :: big_unique_idx
+    integer, dimension(Nin) :: unique
+    integer, dimension(Nin) :: unique_idx
     integer, dimension(Nin), intent(out) :: inv
 
     Nout = 0
 
-    big_unique(:) = 0
+    unique(:) = 0
 
     do i=1,Nin
 
-      if (any( A(i) == big_unique) .eqv. .false.) then
+      if (any( A(i) == unique) .eqv. .false.) then
         Nout = Nout + 1
-        big_unique(Nout) = A(i)
-        big_unique_idx(Nout) = i
+        unique(Nout) = A(i)
+        unique_idx(Nout) = i
 
         inv(i) = Nout
 
 
       ! If the value is already in bigunique, check where it is using minloc
       else
-        idx = minloc(abs(big_unique-A(i)), mask=abs(big_unique-A(i))==0)
-        write (*,*) i, idx
+        idx = minloc(abs(unique(1:Nout)-A(i)))
         inv(i) = idx(1)
       endif
     enddo
 
-    allocate(unique(Nout), unique_idx(Nout))
+    ! allocate(unique(Nout), unique_idx(Nout))
 
-    unique(:) = big_unique(1:Nout)
-    unique_idx(:) = big_unique_idx(1:Nout)
+    ! unique(:) = big_unique(1:Nout)
+    ! unique_idx(:) = big_unique_idx(1:Nout)
 
   end subroutine
 !-------------------------------------------------------------------------------------------------
@@ -1477,6 +1479,7 @@
   integer, dimension(:), allocatable :: index_vector
   integer, dimension(:), allocatable :: ispec_unique_gf_loc_local
   integer, dimension(:), allocatable :: islice_unique_gf_loc_local
+  integer, dimension(:), allocatable :: ibool_flat, inv, iglob_cm2gf_tmp
   integer, dimension(NSPEC_CRUST_MANTLE) :: ispec_mask, islice_mask
   integer, dimension(NPROCTOT_VAL) :: ngf_unique_array, offset
 
@@ -1721,7 +1724,8 @@
       ! Update islice_unique_gf_loc
       ! We can deallocate all of the variables since ispec_mask (a local array)
       ! should contain all necessary info
-      deallocate(ispec_unique_gf_loc, islice_unique_gf_loc)
+      deallocate(ispec_unique_gf_loc, islice_unique_gf_loc, stat=ier)
+      if (ier /= 0 ) call exit_MPI(myrank,'Error deallocating ispec_unique_gf_loc, islice_unique_gf_loc.')
 
       ! Get total number of local elements
       ngf_unique_local = sum(ispec_mask)
@@ -1885,15 +1889,19 @@
   ! This section is quite important since it sets up the
   ! Use global mapping of sources to
   ! call sleep(2)
+  allocate(islice_out_gf_loc(ngf), &
+           ispec_out_gf_loc(ngf), &
+           stat=ier)
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating islice/ispec_out')
+
   if (ngf_unique_local .gt. 0) then
 
     ! Get ibool array for output Green function database
     allocate(ibool_GF(NGLLX, NGLLY, NGLLZ, ngf_unique_local), &
              ibool_flat(NGLLX*NGLLY*NGLLZ*ngf_unique_local), &
+             inv(NGLLX*NGLLY*NGLLZ*ngf_unique_local), &
              ispec_cm2gf(ngf_unique_local), &
              islice_cm2gf(ngf_unique_local), &
-             islice_out_gf_loc(ngf), &
-             ispec_out_gf_loc(ngf), &
              stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating ibool_GF, or iglob_tmp array')
 
@@ -1925,28 +1933,56 @@
         ! For each element in the new local array get the element of
         ! the original crust_mantle array
         ispec_cm2gf(igf_counter) = ispec_unique_gf_loc(igf)
-
+      endif
     enddo
 
+    ! Allocate temporary placeholder for unique, and unique,index array
+    allocate(iglob_cm2gf_tmp(size(ibool_GF)), iglob_tmp(size(ibool_GF)), stat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating unique temp arrays')
+
     ! Flatten subset ibool array for unique-ing
-    ibool_flat = pack(ibool_crust_mantle(:,:,:,ispec_unique_gf_loc))
+    if (myrank==8) write(*,*) 'ispec', ispec_cm2gf
+    ibool_flat = pack(ibool_crust_mantle(:,:,:,ispec_cm2gf), .true.)
+    ! Print corners only
+    write(*,*) 'rank', myrank, 'ibool', ibool_crust_mantle(1:5:4, 1:5:4, 1:5:4,ispec_cm2gf)
 
     ! Get unique values of ibool, indeces of those values, and inverse.
     !                    array      arraysize       unique values, idx,    inverse, Nuniq
-    call unique_inverse(ibool_flat, size(ibool_GF), iglob_cm2gf, iglob_tmp, inv, iglob_counter)
+    call unique_inverse(ibool_flat, size(ibool_GF), iglob_cm2gf_tmp, iglob_tmp, inv, iglob_counter)
 
     ! Large array better deallocate quickly.
-    deallocate(ibool_flat)
+    deallocate(ibool_flat, iglob_tmp, stat=ier) !!!!! REUSING iglob_tmp in next line because lazy
+    if (ier /= 0 ) call exit_MPI(myrank,'Error deallocating bool_flat, iglob_tmp')
+    ! Allocate array and placeholder array.
+    allocate(iglob_cm2gf(iglob_counter), iglob_tmp(iglob_counter), stat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating iglob_cm2gf')
+
+
+    ! Get subset of unique values
+    iglob_cm2gf(:) = iglob_cm2gf_tmp(1:iglob_counter)
+
+    ! if (myrank==17) write(*,*) 'iglob', iglob_cm2gf, 'iglob_counter', iglob_counter
+    if (myrank==8) write(*,*) 'iglob_counter', iglob_counter, myrank
+    if (myrank==17) write(*,*) 'iglob_counter', iglob_counter, myrank
+    ! Deallocate large array
+    deallocate(iglob_cm2gf_tmp, stat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error deallocating iglob_cm2gf_tmp')
 
     ! Create temporary sequence for ibool_GF creation
     do i=1,iglob_counter
-      iglob_tmp(i) = counter
+      iglob_tmp(i) = i
     enddo
 
     ! Created ibool GF from inverse unique array
     ibool_GF(:,:,:,:) = reshape(iglob_tmp(inv), shape(ibool_GF))
 
+    write(*,*) 'rank', myrank, 'ibool_GF', ibool_GF(1:5:4, 1:5:4, 1:5:4, :)
 
+
+    ! if (myrank==0) write(*,*) 'ibbol_GF', minval(ibool_GF),'/', sum(ibool_GF),'/', maxval(ibool_GF)
+
+    deallocate(inv, iglob_tmp, stat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error deallocating iglob_tmp')
 
 
     !     ! write (*,*)
@@ -1982,18 +2018,26 @@
     ! Total number of Green function coordinates in terms of elements
     NGLOB_GF = iglob_counter
 
+    if (myrank==8) write(*,*) 'reshape 3'
+    if (myrank==17) write(*,*) 'reshape 3'
+
     ! Convert crust mantle to Green function coordinates
     ! iglob_cm2gf(:) = iglob_tmp(1:iglob_counter)
-
-    deallocate(iglob_tmp)
   endif
 
-  ! Get ibool array for output Green function database
-  allocate(islice_out_gf_loc(ngf), &
-           ispec_out_gf_loc(ngf), &
-           stat=ier)
+  if (myrank==8) write(*,*) 'reshape 3', myrank
+  if (myrank==17) write(*,*) 'reshape 3', myrank
+  call sleep(1)
 
+  write(*,*) 'rank', myrank, 'Done with uniqueing, ngf:', ngf
+  ! Get ibool array for  output Green function database
   call synchronize_all()
+
+  call sleep(1)
+  ! allocate(islice_out_gf_loc(ngf), &
+  !          ispec_out_gf_loc(ngf), &
+  !          stat=ier)
+  ! if (ier /= 0 ) call exit_MPI(myrank,'Error allocating islice_out...')
 
   ! if (myrank==0) then
   ! do ispec=1,ngf_unique_local
@@ -2005,7 +2049,9 @@
   ! enddo
   ! endif
 
-  if (myrank==0) write(*,*) 'waaay down..'
+  if (myrank==8) write (*,*) 'ispec ', ispec_selected_gf_loc
+  if (myrank==8) write (*,*) 'islice', islice_selected_gf_loc
+  if (myrank==8) write(*,*) 'waaay down..'
   ! Convert crust mantle ispec to green function database ispec
   do igf=1,ngf
     if (islice_selected_gf_loc(igf)==myrank) then
@@ -2020,39 +2066,46 @@
     endif
   enddo
 
-
-
   ! Collect the results on rank one
+  call synchronize_all()
+  ! if (myrank==8) write (*,*) 'ispec ', ispec_selected_gf_loc
+  ! if (myrank==8) write (*,*) 'islice', islice_selected_gf_loc
+  ! if (myrank==8) write(*,*) 'pre-sync'
+  call synchronize_all()
+  ! write(*,*) 'rank', myrank, 'entering send loop'
+  ! call synchronize_all()
   do igf=1,ngf
+
     if (islice_selected_gf_loc(igf) /= 0) then
+
       if (islice_selected_gf_loc(igf) == myrank) then
+        ! write(*,*) 'rank', myrank, 'send 1,  igf', igf
         call send_singlei(ispec_out_gf_loc(igf), 0, igf)
         call send_singlei(islice_out_gf_loc(igf), 0, igf+ngf)
-        ! write(*,*) 'rank', myrank, 'send 1', ' igf', igf
-        ! if (ier /= 0 ) call exit_MPI(myrank,'Error 1')
+        ! write(*,*) 'rank', myrank, 'sent 1, igf', igf
       endif
       if (myrank==0) then
+        ! write(*,*) 'waiting to receive 1', myrank, igf
         call recv_singlei(ispec_out_gf_loc(igf), islice_selected_gf_loc(igf), igf)
         call recv_singlei(islice_out_gf_loc(igf), islice_selected_gf_loc(igf), igf+ngf)
-        ! write(*,*) 'waiting to receive 1'
+        ! write(*,*) 'received 1', myrank
       endif
     endif
   enddo
+  ! call synchronize_all()
 
- call synchronize_all()
   if (myrank == 0) then
-    ! write(*,*) 'islice', islice_out_gf_loc
-    ! write(*,*) 'ispec', ispec_out_gf_loc
+    write(*,*) 'islice', islice_out_gf_loc
+    write(*,*) 'ispec', ispec_out_gf_loc
   endif
+  write (*,*) 'rank', myrank, 'done sending receiving'
 
+  ! if (myrank == 0) write(*,*) 'myrank', 'NGLOB_GF'
 
-  call synchronize_all()
   ! if (myrank == 0) write(*,*) 'myrank', 'NGLOB_GF'
   ! write(*,*) 'myrank', myrank, 'NGLOB_GF', NGLOB_GF
   ! write(*,*) 'myrank', myrank, 'ispec_cm2gf', ispec_cm2gf
 
-
-  call synchronize_all()
 
   if (myrank == 0) then
     write(IMAIN,*)
