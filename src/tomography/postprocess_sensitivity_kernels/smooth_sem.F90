@@ -161,6 +161,8 @@ program smooth_sem_globe
   character(len=MAX_STRING_LEN) :: kernel_names_comma_delimited
   character(len=MAX_STRING_LEN) :: kernel_name, topo_dir
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
+  character(len=MAX_STRING_LEN) :: kernel_output_name
+  character(len=MAX_STRING_LEN),dimension(:),allocatable :: kernel_output_names
   character(len=MAX_STRING_LEN) :: input_file, solver_file
   character(len=MAX_STRING_LEN) :: varname
 #else
@@ -286,6 +288,11 @@ program smooth_sem_globe
   kernel_names(:) = ''
   min_old(:) = 0._CUSTOM_REAL
   max_old(:) = 0._CUSTOM_REAL
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
+  allocate(kernel_output_names(MAX_KERNEL_NAMES), stat=ier)
+  if (ier /= 0) stop 'Error allocating kernel_output_names array'
+  kernel_output_names(:) = ''
+#endif
 
   ! parse command line arguments
   do i = 1, NARGS
@@ -1016,6 +1023,7 @@ program smooth_sem_globe
         print *, '  data: ADIOS using array name = ',trim(varname)
         print *
       endif
+      kernel_output_names(iker) = varname
       ! reads kernel values
       call read_adios_array(myadios_val_file, myadios_val_group, iproc, nspec, trim(varname), kernel(:,:,:,:,iker))
 #else
@@ -1297,10 +1305,10 @@ program smooth_sem_globe
   call define_adios_scalar(myadios_val_group, group_size_inc, '', trim(reg_name)//"nglob", nglob)
   do iker = 1,nker
     ! name
-    kernel_name = kernel_names(iker)
+    kernel_output_name = kernel_output_names(iker)
     local_dim = NGLLX * NGLLY * NGLLZ * nspec
-    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, trim(reg_name), &
-                                     trim(kernel_name), kernel_smooth(:, :, :, :, iker))
+    call define_adios_global_array1D(myadios_val_group, group_size_inc, local_dim, '', &
+                                     trim(kernel_output_name), kernel_smooth(:, :, :, :, iker))
   enddo
   ! opens output files
   call open_file_adios_write(myadios_val_file, myadios_val_group, trim(output_file), "ValWriter")
@@ -1314,6 +1322,7 @@ program smooth_sem_globe
   do iker = 1,nker
     ! name
     kernel_name = kernel_names(iker)
+    kernel_output_name = kernel_output_names(iker)
     if (myrank == 0) then
       print *,'smoothed: ',trim(kernel_name)
     endif
@@ -1324,7 +1333,7 @@ program smooth_sem_globe
     ! smoothed kernel values
     local_dim = NGLLX * NGLLY * NGLLZ * nspec
     call write_adios_global_1d_array(myadios_val_file, myadios_val_group, myrank, sizeprocs_adios, local_dim, &
-                                     trim(reg_name) // trim(kernel_name), kernel_smooth(:,:,:,:,iker))
+                                     trim(kernel_output_name), kernel_smooth(:,:,:,:,iker))
 #else
     ! smoothed kernel file name
     write(output_file,'(a,i6.6,a)') trim(output_dir)//'/proc', myrank, trim(reg_name)//trim(kernel_name)//'_smooth.bin'
