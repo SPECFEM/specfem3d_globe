@@ -544,34 +544,6 @@
 ! Define ADIOS arrays relevant for saving a Green Function database
 !
 
-  subroutine get_max_mpi_integer_8(local_dim, max_local_dim)
-
-    implicit none
-    integer(kind=8), intent(in) :: local_dim
-    integer(kind=8), intent(inout) :: max_local_dim
-    integer :: local_dim_normal = 0
-    integer :: max_local_dim_normal = 0
-
-    ! Preassing the parameters
-    max_local_dim = 0
-    max_local_dim_normal = 0
-    local_dim_normal = int(local_dim)
-
-    ! Get all processes synchronized
-    call synchronize_all()
-
-    ! Get max
-    call max_allreduce_singlei(local_dim_normal, max_local_dim_normal)
-
-    ! Get all processes synchronized
-    call synchronize_all()
-
-    ! Get max_local_dim
-    max_local_dim = int(max_local_dim_normal, kind=8)
-
-  end subroutine
-
-
   subroutine define_green_function_forward_arrays_adios(group_size_inc)
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ

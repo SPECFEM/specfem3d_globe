@@ -369,8 +369,11 @@ module specfem_par
   integer :: ngf_unique = 0
   integer :: ngf_unique_local = 0
 
+  ! adjacency vectors for the source inversion
+  integer, dimension(:), allocatable :: xadj_gf, adjncy_gf
+  integer :: num_neighbors_all_gf
 
-
+  ! Parameters for the source interpolation at the GLL level
   double precision, dimension(:), allocatable :: xi_gf_loc,eta_gf_loc,gamma_gf_loc
   double precision, dimension(:,:,:), allocatable :: nu_gf_loc
   double precision, allocatable, dimension(:) :: gf_loc_lat,gf_loc_lon,gf_loc_depth
