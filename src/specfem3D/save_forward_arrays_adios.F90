@@ -563,7 +563,8 @@
     xi_source,eta_source,gamma_source, &
     USE_FORCE_POINT_SOURCE, &
     ibathy_topo, scale_displ, &
-    myrank, NPROCTOT_VAL
+    myrank, NPROCTOT_VAL,
+    xadj_gf, adjncy_gf, num_neighbors_all_gf
   use specfem_par_crustmantle, only: &
     displ_crust_mantle, veloc_crust_mantle, accel_crust_mantle, &
     xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
