@@ -755,7 +755,6 @@
   call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', 'xadj_gf', xadj_gf)
 
   local_dim = num_neighbors_all_gf_max
-  write(*,*)
   call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', 'adjncy_gf', adjncy_gf)
 
   ! Coordinates
