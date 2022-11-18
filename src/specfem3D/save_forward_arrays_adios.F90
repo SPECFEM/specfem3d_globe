@@ -566,7 +566,7 @@
     myrank, NPROCTOT_VAL, &
     xadj_gf, adjncy_gf, num_neighbors_all_gf
   use specfem_par_crustmantle, only: &
-    displ_crust_mantle, veloc_crust_mantle, accel_crust_mantle, &
+    ! displ_crust_mantle, veloc_crust_mantle, accel_crust_mantle, &
     xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
     epsilondev_xx_crust_mantle, epsilondev_yy_crust_mantle, &
     epsilondev_xy_crust_mantle, epsilondev_xz_crust_mantle, &
@@ -778,9 +778,9 @@
   ! Variables to be written at each step
   !--------
   ! Arrays to be saved
-  displacement = displ_crust_mantle(:, iglob_cm2gf)
-  velocity = veloc_crust_mantle(:, iglob_cm2gf)
-  acceleration = accel_crust_mantle(:, iglob_cm2gf)
+  ! displacement = displ_crust_mantle(:, iglob_cm2gf)
+  ! velocity = veloc_crust_mantle(:, iglob_cm2gf)
+  ! acceleration = accel_crust_mantle(:, iglob_cm2gf)
 
 ! Reconstructing the true strain
   epsilon_xx(:,:,:,:) = 0.d0
@@ -802,14 +802,12 @@
   epsilon_yz(:,:,:,:) = epsilondev_yz_crust_mantle(:,:,:,ispec_cm2gf)
 
   epsilon_fake(:,:,:,:) = epsilon_xz(:,:,:,:)
-  ! write (*,*) 'shape of eps over 3', shape(eps_trace_over_3_crust_mantle)
-  ! eps_trace_over_3 = eps_trace_over_3_crust_mantle(:,:,:,ispec_cm2gf)
 
   ! crust/mantle displacement, velocity, and acceleration
-  local_dim = NDIM * NGLOB_GF_max
-  call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', 'displacement', displacement)
-  call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', 'velocity', velocity)
-  call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', 'acceleration', acceleration)
+  ! local_dim = NDIM * NGLOB_GF_max
+  ! call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', 'displacement', displacement)
+  ! call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', 'velocity', velocity)
+  ! call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', 'acceleration', acceleration)
 
   !rust/mantle
   local_dim = NGLLX * NGLLY * NGLLZ * ngf_unique_local_max
@@ -1093,7 +1091,7 @@ subroutine write_each_time_green_function_forward_arrays_adios()
     myrank, NGLOB_CRUST_MANTLE, NPROCTOT_VAL
   use specfem_par_crustmantle, only: &
     xstore_crust_mantle, ystore_crust_mantle, zstore_crust_mantle, &
-    displ_crust_mantle, veloc_crust_mantle, accel_crust_mantle, &
+    ! displ_crust_mantle, veloc_crust_mantle, accel_crust_mantle, &
     epsilondev_xx_crust_mantle, epsilondev_yy_crust_mantle, &
     epsilondev_xy_crust_mantle, epsilondev_xz_crust_mantle, &
     epsilondev_yz_crust_mantle, eps_trace_over_3_crust_mantle
@@ -1145,25 +1143,22 @@ subroutine write_each_time_green_function_forward_arrays_adios()
   ! Exit if there are no elements to be saved for this bit.
   if (ngf_unique_local == 0) return
 
-  ! Ellipticity parameters
-  ! real(kind=CUSTOM_REAL) :: ellipticity
-
   ! -------
   ! Variables to be written at each step
   !--------
   ! Arrays to be saved
-  displacement = displ_crust_mantle(:, iglob_cm2gf)
-  velocity = veloc_crust_mantle(:, iglob_cm2gf)
-  acceleration = accel_crust_mantle(:, iglob_cm2gf)
+  ! displacement = displ_crust_mantle(:, iglob_cm2gf)
+  ! velocity = veloc_crust_mantle(:, iglob_cm2gf)
+  ! acceleration = accel_crust_mantle(:, iglob_cm2gf)
 
   ! crust/mantle displacement, velocity, and acceleration
-  local_dim = NDIM * NGLOB_GF_max
-  call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
-    sizeprocs_adios, local_dim, 'displacement', displacement)
-  call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
-    sizeprocs_adios, local_dim, 'velocity', velocity)
-  call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
-    sizeprocs_adios, local_dim, 'acceleration', acceleration)
+  ! local_dim = NDIM * NGLOB_GF_max
+  ! call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
+  !   sizeprocs_adios, local_dim, 'displacement', displacement)
+  ! call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
+  !   sizeprocs_adios, local_dim, 'velocity', velocity)
+  ! call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
+  !   sizeprocs_adios, local_dim, 'acceleration', acceleration)
 
   ! Reconstructing the true strain
   epsilon_xx(:,:,:,:) = 0.d0
@@ -1203,9 +1198,6 @@ subroutine write_each_time_green_function_forward_arrays_adios()
     sizeprocs_adios, local_dim, 'epsilon_xz', epsilon_xz)
   call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
     sizeprocs_adios, local_dim, 'epsilon_fake', epsilon_fake)
-  ! write (*,*) minval(epsilon_yz(:,:,:,:)),maxval(epsilon_yz(:,:,:,:)), &
-  !             minval(epsilon_xz(:,:,:,:)),maxval(epsilon_xz(:,:,:,:)), &
-  !             minval(epsilon_fake(:,:,:,:)),maxval(epsilon_fake(:,:,:,:))
 
 
   end subroutine write_each_time_green_function_forward_arrays_adios
