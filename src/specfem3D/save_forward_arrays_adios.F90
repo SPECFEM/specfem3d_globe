@@ -563,7 +563,7 @@
     xi_source,eta_source,gamma_source, &
     USE_FORCE_POINT_SOURCE, &
     ibathy_topo, scale_displ, &
-    myrank, NPROCTOT_VAL,
+    myrank, NPROCTOT_VAL, &
     xadj_gf, adjncy_gf, num_neighbors_all_gf
   use specfem_par_crustmantle, only: &
     displ_crust_mantle, veloc_crust_mantle, accel_crust_mantle, &
@@ -629,8 +629,8 @@
   ! Get max array sizes
   ! ---------------------------------
 
-  integer :: ngf_max, nsources_local_max, ngf_unique_local_max, NGLOB_GF_max
-  integer, parameter :: num_vars = 4
+  integer :: ngf_max, nsources_local_max, ngf_unique_local_max, NGLOB_GF_max, num_neighbors_all_gf_max
+  integer, parameter :: num_vars = 5
   integer, dimension(num_vars) :: max_global_values
 
 
@@ -638,6 +638,7 @@
   max_global_values(2) = nsources_local
   max_global_values(3) = ngf_unique_local
   max_global_values(4) = NGLOB_GF
+  max_global_values(5) = num_neighbors_all_gf
 
   call max_allreduce_i(max_global_values,num_vars)
 
@@ -645,6 +646,7 @@
   nsources_local_max  = max_global_values(2)
   ngf_unique_local_max = max_global_values(3)
   NGLOB_GF_max = max_global_values(4)
+  num_neighbors_all_gf_max = max_global_values(5)
 
   ! Green function elements
   rec_latitude = real(gf_loc_lat, kind=CUSTOM_REAL)
@@ -664,6 +666,8 @@
   call define_adios_scalar(myadios_fwd_group, group_size_inc, '', "NGF", ngf)
   call define_adios_scalar(myadios_fwd_group, group_size_inc, '', "NGF_UNIQUE", ngf_unique)
   call define_adios_scalar(myadios_fwd_group, group_size_inc, '', "NGF_UNIQUE_LOCAL", ngf_unique_local)
+  call define_adios_scalar(myadios_fwd_group, group_size_inc, '', "NUM_NEIGHBORS", num_neighbors_all_gf)
+
 
   ! The topography/bathymetry info does not have to be written by all all processors
   if (myrank == 0) then
@@ -745,6 +749,14 @@
   ! Addressing
   local_dim = NGLLX * NGLLY * NGLLZ * ngf_unique_local_max
   call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', 'ibool_GF', ibool_GF)
+
+  ! Neighbors
+  local_dim = ngf_unique_local_max + 1
+  call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', 'xadj_gf', xadj_gf)
+
+  local_dim = num_neighbors_all_gf_max
+  write(*,*)
+  call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', 'adjncy_gf', adjncy_gf)
 
   ! Coordinates
   x = real(xstore_crust_mantle(iglob_cm2gf), kind=CUSTOM_REAL)
@@ -843,7 +855,8 @@ subroutine write_one_time_green_function_forward_arrays_adios()
     xi_source,eta_source,gamma_source, &
     USE_FORCE_POINT_SOURCE, &
     ibathy_topo, scale_displ, &
-    myrank, NPROCTOT_VAL
+    myrank, NPROCTOT_VAL, &
+    xadj_gf, adjncy_gf, num_neighbors_all_gf
   use specfem_par_crustmantle, only: &
     rstore_crust_mantle, &
     displ_crust_mantle, veloc_crust_mantle, accel_crust_mantle, &
@@ -888,8 +901,8 @@ subroutine write_one_time_green_function_forward_arrays_adios()
   ! Get max array sizes
   ! ---------------------------------
 
-  integer :: ngf_max, nsources_local_max, ngf_unique_local_max, NGLOB_GF_max
-  integer, parameter :: num_vars = 4
+  integer :: ngf_max, nsources_local_max, ngf_unique_local_max, NGLOB_GF_max, num_neighbors_all_gf_max
+  integer, parameter :: num_vars = 5
   integer, dimension(num_vars) :: max_global_values
 
 
@@ -897,6 +910,7 @@ subroutine write_one_time_green_function_forward_arrays_adios()
   max_global_values(2) = nsources_local
   max_global_values(3) = ngf_unique_local
   max_global_values(4) = NGLOB_GF
+  max_global_values(5) = num_neighbors_all_gf
 
   call max_allreduce_i(max_global_values,num_vars)
 
@@ -904,6 +918,7 @@ subroutine write_one_time_green_function_forward_arrays_adios()
   nsources_local_max  = max_global_values(2)
   ngf_unique_local_max = max_global_values(3)
   NGLOB_GF_max = max_global_values(4)
+  num_neighbors_all_gf_max = max_global_values(5)
 
   ! Green function elements
   rec_latitude = real(gf_loc_lat, kind=CUSTOM_REAL)
@@ -924,6 +939,7 @@ subroutine write_one_time_green_function_forward_arrays_adios()
   call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, "NGF", ngf)
   call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, "NGF_UNIQUE", ngf_unique)
   call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, "NGF_UNIQUE_LOCAL", ngf_unique_local)
+  call write_adios_scalar(myadios_fwd_file, myadios_fwd_group, "NUM_NEIGHBORS", num_neighbors_all_gf)
 
   if (myrank == 0) then
 
@@ -1024,6 +1040,16 @@ subroutine write_one_time_green_function_forward_arrays_adios()
   local_dim = NGLLX * NGLLY * NGLLZ * ngf_unique_local_max
   call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
     sizeprocs_adios, local_dim, 'ibool_GF', ibool_GF)
+
+  ! Neighbors
+  local_dim = ngf_unique_local_max + 1
+  call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group, myrank, &
+    sizeprocs_adios, local_dim, 'xadj_gf', xadj_gf)
+
+  local_dim = num_neighbors_all_gf_max
+  call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group, myrank, &
+    sizeprocs_adios, local_dim, 'adjncy_gf', adjncy_gf)
+
 
   ! Coordinates
   x = real(xstore_crust_mantle(iglob_cm2gf), kind=CUSTOM_REAL)

@@ -2262,8 +2262,6 @@
              stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating ibool_GF, or iglob_tmp array')
 
-    ! write (*,*) myrank, 'shape ibool_GF', shape(ibool_GF)
-    if (myrank==0) write(*,*) 'Inside old GF condition'
     ! Conversion arrays from full crust_mantle element array to small
     ! Green function array
     ibool_GF(:,:,:,:) = 0
@@ -2332,9 +2330,6 @@
 
     ! Created ibool GF from inverse unique array
     ibool_GF(:,:,:,:) = reshape(iglob_tmp(inv), shape(ibool_GF))
-
-
-    ! if (myrank==0) write(*,*) 'ibbol_GF', minval(ibool_GF),'/', sum(ibool_GF),'/', maxval(ibool_GF)
 
     deallocate(inv, iglob_tmp, stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error deallocating iglob_tmp')
@@ -2429,29 +2424,34 @@
     ! Get neighbors
     num_neighbors = xadj(ispec+1)-xadj(ispec)
 
-    ! write (*,*) 'rank', myrank, 'ibel', ibel, 'ispec', ispec, 'NN', num_neighbors
-
+    ! Loop over neighbors in full mesh
     do i = 1,num_neighbors
-      ! get neighbor
+
+      ! get neighbor from global adjacency
       ispec_neighbor = adjncy(xadj(ispec) + i)
+
+      ! Check whether global neighbor is also a local neighbor.
       if (any(ispec_neighbor==ispec_cm2gf)) then
+
+        ! If is neighbor increase total neighbor counter.
         inum_neighbor = inum_neighbor + 1
 
-        ! Get indeces of
+        ! Get indeces of neighbors
         idx = pack([(ix,ix=1,size(ispec_cm2gf))],ispec_neighbor==ispec_cm2gf)
+
+        ! Add neighbor to adjacency vector
         tmp_adjacency(inum_neighbor) = idx(1)
 
-        ! if (myrank==0) write (*,*) '   NN', i, 'ispec NN', ispec_neighbor
-        ispec_mask(ispec_neighbor) = 1
-        islice_mask(ispec_neighbor) = myrank
       endif
-
 
     enddo
 
+    ! Add total event counter to adjacency vetor
     xadj_gf(igf+1) = inum_neighbor
-    write (*,*) 'rank', myrank, 'i', igf, 'NN', inum_neighbor
+
   enddo
+
+  ! How to use the adjacency vector
 
   ! Allocate final adjacency array
   allocate(adjncy_gf(inum_neighbor),stat=ier)
