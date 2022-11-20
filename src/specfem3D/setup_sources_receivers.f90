@@ -1970,6 +1970,16 @@
   ! check that the sum of the number of receivers in each slice is nrec (or nsources for adjoint simulations)
   call sum_all_i(ngf_local,ngf_tot_found)
 
+  if (myrank==0) then
+      ! outputs info
+      write(IMAIN,*)
+      write(IMAIN,*) 'Getting unique elements from Green function locations...'
+      ! get MPI starting time
+      time1 = wtime()
+      call flush_IMAIN()
+  endif
+
+
   ! Get unique number of elements and allocate new array of slices and sources
   if (myrank == 0) then
 
@@ -2022,13 +2032,16 @@
     ispec_unique_gf_loc(igf) = ispec_selected_gf_loc(index_vector(igf))
   enddo
 
+  call synchronize_all()
+
   if (myrank==0) then
+    tCPU = wtime() - time1
     ! outputs info
     write(IMAIN,*)
     write(IMAIN,*) 'Found a total of ', ngf_unique, 'tagged elements.'
+    write(IMAIN,*) 'Buffering took', tCPU, ' seconds.'
+    call flush_IMAIN()
   endif
-
-  call synchronize_all()
 
   ! This section is adding a neighbouring elements by brute-force checking the
   ! number of overlapping points
@@ -2045,6 +2058,7 @@
       write(IMAIN,*) 'Computing element buffer for ...'
       ! get MPI starting time
       time1 = wtime()
+      call flush_IMAIN()
     endif
 
 
@@ -2154,13 +2168,18 @@
 
     enddo
 
+    call synchronize_all()
+
     if (myrank==0) then
         tCPU = wtime() - time1
         ! outputs info
         write(IMAIN,*)
         write(IMAIN,*) 'After computing buffer elements, we have ', ngf_unique, ' elements across all slices.'
         write(IMAIN,*) 'Buffering took', tCPU, ' seconds.'
+
+        call flush_IMAIN()
     endif
+
 
   endif
 
@@ -2190,6 +2209,16 @@
            ispec_out_gf_loc(ngf), &
            stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating islice/ispec_out')
+
+  if (myrank==0) then
+    ! outputs info
+    write(IMAIN,*)
+    write(IMAIN,*) 'Computing the unique values in the subset ibool array and the inverse'
+    write(IMAIN,*) 'of the unique indexing for readdressing ...'
+    ! get MPI starting time
+    time1 = wtime()
+    call flush_IMAIN()
+  endif
 
   if (ngf_unique_local .gt. 0) then
 
@@ -2233,17 +2262,6 @@
     ! Flatten subset ibool array for unique-ing
     ibool_flat = pack(ibool_crust_mantle(:,:,:,ispec_cm2gf), .true.)
 
-    if (myrank==0) then
-        ! outputs info
-        write(IMAIN,*)
-        write(IMAIN,*) 'Computing the unique values in the subset ibool array and the inverse'
-        write(IMAIN,*) 'of the unique indexing for readdressing ...'
-        ! get MPI starting time
-        time1 = wtime()
-    endif
-
-
-
     ! Get unique values of ibool, indeces of those values, and inverse.
     !                    array      arraysize       unique values, idx,    inverse, Nuniq
     call unique_inverse(ibool_flat, size(ibool_GF), iglob_cm2gf_tmp, iglob_tmp, inv, iglob_counter)
@@ -2277,19 +2295,18 @@
     ! Total number of Green function coordinates in terms of elements
     NGLOB_GF = iglob_counter
 
-    if (myrank==0) then
-        tCPU = wtime() - time1
-        ! outputs info
-        write(IMAIN,*)
-        write(IMAIN,*) '    ... readdressing of the subset elements took ', tCPU, 'seconds.'
-
-    endif
-
   endif
 
   ! Get ibool array for  output Green function database
   call synchronize_all()
 
+  if (myrank==0) then
+    tCPU = wtime() - time1
+    ! outputs info
+    write(IMAIN,*)
+    write(IMAIN,*) '    ... readdressing of the subset elements took ', tCPU, 'seconds.'
+    call flush_IMAIN()
+  endif
 
   ! Convert crust mantle ispec to green function database ispec
   do igf=1,ngf
@@ -2333,65 +2350,74 @@
   tmp_adjacency(:) = 0
 
   if (myrank==0) then
-        ! outputs info
-        write(IMAIN,*)
-        write(IMAIN,*) 'Gathering neighbors of the subset elements ... '
-        time1 = wtime()
+    ! outputs info
+    write(IMAIN,*)
+    write(IMAIN,*) 'Gathering neighbors of the subset elements ... '
+    time1 = wtime()
+    call flush_IMAIN()
   endif
 
-  do igf=1,ngf_unique_local
+  if (ngf_unique_local .gt. 0) then
 
-    ! Get element
-    ispec = ispec_cm2gf(igf)
+    do igf=1,ngf_unique_local
 
-    ! Get neighbors
-    num_neighbors = xadj(ispec+1)-xadj(ispec)
+      ! Get element
+      ispec = ispec_cm2gf(igf)
 
-    ! Loop over neighbors in full mesh
-    do i = 1,num_neighbors
+      ! Get neighbors
+      num_neighbors = xadj(ispec+1)-xadj(ispec)
 
-      ! get neighbor from global adjacency
-      ispec_neighbor = adjncy(xadj(ispec) + i)
+      ! Loop over neighbors in full mesh
+      do i = 1,num_neighbors
 
-      ! Check whether global neighbor is also a local neighbor.
-      if (any(ispec_neighbor==ispec_cm2gf)) then
+        ! get neighbor from global adjacency
+        ispec_neighbor = adjncy(xadj(ispec) + i)
 
-        ! If is neighbor increase total neighbor counter.
-        inum_neighbor = inum_neighbor + 1
+        ! Check whether global neighbor is also a local neighbor.
+        if (any(ispec_neighbor==ispec_cm2gf)) then
 
-        ! Get indeces of neighbors
-        idx = pack([(ix,ix=1,size(ispec_cm2gf))],ispec_neighbor==ispec_cm2gf)
+          ! If is neighbor increase total neighbor counter.
+          inum_neighbor = inum_neighbor + 1
 
-        ! Add neighbor to adjacency vector
-        tmp_adjacency(inum_neighbor) = idx(1)
+          ! Get indeces of neighbors
+          idx = pack([(ix,ix=1,size(ispec_cm2gf))],ispec_neighbor==ispec_cm2gf)
 
-      endif
+          ! Add neighbor to adjacency vector
+          tmp_adjacency(inum_neighbor) = idx(1)
+
+        endif
+
+      enddo
+
+      ! Add total event counter to adjacency vetor
+      xadj_gf(igf+1) = inum_neighbor
 
     enddo
 
-    ! Add total event counter to adjacency vetor
-    xadj_gf(igf+1) = inum_neighbor
+    ! Allocate final adjacency array
+    allocate(adjncy_gf(inum_neighbor),stat=ier)
+    if (ier /= 0) stop 'Error allocating temp adj'
 
-  enddo
+    ! Define final adjacency array
+    adjncy_gf(1:inum_neighbor) = tmp_adjacency(1:inum_neighbor)
 
-  if (myrank==0) then
-        tCPU = wtime() - time1
-        ! outputs info
-        write(IMAIN,*) '    ... took ', tCPU, ' seconds.'
+    ! Define neighbor counter
+    num_neighbors_all_gf = inum_neighbor
+
+    ! Deallocate tmp adjacency
+    deallocate(tmp_adjacency)
+  else
+    num_neighbors_all_gf = 0
   endif
 
-  ! Allocate final adjacency array
-  allocate(adjncy_gf(inum_neighbor),stat=ier)
-  if (ier /= 0) stop 'Error allocating temp adj'
+  call synchronize_all()
 
-  ! Define final adjacency array
-  adjncy_gf(1:inum_neighbor) = tmp_adjacency(1:inum_neighbor)
-
-  ! Define neighbor counter
-  num_neighbors_all_gf = inum_neighbor
-
-  ! Deallocate tmp adjacency
-  deallocate(tmp_adjacency)
+  if (myrank==0) then
+    tCPU = wtime() - time1
+    ! outputs info
+    write(IMAIN,*) '    ... took ', tCPU, ' seconds.'
+    call flush_IMAIN()
+  endif
 
   call synchronize_all()
 

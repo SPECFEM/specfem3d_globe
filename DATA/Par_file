@@ -315,7 +315,7 @@ RECEIVERS_CAN_BE_BURIED         = .true.
 SAVE_GREEN_FUNCTIONS            = .true.
 USE_BUFFER_ELEMENTS             = .true.
 NUMBER_OF_BUFFER_ELEMENTS       = 1
-NSTEP                           = 25715
+NSTEP                           = 103715
 T0                              = 0.d0
 
 

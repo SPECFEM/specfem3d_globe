@@ -467,8 +467,7 @@
   ! Issue the order to write the previously defined variable to the ADIOS file
   call write_each_time_green_function_forward_arrays_adios()
 
-  ! if (ROTATION_VAL) call write_rotation_forward_arrays_adios()
-  ! if (ATTENUATION_VAL) call write_attenuation_forward_arrays_adios()
+  call synchronize_all()
 
   ! perform writing
   if (ADIOS_SAVE_ALL_SNAPSHOTS_IN_ONE_FILE) then
@@ -564,7 +563,7 @@
     USE_FORCE_POINT_SOURCE, &
     ibathy_topo, scale_displ, &
     myrank, NPROCTOT_VAL, &
-    xadj_gf, adjncy_gf, num_neighbors_all_gf
+    num_neighbors_all_gf, xadj_gf, adjncy_gf
   use specfem_par_crustmantle, only: &
     ! displ_crust_mantle, veloc_crust_mantle, accel_crust_mantle, &
     xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
@@ -622,8 +621,6 @@
   character(len=1024) :: rankname
   character(len=1024) :: format_string
 
-  ! Ellipticity parameters
-  ! real(kind=CUSTOM_REAL) :: ellipticity
 
   ! ---------------------------------
   ! Get max array sizes
@@ -667,7 +664,6 @@
   call define_adios_scalar(myadios_fwd_group, group_size_inc, '', "NGF_UNIQUE", ngf_unique)
   call define_adios_scalar(myadios_fwd_group, group_size_inc, '', "NGF_UNIQUE_LOCAL", ngf_unique_local)
   call define_adios_scalar(myadios_fwd_group, group_size_inc, '', "NUM_NEIGHBORS", num_neighbors_all_gf)
-
 
   ! The topography/bathymetry info does not have to be written by all all processors
   if (myrank == 0) then
@@ -826,7 +822,6 @@
   call define_adios_global_array1D(myadios_fwd_group, group_size_inc, local_dim, '', &
                                    'epsilon_fake', epsilon_fake)
 
-
   end subroutine define_green_function_forward_arrays_adios
 
 !--------------------------------------------------------------------------
@@ -853,7 +848,7 @@ subroutine write_one_time_green_function_forward_arrays_adios()
     USE_FORCE_POINT_SOURCE, &
     ibathy_topo, scale_displ, &
     myrank, NPROCTOT_VAL, &
-    xadj_gf, adjncy_gf, num_neighbors_all_gf
+    num_neighbors_all_gf, xadj_gf, adjncy_gf
   use specfem_par_crustmantle, only: &
     rstore_crust_mantle, &
     displ_crust_mantle, veloc_crust_mantle, accel_crust_mantle, &
@@ -916,6 +911,8 @@ subroutine write_one_time_green_function_forward_arrays_adios()
   ngf_unique_local_max = max_global_values(3)
   NGLOB_GF_max = max_global_values(4)
   num_neighbors_all_gf_max = max_global_values(5)
+
+  write (*,*) 'rank', myrank, 'num-neigh',  num_neighbors_all_gf_max
 
   ! Green function elements
   rec_latitude = real(gf_loc_lat, kind=CUSTOM_REAL)
@@ -1040,10 +1037,12 @@ subroutine write_one_time_green_function_forward_arrays_adios()
 
   ! Neighbors
   local_dim = ngf_unique_local_max + 1
+  write (*,*) 'rank', myrank, 'xadj', minval(xadj_gf), maxval(xadj_gf)
   call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group, myrank, &
     sizeprocs_adios, local_dim, 'xadj_gf', xadj_gf)
 
   local_dim = num_neighbors_all_gf_max
+  write (*,*) 'rank', myrank, 'xadj', minval(adjncy_gf), maxval(adjncy_gf)
   call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group, myrank, &
     sizeprocs_adios, local_dim, 'adjncy_gf', adjncy_gf)
 
@@ -1198,7 +1197,6 @@ subroutine write_each_time_green_function_forward_arrays_adios()
     sizeprocs_adios, local_dim, 'epsilon_xz', epsilon_xz)
   call write_adios_global_1d_array(myadios_fwd_file, myadios_fwd_group,myrank, &
     sizeprocs_adios, local_dim, 'epsilon_fake', epsilon_fake)
-
 
   end subroutine write_each_time_green_function_forward_arrays_adios
 
