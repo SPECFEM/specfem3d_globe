@@ -26,7 +26,7 @@ In many cases, the SEM synthetics are calculated and compared to observed
 seismograms recorded at seismic stations. Since the SEM synthetics
 are accurate for a certain frequency range, both the original data
 and the synthetics need to be processed before a comparison can be
-made. For such comparisons, the following steps are recommended:
+made. For such comparisons, the following steps are recommended:\newline
 
 \begin{enumerate}
 \item Make sure that both synthetic and observed seismograms have the correct station/event and timing information.
@@ -56,7 +56,8 @@ process_data.pl -m CMTSOLUTION -s 1.0 -l 0/4000 -i -f -t 40/500 -p -x bp DATA/19
 
 \noindent
 which has resampled the SAC files to a sampling rate of 1 seconds, cut them between 0 and 4000 seconds, transfered them into displacement
-records and filtered them between 40 and 500 seconds, picked the first P and S arrivals, and added suffix `\texttt{bp}' to the file names.
+records and filtered them between 40 and 500 seconds, picked the first P and S arrivals, and added suffix `\texttt{bp}' to the file names.\newline
+
 
 Note that all of the scripts in this section actually use SAC,
 saclst and/or IASP91 to do the core operations; therefore make sure
@@ -82,7 +83,8 @@ which will convolve the synthetics with a triangular source-time function
 from the \texttt{CMTSOLUTION} file, convert the synthetics into SAC
 format, add event and station information into the SAC headers, resample the SAC files with a sampling rate of 1 seconds, cut them between 0 and 4000 seconds, filter them between 40 and
 500 seconds with the same filter used for the observed data, pick the first P and S arrivals, and add the suffix `\texttt{bp}'
-to the file names.
+to the file names.\newline
+
 
 More options are available for this script, such as adding a time shift
 to the origin time of the synthetics, convolving the synthetics with
@@ -110,7 +112,8 @@ rotate.pl -l 0 -L 4000 SEM/*.MXE.sem.sac.bp
 \noindent
 where the first command performs rotation on the SAC data obtained
 through IRIS (which may have timing information written in the filename),
-while the second command rotates the processed synthetics.
+while the second command rotates the processed synthetics.\newline
+
 
 For synthetics, another (simpler) option is to set flag \texttt{ROTATE\_SEISMOGRAMS\_RT}
 to \texttt{.true.} in the parameter file \texttt{DATA/Par\_file}.
@@ -120,7 +123,8 @@ to \texttt{.true.} in the parameter file \texttt{DATA/Par\_file}.
 
 Note: You need to have the \texttt{sismoutil-0.9b} package installed
 on your computer if you want to run this script on binary SAC files.
-The software is available via the ORFEUS web site \urlwithparentheses{http://www.orfeus-eu.org}.
+The software is available via the ORFEUS web site \urlwithparentheses{http://www.orfeus-eu.org}.\newline
+
 
 In case the simulation crashes during run-time without computing and
 writing all time steps, the SAC files (if flags \texttt{OUTPUT\_SEISMOS\_SAC\_ALPHANUM}

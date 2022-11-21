@@ -27,7 +27,8 @@ half-duration of the source. The half-duration should be large enough
 so that the movie does not contain frequencies that are not resolved
 by the mesh, i.e., it should not contain numerical noise. This can
 be accomplished by selecting a CMT \texttt{HALF\_DURATION} > 1.1 $\times$
-smallest period (see figure \ref{fig:CMTSOLUTION-file}).
+smallest period (see figure \ref{fig:CMTSOLUTION-file}).\newline
+
 
 When \texttt{\small MOVIE\_SURFACE}
 = \texttt{\small .true.} or \texttt{\small MOVIE\_VOLUME}{\small{}
@@ -86,7 +87,8 @@ that control the region in space and time that is saved. These are:
 \texttt{\small MOVIE\_NORTH\_DEG}, \texttt{\small MOVIE\_SOUTH\_DEG},
 \texttt{\small MOVIE\_START} and \texttt{\small MOVIE\_STOP}. The
 code will save a given element if the center of the element is in
-the prescribed volume.
+the prescribed volume.\newline
+
 
 \begin{description}
 \item [{The~Top/Bottom:}] Depth below the surface in kilometers, use \texttt{\small MOVIE\_TOP}
@@ -105,7 +107,8 @@ two numbers, first the number of points within the prescribed volume
 within this particular slice, and second the number of elements. The
 next files are \texttt{\small proc??????\_movie3D\_x.bin}, \texttt{\small proc??????\_movie3D\_y.bin},
 \texttt{\small proc??????\_movie3D\_z.bin} which store the locations
-of the points in the 3D mesh.
+of the points in the 3D mesh.\newline
+
 
 Finally the code stores the ``value'' at each of the points. Which
 value is determined by \texttt{\small MOVIE\_VOLUME\_TYPE} in the
@@ -115,16 +118,19 @@ of strain in the subvolume. Choosing 4 causes the code to save the
 trace of the stress and the deviatoric stress in the whole volume
 (not the subvolume in space), at the time steps specified. The name
 of the output file will depend on the \texttt{\small MOVIE\_VOLUME\_TYPE}
-chosen.
+chosen.\newline
+
 
 Setting \texttt{\small MOVIE\_VOLUME\_COARSE} \texttt{\small =} \texttt{\small .true.}
 will make the code save only the corners of the elements, not all
 the points within each element for \texttt{\small MOVIE\_VOLUME\_TYPE}
-\texttt{\small =} \texttt{\small 1,2,3}.
+\texttt{\small =} \texttt{\small 1,2,3}.\newline
+
 
 To make the code output your favorite ``value'' simply add a new \texttt{\small MOVIE\_VOLUME\_TYPE},
 a new subroutine to \texttt{\small write\_movie\_volume.f90} and a
-subroutine call to \texttt{\small specfem3D.F90}.
+subroutine call to \texttt{\small specfem3D.F90}.\newline
+
 
 A utility program to combine the files produced by \texttt{\small MOVIE\_VOLUME\_TYPE}
 \texttt{\small =} \texttt{\small 1,2,3} is provided in \texttt{\small combine\_paraview}~\\
@@ -140,7 +146,8 @@ The finite-frequency kernels computed as explained in Section \ref{sec:Adjoint-s
 are saved in the \texttt{LOCAL\_PATH} at the end of the simulation.
 Therefore, we first need to collect these files on the front end,
 combine them into one mesh file, and visualize them with some auxilliary
-programs. Examples of kernel simulations may be found in the \texttt{EXAMPLES} directory.
+programs. Examples of kernel simulations may be found in the \texttt{EXAMPLES} directory.\newline
+
 
 \begin{enumerate}
 %%
@@ -153,13 +160,14 @@ the kernel files from all slices onto the front end, it usually takes
 up too much storage space (at least tens of gigabytes). Since the
 sensitivity kernels are the strongest along the source-receiver great
 circle path, it is sufficient to collect only the slices that are
-along or close to the great circle path.
+along or close to the great circle path.\newline
+
 
 A Perl script \texttt{utils/Visualization/VTK\_Paraview/global\_slice\_number.pl} can
 help to figure out the slice numbers that lie along the great circle
 path (both the minor and major arcs), as well as the slice numbers
 required to produce a full picture of the inner core if your kernel
-also illuminates the inner core.
+also illuminates the inner core.\newline
 
 \begin{enumerate}
 \item You need to first compile the utility programs provided in the \texttt{utils/Visualization/VTK\_Paraview/}~\\
@@ -243,7 +251,7 @@ where \texttt{input\_dir} is the directory where all the individual
 kernel files are stored, and \texttt{output\_dir} is where the mesh
 file will be written. Give 0 for low resolution and 1 for high resolution.
 If region is not specified, all three regions (crust and mantle, outer core, inner core)
-will be collected, otherwise, only the specified region will be.\\
+will be collected, otherwise, only the specified region will be.\newline
 
 Here is an example:
 {\footnotesize

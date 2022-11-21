@@ -6,11 +6,12 @@
 \item [configuration fails:]
 Examine the log file 'config.log'. It contains detailed informations.
 In many cases, the path's to these specific compiler commands F90,
-CC and MPIF90 won't be correct if `./configure` fails.
+CC and MPIF90 won't be correct if `./configure` fails.\newline
+
 
 Please make sure that you have a working installation of a Fortran compiler,
 a C compiler and an MPI implementation. You should be able to compile this
-little program code:
+little program code:\newline
 
 {\footnotesize
 \begin{verbatim}
@@ -37,11 +38,13 @@ In case a compilation error like the following occurs, stating
 \end{verbatim}
 }
 \noindent
-make sure you're pointing to the right 'mpif90' wrapper command.
+make sure you're pointing to the right 'mpif90' wrapper command.\newline
+
 
 Normally, this message will appear when you are mixing two different Fortran
 compilers. That is, using e.g. gfortran to compile non-MPI files
-and mpif90, wrapper provided for e.g. ifort, to compile MPI-files.
+and mpif90, wrapper provided for e.g. ifort, to compile MPI-files.\newline
+
 
 fix: e.g. specify
 \begin{verbatim}
@@ -71,7 +74,7 @@ In case you want to modify the PPM-routines in file \texttt{model\_ppm.f90}, ple
 
 \noindent
 You can set \texttt{TRANSVERSE\_ISOTROPY} to \texttt{.false.} in case you want to use the isotropic PREM
-as 1D background model.
+as 1D background model.\newline
 
 \item Transverse isotropy would mean different values for horizontal and vertically polarized wave speeds,
 i.e. different for vph and   vpv, vsh and vsv, and it includes an additional parameter eta.
@@ -98,7 +101,8 @@ and dvs for vsh   and vsv, see in \texttt{meshfem3D\_models.f90}:
 You could modify this to add different perturbations for vph and vpv, resp. vsh and vsv.
 This would basically mean that you add transverse isotropic perturbations.
 You can see how this is done with e.g. the model \texttt{s362ani},
-following the flag \texttt{THREE\_D\_MODEL\_S362ANI} on how to modify accordingly the file \texttt{meshfem3D\_models.f90}.
+following the flag \texttt{THREE\_D\_MODEL\_S362ANI} on how to modify accordingly the file \texttt{meshfem3D\_models.f90}.\newline
+
 
 In case you want to add more specific model routines, follow the code sections starting with:
 

@@ -11,12 +11,14 @@ in order to understand noise simulations from a theoretical perspective.
 \section{New Requirements on `Old' Input Parameter Files}
 
 As usual, the three main input files are crucial: \texttt{DATA/Par\_file}, \texttt{DATA/CMTSOLUTION} and
-\texttt{DATA/STATIONS}.\\
+\texttt{DATA/STATIONS}.\newline
+
 
 \texttt{DATA/CMTSOLUTION} is required for all simulations. However, it may seem unexpected to have it listed here, since the
 noise simulations should have nothing to do with the earthquake -- hence the \texttt{DATA/CMTSOLUTION}.
 For noise simulations, it is critical to have no earthquakes. In other words, the moment tensor
-specified in \texttt{DATA/CMTSOLUTION} must be set to ZERO! \\
+specified in \texttt{DATA/CMTSOLUTION} must be set to ZERO! \newline
+
 
 \texttt{DATA/STATIONS} remains the same as in previous earthquake simulations,
 except that the order of stations listed in \texttt{DATA/STATIONS} is now important.
@@ -24,7 +26,8 @@ The order will be used later to identify the `main' receiver,
 i.e., the one that simultaneously cross correlates with the others.
 Please be noted that the actual station file used in the simulation is \texttt{OUTPUT\_FILES/STATIONS\_FILTERED},
 which is generated when you run your simulations. (e.g., in regional simulations we may have included stations out of the
-region of our interests in \texttt{DATA/STATIONS}, so we have to get rid of them.)\\
+region of our interests in \texttt{DATA/STATIONS}, so we have to get rid of them.)\newline
+
 
 \texttt{DATA/Par\_file} also requires careful attention.
 New to this version of SPECFEM3D\_GLOBE, a parameter called \texttt{NOISE\_TOMOGRAPHY} has been added that specifies the type of simulation to be run.
@@ -32,13 +35,15 @@ New to this version of SPECFEM3D\_GLOBE, a parameter called \texttt{NOISE\_TOMOG
 For example, when \texttt{NOISE\_TOMOGRAPHY} equals 0, a regular earthquake simulation will be run.
 When \texttt{NOISE\_TOMOGRAPHY} is equal to 1/2/3, you are about to run
 step 1/2/3 of the noise simulations respectively.
-Should you be confused by the three steps, refer to \citet{trompetal2010} for details.\\
+Should you be confused by the three steps, refer to \citet{trompetal2010} for details.\newline
+
 
 Another change to \texttt{DATA/Par\_file} involves the parameter \texttt{RECORD\_LENGTH\_IN\_MINUTES}.
 While for regular earthquake simulations this parameter specifies the length of synthetic seismograms generated,
 for noise simulations it specifies the length of the seismograms used to compute cross correlations.
 The actual cross correlations are thus twice this length.
-The code automatically makes modification accordingly, if \texttt{NOISE\_TOMOGRAPHY} is not zero.\\
+The code automatically makes modification accordingly, if \texttt{NOISE\_TOMOGRAPHY} is not zero.\newline
+
 
 There are other parameters in \texttt{DATA/Par\_file} which should be given specific values.
 For instance, \texttt{NUMBER\_OF\_RUNS} and \texttt{NUMBER\_OF\_THIS\_RUN} must be 1;
@@ -50,7 +55,7 @@ Also, we have to reconstruct the ensemble forward wavefields in adjoint simulati
 therefore we need to set \texttt{SAVE\_FORWARD} to \texttt{.true.} for the second step,
 i.e., when \texttt{NOISE\_TOMOGRAPHY} equals 2.
 The third step is for kernel constructions. Hence \texttt{SIMULATION\_TYPE} should be 3, whereas
-\texttt{SAVE\_FORWARD} must be \texttt{.false.}.\\
+\texttt{SAVE\_FORWARD} must be \texttt{.false.}.\newline
 
 
 \section{Noise Simulations: Step by Step}
@@ -83,7 +88,7 @@ Before compilation, the \texttt{DATA/Par\_file} must be specified correctly, e.g
 \texttt{NOISE\_TOMOGRAPHY} shouldn't be zero; \texttt{RECORD\_LENGTH\_IN\_MINUTES},
 \texttt{NEX\_XI} and \texttt{NEX\_ETA} must be what you want in your real simulations.
 Otherwise you may get wrong informations which will cause problems later.
-(it is good to always re-complie the code before you run simulations)\\
+(it is good to always re-complie the code before you run simulations)\newline
 
 \item
 After compiling, you will find two important numbers besides the needed executables:
@@ -209,7 +214,7 @@ and other necessary files, as well as how adjoint simulations work.
 \end{itemize}
 
 It's better to run the three steps continuously within the same job, otherwise you have to collect the saved surface movies
-from the old nodes to the new nodes.\\
+from the old nodes to the new nodes.\newline
 
 \subsection{Post-simulation}
 
@@ -217,10 +222,12 @@ After those simulations, you have all stuff you need, either in the \texttt{OUTP
 in the directory specified by \texttt{LOCAL\_PATH} in \texttt{DATA/Par\_file} (most probably on local nodes).
 Collect whatever you want from the local nodes to your workstation, and then visualize them.
 This process is the same as what you may have done for regular earthquake simulations.
-Refer Chapter~\ref{cha:graphics} if you have problems.\\
+Refer Chapter~\ref{cha:graphics} if you have problems.\newline
+
 
 Simply speaking, two outputs are the most interesting: the simulated ensemble cross correlations and
-one contribution of the ensemble sensitivity kernels.\\
+one contribution of the ensemble sensitivity kernels.\newline
+
 
 The simulated ensemble cross correlations are obtained after the second simulation (Step 2).
 Seismograms in \texttt{OUTPUT\_FILES} are actually the simulated ensemble cross correlations.
@@ -228,11 +235,13 @@ Collect them immediately after Step 2, or the Step 3 will overwrite them.
 Note that we have a `main' receiver specified by \texttt{NOISE\_TOMOGRAPHY/irec\_main\_noise},
 the seismogram at one station corresponds to the cross correlation between that station and the `main'.
 Since the seismograms have three components, we may obtain cross correlations
-for different components as well, not necessarily the cross correlations between vertical components.\\
+for different components as well, not necessarily the cross correlations between vertical components.\newline
+
 
 One contribution of the ensemble cross-correlation sensitivity kernels are obtained after Step 3,
 stored in the \texttt{LOCAL\_PATH} on local nodes.
-The ensemble kernel files are named the same as regular earthquake kernels.\\
+The ensemble kernel files are named the same as regular earthquake kernels.\newline
+
 
 You need to run another three simulations to get the other contribution of the ensemble kernels,
 using different forward and adjoint sources given in \citet{trompetal2010}.

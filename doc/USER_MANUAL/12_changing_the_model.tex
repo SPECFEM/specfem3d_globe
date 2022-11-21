@@ -15,7 +15,9 @@ in the subroutine \texttt{get\_model\_parameters.f90}, is used
 to indicate a 3D crustal model. When this flag is set to \texttt{.true.},
 the crust on top of the 1D reference model (PREM, IASP91, or AK135F\_NO\_MUD)
 is removed and replaced by extending the mantle. The 3D crustal model
-is subsequently overprinted onto the crust-less 1D reference model.
+is subsequently overprinted onto the crust-less 1D reference model.\newline
+
+
 The call to the 3D crustal routine is of the form
 \begin{verbatim}
 call model_crust(lat,lon,r,vp,vs,rho,moho,foundcrust,CM_V,elem_in_crust)
@@ -47,12 +49,15 @@ variables and arrays that describe the model.
 routine to return crustal values, even if the location would
 be below the crust.
 \end{description}
+
+
 All output needs to be non-dimensionalized according to the convention
 summarized in Appendix~\ref{cha:Non-Dimensionalization-Conventions}.
 You can replace this subroutine by your own routine \textit{provided
 you do not change the call structure of the routine}, i.e., the new
 routine should take exactly the same input and produce the required,
-properly non-dimensionalized output.
+properly non-dimensionalized output.\newline
+
 
 Part of the file \texttt{model\_crust.f90} is the subroutine \texttt{model\_crust\_broadcast}.
 The call to this routine takes argument \texttt{CM\_V} and is used
@@ -65,7 +70,8 @@ routine \texttt{model\_crust\_broadcast} are passed to the subroutine
 \texttt{read\_crust\_model} through the structure \texttt{CM\_V}.
 An alternative crustal model could use the same construct. Please
 feel free to contribute subroutines for new models and send them to
-us so that they can be included in future releases of the software.
+us so that they can be included in future releases of the software.\newline
+
 
 \begin{quote}
 \textbf{NOTE:} If you decide to create your own version of file \texttt{model\_crust.f90},
@@ -145,7 +151,8 @@ variables and arrays that describe the model.
 You can replace the \texttt{model\_s20rts.f90} file with your own
 version \textit{provided you do not change the call structure of the
 routine}, i.e., the new routine should take exactly the same input
-and produce the required relative output.
+and produce the required relative output.\newline
+
 
 Part of the file \texttt{model\_s20rts.f90} is the subroutine
 \texttt{model\_s20rts\_broadcast}.
@@ -156,7 +163,8 @@ you \textit{must} provide a \texttt{model\_s20rts\_broadcast} routine,
 even if it does nothing. Model constants and variables read by the
 routine \texttt{model\_s20rts\_broadcast} are passed to the subroutine
 \texttt{read\_model\_s20rts} through the structure \texttt{D3MM\_V.}
-An alternative mantle model should use the same construct.
+An alternative mantle model should use the same construct.\newline
+
 
 \begin{quote}
 \textbf{NOTE:} If you decide to create your own version of file \texttt{model\_s20rts.f90},
@@ -170,7 +178,7 @@ rather than using an implementation in which all the nodes would read
 the same model data files from a remotely-mounted home file system,
 which could create a bottleneck on the network in the case of a large
 number of nodes. For example, in the current call to that routine
-from \texttt{model\_s20rts.f90,} we write:
+from \texttt{model\_s20rts.f90,} we write:\newline
 
 {\footnotesize
 \begin{verbatim}
@@ -244,7 +252,7 @@ with your own implementation you \textit{must} provide a \texttt{model\_aniso\_m
 routine, even if it does nothing. Model constants and variables read
 by the routine \texttt{model\_aniso\_mantle\_broadcast} are passed through the
 structure \texttt{AMM\_V}. An alternative anisotropic mantle model
-should use the same construct.
+should use the same construct.\newline
 
 \begin{quote}
 \textbf{NOTE:} If you decide to create your own version of file \texttt{model\_aniso\_mantle.f90},
@@ -277,7 +285,7 @@ Rotation of the anisotropic tensor elements from one coordinate system
 to another coordinate system may be accomplished based upon the subroutine
 \texttt{rotate\_aniso\_tensor}. Use of this routine requires understanding
 the coordinate system used in \texttt{SPECFEM3D\_GLOBE}, as discussed
-in Appendix~\ref{cha:Reference-Frame-Convention}.
+in Appendix~\ref{cha:Reference-Frame-Convention}.\newline
 
 
 \subsection{Point-Profile Models}\label{sub:Point-Profile-Models}
@@ -299,7 +307,7 @@ where the first line is a comment line and all following ones are specifying the
 The last entry on each line is specifying the absolute value of Vs (however this value is only given as a supplementary information
 and not used any further). The background model is PREM with a transverse isotropic layer between Moho and 220~km depth.
 The specified Vs-perturbations are added as isotropic perturbations. Please see the file \texttt{DATA/PPM/README}
-for more informations how to setup the directory \texttt{DATA/PPM} to use your own ASCII-file.
+for more informations how to setup the directory \texttt{DATA/PPM} to use your own ASCII-file.\newline
 
 
 
@@ -340,13 +348,15 @@ A 3-D attenuation model QRFSI12 \citep{DaEkDz08}
 is provided, as well as 1-D models with a PREM and a 1DREF
 attenuation structure. By default the PREM attenuation model is taken,
 using the routine \texttt{model\_attenuation\_1D\_PREM},
-found in \texttt{model\_attenuation.f90}.
+found in \texttt{model\_attenuation.f90}.\newline
+
 
 To create your own three-dimensional attenuation model, you add your model
 using a routine like the ~\\
 \texttt{model\_atten3D\_QRFSI12} subroutine
 and the example routine above as a guide and replace the call in file
-\texttt{meshfem3D\_models.f90} to your own subroutine.
+\texttt{meshfem3D\_models.f90} to your own subroutine.\newline
+
 
 Note that the resolution and maximum value of anelastic models are
 truncated. This speeds the construction of the standard linear solids

@@ -28,7 +28,7 @@ or your .cshrc file):
 \end{verbatim}
 }
 \noindent
-You can replace the GNU compilers above (gfortran and gcc) with other compilers if you want to; for instance for Intel ifort and icc use FC=ifort CC=icc instead.\\
+You can replace the GNU compilers above (gfortran and gcc) with other compilers if you want to; for instance for Intel ifort and icc use FC=ifort CC=icc instead.\newline
 
 Before running the \texttt{configure} script, you should probably edit file \texttt{flags.guess} to make sure that it contains the best compiler options for your system. Known issues or things to check are:
 \begin{description}
@@ -52,13 +52,13 @@ with the following options:
 
 If you have problems configuring the code on a Cray machine, i.e. for instance if you get an error message from the \texttt{configure} script, try exporting these two variables:
 \texttt{MPI\_INC=\${CRAY\_MPICH2\_DIR}/include and FCLIBS=" "}, and for more details if needed you can refer to the \texttt{utils/Cray\_compiler\_information} directory.
-You can also have a look at the configure script called:\\
+You can also have a look at the configure script called:\newline
 \texttt{utils/Cray\_compiler\_information/configure\_SPECFEM\_for\_Piz\_Daint.bash}.
 
 
 On SGI systems, \texttt{flags.guess} automatically informs \texttt{configure}
 to insert ``\texttt{TRAP\_FPE=OFF}'' into the generated \texttt{Makefile}
-in order to turn underflow trapping off.\\
+in order to turn underflow trapping off.\newline
 
 
 If you run very large meshes on a relatively small number
@@ -69,10 +69,10 @@ In this case, on some compilers you may need to add \texttt{``-mcmodel=medium}''
 or \texttt{``-mcmodel=medium -shared-intel}'' (if you use the Intel ifort / icc compiler)
 to the configure options of CFLAGS, FCFLAGS and LDFLAGS otherwise the compiler will display an error
 message (for instance \texttt{``relocation truncated to fit: R\_X86\_64\_PC32 against .bss''} or something similar);
-on an IBM machine with the \texttt{xlf} and \texttt{xlc} compilers, using \texttt{-q64} is usually sufficient.\\
+on an IBM machine with the \texttt{xlf} and \texttt{xlc} compilers, using \texttt{-q64} is usually sufficient.\newline
 
 
-We recommend that you add {\texttt{ulimit -S -s unlimited}} to your {\texttt{.bash\_profile}} file and/or {\texttt{limit stacksize unlimited }} to your {\texttt{.cshrc}} file to suppress any potential limit to the size of the Unix stack.\\
+We recommend that you add {\texttt{ulimit -S -s unlimited}} to your {\texttt{.bash\_profile}} file and/or {\texttt{limit stacksize unlimited }} to your {\texttt{.cshrc}} file to suppress any potential limit to the size of the Unix stack.\newline
 
 
 %-----------------------------------------------------------------------------------------------------------------------------------%
@@ -122,7 +122,7 @@ So even if you have the new CUDA toolkit version 11, but you want to run on say 
 \end{verbatim}
 }
 \noindent
-The compilation with the cuda5 setting chooses then the right architecture (\texttt{-gencode=arch=compute\_35,code=sm\_35} for K20 cards).\\
+The compilation with the cuda5 setting chooses then the right architecture (\texttt{-gencode=arch=compute\_35,code=sm\_35} for K20 cards).\newline
 
 
 SPECFEM3D\_GLOBE also supports CUDA-aware MPI. This code feature can be enabled by adding the flag \texttt{-{}-enable-cuda-aware-mpi} to
@@ -142,7 +142,7 @@ For example, with OpenMPI installed, check the output of the command
 }
 \noindent
 Without a CUDA-aware MPI installation, the code will fall back to its default handling, i.e., passing MPI buffers through the CPU.
-In case available, test if this feature will improve the overall performance of your simulation.\\
+In case available, test if this feature will improve the overall performance of your simulation.\newline
 
 
 \noindent
@@ -213,7 +213,7 @@ defines \texttt{USE\_CUDA}, and \texttt{-{}-with-hip}
 defines \texttt{USE\_HIP}; and \texttt{GPU\_RUNTIME} set the global
 variable \texttt{run\_cuda}, \texttt{run\_opencl} or \texttt{run\_hip}.
 Texture support has not been validated in OpenCL, but works as
-expected in CUDA.\\
+expected in CUDA.\newline
 
 
 Note about the CUDA/OpenCL/HIP kernel versions: the CUDA/OpenCL/HIP device kernels were
@@ -230,7 +230,7 @@ OpenMP support can be enabled in addition to MPI. However, in many
 cases performance will not improve because our pure MPI implementation
 is already heavily optimized and thus the resulting code will in fact
 be slightly slower. A possible exception could be IBM BlueGene-type
-architectures.\\
+architectures.\newline
 
 
 \noindent
@@ -241,7 +241,7 @@ To enable OpenMP,  add the flag \texttt{-{}-enable-openmp} to the configuration:
 \end{verbatim}
 }
 \noindent
-This will add the corresponding OpenMP flag for the chosen Fortran compiler.\\
+This will add the corresponding OpenMP flag for the chosen Fortran compiler.\newline
 
 
 The DO-loop using OpenMP threads has a SCHEDULE property. The \texttt{OMP\_SCHEDULE}
@@ -345,7 +345,7 @@ your system. So, we encourage you to experiment with these flags (by
 editing the generated \texttt{Makefile} by hand) and to solicit advice
 from your system administrator. Selecting the right compiler and compiler
 flags can make a tremendous difference in terms of performance. We
-welcome feedback on your experience with various compilers and flags.\\
+welcome feedback on your experience with various compilers and flags.\newline
 
 
 When using a slow or not too powerful shared disk system or when running extremely large simulations
@@ -376,7 +376,7 @@ To do so, ask your system administrator for the option to add to your batch subm
 %-----------------------------------------------------------------------------------------------------------------------------------%
 
 \noindent
-Installation instructions for IBM BlueGene (from October 2012):\\
+Installation instructions for IBM BlueGene (from October 2012):\newline
 
 \noindent
 Edit file \texttt{flags.guess} and put this for \texttt{FLAGS\_CHECK}:
@@ -394,11 +394,11 @@ You will need to set these flags to the right architecture for your BlueGene com
 ask your system administrator.
 On some machines if is necessary to use -O2 in these flags instead of -O3 due to a compiler bug of the XLF version installed.
 We thus suggest to first try -O3, and then if the code does not compile or does not run fine then switch back to -O2.
-The debug flags (-g, -qfullpath) do not influence performance but are useful to get at least some insights in case of problems.\\
+The debug flags (-g, -qfullpath) do not influence performance but are useful to get at least some insights in case of problems.\newline
 
 \noindent
 Before running \texttt{configure}, select the XL Fortran compiler by typing \texttt{module load bgq-xl/1.0}
-or \texttt{module load bgq-xl} (another, less efficient option is to load the GNU compilers using \texttt{module load bgq-gnu/4.4.6} or similar).\\
+or \texttt{module load bgq-xl} (another, less efficient option is to load the GNU compilers using \texttt{module load bgq-gnu/4.4.6} or similar).\newline
 
 \noindent
 Then, to configure the code, type this:
@@ -409,7 +409,7 @@ Then, to configure the code, type this:
 }
 
 \noindent
-\underline{Older installation instruction for IBM BlueGene, from 2011:}\\
+\underline{Older installation instruction for IBM BlueGene, from 2011:}\newline
 
 \noindent
 To compile the code on an IBM BlueGene, Laurent L\'eger from IDRIS, France, suggests the following: compile the code with
@@ -499,16 +499,16 @@ We omitted these directives for now to avoid confusion with other possible simul
 The \texttt{``configure''} script assumes that you will compile the code on the same kind of hardware
 as the machine on which you will run it. On some systems (for instance IBM BlueGene, see also the previous section) this might not be the case
 and you may compile the code using a cross compiler on a frontend computer that does not have the same
-architecture. In such a case, typing \texttt{``make all''} on the frontend will fail, but you can use one of these two solutions: \\
+architecture. In such a case, typing \texttt{``make all''} on the frontend will fail, but you can use one of these two solutions: \newline
 
 \noindent
-1/ create a script that runs \texttt{``make all''} on a node instead of on the frontend, if the compiler is also installed on the nodes \\
+1/ create a script that runs \texttt{``make all''} on a node instead of on the frontend, if the compiler is also installed on the nodes \newline
 
 \noindent
 2/ in case of static compilation, after running the \texttt{``configure''} script, create two copies of the Makefiles:
-\\
+\newline
 \red{TODO: this has not been tested out yet, any feedback is welcome}
-\\
+\newline
 
 \noindent
 In \texttt{src/create\_header\_file/Makefile} put this instead of the current values:
@@ -570,6 +570,6 @@ To visualize the call tree (calling tree) of the source code, you can see the Do
 \section{Becoming a developer of the code, or making small modifications in the source code}
 %-----------------------------------------------------------------------------------------------------------------------------------%
 
-If you want to develop new features in the code, and/or if you want to make small changes, improvements, or bug fixes, you are very welcome to contribute. To do so, i.e. to access the development branch of the source code with read/write access (in a safe way, no need to worry too much about breaking the package, there are CI tests based on BuildBot, Travis-CI and Jenkins in place that are checking and validating all new contributions and changes), please visit this Web page:\\
+If you want to develop new features in the code, and/or if you want to make small changes, improvements, or bug fixes, you are very welcome to contribute. To do so, i.e. to access the development branch of the source code with read/write access (in a safe way, no need to worry too much about breaking the package, there are CI tests based on BuildBot, Travis-CI and Jenkins in place that are checking and validating all new contributions and changes), please visit this Web page:\newline
 \url{https://github.com/SPECFEM/specfem3d_globe/wiki}
 

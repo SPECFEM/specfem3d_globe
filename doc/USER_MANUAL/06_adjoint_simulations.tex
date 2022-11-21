@@ -68,14 +68,14 @@ sources, i.e., the adjoint sources are in the same forward time sense
 as the original recorded seismograms.
 \end{enumerate}
 
-\item \textbf{Set the related parameters and run the adjoint simulation}\\
+\item \textbf{Set the related parameters and run the adjoint simulation}\newline
 In the \texttt{DATA/Par\_file}, set the two related parameters to
 be \texttt{SIMULATION\_TYPE = 2} and \texttt{SAVE\_FORWARD = .false.}.
 More conveniently, use the scripts \texttt{utils/change\_simulation\_type.pl}
 to modify the \texttt{Par\_file} automatically (\texttt{change\_simulation\_type.pl
 -a}). Then run the solver to launch the adjoint simulation.
 
-\item \textbf{Collect the seismograms at the original source location}\\
+\item \textbf{Collect the seismograms at the original source location}\newline
 After the adjoint simulation has completed successfully, get the seismograms
 from directory \texttt{OUTPUT\_FILES}.
 %
@@ -103,7 +103,7 @@ simulations (please refer to \citet{LiTr06} and \citet{TrKoLi08} for details).
 
 \begin{enumerate}
 \item \textbf{Run a forward simulation with the state variables saved at
-the end of the simulation}\\
+the end of the simulation}\newline
 %
 Prepare the \texttt{\small CMTSOLUTION} and \texttt{\small STATIONS}
 files, set the parameters \texttt{\small SIMULATION\_TYPE}{\small{}
@@ -137,7 +137,7 @@ contribution are also written to the \texttt{LOCAL\_PATH} when \texttt{SAVE\_FOR
 \end{itemize}
 
 
-\item \textbf{Prepare the adjoint sources}\\
+\item \textbf{Prepare the adjoint sources}\newline
 %
 The adjoint sources need to be prepared the same way as described
 in Section~\ref{sec:Adjoint-simulation-sources}, item~\ref{enu:Prepare-the-adjoint}.
@@ -183,7 +183,7 @@ i.e., suppress file endings \texttt{.sem.ascii}.
 You will also need to create a file called \texttt{STATIONS\_ADJOINT} in the \texttt{DATA/} directory in the root directory of the code. That file can be identical to the \texttt{DATA/STATIONS} file if you had a single station in \texttt{STATIONS}.
 
 
-\item \textbf{Run the kernel simulation}\\
+\item \textbf{Run the kernel simulation}\newline
 %
 With the successful forward simulation and the adjoint source ready
 in \texttt{SEM/}, set \texttt{SIMULATION\_TYPE = 3} and \texttt{SAVE\_FORWARD
@@ -215,7 +215,7 @@ be used as preconditioners in the crust-mantle region for iterative inverse
 optimization schemes.
 \end{itemize}
 
-\item \textbf{Run the boundary kernel simulation}\\
+\item \textbf{Run the boundary kernel simulation}\newline
 %
 If you set the \texttt{SAVE\_BOUNDARY\_MESH = .true.} in
 the \texttt{constants.h} file before the simulations, i.e., at the
@@ -229,7 +229,7 @@ For a theoretical derivation of the boundary kernels, refer to \citet{TrTaLi05},
 and for the visualization of the boundary kernels, refer to Section
 \ref{sec:Finite-Frequency-Kernels}.
 
-\item \textbf{Run the anisotropic kernel simulation}\\
+\item \textbf{Run the anisotropic kernel simulation}\newline
 %
 Instead of the kernels for the isotropic wave speeds, you can also
 compute the kernels for the 21 independent components $C_{IJ},\, I,J=1,...,6$
@@ -252,7 +252,7 @@ can then be combined to obtain the kernels related to other descriptions
 of anisotropy. This can be done, for example, when combining the kernel
 files from slices into one mesh file (see Section~\ref{sec:Finite-Frequency-Kernels}).
 
-\item \textbf{Run the steady state kernel simulation}\\
+\item \textbf{Run the steady state kernel simulation}\newline
 %
 For source encoded adjoint tomography, you can compute the stationary kernels by enabling the flag \texttt{STEADY\_STATE\_KERNEL}. The kernels will then be computed through the stationary part of the wavefield, as is shown in Figure~\vref{fig:Steady-state-kernel}. The length of the stationary wavefield ($\Delta\tau$ in Figure~\ref{fig:Steady-state-kernel}) can be speified with \texttt{STEADY\_STATE\_LENGTH\_IN\_MINUTES}. Please refer to \citet{bachmann2020source} for details.
 %
