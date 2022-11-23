@@ -75,7 +75,7 @@
         timeval = time_t - tshift_src(isource)
 
         ! determines source time function value
-        stf = get_stf_viscoelastic(timeval,isource)
+        stf = get_stf_viscoelastic(timeval,isource,it)
 
         ! distinguishes between single and double precision for reals
         stf_used = real(stf,kind=CUSTOM_REAL)
@@ -109,7 +109,7 @@
       timeval = time_t - tshift_src(isource)
 
       ! determines source time function value
-      stf = get_stf_viscoelastic(timeval,isource)
+      stf = get_stf_viscoelastic(timeval,isource,it)
 
       ! stores current stf values
       stf_pre_compute(isource) = stf
@@ -439,7 +439,7 @@
         timeval = time_t - tshift_src(isource)
 
         ! determines source time function value
-        stf = get_stf_viscoelastic(timeval,isource)
+        stf = get_stf_viscoelastic(timeval,isource,it_tmp)
 
         ! distinguishes between single and double precision for reals
         stf_used = real(stf,kind=CUSTOM_REAL)
@@ -468,7 +468,7 @@
       timeval = time_t - tshift_src(isource)
 
       ! determines source time function value
-      stf = get_stf_viscoelastic(timeval,isource)
+      stf = get_stf_viscoelastic(timeval,isource,it_tmp)
 
       ! stores current stf values
       stf_pre_compute(isource) = stf
@@ -485,7 +485,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  double precision function get_stf_viscoelastic(time_source_dble,isource)
+  double precision function get_stf_viscoelastic(time_source_dble,isource,it_index)
 
 ! returns source time function value for specified time
 
@@ -494,7 +494,7 @@
   implicit none
 
   double precision,intent(in) :: time_source_dble
-  integer,intent(in) :: isource
+  integer,intent(in) :: isource,it_index
 
   ! local parameters
   double precision :: stf,f0
@@ -520,7 +520,7 @@
       stf = comp_source_time_function_rickr(time_source_dble,f0)
     case (2)
       ! Heaviside (step) source time function
-      stf = comp_source_time_function(time_source_dble,hdur_Gaussian(isource))
+      stf = comp_source_time_function(time_source_dble,hdur_Gaussian(isource),it_index)
     case (3)
       ! Monochromatic source time function
       f0 = 1.d0 / hdur(isource) ! using hdur as a PERIOD just to avoid changing FORCESOLUTION file format
@@ -538,7 +538,7 @@
       f0 = 1.d0 / hdur(isource) ! using half duration as a FREQUENCY just to avoid changing CMTSOLUTION file format
       stf = comp_source_time_function_mono(time_source_dble,f0)
     else
-      stf = comp_source_time_function(time_source_dble,hdur_Gaussian(isource))
+      stf = comp_source_time_function(time_source_dble,hdur_Gaussian(isource),it_index)
     endif
   endif
 

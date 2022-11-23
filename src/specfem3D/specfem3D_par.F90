@@ -296,7 +296,7 @@ module specfem_par
   double precision :: source_final_distance_max
 
   ! External source time function.
-  double precision, dimension(:), allocatable :: stfArray_external
+  double precision, dimension(:), allocatable :: user_source_time_function
 
   ! parameters for a force source located exactly at a grid point
   integer, dimension(:), allocatable :: force_stf

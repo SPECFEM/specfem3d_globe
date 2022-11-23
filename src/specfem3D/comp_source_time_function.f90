@@ -25,13 +25,14 @@
 !
 !=====================================================================
 
-  double precision function comp_source_time_function(t,hdur)
+  double precision function comp_source_time_function(t,hdur,it_index)
 
   use constants, only: EXTERNAL_SOURCE_TIME_FUNCTION
 
   implicit none
 
   double precision,intent(in) :: t,hdur
+  integer, intent(in) :: it_index
 
   ! local parameters
   double precision, external :: comp_source_time_function_heavi
@@ -39,7 +40,7 @@
 
   if (EXTERNAL_SOURCE_TIME_FUNCTION) then
     ! external stf
-    comp_source_time_function = comp_source_time_function_ext()
+    comp_source_time_function = comp_source_time_function_ext(it_index)
   else
     ! quasi Heaviside
     comp_source_time_function = comp_source_time_function_heavi(t,hdur)
@@ -193,17 +194,40 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  double precision function comp_source_time_function_ext()
+  double precision function comp_source_time_function_ext(it_index)
 
-  use specfem_par, only: it, stfArray_external
+  use specfem_par, only: SIMULATION_TYPE, NSTEP, user_source_time_function
+
   implicit none
 
+  integer,intent(in) :: it_index
+
+  ! local parameters
+  integer :: it_tmp
+
   ! On the first iteration, go get the ASCII file.
-  if (.not. allocated (stfArray_external)) then
-    call get_EXTERNAL_SOURCE_TIME_FUNCTION()
+  if (.not. allocated (user_source_time_function)) then
+    call read_external_source_time_function()
   endif
 
-  comp_source_time_function_ext = stfArray_external(it)
+  ! sets index in user stf
+  if (SIMULATION_TYPE == 1) then
+    ! forward simulation
+    it_tmp = it_index
+  else
+    ! reverse time
+    ! iteration step
+    ! (see compute_add_sources_backward() in compute_add_sources.f90)
+    ! to match a reversed time value: time_t = dble(NSTEP-it_tmp)*DT - t0
+    it_tmp = NSTEP - it_index
+  endif
+
+  ! checks bounds
+  if (it_tmp < 1) it_tmp = 1
+  if (it_tmp > NSTEP) it_tmp = NSTEP
+
+  ! gets stored STF
+  comp_source_time_function_ext = user_source_time_function(it_tmp)
 
   end function comp_source_time_function_ext
 
@@ -211,40 +235,128 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine get_EXTERNAL_SOURCE_TIME_FUNCTION()
+  subroutine read_external_source_time_function()
 
-  use specfem_par, only: NSTEP, stfArray_external, IIN
+  use constants, only: IIN, MAX_STRING_LEN
+  use specfem_par, only: NSTEP, user_source_time_function, USE_LDDRK
+
   implicit none
 
-  integer :: iterator,ier
+  ! local parameters
+  integer :: i,ier
+  character(len=MAX_STRING_LEN) :: external_source_time_function_filename
   character(len=256) :: line
 
-  ! Allocate the source time function array to the number of time steps.
-  allocate( stfArray_external(NSTEP),stat=ier)
-  if (ier /= 0 ) stop 'Error allocating external source time function array'
+  ! hardcoded name for now...
+  external_source_time_function_filename = 'DATA/stf'
 
-  print *, NSTEP
+  ! saftey check
+  if (USE_LDDRK) then
+    print *,'Error: external source time function is not supported yet for LDDRK scheme'
+    stop 'Error external source time function is not supported yet for LDDRK scheme'
+  endif
+
+  ! Allocate the source time function array to the number of time steps.
+  allocate(user_source_time_function(NSTEP),stat=ier)
+  if (ier /= 0) stop 'Error allocating external user source time function array'
+  user_source_time_function(:) = 0.d0
 
   ! Read in source time function.
-  open(unit=IIN, file='DATA/stf', status='old', form='formatted',iostat=ier)
-  if (ier /= 0 ) stop 'Error opening file DATA/stf'
+  open(unit=IIN, file=trim(external_source_time_function_filename), &
+       status='old', form='formatted', action='read', iostat=ier)
+  if (ier /= 0) then
+    print *,'Error could not open external source file: ',trim(external_source_time_function_filename)
+    stop 'Error opening external source time function file DATA/stf'
+  endif
 
-  read_loop: do iterator=1,NSTEP
+  ! gets number of file entries
+  i = 0
+  do while (ier == 0)
+    read(IIN,"(a256)",iostat=ier) line
+    if (ier == 0) then
+      ! suppress leading white spaces, if any
+      line = adjustl(line)
 
-    read(IIN, '(A)', iostat = ier) line
+      ! skip empty/comment lines
+      if (len_trim(line) == 0) cycle
+      if (line(1:1) == '#' .or. line(1:1) == '!') cycle
+      ! stop 'error in format of external_source_time_function_filename, no comments are allowed in it'
 
-    if (ier /= 0) then
-      print *, "Error in external source time function."
-      stop 'Error reading external stf file'
+      ! increases counter
+      i = i + 1
     endif
+  enddo
+  rewind(IIN)
 
-    ! Ignore lines with a hash (comments)
-    if (index(line, "#") /= 0) cycle read_loop
+  ! checks number of lines
+  if (i < 1) then
+    print *,'Error: External source time function file ',trim(trim(external_source_time_function_filename)),'has no valid data;'
+    print *,'       the number of time steps is < 1. Please check the file...'
+    stop 'Error: the number of time steps in external_source_time_function_filename is < 1'
+  endif
 
-    read(line, *) stfArray_external(iterator)
+  if (i > NSTEP) then
+    print *
+    print *,'****************************************************************************************'
+    print *,'Warning: ',trim(external_source_time_function_filename),' contains more than NSTEP time steps,'
+    print *,'         only the first NSTEP=',NSTEP,' will be read, all the others will be ignored.'
+    print *,'****************************************************************************************'
+    print *
+  endif
 
-  enddo read_loop
+  ! checks number of time steps read
+  if (i < NSTEP) then
+    print *,'Problem when reading external source time file: ', trim(external_source_time_function_filename)
+    print *,'  number of time steps in the simulation = ',NSTEP
+    print *,'  number of time steps read from the source time function = ',i
+    print *,'Please make sure that the number of time steps in the external source file read is greater or &
+             &equal to the number of time steps in the simulation'
+    stop 'Error invalid number of time steps in external source time file'
+  endif
 
+  ! file format: DATA/stf allows for comment lines
+  ! # comment
+  ! stf_val
+  ! stf_val
+  ! ...
+
+  ! read the time step used and check that it is the same as DT used for the code
+  ier = 0
+  i = 0
+  do while (ier == 0)
+    read(IIN,"(a256)",iostat=ier) line
+    if (ier == 0) then
+      ! suppress leading white spaces, if any
+      line = adjustl(line)
+
+      ! skip empty/comment lines
+      if (len_trim(line) == 0) cycle
+      if (line(1:1) == '#' .or. line(1:1) == '!') cycle
+
+      ! increases counter
+      i = i + 1
+
+      ! gets STF
+      if (i <= NSTEP) then
+        ! read the source values
+        read(line,*,iostat=ier) user_source_time_function(i)
+        if (ier /= 0) then
+          print *,'Problem when reading external source time file: ', trim(external_source_time_function_filename)
+          print *,'  line   : ',trim(line)
+          print *,'  counter: ',i
+          print *,'Please check, file format should be: '
+          print *,'  #(optional)comment '
+          print *,'  stf-value'
+          print *,'  stf-value'
+          print *,'  ..'
+          stop 'Error reading external source time file with invalid format'
+        endif
+      endif
+
+    endif
+  enddo
+
+  ! closes external STF file
   close(IIN)
 
-  end subroutine get_EXTERNAL_SOURCE_TIME_FUNCTION
+  end subroutine read_external_source_time_function

@@ -52,6 +52,9 @@
   ! number of points to plot the source time function and spectrum
   integer, parameter :: NSAMP_PLOT_SOURCE = 1000
 
+  ! overall total STF
+  double precision,dimension(:),allocatable :: total_stf
+
   ! only main process outputs stf
   if (myrank /= 0) return
 
@@ -59,6 +62,13 @@
   write(IMAIN,*)
   write(IMAIN,*) 'printing the source-time function'
   call flush_IMAIN()
+
+  ! overall, combined total STF
+  if (NSOURCES > 1) then
+    allocate(total_stf(NSTEP),stat=ier)
+    if (ier /= 0) stop 'Error allocating total_stf array'
+    total_stf(:) = 0.d0
+  endif
 
   ! initializes
   strength = 0.d0
@@ -116,11 +126,13 @@
       timeval = time_t - tshift_src(isource)
 
       ! source time function value (in range [-1,1]
-      stf = get_stf_viscoelastic(timeval,isource)
+      stf = get_stf_viscoelastic(timeval,isource,it)
 
       ! format: #time(s)   #stf   #scaling (M0 or force factor)
       write(IOUT,*) time_t, sngl(stf), sngl(strength)
 
+      ! combined total STF
+      if (NSOURCES > 1) total_stf(it) = total_stf(it) + stf
     enddo
     close(IOUT)
 
@@ -155,5 +167,34 @@
     close(IOUT)
 
   enddo ! NSOURCES
+
+  ! prints out combined total STF
+  if (NSOURCES > 1) then
+    ! output file
+    open(unit=IOUT,file=trim(OUTPUT_FILES)//'/plot_source_time_function_total.txt',status='unknown',iostat=ier)
+    if (ier /= 0 ) call exit_mpi(0,'Error opening plot_source_time_function_total file')
+
+    ! file header
+    write(IOUT,*) "# Combined Total Source Time function"
+    write(IOUT,*) "# number of single sources NSOURCES = ",NSOURCES
+    if (USE_FORCE_POINT_SOURCE) then
+      write(IOUT,*) "# source type point force"
+    else
+      write(IOUT,*) "# source type CMT"
+    endif
+    write(IOUT,*) "# format: #time(s)   #stf"
+
+    ! writes out total source time function to file
+    do it = 1,NSTEP
+      ! time for simulation
+      time_t = dble(it-1)*DT - t0
+      ! format: #time(s)   #stf
+      write(IOUT,*) time_t, sngl(total_stf(it))
+    enddo
+    close(IOUT)
+
+    ! frees temporary array
+    deallocate(total_stf)
+  endif
 
   end subroutine print_stf_file
