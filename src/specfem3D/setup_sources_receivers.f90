@@ -985,7 +985,8 @@
     if (mod(NSTEP,NTSTEP_BETWEEN_READ_ADJSRC) /= 0) then
       print *,'Error: NSTEP ',NSTEP,' not a multiple of NTSTEP_BETWEEN_READ_ADJSRC ',NTSTEP_BETWEEN_READ_ADJSRC
       print *,'       Please change NTSTEP_BETWEEN_READ_ADJSRC in the Par_file!'
-      stop 'Error: mod(NSTEP,NTSTEP_BETWEEN_READ_ADJSRC) must be zero! Please modify Par_file and rerun solver'
+      call exit_MPI(myrank,'Error: mod(NSTEP,NTSTEP_BETWEEN_READ_ADJSRC) must be zero! &
+                           &Please modify Par_file and rerun solver')
     endif
   endif
 
