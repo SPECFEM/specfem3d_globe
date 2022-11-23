@@ -313,7 +313,7 @@ RECEIVERS_CAN_BE_BURIED         = .true.
 
 # interval in time steps for reading adjoint traces
 # 0 = read the whole adjoint sources at start time
-NTSTEP_BETWEEN_READ_ADJSRC      = 500
+NTSTEP_BETWEEN_READ_ADJSRC      = 0
 
 # use ASDF format for reading the adjoint sources
 READ_ADJSRC_ASDF                = .false.
