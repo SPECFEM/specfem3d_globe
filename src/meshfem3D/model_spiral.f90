@@ -57,7 +57,7 @@
 !
 ! - Version SPiRaL.v1.1: Christina Morency, LLNL, 02/25/2020
 !   Debugged mantle loop.
-!   Added flag_smooth_spiral to smooth the crust if needed
+!   Added flag_smooth_spiral_crust to smooth the crust if needed
 !
 ! - Version SPiRaL.v1.0: Christina Morency, LLNL, 01/21/2020
 !   Using model SPiRaL.1.3.
@@ -171,7 +171,7 @@
   double precision, dimension(:), allocatable :: bnd_lat1, bnd_lat2
 
   ! crustal smoothing
-  logical, parameter :: flag_smooth_spiral = .true.
+  logical :: flag_smooth_spiral_crust
   ! sampling rate for CAP points
   integer, parameter :: NTHETA_spiral = 4, NPHI_spiral = 20
 
@@ -189,11 +189,14 @@
 ! standard routine to setup model
 
   use constants
+  use shared_parameters, only: NEX_XI,NEX_ETA
   use model_spiral_crust_par
 
   implicit none
 
+  ! local parameters
   integer :: ier
+  integer :: NEX_MAX
 
   ! allocate crustal arrays
   allocate(crust_thickness(CRUST_NP,CRUST_NB), &
@@ -214,6 +217,18 @@
   bnd_nlon(:) = 0
   bnd_lat1(:) = ZERO
   bnd_lat2(:) = ZERO
+
+  ! by default, crustal smoothing is on
+  ! (required for lower NEX models, otherwise negative Jacobian mesh gets produced)
+  flag_smooth_spiral_crust = .true.
+
+  ! turns smoothing off when NEX resolution is high enough to produce good quality mesh
+  ! note from Christina:
+  !   Crustal smoothing does affect waveforms amplitudes. The absence of smoothing better fits the data,
+  !   and you can appreciate the differences between with/without crustal smoothing on amplitudes.
+  !   So, we strongly recommend removing crustal smoothing when NEX >=144.
+  NEX_MAX = max(NEX_XI,NEX_ETA)
+  if (NEX_MAX >= 144) flag_smooth_spiral_crust = .false.
 
   ! the variables read are declared and stored in structure model_spiral_par
   if (myrank == 0) call read_crust_spiral_model()
@@ -417,6 +432,17 @@
   !    enddo
   !close(77)
 
+  ! user output
+  if (flag_smooth_spiral_crust) then
+    write(IMAIN,*) '  using crustal smoothing:'
+    write(IMAIN,*) '    CAP smoothing degree default                  = ',sngl(CAP_SMOOTHING_DEGREE_DEFAULT)
+    write(IMAIN,*) '    smooth crust even more (for critical regions) = ',SMOOTH_CRUST_EVEN_MORE
+  else
+    write(IMAIN,*) '  no crustal smoothing'
+  endif
+  write(IMAIN,*)
+  call flush_IMAIN()
+
   end subroutine read_crust_spiral_model
 
 !
@@ -599,7 +625,7 @@
   found_crust = .true.
 
   ! gets crustal structure at position lat/lon
-  if (.not. flag_smooth_spiral) then
+  if (.not. flag_smooth_spiral_crust) then
     ! no smoothing
     call read_crust_spiral(lat,lon,coefs,rhos,thicks)
   else
