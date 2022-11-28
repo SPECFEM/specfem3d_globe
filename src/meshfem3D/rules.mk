@@ -115,6 +115,7 @@ meshfem3D_MESHER_OBJECTS = \
 	$O/model_sea99_s.check.o \
 	$O/model_sglobe.check.o \
 	$O/model_sglobecrust.check.o \
+	$O/model_sh_mars.check.o \
 	$O/model_spiral.check.o \
 	$O/moho_stretching.check.o \
 	$O/save_arrays_solver.check.o \
@@ -152,6 +153,7 @@ meshfem3D_MODULES = \
 	$(FC_MODDIR)/model_attenuation_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_bkmns_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_case65tay_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_sh_mars_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_ccrem_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_crust_1_0_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_crust_2_0_par.$(FC_MODEXT) \

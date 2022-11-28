@@ -226,7 +226,7 @@
   ! note from Christina:
   !   Crustal smoothing does affect waveforms amplitudes. The absence of smoothing better fits the data,
   !   and you can appreciate the differences between with/without crustal smoothing on amplitudes.
-  !   So, we strongly recommend removing crustal smoothing when NEX >=144.
+  !   So, we strongly recommend removing crustal smoothing when NEX >= 144.
   NEX_MAX = max(NEX_XI,NEX_ETA)
   if (NEX_MAX >= 144) flag_smooth_spiral_crust = .false.
 

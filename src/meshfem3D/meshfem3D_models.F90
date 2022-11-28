@@ -233,6 +233,10 @@
         !chris modif checker 02/20/21
         call model_heterogen_mntl_broadcast()
 
+      case (THREE_D_MODEL_SH_MARS)
+        ! Mars spherical harmonics model
+        call model_SH_mars_broadcast()
+
       case default
         call exit_MPI(myrank,'3D model not defined')
 
@@ -329,6 +333,10 @@
     case (ICRUST_SPIRAL)
       ! anisotropic crust from SPiRaL
       call model_crust_spiral_broadcast()
+
+    case (ICRUST_SH_MARS)
+      ! Mars SH model (defines both crust & mantle)
+      call model_SH_mars_broadcast()
 
     case default
       stop 'crustal model type not defined'
@@ -884,6 +892,11 @@
           vsv = dvs
           vsh = dvs
           rho = drho
+
+        case (THREE_D_MODEL_SH_MARS)
+          ! Mars model expansion on spherical harmonics
+          r_used = r  ! takes actual position (between CMB and surface)
+          call model_SH_mars_crustmantle(r_used,theta,phi,vpv,vph,vsv,vsh,eta_aniso,rho)
 
         case default
           print *,'Error: do not recognize value for THREE_D_MODEL ',THREE_D_MODEL
@@ -1476,6 +1489,16 @@
                               c11c,c12c,c13c,c14c,c15c,c16c,c22c,c23c,c24c,c25c,c26c, &
                               c33c,c34c,c35c,c36c,c44c,c45c,c46c,c55c,c56c,c66c, &
                               found_crust,elem_in_crust,moho_only)
+
+    case (ICRUST_SH_MARS)
+      ! Mars model expansion on spherical harmonics
+      ! SH mars model defines velocities in both crust & mantle
+      call model_SH_mars_crust(lat,lon,r,vpc,vsc,rhoc,moho,sediment,found_crust,elem_in_crust,moho_only)
+      if (moho_only) return
+      vpvc = vpc
+      vphc = vpc
+      vsvc = vsc
+      vshc = vsc
 
     case default
       stop 'crustal model type not defined'

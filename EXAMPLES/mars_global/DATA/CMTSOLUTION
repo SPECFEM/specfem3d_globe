@@ -1,0 +1,13 @@
+PDE 2019 1 1 12 00 00.00  11.5900  163.7900 30.0 3.0 3.0 Cerberus Fossae
+event name:        2019010101A          
+time shift:        0.0000               
+half duration:     2.0000               
+latitude:          11.5900
+longitude:         163.7900
+depth:             30.0000
+Mrr:               -1.9122e+20
+Mtt:               2.1876e+20
+Mpp:               -2.7546e+19
+Mrt:               4.6280e+20
+Mrp:               -1.0083e+20
+Mtp:               5.8824e+19

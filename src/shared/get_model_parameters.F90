@@ -231,6 +231,13 @@
     ! in case it has an ending for the crust, remove it from the name
     MODEL_ROOT = MODEL_ROOT(1: len_trim(MODEL_ROOT)-12)
   endif
+  ! checks with '_crustSHmars' option
+  if (len_trim(MODEL_ROOT) > 12 ) ending = MODEL_ROOT(len_trim(MODEL_ROOT)-11:len_trim(MODEL_ROOT))
+  if (trim(ending) == '_crustshmars') then
+    impose_crust = ICRUST_SH_MARS
+    ! in case it has an ending for the crust, remove it from the name
+    MODEL_ROOT = MODEL_ROOT(1: len_trim(MODEL_ROOT)-12)
+  endif
 
   ! save main model name (without appended options)
   MODEL_NAME = trim(MODEL_ROOT)
@@ -285,7 +292,15 @@
   ! model specifics
   select case (trim(MODEL_NAME))
 
+  !-----------------------------------------------------------------------
+  !
   ! 1-D models
+  !
+  !-----------------------------------------------------------------------
+
+  ! 1-D reference models
+
+  ! Earth
   case ('1d_isotropic_prem')
     HONOR_1D_SPHERICAL_MOHO = .true.
 
@@ -406,7 +421,13 @@
     REFERENCE_1D_MODEL = REFERENCE_MODEL_MOON_MEENA
     stop 'model MOON_MEENA is not fully implemented yet'
 
+  !-----------------------------------------------------------------------
+  !
   ! 3-D models
+  !
+  !-----------------------------------------------------------------------
+
+  ! Earth
   case ('transversely_isotropic_prem_plus_3d_crust_2.0')
     CASE_3D = .true.
     CRUSTAL = .true.
@@ -481,8 +502,11 @@
     ONE_CRUST = .true.
     TRANSVERSE_ISOTROPY = .true.
 
+  ! Mars
   case('mars_full_sh')
     ! Mars using spherical harmonics model, uses Sohl & Spoon reference model by default
+    ! note: spherical harmonics must be defined as in full_sh format
+    !       with model files in directory folder DATA/full_sphericalharmonic_model/
     REFERENCE_1D_MODEL = REFERENCE_MODEL_SOHL
     ! uses SH crustal model by default
     REFERENCE_CRUSTAL_MODEL = ICRUST_CRUST_SH
@@ -494,6 +518,22 @@
     ONE_CRUST = .true.
     TRANSVERSE_ISOTROPY = .false. ! enforces isotropic model
 
+  case('mars_sh_model')
+    ! Mars using spherical harmonics model, uses Case65TAY 1-D reference model by default
+    ! note: spherical harmonics must be defined as in Ana-Catalina Plesa evolution model formats
+    !       with model files specified in file DATA/mars/SH_model/SH_model_files.dat
+    REFERENCE_1D_MODEL = REFERENCE_MODEL_CASE65TAY
+    ! uses SH crustal model by default
+    REFERENCE_CRUSTAL_MODEL = ICRUST_SH_MARS
+    ! 3D mantle model perturbations
+    THREE_D_MODEL = THREE_D_MODEL_SH_MARS
+    MODEL_3D_MANTLE_PERTUBATIONS = .true.
+    CASE_3D = .true.
+    CRUSTAL = .true.
+    ONE_CRUST = .true.
+    TRANSVERSE_ISOTROPY = .false. ! enforces isotropic model
+
+  ! Moon
   case ('moon_full_sh')
     ! Moon using spherical harmonics model, uses VPREMOON reference model by default
     REFERENCE_1D_MODEL = REFERENCE_MODEL_VPREMOON
@@ -718,9 +758,16 @@
     ! takes tiso PREM mantle model as reference
     TRANSVERSE_ISOTROPY = .true.
 
+  !-----------------------------------------------------------------------
+  !
   ! GLL models
+  !
+  !-----------------------------------------------------------------------
+
   ! velocities will get over-imposed onto a default mesh
   ! (mostly used for iterative model updates)
+
+  ! Earth
   case ('gll','gll_tiso')
     ! default GLL model:
     ! will be given on local basis, at all GLL points,
@@ -780,6 +827,7 @@
     THREE_D_MODEL = THREE_D_MODEL_GLL
     ATTENUATION_GLL = .true.
 
+  ! Mars
   case ('gll_mars')
     ! Mars
     ! default GLL model, based on 1D_Sohl_3D_crust
@@ -817,6 +865,7 @@
     MODEL_GLL = .true.
     MODEL_GLL_TYPE = 1 ! (1 == iso) input model files are iso (vp,vs,rho)
 
+  ! Moon
   case ('gll_moon')
     ! Moon, based on VPREMOON
     REFERENCE_1D_MODEL = REFERENCE_MODEL_VPREMOON
