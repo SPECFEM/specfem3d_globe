@@ -876,6 +876,10 @@
   Qmu = 0.d0
   Qkappa = 0.d0 ! not used, not stored so far...
   tau_e(:) = 0.d0
+  tau_s(:) = 0.d0
+  moho = 0.d0
+  sediment = 0.d0
+
   i = 1; j = 1; k = 1; ispec = 1 ! dummy GLL point
 
   ! do not force the element/point to be in the crust

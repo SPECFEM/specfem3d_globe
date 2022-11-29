@@ -77,7 +77,7 @@
   double precision :: A,C,L,N,F,Gc,Gs,Gc_prime,Gs_prime,mu0
 
   double precision :: Qkappa,Qmu
-  double precision, dimension(N_SLS) :: tau_e
+  double precision, dimension(N_SLS) :: tau_e,tau_s
 
   double precision :: rho,vs
   ! tiso
@@ -91,6 +91,7 @@
   ! it is *CRUCIAL* to leave this initialization here, this was the cause of the "s362ani + attenuation" bug in 2013 and 2014
   ! thus please never remove the line below
   moho = 0.d0
+  sediment = 0.d0
 
   ! loops over all GLL points for this spectral element
   do k = 1,NGLLZ
@@ -137,6 +138,7 @@
         Qmu = 0.d0
         Qkappa = 0.d0 ! not used, not stored so far...
         tau_e(:) = 0.d0
+        tau_s(:) = tau_s_store(:)
 
         ! sets xyz coordinates of GLL point
         xmesh = xstore(i,j,k,ispec)
@@ -233,7 +235,7 @@
         if (ATTENUATION) then
           call meshfem3D_models_getatten_val(idoubling,r_prem,theta,phi, &
                                              ispec, i, j, k, &
-                                             tau_e,tau_s_store, &
+                                             tau_e,tau_s, &
                                              moho,Qmu,Qkappa,elem_in_crust)
         endif
 

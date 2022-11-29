@@ -393,6 +393,16 @@
     check_doubling_flag = .true.
   endif
 
+  vpv = ZERO
+  vph = ZERO
+  vsv = ZERO
+  vsh = ZERO
+  eta_aniso = ONE
+  rho = ZERO
+
+  Qmu = ZERO
+  Qkappa = ZERO
+
 !---
 !
 ! ADD YOUR MODEL HERE
@@ -1204,8 +1214,12 @@
 ! ADD YOUR MODEL HERE
 !
 !---
+
+  ! initializes
   found_crust = .false.
   moho_only = .false.
+  moho = 0.d0
+  sediment = 0.d0
 
   ! crustal model can vary for different 3-D models
   select case (THREE_D_MODEL)
@@ -1343,40 +1357,31 @@
   logical :: found_crust_area,point_in_area
 
   ! initializes
-  if (moho_only) then
-    ! moho depth
-    moho = 0.d0
+  vpvc = 0.d0
+  vphc = 0.d0
+  vsvc = 0.d0
+  vshc = 0.d0
 
-    ! sediment depth
-    sediment = 0.d0
-  else
-    vpvc = 0.d0
-    vphc = 0.d0
-    vsvc = 0.d0
-    vshc = 0.d0
+  vpc = 0.d0
+  vsc = 0.d0
+  rhoc = 0.d0
 
-    vpc = 0.d0
-    vsc = 0.d0
-    rhoc = 0.d0
+  ! isotropic by default
+  etac = 1.d0
 
-    ! isotropic by default
-    etac = 1.d0
+  ! anisotropy
+  c11c = 0.d0; c12c = 0.d0; c13c = 0.d0
+  c14c = 0.d0; c15c = 0.d0; c16c = 0.d0
+  c22c = 0.d0; c23c = 0.d0; c24c = 0.d0
+  c25c = 0.d0; c26c = 0.d0; c33c = 0.d0
+  c34c = 0.d0; c35c = 0.d0; c36c = 0.d0
+  c44c = 0.d0; c45c = 0.d0; c46c = 0.d0
+  c55c = 0.d0; c56c = 0.d0; c66c = 0.d0
 
-    ! anisotropy
-    c11c = 0.d0; c12c = 0.d0; c13c = 0.d0
-    c14c = 0.d0; c15c = 0.d0; c16c = 0.d0
-    c22c = 0.d0; c23c = 0.d0; c24c = 0.d0
-    c25c = 0.d0; c26c = 0.d0; c33c = 0.d0
-    c34c = 0.d0; c35c = 0.d0; c36c = 0.d0
-    c44c = 0.d0; c45c = 0.d0; c46c = 0.d0
-    c55c = 0.d0; c56c = 0.d0; c66c = 0.d0
-
-    ! moho depth
-    moho = 0.d0
-
-    ! sediment depth
-    sediment = 0.d0
-  endif
+  ! moho depth
+  moho = 0.d0
+  ! sediment depth
+  sediment = 0.d0
 
   ! flag to indicate if position inside crust
   found_crust = .false.
