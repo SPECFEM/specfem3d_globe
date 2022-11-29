@@ -908,6 +908,7 @@
   integer, parameter :: ICRUST_SGLOBECRUST = 7    ! modified Crust2.0 for SGLOBE-rani
   integer, parameter :: ICRUST_BKMNS_GLAD  = 8    ! Block Mantle Spherical-Harmonics model
   integer, parameter :: ICRUST_SPIRAL      = 9    ! SPiRaL
+  integer, parameter :: ICRUST_SH_MARS     = 10   ! SH mars models (define crust & mantle values)
 
 ! define flag for 3D Earth model
   integer, parameter :: THREE_D_MODEL_S20RTS        = 101
@@ -929,6 +930,7 @@
   integer, parameter :: THREE_D_MODEL_BKMNS_GLAD    = 117
   integer, parameter :: THREE_D_MODEL_SPIRAL        = 118
   integer, parameter :: THREE_D_MODEL_HETEROGEN_PREM = 119
+  integer, parameter :: THREE_D_MODEL_SH_MARS       = 120
   ! inner core model
   integer, parameter :: THREE_D_MODEL_INNER_CORE_ISHII = 201
 

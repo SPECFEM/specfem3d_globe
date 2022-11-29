@@ -802,7 +802,8 @@
         if (REFERENCE_CRUSTAL_MODEL == ICRUST_SGLOBECRUST) &
           DT = DT*(1.d0 - 0.4d0)
         ! reduces time step size for SPiRaL crustal model
-        if (REFERENCE_CRUSTAL_MODEL == ICRUST_SPIRAL) &
+        ! (this is only needed for meshes with NEX < 144 due to critical element shapes in the crust)
+        if (REFERENCE_CRUSTAL_MODEL == ICRUST_SPIRAL .and. NEX_MAX < 144) &
           DT = DT*(1.d0 - 0.4d0)
       endif
     endif

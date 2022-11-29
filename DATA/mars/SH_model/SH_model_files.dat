@@ -1,0 +1,5 @@
+# mars model files
+density: case65/SH_Case65_TAY13_Density_2102
+vp     : case65/SH_Case65_TAY13_Vp_2102
+vs     : case65/SH_Case65_TAY13_Vs_2102
+

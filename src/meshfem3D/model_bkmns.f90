@@ -91,7 +91,6 @@
   !! see original file setup/constants.h in https://github.com/caiociardelli/gladm25
   integer,parameter :: NPT = 100001      ! Number of interpolation points in the radial basis (must be odd!)
 
-  double precision,parameter :: ANGLE_TOLERANCE = 1d-10  ! Water level to convert from Cartesian to spherical coordinates
   double precision,parameter :: WATER_LEVEL     = 1d-15  ! Water level to prevent divisions by zero
 
   double precision,parameter :: NORM_CMB_R      = 0.54622508d0  ! Normalized core-mantle boundary radius
@@ -859,6 +858,7 @@
   integer :: nnodes,degree,num_spline_NS,num_spline_positions
   integer :: degree_N,num_sh_coeffs
   integer :: spline_degree_zone2,spline_degree_zone3,spline_degree_zone4
+  integer :: dg_max2,dg_max3,dg_max4
   double precision :: rmin,rmax
   double precision :: rmin_zone2,rmax_zone2,rmin_zone3,rmax_zone3,rmin_zone4,rmax_zone4
 
@@ -1318,28 +1318,7 @@
 
   enddo ! izone
 
-  ! pre-computes Legendre polynomial factors
-  call get_Legendre_degree_Factors()
-
-  end subroutine read_mantle_bkmns_model
-
-!
-!-----------------------------------------------------------------------------------------
-!
-
-  subroutine get_Legendre_degree_Factors()
-
-  use constants, only: IMAIN,myrank
-  use model_bkmns_par
-
-  implicit none
-
-  ! local parameters
-  integer :: n,i,ier
-  integer :: dg_max2,dg_max3,dg_max4
-  double precision :: sgn,double_factorial_r
-  !double precision :: double_factorial_r_sqrt
-
+  ! Legendre degree factors
   ! gets actual maximum degree from mantle expansion files
   dg_max2 = maxval(degree_N_zone2(:))
   dg_max3 = maxval(degree_N_zone3(:))
@@ -1356,6 +1335,30 @@
   allocate(Legendre_degree_factor(0:degree_NMAX),stat=ier)
   if (ier /= 0) call exit_MPI(myrank,'Error allocating Legendre factor array')
   Legendre_degree_factor(:) = 0.d0
+
+  ! pre-computes Legendre polynomial factors
+  call get_Legendre_degree_Factors(degree_NMAX,Legendre_degree_factor)
+
+  end subroutine read_mantle_bkmns_model
+
+!
+!-----------------------------------------------------------------------------------------
+!
+
+  subroutine get_Legendre_degree_Factors(degree_NMAX,Legendre_degree_factor)
+
+  use constants, only: IMAIN,myrank
+  use model_bkmns_par, only: LEGENDRE_K2
+
+  implicit none
+
+  integer,intent(in) :: degree_NMAX
+  double precision,dimension(0:degree_NMAX),intent(inout) :: Legendre_degree_factor
+
+  ! local parameters
+  integer :: n,i
+  double precision :: sgn,double_factorial_r
+  !double precision :: double_factorial_r_sqrt
 
   ! old format:
   ! safety check
@@ -1622,10 +1625,6 @@
     val = sqrt ((2.d0 * n + 1) / (4.d0 * PI))
 
     do m = 0,n
-      !mn2Index(m,n)
-      !from original routine: mN2I (unsigned m, unsigned n) = n * (n + 1) / 2 + m;
-      idx = n * (n + 1) / 2 + m
-
       ! nF[mN2I (m, n)] = nml (m , n);
       ! Normalization factor
       !k1 = (m == 0) ? 1.L : 2.L;
@@ -1685,6 +1684,10 @@
         !factor = sqrt(factor)
       endif
 
+      !mn2Index(m,n)
+      !from original routine: mN2I (unsigned m, unsigned n) = n * (n + 1) / 2 + m;
+      idx = n * (n + 1) / 2 + m
+
       ! stores factor
       ! to avoid overflow: sqrt(k1 * k2 * k3 ) = sqrt(k2) * sqrt(k1*k3)
       nFactors(idx) = val * factor
@@ -1730,6 +1733,92 @@
   !enddo
 
   end subroutine get_nml_Factors
+
+!
+!-----------------------------------------------------------------------------------------
+!
+
+  subroutine get_nml_Factors_without_4PI_norm(degree_N, num_sh_coeffs, nFactors)
+
+! similar to get_nml_Factors() routine in model_bkmns.f90, but without the sqrt(1/(4 PI)) normalization factor
+
+  use constants, only: PI
+  use model_bkmns_par, only: LEGENDRE_K1,LEGENDRE_K2
+
+  implicit none
+
+  integer,intent(in) :: degree_N,num_sh_coeffs
+  double precision, dimension(0:num_sh_coeffs-1),intent(inout) :: nFactors
+
+  ! local parameters
+  integer :: n,m,idx,i,i0
+  double precision :: val,factor
+  ! note: PGI compilers don't support quad precision (kind=16), due to a lack of hardware support.
+  !       quad precision will also be very slow as operations are not optimized. thus, going down to 8 byte representations...
+  !real(kind=16) :: factorial_r
+  ! integer w/ 8 byte representation has a maximum value of 2**63-1 = 9,223,372,036,854,775,807
+  !integer(kind=8) :: factorial_r
+  ! using real w/ 8 byte which is double precision
+  double precision :: factorial_r_sqrt
+
+  double precision,parameter :: SQRT_K1 = sqrt(LEGENDRE_K1)
+  double precision,parameter :: SQRT_2 = sqrt(2.0)
+
+  ! new format
+  do n = 0,degree_N
+    ! factor for sqrt(k2)
+    val = sqrt ((2.d0 * n + 1)) !  here it differs to routine above: misses the 1 / (4.d0 * PI) factor
+
+    do m = 0,n
+      ! Auxiliary function to compute the normalization factor
+      ! factor (m , n)
+      if (m == 0) then
+        ! sqrt(k1*k3) = sqrt( 1.d0 * K1 )
+        factor = SQRT_K1
+      else
+        ! computes factorial (n+m)!/(n-m)!
+        i0 = n - m + 1
+
+        ! work-around for large degrees N
+        factorial_r_sqrt = dsqrt(1.d0*i0) / SQRT_K1
+
+        do i = i0 + 1, n + m
+          ! sqrt(b) = sqrt(i0 * i1 * ..) = sqrt(i0) * sqrt(i1) * ..
+          factorial_r_sqrt = factorial_r_sqrt * dsqrt(1.d0*i)
+
+          ! checks if not-a-number
+          if (factorial_r_sqrt /= factorial_r_sqrt) then
+            print *,'Error: nml factor becomes too big for degree_N = ',degree_N, &
+                    'factorial_r_sqrt = ',factorial_r_sqrt,'n,m,i = ',n,m,i
+            stop 'Error: get_nml_Factors() exceeds real*8 limits'
+          endif
+        enddo
+
+        ! factor for sqrt(k1 * k3) = sqrt(k1) * sqrt(k3)
+        !                          = sqrt(k1) * sqrt( LEGENDRE_K1 / factorial) = sqrt(k1) * sqrt(LEGENDRE_K1) / sqrt(factorial)
+        ! factor = sqrt(2.d0) * sqrt(LEGENDRE_K1) / factorial_r_sqrt
+        factor = SQRT_2 / factorial_r_sqrt
+      endif
+
+      ! sgn(m)  - will be applied to Legendre_degree_factor
+      !if (mod(m,2) == 1) then
+      !  sgn = -1.d0
+      !else
+      !  sgn = 1.d0
+      !endif
+
+      !mn2Index(m,n)
+      !from original routine: mN2I (unsigned m, unsigned n) = n * (n + 1) / 2 + m;
+      idx = n * (n + 1) / 2 + m
+
+      ! stores factor
+      ! to avoid overflow: sqrt(k1 * k2 * k3 ) = sqrt(k2) * sqrt(k1*k3)
+      nFactors(idx) = val *  factor
+    enddo
+  enddo
+
+  end subroutine get_nml_Factors_without_4PI_norm
+
 
 !
 !-----------------------------------------------------------------------------------------
@@ -2204,11 +2293,11 @@
         S_coeffs(:) = 0.d0
 
         ! azimutal Basis
-        call get_azimuthal_Basis(phi,degree_N,C_coeffs,S_coeffs)
+        call get_azimuthal_Basis(phi,degree_N,degree_NMAX,C_coeffs,S_coeffs)
 
         do n = 0,degree_N
           ! polar Basis
-          call get_polar_Basis(x,n,num_sh_coeffs,nFactors,P,Pnormalized)
+          call get_polar_Basis(x,n,num_sh_coeffs,nFactors,degree_NMAX,P,Pnormalized,Legendre_degree_factor)
 
           do m = 0,n
             Cmn = Pnormalized(m + 1) * C_coeffs(m)
@@ -2256,14 +2345,12 @@
 !-----------------------------------------------------------------------------------------
 !
 
-  subroutine get_azimuthal_Basis(phi,degree_N,C_coeffs,S_coeffs)
-
-  use model_bkmns_par, only: degree_NMAX
+  subroutine get_azimuthal_Basis(phi,degree_N,degree_NMAX,C_coeffs,S_coeffs)
 
   implicit none
 
   double precision, intent(in) :: phi
-  integer, intent(in) :: degree_N
+  integer, intent(in) :: degree_N,degree_NMAX
   double precision,dimension(0:degree_NMAX),intent(inout) :: C_coeffs,S_coeffs
 
   ! local parameters
@@ -2280,9 +2367,9 @@
 !-----------------------------------------------------------------------------------------
 !
 
-  subroutine get_polar_Basis(x,n,num_sh_coeffs,nFactors,P,Pnormalized)
+  subroutine get_polar_Basis(x,n,num_sh_coeffs,nFactors,degree_NMAX,P,Pnormalized,Legendre_degree_factor)
 
-  use model_bkmns_par, only: LEGENDRE_K2,Legendre_degree_factor,degree_NMAX ! LEGENDRE_K3
+  use model_bkmns_par, only: LEGENDRE_K2 ! LEGENDRE_K3
 
   implicit none
 
@@ -2290,7 +2377,9 @@
   integer, intent(in) :: n,num_sh_coeffs
   double precision,dimension(0:num_sh_coeffs-1),intent(in) :: nFactors
 
+  integer, intent(in) :: degree_NMAX
   double precision,dimension(0:degree_NMAX+1),intent(inout) :: P,Pnormalized
+  double precision,dimension(0:degree_NMAX),intent(in) :: Legendre_degree_factor
 
   ! local parameters
   integer :: m,idx

@@ -188,6 +188,18 @@
   found_crust = .false.
   point_in_area = .false.
 
+  vpc = ZERO
+  vsc = ZERO
+  rhoc = ZERO
+
+  mohoc = ZERO
+  sedimentc = ZERO
+
+  zsmooth(:)   = ZERO
+  vpsmooth(:)  = ZERO
+  vssmooth(:)  = ZERO
+  rhosmooth(:) = ZERO
+
   ! min/max area:
   !
   ! EPcrust lat/lon range:     lat[9.0/ 89.5] / lon[-56.0 / 70.0]
@@ -254,7 +266,6 @@
   if (INCLUDE_SEDIMENTS_IN_CRUST .and. zsmooth(1) >= MINIMUM_SEDIMENT_THICKNESS) then
     sedimentc = zsmooth(1) / R_PLANET_KM
   endif
-
 
   ! initializes
   vp = ZERO

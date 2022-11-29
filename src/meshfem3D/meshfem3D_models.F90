@@ -233,6 +233,10 @@
         !chris modif checker 02/20/21
         call model_heterogen_mntl_broadcast()
 
+      case (THREE_D_MODEL_SH_MARS)
+        ! Mars spherical harmonics model
+        call model_SH_mars_broadcast()
+
       case default
         call exit_MPI(myrank,'3D model not defined')
 
@@ -330,6 +334,10 @@
       ! anisotropic crust from SPiRaL
       call model_crust_spiral_broadcast()
 
+    case (ICRUST_SH_MARS)
+      ! Mars SH model (defines both crust & mantle)
+      call model_SH_mars_broadcast()
+
     case default
       stop 'crustal model type not defined'
 
@@ -384,6 +392,16 @@
     ! check if mesh doubling flags and layering are consistent
     check_doubling_flag = .true.
   endif
+
+  vpv = ZERO
+  vph = ZERO
+  vsv = ZERO
+  vsh = ZERO
+  eta_aniso = ONE
+  rho = ZERO
+
+  Qmu = ZERO
+  Qkappa = ZERO
 
 !---
 !
@@ -885,6 +903,11 @@
           vsh = dvs
           rho = drho
 
+        case (THREE_D_MODEL_SH_MARS)
+          ! Mars model expansion on spherical harmonics
+          r_used = r  ! takes actual position (between CMB and surface)
+          call model_SH_mars_crustmantle(r_used,theta,phi,vpv,vph,vsv,vsh,eta_aniso,rho)
+
         case default
           print *,'Error: do not recognize value for THREE_D_MODEL ',THREE_D_MODEL
           stop 'unknown 3D Earth model in meshfem3D_models_get3Dmntl_val(), please check... '
@@ -1191,8 +1214,12 @@
 ! ADD YOUR MODEL HERE
 !
 !---
+
+  ! initializes
   found_crust = .false.
   moho_only = .false.
+  moho = 0.d0
+  sediment = 0.d0
 
   ! crustal model can vary for different 3-D models
   select case (THREE_D_MODEL)
@@ -1330,40 +1357,31 @@
   logical :: found_crust_area,point_in_area
 
   ! initializes
-  if (moho_only) then
-    ! moho depth
-    moho = 0.d0
+  vpvc = 0.d0
+  vphc = 0.d0
+  vsvc = 0.d0
+  vshc = 0.d0
 
-    ! sediment depth
-    sediment = 0.d0
-  else
-    vpvc = 0.d0
-    vphc = 0.d0
-    vsvc = 0.d0
-    vshc = 0.d0
+  vpc = 0.d0
+  vsc = 0.d0
+  rhoc = 0.d0
 
-    vpc = 0.d0
-    vsc = 0.d0
-    rhoc = 0.d0
+  ! isotropic by default
+  etac = 1.d0
 
-    ! isotropic by default
-    etac = 1.d0
+  ! anisotropy
+  c11c = 0.d0; c12c = 0.d0; c13c = 0.d0
+  c14c = 0.d0; c15c = 0.d0; c16c = 0.d0
+  c22c = 0.d0; c23c = 0.d0; c24c = 0.d0
+  c25c = 0.d0; c26c = 0.d0; c33c = 0.d0
+  c34c = 0.d0; c35c = 0.d0; c36c = 0.d0
+  c44c = 0.d0; c45c = 0.d0; c46c = 0.d0
+  c55c = 0.d0; c56c = 0.d0; c66c = 0.d0
 
-    ! anisotropy
-    c11c = 0.d0; c12c = 0.d0; c13c = 0.d0
-    c14c = 0.d0; c15c = 0.d0; c16c = 0.d0
-    c22c = 0.d0; c23c = 0.d0; c24c = 0.d0
-    c25c = 0.d0; c26c = 0.d0; c33c = 0.d0
-    c34c = 0.d0; c35c = 0.d0; c36c = 0.d0
-    c44c = 0.d0; c45c = 0.d0; c46c = 0.d0
-    c55c = 0.d0; c56c = 0.d0; c66c = 0.d0
-
-    ! moho depth
-    moho = 0.d0
-
-    ! sediment depth
-    sediment = 0.d0
-  endif
+  ! moho depth
+  moho = 0.d0
+  ! sediment depth
+  sediment = 0.d0
 
   ! flag to indicate if position inside crust
   found_crust = .false.
@@ -1476,6 +1494,16 @@
                               c11c,c12c,c13c,c14c,c15c,c16c,c22c,c23c,c24c,c25c,c26c, &
                               c33c,c34c,c35c,c36c,c44c,c45c,c46c,c55c,c56c,c66c, &
                               found_crust,elem_in_crust,moho_only)
+
+    case (ICRUST_SH_MARS)
+      ! Mars model expansion on spherical harmonics
+      ! SH mars model defines velocities in both crust & mantle
+      call model_SH_mars_crust(lat,lon,r,vpc,vsc,rhoc,moho,sediment,found_crust,elem_in_crust,moho_only)
+      if (moho_only) return
+      vpvc = vpc
+      vphc = vpc
+      vsvc = vsc
+      vshc = vsc
 
     case default
       stop 'crustal model type not defined'

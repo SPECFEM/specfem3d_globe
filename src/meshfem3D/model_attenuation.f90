@@ -532,7 +532,7 @@
       rw = -1
     endif
   else
-    ! WRITE SUCCESSFUL
+    ! WRITE
     AM_S%tau_e_storage(:,Qtmp)    = tau_e(:)
     AM_S%Qmu_storage(Qtmp)        = Qmu
     rw = 1
@@ -665,6 +665,8 @@
   min_value  = -1.0e-4
   err        = 0
   prnt       = 0
+  tau_s(:)   = 0.d0
+  tau_e(:)   = 0.d0
 
   ! Determine the min and max frequencies
   f1 = 1.0d0 / t1
