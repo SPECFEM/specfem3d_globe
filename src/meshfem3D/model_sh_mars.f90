@@ -560,7 +560,7 @@
 
   subroutine model_SH_mars_crustmantle(radius_in,theta_in,phi_in,vpv_out,vph_out,vsv_out,vsh_out,eta_out,rho_out)
 
-  use constants, only: PI,TWO_PI,EARTH_R_KM,GRAV
+  use constants, only: PI,PI_OVER_TWO,TWO_PI,EARTH_R_KM,GRAV
   use shared_parameters, only: R_PLANET,RHOAV
 
   use model_sh_mars_par
@@ -593,15 +593,18 @@
   double precision, dimension(NPAR) :: M_par
   double precision :: scaleval_vel,scaleval_rho
 
-  ! note: theta,phi values here are outputs from reduce(theta,phi), which limits theta to [0,PI] and phi to [0,2PI].
-  !        however, the below we expect phi in range [-PI,PI]
-  if (phi_in > PI) then
-    phi = phi_in - TWO_PI
-  else
-    phi = phi_in
-  endif
-  theta = theta_in
+  ! takes position
   radius = radius_in
+
+  ! note: theta,phi values here are outputs from reduce(theta,phi), which limits theta to [0,PI] and phi to [0,2PI].
+  !        however, below we expect theta to go from south to north pole, and phi shifted by (PI/2 + PI)
+  !        to have its meridian at PI/2 (instead of 0) and on the opposite hemisphere.
+  !
+  ! SH mars files use input definition:
+  !  - colatitude: south pole at 0, north pole at PI
+  !  - longitude : shifted by +PI/2
+  theta = PI - theta_in              ! switches theta to have 0 at south pole
+  phi = phi_in + PI_OVER_TWO + PI    ! shifts meridian & hemisphere)
 
   ! initializes parameter values
   vp = 0.d0
