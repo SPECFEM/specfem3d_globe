@@ -575,13 +575,13 @@
 
   ! define constants for the time integration
   ! scaling to make displacement in meters and velocity in meters per second
-  scale_t = ONE/dsqrt(PI*GRAV*RHOAV)
-  scale_t_inv = dsqrt(PI*GRAV*RHOAV)
+  scale_t = ONE/dsqrt(PI*GRAV*RHOAV)        ! [s]
+  scale_t_inv = dsqrt(PI*GRAV*RHOAV)        ! [1/s]
 
-  scale_displ = R_PLANET
-  scale_displ_inv = ONE / scale_displ
+  scale_displ = R_PLANET                    ! [m]
+  scale_displ_inv = ONE / scale_displ       ! [1/m]
 
-  scale_veloc = scale_displ * scale_t_inv
+  scale_veloc = scale_displ * scale_t_inv   ! [m/s]
 
   ! distinguish between single and double precision for reals
   deltat = real(DT*scale_t_inv, kind=CUSTOM_REAL)

@@ -693,7 +693,8 @@
   nu_source(:,:,:) = 0.d0
 
   if (USE_FORCE_POINT_SOURCE) then
-    allocate(force_stf(NSOURCES),factor_force_source(NSOURCES), &
+    allocate(force_stf(NSOURCES),  &
+             factor_force_source(NSOURCES), &
              comp_dir_vect_source_E(NSOURCES), &
              comp_dir_vect_source_N(NSOURCES), &
              comp_dir_vect_source_Z_UP(NSOURCES),stat=ier)
@@ -846,10 +847,10 @@
   else
     ! moment tensors
     if (USE_MONOCHROMATIC_CMT_SOURCE) then
-    ! (based on monochromatic functions)
+      ! (based on monochromatic functions)
       t0 = 0.d0
     else
-    ! (based on Heaviside functions)
+      ! (based on Heaviside functions)
       t0 = - 1.5d0 * minval( tshift_src(:) - hdur(:) )
     endif
   endif
