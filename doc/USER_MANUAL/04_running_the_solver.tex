@@ -38,7 +38,7 @@ the mesher and the solver.\newline
 
 \newpage
 For any particular earthquake, the \texttt{CMTSOLUTION} file that
-represents the point source may be obtained directly from the Harvard Centroid-Moment Tensor (CMT) web page \urlwithparentheses{http://www.globalcmt.org}.
+represents the point source may be obtained directly from the Global Centroid-Moment Tensor (CMT) web page \urlwithparentheses{www.globalcmt.org}.
 It looks like this:
 
 \begin{lyxcode}
@@ -48,7 +48,7 @@ It looks like this:
 {\small \includegraphics[width=1\textwidth]{figures/Denali_CMT.pdf} }
 \par\end{centering}{\small \par}
 
-\caption{\texttt{CMTSOLUTION} file obtained from the Harvard CMT catalog. The
+\caption{\texttt{CMTSOLUTION} file obtained from the Global CMT catalog. The
 top line is the initial estimate of the source, which is used as a
 starting point for the CMT solution. \textbf{M} is the moment tensor,
 $M_{0}${\small{} }is the seismic moment, and $M_{w}$ is the moment
@@ -62,21 +62,22 @@ magnitude.}
 The \texttt{CMTSOLUTION} should be edited in the following way:
 
 \begin{itemize}
-\item For point-source simulations (see finite sources, page \pageref{To-simulate-a})
-we recommend setting the source half-duration parameter \texttt{half
-duration} equal to zero, which corresponds to simulating a step source-time
-function, i.e., a moment-rate function that is a delta function. If
-\texttt{half duration} is not set to zero, the code will use a Gaussian
+\item For point-source simulations (see finite sources, page \pageref{To-simulate-a}),
+setting the source half-duration parameter \texttt{half duration} equal to zero corresponds to simulating a step source-time
+function (Heaviside), i.e., to using a moment-rate function that is a delta function. If
+\texttt{half duration} is not set to zero, the code will use a smooth (pseudo) Heaviside source-time function
+with a corresponding Gaussian moment-rate function
 (i.e., a signal with a shape similar to a `smoothed triangle', as
 explained in \citet{KoTr02a} and shown in Fig~\ref{fig:gauss.vs.triangle})
-source-time function with half-width \texttt{half duration}. We prefer
-to run the solver with \texttt{half duration} set to zero and convolve
+with half-width \texttt{half duration}.
+
+Often, it is preferable to run the solver with \texttt{half duration} set to zero and convolve
 the resulting synthetic seismograms in post-processing after the run,
 because this way it is easy to use a variety of source-time functions
 (see Section \ref{sec:Process-data-and-syn}). \citet{KoTr02a} determined
 that the noise generated in the simulation by using a step source
 time function may be safely filtered out afterward based upon a convolution
-with the desired source time function and/or low-pass filtering. Use
+with the desired source-time function and/or low-pass filtering. Use
 the postprocessing script \texttt{process\_syn.pl} (see Section \ref{sub:process_syn.pl})
 with the \texttt{-h} flag, or the serial code \texttt{convolve\_source\_timefunction.f90}
 and the script \texttt{utils/convolve\_source\_timefunction.csh} for
@@ -88,13 +89,13 @@ make convolve_source_timefunction
 to compile the code and then set the parameter \texttt{hdur} in \texttt{utils/convolve\_source\_timefunction.csh}
 to the desired half-duration.
 
-\item To use a monochromatic source time function instead, enable the flag \texttt{USE\_MONOCHROMATIC\_CMT\_SOURCE} in \texttt{Par\_file}. In this case, \texttt{half
-duration} will be interpreted as the period of the source time function. By default, the left side of the source time function is applied with a Hanning taper at a length of 200.0~s. This can be configured through \texttt{TAPER\_MONOCHROMATIC\_SOURCE} in \texttt{constants.h} file.
+\item To use a monochromatic source-time function instead, enable the flag \texttt{USE\_MONOCHROMATIC\_CMT\_SOURCE} in \texttt{Par\_file}. In this case, \texttt{half
+duration} will be interpreted as the period of the source-time function. By default, the left side of the source-time function is applied with a Hanning taper at a length of 200.0~s. This can be configured through \texttt{TAPER\_MONOCHROMATIC\_SOURCE} in \texttt{constants.h} file.
 
 \item The zero time of the simulation corresponds to the center of the triangle/Gaussian,
 or the centroid time of the earthquake. The start time of the simulation
-is $t=-1.5*\texttt{half duration}$ (the 1.5 is to make sure the moment
-rate function is very close to zero when starting the simulation).
+is $t=-1.5*\texttt{half duration}$ (the 1.5 is to make sure the moment-rate function is very close to zero
+when starting the simulation. This avoids spurious high-frequency oscillations).
 To convert to absolute time $t_{\mathrm{abs}}$, set
 
 \begin{lyxcode}
@@ -118,7 +119,7 @@ is the time in the first column of the output seismogram.
 If you know the earthquake source in strike/dip/rake format rather than in \texttt{CMTSOLUTION} format,
 use the C code \texttt{utils/strike\_dip\_rake\_to\_CMTSOLUTION.c} to convert it.
 The conversion formulas are given for instance in \cite{AkRi80}.
-Note that the \cite{AkRi80} convention is slightly different from the Harvard \texttt{CMTSOLUTION} convention
+Note that the \cite{AkRi80} convention is slightly different from the Global/Harvard \texttt{CMTSOLUTION} convention
 (the sign of some components is different). The C code outputs both.\newline
 
 
@@ -126,8 +127,8 @@ Centroid latitude and longitude should be provided in geographical
 coordinates. The code converts these coordinates to geocentric coordinates~\citep{DaTr98}.
 Of course you may provide your own source representations by designing
 your own \texttt{CMTSOLUTION} file. Just make sure that the resulting
-file adheres to the Harvard CMT conventions (see Appendix~\ref{cha:Reference-Frame-Convention}).
-Note that the first line in the \texttt{CMTSOLUTION} file is the Preliminary Determination of Earthquakes (PDE) solution performed by the USGS NEIC, which is used as a seed for the Harvard CMT inversion. The PDE solution is based upon P waves and often gives the hypocenter of the earthquake, i.e., the rupture initiation point, whereas the CMT solution gives the `centroid location', which is the location with dominant moment release. The PDE solution is not used by our software package but must be present anyway in the first line of the file.\newline
+file adheres to the Global/Harvard CMT conventions (see Appendix~\ref{cha:Reference-Frame-Convention}).
+Note that the first line in the \texttt{CMTSOLUTION} file is the Preliminary Determination of Earthquakes (PDE) solution performed by the USGS NEIC, which is used as a seed for the Global/Harvard CMT inversion. The PDE solution is based upon P waves and often gives the hypocenter of the earthquake, i.e., the rupture initiation point, whereas the CMT solution gives the `centroid location', which is the location with dominant moment release. The PDE solution is not used by our software package but must be present anyway in the first line of the file.\newline
 
 
 In the current version of the code, the solver can run with a non-zero \texttt{time shift} in the \texttt{CMTSOLUTION} file. Thus one does not need to set \texttt{time shift} to zero as it was the case for previous versions of the code. \texttt{time shift} is only used for writing centroid time in the SAC headers (see Appendix~\ref{cha:SAC-headers}). CMT time is obtained by adding \texttt{time shift} to the PDE time given in the first line in the \texttt{CMTSOLUTION} file. Therefore it is recommended not to modify \texttt{time shift} to have the correct timing information in the SAC headers without any post-processing of seismograms.\newline
@@ -182,20 +183,22 @@ be used as the identifier for the force source.
 this  parameter equal to $0.0$ (The solver will not run otherwise!); the time
 shift parameter would simply apply an overall time shift to the synthetics,
 something that can be done in the post-processing (see Section \ref{sec:Process-data-and-syn}).
-\item \texttt{half duration:} Set the half duration value (s) for Step source time
-function. In case that the solver uses a (pseudo) Dirac delta source time function to represent
-a force point source, a very short duration of five time steps is automatically set by default. For a Ricker source time function, set the dominant frequency value (Hz). See the parameter \texttt{source time function:} below for source time functions.
+\item \texttt{half duration:} Set the half duration value (s) for step source-time
+function. In case that the solver uses a (pseudo) Dirac delta source-time function to represent
+a force point source, a very short duration of five time steps is automatically set by default.
+For a Ricker source-time function, set the dominant frequency value (Hz).
+See the parameter \texttt{source time function:} below for source-time functions.
 \item \texttt{latitude:} Set the latitude of the force source.
 \item \texttt{longitude:} Set the longitude of the force source.
 \item \texttt{depth:} Set the depth of the force source (km).
-\item \texttt{source time function:} Set the type of source time function: 0 = Gaussian function, 1 = Ricker function, 2 = Heaviside (step) function, 3 = monochromatic function, 4 = Gaussian function as defined in \citet{Meschede2011}.
+\item \texttt{source time function:} Set the type of source-time function: 0 = Gaussian function, 1 = Ricker function, 2 = Heaviside (step) function, 3 = monochromatic function, 4 = Gaussian function as defined in \citet{Meschede2011}.
 \item \texttt{factor force source:} Set the magnitude of the force source (units in Newton N).
 \item \texttt{component dir vect source E:} Set the East component of a direction vector for the force
 source. Direction vector is not necessarily a unit vector.
 \item \texttt{component dir vect source N:} Set the North component of a direction vector for the force
 source.
 \item \texttt{component dir vect source Z\_up:} Set the vertical component of a direction vector for the force
-source. Sign convnetion follows the positive upward drection.
+source. Sign convention follows the positive upward direction.
 \end{itemize}
 \noindent Where necessary, set a \texttt{FORCESOLUTION} file in the
 same way you configure a \texttt{CMTSOLUTION} file with $N_{\mathrm{sources}}$
@@ -203,7 +206,7 @@ entries, one for each subevent (i.e., concatenate $N_{\mathrm{sources}}$
 \texttt{FORCESOLUTION} files to a single \texttt{FORCESOLUTION} file).
 At least one entry (not necessarily the first) must have a zero \texttt{time
 shift}, and all the other entries must have non-negative \texttt{time shift}.
-Each subevent can have its own set of parameters \texttt{latitude}, \texttt{longitude}, \texttt{depth:},
+Each subevent can have its own set of parameters \texttt{latitude}, \texttt{longitude}, \texttt{depth},
 \texttt{half duration}, etc. \newline
 
 

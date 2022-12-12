@@ -282,6 +282,8 @@ The crustal model is defined by the files in folder \texttt{DATA/crustmaps/marsc
 \item [{\texttt{1D\_case65TAY\_3d\_crust}}] This model adds a 3D crust on top of the 1D Mars model developed by \citet{Plesa2021}.
 The crustal model is defined by the files in folder \texttt{DATA/crustmaps/marscrust*.cmap}
 %
+\item [{\texttt{mars\_SH\_model}}] For a user-specified 3D Mars model given in spherical harmonics and provided in folder \texttt{DATA/mars/SH\_model/}. The model files need to be specified in file \texttt{SH\_model\_files.dat}. The spherical harmonic file format follows the Mars evolution model outputs developed by \citet{Plesa2021}. SH models define both crustal and mantle depths, with an isotropic seismic model description (Vp, Vs, and density).
+%
 \end{description}
 
 %%
@@ -477,7 +479,7 @@ thus refer to Appendix~\ref{cha:Reference-Frame-Convention} for the orientation
 of the reference frame. This vector is made unitary internally in
 the solver and thus only its direction matters here; its norm is ignored
 and the norm of the force used is the factor force source times the
-source time function.
+source-time function.
 %
 \item [{\texttt{OUTPUT\_SEISMOS\_ASCII\_TEXT}}] Set this flag to \texttt{.true.}
 if you want to have the synthetic seismograms written in two-column
@@ -522,7 +524,7 @@ seismograms at the burial depth specified in the \texttt{STATIONS}
 file. This feature is not used at the time of meshing.
 %
 \item [{\texttt{PRINT\_SOURCE\_TIME\_FUNCTION}}] Turn this flag on to print
-information about the source time function in the file \texttt{OUTPUT\_FILES/plot\_source\_time\_function.txt}.
+information about the source-time function in the file \texttt{OUTPUT\_FILES/plot\_source\_time\_function.txt}.
 This feature is not used at the time of meshing.
 %
 \item [{\texttt{NUMBER\_OF\_SIMULTANEOUS\_RUNS}}] adds the ability to run several calculations (several earthquakes)

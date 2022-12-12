@@ -115,14 +115,55 @@ in each direction of the elements \citep{KoTr02a,KoTr02b}.}
 \end{figure}
 
 
+\subsection{Mesh cutoff}\label{sec:Mesh-cutoff}
+
+By default, the mesher will create a full one-chunk mesh, i.e., for all three regions, crust/mantle, outer core and inner core respectively.
+The mesh thus goes down to the inner core, which for very small regional, or even local, simulations would not be needed.
+Furthermore, the default one-chunk mesh will place a first doubling layer below the Moho and a second one below the 771-km depth layer.\newline
+
+To create more specific local meshes, an additional option \texttt{REGIONAL\_MESH\_CUTOFF} together with accompanying parameters have been been added to the \texttt{Par\_file}:
 \begin{description}
 %
 \item [{\texttt{REGIONAL\_MESH\_CUTOFF}}] For regional simulations, choosing this flag will cut-off the mesh at a mesh layer
 below the given input depth, specified by \texttt{REGIONAL\_MESH\_CUTOFF\_DEPTH}.
-By default, the mesher will create a full chunk mesh, i.e., for all three regions, crust/mantle, outer core and inner core respectively.
-Furthermore, it will place a first doubling layer below the Moho and a second one below the 771-km depth layer.
-Setting the flag \texttt{REGIONAL\_MESH\_ADD\_2ND\_DOUBLING} to \texttt{.true.} will move the second doubling layer below the
+%
+\item [{\texttt{REGIONAL\_MESH\_CUTOFF\_DEPTH}}] For cutoff meshes, determines the cutoff depth in km (possible selections are 24.4, 80, 220, 400, 600, 670, 771)
+%
+\item [{\texttt{REGIONAL\_MESH\_ADD\_2ND\_DOUBLING}}] Setting the flag to \texttt{.true.} will move the second doubling layer below the
 220-km depth layer, to also have a second mesh coarsening possibility for the cut-off mesh.
+%
+\end{description}
+
+With these mesh cutoffs parameters, the mesher will remove elements from a standard one-chunk mesh below the cut-off depth. To further tweak and define local meshes, for example by adding multiple doubling layers (similar to the SPECFEM3D\_Cartesian mesher), the following parameters can be added to the \texttt{Par\_file} which only take effect if the flag \texttt{REGIONAL\_MESH\_CUTOFF} has been turned on:
+
+\begin{description}
+%
+\item [{\texttt{USE\_LOCAL\_MESH}}] Setting this flag to \texttt{.true.} will turn on the local mesh layout.
+%
+\item [{\texttt{NUMBER\_OF\_LAYERS\_CRUST}}] For the local mesh layout, determines the number of element layers in the crust. The crustal Moho depth used will be the ficticious Moho depth, i.e., at either 40 or 35 km depth depending on the \texttt{RMOHO\_STRETCH\_ADJUSTMENT} setting in file \texttt{setup/constants.h}.
+%
+\item [{\texttt{NUMBER\_OF\_LAYERS\_MANTLE}}] For the local mesh layout, determines the number of element layers in the mantle. The mantle depth is given by the \texttt{REGIONAL\_MESH\_CUTOFF\_DEPTH} setting.
+%
+\item [{\texttt{NDOUBLINGS}}] Sets the number of doubling layers in the local mesh. A maximum of 5 doubling layers is accepted. For each doubling layer, the element layer number must be specified.
+%
+\item [{\texttt{NZ\_DOUBLING\_1}}] Sets the position of the first doubling layer (counting the mesh element layers from top down). Additional doubling layer position can be specified by adding \texttt{NZ\_DOUBLING\_2}, \texttt{NZ\_DOUBLING\_3}, .. up to \texttt{NZ\_DOUBLING\_5}.
+%
+\end{description}
+
+Applying such a local mesh layout will affect the time step size, and therefore requires the selection of an appropriate time step size. To override the default time step size estimation, one can explicitly specify the size by adding the \texttt{DT} parameter:
+\begin{description}
+%
+\item [{\texttt{DT}}] A user-specified value for the time step size (in seconds). This setting will override the meshers estimated time step size. To set an appropriate value, one can check in file \texttt{OUTPUT\_FILES/output\_mesher.txt} the output given by the mesher, where you will find a section on the verification of mesh parameters with a maximum suggested time step for the crust/mantle region.
+%
+\end{description}
+
+
+
+
+\subsection{Absorbing boundaries}\label{sec:Absorbing-boundaries}
+
+For regional simulations, the following options in the \texttt{Par\_file} will add absorbing boundary conditions:
+\begin{description}
 %
 \item [{\texttt{ABSORBING\_CONDITIONS}}] Set to \texttt{.true.}{\small{}
 }for regional simulations. For instance, see \citet{KoTr99} for a
@@ -148,12 +189,17 @@ This is a regional simulation that happens in the simulation region, the quality
 %
 \end{description}
 
+
+\subsection{Mesh resolution}\label{sec:Mesh-resolution}
+
 When the width of the chunk is different from $90^{\circ}$ (or the
 number of elements is greater than 1248), the radial distribution
 of elements needs to be adjusted as well to maintain spectral elements
 that are as cube-like as possible. The code attempts to do this, but
 be sure to view the mesh with your favorite graphics package to make
-sure that the element are well behaved.
+sure that the element are well behaved.\newline
+
+
 Remember: a high-quality mesh is paramount for accurate simulations.
 In addition to a reorganization of the radial distribution of elements,
 the time stepping and period range in which the attenuation is applied
@@ -180,7 +226,7 @@ velocity/element width occurs. Again, see \texttt{\small read\_compute\_paramete
 for all the details.
 
 The approximate shortest period at which a regional simulation is
-accurate may be determined based upon the relation
+accurate may be determined based upon the empirical relation
 \begin{equation}
 \mbox{shortest period (s)}\simeq(256/\nexxi)\times(\texttt{ANGULAR\_WIDTH\_XI\_IN\_DEGREES}/90)\times17.\label{eq:shortest_period_regional}\end{equation}
 
