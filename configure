@@ -649,7 +649,9 @@ ac_includes_default="\
 ac_header_c_list=
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
-GIT_VERSION_DEPS
+GIT_DATE_VERSION
+GIT_COMMIT_VERSION
+GIT_PACKAGE_VERSION
 VTK_LIBS
 VTK_LDFLAGS
 VTK_INCLUDES
@@ -11259,26 +11261,32 @@ printf "%s\n" "#define SPECFEM3D_GLOBE_GIT_BRANCH \"$SPECFEM3D_GLOBE_GIT_BRANCH\
 
 
 
+
 printf "%s\n" "#define SPECFEM3D_GLOBE_VERSION \"$PACKAGE_VERSION\"" >>confdefs.h
 
 #AC_DEFINE_UNQUOTED([SPECFEM3D_GLOBE_DOI], ["10.5281/zenodo.xxxxx"], [Define SPECFEM3D_GLOBE doi])
 
-if test -d $srcdir/.git
+if test x"$SPECFEM3D_GLOBE_RELEASE_VERSION" = x0
 then :
 
-    GIT_VERSION_DEPS="$srcdir/.git/logs/HEAD"
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: building from git repository" >&5
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: building from git repository" >&5
 printf "%s\n" "$as_me: building from git repository" >&6;}
-
+  GIT_PACKAGE_VERSION=$SPECFEM3D_GLOBE_GIT_REVISION
+  GIT_COMMIT_VERSION=$SPECFEM3D_GLOBE_GIT_HASH
+  GIT_DATE_VERSION=$SPECFEM3D_GLOBE_GIT_DATE
 
 else $as_nop
 
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: not a git repository" >&5
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: not a git repository" >&5
 printf "%s\n" "$as_me: not a git repository" >&6;}
-    ac_config_files="$ac_config_files setup/version.fh"
-
+  GIT_PACKAGE_VERSION=$PACKAGE_VERSION
+  GIT_COMMIT_VERSION="unknown"
+  GIT_DATE_VERSION="unknown"
 
 fi
+
+
+
 
 ############################################################
 
@@ -11287,7 +11295,7 @@ printf "%s\n" "## ----------------------------------- ##
 ## ----------------------------------- ##"
 
 # Output results.
-ac_config_files="$ac_config_files Makefile setup/constants.h setup/constants_tomography.h setup/precision.h setup/config.fh"
+ac_config_files="$ac_config_files Makefile setup/constants.h setup/constants_tomography.h setup/precision.h setup/config.fh setup/version.fh"
 
 
 ac_config_files="$ac_config_files DATA/Par_file:DATA/Par_file DATA/CMTSOLUTION:DATA/CMTSOLUTION DATA/STATIONS:DATA/STATIONS"
@@ -12158,12 +12166,12 @@ for ac_config_target in $ac_config_targets
 do
   case $ac_config_target in
     "setup/config.h") CONFIG_HEADERS="$CONFIG_HEADERS setup/config.h" ;;
-    "setup/version.fh") CONFIG_FILES="$CONFIG_FILES setup/version.fh" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "setup/constants.h") CONFIG_FILES="$CONFIG_FILES setup/constants.h" ;;
     "setup/constants_tomography.h") CONFIG_FILES="$CONFIG_FILES setup/constants_tomography.h" ;;
     "setup/precision.h") CONFIG_FILES="$CONFIG_FILES setup/precision.h" ;;
     "setup/config.fh") CONFIG_FILES="$CONFIG_FILES setup/config.fh" ;;
+    "setup/version.fh") CONFIG_FILES="$CONFIG_FILES setup/version.fh" ;;
     "DATA/Par_file") CONFIG_FILES="$CONFIG_FILES DATA/Par_file:DATA/Par_file" ;;
     "DATA/CMTSOLUTION") CONFIG_FILES="$CONFIG_FILES DATA/CMTSOLUTION:DATA/CMTSOLUTION" ;;
     "DATA/STATIONS") CONFIG_FILES="$CONFIG_FILES DATA/STATIONS:DATA/STATIONS" ;;
