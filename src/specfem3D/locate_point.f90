@@ -424,10 +424,20 @@
     zelm(ia) = dble(zstore(iglob))
   enddo
 
+  ! write (*,*) "Anchors"
+  ! write (*,*) xelm
+  ! write (*,*) yelm
+  ! write (*,*) zelm
+
+
   ! use initial guess in xi and eta
   xi = xigll(ix_initial_guess)
   eta = yigll(iy_initial_guess)
   gamma = zigll(iz_initial_guess)
+
+  ! write (*,*) 'initial guess'
+  ! write (*,*) xi, eta, gamma
+  ! write (*,*)
 
   ! impose receiver exactly at the surface
   if (.not. POINT_CAN_BE_BURIED) gamma = 1.d0
@@ -436,6 +446,11 @@
   dx_min = HUGEVAL
   dy_min = HUGEVAL
   dz_min = HUGEVAL
+
+  ! iterate to solve the non linear system
+  ! write (*,*) "START", x_target, y_target, z_target
+  ! write (*,*) "     ", xi, eta, gamma
+  ! write (*,*)
 
   ! iterate to solve the non linear system
   do iter_loop = 1,NUM_ITER
@@ -487,6 +502,9 @@
     xi = xi + dxi
     eta = eta + deta
     gamma = gamma + dgamma
+
+    ! write (*,*) "    iter", iter_loop, x, y, z
+    ! write (*,*) "                        ", xi, eta, gamma
 
     ! impose that we stay in that element
     ! (useful if user gives a receiver outside the mesh for instance)

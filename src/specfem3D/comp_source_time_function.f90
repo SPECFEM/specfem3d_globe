@@ -244,4 +244,8 @@
 
   close(IIN)
 
+  write(*,*) '------------------------------------------------------'
+  write(*,*) '|             Got the external STF                   |'
+  write(*,*) '------------------------------------------------------'
+
   end subroutine get_EXTERNAL_SOURCE_TIME_FUNCTION

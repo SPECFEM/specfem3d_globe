@@ -504,6 +504,9 @@
 
     do irec = 1,nrec
 
+       write (*, *) 'Station #',irec,': ',trim(network_name(irec))//'.'//trim(station_name(irec)), &
+           'in slice ',islice_selected_rec(irec),' in element ',ispec_selected_rec(irec)
+
       if (DISPLAY_DETAILS_STATIONS .or. final_distance(irec) > 0.01d0 .or. nrec < 50) then
 
         write(IMAIN,*)

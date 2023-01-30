@@ -1819,8 +1819,8 @@
     ! Local
     integer :: i
     integer, dimension(:), allocatable :: idx
-    integer, dimension(Nin) :: unique
-    integer, dimension(Nin) :: unique_idx
+    integer, dimension(Nin), intent(out) :: unique
+    integer, dimension(Nin), intent(out) :: unique_idx
     integer, dimension(Nin), intent(out) :: inv
 
     Nout = 0
@@ -2082,6 +2082,9 @@
           num_neighbors = xadj(ispec+1)-xadj(ispec)
 
           ! Loop over number of neighbors and add to mask
+          ispec_mask(ispec) = 1
+          islice_mask(ispec) = myrank
+
           do i = 1,num_neighbors
             ! Get neighbor element index
             ispec_neighbor = adjncy(xadj(ispec) + i)
@@ -2295,6 +2298,14 @@
     ! Total number of Green function coordinates in terms of elements
     NGLOB_GF = iglob_counter
 
+
+    ! write(*,*) 'rank', myrank, 'ISPEC', ispec_cm2gf
+    ! write(*,*) 'rank', myrank, 'IGLOB', iglob_cm2gf
+    ! write (*,*)
+    ! write (*,*) ( &
+    !   xstore_crust_mantle(ibool_crust_mantle(:,:,:,ispec_cm2gf(1))) &
+    !   - xstore_crust_mantle(iglob_cm2gf(:))(ibool_GF(:,:,:,1)) &
+    ! )
   endif
 
   ! Get ibool array for  output Green function database
@@ -2321,6 +2332,7 @@
         enddo
     endif
   enddo
+
 
   ! Collect the results on rank one
   call synchronize_all()
@@ -2359,6 +2371,7 @@
 
   if (ngf_unique_local .gt. 0) then
 
+
     do igf=1,ngf_unique_local
 
       ! Get element
@@ -2393,6 +2406,8 @@
       xadj_gf(igf+1) = inum_neighbor
 
     enddo
+
+
 
     ! Allocate final adjacency array
     allocate(adjncy_gf(inum_neighbor),stat=ier)
