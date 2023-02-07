@@ -63,7 +63,7 @@ NPROC_ETA                       = 2
 #                          associated reference model rather than the default 3D crustal model
 #                          e.g. s20rts_1Dcrust, s362ani_1Dcrust, etc.
 #
-MODEL                           = 1D_isotropic_prem_crust2.0
+MODEL                           = GLL
 
 # parameters describing the Earth model
 OCEANS                          = .true.
@@ -315,7 +315,7 @@ RECEIVERS_CAN_BE_BURIED         = .true.
 SAVE_GREEN_FUNCTIONS            = .true.
 USE_BUFFER_ELEMENTS             = .true.
 NUMBER_OF_BUFFER_ELEMENTS       = 1
-NSTEP                           = 103715
+NSTEP                           = 104286
 T0                              = 0.d0
 
 
