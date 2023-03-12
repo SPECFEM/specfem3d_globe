@@ -2,8 +2,8 @@
 readme
 --------------------------------
 
-Blender, open source, cross platform suite of tools for 3D creation
-http://www.blender.org/
+requires: Blender for 3D graphics creation
+          https://www.blender.org/
 
 
 

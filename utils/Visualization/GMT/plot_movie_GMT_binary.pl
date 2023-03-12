@@ -28,7 +28,6 @@ if (!getopts('l:L:cdts')) {die('Check input arguments\n');}
 # point locations
 $xy_file = "OUTPUT_FILES/bin_movie.xy";
 
-
 # global region
 $R = "-Rd";
 
@@ -37,6 +36,7 @@ $JM = "-JQ0/0/15";
 
 # interpolation
 $interp = "-I1.5/1.5";
+
 #######################################################
 
 # verbosity
@@ -45,6 +45,8 @@ $verbose = ""; # "-V";
 $grdfile = "movie.grd";
 # annotation
 $B = " -B10/10wesn ";
+# png
+$png = 1; # 0==off / 1==on
 
 open(CSH,">plot_movie.csh");
 print CSH "gmtset BASEMAP_TYPE plain ANOT_FONT_SIZE 9 HEADER_FONT_SIZE 15\n";
@@ -192,6 +194,28 @@ foreach $file (@ARGV) {
   # base map
   print CSH "psbasemap  -R -J -Ba90/a30:.'':WeSn -O -P -V  >> $ps_file\n";
 
+  if ($png == 1){
+    $maskcpt = "gray_pyramid_inv.cpt";
+    print CSH "makecpt -Cgray -T0/128/1 -I -Z -V > $maskcpt\n";
+
+    # start ps-file mask
+    print CSH "psbasemap $JM $R $B -G0 -P $verbose -K > $ps_file.mask\n";
+    print CSH "psxy $file.xyz $JM $R $B -Sr -C$maskcpt -P -K -O $verbose >> $ps_file.mask\n";
+    print CSH "psxy $file.xyz $JM $R $B -M -L -N -C$maskcpt -P -O $verbose >> $ps_file.mask\n";
+    # end ps-file mask
+
+    # convert to png
+    print CSH "convert -crop 1080x540+6+6 $ps_file $file.disp.png\n";
+    print CSH "convert -crop 1080x540+6+6 $ps_file.mask $file.mask.png\n";
+
+    # creates file with transparency (opacity)
+    print CSH "composite -compose CopyOpacity $file.mask.png $file.disp.png $file.png\n";
+
+    # removes temporary images
+    #print CSH "rm -f $ps_file.mask $maskcpt\n";
+    #print CSH "rm -f $file.mask.png $file.disp.png\n";
+  }
+
   # remove temporary data file
   print CSH "rm -f $file.xyz \n";
 
@@ -207,8 +231,8 @@ close(CSH);
 print "\nplotting... \n\n";
 
 # executes script
-system("csh -f plot_movie.csh");
+system("csh plot_movie.csh");
 
 # cleanup
-system("rm -f plot_movie.csh");
-system("rm -f $grdfile $grdfile.1 grd.cpt");
+#system("rm -f plot_movie.csh");
+#system("rm -f $grdfile $grdfile.1 grd.cpt");

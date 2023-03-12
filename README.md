@@ -16,6 +16,20 @@ in the
 - HTML manual (latest version): [specfem3d-globe.readthedocs.io](http://specfem3d-globe.readthedocs.io/)
 
 
+For a quick test, run the default example with these commands:
+```
+./configure FC=gfortran CC=gcc MPIFC=mpif90
+make all
+cd EXAMPLES/regional_Greece_small/
+./run_this_example.sh
+```
+and check the output files in `./OUTPUT_FILES/`
+
+>__NOTE__: Do not modify the 'configure' script directly. Please modify the
+    'configure.ac' file instead, and generate a new 'configure' script with
+    the command: `autoreconf -i`
+
+
 ## Development
 
 [![Actions Status](https://github.com/SPECFEM/specfem3d_globe/workflows/CI/badge.svg)](https://github.com/SPECFEM/specfem3d_globe/actions)
@@ -49,6 +63,9 @@ participating! We have collected a set of guidelines and advice on how to get
 involved in the community and keep them in the specfem3d github wiki:
 [specfem3d wiki](https://github.com/SPECFEM/specfem3d/wiki)
 
+
 ## Computational Infrastructure for Geodynamics (CIG)
 
 SPECFEM3D_GLOBE is part of the software that is hosted by the Computational Infrastructure for Geodynamics (CIG). It is available on the CIG website [here (SPECFEM3D_GLOBE)](https://geodynamics.org/resources/specfem3d).
+
+
