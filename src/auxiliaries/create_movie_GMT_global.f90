@@ -127,10 +127,10 @@
   print *,'reading parameter file'
   print *
 
-! read the parameter file and compute additional parameters
+  ! read the parameter file and compute additional parameters
   call read_compute_parameters()
 
-! get the base pathname for output files
+  ! get the base pathname for output files
   OUTPUT_FILES = OUTPUT_FILES_BASE
 
   if (.not. MOVIE_SURFACE) stop 'movie frames were not saved by the solver'

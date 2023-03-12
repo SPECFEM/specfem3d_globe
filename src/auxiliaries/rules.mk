@@ -501,6 +501,7 @@ xcreate_movie_AVS_DX_SHARED_OBJECTS = \
 	$O/reduce.shared.o \
 	$O/rthetaphi_xyz.shared.o \
 	$O/sort_array_coordinates.shared.o \
+	$O/write_VTK_file.shared.o \
 	$(EMPTY_MACRO)
 
 ##
