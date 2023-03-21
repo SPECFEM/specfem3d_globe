@@ -292,8 +292,9 @@
 !
 ! version 8.0, March 2023:
 !   Wolfgang Bangerth, Stephen Beller, Ebru Bozdag, Caio Ciardelli, Congyue Cui, Armando Espindola-Carmona,
-!   Rene Gassmoeller, Sunny Gogar, Leopold Grinberg, Elodie Kendall, Wenjie Lei, Amanda McPherson, Ridvan Orsvuran,
-!   Daniel Peter, Norbert Podhorszki, Eduardo Valero Cano.
+!   Rene Gassmoeller, Sunny Gogar, Leopold Grinberg, Quancheng Huang, Elodie Kendall, Wenjie Lei,
+!   Amanda McPherson, Yellapragada Meenakshi, Ridvan Orsvuran, Daniel Peter, Norbert Podhorszki, S.T.G. Raghukanth,
+!   Eduardo Valero Cano.
 !     support for new Earth, Moon & Mars models; ADIOS2 file I/O support, GLL models for azimuthal anisotropy & Q,
 !     LDDRK on GPU support, Laplacian smoothing, monochromatic source time functions, sponge absorbing boundaries,
 !     steady-state kernels; mesh cut-off, seismogram down-sampling, non-static compilation.
