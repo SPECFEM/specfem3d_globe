@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-if [ "$1" == "" ]; then echo "usage: ./convert_tga_to_jpg.sh <filename>"; exit 1; fi 
+if [ "$1" == "" ]; then echo "usage: ./convert_tga_to_jpg.sh <filename>"; exit 1; fi
 
 file=$1
 

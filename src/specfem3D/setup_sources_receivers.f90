@@ -693,7 +693,7 @@
   nu_source(:,:,:) = 0.d0
 
   if (USE_FORCE_POINT_SOURCE) then
-    allocate(force_stf(NSOURCES),  &
+    allocate(force_stf(NSOURCES), &
              factor_force_source(NSOURCES), &
              comp_dir_vect_source_E(NSOURCES), &
              comp_dir_vect_source_N(NSOURCES), &
