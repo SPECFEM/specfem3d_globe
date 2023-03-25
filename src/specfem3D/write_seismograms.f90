@@ -157,7 +157,7 @@
           call write_seismograms_strain()
       case (2)
         ! adjoint wavefield
-        call write_adj_seismograms(it_adj_written)
+        call write_adj_seismograms()
         it_adj_written = it
       end select
     endif
@@ -640,22 +640,22 @@
 
 ! write adjoint seismograms to text files
 
-  subroutine write_adj_seismograms(it_adj_written)
+  subroutine write_adj_seismograms()
 
   use constants, only: MAX_STRING_LEN,CUSTOM_REAL,IOUT
 
-  use specfem_par, only: NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
+  use specfem_par, only: NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS,NTSTEP_BETWEEN_OUTPUT_SAMPLE, &
     DT,t0,OUTPUT_FILES, &
     seismograms,number_receiver_global,nrec_local, &
-    it,myrank,WRITE_SEISMOGRAMS_BY_MAIN
+    it,it_adj_written, &
+    myrank,WRITE_SEISMOGRAMS_BY_MAIN
 
   implicit none
-
-  integer,intent(in) :: it_adj_written
 
   ! local parameters
   integer :: irec,irec_local,ier
   integer :: iorientation,isample
+  real(kind=CUSTOM_REAL) :: time_t
 
   character(len=4) :: chn
   character(len=MAX_STRING_LEN) :: sisname
@@ -705,29 +705,27 @@
       ! for example: NT.S000001.MXN.sem.ascii
       write(sisname,"(a3,'.',a1,i6.6,'.',a3,'.sem.ascii')") '/NT','S',irec,chn
 
-      ! save seismograms in text format with no subsampling.
-      ! Because we do not subsample the output, this can result in large files
-      ! if the simulation uses many time steps. However, subsampling the output
-      ! here would result in a loss of accuracy when one later convolves
-      ! the results with the source time function
+      ! save seismograms in text format
       if (it <= NTSTEP_BETWEEN_OUTPUT_SEISMOS) then
-        !open new file
+        ! open new file
         open(unit=IOUT,file=trim(OUTPUT_FILES)//sisname(1:len_trim(sisname)), &
               status='unknown',action='write',iostat=ier)
       else
         ! for it > NTSTEP_BETWEEN_OUTPUT_SEISMOS
-        !append to existing file
+        ! append to existing file
         open(unit=IOUT,file=trim(OUTPUT_FILES)//sisname(1:len_trim(sisname)), &
               status='old',position='append',action='write',iostat=ier)
       endif
       if (ier /= 0) call exit_mpi(myrank,'Error opening file: '//trim(OUTPUT_FILES)//trim(sisname))
 
       ! make sure we never write more than the maximum number of time steps
-      ! subtract half duration of the source to make sure travel time is correct
       do isample = it_adj_written+1,min(it,NSTEP)
+        ! time
+        ! subtract onset time to make sure travel time is correct
         ! distinguish between single and double precision for reals
-        write(IOUT,*) real(dble(isample-1)*DT - t0, kind=CUSTOM_REAL), ' ', &
-                      seismograms(iorientation,irec_local,isample-it_adj_written)
+        time_t = real(dble(isample-1)*DT*NTSTEP_BETWEEN_OUTPUT_SAMPLE - t0,kind=CUSTOM_REAL)
+        ! output
+        write(IOUT,*) time_t,seismograms(iorientation,irec_local,isample-it_adj_written)
       enddo
 
       close(IOUT)
@@ -794,7 +792,7 @@
         call exit_MPI(myrank,'incorrect channel value in write_seismograms_strain()')
       end select
 
-      ! strain seismograms start will have channel-code S**
+      ! strain seismograms will have channel-code S**
       !
       ! create the name of the strain seismogram file using the station name and network name
       ! using format: **net**.**sta**.channel
@@ -829,7 +827,7 @@
 
         ! writes out to file
         ! distinguish between single and double precision for reals
-        write(IOUT,*) real(timeval, kind=CUSTOM_REAL), ' ', real(value, kind=CUSTOM_REAL)
+        write(IOUT,*) real(timeval, kind=CUSTOM_REAL), real(value, kind=CUSTOM_REAL)
       enddo
       close(IOUT)
 
