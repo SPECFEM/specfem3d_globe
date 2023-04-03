@@ -314,7 +314,7 @@ endif
 @COND_XSMM_FALSE@XSMM = no
 
 @COND_XSMM_TRUE@FCFLAGS += $(FC_DEFINE)USE_XSMM -I@LIBXSMM_INC@
-@COND_XSMM_TRUE@MPILIBS += -L@LIBXSMM_LIBS@ -lxsmmf -lxsmm -L@BLAS_LIBS@ -lblas
+@COND_XSMM_TRUE@MPILIBS += -L@LIBXSMM_LIBS@ -lxsmmf -lxsmm -lxsmmext -L@BLAS_LIBS@ -lblas
 
 ##
 ## C++ Parallel STL support

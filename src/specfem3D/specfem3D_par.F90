@@ -1113,10 +1113,17 @@ module my_libxsmm
   !use libxsmm, only: C_LOC,LIBXSMM_SMMfunction,libxsmm_dispatch,libxsmm_call
 
   ! function calls
-  use libxsmm, only: libxsmm_init,libxsmm_finalize, &
-                     libxsmm_smm_25_5_5,libxsmm_smm_5_25_5,libxsmm_smm_5_5_5
+  use libxsmm, only: libxsmm_init,libxsmm_finalize
+  use libxsmm, only: libxsmm_dispatch,libxsmm_available,LIBXSMM_SMMFUNCTION
+  use libxsmm, only: libxsmm_smmcall_abc
+  !use libxsmm, only: libxsmm_smm_25_5_5,libxsmm_smm_5_25_5,libxsmm_smm_5_5_5
 
   implicit none
+
+  ! function pointers
+  ! (note: defined for single precision, thus needs CUSTOM_REAL to be SIZE_REAL)
+  type(LIBXSMM_SMMFUNCTION) :: xmm1, xmm2, xmm3
+
 
 end module my_libxsmm
 

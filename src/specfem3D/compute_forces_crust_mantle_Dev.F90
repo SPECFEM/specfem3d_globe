@@ -572,7 +572,8 @@
   use constants_solver, only: CUSTOM_REAL
 
 #ifdef USE_XSMM
-  use my_libxsmm, only: libxsmm_smm_5_25_5
+  !use my_libxsmm, only: libxsmm_smm_5_25_5
+  use my_libxsmm,only: xmm1,libxsmm_mmcall_abc => libxsmm_smmcall_abc
 #endif
 
   implicit none
@@ -589,9 +590,13 @@
   ! matrix-matrix multiplication C = alpha A * B + beta C
   ! with A(n1,n2) 5x5-matrix, B(n2,n3) 5x25-matrix and C(n1,n3) 5x25-matrix
   ! static version using MNK="5 25, 5" ALPHA=1 BETA=0
-  call libxsmm_smm_5_25_5(a=A, b=B1, c=C1, pa=A, pb=B2, pc=C2)
-  call libxsmm_smm_5_25_5(a=A, b=B2, c=C2, pa=A, pb=B3, pc=C3)
-  call libxsmm_smm_5_25_5(a=A, b=B3, c=C3, pa=A, pb=B1, pc=C1) ! with dummy prefetch
+  !call libxsmm_smm_5_25_5(a=A, b=B1, c=C1, pa=A, pb=B2, pc=C2)
+  !call libxsmm_smm_5_25_5(a=A, b=B2, c=C2, pa=A, pb=B3, pc=C3)
+  !call libxsmm_smm_5_25_5(a=A, b=B3, c=C3, pa=A, pb=B1, pc=C1) ! with dummy prefetch
+  ! dispatch
+  call libxsmm_mmcall_abc(xmm1, A, B1, C1)
+  call libxsmm_mmcall_abc(xmm1, A, B2, C2)
+  call libxsmm_mmcall_abc(xmm1, A, B3, C3)
   return
 #endif
 
@@ -640,7 +645,8 @@
   use constants_solver, only: CUSTOM_REAL
 
 #ifdef USE_XSMM
-  use my_libxsmm, only: libxsmm_smm_25_5_5
+  !use my_libxsmm, only: libxsmm_smm_25_5_5
+  use my_libxsmm,only: xmm2,libxsmm_mmcall_abc => libxsmm_smmcall_abc
 #endif
 
   implicit none
@@ -657,9 +663,13 @@
   ! matrix-matrix multiplication C = alpha A * B + beta C
   ! with A(n1,n2) 25x5-matrix, B(n2,n3) 5x5-matrix and C(n1,n3) 25x5-matrix
   ! static version
-  call libxsmm_smm_25_5_5(a=A1, b=B, c=C1, pa=A2, pb=B, pc=C2)
-  call libxsmm_smm_25_5_5(a=A2, b=B, c=C2, pa=A3, pb=B, pc=C3)
-  call libxsmm_smm_25_5_5(a=A3, b=B, c=C3, pa=A1, pb=B, pc=C1)
+  !call libxsmm_smm_25_5_5(a=A1, b=B, c=C1, pa=A2, pb=B, pc=C2)
+  !call libxsmm_smm_25_5_5(a=A2, b=B, c=C2, pa=A3, pb=B, pc=C3)
+  !call libxsmm_smm_25_5_5(a=A3, b=B, c=C3, pa=A1, pb=B, pc=C1)
+  ! dispatch
+  call libxsmm_mmcall_abc(xmm2, A1, B, C1)
+  call libxsmm_mmcall_abc(xmm2, A2, B, C2)
+  call libxsmm_mmcall_abc(xmm2, A3, B, C3)
   return
 #endif
 
@@ -710,7 +720,8 @@
 ! note: on CPUs like Haswell or Sandy Bridge, the following will slow down computations
 !       however, on Intel Phi (KNC) it is still helpful (speedup +3%)
 #if defined(XSMM_FORCE_EVEN_IF_SLOWER) || ( defined(XSMM) && defined(__MIC__) )
-  use my_libxsmm, only: libxsmm_smm_5_5_5
+  !use my_libxsmm, only: libxsmm_smm_5_5_5
+  use my_libxsmm,only: xmm3,libxsmm_mmcall_abc => libxsmm_smmcall_abc
 #endif
 
   implicit none
@@ -732,25 +743,30 @@
   !  call libxsmm_call(xmm3, A2(:,:,k), B, C2(:,:,k))
   !  call libxsmm_call(xmm3, A3(:,:,k), B, C3(:,:,k))
   !enddo
-
+  ! dispatch
+  do k = 1,5
+    call libxsmm_mmcall_abc(xmm3, A1(1,1,k), B, C1(1,1,k))
+    call libxsmm_mmcall_abc(xmm3, A2(1,1,k), B, C2(1,1,k))
+    call libxsmm_mmcall_abc(xmm3, A3(1,1,k), B, C3(1,1,k))
+  enddo
   ! unrolled
-  call libxsmm_smm_5_5_5(a=A1(1,1,1), b=B, c=C1(1,1,1),pa=A1(1,1,1+1), pb=B, pc=C1(1,1,1+1))
-  call libxsmm_smm_5_5_5(a=A1(1,1,2), b=B, c=C1(1,1,2),pa=A1(1,1,2+1), pb=B, pc=C1(1,1,2+1))
-  call libxsmm_smm_5_5_5(a=A1(1,1,3), b=B, c=C1(1,1,3),pa=A1(1,1,3+1), pb=B, pc=C1(1,1,3+1))
-  call libxsmm_smm_5_5_5(a=A1(1,1,4), b=B, c=C1(1,1,4),pa=A1(1,1,4+1), pb=B, pc=C1(1,1,4+1))
-  call libxsmm_smm_5_5_5(a=A1(1,1,5), b=B, c=C1(1,1,5),pa=A2(1,1,1), pb=B, pc=C2(1,1,1))
+  !call libxsmm_smm_5_5_5(a=A1(1,1,1), b=B, c=C1(1,1,1),pa=A1(1,1,1+1), pb=B, pc=C1(1,1,1+1))
+  !call libxsmm_smm_5_5_5(a=A1(1,1,2), b=B, c=C1(1,1,2),pa=A1(1,1,2+1), pb=B, pc=C1(1,1,2+1))
+  !call libxsmm_smm_5_5_5(a=A1(1,1,3), b=B, c=C1(1,1,3),pa=A1(1,1,3+1), pb=B, pc=C1(1,1,3+1))
+  !call libxsmm_smm_5_5_5(a=A1(1,1,4), b=B, c=C1(1,1,4),pa=A1(1,1,4+1), pb=B, pc=C1(1,1,4+1))
+  !call libxsmm_smm_5_5_5(a=A1(1,1,5), b=B, c=C1(1,1,5),pa=A2(1,1,1), pb=B, pc=C2(1,1,1))
 
-  call libxsmm_smm_5_5_5(a=A2(1,1,1), b=B, c=C2(1,1,1),pa=A2(1,1,1+1), pb=B, pc=C2(1,1,1+1))
-  call libxsmm_smm_5_5_5(a=A2(1,1,2), b=B, c=C2(1,1,2),pa=A2(1,1,2+1), pb=B, pc=C2(1,1,2+1))
-  call libxsmm_smm_5_5_5(a=A2(1,1,3), b=B, c=C2(1,1,3),pa=A2(1,1,3+1), pb=B, pc=C2(1,1,3+1))
-  call libxsmm_smm_5_5_5(a=A2(1,1,4), b=B, c=C2(1,1,4),pa=A2(1,1,4+1), pb=B, pc=C2(1,1,4+1))
-  call libxsmm_smm_5_5_5(a=A2(1,1,5), b=B, c=C2(1,1,5),pa=A3(1,1,1), pb=B, pc=C3(1,1,1))
+  !call libxsmm_smm_5_5_5(a=A2(1,1,1), b=B, c=C2(1,1,1),pa=A2(1,1,1+1), pb=B, pc=C2(1,1,1+1))
+  !call libxsmm_smm_5_5_5(a=A2(1,1,2), b=B, c=C2(1,1,2),pa=A2(1,1,2+1), pb=B, pc=C2(1,1,2+1))
+  !call libxsmm_smm_5_5_5(a=A2(1,1,3), b=B, c=C2(1,1,3),pa=A2(1,1,3+1), pb=B, pc=C2(1,1,3+1))
+  !call libxsmm_smm_5_5_5(a=A2(1,1,4), b=B, c=C2(1,1,4),pa=A2(1,1,4+1), pb=B, pc=C2(1,1,4+1))
+  !call libxsmm_smm_5_5_5(a=A2(1,1,5), b=B, c=C2(1,1,5),pa=A3(1,1,1), pb=B, pc=C3(1,1,1))
 
-  call libxsmm_smm_5_5_5(a=A3(1,1,1), b=B, c=C3(1,1,1),pa=A3(1,1,1+1), pb=B, pc=C3(1,1,1+1))
-  call libxsmm_smm_5_5_5(a=A3(1,1,2), b=B, c=C3(1,1,2),pa=A3(1,1,2+1), pb=B, pc=C3(1,1,2+1))
-  call libxsmm_smm_5_5_5(a=A3(1,1,3), b=B, c=C3(1,1,3),pa=A3(1,1,3+1), pb=B, pc=C3(1,1,3+1))
-  call libxsmm_smm_5_5_5(a=A3(1,1,4), b=B, c=C3(1,1,4),pa=A3(1,1,4+1), pb=B, pc=C3(1,1,4+1))
-  call libxsmm_smm_5_5_5(a=A3(1,1,5), b=B, c=C3(1,1,5),pa=A3(1,1,5), pb=B, pc=C3(1,1,5))
+  !call libxsmm_smm_5_5_5(a=A3(1,1,1), b=B, c=C3(1,1,1),pa=A3(1,1,1+1), pb=B, pc=C3(1,1,1+1))
+  !call libxsmm_smm_5_5_5(a=A3(1,1,2), b=B, c=C3(1,1,2),pa=A3(1,1,2+1), pb=B, pc=C3(1,1,2+1))
+  !call libxsmm_smm_5_5_5(a=A3(1,1,3), b=B, c=C3(1,1,3),pa=A3(1,1,3+1), pb=B, pc=C3(1,1,3+1))
+  !call libxsmm_smm_5_5_5(a=A3(1,1,4), b=B, c=C3(1,1,4),pa=A3(1,1,4+1), pb=B, pc=C3(1,1,4+1))
+  !call libxsmm_smm_5_5_5(a=A3(1,1,5), b=B, c=C3(1,1,5),pa=A3(1,1,5), pb=B, pc=C3(1,1,5))
   return
 #endif
 

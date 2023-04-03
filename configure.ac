@@ -184,7 +184,7 @@ AM_CONDITIONAL([COND_MIC], [test x"$want_mic" != xno])
 ###
 AC_ARG_WITH([xsmm],
     [AS_HELP_STRING([--with-xsmm],
-        [build LIBXSMM (see:https://github.com/hfp/libxsmm) enabled version @<:@default=no@:>@])],
+        [build LIBXSMM (see:https://github.com/libxsmm/libxsmm) enabled version @<:@default=no@:>@])],
     [want_xsmm="$withval"],
     [want_xsmm=no])
 AM_CONDITIONAL([COND_XSMM], [test x"$want_xsmm" != xno])

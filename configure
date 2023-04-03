@@ -1571,8 +1571,9 @@ Optional Packages:
   --with-opencl           build OpenCL GPU enabled version [default=no]
   --with-hip              build HIP GPU enabled version [default=no]
   --with-mic              build native Xeon PHI enabled version [default=no]
-  --with-xsmm             build LIBXSMM (see:https://github.com/hfp/libxsmm)
-                          enabled version [default=no]
+  --with-xsmm             build LIBXSMM
+                          (see:https://github.com/libxsmm/libxsmm) enabled
+                          version [default=no]
   --with-parallel-stl     build mesh sorting with C++ Parallel STL routines
                           [default=no]
   --with-openmp           build OpenMP enabled version [default=no]
