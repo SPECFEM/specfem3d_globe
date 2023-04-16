@@ -400,44 +400,48 @@
   endif
 
   ! outer core
-  call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
-                           rmass_outer_core, &
-                           num_interfaces_outer_core,max_nibool_interfaces_oc, &
-                           nibool_interfaces_outer_core,ibool_interfaces_outer_core, &
-                           my_neighbors_outer_core)
+  if (num_interfaces_outer_core > 0) then
+    call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
+                             rmass_outer_core, &
+                             num_interfaces_outer_core,max_nibool_interfaces_oc, &
+                             nibool_interfaces_outer_core,ibool_interfaces_outer_core, &
+                             my_neighbors_outer_core)
+  endif
 
   ! inner core
-  call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_INNER_CORE, &
-                           rmassz_inner_core, &
-                           num_interfaces_inner_core,max_nibool_interfaces_ic, &
-                           nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
-                           my_neighbors_inner_core)
-
-  if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) then
-    call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
-                             rmassx_inner_core, &
+  if (num_interfaces_inner_core > 0) then
+    call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_INNER_CORE, &
+                             rmassz_inner_core, &
                              num_interfaces_inner_core,max_nibool_interfaces_ic, &
                              nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
                              my_neighbors_inner_core)
 
-    call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
-                             rmassy_inner_core, &
-                             num_interfaces_inner_core,max_nibool_interfaces_ic, &
-                             nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
-                             my_neighbors_inner_core)
-
-    if (SIMULATION_TYPE == 3) then
+    if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) then
       call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
-                               b_rmassx_inner_core, &
+                               rmassx_inner_core, &
                                num_interfaces_inner_core,max_nibool_interfaces_ic, &
                                nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
                                my_neighbors_inner_core)
 
       call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
-                               b_rmassy_inner_core, &
+                               rmassy_inner_core, &
                                num_interfaces_inner_core,max_nibool_interfaces_ic, &
                                nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
                                my_neighbors_inner_core)
+
+      if (SIMULATION_TYPE == 3) then
+        call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
+                                 b_rmassx_inner_core, &
+                                 num_interfaces_inner_core,max_nibool_interfaces_ic, &
+                                 nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
+                                 my_neighbors_inner_core)
+
+        call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
+                                 b_rmassy_inner_core, &
+                                 num_interfaces_inner_core,max_nibool_interfaces_ic, &
+                                 nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
+                                 my_neighbors_inner_core)
+      endif
     endif
   endif
 

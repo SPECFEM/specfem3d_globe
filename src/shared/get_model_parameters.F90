@@ -60,7 +60,8 @@
     ATTENUATION_GLL, CASE_3D,CRUSTAL,HETEROGEN_3D_MANTLE, &
     HONOR_1D_SPHERICAL_MOHO, MODEL_3D_MANTLE_PERTUBATIONS, &
     ONE_CRUST, TRANSVERSE_ISOTROPY, OCEANS,TOPOGRAPHY, &
-    CEM_REQUEST,CEM_ACCEPT
+    CEM_REQUEST,CEM_ACCEPT, &
+    EMC_MODEL
 
   implicit none
 
@@ -284,6 +285,9 @@
   ! no CEM by default
   CEM_REQUEST = .false.
   CEM_ACCEPT  = .false.
+
+  ! no EMC model by default
+  EMC_MODEL = .false.
 
   ! no 3D model by default
   THREE_D_MODEL = 0
@@ -730,8 +734,25 @@
     TRANSVERSE_ISOTROPY = .true.
 #else
   case ('cem_request','cem_accept','cem_gll')
-    print *,'Error model ',trim(MODEL),': package compiled without CEM model support. Please re-configure with --with-cem support.'
-    stop 'Invalid CEM model requested, compiled without CEM support'
+    print *,'Error model ',trim(MODEL),': package compiled without CEM model support.'
+    print *,'Please re-configure with --with-cem or --with-netcdf support.'
+    stop 'Invalid CEM model requested, compiled without CEM/NetCDF support'
+#endif
+
+#ifdef USE_EMC
+  case ('emc_model')
+    EMC_MODEL           = .true.
+    TRANSVERSE_ISOTROPY = .false. ! enforces isotropic model - for now, tiso models are not supported yet...
+  case ('emc_model_tiso')
+    EMC_MODEL           = .true.
+    TRANSVERSE_ISOTROPY = .true.
+    ! tiso models are not supported yet...
+    stop 'EMC models with transverse isotropy are not supported yet!'
+#else
+  case ('emc_model')
+    print *,'Error model ',trim(MODEL),': package compiled without EMC model support.'
+    print *,'Please re-configure with --with-emc or --with-netcdf support.'
+    stop 'Invalid EMC model requested, compiled without EMC/NetCDF support'
 #endif
 
   case ('ppm')

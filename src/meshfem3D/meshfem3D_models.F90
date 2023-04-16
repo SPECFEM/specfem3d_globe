@@ -251,9 +251,15 @@
 
   ! Enclose this in an ifdef so we don't link to netcdf
   ! if we don't need it.
+  ! Collaborative Earth Model (CEM)
 #ifdef USE_CEM
   if (CEM_REQUEST .or. CEM_ACCEPT) &
     call model_cem_broadcast()
+#endif
+  ! IRIS EMC models
+#ifdef USE_EMC
+  if (EMC_MODEL) &
+    call model_EMC_broadcast()
 #endif
 
   ! GLL model
@@ -702,7 +708,7 @@
           !       this is in general true, almost all mantle models fix the moho depth at 24.4 km (set as RMOHO reference)
           !       and invert their velocity models for structures below.
           !
-          !       however, in case a mantle models extends to shallower depths, those velocity regions will be ignored.
+          !       however, in case a mantle model extends to shallower depths, those velocity regions will be ignored.
           !
           ! to do in future: we might want to let the mantle routines decide where to this upper cut-off radius value
           r_used = 0.999999d0*RMOHO/R_PLANET
@@ -972,7 +978,16 @@
 #ifdef USE_CEM
   if (CEM_ACCEPT) then
     ! over-imposes velocity values for all regions (crust/mantle,outer core,inner core)
-    call request_cem (vsh, vsv, vph, vpv, rho, iregion_code, ispec, i, j, k)
+    call request_cem(vsh, vsv, vph, vpv, rho, iregion_code, ispec, i, j, k)
+  endif
+#endif
+
+  ! IRIS EMC model
+#ifdef USE_EMC
+  if (EMC_MODEL) then
+    ! over-imposes velocity values for all possible regions (crust/mantle,outer core,inner core - in case)
+    r_used = r  ! takes actual position (between CMB and surface)
+    call model_EMC_crustmantle(iregion_code,r_used,theta,phi,vpv,vph,vsv,vsh,eta_aniso,rho)
   endif
 #endif
 

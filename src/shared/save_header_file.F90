@@ -112,15 +112,9 @@
   ! local parameters
   double precision :: subtract_central_cube_elems,subtract_central_cube_points
   ! for regional code
-  double precision :: x,y,gamma,rgt,xi,eta
-  double precision :: x_top,y_top,z_top
   double precision :: ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
-  ! rotation matrix from Euler angles
-  integer :: i,j,ix,iy,icorner
-  double precision :: rotation_matrix(3,3)
-  double precision :: vector_ori(3),vector_rotated(3)
-  double precision :: r_corner,theta_corner,phi_corner,lat,long,colat_corner
-  integer :: ier
+  double precision :: corners_lat(4),corners_lon(4)
+  integer :: ix,iy,icorner,ier
 
   integer :: num_elem_gc,num_gll_gc
   double precision :: avg_dist_deg,avg_dist_km,avg_element_size
@@ -215,7 +209,7 @@
       print *
     endif
     print *,'on NEC SX, make sure "loopcnt=" parameter'
-! use fused loops on NEC SX
+    ! use fused loops on NEC SX
     print *,'in Makefile is greater than max vector length = ',NGLOB_REGIONS(IREGION_CRUST_MANTLE) * NDIM
     print *
 
@@ -316,7 +310,7 @@
   write(IOUT,*) '! number of chunks = ',NCHUNKS
   write(IOUT,*) '!'
 
-! the central cube is counted 6 times, therefore remove 5 times
+  ! the central cube is counted 6 times, therefore remove 5 times
   if (INCLUDE_CENTRAL_CUBE) then
     write(IOUT,*) '! these statistics include the central cube'
     subtract_central_cube_elems = 5.d0 * dble((NEX_XI/8))**3
@@ -332,7 +326,7 @@
   write(IOUT,*) '!'
   write(IOUT,*) '! maximum number of points per region = ',NGLOB_REGIONS(IREGION_CRUST_MANTLE)
   write(IOUT,*) '!'
-! use fused loops on NEC SX
+  ! use fused loops on NEC SX
   write(IOUT,*) '! on NEC SX, make sure "loopcnt=" parameter'
   write(IOUT,*) '! in Makefile is greater than max vector length = ',NGLOB_REGIONS(IREGION_CRUST_MANTLE) * NDIM
   write(IOUT,*) '!'
@@ -351,18 +345,14 @@
   write(IOUT,*) '! ',dble(NCHUNKS)*dble(NPROC)*dble(sum(NSPEC_REGIONS)) - subtract_central_cube_elems
   write(IOUT,*) '! approximate total number of points in entire mesh = '
   write(IOUT,*) '! ',dble(NCHUNKS)*dble(NPROC)*dble(sum(NGLOB_REGIONS)) - subtract_central_cube_points
-! there are 3 DOFs in solid regions, but only 1 in fluid outer core
+  ! there are 3 DOFs in solid regions, but only 1 in fluid outer core
   write(IOUT,*) '! approximate total number of degrees of freedom in entire mesh = '
   write(IOUT,*) '! ',dble(NCHUNKS)*dble(NPROC)*(3.d0*(dble(sum(NGLOB_REGIONS))) &
     - 2.d0*dble(NGLOB_REGIONS(IREGION_OUTER_CORE))) &
     - 3.d0*subtract_central_cube_points
   write(IOUT,*) '!'
 
-! convert width to radians
-  ANGULAR_WIDTH_XI_RAD = ANGULAR_WIDTH_XI_IN_DEGREES * DEGREES_TO_RADIANS
-  ANGULAR_WIDTH_ETA_RAD = ANGULAR_WIDTH_ETA_IN_DEGREES * DEGREES_TO_RADIANS
-
-! display location of chunk if regional run
+  ! display location of chunk if regional run
   if (NCHUNKS /= 6) then
 
     write(IOUT,*) '! position of the mesh chunk at the surface:'
@@ -376,68 +366,31 @@
     write(IOUT,*) '!'
     write(IOUT,*) '! angle of rotation of the first chunk = ',sngl(GAMMA_ROTATION_AZIMUTH)
 
-! compute rotation matrix from Euler angles
-    call euler_angles(rotation_matrix,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH)
+    call determine_chunk_corners_latlon(CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH, &
+                                        ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES, &
+                                        corners_lat,corners_lon)
 
-! loop on the four corners of the chunk to display their coordinates
+    ! loop on the four corners of the chunk to display their coordinates
     icorner = 0
     do iy = 0,1
       do ix = 0,1
+        icorner = icorner + 1
 
-      icorner = icorner + 1
-
-      xi  = - ANGULAR_WIDTH_XI_RAD/2.  + dble(ix)*ANGULAR_WIDTH_XI_RAD
-      eta = - ANGULAR_WIDTH_ETA_RAD/2. + dble(iy)*ANGULAR_WIDTH_ETA_RAD
-
-      x = dtan(xi)
-      y = dtan(eta)
-
-      gamma = ONE/dsqrt(ONE+x*x+y*y)
-      rgt = R_UNIT_SPHERE*gamma
-
-      ! define the mesh points at the top surface
-      x_top = -y*rgt
-      y_top = x*rgt
-      z_top = rgt
-
-      ! rotate top
-      vector_ori(1) = x_top
-      vector_ori(2) = y_top
-      vector_ori(3) = z_top
-      do i=1,3
-        vector_rotated(i)=0.0d0
-        do j=1,3
-          vector_rotated(i)=vector_rotated(i)+rotation_matrix(i,j)*vector_ori(j)
-        enddo
-      enddo
-      x_top = vector_rotated(1)
-      y_top = vector_rotated(2)
-      z_top = vector_rotated(3)
-
-      ! convert to latitude and longitude
-      call xyz_2_rthetaphi_dble(x_top,y_top,z_top,r_corner,theta_corner,phi_corner)
-      call reduce(theta_corner,phi_corner)
-
-      ! convert geocentric to geographic colatitude
-      call geocentric_2_geographic_dble(theta_corner,colat_corner)
-
-      if (phi_corner > PI) phi_corner=phi_corner-TWO_PI
-
-      ! compute real position of the source
-      lat = (PI_OVER_TWO-colat_corner)*RADIANS_TO_DEGREES
-      long = phi_corner*RADIANS_TO_DEGREES
-
-      write(IOUT,*) '!'
-      write(IOUT,*) '! corner ',icorner
-      write(IOUT,*) '! longitude in degrees = ',long
-      write(IOUT,*) '! latitude in degrees = ',lat
-
+        ! real position of the corner points
+        write(IOUT,*) '!'
+        write(IOUT,*) '! corner ',icorner
+        write(IOUT,*) '! longitude in degrees = ',corners_lon(icorner)
+        write(IOUT,*) '! latitude in degrees = ',corners_lat(icorner)
       enddo
     enddo
 
     write(IOUT,*) '!'
 
   endif  ! regional chunk
+
+  ! convert width to radians
+  ANGULAR_WIDTH_XI_RAD = ANGULAR_WIDTH_XI_IN_DEGREES * DEGREES_TO_RADIANS
+  ANGULAR_WIDTH_ETA_RAD = ANGULAR_WIDTH_ETA_IN_DEGREES * DEGREES_TO_RADIANS
 
   ! mesh averages
   if (NCHUNKS /= 6) then

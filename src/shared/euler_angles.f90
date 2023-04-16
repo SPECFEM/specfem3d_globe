@@ -65,3 +65,95 @@
 
   end subroutine euler_angles
 
+!
+!-------------------------------------------------------------------------------------------
+!
+
+  subroutine determine_chunk_corners_latlon(CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH, &
+                                            ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES, &
+                                            corners_lat,corners_lon)
+
+  use constants, only: DEGREES_TO_RADIANS,RADIANS_TO_DEGREES,ONE,PI,TWO_PI,PI_OVER_TWO,R_UNIT_SPHERE
+
+  implicit none
+
+  double precision,intent(in) :: CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH
+  double precision,intent(in) :: ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES
+  double precision,intent(out) :: corners_lat(4),corners_lon(4)
+
+  ! local parameters
+  ! rotation matrix from Euler angles
+  integer :: i,j,ix,iy,icorner
+  double precision :: rotation_matrix(3,3)
+  double precision :: vector_ori(3),vector_rotated(3)
+  double precision :: r_corner,theta_corner,phi_corner,lat,long,colat_corner
+  double precision :: x,y,gamma,rgt,xi,eta
+  double precision :: x_top,y_top,z_top
+  double precision :: ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
+
+  ! initializes
+  corners_lat(:) = 0.d0
+  corners_lon(:) = 0.d0
+
+  ! compute rotation matrix from Euler angles
+  call euler_angles(rotation_matrix,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH)
+
+  ! convert width to radians
+  ANGULAR_WIDTH_XI_RAD = ANGULAR_WIDTH_XI_IN_DEGREES * DEGREES_TO_RADIANS
+  ANGULAR_WIDTH_ETA_RAD = ANGULAR_WIDTH_ETA_IN_DEGREES * DEGREES_TO_RADIANS
+
+  ! loop on the four corners of the chunk to display their coordinates
+  icorner = 0
+  do iy = 0,1
+    do ix = 0,1
+
+    icorner = icorner + 1
+
+    xi  = - ANGULAR_WIDTH_XI_RAD/2.  + dble(ix)*ANGULAR_WIDTH_XI_RAD
+    eta = - ANGULAR_WIDTH_ETA_RAD/2. + dble(iy)*ANGULAR_WIDTH_ETA_RAD
+
+    x = dtan(xi)
+    y = dtan(eta)
+
+    gamma = ONE/dsqrt(ONE+x*x+y*y)
+    rgt = R_UNIT_SPHERE*gamma
+
+    ! define the mesh points at the top surface
+    x_top = -y*rgt
+    y_top = x*rgt
+    z_top = rgt
+
+    ! rotate top
+    vector_ori(1) = x_top
+    vector_ori(2) = y_top
+    vector_ori(3) = z_top
+    do i=1,3
+      vector_rotated(i) = 0.0d0
+      do j=1,3
+        vector_rotated(i) = vector_rotated(i) + rotation_matrix(i,j)*vector_ori(j)
+      enddo
+    enddo
+    x_top = vector_rotated(1)
+    y_top = vector_rotated(2)
+    z_top = vector_rotated(3)
+
+    ! convert to latitude and longitude
+    call xyz_2_rthetaphi_dble(x_top,y_top,z_top,r_corner,theta_corner,phi_corner)
+    call reduce(theta_corner,phi_corner)
+
+    ! convert geocentric to geographic colatitude
+    call geocentric_2_geographic_dble(theta_corner,colat_corner)
+
+    if (phi_corner > PI) phi_corner = phi_corner - TWO_PI
+
+    ! compute real position of the source
+    lat = (PI_OVER_TWO-colat_corner) * RADIANS_TO_DEGREES
+    long = phi_corner * RADIANS_TO_DEGREES
+
+    corners_lat(icorner) = lat
+    corners_lon(icorner) = long
+
+    enddo
+  enddo
+
+  end subroutine determine_chunk_corners_latlon

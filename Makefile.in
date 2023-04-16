@@ -427,6 +427,20 @@ endif
 
 #######################################
 ####
+#### NetCDF
+#### with configure: ./configure --with-netcdf NETCDF_LIBS=.. NETCDF_FCFLAGS=.. NETCDF_INC=..
+####
+#######################################
+
+@COND_NETCDF_TRUE@NETCDF = yes
+@COND_NETCDF_FALSE@NETCDF = no
+
+# adds compiler flag
+@COND_NETCDF_TRUE@FCFLAGS += @NETCDF_FCFLAGS@ @NETCDF_INCLUDES@
+@COND_NETCDF_TRUE@MPILIBS += @NETCDF_LIBS@
+
+#######################################
+####
 #### CEM
 #### with configure: ./configure --with-cem CEM_LIBS=.. CEM_FCFLAGS=..
 ####
@@ -439,6 +453,22 @@ endif
 # adds compiler flag
 @COND_CEM_TRUE@FCFLAGS += ${FC_DEFINE}USE_CEM @CEM_FCFLAGS@
 @COND_CEM_TRUE@MPILIBS += @CEM_LIBS@
+
+#######################################
+####
+#### IRIS EMC models
+#### with configure: ./configure --with-emc EMC_LIBS=.. EMC_FCFLAGS=..
+####
+#######################################
+# (requires Netcdf support)
+
+@COND_EMC_TRUE@EMC = yes
+@COND_EMC_FALSE@EMC = no
+
+# adds compiler flag
+@COND_EMC_TRUE@FCFLAGS += ${FC_DEFINE}USE_EMC @EMC_FCFLAGS@
+@COND_EMC_TRUE@MPILIBS += @EMC_LIBS@
+
 
 #######################################
 ## static compilation
