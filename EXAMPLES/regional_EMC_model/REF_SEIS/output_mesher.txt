@@ -52,15 +52,15 @@
 
  incorporating topography
    topo file            : DATA/topo_bathy/topo_bathy_etopo4_smoothed_window_7.bin
-   resolution in minutes:    4.00000000    
+   resolution in minutes:    4.00000000
 
    topography/bathymetry: min/max =        -7747        5507
 
-   Elapsed time for reading in seconds =    4.3050999999999999E-002
+   Elapsed time for reading in seconds =    8.4950000000000012E-002
 
 
-   VTK topo output: topo resolution in minutes =    4.00000000    
-                    samples per degree         =    15.0000000    
+   VTK topo output: topo resolution in minutes =    4.00000000
+                    samples per degree         =    15.0000000
                     resolution distance        =    7.41299534     (km)
                     full globe NLAT =         2700
                                NLON =         5400
@@ -76,18 +76,20 @@
    id     : Alaska.JointInversion_RF+Vph+HV-1.Berg.2020
    title  : Shear Velocity Model of Alaska via Joint Inversion...
 
-   range  : latitude  min/max =    50.0000000     /   75.0000000    
-            longitude min/max =   -180.000000     /  -120.000000    
+   range  : latitude  min/max =    50.0000000     /   75.0000000
+            longitude min/max =   -180.000000     /  -120.000000
             depth     min/max =    0.00000000     /   144.000000     (km)
             regional model
 
-   grid   : lat  min/max =    50.0000000     /   75.0000000    
-            lon  min/max =   -180.000000     /  -120.000000    
-            dep  min/max =    0.00000000     /   144.000000    
+            model (vp,vs,rho) is complete
+
+   grid   : lat  min/max =    50.0000000     /   75.0000000
+            lon  min/max =   -180.000000     /  -120.000000
+            dep  min/max =    0.00000000     /   144.000000
 
             regular grid lat/lon/dep =  T / T / F
-            increments dlat =   0.100000001    
-            increments dlon =   0.200000003    
+            increments dlat =   0.100000001
+            increments dlon =   0.200000003
             increments ddep = variable (  0.250000000     ,..)
 
             depth reference level: earth surface
@@ -99,17 +101,17 @@
             array dimensions nx/ny/nz          =          301 /         251 /         156
             array memory required per process  =    134.879562     MB
 
-   model  : vp  min/max =    1.90540004     /   9.56910038    
-            vs  min/max =   0.488099992     /   5.34880018    
-            rho min/max =    2.05080009     /   3.88599992    
+   model  : vp  min/max =    1.90540004     /   9.56910038
+            vs  min/max =   0.488099992     /   5.34880018
+            rho min/max =    2.05080009     /   3.88599992
 
             number of missing/incomplete model points is      8758308  out of     11785956
                                                             74.3113937     %
 
    simulation chunk setup:
      center (lat,lon) at : (   64.0000000      -150.000000     ) geocentric
-     rotation            :    20.0000000    
-     width eta/xi        :    25.0000000       30.0000000    
+     rotation            :    20.0000000
+     width eta/xi        :    25.0000000       30.0000000
 
      corners (lat,lon) at: (   46.6368103      -163.957794     ),(   53.3719826      -118.907059     )
                            (   63.9481773       165.510025     ),(   76.7717819      -103.802673     ) geographic
@@ -130,10 +132,10 @@
  Radial Meshing parameters:
    NCHUNKS                =            1
 
-   CENTER LAT/LON:             64.0000000     /  -150.000000    
-   GAMMA_ROTATION_AZIMUTH:     20.0000000    
+   CENTER LAT/LON:             64.0000000     /  -150.000000
+   GAMMA_ROTATION_AZIMUTH:     20.0000000
 
-   CHUNK WIDTH XI/ETA:         30.0000000     /   25.0000000    
+   CHUNK WIDTH XI/ETA:         30.0000000     /   25.0000000
    NEX XI/ETA:                        32 /          32
 
    NER_CRUST:                          2
@@ -155,8 +157,8 @@
    DT =    5.0000000000000003E-002
    Minimum period =    38.6093483      (s)
 
-   MIN_ATTENUATION_PERIOD =    38.6093483    
-   MAX_ATTENUATION_PERIOD =    2171.16333    
+   MIN_ATTENUATION_PERIOD =    38.6093483
+   MAX_ATTENUATION_PERIOD =    2171.16333
 
  Regional mesh cutoff:
    cut-off depth          =    200.00000000000000      (km)
@@ -176,22 +178,22 @@
 
  first pass
 
-   ...allocating arrays 
+   ...allocating arrays
 
-   ...setting up layers 
+   ...setting up layers
 
-   ...creating mesh elements 
+   ...creating mesh elements
    creating layer            1 out of            3
      number of regular elements  =           96
      number of doubling elements =          128
-     33.3%    current clock (NOT elapsed) time is: 02h 31min 43sec
+     33.3%    current clock (NOT elapsed) time is: 13h 58min 39sec
    creating layer            2 out of            3
      number of regular elements  =           64
      number of doubling elements =          512
-     66.7%    current clock (NOT elapsed) time is: 02h 31min 43sec
+     66.7%    current clock (NOT elapsed) time is: 13h 58min 39sec
    creating layer            3 out of            3
      number of regular elements  =          256
-    100.0%    current clock (NOT elapsed) time is: 02h 31min 43sec
+    100.0%    current clock (NOT elapsed) time is: 13h 58min 39sec
    layers done
 
    number of elements (per slice)        =         1056
@@ -209,29 +211,29 @@
 
  second pass
 
-   ...allocating arrays 
+   ...allocating arrays
 
-   ...setting up layers 
+   ...setting up layers
 
-   ...creating mesh elements 
+   ...creating mesh elements
    creating layer            1 out of            3
      number of regular elements  =           96
      number of doubling elements =          128
-     33.3%    current clock (NOT elapsed) time is: 02h 31min 43sec
+     33.3%    current clock (NOT elapsed) time is: 13h 58min 39sec
    creating layer            2 out of            3
      number of regular elements  =           64
      number of doubling elements =          512
-     66.7%    current clock (NOT elapsed) time is: 02h 31min 44sec
+     66.7%    current clock (NOT elapsed) time is: 13h 58min 39sec
    creating layer            3 out of            3
      number of regular elements  =          256
-    100.0%    current clock (NOT elapsed) time is: 02h 31min 44sec
+    100.0%    current clock (NOT elapsed) time is: 13h 58min 39sec
    layers done
 
    number of elements (per slice)        =         1056
    total number of elements (all slices) =         4224
 
 
-   ...fills global mesh points 
+   ...fills global mesh points
 
    ...checking mesh resolution and time step
 
@@ -240,22 +242,22 @@
  ----------------------------------
    Region is crust/mantle
 
-   Min Vs =   0.826992095      (km/s)
-   Max Vp =    8.55042934      (km/s)
+   Min Vs =   0.829714894      (km/s)
+   Max Vp =    8.55003834      (km/s)
 
    Max element edge size =    411.768768      (km)
    Min element edge size =    4.85114288      (km)
-   Max/min ratio =    84.8807755    
+   Max/min ratio =    84.8807755
 
-   Max Jacobian eigenvalue ratio =   0.148878485    
+   Max Jacobian eigenvalue ratio =   0.148878485
    Min Jacobian eigenvalue ratio =    5.12770517E-03
 
-   Minimum period resolved =    15.0864983      (s)
+   Minimum period resolved =    15.0369892      (s)
    Minimum period resolved (empirical) =    38.6093483      (s)
    Maximum suggested time step =    5.64999990E-02  (s)
 
    for DT :    5.00000007E-02  (s)
-   Max stability for wave velocities =   0.484120220    
+   Max stability for wave velocities =   0.484120220
  ----------------------------------
 
    saving vtk mesh files for resolution res_minimum_period...
@@ -298,7 +300,7 @@
    total unique MPI interface points:       12804
 
 
-   ...element inner/outer separation 
+   ...element inner/outer separation
 
  for overlapping of communications with calculations:
 
@@ -306,7 +308,7 @@
  percentage of volume elements in crust/mantle    79.9242401     %
 
 
-   ...element mesh coloring 
+   ...element mesh coloring
    mesh coloring:  F
 
    ...creating absorbing boundary arrays
@@ -320,8 +322,8 @@
    ...saving mesh files
 
  calculated region volume:    6.75710896E-03
-                 top area:   0.223485395    
-              bottom area:   0.209725976    
+                 top area:   0.223485395
+              bottom area:   0.209725976
 
  calculated volume:    6.7571089477372302E-003
 
@@ -347,7 +349,7 @@
  smallest and largest possible floating-point numbers are:    1.17549435E-38   3.40282347E+38
 
 
- Elapsed time for mesh generation and buffer creation in seconds =    1.05745697    
+ Elapsed time for mesh generation and buffer creation in seconds =    1.24852097
  Elapsed time for mesh generation and buffer creation in hh:mm:ss =    0 h 00 m 01 s
 
  End of mesh generation

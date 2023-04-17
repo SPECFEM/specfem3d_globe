@@ -63,7 +63,7 @@ NPROC_ETA                       = 2
 #                          associated reference model rather than the default 3D crustal model
 #                          e.g. s20rts_1Dcrust, s362ani_1Dcrust, etc.
 #
-MODEL                           = EMC_model 
+MODEL                           = EMC_model
 
 # parameters describing the Earth model
 OCEANS                          = .true.

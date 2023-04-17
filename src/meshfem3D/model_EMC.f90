@@ -97,27 +97,35 @@ module model_emc_par
   !       it is not clear yet, how the scaling should look like, if we want to provide scaling options,
   !       or if partial EMC models are just not supported.
   !
-  !       below are some options (similar to the PPM model in file model_ppm.f90)
-  !       for now, we don't support scaling yet and require the EMC model provide vp, vs and rho.
+  !       by default, we will use Brocher scaling relations:
+  !       Brocher 2005, Empirical Relations between Elastic Wavespeeds and Density in the Earth’s Crust, BSSA
+
+  !       note that these scaling relations also would have limitations (range of vs, etc.) in their applicability,
+  !       which we ignore for simplicity now.
+  !       todo: this can be improved in future version of this routine...
   !
-  ! scale (perturbations) in shear speed to (perturbations) in density and vp
-  logical, parameter:: SCALE_MODEL = .false.
+  ! scale missing velocity parameters (Vp-to-Density, Vp-to-Vs)
+  logical, parameter :: SCALE_MODEL = .true.
 
-  !! factor to convert (perturbations) in shear speed to (perturbations) in density
-  ! taken from s20rts (see also Qin, 2009, sec. 5.2)
-  double precision, parameter :: SCALE_RHO = 0.40d0
-  ! SCEC version 4 model relationship http://www.data.scec.org/3Dvelocity/
+  ! here below are some more simple options (similar to the PPM model in file model_ppm.f90), mentioned for reference.
+  !
+  !! other factors to convert (perturbations) in shear speed to (perturbations) in density
+  ! taken from s20rts
+  ! (see also Qin et al. 2009, Reliability of mantle tomography models assessed by spectral element simulation, sec. 5.2)
+  !double precision, parameter :: SCALE_RHO = 0.40d0
+  ! SCEC CVM-H version model relationship: https://strike.scec.org/scecpedia/CVM-H,
+  ! uses Brocher 2005 (Empirical Relations between Elastic Wavespeeds and Density in the Earth’s Crust, BSSA) for sediments
   !double precision, parameter :: SCALE_RHO = 0.254d0
-
-  !! factor to convert (perturbations) in shear speed to (perturbations) in Vp
+  !
+  !! other factors to convert (perturbations in) shear speed to (perturbations in) Vp
   ! see: P wave seismic velocity and Vp/Vs ratio beneath the Italian peninsula from local earthquake tomography
   ! (Davide Scadi et al.,2008. tectonophysics)
   !double precision, parameter :: SCALE_VP =  1.75d0 !  corresponds to average vp/vs ratio (becomes unstable!)
   ! Zhou et al. 2005: global upper-mantle structure from finite-frequency surface-wave tomography
   ! http://www.gps.caltech.edu/~yingz/pubs/Zhou_JGR_2005.pdf
   !double precision, parameter :: SCALE_VP =  0.5d0 ! by lab measurements Montagner & Anderson, 1989
-  ! Qin et al. 2009, sec. 5.2
-  double precision, parameter :: SCALE_VP =  0.588d0 ! by Karato, 1993
+  ! (Qin et al. 2009, Reliability of mantle tomography models assessed by spectral element simulation, sec. 5.2)
+  !double precision, parameter :: SCALE_VP =  0.588d0 ! by Karato, 1993
 
   !------------------------------------------------
   ! Parameters for generic reading of NetCDF files
@@ -251,9 +259,9 @@ contains
   status = nf90_get_att(ncid, NF90_GLOBAL, 'geospatial_vertical_units', val_string)
   if (status == nf90_noerr) then
     ! units: 1==m, 2==km, 3==m/s, 4==km/s, 5==g/cm^3, 6==kg/cm^3, 7==kg/m^3
-    if (trim(val_string) == 'm') then
+    if (trim(val_string) == 'm' .or. trim(val_string) == 'meter') then
       unit = 1
-    else if (trim(val_string) == 'km') then
+    else if (trim(val_string) == 'km' .or. trim(val_string) == 'kilometer') then
       unit = 2
     else
       unit = 0
@@ -541,13 +549,13 @@ contains
         ! get attribute value
         call check_status(nf90_get_att(ncid, varid, name, value))
         if (VERBOSE) print *,'      unit: ',trim(value)
-        if (trim(value) == 'm') then
+        if (trim(value) == 'm' .or. trim(value) == 'meter') then
           unit = 1
-        else if (trim(value) == 'km') then
+        else if (trim(value) == 'km' .or. trim(value) == 'kilometer') then
           unit = 2
-        else if (trim(value) == 'm.s-1') then
+        else if (trim(value) == 'm.s-1' .or. trim(value) == 'meter.s-1') then
           unit = 3
-        else if (trim(value) == 'km.s-1') then
+        else if (trim(value) == 'km.s-1' .or. trim(value) == 'kilometer.s-1') then
           unit = 4
         else if (trim(value) == 'g.cm-3' .or. trim(value) == 'g.cm-1') then
           ! Alaska file defines g.cm-1 which is likely an error as density should be g.cm-3
@@ -612,6 +620,210 @@ contains
   end subroutine check_variable_attributes
 
 
+  ! --------------------------------
+  ! subroutine to scale missing density from Vp
+  ! --------------------------------
+  subroutine scale_Brocher_rho_from_vp()
+
+  implicit none
+
+  ! local parameters
+  double precision :: vp,vp_p2,vp_p3,vp_p4,vp_p5,rho
+  integer :: ix,iy,iz,nx,ny,nz
+
+  ! Brocher 2005, Empirical Relations between Elastic Wavespeeds and Density in the Earth’s Crust, BSSA
+  ! factors from eq. (1)
+  double precision,parameter :: fac1 = 1.6612d0
+  double precision,parameter :: fac2 = -0.4721d0
+  double precision,parameter :: fac3 = 0.0671d0
+  double precision,parameter :: fac4 = -0.0043d0
+  double precision,parameter :: fac5 = 0.000106d0
+
+  ! scaling requires vp in km/s
+  ! units: 1==m, 2==km, 3==m/s, 4==km/s, 5==g/cm^3, 6==kg/cm^3, 7==kg/m^3
+  ! unit scaling factor
+  double precision :: unit_scale
+
+  nx = EMC_dims_nx
+  ny = EMC_dims_ny
+  nz = EMC_dims_nz
+
+  ! determines scaling factor to km/s
+  if (EMC_vp_unit == 3) then
+    ! given in m/s -> km/s
+    unit_scale = 1.d0 / 1000.d0
+  else
+    ! given in km/s
+    unit_scale = 1.d0
+  endif
+
+  do iz = 1,nz
+    do iy = 1,ny
+      do ix = 1,nx
+        ! Vp (in km/s)
+        vp = EMC_vp(ix,iy,iz) * unit_scale
+        vp_p2 = vp * vp
+        vp_p3 = vp * vp_p2
+        vp_p4 = vp * vp_p3
+        vp_p5 = vp * vp_p4
+
+        ! scaling relation: eq.(1)
+        rho = fac1 * vp + fac2 * vp_p2 + fac3 * vp_p3 + fac4 * vp_p4 + fac5 * vp_p5
+
+        ! Density
+        EMC_rho(ix,iy,iz) = rho
+      enddo
+    enddo
+  enddo
+
+  ! density scaling for rho given in g/cm^3
+  EMC_rho_unit = 5
+
+  end subroutine scale_Brocher_rho_from_vp
+
+  ! --------------------------------
+  ! subroutine to scale missing Vs from Vp
+  ! --------------------------------
+  subroutine scale_Brocher_vs_from_vp()
+
+  implicit none
+
+  ! local parameters
+  double precision :: vp,vp_p2,vp_p3,vp_p4,vs
+  integer :: ix,iy,iz,nx,ny,nz
+
+  ! Brocher 2005, Empirical Relations between Elastic Wavespeeds and Density in the Earth’s Crust, BSSA
+  ! factors from eq. (1)
+  double precision,parameter :: fac1 = 0.7858d0
+  double precision,parameter :: fac2 = -1.2344d0
+  double precision,parameter :: fac3 = 0.7949d0
+  double precision,parameter :: fac4 = -0.1238d0
+  double precision,parameter :: fac5 = 0.0064d0
+
+  ! scaling requires vp in km/s
+  ! units: 1==m, 2==km, 3==m/s, 4==km/s, 5==g/cm^3, 6==kg/cm^3, 7==kg/m^3
+  ! unit scaling factor
+  double precision :: unit_scale
+
+  nx = EMC_dims_nx
+  ny = EMC_dims_ny
+  nz = EMC_dims_nz
+
+  ! determines scaling factor to km/s
+  if (EMC_vp_unit == 3) then
+    ! given in m/s -> km/s
+    unit_scale = 1.d0 / 1000.d0
+  else
+    ! given in km/s
+    unit_scale = 1.d0
+  endif
+
+  nx = EMC_dims_nx
+  ny = EMC_dims_ny
+  nz = EMC_dims_nz
+
+  do iz = 1,nz
+    do iy = 1,ny
+      do ix = 1,nx
+        ! Vp (in km/s)
+        vp = EMC_vp(ix,iy,iz) * unit_scale
+        vp_p2 = vp * vp
+        vp_p3 = vp * vp_p2
+        vp_p4 = vp * vp_p3
+
+        ! scaling relation: eq.(1)
+        vs = fac1 + fac2 * vp + fac3 * vp_p2 + fac4 * vp_p3 + fac5 * vp_p4
+
+        ! Density
+        EMC_vs(ix,iy,iz) = vs
+      enddo
+    enddo
+  enddo
+
+  ! Vs scaling for vs given in km/s
+  EMC_vs_unit = 4
+
+  ! unit scaling to convert to same unit as vp
+  if (EMC_vp_unit == 3) then
+    ! use same unit as vp km/s -> m/s
+    EMC_vs = EMC_vs * 1000.d0
+    EMC_vs_unit = 3
+  endif
+
+  end subroutine scale_Brocher_vs_from_vp
+
+  ! --------------------------------
+  ! subroutine to scale missing Vp from Vs
+  ! --------------------------------
+  subroutine scale_Brocher_vp_from_vs()
+
+  implicit none
+
+  ! local parameters
+  double precision :: vs,vs_p2,vs_p3,vs_p4,vp
+  integer :: ix,iy,iz,nx,ny,nz
+
+  ! Brocher 2005, Empirical Relations between Elastic Wavespeeds and Density in the Earth’s Crust, BSSA
+  ! factors from eq. (1)
+  double precision,parameter :: fac1 = 0.9409d0
+  double precision,parameter :: fac2 = 2.0947d0
+  double precision,parameter :: fac3 = -0.8206d0
+  double precision,parameter :: fac4 = 0.2683d0
+  double precision,parameter :: fac5 = -0.0251d0
+
+  ! scaling requires vs in km/s
+  ! units: 1==m, 2==km, 3==m/s, 4==km/s, 5==g/cm^3, 6==kg/cm^3, 7==kg/m^3
+  ! unit scaling factor
+  double precision :: unit_scale
+
+  nx = EMC_dims_nx
+  ny = EMC_dims_ny
+  nz = EMC_dims_nz
+
+  ! determines scaling factor to km/s
+  if (EMC_vs_unit == 3) then
+    ! given in m/s -> km/s
+    unit_scale = 1.d0 / 1000.d0
+  else
+    ! given in km/s
+    unit_scale = 1.d0
+  endif
+
+  nx = EMC_dims_nx
+  ny = EMC_dims_ny
+  nz = EMC_dims_nz
+
+  do iz = 1,nz
+    do iy = 1,ny
+      do ix = 1,nx
+        ! Vs (in km/s)
+        vs = EMC_vs(ix,iy,iz) * unit_scale
+        vs_p2 = vs * vs
+        vs_p3 = vs * vs_p2
+        vs_p4 = vs * vs_p3
+
+        ! scaling relation: eq.(1)
+        vp = fac1 + fac2 * vs + fac3 * vs_p2 + fac4 * vs_p3 + fac5 * vs_p4
+
+        ! Density
+        EMC_vp(ix,iy,iz) = vp
+      enddo
+    enddo
+  enddo
+
+  ! Vp scaling for vp given in km/s
+  EMC_vp_unit = 4
+
+  ! unit scaling to convert to same unit as vs
+  if (EMC_vs_unit == 3) then
+    ! use same unit as vp km/s -> m/s
+    EMC_vp = EMC_vp * 1000.d0
+    EMC_vp_unit = 3
+  endif
+
+  end subroutine scale_Brocher_vp_from_vs
+
+
 end module model_emc_par
 
 
@@ -657,6 +869,8 @@ end module model_emc_par
   call bcast_all_singlel(EMC_regular_grid_lat)
   call bcast_all_singlel(EMC_regular_grid_lon)
   call bcast_all_singlel(EMC_regular_grid_dep)
+
+  call bcast_all_singlei(EMC_depth_reference_level)
 
   ! broadcasts grid coordinates
   call bcast_all_singlei(EMC_latlen)
@@ -743,7 +957,6 @@ end module model_emc_par
 
   integer :: varid_vp, varid_vs, varid_rho    ! variable ids
   integer :: varid_lat, varid_lon, varid_dep
-  integer :: unit_vp,unit_vs,unit_rho,unit_dep
   integer :: dir_dep,dir
   integer :: i,ix,iy,iz,ilat,ilon,idep,ier
   integer :: dimindex(3)
@@ -841,9 +1054,49 @@ end module model_emc_par
   if (varid_lat == 0) stop 'Error lat array variable not found'
   if (varid_lon == 0) stop 'Error lon array variable not found'
   if (varid_dep == 0) stop 'Error dep array variable not found'
-  if (varid_vp == 0) stop 'Error vp array variable not found'
-  if (varid_vs == 0) stop 'Error vs array variable not found'
-  if (varid_rho == 0) stop 'Error rho array variable not found'
+
+  ! velocity model
+  if (.not. SCALE_MODEL) then
+    ! no scaling
+    ! must have complete vp,vs,rho setting
+    if (varid_vp == 0) stop 'Error vp array variable not found'
+    if (varid_vs == 0) stop 'Error vs array variable not found'
+    if (varid_rho == 0) stop 'Error rho array variable not found'
+  else
+    ! allows for missing parameter scaling
+    if (varid_vp /= 0 .and. (varid_vs == 0 .or. varid_rho == 0)) then
+      if (varid_vs == 0) then
+        write(IMAIN,*) '           scaling vs  from vp'
+      endif
+      if (varid_rho == 0) then
+        write(IMAIN,*) '           scaling rho from vp'
+      endif
+      write(IMAIN,*)
+      call flush_IMAIN()
+    else if (varid_vs /= 0 .and. (varid_vp == 0 .or. varid_rho == 0)) then
+      if (varid_vp == 0) then
+        write(IMAIN,*) '           scaling vp  from vs'
+      endif
+      if (varid_rho == 0) then
+        write(IMAIN,*) '           scaling rho from vp'
+      endif
+      write(IMAIN,*)
+      call flush_IMAIN()
+    else if (varid_vp /= 0 .and. varid_vs /= 0 .and. varid_rho /= 0) then
+      write(IMAIN,*) '           model (vp,vs,rho) is complete'
+      write(IMAIN,*)
+      call flush_IMAIN()
+    else
+      write(IMAIN,*) '           model (vp,vs,rho) is incomplete:'
+      if (varid_vp == 0)  write(IMAIN,*) '           vp is missing'
+      if (varid_vs == 0)  write(IMAIN,*) '           vs is missing'
+      if (varid_rho == 0) write(IMAIN,*) '           rho is missing'
+      write(IMAIN,*)
+      write(IMAIN,*) 'Please check your EMC model file "model.nc", and/or add more scaling relations to EMC models'
+      call flush_IMAIN()
+      stop 'Error velocity model is incomplete'
+    endif
+  endif
 
   EMC_latlen = latlen
   EMC_lonlen = lonlen
@@ -862,14 +1115,14 @@ end module model_emc_par
   call check_status(nf90_get_var(ncid, varid_dep, EMC_dep))
 
   ! checks up/down direction for depth
-  call check_variable_attributes(ncid, varid_dep, unit_dep, dir_dep, missing_val_dep)
+  call check_variable_attributes(ncid, varid_dep, EMC_dep_unit, dir_dep, missing_val_dep)
 
   ! converts depth to km
   ! units: 1==m, 2==km, 3==m/s, 4==km/s, 5==g/cm^3, 6==kg/cm^3, 7==kg/m^3
-  if (unit_dep == 1) then
+  if (EMC_dep_unit == 1) then
     ! converts to km
     EMC_dep(:) = EMC_dep(:) / 1000.d0
-    unit_dep = 2    ! in km
+    EMC_dep_unit = 2    ! in km
   endif
   ! converts depth reference direction to positive being down (positive depth below sealevel, negative depth above)
   if (dir_dep == 1) then
@@ -1034,23 +1287,64 @@ end module model_emc_par
   if (ier /= 0) stop 'Error allocating vp,vs,rho arrays'
   EMC_vp(:,:,:) = 0.0; EMC_vs(:,:,:) = 0.0; EMC_rho(:,:,:) = 0.0
 
-  ! Set the vill_value of the nc variables (vp, vs, rho) to 0 with
-  ! nf90_def_var_fill
-  ! NOT WORKING.
-  ! call check_status(nf90_def_var_fill(ncid, varid_vp, nf90_fill, 0.0))
-
-  ! Read vp, vs, rho. Replace missing values with 0
-  call check_status(nf90_get_var(ncid, varid_vp, EMC_vp))
-  call check_status(nf90_get_var(ncid, varid_vs, EMC_vs))
-  call check_status(nf90_get_var(ncid, varid_rho, EMC_rho))
+  ! Read vp, vs, rho
+  if (varid_vp /= 0)  call check_status(nf90_get_var(ncid, varid_vp, EMC_vp))
+  if (varid_vs /= 0)  call check_status(nf90_get_var(ncid, varid_vs, EMC_vs))
+  if (varid_rho /= 0) call check_status(nf90_get_var(ncid, varid_rho, EMC_rho))
 
   ! gets units and missing values
-  call check_variable_attributes(ncid, varid_vp, unit_vp, dir, missing_val_vp)
-  call check_variable_attributes(ncid, varid_vs, unit_vs, dir, missing_val_vs)
-  call check_variable_attributes(ncid, varid_rho, unit_rho, dir, missing_val_rho)
+  if (varid_vp /= 0)  call check_variable_attributes(ncid, varid_vp, EMC_vp_unit, dir, missing_val_vp)
+  if (varid_vs /= 0)  call check_variable_attributes(ncid, varid_vs, EMC_vs_unit, dir, missing_val_vs)
+  if (varid_rho /= 0) call check_variable_attributes(ncid, varid_rho, EMC_rho_unit, dir, missing_val_rho)
 
   ! Close netcdf file
   call check_status(nf90_close(ncid))
+
+  ! scaling missing parameters
+  if (SCALE_MODEL) then
+    if (varid_vp /= 0 .and. (varid_vs == 0 .or. varid_rho == 0)) then
+      ! VP provided
+      ! Vs scaling
+      if (varid_vs == 0) then
+        ! scales EMC_vs from EMC_vp
+        call scale_Brocher_vs_from_vp()
+        ! sets missing factor
+        missing_val_vs = missing_val_vp
+        where(EMC_vp == missing_val_vp) EMC_vs = missing_val_vs
+      endif
+      ! Density scaling
+      if (varid_rho == 0) then
+        ! scales EMC_rho from EMC_vp
+        call scale_Brocher_rho_from_vp()
+        ! sets missing factor
+        missing_val_rho = missing_val_vp
+        where(EMC_vp == missing_val_vp) EMC_rho = missing_val_rho
+      endif
+    else if (varid_vs /= 0 .and. (varid_vp == 0 .or. varid_rho == 0)) then
+      ! VS provided
+      ! Vp scaling
+      if (varid_vp == 0) then
+        ! scales EMC_vs from EMC_vp
+        call scale_Brocher_vp_from_vs()
+        ! sets missing factor
+        missing_val_vp = missing_val_vs
+        where(EMC_vs == missing_val_vs) EMC_vp = missing_val_vp
+      endif
+      ! Density scaling
+      if (varid_rho == 0) then
+        ! scales EMC_rho from EMC_vp
+        call scale_Brocher_rho_from_vp()
+        ! sets missing factor
+        missing_val_rho = missing_val_vp
+        where(EMC_vp == missing_val_vp) EMC_rho = missing_val_rho
+      endif
+    else if (varid_vp /= 0 .and. varid_vs /= 0 .and. varid_rho /= 0) then
+      ! complete, no scaling needed
+      continue
+    else
+      stop 'Invalid model scaling relation not implemented yet'
+    endif
+  endif
 
   ! mask missing values
   allocate(EMC_mask(nx,ny,nz),stat=ier)
@@ -1146,28 +1440,27 @@ end module model_emc_par
 
   ! converts density to default kg/m^3
   ! units: 1==m, 2==km, 3==m/s, 4==km/s, 5==g/cm^3, 6==kg/cm^3, 7==kg/m^3
-  if (unit_rho == 5) then
+  if (EMC_rho_unit == 5) then
     ! converts to kg/m^3
     ! rho [kg/m^3] = rho * 1000 [g/cm^3]
     EMC_rho(:,:,:) = EMC_rho(:,:,:) * 1000.d0
-    unit_rho = 7 ! kg/m^3
-  else if (unit_rho == 6) then
+    EMC_rho_unit = 7 ! kg/m^3
+  else if (EMC_rho_unit == 6) then
     ! converts to kg/m^3
     ! rho [kg/m^3] = rho * 1000 [kg/cm^3]
     EMC_rho(:,:,:) = EMC_rho(:,:,:) * 1.d6
-    unit_rho = 7 ! kg/m^3
+    EMC_rho_unit = 7 ! kg/m^3
   endif
-
   ! converts velocity to default m/s
-  if (unit_vp == 4) then
+  if (EMC_vp_unit == 4) then
     ! converts to m/s
     EMC_vp(:,:,:) = EMC_vp(:,:,:) * 1000.d0
-    unit_vp = 3
+    EMC_vp_unit = 3
   endif
-  if (unit_vs == 4) then
+  if (EMC_vs_unit == 4) then
     ! converts to m/s
     EMC_vs(:,:,:) = EMC_vs(:,:,:) * 1000.d0
-    unit_vs = 3
+    EMC_vs_unit = 3
   endif
 
   ! Par_file region info
