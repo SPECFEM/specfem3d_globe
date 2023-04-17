@@ -1114,7 +1114,7 @@ module my_libxsmm
 
   ! function calls
   use libxsmm, only: libxsmm_init,libxsmm_finalize
-  use libxsmm, only: libxsmm_dispatch,libxsmm_available,LIBXSMM_SMMFUNCTION
+  use libxsmm, only: libxsmm_dispatch,libxsmm_available,LIBXSMM_SMMfunction
   use libxsmm, only: libxsmm_smmcall_abc
   !use libxsmm, only: libxsmm_smm_25_5_5,libxsmm_smm_5_25_5,libxsmm_smm_5_5_5
 
@@ -1122,7 +1122,7 @@ module my_libxsmm
 
   ! function pointers
   ! (note: defined for single precision, thus needs CUSTOM_REAL to be SIZE_REAL)
-  type(LIBXSMM_SMMFUNCTION) :: xmm1, xmm2, xmm3
+  type(LIBXSMM_SMMfunction) :: xmm1, xmm2, xmm3
 
 
 end module my_libxsmm

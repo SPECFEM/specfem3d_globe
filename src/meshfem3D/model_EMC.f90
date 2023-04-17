@@ -140,7 +140,7 @@ module model_emc_par
 
   ! alternate string versions of latitude, longitude and depth for string comparison
   ! Example of how to use this:
-  !   if (any(latnames .eq. 'latitude')) then
+  !   if (any(latnames == 'latitude')) then
   !      print *, 'Found latitude'
   character(len=16), dimension(6), parameter :: latnames = (/ character(len=16) :: &
     'latitude','lat','y','ydim','y_dim','y-dim' /)
@@ -166,7 +166,7 @@ contains
 ! helper tools
 
   ! --------------------------------
-  ! Subroutine to check status of netcdf operation
+  ! subroutine to check status of netcdf operation
   ! --------------------------------
   subroutine check_status(status)
 
@@ -181,7 +181,7 @@ contains
   end subroutine check_status
 
   ! --------------------------------
-  ! Subroutine to check the global attributes
+  ! subroutine to check the global attributes
   ! --------------------------------
   subroutine check_global_attributes(ncid)
 
@@ -273,7 +273,7 @@ contains
 
   !geospatial_vertical_positive = "down" ;
 
-  if (VERBOSE) print *,''
+  if (VERBOSE) print *
 
   ! stores model information
   EMC_model_id = trim(id_string)
@@ -293,7 +293,7 @@ contains
   ! checks depth unit
   ! units: 1==m, 2==km, 3==m/s, 4==km/s, 5==g/cm^3, 6==kg/cm^3, 7==kg/m^3
   if (EMC_dep_unit /= 1 .and. EMC_dep_unit /= 2) then
-    print *,'Error: depth unit ',unit,' is invalid, must be either 1==m or 2==km'
+    print *,'Error: depth unit ',unit,' is invalid, must be either 1 == m or 2 == km'
     print *,'Please check EMC model file and attribute geospatial_vertical_units ',trim(val_string)
     stop 'EMC depth unit not recognized'
   endif
@@ -302,7 +302,7 @@ contains
 
 
   ! --------------------------------
-  ! Subroutine to return dimension ids, names, and lengths
+  ! subroutine to return dimension ids, names, and lengths
   ! --------------------------------
   subroutine list_dims(ncid, latid, lonid, depid, latlen, lonlen, deplen)
 
@@ -334,25 +334,25 @@ contains
     if (trim(dimname) == latname_exp .or. any(latnames == trim(dimname))) then
       latid = dimid
       latlen = dimlen
-    elseif (trim(dimname) == lonname_exp .or. any(lonnames == trim(dimname))) then
+    else if (trim(dimname) == lonname_exp .or. any(lonnames == trim(dimname))) then
       lonid = dimid
       lonlen = dimlen
-    elseif (trim(dimname) == depname_exp .or. any(depnames == trim(dimname))) then
+    else if (trim(dimname) == depname_exp .or. any(depnames == trim(dimname))) then
       depid = dimid
       deplen = dimlen
     endif
   enddo
 
-  if (VERBOSE) print *,''
+  if (VERBOSE) print *
   if (VERBOSE) print *,'    dim latid = ', latid,' len = ',latlen
   if (VERBOSE) print *,'    dim lonid = ', lonid,' len = ',lonlen
   if (VERBOSE) print *,'    dim depid = ', depid,' len = ',deplen
-  if (VERBOSE) print *,''
+  if (VERBOSE) print *
 
   end subroutine list_dims
 
   ! --------------------------------
-  ! Subroutine to check that the expected variable names are present
+  ! subroutine to check that the expected variable names are present
   ! --------------------------------
   subroutine check_varnames(ncid, varid_vp, varid_vs, varid_rho, varid_lat, varid_lon, varid_dep)
 
@@ -385,33 +385,33 @@ contains
     ! Assign variable ids
     if (trim(varname) == latname_exp .or. any(latnames == trim(varname))) then
       varid_lat = varid
-    elseif (trim(varname) == lonname_exp .or. any(lonnames == trim(varname))) then
+    else if (trim(varname) == lonname_exp .or. any(lonnames == trim(varname))) then
       varid_lon = varid
-    elseif (trim(varname) == depname_exp .or. any(depnames == trim(varname))) then
+    else if (trim(varname) == depname_exp .or. any(depnames == trim(varname))) then
       varid_dep = varid
-    elseif (trim(varname) == vpname_exp .or. any(vpnames == trim(varname))) then
+    else if (trim(varname) == vpname_exp .or. any(vpnames == trim(varname))) then
       varid_vp = varid
-    elseif (trim(varname) == vsname_exp .or. any(vsnames == trim(varname))) then
+    else if (trim(varname) == vsname_exp .or. any(vsnames == trim(varname))) then
       varid_vs = varid
-    elseif (trim(varname) == rhoname_exp .or. any(rhonames == trim(varname))) then
+    else if (trim(varname) == rhoname_exp .or. any(rhonames == trim(varname))) then
       varid_rho = varid
     endif
   enddo
 
-  if (VERBOSE) print *,''
+  if (VERBOSE) print *
   if (VERBOSE) print *,'    varid_lat  = ', varid_lat
   if (VERBOSE) print *,'    varid_lon  = ', varid_lon
   if (VERBOSE) print *,'    varid_dep  = ', varid_dep
-  if (VERBOSE) print *,''
+  if (VERBOSE) print *
   if (VERBOSE) print *,'    varid_vp   = ', varid_vp
   if (VERBOSE) print *,'    varid_vs   = ', varid_vs
   if (VERBOSE) print *,'    varid_rho  = ', varid_rho
-  if (VERBOSE) print *,''
+  if (VERBOSE) print *
 
   end subroutine check_varnames
 
   ! --------------------------------
-  ! Subroutine to check the dimension order of a variable
+  ! subroutine to check the dimension order of a variable
   ! --------------------------------
   subroutine check_dimorder(ncid, varid, latid, lonid, depid, varorderdims)
 
@@ -463,7 +463,7 @@ contains
         varorderdims(index) = dimids(dimid)
         islat = .true.
         latid = index
-      elseif (trim(dimname) == lonname_exp .or. any(lonnames == trim(dimname))) then
+      else if (trim(dimname) == lonname_exp .or. any(lonnames == trim(dimname))) then
         ! varorderdims index
         index = index + 1
         ! checks varorderdims index
@@ -472,7 +472,7 @@ contains
         varorderdims(index) = dimids(dimid)
         islon = .true.
         lonid = index
-      elseif (trim(dimname) == depname_exp .or. any(depnames == trim(dimname))) then
+      else if (trim(dimname) == depname_exp .or. any(depnames == trim(dimname))) then
         ! varorderdims index
         index = index + 1
         ! checks varorderdims index
@@ -488,12 +488,12 @@ contains
     deallocate(dimids)
   endif
 
-  if (VERBOSE) print *,''
+  if (VERBOSE) print *
   if (VERBOSE) print *,'    Index order of dimensions for stored values: ', varorderdims
   if (VERBOSE) print *,'    latid ',latid,' var dim order = ',varorderdims(latid)
   if (VERBOSE) print *,'    lonid ',lonid,' var dim order = ',varorderdims(lonid)
   if (VERBOSE) print *,'    depid ',depid,' var dim order = ',varorderdims(depid)
-  if (VERBOSE) print *,''
+  if (VERBOSE) print *
 
   ! checks if something found
   if (.not. islat .or. .not. islon .or. .not. isdep) then
@@ -505,7 +505,7 @@ contains
 
 
   ! --------------------------------
-  ! Subroutine to check the attributes of a variable
+  ! subroutine to check the attributes of a variable
   ! --------------------------------
   subroutine check_variable_attributes(ncid, varid, unit, direction, missing_val)
 
@@ -599,9 +599,9 @@ contains
     enddo
   endif
 
-  if (VERBOSE) print *,''
+  if (VERBOSE) print *
   if (VERBOSE) print *,'    unit = ',unit,' direction = ',direction,' missing value = ',missing_val
-  if (VERBOSE) print *,''
+  if (VERBOSE) print *
 
   ! checks if something found
   if (unit == 0) then
@@ -1200,7 +1200,7 @@ end module model_emc_par
     if (EMC_is_regional) then
       ! global simulations not allowed
       if (NCHUNKS == 6) then
-        print *,'Error: Global simulation (NCHUNKS==6) not supported for regional EMC models'
+        print *,'Error: Global simulation (NCHUNKS == 6) not supported for regional EMC models'
         stop 'EMC regional mesh incompatible with global simulations in Par_file'
       endif
 
@@ -1210,7 +1210,7 @@ end module model_emc_par
       if (EMC_lat_min > minval(corners_lat)) then
         print *,'Error: Par_file defined region too large for EMC model.'
         print *,'Par_file : LATITUDE center = ',CENTER_LATITUDE_IN_DEGREES,' with chunk width = ', ANGULAR_WIDTH_ETA_IN_DEGREES
-        print *,'           -> minimum lat = ',CENTER_LATITUDE_IN_DEGREES - 0.5 * ANGULAR_WIDTH_ETA_IN_DEGREES
+        print *,'           - > minimum lat = ',CENTER_LATITUDE_IN_DEGREES - 0.5 * ANGULAR_WIDTH_ETA_IN_DEGREES
         print *,'  chunck corners (lat,lon) at: (',corners_lat(1),corners_lon(1),'),(',corners_lat(2),corners_lon(2),')'
         print *,'                               (',corners_lat(3),corners_lon(3),'),(',corners_lat(4),corners_lon(4),')'
         print *,'EMC model: lat min        = ',EMC_lat_min
@@ -1220,7 +1220,7 @@ end module model_emc_par
       if (EMC_lat_max < maxval(corners_lat)) then
         print *,'Error: Par_file defined region too large for EMC model.'
         print *,'Par_file : LATITUDE center = ',CENTER_LATITUDE_IN_DEGREES,' with chunk width = ', ANGULAR_WIDTH_ETA_IN_DEGREES
-        print *,'           -> maximum lat = ',CENTER_LATITUDE_IN_DEGREES + 0.5 * ANGULAR_WIDTH_ETA_IN_DEGREES
+        print *,'           - > maximum lat = ',CENTER_LATITUDE_IN_DEGREES + 0.5 * ANGULAR_WIDTH_ETA_IN_DEGREES
         print *,'  chunck corners (lat lon) at: (',corners_lat(1),corners_lon(1),'),(',corners_lat(2),corners_lon(2),')'
         print *,'                               (',corners_lat(3),corners_lon(3),'),(',corners_lat(4),corners_lon(4),')'
         print *,'EMC model: lat max        = ',EMC_lat_max
@@ -1231,7 +1231,7 @@ end module model_emc_par
       if (EMC_lon_min > minval(corners_lon)) then
         print *,'Error: Par_file defined region too large for regional EMC models.'
         print *,'Par_file : LONGITUDE center = ',CENTER_LONGITUDE_IN_DEGREES,' with chunk width = ', ANGULAR_WIDTH_XI_IN_DEGREES
-        print *,'           -> minimum lon = ',CENTER_LONGITUDE_IN_DEGREES - 0.5 * ANGULAR_WIDTH_XI_IN_DEGREES
+        print *,'           - > minimum lon = ',CENTER_LONGITUDE_IN_DEGREES - 0.5 * ANGULAR_WIDTH_XI_IN_DEGREES
         print *,'  chunck corners (lat,lon) at: (',corners_lat(1),corners_lon(1),'),(',corners_lat(2),corners_lon(2),')'
         print *,'                               (',corners_lat(3),corners_lon(3),'),(',corners_lat(4),corners_lon(4),')'
         print *,'EMC model: lon min        = ',EMC_lon_min
@@ -1241,7 +1241,7 @@ end module model_emc_par
       if (EMC_lon_max < maxval(corners_lon)) then
         print *,'Error: Par_file defined region too large for regional EMC models.'
         print *,'Par_file : LONGITUDE center = ',CENTER_LONGITUDE_IN_DEGREES,' with chunk width = ', ANGULAR_WIDTH_XI_IN_DEGREES
-        print *,'           -> maximum lon = ',CENTER_LONGITUDE_IN_DEGREES + 0.5 * ANGULAR_WIDTH_XI_IN_DEGREES
+        print *,'           - > maximum lon = ',CENTER_LONGITUDE_IN_DEGREES + 0.5 * ANGULAR_WIDTH_XI_IN_DEGREES
         print *,'  chunck corners (lat,lon) at: (',corners_lat(1),corners_lon(1),'),(',corners_lat(2),corners_lon(2),')'
         print *,'                               (',corners_lat(3),corners_lon(3),'),(',corners_lat(4),corners_lon(4),')'
         print *,'EMC model: lon max        = ',EMC_lon_max
@@ -1408,15 +1408,15 @@ end module model_emc_par
   !   mostly for points very close to surface or borders.
   !   indexing below will take care of such points slightly beyond edges.
   if (r_depth < (EMC_dep_min - 0.5*EMC_ddep) .or. r_depth > (EMC_dep_max + 0.5*EMC_ddep)) then
-    !if (myrank==0) print*,'debug: lat/lon/dep = ',lat,lon,r_depth,' dep min/max ',EMC_dep_min,EMC_dep_max
+    !if (myrank==0) print *,'debug: lat/lon/dep = ',lat,lon,r_depth,' dep min/max ',EMC_dep_min,EMC_dep_max
     return
   endif
   if (lat < (EMC_lat_min - 0.5*EMC_dlat) .or. lat > (EMC_lat_max + 0.5*EMC_dlat)) then
-    !if (myrank==0) print*,'debug: lat/lon/dep = ',lat,lon,r_depth,' lat min/max ',EMC_lat_min,EMC_lat_max
+    !if (myrank==0) print *,'debug: lat/lon/dep = ',lat,lon,r_depth,' lat min/max ',EMC_lat_min,EMC_lat_max
     return
   endif
   if (lon < (EMC_lon_min - 0.5*EMC_dlon) .or. lon > (EMC_lon_max + 0.5*EMC_dlon) ) then
-    !if (myrank==0) print*,'debug: lat/lon/dep = ',lat,lon,r_depth,' lon min/max ',EMC_lon_min,EMC_lon_max
+    !if (myrank==0) print *,'debug: lat/lon/dep = ',lat,lon,r_depth,' lon min/max ',EMC_lon_min,EMC_lon_max
     return
   endif
 
@@ -1485,7 +1485,7 @@ end module model_emc_par
       ! limits to surface points
 
       !debug
-      !print*,'debug: lat/lon/dep = ',lat,lon,r_depth,'index lat/lon/dep = ',index_lat,index_lon,index_dep, &
+      !print *,'debug: lat/lon/dep = ',lat,lon,r_depth,'index lat/lon/dep = ',index_lat,index_lon,index_dep, &
       !      'array value lat/lon/dep',EMC_lat(index_lat),EMC_lon(index_lon),EMC_dep(index_dep), &
       !      'surface index',index_surface,'surface depth ',EMC_dep(index_surface)
 
@@ -1498,7 +1498,7 @@ end module model_emc_par
 
   !debug
   !if (r_depth > 10.1 .and. r_depth < 15.1) &
-  !  print*,'debug: lat/lon/dep = ',lat,lon,r_depth,'index lat/lon/dep = ',index_lat,index_lon,index_dep, &
+  !  print *,'debug: lat/lon/dep = ',lat,lon,r_depth,'index lat/lon/dep = ',index_lat,index_lon,index_dep, &
   !         'array value lat/lon/dep',EMC_lat(index_lat),EMC_lon(index_lon),EMC_dep(index_dep)
 
   !! interpolation
@@ -1581,7 +1581,7 @@ end module model_emc_par
 
   !debug
   !if (r_depth > 10.1 .and. r_depth < 15.1) &
-  !  print*,'debug: lat/lon/dep = ',lat,lon,r_depth,'index lat/lon/dep = ',index_lat,index_lon,index_dep, &
+  !  print *,'debug: lat/lon/dep = ',lat,lon,r_depth,'index lat/lon/dep = ',index_lat,index_lon,index_dep, &
   !         'array value lat/lon/dep',EMC_lat(index_lat),EMC_lon(index_lon),EMC_dep(index_dep), &
   !         'gamma',gamma_interp_x,gamma_interp_y,gamma_interp_z
 
@@ -1717,7 +1717,7 @@ end module model_emc_par
 
   !debug
   !if (r_depth > 10.1 .and. r_depth < 15.1) &
-  !  print*,'debug: lat/lon/dep = ',lat,lon,r_depth,'vp/vs/rho = ',vpl,vsl,rhol,'iso vp/vs/rho',vp_iso,vs_iso,rho_iso, &
+  !  print *,'debug: lat/lon/dep = ',lat,lon,r_depth,'vp/vs/rho = ',vpl,vsl,rhol,'iso vp/vs/rho',vp_iso,vs_iso,rho_iso, &
   !          'val ',val1,val2,val3,val4,val5,val6,val7,val8
 
   ! non-dimensionalize

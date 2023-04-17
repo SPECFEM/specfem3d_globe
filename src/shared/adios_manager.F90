@@ -240,7 +240,7 @@ contains
   is_adios_version2 = .true.
 
   ! note: for below adios2_init() routine, we need a pre-processor flag to determine which adios2_init() routine to take.
-  !       unfortunately, for fortran we are missing a proper include file path for the ADIOS2Config.h file in the ADIOS2 package.
+  !       unfortunately, for Fortran we are missing a proper include file path for the ADIOS2Config.h file in the ADIOS2 package.
   !
   !       the run-time routine get_adios2_version can not be used to determine at compile time which format to take.
   !       so, we added a #ifdef ADIOS2_VERSION_OLD flag for backward compatibility.

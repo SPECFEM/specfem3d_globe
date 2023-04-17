@@ -506,7 +506,7 @@
 
 #ifdef USE_XSMM
   !use my_libxsmm, only: libxsmm_smm_5_25_5,libxsmm_smm_25_5_5
-  use my_libxsmm,only: xmm1,xmm2,libxsmm_mmcall_abc => libxsmm_smmcall_abc
+  use my_libxsmm, only: xmm1,xmm2,libxsmm_mmcall_abc => libxsmm_smmcall_abc
 #endif
 
   implicit none
@@ -663,7 +663,7 @@
 !       however, on Intel Phi (KNC) it is still helpful (speedup +3%)
 #if defined(XSMM_FORCE_EVEN_IF_SLOWER) || ( defined(XSMM) && defined(__MIC__) )
   !use my_libxsmm, only: libxsmm_smm_5_5_5
-  use my_libxsmm,only: xmm3,libxsmm_mmcall_abc => libxsmm_smmcall_abc
+  use my_libxsmm, only: xmm3,libxsmm_mmcall_abc => libxsmm_smmcall_abc
 #endif
 
   implicit none
