@@ -27,6 +27,8 @@ OBJECTS = \
 	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
 	$O/shared_par.shared_module.o \
+	$O/reduce.shared.o \
+	$O/rthetaphi_xyz.shared.o \
 	$(EMPTY_MACRO)
 
 test_models:
