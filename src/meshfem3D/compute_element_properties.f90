@@ -37,7 +37,7 @@
     IFLAG_OUTER_CORE_NORMAL,IFLAG_IN_FICTITIOUS_CUBE, &
     IREGION_CRUST_MANTLE,SUPPRESS_INTERNAL_TOPOGRAPHY,USE_GLL
 
-  use shared_parameters, only: REGIONAL_MESH_CUTOFF,USE_LOCAL_MESH
+  use shared_parameters, only: REGIONAL_MESH_CUTOFF,USE_LOCAL_MESH,EMC_MODEL
 
   use meshfem_models_par, only: &
     TOPOGRAPHY,ELLIPTICITY,CRUSTAL,CASE_3D, &
@@ -88,6 +88,9 @@
   logical :: elem_in_crust,elem_in_mantle
   ! flag for transverse isotropic elements
   logical :: elem_is_tiso
+  ! flag to add topography before model value assignment
+  ! (for models which define point values above sea level with topography)
+  logical :: is_model_with_surface_topography
 
   !debug
   logical, parameter :: DEBUG_OUTPUT = .false.
@@ -98,6 +101,8 @@
   elem_in_crust = .false.
   ! flag if element completely in mantle (all corners below moho)
   elem_in_mantle = .false.
+  ! by default, (mantle) models are defined for spherical earths, thus flag turned off
+  is_model_with_surface_topography = .false.
 
   !debug
   if (DEBUG_OUTPUT) then
@@ -163,11 +168,17 @@
     if (myrank == 0) print *,'  locations done'
   endif
 
-  ! block-mantle-spherical-harmonics expansion of GLAD model
-  ! the top block model assumes point locations with actual topography
-  if (THREE_D_MODEL == THREE_D_MODEL_BKMNS_GLAD) then
-    ! adds surface topography
-    if (TOPOGRAPHY) then
+  ! adds surface topography for models w/ topography
+  if (TOPOGRAPHY) then
+    ! check if model uses topography
+    ! GLAD - block model for crust defines actual point locations above sea level
+    if (THREE_D_MODEL == THREE_D_MODEL_BKMNS_GLAD) &
+      is_model_with_surface_topography = .true.
+    ! IRIS EMC models (regional models typically assume mesh positions at actual elevation/depths)
+    if (EMC_MODEL) &
+      is_model_with_surface_topography = .true.
+
+    if (is_model_with_surface_topography) then
       if (idoubling(ispec) == IFLAG_CRUST .or. &
           idoubling(ispec) == IFLAG_220_80 .or. &
           idoubling(ispec) == IFLAG_80_MOHO) then
@@ -201,7 +212,6 @@
     endif
   endif
 
-
   ! either use GLL points or anchor points to capture TOPOGRAPHY and ELLIPTICITY
   !
   ! note:  using GLL points to capture them results in a slightly more accurate mesh.
@@ -210,18 +220,20 @@
 
   ! adds surface topography
   ! (by default we add topography after setting model values on the GLL points, assuming that the models provided are defined
-  !  for spherical locations and crustal structures give with depth, not absolute position or altitude above sea-level)
-  if (TOPOGRAPHY .and. .not. THREE_D_MODEL == THREE_D_MODEL_BKMNS_GLAD) then
-    if (idoubling(ispec) == IFLAG_CRUST .or. &
-        idoubling(ispec) == IFLAG_220_80 .or. &
-        idoubling(ispec) == IFLAG_80_MOHO) then
-      ! stretches mesh between surface and R220 accordingly
-      if (USE_GLL) then
-        ! stretches every GLL point accordingly
-        call add_topography_gll(xstore,ystore,zstore,ispec,nspec,ibathy_topo)
-      else
-        ! stretches anchor points only, interpolates GLL points later on
-        call add_topography(xelm,yelm,zelm,ibathy_topo)
+  !  for spherical locations and crustal structures given with depth, not absolute position or altitude above sea-level)
+  if (TOPOGRAPHY) then
+    if (.not. is_model_with_surface_topography) then
+      if (idoubling(ispec) == IFLAG_CRUST .or. &
+          idoubling(ispec) == IFLAG_220_80 .or. &
+          idoubling(ispec) == IFLAG_80_MOHO) then
+        ! stretches mesh between surface and R220 accordingly
+        if (USE_GLL) then
+          ! stretches every GLL point accordingly
+          call add_topography_gll(xstore,ystore,zstore,ispec,nspec,ibathy_topo)
+        else
+          ! stretches anchor points only, interpolates GLL points later on
+          call add_topography(xelm,yelm,zelm,ibathy_topo)
+        endif
       endif
     endif
 
@@ -230,7 +242,6 @@
       if (myrank == 0) print *,'  topography done'
     endif
   endif
-
 
   ! adds topography on 410 km and 650 km discontinuity in model S362ANI
   if (.not. SUPPRESS_INTERNAL_TOPOGRAPHY) then

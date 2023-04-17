@@ -1256,6 +1256,10 @@
 
   ! read MPI interfaces from file
 
+  num_interfaces_crust_mantle = 0
+  num_interfaces_outer_core = 0
+  num_interfaces_inner_core = 0
+
   ! crust mantle
   if (I_should_read_the_database .and. NSPEC_CRUST_MANTLE > 0) then
     if (ADIOS_FOR_MPI_ARRAYS) then
@@ -1711,8 +1715,8 @@
   ! MPI interfaces
   read(IIN) num_interfaces_outer_core
   allocate(my_neighbors_outer_core(num_interfaces_outer_core), &
-          nibool_interfaces_outer_core(num_interfaces_outer_core), &
-          stat=ier)
+           nibool_interfaces_outer_core(num_interfaces_outer_core), &
+           stat=ier)
   if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array my_neighbors_outer_core etc.')
   my_neighbors_outer_core(:) = 0; nibool_interfaces_outer_core(:) = 0
 
@@ -1751,7 +1755,7 @@
     read(IIN) num_colors_outer_outer_core,num_colors_inner_outer_core
 
     allocate(num_elem_colors_outer_core(num_colors_outer_outer_core + num_colors_inner_outer_core), &
-            stat=ier)
+             stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating num_elem_colors_outer_core array')
     num_elem_colors_outer_core(:) = 0
 
@@ -1761,7 +1765,7 @@
     num_colors_outer_outer_core = 0
     num_colors_inner_outer_core = 0
     allocate(num_elem_colors_outer_core(num_colors_outer_outer_core + num_colors_inner_outer_core), &
-            stat=ier)
+             stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating num_elem_colors_outer_core array')
     num_elem_colors_outer_core(:) = 0
   endif
@@ -2540,8 +2544,8 @@
   call bcast_all_i_for_database(num_interfaces_outer_core, 1)
   if (.not. I_should_read_the_database) then
     allocate(my_neighbors_outer_core(num_interfaces_outer_core), &
-            nibool_interfaces_outer_core(num_interfaces_outer_core), &
-            stat=ier)
+             nibool_interfaces_outer_core(num_interfaces_outer_core), &
+             stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array my_neighbors_outer_core etc.')
     my_neighbors_outer_core(:) = 0; nibool_interfaces_outer_core(:) = 0
   endif
@@ -2550,7 +2554,7 @@
     call bcast_all_i_for_database(max_nibool_interfaces_oc, 1)
     if (.not. I_should_read_the_database) then
       allocate(ibool_interfaces_outer_core(max_nibool_interfaces_oc,num_interfaces_outer_core), &
-              stat=ier)
+               stat=ier)
       if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array ibool_interfaces_outer_core')
       ibool_interfaces_outer_core(:,:) = 0
     endif
@@ -2595,7 +2599,7 @@
 
     if (.not. I_should_read_the_database) then
       allocate(num_elem_colors_outer_core(num_colors_outer_outer_core + num_colors_inner_outer_core), &
-              stat=ier)
+               stat=ier)
       if (ier /= 0 ) call exit_mpi(myrank,'Error allocating num_elem_colors_outer_core array')
       num_elem_colors_outer_core(:) = 0
     endif
@@ -2607,7 +2611,7 @@
     num_colors_inner_outer_core = 0
     if (.not. I_should_read_the_database) then
       allocate(num_elem_colors_outer_core(num_colors_outer_outer_core + num_colors_inner_outer_core), &
-              stat=ier)
+               stat=ier)
       if (ier /= 0 ) call exit_mpi(myrank,'Error allocating num_elem_colors_outer_core array')
       num_elem_colors_outer_core(:) = 0
     endif

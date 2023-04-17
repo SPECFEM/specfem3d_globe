@@ -30,8 +30,8 @@
 
 module cem_par
 
-  use constants, only: PI, GRAV, RHOAV, MAX_STRING_LEN
-
+  use constants, only: PI, GRAV, MAX_STRING_LEN, IMAIN
+  use shared_parameters, only: RHOAV
   implicit none
 
   double precision :: scaleval
@@ -68,10 +68,13 @@ end module cem_par
   subroutine model_cem_broadcast()
 
   use constants, only: myrank
-  use cem_par
-  use netcdf
+  use shared_parameters, only: R_PLANET
   use meshfem_models_par, only: CEM_ACCEPT
 
+  use cem_par
+  use netcdf
+
+  implicit none
   integer              :: wSize
 
   ! user info
@@ -121,10 +124,11 @@ end module cem_par
 
   subroutine request_cem (vsh, vsv, vph, vpv, rho, iregion_code, ispec, i, j, k)
 
-  use cem_par
   use constants
-
+  use shared_parameters, only: R_PLANET
   use meshfem_par, only: ibool
+
+  use cem_par
 
   implicit none
 
@@ -220,9 +224,10 @@ end module cem_par
 
   subroutine write_cem_request (iregion_code)
 
-  use netcdf
   use constants
-  use CEM_par
+
+  use netcdf
+  use cem_par
 
   implicit none
 
@@ -286,11 +291,12 @@ end module cem_par
   subroutine build_global_coordinates (iregion_code)
 
   use constants
-  use cem_par
-
+  use shared_parameters, only: R_PLANET_KM
   use meshfem_par, only: &
     nspec, nglob, &
     ibool,xstore,ystore,zstore
+
+  use cem_par
 
   implicit none
 

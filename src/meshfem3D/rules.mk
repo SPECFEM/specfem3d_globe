@@ -285,6 +285,16 @@ meshfem3D_OBJECTS += $O/model_cem.checknetcdf.o
 meshfem3D_MODULES += $(FC_MODDIR)/cem_par.$(FC_MODEXT)
 endif
 
+###
+### IRIS EMC models
+###
+
+# conditional EMC model
+ifeq ($(EMC),yes)
+meshfem3D_OBJECTS += $O/model_EMC.checknetcdf.o
+meshfem3D_MODULES += $(FC_MODDIR)/model_emc_par.$(FC_MODEXT)
+endif
+
 ##
 ## C++ Parallel STL sorting
 ##
@@ -376,7 +386,7 @@ $O/%.check_adios.o: $S/%.f90 $O/shared_par.shared_module.o $O/meshfem3D_par.chec
 $O/%.check_adios.o: $S/%.F90 $O/shared_par.shared_module.o $O/meshfem3D_par.check_module.o $O/adios_helpers.shared_adios.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-## CEM
+## CEM / EMC
 
 $O/%.checknetcdf.o: $S/%.f90 $O/shared_par.shared_module.o $O/meshfem3D_par.check_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} $(NETCDF_INCLUDE) -c -o $@ $<

@@ -656,8 +656,14 @@ VTK_LIBS
 VTK_LDFLAGS
 VTK_INCLUDES
 VTK_MAJOR
+EMC_LIBS
+EMC_FCFLAGS
 CEM_LIBS
 CEM_FCFLAGS
+NETCDF_INCLUDES
+NETCDF_LIBS
+NETCDF_FCFLAGS
+NETCDF_INC
 MPI_INCLUDES
 CXXCPP
 ac_ct_CXX
@@ -736,6 +742,10 @@ ac_ct_FC
 LDFLAGS
 FCFLAGS
 FC
+COND_NETCDF_FALSE
+COND_NETCDF_TRUE
+COND_EMC_FALSE
+COND_EMC_TRUE
 COND_CEM_FALSE
 COND_CEM_TRUE
 COND_ASDF_FALSE
@@ -881,6 +891,9 @@ with_adios
 with_adios2
 with_asdf
 with_cem
+with_emc
+with_netcdf
+enable_netcdf
 with_vtk
 with_vtk_suffix
 with_vtk_version
@@ -927,8 +940,13 @@ CXX
 CXXFLAGS
 CCC
 CXXCPP
+NETCDF_INC
+NETCDF_FCFLAGS
+NETCDF_LIBS
 CEM_FCFLAGS
-CEM_LIBS'
+CEM_LIBS
+EMC_FCFLAGS
+EMC_LIBS'
 
 
 # Initialize some variables set by options.
@@ -1562,6 +1580,8 @@ Optional Features:
   --enable-cuda-aware-mpi build CUDA-aware MPI enabled version [default=no]
   --enable-openmp         build OpenMP enabled version [default=no]
   --enable-vtk            build VTK enabled version [default=no]
+  --enable-netcdf         build NetCDF enabled version (IRIS EMC & CEM models)
+                          [default=no]
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1571,8 +1591,9 @@ Optional Packages:
   --with-opencl           build OpenCL GPU enabled version [default=no]
   --with-hip              build HIP GPU enabled version [default=no]
   --with-mic              build native Xeon PHI enabled version [default=no]
-  --with-xsmm             build LIBXSMM (see:https://github.com/hfp/libxsmm)
-                          enabled version [default=no]
+  --with-xsmm             build LIBXSMM
+                          (see:https://github.com/libxsmm/libxsmm) enabled
+                          version [default=no]
   --with-parallel-stl     build mesh sorting with C++ Parallel STL routines
                           [default=no]
   --with-openmp           build OpenMP enabled version [default=no]
@@ -1580,6 +1601,9 @@ Optional Packages:
   --with-adios2           build ADIOS enabled version [default=no]
   --with-asdf             build ASDF enabled version [default=no]
   --with-cem              build CEM enabled version [default=no]
+  --with-emc              build IRIS EMC models enabled version [default=no]
+  --with-netcdf           build NetCDF enabled version (IRIS EMC & CEM models)
+                          [default=no]
   --with-vtk              The prefix where VTK is installed [default=/usr]
   --with-vtk-suffix       Suffix to append to VTK's include directory, e.g.,
                           for vtk-5.2/ the suffix is "-5.2"
@@ -1636,8 +1660,14 @@ Some influential environment variables:
   CXX         C++ compiler command
   CXXFLAGS    C++ compiler flags
   CXXCPP      C++ preprocessor
+  NETCDF_INC  NetCDF include directory
+  NETCDF_FCFLAGS
+              Fortran compiler flags
+  NETCDF_LIBS extra libraries for linking programs
   CEM_FCFLAGS CEM Fortran compiler flags
   CEM_LIBS    CEM extra libraries for linking programs
+  EMC_FCFLAGS IRIS EMC Fortran compiler flags
+  EMC_LIBS    IRIS EMC extra libraries for linking programs
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -3869,12 +3899,87 @@ else $as_nop
   want_cem=no
 fi
 
+
+###
+### IRIS EMC models
+###
+
+
+# Check whether --with-emc was given.
+if test ${with_emc+y}
+then :
+  withval=$with_emc; want_emc="$withval"
+else $as_nop
+  want_emc=no
+fi
+
+
+###
+### NetCDF support
+###
+
+
+# Check whether --with-netcdf was given.
+if test ${with_netcdf+y}
+then :
+  withval=$with_netcdf; with_netcdf="$withval"
+else $as_nop
+  with_netcdf=no
+fi
+
+# Check whether --enable-netcdf was given.
+if test ${enable_netcdf+y}
+then :
+  enableval=$enable_netcdf; enable_netcdf="$enableval"
+else $as_nop
+  enable_netcdf=no
+fi
+
+if test x"$enable_netcdf" != xno || test x"$with_netcdf" != xno
+then :
+  want_netcdf=yes
+else $as_nop
+  want_netcdf=no
+fi
+
+## turns on NetCDF support for CEM & EMC version
+if test x"$want_cem" != xno || test x"$want_emc" != xno
+then :
+  want_netcdf=yes
+fi
+
+## turns on CEM & EMC models for NetCDF version
+if test x"$want_netcdf" != xno
+then :
+  want_cem=yes
+fi
+if test x"$want_netcdf" != xno
+then :
+  want_emc=yes
+fi
+
  if test x"$want_cem" != xno; then
   COND_CEM_TRUE=
   COND_CEM_FALSE='#'
 else
   COND_CEM_TRUE='#'
   COND_CEM_FALSE=
+fi
+
+ if test x"$want_emc" != xno; then
+  COND_EMC_TRUE=
+  COND_EMC_FALSE='#'
+else
+  COND_EMC_TRUE='#'
+  COND_EMC_FALSE=
+fi
+
+ if test x"$want_netcdf" != xno; then
+  COND_NETCDF_TRUE=
+  COND_NETCDF_FALSE='#'
+else
+  COND_NETCDF_TRUE='#'
+  COND_NETCDF_FALSE=
 fi
 
 
@@ -9332,6 +9437,78 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 fi
 
 ###
+### NetCDF support
+###
+
+if test x"$want_netcdf" != xno
+then :
+
+    printf "%s\n" "## ------ ##
+## NetCDF ##
+## ------ ##"
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: NetCDF is enabled" >&5
+printf "%s\n" "$as_me: NetCDF is enabled" >&6;}
+
+
+
+
+
+    # NetCDF checking for Fortran
+    ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for NetCDF modules" >&5
+printf %s "checking for NetCDF modules... " >&6; }
+    FCFLAGS="$NETCDF_FCFLAGS $FCFLAGS"
+    # adds include directory
+    if test "x$NETCDF_INC" != "x"; then
+      NETCDF_INCLUDES="-I$NETCDF_INC"
+      FCFLAGS+=" $NETCDF_INCLUDES"
+    fi
+    # adds CEM flags if given
+    if test "x$CEM_FCFLAGS" != "x"; then
+      FCFLAGS+=" $CEM_FCFLAGS"
+    fi
+    # adds CEM flags if given
+    if test "x$EMC_FCFLAGS" != "x"; then
+      FCFLAGS+=" $EMC_FCFLAGS"
+    fi
+    # compilation test
+    cat > conftest.$ac_ext <<_ACEOF
+
+            program main
+
+      use netcdf
+
+      end
+
+_ACEOF
+if ac_fn_fc_try_compile "$LINENO"
+then :
+
+      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+printf "%s\n" "yes" >&6; }
+
+else $as_nop
+
+      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+      as_fn_error $? "NetCDF module not found; is NetCDF built with Fortran support for this compiler?" "$LINENO" 5
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
+    ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+
+
+fi
+
+###
 ### CEM
 ###
 
@@ -9361,6 +9538,40 @@ printf "%s\n" "$as_me: CEM is enabled" >&6;}
     #], [
     #  AC_MSG_RESULT(no)
     #  AC_MSG_ERROR([NetCDF modules not found; is NetCDF built with Fortran support for this compiler?])
+    #])
+    #AC_LANG_POP([Fortran])
+
+fi
+
+###
+### IRIS EMC models
+###
+
+if test x"$want_emc" != xno
+then :
+
+    printf "%s\n" "## --------------- ##
+## IRIS EMC models ##
+## --------------- ##"
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: IRIS EMC is enabled" >&5
+printf "%s\n" "$as_me: IRIS EMC is enabled" >&6;}
+
+
+
+
+    # NetCDF checking for Fortran
+    #AC_LANG_PUSH(Fortran)
+    #AC_MSG_CHECKING([for NetCDF modules])
+    #FCFLAGS="$EMC_FCFLAGS $FCFLAGS"
+    #AC_COMPILE_IFELSE([
+    #  AC_LANG_PROGRAM([], [[
+    #  use netcdf
+    #  ]])
+    #], [
+    #  AC_MSG_RESULT(yes)
+    #], [
+    #  AC_MSG_RESULT(no)
+    #  AC_MSG_ERROR([NetCDF module not found; is NetCDF built with Fortran support for this compiler?])
     #])
     #AC_LANG_POP([Fortran])
 
@@ -11301,7 +11512,7 @@ ac_config_files="$ac_config_files Makefile setup/constants.h setup/constants_tom
 ac_config_files="$ac_config_files DATA/Par_file:DATA/Par_file DATA/CMTSOLUTION:DATA/CMTSOLUTION DATA/STATIONS:DATA/STATIONS"
 
 
-ac_config_links="$ac_config_links DATA/CCREM:DATA/CCREM DATA/cemRequest:DATA/cemRequest DATA/crust1.0:DATA/crust1.0 DATA/crust2.0:DATA/crust2.0 DATA/crustmap:DATA/crustmap DATA/epcrust:DATA/epcrust DATA/eucrust-07:DATA/eucrust-07 DATA/full_sphericalharmonic_model:DATA/full_sphericalharmonic_model DATA/gladm25:DATA/gladm25 DATA/heterogen:DATA/heterogen DATA/Lebedev_sea99:DATA/Lebedev_sea99 DATA/Montagner_model:DATA/Montagner_model DATA/mars:DATA/mars DATA/moon:DATA/moon DATA/old:DATA/old DATA/PPM:DATA/PPM DATA/QRFSI12:DATA/QRFSI12 DATA/s362ani:DATA/s362ani DATA/s20rts:DATA/s20rts DATA/s40rts:DATA/s40rts DATA/sglobe:DATA/sglobe DATA/spiral1.4:DATA/spiral1.4 DATA/Simons_model:DATA/Simons_model DATA/topo_bathy:DATA/topo_bathy DATA/Zhao_JP_model:DATA/Zhao_JP_model"
+ac_config_links="$ac_config_links DATA/CCREM:DATA/CCREM DATA/cemRequest:DATA/cemRequest DATA/crust1.0:DATA/crust1.0 DATA/crust2.0:DATA/crust2.0 DATA/crustmap:DATA/crustmap DATA/epcrust:DATA/epcrust DATA/eucrust-07:DATA/eucrust-07 DATA/full_sphericalharmonic_model:DATA/full_sphericalharmonic_model DATA/gladm25:DATA/gladm25 DATA/heterogen:DATA/heterogen DATA/IRIS_EMC:DATA/IRIS_EMC DATA/Lebedev_sea99:DATA/Lebedev_sea99 DATA/Montagner_model:DATA/Montagner_model DATA/mars:DATA/mars DATA/moon:DATA/moon DATA/old:DATA/old DATA/PPM:DATA/PPM DATA/QRFSI12:DATA/QRFSI12 DATA/s362ani:DATA/s362ani DATA/s20rts:DATA/s20rts DATA/s40rts:DATA/s40rts DATA/sglobe:DATA/sglobe DATA/spiral1.4:DATA/spiral1.4 DATA/Simons_model:DATA/Simons_model DATA/topo_bathy:DATA/topo_bathy DATA/Zhao_JP_model:DATA/Zhao_JP_model"
 
 
 ac_config_commands="$ac_config_commands bin"
@@ -11566,6 +11777,14 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${COND_CEM_TRUE}" && test -z "${COND_CEM_FALSE}"; then
   as_fn_error $? "conditional \"COND_CEM\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COND_EMC_TRUE}" && test -z "${COND_EMC_FALSE}"; then
+  as_fn_error $? "conditional \"COND_EMC\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COND_NETCDF_TRUE}" && test -z "${COND_NETCDF_FALSE}"; then
+  as_fn_error $? "conditional \"COND_NETCDF\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 case $FC_MODINC in #(
@@ -12185,6 +12404,7 @@ do
     "DATA/full_sphericalharmonic_model") CONFIG_LINKS="$CONFIG_LINKS DATA/full_sphericalharmonic_model:DATA/full_sphericalharmonic_model" ;;
     "DATA/gladm25") CONFIG_LINKS="$CONFIG_LINKS DATA/gladm25:DATA/gladm25" ;;
     "DATA/heterogen") CONFIG_LINKS="$CONFIG_LINKS DATA/heterogen:DATA/heterogen" ;;
+    "DATA/IRIS_EMC") CONFIG_LINKS="$CONFIG_LINKS DATA/IRIS_EMC:DATA/IRIS_EMC" ;;
     "DATA/Lebedev_sea99") CONFIG_LINKS="$CONFIG_LINKS DATA/Lebedev_sea99:DATA/Lebedev_sea99" ;;
     "DATA/Montagner_model") CONFIG_LINKS="$CONFIG_LINKS DATA/Montagner_model:DATA/Montagner_model" ;;
     "DATA/mars") CONFIG_LINKS="$CONFIG_LINKS DATA/mars:DATA/mars" ;;

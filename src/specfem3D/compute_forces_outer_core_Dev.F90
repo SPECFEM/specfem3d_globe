@@ -505,7 +505,8 @@
   use constants_solver, only: CUSTOM_REAL
 
 #ifdef USE_XSMM
-  use my_libxsmm, only: libxsmm_smm_5_25_5,libxsmm_smm_25_5_5
+  !use my_libxsmm, only: libxsmm_smm_5_25_5,libxsmm_smm_25_5_5
+  use my_libxsmm, only: xmm1,xmm2,libxsmm_mmcall_abc => libxsmm_smmcall_abc
 #endif
 
   implicit none
@@ -524,10 +525,14 @@
   ! matrix-matrix multiplication C = alpha A * B + beta C
   if (n1 == 5) then
     ! with A(n1,n2) 5x5-matrix, B(n2,n3) 5x25-matrix and C(n1,n3) 5x25-matrix
-    call libxsmm_smm_5_25_5(a=A, b=B, c=C, pa=A, pb=B, pc=C)
+    !call libxsmm_smm_5_25_5(a=A, b=B, c=C, pa=A, pb=B, pc=C)
+    ! dispatch
+    call libxsmm_mmcall_abc(xmm1, A, B, C)
   else if (n1 == 25) then
     ! with A(n1,n2) 25x5-matrix, B(n2,n3) 5x5-matrix and C(n1,n3) 25x5-matrix
-    call libxsmm_smm_25_5_5(a=A, b=B, c=C, pa=A, pb=B, pc=C)
+    !call libxsmm_smm_25_5_5(a=A, b=B, c=C, pa=A, pb=B, pc=C)
+    ! dispatch
+    call libxsmm_mmcall_abc(xmm2, A, B, C)
   else
     stop 'Invalid n1 value for LibXSMM in mxm5_single routine'
   endif
@@ -657,7 +662,8 @@
 ! note: on CPUs like Haswell or Sandy Bridge, the following will slow down computations
 !       however, on Intel Phi (KNC) it is still helpful (speedup +3%)
 #if defined(XSMM_FORCE_EVEN_IF_SLOWER) || ( defined(XSMM) && defined(__MIC__) )
-  use my_libxsmm, only: libxsmm_smm_5_5_5
+  !use my_libxsmm, only: libxsmm_smm_5_5_5
+  use my_libxsmm, only: xmm3,libxsmm_mmcall_abc => libxsmm_smmcall_abc
 #endif
 
   implicit none
@@ -677,13 +683,16 @@
   !do k = 1,5
   !  call libxsmm_call(xmm3, A(:,:,k), B, C(:,:,k))
   !enddo
-
+  ! dispatch
+  do k = 1,5
+    call libxsmm_mmcall_abc(xmm3, A(1,1,k), B, C(1,1,k))
+  enddo
   ! unrolled
-  call libxsmm_smm_5_5_5(a=A(1,1,1), b=B, c=C(1,1,1),pa=A(1,1,1+1), pb=B, pc=C(1,1,1+1))
-  call libxsmm_smm_5_5_5(a=A(1,1,2), b=B, c=C(1,1,2),pa=A(1,1,2+1), pb=B, pc=C(1,1,2+1))
-  call libxsmm_smm_5_5_5(a=A(1,1,3), b=B, c=C(1,1,3),pa=A(1,1,3+1), pb=B, pc=C(1,1,3+1))
-  call libxsmm_smm_5_5_5(a=A(1,1,4), b=B, c=C(1,1,4),pa=A(1,1,4+1), pb=B, pc=C(1,1,4+1))
-  call libxsmm_smm_5_5_5(a=A(1,1,5), b=B, c=C(1,1,5),pa=A(1,1,1), pb=B, pc=C(1,1,1))
+  !call libxsmm_smm_5_5_5(a=A(1,1,1), b=B, c=C(1,1,1),pa=A(1,1,1+1), pb=B, pc=C(1,1,1+1))
+  !call libxsmm_smm_5_5_5(a=A(1,1,2), b=B, c=C(1,1,2),pa=A(1,1,2+1), pb=B, pc=C(1,1,2+1))
+  !call libxsmm_smm_5_5_5(a=A(1,1,3), b=B, c=C(1,1,3),pa=A(1,1,3+1), pb=B, pc=C(1,1,3+1))
+  !call libxsmm_smm_5_5_5(a=A(1,1,4), b=B, c=C(1,1,4),pa=A(1,1,4+1), pb=B, pc=C(1,1,4+1))
+  !call libxsmm_smm_5_5_5(a=A(1,1,5), b=B, c=C(1,1,5),pa=A(1,1,1), pb=B, pc=C(1,1,1))
   return
 #endif
 

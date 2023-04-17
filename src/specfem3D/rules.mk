@@ -277,11 +277,15 @@ else
 	specfem3D_SHARED_OBJECTS += ${asdf_specfem3D_SHARED_STUBS}
 endif
 
-#
-# conditional CEM model
+# conditional CEM or EMC model
 ifeq ($(CEM),yes)
 	specfem3D_SOLVER_OBJECTS += $O/read_write_netcdf.checknetcdf.o
+else ifeq ($(EMC),yes)
+	specfem3D_SOLVER_OBJECTS += $O/read_write_netcdf.checknetcdf.o
+else ifeq ($(NETCDF),yes)
+	specfem3D_SOLVER_OBJECTS += $O/read_write_netcdf.checknetcdf.o
 endif
+
 
 ###
 ### VTK

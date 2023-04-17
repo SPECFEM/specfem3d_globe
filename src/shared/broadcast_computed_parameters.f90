@@ -37,7 +37,7 @@
   integer, parameter :: nparam_i = 49
   integer, dimension(nparam_i) :: bcast_integer
 
-  integer, parameter :: nparam_l = 72
+  integer, parameter :: nparam_l = 73
   logical, dimension(nparam_l) :: bcast_logical
 
   integer, parameter :: nparam_dp = 42
@@ -108,7 +108,8 @@
             CEM_REQUEST,CEM_ACCEPT,BROADCAST_SAME_MESH_AND_MODEL,MODEL_GLL, &
             USE_MONOCHROMATIC_CMT_SOURCE, ABSORB_USING_GLOBAL_SPONGE, &
             OUTPUT_SEISMOS_3D_ARRAY, &
-            REGIONAL_MESH_CUTOFF,REGIONAL_MESH_ADD_2ND_DOUBLING /)
+            REGIONAL_MESH_CUTOFF,REGIONAL_MESH_ADD_2ND_DOUBLING, &
+            EMC_MODEL /)
 
     bcast_double_precision = (/ &
             DT, &
@@ -344,6 +345,7 @@
     OUTPUT_SEISMOS_3D_ARRAY = bcast_logical(70)
     REGIONAL_MESH_CUTOFF = bcast_logical(71)
     REGIONAL_MESH_ADD_2ND_DOUBLING = bcast_logical(72)
+    EMC_MODEL = bcast_logical(73)
 
     ! double precisions
     DT = bcast_double_precision(1)

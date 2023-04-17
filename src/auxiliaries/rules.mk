@@ -624,6 +624,7 @@ xwrite_profile_SHARED_OBJECTS = \
 	$O/count_points.shared.o \
 	$O/create_name_database.shared.o \
 	$O/define_all_layers.shared.o \
+	$O/euler_angles.shared.o \
 	$O/exit_mpi.shared.o \
 	$O/fft.shared.o \
 	$O/flush_system.shared.o \
@@ -687,6 +688,11 @@ endif
 # conditional CEM model
 ifeq ($(CEM),yes)
 xwrite_profile_OBJECTS += $O/model_cem.checknetcdf.o
+endif
+
+# conditional CEM model
+ifeq ($(EMC),yes)
+xwrite_profile_OBJECTS += $O/model_EMC.checknetcdf.o
 endif
 
 ##

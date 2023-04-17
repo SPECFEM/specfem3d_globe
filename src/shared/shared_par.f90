@@ -285,6 +285,7 @@
              CRUSTAL,ONE_CRUST
   logical :: MODEL_3D_MANTLE_PERTUBATIONS,HETEROGEN_3D_MANTLE
   logical :: CEM_REQUEST,CEM_ACCEPT
+  logical :: EMC_MODEL
 
   logical :: MODEL_GLL
   integer :: MODEL_GLL_TYPE

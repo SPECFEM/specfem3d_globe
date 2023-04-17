@@ -184,7 +184,7 @@ AM_CONDITIONAL([COND_MIC], [test x"$want_mic" != xno])
 ###
 AC_ARG_WITH([xsmm],
     [AS_HELP_STRING([--with-xsmm],
-        [build LIBXSMM (see:https://github.com/hfp/libxsmm) enabled version @<:@default=no@:>@])],
+        [build LIBXSMM (see:https://github.com/libxsmm/libxsmm) enabled version @<:@default=no@:>@])],
     [want_xsmm="$withval"],
     [want_xsmm=no])
 AM_CONDITIONAL([COND_XSMM], [test x"$want_xsmm" != xno])
@@ -270,7 +270,47 @@ AC_ARG_WITH([cem],
         [build CEM enabled version @<:@default=no@:>@])],
     [want_cem="$withval"],
     [want_cem=no])
+
+###
+### IRIS EMC models
+###
+
+AC_ARG_WITH([emc],
+    [AS_HELP_STRING([--with-emc],
+        [build IRIS EMC models enabled version @<:@default=no@:>@])],
+    [want_emc="$withval"],
+    [want_emc=no])
+
+###
+### NetCDF support
+###
+
+AC_ARG_WITH([netcdf],
+    [AS_HELP_STRING([--with-netcdf],
+        [build NetCDF enabled version (IRIS EMC & CEM models) @<:@default=no@:>@])],
+    [with_netcdf="$withval"],
+    [with_netcdf=no])
+AC_ARG_ENABLE([netcdf],
+    [AS_HELP_STRING([--enable-netcdf],
+        [build NetCDF enabled version (IRIS EMC & CEM models) @<:@default=no@:>@])],
+    [enable_netcdf="$enableval"],
+    [enable_netcdf=no])
+AS_IF([test x"$enable_netcdf" != xno || test x"$with_netcdf" != xno],
+    [want_netcdf=yes],[want_netcdf=no])
+
+## turns on NetCDF support for CEM & EMC version
+AS_IF([test x"$want_cem" != xno || test x"$want_emc" != xno],
+    [want_netcdf=yes],[])
+
+## turns on CEM & EMC models for NetCDF version
+AS_IF([test x"$want_netcdf" != xno],
+    [want_cem=yes])
+AS_IF([test x"$want_netcdf" != xno],
+    [want_emc=yes])
+
 AM_CONDITIONAL([COND_CEM], [test x"$want_cem" != xno])
+AM_CONDITIONAL([COND_EMC], [test x"$want_emc" != xno])
+AM_CONDITIONAL([COND_NETCDF], [test x"$want_netcdf" != xno])
 
 ############################################################
 
@@ -676,6 +716,50 @@ AS_IF([test x"$want_cuda" != xno -o x"$want_opencl" != xno -o x"$want_hip" != xn
 ])
 
 ###
+### NetCDF support
+###
+
+AS_IF([test x"$want_netcdf" != xno], [
+    AS_BOX([NetCDF])
+    AC_MSG_NOTICE([NetCDF is enabled])
+
+    AC_ARG_VAR(NETCDF_INC, [NetCDF include directory])
+    AC_ARG_VAR(NETCDF_FCFLAGS, [Fortran compiler flags])
+    AC_ARG_VAR(NETCDF_LIBS, [extra libraries for linking programs])
+
+    # NetCDF checking for Fortran
+    AC_LANG_PUSH(Fortran)
+    AC_MSG_CHECKING([for NetCDF modules])
+    FCFLAGS="$NETCDF_FCFLAGS $FCFLAGS"
+    # adds include directory
+    if test "x$NETCDF_INC" != "x"; then
+      NETCDF_INCLUDES="-I$NETCDF_INC"
+      FCFLAGS+=" $NETCDF_INCLUDES"
+    fi
+    # adds CEM flags if given
+    if test "x$CEM_FCFLAGS" != "x"; then
+      FCFLAGS+=" $CEM_FCFLAGS"
+    fi
+    # adds CEM flags if given
+    if test "x$EMC_FCFLAGS" != "x"; then
+      FCFLAGS+=" $EMC_FCFLAGS"
+    fi
+    # compilation test
+    AC_COMPILE_IFELSE([
+      AC_LANG_PROGRAM([], [[
+      use netcdf
+      ]])
+    ], [
+      AC_MSG_RESULT(yes)
+    ], [
+      AC_MSG_RESULT(no)
+      AC_MSG_ERROR([NetCDF module not found; is NetCDF built with Fortran support for this compiler?])
+    ])
+    AC_LANG_POP([Fortran])
+    AC_SUBST([NETCDF_INCLUDES])
+])
+
+###
 ### CEM
 ###
 
@@ -700,6 +784,34 @@ AS_IF([test x"$want_cem" != xno], [
     #], [
     #  AC_MSG_RESULT(no)
     #  AC_MSG_ERROR([NetCDF modules not found; is NetCDF built with Fortran support for this compiler?])
+    #])
+    #AC_LANG_POP([Fortran])
+])
+
+###
+### IRIS EMC models
+###
+
+AS_IF([test x"$want_emc" != xno], [
+    AS_BOX([IRIS EMC models])
+    AC_MSG_NOTICE([IRIS EMC is enabled])
+
+    AC_ARG_VAR(EMC_FCFLAGS, [IRIS EMC Fortran compiler flags])
+    AC_ARG_VAR(EMC_LIBS, [IRIS EMC extra libraries for linking programs])
+
+    # NetCDF checking for Fortran
+    #AC_LANG_PUSH(Fortran)
+    #AC_MSG_CHECKING([for NetCDF modules])
+    #FCFLAGS="$EMC_FCFLAGS $FCFLAGS"
+    #AC_COMPILE_IFELSE([
+    #  AC_LANG_PROGRAM([], [[
+    #  use netcdf
+    #  ]])
+    #], [
+    #  AC_MSG_RESULT(yes)
+    #], [
+    #  AC_MSG_RESULT(no)
+    #  AC_MSG_ERROR([NetCDF module not found; is NetCDF built with Fortran support for this compiler?])
     #])
     #AC_LANG_POP([Fortran])
 ])
@@ -793,6 +905,7 @@ AC_CONFIG_LINKS([
     DATA/full_sphericalharmonic_model:DATA/full_sphericalharmonic_model
     DATA/gladm25:DATA/gladm25
     DATA/heterogen:DATA/heterogen
+    DATA/IRIS_EMC:DATA/IRIS_EMC
     DATA/Lebedev_sea99:DATA/Lebedev_sea99
     DATA/Montagner_model:DATA/Montagner_model
     DATA/mars:DATA/mars
