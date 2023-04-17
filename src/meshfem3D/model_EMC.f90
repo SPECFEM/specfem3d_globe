@@ -68,13 +68,19 @@ module model_emc_par
   logical :: EMC_is_regional
 
   ! units: 1==m, 2==km, 3==m/s, 4==km/s, 5==g/cm^3, 6==kg/cm^3, 7==kg/m^3
-  integer :: EMC_dep_unit
-  integer :: EMC_vp_unit
-  integer :: EMC_vs_unit
-  integer :: EMC_rho_unit
+  integer :: EMC_dep_unit = 0
+  integer :: EMC_vp_unit = 0
+  integer :: EMC_vs_unit = 0
+  integer :: EMC_rho_unit = 0
 
   ! positive depth direction 1==up, 2==down
-  integer :: EMC_dep_dir
+  integer :: EMC_dep_dir = 0
+
+  ! depth reference levle 1==earth surface, 2==sea level
+  integer :: EMC_depth_reference_level = 0
+
+  ! surface indices
+  integer, dimension(:,:), allocatable :: EMC_surface_index
 
   ! EMC model info
   character(len=MAX_STRING_LEN) :: EMC_model_title, EMC_model_id
@@ -152,7 +158,7 @@ module model_emc_par
   character(len=16), dimension(6), parameter :: rhonames = (/ character(len=16) :: &
   'rho','rhofinal','RHO','rhovar','rho_var','rho-var' /)
 
-  ! verbosity
+  ! verbosity (for debugging)
   logical, parameter :: VERBOSE = .false.
 
 contains
@@ -499,9 +505,9 @@ contains
 
 
   ! --------------------------------
-  ! Subroutine to check the dimension order of a variable
+  ! Subroutine to check the attributes of a variable
   ! --------------------------------
-  subroutine check_attribute_unit(ncid, varid, unit, direction, missing_val)
+  subroutine check_variable_attributes(ncid, varid, unit, direction, missing_val)
 
   implicit none
   integer, intent(in) :: ncid
@@ -573,6 +579,22 @@ contains
         ! assigns value for invalid entries
         call check_status(nf90_get_att(ncid, varid, name, missing_val))
         if (VERBOSE) print *,'      missing value: ',missing_val
+
+      else if (trim(name) == 'long_name' .or. trim(name) == '_long_name') then
+        ! assigns value for invalid entries
+        call check_status(nf90_get_att(ncid, varid, name, value))
+        if (VERBOSE) print *,'      long name: ',trim(value)
+        ! check if depth is with respect to "earth surface" or "sea level"
+        if (index(value,"depth") > 0 .and. index(value,"surface") > 0) then
+          ! example: long_name="depth below earth surface"
+          ! depth with respect to earth surface
+          EMC_depth_reference_level = 1
+        else if (index(value,"depth") > 0 .and. index(value,"sea level") > 0) then
+          ! example long_name="depth below sea level (bsl)"
+          ! depth with respect to sea level
+          EMC_depth_reference_level = 2
+      endif
+
       endif
     enddo
   endif
@@ -587,7 +609,7 @@ contains
     stop 'Error netcdf variable attribute'
   endif
 
-  end subroutine check_attribute_unit
+  end subroutine check_variable_attributes
 
 
 end module model_emc_par
@@ -652,12 +674,18 @@ end module model_emc_par
              EMC_dep(deplen),stat=ier)
     if (ier /= 0) stop 'Error allocating lat,lon,dep arrays'
     EMC_lat(:) = 0.0; EMC_lon(:) = 0.0; EMC_dep(:) = 0.0
+
+    allocate(EMC_surface_index(latlen,lonlen),stat=ier)
+    if (ier /= 0) stop 'Error allocating surface index array'
+    EMC_surface_index(:,:) = 0
   endif
 
   ! broadcast the grid
   call bcast_all_cr(EMC_lat,latlen)
   call bcast_all_cr(EMC_lon,lonlen)
   call bcast_all_cr(EMC_dep,deplen)
+
+  call bcast_all_i(EMC_surface_index,latlen * lonlen)
 
   ! broadcasts velocity model values
   call bcast_all_singlei(EMC_dims_nx)
@@ -705,48 +733,29 @@ end module model_emc_par
 
   implicit none
 
-  ! Define variables
-  ! ----------------
-  integer :: ncid, status !, varid, dimid ! standard netcdf variables
-  !integer :: i, j, k ! looping integers
-  integer :: latid, lonid, depid ! dimension ids
+  ! local parameters
+  integer :: ncid, status
+  integer :: latid, lonid, depid    ! dimension ids
   integer :: latlen, lonlen, deplen ! dimension lengths
-  integer :: dimlens(3) ! dimension lengths (for array allocation purposes)
-  !integer :: nvars, ndims, ngatts, unlimdimid ! netcdf file info
-  !integer :: dimids(3) ! dimension ids
-  !integer, dimension(:), allocatable :: varids ! variable ids
-  integer :: varorderdims(3) ! variable dimension order
-  ! Define arrays
-  ! -------------
-  !real, dimension(:), allocatable :: lat, lon, dep ! lat, lon, dep arrays
-  !real, dimension(:,:,:), allocatable :: vp, vs, rho ! model arrays
+  integer :: dimlens(3)             ! dimension lengths (for array allocation purposes)
+  integer :: varorderdims(3)        ! variable dimension order
   integer :: nx,ny,nz
 
-  ! Define strings
-  ! --------------
-  !character(len=100) :: varname ! variable name
-  !character(len=100) :: dimname ! dimension name
-  !character(len=100) :: attname ! attribute name
-  !character(len=100) :: attvalue ! attribute value
-  !character(len=100) :: latname, lonname, depname ! dimension names
-  !character(len=100), dimension(:), allocatable :: varnames ! variable names
-
-  ! Define other variables
-  ! ----------------------
-  !logical :: islat, islon, isdep ! flags for dimension names
-  !integer :: dimlen ! dimension length
-  !integer :: varndim ! variable number of dimensions
-  integer :: varid_vp, varid_vs, varid_rho ! variable ids
+  integer :: varid_vp, varid_vs, varid_rho    ! variable ids
   integer :: varid_lat, varid_lon, varid_dep
   integer :: unit_vp,unit_vs,unit_rho,unit_dep
   integer :: dir_dep,dir
-  integer :: i,ier
+  integer :: i,ix,iy,iz,ilat,ilon,idep,ier
+  integer :: dimindex(3)
+
   real(kind=CUSTOM_REAL) :: missing_val_vp,missing_val_vs,missing_val_rho,missing_val_dep
   real(kind=CUSTOM_REAL) :: vp_min,vp_max,vs_min,vs_max,rho_min,rho_max
-  real(kind=CUSTOM_REAL) :: dx,dx0
+  real(kind=CUSTOM_REAL) :: dx,dx0,tmp_val
   character (len=MAX_STRING_LEN) :: filename
+
   ! chunk corners
   double precision :: corners_lat(4),corners_lon(4)
+
   ! earth radii
   double precision, parameter :: RCMB_ = 3480000.d0
   double precision, parameter :: R_EARTH_ = 6371000.d0
@@ -787,8 +796,9 @@ end module model_emc_par
   ! converts depth direction to be positive down (positive towards center of earth, negative above sealevel)
   if (EMC_dep_dir == 1) then
     ! converts to down
-    EMC_dep_max = - EMC_dep_max
-    EMC_dep_min = - EMC_dep_min
+    tmp_val = EMC_dep_max
+    EMC_dep_max = - EMC_dep_min        ! switches sign, and also min/max
+    EMC_dep_min = - tmp_val
     EMC_dep_dir = 2                    ! down
   endif
 
@@ -851,16 +861,8 @@ end module model_emc_par
   call check_status(nf90_get_var(ncid, varid_lon, EMC_lon))
   call check_status(nf90_get_var(ncid, varid_dep, EMC_dep))
 
-  ! checks consistency between grid values and header infos
-  if (abs(minval(EMC_lat) - EMC_lat_min) > 1.e-15) stop 'Error invalid EMC grid lat min'
-  if (abs(maxval(EMC_lat) - EMC_lat_max) > 1.e-15) stop 'Error invalid EMC grid lat max'
-  if (abs(minval(EMC_lon) - EMC_lon_min) > 1.e-15) stop 'Error invalid EMC grid lon min'
-  if (abs(maxval(EMC_lon) - EMC_lon_max) > 1.e-15) stop 'Error invalid EMC grid lon max'
-  if (abs(minval(EMC_dep) - EMC_dep_min) > 1.e-15) stop 'Error invalid EMC grid dep min'
-  if (abs(maxval(EMC_dep) - EMC_dep_max) > 1.e-15) stop 'Error invalid EMC grid dep max'
-
   ! checks up/down direction for depth
-  call check_attribute_unit(ncid, varid_dep, unit_dep, dir_dep, missing_val_dep)
+  call check_variable_attributes(ncid, varid_dep, unit_dep, dir_dep, missing_val_dep)
 
   ! converts depth to km
   ! units: 1==m, 2==km, 3==m/s, 4==km/s, 5==g/cm^3, 6==kg/cm^3, 7==kg/m^3
@@ -875,37 +877,65 @@ end module model_emc_par
     dir_dep = 2     ! down
   endif
 
+  ! debug
+  !print *,'debug: array lat min/max = ',minval(EMC_lat),maxval(EMC_lat),'header',EMC_lat_min,EMC_lat_max
+  !print *,'debug: array lon min/max = ',minval(EMC_lon),maxval(EMC_lon),'header',EMC_lon_min,EMC_lon_max
+  !print *,'debug: array dep min/max = ',minval(EMC_dep),maxval(EMC_dep),'header',EMC_dep_min,EMC_dep_max
+
+  ! checks consistency between grid values and header infos
+  if (abs(minval(EMC_lat) - EMC_lat_min) > 1.e-2) stop 'Error invalid EMC grid lat min'
+  if (abs(maxval(EMC_lat) - EMC_lat_max) > 1.e-2) stop 'Error invalid EMC grid lat max'
+  if (abs(minval(EMC_lon) - EMC_lon_min) > 1.e-2) stop 'Error invalid EMC grid lon min'
+  if (abs(maxval(EMC_lon) - EMC_lon_max) > 1.e-2) stop 'Error invalid EMC grid lon max'
+  if (abs(minval(EMC_dep) - EMC_dep_min) > 1.e-2) stop 'Error invalid EMC grid dep min'
+  if (abs(maxval(EMC_dep) - EMC_dep_max) > 1.e-2) stop 'Error invalid EMC grid dep max'
+
+  ! sets actual grid min/max values
+  ! (header values might be truncated for readability as is the case in the SCEC CVM model file)
+  EMC_lat_min = minval(EMC_lat)
+  EMC_lat_max = maxval(EMC_lat)
+  EMC_lon_min = minval(EMC_lon)
+  EMC_lon_max = maxval(EMC_lon)
+  EMC_dep_min = minval(EMC_dep)
+  EMC_dep_max = maxval(EMC_dep)
+
   ! checks regular gridding
   ! lat & lon are usually regular, depth has often variable grid stepping (finer gridding in crust, coarser in mantle)
   ! lat
   EMC_regular_grid_lat = .true.
+  EMC_dlat = (EMC_lat_max - EMC_lat_min) / (latlen-1)
   dx0 = EMC_lat(2) - EMC_lat(1)
   do i = 2,latlen-1
     dx = EMC_lat(i+1) - EMC_lat(i)
-    if (abs(dx - dx0) > 1.e-4 * dx0) then
+    if (abs(dx - dx0) > 1.e-2 * dx0 .and. abs(dx - EMC_dlat) > 1.e-2 * EMC_dlat) then
       EMC_regular_grid_lat = .false.
       exit
     endif
+    dx0 = dx
   enddo
   ! lon
   EMC_regular_grid_lon = .true.
+  EMC_dlon = (EMC_lon_max - EMC_lon_min) / (lonlen-1)
   dx0 = EMC_lon(2) - EMC_lon(1)
   do i = 2,lonlen-1
     dx = EMC_lon(i+1) - EMC_lon(i)
-    if (abs(dx - dx0) > 1.e-4 * dx0) then
+    if (abs(dx - dx0) > 1.e-2 * dx0 .and. abs(dx - EMC_dlon) > 1.e-2 * EMC_dlon) then
       EMC_regular_grid_lon = .false.
       exit
     endif
+    dx0 = dx
   enddo
   ! depth
   EMC_regular_grid_dep = .true.
+  EMC_ddep = (EMC_dep_max - EMC_dep_min) / (deplen-1)
   dx0 = EMC_dep(2) - EMC_dep(1)
   do i = 2,deplen-1
     dx = EMC_dep(i+1) - EMC_dep(i)
-    if (abs(dx - dx0) > 1.e-4 * dx0) then
+    if (abs(dx - dx0) > 1.e-2 * dx0 .and. abs(dx - EMC_ddep) > 1.e-2 * EMC_ddep) then
       EMC_regular_grid_dep = .false.
       exit
     endif
+    dx0 = dx
   enddo
 
   ! grid spacing
@@ -947,6 +977,14 @@ end module model_emc_par
     write(IMAIN,*) '           increments ddep = ',EMC_ddep
   else
     write(IMAIN,*) '           increments ddep = variable (',EMC_ddep,',..)'
+  endif
+  write(IMAIN,*)
+  if (EMC_depth_reference_level == 1) then
+    write(IMAIN,*) '           depth reference level: earth surface'
+  else if (EMC_depth_reference_level == 2) then
+    write(IMAIN,*) '           depth reference level: sea level'
+  else
+    write(IMAIN,*) '           depth reference level: not recognized - assuming earth surface'
   endif
   write(IMAIN,*)
   call flush_IMAIN()
@@ -1007,9 +1045,9 @@ end module model_emc_par
   call check_status(nf90_get_var(ncid, varid_rho, EMC_rho))
 
   ! gets units and missing values
-  call check_attribute_unit(ncid, varid_vp, unit_vp, dir, missing_val_vp)
-  call check_attribute_unit(ncid, varid_vs, unit_vs, dir, missing_val_vs)
-  call check_attribute_unit(ncid, varid_rho, unit_rho, dir, missing_val_rho)
+  call check_variable_attributes(ncid, varid_vp, unit_vp, dir, missing_val_vp)
+  call check_variable_attributes(ncid, varid_vs, unit_vs, dir, missing_val_vs)
+  call check_variable_attributes(ncid, varid_rho, unit_rho, dir, missing_val_rho)
 
   ! Close netcdf file
   call check_status(nf90_close(ncid))
@@ -1070,6 +1108,38 @@ end module model_emc_par
   write(IMAIN,*) '                                                        ',(100.0*count(EMC_mask))/(nx*ny*nz),'%'
   write(IMAIN,*)
   call flush_IMAIN()
+
+  ! surface index
+  ! to avoid taking model values defined for air or oceans, we search for the top-most index that defines the
+  ! velocities for the solid surface
+  allocate(EMC_surface_index(EMC_latlen,EMC_lonlen),stat=ier)
+  if (ier /= 0) stop 'Error allocating surface index array'
+  EMC_surface_index(:,:) = 0
+  do ilat = 1,EMC_latlen
+    do ilon = 1,EMC_lonlen
+      ! assumes that depth array starts at top and move down to earth center
+      do idep = 1,EMC_deplen
+        ! gets array indexing
+        dimindex(varorderdims(latid)) = ilat
+        dimindex(varorderdims(lonid)) = ilon
+        dimindex(varorderdims(depid)) = idep
+        ix = dimindex(varorderdims(1))
+        iy = dimindex(varorderdims(2))
+        iz = dimindex(varorderdims(3))
+        ! checks if point has valid entry
+        if (.not. EMC_mask(ix,iy,iz) .and. EMC_surface_index(ilat,ilon) == 0) then
+          ! checks if point is for solids
+          if (EMC_vs(ix,iy,iz) > 0.d0) then
+            EMC_surface_index(ilat,ilon) = idep
+            ! exit depth loop
+            exit
+          endif
+        endif
+      enddo
+    enddo
+  enddo
+  ! checks missed array values (in case some lat/lon are all missing values)
+  where(EMC_surface_index == 0) EMC_surface_index = 1
 
   ! consistency conversions
   ! to have the model parameters always in the same unit (velocities in km/s, density in kg/m^3)
@@ -1211,7 +1281,8 @@ end module model_emc_par
   subroutine model_EMC_crustmantle(iregion_code,r,theta,phi,vpv,vph,vsv,vsh,eta_aniso,rho)
 
   use constants
-  use shared_parameters, only: R_PLANET,R_PLANET_KM,RHOAV
+  use shared_parameters, only: R_PLANET,R_PLANET_KM,RHOAV,TOPOGRAPHY
+  use meshfem_models_par, only: ibathy_topo
 
   use model_emc_par
 
@@ -1231,13 +1302,16 @@ end module model_emc_par
   double precision :: vp_iso,vs_iso,rho_iso
   double precision :: vpl,vsl,rhol
   double precision :: scaleval_vel,scaleval_rho
-  integer :: index_lat,index_lon,index_dep
+  integer :: index_lat,index_lon,index_dep,index_surface
 
   ! positioning/interpolation
   double precision :: interp_val
   double precision :: gamma_interp_x,gamma_interp_y,gamma_interp_z
   double precision :: val1,val2,val3,val4,val5,val6,val7,val8
   integer :: ix,iy,iz,Nx,Ny,Nz
+
+  ! elevation
+  double precision :: lat_topo,lon_topo,elevation,r_topo
 
   ! checks if anything to do
   ! so far, EMC models only for crust/mantle are supported
@@ -1248,13 +1322,79 @@ end module model_emc_par
   vsl = 0.d0
   rhol = 0.d0
 
-  ! depth of given radius (in km)
-  r_depth = R_PLANET_KM * (1.0 - r)  ! radius is normalized between [0,1]
-
   ! latitude in degrees in [-90,90]
   lat = (PI_OVER_TWO - theta) * RADIANS_TO_DEGREES
   ! longitude in degrees in [0,360]
   lon = phi * RADIANS_TO_DEGREES
+
+  ! depth
+  if (TOPOGRAPHY) then
+    ! takes depth
+    ! depth reference level 1==earth surface, 2==sea level),
+    if (EMC_depth_reference_level == 1) then
+      ! depth relative to earth surface
+      ! gets elevation
+      lat_topo = lat     ! range [-90,90]
+      lon_topo = lon     ! range [0,360]
+      call get_topo_bathy(lat,lon,elevation,ibathy_topo)
+
+      ! debug
+      !print *,'debug: lat/lon/elevation [m]:',lat,lon,sngl(elevation)
+
+      ! normalized surface topography
+      r_topo = 1.d0 + elevation / R_PLANET
+
+      ! depth with respect to surface (in km)
+      r_depth = R_PLANET_KM * (r_topo - r)
+
+      ! checks limit (mesh point cannot be in air)
+      if (r_depth < 0.d0) r_depth = 0.d0
+
+    else
+      ! depth relative to sea level
+      ! with sea level supposed to be normalized at 1
+      ! depth of given radius (in km)
+      r_depth = R_PLANET_KM * (1.0 - r)  ! radius is normalized between [0,1.x]
+
+      ! checks limit (mesh point cannot higher than EMC limit)
+      ! depth positive towards earth center
+      if (r_depth < EMC_dep_min) r_depth = EMC_dep_min
+    endif
+  else
+    ! mesh has no topography
+    ! grid is still spherical at this point and normalized with surface at 1
+    ! depth relative to sea level and relative to earth surface is the same in this case
+    r_depth = R_PLANET_KM * (1.0 - r)  ! radius is normalized between [0,1.x]
+
+    ! checks limit (mesh point cannot higher than EMC limit)
+    ! depth positive towards earth center
+    if (r_depth < EMC_dep_min) r_depth = EMC_dep_min
+  endif
+
+  ! note: here, the choice is that any point outside of the EMC model box falls back to its background velocity model value,
+  !       which by default will be the isotropic PREM.
+  !
+  !       still, this could lead to a problem with the depth in case there is a discrepancy between the elevation of the point
+  !       when topography is used and if the EMC model starts at zero depth.
+  !
+  !       for different models, depth refers either to depth with respect to sea level or surface topography?
+  !       so, if depth refers to sea level, then the depth value is more like a z-coordinate value
+  !       (e.g., -2.0 for 2km elevation, 10.0 to 10km depth below sea level).
+  !       on the other hand, if depth refers to the surface, then the depth value is more like a relative value
+  !       (e.g., 2.0 for 2km depth, 10.0 to 10km depth below surface).
+  !
+  !       thus, for the mesher, if we determine the point values based on the grid points of the initial, spherical grid,
+  !       and then stretch the points to match topography, the point location search here includes no topography yet,
+  !       and depth should always be relative to surface.
+  !
+  !       however, if depth given is with respect to sea level, we should start the point search only with the
+  !       final point location after topography stretching.
+  !       -> there would be a small discrepancy if we transform depth to be always relative to surface, read in the model
+  !          based on the initial spherical mesh and then stretch between bottom to top to accommodate surface topography.
+  !          the transformation of (elevation) depth to depth with respect to surface would need to account for the
+  !          stretching factor.
+  !
+  !       todo: determine depth for initial or final grid points? left for future improvements...
 
   ! shift lon if EMC longitudes start at negative lon
   if (EMC_lon_min < -180.0) then
@@ -1262,17 +1402,6 @@ end module model_emc_par
   else if (EMC_lon_min < 0.0) then
     if (lon > 180.0) lon = lon - 360.0d0    ! range [-180,180]
   endif
-
-  ! note: the indexing below would work such that is takes the boundary model point as the associated value.
-  !       given the boundary point has valid vp/vs/rho values (and is not masked out because of missing values),
-  !       it means that the boundary values are spread out to any simulation region outside of the actual EMC box.
-  !
-  !       here, the choice is that any point outside of the EMC model box falls back to its background velocity model value,
-  !       which by default will be the isotropic PREM.
-  !
-  !       still, this leads to a problem with the depth in case there is a discrepancy between the elevation of the point
-  !       when topography is use and if the EMC model starts at zero depth - which would refer to sea level
-  !       or surface topography?
 
   ! checks if point lies in EMC model region:
   !   we add half of the gridding increments to the limits to avoid numerical artefacts,
@@ -1299,15 +1428,31 @@ end module model_emc_par
   else
     ! gets index of value in EMC_lat closest to given lat
     index_lat = minloc(abs(EMC_lat(:) - lat),dim=1)
+    ! determine closest, but smaller value (like floor(..) above) than given lat
+    if (index_lat <= 0) index_lat = 1
+    if (EMC_dlat > 0.0) then
+      if (EMC_lat(index_lat) > lat) index_lat = index_lat - 1
+    else if (EMC_dlat < 0.0) then
+      if (EMC_lat(index_lat) < lat) index_lat = index_lat - 1
+    endif
   endif
+
   ! lon
   if (EMC_regular_grid_lon) then
     ! indexing starts at 1,..
     index_lon = floor((lon - EMC_lon_min)/EMC_dlon) + 1
   else
     ! gets index of value in EMC_lon closest to given lon
-    index_lat = minloc(abs(EMC_lon(:) - lon),dim=1)
+    index_lon = minloc(abs(EMC_lon(:) - lon),dim=1)
+    ! determine closest, but smaller value (like floor(..) above) than given lon
+    if (index_lon <= 0) index_lon = 1
+    if (EMC_dlon > 0.0) then
+      if (EMC_lon(index_lon) > lon) index_lon = index_lon - 1
+    else if (EMC_dlon < 0.0) then
+      if (EMC_lon(index_lon) < lon) index_lon = index_lon - 1
+    endif
   endif
+
   ! depth
   if (EMC_regular_grid_dep) then
     ! indexing starts at 1,..
@@ -1315,21 +1460,44 @@ end module model_emc_par
   else
     ! gets index of value in EMC_dep closest to given dep
     index_dep = minloc(abs(EMC_dep(:) - r_depth),dim=1)
-    if (index_dep <= 0) index_dep = 1
     ! determine closest, but smaller value (like floor(..) above) than given depth
     ! for example: r_depth = 30.8 -> EMC_dep == 31 closest for minloc index
     !              we want index with EMC_dep == 30 and use the cell between [30,31]km depth for interpolation
     ! in case depth increases in array: ddep > 0 and index with smaller depth is -1
     ! in case depth decreases in array: ddep < 0 and index with smaller depth is +1
+    if (index_dep <= 0) index_dep = 1
     if (EMC_ddep > 0.0) then
-      if (EMC_dep(index_dep) > r_depth) index_dep = index_dep -1
+      if (EMC_dep(index_dep) > r_depth) index_dep = index_dep - 1
     else if (EMC_ddep < 0.0) then
-      if (EMC_dep(index_dep) < r_depth) index_dep = index_dep -1
+      if (EMC_dep(index_dep) < r_depth) index_dep = index_dep - 1
+    endif
+  endif
+
+  ! for points above solid surface elevation
+  ! we limit index to solid surface (no oceans, air, etc.)
+  if ((index_lat >= 1 .and. index_lat <= EMC_latlen) &
+     .and. (index_lon >= 1 .and. index_lon <= EMC_lonlen)) then
+    ! index of top solid surface
+    index_surface = EMC_surface_index(index_lat,index_lon)
+
+    ! assumes that indexing moves down towards earth center, i.e., 1==top, .. ,deplen==bottom of mesh
+    if (index_dep < index_surface) then
+      ! limits to surface points
+
+      !debug
+      !print*,'debug: lat/lon/dep = ',lat,lon,r_depth,'index lat/lon/dep = ',index_lat,index_lon,index_dep, &
+      !      'array value lat/lon/dep',EMC_lat(index_lat),EMC_lon(index_lon),EMC_dep(index_dep), &
+      !      'surface index',index_surface,'surface depth ',EMC_dep(index_surface)
+
+      ! sets index at solid surface
+      index_dep = index_surface
+      ! sets depth to surface depth for gamma factor below
+      r_depth = dble(EMC_dep(index_dep))
     endif
   endif
 
   !debug
-  !if (r_depth > 30.0 .and. r_depth < 50.0) &
+  !if (r_depth > 10.1 .and. r_depth < 15.1) &
   !  print*,'debug: lat/lon/dep = ',lat,lon,r_depth,'index lat/lon/dep = ',index_lat,index_lon,index_dep, &
   !         'array value lat/lon/dep',EMC_lat(index_lat),EMC_lon(index_lon),EMC_dep(index_dep)
 
@@ -1342,6 +1510,7 @@ end module model_emc_par
   !       This might need further improvement in future to become more general.
   if (EMC_dims_nx == EMC_lonlen) then
     ! order: lon/lat/dep
+    ! used by Alaska
     ix = index_lon
     iy = index_lat
     iz = index_dep
@@ -1353,7 +1522,7 @@ end module model_emc_par
     if (ix >= 1 .and. ix <= Nx) gamma_interp_x = lon - dble(EMC_lon(index_lon))
     if (iy >= 1 .and. iy <= Ny) gamma_interp_y = lat - dble(EMC_lat(index_lat))
     if (iz >= 1 .and. iz <= Nz) gamma_interp_z = r_depth - dble(EMC_dep(index_dep))
-  else
+  else if (EMC_dims_nx == EMC_latlen) then
     ! order: lat/lon/dep
     ix = index_lat
     iy = index_lon
@@ -1366,17 +1535,21 @@ end module model_emc_par
     if (ix >= 1 .and. ix <= Nx) gamma_interp_x = lat - dble(EMC_lat(index_lat))
     if (iy >= 1 .and. iy <= Ny) gamma_interp_y = lon - dble(EMC_lon(index_lon))
     if (iz >= 1 .and. iz <= Nz) gamma_interp_z = r_depth - dble(EMC_dep(index_dep))
-  endif
+  else if (EMC_dims_nx == EMC_deplen) then
+    ! order: dep/lon/lat
+    ! used by SCEC-CVM
+    ix = index_dep
+    iy = index_lon
+    iz = index_lat
 
-  ! checks - this check is not needed, we will consider edge points below
-  !if (ix < 0 .or. iy < 0 .or. iz < 0) then
-  !  print *,'Error: position has invalid index: '
-  !  print *,'  rank                   : ',myrank
-  !  print *,'  point index            : ',ix,iy,iz
-  !  print *,'  location (lat/lon/dep) : ',sngl(lat),sngl(lon),sngl(r_depth)
-  !  print *,'  grid point             : ',EMC_lat(index_lat),EMC_lon(index_lon),EMC_dep(index_dep)
-  !  call exit_MPI(myrank,'Error point index in EMC model routine')
-  !endif
+    Nx = EMC_deplen
+    Ny = EMC_lonlen
+    Nz = EMC_latlen
+
+    if (ix >= 1 .and. ix <= Nx) gamma_interp_x = r_depth - dble(EMC_dep(index_dep))
+    if (iy >= 1 .and. iy <= Ny) gamma_interp_y = lon - dble(EMC_lon(index_lon))
+    if (iz >= 1 .and. iz <= Nz) gamma_interp_z = lat - dble(EMC_lat(index_lat))
+  endif
 
   ! suppress edge effects for points outside of the model
   if (ix < 1) then
@@ -1406,13 +1579,31 @@ end module model_emc_par
     gamma_interp_z = 1.d0
   endif
 
+  !debug
+  !if (r_depth > 10.1 .and. r_depth < 15.1) &
+  !  print*,'debug: lat/lon/dep = ',lat,lon,r_depth,'index lat/lon/dep = ',index_lat,index_lon,index_dep, &
+  !         'array value lat/lon/dep',EMC_lat(index_lat),EMC_lon(index_lon),EMC_dep(index_dep), &
+  !         'gamma',gamma_interp_x,gamma_interp_y,gamma_interp_z
+
+  !debug: checks gamma factors
+  !if (gamma_interp_x < 0.d0 .or. gamma_interp_y < 0.d0 .or. gamma_interp_z < 0.d0 .or. &
+  !    gamma_interp_x > 1.d0 .or. gamma_interp_y > 1.d0 .or. gamma_interp_z > 1.d0) then
+  !  print *,'Error: position has invalid index: '
+  !  print *,'  rank                   : ',myrank
+  !  print *,'  point index            : ',ix,iy,iz
+  !  print *,'  location (lat/lon/dep) : ',sngl(lat),sngl(lon),sngl(r_depth)
+  !  print *,'  grid point             : ',EMC_lat(index_lat),EMC_lon(index_lon),EMC_dep(index_dep)
+  !  print *,'  interpolation gamma    : ',gamma_interp_x,gamma_interp_y,gamma_interp_z
+  !  !call exit_MPI(myrank,'Error point index in EMC model routine')
+  !endif
+
+  ! limits interpolation factors to be in range [0,1]
   if (gamma_interp_x < 0.d0) gamma_interp_x = 0.d0
   if (gamma_interp_x > 1.d0) gamma_interp_x = 1.d0
   if (gamma_interp_y < 0.d0) gamma_interp_y = 0.d0
   if (gamma_interp_y > 1.d0) gamma_interp_y = 1.d0
   if (gamma_interp_z < 0.d0) gamma_interp_z = 0.d0
   if (gamma_interp_z > 1.d0) gamma_interp_z = 1.d0
-
 
   ! Voigt average of input (for masked points where model values are missing)
   vp_iso = sqrt( (2.d0*vpv*vpv + vph*vph)/3.d0 )
@@ -1525,7 +1716,7 @@ end module model_emc_par
   rhol = interp_val
 
   !debug
-  !if (r_depth > 30.1 .and. r_depth < 50.0) &
+  !if (r_depth > 10.1 .and. r_depth < 15.1) &
   !  print*,'debug: lat/lon/dep = ',lat,lon,r_depth,'vp/vs/rho = ',vpl,vsl,rhol,'iso vp/vs/rho',vp_iso,vs_iso,rho_iso, &
   !          'val ',val1,val2,val3,val4,val5,val6,val7,val8
 
@@ -1537,8 +1728,10 @@ end module model_emc_par
   vpl = vpl * scaleval_vel
   vsl = vsl * scaleval_vel
 
+  ! only uses solid domain values
+  ! (no fluid domain such as oceans are modelled so far, effect gets approximated by ocean load)
   ! returns model values if non-zero
-  if (vpl > 1.d-15) then
+  if (vsl > 1.d-2) then
     ! converts isotropic values to transverse isotropic
     vpv = vpl
     vph = vpl
