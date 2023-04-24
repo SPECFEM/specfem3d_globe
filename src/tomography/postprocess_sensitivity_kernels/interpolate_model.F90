@@ -207,6 +207,7 @@
   real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: point_distance
   integer,dimension(4) :: loc_max
   logical :: is_updated,is_updated_all
+  logical :: target_is_local_mesh
 
   ! timing
   double precision, external :: wtime
@@ -251,6 +252,10 @@
     enddo
   endif
   call synchronize_all()
+
+  ! initializes
+  nchunks_old = 0
+  nchunks_new = 0
 
   ! reads input arguments
   want_midpoint = 1
@@ -329,8 +334,9 @@
     else
       print *,'  using brute force search'
     endif
-    print *,'  old topo NCHUNKS: ',nchunks_old
-    print *,'  new topo NCHUNKS: ',nchunks_new
+    if (nchunks_old /= 0) then
+      print *,'  old topo NCHUNKS: ',nchunks_old
+    endif
     print *
   endif
 
@@ -381,7 +387,9 @@
   nglob_new = NGLOB_CRUST_MANTLE
 
   ! old (source) mesh
-  nchunks_old = nchunks_new  ! by default assumes same nchunks (e.g., global to global interpolation)
+  if (nchunks_old == 0) then
+    nchunks_old = nchunks_new  ! by default assumes same nchunks (e.g., global to global interpolation)
+  endif
   nproctot_old = 0
   nproc_eta_old = 0
   nproc_xi_old = 0
@@ -1126,11 +1134,39 @@
     endif
     call synchronize_all()
 
+    ! determines if target mesh is a cut-off mesh with USE_LOCAL_MESH flag turned on
+    ! note: For local meshes, all mesh elements belong to idoubling == IFLAG_CRUST == 1.
+    !       Thus, interpolating from a "normal chunk mesh" with idoubling layers min/max
+    !       from 1 to 5 (IFLAG_CRUST to IFLAG_MANTLE_NORMAL), and staying within the layer for the element search
+    !       would only interpolate crustal values from the source mesh to deeper elements in the target mesh.
+    !       We therefore need a flag to decide if we consider elements from all layers in the source mesh for these target meshes.
+    !
+    !       For cut-off meshes with only REGIONAL_MESH_CUTOFF set to .true., the idoubling flags min/max can go from 1 to 4
+    !       (IFLAG_CRUST to IFLAG_670_220) depending on the REGIONAL_MESH_CUTOFF_DEPTH value.
+    !       In these cut-off meshes, staying within layers for element search is still okay to properly account for discontinuities.
+    if (minval(idoubling2) == 1 .and. maxval(idoubling2) == 1) then
+      target_is_local_mesh = .true.
+    else
+      target_is_local_mesh = .false.
+    endif
+
     ! checks that layers match
-    if (minval(idoubling1) /= minval(idoubling2) .or. maxval(idoubling1) /= maxval(idoubling2)) then
+    if (myrank == 0) then
+      print *,'mesh doubling layers:'
+      print *,'  source mesh: min/max = ',minval(idoubling1),maxval(idoubling1)
+      print *,'  target mesh: min/max = ',minval(idoubling2),maxval(idoubling2)
+      print *
+      if (target_is_local_mesh) then
+        print *,'  target mesh: uses cut-off local mesh'
+        print *
+      endif
+    endif
+
+    ! source mesh must have at least all layers that the target mesh has (in case of cut-off meshes REGIONAL_MESH_CUTOFF)
+    if (minval(idoubling1) > minval(idoubling2) .or. maxval(idoubling1) < maxval(idoubling2)) then
       print *,'Error idoubling range:'
-      print *,'idoubling 1:',minval(idoubling1),maxval(idoubling1)
-      print *,'idoubling 2:',minval(idoubling2),maxval(idoubling2)
+      print *,'  idoubling 1:',minval(idoubling1),maxval(idoubling1)
+      print *,'  idoubling 2:',minval(idoubling2),maxval(idoubling2)
       stop 'Error invalid idoubling range'
     endif
 
@@ -1174,17 +1210,20 @@
           do iproc_xi = istart_xi, iend_xi
             ! counter
             iprocnum = iprocnum + 1
-            ! all elements
+            ! search elements
             do ispec = 1, nspec_old
-              if (idoubling1(ispec,iprocnum-1) == ilayer) then
-                if (TREE_INTERNAL_GLL_POINTS) then
-                  ! all internal GLL points ( 2 to NGLLX-1 )
-                  inodes = inodes + (NGLLX-2)*(NGLLY-2)*(NGLLZ-2)
-                endif
-                if (TREE_MID_POINTS) then
-                  ! only element mid-points
-                  inodes = inodes + 1
-                endif
+              ! search elements
+              if (.not. target_is_local_mesh) then
+                ! skips elements outside of this layer
+                if (idoubling1(ispec,iprocnum-1) /= ilayer ) cycle
+              endif
+              if (TREE_INTERNAL_GLL_POINTS) then
+                ! all internal GLL points ( 2 to NGLLX-1 )
+                inodes = inodes + (NGLLX-2)*(NGLLY-2)*(NGLLZ-2)
+              endif
+              if (TREE_MID_POINTS) then
+                ! only element mid-points
+                inodes = inodes + 1
               endif
             enddo
           enddo
@@ -1228,8 +1267,11 @@
             ! adds tree nodes
             do ispec = 1,nspec_old
 
-              ! skips elements outside of this layer
-              if (idoubling1(ispec,iprocnum-1) /= ilayer ) cycle
+              ! search elements
+              if (.not. target_is_local_mesh) then
+                ! skips elements outside of this layer
+                if (idoubling1(ispec,iprocnum-1) /= ilayer ) cycle
+              endif
 
               ! sets up tree nodes
               ! all internal GLL points
