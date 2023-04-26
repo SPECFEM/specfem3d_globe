@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Check for changes
       id: diff
@@ -75,7 +75,7 @@ jobs:
     needs: changesCheck
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Install dependencies
       run: |
@@ -128,7 +128,7 @@ jobs:
         os: [ubuntu-latest,ubuntu-20.04]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh
@@ -147,7 +147,7 @@ jobs:
     needs: changesCheck
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Cache Intel oneapi packages
       id: cache-intel-oneapi
@@ -224,7 +224,7 @@ jobs:
     needs: [linuxCheck]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh
@@ -242,7 +242,7 @@ jobs:
      needs: [linuxCheck]
 
      steps:
-     - uses: actions/checkout@v2
+     - uses: actions/checkout@v3
 
      - name: Install packages
        run: ./.github/scripts/run_install.sh
@@ -267,7 +267,7 @@ jobs:
     needs: [linuxCheck]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh
@@ -291,7 +291,7 @@ jobs:
     needs: [linuxCheck]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh
@@ -315,7 +315,7 @@ jobs:
     needs: [linuxCheck]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh
@@ -340,7 +340,7 @@ jobs:
     needs: [linuxCheck]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh
@@ -364,7 +364,7 @@ jobs:
     needs: [linuxCheck]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh
