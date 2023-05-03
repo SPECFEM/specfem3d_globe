@@ -153,7 +153,9 @@ ifeq ($(CUDA),yes)
   ifeq ($(CUDA11),yes)
 	  BUILD_VERSION_TXT += (v11)
   endif
-
+  ifeq ($(CUDA12),yes)
+	  BUILD_VERSION_TXT += (v12)
+  endif
 endif
 
 ifeq ($(GPU_CUDA_AND_OCL),yes)
