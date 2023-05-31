@@ -78,7 +78,7 @@
   ! local parameters
   integer :: iphase,ier
   integer :: num_elements
-  integer,dimension(1) :: idummy
+  integer,dimension(1) :: idummy = (/ 0 /)
 
   ! inverse arrays use 1D indexing for better compiler vectorization
   ! only used for Deville routines and FORCE_VECTORIZATION)
