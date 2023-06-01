@@ -564,7 +564,11 @@
 !DIR$ ATTRIBUTES FORCEINLINE :: mxm5_3comp_singleA
 #else
 ! cray
-!DIR$ INLINEALWAYS mxm5_3comp_singleA
+! note: with Cray Fortran versions >= 14 on Frontier, inlining this routine together with optimization -O3 leads to problems.
+!       for now, will avoid inlining by this directive INLINENEVER to allow for default compilation,
+!       otherwise the compilation flag -hipa0 would need to be added to suppress all inlining as well.
+!!DIR$ INLINEALWAYS mxm5_3comp_singleA
+!DIR$ INLINENEVER mxm5_3comp_singleA
 #endif
 
 ! 3 different arrays for x/y/z-components, 2-dimensional arrays (25,5)/(5,25), same B matrix for all 3 component arrays
@@ -603,7 +607,9 @@
   ! matrix-matrix multiplication
   do j = 1,n3
 !DIR$ IVDEP
+#if defined __INTEL_COMPILER
 !DIR$ SIMD
+#endif
     do i = 1,n1
       C1(i,j) =  A(i,1) * B1(1,j) &
                + A(i,2) * B1(2,j) &
@@ -637,7 +643,11 @@
 !DIR$ ATTRIBUTES FORCEINLINE :: mxm5_3comp_singleB
 #else
 ! cray
-!DIR$ INLINEALWAYS mxm5_3comp_singleB
+! note: with Cray Fortran versions >= 14 on Frontier, inlining this routine together with optimization -O3 leads to problems.
+!       for now, will avoid inlining by this directive INLINENEVER to allow for default compilation,
+!       otherwise the compilation flag -hipa0 would need to be added to suppress all inlining as well.
+!!DIR$ INLINEALWAYS mxm5_3comp_singleB
+!DIR$ INLINENEVER mxm5_3comp_singleB
 #endif
 
 ! 3 different arrays for x/y/z-components, 2-dimensional arrays (25,5)/(5,25), same B matrix for all 3 component arrays
@@ -676,7 +686,9 @@
   ! matrix-matrix multiplication
   do j = 1,n3
 !DIR$ IVDEP
+#if defined __INTEL_COMPILER
 !DIR$ SIMD
+#endif
     do i = 1,n1
       C1(i,j) =  A1(i,1) * B(1,j) &
                + A1(i,2) * B(2,j) &
@@ -710,7 +722,11 @@
 !DIR$ ATTRIBUTES FORCEINLINE :: mxm5_3comp_3dmat_singleB
 #else
 ! cray
-!DIR$ INLINEALWAYS mxm5_3comp_3dmat_singleB
+! note: with Cray Fortran versions >= 14 on Frontier, inlining this routine together with optimization -O3 leads to problems.
+!       for now, will avoid inlining by this directive INLINENEVER to allow for default compilation,
+!       otherwise the compilation flag -hipa0 would need to be added to suppress all inlining as well.
+!!DIR$ INLINEALWAYS mxm5_3comp_3dmat_singleB
+!DIR$ INLINENEVER mxm5_3comp_3dmat_singleB
 #endif
 
 ! 3 different arrays for x/y/z-components, 3-dimensional arrays (5,5,5), same B matrix for all 3 component arrays
@@ -774,7 +790,9 @@
   do k = 1,n3
     do j = 1,n2
 !DIR$ IVDEP
+#if defined __INTEL_COMPILER
 !DIR$ SIMD
+#endif
       do i = 1,n1
         C1(i,j,k) =  A1(i,1,k) * B(1,j) &
                    + A1(i,2,k) * B(2,j) &
