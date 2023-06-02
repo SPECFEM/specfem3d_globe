@@ -1126,7 +1126,7 @@
   if (npointot > 0) then
     if (myrank == 0) then
       write(IMAIN,*) '    total number of points            : ',npointot
-      write(IMAIN,*) '    array memory required per process : ',dble(npointot) * dble(8) / 1024.d0 / 1024.d0,'MB'
+      write(IMAIN,*) '    array memory required per process : ',3.d0 * dble(npointot) * dble(8) / 1024.d0 / 1024.d0,'MB'
       call flush_IMAIN()
     endif
 

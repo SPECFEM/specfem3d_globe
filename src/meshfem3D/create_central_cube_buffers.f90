@@ -553,7 +553,7 @@
 !
 
   subroutine comp_central_cube_buffer_size(iproc_xi,iproc_eta,ichunk,NPROC_XI,NPROC_ETA,NSPEC2D_BOTTOM_INNER_CORE, &
-                nb_msgs_theor_in_cube,npoin2D_cube_from_slices)
+                                           nb_msgs_theor_in_cube,npoin2D_cube_from_slices)
 
 !--- compute number of messages to expect in cube as well as their size
 !--- take into account vertical sides and bottom side
