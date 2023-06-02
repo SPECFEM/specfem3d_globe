@@ -45,11 +45,14 @@
 
   subroutine cmi_allocate_addressing(iregion_code)
 
-  use meshfem_par, only: myrank,ibool, &
+  use constants, only: CUSTOM_REAL,NUMCORNERS_SHARED,myrank
+
+  use meshfem_par, only: ibool, &
     NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
     NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
-    NSPEC2D_BOTTOM,NSPEC2D_TOP,NSPEC_REGIONS,NGLOB_REGIONS, &
-    NGLOB1D_RADIAL,NUMCORNERS_SHARED
+    NSPEC2D_BOTTOM,NSPEC2D_TOP, &
+    NSPEC_REGIONS,NGLOB_REGIONS, &
+    NGLOB1D_RADIAL
 
   use MPI_interfaces_par
 
@@ -150,38 +153,81 @@
   allocate(buffer_send_chunkcorn_scalar(NGLOB1D_RADIAL_CM), &
            buffer_recv_chunkcorn_scalar(NGLOB1D_RADIAL_CM),stat=ier)
   if (ier /= 0) stop 'Error allocating buffer buffer_send_chunkcorn_scalar,.. arrays'
+  buffer_send_chunkcorn_scalar(:) = 0.0_CUSTOM_REAL
+  buffer_recv_chunkcorn_scalar(:) = 0.0_CUSTOM_REAL
 
   allocate(buffer_send_chunkcorn_vector(NDIM,NGLOB1D_RADIAL_CM + NGLOB1D_RADIAL_IC), &
            buffer_recv_chunkcorn_vector(NDIM,NGLOB1D_RADIAL_CM + NGLOB1D_RADIAL_IC),stat=ier)
   if (ier /= 0) stop 'Error allocating buffer buffer_send_chunkcorn_vector,.. arrays'
+  buffer_send_chunkcorn_vector(:,:) = 0.0_CUSTOM_REAL
+  buffer_recv_chunkcorn_vector(:,:) = 0.0_CUSTOM_REAL
 
   select case (iregion_code)
   case (IREGION_CRUST_MANTLE)
     ! crust mantle
-    allocate(iboolcorner_crust_mantle(NGLOB1D_RADIAL_CM,NUMCORNERS_SHARED))
+    allocate(iboolcorner_crust_mantle(NGLOB1D_RADIAL_CM,NUMCORNERS_SHARED),stat=ier)
+    if (ier /= 0) stop 'Error allocating iboolcorner_crust_mantle array'
+    iboolcorner_crust_mantle(:,:) = 0
+
     allocate(iboolleft_xi_crust_mantle(NGLOB2DMAX_XMIN_XMAX_CM), &
-             iboolright_xi_crust_mantle(NGLOB2DMAX_XMIN_XMAX_CM))
+             iboolright_xi_crust_mantle(NGLOB2DMAX_XMIN_XMAX_CM),stat=ier)
+    if (ier /= 0) stop 'Error allocating iboolcorner_crust_mantle array'
+    iboolleft_xi_crust_mantle(:) = 0
+    iboolright_xi_crust_mantle(:) = 0
+
     allocate(iboolleft_eta_crust_mantle(NGLOB2DMAX_YMIN_YMAX_CM), &
-             iboolright_eta_crust_mantle(NGLOB2DMAX_YMIN_YMAX_CM))
-    allocate(iboolfaces_crust_mantle(NGLOB2DMAX_XY,NUMFACES_SHARED))
+             iboolright_eta_crust_mantle(NGLOB2DMAX_YMIN_YMAX_CM),stat=ier)
+    if (ier /= 0) stop 'Error allocating iboolcorner_crust_mantle array'
+    iboolleft_eta_crust_mantle(:) = 0
+    iboolright_eta_crust_mantle(:) = 0
+
+    allocate(iboolfaces_crust_mantle(NGLOB2DMAX_XY,NUMFACES_SHARED),stat=ier)
+    if (ier /= 0) stop 'Error allocating iboolcorner_crust_mantle array'
+    iboolfaces_crust_mantle(:,:) = 0
 
   case (IREGION_OUTER_CORE)
     ! outer core
-    allocate(iboolcorner_outer_core(NGLOB1D_RADIAL_OC,NUMCORNERS_SHARED))
+    allocate(iboolcorner_outer_core(NGLOB1D_RADIAL_OC,NUMCORNERS_SHARED),stat=ier)
+    if (ier /= 0) stop 'Error allocating iboolcorner_crust_mantle array'
+    iboolcorner_outer_core(:,:) = 0
+
     allocate(iboolleft_xi_outer_core(NGLOB2DMAX_XMIN_XMAX_OC), &
-             iboolright_xi_outer_core(NGLOB2DMAX_XMIN_XMAX_OC))
+             iboolright_xi_outer_core(NGLOB2DMAX_XMIN_XMAX_OC),stat=ier)
+    if (ier /= 0) stop 'Error allocating iboolcorner_crust_mantle array'
+    iboolleft_xi_outer_core(:) = 0
+    iboolright_xi_outer_core(:) = 0
+
     allocate(iboolleft_eta_outer_core(NGLOB2DMAX_YMIN_YMAX_OC), &
-             iboolright_eta_outer_core(NGLOB2DMAX_YMIN_YMAX_OC))
-    allocate(iboolfaces_outer_core(NGLOB2DMAX_XY,NUMFACES_SHARED))
+             iboolright_eta_outer_core(NGLOB2DMAX_YMIN_YMAX_OC),stat=ier)
+    if (ier /= 0) stop 'Error allocating iboolcorner_crust_mantle array'
+    iboolleft_eta_outer_core(:) = 0
+    iboolright_eta_outer_core(:) = 0
+
+    allocate(iboolfaces_outer_core(NGLOB2DMAX_XY,NUMFACES_SHARED),stat=ier)
+    if (ier /= 0) stop 'Error allocating iboolcorner_crust_mantle array'
+    iboolfaces_outer_core(:,:) = 0
 
   case (IREGION_INNER_CORE)
     ! inner core
-    allocate(iboolcorner_inner_core(NGLOB1D_RADIAL_IC,NUMCORNERS_SHARED))
+    allocate(iboolcorner_inner_core(NGLOB1D_RADIAL_IC,NUMCORNERS_SHARED),stat=ier)
+    if (ier /= 0) stop 'Error allocating iboolcorner_crust_mantle array'
+    iboolcorner_inner_core(:,:) = 0
+
     allocate(iboolleft_xi_inner_core(NGLOB2DMAX_XMIN_XMAX_IC), &
-             iboolright_xi_inner_core(NGLOB2DMAX_XMIN_XMAX_IC))
+             iboolright_xi_inner_core(NGLOB2DMAX_XMIN_XMAX_IC),stat=ier)
+    if (ier /= 0) stop 'Error allocating iboolcorner_crust_mantle array'
+    iboolleft_xi_inner_core(:) = 0
+    iboolright_xi_inner_core(:) = 0
+
     allocate(iboolleft_eta_inner_core(NGLOB2DMAX_YMIN_YMAX_IC), &
-             iboolright_eta_inner_core(NGLOB2DMAX_YMIN_YMAX_IC))
-    allocate(iboolfaces_inner_core(NGLOB2DMAX_XY,NUMFACES_SHARED))
+             iboolright_eta_inner_core(NGLOB2DMAX_YMIN_YMAX_IC),stat=ier)
+    if (ier /= 0) stop 'Error allocating iboolcorner_crust_mantle array'
+    iboolleft_eta_inner_core(:) = 0
+    iboolright_eta_inner_core(:) = 0
+
+    allocate(iboolfaces_inner_core(NGLOB2DMAX_XY,NUMFACES_SHARED),stat=ier)
+    if (ier /= 0) stop 'Error allocating iboolcorner_crust_mantle array'
+    iboolfaces_inner_core(:,:) = 0
 
   end select
 
@@ -343,14 +389,14 @@
         call flush_IMAIN()
       endif
       call cmi_read_buffer_data(IREGION_INNER_CORE, &
-                              NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE), &
-                              NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE), &
-                              NGLOB1D_RADIAL(IREGION_INNER_CORE), &
-                              iboolleft_xi_inner_core,iboolright_xi_inner_core, &
-                              iboolleft_eta_inner_core,iboolright_eta_inner_core, &
-                              npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
-                              iboolfaces_inner_core,npoin2D_faces_inner_core, &
-                              iboolcorner_inner_core)
+                               NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE), &
+                               NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE), &
+                               NGLOB1D_RADIAL(IREGION_INNER_CORE), &
+                               iboolleft_xi_inner_core,iboolright_xi_inner_core, &
+                               iboolleft_eta_inner_core,iboolright_eta_inner_core, &
+                               npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+                               iboolfaces_inner_core,npoin2D_faces_inner_core, &
+                               iboolcorner_inner_core)
 
       ! central cube buffers
       if (INCLUDE_CENTRAL_CUBE) then
@@ -364,12 +410,11 @@
 
         ! allocates boundary indexing arrays for central cube
         allocate(ibelm_xmin_inner_core(NSPEC2DMAX_XMIN_XMAX_IC), &
-                ibelm_xmax_inner_core(NSPEC2DMAX_XMIN_XMAX_IC), &
-                ibelm_ymin_inner_core(NSPEC2DMAX_YMIN_YMAX_IC), &
-                ibelm_ymax_inner_core(NSPEC2DMAX_YMIN_YMAX_IC), &
-                ibelm_top_inner_core(NSPEC2D_TOP_IC), &
-                ibelm_bottom_inner_core(NSPEC2D_BOTTOM_IC), &
-                stat=ier)
+                 ibelm_xmax_inner_core(NSPEC2DMAX_XMIN_XMAX_IC), &
+                 ibelm_ymin_inner_core(NSPEC2DMAX_YMIN_YMAX_IC), &
+                 ibelm_ymax_inner_core(NSPEC2DMAX_YMIN_YMAX_IC), &
+                 ibelm_top_inner_core(NSPEC2D_TOP_IC), &
+                 ibelm_bottom_inner_core(NSPEC2D_BOTTOM_IC),stat=ier)
         if (ier /= 0 ) call exit_MPI(myrank,'Error allocating central cube index arrays')
 
         ! gets coupling arrays for inner core
@@ -387,8 +432,8 @@
 
         ! compute number of messages to expect in cube as well as their size
         call comp_central_cube_buffer_size(iproc_xi,iproc_eta,ichunk, &
-                    NPROC_XI,NPROC_ETA,NSPEC2D_BOTTOM(IREGION_INNER_CORE), &
-                    nb_msgs_theor_in_cube,npoin2D_cube_from_slices)
+                                           NPROC_XI,NPROC_ETA,NSPEC2D_BOTTOM(IREGION_INNER_CORE), &
+                                           nb_msgs_theor_in_cube,npoin2D_cube_from_slices)
 
         ! this value is used for dynamic memory allocation, therefore make sure it is never zero
         if (nb_msgs_theor_in_cube > 0) then
@@ -396,6 +441,12 @@
         else
           non_zero_nb_msgs_theor_in_cube = 1
         endif
+        if (myrank == 0) then
+          write(IMAIN,*) '  number of messages in cube : ',nb_msgs_theor_in_cube
+          write(IMAIN,*) '  number of 2D points in cube: ',npoin2D_cube_from_slices
+          call flush_IMAIN()
+        endif
+        call synchronize_all()
 
         ! allocate buffers for cube and slices
         allocate(sender_from_slices_to_cube(non_zero_nb_msgs_theor_in_cube), &
@@ -404,6 +455,11 @@
                  buffer_slices2(npoin2D_cube_from_slices,NDIM), &
                  ibool_central_cube(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices),stat=ier)
         if (ier /= 0 ) call exit_MPI(myrank,'Error allocating cube buffers')
+        sender_from_slices_to_cube(:) = -1
+        ibool_central_cube(:,:) = -1
+        buffer_slices(:,:) = 0.d0
+        buffer_slices2(:,:) = 0.d0
+        buffer_all_cube_from_slices(:,:,:) = 0.d0
 
         ! handles the communications with the central cube if it was included in the mesh
         ! create buffers to assemble with the central cube
@@ -422,7 +478,12 @@
                                          receiver_cube_from_slices,sender_from_slices_to_cube,ibool_central_cube, &
                                          buffer_slices,buffer_slices2,buffer_all_cube_from_slices)
 
-        if (myrank == 0) write(IMAIN,*)
+        if (myrank == 0) then
+          write(IMAIN,*) '  creating central cube done'
+          write(IMAIN,*)
+          call flush_IMAIN()
+        endif
+        call synchronize_all()
 
         ! frees memory
         deallocate(ibelm_xmin_inner_core,ibelm_xmax_inner_core)
@@ -459,10 +520,10 @@
       if (INCLUDE_CENTRAL_CUBE) then
         ! updates flags for elements on slice boundaries
         call fix_non_blocking_central_cube(is_on_a_slice_edge, &
-             ibool,NSPEC_INNER_CORE,NGLOB_INNER_CORE,nb_msgs_theor_in_cube,ibelm_bottom_inner_core, &
-             idoubling,npoin2D_cube_from_slices, &
-             ibool_central_cube,NSPEC2D_BOTTOM(IREGION_INNER_CORE), &
-             ichunk,NPROC_XI)
+                                           ibool,NSPEC_INNER_CORE,NGLOB_INNER_CORE,nb_msgs_theor_in_cube,ibelm_bottom_inner_core, &
+                                           idoubling,npoin2D_cube_from_slices, &
+                                           ibool_central_cube,NSPEC2D_BOTTOM(IREGION_INNER_CORE), &
+                                           ichunk,NPROC_XI)
       endif
 
       ! debug: saves element flags

@@ -31,7 +31,6 @@
   program xcreate_header_file
 
   use shared_parameters
-  use constants
 
   implicit none
 

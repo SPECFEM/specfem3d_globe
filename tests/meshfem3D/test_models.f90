@@ -1,5 +1,6 @@
 program test_models
 
+  use constants, only: DEGREES_TO_RADIANS,MAX_STRING_LEN,myrank
   use meshfem_par
   use manager_adios
 

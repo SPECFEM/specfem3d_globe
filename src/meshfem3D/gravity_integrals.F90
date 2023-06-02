@@ -35,7 +35,11 @@
 
 ! initializes integrals
 
-  use constants
+  use constants, only: myrank,IMAIN,ZERO,CUSTOM_REAL,SIZE_DOUBLE, &
+    GRAVITY_INTEGRALS,REUSE_EXISTING_OBSERVATION_SURF, &
+    ONLY_COMPUTE_CENTER_OF_MASS,COMPUTE_CRUST_CONTRIB_ONLY,SHIFT_TO_THIS_CENTER_OF_MASS, &
+    NX_OBSERVATION,NY_OBSERVATION, &
+    x_shift,y_shift,z_shift
 
   use meshfem_par, only: g_x,g_y,g_z,G_xx,G_yy,G_zz,G_xy,G_xz,G_yz
 
@@ -518,6 +522,7 @@
 
   subroutine finalize_gravity_integrals()
 
+  use constants, only: SI_UNITS_TO_EOTVOS,IXR,IYR,ICHUNKR,ONLY_COMPUTE_CENTER_OF_MASS
   use meshfem_par
   use meshfem_models_par
 

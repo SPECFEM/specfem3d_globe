@@ -374,6 +374,14 @@ typedef double realw;
 //#define CUDA_SHARED_ASYNC
 #endif
 
+#ifdef GPU_DEVICE_Hopper
+// specifics see: https://docs.nvidia.com/cuda/hopper-tuning-guide/index.html
+// register file size 64k 32-bit registers per SM
+// shared memory size 228KB per SM (maximum shared memory, 227KB per thread block)
+// maximum registers 255 per thread
+#undef USE_LAUNCH_BOUNDS
+#endif
+
 // CUDA Graphs
 #if defined (__CUDACC_VER_MAJOR__) && (__CUDACC_VER_MAJOR__ >= 10)
 // CUDA graphs: (experimental feature) requires compilation with CUDA toolkit versions >= 10.0

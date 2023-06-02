@@ -114,22 +114,22 @@
 
   implicit none
 
-  integer :: nspec,nglob,nb_msgs_theor_in_cube,NSPEC2D_BOTTOM_INNER_CORE
-  integer :: ichunk,npoin2D_cube_from_slices,NPROC_XI
+  integer,intent(in) :: nspec,nglob,nb_msgs_theor_in_cube,NSPEC2D_BOTTOM_INNER_CORE
+  integer,intent(in) :: ichunk,npoin2D_cube_from_slices,NPROC_XI
 
-  logical, dimension(nspec) :: is_on_a_slice_edge
+  logical, dimension(nspec),intent(inout) :: is_on_a_slice_edge
 
-  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
+  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
 
-  integer, dimension(nb_msgs_theor_in_cube,npoin2D_cube_from_slices) :: ibool_central_cube
+  integer, dimension(nb_msgs_theor_in_cube,npoin2D_cube_from_slices),intent(in) :: ibool_central_cube
 
-  integer, dimension(NSPEC2D_BOTTOM_INNER_CORE) :: ibelm_bottom_inner_core
+  integer, dimension(NSPEC2D_BOTTOM_INNER_CORE),intent(in) :: ibelm_bottom_inner_core
 
-  integer, dimension(nspec) :: idoubling_inner_core
+  integer, dimension(nspec),intent(in) :: idoubling_inner_core
 
   ! local parameters
-  logical, dimension(nglob) :: mask_ibool
-  integer :: ipoin,ispec,i,j,k,imsg,ispec2D
+  logical, dimension(:),allocatable :: mask_ibool
+  integer :: ipoin,ispec,i,j,k,imsg,ispec2D,ier
 
   if (ichunk /= CHUNK_AB .and. ichunk /= CHUNK_AB_ANTIPODE) then
     do ispec2D = 1,NSPEC2D_BOTTOM_INNER_CORE
@@ -149,6 +149,8 @@
   if (ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
 
     ! clean the mask
+    allocate(mask_ibool(nglob),stat=ier)
+    if (ier /= 0) stop 'Error allocating mask_ibool array'
     mask_ibool(:) = .false.
 
     do imsg = 1,nb_msgs_theor_in_cube
@@ -181,6 +183,9 @@
       enddo
     888 continue
     enddo
+
+    ! free array
+    deallocate(mask_ibool)
 
   endif
 

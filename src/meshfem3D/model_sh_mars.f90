@@ -222,6 +222,7 @@
 
       ! parameter type
       ! converts all string characters to lowercase (to make user input case-insensitive)
+      irange = iachar('a') - iachar('A')
       do i = 1,len_trim(substring)
         if (lge(substring(i:i),'A') .and. lle(substring(i:i),'Z')) then
           substring(i:i) = achar(iachar(substring(i:i)) + irange)
