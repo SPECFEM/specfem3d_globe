@@ -209,7 +209,7 @@ after_success:
   - |
     if [ "$TESTCOV" == "1" ]; then
       gcov --version
-      echo `pwd`
+      echo
       ls -al obj/
     fi
 
