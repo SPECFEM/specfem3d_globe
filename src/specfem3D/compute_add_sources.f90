@@ -38,7 +38,7 @@
   double precision :: stf
   real(kind=CUSTOM_REAL) :: stf_used
   ! for gpu
-  double precision, dimension(NSOURCES) :: stf_pre_compute
+  !double precision, dimension(NSOURCES) :: stf_pre_compute ! obsolete
 
   double precision, external :: get_stf_viscoelastic
 
@@ -103,20 +103,19 @@
 
   else
     ! on GPU
-    ! prepares buffer with source time function values, to be copied onto GPU
-    do isource = 1,NSOURCES
-      ! sets current time for this source
-      timeval = time_t - tshift_src(isource)
-
-      ! determines source time function value
-      stf = get_stf_viscoelastic(timeval,isource,it)
-
-      ! stores current stf values
-      stf_pre_compute(isource) = stf
-    enddo
+    ! we avoid these copies as they synchronize streams and kernels by using local source time function arrays instead
+    !! prepares buffer with source time function values, to be copied onto GPU
+    !do isource = 1,NSOURCES
+    !  ! sets current time for this source
+    !  timeval = time_t - tshift_src(isource)
+    !  ! determines source time function value
+    !  stf = get_stf_viscoelastic(timeval,isource,it)
+    !  ! stores current stf values
+    !  stf_pre_compute(isource) = stf
+    !enddo
 
     ! adds sources: only implements SIMTYPE=1 and NOISE_TOM = 0
-    call compute_add_sources_gpu(Mesh_pointer,NSOURCES,stf_pre_compute)
+    call compute_add_sources_gpu(Mesh_pointer,it,istage)
   endif
 
   end subroutine compute_add_sources
@@ -360,7 +359,7 @@
   double precision :: stf
   real(kind=CUSTOM_REAL) :: stf_used
   ! for gpu
-  double precision, dimension(NSOURCES) :: stf_pre_compute
+  !double precision, dimension(NSOURCES) :: stf_pre_compute ! obsolete
 
   double precision, external :: get_stf_viscoelastic
 
@@ -462,20 +461,19 @@
 
   else
     ! on GPU
-    ! prepares buffer with source time function values, to be copied onto GPU
-    do isource = 1,NSOURCES
-      ! sets current time for this source
-      timeval = time_t - tshift_src(isource)
-
-      ! determines source time function value
-      stf = get_stf_viscoelastic(timeval,isource,it_tmp)
-
-      ! stores current stf values
-      stf_pre_compute(isource) = stf
-    enddo
+    ! we avoid these copies as they synchronize streams and kernels by using local source time function arrays instead
+    !! prepares buffer with source time function values, to be copied onto GPU
+    !do isource = 1,NSOURCES
+    !  ! sets current time for this source
+    !  timeval = time_t - tshift_src(isource)
+    !  ! determines source time function value
+    !  stf = get_stf_viscoelastic(timeval,isource,it_tmp)
+    !  ! stores current stf values
+    !  stf_pre_compute(isource) = stf
+    !enddo
 
     ! adds sources: only implements SIMTYPE=3 (and NOISE_TOM = 0)
-    call compute_add_sources_backward_gpu(Mesh_pointer,NSOURCES,stf_pre_compute)
+    call compute_add_sources_backward_gpu(Mesh_pointer,it_tmp,istage)
   endif
 
   end subroutine compute_add_sources_backward

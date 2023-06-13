@@ -81,6 +81,7 @@
 #define BLOCKSIZE_TRANSFER 256
 #endif
 
+
 #ifdef MANUALLY_UNROLLED_LOOPS
 #pragma message ("\n\nCompiling with: MANUALLY_UNROLLED_LOOPS enabled\n")
 #endif  // MANUALLY_UNROLLED_LOOPS

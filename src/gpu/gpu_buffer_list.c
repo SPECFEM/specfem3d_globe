@@ -311,10 +311,18 @@ GPU_REALW_BUFFER (d_b_B_array_rotation);
 // ------------------------------------------------------------------   //
 // sources
 // ------------------------------------------------------------------   //
-GPU_REALW_BUFFER (d_sourcearrays);
-GPU_DOUBLE_BUFFER (d_stf_pre_compute);
-GPU_INT_BUFFER (d_islice_selected_source);
+// full NSOURCES arrays not needed anymore...
+//GPU_REALW_BUFFER (d_sourcearrays);
+//GPU_DOUBLE_BUFFER (d_stf_pre_compute);
+//GPU_INT_BUFFER (d_islice_selected_source);
+// for pure adjoint simulation cases
 GPU_INT_BUFFER (d_ispec_selected_source);
+
+// local arrays
+GPU_INT_BUFFER (d_ispec_selected_source_local);
+GPU_REALW_BUFFER (d_sourcearrays_local);
+GPU_REALW_BUFFER (d_stf_local);
+GPU_REALW_BUFFER (d_b_stf_local);
 
 // ------------------------------------------------------------------   //
 // receivers

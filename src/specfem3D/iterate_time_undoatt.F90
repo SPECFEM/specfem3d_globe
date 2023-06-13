@@ -477,7 +477,7 @@
           it_of_buffer = it_of_buffer + 1
 
           if (GPU_MODE) then
-#if defined(USE_CUDA) || defined(USE_OPENCL)
+#if defined(USE_CUDA) || defined(USE_HIP) || defined(USE_OPENCL)
             if (it_of_buffer >= 2) then
               call unregister_host_array(b_displ_cm_store_buffer(:,:, it_of_buffer-1))
             endif
@@ -593,7 +593,7 @@
         ! adjoint simulations: kernels
         ! attention: for GPU_MODE and ANISOTROPIC_KL it is necessary to use resort_array (see lines 442-445)
         if (mod(it, ntstep_kl) == 0) then
-#if defined(USE_CUDA) || defined(USE_OPENCL)
+#if defined(USE_CUDA) || defined(USE_HIP) || defined(USE_OPENCL)
           if (GPU_MODE) then
             call unregister_host_array(b_displ_cm_store_buffer(:,:, it_of_buffer+1))
             if (it_of_buffer > 0) then

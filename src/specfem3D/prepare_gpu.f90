@@ -41,6 +41,10 @@
   ! local parameters
   real :: free_mb,used_mb,total_mb
   logical :: USE_3D_ATTENUATION_ARRAYS
+  ! local source arrays
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: stf_local,b_stf_local
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: sourcearrays_local
+  integer, dimension(:), allocatable :: ispec_selected_source_local
 
   ! checks if anything to do
   if (.not. GPU_MODE) return
@@ -62,12 +66,17 @@
   ! evaluates memory required
   call memory_eval_gpu()
 
+  ! creates local source arrays for gpu simulations
+  call prepare_local_gpu_source_arrays()
+
   ! prepares general fields on GPU
   call prepare_constants_device(Mesh_pointer,myrank,NGLLX, &
                                 hprime_xx,hprimewgll_xx, &
                                 wgllwgll_xy,wgllwgll_xz,wgllwgll_yz, &
-                                NSOURCES, nsources_local, sourcearrays, &
-                                islice_selected_source,ispec_selected_source, &
+                                NSOURCES, nsources_local, &
+                                sourcearrays_local, stf_local, b_stf_local, &
+                                ispec_selected_source_local, &
+                                ispec_selected_source, &
                                 nrec, nrec_local, number_receiver_global, &
                                 islice_selected_rec,ispec_selected_rec, &
                                 NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
@@ -92,7 +101,9 @@
                                 deltat, &
                                 GPU_ASYNC_COPY, &
                                 hxir_store,hetar_store,hgammar_store,nu_rec, &
-                                SAVE_SEISMOGRAMS_STRAIN,CUSTOM_REAL)
+                                SAVE_SEISMOGRAMS_STRAIN,CUSTOM_REAL, &
+                                USE_LDDRK, &
+                                NSTEP,NSTAGE_TIME_SCHEME)
   call synchronize_all()
 
   if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
@@ -416,6 +427,9 @@
     call flush_IMAIN()
   endif
 
+  ! frees temporary arrays
+  deallocate(stf_local,b_stf_local,sourcearrays_local,ispec_selected_source_local)
+
   ! synchronizes processes
   call synchronize_all()
 
@@ -445,11 +459,27 @@
 
     ! sources
     if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
+      ! full NSOURCES not needed anymore...
       ! d_sourcearrays
-      memory_size = memory_size + NGLL3 * NSOURCES * NDIM * dble(CUSTOM_REAL)
+      !memory_size = memory_size + NGLL3 * NSOURCES * NDIM * dble(CUSTOM_REAL)
+      ! d_islice_selected_source,d_ispec_selected_source
+      !memory_size = memory_size + 2.d0 * NSOURCES * dble(SIZE_INTEGER)
+      ! local sources only
+      ! d_sourcearrays_local
+      memory_size = memory_size + NDIM * NGLL3 * nsources_local * dble(CUSTOM_REAL)
+      ! d_stf_local
+      memory_size = memory_size + nsources_local * NSTEP * NSTAGE_TIME_SCHEME *  dble(CUSTOM_REAL)
+      if (SIMULATION_TYPE == 3 .and. USE_LDDRK .and. (.not. UNDO_ATTENUATION)) then
+        ! d_b_stf_local
+        memory_size = memory_size + nsources_local * NSTEP * NSTAGE_TIME_SCHEME *  dble(CUSTOM_REAL)
+      endif
+      ! d_ispec_selected_source_local
+      memory_size = memory_size + nsources_local * dble(SIZE_INTEGER)
     endif
-    ! d_islice_selected_source,d_ispec_selected_source
-    memory_size = memory_size + 2.d0 * NSOURCES * dble(SIZE_INTEGER)
+    if (SIMULATION_TYPE == 2) then
+      ! d_ispec_selected_source
+      memory_size = memory_size + NSOURCES * dble(SIZE_INTEGER)
+    endif
 
     ! receivers
     !d_number_receiver_global
@@ -658,5 +688,166 @@
     endif
 
     end subroutine memory_eval_gpu
+
+    !-------------------------------------------------------------------------------------------
+
+    subroutine prepare_local_gpu_source_arrays()
+
+    implicit none
+    ! local parameters
+    integer :: isource_local,isource,it_tmp,istage,ier
+    real(kind=CUSTOM_REAL) :: stf_used
+    double precision :: timeval,time_t
+    double precision :: stf
+    double precision, external :: get_stf_viscoelastic
+
+    ! allocates source arrays
+    if (nsources_local > 0) then
+      ! prepares source arrays for local sources
+      allocate(stf_local(nsources_local,NSTEP,NSTAGE_TIME_SCHEME), &
+               sourcearrays_local(NDIM,NGLLX,NGLLY,NGLLZ,nsources_local), &
+               ispec_selected_source_local(nsources_local), stat=ier)
+    else
+      ! dummy arrays
+      allocate(stf_local(1,1,1), &
+               sourcearrays_local(1,1,1,1,1), &
+               ispec_selected_source_local(1), stat=ier)
+    endif
+    if (ier /= 0) stop 'Error allocating local source arrays'
+
+    stf_local(:,:,:) = 0.0_CUSTOM_REAL
+    sourcearrays_local(:,:,:,:,:) = 0.0_CUSTOM_REAL
+    ispec_selected_source_local(:) = 0
+
+    ! for backward simulations w/ LDDRK
+    if (nsources_local > 0 .and. SIMULATION_TYPE == 3 .and. USE_LDDRK .and. (.not. UNDO_ATTENUATION)) then
+      allocate(b_stf_local(nsources,NSTEP,NSTAGE_TIME_SCHEME),stat=ier)
+    else
+      ! dummy
+      allocate(b_stf_local(1,1,1),stat=ier)
+    endif
+    if (ier /= 0) stop 'Error allocating local source b_stf_local arrays'
+    b_stf_local(:,:,:) = 0.0_CUSTOM_REAL
+
+    ! checks if anything to do
+    if (NOISE_TOMOGRAPHY /= 0) return
+
+    ! loops over all sources to gather local ones
+    isource_local = 0
+    do isource = 1,NSOURCES
+      if (myrank == islice_selected_source(isource)) then
+        ! counter
+        isource_local = isource_local + 1
+
+        ! checks
+        if (isource_local > nsources_local) call exit_MPI(myrank,'Error local source index exceeds nsources_local')
+
+        ! gets local source element
+        ispec_selected_source_local(isource_local) = ispec_selected_source(isource)
+        sourcearrays_local(:,:,:,:,isource_local) = sourcearrays(:,:,:,:,isource)
+
+        ! forward
+        do it_tmp = 1,NSTEP
+          ! time for simulation
+          do istage = 1, NSTAGE_TIME_SCHEME ! is equal to 1 if Newmark because only one stage then
+            ! sets current initial time
+            if (USE_LDDRK) then
+              ! LDDRK
+              ! note: the LDDRK scheme updates displacement after the stiffness computations and
+              !       after adding boundary/coupling/source terms.
+              !       thus, at each time loop step it, displ(:) is still at (n) and not (n+1) like for the Newmark scheme
+              !       when entering this routine. we therefore at an additional -DT to have the corresponding timing for the source.
+              time_t = dble(it_tmp-1-1)*DT + dble(C_LDDRK(istage))*DT - t0
+            else
+              time_t = dble(it_tmp-1)*DT - t0
+            endif
+
+            ! sets current time for this source
+            timeval = time_t - tshift_src(isource)
+
+            ! source time function value (in range [-1,1]
+            stf = get_stf_viscoelastic(timeval,isource,it_tmp)
+
+            ! distinguishes between single and double precision for reals
+            stf_used = real(stf,kind=CUSTOM_REAL)
+
+            ! stores local source time function
+            ! we use an ordering (isource,it,istage) to make it easier to loop over many local sources for a given time in the gpu kernel
+            stf_local(isource_local,it_tmp,istage) = stf_used
+          enddo ! istage
+        enddo
+
+        ! backward
+        if (SIMULATION_TYPE == 3) then
+          ! since there is a different forward and backward timing for the LDDRK scheme,
+          ! we allocate and compute the source time function again for kernel runs in `b_stf_local(:,:,:)`.
+          !
+          ! TODO in future: we might want to allocate only 1 source time function array `stf_local` and
+          !                 make sure that the indexing is producing the same stf values as needed.
+          do it_tmp = 1,NSTEP
+            do istage = 1, NSTAGE_TIME_SCHEME ! is equal to 1 if Newmark because only one stage then
+              ! note on backward/reconstructed wavefields:
+              !       time for b_displ( it ) corresponds to (NSTEP - (it-1) - 1 )*DT - t0  ...
+              !       as we start with saved wavefields b_displ( 1 ) = displ( NSTEP ) which correspond
+              !       to a time (NSTEP - 1)*DT - t0
+              !       (see sources for simulation_type 1 and seismograms)
+              !
+              !       now, at the beginning of the time loop, the numerical Newmark time scheme updates
+              !       the wavefields, that is b_displ( it=1) would correspond to time (NSTEP -1 - 1)*DT - t0.
+              !       however, we read in the backward/reconstructed wavefields at the end of the Newmark time scheme
+              !       in the first (it=1) time loop.
+              !       this leads to the timing (NSTEP-(it-1)-1)*DT-t0-tshift_src for the source time function here
+              !
+              ! sets current initial time
+              if (USE_LDDRK) then
+                ! LDDRK
+                ! note: the LDDRK scheme updates displacement after the stiffness computations and
+                !       after adding boundary/coupling/source terms.
+                !       thus, at each time loop step it, displ(:) is still at (n) and not (n+1) like for the Newmark scheme
+                !       when entering this routine. we therefore at an additional -DT to have the corresponding timing for the source.
+                if (UNDO_ATTENUATION) then
+                  ! stepping moves forward from snapshot position
+                  time_t = dble(NSTEP-it_tmp-1)*DT + dble(C_LDDRK(istage))*DT - t0
+                else
+                  ! stepping backwards
+                  time_t = dble(NSTEP-it_tmp-1)*DT - dble(C_LDDRK(istage))*DT - t0
+                endif
+              else
+                time_t = dble(NSTEP-it_tmp)*DT - t0
+              endif
+
+              ! sets current time for this source
+              timeval = time_t - tshift_src(isource)
+
+              ! determines source time function value
+              stf = get_stf_viscoelastic(timeval,isource,it_tmp)
+
+              ! distinguishes between single and double precision for reals
+              stf_used = real(stf,kind=CUSTOM_REAL)
+
+              ! stores local source time function
+              if (USE_LDDRK .and. (.not. UNDO_ATTENUATION)) then
+                ! only needed to store for LDDRK stepping backwards, as LDDRK uses non-symmetric step lengths (C_LDDRK(istage))
+                ! for all other cases, we can use the forward stf_local array with corresponding indexing.
+                ! for example, Newmark stepping:
+                !    backward time_t = dble(NSTEP-it_tmp)*DT - t0 with it_tmp 1..NSTEP
+                !    forward  time_t = dble(it_tmp-1)*DT - t0  with it_tmp 1..NSTEP
+                !    -> backward indexing:
+                !         it_tmp_backward == 1      -> it_tmp_forward = NSTEP
+                !         it_tmp_backward == 2      -> it_tmp_forward = NSTEP-1
+                !         ..
+                !         it_tmp_backward == NSTEP  -> it_tmp_forward = 1
+                !         and b_stf_local == stf_local(istage, NSTEP-(it_tmp_backward-1), isource_local)
+                b_stf_local(isource_local,it_tmp,istage) = stf_used
+              endif
+            enddo ! istage
+          enddo
+        endif   ! backward
+
+      endif
+    enddo  ! NSOURCES
+
+    end subroutine prepare_local_gpu_source_arrays
+
 
   end subroutine prepare_GPU

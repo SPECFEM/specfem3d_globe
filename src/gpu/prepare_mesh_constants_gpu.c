@@ -82,9 +82,12 @@ void FC_FUNC_ (prepare_constants_device,
                                           int *h_NGLLX,
                                           realw *h_hprime_xx, realw *h_hprimewgll_xx,
                                           realw *h_wgllwgll_xy, realw *h_wgllwgll_xz, realw *h_wgllwgll_yz,
-                                          int *NSOURCES, int *nsources_local,
-                                          realw *h_sourcearrays,
-                                          int *h_islice_selected_source, int *h_ispec_selected_source,
+                                          int *NSOURCES,
+                                          int *nsources_local,
+                                          realw *h_sourcearrays_local,
+                                          realw *h_stf_local, realw *h_b_stf_local,
+                                          int *h_ispec_selected_source_local,
+                                          int *h_ispec_selected_source,
                                           int *nrec, int *nrec_local,
                                           int *h_number_receiver_global,
                                           int *h_islice_selected_rec, int *h_ispec_selected_rec,
@@ -111,7 +114,9 @@ void FC_FUNC_ (prepare_constants_device,
                                           int *GPU_ASYNC_COPY_f,
                                           double * h_hxir_store,double * h_hetar_store,double * h_hgammar_store,double * h_nu,
                                           int *SAVE_SEISMOGRAMS_STRAIN_f,
-                                          int *CUSTOM_REAL_f) {
+                                          int *CUSTOM_REAL_f,
+                                          int *USE_LDDRK_f,
+                                          int *NSTEP_f, int *NSTAGES_f) {
 
   TRACE ("prepare_constants_device");
 
@@ -305,7 +310,7 @@ void FC_FUNC_ (prepare_constants_device,
   mp->NSPEC_INNER_CORE_STRAIN_ONLY = *NSPEC_INNER_CORE_STRAIN_ONLY;
 
   // simulation flags initialization
-  mp->use_lddrk = 0;
+  mp->use_lddrk = *USE_LDDRK_f;
   mp->save_forward = *SAVE_FORWARD_f;
   mp->absorbing_conditions = *ABSORBING_CONDITIONS_f;
   mp->oceans = *OCEANS_f;
@@ -353,16 +358,41 @@ void FC_FUNC_ (prepare_constants_device,
   }
 
   // sources
-  mp->nsources_local = *nsources_local;
+  mp->nsources_local = 0;
   if (mp->simulation_type == 1 || mp->simulation_type == 3) {
-    // not needed in case of pure adjoint simulations (SIMULATION_TYPE == 2)
-    gpuCreateCopy_todevice_realw (&mp->d_sourcearrays, h_sourcearrays, (*NSOURCES) * NDIM * NGLL3);
-
-    // allocates buffer on GPU for source time function values
-    gpuMalloc_double (&mp->d_stf_pre_compute, *NSOURCES);
+    // only add CMT source for non-noise simulations and forward/kernel simulations
+    if (mp->noise_tomography == 0) {
+      mp->nsources_local = *nsources_local;
+    }
   }
-  gpuCreateCopy_todevice_int (&mp->d_islice_selected_source, h_islice_selected_source, *NSOURCES);
-  gpuCreateCopy_todevice_int (&mp->d_ispec_selected_source, h_ispec_selected_source, *NSOURCES);
+  mp->NSTEP = *NSTEP_f;
+  mp->NSTAGES = *NSTAGES_f;
+
+  // source arrays
+  // not needed in case of pure adjoint simulations (SIMULATION_TYPE == 2)
+  // full NSOURCES arrays not needed anymore...
+  //gpuCreateCopy_todevice_realw (&mp->d_sourcearrays, h_sourcearrays, (*NSOURCES) * NDIM * NGLL3);
+  //gpuMalloc_double (&mp->d_stf_pre_compute, *NSOURCES);
+  //gpuCreateCopy_todevice_int (&mp->d_islice_selected_source, h_islice_selected_source, *NSOURCES);
+
+  // only needed for pure adjoint simulation cases
+  if (mp->simulation_type == 2){
+    gpuCreateCopy_todevice_int (&mp->d_ispec_selected_source, h_ispec_selected_source, *NSOURCES);
+  }
+
+  // local sources only...
+  mp->use_b_stf = 0;
+  if (mp->nsources_local > 0){
+    // allocates buffer on GPU for source time function values
+    gpuCreateCopy_todevice_realw (&mp->d_sourcearrays_local, h_sourcearrays_local, mp->nsources_local * NDIM * NGLL3);
+    gpuCreateCopy_todevice_realw (&mp->d_stf_local, h_stf_local, mp->nsources_local * mp->NSTEP * mp->NSTAGES);
+    gpuCreateCopy_todevice_int (&mp->d_ispec_selected_source_local, h_ispec_selected_source_local, mp->nsources_local);
+    // additional array for LDDRK and backward stepping
+    if (mp->simulation_type == 3 && mp->use_lddrk && (! mp->undo_attenuation)){
+      mp->use_b_stf = 1;
+      gpuCreateCopy_todevice_realw (&mp->d_b_stf_local, h_b_stf_local, mp->nsources_local * mp->NSTEP * mp->NSTAGES);
+    }
+  }
 
   // receiver stations
   // note that:   size (number_receiver_global) = nrec_local
@@ -1352,7 +1382,9 @@ void FC_FUNC_ (prepare_fields_noise_device,
 
   // prepares noise source array
   if (mp->noise_tomography == 1) {
-    gpuCreateCopy_todevice_realw (&mp->d_noise_sourcearray, noise_sourcearray, NDIM*NGLL3 * (*NSTEP));
+    // checks with setup NSTEP
+    if (mp->NSTEP != *NSTEP){ exit_on_error("Error invalid NSTEP setup for prepare_fields_noise_device() routine"); }
+    gpuCreateCopy_todevice_realw (&mp->d_noise_sourcearray, noise_sourcearray, NDIM * NGLL3 * mp->NSTEP);
   }
 
   // prepares noise directions
@@ -1435,8 +1467,8 @@ void FC_FUNC_ (prepare_lddrk_device,
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
   size_t size;
 
-  // sets flag
-  mp->use_lddrk = 1;
+  // checks flag
+  if (! mp->use_lddrk){ exit_on_error("Flag use_lddrk is not set properly for routine prepare_lddrk_device()"); }
 
   // note: we don't support yet reading initial wavefields for re-starting simulations with LDDRK.
   //       this would require to store and copy also the **_lddrk wavefields to the restart files which is not done yet.
@@ -2712,12 +2744,14 @@ void FC_FUNC_ (prepare_cleanup_device,
   //------------------------------------------
   // sources
   //------------------------------------------
-  if (mp->simulation_type == 1 || mp->simulation_type == 3) {
-    gpuFree (&mp->d_sourcearrays);
-    gpuFree (&mp->d_stf_pre_compute);
+  if (mp->nsources_local > 0){
+    gpuFree (&mp->d_sourcearrays_local);
+    gpuFree (&mp->d_stf_local);
+    gpuFree (&mp->d_ispec_selected_source_local);
   }
-  gpuFree (&mp->d_islice_selected_source);
-  gpuFree (&mp->d_ispec_selected_source);
+  if (mp->simulation_type == 2){
+    gpuFree (&mp->d_ispec_selected_source);
+  }
 
   //------------------------------------------
   // receivers

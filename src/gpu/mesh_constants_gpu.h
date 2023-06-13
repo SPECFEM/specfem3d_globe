@@ -942,11 +942,24 @@ typedef struct mesh_ {
   // sources
   // ------------------------------------------------------------------   //
   int nsources_local;
-  gpu_realw_mem d_sourcearrays;
-  gpu_double_mem d_stf_pre_compute;
+  int NSTEP;
+  int NSTAGES;
+  gpu_int_mem d_ispec_selected_source_local;
+  gpu_realw_mem d_sourcearrays_local;
+  gpu_realw_mem d_stf_local;
 
-  gpu_int_mem d_islice_selected_source;
-  gpu_int_mem d_ispec_selected_source;
+  // for LDDRK and non-undo-attenuation cases
+  int use_b_stf;
+  gpu_realw_mem d_b_stf_local;
+
+  // full NSOURCES arrays not needed anymore...
+  // we will move to store only local source arrays with full source time function traces
+  // to avoid memory copies before the compute_add_sources() kernel, as those memcopies synchronize streams and will slow down performance...
+  //gpu_realw_mem d_sourcearrays;
+  //gpu_double_mem d_stf_pre_compute;
+  //gpu_int_mem d_islice_selected_source;
+
+  gpu_int_mem d_ispec_selected_source; // needed only for pure adjoint simulation cases
 
   // ------------------------------------------------------------------   //
   // receivers
