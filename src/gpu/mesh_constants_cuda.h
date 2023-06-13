@@ -38,6 +38,8 @@
 // leads up to ~10% performance increase in OpenCL and ~1% in Cuda
 #define MANUALLY_UNROLLED_LOOPS   // uncomment to use loops
 
+/*----------------------------------------------------------------------------------------------- */
+
 // definitions
 typedef cudaEvent_t gpu_event;
 typedef cudaStream_t gpu_stream;
