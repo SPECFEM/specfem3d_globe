@@ -125,24 +125,24 @@
       ! loop on all the points in that 2-D element, including edges
       ix = 1
       do iy = 1,NGLLY
-          do iz = 1,NGLLZ
-            ! select point, if not already selected
-            if (.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
-              mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
-              npoin2D_xi = npoin2D_xi + 1
+        do iz = 1,NGLLZ
+          ! select point, if not already selected
+          if (.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
+            mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
+            npoin2D_xi = npoin2D_xi + 1
 
-              ! fills buffer arrays
-              iboolleft_xi(npoin2D_xi) = ibool(ix,iy,iz,ispec)
+            ! fills buffer arrays
+            iboolleft_xi(npoin2D_xi) = ibool(ix,iy,iz,ispec)
 
-              npoin2D_xi_all(1) = npoin2D_xi_all(1) + 1
+            npoin2D_xi_all(1) = npoin2D_xi_all(1) + 1
 
-              ! debug file output
-              if (DEBUG) then
-                write(IOUT,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
-                              ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
-              endif
+            ! debug file output
+            if (DEBUG) then
+              write(IOUT,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
+                            ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
             endif
-          enddo
+          endif
+        enddo
       enddo
     endif
   enddo

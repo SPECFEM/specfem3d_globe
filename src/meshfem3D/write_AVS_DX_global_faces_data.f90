@@ -90,364 +90,366 @@
   ! processor identification
   character(len=MAX_STRING_LEN) :: prname
 
-! writing points
+  ! writing points
   open(unit=IOUT,file=prname(1:len_trim(prname))//'AVS_DXpointsfaces.txt',status='unknown')
 
-! erase the logical mask used to mark points already found
+  ! erase the logical mask used to mark points already found
   mask_ibool(:) = .false.
 
   nspecface = 0
 
-! mark global AVS or DX points
+  ! mark global AVS or DX points
   do ispec = 1,nspec
-! only if on face
-  if (iMPIcut_xi(1,ispec) .or. iMPIcut_xi(2,ispec) .or. &
-              iMPIcut_eta(1,ispec) .or. iMPIcut_eta(2,ispec)) then
-    iglob1=ibool(1,1,1,ispec)
-    iglob2=ibool(NGLLX,1,1,ispec)
-    iglob3=ibool(NGLLX,NGLLY,1,ispec)
-    iglob4=ibool(1,NGLLY,1,ispec)
-    iglob5=ibool(1,1,NGLLZ,ispec)
-    iglob6=ibool(NGLLX,1,NGLLZ,ispec)
-    iglob7=ibool(NGLLX,NGLLY,NGLLZ,ispec)
-    iglob8=ibool(1,NGLLY,NGLLZ,ispec)
+    ! only if on face
+    if (iMPIcut_xi(1,ispec) .or. iMPIcut_xi(2,ispec) .or. &
+                iMPIcut_eta(1,ispec) .or. iMPIcut_eta(2,ispec)) then
+      iglob1=ibool(1,1,1,ispec)
+      iglob2=ibool(NGLLX,1,1,ispec)
+      iglob3=ibool(NGLLX,NGLLY,1,ispec)
+      iglob4=ibool(1,NGLLY,1,ispec)
+      iglob5=ibool(1,1,NGLLZ,ispec)
+      iglob6=ibool(NGLLX,1,NGLLZ,ispec)
+      iglob7=ibool(NGLLX,NGLLY,NGLLZ,ispec)
+      iglob8=ibool(1,NGLLY,NGLLZ,ispec)
 
-! face xi = xi_min
-  if (iMPIcut_xi(1,ispec)) then
-    nspecface = nspecface + 1
-    mask_ibool(iglob1) = .true.
-    mask_ibool(iglob4) = .true.
-    mask_ibool(iglob8) = .true.
-    mask_ibool(iglob5) = .true.
-  endif
+      ! face xi = xi_min
+      if (iMPIcut_xi(1,ispec)) then
+        nspecface = nspecface + 1
+        mask_ibool(iglob1) = .true.
+        mask_ibool(iglob4) = .true.
+        mask_ibool(iglob8) = .true.
+        mask_ibool(iglob5) = .true.
+      endif
 
-! face xi = xi_max
-  if (iMPIcut_xi(2,ispec)) then
-    nspecface = nspecface + 1
-    mask_ibool(iglob2) = .true.
-    mask_ibool(iglob3) = .true.
-    mask_ibool(iglob7) = .true.
-    mask_ibool(iglob6) = .true.
-  endif
+      ! face xi = xi_max
+      if (iMPIcut_xi(2,ispec)) then
+        nspecface = nspecface + 1
+        mask_ibool(iglob2) = .true.
+        mask_ibool(iglob3) = .true.
+        mask_ibool(iglob7) = .true.
+        mask_ibool(iglob6) = .true.
+      endif
 
-! face eta = eta_min
-  if (iMPIcut_eta(1,ispec)) then
-    nspecface = nspecface + 1
-    mask_ibool(iglob1) = .true.
-    mask_ibool(iglob2) = .true.
-    mask_ibool(iglob6) = .true.
-    mask_ibool(iglob5) = .true.
-  endif
+      ! face eta = eta_min
+      if (iMPIcut_eta(1,ispec)) then
+        nspecface = nspecface + 1
+        mask_ibool(iglob1) = .true.
+        mask_ibool(iglob2) = .true.
+        mask_ibool(iglob6) = .true.
+        mask_ibool(iglob5) = .true.
+      endif
 
-! face eta = eta_max
-  if (iMPIcut_eta(2,ispec)) then
-    nspecface = nspecface + 1
-    mask_ibool(iglob4) = .true.
-    mask_ibool(iglob3) = .true.
-    mask_ibool(iglob7) = .true.
-    mask_ibool(iglob8) = .true.
-  endif
+      ! face eta = eta_max
+      if (iMPIcut_eta(2,ispec)) then
+        nspecface = nspecface + 1
+        mask_ibool(iglob4) = .true.
+        mask_ibool(iglob3) = .true.
+        mask_ibool(iglob7) = .true.
+        mask_ibool(iglob8) = .true.
+      endif
 
-  endif
+    endif
   enddo
 
-! count global number of AVS or DX points
+  ! count global number of AVS or DX points
   npoin = count(mask_ibool(:))
 
-! number of points in AVS or DX file
+  ! number of points in AVS or DX file
   write(IOUT,*) npoin
 
-! erase the logical mask used to mark points already found
+  ! erase the logical mask used to mark points already found
   mask_ibool(:) = .false.
 
-! output global AVS or DX points
+  ! output global AVS or DX points
   numpoin = 0
   do ispec = 1,nspec
-! only if on face
-  if (iMPIcut_xi(1,ispec) .or. iMPIcut_xi(2,ispec) .or. &
-              iMPIcut_eta(1,ispec) .or. iMPIcut_eta(2,ispec)) then
-    iglob1=ibool(1,1,1,ispec)
-    iglob2=ibool(NGLLX,1,1,ispec)
-    iglob3=ibool(NGLLX,NGLLY,1,ispec)
-    iglob4=ibool(1,NGLLY,1,ispec)
-    iglob5=ibool(1,1,NGLLZ,ispec)
-    iglob6=ibool(NGLLX,1,NGLLZ,ispec)
-    iglob7=ibool(NGLLX,NGLLY,NGLLZ,ispec)
-    iglob8=ibool(1,NGLLY,NGLLZ,ispec)
+    ! only if on face
+    if (iMPIcut_xi(1,ispec) .or. iMPIcut_xi(2,ispec) .or. &
+                iMPIcut_eta(1,ispec) .or. iMPIcut_eta(2,ispec)) then
+      iglob1=ibool(1,1,1,ispec)
+      iglob2=ibool(NGLLX,1,1,ispec)
+      iglob3=ibool(NGLLX,NGLLY,1,ispec)
+      iglob4=ibool(1,NGLLY,1,ispec)
+      iglob5=ibool(1,1,NGLLZ,ispec)
+      iglob6=ibool(NGLLX,1,NGLLZ,ispec)
+      iglob7=ibool(NGLLX,NGLLY,NGLLZ,ispec)
+      iglob8=ibool(1,NGLLY,NGLLZ,ispec)
 
-! face xi = xi_min
-  if (iMPIcut_xi(1,ispec)) then
-    if (.not. mask_ibool(iglob1)) then
-      numpoin = numpoin + 1
-      num_ibool_AVS_DX(iglob1) = numpoin
-      write(IOUT,*) numpoin,sngl(xstore(1,1,1,ispec)), &
-                    sngl(ystore(1,1,1,ispec)),sngl(zstore(1,1,1,ispec))
-    endif
-    if (.not. mask_ibool(iglob4)) then
-      numpoin = numpoin + 1
-      num_ibool_AVS_DX(iglob4) = numpoin
-      write(IOUT,*) numpoin,sngl(xstore(1,NGLLY,1,ispec)), &
-                    sngl(ystore(1,NGLLY,1,ispec)),sngl(zstore(1,NGLLY,1,ispec))
-    endif
-    if (.not. mask_ibool(iglob8)) then
-      numpoin = numpoin + 1
-      num_ibool_AVS_DX(iglob8) = numpoin
-      write(IOUT,*) numpoin,sngl(xstore(1,NGLLY,NGLLZ,ispec)), &
-                    sngl(ystore(1,NGLLY,NGLLZ,ispec)),sngl(zstore(1,NGLLY,NGLLZ,ispec))
-    endif
-    if (.not. mask_ibool(iglob5)) then
-      numpoin = numpoin + 1
-      num_ibool_AVS_DX(iglob5) = numpoin
-      write(IOUT,*) numpoin,sngl(xstore(1,1,NGLLZ,ispec)), &
-                    sngl(ystore(1,1,NGLLZ,ispec)),sngl(zstore(1,1,NGLLZ,ispec))
-    endif
-    mask_ibool(iglob1) = .true.
-    mask_ibool(iglob4) = .true.
-    mask_ibool(iglob8) = .true.
-    mask_ibool(iglob5) = .true.
-  endif
+      ! face xi = xi_min
+      if (iMPIcut_xi(1,ispec)) then
+        if (.not. mask_ibool(iglob1)) then
+          numpoin = numpoin + 1
+          num_ibool_AVS_DX(iglob1) = numpoin
+          write(IOUT,*) numpoin,sngl(xstore(1,1,1,ispec)), &
+                        sngl(ystore(1,1,1,ispec)),sngl(zstore(1,1,1,ispec))
+        endif
+        if (.not. mask_ibool(iglob4)) then
+          numpoin = numpoin + 1
+          num_ibool_AVS_DX(iglob4) = numpoin
+          write(IOUT,*) numpoin,sngl(xstore(1,NGLLY,1,ispec)), &
+                        sngl(ystore(1,NGLLY,1,ispec)),sngl(zstore(1,NGLLY,1,ispec))
+        endif
+        if (.not. mask_ibool(iglob8)) then
+          numpoin = numpoin + 1
+          num_ibool_AVS_DX(iglob8) = numpoin
+          write(IOUT,*) numpoin,sngl(xstore(1,NGLLY,NGLLZ,ispec)), &
+                        sngl(ystore(1,NGLLY,NGLLZ,ispec)),sngl(zstore(1,NGLLY,NGLLZ,ispec))
+        endif
+        if (.not. mask_ibool(iglob5)) then
+          numpoin = numpoin + 1
+          num_ibool_AVS_DX(iglob5) = numpoin
+          write(IOUT,*) numpoin,sngl(xstore(1,1,NGLLZ,ispec)), &
+                        sngl(ystore(1,1,NGLLZ,ispec)),sngl(zstore(1,1,NGLLZ,ispec))
+        endif
+        mask_ibool(iglob1) = .true.
+        mask_ibool(iglob4) = .true.
+        mask_ibool(iglob8) = .true.
+        mask_ibool(iglob5) = .true.
+      endif
 
-! face xi = xi_max
-  if (iMPIcut_xi(2,ispec)) then
-    if (.not. mask_ibool(iglob2)) then
-      numpoin = numpoin + 1
-      num_ibool_AVS_DX(iglob2) = numpoin
-      write(IOUT,*) numpoin,sngl(xstore(NGLLX,1,1,ispec)), &
-                    sngl(ystore(NGLLX,1,1,ispec)),sngl(zstore(NGLLX,1,1,ispec))
-    endif
-    if (.not. mask_ibool(iglob3)) then
-      numpoin = numpoin + 1
-      num_ibool_AVS_DX(iglob3) = numpoin
-      write(IOUT,*) numpoin,sngl(xstore(NGLLX,NGLLY,1,ispec)), &
-                    sngl(ystore(NGLLX,NGLLY,1,ispec)),sngl(zstore(NGLLX,NGLLY,1,ispec))
-    endif
-    if (.not. mask_ibool(iglob7)) then
-      numpoin = numpoin + 1
-      num_ibool_AVS_DX(iglob7) = numpoin
-      write(IOUT,*) numpoin,sngl(xstore(NGLLX,NGLLY,NGLLZ,ispec)), &
-                    sngl(ystore(NGLLX,NGLLY,NGLLZ,ispec)),sngl(zstore(NGLLX,NGLLY,NGLLZ,ispec))
-    endif
-    if (.not. mask_ibool(iglob6)) then
-      numpoin = numpoin + 1
-      num_ibool_AVS_DX(iglob6) = numpoin
-      write(IOUT,*) numpoin,sngl(xstore(NGLLX,1,NGLLZ,ispec)), &
-                    sngl(ystore(NGLLX,1,NGLLZ,ispec)),sngl(zstore(NGLLX,1,NGLLZ,ispec))
-    endif
-    mask_ibool(iglob2) = .true.
-    mask_ibool(iglob3) = .true.
-    mask_ibool(iglob7) = .true.
-    mask_ibool(iglob6) = .true.
-  endif
+      ! face xi = xi_max
+      if (iMPIcut_xi(2,ispec)) then
+        if (.not. mask_ibool(iglob2)) then
+          numpoin = numpoin + 1
+          num_ibool_AVS_DX(iglob2) = numpoin
+          write(IOUT,*) numpoin,sngl(xstore(NGLLX,1,1,ispec)), &
+                        sngl(ystore(NGLLX,1,1,ispec)),sngl(zstore(NGLLX,1,1,ispec))
+        endif
+        if (.not. mask_ibool(iglob3)) then
+          numpoin = numpoin + 1
+          num_ibool_AVS_DX(iglob3) = numpoin
+          write(IOUT,*) numpoin,sngl(xstore(NGLLX,NGLLY,1,ispec)), &
+                        sngl(ystore(NGLLX,NGLLY,1,ispec)),sngl(zstore(NGLLX,NGLLY,1,ispec))
+        endif
+        if (.not. mask_ibool(iglob7)) then
+          numpoin = numpoin + 1
+          num_ibool_AVS_DX(iglob7) = numpoin
+          write(IOUT,*) numpoin,sngl(xstore(NGLLX,NGLLY,NGLLZ,ispec)), &
+                        sngl(ystore(NGLLX,NGLLY,NGLLZ,ispec)),sngl(zstore(NGLLX,NGLLY,NGLLZ,ispec))
+        endif
+        if (.not. mask_ibool(iglob6)) then
+          numpoin = numpoin + 1
+          num_ibool_AVS_DX(iglob6) = numpoin
+          write(IOUT,*) numpoin,sngl(xstore(NGLLX,1,NGLLZ,ispec)), &
+                        sngl(ystore(NGLLX,1,NGLLZ,ispec)),sngl(zstore(NGLLX,1,NGLLZ,ispec))
+        endif
+        mask_ibool(iglob2) = .true.
+        mask_ibool(iglob3) = .true.
+        mask_ibool(iglob7) = .true.
+        mask_ibool(iglob6) = .true.
+      endif
 
-! face eta = eta_min
-  if (iMPIcut_eta(1,ispec)) then
-    if (.not. mask_ibool(iglob1)) then
-      numpoin = numpoin + 1
-      num_ibool_AVS_DX(iglob1) = numpoin
-      write(IOUT,*) numpoin,sngl(xstore(1,1,1,ispec)), &
-                    sngl(ystore(1,1,1,ispec)),sngl(zstore(1,1,1,ispec))
-    endif
-    if (.not. mask_ibool(iglob2)) then
-      numpoin = numpoin + 1
-      num_ibool_AVS_DX(iglob2) = numpoin
-      write(IOUT,*) numpoin,sngl(xstore(NGLLX,1,1,ispec)), &
-                    sngl(ystore(NGLLX,1,1,ispec)),sngl(zstore(NGLLX,1,1,ispec))
-    endif
-    if (.not. mask_ibool(iglob6)) then
-      numpoin = numpoin + 1
-      num_ibool_AVS_DX(iglob6) = numpoin
-      write(IOUT,*) numpoin,sngl(xstore(NGLLX,1,NGLLZ,ispec)), &
-                    sngl(ystore(NGLLX,1,NGLLZ,ispec)),sngl(zstore(NGLLX,1,NGLLZ,ispec))
-    endif
-    if (.not. mask_ibool(iglob5)) then
-      numpoin = numpoin + 1
-      num_ibool_AVS_DX(iglob5) = numpoin
-      write(IOUT,*) numpoin,sngl(xstore(1,1,NGLLZ,ispec)), &
-                    sngl(ystore(1,1,NGLLZ,ispec)),sngl(zstore(1,1,NGLLZ,ispec))
-    endif
-    mask_ibool(iglob1) = .true.
-    mask_ibool(iglob2) = .true.
-    mask_ibool(iglob6) = .true.
-    mask_ibool(iglob5) = .true.
-  endif
+      ! face eta = eta_min
+      if (iMPIcut_eta(1,ispec)) then
+        if (.not. mask_ibool(iglob1)) then
+          numpoin = numpoin + 1
+          num_ibool_AVS_DX(iglob1) = numpoin
+          write(IOUT,*) numpoin,sngl(xstore(1,1,1,ispec)), &
+                        sngl(ystore(1,1,1,ispec)),sngl(zstore(1,1,1,ispec))
+        endif
+        if (.not. mask_ibool(iglob2)) then
+          numpoin = numpoin + 1
+          num_ibool_AVS_DX(iglob2) = numpoin
+          write(IOUT,*) numpoin,sngl(xstore(NGLLX,1,1,ispec)), &
+                        sngl(ystore(NGLLX,1,1,ispec)),sngl(zstore(NGLLX,1,1,ispec))
+        endif
+        if (.not. mask_ibool(iglob6)) then
+          numpoin = numpoin + 1
+          num_ibool_AVS_DX(iglob6) = numpoin
+          write(IOUT,*) numpoin,sngl(xstore(NGLLX,1,NGLLZ,ispec)), &
+                        sngl(ystore(NGLLX,1,NGLLZ,ispec)),sngl(zstore(NGLLX,1,NGLLZ,ispec))
+        endif
+        if (.not. mask_ibool(iglob5)) then
+          numpoin = numpoin + 1
+          num_ibool_AVS_DX(iglob5) = numpoin
+          write(IOUT,*) numpoin,sngl(xstore(1,1,NGLLZ,ispec)), &
+                        sngl(ystore(1,1,NGLLZ,ispec)),sngl(zstore(1,1,NGLLZ,ispec))
+        endif
+        mask_ibool(iglob1) = .true.
+        mask_ibool(iglob2) = .true.
+        mask_ibool(iglob6) = .true.
+        mask_ibool(iglob5) = .true.
+      endif
 
-! face eta = eta_max
-  if (iMPIcut_eta(2,ispec)) then
-    if (.not. mask_ibool(iglob4)) then
-      numpoin = numpoin + 1
-      num_ibool_AVS_DX(iglob4) = numpoin
-      write(IOUT,*) numpoin,sngl(xstore(1,NGLLY,1,ispec)), &
-                    sngl(ystore(1,NGLLY,1,ispec)),sngl(zstore(1,NGLLY,1,ispec))
-    endif
-    if (.not. mask_ibool(iglob3)) then
-      numpoin = numpoin + 1
-      num_ibool_AVS_DX(iglob3) = numpoin
-      write(IOUT,*) numpoin,sngl(xstore(NGLLX,NGLLY,1,ispec)), &
-                    sngl(ystore(NGLLX,NGLLY,1,ispec)),sngl(zstore(NGLLX,NGLLY,1,ispec))
-    endif
-    if (.not. mask_ibool(iglob7)) then
-      numpoin = numpoin + 1
-      num_ibool_AVS_DX(iglob7) = numpoin
-      write(IOUT,*) numpoin,sngl(xstore(NGLLX,NGLLY,NGLLZ,ispec)), &
-                    sngl(ystore(NGLLX,NGLLY,NGLLZ,ispec)),sngl(zstore(NGLLX,NGLLY,NGLLZ,ispec))
-    endif
-    if (.not. mask_ibool(iglob8)) then
-      numpoin = numpoin + 1
-      num_ibool_AVS_DX(iglob8) = numpoin
-      write(IOUT,*) numpoin,sngl(xstore(1,NGLLY,NGLLZ,ispec)), &
-                    sngl(ystore(1,NGLLY,NGLLZ,ispec)),sngl(zstore(1,NGLLY,NGLLZ,ispec))
-    endif
-    mask_ibool(iglob4) = .true.
-    mask_ibool(iglob3) = .true.
-    mask_ibool(iglob7) = .true.
-    mask_ibool(iglob8) = .true.
-  endif
+      ! face eta = eta_max
+      if (iMPIcut_eta(2,ispec)) then
+        if (.not. mask_ibool(iglob4)) then
+          numpoin = numpoin + 1
+          num_ibool_AVS_DX(iglob4) = numpoin
+          write(IOUT,*) numpoin,sngl(xstore(1,NGLLY,1,ispec)), &
+                        sngl(ystore(1,NGLLY,1,ispec)),sngl(zstore(1,NGLLY,1,ispec))
+        endif
+        if (.not. mask_ibool(iglob3)) then
+          numpoin = numpoin + 1
+          num_ibool_AVS_DX(iglob3) = numpoin
+          write(IOUT,*) numpoin,sngl(xstore(NGLLX,NGLLY,1,ispec)), &
+                        sngl(ystore(NGLLX,NGLLY,1,ispec)),sngl(zstore(NGLLX,NGLLY,1,ispec))
+        endif
+        if (.not. mask_ibool(iglob7)) then
+          numpoin = numpoin + 1
+          num_ibool_AVS_DX(iglob7) = numpoin
+          write(IOUT,*) numpoin,sngl(xstore(NGLLX,NGLLY,NGLLZ,ispec)), &
+                        sngl(ystore(NGLLX,NGLLY,NGLLZ,ispec)),sngl(zstore(NGLLX,NGLLY,NGLLZ,ispec))
+        endif
+        if (.not. mask_ibool(iglob8)) then
+          numpoin = numpoin + 1
+          num_ibool_AVS_DX(iglob8) = numpoin
+          write(IOUT,*) numpoin,sngl(xstore(1,NGLLY,NGLLZ,ispec)), &
+                        sngl(ystore(1,NGLLY,NGLLZ,ispec)),sngl(zstore(1,NGLLY,NGLLZ,ispec))
+        endif
+        mask_ibool(iglob4) = .true.
+        mask_ibool(iglob3) = .true.
+        mask_ibool(iglob7) = .true.
+        mask_ibool(iglob8) = .true.
+      endif
 
-  endif
+    endif
   enddo
 
-! check that number of global points output is okay
+  ! check that number of global points output is okay
   if (numpoin /= npoin) &
     call exit_MPI(myrank,'incorrect number of global points in AVS or DX file creation')
 
   close(IOUT)
 
-! output global AVS or DX elements
+  ! output global AVS or DX elements
 
-! writing elements
+  ! writing elements
   open(unit=IOUT,file=prname(1:len_trim(prname))//'AVS_DXelementsfaces.txt',status='unknown')
- if (MODEL_3D_MANTLE_PERTUBATIONS) &
+  if (MODEL_3D_MANTLE_PERTUBATIONS) &
     open(unit=11,file=prname(1:len_trim(prname))//'AVS_DXelementsfaces_dvp_dvs.txt',status='unknown')
 
-! number of elements in AVS or DX file
+  ! number of elements in AVS or DX file
   write(IOUT,*) nspecface
 
   ispecface = 0
   do ispec = 1,nspec
-! only if on face
-  if (iMPIcut_xi(1,ispec) .or. iMPIcut_xi(2,ispec) .or. &
-              iMPIcut_eta(1,ispec) .or. iMPIcut_eta(2,ispec)) then
-    iglob1=ibool(1,1,1,ispec)
-    iglob2=ibool(NGLLX,1,1,ispec)
-    iglob3=ibool(NGLLX,NGLLY,1,ispec)
-    iglob4=ibool(1,NGLLY,1,ispec)
-    iglob5=ibool(1,1,NGLLZ,ispec)
-    iglob6=ibool(NGLLX,1,NGLLZ,ispec)
-    iglob7=ibool(NGLLX,NGLLY,NGLLZ,ispec)
-    iglob8=ibool(1,NGLLY,NGLLZ,ispec)
+    ! only if on face
+    if (iMPIcut_xi(1,ispec) .or. iMPIcut_xi(2,ispec) .or. &
+                iMPIcut_eta(1,ispec) .or. iMPIcut_eta(2,ispec)) then
+      iglob1=ibool(1,1,1,ispec)
+      iglob2=ibool(NGLLX,1,1,ispec)
+      iglob3=ibool(NGLLX,NGLLY,1,ispec)
+      iglob4=ibool(1,NGLLY,1,ispec)
+      iglob5=ibool(1,1,NGLLZ,ispec)
+      iglob6=ibool(NGLLX,1,NGLLZ,ispec)
+      iglob7=ibool(NGLLX,NGLLY,NGLLZ,ispec)
+      iglob8=ibool(1,NGLLY,NGLLZ,ispec)
 
-! include lateral variations if needed
+      ! include lateral variations if needed
 
-   if (MODEL_3D_MANTLE_PERTUBATIONS) then
- !   pick a point within the element and get its radius
-     r=dsqrt(xstore(2,2,2,ispec)**2+ystore(2,2,2,ispec)**2+zstore(2,2,2,ispec)**2)
+      if (MODEL_3D_MANTLE_PERTUBATIONS) then
+        ! pick a point within the element and get its radius
+        r=dsqrt(xstore(2,2,2,ispec)**2+ystore(2,2,2,ispec)**2+zstore(2,2,2,ispec)**2)
 
-     if (r > RCMB/R_PLANET .and. r < R_UNIT_SPHERE) then
- !     average over the element
-       dvp = 0.0
-       dvs = 0.0
-       np  = 0
-       do k=2,NGLLZ-1
-         do j=2,NGLLY-1
-           do i=2,NGLLX-1
-             np=np+1
-             x=xstore(i,j,k,ispec)
-             y=ystore(i,j,k,ispec)
-             z=zstore(i,j,k,ispec)
-             r=dsqrt(x*x+y*y+z*z)
-             ! take out ellipticity
-             if (ELLIPTICITY) then
-               call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi_dummy)
-               cost=dcos(theta)
-! this is the Legendre polynomial of degree two, P2(cos(theta)), see the discussion above eq (14.4) in Dahlen and Tromp (1998)
-               p20=0.5d0*(3.0d0*cost*cost-1.0d0)
-! get ellipticity using spline evaluation
-               call spline_evaluation(rspl,ellipicity_spline,ellipicity_spline2,nspl,r,ell)
-! this is eq (14.4) in Dahlen and Tromp (1998)
-               factor=ONE-(TWO/3.0d0)*ell*p20
-               r=r/factor
-             endif
+        if (r > RCMB/R_PLANET .and. r < R_UNIT_SPHERE) then
+          ! average over the element
+          dvp = 0.0
+          dvs = 0.0
+          np  = 0
+          do k=2,NGLLZ-1
+            do j=2,NGLLY-1
+              do i=2,NGLLX-1
+                np=np+1
+                x=xstore(i,j,k,ispec)
+                y=ystore(i,j,k,ispec)
+                z=zstore(i,j,k,ispec)
+                r=dsqrt(x*x+y*y+z*z)
+                ! take out ellipticity
+                if (ELLIPTICITY) then
+                  call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi_dummy)
+                  cost=dcos(theta)
+                  ! this is the Legendre polynomial of degree two, P2(cos(theta)),
+                  ! see the discussion above eq (14.4) in Dahlen and Tromp (1998)
+                  p20=0.5d0*(3.0d0*cost*cost-1.0d0)
+                  ! get ellipticity using spline evaluation
+                  call spline_evaluation(rspl,ellipicity_spline,ellipicity_spline2,nspl,r,ell)
+                  ! this is eq (14.4) in Dahlen and Tromp (1998)
+                  factor=ONE-(TWO/3.0d0)*ell*p20
+                  r=r/factor
+                endif
 
+                ! gets reference model values: rho,vpv,vph,vsv,vsh and eta_aniso
+                call meshfem3D_models_get1D_val(iregion_code,idoubling(ispec), &
+                                                r,rho,vpv,vph,vsv,vsh,eta_aniso, &
+                                                Qkappa,Qmu,RICB,RCMB, &
+                                                RTOPDDOUBLEPRIME,R80,R120,R220,R400,R670,R771, &
+                                                RMOHO,RMIDDLE_CRUST)
 
-             ! gets reference model values: rho,vpv,vph,vsv,vsh and eta_aniso
-             call meshfem3D_models_get1D_val(iregion_code,idoubling(ispec), &
-                                             r,rho,vpv,vph,vsv,vsh,eta_aniso, &
-                                             Qkappa,Qmu,RICB,RCMB, &
-                                             RTOPDDOUBLEPRIME,R80,R120,R220,R400,R670,R771, &
-                                             RMOHO,RMIDDLE_CRUST)
+                ! calculates isotropic values
+                vp = sqrt(((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
+                       + (8.d0 - 8.d0*eta_aniso)*vsv*vsv)/15.d0)
+                vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
+                       + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0)
 
-             ! calculates isotropic values
-             vp = sqrt(((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
-                     + (8.d0 - 8.d0*eta_aniso)*vsv*vsv)/15.d0)
-             vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
-                     + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0)
+                if (abs(rhostore(i,j,k,ispec)) < 1.e-20) then
+                  print *,' attention: rhostore close to zero',rhostore(i,j,k,ispec),r,i,j,k,ispec
+                  dvp = 0.0
+                  dvs = 0.0
+                else if (abs(sngl(vp)) < 1.e-20) then
+                  print *,' attention: vp close to zero',sngl(vp),r,i,j,k,ispec
+                  dvp = 0.0
+                else if (abs(sngl(vs)) < 1.e-20) then
+                  print *,' attention: vs close to zero',sngl(vs),r,i,j,k,ispec
+                  dvs = 0.0
+                else
+                  dvp = dvp &
+                      + (sqrt((kappavstore(i,j,k,ispec)+4.*muvstore(i,j,k,ispec)/3.)/rhostore(i,j,k,ispec)) - sngl(vp))/sngl(vp)
+                  dvs = dvs &
+                      + (sqrt(muvstore(i,j,k,ispec)/rhostore(i,j,k,ispec)) - sngl(vs))/sngl(vs)
+                endif
 
-             if (abs(rhostore(i,j,k,ispec)) < 1.e-20) then
-               print *,' attention: rhostore close to zero',rhostore(i,j,k,ispec),r,i,j,k,ispec
-               dvp = 0.0
-               dvs = 0.0
-             else if (abs(sngl(vp)) < 1.e-20) then
-               print *,' attention: vp close to zero',sngl(vp),r,i,j,k,ispec
-               dvp = 0.0
-             else if (abs(sngl(vs)) < 1.e-20) then
-               print *,' attention: vs close to zero',sngl(vs),r,i,j,k,ispec
-               dvs = 0.0
-             else
-               dvp = dvp + (sqrt((kappavstore(i,j,k,ispec)+4.*muvstore(i,j,k,ispec)/3.)/rhostore(i,j,k,ispec)) - sngl(vp))/sngl(vp)
-               dvs = dvs + (sqrt(muvstore(i,j,k,ispec)/rhostore(i,j,k,ispec)) - sngl(vs))/sngl(vs)
-             endif
+              enddo
+            enddo
+          enddo
+          dvp = dvp / np
+          dvs = dvs / np
+        else
+          dvp = 0.0
+          dvs = 0.0
+        endif
+      endif
 
-           enddo
-         enddo
-       enddo
-       dvp = dvp / np
-       dvs = dvs / np
-    else
-       dvp = 0.0
-       dvs = 0.0
+      ! face xi = xi_min
+      if (iMPIcut_xi(1,ispec)) then
+        ispecface = ispecface + 1
+        write(IOUT,*) ispecface,idoubling(ispec),num_ibool_AVS_DX(iglob1), &
+                      num_ibool_AVS_DX(iglob4),num_ibool_AVS_DX(iglob8), &
+                      num_ibool_AVS_DX(iglob5)
+        if (MODEL_3D_MANTLE_PERTUBATIONS) write(11,*) ispecface,dvp,dvs
+      endif
+
+      ! face xi = xi_max
+      if (iMPIcut_xi(2,ispec)) then
+        ispecface = ispecface + 1
+        write(IOUT,*) ispecface,idoubling(ispec),num_ibool_AVS_DX(iglob2), &
+                      num_ibool_AVS_DX(iglob3),num_ibool_AVS_DX(iglob7), &
+                      num_ibool_AVS_DX(iglob6)
+        if (MODEL_3D_MANTLE_PERTUBATIONS) write(11,*) ispecface,dvp,dvs
+      endif
+
+      ! face eta = eta_min
+      if (iMPIcut_eta(1,ispec)) then
+        ispecface = ispecface + 1
+        write(IOUT,*) ispecface,idoubling(ispec),num_ibool_AVS_DX(iglob1), &
+                      num_ibool_AVS_DX(iglob2),num_ibool_AVS_DX(iglob6), &
+                      num_ibool_AVS_DX(iglob5)
+        if (MODEL_3D_MANTLE_PERTUBATIONS) write(11,*) ispecface,dvp,dvs
+      endif
+
+      ! face eta = eta_max
+      if (iMPIcut_eta(2,ispec)) then
+        ispecface = ispecface + 1
+        write(IOUT,*) ispecface,idoubling(ispec),num_ibool_AVS_DX(iglob4), &
+                      num_ibool_AVS_DX(iglob3),num_ibool_AVS_DX(iglob7), &
+                      num_ibool_AVS_DX(iglob8)
+        if (MODEL_3D_MANTLE_PERTUBATIONS) write(11,*) ispecface,dvp,dvs
+      endif
+
     endif
- endif
-
-! face xi = xi_min
-  if (iMPIcut_xi(1,ispec)) then
-    ispecface = ispecface + 1
-    write(IOUT,*) ispecface,idoubling(ispec),num_ibool_AVS_DX(iglob1), &
-                  num_ibool_AVS_DX(iglob4),num_ibool_AVS_DX(iglob8), &
-                  num_ibool_AVS_DX(iglob5)
-    if (MODEL_3D_MANTLE_PERTUBATIONS) write(11,*) ispecface,dvp,dvs
-  endif
-
-! face xi = xi_max
-  if (iMPIcut_xi(2,ispec)) then
-    ispecface = ispecface + 1
-    write(IOUT,*) ispecface,idoubling(ispec),num_ibool_AVS_DX(iglob2), &
-                  num_ibool_AVS_DX(iglob3),num_ibool_AVS_DX(iglob7), &
-                  num_ibool_AVS_DX(iglob6)
-    if (MODEL_3D_MANTLE_PERTUBATIONS) write(11,*) ispecface,dvp,dvs
-  endif
-
-! face eta = eta_min
-  if (iMPIcut_eta(1,ispec)) then
-    ispecface = ispecface + 1
-    write(IOUT,*) ispecface,idoubling(ispec),num_ibool_AVS_DX(iglob1), &
-                  num_ibool_AVS_DX(iglob2),num_ibool_AVS_DX(iglob6), &
-                  num_ibool_AVS_DX(iglob5)
-    if (MODEL_3D_MANTLE_PERTUBATIONS) write(11,*) ispecface,dvp,dvs
-  endif
-
-! face eta = eta_max
-  if (iMPIcut_eta(2,ispec)) then
-    ispecface = ispecface + 1
-    write(IOUT,*) ispecface,idoubling(ispec),num_ibool_AVS_DX(iglob4), &
-                  num_ibool_AVS_DX(iglob3),num_ibool_AVS_DX(iglob7), &
-                  num_ibool_AVS_DX(iglob8)
-    if (MODEL_3D_MANTLE_PERTUBATIONS) write(11,*) ispecface,dvp,dvs
-  endif
-
-  endif
   enddo
 
-! check that number of surface elements output is okay
+  ! check that number of surface elements output is okay
   if (ispecface /= nspecface) &
     call exit_MPI(myrank,'incorrect number of surface elements in AVS or DX file creation')
 

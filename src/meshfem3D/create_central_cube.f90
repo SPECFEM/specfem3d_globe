@@ -41,7 +41,7 @@
     CHUNK_AC,CHUNK_AC_ANTIPODE, &
     CHUNK_BC,CHUNK_BC_ANTIPODE
 
-  use shared_parameters, only: ratio_divide_central_cube,R_PLANET
+  use shared_parameters, only: ratio_divide_central_cube,R_PLANET,NPROCTOT
 
   use meshfem_par, only: &
     xstore,ystore,zstore
@@ -58,7 +58,7 @@
 
   integer, intent(inout) :: ispec_count
 
-! correct number of spectral elements in each block depending on chunk type
+  ! correct number of spectral elements in each block depending on chunk type
   integer, intent(in) :: nspec
   integer, intent(in) :: NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
   integer, intent(in) :: iproc_xi,iproc_eta
@@ -66,10 +66,10 @@
 
   double precision, intent(in) :: R_CENTRAL_CUBE
 
-! MPI cut-planes parameters along xi and along eta
+  ! MPI cut-planes parameters along xi and along eta
   logical, dimension(2,nspec), intent(inout) :: iMPIcut_xi,iMPIcut_eta
 
-! code for the four regions of the mesh
+  ! code for the four regions of the mesh
   integer, intent(in) :: iregion_code
 
   integer, intent(inout) :: idoubling(nspec)
@@ -164,20 +164,20 @@
         ! new get_flag_boundaries
         ! xmin & xmax
         if (ix == 0) then
-          iMPIcut_xi(1,ispec_count) = .true.
+          if (NPROCTOT > 1) iMPIcut_xi(1,ispec_count) = .true.
           if (iproc_xi == 0) iboun(1,ispec_count)= .true.
         endif
         if (ix == 2*nx_central_cube-2) then
-          iMPIcut_xi(2,ispec_count) = .true.
+          if (NPROCTOT > 1) iMPIcut_xi(2,ispec_count) = .true.
           if (iproc_xi == NPROC_XI-1) iboun(2,ispec_count)= .true.
         endif
         ! ymin & ymax
         if (iy == 0) then
-          iMPIcut_eta(1,ispec_count) = .true.
+          if (NPROCTOT > 1) iMPIcut_eta(1,ispec_count) = .true.
           if (iproc_eta == 0) iboun(3,ispec_count)= .true.
         endif
         if (iy == 2*ny_central_cube-2) then
-          iMPIcut_eta(2,ispec_count) = .true.
+          if (NPROCTOT > 1) iMPIcut_eta(2,ispec_count) = .true.
           if (iproc_eta == NPROC_ETA-1) iboun(4,ispec_count)= .true.
         endif
 

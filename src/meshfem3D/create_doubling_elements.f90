@@ -51,7 +51,7 @@
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE, &
     SAVE_BOUNDARY_MESH
 
-  use shared_parameters, only: ner_mesh_layers,ratio_sampling_array,doubling_index,r_bottom,r_top
+  use shared_parameters, only: ner_mesh_layers,ratio_sampling_array,doubling_index,r_bottom,r_top,NPROCTOT
 
   use meshfem_models_par, only: HONOR_1D_SPHERICAL_MOHO
 
@@ -308,20 +308,20 @@
         ! new get_flag_boundaries
         ! xmin & xmax
         if (ix_elem == 1) then
-            iMPIcut_xi(1,ispec_loc) = iboun_sb(ispec_superbrick,1)
+            if (NPROCTOT > 1) iMPIcut_xi(1,ispec_loc) = iboun_sb(ispec_superbrick,1)
             if (iproc_xi == 0) iboun(1,ispec_loc)= iboun_sb(ispec_superbrick,1)
         endif
         if (ix_elem == (NEX_PER_PROC_XI-step_mult*ratio_sampling_array(ilayer)+1)) then
-            iMPIcut_xi(2,ispec_loc) = iboun_sb(ispec_superbrick,2)
+            if (NPROCTOT > 1) iMPIcut_xi(2,ispec_loc) = iboun_sb(ispec_superbrick,2)
             if (iproc_xi == NPROC_XI-1) iboun(2,ispec_loc)= iboun_sb(ispec_superbrick,2)
         endif
         !! ymin & ymax
         if (iy_elem == 1) then
-            iMPIcut_eta(1,ispec_loc) = iboun_sb(ispec_superbrick,3)
+            if (NPROCTOT > 1) iMPIcut_eta(1,ispec_loc) = iboun_sb(ispec_superbrick,3)
             if (iproc_eta == 0) iboun(3,ispec_loc)= iboun_sb(ispec_superbrick,3)
         endif
         if (iy_elem == (NEX_PER_PROC_ETA-step_mult*ratio_sampling_array(ilayer)+1)) then
-            iMPIcut_eta(2,ispec_loc) = iboun_sb(ispec_superbrick,4)
+            if (NPROCTOT > 1) iMPIcut_eta(2,ispec_loc) = iboun_sb(ispec_superbrick,4)
             if (iproc_eta == NPROC_ETA-1) iboun(4,ispec_loc)= iboun_sb(ispec_superbrick,4)
         endif
         ! zmax only
