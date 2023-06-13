@@ -1154,7 +1154,7 @@ void start_timing_gpu(gpu_event* start,gpu_event* stop) {
 #endif
 }
 
-void stop_timing_gpu(gpu_event* start,gpu_event* stop, char* info_str) {
+void stop_timing_gpu(gpu_event* start,gpu_event* stop, const char* info_str) {
   realw time = 0;
   // stops events
 #ifdef USE_OPENCL
@@ -1177,7 +1177,37 @@ void stop_timing_gpu(gpu_event* start,gpu_event* stop, char* info_str) {
   hipEventDestroy( *stop );
 #endif
   // user output
-  printf("%s: Execution Time = %f ms\n",info_str,time);
+  printf("GPU_timing %s: Execution Time = %f ms\n",info_str,time);
+}
+
+void stop_timing_gpu(gpu_event* start,gpu_event* stop, const char* info_str, realw* t){
+  realw time = 0;
+  // stops events
+#ifdef USE_OPENCL
+// not fully implemented yet...
+  clReleaseEvent(*start);
+  clReleaseEvent(*stop);
+#endif
+#ifdef USE_CUDA
+  // stops events
+  cudaEventRecord( *stop, 0);
+  cudaEventSynchronize( *stop );
+  cudaEventElapsedTime( &time, *start, *stop );
+  cudaEventDestroy( *start );
+  cudaEventDestroy( *stop );
+#endif
+#ifdef USE_HIP
+  // stops events
+  hipEventRecord( *stop, 0);
+  hipEventSynchronize( *stop );
+  hipEventElapsedTime( &time, *start, *stop );
+  hipEventDestroy( *start );
+  hipEventDestroy( *stop );
+#endif
+  // user output
+  printf("GPU_timing %s: Execution Time = %f ms\n",info_str,time);
+  // returns time
+  *t = time;
 }
 
 /* ----------------------------------------------------------------------------------------------- */
