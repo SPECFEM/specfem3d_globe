@@ -968,6 +968,39 @@
     endif
   endif
 
+  ! make sure NSTEP is a multiple of NTSTEP_BETWEEN_OUTPUT_SAMPLE
+  ! if not, increase it a little bit, to the next multiple
+  if (mod(NSTEP,NTSTEP_BETWEEN_OUTPUT_SAMPLE) /= 0) then
+    if (NOISE_TOMOGRAPHY /= 0) then
+      if (myrank == 0) then
+        print *,'Noise simulation: Invalid number of NSTEP          = ',NSTEP
+        print *,'Must be a multiple of NTSTEP_BETWEEN_OUTPUT_SAMPLE = ',NTSTEP_BETWEEN_OUTPUT_SAMPLE
+      endif
+      stop 'Error: NSTEP must be a multiple of NTSTEP_BETWEEN_OUTPUT_SAMPLE'
+    else
+      NSTEP = (NSTEP/NTSTEP_BETWEEN_OUTPUT_SAMPLE + 1)*NTSTEP_BETWEEN_OUTPUT_SAMPLE
+      ! user output
+      if (myrank == 0) then
+        print *
+        print *,'NSTEP is not a multiple of NTSTEP_BETWEEN_OUTPUT_SAMPLE'
+        print *,'thus increasing it automatically to the next multiple, which is ',NSTEP
+        print *
+      endif
+    endif
+  endif
+
+  ! output seismograms at least once at the end of the simulation
+  NTSTEP_BETWEEN_OUTPUT_SEISMOS = min(NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS)
+
+  ! make sure NSTEP_BETWEEN_OUTPUT_SEISMOS is a multiple of NTSTEP_BETWEEN_OUTPUT_SAMPLE
+  if (mod(NTSTEP_BETWEEN_OUTPUT_SEISMOS,NTSTEP_BETWEEN_OUTPUT_SAMPLE) /= 0) then
+    if (myrank == 0) then
+      print *,'Invalid number of NTSTEP_BETWEEN_OUTPUT_SEISMOS    = ',NTSTEP_BETWEEN_OUTPUT_SEISMOS
+      print *,'Must be a multiple of NTSTEP_BETWEEN_OUTPUT_SAMPLE = ',NTSTEP_BETWEEN_OUTPUT_SAMPLE
+    endif
+    stop 'Error: NTSTEP_BETWEEN_OUTPUT_SEISMOS must be a multiple of NTSTEP_BETWEEN_OUTPUT_SAMPLE'
+  endif
+
   ! time loop increments end
   it_end = NSTEP
 
