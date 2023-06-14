@@ -352,15 +352,14 @@ module specfem_par
   !-----------------------------------------------------------------
 
   ! seismograms
-  integer :: it_begin,it_end
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: seismograms
+
+  integer :: nlength_seismogram
   integer :: seismo_offset, seismo_current
+  logical :: do_save_seismograms
 
   ! strain seismograms
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: seismograms_eps
-
-  ! adjoint seismograms
-  integer :: it_adj_written
 
   ! for SAC headers for seismograms
   integer :: yr_SAC,jda_SAC,mo_SAC,da_SAC,ho_SAC,mi_SAC
@@ -469,6 +468,7 @@ module specfem_par
   !-----------------------------------------------------------------
 
   integer :: it
+  integer :: it_begin,it_end
 
   ! non-dimensionalization
   double precision :: scale_t,scale_t_inv,scale_displ,scale_displ_inv,scale_veloc

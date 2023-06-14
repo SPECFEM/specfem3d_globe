@@ -37,28 +37,26 @@
 
   use specfem_par, only: &
     DT,t0,NSTEP, &
-    seismo_offset,seismo_current, NTSTEP_BETWEEN_OUTPUT_SAMPLE, &
-    NTSTEP_BETWEEN_OUTPUT_SEISMOS,OUTPUT_FILES,SIMULATION_TYPE, &
+    seismo_offset,seismo_current, &
+    NTSTEP_BETWEEN_OUTPUT_SAMPLE, &
+    nlength_seismogram, &
+    OUTPUT_FILES,SIMULATION_TYPE, &
     SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE, &
     myrank
 
   implicit none
 
-  real(kind=CUSTOM_REAL), dimension(5,NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: seismogram_tmp
+  real(kind=CUSTOM_REAL), dimension(5,nlength_seismogram) :: seismogram_tmp
 
   integer :: iorientation
   character(len=MAX_STRING_LEN) :: sisname,sisname_big_file
 
   ! local parameters
-  integer :: it
+  integer :: it_current
   integer :: ier,isample
-  integer :: seismo_current_used
-  double precision :: value
-  double precision :: timeval
+  real(kind=CUSTOM_REAL) :: value,time_t
+  double precision :: time_t_db
   character(len=MAX_STRING_LEN) :: sisname_2
-
-  ! actual seismogram length
-  seismo_current_used = ceiling(real(seismo_current) / NTSTEP_BETWEEN_OUTPUT_SAMPLE)
 
   ! add .ascii extension to seismogram file name for ASCII seismograms
   write(sisname_2,"('/',a,'.ascii')") trim(sisname)
@@ -85,28 +83,31 @@
   endif
 
   ! subtract half duration of the source to make sure travel time is correct
-  do isample = 1,seismo_current_used
+  do isample = 1,seismo_current
 
     ! seismogram value
-    value = dble(seismogram_tmp(iorientation,isample))
+    value = seismogram_tmp(iorientation,isample)
 
     ! current time increment
-    it = seismo_offset + isample
+    it_current = seismo_offset + isample
 
     ! current time
     if (SIMULATION_TYPE == 3) then
-      timeval = dble((NSTEP-it)*NTSTEP_BETWEEN_OUTPUT_SAMPLE)*DT - t0
+      time_t_db = dble(NSTEP - it_current * NTSTEP_BETWEEN_OUTPUT_SAMPLE) * DT - t0
     else
-      timeval = dble((it-1)*NTSTEP_BETWEEN_OUTPUT_SAMPLE)*DT - t0
+      time_t_db = dble( (it_current-1) * NTSTEP_BETWEEN_OUTPUT_SAMPLE) * DT - t0
     endif
+
+    ! converts time to CUSTOM_REAL for output
+    time_t = real(time_t_db,kind=CUSTOM_REAL)
 
     ! writes out to file
     if (SAVE_ALL_SEISMOS_IN_ONE_FILE .and. USE_BINARY_FOR_LARGE_FILE) then
       ! distinguish between single and double precision for reals
-      write(IOUT) real(timeval, kind=CUSTOM_REAL), real(value, kind=CUSTOM_REAL)
+      write(IOUT) time_t,value
     else
       ! distinguish between single and double precision for reals
-      write(IOUT,*) real(timeval, kind=CUSTOM_REAL), ' ', real(value, kind=CUSTOM_REAL)
+      write(IOUT,*) time_t,value
     endif
   enddo
 

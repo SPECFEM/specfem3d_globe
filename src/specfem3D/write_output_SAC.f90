@@ -39,8 +39,9 @@
           DT,t0, &
           seismo_offset,seismo_current,it_end, &
           OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-          NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-          MODEL,OUTPUT_FILES,NTSTEP_BETWEEN_OUTPUT_SAMPLE
+          MODEL,OUTPUT_FILES, &
+          NTSTEP_BETWEEN_OUTPUT_SAMPLE, &
+          nlength_seismogram
 
   use specfem_par, only: &
           yr => yr_SAC,jda => jda_SAC,ho => ho_SAC,mi => mi_SAC,sec => sec_SAC, &
@@ -51,7 +52,7 @@
 
   implicit none
 
-  real(kind=CUSTOM_REAL), dimension(5,NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: seismogram_tmp
+  real(kind=CUSTOM_REAL), dimension(5,nlength_seismogram) :: seismogram_tmp
 
   integer :: irec
   integer :: iorientation
@@ -63,7 +64,7 @@
 
   ! local parameters
   double precision :: btime
-  real, dimension(NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: tmp
+  real, dimension(nlength_seismogram) :: tmp
   integer :: time_sec,isample
   character(len=MAX_STRING_LEN) :: sisname_2
 
@@ -116,7 +117,6 @@
   logical, external :: is_leap_year
 
   integer :: imodulo_5
-  integer :: seismo_current_used
 
   !----------------------------------------------------------------
 
@@ -218,9 +218,6 @@
   !USER1  = sngl(elon)
   !USER2  = sngl(depth)
   !USER3  = sngl(cmt_hdur) !half duration from CMT if not changed to t0 = 0.d0 (point source)
-
-  ! actual seismogram length
-  seismo_current_used = ceiling(real(seismo_current) / NTSTEP_BETWEEN_OUTPUT_SAMPLE)
 
   ! to avoid compiler warnings
   value1 = elat
@@ -451,10 +448,10 @@
 
     ! now write data - with five values per row:
     ! ---------------
-    imodulo_5 = mod(seismo_current_used,5)
+    imodulo_5 = mod(seismo_current,5)
     if (imodulo_5 == 0) then
       ! five values per row
-      do isample = 1+5,seismo_current_used+1,5
+      do isample = 1+5,seismo_current+1,5
         value1 = dble(seismogram_tmp(iorientation,isample-5))
         value2 = dble(seismogram_tmp(iorientation,isample-4))
         value3 = dble(seismogram_tmp(iorientation,isample-3))
@@ -464,7 +461,7 @@
       enddo
     else
       ! five values per row as long as possible
-      do isample = 1+5,(seismo_current_used-imodulo_5)+1,5
+      do isample = 1+5,(seismo_current-imodulo_5)+1,5
         value1 = dble(seismogram_tmp(iorientation,isample-5))
         value2 = dble(seismogram_tmp(iorientation,isample-4))
         value3 = dble(seismogram_tmp(iorientation,isample-3))
@@ -473,10 +470,10 @@
         write(IOUT_SAC,510) sngl(value1),sngl(value2),sngl(value3),sngl(value4),sngl(value5)
       enddo
       ! loads remaining values
-      if (imodulo_5 >= 1) value1 = dble(seismogram_tmp(iorientation,seismo_current_used-imodulo_5+1))
-      if (imodulo_5 >= 2) value2 = dble(seismogram_tmp(iorientation,seismo_current_used-imodulo_5+2))
-      if (imodulo_5 >= 3) value3 = dble(seismogram_tmp(iorientation,seismo_current_used-imodulo_5+3))
-      if (imodulo_5 >= 4) value4 = dble(seismogram_tmp(iorientation,seismo_current_used-imodulo_5+4))
+      if (imodulo_5 >= 1) value1 = dble(seismogram_tmp(iorientation,seismo_current-imodulo_5+1))
+      if (imodulo_5 >= 2) value2 = dble(seismogram_tmp(iorientation,seismo_current-imodulo_5+2))
+      if (imodulo_5 >= 3) value3 = dble(seismogram_tmp(iorientation,seismo_current-imodulo_5+3))
+      if (imodulo_5 >= 4) value4 = dble(seismogram_tmp(iorientation,seismo_current-imodulo_5+4))
       ! writes out last data line
       select case(imodulo_5)
       case (1)
@@ -626,7 +623,6 @@
       call write_integer(LCALDA)        !(109)
       call write_integer(int(UNUSED))   !(110)
 
-
       ! write character header variables 111:302
       call write_character(KSTNM,8)         !(111:118)
       call write_character(KEVNM,16)         !(119:134)
@@ -655,10 +651,10 @@
     endif
 
     ! now write SAC time series to file
-    ! BS BS write whole time series at once (hope to increase I/O performance
-    ! compared to using a loop on it)
-    tmp(1:seismo_current_used) = real(seismogram_tmp(iorientation,1:seismo_current_used))
-    call write_n_real(tmp(1:seismo_current_used),seismo_current_used)
+    ! write whole time series at once (hope to increase I/O performance compared to using a loop on it)
+    tmp(1:seismo_current) = real(seismogram_tmp(iorientation,1:seismo_current))
+
+    call write_n_real(tmp(1:seismo_current),seismo_current)
 
     call close_file()
 

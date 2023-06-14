@@ -224,14 +224,14 @@ void FC_FUNC_ (resort_array,
 //
 
 void FC_FUNC_ (compute_seismograms_gpu,
-               COMPUTE_SEISMOGRAMS_GPU) (long *Mesh_pointer_f,
+               COMPUTE_SEISMOGRAMS_GPU) (long *Mesh_pointer,
                                          realw* seismograms,
-                                         int* seismo_currentf,
-                                         int* itf,
-                                         int* it_endf,
-                                         double* scale_displf,
-                                         int* NTSTEP_BETWEEN_OUTPUT_SEISMOSf,
-                                         int* NSTEPf) {}
+                                         int* seismo_current_f,
+                                         int* it_f,
+                                         int* it_end_f,
+                                         double* scale_displ_f,
+                                         int* nlength_seismogram_f,
+                                         int* NSTEP_f) {}
 
 
 //

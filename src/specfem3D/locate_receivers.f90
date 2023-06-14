@@ -746,11 +746,10 @@
     ! close receiver file
     close(IIN)
 
-! BS BS begin
-! In case that the same station and network name appear twice (or more times) in the STATIONS
-! file, problems occur, as two (or more) seismograms are written (with mode
-! "append") to a file with same name. The philosophy here is to accept multiple
-! appearances and to just add a count to the station name in this case.
+    ! In case that the same station and network name appear twice (or more times) in the STATIONS
+    ! file, problems occur, as two (or more) seismograms are written (with mode
+    ! "append") to a file with same name. The philosophy here is to accept multiple
+    ! appearances and to just add a count to the station name in this case.
     allocate(station_duplet(nrec),stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating station_duplet array')
 
@@ -771,7 +770,6 @@
       enddo
     enddo
     deallocate(station_duplet)
-! BS BS end
 
     ! if receivers can not be buried, sets depth to zero
     if (.not. RECEIVERS_CAN_BE_BURIED ) stbur(:) = 0.d0

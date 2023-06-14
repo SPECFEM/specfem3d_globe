@@ -31,28 +31,29 @@
 
 extern EXTERN_LANG
 void FC_FUNC_ (compute_seismograms_gpu,
-               COMPUTE_SEISMOGRAMS_GPU) (long *Mesh_pointer_f,
+               COMPUTE_SEISMOGRAMS_GPU) (long *Mesh_pointer,
                                          realw* seismograms,
-                                         int* seismo_currentf,
-                                         int* itf,
-                                         int* it_endf,
-                                         double* scale_displf,
-                                         int* NTSTEP_BETWEEN_OUTPUT_SEISMOSf,
-                                         int* NSTEPf) {
+                                         int* seismo_current_f,
+                                         int* it_f,
+                                         int* it_end_f,
+                                         double* scale_displ_f,
+                                         int* nlength_seismogram_f,
+                                         int* NSTEP_f) {
   TRACE ("compute_seismograms_gpu");
 
   //get Mesh from Fortran integer wrapper
-  Mesh *mp = (Mesh *) *Mesh_pointer_f;
+  Mesh *mp = (Mesh *) *Mesh_pointer;
 
   // checks if anything to do
   if (mp->nrec_local == 0) return;
 
-  int seismo_current = *seismo_currentf - 1 ;
-  int NTSTEP_BETWEEN_OUTPUT_SEISMOS = *NTSTEP_BETWEEN_OUTPUT_SEISMOSf;
-  int NSTEP = *NSTEPf;
-  int it = *itf;
-  int it_end = *it_endf;
-  realw scale_displ = (realw)(*scale_displf);
+  int seismo_current = *seismo_current_f - 1 ;  // -1 for Fortran -> C indexing
+
+  int nlength_seismogram = *nlength_seismogram_f;
+  int NSTEP = *NSTEP_f;
+  int it = *it_f;
+  int it_end = *it_end_f;
+  realw scale_displ = (realw)(*scale_displ_f);
 
   int blocksize = NGLL3_PADDED;
   int num_blocks_x, num_blocks_y;
@@ -99,7 +100,7 @@ void FC_FUNC_ (compute_seismograms_gpu,
                                      global_work_size, local_work_size, 0, NULL, &kernel_evt));
 
     // copies buffer to CPU
-    if (GPU_ASYNC_COPY &&  ((seismo_current+1) != NTSTEP_BETWEEN_OUTPUT_SEISMOS) && (it != NSTEP) && (it != it_end) ) {
+    if (GPU_ASYNC_COPY &&  ((seismo_current+1) != nlength_seismogram) && (it != NSTEP) && (it != it_end) ) {
       // waits until kernel is finished before starting async memcpy
       clCheck (clFinish (mocl.command_queue));
 
@@ -134,7 +135,7 @@ void FC_FUNC_ (compute_seismograms_gpu,
                                                                       mp->d_number_receiver_global.cuda,
                                                                       scale_displ);
     // copies buffer to CPU
-    if (GPU_ASYNC_COPY &&  ((seismo_current+1) != NTSTEP_BETWEEN_OUTPUT_SEISMOS) && (it != NSTEP) && (it != it_end) ) {
+    if (GPU_ASYNC_COPY &&  ((seismo_current+1) != nlength_seismogram) && (it != NSTEP) && (it != it_end) ) {
       // waits until kernel is finished before starting async memcpy
       cudaStreamSynchronize(mp->compute_stream);
       // copies buffer to CPU
@@ -163,7 +164,7 @@ void FC_FUNC_ (compute_seismograms_gpu,
                                                                     mp->d_number_receiver_global.hip,
                                                                     scale_displ);
     // copies buffer to CPU
-    if (GPU_ASYNC_COPY &&  ((seismo_current+1) != NTSTEP_BETWEEN_OUTPUT_SEISMOS) && (it != NSTEP) && (it != it_end) ) {
+    if (GPU_ASYNC_COPY &&  ((seismo_current+1) != nlength_seismogram) && (it != NSTEP) && (it != it_end) ) {
       // waits until kernel is finished before starting async memcpy
       hipStreamSynchronize(mp->compute_stream);
       // copies buffer to CPU
