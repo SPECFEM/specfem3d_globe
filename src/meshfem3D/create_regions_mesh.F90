@@ -809,7 +809,6 @@
   allocate(iMPIcut_xi(2,nspec), &
            iMPIcut_eta(2,nspec),stat=ier)
   if (ier /= 0) stop 'Error in allocate 15'
-
   iMPIcut_xi(:,:) = .false.; iMPIcut_eta(:,:) = .false.
 
   ! MPI buffer indices
@@ -1267,7 +1266,8 @@
     xstore,ystore,zstore, &
     NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER, &
     NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE, &
-    NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
+    NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
+    NPROCTOT
 
   use regions_mesh_par2, only: prname,iMPIcut_xi,iMPIcut_eta
 
@@ -1290,7 +1290,7 @@
   iboolright_xi(:) = 0
   iboolright_eta(:) = 0
 
-  if (nspec > 0) then
+  if (nspec > 0 .and. NPROCTOT > 1) then
     ! arrays mask_ibool(npointot) used to save memory
     ! allocate memory for arrays
     allocate(mask_ibool(npointot),stat=ier)

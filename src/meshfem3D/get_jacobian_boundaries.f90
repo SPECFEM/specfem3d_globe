@@ -109,8 +109,8 @@
 
     if (iboun(1,ispec)) then
 
-      ispecb1=ispecb1+1
-      ibelm_xmin(ispecb1)=ispec
+      ispecb1 = ispecb1+1
+      ibelm_xmin(ispecb1) = ispec
 
       if (.not. USE_GLL) then
           !   specify the 9 nodes for the 2-D boundary element
@@ -164,8 +164,8 @@
 
     if (iboun(2,ispec)) then
 
-      ispecb2=ispecb2+1
-      ibelm_xmax(ispecb2)=ispec
+      ispecb2 = ispecb2+1
+      ibelm_xmax(ispecb2) = ispec
 
       if (.not. USE_GLL) then
           !   specify the 9 nodes for the 2-D boundary element
@@ -220,8 +220,8 @@
 
     if (iboun(3,ispec)) then
 
-      ispecb3=ispecb3+1
-      ibelm_ymin(ispecb3)=ispec
+      ispecb3 = ispecb3+1
+      ibelm_ymin(ispecb3) = ispec
 
       if (.not. USE_GLL) then
           !   specify the 9 nodes for the 2-D boundary element
@@ -276,8 +276,8 @@
 
     if (iboun(4,ispec)) then
 
-      ispecb4=ispecb4+1
-      ibelm_ymax(ispecb4)=ispec
+      ispecb4 = ispecb4+1
+      ibelm_ymax(ispecb4) = ispec
 
       if (.not. USE_GLL) then
           !   specify the 9 nodes for the 2-D boundary element
@@ -332,8 +332,8 @@
 
     if (iboun(5,ispec)) then
 
-      ispecb5=ispecb5+1
-      ibelm_bottom(ispecb5)=ispec
+      ispecb5 = ispecb5+1
+      ibelm_bottom(ispecb5) = ispec
 
       if (.not. USE_GLL) then
           xelm(1)=xstore(1,1,1,ispec)
@@ -388,8 +388,8 @@
 
     if (iboun(6,ispec)) then
 
-      ispecb6=ispecb6+1
-      ibelm_top(ispecb6)=ispec
+      ispecb6 = ispecb6+1
+      ibelm_top(ispecb6) = ispec
 
       if (.not. USE_GLL) then
           xelm(1)=xstore(1,1,NGLLZ,ispec)

@@ -383,8 +383,18 @@
   !print *,'debug: factor scale mu0,mu = ',factor_scale_mu0,factor_scale_mu,'approximated Q = A/B',a_val/b_val
 
   !--- check that the correction factor is close to one
-  if (scale_factor < 0.8d0 .or. scale_factor > 1.2d0) then
-    print *,'Error: incorrect scale factor: ', scale_factor,'scale mu',factor_scale_mu,'scale mu0',factor_scale_mu0
+  ! note: for very coarse global simulations, the reference frequency (usually 1Hz for global models)
+  !       and center frequency of the simulation can be far apart.
+  !       the scale_factor limiting range here is somewhat set arbitrarily, and enlarged to [0.5,1.5]
+  !       to allow for very coarse global simulation tests with sponge attenuation.
+  if (scale_factor < 0.5d0 .or. scale_factor > 1.5d0) then
+    print *,'Error: incorrect scale factor: ', scale_factor
+    print *,'  scale factor: ', scale_factor,' should be between 0.5 to 1.5'
+    print *,'  factor scale_mu = ',factor_scale_mu,' factor scale_mu0 = ',factor_scale_mu0
+    print *,'  Q value = ',Q_mu
+    print *,'  central period = ',T_c_source * scale_t,' frequency = ',f_c_source / scale_t
+    print *,'  model frequency = ',f_0_model / scale_t
+    print *,'Please check your reference frequency ATTENUATION_f0_REFERENCE in file constants.h'
     call exit_MPI(myrank,'incorrect correction factor in attenuation model')
   endif
 

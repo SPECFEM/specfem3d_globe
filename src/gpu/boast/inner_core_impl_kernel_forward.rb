@@ -1032,7 +1032,7 @@ module BOAST
         comment()
 
         # compilation pragma info
-        if (type == :crust_mantle and get_lang == CUDA and forward) then
+        if (type == :crust_mantle and (get_lang == CUDA or get_lang == HIP) and forward) then
           get_output.puts "#ifdef #{manually_unrolled_loops}"
           get_output.puts "#pragma message (\"\\n\\nCompiling with: #{manually_unrolled_loops} enabled\\n\")"
           get_output.puts "#endif  // #{manually_unrolled_loops}"

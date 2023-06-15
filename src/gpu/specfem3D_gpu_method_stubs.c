@@ -110,13 +110,13 @@ void FC_FUNC_ (check_norm_strain_from_device,
 
 void FC_FUNC_ (compute_add_sources_gpu,
                COMPUTE_ADD_SOURCES_GPU) (long *Mesh_pointer_f,
-                                         int *NSOURCESf,
-                                         double *h_stf_pre_compute) {}
+                                         int *it_f,
+                                         int *istage_f) {}
 
 void FC_FUNC_ (compute_add_sources_backward_gpu,
                COMPUTE_ADD_SOURCES_BACKWARD_GPU) (long *Mesh_pointer_f,
-                                                  int *NSOURCESf,
-                                                  double *h_stf_pre_compute) {}
+                                                  int *it_tmp_f,
+                                                  int *istage_f) {}
 
 void FC_FUNC_ (compute_add_sources_adjoint_gpu,
                COMPUTE_ADD_SOURCES_ADJOINT_GPU) (long *Mesh_pointer_f) {}
@@ -224,14 +224,13 @@ void FC_FUNC_ (resort_array,
 //
 
 void FC_FUNC_ (compute_seismograms_gpu,
-               COMPUTE_SEISMOGRAMS_GPU) (long *Mesh_pointer_f,
+               COMPUTE_SEISMOGRAMS_GPU) (long *Mesh_pointer,
                                          realw* seismograms,
-                                         int* seismo_currentf,
-                                         int* itf,
-                                         int* it_endf,
-                                         double* scale_displf,
-                                         int* NTSTEP_BETWEEN_OUTPUT_SEISMOSf,
-                                         int* NSTEPf) {}
+                                         int* seismo_current_f,
+                                         int* it_f,
+                                         int* it_end_f,
+                                         double* scale_displ_f,
+                                         int* nlength_seismogram_f) {}
 
 
 //
@@ -286,6 +285,9 @@ void FC_FUNC_ (compute_strain_gpu,
 void FC_FUNC_ (pause_for_debug,
                PAUSE_FOR_DEBUG) () {}
 
+void FC_FUNC_ (gpu_synchronize,
+               GPU_SYNCHRONIZE) () {}
+
 void FC_FUNC_ (allocate_gpu_buffer,
                ALLOCATE_GPU_BUFFER) (realw** buffer_f, int* total_size) {}
 
@@ -334,9 +336,12 @@ void FC_FUNC_ (prepare_constants_device,
                                           int *h_NGLLX,
                                           realw *h_hprime_xx, realw *h_hprimewgll_xx,
                                           realw *h_wgllwgll_xy, realw *h_wgllwgll_xz, realw *h_wgllwgll_yz,
-                                          int *NSOURCES, int *nsources_local,
-                                          realw *h_sourcearrays,
-                                          int *h_islice_selected_source, int *h_ispec_selected_source,
+                                          int *NSOURCES,
+                                          int *nsources_local,
+                                          realw *h_sourcearrays_local,
+                                          realw *h_stf_local, realw *h_b_stf_local,
+                                          int *h_ispec_selected_source_local,
+                                          int *h_ispec_selected_source,
                                           int *nrec, int *nrec_local,
                                           int *h_number_receiver_global,
                                           int *h_islice_selected_rec, int *h_ispec_selected_rec,
@@ -362,8 +367,11 @@ void FC_FUNC_ (prepare_constants_device,
                                           realw *deltat_f,
                                           int *GPU_ASYNC_COPY_f,
                                           double * h_hxir_store,double * h_hetar_store,double * h_hgammar_store,double * h_nu,
+                                          int* nlength_seismogram,
                                           int *SAVE_SEISMOGRAMS_STRAIN_f,
-                                          int *CUSTOM_REAL_f) {}
+                                          int *CUSTOM_REAL_f,
+                                          int *USE_LDDRK_f,
+                                          int *NSTEP_f, int *NSTAGES_f) {}
 
 void FC_FUNC_ (prepare_constants_adjoint_device,
                PREPARE_CONSTANTS_ADJOINT_DEVICE) (long *Mesh_pointer_f,

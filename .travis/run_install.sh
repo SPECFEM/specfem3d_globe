@@ -185,6 +185,7 @@ echo "export OMPI_MCA_btl_vader_single_copy_mechanism=none" >> $HOME/.tmprc
 echo "export OMPI_MCA_btl=^openib" >> $HOME/.tmprc
 
 echo ""
-echo "exports:"
-export
+# commented this out due to travis reporting security issues in these outputs
+#echo "exports:"
+#export
 echo ""

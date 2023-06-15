@@ -93,7 +93,7 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #define BLOCKSIZE_TRANSFER 256\n\
 #endif\n\
 \n\
-__kernel void compute_add_sources_kernel(__global float * accel, const __global int * ibool, const __global float * sourcearrays, const __global double * stf_pre_compute, const int myrank, const __global int * islice_selected_source, const __global int * ispec_selected_source, const int NSOURCES){\n\
+__kernel void compute_add_sources_kernel(__global float * accel, const __global int * ibool, const __global float * sourcearrays_local, const __global float * stf_local, const __global int * ispec_selected_source_local, const int nsources_local, const int NSTEP, const int it, const int istage){\n\
   int ispec;\n\
   int iglob;\n\
   float stf;\n\
@@ -105,15 +105,13 @@ __kernel void compute_add_sources_kernel(__global float * accel, const __global 
   j = get_local_id(1);\n\
   k = get_local_id(2);\n\
   isource = get_group_id(0) + (get_num_groups(0)) * (get_group_id(1));\n\
-  if (isource < NSOURCES) {\n\
-    if (myrank == islice_selected_source[isource]) {\n\
-      ispec = ispec_selected_source[isource] - (1);\n\
-      stf = stf_pre_compute[isource];\n\
-      iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)] - (1);\n\
-      atomicAdd(accel + (iglob) * (3) + 0, (sourcearrays[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 0, i, j, k, isource)]) * (stf));\n\
-      atomicAdd(accel + (iglob) * (3) + 1, (sourcearrays[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 1, i, j, k, isource)]) * (stf));\n\
-      atomicAdd(accel + (iglob) * (3) + 2, (sourcearrays[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 2, i, j, k, isource)]) * (stf));\n\
-    }\n\
+  if (isource < nsources_local) {\n\
+    ispec = ispec_selected_source_local[isource] - (1);\n\
+    stf = stf_local[INDEX3(nsources_local, NSTEP, isource, it, istage)];\n\
+    iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)] - (1);\n\
+    atomicAdd(accel + (iglob) * (3) + 0, (sourcearrays_local[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 0, i, j, k, isource)]) * (stf));\n\
+    atomicAdd(accel + (iglob) * (3) + 1, (sourcearrays_local[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 1, i, j, k, isource)]) * (stf));\n\
+    atomicAdd(accel + (iglob) * (3) + 2, (sourcearrays_local[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 2, i, j, k, isource)]) * (stf));\n\
   }\n\
 }\n\
 ";

@@ -30,16 +30,14 @@
 
   use meshfem_par, only: &
     myrank,OUTPUT_FILES,IMAIN, &
-    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE,MAX_STRING_LEN
+    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE,MAX_STRING_LEN, &
+    NPROCTOT
 
   use meshfem_par, only: ibool,is_on_a_slice_edge,xstore_glob,ystore_glob,zstore_glob
 
   use MPI_crust_mantle_par
   use MPI_outer_core_par
   use MPI_inner_core_par
-
-!debug
-!  use shared_parameters, only: NPROCTOT
 
   implicit none
 
@@ -59,7 +57,11 @@
   select case (iregion_code)
   case (IREGION_CRUST_MANTLE)
     ! crust_mantle
-    nspec_outer_crust_mantle = count( is_on_a_slice_edge )
+    if (NPROCTOT > 1) then
+      nspec_outer_crust_mantle = count( is_on_a_slice_edge )
+    else
+      nspec_outer_crust_mantle = 0
+    endif
     nspec_inner_crust_mantle = NSPEC_CRUST_MANTLE - nspec_outer_crust_mantle
 
     num_phase_ispec_crust_mantle = max(nspec_inner_crust_mantle,nspec_outer_crust_mantle)
@@ -71,7 +73,7 @@
     iinner = 0
     iouter = 0
     do ispec = 1,NSPEC_CRUST_MANTLE
-      if (is_on_a_slice_edge(ispec)) then
+      if (is_on_a_slice_edge(ispec) .and. NPROCTOT > 1) then
         ! outer element
         iouter = iouter + 1
         phase_ispec_inner_crust_mantle(iouter,1) = ispec
@@ -113,7 +115,11 @@
 
   case (IREGION_OUTER_CORE)
     ! outer_core
-    nspec_outer_outer_core = count( is_on_a_slice_edge )
+    if (NPROCTOT > 1) then
+      nspec_outer_outer_core = count( is_on_a_slice_edge )
+    else
+      nspec_outer_outer_core = 0
+    endif
     nspec_inner_outer_core = NSPEC_OUTER_CORE - nspec_outer_outer_core
 
     num_phase_ispec_outer_core = max(nspec_inner_outer_core,nspec_outer_outer_core)
@@ -125,7 +131,7 @@
     iinner = 0
     iouter = 0
     do ispec = 1,NSPEC_OUTER_CORE
-      if (is_on_a_slice_edge(ispec)) then
+      if (is_on_a_slice_edge(ispec) .and. NPROCTOT > 1) then
         ! outer element
         iouter = iouter + 1
         phase_ispec_inner_outer_core(iouter,1) = ispec
@@ -154,7 +160,11 @@
 
   case (IREGION_INNER_CORE)
     ! inner_core
-    nspec_outer_inner_core = count( is_on_a_slice_edge )
+    if (NPROCTOT > 1) then
+      nspec_outer_inner_core = count( is_on_a_slice_edge )
+    else
+      nspec_outer_inner_core = 0
+    endif
     nspec_inner_inner_core = NSPEC_INNER_CORE - nspec_outer_inner_core
 
     num_phase_ispec_inner_core = max(nspec_inner_inner_core,nspec_outer_inner_core)
@@ -166,7 +176,7 @@
     iinner = 0
     iouter = 0
     do ispec = 1,NSPEC_INNER_CORE
-      if (is_on_a_slice_edge(ispec)) then
+      if (is_on_a_slice_edge(ispec) .and. NPROCTOT > 1) then
         ! outer element
         iouter = iouter + 1
         phase_ispec_inner_inner_core(iouter,1) = ispec

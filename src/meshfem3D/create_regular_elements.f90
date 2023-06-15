@@ -49,7 +49,7 @@
   use constants, only: myrank,NDIM,CUSTOM_REAL,NGLLX,NGLLY,NGNOD,NGNOD_EIGHT_CORNERS,SUPPRESS_CRUSTAL_MESH, &
     SAVE_BOUNDARY_MESH,IREGION_CRUST_MANTLE,IMAIN
 
-  use shared_parameters, only: ner_mesh_layers,ratio_sampling_array,doubling_index,r_bottom,r_top
+  use shared_parameters, only: ner_mesh_layers,ratio_sampling_array,doubling_index,r_bottom,r_top,NPROCTOT
 
   use meshfem_models_par, only: HONOR_1D_SPHERICAL_MOHO,CASE_3D
 
@@ -240,20 +240,20 @@
         ! new get_flag_boundaries
         ! xmin & xmax
         if (ix_elem == 1) then
-          iMPIcut_xi(1,ispec_loc) = .true.
+          if (NPROCTOT > 1) iMPIcut_xi(1,ispec_loc) = .true.
           if (iproc_xi == 0) iboun(1,ispec_loc) = .true.
         endif
         if (ix_elem == (NEX_PER_PROC_XI-ratio_sampling_array(ilayer)+1)) then
-          iMPIcut_xi(2,ispec_loc) = .true.
+          if (NPROCTOT > 1) iMPIcut_xi(2,ispec_loc) = .true.
           if (iproc_xi == NPROC_XI-1) iboun(2,ispec_loc) = .true.
         endif
         ! ymin & ymax
         if (iy_elem == 1) then
-          iMPIcut_eta(1,ispec_loc) = .true.
+          if (NPROCTOT > 1) iMPIcut_eta(1,ispec_loc) = .true.
           if (iproc_eta == 0) iboun(3,ispec_loc) = .true.
         endif
         if (iy_elem == (NEX_PER_PROC_ETA-ratio_sampling_array(ilayer)+1)) then
-          iMPIcut_eta(2,ispec_loc) = .true.
+          if (NPROCTOT > 1) iMPIcut_eta(2,ispec_loc) = .true.
           if (iproc_eta == NPROC_ETA-1) iboun(4,ispec_loc) = .true.
         endif
         ! zmin & zmax

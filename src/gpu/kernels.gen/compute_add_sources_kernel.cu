@@ -81,7 +81,7 @@
 #define BLOCKSIZE_TRANSFER 256
 #endif
 
-__global__ void compute_add_sources_kernel(float * accel, const int * ibool, const float * sourcearrays, const double * stf_pre_compute, const int myrank, const int * islice_selected_source, const int * ispec_selected_source, const int NSOURCES){
+__global__ void compute_add_sources_kernel(float * accel, const int * ibool, const float * sourcearrays_local, const float * stf_local, const int * ispec_selected_source_local, const int nsources_local, const int NSTEP, const int it, const int istage){
   int ispec;
   int iglob;
   float stf;
@@ -93,14 +93,12 @@ __global__ void compute_add_sources_kernel(float * accel, const int * ibool, con
   j = threadIdx.y;
   k = threadIdx.z;
   isource = blockIdx.x + (gridDim.x) * (blockIdx.y);
-  if (isource < NSOURCES) {
-    if (myrank == islice_selected_source[isource]) {
-      ispec = ispec_selected_source[isource] - (1);
-      stf = stf_pre_compute[isource];
-      iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)] - (1);
-      atomicAdd(accel + (iglob) * (3) + 0, (sourcearrays[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 0, i, j, k, isource)]) * (stf));
-      atomicAdd(accel + (iglob) * (3) + 1, (sourcearrays[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 1, i, j, k, isource)]) * (stf));
-      atomicAdd(accel + (iglob) * (3) + 2, (sourcearrays[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 2, i, j, k, isource)]) * (stf));
-    }
+  if (isource < nsources_local) {
+    ispec = ispec_selected_source_local[isource] - (1);
+    stf = stf_local[INDEX3(nsources_local, NSTEP, isource, it, istage)];
+    iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)] - (1);
+    atomicAdd(accel + (iglob) * (3) + 0, (sourcearrays_local[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 0, i, j, k, isource)]) * (stf));
+    atomicAdd(accel + (iglob) * (3) + 1, (sourcearrays_local[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 1, i, j, k, isource)]) * (stf));
+    atomicAdd(accel + (iglob) * (3) + 2, (sourcearrays_local[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 2, i, j, k, isource)]) * (stf));
   }
 }

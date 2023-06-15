@@ -37,7 +37,9 @@ esac
 
 # info
 #echo $TRAVIS_BUILD_DIR
-echo $WORKDIR
+# commented this out due to travis reporting security issues in these outputs
+#echo $WORKDIR
+
 echo `date`
 echo
 echo "**********************************************************"
@@ -137,7 +139,7 @@ else
 
   # simulation done
   echo
-  echo "simulation done: `pwd`"
+  echo "simulation done: $dir"
   echo `date`
   echo
 
@@ -152,7 +154,7 @@ if [[ $? -ne 0 ]]; then exit 1; fi
 
 # simulation done
 echo
-echo "test done: `pwd`"
+echo "test done: $dir"
 echo `date`
 echo
 

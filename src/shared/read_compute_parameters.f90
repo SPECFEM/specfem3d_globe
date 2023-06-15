@@ -219,8 +219,12 @@
   if (STEADY_STATE_KERNEL) then
     NSTEP_STEADY_STATE = nint(STEADY_STATE_LENGTH_IN_MINUTES * 60.d0 / DT)
 
+    ! checks length
     if (NSTEP_STEADY_STATE == 0) then
+      print *, '*****************************************************************'
       print *, 'Warning: STEADY_STATE_KERNEL disabled because STEADY_STATE_LENGTH_IN_MINUTES is zero'
+      print *, '*****************************************************************'
+      STEADY_STATE_KERNEL = .false.    ! not used any further, but doesn't hurt to reset flag to .false. ...
     endif
   else
     NSTEP_STEADY_STATE = 0
@@ -600,14 +604,17 @@
       stop 'Please set SAVE_ALL_SEISMOS_IN_ONE_FILE and USE_BINARY_FOR_LARGE_FILE to be .false. for noise simulation'
   endif
 
-!! DK DK for gravity integrals
+  ! gravity integrals
   ! in the case of GRAVITY_INTEGRALS we should always use double precision
   if (GRAVITY_INTEGRALS .and. CUSTOM_REAL /= SIZE_DOUBLE) &
-    stop 'for GRAVITY_INTEGRALS use double precision i.e. configure the code with --enable-double-precision'
+    stop 'For GRAVITY_INTEGRALS use double precision i.e. configure the code with --enable-double-precision'
 
   ! adjoint simulations: seismogram output only works if each process writes out its local seismos
   if (WRITE_SEISMOGRAMS_BY_MAIN .and. SIMULATION_TYPE == 2) &
     stop 'For SIMULATION_TYPE == 2, please set WRITE_SEISMOGRAMS_BY_MAIN to .false.'
+
+  if (NTSTEP_BETWEEN_OUTPUT_SAMPLE < 1) &
+    stop 'Invalid NTSTEP_BETWEEN_OUTPUT_SAMPLE, must be >= 1'
 
 !----------------------------------------------
 !

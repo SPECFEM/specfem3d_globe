@@ -176,6 +176,10 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
     tau_sigmainvval = mp->d_tau_sigmainvval; // only d_tau_sigmainvval
   }
 
+  // kernel timing
+  gpu_event start,stop;
+  if (GPU_TIMING){ start_timing_gpu(&start,&stop); }
+
 #ifdef USE_OPENCL
   if (run_opencl) {
     size_t global_work_size[2];
@@ -637,6 +641,9 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
     }
   }
 #endif
+
+  // kernel timing
+  if (GPU_TIMING){ stop_timing_gpu(&start,&stop,"inner_core"); }
 
   GPU_ERROR_CHECKING ("inner_core");
 }

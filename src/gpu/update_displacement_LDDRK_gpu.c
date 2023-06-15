@@ -83,6 +83,10 @@ void FC_FUNC_ (update_displ_lddrk_gpu,
     accel_ic = mp->d_b_accel_inner_core;
   }
 
+  // kernel timing
+  gpu_event start,stop;
+  if (GPU_TIMING){ start_timing_gpu(&start,&stop); }
+
   gpuMemset_realw (&accel_cm, size_cm, 0);
   gpuMemset_realw (&accel_oc, size_oc, 0);
   gpuMemset_realw (&accel_ic, size_ic, 0);
@@ -135,6 +139,9 @@ void FC_FUNC_ (update_displ_lddrk_gpu,
   // todo..
 #endif
   */
+
+  // kernel timing
+  if (GPU_TIMING){ stop_timing_gpu(&start,&stop,"update_displ_lddrk_gpu"); }
 
   GPU_ERROR_CHECKING ("update_displ_lddrk_gpu");
 }
@@ -195,6 +202,10 @@ void FC_FUNC_ (update_elastic_lddrk_gpu,
     veloc_lddrk = mp->d_b_veloc_crust_mantle_lddrk;
     deltat = mp->b_deltat;
   }
+
+  // kernel timing
+  gpu_event start,stop;
+  if (GPU_TIMING){ start_timing_gpu(&start,&stop); }
 
 #ifdef USE_OPENCL
   if (run_opencl) {
@@ -383,6 +394,9 @@ void FC_FUNC_ (update_elastic_lddrk_gpu,
   }
 #endif
 
+  // kernel timing
+  if (GPU_TIMING){ stop_timing_gpu(&start,&stop,"update_elastic_lddrk_gpu"); }
+
   GPU_ERROR_CHECKING ("after update_elastic_lddrk_gpu");
 }
 
@@ -438,6 +452,10 @@ void FC_FUNC_ (update_acoustic_lddrk_gpu,
     veloc_lddrk = mp->d_b_veloc_outer_core_lddrk;
     deltat = mp->b_deltat;
   }
+
+  // kernel timing
+  gpu_event start,stop;
+  if (GPU_TIMING){ start_timing_gpu(&start,&stop); }
 
 #ifdef USE_OPENCL
   if (run_opencl) {
@@ -533,6 +551,9 @@ void FC_FUNC_ (update_acoustic_lddrk_gpu,
                                                                       mp->NGLOB_OUTER_CORE);
   }
 #endif
+
+  // kernel timing
+  if (GPU_TIMING){ stop_timing_gpu(&start,&stop,"update_acoustic_lddrk_gpu"); }
 
   GPU_ERROR_CHECKING ("after update_acoustic_lddrk_gpu");
 }

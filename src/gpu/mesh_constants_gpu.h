@@ -144,6 +144,9 @@ typedef double realw;
 // debug: outputs maximum and preferred work group size (for OpenCL kernels)
 #define DEBUG_KERNEL_WORK_GROUP_SIZE 0
 
+// performance timers
+#define GPU_TIMING 0
+
 // error checking after cuda function calls
 // (note: this synchronizes many calls, thus e.g. no asynchronous memcpy possible)
 #define ENABLE_VERY_SLOW_ERROR_CHECKING 0
@@ -939,10 +942,24 @@ typedef struct mesh_ {
   // sources
   // ------------------------------------------------------------------   //
   int nsources_local;
-  gpu_realw_mem d_sourcearrays;
-  gpu_double_mem d_stf_pre_compute;
-  gpu_int_mem d_islice_selected_source;
-  gpu_int_mem d_ispec_selected_source;
+  int NSTEP;
+  int NSTAGES;
+  gpu_int_mem d_ispec_selected_source_local;
+  gpu_realw_mem d_sourcearrays_local;
+  gpu_realw_mem d_stf_local;
+
+  // for LDDRK and non-undo-attenuation cases
+  int use_b_stf;
+  gpu_realw_mem d_b_stf_local;
+
+  // full NSOURCES arrays not needed anymore...
+  // we will move to store only local source arrays with full source time function traces
+  // to avoid memory copies before the compute_add_sources() kernel, as those memcopies synchronize streams and will slow down performance...
+  //gpu_realw_mem d_sourcearrays;
+  //gpu_double_mem d_stf_pre_compute;
+  //gpu_int_mem d_islice_selected_source;
+
+  gpu_int_mem d_ispec_selected_source; // needed only for pure adjoint simulation cases
 
   // ------------------------------------------------------------------   //
   // receivers
@@ -1284,6 +1301,11 @@ void exit_on_error (const char *info);
 
 void synchronize_mpi ();
 double get_time_val ();
+
+// event timing
+void start_timing_gpu(gpu_event* start, gpu_event* stop);
+void stop_timing_gpu(gpu_event* start, gpu_event* stop, const char* info_str);
+void stop_timing_gpu_t(gpu_event* start, gpu_event* stop, const char* info_str, realw* t);
 
 // defined in check_fields_gpu.c
 void get_free_memory (double *free_db, double *used_db, double *total_db);

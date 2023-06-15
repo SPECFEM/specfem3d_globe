@@ -707,7 +707,7 @@
   endif
 
   ! sources
-  ! BS BS moved open statement and writing of first lines into sr.vtk before the
+  ! moved open statement and writing of first lines into sr.vtk before the
   ! call to locate_sources, where further write statements to that file follow
   if (myrank == 0) then
   ! write source and receiver VTK files for Paraview
@@ -968,6 +968,39 @@
     endif
   endif
 
+  ! make sure NSTEP is a multiple of NTSTEP_BETWEEN_OUTPUT_SAMPLE
+  ! if not, increase it a little bit, to the next multiple
+  if (mod(NSTEP,NTSTEP_BETWEEN_OUTPUT_SAMPLE) /= 0) then
+    if (NOISE_TOMOGRAPHY /= 0) then
+      if (myrank == 0) then
+        print *,'Noise simulation: Invalid number of NSTEP          = ',NSTEP
+        print *,'Must be a multiple of NTSTEP_BETWEEN_OUTPUT_SAMPLE = ',NTSTEP_BETWEEN_OUTPUT_SAMPLE
+      endif
+      stop 'Error: NSTEP must be a multiple of NTSTEP_BETWEEN_OUTPUT_SAMPLE'
+    else
+      NSTEP = (NSTEP/NTSTEP_BETWEEN_OUTPUT_SAMPLE + 1)*NTSTEP_BETWEEN_OUTPUT_SAMPLE
+      ! user output
+      if (myrank == 0) then
+        print *
+        print *,'NSTEP is not a multiple of NTSTEP_BETWEEN_OUTPUT_SAMPLE'
+        print *,'thus increasing it automatically to the next multiple, which is ',NSTEP
+        print *
+      endif
+    endif
+  endif
+
+  ! output seismograms at least once at the end of the simulation
+  NTSTEP_BETWEEN_OUTPUT_SEISMOS = min(NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS)
+
+  ! make sure NSTEP_BETWEEN_OUTPUT_SEISMOS is a multiple of NTSTEP_BETWEEN_OUTPUT_SAMPLE
+  if (mod(NTSTEP_BETWEEN_OUTPUT_SEISMOS,NTSTEP_BETWEEN_OUTPUT_SAMPLE) /= 0) then
+    if (myrank == 0) then
+      print *,'Invalid number of NTSTEP_BETWEEN_OUTPUT_SEISMOS    = ',NTSTEP_BETWEEN_OUTPUT_SEISMOS
+      print *,'Must be a multiple of NTSTEP_BETWEEN_OUTPUT_SAMPLE = ',NTSTEP_BETWEEN_OUTPUT_SAMPLE
+    endif
+    stop 'Error: NTSTEP_BETWEEN_OUTPUT_SEISMOS must be a multiple of NTSTEP_BETWEEN_OUTPUT_SAMPLE'
+  endif
+
   ! time loop increments end
   it_end = NSTEP
 
@@ -1207,12 +1240,26 @@
   endif
 
   ! seismograms
+  ! check if we need to save seismos
+  if (SIMULATION_TYPE == 3 .and. (.not. SAVE_SEISMOGRAMS_IN_ADJOINT_RUN)) then
+    do_save_seismograms = .false.
+  else
+    do_save_seismograms = .true.
+  endif
+
+  ! sets local receivers to zero if no seismogram needs to be saved
+  if (.not. do_save_seismograms) nrec_local = 0
+
+  ! seismogram array length (to write out time portions of the full seismograms)
+  nlength_seismogram = NTSTEP_BETWEEN_OUTPUT_SEISMOS / NTSTEP_BETWEEN_OUTPUT_SAMPLE
+
   ! gather from secondary processes on main
   tmp_rec_local_all(:) = 0
   tmp_rec_local_all(0) = nrec_local
   if (NPROCTOT_VAL > 1) then
     call gather_all_singlei(nrec_local,tmp_rec_local_all,NPROCTOT_VAL)
   endif
+
   ! user output
   if (myrank == 0) then
     ! determines maximum number of local receivers and corresponding rank
@@ -1221,20 +1268,29 @@
     maxproc = maxloc(tmp_rec_local_all(:)) - 1
     ! seismograms array size in MB
     if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
-      ! seismograms need seismograms(NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS)
-      sizeval = dble(maxrec) * dble(NDIM * NTSTEP_BETWEEN_OUTPUT_SEISMOS * CUSTOM_REAL / 1024. / 1024. )
+      ! seismograms need seismograms(NDIM,nrec_local,nlength_seismogram)
+      sizeval = dble(maxrec) * dble(NDIM * nlength_seismogram * CUSTOM_REAL / 1024. / 1024. )
     else
-      ! adjoint seismograms need seismograms(NDIM*NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS)
-      sizeval = dble(maxrec) * dble(NDIM * NDIM * NTSTEP_BETWEEN_OUTPUT_SEISMOS * CUSTOM_REAL / 1024. / 1024. )
+      ! adjoint seismograms need seismograms(NDIM*NDIM,nrec_local,nlength_seismogram)
+      sizeval = dble(maxrec) * dble(NDIM * NDIM * nlength_seismogram * CUSTOM_REAL / 1024. / 1024. )
     endif
+
     ! outputs info
     write(IMAIN,*) 'seismograms:'
-    if (WRITE_SEISMOGRAMS_BY_MAIN) then
-      write(IMAIN,*) '  seismograms written by main process only'
+    if (do_save_seismograms) then
+      if (WRITE_SEISMOGRAMS_BY_MAIN) then
+        write(IMAIN,*) '  seismograms written by main process only'
+      else
+        write(IMAIN,*) '  seismograms written by all processes'
+      endif
     else
-      write(IMAIN,*) '  seismograms written by all processes'
+      write(IMAIN,*) '  seismograms will not be saved'
     endif
+    write(IMAIN,*) '  Total number of simulation steps (NSTEP)                       = ',NSTEP
     write(IMAIN,*) '  writing out seismograms at every NTSTEP_BETWEEN_OUTPUT_SEISMOS = ',NTSTEP_BETWEEN_OUTPUT_SEISMOS
+    write(IMAIN,*) '  number of subsampling steps for seismograms                    = ',NTSTEP_BETWEEN_OUTPUT_SAMPLE
+    write(IMAIN,*) '  Total number of samples for seismograms                        = ',NSTEP/NTSTEP_BETWEEN_OUTPUT_SAMPLE
+    write(IMAIN,*)
     write(IMAIN,*) '  maximum number of local receivers is ',maxrec,' in slice ',maxproc(1)
     write(IMAIN,*) '  size of maximum seismogram array       = ', sngl(sizeval),'MB'
     write(IMAIN,*) '                                         = ', sngl(sizeval/1024.d0),'GB'
@@ -1777,11 +1833,11 @@
 
     ! allocates seismogram array
     if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
-      allocate(seismograms(NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
+      allocate(seismograms(NDIM,nrec_local,nlength_seismogram),stat=ier)
       if (ier /= 0) stop 'Error while allocating seismograms'
     else
       ! adjoint seismograms
-      allocate(seismograms(NDIM*NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
+      allocate(seismograms(NDIM*NDIM,nrec_local,nlength_seismogram),stat=ier)
       if (ier /= 0) stop 'Error while allocating adjoint seismograms'
 
       ! allocates Frechet derivatives array
@@ -1796,15 +1852,15 @@
       stshift_der(:) = 0._CUSTOM_REAL
       shdur_der(:) = 0._CUSTOM_REAL
     endif
+
     ! initializes seismograms
     seismograms(:,:,:) = 0._CUSTOM_REAL
-    ! adjoint seismograms
-    it_adj_written = 0
+
   else
     ! dummy arrays
     ! allocates dummy array since we need it to pass as argument e.g. in write_seismograms() routine
     ! note: nrec_local is zero, Fortran 90/95 should allow zero-sized array allocation...
-    allocate(seismograms(NDIM,0,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
+    allocate(seismograms(NDIM,0,nlength_seismogram),stat=ier)
     if (ier /= 0) stop 'Error while allocating zero seismograms'
     ! dummy allocation
     allocate(hxir_store(1,1), &
@@ -1816,7 +1872,7 @@
   ! strain seismograms
   if (SAVE_SEISMOGRAMS_STRAIN) then
     if (nrec_local > 0) then
-      allocate(seismograms_eps(6,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
+      allocate(seismograms_eps(6,nrec_local,nlength_seismogram),stat=ier)
       if (ier /= 0) stop 'Error while allocating strain seismograms'
       seismograms_eps(:,:,:) = 0._CUSTOM_REAL
     else
@@ -1928,7 +1984,7 @@
 
   ! ASDF seismograms
   if (OUTPUT_SEISMOS_ASDF) then
-    if (.not. (SIMULATION_TYPE == 3 .and. (.not. SAVE_SEISMOGRAMS_IN_ADJOINT_RUN)) ) then
+    if (do_save_seismograms) then
       ! initializes the ASDF data structure by allocating arrays
       call init_asdf_data(nrec_local)
       call synchronize_all()

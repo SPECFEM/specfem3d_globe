@@ -98,7 +98,7 @@ module model_emc_par
   !       or if partial EMC models are just not supported.
   !
   !       by default, we will use Brocher scaling relations:
-  !       Brocher 2005, Empirical Relations between Elastic Wavespeeds and Density in the Earth’s Crust, BSSA
+  !       Brocher 2005, Empirical Relations between Elastic Wavespeeds and Density in the Earth's Crust, BSSA
 
   !       note that these scaling relations also would have limitations (range of vs, etc.) in their applicability,
   !       which we ignore for simplicity now.
@@ -114,7 +114,7 @@ module model_emc_par
   ! (see also Qin et al. 2009, Reliability of mantle tomography models assessed by spectral element simulation, sec. 5.2)
   !double precision, parameter :: SCALE_RHO = 0.40d0
   ! SCEC CVM-H version model relationship: https://strike.scec.org/scecpedia/CVM-H,
-  ! uses Brocher 2005 (Empirical Relations between Elastic Wavespeeds and Density in the Earth’s Crust, BSSA) for sediments
+  ! uses Brocher 2005 (Empirical Relations between Elastic Wavespeeds and Density in the Earth's Crust, BSSA) for sediments
   !double precision, parameter :: SCALE_RHO = 0.254d0
   !
   !! other factors to convert (perturbations in) shear speed to (perturbations in) Vp
@@ -631,7 +631,7 @@ contains
   double precision :: vp,vp_p2,vp_p3,vp_p4,vp_p5,rho
   integer :: ix,iy,iz,nx,ny,nz
 
-  ! Brocher 2005, Empirical Relations between Elastic Wavespeeds and Density in the Earth’s Crust, BSSA
+  ! Brocher 2005, Empirical Relations between Elastic Wavespeeds and Density in the Earth's Crust, BSSA
   ! factors from eq. (1)
   double precision,parameter :: fac1 = 1.6612d0
   double precision,parameter :: fac2 = -0.4721d0
@@ -692,7 +692,7 @@ contains
   double precision :: vp,vp_p2,vp_p3,vp_p4,vs
   integer :: ix,iy,iz,nx,ny,nz
 
-  ! Brocher 2005, Empirical Relations between Elastic Wavespeeds and Density in the Earth’s Crust, BSSA
+  ! Brocher 2005, Empirical Relations between Elastic Wavespeeds and Density in the Earth's Crust, BSSA
   ! factors from eq. (1)
   double precision,parameter :: fac1 = 0.7858d0
   double precision,parameter :: fac2 = -1.2344d0
@@ -763,7 +763,7 @@ contains
   double precision :: vs,vs_p2,vs_p3,vs_p4,vp
   integer :: ix,iy,iz,nx,ny,nz
 
-  ! Brocher 2005, Empirical Relations between Elastic Wavespeeds and Density in the Earth’s Crust, BSSA
+  ! Brocher 2005, Empirical Relations between Elastic Wavespeeds and Density in the Earth's Crust, BSSA
   ! factors from eq. (1)
   double precision,parameter :: fac1 = 0.9409d0
   double precision,parameter :: fac2 = 2.0947d0

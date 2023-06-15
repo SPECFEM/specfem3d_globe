@@ -203,6 +203,10 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
     tau_sigmainvval = mp->d_tau_sigmainvval; // only d_tau_sigmainvval
   }
 
+  // kernel timing
+  gpu_event start,stop;
+  if (GPU_TIMING){ start_timing_gpu(&start,&stop); }
+
 #ifdef USE_OPENCL
   if (run_opencl) {
     size_t global_work_size[2];
@@ -793,6 +797,21 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
     */
   }
 #endif
+
+  // kernel timing
+  if (GPU_TIMING){
+    stop_timing_gpu(&start,&stop,"crust_mantle");
+
+    //realw time;
+    //stop_timing_gpu_t(&start,&stop,"crust_mantle kernel",&time);
+    // time in seconds
+    //time = time / 1000.;
+    // performance
+    // see with: nvprof --metrics flops_sp ./xspecfem3D -> using 883146240 FLOPS (Single) floating-point operations
+    // hand-counts: 89344 * number-of-blocks
+    //realw flops = 89344 * nb_blocks_to_compute;
+    //printf("  performance: %f GFlops/s\n", flops/time *(1./1000./1000./1000.));
+  }
 
   GPU_ERROR_CHECKING ("crust_mantle");
 }
