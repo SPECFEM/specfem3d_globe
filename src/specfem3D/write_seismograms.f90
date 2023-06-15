@@ -42,7 +42,7 @@
     WRITE_SEISMOGRAMS_BY_MAIN,OUTPUT_SEISMOS_ASDF, &
     SAVE_SEISMOGRAMS_IN_ADJOINT_RUN,SAVE_SEISMOGRAMS_STRAIN, &
     moment_der,sloc_der,shdur_der,stshift_der, &
-    scale_displ,NSTEP
+    scale_displ
 
   use specfem_par_crustmantle, only: displ_crust_mantle,b_displ_crust_mantle, &
     eps_trace_over_3_crust_mantle,epsilondev_xx_crust_mantle,epsilondev_xy_crust_mantle,epsilondev_xz_crust_mantle, &
@@ -104,9 +104,7 @@
           call compute_seismograms(NGLOB_CRUST_MANTLE,displ_crust_mantle,seismo_current,seismograms)
         else
           ! on GPU
-          call compute_seismograms_gpu(Mesh_pointer,seismograms,seismo_current,it,it_end, &
-                                       scale_displ,nlength_seismogram,NSTEP)
-
+          call compute_seismograms_gpu(Mesh_pointer,seismograms,seismo_current,it,it_end,scale_displ,nlength_seismogram)
         endif
       case (2)
         ! adjoint run
@@ -120,21 +118,16 @@
         ! kernel run
         if (.not. GPU_MODE) then
           ! on CPU
-          if (.not. ( SIMULATION_TYPE == 3 .and. (.not. SAVE_SEISMOGRAMS_IN_ADJOINT_RUN)) ) then
-            if (OUTPUT_ADJOINT_WAVEFIELD_SEISMOGRAMS) then
-              ! uncomment to output adjoint wavefield instead for seismogram output
-              call compute_seismograms(NGLOB_CRUST_MANTLE_ADJOINT,displ_crust_mantle,seismo_current,seismograms)
-            else
-              ! default, backward reconstructed wavefield seismos
-              call compute_seismograms(NGLOB_CRUST_MANTLE_ADJOINT,b_displ_crust_mantle,seismo_current,seismograms)
-            endif
+          if (OUTPUT_ADJOINT_WAVEFIELD_SEISMOGRAMS) then
+            ! uncomment to output adjoint wavefield instead for seismogram output
+            call compute_seismograms(NGLOB_CRUST_MANTLE_ADJOINT,displ_crust_mantle,seismo_current,seismograms)
+          else
+            ! default, backward reconstructed wavefield seismos
+            call compute_seismograms(NGLOB_CRUST_MANTLE_ADJOINT,b_displ_crust_mantle,seismo_current,seismograms)
           endif
         else
           ! on GPU
-          if (.not. ( SIMULATION_TYPE == 3 .and. (.not. SAVE_SEISMOGRAMS_IN_ADJOINT_RUN)) ) then
-            call compute_seismograms_gpu(Mesh_pointer,seismograms,seismo_current,it,it_end, &
-                                         scale_displ,nlength_seismogram,NSTEP)
-          endif
+          call compute_seismograms_gpu(Mesh_pointer,seismograms,seismo_current,it,it_end,scale_displ,nlength_seismogram)
         endif
       end select
 

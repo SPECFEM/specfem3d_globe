@@ -803,7 +803,7 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
     stop_timing_gpu(&start,&stop,"crust_mantle");
 
     //realw time;
-    //stop_timing_gpu(&start,&stop,"crust_mantle kernel",&time);
+    //stop_timing_gpu_t(&start,&stop,"crust_mantle kernel",&time);
     // time in seconds
     //time = time / 1000.;
     // performance

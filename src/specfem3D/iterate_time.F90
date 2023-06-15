@@ -90,6 +90,9 @@
     close(IOUT)
   endif
 
+  ! synchronizes GPU kernels
+  if (GPU_MODE) call gpu_synchronize()
+
   ! initialize variables for writing seismograms
   seismo_offset = it_begin-1
   seismo_current = 0

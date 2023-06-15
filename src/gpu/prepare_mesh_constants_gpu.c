@@ -113,12 +113,17 @@ void FC_FUNC_ (prepare_constants_device,
                                           realw *deltat_f,
                                           int *GPU_ASYNC_COPY_f,
                                           double * h_hxir_store,double * h_hetar_store,double * h_hgammar_store,double * h_nu,
+                                          int* nlength_seismogram,
                                           int *SAVE_SEISMOGRAMS_STRAIN_f,
                                           int *CUSTOM_REAL_f,
                                           int *USE_LDDRK_f,
                                           int *NSTEP_f, int *NSTAGES_f) {
 
   TRACE ("prepare_constants_device");
+
+  int size,size_padded;
+  int num_blocks_x,num_blocks_y;
+  int size_block_norm,size_block_norm_strain;
 
   // allocates mesh parameter structure
   Mesh *mp = (Mesh *) malloc (sizeof (Mesh));
@@ -401,13 +406,14 @@ void FC_FUNC_ (prepare_constants_device,
   mp->nrec_local = *nrec_local;
   if (mp->nrec_local > 0) {
     gpuCreateCopy_todevice_int (&mp->d_number_receiver_global, h_number_receiver_global, mp->nrec_local);
+
     // for seismograms
     if (mp->simulation_type == 1 || mp->simulation_type == 3 ) {
       // forward/kernel simulations
       realw * xir    = (realw *)malloc(NGLLX * mp->nrec_local*sizeof(realw));
       realw * etar   = (realw *)malloc(NGLLX * mp->nrec_local*sizeof(realw));
       realw * gammar = (realw *)malloc(NGLLX * mp->nrec_local*sizeof(realw));
-      // converts to double to realw arrays, assumes NGLLX == NGLLY == NGLLZ
+      // converts from double to realw arrays, assumes NGLLX == NGLLY == NGLLZ
       for (int i=0;i<NGLLX * mp->nrec_local;i++){
         xir[i]    = (realw)h_hxir_store[i];
         etar[i]   = (realw)h_hetar_store[i];
@@ -421,7 +427,10 @@ void FC_FUNC_ (prepare_constants_device,
       free(gammar);
 
       // local seismograms
-      gpuMalloc_realw (&mp->d_seismograms, NDIM * mp->nrec_local);
+      // full seismograms length (considering sub-sampling)
+      size = (*nlength_seismogram) * mp->nrec_local;
+      gpuMalloc_realw (&mp->d_seismograms, NDIM * size);
+      gpuMemset_realw (&mp->d_seismograms, NDIM * size, 0);
 
       // orientation
       realw* nu;
@@ -495,12 +504,7 @@ void FC_FUNC_ (prepare_constants_device,
   // buffer for norm checking at every timestamp
   int blocksize = BLOCKSIZE_TRANSFER;
 
-  int size,size_padded;
-  int num_blocks_x,num_blocks_y;
-
   // buffer for crust_mantle arrays has maximum size
-  int size_block_norm,size_block_norm_strain;
-
   // norm arrays
   size = mp->NGLOB_CRUST_MANTLE;
 
@@ -656,6 +660,7 @@ void FC_FUNC_ (prepare_constants_adjoint_device,
       if (mp->h_stf_array_adjoint == NULL) exit_on_error ("h_stf_array_adjoint not allocated\n");
     }
     gpuMalloc_realw (&mp->d_stf_array_adjoint, mp->nadj_rec_local * NDIM );
+    gpuMemset_realw (&mp->d_stf_array_adjoint, mp->nadj_rec_local * NDIM, 0);
   }
 
   // synchronizes gpu calls
@@ -1072,6 +1077,7 @@ void FC_FUNC_ (prepare_fields_absorb_device,
     // boundary buffer
     if (mp->save_stacey) {
       gpuMalloc_realw (&mp->d_absorb_buffer_crust_mantle, NDIM * NGLLSQUARE * num_abs_boundary_faces);
+      gpuMemset_realw (&mp->d_absorb_buffer_crust_mantle, NDIM * NGLLSQUARE * num_abs_boundary_faces, 0);
     }
   }
 
@@ -1098,6 +1104,7 @@ void FC_FUNC_ (prepare_fields_absorb_device,
     // boundary buffer
     if (mp->save_stacey) {
       gpuMalloc_realw (&mp->d_absorb_buffer_outer_core, NGLLSQUARE * num_abs_boundary_faces);
+      gpuMemset_realw (&mp->d_absorb_buffer_outer_core, NGLLSQUARE * num_abs_boundary_faces, 0);
     }
   }
 
@@ -1374,6 +1381,7 @@ void FC_FUNC_ (prepare_fields_noise_device,
 
     // alloc storage for the surface buffer to be copied
     gpuMalloc_realw (&mp->d_noise_surface_movie, NDIM * NGLL2 * mp->nspec2D_top_crust_mantle);
+    gpuMemset_realw (&mp->d_noise_surface_movie, NDIM * NGLL2 * mp->nspec2D_top_crust_mantle, 0);
 
   } else {
     // for global mesh: each crust/mantle slice should have at top a free surface

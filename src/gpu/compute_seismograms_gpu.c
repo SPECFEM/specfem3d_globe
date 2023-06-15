@@ -37,8 +37,7 @@ void FC_FUNC_ (compute_seismograms_gpu,
                                          int* it_f,
                                          int* it_end_f,
                                          double* scale_displ_f,
-                                         int* nlength_seismogram_f,
-                                         int* NSTEP_f) {
+                                         int* nlength_seismogram_f) {
   TRACE ("compute_seismograms_gpu");
 
   //get Mesh from Fortran integer wrapper
@@ -50,16 +49,18 @@ void FC_FUNC_ (compute_seismograms_gpu,
   int seismo_current = *seismo_current_f - 1 ;  // -1 for Fortran -> C indexing
 
   int nlength_seismogram = *nlength_seismogram_f;
-  int NSTEP = *NSTEP_f;
   int it = *it_f;
   int it_end = *it_end_f;
+
   realw scale_displ = (realw)(*scale_displ_f);
 
   int blocksize = NGLL3_PADDED;
   int num_blocks_x, num_blocks_y;
   get_blocks_xy (mp->nrec_local, &num_blocks_x, &num_blocks_y);
 
-  int size_buffer = 3 * mp->nrec_local * sizeof(realw);
+  // seismogram array size
+  int size = mp->nrec_local * nlength_seismogram;
+  int size_buffer = NDIM * size * sizeof(realw);
 
   // determines wavefield depending on simulation type
   gpu_realw_mem displ;
@@ -70,6 +71,15 @@ void FC_FUNC_ (compute_seismograms_gpu,
     // forward/adjoint wavefield
     displ = mp->d_displ_crust_mantle;
   }
+
+  // note: due to subsampling, the last time step it == it_end might not be reached,
+  //       but computing seismogram entries might end before.
+  //       thus, both checks
+  //         it%NTSTEP_BETWEEN_OUTPUT_SEISMOS == 0 || it == it_end
+  //       might not be reached. instead we test if the seismogram array is full by
+  //         seismo_current == nlength_seismogram - 1
+  //       and copy it back whenever.
+  //printf("debug: gpu seismo: seismo current/lenght %i/%i - it/it_end %i/%i\n",seismo_current,nlength_seismogram,it,it_end);
 
 #ifdef USE_OPENCL
   if (run_opencl) {
@@ -90,6 +100,7 @@ void FC_FUNC_ (compute_seismograms_gpu,
     clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ispec_selected_rec.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_number_receiver_global.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (realw),  (void *) &scale_displ));
+    clCheck (clSetKernelArg (mocl.kernels.compute_seismograms_kernel, idx++, sizeof (int),    (void *) &seismo_current));
 
     local_work_size[0] = blocksize;
     local_work_size[1] = 1;
@@ -99,21 +110,29 @@ void FC_FUNC_ (compute_seismograms_gpu,
     clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_seismograms_kernel, 2, NULL,
                                      global_work_size, local_work_size, 0, NULL, &kernel_evt));
 
-    // copies buffer to CPU
-    if (GPU_ASYNC_COPY &&  ((seismo_current+1) != nlength_seismogram) && (it != NSTEP) && (it != it_end) ) {
-      // waits until kernel is finished before starting async memcpy
-      clCheck (clFinish (mocl.command_queue));
-
-      if (mp->has_last_copy_evt) {
-        clCheck (clReleaseEvent (mp->last_copy_evt));
-      }
-      clCheck (clEnqueueReadBuffer (mocl.copy_queue, mp->d_seismograms.ocl, CL_FALSE, 0,
-                                    size_buffer, seismograms + 3*mp->nrec_local*seismo_current, 1, &kernel_evt, &mp->last_copy_evt));
-      mp->has_last_copy_evt = 1;
-    } else {
-      // blocking copy
-      clCheck (clEnqueueReadBuffer (mocl.command_queue, mp->d_seismograms.ocl, CL_TRUE, 0,
-                                    size_buffer , seismograms + 3*mp->nrec_local*seismo_current, 0, NULL, NULL));
+    // copies array to CPU host
+    if (seismo_current == nlength_seismogram - 1 || it == it_end){
+      // intermediate copies could be made asynchronous,
+      // only the last copy would be a synchronous copy to make sure we have all previous copies done.
+      //
+      // however, note that asynchronous copies in the copy stream would also require pinned host memory.
+      // This is not use here yet for seismograms, thus the copy becomes blocking by default as well.
+      // we'll leave the if-case here as a todo for future...
+      //if (GPU_ASYNC_COPY && (it != it_end)) {
+      //  // waits until kernel is finished before starting async memcpy
+      //  clCheck (clFinish (mocl.command_queue));
+      //
+      //  if (mp->has_last_copy_evt) {
+      //    clCheck (clReleaseEvent (mp->last_copy_evt));
+      //  }
+      //  clCheck (clEnqueueReadBuffer (mocl.copy_queue, mp->d_seismograms.ocl, CL_FALSE, 0,
+      //                                size_buffer, seismograms, 1, &kernel_evt, &mp->last_copy_evt));
+      //  mp->has_last_copy_evt = 1;
+      //} else {
+        // blocking copy
+        clCheck (clEnqueueReadBuffer (mocl.command_queue, mp->d_seismograms.ocl, CL_TRUE, 0,
+                                      size_buffer , seismograms, 0, NULL, NULL));
+      //}
     }
 
     clReleaseEvent (kernel_evt);
@@ -133,17 +152,25 @@ void FC_FUNC_ (compute_seismograms_gpu,
                                                                       mp->d_nu.cuda,
                                                                       mp->d_ispec_selected_rec.cuda,
                                                                       mp->d_number_receiver_global.cuda,
-                                                                      scale_displ);
-    // copies buffer to CPU
-    if (GPU_ASYNC_COPY &&  ((seismo_current+1) != nlength_seismogram) && (it != NSTEP) && (it != it_end) ) {
-      // waits until kernel is finished before starting async memcpy
-      cudaStreamSynchronize(mp->compute_stream);
-      // copies buffer to CPU
-      cudaMemcpyAsync(seismograms + 3*mp->nrec_local*seismo_current,mp->d_seismograms.cuda,size_buffer,cudaMemcpyDeviceToHost,mp->copy_stream);
-    } else {
-      // synchronous copy
-      print_CUDA_error_if_any(cudaMemcpy(seismograms + 3*mp->nrec_local*seismo_current,mp->d_seismograms.cuda,size_buffer,
-                                         cudaMemcpyDeviceToHost),98000);
+                                                                      scale_displ,
+                                                                      seismo_current);
+    // copies array to CPU host
+    if (seismo_current == nlength_seismogram - 1 || it == it_end){
+      // intermediate copies could be made asynchronous,
+      // only the last copy would be a synchronous copy to make sure we have all previous copies done.
+      //
+      // however, note that asynchronous copies in the copy stream would also require pinned host memory.
+      // This is not use here yet for seismograms, thus the copy becomes blocking by default as well.
+      // we'll leave the if-case here as a todo for future...
+      //if (GPU_ASYNC_COPY &&  (it != it_end)) {
+      //  // waits until kernel is finished before starting async memcpy
+      //  cudaStreamSynchronize(mp->compute_stream);
+      //  // copies buffer to CPU
+      //  cudaMemcpyAsync(seismograms,mp->d_seismograms.cuda,size_buffer,cudaMemcpyDeviceToHost,mp->copy_stream);
+      //} else {
+        // synchronous copy
+        print_CUDA_error_if_any(cudaMemcpy(seismograms,mp->d_seismograms.cuda,size_buffer,cudaMemcpyDeviceToHost),98000);
+      //}
     }
   }
 #endif
@@ -162,17 +189,26 @@ void FC_FUNC_ (compute_seismograms_gpu,
                                                                     mp->d_nu.hip,
                                                                     mp->d_ispec_selected_rec.hip,
                                                                     mp->d_number_receiver_global.hip,
-                                                                    scale_displ);
-    // copies buffer to CPU
-    if (GPU_ASYNC_COPY &&  ((seismo_current+1) != nlength_seismogram) && (it != NSTEP) && (it != it_end) ) {
-      // waits until kernel is finished before starting async memcpy
-      hipStreamSynchronize(mp->compute_stream);
-      // copies buffer to CPU
-      hipMemcpyAsync(seismograms + 3*mp->nrec_local*seismo_current,mp->d_seismograms.hip,size_buffer,hipMemcpyDeviceToHost,mp->copy_stream);
-    } else {
-      // synchronous copy
-      print_HIP_error_if_any(hipMemcpy(seismograms + 3*mp->nrec_local*seismo_current,mp->d_seismograms.hip,size_buffer,
-                                       hipMemcpyDeviceToHost),98000);
+                                                                    scale_displ,
+                                                                    seismo_current);
+
+    // copies array to CPU host
+    if (seismo_current == nlength_seismogram - 1 || it == it_end){
+      // intermediate copies could be made asynchronous,
+      // only the last copy would be a synchronous copy to make sure we have all previous copies done.
+      //
+      // however, note that asynchronous copies in the copy stream would also require pinned host memory.
+      // This is not use here yet for seismograms, thus the copy becomes blocking by default as well.
+      // we'll leave the if-case here as a todo for future...
+      //if (GPU_ASYNC_COPY &&  (it != it_end)) {
+      //  // waits until kernel is finished before starting async memcpy
+      //  hipStreamSynchronize(mp->compute_stream);
+      //  // copies buffer to CPU
+      //  hipMemcpyAsync(seismograms,mp->d_seismograms.hip,size_buffer,hipMemcpyDeviceToHost,mp->copy_stream);
+      //} else {
+        // synchronous copy
+        print_HIP_error_if_any(hipMemcpy(seismograms,mp->d_seismograms.hip,size_buffer,hipMemcpyDeviceToHost),98000);
+      //}
     }
   }
 #endif

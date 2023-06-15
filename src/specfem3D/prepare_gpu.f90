@@ -101,6 +101,7 @@
                                 deltat, &
                                 GPU_ASYNC_COPY, &
                                 hxir_store,hetar_store,hgammar_store,nu_rec, &
+                                nlength_seismogram, &
                                 SAVE_SEISMOGRAMS_STRAIN,CUSTOM_REAL, &
                                 USE_LDDRK, &
                                 NSTEP,NSTAGE_TIME_SCHEME)
@@ -440,7 +441,7 @@
     implicit none
 
     ! local parameters
-    double precision :: memory_size
+    double precision :: memory_size,memory_size_max
     integer,parameter :: NGLL2 = NGLLSQUARE
     integer,parameter :: NGLL3 = 125
     integer,parameter :: NGLL3_PADDED = 128
@@ -482,7 +483,9 @@
     endif
 
     ! receivers
-    !d_number_receiver_global
+    ! d_seismograms
+    memory_size = memory_size + NDIM * nrec_local * nlength_seismogram * dble(CUSTOM_REAL)
+    ! d_number_receiver_global
     memory_size = memory_size + nrec_local * dble(SIZE_INTEGER)
     ! d_station_seismo_field
     memory_size = memory_size + NDIM * NGLL3 * nrec_local * dble(CUSTOM_REAL)
@@ -492,7 +495,6 @@
     endif
     ! d_ispec_selected_rec
     memory_size = memory_size + nrec * dble(SIZE_INTEGER)
-
     ! d_adj_source_adjoint
     memory_size = memory_size + NDIM *  nadj_rec_local * dble(CUSTOM_REAL)
 
@@ -679,10 +681,13 @@
     ! poor estimate for kernel simulations...
     if (SIMULATION_TYPE == 3) memory_size = 2.d0 * memory_size
 
+    ! main process gets maximum for user output
+    call max_all_dp(memory_size,memory_size_max)
+
     ! user output
     if (myrank == 0) then
       write(IMAIN,*)
-      write(IMAIN,*) "  minimum memory requested     : ",sngl(memory_size / 1024.d0 / 1024.d0),"MB per process"
+      write(IMAIN,*) "  minimum memory requested     : ",sngl(memory_size_max / 1024.d0 / 1024.d0),"MB per process"
       write(IMAIN,*)
       call flush_IMAIN()
     endif
@@ -756,7 +761,8 @@
               ! note: the LDDRK scheme updates displacement after the stiffness computations and
               !       after adding boundary/coupling/source terms.
               !       thus, at each time loop step it, displ(:) is still at (n) and not (n+1) like for the Newmark scheme
-              !       when entering this routine. we therefore at an additional -DT to have the corresponding timing for the source.
+              !       when entering this routine. we therefore at an additional -DT to have the corresponding timing
+              !       for the source.
               time_t = dble(it_tmp-1-1)*DT + dble(C_LDDRK(istage))*DT - t0
             else
               time_t = dble(it_tmp-1)*DT - t0
@@ -772,7 +778,8 @@
             stf_used = real(stf,kind=CUSTOM_REAL)
 
             ! stores local source time function
-            ! we use an ordering (isource,it,istage) to make it easier to loop over many local sources for a given time in the gpu kernel
+            ! we use an ordering (isource,it,istage) to make it easier to loop over many local sources
+            ! for a given time in the gpu kernel
             stf_local(isource_local,it_tmp,istage) = stf_used
           enddo ! istage
         enddo
@@ -804,7 +811,8 @@
                 ! note: the LDDRK scheme updates displacement after the stiffness computations and
                 !       after adding boundary/coupling/source terms.
                 !       thus, at each time loop step it, displ(:) is still at (n) and not (n+1) like for the Newmark scheme
-                !       when entering this routine. we therefore at an additional -DT to have the corresponding timing for the source.
+                !       when entering this routine. we therefore at an additional -DT to have the corresponding timing
+                !       for the source.
                 if (UNDO_ATTENUATION) then
                   ! stepping moves forward from snapshot position
                   time_t = dble(NSTEP-it_tmp-1)*DT + dble(C_LDDRK(istage))*DT - t0

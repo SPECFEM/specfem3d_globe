@@ -1303,9 +1303,9 @@ void synchronize_mpi ();
 double get_time_val ();
 
 // event timing
-void start_timing_gpu(gpu_event* start,gpu_event* stop);
-void stop_timing_gpu(gpu_event* start,gpu_event* stop, const char* info_str);
-void stop_timing_gpu(gpu_event* start,gpu_event* stop, const char* info_str,realw* t);
+void start_timing_gpu(gpu_event* start, gpu_event* stop);
+void stop_timing_gpu(gpu_event* start, gpu_event* stop, const char* info_str);
+void stop_timing_gpu_t(gpu_event* start, gpu_event* stop, const char* info_str, realw* t);
 
 // defined in check_fields_gpu.c
 void get_free_memory (double *free_db, double *used_db, double *total_db);

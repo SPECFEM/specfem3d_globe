@@ -219,8 +219,12 @@
   if (STEADY_STATE_KERNEL) then
     NSTEP_STEADY_STATE = nint(STEADY_STATE_LENGTH_IN_MINUTES * 60.d0 / DT)
 
+    ! checks length
     if (NSTEP_STEADY_STATE == 0) then
+      print *, '*****************************************************************'
       print *, 'Warning: STEADY_STATE_KERNEL disabled because STEADY_STATE_LENGTH_IN_MINUTES is zero'
+      print *, '*****************************************************************'
+      STEADY_STATE_KERNEL = .false.    ! not used any further, but doesn't hurt to reset flag to .false. ...
     endif
   else
     NSTEP_STEADY_STATE = 0

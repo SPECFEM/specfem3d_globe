@@ -230,8 +230,7 @@ void FC_FUNC_ (compute_seismograms_gpu,
                                          int* it_f,
                                          int* it_end_f,
                                          double* scale_displ_f,
-                                         int* nlength_seismogram_f,
-                                         int* NSTEP_f) {}
+                                         int* nlength_seismogram_f) {}
 
 
 //
@@ -285,6 +284,9 @@ void FC_FUNC_ (compute_strain_gpu,
 
 void FC_FUNC_ (pause_for_debug,
                PAUSE_FOR_DEBUG) () {}
+
+void FC_FUNC_ (gpu_synchronize,
+               GPU_SYNCHRONIZE) () {}
 
 void FC_FUNC_ (allocate_gpu_buffer,
                ALLOCATE_GPU_BUFFER) (realw** buffer_f, int* total_size) {}
@@ -365,6 +367,7 @@ void FC_FUNC_ (prepare_constants_device,
                                           realw *deltat_f,
                                           int *GPU_ASYNC_COPY_f,
                                           double * h_hxir_store,double * h_hetar_store,double * h_hgammar_store,double * h_nu,
+                                          int* nlength_seismogram,
                                           int *SAVE_SEISMOGRAMS_STRAIN_f,
                                           int *CUSTOM_REAL_f,
                                           int *USE_LDDRK_f,

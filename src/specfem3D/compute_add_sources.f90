@@ -51,7 +51,8 @@
     ! note: the LDDRK scheme updates displacement after the stiffness computations and
     !       after adding boundary/coupling/source terms.
     !       thus, at each time loop step it, displ(:) is still at (n) and not (n+1) like for the Newmark scheme
-    !       when entering this routine. we therefore at an additional -DT to have the corresponding timing for the source.
+    !       when entering this routine. we therefore at an additional -DT to have the corresponding timing
+    !       for the source.
     time_t = dble(it-1-1)*DT + dble(C_LDDRK(istage))*DT - t0
   else
     time_t = dble(it-1)*DT - t0
@@ -413,7 +414,8 @@
     ! note: the LDDRK scheme updates displacement after the stiffness computations and
     !       after adding boundary/coupling/source terms.
     !       thus, at each time loop step it, displ(:) is still at (n) and not (n+1) like for the Newmark scheme
-    !       when entering this routine. we therefore at an additional -DT to have the corresponding timing for the source.
+    !       when entering this routine. we therefore at an additional -DT to have the corresponding timing
+    !       for the source.
     if (UNDO_ATTENUATION) then
       ! stepping moves forward from snapshot position
       time_t = dble(NSTEP-it_tmp-1)*DT + dble(C_LDDRK(istage))*DT - t0

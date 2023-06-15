@@ -924,8 +924,18 @@ end module my_mpi
 !-------------------------------------------------------------------------------------------------
 !
 
-!  subroutine max_all_dp(sendbuf, recvbuf)
-!  end subroutine max_all_dp
+  subroutine max_all_dp(sendbuf, recvbuf)
+
+  use my_mpi
+
+  implicit none
+
+  double precision :: sendbuf, recvbuf
+  integer :: ier
+
+  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_DOUBLE_PRECISION,MPI_MAX,0,my_local_mpi_comm_world,ier)
+
+  end subroutine max_all_dp
 
 !
 !-------------------------------------------------------------------------------------------------

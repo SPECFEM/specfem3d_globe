@@ -491,7 +491,7 @@ void gpuCopy_from_device_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array,
 // copy with offset
 void gpuCopy_from_device_realw_offset (gpu_realw_mem *d_array_addr_ptr, realw *h_array, size_t size, size_t offset) {
 
-  TRACE ("gpuCopy_from_device_realw");
+  TRACE ("gpuCopy_from_device_realw_offset");
 
   // checks if anything to do
   if (size == 0){ return; }
@@ -515,7 +515,7 @@ void gpuCopy_from_device_realw_offset (gpu_realw_mem *d_array_addr_ptr, realw *h
   }
 #endif
 
-  GPU_ERROR_CHECKING ("gpuCopy_from_device_realw");
+  GPU_ERROR_CHECKING ("gpuCopy_from_device_realw_offset");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -1180,7 +1180,10 @@ void stop_timing_gpu(gpu_event* start,gpu_event* stop, const char* info_str) {
   printf("GPU_timing %s: Execution Time = %f ms\n",info_str,time);
 }
 
-void stop_timing_gpu(gpu_event* start,gpu_event* stop, const char* info_str, realw* t){
+// note: C doesn't allow for function overloading.
+//       thus, naming this routine slightly different, with `_t` added, as it returns back time t.
+
+void stop_timing_gpu_t(gpu_event* start,gpu_event* stop, const char* info_str, realw* t){
   realw time = 0;
   // stops events
 #ifdef USE_OPENCL
@@ -1359,6 +1362,22 @@ void FC_FUNC_ (pause_for_debug,
   TRACE ("pause_for_debug");
 
   pause_for_debugger (1);
+}
+
+/*----------------------------------------------------------------------------------------------- */
+
+// external function wrapper to synchronize GPU from Fortran routine
+
+extern EXTERN_LANG
+void FC_FUNC_ (gpu_synchronize,
+               GPU_SYNCHRONIZE) () {
+  TRACE ("gpu_synchronize");
+
+  // synchronize device kernels
+  gpuSynchronize();
+
+  // checks for previous errors
+  exit_on_gpu_error("gpuSynchronize");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
