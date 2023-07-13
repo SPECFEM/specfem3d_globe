@@ -17,7 +17,7 @@ This example is supposed to run with the Alaska EMC model:
 * Alaska.JointInversion-RF+Vph+HV-1.Berg.2020-nc4.nc
   https://ds.iris.edu/ds/products/emc-alaskajointinversion_rfvphhv-1berg2020/
 
-You will need to download the model file and rename it (or create a symbolic link), to be found as "DATA/IRIC_EMC/model.nc".
+You will need to download the model file and rename it (or create a symbolic link), to be found as "DATA/IRIS_EMC/model.nc".
 
 
 1. forward simulation:
