@@ -5,7 +5,7 @@
     <!--*** Solver information ***-->
     <attribute name="code_name"       path="/solver_info" value="SPECFEM3D_GLOBE" type="string"/>
     <attribute name="version_name"    path="/solver_info" value="TIGER"           type="string"/>
-    <attribute name="version_number"  path="/solver_info" value="8.0"             type="string"/>
+    <attribute name="version_number"  path="/solver_info" value="8.1"             type="string"/>
     <!--************************************************************-->
     <!--*** Values read from DATA/Par_file ***-->
     <!-- double precision variables -->

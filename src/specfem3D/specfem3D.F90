@@ -290,6 +290,10 @@
 ! Evolution of the code:
 ! ---------------------
 !
+! version 8.1, November 2023:
+!   Daniel Peter, Julien Thurin, Lucas Sawade.
+!      adds EMC model support; minor fixes and code improvements; updates ADIOS2 and LIBXSMM calls
+!
 ! version 8.0, March 2023:
 !   Wolfgang Bangerth, Stephen Beller, Ebru Bozdag, Caio Ciardelli, Congyue Cui, Armando Espindola-Carmona,
 !   Rene Gassmoeller, Sunny Gogar, Leopold Grinberg, Quancheng Huang, Elodie Kendall, Wenjie Lei,
