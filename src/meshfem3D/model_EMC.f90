@@ -76,7 +76,7 @@ module model_emc_par
   ! positive depth direction 1==up, 2==down
   integer :: EMC_dep_dir = 0
 
-  ! depth reference levle 1==earth surface, 2==sea level
+  ! depth reference level 1==earth surface, 2==sea level
   integer :: EMC_depth_reference_level = 0
 
   ! surface indices

@@ -10,7 +10,12 @@ The python script `blender_sphere.py` uses Blender's python module. To use the s
 ```
 export BLENDER_SYSTEM_PYTHON='/opt/local/Library/Frameworks/Python.framework/Versions/3.10/'
 ```
-For this to work, the python version must match the internal python version from Blender. In this example, Blender version 3.4.1 uses a python version 3.10.
+For this to work, the python version must match the internal python version from Blender. In this example, Blender version 3.6 uses a python version 3.10.
+
+Another option is to install matplotlib into the provided Blender python version. For example, on Mac this can be used:
+```
+/Applications/Blender.app/Contents/Resources/3.6/python/bin/python3.10 -m pip install matplotlib
+```
 
 
 ## Simulation setup
