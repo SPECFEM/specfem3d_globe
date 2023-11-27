@@ -40,25 +40,17 @@ the mesher and the solver.\newline
 For any particular earthquake, the \texttt{CMTSOLUTION} file that
 represents the point source may be obtained directly from the Global Centroid-Moment Tensor (CMT) \href{www.globalcmt.org}{web page}.
 It looks like this:
-
-\begin{lyxcode}
-{\small }%
 \begin{figure}[H]
-\noindent \begin{centering}
-{\small \includegraphics[width=1\textwidth]{figures/Denali_CMT.pdf} }
-\par\end{centering}{\small \par}
-
+\begin{center}
+\includegraphics[width=1\textwidth]{figures/Denali_CMT.pdf}
+\end{center}
 \caption{\texttt{CMTSOLUTION} file obtained from the Global CMT catalog. The
 top line is the initial estimate of the source, which is used as a
 starting point for the CMT solution. \textbf{M} is the moment tensor,
 $M_{0}${\small{} }is the seismic moment, and $M_{w}$ is the moment
 magnitude.}
-
-
 \label{fig:CMTSOLUTION-file}
 \end{figure}
-{\small \par}
-\end{lyxcode}
 The \texttt{CMTSOLUTION} should be edited in the following way:
 
 \begin{itemize}
