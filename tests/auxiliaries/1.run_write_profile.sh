@@ -123,7 +123,7 @@ do
   rm -rf OUTPUT_FILES/*
 
   # MODEL s362ani profile
-  ./bin/xwrite_profile 1 1 47.5 -22.0 >> $testdir/results.log 2>&1
+  mpirun -np 1 ./bin/xwrite_profile 1 1 47.5 -22.0 >> $testdir/results.log 2>&1
 
   # checks exit code
   if [[ $? -ne 0 ]]; then
@@ -140,6 +140,13 @@ do
     echo "setup failed, please check..." >> $testdir/results.log
     exit 1
   fi
+
+  # debug
+  echo ""
+  head -n 20 OUTPUT_FILES/CARDS_th0042_ph0338
+  echo ""
+  tail -n 20 OUTPUT_FILES/CARDS_th0042_ph0338
+  echo ""
 
   # test seismograms
   my_test >> $testdir/results.log

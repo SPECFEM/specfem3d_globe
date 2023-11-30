@@ -176,31 +176,60 @@ jobs:
         sudo echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
         sudo apt-get update
         echo ""
-        echo "packages intel oneapi:"
-        sudo apt-get install -y intel-oneapi-compiler-fortran intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic intel-oneapi-mpi intel-oneapi-mpi-devel
+        # info
+        #sudo -E apt-cache pkgnames intel | grep intel-oneapi
+        #echo ""
+        echo "installing packages intel oneapi:"
+        sudo apt-get install -y intel-oneapi-compiler-fortran-2023.2.2 intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic-2023.2.2 intel-oneapi-mpi intel-oneapi-mpi-devel
+        echo ""
 
     - name: compiler infos
       run: |
-        echo ""
         source /opt/intel/oneapi/setvars.sh
         echo ""
         echo "compiler versions:"
-        echo "icc --version"
-        icc --version
-        echo "ifort --version"
-        ifort --version
-        echo "mpiifort --version"
-        mpiifort --version
-        echo "mpif90 --version"
-        mpif90 --version
+        echo "icx --version"
+        which icx
+        icx --version
         echo ""
-        export TERM=xterm
-        echo "exports:"
-        export
+        echo "icc --version"
+        which icc
+        icc --version
+        echo ""
+        echo "ifx --version"
+        which ifx
+        ifx --version
+        echo ""
+        echo "ifort --version"
+        which ifort
+        ifort --version
+        echo ""
+        echo "mpiifort --version"
+        which mpiifort
+        mpiifort --version
+        echo ""
+        echo "mpif90 --version"
+        which mpif90
+        mpif90 --version
         echo ""
         which ifort
         which icc
         which mpiifort
+        echo ""
+        echo "replacing mpif90 with mpiifort link:"
+        sudo ln -sf $(which mpiifort) $(which mpif90)
+        mpif90 --version
+        echo ""
+        echo "mpirun:"
+        which mpirun
+        echo ""
+        export I_MPI_DEBUG=5,pid,host
+        export I_MPI_LIBRARY_KIND=debug
+        export TERM=xterm
+        # export info
+        echo "exports:"
+        export
+        echo ""
         echo ""
         printenv >> $GITHUB_ENV
         echo "CXX=icpc" >> $GITHUB_ENV
@@ -209,7 +238,8 @@ jobs:
         echo ""
 
     - name: configure debug
-      run: ./configure --enable-debug FC=ifort CC=icc MPIFC=mpiifort
+      run: |
+        ./configure --enable-debug FC=ifort CC=icc MPIFC=mpiifort
 
     - name: make debug
       run: |
@@ -218,7 +248,8 @@ jobs:
         make clean
 
     - name: configure
-      run: ./configure FC=ifort CC=icc MPIFC=mpiifort
+      run: |
+        ./configure FC=ifort CC=icc MPIFC=mpiifort
 
     - name: make
       run: |
@@ -226,8 +257,9 @@ jobs:
         make clean
 
     # fails due to MPI issue on virtual nodes
-    #- name: make tests
-    #  run: make tests
+    - name: make tests
+      run: |
+        make tests
 
   linuxTest_0:
     name: Test run example 0 - make tests

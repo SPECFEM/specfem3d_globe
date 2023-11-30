@@ -88,10 +88,10 @@ end module my_mpi
 
   ! initialize the MPI communicator and start the NPROCTOT MPI processes.
   call MPI_INIT(ier)
-  if (ier /= 0 ) stop 'Error initializing MPI'
+  if (ier /= 0) stop 'Error initializing MPI'
 
   call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
-  if (ier /= 0 ) stop 'Error getting MPI rank'
+  if (ier /= 0) stop 'Error getting MPI rank'
 
   ! we need to make sure that NUMBER_OF_SIMULTANEOUS_RUNS and BROADCAST_SAME_MESH_AND_MODEL are read before calling world_split()
   ! thus read the parameter file
@@ -210,7 +210,7 @@ end module my_mpi
 
   ! synchronizes MPI processes
   call MPI_BARRIER(my_local_mpi_comm_world, ier)
-  if (ier /= 0 ) stop 'Error synchronize MPI processes'
+  if (ier /= 0) stop 'Error synchronize MPI processes'
 
   end subroutine synchronize_all
 
@@ -231,7 +231,7 @@ end module my_mpi
 
   ! synchronizes MPI processes
   call MPI_BARRIER(comm,ier)
-  if (ier /= 0 ) stop 'Error synchronize MPI processes for specified communicator'
+  if (ier /= 0) stop 'Error synchronize MPI processes for specified communicator'
 
   end subroutine synchronize_all_comm
 
@@ -787,7 +787,7 @@ end module my_mpi
   send(:) = buffer(:)
 
   call MPI_ALLREDUCE(send, buffer, countval, MPI_INTEGER, MPI_MAX, my_local_mpi_comm_world, ier)
-  if (ier /= 0 ) stop 'Allreduce to get max values failed.'
+  if (ier /= 0) stop 'Allreduce to get max values failed.'
 
   end subroutine max_allreduce_i
 
@@ -1771,7 +1771,7 @@ end module my_mpi
   integer :: ier
 
   call MPI_COMM_SIZE(my_local_mpi_comm_world,sizeval,ier)
-  if (ier /= 0 ) stop 'Error getting MPI world size'
+  if (ier /= 0) stop 'Error getting MPI world size'
 
   end subroutine world_size
 
@@ -1792,7 +1792,7 @@ end module my_mpi
   integer :: ier
 
   call MPI_COMM_SIZE(comm,sizeval,ier)
-  if (ier /= 0 ) stop 'Error getting MPI world size'
+  if (ier /= 0) stop 'Error getting MPI world size'
 
   end subroutine world_size_comm
 
@@ -1812,7 +1812,7 @@ end module my_mpi
   integer :: ier
 
   call MPI_COMM_RANK(my_local_mpi_comm_world,rank,ier)
-  if (ier /= 0 ) stop 'Error getting MPI rank'
+  if (ier /= 0) stop 'Error getting MPI rank'
 
   end subroutine world_rank
 
@@ -1833,7 +1833,7 @@ end module my_mpi
   integer :: ier
 
   call MPI_COMM_RANK(comm,rank,ier)
-  if (ier /= 0 ) stop 'Error getting MPI rank'
+  if (ier /= 0) stop 'Error getting MPI rank'
 
   end subroutine world_rank_comm
 
@@ -1861,7 +1861,7 @@ end module my_mpi
   ! instead, a duplicate of a user-specified communicator should always be used."
 
   call MPI_COMM_DUP(my_local_mpi_comm_world,comm,ier)
-  if (ier /= 0 ) stop 'Error duplicating my_local_mpi_comm_world communicator'
+  if (ier /= 0) stop 'Error duplicating my_local_mpi_comm_world communicator'
 
   end subroutine world_duplicate
 
@@ -1930,7 +1930,7 @@ end module my_mpi
   integer :: ier
 
   call MPI_Comm_free(comm,ier)
-  if (ier /= 0 ) stop 'Error freeing MPI communicator'
+  if (ier /= 0) stop 'Error freeing MPI communicator'
 
   end subroutine world_comm_free
 
