@@ -20,8 +20,9 @@ my_test(){
   sed '/^[[:blank:]]*#.*$/d;s/#.//' tmp2.dat > tmpB.dat
   # joins file lines
   paste tmpA.dat tmpB.dat > tmp.dat;
+  head -n 20 tmp.dat
   # compare radius
-  awk 'BEGIN{val=0;}{if(index($0,"#") == 0){val+=($1 - $10)**2;}}END{print "L2 radius = ",val;if(val>0.01){print "failed",val;exit 1;}else{print "good";exit 0;}}' tmp.dat;
+  awk 'BEGIN{val=0;}{if(index($0,"#") == 0){val+=($1 - $10)**2;print $0," - val = ",val;}}END{print "L2 radius = ",val;if(val>0.01){print "failed",val;exit 1;}else{print "good";exit 0;}}' tmp.dat;
   if [[ $? -ne 0 ]]; then echo "error model: $model "; echo "comparison failed, please check..."; exit 1; fi
   # compare rho
   awk 'BEGIN{val=0;}{if(index($0,"#") == 0){val+=($2 - $11)**2;}}END{print "L2 rho = ",val;if(val>0.01){print "failed",val;exit 1;}else{print "good";exit 0;}}' tmp.dat;
