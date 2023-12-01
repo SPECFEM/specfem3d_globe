@@ -149,6 +149,9 @@
   ! depth increment
   double precision :: delta
 
+  ! tolerance in checks for equal (==) float values
+  double precision, parameter :: TOL_ZERO = 1.d-12
+
   character(len=MAX_STRING_LEN) :: outfile
   character(len=7) :: str_info
 
@@ -204,6 +207,17 @@
   icolat_end = COLAT_iend
   ilon_start = LON_istart
   ilon_end = LON_iend
+
+  ! initializes
+  iline = 0
+  iline_icb = -1
+  iline_cmb = -1
+  iline_moho = -1
+  iline_ocean = -1
+  rmax_last = 0.0d0
+  lat = 0.d0
+  lon = 0.d0
+  elevation = 0.d0
 
   ! checks program arguments
   count = command_argument_count()
@@ -410,12 +424,14 @@
 
         !  make sure that the Moho discontinuity is at the real moho
         if (CRUSTAL) then
-          if (rmin == RMOHO_FICTITIOUS_IN_MESHER/R_PLANET) rmin = 1.0d0 - moho
-          if (rmax == RMOHO_FICTITIOUS_IN_MESHER/R_PLANET) rmax = 1.0d0 - moho
+          ! checks rmin == RMOHO_FICTITIOUS_IN_MESHER/R_PLANET
+          if (abs(rmin - RMOHO_FICTITIOUS_IN_MESHER/R_PLANET) < TOL_ZERO) rmin = 1.0d0 - moho
+          ! checks rmax == RMOHO_FICTITIOUS_IN_MESHER/R_PLANET
+          if (abs(rmax - RMOHO_FICTITIOUS_IN_MESHER/R_PLANET) < TOL_ZERO) rmax = 1.0d0 - moho
           !print *,'rmin == moho at line ',iline
         endif
 
-        if (abs(rmin - rmax_last) < 1.d-9) then !!!! rmin == rmax_last: this means that we have just jumped between layers
+        if (abs(rmin - rmax_last) < TOL_ZERO) then !!!! rmin == rmax_last: this means that we have just jumped between layers
           ! depth increment
           ! write values every 10 km in the deep earth and every 1 km in the shallow earth
           if (rmin > ((R_PLANET/1000.d0)-DELTA_HIRES_DEPTH)/(R_PLANET/1000.d0)) then
@@ -430,7 +446,7 @@
           ! sets maximum radius without ocean for 1D models
           if (((.not. CRUSTAL) .and. (ROCEAN < R_PLANET)) .and. (.not. TOPOGRAPHY)) then
             ! stops at ocean depth and adds last ocean layers explicitly
-            if (rmax == 1.0d0) rmax = ROCEAN/R_PLANET
+            if (abs(rmax - 1.0d0) < TOL_ZERO) rmax = ROCEAN/R_PLANET      ! rmax == 1.d0
           endif
 
           ! backup to detect jump between layers
@@ -447,18 +463,18 @@
           do idep = 1,nit+1
             ! line counters
             ! inner core boundary
-            if (rmin == RICB/R_PLANET .and. idep == 1) iline_icb = iline
+            if (abs(rmin - RICB/R_PLANET) < TOL_ZERO .and. idep == 1) iline_icb = iline  ! rmin == RICB/R_PLANET
             ! core mantle boundary
-            if (rmin == RCMB/R_PLANET .and. idep == 1) iline_cmb = iline
+            if (abs(rmin - RCMB/R_PLANET) < TOL_ZERO .and. idep == 1) iline_cmb = iline  ! rmin == RCMB/R_PLANET
             ! moho
             if (CRUSTAL) then
               ! uses 3D crustal model (e.g. Crust2.0)
-              if (rmin == (1.0d0 - moho) .and. idep == 1) then
+              if (abs(rmin - (1.0d0 - moho)) < TOL_ZERO .and. idep == 1) then  ! rmin == (1.0d0 - moho)
                 iline_moho = iline
               endif
             else
               ! 1D crust from reference model
-              if (rmin == RMOHO/R_PLANET .and. idep == 1) iline_moho = iline
+              if (abs(rmin - RMOHO/R_PLANET) < TOL_ZERO .and. idep == 1) iline_moho = iline     ! rmin == RMOHO/R_PLANET
             endif
 
             ! radius
@@ -783,6 +799,9 @@
 
   ! local parameters
   double precision :: lat,lon
+
+  ! initializes
+  elevation = 0.d0
 
   ! topography elevation
   if (TOPOGRAPHY .or. OCEANS) then
