@@ -444,7 +444,7 @@
           ! number of iterations in increments of delta between rmin and rmax
           ! note: instead of (rmax - rmin), we add a factor (rmax * 0.999999 - rmin) to avoid getting an extra step
           !       in case the difference is an exact delta match, since we add +1 to nit to reach rmax
-          nit = floor((rmax*0.99999999d0 - rmin)/delta) + 1
+          nit = floor((rmax*0.9999999d0 - rmin)/delta) + 1
 
           ! debug
           !print *,'debug: write profile ilayer/iregion ',ilayer,iregion_code,'rmin/rmax',rmin,rmax,'delta',delta,'nit',nit
@@ -475,8 +475,8 @@
             ! make sure we are within the right shell in PREM to honor discontinuities
             ! use small geometrical tolerance
             r_prem = r
-            if (r <= rmin*1.000001d0) r_prem = rmin*1.000001d0
-            if (r >= rmax*0.999999d0) r_prem = rmax*0.999999d0
+            if (r < rmin*1.000001d0) r_prem = rmin*1.000001d0
+            if (r > rmax*0.999999d0) r_prem = rmax*0.999999d0
 
             ! gets model properties (similar to get_model() routine)
             call write_profile_model_values(r,r_prem,theta,phi,iregion_code,idoubling,rmin,rmax, &
