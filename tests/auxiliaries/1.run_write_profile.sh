@@ -28,7 +28,7 @@ my_test(){
   awk 'BEGIN{val=0;}{if(index($0,"#") == 0){val+=($2 - $11)**2;}}END{print "L2 rho = ",val;if(val>0.01){print "failed",val;exit 1;}else{print "good";exit 0;}}' tmp.dat;
   if [[ $? -ne 0 ]]; then echo "error model: $model "; echo "comparison failed, please check..."; exit 1; fi
   # compare vpv
-  awk 'BEGIN{val=0;}{if(index($0,"#") == 0){val+=($3 - $12)**2;}}END{print "L2 vpv = ",val;if(val>0.01){print "failed",val;exit 1;}else{print "good";exit 0;}}' tmp.dat;
+  awk 'BEGIN{val=0;}{if(index($0,"#") == 0){val+=($3 - $12)**2;print $0," - val = ",val;}}END{print "L2 vpv = ",val;if(val>0.01){print "failed",val;exit 1;}else{print "good";exit 0;}}' tmp.dat;
   if [[ $? -ne 0 ]]; then echo "error model: $model "; echo "comparison failed, please check..."; exit 1; fi
   # compare vsv
   awk 'BEGIN{val=0;}{if(index($0,"#") == 0){val+=($4 - $13)**2;}}END{print "L2 vsv = ",val;if(val>0.01){print "failed",val;exit 1;}else{print "good";exit 0;}}' tmp.dat;

@@ -90,8 +90,8 @@
 ! USER parameters
 
   ! initial position
-  double precision,parameter :: COLAT_0 = 1.0
-  double precision,parameter :: LON_0   = 1.0
+  double precision,parameter :: COLAT_0 = 1.d0
+  double precision,parameter :: LON_0   = 1.d0
 
   ! colatitude loop range (in degrees)
   integer,parameter :: COLAT_istart = 0  ! 0
@@ -208,17 +208,6 @@
   ilon_start = LON_istart
   ilon_end = LON_iend
 
-  ! initializes
-  iline = 0
-  iline_icb = -1
-  iline_cmb = -1
-  iline_moho = -1
-  iline_ocean = -1
-  rmax_last = 0.0d0
-  lat = 0.d0
-  lon = 0.d0
-  elevation = 0.d0
-
   ! checks program arguments
   count = command_argument_count()
   if (count == 0 .or. (count /= 2 .and. count /= 4)) call usage()
@@ -300,10 +289,10 @@
       phi_degrees   = initial_lon   + j*delta_lon ! longitude [0,360]
 
       ! checks limits
-      if (theta_degrees < 0.0) stop 'Error invalid colatitude < 0'
-      if (theta_degrees > 180.0) stop 'Error invalid colatitude > 180'
-      if (phi_degrees < 0.0) phi_degrees = phi_degrees + 360.d0
-      if (phi_degrees > 360.0) phi_degrees = phi_degrees - 360.d0
+      if (theta_degrees < 0.d0) stop 'Error invalid colatitude < 0'
+      if (theta_degrees > 180.d0) stop 'Error invalid colatitude > 180'
+      if (phi_degrees < 0.d0) phi_degrees = phi_degrees + 360.d0
+      if (phi_degrees > 360.d0) phi_degrees = phi_degrees - 360.d0
 
       ! loads corresponding GLL mesh
       if (MODEL_GLL) call load_GLL_mesh(theta_degrees,phi_degrees)
@@ -455,7 +444,7 @@
           ! number of iterations in increments of delta between rmin and rmax
           ! note: instead of (rmax - rmin), we add a factor (rmax * 0.999999 - rmin) to avoid getting an extra step
           !       in case the difference is an exact delta match, since we add +1 to nit to reach rmax
-          nit = floor((rmax*0.9999999 - rmin)/delta) + 1
+          nit = floor((rmax*0.99999999d0 - rmin)/delta) + 1
 
           ! debug
           !print *,'debug: write profile ilayer/iregion ',ilayer,iregion_code,'rmin/rmax',rmin,rmax,'delta',delta,'nit',nit
