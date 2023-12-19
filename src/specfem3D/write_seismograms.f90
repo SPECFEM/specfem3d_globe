@@ -40,7 +40,7 @@
     NTSTEP_BETWEEN_OUTPUT_SEISMOS,NTSTEP_BETWEEN_OUTPUT_SAMPLE, &
     do_save_seismograms, &
     WRITE_SEISMOGRAMS_BY_MAIN,OUTPUT_SEISMOS_ASDF, &
-    SAVE_SEISMOGRAMS_IN_ADJOINT_RUN,SAVE_SEISMOGRAMS_STRAIN, &
+    SAVE_SEISMOGRAMS_STRAIN, &
     moment_der,sloc_der,shdur_der,stshift_der, &
     scale_displ
 
@@ -173,7 +173,7 @@
       select case (SIMULATION_TYPE)
       case (1,3)
         ! forward/reconstructed wavefields
-        if (.not. ( SIMULATION_TYPE == 3 .and. (.not. SAVE_SEISMOGRAMS_IN_ADJOINT_RUN) ) ) &
+        if (do_save_seismograms) &
           call write_seismograms_to_file()
         if (SAVE_SEISMOGRAMS_STRAIN) &
           call write_seismograms_strain()
