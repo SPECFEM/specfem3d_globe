@@ -130,7 +130,7 @@ jobs:
       run: make tests
 
   linuxCheck:
-    name: Test on ${{ matrix.os }}    
+    name: Test on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     needs: changesCheck
 
@@ -147,7 +147,7 @@ jobs:
 
     - name: configure
       run: ./configure
-      
+
     - name: make
       run: make -j2 all
 
@@ -185,6 +185,7 @@ jobs:
 
     - name: compiler infos
       run: |
+        echo ""
         source /opt/intel/oneapi/setvars.sh
         echo ""
         echo "compiler versions:"
@@ -212,19 +213,25 @@ jobs:
         which mpif90
         mpif90 --version
         echo ""
+        # infos
         which ifort
         which icc
         which mpiifort
+        echo "mpirun:"
+        which mpirun
+        echo ""
+        # intel setup for running tests
         echo ""
         echo "replacing mpif90 with mpiifort link:"
         sudo ln -sf $(which mpiifort) $(which mpif90)
         mpif90 --version
         echo ""
-        echo "mpirun:"
-        which mpirun
-        echo ""
-        export I_MPI_DEBUG=5,pid,host
-        export I_MPI_LIBRARY_KIND=debug
+        # debug
+        #export I_MPI_DEBUG=5,pid,host
+        #export I_MPI_LIBRARY_KIND=debug
+        # remove -ftrapuv which leads to issues for running tests
+        sed -i "s/-ftrapuv//g" flags.guess
+        # environment setting
         export TERM=xterm
         # export info
         echo "exports:"
@@ -256,7 +263,7 @@ jobs:
         make -j2 all
         make clean
 
-    # fails due to MPI issue on virtual nodes
+    # note: fails with -ftrapuv flag due to MPI issue on virtual nodes
     - name: make tests
       run: |
         make tests
