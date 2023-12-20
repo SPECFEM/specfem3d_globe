@@ -1,6 +1,6 @@
 # Specfem3D Globe
 
-[![DOI](https://zenodo.org/badge/17524829.svg)](https://zenodo.org/badge/latestdoi/17524829)<br>
+[![DOI](https://zenodo.org/badge/17524829.svg)](https://zenodo.org/doi/10.5281/zenodo.7756943)
 
 SPECFEM3D_GLOBE simulates global and regional (continental-scale) seismic wave propagation.
 The program `xspecfem3D` from SPECFEM3D_GLOBE is a 3-D spectral-element solver for the Earth, Moon or Mars.
