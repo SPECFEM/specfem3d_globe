@@ -1247,9 +1247,6 @@
     do_save_seismograms = .true.
   endif
 
-  ! sets local receivers to zero if no seismogram needs to be saved
-  if (.not. do_save_seismograms) nrec_local = 0
-
   ! seismogram array length (to write out time portions of the full seismograms)
   nlength_seismogram = NTSTEP_BETWEEN_OUTPUT_SEISMOS / NTSTEP_BETWEEN_OUTPUT_SAMPLE
 

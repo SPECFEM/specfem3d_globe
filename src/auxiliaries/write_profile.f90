@@ -90,8 +90,8 @@
 ! USER parameters
 
   ! initial position
-  double precision,parameter :: COLAT_0 = 1.0
-  double precision,parameter :: LON_0   = 1.0
+  double precision,parameter :: COLAT_0 = 1.d0
+  double precision,parameter :: LON_0   = 1.d0
 
   ! colatitude loop range (in degrees)
   integer,parameter :: COLAT_istart = 0  ! 0
@@ -148,6 +148,9 @@
   double precision :: delta_lat,delta_lon
   ! depth increment
   double precision :: delta
+
+  ! tolerance in checks for equal (==) float values
+  double precision, parameter :: TOL_ZERO = 1.d-12
 
   character(len=MAX_STRING_LEN) :: outfile
   character(len=7) :: str_info
@@ -286,10 +289,10 @@
       phi_degrees   = initial_lon   + j*delta_lon ! longitude [0,360]
 
       ! checks limits
-      if (theta_degrees < 0.0) stop 'Error invalid colatitude < 0'
-      if (theta_degrees > 180.0) stop 'Error invalid colatitude > 180'
-      if (phi_degrees < 0.0) phi_degrees = phi_degrees + 360.d0
-      if (phi_degrees > 360.0) phi_degrees = phi_degrees - 360.d0
+      if (theta_degrees < 0.d0) stop 'Error invalid colatitude < 0'
+      if (theta_degrees > 180.d0) stop 'Error invalid colatitude > 180'
+      if (phi_degrees < 0.d0) phi_degrees = phi_degrees + 360.d0
+      if (phi_degrees > 360.d0) phi_degrees = phi_degrees - 360.d0
 
       ! loads corresponding GLL mesh
       if (MODEL_GLL) call load_GLL_mesh(theta_degrees,phi_degrees)
@@ -410,12 +413,14 @@
 
         !  make sure that the Moho discontinuity is at the real moho
         if (CRUSTAL) then
-          if (rmin == RMOHO_FICTITIOUS_IN_MESHER/R_PLANET) rmin = 1.0d0 - moho
-          if (rmax == RMOHO_FICTITIOUS_IN_MESHER/R_PLANET) rmax = 1.0d0 - moho
+          ! checks rmin == RMOHO_FICTITIOUS_IN_MESHER/R_PLANET
+          if (abs(rmin - RMOHO_FICTITIOUS_IN_MESHER/R_PLANET) < TOL_ZERO) rmin = 1.0d0 - moho
+          ! checks rmax == RMOHO_FICTITIOUS_IN_MESHER/R_PLANET
+          if (abs(rmax - RMOHO_FICTITIOUS_IN_MESHER/R_PLANET) < TOL_ZERO) rmax = 1.0d0 - moho
           !print *,'rmin == moho at line ',iline
         endif
 
-        if (abs(rmin - rmax_last) < 1.d-9) then !!!! rmin == rmax_last: this means that we have just jumped between layers
+        if (abs(rmin - rmax_last) < TOL_ZERO) then !!!! rmin == rmax_last: this means that we have just jumped between layers
           ! depth increment
           ! write values every 10 km in the deep earth and every 1 km in the shallow earth
           if (rmin > ((R_PLANET/1000.d0)-DELTA_HIRES_DEPTH)/(R_PLANET/1000.d0)) then
@@ -430,7 +435,7 @@
           ! sets maximum radius without ocean for 1D models
           if (((.not. CRUSTAL) .and. (ROCEAN < R_PLANET)) .and. (.not. TOPOGRAPHY)) then
             ! stops at ocean depth and adds last ocean layers explicitly
-            if (rmax == 1.0d0) rmax = ROCEAN/R_PLANET
+            if (abs(rmax - 1.0d0) < TOL_ZERO) rmax = ROCEAN/R_PLANET      ! rmax == 1.d0
           endif
 
           ! backup to detect jump between layers
@@ -439,7 +444,7 @@
           ! number of iterations in increments of delta between rmin and rmax
           ! note: instead of (rmax - rmin), we add a factor (rmax * 0.999999 - rmin) to avoid getting an extra step
           !       in case the difference is an exact delta match, since we add +1 to nit to reach rmax
-          nit = floor((rmax*0.9999999 - rmin)/delta) + 1
+          nit = floor((rmax*0.9999999d0 - rmin)/delta) + 1
 
           ! debug
           !print *,'debug: write profile ilayer/iregion ',ilayer,iregion_code,'rmin/rmax',rmin,rmax,'delta',delta,'nit',nit
@@ -447,18 +452,18 @@
           do idep = 1,nit+1
             ! line counters
             ! inner core boundary
-            if (rmin == RICB/R_PLANET .and. idep == 1) iline_icb = iline
+            if (abs(rmin - RICB/R_PLANET) < TOL_ZERO .and. idep == 1) iline_icb = iline  ! rmin == RICB/R_PLANET
             ! core mantle boundary
-            if (rmin == RCMB/R_PLANET .and. idep == 1) iline_cmb = iline
+            if (abs(rmin - RCMB/R_PLANET) < TOL_ZERO .and. idep == 1) iline_cmb = iline  ! rmin == RCMB/R_PLANET
             ! moho
             if (CRUSTAL) then
               ! uses 3D crustal model (e.g. Crust2.0)
-              if (rmin == (1.0d0 - moho) .and. idep == 1) then
+              if (abs(rmin - (1.0d0 - moho)) < TOL_ZERO .and. idep == 1) then  ! rmin == (1.0d0 - moho)
                 iline_moho = iline
               endif
             else
               ! 1D crust from reference model
-              if (rmin == RMOHO/R_PLANET .and. idep == 1) iline_moho = iline
+              if (abs(rmin - RMOHO/R_PLANET) < TOL_ZERO .and. idep == 1) iline_moho = iline     ! rmin == RMOHO/R_PLANET
             endif
 
             ! radius
@@ -470,8 +475,8 @@
             ! make sure we are within the right shell in PREM to honor discontinuities
             ! use small geometrical tolerance
             r_prem = r
-            if (r <= rmin*1.000001d0) r_prem = rmin*1.000001d0
-            if (r >= rmax*0.999999d0) r_prem = rmax*0.999999d0
+            if (r < rmin*1.000001d0) r_prem = rmin*1.000001d0
+            if (r > rmax*0.999999d0) r_prem = rmax*0.999999d0
 
             ! gets model properties (similar to get_model() routine)
             call write_profile_model_values(r,r_prem,theta,phi,iregion_code,idoubling,rmin,rmax, &
@@ -783,6 +788,9 @@
 
   ! local parameters
   double precision :: lat,lon
+
+  ! initializes
+  elevation = 0.d0
 
   ! topography elevation
   if (TOPOGRAPHY .or. OCEANS) then
