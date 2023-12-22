@@ -315,6 +315,18 @@ AM_CONDITIONAL([COND_CEM], [test x"$want_cem" != xno])
 AM_CONDITIONAL([COND_EMC], [test x"$want_emc" != xno])
 AM_CONDITIONAL([COND_NETCDF], [test x"$want_netcdf" != xno])
 
+###
+### PETSc support
+###
+
+AC_ARG_WITH([petsc],
+    [AS_HELP_STRING([--with-petsc],
+        [build PETSc enabled version @<:@default=no@:>@])],
+    [want_petsc="$withval"],
+    [want_petsc=no])
+AM_CONDITIONAL([COND_PETSC], [test x$"$want_petsc" != xno])
+
+
 ############################################################
 
 # Checks for programs.
@@ -756,7 +768,7 @@ AS_IF([test x"$want_netcdf" != xno], [
       AC_MSG_RESULT(yes)
     ], [
       AC_MSG_RESULT(no)
-      AC_MSG_ERROR([NetCDF module not found; is NetCDF built with Fortran support for this compiler?])
+      AC_MSG_ERROR([NetCDF module not found; is NetCDF built with Fortran support for this compiler? try setting NETCDF_INC.])
     ])
     AC_LANG_POP([Fortran])
     AC_SUBST([NETCDF_INCLUDES])
@@ -850,6 +862,86 @@ AS_IF([test x"$want_vtk" != xno], [
     CIT_PATH_VTK
     # Add optional libraries we need:
     VTK_LIBS="-lvtkRendering -lvtkGraphics $VTK_LIBS"
+])
+
+###
+### PETSC
+###
+AS_IF([test x"$want_petsc" != xno], [
+    AS_BOX([PETSc])
+    AC_MSG_NOTICE([PETSc is enabled])
+
+    AC_ARG_VAR(PETSC_INC, [PETSC include directory])
+    AC_ARG_VAR(PETSC_FCFLAGS, [Fortran compiler flags (PETSC specific flags)])
+    AC_ARG_VAR(PETSC_LIB, [extra library directory for linking programs with PETSC])
+
+    # test include & lib
+    AS_IF([test x"$PETSC_INC" != x],[
+        PETSC_FCFLAGS+=" -I$PETSC_INC"
+    ])
+    AS_IF([test x"$PETSC_LIB" != x],[
+        PETSC_LDFLAGS="-L$PETSC_LIB"
+    ])
+    PETSC_LIBS="-lpetsc"
+
+    # PETSC checking for Fortran compilation
+    AC_LANG_PUSH(Fortran)
+    FCFLAGS_save="$FCFLAGS"
+    LDFLAGS_save="$LDFLAGS"
+    LIBS_save="$LIBS"
+
+    # compilation test
+    AC_MSG_CHECKING([for PETSC modules])
+    if test "x$PETSC_FCFLAGS" != "x"; then
+      FCFLAGS="$PETSC_FCFLAGS $FCFLAGS"
+    fi
+    # we'll need PETSc's Krylov subspace method solver
+    AC_COMPILE_IFELSE([
+      AC_LANG_PROGRAM([], [[
+! PETSc's Krylov subspace method (KSP) solver
+#include "petsc/finclude/petscksp.h"
+  use petscksp
+      ]])
+    ], [
+      AC_MSG_RESULT(yes)
+    ], [
+      AC_MSG_RESULT(no)
+      AC_MSG_ERROR([PETSC module not found; is PETSC built with Fortran support for this compiler? try setting PETSC_INC.])
+    ])
+
+    # runs linking test
+    AC_MSG_CHECKING([PETSc linking with PetscInitialize in -lpetsc])
+    if test "x$PETSC_LDFLAGS" != "x"; then
+      LDFLAGS="$PETSC_LDFLAGS $LDFLAGS"
+    fi
+    LIBS="$PETSC_LIBS $LIBS"
+    AC_LINK_IFELSE([
+      AC_LANG_PROGRAM([], [[
+! PETSc's Krylov subspace method (KSP) solver
+#include "petsc/finclude/petscksp.h"
+  use petscksp
+  implicit none
+  PetscErrorCode :: ierr
+  call PetscInitialize(ierr)
+  call PetscFinalize(ierr)
+      ]])
+    ], [
+      AC_MSG_RESULT(yes)
+    ],[
+      AC_MSG_RESULT(no)
+      AC_MSG_ERROR([PETSc library linking failed; try setting PETSC_LIB.])
+    ])
+
+    # restore original flags
+    FCFLAGS="$FCFLAGS_save"
+    LDFLAGS="$LDFLAGS_save"
+    LIBS="$LIBS_save"
+    AC_LANG_POP([Fortran])
+
+    # export PETSC flags
+    AC_SUBST([PETSC_FCFLAGS])
+    AC_SUBST([PETSC_LDFLAGS])
+    AC_SUBST([PETSC_LIBS])
 ])
 
 ##

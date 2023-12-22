@@ -477,6 +477,20 @@ endif
 @COND_EMC_TRUE@FCFLAGS += ${FC_DEFINE}USE_EMC @EMC_FCFLAGS@
 @COND_EMC_TRUE@MPILIBS += @EMC_LIBS@
 
+#######################################
+####
+#### PETSc
+#### with configure: ./configure --with-petsc PETSC_FCFLAGS=.. PETSC_INC=.. PETSC_LIB=..
+####
+#######################################
+
+@COND_PETSC_TRUE@PETSC = yes
+@COND_PETSC_FALSE@PETSC = no
+
+# adds compiler flag
+@COND_PETSC_TRUE@FCFLAGS += @PETSC_FCFLAGS@ $(FC_DEFINE)USE_PETSC
+@COND_PETSC_TRUE@LDFLAGS += @PETSC_LDFLAGS@
+@COND_PETSC_TRUE@MPILIBS += @HIP_LDFLAGS@ @PETSC_LIBS@
 
 #######################################
 ## static compilation
