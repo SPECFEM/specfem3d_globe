@@ -604,6 +604,13 @@
       stop 'Please set SAVE_ALL_SEISMOS_IN_ONE_FILE and USE_BINARY_FOR_LARGE_FILE to be .false. for noise simulation'
   endif
 
+  ! gravity
+  ! makes sure to turn off full gravity flag if no gravity simulation selected
+  if (.not. GRAVITY) FULL_GRAVITY = .false.
+  ! safety stop
+  if (FULL_GRAVITY) &
+    stop 'FULL_GRAVITY is not fully implemented yet, please set it to .false.'
+
   ! gravity integrals
   ! in the case of GRAVITY_INTEGRALS we should always use double precision
   if (GRAVITY_INTEGRALS .and. CUSTOM_REAL /= SIZE_DOUBLE) &

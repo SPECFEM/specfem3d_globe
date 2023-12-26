@@ -547,6 +547,10 @@ SUBDIRS = \
 	tomography/postprocess_sensitivity_kernels \
 	$(EMPTY_MACRO)
 
+ifeq ($(PETSC), yes)
+	SUBDIRS += gindex3D
+endif
+
 #ifeq ($(HAS_GPU),yes)
 #  SUBDIRS := gpu $(SUBDIRS)
 #endif
@@ -583,6 +587,13 @@ endif
 #	xcombine_vol_data_vtk_adios2 \
 #	$(EMPTY_MACRO)
 #endif
+
+ifeq ($(PETSC), yes)
+DEFAULT += 	\
+	xgindex3D \
+	$(EMPTY_MACRO)
+endif
+
 
 all: default aux movies postprocess tomography
 
@@ -698,6 +709,11 @@ endif
 	@echo "for unit testing:"
 	@echo "    tests"
 	@echo ""
+ifeq ($(PETSC), yes)
+	@echo "for full-gravity simulations:"
+	@echo "    xgindex3D"
+	@echo ""
+endif
 
 .PHONY: all default clean realclean help tests
 

@@ -100,6 +100,9 @@
   logical :: ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS, &
              ATTENUATION
 
+  ! full gravity support
+  logical :: FULL_GRAVITY = .false.
+
   ! regional mesh cut-off
   logical :: REGIONAL_MESH_CUTOFF
   ! regional mesh cut-off depth (in km)

@@ -73,6 +73,10 @@ GRAVITY                         = .true.
 ROTATION                        = .true.
 ATTENUATION                     = .true.
 
+# full gravity calculation by solving Poisson's equation for gravity potential instead of using a Cowling approximation
+# (must have also GRAVITY flag set to .true. to become active)
+FULL_GRAVITY                    = .false.
+
 # record length in minutes
 RECORD_LENGTH_IN_MINUTES        = 5.0d0
 

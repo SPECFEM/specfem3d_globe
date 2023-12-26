@@ -154,6 +154,9 @@ module constants_solver
   logical :: GRAVITY_VAL
   logical :: OCEANS_VAL
 
+  ! full gravity support
+  logical :: FULL_GRAVITY_VAL
+
   logical :: ROTATION_VAL
   logical :: EXACT_MASS_MATRIX_FOR_ROTATION_VAL
   logical :: PARTIAL_PHYS_DISPERSION_ONLY_VAL

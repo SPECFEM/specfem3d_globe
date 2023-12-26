@@ -603,6 +603,9 @@
   write(IOUT) GRAVITY
   write(IOUT) OCEANS
 
+  ! full gravity support
+  write(IOUT) FULL_GRAVITY
+
   if (TOPOGRAPHY .or. OCEANS) then
     write(IOUT) NX_BATHY
     write(IOUT) NY_BATHY

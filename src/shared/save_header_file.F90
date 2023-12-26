@@ -66,8 +66,8 @@
 
   use shared_parameters, only: TOPOGRAPHY, &
     TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-    ELLIPTICITY,GRAVITY,ROTATION, &
-    OCEANS,ATTENUATION,ATTENUATION_3D, &
+    ELLIPTICITY,GRAVITY,FULL_GRAVITY,ROTATION,OCEANS, &
+    ATTENUATION,ATTENUATION_3D, &
     ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,NCHUNKS, &
     INCLUDE_CENTRAL_CUBE,CENTER_LONGITUDE_IN_DEGREES, &
     CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH, &
@@ -582,6 +582,13 @@
     write(IOUT,*) 'logical, parameter :: GRAVITY_VAL = .true.'
   else
     write(IOUT,*) 'logical, parameter :: GRAVITY_VAL = .false.'
+  endif
+  write(IOUT,*)
+
+  if (FULL_GRAVITY) then
+    write(IOUT,*) 'logical, parameter :: FULL_GRAVITY_VAL = .true.'
+  else
+    write(IOUT,*) 'logical, parameter :: FULL_GRAVITY_VAL = .false.'
   endif
   write(IOUT,*)
 

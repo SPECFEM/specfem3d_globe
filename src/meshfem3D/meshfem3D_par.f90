@@ -74,7 +74,9 @@
     THREE_D_MODEL_INNER_CORE_ISHII
 
   use shared_input_parameters, only: &
-    ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS, &
+    ELLIPTICITY, &
+    GRAVITY,FULL_GRAVITY, &
+    ROTATION,TOPOGRAPHY,OCEANS, &
     ATTENUATION,USE_FULL_TISO_MANTLE
 
   use shared_compute_parameters, only: &
@@ -88,6 +90,9 @@
     EMC_MODEL, &
     NX_BATHY,NY_BATHY, &
     R_PLANET,R_PLANET_KM,R_DEEPEST_CRUST,REGIONAL_MOHO_MESH
+
+  ! infinite elements
+  use constants, only: ADD_TRINF
 
   implicit none
 
