@@ -88,7 +88,7 @@
     call flush_IMAIN()
   endif
 
-!! DK DK for gravity integrals
+  ! for gravity integrals
   if (GRAVITY_INTEGRALS) call exit_MPI(myrank,'no need to run the solver to compute gravity integrals, only the mesher')
 
   if (myrank == 0) then
