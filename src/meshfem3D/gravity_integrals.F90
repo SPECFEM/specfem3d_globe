@@ -406,7 +406,7 @@
           y_meshpoint = ystore(i,j,k,ispec)
           z_meshpoint = zstore(i,j,k,ispec)
 
-!! DK DK for gravity integral calculations we may want to shift the reference frame to a pre-computed center of mass
+          ! for gravity integral calculations we may want to shift the reference frame to a pre-computed center of mass
           if (SHIFT_TO_THIS_CENTER_OF_MASS) then
             x_meshpoint = x_meshpoint - x_shift
             y_meshpoint = y_meshpoint - y_shift

@@ -844,10 +844,10 @@
   itypecorner(2,ichunk) = IUPPERUPPER
   itypecorner(3,ichunk) = IUPPERLOWER
 
-!! DK DK in the future, should also assemble second corner when NCHUNKS = 2
-!! DK DK for now we only assemble one corner for simplicity
-!! DK DK formally this is incorrect and should be changed in the future
-!! DK DK in practice this trick works fine
+!! todo: in the future, should also assemble second corner when NCHUNKS = 2
+!!       for now we only assemble one corner for simplicity
+!!       formally this is incorrect and should be changed in the future
+!!       in practice this trick works fine
 
   ! this only if more than 3 chunks
   if (NCHUNKS > 3) then

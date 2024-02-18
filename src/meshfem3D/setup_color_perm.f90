@@ -1098,11 +1098,11 @@
 !
 !  else
 !
-!    !! DK DK for regular C + MPI version for CPUs: do not use colors but nonetheless put all the outer elements
-!    !! DK DK first in order to be able to overlap non-blocking MPI communications with calculations
+!    ! for regular C + MPI version for CPUs: do not use colors but nonetheless put all the outer elements
+!    ! first in order to be able to overlap non-blocking MPI communications with calculations
 !
-!    !! DK DK nov 2010, for Rosa Badia / StarSs:
-!    !! no need for mesh coloring, but need to implement inner/outer subsets for non blocking MPI for StarSs
+!    ! nov 2010, for Rosa Badia / StarSs:
+!    ! no need for mesh coloring, but need to implement inner/outer subsets for non blocking MPI for StarSs
 !    ispec_counter = 0
 !    perm(:) = 0
 !
@@ -1150,7 +1150,7 @@
 !
 !    write(IOUT,*) 'integer, parameter :: NSPEC = ',nspec
 !    write(IOUT,*) 'integer, parameter :: NGLOB = ',nglob
-!    !!! DK DK use 1000 time steps only for the scaling tests
+!    ! use 1000 time steps only for the scaling tests
 !    write(IOUT,*) 'integer, parameter :: NSTEP = 1000 !!!!!!!!!!! ',nstep
 !    write(IOUT,*) 'real(kind=4), parameter :: deltat = ',DT
 !    write(IOUT,*)
@@ -1188,7 +1188,7 @@
 !    write(IOUT,*) '#define NSPEC ',nspec
 !    write(IOUT,*) '#define NGLOB ',nglob
 !    !!    write(IOUT,*) '#define NSTEP ',nstep
-!    !!! DK DK use 1000 time steps only for the scaling tests
+!    ! use 1000 time steps only for the scaling tests
 !    write(IOUT,*) '// #define NSTEP ',nstep
 !    write(IOUT,*) '#define NSTEP 1000'
 !    ! put an "f" at the end to force single precision

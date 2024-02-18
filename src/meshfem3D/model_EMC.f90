@@ -805,7 +805,7 @@ contains
         ! scaling relation: eq.(1)
         vp = fac1 + fac2 * vs + fac3 * vs_p2 + fac4 * vs_p3 + fac5 * vs_p4
 
-        ! Density
+        ! Vp
         EMC_vp(ix,iy,iz) = vp
       enddo
     enddo
@@ -1447,7 +1447,7 @@ end module model_emc_par
     EMC_rho_unit = 7 ! kg/m^3
   else if (EMC_rho_unit == 6) then
     ! converts to kg/m^3
-    ! rho [kg/m^3] = rho * 1000 [kg/cm^3]
+    ! rho [kg/m^3] = rho * 1000000 [kg/cm^3]
     EMC_rho(:,:,:) = EMC_rho(:,:,:) * 1.d6
     EMC_rho_unit = 7 ! kg/m^3
   endif

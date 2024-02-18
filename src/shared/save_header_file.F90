@@ -119,7 +119,7 @@
   integer :: num_elem_gc,num_gll_gc
   double precision :: avg_dist_deg,avg_dist_km,avg_element_size
 
-!! DK DK for UNDO_ATTENUATION
+  ! for UNDO_ATTENUATION
   integer :: saved_SIMULATION_TYPE
   integer :: number_of_dumpings_to_do
   double precision :: static_memory_size_GB,size_to_store_at_each_time_step,disk_size_of_each_dumping
@@ -791,7 +791,7 @@
   if (UNDO_ATTENUATION) then
     if (MEMORY_INSTALLED_PER_CORE_IN_GB < 0.1d0) &
          stop 'less than 100 MB per core for MEMORY_INSTALLED_PER_CORE_IN_GB does not seem realistic; exiting...'
-!! DK DK the value below will probably need to be increased one day, on future machines
+    ! the value below will probably need to be increased one day, on future machines
     if (MEMORY_INSTALLED_PER_CORE_IN_GB > 512.d0) &
          stop 'more than 512 GB per core for MEMORY_INSTALLED_PER_CORE_IN_GB does not seem realistic; exiting...'
 
@@ -799,8 +799,8 @@
          stop 'less than 50% for PERCENT_OF_MEM_TO_USE_PER_CORE does not seem realistic; exiting...'
     if (PERCENT_OF_MEM_TO_USE_PER_CORE > 100.d0) &
          stop 'more than 100% for PERCENT_OF_MEM_TO_USE_PER_CORE makes no sense; exiting...'
-!! DK DK will need to remove the .and. .not. GPU_MODE test here
-!! DK DK if the undo_attenuation buffers are stored on the GPU instead of on the host
+    ! will need to remove the .and. .not. GPU_MODE test here
+    ! if the undo_attenuation buffers are stored on the GPU instead of on the host
     if (PERCENT_OF_MEM_TO_USE_PER_CORE > 92.d0 .and. .not. GPU_MODE) &
          stop 'more than 92% for PERCENT_OF_MEM_TO_USE_PER_CORE when not using GPUs is risky; exiting...'
   endif
@@ -810,9 +810,9 @@
   ! convert static memory size to GB
   static_memory_size_GB = static_memory_size / 1024.d0 / 1024.d0 / 1024.d0
 
-!! DK DK June 2014: TODO  this comment is true but the statement is commented out for now
-!! DK DK June 2014: TODO  because there is no GPU support for UNDO_ATTENUATION yet
-!! DK DK June 2014:
+! June 2014: TODO  this comment is true but the statement is commented out for now
+! June 2014: TODO  because there is no GPU support for UNDO_ATTENUATION yet
+! June 2014:
 ! in the case of GPUs, the buffers remain on the host i.e. on the CPU, thus static_memory_size_GB could be set to zero here
 ! because the solver uses almost no permanent host memory, since all calculations are performed and stored on the device;
 ! however we prefer not to do that here because we probably have some temporary copies of all the arrays created on the host first,
@@ -901,7 +901,7 @@
   ! convert to GB
   disk_size_of_each_dumping = disk_size_of_each_dumping / 1024.d0 / 1024.d0 / 1024.d0
 
-!! DK DK this formula could be made more precise; currently in some cases it can probably be off by +1 or -1; does not matter much
+  ! this formula could be made more precise; currently in some cases it can probably be off by +1 or -1; does not matter much
   number_of_dumpings_to_do = ceiling( dble(NSTEP)/dble(NT_DUMP_ATTENUATION_optimal) )
 
   end subroutine compute_optimized_dumping

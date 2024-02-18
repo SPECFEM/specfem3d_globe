@@ -779,9 +779,9 @@ end module my_mpi
   integer,dimension(countval) :: send
 
   ! seems not to be supported on all kind of MPI implementations...
-  !! DK DK: yes, I confirm, using MPI_IN_PLACE is tricky
-  !! DK DK (see the answer at http://stackoverflow.com/questions/17741574/in-place-mpi-reduce-crashes-with-openmpi
-  !! DK DK      for how to use it right)
+  !! Dimitri: yes, I confirm, using MPI_IN_PLACE is tricky
+  !! (see the answer at http://stackoverflow.com/questions/17741574/in-place-mpi-reduce-crashes-with-openmpi
+  !!  for how to use it right)
   !call MPI_ALLREDUCE(MPI_IN_PLACE, buffer, countval, MPI_INTEGER, MPI_MAX, my_local_mpi_comm_world, ier)
 
   send(:) = buffer(:)

@@ -1,6 +1,6 @@
 #! /bin/ksh
 
-### DK DK submit this with "mnsubmit name_of_script.ll"
+### submit this with "mnsubmit name_of_script.ll"
 
 #@ job_name = Specfem3D_MPI
 
@@ -24,7 +24,7 @@
 #@ features = mx 
 #####################################################################
 
-# DK DK this below OK in May 2009
+# this below OK in May 2009
 MPITRACE_HOME=/gpfs/apps/CEPBATOOLS/mpitrace-mx/64
 
 #environment

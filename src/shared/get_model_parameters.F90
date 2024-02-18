@@ -1309,7 +1309,7 @@
     RHO_BOTTOM_OC = 12168.6383 / RHOAV
 
   case (REFERENCE_MODEL_AK135F_NO_MUD)
-!! DK DK values below entirely checked and fixed by Dimitri Komatitsch in December 2012.
+    ! values below entirely checked and fixed by Dimitri Komatitsch in December 2012.
     ROCEAN = 6368000.d0
     RMIDDLE_CRUST = 6351000.d0
     RMOHO  = 6336000.d0         ! at 35km depth

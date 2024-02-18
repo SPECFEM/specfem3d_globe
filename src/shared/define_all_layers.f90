@@ -644,12 +644,12 @@
       ! the first region is the crust at the surface of the Earth
       ! the last region is in the inner core near the center of the Earth
 
-      !!!!!!!!!!! DK DK: beware, is there a bug when 3D crust crosses anisotropy in the mantle?
-      !!!!!!!!!!! DK DK: i.e. if there is no thick crust there, some elements above the Moho
-      !!!!!!!!!!! DK DK: should be anisotropic but anisotropy is currently only
-      !!!!!!!!!!! DK DK: stored between d220 and MOHO to save memory? Clarify this one day.
-      !!!!!!!!!!! DK DK: The Moho stretching and squishing that Jeroen added to V4.0
-      !!!!!!!!!!! DK DK: should partly deal with this problem.
+      ! TODO: Beware, is there a bug when 3D crust crosses anisotropy in the mantle?
+      !       i.e. if there is no thick crust there, some elements above the Moho
+      !       should be anisotropic but anisotropy is currently only
+      !       stored between d220 and MOHO to save memory? Clarify this one day.
+      !       The Moho stretching and squishing that Jeroen added to V4.0
+      !       should partly deal with this problem.
 
       r_top(1) = R_PLANET
       r_bottom(1) = RMOHO_FICTITIOUS_IN_MESHER
@@ -1364,12 +1364,12 @@
       ! the first region is the crust at the surface of the Earth
       ! the last region is in the inner core near the center of the Earth
 
-      !!!!!!!!!!! DK DK: beware, is there a bug when 3D crust crosses anisotropy in the mantle?
-      !!!!!!!!!!! DK DK: i.e. if there is no thick crust there, some elements above the Moho
-      !!!!!!!!!!! DK DK: should be anisotropic but anisotropy is currently only
-      !!!!!!!!!!! DK DK: stored between d220 and MOHO to save memory? Clarify this one day.
-      !!!!!!!!!!! DK DK: The Moho stretching and squishing that Jeroen added to V4.0
-      !!!!!!!!!!! DK DK: should partly deal with this problem.
+      ! TODO: Beware, is there a bug when 3D crust crosses anisotropy in the mantle?
+      !       i.e. if there is no thick crust there, some elements above the Moho
+      !       should be anisotropic but anisotropy is currently only
+      !       stored between d220 and MOHO to save memory? Clarify this one day.
+      !       The Moho stretching and squishing that Jeroen added to V4.0
+      !       should partly deal with this problem.
 
       r_top(1) = R_PLANET
       r_bottom(1) = RMOHO_FICTITIOUS_IN_MESHER

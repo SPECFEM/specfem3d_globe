@@ -345,7 +345,7 @@ ${E}/xspecfem3D: $(specfem3D_OBJECTS) $(specfem3D_SHARED_OBJECTS)
 	@echo ""
 
 ## use MPI here
-## DK DK add OpenMP compiler flag here if needed
+# add OpenMP compiler flag here if needed
 #	${MPIFCCOMPILE_CHECK} -qsmp=omp -o ${E}/xspecfem3D $(specfem3D_OBJECTS) $(specfem3D_SHARED_OBJECTS) $(LDFLAGS) $(MPILIBS) $(LIBS)
 
 	${FCLINK} -o $@ $+ $(SPECFEM_LINK_FLAGS)
@@ -396,7 +396,7 @@ $O/%.solverstatic.o: $S/%.F90 $O/shared_par.shared_module.o $O/specfem3D_par.sol
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.solverstatic_openmp.o: $S/%.f90 $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o
-## DK DK add OpenMP compiler flag here if needed
+# add OpenMP compiler flag here if needed
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -qsmp=omp -o $@ $<
 
 
