@@ -146,7 +146,8 @@ module model_emc_par
 
   character(len=16), parameter :: elevation_exp = 'elevation'
 
-  ! alternate string versions of latitude, longitude and depth for string comparison
+  ! key words
+  ! string versions of latitude, longitude and depth for string comparison
   ! Example of how to use this:
   !   if (any(latnames == 'latitude')) then
   !      print *, 'Found latitude'
@@ -157,7 +158,7 @@ module model_emc_par
   character(len=16), dimension(6), parameter :: depnames = (/ character(len=16) :: &
     'depth','dep','z','zdim','z_dim','z-dim' /)
 
-  ! alternate string versions of vp, vs and rho for string comparison
+  ! string versions of vp, vs and rho for string comparison
   ! Alaska model: defines vpfinal,vsfinal,rhofinal for final velocity model
   character(len=16), dimension(6), parameter :: vpnames = (/ character(len=16) :: &
   'vp','vpfinal','VP','vpvar','vp_var','vp-var' /)
@@ -165,6 +166,25 @@ module model_emc_par
   'vs','vsfinal','VS','vsvar','vs_var','vs-var' /)
   character(len=16), dimension(6), parameter :: rhonames = (/ character(len=16) :: &
   'rho','rhofinal','RHO','rhovar','rho_var','rho-var' /)
+
+  ! string versions of units
+  ! length
+  character(len=16), dimension(2), parameter :: unitnames_m = (/ character(len=16) :: &
+  'm','meter' /)
+  character(len=16), dimension(2), parameter :: unitnames_km = (/ character(len=16) :: &
+  'km','kilometer' /)
+  ! density
+  character(len=16), dimension(2), parameter :: unitnames_gcm = (/ character(len=16) :: &
+  'g.cm-3','g.cm-1' /)  ! Alaska file defines g.cm-1 which is likely an error as density should be g.cm-3
+  character(len=16), dimension(2), parameter :: unitnames_kgcm = (/ character(len=16) :: &
+  'kg.cm-3','kg.cm-1' /)
+  character(len=16), dimension(2), parameter :: unitnames_kgm = (/ character(len=16) :: &
+  'kg.m-3','kg.m-1' /)
+  ! velocity
+  character(len=16), dimension(4), parameter :: unitnames_velms = (/ character(len=16) :: &
+  'm.s-1','m/s','meter.s-1','meter/s' /)
+  character(len=16), dimension(4), parameter :: unitnames_velkms = (/ character(len=16) :: &
+  'km.s-1','km/s','kilometer.s-1','kilometer/s' /)
 
   ! verbosity (for debugging)
   logical, parameter :: VERBOSE = .false.
@@ -259,9 +279,12 @@ contains
   status = nf90_get_att(ncid, NF90_GLOBAL, 'geospatial_vertical_units', val_string)
   if (status == nf90_noerr) then
     ! units: 1==m, 2==km, 3==m/s, 4==km/s, 5==g/cm^3, 6==kg/cm^3, 7==kg/m^3
-    if (trim(val_string) == 'm' .or. trim(val_string) == 'meter') then
+    ! remove additional remarks on units, e.g., "km (bsl)"
+    if (index(val_string,"(") > 0) val_string = val_string(1:index(val_string,"(")-1)
+    ! determine unit
+    if (any(unitnames_m == trim(val_string))) then
       unit = 1
-    else if (trim(val_string) == 'km' .or. trim(val_string) == 'kilometer') then
+    else if (any(unitnames_km == trim(val_string))) then
       unit = 2
     else
       unit = 0
@@ -441,7 +464,7 @@ contains
   isdep = .false.
   varorderdims(:) = 0
 
-  if (VERBOSE) print *,'  vp dimension ordering: '
+  if (VERBOSE) print *,'  dimension ordering: '
 
   ! Get number of dimensions
   call check_status(nf90_inquire_variable(ncid, varid, ndims=varndim))
@@ -549,20 +572,24 @@ contains
         ! get attribute value
         call check_status(nf90_get_att(ncid, varid, name, value))
         if (VERBOSE) print *,'      unit: ',trim(value)
-        if (trim(value) == 'm' .or. trim(value) == 'meter') then
+
+        ! remove additional remarks on units, e.g., "km (bsl)"
+        if (index(value,"(") > 0) value = value(1:index(value,"(")-1)
+
+        ! determine unit
+        if (any(unitnames_m == trim(value))) then
           unit = 1
-        else if (trim(value) == 'km' .or. trim(value) == 'kilometer') then
+        else if (any(unitnames_km == trim(value))) then
           unit = 2
-        else if (trim(value) == 'm.s-1' .or. trim(value) == 'meter.s-1') then
+        else if (any(unitnames_velms == trim(value))) then
           unit = 3
-        else if (trim(value) == 'km.s-1' .or. trim(value) == 'kilometer.s-1') then
+        else if (any(unitnames_velkms == trim(value))) then
           unit = 4
-        else if (trim(value) == 'g.cm-3' .or. trim(value) == 'g.cm-1') then
-          ! Alaska file defines g.cm-1 which is likely an error as density should be g.cm-3
+        else if (any(unitnames_gcm == trim(value))) then
           unit = 5
-        else if (trim(value) == 'kg.cm-3' .or. trim(value) == 'kg.cm-1') then
+        else if (any(unitnames_kgcm == trim(value))) then
           unit = 6
-        else if (trim(value) == 'kg.m-3' .or. trim(value) == 'kg.m-1') then
+        else if (any(unitnames_kgm == trim(value))) then
           unit = 7
         else
           print *,'Error: unit ',trim(value),' is not recognized yet.'
@@ -1157,10 +1184,12 @@ end module model_emc_par
   ! lat
   EMC_regular_grid_lat = .true.
   EMC_dlat = (EMC_lat_max - EMC_lat_min) / (latlen-1)
+  if (EMC_lat(2) < EMC_lat(1)) EMC_dlat = - EMC_dlat ! flips direction
   dx0 = EMC_lat(2) - EMC_lat(1)
   do i = 2,latlen-1
     dx = EMC_lat(i+1) - EMC_lat(i)
-    if (abs(dx - dx0) > 1.e-2 * dx0 .and. abs(dx - EMC_dlat) > 1.e-2 * EMC_dlat) then
+    if (abs(dx - dx0) > abs(1.e-2 * dx0) .and. abs(dx - EMC_dlat) > abs(1.e-2 * EMC_dlat)) then
+      if (VERBOSE) print *,'  irrregular gridding: dlat ',EMC_dlat,' - dx,dx0 = ',dx,dx0
       EMC_regular_grid_lat = .false.
       exit
     endif
@@ -1169,10 +1198,12 @@ end module model_emc_par
   ! lon
   EMC_regular_grid_lon = .true.
   EMC_dlon = (EMC_lon_max - EMC_lon_min) / (lonlen-1)
+  if (EMC_lon(2) < EMC_lon(1)) EMC_dlon = - EMC_dlon ! flips direction
   dx0 = EMC_lon(2) - EMC_lon(1)
   do i = 2,lonlen-1
     dx = EMC_lon(i+1) - EMC_lon(i)
-    if (abs(dx - dx0) > 1.e-2 * dx0 .and. abs(dx - EMC_dlon) > 1.e-2 * EMC_dlon) then
+    if (abs(dx - dx0) > abs(1.e-2 * dx0) .and. abs(dx - EMC_dlon) > abs(1.e-2 * EMC_dlon)) then
+      if (VERBOSE) print *,'  irrregular gridding: dlon ',EMC_dlon,' - dx,dx0 = ',dx,dx0
       EMC_regular_grid_lon = .false.
       exit
     endif
@@ -1181,10 +1212,12 @@ end module model_emc_par
   ! depth
   EMC_regular_grid_dep = .true.
   EMC_ddep = (EMC_dep_max - EMC_dep_min) / (deplen-1)
+  if (EMC_dep(2) < EMC_dep(1)) EMC_ddep = - EMC_ddep ! flips direction
   dx0 = EMC_dep(2) - EMC_dep(1)
   do i = 2,deplen-1
     dx = EMC_dep(i+1) - EMC_dep(i)
-    if (abs(dx - dx0) > 1.e-2 * dx0 .and. abs(dx - EMC_ddep) > 1.e-2 * EMC_ddep) then
+    if (abs(dx - dx0) > abs(1.e-2 * dx0) .and. abs(dx - EMC_ddep) > abs(1.e-2 * EMC_ddep)) then
+      if (VERBOSE) print *,'  irrregular gridding: ddep ',EMC_ddep,' - dx,dx0 = ',dx,dx0
       EMC_regular_grid_dep = .false.
       exit
     endif
@@ -1193,17 +1226,17 @@ end module model_emc_par
 
   ! grid spacing
   if (EMC_regular_grid_lat) then
-    EMC_dlat = (EMC_lat_max - EMC_lat_min) / (latlen-1)
+    EMC_dlat = EMC_dlat
   else
     EMC_dlat = EMC_lat(2) - EMC_lat(1)
   endif
   if (EMC_regular_grid_lon) then
-    EMC_dlon = (EMC_lon_max - EMC_lon_min) / (lonlen-1)
+    EMC_dlon = EMC_dlon
   else
     EMC_dlon = EMC_lon(2) - EMC_lon(1)
   endif
   if (EMC_regular_grid_dep) then
-    EMC_ddep = (EMC_dep_max - EMC_dep_min) / (deplen-1)
+    EMC_ddep = EMC_ddep
   else
     EMC_ddep = EMC_dep(2) - EMC_dep(1)
   endif
@@ -1244,7 +1277,16 @@ end module model_emc_par
 
   ! model variables dimensions
   ! Check that the variable's dimensions are in the correct order
-  call check_dimorder(ncid, varid_vp, latid, lonid, depid, varorderdims)
+  if (varid_vp /= 0) then
+    call check_dimorder(ncid, varid_vp, latid, lonid, depid, varorderdims)
+  else if (varid_vs /= 0) then
+    call check_dimorder(ncid, varid_vs, latid, lonid, depid, varorderdims)
+  else if (varid_rho /= 0) then
+    call check_dimorder(ncid, varid_rho, latid, lonid, depid, varorderdims)
+  else
+    print *,'Error: no parameter vp, vs or rho found for checking array dimensions'
+    stop 'Error no model parameter vp, vs or rho found'
+  endif
 
   ! set dimension lengths
   dimlens(:) = 0
@@ -1598,9 +1640,7 @@ end module model_emc_par
   integer :: index_lat,index_lon,index_dep,index_surface
 
   ! positioning/interpolation
-  double precision :: interp_val
   double precision :: gamma_interp_x,gamma_interp_y,gamma_interp_z
-  double precision :: val1,val2,val3,val4,val5,val6,val7,val8
   integer :: ix,iy,iz,Nx,Ny,Nz
 
   ! elevation
@@ -1649,7 +1689,7 @@ end module model_emc_par
       ! depth of given radius (in km)
       r_depth = R_PLANET_KM * (1.0 - r)  ! radius is normalized between [0,1.x]
 
-      ! checks limit (mesh point cannot higher than EMC limit)
+      ! checks limit (mesh point cannot be higher than EMC limit)
       ! depth positive towards earth center
       if (r_depth < EMC_dep_min) r_depth = EMC_dep_min
     endif
@@ -1659,7 +1699,13 @@ end module model_emc_par
     ! depth relative to sea level and relative to earth surface is the same in this case
     r_depth = R_PLANET_KM * (1.0 - r)  ! radius is normalized between [0,1.x]
 
-    ! checks limit (mesh point cannot higher than EMC limit)
+    ! checks limit (mesh point cannot be higher than EMC limit)
+    !
+    ! note: this has also the effect that the EMC model velocities extend upwards, i.e., for EMC models that have been defined
+    !       only below a given depth, the velocities from the upper most depth will be extended up to the surface.
+    !       for example, the Ward (2018) model starts at a depth of 1 km down to a depth of 70 km. the velocities at 1 km depth
+    !       will be used for any shallower depths.
+    !
     ! depth positive towards earth center
     if (r_depth < EMC_dep_min) r_depth = EMC_dep_min
   endif
@@ -1700,15 +1746,15 @@ end module model_emc_par
   !   we add half of the gridding increments to the limits to avoid numerical artefacts,
   !   mostly for points very close to surface or borders.
   !   indexing below will take care of such points slightly beyond edges.
-  if (r_depth < (EMC_dep_min - 0.5*EMC_ddep) .or. r_depth > (EMC_dep_max + 0.5*EMC_ddep)) then
+  if (r_depth < (EMC_dep_min - 0.5*abs(EMC_ddep)) .or. r_depth > (EMC_dep_max + 0.5*abs(EMC_ddep))) then
     !if (myrank==0) print *,'debug: lat/lon/dep = ',lat,lon,r_depth,' dep min/max ',EMC_dep_min,EMC_dep_max
     return
   endif
-  if (lat < (EMC_lat_min - 0.5*EMC_dlat) .or. lat > (EMC_lat_max + 0.5*EMC_dlat)) then
+  if (lat < (EMC_lat_min - 0.5*abs(EMC_dlat)) .or. lat > (EMC_lat_max + 0.5*abs(EMC_dlat))) then
     !if (myrank==0) print *,'debug: lat/lon/dep = ',lat,lon,r_depth,' lat min/max ',EMC_lat_min,EMC_lat_max
     return
   endif
-  if (lon < (EMC_lon_min - 0.5*EMC_dlon) .or. lon > (EMC_lon_max + 0.5*EMC_dlon) ) then
+  if (lon < (EMC_lon_min - 0.5*abs(EMC_dlon)) .or. lon > (EMC_lon_max + 0.5*abs(EMC_dlon))) then
     !if (myrank==0) print *,'debug: lat/lon/dep = ',lat,lon,r_depth,' lon min/max ',EMC_lon_min,EMC_lon_max
     return
   endif
@@ -1717,7 +1763,7 @@ end module model_emc_par
   ! lat
   if (EMC_regular_grid_lat) then
     ! indexing starts at 1,..
-    index_lat = floor((lat - EMC_lat_min)/EMC_dlat) + 1
+    index_lat = floor((lat - EMC_lat(1))/EMC_dlat) + 1
   else
     ! gets index of value in EMC_lat closest to given lat
     index_lat = minloc(abs(EMC_lat(:) - lat),dim=1)
@@ -1733,7 +1779,7 @@ end module model_emc_par
   ! lon
   if (EMC_regular_grid_lon) then
     ! indexing starts at 1,..
-    index_lon = floor((lon - EMC_lon_min)/EMC_dlon) + 1
+    index_lon = floor((lon - EMC_lon(1))/EMC_dlon) + 1
   else
     ! gets index of value in EMC_lon closest to given lon
     index_lon = minloc(abs(EMC_lon(:) - lon),dim=1)
@@ -1749,7 +1795,7 @@ end module model_emc_par
   ! depth
   if (EMC_regular_grid_dep) then
     ! indexing starts at 1,..
-    index_dep = floor((r_depth - EMC_dep_min)/EMC_ddep) + 1
+    index_dep = floor((r_depth - EMC_dep(1))/EMC_ddep) + 1
   else
     ! gets index of value in EMC_dep closest to given dep
     index_dep = minloc(abs(EMC_dep(:) - r_depth),dim=1)
@@ -1773,19 +1819,37 @@ end module model_emc_par
     ! index of top solid surface
     index_surface = EMC_surface_index(index_lat,index_lon)
 
-    ! assumes that indexing moves down towards earth center, i.e., 1==top, .. ,deplen==bottom of mesh
-    if (index_dep < index_surface) then
-      ! limits to surface points
+    ! sets depth of solid surface
+    if (EMC_ddep > 0.0) then
+      ! assumes that indexing moves down towards earth center, i.e., 1==top, .. ,deplen==bottom of mesh
+      if (index_dep < index_surface) then
+        ! limits to surface points
 
-      !debug
-      !print *,'debug: lat/lon/dep = ',lat,lon,r_depth,'index lat/lon/dep = ',index_lat,index_lon,index_dep, &
-      !      'array value lat/lon/dep',EMC_lat(index_lat),EMC_lon(index_lon),EMC_dep(index_dep), &
-      !      'surface index',index_surface,'surface depth ',EMC_dep(index_surface)
+        !debug
+        !print *,'debug: lat/lon/dep = ',lat,lon,r_depth,'index lat/lon/dep = ',index_lat,index_lon,index_dep, &
+        !      'array value lat/lon/dep',EMC_lat(index_lat),EMC_lon(index_lon),EMC_dep(index_dep), &
+        !      'surface index',index_surface,'surface depth ',EMC_dep(index_surface)
 
-      ! sets index at solid surface
-      index_dep = index_surface
-      ! sets depth to surface depth for gamma factor below
-      r_depth = dble(EMC_dep(index_dep))
+        ! sets index at solid surface
+        index_dep = index_surface
+        ! sets depth to surface depth for gamma factor below
+        r_depth = dble(EMC_dep(index_dep))
+      endif
+    else
+      ! assumes that indexing moves up towards earth surface, i.e., 1==bottom, .. ,deplen==top of mesh
+      if (index_dep > index_surface) then
+        ! limits to surface points
+
+        !debug
+        !print *,'debug: lat/lon/dep = ',lat,lon,r_depth,'index lat/lon/dep = ',index_lat,index_lon,index_dep, &
+        !      'array value lat/lon/dep',EMC_lat(index_lat),EMC_lon(index_lon),EMC_dep(index_dep), &
+        !      'surface index',index_surface,'surface depth ',EMC_dep(index_surface)
+
+        ! sets index at solid surface
+        index_dep = index_surface
+        ! sets depth to surface depth for gamma factor below
+        r_depth = dble(EMC_dep(index_dep))
+      endif
     endif
   endif
 
@@ -1910,103 +1974,16 @@ end module model_emc_par
   rho_iso = rho_iso * RHOAV                         ! to kg/m3
 
   ! model vp
-  val1 = EMC_vp(ix  ,iy  ,iz  )
-  val2 = EMC_vp(ix+1,iy  ,iz  )
-  val3 = EMC_vp(ix+1,iy+1,iz  )
-  val4 = EMC_vp(ix  ,iy+1,iz  )
-  val5 = EMC_vp(ix  ,iy  ,iz+1)
-  val6 = EMC_vp(ix+1,iy  ,iz+1)
-  val7 = EMC_vp(ix+1,iy+1,iz+1)
-  val8 = EMC_vp(ix  ,iy+1,iz+1)
-
-  if (EMC_mask(ix  ,iy  ,iz  )) val1 = vp_iso  ! takes input vp (coming from background model PREM)
-  if (EMC_mask(ix+1,iy  ,iz  )) val2 = vp_iso
-  if (EMC_mask(ix+1,iy+1,iz  )) val3 = vp_iso
-  if (EMC_mask(ix  ,iy+1,iz  )) val4 = vp_iso
-  if (EMC_mask(ix  ,iy  ,iz+1)) val5 = vp_iso
-  if (EMC_mask(ix+1,iy  ,iz+1)) val6 = vp_iso
-  if (EMC_mask(ix+1,iy+1,iz+1)) val7 = vp_iso
-  if (EMC_mask(ix  ,iy+1,iz+1)) val8 = vp_iso
-
-  ! interpolation rule
-  ! use trilinear interpolation in cell to define perturbation value
-  interp_val =  &
-       val1 * (1.d0-gamma_interp_x) * (1.d0-gamma_interp_y) * (1.d0-gamma_interp_z) + &
-       val2 * gamma_interp_x        * (1.d0-gamma_interp_y) * (1.d0-gamma_interp_z) + &
-       val3 * gamma_interp_x        * gamma_interp_y        * (1.d0-gamma_interp_z) + &
-       val4 * (1.d0-gamma_interp_x) * gamma_interp_y        * (1.d0-gamma_interp_z) + &
-       val5 * (1.d0-gamma_interp_x) * (1.d0-gamma_interp_y) * gamma_interp_z + &
-       val6 * gamma_interp_x        * (1.d0-gamma_interp_y) * gamma_interp_z + &
-       val7 * gamma_interp_x        * gamma_interp_y        * gamma_interp_z + &
-       val8 * (1.d0-gamma_interp_x) * gamma_interp_y        * gamma_interp_z
   ! stores interpolated value
-  vpl = interp_val
+  vpl = interpolate_trilinear(EMC_vp,vp_iso,ix,iy,iz,gamma_interp_x,gamma_interp_y,gamma_interp_z)
 
   ! model vs
-  val1 = EMC_vs(ix  ,iy  ,iz  )
-  val2 = EMC_vs(ix+1,iy  ,iz  )
-  val3 = EMC_vs(ix+1,iy+1,iz  )
-  val4 = EMC_vs(ix  ,iy+1,iz  )
-  val5 = EMC_vs(ix  ,iy  ,iz+1)
-  val6 = EMC_vs(ix+1,iy  ,iz+1)
-  val7 = EMC_vs(ix+1,iy+1,iz+1)
-  val8 = EMC_vs(ix  ,iy+1,iz+1)
-
-  if (EMC_mask(ix  ,iy  ,iz  )) val1 = vs_iso  ! takes input vs (coming from background model PREM)
-  if (EMC_mask(ix+1,iy  ,iz  )) val2 = vs_iso
-  if (EMC_mask(ix+1,iy+1,iz  )) val3 = vs_iso
-  if (EMC_mask(ix  ,iy+1,iz  )) val4 = vs_iso
-  if (EMC_mask(ix  ,iy  ,iz+1)) val5 = vs_iso
-  if (EMC_mask(ix+1,iy  ,iz+1)) val6 = vs_iso
-  if (EMC_mask(ix+1,iy+1,iz+1)) val7 = vs_iso
-  if (EMC_mask(ix  ,iy+1,iz+1)) val8 = vs_iso
-
-  ! interpolation rule
-  ! use trilinear interpolation in cell to define perturbation value
-  interp_val =  &
-       val1 * (1.d0-gamma_interp_x) * (1.d0-gamma_interp_y) * (1.d0-gamma_interp_z) + &
-       val2 * gamma_interp_x        * (1.d0-gamma_interp_y) * (1.d0-gamma_interp_z) + &
-       val3 * gamma_interp_x        * gamma_interp_y        * (1.d0-gamma_interp_z) + &
-       val4 * (1.d0-gamma_interp_x) * gamma_interp_y        * (1.d0-gamma_interp_z) + &
-       val5 * (1.d0-gamma_interp_x) * (1.d0-gamma_interp_y) * gamma_interp_z + &
-       val6 * gamma_interp_x        * (1.d0-gamma_interp_y) * gamma_interp_z + &
-       val7 * gamma_interp_x        * gamma_interp_y        * gamma_interp_z + &
-       val8 * (1.d0-gamma_interp_x) * gamma_interp_y        * gamma_interp_z
   ! stores interpolated value
-  vsl = interp_val
+  vsl = interpolate_trilinear(EMC_vs,vs_iso,ix,iy,iz,gamma_interp_x,gamma_interp_y,gamma_interp_z)
 
   ! model rho
-  val1 = EMC_rho(ix  ,iy  ,iz  )
-  val2 = EMC_rho(ix+1,iy  ,iz  )
-  val3 = EMC_rho(ix+1,iy+1,iz  )
-  val4 = EMC_rho(ix  ,iy+1,iz  )
-  val5 = EMC_rho(ix  ,iy  ,iz+1)
-  val6 = EMC_rho(ix+1,iy  ,iz+1)
-  val7 = EMC_rho(ix+1,iy+1,iz+1)
-  val8 = EMC_rho(ix  ,iy+1,iz+1)
-
-  if (EMC_mask(ix  ,iy  ,iz  )) val1 = rho_iso  ! takes input rho (coming from background model PREM)
-  if (EMC_mask(ix+1,iy  ,iz  )) val2 = rho_iso
-  if (EMC_mask(ix+1,iy+1,iz  )) val3 = rho_iso
-  if (EMC_mask(ix  ,iy+1,iz  )) val4 = rho_iso
-  if (EMC_mask(ix  ,iy  ,iz+1)) val5 = rho_iso
-  if (EMC_mask(ix+1,iy  ,iz+1)) val6 = rho_iso
-  if (EMC_mask(ix+1,iy+1,iz+1)) val7 = rho_iso
-  if (EMC_mask(ix  ,iy+1,iz+1)) val8 = rho_iso
-
-  ! interpolation rule
-  ! use trilinear interpolation in cell to define perturbation value
-  interp_val =  &
-       val1 * (1.d0-gamma_interp_x) * (1.d0-gamma_interp_y) * (1.d0-gamma_interp_z) + &
-       val2 * gamma_interp_x        * (1.d0-gamma_interp_y) * (1.d0-gamma_interp_z) + &
-       val3 * gamma_interp_x        * gamma_interp_y        * (1.d0-gamma_interp_z) + &
-       val4 * (1.d0-gamma_interp_x) * gamma_interp_y        * (1.d0-gamma_interp_z) + &
-       val5 * (1.d0-gamma_interp_x) * (1.d0-gamma_interp_y) * gamma_interp_z + &
-       val6 * gamma_interp_x        * (1.d0-gamma_interp_y) * gamma_interp_z + &
-       val7 * gamma_interp_x        * gamma_interp_y        * gamma_interp_z + &
-       val8 * (1.d0-gamma_interp_x) * gamma_interp_y        * gamma_interp_z
   ! stores interpolated value
-  rhol = interp_val
+  rhol = interpolate_trilinear(EMC_rho,rho_iso,ix,iy,iz,gamma_interp_x,gamma_interp_y,gamma_interp_z)
 
   !debug
   !if (r_depth > 10.1 .and. r_depth < 15.1) &
@@ -2033,5 +2010,54 @@ end module model_emc_par
     eta_aniso = 1.d0
     rho = rhol
   endif
+
+contains
+
+  function interpolate_trilinear(EMC_par,EMC_par_iso,ix,iy,iz, &
+                                 gamma_interp_x,gamma_interp_y,gamma_interp_z) result (interp_val)
+
+  implicit none
+  real(kind=CUSTOM_REAL), dimension(Nx,Ny,Nz), intent(in) :: EMC_par
+  double precision, intent(in) :: EMC_par_iso
+  integer, intent(in) :: ix,iy,iz
+  double precision, intent(in) :: gamma_interp_x,gamma_interp_y,gamma_interp_z
+  ! return value
+  double precision :: interp_val
+
+  ! local variables
+  double precision :: val1,val2,val3,val4,val5,val6,val7,val8
+
+  ! model parameter (vp, vs or rho)
+  val1 = EMC_par(ix  ,iy  ,iz  )
+  val2 = EMC_par(ix+1,iy  ,iz  )
+  val3 = EMC_par(ix+1,iy+1,iz  )
+  val4 = EMC_par(ix  ,iy+1,iz  )
+  val5 = EMC_par(ix  ,iy  ,iz+1)
+  val6 = EMC_par(ix+1,iy  ,iz+1)
+  val7 = EMC_par(ix+1,iy+1,iz+1)
+  val8 = EMC_par(ix  ,iy+1,iz+1)
+
+  if (EMC_mask(ix  ,iy  ,iz  )) val1 = EMC_par_iso  ! takes input parameter (coming from background model PREM)
+  if (EMC_mask(ix+1,iy  ,iz  )) val2 = EMC_par_iso
+  if (EMC_mask(ix+1,iy+1,iz  )) val3 = EMC_par_iso
+  if (EMC_mask(ix  ,iy+1,iz  )) val4 = EMC_par_iso
+  if (EMC_mask(ix  ,iy  ,iz+1)) val5 = EMC_par_iso
+  if (EMC_mask(ix+1,iy  ,iz+1)) val6 = EMC_par_iso
+  if (EMC_mask(ix+1,iy+1,iz+1)) val7 = EMC_par_iso
+  if (EMC_mask(ix  ,iy+1,iz+1)) val8 = EMC_par_iso
+
+  ! interpolation rule
+  ! use trilinear interpolation in cell to define perturbation value
+  interp_val =  &
+       val1 * (1.d0-gamma_interp_x) * (1.d0-gamma_interp_y) * (1.d0-gamma_interp_z) + &
+       val2 * gamma_interp_x        * (1.d0-gamma_interp_y) * (1.d0-gamma_interp_z) + &
+       val3 * gamma_interp_x        * gamma_interp_y        * (1.d0-gamma_interp_z) + &
+       val4 * (1.d0-gamma_interp_x) * gamma_interp_y        * (1.d0-gamma_interp_z) + &
+       val5 * (1.d0-gamma_interp_x) * (1.d0-gamma_interp_y) * gamma_interp_z + &
+       val6 * gamma_interp_x        * (1.d0-gamma_interp_y) * gamma_interp_z + &
+       val7 * gamma_interp_x        * gamma_interp_y        * gamma_interp_z + &
+       val8 * (1.d0-gamma_interp_x) * gamma_interp_y        * gamma_interp_z
+
+  end function interpolate_trilinear
 
   end subroutine model_EMC_crustmantle

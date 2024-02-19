@@ -523,7 +523,7 @@
 
 contains
 
-  function distance(x1,x2,n) result(r)
+  function distance(x1,x2,n) result (r)
     implicit none
     integer,intent(in) :: n
     real(kind=CUSTOM_REAL),intent(in) :: x1(n),x2(n)
