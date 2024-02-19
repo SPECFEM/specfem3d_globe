@@ -125,6 +125,7 @@ meshfem3D_MESHER_OBJECTS = \
 	$O/setup_inner_outer.check.o \
 	$O/setup_model.check.o \
 	$O/setup_MPI_interfaces.check.o \
+	$O/SIEM_meshing.check.o \
 	$O/stretching_function.check.o \
 	$O/test_MPI_interfaces.check.o \
 	$O/write_AVS_DX_global_chunks_data.check.o \
@@ -145,6 +146,9 @@ meshfem3D_MODULES = \
 	$(FC_MODDIR)/mpi_crust_mantle_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/mpi_inner_core_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/mpi_outer_core_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/mpi_trinfinite_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/mpi_infinite_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/siem_meshfem_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_1066a_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_1dref_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_ak135_par.$(FC_MODEXT) \

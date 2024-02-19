@@ -29,8 +29,9 @@
   subroutine setup_inner_outer(iregion_code)
 
   use meshfem_par, only: &
-    myrank,OUTPUT_FILES,IMAIN, &
-    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE,MAX_STRING_LEN, &
+    myrank,OUTPUT_FILES,IMAIN,MAX_STRING_LEN, &
+    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
+    IREGION_TRINFINITE,IREGION_INFINITE, &
     NPROCTOT
 
   use meshfem_par, only: ibool,is_on_a_slice_edge,xstore_glob,ystore_glob,zstore_glob
@@ -38,6 +39,9 @@
   use MPI_crust_mantle_par
   use MPI_outer_core_par
   use MPI_inner_core_par
+
+  use MPI_trinfinite_par
+  use MPI_infinite_par
 
   implicit none
 
@@ -200,6 +204,98 @@
     if (DEBUG) then
       write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_innerouter_inner_core_proc',myrank
       call write_VTK_data_elem_l(NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
+                                xstore_glob,ystore_glob,zstore_glob, &
+                                ibool,is_on_a_slice_edge,filename)
+    endif
+
+  case (IREGION_TRINFINITE)
+    ! transition infinite region
+    if (NPROCTOT > 1) then
+      nspec_outer_trinfinite = count( is_on_a_slice_edge )
+    else
+      nspec_outer_trinfinite = 0
+    endif
+    nspec_inner_trinfinite = NSPEC_TRINFINITE - nspec_outer_trinfinite
+
+    num_phase_ispec_trinfinite = max(nspec_inner_trinfinite,nspec_outer_trinfinite)
+
+    allocate(phase_ispec_inner_trinfinite(num_phase_ispec_trinfinite,2),stat=ier)
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array phase_ispec_inner_trinfinite')
+
+    phase_ispec_inner_trinfinite(:,:) = 0
+    iinner = 0
+    iouter = 0
+    do ispec = 1,NSPEC_TRINFINITE
+      if (is_on_a_slice_edge(ispec) .and. NPROCTOT > 1) then
+        ! outer element
+        iouter = iouter + 1
+        phase_ispec_inner_trinfinite(iouter,1) = ispec
+      else
+        ! inner element
+        iinner = iinner + 1
+        phase_ispec_inner_trinfinite(iinner,2) = ispec
+      endif
+    enddo
+
+    ! user output
+    if (myrank == 0) then
+      percentage_edge = 100. * nspec_outer_trinfinite / real(NSPEC_TRINFINITE)
+      write(IMAIN,*) 'percentage of edge elements in transition infinite region ',percentage_edge,'%'
+      write(IMAIN,*) 'percentage of volume elements in transition infinite region ',100. - percentage_edge,'%'
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
+
+    ! debug: saves element flags
+    if (DEBUG) then
+      write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_innerouter_trinfinite_proc',myrank
+      call write_VTK_data_elem_l(NSPEC_TRINFINITE,NGLOB_TRINFINITE, &
+                                xstore_glob,ystore_glob,zstore_glob, &
+                                ibool,is_on_a_slice_edge,filename)
+    endif
+
+  case (IREGION_INFINITE)
+    ! infinite region
+    if (NPROCTOT > 1) then
+      nspec_outer_infinite = count( is_on_a_slice_edge )
+    else
+      nspec_outer_infinite = 0
+    endif
+    nspec_inner_infinite = NSPEC_INFINITE - nspec_outer_infinite
+
+    num_phase_ispec_infinite = max(nspec_inner_infinite,nspec_outer_infinite)
+
+    allocate(phase_ispec_inner_infinite(num_phase_ispec_infinite,2),stat=ier)
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array phase_ispec_inner_infinite')
+
+    phase_ispec_inner_infinite(:,:) = 0
+    iinner = 0
+    iouter = 0
+    do ispec = 1,NSPEC_INFINITE
+      if (is_on_a_slice_edge(ispec) .and. NPROCTOT > 1) then
+        ! outer element
+        iouter = iouter + 1
+        phase_ispec_inner_infinite(iouter,1) = ispec
+      else
+        ! inner element
+        iinner = iinner + 1
+        phase_ispec_inner_infinite(iinner,2) = ispec
+      endif
+    enddo
+
+    ! user output
+    if (myrank == 0) then
+      percentage_edge = 100. * nspec_outer_infinite / real(NSPEC_INFINITE)
+      write(IMAIN,*) 'percentage of edge elements in infinite region ',percentage_edge,'%'
+      write(IMAIN,*) 'percentage of volume elements in infinite region ',100. - percentage_edge,'%'
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
+
+    ! debug: saves element flags
+    if (DEBUG) then
+      write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_innerouter_infinite_proc',myrank
+      call write_VTK_data_elem_l(NSPEC_INFINITE,NGLOB_INFINITE, &
                                 xstore_glob,ystore_glob,zstore_glob, &
                                 ibool,is_on_a_slice_edge,filename)
     endif

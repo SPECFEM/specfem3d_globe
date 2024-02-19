@@ -32,7 +32,10 @@
 
 ! create the different regions of the mesh
 
-  use constants, only: myrank,IREGION_CRUST_MANTLE,IREGION_INNER_CORE,IREGION_OUTER_CORE
+  use constants, only: myrank, &
+    IREGION_CRUST_MANTLE,IREGION_INNER_CORE,IREGION_OUTER_CORE, &
+    IREGION_TRINFINITE,IREGION_INFINITE, &
+    NLAYER_TRINF
 
   use shared_parameters, only: R_PLANET,ONE_CRUST
 
@@ -57,21 +60,30 @@
   call define_all_layers_number_and_offset(NUMBER_OF_MESH_LAYERS,layer_offset)
 
   ! define the first and last layers that define this region
-  if (iregion_code == IREGION_CRUST_MANTLE) then
+  select case(iregion_code)
+  case (IREGION_CRUST_MANTLE)
     ifirst_region = 1
     ilast_region = 10 + layer_offset
 
-  else if (iregion_code == IREGION_OUTER_CORE) then
+  case (IREGION_OUTER_CORE)
     ifirst_region = 11 + layer_offset
     ilast_region = NUMBER_OF_MESH_LAYERS - 1
 
-  else if (iregion_code == IREGION_INNER_CORE) then
+  case (IREGION_INNER_CORE)
     ifirst_region = NUMBER_OF_MESH_LAYERS
     ilast_region = NUMBER_OF_MESH_LAYERS
 
-  else
+  case (IREGION_TRINFINITE)
+    ifirst_region = 1
+    ilast_region = NLAYER_TRINF
+
+  case (IREGION_INFINITE)
+    ifirst_region = 1
+    ilast_region = 1          ! single layer
+
+  case default
     call exit_MPI(myrank,'incorrect region code detected')
-  endif
+  end select
 
   ! to consider anisotropic elements first and to build the mesh from the bottom to the top of the region
   ! note: in older versions, we assumed to have anisotropic elements at the beginning of ibool(..),etc. arrays

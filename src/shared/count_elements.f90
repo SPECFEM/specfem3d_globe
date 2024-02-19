@@ -31,44 +31,54 @@
                             NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
                             NSPEC1D_RADIAL, &
                             NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
-                            doubling,tmp_sum,tmp_sum_xi,tmp_sum_eta, &
-                            NUMBER_OF_MESH_LAYERS,layer_offset,nspec2D_xi_sb,nspec2D_eta_sb, &
-                            nb_lay_sb, nspec_sb, nglob_surf, &
-                            CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, INCLUDE_CENTRAL_CUBE, &
-                            last_doubling_layer, &
-                            DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA, &
-                            tmp_sum_nglob2D_xi, tmp_sum_nglob2D_eta,divider,nglob_edges_h, &
-                            nglob_edge_v,to_remove)
+                            NUMBER_OF_MESH_LAYERS,layer_offset, &
+                            CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,INCLUDE_CENTRAL_CUBE, &
+                            last_doubling_layer)
 
   use constants
   use shared_parameters, only: ner_mesh_layers,ratio_sampling_array,this_region_has_a_doubling, &
+    DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA, &
     REGIONAL_MESH_CUTOFF
 
   implicit none
 
   ! parameters to be computed based upon parameters above read from file
-  integer :: NPROC,NEX_XI,NEX_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube
+  integer, intent(in) :: NPROC,NEX_XI,NEX_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
+  integer, intent(out) :: ratio_divide_central_cube
 
-  integer, dimension(MAX_NUM_REGIONS) :: NSPEC_REGIONS,NSPEC2D_XI,NSPEC2D_ETA, &
+  integer, dimension(MAX_NUM_REGIONS),intent(out) :: NSPEC_REGIONS,NSPEC2D_XI,NSPEC2D_ETA, &
       NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
       NSPEC1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
 
-  integer ::  doubling, tmp_sum, tmp_sum_xi, tmp_sum_eta
-  integer ::  NUMBER_OF_MESH_LAYERS,layer_offset,nspec2D_xi_sb,nspec2D_eta_sb, &
-              nb_lay_sb, nspec_sb, nglob_surf
+  integer, intent(in) :: NUMBER_OF_MESH_LAYERS,layer_offset
 
   ! for the cut doublingbrick improvement
-  logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
-  logical :: INCLUDE_CENTRAL_CUBE
-  integer :: last_doubling_layer
-  integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
-  integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
-
-  integer :: tmp_sum_nglob2D_xi, tmp_sum_nglob2D_eta,divider,nglob_edges_h,nglob_edge_v,to_remove
+  logical, intent(in) :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
+  logical, intent(in) :: INCLUDE_CENTRAL_CUBE
+  integer, intent(in) :: last_doubling_layer
 
   ! local parameters
   integer :: ifirst_region, ilast_region, iter_region, iter_layer
   integer :: itop_layer,ibottom_layer
+  integer :: tmp_sum_nglob2D_xi,tmp_sum_nglob2D_eta
+  integer :: divider,nglob_edges_h,nglob_edge_v,to_remove
+  integer :: nspec2D_xi_sb,nspec2D_eta_sb,nb_lay_sb,nspec_sb,nglob_surf
+  integer :: doubling, tmp_sum, tmp_sum_xi, tmp_sum_eta
+
+  ! initializes
+  NSPEC_REGIONS(:) = 0
+
+  NSPEC2D_XI(:) = 0
+  NSPEC2D_ETA(:) = 0
+  NSPEC2D_BOTTOM(:) = 0
+  NSPEC2D_TOP(:) = 0
+  NSPEC2DMAX_XMIN_XMAX(:) = 0
+  NSPEC2DMAX_YMIN_YMAX(:) = 0
+
+  NSPEC1D_RADIAL(:) = 0
+
+  NGLOB2DMAX_XMIN_XMAX(:) = 0
+  NGLOB2DMAX_YMIN_YMAX(:) = 0
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!
@@ -411,6 +421,7 @@
     NSPEC_REGIONS(iter_region) = tmp_sum
   enddo
 
+  ! central cube
   if (INCLUDE_CENTRAL_CUBE) then
     NSPEC_REGIONS(IREGION_INNER_CORE) = NSPEC_REGIONS(IREGION_INNER_CORE) + &
          (NEX_PER_PROC_XI / ratio_divide_central_cube) * &

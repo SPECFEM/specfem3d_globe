@@ -45,11 +45,13 @@
 !
 
   use constants, only: &
-    IMAIN,IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE,CUSTOM_REAL, &
+    IMAIN,CUSTOM_REAL, &
+    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
+    IREGION_TRINFINITE,IREGION_INFINITE, &
     SAVE_BOUNDARY_MESH,SAVE_MESHFILES_AVS_DX_FORMAT
 
   use shared_parameters, only: &
-    R_CENTRAL_CUBE,RICB,RCMB
+    R_CENTRAL_CUBE,RICB,RCMB,RINF
 
   use meshfem_par, only: &
     myrank,nspec,nglob,iregion_code, &
@@ -60,6 +62,7 @@
     NCHUNKS,SAVE_MESH_FILES,ABSORBING_CONDITIONS,LOCAL_PATH, &
     ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_SOLVER_MESHFILES, &
     ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION,GRAVITY_INTEGRALS, &
+    FULL_GRAVITY, &
     NGLOB1D_RADIAL_CORNER, &
     NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
     volume_total,Earth_mass_total,Earth_center_of_mass_x_total,Earth_center_of_mass_y_total,Earth_center_of_mass_z_total
@@ -272,7 +275,7 @@
                                  NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
                                  xigll,yigll,zigll)
 
-!! DK DK for gravity integrals
+    ! for gravity integrals
     ! creation of the top observation surface if region is the crust_mantle
     if (GRAVITY_INTEGRALS) then
       if (iregion_code == IREGION_CRUST_MANTLE) call gravity_observation_surface()
@@ -377,6 +380,10 @@
         nglob_xy = nglob
       case (IREGION_INNER_CORE, IREGION_OUTER_CORE)
         nglob_xy = 1
+      case (IREGION_TRINFINITE, IREGION_INFINITE)
+        nglob_xy = 1
+      case default
+        call exit_mpi(myrank,'Invalid region code for nglob_xy')
       end select
     else
        nglob_xy = 1
@@ -388,6 +395,10 @@
          nglob_xy = nglob
       case (IREGION_OUTER_CORE)
          nglob_xy = 1
+      case (IREGION_TRINFINITE, IREGION_INFINITE)
+        nglob_xy = 1
+      case default
+        call exit_mpi(myrank,'Invalid region code for nglob_xy with EXACT_MASS_MATRIX_FOR_ROTATION')
       end select
     endif
 
@@ -436,7 +447,7 @@
     ! save the binary files
     call synchronize_all()
 
-!! DK DK for gravity integrals
+    ! for gravity integrals
     ! gravity integrals computation won't need mesh nor solver runs
     if (.not. GRAVITY_INTEGRALS) then
       if (myrank == 0) then
@@ -518,7 +529,7 @@
     call compute_volumes_and_areas(NCHUNKS,iregion_code,nspec,wxgll,wygll,wzgll, &
                                    xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
                                    NSPEC2D_BOTTOM,jacobian2D_bottom,NSPEC2D_TOP,jacobian2D_top,idoubling, &
-                                   volume_total,RCMB,RICB,R_CENTRAL_CUBE)
+                                   volume_total,RCMB,RICB,R_CENTRAL_CUBE,RINF)
 
     ! compute Earth mass of that part of the slice, and then total Earth mass
     call compute_Earth_mass(Earth_mass_total, &
@@ -526,7 +537,7 @@
                             nspec,wxgll,wygll,wzgll,xstore,ystore,zstore,xixstore,xiystore,xizstore, &
                             etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,rhostore,idoubling)
 
-!! DK DK for gravity integrals
+    ! for gravity integrals
     if (GRAVITY_INTEGRALS) then
       call synchronize_all()
       if (myrank == 0) then
@@ -546,6 +557,9 @@
     stop 'there cannot be more than two passes in mesh creation'
 
   end select  ! end of test if first or second pass
+
+  ! infinite region for full gravity support
+  if (FULL_GRAVITY) call SIEM_mesh_set_reference_arrays(iregion_code,ipass)
 
   ! synchronizes processes
   call synchronize_all()
@@ -933,10 +947,11 @@
   subroutine crm_setup_layers(ipass,NEX_PER_PROC_ETA)
 
   use constants, only: SUPPRESS_CRUSTAL_MESH, &
-    GAUSSALPHA,GAUSSBETA,NGLLX,NGLLY,NGLLZ,NGNOD
+    GAUSSALPHA,GAUSSBETA,NGLLX,NGLLY,NGLLZ,NGNOD, &
+    IREGION_CRUST_MANTLE,IREGION_TRINFINITE,IREGION_INFINITE
 
   use meshfem_par, only: &
-    iregion_code,IREGION_CRUST_MANTLE, &
+    iregion_code, &
     R670,RMOHO,R400,RMIDDLE_CRUST, &
     ner_mesh_layers,r_top,r_bottom, &
     CASE_3D
@@ -951,7 +966,7 @@
   implicit none
 
   integer,intent(in) :: ipass
-  integer :: NEX_PER_PROC_ETA
+  integer,intent(in) :: NEX_PER_PROC_ETA
 
   ! local parameters
   integer :: cpt
@@ -1012,7 +1027,7 @@
   endif
 
   ! to consider anisotropic elements first and to build the mesh from the bottom to the top of the region
-  allocate (perm_layer(ifirst_region:ilast_region),stat=ier)
+  allocate(perm_layer(ifirst_region:ilast_region),stat=ier)
   if (ier /= 0) stop 'Error in allocate 18'
   perm_layer = (/ (i, i=ilast_region,ifirst_region,-1) /)
 
@@ -1084,6 +1099,11 @@
       !(with stretch_tab( index_radius(1=top,2=bottom), index_layer( 1=first layer, 2=second layer, 3= ...) )
       RMIDDLE_CRUST = stretch_tab(2,1)
     endif
+  endif
+
+  ! SIEM meshing for full gravity support
+  if (iregion_code == IREGION_TRINFINITE .or. iregion_code == IREGION_TRINFINITE) then
+    call SIEM_mesh_setup_layers(ipass)
   endif
 
   end subroutine crm_setup_layers
@@ -1332,6 +1352,7 @@
 
   subroutine crm_free_MPI_arrays()
 
+  use constants, only: myrank
   use meshfem_par, only: iregion_code
 
   use MPI_interfaces_par
@@ -1339,6 +1360,9 @@
   use MPI_crust_mantle_par
   use MPI_outer_core_par
   use MPI_inner_core_par
+
+  use MPI_trinfinite_par
+  use MPI_infinite_par
 
   implicit none
 
@@ -1356,6 +1380,16 @@
     ! inner core
     deallocate(phase_ispec_inner_inner_core)
     deallocate(num_elem_colors_inner_core)
+  case (IREGION_TRINFINITE)
+    ! transition-to-infinite
+    deallocate(phase_ispec_inner_trinfinite)
+    deallocate(num_elem_colors_trinfinite)
+  case (IREGION_INFINITE)
+    ! infinite region
+    deallocate(phase_ispec_inner_infinite)
+    deallocate(num_elem_colors_infinite)
+  case default
+    call exit_mpi(myrank,'Invalid region code in crm_free_MPI_arrays')
   end select
 
   end subroutine crm_free_MPI_arrays

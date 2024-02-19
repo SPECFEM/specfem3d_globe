@@ -329,6 +329,7 @@
   use meshfem_par, only: &
     iregion_code,LOCAL_PATH, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
+    IREGION_TRINFINITE,IREGION_INFINITE, &
     ADIOS_FOR_MPI_ARRAYS
 
 !  use MPI_interfaces_par
@@ -336,6 +337,9 @@
   use MPI_crust_mantle_par
   use MPI_outer_core_par
   use MPI_inner_core_par
+
+  use MPI_infinite_par
+  use MPI_trinfinite_par
 
   implicit none
 
@@ -405,6 +409,51 @@
                             num_colors_outer_inner_core,num_colors_inner_inner_core, &
                             num_elem_colors_inner_core)
     endif
+
+  case (IREGION_TRINFINITE)
+    ! transition infinite
+    if (ADIOS_FOR_MPI_ARRAYS) then
+      call save_MPI_arrays_adios(IREGION_TRINFINITE,LOCAL_PATH, &
+                                  num_interfaces_trinfinite,max_nibool_interfaces_trinfinite, &
+                                  my_neighbors_trinfinite,nibool_interfaces_trinfinite, &
+                                  ibool_interfaces_trinfinite, &
+                                  nspec_inner_trinfinite,nspec_outer_trinfinite, &
+                                  num_phase_ispec_trinfinite,phase_ispec_inner_trinfinite, &
+                                  num_colors_outer_trinfinite,num_colors_inner_trinfinite, &
+                                  num_elem_colors_trinfinite)
+    else
+      call save_MPI_arrays(IREGION_TRINFINITE,LOCAL_PATH, &
+                            num_interfaces_trinfinite,max_nibool_interfaces_trinfinite, &
+                            my_neighbors_trinfinite,nibool_interfaces_trinfinite, &
+                            ibool_interfaces_trinfinite, &
+                            nspec_inner_trinfinite,nspec_outer_trinfinite, &
+                            num_phase_ispec_trinfinite,phase_ispec_inner_trinfinite, &
+                            num_colors_outer_trinfinite,num_colors_inner_trinfinite, &
+                            num_elem_colors_trinfinite)
+    endif
+
+  case (IREGION_INFINITE)
+    ! infinite region
+    if (ADIOS_FOR_MPI_ARRAYS) then
+      call save_MPI_arrays_adios(IREGION_INFINITE,LOCAL_PATH, &
+                                  num_interfaces_infinite,max_nibool_interfaces_infinite, &
+                                  my_neighbors_infinite,nibool_interfaces_infinite, &
+                                  ibool_interfaces_infinite, &
+                                  nspec_inner_infinite,nspec_outer_infinite, &
+                                  num_phase_ispec_infinite,phase_ispec_inner_infinite, &
+                                  num_colors_outer_infinite,num_colors_inner_infinite, &
+                                  num_elem_colors_infinite)
+    else
+      call save_MPI_arrays(IREGION_INFINITE,LOCAL_PATH, &
+                            num_interfaces_infinite,max_nibool_interfaces_infinite, &
+                            my_neighbors_infinite,nibool_interfaces_infinite, &
+                            ibool_interfaces_infinite, &
+                            nspec_inner_infinite,nspec_outer_infinite, &
+                            num_phase_ispec_infinite,phase_ispec_inner_infinite, &
+                            num_colors_outer_infinite,num_colors_inner_infinite, &
+                            num_elem_colors_infinite)
+    endif
+
   end select
 
   end subroutine save_arrays_solver_MPI
@@ -696,6 +745,23 @@
   write(IOUT) CENTER_LATITUDE_IN_DEGREES
   write(IOUT) CENTER_LONGITUDE_IN_DEGREES
   write(IOUT) GAMMA_ROTATION_AZIMUTH
+
+  ! additional transition/infinite regions
+  write(IOUT) NSPEC_REGIONS(IREGION_TRINFINITE)
+  write(IOUT) NSPEC_REGIONS(IREGION_INFINITE)
+
+  write(IOUT) NGLOB_REGIONS(IREGION_TRINFINITE)
+  write(IOUT) NGLOB_REGIONS(IREGION_INFINITE)
+
+  write(IOUT) NSPEC2DMAX_XMIN_XMAX(IREGION_TRINFINITE)
+  write(IOUT) NSPEC2DMAX_YMIN_YMAX(IREGION_TRINFINITE)
+  write(IOUT) NSPEC2D_BOTTOM(IREGION_TRINFINITE)
+  write(IOUT) NSPEC2D_TOP(IREGION_TRINFINITE)
+
+  write(IOUT) NSPEC2DMAX_XMIN_XMAX(IREGION_INFINITE)
+  write(IOUT) NSPEC2DMAX_YMIN_YMAX(IREGION_INFINITE)
+  write(IOUT) NSPEC2D_BOTTOM(IREGION_INFINITE)
+  write(IOUT) NSPEC2D_TOP(IREGION_INFINITE)
 
   close(IOUT)
 

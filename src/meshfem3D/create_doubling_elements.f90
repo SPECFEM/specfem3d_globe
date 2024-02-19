@@ -326,10 +326,10 @@
         endif
         ! zmax only
         if (ilayer == ifirst_region) then
-          iboun(6,ispec_loc)= iboun_sb(ispec_superbrick,6)
+          iboun(6,ispec_loc) = iboun_sb(ispec_superbrick,6)
         endif
         if (ilayer == ilast_region .and. iz_elem == 1) then
-          iboun(5,ispec_loc)= iboun_sb(ispec_superbrick,5)
+          iboun(5,ispec_loc) = iboun_sb(ispec_superbrick,5)
         endif
 
         ! define the doubling flag of this element

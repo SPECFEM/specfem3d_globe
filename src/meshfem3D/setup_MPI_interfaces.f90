@@ -37,6 +37,9 @@
   use MPI_outer_core_par
   use MPI_inner_core_par
 
+  use MPI_trinfinite_par
+  use MPI_infinite_par
+
   implicit none
 
   integer,intent(in):: iregion_code
@@ -84,6 +87,17 @@
     ! inner core
     call setup_MPI_interfaces_ic(MAX_NEIGHBORS,my_neighbors,nibool_neighbors, &
                                  max_nibool,ibool_neighbors)
+
+  case (IREGION_TRINFINITE)
+    ! transition infinite region
+    call setup_MPI_interfaces_trinf(MAX_NEIGHBORS,my_neighbors,nibool_neighbors, &
+                                    max_nibool,ibool_neighbors)
+
+  case (IREGION_INFINITE)
+    ! infinite region
+    call setup_MPI_interfaces_inf(MAX_NEIGHBORS,my_neighbors,nibool_neighbors, &
+                                  max_nibool,ibool_neighbors)
+
   end select
 
   ! frees temporary array
@@ -115,6 +129,18 @@
     deallocate(iboolleft_xi_inner_core,iboolright_xi_inner_core)
     deallocate(iboolleft_eta_inner_core,iboolright_eta_inner_core)
     deallocate(iboolfaces_inner_core)
+  case (IREGION_TRINFINITE)
+    ! transition infinite
+    deallocate(iboolcorner_trinfinite)
+    deallocate(iboolleft_xi_trinfinite,iboolright_xi_trinfinite)
+    deallocate(iboolleft_eta_trinfinite,iboolright_eta_trinfinite)
+    deallocate(iboolfaces_trinfinite)
+  case (IREGION_INFINITE)
+    ! infinite
+    deallocate(iboolcorner_infinite)
+    deallocate(iboolleft_xi_infinite,iboolright_xi_infinite)
+    deallocate(iboolleft_eta_infinite,iboolright_eta_infinite)
+    deallocate(iboolfaces_infinite)
   end select
 
   ! synchronizes MPI processes
@@ -216,16 +242,14 @@
 
   ! stores MPI interfaces information
   allocate(my_neighbors_crust_mantle(num_interfaces_crust_mantle), &
-           nibool_interfaces_crust_mantle(num_interfaces_crust_mantle), &
-           stat=ier)
+           nibool_interfaces_crust_mantle(num_interfaces_crust_mantle),stat=ier)
   if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array my_neighbors_crust_mantle etc.')
   my_neighbors_crust_mantle(:) = -1
   nibool_interfaces_crust_mantle(:) = 0
 
   ! copies interfaces arrays
   if (num_interfaces_crust_mantle > 0) then
-    allocate(ibool_interfaces_crust_mantle(max_nibool_interfaces_cm,num_interfaces_crust_mantle), &
-             stat=ier)
+    allocate(ibool_interfaces_crust_mantle(max_nibool_interfaces_cm,num_interfaces_crust_mantle),stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array ibool_interfaces_crust_mantle')
     ibool_interfaces_crust_mantle(:,:) = 0
 
@@ -360,16 +384,14 @@
 
   ! stores MPI interfaces information
   allocate(my_neighbors_outer_core(num_interfaces_outer_core), &
-          nibool_interfaces_outer_core(num_interfaces_outer_core), &
-          stat=ier)
+           nibool_interfaces_outer_core(num_interfaces_outer_core),stat=ier)
   if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array my_neighbors_outer_core etc.')
   my_neighbors_outer_core(:) = -1
   nibool_interfaces_outer_core(:) = 0
 
   ! copies interfaces arrays
   if (num_interfaces_outer_core > 0) then
-    allocate(ibool_interfaces_outer_core(max_nibool_interfaces_oc,num_interfaces_outer_core), &
-           stat=ier)
+    allocate(ibool_interfaces_outer_core(max_nibool_interfaces_oc,num_interfaces_outer_core),stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array ibool_interfaces_outer_core')
     ibool_interfaces_outer_core(:,:) = 0
 
@@ -566,16 +588,14 @@
 
   ! stores MPI interfaces information
   allocate(my_neighbors_inner_core(num_interfaces_inner_core), &
-          nibool_interfaces_inner_core(num_interfaces_inner_core), &
-          stat=ier)
+           nibool_interfaces_inner_core(num_interfaces_inner_core),stat=ier)
   if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array my_neighbors_inner_core etc.')
   my_neighbors_inner_core(:) = -1
   nibool_interfaces_inner_core(:) = 0
 
   ! copies interfaces arrays
   if (num_interfaces_inner_core > 0) then
-    allocate(ibool_interfaces_inner_core(max_nibool_interfaces_ic,num_interfaces_inner_core), &
-           stat=ier)
+    allocate(ibool_interfaces_inner_core(max_nibool_interfaces_ic,num_interfaces_inner_core),stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array ibool_interfaces_inner_core')
     ibool_interfaces_inner_core(:,:) = 0
 
@@ -614,4 +634,287 @@
   call test_MPI_ic()
 
   end subroutine setup_MPI_interfaces_ic
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine setup_MPI_interfaces_trinf(MAX_NEIGHBORS,my_neighbors,nibool_neighbors, &
+                                        max_nibool,ibool_neighbors)
+
+  use meshfem_par, only: &
+    myrank,iproc_xi,iproc_eta,ichunk,addressing,INCLUDE_CENTRAL_CUBE, &
+    NPROC_XI,NPROC_ETA,NPROCTOT, &
+    NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NCHUNKS, &
+    OUTPUT_FILES,IFLAG_IN_FICTITIOUS_CUBE,NGLLX,NGLLY,NGLLZ,MAX_STRING_LEN
+
+  use meshfem_par, only: ibool,is_on_a_slice_edge,xstore_glob,ystore_glob,zstore_glob
+
+  use MPI_interfaces_par
+  use MPI_trinfinite_par
+
+  implicit none
+
+  integer :: MAX_NEIGHBORS,max_nibool
+  integer, dimension(MAX_NEIGHBORS) :: my_neighbors,nibool_neighbors
+  integer, dimension(max_nibool,MAX_NEIGHBORS) :: ibool_neighbors
+
+  ! local parameters
+  ! temporary buffers for send and receive between faces of the slices and the chunks
+  real(kind=CUSTOM_REAL), dimension(npoin2D_max_all_CM_IC) :: &
+    buffer_send_faces_scalar,buffer_received_faces_scalar
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: test_flag
+  integer,dimension(:),allocatable :: dummy_i
+  integer :: i,ier
+  logical :: add_central_cube
+  !----------------------
+  ! debug file output
+  logical,parameter :: DEBUG = .false.
+  !----------------------
+  character(len=MAX_STRING_LEN) :: filename
+
+  ! sets up MPI interfaces
+  ! transition infinite region
+  if (myrank == 0 ) then
+    write(IMAIN,*) 'transition infinite MPI:'
+    call flush_IMAIN()
+  endif
+
+  if (NPROCTOT > 1 .and. NSPEC_TRINFINITE > 0) then
+    allocate(test_flag(NGLOB_TRINFINITE),stat=ier)
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating test_flag transition infinite')
+
+    ! sets flag to rank id (+1 to avoid problems with zero rank)
+    test_flag(:) = myrank + 1.0
+
+    ! assembles values
+    call assemble_MPI_scalar_block(test_flag,NGLOB_TRINFINITE, &
+                                   iproc_xi,iproc_eta,ichunk,addressing, &
+                                   iboolleft_xi_trinfinite,iboolright_xi_trinfinite, &
+                                   iboolleft_eta_trinfinite,iboolright_eta_trinfinite, &
+                                   npoin2D_faces_trinfinite,npoin2D_xi_trinfinite,npoin2D_eta_trinfinite, &
+                                   iboolfaces_trinfinite,iboolcorner_trinfinite, &
+                                   iprocfrom_faces,iprocto_faces,imsg_type, &
+                                   iproc_main_corners,iproc_worker1_corners,iproc_worker2_corners, &
+                                   buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
+                                   buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
+                                   NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
+                                   NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_TRINFINITE), &
+                                   NGLOB2DMAX_XMIN_XMAX(IREGION_TRINFINITE),NGLOB2DMAX_YMIN_YMAX(IREGION_TRINFINITE), &
+                                   NGLOB2DMAX_XY,NCHUNKS)
+
+    ! removes own myrank id (+1)
+    test_flag(:) = test_flag(:) - ( myrank + 1.0)
+
+    allocate(dummy_i(NSPEC_TRINFINITE),stat=ier)
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating dummy_i')
+    dummy_i(:) = 0
+    add_central_cube = .false.
+
+    ! determines neighbor rank for shared faces
+    call get_MPI_interfaces(myrank,NGLOB_TRINFINITE,NSPEC_TRINFINITE, &
+                            test_flag,my_neighbors,nibool_neighbors,ibool_neighbors, &
+                            num_interfaces_trinfinite,max_nibool_interfaces_trinfinite, &
+                            max_nibool,MAX_NEIGHBORS, &
+                            ibool,is_on_a_slice_edge, &
+                            IREGION_TRINFINITE,add_central_cube,dummy_i,INCLUDE_CENTRAL_CUBE, &
+                            xstore_glob,ystore_glob,zstore_glob,NPROCTOT)
+
+    deallocate(test_flag)
+    deallocate(dummy_i)
+  else
+    ! no interfaces
+    num_interfaces_trinfinite = 0
+  endif
+
+  ! stores MPI interfaces information
+  allocate(my_neighbors_trinfinite(num_interfaces_trinfinite), &
+           nibool_interfaces_trinfinite(num_interfaces_trinfinite),stat=ier)
+  if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array my_neighbors_trinfinite etc.')
+  my_neighbors_trinfinite(:) = -1
+  nibool_interfaces_trinfinite(:) = 0
+
+  ! copies interfaces arrays
+  if (num_interfaces_trinfinite > 0) then
+    allocate(ibool_interfaces_trinfinite(max_nibool_interfaces_trinfinite,num_interfaces_trinfinite),stat=ier)
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array ibool_interfaces_trinfinite')
+    ibool_interfaces_trinfinite(:,:) = 0
+
+    ! ranks of neighbor processes
+    my_neighbors_trinfinite(:) = my_neighbors(1:num_interfaces_trinfinite)
+    ! number of global ibool entries on each interface
+    nibool_interfaces_trinfinite(:) = nibool_neighbors(1:num_interfaces_trinfinite)
+    ! global iglob point ids on each interface
+    ibool_interfaces_trinfinite(:,:) = ibool_neighbors(1:max_nibool_interfaces_trinfinite,1:num_interfaces_trinfinite)
+  else
+    ! dummy allocation (Fortran90 should allow allocate statement with zero array size)
+    max_nibool_interfaces_trinfinite = 0
+    allocate(ibool_interfaces_trinfinite(0,0),stat=ier)
+  endif
+
+  ! debug: outputs MPI interface
+  if (DEBUG) then
+    do i = 1,num_interfaces_trinfinite
+      write(filename,'(a,i6.6,a,i2.2)') trim(OUTPUT_FILES)//'/MPI_points_trinfinite_proc',myrank, &
+                      '_',my_neighbors_trinfinite(i)
+      call write_VTK_data_points(NGLOB_TRINFINITE, &
+                        xstore_glob,ystore_glob,zstore_glob, &
+                        ibool_interfaces_trinfinite(1:nibool_interfaces_trinfinite(i),i), &
+                        nibool_interfaces_trinfinite(i),filename)
+    enddo
+    call synchronize_all()
+  endif
+
+  ! checks addressing
+  call test_MPI_neighbors(IREGION_TRINFINITE, &
+                          num_interfaces_trinfinite,max_nibool_interfaces_trinfinite, &
+                          my_neighbors_trinfinite,nibool_interfaces_trinfinite, &
+                          ibool_interfaces_trinfinite)
+
+  ! checks with assembly of test fields
+  call test_MPI_trinf()
+
+  end subroutine setup_MPI_interfaces_trinf
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine setup_MPI_interfaces_inf(MAX_NEIGHBORS,my_neighbors,nibool_neighbors, &
+                                      max_nibool,ibool_neighbors)
+
+  use meshfem_par, only: &
+    myrank,iproc_xi,iproc_eta,ichunk,addressing,INCLUDE_CENTRAL_CUBE, &
+    NPROC_XI,NPROC_ETA,NPROCTOT, &
+    NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NCHUNKS, &
+    OUTPUT_FILES,IFLAG_IN_FICTITIOUS_CUBE,NGLLX,NGLLY,NGLLZ,MAX_STRING_LEN
+
+  use meshfem_par, only: ibool,is_on_a_slice_edge,xstore_glob,ystore_glob,zstore_glob
+
+  use MPI_interfaces_par
+  use MPI_infinite_par
+
+  implicit none
+
+  integer :: MAX_NEIGHBORS,max_nibool
+  integer, dimension(MAX_NEIGHBORS) :: my_neighbors,nibool_neighbors
+  integer, dimension(max_nibool,MAX_NEIGHBORS) :: ibool_neighbors
+
+  ! local parameters
+  ! temporary buffers for send and receive between faces of the slices and the chunks
+  real(kind=CUSTOM_REAL), dimension(npoin2D_max_all_CM_IC) :: &
+    buffer_send_faces_scalar,buffer_received_faces_scalar
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: test_flag
+  integer,dimension(:),allocatable :: dummy_i
+  integer :: i,ier
+  logical :: add_central_cube
+  !----------------------
+  ! debug file output
+  logical,parameter :: DEBUG = .false.
+  !----------------------
+  character(len=MAX_STRING_LEN) :: filename
+
+  ! sets up MPI interfaces
+  ! transition infinite region
+  if (myrank == 0 ) then
+    write(IMAIN,*) 'transition infinite MPI:'
+    call flush_IMAIN()
+  endif
+
+  if (NPROCTOT > 1 .and. NSPEC_INFINITE > 0) then
+    allocate(test_flag(NGLOB_INFINITE),stat=ier)
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating test_flag infinite')
+
+    ! sets flag to rank id (+1 to avoid problems with zero rank)
+    test_flag(:) = myrank + 1.0
+
+    ! assembles values
+    call assemble_MPI_scalar_block(test_flag,NGLOB_INFINITE, &
+                                   iproc_xi,iproc_eta,ichunk,addressing, &
+                                   iboolleft_xi_infinite,iboolright_xi_infinite, &
+                                   iboolleft_eta_infinite,iboolright_eta_infinite, &
+                                   npoin2D_faces_infinite,npoin2D_xi_infinite,npoin2D_eta_infinite, &
+                                   iboolfaces_infinite,iboolcorner_infinite, &
+                                   iprocfrom_faces,iprocto_faces,imsg_type, &
+                                   iproc_main_corners,iproc_worker1_corners,iproc_worker2_corners, &
+                                   buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
+                                   buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
+                                   NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
+                                   NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_INFINITE), &
+                                   NGLOB2DMAX_XMIN_XMAX(IREGION_INFINITE),NGLOB2DMAX_YMIN_YMAX(IREGION_INFINITE), &
+                                   NGLOB2DMAX_XY,NCHUNKS)
+
+    ! removes own myrank id (+1)
+    test_flag(:) = test_flag(:) - ( myrank + 1.0)
+
+    allocate(dummy_i(NSPEC_INFINITE),stat=ier)
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating dummy_i')
+    dummy_i(:) = 0
+    add_central_cube = .false.
+
+    ! determines neighbor rank for shared faces
+    call get_MPI_interfaces(myrank,NGLOB_INFINITE,NSPEC_INFINITE, &
+                            test_flag,my_neighbors,nibool_neighbors,ibool_neighbors, &
+                            num_interfaces_infinite,max_nibool_interfaces_infinite, &
+                            max_nibool,MAX_NEIGHBORS, &
+                            ibool,is_on_a_slice_edge, &
+                            IREGION_INFINITE,add_central_cube,dummy_i,INCLUDE_CENTRAL_CUBE, &
+                            xstore_glob,ystore_glob,zstore_glob,NPROCTOT)
+
+    deallocate(test_flag)
+    deallocate(dummy_i)
+  else
+    ! no interfaces
+    num_interfaces_infinite = 0
+  endif
+
+  ! stores MPI interfaces information
+  allocate(my_neighbors_infinite(num_interfaces_infinite), &
+           nibool_interfaces_infinite(num_interfaces_infinite),stat=ier)
+  if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array my_neighbors_infinite etc.')
+  my_neighbors_infinite(:) = -1
+  nibool_interfaces_infinite(:) = 0
+
+  ! copies interfaces arrays
+  if (num_interfaces_infinite > 0) then
+    allocate(ibool_interfaces_infinite(max_nibool_interfaces_infinite,num_interfaces_infinite),stat=ier)
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array ibool_interfaces_infinite')
+    ibool_interfaces_infinite(:,:) = 0
+
+    ! ranks of neighbor processes
+    my_neighbors_infinite(:) = my_neighbors(1:num_interfaces_infinite)
+    ! number of global ibool entries on each interface
+    nibool_interfaces_infinite(:) = nibool_neighbors(1:num_interfaces_infinite)
+    ! global iglob point ids on each interface
+    ibool_interfaces_infinite(:,:) = ibool_neighbors(1:max_nibool_interfaces_infinite,1:num_interfaces_infinite)
+  else
+    ! dummy allocation (Fortran90 should allow allocate statement with zero array size)
+    max_nibool_interfaces_infinite = 0
+    allocate(ibool_interfaces_infinite(0,0),stat=ier)
+  endif
+
+  ! debug: outputs MPI interface
+  if (DEBUG) then
+    do i = 1,num_interfaces_infinite
+      write(filename,'(a,i6.6,a,i2.2)') trim(OUTPUT_FILES)//'/MPI_points_infinite_proc',myrank, &
+                      '_',my_neighbors_infinite(i)
+      call write_VTK_data_points(NGLOB_INFINITE, &
+                        xstore_glob,ystore_glob,zstore_glob, &
+                        ibool_interfaces_infinite(1:nibool_interfaces_infinite(i),i), &
+                        nibool_interfaces_infinite(i),filename)
+    enddo
+    call synchronize_all()
+  endif
+
+  ! checks addressing
+  call test_MPI_neighbors(IREGION_INFINITE, &
+                          num_interfaces_infinite,max_nibool_interfaces_infinite, &
+                          my_neighbors_infinite,nibool_interfaces_infinite, &
+                          ibool_interfaces_infinite)
+
+  ! checks with assembly of test fields
+  call test_MPI_inf()
+
+  end subroutine setup_MPI_interfaces_inf
+
 

@@ -831,7 +831,7 @@
   integer, parameter :: CHUNK_AB_ANTIPODE = 6
 
 ! maximum number of regions in the mesh
-  integer, parameter :: MAX_NUM_REGIONS = 3
+  integer, parameter :: MAX_NUM_REGIONS = 5    ! (CRUST_MANTLE, OUTER_CORE, INNER_CORE) + (TRINFINITE, INFINITE) regions
 
 ! define flag for planet
 ! strictly speaking, the moon is not a planet but a natural satellite. well, let's stay with IPLANET_** for now.
@@ -1333,8 +1333,8 @@
   logical, parameter :: ADD_TRINF = .true.
 
   integer, parameter :: NLAYER_TRINF = 10           ! default 10
-  integer, parameter :: NREGIONS_INF = 2            ! this must be: 2 == transition infinite + infinite
-  integer, parameter :: NUM_REGIONS_ALL = 5         ! this must be: 5 == MAX_NUM_REGIONS + NREGIONS_INF == 3 + 2
+  !!integer, parameter :: NREGIONS_INF = 2            ! this must be: 2 == transition infinite + infinite
+  !!integer, parameter :: NUM_REGIONS_ALL = 5        ! this must be == MAX_NUM_REGIONS == 5 == 3 + NREGIONS_INF == 3 + 2
 
 ! degrees of freedoms
   integer, parameter :: NNDOFU   = 0 ! displacement components
