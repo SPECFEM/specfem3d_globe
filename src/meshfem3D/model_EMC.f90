@@ -38,7 +38,7 @@
 
 module model_emc_par
 
-  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,IMAIN
+  use constants, only: CUSTOM_REAL,TINYVAL,MAX_STRING_LEN,IMAIN
 
   use netcdf
 
@@ -552,7 +552,7 @@ contains
   ! initializes
   unit = 0
   direction = 0
-  missing_val = -1.0
+  missing_val = -1.0_CUSTOM_REAL
 
   if (VERBOSE) print *,'  variable units: '
 
@@ -1044,8 +1044,8 @@ end module model_emc_par
 
   ! flag for regional/global models
   EMC_is_regional = .true.
-  if ((EMC_lat_max - EMC_lat_min == 180.0) .and. &
-      (EMC_lon_max - EMC_lon_min == 360.0 )) then
+  if (abs((EMC_lat_max - EMC_lat_min) - 180.0) < TINYVAL .and. &
+      abs((EMC_lon_max - EMC_lon_min) - 360.0) < TINYVAL) then
     ! global extent
     EMC_is_regional = .false.
   endif
@@ -1348,44 +1348,61 @@ end module model_emc_par
       ! VP provided
       ! Vs scaling
       if (varid_vs == 0) then
+        ! user output
+        write(IMAIN,*) '  scaling: Vs  from Vp   (Brocher scaling)'
+        call flush_IMAIN()
         ! scales EMC_vs from EMC_vp
         call scale_Brocher_vs_from_vp()
         ! sets missing factor
         missing_val_vs = missing_val_vp
-        where(EMC_vp == missing_val_vp) EMC_vs = missing_val_vs
+        where(abs(EMC_vp - missing_val_vp) < TINYVAL) EMC_vs = missing_val_vs
       endif
       ! Density scaling
       if (varid_rho == 0) then
+        ! user output
+        write(IMAIN,*) '  scaling: Rho from Vp   (Brocher scaling)'
+        call flush_IMAIN()
         ! scales EMC_rho from EMC_vp
         call scale_Brocher_rho_from_vp()
         ! sets missing factor
         missing_val_rho = missing_val_vp
-        where(EMC_vp == missing_val_vp) EMC_rho = missing_val_rho
+        where(abs(EMC_vp - missing_val_vp) < TINYVAL) EMC_rho = missing_val_rho
       endif
     else if (varid_vs /= 0 .and. (varid_vp == 0 .or. varid_rho == 0)) then
       ! VS provided
       ! Vp scaling
       if (varid_vp == 0) then
+        ! user output
+        write(IMAIN,*) '  scaling: Vp  from Vs   (Brocher scaling)'
+        call flush_IMAIN()
         ! scales EMC_vs from EMC_vp
         call scale_Brocher_vp_from_vs()
         ! sets missing factor
         missing_val_vp = missing_val_vs
-        where(EMC_vs == missing_val_vs) EMC_vp = missing_val_vp
+        where(abs(EMC_vs - missing_val_vs) < TINYVAL) EMC_vp = missing_val_vp
       endif
       ! Density scaling
       if (varid_rho == 0) then
+        ! user output
+        write(IMAIN,*) '  scaling: Rho from Vp   (Brocher scaling)'
+        call flush_IMAIN()
         ! scales EMC_rho from EMC_vp
         call scale_Brocher_rho_from_vp()
         ! sets missing factor
         missing_val_rho = missing_val_vp
-        where(EMC_vp == missing_val_vp) EMC_rho = missing_val_rho
+        where(abs(EMC_vp - missing_val_vp) < TINYVAL) EMC_rho = missing_val_rho
       endif
     else if (varid_vp /= 0 .and. varid_vs /= 0 .and. varid_rho /= 0) then
       ! complete, no scaling needed
+      write(IMAIN,*) '  scaling: no scaling needed, all parameters provided'
+      call flush_IMAIN()
       continue
     else
       stop 'Invalid model scaling relation not implemented yet'
     endif
+    ! user output
+    write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   ! mask missing values
@@ -1395,33 +1412,53 @@ end module model_emc_par
 
   ! vp
   ! here mask is .false. for missing value, .true. for valid points
-  where(EMC_vp == missing_val_vp)
-    EMC_mask = .false.
-  elsewhere
-    EMC_mask = .true.
-  end where
+  !
+  ! note: intel ifort compiler (2021.10.0 oneAPI) seems to have problems with the `where .. elsewhere ..` statement
+  !       and crashes with a segmentation fault. however, it seems to work with only a `where ..` statement.
+  !       as a work-around, we omit the `elsewhere` statement and initialize first the mask accordingly.
+  !
+  ! also, instead of comparing float values directly like `a == b`, we use an expression like `abs(a-b) < TINYVAL`
+  ! to allow for some inaccuracy due to numerical precision.
+  !
+  !leads to ifort crashes:
+  !where(EMC_vp == missing_val_vp)
+  !  EMC_mask = .false.
+  !elsewhere
+  !  EMC_mask = .true.
+  !end where
+  !work-around:
+  EMC_mask(:,:,:) = .true.
+  where(abs(EMC_vp - missing_val_vp) < TINYVAL) EMC_mask = .false.
   ! min/max without missing values
   vp_min = minval(EMC_vp,mask=EMC_mask)
   vp_max = maxval(EMC_vp,mask=EMC_mask)
 
   ! vs
   ! here mask is .false. for missing value, .true. for valid points
-  where(EMC_vs == missing_val_vs)
-    EMC_mask = .false.
-  elsewhere
-    EMC_mask = .true.
-  end where
+  !leads to ifort crashes:
+  !where(EMC_vs == missing_val_vs)
+  !  EMC_mask = .false.
+  !elsewhere
+  !  EMC_mask = .true.
+  !end where
+  !work-around:
+  EMC_mask(:,:,:) = .true.
+  where(abs(EMC_vs - missing_val_vs) < TINYVAL) EMC_mask = .false.
   ! min/max without missing values
   vs_min = minval(EMC_vs,mask=EMC_mask)
   vs_max = maxval(EMC_vs,mask=EMC_mask)
 
   ! rho
   ! here mask is .false. for missing value, .true. for valid points
-  where(EMC_rho == missing_val_rho)
-    EMC_mask = .false.
-  elsewhere
-    EMC_mask = .true.
-  end where
+  !leads to ifort crashes:
+  !where(EMC_rho == missing_val_rho)
+  !  EMC_mask = .false.
+  !elsewhere
+  !  EMC_mask = .true.
+  !end where
+  !work-around:
+  EMC_mask(:,:,:) = .true.
+  where(abs(EMC_rho - missing_val_rho) < TINYVAL) EMC_mask = .false.
   ! min/max without missing values
   rho_min = minval(EMC_rho,mask=EMC_mask)
   rho_max = maxval(EMC_rho,mask=EMC_mask)
@@ -1431,9 +1468,9 @@ end module model_emc_par
   !                          where at least one of the velocity model values (vp, vs or rho) is missing;
   !                          and mask==.false. for valid points.
   EMC_mask(:,:,:) = .false.
-  where(EMC_vp == missing_val_vp) EMC_mask = .true.
-  where(EMC_vs == missing_val_vs) EMC_mask = .true.
-  where(EMC_rho == missing_val_rho) EMC_mask = .true.
+  where(abs(EMC_vp - missing_val_vp) < TINYVAL) EMC_mask = .true.
+  where(abs(EMC_vs - missing_val_vs) < TINYVAL) EMC_mask = .true.
+  where(abs(EMC_rho - missing_val_rho) < TINYVAL) EMC_mask = .true.
 
   ! user output
   write(IMAIN,*) '  model  : vp  min/max = ', vp_min,'/',vp_max
@@ -1464,8 +1501,8 @@ end module model_emc_par
         iz = dimindex(varorderdims(3))
         ! checks if point has valid entry
         if (.not. EMC_mask(ix,iy,iz) .and. EMC_surface_index(ilat,ilon) == 0) then
-          ! checks if point is for solids
-          if (EMC_vs(ix,iy,iz) > 0.d0) then
+          ! checks if point is for solids (vs > 0)
+          if (EMC_vs(ix,iy,iz) > TINYVAL) then
             EMC_surface_index(ilat,ilon) = idep
             ! exit depth loop
             exit
@@ -1775,6 +1812,8 @@ end module model_emc_par
       if (EMC_lat(index_lat) < lat) index_lat = index_lat - 1
     endif
   endif
+  ! checks if lat within EMC model
+  if (index_lat < 1 .or. index_lat > EMC_latlen) return
 
   ! lon
   if (EMC_regular_grid_lon) then
@@ -1791,6 +1830,8 @@ end module model_emc_par
       if (EMC_lon(index_lon) < lon) index_lon = index_lon - 1
     endif
   endif
+  ! checks if lon within EMC model
+  if (index_lon < 1 .or. index_lon > EMC_lonlen) return
 
   ! depth
   if (EMC_regular_grid_dep) then
@@ -1810,6 +1851,12 @@ end module model_emc_par
     else if (EMC_ddep < 0.0) then
       if (EMC_dep(index_dep) < r_depth) index_dep = index_dep - 1
     endif
+  endif
+  ! checks if depth within EMC model (allowed to be above <= 0, but will return if too deep)
+  if (EMC_ddep > 0.0) then
+    if (index_dep > EMC_deplen) return
+  else if (EMC_ddep < 0.0) then
+    if (index_dep < 1) return
   endif
 
   ! for points above solid surface elevation
@@ -1987,21 +2034,23 @@ end module model_emc_par
 
   !debug
   !if (r_depth > 10.1 .and. r_depth < 15.1) &
+  !if (vsl <= 1.0) &
   !  print *,'debug: lat/lon/dep = ',lat,lon,r_depth,'vp/vs/rho = ',vpl,vsl,rhol,'iso vp/vs/rho',vp_iso,vs_iso,rho_iso, &
-  !          'val ',val1,val2,val3,val4,val5,val6,val7,val8
-
-  ! non-dimensionalize
-  scaleval_rho = 1.0d0 / RHOAV                             ! from kg/m3
-  scaleval_vel = 1.0d0 / (R_PLANET * sqrt(PI*GRAV*RHOAV))  ! from m/s
-
-  rhol = rhol * scaleval_rho
-  vpl = vpl * scaleval_vel
-  vsl = vsl * scaleval_vel
+  !          'index dep/surf ',index_dep,index_surface,'surface depth',EMC_dep(index_surface), &
+  !          'index lat/lon/dep',index_lat,index_lon,index_dep,'ix,iy,iz',ix,iy,iz
 
   ! only uses solid domain values
   ! (no fluid domain such as oceans are modelled so far, effect gets approximated by ocean load)
   ! returns model values if non-zero
-  if (vsl > 1.d-2) then
+  if (vsl > 1.0) then
+    ! non-dimensionalize
+    scaleval_rho = 1.0d0 / RHOAV                             ! from kg/m3
+    scaleval_vel = 1.0d0 / (R_PLANET * sqrt(PI*GRAV*RHOAV))  ! from m/s (scaleval_vel == 1.459769779014117E-004)
+
+    rhol = rhol * scaleval_rho
+    vpl = vpl * scaleval_vel
+    vsl = vsl * scaleval_vel
+
     ! converts isotropic values to transverse isotropic
     vpv = vpl
     vph = vpl
