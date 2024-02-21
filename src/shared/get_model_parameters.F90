@@ -69,7 +69,6 @@
   character(len=64) :: ending
   character(len=MAX_STRING_LEN) :: MODEL_ROOT,MODEL_L
   integer :: impose_crust
-  integer :: irange,i
 
   ! defaults:
   !
@@ -90,13 +89,7 @@
   !  to .false. for a 1D crustal model.
 
   ! converts all string characters to lowercase (to make user input case-insensitive)
-  MODEL_L = MODEL
-  irange = iachar('a') - iachar('A')
-  do i = 1,len_trim(MODEL_L)
-    if (lge(MODEL_L(i:i),'A') .and. lle(MODEL_L(i:i),'Z')) then
-      MODEL_L(i:i) = achar(iachar(MODEL_L(i:i)) + irange)
-    endif
-  enddo
+  call convert_to_lowercase(MODEL,MODEL_L)
   MODEL_ROOT = MODEL_L ! sets root name of model to original one
 
   ! note: in the following we check the model name and see if some specific ending has been appended

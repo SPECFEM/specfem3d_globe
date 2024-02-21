@@ -293,7 +293,7 @@
   logical, intent(in) :: USE_EXTERNAL_CRUSTAL_MODEL
 
   ! local parameters
-  integer :: nlines,ir,i,ier,irange
+  integer :: nlines,ir,i,ier
   double precision :: r,vp,vs,rho
   double precision :: Qp,Qs,Qkappa,Qmu
   double precision :: Qkappa_inv,Qp_inv,dr
@@ -448,13 +448,7 @@
     !  .. # CMB ..
     !  .. # ICB ..
     ! converts all string characters to lowercase (to make user input case-insensitive)
-    tmp_line = line
-    irange = iachar('a') - iachar('A')
-    do i = 1,len_trim(line)
-      if (lge(tmp_line(i:i),'A') .and. lle(tmp_line(i:i),'Z')) then
-        tmp_line(i:i) = achar(iachar(tmp_line(i:i)) + irange)
-      endif
-    enddo
+    call convert_to_lowercase(line,tmp_line)
     line = tmp_line
     ! checks index for moho/cmb/icb
     ! note that the line comment .. # moho
