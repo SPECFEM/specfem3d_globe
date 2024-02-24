@@ -1358,7 +1358,7 @@
   real(kind=CUSTOM_REAL) :: xmin,xmax,ymin,ymax,zmin,zmax
 
   integer :: ipoin,nslice_points
-  integer,dimension(nglob_target) :: slice_points
+  integer,dimension(:),allocatable :: slice_points
 
   ! debug warning about large model value differences
   logical,parameter :: DO_WARNING = .false.
@@ -1381,6 +1381,11 @@
   ymax = maxval(ystore)
   zmin = minval(zstore)
   zmax = maxval(zstore)
+
+  ! temporary array
+  allocate(slice_points(nglob_target),stat=ier)
+  if (ier /= 0) stop 'Error allocating slice_points array'
+  slice_points(:) = 0
 
   ! counts points in this slice
   nslice_points = 0
@@ -1584,6 +1589,9 @@
     deallocate(search_elements)
 
   enddo
+
+  ! free temporary array
+  deallocate(slice_points)
 
   ! done looping over target locations
   if (myrank == 0) print *
