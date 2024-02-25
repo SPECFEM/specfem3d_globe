@@ -314,23 +314,20 @@
   implicit none
 
   ! local parameters
-  integer :: nblocks_xi,nblocks_eta
   ! doubling layers
   integer :: ielem,elem_doubling_mantle,elem_doubling_middle_outer_core,elem_doubling_bottom_outer_core
   double precision :: DEPTH_SECOND_DOUBLING_REAL,DEPTH_THIRD_DOUBLING_REAL, &
-                          DEPTH_FOURTH_DOUBLING_REAL,distance,distance_min,zval
-  integer :: doubling, padding, tmp_sum, tmp_sum_xi, tmp_sum_eta
+                      DEPTH_FOURTH_DOUBLING_REAL,distance,distance_min,zval
   ! layers
-  integer ::  NUMBER_OF_MESH_LAYERS,layer_offset,nspec2D_xi_sb,nspec2D_eta_sb, &
-              nb_lay_sb, nspec_sb, nglob_vol, nglob_surf, nglob_edge
+  integer ::  NUMBER_OF_MESH_LAYERS,layer_offset
   ! for the cut doublingbrick improvement
-  integer :: last_doubling_layer, cut_doubling, nglob_int_surf_xi, nglob_int_surf_eta,nglob_ext_surf, &
-              normal_doubling, nglob_center_edge, nglob_corner_edge, nglob_border_edge
-  integer :: tmp_sum_nglob2D_xi, tmp_sum_nglob2D_eta,divider,nglob_edges_h,nglob_edge_v,to_remove
+  integer :: last_doubling_layer
+  ! full gravity
+  integer :: iregion0,iter_region,nlayer,nspec1layer,nspec1d,nnode1d
 
   ! check that mesh can be coarsened in depth three or four times
-  CUT_SUPERBRICK_XI=.false.
-  CUT_SUPERBRICK_ETA=.false.
+  CUT_SUPERBRICK_XI = .false.
+  CUT_SUPERBRICK_ETA = .false.
 
   if (SUPPRESS_CRUSTAL_MESH .and. .not. ADD_4TH_DOUBLING) then
     if (mod(NEX_XI,8) /= 0) stop 'NEX_XI must be a multiple of 8'
@@ -386,32 +383,23 @@
                         NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
                         NSPEC1D_RADIAL, &
                         NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
-                        doubling,tmp_sum,tmp_sum_xi,tmp_sum_eta, &
-                        NUMBER_OF_MESH_LAYERS,layer_offset,nspec2D_xi_sb,nspec2D_eta_sb, &
-                        nb_lay_sb, nspec_sb, nglob_surf, &
-                        CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, INCLUDE_CENTRAL_CUBE, &
-                        last_doubling_layer, &
-                        DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA, &
-                        tmp_sum_nglob2D_xi, tmp_sum_nglob2D_eta,divider,nglob_edges_h, &
-                        nglob_edge_v,to_remove)
+                        NUMBER_OF_MESH_LAYERS,layer_offset,&
+                        CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,INCLUDE_CENTRAL_CUBE, &
+                        last_doubling_layer)
 
   ! calculates number of points (NGLOB_REGIONS)
   call count_points(NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube, &
                         NSPEC1D_RADIAL,NGLOB1D_RADIAL, &
                         NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
                         NGLOB_REGIONS, &
-                        nblocks_xi,nblocks_eta, &
-                        doubling, padding, tmp_sum, &
                         INCLUDE_CENTRAL_CUBE,NER_TOP_CENTRAL_CUBE_ICB,NEX_XI, &
                         NUMBER_OF_MESH_LAYERS, layer_offset, &
-                        nb_lay_sb, nglob_vol, nglob_surf, nglob_edge, &
                         CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, &
-                        last_doubling_layer, cut_doubling, nglob_int_surf_xi, nglob_int_surf_eta,nglob_ext_surf, &
-                        normal_doubling, nglob_center_edge, nglob_corner_edge, nglob_border_edge)
+                        last_doubling_layer)
 
   if (ATTENUATION) then
-!! DK DK July 2013: to save a huge amount of memory, when 3D attenuation is off it is sufficient to save a single point
-!! DK DK July 2013: per spectral element because the Q attenuation factor is then constant per layer of the geological model
+    ! to save a huge amount of memory, when 3D attenuation is off it is sufficient to save a single point
+    ! per spectral element because the Q attenuation factor is then constant per layer of the geological model
     if (ATTENUATION_3D .or. ATTENUATION_1D_WITH_3D_STORAGE) then
       ATT1 = NGLLX
       ATT2 = NGLLY
@@ -429,6 +417,62 @@
      ATT3 = 1
      ATT4 = 1
      ATT5 = 1
+  endif
+
+  ! full gravity support
+  ! TODO: some of the below parameters are also recalculated in the create_meshes.f90 which is not necessary
+  if (FULL_GRAVITY) then
+    ! start region
+    iregion0 = IREGION_CRUST_MANTLE
+
+    ! loops over transition-to-infinite and infinite regions
+    do iter_region = IREGION_TRINFINITE,IREGION_INFINITE
+      ! checks
+      if (iter_region == IREGION_TRINFINITE .and. .not. ADD_TRINF) cycle
+
+      ! sets region layers
+      if (iter_region == IREGION_TRINFINITE) then
+        ! transition-to-infinite region
+        nlayer = NLAYER_TRINF
+      else
+        ! infinite region
+        nlayer = 1      ! single layer
+      endif
+
+      nspec1layer = NSPEC2D_TOP(iregion0)
+      nspec1d = sqrt(real(nspec1layer))
+
+      ! checks if nspec2d top is squared
+      if (nspec1d*nspec1d /= nspec1layer) then
+        print *,'Error: full gravity 2d surface elements is invalid for region ',iter_region
+        print *,'  nspec1D**2 = ',nspec1d*nspec1d,' should be ',nspec1layer
+        print *,'Please make sure to have NEX_XI == NEX_ETA.'
+        stop 'Invalid number of full gravity 2d surface elements'
+      endif
+
+      NSPEC_REGIONS(iter_region) = nlayer * nspec1layer
+
+      NSPEC2DMAX_XMIN_XMAX(iter_region) = nlayer*nspec1d
+      NSPEC2DMAX_YMIN_YMAX(iter_region) = nlayer*nspec1d
+      NSPEC2D_BOTTOM(iter_region) = nspec1layer
+      NSPEC2D_TOP(iter_region) = nspec1layer
+
+      nnode1d = nspec1d * (NGLLX-1)+1 ! ngllx=nglly
+
+      NGLOB_REGIONS(iter_region) = (nlayer*(NGLLZ-1)+1) * (nnode1d*nnode1d)
+
+      NGLOB2DMAX_XMIN_XMAX(iter_region) = (nlayer*(NGLLZ-1)+1)*nnode1d
+      NGLOB2DMAX_YMIN_YMAX(iter_region) = (nlayer*(NGLLZ-1)+1)*nnode1d
+
+      NGLOB1D_RADIAL(iter_region) = (nlayer*(NGLLZ-1)+1)
+
+      ! start region for next region
+      iregion0 = iter_region
+    enddo
+
+    ! full gravity kernels
+    ! TODO: check if this can be put into the solver and/or if CALC_GRAVITY_KERNELS is needed
+    !if (SIMULATION_TYPE == 3 .and. FULL_GRAVITY) CALC_GRAVITY_KERNELS = .true.
   endif
 
   end subroutine rcp_set_mesh_parameters
@@ -500,11 +544,11 @@
   if (UNDO_ATTENUATION .and. MOVIE_VOLUME .and. MOVIE_VOLUME_TYPE == 4 ) &
     stop 'MOVIE_VOLUME_TYPE == 4 is not implemented for UNDO_ATTENUATION in order to save memory'
 
-  !! DK DK this should not be difficult to fix and test, but not done yet by lack of time
+  ! this should not be difficult to fix and test, but not done yet by lack of time
   if (UNDO_ATTENUATION .and. NUMBER_OF_RUNS /= 1) &
     stop 'NUMBER_OF_RUNS should be == 1 for now when using UNDO_ATTENUATION'
 
-  !! DK DK this should not be difficult to fix and test, but not done yet by lack of time
+  ! this should not be difficult to fix and test, but not done yet by lack of time
   if (UNDO_ATTENUATION .and. NUMBER_OF_THIS_RUN > 1) &
     stop 'we currently do not support NUMBER_OF_THIS_RUN > 1 in the case of UNDO_ATTENUATION'
 
@@ -604,6 +648,13 @@
       stop 'Please set SAVE_ALL_SEISMOS_IN_ONE_FILE and USE_BINARY_FOR_LARGE_FILE to be .false. for noise simulation'
   endif
 
+  ! gravity
+  ! makes sure to turn off full gravity flag if no gravity simulation selected
+  if (.not. GRAVITY) FULL_GRAVITY = .false.
+  ! safety stop
+  if (FULL_GRAVITY) &
+    stop 'FULL_GRAVITY is not fully implemented yet, please set it to .false.'
+
   ! gravity integrals
   ! in the case of GRAVITY_INTEGRALS we should always use double precision
   if (GRAVITY_INTEGRALS .and. CUSTOM_REAL /= SIZE_DOUBLE) &
@@ -624,7 +675,7 @@
 !
 ! please remove these security checks only after validating new features
 
-!! DK DK July 2013: temporary, the time for Matthieu Lefebvre to merge his ADIOS implementation
+  ! July 2013: temporary, the time for Matthieu Lefebvre to merge his ADIOS implementation
   if (ADIOS_ENABLED .and. SAVE_REGULAR_KL ) &
     stop 'ADIOS_ENABLED support not implemented yet for SAVE_REGULAR_KL'
 

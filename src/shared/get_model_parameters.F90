@@ -69,7 +69,6 @@
   character(len=64) :: ending
   character(len=MAX_STRING_LEN) :: MODEL_ROOT,MODEL_L
   integer :: impose_crust
-  integer :: irange,i
 
   ! defaults:
   !
@@ -90,13 +89,7 @@
   !  to .false. for a 1D crustal model.
 
   ! converts all string characters to lowercase (to make user input case-insensitive)
-  MODEL_L = MODEL
-  irange = iachar('a') - iachar('A')
-  do i = 1,len_trim(MODEL_L)
-    if (lge(MODEL_L(i:i),'A') .and. lle(MODEL_L(i:i),'Z')) then
-      MODEL_L(i:i) = achar(iachar(MODEL_L(i:i)) + irange)
-    endif
-  enddo
+  call convert_to_lowercase(MODEL,MODEL_L)
   MODEL_ROOT = MODEL_L ! sets root name of model to original one
 
   ! note: in the following we check the model name and see if some specific ending has been appended
@@ -1309,7 +1302,7 @@
     RHO_BOTTOM_OC = 12168.6383 / RHOAV
 
   case (REFERENCE_MODEL_AK135F_NO_MUD)
-!! DK DK values below entirely checked and fixed by Dimitri Komatitsch in December 2012.
+    ! values below entirely checked and fixed by Dimitri Komatitsch in December 2012.
     ROCEAN = 6368000.d0
     RMIDDLE_CRUST = 6351000.d0
     RMOHO  = 6336000.d0         ! at 35km depth

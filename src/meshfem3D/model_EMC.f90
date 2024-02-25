@@ -35,10 +35,12 @@
 ! - April 2023
 !   Julien Thurin (original reading routines from https://github.com/thurinj/specfem_nc_tomo/blob/main/read_ncmodel.f90)
 !   Daniel Peter (added basic implementation to read/broadcast/interpolate)
+! - Feb 2024
+!   Daniel (added interpolation methods to fill missing values, fixed final grid cell interpolation, added tapering)
 
 module model_emc_par
 
-  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,IMAIN
+  use constants, only: CUSTOM_REAL,TINYVAL,MAX_STRING_LEN,IMAIN
 
   use netcdf
 
@@ -46,6 +48,9 @@ module model_emc_par
 
   ! velocity model
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: EMC_vs, EMC_vp, EMC_rho
+
+  ! average 1D velocity model
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: EMC_avg_vs, EMC_avg_vp, EMC_avg_rho
 
   ! model array dimensions
   integer :: EMC_dims_nx,EMC_dims_ny,EMC_dims_nz
@@ -79,15 +84,41 @@ module model_emc_par
   ! depth reference level 1==earth surface, 2==sea level
   integer :: EMC_depth_reference_level = 0
 
-  ! surface indices
-  integer, dimension(:,:), allocatable :: EMC_surface_index
-
   ! EMC model info
   character(len=MAX_STRING_LEN) :: EMC_model_title, EMC_model_id
 
+  !------------------------------------------------
+  ! Model modifications
+  !------------------------------------------------
+  !
+  ! extends the model values beyond its model range
+  ! If set to .false., we will put the background velocities to points outside the model range
+  ! (default is .true. to extend)
+  logical, parameter :: EXTEND_EMC_MODEL_RANGE = .true.
+
+  ! taper off values towards background velocities for points outside the model range
+  logical, parameter :: TAPER_OUTSIDE_RANGE = .true.
+  ! maximum taper distance (in degrees)
+  double precision, parameter :: taper_distance_maximum_hori_in_degrees = 5.d0   ! horizontal taper
+  double precision, parameter :: taper_distance_maximum_vert_in_km = 50.d0       ! vertical taper
+
+  ! fill missing values
+  !
+  ! missing values in data arrays will be replaced by interpolated values between defined neighboring grid points
+  ! (default is .true. to fill by interpolated values)
+  logical, parameter :: FILL_MISSING_VALUES_WITH_INTERPOLATION = .true.
+  ! interpolation method: 1 == Shepard (preferred), 2 == nearest, 3 == bilinear
+  integer, parameter :: INTERPOLATION_METHOD = 1
+  !
+  ! missing values in data arrays will be replaced by the average value at each depth
+  ! (default is .false. to use interpolated instead)
+  logical, parameter :: FILL_MISSING_VALUES_WITH_AVERAGE = .false.
+
   ! enforce simulation mesh to be within EMC model region
+  !
   ! If set to .false., we will allow any simulation mesh and (only) embed EMC model values where defined
   ! into the default background model which is set to isotropic PREM.
+  ! (default is .false. to allow for more flexible, larger meshes)
   logical, parameter :: ENFORCE_EMC_MESH_REGION = .false.
 
   !------------------------------------------------
@@ -146,7 +177,8 @@ module model_emc_par
 
   character(len=16), parameter :: elevation_exp = 'elevation'
 
-  ! alternate string versions of latitude, longitude and depth for string comparison
+  ! key words
+  ! string versions of latitude, longitude and depth for string comparison
   ! Example of how to use this:
   !   if (any(latnames == 'latitude')) then
   !      print *, 'Found latitude'
@@ -157,7 +189,7 @@ module model_emc_par
   character(len=16), dimension(6), parameter :: depnames = (/ character(len=16) :: &
     'depth','dep','z','zdim','z_dim','z-dim' /)
 
-  ! alternate string versions of vp, vs and rho for string comparison
+  ! string versions of vp, vs and rho for string comparison
   ! Alaska model: defines vpfinal,vsfinal,rhofinal for final velocity model
   character(len=16), dimension(6), parameter :: vpnames = (/ character(len=16) :: &
   'vp','vpfinal','VP','vpvar','vp_var','vp-var' /)
@@ -165,6 +197,25 @@ module model_emc_par
   'vs','vsfinal','VS','vsvar','vs_var','vs-var' /)
   character(len=16), dimension(6), parameter :: rhonames = (/ character(len=16) :: &
   'rho','rhofinal','RHO','rhovar','rho_var','rho-var' /)
+
+  ! string versions of units
+  ! length
+  character(len=16), dimension(2), parameter :: unitnames_m = (/ character(len=16) :: &
+  'm','meter' /)
+  character(len=16), dimension(2), parameter :: unitnames_km = (/ character(len=16) :: &
+  'km','kilometer' /)
+  ! density
+  character(len=16), dimension(2), parameter :: unitnames_gcm = (/ character(len=16) :: &
+  'g.cm-3','g.cm-1' /)  ! Alaska file defines g.cm-1 which is likely an error as density should be g.cm-3
+  character(len=16), dimension(2), parameter :: unitnames_kgcm = (/ character(len=16) :: &
+  'kg.cm-3','kg.cm-1' /)
+  character(len=16), dimension(2), parameter :: unitnames_kgm = (/ character(len=16) :: &
+  'kg.m-3','kg.m-1' /)
+  ! velocity
+  character(len=16), dimension(4), parameter :: unitnames_velms = (/ character(len=16) :: &
+  'm.s-1','m/s','meter.s-1','meter/s' /)
+  character(len=16), dimension(4), parameter :: unitnames_velkms = (/ character(len=16) :: &
+  'km.s-1','km/s','kilometer.s-1','kilometer/s' /)
 
   ! verbosity (for debugging)
   logical, parameter :: VERBOSE = .false.
@@ -259,9 +310,12 @@ contains
   status = nf90_get_att(ncid, NF90_GLOBAL, 'geospatial_vertical_units', val_string)
   if (status == nf90_noerr) then
     ! units: 1==m, 2==km, 3==m/s, 4==km/s, 5==g/cm^3, 6==kg/cm^3, 7==kg/m^3
-    if (trim(val_string) == 'm' .or. trim(val_string) == 'meter') then
+    ! remove additional remarks on units, e.g., "km (bsl)"
+    if (index(val_string,"(") > 0) val_string = val_string(1:index(val_string,"(")-1)
+    ! determine unit
+    if (any(unitnames_m == trim(val_string))) then
       unit = 1
-    else if (trim(val_string) == 'km' .or. trim(val_string) == 'kilometer') then
+    else if (any(unitnames_km == trim(val_string))) then
       unit = 2
     else
       unit = 0
@@ -439,9 +493,12 @@ contains
   islat = .false.
   islon = .false.
   isdep = .false.
+  latid = 0
+  lonid = 0
+  depid = 0
   varorderdims(:) = 0
 
-  if (VERBOSE) print *,'  vp dimension ordering: '
+  if (VERBOSE) print *,'  dimension ordering: '
 
   ! Get number of dimensions
   call check_status(nf90_inquire_variable(ncid, varid, ndims=varndim))
@@ -498,9 +555,9 @@ contains
 
   if (VERBOSE) print *
   if (VERBOSE) print *,'    Index order of dimensions for stored values: ', varorderdims
-  if (VERBOSE) print *,'    latid ',latid,' var dim order = ',varorderdims(latid)
-  if (VERBOSE) print *,'    lonid ',lonid,' var dim order = ',varorderdims(lonid)
-  if (VERBOSE) print *,'    depid ',depid,' var dim order = ',varorderdims(depid)
+  if (VERBOSE) print *,'    lonid ',lonid,' var dim index = ',varorderdims(lonid)
+  if (VERBOSE) print *,'    latid ',latid,' var dim index = ',varorderdims(latid)
+  if (VERBOSE) print *,'    depid ',depid,' var dim index = ',varorderdims(depid)
   if (VERBOSE) print *
 
   ! checks if something found
@@ -525,11 +582,17 @@ contains
   ! local parameters
   integer :: num_atts,i
   character(len=100) :: name,value
+  real(kind=CUSTOM_REAL) :: fill_val
+  logical :: has_fill_value,has_missing_value
 
   ! initializes
-  unit = 0
-  direction = 0
-  missing_val = -1.0
+  unit        = 0
+  direction   = 0
+  missing_val = 9999.0_CUSTOM_REAL
+  fill_val    = 9999.0_CUSTOM_REAL
+
+  has_missing_value = .false.
+  has_fill_value = .false.
 
   if (VERBOSE) print *,'  variable units: '
 
@@ -549,20 +612,24 @@ contains
         ! get attribute value
         call check_status(nf90_get_att(ncid, varid, name, value))
         if (VERBOSE) print *,'      unit: ',trim(value)
-        if (trim(value) == 'm' .or. trim(value) == 'meter') then
+
+        ! remove additional remarks on units, e.g., "km (bsl)"
+        if (index(value,"(") > 0) value = value(1:index(value,"(")-1)
+
+        ! determine unit
+        if (any(unitnames_m == trim(value))) then
           unit = 1
-        else if (trim(value) == 'km' .or. trim(value) == 'kilometer') then
+        else if (any(unitnames_km == trim(value))) then
           unit = 2
-        else if (trim(value) == 'm.s-1' .or. trim(value) == 'meter.s-1') then
+        else if (any(unitnames_velms == trim(value))) then
           unit = 3
-        else if (trim(value) == 'km.s-1' .or. trim(value) == 'kilometer.s-1') then
+        else if (any(unitnames_velkms == trim(value))) then
           unit = 4
-        else if (trim(value) == 'g.cm-3' .or. trim(value) == 'g.cm-1') then
-          ! Alaska file defines g.cm-1 which is likely an error as density should be g.cm-3
+        else if (any(unitnames_gcm == trim(value))) then
           unit = 5
-        else if (trim(value) == 'kg.cm-3' .or. trim(value) == 'kg.cm-1') then
+        else if (any(unitnames_kgcm == trim(value))) then
           unit = 6
-        else if (trim(value) == 'kg.m-3' .or. trim(value) == 'kg.m-1') then
+        else if (any(unitnames_kgm == trim(value))) then
           unit = 7
         else
           print *,'Error: unit ',trim(value),' is not recognized yet.'
@@ -587,6 +654,13 @@ contains
         ! assigns value for invalid entries
         call check_status(nf90_get_att(ncid, varid, name, missing_val))
         if (VERBOSE) print *,'      missing value: ',missing_val
+        has_missing_value = .true.
+
+      else if (trim(name) == '_FillValue' .or. trim(name) == 'FillValue') then
+        ! assigns value for invalid entries
+        call check_status(nf90_get_att(ncid, varid, name, fill_val))
+        if (VERBOSE) print *,'      fill value: ',fill_val
+        has_fill_value = .true.
 
       else if (trim(name) == 'long_name' .or. trim(name) == '_long_name') then
         ! assigns value for invalid entries
@@ -607,9 +681,22 @@ contains
     enddo
   endif
 
+  ! debug output
   if (VERBOSE) print *
-  if (VERBOSE) print *,'    unit = ',unit,' direction = ',direction,' missing value = ',missing_val
+  if (VERBOSE) print *,'    unit = ',unit,' direction = ',direction
+  if (VERBOSE) print *,'    missing/fill value = ',missing_val,fill_val,'has missing/fill',has_missing_value,has_fill_value
   if (VERBOSE) print *
+
+  ! sets missing value to fill value (in case only a fill value was provided)
+  !
+  ! note: this doesn't work for all models, as for example the AlaskaFWANT_Vs2019 model
+  !       (file YangAndGao-AlaskaFWANT-Vs2019-0.0.nc) uses NaN values and not fill values
+  !       to indicate missing points.
+  !       we will check for NaNs, if there is no missing value provided...
+  !
+  if (.not. has_missing_value .and. has_fill_value) then
+    missing_val = fill_val
+  endif
 
   ! checks if something found
   if (unit == 0) then
@@ -619,6 +706,45 @@ contains
 
   end subroutine check_variable_attributes
 
+  ! --------------------------------
+  ! convert NaNs to default missing_val value
+  ! --------------------------------
+  subroutine convert_nan_to_missing(EMC_par,missing_val)
+
+  use, intrinsic :: ieee_arithmetic
+
+  implicit none
+
+  real(kind=CUSTOM_REAL), dimension(EMC_dims_nx,EMC_dims_ny,EMC_dims_nz), intent(inout) :: EMC_par
+  real(kind=CUSTOM_REAL), intent(in) :: missing_val
+
+  ! local parameters
+  integer :: ix,iy,iz
+  real(kind=CUSTOM_REAL) :: val
+
+! note: isNaN() function is a GNU extension, thus not all compilers might have it.
+!       using a simple val /= val check can already work.
+!       here, we double-check with the IEEE intrinsic function ieee_is_nan() which should be Fortran2003 standard.
+
+  do iz = 1,EMC_dims_nz
+    do iy = 1,EMC_dims_ny
+      do ix = 1,EMC_dims_nx
+        ! gets value
+        val = EMC_par(ix,iy,iz)
+
+        ! checks number (isNaN)
+        ! for NaN values: val /= val
+        if (val /= val) EMC_par(ix,iy,iz) = missing_val
+
+        ! double-check with ieee function
+        if (ieee_support_standard(val)) then
+          if (ieee_is_nan(val)) EMC_par(ix,iy,iz) = missing_val
+        endif
+      enddo
+    enddo
+  enddo
+
+  end subroutine convert_nan_to_missing
 
   ! --------------------------------
   ! subroutine to scale missing density from Vp
@@ -805,7 +931,7 @@ contains
         ! scaling relation: eq.(1)
         vp = fac1 + fac2 * vs + fac3 * vs_p2 + fac4 * vs_p3 + fac5 * vs_p4
 
-        ! Density
+        ! Vp
         EMC_vp(ix,iy,iz) = vp
       enddo
     enddo
@@ -823,13 +949,1282 @@ contains
 
   end subroutine scale_Brocher_vp_from_vs
 
-
 end module model_emc_par
+
+!-------------------------------------------------------------------------------------------
+!
+! helper routines
+!
+!-------------------------------------------------------------------------------------------
+
+  subroutine reorder_EMC_model_arrays(lonid,latid,depid,varorderdims)
+
+  use model_emc_par
+
+  implicit none
+
+  integer, intent(in) :: latid, lonid, depid       ! dimension ids
+  integer, intent(in) :: varorderdims(3)           ! variable dimension order
+
+  ! local parameters
+  integer :: ilon,ilat,idep,ier
+  integer :: ix,iy,iz
+  integer :: dimindex(3)
+  ! temporary arrays for re-ordering
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: tmp_array
+  logical, dimension(:,:,:), allocatable :: tmp_mask
+
+  ! note: arrays EMC_vp(:,:,:),.. might use different index orders for different EMC model files.
+  !       For example, Alaska file uses nx==lonlen, ny==latlen, nz==deplen,
+  !       but other EMC model files might have a different order.
+  !       This gets determines by dimlens() and varorderdims().
+  !
+  ! user output
+  write(IMAIN,*) '  reordering:'
+  write(IMAIN,*) '    current indexing: lon/lat/depth ids = ',lonid,latid,depid
+  write(IMAIN,*) '                                var ids = ',varorderdims(lonid),varorderdims(latid),varorderdims(depid)
+  write(IMAIN,*) '                dimensions nx / ny / nz = ',EMC_dims_nx,EMC_dims_ny,EMC_dims_nz
+  call flush_IMAIN()
+
+  ! checks if longitude needs re-ordering as well
+  if (EMC_dlon < 0.0) then
+    write(IMAIN,*) '                lon ordering  : decreases ',EMC_dlon
+    call flush_IMAIN()
+  endif
+
+  ! checks if latitude needs re-ordering as well
+  if (EMC_dlat < 0.0) then
+    write(IMAIN,*) '                lat ordering  : decreases ',EMC_dlat
+    call flush_IMAIN()
+  endif
+
+  ! checks if depth needs re-ordering as well
+  if (EMC_ddep < 0.0) then
+    write(IMAIN,*) '                depth ordering: decreases ',EMC_ddep
+    call flush_IMAIN()
+  endif
+
+  ! allocates temporary array
+  allocate(tmp_array(EMC_lonlen,EMC_latlen,EMC_deplen),stat=ier)
+  if (ier /= 0) stop 'Error allocating temporary array'
+  tmp_array(:,:,:) = 0.0_CUSTOM_REAL
+
+  ! Vp array
+  do idep = 1,EMC_deplen
+    do ilat = 1,EMC_latlen
+      do ilon = 1,EMC_lonlen
+        ! gets array indexing
+        if (EMC_dlon < 0.0) then
+          dimindex(varorderdims(lonid)) = EMC_lonlen - ilon + 1
+        else
+          dimindex(varorderdims(lonid)) = ilon
+        endif
+        if (EMC_dlat < 0.0) then
+          dimindex(varorderdims(latid)) = EMC_latlen - ilat + 1
+        else
+          dimindex(varorderdims(latid)) = ilat
+        endif
+        if (EMC_ddep < 0.0) then
+          dimindex(varorderdims(depid)) = EMC_deplen - idep + 1
+        else
+          dimindex(varorderdims(depid)) = idep
+        endif
+        ix = dimindex(varorderdims(1))
+        iy = dimindex(varorderdims(2))
+        iz = dimindex(varorderdims(3))
+        ! saves in re-order temporary array
+        tmp_array(ilon,ilat,idep) = EMC_vp(ix,iy,iz)
+      enddo
+    enddo
+  enddo
+  ! re-allocate with new order
+  deallocate(EMC_vp)
+  allocate(EMC_vp(EMC_lonlen,EMC_latlen,EMC_deplen),stat=ier)
+  if (ier /= 0) stop 'Error allocating reordered vp array'
+  EMC_vp(:,:,:) = tmp_array(:,:,:)
+
+  ! Vs array
+  tmp_array(:,:,:) = 0.0_CUSTOM_REAL
+  do idep = 1,EMC_deplen
+    do ilat = 1,EMC_latlen
+      do ilon = 1,EMC_lonlen
+        ! gets array indexing
+        if (EMC_dlon < 0.0) then
+          dimindex(varorderdims(lonid)) = EMC_lonlen - ilon + 1
+        else
+          dimindex(varorderdims(lonid)) = ilon
+        endif
+        if (EMC_dlat < 0.0) then
+          dimindex(varorderdims(latid)) = EMC_latlen - ilat + 1
+        else
+          dimindex(varorderdims(latid)) = ilat
+        endif
+        if (EMC_ddep < 0.0) then
+          dimindex(varorderdims(depid)) = EMC_deplen - idep + 1
+        else
+          dimindex(varorderdims(depid)) = idep
+        endif
+        ix = dimindex(varorderdims(1))
+        iy = dimindex(varorderdims(2))
+        iz = dimindex(varorderdims(3))
+        ! saves in re-order temporary array
+        tmp_array(ilon,ilat,idep) = EMC_vs(ix,iy,iz)
+      enddo
+    enddo
+  enddo
+  ! re-allocate with new order
+  deallocate(EMC_vs)
+  allocate(EMC_vs(EMC_lonlen,EMC_latlen,EMC_deplen),stat=ier)
+  if (ier /= 0) stop 'Error allocating reordered vs array'
+  EMC_vs(:,:,:) = tmp_array(:,:,:)
+
+  ! density array
+  tmp_array(:,:,:) = 0.0_CUSTOM_REAL
+  do idep = 1,EMC_deplen
+    do ilat = 1,EMC_latlen
+      do ilon = 1,EMC_lonlen
+        ! gets array indexing
+        if (EMC_dlon < 0.0) then
+          dimindex(varorderdims(lonid)) = EMC_lonlen - ilon + 1
+        else
+          dimindex(varorderdims(lonid)) = ilon
+        endif
+        if (EMC_dlat < 0.0) then
+          dimindex(varorderdims(latid)) = EMC_latlen - ilat + 1
+        else
+          dimindex(varorderdims(latid)) = ilat
+        endif
+        if (EMC_ddep < 0.0) then
+          dimindex(varorderdims(depid)) = EMC_deplen - idep + 1
+        else
+          dimindex(varorderdims(depid)) = idep
+        endif
+        ix = dimindex(varorderdims(1))
+        iy = dimindex(varorderdims(2))
+        iz = dimindex(varorderdims(3))
+        ! saves in re-order temporary array
+        tmp_array(ilon,ilat,idep) = EMC_rho(ix,iy,iz)
+      enddo
+    enddo
+  enddo
+  ! re-allocate with new order
+  deallocate(EMC_rho)
+  allocate(EMC_rho(EMC_lonlen,EMC_latlen,EMC_deplen),stat=ier)
+  if (ier /= 0) stop 'Error allocating reordered vs array'
+  EMC_rho(:,:,:) = tmp_array(:,:,:)
+
+  ! re-order mask
+  ! (mask is .true. for missing value)
+  allocate(tmp_mask(EMC_lonlen,EMC_latlen,EMC_deplen),stat=ier)
+  if (ier /= 0) stop 'Error allocating temporary mask array'
+  tmp_mask(:,:,:) = .false.
+  do idep = 1,EMC_deplen
+    do ilat = 1,EMC_latlen
+      do ilon = 1,EMC_lonlen
+        ! gets array indexing
+        if (EMC_dlon < 0.0) then
+          dimindex(varorderdims(lonid)) = EMC_lonlen - ilon + 1
+        else
+          dimindex(varorderdims(lonid)) = ilon
+        endif
+        if (EMC_dlat < 0.0) then
+          dimindex(varorderdims(latid)) = EMC_latlen - ilat + 1
+        else
+          dimindex(varorderdims(latid)) = ilat
+        endif
+        if (EMC_ddep < 0.0) then
+          dimindex(varorderdims(depid)) = EMC_deplen - idep + 1
+        else
+          dimindex(varorderdims(depid)) = idep
+        endif
+        ix = dimindex(varorderdims(1))
+        iy = dimindex(varorderdims(2))
+        iz = dimindex(varorderdims(3))
+        ! saves in re-order temporary array
+        tmp_mask(ilon,ilat,idep) = EMC_mask(ix,iy,iz)
+      enddo
+    enddo
+  enddo
+  ! re-allocate with new order
+  deallocate(EMC_mask)
+  allocate(EMC_mask(EMC_lonlen,EMC_latlen,EMC_deplen),stat=ier)
+  if (ier /= 0) stop 'Error allocating reordered mask array'
+  EMC_mask(:,:,:) = tmp_mask(:,:,:)
+
+  ! re-orders lon array
+  if (EMC_dlon < 0.0) then
+    tmp_array(:,:,:) = 0.0_CUSTOM_REAL
+    do ilon = 1,EMC_lonlen
+      tmp_array(ilon,1,1) = EMC_lon(EMC_lonlen - ilon + 1)
+    enddo
+    EMC_lon(:) = tmp_array(:,1,1)
+    EMC_dlon = - EMC_dlon
+  endif
+
+  ! re-orders lat array
+  if (EMC_dlat < 0.0) then
+    tmp_array(:,:,:) = 0.0_CUSTOM_REAL
+    do ilat = 1,EMC_latlen
+      tmp_array(1,ilat,1) = EMC_lat(EMC_latlen - ilat + 1)
+    enddo
+    EMC_lat(:) = tmp_array(1,:,1)
+    EMC_dlat = - EMC_dlat
+  endif
+
+  ! re-orders depth array
+  if (EMC_ddep < 0.0) then
+    tmp_array(:,:,:) = 0.0_CUSTOM_REAL
+    do idep = 1,EMC_deplen
+      tmp_array(1,1,idep) = EMC_dep(EMC_deplen - idep + 1)
+    enddo
+    EMC_dep(:) = tmp_array(1,1,:)
+    EMC_ddep = - EMC_ddep
+  endif
+
+  ! free temporary array
+  deallocate(tmp_array)
+  deallocate(tmp_mask)
+
+  ! re-set dimensions
+  EMC_dims_nx = EMC_lonlen
+  EMC_dims_ny = EMC_latlen
+  EMC_dims_nz = EMC_deplen
+
+  ! user output
+  write(IMAIN,*)
+  write(IMAIN,*) '    new     indexing: lon/lat/depth ids = ',1,2,3
+  write(IMAIN,*) '                dimensions nx / ny / nz = ',EMC_dims_nx,EMC_dims_ny,EMC_dims_nz
+  write(IMAIN,*) '                lon ordering  :    dlon = ',EMC_dlon
+  write(IMAIN,*) '                lat ordering  :    dlat = ',EMC_dlat
+  write(IMAIN,*) '                depth ordering:    ddep = ',EMC_ddep
+  write(IMAIN,*)
+  call flush_IMAIN()
+
+  end subroutine reorder_EMC_model_arrays
+
+!
+!-------------------------------------------------------------------------------------------
+!
+
+  subroutine fill_EMC_surface_values()
+
+  use model_emc_par
+
+  implicit none
+
+  ! local parameters
+  integer :: ilon,ilat,idep,icount
+  integer :: surface_index
+  real(kind=CUSTOM_REAL) :: val_vp,val_vs,val_rho
+
+  ! to avoid taking model values defined for air or oceans, we search for the top-most index that defines the
+  ! velocities for the solid surface and extend those solid values upwards
+
+  ! check if something to do
+  if (count(abs(EMC_vs(:,:,:)) < TINYVAL) == 0) return
+
+  ! user output
+  write(IMAIN,*) '  filling fluid surface values w/ solid:'
+  call flush_IMAIN()
+
+  ! counter
+  icount = 0
+
+  ! for each lat/lon grid position
+  do ilat = 1,EMC_latlen
+    do ilon = 1,EMC_lonlen
+      ! gets first index where Vs > 0
+      ! (assumes that depth array starts at top and moves down to earth center)
+      surface_index = 0
+      do idep = 1,EMC_deplen
+        ! checks if point has valid entry
+        if (.not. EMC_mask(ilon,ilat,idep) .and. surface_index == 0) then
+          ! checks if point is for solids (vs > 0)
+          if (EMC_vs(ilon,ilat,idep) > TINYVAL) then
+            ! store index
+            surface_index = idep
+            ! exit depth loop
+            exit
+          endif
+        endif
+      enddo
+
+      ! checks missed array values (in case some lat/lon are all missing values)
+      if (surface_index == 0) surface_index = 1
+
+      ! extends surface velocities upwards
+      ! EMC models might have values for air/water on top - for such points above solid surface elevation,
+      ! we extend the values corresponding to the solid surface (no oceans, air, etc.)
+      ! solid values
+      val_vp = EMC_vp(ilon,ilat,surface_index)
+      val_vs = EMC_vs(ilon,ilat,surface_index)
+      val_rho = EMC_rho(ilon,ilat,surface_index)
+      ! extend values upwards
+      do idep = 1,surface_index
+        EMC_vp(ilon,ilat,idep) = val_vp
+        EMC_vs(ilon,ilat,idep) = val_vs
+        EMC_rho(ilon,ilat,idep) = val_rho
+      enddo
+
+      ! updates entries per array
+      icount = icount + (surface_index - 1)
+    enddo
+  enddo
+
+  ! user output
+  write(IMAIN,*) '    updated surface entries = ',icount
+  if (icount == 0) write(IMAIN,*) '    no fluid (vs==0) entries found'
+  write(IMAIN,*)
+  call flush_IMAIN()
+
+  end subroutine fill_EMC_surface_values
 
 
 !
 !-------------------------------------------------------------------------------------------
 !
+
+  subroutine determine_EMC_depth_average()
+
+  use constants, only: IOUT
+  use shared_parameters, only: OUTPUT_FILES
+
+  use model_emc_par
+
+  implicit none
+  ! local parameters
+  integer :: idep,ier
+  character (len=MAX_STRING_LEN) :: filename
+  ! spline interpolation
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: spline_b_vp,spline_c_vp,spline_d_vp
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: spline_b_vs,spline_c_vs,spline_d_vs
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: spline_b_rho,spline_c_rho,spline_d_rho
+  real(kind=CUSTOM_REAL) :: val_interp_vp,val_interp_vs,val_interp_rho
+  real(kind=CUSTOM_REAL) :: z_depth
+  integer :: i
+  ! for spline interpolation of depth profiles
+  logical, parameter :: OUTPUT_SPLINE_INTERPOLATED_DEPTH = .false.
+
+  ! (based on defined grid point values only, ignoring missing point values)
+  ! user output
+  write(IMAIN,*) '  EMC model 1D depth average:'
+  call flush_IMAIN()
+
+  ! allocates 1D average arrays
+  allocate(EMC_avg_rho(EMC_deplen),EMC_avg_vp(EMC_deplen),EMC_avg_vs(EMC_deplen),stat=ier)
+  if (ier /= 0) stop 'Error allocating 1d average arrays'
+  EMC_avg_rho(:) = 0.0; EMC_avg_vp(:) = 0.0; EMC_avg_vs(:) = 0.0
+
+  ! Vp
+  call get_average_model(EMC_vp,EMC_avg_vp)
+  ! Vs
+  call get_average_model(EMC_vs,EMC_avg_vs)
+  ! Density
+  call get_average_model(EMC_rho,EMC_avg_rho)
+
+  ! save output as file
+  filename = trim(OUTPUT_FILES) // '/EMC_model_1D_depth_average.dat'
+  open(unit=IOUT,file=trim(filename),status='unknown',iostat=ier)
+  if (ier /= 0) call exit_mpi(0,'Error opening EMC_model_1D_depth_average.dat file')
+  write(IOUT,*) '# EMC model - 1D depth average'
+  write(IOUT,*) '#'
+  write(IOUT,*) '# model id    : ',trim(EMC_model_id)
+  write(IOUT,*) '#       title : ',trim(EMC_model_title)
+  write(IOUT,*) '#       range : latitude  min/max = ',EMC_lat_min,'/',EMC_lat_max
+  write(IOUT,*) '#               longitude min/max = ',EMC_lon_min,'/',EMC_lon_max
+  write(IOUT,*) '#               depth     min/max = ',EMC_dep_min,'/',EMC_dep_max,'(km)'
+  write(IOUT,*) '#'
+  write(IOUT,*) '# 1D depth average'
+  write(IOUT,*) '# format:'
+  write(IOUT,*) '#depth (km) #rho (kg/m^3)  #vp (m/s)  #vs (m/s)'
+  do idep = 1,EMC_deplen
+    write(IOUT,*) EMC_dep(idep),EMC_avg_rho(idep),EMC_avg_vp(idep),EMC_avg_vs(idep)
+  enddo
+  close(IOUT)
+
+  ! user output
+  write(IMAIN,*) '    written to: ',trim(filename)
+  write(IMAIN,*)
+  call flush_IMAIN()
+
+  ! spline evaluations
+  if (OUTPUT_SPLINE_INTERPOLATED_DEPTH) then
+    ! allocates 1D average arrays
+    allocate(spline_b_vp(EMC_deplen),spline_c_vp(EMC_deplen),spline_d_vp(EMC_deplen),stat=ier)
+    if (ier /= 0) stop 'Error allocating spline vp arrays'
+    spline_b_vp(:) = 0.0; spline_c_vp(:) = 0.0; spline_d_vp(:) = 0.0
+
+    allocate(spline_b_vs(EMC_deplen),spline_c_vs(EMC_deplen),spline_d_vs(EMC_deplen),stat=ier)
+    if (ier /= 0) stop 'Error allocating spline vs arrays'
+    spline_b_vs(:) = 0.0; spline_c_vs(:) = 0.0; spline_d_vs(:) = 0.0
+
+    allocate(spline_b_rho(EMC_deplen),spline_c_rho(EMC_deplen),spline_d_rho(EMC_deplen),stat=ier)
+    if (ier /= 0) stop 'Error allocating spline rho arrays'
+    spline_b_rho(:) = 0.0; spline_c_rho(:) = 0.0; spline_d_rho(:) = 0.0
+
+    call EMC_setup_spline_coeffs(EMC_deplen,EMC_dep,EMC_avg_vp,spline_b_vp,spline_c_vp,spline_d_vp)
+    call EMC_setup_spline_coeffs(EMC_deplen,EMC_dep,EMC_avg_vs,spline_b_vs,spline_c_vs,spline_d_vs)
+    call EMC_setup_spline_coeffs(EMC_deplen,EMC_dep,EMC_avg_rho,spline_b_rho,spline_c_rho,spline_d_rho)
+
+    ! save output as file
+    filename = trim(OUTPUT_FILES) // '/EMC_model_1D_depth_average.spline-interpolated.dat'
+    open(unit=IOUT,file=trim(filename),status='unknown',iostat=ier)
+    write(IOUT,*) '# 1D depth average - interpolated'
+    write(IOUT,*) '#depth (km) #rho (kg/m^3)  #vp (m/s)  #vs (m/s)'
+
+    ! interpolate
+    do i = 0,500
+      z_depth = i * (EMC_dep_max / 500.0)
+
+      ! Perform cubic B-spline interpolation
+      call EMC_eval_spline(EMC_deplen,EMC_dep,EMC_avg_vp,spline_b_vp,spline_c_vp,spline_d_vp,z_depth,val_interp_vp)
+      call EMC_eval_spline(EMC_deplen,EMC_dep,EMC_avg_vs,spline_b_vs,spline_c_vs,spline_d_vs,z_depth,val_interp_vs)
+      call EMC_eval_spline(EMC_deplen,EMC_dep,EMC_avg_rho,spline_b_rho,spline_c_rho,spline_d_rho,z_depth,val_interp_rho)
+
+      write(IOUT,*) z_depth,val_interp_rho,val_interp_vp,val_interp_vs
+    enddo
+    close(IOUT)
+  endif
+
+contains
+
+  subroutine get_average_model(EMC_par,EMC_avg)
+
+  use model_emc_par, only: EMC_dims_nx,EMC_dims_ny,EMC_dims_nz,EMC_mask
+
+  implicit none
+  real(kind=CUSTOM_REAL), dimension(EMC_dims_nx,EMC_dims_ny,EMC_dims_nz), intent(in) :: EMC_par
+  real(kind=CUSTOM_REAL), dimension(EMC_deplen), intent(inout) :: EMC_avg
+  ! local variables
+  integer :: idep,ilat,ilon,icount
+  real(kind=CUSTOM_REAL) :: val_avg,val
+
+  ! initializes average value
+  EMC_avg(:) = 0.0_CUSTOM_REAL
+
+  ! loops over each depth and determines the average value for valid points
+  do idep = 1,EMC_deplen
+    ! initializes depth average
+    icount = 0
+    val_avg = 0.0_CUSTOM_REAL
+
+    ! loops over horizontal slice
+    do ilat = 1,EMC_latlen
+      do ilon = 1,EMC_lonlen
+        ! checks if point has valid entry
+        ! (mask is .true. for missing points)
+        if (.not. EMC_mask(ilon,ilat,idep)) then
+          ! gets model parameter value (vp, vs or rho)
+          val = EMC_par(ilon,ilat,idep)
+          ! checks if point is for solids (vs > 0)
+          if (val > TINYVAL) then
+            ! adds value
+            icount = icount + 1
+            val_avg = val_avg + val
+          endif
+        endif
+      enddo
+    enddo
+
+    ! stores average value
+    if (icount > 0) EMC_avg(idep) = val_avg / icount
+
+    !debug
+    !print *,'debug: average ',idep,EMC_avg(idep),' - counts',icount
+  enddo
+
+  end subroutine get_average_model
+
+  end subroutine determine_EMC_depth_average
+
+!
+!-------------------------------------------------------------------------------------------
+!
+
+  subroutine EMC_setup_spline_coeffs(n,x,y,spline_b,spline_c,spline_d)
+
+  use constants, only: CUSTOM_REAL
+
+  implicit none
+  integer, intent(in) :: n
+  real(kind=CUSTOM_REAL), dimension(n), intent(in) :: x, y  ! x position, y values
+  real(kind=CUSTOM_REAL), dimension(n), intent(inout) :: spline_b,spline_c,spline_d
+
+  ! local parameters
+  integer :: i, j
+  real(kind=CUSTOM_REAL) :: a(n), b(n), c(n)
+  real(kind=CUSTOM_REAL) :: h(n-1), d(n), l(n), mu(n), z(n)
+
+  ! initializes
+  a(:) = 0.0
+  b(:) = 0.0
+  c(:) = 0.0
+  d(:) = 0.0
+  l(:) = 0.0
+  mu(:) = 0.0
+  z(:) = 0.0
+
+  ! Compute h[i] = x[i+1] - x[i] and initialize arrays
+  do i = 1, n-1
+    h(i) = x(i+1) - x(i)
+  enddo
+
+  ! Compute a[i] = (3/h[i]) * (a[i+1] - a[i]) - (3/h[i-1]) * (a[i] - a[i-1])
+  do i = 2, n-1
+    a(i) = (3.0 / h(i)) * (y(i+1) - y(i)) - (3.0 / h(i-1)) * (y(i) - y(i-1))
+  end do
+
+  ! Solve for c[i] using Thomas algorithm for tridiagonal systems
+  l(1) = 2.0 * h(1)
+  mu(1) = 0.5
+  z(1) = a(1) / l(1)
+  do i = 2, n-1
+    l(i) = 2.0 * (x(i+1) - x(i-1)) - h(i-1) * mu(i-1)
+    mu(i) = h(i) / l(i)
+    z(i) = (a(i) - h(i-1) * z(i-1)) / l(i)
+  end do
+  l(n) = h(n-1) * (2.0 - mu(n-1))
+  z(n) = (a(n) - h(n-1) * z(n-1)) / l(n)
+  c(n) = z(n)
+  do j = n-1, 1, -1
+    c(j) = z(j) - mu(j) * c(j+1)
+    b(j) = (y(j+1) - y(j)) / h(j) - h(j) * (c(j+1) + 2.0 * c(j)) / 3.0
+    d(j) = (c(j+1) - c(j)) / (3.0 * h(j))
+  end do
+
+  ! return coefficients
+  spline_b(:) = b(:)
+  spline_c(:) = c(:)
+  spline_d(:) = d(:)
+
+  end subroutine EMC_setup_spline_coeffs
+
+!
+!-------------------------------------------------------------------------------------------
+!
+
+  subroutine EMC_eval_spline(n,x,y,spline_b,spline_c,spline_d,x_target,y_interp)
+
+  use constants, only: CUSTOM_REAL
+
+  implicit none
+  integer, intent(in) :: n
+  real(kind=CUSTOM_REAL), dimension(n), intent(in) :: x,y
+  real(kind=CUSTOM_REAL), dimension(n), intent(in) :: spline_b,spline_c,spline_d
+  real(kind=CUSTOM_REAL), intent(in) :: x_target
+  real(kind=CUSTOM_REAL), intent(inout) :: y_interp
+  ! local parameters
+  integer :: i
+
+  ! Find the segment that x_target is in and evaluate the spline there
+  i = 1
+  do while (i < n)
+    if (x_target >= x(i) .and. x_target <= x(i+1)) exit
+    i = i + 1
+  end do
+
+  ! spline interpolation
+  y_interp = y(i) + spline_b(i) * (x_target - x(i)) + spline_c(i) * (x_target - x(i))**2 + spline_d(i) * (x_target - x(i))**3
+
+  end subroutine EMC_eval_spline
+
+!
+!-------------------------------------------------------------------------------------------
+!
+
+  subroutine fill_EMC_missing_values_average()
+
+! replaces missing values with 1D depth average values
+
+  use model_emc_par
+
+  implicit none
+  ! local parameters
+  integer :: ilat,ilon,idep,icount
+  real(kind=CUSTOM_REAL) :: val_vs,val_vp,val_rho
+
+  ! checks if anything to do
+  if (count(EMC_mask(:,:,:) .eqv. .true.) == 0) return
+
+  ! user output
+  write(IMAIN,*) '  filling:'
+  write(IMAIN,*) '    using 1D depth average for missing values'
+  call flush_IMAIN()
+
+  ! counter
+  icount = 0
+
+  ! loops over each depth and replaces missing values with the average 1D value
+  do idep = 1,EMC_deplen
+    ! gets depth average values
+    val_vp = EMC_avg_vp(idep)
+    val_vs = EMC_avg_vs(idep)
+    val_rho = EMC_avg_rho(idep)
+
+    ! loops over horizontal slice
+    do ilat = 1,EMC_latlen
+      do ilon = 1,EMC_lonlen
+        ! replace missing value
+        if (EMC_mask(ilon,ilat,idep)) then
+          EMC_vp(ilon,ilat,idep) = val_vp
+          EMC_vs(ilon,ilat,idep) = val_vs
+          EMC_rho(ilon,ilat,idep) = val_rho
+          ! re-set mask
+          EMC_mask(ilon,ilat,idep) = .false.
+          ! counter
+          icount = icount + 1
+        endif
+      enddo
+    enddo
+  enddo
+
+  ! checks that all values have been set
+  if (count(EMC_mask(:,:,:) .eqv. .true.) > 0) stop 'Error filling missing values w/ average'
+
+  ! user output
+  write(IMAIN,*) '    number of updated values = ',icount
+  write(IMAIN,*) '    vp  min/max = ',minval(EMC_vp),'/',maxval(EMC_vp),'(m/s)'
+  write(IMAIN,*) '    vs  min/max = ',minval(EMC_vs),'/',maxval(EMC_vs),'(m/s)'
+  write(IMAIN,*) '    rho min/max = ',minval(EMC_rho),'/',maxval(EMC_rho),'(kg/m^3)'
+  write(IMAIN,*)
+  call flush_IMAIN()
+
+  end subroutine fill_EMC_missing_values_average
+
+!
+!-------------------------------------------------------------------------------------------
+!
+
+  subroutine fill_EMC_missing_values_interpolated()
+
+! replaces missing values with interpolated values from neighboring grid points
+
+  use model_emc_par
+
+  implicit none
+
+  ! local parameters
+  integer :: ilat,ilon,idep,iupdated,ier
+  integer :: Nx,Ny
+  real(kind=CUSTOM_REAL) :: val_avg_vp,val_avg_vs,val_avg_rho
+  double precision :: vp_interp,vs_interp,rho_interp
+  logical, dimension(:,:,:), allocatable :: tmp_mask
+
+  ! grid search number of grid steps (Shepard & nearest neighbor)
+  integer :: NUMSTEPS_IX,NUMSTEPS_IY
+  integer, parameter :: NUMSTEPS = 8
+
+  ! tapering
+  double precision :: taper_dist_maximum
+
+  ! checks if anything to do
+  if (count(EMC_mask(:,:,:) .eqv. .true.) == 0) return
+
+  ! user output
+  write(IMAIN,*) '  filling:'
+  write(IMAIN,*) '    using interpolated closest model values for missing values'
+  write(IMAIN,*) '    interpolation method : ',INTERPOLATION_METHOD,'(1==Shepard/2==nearest/3==bilinear)'
+  write(IMAIN,*)
+  call flush_IMAIN()
+
+  ! allocate temporary mask copy
+  allocate(tmp_mask(EMC_dims_nx,EMC_dims_ny,EMC_dims_nz),stat=ier)
+  if (ier /= 0) stop 'Error allocating tmp_mask array'
+  ! copy mask
+  tmp_mask(:,:,:) = EMC_mask(:,:,:)
+
+  ! counter
+  iupdated = 0
+
+  Nx = EMC_lonlen
+  Ny = EMC_latlen
+
+  ! determines number of grid steps for Shepard & nearest neighbor and different dlon,dlat sizes
+  NUMSTEPS_IX = nint( NUMSTEPS * max(EMC_dlon,EMC_dlat) / EMC_dlon )
+  NUMSTEPS_IY = nint( NUMSTEPS * max(EMC_dlon,EMC_dlat) / EMC_dlat )
+
+  ! maximum distance for tapering
+  taper_dist_maximum = NUMSTEPS * max(EMC_dlon,EMC_dlat)
+
+  ! loops over each depth and replaces missing values with values interpolated from neighboring grid points
+  do idep = 1,EMC_deplen
+    ! gets depth average values
+    val_avg_vp = EMC_avg_vp(idep)
+    val_avg_vs = EMC_avg_vs(idep)
+    val_avg_rho = EMC_avg_rho(idep)
+
+    ! loops over horizontal slice
+    do ilat = 1,EMC_latlen
+      do ilon = 1,EMC_lonlen
+        ! replace missing value
+        if (EMC_mask(ilon,ilat,idep)) then
+          ! bilinear interpolation
+          select case (INTERPOLATION_METHOD)
+          case (1)
+            ! inverse distance weighted (IDL) interpolation (Shepard's method)
+            call do_shepard_interpolation(vp_interp,vs_interp,rho_interp)
+          case (2)
+            ! nearest neighbor
+            call do_nearest_interpolation(vp_interp,vs_interp,rho_interp)
+          case (3)
+            ! bilinear
+            call do_bilinear_interpolation(vp_interp,vs_interp,rho_interp)
+          case default
+            stop 'Interpolation method not implemented for filling missing values'
+          end select
+
+          ! stores interpolated value
+          EMC_vp(ilon,ilat,idep) = vp_interp
+          EMC_vs(ilon,ilat,idep) = vs_interp
+          EMC_rho(ilon,ilat,idep) = rho_interp
+
+          ! update mask flag
+          tmp_mask(ilon,ilat,idep) = .false.
+
+          ! counter
+          iupdated = iupdated + 1
+        endif
+      enddo
+    enddo
+  enddo
+
+  ! update main mask, should be all .false. now
+  EMC_mask(:,:,:) = tmp_mask(:,:,:)
+
+  ! checks that all values have been set
+  if (count(EMC_mask(:,:,:) .eqv. .true.) > 0) stop 'Error filling missing values w/ average'
+
+  ! user output
+  write(IMAIN,*) '    number of updated values = ',iupdated
+  write(IMAIN,*) '    vp  min/max = ',minval(EMC_vp),'/',maxval(EMC_vp),'(m/s)'
+  write(IMAIN,*) '    vs  min/max = ',minval(EMC_vs),'/',maxval(EMC_vs),'(m/s)'
+  write(IMAIN,*) '    rho min/max = ',minval(EMC_rho),'/',maxval(EMC_rho),'(kg/m^3)'
+  write(IMAIN,*)
+  call flush_IMAIN()
+
+  ! free temporary array
+  deallocate(tmp_mask)
+
+contains
+
+  function get_next_index_lon(ilon,ilat,idep,idirection) result (ix)
+
+  implicit none
+  integer, intent(in) :: ilon,ilat,idep,idirection
+  ! return result
+  integer :: ix
+  ! local parameters
+
+  ! find defined point
+  ! (mask is .true. for missing value)
+  ix = ilon
+
+  ! direction -1 == search to the left/smaller, +1 == search to the right/bigger
+  select case(idirection)
+  case (-1)
+    ! looks for smaller index that is defined
+    do while (EMC_mask(ix,ilat,idep))
+      ix = ix - 1
+      if (ix < 1) exit
+    enddo
+
+  case (1)
+    ! looks for bigger index that is defined
+    do while (EMC_mask(ix,ilat,idep))
+      ix = ix + 1
+      if (ix > EMC_lonlen) exit
+    enddo
+  end select
+
+  end function get_next_index_lon
+
+  !------------------------------------
+
+  function get_next_index_lat(ilon,ilat,idep,idirection) result (iy)
+
+  implicit none
+  integer, intent(in) :: ilon,ilat,idep,idirection
+  ! return result
+  integer :: iy
+  ! local parameters
+
+  ! find defined point
+  ! (mask is .true. for missing value)
+  iy = ilat
+
+  ! direction -1 == search to the left/smaller, +1 == search to the right/bigger
+  select case(idirection)
+  case (-1)
+    ! looks for smaller index that is defined
+    do while (EMC_mask(ilon,iy,idep))
+      iy = iy - 1
+      if (iy < 1) exit
+    enddo
+
+  case (1)
+    ! looks for bigger index that is defined
+    do while (EMC_mask(ilon,iy,idep))
+      iy = iy + 1
+      if (iy > EMC_latlen) exit
+    enddo
+  end select
+
+  end function get_next_index_lat
+
+  !------------------------------------
+
+  subroutine do_nearest_interpolation(vp_interp,vs_interp,rho_interp)
+
+  use constants, only: HUGEVAL
+
+  implicit none
+
+  double precision, intent(inout) :: vp_interp,vs_interp,rho_interp
+
+  ! local parameters
+  double precision :: lon_ref,lat_ref,lon,lat
+  double precision :: dist_sq
+  integer :: i,j,ix,iy
+  ! nearest neighbor
+  integer :: ilon_n,ilat_n
+  double precision :: dist_n
+  ! tapering
+  double precision :: taper_val
+  double precision, external :: cosine_taper
+
+  ! reference grid point position
+  lon_ref = EMC_lon(ilon)
+  lat_ref = EMC_lat(ilat)
+
+  dist_n = +HUGEVAL
+  ilon_n = 0
+  ilat_n = 0
+
+  ! finds nearest point within a grid search
+  do j = -NUMSTEPS_IY,NUMSTEPS_IY
+    do i = -NUMSTEPS_IX,NUMSTEPS_IX
+      ! grid index
+      ix = ilon + i
+      iy = ilat + j
+
+      ! checks bounds
+      if (ix < 1) cycle
+      if (ix > Nx) cycle
+      if (iy < 1) cycle
+      if (iy > Ny) cycle
+
+      ! skip missing points
+      if (EMC_mask(ix,iy,idep)) cycle
+
+      ! defined point location
+      lon = EMC_lon(ix)
+      lat = EMC_lat(iy)
+
+      ! distance - as simple as it gets in degrees, no Haversine function used for more accurate results...
+      dist_sq = (lon_ref - lon)**2 + (lat_ref - lat)**2
+      if (dist_sq < dist_n) then
+        dist_n = dist_sq
+        ilon_n = ix
+        ilat_n = iy
+      endif
+    enddo
+  enddo
+
+  !debug
+  !print *,'debug: nearest interpolation: dist_n ',dist_n,' ilon_n/ilat_n ',ilon_n,ilat_n,'Nx/Ny',Nx,Ny
+  !print *,'       reference lon/lat',lon_ref,lat_ref
+  !print *,'       EMC lon min/max',EMC_lon_min,EMC_lon_max
+  !print *,'       EMC lat min/max',EMC_lat_min,EMC_lat_max
+
+  ! checks if we found a point
+  if (ilon_n == 0 .or. ilat_n == 0) then
+    ! no near point found
+    ! return background/average value
+    vp_interp = val_avg_vp
+    vs_interp = val_avg_vs
+    rho_interp = val_avg_rho
+  else
+    ! computes taper
+    dist_n = sqrt(dist_n)
+    taper_val = cosine_taper(dist_n, taper_dist_maximum)
+
+    ! nearest point value w/ tapering
+    vp_interp = EMC_vp(ilon_n,ilat_n,idep) * taper_val + (1.d0 - taper_val) * val_avg_vp
+    vs_interp = EMC_vs(ilon_n,ilat_n,idep) * taper_val + (1.d0 - taper_val) * val_avg_vs
+    rho_interp = EMC_rho(ilon_n,ilat_n,idep) * taper_val + (1.d0 - taper_val) * val_avg_rho
+  endif
+
+  end subroutine do_nearest_interpolation
+
+  !------------------------------------
+
+  subroutine do_bilinear_interpolation(vp_interp,vs_interp,rho_interp)
+
+  implicit none
+
+  double precision, intent(inout) :: vp_interp,vs_interp,rho_interp
+
+  ! local parameters
+  double precision :: lon,lat
+  double precision :: dx,dy
+  double precision :: gamma_interp_x,gamma_interp_y
+  double precision :: val1_par(3),val2_par(3),val3_par(3),val4_par(3)
+  integer :: ix,iy,ixplus,iyplus
+
+  ! to use average/background velocities for "virtual" points on boarders
+  logical, parameter :: FILL_MISSING_BORDER_POINTS_WITH_AVERAGE_VALUES = .true.
+
+  ! get lon index from next grid point that is defined
+  ! left
+  ix = get_next_index_lon(ilon,ilat,idep,-1)
+  ! right
+  ixplus = get_next_index_lon(ilon,ilat,idep,+1)
+
+  ! get lat index from next grid point that is defined
+  ! down
+  iy = get_next_index_lat(ilon,ilat,idep,-1)
+  ! up
+  iyplus = get_next_index_lat(ilon,ilat,idep,+1)
+
+  ! sets interpolation values
+  ! longitude
+  if (ix < 1 .and. ixplus > Nx) then
+    ! no valid point on this lon
+    ! puts "virtual" points to border
+    ix = 1
+    ixplus = Nx
+    ! sets value to depth average value
+    ! val1
+    val1_par(1) = val_avg_vp     ! left point values
+    val1_par(2) = val_avg_vs
+    val1_par(3) = val_avg_rho
+    ! val2
+    val2_par(1) = val_avg_vp     ! right point values
+    val2_par(2) = val_avg_vs
+    val2_par(3) = val_avg_rho
+  else if (ix < 1 .and. ixplus <= Nx) then
+    ! no point to the left, takes value from right one
+    ! puts "virtual" left to border
+    ix = 1
+    ! sets value to value from right point
+    ! val1
+    if (FILL_MISSING_BORDER_POINTS_WITH_AVERAGE_VALUES) then
+      val1_par(1) = val_avg_vp     ! left border
+      val1_par(2) = val_avg_vs
+      val1_par(3) = val_avg_rho
+    else
+      ! extend right point values
+      val1_par(1) = EMC_vp(ixplus,ilat,idep)
+      val1_par(2) = EMC_vs(ixplus,ilat,idep)
+      val1_par(3) = EMC_rho(ixplus,ilat,idep)
+    endif
+    ! val2
+    val2_par(1) = EMC_vp(ixplus,ilat,idep)
+    val2_par(2) = EMC_vs(ixplus,ilat,idep)
+    val2_par(3) = EMC_rho(ixplus,ilat,idep)
+  else if (ix >= 1 .and. ixplus > Nx) then
+    ! no point to the right, takes value from left one
+    ! puts "virtual" right to border
+    ixplus = Nx
+    ! sets value to value from left point
+    ! val1
+    val1_par(1) = EMC_vp(ix,ilat,idep)
+    val1_par(2) = EMC_vs(ix,ilat,idep)
+    val1_par(3) = EMC_rho(ix,ilat,idep)
+    ! val2
+    if (FILL_MISSING_BORDER_POINTS_WITH_AVERAGE_VALUES) then
+      val2_par(1) = val_avg_vp     ! right border
+      val2_par(2) = val_avg_vs
+      val2_par(3) = val_avg_rho
+    else
+      ! extend left point values
+      val2_par(1) = EMC_vp(ix,ilat,idep)
+      val2_par(2) = EMC_vs(ix,ilat,idep)
+      val2_par(3) = EMC_rho(ix,ilat,idep)
+    endif
+  else
+    ! left/right points valid
+    ! sets value
+    val1_par(1) = EMC_vp(ix,ilat,idep)
+    val1_par(2) = EMC_vs(ix,ilat,idep)
+    val1_par(3) = EMC_rho(ix,ilat,idep)
+
+    val2_par(1) = EMC_vp(ixplus,ilat,idep)
+    val2_par(2) = EMC_vs(ixplus,ilat,idep)
+    val2_par(3) = EMC_rho(ixplus,ilat,idep)
+  endif
+
+  ! latitude
+  if (iy < 1 .and. iyplus > Ny) then
+    ! no valid point on this lat
+    ! puts "virtual" points to border
+    iy = 1
+    iyplus = Ny
+    ! sets value to depth average value
+    ! val3
+    val3_par(1) = val_avg_vp     ! lower point values
+    val3_par(2) = val_avg_vs
+    val3_par(3) = val_avg_rho
+    ! val4
+    val4_par(1) = val_avg_vp     ! upper point values
+    val4_par(2) = val_avg_vs
+    val4_par(3) = val_avg_rho
+  else if (iy < 1 .and. iyplus <= Ny) then
+    ! no point down, takes value from upper one
+    ! puts "virtual" lower to border
+    iy = 1
+    ! sets value to value from right point
+    ! val3
+    if (FILL_MISSING_BORDER_POINTS_WITH_AVERAGE_VALUES) then
+      val3_par(1) = val_avg_vp     ! right border
+      val3_par(2) = val_avg_vs
+      val3_par(3) = val_avg_rho
+    else
+      val3_par(1) = EMC_vp(ilon,iyplus,idep)
+      val3_par(2) = EMC_vs(ilon,iyplus,idep)
+      val3_par(3) = EMC_rho(ilon,iyplus,idep)
+    endif
+    ! val4
+    val4_par(1) = EMC_vp(ilon,iyplus,idep)
+    val4_par(2) = EMC_vs(ilon,iyplus,idep)
+    val4_par(3) = EMC_rho(ilon,iyplus,idep)
+  else if (iy >= 1 .and. iyplus > Ny) then
+    ! no point up, takes value from lower one
+    ! puts "virtual" upper to border
+    iyplus = Ny
+    ! sets value to value from left point
+    ! val3
+    val3_par(1) = EMC_vp(ilon,iy,idep)
+    val3_par(2) = EMC_vs(ilon,iy,idep)
+    val3_par(3) = EMC_rho(ilon,iy,idep)
+    ! val4
+    if (FILL_MISSING_BORDER_POINTS_WITH_AVERAGE_VALUES) then
+      val4_par(1) = val_avg_vp     ! right border
+      val4_par(2) = val_avg_vs
+      val4_par(3) = val_avg_rho
+    else
+      val4_par(1) = EMC_vp(ilon,iy,idep)
+      val4_par(2) = EMC_vs(ilon,iy,idep)
+      val4_par(3) = EMC_rho(ilon,iy,idep)
+    endif
+  else
+    ! lower/upper points valid
+    ! sets value
+    ! val3
+    val3_par(1) = EMC_vp(ilon,iy,idep)
+    val3_par(2) = EMC_vs(ilon,iy,idep)
+    val3_par(3) = EMC_rho(ilon,iy,idep)
+    ! val4
+    val4_par(1) = EMC_vp(ilon,iyplus,idep)
+    val4_par(2) = EMC_vs(ilon,iyplus,idep)
+    val4_par(3) = EMC_rho(ilon,iyplus,idep)
+  endif
+
+  ! check index bounds
+  if (ix < 1     .or. ix > Nx    ) stop 'Invalid interpolation point 1'
+  if (ixplus < 1 .or. ixplus > Nx) stop 'Invalid interpolation point 2'
+  if (iy < 1     .or. iy > Ny    ) stop 'Invalid interpolation point 3'
+  if (iyplus < 1 .or. iyplus > Ny) stop 'Invalid interpolation point 4'
+
+  if (ix == ixplus) stop 'Invalid interpolation point 1 and point 2'
+  if (iy == iyplus) stop 'Invalid interpolation point 3 and point 4'
+
+  ! interpolation
+  dx = 1.d0
+  dy = 1.d0
+  gamma_interp_x = 0.d0
+  gamma_interp_y = 0.d0
+
+  ! grid point position
+  lon = EMC_lon(ilon)
+  lat = EMC_lat(ilat)
+
+  ! determine ratio factor
+  ! distance between the two interpolation points
+  if (ix /= ixplus) dx = EMC_lon(ixplus) - EMC_lon(ix)
+  ! ratio
+  gamma_interp_x = (lon - dble(EMC_lon(ix))) / dx
+
+  ! distance between the two interpolation points
+  if (iy /= iyplus) dy = EMC_lat(iyplus) - EMC_lat(iy)
+  ! ratio
+  gamma_interp_y = (lat - dble(EMC_lat(iy))) / dy
+
+  ! limits interpolation factors to be in range [0,1]
+  if (gamma_interp_x < 0.d0) gamma_interp_x = 0.d0
+  if (gamma_interp_x > 1.d0) gamma_interp_x = 1.d0
+  if (gamma_interp_y < 0.d0) gamma_interp_y = 0.d0
+  if (gamma_interp_y > 1.d0) gamma_interp_y = 1.d0
+
+  ! bilinear interpolation
+  vp_interp = interpolate_bilinear(val1_par(1),val2_par(1),val3_par(1),val4_par(1),gamma_interp_x,gamma_interp_y)
+  vs_interp = interpolate_bilinear(val1_par(2),val2_par(2),val3_par(2),val4_par(2),gamma_interp_x,gamma_interp_y)
+  rho_interp= interpolate_bilinear(val1_par(3),val2_par(3),val3_par(3),val4_par(3),gamma_interp_x,gamma_interp_y)
+
+  end subroutine do_bilinear_interpolation
+
+  !------------------------------------
+
+  function interpolate_bilinear(val1,val2,val3,val4, &
+                                gamma_interp_x,gamma_interp_y) result (interp_val)
+
+  implicit none
+  double precision, intent(in) :: val1,val2,val3,val4
+  double precision, intent(in) :: gamma_interp_x,gamma_interp_y
+  ! return value
+  double precision :: interp_val
+
+  ! interpolation rule
+  ! uses bilinear interpolation
+  interp_val =  &
+       val1 * (1.d0-gamma_interp_x) * (1.d0-gamma_interp_y) + &
+       val2 * gamma_interp_x        * (1.d0-gamma_interp_y) + &
+       val3 * gamma_interp_x        * gamma_interp_y        + &
+       val4 * (1.d0-gamma_interp_x) * gamma_interp_y
+
+  end function interpolate_bilinear
+
+  !------------------------------------
+
+  subroutine do_shepard_interpolation(vp_interp,vs_interp,rho_interp)
+
+! inverse distance weighted (IDL) interpolation (Shepard's method)
+
+  use constants, only: HUGEVAL
+
+  implicit none
+
+  double precision, intent(inout) :: vp_interp,vs_interp,rho_interp
+
+  ! local parameters
+  double precision :: lon_ref,lat_ref,lon,lat
+  double precision :: dist,dist_sq
+  integer :: i,j,ix,iy
+  integer :: icount
+  ! inverse weighting
+  double precision :: sum_weight,weight
+  double precision :: sum_val_vp,sum_val_vs,sum_val_rho
+  ! tapering
+  double precision :: taper_val
+  double precision, external :: cosine_taper
+
+  ! reference grid point position
+  lon_ref = EMC_lon(ilon)
+  lat_ref = EMC_lat(ilat)
+
+  ! initializes weighted values
+  sum_val_vp = 0.d0
+  sum_val_vs = 0.d0
+  sum_val_rho = 0.d0
+
+  sum_weight = 0.d0
+  icount = 0
+
+  ! finds defined points within a grid search
+  do j = -NUMSTEPS_IY,NUMSTEPS_IY
+    do i = -NUMSTEPS_IX,NUMSTEPS_IX
+      ! grid index
+      ix = ilon + i
+      iy = ilat + j
+
+      ! checks bounds
+      if (ix < 1) cycle
+      if (ix > Nx) cycle
+      if (iy < 1) cycle
+      if (iy > Ny) cycle
+
+      ! skip missing points
+      if (EMC_mask(ix,iy,idep)) cycle
+
+      ! defined point location
+      lon = EMC_lon(ix)
+      lat = EMC_lat(iy)
+
+      ! distance - as simple as it gets in degrees, no Haversine function used for more accurate results...
+      dist_sq = (lon_ref - lon)*(lon_ref - lon) + (lat_ref - lat)*(lat_ref - lat)
+
+      ! weight based on inverse distance
+      weight = 1.d0 / dist_sq ! * taper_val
+
+      ! Accumulate weighted sum
+      sum_weight = sum_weight + weight
+
+      ! computes taper
+      dist = sqrt(dist_sq)
+      taper_val = cosine_taper(dist, taper_dist_maximum)
+
+      ! nearest point value w/ tapering
+      vp_interp = EMC_vp(ix,iy,idep) * taper_val + (1.d0 - taper_val) * val_avg_vp
+      vs_interp = EMC_vs(ix,iy,idep) * taper_val + (1.d0 - taper_val) * val_avg_vs
+      rho_interp = EMC_rho(ix,iy,idep) * taper_val + (1.d0 - taper_val) * val_avg_rho
+
+      sum_val_vp = sum_val_vp + weight * vp_interp
+      sum_val_vs = sum_val_vs + weight * vs_interp
+      sum_val_rho = sum_val_rho + weight * rho_interp
+
+      ! counter
+      icount = icount + 1
+    enddo
+  enddo
+
+  !debug
+  !print *,'debug: weighted interpolation: icount ',icount,' ilon/ilat ',ilon,ilat,'Nx/Ny',Nx,Ny,'sum_w',sum_weight
+  !print *,'       reference lon/lat',lon_ref,lat_ref
+  !print *,'       EMC lon min/max',EMC_lon_min,EMC_lon_max
+  !print *,'       EMC lat min/max',EMC_lat_min,EMC_lat_max
+
+  ! checks if we found a point
+  if (icount == 0) then
+    ! no near point found
+    ! return background/average value
+    vp_interp = val_avg_vp
+    vs_interp = val_avg_vs
+    rho_interp = val_avg_rho
+  else
+    ! Compute interpolated value
+    vp_interp = sum_val_vp / sum_weight
+    vs_interp = sum_val_vs / sum_weight
+    rho_interp = sum_val_rho / sum_weight
+  endif
+
+  end subroutine do_shepard_interpolation
+
+  end subroutine fill_EMC_missing_values_interpolated
+
+!
+!-------------------------------------------------------------------------------------------
+!
+
+  function cosine_taper(distance, max_distance) result(taper_val)
+
+  use constants, only: TINYVAL,PI
+  implicit none
+  double precision,intent(in) :: distance, max_distance
+  ! return result
+  double precision :: taper_val
+
+  ! initializes
+  taper_val = 1.d0
+
+  ! check
+  if (abs(max_distance) < TINYVAL) return
+
+  if (distance <= 0.d0) then
+    taper_val = 1.d0
+  else if (distance >= max_distance) then
+    taper_val = 0.d0
+  else
+    taper_val = 0.5d0 * (1.d0 + cos(PI * distance / max_distance))
+  end if
+
+  end function cosine_taper
+
+
+!-------------------------------------------------------------------------------------------
+!
+! main routines
+!
+!-------------------------------------------------------------------------------------------
 
   subroutine model_emc_broadcast()
 
@@ -859,6 +2254,7 @@ end module model_emc_par
   call bcast_all_singlecr(EMC_lon_max)
   call bcast_all_singlecr(EMC_dep_min)
   call bcast_all_singlecr(EMC_dep_max)
+
   call bcast_all_singlel(EMC_is_regional)
 
   ! broadcasts EMC gridding info
@@ -873,33 +2269,27 @@ end module model_emc_par
   call bcast_all_singlei(EMC_depth_reference_level)
 
   ! broadcasts grid coordinates
-  call bcast_all_singlei(EMC_latlen)
   call bcast_all_singlei(EMC_lonlen)
+  call bcast_all_singlei(EMC_latlen)
   call bcast_all_singlei(EMC_deplen)
 
-  latlen = EMC_latlen
   lonlen = EMC_lonlen
+  latlen = EMC_latlen
   deplen = EMC_deplen
 
   ! allocate grid arrays for all other processes
   if (myrank /= 0) then
-    allocate(EMC_lat(latlen), &
-             EMC_lon(lonlen), &
+    allocate(EMC_lon(lonlen), &
+             EMC_lat(latlen), &
              EMC_dep(deplen),stat=ier)
     if (ier /= 0) stop 'Error allocating lat,lon,dep arrays'
-    EMC_lat(:) = 0.0; EMC_lon(:) = 0.0; EMC_dep(:) = 0.0
-
-    allocate(EMC_surface_index(latlen,lonlen),stat=ier)
-    if (ier /= 0) stop 'Error allocating surface index array'
-    EMC_surface_index(:,:) = 0
+    EMC_lon(:) = 0.0; EMC_lat(:) = 0.0; EMC_dep(:) = 0.0
   endif
 
   ! broadcast the grid
   call bcast_all_cr(EMC_lat,latlen)
   call bcast_all_cr(EMC_lon,lonlen)
   call bcast_all_cr(EMC_dep,deplen)
-
-  call bcast_all_i(EMC_surface_index,latlen * lonlen)
 
   ! broadcasts velocity model values
   call bcast_all_singlei(EMC_dims_nx)
@@ -912,23 +2302,36 @@ end module model_emc_par
 
   ! allocate model arrays for all other processes
   if (myrank /= 0) then
+    ! model parameters
     allocate(EMC_vp(nx,ny,nz), &
              EMC_vs(nx,ny,nz), &
              EMC_rho(nx,ny,nz), stat=ier)
     if (ier /= 0) stop 'Error allocating EMC model arrays'
     EMC_vp(:,:,:) = 0.0; EMC_vs(:,:,:) = 0.0; EMC_rho(:,:,:) = 0.0
 
-    ! mask missing values
+    ! mask for missing values
     allocate(EMC_mask(nx,ny,nz),stat=ier)
     if (ier /= 0) stop 'Error allocating mask'
     EMC_mask(:,:,:) = .false.
+
+    ! average 1D model
+    allocate(EMC_avg_rho(deplen),EMC_avg_vp(deplen),EMC_avg_vs(deplen),stat=ier)
+    if (ier /= 0) stop 'Error allocating 1d average arrays'
+    EMC_avg_rho(:) = 0.0; EMC_avg_vp(:) = 0.0; EMC_avg_vs(:) = 0.0
   endif
 
   ! broadcast the velocity model
   call bcast_all_cr(EMC_vp,nx * ny * nz)
   call bcast_all_cr(EMC_vs,nx * ny * nz)
   call bcast_all_cr(EMC_rho,nx * ny * nz)
+
+  ! mask
   call bcast_all_l(EMC_mask,nx * ny * nz)
+
+  ! average 1D model
+  call bcast_all_cr(EMC_avg_vp,deplen)
+  call bcast_all_cr(EMC_avg_vs,deplen)
+  call bcast_all_cr(EMC_avg_rho,deplen)
 
   end subroutine model_emc_broadcast
 
@@ -938,10 +2341,16 @@ end module model_emc_par
 
   subroutine read_emc_model()
 
+  use constants, only: IOUT
+
   use shared_parameters, only: REGIONAL_MESH_CUTOFF,REGIONAL_MESH_CUTOFF_DEPTH, &
     CENTER_LATITUDE_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH, &
     ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES, &
     NCHUNKS
+
+  ! tapering
+  use constants, only: TWO_PI,R_UNIT_SPHERE,DEGREES_TO_RADIANS,RADIANS_TO_DEGREES
+  use shared_parameters, only: NCHUNKS,NEX_XI,NEX_ETA,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES
 
   use model_emc_par
 
@@ -958,8 +2367,7 @@ end module model_emc_par
   integer :: varid_vp, varid_vs, varid_rho    ! variable ids
   integer :: varid_lat, varid_lon, varid_dep
   integer :: dir_dep,dir
-  integer :: i,ix,iy,iz,ilat,ilon,idep,ier
-  integer :: dimindex(3)
+  integer :: i,ier
 
   real(kind=CUSTOM_REAL) :: missing_val_vp,missing_val_vs,missing_val_rho,missing_val_dep
   real(kind=CUSTOM_REAL) :: vp_min,vp_max,vs_min,vs_max,rho_min,rho_max
@@ -968,6 +2376,10 @@ end module model_emc_par
 
   ! chunk corners
   double precision :: corners_lat(4),corners_lon(4)
+
+  ! tapering
+  double precision :: ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
+  double precision :: element_size
 
   ! earth radii
   double precision, parameter :: RCMB_ = 3480000.d0
@@ -1017,8 +2429,8 @@ end module model_emc_par
 
   ! flag for regional/global models
   EMC_is_regional = .true.
-  if ((EMC_lat_max - EMC_lat_min == 180.0) .and. &
-      (EMC_lon_max - EMC_lon_min == 360.0 )) then
+  if (abs((EMC_lat_max - EMC_lat_min) - 180.0) < TINYVAL .and. &
+      abs((EMC_lon_max - EMC_lon_min) - 360.0) < TINYVAL) then
     ! global extent
     EMC_is_regional = .false.
   endif
@@ -1034,6 +2446,20 @@ end module model_emc_par
     write(IMAIN,*) '           regional model'
   else
     write(IMAIN,*) '           global model'
+  endif
+  write(IMAIN,*)
+  if (FILL_MISSING_VALUES_WITH_AVERAGE) then
+    write(IMAIN,*) '           using average 1D velocities for missing values'
+  else if (FILL_MISSING_VALUES_WITH_INTERPOLATION) then
+    write(IMAIN,*) '           using interpolated velocities for missing values'
+  else
+    write(IMAIN,*) '           using default background (PREM) values for missing values'
+  endif
+  if (EXTEND_EMC_MODEL_RANGE) then
+    write(IMAIN,*) '           extending model range (laterally & vertically)'
+  endif
+  if (TAPER_OUTSIDE_RANGE) then
+    write(IMAIN,*) '           using taper for outside points'
   endif
   write(IMAIN,*)
   call flush_IMAIN()
@@ -1157,10 +2583,15 @@ end module model_emc_par
   ! lat
   EMC_regular_grid_lat = .true.
   EMC_dlat = (EMC_lat_max - EMC_lat_min) / (latlen-1)
+  if (EMC_lat(2) < EMC_lat(1)) EMC_dlat = - EMC_dlat ! flips direction
   dx0 = EMC_lat(2) - EMC_lat(1)
   do i = 2,latlen-1
     dx = EMC_lat(i+1) - EMC_lat(i)
-    if (abs(dx - dx0) > 1.e-2 * dx0 .and. abs(dx - EMC_dlat) > 1.e-2 * EMC_dlat) then
+    if (abs(dx - dx0) > abs(1.e-2 * dx0) .and. abs(dx - EMC_dlat) > abs(1.e-2 * EMC_dlat)) then
+      !debug
+      if (VERBOSE) print *,'  irrregular gridding: dlat ',EMC_dlat,' - dx,dx0 = ',dx,dx0
+      if (VERBOSE) print *
+      ! set flag
       EMC_regular_grid_lat = .false.
       exit
     endif
@@ -1169,10 +2600,15 @@ end module model_emc_par
   ! lon
   EMC_regular_grid_lon = .true.
   EMC_dlon = (EMC_lon_max - EMC_lon_min) / (lonlen-1)
+  if (EMC_lon(2) < EMC_lon(1)) EMC_dlon = - EMC_dlon ! flips direction
   dx0 = EMC_lon(2) - EMC_lon(1)
   do i = 2,lonlen-1
     dx = EMC_lon(i+1) - EMC_lon(i)
-    if (abs(dx - dx0) > 1.e-2 * dx0 .and. abs(dx - EMC_dlon) > 1.e-2 * EMC_dlon) then
+    if (abs(dx - dx0) > abs(1.e-2 * dx0) .and. abs(dx - EMC_dlon) > abs(1.e-2 * EMC_dlon)) then
+      !debug
+      if (VERBOSE) print *,'  irrregular gridding: dlon ',EMC_dlon,' - dx,dx0 = ',dx,dx0
+      if (VERBOSE) print *
+      ! set flag
       EMC_regular_grid_lon = .false.
       exit
     endif
@@ -1181,10 +2617,15 @@ end module model_emc_par
   ! depth
   EMC_regular_grid_dep = .true.
   EMC_ddep = (EMC_dep_max - EMC_dep_min) / (deplen-1)
+  if (EMC_dep(2) < EMC_dep(1)) EMC_ddep = - EMC_ddep ! flips direction
   dx0 = EMC_dep(2) - EMC_dep(1)
   do i = 2,deplen-1
     dx = EMC_dep(i+1) - EMC_dep(i)
-    if (abs(dx - dx0) > 1.e-2 * dx0 .and. abs(dx - EMC_ddep) > 1.e-2 * EMC_ddep) then
+    if (abs(dx - dx0) > abs(1.e-2 * dx0) .and. abs(dx - EMC_ddep) > abs(1.e-2 * EMC_ddep)) then
+      ! debug
+      if (VERBOSE) print *,'  irrregular gridding: ddep ',EMC_ddep,' - dx,dx0 = ',dx,dx0
+      if (VERBOSE) print *
+      ! set flag
       EMC_regular_grid_dep = .false.
       exit
     endif
@@ -1193,17 +2634,17 @@ end module model_emc_par
 
   ! grid spacing
   if (EMC_regular_grid_lat) then
-    EMC_dlat = (EMC_lat_max - EMC_lat_min) / (latlen-1)
+    EMC_dlat = EMC_dlat
   else
     EMC_dlat = EMC_lat(2) - EMC_lat(1)
   endif
   if (EMC_regular_grid_lon) then
-    EMC_dlon = (EMC_lon_max - EMC_lon_min) / (lonlen-1)
+    EMC_dlon = EMC_dlon
   else
     EMC_dlon = EMC_lon(2) - EMC_lon(1)
   endif
   if (EMC_regular_grid_dep) then
-    EMC_ddep = (EMC_dep_max - EMC_dep_min) / (deplen-1)
+    EMC_ddep = EMC_ddep
   else
     EMC_ddep = EMC_dep(2) - EMC_dep(1)
   endif
@@ -1216,15 +2657,15 @@ end module model_emc_par
   write(IMAIN,*) '           regular grid lat/lon/dep = ',EMC_regular_grid_lat,'/', &
                                                           EMC_regular_grid_lon,'/', &
                                                           EMC_regular_grid_dep
-  if (EMC_regular_grid_lat) then
-    write(IMAIN,*) '           increments dlat = ',EMC_dlat
-  else
-    write(IMAIN,*) '           increments dlat = variable (',EMC_dlat,',..)'
-  endif
   if (EMC_regular_grid_lon) then
     write(IMAIN,*) '           increments dlon = ',EMC_dlon
   else
     write(IMAIN,*) '           increments dlon = variable (',EMC_dlon,',..)'
+  endif
+  if (EMC_regular_grid_lat) then
+    write(IMAIN,*) '           increments dlat = ',EMC_dlat
+  else
+    write(IMAIN,*) '           increments dlat = variable (',EMC_dlat,',..)'
   endif
   if (EMC_regular_grid_dep) then
     write(IMAIN,*) '           increments ddep = ',EMC_ddep
@@ -1244,7 +2685,28 @@ end module model_emc_par
 
   ! model variables dimensions
   ! Check that the variable's dimensions are in the correct order
-  call check_dimorder(ncid, varid_vp, latid, lonid, depid, varorderdims)
+  if (varid_vp /= 0) then
+    call check_dimorder(ncid, varid_vp, latid, lonid, depid, varorderdims)
+  else if (varid_vs /= 0) then
+    call check_dimorder(ncid, varid_vs, latid, lonid, depid, varorderdims)
+  else if (varid_rho /= 0) then
+    call check_dimorder(ncid, varid_rho, latid, lonid, depid, varorderdims)
+  else
+    print *,'Error: no parameter vp, vs or rho found for checking array dimensions'
+    stop 'Error no model parameter vp, vs or rho found'
+  endif
+
+  ! user output
+  write(IMAIN,*) '  order  : lon id ',lonid,' array index = ',varorderdims(lonid)
+  write(IMAIN,*) '           lat id ',latid,' array index = ',varorderdims(latid)
+  write(IMAIN,*) '           dep id ',depid,' array index = ',varorderdims(depid)
+  write(IMAIN,*)
+  call flush_IMAIN()
+
+  ! safety check with stored ids
+  if (latid == 0) stop 'Invalid lat ids between dimension and array infos'
+  if (lonid == 0) stop 'Invalid lon ids between dimension and array infos'
+  if (depid == 0) stop 'Invalid depth ids between dimension and array infos'
 
   ! set dimension lengths
   dimlens(:) = 0
@@ -1270,12 +2732,12 @@ end module model_emc_par
   EMC_dims_nz = nz
 
   ! user output
-  write(IMAIN,*) '  size   : number of points lat               = ',latlen
-  write(IMAIN,*) '           number of points lon               = ',lonlen
-  write(IMAIN,*) '           number of points dep               = ',deplen
+  write(IMAIN,*) '  size   : number of points lat         = ',latlen
+  write(IMAIN,*) '           number of points lon         = ',lonlen
+  write(IMAIN,*) '           number of points dep         = ',deplen
   write(IMAIN,*)
-  write(IMAIN,*) '           array dimensions nx/ny/nz          = ',nx,'/',ny,'/',nz
-  write(IMAIN,*) '           array memory required per process  = ', &
+  write(IMAIN,*) '           array dimensions nx/ny/nz    = ',nx,ny,nz
+  write(IMAIN,*) '           memory required per process  = ', &
                              sngl(3*dble(nx)*dble(ny)*dble(nz)*dble(CUSTOM_REAL)/1024./1024.),'MB'
   write(IMAIN,*)
   call flush_IMAIN()
@@ -1293,9 +2755,21 @@ end module model_emc_par
   if (varid_rho /= 0) call check_status(nf90_get_var(ncid, varid_rho, EMC_rho))
 
   ! gets units and missing values
-  if (varid_vp /= 0)  call check_variable_attributes(ncid, varid_vp, EMC_vp_unit, dir, missing_val_vp)
-  if (varid_vs /= 0)  call check_variable_attributes(ncid, varid_vs, EMC_vs_unit, dir, missing_val_vs)
-  if (varid_rho /= 0) call check_variable_attributes(ncid, varid_rho, EMC_rho_unit, dir, missing_val_rho)
+  if (varid_vp /= 0) then
+    call check_variable_attributes(ncid, varid_vp, EMC_vp_unit, dir, missing_val_vp)
+    ! double-check as array might still have NaNs
+    call convert_nan_to_missing(EMC_vp,missing_val_vp)
+  endif
+  if (varid_vs /= 0) then
+    call check_variable_attributes(ncid, varid_vs, EMC_vs_unit, dir, missing_val_vs)
+    ! double-check as array might still have NaNs
+    call convert_nan_to_missing(EMC_vs,missing_val_vs)
+  endif
+  if (varid_rho /= 0) then
+    call check_variable_attributes(ncid, varid_rho, EMC_rho_unit, dir, missing_val_rho)
+    ! double-check as array might still have NaNs
+    call convert_nan_to_missing(EMC_rho,missing_val_rho)
+  endif
 
   ! Close netcdf file
   call check_status(nf90_close(ncid))
@@ -1306,44 +2780,61 @@ end module model_emc_par
       ! VP provided
       ! Vs scaling
       if (varid_vs == 0) then
+        ! user output
+        write(IMAIN,*) '  scaling: Vs  from Vp   (Brocher scaling)'
+        call flush_IMAIN()
         ! scales EMC_vs from EMC_vp
         call scale_Brocher_vs_from_vp()
         ! sets missing factor
         missing_val_vs = missing_val_vp
-        where(EMC_vp == missing_val_vp) EMC_vs = missing_val_vs
+        where(abs(EMC_vp - missing_val_vp) < TINYVAL) EMC_vs = missing_val_vs
       endif
       ! Density scaling
       if (varid_rho == 0) then
+        ! user output
+        write(IMAIN,*) '  scaling: Rho from Vp   (Brocher scaling)'
+        call flush_IMAIN()
         ! scales EMC_rho from EMC_vp
         call scale_Brocher_rho_from_vp()
         ! sets missing factor
         missing_val_rho = missing_val_vp
-        where(EMC_vp == missing_val_vp) EMC_rho = missing_val_rho
+        where(abs(EMC_vp - missing_val_vp) < TINYVAL) EMC_rho = missing_val_rho
       endif
     else if (varid_vs /= 0 .and. (varid_vp == 0 .or. varid_rho == 0)) then
       ! VS provided
       ! Vp scaling
       if (varid_vp == 0) then
+        ! user output
+        write(IMAIN,*) '  scaling: Vp  from Vs   (Brocher scaling)'
+        call flush_IMAIN()
         ! scales EMC_vs from EMC_vp
         call scale_Brocher_vp_from_vs()
         ! sets missing factor
         missing_val_vp = missing_val_vs
-        where(EMC_vs == missing_val_vs) EMC_vp = missing_val_vp
+        where(abs(EMC_vs - missing_val_vs) < TINYVAL) EMC_vp = missing_val_vp
       endif
       ! Density scaling
       if (varid_rho == 0) then
+        ! user output
+        write(IMAIN,*) '  scaling: Rho from Vp   (Brocher scaling)'
+        call flush_IMAIN()
         ! scales EMC_rho from EMC_vp
         call scale_Brocher_rho_from_vp()
         ! sets missing factor
         missing_val_rho = missing_val_vp
-        where(EMC_vp == missing_val_vp) EMC_rho = missing_val_rho
+        where(abs(EMC_vp - missing_val_vp) < TINYVAL) EMC_rho = missing_val_rho
       endif
     else if (varid_vp /= 0 .and. varid_vs /= 0 .and. varid_rho /= 0) then
       ! complete, no scaling needed
+      write(IMAIN,*) '  scaling: no scaling needed, all parameters provided'
+      call flush_IMAIN()
       continue
     else
       stop 'Invalid model scaling relation not implemented yet'
     endif
+    ! user output
+    write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   ! mask missing values
@@ -1353,33 +2844,53 @@ end module model_emc_par
 
   ! vp
   ! here mask is .false. for missing value, .true. for valid points
-  where(EMC_vp == missing_val_vp)
-    EMC_mask = .false.
-  elsewhere
-    EMC_mask = .true.
-  end where
+  !
+  ! note: intel ifort compiler (2021.10.0 oneAPI) seems to have problems with the `where .. elsewhere ..` statement
+  !       and crashes with a segmentation fault. however, it seems to work with only a `where ..` statement.
+  !       as a work-around, we omit the `elsewhere` statement and initialize first the mask accordingly.
+  !
+  ! also, instead of comparing float values directly like `a == b`, we use an expression like `abs(a-b) < TINYVAL`
+  ! to allow for some inaccuracy due to numerical precision.
+  !
+  !leads to ifort crashes:
+  !where(EMC_vp == missing_val_vp)
+  !  EMC_mask = .false.
+  !elsewhere
+  !  EMC_mask = .true.
+  !end where
+  !work-around:
+  EMC_mask(:,:,:) = .true.
+  where(abs(EMC_vp - missing_val_vp) < TINYVAL) EMC_mask = .false.
   ! min/max without missing values
   vp_min = minval(EMC_vp,mask=EMC_mask)
   vp_max = maxval(EMC_vp,mask=EMC_mask)
 
   ! vs
   ! here mask is .false. for missing value, .true. for valid points
-  where(EMC_vs == missing_val_vs)
-    EMC_mask = .false.
-  elsewhere
-    EMC_mask = .true.
-  end where
+  !leads to ifort crashes:
+  !where(EMC_vs == missing_val_vs)
+  !  EMC_mask = .false.
+  !elsewhere
+  !  EMC_mask = .true.
+  !end where
+  !work-around:
+  EMC_mask(:,:,:) = .true.
+  where(abs(EMC_vs - missing_val_vs) < TINYVAL) EMC_mask = .false.
   ! min/max without missing values
   vs_min = minval(EMC_vs,mask=EMC_mask)
   vs_max = maxval(EMC_vs,mask=EMC_mask)
 
   ! rho
   ! here mask is .false. for missing value, .true. for valid points
-  where(EMC_rho == missing_val_rho)
-    EMC_mask = .false.
-  elsewhere
-    EMC_mask = .true.
-  end where
+  !leads to ifort crashes:
+  !where(EMC_rho == missing_val_rho)
+  !  EMC_mask = .false.
+  !elsewhere
+  !  EMC_mask = .true.
+  !end where
+  !work-around:
+  EMC_mask(:,:,:) = .true.
+  where(abs(EMC_rho - missing_val_rho) < TINYVAL) EMC_mask = .false.
   ! min/max without missing values
   rho_min = minval(EMC_rho,mask=EMC_mask)
   rho_max = maxval(EMC_rho,mask=EMC_mask)
@@ -1389,9 +2900,9 @@ end module model_emc_par
   !                          where at least one of the velocity model values (vp, vs or rho) is missing;
   !                          and mask==.false. for valid points.
   EMC_mask(:,:,:) = .false.
-  where(EMC_vp == missing_val_vp) EMC_mask = .true.
-  where(EMC_vs == missing_val_vs) EMC_mask = .true.
-  where(EMC_rho == missing_val_rho) EMC_mask = .true.
+  where(abs(EMC_vp - missing_val_vp) < TINYVAL) EMC_mask = .true.
+  where(abs(EMC_vs - missing_val_vs) < TINYVAL) EMC_mask = .true.
+  where(abs(EMC_rho - missing_val_rho) < TINYVAL) EMC_mask = .true.
 
   ! user output
   write(IMAIN,*) '  model  : vp  min/max = ', vp_min,'/',vp_max
@@ -1402,66 +2913,6 @@ end module model_emc_par
   write(IMAIN,*) '                                                        ',(100.0*count(EMC_mask))/(nx*ny*nz),'%'
   write(IMAIN,*)
   call flush_IMAIN()
-
-  ! surface index
-  ! to avoid taking model values defined for air or oceans, we search for the top-most index that defines the
-  ! velocities for the solid surface
-  allocate(EMC_surface_index(EMC_latlen,EMC_lonlen),stat=ier)
-  if (ier /= 0) stop 'Error allocating surface index array'
-  EMC_surface_index(:,:) = 0
-  do ilat = 1,EMC_latlen
-    do ilon = 1,EMC_lonlen
-      ! assumes that depth array starts at top and move down to earth center
-      do idep = 1,EMC_deplen
-        ! gets array indexing
-        dimindex(varorderdims(latid)) = ilat
-        dimindex(varorderdims(lonid)) = ilon
-        dimindex(varorderdims(depid)) = idep
-        ix = dimindex(varorderdims(1))
-        iy = dimindex(varorderdims(2))
-        iz = dimindex(varorderdims(3))
-        ! checks if point has valid entry
-        if (.not. EMC_mask(ix,iy,iz) .and. EMC_surface_index(ilat,ilon) == 0) then
-          ! checks if point is for solids
-          if (EMC_vs(ix,iy,iz) > 0.d0) then
-            EMC_surface_index(ilat,ilon) = idep
-            ! exit depth loop
-            exit
-          endif
-        endif
-      enddo
-    enddo
-  enddo
-  ! checks missed array values (in case some lat/lon are all missing values)
-  where(EMC_surface_index == 0) EMC_surface_index = 1
-
-  ! consistency conversions
-  ! to have the model parameters always in the same unit (velocities in km/s, density in kg/m^3)
-
-  ! converts density to default kg/m^3
-  ! units: 1==m, 2==km, 3==m/s, 4==km/s, 5==g/cm^3, 6==kg/cm^3, 7==kg/m^3
-  if (EMC_rho_unit == 5) then
-    ! converts to kg/m^3
-    ! rho [kg/m^3] = rho * 1000 [g/cm^3]
-    EMC_rho(:,:,:) = EMC_rho(:,:,:) * 1000.d0
-    EMC_rho_unit = 7 ! kg/m^3
-  else if (EMC_rho_unit == 6) then
-    ! converts to kg/m^3
-    ! rho [kg/m^3] = rho * 1000 [kg/cm^3]
-    EMC_rho(:,:,:) = EMC_rho(:,:,:) * 1.d6
-    EMC_rho_unit = 7 ! kg/m^3
-  endif
-  ! converts velocity to default m/s
-  if (EMC_vp_unit == 4) then
-    ! converts to m/s
-    EMC_vp(:,:,:) = EMC_vp(:,:,:) * 1000.d0
-    EMC_vp_unit = 3
-  endif
-  if (EMC_vs_unit == 4) then
-    ! converts to m/s
-    EMC_vs(:,:,:) = EMC_vs(:,:,:) * 1000.d0
-    EMC_vs_unit = 3
-  endif
 
   ! Par_file region info
   if (NCHUNKS /= 6) then
@@ -1474,7 +2925,7 @@ end module model_emc_par
     if (EMC_lon_max > 180.0) where(corners_lon(:) < 0.d0) corners_lon = corners_lon + 360.0    ! range [0,360]
 
     ! user output
-    write(IMAIN,*) '  simulation chunk setup:'
+    write(IMAIN,*) '  simulation chunk:'
     write(IMAIN,*) '    center (lat,lon) at : (',sngl(CENTER_LATITUDE_IN_DEGREES),sngl(CENTER_LONGITUDE_IN_DEGREES),') geocentric'
     write(IMAIN,*) '    rotation            : ',sngl(GAMMA_ROTATION_AZIMUTH)
     write(IMAIN,*) '    width eta/xi        : ',sngl(ANGULAR_WIDTH_ETA_IN_DEGREES),sngl(ANGULAR_WIDTH_XI_IN_DEGREES)
@@ -1565,6 +3016,111 @@ end module model_emc_par
     endif ! EMC_is_regional
   endif
 
+  ! consistency conversions
+  ! to have the model parameters always in the same unit (velocities in km/s, density in kg/m^3)
+
+  ! converts density to default kg/m^3
+  ! units: 1==m, 2==km, 3==m/s, 4==km/s, 5==g/cm^3, 6==kg/cm^3, 7==kg/m^3
+  if (EMC_rho_unit == 5) then
+    ! converts to kg/m^3
+    ! rho [kg/m^3] = rho * 1000 [g/cm^3]
+    EMC_rho(:,:,:) = EMC_rho(:,:,:) * 1000.d0
+    EMC_rho_unit = 7 ! kg/m^3
+  else if (EMC_rho_unit == 6) then
+    ! converts to kg/m^3
+    ! rho [kg/m^3] = rho * 1000000 [kg/cm^3]
+    EMC_rho(:,:,:) = EMC_rho(:,:,:) * 1.d6
+    EMC_rho_unit = 7 ! kg/m^3
+  endif
+  ! converts velocity to default m/s
+  if (EMC_vp_unit == 4) then
+    ! converts to m/s
+    EMC_vp(:,:,:) = EMC_vp(:,:,:) * 1000.d0
+    EMC_vp_unit = 3
+  endif
+  if (EMC_vs_unit == 4) then
+    ! converts to m/s
+    EMC_vs(:,:,:) = EMC_vs(:,:,:) * 1000.d0
+    EMC_vs_unit = 3
+  endif
+
+  ! re-orders arrays to have fixed lon/lat/depth indexing
+  call reorder_EMC_model_arrays(lonid,latid,depid,varorderdims)
+
+  ! model modifications
+  !
+  ! note: some EMC models might need some special modifications to avoid artificially low Vs values.
+  !       to create an EMC model, some groups might interpolate velocities between fluid/air and solid grid points,
+  !       which leads to very low Vs values, but still giving a solid medium, and not a fluid/air medium.
+  !       we could try to mitigate these models a bit, but it's unclear what would be a reasonable modification.
+  !
+  !       for now, we take what we get and the user decides if that model is usable for seismic simulations...
+  !
+  !if (trim(EMC_model_id) == 'AlaskaFWANT_Vs2019') then
+  !  ! AlaskaFWANT_Vs2019
+  !  ! EMC file: YangAndGao-AlaskaFWANT-Vs2019-0.0.nc
+  !  ! - the upper-most top Vs values look too artificial, either they are not valid (NaNf) or have
+  !  !   very small, non-zero values (like 0.00313637 km/s, ..)
+  !  !   -> we will replace this top layer with the values from the layer below
+  !  !      however, this still doesn't solve very small Vs values as they progress even further down...
+  !  ! user ouput
+  !  write(IMAIN,*) '  using model modification for model: ',trim(EMC_model_id)
+  !  write(IMAIN,*) '    replacing top layer with next layer values (to fix tiny Vs values)'
+  !  write(IMAIN,*)
+  !  call flush_IMAIN()
+  !
+  !  ! replaces first layer values with values from layer below
+  !  !    top layer is at 0 km depth
+  !  !    next         at 1.833 km
+  !  !    next         at 3.666 km
+  !  EMC_vp(:,:,1) = EMC_vp(:,:,2)
+  !  EMC_vs(:,:,1) = EMC_vs(:,:,2)
+  !  EMC_rho(:,:,1) = EMC_rho(:,:,2)
+  !  EMC_mask(:,:,1) = EMC_mask(:,:,2)
+  !  ! new model name
+  !  EMC_model_id = trim(EMC_model_id) // '-modified'
+  !endif
+
+  ! extend solid surface values upwards
+  call fill_EMC_surface_values()
+
+  ! determine average 1D model
+  call determine_EMC_depth_average()
+
+  ! fills missing value grid points w/ 1d depth average values
+  if (FILL_MISSING_VALUES_WITH_AVERAGE) then
+    call fill_EMC_missing_values_average()
+  endif
+
+  ! fills missing value grid points w/ 1d depth average values
+  if (FILL_MISSING_VALUES_WITH_INTERPOLATION) then
+    call fill_EMC_missing_values_interpolated()
+  endif
+
+  ! tapering
+  if (TAPER_OUTSIDE_RANGE) then
+    ! compares fixed taper distances to mesh
+    ! compute typical size of elements at the surface
+    ! (normalized)
+    if (NCHUNKS == 6) then
+      ! estimation for global meshes (assuming 90-degree chunks)
+      element_size = TWO_PI * R_UNIT_SPHERE / (4.d0 * NEX_XI)
+    else
+      ! estimation for 1-chunk meshes
+      ANGULAR_WIDTH_XI_RAD = ANGULAR_WIDTH_XI_IN_DEGREES * DEGREES_TO_RADIANS
+      ANGULAR_WIDTH_ETA_RAD = ANGULAR_WIDTH_ETA_IN_DEGREES * DEGREES_TO_RADIANS
+      element_size = max( ANGULAR_WIDTH_XI_RAD/NEX_XI,ANGULAR_WIDTH_ETA_RAD/NEX_ETA ) * R_UNIT_SPHERE
+    endif
+
+    ! user output
+    write(IMAIN,*)'  taper : horizontal taper distance (in deg) : ',taper_distance_maximum_hori_in_degrees,'(deg)'
+    write(IMAIN,*)'          vertical   taper distance (in km)  : ',taper_distance_maximum_vert_in_km,'(km)'
+    write(IMAIN,*)
+    write(IMAIN,*)'          estimated element size (at surface)          : ',element_size * RADIANS_TO_DEGREES,'(deg)'
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
   end subroutine read_emc_model
 
 !
@@ -1595,16 +3151,15 @@ end module model_emc_par
   double precision :: vp_iso,vs_iso,rho_iso
   double precision :: vpl,vsl,rhol
   double precision :: scaleval_vel,scaleval_rho
-  integer :: index_lat,index_lon,index_dep,index_surface
-
-  ! positioning/interpolation
-  double precision :: interp_val
-  double precision :: gamma_interp_x,gamma_interp_y,gamma_interp_z
-  double precision :: val1,val2,val3,val4,val5,val6,val7,val8
-  integer :: ix,iy,iz,Nx,Ny,Nz
-
+  integer :: index_lat,index_lon,index_dep
   ! elevation
   double precision :: lat_topo,lon_topo,elevation,r_topo
+  ! flag for points with missing values
+  logical :: is_point_outside
+
+  ! tapering
+  double precision :: dist_lon,dist_lat,dist,taper_val
+  double precision, external :: cosine_taper
 
   ! checks if anything to do
   ! so far, EMC models only for crust/mantle are supported
@@ -1649,7 +3204,7 @@ end module model_emc_par
       ! depth of given radius (in km)
       r_depth = R_PLANET_KM * (1.0 - r)  ! radius is normalized between [0,1.x]
 
-      ! checks limit (mesh point cannot higher than EMC limit)
+      ! checks limit (mesh point cannot be higher than EMC limit)
       ! depth positive towards earth center
       if (r_depth < EMC_dep_min) r_depth = EMC_dep_min
     endif
@@ -1659,7 +3214,13 @@ end module model_emc_par
     ! depth relative to sea level and relative to earth surface is the same in this case
     r_depth = R_PLANET_KM * (1.0 - r)  ! radius is normalized between [0,1.x]
 
-    ! checks limit (mesh point cannot higher than EMC limit)
+    ! checks limit (mesh point cannot be higher than EMC limit)
+    !
+    ! note: this has also the effect that the EMC model velocities extend upwards, i.e., for EMC models that have been defined
+    !       only below a given depth, the velocities from the upper most depth will be extended up to the surface.
+    !       for example, the Ward (2018) model starts at a depth of 1 km down to a depth of 70 km. the velocities at 1 km depth
+    !       will be used for any shallower depths.
+    !
     ! depth positive towards earth center
     if (r_depth < EMC_dep_min) r_depth = EMC_dep_min
   endif
@@ -1689,67 +3250,55 @@ end module model_emc_par
   !
   !       todo: determine depth for initial or final grid points? left for future improvements...
 
-  ! shift lon if EMC longitudes start at negative lon
+  ! shift lon [0,360] if EMC longitudes start at negative lon
   if (EMC_lon_min < -180.0) then
+    if (lon > 0.0) lon = lon - 360.0d0      ! range [-360,0]
+  else if (EMC_lon_min < 0.0 .and. EMC_lon_max <= 0.0) then
     if (lon > 0.0) lon = lon - 360.0d0      ! range [-360,0]
   else if (EMC_lon_min < 0.0) then
     if (lon > 180.0) lon = lon - 360.0d0    ! range [-180,180]
   endif
 
-  ! checks if point lies in EMC model region:
-  !   we add half of the gridding increments to the limits to avoid numerical artefacts,
-  !   mostly for points very close to surface or borders.
-  !   indexing below will take care of such points slightly beyond edges.
-  if (r_depth < (EMC_dep_min - 0.5*EMC_ddep) .or. r_depth > (EMC_dep_max + 0.5*EMC_ddep)) then
-    !if (myrank==0) print *,'debug: lat/lon/dep = ',lat,lon,r_depth,' dep min/max ',EMC_dep_min,EMC_dep_max
-    return
-  endif
-  if (lat < (EMC_lat_min - 0.5*EMC_dlat) .or. lat > (EMC_lat_max + 0.5*EMC_dlat)) then
-    !if (myrank==0) print *,'debug: lat/lon/dep = ',lat,lon,r_depth,' lat min/max ',EMC_lat_min,EMC_lat_max
-    return
-  endif
-  if (lon < (EMC_lon_min - 0.5*EMC_dlon) .or. lon > (EMC_lon_max + 0.5*EMC_dlon) ) then
-    !if (myrank==0) print *,'debug: lat/lon/dep = ',lat,lon,r_depth,' lon min/max ',EMC_lon_min,EMC_lon_max
-    return
-  endif
+  ! safety check
+  ! we assume from here on that the increments EMC_dlon, EMC_dlat and EMC_ddep are strictly positive.
+  ! this should have been done by re-orderering the arrays in the read routine if needed.
+  if (EMC_dlon <= 0.0_CUSTOM_REAL) stop 'Invalid EMC dlon increment'
+  if (EMC_dlat <= 0.0_CUSTOM_REAL) stop 'Invalid EMC dlat increment'
+  if (EMC_ddep <= 0.0_CUSTOM_REAL) stop 'Invalid EMC ddep increment'
 
   ! finds grid index
-  ! lat
+  ! lat [-90,90]
   if (EMC_regular_grid_lat) then
     ! indexing starts at 1,..
-    index_lat = floor((lat - EMC_lat_min)/EMC_dlat) + 1
+    index_lat = floor((lat - EMC_lat(1))/EMC_dlat) + 1
   else
     ! gets index of value in EMC_lat closest to given lat
     index_lat = minloc(abs(EMC_lat(:) - lat),dim=1)
     ! determine closest, but smaller value (like floor(..) above) than given lat
-    if (index_lat <= 0) index_lat = 1
-    if (EMC_dlat > 0.0) then
-      if (EMC_lat(index_lat) > lat) index_lat = index_lat - 1
-    else if (EMC_dlat < 0.0) then
-      if (EMC_lat(index_lat) < lat) index_lat = index_lat - 1
-    endif
+    if (lat < EMC_lat(index_lat)) index_lat = index_lat - 1
   endif
+  ! checks bounds to allow index_lat go beyond the range [1,latlen], indicating that the point lies outside
+  if (lat < EMC_lat(1)) index_lat = 0
+  if (lat > EMC_lat(EMC_latlen)) index_lat = EMC_latlen + 1
 
   ! lon
   if (EMC_regular_grid_lon) then
     ! indexing starts at 1,..
-    index_lon = floor((lon - EMC_lon_min)/EMC_dlon) + 1
+    index_lon = floor((lon - EMC_lon(1))/EMC_dlon) + 1
   else
     ! gets index of value in EMC_lon closest to given lon
     index_lon = minloc(abs(EMC_lon(:) - lon),dim=1)
     ! determine closest, but smaller value (like floor(..) above) than given lon
-    if (index_lon <= 0) index_lon = 1
-    if (EMC_dlon > 0.0) then
-      if (EMC_lon(index_lon) > lon) index_lon = index_lon - 1
-    else if (EMC_dlon < 0.0) then
-      if (EMC_lon(index_lon) < lon) index_lon = index_lon - 1
-    endif
+    if (lon < EMC_lon(index_lon)) index_lon = index_lon - 1
   endif
+  ! checks bounds to allow index_lat go beyond the range [1,lonlen], indicating that the point lies outside
+  if (lon < EMC_lon(1)) index_lon = 0
+  if (lon > EMC_lon(EMC_lonlen)) index_lon = EMC_lonlen + 1
 
   ! depth
   if (EMC_regular_grid_dep) then
     ! indexing starts at 1,..
-    index_dep = floor((r_depth - EMC_dep_min)/EMC_ddep) + 1
+    index_dep = floor((r_depth - EMC_dep(1))/EMC_ddep) + 1
   else
     ! gets index of value in EMC_dep closest to given dep
     index_dep = minloc(abs(EMC_dep(:) - r_depth),dim=1)
@@ -1758,90 +3307,255 @@ end module model_emc_par
     !              we want index with EMC_dep == 30 and use the cell between [30,31]km depth for interpolation
     ! in case depth increases in array: ddep > 0 and index with smaller depth is -1
     ! in case depth decreases in array: ddep < 0 and index with smaller depth is +1
-    if (index_dep <= 0) index_dep = 1
-    if (EMC_ddep > 0.0) then
-      if (EMC_dep(index_dep) > r_depth) index_dep = index_dep - 1
-    else if (EMC_ddep < 0.0) then
-      if (EMC_dep(index_dep) < r_depth) index_dep = index_dep - 1
+    if (r_depth < EMC_dep(index_dep)) index_dep = index_dep - 1
+  endif
+  ! checks bounds to allow index_dep go beyond the range [1,deplen], indicating that the point lies outside
+  if (r_depth < EMC_dep(1)) index_dep = 0
+  if (r_depth > EMC_dep(EMC_deplen)) index_dep = EMC_deplen + 1
+
+  ! extend model laterally to points outside EMC region
+  if (EXTEND_EMC_MODEL_RANGE) then
+    ! limits index
+    ! lat
+    if (index_lat < 1) index_lat = 1                        ! interpolation will take care
+    if (index_lat > EMC_latlen) index_lat = EMC_latlen
+    ! lon
+    if (index_lon < 1) index_lon = 1                        ! interpolation will take care
+    if (index_lon > EMC_lonlen) index_lon = EMC_lonlen
+    ! depth extensions
+    ! note: we will always extend the model values upwards to the surface if needed;
+    !       this will allow for variations on top.
+    !       for deeper parts, extending the model smears out structures vertically (looks like plume-like structures below).
+    !       one could also replace value below the model range with average/background velocities.
+    !       however, this introduces an artificial discontinuity at the bottom of the EMC model.
+    ! here, we choose to extend in both directions as we will use by default a taper to taper off values outside the model.
+    if (index_dep < 1) index_dep = 1                        ! extends model to top
+    if (index_dep > EMC_deplen) index_dep = EMC_deplen      ! extends model below
+    ! or
+    !!if (index_dep > EMC_deplen) index_dep = EMC_deplen +1   ! replaces bottom by average/background
+  endif
+
+  ! checks if point outside
+  is_point_outside = .false.
+  if (index_lat < 1 .or. index_lat > EMC_latlen) is_point_outside = .true.
+  if (index_lon < 1 .or. index_lon > EMC_lonlen) is_point_outside = .true.
+  if (index_dep > EMC_deplen) is_point_outside = .true.
+
+  ! background velocities (from PREM)
+  ! Voigt average of input (for masked points where model values are missing)
+  vp_iso = sqrt( (2.d0*vpv*vpv + vph*vph)/3.d0 )
+  vs_iso = sqrt( (2.d0*vsv*vsv + vsh*vsh)/3.d0 )
+  rho_iso = rho
+
+  ! input background values are non-dimensionalized already
+  ! - here we put dimension back to m/s (and kg/m^3) to mix with EMC model values for interpolation
+  vp_iso = vp_iso * R_PLANET * sqrt(PI*GRAV*RHOAV)  ! to m/s
+  vs_iso = vs_iso * R_PLANET * sqrt(PI*GRAV*RHOAV)  ! to m/s
+  rho_iso = rho_iso * RHOAV                         ! to kg/m3
+
+  ! using average 1D model depth values
+  if (FILL_MISSING_VALUES_WITH_AVERAGE .or. FILL_MISSING_VALUES_WITH_INTERPOLATION) then
+    if (index_dep >= 1 .and. index_dep <= EMC_deplen) then
+      ! takes average values at depth
+      call get_interpolated_1d_depth_average(r_depth,index_dep,vp_iso,vs_iso,rho_iso)
+    else
+      ! point outside model range
+      ! last layer values
+      vp_iso = EMC_avg_vp(EMC_deplen)
+      vs_iso = EMC_avg_vs(EMC_deplen)
+      rho_iso = EMC_avg_rho(EMC_deplen)
     endif
   endif
 
-  ! for points above solid surface elevation
-  ! we limit index to solid surface (no oceans, air, etc.)
-  if ((index_lat >= 1 .and. index_lat <= EMC_latlen) &
-     .and. (index_lon >= 1 .and. index_lon <= EMC_lonlen)) then
-    ! index of top solid surface
-    index_surface = EMC_surface_index(index_lat,index_lon)
+  ! interpolation
+  if (.not. is_point_outside) then
+    ! takes model values interpolated from EMC model
+    call get_interpolated_EMC_values(index_lon,index_lat,index_dep,lon,lat,r_depth,rho_iso,vp_iso,vs_iso,rhol,vpl,vsl)
+  else
+    ! set to average/background value
+    rhol = rho_iso
+    vpl = vp_iso
+    vsl = vs_iso
+  endif
 
-    ! assumes that indexing moves down towards earth center, i.e., 1==top, .. ,deplen==bottom of mesh
-    if (index_dep < index_surface) then
-      ! limits to surface points
+  ! point outside model
+  if (TAPER_OUTSIDE_RANGE) then
+    ! determines if point outside based on lat/lon position
+    ! get maximum distance in radians
+    ! lon
+    if (lon < EMC_lon(1)) then
+      dist_lon = abs(EMC_lon(1) - lon)
+    else if (lon > EMC_lon(EMC_lonlen)) then
+      dist_lon = abs(lon - EMC_lon(EMC_lonlen))
+    else
+      dist_lon = 0.d0
+    endif
+    ! lat
+    if (lat < EMC_lat(1)) then
+      dist_lat = abs(EMC_lat(1) - lat)
+    else if (lat > EMC_lat(EMC_latlen)) then
+      dist_lat = abs(lat - EMC_lat(EMC_latlen))
+    else
+      dist_lat = 0.d0
+    endif
 
-      !debug
-      !print *,'debug: lat/lon/dep = ',lat,lon,r_depth,'index lat/lon/dep = ',index_lat,index_lon,index_dep, &
-      !      'array value lat/lon/dep',EMC_lat(index_lat),EMC_lon(index_lon),EMC_dep(index_dep), &
-      !      'surface index',index_surface,'surface depth ',EMC_dep(index_surface)
+    ! distance in degrees
+    dist = max(dist_lon,dist_lat)
 
-      ! sets index at solid surface
-      index_dep = index_surface
-      ! sets depth to surface depth for gamma factor below
-      r_depth = dble(EMC_dep(index_dep))
+    ! apply horizontal taper
+    if (dist > 0.d0) then
+      ! position outside EMC model range
+      ! gets cosine taper value
+      taper_val = cosine_taper(dist,taper_distance_maximum_hori_in_degrees)
+
+      ! taper between (interpolated) and background/average value
+      vpl = vpl * taper_val + (1.d0 - taper_val) * vp_iso
+      vsl = vsl * taper_val + (1.d0 - taper_val) * vs_iso
+      rhol = rhol * taper_val + (1.d0 - taper_val) * rho_iso
+    endif
+
+    ! vertical distance
+    if (r_depth > EMC_dep(EMC_deplen)) then
+      dist = abs(r_depth - EMC_dep(EMC_deplen))
+    else
+      dist = 0.d0
+    endif
+
+    ! apply vertical taper
+    if (dist > 0.d0) then
+      ! position below EMC model range
+      ! gets cosine taper value
+      taper_val = cosine_taper(dist,taper_distance_maximum_vert_in_km)
+
+      ! taper between (interpolated) and background/average value
+      vpl = vpl * taper_val + (1.d0 - taper_val) * vp_iso
+      vsl = vsl * taper_val + (1.d0 - taper_val) * vs_iso
+      rhol = rhol * taper_val + (1.d0 - taper_val) * rho_iso
     endif
   endif
 
   !debug
   !if (r_depth > 10.1 .and. r_depth < 15.1) &
-  !  print *,'debug: lat/lon/dep = ',lat,lon,r_depth,'index lat/lon/dep = ',index_lat,index_lon,index_dep, &
-  !         'array value lat/lon/dep',EMC_lat(index_lat),EMC_lon(index_lon),EMC_dep(index_dep)
+  !if (vsl <= 1.0) &
+  !  print *,'debug: lat/lon/dep = ',lat,lon,r_depth,'vp/vs/rho = ',vpl,vsl,rhol,'iso vp/vs/rho',vp_iso,vs_iso,rho_iso, &
+  !          'index lat/lon/dep',index_lat,index_lon,index_dep
 
-  !! interpolation
+  ! only uses solid domain values
+  ! (no fluid domain such as oceans are modelled so far, effect gets approximated by ocean load)
+  ! returns model values if non-zero
+  if (vsl > TINYVAL) then
+    ! non-dimensionalize
+    scaleval_rho = 1.0d0 / RHOAV                             ! from kg/m3
+    scaleval_vel = 1.0d0 / (R_PLANET * sqrt(PI*GRAV*RHOAV))  ! from m/s (scaleval_vel == 1.459769779014117E-004)
+
+    rhol = rhol * scaleval_rho
+    vpl = vpl * scaleval_vel
+    vsl = vsl * scaleval_vel
+
+    ! converts isotropic values to transverse isotropic
+    vpv = vpl
+    vph = vpl
+    vsv = vsl
+    vsh = vsl
+    eta_aniso = 1.d0
+    rho = rhol
+  endif
+
+  end subroutine model_EMC_crustmantle
+
+!
+!-------------------------------------------------------------------------------------------
+!
+
+  subroutine get_interpolated_1d_depth_average(r_depth,index_dep,vp_iso,vs_iso,rho_iso)
+
+  use model_emc_par, only: EMC_dep,EMC_deplen, &
+                           EMC_avg_vp,EMC_avg_vs,EMC_avg_rho
+
+  implicit none
+
+  double precision,intent(in) :: r_depth
+  integer, intent(in) :: index_dep
+  double precision, intent(inout) :: vp_iso,vs_iso,rho_iso
+
+  ! local parameters
+  ! 1d average
+  double precision :: dz,interp_z
+
+  if (index_dep < EMC_deplen) then
+    ! interpolated between two depth values
+    dz = EMC_dep(index_dep+1) - EMC_dep(index_dep)
+    interp_z = (r_depth - dble(EMC_dep(index_dep))) / dz
+
+    if (interp_z < 0.d0) interp_z = 0.d0
+    if (interp_z > 1.d0) interp_z = 1.d0
+
+    ! linear interpolation
+    vp_iso  = EMC_avg_vp(index_dep) * (1.d0 - interp_z)  + EMC_avg_vp(index_dep+1) * interp_z
+    vs_iso  = EMC_avg_vs(index_dep) * (1.d0 - interp_z)  + EMC_avg_vs(index_dep+1) * interp_z
+    rho_iso = EMC_avg_rho(index_dep) * (1.d0 - interp_z) + EMC_avg_rho(index_dep+1) * interp_z
+  else
+    ! last layer values
+    vp_iso = EMC_avg_vp(index_dep)
+    vs_iso = EMC_avg_vs(index_dep)
+    rho_iso = EMC_avg_rho(index_dep)
+  endif
+
+  end subroutine get_interpolated_1d_depth_average
+
+!
+!-------------------------------------------------------------------------------------------
+!
+
+  subroutine get_interpolated_EMC_values(index_lon,index_lat,index_dep,lon,lat,r_depth,rho_iso,vp_iso,vs_iso,rhol,vpl,vsl)
+
+  use model_emc_par, only: EMC_rho,EMC_vp,EMC_vs, &
+                           EMC_lat,EMC_lon,EMC_dep, &
+                           EMC_lonlen,EMC_latlen,EMC_deplen
+
+  implicit none
+
+  integer, intent(in) :: index_lon,index_lat,index_dep
+  double precision, intent(in) :: r_depth,lat,lon
+  double precision, intent(in) :: vp_iso,vs_iso,rho_iso
+  double precision, intent(inout) :: vpl,vsl,rhol
+
+  ! local parameters
+  integer :: ix,iy,iz
+  integer :: Nx,Ny,Nz
+  ! positioning/interpolation
+  double precision :: gamma_interp_x,gamma_interp_y,gamma_interp_z
+  double precision :: dx,dy,dz
+
+  ! initializes
+  dx = 1.d0
+  dy = 1.d0
+  dz = 1.d0
+  gamma_interp_x = 0.d0
+  gamma_interp_y = 0.d0
+  gamma_interp_z = 0.d0
+
   ! sets array indices
-  ! note: arrays EMC_vp(:,:,:),.. might use different index orders for different EMC model files.
-  !       For example, Alaska file uses nx==lonlen, ny==latlen, nz==deplen,
-  !       but other EMC model files might have a different order.
-  !       This gets determines by dimlens() and varorderdims(), here we just check the nx index to decide.
-  !       This might need further improvement in future to become more general.
-  if (EMC_dims_nx == EMC_lonlen) then
-    ! order: lon/lat/dep
-    ! used by Alaska
-    ix = index_lon
-    iy = index_lat
-    iz = index_dep
+  ! order: lon/lat/dep (re-ordered EMC model arrays should have this order)
+  ix = index_lon
+  iy = index_lat
+  iz = index_dep
 
-    Nx = EMC_lonlen
-    Ny = EMC_latlen
-    Nz = EMC_deplen
+  Nx = EMC_lonlen
+  Ny = EMC_latlen
+  Nz = EMC_deplen
 
-    if (ix >= 1 .and. ix <= Nx) gamma_interp_x = lon - dble(EMC_lon(index_lon))
-    if (iy >= 1 .and. iy <= Ny) gamma_interp_y = lat - dble(EMC_lat(index_lat))
-    if (iz >= 1 .and. iz <= Nz) gamma_interp_z = r_depth - dble(EMC_dep(index_dep))
-  else if (EMC_dims_nx == EMC_latlen) then
-    ! order: lat/lon/dep
-    ix = index_lat
-    iy = index_lon
-    iz = index_dep
-
-    Nx = EMC_latlen
-    Ny = EMC_lonlen
-    Nz = EMC_deplen
-
-    if (ix >= 1 .and. ix <= Nx) gamma_interp_x = lat - dble(EMC_lat(index_lat))
-    if (iy >= 1 .and. iy <= Ny) gamma_interp_y = lon - dble(EMC_lon(index_lon))
-    if (iz >= 1 .and. iz <= Nz) gamma_interp_z = r_depth - dble(EMC_dep(index_dep))
-  else if (EMC_dims_nx == EMC_deplen) then
-    ! order: dep/lon/lat
-    ! used by SCEC-CVM
-    ix = index_dep
-    iy = index_lon
-    iz = index_lat
-
-    Nx = EMC_deplen
-    Ny = EMC_lonlen
-    Nz = EMC_latlen
-
-    if (ix >= 1 .and. ix <= Nx) gamma_interp_x = r_depth - dble(EMC_dep(index_dep))
-    if (iy >= 1 .and. iy <= Ny) gamma_interp_y = lon - dble(EMC_lon(index_lon))
-    if (iz >= 1 .and. iz <= Nz) gamma_interp_z = lat - dble(EMC_lat(index_lat))
+  if (ix >= 1 .and. ix <= Nx) then
+    if (ix < Nx) dx = EMC_lon(ix+1) - EMC_lon(ix)
+    gamma_interp_x = (lon - dble(EMC_lon(ix))) / dx
+  endif
+  if (iy >= 1 .and. iy <= Ny) then
+    if (iy < Ny) dy = EMC_lat(iy+1) - EMC_lat(iy)
+    gamma_interp_y = (lat - dble(EMC_lat(iy))) / dy
+  endif
+  if (iz >= 1 .and. iz <= Nz) then
+    if (iz < Nz) dz = EMC_dep(iz+1) - EMC_dep(iz)
+    gamma_interp_z = (r_depth - dble(EMC_dep(iz))) / dz
   endif
 
   ! suppress edge effects for points outside of the model
@@ -1872,21 +3586,15 @@ end module model_emc_par
     gamma_interp_z = 1.d0
   endif
 
-  !debug
-  !if (r_depth > 10.1 .and. r_depth < 15.1) &
-  !  print *,'debug: lat/lon/dep = ',lat,lon,r_depth,'index lat/lon/dep = ',index_lat,index_lon,index_dep, &
-  !         'array value lat/lon/dep',EMC_lat(index_lat),EMC_lon(index_lon),EMC_dep(index_dep), &
-  !         'gamma',gamma_interp_x,gamma_interp_y,gamma_interp_z
-
   !debug: checks gamma factors
   !if (gamma_interp_x < 0.d0 .or. gamma_interp_y < 0.d0 .or. gamma_interp_z < 0.d0 .or. &
   !    gamma_interp_x > 1.d0 .or. gamma_interp_y > 1.d0 .or. gamma_interp_z > 1.d0) then
-  !  print *,'Error: position has invalid index: '
-  !  print *,'  rank                   : ',myrank
-  !  print *,'  point index            : ',ix,iy,iz
-  !  print *,'  location (lat/lon/dep) : ',sngl(lat),sngl(lon),sngl(r_depth)
-  !  print *,'  grid point             : ',EMC_lat(index_lat),EMC_lon(index_lon),EMC_dep(index_dep)
+  !  print *,'Error: position has invalid gamma interpolation factors: '
+  !  print *,'  point index            : ',ix,iy,iz,'Nx/Ny/Nz',Nx,Ny,Nz
+  !  print *,'  location (lon/lat/dep) : ',sngl(lon),sngl(lat),sngl(r_depth)
+  !  print *,'  grid point             : ',EMC_lon(ix),EMC_lat(iy),EMC_dep(iz)
   !  print *,'  interpolation gamma    : ',gamma_interp_x,gamma_interp_y,gamma_interp_z
+  !  print *,'  interpolation dx/dy/dz : ',dx,dy,dz
   !  !call exit_MPI(myrank,'Error point index in EMC model routine')
   !endif
 
@@ -1898,101 +3606,56 @@ end module model_emc_par
   if (gamma_interp_z < 0.d0) gamma_interp_z = 0.d0
   if (gamma_interp_z > 1.d0) gamma_interp_z = 1.d0
 
-  ! Voigt average of input (for masked points where model values are missing)
-  vp_iso = sqrt( (2.d0*vpv*vpv + vph*vph)/3.d0 )
-  vs_iso = sqrt( (2.d0*vsv*vsv + vsh*vsh)/3.d0 )
-  rho_iso = rho
-
-  ! input background values are non-dimensionalized already
-  ! - here we put dimension back to m/s (and kg/m^3) to mix with EMC model values for interpolation
-  vp_iso = vp_iso * R_PLANET * sqrt(PI*GRAV*RHOAV)  ! to m/s
-  vs_iso = vs_iso * R_PLANET * sqrt(PI*GRAV*RHOAV)  ! to m/s
-  rho_iso = rho_iso * RHOAV                         ! to kg/m3
-
   ! model vp
-  val1 = EMC_vp(ix  ,iy  ,iz  )
-  val2 = EMC_vp(ix+1,iy  ,iz  )
-  val3 = EMC_vp(ix+1,iy+1,iz  )
-  val4 = EMC_vp(ix  ,iy+1,iz  )
-  val5 = EMC_vp(ix  ,iy  ,iz+1)
-  val6 = EMC_vp(ix+1,iy  ,iz+1)
-  val7 = EMC_vp(ix+1,iy+1,iz+1)
-  val8 = EMC_vp(ix  ,iy+1,iz+1)
-
-  if (EMC_mask(ix  ,iy  ,iz  )) val1 = vp_iso  ! takes input vp (coming from background model PREM)
-  if (EMC_mask(ix+1,iy  ,iz  )) val2 = vp_iso
-  if (EMC_mask(ix+1,iy+1,iz  )) val3 = vp_iso
-  if (EMC_mask(ix  ,iy+1,iz  )) val4 = vp_iso
-  if (EMC_mask(ix  ,iy  ,iz+1)) val5 = vp_iso
-  if (EMC_mask(ix+1,iy  ,iz+1)) val6 = vp_iso
-  if (EMC_mask(ix+1,iy+1,iz+1)) val7 = vp_iso
-  if (EMC_mask(ix  ,iy+1,iz+1)) val8 = vp_iso
-
-  ! interpolation rule
-  ! use trilinear interpolation in cell to define perturbation value
-  interp_val =  &
-       val1 * (1.d0-gamma_interp_x) * (1.d0-gamma_interp_y) * (1.d0-gamma_interp_z) + &
-       val2 * gamma_interp_x        * (1.d0-gamma_interp_y) * (1.d0-gamma_interp_z) + &
-       val3 * gamma_interp_x        * gamma_interp_y        * (1.d0-gamma_interp_z) + &
-       val4 * (1.d0-gamma_interp_x) * gamma_interp_y        * (1.d0-gamma_interp_z) + &
-       val5 * (1.d0-gamma_interp_x) * (1.d0-gamma_interp_y) * gamma_interp_z + &
-       val6 * gamma_interp_x        * (1.d0-gamma_interp_y) * gamma_interp_z + &
-       val7 * gamma_interp_x        * gamma_interp_y        * gamma_interp_z + &
-       val8 * (1.d0-gamma_interp_x) * gamma_interp_y        * gamma_interp_z
   ! stores interpolated value
-  vpl = interp_val
+  vpl = interpolate_trilinear(EMC_vp,vp_iso,ix,iy,iz,gamma_interp_x,gamma_interp_y,gamma_interp_z)
 
   ! model vs
-  val1 = EMC_vs(ix  ,iy  ,iz  )
-  val2 = EMC_vs(ix+1,iy  ,iz  )
-  val3 = EMC_vs(ix+1,iy+1,iz  )
-  val4 = EMC_vs(ix  ,iy+1,iz  )
-  val5 = EMC_vs(ix  ,iy  ,iz+1)
-  val6 = EMC_vs(ix+1,iy  ,iz+1)
-  val7 = EMC_vs(ix+1,iy+1,iz+1)
-  val8 = EMC_vs(ix  ,iy+1,iz+1)
-
-  if (EMC_mask(ix  ,iy  ,iz  )) val1 = vs_iso  ! takes input vs (coming from background model PREM)
-  if (EMC_mask(ix+1,iy  ,iz  )) val2 = vs_iso
-  if (EMC_mask(ix+1,iy+1,iz  )) val3 = vs_iso
-  if (EMC_mask(ix  ,iy+1,iz  )) val4 = vs_iso
-  if (EMC_mask(ix  ,iy  ,iz+1)) val5 = vs_iso
-  if (EMC_mask(ix+1,iy  ,iz+1)) val6 = vs_iso
-  if (EMC_mask(ix+1,iy+1,iz+1)) val7 = vs_iso
-  if (EMC_mask(ix  ,iy+1,iz+1)) val8 = vs_iso
-
-  ! interpolation rule
-  ! use trilinear interpolation in cell to define perturbation value
-  interp_val =  &
-       val1 * (1.d0-gamma_interp_x) * (1.d0-gamma_interp_y) * (1.d0-gamma_interp_z) + &
-       val2 * gamma_interp_x        * (1.d0-gamma_interp_y) * (1.d0-gamma_interp_z) + &
-       val3 * gamma_interp_x        * gamma_interp_y        * (1.d0-gamma_interp_z) + &
-       val4 * (1.d0-gamma_interp_x) * gamma_interp_y        * (1.d0-gamma_interp_z) + &
-       val5 * (1.d0-gamma_interp_x) * (1.d0-gamma_interp_y) * gamma_interp_z + &
-       val6 * gamma_interp_x        * (1.d0-gamma_interp_y) * gamma_interp_z + &
-       val7 * gamma_interp_x        * gamma_interp_y        * gamma_interp_z + &
-       val8 * (1.d0-gamma_interp_x) * gamma_interp_y        * gamma_interp_z
   ! stores interpolated value
-  vsl = interp_val
+  vsl = interpolate_trilinear(EMC_vs,vs_iso,ix,iy,iz,gamma_interp_x,gamma_interp_y,gamma_interp_z)
 
   ! model rho
-  val1 = EMC_rho(ix  ,iy  ,iz  )
-  val2 = EMC_rho(ix+1,iy  ,iz  )
-  val3 = EMC_rho(ix+1,iy+1,iz  )
-  val4 = EMC_rho(ix  ,iy+1,iz  )
-  val5 = EMC_rho(ix  ,iy  ,iz+1)
-  val6 = EMC_rho(ix+1,iy  ,iz+1)
-  val7 = EMC_rho(ix+1,iy+1,iz+1)
-  val8 = EMC_rho(ix  ,iy+1,iz+1)
+  ! stores interpolated value
+  rhol = interpolate_trilinear(EMC_rho,rho_iso,ix,iy,iz,gamma_interp_x,gamma_interp_y,gamma_interp_z)
 
-  if (EMC_mask(ix  ,iy  ,iz  )) val1 = rho_iso  ! takes input rho (coming from background model PREM)
-  if (EMC_mask(ix+1,iy  ,iz  )) val2 = rho_iso
-  if (EMC_mask(ix+1,iy+1,iz  )) val3 = rho_iso
-  if (EMC_mask(ix  ,iy+1,iz  )) val4 = rho_iso
-  if (EMC_mask(ix  ,iy  ,iz+1)) val5 = rho_iso
-  if (EMC_mask(ix+1,iy  ,iz+1)) val6 = rho_iso
-  if (EMC_mask(ix+1,iy+1,iz+1)) val7 = rho_iso
-  if (EMC_mask(ix  ,iy+1,iz+1)) val8 = rho_iso
+contains
+
+  function interpolate_trilinear(EMC_par,EMC_par_iso,ix,iy,iz, &
+                                 gamma_interp_x,gamma_interp_y,gamma_interp_z) result (interp_val)
+
+  use constants, only: CUSTOM_REAL
+
+  use model_emc_par, only: EMC_mask
+
+  implicit none
+  real(kind=CUSTOM_REAL), dimension(Nx,Ny,Nz), intent(in) :: EMC_par
+  double precision, intent(in) :: EMC_par_iso
+  integer, intent(in) :: ix,iy,iz
+  double precision, intent(in) :: gamma_interp_x,gamma_interp_y,gamma_interp_z
+  ! return value
+  double precision :: interp_val
+
+  ! local variables
+  double precision :: val1,val2,val3,val4,val5,val6,val7,val8
+
+  ! model parameter (vp, vs or rho)
+  val1 = EMC_par(ix  ,iy  ,iz  )
+  val2 = EMC_par(ix+1,iy  ,iz  )
+  val3 = EMC_par(ix+1,iy+1,iz  )
+  val4 = EMC_par(ix  ,iy+1,iz  )
+  val5 = EMC_par(ix  ,iy  ,iz+1)
+  val6 = EMC_par(ix+1,iy  ,iz+1)
+  val7 = EMC_par(ix+1,iy+1,iz+1)
+  val8 = EMC_par(ix  ,iy+1,iz+1)
+
+  if (EMC_mask(ix  ,iy  ,iz  )) val1 = EMC_par_iso  ! takes input parameter (coming from background model PREM)
+  if (EMC_mask(ix+1,iy  ,iz  )) val2 = EMC_par_iso
+  if (EMC_mask(ix+1,iy+1,iz  )) val3 = EMC_par_iso
+  if (EMC_mask(ix  ,iy+1,iz  )) val4 = EMC_par_iso
+  if (EMC_mask(ix  ,iy  ,iz+1)) val5 = EMC_par_iso
+  if (EMC_mask(ix+1,iy  ,iz+1)) val6 = EMC_par_iso
+  if (EMC_mask(ix+1,iy+1,iz+1)) val7 = EMC_par_iso
+  if (EMC_mask(ix  ,iy+1,iz+1)) val8 = EMC_par_iso
 
   ! interpolation rule
   ! use trilinear interpolation in cell to define perturbation value
@@ -2005,33 +3668,7 @@ end module model_emc_par
        val6 * gamma_interp_x        * (1.d0-gamma_interp_y) * gamma_interp_z + &
        val7 * gamma_interp_x        * gamma_interp_y        * gamma_interp_z + &
        val8 * (1.d0-gamma_interp_x) * gamma_interp_y        * gamma_interp_z
-  ! stores interpolated value
-  rhol = interp_val
 
-  !debug
-  !if (r_depth > 10.1 .and. r_depth < 15.1) &
-  !  print *,'debug: lat/lon/dep = ',lat,lon,r_depth,'vp/vs/rho = ',vpl,vsl,rhol,'iso vp/vs/rho',vp_iso,vs_iso,rho_iso, &
-  !          'val ',val1,val2,val3,val4,val5,val6,val7,val8
+  end function interpolate_trilinear
 
-  ! non-dimensionalize
-  scaleval_rho = 1.0d0 / RHOAV                             ! from kg/m3
-  scaleval_vel = 1.0d0 / (R_PLANET * sqrt(PI*GRAV*RHOAV))  ! from m/s
-
-  rhol = rhol * scaleval_rho
-  vpl = vpl * scaleval_vel
-  vsl = vsl * scaleval_vel
-
-  ! only uses solid domain values
-  ! (no fluid domain such as oceans are modelled so far, effect gets approximated by ocean load)
-  ! returns model values if non-zero
-  if (vsl > 1.d-2) then
-    ! converts isotropic values to transverse isotropic
-    vpv = vpl
-    vph = vpl
-    vsv = vsl
-    vsh = vsl
-    eta_aniso = 1.d0
-    rho = rhol
-  endif
-
-  end subroutine model_EMC_crustmantle
+  end subroutine get_interpolated_EMC_values

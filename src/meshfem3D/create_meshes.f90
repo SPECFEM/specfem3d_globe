@@ -144,6 +144,10 @@
             write(IMAIN,*) 'this region is the outer core'
           case (IREGION_INNER_CORE)
             write(IMAIN,*) 'this region is the inner core'
+          case(IREGION_TRINFINITE)
+            write(IMAIN,*) 'this region is the transition-to-infinite region'
+          case(IREGION_INFINITE)
+            write(IMAIN,*) 'this region is the infinite region'
           case default
             call exit_MPI(myrank,'incorrect region code')
         end select
@@ -183,7 +187,6 @@
 
         ! If we're in the request stage of CEM, exit.
         if (CEM_REQUEST) exit
-
       enddo
 
       ! deallocate arrays used for that region

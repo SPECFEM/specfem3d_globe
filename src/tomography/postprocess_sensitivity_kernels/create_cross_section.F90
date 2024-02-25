@@ -759,7 +759,7 @@
     ! writes out cross section
     call write_cross_section(nglob_target,x2,y2,z2,model2,model_distance2, &
                              model_diff,model_pert,m_avg_total,point_avg_total, &
-                             typical_size,depth0,section_type,filename)
+                             typical_size,depth0,section_type,filename,fname)
 
     ! frees temporary arrays
     deallocate(model_diff,model_pert)
@@ -1238,12 +1238,16 @@
   real(kind=CUSTOM_REAL), dimension(nglob_target),intent(inout) :: model2,model_distance2
 
   ! local parameters
-  integer :: iglob,iproc
-
-  real(kind=CUSTOM_REAL), dimension(2,nglob_target) :: buffer
+  integer :: iglob,iproc,ier
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: buffer
   real(kind=CUSTOM_REAL) :: dist,val
-
+  ! MPI communication tag
   integer, parameter :: itag = 11
+
+  ! temporary array
+  allocate(buffer(2,nglob_target),stat=ier)
+  if (ier /= 0) stop 'Error allocating buffer'
+  buffer(:,:) = 0.0_CUSTOM_REAL
 
   ! main gets point distances
   if (myrank == 0) then
@@ -1281,6 +1285,9 @@
 
   ! synchronizes all mpi-processes
   call synchronize_all()
+
+  ! free temporary array
+  deallocate(buffer)
 
   end subroutine collect_closest_point_values
 
@@ -1358,7 +1365,7 @@
   real(kind=CUSTOM_REAL) :: xmin,xmax,ymin,ymax,zmin,zmax
 
   integer :: ipoin,nslice_points
-  integer,dimension(nglob_target) :: slice_points
+  integer,dimension(:),allocatable :: slice_points
 
   ! debug warning about large model value differences
   logical,parameter :: DO_WARNING = .false.
@@ -1381,6 +1388,11 @@
   ymax = maxval(ystore)
   zmin = minval(zstore)
   zmax = maxval(zstore)
+
+  ! temporary array
+  allocate(slice_points(nglob_target),stat=ier)
+  if (ier /= 0) stop 'Error allocating slice_points array'
+  slice_points(:) = 0
 
   ! counts points in this slice
   nslice_points = 0
@@ -1584,6 +1596,9 @@
     deallocate(search_elements)
 
   enddo
+
+  ! free temporary array
+  deallocate(slice_points)
 
   ! done looping over target locations
   if (myrank == 0) print *
@@ -2040,7 +2055,7 @@
 
   subroutine write_cross_section(nglob_target,x2,y2,z2,model2,model_distance2, &
                                  model_diff,model_pert,m_avg_total,point_avg_total, &
-                                 typical_size,depth0,section_type,filename)
+                                 typical_size,depth0,section_type,filename,fname)
 
   use constants, only: CUSTOM_REAL,IOUT,MAX_STRING_LEN
   use shared_parameters, only: R_PLANET_KM
@@ -2059,6 +2074,7 @@
   integer,intent(in) :: section_type
 
   character(len=MAX_STRING_LEN),intent(in) :: filename
+  character(len=16),intent(in) :: fname
 
   ! local parameters
   double precision :: r,lat,lon
@@ -2079,22 +2095,31 @@
     stop 'Error opening output model file'
   endif
 
+  ! note: to avoid line breaks after 80 characters, we specify a format in the write-statement:
+  !         write(IOUT,'(a)') ..
+  !       instead of
+  !         write(IOUT,*) ..
+  !       this is because compilers like ifort will add line breaks in the free formatted (list-directed) version,
+  !       and then the files becomes unreadable, e.g., for a plotting script.
+
   ! header info
-  write(IOUT,*) '# cross-section informations:'
+  write(IOUT,'(a)') '# cross-section informations:'
   if (section_type == 0) then
-    write(IOUT,*) '#   horizontal cross-section'
-    write(IOUT,*) '#'
-    write(IOUT,*) '#   depth = ',depth0
+    write(IOUT,'(a)') '#   horizontal cross-section'
+    write(IOUT,'(a)') '#'
+    write(IOUT,'(a,f14.6)') '#   depth = ',depth0
+    write(IOUT,'(a)') '#'
   else
-    write(IOUT,*) '#   vertical cross-section'
-    write(IOUT,*) '#'
+    write(IOUT,'(a)') '#   vertical cross-section'
+    write(IOUT,'(a)') '#'
   endif
-  write(IOUT,*) '#   cross-section average value (m_avg) = ',m_avg_total
-  write(IOUT,*) '#   point average value                 = ',point_avg_total
-  write(IOUT,*) '#'
+  write(IOUT,'(a)') '#   parameter                           = ' // trim(fname)
+  write(IOUT,'(a,f14.6)') '#   cross-section average value (m_avg) = ',m_avg_total
+  write(IOUT,'(a,f14.6)') '#   point average value                 = ',point_avg_total
+  write(IOUT,'(a)') '#'
   ! format: #lon #lat #parameter-value #actual-radius #minimum-distance(km)
-  write(IOUT,*) '#lon(degrees)   #lat(degrees)    #radius(km)   #parameter-value  #perturbation ln(m/m_avg)  ' // &
-                '#difference (m - m_avg)  #closest-point-distance(km)'
+  write(IOUT,'(a)') '#lon(degrees)   #lat(degrees)    #radius(km)   #parameter-value  #perturbation ln(m/m_avg)  ' // &
+                    '#difference (m - m_avg)  #closest-point-distance(km)'
 
   ! writes out data points
   do iglob = 1,nglob_target
@@ -2119,8 +2144,8 @@
       diff = model_diff(iglob)
 
       ! outputs cross-section points to file
-      write(IOUT,*) sngl(lon),sngl(lat),sngl(r*R_PLANET_KM),sngl(val), &
-                    sngl(pert),sngl(diff),sngl(dist_min*R_PLANET_KM)
+      write(IOUT,'(7f14.6)') sngl(lon),sngl(lat),sngl(r*R_PLANET_KM),sngl(val), &
+                             sngl(pert),sngl(diff),sngl(dist_min*R_PLANET_KM)
     endif
     !debug
     !print *,'lat/lon/r/param = ',sngl(lat),sngl(lon),sngl(r*R_PLANET_KM),model2(iglob),model_distance2(iglob)*R_PLANET_KM

@@ -204,12 +204,12 @@
       Qkappa = 57827.0d0
 
   else if (SUPPRESS_CRUSTAL_MESH) then
-  !! DK DK extend the Moho up to the surface instead of the crust
-          vp = 8.78541d0-0.74953d0*(RMOHO / R_PLANET)
-          vs = 6.706231d0-2.248585d0*(RMOHO / R_PLANET)
-          rho = 3.3198d0
-          Qmu = 600.0d0
-          Qkappa = 57827.0d0
+      ! extend the Moho up to the surface instead of the crust
+      vp = 8.78541d0-0.74953d0*(RMOHO / R_PLANET)
+      vs = 6.706231d0-2.248585d0*(RMOHO / R_PLANET)
+      rho = 3.3198d0
+      Qmu = 600.0d0
+      Qkappa = 57827.0d0
 
   else if (r > RMOHO .and. r <= RMIDDLE_CRUST) then
       vp = 6.5d0
@@ -218,7 +218,7 @@
       Qmu=600.0d0
       Qkappa=57827.0d0
 
-  ! same properties everywhere in IASP91 crust if we decide to define only one layer in the crust
+      ! same properties everywhere in IASP91 crust if we decide to define only one layer in the crust
       if (ONE_CRUST) then
         vp = 5.8d0
         vs = 3.36d0

@@ -652,6 +652,11 @@ LIBOBJS
 GIT_DATE_VERSION
 GIT_COMMIT_VERSION
 GIT_PACKAGE_VERSION
+PETSC_LIBS
+PETSC_LDFLAGS
+PETSC_LIB
+PETSC_FCFLAGS
+PETSC_INC
 VTK_LIBS
 VTK_LDFLAGS
 VTK_INCLUDES
@@ -742,6 +747,8 @@ ac_ct_FC
 LDFLAGS
 FCFLAGS
 FC
+COND_PETSC_FALSE
+COND_PETSC_TRUE
 COND_NETCDF_FALSE
 COND_NETCDF_TRUE
 COND_EMC_FALSE
@@ -898,6 +905,7 @@ with_cem
 with_emc
 with_netcdf
 enable_netcdf
+with_petsc
 with_vtk
 with_vtk_suffix
 with_vtk_version
@@ -950,7 +958,10 @@ NETCDF_LIBS
 CEM_FCFLAGS
 CEM_LIBS
 EMC_FCFLAGS
-EMC_LIBS'
+EMC_LIBS
+PETSC_INC
+PETSC_FCFLAGS
+PETSC_LIB'
 
 
 # Initialize some variables set by options.
@@ -1608,6 +1619,7 @@ Optional Packages:
   --with-emc              build IRIS EMC models enabled version [default=no]
   --with-netcdf           build NetCDF enabled version (IRIS EMC & CEM models)
                           [default=no]
+  --with-petsc            build PETSc enabled version [default=no]
   --with-vtk              The prefix where VTK is installed [default=/usr]
   --with-vtk-suffix       Suffix to append to VTK's include directory, e.g.,
                           for vtk-5.2/ the suffix is "-5.2"
@@ -1672,6 +1684,10 @@ Some influential environment variables:
   CEM_LIBS    CEM extra libraries for linking programs
   EMC_FCFLAGS IRIS EMC Fortran compiler flags
   EMC_LIBS    IRIS EMC extra libraries for linking programs
+  PETSC_INC   PETSC include directory
+  PETSC_FCFLAGS
+              Fortran compiler flags (PETSC specific flags)
+  PETSC_LIB   extra library directory for linking programs with PETSC
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -4002,6 +4018,29 @@ else
   COND_NETCDF_TRUE='#'
   COND_NETCDF_FALSE=
 fi
+
+
+###
+### PETSc support
+###
+
+
+# Check whether --with-petsc was given.
+if test ${with_petsc+y}
+then :
+  withval=$with_petsc; want_petsc="$withval"
+else $as_nop
+  want_petsc=no
+fi
+
+ if test x$"$want_petsc" != xno; then
+  COND_PETSC_TRUE=
+  COND_PETSC_FALSE='#'
+else
+  COND_PETSC_TRUE='#'
+  COND_PETSC_FALSE=
+fi
+
 
 
 ############################################################
@@ -9516,7 +9555,7 @@ else $as_nop
 
       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
 printf "%s\n" "no" >&6; }
-      as_fn_error $? "NetCDF module not found; is NetCDF built with Fortran support for this compiler?" "$LINENO" 5
+      as_fn_error $? "NetCDF module not found; is NetCDF built with Fortran support for this compiler? try setting NETCDF_INC." "$LINENO" 5
 
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
@@ -11431,6 +11470,135 @@ printf "%s\n" "#define HAVE_VTK /**/" >>confdefs.h
 
 fi
 
+###
+### PETSC
+###
+if test x"$want_petsc" != xno
+then :
+
+    printf "%s\n" "## ----- ##
+## PETSc ##
+## ----- ##"
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: PETSc is enabled" >&5
+printf "%s\n" "$as_me: PETSc is enabled" >&6;}
+
+
+
+
+
+    # test include & lib
+    if test x"$PETSC_INC" != x
+then :
+
+        PETSC_FCFLAGS+=" -I$PETSC_INC"
+
+fi
+    if test x"$PETSC_LIB" != x
+then :
+
+        PETSC_LDFLAGS="-L$PETSC_LIB"
+
+fi
+    PETSC_LIBS="-lpetsc"
+
+    # PETSC checking for Fortran compilation
+    ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+    FCFLAGS_save="$FCFLAGS"
+    LDFLAGS_save="$LDFLAGS"
+    LIBS_save="$LIBS"
+
+    # compilation test
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for PETSC modules" >&5
+printf %s "checking for PETSC modules... " >&6; }
+    if test "x$PETSC_FCFLAGS" != "x"; then
+      FCFLAGS="$PETSC_FCFLAGS $FCFLAGS"
+    fi
+    # we'll need PETSc's Krylov subspace method solver
+    cat > conftest.$ac_ext <<_ACEOF
+
+            program main
+
+! PETSc's Krylov subspace method (KSP) solver
+#include "petsc/finclude/petscksp.h"
+  use petscksp
+
+      end
+
+_ACEOF
+if ac_fn_fc_try_compile "$LINENO"
+then :
+
+      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+printf "%s\n" "yes" >&6; }
+
+else $as_nop
+
+      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+      as_fn_error $? "PETSC module not found; is PETSC built with Fortran support for this compiler? try setting PETSC_INC." "$LINENO" 5
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
+
+    # runs linking test
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking PETSc linking with PetscInitialize in -lpetsc" >&5
+printf %s "checking PETSc linking with PetscInitialize in -lpetsc... " >&6; }
+    if test "x$PETSC_LDFLAGS" != "x"; then
+      LDFLAGS="$PETSC_LDFLAGS $LDFLAGS"
+    fi
+    LIBS="$PETSC_LIBS $LIBS"
+    cat > conftest.$ac_ext <<_ACEOF
+
+            program main
+
+! PETSc's Krylov subspace method (KSP) solver
+#include "petsc/finclude/petscksp.h"
+  use petscksp
+  implicit none
+  PetscErrorCode :: ierr
+  call PetscInitialize(ierr)
+  call PetscFinalize(ierr)
+
+      end
+
+_ACEOF
+if ac_fn_fc_try_link "$LINENO"
+then :
+
+      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+printf "%s\n" "yes" >&6; }
+
+else $as_nop
+
+      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+      as_fn_error $? "PETSc library linking failed; try setting PETSC_LIB." "$LINENO" 5
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+
+    # restore original flags
+    FCFLAGS="$FCFLAGS_save"
+    LDFLAGS="$LDFLAGS_save"
+    LIBS="$LIBS_save"
+    ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+
+    # export PETSC flags
+
+
+
+
+fi
+
 ##
 ## Git version info
 ##
@@ -11814,6 +11982,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${COND_NETCDF_TRUE}" && test -z "${COND_NETCDF_FALSE}"; then
   as_fn_error $? "conditional \"COND_NETCDF\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COND_PETSC_TRUE}" && test -z "${COND_PETSC_FALSE}"; then
+  as_fn_error $? "conditional \"COND_PETSC\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 case $FC_MODINC in #(

@@ -182,7 +182,15 @@
     write(IMAIN,*) '  no surface topography'
   endif
   if (GRAVITY) then
-    write(IMAIN,*) '  incorporating self-gravitation (Cowling approximation)'
+    if (FULL_GRAVITY) then
+      if (ADD_TRINF) then
+        write(IMAIN,*) '  incorporating full self-gravitation (with transition layer)'
+      else
+        write(IMAIN,*) '  incorporating full self-gravitation (without transition layer)'
+      endif
+    else
+      write(IMAIN,*) '  incorporating self-gravitation (Cowling approximation)'
+    endif
   else
     write(IMAIN,*) '  no self-gravitation'
   endif

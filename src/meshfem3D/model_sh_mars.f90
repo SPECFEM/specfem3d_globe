@@ -172,7 +172,7 @@
   implicit none
 
   ! local parameters
-  integer :: i,ipar,irange,ier,ilayer,n,m,idx
+  integer :: i,ipar,ier,ilayer,n,m,idx
   integer :: degree_N_read,N_shells_read,n_read,m_read
   double precision :: A_coeff,B_coeff
   double precision :: shell_radius,r_norm
@@ -222,12 +222,7 @@
 
       ! parameter type
       ! converts all string characters to lowercase (to make user input case-insensitive)
-      irange = iachar('a') - iachar('A')
-      do i = 1,len_trim(substring)
-        if (lge(substring(i:i),'A') .and. lle(substring(i:i),'Z')) then
-          substring(i:i) = achar(iachar(substring(i:i)) + irange)
-        endif
-      enddo
+      call convert_to_lowercase(substring,substring)
       !debug
       !print *,'debug: SH mars model: parameter = ',trim(substring),' file = ',trim(filename)
 

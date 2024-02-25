@@ -303,9 +303,9 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-!! DK DK put the list of parameters back here to avoid a warning / error from the gfortran compiler
-!! DK DK about undefined behavior when aggressive loop vectorization is used by the compiler
-!!
+! put the list of parameters back here to avoid a warning / error from the gfortran compiler
+! about undefined behavior when aggressive loop vectorization is used by the compiler
+!
 !! daniel: the optimization error can occur for statements in do-loops like
 !!                vector_accel_outer_core(:,iglob) = gradxyz(:)
 !!         some compilers will have internal issues when aggressive optimization is used.

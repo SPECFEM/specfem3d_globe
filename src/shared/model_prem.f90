@@ -312,7 +312,7 @@
         Qkappa = 57827.0d0
 
       else if (SUPPRESS_CRUSTAL_MESH) then
-!! DK DK extend the Moho up to the surface instead of the crust
+        ! extend the Moho up to the surface instead of the crust
         drhodr = 0.6924d0
         rho = 2.6910d0 + 0.6924d0*(PREM_RMOHO / R_PLANET)
         vp = 4.1875d0 + 3.9382d0*(PREM_RMOHO / R_PLANET)
@@ -328,7 +328,7 @@
         Qmu = 600.0d0
         Qkappa = 57827.0d0
 
-! same properties everywhere in PREM crust if we decide to define only one layer in the crust
+        ! same properties everywhere in PREM crust if we decide to define only one layer in the crust
         if (ONE_CRUST) then
           drhodr = 0.0d0
           rho = 2.6d0

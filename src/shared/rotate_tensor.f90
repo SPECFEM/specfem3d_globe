@@ -1558,7 +1558,7 @@
 !       we will replace them here with the rotation by "simpler" multiplication with a Bond matrix.
 !
 !       one can double check the resulting coefficients with sympy formulations created by running the script:
-!       ./utils/rotate_elastic_tensor_symbolic.py 2
+!       ./utils/scripts/rotate_elastic_tensor_symbolic.py 2
 !
 !
 ! Coeff from Min's routine rotate_anisotropic_tensor

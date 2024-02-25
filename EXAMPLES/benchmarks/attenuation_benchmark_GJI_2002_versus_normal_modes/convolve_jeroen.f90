@@ -1,14 +1,14 @@
 
   program convolve_jeroen
 
-!! JT JT January 2001
+!! January 2001, by Jeroen Tromp
 
-!! DK DK added option to convolve with a triangle
-!! DK DK also now reads hdur and number of lines from external file
+!! Dimitri Komatitsch: added option to convolve with a triangle
+!!                     also now reads hdur and number of lines from external file
 
-!! DK DK suppressed last "hdur" seconds in seismograms
-!! DK DK to remove artefact from the convolution at the end of the seismogram
-!! DK DK which was then creating some problems in the "remove_offset" routine
+!! suppressed last "hdur" seconds in seismograms
+!! to remove artefact from the convolution at the end of the seismogram
+!! which was then creating some problems in the "remove_offset" routine
 
   implicit none
 

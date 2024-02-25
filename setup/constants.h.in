@@ -48,9 +48,9 @@
 
 !*********************************************************************************************************
 
-!! DK DK added this temporarily here to make SPECFEM3D and SPECFEM3D_GLOBE much more similar
-!! DK DK in terms of the structure of their main time iteration loop; these are future features
-!! DK DK that are missing in this code but implemented in the other and that could thus be cut and pasted one day
+!! added this temporarily here to make SPECFEM3D and SPECFEM3D_GLOBE much more similar
+!! in terms of the structure of their main time iteration loop; these are future features
+!! that are missing in this code but implemented in the other and that could thus be cut and pasted one day
   logical, parameter :: OUTPUT_ENERGY = .false.
   integer, parameter :: IOUT_ENERGY = 937  ! file number for the energy file
   logical, parameter :: GRAVITY_SIMULATION = .false.
@@ -670,7 +670,7 @@
 
 ! number of points in each horizontal direction of the observation grid of each cubed-sphere chunk
 ! at the altitude of the observation point
-!! DK DK 4 is a fictitious value used to save memory when the GRAVITY_INTEGRALS option is off
+!! 4 is a fictitious value used to save memory when the GRAVITY_INTEGRALS option is off
   integer, parameter :: NX_OBSERVATION = 4 ! 500
   integer, parameter :: NY_OBSERVATION = NX_OBSERVATION
 
@@ -740,8 +740,8 @@
 
 ! on some processors (e.g. some Intel chips) it is necessary to suppress underflows
 ! by using a small initial field instead of zero
-!! DK DK August 2018: on modern processors this does not happen any more,
-!! DK DK August 2018: and thus no need to purposely lose accuracy to avoid underflows; thus turning it off by default
+!! August 2018: on modern processors this does not happen any more,
+!! August 2018: and thus no need to purposely lose accuracy to avoid underflows; thus turning it off by default
   logical, parameter :: FIX_UNDERFLOW_PROBLEM = .false. ! .true.
 
 ! some useful constants
@@ -777,9 +777,9 @@
   integer, parameter :: MIDZ = (NGLLZ+1)/2
 
 ! gravitational constant in S.I. units i.e. in m3 kg-1 s-2, or equivalently in N.(m/kg)^2
-!! DK DK April 2014: switched to the 2010 Committee on Data for Science and Technology (CODATA) recommended value
-!! DK DK see e.g. http://www.physics.nist.gov/cgi-bin/cuu/Value?bg
-!! DK DK and http://en.wikipedia.org/wiki/Gravitational_constant
+!! April 2014: switched to the 2010 Committee on Data for Science and Technology (CODATA) recommended value
+!! see e.g. http://www.physics.nist.gov/cgi-bin/cuu/Value?bg
+!! and http://en.wikipedia.org/wiki/Gravitational_constant
 !! double precision, parameter :: GRAV = 6.6723d-11
 !! double precision, parameter :: GRAV = 6.67430d-11  ! newer suggestion by CODATA 2018
   double precision, parameter :: GRAV = 6.67384d-11  ! CODATA 2010
@@ -831,7 +831,7 @@
   integer, parameter :: CHUNK_AB_ANTIPODE = 6
 
 ! maximum number of regions in the mesh
-  integer, parameter :: MAX_NUM_REGIONS = 3
+  integer, parameter :: MAX_NUM_REGIONS = 5    ! (CRUST_MANTLE, OUTER_CORE, INNER_CORE) + (TRINFINITE, INFINITE) regions
 
 ! define flag for planet
 ! strictly speaking, the moon is not a planet but a natural satellite. well, let's stay with IPLANET_** for now.
@@ -843,6 +843,10 @@
   integer, parameter :: IREGION_CRUST_MANTLE = 1
   integer, parameter :: IREGION_OUTER_CORE = 2
   integer, parameter :: IREGION_INNER_CORE = 3
+
+! define flag for region of the infinite-element mesh surrounding the global mesh
+  integer, parameter :: IREGION_TRINFINITE = 4      ! transition-to-infinite region
+  integer, parameter :: IREGION_INFINITE = 5        ! infinite mesh region
 
 ! define flag for elements
   integer, parameter :: IFLAG_CRUST = 1
@@ -1317,3 +1321,92 @@
 ! adapted regional moho stretching (use only for special areas to optimize a local mesh)
   logical, parameter :: MOON_REGIONAL_MOHO_MESH = .false.
   logical, parameter :: MOON_HONOR_DEEP_MOHO = .false.
+
+
+!!-----------------------------------------------------------
+!!
+!! Spectral infinite-element mesh
+!!
+!!-----------------------------------------------------------
+
+! transition-to-infinite and inifinite regions
+  logical, parameter :: ADD_TRINF = .true.
+
+  integer, parameter :: NLAYER_TRINF = 10           ! default 10
+  !!integer, parameter :: NREGIONS_INF = 2            ! this must be: 2 == transition infinite + infinite
+  !!integer, parameter :: NUM_REGIONS_ALL = 5        ! this must be == MAX_NUM_REGIONS == 5 == 3 + NREGIONS_INF == 3 + 2
+
+! degrees of freedoms
+  integer, parameter :: NNDOFU   = 0 ! displacement components
+  integer, parameter :: NNDOFCHI = 0 ! displacement potential
+  integer, parameter :: NNDOFP   = 0 ! pressure
+  integer, parameter :: NNDOFPHI = 1 ! gravitational potential
+  integer, parameter :: NNDOF    = NNDOFU + NNDOFCHI + NNDOFP + NNDOFPHI ! all nodal freedoms
+
+! number of GLL points in each direction of an element (degree plus one)
+  integer, parameter :: NGLLX1 = 3
+  integer, parameter :: NGLLY1 = NGLLX1
+  integer, parameter :: NGLLZ1 = NGLLX1
+  integer, parameter :: NGLLCUBE1 = NGLLX1 * NGLLY1 * NGLLZ1
+
+  !integer, parameter :: NGLLZ_INF = 3        ! this is always 3
+  !integer, parameter :: NGLL = NGLLCUBE      ! NGLLX*NGLLY*NGLLZ!, NGLL_INF=NGLLX*NGLLY*NGLLZ_INF
+  !integer, parameter :: NGLLXY = NGLLSQUARE  ! NGLLX*NGLLY
+  !integer, parameter :: NSUBHEX = (NGLLX-1)*(NGLLY-1)*(NGLLZ-1)
+
+!------------------------------------------------------------
+! Level-1 solver
+!------------------------------------------------------------
+  integer, parameter :: NEDOF1    = NGLLCUBE1 * NNDOF
+  integer, parameter :: NEDOFU1   = NGLLCUBE1 * NNDOFU, &
+                        NEDOFCHI1 = NGLLCUBE1 * NNDOFCHI,&
+                        NEDOFP1   = NGLLCUBE1 * NNDOFP, &
+                        NEDOFPHI1 = NGLLCUBE1 * NNDOFPHI
+
+!------------------------------------------------------------
+! Level-2 solver
+!------------------------------------------------------------
+  integer, parameter :: NEDOFU   = NGLLCUBE * NNDOFU, &
+                        NEDOFCHI = NGLLCUBE * NNDOFCHI, &
+                        NEDOFP   = NGLLCUBE * NNDOFP, &
+                        NEDOFPHI = NGLLCUBE * NNDOFPHI
+  integer, parameter :: NEDOF = NGLLCUBE * NNDOF
+
+
+!!-----------------------------------------------------------
+!!
+!! Poisson's solver
+!!
+!!-----------------------------------------------------------
+
+! maximum number of iteration for conjugate gradient solver
+  integer, parameter :: BUILTIN = 0, PETSC = 1
+
+! by default, the Poisson solver needs the PETSc library
+  integer, parameter :: POISSON_SOLVER = PETSC            ! or BUILTIN
+  logical, parameter :: POISSON_SOLVER_5GLL = .false.
+
+! if the following parameter is .true., contribution of the perturbed gravity is
+! discarded in compute force routines, perturbed gravity is still computed from
+! the density perturbation.
+  logical, parameter :: DISCARD_GCONTRIB = .false.
+
+! maximum number of iteration for conjugate gradient solver
+  integer, parameter :: CG_MAXITER = 10000
+
+! relative tolerance for conjugate gradient solver
+  real(kind=CUSTOM_REAL), parameter :: CG_TOL  = 1.0e-7_CUSTOM_REAL, &
+                                       CG_TOL1 = 1.0e-7_CUSTOM_REAL
+
+! Krylov subspace method (KSP)
+! Level-1 KSP solver
+  integer,parameter :: KSP_MAXITER1 = 3000
+  real(kind=CUSTOM_REAL), parameter :: KSP_RTOL1 = 1.0e-7_CUSTOM_REAL
+  real(kind=CUSTOM_REAL), parameter :: KSP_ATOL1 = 1.0e-30_CUSTOM_REAL
+  real(kind=CUSTOM_REAL), parameter :: KSP_DTOL1 = 1.0e30_CUSTOM_REAL
+
+! Level-2 KSP solver
+  integer,parameter :: KSP_MAXITER = 3000
+  real(kind=CUSTOM_REAL), parameter :: KSP_RTOL = 1.0e-7_CUSTOM_REAL
+  real(kind=CUSTOM_REAL), parameter :: KSP_ATOL = 1.0e-30_CUSTOM_REAL
+  real(kind=CUSTOM_REAL), parameter :: KSP_DTOL = 1.0e30_CUSTOM_REAL

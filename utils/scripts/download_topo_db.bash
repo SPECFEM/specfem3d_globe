@@ -5,7 +5,14 @@
 # this is optional, the default topography file topo_bathy_etopo4_smoothed_window_7.dat used by SPECFEM3D_GLOBE
 # is already included in the source code
 
+# you will need to call this script from the root directory of the package.
 # this only needs to be done once (and for all)
+
+if [ ! -e DATA/topo_bathy ]; then
+  echo "you will need to call this script from the root directory of the package..."
+  exit 1
+fi
+
 
 cd DATA/topo_bathy
 

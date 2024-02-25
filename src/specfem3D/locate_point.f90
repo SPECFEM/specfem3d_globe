@@ -410,7 +410,8 @@
   ! coordinates of the control points of the surface element
   double precision :: xelm(NGNOD),yelm(NGNOD),zelm(NGNOD)
 
-  double precision :: dx,dy,dz,dx_min,dy_min,dz_min,d_min_sq
+  double precision :: dx,dy,dz
+  double precision :: d_sq,d_min_sq
   double precision :: dxi,deta,dgamma
   double precision :: xix,xiy,xiz
   double precision :: etax,etay,etaz
@@ -433,9 +434,6 @@
   if (.not. POINT_CAN_BE_BURIED) gamma = 1.d0
 
   d_min_sq = HUGEVAL
-  dx_min = HUGEVAL
-  dy_min = HUGEVAL
-  dz_min = HUGEVAL
 
   ! iterate to solve the non linear system
   do iter_loop = 1,NUM_ITER
@@ -452,21 +450,23 @@
     !debug
     !print *,'  iter ',iter_loop,'dx',sngl(dx),sngl(dx_min),'dy',sngl(dy),sngl(dy_min),'dz',sngl(dz),sngl(dz_min),d_min_sq
 
+    ! distance squared
+    d_sq = dx*dx + dy*dy + dz*dz
+
     ! compute increments
-    if ((dx**2 + dy**2 + dz**2) < d_min_sq) then
-      d_min_sq = dx**2 + dy**2 + dz**2
-      dx_min = dx
-      dy_min = dy
-      dz_min = dz
+    if (d_sq < d_min_sq) then
+      d_min_sq = d_sq
 
       dxi = xix*dx + xiy*dy + xiz*dz
       deta = etax*dx + etay*dy + etaz*dz
       dgamma = gammax*dx + gammay*dy + gammaz*dz
     else
       ! new position is worse than old one, no change necessary
-      dxi = 0.d0
-      deta = 0.d0
-      dgamma = 0.d0
+      ! stop, no further improvements
+      !dxi = 0.d0
+      !deta = 0.d0
+      !dgamma = 0.d0
+      exit
     endif
 
     ! decreases step length if step is large

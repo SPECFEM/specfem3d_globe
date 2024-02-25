@@ -477,6 +477,20 @@ endif
 @COND_EMC_TRUE@FCFLAGS += ${FC_DEFINE}USE_EMC @EMC_FCFLAGS@
 @COND_EMC_TRUE@MPILIBS += @EMC_LIBS@
 
+#######################################
+####
+#### PETSc
+#### with configure: ./configure --with-petsc PETSC_FCFLAGS=.. PETSC_INC=.. PETSC_LIB=..
+####
+#######################################
+
+@COND_PETSC_TRUE@PETSC = yes
+@COND_PETSC_FALSE@PETSC = no
+
+# adds compiler flag
+@COND_PETSC_TRUE@FCFLAGS += @PETSC_FCFLAGS@ $(FC_DEFINE)USE_PETSC
+@COND_PETSC_TRUE@LDFLAGS += @PETSC_LDFLAGS@
+@COND_PETSC_TRUE@MPILIBS += @HIP_LDFLAGS@ @PETSC_LIBS@
 
 #######################################
 ## static compilation
@@ -533,6 +547,10 @@ SUBDIRS = \
 	tomography/postprocess_sensitivity_kernels \
 	$(EMPTY_MACRO)
 
+ifeq ($(PETSC), yes)
+	SUBDIRS += gindex3D
+endif
+
 #ifeq ($(HAS_GPU),yes)
 #  SUBDIRS := gpu $(SUBDIRS)
 #endif
@@ -569,6 +587,13 @@ endif
 #	xcombine_vol_data_vtk_adios2 \
 #	$(EMPTY_MACRO)
 #endif
+
+ifeq ($(PETSC), yes)
+DEFAULT += 	\
+	xgindex3D \
+	$(EMPTY_MACRO)
+endif
+
 
 all: default aux movies postprocess tomography
 
@@ -684,6 +709,11 @@ endif
 	@echo "for unit testing:"
 	@echo "    tests"
 	@echo ""
+ifeq ($(PETSC), yes)
+	@echo "for full-gravity simulations:"
+	@echo "    xgindex3D"
+	@echo ""
+endif
 
 .PHONY: all default clean realclean help tests
 

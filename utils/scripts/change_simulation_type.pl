@@ -1,4 +1,8 @@
 #!/usr/bin/perl
+#
+# changes the SIMULATION_TYPE setting in DATA/Par_file
+#
+# originally written by Qinya Liu, Caltech, May 2007
 
 use Time::Local;
 use Getopt::Std;

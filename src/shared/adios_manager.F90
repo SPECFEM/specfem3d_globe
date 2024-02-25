@@ -1683,7 +1683,6 @@ contains
   ! local parameters
   character(len=MAX_STRING_LEN) :: tmp_engine
   character(len=4) :: ext
-  integer :: irange,i
 
   ! selects engine type
   if (present(ENGINE)) then
@@ -1695,12 +1694,7 @@ contains
   endif
 
   ! converts all string characters to lowercase (to make user input case-insensitive)
-  irange = iachar('a') - iachar('A')
-  do i = 1,len_trim(tmp_engine)
-    if (lge(tmp_engine(i:i),'A') .and. lle(tmp_engine(i:i),'Z')) then
-      tmp_engine(i:i) = achar(iachar(tmp_engine(i:i)) + irange)
-    endif
-  enddo
+  call convert_to_lowercase(tmp_engine,tmp_engine)
 
   ! debug
   !print *,'debug: get_adios_filename ',trim(name),' - engine: ',trim(tmp_engine)

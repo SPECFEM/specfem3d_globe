@@ -32,18 +32,18 @@ int argc; char **argv;
   void            free_dvector();
   FILE           *fp_prem, *fp_elastic;
 
-/*  DK DK  printf("longest period (seconds): "); */
+/*  printf("longest period (seconds): "); */
   scanf("%lf",&T1);
   f1= 1.0/T1;
 
-/*  DK DK  printf("shortest period (seconds): "); */
+/*  printf("shortest period (seconds): "); */
   scanf("%lf",&T2);
   f2 = 1.0/T2;
 
-/*  DK DK  printf("number of mechanisms: "); */
+/*  printf("number of mechanisms: "); */
   scanf("%d",&n);
 
-/*  DK DK  printf("1 = use xmgr  0 = do not use xmgr: "); */
+/*  printf("1 = use xmgr  0 = do not use xmgr: "); */
   scanf("%d",&xmgr);
 
   if (f2 < f1) {
@@ -70,12 +70,12 @@ int argc; char **argv;
         }
   Q_kappa_m = Q_mu_m = 0.0;
   om0 = PI2 * pow(10.0, 0.5 * (log10(f1) + log10(f2)));
-/* DK DK  printf("\n\n! central frequency: %25.15f mHz\n\n", 1.0E+03 * om0 / PI2); */
+/* printf("\n\n! central frequency: %25.15f mHz\n\n", 1.0E+03 * om0 / PI2); */
   for (j = 0; j < NR; j++) {
           plot=0;
     fscanf(fp_prem, "%lf %lf %lf %lf %lf %lf", &r, &rho, &v_p, &v_s, &Q_kappa, &Q_mu);
 
-/* DK DK removed for Qmu only in the Earth
+/* removed for Qmu only in the Earth
     if (Q_kappa != Q_kappa_m) {
       printf("\ntarget Q_kappa: %6.2f\n\n", Q_kappa);
       constant_Q2_sub(f1, f2, n, (double) Q_kappa, tau_s, tau_e, xmgr);
@@ -121,7 +121,7 @@ int argc; char **argv;
                         muR=0.5*mu0*b*b/Omega;
                         plot_modulus(f1, f2, n, mu, muR, Q_mu, tau_e, tau_s, xmgr);
 
-/* DK DK converted to Fortran90 output */
+/* converted to Fortran90 output */
 
                   if (counter == 1) {
                     printf("! tau sigma evenly spaced in log frequency, does not depend on value of Q\n");
@@ -161,7 +161,7 @@ int argc; char **argv;
                   for (i = 1; i <= n; i++) {
                     printf("    tau_mu(%1d) = %30.20fd0\n", i, tau_e[i] );
                     }
-/* DK DK     printf("    radius_km_and_above = %f \n", r/1000.0); */
+/*    printf("    radius_km_and_above = %f \n", r/1000.0); */
                   printf("    Q_mu = %20.10fd0\n", Q_mu);
     }
 
@@ -227,7 +227,7 @@ for (expo = exp1; expo <= exp2; expo += dexp) {
 fclose(fp_v);
 fclose(fp_q);
 
-/* DK DK call xmgr to plot curves if needed */
+/* call xmgr to plot curves if needed */
 
 if (xmgr == 1) {
   sprintf(strng, "xmgr -nxy Q%1d", pid);
@@ -1010,18 +1010,18 @@ void constant_Q2_sub(f1, f2, n, Q, tau_s, tau_e, xmgr)
 
   print_model(f1, f2, n, Q, x1, x2, xmgr);
 
-/* DK DK  printf("! frequency range: %f -- %f mHz\n", f1 * 1.0E+03, f2 * 1.0E+03);
+/* printf("! frequency range: %f -- %f mHz\n", f1 * 1.0E+03, f2 * 1.0E+03);
   printf("! period range: %f -- %f s\n", 1./f2 , 1./f1 );
   printf("! desired Q: %f\n", Q);
   printf("! number of relaxation mechanisms: %d\n", n); */
   for (i = 1; i <= n; i++) {
           tau_e[i]=x1[i] + x2[i];
-/* DK DK    printf("tau_e[%d]: %e\n", i, x1[i] + x2[i]);   */
+/*   printf("tau_e[%d]: %e\n", i, x1[i] + x2[i]);   */
   }
   printf("\n");
   for (i = 1; i <= n; i++) {
           tau_s[i]=x2[i];
-/* DK DK     printf("tau_s[%d]: %e\n", i, x2[i]);   */
+/*    printf("tau_s[%d]: %e\n", i, x2[i]);   */
   }
 
   free_dvector(x1, 1, n);
@@ -1068,7 +1068,7 @@ for (i = 1; i <= n; i++) {
   x2[i] = tau_s[i];
 }
 
-/* DK DK suppressed verbose output
+/* suppressed verbose output
 printf("initial stress and strain relaxation times: \n\n");
 for (i = 1; i <= n; i++) {
   printf("tau_e[%d]: %e\n", i, x1[i] + x2[i]);
@@ -1168,7 +1168,7 @@ for (expo = exp1; expo <= exp2; expo += dexp) {
 fclose(fp_q);
 fclose(fp_q_approx);
 
-/* DK DK added option to avoid calling Xmgr */
+/* added option to avoid calling Xmgr */
 if(xmgr == 1) {
   sprintf(strng, "xmgr q%1d q_approx%1d", pid, pid);
   system(strng);

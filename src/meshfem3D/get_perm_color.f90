@@ -557,7 +557,7 @@
     nb_colors_inner_elements = maxval_count_ibool_inner
   endif
 
-  !! DK DK do it for inner elements only for now
+  ! do it for inner elements only for now
   ! Droux optimization run
   nb_tries_of_Droux_1993 = 1
 
@@ -745,7 +745,7 @@
           icolor_conflict_found(ncolors),stat=ier)
   if (ier /= 0 ) stop 'Error allocating nb_elems_in_this_color arrays'
 
-  !! DK DK do it for outer elements
+  ! do it for outer elements
   icolormin = 1
   icolormax = nb_colors_outer_elements
 
@@ -872,8 +872,7 @@
 
   enddo ! icolor
 
-!! DK DK do it for inner elements
-
+  ! do it for inner elements
   icolormin = nb_colors_outer_elements + 1
   icolormax = ncolors
 

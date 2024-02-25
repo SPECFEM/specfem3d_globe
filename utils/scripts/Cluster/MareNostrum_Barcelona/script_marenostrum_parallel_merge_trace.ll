@@ -1,6 +1,6 @@
 #! /bin/ksh
 
-### DK DK submit this with "mnsubmit name_of_script.ll"
+### submit this with "mnsubmit name_of_script.ll"
 
 #@ job_name = Specfem3D_MPI
 
@@ -12,22 +12,25 @@
 #####
 
 #####################################################################
-## Running the job with tracing step
+## parallel merging step
 #####################################################################
-#@ total_tasks = 64
+#@ output = Specfem3D_merge_%j.out
+#@ error = Specfem3D_merge_%j.err
+#@ total_tasks = 32
 #@ tasks_per_node = 4
 ############## Wall clock limit hhh:mm:ss
 #@ wall_clock_limit = 02:00:00
-#@ output = Specfem3D_run_%j.out
-#@ error = Specfem3D_run_%j.err
 #@ queue
-#@ features = mx
+#@ features = mx 
+#####################################################################
+
+# this below OK in May 2009
+MPITRACE_HOME=/gpfs/apps/CEPBATOOLS/mpitrace-mx/64
 
 #environment
 MP_EUILIB=mx
 OBJECT_MODE=64
 MP_RSH=ssh
 
-    srun ./xgenerate_databases
-#    srun ./bin/xspecfem3D
+  srun ${MPITRACE_HOME}/bin/mpimpi2prv -f TRACE.mpits -maxmem 1024 -syn -o trace.prv
 

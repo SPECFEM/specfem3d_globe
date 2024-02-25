@@ -173,6 +173,9 @@
   read(IIN) GRAVITY_VAL
   read(IIN) OCEANS_VAL
 
+  ! full gravity support
+  read(IIN) FULL_GRAVITY_VAL
+
   read(IIN) NX_BATHY_VAL
   read(IIN) NY_BATHY_VAL
 
@@ -273,6 +276,8 @@
   read(IIN) CENTER_LONGITUDE_IN_DEGREES_VAL
   read(IIN) GAMMA_ROTATION_AZIMUTH_VAL
 
+  !TODO: read in NSPEC_TRINFINITE, NSPEC_INFINITE, ..
+
   close(IIN)
 
 #endif
@@ -304,7 +309,7 @@
   integer, parameter :: nparam_i = 65
   integer, dimension(nparam_i) :: bcast_integer
 
-  integer, parameter :: nparam_l = 14
+  integer, parameter :: nparam_l = 15
   logical, dimension(nparam_l) :: bcast_logical
 
   integer, parameter :: nparam_dp = 5
@@ -354,7 +359,8 @@
         ROTATION_VAL,EXACT_MASS_MATRIX_FOR_ROTATION_VAL, &
         PARTIAL_PHYS_DISPERSION_ONLY_VAL, &
         USE_DEVILLE_PRODUCTS_VAL, &
-        ATTENUATION_1D_WITH_3D_STORAGE_VAL,UNDO_ATTENUATION_VAL &
+        ATTENUATION_1D_WITH_3D_STORAGE_VAL,UNDO_ATTENUATION_VAL, &
+        FULL_GRAVITY_VAL &
         /)
 
       bcast_double_precision = (/ &
@@ -460,6 +466,7 @@
     USE_DEVILLE_PRODUCTS_VAL = bcast_logical(12)
     ATTENUATION_1D_WITH_3D_STORAGE_VAL = bcast_logical(13)
     UNDO_ATTENUATION_VAL = bcast_logical(14)
+    FULL_GRAVITY_VAL = bcast_logical(15)
 
     ! double precisions
     ANGULAR_WIDTH_ETA_IN_DEGREES_VAL = bcast_double_precision(1)

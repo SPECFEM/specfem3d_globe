@@ -1170,7 +1170,7 @@
     if (dd(iver) >= 0.0 .and. .not. (dd(iver) > (verrad(iver))*2.d0)) then
       ncon = ncon + 1
 
-!! DK DK added this safety test
+      ! added this safety test
       if (ncon > maxver) stop 'Error: ncon > maxver in splcon() routine'
 
       icon(ncon) = iver

@@ -322,7 +322,7 @@
           Qkappa=57827.0d0
 
         else if (SUPPRESS_CRUSTAL_MESH) then
-          ! DK DK extend the Moho up to the surface instead of the crust
+          ! extend the Moho up to the surface instead of the crust
           x_moho = SOHL_RMOHO / R_PLANET
           drhodr=1.7831d0+2.0d0*1.2168d0*x_moho-3.0d0*1.7209d0*x_moho*x_moho
           rho=2.2095d0+1.7831d0*x_moho+1.2168d0*x_moho*x_moho-1.7209d0*x_moho*x_moho*x_moho

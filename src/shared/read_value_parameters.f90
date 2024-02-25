@@ -197,3 +197,40 @@
   call param_close()
 
   end subroutine close_parameter_file
+
+!-------------------------------------------------------------------------------------------------
+!
+! shared helper functions
+!
+!-------------------------------------------------------------------------------------------------
+! put here for lack of better places... move to a better file in future
+
+
+  subroutine convert_to_lowercase(str,str_lowercase)
+
+! converts all string characters to lower case
+
+  use constants, only: MAX_STRING_LEN
+
+  implicit none
+
+  character(len=*),intent(in) :: str
+  character(len=*),intent(inout) :: str_lowercase
+
+  ! local parameters
+  integer :: irange,i
+  character(len=len(str)) :: tmp_string
+
+  ! converts all string characters to lowercase (to make user input case-insensitive)
+  tmp_string = str
+
+  irange = iachar('a') - iachar('A')
+  do i = 1,len_trim(tmp_string)
+    if (lge(tmp_string(i:i),'A') .and. lle(tmp_string(i:i),'Z')) then
+      tmp_string(i:i) = achar(iachar(tmp_string(i:i)) + irange)
+    endif
+  enddo
+
+  str_lowercase(1:len(str)) = tmp_string
+
+  end subroutine convert_to_lowercase

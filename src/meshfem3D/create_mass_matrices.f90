@@ -96,9 +96,10 @@
   b_rmassx(:) = 0._CUSTOM_REAL
   b_rmassy(:) = 0._CUSTOM_REAL
 
-!----------------------------------------------------------------
+  ! checks if anything to do
+  if (iregion_code == IREGION_TRINFINITE .or. iregion_code == IREGION_INFINITE) return
 
-! first create the main standard mass matrix with no corrections
+  ! first create the main standard mass matrix with no corrections
 
 ! openmp mesher
 !$OMP PARALLEL DEFAULT(SHARED) &
@@ -134,7 +135,6 @@
 
           ! definition depends if region is fluid or solid
           select case (iregion_code)
-
           case (IREGION_CRUST_MANTLE, IREGION_INNER_CORE)
             ! distinguish between single and double precision for reals
 !$OMP ATOMIC
@@ -143,7 +143,6 @@
 
           ! fluid in outer core
           case (IREGION_OUTER_CORE)
-
             !checks division
             if (kappavstore(i,j,k,ispec) <= 0.0_CUSTOM_REAL) stop 'Error invalid kappav in outer core mass matrix'
 
@@ -156,7 +155,7 @@
                         kind=CUSTOM_REAL)
 
           case default
-            call exit_MPI(myrank,'wrong region code')
+            call exit_MPI(myrank,'wrong region code in create_mass_matrix')
 
           end select
 
@@ -283,9 +282,7 @@
 
   ! definition depends if region is fluid or solid
   select case (iregion_code)
-
   case (IREGION_CRUST_MANTLE, IREGION_INNER_CORE)
-
 ! openmp mesher
 !$OMP PARALLEL DEFAULT(SHARED) &
 !$OMP PRIVATE(ispec,i,j,k,iglob,weight, &
@@ -339,8 +336,13 @@
 !$OMP ENDDO
 !$OMP END PARALLEL
 
-  end select
+  case (IREGION_OUTER_CORE)
+    ! nothing to do
+    continue
 
+  case default
+    call exit_MPI(myrank,'wrong region code in create_mass_matrices_rotation')
+  end select
 
   end subroutine create_mass_matrices_rotation
 
@@ -425,7 +427,6 @@
   ! adds contributions to mass matrix to stabilize Stacey conditions
   select case (iregion_code)
   case (IREGION_CRUST_MANTLE)
-
     do iface = 1,num_abs_boundary_faces
 
       ispec = abs_boundary_ispec(iface)
@@ -465,7 +466,6 @@
     if (minval(rmassy(:)) <= 0.) call exit_MPI(myrank,'negative rmassy matrix term')
 
   case (IREGION_OUTER_CORE)
-
     do iface = 1,num_abs_boundary_faces
 
       ispec = abs_boundary_ispec(iface)
@@ -492,7 +492,7 @@
     continue
 
   case default
-    call exit_MPI(myrank,'wrong region code')
+    call exit_MPI(myrank,'wrong region code in create_mass_matrices_Stacey')
 
   end select
 
@@ -601,7 +601,7 @@
 
           if (.not. USE_OLD_VERSION_5_1_5_FORMAT) then
             ! adds small margins
-            !! DK DK: added a test to only do this if we are on the axis
+            ! added a test to only do this if we are on the axis
             if (abs(theta) > 89.99d0) then
               theta = theta + 0.0000001d0
               phi = phi + 0.0000001d0

@@ -88,7 +88,7 @@
     call flush_IMAIN()
   endif
 
-!! DK DK for gravity integrals
+  ! for gravity integrals
   if (GRAVITY_INTEGRALS) call exit_MPI(myrank,'no need to run the solver to compute gravity integrals, only the mesher')
 
   if (myrank == 0) then
@@ -186,7 +186,15 @@
       write(IMAIN,*) '  no surface topography'
     endif
     if (GRAVITY) then
-      write(IMAIN,*) '  incorporating self-gravitation (Cowling approximation)'
+      if (FULL_GRAVITY) then
+        if (ADD_TRINF) then
+          write(IMAIN,*) '  incorporating full self-gravitation (with transition layer)'
+        else
+          write(IMAIN,*) '  incorporating full self-gravitation (without transition layer)'
+        endif
+      else
+        write(IMAIN,*) '  incorporating self-gravitation (Cowling approximation)'
+      endif
     else
       write(IMAIN,*) '  no self-gravitation'
     endif
@@ -369,6 +377,11 @@
       if (myrank == 0) write(IMAIN,*) 'GRAVITY:',GRAVITY,GRAVITY_VAL
       write(*,*) 'GRAVITY:', GRAVITY, GRAVITY_VAL
       call exit_MPI(myrank,'Error in compiled parameters GRAVITY, please recompile solver')
+  endif
+  if (FULL_GRAVITY .neqv. FULL_GRAVITY_VAL) then
+      if (myrank == 0) write(IMAIN,*) 'FULL_GRAVITY:',FULL_GRAVITY,FULL_GRAVITY_VAL
+      write(*,*) 'FULL_GRAVITY:', FULL_GRAVITY, FULL_GRAVITY_VAL
+      call exit_MPI(myrank,'Error in compiled parameters FULL_GRAVITY, please recompile solver')
   endif
   if (ROTATION .neqv. ROTATION_VAL) then
       if (myrank == 0) write(IMAIN,*) 'ROTATION:',ROTATION,ROTATION_VAL
