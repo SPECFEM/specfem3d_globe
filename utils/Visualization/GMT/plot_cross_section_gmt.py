@@ -47,6 +47,12 @@ def process_data(filename):
     # numpy reads tabled data
     data_array = np.loadtxt(filename)
 
+    # check length
+    if len(data_array) == 0:
+        print("no data points")
+        print("Please check file...")
+        sys.exit(1)
+
     # convert to pandas dataframe
     data = pd.DataFrame(data_array)
 
