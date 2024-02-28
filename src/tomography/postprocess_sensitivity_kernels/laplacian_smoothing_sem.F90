@@ -59,7 +59,8 @@ program smooth_laplacian_sem
   integer :: iker, i, j, k, idof, iel, i1, i2, ier, sizeprocs
 
   double precision    :: Lx, Ly, Lz, Lh, Lv, conv_crit, Lh2, Lv2
-  double precision    :: x, y, z, r, theta, phi, rel_to_prem
+  double precision    :: x, y, z, rel_to_prem
+  double precision    :: r, theta, phi
   double precision    :: rho,drhodr,vp,vs,Qkappa,Qmu
 
   real(kind=CUSTOM_REAL), dimension(:),       allocatable :: m, s
@@ -551,7 +552,14 @@ program smooth_laplacian_sem
           x = xglob(idof)
           y = yglob(idof)
           z = zglob(idof)
+
+          ! converts x/y/z to geocentric coordinates r/theta/phi
           call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
+
+          ! theta/phi not used any further...
+          ! note: converts the geocentric colatitude to a geographic colatitude by ellipticity correction
+          !if (ELLIPTICITY) call geocentric_2_geographic_dble(theta,theta)
+
           ! determine smoothing radius
           Lh2 = Lh
           Lv2 = Lv
