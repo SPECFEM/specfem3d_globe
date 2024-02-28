@@ -74,7 +74,7 @@
                                             corners_lat,corners_lon)
 
   use constants, only: DEGREES_TO_RADIANS,RADIANS_TO_DEGREES,ONE,PI,TWO_PI,PI_OVER_TWO,R_UNIT_SPHERE
-  
+
   implicit none
 
   double precision,intent(in) :: CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH

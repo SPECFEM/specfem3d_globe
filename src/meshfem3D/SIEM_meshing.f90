@@ -39,7 +39,7 @@
 
   module SIEM_meshfem_par
 
-  use constants,only: CUSTOM_REAL,NDIM,NGLLZ
+  use constants, only: CUSTOM_REAL,NDIM,NGLLZ
 
   implicit none
 
@@ -249,7 +249,7 @@
 
   ! allocates temporary arrays
   allocate(iboolt(NGLLX,NGLLY,NGLLZ,nspec0), &
-           ibount(6,nspec0),                     &
+           ibount(6,nspec0), &
            iMPIcutt_xi(2,nspec0), &
            iMPIcutt_eta(2,nspec0), &
            xstoret(NGLLX,NGLLY,NGLLZ,nspec0), &
@@ -399,7 +399,7 @@
     gaminf = r1/(RINF-r1)
     invgaminf = (RINF-r1)/r1 !r1/(RINF-r1) use inverse instead for multiplication
 
-    if(gaminf == 0.0_CUSTOM_REAL)then
+    if (gaminf == 0.0_CUSTOM_REAL) then
       print *,'ERROR: zero division!'
       stop 'Invalid gaminf zero division'
     endif
@@ -424,9 +424,9 @@
   do k = 1,NGLLZ
     inum = 0
     xp = xs(:,:,k)
-    !if(k.eq.1)xp=xs
-    !if(k.eq.2)xp=mirxs1
-    !if(k.eq.3)xp=mirxs2
+    !if (k==1)xp=xs
+    !if (k==2)xp=mirxs1
+    !if (k==3)xp=mirxs2
     do ispec = 1,nspec0
       ispec_n = ispecnew(ispec)
       do j = 1,NGLLY
@@ -470,7 +470,7 @@
 
   do ispec = 1,nspec0
     ispec_n = ispecnew(ispec)
-    do k = 1,NGLLZ ! 1 was previously set for ilayer>1 but not other
+    do k = 1,NGLLZ ! 1 was previously set for ilayer > 1 but not other
       do j = 1,NGLLY
         do i = 1,NGLLX
           iglob = iboolold(i,j,k,ispec)
@@ -491,7 +491,7 @@
   !        do j = 1,NGLLY
   !          do i = 1,NGLLX
   !            iglob = iboolold(i,j,k,ispec)
-  !            if(.not.isnode(iglob))then
+  !            if (.not. isnode(iglob)) then
   !              ib = ib+1
   !              isnode(iglob) = .true.
   !              ibnew(iglob) = ib
@@ -538,7 +538,7 @@ contains
 
   ! Author: Michel Olagnon
   ! orderpack 2.0
-  ! source: http://www.fortran-2000.com/rank/
+  ! source: http://www.Fortran-2000.com/rank/
 
   subroutine i_uniinv (XDONT, IGOEST)
     ! UNIINV = Merge-sort inverse ranking of an array, with removal of
@@ -570,7 +570,7 @@ contains
 
     ! fill-in the index array, creating ordered couples
     do IIND = 2, NVAL, 2
-      if(XDONT(IIND-1) < XDONT(IIND)) then
+      if (XDONT(IIND-1) < XDONT(IIND)) then
         IRNGT (IIND-1) = IIND - 1
         IRNGT (IIND) = IIND
       else
@@ -578,7 +578,7 @@ contains
         IRNGT (IIND) = IIND - 1
       endif
     enddo
-    if(modulo(NVAL,2) /= 0) then
+    if (modulo(NVAL,2) /= 0) then
       IRNGT (NVAL) = NVAL
     endif
 

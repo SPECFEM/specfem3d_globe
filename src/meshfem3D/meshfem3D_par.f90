@@ -649,7 +649,7 @@
 
   module MPI_trinfinite_par
 
-  use constants,only: CUSTOM_REAL,NUMFACES_SHARED,NB_SQUARE_EDGES_ONEDIR
+  use constants, only: CUSTOM_REAL,NUMFACES_SHARED,NB_SQUARE_EDGES_ONEDIR
 
   implicit none
 
@@ -705,7 +705,7 @@
 
   module MPI_infinite_par
 
-  use constants,only: CUSTOM_REAL,NUMFACES_SHARED,NB_SQUARE_EDGES_ONEDIR
+  use constants, only: CUSTOM_REAL,NUMFACES_SHARED,NB_SQUARE_EDGES_ONEDIR
 
   implicit none
 

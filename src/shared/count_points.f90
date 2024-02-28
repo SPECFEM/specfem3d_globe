@@ -31,7 +31,7 @@
                           NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
                           NGLOB_REGIONS, &
                           INCLUDE_CENTRAL_CUBE,NER_TOP_CENTRAL_CUBE_ICB,NEX_XI, &
-                          NUMBER_OF_MESH_LAYERS,layer_offset, &                          
+                          NUMBER_OF_MESH_LAYERS,layer_offset, &
                           CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, &
                           last_doubling_layer)
 

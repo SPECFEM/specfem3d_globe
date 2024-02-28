@@ -1273,7 +1273,7 @@ end module model_emc_par
 
   ! user output
   write(IMAIN,*) '    updated surface entries = ',icount
-  if (icount == 0) write(IMAIN,*) '    no fluid (vs==0) entries found'
+  if (icount == 0) write(IMAIN,*) '    no fluid (vs == 0) entries found'
   write(IMAIN,*)
   call flush_IMAIN()
 
@@ -1472,7 +1472,7 @@ contains
   ! Compute a[i] = (3/h[i]) * (a[i+1] - a[i]) - (3/h[i-1]) * (a[i] - a[i-1])
   do i = 2, n-1
     a(i) = (3.0 / h(i)) * (y(i+1) - y(i)) - (3.0 / h(i-1)) * (y(i) - y(i-1))
-  end do
+  enddo
 
   ! Solve for c[i] using Thomas algorithm for tridiagonal systems
   l(1) = 2.0 * h(1)
@@ -1482,7 +1482,7 @@ contains
     l(i) = 2.0 * (x(i+1) - x(i-1)) - h(i-1) * mu(i-1)
     mu(i) = h(i) / l(i)
     z(i) = (a(i) - h(i-1) * z(i-1)) / l(i)
-  end do
+  enddo
   l(n) = h(n-1) * (2.0 - mu(n-1))
   z(n) = (a(n) - h(n-1) * z(n-1)) / l(n)
   c(n) = z(n)
@@ -1490,7 +1490,7 @@ contains
     c(j) = z(j) - mu(j) * c(j+1)
     b(j) = (y(j+1) - y(j)) / h(j) - h(j) * (c(j+1) + 2.0 * c(j)) / 3.0
     d(j) = (c(j+1) - c(j)) / (3.0 * h(j))
-  end do
+  enddo
 
   ! return coefficients
   spline_b(:) = b(:)
@@ -1521,7 +1521,7 @@ contains
   do while (i < n)
     if (x_target >= x(i) .and. x_target <= x(i+1)) exit
     i = i + 1
-  end do
+  enddo
 
   ! spline interpolation
   y_interp = y(i) + spline_b(i) * (x_target - x(i)) + spline_c(i) * (x_target - x(i))**2 + spline_d(i) * (x_target - x(i))**3
@@ -1623,7 +1623,7 @@ contains
   ! user output
   write(IMAIN,*) '  filling:'
   write(IMAIN,*) '    using interpolated closest model values for missing values'
-  write(IMAIN,*) '    interpolation method : ',INTERPOLATION_METHOD,'(1==Shepard/2==nearest/3==bilinear)'
+  write(IMAIN,*) '    interpolation method : ',INTERPOLATION_METHOD,'(1 == Shepard/2 == nearest/3 == bilinear)'
   write(IMAIN,*)
   call flush_IMAIN()
 
@@ -2024,9 +2024,9 @@ contains
   endif
 
   ! check index bounds
-  if (ix < 1     .or. ix > Nx    ) stop 'Invalid interpolation point 1'
+  if (ix < 1 .or. ix > Nx    ) stop 'Invalid interpolation point 1'
   if (ixplus < 1 .or. ixplus > Nx) stop 'Invalid interpolation point 2'
-  if (iy < 1     .or. iy > Ny    ) stop 'Invalid interpolation point 3'
+  if (iy < 1 .or. iy > Ny    ) stop 'Invalid interpolation point 3'
   if (iyplus < 1 .or. iyplus > Ny) stop 'Invalid interpolation point 4'
 
   if (ix == ixplus) stop 'Invalid interpolation point 1 and point 2'
@@ -2221,7 +2221,7 @@ contains
     taper_val = 0.d0
   else
     taper_val = 0.5d0 * (1.d0 + cos(PI * distance / max_distance))
-  end if
+  endif
 
   end function cosine_taper
 

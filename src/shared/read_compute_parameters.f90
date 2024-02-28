@@ -383,7 +383,7 @@
                         NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
                         NSPEC1D_RADIAL, &
                         NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
-                        NUMBER_OF_MESH_LAYERS,layer_offset,&
+                        NUMBER_OF_MESH_LAYERS,layer_offset, &
                         CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,INCLUDE_CENTRAL_CUBE, &
                         last_doubling_layer)
 

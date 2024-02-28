@@ -246,7 +246,7 @@
         call compute_element_GLL_locations(xelm,yelm,zelm,ispec,nspec,xstore,ystore,zstore,shape3D)
       endif
       ! sets mesh flag
-      ! (to make sure that the conversions from geocentric cartesian x/y/z to geodectic lat/lon position accounts for ellipticity)
+      ! (to make sure that the conversions from geocentric Cartesian x/y/z to geodectic lat/lon position accounts for ellipticity)
       elem_is_elliptical = .true.
     endif
   endif
@@ -382,7 +382,7 @@
         call get_ellipticity(xelm,yelm,zelm,nspl,rspl,ellipicity_spline,ellipicity_spline2)
       endif
       ! sets mesh flag
-      ! (to make sure that the conversions from geocentric cartesian x/y/z to geodectic lat/lon position accounts for ellipticity)
+      ! (to make sure that the conversions from geocentric Cartesian x/y/z to geodectic lat/lon position accounts for ellipticity)
       elem_is_elliptical = .true.
 
       !debug

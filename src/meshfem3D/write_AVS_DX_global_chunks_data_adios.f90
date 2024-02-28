@@ -865,7 +865,7 @@ contains
                   ! removes ellipticity stretch from position x/y/z
                   call revert_ellipticity(x,y,z,nspl,rspl,ellipicity_spline,ellipicity_spline2)
                 endif
-                
+
                 ! updates radius
                 r = dsqrt(x*x+y*y+z*z)
 

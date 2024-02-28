@@ -638,7 +638,7 @@
     ! transition infinite layer
     if (NSPEC_TRINFINITE > 0) then
       ! user output
-      if(myrank == 0) then
+      if (myrank == 0) then
         write(IMAIN,*)
         write(IMAIN,*) 'transition infinite region:'
         call flush_IMAIN()
@@ -686,7 +686,7 @@
     ! infinite layer
     if (NSPEC_INFINITE > 0) then
       ! user output
-      if(myrank == 0) then
+      if (myrank == 0) then
         write(IMAIN,*)
         write(IMAIN,*) 'infinite region:'
         call flush_IMAIN()
