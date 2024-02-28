@@ -1782,7 +1782,7 @@ contains
   double precision, intent(inout) :: vp_interp,vs_interp,rho_interp
 
   ! local parameters
-  double precision :: lon_ref,lat_ref,lon,lat
+  double precision :: lon_ref,lat_ref,lon,lat,dlon,dlat
   double precision :: dist_sq
   integer :: i,j,ix,iy
   ! nearest neighbor
@@ -1820,8 +1820,11 @@ contains
       lon = EMC_lon(ix)
       lat = EMC_lat(iy)
 
-      ! distance - as simple as it gets in degrees, no Haversine function used for more accurate results...
-      dist_sq = (lon_ref - lon)**2 + (lat_ref - lat)**2
+      ! distance - as simple as it gets in degrees
+      ! no Haversine function (that could be used for more accurate results, but more costly)
+      dlon = lon_ref - lon
+      dlat = lat_ref - lat
+      dist_sq = dlon*dlon + dlat*dlat
       if (dist_sq < dist_n) then
         dist_n = dist_sq
         ilon_n = ix
@@ -2097,7 +2100,7 @@ contains
   double precision, intent(inout) :: vp_interp,vs_interp,rho_interp
 
   ! local parameters
-  double precision :: lon_ref,lat_ref,lon,lat
+  double precision :: lon_ref,lat_ref,lon,lat,dlon,dlat
   double precision :: dist,dist_sq
   integer :: i,j,ix,iy
   integer :: icount
@@ -2140,8 +2143,11 @@ contains
       lon = EMC_lon(ix)
       lat = EMC_lat(iy)
 
-      ! distance - as simple as it gets in degrees, no Haversine function used for more accurate results...
-      dist_sq = (lon_ref - lon)*(lon_ref - lon) + (lat_ref - lat)*(lat_ref - lat)
+      ! distance - as simple as it gets in degrees
+      ! no Haversine function (that could be used for more accurate results, but more costly)
+      dlon = lon_ref - lon
+      dlat = lat_ref - lat
+      dist_sq = dlon*dlon + dlat*dlat
 
       ! weight based on inverse distance
       weight = 1.d0 / dist_sq ! * taper_val
@@ -2926,7 +2932,7 @@ contains
 
     ! user output
     write(IMAIN,*) '  simulation chunk:'
-    write(IMAIN,*) '    center (lat,lon) at : (',sngl(CENTER_LATITUDE_IN_DEGREES),sngl(CENTER_LONGITUDE_IN_DEGREES),') geocentric'
+    write(IMAIN,*) '    center (lat,lon) at : (',sngl(CENTER_LATITUDE_IN_DEGREES),sngl(CENTER_LONGITUDE_IN_DEGREES),')'
     write(IMAIN,*) '    rotation            : ',sngl(GAMMA_ROTATION_AZIMUTH)
     write(IMAIN,*) '    width eta/xi        : ',sngl(ANGULAR_WIDTH_ETA_IN_DEGREES),sngl(ANGULAR_WIDTH_XI_IN_DEGREES)
     write(IMAIN,*)
@@ -3132,6 +3138,7 @@ contains
   use constants
   use shared_parameters, only: R_PLANET,R_PLANET_KM,RHOAV,TOPOGRAPHY
   use meshfem_models_par, only: ibathy_topo
+  use meshfem_models_par, only: rspl,ellipicity_spline,ellipicity_spline2,nspl,elem_is_elliptical
 
   use model_emc_par
 
@@ -3140,20 +3147,20 @@ contains
   integer ,intent(in) :: iregion_code
 
   ! radius     - normalized by globe radius [0,1.x]
-  ! theta/phi  - colatitude/longitude in rad (range theta/phi = [0,pi] / [0,2pi]
+  ! theta/phi  - colatitude/longitude in rad (range theta/phi = [0,pi] / [0,2pi] (geocentric)
   double precision, intent(in) :: r,theta,phi
 
   ! absolute values, not perturbations
   double precision, intent(inout) :: vpv,vph,vsv,vsh,eta_aniso,rho
 
   ! local parameters
-  double precision :: r_depth,lat,lon
+  double precision :: r0,lat,lon,colat,r_depth
   double precision :: vp_iso,vs_iso,rho_iso
   double precision :: vpl,vsl,rhol
   double precision :: scaleval_vel,scaleval_rho
   integer :: index_lat,index_lon,index_dep
   ! elevation
-  double precision :: lat_topo,lon_topo,elevation,r_topo
+  double precision :: elevation
   ! flag for points with missing values
   logical :: is_point_outside
 
@@ -3170,60 +3177,75 @@ contains
   vsl = 0.d0
   rhol = 0.d0
 
+  ! corrects colatitude for ellipticity in case
+  if (elem_is_elliptical) then
+    ! converts to geographic colatitude
+    call geocentric_2_geographic_colat_dble(theta,colat)
+  else
+    ! spherical mesh, geocentric and geographic colatitudes are the same
+    colat = theta
+  endif
+
+  ! geographic lat/lon
   ! latitude in degrees in [-90,90]
-  lat = (PI_OVER_TWO - theta) * RADIANS_TO_DEGREES
+  lat = (PI_OVER_TWO - colat) * RADIANS_TO_DEGREES
   ! longitude in degrees in [0,360]
   lon = phi * RADIANS_TO_DEGREES
 
-  ! depth
+  ! determines radius of earth surface at position lat/lon (to calculate depth of position r)
+  ! normalized surface radius
+  r0 = R_UNIT_SPHERE
+
+  ! finds elevation of position
   if (TOPOGRAPHY) then
-    ! takes depth
-    ! depth reference level 1==earth surface, 2==sea level),
+    ! EMC depth reference level 1==earth surface, 2==sea level),
     if (EMC_depth_reference_level == 1) then
       ! depth relative to earth surface
       ! gets elevation
-      lat_topo = lat     ! range [-90,90]
-      lon_topo = lon     ! range [0,360]
+      ! needs lat in range [-90,90], lon in range [0,360]
       call get_topo_bathy(lat,lon,elevation,ibathy_topo)
-
-      ! debug
-      !print *,'debug: lat/lon/elevation [m]:',lat,lon,sngl(elevation)
-
-      ! normalized surface topography
-      r_topo = 1.d0 + elevation / R_PLANET
-
-      ! depth with respect to surface (in km)
-      r_depth = R_PLANET_KM * (r_topo - r)
-
-      ! checks limit (mesh point cannot be in air)
-      if (r_depth < 0.d0) r_depth = 0.d0
-
+      ! adapts surface radius
+      r0 = r0 + elevation/R_PLANET
     else
       ! depth relative to sea level
       ! with sea level supposed to be normalized at 1
-      ! depth of given radius (in km)
-      r_depth = R_PLANET_KM * (1.0 - r)  ! radius is normalized between [0,1.x]
-
-      ! checks limit (mesh point cannot be higher than EMC limit)
-      ! depth positive towards earth center
-      if (r_depth < EMC_dep_min) r_depth = EMC_dep_min
+      r0 = r0       ! already done
     endif
-  else
-    ! mesh has no topography
-    ! grid is still spherical at this point and normalized with surface at 1
-    ! depth relative to sea level and relative to earth surface is the same in this case
-    r_depth = R_PLANET_KM * (1.0 - r)  ! radius is normalized between [0,1.x]
-
-    ! checks limit (mesh point cannot be higher than EMC limit)
-    !
-    ! note: this has also the effect that the EMC model velocities extend upwards, i.e., for EMC models that have been defined
-    !       only below a given depth, the velocities from the upper most depth will be extended up to the surface.
-    !       for example, the Ward (2018) model starts at a depth of 1 km down to a depth of 70 km. the velocities at 1 km depth
-    !       will be used for any shallower depths.
-    !
-    ! depth positive towards earth center
-    if (r_depth < EMC_dep_min) r_depth = EMC_dep_min
   endif
+
+  ! ellipticity
+  if (elem_is_elliptical) then
+    ! adds ellipticity factor to radius (needs geocentric colatitude)
+    call add_ellipticity_rtheta(r0,theta,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+  endif
+
+  ! depth with respect to surface (in km)
+  r_depth = R_PLANET_KM * (r0 - r)
+
+  ! checks depth limits
+  ! depth reference level 1==earth surface, 2==sea level),
+  if (EMC_depth_reference_level == 1) then
+    ! depth relative to earth surface
+    ! checks limit (mesh point cannot be in air)
+    if (r_depth < 0.d0) r_depth = 0.d0
+  else
+    ! depth relative to sea level
+    ! checks limit (mesh point cannot be higher than EMC limit)
+    ! depth positive towards earth center
+    !if (r_depth < EMC_dep_min) r_depth = EMC_dep_min
+    ! will be checked in any case below
+    continue
+  endif
+
+  ! general depth check (mesh point cannot be higher than EMC limit)
+  !
+  ! note: this has also the effect that the EMC model velocities extend upwards, i.e., for EMC models that have been defined
+  !       only below a given depth, the velocities from the upper most depth will be extended up to the surface.
+  !       for example, the Ward (2018) model starts at a depth of 1 km down to a depth of 70 km. the velocities at 1 km depth
+  !       will be used for any shallower depths.
+  !
+  ! depth positive towards earth center
+  if (r_depth < EMC_dep_min) r_depth = EMC_dep_min
 
   ! note: here, the choice is that any point outside of the EMC model box falls back to its background velocity model value,
   !       which by default will be the isotropic PREM.
