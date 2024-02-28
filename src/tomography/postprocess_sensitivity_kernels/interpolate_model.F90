@@ -2674,7 +2674,7 @@
     endif
 
     ! decreases step length if step is large
-    if ((dxi**2 + deta**2 + dgamma**2) > 1.0d0) then
+    if ((dxi*dxi + deta*deta + dgamma*dgamma) > 1.0d0) then
       dxi = dxi * 0.33333333333d0
       deta = deta * 0.33333333333d0
       dgamma = dgamma * 0.33333333333d0

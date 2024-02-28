@@ -84,7 +84,7 @@
 
   double precision :: r,rho,vp,vs,Qkappa,Qmu
   double precision :: vpv,vph,vsv,vsh,eta_aniso
-  double precision :: x,y,z,theta,phi_dummy,cost,p20,ell,factor
+  double precision :: x,y,z
   real(kind=CUSTOM_REAL) :: dvp,dvs
 
   ! processor identification
@@ -350,24 +350,19 @@
           do k=2,NGLLZ-1
             do j=2,NGLLY-1
               do i=2,NGLLX-1
-                np=np+1
-                x=xstore(i,j,k,ispec)
-                y=ystore(i,j,k,ispec)
-                z=zstore(i,j,k,ispec)
-                r=dsqrt(x*x+y*y+z*z)
+                np = np+1
+                x = xstore(i,j,k,ispec)
+                y = ystore(i,j,k,ispec)
+                z = zstore(i,j,k,ispec)
+
                 ! take out ellipticity
                 if (ELLIPTICITY) then
-                  call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi_dummy)
-                  cost=dcos(theta)
-                  ! this is the Legendre polynomial of degree two, P2(cos(theta)),
-                  ! see the discussion above eq (14.4) in Dahlen and Tromp (1998)
-                  p20=0.5d0*(3.0d0*cost*cost-1.0d0)
-                  ! get ellipticity using spline evaluation
-                  call spline_evaluation(rspl,ellipicity_spline,ellipicity_spline2,nspl,r,ell)
-                  ! this is eq (14.4) in Dahlen and Tromp (1998)
-                  factor=ONE-(TWO/3.0d0)*ell*p20
-                  r=r/factor
+                  ! removes ellipticity stretch from position x/y/z
+                  call revert_ellipticity(x,y,z,nspl,rspl,ellipicity_spline,ellipicity_spline2)
                 endif
+
+                ! updates radius
+                r = dsqrt(x*x+y*y+z*z)
 
                 ! gets reference model values: rho,vpv,vph,vsv,vsh and eta_aniso
                 call meshfem3D_models_get1D_val(iregion_code,idoubling(ispec), &

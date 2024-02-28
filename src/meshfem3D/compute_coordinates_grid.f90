@@ -32,6 +32,9 @@
                                      ner,ilayer,ichunk,rotation_matrix,NCHUNKS, &
                                      INCLUDE_CENTRAL_CUBE,NUMBER_OF_MESH_LAYERS)
 
+! determines the elements control point locations (xelm/yelm/zelm)
+! for a spherically, layered planet
+
   use constants, only: NGNOD,NDIM,ZERO,ONE,PI,PI_OVER_TWO, &
     CHUNK_AB,CHUNK_AC,CHUNK_BC,CHUNK_AB_ANTIPODE,CHUNK_AC_ANTIPODE,CHUNK_BC_ANTIPODE, &
     CENTRAL_CUBE_INFLATE_FACTOR
@@ -42,7 +45,7 @@
   double precision, dimension(NGNOD),intent(out) :: xelm,yelm,zelm
   double precision, dimension(NGNOD),intent(in) :: offset_x,offset_y,offset_z
 
-! rotation matrix from Euler angles
+  ! rotation matrix from Euler angles
   double precision, dimension(NDIM,NDIM),intent(in) :: rotation_matrix
 
   integer, intent(in) :: iproc_xi,iproc_eta,NPROC_XI,NPROC_ETA, &
@@ -53,27 +56,22 @@
   logical,intent(in) :: INCLUDE_CENTRAL_CUBE
   integer,intent(in) :: NUMBER_OF_MESH_LAYERS
 
-! local variables
+  ! local variables
   integer :: i,j,ignod
 
   double precision :: xi,eta,gamma,x,y,z,rgb,rgt,rn
   double precision :: x_bot,y_bot,z_bot
   double precision :: x_top,y_top,z_top
-!  double precision :: x_,y_
 
   double precision, dimension(NDIM) :: vector_ori,vector_rotated
 
   double precision :: ratio_xi, ratio_eta, fact_xi, fact_eta, fact_xi_,fact_eta_
 
-! to avoid compiler warnings
-!  x_ = 0
-!  y_ = 0
-
-! loop on all the nodes in this element
+  ! loop on all the nodes in this element
   do ignod = 1,NGNOD
 
     if (ilayer == NUMBER_OF_MESH_LAYERS .and. INCLUDE_CENTRAL_CUBE) then
-! case of the inner core
+      ! case of the inner core
       ratio_xi = ((iproc_xi + offset_x(ignod)/dble(NEX_PER_PROC_XI))/dble(NPROC_XI))
       fact_xi = 2.d0*ratio_xi-1.d0
 
@@ -86,7 +84,6 @@
 ! uncomment the following lines to have more regular surface mesh (better aspect ratio for each element)
 ! uncomment the corresponding lines in the else condition of this if statement too.
 ! note that the ratio bigger_edge_size/smaller_edge_size for the surface mesh is a bit higher (1.43 vs 1.41)
-
 !     fact_xi_= (3.d0*fact_xi+4.d0*fact_xi_)/7.d0
 !     fact_eta_= (3.d0*fact_eta+4.d0*fact_eta_)/7.d0
 
@@ -96,12 +93,12 @@
       gamma = ONE / sqrt(ONE + fact_xi_**2 + fact_eta_**2)
       rgt = (r_top / R_PLANET)*gamma
 
-! coordinates of the edge extremity on the central cube surface
+      ! coordinates of the edge extremity on the central cube surface
       x_bot = ((r_bottom / R_PLANET) / sqrt(3.d0))* fact_xi * (1 + cos(eta)*CENTRAL_CUBE_INFLATE_FACTOR / PI)
       y_bot = ((r_bottom / R_PLANET) / sqrt(3.d0)) * fact_eta * (1 + cos(xi)*CENTRAL_CUBE_INFLATE_FACTOR / PI)
       z_bot = ((r_bottom / R_PLANET) / sqrt(3.d0)) * (1 + (cos(xi) + cos(eta))*CENTRAL_CUBE_INFLATE_FACTOR / PI)
 
-! coordinates of the edge extremity on the ICB
+      ! coordinates of the edge extremity on the ICB
       x_top = fact_xi_*rgt
       y_top = fact_eta_*rgt
       z_top = rgt
@@ -297,22 +294,22 @@
 
   double precision :: xgrid_central_cube,ygrid_central_cube,zgrid_central_cube,radius_cube
 
-! local variables
+  ! local variables
   double precision :: ratio_x,ratio_y,ratio_z
   double precision :: fact_x,fact_y,fact_z,xi,eta,gamma
 
-! the slice extends to the entire cube along Z
-! but only to current block along X and Y
+  ! the slice extends to the entire cube along Z
+  ! but only to current block along X and Y
   ratio_x = (dble(iproc_xi) + dble(ix)/dble(2*nx_central_cube)) / dble(NPROC_XI)
   ratio_y = (dble(iproc_eta) + dble(iy)/dble(2*ny_central_cube)) / dble(NPROC_ETA)
   ratio_z = dble(iz)/dble(2*nz_central_cube)
 
   if (abs(ratio_x) > 1.001d0 .or. abs(ratio_y) > 1.001d0 .or. abs(ratio_z) > 1.001d0) stop 'wrong ratio in central cube'
 
-! use a "flat" cubed sphere to create the central cube
+  ! use a "flat" cubed sphere to create the central cube
 
-! map ratio to [-1,1] and then map to real radius
-! then add deformation
+  ! map ratio to [-1,1] and then map to real radius
+  ! then add deformation
   fact_x = 2.d0*ratio_x-1.d0
   fact_y = 2.d0*ratio_y-1.d0
   fact_z = 2.d0*ratio_z-1.d0

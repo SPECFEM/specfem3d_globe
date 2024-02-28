@@ -667,7 +667,7 @@ program combine_vol_data
                 z = zstore(iglob)
 
                 ! remove ellipticity
-                if (CORRECT_ELLIPTICITY) call revert_ellipticity(x,y,z,nspl,rspl,espl,espl2)
+                if (CORRECT_ELLIPTICITY) call revert_ellipticity_cr(x,y,z,nspl,rspl,espl,espl2)
 
                 ! takes the averaged data value for mesh
                 if (AVERAGE_GLOBALPOINTS) then

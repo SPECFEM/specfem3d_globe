@@ -30,17 +30,17 @@
   subroutine recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z, &
                                 xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
 
-  use constants, only: NGNOD,NDIM,ZERO,HALF,ONE,TWO
+  use constants, only: NGNOD,NDIM,ZERO,HALF,ONE,TWO,myrank
 
   implicit none
 
   double precision,intent(inout) :: x,y,z,xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
   double precision,intent(in) :: xi,eta,gamma
 
-! coordinates of the control points of the surface element
+  ! coordinates of the control points of the surface element
   double precision,intent(in) :: xelm(NGNOD),yelm(NGNOD),zelm(NGNOD)
 
-! 3D shape functions and their derivatives at receiver
+  ! 3D shape functions and their derivatives at receiver
   double precision :: shape3D(NGNOD)
   double precision :: dershape3D(NDIM,NGNOD)
 
@@ -61,7 +61,7 @@
 ! recompute Jacobian for any given (xi,eta,gamma) point
 ! not necessarily a GLL point
 
-! check that the parameter file is correct
+  ! check that the parameter file is correct
   if (NGNOD /= 27) stop 'elements should have 27 control nodes'
 
   l1xi=HALF*xi*(xi-ONE)
@@ -88,7 +88,7 @@
   l2pgamma=-TWO*gamma
   l3pgamma=gamma+HALF
 
-! corner nodes
+  ! corner nodes
 
   shape3D(1)=l1xi*l1eta*l1gamma
   shape3D(2)=l3xi*l1eta*l1gamma
@@ -126,7 +126,7 @@
   dershape3D(3,7)=l3xi*l3eta*l3pgamma
   dershape3D(3,8)=l1xi*l3eta*l3pgamma
 
-! midside nodes
+  ! midside nodes
 
   shape3D(9)=l2xi*l1eta*l1gamma
   shape3D(10)=l3xi*l2eta*l1gamma
@@ -180,7 +180,7 @@
   dershape3D(3,19)=l2xi*l3eta*l3pgamma
   dershape3D(3,20)=l1xi*l2eta*l3pgamma
 
-! side center nodes
+  ! side center nodes
 
   shape3D(21)=l2xi*l2eta*l1gamma
   shape3D(22)=l2xi*l1eta*l2gamma
@@ -210,15 +210,14 @@
   dershape3D(3,25)=l1xi*l2eta*l2pgamma
   dershape3D(3,26)=l2xi*l2eta*l3pgamma
 
-! center node
-
+  ! center node
   shape3D(27) = l2xi*l2eta*l2gamma
 
   dershape3D(1,27) = l2pxi*l2eta*l2gamma
   dershape3D(2,27) = l2xi*l2peta*l2gamma
   dershape3D(3,27) = l2xi*l2eta*l2pgamma
 
-! compute coordinates and Jacobian matrix
+  ! compute coordinates and Jacobian matrix
   x = ZERO
   y = ZERO
   z = ZERO
@@ -252,9 +251,17 @@
   jacobian = xxi*(yeta*zgamma-ygamma*zeta) - xeta*(yxi*zgamma-ygamma*zxi) + &
              xgamma*(yxi*zeta-yeta*zxi)
 
-  if (jacobian <= ZERO) stop '3D Jacobian undefined'
+  if (jacobian <= ZERO) then
+    ! info
+    print *,'Error Jacobian rank:',myrank,'has invalid Jacobian ',jacobian
+    print *,'  input xi/eta/gamma: ',xi,eta,gamma
+    print *,'  Jacobian: ',jacobian,'xxi',xxi,xeta,xgamma,'yxi',yxi,yeta,ygamma,'zxi',zxi,zeta,zgamma
+    print *,'  location x/y/z: ',x,y,z,'r:',sqrt(x*x+y*y+z*z)
 
-! invert the relation (Fletcher p. 50 vol. 2)
+    stop '3D Jacobian undefined'
+  endif
+
+  ! invert the relation (Fletcher p. 50 vol. 2)
   xix = (yeta*zgamma-ygamma*zeta)/jacobian
   xiy = (xgamma*zeta-xeta*zgamma)/jacobian
   xiz = (xeta*ygamma-xgamma*yeta)/jacobian

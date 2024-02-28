@@ -335,45 +335,175 @@
 !-----------------------------------------------------------------
 !
 
-  subroutine revert_ellipticity(x,y,z,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+  subroutine add_ellipticity(x,y,z,nspl,rspl,ellipicity_spline,ellipicity_spline2)
 
-! routine to revert ellipticity and go back to a spherical Earth
-! (is currently used by src/auxiliaries/combine_vol_data.F90 only)
+! adds ellipticity factor to position x/y/z
 
   use constants
 
   implicit none
 
-  real(kind=CUSTOM_REAL) :: x,y,z
-  integer :: nspl
-  double precision :: rspl(NR_DENSITY),ellipicity_spline(NR_DENSITY),ellipicity_spline2(NR_DENSITY)
+  double precision, intent(inout) :: x,y,z
+  integer,intent(in) :: nspl
+  double precision,intent(in) :: rspl(NR_DENSITY),ellipicity_spline(NR_DENSITY),ellipicity_spline2(NR_DENSITY)
 
   ! local parameters
-  double precision :: x1,y1,z1
   double precision :: ell
   double precision :: r,theta,phi,factor
   double precision :: cost,p20
 
   ! gets spherical coordinates
-  x1 = x
-  y1 = y
-  z1 = z
-  call xyz_2_rthetaphi_dble(x1,y1,z1,r,theta,phi)
+  call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
 
   cost = dcos(theta)
-! this is the Legendre polynomial of degree two, P2(cos(theta)), see the discussion above eq (14.4) in Dahlen and Tromp (1998)
+
+  ! this is the Legendre polynomial of degree two, P2(cos(theta)),
+  ! see the discussion above eq (14.4) in Dahlen and Tromp (1998)
   p20 = 0.5d0*(3.0d0*cost*cost-1.0d0)
 
   ! get ellipticity using spline evaluation
   call spline_evaluation(rspl,ellipicity_spline,ellipicity_spline2,nspl,r,ell)
 
-! this is eq (14.4) in Dahlen and Tromp (1998)
-  factor = ONE-(TWO/3.0d0)*ell*p20
+  ! this is eq (14.4) in Dahlen and Tromp (1998)
+  factor = ONE - (TWO/3.0d0)*ell*p20
 
-  ! removes ellipticity factor
-  x = real( dble(x) / factor,kind=CUSTOM_REAL)
-  y = real( dble(y) / factor,kind=CUSTOM_REAL)
-  z = real( dble(z) / factor,kind=CUSTOM_REAL)
+  ! applies ellipticity
+  x = x * factor
+  y = y * factor
+  z = z * factor
+
+  end subroutine add_ellipticity
+
+!
+!-----------------------------------------------------------------
+!
+
+  subroutine add_ellipticity_rtheta(r,theta,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+
+! adds ellipticity factor to radius r
+
+  use constants
+
+  implicit none
+
+  double precision, intent(inout) :: r
+  double precision, intent(in) :: theta
+  integer,intent(in) :: nspl
+  double precision,intent(in) :: rspl(NR_DENSITY),ellipicity_spline(NR_DENSITY),ellipicity_spline2(NR_DENSITY)
+
+  ! local parameters
+  double precision :: ell
+  double precision :: factor
+  double precision :: cost,p20
+
+  ! pre-calculates coefficient
+  cost = dcos(theta)
+
+  ! this is the Legendre polynomial of degree two, P2(cos(theta)),
+  ! see the discussion above eq (14.4) in Dahlen and Tromp (1998)
+  p20 = 0.5d0*(3.0d0*cost*cost-1.0d0)
+
+  ! get ellipticity using spline evaluation
+  call spline_evaluation(rspl,ellipicity_spline,ellipicity_spline2,nspl,r,ell)
+
+  ! this is eq (14.4) in Dahlen and Tromp (1998)
+  factor = ONE - (TWO/3.0d0)*ell*p20
+
+  ! applies ellipticity
+  r = r * factor
+
+  end subroutine add_ellipticity_rtheta
+
+!
+!-----------------------------------------------------------------
+!
+
+  subroutine revert_ellipticity_cr(x,y,z,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+
+! routine to revert ellipticity and go back to a spherical Earth
+
+  use constants
+
+  implicit none
+
+  real(kind=CUSTOM_REAL),intent(inout) :: x,y,z
+  integer,intent(in) :: nspl
+  double precision,intent(in) :: rspl(NR_DENSITY),ellipicity_spline(NR_DENSITY),ellipicity_spline2(NR_DENSITY)
+
+  ! local parameters
+  double precision :: x1,y1,z1
+
+  ! converts to double
+  x1 = x
+  y1 = y
+  z1 = z
+
+  ! revert ellipticity
+  call revert_ellipticity(x1,y1,z1,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+
+  ! converts to custom real
+  x = real(x1,kind=CUSTOM_REAL)
+  y = real(y1,kind=CUSTOM_REAL)
+  z = real(z1,kind=CUSTOM_REAL)
+
+  end subroutine revert_ellipticity_cr
+
+!
+!-----------------------------------------------------------------
+!
+
+  subroutine revert_ellipticity(x,y,z,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+
+! routine to revert ellipticity and go back to a spherical Earth
+
+! (in double precision)
+
+! note: going from an elliptical reference point x/y/z back to a spherical reference point x_s/y_s/z_s
+!       is done here only in an approximate way as we use the stretch factor ell evaluated from x/y/z.
+!
+!       for an exact projection back to the spherical position, we would need to get the factor ell evaluated
+!       from the the original position x_s/y_s/z_s and radius r_s, and not from r as done below.
+!
+!       one could try to do this iteratively, i.e., once we got the first spherical position, calculate again
+!       the elliptical position and compare the input with the newly evaluated, take the difference, correct the
+!       the stretch factor accordingly and project back to an updated spherical position - and so on.
+!
+!       this will take more computational time, so we return only the first approximate spherical position here...
+
+  use constants
+
+  implicit none
+
+  double precision,intent(inout) :: x,y,z
+  integer,intent(in) :: nspl
+  double precision,intent(in) :: rspl(NR_DENSITY),ellipicity_spline(NR_DENSITY),ellipicity_spline2(NR_DENSITY)
+
+  ! local parameters
+  double precision :: ell
+  double precision :: r,theta,phi,factor
+  double precision :: cost,p20
+
+  ! gets spherical coordinates
+  call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
+
+  cost = dcos(theta)
+
+  ! this is the Legendre polynomial of degree two, P2(cos(theta)),
+  ! see the discussion above eq (14.4) in Dahlen and Tromp (1998)
+  p20 = 0.5d0*(3.0d0*cost*cost-1.0d0)
+
+  ! get ellipticity using spline evaluation
+  call spline_evaluation(rspl,ellipicity_spline,ellipicity_spline2,nspl,r,ell)
+
+  ! this is eq (14.4) in Dahlen and Tromp (1998)
+  factor = ONE - (TWO/3.0d0)*ell*p20
+
+  ! removes ellipticity factor from x/y/z position
+  ! (assuming that x/y/z position has been stretched before to account for ellipticity,
+  !  this puts it back, approximately, to a spherical position)
+  x = x / factor
+  y = y / factor
+  z = z / factor
 
   end subroutine revert_ellipticity
 
@@ -408,8 +538,8 @@
   ! get ellipticity using spline evaluation
   call spline_evaluation(rspl,ellipicity_spline,ellipicity_spline2,nspl,r,ell)
 
-! this is eq (14.4) in Dahlen and Tromp (1998)
-  factor = ONE-(TWO/3.0d0)*ell*p20
+  ! this is eq (14.4) in Dahlen and Tromp (1998)
+  factor = ONE - (TWO/3.0d0)*ell*p20
 
   ! removes ellipticity factor
   r = r / factor
