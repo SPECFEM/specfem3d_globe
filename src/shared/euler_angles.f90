@@ -74,7 +74,7 @@
                                             corners_lat,corners_lon)
 
   use constants, only: DEGREES_TO_RADIANS,RADIANS_TO_DEGREES,ONE,PI,TWO_PI,PI_OVER_TWO,R_UNIT_SPHERE
-
+  
   implicit none
 
   double precision,intent(in) :: CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH
@@ -86,7 +86,7 @@
   integer :: i,j,ix,iy,icorner
   double precision :: rotation_matrix(3,3)
   double precision :: vector_ori(3),vector_rotated(3)
-  double precision :: r_corner,theta_corner,phi_corner,lat,long,colat_corner
+  double precision :: r_corner,theta_corner,phi_corner,lat,lon,colat_corner
   double precision :: x,y,gamma,rgt,xi,eta
   double precision :: x_top,y_top,z_top
   double precision :: ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
@@ -109,8 +109,8 @@
 
     icorner = icorner + 1
 
-    xi  = - ANGULAR_WIDTH_XI_RAD/2.  + dble(ix)*ANGULAR_WIDTH_XI_RAD
-    eta = - ANGULAR_WIDTH_ETA_RAD/2. + dble(iy)*ANGULAR_WIDTH_ETA_RAD
+    xi  = - ANGULAR_WIDTH_XI_RAD/2.d0  + dble(ix)*ANGULAR_WIDTH_XI_RAD
+    eta = - ANGULAR_WIDTH_ETA_RAD/2.d0 + dble(iy)*ANGULAR_WIDTH_ETA_RAD
 
     x = dtan(xi)
     y = dtan(eta)
@@ -137,21 +137,25 @@
     y_top = vector_rotated(2)
     z_top = vector_rotated(3)
 
-    ! convert to latitude and longitude
+    ! convert to geocentric position
     call xyz_2_rthetaphi_dble(x_top,y_top,z_top,r_corner,theta_corner,phi_corner)
+
+    ! reduce theta/phi to range [0,PI] and [0,2PI]
     call reduce(theta_corner,phi_corner)
 
     ! convert geocentric to geographic colatitude
-    call geocentric_2_geographic_dble(theta_corner,colat_corner)
+    ! note: for spherical mesh x/y/z, geographic colatitude is the same as geocentric colatitude
+    colat_corner = theta_corner
 
+    ! lon in range [-PI,PI]
     if (phi_corner > PI) phi_corner = phi_corner - TWO_PI
 
-    ! compute real position of the source
-    lat = (PI_OVER_TWO-colat_corner) * RADIANS_TO_DEGREES
-    long = phi_corner * RADIANS_TO_DEGREES
+    ! compute real position of the corner
+    lat = (PI_OVER_TWO - colat_corner) * RADIANS_TO_DEGREES
+    lon = phi_corner * RADIANS_TO_DEGREES
 
     corners_lat(icorner) = lat
-    corners_lon(icorner) = long
+    corners_lon(icorner) = lon
 
     enddo
   enddo

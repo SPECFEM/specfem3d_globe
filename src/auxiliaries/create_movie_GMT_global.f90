@@ -75,7 +75,7 @@
   integer :: ispec
 
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: x,y,z,displn
-  real(kind=CUSTOM_REAL) :: xcoord,ycoord,zcoord,rval,thetaval,phival
+  real(kind=CUSTOM_REAL) :: xcoord,ycoord,zcoord,rval,thetaval,phival,latval,longval
   real(kind=CUSTOM_REAL) :: RRval,rhoval
   real(kind=CUSTOM_REAL) :: displx,disply,displz
   real(kind=CUSTOM_REAL) :: normal_x,normal_y,normal_z
@@ -969,15 +969,14 @@
               ycoord = sngl(yp(ieoff))
               zcoord = sngl(zp(ieoff))
 
-              ! location latitude/longitude (with geocentric colatitude theta )
-              call xyz_2_rthetaphi(xcoord,ycoord,zcoord,rval,thetaval,phival)
+              ! location latitude/longitude (with geographic latitude in degrees)
+              call xyz_2_rlatlon_cr(xcoord,ycoord,zcoord,rval,latval,longval,ELLIPTICITY)
 
-              ! converts the geocentric colatitude to a geographic colatitude
-              call geocentric_2_geographic_cr(thetaval,thetaval)
+              ! converts to real
+              lat = latval
+              long = longval
 
-              ! gets geographic latitude and longitude in degrees
-              lat = sngl(90.d0 - thetaval*RADIANS_TO_DEGREES)
-              long = sngl(phival*RADIANS_TO_DEGREES)
+              ! puts lon in range [-180,180]
               if (long > 180.0) long = long-360.0
             endif
 

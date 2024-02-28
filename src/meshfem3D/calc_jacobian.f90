@@ -47,9 +47,9 @@
                                    gammaxstore,gammaystore,gammazstore)
 
   use constants, only: myrank,NGLLX,NGLLY,NGLLZ,CUSTOM_REAL, &
-    ZERO,ONE,TINYVAL,VERYSMALLVAL,RADIANS_TO_DEGREES
+    ZERO,ONE,TINYVAL,VERYSMALLVAL
 
-  use shared_parameters, only: R_PLANET_KM
+  use shared_parameters, only: R_PLANET_KM,ELLIPTICITY
 
   implicit none
 
@@ -78,7 +78,7 @@
   double precision :: hlagrange,hlagrange_xi,hlagrange_eta,hlagrange_gamma
   double precision :: jacobian,jacobian_inv
   double precision :: xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
-  double precision :: r,theta,phi
+  double precision :: r,lat,lon
   double precision :: x,y,z
 
   integer :: i,j,k,i1,j1,k1
@@ -199,16 +199,16 @@
           ! note: the mesh can have ellipticity, thus the geocentric colatitude might differ from the geographic one
           !
           ! converts position to geocentric coordinates
+          call xyz_2_rlatlon_dble(xstore(i,j,k,ispec),ystore(i,j,k,ispec),zstore(i,j,k,ispec),r,lat,lon,ELLIPTICITY)
+          ! info
           print *
           print *,'Mesh becomes invalid due to distorted elements!'
           print *,'Please check your mesh setup (NEX, topography, etc.) and try re-running the mesher.'
           print *
           print *,'Error Jacobian rank:',myrank,'has invalid Jacobian ',jacobian
-          print *,'  Jacobian: ',jacobian,'xxi/eta/gamma',xxi,xeta,xgamma,'yxi/eta/gamma',yxi,yeta,ygamma,'zxi',zxi/zeta,zgamma
+          print *,'  Jacobian: ',jacobian,'xxi',xxi,xeta,xgamma,'yxi',yxi,yeta,ygamma,'zxi',zxi,zeta,zgamma
           print *,'  location x/y/z: ',xstore(i,j,k,ispec),ystore(i,j,k,ispec),zstore(i,j,k,ispec)
-          call xyz_2_rthetaphi_dble(xstore(i,j,k,ispec),ystore(i,j,k,ispec),zstore(i,j,k,ispec),r,theta,phi)
-          print *,'  location r    : ',sngl(r*R_PLANET_KM),'km - lat/lon: ', &
-                  sngl(90.0-(theta*RADIANS_TO_DEGREES)),sngl(phi*RADIANS_TO_DEGREES)
+          print *,'  location r    : ',sngl(r*R_PLANET_KM),'km - lat/lon: ',lat,lon
           call exit_MPI(myrank,'3D Jacobian undefined in recalc_jacobian_gll3D.f90')
         endif
 

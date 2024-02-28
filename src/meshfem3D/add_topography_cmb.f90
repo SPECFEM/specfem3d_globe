@@ -32,6 +32,7 @@
   use constants
   use shared_parameters, only: R_PLANET,R_PLANET_KM
   use meshfem_par, only: RTOPDDOUBLEPRIME,RCMB
+  use meshfem_models_par, only: elem_is_elliptical
 
   implicit none
 
@@ -56,7 +57,8 @@
     z = zelm(ia)
 
     ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
-    call xyz_2_rlatlon_dble(x,y,z,r,lat,lon)
+    ! note: at this point, the mesh is still spherical (no need to correct latitude for ellipticity)
+    call xyz_2_rlatlon_dble(x,y,z,r,lat,lon,elem_is_elliptical)
 
     ! compute topography on CMB; routine subtopo_cmb needs to be supplied by the user
     ! (see for example routine subtopo_sh_cmb() in model_full_sh.f90)

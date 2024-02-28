@@ -507,7 +507,8 @@
   use constants
 
   use meshfem_models_par, only: &
-    OCEANS,TOPOGRAPHY,ibathy_topo,CASE_3D
+    OCEANS,TOPOGRAPHY,ELLIPTICITY, &
+    ibathy_topo,CASE_3D
 
   use meshfem_par, only: &
     myrank,RHO_OCEANS,nspec
@@ -531,8 +532,8 @@
   integer,intent(in) :: NSPEC2D_TOP
 
   ! local parameters
-  double precision :: x,y,z,r,theta,phi,weight
-  double precision :: lat,lon
+  double precision :: x,y,z,weight
+  double precision :: r,lat,lon
   double precision :: elevation,height_oceans
 
   integer :: ispec,i,j,k,iglob,ispec2D
@@ -573,7 +574,7 @@
 
 ! openmp mesher
 !$OMP PARALLEL DEFAULT(SHARED) &
-!$OMP PRIVATE(ispec2D,ispec,i,j,iglob,x,y,z,r,theta,phi,lat,lon,elevation,height_oceans,weight)
+!$OMP PRIVATE(ispec2D,ispec,i,j,iglob,x,y,z,r,lat,lon,elevation,height_oceans,weight)
 !$OMP DO
   do ispec2D = 1,NSPEC2D_TOP
 
@@ -595,36 +596,9 @@
           y = ystore(i,j,k,ispec)
           z = zstore(i,j,k,ispec)
 
-          ! map to latitude and longitude for bathymetry routine
-          ! slightly move points to avoid roundoff problem when exactly on the polar axis
-          call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
-
-          if (.not. USE_OLD_VERSION_5_1_5_FORMAT) then
-            ! adds small margins
-            ! added a test to only do this if we are on the axis
-            if (abs(theta) > 89.99d0) then
-              theta = theta + 0.0000001d0
-              phi = phi + 0.0000001d0
-            endif
-          endif
-
-          call reduce(theta,phi)
-
-          ! converts the geocentric colatitude to a geographic colatitude
-          ! note: bathymetry is given in geographic lat/lon
-          !       (i.e., latitude with respect to reference ellipsoid)
-          !       we will need convert the geocentric positions here to geographic ones
-          if (USE_OLD_VERSION_5_1_5_FORMAT) then
-            ! always converts
-            theta = PI_OVER_TWO - datan(1.006760466d0*dcos(theta)/dmax1(TINYVAL,dsin(theta)))
-          else
-            ! will take flag ASSUME_PERFECT_SPHERE into account
-            call geocentric_2_geographic_dble(theta,theta)
-          endif
-
-          ! get geographic latitude and longitude in degrees
-          lat = (PI_OVER_TWO-theta)*RADIANS_TO_DEGREES
-          lon = phi * RADIANS_TO_DEGREES
+          ! map to geographic latitude and longitude (in degrees) for bathymetry routine
+          ! note: at this point, the mesh can be elliptical, depending on the Par_file flag choosen
+          call xyz_2_rlatlon_dble(x,y,z,r,lat,lon,ELLIPTICITY)
 
           ! compute elevation at current point
           call get_topo_bathy(lat,lon,elevation,ibathy_topo)

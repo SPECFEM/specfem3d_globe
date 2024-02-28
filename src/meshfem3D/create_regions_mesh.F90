@@ -180,6 +180,12 @@
                                NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
                                offset_proc_xi,offset_proc_eta)
 
+  ! at this point, we have created the cubed-sphere mesh that accommodates Moho variations, topography and ellipticity,
+  ! together with the rheological properties on all GLL points.
+  !
+  ! we still need to compute all assembly related arrays (indexing, MPI partitioning, absorbing boundaries)
+  ! and pre-calculate the mass matrices.
+
   select case (ipass)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   case (1) !!!!!!!!!!! first pass of the mesher

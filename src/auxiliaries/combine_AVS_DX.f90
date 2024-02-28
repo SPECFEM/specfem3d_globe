@@ -952,8 +952,8 @@
                  DT,1,min_tshift_cmt_original)
 
 !   convert geographic latitude lat (degrees) to geocentric colatitude theta (radians)
-    call lat_2_geocentric_colat_dble(lat(1),theta)
-    phi=dble(long(1))*DEGREES_TO_RADIANS
+    call lat_2_geocentric_colat_dble(lat(1),theta,ELLIPTICITY)
+    phi = dble(long(1))*DEGREES_TO_RADIANS
     call reduce(theta,phi)
 
 !   compute Cartesian position of the source (ignore ellipticity for AVS_DX)
@@ -1015,8 +1015,8 @@
       read(11,*) station_name(irec),network_name(irec),stlat(irec),stlon(irec),stele(irec),stbur(irec)
 
 ! convert geographic latitude stlat (degrees) to geocentric colatitude theta (radians)
-      call lat_2_geocentric_colat_dble(stlat(irec),theta)
-      phi=stlon(irec)*DEGREES_TO_RADIANS
+      call lat_2_geocentric_colat_dble(stlat(irec),theta,ELLIPTICITY)
+      phi = stlon(irec)*DEGREES_TO_RADIANS
       call reduce(theta,phi)
 
 ! compute the Cartesian position of the receiver (ignore ellipticity for AVS_DX)

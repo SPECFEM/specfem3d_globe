@@ -677,7 +677,7 @@
   if (lon > 360.d0 ) lon = lon - 360.d0
 
   ! converts geographic latitude stlat (degrees) to geocentric colatitude theta (radians)
-  call lat_2_geocentric_colat_dble(lat,theta_main)
+  call lat_2_geocentric_colat_dble(lat,theta_main,ELLIPTICITY_VAL)
 
   phi_main = lon * DEGREES_TO_RADIANS
   call reduce(theta_main,phi_main)
@@ -693,12 +693,13 @@
     if (lon > 360.d0 ) lon = lon - 360.d0
 
     ! converts geographic latitude stlat (degrees) to geocentric colatitude theta (radians)
-    call lat_2_geocentric_colat_dble(lat,theta)
+    call lat_2_geocentric_colat_dble(lat,theta,ELLIPTICITY_VAL)
 
     phi = lon*DEGREES_TO_RADIANS
     call reduce(theta,phi)
 
     ! computes epicentral distance
+    ! (formula by law of cosines)
     epidist(irec) = acos(cos(theta)*cos(theta_main) + &
                            sin(theta)*sin(theta_main)*cos(phi-phi_main))*RADIANS_TO_DEGREES
   enddo

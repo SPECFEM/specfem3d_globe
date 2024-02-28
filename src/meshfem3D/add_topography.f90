@@ -28,8 +28,9 @@
   subroutine add_topography(xelm,yelm,zelm,ibathy_topo)
 
   use constants, only: myrank,NGNOD,R_UNIT_SPHERE,ONE
-  use meshfem_par, only: R220,NX_BATHY,NY_BATHY,R_PLANET
   use shared_parameters, only: REGIONAL_MESH_CUTOFF,REGIONAL_MESH_CUTOFF_DEPTH,USE_LOCAL_MESH
+  use meshfem_par, only: R220,NX_BATHY,NY_BATHY,R_PLANET
+  use meshfem_models_par, only: elem_is_elliptical
 
   implicit none
 
@@ -53,7 +54,8 @@
     z = zelm(ia)
 
     ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
-    call xyz_2_rlatlon_dble(x,y,z,r,lat,lon)
+    ! note: at this point, the mesh is still spherical (no need to correct latitude for ellipticity)
+    call xyz_2_rlatlon_dble(x,y,z,r,lat,lon,elem_is_elliptical)
 
     ! compute elevation at current point
     call get_topo_bathy(lat,lon,elevation,ibathy_topo)
@@ -98,8 +100,9 @@
 
   use constants
   use shared_parameters, only: R_PLANET
-  use meshfem_par, only: R220,NX_BATHY,NY_BATHY
   use shared_parameters, only: REGIONAL_MESH_CUTOFF,REGIONAL_MESH_CUTOFF_DEPTH,USE_LOCAL_MESH
+  use meshfem_par, only: R220,NX_BATHY,NY_BATHY
+  use meshfem_models_par, only: elem_is_elliptical
 
   implicit none
 
@@ -124,7 +127,8 @@
         z = zstore(i,j,k,ispec)
 
         ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
-        call xyz_2_rlatlon_dble(x,y,z,r,lat,lon)
+        ! note: at this point, the mesh is still spherical (no need to correct latitude for ellipticity)
+        call xyz_2_rlatlon_dble(x,y,z,r,lat,lon,elem_is_elliptical)
 
         ! compute elevation at current point
         call get_topo_bathy(lat,lon,elevation,ibathy_topo)

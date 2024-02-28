@@ -1085,6 +1085,7 @@
   use shared_parameters, only: R_PLANET
 
   use meshfem_par, only: R220,R400,R670,R771
+  use meshfem_models_par, only: elem_is_elliptical
 
   implicit none
 
@@ -1098,7 +1099,7 @@
   real(kind=4) :: topo410out,topo650out
   double precision :: topo410,topo650
 
-  double precision :: r,lat,lon,theta,phi
+  double precision :: r,lat,lon
   double precision :: gamma
   double precision :: x,y,z
 
@@ -1123,20 +1124,12 @@
     y = yelm(ia)
     z = zelm(ia)
 
-    if (USE_OLD_VERSION_5_1_5_FORMAT) then
-      ! convert to r theta phi
-      call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
-      call reduce(theta,phi)
-      ! get colatitude and longitude in degrees
-      lat = 90.0 - theta * RADIANS_TO_DEGREES
-      lon = phi * RADIANS_TO_DEGREES
-    else
-      ! note: the topography on 410 and 650 is given in geographic colat/lon,
-      !       thus we need to convert geocentric colatitude to geographic colatitudes
-      !
-      ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
-      call xyz_2_rlatlon_dble(x,y,z,r,lat,lon)
-    endif
+    ! note: the topography on 410 and 650 is given in geographic colat/lon,
+    !       thus we need to convert geocentric colatitude to geographic colatitudes
+    !
+    ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
+    ! note: at this point, the mesh is still spherical (no need to correct latitude for ellipticity)
+    call xyz_2_rlatlon_dble(x,y,z,r,lat,lon,elem_is_elliptical)
 
     ! stretching occurs between 220 and 770
     if (r > R220/R_PLANET .or. r < R771/R_PLANET) cycle
@@ -1254,8 +1247,8 @@
 ! this is only a placeholder function, which is not used yet...user must supply the subtopo_cmb() routine
 
   use constants
-
   use shared_parameters, only: R_PLANET,RCMB,RTOPDDOUBLEPRIME
+  use meshfem_models_par, only: elem_is_elliptical
 
   implicit none
 
@@ -1286,7 +1279,8 @@
     z = zelm(ia)
 
     ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
-    call xyz_2_rlatlon_dble(x,y,z,r,lat,lon)
+    ! note: at this point, the mesh is still spherical (no need to correct latitude for ellipticity)
+    call xyz_2_rlatlon_dble(x,y,z,r,lat,lon,elem_is_elliptical)
 
     ! compute topography on CMB; routine subtopo_cmb needs to be supplied by the user
     call subtopo_sh_cmb(lat,lon,topocmb)

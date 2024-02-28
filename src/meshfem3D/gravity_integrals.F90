@@ -113,7 +113,7 @@
 
   implicit none
 
-! local variables
+  ! local variables
   integer :: ix,iy,ichunk,ier
 
   double precision :: gamma,x,y,rgt
@@ -122,12 +122,12 @@
 
   double precision :: r,lat,lon,elevation
 
-! the observation surface is always above the whole Earth, thus each mesh chunk has a size of PI / 2 in each direction
+  ! the observation surface is always above the whole Earth, thus each mesh chunk has a size of PI / 2 in each direction
   double precision, parameter :: ANGULAR_WIDTH_XI_RAD = PI_OVER_TWO, ANGULAR_WIDTH_ETA_RAD = PI_OVER_TWO
 
-! reuse an existing observation surface created in another run and stored to disk,
-! so that we are sure that they are exactly the same (for instance when comparing results for a reference ellipsoidal Earth
-! and results for a 3D Earth with topography)
+  ! reuse an existing observation surface created in another run and stored to disk,
+  ! so that we are sure that they are exactly the same (for instance when comparing results for a reference ellipsoidal Earth
+  ! and results for a 3D Earth with topography)
   if (REUSE_EXISTING_OBSERVATION_SURF) then
 
     if (myrank == 0) then
@@ -135,7 +135,7 @@
            status='old',action='read',iostat=ier)
       if (ier /= 0 ) call exit_mpi(myrank,'Error opening file for REUSE_EXISTING_OBSERVATION_SURF')
 
-!     loop on all the chunks and then on all the observation nodes in each chunk
+      ! loop on all the chunks and then on all the observation nodes in each chunk
       do ichunk = 1,NCHUNKS_MAX
         do iy = 1,NY_OBSERVATION
           do ix = 1,NX_OBSERVATION
@@ -148,12 +148,12 @@
 
     endif
 
-!   implicitly converts the 3D to 1D arrays
+    ! implicitly converts the 3D to 1D arrays
     call bcast_all_dp(x_observation, NX_OBSERVATION * NY_OBSERVATION * NCHUNKS_MAX)
     call bcast_all_dp(y_observation, NX_OBSERVATION * NY_OBSERVATION * NCHUNKS_MAX)
     call bcast_all_dp(z_observation, NX_OBSERVATION * NY_OBSERVATION * NCHUNKS_MAX)
 
-!   loop on all the chunks and then on all the observation nodes in each chunk
+    ! loop on all the chunks and then on all the observation nodes in each chunk
     do ichunk = 1,NCHUNKS_MAX
       do iy = 1,NY_OBSERVATION
         do ix = 1,NX_OBSERVATION
@@ -163,7 +163,7 @@
           z_top = z_observation(ix,iy,ichunk)
 
           ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
-          call xyz_2_rlatlon_dble(x_top,y_top,z_top,r,lat,lon)
+          call xyz_2_rlatlon_dble(x_top,y_top,z_top,r,lat,lon,ELLIPTICITY)
 
           ! store the values obtained for future display with GMT
           if (lon > 180.0d0 ) lon = lon - 360.0d0
@@ -183,7 +183,7 @@
                                                                                                  action='write')
   endif
 
-! loop on all the chunks and then on all the observation nodes in each chunk
+  ! loop on all the chunks and then on all the observation nodes in each chunk
   do ichunk = 1,NCHUNKS_MAX
     do iy = 1,NY_OBSERVATION
       do ix = 1,NX_OBSERVATION
@@ -199,11 +199,11 @@
 
       gamma = ONE / sqrt(ONE + x*x + y*y)
 
-! first compute the position of the points exactly at the free surface of the Earth (without the oceans)
-! keeping in mind that the code non-dimensionalizes the radius of the spherical Earth to one
-      rgt = R_UNIT_SPHERE*gamma
+      ! first compute the position of the points exactly at the free surface of the Earth (without the oceans)
+      ! keeping in mind that the code non-dimensionalizes the radius of the spherical Earth to one
+      rgt = R_UNIT_SPHERE * gamma
 
-    ! define the mesh points on the top and the bottom in the six regions of the cubed sphere
+      ! define the mesh points on the top and the bottom in the six regions of the cubed sphere
       select case (ichunk)
 
         case (CHUNK_AB)
@@ -251,7 +251,7 @@
       if (ELLIPTICITY) call get_ellipticity_single_point(x_top,y_top,z_top,nspl,rspl,ellipicity_spline,ellipicity_spline2)
 
       ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
-      call xyz_2_rlatlon_dble(x_top,y_top,z_top,r,lat,lon)
+      call xyz_2_rlatlon_dble(x_top,y_top,z_top,r,lat,lon,ELLIPTICITY)
 
       ! compute elevation at current point
       if (TOPOGRAPHY) then

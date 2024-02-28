@@ -1654,8 +1654,10 @@
   ! sponge layer
   if (ABSORB_USING_GLOBAL_SPONGE) then
     ! get distance to chunk center
-    call lat_2_geocentric_colat_dble(SPONGE_LATITUDE_IN_DEGREES, theta_c)
+    ! note: assuming mesh is still spherical, no need to correct colatitude by ellipticity factor
+    call lat_2_geocentric_colat_dble(SPONGE_LATITUDE_IN_DEGREES, theta_c, .false.)
     phi_c = SPONGE_LONGITUDE_IN_DEGREES * DEGREES_TO_RADIANS
+    ! theta to [0,PI] and phi to [0,2PI]
     call reduce(theta_c, phi_c)
 
     dist = acos(cos(theta)*cos(theta_c) + sin(theta)*sin(theta_c)*cos(phi-phi_c))

@@ -28,9 +28,7 @@
   subroutine moho_stretching_honor_crust(xelm,yelm,zelm, &
                                          elem_in_crust,elem_in_mantle)
 
-! stretching the moho according to the crust 2.0
-! input:  myrank, xelm, yelm, zelm
-! Dec, 30, 2009
+! stretches the moho according to the crustal variations (CRUST1.0, CRUST2.0, ..)
 
   use constants, only: myrank, &
     NGNOD,R_UNIT_SPHERE, &
@@ -52,13 +50,15 @@
   use meshfem_par, only: &
     TOPOGRAPHY
 
+  use meshfem_models_par, only: elem_is_elliptical
+
   implicit none
 
   double precision,dimension(NGNOD),intent(inout) :: xelm,yelm,zelm
   logical,intent(inout) :: elem_in_crust,elem_in_mantle
 
   ! local parameters
-  double precision :: r,theta,phi,lat,lon
+  double precision :: r,lat,lon
   double precision :: vpvc,vphc,vsvc,vshc,etac,rhoc
   double precision :: c11c,c12c,c13c,c14c,c15c,c16c,c22c,c23c,c24c,c25c,c26c, &
                       c33c,c34c,c35c,c36c,c44c,c45c,c46c,c55c,c56c,c66c
@@ -82,6 +82,8 @@
   ! Moon - todo: needs better estimates
   double precision,parameter :: MOHO_MINIMUM_DEFAULT_MOON = 2.0 / MOON_R_KM
   double precision,parameter :: MOHO_MAXIMUM_DEFAULT_MOON = 100.0 / MOON_R_KM
+
+  ! note: at this point, the mesh is still perfectly spherical.
 
   ! min/max defaults
   select case(PLANET_TYPE)
@@ -132,22 +134,12 @@
     y = yelm(ia)
     z = zelm(ia)
 
+    ! note: the moho information is given in geographic latitude/longitude (with respect to a reference ellipsoid).
+    !       we need to convert the geocentric mesh positions (x/y/z) to geographic ones (lat/lon)
+    !
     ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
-    if (USE_OLD_VERSION_5_1_5_FORMAT) then
-      ! note: at this point, the mesh is still perfectly spherical, thus no need to
-      !         convert the geocentric colatitude to a geographic colatitude
-      call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
-      call reduce(theta,phi)
-      lat = (PI_OVER_TWO - theta) * RADIANS_TO_DEGREES
-      lon = phi * RADIANS_TO_DEGREES
-    else
-      ! note: the moho information is given in geographic latitude/longitude (with respect to a reference ellipsoid).
-      !       we need to convert the geocentric mesh positions (x/y/z) to geographic ones (lat/lon),
-      !       thus correcting geocentric latitude for ellipticity
-      !
-      ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
-      call xyz_2_rlatlon_dble(x,y,z,r,lat,lon)
-    endif
+    ! note: at this point, the mesh is still spherical (no need to correct latitude for ellipticity)
+    call xyz_2_rlatlon_dble(x,y,z,r,lat,lon,elem_is_elliptical)
 
     ! sets longitude bounds [-180,180]
     if (lon > 180.d0 ) lon = lon - 360.0d0
@@ -301,9 +293,7 @@
 !
 ! uses a 3-layer crust region
 !
-! stretching the moho according to the crust 2.0
-! input:  myrank, xelm, yelm, zelm
-! Dec, 30, 2009
+! stretches the moho according to the crustal variations (CRUST1.0, CRUST2.0, ..)
 
   use constants, only: myrank, &
     NGNOD,PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,ONE,USE_OLD_VERSION_5_1_5_FORMAT, &
@@ -313,6 +303,8 @@
 
   use meshfem_par, only: R220
 
+  use meshfem_models_par, only: elem_is_elliptical
+
   implicit none
 
   double precision,dimension(NGNOD),intent(inout) :: xelm,yelm,zelm
@@ -321,13 +313,15 @@
 
   ! local parameters
   integer :: ia,count_crust,count_mantle
-  double precision :: r,theta,phi,lat,lon
+  double precision :: r,lat,lon
   double precision :: vpvc,vphc,vsvc,vshc,etac,rhoc
   double precision :: c11c,c12c,c13c,c14c,c15c,c16c,c22c,c23c,c24c,c25c,c26c, &
                       c33c,c34c,c35c,c36c,c44c,c45c,c46c,c55c,c56c,c66c
   double precision :: moho,sediment
   logical :: found_crust,moho_only
   double precision :: x,y,z
+
+  ! note: at this point, the mesh is still perfectly spherical.
 
   ! loops over element's anchor points
   count_crust = 0
@@ -339,22 +333,12 @@
     y = yelm(ia)
     z = zelm(ia)
 
+    ! note: the moho information is given in geographic latitude/longitude (with respect to a reference ellipsoid).
+    !       we need to convert the geocentric mesh positions (x/y/z) to geographic ones (lat/lon)
+    !
     ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
-    if (USE_OLD_VERSION_5_1_5_FORMAT) then
-      ! note: at this point, the mesh is still perfectly spherical, thus no need to
-      !         convert the geocentric colatitude to a geographic colatitude
-      call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
-      call reduce(theta,phi)
-      lat = (PI_OVER_TWO - theta) * RADIANS_TO_DEGREES
-      lon = phi * RADIANS_TO_DEGREES
-    else
-      ! note: the moho information is given in geographic latitude/longitude (with respect to a reference ellipsoid).
-      !       we need to convert the geocentric mesh positions (x/y/z) to geographic ones (lat/lon),
-      !       thus correcting geocentric latitude for ellipticity
-      !
-      ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
-      call xyz_2_rlatlon_dble(x,y,z,r,lat,lon)
-    endif
+    ! note: at this point, the mesh is still spherical (no need to correct latitude for ellipticity)
+    call xyz_2_rlatlon_dble(x,y,z,r,lat,lon,elem_is_elliptical)
 
     ! sets longitude bounds [-180,180]
     if (lon > 180.d0 ) lon = lon - 360.0d0

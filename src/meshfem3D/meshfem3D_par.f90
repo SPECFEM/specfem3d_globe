@@ -102,6 +102,8 @@
   ! for ellipticity
   double precision,dimension(NR_DENSITY) :: rspl,ellipicity_spline,ellipicity_spline2
   integer :: nspl
+  ! flag to indicate if mesh element positions have moved to account for ellipticity (otherwise still spherical)
+  logical :: elem_is_elliptical
 
   end module meshfem_models_par
 

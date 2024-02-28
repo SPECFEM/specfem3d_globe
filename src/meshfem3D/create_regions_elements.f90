@@ -30,6 +30,7 @@
                                      offset_proc_xi,offset_proc_eta)
 
 ! creates all elements belonging to different regions of the mesh
+! this will create a cubed-sphere mesh that accommodates Moho variations, topography and ellipticity.
 
   use constants, only: &
     myrank,IMAIN, &
