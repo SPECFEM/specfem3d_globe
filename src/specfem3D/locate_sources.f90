@@ -35,18 +35,19 @@
 
   use shared_parameters, only: OUTPUT_FILES,R_PLANET,RHOAV
 
-  use specfem_par, only: &
-    NSOURCES,DT, &
-    rspl,ellipicity_spline,ellipicity_spline2,nspl,ibathy_topo, &
-    LOCAL_TMP_PATH,SIMULATION_TYPE,TOPOGRAPHY, &
+  use specfem_par, only: NSOURCES,DT, &
+    ibathy_topo,TOPOGRAPHY, &
+    LOCAL_TMP_PATH,SIMULATION_TYPE, &
     SAVE_SOURCE_MASK
+
+  use specfem_par, only: rspl,ellipicity_spline,ellipicity_spline2,nspl
 
   ! sources
   use specfem_par, only: &
     hdur,Mxx,Myy,Mzz,Mxy,Mxz,Myz,Mw,M0, &
     xi_source,eta_source,gamma_source,nu_source, &
     islice_selected_source,ispec_selected_source, &
-    tshift_src,theta_source,phi_source,source_final_distance_max
+    tshift_src,source_theta_ref,source_phi_ref,source_final_distance_max
 
   ! forces
   use specfem_par, only: &
@@ -69,7 +70,7 @@
   double precision, dimension(6,NSOURCES) :: moment_tensor
 
   double precision, dimension(NSOURCES) :: final_distance
-  double precision, dimension(NSOURCES) :: r0_source
+  double precision, dimension(NSOURCES) :: rsurface_source
 
   ! point locations
   double precision, allocatable, dimension(:,:) :: xyz_target
@@ -88,18 +89,16 @@
   double precision, dimension(:), allocatable :: xi_subset,eta_subset,gamma_subset
   double precision, dimension(:,:), allocatable :: xi_all,eta_all,gamma_all
 
-  double precision :: lat,lon,radius,depth,r_target
+  double precision :: lat,lon,depth,r_target
 
   double precision :: theta,phi
   double precision :: sint,cost,sinp,cosp
 
-  double precision :: ell
   double precision :: elevation
-  double precision :: r0,p20
+  double precision :: r0
 
   double precision :: r_found
   double precision :: Mrr,Mtt,Mpp,Mrt,Mrp,Mtp
-  double precision :: colat_source
 
   double precision :: distmin_not_squared
   double precision :: x_target,y_target,z_target
@@ -149,6 +148,9 @@
   total_M0 = 0.d0
   total_Mw = 0.d0
   total_force_N = 0.d0
+
+  source_phi_ref = 0.d0
+  source_theta_ref = 0.d0
 
   ! normalized source radius
   r0 = R_UNIT_SPHERE
@@ -236,10 +238,20 @@
       if (lon > 360.d0 ) lon = lon - 360.d0
 
       ! convert geographic latitude lat (degrees) to geocentric colatitude theta (radians)
-      call lat_2_geocentric_colat_dble(lat,theta)
+      call lat_2_geocentric_colat_dble(lat,theta,ELLIPTICITY_VAL)
 
+      ! longitude
       phi = lon*DEGREES_TO_RADIANS
+
+      ! theta to [0,PI] and phi to [0,2PI]
       call reduce(theta,phi)
+
+      ! stores first source theta/phi position (geocentric) as reference
+      ! for epicentral distance calculations of receivers
+      if (isource == 1) then
+        source_phi_ref = phi
+        source_theta_ref = theta
+      endif
 
       sint = sin(theta)
       cost = cos(theta)
@@ -290,7 +302,7 @@
           call exit_MPI(myrank,'incorrect orientation')
         endif
 
-        !   get the orientation of the seismometer
+        ! get the orientation of the position
         thetan = (90.0d0+stdip)*DEGREES_TO_RADIANS
         phin = stazi*DEGREES_TO_RADIANS
 
@@ -323,26 +335,18 @@
 
       ! ellipticity
       if (ELLIPTICITY_VAL) then
-        ! this is the Legendre polynomial of degree two, P2(cos(theta)),
-        ! see the discussion above eq (14.4) in Dahlen and Tromp (1998)
-        p20 = 0.5d0*(3.0d0*cost*cost-1.0d0)
-
-        ! todo: check if we need radius or r0 for evaluation below...
-        !       (receiver location routine takes r0)
-        radius = r0 - depth/R_PLANET
-
-        ! get ellipticity using spline evaluation
-        call spline_evaluation(rspl,ellipicity_spline,ellipicity_spline2,nspl,radius,ell)
-
-        ! this is eq (14.4) in Dahlen and Tromp (1998)
-        r0 = r0*(1.0d0-(2.0d0/3.0d0)*ell*p20)
+        ! adds ellipticity factor to radius
+        call add_ellipticity_rtheta(r0,theta,nspl,rspl,ellipicity_spline,ellipicity_spline2)
       endif
 
       ! stores surface radius for info output
-      r0_source(isource) = r0
+      rsurface_source(isource) = r0
 
       ! subtracts source depth (given in m)
-      r_target = r0 - depth/R_PLANET
+      r0 = r0 - depth/R_PLANET
+
+      ! source position
+      r_target = r0
 
       ! compute the Cartesian position of the source
       x_target = r_target*sint*cosp
@@ -612,17 +616,13 @@
                                    sngl(xyz_found_subset(3,isource_in_this_subset))
 
         ! get latitude, longitude and depth of the source that will be used
-        call xyz_2_rthetaphi_dble(xyz_found_subset(1,isource_in_this_subset), &
-                                  xyz_found_subset(2,isource_in_this_subset), &
-                                  xyz_found_subset(3,isource_in_this_subset), &
-                                  r_found,theta_source(isource),phi_source(isource))
-        call reduce(theta_source(isource),phi_source(isource))
+        call xyz_2_rlatlon_dble(xyz_found_subset(1,isource_in_this_subset), &
+                                xyz_found_subset(2,isource_in_this_subset), &
+                                xyz_found_subset(3,isource_in_this_subset), &
+                                r_found,lat,lon,ELLIPTICITY_VAL)
 
-        ! converts geocentric to geographic colatitude
-        call geocentric_2_geographic_dble(theta_source(isource),colat_source)
-
-        ! brings longitude between -PI and PI
-        if (phi_source(isource) > PI) phi_source(isource) = phi_source(isource) - TWO_PI
+        ! brings longitude range ([0,360] by default) to source longitude range for display
+        if (srclon(isource) < 0.d0) lon = lon - 360.d0
 
         write(IMAIN,*)
         write(IMAIN,*) '  original (requested) position of the source:'
@@ -635,9 +635,9 @@
         ! compute real position of the source
         write(IMAIN,*) '  position of the source that will be used:'
         write(IMAIN,*)
-        write(IMAIN,*) '        latitude: ',(PI_OVER_TWO-colat_source)*RADIANS_TO_DEGREES
-        write(IMAIN,*) '       longitude: ',phi_source(isource)*RADIANS_TO_DEGREES
-        write(IMAIN,*) '           depth: ',(r0_source(isource)-r_found)*R_PLANET/1000.0d0,' km'
+        write(IMAIN,*) '        latitude: ',lat
+        write(IMAIN,*) '       longitude: ',lon
+        write(IMAIN,*) '           depth: ',(rsurface_source(isource)-r_found)*R_PLANET/1000.0d0,' km'
         write(IMAIN,*)
 
         ! display error in location estimate

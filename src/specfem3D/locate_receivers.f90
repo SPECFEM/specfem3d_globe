@@ -29,8 +29,7 @@
 !---- locate_receivers finds the correct position of the receivers
 !----
 
-  subroutine locate_receivers(yr,jda,ho,mi,sec, &
-                              theta_source,phi_source)
+  subroutine locate_receivers(yr,jda,ho,mi,sec)
 
   use constants_solver, only: &
     ELLIPTICITY_VAL,NCHUNKS_VAL,NPROCTOT_VAL,NDIM, &
@@ -47,14 +46,17 @@
     nrec,islice_selected_rec,ispec_selected_rec, &
     xi_receiver,eta_receiver,gamma_receiver,station_name,network_name, &
     stlat,stlon,stele,stbur,nu_rec,receiver_final_distance_max, &
-    rspl,ellipicity_spline,ellipicity_spline2,nspl,ibathy_topo, &
-    TOPOGRAPHY,RECEIVERS_CAN_BE_BURIED
+    RECEIVERS_CAN_BE_BURIED, &
+    ibathy_topo,TOPOGRAPHY
+
+  use specfem_par, only: rspl,ellipicity_spline,ellipicity_spline2,nspl
+
+  use specfem_par, only: source_theta_ref,source_phi_ref
 
   implicit none
 
   integer,intent(in) :: yr,jda,ho,mi
   double precision,intent(in) :: sec
-  double precision,intent(in) :: theta_source,phi_source
 
   ! local parameters
   integer :: iprocloop
@@ -95,9 +97,8 @@
   double precision :: theta,phi
   double precision :: sint,cost,sinp,cosp
 
-  double precision :: ell
   double precision :: elevation
-  double precision :: r0,p20
+  double precision :: r0
 
   double precision :: distmin_not_squared
   double precision :: x_target,y_target,z_target
@@ -162,9 +163,12 @@
     if (lon > 360.d0 ) lon = lon - 360.d0
 
     ! converts geographic latitude stlat (degrees) to geocentric colatitude theta (radians)
-    call lat_2_geocentric_colat_dble(lat,theta)
+    call lat_2_geocentric_colat_dble(lat,theta,ELLIPTICITY_VAL)
 
+    ! longitude
     phi = lon*DEGREES_TO_RADIANS
+
+    ! theta to [0,PI] and phi to [0,2PI]
     call reduce(theta,phi)
 
     sint = sin(theta)
@@ -172,9 +176,10 @@
     sinp = sin(phi)
     cosp = cos(phi)
 
-    ! compute epicentral distance
-    epidist(irec) = acos(cost*cos(theta_source) + &
-                         sint*sin(theta_source)*cos(phi-phi_source))*RADIANS_TO_DEGREES
+    ! compute epicentral distance to reference source position
+    ! (formula by law of cosines)
+    epidist(irec) = acos(cost*cos(source_theta_ref) + &
+                         sint*sin(source_theta_ref)*cos(phi-source_phi_ref))*RADIANS_TO_DEGREES
 
     ! record three components for each station
     do iorientation = 1,3
@@ -194,7 +199,7 @@
         call exit_MPI(myrank,'incorrect orientation')
       endif
 
-      !     get the orientation of the seismometer
+      ! get the orientation of the seismometer
       thetan = (90.0d0+stdip)*DEGREES_TO_RADIANS
       phin = stazi*DEGREES_TO_RADIANS
 
@@ -227,19 +232,15 @@
 
     ! ellipticity
     if (ELLIPTICITY_VAL) then
-      ! this is the Legendre polynomial of degree two, P2(cos(theta)),
-      ! see the discussion above eq (14.4) in Dahlen and Tromp (1998)
-      p20 = 0.5d0*(3.0d0*cost*cost-1.0d0)
-
-      ! get ellipticity using spline evaluation
-      call spline_evaluation(rspl,ellipicity_spline,ellipicity_spline2,nspl,r0,ell)
-
-      ! this is eq (14.4) in Dahlen and Tromp (1998)
-      r0 = r0*(1.0d0-(2.0d0/3.0d0)*ell*p20)
+      ! adds ellipticity factor to radius
+      call add_ellipticity_rtheta(r0,theta,nspl,rspl,ellipicity_spline,ellipicity_spline2)
     endif
 
     ! subtract station burial depth (in meters)
-    r_target = r0 - depth/R_PLANET
+    r0 = r0 - depth/R_PLANET
+
+    ! receiver position
+    r_target = r0
 
     ! compute the Cartesian position of the receiver
     x_target = r_target*sint*cosp
@@ -516,8 +517,10 @@
         write(IMAIN,*) '   at xi,eta,gamma coordinates = ',xi_receiver(irec),eta_receiver(irec),gamma_receiver(irec)
 
         ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
-        call xyz_2_rlatlon_dble(xyz_found(1,irec),xyz_found(2,irec),xyz_found(3,irec),radius,lat,lon)
+        call xyz_2_rlatlon_dble(xyz_found(1,irec),xyz_found(2,irec),xyz_found(3,irec),radius,lat,lon,ELLIPTICITY_VAL)
 
+        ! output same longitude range ([0,360] by default) as input range from stations file stlon(..)
+        if (stlon(irec) < 0.d0) lon = lon - 360.d0
         write(IMAIN,*) '   at lat/lon = ',sngl(lat),sngl(lon)
       endif
 

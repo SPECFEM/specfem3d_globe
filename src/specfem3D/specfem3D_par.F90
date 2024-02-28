@@ -291,12 +291,12 @@ module specfem_par
   double precision, dimension(:), allocatable :: Mxx,Myy,Mzz,Mxy,Mxz,Myz
   double precision, dimension(:), allocatable :: xi_source,eta_source,gamma_source
   double precision, dimension(:), allocatable :: tshift_src,hdur,hdur_Gaussian
-  double precision, dimension(:), allocatable :: theta_source,phi_source
 
   double precision :: Mrr,Mtt,Mpp,Mrt,Mrp,Mtp,Mw,M0
   double precision :: t0
   double precision :: min_tshift_src_original
   double precision :: source_final_distance_max
+  double precision :: source_theta_ref,source_phi_ref   ! reference (geocentric) theta/phi position for source
 
   ! External source time function.
   double precision, dimension(:), allocatable :: user_source_time_function

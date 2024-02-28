@@ -28,7 +28,6 @@
   subroutine setup_sources_receivers()
 
   use specfem_par, only: myrank,IMAIN,NSOURCES,NSTEP, &
-    theta_source,phi_source, &
     TOPOGRAPHY,ibathy_topo, &
     USE_DISTANCE_CRITERION,xyz_midpoints,xadj,adjncy
 
@@ -64,9 +63,6 @@
   endif
   call synchronize_all()
 
-  ! frees arrays
-  deallocate(theta_source,phi_source)
-
   ! topography array no more needed
   if (TOPOGRAPHY) then
     if (allocated(ibathy_topo) ) deallocate(ibathy_topo)
@@ -95,7 +91,7 @@
 
   use specfem_par, only: &
     NCHUNKS_VAL,NEX_XI_VAL,NEX_ETA_VAL,ANGULAR_WIDTH_XI_IN_DEGREES_VAL,ANGULAR_WIDTH_ETA_IN_DEGREES_VAL, &
-    LAT_LON_MARGIN,myrank
+    ELLIPTICITY_VAL,LAT_LON_MARGIN,myrank
 
   use specfem_par, only: &
     nspec => NSPEC_CRUST_MANTLE,nglob => NGLOB_CRUST_MANTLE
@@ -140,7 +136,7 @@
   ! limits receiver search
   if (USE_DISTANCE_CRITERION) then
     ! retrieves latitude/longitude range of this slice
-    call xyz_2_latlon_minmax(nspec,nglob,ibool,xstore,ystore,zstore,lat_min,lat_max,lon_min,lon_max)
+    call xyz_2_latlon_minmax(nspec,nglob,ibool,xstore,ystore,zstore,lat_min,lat_max,lon_min,lon_max,ELLIPTICITY_VAL)
 
     ! adds search margin
     lat_min = lat_min - LAT_LON_MARGIN
@@ -683,11 +679,6 @@
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating source arrays')
   tshift_src(:) = 0.d0; hdur(:) = 0.d0; hdur_Gaussian(:) = 0.d0
 
-  allocate(theta_source(NSOURCES), &
-           phi_source(NSOURCES),stat=ier)
-  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating source arrays')
-  theta_source(:) = 0.d0; phi_source(:) = 0.d0
-
   allocate(nu_source(NDIM,NDIM,NSOURCES),stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating source arrays')
   nu_source(:,:,:) = 0.d0
@@ -1104,8 +1095,7 @@
   endif
 
   ! locate receivers in the crust in the mesh
-  call locate_receivers(yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC, &
-                        theta_source(1),phi_source(1) )
+  call locate_receivers(yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC)
 
   ! count number of receivers located in this slice
   nrec_local = 0
