@@ -322,8 +322,8 @@
 
   endif
 
-500 format(a8,1x,a3,6x,f9.4,1x,f9.4,1x,f6.1,1x,f6.1,1x,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4.4,1x,i3.3,1x,i2.2,1x,i2.2,1x,f6.3)
-600 format(a8,1x,a3,6x,f9.4,1x,f9.4,1x,i6,1x,f6.1,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4.4,1x,i3.3,1x,i2.2,1x,i2.2,1x,f6.3)
+500 format(a8,1x,a3,6x,f9.4,1x,f9.4,1x,f6.1,1x,f9.1,1x,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4.4,1x,i3.3,1x,i2.2,1x,i2.2,1x,f6.3)
+600 format(a8,1x,a3,6x,f9.4,1x,f9.4,1x,i6,1x,f9.1,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4.4,1x,i3.3,1x,i2.2,1x,i2.2,1x,f6.3)
 
   ! make sure we clean the array before the gather
   ispec_selected_rec(:) = 0
@@ -627,7 +627,7 @@
       if (ier /= 0 ) call exit_MPI(myrank,'Error opening file STATIONS_FILTERED')
       ! loop on all the stations to read station information
       do irec = 1,nrec
-        write(IOUT,'(a8,1x,a3,6x,f8.4,1x,f9.4,1x,f6.1,1x,f6.1)') trim(station_name(irec)),trim(network_name(irec)), &
+        write(IOUT,'(a8,1x,a3,6x,f8.4,1x,f9.4,1x,f9.1,1x,f9.1)') trim(station_name(irec)),trim(network_name(irec)), &
           sngl(stlat(irec)),sngl(stlon(irec)),sngl(stele(irec)),sngl(stbur(irec))
       enddo
       ! close receiver file
