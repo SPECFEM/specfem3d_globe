@@ -248,7 +248,7 @@
       end select
 
       ! add ellipticity
-      if (ELLIPTICITY) call get_ellipticity_single_point(x_top,y_top,z_top,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+      if (ELLIPTICITY) call add_ellipticity(x_top,y_top,z_top,nspl,rspl,ellipicity_spline,ellipicity_spline2)
 
       ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
       call xyz_2_rlatlon_dble(x_top,y_top,z_top,r,lat,lon,ELLIPTICITY)
