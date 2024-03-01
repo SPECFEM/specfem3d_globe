@@ -66,7 +66,7 @@
   program xwrite_profile
 
   use constants, only: &
-    GRAV,PI,MAX_STRING_LEN,IMAIN,ISTANDARD_OUTPUT, &
+    GRAV,PI,RADIANS_TO_DEGREES,MAX_STRING_LEN,IMAIN,ISTANDARD_OUTPUT, &
     IREGION_INNER_CORE,IREGION_OUTER_CORE,IREGION_CRUST_MANTLE, &
     IFLAG_IN_FICTITIOUS_CUBE,IFLAG_INNER_CORE_NORMAL, &
     IFLAG_MIDDLE_CENTRAL_CUBE,IFLAG_TOP_CENTRAL_CUBE,IFLAG_BOTTOM_CENTRAL_CUBE, &
@@ -78,10 +78,13 @@
   use meshfem_models_par, only: &
     CRUSTAL,ONE_CRUST
 
+  ! ellipticity
+  use meshfem_models_par, only: nspl,rspl,ellipicity_spline,ellipicity_spline2
+
   use shared_parameters, only: &
     doubling_index,MAX_NUMBER_OF_MESH_LAYERS,rmaxs,rmins, &
     MODEL,MODEL_GLL,OUTPUT_FILES, &
-    OCEANS,TOPOGRAPHY,TRANSVERSE_ISOTROPY, &
+    OCEANS,TOPOGRAPHY,ELLIPTICITY,TRANSVERSE_ISOTROPY, &
     PLANET_TYPE,R_PLANET,RCMB,RICB,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,ROCEAN,RHOAV
 
   implicit none
@@ -118,15 +121,13 @@
   integer :: NUMBER_OF_MESH_LAYERS
   ! for loop on all the slices
   integer :: iregion_code
-  ! for ellipticity
-  !integer :: nspl
-  !double precision :: rspl(NR_DENSITY),ellipicity_spline(NR_DENSITY),ellipicity_spline2(NR_DENSITY)
   ! proc numbers for MPI
   integer :: sizeprocs
 
   ! arguments
   integer :: count
   character(len=MAX_STRING_LEN) :: arg
+  logical :: use_userdefined_lat
 
   double precision :: rmin,rmax,rmax_last,r_prem
   double precision :: r,theta,phi
@@ -201,6 +202,7 @@
   ! start position
   initial_colat =  COLAT_0! 90.d0 - start_lat
   initial_lon = LON_0
+  use_userdefined_lat = .false.
 
   ! loop range
   icolat_start = COLAT_istart
@@ -243,6 +245,8 @@
         ! single profile only
         icolat_start = 0
         icolat_end = 0
+        ! set flag
+        use_userdefined_lat = .true.
       case (4)
         read(arg,*) lon
         ! initial longitude
@@ -280,6 +284,18 @@
     NUMBER_OF_MESH_LAYERS = MAX_NUMBER_OF_MESH_LAYERS
   endif
 !> end of part from create_regions_mesh -> initialize_layers()
+
+  ! sets up spline coefficients for ellipticity
+  if (ELLIPTICITY) call make_ellipticity(nspl,rspl,ellipicity_spline,ellipicity_spline2)
+
+  ! corrects user defined starting lat by ellipticity factor to have geocentric latitude
+  ! we will loop over geocentric positions and convert back to geographic for getting topography in case
+  if (use_userdefined_lat .and. ELLIPTICITY) then
+    ! gets geocentric colat in rad
+    call lat_2_geocentric_colat_dble(lat,theta,ELLIPTICITY)
+    ! re-sets initial colatitude
+    initial_colat = theta * RADIANS_TO_DEGREES
+  endif
 
   ! loop over all theta (colatitude) and phis (longitude), every two degrees
   do i = icolat_start,icolat_end
@@ -324,8 +340,19 @@
       else
         write(57,'(a)') '# model         : '//trim(MODEL)
       endif
-      write(57,'(a,F10.4)') '# point location: colatitude [degree] = ',sngl(theta_degrees)
-      write(57,'(a,F10.4)') '# point location: longitude  [degree] = ',sngl(phi_degrees)
+      if (ELLIPTICITY) then
+        ! output geocentric and geographic position
+        ! converts geocentric theta/phi position to geographic lat/lon (in degrees)
+        call thetaphi_2_geographic_latlon_dble(theta,phi,lat,lon,ELLIPTICITY)
+        write(57,'(a,F10.4)') '# geographic point location: colatitude [degree] = ',sngl(90.0 - lat)
+        write(57,'(a,F10.4)') '#            point location: longitude  [degree] = ',sngl(lon)
+        write(57,'(a,F10.4)') '# geocentric point location: colatitude [degree] = ',sngl(theta_degrees)
+        write(57,'(a,F10.4)') '#            point location: longitude  [degree] = ',sngl(phi_degrees)
+      else
+        ! geocentric and geographic lat/lon are the same
+        write(57,'(a,F10.4)') '# point location: colatitude [degree] = ',sngl(theta_degrees)
+        write(57,'(a,F10.4)') '# point location: longitude  [degree] = ',sngl(phi_degrees)
+      endif
       if (CRUSTAL) then
         write(57,'(a,F10.4)') '# moho depth    : moho [km] = ',sngl(moho*(R_PLANET/1000.d0))
       else
@@ -368,7 +395,11 @@
           write(57,'(a)') '# no oceans'
         endif
       endif
-      write(57,'(a)') '# no ellipticity'
+      if (ELLIPTICITY) then
+        write(57,'(a)') '# ellipticity'
+      else
+        write(57,'(a)') '# no ellipticity'
+      endif
       write(57,'(a)') '#'
       write(57,'(a)') '#radius(m) #rho #vpv #vsv #Qkappa #Qmu #vph #vsh #eta'
 
@@ -492,7 +523,11 @@
             ! adds topography stretching
             call write_profile_add_topography(r_prem,idoubling,elevation)
 
-            ! note: ELLIPTICITY will be ignored for now...
+            ! ellipticity
+            if (ELLIPTICITY) then
+              ! adds ellipticity factor to radius
+              call add_ellipticity_rtheta(r_prem,theta,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+            endif
 
             ! scale values read from routines back to true values
             scaleval = dsqrt(PI*GRAV*RHOAV)
@@ -526,7 +561,7 @@
       enddo !ilayer
 
       ! adds ocean layer profile
-      call write_profile_ocean(r_prem,elevation,iline,iline_ocean)
+      call write_profile_ocean(r_prem,theta,elevation,iline,iline_ocean)
 
       ! discontinuities info
       write(57,'(a)') '# discontinuities info'
@@ -795,9 +830,11 @@
   ! topography elevation
   if (TOPOGRAPHY .or. OCEANS) then
     if (TOPOGRAPHY) then
-      lat = (PI/2.0d0-theta)*180.0d0/PI     ! range [-90,90]
-      lon = phi*180.0d0/PI
-      if (lon > 180.0d0) lon = lon-360.0d0  ! range [-180,180]
+      ! converts geocentric theta/phi position to geographic lat/lon (in degrees)
+      call thetaphi_2_geographic_latlon_dble(theta,phi,lat,lon,ELLIPTICITY)
+
+      ! longitude range [-180,180]
+      if (lon > 180.0d0) lon = lon-360.0d0
 
       !if (myrank == 0) print *,'  get_topo_bathy(lat,lon,elevation,ibathy_topo',lat,lon,elevation
 
@@ -1020,7 +1057,7 @@
 !
 
 
-  subroutine write_profile_ocean(r_prem,elevation,iline,iline_ocean)
+  subroutine write_profile_ocean(r_prem,theta,elevation,iline,iline_ocean)
 
   use constants, only: MINIMUM_THICKNESS_3D_OCEANS
   use meshfem_models_par
@@ -1028,7 +1065,7 @@
 
   implicit none
 
-  double precision,intent(in) :: r_prem,elevation
+  double precision,intent(in) :: r_prem,theta,elevation
   integer,intent(inout) :: iline,iline_ocean
 
   ! local parameters
@@ -1112,7 +1149,13 @@
       ! points within ocean
       do ilayers_ocean = 0,nlayers_ocean
         ! radius
-        r_ocean = r_prem + ilayers_ocean* delta/R_PLANET
+        r_ocean = r_prem + ilayers_ocean * delta/R_PLANET
+
+        ! ellipticity
+        if (ELLIPTICITY) then
+          ! adds ellipticity factor to radius
+          call add_ellipticity_rtheta(r_ocean,theta,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+        endif
 
         ! ocean properties (salt water parameters from PREM)
         if (ilayers_ocean == 0) then
@@ -1127,7 +1170,14 @@
       ! at surface
       if (r_ocean < 1.d0) then
         ! last line exactly at earth surface
-        write(57,'(F10.0,7F12.2,F12.5)') sngl(1.0d0*R_PLANET),1020.0,1450.,0.0,57822.5,0.0,1450.,0.0,1.0
+        r_ocean = 1.d0
+        ! ellipticity
+        if (ELLIPTICITY) then
+          ! adds ellipticity factor to radius
+          call add_ellipticity_rtheta(r_ocean,theta,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+        endif
+        ! last line
+        write(57,'(F10.0,7F12.2,F12.5)') sngl(r_ocean*R_PLANET),1020.0,1450.,0.0,57822.5,0.0,1450.,0.0,1.0
         ! line counter
         iline = iline + 1
       endif
@@ -1253,30 +1303,22 @@
   real(kind=CUSTOM_REAL),intent(out) :: xi,eta
 
   ! local parameters
-  real(kind=CUSTOM_REAL) :: theta,phi,x,y,z,xik,etak
-  real(kind=CUSTOM_REAL) :: clat,clon,grot
-  real(kind=CUSTOM_REAL) :: rotation_matrix(3,3)
+  real(kind=CUSTOM_REAL) :: r,theta,phi,x,y,z,xik,etak
   real(kind=CUSTOM_REAL) :: xn,yn,zn
+  double precision :: rotation_matrix(3,3)
   integer :: k
 
   ! converts lat/lon from degrees to radians (colatitute/longitude)
   theta = (90.0 - lat)/180.0 * PI
   phi = lon/180.0 * PI
 
-  ! converts (theta,phi) to (x,y,z) on unit sphere
-  call tp2xyz(theta,phi,x,y,z)
+  ! converts (r,theta,phi) to (x,y,z) on unit sphere
+  r = 1.0_CUSTOM_REAL
+  call rthetaphi_2_xyz(x,y,z,r,theta,phi)
 
   if (nchunks /= 6) then
-    clon = CENTER_LONGITUDE_IN_DEGREES
-    clat = CENTER_LATITUDE_IN_DEGREES
-    grot = GAMMA_ROTATION_AZIMUTH
-
-    ! converts to radians
-    clon = clon/180.0 * PI
-    clat = clat/180.0 * PI
-    grot = grot/180.0 * PI
-
-    call rotmat(clon,clat,grot,rotation_matrix)
+    ! compute rotation matrix from Euler angles
+    call euler_angles(rotation_matrix,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH)
 
     xn = x * rotation_matrix(1,1) + y * rotation_matrix(2,1) + z * rotation_matrix(3,1)
     yn = x * rotation_matrix(1,2) + y * rotation_matrix(2,2) + z * rotation_matrix(3,2)
@@ -1326,67 +1368,69 @@
 !
 !-------------------------------------------------------------------------------------
 !
-
-  subroutine tp2xyz(th,ph,x,y,z)
-
-  use constants, only: CUSTOM_REAL
-
-  implicit none
-
-  real(CUSTOM_REAL),intent(in) :: th,ph
-  real(CUSTOM_REAL),intent(out) :: x,y,z
-
-  ! convert (th,ph) to (x,y,z) on unit sphere
-  x = sin(th) * cos(ph)
-  y = sin(th) * sin(ph)
-  z = cos(th)
-
-  end subroutine tp2xyz
-
+! not used any further... left here for reference
+!
+!  subroutine tp2xyz(th,ph,x,y,z)
+!
+!  use constants, only: CUSTOM_REAL
+!
+!  implicit none
+!
+!  real(CUSTOM_REAL),intent(in) :: th,ph
+!  real(CUSTOM_REAL),intent(out) :: x,y,z
+!
+!  ! convert (th,ph) to (x,y,z) on unit sphere
+!  x = sin(th) * cos(ph)
+!  y = sin(th) * sin(ph)
+!  z = cos(th)
+!
+!  end subroutine tp2xyz
+!
 !
 !-------------------------------------------------------------------------------------
 !
-
-  subroutine rotmat(clon,clat,grot,rotation_matrix)
-
-  ! this function calculate the 3x3 rotation matrix from the AB chunk
-  ! frame to the actual frame defined by (clon,clat,grot)
-
-  use constants, only: CUSTOM_REAL,PI
-
-  implicit none
-
-  real(kind=CUSTOM_REAL),intent(in) :: clon,clat,grot
-  real(kind=CUSTOM_REAL),intent(out) :: rotation_matrix(3,3)
-
-  ! local parameters
-  real(kind=CUSTOM_REAL) :: alpha, beta, gamma, sina, cosa, sinb, cosb, sing, cosg
-
-  ! compute colatitude and longitude
-  alpha = clon
-  beta = PI/2.0 - clat
-  gamma = grot
-
-  sina = sin(alpha)
-  cosa = cos(alpha)
-  sinb = sin(beta)
-  cosb = cos(beta)
-  sing = sin(gamma)
-  cosg = cos(gamma)
-
-  ! define rotation matrix
-  rotation_matrix(1,1) = cosg*cosb*cosa-sing*sina
-  rotation_matrix(1,2) = -sing*cosb*cosa-cosg*sina
-  rotation_matrix(1,3) = sinb*cosa
-  rotation_matrix(2,1) = cosg*cosb*sina+sing*cosa
-  rotation_matrix(2,2) = -sing*cosb*sina+cosg*cosa
-  rotation_matrix(2,3) = sinb*sina
-  rotation_matrix(3,1) = -cosg*sinb
-  rotation_matrix(3,2) = sing*sinb
-  rotation_matrix(3,3) = cosb
-
-  end subroutine rotmat
-
+! not used any further... left here as a reference
+!
+!  subroutine rotmat(clon,clat,grot,rotation_matrix)
+!
+!  ! this function calculate the 3x3 rotation matrix from the AB chunk
+!  ! frame to the actual frame defined by (clon,clat,grot)
+!
+!  use constants, only: CUSTOM_REAL,PI
+!
+!  implicit none
+!
+!  real(kind=CUSTOM_REAL),intent(in) :: clon,clat,grot
+!  real(kind=CUSTOM_REAL),intent(out) :: rotation_matrix(3,3)
+!
+!  ! local parameters
+!  real(kind=CUSTOM_REAL) :: alpha, beta, gamma, sina, cosa, sinb, cosb, sing, cosg
+!
+!  ! compute colatitude and longitude
+!  alpha = clon
+!  beta = PI/2.0 - clat
+!  gamma = grot
+!
+!  sina = sin(alpha)
+!  cosa = cos(alpha)
+!  sinb = sin(beta)
+!  cosb = cos(beta)
+!  sing = sin(gamma)
+!  cosg = cos(gamma)
+!
+!  ! define rotation matrix
+!  rotation_matrix(1,1) = cosg*cosb*cosa-sing*sina
+!  rotation_matrix(1,2) = -sing*cosb*cosa-cosg*sina
+!  rotation_matrix(1,3) = sinb*cosa
+!  rotation_matrix(2,1) = cosg*cosb*sina+sing*cosa
+!  rotation_matrix(2,2) = -sing*cosb*sina+cosg*cosa
+!  rotation_matrix(2,3) = sinb*sina
+!  rotation_matrix(3,1) = -cosg*sinb
+!  rotation_matrix(3,2) = sing*sinb
+!  rotation_matrix(3,3) = cosb
+!
+!  end subroutine rotmat
+!
 !
 !-------------------------------------------------------------------------------------
 !

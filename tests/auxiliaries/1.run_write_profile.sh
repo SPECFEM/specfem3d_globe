@@ -118,6 +118,7 @@ do
 
   # sets model
   sed -i "s:^MODEL .*:MODEL   = $model:" DATA/Par_file
+  sed -i "s:^ELLIPTICITY .*:ELLIPTICITY   = .false.:" DATA/Par_file    # no ellipticity profiles
 
   # turns off OCEANS for Mars & Moon models
   if [ "$model" == "1d_sohl" ] || [ "$model" == "1d_case65TAY_3D_crust" ] || [ "$model" == "vpremoon" ]; then
