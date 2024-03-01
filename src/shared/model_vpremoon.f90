@@ -117,6 +117,9 @@
   double precision :: vp_tmp,vs_tmp,rho_tmp,Qmu_tmp,Qkappa_tmp
   integer :: i
 
+  ! check if already done
+  if (allocated(VPREMOON_radius)) return
+
   ! all processes will define same parameters
   call define_model_vpremoon()
 

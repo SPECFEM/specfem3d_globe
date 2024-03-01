@@ -372,7 +372,6 @@
   ! Moon models
   case (REFERENCE_MODEL_VPREMOON)
     ! Moon
-    print *,'debug: qmu size',size(Qmu),size(VPREMOON_Qmu_original)
     Qmu(:) = VPREMOON_Qmu_original(:)
 
   case default
