@@ -89,6 +89,135 @@
   double precision :: xmesh,ymesh,zmesh
   double precision :: sumshape,sumdershapexi,sumdershapeeta,sumdershapegamma
 
+  ! debug: testing locations
+  if (DEBUG) then
+    ! moves all debug related calculations into this if-statement to avoid doing debugging if-checks in the main loop
+    ! first go over all 125 GLL points
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+
+          xi = xigll(i)
+          eta = yigll(j)
+          gamma = zigll(k)
+
+          ! calculate Lagrange polynomial and its derivative
+          call lagrange_any(xi,NGLLX,xigll,hxir,hpxir)
+          call lagrange_any(eta,NGLLY,yigll,hetar,hpetar)
+          call lagrange_any(gamma,NGLLZ,zigll,hgammar,hpgammar)
+
+          xxi = ZERO
+          xeta = ZERO
+          xgamma = ZERO
+          yxi = ZERO
+          yeta = ZERO
+          ygamma = ZERO
+          zxi = ZERO
+          zeta = ZERO
+          zgamma = ZERO
+
+          ! DEBUG
+          ! test parameters
+          sumshape = ZERO
+          sumdershapexi = ZERO
+          sumdershapeeta = ZERO
+          sumdershapegamma = ZERO
+
+          xmesh = ZERO
+          ymesh = ZERO
+          zmesh = ZERO
+
+          do k1 = 1,NGLLZ
+            do j1 = 1,NGLLY
+              do i1 = 1,NGLLX
+
+                hlagrange = hxir(i1) * hetar(j1) * hgammar(k1)
+                hlagrange_xi = hpxir(i1) * hetar(j1) * hgammar(k1)
+                hlagrange_eta = hxir(i1) * hpetar(j1) * hgammar(k1)
+                hlagrange_gamma = hxir(i1) * hetar(j1) * hpgammar(k1)
+
+                x = xstore(i1,j1,k1,ispec)
+                y = ystore(i1,j1,k1,ispec)
+                z = zstore(i1,j1,k1,ispec)
+
+                xxi = xxi + x * hlagrange_xi
+                xeta = xeta + x * hlagrange_eta
+                xgamma = xgamma + x * hlagrange_gamma
+
+                yxi = yxi + y * hlagrange_xi
+                yeta = yeta + y * hlagrange_eta
+                ygamma = ygamma + y * hlagrange_gamma
+
+                zxi = zxi + z * hlagrange_xi
+                zeta = zeta + z * hlagrange_eta
+                zgamma = zgamma + z * hlagrange_gamma
+
+                ! DEBUG
+                ! test the Lagrange polynomial and its derivative
+                xmesh = xmesh + x * hlagrange
+                ymesh = ymesh + y * hlagrange
+                zmesh = zmesh + z * hlagrange
+
+                sumshape = sumshape + hlagrange
+                sumdershapexi = sumdershapexi + hlagrange_xi
+                sumdershapeeta = sumdershapeeta + hlagrange_eta
+                sumdershapegamma = sumdershapegamma + hlagrange_gamma
+
+              enddo
+            enddo
+          enddo
+
+          ! DEBUG
+          ! Check the Lagrange polynomial and its derivative
+          if (abs(xmesh - xstore(i,j,k,ispec)) > TINYVAL &
+            .or. abs(ymesh - ystore(i,j,k,ispec)) > TINYVAL &
+            .or. abs(zmesh - zstore(i,j,k,ispec)) > TINYVAL) then
+            call exit_MPI(myrank,'Error new mesh is wrong in recalc_jacobian_gll3D.f90')
+          endif
+          if (abs(sumshape-one) > TINYVAL) then
+            call exit_MPI(myrank,'Error shape functions in recalc_jacobian_gll3D.f90')
+          endif
+          if (abs(sumdershapexi) > TINYVAL) then
+            call exit_MPI(myrank,'Error derivative xi in recalc_jacobian_gll3D.f90')
+          endif
+          if (abs(sumdershapeeta) > TINYVAL) then
+            call exit_MPI(myrank,'Error derivative eta in recalc_jacobian_gll3D.f90')
+          endif
+          if (abs(sumdershapegamma) > TINYVAL) then
+            call exit_MPI(myrank,'Error derivative gamma in recalc_jacobian_gll3D.f90')
+          endif
+
+          ! Jacobian calculation
+          jacobian = xxi*(yeta*zgamma-ygamma*zeta) - &
+                     xeta*(yxi*zgamma-ygamma*zxi) + &
+                     xgamma*(yxi*zeta-yeta*zxi)
+
+          ! Check the Jacobian
+          ! note: when honoring the moho, we squeeze and stretch elements
+          !          thus, it can happen that with a coarse mesh resolution, the Jacobian encounters problems
+          if (jacobian <= VERYSMALLVAL) then
+            ! note: the mesh can have ellipticity, thus the geocentric colatitude might differ from the geographic one
+            !
+            ! converts position to geocentric coordinates
+            call xyz_2_rlatlon_dble(xstore(i,j,k,ispec),ystore(i,j,k,ispec),zstore(i,j,k,ispec),r,lat,lon,ELLIPTICITY)
+            ! info
+            print *,'DEBUG MESH CHECK'
+            print *,'Mesh becomes invalid due to distorted elements!'
+            print *,'Please check your mesh setup (NEX, topography, etc.) and try re-running the mesher.'
+            print *
+            print *,'Error Jacobian rank:',myrank,'has invalid Jacobian ',jacobian
+            print *,'  xxi',xxi,xeta,xgamma
+            print *,'  yxi',yxi,yeta,ygamma
+            print *,'  zxi',zxi,zeta,zgamma
+            print *,'  location x/y/z: ',xstore(i,j,k,ispec),ystore(i,j,k,ispec),zstore(i,j,k,ispec)
+            print *,'  location r    : ',sngl(r*R_PLANET_KM),'km - lat/lon: ',lat,lon
+            call exit_MPI(myrank,'3D Jacobian undefined in recalc_jacobian_gll3D.f90')
+          endif
+        enddo
+      enddo
+    enddo
+  endif ! DEBUG
+
   ! first go over all 125 GLL points
   do k = 1,NGLLZ
     do j = 1,NGLLY
@@ -112,18 +241,6 @@
         zxi = ZERO
         zeta = ZERO
         zgamma = ZERO
-
-        ! test parameters
-        if (DEBUG) then
-          sumshape = ZERO
-          sumdershapexi = ZERO
-          sumdershapeeta = ZERO
-          sumdershapegamma = ZERO
-
-          xmesh = ZERO
-          ymesh = ZERO
-          zmesh = ZERO
-        endif
 
         do k1 = 1,NGLLZ
           do j1 = 1,NGLLY
@@ -149,43 +266,9 @@
               zxi = zxi + z * hlagrange_xi
               zeta = zeta + z * hlagrange_eta
               zgamma = zgamma + z * hlagrange_gamma
-
-              ! test the Lagrange polynomial and its derivative
-              if (DEBUG) then
-                xmesh = xmesh + x * hlagrange
-                ymesh = ymesh + y * hlagrange
-                zmesh = zmesh + z * hlagrange
-
-                sumshape = sumshape + hlagrange
-                sumdershapexi = sumdershapexi + hlagrange_xi
-                sumdershapeeta = sumdershapeeta + hlagrange_eta
-                sumdershapegamma = sumdershapegamma + hlagrange_gamma
-              endif
-
             enddo
           enddo
         enddo
-
-        ! Check the Lagrange polynomial and its derivative
-        if (DEBUG) then
-          if (abs(xmesh - xstore(i,j,k,ispec)) > TINYVAL &
-            .or. abs(ymesh - ystore(i,j,k,ispec)) > TINYVAL &
-            .or. abs(zmesh - zstore(i,j,k,ispec)) > TINYVAL) then
-            call exit_MPI(myrank,'Error new mesh is wrong in recalc_jacobian_gll3D.f90')
-          endif
-          if (abs(sumshape-one) > TINYVAL) then
-            call exit_MPI(myrank,'Error shape functions in recalc_jacobian_gll3D.f90')
-          endif
-          if (abs(sumdershapexi) > TINYVAL) then
-            call exit_MPI(myrank,'Error derivative xi in recalc_jacobian_gll3D.f90')
-          endif
-          if (abs(sumdershapeeta) > TINYVAL) then
-            call exit_MPI(myrank,'Error derivative eta in recalc_jacobian_gll3D.f90')
-          endif
-          if (abs(sumdershapegamma) > TINYVAL) then
-            call exit_MPI(myrank,'Error derivative gamma in recalc_jacobian_gll3D.f90')
-          endif
-        endif
 
         ! Jacobian calculation
         jacobian = xxi*(yeta*zgamma-ygamma*zeta) - &
@@ -206,7 +289,6 @@
           print *,'Please check your mesh setup (NEX, topography, etc.) and try re-running the mesher.'
           print *
           print *,'Error Jacobian rank:',myrank,'has invalid Jacobian ',jacobian
-          print *,'  Jacobian: ',jacobian,'xxi',xxi,xeta,xgamma,'yxi',yxi,yeta,ygamma,'zxi',zxi,zeta,zgamma
           print *,'  location x/y/z: ',xstore(i,j,k,ispec),ystore(i,j,k,ispec),zstore(i,j,k,ispec)
           print *,'  location r    : ',sngl(r*R_PLANET_KM),'km - lat/lon: ',lat,lon
           call exit_MPI(myrank,'3D Jacobian undefined in recalc_jacobian_gll3D.f90')
