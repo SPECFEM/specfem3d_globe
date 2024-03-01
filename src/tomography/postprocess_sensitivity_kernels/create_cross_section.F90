@@ -519,9 +519,12 @@
     call latlon_2_geocentric_thetaphi_dble(v_lat1,v_lon1,theta1,phi1,ELLIPTICITY)
     call latlon_2_geocentric_thetaphi_dble(v_lat2,v_lon2,theta2,phi2,ELLIPTICITY)
 
-    ! compute epicentral distance
-    ! (formula by law of cosines)
-    epidist = acos(cos(theta1)*cos(theta2) + sin(theta1)*sin(theta2)*cos(phi1-phi2)) * RADIANS_TO_DEGREES
+    ! computes epicentral distance (in radians)
+    call get_greatcircle_distance(theta1,phi1,theta2,phi2,epidist)
+
+    ! distance in degrees
+    epidist = epidist * RADIANS_TO_DEGREES
+
     if (epidist <= SMALLVAL) then
       stop 'Error great-circle points too close to each other'
     endif

@@ -95,7 +95,7 @@
   double precision :: lat,lon,radius,depth,r_target
 
   double precision :: theta,phi
-  double precision :: sint,cost,sinp,cosp
+  double precision :: sint,cost,sinp,cosp,dist
 
   double precision :: elevation
   double precision :: r0
@@ -176,10 +176,10 @@
     sinp = sin(phi)
     cosp = cos(phi)
 
-    ! compute epicentral distance to reference source position
-    ! (formula by law of cosines)
-    epidist(irec) = acos(cost*cos(source_theta_ref) + &
-                         sint*sin(source_theta_ref)*cos(phi-source_phi_ref))*RADIANS_TO_DEGREES
+    ! compute epicentral distance to reference source position (in radians)
+    call get_greatcircle_distance(theta,phi,source_theta_ref,source_phi_ref,dist)
+
+    epidist(irec) = dist * RADIANS_TO_DEGREES
 
     ! record three components for each station
     do iorientation = 1,3

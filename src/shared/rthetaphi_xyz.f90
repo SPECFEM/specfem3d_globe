@@ -228,6 +228,47 @@
 
   end subroutine lat_2_geocentric_colat_dble
 
+!
+!------------------------------------------------------------------------------
+!
+
+  subroutine geographic_2_geocentric_lat_dble(lat_prime,lat,is_mesh_elliptical)
+
+! converts geographic latitude (lat_prime) (in degrees) to geocentric colatitude (theta) (in radians)
+
+  use constants, only: PI_OVER_TWO,DEGREES_TO_RADIANS,RADIANS_TO_DEGREES,ASSUME_PERFECT_SPHERE
+  use shared_parameters, only: ONE_MINUS_F_SQUARED
+
+  implicit none
+
+  ! latitude (in degrees) (geographic/geodetic)
+  double precision,intent(in) :: lat_prime
+  ! latitude (in radians) (geocentric)
+  double precision,intent(inout) :: lat
+  ! mesh ellipticity
+  logical, intent(in) :: is_mesh_elliptical
+
+  ! local parameter
+  double precision :: val
+
+  if (.not. ASSUME_PERFECT_SPHERE) then
+    ! converts geographic (lat_prime) to geocentric latitude (lat)
+    if (is_mesh_elliptical) then
+      ! geocentric latitude, accounting for ellipticity factor
+      val = atan( ONE_MINUS_F_SQUARED*dtan(lat_prime * DEGREES_TO_RADIANS) ) * RADIANS_TO_DEGREES
+    else
+      ! for perfect sphere, geocentric and geographic latitudes are the same
+      val = lat_prime
+    endif
+  else
+    ! for perfect sphere, geocentric and geographic latitudes are the same
+    val = lat_prime
+  endif
+
+  ! return result
+  lat = val
+
+  end subroutine geographic_2_geocentric_lat_dble
 
 !
 !------------------------------------------------------------------------------
@@ -248,7 +289,7 @@
   ! local parameters
   double precision :: theta,phi,theta_prime
 
-  ! converts location to radius/colatitude/longitude
+  ! converts location to (geocentric) position radius/colatitude/longitude
   call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
 
   ! reduces range for colatitude to 0 and PI, for longitude to 0 and 2*PI
@@ -512,7 +553,7 @@
   y = y_in
   z = z_in
 
-  ! converts location to radius/colatitude/longitude
+  ! converts location to (geocentric) position radius/colatitude/longitude
   call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
 
   ! reduces range for colatitude to 0 and PI, for longitude to 0 and 2*PI
@@ -659,11 +700,83 @@
 !-------------------------------------------------------------------------------------------
 !
 
+  subroutine get_greatcircle_distance(theta1,phi1,theta2,phi2,dist)
+
+! returns great-circle distance (by haversine formula) in radians
+
+  use constants, only: RADIANS_TO_DEGREES
+
+  implicit none
+
+  double precision, intent(in) :: theta1,phi1,theta2,phi2    ! positions colat/phi in rad
+  double precision, intent(out) :: dist
+  ! local parameters
+  double precision :: mid_theta,mid_phi,sintheta,sinphi
+  double precision :: a
+
+! note: the haversine formula calculates the great-circle distance for positions on a sphere.
+!       It is slightly more accurate than the law of cosines formula:
+!          d = acos( sin(theta1) * sin(theta2) + cos(theta1) * cos(theta2) * cos(phi1 - phi2) )
+!       Both are valid for distances on a sphere.
+!
+!       We could correct the geodetic lat/lon positions to get geocentric lat/lon and then calculate the distance.
+!       This would be more accurate, but adds additional computational costs.
+
+  ! haversine formula
+  mid_theta = 0.5d0 * (theta1 - theta2)
+  mid_phi = 0.5d0 * (phi1 - phi2)
+
+  sintheta = dsin(mid_theta)
+  sinphi = dsin(mid_phi)
+
+  a = dsqrt( sintheta*sintheta + dcos(theta1) * dcos(theta2) * sinphi*sinphi)
+
+  if (abs(a) > 1.d0) a = sign(1.d0,a) * 1.d0 ! limit to +/- 1 numerical accuracy for asin(..)
+
+  ! great-circle (epicentral) distance in rad
+  dist = 2.d0 * asin(a)
+
+  end subroutine get_greatcircle_distance
+
+!
+!-------------------------------------------------------------------------------------------
+!
+
 ! not used yet...
 !
-!  subroutine get_greatcircle_distance(lat1,lon1,lat2,lon2,dist)
+!  subroutine get_greatcircle_distance_cosines(theta1,phi1,theta2,phi2,dist)
 !
-!! great-circle distance (by haversine formula)
+!! returns great-circle distance (by law of cosines formula) in radians
+!
+!  use constants, only: RADIANS_TO_DEGREES
+!
+!  implicit none
+!
+!  double precision, intent(in) :: theta1,phi1,theta2,phi2    ! positions colat/phi in rad
+!  double precision, intent(out) :: dist
+!  ! local parameters
+!  double precision :: a
+!
+!  ! (formula by law of cosines)
+!  a = cos(theta1)*cos(theta2) + sin(theta1)*sin(theta2)*cos(phi1-phi2)
+!
+!  if (abs(a) > 1.d0) a = sign(1.d0,a) * 1.d0 ! limit to +/- 1 numerical accuracy for acos(..)
+!
+!  ! great-circle (epicentral) distance in rad
+!  dist = acos(a)
+!
+!  end subroutine get_greatcircle_distance_cosines
+!
+!
+!
+!-------------------------------------------------------------------------------------------
+!
+
+! not used yet...
+!
+!  subroutine get_greatcircle_distance_latlon_haversine(lat1,lon1,lat2,lon2,dist)
+!
+!! returns great-circle distance (by haversine formula) in degrees
 !
 !  use constants, only: DEGREES_TO_RADIANS, RADIANS_TO_DEGREES, TWO_PI
 !
@@ -709,6 +822,6 @@
 !  ! distance in degrees
 !  dist = c * RADIANS_TO_DEGREES
 !
-!  end subroutine get_greatcircle_distance
+!  end subroutine get_greatcircle_distance_latlon_haversine
 
 

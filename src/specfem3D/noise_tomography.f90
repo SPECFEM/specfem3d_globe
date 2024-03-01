@@ -658,7 +658,7 @@
   ! local parameters
   integer :: irec,i
   double precision :: lat,lon
-  double precision :: theta,phi
+  double precision :: theta,phi,dist
   double precision :: theta_main,phi_main
   double precision, dimension(nrec) :: epidist
   ! sorting order
@@ -698,10 +698,10 @@
     phi = lon*DEGREES_TO_RADIANS
     call reduce(theta,phi)
 
-    ! computes epicentral distance
-    ! (formula by law of cosines)
-    epidist(irec) = acos(cos(theta)*cos(theta_main) + &
-                           sin(theta)*sin(theta_main)*cos(phi-phi_main))*RADIANS_TO_DEGREES
+    ! computes epicentral distance (in radians)
+    call get_greatcircle_distance(theta,phi,theta_main,phi_main,dist)
+
+    epidist(irec) = dist * RADIANS_TO_DEGREES
   enddo
 
   ! print some information about stations

@@ -367,13 +367,13 @@
   write(IOUT_VTK,'(a)') 'ASCII'
   write(IOUT_VTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
   write(IOUT_VTK, '(a,i12,a)') 'POINTS ', nglob, ' float'
-  do i = 1,nglob
 
+  do i = 1,nglob
     !x,y,z store have been converted to r theta phi already, need to revert back for xyz output
     rval = rstore_dummy(1,i)
     thetaval = rstore_dummy(2,i)
     phival = rstore_dummy(3,i)
-
+    ! converts (geocentric) position r/theta/phi to Cartesian position x/y/z
     call rthetaphi_2_xyz(xval,yval,zval,rval,thetaval,phival)
 
     write(IOUT_VTK,'(3e18.6)') real(xval,kind=4),real(yval,kind=4),real(zval,kind=4)
