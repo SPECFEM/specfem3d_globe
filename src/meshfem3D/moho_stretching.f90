@@ -42,15 +42,11 @@
   ! Moon
   use constants, only: MOON_R,MOON_R_KM
 
-  use shared_parameters, only: PLANET_TYPE,IPLANET_EARTH,IPLANET_MARS,IPLANET_MOON,R_PLANET
+  use shared_parameters, only: PLANET_TYPE,IPLANET_EARTH,IPLANET_MARS,IPLANET_MOON,R_PLANET, &
+    TOPOGRAPHY,ELLIPTICITY
 
   use meshfem_par, only: &
     RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST,REFERENCE_CRUSTAL_MODEL
-
-  use meshfem_par, only: &
-    TOPOGRAPHY
-
-  use meshfem_models_par, only: elem_is_elliptical
 
   implicit none
 
@@ -139,7 +135,7 @@
     !
     ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
     ! note: at this point, the mesh is still spherical (no need to correct latitude for ellipticity)
-    call xyz_2_rlatlon_dble(x,y,z,r,lat,lon,elem_is_elliptical)
+    call xyz_2_rlatlon_dble(x,y,z,r,lat,lon,ELLIPTICITY)
 
     ! sets longitude bounds [-180,180]
     if (lon > 180.d0 ) lon = lon - 360.0d0
@@ -299,11 +295,9 @@
     NGNOD,PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,ONE,USE_OLD_VERSION_5_1_5_FORMAT, &
     SUPPRESS_MOHO_STRETCHING
 
-  use shared_parameters, only: R_PLANET,HONOR_DEEP_MOHO
+  use shared_parameters, only: R_PLANET,HONOR_DEEP_MOHO,ELLIPTICITY
 
   use meshfem_par, only: R220
-
-  use meshfem_models_par, only: elem_is_elliptical
 
   implicit none
 
@@ -338,7 +332,7 @@
     !
     ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
     ! note: at this point, the mesh is still spherical (no need to correct latitude for ellipticity)
-    call xyz_2_rlatlon_dble(x,y,z,r,lat,lon,elem_is_elliptical)
+    call xyz_2_rlatlon_dble(x,y,z,r,lat,lon,ELLIPTICITY)
 
     ! sets longitude bounds [-180,180]
     if (lon > 180.d0 ) lon = lon - 360.0d0

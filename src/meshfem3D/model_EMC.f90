@@ -3136,9 +3136,9 @@ contains
   subroutine model_EMC_crustmantle(iregion_code,r,theta,phi,vpv,vph,vsv,vsh,eta_aniso,rho)
 
   use constants
-  use shared_parameters, only: R_PLANET,R_PLANET_KM,RHOAV,TOPOGRAPHY
+  use shared_parameters, only: R_PLANET,R_PLANET_KM,RHOAV,TOPOGRAPHY,ELLIPTICITY
   use meshfem_models_par, only: ibathy_topo
-  use meshfem_models_par, only: rspl,ellipicity_spline,ellipicity_spline2,nspl,elem_is_elliptical
+  use meshfem_models_par, only: rspl,ellipicity_spline,ellipicity_spline2,nspl
 
   use model_emc_par
 
@@ -3178,7 +3178,7 @@ contains
   rhol = 0.d0
 
   ! corrects colatitude for ellipticity in case
-  if (elem_is_elliptical) then
+  if (ELLIPTICITY) then
     ! converts to geographic colatitude
     call geocentric_2_geographic_colat_dble(theta,colat)
   else
@@ -3214,7 +3214,7 @@ contains
   endif
 
   ! ellipticity
-  if (elem_is_elliptical) then
+  if (ELLIPTICITY) then
     ! adds ellipticity factor to radius (needs geocentric colatitude)
     call add_ellipticity_rtheta(r0,theta,nspl,rspl,ellipicity_spline,ellipicity_spline2)
   endif

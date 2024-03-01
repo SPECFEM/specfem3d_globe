@@ -50,7 +50,7 @@
     REGIONAL_MOHO_MESH
 
   ! ellipticity
-  use meshfem_models_par, only: nspl,rspl,ellipicity_spline,ellipicity_spline2,elem_is_elliptical
+  use meshfem_models_par, only: nspl,rspl,ellipicity_spline,ellipicity_spline2
 
   use regions_mesh_par2, only: &
     xixstore,xiystore,xizstore, &
@@ -95,11 +95,11 @@
   logical :: elem_is_tiso
 
   ! flag to add topography before model value assignment
-  ! (for models which define point values above sea level with topography)
+  ! (for models which define point values above sea level referenced to an Earth with topography)
   logical :: is_model_with_surface_topography
 
   ! flag to add ellipticity before model value assignment
-  ! (for models which define lat/lon/depth)
+  ! (for models which define lat/lon/depth referenced to a "true", elliptical Earth)
   logical :: is_model_with_ellipticity
 
   !debug
@@ -122,8 +122,6 @@
   elem_in_crust = .false.
   ! flag if element completely in mantle (all corners below moho)
   elem_in_mantle = .false.
-  ! flag if element has ellipticity (to convert geocentric to geographic/geodetic coordinates)
-  elem_is_elliptical = .false.
 
   ! by default, (mantle) models are defined for spherical earths, thus flag turned off
   is_model_with_surface_topography = .false.
@@ -223,6 +221,7 @@
         else
           ! stretches anchor points only, interpolates GLL points later on
           call add_topography(xelm,yelm,zelm,ibathy_topo)
+
           ! re-interpolates GLL point locations
           ! needed for get_model(..) routine to consider stretched locations in xstore,.. arrays
           call compute_element_GLL_locations(xelm,yelm,zelm,ispec,nspec,xstore,ystore,zstore,shape3D)
@@ -241,13 +240,11 @@
       else
         ! make the Earth's ellipticity, use element anchor points
         call get_ellipticity(xelm,yelm,zelm,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+
         ! re-interpolates GLL point locations
         ! needed for get_model(..) routine to consider stretched locations in xstore,.. arrays
         call compute_element_GLL_locations(xelm,yelm,zelm,ispec,nspec,xstore,ystore,zstore,shape3D)
       endif
-      ! sets mesh flag
-      ! (to make sure that the conversions from geocentric Cartesian x/y/z to geodectic lat/lon position accounts for ellipticity)
-      elem_is_elliptical = .true.
     endif
   endif
 
@@ -381,9 +378,6 @@
         ! make the Earth's ellipticity, use element anchor points
         call get_ellipticity(xelm,yelm,zelm,nspl,rspl,ellipicity_spline,ellipicity_spline2)
       endif
-      ! sets mesh flag
-      ! (to make sure that the conversions from geocentric Cartesian x/y/z to geodectic lat/lon position accounts for ellipticity)
-      elem_is_elliptical = .true.
 
       !debug
       if (DEBUG_OUTPUT) then

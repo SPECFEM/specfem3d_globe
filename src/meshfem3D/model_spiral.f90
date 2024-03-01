@@ -1992,15 +1992,12 @@
   subroutine add_topography_mantle_spiral(xelm,yelm,zelm)
 
   use constants
-  use shared_parameters, only: R_PLANET,R_PLANET_KM
+  use shared_parameters, only: R_PLANET,R_PLANET_KM,ELLIPTICITY
   use meshfem_par, only: R220,R400,R670,R771
-  use meshfem_models_par, only: elem_is_elliptical
 
   implicit none
 
-  double precision :: xelm(NGNOD)
-  double precision :: yelm(NGNOD)
-  double precision :: zelm(NGNOD)
+  double precision, intent(inout) :: xelm(NGNOD),yelm(NGNOD),zelm(NGNOD)
 
   ! local parameters
   integer :: ia
@@ -2018,7 +2015,7 @@
 
     ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
     ! note: at this point, the mesh is still spherical (no need to correct latitude for ellipticity)
-    call xyz_2_rlatlon_dble(x,y,z,r,lat,lon,elem_is_elliptical)
+    call xyz_2_rlatlon_dble(x,y,z,r,lat,lon,ELLIPTICITY)
 
     ! The above subroutine produces longitudes with [0,360] convention.
     ! Need to convert to [-180,180] convention expected by subtopo_spiral below
