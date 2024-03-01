@@ -30,6 +30,7 @@
   subroutine euler_angles(rotation_matrix,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH)
 
   use constants, only: DEGREES_TO_RADIANS
+  use shared_parameters, only: ELLIPTICITY
 
   implicit none
 
@@ -40,9 +41,12 @@
   double precision :: alpha,beta,gamma
   double precision :: sina,cosa,sinb,cosb,sing,cosg
 
-! compute colatitude and longitude and convert to radians
+  ! compute colatitude and longitude and convert to radians
+  ! longitude
   alpha = CENTER_LONGITUDE_IN_DEGREES * DEGREES_TO_RADIANS
-  beta = (90.0d0 - CENTER_LATITUDE_IN_DEGREES) * DEGREES_TO_RADIANS
+  ! converts geographic latitude (degrees) to geocentric colatitude theta (radians)
+  call lat_2_geocentric_colat_dble(CENTER_LATITUDE_IN_DEGREES,beta,ELLIPTICITY)
+  ! gamma rotation
   gamma = GAMMA_ROTATION_AZIMUTH * DEGREES_TO_RADIANS
 
   sina = dsin(alpha)
@@ -52,7 +56,7 @@
   sing = dsin(gamma)
   cosg = dcos(gamma)
 
-! define rotation matrix
+  ! define rotation matrix
   rotation_matrix(1,1) = cosg*cosb*cosa-sing*sina
   rotation_matrix(1,2) = -sing*cosb*cosa-cosg*sina
   rotation_matrix(1,3) = sinb*cosa
@@ -74,6 +78,7 @@
                                             corners_lat,corners_lon)
 
   use constants, only: DEGREES_TO_RADIANS,RADIANS_TO_DEGREES,ONE,PI,TWO_PI,PI_OVER_TWO,R_UNIT_SPHERE
+  use shared_parameters, only: ELLIPTICITY
 
   implicit none
 
@@ -86,7 +91,7 @@
   integer :: i,j,ix,iy,icorner
   double precision :: rotation_matrix(3,3)
   double precision :: vector_ori(3),vector_rotated(3)
-  double precision :: r_corner,theta_corner,phi_corner,lat,lon,colat_corner
+  double precision :: r_corner,lat,lon
   double precision :: x,y,gamma,rgt,xi,eta
   double precision :: x_top,y_top,z_top
   double precision :: ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
@@ -137,22 +142,8 @@
     y_top = vector_rotated(2)
     z_top = vector_rotated(3)
 
-    ! convert to geocentric position
-    call xyz_2_rthetaphi_dble(x_top,y_top,z_top,r_corner,theta_corner,phi_corner)
-
-    ! reduce theta/phi to range [0,PI] and [0,2PI]
-    call reduce(theta_corner,phi_corner)
-
-    ! convert geocentric to geographic colatitude
-    ! note: for spherical mesh x/y/z, geographic colatitude is the same as geocentric colatitude
-    colat_corner = theta_corner
-
-    ! lon in range [-PI,PI]
-    if (phi_corner > PI) phi_corner = phi_corner - TWO_PI
-
-    ! compute real position of the corner
-    lat = (PI_OVER_TWO - colat_corner) * RADIANS_TO_DEGREES
-    lon = phi_corner * RADIANS_TO_DEGREES
+    ! convert geocentric position x/y/z to geographic lat/lon (in degrees)
+    call xyz_2_rlatlon_dble(x_top,y_top,z_top,r_corner,lat,lon,ELLIPTICITY)
 
     corners_lat(icorner) = lat
     corners_lon(icorner) = lon
