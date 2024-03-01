@@ -285,9 +285,6 @@
   endif
 !> end of part from create_regions_mesh -> initialize_layers()
 
-  ! sets up spline coefficients for ellipticity
-  if (ELLIPTICITY) call make_ellipticity(nspl,rspl,ellipicity_spline,ellipicity_spline2)
-
   ! corrects user defined starting lat by ellipticity factor to have geocentric latitude
   ! we will loop over geocentric positions and convert back to geographic for getting topography in case
   if (use_userdefined_lat .and. ELLIPTICITY) then

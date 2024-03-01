@@ -138,6 +138,9 @@
     case (REFERENCE_MODEL_CCREM)
       call model_ccrem_broadcast(CRUSTAL)
 
+    case (REFERENCE_MODEL_VPREMOON)
+      call model_vpremoon_broadcast(CRUSTAL)
+
   end select
 
   end subroutine meshfem3D_reference_model_broadcast

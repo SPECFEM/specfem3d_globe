@@ -100,11 +100,68 @@
 !-------------------------------------------------------------------------------------------------
 !
 
+  subroutine model_vpremoon_broadcast(CRUSTAL)
+
+! standard routine to setup model
+
+  use constants, only: SUPPRESS_CRUSTAL_MESH
+  use shared_parameters, only: ONE_CRUST
+
+  use model_vpremoon_par
+
+  implicit none
+
+  logical,intent(in) :: CRUSTAL
+
+  ! local parameters
+  double precision :: vp_tmp,vs_tmp,rho_tmp,Qmu_tmp,Qkappa_tmp
+  integer :: i
+
+  ! all processes will define same parameters
+  call define_model_vpremoon()
+
+  ! ONE_CRUST uses a single layer value for the crust
+  if (ONE_CRUST) then
+    ! upper crust is in (3:4)
+    rho_tmp = VPREMOON_density(NR_VPREMOON_layers-3)
+    vp_tmp = VPREMOON_vp(NR_VPREMOON_layers-3)
+    vs_tmp = VPREMOON_vs(NR_VPREMOON_layers-3)
+    Qkappa_tmp = VPREMOON_Qkappa(NR_VPREMOON_layers-3)
+    Qmu_tmp = VPREMOON_Qmu(NR_VPREMOON_layers-3)
+    ! assign all crust (1:6) values to upper crust
+    VPREMOON_density(NR_VPREMOON_layers-5:NR_VPREMOON_layers) = rho_tmp
+    VPREMOON_vp(NR_VPREMOON_layers-5:NR_VPREMOON_layers) = vp_tmp
+    VPREMOON_vs(NR_VPREMOON_layers-5:NR_VPREMOON_layers) = vs_tmp
+    VPREMOON_Qkappa(NR_VPREMOON_layers-5:NR_VPREMOON_layers) = Qkappa_tmp
+    VPREMOON_Qmu(NR_VPREMOON_layers-5:NR_VPREMOON_layers) = Qmu_tmp
+  endif
+
+  ! in case an external crustal model will be superimposed on top, we extend mantle values to the surface
+  !
+  ! strip the crust and replace it by mantle if we use an external crustal model
+  ! note: assumes that the crust is given by 6 layers
+  !       see in vpremoon.dat: regolith layer (1:2), upper crust (3:4), lower crust (5:6), the mantle
+  if (SUPPRESS_CRUSTAL_MESH .or. CRUSTAL) then
+    do i = NR_VPREMOON_layers-5,NR_VPREMOON_layers
+      VPREMOON_density(i) = VPREMOON_density(NR_VPREMOON_layers-6)
+      VPREMOON_vp(i) = VPREMOON_vp(NR_VPREMOON_layers-6)
+      VPREMOON_vs(i) = VPREMOON_vs(NR_VPREMOON_layers-6)
+      VPREMOON_Qkappa(i) = VPREMOON_Qkappa(NR_VPREMOON_layers-6)
+      VPREMOON_Qmu(i) = VPREMOON_Qmu(NR_VPREMOON_layers-6)
+    enddo
+  endif
+
+  end subroutine model_vpremoon_broadcast
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
   subroutine model_vpremoon(x,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &
                             check_doubling_flag,iregion_code)
 
   use constants
-  use shared_parameters, only: R_PLANET,RHOAV,ONE_CRUST
+  use shared_parameters, only: R_PLANET,RHOAV
 
   use model_vpremoon_par
 
@@ -130,44 +187,11 @@
 
   ! local parameters
   double precision :: r,frac,scaleval,dr,drho
-  double precision :: vp_tmp,vs_tmp,rho_tmp,Qmu_tmp,Qkappa_tmp
   integer :: i
 
   ! first allocates and defines model arrays (will be done only once)
   if (.not. allocated(VPREMOON_radius)) then
-    ! all processes will define same parameters
-    call define_model_vpremoon()
-
-    ! ONE_CRUST uses a single layer value for the crust
-    if (ONE_CRUST) then
-      ! upper crust is in (3:4)
-      rho_tmp = VPREMOON_density(NR_VPREMOON_layers-3)
-      vp_tmp = VPREMOON_vp(NR_VPREMOON_layers-3)
-      vs_tmp = VPREMOON_vs(NR_VPREMOON_layers-3)
-      Qkappa_tmp = VPREMOON_Qkappa(NR_VPREMOON_layers-3)
-      Qmu_tmp = VPREMOON_Qmu(NR_VPREMOON_layers-3)
-      ! assign all crust (1:6) values to upper crust
-      VPREMOON_density(NR_VPREMOON_layers-5:NR_VPREMOON_layers) = rho_tmp
-      VPREMOON_vp(NR_VPREMOON_layers-5:NR_VPREMOON_layers) = vp_tmp
-      VPREMOON_vs(NR_VPREMOON_layers-5:NR_VPREMOON_layers) = vs_tmp
-      VPREMOON_Qkappa(NR_VPREMOON_layers-5:NR_VPREMOON_layers) = Qkappa_tmp
-      VPREMOON_Qmu(NR_VPREMOON_layers-5:NR_VPREMOON_layers) = Qmu_tmp
-    endif
-
-    ! in case an external crustal model will be superimposed on top, we extend mantle values to the surface
-    !
-    ! strip the crust and replace it by mantle if we use an external crustal model
-    ! note: assumes that the crust is given by 6 layers
-    !       see in vpremoon.dat: regolith layer (1:2), upper crust (3:4), lower crust (5:6), the mantle
-    if (SUPPRESS_CRUSTAL_MESH .or. CRUSTAL) then
-      do i = NR_VPREMOON_layers-5,NR_VPREMOON_layers
-        VPREMOON_density(i) = VPREMOON_density(NR_VPREMOON_layers-6)
-        VPREMOON_vp(i) = VPREMOON_vp(NR_VPREMOON_layers-6)
-        VPREMOON_vs(i) = VPREMOON_vs(NR_VPREMOON_layers-6)
-        VPREMOON_Qkappa(i) = VPREMOON_Qkappa(NR_VPREMOON_layers-6)
-        VPREMOON_Qmu(i) = VPREMOON_Qmu(NR_VPREMOON_layers-6)
-      enddo
-    endif
+    call model_vpremoon_broadcast(CRUSTAL)
   endif
 
   ! compute real physical radius in meters
@@ -497,7 +521,7 @@
   subroutine model_vpremoon_density(x,rho)
 
   use constants
-  use shared_parameters, only: R_PLANET,RHOAV,ONE_CRUST
+  use shared_parameters, only: R_PLANET,RHOAV,CRUSTAL
 
   use model_vpremoon_par
 
@@ -509,28 +533,10 @@
   ! local parameters
   integer :: i
   double precision :: r,dr,frac
-  double precision :: vp_tmp,vs_tmp,rho_tmp,Qmu_tmp,Qkappa_tmp
 
   ! first allocates and defines model arrays (will be done only once)
   if (.not. allocated(VPREMOON_radius)) then
-    ! all processes will define same parameters
-    call define_model_vpremoon()
-
-    ! ONE_CRUST uses a single layer value for the crust
-    if (ONE_CRUST) then
-      ! upper crust is in (3:4)
-      rho_tmp = VPREMOON_density(NR_VPREMOON_layers-3)
-      vp_tmp = VPREMOON_vp(NR_VPREMOON_layers-3)
-      vs_tmp = VPREMOON_vs(NR_VPREMOON_layers-3)
-      Qkappa_tmp = VPREMOON_Qkappa(NR_VPREMOON_layers-3)
-      Qmu_tmp = VPREMOON_Qmu(NR_VPREMOON_layers-3)
-      ! assign all crust (1:6) values to upper crust
-      VPREMOON_density(NR_VPREMOON_layers-5:NR_VPREMOON_layers) = rho_tmp
-      VPREMOON_vp(NR_VPREMOON_layers-5:NR_VPREMOON_layers) = vp_tmp
-      VPREMOON_vs(NR_VPREMOON_layers-5:NR_VPREMOON_layers) = vs_tmp
-      VPREMOON_Qkappa(NR_VPREMOON_layers-5:NR_VPREMOON_layers) = Qkappa_tmp
-      VPREMOON_Qmu(NR_VPREMOON_layers-5:NR_VPREMOON_layers) = Qmu_tmp
-    endif
+    call model_vpremoon_broadcast(CRUSTAL)
   endif
 
   ! initializes
