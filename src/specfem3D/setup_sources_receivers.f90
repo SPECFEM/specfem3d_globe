@@ -1401,7 +1401,7 @@
   "('sed -e ',a1,'s/POINTS.*/POINTS',i6,' float/',a1,'<',a,'>',a)")&
       "'",NSOURCES + nrec,"'",trim(filename),trim(filename_new)
 
-    ! note: this system() routine is non-standard Fortran
+    ! calls as system command (system needs to have `sed` command)
     call system_command(command)
 
     ! only extract receiver locations and remove temporary file
@@ -1411,7 +1411,7 @@
    &print ',a1,'POINTS',i6,' float',a1,';if (NR > 5+',i6,')print $0}',a1,'<',a,'>',a)")&
       "'",'"',nrec,'"',NSOURCES,"'",trim(filename),trim(filename_new)
 
-    ! note: this system() routine is non-standard Fortran
+    ! calls as system command (system needs to have `awk` command)
     call system_command(command)
 
     ! only extract source locations and remove temporary file
@@ -1420,7 +1420,7 @@
   "('awk ',a1,'{if (NR < 6 + ',i6,') print $0}END{print}',a1,'<',a,'>',a,'; rm -f ',a)")&
       "'",NSOURCES,"'",trim(filename),trim(filename_new),trim(filename)
 
-    ! note: this system() routine is non-standard Fortran
+    ! calls as system command (system needs to have `awk` command)
     call system_command(command)
 
   endif
