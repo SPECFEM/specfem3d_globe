@@ -42,8 +42,8 @@
   double precision :: sina,cosa,sinb,cosb,sing,cosg
 
   ! flag to move chunk center position to geographic lon/lat instead of geocentric lon/lat when ellipticity is on.
-  ! by default, the chunk is centered around geocentric position.
-  logical, parameter :: USE_GEOGRAPHIC_CENTER_POSITION = .false.
+  ! by default, the chunk is centered around geographic position.
+  logical, parameter :: USE_GEOGRAPHIC_CENTER_POSITION = .true.
 
   ! compute colatitude and longitude and convert to radians
   if (USE_GEOGRAPHIC_CENTER_POSITION) then
