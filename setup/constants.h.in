@@ -564,14 +564,6 @@
 ! be careful when changing this flag when computing classical kernel
   integer, parameter :: NTSTEP_BETWEEN_COMPUTE_KERNELS = 1
 
-!!-----------------------------------------------------------
-!!
-!! new version compatibility
-!!
-!!-----------------------------------------------------------
-! for comparison against older versions: in version 7.0 tiso was constrained to below moho, new version allows also in crust
-  logical, parameter :: USE_OLD_VERSION_7_0_0_FORMAT = .false.
-
 
 !!-----------------------------------------------------------
 !!

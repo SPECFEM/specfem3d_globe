@@ -508,7 +508,7 @@
 
   use meshfem_models_par, only: &
     OCEANS,TOPOGRAPHY,ELLIPTICITY, &
-    ibathy_topo,CASE_3D
+    ibathy_topo
 
   use meshfem_par, only: &
     myrank,RHO_OCEANS,nspec
