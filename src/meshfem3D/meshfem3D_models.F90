@@ -1218,7 +1218,7 @@
   double precision,intent(inout) :: moho,sediment
 
   ! local parameters
-  double precision :: lat,lon,colat
+  double precision :: lat,lon
   double precision :: vpvc,vphc,vsvc,vshc,etac
   double precision :: vpc,vsc,rhoc !vpc_eu
   double precision :: c11c,c12c,c13c,c14c,c15c,c16c,c22c,c23c,c24c,c25c,c26c, &
@@ -1231,19 +1231,11 @@
   ! for point radius smaller than deepest possible crust radius (~80 km depth)
   if (r < R_DEEPEST_CRUST) return
 
-  ! converts geocentric colatitude (theta) to geographic colatitude (colat)
-  if (ELLIPTICITY) then
-    call geocentric_2_geographic_colat_dble(theta,colat)
-  else
-    ! for a spherical Earth, geocentric and geographic colat is the same
-    colat = theta
-  endif
-
+  ! converts geocentric colatitude/lon (theta/phi) to geographic latitude/lon (lat/lon)
   ! lat/lon in degrees (range lat/lon = [-90,90] / [-180,180]
-  lat = (PI_OVER_TWO - colat) * RADIANS_TO_DEGREES
-  lon = phi * RADIANS_TO_DEGREES
+  call thetaphi_2_geographic_latlon_dble(theta,phi,lat,lon,ELLIPTICITY)
 
-  ! puts lon in range [-180,180]
+  ! double-check lon in range [-180,180]
   if (lon > 180.0d0 ) lon = lon - 360.0d0
 
 !---
