@@ -1,10 +1,10 @@
 cff-version: 1.2.0
 
 message: "If this software turns out to be helpful for your research, please cite both the article from preferred-citation and the software itself. More detailed citation suggestions can be found in the user manual."
-title: 'SPECFEM/specfem3d_globe: SPECFEM3D_GLOBE v8.1.0'
-version: v8.1.0
+title: 'SPECFEM/specfem3d_globe: SPECFEM3D_GLOBE'
+version: v8.1.1
 date-released: 2023-12-20
-repository-code: https://github.com/SPECFEM/specfem3d_globe/tree/v8.1.0
+repository-code: https://github.com/SPECFEM/specfem3d_globe
 url: "https://github.com/SPECFEM/specfem3d_globe"
 type: software
 identifiers:
