@@ -479,7 +479,7 @@
         write(IMAIN,*)
         ! different output for force point sources
         if (USE_FORCE_POINT_SOURCE) then
-          write(IMAIN,*) '  using force point source: '
+          write(IMAIN,*) '  using force point source:'
           write(IMAIN,*) '    xi coordinate of source in that element: ',xi_source(isource)
           write(IMAIN,*) '    eta coordinate of source in that element: ',eta_source(isource)
           write(IMAIN,*) '    gamma coordinate of source in that element: ',gamma_source(isource)
@@ -503,7 +503,7 @@
             xyz_found_subset(2,isource_in_this_subset),xyz_found_subset(3,isource_in_this_subset)
         else
           ! moment tensor
-          write(IMAIN,*) '  using moment tensor source: '
+          write(IMAIN,*) '  using moment tensor source:'
           write(IMAIN,*) '    xi coordinate of source in that element: ',xi_source(isource)
           write(IMAIN,*) '    eta coordinate of source in that element: ',eta_source(isource)
           write(IMAIN,*) '    gamma coordinate of source in that element: ',gamma_source(isource)
