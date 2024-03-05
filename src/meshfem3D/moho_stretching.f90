@@ -32,7 +32,7 @@
 
   use constants, only: myrank, &
     NGNOD,R_UNIT_SPHERE, &
-    PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,SMALLVAL,ONE,USE_OLD_VERSION_5_1_5_FORMAT, &
+    PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,SMALLVAL,ONE, &
     SUPPRESS_MOHO_STRETCHING,ICRUST_CRUST_SH,ICRUST_SGLOBECRUST
 
   ! Earth
@@ -165,16 +165,14 @@
     !          nevertheless its moho depth should be set and will be used in linear stretching
     if (moho < TINYVAL ) call exit_mpi(myrank,'Error moho depth to honor')
 
-    if (.not. USE_OLD_VERSION_5_1_5_FORMAT) then
-      ! limits moho depth to a threshold value to avoid stretching problems
-      if (moho < MOHO_MINIMUM) then
-        print *,'moho value exceeds minimum (in km): ',moho*R_PLANET/1000.d0,MOHO_MINIMUM*R_PLANET/1000.d0,'lat/lon:',lat,lon
-        moho = MOHO_MINIMUM
-      endif
-      if (moho > MOHO_MAXIMUM) then
-        print *,'moho value exceeds maximum (in km): ',moho*R_PLANET/1000.d0,MOHO_MAXIMUM*R_PLANET/1000.d0,'lat/lon:',lat,lon
-        moho = MOHO_MAXIMUM
-      endif
+    ! limits moho depth to a threshold value to avoid stretching problems
+    if (moho < MOHO_MINIMUM) then
+      print *,'moho value exceeds minimum (in km): ',moho*R_PLANET/1000.d0,MOHO_MINIMUM*R_PLANET/1000.d0,'lat/lon:',lat,lon
+      moho = MOHO_MINIMUM
+    endif
+    if (moho > MOHO_MAXIMUM) then
+      print *,'moho value exceeds maximum (in km): ',moho*R_PLANET/1000.d0,MOHO_MAXIMUM*R_PLANET/1000.d0,'lat/lon:',lat,lon
+      moho = MOHO_MAXIMUM
     endif
 
     ! radius of moho depth (normalized)
@@ -292,7 +290,7 @@
 ! stretches the moho according to the crustal variations (CRUST1.0, CRUST2.0, ..)
 
   use constants, only: myrank, &
-    NGNOD,PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,ONE,USE_OLD_VERSION_5_1_5_FORMAT, &
+    NGNOD,PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,ONE, &
     SUPPRESS_MOHO_STRETCHING
 
   use shared_parameters, only: R_PLANET,HONOR_DEEP_MOHO,ELLIPTICITY

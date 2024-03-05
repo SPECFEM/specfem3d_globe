@@ -571,7 +571,7 @@
 ! Anyway, I'm sorry that I'm not giving a clear answer, but hopefully this
 ! gives some thoughts.
 
-  use constants, only: PI_OVER_TWO,TINYVAL,ASSUME_PERFECT_SPHERE,USE_OLD_VERSION_5_1_5_FORMAT
+  use constants, only: PI_OVER_TWO,TINYVAL,ASSUME_PERFECT_SPHERE
   use shared_parameters, only: ONE_MINUS_F_SQUARED
 
   implicit none
@@ -597,12 +597,8 @@
 
   if (.not. ASSUME_PERFECT_SPHERE) then
     ! mesh is elliptical
-    if (USE_OLD_VERSION_5_1_5_FORMAT) then
-      val = PI_OVER_TWO - datan(1.006760466d0*dcos(theta)/dmax1(TINYVAL,dsin(theta)))
-    else
-      ! converts geocentric colatitude theta to geographic colatitude theta_prime
-      val = PI_OVER_TWO - datan(FACTOR_TAN*dcos(theta)/dmax1(TINYVAL,dsin(theta)))
-    endif
+    ! converts geocentric colatitude theta to geographic colatitude theta_prime
+    val = PI_OVER_TWO - datan(FACTOR_TAN*dcos(theta)/dmax1(TINYVAL,dsin(theta)))
   else
     ! mesh is spherical, thus geocentric and geographic colatitudes are identical
     val = theta

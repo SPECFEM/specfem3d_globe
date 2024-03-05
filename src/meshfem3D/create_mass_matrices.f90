@@ -552,19 +552,9 @@
   ! initializes
   do_ocean_load = .false.
 
-  ! note: old version (5.1.5)
-  ! only for models where 3D crustal stretching was used (even without topography?)
-  if (USE_OLD_VERSION_5_1_5_FORMAT) then
-    if (CASE_3D) then
-      do_ocean_load = .true.
-    endif
-  else
-    ! note: new version:
-    ! for 3D Earth with topography, compute local height of oceans
-    if (TOPOGRAPHY) then
-      do_ocean_load = .true.
-    endif
-  endif
+  ! note: new version:
+  !       for 3D Earth with topography, compute local height of oceans
+  if (TOPOGRAPHY) do_ocean_load = .true.
 
   ! create ocean load mass matrix for degrees of freedom at ocean bottom
   rmass_ocean_load(:) = 0._CUSTOM_REAL

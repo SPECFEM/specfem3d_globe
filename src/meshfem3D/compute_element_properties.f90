@@ -477,7 +477,7 @@
 
 ! sets transverse isotropic flag for elements in crust/mantle
 
-  use constants, only: IMAIN,myrank,USE_OLD_VERSION_7_0_0_FORMAT,USE_OLD_VERSION_5_1_5_FORMAT, &
+  use constants, only: IMAIN,myrank,USE_OLD_VERSION_7_0_0_FORMAT, &
     IFLAG_CRUST,IFLAG_220_80,IFLAG_80_MOHO,IFLAG_670_220,IFLAG_MANTLE_NORMAL,IREGION_CRUST_MANTLE, &
     REFERENCE_MODEL_1DREF,REFERENCE_MODEL_1DREF, &
     THREE_D_MODEL_S362WMANI,THREE_D_MODEL_SGLOBE
@@ -513,8 +513,6 @@
         write(IMAIN,*) '    using fully transverse isotopic mantle'
       if (USE_OLD_VERSION_7_0_0_FORMAT) &
         write(IMAIN,*) '    using formatting from version 7.0.0'
-      if (USE_OLD_VERSION_5_1_5_FORMAT) &
-        write(IMAIN,*) '    using formatting from version 5.1.5'
       call flush_IMAIN()
     endif
   endif
@@ -553,14 +551,7 @@
     ! THREE_D_MODEL_S29EA
     ! THREE_D_MODEL_GLL
     ! which show significant transverse isotropy also below 220km depth
-    if (USE_OLD_VERSION_5_1_5_FORMAT) then
-      ! assigns TI only to elements below (2-layer) fictitious moho down to 670
-      if (idoubling(ispec) == IFLAG_220_80 &
-        .or. idoubling(ispec) == IFLAG_80_MOHO &
-        .or. idoubling(ispec) == IFLAG_670_220) then
-        elem_is_tiso = .true.
-      endif
-    else if (USE_OLD_VERSION_7_0_0_FORMAT) then
+    if (USE_OLD_VERSION_7_0_0_FORMAT) then
       ! assigns TI to elements in mantle elements just below actual moho down to 670
       if (idoubling(ispec) == IFLAG_670_220 &
           .or. idoubling(ispec) == IFLAG_220_80 &
@@ -581,17 +572,7 @@
   case default
     ! default reference models
     ! for example, PREM assigns transverse isotropy between Moho and 220km
-    if (USE_OLD_VERSION_5_1_5_FORMAT) then
-      ! assigns TI only to elements below (2-layer) fictitious moho
-      if (idoubling(ispec) == IFLAG_220_80 &
-          .or. idoubling(ispec) == IFLAG_80_MOHO) then
-        ! default case for PREM reference models:
-        ! models use only transverse isotropy between moho and 220 km depth
-        elem_is_tiso = .true.
-        ! checks mantle flag to be sure
-        if (elem_in_mantle .eqv. .false. ) stop 'Error mantle flag confused between moho and 220'
-      endif
-    else if (USE_OLD_VERSION_7_0_0_FORMAT) then
+    if (USE_OLD_VERSION_7_0_0_FORMAT) then
       ! assigns TI to elements in mantle elements just below actual moho
       if (idoubling(ispec) == IFLAG_220_80 &
           .or. idoubling(ispec) == IFLAG_80_MOHO &
@@ -621,7 +602,7 @@
   !       older implementations used also the flag elem_in_mantle to distinguish elements in the IFLAG_CRUST layer
   !       which were below the actual moho (needed for the case of 3D crustal models and thin oceanic moho).
   !       this flag however becomes obsolete in this newer implementation. it is kept for backward compatibility,
-  !       in case one wants to run a simulation with USE_OLD_VERSION_5_1_5_FORMAT or USE_OLD_VERSION_7_0_0_FORMAT turned on.
+  !       in case one wants to run a simulation with USE_OLD_VERSION_7_0_0_FORMAT turned on.
 
   ! 3D mantle model specific additions
   select case (THREE_D_MODEL)
