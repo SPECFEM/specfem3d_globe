@@ -790,8 +790,6 @@
 
 ! returns great-circle distance (by haversine formula) in radians
 
-  use constants, only: RADIANS_TO_DEGREES
-
   implicit none
 
   double precision, intent(in) :: theta1,phi1,theta2,phi2    ! positions colat/phi in rad
@@ -808,6 +806,26 @@
 !       We could correct the geodetic lat/lon positions to get geocentric lat/lon and then calculate the distance.
 !       This would be more accurate, but adds additional computational costs.
 
+  ! using latitudes:
+  !  lat1 = PI_OVER_TWO - theta1    ! in rad
+  !  lat2 = PI_OVER_TWO - theta2
+  !  ! haversine formula
+  !  mid_lat = 0.5d0 * (lat1 - lat2)
+  !  mid_lon = 0.5d0 * (phi1 - phi2)
+  !  sinlat = dsin(mid_lat)
+  !  sinlon = dsin(mid_lon)
+  !  a = dsqrt( sinlat*sinlat + dcos(lat1) * dcos(lat2) * sinlon*sinlon )
+
+  ! here, we're using colatitudes:
+  !  -> lat1 - lat2 = pi/2 - theta1 - (pi/2 - theta2)
+  !                 = theta2 - theta1
+  !     it doesn't matter though if we use (theta2 - theta1) or (theta1 - theta2) below as it will be used
+  !     together with sin^2.
+  !
+  !  -> cos(lat1)   = cos(pi/2 - theta1)
+  !                 = sin(theta1)
+  !     this is the main difference wrt/ to the formula for latitudes
+
   ! haversine formula
   mid_theta = 0.5d0 * (theta1 - theta2)
   mid_phi = 0.5d0 * (phi1 - phi2)
@@ -815,12 +833,12 @@
   sintheta = dsin(mid_theta)
   sinphi = dsin(mid_phi)
 
-  a = dsqrt( sintheta*sintheta + dcos(theta1) * dcos(theta2) * sinphi*sinphi)
+  a = dsqrt( sintheta*sintheta + dsin(theta1) * dsin(theta2) * sinphi*sinphi )
 
   if (abs(a) > 1.d0) a = sign(1.d0,a) * 1.d0 ! limit to +/- 1 numerical accuracy for asin(..)
 
   ! great-circle (epicentral) distance in rad
-  dist = 2.d0 * asin(a)
+  dist = 2.d0 * dasin(a)
 
   end subroutine get_greatcircle_distance
 
