@@ -42,7 +42,9 @@
 
   use specfem_par_crustmantle, only: &
     ibool => ibool_crust_mantle, &
-    xstore => xstore_crust_mantle,ystore => ystore_crust_mantle,zstore => zstore_crust_mantle
+    xstore => xstore_crust_mantle, &
+    ystore => ystore_crust_mantle, &
+    zstore => zstore_crust_mantle
 
   ! for point search
   use specfem_par, only: &

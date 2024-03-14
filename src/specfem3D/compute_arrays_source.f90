@@ -25,51 +25,39 @@
 !
 !=====================================================================
 
-  subroutine compute_arrays_source(sourcearray, &
-                                   xi_source,eta_source,gamma_source, &
-                                   Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
-                                   xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
-                                   xigll,yigll,zigll)
+  subroutine compute_arrays_source_cmt(sourcearray, &
+                                       hxis,hetas,hgammas,hpxis,hpetas,hpgammas, &
+                                       Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
+                                       xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
 
   use constants
 
   implicit none
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearray
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ), intent(out) :: sourcearray
 
-  double precision :: xi_source,eta_source,gamma_source
-  double precision :: Mxx,Myy,Mzz,Mxy,Mxz,Myz
+  double precision, dimension(NGLLX), intent(in) :: hxis,hpxis
+  double precision, dimension(NGLLY), intent(in) :: hetas,hpetas
+  double precision, dimension(NGLLZ), intent(in) :: hgammas,hpgammas
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: xix,xiy,xiz,etax,etay,etaz, &
+  double precision, intent(in) :: Mxx,Myy,Mzz,Mxy,Mxz,Myz
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: xix,xiy,xiz,etax,etay,etaz, &
         gammax,gammay,gammaz
-
-  ! Gauss-Lobatto-Legendre points of integration and weights
-  double precision, dimension(NGLLX) :: xigll
-  double precision, dimension(NGLLY) :: yigll
-  double precision, dimension(NGLLZ) :: zigll
 
   ! local parameters
   double precision :: xixd,xiyd,xizd,etaxd,etayd,etazd,gammaxd,gammayd,gammazd
 
   ! source arrays
   double precision, dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearrayd
-  double precision, dimension(NGLLX) :: hxis,hpxis
-  double precision, dimension(NGLLY) :: hetas,hpetas
-  double precision, dimension(NGLLZ) :: hgammas,hpgammas
 
-  double precision :: hlagrange
+  double precision :: hlagrange,hlagrange_xi,hlagrange_eta,hlagrange_gamma
   double precision :: dsrc_dx, dsrc_dy, dsrc_dz
   double precision :: dxis_dx, detas_dx, dgammas_dx
   double precision :: dxis_dy, detas_dy, dgammas_dy
   double precision :: dxis_dz, detas_dz, dgammas_dz
 
   integer :: k,l,m
-
-! compute Lagrange polynomials at the source location
-! the source does not necessarily correspond to a Gauss-Lobatto point
-  call lagrange_any(xi_source,NGLLX,xigll,hxis,hpxis)
-  call lagrange_any(eta_source,NGLLY,yigll,hetas,hpetas)
-  call lagrange_any(gamma_source,NGLLZ,zigll,hgammas,hpgammas)
 
   dxis_dx = ZERO
   dxis_dy = ZERO
@@ -81,65 +69,123 @@
   dgammas_dy = ZERO
   dgammas_dz = ZERO
 
+  ! derivatives dxi/dx, dxi/dy, etc. evaluated at source position
   do m = 1,NGLLZ
-     do l = 1,NGLLY
-        do k = 1,NGLLX
+    do l = 1,NGLLY
+      do k = 1,NGLLX
+        xixd    = dble(xix(k,l,m))
+        xiyd    = dble(xiy(k,l,m))
+        xizd    = dble(xiz(k,l,m))
+        etaxd   = dble(etax(k,l,m))
+        etayd   = dble(etay(k,l,m))
+        etazd   = dble(etaz(k,l,m))
+        gammaxd = dble(gammax(k,l,m))
+        gammayd = dble(gammay(k,l,m))
+        gammazd = dble(gammaz(k,l,m))
 
-           xixd    = dble(xix(k,l,m))
-           xiyd    = dble(xiy(k,l,m))
-           xizd    = dble(xiz(k,l,m))
-           etaxd   = dble(etax(k,l,m))
-           etayd   = dble(etay(k,l,m))
-           etazd   = dble(etaz(k,l,m))
-           gammaxd = dble(gammax(k,l,m))
-           gammayd = dble(gammay(k,l,m))
-           gammazd = dble(gammaz(k,l,m))
+        hlagrange = hxis(k) * hetas(l) * hgammas(m)
 
-           hlagrange = hxis(k) * hetas(l) * hgammas(m)
+        dxis_dx = dxis_dx + hlagrange * xixd
+        dxis_dy = dxis_dy + hlagrange * xiyd
+        dxis_dz = dxis_dz + hlagrange * xizd
 
-           dxis_dx = dxis_dx + hlagrange * xixd
-           dxis_dy = dxis_dy + hlagrange * xiyd
-           dxis_dz = dxis_dz + hlagrange * xizd
+        detas_dx = detas_dx + hlagrange * etaxd
+        detas_dy = detas_dy + hlagrange * etayd
+        detas_dz = detas_dz + hlagrange * etazd
 
-           detas_dx = detas_dx + hlagrange * etaxd
-           detas_dy = detas_dy + hlagrange * etayd
-           detas_dz = detas_dz + hlagrange * etazd
-
-           dgammas_dx = dgammas_dx + hlagrange * gammaxd
-           dgammas_dy = dgammas_dy + hlagrange * gammayd
-           dgammas_dz = dgammas_dz + hlagrange * gammazd
-
-       enddo
-     enddo
+        dgammas_dx = dgammas_dx + hlagrange * gammaxd
+        dgammas_dy = dgammas_dy + hlagrange * gammayd
+        dgammas_dz = dgammas_dz + hlagrange * gammazd
+      enddo
+    enddo
   enddo
 
-! calculate source array
+  ! calculate source array
   sourcearrayd(:,:,:,:) = ZERO
+
   do m = 1,NGLLZ
-     do l = 1,NGLLY
-        do k = 1,NGLLX
+    do l = 1,NGLLY
+      do k = 1,NGLLX
+        hlagrange_xi    = hpxis(k) *  hetas(l) *  hgammas(m)
+        hlagrange_eta   =  hxis(k) * hpetas(l) *  hgammas(m)
+        hlagrange_gamma =  hxis(k) *  hetas(l) * hpgammas(m)
 
-           dsrc_dx = (hpxis(k)*dxis_dx)*hetas(l)*hgammas(m) + hxis(k)*(hpetas(l)*detas_dx)*hgammas(m) + &
-                                                                hxis(k)*hetas(l)*(hpgammas(m)*dgammas_dx)
-           dsrc_dy = (hpxis(k)*dxis_dy)*hetas(l)*hgammas(m) + hxis(k)*(hpetas(l)*detas_dy)*hgammas(m) + &
-                                                                hxis(k)*hetas(l)*(hpgammas(m)*dgammas_dy)
-           dsrc_dz = (hpxis(k)*dxis_dz)*hetas(l)*hgammas(m) + hxis(k)*(hpetas(l)*detas_dz)*hgammas(m) + &
-                                                                hxis(k)*hetas(l)*(hpgammas(m)*dgammas_dz)
+        ! gradient at source position
+        dsrc_dx = hlagrange_xi * dxis_dx &
+                + hlagrange_eta * detas_dx &
+                + hlagrange_gamma * dgammas_dx
 
-           sourcearrayd(1,k,l,m) = sourcearrayd(1,k,l,m) + (Mxx*dsrc_dx + Mxy*dsrc_dy + Mxz*dsrc_dz)
-           sourcearrayd(2,k,l,m) = sourcearrayd(2,k,l,m) + (Mxy*dsrc_dx + Myy*dsrc_dy + Myz*dsrc_dz)
-           sourcearrayd(3,k,l,m) = sourcearrayd(3,k,l,m) + (Mxz*dsrc_dx + Myz*dsrc_dy + Mzz*dsrc_dz)
+        dsrc_dy = hlagrange_xi * dxis_dy &
+                + hlagrange_eta * detas_dy &
+                + hlagrange_gamma * dgammas_dy
 
-       enddo
-     enddo
+        dsrc_dz = hlagrange_xi * dxis_dz &
+                + hlagrange_eta * detas_dz &
+                + hlagrange_gamma * dgammas_dz
+
+        sourcearrayd(1,k,l,m) = sourcearrayd(1,k,l,m) + (Mxx*dsrc_dx + Mxy*dsrc_dy + Mxz*dsrc_dz)
+        sourcearrayd(2,k,l,m) = sourcearrayd(2,k,l,m) + (Mxy*dsrc_dx + Myy*dsrc_dy + Myz*dsrc_dz)
+        sourcearrayd(3,k,l,m) = sourcearrayd(3,k,l,m) + (Mxz*dsrc_dx + Myz*dsrc_dy + Mzz*dsrc_dz)
+      enddo
+    enddo
   enddo
 
   ! distinguish between single and double precision for reals
   sourcearray(:,:,:,:) = real(sourcearrayd(:,:,:,:), kind=CUSTOM_REAL)
 
-  end subroutine compute_arrays_source
+  end subroutine compute_arrays_source_cmt
 
-!================================================================
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+! compute array for force point source
+
+  subroutine compute_arrays_source_forcesolution(sourcearray,hxis,hetas,hgammas,factor_source,comp_x,comp_y,comp_z,nu_source)
+
+  use constants
+
+  implicit none
+
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ), intent(out) :: sourcearray
+
+  double precision, dimension(NGLLX), intent(in) :: hxis
+  double precision, dimension(NGLLY), intent(in) :: hetas
+  double precision, dimension(NGLLZ), intent(in) :: hgammas
+  double precision, intent(in) :: factor_source
+  double precision, intent(in) :: comp_x,comp_y,comp_z
+  double precision, dimension(NDIM,NDIM), intent(in) :: nu_source
+
+  ! local parameters
+  integer :: i,j,k
+  double precision :: hlagrange
+  double precision, dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearrayd
+
+  ! initializes
+  sourcearrayd(:,:,:,:) = ZERO
+
+  ! calculates source array for interpolated location
+  do k = 1,NGLLZ
+    do j = 1,NGLLY
+      do i = 1,NGLLX
+        hlagrange = hxis(i) * hetas(j) * hgammas(k)
+
+        ! identical source array components in x,y,z-direction
+        sourcearrayd(:,i,j,k) = factor_source *  hlagrange * ( nu_source(1,:) * comp_x + &
+                                                               nu_source(2,:) * comp_y + &
+                                                               nu_source(3,:) * comp_z )
+      enddo
+    enddo
+  enddo
+
+  ! distinguish between single and double precision for reals
+  sourcearray(:,:,:,:) = real(sourcearrayd(:,:,:,:), kind=CUSTOM_REAL)
+
+  end subroutine compute_arrays_source_forcesolution
+
+!
+!-------------------------------------------------------------------------------------------------
+!
 
   subroutine compute_arrays_source_adjoint(adj_source_file,nu,source_adjoint, &
                                            NSTEP_BLOCK,iadjsrc,it_sub_adj)

@@ -507,6 +507,9 @@
           write(IMAIN,*) '    xi coordinate of source in that element: ',xi_source(isource)
           write(IMAIN,*) '    eta coordinate of source in that element: ',eta_source(isource)
           write(IMAIN,*) '    gamma coordinate of source in that element: ',gamma_source(isource)
+          write(IMAIN,*)
+          write(IMAIN,*) '    at (x,y,z) coordinates = ',xyz_found_subset(1,isource_in_this_subset), &
+            xyz_found_subset(2,isource_in_this_subset),xyz_found_subset(3,isource_in_this_subset)
         endif
         write(IMAIN,*)
 

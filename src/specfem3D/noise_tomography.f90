@@ -537,20 +537,21 @@
   implicit none
 
   ! input parameters
-  integer :: NSTEP
-  double precision, dimension(NGLLX) :: xigll
-  double precision, dimension(NGLLY) :: yigll
-  double precision, dimension(NGLLZ) :: zigll
-  double precision, dimension(NDIM,NDIM) :: nu_single  ! rotation matrix at the main receiver
+  double precision, intent(in) :: xi_noise, eta_noise, gamma_noise ! main receiver location
+  double precision, dimension(NDIM,NDIM), intent(in) :: nu_single  ! rotation matrix at the main receiver
+  double precision, dimension(NGLLX), intent(in) :: xigll
+  double precision, dimension(NGLLY), intent(in) :: yigll
+  double precision, dimension(NGLLZ), intent(in) :: zigll
+  integer, intent(in) :: NSTEP
   ! output parameters
-  real(kind=CUSTOM_REAL),dimension(NDIM,NGLLX,NGLLY,NGLLZ,NSTEP) :: noise_sourcearray
+  real(kind=CUSTOM_REAL),dimension(NDIM,NGLLX,NGLLY,NGLLZ,NSTEP), intent(out) :: noise_sourcearray
+
   ! local parameters
   integer itime, i, j, k, ier, nlines
   real(kind=CUSTOM_REAL) :: junk
   real(kind=CUSTOM_REAL), dimension(NSTEP) :: noise_src
   real(kind=CUSTOM_REAL), dimension(NDIM,NSTEP) :: noise_src_u
   double precision, dimension(NDIM) :: nu_main       ! component direction chosen at the main receiver
-  double precision :: xi_noise, eta_noise, gamma_noise ! main receiver location
   double precision, dimension(NGLLX) :: hxir, hpxir
   double precision, dimension(NGLLY) :: hetar, hpetar
   double precision, dimension(NGLLZ) :: hgammar, hpgammar

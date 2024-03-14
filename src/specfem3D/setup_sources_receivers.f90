@@ -1527,18 +1527,17 @@
   implicit none
 
   ! local parameters
-  integer :: isource,i,j,k,ispec !,iglob
+  integer :: isource,ispec
 
   double precision, dimension(NGLLX) :: hxis,hpxis
   double precision, dimension(NGLLY) :: hetas,hpetas
   double precision, dimension(NGLLZ) :: hgammas,hpgammas
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearray
-  double precision, dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearrayd
 
   double precision :: xi,eta,gamma
-  double precision :: hlagrange
-  double precision :: norm
+  double precision :: norm,comp_x,comp_y,comp_z
+  double precision :: factor_source
 
   do isource = 1,NSOURCES
 
@@ -1564,102 +1563,57 @@
       eta = eta_source(isource)
       gamma = gamma_source(isource)
 
-!      ! pre-computes source contribution on GLL points
-!      call compute_arrays_source(sourcearray,xi,eta,gamma, &
-!                          Mxx(isource),Myy(isource),Mzz(isource),Mxy(isource),Mxz(isource),Myz(isource), &
-!                          xix_crust_mantle(:,:,:,ispec),xiy_crust_mantle(:,:,:,ispec),xiz_crust_mantle(:,:,:,ispec), &
-!                          etax_crust_mantle(:,:,:,ispec),etay_crust_mantle(:,:,:,ispec),etaz_crust_mantle(:,:,:,ispec), &
-!                          gammax_crust_mantle(:,:,:,ispec),gammay_crust_mantle(:,:,:,ispec),gammaz_crust_mantle(:,:,:,ispec), &
-!                          xigll,yigll,zigll)
-!
-!      ! point forces, initializes sourcearray, used for simplified CUDA routines
-!    !-------------POINT FORCE-----------------------------------------------
-!      if (USE_FORCE_POINT_SOURCE) then
-!        ! note: for use_force_point_source xi/eta/gamma are in the range [1,NGLL*]
-!        iglob = ibool_crust_mantle(nint(xi),nint(eta),nint(gamma),ispec)
-!
-!        ! sets sourcearrays
-!        do k = 1,NGLLZ
-!          do j = 1,NGLLY
-!            do i = 1,NGLLX
-!              if (ibool_crust_mantle(i,j,k,ispec) == iglob) then
-!                ! elastic source components
-!                sourcearray(:,i,j,k) = nu_source(COMPONENT_FORCE_SOURCE,:,isource)
-!              endif
-!            enddo
-!          enddo
-!        enddo
-!      endif
-!    !-------------POINT FORCE-----------------------------------------------
-!
-!      ! stores source excitations
-!      sourcearrays(:,:,:,:,isource) = sourcearray(:,:,:,:)
-!    endif
-
       ! compute Lagrange polynomials at the source location
       call lagrange_any(xi,NGLLX,xigll,hxis,hpxis)
       call lagrange_any(eta,NGLLY,yigll,hetas,hpetas)
       call lagrange_any(gamma,NGLLZ,zigll,hgammas,hpgammas)
 
-      if (USE_FORCE_POINT_SOURCE) then ! use of FORCESOLUTION files
+      ! pre-computes source contribution on GLL points
+      if (USE_FORCE_POINT_SOURCE) then
+        ! use of FORCESOLUTION files
 
         ! note: for use_force_point_source xi/eta/gamma are also in the range [-1,1], for exact positioning
+        factor_source = factor_force_source(isource)
 
-        ! initializes source array
-        sourcearrayd(:,:,:,:) = 0.0d0
+        ! we use a tilted force defined by its magnitude and the projections
+        ! of an arbitrary (non-unitary) direction vector on the E/N/Z_UP basis
+        !
+        ! note: nu_source(iorientation,:,isource) is the rotation matrix from ECEF to local N-E-UP
+        !       (defined in src/specfem3D/locate_sources.f90)
 
-        ! calculates source array for interpolated location
-        do k=1,NGLLZ
-          do j=1,NGLLY
-            do i=1,NGLLX
-              hlagrange = hxis(i) * hetas(j) * hgammas(k)
+        ! length of component vector
+        norm = dsqrt( comp_dir_vect_source_E(isource)**2 &
+                    + comp_dir_vect_source_N(isource)**2 &
+                    + comp_dir_vect_source_Z_UP(isource)**2 )
 
-              ! elastic source
-              norm = sqrt( comp_dir_vect_source_E(isource)**2 &
-                         + comp_dir_vect_source_N(isource)**2 &
-                         + comp_dir_vect_source_Z_UP(isource)**2 )
+        ! checks norm of component vector
+        if (norm < TINYVAL) then
+          call exit_MPI(myrank,'error force point source: component vector has (almost) zero norm')
+        endif
 
-              ! checks norm of component vector
-              if (norm < TINYVAL) then
-                call exit_MPI(myrank,'error force point source: component vector has (almost) zero norm')
-              endif
+        ! normalizes given component vector
+        comp_x = comp_dir_vect_source_N(isource) / norm      ! N/E component changed compared to Cartesian version
+        comp_y = comp_dir_vect_source_E(isource) / norm
+        comp_z = comp_dir_vect_source_Z_UP(isource) / norm
 
-              ! normalizes vector
-              comp_dir_vect_source_E(isource) = comp_dir_vect_source_E(isource) / norm
-              comp_dir_vect_source_N(isource) = comp_dir_vect_source_N(isource) / norm
-              comp_dir_vect_source_Z_UP(isource) = comp_dir_vect_source_Z_UP(isource) / norm
+        call compute_arrays_source_forcesolution(sourcearray,hxis,hetas,hgammas,factor_source, &
+                                                 comp_x,comp_y,comp_z,nu_source(:,:,isource))
 
-              ! we use a tilted force defined by its magnitude and the projections
-              ! of an arbitrary (non-unitary) direction vector on the E/N/Z_UP basis
-              !
-              ! note: nu_source(iorientation,:,isource) is the rotation matrix from ECEF to local N-E-UP
-              !       (defined in src/specfem3D/locate_sources.f90)
-              sourcearrayd(:,i,j,k) = factor_force_source(isource) * hlagrange * &
-                                      ( nu_source(1,:,isource) * comp_dir_vect_source_N(isource) + &
-                                        nu_source(2,:,isource) * comp_dir_vect_source_E(isource) + &
-                                        nu_source(3,:,isource) * comp_dir_vect_source_Z_UP(isource) )
-            enddo
-          enddo
-        enddo
-
-        ! distinguish between single and double precision for reals
-        sourcearray(:,:,:,:) = real(sourcearrayd(:,:,:,:),kind=CUSTOM_REAL)
-
-      else ! use of CMTSOLUTION files
-
-        call compute_arrays_source(sourcearray,xi,eta,gamma, &
-                          Mxx(isource),Myy(isource),Mzz(isource),Mxy(isource), &
-                          Mxz(isource),Myz(isource), &
-                          xix_crust_mantle(:,:,:,ispec), &
-                          xiy_crust_mantle(:,:,:,ispec), &
-                          xiz_crust_mantle(:,:,:,ispec), &
-                          etax_crust_mantle(:,:,:,ispec), &
-                          etay_crust_mantle(:,:,:,ispec), &
-                          etaz_crust_mantle(:,:,:,ispec), &
-                          gammax_crust_mantle(:,:,:,ispec), &
-                          gammay_crust_mantle(:,:,:,ispec), &
-                          gammaz_crust_mantle(:,:,:,ispec), &
-                          xigll,yigll,zigll)
+      else
+        ! use of CMTSOLUTION files
+        call compute_arrays_source_cmt(sourcearray, &
+                                       hxis,hetas,hgammas,hpxis,hpetas,hpgammas, &
+                                       Mxx(isource),Myy(isource),Mzz(isource),Mxy(isource), &
+                                       Mxz(isource),Myz(isource), &
+                                       xix_crust_mantle(:,:,:,ispec), &
+                                       xiy_crust_mantle(:,:,:,ispec), &
+                                       xiz_crust_mantle(:,:,:,ispec), &
+                                       etax_crust_mantle(:,:,:,ispec), &
+                                       etay_crust_mantle(:,:,:,ispec), &
+                                       etaz_crust_mantle(:,:,:,ispec), &
+                                       gammax_crust_mantle(:,:,:,ispec), &
+                                       gammay_crust_mantle(:,:,:,ispec), &
+                                       gammaz_crust_mantle(:,:,:,ispec))
 
       endif
 
