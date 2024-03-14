@@ -1289,7 +1289,7 @@
 
 ! returns the chunk number and process number xi/eta for a given location lat/lon (degrees)
 
-  use constants, only: PI,CUSTOM_REAL
+  use constants, only: NDIM,PI,CUSTOM_REAL
   use shared_parameters, only: CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH
 
   implicit none
@@ -1302,7 +1302,7 @@
   ! local parameters
   real(kind=CUSTOM_REAL) :: r,theta,phi,x,y,z,xik,etak
   real(kind=CUSTOM_REAL) :: xn,yn,zn
-  double precision :: rotation_matrix(3,3)
+  double precision, dimension(NDIM,NDIM) :: rotation_matrix
   integer :: k
 
   ! converts lat/lon from degrees to radians (colatitute/longitude)

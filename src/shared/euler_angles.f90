@@ -29,27 +29,31 @@
 
   subroutine euler_angles(rotation_matrix,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH)
 
-  use constants, only: DEGREES_TO_RADIANS
+  use constants, only: NDIM,DEGREES_TO_RADIANS
   use shared_parameters, only: ELLIPTICITY
 
   implicit none
 
-  double precision,intent(out) :: rotation_matrix(3,3)
-  double precision,intent(in) :: CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH
+  double precision, dimension(NDIM,NDIM), intent(out) :: rotation_matrix
+  double precision, intent(in) :: CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH
 
   ! local parameters
   double precision :: alpha,beta,gamma
   double precision :: sina,cosa,sinb,cosb,sing,cosg
 
-  ! flag to move chunk center position to geographic lon/lat instead of geocentric lon/lat when ellipticity is on.
-  ! by default, the chunk is centered around geographic position.
+  ! flag to move/correct chunk center position from geographic to geocentric position when ellipticity is on.
   logical, parameter :: USE_GEOGRAPHIC_CENTER_POSITION = .true.
 
   ! compute colatitude and longitude and convert to radians
   if (USE_GEOGRAPHIC_CENTER_POSITION) then
     ! longitude
     alpha = CENTER_LONGITUDE_IN_DEGREES * DEGREES_TO_RADIANS
-    ! converts geographic latitude (degrees) to geocentric colatitude theta (radians)
+    ! converts geographic latitude (degrees) to geocentric colatitude theta (radians) used for meshing.
+    !
+    ! note: the maximum difference is reached at 45 degree latitude,
+    !       where the geographic vs. geocentric value differs by ~ 0.2 degree.
+    !       that is, if CENTER_LATITUDE_IN_DEGREES == 45.00 degrees for the geographic position,
+    !       then the geocentric latitude would become ~44.81 degrees.
     call lat_2_geocentric_colat_dble(CENTER_LATITUDE_IN_DEGREES,beta,ELLIPTICITY)
     ! gamma rotation
     gamma = GAMMA_ROTATION_AZIMUTH * DEGREES_TO_RADIANS
