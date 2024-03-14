@@ -1,7 +1,7 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
-!          --------------------------------------------------
+!                       S p e c f e m 3 D  G l o b e
+!                       ----------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
@@ -48,9 +48,9 @@
 
 !*********************************************************************************************************
 
-!! DK DK added this temporarily here to make SPECFEM3D and SPECFEM3D_GLOBE much more similar
-!! DK DK in terms of the structure of their main time iteration loop; these are future features
-!! DK DK that are missing in this code but implemented in the other and that could thus be cut and pasted one day
+!! added this temporarily here to make SPECFEM3D and SPECFEM3D_GLOBE much more similar
+!! in terms of the structure of their main time iteration loop; these are future features
+!! that are missing in this code but implemented in the other and that could thus be cut and pasted one day
   logical, parameter :: OUTPUT_ENERGY = .false.
   integer, parameter :: IOUT_ENERGY = 937  ! file number for the energy file
   logical, parameter :: GRAVITY_SIMULATION = .false.
@@ -69,7 +69,7 @@
 
 ! input, output and main MPI I/O files
 ! note: careful with these unit numbers, we mostly use units in the 40-50 range.
-!       cray Fortran e.g. reserves 0,5,6 (standard error,input,output units) and 100,101,102 (input,output,error unit)
+!       Cray Fortran e.g. reserves 0,5,6 (standard error,input,output units) and 100,101,102 (input,output,error unit)
   integer, parameter :: ISTANDARD_OUTPUT = 6     ! or for cray: 101
 ! I/O unit for file input,output
   integer, parameter :: IIN = 40,IOUT = 41
@@ -278,6 +278,21 @@
 ! time function. Set to false by default.
   logical, parameter :: EXTERNAL_SOURCE_TIME_FUNCTION = .false.
 
+! This parameter determines the taper length of monochromatic source time function in seconds
+  double precision, parameter :: TAPER_MONOCHROMATIC_SOURCE = 200.0d0
+
+!!-----------------------------------------------------------
+!!
+!! for sponge absorbing boundary
+!!
+!!-----------------------------------------------------------
+
+! decay factor at the point farthest from the boundary
+  double precision, parameter :: SPONGE_MIN_Q = 30.d0
+
+! width of the region that transits from zero attenuation to full attenuation
+  double precision, parameter :: SPONGE_WIDTH_IN_DEGREES = 15.d0
+
 !!-----------------------------------------------------------
 !!
 !! for attenuation
@@ -380,12 +395,68 @@
 !!
 !!-----------------------------------------------------------
 
-  integer, parameter :: ADIOS_BUFFER_SIZE_IN_MB = 400
-  character(len=*), parameter :: ADIOS_TRANSPORT_METHOD = "MPI"
+! for undo_att snapshots
+! use only one file for all steps or a single file per iteration step
+  logical, parameter :: ADIOS_SAVE_ALL_SNAPSHOTS_IN_ONE_FILE = .true.
 
-! ADIOS transport methods for undo save_frame** data files (see ADIOS manual for details)
+! type selection to use compression operation before saving undo_att forward snapshot arrays
+! compression algorithm: 0 == none / 1 == ZFP compression / 2 == SZ compression (needs to be supported by ADIOS2 library)
+  integer, parameter :: ADIOS_COMPRESSION_ALGORITHM = 0     ! (default none)
+
+!! ZFP compression
+! mode options: see https://zfp.readthedocs.io/en/release0.5.5/modes.html
+! parameters: 'rate'      w/ value '8'    - fixed-rate mode: choose values between ~8-20, higher for better accuracy
+!             'accuracy'  w/ value '0.01' - fixed-accuracy mode: choose smaller value for better accuracy
+!             'precision' w/ value '10'   - fixed-precision mode: choose between ~10-50, higher for better accuracy
+!                                           (https://www.osti.gov/pages/servlets/purl/1572236)
+!
+! test setup: global simulation (s362ani model), NEX=160, ADIOS 2.5.0
+!             duration 30 min, 9 snapshot files (w/ estimated total size 117.6 GB)
+! - {'rate','8'} leads to a rather constant compression by using (8+1)-bit representation for 4 32-bit floats
+!     compression rate factor: ~3.98x (123474736 Bytes / 30998320 Bytes ~ 118 GB / 30GB)
+!                              betav_kl_crust_mantle total norm of difference :   2.6486799E-22
+! - {'rate','12'} has better accuracy (leading to small wavefield perturbations)
+!     compression rate factor: ~2.65x (123474736 Bytes / 46423124 Bytes ~ 118 GB / 45GB)
+!                              betav_kl_crust_mantle total norm of difference :   4.3890730E-24
+! - {'precision','10'} leads to a more variable compression for wavefields depending on their dynamic range
+!     compression rate factor: ~4.05x (123474736 Bytes / 30460388 Bytes ~ 118 GB / 30 GB)
+!                              betav_kl_crust_mantle total norm of difference :   5.3706092E-24
+! - {'precision','12'} has better accuracy (leading to small wavefield perturbations)
+!     compression rate factor: ~3.43x (123474736 Bytes / 35972672 Bytes ~ 118 GB / 35GB)
+!                              betav_kl_crust_mantle total norm of difference :   1.9846376E-25
+! - {'precision','20'} has good accuracy (almost identical reconstructed waveforms)
+!     compression rate factor: ~2.12x (123474736 Bytes / 58020080 Bytes ~ 118 GB / 56 GB)
+!                              betav_kl_crust_mantle total norm of difference :   2.5939579E-30
+!
+! performance overhead for compressing/decompressing is negligible in all cases
+! (a few seconds, compared to minutes for the total simulaton)
+!
+! a default setting of {'precision','12'} seems a good compromise between accuracy and compression rate
+  character(len=*), parameter :: ADIOS_COMPRESSION_MODE = 'precision'     ! 'precision','rate'
+  character(len=*), parameter :: ADIOS_COMPRESSION_MODE_VALUE = '12'      ! '8','12,'20'
+
+!! SZ compression
+! parameters: 'accuracy', value '0.0000000001' = 1.e-10
+!             leaving empty '','' chooses automatic setting? to check...
+  !character(len=*), parameter :: ADIOS_COMPRESSION_MODE = ''
+  !character(len=*), parameter :: ADIOS_COMPRESSION_MODE_VALUE = ''
+
+!! LZ4 compression (lossless)
+! parameters: level 'lvl=9' and 'threshold=4096' 4K-bytes
+  !character(len=*), parameter :: ADIOS_COMPRESSION_MODE = 'lvl'
+  !character(len=*), parameter :: ADIOS_COMPRESSION_MODE_VALUE = '9,threshold=4096'
+
+! size of the ADIOS buffer to use
+  integer, parameter :: ADIOS_BUFFER_SIZE_IN_MB = 400
+
+! ADIOS transport methods (see ADIOS manual for details)
 !! MPI (default)
-  character(len=*), parameter :: ADIOS_TRANSPORT_METHOD_UNDO_ATT = "MPI"   ! or check with: "POSIX", "MPI_AGGREGATE",..
+  character(len=*), parameter :: ADIOS_TRANSPORT_METHOD = "MPI"
+  character(len=*), parameter :: ADIOS_METHOD_PARAMS =  ''
+
+! ADIOS transport methods for undo save_frame** data files
+!! MPI (default)
+  character(len=*), parameter :: ADIOS_TRANSPORT_METHOD_UNDO_ATT = "MPI"
   character(len=*), parameter :: ADIOS_METHOD_PARAMS_UNDO_ATT =  ''
 ! or
 !! POSIX
@@ -400,7 +471,6 @@
 !  character(len=*), parameter :: ADIOS_TRANSPORT_METHOD_UNDO_ATT = "MPI_LUSTRE"
 !  character(len=*), parameter :: ADIOS_METHOD_PARAMS_UNDO_ATT =  "stripe_count=16,stripe_size=4194304,block_size=4194304"
 
-
 !!-----------------------------------------------------------
 !!
 !! ADIOS2 Related values
@@ -409,7 +479,8 @@
 
 ! ADIOS2 engines
 !! note on native engine types:
-!!  - "MPI" is not supported yet by adios2 version (current 2.4.0), check out in future.
+!!  - "MPI" is not supported yet by adios2 version (current 2.6.0), check out in future.
+!!  - "HDF5" doesn't support file appending yet, which is needed at the moment.
 !!  - "BPfile" doesn't support file appending yet, which is needed at the moment.
 !!  - "BP3" would allow for backward compatibility to ADIOS 1.x, but doesn't support file appending yet.
 !!  - "BP4" is the new adios2 format with enhanced capabilities.
@@ -437,14 +508,15 @@
 !!-----------------------------------------------------------
 
 ! keeps track of everything
+! stores specfem provenance string in ASDF file
   logical, parameter :: ASDF_OUTPUT_PROVENANCE = .false.
 
 ! ASDF string lengths
   integer, parameter :: ASDF_MAX_STRING_LENGTH = 1024
   integer, parameter :: ASDF_MAX_QUAKEML_LENGTH = 8096
   integer, parameter :: ASDF_MAX_STATIONXML_LENGTH = 16182
-  integer, parameter :: ASDF_MAX_PARFILE_LENGTH = 20000
-  integer, parameter :: ASDF_MAX_CONSTANTS_LENGTH = 45000
+  integer, parameter :: ASDF_MAX_PARFILE_LENGTH = 25000
+  integer, parameter :: ASDF_MAX_CONSTANTS_LENGTH = 65000
   integer, parameter :: ASDF_MAX_TIME_STRING_LENGTH = 22
 
 
@@ -484,16 +556,13 @@
 ! flag to write seismograms with adjoint wavefield instead of backward, reconstructed wavefield
   logical, parameter :: OUTPUT_ADJOINT_WAVEFIELD_SEISMOGRAMS = .false.
 
-!!-----------------------------------------------------------
-!!
-!! new version compatibility
-!!
-!!-----------------------------------------------------------
-! old version 5.1.5 uses full 3d attenuation arrays (set to .true.), CUSTOM_REAL for attenuation arrays (Qmu_store, tau_e_store)
-! new version uses optional full 3d attenuation
-  logical, parameter :: USE_OLD_VERSION_5_1_5_FORMAT = .false.
-! for comparison against older versions: in version 7.0 tiso was constrained to below moho, new version allows also in crust
-  logical, parameter :: USE_OLD_VERSION_7_0_0_FORMAT = .false.
+! flag to use source-receicer preconditioner instead of source-source preconditioner
+  logical, parameter :: USE_SOURCE_RECEIVER_Hessian = .true.
+
+! number of timesteps between calling compute_kernels() in adjoint simulation with undo_attenuation
+! note: this flag is tested for stationary kernels only (STEADY_STATE_KERNEL = .true.)
+! be careful when changing this flag when computing classical kernel
+  integer, parameter :: NTSTEP_BETWEEN_COMPUTE_KERNELS = 1
 
 
 !!-----------------------------------------------------------
@@ -532,6 +601,19 @@
 ! (useful for postprocessing during simulation time)
   logical, parameter :: RUN_EXTERNAL_MOVIE_SCRIPT = .false.
   character(len=*),parameter :: MOVIE_SCRIPT_NAME = "./tar_movie_files.sh"
+
+!!-----------------------------------------------------------
+!!
+!! smoothing of the sensitivity kernels
+!!
+!!-----------------------------------------------------------
+
+! using this is more precise, but more costly
+  logical, parameter :: USE_QUADRATURE_RULE_FOR_SMOOTHING = .true.
+
+! using Euclidian vector distance to calculate vertical and horizontal distances between two points,
+! which is faster than using the exact epicentral distance for the horizontal distance.
+  logical, parameter :: USE_VECTOR_DISTANCE_FOR_SMOOTHING = .true.
 
 
 !!-----------------------------------------------------------
@@ -577,7 +659,7 @@
 
 ! number of points in each horizontal direction of the observation grid of each cubed-sphere chunk
 ! at the altitude of the observation point
-!! DK DK 4 is a fictitious value used to save memory when the GRAVITY_INTEGRALS option is off
+!! 4 is a fictitious value used to save memory when the GRAVITY_INTEGRALS option is off
   integer, parameter :: NX_OBSERVATION = 4 ! 500
   integer, parameter :: NY_OBSERVATION = NX_OBSERVATION
 
@@ -647,8 +729,8 @@
 
 ! on some processors (e.g. some Intel chips) it is necessary to suppress underflows
 ! by using a small initial field instead of zero
-!! DK DK August 2018: on modern processors this does not happen any more,
-!! DK DK August 2018: and thus no need to purposely lose accuracy to avoid underflows; thus turning it off by default
+!! August 2018: on modern processors this does not happen any more,
+!! August 2018: and thus no need to purposely lose accuracy to avoid underflows; thus turning it off by default
   logical, parameter :: FIX_UNDERFLOW_PROBLEM = .false. ! .true.
 
 ! some useful constants
@@ -671,6 +753,9 @@
 ! number of nodes for 2D and 3D shape functions for hexahedra with 27 nodes
   integer, parameter :: NGNOD = 27, NGNOD2D = 9
 
+! assumes NGLLX == NGLLY == NGLLZ
+  integer, parameter :: NGLLSQUARE = NGLLX * NGLLY
+
 ! Deville routines optimized for NGLLX = NGLLY = NGLLZ = 5
   integer, parameter :: m1 = NGLLX, m2 = NGLLX * NGLLY
   integer, parameter :: NGLLCUBE = NGLLX * NGLLY * NGLLZ
@@ -681,9 +766,9 @@
   integer, parameter :: MIDZ = (NGLLZ+1)/2
 
 ! gravitational constant in S.I. units i.e. in m3 kg-1 s-2, or equivalently in N.(m/kg)^2
-!! DK DK April 2014: switched to the 2010 Committee on Data for Science and Technology (CODATA) recommended value
-!! DK DK see e.g. http://www.physics.nist.gov/cgi-bin/cuu/Value?bg
-!! DK DK and http://en.wikipedia.org/wiki/Gravitational_constant
+!! April 2014: switched to the 2010 Committee on Data for Science and Technology (CODATA) recommended value
+!! see e.g. http://www.physics.nist.gov/cgi-bin/cuu/Value?bg
+!! and http://en.wikipedia.org/wiki/Gravitational_constant
 !! double precision, parameter :: GRAV = 6.6723d-11
 !! double precision, parameter :: GRAV = 6.67430d-11  ! newer suggestion by CODATA 2018
   double precision, parameter :: GRAV = 6.67384d-11  ! CODATA 2010
@@ -735,7 +820,7 @@
   integer, parameter :: CHUNK_AB_ANTIPODE = 6
 
 ! maximum number of regions in the mesh
-  integer, parameter :: MAX_NUM_REGIONS = 3
+  integer, parameter :: MAX_NUM_REGIONS = 5    ! (CRUST_MANTLE, OUTER_CORE, INNER_CORE) + (TRINFINITE, INFINITE) regions
 
 ! define flag for planet
 ! strictly speaking, the moon is not a planet but a natural satellite. well, let's stay with IPLANET_** for now.
@@ -747,6 +832,10 @@
   integer, parameter :: IREGION_CRUST_MANTLE = 1
   integer, parameter :: IREGION_OUTER_CORE = 2
   integer, parameter :: IREGION_INNER_CORE = 3
+
+! define flag for region of the infinite-element mesh surrounding the global mesh
+  integer, parameter :: IREGION_TRINFINITE = 4      ! transition-to-infinite region
+  integer, parameter :: IREGION_INFINITE = 5        ! infinite mesh region
 
 ! define flag for elements
   integer, parameter :: IFLAG_CRUST = 1
@@ -783,18 +872,24 @@
   integer, parameter :: NGNOD_EIGHT_CORNERS = 8
 
 ! define flag for reference 1D Earth model
-  integer, parameter :: REFERENCE_MODEL_PREM   = 1
-  integer, parameter :: REFERENCE_MODEL_IASP91 = 2
-  integer, parameter :: REFERENCE_MODEL_1066A  = 3
-  integer, parameter :: REFERENCE_MODEL_AK135F_NO_MUD = 4
-  integer, parameter :: REFERENCE_MODEL_1DREF = 5
-  integer, parameter :: REFERENCE_MODEL_JP1D  = 6
-  integer, parameter :: REFERENCE_MODEL_SEA1D = 7
-  integer, parameter :: REFERENCE_MODEL_SOHL = 8        ! Mars
-  integer, parameter :: REFERENCE_MODEL_SOHL_B = 9      ! Mars
-  integer, parameter :: REFERENCE_MODEL_CASE65TAY = 10  ! Mars
-  integer, parameter :: REFERENCE_MODEL_VPREMOON = 11   ! Moon
-  integer, parameter :: REFERENCE_MODEL_MOON_MEENA = 12 ! Moon
+  integer, parameter :: REFERENCE_MODEL_PREM       = 1
+  integer, parameter :: REFERENCE_MODEL_PREM2      = 2
+  integer, parameter :: REFERENCE_MODEL_IASP91     = 3
+  integer, parameter :: REFERENCE_MODEL_1066A      = 4
+  integer, parameter :: REFERENCE_MODEL_AK135F_NO_MUD = 5
+  integer, parameter :: REFERENCE_MODEL_1DREF      = 6
+  integer, parameter :: REFERENCE_MODEL_JP1D       = 7
+  integer, parameter :: REFERENCE_MODEL_SEA1D      = 8
+  integer, parameter :: REFERENCE_MODEL_CCREM      = 9
+  ! Mars
+  integer, parameter :: REFERENCE_MODEL_SOHL       = 101
+  integer, parameter :: REFERENCE_MODEL_SOHL_B     = 102
+  integer, parameter :: REFERENCE_MODEL_CASE65TAY  = 103
+  integer, parameter :: REFERENCE_MODEL_MARS_1D    = 104  ! defined by file
+
+  ! Moon
+  integer, parameter :: REFERENCE_MODEL_VPREMOON   = 201
+  integer, parameter :: REFERENCE_MODEL_MOON_MEENA = 202
 
 ! crustal model constants
   integer, parameter :: ICRUST_CRUST1      = 1    ! Crust1.0
@@ -804,6 +899,9 @@
   integer, parameter :: ICRUST_CRUST_SH    = 5    ! Spherical-Harmonics Crust
   integer, parameter :: ICRUST_EUCRUST     = 6    ! EUcrust07
   integer, parameter :: ICRUST_SGLOBECRUST = 7    ! modified Crust2.0 for SGLOBE-rani
+  integer, parameter :: ICRUST_BKMNS_GLAD  = 8    ! Block Mantle Spherical-Harmonics model
+  integer, parameter :: ICRUST_SPIRAL      = 9    ! SPiRaL
+  integer, parameter :: ICRUST_SH_MARS     = 10   ! SH mars models (define crust & mantle values)
 
 ! define flag for 3D Earth model
   integer, parameter :: THREE_D_MODEL_S20RTS        = 101
@@ -822,6 +920,10 @@
   integer, parameter :: THREE_D_MODEL_SGLOBE        = 114
   integer, parameter :: THREE_D_MODEL_SGLOBE_ISO    = 115
   integer, parameter :: THREE_D_MODEL_ANISO_MANTLE  = 116
+  integer, parameter :: THREE_D_MODEL_BKMNS_GLAD    = 117
+  integer, parameter :: THREE_D_MODEL_SPIRAL        = 118
+  integer, parameter :: THREE_D_MODEL_HETEROGEN_PREM = 119
+  integer, parameter :: THREE_D_MODEL_SH_MARS       = 120
   ! inner core model
   integer, parameter :: THREE_D_MODEL_INNER_CORE_ISHII = 201
 
@@ -944,7 +1046,7 @@
 !!-----------------------------------------------------------
 
 ! for the stretching of crustal elements in the case of 3D models
-! (values are chosen for 3D models to have RMOHO_FICTICIOUS at 35 km
+! (values are chosen for 3D models to have RMOHO_FICTITIOUS at 35 km
 !  and RMIDDLE_CRUST to become 15 km with stretching function stretch_tab)
   double precision, parameter :: EARTH_MAX_RATIO_CRUST_STRETCHING = 0.75d0
   double precision, parameter :: EARTH_RMOHO_STRETCH_ADJUSTMENT = 5000.d0 ! moho up to 35km
@@ -1040,7 +1142,7 @@
 !!
 !!-----------------------------------------------------------
 ! Model MARS
-  double precision, parameter :: MARS_R = 3390000.d0
+  double precision, parameter :: MARS_R = 3390000.d0    ! default 3390.0 km radius based on Sohl models
   double precision, parameter :: R_MARS = MARS_R
 
 ! radius of the MARS in km
@@ -1208,3 +1310,92 @@
 ! adapted regional moho stretching (use only for special areas to optimize a local mesh)
   logical, parameter :: MOON_REGIONAL_MOHO_MESH = .false.
   logical, parameter :: MOON_HONOR_DEEP_MOHO = .false.
+
+
+!!-----------------------------------------------------------
+!!
+!! Spectral infinite-element mesh
+!!
+!!-----------------------------------------------------------
+
+! transition-to-infinite and inifinite regions
+  logical, parameter :: ADD_TRINF = .true.
+
+  integer, parameter :: NLAYER_TRINF = 10           ! default 10
+  !!integer, parameter :: NREGIONS_INF = 2            ! this must be: 2 == transition infinite + infinite
+  !!integer, parameter :: NUM_REGIONS_ALL = 5        ! this must be == MAX_NUM_REGIONS == 5 == 3 + NREGIONS_INF == 3 + 2
+
+! degrees of freedoms
+  integer, parameter :: NNDOFU   = 0 ! displacement components
+  integer, parameter :: NNDOFCHI = 0 ! displacement potential
+  integer, parameter :: NNDOFP   = 0 ! pressure
+  integer, parameter :: NNDOFPHI = 1 ! gravitational potential
+  integer, parameter :: NNDOF    = NNDOFU + NNDOFCHI + NNDOFP + NNDOFPHI ! all nodal freedoms
+
+! number of GLL points in each direction of an element (degree plus one)
+  integer, parameter :: NGLLX1 = 3
+  integer, parameter :: NGLLY1 = NGLLX1
+  integer, parameter :: NGLLZ1 = NGLLX1
+  integer, parameter :: NGLLCUBE1 = NGLLX1 * NGLLY1 * NGLLZ1
+
+  !integer, parameter :: NGLLZ_INF = 3        ! this is always 3
+  !integer, parameter :: NGLL = NGLLCUBE      ! NGLLX*NGLLY*NGLLZ!, NGLL_INF=NGLLX*NGLLY*NGLLZ_INF
+  !integer, parameter :: NGLLXY = NGLLSQUARE  ! NGLLX*NGLLY
+  !integer, parameter :: NSUBHEX = (NGLLX-1)*(NGLLY-1)*(NGLLZ-1)
+
+!------------------------------------------------------------
+! Level-1 solver
+!------------------------------------------------------------
+  integer, parameter :: NEDOF1    = NGLLCUBE1 * NNDOF
+  integer, parameter :: NEDOFU1   = NGLLCUBE1 * NNDOFU, &
+                        NEDOFCHI1 = NGLLCUBE1 * NNDOFCHI,&
+                        NEDOFP1   = NGLLCUBE1 * NNDOFP, &
+                        NEDOFPHI1 = NGLLCUBE1 * NNDOFPHI
+
+!------------------------------------------------------------
+! Level-2 solver
+!------------------------------------------------------------
+  integer, parameter :: NEDOFU   = NGLLCUBE * NNDOFU, &
+                        NEDOFCHI = NGLLCUBE * NNDOFCHI, &
+                        NEDOFP   = NGLLCUBE * NNDOFP, &
+                        NEDOFPHI = NGLLCUBE * NNDOFPHI
+  integer, parameter :: NEDOF = NGLLCUBE * NNDOF
+
+
+!!-----------------------------------------------------------
+!!
+!! Poisson's solver
+!!
+!!-----------------------------------------------------------
+
+! maximum number of iteration for conjugate gradient solver
+  integer, parameter :: BUILTIN = 0, PETSC = 1
+
+! by default, the Poisson solver needs the PETSc library
+  integer, parameter :: POISSON_SOLVER = PETSC            ! or BUILTIN
+  logical, parameter :: POISSON_SOLVER_5GLL = .false.
+
+! if the following parameter is .true., contribution of the perturbed gravity is
+! discarded in compute force routines, perturbed gravity is still computed from
+! the density perturbation.
+  logical, parameter :: DISCARD_GCONTRIB = .false.
+
+! maximum number of iteration for conjugate gradient solver
+  integer, parameter :: CG_MAXITER = 10000
+
+! relative tolerance for conjugate gradient solver
+  real(kind=CUSTOM_REAL), parameter :: CG_TOL  = 1.0e-7_CUSTOM_REAL, &
+                                       CG_TOL1 = 1.0e-7_CUSTOM_REAL
+
+! Krylov subspace method (KSP)
+! Level-1 KSP solver
+  integer,parameter :: KSP_MAXITER1 = 3000
+  real(kind=CUSTOM_REAL), parameter :: KSP_RTOL1 = 1.0e-7_CUSTOM_REAL
+  real(kind=CUSTOM_REAL), parameter :: KSP_ATOL1 = 1.0e-30_CUSTOM_REAL
+  real(kind=CUSTOM_REAL), parameter :: KSP_DTOL1 = 1.0e30_CUSTOM_REAL
+
+! Level-2 KSP solver
+  integer,parameter :: KSP_MAXITER = 3000
+  real(kind=CUSTOM_REAL), parameter :: KSP_RTOL = 1.0e-7_CUSTOM_REAL
+  real(kind=CUSTOM_REAL), parameter :: KSP_ATOL = 1.0e-30_CUSTOM_REAL
+  real(kind=CUSTOM_REAL), parameter :: KSP_DTOL = 1.0e30_CUSTOM_REAL

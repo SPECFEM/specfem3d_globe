@@ -26,48 +26,48 @@
  ! total for full 1-chunk mesh:
  ! ---------------------------
  !
- ! exact total number of spectral elements in entire mesh =
- !    9360.0000000000000
- ! approximate total number of points in entire mesh =
- !    644924.00000000000
- ! approximate total number of degrees of freedom in entire mesh =
- !    1831916.0000000000
+ ! exact total number of spectral elements in entire mesh = 
+ !    9360.0000000000000     
+ ! approximate total number of points in entire mesh = 
+ !    644924.00000000000     
+ ! approximate total number of degrees of freedom in entire mesh = 
+ !    1831916.0000000000     
  !
  ! position of the mesh chunk at the surface:
  ! -----------------------------------------
  !
- ! angular size in first direction in degrees =    90.0000000
- ! angular size in second direction in degrees =    90.0000000
+ ! angular size in first direction in degrees =    90.0000000    
+ ! angular size in second direction in degrees =    90.0000000    
  !
- ! longitude of center in degrees =    140.000000
- ! latitude of center in degrees =    45.0000000
+ ! longitude of center in degrees =    140.000000    
+ ! latitude of center in degrees =    45.0000000    
  !
- ! angle of rotation of the first chunk =   -130.000000
+ ! angle of rotation of the first chunk =   -130.000000    
  !
  ! corner            1
- ! longitude in degrees =   -16.908319900987031
- ! latitude in degrees =    79.614313366923795
+ ! longitude in degrees =    343.09168009901288     
+ ! latitude in degrees =    79.546211208738200     
  !
  ! corner            2
- ! longitude in degrees =    79.413162387413692
- ! latitude in degrees =    21.101334746329336
+ ! longitude in degrees =    79.413162387413678     
+ ! latitude in degrees =    20.973056977842038     
  !
  ! corner            3
- ! longitude in degrees =   -153.75170696307563
- ! latitude in degrees =    27.451044610874433
+ ! longitude in degrees =    206.24829303692437     
+ ! latitude in degrees =    27.294721195949393     
  !
  ! corner            4
- ! longitude in degrees =    144.13890799393090
- ! latitude in degrees =   -9.6711218987549348
+ ! longitude in degrees =    144.13890799393090     
+ ! latitude in degrees =   -9.6079169325811549     
  !
  ! resolution of the mesh at the surface:
  ! -------------------------------------
  !
  ! spectral elements along a great circle =          128
  ! GLL points along a great circle =          512
- ! average distance between points in degrees =   0.703125000
- ! average distance between points in km =    78.1839294
- ! average size of a spectral element in km =    312.735718
+ ! average distance between points in degrees =   0.703125000    
+ ! average distance between points in km =    78.1839294    
+ ! average size of a spectral element in km =    312.735718    
  !
 
  ! approximate static memory needed by the solver:
@@ -79,10 +79,10 @@
  !  by typing "size -d bin/xspecfem3D"
  !  after compiling the code with the DATA/Par_file you plan to use)
  !
- ! size of static arrays per slice =    57.605108000000001       MB
- !                                 =    54.936511993408203       MiB
- !                                 =    5.7605108000000002E-002  GB
- !                                 =    5.3648937493562698E-002  GiB
+ ! size of static arrays per slice =    57.531911999999998       MB
+ !                                 =    54.866706848144531       MiB
+ !                                 =    5.7531911999999998E-002  GB
+ !                                 =    5.3580768406391144E-002  GiB
  !
  ! (should be below to 80% or 90% of the memory installed per core)
  ! (if significantly more, the job will not run by lack of memory )
@@ -91,12 +91,12 @@
  ! (but that can be perfectly acceptable if you can afford it and
  !  want faster results by using more cores)
  !
- ! size of static arrays for all slices =    230.42043200000001       MB
- !                                      =    219.74604797363281       MiB
- !                                      =   0.23042043200000001       GB
- !                                      =   0.21459574997425079       GiB
- !                                      =    2.3042043199999999E-004  TB
- !                                      =    2.0956616208422929E-004  TiB
+ ! size of static arrays for all slices =    230.12764799999999       MB
+ !                                      =    219.46682739257812       MiB
+ !                                      =   0.23012764799999999       GB
+ !                                      =   0.21432307362556458       GiB
+ !                                      =    2.3012764799999999E-004  TB
+ !                                      =    2.0929987658746541E-004  TiB
  !
 
  integer, parameter :: NEX_XI_VAL =           32
@@ -110,36 +110,36 @@
  integer, parameter :: NGLOB_OUTER_CORE =        12857
  integer, parameter :: NGLOB_INNER_CORE =          729
 
- integer, parameter :: NSPECMAX_ANISO_IC =            1
+ integer, parameter :: NSPECMAX_ANISO_IC =            0
 
  integer, parameter :: NSPECMAX_ISO_MANTLE =         2160
  integer, parameter :: NSPECMAX_TISO_MANTLE =         2160
- integer, parameter :: NSPECMAX_ANISO_MANTLE =            1
+ integer, parameter :: NSPECMAX_ANISO_MANTLE =            0
 
- integer, parameter :: NSPEC_CRUST_MANTLE_ATTENUATION =            1
- integer, parameter :: NSPEC_INNER_CORE_ATTENUATION =            1
+ integer, parameter :: NSPEC_CRUST_MANTLE_ATTENUATION =            0
+ integer, parameter :: NSPEC_INNER_CORE_ATTENUATION =            0
 
- integer, parameter :: NSPEC_CRUST_MANTLE_STR_OR_ATT =            1
- integer, parameter :: NSPEC_INNER_CORE_STR_OR_ATT =            1
+ integer, parameter :: NSPEC_CRUST_MANTLE_STR_OR_ATT =            0
+ integer, parameter :: NSPEC_INNER_CORE_STR_OR_ATT =            0
 
- integer, parameter :: NSPEC_CRUST_MANTLE_STR_AND_ATT =            1
- integer, parameter :: NSPEC_INNER_CORE_STR_AND_ATT =            1
+ integer, parameter :: NSPEC_CRUST_MANTLE_STR_AND_ATT =            0
+ integer, parameter :: NSPEC_INNER_CORE_STR_AND_ATT =            0
 
- integer, parameter :: NSPEC_CRUST_MANTLE_STRAIN_ONLY =            1
- integer, parameter :: NSPEC_INNER_CORE_STRAIN_ONLY =            1
+ integer, parameter :: NSPEC_CRUST_MANTLE_STRAIN_ONLY =            0
+ integer, parameter :: NSPEC_INNER_CORE_STRAIN_ONLY =            0
 
- integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT =            1
- integer, parameter :: NSPEC_OUTER_CORE_ADJOINT =            1
- integer, parameter :: NSPEC_INNER_CORE_ADJOINT =            1
- integer, parameter :: NGLOB_CRUST_MANTLE_ADJOINT =            1
- integer, parameter :: NGLOB_OUTER_CORE_ADJOINT =            1
- integer, parameter :: NGLOB_INNER_CORE_ADJOINT =            1
- integer, parameter :: NSPEC_OUTER_CORE_ROT_ADJOINT =            1
+ integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT =            0
+ integer, parameter :: NSPEC_OUTER_CORE_ADJOINT =            0
+ integer, parameter :: NSPEC_INNER_CORE_ADJOINT =            0
+ integer, parameter :: NGLOB_CRUST_MANTLE_ADJOINT =            0
+ integer, parameter :: NGLOB_OUTER_CORE_ADJOINT =            0
+ integer, parameter :: NGLOB_INNER_CORE_ADJOINT =            0
+ integer, parameter :: NSPEC_OUTER_CORE_ROT_ADJOINT =            0
 
  integer, parameter :: NSPEC_CRUST_MANTLE_STACEY =         2160
  integer, parameter :: NSPEC_OUTER_CORE_STACEY =          172
 
- integer, parameter :: NGLOB_CRUST_MANTLE_OCEANS =            1
+ integer, parameter :: NGLOB_CRUST_MANTLE_OCEANS =            0
 
  logical, parameter :: TRANSVERSE_ISOTROPY_VAL = .true.
 
@@ -155,15 +155,17 @@
 
  logical, parameter :: GRAVITY_VAL = .false.
 
+ logical, parameter :: FULL_GRAVITY_VAL = .false.
+
  logical, parameter :: OCEANS_VAL = .false.
 
- integer, parameter :: NX_BATHY_VAL = 1
- integer, parameter :: NY_BATHY_VAL = 1
+ integer, parameter :: NX_BATHY_VAL = 0
+ integer, parameter :: NY_BATHY_VAL = 0
 
  logical, parameter :: ROTATION_VAL = .false.
  logical, parameter :: EXACT_MASS_MATRIX_FOR_ROTATION_VAL = .false.
 
- integer, parameter :: NSPEC_OUTER_CORE_ROTATION =            1
+ integer, parameter :: NSPEC_OUTER_CORE_ROTATION =            0
 
  logical, parameter :: PARTIAL_PHYS_DISPERSION_ONLY_VAL = .false.
 
@@ -197,19 +199,19 @@
  integer, parameter :: NSPEC2D_ICB =            1
 
  logical, parameter :: USE_DEVILLE_PRODUCTS_VAL = .true.
- integer, parameter :: NSPEC_CRUST_MANTLE_3DMOVIE = 1
- integer, parameter :: NGLOB_CRUST_MANTLE_3DMOVIE = 1
+ integer, parameter :: NSPEC_CRUST_MANTLE_3DMOVIE = 0
+ integer, parameter :: NGLOB_CRUST_MANTLE_3DMOVIE = 0
 
- integer, parameter :: NSPEC_OUTER_CORE_3DMOVIE = 1
+ integer, parameter :: NSPEC_OUTER_CORE_3DMOVIE = 0
  integer, parameter :: NGLOB_XY_CM =       147645
- integer, parameter :: NGLOB_XY_IC =            1
+ integer, parameter :: NGLOB_XY_IC =            0
 
  logical, parameter :: ATTENUATION_1D_WITH_3D_STORAGE_VAL = .true.
 
  logical, parameter :: FORCE_VECTORIZATION_VAL = .true.
 
  logical, parameter :: UNDO_ATTENUATION_VAL = .false.
- integer, parameter :: NT_DUMP_ATTENUATION_VAL =         1751
+ integer, parameter :: NT_DUMP_ATTENUATION_VAL =         1884
 
  double precision, parameter :: ANGULAR_WIDTH_ETA_IN_DEGREES_VAL =    90.000000
  double precision, parameter :: ANGULAR_WIDTH_XI_IN_DEGREES_VAL =    90.000000
