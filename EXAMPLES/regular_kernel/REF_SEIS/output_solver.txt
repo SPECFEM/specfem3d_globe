@@ -52,13 +52,13 @@
 
  Spatial distribution of the slices
                         0
-  
+
      2       1       4
-  
+
                         5
-  
+
                         3
-  
+
  mesh databases:
    reading in crust/mantle databases...
    reading in outer core databases...
@@ -77,7 +77,7 @@
    percentage of volume elements in inner core    45.8333321     %
 
 
- Elapsed time for reading mesh in seconds =   0.147806004    
+ Elapsed time for reading mesh in seconds =   0.147806004
 
  adjacency:
    total number of elements in this slice =         8640
@@ -93,7 +93,7 @@
    maximum neighbors found per element =           37 (should be 37 for globe meshes)
    total number of neighbors           =       205900
 
-   Elapsed time for detection of neighbors in seconds =   0.70328100000000004     
+   Elapsed time for detection of neighbors in seconds =   0.70328100000000004
 
  kd-tree:
    total data points:       233280
@@ -119,10 +119,10 @@
 
    using moment tensor source:
      xi coordinate of source in that element:   -5.9022019795819294E-002
-     eta coordinate of source in that element:  -0.35820900936972955     
-     gamma coordinate of source in that element:  -0.19983811889458347     
+     eta coordinate of source in that element:  -0.35820900936972955
+     gamma coordinate of source in that element:  -0.19983811889458347
 
-     at (x,y,z) coordinates =   0.71369099526219981       0.16686913726174438       0.67752220072892433     
+     at (x,y,z) coordinates =   0.71369099526219981       0.16686913726174438       0.67752220072892433
 
    source time function:
      using (quasi) Heaviside source time function
@@ -132,19 +132,19 @@
 
    magnitude of the source:
         scalar moment M0 =    9.6037573896886842E+025  dyne-cm
-     moment magnitude Mw =    6.6216276443133104     
+     moment magnitude Mw =    6.6216276443133104
 
 
    original (requested) position of the source:
 
-         latitude:    42.750000000000000     
-        longitude:    13.160000000000000     
+         latitude:    42.750000000000000
+        longitude:    13.160000000000000
             depth:    12.000000000000000       km
 
    position of the source that will be used:
 
-         latitude:    42.750000000000007     
-        longitude:    13.159999999999998     
+         latitude:    42.750000000000007
+        longitude:    13.159999999999998
             depth:    11.999999999999526       km
 
    Error in location of the source:    0.00000000      km
@@ -191,164 +191,164 @@
  Station #    13:                   IU.SJG    epicentral distance:     70.095345 degrees
 
  Station #           1 : II.BFO
-        original latitude:    48.3301010    
-       original longitude:    8.32960033    
-      epicentral distance:    6.52252054    
+        original latitude:    48.3301010
+       original longitude:    8.32960033
+      epicentral distance:    6.52252054
    closest estimate found:    1.01581547E-12  km away
     in slice            0  in element         8194
-    at xi,eta,gamma coordinates =   0.22448131534980195      -0.41751520817993854        1.0001076445279549     
-    at (x,y,z)                  =   0.65782469787163222        9.6313347540431249E-002  0.74698755408350115     
-    at lat/lon                  =    48.3301010       8.32960033    
+    at xi,eta,gamma coordinates =   0.22448131534980195      -0.41751520817993854        1.0001076445279549
+    at (x,y,z)                  =   0.65782469787163222        9.6313347540431249E-002  0.74698755408350115
+    at lat/lon                  =    48.3301010       8.32960033
 
  Station #           2 : II.BRVK
-        original latitude:    53.0581017    
-       original longitude:    70.2827988    
-      epicentral distance:    38.5466728    
+        original latitude:    53.0581017
+       original longitude:    70.2827988
+      epicentral distance:    38.5466728
    closest estimate found:    0.00000000      km away
     in slice            0  in element         8523
-    at xi,eta,gamma coordinates =    9.7825682261971039E-002  0.87704718022969341       0.99840319929476762     
-    at (x,y,z)                  =   0.20276526470190537       0.56576620481278972       0.79924347985499689     
-    at lat/lon                  =    53.0581017       70.2827988    
+    at xi,eta,gamma coordinates =    9.7825682261971039E-002  0.87704718022969341       0.99840319929476762
+    at (x,y,z)                  =   0.20276526470190537       0.56576620481278972       0.79924347985499689
+    at lat/lon                  =    53.0581017       70.2827988
 
  Station #           3 : II.GAR
-        original latitude:    39.0000000    
-       original longitude:    70.3167038    
-      epicentral distance:    42.5501823    
+        original latitude:    39.0000000
+       original longitude:    70.3167038
+      epicentral distance:    42.5501823
    closest estimate found:    2.93773339E-12  km away
     in slice            3  in element         7657
-    at xi,eta,gamma coordinates =    6.0092709179197984E-002   1.0029866991508067       0.99996515057200719     
-    at (x,y,z)                  =   0.26175895064638477       0.73173635768996947       0.62932039104983695     
-    at lat/lon                  =    39.0000000       70.3167038    
+    at xi,eta,gamma coordinates =    6.0092709179197984E-002   1.0029866991508067       0.99996515057200719
+    at (x,y,z)                  =   0.26175895064638477       0.73173635768996947       0.62932039104983695
+    at lat/lon                  =    39.0000000       70.3167038
 
  Station #           4 : II.MSEY
-        original latitude:   -4.67369986    
-       original longitude:    55.4791985    
-      epicentral distance:    60.9319992    
+        original latitude:   -4.67369986
+       original longitude:    55.4791985
+      epicentral distance:    60.9319992
    closest estimate found:    8.84153861E-14  km away
     in slice            3  in element         8196
-    at xi,eta,gamma coordinates =  -0.97043212077741015       0.45191087605872116       0.99088777061930733     
+    at xi,eta,gamma coordinates =  -0.97043212077741015       0.45191087605872116       0.99088777061930733
     at (x,y,z)                  =   0.56481295744910009       0.82116915984560490       -8.1479858100742583E-002
-    at lat/lon                  =   -4.67369986       55.4791985    
+    at lat/lon                  =   -4.67369986       55.4791985
 
  Station #           5 : II.RAYN
-        original latitude:    23.5224991    
-       original longitude:    45.5032005    
-      epicentral distance:    32.8850746    
+        original latitude:    23.5224991
+       original longitude:    45.5032005
+      epicentral distance:    32.8850746
    closest estimate found:    1.06098463E-12  km away
     in slice            3  in element         7745
-    at xi,eta,gamma coordinates =   0.67586144544019433      -0.64219666419346366       0.99973238334108616     
-    at (x,y,z)                  =   0.64262937027057943       0.65401745969819547       0.39910904152967325     
-    at lat/lon                  =    23.5224991       45.5032005    
+    at xi,eta,gamma coordinates =   0.67586144544019433      -0.64219666419346366       0.99973238334108616
+    at (x,y,z)                  =   0.64262937027057943       0.65401745969819547       0.39910904152967325
+    at lat/lon                  =    23.5224991       45.5032005
 
  Station #           6 : II.TLY
-        original latitude:    51.6806984    
-       original longitude:    103.643799    
-      epicentral distance:    58.0809555    
+        original latitude:    51.6806984
+       original longitude:    103.643799
+      epicentral distance:    58.0809555
    closest estimate found:    7.29091971E-13  km away
     in slice            0  in element         8564
-    at xi,eta,gamma coordinates =  -0.31615812848070979       0.50922815523746068       0.99809956814599177     
-    at (x,y,z)                  =  -0.14625850554861095       0.60254442860985269       0.78456509141469266     
-    at lat/lon                  =    51.6806984       103.643799    
+    at xi,eta,gamma coordinates =  -0.31615812848070979       0.50922815523746068       0.99809956814599177
+    at (x,y,z)                  =  -0.14625850554861095       0.60254442860985269       0.78456509141469266
+    at lat/lon                  =    51.6806984       103.643799
 
  Station #           7 : IU.ANTO
-        original latitude:    39.8680000    
-       original longitude:    32.7933998    
-      epicentral distance:    14.9906788    
+        original latitude:    39.8680000
+       original longitude:    32.7933998
+      epicentral distance:    14.9906788
    closest estimate found:    1.00030596E-12  km away
     in slice            4  in element         8613
-    at xi,eta,gamma coordinates =   0.86756526706739501      -0.31973989536152181       0.98213245368628177     
-    at (x,y,z)                  =   0.64518339253802759       0.41568714446010552       0.64100225060838456     
-    at lat/lon                  =    39.8680000       32.7933998    
+    at xi,eta,gamma coordinates =   0.86756526706739501      -0.31973989536152181       0.98213245368628177
+    at (x,y,z)                  =   0.64518339253802759       0.41568714446010552       0.64100225060838456
+    at lat/lon                  =    39.8680000       32.7933998
 
  Station #           8 : IU.FURI
-        original latitude:    8.89519978    
-       original longitude:    38.6797981    
-      epicentral distance:    40.5648346    
+        original latitude:    8.89519978
+       original longitude:    38.6797981
+      epicentral distance:    40.5648346
    closest estimate found:    7.29091971E-13  km away
     in slice            4  in element         8259
-    at xi,eta,gamma coordinates =  -0.93831952532597362      -0.50567210248471806       0.99950038446766942     
-    at (x,y,z)                  =   0.77126116188167448       0.61745039286464554       0.15462749727178074     
-    at lat/lon                  =    8.89519978       38.6797981    
+    at xi,eta,gamma coordinates =  -0.93831952532597362      -0.50567210248471806       0.99950038446766942
+    at (x,y,z)                  =   0.77126116188167448       0.61745039286464554       0.15462749727178074
+    at lat/lon                  =    8.89519978       38.6797981
 
  Station #           9 : IU.GRFO
-        original latitude:    49.6908989    
-       original longitude:    11.2202997    
-      epicentral distance:    7.06878328    
+        original latitude:    49.6908989
+       original longitude:    11.2202997
+      epicentral distance:    7.06878328
    closest estimate found:    1.01581547E-12  km away
     in slice            0  in element         8226
-    at xi,eta,gamma coordinates =  -0.33451999913098274       0.72304377968470590       0.98824595956220251     
-    at (x,y,z)                  =   0.63453447231151405       0.12587485618130761       0.76255170929957494     
-    at lat/lon                  =    49.6908989       11.2202997    
+    at xi,eta,gamma coordinates =  -0.33451999913098274       0.72304377968470590       0.98824595956220251
+    at (x,y,z)                  =   0.63453447231151405       0.12587485618130761       0.76255170929957494
+    at lat/lon                  =    49.6908989       11.2202997
 
  Station #          10 : IU.KONO
-        original latitude:    59.6491013    
-       original longitude:    9.59819984    
-      epicentral distance:    17.0398026    
+        original latitude:    59.6491013
+       original longitude:    9.59819984
+      epicentral distance:    17.0398026
    closest estimate found:    2.15305529E-12  km away
     in slice            0  in element         8166
-    at xi,eta,gamma coordinates =   0.96534009368311413      -0.33330196228225972       0.96600968664066333     
-    at (x,y,z)                  =   0.49819437556112306        8.4247172467598552E-002  0.86290094871989931     
-    at lat/lon                  =    59.6491013       9.59819984    
+    at xi,eta,gamma coordinates =   0.96534009368311413      -0.33330196228225972       0.96600968664066333
+    at (x,y,z)                  =   0.49819437556112306        8.4247172467598552E-002  0.86290094871989931
+    at lat/lon                  =    59.6491013       9.59819984
 
  Station #          11 : IU.MSKU
-        original latitude:   -1.65569997    
-       original longitude:    13.6115999    
-      epicentral distance:    44.4075661    
+        original latitude:   -1.65569997
+       original longitude:    13.6115999
+      epicentral distance:    44.4075661
    closest estimate found:    7.29426936E-13  km away
     in slice            4  in element         8108
-    at xi,eta,gamma coordinates =  -0.21140826007513300      -0.67939681573507860       0.99749852456364796     
+    at xi,eta,gamma coordinates =  -0.21140826007513300      -0.67939681573507860       0.99749852456364796
     at (x,y,z)                  =   0.97150378690452843       0.23523971237012065       -2.8893281365271979E-002
-    at lat/lon                  =   -1.65569997       13.6115999    
+    at lat/lon                  =   -1.65569997       13.6115999
 
  Station #          12 : IU.PAB
-        original latitude:    39.5446014    
-       original longitude:   -4.34989977    
-      epicentral distance:    13.5421448    
+        original latitude:    39.5446014
+       original longitude:   -4.34989977
+      epicentral distance:    13.5421448
    closest estimate found:    2.00500293E-12  km away
     in slice            4  in element         8594
-    at xi,eta,gamma coordinates =  -0.82170313303907994        9.3260118371419246E-002   1.0000107021995874     
-    at (x,y,z)                  =   0.76890794319915945       -5.8487965670775376E-002  0.63667867308158799     
-    at lat/lon                  =    39.5446014      -4.34989977    
+    at xi,eta,gamma coordinates =  -0.82170313303907994        9.3260118371419246E-002   1.0000107021995874
+    at (x,y,z)                  =   0.76890794319915945       -5.8487965670775376E-002  0.63667867308158799
+    at lat/lon                  =    39.5446014      -4.34989977
 
  Station #          13 : IU.SJG
-        original latitude:    18.1091003    
-       original longitude:   -66.1500015    
-      epicentral distance:    70.0953445    
+        original latitude:    18.1091003
+       original longitude:   -66.1500015
+      epicentral distance:    70.0953445
    closest estimate found:    8.66290329E-13  km away
     in slice            1  in element         8328
-    at xi,eta,gamma coordinates =   0.99109548968925010        4.0003769940103691E-002  0.99999971292441869     
-    at (x,y,z)                  =   0.38431499208997738      -0.86930335306486173       0.31082739133652437     
-    at lat/lon                  =    18.1091003      -66.1500015    
+    at xi,eta,gamma coordinates =   0.99109548968925010        4.0003769940103691E-002  0.99999971292441869
+    at (x,y,z)                  =   0.38431499208997738      -0.86930335306486173       0.31082739133652437
+    at lat/lon                  =    18.1091003      -66.1500015
 
  Station #          14 : MN.BLY
-        original latitude:    44.7487984    
-       original longitude:    17.1839008    
-      epicentral distance:    3.52697039    
+        original latitude:    44.7487984
+       original longitude:    17.1839008
+      epicentral distance:    3.52697039
    closest estimate found:    1.58162253E-12  km away
     in slice            0  in element         8289
-    at xi,eta,gamma coordinates =   0.80176208763193779      -0.24853589576779844        1.0001947178192316     
-    at (x,y,z)                  =   0.67849768735641991       0.20982121154298239       0.70399973971315377     
-    at lat/lon                  =    44.7487984       17.1839008    
+    at xi,eta,gamma coordinates =   0.80176208763193779      -0.24853589576779844        1.0001947178192316
+    at (x,y,z)                  =   0.67849768735641991       0.20982121154298239       0.70399973971315377
+    at lat/lon                  =    44.7487984       17.1839008
 
  Station #          15 : MN.VLC
-        original latitude:    44.1594009    
-       original longitude:    10.3864002    
-      epicentral distance:    2.45745540    
+        original latitude:    44.1594009
+       original longitude:    10.3864002
+      epicentral distance:    2.45745540
    closest estimate found:    7.07323089E-13  km away
     in slice            4  in element         8621
-    at xi,eta,gamma coordinates =   0.73876668570722737      -0.38586859995656514       0.99990553668877369     
-    at (x,y,z)                  =   0.70564892939773016       0.12933768301786505       0.69665659433055360     
-    at lat/lon                  =    44.1594009       10.3864002    
+    at xi,eta,gamma coordinates =   0.73876668570722737      -0.38586859995656514       0.99990553668877369
+    at (x,y,z)                  =   0.70564892939773016       0.12933768301786505       0.69665659433055360
+    at lat/lon                  =    44.1594009       10.3864002
 
  Station #          16 : GE.MATE
-        original latitude:    40.6491013    
-       original longitude:    16.7043991    
-      epicentral distance:    3.37840009    
+        original latitude:    40.6491013
+       original longitude:    16.7043991
+      epicentral distance:    3.37840009
    closest estimate found:    1.42565528E-12  km away
     in slice            4  in element         8587
-    at xi,eta,gamma coordinates =   0.77686821263252603      -0.87867849153969346        1.0002510712707622     
-    at (x,y,z)                  =   0.72669596215453858       0.21808006763626619       0.65142464083579965     
-    at lat/lon                  =    40.6491013       16.7043991    
+    at xi,eta,gamma coordinates =   0.77686821263252603      -0.87867849153969346        1.0002510712707622
+    at (x,y,z)                  =   0.72669596215453858       0.21808006763626619       0.65142464083579965
+    at lat/lon                  =    40.6491013       16.7043991
 
  maximum error in location of all the receivers:    2.93773339E-12  km
 
@@ -417,18 +417,18 @@
    using force vectorization
    using Deville products
    inverse table of ibool done
-   fusing arrays: 
+   fusing arrays:
      size of fused arrays =    40.4434204     MB
                           =    3.94955277E-02 GB
    fused arrays done
-   bandwidth test (STREAM TRIAD): 
+   bandwidth test (STREAM TRIAD):
       memory accesses =    19.7758369     MB
       timing  min/max =    9.41000006E-04 s /    1.37600000E-03 s
       timing      avg =    1.10460003E-03 s
       bandwidth       =    17.4835606     GB/s
 
 
- Elapsed time for preparing timerun in seconds =   0.230811000    
+ Elapsed time for preparing timerun in seconds =   0.230811000
 
 
  time loop:
@@ -447,15 +447,15 @@
  Time step #            5
  Time:  -0.108000003      minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =    7.13340114E-07
- Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    0.00000000    
- Elapsed time in seconds =   0.12060900000000019     
+ Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    0.00000000
+ Elapsed time in seconds =   0.12060900000000019
  Elapsed time in hh:mm:ss =      0 h 00 m 00 s
  Mean elapsed time per time step in seconds =    2.4121800000000037E-002
  Time steps done =            5  out of          600
  Time steps remaining =          595
- Estimated remaining time in seconds =    14.352471000000023     
+ Estimated remaining time in seconds =    14.352471000000023
  Estimated remaining time in hh:mm:ss =      0 h 00 m 14 s
- Estimated total run time in seconds =    14.473080000000023     
+ Estimated total run time in seconds =    14.473080000000023
  Estimated total run time in hh:mm:ss =      0 h 00 m 14 s
  We have done   0.833333313     % of that
  The run will finish approximately on (in local time): Thu Mar 14, 2024 20:14
@@ -467,15 +467,15 @@
  Time step #          200
  Time:   0.476999998      minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =    1.07403742E-02
- Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    0.00000000    
- Elapsed time in seconds =    5.5463130000000005     
+ Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    0.00000000
+ Elapsed time in seconds =    5.5463130000000005
  Elapsed time in hh:mm:ss =      0 h 00 m 05 s
  Mean elapsed time per time step in seconds =    2.7731565000000003E-002
  Time steps done =          200  out of          600
  Time steps remaining =          400
- Estimated remaining time in seconds =    11.092626000000001     
+ Estimated remaining time in seconds =    11.092626000000001
  Estimated remaining time in hh:mm:ss =      0 h 00 m 11 s
- Estimated total run time in seconds =    16.638939000000001     
+ Estimated total run time in seconds =    16.638939000000001
  Estimated total run time in hh:mm:ss =      0 h 00 m 16 s
  We have done    33.3333321     % of that
  The run will finish approximately on (in local time): Thu Mar 14, 2024 20:14
@@ -483,15 +483,15 @@
  Time step #          400
  Time:    1.07700002      minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =    1.22650824E-02
- Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    0.00000000    
- Elapsed time in seconds =    11.084565000000000     
+ Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    0.00000000
+ Elapsed time in seconds =    11.084565000000000
  Elapsed time in hh:mm:ss =      0 h 00 m 11 s
  Mean elapsed time per time step in seconds =    2.7711412499999998E-002
  Time steps done =          400  out of          600
  Time steps remaining =          200
- Estimated remaining time in seconds =    5.5422824999999998     
+ Estimated remaining time in seconds =    5.5422824999999998
  Estimated remaining time in hh:mm:ss =      0 h 00 m 05 s
- Estimated total run time in seconds =    16.626847500000000     
+ Estimated total run time in seconds =    16.626847500000000
  Estimated total run time in hh:mm:ss =      0 h 00 m 16 s
  We have done    66.6666641     % of that
  The run will finish approximately on (in local time): Thu Mar 14, 2024 20:14
@@ -500,14 +500,14 @@
  Time:    1.67700005      minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =    1.14186676E-02
  Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    2.23888258E-39
- Elapsed time in seconds =    16.624842999999998     
+ Elapsed time in seconds =    16.624842999999998
  Elapsed time in hh:mm:ss =      0 h 00 m 16 s
  Mean elapsed time per time step in seconds =    2.7708071666666664E-002
  Time steps done =          600  out of          600
  Time steps remaining =            0
- Estimated remaining time in seconds =    0.0000000000000000     
+ Estimated remaining time in seconds =    0.0000000000000000
  Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
- Estimated total run time in seconds =    16.624842999999998     
+ Estimated total run time in seconds =    16.624842999999998
  Estimated total run time in hh:mm:ss =      0 h 00 m 16 s
  We have done    100.000000     % of that
 
@@ -516,7 +516,7 @@
  Writing the seismograms by main proc alone took    4.30580005E-02  seconds
 
  Time-Loop Complete. Timing info:
- Total elapsed time in seconds =    16.695553000000000     
+ Total elapsed time in seconds =    16.695553000000000
  Total elapsed time in hh:mm:ss =      0 h 00 m 16 s
 
  finalizing simulation

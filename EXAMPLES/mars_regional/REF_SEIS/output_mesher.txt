@@ -52,15 +52,15 @@
 
  incorporating topography
    topo file            : DATA/topo_bathy/topo_bathy_marstopo4_smoothed_window_3.dat.bin
-   resolution in minutes:    4.00000000    
+   resolution in minutes:    4.00000000
 
    topography/bathymetry: min/max =        -7830       21092
 
    Elapsed time for reading in seconds =    6.3744999999999996E-002
 
 
-   VTK topo output: topo resolution in minutes =    4.00000000    
-                    samples per degree         =    15.0000000    
+   VTK topo output: topo resolution in minutes =    4.00000000
+                    samples per degree         =    15.0000000
                     resolution distance        =    3.94444418     (km)
                     full globe NLAT =         2700
                                NLON =         5400
@@ -107,10 +107,10 @@
  Radial Meshing parameters:
    NCHUNKS                =            1
 
-   CENTER LAT/LON:             4.50000000     /   136.000000    
-   GAMMA_ROTATION_AZIMUTH:     0.00000000    
+   CENTER LAT/LON:             4.50000000     /   136.000000
+   GAMMA_ROTATION_AZIMUTH:     0.00000000
 
-   CHUNK WIDTH XI/ETA:         15.0000000     /   15.0000000    
+   CHUNK WIDTH XI/ETA:         15.0000000     /   15.0000000
    NEX XI/ETA:                        32 /          32
 
    NER_CRUST:                          5
@@ -129,11 +129,11 @@
    R_CENTRAL_CUBE =    358.000000      km
 
  Mesh resolution:
-   DT =   0.19000000000000000     
+   DT =   0.19000000000000000
    Minimum period =    6.93359327      (s)
 
-   MIN_ATTENUATION_PERIOD =    6.93359327    
-   MAX_ATTENUATION_PERIOD =    389.904602    
+   MIN_ATTENUATION_PERIOD =    6.93359327
+   MAX_ATTENUATION_PERIOD =    389.904602
 
 
 
@@ -145,11 +145,11 @@
 
  first pass
 
-   ...allocating arrays 
+   ...allocating arrays
 
-   ...setting up layers 
+   ...setting up layers
 
-   ...creating mesh elements 
+   ...creating mesh elements
    creating layer            1 out of           10
      number of regular elements  =           64
      number of doubling elements =          512
@@ -197,11 +197,11 @@
 
  second pass
 
-   ...allocating arrays 
+   ...allocating arrays
 
-   ...setting up layers 
+   ...setting up layers
 
-   ...creating mesh elements 
+   ...creating mesh elements
    creating layer            1 out of           10
      number of regular elements  =           64
      number of doubling elements =          512
@@ -238,7 +238,7 @@
    total number of elements (all slices) =        12736
 
 
-   ...fills global mesh points 
+   ...fills global mesh points
 
    ...checking mesh resolution and time step
 
@@ -252,17 +252,17 @@
 
    Max element edge size =    112.877655      (km)
    Min element edge size =    20.5721664      (km)
-   Max/min ratio =    5.48691130    
+   Max/min ratio =    5.48691130
 
-   Max Jacobian eigenvalue ratio =   0.998961389    
-   Min Jacobian eigenvalue ratio =   0.183637589    
+   Max Jacobian eigenvalue ratio =   0.998961389
+   Min Jacobian eigenvalue ratio =   0.183637589
 
    Minimum period resolved =    13.5017023      (s)
    Minimum period resolved (empirical) =    6.93359327      (s)
    Maximum suggested time step =   0.250000000      (s)
 
    for DT :   0.189999998      (s)
-   Max stability for wave velocities =   0.413454980    
+   Max stability for wave velocities =   0.413454980
  ----------------------------------
 
    saving vtk mesh files for resolution res_minimum_period...
@@ -305,7 +305,7 @@
    total unique MPI interface points:       39268
 
 
-   ...element inner/outer separation 
+   ...element inner/outer separation
 
  for overlapping of communications with calculations:
 
@@ -313,7 +313,7 @@
  percentage of volume elements in crust/mantle    81.2185974     %
 
 
-   ...element mesh coloring 
+   ...element mesh coloring
    mesh coloring:  F
 
    ...creating absorbing boundary arrays
@@ -337,11 +337,11 @@
 
  first pass
 
-   ...allocating arrays 
+   ...allocating arrays
 
-   ...setting up layers 
+   ...setting up layers
 
-   ...creating mesh elements 
+   ...creating mesh elements
    creating layer            1 out of            2
      number of regular elements  =           20
      number of doubling elements =           32
@@ -366,11 +366,11 @@
 
  second pass
 
-   ...allocating arrays 
+   ...allocating arrays
 
-   ...setting up layers 
+   ...setting up layers
 
-   ...creating mesh elements 
+   ...creating mesh elements
    creating layer            1 out of            2
      number of regular elements  =           20
      number of doubling elements =           32
@@ -384,7 +384,7 @@
    total number of elements (all slices) =          336
 
 
-   ...fills global mesh points 
+   ...fills global mesh points
 
    ...checking mesh resolution and time step
 
@@ -398,17 +398,17 @@
 
    Max element edge size =    159.043533      (km)
    Min element edge size =    33.4513931      (km)
-   Max/min ratio =    4.75446653    
+   Max/min ratio =    4.75446653
 
-   Max Jacobian eigenvalue ratio =   0.775694788    
-   Min Jacobian eigenvalue ratio =   0.180480093    
+   Max Jacobian eigenvalue ratio =   0.775694788
+   Min Jacobian eigenvalue ratio =   0.180480093
 
    Minimum period resolved =    12.2035332      (s)
    Minimum period resolved (empirical) =    6.93359327      (s)
    Maximum suggested time step =   0.490000010      (s)
 
    for DT :   0.189999998      (s)
-   Max stability for wave velocities =   0.213108510    
+   Max stability for wave velocities =   0.213108510
  ----------------------------------
 
    saving vtk mesh files for resolution res_minimum_period...
@@ -451,12 +451,12 @@
    total assembled MPI interface points:        3572
 
 
-   ...element inner/outer separation 
+   ...element inner/outer separation
  percentage of edge elements in outer core    55.9523811     %
  percentage of volume elements in outer core    44.0476189     %
 
 
-   ...element mesh coloring 
+   ...element mesh coloring
    mesh coloring:  F
 
    ...creating absorbing boundary arrays
@@ -480,11 +480,11 @@
 
  first pass
 
-   ...allocating arrays 
+   ...allocating arrays
 
-   ...setting up layers 
+   ...setting up layers
 
-   ...creating mesh elements 
+   ...creating mesh elements
    creating layer            1 out of            1
      number of regular elements  =           12
     100.0%    current clock (NOT elapsed) time is: 11h 40min 30sec
@@ -505,11 +505,11 @@
 
  second pass
 
-   ...allocating arrays 
+   ...allocating arrays
 
-   ...setting up layers 
+   ...setting up layers
 
-   ...creating mesh elements 
+   ...creating mesh elements
    creating layer            1 out of            1
      number of regular elements  =           12
     100.0%    current clock (NOT elapsed) time is: 11h 40min 30sec
@@ -519,7 +519,7 @@
    total number of elements (all slices) =           48
 
 
-   ...fills global mesh points 
+   ...fills global mesh points
 
    ...checking mesh resolution and time step
 
@@ -533,17 +533,17 @@
 
    Max element edge size =    52.4020081      (km)
    Min element edge size =    23.2535954      (km)
-   Max/min ratio =    2.25350142    
+   Max/min ratio =    2.25350142
 
-   Max Jacobian eigenvalue ratio =   0.644304633    
-   Min Jacobian eigenvalue ratio =   0.440376937    
+   Max Jacobian eigenvalue ratio =   0.644304633
+   Min Jacobian eigenvalue ratio =   0.440376937
 
    Minimum period resolved =    12.6044388      (s)
    Minimum period resolved (empirical) =    6.93359327      (s)
    Maximum suggested time step =   0.300000012      (s)
 
    for DT :   0.189999998      (s)
-   Max stability for wave velocities =   0.345431179    
+   Max stability for wave velocities =   0.345431179
  ----------------------------------
 
    saving vtk mesh files for resolution res_minimum_period...
@@ -586,12 +586,12 @@
    total assembled MPI interface points:         884
 
 
-   ...element inner/outer separation 
+   ...element inner/outer separation
  percentage of edge elements in inner core    75.0000000     %
  percentage of volume elements in inner core    25.0000000     %
 
 
-   ...element mesh coloring 
+   ...element mesh coloring
    mesh coloring:  F
 
    ...creating absorbing boundary arrays
@@ -623,14 +623,14 @@
  Load balancing = 100 % by definition
 
 
- the time step of the solver will be DT =   0.189999998    
+ the time step of the solver will be DT =   0.189999998
 
  using single precision for the calculations
 
  smallest and largest possible floating-point numbers are:    1.17549435E-38   3.40282347E+38
 
 
- Elapsed time for mesh generation and buffer creation in seconds =    8.84512520    
+ Elapsed time for mesh generation and buffer creation in seconds =    8.84512520
  Elapsed time for mesh generation and buffer creation in hh:mm:ss =    0 h 00 m 08 s
 
  End of mesh generation

@@ -51,13 +51,13 @@
 
  Spatial distribution of the slices
                         0
-  
+
      2       1       4
-  
+
                         5
-  
+
                         3
-  
+
  attenuation model:
    1D reference model
    model: PREM attenuation
@@ -74,10 +74,10 @@
  Radial Meshing parameters:
    NCHUNKS                =            6
 
-   CENTER LAT/LON:             0.00000000     /   0.00000000    
-   GAMMA_ROTATION_AZIMUTH:     0.00000000    
+   CENTER LAT/LON:             0.00000000     /   0.00000000
+   GAMMA_ROTATION_AZIMUTH:     0.00000000
 
-   CHUNK WIDTH XI/ETA:         90.0000000     /   90.0000000    
+   CHUNK WIDTH XI/ETA:         90.0000000     /   90.0000000
    NEX XI/ETA:                        32 /          32
 
    NER_CRUST:                          2
@@ -96,11 +96,11 @@
    R_CENTRAL_CUBE =    950.000000      km
 
  Mesh resolution:
-   DT =   0.13000000000000000     
+   DT =   0.13000000000000000
    Minimum period =    138.993652      (s)
 
-   MIN_ATTENUATION_PERIOD =    138.993652    
-   MAX_ATTENUATION_PERIOD =    7816.18799    
+   MIN_ATTENUATION_PERIOD =    138.993652
+   MAX_ATTENUATION_PERIOD =    7816.18799
 
 
 
@@ -112,11 +112,11 @@
 
  first pass
 
-   ...allocating arrays 
+   ...allocating arrays
 
-   ...setting up layers 
+   ...setting up layers
 
-   ...creating mesh elements 
+   ...creating mesh elements
    creating layer            1 out of           11
      number of regular elements  =            0
      number of doubling elements =         1792
@@ -169,11 +169,11 @@
 
  second pass
 
-   ...allocating arrays 
+   ...allocating arrays
 
-   ...setting up layers 
+   ...setting up layers
 
-   ...creating mesh elements 
+   ...creating mesh elements
    creating layer            1 out of           11
      number of regular elements  =            0
      number of doubling elements =         1792
@@ -215,7 +215,7 @@
    total number of elements (all slices) =        51840
 
 
-   ...fills global mesh points 
+   ...fills global mesh points
 
    ...checking mesh resolution and time step
 
@@ -229,9 +229,9 @@
 
    Max element edge size =    892.094177      (km)
    Min element edge size =    14.9996128      (km)
-   Max/min ratio =    59.4744797    
+   Max/min ratio =    59.4744797
 
-   Max Jacobian eigenvalue ratio =   0.434512287    
+   Max Jacobian eigenvalue ratio =   0.434512287
    Min Jacobian eigenvalue ratio =    1.67035908E-02
 
    Minimum period resolved =    27.6425476      (s)
@@ -239,7 +239,7 @@
    Maximum suggested time step =   0.174999997      (s)
 
    for DT :   0.129999995      (s)
-   Max stability for wave velocities =   0.403812915    
+   Max stability for wave velocities =   0.403812915
  ----------------------------------
 
    saving vtk mesh files for resolution res_minimum_period...
@@ -297,7 +297,7 @@
    total unique MPI interface points:      170880
 
 
-   ...element inner/outer separation 
+   ...element inner/outer separation
 
  for overlapping of communications with calculations:
 
@@ -305,7 +305,7 @@
  percentage of volume elements in crust/mantle    79.3981476     %
 
 
-   ...element mesh coloring 
+   ...element mesh coloring
    mesh coloring:  F
 
    ...creating mass matrix
@@ -314,11 +314,11 @@
 
    ...saving mesh files
 
- calculated region volume:    3.50495863    
-                 top area:    12.5663700    
-             exact area:    12.566370614359172     
-              bottom area:    3.75362110    
-             exact area:    3.7536362746487373     
+ calculated region volume:    3.50495863
+                 top area:    12.5663700
+             exact area:    12.566370614359172
+              bottom area:    3.75362110
+             exact area:    3.7536362746487373
 
  *******************************************
  creating mesh in region            2
@@ -328,11 +328,11 @@
 
  first pass
 
-   ...allocating arrays 
+   ...allocating arrays
 
-   ...setting up layers 
+   ...setting up layers
 
-   ...creating mesh elements 
+   ...creating mesh elements
    creating layer            1 out of            2
      number of regular elements  =          112
      number of doubling elements =          128
@@ -357,11 +357,11 @@
 
  second pass
 
-   ...allocating arrays 
+   ...allocating arrays
 
-   ...setting up layers 
+   ...setting up layers
 
-   ...creating mesh elements 
+   ...creating mesh elements
    creating layer            1 out of            2
      number of regular elements  =          112
      number of doubling elements =          128
@@ -375,7 +375,7 @@
    total number of elements (all slices) =         4128
 
 
-   ...fills global mesh points 
+   ...fills global mesh points
 
    ...checking mesh resolution and time step
 
@@ -389,9 +389,9 @@
 
    Max element edge size =    910.074097      (km)
    Min element edge size =    70.7810974      (km)
-   Max/min ratio =    12.8575869    
+   Max/min ratio =    12.8575869
 
-   Max Jacobian eigenvalue ratio =   0.446650237    
+   Max Jacobian eigenvalue ratio =   0.446650237
    Min Jacobian eigenvalue ratio =    5.25875725E-02
 
    Minimum period resolved =    22.0949268      (s)
@@ -399,7 +399,7 @@
    Maximum suggested time step =   0.689999998      (s)
 
    for DT :   0.129999995      (s)
-   Max stability for wave velocities =   0.103164703    
+   Max stability for wave velocities =   0.103164703
  ----------------------------------
 
    saving vtk mesh files for resolution res_minimum_period...
@@ -457,12 +457,12 @@
    total assembled MPI interface points:       38976
 
 
-   ...element inner/outer separation 
+   ...element inner/outer separation
  percentage of edge elements in outer core    51.1627922     %
  percentage of volume elements in outer core    48.8372078     %
 
 
-   ...element mesh coloring 
+   ...element mesh coloring
    mesh coloring:  F
 
    ...creating mass matrix
@@ -471,11 +471,11 @@
 
    ...saving mesh files
 
- calculated region volume:   0.654637754    
-                 top area:    3.75362110    
-             exact area:    3.7536362746487373     
-              bottom area:   0.458508790    
-             exact area:   0.45853850461132722     
+ calculated region volume:   0.654637754
+                 top area:    3.75362110
+             exact area:    3.7536362746487373
+              bottom area:   0.458508790
+             exact area:   0.45853850461132722
 
  *******************************************
  creating mesh in region            3
@@ -485,11 +485,11 @@
 
  first pass
 
-   ...allocating arrays 
+   ...allocating arrays
 
-   ...setting up layers 
+   ...setting up layers
 
-   ...creating mesh elements 
+   ...creating mesh elements
    creating layer            1 out of            1
      number of regular elements  =           32
     100.0%    current clock (NOT elapsed) time is: 17h 25min 44sec
@@ -514,11 +514,11 @@
 
  second pass
 
-   ...allocating arrays 
+   ...allocating arrays
 
-   ...setting up layers 
+   ...setting up layers
 
-   ...creating mesh elements 
+   ...creating mesh elements
    creating layer            1 out of            1
      number of regular elements  =           32
     100.0%    current clock (NOT elapsed) time is: 17h 25min 44sec
@@ -532,7 +532,7 @@
      total number of elements =           96
 
 
-   ...fills global mesh points 
+   ...fills global mesh points
 
    ...checking mesh resolution and time step
 
@@ -546,10 +546,10 @@
 
    Max element edge size =    474.849884      (km)
    Min element edge size =    133.500000      (km)
-   Max/min ratio =    3.55692792    
+   Max/min ratio =    3.55692792
 
-   Max Jacobian eigenvalue ratio =    1.00000000    
-   Min Jacobian eigenvalue ratio =   0.243015945    
+   Max Jacobian eigenvalue ratio =    1.00000000
+   Min Jacobian eigenvalue ratio =   0.243015945
 
    Minimum period resolved =    114.906204      (s)
    Minimum period resolved (empirical) =    138.993652      (s)
@@ -621,12 +621,12 @@
    total assembled MPI interface points:        5830
 
 
-   ...element inner/outer separation 
+   ...element inner/outer separation
  percentage of edge elements in inner core    54.1666679     %
  percentage of volume elements in inner core    45.8333321     %
 
 
-   ...element mesh coloring 
+   ...element mesh coloring
    mesh coloring:  F
 
    ...creating mass matrix
@@ -636,23 +636,23 @@
    ...saving mesh files
 
  calculated region volume:    2.91937422E-02
-                 top area:   0.458508790    
-             exact area:   0.45853850461132722     
-              bottom area:   0.211699098    
-             more or less similar area (central cube):   0.17787790385168645     
+                 top area:   0.458508790
+             exact area:   0.45853850461132722
+              bottom area:   0.211699098
+             more or less similar area (central cube):   0.17787790385168645
 
- calculated volume:    4.1887900908424491     
-      exact volume:    4.1887902047863905     
+ calculated volume:    4.1887900908424491
+      exact volume:    4.1887902047863905
 
- computed total Earth mass for this density model and mesh: 
+ computed total Earth mass for this density model and mesh:
        5.98280714E+24  kg
     (should be not too far from 5.974E+24 kg)
 
- average density for this density model and mesh: 
+ average density for this density model and mesh:
        5523.23584      kg/m3
     (should be not too far from 5514 kg/m3)
 
- position of the center of mass of the globe for this density model and mesh: 
+ position of the center of mass of the globe for this density model and mesh:
     x =  -0.606220663      km
     y =  -0.433103979      km
     z =  -0.520078659      km
@@ -673,14 +673,14 @@
  Load balancing = 100 % by definition
 
 
- the time step of the solver will be DT =   0.129999995    
+ the time step of the solver will be DT =   0.129999995
 
  using single precision for the calculations
 
  smallest and largest possible floating-point numbers are:    1.17549435E-38   3.40282347E+38
 
 
- Elapsed time for mesh generation and buffer creation in seconds =    1.38352597    
+ Elapsed time for mesh generation and buffer creation in seconds =    1.38352597
  Elapsed time for mesh generation and buffer creation in hh:mm:ss =    0 h 00 m 01 s
 
  End of mesh generation

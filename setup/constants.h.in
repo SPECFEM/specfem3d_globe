@@ -1348,7 +1348,7 @@
 !------------------------------------------------------------
   integer, parameter :: NEDOF1    = NGLLCUBE1 * NNDOF
   integer, parameter :: NEDOFU1   = NGLLCUBE1 * NNDOFU, &
-                        NEDOFCHI1 = NGLLCUBE1 * NNDOFCHI,&
+                        NEDOFCHI1 = NGLLCUBE1 * NNDOFCHI, &
                         NEDOFP1   = NGLLCUBE1 * NNDOFP, &
                         NEDOFPHI1 = NGLLCUBE1 * NNDOFPHI
 

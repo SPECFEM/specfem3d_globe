@@ -115,11 +115,11 @@
                   in element         2644
 
    using moment tensor source:
-     xi coordinate of source in that element:   0.26425897217592242     
-     eta coordinate of source in that element:  -0.63943840245973405     
-     gamma coordinate of source in that element:  -0.16283931578884714     
+     xi coordinate of source in that element:   0.26425897217592242
+     eta coordinate of source in that element:  -0.63943840245973405
+     gamma coordinate of source in that element:  -0.16283931578884714
 
-     at (x,y,z) coordinates =  -0.67652412866326372       0.72548330715519671       0.10303616589233269     
+     at (x,y,z) coordinates =  -0.67652412866326372       0.72548330715519671       0.10303616589233269
 
    source time function:
      using (quasi) Heaviside source time function
@@ -129,19 +129,19 @@
 
    magnitude of the source:
         scalar moment M0 =    4.9645444710466639E+024  dyne-cm
-     moment magnitude Mw =    5.7639197942959406     
+     moment magnitude Mw =    5.7639197942959406
 
 
    original (requested) position of the source:
 
-         latitude:    6.0000000000000000     
-        longitude:    133.00000000000000     
+         latitude:    6.0000000000000000
+        longitude:    133.00000000000000
             depth:    12.000000000000000       km
 
    position of the source that will be used:
 
-         latitude:    5.9999999999999956     
-        longitude:    133.00000000000000     
+         latitude:    5.9999999999999956
+        longitude:    133.00000000000000
             depth:    11.999999999999341       km
 
    Error in location of the source:    5.34336464E-13  km
@@ -169,14 +169,14 @@
  Station #     1:                 XB.ELYSE    epicentral distance:      3.002847 degrees
 
  Station #           1 : XB.ELYSE
-        original latitude:    4.50238419    
-       original longitude:    135.623444    
-      epicentral distance:    3.00284719    
+        original latitude:    4.50238419
+       original longitude:    135.623444
+      epicentral distance:    3.00284719
    closest estimate found:    0.00000000      km away
     in slice            2  in element         3109
-    at xi,eta,gamma coordinates =  -0.60179378362113656      -0.98953848794693766        1.0001704123548432     
+    at xi,eta,gamma coordinates =  -0.60179378362113656      -0.98953848794693766        1.0001704123548432
     at (x,y,z)                  =  -0.71321229125508312       0.69785762116987604        7.7650431989433263E-002
-    at lat/lon                  =    4.50238419       135.623444    
+    at lat/lon                  =    4.50238419       135.623444
 
  maximum error in location of all the receivers:    0.00000000      km
 
@@ -236,12 +236,12 @@
    number of SLS bodies:            3
    partial attenuation, physical dispersion only:  F
 
-   Reference frequency of anelastic model (Hz):    1.00000000    
-                                    period (s):    1.00000000    
-   Attenuation frequency band min/max (Hz):   2.56472989E-03 /  0.144225359    
-               period band    min/max (s) :   6.93359327     /   389.904602    
+   Reference frequency of anelastic model (Hz):    1.00000000
+                                    period (s):    1.00000000
+   Attenuation frequency band min/max (Hz):   2.56472989E-03 /  0.144225359
+               period band    min/max (s) :   6.93359327     /   389.904602
    Logarithmic center frequency (Hz):   1.92327611E-02
-                      period     (s):   51.9946136    
+                      period     (s):   51.9946136
 
    using shear attenuation Q_mu
 
@@ -266,18 +266,18 @@
    using force vectorization
    using Deville products
    inverse table of ibool done
-   fusing arrays: 
+   fusing arrays:
      size of fused arrays =    14.0762329     MB
                           =    1.37463212E-02 GB
    fused arrays done
-   bandwidth test (STREAM TRIAD): 
+   bandwidth test (STREAM TRIAD):
       memory accesses =    7.40784073     MB
       timing  min/max =    1.13000002E-04 s /    1.18999997E-04 s
       timing      avg =    1.14199996E-04 s
       bandwidth       =    63.3469315     GB/s
 
 
- Elapsed time for preparing timerun in seconds =   0.101263002    
+ Elapsed time for preparing timerun in seconds =   0.101263002
 
 
  time loop:
@@ -296,16 +296,16 @@
  Time step #            5
  Time:   -3.73333320E-02  minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =    5.96434802E-06
- Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    0.00000000    
+ Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    0.00000000
  Max of strain, epsilondev_crust_mantle  =   2.21443797E-09
  Elapsed time in seconds =    5.4113999999999995E-002
  Elapsed time in hh:mm:ss =      0 h 00 m 00 s
  Mean elapsed time per time step in seconds =    1.0822799999999999E-002
  Time steps done =            5  out of          900
  Time steps remaining =          895
- Estimated remaining time in seconds =    9.6864059999999981     
+ Estimated remaining time in seconds =    9.6864059999999981
  Estimated remaining time in hh:mm:ss =      0 h 00 m 09 s
- Estimated total run time in seconds =    9.7405199999999983     
+ Estimated total run time in seconds =    9.7405199999999983
  Estimated total run time in hh:mm:ss =      0 h 00 m 09 s
  We have done   0.555555582     % of that
  The run will finish approximately on (in local time): Fri Mar 15, 2024 11:40
@@ -319,14 +319,14 @@
  Max norm displacement vector U in solid in all slices for forward prop. (m) =    1.82992984E-02
  Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    3.28031714E-31
  Max of strain, epsilondev_crust_mantle  =   3.13412829E-06
- Elapsed time in seconds =    6.3452839999999995     
+ Elapsed time in seconds =    6.3452839999999995
  Elapsed time in hh:mm:ss =      0 h 00 m 06 s
  Mean elapsed time per time step in seconds =    1.2690567999999999E-002
  Time steps done =          500  out of          900
  Time steps remaining =          400
- Estimated remaining time in seconds =    5.0762271999999999     
+ Estimated remaining time in seconds =    5.0762271999999999
  Estimated remaining time in hh:mm:ss =      0 h 00 m 05 s
- Estimated total run time in seconds =    11.421511199999999     
+ Estimated total run time in seconds =    11.421511199999999
  Estimated total run time in hh:mm:ss =      0 h 00 m 11 s
  We have done    55.5555573     % of that
  The run will finish approximately on (in local time): Fri Mar 15, 2024 11:40
@@ -336,14 +336,14 @@
  Max norm displacement vector U in solid in all slices for forward prop. (m) =    1.82902701E-02
  Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    4.59217365E-22
  Max of strain, epsilondev_crust_mantle  =   3.13304076E-06
- Elapsed time in seconds =    11.412920000000000     
+ Elapsed time in seconds =    11.412920000000000
  Elapsed time in hh:mm:ss =      0 h 00 m 11 s
  Mean elapsed time per time step in seconds =    1.2681022222222222E-002
  Time steps done =          900  out of          900
  Time steps remaining =            0
- Estimated remaining time in seconds =    0.0000000000000000     
+ Estimated remaining time in seconds =    0.0000000000000000
  Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
- Estimated total run time in seconds =    11.412920000000000     
+ Estimated total run time in seconds =    11.412920000000000
  Estimated total run time in hh:mm:ss =      0 h 00 m 11 s
  We have done    100.000000     % of that
 
@@ -351,7 +351,7 @@
  Writing the seismograms in parallel took    2.23500002E-03  seconds
 
  Time-Loop Complete. Timing info:
- Total elapsed time in seconds =    11.428120000000000     
+ Total elapsed time in seconds =    11.428120000000000
  Total elapsed time in hh:mm:ss =      0 h 00 m 11 s
 
  finalizing simulation

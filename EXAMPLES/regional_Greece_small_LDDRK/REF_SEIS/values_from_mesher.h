@@ -26,48 +26,48 @@
  ! total for full 1-chunk mesh:
  ! ---------------------------
  !
- ! exact total number of spectral elements in entire mesh = 
- !    9680.0000000000000     
- ! approximate total number of points in entire mesh = 
- !    666972.00000000000     
- ! approximate total number of degrees of freedom in entire mesh = 
- !    1898060.0000000000     
+ ! exact total number of spectral elements in entire mesh =
+ !    9680.0000000000000
+ ! approximate total number of points in entire mesh =
+ !    666972.00000000000
+ ! approximate total number of degrees of freedom in entire mesh =
+ !    1898060.0000000000
  !
  ! position of the mesh chunk at the surface:
  ! -----------------------------------------
  !
- ! angular size in first direction in degrees =    20.0000000    
- ! angular size in second direction in degrees =    20.0000000    
+ ! angular size in first direction in degrees =    20.0000000
+ ! angular size in second direction in degrees =    20.0000000
  !
- ! longitude of center in degrees =    25.0000000    
- ! latitude of center in degrees =    40.0000000    
+ ! longitude of center in degrees =    25.0000000
+ ! latitude of center in degrees =    40.0000000
  !
- ! angle of rotation of the first chunk =    0.00000000    
+ ! angle of rotation of the first chunk =    0.00000000
  !
  ! corner            1
- ! longitude in degrees =    13.661882747982682     
- ! latitude in degrees =    29.513451805567765     
+ ! longitude in degrees =    13.661882747982682
+ ! latitude in degrees =    29.513451805567765
  !
  ! corner            2
- ! longitude in degrees =    36.338117252017319     
- ! latitude in degrees =    29.513451805567765     
+ ! longitude in degrees =    36.338117252017319
+ ! latitude in degrees =    29.513451805567765
  !
  ! corner            3
- ! longitude in degrees =    9.8824891302835312     
- ! latitude in degrees =    49.003504872368651     
+ ! longitude in degrees =    9.8824891302835312
+ ! latitude in degrees =    49.003504872368651
  !
  ! corner            4
- ! longitude in degrees =    40.117510869716469     
- ! latitude in degrees =    49.003504872368651     
+ ! longitude in degrees =    40.117510869716469
+ ! latitude in degrees =    49.003504872368651
  !
  ! resolution of the mesh at the surface:
  ! -------------------------------------
  !
  ! spectral elements along a great circle =          576
  ! GLL points along a great circle =         2304
- ! average distance between points in degrees =   0.156250000    
- ! average distance between points in km =    17.3742065    
- ! average size of a spectral element in km =    69.4968262    
+ ! average distance between points in degrees =   0.156250000
+ ! average distance between points in km =    17.3742065
+ ! average size of a spectral element in km =    69.4968262
  !
 
  ! approximate static memory needed by the solver:
