@@ -50,8 +50,8 @@
   module model_atten3D_QRFSI12_par
 
   ! QRFSI12 constants
-  integer,parameter :: NKQ=8,MAXL_Q=12
-  integer,parameter :: NSQ=(MAXL_Q+1)**2,NDEPTHS_REFQ=913
+  integer,parameter :: NKQ = 8,MAXL_Q = 12
+  integer,parameter :: NSQ=(MAXL_Q+1)**2,NDEPTHS_REFQ = 913
 
   ! model_atten3D_QRFSI12_variables
   double precision,dimension(:,:),allocatable :: QRFSI12_Q_dqmu
@@ -148,11 +148,11 @@
     do l = 0,MAXL_Q
       do m = 0,l
         if (m == 0) then
-          j=j+1
+          j = j+1
           read(IIN,*)ll,mm,v1
           QRFSI12_Q_dqmu(k,j)=v1
         else
-          j=j+2
+          j = j+2
           read(IIN,*)ll,mm,v1,v2
   !       write(*,*) 'k,l,m,ll,mm:',k,l,m,ll,mm,v1
           QRFSI12_Q_dqmu(k,j-1)=2.*v1
@@ -262,9 +262,9 @@
     !   print *,'QRFSI12: we are in the mantle at depth',depth
 
     ifnd = 0
-    do i=2,NDEPTHS_REFQ
+    do i = 2,NDEPTHS_REFQ
       if (depth >= QRFSI12_Q_refdepth(i-1) .and. depth < QRFSI12_Q_refdepth(i)) then
-        ifnd=i
+        ifnd = i
       endif
     enddo
     if (ifnd == 0) then

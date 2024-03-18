@@ -59,27 +59,27 @@
 ! generate the 2D shape functions and their derivatives (9 nodes)
   do i = 1,NGLLA
 
-  xi=xigll(i)
+  xi = xigll(i)
 
-  l1xi=HALF*xi*(xi-ONE)
-  l2xi=ONE-xi**2
-  l3xi=HALF*xi*(xi+ONE)
+  l1xi = HALF*xi*(xi-ONE)
+  l2xi = ONE-xi**2
+  l3xi = HALF*xi*(xi+ONE)
 
-  l1pxi=xi-HALF
+  l1pxi = xi-HALF
   l2pxi=-TWO*xi
-  l3pxi=xi+HALF
+  l3pxi = xi+HALF
 
   do j = 1,NGLLB
 
-    eta=yigll(j)
+    eta = yigll(j)
 
-    l1eta=HALF*eta*(eta-ONE)
-    l2eta=ONE-eta**2
-    l3eta=HALF*eta*(eta+ONE)
+    l1eta = HALF*eta*(eta-ONE)
+    l2eta = ONE-eta**2
+    l3eta = HALF*eta*(eta+ONE)
 
-    l1peta=eta-HALF
+    l1peta = eta-HALF
     l2peta=-TWO*eta
-    l3peta=eta+HALF
+    l3peta = eta+HALF
 
 !   corner nodes
 
@@ -129,17 +129,17 @@
   do i = 1,NGLLA
     do j = 1,NGLLB
 
-    sumshape=ZERO
+    sumshape = ZERO
 
-    sumdershapexi=ZERO
-    sumdershapeeta=ZERO
+    sumdershapexi = ZERO
+    sumdershapeeta = ZERO
 
     do ia = 1,NGNOD2D
 
-      sumshape=sumshape+shape2D(ia,i,j)
+      sumshape = sumshape+shape2D(ia,i,j)
 
-      sumdershapexi=sumdershapexi+dershape2D(1,ia,i,j)
-      sumdershapeeta=sumdershapeeta+dershape2D(2,ia,i,j)
+      sumdershapexi = sumdershapexi+dershape2D(1,ia,i,j)
+      sumdershapeeta = sumdershapeeta+dershape2D(2,ia,i,j)
 
     enddo
 

@@ -1961,9 +1961,9 @@
 
   ! finds closest interior GLL point
   ! interior points should be good enough for iterative point search below
-  do k=2,NGLLZ-1
-    do j=2,NGLLY-1
-      do i=2,NGLLX-1
+  do k = 2,NGLLZ-1
+    do j = 2,NGLLY-1
+      do i = 2,NGLLX-1
         iglob = ibool(i,j,k,ispec_selected)
 
         dist = (x_target - xstore(iglob))*(x_target - xstore(iglob)) &

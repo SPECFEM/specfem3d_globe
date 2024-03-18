@@ -534,16 +534,16 @@
 
   if (MODEL_3D_MANTLE_PERTUBATIONS) then
 !   pick a point within the element and get its radius
-    r=dsqrt(xstore(2,2,2,ispec)**2+ystore(2,2,2,ispec)**2+zstore(2,2,2,ispec)**2)
+    r = dsqrt(xstore(2,2,2,ispec)**2+ystore(2,2,2,ispec)**2+zstore(2,2,2,ispec)**2)
 
     if (r > RCMB/R_PLANET .and. r < R_UNIT_SPHERE) then
 !     average over the element
       dvp = 0.0
       dvs = 0.0
       np  = 0
-      do k=2,NGLLZ-1
-        do j=2,NGLLY-1
-          do i=2,NGLLX-1
+      do k = 2,NGLLZ-1
+        do j = 2,NGLLY-1
+          do i = 2,NGLLX-1
             np = np+1
             x = xstore(i,j,k,ispec)
             y = ystore(i,j,k,ispec)

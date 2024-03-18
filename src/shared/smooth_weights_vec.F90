@@ -308,9 +308,9 @@
       xc(3) = cost
 
       ! get x,y,z coordinates in cap around point of interest
-      do j=1,3
+      do j = 1,3
         x(j) = ZERO
-        do k=1,3
+        do k = 1,3
           x(j) = x(j)+rotation_matrix(j,k)*xc(k)
         enddo
       enddo

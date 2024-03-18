@@ -176,7 +176,7 @@ program clip_sem_globe
   if (ier /= 0) stop 'Error allocating array sem_array'
 
   ! clip kernels
-  do iker=1,nker
+  do iker = 1,nker
 
     kernel_name = trim(kernel_names(iker))
     if (myrank == 0) print *,'clipping array: ',trim(kernel_name)

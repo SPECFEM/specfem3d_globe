@@ -103,14 +103,14 @@
     ! only if on face
     if (iMPIcut_xi(1,ispec) .or. iMPIcut_xi(2,ispec) .or. &
                 iMPIcut_eta(1,ispec) .or. iMPIcut_eta(2,ispec)) then
-      iglob1=ibool(1,1,1,ispec)
-      iglob2=ibool(NGLLX,1,1,ispec)
-      iglob3=ibool(NGLLX,NGLLY,1,ispec)
-      iglob4=ibool(1,NGLLY,1,ispec)
-      iglob5=ibool(1,1,NGLLZ,ispec)
-      iglob6=ibool(NGLLX,1,NGLLZ,ispec)
-      iglob7=ibool(NGLLX,NGLLY,NGLLZ,ispec)
-      iglob8=ibool(1,NGLLY,NGLLZ,ispec)
+      iglob1 = ibool(1,1,1,ispec)
+      iglob2 = ibool(NGLLX,1,1,ispec)
+      iglob3 = ibool(NGLLX,NGLLY,1,ispec)
+      iglob4 = ibool(1,NGLLY,1,ispec)
+      iglob5 = ibool(1,1,NGLLZ,ispec)
+      iglob6 = ibool(NGLLX,1,NGLLZ,ispec)
+      iglob7 = ibool(NGLLX,NGLLY,NGLLZ,ispec)
+      iglob8 = ibool(1,NGLLY,NGLLZ,ispec)
 
       ! face xi = xi_min
       if (iMPIcut_xi(1,ispec)) then
@@ -166,14 +166,14 @@
     ! only if on face
     if (iMPIcut_xi(1,ispec) .or. iMPIcut_xi(2,ispec) .or. &
                 iMPIcut_eta(1,ispec) .or. iMPIcut_eta(2,ispec)) then
-      iglob1=ibool(1,1,1,ispec)
-      iglob2=ibool(NGLLX,1,1,ispec)
-      iglob3=ibool(NGLLX,NGLLY,1,ispec)
-      iglob4=ibool(1,NGLLY,1,ispec)
-      iglob5=ibool(1,1,NGLLZ,ispec)
-      iglob6=ibool(NGLLX,1,NGLLZ,ispec)
-      iglob7=ibool(NGLLX,NGLLY,NGLLZ,ispec)
-      iglob8=ibool(1,NGLLY,NGLLZ,ispec)
+      iglob1 = ibool(1,1,1,ispec)
+      iglob2 = ibool(NGLLX,1,1,ispec)
+      iglob3 = ibool(NGLLX,NGLLY,1,ispec)
+      iglob4 = ibool(1,NGLLY,1,ispec)
+      iglob5 = ibool(1,1,NGLLZ,ispec)
+      iglob6 = ibool(NGLLX,1,NGLLZ,ispec)
+      iglob7 = ibool(NGLLX,NGLLY,NGLLZ,ispec)
+      iglob8 = ibool(1,NGLLY,NGLLZ,ispec)
 
       ! face xi = xi_min
       if (iMPIcut_xi(1,ispec)) then
@@ -327,29 +327,29 @@
     ! only if on face
     if (iMPIcut_xi(1,ispec) .or. iMPIcut_xi(2,ispec) .or. &
                 iMPIcut_eta(1,ispec) .or. iMPIcut_eta(2,ispec)) then
-      iglob1=ibool(1,1,1,ispec)
-      iglob2=ibool(NGLLX,1,1,ispec)
-      iglob3=ibool(NGLLX,NGLLY,1,ispec)
-      iglob4=ibool(1,NGLLY,1,ispec)
-      iglob5=ibool(1,1,NGLLZ,ispec)
-      iglob6=ibool(NGLLX,1,NGLLZ,ispec)
-      iglob7=ibool(NGLLX,NGLLY,NGLLZ,ispec)
-      iglob8=ibool(1,NGLLY,NGLLZ,ispec)
+      iglob1 = ibool(1,1,1,ispec)
+      iglob2 = ibool(NGLLX,1,1,ispec)
+      iglob3 = ibool(NGLLX,NGLLY,1,ispec)
+      iglob4 = ibool(1,NGLLY,1,ispec)
+      iglob5 = ibool(1,1,NGLLZ,ispec)
+      iglob6 = ibool(NGLLX,1,NGLLZ,ispec)
+      iglob7 = ibool(NGLLX,NGLLY,NGLLZ,ispec)
+      iglob8 = ibool(1,NGLLY,NGLLZ,ispec)
 
       ! include lateral variations if needed
 
       if (MODEL_3D_MANTLE_PERTUBATIONS) then
         ! pick a point within the element and get its radius
-        r=dsqrt(xstore(2,2,2,ispec)**2+ystore(2,2,2,ispec)**2+zstore(2,2,2,ispec)**2)
+        r = dsqrt(xstore(2,2,2,ispec)**2+ystore(2,2,2,ispec)**2+zstore(2,2,2,ispec)**2)
 
         if (r > RCMB/R_PLANET .and. r < R_UNIT_SPHERE) then
           ! average over the element
           dvp = 0.0
           dvs = 0.0
           np  = 0
-          do k=2,NGLLZ-1
-            do j=2,NGLLY-1
-              do i=2,NGLLX-1
+          do k = 2,NGLLZ-1
+            do j = 2,NGLLY-1
+              do i = 2,NGLLX-1
                 np = np+1
                 x = xstore(i,j,k,ispec)
                 y = ystore(i,j,k,ispec)

@@ -488,10 +488,10 @@
     else if (r < R35 .and. r > R60) then
       gamma = (( r - R60)/( R35 - R60)) ! keeps r60 fixed
       if (abs(gamma) < SMALLVAL) then
-        gamma=0.0d0
+        gamma = 0.0d0
       endif
     else
-      gamma=0.0d0
+      gamma = 0.0d0
     endif
     if (gamma < -0.0001d0 .or. gamma > 1.0001d0) &
       stop 'incorrect value of gamma for moho from crust 2.0'
@@ -508,10 +508,10 @@
     else if (r < R35 .and. r > R60) then
       gamma=((r-R60)/(R35-R60)) ! keeps r60 fixed
       if (abs(gamma) < SMALLVAL) then
-        gamma=0.0d0
+        gamma = 0.0d0
       endif
     else
-      gamma=0.0d0
+      gamma = 0.0d0
     endif
     if (gamma < -0.0001d0 .or. gamma > 1.0001d0) &
       stop 'incorrect value of gamma for moho from crust 2.0'
@@ -529,10 +529,10 @@
       else if (r < R60) then
         gamma=(r-R220/RSURFACE)/(R60-R220/RSURFACE)
         if (abs(gamma) < SMALLVAL) then
-          gamma=0.0d0
+          gamma = 0.0d0
         endif
       else
-        gamma=0.0d0
+        gamma = 0.0d0
       endif
 
       call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)
@@ -548,10 +548,10 @@
     else if (r < R35 .and. r > R60) then
       gamma=(r-R60)/(R35-R60) ! keeps r60 fixed
       if (abs(gamma) < SMALLVAL) then
-        gamma=0.0d0
+        gamma = 0.0d0
       endif
     else
-      gamma=0.0d0
+      gamma = 0.0d0
     endif
     if (gamma < -0.0001d0 .or. gamma > 1.0001d0) &
       stop 'incorrect value of gamma for moho from crust 2.0'
@@ -569,10 +569,10 @@
       else if (r < R15 .and. R > R25) then
         gamma=(r-R25)/(R15-R25) ! keeps mesh at r25 fixed
         if (abs(gamma) < SMALLVAL) then
-          gamma=0.0d0
+          gamma = 0.0d0
         endif
       else
-        gamma=0.0d0
+        gamma = 0.0d0
       endif
 
       call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)
@@ -671,10 +671,10 @@
     else if (r < R35 .and. r > R220/RSURFACE) then
       gamma = ((r-R220/RSURFACE)/(R35-R220/RSURFACE))
       if (abs(gamma) < SMALLVAL) then
-        gamma=0.0d0
+        gamma = 0.0d0
       endif
     else
-      gamma=0.0d0
+      gamma = 0.0d0
     endif
     if (gamma < -0.0001d0 .or. gamma > 1.0001d0) &
       stop 'incorrect value of gamma for moho from crust 2.0'
@@ -691,10 +691,10 @@
     else if (r < R35 .and. r > R220/RSURFACE) then
       gamma=((r-R220/RSURFACE)/(R35-R220/RSURFACE))
       if (abs(gamma) < SMALLVAL) then
-        gamma=0.0d0
+        gamma = 0.0d0
       endif
     else
-      gamma=0.0d0
+      gamma = 0.0d0
     endif
     if (gamma < -0.0001d0 .or. gamma > 1.0001d0) &
       stop 'incorrect value of gamma for moho from crust 2.0'
@@ -711,10 +711,10 @@
     else if (r < R35 .and. r > R220/RSURFACE) then
       gamma=(r-R220/RSURFACE)/(R35-R220/RSURFACE)
       if (abs(gamma) < SMALLVAL) then
-        gamma=0.0d0
+        gamma = 0.0d0
       endif
     else
-      gamma=0.0d0
+      gamma = 0.0d0
     endif
     if (gamma < -0.0001d0 .or. gamma > 1.0001d0) &
       stop 'incorrect value of gamma for moho from crust 2.0'
@@ -729,10 +729,10 @@
       else if (r < R15 .and. R > R25) then
         gamma=(r-R25)/(R15-R25)
         if (abs(gamma) < SMALLVAL) then
-          gamma=0.0d0
+          gamma = 0.0d0
         endif
       else
-        gamma=0.0d0
+        gamma = 0.0d0
       endif
 
       call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)

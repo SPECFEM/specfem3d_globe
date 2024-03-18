@@ -3119,10 +3119,10 @@ contains
     endif
 
     ! user output
-    write(IMAIN,*)'  taper : horizontal taper distance (in deg) : ',taper_distance_maximum_hori_in_degrees,'(deg)'
-    write(IMAIN,*)'          vertical   taper distance (in km)  : ',taper_distance_maximum_vert_in_km,'(km)'
+    write(IMAIN,*) '  taper : horizontal taper distance (in deg) : ',taper_distance_maximum_hori_in_degrees,'(deg)'
+    write(IMAIN,*) '          vertical   taper distance (in km)  : ',taper_distance_maximum_vert_in_km,'(km)'
     write(IMAIN,*)
-    write(IMAIN,*)'          estimated element size (at surface)          : ',element_size * RADIANS_TO_DEGREES,'(deg)'
+    write(IMAIN,*) '          estimated element size (at surface)          : ',element_size * RADIANS_TO_DEGREES,'(deg)'
     write(IMAIN,*)
     call flush_IMAIN()
   endif

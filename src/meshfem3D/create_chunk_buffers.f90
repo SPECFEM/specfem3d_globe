@@ -476,7 +476,7 @@
           call exit_MPI(myrank,'incorrect message type labeling')
 
         ! loop on sender/receiver (1=sender 2=receiver)
-        do imode_comm=1,2
+        do imode_comm = 1,2
           ! initializes
           iproc = -1
           iedge = -1
@@ -545,7 +545,7 @@
               endif
 
               do ispec2D = 1,nspec2D_xmin
-                ispec=ibelm_xmin(ispec2D)
+                ispec = ibelm_xmin(ispec2D)
 
                 ! remove central cube for chunk buffers
                 if (idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
@@ -589,7 +589,7 @@
               endif
 
               do ispec2D = 1,nspec2D_xmax
-                ispec=ibelm_xmax(ispec2D)
+                ispec = ibelm_xmax(ispec2D)
 
                 ! remove central cube for chunk buffers
                 if (idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
@@ -597,7 +597,7 @@
                   idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
                   idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
 
-                i=NGLLX
+                i = NGLLX
                 do k = 1,NGLLZ
                   do j = 1,NGLLY
                     if (.not. mask_ibool(ibool(i,j,k,ispec))) then
@@ -633,7 +633,7 @@
               endif
 
               do ispec2D = 1,nspec2D_ymin
-                ispec=ibelm_ymin(ispec2D)
+                ispec = ibelm_ymin(ispec2D)
 
                 ! remove central cube for chunk buffers
                 if (idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
@@ -677,7 +677,7 @@
               endif
 
               do ispec2D = 1,nspec2D_ymax
-                ispec=ibelm_ymax(ispec2D)
+                ispec = ibelm_ymax(ispec2D)
 
                 ! remove central cube for chunk buffers
                 if (idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
@@ -685,7 +685,7 @@
                   idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
                   idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
 
-                j=NGLLY
+                j = NGLLY
                 do k = 1,NGLLZ
                   do i = 1,NGLLX
                     if (.not. mask_ibool(ibool(i,j,k,ispec))) then

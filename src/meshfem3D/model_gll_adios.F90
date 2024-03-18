@@ -65,8 +65,8 @@
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*)'reading in model from ',trim(PATHNAME_GLL_modeldir)
-    write(IMAIN,*)'  ADIOS file: ',trim(file_name)
+    write(IMAIN,*) 'reading in model from ',trim(PATHNAME_GLL_modeldir)
+    write(IMAIN,*) '  ADIOS file: ',trim(file_name)
     if (rank /= myrank) write(IMAIN,*) '  mesh slice for rank: ',rank
     call flush_IMAIN()
   endif
@@ -85,7 +85,7 @@
   case (1)
     ! isotropic model
     if (rank == 0) then
-      write(IMAIN,*)'  ADIOS reads isotropic model values: (rho,vp,vs)'
+      write(IMAIN,*) '  ADIOS reads isotropic model values: (rho,vp,vs)'
       call flush_IMAIN()
     endif
     ! vp mesh
@@ -97,7 +97,7 @@
   case (2)
     ! transverse isotropic model
     if (rank == 0) then
-      write(IMAIN,*)'  ADIOS reads transversely isotropic model values: (rho,vpv,vph,vsv,vsh,eta)'
+      write(IMAIN,*) '  ADIOS reads transversely isotropic model values: (rho,vpv,vph,vsv,vsh,eta)'
       call flush_IMAIN()
     endif
 
@@ -121,7 +121,7 @@
   case (3)
     ! azimuthal model
     if (rank == 0) then
-      write(IMAIN,*)'  reads azimuthal anisotropic model values: (rho,vpv,vph,vsv,vsh,eta,Gc_prime,Gs_prime,mu0)'
+      write(IMAIN,*) '  reads azimuthal anisotropic model values: (rho,vpv,vph,vsv,vsh,eta,Gc_prime,Gs_prime,mu0)'
       call flush_IMAIN()
     endif
 
@@ -193,7 +193,7 @@
 
   if (has_innercore_all) then
     if (myrank == 0) then
-      write(IMAIN,*)'  ADIOS reads inner core model values: (vp,vs,rho)'
+      write(IMAIN,*) '  ADIOS reads inner core model values: (vp,vs,rho)'
       write(IMAIN,*)
       call flush_IMAIN()
     endif
@@ -235,7 +235,7 @@
   call synchronize_all()
 
   if (myrank == 0) then
-    write(IMAIN,*)'  ADIOS reading done'
+    write(IMAIN,*) '  ADIOS reading done'
     write(IMAIN,*)
     call flush_IMAIN()
   endif

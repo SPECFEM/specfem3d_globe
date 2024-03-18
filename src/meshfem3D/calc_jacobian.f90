@@ -376,7 +376,7 @@
         zxi = ZERO
         zeta = ZERO
 
-        xi=xigll(i)
+        xi = xigll(i)
         eta = yigll(j)
 
         call lagrange_any(xi,NGLLA,xigll,hxir,hpxir)

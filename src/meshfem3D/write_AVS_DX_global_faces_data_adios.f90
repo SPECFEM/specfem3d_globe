@@ -96,14 +96,14 @@ subroutine define_AVS_DX_global_faces_data_adios (nspec, iMPIcut_xi,iMPIcut_eta,
     ! only if on face
     if (iMPIcut_xi(1,ispec) .or. iMPIcut_xi(2,ispec) .or. &
         iMPIcut_eta(1,ispec) .or. iMPIcut_eta(2,ispec)) then
-      iglob1=ibool(1,1,1,ispec)
-      iglob2=ibool(NGLLX,1,1,ispec)
-      iglob3=ibool(NGLLX,NGLLY,1,ispec)
-      iglob4=ibool(1,NGLLY,1,ispec)
-      iglob5=ibool(1,1,NGLLZ,ispec)
-      iglob6=ibool(NGLLX,1,NGLLZ,ispec)
-      iglob7=ibool(NGLLX,NGLLY,NGLLZ,ispec)
-      iglob8=ibool(1,NGLLY,NGLLZ,ispec)
+      iglob1 = ibool(1,1,1,ispec)
+      iglob2 = ibool(NGLLX,1,1,ispec)
+      iglob3 = ibool(NGLLX,NGLLY,1,ispec)
+      iglob4 = ibool(1,NGLLY,1,ispec)
+      iglob5 = ibool(1,1,NGLLZ,ispec)
+      iglob6 = ibool(NGLLX,1,NGLLZ,ispec)
+      iglob7 = ibool(NGLLX,NGLLY,NGLLZ,ispec)
+      iglob8 = ibool(1,NGLLY,NGLLZ,ispec)
 
       ! face xi = xi_min
       if (iMPIcut_xi(1,ispec)) then
@@ -295,14 +295,14 @@ subroutine prepare_AVS_DX_global_faces_data_adios(nspec, &
   ! only if on face
     if (iMPIcut_xi(1,ispec) .or. iMPIcut_xi(2,ispec) .or. &
                 iMPIcut_eta(1,ispec) .or. iMPIcut_eta(2,ispec)) then
-      iglob1=ibool(1,1,1,ispec)
-      iglob2=ibool(NGLLX,1,1,ispec)
-      iglob3=ibool(NGLLX,NGLLY,1,ispec)
-      iglob4=ibool(1,NGLLY,1,ispec)
-      iglob5=ibool(1,1,NGLLZ,ispec)
-      iglob6=ibool(NGLLX,1,NGLLZ,ispec)
-      iglob7=ibool(NGLLX,NGLLY,NGLLZ,ispec)
-      iglob8=ibool(1,NGLLY,NGLLZ,ispec)
+      iglob1 = ibool(1,1,1,ispec)
+      iglob2 = ibool(NGLLX,1,1,ispec)
+      iglob3 = ibool(NGLLX,NGLLY,1,ispec)
+      iglob4 = ibool(1,NGLLY,1,ispec)
+      iglob5 = ibool(1,1,NGLLZ,ispec)
+      iglob6 = ibool(NGLLX,1,NGLLZ,ispec)
+      iglob7 = ibool(NGLLX,NGLLY,NGLLZ,ispec)
+      iglob8 = ibool(1,NGLLY,NGLLZ,ispec)
 
       ! face xi = xi_min
       if (iMPIcut_xi(1,ispec)) then
@@ -355,14 +355,14 @@ subroutine prepare_AVS_DX_global_faces_data_adios(nspec, &
     ! only if on face
     if (iMPIcut_xi(1,ispec) .or. iMPIcut_xi(2,ispec) .or. &
                 iMPIcut_eta(1,ispec) .or. iMPIcut_eta(2,ispec)) then
-      iglob1=ibool(1,1,1,ispec)
-      iglob2=ibool(NGLLX,1,1,ispec)
-      iglob3=ibool(NGLLX,NGLLY,1,ispec)
-      iglob4=ibool(1,NGLLY,1,ispec)
-      iglob5=ibool(1,1,NGLLZ,ispec)
-      iglob6=ibool(NGLLX,1,NGLLZ,ispec)
-      iglob7=ibool(NGLLX,NGLLY,NGLLZ,ispec)
-      iglob8=ibool(1,NGLLY,NGLLZ,ispec)
+      iglob1 = ibool(1,1,1,ispec)
+      iglob2 = ibool(NGLLX,1,1,ispec)
+      iglob3 = ibool(NGLLX,NGLLY,1,ispec)
+      iglob4 = ibool(1,NGLLY,1,ispec)
+      iglob5 = ibool(1,1,NGLLZ,ispec)
+      iglob6 = ibool(NGLLX,1,NGLLZ,ispec)
+      iglob7 = ibool(NGLLX,NGLLY,NGLLZ,ispec)
+      iglob8 = ibool(1,NGLLY,NGLLZ,ispec)
 
       ! face xi = xi_min
       if (iMPIcut_xi(1,ispec)) then
@@ -524,14 +524,14 @@ subroutine prepare_AVS_DX_global_faces_data_adios(nspec, &
     ! only if on face
     if (iMPIcut_xi(1,ispec) .or. iMPIcut_xi(2,ispec) .or. &
                 iMPIcut_eta(1,ispec) .or. iMPIcut_eta(2,ispec)) then
-      iglob1=ibool(1,1,1,ispec)
-      iglob2=ibool(NGLLX,1,1,ispec)
-      iglob3=ibool(NGLLX,NGLLY,1,ispec)
-      iglob4=ibool(1,NGLLY,1,ispec)
-      iglob5=ibool(1,1,NGLLZ,ispec)
-      iglob6=ibool(NGLLX,1,NGLLZ,ispec)
-      iglob7=ibool(NGLLX,NGLLY,NGLLZ,ispec)
-      iglob8=ibool(1,NGLLY,NGLLZ,ispec)
+      iglob1 = ibool(1,1,1,ispec)
+      iglob2 = ibool(NGLLX,1,1,ispec)
+      iglob3 = ibool(NGLLX,NGLLY,1,ispec)
+      iglob4 = ibool(1,NGLLY,1,ispec)
+      iglob5 = ibool(1,1,NGLLZ,ispec)
+      iglob6 = ibool(NGLLX,1,NGLLZ,ispec)
+      iglob7 = ibool(NGLLX,NGLLY,NGLLZ,ispec)
+      iglob8 = ibool(1,NGLLY,NGLLZ,ispec)
 
       ! include lateral variations if needed
       if (MODEL_3D_MANTLE_PERTUBATIONS) then
@@ -545,9 +545,9 @@ subroutine prepare_AVS_DX_global_faces_data_adios(nspec, &
           dvp = 0.0
           dvs = 0.0
           np  = 0
-          do k=2,NGLLZ-1
-            do j=2,NGLLY-1
-              do i=2,NGLLX-1
+          do k = 2,NGLLZ-1
+            do j = 2,NGLLY-1
+              do i = 2,NGLLX-1
                 np = np+1
                 x = xstore(i,j,k,ispec)
                 y = ystore(i,j,k,ispec)

@@ -434,7 +434,7 @@
       NSPEC2D_BOTTOM(iter_region) = nspec1layer
       NSPEC2D_TOP(iter_region) = nspec1layer
 
-      nnode1d = nspec1d * (NGLLX-1)+1 ! ngllx=nglly
+      nnode1d = nspec1d * (NGLLX-1)+1 ! ngllx = nglly
 
       NGLOB_REGIONS(iter_region) = (nlayer*(NGLLZ-1)+1) * (nnode1d*nnode1d)
 

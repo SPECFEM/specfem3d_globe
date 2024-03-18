@@ -73,8 +73,8 @@
   double precision, parameter :: JP3D_DEP_MAX = 500.d0
 
   ! Japan 3D model (Zhao, 1994) constants
-  integer, parameter :: MPA=42,MRA=48,MHA=21,MPB=42,MRB=48,MHB=18
-  integer, parameter :: MKA=2101,MKB=2101
+  integer, parameter :: MPA = 42,MRA = 48,MHA = 21,MPB = 42,MRB = 48,MHB = 18
+  integer, parameter :: MKA = 2101,MKB = 2101
 
   ! JP3DM_V arrays: vmod3d
   double precision,dimension(:),allocatable :: JP3DM_PNA,JP3DM_RNA,JP3DM_HNA, &

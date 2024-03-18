@@ -338,7 +338,7 @@
   enddo
 
   if (nsnode_all /= inum) then
-    write(*,*)'ERROR: total number of surface nodes mismatch!'
+    write(*,*) 'ERROR: total number of surface nodes mismatch!'
     stop 'Invalid number of surface nodes'
   endif
 
@@ -424,9 +424,9 @@
   do k = 1,NGLLZ
     inum = 0
     xp = xs(:,:,k)
-    !if (k==1)xp=xs
-    !if (k==2)xp=mirxs1
-    !if (k==3)xp=mirxs2
+    !if (k==1) xp=xs
+    !if (k==2) xp=mirxs1
+    !if (k==3) xp=mirxs2
     do ispec = 1,nspec0
       ispec_n = ispecnew(ispec)
       do j = 1,NGLLY

@@ -781,7 +781,7 @@
         ner_mesh_layers( 1) = ceiling (NER_CRUST / 2.d0)
         ner_mesh_layers( 2) = floor (NER_CRUST / 2.d0)
       else
-        ner_mesh_layers( 1) = floor (NER_CRUST / 2.d0)      ! regional mesh: ner_mesh_layers(1) = 1 since NER_CRUST=3
+        ner_mesh_layers( 1) = floor (NER_CRUST / 2.d0)      ! regional mesh: ner_mesh_layers(1) = 1 since NER_CRUST = 3
         ner_mesh_layers( 2) = ceiling (NER_CRUST / 2.d0)    !                ner_mesh_layers(2) = 2
       endif
       ner_mesh_layers( 3) = NER_80_MOHO

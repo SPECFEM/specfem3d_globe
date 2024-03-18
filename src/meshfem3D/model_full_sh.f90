@@ -1050,7 +1050,7 @@
 
   !   FILL IN THE LAST POINT WITH A LINEAR EXTRAPOLATION.
 9  J2 = J2+2
-  do J=1,3
+  do J = 1,3
     Q(J,J2) = YY(J)
   enddo
 

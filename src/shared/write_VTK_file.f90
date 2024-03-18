@@ -710,7 +710,7 @@
   ! writes out all points for each element, not just global ones
   if (USE_CORNERS) then
     write(IOUT_VTK, '(a,i12,a)') 'POINTS ', nspec*8, ' float'
-    do ispec=1,nspec
+    do ispec = 1,nspec
       i = ibool(1,1,1,ispec)
       write(IOUT_VTK,'(3e18.6)') real(xstore_dummy(i),kind=4),real(ystore_dummy(i),kind=4),real(zstore_dummy(i),kind=4)
 
@@ -737,7 +737,7 @@
     enddo
   else
     write(IOUT_VTK, '(a,i16,a)') 'POINTS ', NGLLX*NGLLY*NGLLZ*nspec, ' float'
-    do ispec=1,nspec
+    do ispec = 1,nspec
       do k = 1,NGLLZ
         do j = 1,NGLLY
           do i = 1,NGLLX
@@ -755,14 +755,14 @@
   ! note: indices for vtk start at 0
   if (USE_CORNERS) then
     write(IOUT_VTK,'(a,i12,i12)') "CELLS ",nspec,nspec*9
-    do ispec=1,nspec
+    do ispec = 1,nspec
       write(IOUT_VTK,'(9i12)') 8, &
             (ispec-1)*8,(ispec-1)*8+1,(ispec-1)*8+2,(ispec-1)*8+3, &
             (ispec-1)*8+4,(ispec-1)*8+5,(ispec-1)*8+6,(ispec-1)*8+7
     enddo
   else
     write(IOUT_VTK,'(a,i16,i16)') "CELLS ",(NGLLX-1)*(NGLLY-1)*(NGLLZ-1)*nspec,(NGLLX-1)*(NGLLY-1)*(NGLLZ-1)*nspec*9
-    do ispec=1,nspec
+    do ispec = 1,nspec
       do k = 1,NGLLZ-1
         do j = 1,NGLLY-1
           do i = 1,NGLLX-1
@@ -881,7 +881,7 @@
   write(IOUT_VTK,'(a)') 'ASCII'
   write(IOUT_VTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
   write(IOUT_VTK, '(a,i12,a)') 'POINTS ', nglob, ' float'
-  do i=1,nglob
+  do i = 1,nglob
     write(IOUT_VTK,'(3e18.6)') real(xstore_dummy(i),kind=4),real(ystore_dummy(i),kind=4),real(zstore_dummy(i),kind=4)
   enddo
   write(IOUT_VTK,*) ''

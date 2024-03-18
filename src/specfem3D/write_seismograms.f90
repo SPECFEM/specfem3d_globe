@@ -538,7 +538,7 @@
   ! get band code
   call band_instrument_code(DT,bic)
 
-  if (ROTATE_SEISMOGRAMS_RT) then ! iorientation 1=N,2=E,3=Z,4=R,5=T
+  if (ROTATE_SEISMOGRAMS_RT) then ! iorientation 1 = N,2 = E,3 = Z,4 = R,5 = T
     ior_start = 3    ! starting from Z
     ior_end   = 5    ! ending with T => ZRT
   else

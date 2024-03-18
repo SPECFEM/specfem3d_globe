@@ -148,9 +148,9 @@
     vector_ori(1) = x_top
     vector_ori(2) = y_top
     vector_ori(3) = z_top
-    do i=1,3
+    do i = 1,3
       vector_rotated(i) = 0.0d0
-      do j=1,3
+      do j = 1,3
         vector_rotated(i) = vector_rotated(i) + rotation_matrix(i,j)*vector_ori(j)
       enddo
     enddo

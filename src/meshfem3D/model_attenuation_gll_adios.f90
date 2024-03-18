@@ -59,8 +59,8 @@
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*)'reading in model from ',trim(PATHNAME_GLL_modeldir)
-    write(IMAIN,*)'  ADIOS file: ',trim(file_name)
+    write(IMAIN,*) 'reading in model from ',trim(PATHNAME_GLL_modeldir)
+    write(IMAIN,*) '  ADIOS file: ',trim(file_name)
     if (rank /= myrank) write(IMAIN,*) '  mesh slice for rank: ',rank
     call flush_IMAIN()
   endif
@@ -86,7 +86,7 @@
   call synchronize_all()
 
   if (myrank == 0) then
-    write(IMAIN,*)'  ADIOS reading done'
+    write(IMAIN,*) '  ADIOS reading done'
     write(IMAIN,*)
     call flush_IMAIN()
   endif

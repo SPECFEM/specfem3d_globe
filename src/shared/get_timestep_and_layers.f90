@@ -264,7 +264,7 @@
       MAX_ATTENUATION_PERIOD   = 750d0
       ! number of element layers in each mesh region
       NER_CRUST                = 3
-      NER_80_MOHO              = 2  ! 2 okay; setting w/ jacobian error: nex96, rmoho=28km, r80=130km, ner > 2
+      NER_80_MOHO              = 2  ! 2 okay; setting w/ jacobian error: nex96, rmoho = 28km, r80 = 130km, ner > 2
       NER_220_80               = 3
       NER_400_220              = 2
       NER_600_400              = 2

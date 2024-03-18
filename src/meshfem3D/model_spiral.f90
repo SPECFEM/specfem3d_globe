@@ -984,7 +984,7 @@
       endif
 
       NlatNlon = NlatNlon + bnd_nlat(l)*bnd_nlon(l)
-    enddo ! do l=1,Nbnd, with no interpolation
+    enddo ! do l = 1,Nbnd, with no interpolation
 
   else
     ! with interpolation
@@ -1062,7 +1062,7 @@
       endif
 
       NlatNlon = NlatNlon + bnd_nlat(l)*bnd_nlon(l)
-   enddo ! do l=1,Nbnd, with interpolation
+   enddo ! do l = 1,Nbnd, with interpolation
 
   endif ! if (.not. interpolation)
 
@@ -1869,8 +1869,8 @@
         endif !if (lat >= mtle_bnd_lat1(l) .and. lat <= mtle_bnd_lat2(l)....
 
         NlatNlonNdep = NlatNlonNdep + mtle_bnd_nlat(l)*mtle_bnd_nlon(l)*Ndep
-      enddo ! do l=1,Nbnd, with no interpolation
-    enddo ! do m=1,Nbndz, with no interpolation
+      enddo ! do l = 1,Nbnd, with no interpolation
+    enddo ! do m = 1,Nbndz, with no interpolation
 
   else
     ! with interpolation
@@ -1978,8 +1978,8 @@
 
         NlatNlonNdep = NlatNlonNdep + mtle_bnd_nlat(l)*mtle_bnd_nlon(l)*Ndep
 
-      enddo ! do l=1,Nbnd, with interpolation
-    enddo ! do m=1,Nbndz, with interpolation
+      enddo ! do l = 1,Nbnd, with interpolation
+    enddo ! do m = 1,Nbndz, with interpolation
 
   endif ! if (.not. interpolation)
 

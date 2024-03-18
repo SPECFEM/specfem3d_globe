@@ -287,7 +287,7 @@
   ! ****************************************************
 
   ! distinguishes two runs: for elements on MPI interfaces, and elements within the partitions
-  do iphase=1,2
+  do iphase = 1,2
 
     ! first, iphase == 1 for points on MPI interfaces (thus outer elements)
     ! second, iphase == 2 for points purely inside partition (thus inner elements)

@@ -1035,7 +1035,7 @@
   ! to consider anisotropic elements first and to build the mesh from the bottom to the top of the region
   allocate(perm_layer(ifirst_region:ilast_region),stat=ier)
   if (ier /= 0) stop 'Error in allocate 18'
-  perm_layer = (/ (i, i=ilast_region,ifirst_region,-1) /)
+  perm_layer = (/ (i, i = ilast_region,ifirst_region,-1) /)
 
   if (iregion_code == IREGION_CRUST_MANTLE .and. (.not. REGIONAL_MESH_CUTOFF)) then
     ! sets start of anisotropic layering after the first/last layer aniso
