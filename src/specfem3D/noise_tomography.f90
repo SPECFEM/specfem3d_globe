@@ -142,13 +142,13 @@
     if (SIMULATION_TYPE /= 1) &
       call exit_mpi(myrank,'NOISE_TOMOGRAPHY=2 requires SIMULATION_TYPE=1! check DATA/Par_file')
     if (.not. SAVE_FORWARD) &
-      call exit_mpi(myrank,'NOISE_TOMOGRAPHY=2 requires SAVE_FORWARD=.true.! check DATA/Par_file')
+      call exit_mpi(myrank,'NOISE_TOMOGRAPHY=2 requires SAVE_FORWARD = .true.! check DATA/Par_file')
   case (3)
     ! adjoint ensemble kernel simulation
     if (SIMULATION_TYPE /= 3) &
       call exit_mpi(myrank,'NOISE_TOMOGRAPHY=3 requires SIMULATION_TYPE=3! check DATA/Par_file')
     if (SAVE_FORWARD) &
-      call exit_mpi(myrank,'NOISE_TOMOGRAPHY=3 requires SAVE_FORWARD=.false.! check DATA/Par_file')
+      call exit_mpi(myrank,'NOISE_TOMOGRAPHY=3 requires SAVE_FORWARD = .false.! check DATA/Par_file')
   case default
     call exit_MPI(myrank,'Error invalid NOISE_TOMOGRAPHY value for noise simulation setup! check DATA/Par_file')
   end select
