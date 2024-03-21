@@ -36,7 +36,7 @@
 ! number of elements in CUBIT mesh
   nspec = 13
 
-  do ispec=1,nspec
+  do ispec = 1,nspec
 
     read(*,*) iglob1,iglob2,iglob3,iglob4,iglob5,iglob6,iglob7,iglob8
 

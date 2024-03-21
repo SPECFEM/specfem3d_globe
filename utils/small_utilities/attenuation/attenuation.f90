@@ -28,9 +28,9 @@ program attenuation
   write_central_period = 0
 
   ! input period range
-!  write(*,*)'longest period (seconds): '
+!  write(*,*) 'longest period (seconds): '
   read(5,*, end=13) t1
-!  write(*,*)'shortest period (seconds): '
+!  write(*,*) 'shortest period (seconds): '
   read(5,*, end=13) t2
 
   write(*,*)
@@ -38,13 +38,13 @@ program attenuation
   write(*,*)
 
   ! input N_SLS
-!  write(*,*)'number of mechanisms: '
+!  write(*,*) 'number of mechanisms: '
   read(5,*, end=13) n
 
 42 continue
 
   ! input Q
-!  write(*,*)'Q: '
+!  write(*,*) 'Q: '
   read(5,*, end=13) Q
 
   tau_e(:)  = 0.0d0
@@ -57,46 +57,46 @@ program attenuation
      write(*,*)"! define central period of source in seconds using values from Jeroen's code"
      write(*,'(A27,F20.15,A2)')'  T_c_source = 1000.d0 / ', omega_not ,'d0'
      write(*,*)
-     write(*,*)'! tau sigma evenly spaced in log frequency, does not depend on value of Q'
+     write(*,*) '! tau sigma evenly spaced in log frequency, does not depend on value of Q'
      do i = 1,n
         write(*,'(A13,I1,A4,F30.20,A2)')'  tau_sigma(',i,') = ', tau_s(i), 'd0'
      enddo
      write(*,*)
      write(*,*)"! check in which region we are based upon doubling flag"
      write(*,*)
-     write(*,*)'  select case(iregion_attenuation)'
+     write(*,*) '  select case(iregion_attenuation)'
      write(*,*)
      write_central_period = 1
 
   endif
   if (Q == 84.6d0) then
-     write(*,*)'!--- inner core, target Q_mu: 84.60'
+     write(*,*) '!--- inner core, target Q_mu: 84.60'
      write(*,*)
-     write(*,*)'  case(IREGION_ATTENUATION_INNER_CORE)'
+     write(*,*) '  case(IREGION_ATTENUATION_INNER_CORE)'
      write(*,*)
   endif
   if (Q == 312.0d0) then
-     write(*,*)'!--- CMB - > d670 (no attenuation in fluid outer core), target Q_mu = 312.'
+     write(*,*) '!--- CMB - > d670 (no attenuation in fluid outer core), target Q_mu = 312.'
      write(*,*)
-     write(*,*)'  case(IREGION_ATTENUATION_CMB_670)'
+     write(*,*) '  case(IREGION_ATTENUATION_CMB_670)'
      write(*,*)
   endif
   if (Q == 143.0d0) then
-     write(*,*)'!--- d670 - > d220, target Q_mu: 143.'
+     write(*,*) '!--- d670 - > d220, target Q_mu: 143.'
      write(*,*)
-     write(*,*)'  case(IREGION_ATTENUATION_670_220)'
+     write(*,*) '  case(IREGION_ATTENUATION_670_220)'
      write(*,*)
   endif
   if (Q == 80.0d0) then
-     write(*,*)'!--- d220 - > depth of 80 km, target Q_mu:  80.'
+     write(*,*) '!--- d220 - > depth of 80 km, target Q_mu:  80.'
      write(*,*)
-     write(*,*)'  case(IREGION_ATTENUATION_220_80)'
+     write(*,*) '  case(IREGION_ATTENUATION_220_80)'
      write(*,*)
   endif
   if (Q == 600.0d0) then
-     write(*,*)'!--- depth of 80 km - > surface, target Q_mu: 600.'
+     write(*,*) '!--- depth of 80 km - > surface, target Q_mu: 600.'
      write(*,*)
-     write(*,*)'  case(IREGION_ATTENUATION_80_SURFACE)'
+     write(*,*) '  case(IREGION_ATTENUATION_80_SURFACE)'
      write(*,*)
   endif
 
@@ -110,13 +110,13 @@ program attenuation
 
 
 13 continue
-  write(*,*)'!--- do nothing for fluid outer core (no attenuation there)'
+  write(*,*) '!--- do nothing for fluid outer core (no attenuation there)'
   write(*,*)
-  write(*,*)'  case default'
+  write(*,*) '  case default'
   write(*,*)
   write(*,*)"    call exit_MPI(myrank,'wrong attenuation flag in mesh')"
   write(*,*)
-  write(*,*)'  end select'
+  write(*,*) '  end select'
   write(*,*)
 
 end program attenuation
@@ -253,13 +253,13 @@ subroutine attenuation_invert_SVD(t1,t2,n,Q_real,omega_not,tau_s,tau_e)
   tau_s(:)     = 0.0d0
 
   PI2 = 6.28318530717958d0
-  write(*,*)'pi2: ', PI2
+  write(*,*) 'pi2: ', PI2
 
   f1 = 1.0d0/t1
   f2 = 1.0d0/t2
 
   if (f2 < f1 .or. Q_real < 0.0d0 .or. n < 1) then
-     write(*,*)'bad parameters'
+     write(*,*) 'bad parameters'
      call exit(-1)
   endif
 
@@ -269,29 +269,29 @@ subroutine attenuation_invert_SVD(t1,t2,n,Q_real,omega_not,tau_s,tau_e)
   exp2 = log10(f2)
 
   dexp = (exp2 - exp1) / real(n - 1.0d0)
-  write(*,*)dexp
+  write(*,*) dexp
   q = 1.0d0 / (real(n - 1.0d0) * Q_real )
-  write(*,*)'Q: ',q
+  write(*,*) 'Q: ',q
   do i = 1,n
      expo     = exp1 + real(i-1) * dexp
      omega    = PI2 * 10.d0**expo
-     write(*,*)omega,expo,PI2
+     write(*,*) omega,expo,PI2
      tau_s(i) = 1.0d0 / omega
      tau_e(i) = tau_s(i) * (1.0d0 + q) / (1.0d0 - q)
   enddo
 
   x1(:) = tau_e(:) - tau_s(:)
   x2(:) = tau_s(:)
-  write(*,*)'e: ', tau_e
-  write(*,*)'x1: ', x1
-  write(*,*)'x2: ', x2
+  write(*,*) 'e: ', tau_e
+  write(*,*) 'x1: ', x1
+  write(*,*) 'x2: ', x2
 
   exp1 = log10(f1);
   exp2 = log10(f2);
   dexp = (exp2 - exp1) / 100.0d0
-  write(*,*)'exp1, exp2: ', exp1, exp2, dexp
+  write(*,*) 'exp1, exp2: ', exp1, exp2, dexp
   expo = exp1 - dexp
-  do i=1,100
+  do i = 1,100
      expo = expo + dexp
      df       = 10.0d0**(expo+dexp) - 10.0d0**(expo)
      omega    = PI2 * 10.0d0**(expo)
@@ -307,7 +307,7 @@ subroutine attenuation_invert_SVD(t1,t2,n,Q_real,omega_not,tau_s,tau_e)
         dadp(j) = omega**2.0d0 * tau_s(j) / demon
         dbdp(j) = omega / demon
      enddo
-!     write(*,*)'ab: ', a, b,demon,expo
+!     write(*,*) 'ab: ', a, b,demon,expo
      Q_omega = a / b
      Q_ratio = 1.0d0 / Q_omega - 1.0d0 / Q_real
      F_ratio = df / (f2 - f1)
@@ -322,11 +322,11 @@ subroutine attenuation_invert_SVD(t1,t2,n,Q_real,omega_not,tau_s,tau_e)
      enddo
   enddo
   write(*,*)
-  write(*,*)'blah: ', x1
+  write(*,*) 'blah: ', x1
   write(*,*)
-  write(*,*)gradient
+  write(*,*) gradient
   write(*,*)
-  write(*,*)Hessian
+  write(*,*) Hessian
   write(*,*)
   call invert(x1, gradient, Hessian, n)
 
@@ -388,12 +388,12 @@ function pythag_dp(a,b)
   absa=abs(a)
   absb=abs(b)
   if (absa > absb) then
-     pythag_dp=absa*sqrt(1.0d0+(absb/absa)**2)
+     pythag_dp = absa*sqrt(1.0d0+(absb/absa)**2)
   else
      if (absb == 0.0d0) then
-        pythag_dp=0.0d0
+        pythag_dp = 0.0d0
      else
-        pythag_dp=absb*sqrt(1.0d0+(absa/absb)**2)
+        pythag_dp = absb*sqrt(1.0d0+(absa/absb)**2)
      endif
   endif
 end function pythag_dp
@@ -416,102 +416,102 @@ subroutine svdcmp_dp(a,w,v,p)
   m=size(a,1)
 !  n=assert_eq(size(a,2),size(v,1),size(v,2),size(w),'svdcmp_dp')
   n = size(a,2)
-!  write(*,*)'Inside svdcmp_dp'
-  g=0.0d0
-  scale=0.0d0
-  do i=1,n
-     l=i+1
+!  write(*,*) 'Inside svdcmp_dp'
+  g = 0.0d0
+  scale = 0.0d0
+  do i = 1,n
+     l = i+1
      rv1(i)=scale*g
-     g=0.0d0
-     scale=0.0d0
-!     write(*,*)i,n,m,l
+     g = 0.0d0
+     scale = 0.0d0
+!     write(*,*) i,n,m,l
      if (i <= m) then
-        scale=sum(abs(a(i:m,i)))
+        scale = sum(abs(a(i:m,i)))
         if (scale /= 0.0d0) then
            a(i:m,i)=a(i:m,i)/scale
-           s=dot_product(a(i:m,i),a(i:m,i))
+           s = dot_product(a(i:m,i),a(i:m,i))
            f=a(i,i)
            g=-sign(sqrt(s),f)
-           h=f*g-s
+           h = f*g-s
            a(i,i)=f-g
            tempn(l:n)=matmul(a(i:m,i),a(i:m,l:n))/h
 !           a(i:m,l:n)=a(i:m,l:n)+outerprod_d(a(i:m,i),m-1+1,tempn(l:n),n-l+1)
-           a(i:m,l:n)=a(i:m,l:n)+spread(a(i:m,i),dim=2,ncopies=size(tempn(l:n))) * &
-                spread(tempn(l:n),dim=1,ncopies=size(a(i:m,i)))
+           a(i:m,l:n)=a(i:m,l:n)+spread(a(i:m,i),dim = 2,ncopies = size(tempn(l:n))) * &
+                spread(tempn(l:n),dim = 1,ncopies = size(a(i:m,i)))
            a(i:m,i)=scale*a(i:m,i)
         endif
      endif
      w(i)=scale*g
-     g=0.0d0
-     scale=0.0d0
+     g = 0.0d0
+     scale = 0.0d0
      if ((i <= m) .and. (i /= n)) then
-        scale=sum(abs(a(i,l:n)))
+        scale = sum(abs(a(i,l:n)))
         if (scale /= 0.0d0) then
            a(i,l:n)=a(i,l:n)/scale
-           s=dot_product(a(i,l:n),a(i,l:n))
+           s = dot_product(a(i,l:n),a(i,l:n))
            f=a(i,l)
            g=-sign(sqrt(s),f)
-           h=f*g-s
+           h = f*g-s
            a(i,l)=f-g
            rv1(l:n)=a(i,l:n)/h
            tempm(l:m)=matmul(a(l:m,l:n),a(i,l:n))
 !           a(l:m,l:n)=a(l:m,l:n)+outerprod_d(tempm(l:m),m-l+1,rv1(l:n),n-l+1)
-           a(l:m,l:n)=a(l:m,l:n)+spread(tempm(l:m),dim=2,ncopies=size(rv1(l:n))) * &
-                spread(rv1(l:n),dim=1,ncopies=size(tempm(l:m)))
+           a(l:m,l:n)=a(l:m,l:n)+spread(tempm(l:m),dim = 2,ncopies = size(rv1(l:n))) * &
+                spread(rv1(l:n),dim = 1,ncopies = size(tempm(l:m)))
            a(i,l:n)=scale*a(i,l:n)
         endif
      endif
   enddo
   anorm=maxval(abs(w)+abs(rv1))
-!  write(*,*)W
-  do i=n,1,-1
+!  write(*,*) W
+  do i = n,1,-1
      if (i < n) then
         if (g /= 0.0d0) then
            v(l:n,i)=(a(i,l:n)/a(i,l))/g
            tempn(l:n)=matmul(a(i,l:n),v(l:n,l:n))
 !           v(l:n,l:n)=v(l:n,l:n)+outerprod_d(v(l:n,i),n-1+1,tempn(l:n),n-l+1)
-           v(l:n,l:n)=v(l:n,l:n)+spread(v(l:n,i),dim=2,ncopies=size(tempn(l:n))) * &
-                spread(tempn(l:n), dim=1, ncopies=size(v(l:n,i)))
+           v(l:n,l:n)=v(l:n,l:n)+spread(v(l:n,i),dim = 2,ncopies = size(tempn(l:n))) * &
+                spread(tempn(l:n), dim = 1, ncopies = size(v(l:n,i)))
         endif
         v(i,l:n)=0.0d0
         v(l:n,i)=0.0d0
      endif
      v(i,i)=1.0d0
      g=rv1(i)
-     l=i
+     l = i
   enddo
   do i=min(m,n),1,-1
-     l=i+1
+     l = i+1
      g=w(i)
      a(i,l:n)=0.0d0
      if (g /= 0.0d0) then
-        g=1.0d0/g
+        g = 1.0d0/g
         tempn(l:n)=(matmul(a(l:m,i),a(l:m,l:n))/a(i,i))*g
 !        a(i:m,l:n)=a(i:m,l:n)+outerprod_d(a(i:m,i),m-i+1,tempn(l:n),n-l)
-        a(i:m,l:n)=a(i:m,l:n)+spread(a(i:m,i),dim=2,ncopies=size(tempn(l:n))) * &
-             spread(tempn(l:n),dim=1,ncopies=size(a(i:m,i)))
+        a(i:m,l:n)=a(i:m,l:n)+spread(a(i:m,i),dim = 2,ncopies = size(tempn(l:n))) * &
+             spread(tempn(l:n),dim = 1,ncopies = size(a(i:m,i)))
         a(i:m,i)=a(i:m,i)*g
      else
         a(i:m,i)=0.0d0
      endif
      a(i,i)=a(i,i)+1.0d0
   enddo
-  do k=n,1,-1
-     do its=1,30
-        do l=k,1,-1
-           nm=l-1
+  do k = n,1,-1
+     do its = 1,30
+        do l = k,1,-1
+           nm = l-1
            if ((abs(rv1(l))+anorm) == anorm) exit
            if ((abs(w(nm))+anorm) == anorm) then
-              c=0.0d0
-              s=1.0d0
-              do i=l,k
+              c = 0.0d0
+              s = 1.0d0
+              do i = l,k
                  f=s*rv1(i)
                  rv1(i)=c*rv1(i)
                  if ((abs(f)+anorm) == anorm) exit
                  g=w(i)
                  h=pythag_dp(f,g)
                  w(i)=h
-                 h=1.0d0/h
+                 h = 1.0d0/h
                  c= (g*h)
                  s=-(f*h)
                  tempm(1:m)=a(1:m,nm)
@@ -534,38 +534,38 @@ subroutine svdcmp_dp(a,w,v,p)
            call exit(-1)
         endif
         x=w(l)
-        nm=k-1
+        nm = k-1
         y=w(nm)
         g=rv1(nm)
         h=rv1(k)
         f=((y-z)*(y+z)+(g-h)*(g+h))/(2.0d0*h*y)
         g=pythag_dp(f,1.0d0)
         f=((x-z)*(x+z)+h*((y/(f+sign(g,f)))-h))/x
-        c=1.0d0
-        s=1.0d0
-        do j=l,nm
-           i=j+1
+        c = 1.0d0
+        s = 1.0d0
+        do j = l,nm
+           i = j+1
            g=rv1(i)
            y=w(i)
-           h=s*g
-           g=c*g
+           h = s*g
+           g = c*g
            z=pythag_dp(f,h)
            rv1(j)=z
-           c=f/z
-           s=h/z
+           c = f/z
+           s = h/z
            f= (x*c)+(g*s)
            g=-(x*s)+(g*c)
-           h=y*s
-           y=y*c
+           h = y*s
+           y = y*c
            tempn(1:n)=v(1:n,j)
            v(1:n,j)=v(1:n,j)*c+v(1:n,i)*s
            v(1:n,i)=-tempn(1:n)*s+v(1:n,i)*c
            z=pythag_dp(f,h)
            w(j)=z
            if (z /= 0.0d0) then
-              z=1.0d0/z
-              c=f*z
-              s=h*z
+              z = 1.0d0/z
+              c = f*z
+              s = h*z
            endif
            f= (c*g)+(s*y)
            x=-(s*g)+(c*y)

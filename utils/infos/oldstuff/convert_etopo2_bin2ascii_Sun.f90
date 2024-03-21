@@ -48,8 +48,8 @@
 !! DK DK beware, longitude blocks MUST be swapped
   stop 'beware, longitude blocks MUST be swapped, see file swap_topo_bathy_Sun.f90 for details'
   open(unit=13,file='topo_bathy_etopo2.dat',status='unknown')
-  do itopo_y=1,NY_BATHY
-    do itopo_x=1,NX_BATHY
+  do itopo_y = 1,NY_BATHY
+    do itopo_x = 1,NX_BATHY
       write(13,*) ibathy_topo(itopo_x,itopo_y)
     enddo
   enddo
@@ -83,8 +83,8 @@
 
   icurrent_rec = 1
 
-  do iadd1=1,NY_BATHY
-    do iel1=1,NX_BATHY
+  do iadd1 = 1,NY_BATHY
+    do iel1 = 1,NX_BATHY
       read(13,rec=icurrent_rec) ibathy_topo(iel1,iadd1)
       icurrent_rec = icurrent_rec + 1
     enddo

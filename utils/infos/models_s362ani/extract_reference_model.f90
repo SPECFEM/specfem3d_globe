@@ -26,7 +26,7 @@
   read(10,*)
 
 ! read the card deck model
-  do i=1,NR_REF
+  do i = 1,NR_REF
     read(10,*) radius_ref(i),density_ref(i),vpv_ref(i),vsv_ref(i),Qkappa_ref(i),Qmu_ref(i),vph_ref(i),vsh_ref(i),eta_ref(i)
   enddo
 

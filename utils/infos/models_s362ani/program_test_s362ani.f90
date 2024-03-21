@@ -171,14 +171,14 @@
       theta = (90.0d0-lat)*PI/180.0d0
       phi = lon*PI/180.0d0
 
-      ocf=0.0d0
-      do l=0,NL_OCEAN_CONTINENT
+      ocf = 0.0d0
+      do l = 0,NL_OCEAN_CONTINENT
         sint = dsin(theta)
         cost = dcos(theta)
         call lgndr(l,cost,sint,x,dx)
         m = 0
         ocf = ocf +  A_lm(l,m)*x(m+1)
-        do m=1,l
+        do m = 1,l
           ocf = ocf + (A_lm(l,m)*dcos(dble(m)*phi)+B_lm(l,m)*dsin(dble(m)*phi))*x(m+1)
         enddo
       enddo

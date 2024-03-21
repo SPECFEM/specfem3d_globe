@@ -14,7 +14,7 @@ The following examples are provided:
 
   contains an example for a small regional simulation and an event located in southern Greece;
   the example can be run as a small test on a single desktop machine
-  (4 CPUs, forward simulation lasts ~5min, kernel simulation lasts ~10min) 
+  (4 CPUs, forward simulation lasts ~5min, kernel simulation lasts ~10min)
 
   * `regional_MiddleEast/`
 
@@ -35,10 +35,10 @@ The following examples are provided:
 
 - PREM benchmark solutions:
 
-  * `benchmarks/` 
+  * `benchmarks/`
 
-  contains PREM benchmarks for comparing SEM outputs with normal-mode solutions 
-  (various resolutions: Vanuatu 384 CPUs/ Bolivia 1536 CPUs) 
+  contains PREM benchmarks for comparing SEM outputs with normal-mode solutions
+  (various resolutions: Vanuatu 384 CPUs/ Bolivia 1536 CPUs)
 
 
 - seismic interferometry:

@@ -23,9 +23,9 @@ rho = 2 / ( float((N+1)*N) * VN**2)
 
 !calculating the derivatives of the Polynomials at the  Gauss-Lobatto-Legendre Quadrature points
 
-do i=0,N
+do i = 0,N
 
-    LL=0
+    LL = 0
     LL(i)=1
     call DELEGL(N,xi,VN,LL,DL(:,i))
 
@@ -41,17 +41,17 @@ implicit none
 DOUBLE PRECISION X,xi(0:N),Y,DY,D2Y,ET(0:1000),VN(0:1000)
 INTEGER j,k,N
 
-DO j=0,1000
+DO j = 0,1000
 X=-1+REAL(j)/1000.*2
 !CALL VALEPO(N,X,Y,DY,D2Y)
 CALL ZELEGL(N,ET,VN)
 !WRITE(5,*)X,Y,DY,D2Y
 enddo
-DO j=0,N
+DO j = 0,N
 
   xi(j)=ET(j)
 
-!write(*,*)ET(j),VN(j)
+!write(*,*) ET(j),VN(j)
 enddo
 !CLOSE(5)
 !CLOSE(6)
@@ -92,7 +92,7 @@ end subroutine main_pol
          DYP  = 0.
          D2YP = 0.
 
-      DO I=2,N
+      DO I = 2,N
          C1 = DFLOAT(I)
          C2 = 2.*C1-1.
          C4 = C1-1.
@@ -148,9 +148,9 @@ end subroutine VALEPO
 
          PI = 3.14159265358979323846
          C  = PI/DFLOAT(N)
-      DO I=1,N2
+      DO I = 1,N2
         ETX = DCOS(C*DFLOAT(I))
-        DO IT=1,8
+        DO IT = 1,8
          CALL VALEPO(N,ETX,Y,DY,D2Y)
          ETX = ETX-DY/D2Y
         enddo
@@ -183,11 +183,11 @@ double precision ET(0:*), VN(0:*), QN(0:*), DQN(0:*)
           DQN(0) = 0.D0
       if (N == 0) return
 
-      DO 1 I=0,N
+      DO 1 I = 0,N
           SU = 0.D0
           VI = VN(I)
           EI = ET(I)
-      DO 2 J=0,N
+      DO 2 J = 0,N
       if (I == J) goto 2
           VJ = VN(J)
           EJ = ET(J)

@@ -126,7 +126,7 @@
   write(11,*) 'object 3 class array type float rank 0 items ',NSPEC,' data follows'
 
 ! write element data (use a different color for each element)
-  do ispec=1,NSPEC
+  do ispec = 1,NSPEC
     write(11,*) ispec
   enddo
 

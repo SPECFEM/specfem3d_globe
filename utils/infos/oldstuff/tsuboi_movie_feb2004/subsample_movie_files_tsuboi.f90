@@ -26,14 +26,14 @@
   read(*,*)
   read(*,*)
 
-  do ipoin=1,npoin
+  do ipoin = 1,npoin
     read(*,*) x(ipoin),y(ipoin),z(ipoin)
   enddo
 
 ! skip header
   read(*,*)
 
-  do ielem=1,nelem
+  do ielem = 1,nelem
     read(*,*) ibool1(ielem),ibool2(ielem),ibool3(ielem),ibool4(ielem)
   enddo
 
@@ -42,7 +42,7 @@
   read(*,*)
   read(*,*)
 
-  do ipoin=1,npoin
+  do ipoin = 1,npoin
     read(*,*) dataval(ipoin)
   enddo
 
@@ -57,7 +57,7 @@
   ipoin_current = 0
   ielem_base_highres = 0
 
-  do ielem=1,nelem_lowres
+  do ielem = 1,nelem_lowres
 
 !! DK DK point numbers start at 0 in OpenDX, therefore add 1 to index value
     if (.not. mask_numbered(ibool1(ielem_base_highres+1) + 1)) then
@@ -93,7 +93,7 @@
 ! points
   write(*,*) 'object 1 class array type float rank 1 shape 3 items ',npoin_lowres,' data follows'
 
-  do ipoin=1,npoin
+  do ipoin = 1,npoin
     if (mask_numbered(ipoin)) write(*,"(f8.5,1x,f8.5,1x,f8.5)") x(ipoin),y(ipoin),z(ipoin)
   enddo
 
@@ -102,7 +102,7 @@
 
 ! point order in OpenDX is 1,4,2,3 *not* 1,2,3,4 as in AVS
   ielem_base_highres = 0
-  do ielem=1,nelem_lowres
+  do ielem = 1,nelem_lowres
 !! DK DK extract the four corners of the NGLL x NGLL high-res OpenDX element
     write(*,210) inewpointnumber(ibool1(ielem_base_highres+1) + 1),inewpointnumber(ibool2(ielem_base_highres+13) + 1), &
                  inewpointnumber(ibool3(ielem_base_highres+4) + 1),inewpointnumber(ibool4(ielem_base_highres+16) + 1)
@@ -113,7 +113,7 @@
   write(*,*) 'attribute "element type" string "quads"'
   write(*,*) 'attribute "ref" string "positions"'
   write(*,*) 'object 3 class array type float rank 0 items ',npoin_lowres,' data follows'
-  do ipoin=1,npoin
+  do ipoin = 1,npoin
     if (mask_numbered(ipoin)) write(*,501) dataval(ipoin)
   enddo
 

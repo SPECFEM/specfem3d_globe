@@ -55,7 +55,7 @@ subroutine attenuation_simplex(t1, t2, n, Q_real, omega_not, tau_s, tau_e)
   exp2 = log10(f2);
 
   if (f2 < f1 .or. Q_real < 0.0d0 .or. n < 1) then
-     write(*,*)'bad parameters'
+     write(*,*) 'bad parameters'
      call exit(-1)
   endif
 
@@ -88,10 +88,10 @@ subroutine attenuation_simplex(t1, t2, n, Q_real, omega_not, tau_s, tau_e)
   ! Run a simplex search to determine the optimum values of tau_e
   call fminsearch(attenuation_eval, tau_e, n, iterations, min_value, prnt, err)
   if (err > 0) then
-     write(*,*)'Search did not converge for an attenuation of ', Q_real
-     write(*,*)'    Iterations: ', iterations
-     write(*,*)'    Min Value:  ', min_value
-     write(*,*)'    Aborting program'
+     write(*,*) 'Search did not converge for an attenuation of ', Q_real
+     write(*,*) '    Iterations: ', iterations
+     write(*,*) '    Min Value:  ', min_value
+     write(*,*) '    Aborting program'
      call exit(-1)
   endif
 
@@ -184,12 +184,12 @@ subroutine attenuation_maxwell(nf,nsls,f,tau_s,tau_e,B,A)
   do i = 1,nf
      w = 2.0d0 * PI * 10**f(i)
      do j = 1,nsls
-!        write(*,*)j,tau_s(j),tau_e(j)
+!        write(*,*) j,tau_s(j),tau_e(j)
         demon = 1.0d0 + w**2 * tau_s(j)**2
         A(i) = A(i) + ((1.0d0 + (w**2 * tau_e(j) * tau_s(j)))/ demon)
         B(i) = B(i) + ((w * (tau_e(j) - tau_s(j))) / demon)
      enddo
-!     write(*,*)A(i),B(i),10**f(i)
+!     write(*,*) A(i),B(i),10**f(i)
   enddo
 
 end subroutine attenuation_maxwell
@@ -368,14 +368,14 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err)
   itercount = 1
   func_evals = n+1
   if (prnt == 3) then
-     write(*,*)'Iterations   Funk Evals   Value How'
-     write(*,*)itercount, func_evals, fv(1), how
+     write(*,*) 'Iterations   Funk Evals   Value How'
+     write(*,*) itercount, func_evals, fv(1), how
   endif
   if (prnt == 4) then
-     write(*,*)'How: ',how
-     write(*,*)'V: ', v
-     write(*,*)'fv: ',fv
-     write(*,*)'evals: ',func_evals
+     write(*,*) 'How: ',how
+     write(*,*) 'V: ', v
+     write(*,*) 'fv: ',fv
+     write(*,*) 'evals: ',func_evals
   endif
 
   do while (func_evals < maxfun .and. itercount < maxiter)
@@ -456,7 +456,7 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err)
               endif
            endif
            if (how == shrink) then
-              do j=2,n+1
+              do j = 2,n+1
                  v(:,j)=v(:,1)+sigma*(v(:,j) - v(:,1))
                  x(:) = v(:,j)
                  fv(j) = funk(x)
@@ -474,22 +474,22 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err)
 
      itercount = itercount + 1
      if (prnt == 3) then
-        write(*,*)itercount, func_evals, fv(1), how
+        write(*,*) itercount, func_evals, fv(1), how
      else if (prnt == 4) then
         write(*,*)
-        write(*,*)'How: ',how
-        write(*,*)'v: ',v
-        write(*,*)'fv: ',fv
-        write(*,*)'evals: ',func_evals
+        write(*,*) 'How: ',how
+        write(*,*) 'v: ',v
+        write(*,*) 'fv: ',fv
+        write(*,*) 'evals: ',func_evals
      endif
   enddo
 
   if (func_evals > maxfun) then
-     write(*,*)'function evaluations exceeded prescribed limit', maxfun
+     write(*,*) 'function evaluations exceeded prescribed limit', maxfun
      err = 1
   endif
   if (itercount > maxiter) then
-     write(*,*)'iterations exceeded prescribed limit', maxiter
+     write(*,*) 'iterations exceeded prescribed limit', maxiter
      err = 2
   endif
 

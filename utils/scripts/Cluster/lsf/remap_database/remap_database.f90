@@ -28,13 +28,13 @@ implicit none
 
   call get_command_argument(3,junk2)
   if (trim(junk2) == '') then
-     use_jobid=.false.
+     use_jobid = .false.
   else
      call get_command_argument(4,junk3)
      if (trim(junk3) == '') call exit_mpi(myrank,'Usage: remap old-mach num-slice [old-jobid new-jobid]')
      read(junk2,*) old_jobid
      read(junk3,*) new_jobid
-     use_jobid=.true.
+     use_jobid = .true.
   endif
   if (num_slices /= sizeprocs) call exit_mpi(myrank,'number of slices does not match')
 

@@ -191,7 +191,7 @@ program adj_traveltime
 
   if (taper_type == 1) then
     ! cosine taper, otherwise using a constant (1.0) instead
-    do l=1,length_window
+    do l = 1,length_window
       taper(l) = (1.0-cos(pi*2.0*(l-1)/(length_window-1)))/2.0
     enddo
   endif
@@ -312,7 +312,7 @@ program adj_traveltime
     enddo
     close(1001)
 
-  enddo  !do ifreq=1,nfreq
+  enddo  !do ifreq = 1,nfreq
 
   ! closes misfit file
   close(1111)

@@ -15,8 +15,8 @@
   integer itopo_x,itopo_y
 
   open(unit=13,file='topo_bathy_etopo4_from_etopo2_subsampled.dat',status='old')
-  do itopo_y=1,NY_BATHY
-    do itopo_x=1,NX_BATHY
+  do itopo_y = 1,NY_BATHY
+    do itopo_x = 1,NX_BATHY
       read(13,*) ibathy_topo(itopo_x,itopo_y)
     enddo
   enddo
@@ -26,11 +26,11 @@
 ! in the final file, itopo_x = 1 should correspond to longitude = 0
 ! therefore one should see Africa on the left of the JPEG image of topography
   open(unit=13,file='topo_bathy_etopo4_from_etopo2_subsampled_2.dat',status='unknown')
-  do itopo_y=1,NY_BATHY
-    do itopo_x=NX_BATHY/2+1,NX_BATHY
+  do itopo_y = 1,NY_BATHY
+    do itopo_x = NX_BATHY/2+1,NX_BATHY
       write(13,*) ibathy_topo(itopo_x,itopo_y)
     enddo
-    do itopo_x=1,NX_BATHY/2
+    do itopo_x = 1,NX_BATHY/2
       write(13,*) ibathy_topo(itopo_x,itopo_y)
     enddo
   enddo

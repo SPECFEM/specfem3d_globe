@@ -40,8 +40,8 @@
 
 ! loop on all the chunks to create global slice addressing for solver
   do ichunk = 1,NCHUNKS
-    do iproc_eta=0,NPROC_ETA-1
-      do iproc_xi=0,NPROC_XI-1
+    do iproc_eta = 0,NPROC_ETA-1
+      do iproc_xi = 0,NPROC_XI-1
         addressing(ichunk,iproc_xi,iproc_eta) = (ichunk-1)*NPROC + iproc_eta * NPROC_XI + iproc_xi
       enddo
     enddo

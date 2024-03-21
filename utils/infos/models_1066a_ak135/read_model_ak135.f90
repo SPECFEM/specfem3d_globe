@@ -47,7 +47,7 @@
 ! ak135 layercake model
   open(unit=10,file='ak135.dat',status='old',action='read')
 
-  do i=NR_AK135,1,-1
+  do i = NR_AK135,1,-1
 
 ! depth: km
 ! density density_ak135: kg/m^3
@@ -74,42 +74,42 @@
 
   print *
 
-  do i=1,NR_AK135
+  do i = 1,NR_AK135
     write(texttowrite,201) i
     print *,trim(texttowrite),radius_ak135(i)
   enddo
  201 format(' Mak135_V%radius_ak135(',i3,') = ')
   print *
 
-  do i=1,NR_AK135
+  do i = 1,NR_AK135
     write(texttowrite,202) i
     print *,trim(texttowrite),density_ak135(i)
   enddo
  202 format(' Mak135_V%density_ak135(',i3,') = ')
   print *
 
-  do i=1,NR_AK135
+  do i = 1,NR_AK135
     write(texttowrite,203) i
     print *,trim(texttowrite),vp_ak135(i)
   enddo
  203 format(' Mak135_V%vp_ak135(',i3,') = ')
   print *
 
-  do i=1,NR_AK135
+  do i = 1,NR_AK135
     write(texttowrite,204) i
     print *,trim(texttowrite),vs_ak135(i)
   enddo
  204 format(' Mak135_V%vs_ak135(',i3,') = ')
   print *
 
-  do i=1,NR_AK135
+  do i = 1,NR_AK135
     write(texttowrite,205) i
     print *,trim(texttowrite),Qkappa_ak135(i)
   enddo
  205 format(' Mak135_V%Qkappa_ak135(',i3,') = ')
   print *
 
-  do i=1,NR_AK135
+  do i = 1,NR_AK135
     write(texttowrite,206) i
     print *,trim(texttowrite),Qmu_ak135(i)
   enddo

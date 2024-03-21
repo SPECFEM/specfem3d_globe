@@ -285,7 +285,7 @@ contains
     real(kind=CUSTOM_REAL) :: rad, sa, ea, ssa, csa, so, eo, sea, cea, ces, &
                ses
 
-    rad=pi/180.0d0
+    rad = pi/180.0d0
 
     sa  = atan(.993270*tan(sta*rad))
     ea  = atan(.993270*tan(epa*rad))
@@ -302,8 +302,8 @@ contains
       if (sto == epo) then
         dk =0.00
         dd =0.00
-        daze=0.0
-        dazs=0.0
+        daze = 0.0
+        dazs = 0.0
         return
       endif
     endif
@@ -312,8 +312,8 @@ contains
       if (epa == 90.0) then
         dk =0.00
         dd =0.00
-        daze=0.00
-        dazs=0.00
+        daze = 0.00
+        dazs = 0.00
         return
       endif
     endif
@@ -322,14 +322,14 @@ contains
       if (epa == -90.0) then
         dk =0.00
         dd =0.00
-        daze=0.00
-        dazs=0.00
+        daze = 0.00
+        dazs = 0.00
         return
       endif
     endif
 
     dd = ssa*sea+csa*cea*ces
-    if (dd /= 0.) dd=atan(sqrt(1.0-dd*dd)/dd)
+    if (dd /= 0.) dd = atan(sqrt(1.0-dd*dd)/dd)
     if (dd == 0.) dd=pi/2.0
     if (dd < 0.0) dd=dd+pi
     dd = dd/rad
