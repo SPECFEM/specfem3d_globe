@@ -628,6 +628,7 @@
   ! gravity
   ! makes sure to turn off full gravity flag if no gravity simulation selected
   if (.not. GRAVITY) FULL_GRAVITY = .false.
+
   ! safety stop
   if (FULL_GRAVITY) &
     stop 'FULL_GRAVITY is not fully implemented yet, please set it to .false.'

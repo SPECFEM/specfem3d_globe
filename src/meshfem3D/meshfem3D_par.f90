@@ -200,6 +200,9 @@
              NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
              NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION
 
+  integer :: NSPEC_TRINFINITE_ADJOINT,NSPEC_INFINITE_ADJOINT, &
+             NGLOB_TRINFINITE_ADJOINT,NGLOB_INFINITE_ADJOINT
+
   integer :: NT_DUMP_ATTENUATION_optimal
 
   ! this for the different corners of the slice (which are different if the superbrick is cut)

@@ -1320,37 +1320,32 @@
 
 ! transition-to-infinite and inifinite regions
   logical, parameter :: ADD_TRINF = .true.
-
   integer, parameter :: NLAYER_TRINF = 10           ! default 10
-  !!integer, parameter :: NREGIONS_INF = 2            ! this must be: 2 == transition infinite + infinite
-  !!integer, parameter :: NUM_REGIONS_ALL = 5        ! this must be == MAX_NUM_REGIONS == 5 == 3 + NREGIONS_INF == 3 + 2
 
 ! degrees of freedoms
   integer, parameter :: NNDOFU   = 0 ! displacement components
   integer, parameter :: NNDOFCHI = 0 ! displacement potential
   integer, parameter :: NNDOFP   = 0 ! pressure
   integer, parameter :: NNDOFPHI = 1 ! gravitational potential
-  integer, parameter :: NNDOF    = NNDOFU + NNDOFCHI + NNDOFP + NNDOFPHI ! all nodal freedoms
+
+! all nodal freedoms
+  integer, parameter :: NNDOF    = NNDOFU + NNDOFCHI + NNDOFP + NNDOFPHI
 
 ! number of GLL points in each direction of an element (degree plus one)
-  integer, parameter :: NGLLX1 = 3
-  integer, parameter :: NGLLY1 = NGLLX1
-  integer, parameter :: NGLLZ1 = NGLLX1
-  integer, parameter :: NGLLCUBE1 = NGLLX1 * NGLLY1 * NGLLZ1
-
-  !integer, parameter :: NGLLZ_INF = 3        ! this is always 3
-  !integer, parameter :: NGLL = NGLLCUBE      ! NGLLX*NGLLY*NGLLZ!, NGLL_INF=NGLLX*NGLLY*NGLLZ_INF
-  !integer, parameter :: NGLLXY = NGLLSQUARE  ! NGLLX*NGLLY
-  !integer, parameter :: NSUBHEX = (NGLLX-1)*(NGLLY-1)*(NGLLZ-1)
+  integer, parameter :: NGLLX_INF = 3
+  integer, parameter :: NGLLY_INF = NGLLX_INF
+  integer, parameter :: NGLLZ_INF = NGLLX_INF
+  integer, parameter :: NGLLCUBE_INF = NGLLX_INF * NGLLY_INF * NGLLZ_INF
 
 !------------------------------------------------------------
 ! Level-1 solver
 !------------------------------------------------------------
-  integer, parameter :: NEDOF1    = NGLLCUBE1 * NNDOF
-  integer, parameter :: NEDOFU1   = NGLLCUBE1 * NNDOFU, &
-                        NEDOFCHI1 = NGLLCUBE1 * NNDOFCHI, &
-                        NEDOFP1   = NGLLCUBE1 * NNDOFP, &
-                        NEDOFPHI1 = NGLLCUBE1 * NNDOFPHI
+  integer, parameter :: NEDOFU1   = NGLLCUBE_INF * NNDOFU, &
+                        NEDOFCHI1 = NGLLCUBE_INF * NNDOFCHI, &
+                        NEDOFP1   = NGLLCUBE_INF * NNDOFP, &
+                        NEDOFPHI1 = NGLLCUBE_INF * NNDOFPHI
+
+  integer, parameter :: NEDOF1    = NGLLCUBE_INF * NNDOF
 
 !------------------------------------------------------------
 ! Level-2 solver
@@ -1359,8 +1354,8 @@
                         NEDOFCHI = NGLLCUBE * NNDOFCHI, &
                         NEDOFP   = NGLLCUBE * NNDOFP, &
                         NEDOFPHI = NGLLCUBE * NNDOFPHI
-  integer, parameter :: NEDOF = NGLLCUBE * NNDOF
 
+  integer, parameter :: NEDOF    = NGLLCUBE * NNDOF
 
 !!-----------------------------------------------------------
 !!
