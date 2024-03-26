@@ -73,6 +73,7 @@
     NGLOB1D_RADIAL_CORNER(iregion,:) = NGLOB1D_RADIAL(iregion)
   enddo
 
+  ! special cases for outer core
   if (CUT_SUPERBRICK_XI) then
     if (CUT_SUPERBRICK_ETA) then
       if (mod(iproc_xi_slice(myrank),2) == 0) then

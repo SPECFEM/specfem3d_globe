@@ -1318,9 +1318,16 @@
 !!
 !!-----------------------------------------------------------
 
-! transition-to-infinite and inifinite regions
+! transition-to-infinite and infinite regions
   logical, parameter :: ADD_TRINF = .true.
   integer, parameter :: NLAYER_TRINF = 10           ! default 10
+
+! pole position for infinite element region
+! center of the Earth
+  double precision, dimension(NDIM), parameter :: POLE_INF = (/ 0.d0, 0.d0, 0.d0 /)
+! or
+!! center of the source or disturbance
+!!  double precision, dimension(NDIM), parameter :: POLE_INF = (/ -0.6334289d0, 0.4764568d0, 0.6045561d0 /)
 
 ! degrees of freedoms
   integer, parameter :: NNDOFU   = 0 ! displacement components

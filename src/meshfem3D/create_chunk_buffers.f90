@@ -178,6 +178,7 @@
   if (myrank == 0) then
     write(IMAIN,*) 'There is a total of ',NUMMSGS_FACES,' messages to assemble faces between chunks'
     write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   ! allocates arrays needed for assembly
@@ -952,7 +953,6 @@
         .or. iproc_worker1_corners(imsg) > NPROCTOT-1 &
         .or. iproc_worker2_corners(imsg) > NPROCTOT-1) &
         call exit_MPI(myrank,'incorrect chunk corner numbering')
-
 
     ! loop on the three processors of a given corner
     do imember_corner = 1,3

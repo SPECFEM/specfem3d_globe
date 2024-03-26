@@ -185,7 +185,10 @@
 
     case (IREGION_TRINFINITE,IREGION_INFINITE)
       ! infinite-element mesh regions
-      call SIEM_mesh_create_elements(iregion_code,ilayer_loop)
+      ! current layer - no need for layer permutations
+      ilayer = ilayer_loop
+      ! mesh spectral-infinite elements
+      call SIEM_mesh_create_elements(ilayer,ispec_count,ipass,iregion_code)
 
     case default
       call exit_MPI(myrank,'Invalid region code for creating regions elements')
@@ -258,7 +261,10 @@
   endif
 
   ! check total number of spectral elements created
-  if (ispec_count /= nspec) call exit_MPI(myrank,'ispec_count should equal nspec')
+  if (ispec_count /= nspec) then
+    print *,'Error: rank ',myrank,' has created invalid total number of elements ',ispec_count,'; should be ',nspec
+    call exit_MPI(myrank,'ispec_count should equal nspec')
+  endif
 
   ! if any of these flags is true, the element is on a communication edge
   ! this is not enough because it can also be in contact by an edge or a corner but not a full face

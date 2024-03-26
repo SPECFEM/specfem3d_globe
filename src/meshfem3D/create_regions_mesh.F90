@@ -221,18 +221,21 @@
     ! Only go into here if we're requesting xyz files for CEM
 #ifdef USE_CEM
     if (CEM_REQUEST) then
-
-      call build_global_coordinates(iregion_code)
-      call write_cem_request(iregion_code)
+      ! for Comprehensive Earth Model request
       call synchronize_all()
+      if (myrank == 0) then
+        write(IMAIN,*)
+        write(IMAIN,*) '  ...creating CEM request file'
+        call flush_IMAIN()
+      endif
 
-      deallocate(ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
-                 ibool1D_leftxi_righteta,ibool1D_rightxi_righteta, &
-                 xyz1D_leftxi_lefteta,xyz1D_rightxi_lefteta, &
-                 xyz1D_leftxi_righteta,xyz1D_rightxi_righteta,iboolleft_xi, &
-                 iboolright_xi,iboolleft_eta,iboolright_eta,nimin,nimax, &
-                 njmin, njmax,nkmin_xi,nkmin_eta,iboolfaces,iboolcorner)
+      ! builds global coordinate arrays for CEM request
+      call build_global_coordinates(iregion_code)
 
+      ! writes out CEM request file
+      call write_cem_request(iregion_code)
+
+      call synchronize_all()
     endif
 #endif
 
@@ -320,8 +323,7 @@
 
     ! only deallocates after second pass
     deallocate(iboolleft_xi,iboolright_xi,iboolleft_eta,iboolright_eta)
-    deallocate(iboolfaces)
-    deallocate(iboolcorner)
+    deallocate(iboolcorner,iboolfaces)
 
     ! sets up inner/outer element arrays
     call synchronize_all()
@@ -442,14 +444,6 @@
                               iregion_code,xstore,ystore,zstore, &
                               NSPEC2D_TOP)
 
-    ! free Stacey helper arrays (not needed anymore)
-    deallocate(nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta)
-    if (allocated(abs_boundary_ispec)) then
-      deallocate(abs_boundary_ispec,abs_boundary_npoin,abs_boundary_ijk)
-      deallocate(abs_boundary_jacobian2Dw)
-      deallocate(abs_boundary_normal)
-    endif
-
     ! save the binary files
     call synchronize_all()
 
@@ -493,7 +487,8 @@
 
       ! saves mesh files for visualization, GLL model updates, etc.
       ! create AVS or DX mesh data for the slices
-      if (SAVE_MESH_FILES) then
+      if (SAVE_MESH_FILES .and. &
+          iregion_code /= IREGION_TRINFINITE .and. iregion_code /= IREGION_INFINITE) then
         ! user output
         call synchronize_all()
         if (myrank == 0) then
@@ -530,6 +525,13 @@
     deallocate(xstore_glob,ystore_glob,zstore_glob)
     ! frees MPI arrays memory
     call crm_free_MPI_arrays()
+    ! free Stacey helper arrays (not needed anymore)
+    if (allocated(nimin)) deallocate(nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta)
+    if (allocated(abs_boundary_ispec)) then
+      deallocate(abs_boundary_ispec,abs_boundary_npoin,abs_boundary_ijk)
+      deallocate(abs_boundary_jacobian2Dw)
+      deallocate(abs_boundary_normal)
+    endif
 
     ! compute volume, bottom and top area of that part of the slice, and then the total
     call compute_volumes_and_areas(NCHUNKS,iregion_code,nspec,wxgll,wygll,wzgll, &
@@ -643,7 +645,7 @@
   integer,intent(in) :: NSPEC2D_BOTTOM,NSPEC2D_TOP
 
   ! local parameters
-  integer :: ier,isampling_ratio
+  integer :: i,isampling_ratio,ier
   integer :: nspec_actually,nspec_att
 
   ! adios needs properly initialized arrays, otherwise its intrinsic check procedures will cause undefined operations
@@ -834,8 +836,13 @@
   ! MPI buffer indices
   !
   ! define maximum size for message buffers
-  ! use number of elements found in the mantle since it is the largest region
-  NGLOB2DMAX_XY = max(NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE))
+  NGLOB2DMAX_XY = 0
+  ! use maximum number of elements found over all regions (mostly determined by the mantle since it is the largest region)
+  do i = 1,MAX_NUM_REGIONS
+    NGLOB2DMAX_XY = max(NGLOB2DMAX_XY,NGLOB2DMAX_XMIN_XMAX(i))
+    NGLOB2DMAX_XY = max(NGLOB2DMAX_XY,NGLOB2DMAX_YMIN_YMAX(i))
+  enddo
+
   ! 1-D buffers
   NGLOB1D_RADIAL_MAX = maxval(NGLOB1D_RADIAL_CORNER(iregion_code,:))
 
@@ -1108,7 +1115,8 @@
   endif
 
   ! SIEM meshing for full gravity support
-  if (iregion_code == IREGION_TRINFINITE .or. iregion_code == IREGION_TRINFINITE) then
+  if (iregion_code == IREGION_TRINFINITE .or. &
+      iregion_code == IREGION_INFINITE) then
     call SIEM_mesh_setup_layers(ipass)
   endif
 
@@ -1151,7 +1159,7 @@
   if (npointot > 0) then
     if (myrank == 0) then
       write(IMAIN,*) '    total number of points            : ',npointot
-      write(IMAIN,*) '    array memory required per process : ',3.d0 * dble(npointot) * dble(8) / 1024.d0 / 1024.d0,'MB'
+      write(IMAIN,*) '    array memory required per process : ',sngl(3.d0 * dble(npointot) * dble(8) / 1024.d0 / 1024.d0),'MB'
       call flush_IMAIN()
     endif
 
@@ -1197,6 +1205,7 @@
       call flush_IMAIN()
     endif
 
+    ! creates ibool array mapping and number of unique nodes nglob_new
     call get_global(npointot,xp,yp,zp,ibool,nglob_new)
 
     deallocate(xp,yp,zp)
@@ -1321,6 +1330,7 @@
     ! allocate memory for arrays
     allocate(mask_ibool(npointot),stat=ier)
     if (ier /= 0) stop 'Error in allocate 20b'
+    mask_ibool(:) = .false.
 
     ! gets MPI buffer indices
     call get_MPI_cutplanes_xi(prname,nspec,iMPIcut_xi,ibool, &

@@ -206,6 +206,8 @@
             print *,'Please check your mesh setup (NEX, topography, etc.) and try re-running the mesher.'
             print *
             print *,'Error Jacobian rank:',myrank,'has invalid Jacobian ',jacobian
+            print *,'  node i/j/k/ispec : ',i,j,k,ispec
+            print *,'  node xi/eta/gamma: ',xi,eta,gamma
             print *,'  xxi',xxi,xeta,xgamma
             print *,'  yxi',yxi,yeta,ygamma
             print *,'  zxi',zxi,zeta,zgamma

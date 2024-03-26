@@ -145,10 +145,12 @@
   call sum_all_dp(volume_local,volume_total_region)
 
   if (myrank == 0) then
-    !   sum volume over all the regions
-    volume_total = volume_total + volume_total_region
+    ! sum volume over all the regions
+    ! (without transition-to-infinite and infinite region)
+    if (iregion_code /= IREGION_TRINFINITE .and. iregion_code /= IREGION_INFINITE) &
+      volume_total = volume_total + volume_total_region
 
-    !   check volume of chunk, and bottom and top area
+    ! check volume of chunk, and bottom and top area
     write(IMAIN,*)
     write(IMAIN,*) 'calculated region volume: ',sngl(volume_total_region)
     write(IMAIN,*) '                top area: ',sngl(area_total_top)
@@ -157,16 +159,16 @@
     if (NCHUNKS == 6 .and. .not. TOPOGRAPHY) then
       select case (iregion_code)
         case (IREGION_CRUST_MANTLE)
-          write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*R_UNIT_SPHERE**2
+          write(IMAIN,*) '              exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*R_UNIT_SPHERE**2
         case (IREGION_OUTER_CORE)
-          write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RCMB/R_PLANET)**2
+          write(IMAIN,*) '              exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RCMB/R_PLANET)**2
         case (IREGION_INNER_CORE)
-          write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RICB/R_PLANET)**2
+          write(IMAIN,*) '              exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RICB/R_PLANET)**2
         ! TODO: need to fix for transition and infinite layers
         case(IREGION_TRINFINITE)
-          write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RINF/R_PLANET)**2
+          write(IMAIN,*) '              exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*RINF**2  ! top at RINF
         case(IREGION_INFINITE)
-          write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RINF/R_PLANET)**2
+          write(IMAIN,*) '              exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*RINF**2
         case default
           call exit_MPI(myrank,'incorrect region code')
       end select
@@ -178,17 +180,17 @@
     if (NCHUNKS == 6 .and. .not. TOPOGRAPHY) then
       select case (iregion_code)
         case (IREGION_CRUST_MANTLE)
-          write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RCMB/R_PLANET)**2
+          write(IMAIN,*) '              exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RCMB/R_PLANET)**2
         case (IREGION_OUTER_CORE)
-          write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RICB/R_PLANET)**2
+          write(IMAIN,*) '              exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RICB/R_PLANET)**2
         case (IREGION_INNER_CORE)
-          write(IMAIN,*) '            more or less similar area (central cube): ', &
+          write(IMAIN,*) '              more or less similar area (central cube): ', &
                                            dble(NCHUNKS)*(2.*(R_CENTRAL_CUBE / R_PLANET)/sqrt(3.))**2
         ! TODO: need to fix for transition and infinite layers
         case(IREGION_TRINFINITE)
-          write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RINF/R_PLANET)**2
+          write(IMAIN,*) '              exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*R_UNIT_SPHERE**2 ! bottom at crust surface
         case(IREGION_INFINITE)
-          write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RINF/R_PLANET)**2
+          write(IMAIN,*) '              exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*R_UNIT_SPHERE**2
         case default
           call exit_MPI(myrank,'incorrect region code')
       end select
@@ -319,6 +321,7 @@
   Earth_center_of_mass_x_tot_reg = ZERO
   Earth_center_of_mass_y_tot_reg = ZERO
   Earth_center_of_mass_z_tot_reg = ZERO
+
   call sum_all_dp(Earth_mass_local,Earth_mass_total_region)
   call sum_all_dp(Earth_center_of_mass_x_local,Earth_center_of_mass_x_tot_reg)
   call sum_all_dp(Earth_center_of_mass_y_local,Earth_center_of_mass_y_tot_reg)

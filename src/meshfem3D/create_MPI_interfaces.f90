@@ -71,9 +71,11 @@
   integer :: ier
 
   ! parameters from header file
-  NGLOB1D_RADIAL_CM = NGLOB1D_RADIAL(IREGION_CRUST_MANTLE)
-  NGLOB1D_RADIAL_OC = NGLOB1D_RADIAL(IREGION_OUTER_CORE)
-  NGLOB1D_RADIAL_IC = NGLOB1D_RADIAL(IREGION_INNER_CORE)
+  NGLOB1D_RADIAL_CM    = NGLOB1D_RADIAL(IREGION_CRUST_MANTLE)
+  NGLOB1D_RADIAL_OC    = NGLOB1D_RADIAL(IREGION_OUTER_CORE)
+  NGLOB1D_RADIAL_IC    = NGLOB1D_RADIAL(IREGION_INNER_CORE)
+  NGLOB1D_RADIAL_TRINF = NGLOB1D_RADIAL(IREGION_TRINFINITE)
+  NGLOB1D_RADIAL_INF   = NGLOB1D_RADIAL(IREGION_INFINITE)
 
   ! initializes
   NSPEC_CRUST_MANTLE = 0
@@ -90,6 +92,9 @@
 
   NSPEC_INFINITE = 0
   NGLOB_INFINITE = 0
+
+  npoin2D_cube_from_slices = 0
+  non_zero_nb_msgs_theor_in_cube = 0
 
   select case (iregion_code)
 
@@ -184,14 +189,14 @@
     ! check that the number of points in this slice is correct
     if (NSPEC_TRINFINITE > 0) then
       if (minval(ibool(:,:,:,:)) /= 1 .or. maxval(ibool(:,:,:,:)) /= NGLOB_TRINFINITE) &
-        call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in transition inifinite region')
+        call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in transition infinite region')
     endif
 
   case (IREGION_INFINITE)
     ! check that the number of points in this slice is correct
     if (NSPEC_INFINITE > 0) then
       if (minval(ibool(:,:,:,:)) /= 1 .or. maxval(ibool(:,:,:,:)) /= NGLOB_INFINITE) &
-        call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in inifinite region')
+        call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in infinite region')
     endif
 
   end select
@@ -419,11 +424,11 @@
       endif
 
       ! added this to reduce the size of the buffers
-      ! size of buffers is the sum of two sizes because we handle two regions in the same MPI call
+      ! deprecated: size of buffers is the sum of two sizes because we handle two regions in the same MPI call
       !npoin2D_max_all_CM_IC = max(maxval(npoin2D_xi_crust_mantle(:) + npoin2D_xi_inner_core(:)), &
       !                            maxval(npoin2D_eta_crust_mantle(:) + npoin2D_eta_inner_core(:)))
-      npoin2D_max_all_CM_IC = max(maxval(npoin2D_xi_crust_mantle(:)), &
-                                  maxval(npoin2D_eta_crust_mantle(:)))
+      ! buffer for region assembly
+      npoin2D_max_all_buffer = max(maxval(npoin2D_xi_crust_mantle(:)),maxval(npoin2D_eta_crust_mantle(:)))
     endif
 
   case (IREGION_OUTER_CORE)
@@ -467,10 +472,8 @@
                                    ibool,is_on_a_slice_edge,filename)
       endif
 
-      ! added this to reduce the size of the buffers
-      ! size of buffers is the sum of two sizes because we handle two regions in the same MPI call
-      npoin2D_max_all_CM_IC = max(maxval(npoin2D_xi_outer_core(:)), &
-                                  maxval(npoin2D_eta_outer_core(:)))
+      ! buffer for region assembly
+      npoin2D_max_all_buffer = max(maxval(npoin2D_xi_outer_core(:)),maxval(npoin2D_eta_outer_core(:)))
     endif
 
   case (IREGION_INNER_CORE)
@@ -614,7 +617,8 @@
       if (INCLUDE_CENTRAL_CUBE) then
         ! updates flags for elements on slice boundaries
         call fix_non_blocking_central_cube(is_on_a_slice_edge, &
-                                           ibool,NSPEC_INNER_CORE,NGLOB_INNER_CORE,nb_msgs_theor_in_cube,ibelm_bottom_inner_core, &
+                                           ibool,NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
+                                           nb_msgs_theor_in_cube,ibelm_bottom_inner_core, &
                                            idoubling,npoin2D_cube_from_slices, &
                                            ibool_central_cube,NSPEC2D_BOTTOM(IREGION_INNER_CORE), &
                                            ichunk,NPROC_XI)
@@ -628,10 +632,8 @@
                                    ibool,is_on_a_slice_edge,filename)
       endif
 
-      ! added this to reduce the size of the buffers
-      ! size of buffers is the sum of two sizes because we handle two regions in the same MPI call
-      npoin2D_max_all_CM_IC = max(maxval(npoin2D_xi_inner_core(:)), &
-                                  maxval(npoin2D_eta_inner_core(:)))
+      ! buffer for region assembly
+      npoin2D_max_all_buffer = max(maxval(npoin2D_xi_inner_core(:)),maxval(npoin2D_eta_inner_core(:)))
     endif
 
   case (IREGION_TRINFINITE)
@@ -675,11 +677,8 @@
                                    ibool,is_on_a_slice_edge,filename)
       endif
 
-      ! added this to reduce the size of the buffers
-      ! size of buffers is the sum of two sizes because we handle two regions in the same MPI call
-      npoin2D_max_all_CM_IC = max(maxval(npoin2D_xi_trinfinite(:)), &
-                                  maxval(npoin2D_eta_trinfinite(:)))
-
+      ! buffer for region assembly
+      npoin2D_max_all_buffer = max(maxval(npoin2D_xi_trinfinite(:)),maxval(npoin2D_eta_trinfinite(:)))
     endif
 
   case (IREGION_INFINITE)
@@ -723,11 +722,8 @@
                                    ibool,is_on_a_slice_edge,filename)
       endif
 
-      ! added this to reduce the size of the buffers
-      ! size of buffers is the sum of two sizes because we handle two regions in the same MPI call
-      npoin2D_max_all_CM_IC = max(maxval(npoin2D_xi_infinite(:)), &
-                                  maxval(npoin2D_eta_infinite(:)))
-
+      ! buffer for region assembly
+      npoin2D_max_all_buffer = max(maxval(npoin2D_xi_infinite(:)),maxval(npoin2D_eta_infinite(:)))
     endif
 
   end select
@@ -755,20 +751,20 @@
 
   implicit none
 
-  integer :: iregion_code
+  integer,intent(in) :: iregion_code
 
-  integer :: NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
-  integer :: NGLOB1D_RADIAL
+  integer,intent(in) :: NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
+  integer,intent(in) :: NGLOB1D_RADIAL
 
-  integer, dimension(NGLOB2DMAX_XMIN_XMAX) :: iboolleft_xi_s,iboolright_xi_s
-  integer, dimension(NGLOB2DMAX_YMIN_YMAX) :: iboolleft_eta_s,iboolright_eta_s
+  integer, dimension(NGLOB2DMAX_XMIN_XMAX),intent(inout) :: iboolleft_xi_s,iboolright_xi_s
+  integer, dimension(NGLOB2DMAX_YMIN_YMAX),intent(inout) :: iboolleft_eta_s,iboolright_eta_s
 
-  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_s,npoin2D_eta_s
+  integer, dimension(NB_SQUARE_EDGES_ONEDIR),intent(inout) :: npoin2D_xi_s,npoin2D_eta_s
 
-  integer, dimension(NGLOB2DMAX_XY,NUMFACES_SHARED) :: iboolfaces_s
-  integer, dimension(NUMFACES_SHARED) :: npoin2D_faces_s
+  integer, dimension(NGLOB2DMAX_XY,NUMFACES_SHARED),intent(inout) :: iboolfaces_s
+  integer, dimension(NUMFACES_SHARED),intent(inout) :: npoin2D_faces_s
 
-  integer, dimension(NGLOB1D_RADIAL,NUMCORNERS_SHARED) :: iboolcorner_s
+  integer, dimension(NGLOB1D_RADIAL,NUMCORNERS_SHARED),intent(inout) :: iboolcorner_s
 
   ! local parameters
   integer :: icount_faces,imsg
@@ -830,6 +826,7 @@
     ! user output
     if (myrank == 0) then
       write(IMAIN,*) '  no MPI buffers needed'
+      write(IMAIN,*)
       call flush_IMAIN()
     endif
   endif

@@ -173,10 +173,6 @@
   double precision, dimension(NDIM,NDIM) :: rotation_matrix
   double precision :: ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
 
-  ! for some statistics for the mesh
-  integer :: numelem_crust_mantle,numelem_outer_core,numelem_inner_core
-  integer :: numelem_total
-
   ! timer MPI
   double precision :: time_start
 
@@ -451,7 +447,7 @@
   ! we use the same buffers to assemble scalars and vectors because vectors are
   ! always three times bigger and therefore scalars can use the first part
   ! of the vector buffer in memory even if it has an additional index here
-  integer :: npoin2D_max_all_CM_IC
+  integer :: npoin2D_max_all_buffer
 
   ! buffers for send and receive between corners of the chunks
   real(kind=CUSTOM_REAL), dimension(:),allocatable :: &

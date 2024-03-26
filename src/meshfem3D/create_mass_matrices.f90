@@ -259,7 +259,7 @@
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*) '    creates exact mass matrix for rotation'
+    write(IMAIN,*) '     creates exact mass matrix for rotation'
     call flush_IMAIN()
   endif
 
@@ -413,7 +413,7 @@
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*) '    updates mass matrix with Stacey boundary corrections'
+    write(IMAIN,*) '     updates mass matrix with Stacey boundary corrections'
     call flush_IMAIN()
   endif
 
@@ -545,7 +545,7 @@
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*) '    updates mass matrix with ocean load'
+    write(IMAIN,*) '     updates mass matrix with ocean load'
     call flush_IMAIN()
   endif
 
