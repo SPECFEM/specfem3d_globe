@@ -80,7 +80,7 @@
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: val_ispec_pmax,val_ispec_dt
   character(len=MAX_STRING_LEN) :: filename
   character(len=32),parameter :: region(MAX_NUM_REGIONS) = &
-    (/character(len=32) :: 'crust/mantle', 'outer core', 'inner core',  &
+    (/character(len=32) :: 'crust/mantle', 'outer core', 'inner core', &
                            'transition-to-infinite', 'infinite' /)
 
   !debug timing

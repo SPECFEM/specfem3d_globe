@@ -441,7 +441,7 @@
       igllx = index_gll(1,i)
       iglly = index_gll(2,i)
       ispec_layer = index_gll(3,i)
-      xs(1,inode_order(i),1) = xstoret(igllx,iglly,NGLLZ,ispec_layer)    ! from NGLLZ -> top nodes
+      xs(1,inode_order(i),1) = xstoret(igllx,iglly,NGLLZ,ispec_layer)    ! from NGLLZ - > top nodes
       xs(2,inode_order(i),1) = ystoret(igllx,iglly,NGLLZ,ispec_layer)
       xs(3,inode_order(i),1) = zstoret(igllx,iglly,NGLLZ,ispec_layer)
       isnode(inode_order(i)) = .true.
@@ -657,7 +657,7 @@
       do i = 0,NPROCTOT-1
         if (myrank == i) then
           print *,'debug: rank',i,' ispecnew',ispecnew(1:10)
-          do k=1,NGLLZ
+          do k = 1,NGLLZ
             print *,'debug: xstore ',k,xstore(:,:,k,ispecnew(1))
             call flush_stdout()
           enddo
