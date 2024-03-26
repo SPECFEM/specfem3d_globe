@@ -56,7 +56,6 @@
 
   if (.not. I_should_read_the_database) return
 
-
   ! create full name with path
   filename = trim(LOCAL_PATH) // "/mesh_parameters.bin"
 
