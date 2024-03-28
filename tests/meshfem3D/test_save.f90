@@ -9,6 +9,11 @@ program test_save
 
   ! local parameters
   integer :: sizeprocs
+  ! for some statistics for the mesh
+  integer :: numelem_crust_mantle,numelem_outer_core,numelem_inner_core
+  integer :: numelem_trinfinite,numelem_infinite
+  integer :: numelem_total
+
   ! timing
   double precision, external :: wtime
 
@@ -128,6 +133,16 @@ program test_save
     else
       print *,'  result is correct'
     endif
+
+    ! number of elements
+    numelem_crust_mantle = NSPEC_REGIONS(IREGION_CRUST_MANTLE)
+    numelem_outer_core   = NSPEC_REGIONS(IREGION_OUTER_CORE)
+    numelem_inner_core   = NSPEC_REGIONS(IREGION_INNER_CORE)
+    numelem_trinfinite   = NSPEC_REGIONS(IREGION_TRINFINITE)
+    numelem_infinite     = NSPEC_REGIONS(IREGION_INFINITE)
+
+    numelem_total = numelem_crust_mantle + numelem_outer_core + numelem_inner_core &
+                    + numelem_trinfinite + numelem_infinite
 
     print *,'numelem_total = ',numelem_total
     if (numelem_total /= 5265) then
