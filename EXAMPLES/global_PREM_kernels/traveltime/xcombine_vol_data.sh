@@ -1,7 +1,6 @@
 #!/bin/bash
 #
 #
-# note: script requires executable 'mesh2vtu'
 ##############################################
 # USER PARAMETERS
 
@@ -40,18 +39,17 @@ else
 fi
 
 # for visualization
-cp -v ~/SPECFEM3D_GLOBE/utils/Visualization/VTK_ParaView/AVS_continent_boundaries.inp .
-cp -v ~/SPECFEM3D_GLOBE/utils/Visualization/VTK_ParaView/paraviewpython-example.py .
+ln -s ../../../utils/Visualization/VTK_ParaView/AVS_continent_boundaries.inp
+ln -s ../../../utils/Visualization/VTK_ParaView/paraviewpython-example.py
 
 # only for crust_mantle region
 echo
 echo "alpha kernel"
 echo
-./bin/xcombine_vol_data $slice alpha_kernel $dir $dir OUTPUT_FILES/ $res 1
-echo ""
-mesh2vtu OUTPUT_FILES/reg_1_alpha_kernel.mesh OUTPUT_FILES/reg_1_alpha_kernel.vtu
-echo ""
-rm -f OUTPUT_FILES/reg_*alpha*.mesh
+./bin/xcombine_vol_data_vtu $slice alpha_kernel $dir $dir OUTPUT_FILES/ $res 1
+
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
 # colorbar
 # see RGBPoints section
@@ -60,32 +58,40 @@ echo
 sed "s:1e-09:$maxcolor:g" state_alpha_kernel.pvsm > tmp_alpha.pvsm
 
 ./paraviewpython-example.py tmp_alpha.pvsm
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
+
 mv -v image.jpg image_alpha_kernel.jpg
 
 echo
 echo "beta kernel"
 echo
-./bin/xcombine_vol_data $slice beta_kernel $dir $dir OUTPUT_FILES/ $res 1
-echo ""
-mesh2vtu OUTPUT_FILES/reg_1_beta_kernel.mesh OUTPUT_FILES/reg_1_beta_kernel.vtu
-echo ""
-rm -f OUTPUT_FILES/reg_*beta*.mesh
+./bin/xcombine_vol_data_vtu $slice beta_kernel $dir $dir OUTPUT_FILES/ $res 1
+
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
 sed "s:alpha:beta:g" tmp_alpha.pvsm > tmp_beta.pvsm
 ./paraviewpython-example.py tmp_beta.pvsm
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
+
 mv -v image.jpg image_beta_kernel.jpg
 
 echo
 echo "rho kernel"
 echo
-./bin/xcombine_vol_data $slice rho_kernel $dir $dir OUTPUT_FILES/ $res 1
-echo ""
-mesh2vtu OUTPUT_FILES/reg_1_rho_kernel.mesh OUTPUT_FILES/reg_1_rho_kernel.vtu
-echo ""
-rm -f OUTPUT_FILES/reg_*rho*.mesh
+./bin/xcombine_vol_data_vtu $slice rho_kernel $dir $dir OUTPUT_FILES/ $res 1
+
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
+
 
 sed "s:alpha:rho:g" tmp_alpha.pvsm > tmp_rho.pvsm
 ./paraviewpython-example.py tmp_rho.pvsm
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
+
 mv -v image.jpg image_rho_kernel.jpg
 
 echo

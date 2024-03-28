@@ -21,7 +21,7 @@
 ! 1066a layercake model
   open(unit=10,file='1066a.dat',status='old',action='read')
 
-  do i=1,NR_1066A
+  do i = 1,NR_1066A
 
 ! depth: m
 ! density density_1066a: g/m^3
@@ -41,42 +41,42 @@
 
   print *
 
-  do i=1,NR_1066A
+  do i = 1,NR_1066A
     write(texttowrite,201) i
     print *,trim(texttowrite),radius_1066a(i)
   enddo
  201 format(' radius_1066a(',i3,') = ')
   print *
 
-  do i=1,NR_1066A
+  do i = 1,NR_1066A
     write(texttowrite,202) i
     print *,trim(texttowrite),density_1066a(i)
   enddo
  202 format(' density_1066a(',i3,') = ')
   print *
 
-  do i=1,NR_1066A
+  do i = 1,NR_1066A
     write(texttowrite,203) i
     print *,trim(texttowrite),vp_1066a(i)
   enddo
  203 format(' vp_1066a(',i3,') = ')
   print *
 
-  do i=1,NR_1066A
+  do i = 1,NR_1066A
     write(texttowrite,204) i
     print *,trim(texttowrite),vs_1066a(i)
   enddo
  204 format(' vs_1066a(',i3,') = ')
   print *
 
-  do i=1,NR_1066A
+  do i = 1,NR_1066A
     write(texttowrite,205) i
     print *,trim(texttowrite),Qkappa_1066a(i)
   enddo
  205 format(' Qkappa_1066a(',i3,') = ')
   print *
 
-  do i=1,NR_1066A
+  do i = 1,NR_1066A
     write(texttowrite,206) i
     print *,trim(texttowrite),Qmu_1066a(i)
   enddo

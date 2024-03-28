@@ -42,7 +42,9 @@
 
   use specfem_par_crustmantle, only: &
     ibool => ibool_crust_mantle, &
-    xstore => xstore_crust_mantle,ystore => ystore_crust_mantle,zstore => zstore_crust_mantle
+    xstore => xstore_crust_mantle, &
+    ystore => ystore_crust_mantle, &
+    zstore => zstore_crust_mantle
 
   ! for point search
   use specfem_par, only: &
@@ -470,7 +472,7 @@
     endif
 
     ! decreases step length if step is large
-    if ((dxi**2 + deta**2 + dgamma**2) > 1.0d0) then
+    if ((dxi*dxi + deta*deta + dgamma*dgamma) > 1.0d0) then
       dxi = dxi * 0.33333333333d0
       deta = deta * 0.33333333333d0
       dgamma = dgamma * 0.33333333333d0

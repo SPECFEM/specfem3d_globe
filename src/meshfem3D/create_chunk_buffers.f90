@@ -178,6 +178,7 @@
   if (myrank == 0) then
     write(IMAIN,*) 'There is a total of ',NUMMSGS_FACES,' messages to assemble faces between chunks'
     write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   ! allocates arrays needed for assembly
@@ -476,7 +477,7 @@
           call exit_MPI(myrank,'incorrect message type labeling')
 
         ! loop on sender/receiver (1=sender 2=receiver)
-        do imode_comm=1,2
+        do imode_comm = 1,2
           ! initializes
           iproc = -1
           iedge = -1
@@ -545,7 +546,7 @@
               endif
 
               do ispec2D = 1,nspec2D_xmin
-                ispec=ibelm_xmin(ispec2D)
+                ispec = ibelm_xmin(ispec2D)
 
                 ! remove central cube for chunk buffers
                 if (idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
@@ -589,7 +590,7 @@
               endif
 
               do ispec2D = 1,nspec2D_xmax
-                ispec=ibelm_xmax(ispec2D)
+                ispec = ibelm_xmax(ispec2D)
 
                 ! remove central cube for chunk buffers
                 if (idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
@@ -597,7 +598,7 @@
                   idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
                   idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
 
-                i=NGLLX
+                i = NGLLX
                 do k = 1,NGLLZ
                   do j = 1,NGLLY
                     if (.not. mask_ibool(ibool(i,j,k,ispec))) then
@@ -633,7 +634,7 @@
               endif
 
               do ispec2D = 1,nspec2D_ymin
-                ispec=ibelm_ymin(ispec2D)
+                ispec = ibelm_ymin(ispec2D)
 
                 ! remove central cube for chunk buffers
                 if (idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
@@ -677,7 +678,7 @@
               endif
 
               do ispec2D = 1,nspec2D_ymax
-                ispec=ibelm_ymax(ispec2D)
+                ispec = ibelm_ymax(ispec2D)
 
                 ! remove central cube for chunk buffers
                 if (idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
@@ -685,7 +686,7 @@
                   idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
                   idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
 
-                j=NGLLY
+                j = NGLLY
                 do k = 1,NGLLZ
                   do i = 1,NGLLX
                     if (.not. mask_ibool(ibool(i,j,k,ispec))) then
@@ -952,7 +953,6 @@
         .or. iproc_worker1_corners(imsg) > NPROCTOT-1 &
         .or. iproc_worker2_corners(imsg) > NPROCTOT-1) &
         call exit_MPI(myrank,'incorrect chunk corner numbering')
-
 
     ! loop on the three processors of a given corner
     do imember_corner = 1,3

@@ -52,14 +52,14 @@
   read(55,*) npoin,nspec
 
   print *,'object 1 class array type float rank 1 shape 3 items ',npoin,' data follows'
-  do ipoin=1,npoin
+  do ipoin = 1,npoin
     read(55,*) i1,x(ipoin),y(ipoin),z(ipoin)
     icorresp(i1) = ipoin
     print *,x(ipoin),y(ipoin),z(ipoin)
   enddo
 
   print *,'object 2 class array type int rank 1 shape 4 items ',nspec,' data follows'
-  do ispec=1,nspec
+  do ispec = 1,nspec
     read(55,*) idum1,idum2,i1,i2,i3,i4
 ! point order in OpenDX is 1,4,2,3 *not* 1,2,3,4 as in AVS
     print *,icorresp(i1)-1,icorresp(i4)-1,icorresp(i2)-1,icorresp(i3)-1
@@ -74,7 +74,7 @@
   print *,'attribute "element type" string "quads"'
   print *,'attribute "ref" string "positions"'
   print *,'object 3 class array type float rank 0 items ',npoin,' data follows'
-  do ipoin=1,npoin
+  do ipoin = 1,npoin
     print *,ipoin
   enddo
 

@@ -273,7 +273,7 @@
                       R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
                       R_CENTRAL_CUBE
 
-  ! inifinite layer radius
+  ! infinite layer radius
   double precision :: RINF
 
   double precision :: RMOHO_FICTITIOUS_IN_MESHER,R80_FICTITIOUS_IN_MESHER

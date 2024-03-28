@@ -152,29 +152,6 @@
     print *
   endif
 
-  ! produces simulations compatible with old globe version 5.1.5
-  if (USE_OLD_VERSION_5_1_5_FORMAT) then
-    print *
-    print *,'**************'
-    print *,'using globe version 5.1.5 compatible simulation parameters'
-    if (.not. ATTENUATION_1D_WITH_3D_STORAGE ) &
-      stop 'ATTENUATION_1D_WITH_3D_STORAGE should be set to .true. for compatibility with globe version 5.1.5 '
-    if (UNDO_ATTENUATION) then
-      print *,'setting UNDO_ATTENUATION to .false. for compatibility with globe version 5.1.5 '
-      UNDO_ATTENUATION = .false.
-    endif
-    if (USE_LDDRK) then
-      print *,'setting USE_LDDRK to .false. for compatibility with globe version 5.1.5 '
-      USE_LDDRK = .false.
-    endif
-    if (EXACT_MASS_MATRIX_FOR_ROTATION) then
-      print *,'setting EXACT_MASS_MATRIX_FOR_ROTATION to .false. for compatibility with globe version 5.1.5 '
-      EXACT_MASS_MATRIX_FOR_ROTATION = .false.
-    endif
-    print *,'**************'
-    print *
-  endif
-
   ! checks flags when perfect sphere is set
   if (ASSUME_PERFECT_SPHERE) then
     if (ELLIPTICITY) then
@@ -319,11 +296,9 @@
   double precision :: DEPTH_SECOND_DOUBLING_REAL,DEPTH_THIRD_DOUBLING_REAL, &
                       DEPTH_FOURTH_DOUBLING_REAL,distance,distance_min,zval
   ! layers
-  integer ::  NUMBER_OF_MESH_LAYERS,layer_offset
+  integer :: NUMBER_OF_MESH_LAYERS,layer_offset
   ! for the cut doublingbrick improvement
   integer :: last_doubling_layer
-  ! full gravity
-  integer :: iregion0,iter_region,nlayer,nspec1layer,nspec1d,nnode1d
 
   ! check that mesh can be coarsened in depth three or four times
   CUT_SUPERBRICK_XI = .false.
@@ -383,7 +358,7 @@
                         NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
                         NSPEC1D_RADIAL, &
                         NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
-                        NUMBER_OF_MESH_LAYERS,layer_offset,&
+                        NUMBER_OF_MESH_LAYERS,layer_offset, &
                         CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,INCLUDE_CENTRAL_CUBE, &
                         last_doubling_layer)
 
@@ -420,60 +395,7 @@
   endif
 
   ! full gravity support
-  ! TODO: some of the below parameters are also recalculated in the create_meshes.f90 which is not necessary
-  if (FULL_GRAVITY) then
-    ! start region
-    iregion0 = IREGION_CRUST_MANTLE
-
-    ! loops over transition-to-infinite and infinite regions
-    do iter_region = IREGION_TRINFINITE,IREGION_INFINITE
-      ! checks
-      if (iter_region == IREGION_TRINFINITE .and. .not. ADD_TRINF) cycle
-
-      ! sets region layers
-      if (iter_region == IREGION_TRINFINITE) then
-        ! transition-to-infinite region
-        nlayer = NLAYER_TRINF
-      else
-        ! infinite region
-        nlayer = 1      ! single layer
-      endif
-
-      nspec1layer = NSPEC2D_TOP(iregion0)
-      nspec1d = sqrt(real(nspec1layer))
-
-      ! checks if nspec2d top is squared
-      if (nspec1d*nspec1d /= nspec1layer) then
-        print *,'Error: full gravity 2d surface elements is invalid for region ',iter_region
-        print *,'  nspec1D**2 = ',nspec1d*nspec1d,' should be ',nspec1layer
-        print *,'Please make sure to have NEX_XI == NEX_ETA.'
-        stop 'Invalid number of full gravity 2d surface elements'
-      endif
-
-      NSPEC_REGIONS(iter_region) = nlayer * nspec1layer
-
-      NSPEC2DMAX_XMIN_XMAX(iter_region) = nlayer*nspec1d
-      NSPEC2DMAX_YMIN_YMAX(iter_region) = nlayer*nspec1d
-      NSPEC2D_BOTTOM(iter_region) = nspec1layer
-      NSPEC2D_TOP(iter_region) = nspec1layer
-
-      nnode1d = nspec1d * (NGLLX-1)+1 ! ngllx=nglly
-
-      NGLOB_REGIONS(iter_region) = (nlayer*(NGLLZ-1)+1) * (nnode1d*nnode1d)
-
-      NGLOB2DMAX_XMIN_XMAX(iter_region) = (nlayer*(NGLLZ-1)+1)*nnode1d
-      NGLOB2DMAX_YMIN_YMAX(iter_region) = (nlayer*(NGLLZ-1)+1)*nnode1d
-
-      NGLOB1D_RADIAL(iter_region) = (nlayer*(NGLLZ-1)+1)
-
-      ! start region for next region
-      iregion0 = iter_region
-    enddo
-
-    ! full gravity kernels
-    ! TODO: check if this can be put into the solver and/or if CALC_GRAVITY_KERNELS is needed
-    !if (SIMULATION_TYPE == 3 .and. FULL_GRAVITY) CALC_GRAVITY_KERNELS = .true.
-  endif
+  if (FULL_GRAVITY) call rcp_SIEM_set_mesh_parameters()
 
   end subroutine rcp_set_mesh_parameters
 
@@ -651,9 +573,6 @@
   ! gravity
   ! makes sure to turn off full gravity flag if no gravity simulation selected
   if (.not. GRAVITY) FULL_GRAVITY = .false.
-  ! safety stop
-  if (FULL_GRAVITY) &
-    stop 'FULL_GRAVITY is not fully implemented yet, please set it to .false.'
 
   ! gravity integrals
   ! in the case of GRAVITY_INTEGRALS we should always use double precision
@@ -690,3 +609,84 @@
 
   end subroutine rcp_check_parameters
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine rcp_SIEM_set_mesh_parameters()
+
+! sets mesh parameters for spectral-infinite element mesh regions
+
+  use constants
+  use shared_parameters
+
+  implicit none
+
+  ! local parameters
+  integer :: iregion0,iter_region,nlayer,nspec1layer,nspec1d,nnode1d
+
+  ! safety check
+  if (.not. FULL_GRAVITY) return
+
+  ! start region
+  iregion0 = IREGION_CRUST_MANTLE
+
+  ! loops over transition-to-infinite and infinite regions
+  do iter_region = IREGION_TRINFINITE,IREGION_INFINITE
+    ! checks
+    if (iter_region == IREGION_TRINFINITE .and. .not. ADD_TRINF) cycle
+
+    ! sets region layers
+    if (iter_region == IREGION_TRINFINITE) then
+      ! transition-to-infinite region
+      nlayer = NLAYER_TRINF
+    else
+      ! infinite region
+      nlayer = 1      ! single layer
+    endif
+
+    nspec1layer = NSPEC2D_TOP(iregion0)
+    nspec1d = sqrt(real(nspec1layer))
+
+    ! checks if nspec2d top is squared
+    if (nspec1d*nspec1d /= nspec1layer) then
+      print *,'Error: full gravity 2d surface elements is invalid for region ',iter_region
+      print *,'  nspec1D**2 = ',nspec1d*nspec1d,' should be ',nspec1layer
+      print *,'Please make sure to have NEX_XI == NEX_ETA.'
+      stop 'Invalid number of full gravity 2d surface elements'
+    endif
+
+    ! total number of elements
+    NSPEC_REGIONS(iter_region) = nlayer * nspec1layer
+
+    ! boundary flags
+    NSPEC2D_BOTTOM(iter_region) = nspec1layer
+    NSPEC2D_TOP(iter_region) = nspec1layer
+
+    nnode1d = nspec1d * (NGLLX-1)+1 ! ngllx = nglly
+
+    ! total number of global nodes
+    NGLOB_REGIONS(iter_region) = (nlayer*(NGLLZ-1)+1) * (nnode1d*nnode1d)
+
+    ! MPI cut-planes
+    NSPEC2D_XI(iter_region) = nlayer * nspec1d
+    NSPEC2D_ETA(iter_region) = nlayer * nspec1d
+
+    NSPEC2DMAX_XMIN_XMAX(iter_region) = nlayer * nspec1d
+    NSPEC2DMAX_YMIN_YMAX(iter_region) = nlayer * nspec1d
+
+    NGLOB2DMAX_XMIN_XMAX(iter_region) = (nlayer*(NGLLZ-1)+1)*nnode1d
+    NGLOB2DMAX_YMIN_YMAX(iter_region) = (nlayer*(NGLLZ-1)+1)*nnode1d
+
+    NGLOB1D_RADIAL(iter_region) = (nlayer*(NGLLZ-1)+1)
+    NSPEC1D_RADIAL(iter_region) = nlayer
+
+    ! start region for next region
+    iregion0 = iter_region
+  enddo
+
+  ! full gravity kernels
+  ! TODO: check if this can be put into the solver and/or if CALC_GRAVITY_KERNELS is needed
+  !if (SIMULATION_TYPE == 3 .and. FULL_GRAVITY) CALC_GRAVITY_KERNELS = .true.
+
+  end subroutine rcp_SIEM_set_mesh_parameters

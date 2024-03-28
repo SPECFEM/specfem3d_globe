@@ -59,7 +59,8 @@ program smooth_laplacian_sem
   integer :: iker, i, j, k, idof, iel, i1, i2, ier, sizeprocs
 
   double precision    :: Lx, Ly, Lz, Lh, Lv, conv_crit, Lh2, Lv2
-  double precision    :: x, y, z, r, theta, phi, rel_to_prem
+  double precision    :: x, y, z, rel_to_prem
+  double precision    :: r, theta, phi
   double precision    :: rho,drhodr,vp,vs,Qkappa,Qmu
 
   real(kind=CUSTOM_REAL), dimension(:),       allocatable :: m, s
@@ -360,9 +361,9 @@ program smooth_laplacian_sem
   call zwgljd(xgll,wx,NGLLX,GAUSSALPHA,GAUSSBETA)
   call zwgljd(ygll,wy,NGLLY,GAUSSALPHA,GAUSSBETA)
   call zwgljd(zgll,wz,NGLLZ,GAUSSALPHA,GAUSSBETA)
-  do k=1,NGLLZ
-     do j=1,NGLLY
-        do i=1,NGLLX
+  do k = 1,NGLLZ
+     do j = 1,NGLLY
+        do i = 1,NGLLX
            wxyz(i,j,k) = real(wx(i)*wy(j)*wz(k),kind=CUSTOM_REAL)
         enddo
      enddo
@@ -551,7 +552,14 @@ program smooth_laplacian_sem
           x = xglob(idof)
           y = yglob(idof)
           z = zglob(idof)
+
+          ! converts x/y/z to geocentric coordinates r/theta/phi
           call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
+
+          ! theta/phi not used any further...
+          ! note: converts the geocentric colatitude to a geographic colatitude by ellipticity correction
+          !if (ELLIPTICITY) call geocentric_2_geographic_dble(theta,theta)
+
           ! determine smoothing radius
           Lh2 = Lh
           Lv2 = Lv
@@ -850,12 +858,12 @@ contains
 
        ! Print infos
        if (myrank == 0) then
-           write(*,*)'Iterations ',iter_cg,', max residual ',res_norm_inf,' l2 norm ',res_norm_new
+           write(*,*) 'Iterations ',iter_cg,', max residual ',res_norm_inf,' l2 norm ',res_norm_new
        endif
 
     enddo
 
-    if (myrank == 0) write(*,*)'Iterations ',iter_cg,', max residual ',res_norm_inf
+    if (myrank == 0) write(*,*) 'Iterations ',iter_cg,', max residual ',res_norm_inf
 
 
   end subroutine solve_laplace_linear_system_cg
@@ -1107,7 +1115,7 @@ contains
     if (size(a) /= size(b)) then
        stop
     endif
-    do i=1,size(a)
+    do i = 1,size(a)
        valloc = valloc + a(i) * b(i)
     enddo
     call sum_all_cr(valloc, val)
@@ -1129,7 +1137,7 @@ contains
 
     valloc = 0
     val    = 0
-    do i=1,size(a)
+    do i = 1,size(a)
        valloc = max(valloc,abs(a(i)))
     enddo
     call max_all_cr(valloc, val)

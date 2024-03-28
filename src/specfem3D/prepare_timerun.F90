@@ -500,7 +500,9 @@
 !$OMP DO
 #endif
   do i = 1,NGLOB_CRUST_MANTLE
+    ! converts x/y/z to geocentric r/theta/phi
     call xyz_2_rthetaphi(xstore_crust_mantle(i),ystore_crust_mantle(i),zstore_crust_mantle(i),rval,thetaval,phival)
+
     rstore_crust_mantle(1,i) = rval
     rstore_crust_mantle(2,i) = thetaval
     rstore_crust_mantle(3,i) = phival
@@ -522,7 +524,9 @@
 !$OMP DO
 #endif
   do i = 1,NGLOB_OUTER_CORE
+    ! converts x/y/z to geocentric r/theta/phi
     call xyz_2_rthetaphi(xstore_outer_core(i),ystore_outer_core(i),zstore_outer_core(i),rval,thetaval,phival)
+
     rstore_outer_core(1,i) = rval
     rstore_outer_core(2,i) = thetaval
     rstore_outer_core(3,i) = phival
@@ -544,7 +548,9 @@
 !$OMP DO
 #endif
   do i = 1,NGLOB_INNER_CORE
+    ! converts x/y/z to geocentric r/theta/phi
     call xyz_2_rthetaphi(xstore_inner_core(i),ystore_inner_core(i),zstore_inner_core(i),rval,thetaval,phival)
+
     rstore_inner_core(1,i) = rval
     rstore_inner_core(2,i) = thetaval
     rstore_inner_core(3,i) = phival

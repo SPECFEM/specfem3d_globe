@@ -308,9 +308,9 @@
       xc(3) = cost
 
       ! get x,y,z coordinates in cap around point of interest
-      do j=1,3
+      do j = 1,3
         x(j) = ZERO
-        do k=1,3
+        do k = 1,3
           x(j) = x(j)+rotation_matrix(j,k)*xc(k)
         enddo
       enddo
@@ -318,10 +318,12 @@
       ! get latitude and longitude (degrees) of integration point
       call xyz_2_rthetaphi_dble(x(1),x(2),x(3),r_rot,theta_rot,phi_rot)
       call reduce(theta_rot,phi_rot)
+
       xlat(i) = (PI_OVER_TWO - theta_rot) * RADIANS_TO_DEGREES
       xlon(i) = phi_rot * RADIANS_TO_DEGREES
-      if (xlon(i) > 180.0d0) xlon(i) = xlon(i) - 360.0d0
 
+      ! longitude range [-180,180]
+      if (xlon(i) > 180.0d0) xlon(i) = xlon(i) - 360.0d0
     enddo
   enddo
 

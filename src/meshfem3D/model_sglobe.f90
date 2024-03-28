@@ -532,7 +532,7 @@
   A0 = X(J1-1)
 
 !   SEARCH FOR DISCONTINUITIES.
-  do I=J1,I2
+  do I = J1,I2
     B0 = A0
     A0 = X(I)
     if (DABS((A0-B0)/DMAX1(A0,B0)) < SMALL) goto 4
@@ -557,7 +557,7 @@
 10 continue
   J2 = J2+2
   Y0 =(Y(J2)-Y(J1))/(X(J2)-X(J1))
-  do J=1,3
+  do J = 1,3
     Q(J,J1)=YY(J)
     Q(J,J2)=YY(J)
   enddo
@@ -577,7 +577,7 @@
   B1 = B0
 
 !   EXPLICITLY REDUCE BANDED MATRIX TO AN UPPER BANDED MATRIX.
-  DO I=J1,J2
+  DO I = J1,J2
     H = X(I+1)-X(I)
     Y0 = Y(I+1)-Y(I)
     H2 = H*H
@@ -615,19 +615,19 @@
   Q(2,I) = F(1,I)-Q(1,I)*Q(3,I)
 
 !   SOLVE UPPER BANDED MATRIX BY REVERSE ITERATION.
-  DO J=J1,J2
-    K=I-1
+  DO J = J1,J2
+    K = I-1
     Q(1,I)=F(3,K)-Q(3,K)*Q(2,I)
     Q(3,K)=F(2,K)-Q(2,K)*Q(1,I)
     Q(2,K)=F(1,K)-Q(1,K)*Q(3,K)
-    I=K
+    I = K
   enddo
   Q(1,I)=B1
 
 !   FILL IN THE LAST POINT WITH A LINEAR EXTRAPOLATION.
 9 continue
   J2 = J2+2
-  DO J=1,3
+  DO J = 1,3
     Q(J,J2)=YY(J)
   enddo
 
@@ -647,7 +647,7 @@
 
 !   THERE IS ONLY ONE POINT LEFT AFTER THE LATEST DISCONTINUITY.
 7 continue
-  do J=1,3
+  do J = 1,3
     Q(J,I2)=YY(J)
   enddo
 

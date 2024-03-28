@@ -173,7 +173,7 @@
   xd1 = 0
 
   !----------------------- depth in the model ------------------
-  dep=R_PLANET_KM*(R_UNIT_SPHERE - radius)
+  dep = R_PLANET_KM*(R_UNIT_SPHERE - radius)
   if (dep <= sea99_depth(1)) then
      id1 = 1
      xd1 = 0

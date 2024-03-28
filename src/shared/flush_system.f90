@@ -69,8 +69,11 @@
   !   a) comment out the line below
   !   b) try to use other function implementation: e.g. Fortran 2008 supports
   !      call execute_command_line(trim(command))
-
-  call system(trim(command))
+  !
+  !call system(trim(command))
+  !
+  ! standard f2008
+  call execute_command_line(trim(command))
 
   end subroutine system_command
 

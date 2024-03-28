@@ -437,7 +437,7 @@
   real, intent(out) :: xi, eta
 
   real :: x, y, z
-  real, parameter :: EPS=1e-6
+  real, parameter :: EPS = 1e-6
 
   x = xx; y = yy; z = zz
   if (0 <= x .and. x < EPS)  x = EPS

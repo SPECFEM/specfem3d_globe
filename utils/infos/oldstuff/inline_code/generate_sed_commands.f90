@@ -11,7 +11,7 @@
 
   integer i
 
-  do i=1,NGLL
+  do i = 1,NGLL
     write(*,130) i,i
     write(*,131) i,i
     write(*,140) i,i

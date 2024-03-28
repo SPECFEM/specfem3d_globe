@@ -30,14 +30,12 @@
 ! this is only a placeholder function, which is not used yet...user must supply the subtopo_cmb() routine
 
   use constants
-  use shared_parameters, only: R_PLANET,R_PLANET_KM
+  use shared_parameters, only: R_PLANET,R_PLANET_KM,ELLIPTICITY
   use meshfem_par, only: RTOPDDOUBLEPRIME,RCMB
 
   implicit none
 
-  double precision,intent(inout) :: xelm(NGNOD)
-  double precision,intent(inout) :: yelm(NGNOD)
-  double precision,intent(inout) :: zelm(NGNOD)
+  double precision,intent(inout) :: xelm(NGNOD),yelm(NGNOD),zelm(NGNOD)
 
   ! local parameters
   integer :: ia
@@ -56,7 +54,7 @@
     z = zelm(ia)
 
     ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
-    call xyz_2_rlatlon_dble(x,y,z,r,lat,lon)
+    call xyz_2_rlatlon_dble(x,y,z,r,lat,lon,ELLIPTICITY)
 
     ! compute topography on CMB; routine subtopo_cmb needs to be supplied by the user
     ! (see for example routine subtopo_sh_cmb() in model_full_sh.f90)

@@ -98,9 +98,9 @@
 
 ! switches do-loops between: do k=1,NGLLZ; do j=1,NGLLY; do i=1,NGLLX <-> do ijk=1,NGLLCUBE
 #ifdef FORCE_VECTORIZATION
-#  define DO_LOOP_IJK  do ijk=1,NGLLCUBE
+#  define DO_LOOP_IJK  do ijk = 1,NGLLCUBE
 #else
-#  define DO_LOOP_IJK  do k=1,NGLLZ; do j=1,NGLLY; do i=1,NGLLX
+#  define DO_LOOP_IJK  do k = 1,NGLLZ; do j = 1,NGLLY; do i = 1,NGLLX
 #endif
 
 ! switches enddo-loops between: enddo; enddo; enddo ! NGLLZ,NGLLY,NGLLX <-> enddo ! NGLLCUBE

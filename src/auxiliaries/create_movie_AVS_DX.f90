@@ -38,7 +38,7 @@
   use shared_parameters, only: &
     NEX_XI,NEX_ETA,NSTEP,NTSTEP_BETWEEN_FRAMES, &
     NCHUNKS,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-    OUTPUT_FILES,MOVIE_COARSE
+    OUTPUT_FILES,MOVIE_COARSE,ELLIPTICITY
 
   implicit none
 
@@ -728,15 +728,10 @@
             ycoord = sngl(yp_save(ilocnum+ieoff))
             zcoord = sngl(zp_save(ilocnum+ieoff))
 
-            ! location latitude/longitude (with geocentric colatitude theta )
-            call xyz_2_rthetaphi(xcoord,ycoord,zcoord,rval,thetaval,phival)
+            ! location latitude/longitude (with geographic latitude in degrees)
+            call xyz_2_rlatlon_cr(xcoord,ycoord,zcoord,rval,lat,long,ELLIPTICITY)
 
-            ! note: converts the geocentric colatitude to a geographic colatitude
-            call geocentric_2_geographic_cr(thetaval,thetaval)
-
-            ! gets geographic latitude and longitude in degrees
-            lat = (PI_OVER_TWO-thetaval)*RADIANS_TO_DEGREES
-            long = phival*RADIANS_TO_DEGREES
+            ! puts lon in range [-180,180]
             if (long > 180.0) long = long-360.0
 
             write(11,*) long,lat,sngl(field_display(ilocnum+ieoff))

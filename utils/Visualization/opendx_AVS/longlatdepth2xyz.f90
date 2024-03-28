@@ -52,8 +52,8 @@
 
 ! convert geographic latitude latitude (degrees)
 ! to geocentric colatitude theta (radians)
-  theta=PI/2.0d0-atan(0.99329534d0*dtan(latitude*PI/180.0d0))
-  phi=longitude*PI/180.0d0
+  theta = PI/2.0d0-atan(0.99329534d0*dtan(latitude*PI/180.0d0))
+  phi = longitude*PI/180.0d0
 
 ! normalized Earth radius
   r0 = 1.d0

@@ -42,28 +42,28 @@
 
   integer,intent(in) :: nspec
 
-  logical,dimension(2,nspec) :: iMPIcut_xi
+  logical,dimension(2,nspec),intent(in) :: iMPIcut_xi
 
   integer,dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
 
   double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: xstore,ystore,zstore
 
   ! logical mask used to create arrays iboolleft_xi and iboolright_xi
-  integer :: npointot
-  logical,dimension(npointot) :: mask_ibool
+  integer,intent(in) :: npointot
+  logical,dimension(npointot),intent(inout) :: mask_ibool
 
-  integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_EDGES_ONEDIR) :: NSPEC2D_ETA_FACE
+  integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_EDGES_ONEDIR),intent(in) :: NSPEC2D_ETA_FACE
 
-  integer :: iregion
-  integer :: npoin2D_xi
+  integer,intent(in) :: iregion
+  integer,intent(inout) :: npoin2D_xi
 
-  integer :: NGLOB2DMAX_XMIN_XMAX
+  integer,intent(in) :: NGLOB2DMAX_XMIN_XMAX
   integer, dimension(NGLOB2DMAX_XMIN_XMAX),intent(inout) :: iboolleft_xi,iboolright_xi
 
-  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_all
+  integer, dimension(NB_SQUARE_EDGES_ONEDIR),intent(inout) :: npoin2D_xi_all
 
   ! processor identification
-  character(len=MAX_STRING_LEN) :: prname
+  character(len=MAX_STRING_LEN),intent(in) :: prname
 
   ! local parameters
   ! global element numbering

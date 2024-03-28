@@ -528,7 +528,7 @@ contains
   !!
   !(\doc)codesnippet
   Free_Unit = -1_I4P                                      ! initializing free logic unit
-  n1=1_I4P                                                ! initializing counter
+  n1 = 1_I4P                                                ! initializing counter
   do
     if ((n1 /= 5_I4P) .and. (n1 /= 6_I4P) .and. (n1 /= 9_I4P)) then
       inquire (unit=n1,opened=lopen,iostat=ios)           ! verify logic units
@@ -539,7 +539,7 @@ contains
         endif
       endif
     endif
-    n1=n1+1_I4P                                           ! updating counter
+    n1 = n1+1_I4P                                           ! updating counter
   enddo
   return
   !(doc/)codesnippet
@@ -569,7 +569,7 @@ contains
   !!
   !(\doc)codesnippet
   Upper_Case = string
-  do n1=1,len(string)
+  do n1 = 1,len(string)
     select case(ichar(string(n1:n1)))
     case(97:122)
       Upper_Case(n1:n1)=char(ichar(string(n1:n1))-32) ! Upper case conversion

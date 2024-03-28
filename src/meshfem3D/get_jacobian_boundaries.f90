@@ -485,27 +485,27 @@
   do j = 1,NGLLB
     do i = 1,NGLLA
 
-    xxi=ZERO
-    xeta=ZERO
-    yxi=ZERO
-    yeta=ZERO
-    zxi=ZERO
-    zeta=ZERO
+    xxi = ZERO
+    xeta = ZERO
+    yxi = ZERO
+    yeta = ZERO
+    zxi = ZERO
+    zeta = ZERO
 
     do ia = 1,NGNOD2D
-      xxi=xxi+dershape2D(1,ia,i,j)*xelm(ia)
-      xeta=xeta+dershape2D(2,ia,i,j)*xelm(ia)
-      yxi=yxi+dershape2D(1,ia,i,j)*yelm(ia)
-      yeta=yeta+dershape2D(2,ia,i,j)*yelm(ia)
-      zxi=zxi+dershape2D(1,ia,i,j)*zelm(ia)
-      zeta=zeta+dershape2D(2,ia,i,j)*zelm(ia)
+      xxi = xxi+dershape2D(1,ia,i,j)*xelm(ia)
+      xeta = xeta+dershape2D(2,ia,i,j)*xelm(ia)
+      yxi = yxi+dershape2D(1,ia,i,j)*yelm(ia)
+      yeta = yeta+dershape2D(2,ia,i,j)*yelm(ia)
+      zxi = zxi+dershape2D(1,ia,i,j)*zelm(ia)
+      zeta = zeta+dershape2D(2,ia,i,j)*zelm(ia)
     enddo
 
     !   calculate the unnormalized normal to the boundary
-    unx=yxi*zeta-yeta*zxi
-    uny=zxi*xeta-zeta*xxi
-    unz=xxi*yeta-xeta*yxi
-    jacobian=dsqrt(unx**2+uny**2+unz**2)
+    unx = yxi*zeta-yeta*zxi
+    uny = zxi*xeta-zeta*xxi
+    unz = xxi*yeta-xeta*yxi
+    jacobian = dsqrt(unx**2+uny**2+unz**2)
 
     if (jacobian <= ZERO) call exit_MPI(myrank,'2D Jacobian undefined')
 

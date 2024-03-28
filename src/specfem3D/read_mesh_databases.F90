@@ -131,7 +131,7 @@
 #endif
 
   ! frees arrays
-  deallocate(addressing)
+  if (allocated(addressing)) deallocate(addressing)
 
   ! user output
   call synchronize_all()
@@ -1130,111 +1130,113 @@
 !
 !-------------------------------------------------------------------------------------------------
 !
-
-  subroutine read_mesh_databases_addressing()
-
-  use constants
-
-  use specfem_par
-  use specfem_par_crustmantle
-  use specfem_par_innercore
-  use specfem_par_outercore
-
-  implicit none
-
-  ! local parameters
-  integer, dimension(0:NPROCTOT_VAL-1) :: ichunk_slice,iproc_xi_slice,iproc_eta_slice
-  integer :: ier,iproc,iproc_read,iproc_xi,iproc_eta
-
-  if (I_should_read_the_database) then
-    ! open file with global slice number addressing
-    if (myrank == 0) then
-      open(unit=IIN,file=trim(OUTPUT_FILES)//'/addressing.txt',status='old',action='read',iostat=ier)
-      if (ier /= 0 ) call exit_mpi(myrank,'Error opening addressing.txt')
-
-      do iproc = 0,NPROCTOT_VAL-1
-        read(IIN,*) iproc_read,ichunk,iproc_xi,iproc_eta
-
-        if (iproc_read /= iproc) call exit_MPI(myrank,'incorrect slice number read')
-
-        addressing(ichunk,iproc_xi,iproc_eta) = iproc
-        ichunk_slice(iproc) = ichunk
-        iproc_xi_slice(iproc) = iproc_xi
-        iproc_eta_slice(iproc) = iproc_eta
-      enddo
-      close(IIN)
-    endif
-
-    ! broadcast the information read on the main to the nodes
-    call bcast_all_i(addressing,NCHUNKS_VAL*NPROC_XI_VAL*NPROC_ETA_VAL)
-    call bcast_all_i(ichunk_slice,NPROCTOT_VAL)
-    call bcast_all_i(iproc_xi_slice,NPROCTOT_VAL)
-    call bcast_all_i(iproc_eta_slice,NPROCTOT_VAL)
-
-    ! output a topology map of slices - fix 20x by nproc
-    if (myrank == 0) then
-      if (NCHUNKS_VAL == 6 .and. NPROCTOT_VAL < 1000) then
-        write(IMAIN,*) 'Spatial distribution of the slices'
-        do iproc_xi = NPROC_XI_VAL-1, 0, -1
-          write(IMAIN,'(20x)',advance='no')
-          do iproc_eta = NPROC_ETA_VAL -1, 0, -1
-            ichunk = CHUNK_AB
-            write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
-          enddo
-          write(IMAIN,'(1x)',advance='yes')
-        enddo
-        write(IMAIN, *) ' '
-        do iproc_xi = NPROC_XI_VAL-1, 0, -1
-          write(IMAIN,'(1x)',advance='no')
-          do iproc_eta = NPROC_ETA_VAL -1, 0, -1
-            ichunk = CHUNK_BC
-            write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
-          enddo
-          write(IMAIN,'(3x)',advance='no')
-          do iproc_eta = NPROC_ETA_VAL -1, 0, -1
-            ichunk = CHUNK_AC
-            write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
-          enddo
-          write(IMAIN,'(3x)',advance='no')
-          do iproc_eta = NPROC_ETA_VAL -1, 0, -1
-            ichunk = CHUNK_BC_ANTIPODE
-            write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
-          enddo
-          write(IMAIN,'(1x)',advance='yes')
-        enddo
-        write(IMAIN, *) ' '
-        do iproc_xi = NPROC_XI_VAL-1, 0, -1
-          write(IMAIN,'(20x)',advance='no')
-          do iproc_eta = NPROC_ETA_VAL -1, 0, -1
-            ichunk = CHUNK_AB_ANTIPODE
-            write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
-          enddo
-          write(IMAIN,'(1x)',advance='yes')
-        enddo
-        write(IMAIN, *) ' '
-        do iproc_xi = NPROC_XI_VAL-1, 0, -1
-          write(IMAIN,'(20x)',advance='no')
-          do iproc_eta = NPROC_ETA_VAL -1, 0, -1
-            ichunk = CHUNK_AC_ANTIPODE
-            write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
-          enddo
-          write(IMAIN,'(1x)',advance='yes')
-        enddo
-        write(IMAIN, *) ' '
-      endif
-    endif
-
-    ! determine chunk number and local slice coordinates using addressing
-    ! (needed for Stacey conditions)
-    ichunk = ichunk_slice(myrank)
-  endif ! I_should_read_the_database
-
-  call bcast_all_i_for_database(ichunk, 1)
-  call bcast_all_i_for_database(addressing(1,0,0), size(addressing,kind=4))
-
-  end subroutine read_mesh_databases_addressing
-
-
+!
+! not used anymore... left here for reference
+!
+!  subroutine read_mesh_databases_addressing()
+!
+!  use constants
+!
+!  use specfem_par
+!  use specfem_par_crustmantle
+!  use specfem_par_innercore
+!  use specfem_par_outercore
+!
+!  implicit none
+!
+!  ! local parameters
+!  integer, dimension(0:NPROCTOT_VAL-1) :: ichunk_slice,iproc_xi_slice,iproc_eta_slice
+!  integer :: ier,iproc,iproc_read,iproc_xi,iproc_eta
+!
+!  if (I_should_read_the_database) then
+!    ! open file with global slice number addressing
+!    if (myrank == 0) then
+!      open(unit=IIN,file=trim(OUTPUT_FILES)//'/addressing.txt',status='old',action='read',iostat=ier)
+!      if (ier /= 0 ) call exit_mpi(myrank,'Error opening addressing.txt')
+!
+!      do iproc = 0,NPROCTOT_VAL-1
+!        read(IIN,*) iproc_read,ichunk,iproc_xi,iproc_eta
+!
+!        if (iproc_read /= iproc) call exit_MPI(myrank,'incorrect slice number read')
+!
+!        addressing(ichunk,iproc_xi,iproc_eta) = iproc
+!        ichunk_slice(iproc) = ichunk
+!        iproc_xi_slice(iproc) = iproc_xi
+!        iproc_eta_slice(iproc) = iproc_eta
+!      enddo
+!      close(IIN)
+!    endif
+!
+!    ! broadcast the information read on the main to the nodes
+!    call bcast_all_i(addressing,NCHUNKS_VAL*NPROC_XI_VAL*NPROC_ETA_VAL)
+!    call bcast_all_i(ichunk_slice,NPROCTOT_VAL)
+!    call bcast_all_i(iproc_xi_slice,NPROCTOT_VAL)
+!    call bcast_all_i(iproc_eta_slice,NPROCTOT_VAL)
+!
+!    ! output a topology map of slices - fix 20x by nproc
+!    if (myrank == 0) then
+!      if (NCHUNKS_VAL == 6 .and. NPROCTOT_VAL < 1000) then
+!        write(IMAIN,*) 'Spatial distribution of the slices'
+!        do iproc_xi = NPROC_XI_VAL-1, 0, -1
+!          write(IMAIN,'(20x)',advance='no')
+!          do iproc_eta = NPROC_ETA_VAL -1, 0, -1
+!            ichunk = CHUNK_AB
+!            write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
+!          enddo
+!          write(IMAIN,'(1x)',advance='yes')
+!        enddo
+!        write(IMAIN, *) ' '
+!        do iproc_xi = NPROC_XI_VAL-1, 0, -1
+!          write(IMAIN,'(1x)',advance='no')
+!          do iproc_eta = NPROC_ETA_VAL -1, 0, -1
+!            ichunk = CHUNK_BC
+!            write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
+!          enddo
+!          write(IMAIN,'(3x)',advance='no')
+!          do iproc_eta = NPROC_ETA_VAL -1, 0, -1
+!            ichunk = CHUNK_AC
+!            write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
+!          enddo
+!          write(IMAIN,'(3x)',advance='no')
+!          do iproc_eta = NPROC_ETA_VAL -1, 0, -1
+!            ichunk = CHUNK_BC_ANTIPODE
+!            write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
+!          enddo
+!          write(IMAIN,'(1x)',advance='yes')
+!        enddo
+!        write(IMAIN, *) ' '
+!        do iproc_xi = NPROC_XI_VAL-1, 0, -1
+!          write(IMAIN,'(20x)',advance='no')
+!          do iproc_eta = NPROC_ETA_VAL -1, 0, -1
+!            ichunk = CHUNK_AB_ANTIPODE
+!            write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
+!          enddo
+!          write(IMAIN,'(1x)',advance='yes')
+!        enddo
+!        write(IMAIN, *) ' '
+!        do iproc_xi = NPROC_XI_VAL-1, 0, -1
+!          write(IMAIN,'(20x)',advance='no')
+!          do iproc_eta = NPROC_ETA_VAL -1, 0, -1
+!            ichunk = CHUNK_AC_ANTIPODE
+!            write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
+!          enddo
+!          write(IMAIN,'(1x)',advance='yes')
+!        enddo
+!        write(IMAIN, *) ' '
+!      endif
+!    endif
+!
+!    ! determine chunk number and local slice coordinates using addressing
+!    ! (needed for Stacey conditions)
+!    ichunk = ichunk_slice(myrank)
+!  endif ! I_should_read_the_database
+!
+!  call bcast_all_i_for_database(ichunk, 1)
+!  call bcast_all_i_for_database(addressing(1,0,0), size(addressing,kind=4))
+!
+!  end subroutine read_mesh_databases_addressing
+!
+!
 !
 !-------------------------------------------------------------------------------------------------
 !

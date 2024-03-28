@@ -79,7 +79,9 @@
   logical :: do_output
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: val_ispec_pmax,val_ispec_dt
   character(len=MAX_STRING_LEN) :: filename
-  character(len=32),parameter :: region(4) = (/character(len=32) :: 'crust/mantle', 'outer core', 'inner core', 'central cube'/)
+  character(len=32),parameter :: region(MAX_NUM_REGIONS) = &
+    (/character(len=32) :: 'crust/mantle', 'outer core', 'inner core', &
+                           'transition-to-infinite', 'infinite' /)
 
   !debug timing
   !double precision, external :: wtime
@@ -93,11 +95,32 @@
   ! safety check
   if (NGLLX < 1 .or. NGLLX > 15) stop 'Invalid NGLLX value in routine check_mesh_resolution'
 
+  ! check if we want to output files
+  if (SAVE_MESH_FILES) then
+    ! by default, lets the SAVE_MESH_FILES flag determine about the file output
+    do_output = .true.
+    ! ADIOS case
+    if (ADIOS_ENABLED) then
+      if (DEBUG_OUTPUT_FOR_ADIOS) then
+        ! we will output vtk/vtu files nevertheless
+        do_output = .true.
+      else
+        ! omit the file output
+        do_output = .false.
+      endif
+    endif
+  else
+    ! no output requested
+    do_output = .false.
+  endif
+
   ! temporary arrays for file output
-  allocate(val_ispec_pmax(nspec),val_ispec_dt(nspec),stat=ier)
-  if (ier /= 0) stop 'Error allocating val_ispec_pmax arrays'
-  val_ispec_pmax(:) = 0._CUSTOM_REAL
-  val_ispec_dt(:) = 0._CUSTOM_REAL
+  if (do_output) then
+    allocate(val_ispec_pmax(nspec),val_ispec_dt(nspec),stat=ier)
+    if (ier /= 0) stop 'Error allocating val_ispec_pmax arrays'
+    val_ispec_pmax(:) = 0._CUSTOM_REAL
+    val_ispec_dt(:) = 0._CUSTOM_REAL
+  endif
 
   ! initializes global min/max values only when first called
   if (iregion_code == 1) then
@@ -229,8 +252,10 @@
     cmax_reg = max(cmax_reg,cmax)
 
     ! stores for file output
-    val_ispec_pmax(ispec) = pmax
-    val_ispec_dt(ispec) = dt_max
+    if (do_output) then
+      val_ispec_pmax(ispec) = pmax
+      val_ispec_dt(ispec) = dt_max
+    endif
 
   enddo ! ispec
 !$OMP ENDDO
@@ -284,13 +309,15 @@
     write(IMAIN,*) '----------------------------------'
     write(IMAIN,*) '  Region is ',trim(region(iregion_code))
     write(IMAIN,*)
-    if (iregion_code == IREGION_OUTER_CORE) then
-      write(IMAIN,*) '  Min Vp = ',vsmin_reg,' (km/s)'
-    else
-      write(IMAIN,*) '  Min Vs = ',vsmin_reg,' (km/s)'
+    if (iregion_code /= IREGION_TRINFINITE .and. iregion_code /= IREGION_INFINITE) then
+      if (iregion_code == IREGION_OUTER_CORE) then
+        write(IMAIN,*) '  Min Vp = ',vsmin_reg,' (km/s)'
+      else
+        write(IMAIN,*) '  Min Vs = ',vsmin_reg,' (km/s)'
+      endif
+      write(IMAIN,*) '  Max Vp = ',vpmax_reg,' (km/s)'
+      write(IMAIN,*)
     endif
-    write(IMAIN,*) '  Max Vp = ',vpmax_reg,' (km/s)'
-    write(IMAIN,*)
     write(IMAIN,*) '  Max element edge size = ',elemsize_max_reg,' (km)'
     write(IMAIN,*) '  Min element edge size = ',elemsize_min_reg,' (km)'
     write(IMAIN,*) '  Max/min ratio = ',elemsize_max_reg/elemsize_min_reg
@@ -298,12 +325,14 @@
     write(IMAIN,*) '  Max Jacobian eigenvalue ratio = ',eig_ratio_max_reg
     write(IMAIN,*) '  Min Jacobian eigenvalue ratio = ',eig_ratio_min_reg
     write(IMAIN,*)
-    write(IMAIN,*) '  Minimum period resolved = ',pmax_reg,' (s)'
-    write(IMAIN,*) '  Minimum period resolved (empirical) = ',pmax_empirical,' (s)'
-    write(IMAIN,*) '  Maximum suggested time step = ',dt_max_reg,' (s)'
-    write(IMAIN,*)
-    write(IMAIN,*) '  for DT : ',sngl(DT),' (s)'
-    write(IMAIN,*) '  Max stability for wave velocities = ',cmax_reg
+    if (iregion_code /= IREGION_TRINFINITE .and. iregion_code /= IREGION_INFINITE) then
+      write(IMAIN,*) '  Minimum period resolved = ',pmax_reg,' (s)'
+      write(IMAIN,*) '  Minimum period resolved (empirical) = ',pmax_empirical,' (s)'
+      write(IMAIN,*) '  Maximum suggested time step = ',dt_max_reg,' (s)'
+      write(IMAIN,*)
+      write(IMAIN,*) '  for DT : ',sngl(DT),' (s)'
+      write(IMAIN,*) '  Max stability for wave velocities = ',cmax_reg
+    endif
     write(IMAIN,*) '----------------------------------'
     write(IMAIN,*)
     call flush_IMAIN()
@@ -314,25 +343,6 @@
   !  ! debug
   !  print *,'*** Maximum suggested time step = ',dt_max_glob
   !endif
-
-  ! check if we want to output these files
-  if (SAVE_MESH_FILES) then
-    ! by default, lets the SAVE_MESH_FILES flag determine about the file output
-    do_output = .true.
-    ! ADIOS case
-    if (ADIOS_ENABLED) then
-      if (DEBUG_OUTPUT_FOR_ADIOS) then
-        ! we will output vtk/vtu files nevertheless
-        do_output = .true.
-      else
-        ! omit the file output
-        do_output = .false.
-      endif
-    endif
-  else
-    ! no output requested
-    do_output = .false.
-  endif
 
   ! debug: saves element flags
   if (do_output) then
@@ -369,10 +379,10 @@
                                   xstore_glob,ystore_glob,zstore_glob, &
                                   ibool,val_ispec_dt,filename)
     endif
-  endif
 
-  ! free memory
-  deallocate(val_ispec_pmax,val_ispec_dt)
+    ! free memory
+    deallocate(val_ispec_pmax,val_ispec_dt)
+  endif
 
   end subroutine check_mesh_resolution
 
@@ -387,7 +397,8 @@
   subroutine get_vpvs_minmax(vpmax,vsmin,ispec,nspec,iregion_code,kappavstore,kappahstore,muvstore,muhstore,rhostore)
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ, &
-                       PI,GRAV,HUGEVAL,TINYVAL,FOUR_THIRDS
+                       PI,GRAV,HUGEVAL,TINYVAL,FOUR_THIRDS, &
+                       IREGION_TRINFINITE,IREGION_INFINITE
   use shared_parameters, only: RHOAV,R_PLANET
 
   !for fully anisotropic models
@@ -407,9 +418,19 @@
 
   ! local parameters
   real(kind=CUSTOM_REAL) :: vpv,vph,vsv,vsh
-  integer :: i,j,k,idummy
+  integer :: i,j,k
   ! scaling factors to re-dimensionalize units
   real(kind=CUSTOM_REAL) :: scaleval
+
+  ! checks if anything to do for this region
+  if (iregion_code == IREGION_TRINFINITE .or. &
+      iregion_code == IREGION_INFINITE) then
+    ! no material parameters set, return artificial values
+    vpmax = 1.0_CUSTOM_REAL
+    vsmin = 1.0_CUSTOM_REAL
+    ! all done
+    return
+  endif
 
   vpmax = - HUGEVAL
   vsmin = HUGEVAL
@@ -518,13 +539,11 @@
       enddo
     enddo
   enddo
+
   ! maximum Vp (in km/s)
   scaleval = real(sqrt(PI*GRAV*RHOAV)*(R_PLANET/1000.0d0),kind=CUSTOM_REAL)
   vpmax = sqrt(vpmax) * scaleval
   vsmin = sqrt(vsmin) * scaleval
-
-  ! to avoid compiler warning
-  idummy = iregion_code
 
   end subroutine get_vpvs_minmax
 

@@ -206,7 +206,7 @@
 
   ! compute average values for North and South pole
   do l = 1,NLAYERS_CRUSTMAP
-    do i=1,360*CRUSTMAP_RESOLUTION
+    do i = 1,360*CRUSTMAP_RESOLUTION
       thicknessnp(l) =  thicknessnp(l)+thickness(1,i,l)
       thicknesssp(l) = thicknesssp(l)+thickness(180*CRUSTMAP_RESOLUTION,i,l)
       densitynp(l) = densitynp(l)+density(1,i,l)
@@ -291,7 +291,7 @@
     call exit_MPI(0, 'Error model crustmap')
   endif
 
-  do ila=1,180*CRUSTMAP_RESOLUTION
+  do ila = 1,180*CRUSTMAP_RESOLUTION
     read(IIN,*,iostat=ier) (var(ila,iln),iln=1,360*CRUSTMAP_RESOLUTION)
     if (ier /= 0) then
       print *,'Error: reading crustmap file entry failed: ',trim(str_crust),' res:',CRUSTMAP_RESOLUTION,'entry:',ila,iln
@@ -583,9 +583,9 @@
 
     ! interpolates location and crust values
     if (iupcolat == 0) then
-       weightup=weightup*2
+       weightup = weightup*2
     else if (iupcolat == 180*CRUSTMAP_RESOLUTION) then
-       weightup=2*weightup-1
+       weightup = 2*weightup-1
     endif
 
     if (ileftlng == 360*CRUSTMAP_RESOLUTION) then
@@ -594,8 +594,8 @@
       irightlng = ileftlng+1
     endif
 
-    weightul=weightup*weightleft
-    weightur=weightup*(1.0-weightleft)
+    weightul = weightup*weightleft
+    weightur = weightup*(1.0-weightleft)
     weightll=(1.0-weightup)*weightleft
     weightlr=(1.0-weightup)*(1.0-weightleft)
 
@@ -684,9 +684,9 @@
 
   ! map longitudes to [0,360]
   if (lng < 0) then
-    xlng=lng+360.0
+    xlng = lng+360.0
   else
-    xlng=lng
+    xlng = lng
   endif
 
   ! latitude index & weight

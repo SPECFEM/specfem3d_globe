@@ -247,6 +247,9 @@
     enddo
   enddo
 
+  ! checks if element arrays available
+  if (.not. allocated(nimin)) call exit_MPI(myrank,'Error Stacey element arrays nimin,.. not allocated')
+
   ! initializes bottom boundary flag
   add_bottom_boundary = .false.
 

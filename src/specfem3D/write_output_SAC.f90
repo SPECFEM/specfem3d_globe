@@ -297,7 +297,7 @@
   endif
 
 
-  NVHDR=6 ! SAC header version number. Current is 6
+  NVHDR = 6 ! SAC header version number. Current is 6
 
   ! CSS3.0 variables:
   NORID = int(undef) !origin ID
@@ -307,7 +307,7 @@
   ! NUMBER of POINTS:
   NPTS = ceiling(real(it_end-seismo_offset) / NTSTEP_BETWEEN_OUTPUT_SAMPLE) ! [REQUIRED]
   ! event type
-  IFTYPE = 1 ! 1=ITIME, i.e. seismogram  [REQUIRED] # numbering system is
+  IFTYPE = 1 ! 1 = ITIME, i.e. seismogram  [REQUIRED] # numbering system is
   IDEP   = 6 ! 6: displ/nm                          # quite strange, best
 
   IZTYPE = 11 !=origint reference time equivalent ! # by chnhdr and write
@@ -316,7 +316,7 @@
   ISYNTH = int(undef) ! 1 real data, 2...n synth. flag
   ! permission flags:
   LEVEN  = 1 ! evenly spaced data [REQUIRED]
-  LPSPOL = 1 ! ? pos. polarity of components (has to be TRUE for LCALDA=1)
+  LPSPOL = 1 ! ? pos. polarity of components (has to be TRUE for LCALDA = 1)
   LOVROK = 1 ! 1: OK to overwrite file on disk
   LCALDA = 1 ! 1: calculate DIST, AZ, BAZ, and GCARC, 0: do nothing
   ! ------------------end format 5I10---------

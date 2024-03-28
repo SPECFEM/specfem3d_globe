@@ -76,13 +76,13 @@ subroutine compute_kernel_integral_iso()
   if (ier /= 0) stop 'Error allocating jacobian array'
 
   ! GLL points
-  wgll_cube = 0.0
+  wgll_cube = 0.0_CUSTOM_REAL
   call zwgljd(xigll,wxgll,NGLLX,GAUSSALPHA,GAUSSBETA)
   call zwgljd(yigll,wygll,NGLLY,GAUSSALPHA,GAUSSBETA)
   call zwgljd(zigll,wzgll,NGLLZ,GAUSSALPHA,GAUSSBETA)
-  do k=1,NGLLZ
-    do j=1,NGLLY
-      do i=1,NGLLX
+  do k = 1,NGLLZ
+    do j = 1,NGLLY
+      do i = 1,NGLLX
         wgll_cube(i,j,k) = wxgll(i)*wygll(j)*wzgll(k)
       enddo
     enddo
@@ -278,13 +278,13 @@ subroutine compute_kernel_integral_tiso()
   if (ier /= 0) stop 'Error allocating jacobian array'
 
   ! GLL points
-  wgll_cube = 0.0
+  wgll_cube = 0.0_CUSTOM_REAL
   call zwgljd(xigll,wxgll,NGLLX,GAUSSALPHA,GAUSSBETA)
   call zwgljd(yigll,wygll,NGLLY,GAUSSALPHA,GAUSSBETA)
   call zwgljd(zigll,wzgll,NGLLZ,GAUSSALPHA,GAUSSBETA)
-  do k=1,NGLLZ
-    do j=1,NGLLY
-      do i=1,NGLLX
+  do k = 1,NGLLZ
+    do j = 1,NGLLY
+      do i = 1,NGLLX
         wgll_cube(i,j,k) = wxgll(i)*wygll(j)*wzgll(k)
       enddo
     enddo
@@ -324,7 +324,7 @@ subroutine compute_kernel_integral_tiso()
           endif
 
           ! volume associated with GLL point
-          volumel = jacobian(i,j,k,ispec)*wgll_cube(i,j,k)
+          volumel = jacobian(i,j,k,ispec) * wgll_cube(i,j,k)
           volume_glob = volume_glob + volumel
 
           ! kernel integration: for each element
@@ -489,7 +489,7 @@ subroutine compute_kernel_integral_tiso_iso()
   double precision, dimension(NGLLY) :: yigll, wygll
   double precision, dimension(NGLLZ) :: zigll, wzgll
   ! array with all the weights in the cube
-  double precision, dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
 
   integer :: iglob
   integer :: i,j,k,ispec,ier
@@ -508,13 +508,13 @@ subroutine compute_kernel_integral_tiso_iso()
   if (ier /= 0) stop 'Error allocating jacobian array'
 
   ! GLL points
-  wgll_cube = 0.0d0
+  wgll_cube = 0.0_CUSTOM_REAL
   call zwgljd(xigll,wxgll,NGLLX,GAUSSALPHA,GAUSSBETA)
   call zwgljd(yigll,wygll,NGLLY,GAUSSALPHA,GAUSSBETA)
   call zwgljd(zigll,wzgll,NGLLZ,GAUSSALPHA,GAUSSBETA)
-  do k=1,NGLLZ
-    do j=1,NGLLY
-      do i=1,NGLLX
+  do k = 1,NGLLZ
+    do j = 1,NGLLY
+      do i = 1,NGLLX
         wgll_cube(i,j,k) = wxgll(i)*wygll(j)*wzgll(k)
       enddo
     enddo
@@ -553,7 +553,7 @@ subroutine compute_kernel_integral_tiso_iso()
           endif
 
           ! volume associated with GLL point
-          volumel = jacobian(i,j,k,ispec)*wgll_cube(i,j,k)
+          volumel = jacobian(i,j,k,ispec) * wgll_cube(i,j,k)
           volume_glob = volume_glob + volumel
 
           ! kernel integration: for each element

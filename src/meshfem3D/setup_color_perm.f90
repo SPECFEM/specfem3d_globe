@@ -55,7 +55,7 @@
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*) '  mesh coloring: ',USE_MESH_COLORING_GPU
+    write(IMAIN,*) '     mesh coloring: ',USE_MESH_COLORING_GPU
     call flush_IMAIN()
   endif
 
@@ -70,7 +70,7 @@
     if (USE_MESH_COLORING_GPU) then
 
       ! user output
-      if (myrank == 0) write(IMAIN,*) '  coloring crust mantle... '
+      if (myrank == 0) write(IMAIN,*) '     coloring crust mantle... '
 
       ! crust/mantle region
       nspec = NSPEC_CRUST_MANTLE
@@ -97,7 +97,9 @@
       call synchronize_all()
       if (myrank == 0) then
         write(IMAIN,*) '     mesh permutation:'
+        call flush_IMAIN()
       endif
+
       call setup_permutation(nspec,nglob,ibool, &
                              idomain,perm, &
                              num_colors_outer_crust_mantle,num_colors_inner_crust_mantle, &
@@ -122,7 +124,7 @@
     if (USE_MESH_COLORING_GPU) then
 
       ! user output
-      if (myrank == 0) write(IMAIN,*) '  coloring outer core... '
+      if (myrank == 0) write(IMAIN,*) '     coloring outer core... '
 
       ! outer core region
       nspec = NSPEC_OUTER_CORE
@@ -149,7 +151,9 @@
       call synchronize_all()
       if (myrank == 0) then
         write(IMAIN,*) '     mesh permutation:'
+        call flush_IMAIN()
       endif
+
       call setup_permutation(nspec,nglob,ibool, &
                              idomain,perm, &
                              num_colors_outer_outer_core,num_colors_inner_outer_core, &
@@ -174,7 +178,7 @@
     if (USE_MESH_COLORING_GPU) then
 
       ! user output
-      if (myrank == 0) write(IMAIN,*) '  coloring inner core... '
+      if (myrank == 0) write(IMAIN,*) '     coloring inner core... '
 
       ! inner core region
       nspec = NSPEC_INNER_CORE
@@ -204,7 +208,9 @@
       call synchronize_all()
       if (myrank == 0) then
         write(IMAIN,*) '     mesh permutation:'
+        call flush_IMAIN()
       endif
+
       call setup_permutation(nspec,nglob,ibool, &
                              idomain,perm, &
                              num_colors_outer_inner_core,num_colors_inner_inner_core, &
@@ -229,7 +235,7 @@
     if (USE_MESH_COLORING_GPU) then
 
       ! user output
-      if (myrank == 0) write(IMAIN,*) '  coloring transition infinite region... '
+      if (myrank == 0) write(IMAIN,*) '     coloring transition infinite region... '
 
       ! crust/mantle region
       nspec = NSPEC_TRINFINITE
@@ -256,7 +262,9 @@
       call synchronize_all()
       if (myrank == 0) then
         write(IMAIN,*) '     mesh permutation:'
+        call flush_IMAIN()
       endif
+
       call setup_permutation(nspec,nglob,ibool, &
                              idomain,perm, &
                              num_colors_outer_trinfinite,num_colors_inner_trinfinite, &
@@ -281,7 +289,7 @@
     if (USE_MESH_COLORING_GPU) then
 
       ! user output
-      if (myrank == 0) write(IMAIN,*) '  coloring infinite region... '
+      if (myrank == 0) write(IMAIN,*) '     coloring infinite region... '
 
       ! crust/mantle region
       nspec = NSPEC_INFINITE
@@ -308,7 +316,9 @@
       call synchronize_all()
       if (myrank == 0) then
         write(IMAIN,*) '     mesh permutation:'
+        call flush_IMAIN()
       endif
+
       call setup_permutation(nspec,nglob,ibool, &
                              idomain,perm, &
                              num_colors_outer_infinite,num_colors_inner_infinite, &

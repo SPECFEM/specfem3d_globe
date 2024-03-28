@@ -231,7 +231,7 @@ end module cem_par
 
   implicit none
 
-  integer, parameter :: NDIMS_WRITE=2
+  integer, parameter :: NDIMS_WRITE = 2
   integer, dimension (NDIMS_WRITE) :: start, count, ids
 
   integer :: ncid, paramDimID, procDimID, varidX, varidY, varidZ
@@ -303,10 +303,10 @@ end module cem_par
   integer, intent (in) :: iregion_code
   integer              :: i, j, k, iglob, ispec, region
 
-  double precision, parameter :: R_020_KM=6351.0d0, R_052_KM=6319.0d0
-  double precision, parameter :: R_100_KM=6271.0d0, R_400_KM=5971.0d0
-  double precision, parameter :: R_670_KM=5701.0d0, R_CMB_KM=3480.0d0
-  double precision, parameter :: R_ICB_KM=1221.0d0, R_THO_KM=5371.0d0
+  double precision, parameter :: R_020_KM = 6351.0d0, R_052_KM = 6319.0d0
+  double precision, parameter :: R_100_KM = 6271.0d0, R_400_KM = 5971.0d0
+  double precision, parameter :: R_670_KM = 5701.0d0, R_CMB_KM = 3480.0d0
+  double precision, parameter :: R_ICB_KM = 1221.0d0, R_THO_KM = 5371.0d0
   double precision            :: x, y, z, rad
 
   allocate(xyzOut(nglob,NDIMS))

@@ -205,7 +205,7 @@
     endif
     if (ATTENUATION) then
       write(IMAIN,*) '  incorporating attenuation using ',N_SLS,' standard linear solids'
-      if (ATTENUATION_3D) write(IMAIN,*)'  using 3D attenuation model'
+      if (ATTENUATION_3D) write(IMAIN,*) '  using 3D attenuation model'
     else
       write(IMAIN,*) '  no attenuation'
     endif
@@ -583,6 +583,21 @@
 
   if (SAVE_SEISMOGRAMS_STRAIN .and. WRITE_SEISMOGRAMS_BY_MAIN) &
     call exit_MPI(myrank,'For SAVE_SEISMOGRAMS_STRAIN, please set WRITE_SEISMOGRAMS_BY_MAIN to .false.')
+
+  ! full gravity support
+  if (FULL_GRAVITY) then
+    ! checks adjoint arrays
+    if ((SIMULATION_TYPE == 1 .and. SAVE_FORWARD) .or. SIMULATION_TYPE == 3) then
+      ! checks adjoint array dimensions
+      if (NSPEC_TRINFINITE_ADJOINT /= NSPEC_TRINFINITE &
+        .or. NSPEC_INFINITE_ADJOINT /= NSPEC_INFINITE &
+        .or. NGLOB_TRINFINITE_ADJOINT /= NGLOB_TRINFINITE &
+        .or. NGLOB_INFINITE_ADJOINT /= NGLOB_INFINITE) &
+        call exit_MPI(myrank, 'improper dimensions of adjoint arrays for infinite regions, please recompile solver')
+    endif
+    ! safety stop
+    stop 'FULL_GRAVITY is not fully implemented yet, please set it to .false. for now...'
+  endif
 
   end subroutine initialize_simulation_check
 

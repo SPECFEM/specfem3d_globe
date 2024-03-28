@@ -41,7 +41,7 @@ def convert_etopo_ascii2bin(filename_in,filename_out):
         text = inf.readlines(1024*1024)  # 1M at a time
         if not len(text):
             break
-        ioin = BytesIO(''.join(text))
+        ioin = BytesIO(b"".join(text))
         data = np.genfromtxt(ioin)
         if not len(data):
             break

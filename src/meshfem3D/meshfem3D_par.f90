@@ -173,10 +173,6 @@
   double precision, dimension(NDIM,NDIM) :: rotation_matrix
   double precision :: ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
 
-  ! for some statistics for the mesh
-  integer :: numelem_crust_mantle,numelem_outer_core,numelem_inner_core
-  integer :: numelem_total
-
   ! timer MPI
   double precision :: time_start
 
@@ -199,6 +195,9 @@
              NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
              NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
              NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION
+
+  integer :: NSPEC_TRINFINITE_ADJOINT,NSPEC_INFINITE_ADJOINT, &
+             NGLOB_TRINFINITE_ADJOINT,NGLOB_INFINITE_ADJOINT
 
   integer :: NT_DUMP_ATTENUATION_optimal
 
@@ -448,7 +447,7 @@
   ! we use the same buffers to assemble scalars and vectors because vectors are
   ! always three times bigger and therefore scalars can use the first part
   ! of the vector buffer in memory even if it has an additional index here
-  integer :: npoin2D_max_all_CM_IC
+  integer :: npoin2D_max_all_buffer
 
   ! buffers for send and receive between corners of the chunks
   real(kind=CUSTOM_REAL), dimension(:),allocatable :: &
@@ -647,7 +646,7 @@
 
   module MPI_trinfinite_par
 
-  use constants,only: CUSTOM_REAL,NUMFACES_SHARED,NB_SQUARE_EDGES_ONEDIR
+  use constants, only: CUSTOM_REAL,NUMFACES_SHARED,NB_SQUARE_EDGES_ONEDIR
 
   implicit none
 
@@ -703,7 +702,7 @@
 
   module MPI_infinite_par
 
-  use constants,only: CUSTOM_REAL,NUMFACES_SHARED,NB_SQUARE_EDGES_ONEDIR
+  use constants, only: CUSTOM_REAL,NUMFACES_SHARED,NB_SQUARE_EDGES_ONEDIR
 
   implicit none
 

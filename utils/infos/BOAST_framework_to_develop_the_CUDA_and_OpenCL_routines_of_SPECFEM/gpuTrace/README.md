@@ -44,7 +44,7 @@ Tracing the execution
 =====================
 
 * `gpuTrace` works with a preloaded library, so you need to set the environment variable `LD_PRELOAD` to `ldChecker.so`.
-  
+
 * `make get_env_preload` prints the definition of the variable (LD_PRELOAD=..).
   * with GDB, use the command `set environment LD_PRELOAD=...` before running the application (and use `start` to let GDB load the symbols of the library.)
 
@@ -99,7 +99,7 @@ GPU Tracing
 GPU Testing
 -----------
 
-Step 1: gather kernel parametere values 
+Step 1: gather kernel parametere values
 
 * PRINT_KERNEL_BEFORE_EXEC 1
 * PRINT_KERNEL_AFTER_EXEC 1
@@ -113,7 +113,7 @@ then
 
 * set filters as you need
 * give a name to the dataset with environment variable "LD_KERNEL_SUBDIR_PREFIX"
-* run the application 
+* run the application
 
 finally
 

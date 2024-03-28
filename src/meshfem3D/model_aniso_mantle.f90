@@ -519,8 +519,8 @@
           if (nf <= 3 .or. nf >= 6) then
             bet2(ipa,idep,ilat,ilon) = AMM_V_beta(ipa,idep,ilat,ilon)*0.01*ppp + ppp
           else
-            if (nf == 4)bet2(ipa,idep,ilat,ilon) = AMM_V_beta(ipa,idep,ilat,ilon)*0.01 + 1.
-            if (nf == 5)bet2(ipa,idep,ilat,ilon) = - AMM_V_beta(ipa,idep,ilat,ilon)*0.01 + 1.
+            if (nf == 4) bet2(ipa,idep,ilat,ilon) = AMM_V_beta(ipa,idep,ilat,ilon)*0.01 + 1.
+            if (nf == 5) bet2(ipa,idep,ilat,ilon) = - AMM_V_beta(ipa,idep,ilat,ilon)*0.01 + 1.
           endif
         enddo
 

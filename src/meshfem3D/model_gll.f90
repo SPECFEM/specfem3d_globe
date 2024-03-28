@@ -385,7 +385,7 @@
 
   call synchronize_all()
   if (myrank == 0) then
-    write(IMAIN,*)'  reading done'
+    write(IMAIN,*) '  reading done'
     write(IMAIN,*)
     call flush_IMAIN()
   endif
@@ -427,7 +427,7 @@
   case (1)
     ! isotropic model
     if (rank == 0) then
-      write(IMAIN,*)'  reads isotropic model values: rho,vp,vs'
+      write(IMAIN,*) '  reads isotropic model values: rho,vp,vs'
       call flush_IMAIN()
     endif
 
@@ -454,7 +454,7 @@
   case (2)
     ! transverse isotropic model
     if (rank == 0) then
-      write(IMAIN,*)'  reads transversely isotropic model values: rho,vpv,vph,vsv,vsh,eta'
+      write(IMAIN,*) '  reads transversely isotropic model values: rho,vpv,vph,vsv,vsh,eta'
       call flush_IMAIN()
     endif
 
@@ -509,7 +509,7 @@
   case (3)
     ! azimuthal model
     if (rank == 0) then
-      write(IMAIN,*)'  reads azimuthal anisotropic model values: rho,vpv,vph,vsv,vsh,eta,Gc_prime,Gs_prime,mu0'
+      write(IMAIN,*) '  reads azimuthal anisotropic model values: rho,vpv,vph,vsv,vsh,eta,Gc_prime,Gs_prime,mu0'
       call flush_IMAIN()
     endif
 

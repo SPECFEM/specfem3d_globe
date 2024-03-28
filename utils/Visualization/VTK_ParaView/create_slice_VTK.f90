@@ -283,7 +283,7 @@
 
   ! writes out all points for each element, not just global ones
   write(IOUT_VTK, '(a,i12,a)') 'POINTS ', nspec*8, ' float'
-  do ispec=1,nspec
+  do ispec = 1,nspec
     i = ibool(1,1,1,ispec)
     write(IOUT_VTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
 
@@ -312,7 +312,7 @@
 
   ! note: indices for vtk start at 0
   write(IOUT_VTK,'(a,i12,i12)') "CELLS ",nspec,nspec*9
-  do ispec=1,nspec
+  do ispec = 1,nspec
     write(IOUT_VTK,'(9i12)') 8,(ispec-1)*8,(ispec-1)*8+1,(ispec-1)*8+2,(ispec-1)*8+3, &
           (ispec-1)*8+4,(ispec-1)*8+5,(ispec-1)*8+6,(ispec-1)*8+7
   enddo

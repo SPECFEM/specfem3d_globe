@@ -94,6 +94,7 @@
   case default
     call exit_mpi(myrank,'Error test MPI: iregion_code not recognized')
   end select
+  mask(:) = .false.
 
   ! test ibool entries
   ! (must be non-zero and unique)
@@ -139,11 +140,15 @@
   ! gets maximum interfaces from all processes
   call max_all_i(num_interfaces,max_num)
 
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  maximum interfaces:',max_num
+    call flush_IMAIN()
+  endif
+  call synchronize_all()
+
   ! main gathers info
   if (myrank == 0) then
-    ! user output
-    write(IMAIN,*) '  maximum interfaces:',max_num
-
     ! array for gathering info
     allocate(test_interfaces(max_num,0:NPROCTOT),stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating test_interfaces')
@@ -335,7 +340,7 @@
   ! checks within slice
   if (i /= num_unique) then
     print *,'Error test crust mantle : rank',myrank,'unique MPI points:',i,num_unique
-    call exit_mpi(myrank,'Error MPI assembly crust mantle')
+    call exit_mpi(myrank,'Error MPI assembly unique points crust mantle')
   endif
 
   ! total number of assembly points
@@ -346,7 +351,7 @@
     ! checks
     if (inum /= icount) then
       print *,'Error crust mantle : total MPI points:',myrank,'total: ',inum,icount
-      call exit_mpi(myrank,'Error MPI assembly crust mantle')
+      call exit_mpi(myrank,'Error MPI assembly total points crust mantle')
     endif
 
     ! user output
@@ -414,6 +419,7 @@
     write(IMAIN,*) '  total MPI interface points : ',inum
     write(IMAIN,*) '  unique MPI interface points: ',icount
     write(IMAIN,*) '  maximum valence            : ',max_valence
+    call flush_IMAIN()
   endif
 
   ! initialized for assembly
@@ -446,7 +452,7 @@
   ! checks within slice
   if (i /= num_unique) then
     print *,'Error test outer core : rank',myrank,'unique MPI points:',i,num_unique
-    call exit_mpi(myrank,'Error MPI assembly outer core')
+    call exit_mpi(myrank,'Error MPI assembly unique points outer core')
   endif
   call sum_all_i(i,inum)
 
@@ -455,7 +461,7 @@
     ! checks
     if (inum /= icount) then
       print *,'Error outer core : total MPI points:',myrank,'total: ',inum,icount
-      call exit_mpi(myrank,'Error MPI assembly outer_core')
+      call exit_mpi(myrank,'Error MPI assembly total points outer_core')
     endif
 
     ! user output
@@ -525,6 +531,7 @@
     write(IMAIN,*) '  total MPI interface points : ',inum
     write(IMAIN,*) '  unique MPI interface points: ',icount
     write(IMAIN,*) '  maximum valence            : ',max_valence
+    call flush_IMAIN()
   endif
 
   ! initializes for assembly
@@ -559,7 +566,7 @@
   ! checks within slice
   if (i /= num_unique) then
     print *,'Error test inner core : rank',myrank,'unique MPI points:',i,num_unique
-    call exit_mpi(myrank,'Error MPI assembly inner core')
+    call exit_mpi(myrank,'Error MPI assembly unique points inner core')
   endif
   call sum_all_i(i,inum)
 
@@ -567,7 +574,7 @@
     ! checks
     if (inum /= icount) then
       print *,'Error inner core : total MPI points:',myrank,'total: ',inum,icount
-      call exit_mpi(myrank,'Error MPI assembly inner core')
+      call exit_mpi(myrank,'Error MPI assembly total points inner core')
     endif
 
     ! user output
@@ -603,7 +610,7 @@
   integer :: max_valence,num_unique
   integer,dimension(:),allocatable :: valence
 
-  ! outer core
+  ! transition infinite region
   allocate(test_flag(NGLOB_TRINFINITE),stat=ier)
   if (ier /= 0 ) stop 'Error allocating array test_flag transition infinite region'
   allocate(valence(NGLOB_TRINFINITE),stat=ier)
@@ -620,6 +627,7 @@
       valence(iglob) = valence(iglob) + 1
     enddo
   enddo
+
   i = sum(nibool_interfaces_trinfinite)
   call sum_all_i(i,inum)
 
@@ -635,6 +643,7 @@
     write(IMAIN,*) '  total MPI interface points : ',inum
     write(IMAIN,*) '  unique MPI interface points: ',icount
     write(IMAIN,*) '  maximum valence            : ',max_valence
+    call flush_IMAIN()
   endif
 
   ! initialized for assembly
@@ -646,7 +655,6 @@
                            num_interfaces_trinfinite,max_nibool_interfaces_trinfinite, &
                            nibool_interfaces_trinfinite,ibool_interfaces_trinfinite, &
                            my_neighbors_trinfinite)
-
 
   ! removes initial flag
   test_flag(:) = test_flag(:) - 1.0_CUSTOM_REAL
@@ -666,8 +674,8 @@
 
   ! checks within slice
   if (i /= num_unique) then
-    print *,'Error test outer core : rank',myrank,'unique MPI points:',i,num_unique
-    call exit_mpi(myrank,'Error MPI assembly transition infinite region')
+    print *,'Error test transition infinite : rank',myrank,'unique MPI points:',i,num_unique
+    call exit_mpi(myrank,'Error MPI assembly unique points transition infinite region')
   endif
   call sum_all_i(i,inum)
 
@@ -675,8 +683,8 @@
   if (myrank == 0) then
     ! checks
     if (inum /= icount) then
-      print *,'Error outer core : total MPI points:',myrank,'total: ',inum,icount
-      call exit_mpi(myrank,'Error MPI assembly transition infinite region')
+      print *,'Error test transition infinite : total MPI points:',myrank,'total: ',inum,icount
+      call exit_mpi(myrank,'Error MPI assembly total points transition infinite region')
     endif
 
     ! user output
@@ -712,7 +720,7 @@
   integer :: max_valence,num_unique
   integer,dimension(:),allocatable :: valence
 
-  ! outer core
+  ! infinite region
   allocate(test_flag(NGLOB_INFINITE),stat=ier)
   if (ier /= 0 ) stop 'Error allocating array test_flag infinite region'
   allocate(valence(NGLOB_INFINITE),stat=ier)
@@ -744,6 +752,7 @@
     write(IMAIN,*) '  total MPI interface points : ',inum
     write(IMAIN,*) '  unique MPI interface points: ',icount
     write(IMAIN,*) '  maximum valence            : ',max_valence
+    call flush_IMAIN()
   endif
 
   ! initialized for assembly
@@ -775,8 +784,8 @@
 
   ! checks within slice
   if (i /= num_unique) then
-    print *,'Error test outer core : rank',myrank,'unique MPI points:',i,num_unique
-    call exit_mpi(myrank,'Error MPI assembly infinite region')
+    print *,'Error test infinite : rank',myrank,'unique MPI points:',i,num_unique
+    call exit_mpi(myrank,'Error MPI assembly unique points infinite region')
   endif
   call sum_all_i(i,inum)
 
@@ -784,8 +793,8 @@
   if (myrank == 0) then
     ! checks
     if (inum /= icount) then
-      print *,'Error outer core : total MPI points:',myrank,'total: ',inum,icount
-      call exit_mpi(myrank,'Error MPI assembly infinite region')
+      print *,'Error test infinite : total MPI points:',myrank,'total: ',inum,icount
+      call exit_mpi(myrank,'Error MPI assembly total points infinite region')
     endif
 
     ! user output

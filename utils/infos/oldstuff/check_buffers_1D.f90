@@ -121,7 +121,7 @@
 ! ********************************************************
 
 ! loop for both corners for 1D buffers
-  do icorners=1,2
+  do icorners = 1,2
 
   print *
   print *,'Checking for xi in set of corners # ',icorners
@@ -135,11 +135,11 @@
   print *
 
 ! double loop on NPROC_XI and NPROC_ETA
-  do iproc_eta=0,NPROC_ETA-1
+  do iproc_eta = 0,NPROC_ETA-1
 
   print *,'checking row ',iproc_eta
 
-  do iproc_xi=0,NPROC_XI-2
+  do iproc_xi = 0,NPROC_XI-2
 
   print *,'checking slice ixi = ',iproc_xi,' in that row'
 
@@ -303,7 +303,7 @@
 ! ********************************************************
 
 ! added loop for both corners for 1D buffers
-  do icorners=1,2
+  do icorners = 1,2
 
   print *
   print *,'Checking for eta in set of corners # ',icorners
@@ -317,11 +317,11 @@
   print *
 
 ! double loop on NPROC_XI and NPROC_ETA
-  do iproc_xi=0,NPROC_XI-1
+  do iproc_xi = 0,NPROC_XI-1
 
   print *,'checking row ',iproc_xi
 
-  do iproc_eta=0,NPROC_ETA-2
+  do iproc_eta = 0,NPROC_ETA-2
 
   print *,'checking slice ieta = ',iproc_eta,' in that row'
 

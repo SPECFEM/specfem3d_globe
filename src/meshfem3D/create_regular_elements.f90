@@ -76,17 +76,17 @@
   integer,intent(in) :: ner_without_doubling
   logical,intent(in) :: INCLUDE_CENTRAL_CUBE
 
-! parameters needed to store the radii of the grid points in the spherically symmetric Earth
+  ! parameters needed to store the radii of the grid points in the spherically symmetric Earth
   double precision,intent(in) :: rmin,rmax
   double precision,intent(in) :: r_moho,r_400,r_670
 
-! MPI cut-planes parameters along xi and along eta
+  ! MPI cut-planes parameters along xi and along eta
   logical, dimension(2,nspec),intent(inout) :: iMPIcut_xi,iMPIcut_eta
 
   double precision,intent(in) :: ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
   integer,intent(in) :: iproc_xi,iproc_eta
 
-! rotation matrix from Euler angles
+  ! rotation matrix from Euler angles
   double precision, dimension(NDIM,NDIM),intent(in) :: rotation_matrix
 
   integer,intent(inout) :: idoubling(nspec)
@@ -94,7 +94,7 @@
 
   double precision, dimension(2,ner_mesh_layers(1)),intent(in) :: stretch_tab
 
-! Boundary Mesh
+  ! Boundary Mesh
   integer,intent(in) :: NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho
   integer,intent(inout) :: ibelm_moho_top(NSPEC2D_MOHO),ibelm_moho_bot(NSPEC2D_MOHO)
   integer,intent(inout) :: ibelm_400_top(NSPEC2D_400),ibelm_400_bot(NSPEC2D_400)
@@ -209,6 +209,8 @@
         call add_missing_nodes(offset_x,offset_y,offset_z)
 
         ! compute the actual position of all the grid points of that element
+        ! note: this will create the element positions xelm/yelm/zelm for a spherical mesh.
+        !       the mesh is layered according to r_top/r_bottom (or stretch_tab(1/2) for crust)
         if (ilayer == 1 .and. CASE_3D .and. .not. SUPPRESS_CRUSTAL_MESH) then
           ! crustal elements are stretched to be thinner in the upper crust than in lower crust in the 3D case
           ! max ratio between size of upper crust elements and
@@ -280,6 +282,8 @@
         endif
 
         ! compute several rheological and geometrical properties for this spectral element
+        ! note: this will stretch and move the element positions to accommodate Moho variations, topography and ellipticity.
+        !       it will also determine the rheological properties of the model at all the GLL positions.
         call compute_element_properties(ispec_loc,iregion_code,idoubling,ipass, &
                                         xstore,ystore,zstore,nspec, &
                                         xelm,yelm,zelm,shape3D,rmin,rmax, &

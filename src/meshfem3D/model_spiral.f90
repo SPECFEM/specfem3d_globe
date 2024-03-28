@@ -984,7 +984,7 @@
       endif
 
       NlatNlon = NlatNlon + bnd_nlat(l)*bnd_nlon(l)
-    enddo ! do l=1,Nbnd, with no interpolation
+    enddo ! do l = 1,Nbnd, with no interpolation
 
   else
     ! with interpolation
@@ -1062,7 +1062,7 @@
       endif
 
       NlatNlon = NlatNlon + bnd_nlat(l)*bnd_nlon(l)
-   enddo ! do l=1,Nbnd, with interpolation
+   enddo ! do l = 1,Nbnd, with interpolation
 
   endif ! if (.not. interpolation)
 
@@ -1869,8 +1869,8 @@
         endif !if (lat >= mtle_bnd_lat1(l) .and. lat <= mtle_bnd_lat2(l)....
 
         NlatNlonNdep = NlatNlonNdep + mtle_bnd_nlat(l)*mtle_bnd_nlon(l)*Ndep
-      enddo ! do l=1,Nbnd, with no interpolation
-    enddo ! do m=1,Nbndz, with no interpolation
+      enddo ! do l = 1,Nbnd, with no interpolation
+    enddo ! do m = 1,Nbndz, with no interpolation
 
   else
     ! with interpolation
@@ -1978,8 +1978,8 @@
 
         NlatNlonNdep = NlatNlonNdep + mtle_bnd_nlat(l)*mtle_bnd_nlon(l)*Ndep
 
-      enddo ! do l=1,Nbnd, with interpolation
-    enddo ! do m=1,Nbndz, with interpolation
+      enddo ! do l = 1,Nbnd, with interpolation
+    enddo ! do m = 1,Nbndz, with interpolation
 
   endif ! if (.not. interpolation)
 
@@ -1992,15 +1992,12 @@
   subroutine add_topography_mantle_spiral(xelm,yelm,zelm)
 
   use constants
-  use shared_parameters, only: R_PLANET,R_PLANET_KM
-
+  use shared_parameters, only: R_PLANET,R_PLANET_KM,ELLIPTICITY
   use meshfem_par, only: R220,R400,R670,R771
 
   implicit none
 
-  double precision :: xelm(NGNOD)
-  double precision :: yelm(NGNOD)
-  double precision :: zelm(NGNOD)
+  double precision, intent(inout) :: xelm(NGNOD),yelm(NGNOD),zelm(NGNOD)
 
   ! local parameters
   integer :: ia
@@ -2017,7 +2014,8 @@
     z = zelm(ia)
 
     ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
-    call xyz_2_rlatlon_dble(x,y,z,r,lat,lon)
+    ! note: at this point, the mesh is still spherical (no need to correct latitude for ellipticity)
+    call xyz_2_rlatlon_dble(x,y,z,r,lat,lon,ELLIPTICITY)
 
     ! The above subroutine produces longitudes with [0,360] convention.
     ! Need to convert to [-180,180] convention expected by subtopo_spiral below

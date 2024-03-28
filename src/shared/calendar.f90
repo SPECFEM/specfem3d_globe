@@ -490,7 +490,7 @@
 !
 ! Look for out-of-range option values.
   if ((ioptn == 0) .or. (abs(ioptn) >= 6)) then
-   write(*,*)'For calndr(), you specified ioptn = ', ioptn
+   write(*,*) 'For calndr(), you specified ioptn = ', ioptn
    write(*,*) 'Allowable values are 1 to 5 for the Gregorian calendar'
    write(*,*) 'and -1 to -5 for the Julian calendar.'
    stop

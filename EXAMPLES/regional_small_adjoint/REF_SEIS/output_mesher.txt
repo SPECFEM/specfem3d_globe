@@ -3,7 +3,7 @@
  *** Specfem3D MPI Mesher ***
  ****************************
 
- Version: 7.0.3
+ Version: 8.1.1
 
 
  Planet: Earth
@@ -46,9 +46,12 @@
 
  Reference radius of the globe used is    6371.0000000000000       km
 
- Central cube is at a radius of    932.00000000000000       km
+ Central cube is at a radius of    952.00000000000000       km
  creating global slice addressing
 
+ attenuation model:
+   1D reference model
+   model: AK135 attenuation
 
  additional mesh optimizations
 
@@ -81,7 +84,7 @@
    NER_TOP_CENTRAL_CUBE_ICB:           2
    SUPPRESS_CRUSTAL_MESH:    F
 
-   R_CENTRAL_CUBE =    932.000000      km
+   R_CENTRAL_CUBE =    952.000000      km
 
  Mesh resolution:
    DT =   0.17999999999999999
@@ -89,6 +92,7 @@
 
    MIN_ATTENUATION_PERIOD =    46.3312187
    MAX_ATTENUATION_PERIOD =    2605.39600
+
 
 
  *******************************************
@@ -105,30 +109,52 @@
 
    ...creating mesh elements
    creating layer            1 out of           11
-      9.1%    current clock (NOT elapsed) time is: 23h 15min 20sec
+     number of regular elements  =            0
+     number of doubling elements =          448
+      9.1%    current clock (NOT elapsed) time is: 16h 21min 34sec
    creating layer            2 out of           11
-     18.2%    current clock (NOT elapsed) time is: 23h 15min 20sec
+     number of regular elements  =          128
+     18.2%    current clock (NOT elapsed) time is: 16h 21min 34sec
    creating layer            3 out of           11
-     27.3%    current clock (NOT elapsed) time is: 23h 15min 20sec
+     number of regular elements  =           16
+     27.3%    current clock (NOT elapsed) time is: 16h 21min 34sec
    creating layer            4 out of           11
-     36.4%    current clock (NOT elapsed) time is: 23h 15min 20sec
+     number of regular elements  =           96
+     number of doubling elements =          128
+     36.4%    current clock (NOT elapsed) time is: 16h 21min 34sec
    creating layer            5 out of           11
-     45.5%    current clock (NOT elapsed) time is: 23h 15min 20sec
+     number of regular elements  =          448
+     45.5%    current clock (NOT elapsed) time is: 16h 21min 34sec
    creating layer            6 out of           11
-     54.5%    current clock (NOT elapsed) time is: 23h 15min 20sec
+     number of regular elements  =           64
+     54.5%    current clock (NOT elapsed) time is: 16h 21min 34sec
    creating layer            7 out of           11
-     63.6%    current clock (NOT elapsed) time is: 23h 15min 20sec
+     number of regular elements  =           64
+     63.6%    current clock (NOT elapsed) time is: 16h 21min 34sec
    creating layer            8 out of           11
-     72.7%    current clock (NOT elapsed) time is: 23h 15min 20sec
+     number of regular elements  =          128
+     72.7%    current clock (NOT elapsed) time is: 16h 21min 34sec
    creating layer            9 out of           11
-     81.8%    current clock (NOT elapsed) time is: 23h 15min 20sec
+     number of regular elements  =          128
+     81.8%    current clock (NOT elapsed) time is: 16h 21min 34sec
    creating layer           10 out of           11
-     90.9%    current clock (NOT elapsed) time is: 23h 15min 20sec
+     number of regular elements  =          256
+     90.9%    current clock (NOT elapsed) time is: 16h 21min 34sec
    creating layer           11 out of           11
-    100.0%    current clock (NOT elapsed) time is: 23h 15min 20sec
+     number of regular elements  =          256
+    100.0%    current clock (NOT elapsed) time is: 16h 21min 34sec
+   layers done
+
+   number of elements (per slice)        =         2160
+   total number of elements (all slices) =         8640
 
 
    ...creating global addressing
+     total number of points            :       270000
+     array memory required per process :    6.17980957     MB
+     getting global points             : npointot =       270000  nspec =         2160
+     creating indirect addressing
+     ibool ok
 
    ...creating MPI buffers
 
@@ -140,27 +166,44 @@
 
    ...creating mesh elements
    creating layer            1 out of           11
-      9.1%    current clock (NOT elapsed) time is: 23h 15min 20sec
+     number of regular elements  =            0
+     number of doubling elements =          448
+      9.1%    current clock (NOT elapsed) time is: 16h 21min 34sec
    creating layer            2 out of           11
-     18.2%    current clock (NOT elapsed) time is: 23h 15min 20sec
+     number of regular elements  =          128
+     18.2%    current clock (NOT elapsed) time is: 16h 21min 34sec
    creating layer            3 out of           11
-     27.3%    current clock (NOT elapsed) time is: 23h 15min 20sec
+     number of regular elements  =           16
+     27.3%    current clock (NOT elapsed) time is: 16h 21min 34sec
    creating layer            4 out of           11
-     36.4%    current clock (NOT elapsed) time is: 23h 15min 20sec
+     number of regular elements  =           96
+     number of doubling elements =          128
+     36.4%    current clock (NOT elapsed) time is: 16h 21min 34sec
    creating layer            5 out of           11
-     45.5%    current clock (NOT elapsed) time is: 23h 15min 20sec
+     number of regular elements  =          448
+     45.5%    current clock (NOT elapsed) time is: 16h 21min 34sec
    creating layer            6 out of           11
-     54.5%    current clock (NOT elapsed) time is: 23h 15min 20sec
+     number of regular elements  =           64
+     54.5%    current clock (NOT elapsed) time is: 16h 21min 34sec
    creating layer            7 out of           11
-     63.6%    current clock (NOT elapsed) time is: 23h 15min 20sec
+     number of regular elements  =           64
+     63.6%    current clock (NOT elapsed) time is: 16h 21min 34sec
    creating layer            8 out of           11
-     72.7%    current clock (NOT elapsed) time is: 23h 15min 20sec
+     number of regular elements  =          128
+     72.7%    current clock (NOT elapsed) time is: 16h 21min 34sec
    creating layer            9 out of           11
-     81.8%    current clock (NOT elapsed) time is: 23h 15min 20sec
+     number of regular elements  =          128
+     81.8%    current clock (NOT elapsed) time is: 16h 21min 34sec
    creating layer           10 out of           11
-     90.9%    current clock (NOT elapsed) time is: 23h 15min 20sec
+     number of regular elements  =          256
+     90.9%    current clock (NOT elapsed) time is: 16h 21min 34sec
    creating layer           11 out of           11
-    100.0%    current clock (NOT elapsed) time is: 23h 15min 20sec
+     number of regular elements  =          256
+    100.0%    current clock (NOT elapsed) time is: 16h 21min 34sec
+   layers done
+
+   number of elements (per slice)        =         2160
+   total number of elements (all slices) =         8640
 
 
    ...fills global mesh points
@@ -239,10 +282,12 @@
 
 
    ...element mesh coloring
-   mesh coloring:  F
+      mesh coloring:  F
+
+   ...creating absorbing boundary arrays
 
    ...creating mass matrix
-     updates mass matrix with Stacey boundary corrections
+      updates mass matrix with Stacey boundary corrections
 
    ...saving binary files
 
@@ -266,12 +311,24 @@
 
    ...creating mesh elements
    creating layer            1 out of            2
-     50.0%    current clock (NOT elapsed) time is: 23h 15min 21sec
+     number of regular elements  =           28
+     number of doubling elements =           32
+     50.0%    current clock (NOT elapsed) time is: 16h 21min 34sec
    creating layer            2 out of            2
-    100.0%    current clock (NOT elapsed) time is: 23h 15min 21sec
+     number of regular elements  =          112
+    100.0%    current clock (NOT elapsed) time is: 16h 21min 34sec
+   layers done
+
+   number of elements (per slice)        =          172
+   total number of elements (all slices) =          688
 
 
    ...creating global addressing
+     total number of points            :        21500
+     array memory required per process :   0.492095947     MB
+     getting global points             : npointot =        21500  nspec =          172
+     creating indirect addressing
+     ibool ok
 
    ...creating MPI buffers
 
@@ -283,9 +340,16 @@
 
    ...creating mesh elements
    creating layer            1 out of            2
-     50.0%    current clock (NOT elapsed) time is: 23h 15min 21sec
+     number of regular elements  =           28
+     number of doubling elements =           32
+     50.0%    current clock (NOT elapsed) time is: 16h 21min 34sec
    creating layer            2 out of            2
-    100.0%    current clock (NOT elapsed) time is: 23h 15min 21sec
+     number of regular elements  =          112
+    100.0%    current clock (NOT elapsed) time is: 16h 21min 34sec
+   layers done
+
+   number of elements (per slice)        =          172
+   total number of elements (all slices) =          688
 
 
    ...fills global mesh points
@@ -361,10 +425,12 @@
 
 
    ...element mesh coloring
-   mesh coloring:  F
+      mesh coloring:  F
+
+   ...creating absorbing boundary arrays
 
    ...creating mass matrix
-     updates mass matrix with Stacey boundary corrections
+      updates mass matrix with Stacey boundary corrections
 
    ...saving binary files
 
@@ -388,10 +454,20 @@
 
    ...creating mesh elements
    creating layer            1 out of            1
-    100.0%    current clock (NOT elapsed) time is: 23h 15min 21sec
+     number of regular elements  =            8
+    100.0%    current clock (NOT elapsed) time is: 16h 21min 34sec
+   layers done
+
+   number of elements (per slice)        =            8
+   total number of elements (all slices) =           32
 
 
    ...creating global addressing
+     total number of points            :         1000
+     array memory required per process :    2.28881836E-02 MB
+     getting global points             : npointot =         1000  nspec =            8
+     creating indirect addressing
+     ibool ok
 
    ...creating MPI buffers
 
@@ -403,7 +479,12 @@
 
    ...creating mesh elements
    creating layer            1 out of            1
-    100.0%    current clock (NOT elapsed) time is: 23h 15min 21sec
+     number of regular elements  =            8
+    100.0%    current clock (NOT elapsed) time is: 16h 21min 34sec
+   layers done
+
+   number of elements (per slice)        =            8
+   total number of elements (all slices) =           32
 
 
    ...fills global mesh points
@@ -416,21 +497,21 @@
    Region is inner core
 
    Min Vs =    3.50430012      (km/s)
-   Max Vp =    11.1259289      (km/s)
+   Max Vp =    11.1200123      (km/s)
 
    Max element edge size =    159.256638      (km)
-   Min element edge size =    117.807892      (km)
-   Max/min ratio =    1.35183334
+   Min element edge size =    120.335938      (km)
+   Max/min ratio =    1.32343376
 
-   Max Jacobian eigenvalue ratio =   0.992640913
-   Min Jacobian eigenvalue ratio =   0.801900446
+   Max Jacobian eigenvalue ratio =   0.996547818
+   Min Jacobian eigenvalue ratio =   0.830135345
 
-   Minimum period resolved =    49.7233887      (s)
+   Minimum period resolved =    47.3525467      (s)
    Minimum period resolved (empirical) =    46.3312187      (s)
    Maximum suggested time step =    1.00000000      (s)
 
    for DT :   0.180000007      (s)
-   Max stability for wave velocities =    9.84485969E-02
+   Max stability for wave velocities =    9.63291153E-02
  ----------------------------------
 
    saving vtk mesh files for resolution res_minimum_period...
@@ -479,29 +560,37 @@
 
 
    ...element mesh coloring
-   mesh coloring:  F
+      mesh coloring:  F
+
+   ...creating absorbing boundary arrays
 
    ...creating mass matrix
-     updates mass matrix with Stacey boundary corrections
 
    ...saving binary files
 
    ...saving mesh files
 
- calculated region volume:    3.43970838E-04
+ calculated region volume:    3.25567264E-04
                  top area:    9.79264453E-03
-              bottom area:    5.73844090E-03
+              bottom area:    5.98736806E-03
 
- calculated volume:    8.9103509631485250E-002
+ all mesh regions created - done
+
+ *******************************************
+
+ finalizing simulation:
+
+ calculated volume:    8.9085106052999033E-002
 
  Repartition of elements in regions:
  ----------------------------------
 
- total number of elements in each slice:         2340
+ number of elements in each slice      :         2340
+ total number of elements in all slices:         9360
 
-  - crust and mantle:    92.3076935      %
-  - outer core:    7.35042715      %
-  - inner core:   0.341880351      %
+  - crust and mantle       :    92.3076935      %
+  - outer core             :    7.35042715      %
+  - inner core             :   0.341880351      %
 
  for some mesh statistics, see comments in file OUTPUT_FILES/values_from_mesher.h
 
@@ -515,7 +604,7 @@
  smallest and largest possible floating-point numbers are:    1.17549435E-38   3.40282347E+38
 
 
- Elapsed time for mesh generation and buffer creation in seconds =   0.988319993
+ Elapsed time for mesh generation and buffer creation in seconds =   0.385968000
  Elapsed time for mesh generation and buffer creation in hh:mm:ss =    0 h 00 m 00 s
 
  End of mesh generation

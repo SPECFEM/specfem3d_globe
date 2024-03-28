@@ -12,23 +12,27 @@ import pandas as pd
 ######################################################################
 # USER Parameters
 
-# True for vertical, False for horizontal cross-section
-plot_vert = False
-
 # True for surface interpolation, False for plotting dots
-use_surface_interpolation = False
+use_surface_interpolation = True
 
 # small perspective globe (on left top corner)
 add_perspective = True
 
+# use hillshade topo as background
+use_topo = True
+
+# True for vertical, False for horizontal cross-section
+plot_vert = False
+
 # show figure
 show_plot = False
+
 
 ######################################################################
 
 # globals
 color_range = None   # specify a colormap min/max
-use_topo = False     # use hillshade topo as background
+fix_region = None    # user specified region code
 
 # to convert radius to depth
 EARTH_SURFACE_RADIUS = 6371.0  # PREM surface radius in km
@@ -46,6 +50,12 @@ def process_data(filename):
 
     # numpy reads tabled data
     data_array = np.loadtxt(filename)
+
+    # check length
+    if len(data_array) == 0:
+        print("no data points")
+        print("Please check file...")
+        sys.exit(1)
 
     # convert to pandas dataframe
     data = pd.DataFrame(data_array)
@@ -170,15 +180,15 @@ def add_perspective_view(lon_min,lon_max,lat_min,lat_max,fig):
     projection = f"G{lon_min}/{lat_min}/4c"
 
     # Define the region. 'g' stands for global.
-    region = 'g'
+    region_globe = 'g'
 
     # Define the frame. '5g15' sets the annotation and gridline interval.
-    frame = '5g15'
+    frame_globe = '5g15'
 
     with fig.inset(position="jTL+w4c+o0.1c"):
         # Plot the coastlines
         #fig.basemap(region=region, projection=projection, frame=frame)
-        fig.coast(region=region, projection=projection, frame=frame, land="lightbrown", water="lightblue")
+        fig.coast(region=region_globe, projection=projection, frame=frame_globe, land="lightbrown", water="lightblue")
         if plot_vert:
             # Plot the great-circle line
             fig.plot(x=[lon_min, lon_max], y=[lat_min, lat_max], pen='0.1')
@@ -328,6 +338,8 @@ def plot_cross_section(filename):
 
     # regional plots
     if is_regional:
+        print("  using regional plot")
+        print("")
         if plot_vert:
             # vertical
             R = f"{dist_min}/{dist_max}/{depth_min}/{depth_max}"     # uses depth instead of radius
@@ -337,9 +349,13 @@ def plot_cross_section(filename):
             # horizontal
             R = f"{lon_min}/{lon_max}/{lat_min}/{lat_max}"
             B = '5a10/5a10WeSn:.\"Cross-Section\":'
-        print("  using regional plot")
-        print("  region: ",R)
-        print("")
+
+    # fixes region
+    if not fix_region is None:
+        R = fix_region
+
+    print("plot region: ",R)
+    print("")
 
     # adapt data for vertical plots
     if plot_vert:
@@ -356,6 +372,11 @@ def plot_cross_section(filename):
         # horizontal
         data_xyz = data[['lon', 'lat', 'value']]
         data_xyz.columns = ['x', 'y', 'z']
+
+    # region info
+    #region_info = pygmt.info(data=data_xyz,per_column=True)
+    #print("region info: ",region_info)
+    #print("")
 
     # Create figure and set basic elements
     fig = pygmt.Figure()
@@ -389,9 +410,11 @@ def plot_cross_section(filename):
     create_colormap(val_average)
 
     if use_surface_interpolation:
-        # get region
-        region = pygmt.info(data=data_xyz,per_column=True)
-        #print("region: ",region)
+        # surface interpolation
+        print("surface interpolation:")
+
+        # use plot region for interpolation
+        region = R
 
         # Create a grid
         if plot_vert:
@@ -399,10 +422,10 @@ def plot_cross_section(filename):
             space_x = dim_dist / 500.0
             space_y = dim_depth / 500.0
 
-            print("grid: spacing = {} / {}".format(space_x,space_y))
+            print("  grid: spacing = {} / {}".format(space_x,space_y))
             print("")
             
-            grid = pygmt.surface(data_xyz, region=region, spacing=[space_x,space_y], verbose='q')
+            grid = pygmt.surface(data_xyz, region=R, spacing=[space_x,space_y], verbose='q')
         else:
             # horizontal lon/lat/radius
             # determine grid spacing
@@ -410,10 +433,10 @@ def plot_cross_section(filename):
             spacing = np.round(spacing, -int(np.floor(np.log10(np.abs(spacing))))) # limit to significant digit 0.12 -> 0.1
             if spacing < 0.05: spacing = 0.05
 
-            print("grid: spacing = ",spacing)
+            print("  grid: spacing = ",spacing)
             print("")
 
-            grid = pygmt.surface(data_xyz, region=region, spacing=spacing, verbose='q')
+            grid = pygmt.surface(data_xyz, region=R, spacing=spacing, verbose='q')
         #print("grid: ",grid)
 
         # determine which areas have no data points to dimm outside areas
@@ -456,8 +479,44 @@ def plot_cross_section(filename):
         fig.grdimage(grid, cmap=True, transparency=transparency)
 
     else:
+        # point plot
+        print("point plot:")
+
+        # determine point size based on data increments
+        # difference between 2 consecutive entries
+        diffs_x = np.abs(np.diff(data_xyz['x']))
+        diffs_y = np.abs(np.diff(data_xyz['y']))
+        #print("debug: diffs_x ",diffs_x)
+        #print("debug: diffs_y ",diffs_y)
+
+        # get increments
+        dx = next((diff for diff in diffs_x if diff > 0.00001), None)
+        if dx is None: dx = 1.0
+        dy = next((diff for diff in diffs_y if diff > 0.00001), None)
+        if dy is None: dy = 1.0
+        print("  increments dx/dy = {:.2f} / {:.2f}".format(dx,dy))
+
+        # determine point size
+        dmin = min(dx,dy)
+        if dmin < 0.5:
+            point_size = 0.1
+        elif dmin < 1.0:
+            point_size = 0.2
+        else:
+            point_size = 0.5
+
+        if plot_vert:
+            # square points
+            point_style = f"s{point_size}c"
+        else:
+            # circle points
+            point_style = f"c{point_size}c"
+
+        print("  point size  = {} - style = {}".format(point_size,point_style))
+        print("")
+
         # Plot data points directly
-        fig.plot(x=data_xyz['x'], y=data_xyz['y'], fill=data_xyz['z'], style="c0.1c", cmap=True, transparency=transparency)
+        fig.plot(x=data_xyz['x'], y=data_xyz['y'], fill=data_xyz['z'], style=point_style, cmap=True, transparency=transparency)
 
     # adds a perspective globe view
     if add_perspective:
@@ -488,15 +547,19 @@ def plot_cross_section(filename):
 
 
 def usage():
-    print("usage: ./plot_cross_section_gmt.py --file=filename [--horiz] [--vert] [--surf] [--color_range=min,max] [--show] [--topo]")
+    print("usage: ./plot_cross_section_gmt.py --file=filename [--horiz] [--vert] [--color_range=min,max] [--region=R]")
+    print("                                                   [--surf] [--points] [--topo] [--no-topo] [--show]")
     print("  with")
     print("     --file=filename    - input cross-section, for example 'OUTPUT_FILES/cross_section_vpv.dat'")
     print("     --horiz            - (optional) horizontal cross-section plot (used by default)")
     print("     --vert             - (optional) vertical cross-section plot")
-    print("     --surf             - (optional) use surface interpolation (default is off, plotting dots)")
-    print("     --color_range      - (optional) fixes colormap range to (min,max) values")
+    print("     --surf             - (optional) use surface interpolation (default is on)")
+    print("     --points           - (optional) use points for plotting (default is off, using surface interpolation by default)")
+    print("     --color_range=..   - (optional) fixes colormap range to (min,max) values")
+    print("     --region=R         - (optional) use a fixed region specifier R (e.g. 'lonmin/lonmax/latmin/latmax')")
     print("     --show             - (optional) show figure plot (default is off)")
-    print("     --topo             - (optional) use hillshaded topography as land background")
+    print("     --topo             - (optional) use hillshaded topography as land background (default is on)")
+    print("     --no-topo          - (optional) empty land (no topography as land background), uses only coast lines")
     sys.exit(1)
 
 
@@ -524,13 +587,21 @@ if __name__ == '__main__':
             plot_vert = True
         elif "--surf" in arg:
             use_surface_interpolation = True
+        elif "--no-surf" in arg:
+            use_surface_interpolation = False
+        elif "--points" in arg:
+            use_surface_interpolation = False
         elif "--show" in arg:
             show_plot = True
+        elif "--topo" in arg:
+            use_topo = True
+        elif "--no-topo" in arg:
+            use_topo = False
         elif "--color_range" in arg:
             str_array = arg.split('=')[1]
             color_range = np.array([float(val) for val in str_array.strip('()[]').split(',')])
-        elif "--topo" in arg:
-            use_topo = True
+        elif "--region" in arg:
+            fix_region = arg.split('=')[1]
         elif i > 1:
             print("argument not recognized: ",arg)
             sys.exit(1)

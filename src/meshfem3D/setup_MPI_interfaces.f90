@@ -64,8 +64,8 @@
   nibool_neighbors(:) = 0
 
   ! estimates initial maximum ibool array
-  max_nibool = npoin2D_max_all_CM_IC * NUMFACES_SHARED &
-               + non_zero_nb_msgs_theor_in_cube*npoin2D_cube_from_slices
+  max_nibool = npoin2D_max_all_buffer * NUMFACES_SHARED &
+               + non_zero_nb_msgs_theor_in_cube * npoin2D_cube_from_slices
 
   allocate(ibool_neighbors(max_nibool,MAX_NEIGHBORS), stat=ier)
   if (ier /= 0 ) call exit_mpi(myrank,'Error allocating ibool_neighbors')
@@ -174,8 +174,7 @@
 
   ! local parameters
   ! temporary buffers for send and receive between faces of the slices and the chunks
-  real(kind=CUSTOM_REAL), dimension(npoin2D_max_all_CM_IC) :: &
-    buffer_send_faces_scalar,buffer_received_faces_scalar
+  real(kind=CUSTOM_REAL), dimension(npoin2D_max_all_buffer) :: buffer_send_faces_scalar,buffer_received_faces_scalar
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: test_flag
   integer,dimension(:),allocatable :: dummy_i
   logical :: add_central_cube
@@ -209,7 +208,7 @@
                                    iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
                                    iprocfrom_faces,iprocto_faces,imsg_type, &
                                    iproc_main_corners,iproc_worker1_corners,iproc_worker2_corners, &
-                                   buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
+                                   buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_buffer, &
                                    buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
                                    NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
                                    NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
@@ -316,8 +315,7 @@
 
   ! local parameters
   ! temporary buffers for send and receive between faces of the slices and the chunks
-  real(kind=CUSTOM_REAL), dimension(npoin2D_max_all_CM_IC) :: &
-    buffer_send_faces_scalar,buffer_received_faces_scalar
+  real(kind=CUSTOM_REAL), dimension(npoin2D_max_all_buffer) :: buffer_send_faces_scalar,buffer_received_faces_scalar
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: test_flag
   integer,dimension(:),allocatable :: dummy_i
   logical :: add_central_cube
@@ -351,7 +349,7 @@
                                    iboolfaces_outer_core,iboolcorner_outer_core, &
                                    iprocfrom_faces,iprocto_faces,imsg_type, &
                                    iproc_main_corners,iproc_worker1_corners,iproc_worker2_corners, &
-                                   buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
+                                   buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_buffer, &
                                    buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
                                    NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
                                    NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
@@ -457,8 +455,7 @@
 
   ! local parameters
   ! temporary buffers for send and receive between faces of the slices and the chunks
-  real(kind=CUSTOM_REAL), dimension(npoin2D_max_all_CM_IC) :: &
-    buffer_send_faces_scalar,buffer_received_faces_scalar
+  real(kind=CUSTOM_REAL), dimension(npoin2D_max_all_buffer) :: buffer_send_faces_scalar,buffer_received_faces_scalar
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: test_flag
   integer :: i,j,k,ispec,iglob,ier
   integer :: ndim_assemble
@@ -505,7 +502,7 @@
                                    iboolfaces_inner_core,iboolcorner_inner_core, &
                                    iprocfrom_faces,iprocto_faces,imsg_type, &
                                    iproc_main_corners,iproc_worker1_corners,iproc_worker2_corners, &
-                                   buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
+                                   buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_buffer, &
                                    buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
                                    NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
                                    NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_INNER_CORE), &
@@ -661,8 +658,7 @@
 
   ! local parameters
   ! temporary buffers for send and receive between faces of the slices and the chunks
-  real(kind=CUSTOM_REAL), dimension(npoin2D_max_all_CM_IC) :: &
-    buffer_send_faces_scalar,buffer_received_faces_scalar
+  real(kind=CUSTOM_REAL), dimension(npoin2D_max_all_buffer) :: buffer_send_faces_scalar,buffer_received_faces_scalar
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: test_flag
   integer,dimension(:),allocatable :: dummy_i
   integer :: i,ier
@@ -696,12 +692,19 @@
                                    iboolfaces_trinfinite,iboolcorner_trinfinite, &
                                    iprocfrom_faces,iprocto_faces,imsg_type, &
                                    iproc_main_corners,iproc_worker1_corners,iproc_worker2_corners, &
-                                   buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
+                                   buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_buffer, &
                                    buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
                                    NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
                                    NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_TRINFINITE), &
                                    NGLOB2DMAX_XMIN_XMAX(IREGION_TRINFINITE),NGLOB2DMAX_YMIN_YMAX(IREGION_TRINFINITE), &
                                    NGLOB2DMAX_XY,NCHUNKS)
+
+    do i = 1,NGLOB_TRINFINITE
+      if (nint( test_flag(i) ) /= nint( test_flag(i) ) ) then
+        print *,'error: rank ',myrank,' has invalid test flag ',test_flag(i),nint( test_flag(i))
+        stop 'Error invalid test flag'
+      endif
+    enddo
 
     ! removes own myrank id (+1)
     test_flag(:) = test_flag(:) - ( myrank + 1.0)
@@ -802,8 +805,7 @@
 
   ! local parameters
   ! temporary buffers for send and receive between faces of the slices and the chunks
-  real(kind=CUSTOM_REAL), dimension(npoin2D_max_all_CM_IC) :: &
-    buffer_send_faces_scalar,buffer_received_faces_scalar
+  real(kind=CUSTOM_REAL), dimension(npoin2D_max_all_buffer) :: buffer_send_faces_scalar,buffer_received_faces_scalar
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: test_flag
   integer,dimension(:),allocatable :: dummy_i
   integer :: i,ier
@@ -817,7 +819,7 @@
   ! sets up MPI interfaces
   ! transition infinite region
   if (myrank == 0 ) then
-    write(IMAIN,*) 'transition infinite MPI:'
+    write(IMAIN,*) 'infinite MPI:'
     call flush_IMAIN()
   endif
 
@@ -837,7 +839,7 @@
                                    iboolfaces_infinite,iboolcorner_infinite, &
                                    iprocfrom_faces,iprocto_faces,imsg_type, &
                                    iproc_main_corners,iproc_worker1_corners,iproc_worker2_corners, &
-                                   buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
+                                   buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_buffer, &
                                    buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
                                    NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
                                    NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_INFINITE), &

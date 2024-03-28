@@ -543,14 +543,15 @@
 
     enddo
 
+    ! synchronizes processes
+    call synchronize_all()
+
     ! user output
     if (myrank == 0) then
       write(IMAIN,*)"  fused arrays done"
       call flush_IMAIN()
     endif
 
-    ! synchronizes processes
-    call synchronize_all()
   else
     ! dummy
     allocate(deriv_mapping_crust_mantle(1,1,1,1,1), &
@@ -684,6 +685,14 @@
   ! repeats test
   integer, parameter :: NTIMES = 15
 
+  ! output bandwidth
+  if (myrank == 0) then
+    write(IMAIN,*) "  bandwidth test (STREAM TRIAD): "
+    call flush_IMAIN()
+  endif
+  ! synchronizes processes
+  call synchronize_all()
+
   ! note: we want to use the actual arrays displ/veloc/accel which will be used later in the code
   !       but they might have initial values read in, so we need to temporarily store them
 
@@ -789,7 +798,6 @@
 
   ! output bandwidth
   if (myrank == 0) then
-    write(IMAIN,*) "  bandwidth test (STREAM TRIAD): "
     write(IMAIN,*) "     memory accesses = ",sngl(mem),'MB'
     write(IMAIN,*) "     timing  min/max = ",sngl(t_min),'s / ',sngl(t_max),'s'
     write(IMAIN,*) "     timing      avg = ",sngl(t_avg),'s'

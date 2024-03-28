@@ -513,7 +513,7 @@ end program sum_kernels_globe
   ! dummy for definitions
   allocate(dummy_real4d(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),stat=ier)
   if (ier /= 0) stop 'Error allocating dummy array'
-  dummy_real4d(:,:,:,:) = 0.0
+  dummy_real4d(:,:,:,:) = 0.0_CUSTOM_REAL
 
   ! ADIOS
   ! start setting up full file group size

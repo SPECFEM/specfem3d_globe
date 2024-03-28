@@ -138,6 +138,9 @@
     case (REFERENCE_MODEL_CCREM)
       call model_ccrem_broadcast(CRUSTAL)
 
+    case (REFERENCE_MODEL_VPREMOON)
+      call model_vpremoon_broadcast(CRUSTAL)
+
   end select
 
   end subroutine meshfem3D_reference_model_broadcast
@@ -672,6 +675,14 @@
   r_used = ZERO
   suppress_mantle_extension = .false.
 
+  ! note: global mantle models are in general defined with respect to a spherical Earth.
+  !       furthermore, geocentric and geographic colatitude (theta) is the same for a spherical Earth.
+  !
+  !       the only model using point locations at "true" Earth positions is the EMC model, where the mesh
+  !       can be either elliptical or not, depending on the Par_file 'ELLIPTICITY' flag.
+  !
+  !       TODO: in case, we will have more 3D (tomographic) models in future that need "true" positions, we can re-visit this.
+
 !---
 !
 ! ADD YOUR MODEL HERE
@@ -1188,6 +1199,7 @@
 
 ! returns velocities and density for points in 3D crustal region
 
+  use shared_parameters, only: ELLIPTICITY
   use meshfem_models_par
 
   implicit none
@@ -1219,9 +1231,11 @@
   ! for point radius smaller than deepest possible crust radius (~80 km depth)
   if (r < R_DEEPEST_CRUST) return
 
+  ! converts geocentric colatitude/lon (theta/phi) to geographic latitude/lon (lat/lon)
   ! lat/lon in degrees (range lat/lon = [-90,90] / [-180,180]
-  lat = (PI_OVER_TWO - theta) * RADIANS_TO_DEGREES
-  lon = phi * RADIANS_TO_DEGREES
+  call thetaphi_2_geographic_latlon_dble(theta,phi,lat,lon,ELLIPTICITY)
+
+  ! double-check lon in range [-180,180]
   if (lon > 180.0d0 ) lon = lon - 360.0d0
 
 !---
@@ -1654,11 +1668,16 @@
   ! sponge layer
   if (ABSORB_USING_GLOBAL_SPONGE) then
     ! get distance to chunk center
-    call lat_2_geocentric_colat_dble(SPONGE_LATITUDE_IN_DEGREES, theta_c)
+    ! note: assuming mesh is still spherical, no need to correct colatitude by ellipticity factor
+    call lat_2_geocentric_colat_dble(SPONGE_LATITUDE_IN_DEGREES, theta_c, ELLIPTICITY)
     phi_c = SPONGE_LONGITUDE_IN_DEGREES * DEGREES_TO_RADIANS
+
+    ! theta to [0,PI] and phi to [0,2PI]
     call reduce(theta_c, phi_c)
 
-    dist = acos(cos(theta)*cos(theta_c) + sin(theta)*sin(theta_c)*cos(phi-phi_c))
+    ! epicentral distance (in rad)
+    call get_greatcircle_distance(theta,phi,theta_c,phi_c,dist)
+
     dist_c = SPONGE_RADIUS_IN_DEGREES * DEGREES_TO_RADIANS
     edge = SPONGE_WIDTH_IN_DEGREES * DEGREES_TO_RADIANS
 
@@ -1721,8 +1740,12 @@
 
 ! creates VTK output file for moho depths spanning full globe
 
-  use constants, only: PI,IREGION_CRUST_MANTLE,MAX_STRING_LEN,IMAIN,myrank
-  use shared_parameters, only: LOCAL_PATH,R_PLANET_KM
+  use constants, only: PI,IREGION_CRUST_MANTLE,MAX_STRING_LEN,IMAIN,myrank, &
+    DEGREES_TO_RADIANS,R_UNIT_SPHERE
+  use shared_parameters, only: LOCAL_PATH,R_PLANET_KM,R_PLANET, &
+    TOPOGRAPHY,ELLIPTICITY
+  use meshfem_models_par, only: ibathy_topo
+  use meshfem_models_par, only: nspl,rspl,ellipicity_spline,ellipicity_spline2
 
   implicit none
 
@@ -1733,7 +1756,7 @@
   double precision :: vpv,vph,vsv,vsh,rho,eta_aniso
   double precision :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
                       c33,c34,c35,c36,c44,c45,c46,c55,c56,c66
-  double precision :: moho,sediment
+  double precision :: moho,sediment,elevation
   integer :: iregion_code
   logical :: elem_in_crust
 
@@ -1782,13 +1805,29 @@
       lat = 90.d0 - j*dlat + 0.5d0
       lon = -180.d0 + i*dlon - 0.5d0
 
-      ! converts to colatitude theta/phi in radians
-      theta = (90.d0 - lat) * PI/180.d0   ! colatitude between [0,pi]
-      phi = lon * PI/180.d0               ! longitude between [-pi,pi]
-      r = 1.0d0                           ! radius at surface (normalized)
+      ! converts geographic latitude (degrees) to geocentric colatitude theta (radians)
+      call lat_2_geocentric_colat_dble(lat,theta,ELLIPTICITY)
+
+      ! converts to longitude in radians (between [-pi,pi])
+      phi = lon * DEGREES_TO_RADIANS
 
       ! theta to [0,PI] and phi to [0,2PI]
       call reduce(theta,phi)
+
+      ! radius at surface (normalized)
+      r = R_UNIT_SPHERE
+
+      ! finds elevation of position lat/lon
+      if (TOPOGRAPHY) then
+         call get_topo_bathy(lat,lon,elevation,ibathy_topo)
+         r = r + elevation/R_PLANET
+      endif
+
+      ! ellipticity
+      if (ELLIPTICITY) then
+        ! adds ellipticity factor to radius
+        call add_ellipticity_rtheta(r,theta,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+      endif
 
       ! gets moho
       call meshfem3D_models_get3Dcrust_val(iregion_code,r,theta,phi, &
@@ -1801,8 +1840,9 @@
       moho_depth(iglob) = moho * R_PLANET_KM  ! dimensionalize moho depth to km
       sediment_depth(iglob) = sediment * R_PLANET_KM
 
-      ! gets point's position x/y/z
+      ! gets point's (geocentric) position x/y/z
       call rthetaphi_2_xyz_dble(xmesh,ymesh,zmesh,r,theta,phi)
+
       tmp_x(iglob) = xmesh
       tmp_y(iglob) = ymesh
       tmp_z(iglob) = zmesh
@@ -1872,9 +1912,12 @@
 
 ! creates VTK output file for moho depths spanning full globe
 
-  use constants, only: PI,MAX_STRING_LEN,IMAIN,myrank
-  use shared_parameters, only: LOCAL_PATH,RESOLUTION_TOPO_FILE,R_PLANET_KM
+  use constants, only: PI,MAX_STRING_LEN,IMAIN,myrank, &
+    DEGREES_TO_RADIANS,R_UNIT_SPHERE
+  use shared_parameters, only: LOCAL_PATH,RESOLUTION_TOPO_FILE,R_PLANET,R_PLANET_KM, &
+    TOPOGRAPHY,ELLIPTICITY
   use meshfem_models_par, only: ibathy_topo
+  use meshfem_models_par, only: nspl,rspl,ellipicity_spline,ellipicity_spline2
 
   implicit none
 
@@ -1918,8 +1961,8 @@
   call flush_IMAIN()
 
   ! limits size of output file
-  if (samples_per_degree > 2) then
-    samples_per_degree = 2.d0
+  if (samples_per_degree > 4.d0) then
+    samples_per_degree = 4.d0
     NLAT = int(NLAT_g * samples_per_degree)
     NLON = int(NLON_g * samples_per_degree)
     ! info
@@ -1945,6 +1988,8 @@
   dlat = 180.d0/NLAT
   dlon = 360.d0/NLON
 
+  elevation = 0.d0
+
   ! loop in 1-degree steps over the globe
   do j = 1,NLAT
     do i = 1,NLON
@@ -1952,19 +1997,36 @@
       lat = 90.d0 - j*dlat + 0.5d0*dlat
       lon = -180.d0 + i*dlon - 0.5d0*dlon
 
-      ! converts to colatitude theta/phi in radians
-      theta = (90.d0 - lat) * PI/180.d0   ! colatitude between [0,pi]
-      phi = lon * PI/180.d0               ! longitude between [-pi,pi]
-      r = 1.0d0                           ! radius at surface (normalized)
+      ! converts geographic latitude (degrees) to geocentric colatitude theta (radians)
+      call lat_2_geocentric_colat_dble(lat,theta,ELLIPTICITY)
+
+      ! converts to longitude in radians (between [-pi,pi])
+      phi = lon * DEGREES_TO_RADIANS
+
+      ! theta to [0,PI] and phi to [0,2PI]
+      call reduce(theta,phi)
+
+      ! radius at surface (normalized)
+      r = R_UNIT_SPHERE
+
+      ! finds elevation of position lat/lon
+      if (TOPOGRAPHY) then
+        ! compute elevation at current point
+        call get_topo_bathy(lat,lon,elevation,ibathy_topo)
+        r = r + elevation/R_PLANET
+      endif
+
+      ! ellipticity
+      if (ELLIPTICITY) then
+        ! adds ellipticity factor to radius
+        call add_ellipticity_rtheta(r,theta,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+      endif
 
       ! gets point's position
       call rthetaphi_2_xyz_dble(xmesh,ymesh,zmesh,r,theta,phi)
 
       ! debug
       !print *,'debug: lat/lon',lat,lon,theta,phi,'xyz',xmesh,ymesh,zmesh
-
-      ! compute elevation at current point
-      call get_topo_bathy(lat,lon,elevation,ibathy_topo)
 
       ! stores
       iglob = i + (j-1) * NLON

@@ -367,13 +367,13 @@
   write(IOUT_VTK,'(a)') 'ASCII'
   write(IOUT_VTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
   write(IOUT_VTK, '(a,i12,a)') 'POINTS ', nglob, ' float'
-  do i = 1,nglob
 
+  do i = 1,nglob
     !x,y,z store have been converted to r theta phi already, need to revert back for xyz output
     rval = rstore_dummy(1,i)
     thetaval = rstore_dummy(2,i)
     phival = rstore_dummy(3,i)
-
+    ! converts (geocentric) position r/theta/phi to Cartesian position x/y/z
     call rthetaphi_2_xyz(xval,yval,zval,rval,thetaval,phival)
 
     write(IOUT_VTK,'(3e18.6)') real(xval,kind=4),real(yval,kind=4),real(zval,kind=4)
@@ -710,7 +710,7 @@
   ! writes out all points for each element, not just global ones
   if (USE_CORNERS) then
     write(IOUT_VTK, '(a,i12,a)') 'POINTS ', nspec*8, ' float'
-    do ispec=1,nspec
+    do ispec = 1,nspec
       i = ibool(1,1,1,ispec)
       write(IOUT_VTK,'(3e18.6)') real(xstore_dummy(i),kind=4),real(ystore_dummy(i),kind=4),real(zstore_dummy(i),kind=4)
 
@@ -737,7 +737,7 @@
     enddo
   else
     write(IOUT_VTK, '(a,i16,a)') 'POINTS ', NGLLX*NGLLY*NGLLZ*nspec, ' float'
-    do ispec=1,nspec
+    do ispec = 1,nspec
       do k = 1,NGLLZ
         do j = 1,NGLLY
           do i = 1,NGLLX
@@ -755,14 +755,14 @@
   ! note: indices for vtk start at 0
   if (USE_CORNERS) then
     write(IOUT_VTK,'(a,i12,i12)') "CELLS ",nspec,nspec*9
-    do ispec=1,nspec
+    do ispec = 1,nspec
       write(IOUT_VTK,'(9i12)') 8, &
             (ispec-1)*8,(ispec-1)*8+1,(ispec-1)*8+2,(ispec-1)*8+3, &
             (ispec-1)*8+4,(ispec-1)*8+5,(ispec-1)*8+6,(ispec-1)*8+7
     enddo
   else
     write(IOUT_VTK,'(a,i16,i16)') "CELLS ",(NGLLX-1)*(NGLLY-1)*(NGLLZ-1)*nspec,(NGLLX-1)*(NGLLY-1)*(NGLLZ-1)*nspec*9
-    do ispec=1,nspec
+    do ispec = 1,nspec
       do k = 1,NGLLZ-1
         do j = 1,NGLLY-1
           do i = 1,NGLLX-1
@@ -881,7 +881,7 @@
   write(IOUT_VTK,'(a)') 'ASCII'
   write(IOUT_VTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
   write(IOUT_VTK, '(a,i12,a)') 'POINTS ', nglob, ' float'
-  do i=1,nglob
+  do i = 1,nglob
     write(IOUT_VTK,'(3e18.6)') real(xstore_dummy(i),kind=4),real(ystore_dummy(i),kind=4),real(zstore_dummy(i),kind=4)
   enddo
   write(IOUT_VTK,*) ''
@@ -1113,7 +1113,7 @@
 
 ! saves vtk file for CUSTOM_REAL values
 
-  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,IOUT_VTK,SIZE_DOUBLE
+  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,IOUT_VTK
 
   implicit none
 
@@ -1164,26 +1164,33 @@
   write(IOUT_VTK,'(6i12)') (12,it = 1,ne)
   write(IOUT_VTK,*) ''
 
+  ! note: paraview float issues
+  !
+  !       instead of 'float' we could also use 'double' to avoid issues:
+  !       for real(kind=4) values, Fortran's intrinsic tiny() and huge() function will give:
+  !         tiny/huge =    1.17549435E-38   3.40282347E+38
+  !       paraview's float value range complains for values <= 1.e-39, thus tiny/huge limits should be ok.
+  !
+  !       however, even when using single precision values the output range can go beyond these limits,
+  !       in particular for small values one can find outputs like '-2.04557346E-39' for single precision numbers.
+  !       paraview's vtk reader will then complain about the next number on the following line.
+  !
+  ! here, we will thus use the tiny/huge limits for both single and double precision data values, since we are using
+  ! this already for double.
+
   ! data values
   write(IOUT_VTK,'(a,i12)') "POINT_DATA ",np
   write(IOUT_VTK,'(a)') "SCALARS "//trim(var_name)//" float"
   write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
-  if (CUSTOM_REAL == SIZE_DOUBLE) then
-    ! double precision values
-    do i = 1,np
-      ! converts to float
-      val = real(total_dat(i),kind=4)
-      ! stay within boundaries of float values, otherwise paraview will complain
-      if (abs(val) < tiny(val)) val = sign(1.0,val) * tiny(val)
-      if (abs(val) > huge(val)) val = sign(1.0,val) * huge(val)
-      write(IOUT_VTK,*) val
-    enddo
-  else
-    ! single precision
-    do i = 1,np
-      write(IOUT_VTK,*) total_dat(i)
-    enddo
-  endif
+  ! limits values to paraview's float range
+  do i = 1,np
+    ! converts to float
+    val = real(total_dat(i),kind=4)
+    ! stay within boundaries of float values, otherwise paraview will complain
+    if (abs(val) < tiny(val)) val = sign(1.0,val) * tiny(val)
+    if (abs(val) > huge(val)) val = sign(1.0,val) * huge(val)
+    write(IOUT_VTK,*) val
+  enddo
   write(IOUT_VTK,*) ''
   close(IOUT_VTK)
 
@@ -1198,7 +1205,7 @@
 
 ! saves vtk file for CUSTOM_REAL values, for 2D surface plane data
 
-  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,IOUT_VTK,SIZE_DOUBLE
+  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,IOUT_VTK
 
   implicit none
 
@@ -1254,22 +1261,15 @@
   write(IOUT_VTK,'(a,i12)') "POINT_DATA ",np
   write(IOUT_VTK,'(a)') "SCALARS "//trim(var_name)//" float"
   write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
-  if (CUSTOM_REAL == SIZE_DOUBLE) then
-    ! double precision values
-    do i = 1,np
-      ! converts to float
-      val = real(total_dat(i),kind=4)
-      ! stay within boundaries of float values, otherwise paraview will complain
-      if (abs(val) < tiny(val)) val = sign(1.0,val) * tiny(val)
-      if (abs(val) > huge(val)) val = sign(1.0,val) * huge(val)
-      write(IOUT_VTK,*) val
-    enddo
-  else
-    ! single precision
-    do i = 1,np
-      write(IOUT_VTK,*) total_dat(i)
-    enddo
-  endif
+  ! limits values to paraview's float range
+  do i = 1,np
+    ! converts to float
+    val = real(total_dat(i),kind=4)
+    ! stay within boundaries of float values, otherwise paraview will complain
+    if (abs(val) < tiny(val)) val = sign(1.0,val) * tiny(val)
+    if (abs(val) > huge(val)) val = sign(1.0,val) * huge(val)
+    write(IOUT_VTK,*) val
+  enddo
   write(IOUT_VTK,*) ''
   close(IOUT_VTK)
 
@@ -1286,7 +1286,7 @@
 ! saves vtk file for CUSTOM_REAL values, writes out each element as unconnected finite elements
 ! (no shared global points). this visualizes sharp jumps/discontinuities from one element to another.
 
-  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,IOUT_VTK,SIZE_DOUBLE
+  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,IOUT_VTK
 
   implicit none
 
@@ -1346,28 +1346,18 @@
   write(IOUT_VTK,'(a,i12)') "POINT_DATA ",ne*8
   write(IOUT_VTK,'(a)') "SCALARS "//trim(var_name)//" float"
   write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
-  if (CUSTOM_REAL == SIZE_DOUBLE) then
-    ! double precision values
-    do ie = 1,ne
-      do j = 1,8
-        ! converts to float
-        i = total_dat_con(j,ie) + 1 ! needs to add +1 which has been removed before input
-        val = real(total_dat(i),kind=4)
-        ! stay within boundaries of float values, otherwise paraview will complain
-        if (abs(val) < tiny(val)) val = sign(1.0,val) * tiny(val)
-        if (abs(val) > huge(val)) val = sign(1.0,val) * huge(val)
-        write(IOUT_VTK,*) val
-      enddo
+  ! limits values to paraview's float range
+  do ie = 1,ne
+    do j = 1,8
+      ! converts to float
+      i = total_dat_con(j,ie) + 1 ! needs to add +1 which has been removed before input
+      val = real(total_dat(i),kind=4)
+      ! stay within boundaries of float values, otherwise paraview will complain
+      if (abs(val) < tiny(val)) val = sign(1.0,val) * tiny(val)
+      if (abs(val) > huge(val)) val = sign(1.0,val) * huge(val)
+      write(IOUT_VTK,*) val
     enddo
-  else
-    ! single precision
-    do ie = 1,ne
-      do j = 1,8
-        i = total_dat_con(j,ie) + 1 ! needs to add +1 which has been removed before input
-        write(IOUT_VTK,*) total_dat(i)
-      enddo
-    enddo
-  endif
+  enddo
   write(IOUT_VTK,*) ''
   close(IOUT_VTK)
 

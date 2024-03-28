@@ -35,19 +35,33 @@
   implicit none
 
   ! local parameters
+  ! for some statistics for the mesh
+  integer :: numelem_crust_mantle,numelem_outer_core,numelem_inner_core
+  integer :: numelem_trinfinite,numelem_infinite
+  integer :: numelem_total,numelem_total_all
+
   ! timing
   double precision :: tCPU
   double precision, external :: wtime
 
   logical, parameter :: PRINT_INFO_TO_SCREEN = .false.
-  integer :: numelem_total_all
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) 'finalizing simulation:'
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
 
   ! number of elements
   numelem_crust_mantle = NSPEC_REGIONS(IREGION_CRUST_MANTLE)
-  numelem_outer_core = NSPEC_REGIONS(IREGION_OUTER_CORE)
-  numelem_inner_core = NSPEC_REGIONS(IREGION_INNER_CORE)
+  numelem_outer_core   = NSPEC_REGIONS(IREGION_OUTER_CORE)
+  numelem_inner_core   = NSPEC_REGIONS(IREGION_INNER_CORE)
+  numelem_trinfinite   = NSPEC_REGIONS(IREGION_TRINFINITE)
+  numelem_infinite     = NSPEC_REGIONS(IREGION_INFINITE)
 
-  numelem_total = numelem_crust_mantle + numelem_outer_core + numelem_inner_core
+  numelem_total = numelem_crust_mantle + numelem_outer_core + numelem_inner_core &
+                  + numelem_trinfinite + numelem_infinite
 
   ! stats
   call sum_all_i(numelem_total,numelem_total_all)
@@ -61,7 +75,6 @@
                                      Earth_center_of_mass_z_total**2) / Earth_mass_total) / 1000.d0
 
     ! check volume of chunk
-    write(IMAIN,*)
     write(IMAIN,*) 'calculated volume: ',volume_total
     if (NCHUNKS == 6 .and. .not. ELLIPTICITY .and. .not. TOPOGRAPHY) &
         write(IMAIN,*) '     exact volume: ',(4.0d0/3.0d0)*PI*(R_UNIT_SPHERE**3)
@@ -117,9 +130,13 @@
     write(IMAIN,*) 'number of elements in each slice      : ',numelem_total
     write(IMAIN,*) 'total number of elements in all slices: ',numelem_total_all
     write(IMAIN,*)
-    write(IMAIN,*) ' - crust and mantle: ',sngl(100.d0*dble(numelem_crust_mantle)/dble(numelem_total)),' %'
-    write(IMAIN,*) ' - outer core: ',sngl(100.d0*dble(numelem_outer_core)/dble(numelem_total)),' %'
-    write(IMAIN,*) ' - inner core: ',sngl(100.d0*dble(numelem_inner_core)/dble(numelem_total)),' %'
+    write(IMAIN,*) ' - crust and mantle       : ',sngl(100.d0*dble(numelem_crust_mantle)/dble(numelem_total)),' %'
+    write(IMAIN,*) ' - outer core             : ',sngl(100.d0*dble(numelem_outer_core)/dble(numelem_total)),' %'
+    write(IMAIN,*) ' - inner core             : ',sngl(100.d0*dble(numelem_inner_core)/dble(numelem_total)),' %'
+    if (FULL_GRAVITY) then
+      write(IMAIN,*) ' - transition-to-infinite : ',sngl(100.d0*dble(numelem_trinfinite)/dble(numelem_total)),' %'
+      write(IMAIN,*) ' - infinite               : ',sngl(100.d0*dble(numelem_infinite)/dble(numelem_total)),' %'
+    endif
     write(IMAIN,*)
     write(IMAIN,*) 'for some mesh statistics, see comments in file OUTPUT_FILES/values_from_mesher.h'
     write(IMAIN,*)
@@ -156,8 +173,11 @@
                           NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
                           NSPEC_CRUST_MANTLE_ADJOINT, &
                           NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
-                          NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
-                          NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
+                          NSPEC_TRINFINITE_ADJOINT,NSPEC_INFINITE_ADJOINT, &
+                          NGLOB_CRUST_MANTLE_ADJOINT, &
+                          NGLOB_OUTER_CORE_ADJOINT,NGLOB_INNER_CORE_ADJOINT, &
+                          NGLOB_TRINFINITE_ADJOINT,NGLOB_INFINITE_ADJOINT, &
+                          NSPEC_OUTER_CORE_ROT_ADJOINT, &
                           NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
                           NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION,NT_DUMP_ATTENUATION_optimal, &
                           PRINT_INFO_TO_SCREEN)

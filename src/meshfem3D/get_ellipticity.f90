@@ -25,25 +25,22 @@
 !
 !=====================================================================
 
+
   subroutine get_ellipticity(xelm,yelm,zelm,nspl,rspl,ellipicity_spline,ellipicity_spline2)
 
   use constants, only: NR_DENSITY,NGNOD,ONE,TWO
 
   implicit none
 
-  integer :: nspl
-  double precision :: xelm(NGNOD)
-  double precision :: yelm(NGNOD)
-  double precision :: zelm(NGNOD)
-  double precision :: rspl(NR_DENSITY),ellipicity_spline(NR_DENSITY),ellipicity_spline2(NR_DENSITY)
+  integer,intent(in) :: nspl
+  double precision,intent(inout) :: xelm(NGNOD)
+  double precision,intent(inout) :: yelm(NGNOD)
+  double precision,intent(inout) :: zelm(NGNOD)
+  double precision,intent(in) :: rspl(NR_DENSITY),ellipicity_spline(NR_DENSITY),ellipicity_spline2(NR_DENSITY)
 
   ! local parameters
   integer :: ia
-
-  double precision :: ell
-  double precision :: r,theta,phi,factor
   double precision :: x,y,z
-  double precision :: cost,p20
 
   do ia = 1,NGNOD
 
@@ -51,21 +48,12 @@
     y = yelm(ia)
     z = zelm(ia)
 
-    call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
+    ! adds ellipticity to position x/y/z
+    call add_ellipticity(x,y,z,nspl,rspl,ellipicity_spline,ellipicity_spline2)
 
-    cost = dcos(theta)
-! this is the Legendre polynomial of degree two, P2(cos(theta)), see the discussion above eq (14.4) in Dahlen and Tromp (1998)
-    p20 = 0.5d0*(3.0d0*cost*cost-1.0d0)
-
-    ! get ellipticity using spline evaluation
-    call spline_evaluation(rspl,ellipicity_spline,ellipicity_spline2,nspl,r,ell)
-
-! this is eq (14.4) in Dahlen and Tromp (1998)
-    factor = ONE-(TWO/3.0d0)*ell*p20
-
-    xelm(ia) = x*factor
-    yelm(ia) = y*factor
-    zelm(ia) = z*factor
+    xelm(ia) = x
+    yelm(ia) = y
+    zelm(ia) = z
 
   enddo
 
@@ -84,18 +72,14 @@
 
   implicit none
 
-  integer :: nspl
-  integer :: ispec,nspec
-  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
-  double precision :: rspl(NR_DENSITY),ellipicity_spline(NR_DENSITY),ellipicity_spline2(NR_DENSITY)
+  integer,intent(in) :: nspl
+  integer,intent(in) :: ispec,nspec
+  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(inout) :: xstore,ystore,zstore
+  double precision,intent(in) :: rspl(NR_DENSITY),ellipicity_spline(NR_DENSITY),ellipicity_spline2(NR_DENSITY)
 
   ! local parameters
   integer :: i,j,k
-
-  double precision :: ell
-  double precision :: r,theta,phi,factor
   double precision :: x,y,z
-  double precision :: cost,p20
 
   do k = 1,NGLLZ
     do j = 1,NGLLY
@@ -105,63 +89,16 @@
         y = ystore(i,j,k,ispec)
         z = zstore(i,j,k,ispec)
 
-        call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
+        ! adds ellipticity to position x/y/z
+        call add_ellipticity(x,y,z,nspl,rspl,ellipicity_spline,ellipicity_spline2)
 
-        cost = dcos(theta)
-! this is the Legendre polynomial of degree two, P2(cos(theta)), see the discussion above eq (14.4) in Dahlen and Tromp (1998)
-        p20 = 0.5d0*(3.0d0*cost*cost-1.0d0)
-
-        ! get ellipticity using spline evaluation
-        call spline_evaluation(rspl,ellipicity_spline,ellipicity_spline2,nspl,r,ell)
-
-! this is eq (14.4) in Dahlen and Tromp (1998)
-        factor = ONE-(TWO/3.0d0)*ell*p20
-
-        xstore(i,j,k,ispec) = x*factor
-        ystore(i,j,k,ispec) = y*factor
-        zstore(i,j,k,ispec) = z*factor
+        xstore(i,j,k,ispec) = x
+        ystore(i,j,k,ispec) = y
+        zstore(i,j,k,ispec) = z
 
       enddo
     enddo
   enddo
 
   end subroutine get_ellipticity_gll
-
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine get_ellipticity_single_point(x,y,z,nspl,rspl,ellipicity_spline,ellipicity_spline2)
-
-  use constants, only: NR_DENSITY,ONE,TWO
-
-  implicit none
-
-  integer :: nspl
-  double precision :: x,y,z
-  double precision :: rspl(NR_DENSITY),ellipicity_spline(NR_DENSITY),ellipicity_spline2(NR_DENSITY)
-
-  ! local parameters
-  double precision :: ell
-  double precision :: r,theta,phi,factor
-  double precision :: cost,p20
-
-  call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
-
-  cost = dcos(theta)
-! this is the Legendre polynomial of degree two, P2(cos(theta)), see the discussion above eq (14.4) in Dahlen and Tromp (1998)
-  p20 = 0.5d0*(3.0d0*cost*cost-1.0d0)
-
-  ! get ellipticity using spline evaluation
-  call spline_evaluation(rspl,ellipicity_spline,ellipicity_spline2,nspl,r,ell)
-
-! this is eq (14.4) in Dahlen and Tromp (1998)
-  factor = ONE-(TWO/3.0d0)*ell*p20
-
-  x = x*factor
-  y = y*factor
-  z = z*factor
-
-  end subroutine get_ellipticity_single_point
 

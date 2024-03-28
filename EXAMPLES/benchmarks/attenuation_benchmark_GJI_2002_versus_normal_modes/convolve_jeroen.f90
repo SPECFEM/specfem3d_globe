@@ -12,9 +12,9 @@
 
   implicit none
 
-  double precision, parameter :: DECAY_RATE=2.628d0
+  double precision, parameter :: DECAY_RATE = 2.628d0
 
-  double precision, parameter :: PI=3.141592653589793d0
+  double precision, parameter :: PI = 3.141592653589793d0
 
 ! number of samples in the ASCII seismogram files (i.e. it is the value of NSTEP in the SPECFEM3D code)
   integer, parameter :: nlines = 15500
@@ -42,14 +42,14 @@
   allocate(time(nlines),sem(nlines),sem_fil(nlines))
 
 ! read the seismogram from the standard input
-  do i=1,nlines
+  do i = 1,nlines
     read(*,*) time(i),sem(i)
   enddo
 
-  alpha=DECAY_RATE/hdur
-  dt=dble(time(2))-dble(time(1))
+  alpha = DECAY_RATE/hdur
+  dt = dble(time(2))-dble(time(1))
   N_j=int(hdur/dt)
-  do i=1,nlines
+  do i = 1,nlines
     sem_fil(i)=0.0d0
     do j=-N_j,N_j
       tau_j=dble(j)*dt
@@ -78,7 +78,7 @@
       else
 
 ! convolve with a Gaussian
-        source=alpha*dexp(-alpha*alpha*tau_j*tau_j)/dsqrt(PI)
+        source = alpha*dexp(-alpha*alpha*tau_j*tau_j)/dsqrt(PI)
 
       endif
 
@@ -90,7 +90,7 @@
 ! compute number of samples to remove from end of seismograms
   number_remove = int(hdur / dt) + 1
 ! write the convolved seismogram to the standard output
-  do i=1,nlines - number_remove
+  do i = 1,nlines - number_remove
     write(*,*) time(i),sngl(sem_fil(i))
   enddo
 
